@@ -51,17 +51,21 @@ la date de fin de validité saisie met à jour l’alerte « ordonnance expirée
 | `infikit/manifest.webmanifest`, `infikit/sw.js`, `infikit/icons/` | installation et mode hors connexion |
 | `infikit/oauth-worker/worker.js` | relais OAuth GitHub (facultatif) |
 
-## Freelance Kit — TJM & devis pour freelances
+## Freelance Kit — TJM, devis & factures pour freelances
 
-Calculateur de TJM (net visé, charges, frais, jours facturables) et générateur de devis sur-mesure (jours-hommes × coefficient de complexité, TVA, acompte).
+Calculateur de TJM, **devis et factures séparés** (numérotation continue, mentions légales françaises, remises, TVA multi-taux, acomptes, avoirs) et carnet de clients.
 Outil indépendant d'Infikit : il vit dans `freelance/` et n'utilise que son propre stockage (`fk:*`).
 
 **Adresse :** https://ikeupods-del.github.io/Quentools/freelance/
 
-- **Connexion Google** : même projet Firebase que les autres apps QuenTools (`freelance/config.js`), même compte. Les données (réglages TJM, devis, bibliothèque) sont synchronisées dans Firestore sous `users/{uid}/apps/freelance/main/current` ; la version la plus récente gagne. Prérequis identiques à Infikit (Google activé dans Firebase Auth, domaine `ikeupods-del.github.io` autorisé, règles Firestore couvrant `users/{uid}/apps/**`).
-- **GitHub** : export du devis en **gist secret** (`.json` + `.md`), mis à jour à chaque nouvel export. Connexion en collant un jeton avec la seule case `gist`, ou en un clic via `githubClientId` / `githubOAuthProxy` dans `freelance/config.js` (OAuth App dont le callback est `.../Quentools/freelance/`).
-- **Exports** : impression / PDF, `.md`, `.json`.
-- Les données synchronisées ne sont **pas** chiffrées côté client (contrairement à Infikit) : ne pas y mettre d'informations sensibles.
+- **Réglages** : identité (forme juridique, SIREN/SIRET contrôlés, APE, capital, RCS, assurance), TVA (franchise en base art. 293 B ou assujetti, TVA sur les débits), moyens de paiement (IBAN contrôlé avec QR code de virement SEPA, PayPal.me, lien de paiement, chèque), conditions (délai, pénalités, escompte, indemnité de 40 €), préfixes de numérotation, logo et couleur.
+- **Documents** : un devis ou une facture est un brouillon modifiable ; « Finaliser » contrôle les mentions obligatoires (y compris le SIREN du client professionnel exigé depuis le 1er septembre 2026), attribue le numéro (`F-2026-001`, sans trou, remis à zéro chaque année) et fige l'émetteur et le client. Un document finalisé n'est plus modifiable : on le corrige par un **avoir**.
+- **Remises & ajustements** : remise par ligne (%), remise globale (% ou €), coefficient de complexité, acompte (facture d'acompte puis facture de solde qui déduit l'acompte), autoliquidation / hors champ de TVA.
+- **Suivi** : statuts (envoyé, accepté, payée, en retard…), indicateurs (facturé, encaissé, à encaisser, en retard), export CSV pour le comptable, sauvegarde / restauration JSON.
+- **Connexion Google** : même projet Firebase que les autres apps QuenTools (`freelance/config.js`), données synchronisées dans Firestore sous `users/{uid}/apps/freelance/main/current` (la version la plus récente gagne). Prérequis identiques à Infikit (Google activé dans Firebase Auth, domaine `ikeupods-del.github.io` autorisé, règles Firestore couvrant `users/{uid}/apps/**`).
+- **GitHub** : export d'un document en **gist secret** (`.json` + `.md`). Connexion par jeton `gist` collé, ou en un clic via `githubClientId` / `githubOAuthProxy` dans `freelance/config.js`.
+- Les données synchronisées ne sont **pas** chiffrées côté client (contrairement à Infikit).
+- Limites : pas de transmission par plateforme de facturation électronique agréée, pas de modèles de mentions propres à un métier réglementé. L'outil ne remplace pas l'avis d'un comptable.
 
 | Fichier | Rôle |
 |---|---|
