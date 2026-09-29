@@ -64,7 +64,7 @@ const LESSONS = [
   test: 'Une semaine entière sans accident à l’intérieur, avec des sorties espacées de 3 à 4 heures.', safety: 'Ne sortez pas un chiot non protégé dans les lieux fréquentés par des chiens inconnus tant que son protocole de vaccination n’est pas terminé (voir avec votre vétérinaire).' },
 
 /* ---------------- WOUF PLUS ---------------- */
-{ id: 'coucher', free: false, icon: '🛏️', cat: 'Bases', title: 'Coucher', from: 10, dur: '3 min × 3 par jour', span: '3 à 6 jours', level: 'Débutant',
+{ id: 'coucher', free: true, icon: '🛏️', cat: 'Bases', title: 'Coucher', from: 10, dur: '3 min × 3 par jour', span: '3 à 6 jours', level: 'Débutant',
   goal: 'Votre chien se couche sur signal et y reste quelques secondes, détendu.',
   why: 'Le coucher est une position de calme : il prépare la « Place », le « Reste » et la gestion de l’excitation. C’est aussi l’exercice où l’on apprend le plus sur la patience du chien… et la nôtre.',
   need: ['Friandises molles de bonne valeur', 'Un sol confortable (tapis ou herbe) : un chien qui a mal aux coudes ne se couchera pas'],
@@ -94,7 +94,7 @@ const LESSONS = [
   faq: [['Il se lève dès que je bouge.', 'Restez collé à lui et ne bougez qu’un pied. Faites des paliers minuscules.'], ['Il tient à la maison mais pas dehors.', 'Normal : recommencez à 1 seconde et à 1 pas dans chaque nouveau lieu.'], ['Il se couche quand je demande « Reste » assis.', 'Récompensez plus vite, et au niveau de son museau, pas en bas.']],
   test: 'Assis, 10 secondes à 5 pas de vous avec un léger mouvement de distraction, 8 fois sur 10, dans 2 lieux.', safety: 'Ne demandez jamais un « Reste » long à un chien stressé ou dans un environnement dangereux : c’est un exercice, pas une garantie de sécurité (gardez-le en laisse).' },
 
-{ id: 'rappel', free: false, icon: '📣', cat: 'Sécurité', title: 'Rappel : « Ici ! » fiable', from: 10, dur: '5 min × 2-3 par jour', span: '4 à 8 semaines', level: 'Intermédiaire',
+{ id: 'rappel', free: true, icon: '📣', cat: 'Sécurité', title: 'Rappel : « Ici ! » fiable', from: 10, dur: '5 min × 2-3 par jour', span: '4 à 8 semaines', level: 'Intermédiaire',
   goal: 'Votre chien revient vers vous quand vous l’appelez, même face à une distraction.',
   why: 'Le rappel est le comportement qui peut sauver la vie de votre chien. Il se construit en le rendant toujours plus intéressant que le reste du monde : jamais de punition au retour, des récompenses de grande valeur, et un signal utilisé rarement et pour de bonnes raisons.',
   need: ['Friandises très appétissantes (poulet, fromage)', 'Une longe de 5 à 10 mètres (pour la sécurité)', 'Un mot de rappel exclusif (« Ici ! », un sifflet…)', 'Un harnais pour la longe'],
@@ -109,7 +109,7 @@ const LESSONS = [
   faq: [['Il ne revient que si j’ai des friandises.', 'Au début, oui. Ensuite variez les récompenses (jeu, caresses, liberté) et cachez les friandises, mais gardez-en toujours d’excellentes pour les rappels difficiles.'], ['Il vient mais s’arrête à 2 mètres.', 'Il s’attend à être attrapé. Récompensez sur place, ne l’attrapez pas, et reculez pour l’encourager.'], ['Il a un très fort instinct de chasse.', 'Sécurité avant tout : longe ou espace clos, et travail d’un éducateur formé pour renforcer la maîtrise (jeu de rapport, marche au pied).']],
   test: 'En espace ouvert, il revient de 15 mètres au premier appel 8 fois sur 10 avec une distraction faible, en étant sur longe.', safety: 'Un rappel n’est jamais fiable à 100 %. Près d’une route ou en présence de bétail ou de faune : gardez toujours votre chien en laisse.' },
 
-{ id: 'laisse', free: false, icon: '🦮', cat: 'Balades', title: 'Marcher en laisse sans tirer', from: 12, dur: '10 min × 2 par jour', span: '3 à 6 semaines', level: 'Intermédiaire',
+{ id: 'laisse', free: true, icon: '🦮', cat: 'Balades', title: 'Marcher en laisse sans tirer', from: 12, dur: '10 min × 2 par jour', span: '3 à 6 semaines', level: 'Intermédiaire',
   goal: 'Votre chien marche à vos côtés avec une laisse détendue en forme de « J ».',
   why: 'Le chien tire parce que ça marche : tirer le fait avancer. On inverse la règle : laisse tendue = on s’arrête, laisse détendue = on avance. Le chien apprend que marcher près de vous est plus payant que tirer.',
   need: ['Un harnais bien ajusté (préférez-le au collier pour un chien qui tire)', 'Une laisse de 1,5 à 2 mètres (pas de laisse à enrouleur)', 'Friandises en poche ou dans une banane'],

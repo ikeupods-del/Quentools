@@ -62,7 +62,7 @@ LESSONS.push(
   faq: [['Il se cache et ne mange pas.', 'C’est fréquent les premières heures. S’il ne mange rien après 24 heures (chaton), consultez.'], ['Il pleure la nuit.', 'Il cherche la chaleur et la compagnie : bouillotte tiède enveloppée, vêtement à votre odeur, veilleuse. Ne le punissez pas.']],
   test: 'Au bout de 7 jours : il mange, utilise le bac, explore, vient chercher des câlins et a été vu par le vétérinaire.', safety: 'Chaton non vacciné : pas de contact avec des chats inconnus ni sorties tant que le protocole n’est pas terminé.' },
 
-{ id: 'c-transport', sp: 'cat', free: false, icon: '🧳', cat: 'Soins', title: 'Caisse de transport et vétérinaire sans stress', from: 8, dur: '3 min × 2 par jour', span: '2 à 4 semaines', level: 'Essentiel',
+{ id: 'c-transport', sp: 'cat', free: true, icon: '🧳', cat: 'Soins', title: 'Caisse de transport et vétérinaire sans stress', from: 8, dur: '3 min × 2 par jour', span: '2 à 4 semaines', level: 'Essentiel',
   goal: 'Votre chat entre dans sa caisse sans résistance et supporte le trajet et la consultation avec un stress réduit.',
   why: 'Beaucoup de chats détestent la caisse parce qu’elle n’apparaît que pour aller chez le vétérinaire. En la laissant en permanence à disposition, comme un couchage, elle devient un abri familier, et les visites deviennent bien plus simples pour tout le monde.',
   need: ['Une caisse rigide, ouvrable par le dessus, avec fermeture solide', 'Une serviette ou couverture à son odeur', 'Friandises, spray à phéromones (facultatif)'],
@@ -77,7 +77,7 @@ LESSONS.push(
   faq: [['Il se cache à la vue de la caisse.', 'Elle est associée aux mauvais souvenirs. Rangez-la à nouveau en place, laissez-la ouverte plusieurs semaines avec friandises et couchage.'], ['Il miaule tout le trajet.', 'Couvrez la caisse, roulez doucement, utilisez des phéromones ; si le stress est intense, parlez à votre vétérinaire de solutions adaptées.']],
   test: 'Il entre seul dans la caisse et supporte 10 minutes de voiture sans stress.', safety: 'Jamais de chat libre en voiture : risque d’accident pour tous.' },
 
-{ id: 'c-jeu', sp: 'cat', free: false, icon: '🪶', cat: 'Bien-être', title: 'Jeu et enrichissement : la chasse simulée', from: 8, dur: '5 à 10 min × 2-3 par jour', span: 'En continu', level: 'Essentiel',
+{ id: 'c-jeu', sp: 'cat', free: true, icon: '🪶', cat: 'Bien-être', title: 'Jeu et enrichissement : la chasse simulée', from: 8, dur: '5 à 10 min × 2-3 par jour', span: 'En continu', level: 'Essentiel',
   goal: 'Votre chat dépense son énergie de chasseur chaque jour, est moins destructeur, moins gras et plus équilibré.',
   why: 'Le chat est un prédateur : guetter, traquer, poursuivre, bondir, attraper, manger. Un chat d’appartement qui ne peut jamais accomplir cette séquence s’ennuie, grossit, griffe les meubles et peut devenir agressif ou anxieux. Le jeu avec une canne à pêche est le meilleur moyen de la compléter.',
   need: ['Canne à pêche à plumes ou fils', 'Petites proies (souris, balles), tunnel, boîtes', 'Distributeurs de nourriture ludiques, friandises'],
