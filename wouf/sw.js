@@ -1,7 +1,7 @@
 /* Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, documents) ne passent jamais par ici :
    elles restent dans le stockage de l'appareil. Seuls les fichiers de l'app sont mis en cache. */
-const CACHE = 'wouf-v1.0';
-const SHELL = ['./', './index.html', './style.css', './config.js', './data.js', './core.js', './health.js', './screens.js', './sos.js', './assurance.js', './extras.js', './main.js', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+const CACHE = 'wouf-v1.1';
+const SHELL = ['./', './index.html', './style.css', './config.js', './data.js', './core.js', './health.js', './screens.js', './sos.js', './assurance.js', './lessons.js', './educ.js', './cloud.js', './extras.js', './main.js', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {

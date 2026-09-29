@@ -76,7 +76,19 @@ fiche d'urgence, affiche « chien perdu », fiche véto en PDF, export des rappe
 **SOS** : vétérinaires ouverts / 24 h/24 autour de soi (OpenStreetMap, sans clé d'API), contacts d'urgence, premiers secours, aliments toxiques.
 **Assurance** : simulateur de coût réel par niveau de couverture + comparateur de vrais devis saisis + liens de devis (affiliation possible).
 
-**Adresse :** https://ikeupods-del.github.io/Quentools/wouf/ — application installable (PWA), hors connexion, aucune inscription, données sur l'appareil.
+**Adresse :** https://ikeupods-del.github.io/Quentools/wouf/ — application installable (PWA), hors connexion, sans inscription obligatoire, données sur l'appareil.
+
+### Connexion Google et sauvegarde automatique
+Bouton « Continuer avec Google » (accueil, Réglages) : les données (carnet, poids, éducation…) sont synchronisées automatiquement dans Firestore sous `users/{uid}/apps/wouf/main`
+(même projet Firebase `quentools-adca1` et mêmes prérequis qu'Infikit / Freelance Kit : Google activé dans Authentication, domaine `ikeupods-del.github.io` autorisé, règles couvrant `users/{uid}/apps/**`).
+Nouveau téléphone : se connecter avec Google suffit à tout retrouver. « La plus récente gagne » ; si des données existent des deux côtés à la première connexion, l'app demande lesquelles garder.
+Les documents (photos / PDF) ne sont pas synchronisés (limite de taille Firestore) : ils sont dans la sauvegarde chiffrée manuelle. Les données synchronisées ne sont pas chiffrées côté client.
+
+### Éducation (Wouf Éducation)
+13 leçons en renforcement positif (`wouf/lessons.js`, éditable) : **3 gratuites** (marqueur et prénom, assis, propreté du chiot) et **10 Wouf Plus** (coucher, reste, rappel, marche en laisse,
+laisse-le / donne, place, solitude, socialisation, soins coopératifs, ne pas sauter), plus les 10 principes (gratuits) et un programme chiot de 8 semaines (Plus).
+Chaque leçon : objectif, matériel, étapes progressives avec critères de réussite, erreurs fréquentes, dépannage, test de validation. Mode **séance guidée** (chronomètre, marqueur sonore,
+compteur de réussites avec la règle des 80 %), suivi par leçon, série de jours, badges. Réglage : `premium` (`lessons`, `programs`) dans `wouf/config.js`.
 
 ### Abonnement « Wouf Plus » : activable à tout moment
 Par défaut **tout est gratuit**. Tout se pilote dans `wouf/config.js` (section `billing`) :
@@ -107,4 +119,6 @@ Wouf ne connaît pas les tarifs en temps réel des assureurs et n'affiche donc *
 | `wouf/data.js` | races, vaccins, toxiques, premiers secours |
 | `wouf/core.js`, `health.js` | stockage, formulaires, droits ; rappels, score, plan chiot |
 | `wouf/screens.js`, `sos.js`, `assurance.js`, `extras.js`, `main.js` | écrans |
+| `wouf/lessons.js`, `educ.js` | contenu des leçons et écrans d'éducation |
+| `wouf/cloud.js` | connexion Google et synchronisation Firestore |
 | `wouf/billing-worker/worker.js` | relais Stripe (facultatif tant que gratuit) |

@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.0.0',
+  version: '1.1.0',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL de l'abonnement
@@ -19,7 +19,18 @@ window.WOUF_CONFIG = {
       { id: 'yearly',  label: 'Annuel',  price: '24,99 €', per: 'an', badge: '−30 %' }
     ],
     limits: { dogs: 1, documents: 3 },                       // limites de la formule gratuite (si enabled)
-    premium: ['multiDogs', 'documents', 'report', 'calendar', 'stats']  // fonctions réservées à Plus (si enabled)
+    premium: ['multiDogs', 'documents', 'report', 'calendar', 'stats', 'lessons', 'programs']  // fonctions réservées à Plus (si enabled)
+  },
+
+  // Connexion Google + sauvegarde automatique (même projet Firebase que les autres apps QuenTools).
+  // Clés publiques par conception : la sécurité vient des règles Firestore (users/{uid}/apps/**).
+  firebase: {
+    apiKey: "AIzaSyA-JS7hnSQXeNXnAPqbF3MV8rkPQ5_JVY8",
+    authDomain: "quentools-adca1.firebaseapp.com",
+    projectId: "quentools-adca1",
+    storageBucket: "quentools-adca1.firebasestorage.app",
+    messagingSenderId: "55024741286",
+    appId: "1:55024741286:web:957475540e24ed223b7d67"
   },
 
   // Liens partenaires (affiliation) : { santevet: 'https://…' }. Quand un lien existe, il remplace la recherche

@@ -13,6 +13,7 @@ function printHTML(html) {
 /* ---------- Menu Plus ---------- */
 ROUTES.plus = function plusMenu() {
   const items = [
+    ['#/educ', '🎓', 'Éducation', 'Leçons, séances guidées, programme chiot'],
     ['#/assurance', '🛡️', 'Assurance chien', 'Comparateur et simulateur de coût réel'],
     ['#/depenses', '💶', 'Dépenses', 'Budget vétérinaire, nourriture, accessoires'],
     ['#/documents', '📎', 'Documents', 'Ordonnances, résultats, carte d’identification'],
@@ -108,7 +109,7 @@ ACT['add-doc'] = () => {
 };
 ACT['view-doc'] = async ({ id }) => {
   const doc = S.docs.find(d => d.id === id), blob = await fget(id);
-  if (!blob) return toast('Fichier introuvable');
+  if (!blob) return toast('Ce document est stocké sur un autre appareil (les documents ne sont pas synchronisés avec Google).');
   const url = URL.createObjectURL(blob), isImg = doc.mime.startsWith('image/');
   const el = sheet(`<div class="sheet-head"><h2>${esc(doc.title)}</h2><button class="x" data-close>✕</button></div>
     ${isImg ? `<img class="doc-img" src="${url}" alt="">` : `<iframe class="doc-pdf" src="${url}" title="${esc(doc.title)}"></iframe>`}
@@ -247,7 +248,9 @@ const FEATURES = {
   documents: ['📎', 'Documents illimités', 'Ordonnances, résultats, cartes : sans limite.'],
   report: ['📄', 'Fiche véto en PDF', 'Carnet complet prêt à imprimer ou à envoyer.'],
   calendar: ['📅', 'Rappels dans votre agenda', 'Export vers Google / Apple Calendar avec alertes.'],
-  stats: ['📊', 'Statistiques de dépenses', 'Graphiques par catégorie et par mois, export CSV.']
+  stats: ['📊', 'Statistiques de dépenses', 'Graphiques par catégorie et par mois, export CSV.'],
+  lessons: ['🎓', '10 leçons d’éducation avancées', 'Rappel, marche en laisse, solitude, socialisation, soins… étapes détaillées, dépannage et suivi de séances.'],
+  programs: ['🗓️', 'Programme chiot de 8 semaines', 'Un parcours guidé qui enchaîne les leçons dans le bon ordre.']
 };
 function planButtons() {
   return (BILL.plans || []).map(p => `<button class="plan" data-act="checkout" data-plan="${p.id}" ${BILL.api ? '' : 'disabled'}>${p.badge ? `<em>${esc(p.badge)}</em>` : ''}<b>${esc(p.label)}</b><span>${esc(p.price)}<small> / ${esc(p.per)}</small></span></button>`).join('');
@@ -291,7 +294,7 @@ ROUTES.abo = function abo() {
   else status = `<section class="card plus-hero"><h2>Wouf gratuit</h2><p>Formule gratuite : ${(BILL.limits || {}).dogs || 1} chien, ${(BILL.limits || {}).documents || 3} documents. Passez à Plus pour tout débloquer.</p></section><section class="card"><div class="plans">${planButtons()}</div>${BILL.api ? '' : '<p class="mut small">Paiement non configuré.</p>'}<p class="mut small">Résiliable à tout moment depuis cette page. Paiement sécurisé par Stripe.</p></section>`;
   return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>⭐ Wouf Plus</h1></div>${status}
   <section class="card"><h2>Ce que comprend Plus</h2>${Object.values(FEATURES).map(x => `<div class="row"><span class="ico">${x[0]}</span><span class="grow"><b>${x[1]}</b><small>${x[2]}</small></span>${plus() ? '<span class="pill ok">Inclus</span>' : '<span class="pill plus">Plus</span>'}</div>`).join('')}
-  <p class="mut small">Toujours gratuit : carnet de santé, rappels, poids, traitements, journal, SOS et vétérinaires de garde, comparateur d’assurance, dépenses, nutrition, sauvegarde.</p></section>`;
+  <p class="mut small">Toujours gratuit : carnet de santé, rappels, poids, traitements, journal, SOS et vétérinaires de garde, comparateur d’assurance, dépenses, nutrition, sauvegarde Google, 3 leçons d’éducation et les principes de l’éducation positive.</p></section>`;
 };
 
 /* ---------- Réglages ---------- */
@@ -314,11 +317,17 @@ ACT.wipe = async () => {
 ROUTES.reglages = function reglages() {
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>⚙️ Réglages</h1></div>
+  <section class="card"><h2>☁️ Compte Google</h2>${CLOUD.user
+    ? `<div class="row"><span class="ico">${CLOUD.user.picture ? `<img class="av sm" src="${esc(CLOUD.user.picture)}" alt="" referrerpolicy="no-referrer">` : '👤'}</span><span class="grow"><b>${esc(CLOUD.user.name || CLOUD.user.email)}</b><small>${esc(CLOUD.user.email)}</small></span></div>
+       <p class="${CLOUD.st === 'err' ? 'bad' : CLOUD.st === 'ok' ? 'ok' : 'mut'}">${esc(cloudLabel())}${CLOUD.st === 'ok' && CLOUD.at ? ' · ' + new Date(CLOUD.at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : ''}${CLOUD.msg ? ' — ' + esc(CLOUD.msg) : ''}</p>
+       <div class="btn-row"><button class="btn primary" data-act="g-sync">Synchroniser maintenant</button><button class="btn" data-act="g-signout">Se déconnecter</button></div>
+       <p class="mut small">Vos données (carnet, poids, éducation…) sont sauvegardées automatiquement. Les documents (photos, PDF) restent sur l’appareil : utilisez la sauvegarde chiffrée pour les conserver.</p>`
+    : `<p class="mut">Connectez-vous pour sauvegarder automatiquement et retrouver votre carnet sur tous vos appareils.</p><button class="btn primary" data-act="g-signin">Continuer avec Google</button>${CloudApi.available() ? '' : '<p class="mut small">Disponible sur la version publiée (https).</p>'}`}</section>
   <section class="card"><h2>Propriétaire</h2><p class="mut">Utilisé sur la fiche d’urgence, la fiche véto et l’affiche « chien perdu ».</p>
     <div class="field"><label>Nom</label><input data-set="owner.name" value="${esc(S.owner.name)}"></div><div class="field"><label>Téléphone</label><input data-set="owner.phone" type="tel" value="${esc(S.owner.phone)}"></div></section>
   <section class="card"><h2>Rappels</h2><label class="chk"><input type="checkbox" data-act="notif" ${S.settings.notif ? 'checked' : ''}> <span>Me notifier à l’ouverture de l’app quand une échéance approche</span></label>
     <p class="mut small">Pour être prévenu(e) même app fermée, exportez les rappels vers votre agenda (Carnet → « Ajouter les rappels à mon agenda »).</p></section>
   ${!standalone ? `<section class="card"><h2>Installer Wouf</h2>${installEvt ? '<button class="btn primary" data-act="install">📲 Installer l’app</button>' : '<p class="mut">iPhone : Partager → « Sur l’écran d’accueil ». Android : menu du navigateur → « Installer l’application ».</p>'}</section>` : ''}
-  <section class="card"><h2>Confidentialité</h2><p class="mut">Aucun compte, aucun suivi publicitaire. Vos données sont stockées sur cet appareil. Seules les recherches de cliniques (OpenStreetMap) et d’adresse utilisent le réseau, avec votre position uniquement au moment où vous la demandez.</p></section>
+  <section class="card"><h2>Confidentialité</h2><p class="mut">Aucun suivi publicitaire. Vos données sont stockées sur cet appareil ; si vous vous connectez avec Google (facultatif), elles sont aussi sauvegardées dans votre espace privé de compte. Les recherches de cliniques (OpenStreetMap) et d’adresse utilisent le réseau, avec votre position uniquement au moment où vous la demandez.</p></section>
   <section class="card"><h2>Zone sensible</h2><button class="btn danger" data-act="wipe">Supprimer toutes mes données</button></section>`;
 };

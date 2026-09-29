@@ -48,7 +48,7 @@ function blank() {
   return {
     v: 1, dogs: [], events: [], weights: [], meds: [], medLog: {}, journal: [], expenses: [], docs: [], quotes: [], contacts: [],
     owner: { name: '', phone: '' }, settings: { notif: false, lastNotif: '', lastBackup: '', home: null }, sub: null,
-    current: null, installedAt: today()
+    current: null, installedAt: today(), edu: {}, updatedAt: 0
   };
 }
 function load() {
@@ -58,7 +58,7 @@ function load() {
 let S = load();
 let saveT;
 function flush() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Stockage plein : faites une sauvegarde, puis supprimez des éléments.'); } }
-function save() { clearTimeout(saveT); saveT = setTimeout(flush, 120); }
+function save() { S.updatedAt = Date.now(); clearTimeout(saveT); saveT = setTimeout(flush, 120); if (typeof cloudQueue === 'function') cloudQueue(); }
 addEventListener('pagehide', flush);
 const dog = () => S.dogs.find(d => d.id === S.current) || S.dogs[0] || null;
 

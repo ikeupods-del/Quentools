@@ -1,7 +1,7 @@
 'use strict';
 /* Wouf — routeur, rendu, démarrage. */
 
-const NAV_OF = { home: 'home', carnet: 'carnet', plan: 'carnet', suivi: 'suivi', sos: 'sos' };
+const NAV_OF = { home: 'home', carnet: 'carnet', plan: 'carnet', suivi: 'suivi', sos: 'sos', educ: 'educ', lecon: 'educ', seance: 'educ', principes: 'educ', programme: 'educ' };
 let lastRoute = null;
 
 function routeName() { return (location.hash.replace(/^#\/?/, '') || 'home').split('?')[0]; }
@@ -18,6 +18,7 @@ function render(keepScroll) {
   $('#tabs').hidden = !S.dogs.length && !open.includes(r);
   if (keepScroll === true && lastRoute === r) window.scrollTo(0, y); else if (lastRoute !== r) window.scrollTo(0, 0);
   lastRoute = r;
+  if (r !== 'seance') clearInterval(SEANCE.iv);
   const fn = ROUTES[r]; if (fn && fn.after) fn.after();
   document.title = 'Wouf — ' + (S.dogs.length && dog() ? dog().name : 'carnet de santé du chien');
 }
@@ -40,3 +41,4 @@ if ('serviceWorker' in navigator) addEventListener('load', () => navigator.servi
 render();
 refreshSub().then(() => { if (routeName() === 'abo') render(true); });
 maybeNotify();
+cloudInit();
