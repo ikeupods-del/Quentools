@@ -54,31 +54,31 @@ function lessonQuiz(l, rnd = Math.random) {
     return { q: `Étape « ${l.steps[i].t} » : à quel moment peut-on passer à la suite ?`, opts: opts.map(k => l.steps[k].crit), ok: opts.indexOf(i) };
   });
 }
-const QUIZ = { id: null, qs: [], i: 0, score: 0, picked: null };
+const QUIZ = { id: null, qs: [], i: 0, score: 0, picked: null, run: 0, salt: 0 };
 function quizHTML() {
   const l = lessonOf(QUIZ.id), q = QUIZ.qs[QUIZ.i];
   if (!q) return `<div class="sheet-head"><h2>${QUIZ.score === QUIZ.qs.length ? '🏆 Sans faute !' : '💪 Presque !'}</h2><button class="x" data-close>✕</button></div>
-    <div class="quiz-end"><div class="big-n">${QUIZ.score}/${QUIZ.qs.length}</div>${QUIZ.score === QUIZ.qs.length ? `<p>Leçon validée : <b>+${XP_LESSON + XP_QUIZ} XP</b></p><button class="btn primary big" data-act="quiz-finish">Continuer</button>` : `<p>Il faut 3 bonnes réponses pour valider « ${esc(l.title)} ». Relisez les étapes, puis réessayez.</p><button class="btn primary big" data-act="quiz-retry">Réessayer</button>`}</div>`;
+    ${quizMood()}<div class="quiz-end"><div class="big-n">${QUIZ.score}/${QUIZ.qs.length}</div>${QUIZ.score === QUIZ.qs.length ? `<p>Leçon validée : <b>+${XP_LESSON + XP_QUIZ} XP</b></p><button class="btn primary big" data-act="quiz-finish">Continuer</button>` : `<p>Il faut 3 bonnes réponses pour valider « ${esc(l.title)} ». Relisez les étapes, puis réessayez.</p><button class="btn primary big" data-act="quiz-retry">Réessayer</button>`}</div>`;
   return `<div class="sheet-head"><h2>${l.icon} Quiz · ${QUIZ.i + 1}/${QUIZ.qs.length}</h2><button class="x" data-close>✕</button></div>
     <div class="qbar">${QUIZ.qs.map((_, k) => `<i class="${k < QUIZ.i ? 'on' : ''}"></i>`).join('')}</div>
-    <p class="quiz-q">${esc(q.q)}</p><div class="quiz-opts">${q.opts.map((o, k) => `<button class="qopt ${QUIZ.picked == null ? '' : k === q.ok ? 'good' : k === QUIZ.picked ? 'bad' : 'dim'}" data-act="quiz-pick" data-k="${k}" ${QUIZ.picked == null ? '' : 'disabled'}>${esc(o)}</button>`).join('')}</div>
+    ${quizMood()}<p class="quiz-q">${esc(q.q)}</p><div class="quiz-opts">${q.opts.map((o, k) => `<button class="qopt ${QUIZ.picked == null ? '' : k === q.ok ? 'good' : k === QUIZ.picked ? 'bad' : 'dim'}" data-act="quiz-pick" data-k="${k}" ${QUIZ.picked == null ? '' : 'disabled'}>${esc(o)}</button>`).join('')}</div>
     ${QUIZ.picked == null ? '' : `<div class="quiz-fb ${QUIZ.picked === q.ok ? 'good' : 'bad'}"><b>${QUIZ.picked === q.ok ? '✅ Bonne réponse !' : '❌ Pas tout à fait.'}</b><button class="btn primary" data-act="quiz-next">Continuer</button></div>`}`;
 }
 function quizRender() { const s = $('.sheet.quiz'); if (s) s.innerHTML = quizHTML(); }
 function quizOpen(id) {
   const l = lessonOf(id); if (!l || !lessonUnlocked(l)) return;
-  Object.assign(QUIZ, { id, qs: lessonQuiz(l), i: 0, score: 0, picked: null });
+  Object.assign(QUIZ, { id, qs: lessonQuiz(l), i: 0, score: 0, picked: null, run: 0, salt: Math.floor(Math.random() * 97) });
   const el = sheet(quizHTML()); $('.sheet', el).classList.add('quiz');
 }
 ACT['quiz-open'] = ({ id }) => quizOpen(id);
-ACT['quiz-pick'] = ({ k }) => { if (QUIZ.picked != null) return; QUIZ.picked = +k; if (QUIZ.picked === QUIZ.qs[QUIZ.i].ok) { QUIZ.score++; if (navigator.vibrate) navigator.vibrate(20); } quizRender(); };
+ACT['quiz-pick'] = ({ k }) => { if (QUIZ.picked != null) return; QUIZ.picked = +k; const good = QUIZ.picked === QUIZ.qs[QUIZ.i].ok; if (good) { QUIZ.score++; QUIZ.run++; } else QUIZ.run = 0; if (navigator.vibrate) navigator.vibrate(good ? 20 : [40, 60, 40]); quizSound(good); quizRender(); };
 ACT['quiz-next'] = () => { QUIZ.i++; QUIZ.picked = null; quizRender(); };
 ACT['quiz-retry'] = () => { const id = QUIZ.id; closeSheet(); quizOpen(id); };
 ACT['quiz-finish'] = () => {
   const d = dog(), l = lessonOf(QUIZ.id), p = eduSet(d.id, l.id), before = levelOf(xpOf(d)).n;
   p.done = true; p.quiz = 3; l.steps.forEach((_, i) => { p.steps[i] = 1; }); save(); closeSheet();
   const lv = levelOf(xpOf(d));
-  celebrate(`${l.icon} Leçon acquise !`, `+${XP_LESSON + XP_QUIZ} XP${lv.n > before ? ` · Niveau ${lv.n} : ${lv.name} 🎉` : ''}`, () => rewardCheck());
+  celebrate.pet = l.sp === 'cat' ? 'cat' : 'dog'; celebrate(`${l.icon} Leçon acquise !`, `+${XP_LESSON + XP_QUIZ} XP${lv.n > before ? ` · Niveau ${lv.n} : ${lv.name} 🎉` : ''}`, () => rewardCheck());
   render(true);
 };
 
@@ -87,9 +87,9 @@ function celebrate(title, sub, then) {
   const colors = ['#f0782a', '#ffc21a', '#2bb673', '#4d8fd6', '#e2453c', '#9b59b6'];
   const bits = Array.from({ length: 36 }, (_, i) => `<i style="left:${Math.round(Math.random() * 100)}%;background:${colors[i % colors.length]};animation-delay:${(Math.random() * 0.4).toFixed(2)}s;--r:${Math.round(Math.random() * 720 - 360)}deg"></i>`).join('');
   const el = document.createElement('div'); el.className = 'celebrate';
-  el.innerHTML = `<div class="confetti">${bits}</div><div class="cel-card"><b>${esc(title)}</b><small>${esc(sub || '')}</small><button class="btn primary" data-cel>Continuer</button></div>`;
+  el.innerHTML = `<div class="confetti">${bits}</div><div class="cel-card">${celebrate.pet ? mascot('win', celebrate.pet === 'cat', celebrate.pet === 'cat' ? 'Ronron de victoire ! 😻' : 'Wouf wouf ! On a réussi ! 🥳', true) : ''}<b>${esc(title)}</b><small>${esc(sub || '')}</small><button class="btn primary" data-cel>Continuer</button></div>`;
   document.body.appendChild(el);
-  const close = () => { el.remove(); if (then) then(); };
+  celebrate.pet = null; const close = () => { el.remove(); if (then) then(); };
   el.querySelector('[data-cel]').onclick = close; setTimeout(() => { if (el.isConnected) close(); }, 6000);
 }
 
@@ -123,3 +123,68 @@ ACT['reward-show'] = () => rewardSheet();
 ACT['reward-buy'] = async () => { if (CLOUD.user) await cloudPush().catch(() => {}); closeAllSheets(); ACT.checkout(); };
 /* Le prix réduit s'applique automatiquement au paiement dès que la personne est éligible (le relais le vérifie aussi). */
 const rewardActive = () => rewardOn() && rewardEligible();
+
+/* ---------- La mascotte du quiz : un chien (ou un chat) qui réagit à chaque réponse ---------- */
+const MASCOT_TXT = {
+  dog: {
+    think: ['Hmm… je réfléchis avec toi 🤔', 'À toi de jouer ! 🐾', 'Je te fais confiance, vas-y !', 'Prends ton temps, je t’attends 🦴'],
+    good: ['Wouf ! Bravo ! 🎉', 'Exactement ! Ma queue ne s’arrête plus !', 'Trop fort ! 🦴', 'Oui oui oui ! Tu gères !', 'Parfait, j’en saute de joie !'],
+    streak: ['Deux d’affilée ! 🔥', 'Imbattable ! 🔥🔥', 'Tu es en feu ! 🔥'],
+    bad: ['Oups… pas grave ! 🐾', 'Presque ! Regarde la bonne réponse 👀', 'On apprend en se trompant, comme moi !', 'Ouille… on la retient pour la prochaine fois !'],
+    win: ['Sans faute ! On fait la fête ! 🥳', 'Champion ! Tu mérites une friandise 🦴'],
+    fail: ['Pas grave, on réessaie ensemble 💪', 'Relis les étapes, je t’attends ici 🐾']
+  },
+  cat: {
+    think: ['Miaou ? À toi de jouer 🤔', 'Je t’observe… sans pression 😼', 'Prends ton temps, je fais ma sieste 😺'],
+    good: ['Miaou ! Bravo ! 🎉', 'Ronron de fierté 😻', 'Exactement ! Tu as tout compris', 'Parfait, digne d’un chat 😸'],
+    streak: ['Deux d’affilée ! 🔥', 'Impressionnant… pour un humain 😼🔥', 'Tu es en feu ! 🔥'],
+    bad: ['Oups… même les chats ratent un saut 🐾', 'Presque ! Regarde la bonne réponse 👀', 'Pas grave, on recommence après la sieste'],
+    win: ['Sans faute ! Ronron de victoire 🥳', 'Magnifique ! Tu mérites une caresse… sur le menton'],
+    fail: ['Pas grave, on réessaie 💪', 'Relis les étapes, je garde ta place au chaud 😺']
+  }
+};
+const pickTxt = (list, seed) => list[Math.abs(seed) % list.length];
+/* Dessin vectoriel animé (aucune image à télécharger). mood : think | good | bad | win | fail */
+function mascot(mood, cat, text, big) {
+  const coat = cat ? '#b9b3ad' : '#d9a066', coat2 = cat ? '#948c84' : '#b9803f', muzzle = cat ? '#efe9e3' : '#f3d9b6', ink = '#3a2a1a';
+  const happy = mood === 'good' || mood === 'win', sad = mood === 'bad';
+  const ears = cat
+    ? `<path class="ear l" d="M54 52 L58 20 L79 40 Z" fill="${coat2}"/><path class="ear r" d="M106 52 L102 20 L81 40 Z" fill="${coat2}"/><path d="M59 43 L61 28 L71 39 Z M101 43 L99 28 L89 39 Z" fill="#e8a4ae"/>`
+    : `<path class="ear l" d="M56 48 C38 44 31 72 40 90 C47 96 58 86 60 70 Z" fill="${coat2}"/><path class="ear r" d="M104 48 C122 44 129 72 120 90 C113 96 102 86 100 70 Z" fill="${coat2}"/>`;
+  const eyes = happy ? `<path d="M63 66 q7 -9 14 0 M83 66 q7 -9 14 0" stroke="${ink}" stroke-width="3.4" fill="none" stroke-linecap="round"/>`
+    : mood === 'think' ? `<ellipse cx="70" cy="64" rx="5" ry="6.5" fill="${ink}"/><ellipse cx="90" cy="64" rx="5" ry="6.5" fill="${ink}"/><circle cx="72" cy="60.5" r="2" fill="#fff"/><circle cx="92" cy="60.5" r="2" fill="#fff"/>`
+    : `<ellipse cx="70" cy="65" rx="5" ry="6.5" fill="${ink}"/><ellipse cx="90" cy="65" rx="5" ry="6.5" fill="${ink}"/><circle cx="71.5" cy="63" r="1.8" fill="#fff"/><circle cx="91.5" cy="63" r="1.8" fill="#fff"/>`;
+  const brows = sad ? `<path d="M61 55 l12 -4 M99 55 l-12 -4" stroke="${ink}" stroke-width="2.6" stroke-linecap="round"/>` : mood === 'think' ? `<path d="M62 51 l11 2 M87 52 q6 -5 12 -2" stroke="${ink}" stroke-width="2.4" fill="none" stroke-linecap="round"/>` : '';
+  const mouth = happy ? `<path d="M69 86 q11 14 22 0 Z" fill="#5a2a1a"/><path class="tongue" d="M75 91 q5 12 10 0 Z" fill="#ef6f86"/>`
+    : sad ? `<path d="M72 93 q8 -7 16 0" stroke="${ink}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`
+    : mood === 'think' ? `<path d="M76 89 q5 2 9 -1" stroke="${ink}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+    : `<path d="M72 87 q8 7 16 0" stroke="${ink}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
+  const whisk = cat ? `<path d="M60 82 h-16 M60 87 l-14 4 M100 82 h16 M100 87 l14 4" stroke="#7a6a5a" stroke-width="1.4" stroke-linecap="round"/>` : '';
+  const blush = happy ? `<circle cx="60" cy="78" r="5" fill="#f4a3a3" opacity=".6"/><circle cx="100" cy="78" r="5" fill="#f4a3a3" opacity=".6"/>` : '';
+  const extra = {
+    think: `<text class="qmark" x="120" y="30" font-size="26" font-weight="800" fill="#f0782a">?</text>`,
+    good: `<g class="spark"><path d="M24 34 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#ffc21a"/><path d="M132 24 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5z" fill="#ffc21a"/><path d="M138 70 c0 -5 7 -5 7 0 c0 -5 7 -5 7 0 c0 6 -7 9 -7 11 c0 -2 -7 -5 -7 -11z" fill="#ff5d73"/></g>`,
+    bad: `<path class="tear" d="M64 72 q-4 8 0 11 q4 -3 0 -11z" fill="#6cc3ff"/><text x="118" y="36" font-size="18" fill="#9aa3b8">💧</text>`,
+    win: `<g><path d="M66 38 L80 6 L94 38 Z" fill="#4d8fd6"/><path d="M68 34 L92 34" stroke="#ffc21a" stroke-width="4"/><circle cx="80" cy="6" r="5" fill="#ffc21a"/></g><g class="spark"><rect x="20" y="30" width="7" height="11" fill="#ff5d73" transform="rotate(20 23 35)"/><rect x="134" y="26" width="7" height="11" fill="#2bb673" transform="rotate(-25 137 31)"/><rect x="28" y="84" width="6" height="10" fill="#4d8fd6"/><rect x="130" y="80" width="6" height="10" fill="#ffc21a" transform="rotate(30 133 85)"/></g>`,
+    fail: `<text x="120" y="40" font-size="22">💪</text>`
+  }[mood] || '';
+  const tail = cat ? `<path class="tail" d="M116 118 q30 -6 26 -40" stroke="${coat2}" stroke-width="9" fill="none" stroke-linecap="round"/>` : `<path class="tail" d="M114 112 q24 -10 20 -34" stroke="${coat2}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+  const svg = `<svg viewBox="0 0 160 150" class="msvg" role="img" aria-label="${esc(text)}"><ellipse cx="80" cy="143" rx="44" ry="5" fill="#000" opacity=".12"/>
+    <g class="mbody"><ellipse cx="80" cy="118" rx="38" ry="23" fill="${coat}"/><rect x="54" y="126" width="13" height="16" rx="6.5" fill="${coat2}"/><rect x="93" y="126" width="13" height="16" rx="6.5" fill="${coat2}"/>${tail}
+    <g class="mhead">${ears}<circle cx="80" cy="68" r="32" fill="${coat}"/><ellipse cx="80" cy="82" rx="17" ry="12" fill="${muzzle}"/><ellipse cx="80" cy="76" rx="5.5" ry="4" fill="${ink}"/>${eyes}${brows}${mouth}${whisk}${blush}</g></g>${extra}</svg>`;
+  return `<div class="mascot m-${mood} ${big ? 'big' : ''}">${svg}<div class="bubble">${esc(text)}</div></div>`;
+}
+function quizMood() {
+  const l = lessonOf(QUIZ.id), sp = l && l.sp === 'cat' ? 'cat' : 'dog', T = MASCOT_TXT[sp], q = QUIZ.qs[QUIZ.i], seed = QUIZ.i * 7 + QUIZ.score * 3 + (QUIZ.picked || 0) + (QUIZ.salt || 0);
+  if (!q) { const win = QUIZ.score === QUIZ.qs.length; return mascot(win ? 'win' : 'fail', sp === 'cat', pickTxt(T[win ? 'win' : 'fail'], seed), true); }
+  if (QUIZ.picked == null) return mascot('think', sp === 'cat', pickTxt(T.think, seed));
+  const good = QUIZ.picked === q.ok;
+  return mascot(good ? 'good' : 'bad', sp === 'cat', pickTxt(good ? (QUIZ.run >= 2 ? T.streak : T.good) : T.bad, seed));
+}
+/* Petits sons (bonne réponse : deux notes qui montent ; erreur : une note grave). Silencieux si l'audio est indisponible. */
+function quizSound(good) {
+  try {
+    const c = quizSound.c = quizSound.c || new (window.AudioContext || window.webkitAudioContext)();
+    (good ? [660, 990] : [220]).forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + i * 0.12; o.type = good ? 'triangle' : 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + (good ? 0.18 : 0.3)); o.connect(g).connect(c.destination); o.start(t); o.stop(t + 0.32); });
+  } catch (e) { /* audio indisponible */ }
+}

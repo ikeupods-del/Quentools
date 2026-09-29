@@ -320,11 +320,14 @@ test('parcours façon Duolingo : unités, XP, niveaux, objectif du jour, quiz de
   await p.click('.unit-h >> nth=1'); assert.ok((await p.locator('.path .pnode').count()) >= 1); assert.ok(await p.$('.unit-h.on >> nth=0'));
   // valider une leçon : quiz (une erreur → réessayer), puis sans faute → XP + célébration
   await b.go('#/lecon?id=assis'); await p.click('[data-act=lesson-done]'); await p.waitForSelector('.qopt');
-  await b.ev(() => ACT['quiz-pick']({ k: (QUIZ.qs[0].ok + 1) % QUIZ.qs[0].opts.length })); assert.match(await text(p, '.quiz-fb'), /Pas tout à fait/);
+  assert.ok(await p.$('.sheet .mascot.m-think'), 'le chien réfléchit avant la réponse');
+  await b.ev(() => ACT['quiz-pick']({ k: (QUIZ.qs[0].ok + 1) % QUIZ.qs[0].opts.length })); assert.match(await text(p, '.quiz-fb'), /Pas tout à fait/); assert.ok(await p.$('.sheet .mascot.m-bad'), 'le chien est triste après une erreur');
   for (let k = 0; k < 2; k++) { await p.click('[data-act=quiz-next]'); await b.ev(() => ACT['quiz-pick']({ k: QUIZ.qs[QUIZ.i].ok })); } await p.click('[data-act=quiz-next]');
   assert.match(await text(p, '.sheet.quiz'), /2\/3/); assert.equal(await b.ev(() => eduGet('d1', 'assis').done), false, 'pas validée avec une erreur');
-  await p.click('[data-act=quiz-retry]'); for (let k = 0; k < 3; k++) { await b.ev(() => ACT['quiz-pick']({ k: QUIZ.qs[QUIZ.i].ok })); await p.click('[data-act=quiz-next]'); }
-  await p.click('[data-act=quiz-finish]'); await p.waitForSelector('.celebrate'); assert.match(await text(p, '.cel-card'), /\+70 XP/); await p.click('.celebrate [data-cel]');
+  assert.ok(await p.$('.sheet .mascot.m-fail'), 'encouragement en fin de quiz raté');
+  await p.click('[data-act=quiz-retry]'); for (let k = 0; k < 3; k++) { await b.ev(() => ACT['quiz-pick']({ k: QUIZ.qs[QUIZ.i].ok })); assert.ok(await p.$('.sheet .mascot.m-good'), 'le chien saute de joie'); if (k === 2) assert.match(await text(p, '.sheet .bubble'), /🔥/, 'série de bonnes réponses'); await p.click('[data-act=quiz-next]'); }
+  assert.ok(await p.$('.sheet .mascot.m-win')); assert.ok(await b.ev(() => MASCOT_TXT.cat.good.length && mascot('good', true, 'x').includes('M54 52')), 'un chat pour les leçons de chat');
+  await p.click('[data-act=quiz-finish]'); await p.waitForSelector('.celebrate'); assert.match(await text(p, '.cel-card'), /\+70 XP/); assert.ok(await p.$('.cel-card .mascot.m-win')); await p.click('.celebrate [data-cel]');
   assert.deepEqual(await b.ev(() => [eduGet('d1', 'assis').done, eduGet('d1', 'assis').quiz, xpOf(dog())]), [true, 3, 70]);
   await b.go('#/lecon?id=assis'); await p.click('[data-act=lesson-done]'); assert.equal(await b.ev(() => eduGet('d1', 'assis').done), false, 'second appui : annule');
   noErrors(b); await b.ctx.close();
