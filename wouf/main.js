@@ -1,0 +1,42 @@
+'use strict';
+/* Wouf — routeur, rendu, démarrage. */
+
+const NAV_OF = { home: 'home', carnet: 'carnet', plan: 'carnet', suivi: 'suivi', sos: 'sos' };
+let lastRoute = null;
+
+function routeName() { return (location.hash.replace(/^#\/?/, '') || 'home').split('?')[0]; }
+
+function render(keepScroll) {
+  const r = routeName(), open = ['reglages', 'sauvegarde', 'abo', 'plus'];
+  renderTop();
+  let html;
+  if (!S.dogs.length && !open.includes(r)) html = welcome();
+  else html = (ROUTES[r] || ROUTES.home)();
+  const y = window.scrollY;
+  $('#view').innerHTML = html;
+  $$('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.r === (NAV_OF[r] || 'plus')));
+  $('#tabs').hidden = !S.dogs.length && !open.includes(r);
+  if (keepScroll === true && lastRoute === r) window.scrollTo(0, y); else if (lastRoute !== r) window.scrollTo(0, 0);
+  lastRoute = r;
+  const fn = ROUTES[r]; if (fn && fn.after) fn.after();
+  document.title = 'Wouf — ' + (S.dogs.length && dog() ? dog().name : 'carnet de santé du chien');
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]');
+  if (!t) return;
+  const fn = ACT[t.dataset.act];
+  if (fn) { if (t.tagName === 'A' && t.getAttribute('href') === '#') e.preventDefault(); fn(t.dataset, t, e); }
+});
+addEventListener('hashchange', () => { closeAllSheets(); render(); });
+
+/* Bibliothèque de races pour l'autocomplétion */
+$('#breeds').innerHTML = BREEDS.map(b => `<option value="${esc(b.name)}">`).join('');
+
+/* Service worker */
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+
+/* Démarrage */
+render();
+refreshSub().then(() => { if (routeName() === 'abo') render(true); });
+maybeNotify();
