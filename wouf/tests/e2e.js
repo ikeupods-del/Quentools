@@ -309,14 +309,14 @@ test('éducation : 110 leçons (100 Plus + 10 gratuites), recherche sans accents
   await b.ev(() => { EDU.cat = ''; }); noErrors(b); await b.ctx.close();
 });
 
-test('parcours façon Duolingo : unités, XP, niveaux, objectif du jour, quiz de validation, célébration', async () => {
+test('parcours ludique : unités, XP, niveaux, objectif du jour, quiz de validation, célébration', async () => {
   const b = await boot({ hash: '#/educ' }), p = b.page;
   assert.deepEqual(await b.ev(() => [0, 99, 100, 299, 300, 600].map(x => levelOf(x).n)), [1, 1, 2, 2, 3, 4]);
   const qz = await b.ev(() => LESSONS.every(l => { const qs = lessonQuiz(l); return qs.length === 3 && qs.every((q, k) => q.opts.length === 3 && new Set(q.opts).size === 3 && q.opts[q.ok] === QUIZZES[l.id][k][1] && q.why === QUIZZES[l.id][k][4]); }));
   assert.ok(qz, 'chaque leçon a ses 3 questions écrites à la main, bonne réponse et explication correctes');
   const mixed = await b.ev(() => { const seen = new Set(); for (let i = 0; i < 40; i++) seen.add(lessonQuiz(lessonOf('assis'))[0].ok); return seen.size; }); assert.ok(mixed >= 2, 'la bonne réponse change de place');
   await p.waitForSelector('.lvl'); assert.match(await text(p, '.lvl'), /Débutant curieux/); assert.match(await text(p, '.edu-hero'), /objectif du jour/);
-  assert.ok((await p.locator('.path .pnode').count()) >= 6, 'unité « Les bases » ouverte'); assert.equal(await p.locator('.pnode.cur').count(), 1);
+  assert.ok((await p.locator('.path .pnode').count()) >= 6, 'unité « Les bases » ouverte'); assert.equal(await p.locator('.pnode.cur').count(), 1); assert.ok((await p.locator('.path .pnode .paw svg').count()) >= 6, 'étapes en empreintes de pattes'); assert.match(await text(p, '.lvl'), /🦴/); assert.doesNotMatch(await text(p, '#view'), /\bXP\b/);
   assert.ok((await p.locator('.unit-h').count()) >= 8, 'unités par thème');
   await p.click('.unit-h >> nth=1'); assert.ok((await p.locator('.path .pnode').count()) >= 1); assert.ok(await p.$('.unit-h.on >> nth=0'));
   // valider une leçon : quiz (une erreur → réessayer), puis sans faute → XP + célébration
@@ -328,7 +328,7 @@ test('parcours façon Duolingo : unités, XP, niveaux, objectif du jour, quiz de
   assert.ok(await p.$('.sheet .mascot.m-fail'), 'encouragement en fin de quiz raté');
   await p.click('[data-act=quiz-retry]'); for (let k = 0; k < 3; k++) { await b.ev(() => ACT['quiz-pick']({ k: QUIZ.qs[QUIZ.i].ok })); assert.ok(await p.$('.sheet .mascot.m-good'), 'le chien saute de joie'); if (k === 2) assert.match(await text(p, '.sheet .bubble'), /🔥/, 'série de bonnes réponses'); await p.click('[data-act=quiz-next]'); }
   assert.ok(await p.$('.sheet .mascot.m-win')); assert.ok(await b.ev(() => MASCOT_TXT.cat.good.length && mascot('good', true, 'x').includes('M54 52')), 'un chat pour les leçons de chat');
-  await p.click('[data-act=quiz-finish]'); await p.waitForSelector('.celebrate'); assert.match(await text(p, '.cel-card'), /\+70 XP/); assert.ok(await p.$('.cel-card .mascot.m-win')); await p.click('.celebrate [data-cel]');
+  await p.click('[data-act=quiz-finish]'); await p.waitForSelector('.celebrate'); assert.match(await text(p, '.cel-card'), /\+70 🦴/); assert.ok(await p.$('.cel-card .mascot.m-win')); await p.click('.celebrate [data-cel]');
   assert.deepEqual(await b.ev(() => [eduGet('d1', 'assis').done, eduGet('d1', 'assis').quiz, xpOf(dog())]), [true, 3, 70]);
   await b.go('#/lecon?id=assis'); await p.click('[data-act=lesson-done]'); assert.equal(await b.ev(() => eduGet('d1', 'assis').done), false, 'second appui : annule');
   noErrors(b); await b.ctx.close();
