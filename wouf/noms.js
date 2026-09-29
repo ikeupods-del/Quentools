@@ -60,7 +60,7 @@ function pickNames(f, n = 8, rnd = Math.random) {
   const letter = norm(f.letter).slice(0, 1);
   let pool = NAME_POOL.filter(x => (!f.style || x.style === f.style) && (!f.sex || x.sex === 'u' || x.sex === f.sex) && (x.sp === 'b' || x.sp === (f.sp === 'cat' ? 'c' : 'd')) && (!letter || norm(x.name)[0] === letter) && (!f.short || syllables(x.name) <= 2) && !(f.exclude || []).includes(x.name) && !confusedWith(x.name));
   const a = pool.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-  return a.slice(0, n);
+  const seen = new Set(); return a.filter(x => !seen.has(x.name) && seen.add(x.name)).slice(0, n);
 }
 
 /* ---------- Écran ---------- */
