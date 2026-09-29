@@ -266,10 +266,10 @@ test('noms : lettre de l’année LOF/LOOF, filtres, test d’un nom, favoris, u
   const r = await b.ev(() => ({ years: [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2045, 2046].map(lofLetter).join(''), noKQW: [...Array(60)].every((_, i) => !/[KQWXYZ]/.test(lofLetter(2000 + i))),
     n: NAME_POOL.length, dup: pickNames({}, 1000).some(x => confusedWith(x.name)) || pickNames({}, 1000).some(x => ['Ninon', 'Sauge', 'Patate', 'Ouistiti'].includes(x.name)),
     b: pickNames({ sp: 'dog', sex: 'f', letter: 'B' }, 50).every(x => x.name[0] === 'B' && x.sex !== 'm'), cat: pickNames({ sp: 'cat' }, 500).every(x => x.sp !== 'd'), dog: pickNames({ sp: 'dog' }, 500).every(x => x.sp !== 'c'),
-    short: pickNames({ short: true }, 500).every(x => syllables(x.name) <= 2), style: pickNames({ style: 'gourmand' }, 500).every(x => x.style === 'gourmand'), none: pickNames({ letter: 'X' }).length,
+    short: pickNames({ short: true }, 500).every(x => syllables(x.name) <= 2), uniq: (l => new Set(l.map(x => x.name)).size === l.length)(pickNames({}, 1000)), style: pickNames({ style: 'gourmand' }, 500).every(x => x.style === 'gourmand'), none: pickNames({ letter: 'X' }).length,
     seeded: JSON.stringify(pickNames({}, 3, () => 0.1)) === JSON.stringify(pickNames({}, 3, () => 0.1)) }));
   assert.equal(r.years, 'PRSTUVABCAB', 'lettres par année (cycle de 20, sans K Q W X Y Z)');
-  assert.ok(r.noKQW && r.n >= 300 && !r.dup && r.b && r.cat && r.dog && r.short && r.style && r.none === 0 && r.seeded, JSON.stringify(r));
+  assert.ok(r.noKQW && r.n >= 300 && !r.dup && r.b && r.cat && r.dog && r.short && r.uniq && r.style && r.none === 0 && r.seeded, JSON.stringify(r));
   const ck = await b.ev(() => ({ nala: nameCheck('Nala').score, viens: nameCheck('Viens').notes.some(n => /ordre/.test(n[1])), nono: !!confusedWith('Nono'), long: nameCheck('Maximilien').notes.some(n => n[0] === 'bad'), twin: nameCheck('Lala', ['Nala']).notes.some(n => /Sonne comme/.test(n[1])), same: nameCheck('Nala', ['Nala']).notes.some(n => /déjà/.test(n[1])), empty: nameCheck('').score }));
   assert.ok(ck.nala >= 80 && ck.viens && ck.nono && ck.long && ck.twin && ck.same && ck.empty === 0, JSON.stringify(ck));
   await p.fill('#nm-year', '2026'); assert.equal(await text(p, '.big-letter'), 'B');
