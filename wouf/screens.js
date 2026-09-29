@@ -33,13 +33,15 @@ function dogFields(d = {}, isNew = false) {
     { n: 'idealMin', l: 'Poids idéal min. (kg) — facultatif', t: 'number', v: d.idealMin, cls: 'half' },
     { n: 'idealMax', l: 'Poids idéal max. (kg)', t: 'number', v: d.idealMax, cls: 'half' },
     { n: 'vetName', l: 'Vétérinaire habituel', v: d.vetName },
-    { n: 'vetPhone', l: 'Téléphone du vétérinaire', t: 'tel', v: d.vetPhone }
+    { n: 'vetPhone', l: 'Téléphone du vétérinaire', t: 'tel', v: d.vetPhone },
+    { n: 'insurer', l: 'Assurance santé (facultatif)', v: (d.insurance || {}).insurer, ph: 'Nom de l’assureur', cls: 'half' },
+    { n: 'renewal', l: 'Renouvellement du contrat', t: 'date', v: (d.insurance || {}).renewal, cls: 'half', hint: 'Wouf vous rappelle l’échéance.' }
   ];
 }
 async function saveDog(v, existing) {
   const d = existing || { id: uid(), createdAt: today(), insurance: {}, species: v.species || 'dog' };
   const photo = v.photo ? await squarePhoto(v.photo) : d.photo;
-  Object.assign(d, { name: v.name, breed: v.breed, sex: v.sex, neutered: v.neutered, birth: v.birth, chip: v.chip, color: v.color, allergies: v.allergies, idealMin: v.idealMin, idealMax: v.idealMax, vetName: v.vetName, vetPhone: v.vetPhone, photo });
+  Object.assign(d, { name: v.name, breed: v.breed, sex: v.sex, neutered: v.neutered, birth: v.birth, chip: v.chip, color: v.color, allergies: v.allergies, idealMin: v.idealMin, idealMax: v.idealMax, vetName: v.vetName, vetPhone: v.vetPhone, insurance: { ...(d.insurance || {}), insurer: v.insurer, renewal: v.renewal }, photo });
   if (!existing) S.dogs.push(d);
   return d;
 }
@@ -70,7 +72,7 @@ function editDog(id) {
     onDelete: async () => {
       const ids = S.docs.filter(x => x.dogId === d.id).map(x => x.id); for (const f of ids) await fdel(f).catch(() => {});
       S.dogs = S.dogs.filter(x => x.id !== d.id); if (S.edu) delete S.edu[d.id];
-      for (const k of ['events', 'weights', 'meds', 'journal', 'expenses', 'docs', 'quotes', 'walks']) S[k] = S[k].filter(x => x.dogId !== d.id);
+      for (const k of ['events', 'weights', 'meds', 'journal', 'expenses', 'docs', 'walks']) S[k] = S[k].filter(x => x.dogId !== d.id);
       S.current = (S.dogs[0] || {}).id || null; save(); render(); toast('Fiche supprimée');
     }
   });
@@ -88,9 +90,9 @@ ACT['new-dog'] = () => setTimeout(() => newDog(false), 50);
 function welcome() {
   return `<section class="welcome"><div class="hero-paw"><svg viewBox="0 0 64 64" width="88" height="88"><use href="#paw"/></svg></div>
     <h1>Le carnet de santé de votre chien ou chat, dans votre poche</h1>
-    <p>Vaccins, vermifuges, poids, traitements, dépenses, vétérinaires de garde, comparateur d’assurance… Tout au même endroit, sans compte à créer.</p>
+    <p>Vaccins, vermifuges, poids, traitements, dépenses, vétérinaires de garde, comparateur de croquettes… Tout au même endroit, sans compte à créer.</p>
     <button class="btn primary big" data-act="first-dog">Ajouter mon compagnon 🐶🐱</button>
-    <ul class="feat"><li>💉 Rappels automatiques</li><li>🚨 Vétos ouverts près de vous</li><li>🛡️ Comparateur d’assurance</li><li>📈 Courbe de poids</li><li>🔒 Données sur votre téléphone</li></ul>
+    <ul class="feat"><li>💉 Rappels automatiques</li><li>🚨 Vétos ouverts près de vous</li><li>🥣 Comparateur de croquettes</li><li>📈 Courbe de poids</li><li>🔒 Données sur votre téléphone</li></ul>
     <button class="btn big" data-act="g-signin"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 019.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 000 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg> Continuer avec Google (retrouver mes données)</button>
     <p class="mut"><a href="#/sauvegarde">J’ai un fichier de sauvegarde à restaurer</a></p></section>`;
 }
@@ -100,7 +102,7 @@ ACT['first-dog'] = () => newDog(true);
 function reminderRow(r) {
   const cls = r.days < 0 ? 'bad' : r.days <= 14 ? 'warn' : 'ok';
   return `<div class="row"><span class="ico">${r.icon}</span><span class="grow"><b>${esc(r.title)}</b><small class="${cls}">${dueText(r.days)} · ${fmtDate(r.due)}</small></span>
-    ${r.kind === 'event' ? `<button class="btn sm primary" data-act="renew" data-id="${r.ev.id}">Fait ✓</button>` : `<a class="btn sm" href="#/assurance">Voir</a>`}</div>`;
+    ${r.kind === 'event' ? `<button class="btn sm primary" data-act="renew" data-id="${r.ev.id}">Fait ✓</button>` : `<button class="btn sm" data-act="edit-dog" data-id="${r.dogId}">Modifier</button>`}</div>`;
 }
 ROUTES.home = function home() {
   const d = dog(), rem = reminders(d.id), late = rem.filter(r => r.days < 0), soon = rem.filter(r => r.days >= 0 && r.days <= 30), miss = missing(d);
@@ -142,6 +144,7 @@ ROUTES.home = function home() {
     <button class="tile" data-act="add-event" data-type="visit"><span>🩺</span>Consultation</button>
     <button class="tile" data-act="add-expense"><span>💶</span>Dépense</button>
   </section>
+  <section class="card don-card"><div><b>❤️ Un geste pour les animaux sans famille</b><small>Faites un don à ${esc(donation().name)}, directement sur le site officiel.</small></div><a class="btn primary sm" href="${esc(donation().url)}" target="_blank" rel="noopener noreferrer">Faire un don</a></section>
   <section class="card tip"><b>💡 Le saviez-vous ?</b><p>${tipsOf(d)[Math.floor(Date.now() / 864e5) % tipsOf(d).length]}</p></section>`;
 };
 ACT.renew = ({ id }) => {

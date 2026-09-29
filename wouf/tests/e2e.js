@@ -280,6 +280,68 @@ test('leçons complètes : programme d’entraînement, erreurs, dépannage, pis
   assert.ok(n[0] >= 30 && n[1] >= 10 && n[2] >= 8, JSON.stringify(n)); noErrors(b); await b.ctx.close();
 });
 
+/* ================= 8b. Croquettes, don ================= */
+const KIB_GOOD = { type: 'dry', stage: 'adult', name: 'Adulte poulet riz', brand: 'Marque A', price: '48', bagKg: '12', protein: '27', fat: '15', fiber: '2.5', ash: '7', moisture: '9', ca: '1.2', p: '0.9', ingredients: 'Poulet déshydraté (30 %), riz, graisse de poulet, pulpe de betterave, huile de saumon, tocophérols' };
+const KIB_LOW = { type: 'dry', stage: 'adult', name: 'Menu économique', brand: 'Marque B', price: '20', bagKg: '15', protein: '18', fat: '7', fiber: '4', ash: '8', moisture: '10', ingredients: 'Céréales (maïs, blé), viandes et sous-produits animaux, colorants, sucre, BHA' };
+async function addFood(b, f) {
+  const p = b.page; await p.click('[data-act=food-add]'); await p.waitForSelector('#f_name');
+  await p.selectOption('#f_type', f.type); await p.selectOption('#f_stage', f.stage);
+  for (const k of ['name', 'brand', 'price', 'bagKg', 'protein', 'fat', 'fiber', 'ash', 'moisture', 'ca', 'p', 'ingredients']) if (f[k] != null) await p.fill('#f_' + (k === 'bagKg' ? 'bagKg' : k), f[k]);
+  await p.click('form [type=submit]'); await p.waitForSelector('.food');
+}
+test('croquettes : profil, classement, coût, comparaison, allergies, détail', async () => {
+  const b = await boot({ data: seed({ weights: [{ id: 'w1', dogId: 'd1', date: day(-3), kg: 30 }], dogs: [dogRec({ activity: 'high', allergies: 'allergique au blé' })] }), hash: '#/croquettes' }), p = b.page;
+  await p.waitForSelector('.tgt'); assert.match(await text(p, '#view'), /Besoin énergétique : \d+ kcal par jour/); assert.match(await text(p, '.tgt'), /Protéines26 à 34 %/);
+  await addFood(b, KIB_LOW); await addFood(b, KIB_GOOD);
+  assert.equal(await p.locator('a.food').count(), 2); assert.match(await text(p, 'a.food:first-of-type'), /Adulte poulet riz/, 'le meilleur produit est classé premier');
+  const sc = await p.locator('.score-badge').allTextContents(); assert.ok(+sc[0] >= 80 && +sc[1] <= 55, sc.join('/'));
+  assert.match(await text(p, '#view'), /Meilleur choix parmi vos produits/); assert.match(await text(p, '.food:last-of-type'), /Contient : blé \/ gluten/, 'allergie détectée');
+  await p.waitForSelector('table.cmp'); const cmp = await text(p, 'table.cmp'); assert.match(cmp, /Coût par mois/); assert.match(cmp, /Alerte allergie/);
+  const calc = await b.ev(() => { const d = dog(), prof = foodProfile(d), need = foodKcalNeed(d, prof), r = evalFood(d, prof, S.foods.find(f => f.name === 'Adulte poulet riz'), need); return { kcal: need.kcal, g: r.g, day: r.day, ppk: r.ppk }; });
+  assert.equal(calc.ppk, 4); assert.ok(calc.kcal > 1800 && calc.kcal < 2100, 'besoin chien actif 30 kg : ' + calc.kcal); assert.ok(Math.abs(calc.day - calc.g / 1000 * 4) < 0.001, 'coût = grammes × prix au kg');
+  await p.click('a.food:first-of-type'); await p.waitForSelector('.part'); assert.match(await text(p, '#view'), /Détail de la note/); assert.match(await text(p, '#view'), /Ration et coût pour Nala/);
+  await p.click('[data-act=food-edit]'); await p.fill('#f_protein', '40'); await p.fill('#f_fat', '60'); await p.click('form [type=submit]'); assert.match(await text(p, '#toast'), /dépassent 100/);
+  await p.click('.sheet [data-close]'); await p.click('[data-act=food-del]'); await p.click('.sheet-wrap.dlg [data-ok]'); await p.waitForSelector('.food'); assert.equal(await b.ev(() => S.foods.length), 1);
+  await b.go('#/croquettes-guide'); assert.ok((await p.locator('details').count()) >= 10); assert.match(await text(p, '#view'), /matière sèche/);
+  noErrors(b); await b.ctx.close();
+});
+test('croquettes : chiot de grande race (calcium), chat, activité modifiable', async () => {
+  const b = await boot({ data: seed({ dogs: [dogRec({ birth: day(-150), breed: 'Dogue Allemand' }), dogRec({ id: 'c1', name: 'Miso', species: 'cat', breed: 'Persan', birth: '2022-03-01', neutered: true })], weights: [{ id: 'w1', dogId: 'd1', date: day(-2), kg: 20 }, { id: 'w2', dogId: 'c1', date: day(-2), kg: 5 }] }), hash: '#/croquettes' }), p = b.page;
+  await p.waitForSelector('.tgt'); assert.match(await text(p, '.tgt'), /maximum strict pour les grands chiots/); assert.match(await text(p, '#view'), /grande race/);
+  await addFood(b, { ...KIB_GOOD, name: 'Croissance calcium haut', stage: 'growth', ca: '2.3', p: '1.3' }); await addFood(b, { ...KIB_GOOD, name: 'Croissance grandes races', stage: 'growth', ca: '1.2', p: '0.9' });
+  assert.match(await text(p, 'a.food:first-of-type'), /Croissance grandes races/); await p.click('a.food:last-of-type'); await p.waitForSelector('.part'); assert.match(await text(p, '#view'), /AU-DESSUS du maximum sûr/); await b.go('#/croquettes');
+  await b.ev(() => { S.current = 'c1'; save(); render(); }); await p.waitForSelector('.tgt'); assert.match(await text(p, '.tgt'), /Protéines32 à 45 %/); assert.equal(await p.locator('a.food').count(), 0, 'les produits sont propres à chaque espèce');
+  await addFood(b, { type: 'wet', stage: 'adult', name: 'Pâtée poulet', brand: 'C', price: '30', bagKg: '10', protein: '9', fat: '5', fiber: '0.5', ash: '2', moisture: '80', ingredients: 'Poulet, bouillon, foie de poulet' });
+  await p.click('a.food'); await p.waitForSelector('.part'); assert.match(await text(p, '#view'), /hydratation/); await b.go('#/croquettes');
+  await p.click('[data-act=food-act][data-v=sport]'); assert.equal(await b.ev(() => S.dogs.find(d => d.id === 'c1').activity), 'sport');
+  noErrors(b); await b.ctx.close();
+});
+test('croquettes : recherche Open Pet Food Facts (simulée) et import pré-rempli', async () => {
+  const b = await boot({ data: seed({ weights: [{ id: 'w1', dogId: 'd1', date: day(-3), kg: 30 }] }), hash: '#/croquettes' }), p = b.page; const asked = [];
+  await b.ctx.route(/openpetfoodfacts/, r => { asked.push(r.request().url()); const u = r.request().url(), cors = { 'access-control-allow-origin': '*' };
+    if (/api\/v2\/product\/3760123456789/.test(u)) return r.fulfill({ headers: cors, contentType: 'application/json', body: JSON.stringify({ status: 1, product: { code: '3760123456789', product_name: 'Croquettes test code', brands: 'MarqueX', nutriments: { proteins_100g: 25 } } }) });
+    return r.fulfill({ headers: cors, contentType: 'application/json', body: JSON.stringify({ products: [{ code: '1', product_name: 'Croquettes adulte poulet', brands: 'MarqueX,Autre', quantity: '12 kg', ingredients_text_fr: 'Poulet, riz, maïs', nutriments: { proteins_100g: 26, fat_100g: 14, fiber_100g: 3, 'energy-kcal_100g': 375 } }, { code: '2', product_name: '' }] }) }); });
+  await p.click('[data-act=food-search]'); await p.fill('#food-q input', 'poulet'); await p.click('#food-q button'); await p.waitForSelector('[data-act=food-pick]');
+  assert.equal(await p.locator('[data-act=food-pick]').count(), 1, 'les produits sans nom sont ignorés'); assert.match(asked[0], /search_terms=poulet/);
+  await p.click('[data-act=food-pick]'); await p.waitForSelector('#f_name'); assert.equal(await p.inputValue('#f_name'), 'Croquettes adulte poulet'); assert.equal(await p.inputValue('#f_brand'), 'MarqueX');
+  assert.equal(await p.inputValue('#f_protein'), '26'); assert.equal(await p.inputValue('#f_kcalKg'), '3750'); assert.match(await text(p, '.note-import'), /Vérifiez chaque valeur/); assert.match(await text(p, '.note-import'), /manquante/);
+  await p.fill('#f_ash', '7'); await p.click('form [type=submit]'); await p.waitForSelector('.food'); assert.equal(await b.ev(() => S.foods[0].ingredients), 'Poulet, riz, maïs');
+  await p.click('[data-act=food-search]'); await p.fill('#food-q input', '3760123456789'); await p.click('#food-q button'); await p.waitForSelector('[data-act=food-pick]'); assert.ok(asked.some(u => /api\/v2\/product\/3760123456789/.test(u)), 'code-barres : recherche exacte');
+  await p.click('.sheet [data-close]'); await b.ctx.unroute(/openpetfoodfacts/); await b.ctx.route(/openpetfoodfacts/, r => r.abort()); await p.click('[data-act=food-search]'); await p.fill('#food-q input', 'x'); await p.click('#food-q button'); await p.waitForSelector('#food-res .warn'); assert.match(await text(p, '#food-res'), /Recherche impossible/);
+  noErrors(b); await b.ctx.close();
+});
+test('don à la SPA : lien direct sécurisé vers le site officiel, transparence', async () => {
+  const b = await boot(), p = b.page;
+  const home = await b.ev(() => { const a = document.querySelector('.don-card a'); return { href: a.href, target: a.target, rel: a.rel }; });
+  assert.equal(home.href, 'https://www.spa.asso.fr/'); assert.equal(home.target, '_blank'); assert.match(home.rel, /noopener/); assert.match(home.rel, /noreferrer/);
+  await b.go('#/plus'); assert.match(await text(p, '#view'), /Faire un don à la SPA`?/); await b.go('#/don'); await p.waitForSelector('.big-heart');
+  const btn = await b.ev(() => { const a = document.querySelector('#view a.btn.primary'); return { href: a.href, text: a.textContent, target: a.target }; });
+  assert.equal(btn.href, 'https://www.spa.asso.fr/'); assert.match(btn.text, /Faire un don à la SPA/); assert.equal(btn.target, '_blank');
+  assert.match(await text(p, '#view'), /n’est pas affilié/); assert.match(await text(p, '#view'), /ne collecte aucun don/);
+  await b.ev(() => { CFG.donation.name = 'une autre association'; CFG.donation.url = 'https://exemple.org/don'; render(); }); assert.equal(await b.ev(() => document.querySelector('#view a.btn.primary').href), 'https://exemple.org/don');
+  noErrors(b); await b.ctx.close();
+});
+
 /* ================= 9. Google : sauvegarde cloud ================= */
 test('cloud : envoi, envoi automatique, restauration, conflit dans les deux sens, achat qui suit le compte', async () => {
   const b = await boot({ hash: '#/reglages' }), p = b.page; await fakeCloud(p);
@@ -296,13 +358,13 @@ test('cloud : envoi, envoi automatique, restauration, conflit dans les deux sens
 });
 
 /* ================= 10. Parcours santé historique ================= */
-test('SOS vétérinaires, assurance, sauvegarde chiffrée, agenda, fiche véto', async () => {
+test('SOS vétérinaires, sauvegarde chiffrée, agenda, fiche véto', async () => {
   const b = await boot({ geo: true, data: seed({ weights: [{ id: 'w1', dogId: 'd1', date: day(-5), kg: 30 }], events: [{ id: 'e1', dogId: 'd1', type: 'vaccine', title: 'Rage', date: day(-300), next: day(65), cost: 60 }] }), hash: '#/sos' }), p = b.page;
   await p.click('[data-act=locate]'); await p.waitForSelector('.vet'); assert.equal(await p.locator('.vet').count(), 3);
   await p.click('[data-f="24"]'); assert.equal(await p.locator('.vet').count(), 1); await p.click('[data-f=all]');
   await p.fill('#tox-q', 'raisin'); assert.equal(await p.locator('.tox').count(), 1);
-  await b.go('#/assurance'); await p.waitForSelector('.ins'); assert.equal(await p.locator('.ins').count(), 5); assert.match(await text(p, 'h1'), /Assurance chien/);
-  await p.click('[data-act=add-quote]'); await p.fill('#f_insurer', 'Testo'); await p.fill('#f_monthly', '30'); await p.fill('#f_taux', '80'); await p.fill('#f_plafond', '2500'); await p.click('form [type=submit]'); await p.waitForSelector('.row .side b');
+  await b.go('#/assurance'); await p.waitForSelector('.hero'); assert.equal(await p.locator('.ins').count(), 0, 'le comparateur d’assurance n’existe plus');
+  await b.go('#/plus'); assert.doesNotMatch(await text(p, '#view'), /Assurance santé|Comparateur et simulateur/);
   const rt = await b.ev(async () => { const blob = await makeBackup('secret123', true), j = await readBackup(await blob.text(), 'secret123'); let bad; try { await readBackup(await blob.text(), 'wrong'); } catch (e) { bad = e.message; } return { dogs: j.state.dogs.length, bad }; });
   assert.deepEqual(rt, { dogs: 1, bad: 'Phrase secrète incorrecte.' });
   assert.equal(await b.ev(() => (buildICS().match(/BEGIN:VEVENT/g) || []).length), 1);

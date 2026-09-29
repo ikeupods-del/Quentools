@@ -1,7 +1,7 @@
 'use strict';
 /* Wouf — routeur, rendu, démarrage. */
 
-const NAV_OF = { balade: 'suivi', 'balade-detail': 'suivi', 'plan-poids': 'plus', bilan: 'plus', gardien: 'plus', home: 'home', carnet: 'carnet', plan: 'carnet', suivi: 'suivi', sos: 'sos', educ: 'educ', lecon: 'educ', seance: 'educ', principes: 'educ', programme: 'educ' };
+const NAV_OF = { croquettes: 'plus', croquette: 'plus', 'croquettes-guide': 'plus', don: 'plus', balade: 'suivi', 'balade-detail': 'suivi', 'plan-poids': 'plus', bilan: 'plus', gardien: 'plus', home: 'home', carnet: 'carnet', plan: 'carnet', suivi: 'suivi', sos: 'sos', educ: 'educ', lecon: 'educ', seance: 'educ', principes: 'educ', programme: 'educ' };
 let lastRoute = null;
 
 function routeName() { return (location.hash.replace(/^#\/?/, '') || 'home').split('?')[0]; }

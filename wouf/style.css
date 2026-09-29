@@ -126,3 +126,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-off
 @media (prefers-color-scheme:dark){.plus-cta{background:linear-gradient(135deg,#4a3813,#3a2a10);color:#ffe9bd}.plus-cta small{color:#e6cf9c}}
 .cta-plus{margin:6px 0 10px}
 .plan-row{align-items:flex-start;cursor:default}.plan-w{flex:none;width:105px;font-weight:700;color:var(--priD);font-size:.88rem}
+
+/* Croquettes et don */
+.rank{width:26px;height:26px;border-radius:50%;background:var(--soft);color:var(--priD);display:grid;place-items:center;font-weight:800;flex:none}
+.food{text-decoration:none;color:inherit}.food .grow small.bad{font-weight:600}
+.score-badge{display:inline-block;min-width:44px;text-align:center;padding:4px 10px;border-radius:12px;font-weight:800;color:#fff;background:var(--mut)}.score-badge.ok{background:var(--ok)}.score-badge.warn{background:var(--warn)}.score-badge.bad{background:var(--bad)}
+.table-scroll{overflow-x:auto;margin:8px -6px}.cmp{border-collapse:collapse;min-width:100%;font-size:.86rem}.cmp th,.cmp td{border-top:1px solid var(--line);padding:7px 8px;text-align:center;white-space:nowrap}.cmp thead th{border:0;font-size:.8rem}.cmp tbody th{text-align:left;color:var(--mut);font-weight:600;position:sticky;left:0;background:var(--card)}
+.tgt th{width:36%}.note-import{background:var(--soft);border-radius:12px;padding:8px 12px;font-size:.9rem}.part small{display:block;color:var(--mut);font-size:.84rem}
+.don-card{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(135deg,#ffe3e3,#fff0f0);border:0;color:#5a1a1a}.don-card small{display:block;color:#7a3a3a;font-size:.82rem}
+@media (prefers-color-scheme:dark){.don-card{background:linear-gradient(135deg,#4a1f1f,#3a1818);color:#ffdede}.don-card small{color:#e8b4b4}}
+.big-heart{font-size:3.2rem}

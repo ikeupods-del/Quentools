@@ -15,7 +15,7 @@ function reminders(id) {
     if (seen.has(k)) continue; seen.add(k);
     if (e.next) out.push({ kind: 'event', ev: e, title: e.title, icon: TYPES[e.type].icon, due: e.next, days: diffDays(e.next, today()) });
   }
-  if (d && d.insurance && d.insurance.renewal) out.push({ kind: 'insurance', title: 'Renouvellement assurance' + (d.insurance.insurer ? ' – ' + d.insurance.insurer : ''), icon: '🛡️', due: d.insurance.renewal, days: diffDays(d.insurance.renewal, today()) });
+  if (d && d.insurance && d.insurance.renewal) out.push({ kind: 'insurance', dogId: id, title: 'Renouvellement assurance' + (d.insurance.insurer ? ' – ' + d.insurance.insurer : ''), icon: '🛡️', due: d.insurance.renewal, days: diffDays(d.insurance.renewal, today()) });
   return out.sort((a, b) => a.days - b.days);
 }
 function missing(d) {
