@@ -12,29 +12,35 @@ function printHTML(html) {
 
 /* ---------- Menu Plus ---------- */
 ROUTES.plus = function plusMenu() {
-  const items = [
-    ['#/educ', '🎓', 'Éducation', 'Leçons, séances guidées, programmes'],
-    ['#/balade', '🦮', 'Balades GPS', 'Distance, tracé, objectif du jour' + (allowed('tracker') ? '' : ' · Plus')],
-    ['#/recherche', '🔎', 'Rechercher', 'Aliments, leçons, carnet, journal, documents'],
-    ['#/triage', '🩺', 'Que faire ? (symptômes)', 'Urgence, vétérinaire sous 24 h ou surveillance'],
-    ['#/meteo', '🌦️', 'Météo balade', 'Chaleur, froid, meilleures heures' + (allowed('weather') ? '' : ' · Plus')],
-    ['#/bilan', '🧠', 'Bilan santé', 'Conseils personnalisés' + (allowed('bilan') ? '' : ' · Plus')],
-    ['#/gardien', '🧳', 'Fiche gardien', 'Pour la personne qui garde votre animal' + (allowed('sitter') ? '' : ' · Plus')],
-    ['#/croquettes', '🥣', 'Comparateur de croquettes', 'Le meilleur choix selon âge, race et activité'],
-    ['#/depenses', '💶', 'Dépenses', 'Budget vétérinaire, nourriture, accessoires'],
-    ['#/documents', '📎', 'Documents', 'Ordonnances, résultats, carte d’identification'],
-    ['#/nutrition', '🍖', 'Ration quotidienne', 'Calcul des calories et des grammes de croquettes'],
-    ['#/race', '🧬', 'Ma race et sa santé', 'Poids idéal, espérance de vie, risques'],
-    ['#/perdu', '📣', 'Animal perdu', 'Affiche à imprimer et démarches'],
-    ['#/don', '❤️', 'Faire un don à la SPA', 'Aider les animaux sans famille'],
-    ['#/sauvegarde', '💾', 'Sauvegarde', 'Exporter / restaurer (chiffrée)'],
-    ['#/abo', '⭐', 'Wouf Plus', plus() && !BILL.enabled ? 'Toutes les fonctions sont gratuites pour le moment' : subActive() ? 'Actif à vie' : planLine() + ' · sans abonnement'],
-    ['#/support', '💬', 'Assistance', isPriority() ? 'Prioritaire ⭐' : 'FAQ et contact'],
-    ['#/nouveautes', '🆕', 'Nouveautés', 'Version ' + (CFG.version || '')],
-    ['#/reglages', '⚙️', 'Réglages', 'Profil, notifications, installation'],
-    ['#/legal', '⚖️', 'Informations légales', 'Mentions, CGV, confidentialité']
+  const quick = [['#/triage', '🩺', 'Que faire ?'], ['#/meteo', '🌦️', 'Météo balade'], ['#/recherche', '🔎', 'Rechercher'], ['#/noms', '🏷️', 'Trouver un nom']];
+  const groups = [
+    ['Santé', [
+      ['#/bilan', '🧠', 'Bilan santé', 'Conseils personnalisés' + (allowed('bilan') ? '' : ' · Plus')],
+      ['#/race', '🧬', 'Ma race et sa santé', 'Poids idéal, espérance de vie, risques'],
+      ['#/documents', '📎', 'Documents', 'Ordonnances, résultats, carte d’identification'],
+      ['#/depenses', '💶', 'Dépenses', 'Budget vétérinaire, nourriture, accessoires']]],
+    ['Éduquer et bouger', [
+      ['#/educ', '🎓', 'Éducation', 'Leçons, séances guidées, programmes'],
+      ['#/balade', '🦮', 'Balades GPS et pas', 'Distance, tracé, objectif du jour' + (allowed('tracker') ? '' : ' · Plus')]]],
+    ['Alimentation', [
+      ['#/croquettes', '🥣', 'Comparateur de croquettes', 'Le meilleur choix selon âge, race et activité'],
+      ['#/nutrition', '🍖', 'Ration quotidienne', 'Calcul des calories et des grammes de croquettes']]],
+    ['Pratique', [
+      ['#/gardien', '🧳', 'Fiche gardien', 'Pour la personne qui garde votre animal' + (allowed('sitter') ? '' : ' · Plus')],
+      ['#/perdu', '📣', 'Animal perdu', 'Affiche à imprimer et démarches'],
+      ['#/sauvegarde', '💾', 'Sauvegarde', 'Exporter / restaurer (chiffrée)'],
+      ['#/reglages', '⚙️', 'Réglages', 'Profil, notifications, installation']]],
+    ['Wouf', [
+      ['#/abo', '⭐', 'Wouf Plus', plus() && !BILL.enabled ? 'Toutes les fonctions sont gratuites pour le moment' : subActive() ? 'Actif à vie' : planLine() + ' · sans abonnement'],
+      ['#/don', '❤️', 'Faire un don à la SPA', 'Aider les animaux sans famille'],
+      ['#/support', '💬', 'Assistance', isPriority() ? 'Prioritaire ⭐' : 'FAQ et contact'],
+      ['#/nouveautes', '🆕', 'Nouveautés', 'Version ' + (CFG.version || '')],
+      ['#/legal', '⚖️', 'Informations légales', 'Mentions, CGV, confidentialité']]]
   ];
-  return `<div class="page-h"><h1>Plus</h1></div><div class="list card menu">${items.map(([h, i, t, s]) => `<a class="row" href="${h}"><span class="ico">${i}</span><span class="grow"><b>${t}</b><small>${s}</small></span><span class="chev">›</span></a>`).join('')}</div>
+  const row = ([h, i, t, s]) => `<a class="row" href="${h}"><span class="ico">${i}</span><span class="grow"><b>${t}</b><small>${s}</small></span><span class="chev">›</span></a>`;
+  return `<div class="page-h"><h1>Plus</h1></div>
+  <section class="grid4">${quick.map(([h, i, t]) => `<a class="tile sm" href="${h}"><span>${i}</span>${t}</a>`).join('')}</section>
+  ${groups.map(([g, items]) => `<h2 class="grp">${g}</h2><div class="list card menu">${items.map(row).join('')}</div>`).join('')}
   <p class="mut center small">Wouf ${esc(CFG.version || '')} · Les informations de santé sont indicatives et ne remplacent pas l’avis d’un vétérinaire.</p>`;
 };
 

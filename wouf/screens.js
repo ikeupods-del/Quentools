@@ -116,19 +116,15 @@ ROUTES.home = function home() {
     <p class="chips-i"><span class="pill">${esc(ageText(d.birth))}</span><span class="pill">${lifeStage(d)}</span>${ha ? `<span class="pill">≈ ${ha} ans humains</span>` : ''}${lw ? `<span class="pill">${fmtKg(lw.kg)}</span>` : ''}</p>
     ${bd !== null && bd <= 30 ? `<p class="bday">🎂 ${bd === 0 ? 'C’est son anniversaire aujourd’hui !' : 'Anniversaire dans ' + bd + ' j'}</p>` : ''}</div></section>
 
-  ${subActive() ? '' : `<section class="card plus-cta"><div><b>⭐ Wouf+ · ${esc(planLine())}</b><small>${BILL.enabled ? nDog(false) + ' leçons chien, ' + nCat(false) + ' chat, GPS, bilan santé, assistance prioritaire' : 'Offert pendant le lancement : tout est débloqué'}</small></div><button class="btn primary sm" data-act="subscribe">${BILL.enabled ? 'Souscrire' : 'Découvrir'}</button></section>`}
-
-  ${backupOld ? `<section class="card note"><b>💾 Pensez à sauvegarder</b><p>Vos données sont sur ce téléphone. Une sauvegarde chiffrée évite de tout perdre en cas de changement d’appareil.</p><a class="btn sm" href="#/sauvegarde">Sauvegarder</a></section>` : ''}
-
-  ${!CLOUD.user && CloudApi.available() ? `<section class="card note"><b>☁️ Sauvegardez avec Google</b><p>Retrouvez le carnet de ${esc(d.name)} sur un autre téléphone, et ne perdez rien si vous changez d’appareil.</p><button class="btn sm primary" data-act="g-signin">Se connecter avec Google</button></section>` : ''}
-  ${(() => { const nx = nextLesson(d), es = eduStats(d); return nx ? `<a class="card banner edu-banner" href="#/seance?id=${nx.id}"><b>🎓 Séance du jour : ${nx.icon} ${esc(nx.title)}</b><span>${es.streak ? '🔥 ' + es.streak + ' jour' + (es.streak > 1 ? 's' : '') + ' d’affilée · ' : ''}2 à 5 minutes suffisent →</span></a>` : ''; })()}
-
   <section class="card"><div class="card-h"><h2>À faire</h2><a class="lnk" href="#/carnet">Carnet →</a></div>
     ${late.map(reminderRow).join('')}${soon.map(reminderRow).join('')}
     ${miss.map(m => `<div class="row"><span class="ico">${TYPES[m.type].icon}</span><span class="grow"><b>${m.msg}</b><small>Ajoutez la dernière date pour activer les rappels</small></span><button class="btn sm" data-act="add-event" data-type="${m.type}">Ajouter</button></div>`).join('')}
     ${!late.length && !soon.length && !miss.length ? `<p class="okmsg">✅ Tout est à jour. ${rem[0] ? `Prochaine échéance : ${esc(rem[0].title)} ${dueText(rem[0].days)}.` : ''}</p>` : ''}</section>
 
   ${meds.length ? `<section class="card"><div class="card-h"><h2>Traitements du jour</h2><a class="lnk" href="#/suivi" data-act="tab-suivi" data-tab="soins">Gérer →</a></div>${meds.map(medRow).join('')}</section>` : ''}
+
+  ${backupOld ? `<section class="card note"><b>💾 Pensez à sauvegarder</b><p>Vos données sont sur ce téléphone. Une sauvegarde chiffrée évite de tout perdre en cas de changement d’appareil.</p><a class="btn sm" href="#/sauvegarde">Sauvegarder</a></section>` : (!CLOUD.user && CloudApi.available() ? `<section class="card note"><b>☁️ Sauvegardez avec Google</b><p>Retrouvez le carnet de ${esc(d.name)} sur un autre téléphone, et ne perdez rien si vous changez d’appareil.</p><button class="btn sm primary" data-act="g-signin">Se connecter avec Google</button></section>` : '')}
+  ${(() => { const nx = nextLesson(d), es = eduStats(d); return nx ? `<a class="card banner edu-banner" href="#/seance?id=${nx.id}"><b>🎓 Séance du jour : ${nx.icon} ${esc(nx.title)}</b><span>${es.streak ? '🔥 ' + es.streak + ' jour' + (es.streak > 1 ? 's' : '') + ' d’affilée · ' : ''}2 à 5 minutes suffisent →</span></a>` : ''; })()}
 
   <section class="card"><div class="card-h"><h2>Score de suivi</h2></div><div class="score">${ring}<ul>${sc.parts.map(p => `<li><span class="dot ${p[2] >= 1 ? 'ok' : p[2] > 0 ? 'warn' : 'bad'}"></span>${p[0]}</li>`).join('')}</ul></div>
     ${sc.tips.length ? `<p class="mut">${sc.tips.slice(0, 2).join(' · ')}</p>` : '<p class="okmsg">Suivi exemplaire, bravo 👏</p>'}</section>
@@ -137,7 +133,7 @@ ROUTES.home = function home() {
     ${dogWeights(d.id).length > 1 ? lineChart(dogWeights(d.id).map(w => ({ x: w.date, y: w.kg })), { band: idealBand(d), unit: 'kg', height: 140 }) : `<p class="mut">${lw ? 'Ajoutez une nouvelle pesée pour voir la courbe.' : 'Aucune pesée enregistrée.'}</p>`}
     ${ws ? `<p class="${ws.cls}">${ws.txt}</p>` : ''}</section>
 
-  <a class="card banner" href="#/triage"><b>🩺 Que faire ? Un symptôme à évaluer</b><span>Urgence, vétérinaire sous 24 h ou simple surveillance →</span></a>
+  <section class="grid3"><a class="tile sm" href="#/triage"><span>🩺</span>Que faire ?</a><a class="tile sm" href="#/meteo"><span>🌦️</span>Météo balade</a><a class="tile sm" href="#/noms"><span>🏷️</span>Trouver un nom</a></section>
   ${spOf(d).id === 'dog' ? `<a class="card banner" href="#/balade"><b>🦮 Balades ${allowed('tracker') ? '' : '<span class="pill plus">Plus</span>'}</b><span>${allowed('tracker') ? (() => { const m = walkMinutes(walksOn(d.id, today())), g = dailyGoal(d); return m + ' / ' + g + ' min aujourd’hui · lancer une balade →'; })() : 'Suivi GPS, tracé et objectif du jour →'}</span></a>` : ''}
   <section class="grid2">
     <button class="tile" data-act="add-event" data-type="vaccine"><span>💉</span>Vaccin</button>
@@ -145,6 +141,7 @@ ROUTES.home = function home() {
     <button class="tile" data-act="add-event" data-type="visit"><span>🩺</span>Consultation</button>
     <button class="tile" data-act="add-expense"><span>💶</span>Dépense</button>
   </section>
+  ${subActive() ? '' : `<section class="card plus-cta"><div><b>⭐ Wouf+ · ${esc(planLine())}</b><small>${BILL.enabled ? nDog(false) + ' leçons chien, ' + nCat(false) + ' chat, GPS, bilan santé, assistance prioritaire' : 'Offert pendant le lancement : tout est débloqué'}</small></div><button class="btn primary sm" data-act="subscribe">${BILL.enabled ? 'Souscrire' : 'Découvrir'}</button></section>`}
   <section class="card don-card"><div><b>❤️ Un geste pour les animaux sans famille</b><small>Faites un don à ${esc(donation().name)}, directement sur le site officiel.</small></div><a class="btn primary sm" href="${esc(donation().url)}" target="_blank" rel="noopener noreferrer">Faire un don</a></section>
   <section class="card tip"><b>💡 Le saviez-vous ?</b><p>${tipsOf(d)[Math.floor(Date.now() / 864e5) % tipsOf(d).length]}</p></section>`;
 };

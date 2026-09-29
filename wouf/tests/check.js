@@ -14,7 +14,7 @@ for (const f of jsFiles) { try { new vm.Script(read(f), { filename: f }); passes
 
 section('Chargement des données');
 const ctx = vm.createContext({ window: {}, console });
-for (const f of ['config.js', 'data.js', 'species.js', 'lessons.js', 'lessons2.js', 'lessons_cat.js', 'lessons3.js', 'lessons_cat2.js', 'lessons4.js', 'lessons_cat3.js', 'lessons_plans.js']) vm.runInContext(read(f), ctx, { filename: f });
+for (const f of ['config.js', 'data.js', 'species.js', 'lessons.js', 'lessons2.js', 'lessons_cat.js', 'lessons3.js', 'lessons_cat2.js', 'lessons4.js', 'lessons_cat3.js', 'lessons5.js', 'lessons_cat4.js', 'lessons_plans.js']) vm.runInContext(read(f), ctx, { filename: f });
 const get = e => vm.runInContext(e, ctx);
 const LESSONS = get('LESSONS'), PROGRAMS = get('PROGRAMS'), BREEDS = get('BREEDS.concat(CAT_BREEDS)'), CFG = get('window.WOUF_CONFIG');
 
