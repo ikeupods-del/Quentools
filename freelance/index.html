@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="fr" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Freelance Kit — TJM & Devis</title>
+<meta name="description" content="Calculateur de TJM et générateur de devis sur-mesure pour freelances.">
+
+<!-- ============ 1. DÉPENDANCES (CDN) ============ -->
+<script>
+  // Thème appliqué AVANT le rendu pour éviter le flash blanc
+  (function () {
+    try {
+      var t = localStorage.getItem('fk:theme');
+      var dark = t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.classList.toggle('dark', dark);
+    } catch (e) {}
+  })();
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } }
+  };
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+
+<style>
+  [x-cloak] { display: none !important; }
+  /* Impression : seul le devis est imprimé (base de l'export PDF) */
+  @media print {
+    body { background: #fff !important; }
+    .no-print { display: none !important; }
+    #quote-card { box-shadow: none !important; border: 0 !important; }
+  }
+</style>
+<!-- Composants (le CDN Tailwind interprète @apply dans text/tailwindcss) -->
+<style type="text/tailwindcss">
+  @layer components {
+    .field { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100; }
+    .lbl { @apply mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400; }
+    .card { @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6; }
+    .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-500/40; }
+    .btn-primary { @apply bg-indigo-600 text-white hover:bg-indigo-500; }
+    .btn-ghost { @apply border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100"
+      x-data="app()" x-init="init()" x-cloak>
+
+  <!-- ============ 2. EN-TÊTE ============ -->
+  <header class="no-print sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+      <div class="flex items-center gap-2.5">
+        <span class="grid h-8 w-8 place-items-center rounded-lg bg-indigo-600 text-sm font-bold text-white">F</span>
+        <span class="font-semibold tracking-tight">Freelance Kit</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <!-- HOOK AUTH : brancher ici Google / GitHub (voir section Integrations plus bas) -->
+        <button class="btn btn-ghost" @click="Integrations.signIn('google')" title="Bientôt disponible">Google</button>
+        <button class="btn btn-ghost hidden sm:inline-flex" @click="Integrations.signIn('github')" title="Bientôt disponible">GitHub</button>
+        <button class="btn btn-ghost !px-2.5" @click="toggleTheme()" aria-label="Basculer le thème">
+          <span x-text="dark ? '☀️' : '🌙'"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl space-y-8 px-4 py-8">
+
+    <!-- ============ 3. CALCULATEUR TJM ============ -->
+    <section class="no-print grid gap-6 lg:grid-cols-5" aria-labelledby="h-tjm">
+      <div class="card lg:col-span-3">
+        <h2 id="h-tjm" class="text-lg font-semibold">Calculateur de TJM</h2>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Renseignez vos objectifs : le résultat se met à jour instantanément.</p>
+
+        <div class="mt-5 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label class="lbl">Salaire net visé / mois (€)</label>
+            <input type="number" min="0" step="50" class="field" x-model.number="tjm.netMonthly">
+          </div>
+          <div>
+            <label class="lbl">Charges sociales &amp; impôts (% du CA)</label>
+            <input type="number" min="0" max="90" step="0.5" class="field" x-model.number="tjm.chargesRate">
+            <p class="mt-1 text-xs text-slate-500">Micro-BNC ≈ 21,1 % · EURL/SASU ≈ 45 % du brut</p>
+          </div>
+          <div>
+            <label class="lbl">Frais professionnels / mois (€)</label>
+            <input type="number" min="0" step="10" class="field" x-model.number="tjm.expensesMonthly">
+            <p class="mt-1 text-xs text-slate-500">Compta, mutuelle, matériel, logiciels, coworking…</p>
+          </div>
+          <div>
+            <label class="lbl">Marge de sécurité / trésorerie (%)</label>
+            <input type="number" min="0" max="50" step="1" class="field" x-model.number="tjm.buffer">
+          </div>
+          <div>
+            <label class="lbl">Jours travaillés / an</label>
+            <input type="number" min="1" max="365" class="field" x-model.number="tjm.daysWorked">
+            <p class="mt-1 text-xs text-slate-500">≈ 218 j après congés &amp; fériés</p>
+          </div>
+          <div>
+            <label class="lbl">Taux de jours facturables (%)</label>
+            <input type="number" min="1" max="100" step="1" class="field" x-model.number="tjm.billableRate">
+            <p class="mt-1 text-xs text-slate-500">Le reste = prospection, admin, intercontrat</p>
+          </div>
+          <div>
+            <label class="lbl">Heures par jour</label>
+            <input type="number" min="1" max="12" step="0.5" class="field" x-model.number="tjm.hoursPerDay">
+          </div>
+        </div>
+      </div>
+
+      <!-- Résultats -->
+      <aside class="card flex flex-col justify-between bg-gradient-to-br from-indigo-600 to-violet-600 !border-0 text-white dark:from-indigo-600/90 dark:to-violet-700/90">
+        <div>
+          <p class="text-xs font-medium uppercase tracking-wider text-indigo-100">TJM recommandé</p>
+          <p class="mt-1 text-5xl font-bold tracking-tight" x-text="eur(tjmResult.tjm)"></p>
+          <p class="mt-2 text-sm text-indigo-100">
+            Taux horaire : <strong x-text="eur(tjmResult.hourly)"></strong> / h
+          </p>
+        </div>
+        <dl class="mt-6 space-y-2 border-t border-white/20 pt-4 text-sm">
+          <div class="flex justify-between"><dt class="text-indigo-100">CA annuel nécessaire</dt><dd class="font-medium" x-text="eur(tjmResult.revenue)"></dd></div>
+          <div class="flex justify-between"><dt class="text-indigo-100">Jours facturables</dt><dd class="font-medium" x-text="tjmResult.billableDays.toFixed(0) + ' j'"></dd></div>
+          <div class="flex justify-between"><dt class="text-indigo-100">Net annuel visé</dt><dd class="font-medium" x-text="eur(tjm.netMonthly * 12)"></dd></div>
+        </dl>
+        <button class="btn mt-5 bg-white text-indigo-700 hover:bg-indigo-50" @click="useTjmInQuote()">
+          Utiliser ce TJM dans le devis ↓
+        </button>
+      </aside>
+    </section>
+
+    <!-- ============ 4. GÉNÉRATEUR DE DEVIS ============ -->
+    <section class="grid gap-6 lg:grid-cols-5" aria-labelledby="h-quote">
+      <!-- Formulaire -->
+      <div class="card no-print lg:col-span-2">
+        <h2 id="h-quote" class="text-lg font-semibold">Devis sur-mesure</h2>
+
+        <div class="mt-5 space-y-4">
+          <div>
+            <label class="lbl">Client</label>
+            <input class="field" placeholder="Nom / société" x-model="quote.client">
+          </div>
+          <div>
+            <label class="lbl">Projet</label>
+            <input class="field" placeholder="Intitulé de la mission" x-model="quote.project">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="lbl">TJM appliqué (€)</label>
+              <input type="number" min="0" step="10" class="field" x-model.number="quote.rate">
+            </div>
+            <div>
+              <label class="lbl">TVA (%)</label>
+              <select class="field" x-model.number="quote.vat">
+                <option value="0">0 % (franchise)</option>
+                <option value="5.5">5,5 %</option>
+                <option value="10">10 %</option>
+                <option value="20">20 %</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Coefficient de complexité -->
+          <div>
+            <label class="lbl">Coefficient de complexité</label>
+            <div class="grid grid-cols-2 gap-2">
+              <template x-for="c in complexities" :key="c.value">
+                <button type="button"
+                        class="rounded-lg border px-3 py-2 text-left text-sm transition"
+                        :class="quote.coef === c.value
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300'
+                          : 'border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800'"
+                        @click="quote.coef = c.value">
+                  <span class="block font-medium" x-text="c.label"></span>
+                  <span class="text-xs opacity-70" x-text="'× ' + c.value.toFixed(2)"></span>
+                </button>
+              </template>
+            </div>
+            <div class="mt-2 flex items-center gap-2 text-xs text-slate-500">
+              <span>Personnalisé</span>
+              <input type="number" min="0.5" max="3" step="0.05" class="field !w-24 !py-1" x-model.number="quote.coef">
+            </div>
+          </div>
+
+          <div>
+            <label class="lbl">Acompte à la commande (%)</label>
+            <input type="number" min="0" max="100" step="5" class="field" x-model.number="quote.deposit">
+          </div>
+        </div>
+      </div>
+
+      <!-- Aperçu du devis (zone imprimable) -->
+      <div id="quote-card" class="card lg:col-span-3">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-500">Devis</p>
+            <p class="text-xl font-semibold" x-text="quote.project || 'Nouveau projet'"></p>
+            <p class="text-sm text-slate-500" x-text="quote.client ? 'Pour ' + quote.client : 'Client à renseigner'"></p>
+          </div>
+          <p class="text-sm text-slate-500" x-text="today"></p>
+        </div>
+
+        <!-- Lignes -->
+        <div class="mt-5 overflow-x-auto">
+          <table class="w-full min-w-[420px] text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
+                <th class="py-2 pr-2 font-medium">Prestation</th>
+                <th class="w-24 py-2 pr-2 font-medium">Jours</th>
+                <th class="w-28 py-2 text-right font-medium">Montant</th>
+                <th class="no-print w-8"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="(l, i) in quote.lines" :key="l.id">
+                <tr class="border-b border-slate-100 dark:border-slate-800/70">
+                  <td class="py-2 pr-2"><input class="field" placeholder="Ex. Conception UI" x-model="l.label"></td>
+                  <td class="py-2 pr-2"><input type="number" min="0" step="0.5" class="field" x-model.number="l.days"></td>
+                  <td class="py-2 text-right tabular-nums" x-text="eur(l.days * quote.rate)"></td>
+                  <td class="no-print py-2 text-right">
+                    <button class="text-slate-400 hover:text-red-500" @click="removeLine(i)" aria-label="Supprimer">✕</button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn btn-ghost no-print mt-3" @click="addLine()">+ Ajouter une ligne</button>
+
+        <!-- Totaux -->
+        <dl class="mt-6 ml-auto max-w-xs space-y-1.5 text-sm">
+          <div class="flex justify-between"><dt class="text-slate-500">Total jours-hommes</dt><dd class="tabular-nums" x-text="totals.days.toFixed(1) + ' j'"></dd></div>
+          <div class="flex justify-between"><dt class="text-slate-500">Sous-total</dt><dd class="tabular-nums" x-text="eur(totals.subtotal)"></dd></div>
+          <div class="flex justify-between"><dt class="text-slate-500" x-text="'Complexité × ' + Number(quote.coef).toFixed(2)"></dt><dd class="tabular-nums" x-text="eur(totals.complexity)"></dd></div>
+          <div class="flex justify-between border-t border-slate-200 pt-1.5 dark:border-slate-800"><dt class="font-medium">Total HT</dt><dd class="font-medium tabular-nums" x-text="eur(totals.ht)"></dd></div>
+          <div class="flex justify-between"><dt class="text-slate-500" x-text="'TVA ' + quote.vat + ' %'"></dt><dd class="tabular-nums" x-text="eur(totals.vat)"></dd></div>
+          <div class="flex justify-between rounded-lg bg-indigo-50 px-3 py-2 text-base font-semibold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+            <dt>Total TTC</dt><dd class="tabular-nums" x-text="eur(totals.ttc)"></dd>
+          </div>
+          <div class="flex justify-between text-xs text-slate-500" x-show="quote.deposit > 0">
+            <dt x-text="'Acompte ' + quote.deposit + ' %'"></dt><dd class="tabular-nums" x-text="eur(totals.ttc * quote.deposit / 100)"></dd>
+          </div>
+        </dl>
+
+        <!-- Actions / exports -->
+        <div class="no-print mt-6 flex flex-wrap gap-2 border-t border-slate-200 pt-5 dark:border-slate-800">
+          <button class="btn btn-primary" @click="window.print()">Imprimer / PDF</button>
+          <button class="btn btn-ghost" @click="exportJSON()">Export JSON</button>
+          <!-- HOOK EXPORT : brancher Integrations.exportToGitHub / saveToDrive ici -->
+          <button class="btn btn-ghost" @click="Integrations.exportToGitHub(snapshot())" title="Bientôt disponible">→ GitHub</button>
+          <button class="btn btn-ghost" @click="Integrations.saveToDrive(snapshot())" title="Bientôt disponible">→ Drive</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="no-print pb-6 text-center text-xs text-slate-500">
+      Données enregistrées localement dans votre navigateur · Aucun envoi serveur.
+    </footer>
+  </main>
+
+  <!-- Toast -->
+  <div x-show="toast" x-transition class="no-print fixed bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-white dark:text-slate-900" x-text="toast"></div>
+
+<script>
+/* =====================================================================
+   5. INTÉGRATIONS (STUBS) — à implémenter dans la prochaine version
+   ---------------------------------------------------------------------
+   Toute la logique externe passe par cet objet : l'UI n'appelle que
+   ces méthodes, donc rien d'autre à modifier dans le HTML.
+
+   • Google  : Google Identity Services (OAuth2 token client, scope
+               drive.file) puis Drive API v3 pour sauvegarder le JSON.
+   • GitHub  : OAuth via un petit proxy (worker) pour l'échange du code,
+               puis PUT /repos/{owner}/{repo}/contents/{path} pour commiter
+               le devis (JSON/Markdown).
+   ===================================================================== */
+const Integrations = {
+  user: null,
+  async signIn(provider /* 'google' | 'github' */) {
+    // TODO: lancer le flux OAuth, stocker le token en mémoire (jamais en clair dans localStorage)
+    window.dispatchEvent(new CustomEvent('fk:toast', { detail: `Connexion ${provider} : à venir` }));
+  },
+  async signOut() { this.user = null; },
+  async saveToDrive(snapshot) {
+    // TODO: POST https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart
+    window.dispatchEvent(new CustomEvent('fk:toast', { detail: 'Sauvegarde Drive : à venir' }));
+  },
+  async exportToGitHub(snapshot) {
+    // TODO: PUT https://api.github.com/repos/{owner}/{repo}/contents/devis/{id}.json
+    window.dispatchEvent(new CustomEvent('fk:toast', { detail: 'Export GitHub : à venir' }));
+  }
+};
+
+/* =====================================================================
+   6. PERSISTANCE — point d'entrée unique (remplaçable par Drive/GitHub)
+   ===================================================================== */
+const Store = {
+  key: 'fk:state:v1',
+  load() { try { return JSON.parse(localStorage.getItem(this.key)); } catch (e) { return null; } },
+  save(state) { try { localStorage.setItem(this.key, JSON.stringify(state)); } catch (e) {} }
+};
+
+/* =====================================================================
+   7. LOGIQUE APPLICATIVE (Alpine.js)
+   ===================================================================== */
+function app() {
+  const uid = () => Math.random().toString(36).slice(2, 9);
+
+  return {
+    dark: document.documentElement.classList.contains('dark'),
+    toast: '',
+
+    // --- État : calculateur TJM ---
+    tjm: {
+      netMonthly: 3000, chargesRate: 22, expensesMonthly: 300,
+      buffer: 10, daysWorked: 218, billableRate: 80, hoursPerDay: 7
+    },
+
+    // --- État : devis ---
+    complexities: [
+      { label: 'Simple',    value: 1.00 },
+      { label: 'Standard',  value: 1.15 },
+      { label: 'Complexe',  value: 1.30 },
+      { label: 'Critique',  value: 1.50 }
+    ],
+    quote: {
+      client: '', project: '', rate: 500, vat: 20, coef: 1.15, deposit: 30,
+      lines: [{ id: uid(), label: 'Cadrage & conception', days: 3 }, { id: uid(), label: 'Développement', days: 10 }]
+    },
+
+    // --- Cycle de vie ---
+    init() {
+      const saved = Store.load();
+      if (saved) { Object.assign(this.tjm, saved.tjm); Object.assign(this.quote, saved.quote); }
+      else this.quote.rate = Math.round(this.tjmResult.tjm / 10) * 10;
+      // Sauvegarde automatique à chaque changement
+      this.$watch('tjm', () => Store.save(this.snapshot()));
+      this.$watch('quote', () => Store.save(this.snapshot()));
+      window.addEventListener('fk:toast', e => this.notify(e.detail));
+    },
+    snapshot() { return JSON.parse(JSON.stringify({ tjm: this.tjm, quote: this.quote, savedAt: new Date().toISOString() })); },
+
+    // --- Calculs TJM ---
+    get tjmResult() {
+      const t = this.tjm, n = v => Math.max(0, Number(v) || 0);
+      const netYear   = n(t.netMonthly) * 12;
+      const expenses  = n(t.expensesMonthly) * 12;
+      const rate      = Math.min(n(t.chargesRate), 90) / 100;
+      // CA = (net + frais) / (1 - charges) , majoré de la marge de sécurité
+      const revenue   = ((netYear + expenses) / (1 - rate)) * (1 + n(t.buffer) / 100);
+      const billable  = n(t.daysWorked) * Math.min(n(t.billableRate), 100) / 100;
+      const tjm       = billable ? revenue / billable : 0;
+      return { revenue, billableDays: billable, tjm, hourly: n(t.hoursPerDay) ? tjm / t.hoursPerDay : 0 };
+    },
+
+    // --- Calculs devis ---
+    get totals() {
+      const days = this.quote.lines.reduce((s, l) => s + (Number(l.days) || 0), 0);
+      const subtotal = days * (Number(this.quote.rate) || 0);
+      const ht = subtotal * (Number(this.quote.coef) || 1);
+      const vat = ht * (Number(this.quote.vat) || 0) / 100;
+      return { days, subtotal, complexity: ht - subtotal, ht, vat, ttc: ht + vat };
+    },
+
+    // --- Actions ---
+    addLine() { this.quote.lines.push({ id: uid(), label: '', days: 1 }); },
+    removeLine(i) { this.quote.lines.splice(i, 1); },
+    useTjmInQuote() {
+      this.quote.rate = Math.round(this.tjmResult.tjm);
+      this.notify('TJM reporté dans le devis');
+      document.getElementById('h-quote').scrollIntoView({ behavior: 'smooth' });
+    },
+    exportJSON() {
+      const blob = new Blob([JSON.stringify(this.snapshot(), null, 2)], { type: 'application/json' });
+      const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'devis.json' });
+      a.click(); URL.revokeObjectURL(a.href);
+    },
+    toggleTheme() {
+      this.dark = !this.dark;
+      document.documentElement.classList.toggle('dark', this.dark);
+      try { localStorage.setItem('fk:theme', this.dark ? 'dark' : 'light'); } catch (e) {}
+    },
+    notify(msg) { this.toast = msg; clearTimeout(this._t); this._t = setTimeout(() => this.toast = '', 2200); },
+
+    // --- Formatage ---
+    eur(v) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v || 0); },
+    get today() { return new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }); }
+  };
+}
+</script>
+</body>
+</html>
