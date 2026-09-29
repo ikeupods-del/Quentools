@@ -65,6 +65,7 @@ ok(cl && cl[1] === CFG.version, `version de config.js (${CFG.version}) ≠ derni
 ok(read('package.json').includes(`"version": "${CFG.version}"`), 'package.json : version différente de config.js');
 ok(JSON.parse(read('package-lock.json')).version === CFG.version, 'package-lock.json : version différente de config.js');
 ok(read('sw.js').includes(`wouf-v${CFG.version.split('.').slice(0, 2).join('.')}`), 'sw.js : le nom du cache doit suivre la version (wouf-vX.Y) pour forcer la mise à jour');
+ok(CFG.donation && /^https:\/\/[^ ]+$/.test(CFG.donation.url) && CFG.donation.name, 'config.js : donation.url (https) et donation.name requis');
 if (B.enabled) {
   const L = CFG.legal, S = CFG.support;
   for (const k of ['seller', 'form', 'address', 'siret', 'email', 'mediator']) ok(L[k], `billing.enabled = true mais legal.${k} est vide : complétez config.js avant de vendre`);

@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.3.0',
+  version: '1.4.0',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
@@ -54,9 +54,13 @@ window.WOUF_CONFIG = {
     appId: "1:55024741286:web:957475540e24ed223b7d67"
   },
 
-  // Liens partenaires (affiliation) : { santevet: 'https://…' }. Quand un lien existe, il remplace la recherche
-  // neutre et l'app affiche la mention « lien partenaire ».
-  affiliates: {},
+  // Bouton « Faire un don » : ouvre directement la page de don de l'association (Wouf ne touche rien et n'encaisse rien).
+  // Vérifiez l'adresse exacte de la page de don sur le site de l'association avant publication.
+  donation: {
+    name: 'la SPA',
+    url: 'https://www.spa.asso.fr/',
+    text: 'La SPA recueille, soigne et fait adopter des animaux abandonnés ou maltraités.'
+  },
 
   contactEmail: ''
 };

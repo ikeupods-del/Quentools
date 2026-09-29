@@ -37,7 +37,7 @@ function healthInsights(d) {
     if (days30.length) { const avg = Math.round(sum(days30.map(w => w.dur)) / 60 / 30), g = dailyGoal(d); add(avg >= g * 0.8 ? 'ok' : 'warn', '🦮', `Activité : ${avg} min/jour en moyenne`, avg >= g * 0.8 ? `Objectif de ${g} min quasiment atteint.` : `L’objectif est de ${g} min par jour : augmentez progressivement.`, '#/balade'); }
   }
   // Assurance
-  const ins = d.insurance || {}; if (ins.renewal && diffDays(ins.renewal, today()) <= 60 && diffDays(ins.renewal, today()) >= 0) add('warn', '🛡️', 'Renouvellement d’assurance proche', 'Comparez avant de renouveler : les tarifs évoluent avec l’âge.', '#/assurance');
+  const ins = d.insurance || {}; if (ins.renewal && diffDays(ins.renewal, today()) <= 60 && diffDays(ins.renewal, today()) >= 0) add('warn', '🛡️', 'Renouvellement d’assurance proche', 'Vérifiez vos garanties et votre tarif avant de renouveler : ils évoluent avec l’âge.', '#/depenses');
   // Dépenses
   const ex = allExpenses(d.id).filter(e => diffDays(today(), e.date) <= 365), tot = sum(ex.map(e => e.amount));
   if (tot > 0) add('ok', '💶', `Dépenses : ${fmtMoney(Math.round(tot))} sur 12 mois`, `Soit ≈ ${fmtMoney(Math.round(tot / 12))} par mois.`, '#/depenses');

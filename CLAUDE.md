@@ -4,13 +4,15 @@ Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `in
 
 ## Wouf — repères rapides
 - **Aucune compilation.** Scripts classiques chargés dans l'ordre de `wouf/index.html` (variables globales partagées). Ajouter un fichier JS = l'ajouter à `index.html` **et** à `SHELL` dans `wouf/sw.js` (le test `check` le vérifie).
-- Ordre : `config → data → species → core → health → screens → sos → assurance → lessons → lessons2 → lessons_cat → educ → cloud → tracker → plusfeatures → business → extras → main`.
+- Ordre : `config → data → species → core → health → screens → sos → nutrition → croquettes → lessons → lessons2 → lessons_cat → educ → cloud → tracker → plusfeatures → business → extras → main`.
 - `S` = l'état de l'utilisateur (localStorage `wouf:data`). **`S.dogs` contient tous les animaux (chiens ET chats)**, champ `species` (`dog`|`cat`) ; le nom est historique, ne pas le renommer (données existantes et synchronisation). Toute nouvelle donnée : l'ajouter à `blank()`, et si la structure change, augmenter `SCHEMA` + étape dans `migrate()` (core.js).
 - Écrans = `ROUTES.nom = () => html` ; actions = `ACT['nom']` déclenchées par `data-act="nom"` ; `render(true)` réaffiche en gardant le défilement. Toujours échapper le texte utilisateur avec `esc()`.
 - Vocabulaire selon l'espèce : `spOf(d)`, `presetsFor(type, d)`, `toxicsOf(d)`, `firstAidOf(d)`, `nutFactorsOf(d)`, `lessonsFor(d)`. Ne jamais écrire « chien » en dur dans un texte visible d'un animal quelconque.
 - **Droits Plus** : `plus()`, `allowed('fonction')`, `gate('fonction', fn)`, `paywall('fonction')` ; liste dans `config.js` → `billing.premium` ; description commerciale dans `business.js` → `FEATURES` (chaque fonction Plus doit y figurer, test `check`).
 - **Interrupteur d'abonnement** : `billing.enabled` (config.js). Faux = tout gratuit. Ne l'active jamais sans que le propriétaire l'ait demandé : le test refuse si les infos légales manquent.
 - Vente : achat unique « à vie » lié au compte Google, relais Cloudflare `wouf/billing-worker/` (vérifie le jeton Firebase, lit Stripe, envoie l'assistance par e-mail). Prix affiché dans `config.js` doit égaler le prix Stripe.
+- Comparateur de croquettes : `nutrition.js` = calculs purs (sans DOM, testés en vm dans `tests/unit/nutrition.test.mjs`), `croquettes.js` = écrans. Aucune donnée produit inventée : l'utilisateur saisit l'étiquette (ou importe depuis Open Pet Food Facts). Ne jamais ajouter de « produits recommandés » codés en dur ni de faux tarifs. Pas de comparateur d'assurances (retiré : impossible à comparer en vrai).
+- Don : `config.js` → `donation` (lien direct, Wouf n'encaisse rien, non affilié).
 - Données de référence : `data.js` (chien), `species.js` (chat + helpers), leçons dans `lessons*.js` (chaque leçon exige `plan` et `next`, contrôlé par les tests ; `lessons_plans.js` complète les leçons de base). Méthode d'éducation : **renforcement positif uniquement** (jamais de punition, collier de contrainte, etc.).
 
 ## Avant de livrer une modification de Wouf

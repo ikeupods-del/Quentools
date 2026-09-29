@@ -17,12 +17,13 @@ ROUTES.plus = function plusMenu() {
     ['#/balade', '🦮', 'Balades GPS', 'Distance, tracé, objectif du jour' + (allowed('tracker') ? '' : ' · Plus')],
     ['#/bilan', '🧠', 'Bilan santé', 'Conseils personnalisés' + (allowed('bilan') ? '' : ' · Plus')],
     ['#/gardien', '🧳', 'Fiche gardien', 'Pour la personne qui garde votre animal' + (allowed('sitter') ? '' : ' · Plus')],
-    ['#/assurance', '🛡️', 'Assurance santé', 'Comparateur et simulateur de coût réel'],
+    ['#/croquettes', '🥣', 'Comparateur de croquettes', 'Le meilleur choix selon âge, race et activité'],
     ['#/depenses', '💶', 'Dépenses', 'Budget vétérinaire, nourriture, accessoires'],
     ['#/documents', '📎', 'Documents', 'Ordonnances, résultats, carte d’identification'],
     ['#/nutrition', '🍖', 'Ration quotidienne', 'Calcul des calories et des grammes de croquettes'],
     ['#/race', '🧬', 'Ma race et sa santé', 'Poids idéal, espérance de vie, risques'],
     ['#/perdu', '📣', 'Animal perdu', 'Affiche à imprimer et démarches'],
+    ['#/don', '❤️', 'Faire un don à la SPA', 'Aider les animaux sans famille'],
     ['#/sauvegarde', '💾', 'Sauvegarde', 'Exporter / restaurer (chiffrée)'],
     ['#/abo', '⭐', 'Wouf Plus', plus() && !BILL.enabled ? 'Toutes les fonctions sont gratuites pour le moment' : subActive() ? 'Actif à vie' : planLine() + ' · sans abonnement'],
     ['#/support', '💬', 'Assistance', isPriority() ? 'Prioritaire ⭐' : 'FAQ et contact'],
@@ -150,6 +151,7 @@ ROUTES.nutrition = function nutrition() {
   <div class="field"><label>Situation</label><select data-nut="f">${nutFactorsOf(d).map(f => `<option value="${f[0]}" ${f[0] === (fd.f || nutDefault(d)) ? 'selected' : ''}>${f[1]}</option>`).join('')}</select></div>
   <div class="field half"><label>Croquettes (kcal / 100 g)</label><input data-nut="kcal" type="number" inputmode="decimal" value="${fd.kcal || 350}"></div><div class="field half"><label>Repas / jour</label><input data-nut="meals" type="number" inputmode="numeric" value="${fd.meals || 2}"></div>
   <div id="nut-out"></div></section>
+  <a class="card banner" href="#/croquettes"><b>🥣 Comparateur de croquettes</b><span>Le meilleur choix selon l’âge, la race et l’activité de ${esc(d.name)} →</span></a>
   <a class="card banner" href="#/plan-poids"><b>⚖️ Plan de perte de poids ${allowed('weightplan') ? '' : '<span class="pill plus">Plus</span>'}</b><span>Ration, étapes et date d’objectif →</span></a>`;
 };
 ROUTES.nutrition.after = () => { const r = $('#nut'); if (r) nutCalc(r); };
@@ -245,6 +247,17 @@ ACT.import = async () => {
     if (!(await ask('Remplacer toutes les données de cet appareil par cette sauvegarde ?', 'Restaurer'))) return;
     await restoreBackup(j); location.hash = '#/home'; render(); toast('Sauvegarde restaurée ✓');
   } catch (e) { toast(e.message || 'Fichier illisible'); }
+};
+
+/* ---------- Don à une association (lien direct vers le site officiel : Wouf n'encaisse rien) ---------- */
+const donation = () => CFG.donation || { name: 'la SPA', url: 'https://www.spa.asso.fr/', text: '' };
+ROUTES.don = function don() {
+  const D = donation();
+  return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>❤️ Faire un don</h1></div>
+  <section class="card center"><div class="big-heart">❤️</div><h2>Aider les animaux sans famille</h2><p>${esc(D.text || '')}</p>
+    <a class="btn primary big" href="${esc(D.url)}" target="_blank" rel="noopener noreferrer">❤️ Faire un don à ${esc(D.name)}</a>
+    <p class="mut small">Le bouton ouvre directement le site officiel de l’association, où vous choisissez le montant.</p></section>
+  <section class="card note"><b>En toute transparence</b><p>Wouf n’est pas affilié à ${esc(D.name)} et ne reçoit aucune commission : il ne collecte aucun don et n’a accès à aucune information de paiement. Votre don et votre reçu fiscal passent uniquement par l’association.</p></section>`;
 };
 
 /* ---------- Réglages ---------- */

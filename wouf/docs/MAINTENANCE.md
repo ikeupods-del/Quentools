@@ -16,6 +16,8 @@ Il est écrit pour être suivi sans être développeur. Pour toute modification,
 | Corriger ou ajouter une leçon | `wouf/lessons.js` (chien, gratuites et bases), `lessons2.js` et `lessons3.js` (chien Plus), `lessons_cat.js` et `lessons_cat2.js` (chat), `lessons_plans.js` (programmes d’entraînement des leçons de base) |
 | Ajouter une race, un aliment toxique, un premier secours | `wouf/data.js` (chien) ou `wouf/species.js` (chat) |
 | Changer les textes de vente, la FAQ, les conditions de vente | `wouf/business.js` |
+| Ajuster les repères du comparateur de croquettes | `wouf/nutrition.js` (fonction `nutTargets`) |
+| Changer l’association du bouton de don | `wouf/config.js` (`donation`) |
 | Annoncer une nouveauté | `CHANGELOG` dans `wouf/business.js` |
 | Changer les couleurs, la mise en page | `wouf/style.css` |
 
@@ -50,6 +52,17 @@ Les fichiers de l’app sont revalidés à chaque ouverture, la mise à jour est
 **Changer le prix** : (1) dans Stripe, créer un **nouveau prix** de paiement unique (on ne modifie pas un prix existant) ; (2) mettre son identifiant dans `wrangler.toml` (`PRICE_LIFETIME`) et redéployer le relais (`npx wrangler deploy`) ; (3) mettre le prix affiché dans `config.js` (`plans[0].price`) et dans les conditions de vente (elles le reprennent automatiquement). Les acheteurs existants ne sont pas concernés.
 
 **Changer le format des données** (ajout d’un champ obligatoire, renommage) : augmenter `SCHEMA` dans `core.js` et ajouter une étape dans `migrate()`. Les données des utilisateurs sont ainsi mises à niveau à l’ouverture, sans perte. Le test « migration » montre comment vérifier avec d’anciennes données.
+
+## 3 bis. Comparateur de croquettes et don
+
+**Comparateur de croquettes** (gratuit). Wouf ne contient **aucune base de produits** : il analyse la composition de l’étiquette saisie par l’utilisateur (ou importée depuis Open Pet Food Facts, base collaborative gratuite et incomplète) et la compare aux besoins de l’animal (âge, taille, race, activité, stérilisation, surpoids, allergies déclarées). Il calcule matière sèche, énergie, note d’adéquation sur 100, ration et coût par jour / mois. Le calcul est dans `nutrition.js` et testé (`tests/unit/nutrition.test.mjs`).
+- Les **repères** (protéines, graisses, fibres, énergie, calcium) sont des valeurs simplifiées inspirées de FEDIAF et AAFCO, dans `nutTargets`. **Faites-les relire par un vétérinaire nutritionniste** avant de communiquer largement dessus ; si vous les modifiez, adaptez les tests.
+- Wouf **ne recommande jamais une marque** : il classe les produits que l’utilisateur compare. N’ajoutez pas de « produits recommandés » sans données vérifiées et sans divulguer les éventuels liens d’affiliation.
+- L’importation Open Pet Food Facts dépend d’un service tiers : si l’adresse ou le format change, seule la fonction `fromOPFF` (croquettes.js) est à ajuster ; la saisie manuelle continue de fonctionner.
+
+**Don à la SPA.** Le bouton (accueil, menu Plus, page « Faire un don ») ouvre directement l’adresse `donation.url` de `config.js` dans un nouvel onglet. **Vérifiez l’adresse exacte de la page de don sur le site de l’association** et mettez-la dans `donation.url` (les tests exigent une adresse en https). Wouf n’encaisse rien et n’est pas affilié à l’association : n’utilisez ni son logo ni son nom comme caution sans son accord écrit. Pour soutenir une autre association, changez `name`, `url` et `text`.
+
+**Assurance.** Il n’y a plus de comparateur d’assurances (Wouf ne peut pas comparer de vraies offres en direct). La fiche de l’animal garde seulement l’assureur et la date de renouvellement pour le rappel.
 
 ## 4. Mise en vente : la checklist complète
 

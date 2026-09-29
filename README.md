@@ -76,7 +76,7 @@ Outil indépendant d'Infikit : il vit dans `freelance/` et n'utilise que son pro
 ### Gratuit, pour toujours
 Carnet de santé complet (vaccins, vermifuges, antipuces, consultations…) avec **rappels automatiques**, plan chiot / chaton, courbe de poids vs race, traitements du jour, journal de symptômes,
 dépenses, ration quotidienne, fiche d'urgence, affiche « animal perdu », **SOS** (vétérinaires ouverts et de garde autour de soi via OpenStreetMap, premiers secours, toxiques, contacts d'urgence),
-**comparateur d'assurance** (simulateur de coût réel + comparaison de vrais devis, aucun prix inventé), sauvegarde chiffrée, **connexion Google et sauvegarde automatique**,
+**comparateur de croquettes** (analyse de la composition réelle selon l'âge, la race, l'activité, le poids et les allergies), **bouton de don à la SPA**, sauvegarde chiffrée, **connexion Google et sauvegarde automatique**,
 **1 chien + 1 chat**, les principes d'éducation positive, **3 leçons chien et 2 leçons chat** complètes.
 
 ### Wouf Plus : 19,99 € **à vie** (paiement unique, lié au compte Google)
@@ -98,7 +98,8 @@ La publication (GitHub Pages) ne se fait que si les tests passent. Détails et p
 | `wouf/config.js` | **interrupteur de paiement**, prix affiché, fonctions Plus, infos légales, assistance |
 | `wouf/data.js`, `species.js` | races, vaccins, toxiques, premiers secours (chien et chat) |
 | `wouf/lessons*.js`, `educ.js` | contenu des leçons (chien : `lessons.js`, `lessons2.js`, `lessons3.js` ; chat : `lessons_cat*.js` ; programmes d'entraînement : `lessons_plans.js`) et écrans d'éducation |
-| `wouf/core.js`, `health.js`, `screens.js`, `sos.js`, `assurance.js`, `tracker.js`, `plusfeatures.js`, `extras.js`, `main.js` | logique et écrans |
+| `wouf/core.js`, `health.js`, `screens.js`, `sos.js`, `nutrition.js`, `croquettes.js`, `tracker.js`, `plusfeatures.js`, `extras.js`, `main.js` | logique et écrans |
+| `wouf/nutrition.js`, `croquettes.js` | comparateur de croquettes (calculs purs testés + écrans) |
 | `wouf/cloud.js` | connexion Google et synchronisation |
 | `wouf/business.js` | achat à vie, assistance, pages légales, nouveautés, mises à jour |
 | `wouf/billing-worker/` | relais Cloudflare (paiement Stripe, vérification d'identité, e-mails d'assistance) |
