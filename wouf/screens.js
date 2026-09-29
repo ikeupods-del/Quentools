@@ -137,6 +137,7 @@ ROUTES.home = function home() {
     ${dogWeights(d.id).length > 1 ? lineChart(dogWeights(d.id).map(w => ({ x: w.date, y: w.kg })), { band: idealBand(d), unit: 'kg', height: 140 }) : `<p class="mut">${lw ? 'Ajoutez une nouvelle pesée pour voir la courbe.' : 'Aucune pesée enregistrée.'}</p>`}
     ${ws ? `<p class="${ws.cls}">${ws.txt}</p>` : ''}</section>
 
+  <a class="card banner" href="#/triage"><b>🩺 Que faire ? Un symptôme à évaluer</b><span>Urgence, vétérinaire sous 24 h ou simple surveillance →</span></a>
   ${spOf(d).id === 'dog' ? `<a class="card banner" href="#/balade"><b>🦮 Balades ${allowed('tracker') ? '' : '<span class="pill plus">Plus</span>'}</b><span>${allowed('tracker') ? (() => { const m = walkMinutes(walksOn(d.id, today())), g = dailyGoal(d); return m + ' / ' + g + ' min aujourd’hui · lancer une balade →'; })() : 'Suivi GPS, tracé et objectif du jour →'}</span></a>` : ''}
   <section class="grid2">
     <button class="tile" data-act="add-event" data-type="vaccine"><span>💉</span>Vaccin</button>

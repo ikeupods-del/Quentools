@@ -167,6 +167,57 @@ test('fonctions Plus verrouillées en formule gratuite (tracker, bilan, gardien,
   noErrors(b); await b.ctx.close();
 });
 
+/* ================= Que faire ? et météo ================= */
+test('triage : urgence, vétérinaire sous 24 h, surveillance, âge fragile, note au journal', async () => {
+  const b = await boot({ hash: '#/triage' }), p = b.page;
+  await p.waitForSelector('[data-act=tri-pick]');
+  assert.ok((await p.$$('[data-act=tri-pick]')).length >= 10);
+  await p.click('[data-id=vomit]'); await p.waitForSelector('[data-act=tri-flag]');
+  assert.match(await text(p, '.insight'), /Surveillez/);               // rien coché : adulte en forme
+  await p.click('[data-k=a0]'); assert.match(await text(p, '.insight'), /Vétérinaire sous 24 h/);
+  await p.click('[data-k=r0]'); assert.match(await text(p, '.insight'), /tout de suite/);
+  assert.ok(await p.$('a[href="#/sos"].btn'), 'lien vers les vétérinaires de garde');
+  await p.click('[data-act=tri-note]'); assert.equal(await b.ev(() => S.journal.filter(j => j.kind === 'symptom' && j.sev === '3').length), 1);
+  // chiot : le seuil d'alerte est abaissé
+  const r = await b.ev(() => { const pup = { name: 'P', species: 'dog', breed: 'Labrador', birth: new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10) }, sym = TRIAGE.find(s => s.id === 'diarrhea');
+    return { none: triageResult(sym, {}, pup).lvl, amber: triageResult(sym, { a0: true }, pup).lvl, adultNone: triageResult(sym, {}, { name: 'A', species: 'dog', breed: 'Labrador', birth: '2020-01-01' }).lvl }; });
+  assert.deepEqual(r, { none: 'amber', amber: 'red', adultNone: 'green' });
+  // chaque symptôme : au moins un signe d'urgence, texte de surveillance, pas de « chien » codé en dur pour un chat
+  assert.ok(await b.ev(() => TRIAGE.every(s => s.red.length && s.watch && s.label)));
+  noErrors(b); await b.ctx.close();
+});
+
+test('météo balade : seuils selon la race et l’âge, meilleures heures, données simulées, erreur réseau', async () => {
+  const mk = (hot) => { const h = { time: [], apparent_temperature: [], precipitation_probability: [], weather_code: [], is_day: [] }, t0 = new Date(); t0.setMinutes(0, 0, 0);
+    for (let i = 0; i < 48; i++) { const d = new Date(t0.getTime() + i * 36e5), H = d.getHours(); h.time.push(new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16)); h.apparent_temperature.push(hot ? (H >= 11 && H <= 19 ? 33 : 18) : 15); h.precipitation_probability.push(0); h.weather_code.push(0); h.is_day.push(H >= 7 && H <= 21 ? 1 : 0); }
+    return { current: { time: h.time[0], temperature_2m: hot ? 33 : 15, apparent_temperature: hot ? 33 : 15, weather_code: 0 }, hourly: h }; };
+  const b = await boot({ geo: true, hash: '#/meteo', data: seed({ dogs: [dogRec({ breed: 'Bouledogue Français' })] }) }), p = b.page;
+  await p.route(/open-meteo/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(mk(true)) }));
+  await p.waitForSelector('[data-act=meteo-go]'); await p.click('[data-act=meteo-go]'); await p.waitForSelector('.insight');
+  assert.match(await text(p, '.insight'), /33 °C.*Trop chaud/); assert.match(await text(p, '#view'), /museau court/);
+  assert.ok(await p.$('.hours .hr'), 'grille horaire'); assert.match(await text(p, '#view'), /Meilleures heures/);
+  const r = await b.ev(() => { const lab = { name: 'L', species: 'dog', breed: 'Labrador', birth: '2020-01-01' }, bull = { name: 'B', species: 'dog', breed: 'Bulldog Anglais', birth: '2020-01-01' };
+    return [walkRisk(22, lab).lvl, walkRisk(22, bull).lvl, walkRisk(27, lab).lvl, walkRisk(27, bull).lvl, walkRisk(31, lab).lvl, walkRisk(15, lab, { storm: true }).lvl, walkRisk(15, lab, { rain: 90 }).lvl, walkRisk(-5, { name: 'x', species: 'dog', breed: 'Chihuahua', birth: '2020-01-01' }).lvl]; });
+  assert.deepEqual(r, ['ok', 'warn', 'warn', 'bad', 'bad', 'bad', 'warn', 'bad']);
+  await p.unroute(/open-meteo/); await p.route(/open-meteo/, r => r.abort());
+  await p.click('[data-act=meteo-go]'); await p.waitForSelector('.warnbox'); assert.match(await text(p, '.warnbox'), /indisponible/);
+  noErrors(b); await b.ctx.close();
+  const f = await boot({ query: '?preview=free', hash: '#/meteo' }); await f.page.waitForSelector('[data-act=paywall]'); noErrors(f); await f.ctx.close();
+});
+
+test('recherche globale : aliments toxiques, leçons, carnet, journal, documents', async () => {
+  const data = seed({ events: [{ id: 'e1', dogId: 'd1', type: 'vaccine', title: 'Rage annuelle', date: '2026-01-10', next: '2027-01-10' }], journal: [{ id: 'j1', dogId: 'd1', date: '2026-02-01', kind: 'symptom', sev: '1', note: 'Boite après la balade' }], docs: [{ id: 'x1', dogId: 'd1', kind: 'rx', title: 'Ordonnance antibiotique', date: '2026-02-02' }] });
+  const b = await boot({ data, hash: '#/recherche' }), p = b.page;
+  await p.waitForSelector('#gs-q'); assert.match(await text(p, '#gs-res'), /Tapez au moins/);
+  await p.fill('#gs-q', 'chocolat'); assert.match(await text(p, '#gs-res'), /Aliments et produits dangereux/);
+  await p.fill('#gs-q', 'rage'); assert.match(await text(p, '#gs-res'), /Rage annuelle/);
+  await p.fill('#gs-q', 'boite'); assert.match(await text(p, '#gs-res'), /Journal de santé/);
+  await p.fill('#gs-q', 'ordonnance'); assert.match(await text(p, '#gs-res'), /Documents/);
+  await p.fill('#gs-q', 'vomissement'); assert.match(await text(p, '#gs-res'), /Que faire/);
+  await p.fill('#gs-q', 'zzzzqq'); assert.match(await text(p, '#gs-res'), /Aucun résultat/);
+  noErrors(b); await b.ctx.close();
+});
+
 /* ================= 7. Achat à vie (relais simulé) ================= */
 test('achat à vie : connexion Google requise, consentement, paiement, retour, activation, remboursement', async () => {
   const b = await boot({ query: '?preview=none', hash: '#/abo' }), p = b.page; let seen = {};

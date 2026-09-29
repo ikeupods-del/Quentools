@@ -15,6 +15,9 @@ ROUTES.plus = function plusMenu() {
   const items = [
     ['#/educ', '🎓', 'Éducation', 'Leçons, séances guidées, programmes'],
     ['#/balade', '🦮', 'Balades GPS', 'Distance, tracé, objectif du jour' + (allowed('tracker') ? '' : ' · Plus')],
+    ['#/recherche', '🔎', 'Rechercher', 'Aliments, leçons, carnet, journal, documents'],
+    ['#/triage', '🩺', 'Que faire ? (symptômes)', 'Urgence, vétérinaire sous 24 h ou surveillance'],
+    ['#/meteo', '🌦️', 'Météo balade', 'Chaleur, froid, meilleures heures' + (allowed('weather') ? '' : ' · Plus')],
     ['#/bilan', '🧠', 'Bilan santé', 'Conseils personnalisés' + (allowed('bilan') ? '' : ' · Plus')],
     ['#/gardien', '🧳', 'Fiche gardien', 'Pour la personne qui garde votre animal' + (allowed('sitter') ? '' : ' · Plus')],
     ['#/croquettes', '🥣', 'Comparateur de croquettes', 'Le meilleur choix selon âge, race et activité'],

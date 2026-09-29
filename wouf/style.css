@@ -141,3 +141,5 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-off
 .reco{border-color:color-mix(in srgb,var(--pri) 40%,var(--line));background:linear-gradient(135deg,var(--soft),var(--card))}.reco-tag{font-size:.8rem;font-weight:800;color:var(--priD);text-transform:uppercase;letter-spacing:.04em}.reco h2{font-size:1.25rem;margin:.2rem 0 .3rem}
 .reco-rows{display:grid;gap:8px;margin:10px 0}.reco-rows>div{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 12px}.reco-rows span{font-size:1.3rem}.reco-rows p{margin:0}.reco-rows b{display:block;font-size:.8rem;color:var(--mut)}
 .avoid li::marker{color:var(--bad)}#sugg{margin-top:10px}
+
+.hours{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.hr{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:14px;background:var(--soft);border-bottom:4px solid var(--ok)}.hr.warn{border-bottom-color:var(--warn)}.hr.bad{border-bottom-color:var(--bad)}.hr span{font-size:1.3rem}.hr small{color:var(--mut)}
