@@ -61,10 +61,10 @@ ROUTES.educ = function educ() {
   const all = lessonsFor(d), free = all.filter(l => l.free), paid = all.filter(l => !l.free), progs = programsFor(d), pst = id => ((((S.edu || {})[d.id] || {})._progs || {})[id]) || null;
   const badges = BADGES.map(([i, n, f]) => ({ i, n, on: f(st, d) }));
   return `<div class="page-h"><h1>🎓 Éducation</h1></div>
-  <section class="card edu-hero">${(() => { const xp = xpOf(d), lv = levelOf(xp), td = todaySessions(d); return `<div class="lvl"><span class="lvl-n">${lv.n}</span><span class="grow"><b>${esc(lv.name)}</b><small>${xp} XP · encore ${lv.hi - xp} XP pour le niveau ${lv.n + 1}</small><span class="ubar"><i style="width:${lv.pct}%"></i></span></span></div>
+  <section class="card edu-hero">${(() => { const xp = xpOf(d), lv = levelOf(xp), td = todaySessions(d); return `<div class="lvl"><span class="lvl-n">${lv.n}</span><span class="grow"><b>${esc(lv.name)}</b><small>${xp} 🦴 os gagnés · encore ${lv.hi - xp} 🦴 pour le niveau ${lv.n + 1}</small><span class="ubar"><i style="width:${lv.pct}%"></i></span></span></div>
     <div class="edu-stats"><div><b>🔥 ${st.streak}</b><small>jours d’affilée</small></div><div><b>${td ? '✅' : '🎯'} ${td}/1</b><small>objectif du jour</small></div><div><b>${st.done}/${all.length}</b><small>leçons acquises</small></div></div>`; })()}
     ${nx ? `<div class="next"><small>Prochaine leçon conseillée pour ${esc(d.name)}</small><b>${nx.icon} ${esc(nx.title)}</b><div class="btn-row"><a class="btn primary" href="#/seance?id=${nx.id}">▶ Démarrer une séance</a><a class="btn" href="#/lecon?id=${nx.id}">Voir la leçon</a></div></div>` : '<p class="okmsg">Bravo, toutes les leçons disponibles sont acquises !</p>'}</section>
-  <section class="card"><h2>🗺️ Mon parcours</h2><p class="mut small">+${XP_SESSION} XP par séance · +${XP_LESSON + XP_QUIZ} XP par leçon validée au quiz</p>${pathHTML(d)}</section>
+  <section class="card"><h2>🐾 Mon parcours</h2><p class="mut small">Gagnez des os : +${XP_SESSION} 🦴 par séance, +${XP_LESSON + XP_QUIZ} 🦴 par leçon validée au quiz.</p>${pathHTML(d)}</section>
   <a class="card banner" href="#/principes"><b>📖 Les ${principlesFor(d).length} principes d’une bonne éducation</b><span>${spOf(d).id === 'cat' ? 'Environnement, jeu, respect du chat… à lire d’abord (gratuit) →' : 'Renforcement positif, marqueur, règle des 80 %… à lire d’abord (gratuit) →'}</span></a>
   <section class="card"><div class="card-h"><h2>Leçons gratuites</h2></div><div class="list">${free.map(l => lessonCard(d, l)).join('')}</div></section>
   <section class="card"><div class="card-h"><h2>Leçons Wouf Plus</h2>${plus() ? '<span class="pill ok">Débloquées</span>' : '<span class="pill plus">Plus</span>'}</div>
@@ -147,7 +147,7 @@ ACT['s-end'] = () => {
   const p = eduSet(d.id, l.id); p.sessions.push({ d: today(), t: Date.now(), min, ok: SEANCE.ok, n });
   let msg = 'Séance enregistrée ✓';
   if (n >= 10 && SEANCE.ok / n >= 0.8) { p.steps[SEANCE.step] = 1; msg = 'Étape validée 🎉'; if (SEANCE.step === l.steps.length - 1) msg = 'Dernière étape validée ! Passez le test de validation.'; }
-  save(); SEANCE.id = null; clearInterval(SEANCE.iv); toast(msg + ` · +${XP_SESSION} XP${todaySessions(d) === 1 ? ' · objectif du jour atteint 🎯' : ''}`); location.hash = '#/lecon?id=' + l.id;
+  save(); SEANCE.id = null; clearInterval(SEANCE.iv); toast(msg + ` · +${XP_SESSION} 🦴${todaySessions(d) === 1 ? ' · objectif du jour atteint 🎯' : ''}`); location.hash = '#/lecon?id=' + l.id;
 };
 
 /* ---------- Programmes guidés (Plus) ---------- */

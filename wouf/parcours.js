@@ -1,5 +1,5 @@
 'use strict';
-/* Wouf Éducation — parcours ludique : unités, étapes à débloquer, points d'expérience (XP), niveaux,
+/* Wouf Éducation — parcours en empreintes de pattes : unités, étapes à débloquer, os à gagner (points), niveaux,
    objectif du jour, mini-quiz de validation, célébrations, et offre récompense (Wouf Plus à prix réduit)
    réservée aux personnes qui ont terminé TOUTES les leçons gratuites de leurs animaux. */
 
@@ -30,10 +30,12 @@ const PARC = { open: null };
 function pathHTML(d) {
   const units = unitsFor(d), cur = units.find(u => u.ls.some(l => !eduGet(d.id, l.id).done)) || units[units.length - 1];
   const openId = PARC.open || cur.id;
+  /* Chaque étape est une empreinte de patte ; elles alternent à gauche et à droite comme une vraie marche. */
+  const PAW = '<svg viewBox="0 0 100 100" class="pawsvg" aria-hidden="true"><ellipse cx="21" cy="40" rx="9" ry="11.5" transform="rotate(-24 21 40)"/><ellipse cx="39" cy="22" rx="9.5" ry="12.5" transform="rotate(-8 39 22)"/><ellipse cx="61" cy="22" rx="9.5" ry="12.5" transform="rotate(8 61 22)"/><ellipse cx="79" cy="40" rx="9" ry="11.5" transform="rotate(24 79 40)"/><path d="M50 44c-17 0-33 15-33 30 0 11 9 16 18 16 6 0 10-2 15-2s9 2 15 2c9 0 18-5 18-16 0-15-16-30-33-30z"/></svg>';
   const node = (l, i, u) => {
     const p = eduGet(d.id, l.id), lock = !lessonUnlocked(l), isCur = !lock && !p.done && u.ls.find(x => !eduGet(d.id, x.id).done && lessonUnlocked(x)) === l;
-    const cls = p.done ? 'done' : lock ? 'lock' : isCur ? 'cur' : 'open', off = [0, 1, 2, 1, 0, -1, -2, -1][i % 8];
-    return `<a class="pnode ${cls}" style="--off:${off}" href="#/lecon?id=${l.id}" aria-label="${esc(l.title)}"><span class="pdot">${p.done ? '✓' : lock ? '🔒' : l.icon}</span>${isCur ? '<span class="pgo">Commencer</span>' : ''}<small>${esc(l.title.split(/[:(]/)[0].trim())}</small></a>`;
+    const cls = p.done ? 'done' : lock ? 'lock' : isCur ? 'cur' : 'open', side = i % 2 ? 'r' : 'l';
+    return `<a class="pnode ${cls} ${side}" href="#/lecon?id=${l.id}" aria-label="${esc(l.title)}${p.done ? ' (acquise)' : lock ? ' (Wouf Plus)' : ''}"><span class="paw">${PAW}<span class="pdot">${p.done ? '✓' : lock ? '🔒' : l.icon}</span></span>${isCur ? '<span class="pgo">C’est parti !</span>' : ''}<small>${esc(l.title.split(/[:(]/)[0].trim())}</small></a>`;
   };
   return units.map(u => {
     const done = u.ls.filter(l => eduGet(d.id, l.id).done).length, full = done === u.ls.length;
@@ -59,7 +61,7 @@ const QUIZ = { id: null, qs: [], i: 0, score: 0, picked: null, run: 0, salt: 0 }
 function quizHTML() {
   const l = lessonOf(QUIZ.id), q = QUIZ.qs[QUIZ.i];
   if (!q) return `<div class="sheet-head"><h2>${QUIZ.score === QUIZ.qs.length ? '🏆 Sans faute !' : '💪 Presque !'}</h2><button class="x" data-close>✕</button></div>
-    ${quizMood()}<div class="quiz-end"><div class="big-n">${QUIZ.score}/${QUIZ.qs.length}</div>${QUIZ.score === QUIZ.qs.length ? `<p>Leçon validée : <b>+${XP_LESSON + XP_QUIZ} XP</b></p><button class="btn primary big" data-act="quiz-finish">Continuer</button>` : `<p>Il faut 3 bonnes réponses pour valider « ${esc(l.title)} ». Relisez les étapes, puis réessayez.</p><button class="btn primary big" data-act="quiz-retry">Réessayer</button>`}</div>`;
+    ${quizMood()}<div class="quiz-end"><div class="big-n">${QUIZ.score}/${QUIZ.qs.length}</div>${QUIZ.score === QUIZ.qs.length ? `<p>Leçon validée : <b>+${XP_LESSON + XP_QUIZ} 🦴</b></p><button class="btn primary big" data-act="quiz-finish">Continuer</button>` : `<p>Il faut 3 bonnes réponses pour valider « ${esc(l.title)} ». Relisez les étapes, puis réessayez.</p><button class="btn primary big" data-act="quiz-retry">Réessayer</button>`}</div>`;
   return `<div class="sheet-head"><h2>${l.icon} Quiz · ${QUIZ.i + 1}/${QUIZ.qs.length}<small class="quiz-lesson">${esc(l.title)}</small></h2><button class="x" data-close>✕</button></div>
     <div class="qbar">${QUIZ.qs.map((_, k) => `<i class="${k < QUIZ.i ? 'on' : ''}"></i>`).join('')}</div>
     ${quizMood()}<p class="quiz-q">${esc(q.q)}</p><div class="quiz-opts">${q.opts.map((o, k) => `<button class="qopt ${QUIZ.picked == null ? '' : k === q.ok ? 'good' : k === QUIZ.picked ? 'bad' : 'dim'}" data-act="quiz-pick" data-k="${k}" ${QUIZ.picked == null ? '' : 'disabled'}>${esc(o)}</button>`).join('')}</div>
@@ -79,7 +81,7 @@ ACT['quiz-finish'] = () => {
   const d = dog(), l = lessonOf(QUIZ.id), p = eduSet(d.id, l.id), before = levelOf(xpOf(d)).n;
   p.done = true; p.quiz = 3; l.steps.forEach((_, i) => { p.steps[i] = 1; }); save(); closeSheet();
   const lv = levelOf(xpOf(d));
-  celebrate.pet = l.sp === 'cat' ? 'cat' : 'dog'; celebrate(`${l.icon} Leçon acquise !`, `+${XP_LESSON + XP_QUIZ} XP${lv.n > before ? ` · Niveau ${lv.n} : ${lv.name} 🎉` : ''}`, () => rewardCheck());
+  celebrate.pet = l.sp === 'cat' ? 'cat' : 'dog'; celebrate(`${l.icon} Leçon acquise !`, `+${XP_LESSON + XP_QUIZ} 🦴${lv.n > before ? ` · Niveau ${lv.n} : ${lv.name} 🎉` : ''}`, () => rewardCheck());
   render(true);
 };
 
