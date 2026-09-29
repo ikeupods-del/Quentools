@@ -14,7 +14,7 @@ for (const f of jsFiles) { try { new vm.Script(read(f), { filename: f }); passes
 
 section('Chargement des données');
 const ctx = vm.createContext({ window: {}, console });
-for (const f of ['config.js', 'data.js', 'species.js', 'lessons.js', 'lessons2.js', 'lessons_cat.js', 'lessons3.js', 'lessons_cat2.js', 'lessons4.js', 'lessons_cat3.js', 'lessons5.js', 'lessons_cat4.js', 'lessons_plans.js']) vm.runInContext(read(f), ctx, { filename: f });
+for (const f of ['config.js', 'data.js', 'species.js', 'lessons.js', 'lessons2.js', 'lessons_cat.js', 'lessons3.js', 'lessons_cat2.js', 'lessons4.js', 'lessons_cat3.js', 'lessons5.js', 'lessons_cat4.js', 'lessons6.js', 'lessons7.js', 'lessons_cat5.js', 'lessons_plans.js']) vm.runInContext(read(f), ctx, { filename: f });
 const get = e => vm.runInContext(e, ctx);
 const LESSONS = get('LESSONS'), PROGRAMS = get('PROGRAMS'), BREEDS = get('BREEDS.concat(CAT_BREEDS)'), CFG = get('window.WOUF_CONFIG');
 
@@ -36,7 +36,8 @@ for (const l of LESSONS) {
   ok(l.why.length > 80 && l.goal.length > 30, `${l.id} : textes trop courts`);
 }
 const dog = LESSONS.filter(l => (l.sp || 'dog') === 'dog'), cat = LESSONS.filter(l => l.sp === 'cat');
-ok(dog.filter(l => l.free).length === 3, `chien : 3 leçons gratuites attendues (${dog.filter(l => l.free).length})`);
+ok(LESSONS.filter(l => l.free).length === 10, `10 leçons gratuites attendues au total (${LESSONS.filter(l => l.free).length})`);
+ok(LESSONS.filter(l => !l.free).length >= 100, `au moins 100 leçons Plus attendues (${LESSONS.filter(l => !l.free).length})`);
 ok(dog.filter(l => !l.free).length >= 30, `chien : au moins 30 leçons Plus (${dog.filter(l => !l.free).length})`);
 ok(cat.filter(l => l.free).length >= 2 && cat.filter(l => !l.free).length >= 10, 'chat : au moins 2 leçons gratuites et 10 Plus');
 console.log(`  ${dog.length} leçons chien (${dog.filter(l => !l.free).length} Plus), ${cat.length} leçons chat (${cat.filter(l => !l.free).length} Plus)`);
@@ -60,6 +61,11 @@ ok(B && typeof B.enabled === 'boolean', 'billing.enabled doit être un booléen'
 ok(B.plans && B.plans.length === 1 && /\d/.test(B.plans[0].price), 'un plan à paiement unique avec un prix affiché est attendu');
 const bizFeatures = (read('business.js').match(/const FEATURES = \{([\s\S]*?)\n\};/) || [, ''])[1];
 for (const f of B.premium) ok(new RegExp('\\b' + f + ':').test(bizFeatures), `fonction Plus « ${f} » sans description dans business.js (FEATURES)`);
+const RW = B.rewardOffer || {};
+ok(!RW.enabled || /\d/.test(RW.price || ''), 'billing.rewardOffer.enabled = true mais aucun prix affiché');
+{ const wf = read('billing-worker/worker.js').match(/const FREE_LESSONS = (\{[^\n]*\});/), app = { dog: dog.filter(l => l.free).map(l => l.id), cat: cat.filter(l => l.free).map(l => l.id) };
+  const w = wf ? Function('return ' + wf[1])() : null;
+  ok(w && ['dog', 'cat'].every(sp => JSON.stringify([...w[sp]].sort()) === JSON.stringify([...app[sp]].sort())), 'billing-worker/worker.js : FREE_LESSONS doit reprendre exactement les leçons gratuites de l’app (offre récompense)'); }
 const cl = read('business.js').match(/const CHANGELOG = \[\s*\{ v: '([\d.]+)'/);
 ok(cl && cl[1] === CFG.version, `version de config.js (${CFG.version}) ≠ dernière entrée du CHANGELOG (${cl && cl[1]})`);
 ok(read('package.json').includes(`"version": "${CFG.version}"`), 'package.json : version différente de config.js');

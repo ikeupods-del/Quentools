@@ -38,22 +38,41 @@ const BADGES = [
 ];
 
 /* ---------- Écran Éducation ---------- */
-ROUTES.educ = function educ() {
-  const d = dog(), st = eduStats(d), nx = nextLesson(d);
-  const card = l => {
+const EDU = { q: '', cat: '' };
+const eduCats = list => [...new Set(list.map(l => l.cat))].sort((a, b) => a.localeCompare(b, 'fr'));
+function lessonCard(d, l) {
     const stt = lessonState(d, l), lock = !lessonUnlocked(l), [lab, cls] = STATE_LABEL[stt];
     return `<a class="row lesson" href="#/lecon?id=${l.id}"><span class="ico">${l.icon}</span><span class="grow"><b>${esc(l.title)}</b><small>${esc(l.cat)} · ${esc(l.level)} · dès ${l.from} sem.</small></span>${lock ? '<span class="pill plus">Plus</span>' : lab ? `<span class="pill ${cls}">${lab}</span>` : '<span class="chev">›</span>'}</a>`;
-  };
+}
+/* Recherche sans accents dans le titre, la catégorie, l'objectif et le « pourquoi ». */
+function eduFilter(list, q, cat) {
+  const n = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''), words = n(q).split(/\s+/).filter(Boolean);
+  return list.filter(l => (!cat || l.cat === cat) && words.every(w => n(l.title + ' ' + l.cat + ' ' + l.goal + ' ' + l.why).includes(w)));
+}
+function eduListHTML(d) {
+  const paid = lessonsFor(d).filter(l => !l.free), r = eduFilter(paid, EDU.q, EDU.cat);
+  return r.map(l => lessonCard(d, l)).join('') || '<p class="empty">Aucune leçon ne correspond. Essayez un autre mot.</p>';
+}
+ACT['edu-cat'] = ({ c }) => { EDU.cat = c; render(true); };
+document.addEventListener('input', e => { if (e.target.id === 'edu-q') { EDU.q = e.target.value; const el = $('#edu-list'); if (el) el.innerHTML = eduListHTML(dog()); } });
+
+ROUTES.educ = function educ() {
+  const d = dog(), st = eduStats(d), nx = nextLesson(d);
   const all = lessonsFor(d), free = all.filter(l => l.free), paid = all.filter(l => !l.free), progs = programsFor(d), pst = id => ((((S.edu || {})[d.id] || {})._progs || {})[id]) || null;
   const badges = BADGES.map(([i, n, f]) => ({ i, n, on: f(st, d) }));
   return `<div class="page-h"><h1>🎓 Éducation</h1></div>
-  <section class="card edu-hero"><div class="edu-stats"><div><b>${st.streak}</b><small>jours d’affilée</small></div><div><b>${st.week}</b><small>séances / 7 j</small></div><div><b>${st.done}/${all.length}</b><small>leçons acquises</small></div></div>
+  <section class="card edu-hero">${(() => { const xp = xpOf(d), lv = levelOf(xp), td = todaySessions(d); return `<div class="lvl"><span class="lvl-n">${lv.n}</span><span class="grow"><b>${esc(lv.name)}</b><small>${xp} XP · encore ${lv.hi - xp} XP pour le niveau ${lv.n + 1}</small><span class="ubar"><i style="width:${lv.pct}%"></i></span></span></div>
+    <div class="edu-stats"><div><b>🔥 ${st.streak}</b><small>jours d’affilée</small></div><div><b>${td ? '✅' : '🎯'} ${td}/1</b><small>objectif du jour</small></div><div><b>${st.done}/${all.length}</b><small>leçons acquises</small></div></div>`; })()}
     ${nx ? `<div class="next"><small>Prochaine leçon conseillée pour ${esc(d.name)}</small><b>${nx.icon} ${esc(nx.title)}</b><div class="btn-row"><a class="btn primary" href="#/seance?id=${nx.id}">▶ Démarrer une séance</a><a class="btn" href="#/lecon?id=${nx.id}">Voir la leçon</a></div></div>` : '<p class="okmsg">Bravo, toutes les leçons disponibles sont acquises !</p>'}</section>
+  <section class="card"><h2>🗺️ Mon parcours</h2><p class="mut small">+${XP_SESSION} XP par séance · +${XP_LESSON + XP_QUIZ} XP par leçon validée au quiz</p>${pathHTML(d)}</section>
   <a class="card banner" href="#/principes"><b>📖 Les ${principlesFor(d).length} principes d’une bonne éducation</b><span>${spOf(d).id === 'cat' ? 'Environnement, jeu, respect du chat… à lire d’abord (gratuit) →' : 'Renforcement positif, marqueur, règle des 80 %… à lire d’abord (gratuit) →'}</span></a>
-  <section class="card"><div class="card-h"><h2>Leçons gratuites</h2></div><div class="list">${free.map(card).join('')}</div></section>
+  <section class="card"><div class="card-h"><h2>Leçons gratuites</h2></div><div class="list">${free.map(l => lessonCard(d, l)).join('')}</div></section>
   <section class="card"><div class="card-h"><h2>Leçons Wouf Plus</h2>${plus() ? '<span class="pill ok">Débloquées</span>' : '<span class="pill plus">Plus</span>'}</div>
-    <p class="mut small">${paid.length} leçons détaillées : étapes progressives, programme d’entraînement, critères de réussite, erreurs fréquentes, dépannage. Nouvelles leçons ajoutées régulièrement.</p>${plus() && !BILL.enabled ? '' : (subActive() ? '' : `<button class="btn primary big cta-plus" data-act="subscribe">${ctaLabel()}</button>`)}<div class="list">${paid.map(card).join('')}</div></section>
-  ${progs.map(prog => `<a class="card banner" href="#/programme?id=${prog.id}"><b>${prog.icon} ${esc(prog.title)} ${plus() ? '' : '<span class="pill plus">Plus</span>'}</b><span>${pst(prog.id) ? 'Programme en cours' : esc(prog.sub)} →</span></a>`).join('')}
+    <p class="mut small">${paid.length} leçons détaillées : étapes progressives, programme d’entraînement, critères de réussite, erreurs fréquentes, dépannage. Nouvelles leçons ajoutées régulièrement.</p>${plus() && !BILL.enabled ? '' : (subActive() ? '' : `<button class="btn primary big cta-plus" data-act="subscribe">${ctaLabel()}</button>`)}
+    <input id="edu-q" class="search" type="search" placeholder="Chercher une leçon : rappel, griffes, bébé, peur…" value="${esc(EDU.q)}" autocomplete="off">
+    <div class="chips scroll">${[['', 'Toutes (' + paid.length + ')']].concat(eduCats(paid).map(c => [c, c + ' (' + paid.filter(l => l.cat === c).length + ')'])).map(([c, t]) => `<button class="chip ${EDU.cat === c ? 'on' : ''}" data-act="edu-cat" data-c="${esc(c)}">${esc(t)}</button>`).join('')}</div>
+    <div class="list" id="edu-list">${eduListHTML(d)}</div></section>
+  <section class="card"><div class="card-h"><h2>Programmes guidés</h2>${plus() ? '' : '<span class="pill plus">Plus</span>'}</div><div class="list">${progs.map(prog => `<a class="row" href="#/programme?id=${prog.id}"><span class="ico">${prog.icon}</span><span class="grow"><b>${esc(prog.title)}</b><small>${pst(prog.id) ? '▶ Programme en cours' : esc(prog.sub)}</small></span><span class="chev">›</span></a>`).join('')}</div></section>
   <section class="card"><h2>Badges</h2><div class="badges">${badges.map(b => `<div class="badge ${b.on ? 'on' : ''}"><span>${b.i}</span><small>${esc(b.n)}</small></div>`).join('')}</div></section>
   ${st.ss.length ? `<section class="card"><h2>Dernières séances</h2>${st.ss.slice(0, 6).map(s => { const l = lessonOf(s.lid) || {}; return `<div class="row"><span class="ico">${l.icon || '🎓'}</span><span class="grow"><b>${esc(l.title || s.lid)}</b><small>${fmtDate(s.d)} · ${s.min || 1} min${s.n ? ` · ${s.ok}/${s.n} réussites` : ''}</small></span>${s.n ? `<span class="pill ${s.ok / s.n >= 0.8 ? 'ok' : s.ok / s.n >= 0.6 ? 'warn' : ''}">${Math.round(100 * s.ok / s.n)} %</span>` : ''}</div>`; }).join('')}</section>` : ''}
   <p class="mut small center">Méthode positive, sans aucune contrainte physique. Un problème de comportement ? Consultez un vétérinaire comportementaliste.</p>`;
@@ -77,7 +96,7 @@ ROUTES.lecon = function lecon() {
     <ol class="bul">${l.steps.map(s => `<li>${esc(s.t)}</li>`).join('')}</ol>${l.plan ? `<p class="mut small">Inclus : programme d’entraînement en ${l.plan.length} étapes, erreurs fréquentes, dépannage, test de validation.</p>` : ''}<button class="btn primary big" data-act="subscribe">${ctaLabel()}</button></section>`;
   return head + `${goal}
   <section class="card"><div class="card-h"><h2>Progression</h2><span class="mut">${tick}/${l.steps.length} étapes</span></div><div class="bar"><i style="width:${Math.round(100 * tick / l.steps.length)}%"></i></div>
-    <div class="btn-row"><a class="btn primary" href="#/seance?id=${l.id}">▶ Démarrer une séance</a><button class="btn ${p.done ? 'ok-fill' : ''}" data-act="lesson-done" data-id="${l.id}">${p.done ? '✓ Acquis (annuler)' : 'Marquer comme acquis'}</button></div></section>
+    <div class="btn-row"><a class="btn primary" href="#/seance?id=${l.id}">▶ Démarrer une séance</a><button class="btn ${p.done ? 'ok-fill' : ''}" data-act="lesson-done" data-id="${l.id}">${p.done ? '✓ Acquis (annuler)' : '✅ Valider la leçon (quiz)'}</button></div></section>
   <section class="card"><h2>💡 Pourquoi ça marche</h2><p>${esc(l.why)}</p><h3>Matériel</h3><ul class="bul">${l.need.map(n => `<li>${esc(n)}</li>`).join('')}</ul></section>
   <section class="card"><h2>Les étapes</h2>${l.steps.map((s, i) => `<div class="step ${p.steps[i] ? 'done' : ''}"><input type="checkbox" data-act="step-tick" data-id="${l.id}" data-i="${i}" ${p.steps[i] ? 'checked' : ''} aria-label="Étape ${i + 1} réussie"><details ${i === 0 || (p.steps[i - 1] && !p.steps[i]) ? 'open' : ''}><summary><b>Étape ${i + 1} · ${esc(s.t)}</b>${s.min ? `<small> ~${s.min} min</small>` : ''}</summary><p>${esc(s.b)}</p><p class="crit">✅ <b>Pour passer à la suite :</b> ${esc(s.crit)}</p></details></div>`).join('')}</section>
   ${l.plan ? `<section class="card"><h2>📅 Programme d’entraînement</h2>${l.plan.map(([w, t]) => `<div class="row plan-row"><span class="plan-w">${esc(w)}</span><span class="grow">${esc(t)}</span></div>`).join('')}</section>` : ''}
@@ -87,7 +106,8 @@ ROUTES.lecon = function lecon() {
   ${l.next && l.next.length ? `<section class="card"><h2>🚀 Pour aller plus loin</h2><ul class="bul">${l.next.map(n => `<li>${esc(n)}</li>`).join('')}</ul></section>` : ''}`;
 };
 ACT['step-tick'] = ({ id, i }, el) => { const p = eduSet(dog().id, id); if (el.checked) p.steps[i] = 1; else delete p.steps[i]; save(); render(true); };
-ACT['lesson-done'] = ({ id }) => { const p = eduSet(dog().id, id); p.done = !p.done; if (p.done) { const l = lessonOf(id); l.steps.forEach((_, i) => { p.steps[i] = 1; }); toast('Leçon acquise 🎓'); } save(); render(true); };
+/* Valider = réussir le mini-quiz (3 questions) ; un second appui annule. */
+ACT['lesson-done'] = ({ id }) => { const p = eduGet(dog().id, id); if (!p.done) return quizOpen(id); const q = eduSet(dog().id, id); q.done = false; delete q.quiz; save(); render(true); };
 
 /* ---------- Séance guidée ---------- */
 const SEANCE = { id: null, step: 0, ok: 0, ko: 0, t0: 0, iv: null };
@@ -127,7 +147,7 @@ ACT['s-end'] = () => {
   const p = eduSet(d.id, l.id); p.sessions.push({ d: today(), t: Date.now(), min, ok: SEANCE.ok, n });
   let msg = 'Séance enregistrée ✓';
   if (n >= 10 && SEANCE.ok / n >= 0.8) { p.steps[SEANCE.step] = 1; msg = 'Étape validée 🎉'; if (SEANCE.step === l.steps.length - 1) msg = 'Dernière étape validée ! Passez le test de validation.'; }
-  save(); SEANCE.id = null; clearInterval(SEANCE.iv); toast(msg); location.hash = '#/lecon?id=' + l.id;
+  save(); SEANCE.id = null; clearInterval(SEANCE.iv); toast(msg + ` · +${XP_SESSION} XP${todaySessions(d) === 1 ? ' · objectif du jour atteint 🎯' : ''}`); location.hash = '#/lecon?id=' + l.id;
 };
 
 /* ---------- Programmes guidés (Plus) ---------- */

@@ -6,6 +6,8 @@
    Variables du Worker (Cloudflare → Workers → Settings → Variables) :
      STRIPE_SECRET_KEY   (secret)  clé secrète Stripe (sk_test_… puis sk_live_…)
      PRICE_LIFETIME      id du prix Stripe à paiement UNIQUE de 19,99 € (price_…)
+     PRICE_LIFETIME_REWARD (facultatif) id du prix Stripe réduit de l’offre récompense (9,99 €), accordé seulement si la
+                         progression sauvegardée du compte montre TOUTES les leçons gratuites terminées
      ALLOWED_ORIGIN      origines autorisées, séparées par des virgules. Ex. https://ikeupods-del.github.io
      FIREBASE_PROJECT_ID (facultatif) défaut : quentools-adca1
      RESEND_API_KEY      (secret, facultatif) envoi des e-mails d'assistance via Resend (resend.com)
@@ -13,7 +15,7 @@
      SUPPORT_FROM        expéditeur vérifié dans Resend (ex. Wouf <support@votre-domaine.fr>)
 
    Routes (toutes en JSON) :
-     POST /checkout {returnUrl}                    → {url}                       Authorization: Bearer <jeton Firebase>
+     POST /checkout {returnUrl, offer?:'lecons'}   → {url}                       Authorization: Bearer <jeton Firebase>
      GET  /status[?session_id=cs_…]                → {active, lifetime, plan, since}   Authorization: Bearer <jeton Firebase>
      POST /support {category,message,email,diagnostics} → {ok, priority}         jeton facultatif (donne la priorité si achat vérifié)
    Documentation : wouf/docs/MAINTENANCE.md */
@@ -66,18 +68,41 @@ async function paidFor(env, uid) {
   const pi = (res.data || []).find(p => p.latest_charge && typeof p.latest_charge === 'object' && !p.latest_charge.refunded && !p.latest_charge.disputed);
   return pi ? { active: true, lifetime: true, plan: 'lifetime', since: new Date(pi.created * 1000).toISOString() } : { active: false };
 }
+/* ---------- Offre récompense : lecture de la progression sauvegardée (Firestore, avec le jeton de l'utilisateur) ---------- */
+// Doit rester identique aux leçons « free: true » de l'app (le test `check` compare les deux listes).
+const FREE_LESSONS = { dog: ['marqueur', 'assis', 'proprete', 'coucher', 'rappel', 'laisse'], cat: ['c-litiere', 'c-griffoir', 'c-jeu', 'c-transport'] };
+function rewardEligible(st) {
+  const pets = (st && st.dogs) || [], sps = [...new Set(pets.map(p => p.species || 'dog'))];
+  if (!sps.length || sps.some(sp => !FREE_LESSONS[sp])) return false;
+  return sps.every(sp => pets.filter(p => (p.species || 'dog') === sp).some(p => FREE_LESSONS[sp].every(id => ((((st.edu || {})[p.id] || {})[id]) || {}).done)));
+}
+async function savedState(env, token, uid) {
+  const project = env.FIREBASE_PROJECT_ID || 'quentools-adca1', base = `https://firestore.googleapis.com/v1/projects/${project}/databases/(default)/documents/users/${uid}/apps/wouf/main/`;
+  const get = async id => { const r = await fetch(base + id, { headers: { Authorization: 'Bearer ' + token } }); if (!r.ok) throw new HttpError(403, 'Progression introuvable : connectez-vous et synchronisez Wouf, puis réessayez'); return (await r.json()).fields || {}; };
+  const n = parseInt(((await get('current')).n || {}).integerValue || '0', 10);
+  if (!(n >= 1 && n <= 40)) throw new HttpError(403, 'Progression introuvable : synchronisez Wouf, puis réessayez');
+  let text = ''; for (let i = 0; i < n; i++) text += (((await get('p' + i)).t) || {}).stringValue || '';
+  try { return JSON.parse(text); } catch (e) { throw new HttpError(403, 'Progression illisible : synchronisez Wouf, puis réessayez'); }
+}
 const goodReturn = (u, env) => { try { return origins(env).includes(new URL(u).origin); } catch (e) { return false; } };
 
 /* ---------- Routes ---------- */
 async function handle(req, env) {
   const url = new URL(req.url), path = url.pathname;
   if (path === '/checkout' && req.method === 'POST') {
-    const user = await authed(req, env), { returnUrl } = await req.json().catch(() => ({}));
-    if (!env.PRICE_LIFETIME || !goodReturn(returnUrl, env)) throw new HttpError(400, 'Requête invalide');
+    const user = await authed(req, env), { returnUrl, offer } = await req.json().catch(() => ({}));
+    if (!env.PRICE_LIFETIME || !goodReturn(returnUrl, env) || (offer !== undefined && offer !== 'lecons')) throw new HttpError(400, 'Requête invalide');
     if ((await paidFor(env, user.uid)).active) throw new HttpError(409, 'Wouf Plus est déjà actif sur ce compte');
-    const meta = { uid: user.uid, product: 'wouf-plus' };
+    let price = env.PRICE_LIFETIME;
+    if (offer === 'lecons') {
+      if (!env.PRICE_LIFETIME_REWARD) throw new HttpError(400, 'Offre indisponible');
+      const token = (req.headers.get('Authorization') || '').slice(7);
+      if (!rewardEligible(await savedState(env, token, user.uid))) throw new HttpError(403, 'Offre réservée aux comptes qui ont terminé toutes les leçons gratuites (synchronisez Wouf si c’est le cas)');
+      price = env.PRICE_LIFETIME_REWARD;
+    }
+    const meta = { uid: user.uid, product: 'wouf-plus', ...(offer === 'lecons' ? { offer: 'lecons' } : {}) };
     const s = await stripe(env, 'POST', '/checkout/sessions', {
-      mode: 'payment', line_items: { 0: { price: env.PRICE_LIFETIME, quantity: 1 } }, client_reference_id: user.uid, ...(user.email ? { customer_email: user.email } : {}),
+      mode: 'payment', line_items: { 0: { price, quantity: 1 } }, client_reference_id: user.uid, ...(user.email ? { customer_email: user.email } : {}),
       metadata: meta, payment_intent_data: { metadata: meta }, allow_promotion_codes: 'true', locale: 'fr',
       success_url: returnUrl + '?paid=1&session_id={CHECKOUT_SESSION_ID}', cancel_url: returnUrl + '#/abo'
     });

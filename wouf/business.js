@@ -10,6 +10,7 @@ const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free ==
 const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
 
 const CHANGELOG = [
+  { v: '1.9.0', date: '2026-09-29', items: ['🎓 110 leçons : 100 leçons Wouf Plus et 10 leçons gratuites (le coucher, le rappel, la marche en laisse, le jeu du chat et la caisse de transport deviennent gratuits). 33 nouvelles leçons détaillées : soins, médicaments, griffes, canicross, agility, langage du chien et du chat, fugues, chien sourd, convalescence, voyages…', '🗺️ Nouveau parcours façon Duolingo : unités par thème, étapes à débloquer, points d’expérience, niveaux, objectif du jour, série de jours et célébrations.', '✅ Chaque leçon se valide par un mini-quiz de 3 questions.', '🏅 Offre récompense : terminez toutes les leçons gratuites et Wouf Plus passe à 9,99 € à vie au lieu de 19,99 €.', '🔎 Recherche et filtres par thème dans l’écran Éducation, 6 nouveaux programmes guidés.'] },
   { v: '1.8.0', date: '2026-09-29', items: ['🏷️ Nouveau : générateur de noms pour chien et chat (styles, sexe, initiale), avec la lettre de l’année des pedigrees LOF/LOOF calculée automatiquement, test d’un nom (facile à retenir ? ressemble-t-il à un ordre ?), écoute du nom et favoris.', '🏠 Accueil réorganisé : « À faire » juste après la fiche, une seule invitation à la fois, raccourcis vers « Que faire ? », la météo et les noms.', '🗂️ Menu Plus classé par rubriques (Santé, Éduquer et bouger, Alimentation, Pratique, Wouf) avec 4 accès rapides.', '🎓 11 nouvelles leçons Wouf Plus : chien (vétérinaire sans stress, baignade, premières nuits du chiot, jeux d’intelligence, arrivée d’un bébé, chien craintif, deux chiens) et chat (bébé, hydratation, surpoids, sorties en sécurité), et 3 nouveaux programmes.'] },
   { v: '1.7.0', date: '2026-09-29', items: ['👣 Balades : compteur de pas (capteur de mouvement du téléphone). Quand le GPS est faible ou absent, la distance est estimée à partir des pas ; longueur de pas réglable.', '🐶 Météo balade : un chien illustré selon le temps (lunettes et parasol au soleil, il boude sous la pluie, oreilles au vent, écharpe par grand froid, sous la couette pendant l’orage…), vent et UV pris en compte, conseils du jour.', '🎓 14 nouvelles leçons Wouf Plus : 9 chien (regard, maîtrise de soi, chien réactif, mâchouillage, instinct de chasse, vie en ville, randonnée, dents, vols de nourriture) et 5 chat (jeu qui mord, pipi hors litière, déménagement, absences, dents), et 4 nouveaux programmes.'] },
   { v: '1.6.0', date: '2026-09-29', items: ['🩺 Nouveau : « Que faire ? », un guide pour évaluer un symptôme (urgence immédiate, vétérinaire sous 24 h ou surveillance), adapté à l’âge de l’animal, avec ajout au journal de santé.', '🌦️ Nouveau : météo des balades (Wouf Plus) : chaleur, froid, pluie et orage adaptés à la race, à l’âge et au gabarit, et meilleures heures pour sortir.', '🔎 Nouveau : recherche dans toute l’app (aliments dangereux, leçons, carnet, journal, documents).'] },
@@ -73,12 +74,12 @@ const FEATURES = {
 const planLine = () => { const p = planOf(); return `${p.price} ${p.per}`; };
 
 function buySheet() {
-  const p = planOf(), el = sheet(`<div class="sheet-head"><h2>⭐ ${esc(p.label)}</h2><button class="x" data-close>✕</button></div>
-    <div class="big-n center">${esc(p.price)}<small> ${esc(p.per)}</small></div>
+  const p = planOf(), rw = rewardActive(), price = rw ? REWARD.price : p.price, el = sheet(`<div class="sheet-head"><h2>⭐ ${esc(p.label)}</h2><button class="x" data-close>✕</button></div>
+    ${rw ? `<p class="center reward-tag">🏅 Offre récompense : toutes les leçons gratuites terminées</p><div class="price-cut center"><s>${esc(p.price)}</s> <b>${esc(price)}</b></div>` : `<div class="big-n center">${esc(p.price)}<small> ${esc(p.per)}</small></div>`}
     <p class="center mut">Un seul paiement, pour toujours. Aucun abonnement, aucune reconduction.</p>
     <ul class="bul">${Object.values(FEATURES).map(x => `<li><b>${esc(x[1])}</b></li>`).join('')}</ul>
     <label class="chk consent"><input type="checkbox" id="buy-consent"> <span>J’ai lu les <a href="#/legal?doc=cgv" data-close>conditions de vente</a>. Je demande l’accès immédiat à Wouf Plus et je reconnais perdre mon droit de rétractation de 14 jours dès que l’accès est fourni.</span></label>
-    <div class="form-actions"><button class="btn primary big" data-act="buy-go">Payer ${esc(p.price)} par carte</button></div>
+    <div class="form-actions"><button class="btn primary big" data-act="buy-go">Payer ${esc(price)} par carte</button></div>
     <p class="mut small center">Paiement sécurisé par Stripe. Votre achat est lié à votre compte Google : il vous suit sur tous vos appareils.</p>`);
   return el;
 }
@@ -90,7 +91,7 @@ ACT.checkout = async () => {
 };
 ACT['buy-go'] = async () => {
   if (!$('#buy-consent').checked) return toast('Cochez la case pour continuer');
-  try { toast('Redirection vers le paiement sécurisé…'); const j = await api('/checkout', { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ returnUrl: location.origin + location.pathname }) }); location.href = j.url; }
+  try { toast('Redirection vers le paiement sécurisé…'); const j = await api('/checkout', { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ returnUrl: location.origin + location.pathname, ...(rewardActive() ? { offer: 'lecons' } : {}) }) }); location.href = j.url; }
   catch (e) { toast(e.message); }
 };
 function soonSheet() {
@@ -123,7 +124,8 @@ ROUTES.abo = function abo() {
   else if (isFreeWindow()) status = `<section class="card plus-hero"><h2>⭐ Offre de lancement</h2><p>Wouf Plus est offert jusqu’au ${fmtDate(BILL.freeUntil)}. Ensuite : ${esc(planLine())}.</p></section>`;
   else status = `<section class="card plus-hero"><h2>${esc(p.label)}</h2><div class="big-n">${esc(p.price)}<small> ${esc(p.per)}</small></div><p>Un seul paiement, pour toujours. Toutes les nouveautés Plus incluses, assistance prioritaire comprise.</p>
     <button class="btn primary big" data-act="subscribe">${ctaLabel()}</button>${BILL.api ? '<button class="lnk" data-act="restore">J’ai déjà acheté : restaurer mon achat</button>' : ''}</section>`;
-  return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>⭐ Wouf Plus</h1></div>${status}
+  const rw = rewardOn() && !subActive() ? (rewardEligible() ? `<section class="card reward-card"><b>🏅 Offre récompense débloquée</b><p>Vous avez terminé toutes les leçons gratuites : Wouf Plus à vie pour <b>${esc(REWARD.price)}</b> au lieu de ${esc(p.price)}${on ? '' : ' (dès l’ouverture de la vente)'}.</p>${on ? '<button class="btn primary" data-act="subscribe">Profiter de l’offre</button>' : ''}</section>` : `<section class="card note"><b>🏅 Une récompense vous attend</b><p>Terminez toutes les leçons gratuites (quiz compris) et débloquez Wouf Plus à vie pour <b>${esc(REWARD.price)}</b> au lieu de ${esc(p.price)}.</p><a class="btn sm" href="#/educ">Voir mon parcours</a></section>`) : '';
+  return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>⭐ Wouf Plus</h1></div>${status}${rw}
   <section class="card"><h2>Ce que comprend Plus</h2>${Object.values(FEATURES).map(x => `<div class="row"><span class="ico">${x[0]}</span><span class="grow"><b>${esc(x[1])}</b><small>${esc(x[2])}</small></span>${plus() ? '<span class="pill ok">Inclus</span>' : '<span class="pill plus">Plus</span>'}</div>`).join('')}</section>
   <section class="card"><h2>Toujours gratuit</h2><ul class="bul"><li>Carnet de santé, rappels, poids, traitements, journal</li><li>1 chien + 1 chat</li><li>SOS : vétérinaires ouverts / de garde, premiers secours, toxiques</li><li>Comparateur de croquettes, dépenses, ration, sauvegarde Google et chiffrée</li><li>Éducation : les principes, ${nDog(true)} leçons chien et ${nCat(true)} leçons chat</li></ul></section>`;
 };

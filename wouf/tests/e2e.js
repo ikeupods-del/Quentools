@@ -97,7 +97,7 @@ test('éducation : leçons par espèce (22 Plus pour le chien), contenu complet,
   const b = await boot({ data: seed({ dogs: [dogRec({ birth: '2026-05-10' }), dogRec({ id: 'c1', name: 'Miso', species: 'cat', birth: '2025-01-01' })] }), hash: '#/educ' }), p = b.page;
   await p.waitForSelector('.edu-hero');
   const n = await b.ev(() => ({ dogPlus: lessonsFor(dog()).filter(l => !l.free).length, dogFree: lessonsFor(dog()).filter(l => l.free).length, catAll: LESSONS.filter(l => l.sp === 'cat').length }));
-  assert.ok(n.dogPlus >= 20, 'au moins 20 leçons Plus pour le chien'); assert.equal(n.dogFree, 3); assert.ok(n.catAll >= 6);
+  assert.ok(n.dogPlus >= 20, 'au moins 20 leçons Plus pour le chien'); assert.equal(n.dogFree, 6); assert.ok(n.catAll >= 6);
   assert.equal(await p.locator('a.lesson').count(), n.dogPlus + n.dogFree);
   await b.ev(() => { S.current = 'c1'; save(); render(); }); assert.equal(await p.locator('a.lesson').count(), n.catAll, 'la liste suit l’espèce du chat');
   await b.ev(() => { S.current = 'd1'; save(); render(); });
@@ -106,15 +106,17 @@ test('éducation : leçons par espèce (22 Plus pour le chien), contenu complet,
   for (let i = 0; i < 9; i++) await p.click('[data-act=s-ok]'); await p.click('[data-act=s-ko]'); await p.waitForTimeout(1100); assert.notEqual(await text(p, '#tmr'), '0:00');
   await p.click('[data-act=s-end]'); await p.waitForSelector('.step');
   assert.deepEqual(await b.ev(() => { const e = eduGet('d1', 'marqueur'); return [e.sessions.length, e.sessions[0].ok, e.sessions[0].n, e.steps[1]]; }), [1, 9, 10, 1]);
-  await p.click('[data-act=lesson-done]'); await b.go('#/educ'); await p.waitForSelector('.badges'); assert.ok((await p.locator('.badge.on').count()) >= 2);
+  await p.click('[data-act=lesson-done]'); await p.waitForSelector('.sheet.quiz'); for (let k = 0; k < 3; k++) { await b.ev(() => ACT['quiz-pick']({ k: QUIZ.qs[QUIZ.i].ok })); await p.click('[data-act=quiz-next]'); } await p.click('[data-act=quiz-finish]'); await p.click('.celebrate [data-cel]');
+  assert.equal(await b.ev(() => eduGet('d1', 'marqueur').done), true); await b.go('#/educ'); await p.waitForSelector('.badges'); assert.ok((await p.locator('.badge.on').count()) >= 2);
   await b.go('#/programme?id=balade6'); assert.match(await text(p, 'h1'), /balade parfaite/); await p.click('[data-act=prog-start]'); assert.ok(await b.ev(() => S.edu.d1._progs.balade6.start));
   noErrors(b); await b.ctx.close();
 });
 test('éducation : leçons Plus verrouillées pour un utilisateur gratuit', async () => {
   const b = await boot({ query: '?preview=free', hash: '#/educ' }), p = b.page;
   await p.waitForSelector('.edu-hero'); assert.ok((await p.locator('a.lesson .pill.plus').count()) >= 20);
-  await b.go('#/lecon?id=rappel'); await p.waitForSelector('[data-act=subscribe]'); assert.doesNotMatch(await text(p, '#view'), /Erreurs fréquentes/, 'le contenu payant n’est pas affiché');
-  await b.go('#/seance?id=rappel'); assert.match(await text(p, '#view'), /indisponible/);
+  await b.go('#/lecon?id=stop'); await p.waitForSelector('[data-act=subscribe]'); assert.doesNotMatch(await text(p, '#view'), /Erreurs fréquentes/, 'le contenu payant n’est pas affiché');
+  await b.go('#/seance?id=stop'); assert.match(await text(p, '#view'), /indisponible/);
+  await b.go('#/lecon?id=rappel'); await p.waitForSelector('.step'); assert.match(await text(p, '#view'), /Erreurs fréquentes/, 'le rappel est désormais gratuit');
   await b.go('#/lecon?id=assis'); await p.waitForSelector('.step'); assert.match(await text(p, '#view'), /Erreurs fréquentes/, 'une leçon gratuite reste accessible');
   await b.go('#/programme?id=chiot8'); assert.match(await text(p, '#view'), /Débloquer/);
   noErrors(b); await b.ctx.close();
@@ -293,6 +295,69 @@ test('accueil et menu Plus : « À faire » en premier, une seule invitation à 
   noErrors(b); await b.ctx.close();
 });
 
+test('éducation : 110 leçons (100 Plus + 10 gratuites), recherche sans accents et filtres par catégorie', async () => {
+  const b = await boot({ hash: '#/educ' }), p = b.page;
+  const tot = await b.ev(() => ({ all: LESSONS.length, plus: LESSONS.filter(l => !l.free).length, free: LESSONS.filter(l => l.free).length }));
+  assert.deepEqual(tot, { all: 110, plus: 100, free: 10 });
+  await p.waitForSelector('#edu-q'); const n0 = await p.locator('#edu-list a.lesson').count(); assert.ok(n0 >= 60);
+  await p.fill('#edu-q', 'griffes'); assert.ok((await p.locator('#edu-list a.lesson').count()) >= 1); assert.match(await text(p, '#edu-list'), /griffes/i);
+  await p.fill('#edu-q', 'bebe'); assert.match(await text(p, '#edu-list'), /bébé/);
+  await p.fill('#edu-q', 'zzzz'); assert.match(await text(p, '#edu-list'), /Aucune leçon/);
+  await p.fill('#edu-q', ''); await b.ev(() => { EDU.q = ''; });
+  await p.click('[data-act=edu-cat][data-c="Soins"]'); const cats = await b.ev(() => [...document.querySelectorAll('#edu-list a.lesson small')].map(s => s.textContent.split(' · ')[0])); assert.ok(cats.length >= 5 && cats.every(c => c === 'Soins'), cats.join('|'));
+  assert.ok((await p.locator('a.row[href^="#/programme"]').count()) >= 10, 'programmes listés');
+  await b.ev(() => { EDU.cat = ''; }); noErrors(b); await b.ctx.close();
+});
+
+test('parcours façon Duolingo : unités, XP, niveaux, objectif du jour, quiz de validation, célébration', async () => {
+  const b = await boot({ hash: '#/educ' }), p = b.page;
+  assert.deepEqual(await b.ev(() => [0, 99, 100, 299, 300, 600].map(x => levelOf(x).n)), [1, 1, 2, 2, 3, 4]);
+  const qz = await b.ev(() => LESSONS.every(l => { const qs = lessonQuiz(l); return qs.length === 3 && qs.every(q => q.opts.length >= 2 && new Set(q.opts).size === q.opts.length && l.steps.some(s => q.q.includes(s.t) && s.crit === q.opts[q.ok])); }));
+  assert.ok(qz, 'chaque leçon a un quiz de 3 questions dont la bonne réponse est le vrai critère de l’étape');
+  await p.waitForSelector('.lvl'); assert.match(await text(p, '.lvl'), /Débutant curieux/); assert.match(await text(p, '.edu-hero'), /objectif du jour/);
+  assert.ok((await p.locator('.path .pnode').count()) >= 6, 'unité « Les bases » ouverte'); assert.equal(await p.locator('.pnode.cur').count(), 1);
+  assert.ok((await p.locator('.unit-h').count()) >= 8, 'unités par thème');
+  await p.click('.unit-h >> nth=1'); assert.ok((await p.locator('.path .pnode').count()) >= 1); assert.ok(await p.$('.unit-h.on >> nth=0'));
+  // valider une leçon : quiz (une erreur → réessayer), puis sans faute → XP + célébration
+  await b.go('#/lecon?id=assis'); await p.click('[data-act=lesson-done]'); await p.waitForSelector('.qopt');
+  await b.ev(() => ACT['quiz-pick']({ k: (QUIZ.qs[0].ok + 1) % QUIZ.qs[0].opts.length })); assert.match(await text(p, '.quiz-fb'), /Pas tout à fait/);
+  for (let k = 0; k < 2; k++) { await p.click('[data-act=quiz-next]'); await b.ev(() => ACT['quiz-pick']({ k: QUIZ.qs[QUIZ.i].ok })); } await p.click('[data-act=quiz-next]');
+  assert.match(await text(p, '.sheet.quiz'), /2\/3/); assert.equal(await b.ev(() => eduGet('d1', 'assis').done), false, 'pas validée avec une erreur');
+  await p.click('[data-act=quiz-retry]'); for (let k = 0; k < 3; k++) { await b.ev(() => ACT['quiz-pick']({ k: QUIZ.qs[QUIZ.i].ok })); await p.click('[data-act=quiz-next]'); }
+  await p.click('[data-act=quiz-finish]'); await p.waitForSelector('.celebrate'); assert.match(await text(p, '.cel-card'), /\+70 XP/); await p.click('.celebrate [data-cel]');
+  assert.deepEqual(await b.ev(() => [eduGet('d1', 'assis').done, eduGet('d1', 'assis').quiz, xpOf(dog())]), [true, 3, 70]);
+  await b.go('#/lecon?id=assis'); await p.click('[data-act=lesson-done]'); assert.equal(await b.ev(() => eduGet('d1', 'assis').done), false, 'second appui : annule');
+  noErrors(b); await b.ctx.close();
+});
+
+test('offre récompense : popup uniquement quand TOUTES les leçons gratuites sont faites, prix réduit au paiement', async () => {
+  const b = await boot({ query: '?preview=none', hash: '#/educ' }), p = b.page; let body = null;
+  await b.ctx.route('https://api.wouf.test/**', async r => { const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+    if (r.request().method() === 'OPTIONS') return r.fulfill({ status: 200, headers: cors }); if (new URL(r.request().url()).pathname === '/checkout') body = JSON.parse(r.request().postData());
+    return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify({ url: 'https://checkout.example/pay' }) }); });
+  await b.ctx.route('https://checkout.example/**', r => r.fulfill({ contentType: 'text/html', body: '<h1>stripe</h1>' }));
+  const pure = await b.ev(() => { const d = (ids, sp = 'dog') => ({ dogs: [{ id: 'a', species: sp }], edu: { a: Object.fromEntries(ids.map(i => [i, { done: true }])) } }), dogIds = freeIdsOf('dog'), catIds = freeIdsOf('cat');
+    return { n: [dogIds.length, catIds.length], dogAll: rewardEligible(d(dogIds)), dogMissing: rewardEligible(d(dogIds.slice(1))), catAll: rewardEligible(d(catIds, 'cat')), both: rewardEligible({ dogs: [{ id: 'a', species: 'dog' }, { id: 'b', species: 'cat' }], edu: { a: Object.fromEntries(dogIds.map(i => [i, { done: true }])) } }), none: rewardEligible({ dogs: [] }) }; });
+  assert.deepEqual(pure, { n: [6, 4], dogAll: true, dogMissing: false, catAll: true, both: false, none: false });
+  await fakeCloud(p);
+  await b.ev(() => { BILL.enabled = true; BILL.api = 'https://api.wouf.test'; BILL.freeUntil = null; Object.assign(LEGAL, { seller: 'V', form: 'EI', address: '1 rue', siret: '1', email: 'v@t.fr', mediator: 'M' });
+    freeIdsOf('dog').slice(0, 5).forEach(id => { const q = eduSet('d1', id); q.done = true; }); save(); });
+  await b.go('#/abo'); assert.match(await text(p, '#view'), /Une récompense vous attend/); assert.doesNotMatch(await text(p, '#view'), /Offre récompense débloquée/);
+  // les 5 premières ne déclenchent rien ; la 6ᵉ via le quiz ouvre la récompense
+  assert.equal(await b.ev(() => (rewardCheck(), document.querySelectorAll('.sheet-wrap').length)), 0);
+  const last = await b.ev(() => freeIdsOf('dog')[5]);
+  await b.go('#/lecon?id=' + last); await p.click('[data-act=lesson-done]'); for (let k = 0; k < 3; k++) { await b.ev(() => ACT['quiz-pick']({ k: QUIZ.qs[QUIZ.i].ok })); await p.click('[data-act=quiz-next]'); }
+  await p.click('[data-act=quiz-finish]'); await p.click('.celebrate [data-cel]'); await p.waitForSelector('.reward');
+  assert.match(await text(p, '.reward'), /19,99 €\s*9,99 €/); assert.ok(await b.ev(() => S.reward.shown));
+  await p.click('[data-act=reward-buy]'); await p.waitForSelector('#buy-consent'); assert.match(await text(p, '.sheet'), /Offre récompense/); assert.match(await text(p, '.sheet [data-act=buy-go]'), /9,99 €/);
+  await p.check('#buy-consent'); await Promise.all([p.waitForURL('https://checkout.example/**'), p.click('[data-act=buy-go]')]); assert.equal(body.offer, 'lecons');
+  noErrors(b); await b.ctx.close();
+  // une seule fois : pas de nouvelle popup ; et gratuit pour tous → message sans paiement
+  const c = await boot({ hash: '#/educ' }); await c.ev(() => { freeIdsOf('dog').forEach(id => { eduSet('d1', id).done = true; }); rewardCheck(); });
+  await c.page.waitForSelector('.sheet'); assert.match(await text(c.page, '.sheet'), /Bases acquises/); assert.match(await text(c.page, '.sheet'), /9,99 €/);
+  assert.equal(await c.ev(() => { closeAllSheets(); rewardCheck(); return document.querySelectorAll('.sheet-wrap').length; }), 0, 'la popup ne revient pas'); noErrors(c); await c.ctx.close();
+});
+
 /* ================= 7. Achat à vie (relais simulé) ================= */
 test('achat à vie : connexion Google requise, consentement, paiement, retour, activation, remboursement', async () => {
   const b = await boot({ query: '?preview=none', hash: '#/abo' }), p = b.page; let seen = {};
@@ -393,7 +458,7 @@ test('bouton Wouf+ : visible pour les non-abonnés, présentation de l’offre t
   // vente ouverte, utilisateur non abonné : libellé d'achat partout
   await b.ev(() => { BILL.enabled = true; BILL.api = 'https://api.wouf.test'; render(); });
   assert.match(await text(p, '[data-act=subscribe]'), /Souscrire à Wouf\+ · 19,99 € à vie/); await b.go('#/educ'); await p.waitForSelector('.cta-plus'); assert.match(await text(p, '.cta-plus'), /Souscrire à Wouf\+/);
-  await b.go('#/lecon?id=rappel'); assert.match(await text(p, '[data-act=subscribe]'), /Souscrire/);
+  await b.go('#/lecon?id=stop'); assert.match(await text(p, '[data-act=subscribe]'), /Souscrire/);
   // abonné : plus de bouton
   await b.ev(() => { S.sub = { active: true, lifetime: true }; render(); }); assert.equal(await p.locator('.plusbtn').count(), 0);
   noErrors(b); await b.ctx.close();
