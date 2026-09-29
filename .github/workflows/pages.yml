@@ -17,7 +17,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Rien n'est publié si les tests de Wouf échouent (contenu, configuration, relais, parcours utilisateur).
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: wouf/package-lock.json }
+      - run: npm ci
+        working-directory: wouf
+      - run: npx playwright install --with-deps chromium
+        working-directory: wouf
+      - run: npm test
+        working-directory: wouf
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -30,7 +46,7 @@ jobs:
           cp index.html _site/
           rsync -a --exclude oauth-worker infikit _site/
           rsync -a freelance _site/
-          rsync -a --exclude billing-worker wouf _site/
+          rsync -a --exclude billing-worker --exclude tests --exclude docs --exclude node_modules --exclude 'package*.json' --exclude '.gitignore' wouf _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

@@ -154,7 +154,7 @@ ACT.emergency = () => {
 };
 ACT['print-em'] = () => printHTML(`<h1>Fiche d’urgence</h1>${emergencyHTML(dog())}`);
 ACT['share-em'] = async () => {
-  const d = dog(), lw = lastWeight(d.id), t = `🐾 ${d.name} — ${d.breed || 'chien'}, ${ageText(d.birth)}${lw ? ', ' + fmtKg(lw.kg) : ''}\nPuce : ${d.chip || '—'}\nAllergies : ${d.allergies || 'aucune connue'}\nVétérinaire : ${d.vetName || '—'} ${d.vetPhone || ''}\nPropriétaire : ${S.owner.name || ''} ${S.owner.phone || ''}`;
+  const d = dog(), lw = lastWeight(d.id), t = `🐾 ${d.name} — ${d.breed || spOf(d).noun}, ${ageText(d.birth)}${lw ? ', ' + fmtKg(lw.kg) : ''}\nPuce : ${d.chip || '—'}\nAllergies : ${d.allergies || 'aucune connue'}\nVétérinaire : ${d.vetName || '—'} ${d.vetPhone || ''}\nPropriétaire : ${S.owner.name || ''} ${S.owner.phone || ''}`;
   try { if (navigator.share) return await navigator.share({ title: 'Fiche d’urgence ' + d.name, text: t }); await navigator.clipboard.writeText(t); toast('Copié dans le presse-papiers'); } catch (e) { /* annulé */ }
 };
 
@@ -170,14 +170,14 @@ ROUTES.sos = function sos() {
   <section class="card"><div class="card-h"><h2>Mes contacts d’urgence</h2><button class="lnk" data-act="add-contact">＋ Ajouter</button></div>
     ${cts.map(c => `<div class="row"><span class="ico">📞</span><span class="grow"><b>${esc(c.label)}</b><small>${esc(fmtPhone(c.phone))}</small></span><a class="btn sm primary" href="${phoneLink(c.phone)}">Appeler</a>${c.fixed ? '' : `<button class="btn sm" data-act="edit-contact" data-id="${c.id}">✎</button>`}</div>`).join('') || '<p class="empty">Ajoutez la clinique de garde de votre secteur, un voisin, un proche…</p>'}</section>
   <section class="card"><div class="card-h"><h2>Fiche d’urgence</h2></div><p class="mut">Identité, puce, allergies, vaccins, contacts : prête à montrer, imprimer ou envoyer.</p><button class="btn primary" data-act="emergency">Afficher la fiche de ${esc(d.name)}</button></section>
-  <section class="card"><h2>Consulter sans attendre si…</h2><ul class="bul">${URGENT_SIGNS.map(s => `<li>${s}</li>`).join('')}</ul></section>
-  <section class="card"><h2>Premiers secours</h2><p class="mut">Ces gestes ne remplacent jamais un avis vétérinaire.</p>${FIRST_AID.map(([i, t, steps]) => `<details><summary>${i} ${t}</summary><ol>${steps.map(s => `<li>${s}</li>`).join('')}</ol></details>`).join('')}</section>
-  <section class="card"><h2>Aliments et produits dangereux</h2><input id="tox-q" class="search" type="search" placeholder="Chocolat, raisin, oignon, plante…" autocomplete="off"><div id="tox-list">${toxHTML('')}</div>
+  <section class="card"><h2>Consulter sans attendre si…</h2><ul class="bul">${urgentOf(d).map(s => `<li>${s}</li>`).join('')}</ul></section>
+  <section class="card"><h2>Premiers secours</h2><p class="mut">Ces gestes ne remplacent jamais un avis vétérinaire.</p>${firstAidOf(d).map(([i, t, steps]) => `<details><summary>${i} ${t}</summary><ol>${steps.map(s => `<li>${s}</li>`).join('')}</ol></details>`).join('')}</section>
+  <section class="card"><h2>Aliments et produits dangereux</h2><input id="tox-q" class="search" type="search" placeholder="${spOf(d).id === 'cat' ? 'Lys, plante, médicament, pipette…' : 'Chocolat, raisin, oignon, plante…'}" autocomplete="off"><div id="tox-list">${toxHTML('')}</div>
     <h3>Centres antipoison vétérinaires</h3><p class="mut small">Consultation généralement payante ; vérifiez les numéros à jour.</p>${POISON_LINES.map(([n, p]) => `<div class="row"><span class="ico">☠️</span><span class="grow"><b>${n}</b><small>${fmtPhone(p)}</small></span><a class="btn sm primary" href="${phoneLink(p)}">Appeler</a></div>`).join('')}</section>`;
 };
 function toxHTML(q) {
   q = q.trim().toLowerCase();
-  const l = TOXICS.filter(t => !q || (t.name + ' ' + t.why).toLowerCase().includes(q));
+  const l = toxicsOf(dog()).filter(t => !q || (t.name + ' ' + t.why).toLowerCase().includes(q));
   return l.map(t => `<div class="tox ${t.level}"><b>${t.level === 'danger' ? '⛔' : '⚠️'} ${esc(t.name)}</b><p>${esc(t.why)}</p></div>`).join('') || '<p class="empty">Aucun résultat : en cas de doute, appelez un vétérinaire.</p>';
 }
 document.addEventListener('input', e => { if (e.target.id === 'tox-q') $('#tox-list').innerHTML = toxHTML(e.target.value); });

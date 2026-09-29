@@ -1,0 +1,22 @@
+# Vérifie Wouf à chaque pull request qui le touche : contrôles statiques, relais de paiement, tests dans un vrai navigateur.
+name: Wouf — tests
+on:
+  pull_request:
+    paths: ['wouf/**', '.github/workflows/wouf-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: wouf/package-lock.json }
+      - run: npm ci
+        working-directory: wouf
+      - run: npx playwright install --with-deps chromium
+        working-directory: wouf
+      - run: npm test
+        working-directory: wouf

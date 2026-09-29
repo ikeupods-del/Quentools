@@ -5,7 +5,7 @@ const dogEvents = id => S.events.filter(e => e.dogId === id).sort((a, b) => b.da
 const dogWeights = id => S.weights.filter(w => w.dogId === id).sort((a, b) => a.date.localeCompare(b.date));
 const lastWeight = id => { const w = dogWeights(id); return w.length ? w[w.length - 1] : null; };
 const dogBreed = d => breedOf(d.breed);
-const dogSize = d => (dogBreed(d) || {}).size || d.size || 'M';
+const dogSize = d => spOf(d).id === 'cat' ? 'CAT' : ((dogBreed(d) || {}).size || d.size || 'M');
 
 /* Rappels : le dernier événement de chaque « série » (type + titre) porte la prochaine échéance. */
 function reminders(id) {
@@ -41,7 +41,7 @@ function score(d) {
     ['Vaccins', 40, st('vaccine'), 'Vaccins à renouveler ou à enregistrer'],
     ['Antipuces / tiques', 20, st('parasite'), 'Antiparasitaire à renouveler'],
     ['Vermifuge', 15, st('worm'), 'Vermifuge à renouveler'],
-    ['Pesée récente', 10, wAge <= 60 ? 1 : wAge <= 180 ? 0.5 : 0, 'Pesez votre chien (une fois par mois)'],
+    ['Pesée récente', 10, wAge <= 60 ? 1 : wAge <= 180 ? 0.5 : 0, 'Pesez votre ' + spOf(d).noun + ' (une fois par mois)'],
     ['Visite annuelle', 15, visit ? 1 : 0, 'Une visite chez le vétérinaire par an']
   ];
   return { total: Math.round(sum(parts.map(p => p[1] * p[2]))), parts, tips: parts.filter(p => p[2] < 1).map(p => p[3]) };
@@ -64,7 +64,7 @@ const idealBand = d => d.idealMin && d.idealMax ? [d.idealMin, d.idealMax] : (do
 function lifeStage(d) {
   if (!d.birth) return '—';
   const y = ageYears(d.birth);
-  return y < 1 ? 'Chiot' : y >= SENIOR_AGE[dogSize(d)] ? 'Senior' : 'Adulte';
+  return y < 1 ? spOf(d).young : y >= SENIOR_AGE[dogSize(d)] ? 'Senior' : 'Adulte';
 }
 
 /* Traitements du jour */
@@ -85,18 +85,26 @@ function allExpenses(id) {
   return ev.concat(ex).sort((a, b) => b.date.localeCompare(a.date));
 }
 
-/* Plan chiot : dates calculées depuis la naissance */
+/* Plan chiot / chaton : dates calculées depuis la naissance */
 function puppyPlan(d) {
-  const at = w => addDays(d.birth, w * 7);
-  const P = [];
-  [2, 4, 6, 8, 10, 12, 16, 20, 24].forEach(w => P.push({ w, type: 'worm', title: 'Vermifuge chiot (mensuel)', label: 'Vermifuge' }));
-  P.push({ w: 8, type: 'vaccine', title: VACCINES[0][0], label: '1ʳᵉ injection CHPPiL' });
-  P.push({ w: 12, type: 'vaccine', title: VACCINES[0][0], label: '2ᵉ injection CHPPiL' });
-  P.push({ w: 12, type: 'vaccine', title: 'Rage', label: 'Rage (à partir de 12 semaines)' });
-  P.push({ w: 16, type: 'vaccine', title: VACCINES[0][0], label: 'Rappel CHPPiL (si 3 injections)' });
-  P.push({ w: 8, type: 'parasite', title: 'Comprimé antiparasitaire mensuel', label: 'Antipuces / tiques (dès 8 semaines selon produit)' });
-  P.push({ w: 26, type: 'visit', title: 'Visite de contrôle', label: 'Visite des 6 mois (croissance, dents, stérilisation ?)' });
-  P.push({ w: 52, type: 'vaccine', title: VACCINES[0][0], label: 'Rappel des 1 an' });
+  const at = w => addDays(d.birth, w * 7), cat = spOf(d).id === 'cat', P = [], V = presetsFor('vaccine', d), sp = spOf(d);
+  const wormT = presetsFor('worm', d)[1][0], parT = presetsFor('parasite', d)[cat ? 1 : 1][0];
+  [2, 4, 6, 8, 10, 12, 16, 20, 24].forEach(w => P.push({ w, type: 'worm', title: wormT, label: 'Vermifuge' }));
+  if (cat) {
+    P.push({ w: 8, type: 'vaccine', title: V[1][0], label: '1ʳᵉ injection typhus + coryza (+ leucose)' });
+    P.push({ w: 12, type: 'vaccine', title: V[1][0], label: '2ᵉ injection typhus + coryza (+ leucose)' });
+    P.push({ w: 12, type: 'vaccine', title: 'Rage', label: 'Rage (si voyage ou exigée, dès 12 semaines)' });
+    P.push({ w: 26, type: 'visit', title: 'Visite de contrôle', label: 'Visite des 6 mois (croissance, dents, stérilisation)' });
+    P.push({ w: 52, type: 'vaccine', title: V[1][0], label: 'Rappel des 1 an' });
+  } else {
+    P.push({ w: 8, type: 'vaccine', title: V[0][0], label: '1ʳᵉ injection CHPPiL' });
+    P.push({ w: 12, type: 'vaccine', title: V[0][0], label: '2ᵉ injection CHPPiL' });
+    P.push({ w: 12, type: 'vaccine', title: 'Rage', label: 'Rage (à partir de 12 semaines)' });
+    P.push({ w: 16, type: 'vaccine', title: V[0][0], label: 'Rappel CHPPiL (si 3 injections)' });
+    P.push({ w: 26, type: 'visit', title: 'Visite de contrôle', label: 'Visite des 6 mois (croissance, dents, stérilisation ?)' });
+    P.push({ w: 52, type: 'vaccine', title: V[0][0], label: 'Rappel des 1 an' });
+  }
+  P.push({ w: 8, type: 'parasite', title: parT, label: 'Antipuces / tiques (dès 8 semaines selon produit)' });
   return P.sort((a, b) => a.w - b.w).map(p => ({ ...p, date: at(p.w), done: S.events.some(e => e.dogId === d.id && e.type === p.type && Math.abs(diffDays(e.date, at(p.w))) <= 21 && (p.type !== 'vaccine' || e.title === p.title)) }));
 }
 

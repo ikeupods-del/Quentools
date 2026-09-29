@@ -13,15 +13,22 @@ function printHTML(html) {
 /* ---------- Menu Plus ---------- */
 ROUTES.plus = function plusMenu() {
   const items = [
-    ['#/assurance', '🛡️', 'Assurance chien', 'Comparateur et simulateur de coût réel'],
+    ['#/educ', '🎓', 'Éducation', 'Leçons, séances guidées, programmes'],
+    ['#/balade', '🦮', 'Balades GPS', 'Distance, tracé, objectif du jour' + (allowed('tracker') ? '' : ' · Plus')],
+    ['#/bilan', '🧠', 'Bilan santé', 'Conseils personnalisés' + (allowed('bilan') ? '' : ' · Plus')],
+    ['#/gardien', '🧳', 'Fiche gardien', 'Pour la personne qui garde votre animal' + (allowed('sitter') ? '' : ' · Plus')],
+    ['#/assurance', '🛡️', 'Assurance santé', 'Comparateur et simulateur de coût réel'],
     ['#/depenses', '💶', 'Dépenses', 'Budget vétérinaire, nourriture, accessoires'],
     ['#/documents', '📎', 'Documents', 'Ordonnances, résultats, carte d’identification'],
     ['#/nutrition', '🍖', 'Ration quotidienne', 'Calcul des calories et des grammes de croquettes'],
     ['#/race', '🧬', 'Ma race et sa santé', 'Poids idéal, espérance de vie, risques'],
-    ['#/perdu', '📣', 'Chien perdu', 'Affiche à imprimer et démarches'],
+    ['#/perdu', '📣', 'Animal perdu', 'Affiche à imprimer et démarches'],
     ['#/sauvegarde', '💾', 'Sauvegarde', 'Exporter / restaurer (chiffrée)'],
-    ['#/abo', '⭐', 'Wouf Plus', plus() && !BILL.enabled ? 'Toutes les fonctions sont gratuites pour le moment' : 'Abonnement et avantages'],
-    ['#/reglages', '⚙️', 'Réglages', 'Profil, notifications, installation']
+    ['#/abo', '⭐', 'Wouf Plus', plus() && !BILL.enabled ? 'Toutes les fonctions sont gratuites pour le moment' : subActive() ? 'Actif à vie' : planLine() + ' · sans abonnement'],
+    ['#/support', '💬', 'Assistance', isPriority() ? 'Prioritaire ⭐' : 'FAQ et contact'],
+    ['#/nouveautes', '🆕', 'Nouveautés', 'Version ' + (CFG.version || '')],
+    ['#/reglages', '⚙️', 'Réglages', 'Profil, notifications, installation'],
+    ['#/legal', '⚖️', 'Informations légales', 'Mentions, CGV, confidentialité']
   ];
   return `<div class="page-h"><h1>Plus</h1></div><div class="list card menu">${items.map(([h, i, t, s]) => `<a class="row" href="${h}"><span class="ico">${i}</span><span class="grow"><b>${t}</b><small>${s}</small></span><span class="chev">›</span></a>`).join('')}</div>
   <p class="mut center small">Wouf ${esc(CFG.version || '')} · Les informations de santé sont indicatives et ne remplacent pas l’avis d’un vétérinaire.</p>`;
@@ -85,7 +92,6 @@ ROUTES.depenses = function depenses() {
   <div class="list card">${list.map(e => `<button class="row" data-act="edit-expense" data-id="${e.id}" data-ev="${e.fromEvent ? 1 : 0}"><span class="ico">${e.fromEvent ? TYPES[e.type].icon : '🧾'}</span><span class="grow"><b>${esc(e.label || e.cat)}</b><small>${fmtDate(e.date)} · ${esc(e.cat)}</small></span><span class="side"><b>${fmtMoney(e.amount)}</b></span></button>`).join('') || '<p class="empty">Ajoutez vos dépenses (le coût saisi dans le carnet est repris automatiquement).</p>'}</div>
   <div class="actions-row"><button class="btn" data-act="xp-csv">⬇️ Export CSV${locked ? ' <span class="pill plus">Plus</span>' : ''}</button></div>`;
 };
-ACT.paywall = ({ f }) => paywall(f);
 
 /* ---------- Documents ---------- */
 const DOC_KINDS = ['Ordonnance', 'Résultats d’analyses', 'Carte d’identification (I-CAD)', 'Pedigree (LOF)', 'Contrat d’assurance', 'Facture', 'Autre'];
@@ -108,7 +114,7 @@ ACT['add-doc'] = () => {
 };
 ACT['view-doc'] = async ({ id }) => {
   const doc = S.docs.find(d => d.id === id), blob = await fget(id);
-  if (!blob) return toast('Fichier introuvable');
+  if (!blob) return toast('Ce document est stocké sur un autre appareil (les documents ne sont pas synchronisés avec Google).');
   const url = URL.createObjectURL(blob), isImg = doc.mime.startsWith('image/');
   const el = sheet(`<div class="sheet-head"><h2>${esc(doc.title)}</h2><button class="x" data-close>✕</button></div>
     ${isImg ? `<img class="doc-img" src="${url}" alt="">` : `<iframe class="doc-pdf" src="${url}" title="${esc(doc.title)}"></iframe>`}
@@ -125,13 +131,12 @@ ROUTES.documents = function documents() {
 };
 
 /* ---------- Nutrition ---------- */
-const NUT_FACTORS = [['neutered', 'Adulte stérilisé', 1.6], ['intact', 'Adulte non stérilisé', 1.8], ['inactive', 'Sédentaire / tendance à grossir', 1.4], ['loss', 'Perte de poids (peser le poids cible)', 1.0], ['active', 'Très actif / sportif', 2.5], ['senior', 'Senior', 1.4], ['pup4', 'Chiot de moins de 4 mois', 3.0], ['pup12', 'Chiot de 4 à 12 mois', 2.0]];
 function nutDefault(d) {
   if (d.birth) { const m = ageMonths(d.birth); if (m < 4) return 'pup4'; if (m < 12) return 'pup12'; if (lifeStage(d) === 'Senior') return 'senior'; }
   return d.neutered ? 'neutered' : 'intact';
 }
 function nutCalc(root) {
-  const kg = num($('[data-nut=kg]', root).value), f = NUT_FACTORS.find(x => x[0] === $('[data-nut=f]', root).value), kc = num($('[data-nut=kcal]', root).value), meals = Math.max(1, num($('[data-nut=meals]', root).value) || 2), out = $('#nut-out', root);
+  const kg = num($('[data-nut=kg]', root).value), f = nutFactorsOf(dog()).find(x => x[0] === $('[data-nut=f]', root).value), kc = num($('[data-nut=kcal]', root).value), meals = Math.max(1, num($('[data-nut=meals]', root).value) || 2), out = $('#nut-out', root);
   if (!kg || !f) { out.innerHTML = '<p class="empty">Indiquez le poids.</p>'; return; }
   const rer = 70 * Math.pow(kg, 0.75), mer = rer * f[2];
   out.innerHTML = `<div class="kv-line"><span>Besoin de base <b>${Math.round(rer)} kcal</b></span><span>Besoin journalier <b>${Math.round(mer)} kcal</b></span></div>
@@ -142,9 +147,10 @@ ROUTES.nutrition = function nutrition() {
   const d = dog(), lw = lastWeight(d.id), fd = d.food || {};
   return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>🍖 Ration de ${esc(d.name)}</h1></div>
   <section class="card" id="nut"><div class="field"><label>Poids (kg)</label><input data-nut="kg" type="number" inputmode="decimal" step="any" value="${lw ? lw.kg : ''}"></div>
-  <div class="field"><label>Situation</label><select data-nut="f">${NUT_FACTORS.map(f => `<option value="${f[0]}" ${f[0] === (fd.f || nutDefault(d)) ? 'selected' : ''}>${f[1]}</option>`).join('')}</select></div>
+  <div class="field"><label>Situation</label><select data-nut="f">${nutFactorsOf(d).map(f => `<option value="${f[0]}" ${f[0] === (fd.f || nutDefault(d)) ? 'selected' : ''}>${f[1]}</option>`).join('')}</select></div>
   <div class="field half"><label>Croquettes (kcal / 100 g)</label><input data-nut="kcal" type="number" inputmode="decimal" value="${fd.kcal || 350}"></div><div class="field half"><label>Repas / jour</label><input data-nut="meals" type="number" inputmode="numeric" value="${fd.meals || 2}"></div>
-  <div id="nut-out"></div></section>`;
+  <div id="nut-out"></div></section>
+  <a class="card banner" href="#/plan-poids"><b>⚖️ Plan de perte de poids ${allowed('weightplan') ? '' : '<span class="pill plus">Plus</span>'}</b><span>Ration, étapes et date d’objectif →</span></a>`;
 };
 ROUTES.nutrition.after = () => { const r = $('#nut'); if (r) nutCalc(r); };
 document.addEventListener('input', e => { const r = e.target.closest('#nut'); if (r) { nutCalc(r); const d = dog(); d.food = { f: $('[data-nut=f]', r).value, kcal: num($('[data-nut=kcal]', r).value), meals: num($('[data-nut=meals]', r).value) }; save(); } });
@@ -165,17 +171,17 @@ ROUTES.race = function race() {
 /* ---------- Chien perdu ---------- */
 ROUTES.perdu = function perdu() {
   const d = dog();
-  return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>📣 Chien perdu</h1></div>
+  return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>📣 ${spOf(d).noun === 'chat' ? 'Chat' : 'Chien'} perdu</h1></div>
   <section class="card sos-hero"><b>${esc(d.name)} a disparu ?</b><button class="btn danger-fill big" data-act="poster">Créer l’affiche à imprimer</button></section>
   <section class="card"><h2>Les bons réflexes</h2><ol class="bul"><li>Retournez immédiatement à l’endroit de la disparition et restez-y un moment ; laissez un vêtement porté.</li><li>Prévenez l’<b>I-CAD</b> (fichier d’identification) pour signaler la disparition.</li><li>Appelez les vétérinaires, la fourrière et la mairie du secteur.</li><li>Publiez sur les groupes locaux et les sites de chiens perdus, avec une photo nette.</li><li>Affichez chez les commerçants et sur les lieux de passage.</li><li>Ne criez pas après lui à son retour : il doit vouloir revenir.</li></ol></section>`;
 };
 ACT.poster = () => {
   const d = dog();
   openForm({
-    title: 'Affiche « chien perdu »', submit: 'Aperçu / imprimer',
+    title: 'Affiche « ' + spOf(d).noun + ' perdu »', submit: 'Aperçu / imprimer',
     fields: [{ n: 'where', l: 'Lieu de disparition', v: '', req: true, ph: 'Rue, quartier, ville' }, { n: 'when', l: 'Date', t: 'date', v: today(), req: true }, { n: 'phone', l: 'Téléphone à appeler', t: 'tel', v: S.owner.phone, req: true }, { n: 'msg', l: 'Message', t: 'textarea', v: 'Il/elle est très craintif(ve), ne pas courir après lui/elle. Récompense.' }],
     onSubmit(v) {
-      printHTML(`<div class="poster"><h1>CHIEN PERDU</h1>${d.photo ? `<img src="${d.photo}" alt="">` : ''}<h2>${esc(d.name)}</h2><p class="pl">${esc(d.breed || '')} ${d.sex === 'F' ? '· Femelle' : '· Mâle'}${d.color ? ' · ' + esc(d.color) : ''}</p>
+      printHTML(`<div class="poster"><h1>${spOf(d).noun.toUpperCase()} PERDU</h1>${d.photo ? `<img src="${d.photo}" alt="">` : ''}<h2>${esc(d.name)}</h2><p class="pl">${esc(d.breed || '')} ${d.sex === 'F' ? '· Femelle' : '· Mâle'}${d.color ? ' · ' + esc(d.color) : ''}</p>
         <p class="pl">Perdu(e) le <b>${fmtDate(v.when)}</b> à <b>${esc(v.where)}</b></p>${d.chip ? `<p>Identifié(e) par puce : ${esc(d.chip)}</p>` : ''}<p>${esc(v.msg)}</p><div class="tel">${esc(fmtPhone(v.phone))}</div></div>`);
     }
   });
@@ -241,59 +247,6 @@ ACT.import = async () => {
   } catch (e) { toast(e.message || 'Fichier illisible'); }
 };
 
-/* ---------- Abonnement Wouf Plus ---------- */
-const FEATURES = {
-  multiDogs: ['🐕‍🦺', 'Plusieurs chiens', 'Un carnet complet pour chacun de vos chiens.'],
-  documents: ['📎', 'Documents illimités', 'Ordonnances, résultats, cartes : sans limite.'],
-  report: ['📄', 'Fiche véto en PDF', 'Carnet complet prêt à imprimer ou à envoyer.'],
-  calendar: ['📅', 'Rappels dans votre agenda', 'Export vers Google / Apple Calendar avec alertes.'],
-  stats: ['📊', 'Statistiques de dépenses', 'Graphiques par catégorie et par mois, export CSV.']
-};
-function planButtons() {
-  return (BILL.plans || []).map(p => `<button class="plan" data-act="checkout" data-plan="${p.id}" ${BILL.api ? '' : 'disabled'}>${p.badge ? `<em>${esc(p.badge)}</em>` : ''}<b>${esc(p.label)}</b><span>${esc(p.price)}<small> / ${esc(p.per)}</small></span></button>`).join('');
-}
-function paywall(f) {
-  const info = FEATURES[f] || ['⭐', 'Wouf Plus', ''];
-  sheet(`<div class="sheet-head"><h2>${info[0]} ${esc(info[1])}</h2><button class="x" data-close>✕</button></div><p>${esc(info[2])} Cette fonction fait partie de <b>Wouf Plus</b>.</p>
-    <ul class="bul">${Object.values(FEATURES).map(x => `<li>${x[1]}</li>`).join('')}</ul>
-    <div class="plans">${planButtons()}</div><p class="mut small">Résiliable à tout moment. Vos données restent toujours accessibles.</p>
-    <div class="form-actions"><a class="btn" href="#/abo" data-close>En savoir plus</a></div>`);
-}
-async function api(path, opt) {
-  const r = await fetch(BILL.api.replace(/\/$/, '') + path, opt); const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.error || 'Erreur ' + r.status); return j;
-}
-const applySub = j => { S.sub = { active: !!j.active, plan: j.plan || '', until: j.until || '', customer: j.customer || (S.sub || {}).customer || '', checked: Date.now() }; save(); };
-ACT.checkout = async ({ plan }) => {
-  if (!BILL.api) return toast('Paiement non configuré');
-  try { toast('Redirection vers le paiement sécurisé…'); const j = await api('/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan, returnUrl: location.origin + location.pathname }) }); location.href = j.url; }
-  catch (e) { toast(e.message); }
-};
-ACT.manage = async () => {
-  try { const j = await api('/portal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customer: (S.sub || {}).customer, returnUrl: location.origin + location.pathname + '#/abo' }) }); location.href = j.url; }
-  catch (e) { toast(e.message); }
-};
-async function refreshSub() {
-  if (!BILL.enabled || !BILL.api) return;
-  const qs = new URLSearchParams(location.search), sid = qs.get('session_id');
-  try {
-    if (sid) { applySub(await api('/status?session_id=' + encodeURIComponent(sid))); history.replaceState(null, '', location.pathname + '#/abo'); toast(subActive() ? 'Bienvenue dans Wouf Plus ⭐' : 'Paiement en cours de validation…'); }
-    else if (S.sub && S.sub.customer && Date.now() - (S.sub.checked || 0) > 6 * 36e5) applySub(await api('/status?customer=' + encodeURIComponent(S.sub.customer)));
-  } catch (e) { /* hors ligne : on garde l'état connu */ }
-}
-ROUTES.abo = function abo() {
-  const on = BILL.enabled, s = S.sub;
-  let status;
-  if (!on) status = `<section class="card plus-hero"><h2>🎉 Wouf est 100 % gratuit pour le moment</h2><p>Toutes les fonctions Plus sont incluses, sans limite. Si un abonnement devait être lancé un jour, vous en seriez prévenu(e) et <b>vos données resteraient toujours accessibles</b>.</p></section>`;
-  else if (grandfathered() && !subActive()) status = `<section class="card plus-hero"><h2>⭐ Wouf Plus offert</h2><p>Merci d’être là depuis le début : Plus vous est offert ${!BILL.grandfatherUntil || BILL.grandfatherUntil === 'lifetime' ? 'à vie' : 'jusqu’au ' + fmtDate(BILL.grandfatherUntil)}.</p></section>`;
-  else if (isFreeWindow()) status = `<section class="card plus-hero"><h2>⭐ Offre de lancement</h2><p>Wouf Plus est offert jusqu’au ${fmtDate(BILL.freeUntil)}.</p></section>`;
-  else if (subActive()) status = `<section class="card plus-hero"><h2>⭐ Wouf Plus actif</h2><p>Formule ${esc(s.plan || '')} · valable jusqu’au ${fmtDate(String(s.until).slice(0, 10))}.</p><button class="btn" data-act="manage">Gérer / résilier mon abonnement</button></section>`;
-  else status = `<section class="card plus-hero"><h2>Wouf gratuit</h2><p>Formule gratuite : ${(BILL.limits || {}).dogs || 1} chien, ${(BILL.limits || {}).documents || 3} documents. Passez à Plus pour tout débloquer.</p></section><section class="card"><div class="plans">${planButtons()}</div>${BILL.api ? '' : '<p class="mut small">Paiement non configuré.</p>'}<p class="mut small">Résiliable à tout moment depuis cette page. Paiement sécurisé par Stripe.</p></section>`;
-  return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>⭐ Wouf Plus</h1></div>${status}
-  <section class="card"><h2>Ce que comprend Plus</h2>${Object.values(FEATURES).map(x => `<div class="row"><span class="ico">${x[0]}</span><span class="grow"><b>${x[1]}</b><small>${x[2]}</small></span>${plus() ? '<span class="pill ok">Inclus</span>' : '<span class="pill plus">Plus</span>'}</div>`).join('')}
-  <p class="mut small">Toujours gratuit : carnet de santé, rappels, poids, traitements, journal, SOS et vétérinaires de garde, comparateur d’assurance, dépenses, nutrition, sauvegarde.</p></section>`;
-};
-
 /* ---------- Réglages ---------- */
 let installEvt = null;
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (location.hash === '#/reglages') render(true); });
@@ -307,18 +260,24 @@ ACT.notif = async () => {
 };
 document.addEventListener('change', e => { const t = e.target.closest('[data-set]'); if (t) { const [a, b] = t.dataset.set.split('.'); S[a][b] = t.value.trim(); save(); } });
 ACT.wipe = async () => {
-  if (!(await ask('Supprimer TOUTES les données (chiens, carnet, documents) de cet appareil ? Faites une sauvegarde avant.', 'Tout supprimer'))) return;
+  if (!(await ask('Supprimer TOUTES les données (animaux, carnet, documents) de cet appareil ? Faites une sauvegarde avant.', 'Tout supprimer'))) return;
   for (const x of S.docs) await fdel(x.id).catch(() => {});
   S = blank(); flush(); try { localStorage.removeItem('wouf:vets'); } catch (e) { /* rien */ } location.hash = '#/home'; render();
 };
 ROUTES.reglages = function reglages() {
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>⚙️ Réglages</h1></div>
-  <section class="card"><h2>Propriétaire</h2><p class="mut">Utilisé sur la fiche d’urgence, la fiche véto et l’affiche « chien perdu ».</p>
+  <section class="card"><h2>☁️ Compte Google</h2>${CLOUD.user
+    ? `<div class="row"><span class="ico">${CLOUD.user.picture ? `<img class="av sm" src="${esc(CLOUD.user.picture)}" alt="" referrerpolicy="no-referrer">` : '👤'}</span><span class="grow"><b>${esc(CLOUD.user.name || CLOUD.user.email)}</b><small>${esc(CLOUD.user.email)}</small></span></div>
+       <p class="${CLOUD.st === 'err' ? 'bad' : CLOUD.st === 'ok' ? 'ok' : 'mut'}">${esc(cloudLabel())}${CLOUD.st === 'ok' && CLOUD.at ? ' · ' + new Date(CLOUD.at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : ''}${CLOUD.msg ? ' — ' + esc(CLOUD.msg) : ''}</p>
+       <div class="btn-row"><button class="btn primary" data-act="g-sync">Synchroniser maintenant</button><button class="btn" data-act="g-signout">Se déconnecter</button></div>
+       <p class="mut small">Vos données (carnet, poids, éducation…) sont sauvegardées automatiquement. Les documents (photos, PDF) restent sur l’appareil : utilisez la sauvegarde chiffrée pour les conserver.</p>`
+    : `<p class="mut">Connectez-vous pour sauvegarder automatiquement et retrouver votre carnet sur tous vos appareils.</p><button class="btn primary" data-act="g-signin">Continuer avec Google</button>${CloudApi.available() ? '' : '<p class="mut small">Disponible sur la version publiée (https).</p>'}`}</section>
+  <section class="card"><h2>Propriétaire</h2><p class="mut">Utilisé sur la fiche d’urgence, la fiche véto et l’affiche « animal perdu ».</p>
     <div class="field"><label>Nom</label><input data-set="owner.name" value="${esc(S.owner.name)}"></div><div class="field"><label>Téléphone</label><input data-set="owner.phone" type="tel" value="${esc(S.owner.phone)}"></div></section>
   <section class="card"><h2>Rappels</h2><label class="chk"><input type="checkbox" data-act="notif" ${S.settings.notif ? 'checked' : ''}> <span>Me notifier à l’ouverture de l’app quand une échéance approche</span></label>
     <p class="mut small">Pour être prévenu(e) même app fermée, exportez les rappels vers votre agenda (Carnet → « Ajouter les rappels à mon agenda »).</p></section>
   ${!standalone ? `<section class="card"><h2>Installer Wouf</h2>${installEvt ? '<button class="btn primary" data-act="install">📲 Installer l’app</button>' : '<p class="mut">iPhone : Partager → « Sur l’écran d’accueil ». Android : menu du navigateur → « Installer l’application ».</p>'}</section>` : ''}
-  <section class="card"><h2>Confidentialité</h2><p class="mut">Aucun compte, aucun suivi publicitaire. Vos données sont stockées sur cet appareil. Seules les recherches de cliniques (OpenStreetMap) et d’adresse utilisent le réseau, avec votre position uniquement au moment où vous la demandez.</p></section>
+  <section class="card"><h2>Confidentialité</h2><p class="mut">Aucun suivi publicitaire. Vos données sont stockées sur cet appareil ; si vous vous connectez avec Google (facultatif), elles sont aussi sauvegardées dans votre espace privé de compte. Les recherches de cliniques (OpenStreetMap) et d’adresse utilisent le réseau, avec votre position uniquement au moment où vous la demandez.</p></section>
   <section class="card"><h2>Zone sensible</h2><button class="btn danger" data-act="wipe">Supprimer toutes mes données</button></section>`;
 };

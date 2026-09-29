@@ -4,6 +4,12 @@
 const CFG = window.WOUF_CONFIG || {};
 const BILL = CFG.billing || { enabled: false };
 const KEY = 'wouf:data';
+const SCHEMA = 2;   // version du format des données : incrémentez + ajoutez une étape dans migrate() quand la structure change
+
+/* Journal d'erreurs local (jamais envoyé sans action de l'utilisateur : voir Assistance) */
+function logError(msg, src) { try { const a = JSON.parse(localStorage.getItem('wouf:errors') || '[]'); a.push({ t: Date.now(), m: String(msg).slice(0, 300), s: String(src || '').slice(0, 120) }); localStorage.setItem('wouf:errors', JSON.stringify(a.slice(-10))); } catch (e) { /* ignore */ } }
+addEventListener('error', e => logError(e.message, (e.filename || '').split('/').pop() + ':' + e.lineno));
+addEventListener('unhandledrejection', e => logError((e.reason && e.reason.message) || e.reason, 'promise'));
 
 /* ---------- Outils ---------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -48,17 +54,23 @@ function blank() {
   return {
     v: 1, dogs: [], events: [], weights: [], meds: [], medLog: {}, journal: [], expenses: [], docs: [], quotes: [], contacts: [],
     owner: { name: '', phone: '' }, settings: { notif: false, lastNotif: '', lastBackup: '', home: null }, sub: null,
-    current: null, installedAt: today()
+    current: null, installedAt: today(), edu: {}, walks: [], updatedAt: 0, schema: SCHEMA
   };
 }
+/* Migrations : chaque étape est idempotente et ne détruit jamais de données. */
+function migrate(r) {
+  if (!r.schema || r.schema < 2) { (r.dogs || []).forEach(d => { if (!d.species) d.species = 'dog'; }); r.walks = r.walks || []; r.edu = r.edu || {}; r.schema = 2; }
+  // if (r.schema < 3) { … ; r.schema = 3; }
+  return r;
+}
 function load() {
-  try { const r = JSON.parse(localStorage.getItem(KEY)); if (r && r.v) return Object.assign(blank(), r); } catch (e) { /* stockage indisponible */ }
+  try { const r = JSON.parse(localStorage.getItem(KEY)); if (r && r.v) return Object.assign(blank(), migrate(r)); } catch (e) { /* stockage indisponible */ }
   return blank();
 }
 let S = load();
 let saveT;
 function flush() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Stockage plein : faites une sauvegarde, puis supprimez des éléments.'); } }
-function save() { clearTimeout(saveT); saveT = setTimeout(flush, 120); }
+function save() { S.updatedAt = Date.now(); clearTimeout(saveT); saveT = setTimeout(flush, 120); if (typeof cloudQueue === 'function') cloudQueue(); }
 addEventListener('pagehide', flush);
 const dog = () => S.dogs.find(d => d.id === S.current) || S.dogs[0] || null;
 
@@ -207,11 +219,14 @@ function grandfathered() {
   if (!BILL.enabled || !BILL.grandfatherBefore || S.installedAt >= BILL.grandfatherBefore) return false;
   const u = BILL.grandfatherUntil; return !u || u === 'lifetime' || today() <= u;
 }
-const subActive = () => !!(S.sub && S.sub.active && S.sub.until && Date.now() < Date.parse(S.sub.until));
+const subActive = () => !!(S.sub && S.sub.active && (S.sub.lifetime || (S.sub.until && Date.now() < Date.parse(S.sub.until))));
 function plus() { if (PREVIEW === 'free') return false; if (PREVIEW === 'plus') return true; return isFreeWindow() || grandfathered() || subActive(); }
 const isPremium = f => (BILL.premium || []).includes(f);
 const allowed = f => plus() || !isPremium(f);
-function canAddDog() { return plus() || !isPremium('multiDogs') || S.dogs.length < ((BILL.limits || {}).dogs || 1); }
+/* Formule gratuite : 1 chien + 1 chat. Plus : autant d'animaux que l'on veut. */
+const petsOf = sp => S.dogs.filter(d => (d.species || 'dog') === sp);
+function canAddPet(sp) { return plus() || !isPremium('multiDogs') || petsOf(sp).length < ((BILL.limits || {}).perSpecies || 1); }
+const canAddAnyPet = () => canAddPet('dog') || canAddPet('cat');
 function canAddDoc() { return plus() || !isPremium('documents') || S.docs.filter(d => d.dogId === (dog() || {}).id).length < ((BILL.limits || {}).documents || 3); }
 function gate(f, fn) { if (allowed(f)) return fn(); paywall(f); }
 
