@@ -4,7 +4,7 @@ Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `in
 
 ## Wouf — repères rapides
 - **Aucune compilation.** Scripts classiques chargés dans l'ordre de `wouf/index.html` (variables globales partagées). Ajouter un fichier JS = l'ajouter à `index.html` **et** à `SHELL` dans `wouf/sw.js` (le test `check` le vérifie).
-- Ordre : `config → data → species → core → health → screens → sos → nutrition → croquettes → lessons → lessons2 → lessons_cat → educ → cloud → tracker → plusfeatures → guide → business → extras → main`.
+- Ordre : `config → data → species → core → health → screens → sos → nutrition → croquettes → lessons → lessons2 → lessons_cat → educ → cloud → tracker → plusfeatures → guide → noms → business → extras → main`.
 - `S` = l'état de l'utilisateur (localStorage `wouf:data`). **`S.dogs` contient tous les animaux (chiens ET chats)**, champ `species` (`dog`|`cat`) ; le nom est historique, ne pas le renommer (données existantes et synchronisation). Toute nouvelle donnée : l'ajouter à `blank()`, et si la structure change, augmenter `SCHEMA` + étape dans `migrate()` (core.js).
 - Écrans = `ROUTES.nom = () => html` ; actions = `ACT['nom']` déclenchées par `data-act="nom"` ; `render(true)` réaffiche en gardant le défilement. Toujours échapper le texte utilisateur avec `esc()`.
 - Vocabulaire selon l'espèce : `spOf(d)`, `presetsFor(type, d)`, `toxicsOf(d)`, `firstAidOf(d)`, `nutFactorsOf(d)`, `lessonsFor(d)`. Ne jamais écrire « chien » en dur dans un texte visible d'un animal quelconque.

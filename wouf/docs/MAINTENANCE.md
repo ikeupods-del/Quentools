@@ -40,7 +40,7 @@ Les fichiers de l’app sont revalidés à chaque ouverture, la mise à jour est
 
 **Corriger une faute dans une leçon** : ouvrir le fichier, corriger le texte entre guillemets, `npm test`, pull request.
 
-**Ajouter une leçon** : copier une leçon existante dans `lessons4.js` (chien) ou `lessons_cat3.js` (chat), changer `id` (unique, sans espace), `free: false` (ou `true` pour l’offrir), et remplir tous les champs, y compris `plan` (programme d’entraînement) et `next` (pistes pour aller plus loin). Le test `check` refuse une leçon incomplète (au moins 3 étapes avec critère de réussite, un plan de 3 étapes, 3 erreurs fréquentes, 2 questions de dépannage, 2 pistes). Pour la placer dans un programme, ajouter son `id` à une semaine de `PROGRAMS`. Les nombres de leçons affichés dans l’app (offre, présentation) se calculent tout seuls.
+**Ajouter une leçon** : copier une leçon existante dans `lessons5.js` (chien) ou `lessons_cat4.js` (chat), changer `id` (unique, sans espace), `free: false` (ou `true` pour l’offrir), et remplir tous les champs, y compris `plan` (programme d’entraînement) et `next` (pistes pour aller plus loin). Le test `check` refuse une leçon incomplète (au moins 3 étapes avec critère de réussite, un plan de 3 étapes, 3 erreurs fréquentes, 2 questions de dépannage, 2 pistes). Pour la placer dans un programme, ajouter son `id` à une semaine de `PROGRAMS`. Les nombres de leçons affichés dans l’app (offre, présentation) se calculent tout seuls.
 
 **Le bouton « Wouf+ »** (en-tête, accueil, éducation, fiche de leçon verrouillée) : tant que `billing.enabled` vaut `false` ou que le relais n’est pas configuré, il présente l’offre (« tout est offert pour le moment »). Dès que la vente est ouverte (`enabled: true` et `api` renseignée), il lance le paiement à 19,99 € à vie avec connexion Google et case de consentement.
 
@@ -134,3 +134,5 @@ Les fiches santé, premiers secours, toxiques, leçons et calculs (ration, plan 
 - **Aucun secret dans le dépôt** : les clés Stripe et Resend ne vivent que dans Cloudflare (`wrangler secret put`). Le test `check` échoue si une clé Stripe est écrite dans un fichier.
 - Les clés Firebase de `config.js` sont publiques par conception ; la sécurité vient des règles Firestore.
 - Le relais vérifie la signature du jeton Google (tests inclus : jeton falsifié, expiré, d’un autre projet), n’accepte que vos adresses (`ALLOWED_ORIGIN`) et ne stocke aucune donnée.
+
+**Générateur de noms** (`noms.js`) : listes de noms par style dans `NAME_STYLES` (format `Nom.sexe.espèce`, sexe `m`/`f`, espèce `d`/`c`, tout est facultatif). La lettre de l'année des pedigrees (LOF/LOOF) est calculée par `lofLetter(année)` : cycle de 20 lettres sans K Q W X Y Z, repères vérifiés (2025 = A, 2026 = B) ; ne pas la coder « en dur » année par année.

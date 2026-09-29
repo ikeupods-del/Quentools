@@ -54,7 +54,7 @@ function blank() {
   return {
     v: 1, dogs: [], events: [], weights: [], meds: [], medLog: {}, journal: [], expenses: [], docs: [], foods: [], contacts: [],
     owner: { name: '', phone: '' }, settings: { notif: false, lastNotif: '', lastBackup: '', home: null }, sub: null,
-    current: null, installedAt: today(), edu: {}, walks: [], updatedAt: 0, schema: SCHEMA
+    current: null, installedAt: today(), edu: {}, walks: [], names: [], updatedAt: 0, schema: SCHEMA
   };
 }
 /* Migrations : chaque étape est idempotente et ne détruit jamais de données. */

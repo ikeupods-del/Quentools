@@ -247,14 +247,49 @@ test('météo : scène illustrée (soleil, pluie, vent, froid, orage, neige, nui
   noErrors(b); await b.ctx.close();
 });
 
-test('nouvelles leçons Plus : 9 chien + 5 chat, 4 nouveaux programmes, pages qui s’affichent', async () => {
+test('nouvelles leçons Plus : 16 chien + 9 chat, 7 nouveaux programmes, pages qui s’affichent', async () => {
   const data = seed({ dogs: [dogRec(), dogRec({ id: 'c1', name: 'Miso', species: 'cat', breed: 'Européen', birth: '2024-03-01' })] });
   const b = await boot({ data }), p = b.page;
-  const ids = { d1: ['focus', 'impulsions', 'reactivite', 'destruction', 'poursuite', 'ville', 'randonnee', 'dents', 'vol'], c1: ['c-mord', 'c-pipi', 'c-demenagement', 'c-solitude', 'c-dents'] };
+  const ids = { d1: ['veto', 'eau', 'nuits', 'cerveau', 'bebe', 'craintif', 'deux-chiens', 'focus', 'impulsions', 'reactivite', 'destruction', 'poursuite', 'ville', 'randonnee', 'dents', 'vol'], c1: ['c-bebe', 'c-eau', 'c-poids', 'c-dehors', 'c-mord', 'c-pipi', 'c-demenagement', 'c-solitude', 'c-dents'] };
   for (const cur of ['d1', 'c1']) { await b.ev(c => { S.current = c; save(); }, cur);
     for (const id of ids[cur]) { await b.go('#/lecon?id=' + id); await p.waitForSelector('.lesson-h, h1'); const h = await text(p, '#view'); assert.ok(h.length > 900, id + ' trop court'); assert.match(h, /Programme|programme/); }
     assert.equal(await b.ev(id => lessonsFor(dog()).filter(l => !l.free).length >= (id === 'd1' ? 40 : 15), cur), true); }
-  for (const id of ['ville4', 'reactif8', 'maison4', 'chat-detente4']) { await b.ev(c => { S.current = c; save(); }, id === 'chat-detente4' ? 'c1' : 'd1'); await b.go('#/programme?id=' + id); await p.waitForSelector('h1'); assert.match(await text(p, '#view'), /Semaine/); }
+  for (const id of ['ville4', 'reactif8', 'maison4', 'famille4', 'chiot-nuit3', 'chat-sante3', 'chat-detente4']) { await b.ev(c => { S.current = c; save(); }, /^chat/.test(id) ? 'c1' : 'd1'); await b.go('#/programme?id=' + id); await p.waitForSelector('h1'); assert.match(await text(p, '#view'), /Semaine/); }
+  noErrors(b); await b.ctx.close();
+});
+
+test('noms : lettre de l’année LOF/LOOF, filtres, test d’un nom, favoris, utilisation', async () => {
+  const b = await boot({ hash: '#/noms' }), p = b.page;
+  await p.waitForSelector('#nm-letter');
+  const r = await b.ev(() => ({ years: [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2045, 2046].map(lofLetter).join(''), noKQW: [...Array(60)].every((_, i) => !/[KQWXYZ]/.test(lofLetter(2000 + i))),
+    n: NAME_POOL.length, dup: pickNames({}, 1000).some(x => confusedWith(x.name)) || pickNames({}, 1000).some(x => ['Ninon', 'Sauge', 'Patate', 'Ouistiti'].includes(x.name)),
+    b: pickNames({ sp: 'dog', sex: 'f', letter: 'B' }, 50).every(x => x.name[0] === 'B' && x.sex !== 'm'), cat: pickNames({ sp: 'cat' }, 500).every(x => x.sp !== 'd'), dog: pickNames({ sp: 'dog' }, 500).every(x => x.sp !== 'c'),
+    short: pickNames({ short: true }, 500).every(x => syllables(x.name) <= 2), style: pickNames({ style: 'gourmand' }, 500).every(x => x.style === 'gourmand'), none: pickNames({ letter: 'X' }).length,
+    seeded: JSON.stringify(pickNames({}, 3, () => 0.1)) === JSON.stringify(pickNames({}, 3, () => 0.1)) }));
+  assert.equal(r.years, 'PRSTUVABCAB', 'lettres par année (cycle de 20, sans K Q W X Y Z)');
+  assert.ok(r.noKQW && r.n >= 300 && !r.dup && r.b && r.cat && r.dog && r.short && r.style && r.none === 0 && r.seeded, JSON.stringify(r));
+  const ck = await b.ev(() => ({ nala: nameCheck('Nala').score, viens: nameCheck('Viens').notes.some(n => /ordre/.test(n[1])), nono: !!confusedWith('Nono'), long: nameCheck('Maximilien').notes.some(n => n[0] === 'bad'), twin: nameCheck('Lala', ['Nala']).notes.some(n => /Sonne comme/.test(n[1])), same: nameCheck('Nala', ['Nala']).notes.some(n => /déjà/.test(n[1])), empty: nameCheck('').score }));
+  assert.ok(ck.nala >= 80 && ck.viens && ck.nono && ck.long && ck.twin && ck.same && ck.empty === 0, JSON.stringify(ck));
+  await p.fill('#nm-year', '2026'); assert.equal(await text(p, '.big-letter'), 'B');
+  await p.fill('#nm-year', '2024'); assert.equal(await text(p, '.big-letter'), 'V'); await p.fill('#nm-year', '2026');
+  await p.click('[data-act=nm-lof]'); await p.waitForSelector('.name-card'); assert.ok((await p.$$('.name-card')).length >= 5); assert.ok(await b.ev(() => NOMS.list.every(x => x.name[0] === 'B')));
+  await p.click('[data-k=sp][data-v=cat]'); await p.click('[data-k=style][data-v=gourmand]'); await p.fill('#nm-letter', ''); await p.click('[data-act=nm-go]'); await p.waitForSelector('.name-card');
+  assert.ok(await b.ev(() => NOMS.list.length >= 6 && NOMS.list.every(x => x.style === 'gourmand')));
+  await p.fill('#nm-test', 'Assis'); assert.match(await text(p, '#nm-test-res'), /ordre « assis »/); await p.fill('#nm-test', 'Nala'); assert.match(await text(p, '#nm-test-res'), /Deux syllabes/);
+  const first = await b.ev(() => NOMS.list[0].name); await p.click('.name-card [data-act=nm-fav]'); assert.deepEqual(await b.ev(() => S.names), [first]); await p.waitForSelector('[data-act=nm-use]');
+  await p.click('[data-act=nm-use]'); await p.waitForSelector('.sheet input[name=name]'); await p.waitForTimeout(250); assert.equal(await p.inputValue('.sheet input[name=name]'), first);
+  noErrors(b); await b.ctx.close();
+});
+
+test('accueil et menu Plus : « À faire » en premier, une seule invitation à la fois, menu par rubriques', async () => {
+  const b = await boot({ data: seed({ events: [{ id: 'e1', dogId: 'd1', type: 'vaccine', title: 'Rage annuelle', date: day(-300), next: day(-3) }] }) }), p = b.page;
+  await p.waitForSelector('.hero'); const order = await b.ev(() => [...document.querySelectorAll('#view > section, #view > a')].map(e => e.querySelector('h2') ? e.querySelector('h2').textContent : e.className.split(' ')[1] || e.className));
+  assert.equal(order[0], 'hero'); assert.equal(order[1], 'À faire', 'la liste À faire vient juste après la fiche : ' + order.join('|'));
+  assert.ok(await p.$('.grid3 a[href="#/noms"]'));
+  await b.go('#/plus'); await p.waitForSelector('.grid4'); const h = await b.ev(() => [...document.querySelectorAll('.grp')].map(e => e.textContent)); assert.deepEqual(h, ['Santé', 'Éduquer et bouger', 'Alimentation', 'Pratique', 'Wouf']);
+  assert.equal(await p.locator('.grid4 a').count(), 4);
+  // les liens du menu mènent tous à une page existante
+  const bad = await b.ev(() => [...document.querySelectorAll('.menu a, .grid4 a')].map(a => a.getAttribute('href').slice(2)).filter(r => !ROUTES[r])); assert.deepEqual(bad, []);
   noErrors(b); await b.ctx.close();
 });
 
