@@ -330,13 +330,35 @@ test('croquettes : recherche Open Pet Food Facts (simulée) et import pré-rempl
   await p.click('.sheet [data-close]'); await b.ctx.unroute(/openpetfoodfacts/); await b.ctx.route(/openpetfoodfacts/, r => r.abort()); await p.click('[data-act=food-search]'); await p.fill('#food-q input', 'x'); await p.click('#food-q button'); await p.waitForSelector('#food-res .warn'); assert.match(await text(p, '#food-res'), /Recherche impossible/);
   noErrors(b); await b.ctx.close();
 });
+test('croquettes : recommandation selon le chien et suggestions de vrais produits classés', async () => {
+  const b = await boot({ data: seed({ weights: [{ id: 'w1', dogId: 'd1', date: day(-3), kg: 30 }], dogs: [dogRec({ activity: 'high', allergies: 'allergique au blé' })] }), hash: '#/croquettes' }), p = b.page; const asked = [];
+  await p.waitForSelector('.reco'); assert.match(await text(p, '.reco h2'), /Croquettes adulte actif/); assert.match(await text(p, '.reco'), /Grosses croquettes|Croquettes de taille moyenne/); assert.match(await text(p, '.reco'), /À exiger sur l’étiquette/); assert.match(await text(p, '.reco'), /allergènes déclarés/);
+  const OFF = [
+    { code: '1', product_name: 'Adulte actif poulet', brands: 'MarqueA', quantity: '12 kg', ingredients_text_fr: 'Poulet déshydraté, riz, graisse de poulet, tocophérols', nutriments: { proteins_100g: 27, fat_100g: 16, fiber_100g: 2.5, ash_100g: 7, moisture_100g: 9 } },
+    { code: '2', product_name: 'Croquettes économiques', brands: 'MarqueB', ingredients_text_fr: 'Céréales, viandes et sous-produits animaux, colorants', nutriments: { proteins_100g: 18, fat_100g: 7, fiber_100g: 4, ash_100g: 8, moisture_100g: 10 } },
+    { code: '3', product_name: 'Sans composition', brands: 'MarqueC', nutriments: {} },
+    { code: '4', product_name: 'Adult au blé', brands: 'MarqueD', ingredients_text_fr: 'Blé, poulet', nutriments: { proteins_100g: 27, fat_100g: 16, fiber_100g: 2.5, ash_100g: 7, moisture_100g: 9 } },
+    { code: '5', product_name: 'Adulte actif poulet', brands: 'MarqueA', nutriments: { proteins_100g: 27, fat_100g: 16 } }];
+  await b.ctx.route(/openpetfoodfacts/, r => { asked.push(decodeURIComponent(r.request().url())); r.fulfill({ headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: JSON.stringify({ products: OFF }) }); });
+  await p.click('[data-act=sugg-run]'); await p.waitForSelector('#sugg [data-act=sugg-add]'); assert.match(asked[0], /search_terms=croquettes chien actif/); assert.match(asked[0], /page_size=40/);
+  const rows = await p.locator('#sugg [data-act=sugg-add]').count(); assert.equal(rows, 3, 'doublon et produit sans composition écartés');
+  assert.match(await text(p, '#sugg [data-act=sugg-add]:first-of-type'), /Adulte actif poulet/); assert.match(await text(p, '#sugg [data-act=sugg-add]:last-of-type'), /Contient : blé/, 'produit avec l’allergène en dernier');
+  assert.match(await text(p, '#sugg'), /sans composition ignorés/); assert.match(await text(p, '#sugg'), /pas une recommandation de marque/);
+  await p.click('#sugg [data-act=sugg-add]:first-of-type'); await p.waitForSelector('#f_name'); assert.equal(await p.inputValue('#f_name'), 'Adulte actif poulet'); assert.equal(await p.inputValue('#f_stage'), 'adult'); assert.match(await text(p, '.note-import'), /Vérifiez chaque valeur/);
+  await p.fill('#f_price', '48'); await p.fill('#f_bagKg', '12'); await p.click('form [type=submit]'); await p.waitForSelector('a.food'); assert.equal(await b.ev(() => S.foods[0].name), 'Adulte actif poulet');
+  // changement de profil : chiot de grande race → recommandation différente
+  await b.ev(() => { const d = dog(); d.birth = new Date(Date.now() - 150 * 864e5).toISOString().slice(0, 10); d.breed = 'Dogue Allemand'; save(); render(); }); await p.waitForSelector('.reco');
+  assert.match(await text(p, '.reco h2'), /croissance grandes races/); assert.match(await text(p, '.reco'), /Calcium entre 1,0 et 1,5/); assert.match(await text(p, '.reco'), /tous âges/);
+  await b.ctx.unroute(/openpetfoodfacts/); await b.ctx.route(/openpetfoodfacts/, r => r.abort()); await p.click('[data-act=sugg-run]'); await p.waitForSelector('#sugg .warn'); assert.match(await text(p, '#sugg'), /Recherche impossible/);
+  noErrors(b); await b.ctx.close();
+});
 test('don à la SPA : lien direct sécurisé vers le site officiel, transparence', async () => {
   const b = await boot(), p = b.page;
   const home = await b.ev(() => { const a = document.querySelector('.don-card a'); return { href: a.href, target: a.target, rel: a.rel }; });
-  assert.equal(home.href, 'https://www.spa.asso.fr/'); assert.equal(home.target, '_blank'); assert.match(home.rel, /noopener/); assert.match(home.rel, /noreferrer/);
+  assert.equal(home.href, 'https://soutenir.la-spa.fr/P_StopAbandon2026_site/~mon-don'); assert.equal(home.target, '_blank'); assert.match(home.rel, /noopener/); assert.match(home.rel, /noreferrer/);
   await b.go('#/plus'); assert.match(await text(p, '#view'), /Faire un don à la SPA`?/); await b.go('#/don'); await p.waitForSelector('.big-heart');
   const btn = await b.ev(() => { const a = document.querySelector('#view a.btn.primary'); return { href: a.href, text: a.textContent, target: a.target }; });
-  assert.equal(btn.href, 'https://www.spa.asso.fr/'); assert.match(btn.text, /Faire un don à la SPA/); assert.equal(btn.target, '_blank');
+  assert.equal(btn.href, 'https://soutenir.la-spa.fr/P_StopAbandon2026_site/~mon-don'); assert.match(btn.text, /Faire un don à la SPA/); assert.equal(btn.target, '_blank');
   assert.match(await text(p, '#view'), /n’est pas affilié/); assert.match(await text(p, '#view'), /ne collecte aucun don/);
   await b.ev(() => { CFG.donation.name = 'une autre association'; CFG.donation.url = 'https://exemple.org/don'; render(); }); assert.equal(await b.ev(() => document.querySelector('#view a.btn.primary').href), 'https://exemple.org/don');
   noErrors(b); await b.ctx.close();

@@ -87,3 +87,24 @@ test('allergies déclarées : détection dans la liste d’ingrédients', () => 
   assert.deepEqual(L('Allergique au poulet'), ['poulet']); assert.deepEqual(L('blé et œufs'), ['ble', 'oeuf']);
   assert.deepEqual(L(''), []); assert.deepEqual(L('poisson'), []); assert.deepEqual(L('allergie au riz et à la dinde'), ['riz']);
 });
+
+test('devinette du type et de l’âge visé d’après le nom du produit', () => {
+  const S = N('guessFoodStage'), T = N('guessFoodType');
+  assert.equal(S('Croquettes chiot grande race'), 'growth'); assert.equal(S('Kitten poulet'), 'growth'); assert.equal(S('Mature 8+ chat'), 'senior'); assert.equal(S('Chien Senior mini'), 'senior');
+  assert.equal(S('Chat stérilisé saumon'), 'light'); assert.equal(S('Light chien'), 'light'); assert.equal(S('Adult Medium poulet'), 'adult'); assert.equal(S('Croquettes Adulte actif poulet'), 'adult'); assert.equal(S('Chien adultes petite race'), 'adult'); assert.equal(S('Menu image'), 'all', 'image ≠ âge'); assert.equal(S('Puppy tous âges'), 'all'); assert.equal(S('Chiot et adulte, tous les âges'), 'all'); assert.equal(S('All life stages poulet'), 'all');
+  assert.equal(T('Pâtée au bœuf', ''), 'wet'); assert.equal(T('Croquettes', 80), 'wet'); assert.equal(T('Croquettes', 9), 'dry'); assert.equal(T('x', 30), 'semi');
+});
+test('recommandation : le type d’aliment suit le profil (âge, taille, activité, stérilisation, surpoids, espèce)', () => {
+  const R = N('recommendFood'), base = { species: 'dog', stage: 'adult', size: 'M', activity: 'normal', neutered: false, overweight: false, months: 36 };
+  const big = R({ ...base, stage: 'growth', size: 'XL', months: 5 }, { allergies: 'blé' });
+  assert.match(big.headline, /croissance grandes races/); assert.equal(big.meals, '3 repas par jour'); assert.match(big.searches[0].q, /chiot grande race/);
+  assert.ok(big.must.some(x => /Calcium/.test(x)) && big.avoid.some(x => /tous âges/.test(x)) && big.avoid.some(x => /blé/.test(x)), 'calcium à exiger, « tous âges » à éviter, allergène à éviter');
+  assert.match(R({ ...base, stage: 'growth', size: 'S', months: 3 }).meals, /4 repas/);
+  assert.match(R({ ...base, stage: 'senior' }).headline, /senior/); assert.match(R({ ...base, overweight: true }).headline, /allégées/); assert.match(R({ ...base, overweight: true }).avoid.join(' '), /400 kcal/);
+  assert.match(R({ ...base, activity: 'sport' }).headline, /sport/); assert.match(R({ ...base, activity: 'high' }).headline, /actif/); assert.match(R({ ...base, neutered: true }).headline, /stérilisé/);
+  assert.match(R({ ...base, size: 'XL' }).meals, /torsion/); assert.match(R({ ...base, size: 'S' }).kibble, /Petites croquettes/); assert.match(R({ ...base, size: 'L' }).kibble, /Grosses/);
+  const cat = R({ species: 'cat', stage: 'adult', size: 'CAT', activity: 'normal', neutered: true, overweight: false }, { breed: 'Persan' });
+  assert.match(cat.headline, /chat stérilisé/); assert.match(cat.format, /sec \+ humide/); assert.match(cat.kibble, /museaux plats/); assert.match(cat.searches[0].q, /chat stérilisé/); assert.ok(cat.must.some(x => /taurine/.test(x)));
+  assert.match(R({ species: 'cat', stage: 'growth', size: 'CAT', activity: 'normal', neutered: false, overweight: false, months: 4 }).headline, /chaton/);
+  for (const p of [base, { ...base, stage: 'growth' }, { ...base, species: 'cat', size: 'CAT' }]) { const r = R(p); assert.ok(r.headline && r.why && r.must.length >= 5 && r.avoid.length >= 1 && r.searches.length >= 2); }
+});

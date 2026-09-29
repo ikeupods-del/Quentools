@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.4.0',
+  version: '1.5.0',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
@@ -55,10 +55,10 @@ window.WOUF_CONFIG = {
   },
 
   // Bouton « Faire un don » : ouvre directement la page de don de l'association (Wouf ne touche rien et n'encaisse rien).
-  // Vérifiez l'adresse exacte de la page de don sur le site de l'association avant publication.
+  // Si la campagne change, mettez ici la nouvelle adresse de la page de don de l'association.
   donation: {
     name: 'la SPA',
-    url: 'https://www.spa.asso.fr/',
+    url: 'https://soutenir.la-spa.fr/P_StopAbandon2026_site/~mon-don',   // page de don indiquée par le propriétaire (campagne « Stop abandon 2026 »)
     text: 'La SPA recueille, soigne et fait adopter des animaux abandonnés ou maltraités.'
   },
 
