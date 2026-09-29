@@ -3,10 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Freelance Kit — TJM & Devis</title>
-<meta name="description" content="Calculateur de TJM et générateur de devis sur-mesure pour freelances.">
+<title>Freelance Kit — TJM, devis &amp; factures</title>
+<meta name="description" content="Calculateur de TJM, devis et factures conformes pour freelances et micro-entrepreneurs.">
 
-<!-- ============ 1. DÉPENDANCES (CDN) ============ -->
 <script>
   // Thème appliqué AVANT le rendu pour éviter le flash blanc
   (function () {
@@ -19,33 +18,39 @@
 </script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-  tailwind.config = {
-    darkMode: 'class',
-    theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } }
-  };
+  tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } } };
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 
 <style>
   [x-cloak] { display: none !important; }
-  /* Impression : seul le devis est imprimé (base de l'export PDF) */
+  fieldset { min-width: 0; }
+  fieldset:disabled .field { opacity: .7; cursor: not-allowed; }
+  /* Impression / PDF : seul le document (#paper) est imprimé */
+  @page { size: A4; margin: 12mm; }
   @media print {
-    body { background: #fff !important; }
+    html, body { background: #fff !important; }
+    body * { visibility: hidden; }
+    #paper, #paper * { visibility: visible; }
+    #paper { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; border: 0 !important; padding: 0 !important; }
     .no-print { display: none !important; }
-    #quote-card { box-shadow: none !important; border: 0 !important; }
   }
 </style>
-<!-- Composants (le CDN Tailwind interprète @apply dans text/tailwindcss) -->
 <style type="text/tailwindcss">
   @layer components {
-    .field { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100; }
+    .field { @apply w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100; }
     .lbl { @apply mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400; }
+    .hint { @apply mt-1 text-xs text-slate-500; }
     .card { @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6; }
-    .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-500/40; }
+    .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-50; }
     .btn-primary { @apply bg-indigo-600 text-white hover:bg-indigo-500; }
     .btn-ghost { @apply border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800; }
+    .btn-danger { @apply border border-red-300 text-red-600 hover:bg-red-50 dark:border-red-500/40 dark:text-red-400 dark:hover:bg-red-500/10; }
+    .pill { @apply inline-block rounded-full px-2.5 py-0.5 text-xs font-medium; }
+    .h2 { @apply text-lg font-semibold; }
   }
 </style>
 </head>
@@ -53,260 +58,647 @@
 <body class="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100"
       x-data="app()" x-init="init()" x-cloak>
 
-  <!-- ============ 2. EN-TÊTE ============ -->
+  <!-- ============ EN-TÊTE ============ -->
   <header class="no-print sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
-    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2.5">
       <div class="flex items-center gap-2.5">
         <span class="grid h-8 w-8 place-items-center rounded-lg bg-indigo-600 text-sm font-bold text-white">F</span>
         <span class="font-semibold tracking-tight">Freelance Kit</span>
       </div>
+      <nav class="order-3 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto" aria-label="Navigation">
+        <template x-for="t in tabs" :key="t.id">
+          <button class="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition"
+                  :class="(tab === t.id || (t.id === 'docs' && tab === 'edit')) ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'"
+                  @click="go(t.id)" x-text="t.label"></button>
+        </template>
+      </nav>
       <div class="flex items-center gap-2">
-        <!-- Google -->
         <template x-if="acct.google">
           <button class="btn btn-ghost !px-2.5" @click="signOut('google')" :title="'Google : ' + acct.google.email + ' — cliquer pour se déconnecter'">
             <img x-show="acct.google.picture" :src="acct.google.picture" alt="" class="h-5 w-5 rounded-full" referrerpolicy="no-referrer">
-            <span class="hidden max-w-[10rem] truncate sm:inline" x-text="acct.google.name || acct.google.email"></span>
+            <span class="hidden max-w-[9rem] truncate lg:inline" x-text="acct.google.name || acct.google.email"></span>
             <span class="text-xs text-slate-500" x-text="syncLabel"></span>
           </button>
         </template>
-        <template x-if="!acct.google">
-          <button class="btn btn-ghost" @click="signIn('google')">Google</button>
-        </template>
-        <!-- GitHub -->
+        <template x-if="!acct.google"><button class="btn btn-ghost" @click="signIn('google')">Google</button></template>
         <template x-if="acct.github">
           <button class="btn btn-ghost" @click="signOut('github')" :title="'GitHub : ' + acct.github.login + ' — cliquer pour se déconnecter'">
             <img x-show="acct.github.picture" :src="acct.github.picture" alt="" class="h-5 w-5 rounded-full">
-            <span class="hidden sm:inline" x-text="acct.github.login"></span>
+            <span class="hidden lg:inline" x-text="acct.github.login"></span>
           </button>
         </template>
-        <template x-if="!acct.github">
-          <button class="btn btn-ghost" @click="signIn('github')">GitHub</button>
-        </template>
-        <button class="btn btn-ghost !px-2.5" @click="toggleTheme()" aria-label="Basculer le thème">
-          <span x-text="dark ? '☀️' : '🌙'"></span>
-        </button>
+        <template x-if="!acct.github"><button class="btn btn-ghost" @click="signIn('github')">GitHub</button></template>
+        <button class="btn btn-ghost !px-2.5" @click="toggleTheme()" aria-label="Basculer le thème"><span x-text="dark ? '☀️' : '🌙'"></span></button>
       </div>
     </div>
   </header>
 
   <main class="mx-auto max-w-6xl space-y-8 px-4 py-8">
 
-    <!-- ============ 3. CALCULATEUR TJM ============ -->
-    <section class="no-print grid gap-6 lg:grid-cols-5" aria-labelledby="h-tjm">
+    <!-- ================================================================
+         CALCULATEUR TJM
+         ================================================================ -->
+    <section x-show="tab === 'tjm'" class="no-print grid gap-6 lg:grid-cols-5" aria-labelledby="h-tjm">
       <div class="card lg:col-span-3">
-        <h2 id="h-tjm" class="text-lg font-semibold">Calculateur de TJM</h2>
+        <h2 id="h-tjm" class="h2">Calculateur de TJM</h2>
         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Renseignez vos objectifs : le résultat se met à jour instantanément.</p>
-
         <div class="mt-5 grid gap-4 sm:grid-cols-2">
-          <div>
-            <label class="lbl">Salaire net visé / mois (€)</label>
-            <input type="number" min="0" step="50" class="field" x-model.number="tjm.netMonthly">
-          </div>
+          <div><label class="lbl">Salaire net visé / mois (€)</label><input type="number" min="0" step="50" class="field" x-model.number="tjm.netMonthly"></div>
           <div>
             <label class="lbl">Charges sociales &amp; impôts (% du CA)</label>
             <input type="number" min="0" max="90" step="0.5" class="field" x-model.number="tjm.chargesRate">
-            <p class="mt-1 text-xs text-slate-500">Micro-BNC ≈ 21,1 % · EURL/SASU ≈ 45 % du brut</p>
+            <p class="hint">Selon votre statut : vérifiez le taux en vigueur (micro-entreprise, société…).</p>
           </div>
           <div>
             <label class="lbl">Frais professionnels / mois (€)</label>
             <input type="number" min="0" step="10" class="field" x-model.number="tjm.expensesMonthly">
-            <p class="mt-1 text-xs text-slate-500">Compta, mutuelle, matériel, logiciels, coworking…</p>
+            <p class="hint">Compta, mutuelle, matériel, logiciels, coworking…</p>
           </div>
-          <div>
-            <label class="lbl">Marge de sécurité / trésorerie (%)</label>
-            <input type="number" min="0" max="50" step="1" class="field" x-model.number="tjm.buffer">
-          </div>
-          <div>
-            <label class="lbl">Jours travaillés / an</label>
-            <input type="number" min="1" max="365" class="field" x-model.number="tjm.daysWorked">
-            <p class="mt-1 text-xs text-slate-500">≈ 218 j après congés &amp; fériés</p>
-          </div>
-          <div>
-            <label class="lbl">Taux de jours facturables (%)</label>
-            <input type="number" min="1" max="100" step="1" class="field" x-model.number="tjm.billableRate">
-            <p class="mt-1 text-xs text-slate-500">Le reste = prospection, admin, intercontrat</p>
-          </div>
-          <div>
-            <label class="lbl">Heures par jour</label>
-            <input type="number" min="1" max="12" step="0.5" class="field" x-model.number="tjm.hoursPerDay">
-          </div>
+          <div><label class="lbl">Marge de sécurité / trésorerie (%)</label><input type="number" min="0" max="50" class="field" x-model.number="tjm.buffer"></div>
+          <div><label class="lbl">Jours travaillés / an</label><input type="number" min="1" max="365" class="field" x-model.number="tjm.daysWorked"><p class="hint">≈ 218 j après congés &amp; fériés</p></div>
+          <div><label class="lbl">Taux de jours facturables (%)</label><input type="number" min="1" max="100" class="field" x-model.number="tjm.billableRate"><p class="hint">Le reste = prospection, admin, intercontrat</p></div>
+          <div><label class="lbl">Heures par jour</label><input type="number" min="1" max="12" step="0.5" class="field" x-model.number="tjm.hoursPerDay"></div>
         </div>
       </div>
-
-      <!-- Résultats -->
       <aside class="card flex flex-col justify-between bg-gradient-to-br from-indigo-600 to-violet-600 !border-0 text-white dark:from-indigo-600/90 dark:to-violet-700/90">
         <div>
           <p class="text-xs font-medium uppercase tracking-wider text-indigo-100">TJM recommandé</p>
           <p class="mt-1 text-5xl font-bold tracking-tight" x-text="eur(tjmResult.tjm)"></p>
-          <p class="mt-2 text-sm text-indigo-100">
-            Taux horaire : <strong x-text="eur(tjmResult.hourly)"></strong> / h
-          </p>
+          <p class="mt-2 text-sm text-indigo-100">Taux horaire : <strong x-text="eur(tjmResult.hourly)"></strong> / h</p>
         </div>
         <dl class="mt-6 space-y-2 border-t border-white/20 pt-4 text-sm">
           <div class="flex justify-between"><dt class="text-indigo-100">CA annuel nécessaire</dt><dd class="font-medium" x-text="eur(tjmResult.revenue)"></dd></div>
           <div class="flex justify-between"><dt class="text-indigo-100">Jours facturables</dt><dd class="font-medium" x-text="tjmResult.billableDays.toFixed(0) + ' j'"></dd></div>
           <div class="flex justify-between"><dt class="text-indigo-100">Net annuel visé</dt><dd class="font-medium" x-text="eur(tjm.netMonthly * 12)"></dd></div>
         </dl>
-        <button class="btn mt-5 bg-white text-indigo-700 hover:bg-indigo-50" @click="useTjmInQuote()">
-          Utiliser ce TJM dans le devis ↓
-        </button>
+        <button class="btn mt-5 bg-white text-indigo-700 hover:bg-indigo-50" @click="useTjm()">Utiliser comme tarif jour par défaut</button>
+        <p class="mt-2 text-center text-xs text-indigo-100" x-show="tjmRate">Tarif jour actuel : <strong x-text="eur(tjmRate)"></strong></p>
       </aside>
     </section>
 
-    <!-- ============ 4. GÉNÉRATEUR DE DEVIS ============ -->
-    <section class="grid gap-6 lg:grid-cols-5" aria-labelledby="h-quote">
-      <!-- Formulaire -->
-      <div class="card no-print lg:col-span-2">
-        <h2 id="h-quote" class="text-lg font-semibold">Devis sur-mesure</h2>
-
-        <div class="mt-5 space-y-4">
-          <div>
-            <label class="lbl">Client</label>
-            <input class="field" placeholder="Nom / société" x-model="quote.client">
-          </div>
-          <div>
-            <label class="lbl">Projet</label>
-            <input class="field" placeholder="Intitulé de la mission" x-model="quote.project">
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="lbl">TJM appliqué (€)</label>
-              <input type="number" min="0" step="10" class="field" x-model.number="quote.rate">
-            </div>
-            <div>
-              <label class="lbl">TVA (%)</label>
-              <select class="field" x-model.number="quote.vat">
-                <option value="0">0 % (franchise)</option>
-                <option value="5.5">5,5 %</option>
-                <option value="10">10 %</option>
-                <option value="20">20 %</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Coefficient de complexité -->
-          <div>
-            <label class="lbl">Coefficient de complexité</label>
-            <div class="grid grid-cols-2 gap-2">
-              <template x-for="c in complexities" :key="c.value">
-                <button type="button"
-                        class="rounded-lg border px-3 py-2 text-left text-sm transition"
-                        :class="quote.coef === c.value
-                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300'
-                          : 'border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800'"
-                        @click="quote.coef = c.value">
-                  <span class="block font-medium" x-text="c.label"></span>
-                  <span class="text-xs opacity-70" x-text="'× ' + c.value.toFixed(2)"></span>
-                </button>
-              </template>
-            </div>
-            <div class="mt-2 flex items-center gap-2 text-xs text-slate-500">
-              <span>Personnalisé</span>
-              <input type="number" min="0.5" max="3" step="0.05" class="field !w-24 !py-1" x-model.number="quote.coef">
-            </div>
-          </div>
-
-          <div>
-            <label class="lbl">Acompte à la commande (%)</label>
-            <input type="number" min="0" max="100" step="5" class="field" x-model.number="quote.deposit">
-          </div>
-        </div>
+    <!-- ================================================================
+         DOCUMENTS : LISTE
+         ================================================================ -->
+    <section x-show="tab === 'docs'" class="no-print space-y-6" aria-labelledby="h-docs">
+      <!-- Bandeau : profil incomplet -->
+      <div x-show="profileErrors.length" class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+        <p><strong>Réglages à compléter</strong> pour émettre des documents conformes : <span x-text="profileErrors.slice(0, 3).join(', ') + (profileErrors.length > 3 ? '…' : '')"></span>.</p>
+        <button class="btn btn-ghost" @click="go('settings')">Ouvrir les réglages</button>
       </div>
 
-      <!-- Aperçu du devis (zone imprimable) -->
-      <div id="quote-card" class="card lg:col-span-3">
-        <div class="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p class="text-xs font-medium uppercase tracking-wider text-slate-500">Devis</p>
-            <p class="text-xl font-semibold" x-text="quote.project || 'Nouveau projet'"></p>
-            <p class="text-sm text-slate-500" x-text="quote.client ? 'Pour ' + quote.client : 'Client à renseigner'"></p>
+      <!-- Indicateurs -->
+      <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <template x-for="k in kpis" :key="k.label">
+          <div class="card !p-4">
+            <p class="text-xs font-medium text-slate-500" x-text="k.label"></p>
+            <p class="mt-1 text-xl font-semibold tabular-nums" :class="k.cls" x-text="money(k.value)"></p>
+            <p class="text-xs text-slate-500" x-text="k.sub"></p>
           </div>
-          <p class="text-sm text-slate-500" x-text="today"></p>
-        </div>
+        </template>
+      </div>
 
-        <!-- Lignes -->
-        <div class="mt-5 overflow-x-auto">
-          <table class="w-full min-w-[420px] text-sm">
-            <thead>
-              <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
-                <th class="py-2 pr-2 font-medium">Prestation</th>
-                <th class="w-24 py-2 pr-2 font-medium">Jours</th>
-                <th class="w-28 py-2 text-right font-medium">Montant</th>
-                <th class="no-print w-8"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="(l, i) in quote.lines" :key="l.id">
-                <tr class="border-b border-slate-100 dark:border-slate-800/70">
-                  <td class="py-2 pr-2"><input class="field" placeholder="Ex. Conception UI" x-model="l.label"></td>
-                  <td class="py-2 pr-2"><input type="number" min="0" step="0.5" class="field" x-model.number="l.days"></td>
-                  <td class="py-2 text-right tabular-nums" x-text="eur(l.days * quote.rate)"></td>
-                  <td class="no-print py-2 text-right">
-                    <button class="text-slate-400 hover:text-red-500" @click="removeLine(i)" aria-label="Supprimer">✕</button>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-        <button class="btn btn-ghost no-print mt-3" @click="addLine()">+ Ajouter une ligne</button>
-
-        <!-- Totaux -->
-        <dl class="mt-6 ml-auto max-w-xs space-y-1.5 text-sm">
-          <div class="flex justify-between"><dt class="text-slate-500">Total jours-hommes</dt><dd class="tabular-nums" x-text="totals.days.toFixed(1) + ' j'"></dd></div>
-          <div class="flex justify-between"><dt class="text-slate-500">Sous-total</dt><dd class="tabular-nums" x-text="eur(totals.subtotal)"></dd></div>
-          <div class="flex justify-between"><dt class="text-slate-500" x-text="'Complexité × ' + Number(quote.coef).toFixed(2)"></dt><dd class="tabular-nums" x-text="eur(totals.complexity)"></dd></div>
-          <div class="flex justify-between border-t border-slate-200 pt-1.5 dark:border-slate-800"><dt class="font-medium">Total HT</dt><dd class="font-medium tabular-nums" x-text="eur(totals.ht)"></dd></div>
-          <div class="flex justify-between"><dt class="text-slate-500" x-text="'TVA ' + quote.vat + ' %'"></dt><dd class="tabular-nums" x-text="eur(totals.vat)"></dd></div>
-          <div class="flex justify-between rounded-lg bg-indigo-50 px-3 py-2 text-base font-semibold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
-            <dt>Total TTC</dt><dd class="tabular-nums" x-text="eur(totals.ttc)"></dd>
+      <div class="card">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="h-docs" class="h2">Devis &amp; factures</h2>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn btn-primary" @click="createDoc('devis')">+ Nouveau devis</button>
+            <button class="btn btn-primary" @click="createDoc('facture')">+ Nouvelle facture</button>
+            <button class="btn btn-ghost" @click="exportCSV()" :disabled="!docs.length">Export CSV</button>
           </div>
-          <div class="flex justify-between text-xs text-slate-500" x-show="quote.deposit > 0">
-            <dt x-text="'Acompte ' + quote.deposit + ' %'"></dt><dd class="tabular-nums" x-text="eur(totals.ttc * quote.deposit / 100)"></dd>
-          </div>
-        </dl>
-
-        <!-- Actions / exports -->
-        <div class="no-print mt-6 flex flex-wrap gap-2 border-t border-slate-200 pt-5 dark:border-slate-800">
-          <button class="btn btn-primary" @click="window.print()">Imprimer / PDF</button>
-          <button class="btn btn-ghost" @click="exportJSON()">Export JSON</button>
-          <button class="btn btn-ghost" @click="exportMarkdown()">Export .md</button>
-          <button class="btn btn-ghost" @click="saveToLibrary()">Enregistrer</button>
-          <button class="btn btn-ghost" :disabled="busy" @click="exportGithub()">→ GitHub (gist)</button>
         </div>
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+          <template x-for="f in filters" :key="f.id">
+            <button class="pill !px-3 !py-1 text-sm" :class="filter === f.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'" @click="filter = f.id" x-text="f.label"></button>
+          </template>
+          <input class="field !w-48 sm:ml-auto" placeholder="Rechercher…" x-model="search">
+        </div>
+        <p class="mt-6 text-center text-sm text-slate-500" x-show="!visibleDocs.length">Aucun document. Créez votre premier devis ou votre première facture.</p>
+        <ul class="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
+          <template x-for="d in visibleDocs" :key="d.id">
+            <li class="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+              <button class="min-w-0 flex-1 text-left" @click="openDoc(d.id)">
+                <p class="truncate font-medium">
+                  <span x-text="d.number || 'Brouillon'"></span>
+                  <span class="font-normal text-slate-500" x-text="d.title ? ' — ' + d.title : ''"></span>
+                </p>
+                <p class="truncate text-xs text-slate-500" x-text="typeLabel(d.type) + ' · ' + (clientName(d) || 'Client à choisir') + ' · ' + fmtDate(d.issueDate)"></p>
+              </button>
+              <span class="pill" :class="stateOf(d).cls" x-text="stateOf(d).label"></span>
+              <span class="w-28 text-right font-medium tabular-nums" x-text="money(calc(d).ttc)"></span>
+            </li>
+          </template>
+        </ul>
       </div>
     </section>
 
-    <!-- ============ BIBLIOTHÈQUE DE DEVIS ============ -->
-    <section class="card no-print" aria-labelledby="h-lib">
+    <!-- ================================================================
+         DOCUMENT : ÉDITEUR + APERÇU
+         ================================================================ -->
+    <template x-if="tab === 'edit' && cur">
+      <section class="space-y-4">
+        <!-- Barre d'actions -->
+        <div class="no-print card !p-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <button class="btn btn-ghost" @click="go('docs')">← Retour</button>
+              <div>
+                <p class="font-semibold" x-text="typeLabel(cur.type) + ' ' + (cur.number || '(brouillon)')"></p>
+                <span class="pill" :class="stateOf(cur).cls" x-text="stateOf(cur).label"></span>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button x-show="!locked" class="btn btn-primary" @click="finalize()">Finaliser &amp; numéroter</button>
+              <template x-if="cur.type === 'devis' && cur.status === 'sent'">
+                <div class="flex flex-wrap gap-2">
+                  <button class="btn btn-ghost" @click="setStatus('accepted')">Accepté</button>
+                  <button class="btn btn-ghost" @click="setStatus('refused')">Refusé</button>
+                </div>
+              </template>
+              <template x-if="cur.type === 'devis' && (cur.status === 'sent' || cur.status === 'accepted')">
+                <div class="flex flex-wrap gap-2">
+                  <button class="btn btn-ghost" @click="invoiceFromQuote('deposit')" x-show="cur.deposit > 0">Facture d'acompte</button>
+                  <button class="btn btn-ghost" @click="invoiceFromQuote('full')">Facture complète</button>
+                </div>
+              </template>
+              <button x-show="cur.type === 'facture' && locked" class="btn btn-ghost" @click="creditNote()">Créer un avoir</button>
+              <button class="btn btn-ghost" @click="duplicate()">Dupliquer</button>
+              <button class="btn btn-primary" @click="printDoc()">Imprimer / PDF</button>
+              <button x-show="!locked" class="btn btn-danger" @click="removeDraft()">Supprimer</button>
+            </div>
+          </div>
+
+          <!-- Contrôle de conformité (brouillon) -->
+          <div x-show="!locked && (check.errors.length || check.warnings.length)" class="mt-4 space-y-2 text-sm">
+            <template x-for="e in check.errors" :key="e"><p class="rounded-lg bg-red-50 px-3 py-2 text-red-700 dark:bg-red-500/10 dark:text-red-300">✕ <span x-text="e"></span></p></template>
+            <template x-for="w in check.warnings" :key="w"><p class="rounded-lg bg-amber-50 px-3 py-2 text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">! <span x-text="w"></span></p></template>
+            <button class="text-indigo-600 underline dark:text-indigo-400" x-show="check.errors.some(e => e.startsWith('Réglages'))" @click="go('settings')">Ouvrir les réglages</button>
+          </div>
+          <p x-show="!locked && !check.errors.length" class="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">✓ Toutes les mentions obligatoires sont présentes : vous pouvez finaliser.</p>
+          <p x-show="locked" class="mt-3 text-xs text-slate-500">Document finalisé : il ne peut plus être modifié (numérotation continue). <span x-text="cur.type === 'devis' ? 'Pour le réviser, dupliquez-le.' : 'Pour corriger une facture, créez un avoir.'"></span></p>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-5">
+          <!-- ===== Formulaire ===== -->
+          <div class="no-print min-w-0 space-y-4 lg:col-span-2">
+            <!-- Règlement (facture émise) -->
+            <div class="card" x-show="cur.type === 'facture' && cur.status !== 'draft'">
+              <h3 class="font-semibold">Règlement</h3>
+              <div class="mt-3 grid grid-cols-2 gap-3">
+                <div><label class="lbl">Date de paiement</label><input type="date" class="field" x-model="cur.paidAt"></div>
+                <div><label class="lbl">Mode</label>
+                  <select class="field" x-model="cur.paidMethod"><option value="">—</option><option>Virement</option><option>PayPal</option><option>Chèque</option><option>Carte</option><option>Espèces</option></select>
+                </div>
+              </div>
+              <div class="mt-3 flex gap-2">
+                <button class="btn btn-primary" @click="markPaid()">Marquer payée</button>
+                <button class="btn btn-ghost" x-show="cur.status === 'paid'" @click="cur.status = 'issued'; cur.paidAt = ''">Annuler le paiement</button>
+              </div>
+            </div>
+
+            <fieldset :disabled="locked" class="card space-y-4">
+              <!-- Client -->
+              <div>
+                <label class="lbl">Client</label>
+                <div class="flex gap-2">
+                  <select class="field" x-model="cur.clientId">
+                    <option value="">— Choisir un client —</option>
+                    <template x-for="c in clients" :key="c.id"><option :value="c.id" x-text="c.name"></option></template>
+                  </select>
+                  <button type="button" class="btn btn-ghost shrink-0" @click="openClient('', true)">+ Nouveau</button>
+                </div>
+                <button type="button" class="hint text-indigo-600 underline dark:text-indigo-400" x-show="cur.clientId && !locked" @click="openClient(cur.clientId, true)">Modifier ce client</button>
+              </div>
+              <div><label class="lbl">Objet / projet</label><input class="field" placeholder="Ex. Refonte du site vitrine" x-model="cur.title"></div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="lbl">Date d'émission</label><input type="date" class="field" x-model="cur.issueDate"></div>
+                <div x-show="cur.type !== 'devis'"><label class="lbl">Date de la prestation</label><input type="date" class="field" x-model="cur.serviceDate"></div>
+                <div x-show="cur.type === 'devis'"><label class="lbl">Validité (jours)</label><input type="number" min="1" class="field" x-model.number="cur.validDays"></div>
+                <div x-show="cur.type !== 'avoir'"><label class="lbl">Délai de paiement</label>
+                  <select class="field" x-model.number="cur.payDays">
+                    <option value="0">À réception</option><option value="15">15 jours</option><option value="30">30 jours</option><option value="45">45 jours</option><option value="60">60 jours</option>
+                  </select>
+                </div>
+                <div><label class="lbl">Nature de l'opération</label>
+                  <select class="field" x-model="cur.opType"><option value="services">Prestation de services</option><option value="biens">Vente de biens</option><option value="mixte">Mixte (biens + services)</option></select>
+                </div>
+              </div>
+
+              <!-- Lignes -->
+              <div>
+                <p class="lbl">Prestations</p>
+                <div class="space-y-3">
+                  <template x-for="(l, i) in cur.lines" :key="l.id">
+                    <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                      <div class="flex gap-2">
+                        <input class="field" placeholder="Désignation" x-model="l.label">
+                        <button type="button" class="px-1 text-slate-400 hover:text-red-500" x-show="!locked && cur.lines.length > 1" @click="cur.lines.splice(i, 1)" aria-label="Supprimer la ligne">✕</button>
+                      </div>
+                      <textarea class="field mt-2" rows="2" placeholder="Description (facultatif)" x-model="l.desc"></textarea>
+                      <div class="mt-2 grid grid-cols-3 gap-2">
+                        <div><label class="lbl">Quantité</label><input type="number" min="0" step="0.5" class="field" x-model.number="l.qty"></div>
+                        <div><label class="lbl">Unité</label>
+                          <select class="field" x-model="l.unit"><option>jour</option><option>heure</option><option>forfait</option><option>unité</option><option>mois</option></select>
+                        </div>
+                        <div><label class="lbl">Prix unit. HT (€)</label><input type="number" min="0" step="1" class="field" x-model.number="l.price"></div>
+                        <div><label class="lbl">Remise (%)</label><input type="number" min="0" max="100" class="field" x-model.number="l.disc"></div>
+                        <div x-show="vatActive"><label class="lbl">TVA</label>
+                          <select class="field" x-model.number="l.vat"><option value="20">20 %</option><option value="10">10 %</option><option value="5.5">5,5 %</option><option value="2.1">2,1 %</option><option value="0">0 %</option></select>
+                        </div>
+                        <div class="text-right text-sm"><p class="lbl">Total HT</p><p class="pt-2 font-medium tabular-nums" x-text="money(lineNet(l))"></p></div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-2" x-show="!locked">
+                  <button type="button" class="btn btn-ghost" @click="addLine(true)">+ Ligne au TJM</button>
+                  <button type="button" class="btn btn-ghost" @click="addLine(false)">+ Ligne libre</button>
+                </div>
+              </div>
+
+              <!-- Ajustements -->
+              <div class="space-y-3 border-t border-slate-200 pt-4 dark:border-slate-800">
+                <p class="lbl">Ajustements</p>
+                <div>
+                  <label class="lbl">Coefficient de complexité</label>
+                  <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <template x-for="c in complexities" :key="c.value">
+                      <button type="button" class="rounded-lg border px-2 py-1.5 text-left text-xs transition"
+                        :class="cur.coef === c.value ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300' : 'border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800'"
+                        @click="cur.coef = c.value">
+                        <span class="block font-medium" x-text="c.label"></span><span class="opacity-70" x-text="'× ' + c.value.toFixed(2)"></span>
+                      </button>
+                    </template>
+                  </div>
+                  <div class="mt-2 flex items-center gap-2 text-xs text-slate-500"><span>Personnalisé</span><input type="number" min="0.5" max="3" step="0.05" class="field !w-24 !py-1" x-model.number="cur.coef"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div><label class="lbl">Remise globale</label>
+                    <div class="flex gap-2">
+                      <input type="number" min="0" class="field" x-model.number="cur.discount.value">
+                      <select class="field !w-20" x-model="cur.discount.mode"><option value="pct">%</option><option value="eur">€</option></select>
+                    </div>
+                  </div>
+                  <div x-show="cur.type === 'devis'"><label class="lbl">Acompte à la commande (%)</label><input type="number" min="0" max="100" step="5" class="field" x-model.number="cur.deposit"></div>
+                  <div x-show="cur.type === 'facture'"><label class="lbl">Déjà réglé / acomptes TTC (€)</label><input type="number" min="0" step="1" class="field" x-model.number="cur.paid"></div>
+                </div>
+                <div x-show="profile.vatRegime === 'reel'">
+                  <label class="lbl">Régime de TVA du document</label>
+                  <select class="field" x-model="cur.vatMode">
+                    <option value="normal">TVA française applicable</option>
+                    <option value="autoliq">Autoliquidation (client professionnel UE)</option>
+                    <option value="export">Hors champ (client hors UE)</option>
+                  </select>
+                </div>
+                <div><label class="lbl">Notes (visibles sur le document)</label><textarea class="field" rows="3" placeholder="Conditions particulières, planning, livrables…" x-model="cur.notes"></textarea></div>
+              </div>
+            </fieldset>
+
+            <div class="card !p-4 flex flex-wrap gap-2">
+              <button class="btn btn-ghost" @click="exportMarkdown()">Export .md</button>
+              <button class="btn btn-ghost" @click="exportJSON()">Export .json</button>
+              <button class="btn btn-ghost" :disabled="busy" @click="exportGithub()">→ GitHub (gist)</button>
+            </div>
+          </div>
+
+          <!-- ===== Aperçu (zone imprimable) ===== -->
+          <div class="min-w-0 lg:col-span-3">
+            <div id="paper" class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 text-[13px] leading-relaxed text-slate-900 shadow-sm sm:p-10" :style="'--accent:' + (iss.accent || '#4f46e5')">
+              <!-- Filigrane brouillon -->
+              <div x-show="cur.status === 'draft'" class="pointer-events-none absolute inset-0 grid place-items-center">
+                <span class="-rotate-12 select-none text-7xl font-bold tracking-widest text-slate-200">BROUILLON</span>
+              </div>
+
+              <div class="relative">
+                <!-- En-tête -->
+                <div class="flex flex-wrap items-start justify-between gap-6">
+                  <div class="max-w-[55%]">
+                    <img x-show="iss.logo" :src="iss.logo" alt="" class="mb-3 max-h-16 max-w-[180px] object-contain">
+                    <p class="text-base font-bold" x-text="iss.name || 'Votre entreprise'"></p>
+                    <p x-show="iss.tradeName" class="text-slate-600" x-text="iss.tradeName"></p>
+                    <p class="whitespace-pre-line text-slate-600" x-text="addrBlock(iss)"></p>
+                    <p class="text-slate-600" x-text="[iss.email, iss.phone].filter(Boolean).join(' · ')"></p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-2xl font-bold tracking-tight" style="color: var(--accent)" x-text="typeLabel(cur.type).toUpperCase()"></p>
+                    <p class="font-semibold" x-text="cur.number || 'Brouillon'"></p>
+                    <p class="text-slate-600">Date : <span x-text="fmtDate(cur.issueDate)"></span></p>
+                    <p class="text-slate-600" x-show="cur.type === 'devis'">Valable jusqu'au : <span x-text="fmtDate(cur.validUntil || addDays(cur.issueDate, cur.validDays))"></span></p>
+                    <p class="text-slate-600" x-show="cur.type !== 'devis'">Prestation le : <span x-text="fmtDate(cur.serviceDate)"></span></p>
+                    <p class="text-slate-600" x-show="cur.type === 'facture'">Échéance : <span x-text="fmtDate(cur.dueDate || addDays(cur.issueDate, cur.payDays))"></span></p>
+                    <p class="text-slate-600" x-show="cur.ref">Réf. <span x-text="cur.ref && cur.ref.number"></span></p>
+                  </div>
+                </div>
+
+                <!-- Client -->
+                <div class="mt-8 rounded-lg bg-slate-50 p-4">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-slate-500" x-text="cur.type === 'devis' ? 'Destinataire' : 'Facturé à'"></p>
+                  <template x-if="cl">
+                    <div>
+                      <p class="font-semibold" x-text="cl.name"></p>
+                      <p x-show="cl.contact" class="text-slate-600" x-text="cl.contact"></p>
+                      <p class="whitespace-pre-line text-slate-600" x-text="addrBlock(cl)"></p>
+                      <p x-show="cl.siren" class="text-slate-600" x-text="'SIREN : ' + fmtSiren(cl.siren)"></p>
+                      <p x-show="cl.vatNumber" class="text-slate-600" x-text="'N° TVA : ' + cl.vatNumber"></p>
+                      <p x-show="cl.deliveryAddress" class="text-slate-600" x-text="'Livraison : ' + cl.deliveryAddress"></p>
+                    </div>
+                  </template>
+                  <p x-show="!cl" class="italic text-slate-400">Client à sélectionner</p>
+                </div>
+                <p class="mt-4 font-medium" x-show="cur.title">Objet : <span x-text="cur.title"></span></p>
+
+                <!-- Lignes -->
+                <div class="mt-4 overflow-x-auto">
+                  <table class="w-full min-w-[520px] text-left">
+                    <thead>
+                      <tr class="border-b-2 text-xs uppercase tracking-wide text-slate-500" style="border-color: var(--accent)">
+                        <th class="py-2 pr-2 font-semibold">Désignation</th>
+                        <th class="px-2 py-2 text-right font-semibold">Qté</th>
+                        <th class="px-2 py-2 text-right font-semibold">PU HT</th>
+                        <th class="px-2 py-2 text-right font-semibold" x-show="anyLineDisc">Remise</th>
+                        <th class="px-2 py-2 text-right font-semibold" x-show="vatActive">TVA</th>
+                        <th class="py-2 pl-2 text-right font-semibold">Total HT</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <template x-for="l in cur.lines" :key="l.id">
+                        <tr class="border-b border-slate-100 align-top">
+                          <td class="py-2 pr-2"><p class="font-medium" x-text="l.label || '—'"></p><p x-show="l.desc" class="whitespace-pre-line text-xs text-slate-500" x-text="l.desc"></p></td>
+                          <td class="whitespace-nowrap px-2 py-2 text-right tabular-nums" x-text="l.qty + ' ' + l.unit + (l.qty > 1 && l.unit === 'jour' ? 's' : '')"></td>
+                          <td class="whitespace-nowrap px-2 py-2 text-right tabular-nums" x-text="money(l.price)"></td>
+                          <td class="px-2 py-2 text-right tabular-nums" x-show="anyLineDisc" x-text="l.disc ? l.disc + ' %' : ''"></td>
+                          <td class="px-2 py-2 text-right tabular-nums" x-show="vatActive" x-text="vatRateOf(l) + ' %'"></td>
+                          <td class="whitespace-nowrap py-2 pl-2 text-right font-medium tabular-nums" x-text="money(lineNet(l) * sign)"></td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Totaux -->
+                <dl class="ml-auto mt-4 max-w-xs space-y-1 tabular-nums">
+                  <div class="flex justify-between" x-show="t.coefAmt || t.discAmt"><dt class="text-slate-600">Sous-total HT</dt><dd x-text="money(t.sub)"></dd></div>
+                  <div class="flex justify-between" x-show="t.coefAmt"><dt class="text-slate-600" x-text="'Majoration complexité × ' + Number(cur.coef).toFixed(2)"></dt><dd x-text="money(t.coefAmt)"></dd></div>
+                  <div class="flex justify-between" x-show="t.discAmt"><dt class="text-slate-600" x-text="'Remise' + (cur.discount.mode === 'pct' ? ' ' + cur.discount.value + ' %' : '')"></dt><dd x-text="money(-t.discAmt)"></dd></div>
+                  <div class="flex justify-between border-t border-slate-200 pt-1 font-medium" x-show="vatActive"><dt>Total HT</dt><dd x-text="money(t.ht)"></dd></div>
+                  <template x-for="v in t.vatLines" :key="v.rate">
+                    <div class="flex justify-between" x-show="vatActive"><dt class="text-slate-600" x-text="'TVA ' + v.rate + ' % (base ' + money(v.base) + ')'"></dt><dd x-text="money(v.vat)"></dd></div>
+                  </template>
+                  <div class="flex justify-between rounded-md px-3 py-2 text-base font-bold text-white" style="background: var(--accent)"><dt x-text="vatActive ? 'Total TTC' : 'Total à payer'"></dt><dd x-text="money(t.ttc)"></dd></div>
+                  <div class="flex justify-between" x-show="t.paid"><dt class="text-slate-600">Déjà réglé (acomptes)</dt><dd x-text="money(-t.paid)"></dd></div>
+                  <div class="flex justify-between font-bold" x-show="t.paid"><dt>Net à payer</dt><dd x-text="money(t.due)"></dd></div>
+                </dl>
+
+                <p class="mt-4 whitespace-pre-line" x-show="cur.notes" x-text="cur.notes"></p>
+
+                <!-- Règlement -->
+                <div class="mt-6 grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-[1fr_auto]" x-show="cur.type !== 'avoir' && payLines.length">
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Règlement</p>
+                    <template x-for="p in payLines" :key="p"><p x-text="p"></p></template>
+                  </div>
+                  <div x-show="qr" class="h-24 w-24" x-html="qr" title="QR code de virement SEPA"></div>
+                </div>
+
+                <!-- Bon pour accord -->
+                <div class="mt-6 grid grid-cols-2 gap-4" x-show="cur.type === 'devis'">
+                  <div class="h-24 rounded-lg border border-dashed border-slate-300 p-2 text-xs text-slate-500">Bon pour accord — date et signature du client<br>(précédées de la mention « Bon pour accord »)</div>
+                  <div class="h-24 rounded-lg border border-dashed border-slate-300 p-2 text-xs text-slate-500">Signature de l'entreprise</div>
+                </div>
+
+                <!-- Mentions légales -->
+                <ul class="mt-6 space-y-0.5 text-[11px] text-slate-500"><template x-for="m in mentions" :key="m"><li x-text="m"></li></template></ul>
+                <p class="mt-4 border-t border-slate-200 pt-3 text-center text-[10.5px] text-slate-500" x-text="legalLine"></p>
+                <p class="mt-1 text-center text-[10.5px] text-slate-400" x-show="iss.footerNote" x-text="iss.footerNote"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </template>
+
+    <!-- ================================================================
+         CLIENTS
+         ================================================================ -->
+    <section x-show="tab === 'clients'" class="no-print card" aria-labelledby="h-cl">
       <div class="flex items-center justify-between gap-3">
-        <h2 id="h-lib" class="text-lg font-semibold">Mes devis</h2>
-        <button class="btn btn-ghost" @click="newQuote()">+ Nouveau devis</button>
+        <h2 id="h-cl" class="h2">Clients</h2>
+        <button class="btn btn-primary" @click="openClient('', false)">+ Nouveau client</button>
       </div>
-      <p class="mt-3 text-sm text-slate-500" x-show="!library.length">Aucun devis enregistré. Utilisez « Enregistrer » sous l'aperçu.</p>
+      <p class="mt-4 text-center text-sm text-slate-500" x-show="!clients.length">Aucun client pour l'instant.</p>
       <ul class="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
-        <template x-for="q in library" :key="q.id">
-          <li class="flex items-center justify-between gap-3 py-2.5 text-sm">
+        <template x-for="c in clients" :key="c.id">
+          <li class="flex items-center justify-between gap-3 py-3 text-sm">
             <div class="min-w-0">
-              <p class="truncate font-medium" x-text="(q.project || 'Sans titre') + (q.client ? ' — ' + q.client : '')"></p>
-              <p class="text-xs text-slate-500" x-text="eur(quoteTotals(q).ttc) + ' TTC · ' + new Date(q.updatedAt).toLocaleDateString('fr-FR')"></p>
+              <p class="truncate font-medium" x-text="c.name"></p>
+              <p class="truncate text-xs text-slate-500" x-text="[c.type === 'pro' ? 'Professionnel' : 'Particulier', c.siren ? 'SIREN ' + fmtSiren(c.siren) : '', c.email].filter(Boolean).join(' · ')"></p>
             </div>
             <div class="flex shrink-0 gap-2">
-              <button class="btn btn-ghost !py-1" @click="openQuote(q.id)">Ouvrir</button>
-              <button class="btn btn-ghost !py-1 hover:!text-red-500" @click="deleteQuote(q.id)" aria-label="Supprimer">✕</button>
+              <button class="btn btn-ghost !py-1" @click="openClient(c.id, false)">Modifier</button>
+              <button class="btn btn-ghost !py-1 hover:!text-red-500" @click="deleteClient(c.id)" aria-label="Supprimer">✕</button>
             </div>
           </li>
         </template>
       </ul>
     </section>
 
-    <footer class="no-print pb-6 text-center text-xs text-slate-500">
-      Données enregistrées dans votre navigateur · synchronisées avec votre compte Google si vous êtes connecté.
-    </footer>
+    <!-- ================================================================
+         RÉGLAGES
+         ================================================================ -->
+    <section x-show="tab === 'settings'" class="no-print space-y-6" aria-labelledby="h-set">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 id="h-set" class="h2">Réglages de l'entreprise</h2>
+          <p class="text-sm text-slate-500">Ces informations sont reprises automatiquement sur tous vos devis et factures.</p>
+        </div>
+        <div class="w-full max-w-xs">
+          <p class="text-xs text-slate-500" x-text="'Profil complet à ' + completeness + ' %'"></p>
+          <div class="mt-1 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"><div class="h-full rounded-full bg-indigo-600 transition-all" :style="'width:' + completeness + '%'"></div></div>
+        </div>
+      </div>
+
+      <div class="grid gap-6 lg:grid-cols-2">
+        <!-- Identité -->
+        <div class="card space-y-4">
+          <h3 class="font-semibold">Identité &amp; immatriculation</h3>
+          <div><label class="lbl">Nom / raison sociale *</label><input class="field" x-model="profile.name" placeholder="Ex. Jeanne Martin ou Studio Martin SASU"></div>
+          <div><label class="lbl">Nom commercial / enseigne</label><input class="field" x-model="profile.tradeName"></div>
+          <div><label class="lbl">Forme juridique *</label>
+            <select class="field" x-model="profile.legalForm">
+              <template x-for="(lbl, k) in legalForms" :key="k"><option :value="k" x-text="lbl"></option></template>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="lbl">SIREN</label><input class="field" inputmode="numeric" x-model="profile.siren" placeholder="9 chiffres">
+              <p class="hint" :class="profile.siren ? (sirenOk(profile.siren) ? 'text-emerald-600' : 'text-red-500') : ''" x-text="profile.siren ? (sirenOk(profile.siren) ? '✓ valide' : '✕ invalide') : ''"></p>
+            </div>
+            <div>
+              <label class="lbl">SIRET *</label><input class="field" inputmode="numeric" x-model="profile.siret" placeholder="14 chiffres">
+              <p class="hint" :class="profile.siret ? (siretOk(profile.siret) ? 'text-emerald-600' : 'text-red-500') : ''" x-text="profile.siret ? (siretOk(profile.siret) ? '✓ valide' : '✕ invalide') : ''"></p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="lbl">Code APE / NAF</label><input class="field" x-model="profile.ape" placeholder="6201Z"></div>
+            <div x-show="isCompany"><label class="lbl">Capital social (€) *</label><input class="field" x-model="profile.capital"></div>
+          </div>
+          <div>
+            <label class="lbl" x-text="isCompany ? 'Immatriculation RCS *' : 'Immatriculation (RCS / RM)'"></label>
+            <input class="field" x-model="profile.rcs" :placeholder="isCompany ? 'RCS Paris 123 456 789' : 'Dispensé d’immatriculation au RCS et au RM'">
+          </div>
+          <div><label class="lbl">Assurance responsabilité civile pro (si applicable)</label><input class="field" x-model="profile.insurance" placeholder="Ex. AXA, contrat n° 123456 — France entière"></div>
+        </div>
+
+        <!-- Coordonnées -->
+        <div class="card space-y-4">
+          <h3 class="font-semibold">Coordonnées</h3>
+          <div><label class="lbl">Adresse *</label><input class="field" x-model="profile.address"></div>
+          <div class="grid grid-cols-3 gap-3">
+            <div><label class="lbl">Code postal *</label><input class="field" x-model="profile.zip"></div>
+            <div class="col-span-2"><label class="lbl">Ville *</label><input class="field" x-model="profile.city"></div>
+          </div>
+          <div><label class="lbl">Pays</label><input class="field" x-model="profile.country"></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="lbl">E-mail *</label><input type="email" class="field" x-model="profile.email"></div>
+            <div><label class="lbl">Téléphone</label><input class="field" x-model="profile.phone"></div>
+          </div>
+
+          <h3 class="pt-2 font-semibold">TVA</h3>
+          <div><label class="lbl">Régime de TVA</label>
+            <select class="field" x-model="profile.vatRegime">
+              <option value="franchise">Franchise en base (TVA non applicable, art. 293 B du CGI)</option>
+              <option value="reel">Assujetti à la TVA</option>
+            </select>
+          </div>
+          <template x-if="profile.vatRegime === 'reel'">
+            <div class="space-y-4">
+              <div><label class="lbl">N° de TVA intracommunautaire *</label><input class="field" x-model="profile.vatNumber" placeholder="FR12345678901"></div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="lbl">Taux par défaut</label>
+                  <select class="field" x-model.number="profile.vatDefault"><option value="20">20 %</option><option value="10">10 %</option><option value="5.5">5,5 %</option><option value="0">0 %</option></select>
+                </div>
+                <label class="mt-6 flex items-center gap-2 text-sm"><input type="checkbox" x-model="profile.vatOnDebits"> TVA sur les débits</label>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Règlement -->
+        <div class="card space-y-4">
+          <h3 class="font-semibold">Moyens de paiement</h3>
+          <p class="hint">Affichés sur vos factures pour que le client vous paie facilement.</p>
+          <label class="flex items-center gap-2 text-sm font-medium"><input type="checkbox" x-model="profile.pay.transfer"> Virement bancaire</label>
+          <div x-show="profile.pay.transfer" class="space-y-3 pl-6">
+            <div>
+              <label class="lbl">IBAN</label><input class="field" x-model="profile.pay.iban" placeholder="FR76 …" autocapitalize="characters">
+              <p class="hint" :class="profile.pay.iban ? (ibanOk(profile.pay.iban) ? 'text-emerald-600' : 'text-red-500') : ''" x-text="profile.pay.iban ? (ibanOk(profile.pay.iban) ? '✓ IBAN valide — un QR code de virement sera ajouté aux factures' : '✕ IBAN invalide') : ''"></p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="lbl">BIC</label><input class="field" x-model="profile.pay.bic"></div>
+              <div><label class="lbl">Titulaire du compte</label><input class="field" x-model="profile.pay.holder" :placeholder="profile.name"></div>
+            </div>
+          </div>
+          <label class="flex items-center gap-2 text-sm font-medium"><input type="checkbox" x-model="profile.pay.paypalOn"> PayPal</label>
+          <div x-show="profile.pay.paypalOn" class="pl-6"><label class="lbl">Lien PayPal.me ou e-mail PayPal</label><input class="field" x-model="profile.pay.paypal" placeholder="paypal.me/votrenom"></div>
+          <label class="flex items-center gap-2 text-sm font-medium"><input type="checkbox" x-model="profile.pay.linkOn"> Lien de paiement en ligne (Stripe, SumUp, Lydia…)</label>
+          <div x-show="profile.pay.linkOn" class="pl-6"><label class="lbl">URL</label><input class="field" x-model="profile.pay.link" placeholder="https://…"></div>
+          <label class="flex items-center gap-2 text-sm font-medium"><input type="checkbox" x-model="profile.pay.chequeOn"> Chèque</label>
+          <div x-show="profile.pay.chequeOn" class="pl-6"><label class="lbl">À l'ordre de</label><input class="field" x-model="profile.pay.cheque" :placeholder="profile.name"></div>
+        </div>
+
+        <!-- Conditions -->
+        <div class="card space-y-4">
+          <h3 class="font-semibold">Conditions &amp; numérotation</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="lbl">Délai de paiement par défaut</label>
+              <select class="field" x-model.number="profile.terms.payDays"><option value="0">À réception</option><option value="15">15 jours</option><option value="30">30 jours</option><option value="45">45 jours</option><option value="60">60 jours</option></select>
+            </div>
+            <div><label class="lbl">Validité des devis (jours)</label><input type="number" min="1" class="field" x-model.number="profile.terms.validDays"></div>
+          </div>
+          <div><label class="lbl">Pénalités de retard</label><input class="field" x-model="profile.terms.penalty"><p class="hint">Minimum légal : 3 fois le taux d'intérêt légal.</p></div>
+          <div><label class="lbl">Escompte pour paiement anticipé</label><input class="field" x-model="profile.terms.discount"></div>
+          <div class="grid grid-cols-3 gap-3">
+            <div><label class="lbl">Préfixe devis</label><input class="field" x-model="profile.prefix.devis"></div>
+            <div><label class="lbl">Préfixe facture</label><input class="field" x-model="profile.prefix.facture"></div>
+            <div><label class="lbl">Préfixe avoir</label><input class="field" x-model="profile.prefix.avoir"></div>
+          </div>
+          <p class="hint">Exemple de numéro : <strong x-text="numberFor('facture', today, true)"></strong>. La numérotation est chronologique et sans trou, remise à zéro chaque année.</p>
+          <div><label class="lbl">Mention de pied de page (facultatif)</label><input class="field" x-model="profile.footerNote" placeholder="Ex. Merci pour votre confiance !"></div>
+        </div>
+
+        <!-- Apparence -->
+        <div class="card space-y-4">
+          <h3 class="font-semibold">Apparence des documents</h3>
+          <div class="flex items-center gap-4">
+            <img x-show="profile.logo" :src="profile.logo" alt="Logo" class="h-14 max-w-[160px] rounded border border-slate-200 object-contain p-1 dark:border-slate-700">
+            <div class="space-y-2">
+              <input type="file" accept="image/*" class="hidden" x-ref="logoInput" @change="loadLogo($event)">
+              <button class="btn btn-ghost" @click="$refs.logoInput.click()" x-text="profile.logo ? 'Changer le logo' : 'Ajouter un logo'"></button>
+              <button class="btn btn-ghost" x-show="profile.logo" @click="profile.logo = ''">Retirer</button>
+            </div>
+          </div>
+          <div class="flex items-center gap-3"><label class="lbl !mb-0">Couleur d'accent</label><input type="color" class="h-9 w-14 cursor-pointer rounded border border-slate-300 bg-transparent dark:border-slate-700" x-model="profile.accent"></div>
+        </div>
+
+        <!-- Données -->
+        <div class="card space-y-3">
+          <h3 class="font-semibold">Mes données</h3>
+          <p class="text-sm text-slate-500">Tout est enregistré dans votre navigateur, et synchronisé avec votre compte Google si vous êtes connecté. Faites une sauvegarde de temps en temps.</p>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn btn-ghost" @click="exportBackup()">Exporter une sauvegarde</button>
+            <input type="file" accept="application/json" class="hidden" x-ref="importInput" @change="importBackup($event)">
+            <button class="btn btn-ghost" @click="$refs.importInput.click()">Importer une sauvegarde</button>
+            <button class="btn btn-danger" @click="resetAll()">Tout effacer</button>
+          </div>
+          <p class="hint">Les documents finalisés sont conservés tels quels (identité de l'émetteur et du client figées à l'émission).</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-500">Freelance Kit aide à produire des documents contenant les mentions habituellement exigées (droit français) mais ne remplace pas l'avis d'un comptable. La transmission via une plateforme de facturation électronique agréée n'est pas gérée.</p>
+    </section>
+
+    <footer class="no-print pb-6 text-center text-xs text-slate-500">Freelance Kit · vos données restent dans votre navigateur et votre compte.</footer>
   </main>
 
-  <!-- Modale : jeton GitHub -->
-  <div x-show="ghModal" x-transition.opacity class="no-print fixed inset-0 z-30 grid place-items-center bg-slate-950/60 p-4" @keydown.escape.window="ghModal=false" @click.self="ghModal=false">
+  <!-- ============ Modale : client ============ -->
+  <div x-show="cm" x-transition.opacity class="no-print fixed inset-0 z-30 grid place-items-center overflow-y-auto bg-slate-950/60 p-4" @keydown.escape.window="cm = null" @click.self="cm = null">
+    <div class="card my-8 w-full max-w-lg">
+      <template x-if="cm">
+        <div class="space-y-4">
+          <h3 class="text-lg font-semibold" x-text="cm.name && clients.some(c => c.id === cm.id) ? 'Modifier le client' : 'Nouveau client'"></h3>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="rounded-lg border px-3 py-2 text-sm" :class="cm.type === 'pro' ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300' : 'border-slate-300 dark:border-slate-700'" @click="cm.type = 'pro'">Professionnel</button>
+            <button class="rounded-lg border px-3 py-2 text-sm" :class="cm.type === 'part' ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300' : 'border-slate-300 dark:border-slate-700'" @click="cm.type = 'part'">Particulier</button>
+          </div>
+          <div><label class="lbl" x-text="cm.type === 'pro' ? 'Raison sociale *' : 'Nom et prénom *'"></label><input class="field" x-model="cm.name"></div>
+          <div x-show="cm.type === 'pro'"><label class="lbl">Contact</label><input class="field" x-model="cm.contact"></div>
+          <div><label class="lbl">Adresse *</label><input class="field" x-model="cm.address"></div>
+          <div class="grid grid-cols-3 gap-3">
+            <div><label class="lbl">Code postal *</label><input class="field" x-model="cm.zip"></div>
+            <div class="col-span-2"><label class="lbl">Ville *</label><input class="field" x-model="cm.city"></div>
+          </div>
+          <div><label class="lbl">Pays</label><input class="field" x-model="cm.country"></div>
+          <div class="grid grid-cols-2 gap-3" x-show="cm.type === 'pro'">
+            <div><label class="lbl">SIREN <span x-show="isFR(cm)">*</span></label><input class="field" inputmode="numeric" x-model="cm.siren"><p class="hint" :class="sirenOk(cm.siren) ? 'text-emerald-600' : 'text-red-500'" x-show="cm.siren" x-text="sirenOk(cm.siren) ? '✓ valide' : '✕ invalide'"></p></div>
+            <div><label class="lbl">N° TVA intracom.</label><input class="field" x-model="cm.vatNumber"></div>
+          </div>
+          <div><label class="lbl">Adresse de livraison (si différente)</label><input class="field" x-model="cm.deliveryAddress"></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="lbl">E-mail</label><input type="email" class="field" x-model="cm.email"></div>
+            <div><label class="lbl">Téléphone</label><input class="field" x-model="cm.phone"></div>
+          </div>
+          <p class="hint" x-show="cm.type === 'pro' && isFR(cm)">Depuis le 1er septembre 2026, le SIREN du client professionnel est une mention obligatoire des factures.</p>
+          <div class="flex justify-end gap-2">
+            <button class="btn btn-ghost" @click="cm = null">Annuler</button>
+            <button class="btn btn-primary" @click="saveClient()">Enregistrer</button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- ============ Modale : jeton GitHub ============ -->
+  <div x-show="ghModal" x-transition.opacity class="no-print fixed inset-0 z-30 grid place-items-center bg-slate-950/60 p-4" @keydown.escape.window="ghModal = false" @click.self="ghModal = false">
     <div class="card w-full max-w-md">
       <h3 class="text-lg font-semibold">Connexion GitHub</h3>
       <ol class="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-slate-600 dark:text-slate-300">
@@ -314,16 +706,15 @@
         <li>Copiez le code <code>ghp_…</code> et collez-le ici.</li>
       </ol>
       <input class="field mt-4" placeholder="ghp_…" autocomplete="off" autocapitalize="off" spellcheck="false" x-model="ghToken" @keydown.enter="ghTokenLogin()">
-      <p class="mt-2 text-xs text-slate-500">Le jeton reste dans ce navigateur. Il ne donne accès qu'à vos gists (devis exportés en gist secret).</p>
+      <p class="mt-2 text-xs text-slate-500">Le jeton reste dans ce navigateur. Il ne donne accès qu'à vos gists (documents exportés en gist secret).</p>
       <div class="mt-4 flex justify-end gap-2">
-        <button class="btn btn-ghost" @click="ghModal=false">Annuler</button>
+        <button class="btn btn-ghost" @click="ghModal = false">Annuler</button>
         <button class="btn btn-primary" @click="ghTokenLogin()">Se connecter</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast -->
-  <div x-show="toast" x-transition class="no-print fixed bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-white dark:text-slate-900" x-text="toast"></div>
+  <div x-show="toast" x-transition class="no-print fixed bottom-4 left-1/2 z-40 max-w-[92vw] -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-white dark:text-slate-900" x-text="toast"></div>
 
 <script>
 /* =====================================================================
@@ -434,80 +825,145 @@ const Integrations = {
 };
 
 /* =====================================================================
-   6. PERSISTANCE LOCALE — point d'entrée unique
+   6. OUTILS : formats, validations (SIREN/SIRET/IBAN), calculs
    ===================================================================== */
-const Store = {
-  key: 'fk:state:v1',
-  load() { try { return JSON.parse(localStorage.getItem(this.key)); } catch (e) { return null; } },
-  save(state) { try { localStorage.setItem(this.key, JSON.stringify(state)); } catch (e) {} }
+const uid = () => Math.random().toString(36).slice(2, 9);
+const clone = o => JSON.parse(JSON.stringify(o));
+const r2 = n => Math.round(((Number(n) || 0) + Number.EPSILON * Math.sign(Number(n) || 0)) * 100) / 100;
+const digits = s => String(s || '').replace(/\D/g, '');
+const pad = (n, w = 3) => String(n).padStart(w, '0');
+
+const isoToday = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1, 2)}-${pad(d.getDate(), 2)}`; };
+const addDays = (iso, n) => { if (!iso) return ''; const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + (Number(n) || 0)); return `${d.getFullYear()}-${pad(d.getMonth() + 1, 2)}-${pad(d.getDate(), 2)}`; };
+const fmtDate = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
+const money = v => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(v) || 0);
+const fmtSiren = s => digits(s).replace(/^(\d{3})(\d{3})(\d{3})(\d{0,5})$/, (m, a, b, c, d) => [a, b, c, d].filter(Boolean).join(' '));
+
+// Algorithme de Luhn (SIREN / SIRET)
+const luhn = s => { let sum = 0; for (let i = 0; i < s.length; i++) { let n = +s[s.length - 1 - i]; if (i % 2) { n *= 2; if (n > 9) n -= 9; } sum += n; } return sum % 10 === 0; };
+const sirenOk = s => { const d = digits(s); return d.length === 9 && luhn(d); };
+const siretOk = s => { const d = digits(s); if (d.length !== 14) return false; return luhn(d) || (d.startsWith('356000000') && d.split('').reduce((a, c) => a + +c, 0) % 5 === 0); };
+// IBAN : contrôle modulo 97
+const ibanOk = s => {
+  const v = String(s || '').replace(/\s/g, '').toUpperCase();
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(v)) return false;
+  const n = (v.slice(4) + v.slice(0, 4)).replace(/[A-Z]/g, c => c.charCodeAt(0) - 55);
+  let rem = 0; for (const ch of n) rem = (rem * 10 + +ch) % 97;
+  return rem === 1;
+};
+const fmtIban = s => String(s || '').replace(/\s/g, '').toUpperCase().replace(/(.{4})/g, '$1 ').trim();
+const stripAccents = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+const LEGAL_FORMS = {
+  micro: 'Micro-entrepreneur (EI)', ei: 'Entrepreneur individuel (EI)', eurl: 'EURL', sasu: 'SASU', sarl: 'SARL', sas: 'SAS', autre: 'Autre'
+};
+const COMPANY_FORMS = ['eurl', 'sasu', 'sarl', 'sas'];
+const OP_LABELS = { services: 'Prestation de services', biens: 'Vente de biens', mixte: 'Opération mixte (biens et services)' };
+const VAT_TEXT = {
+  franchise: 'TVA non applicable, art. 293 B du CGI.',
+  autoliq: 'Autoliquidation de la TVA par le preneur — TVA non applicable, art. 259-1 du CGI.',
+  export: 'TVA non applicable, art. 259-1 du CGI (prestation à un preneur établi hors de France).'
 };
 
 /* =====================================================================
-   7. LOGIQUE APPLICATIVE (Alpine.js)
+   7. PERSISTANCE LOCALE — point d'entrée unique
+   ===================================================================== */
+const Store = {
+  key: 'fk:state:v2', legacyKey: 'fk:state:v1',
+  load() { try { return JSON.parse(localStorage.getItem(this.key)); } catch (e) { return null; } },
+  loadLegacy() { try { return JSON.parse(localStorage.getItem(this.legacyKey)); } catch (e) { return null; } },
+  save(state) { try { localStorage.setItem(this.key, JSON.stringify(state)); } catch (e) {} }
+};
+
+const defaultProfile = () => ({
+  name: '', tradeName: '', legalForm: 'micro', siren: '', siret: '', ape: '', capital: '', rcs: '', insurance: '',
+  address: '', zip: '', city: '', country: 'France', email: '', phone: '',
+  vatRegime: 'franchise', vatNumber: '', vatDefault: 20, vatOnDebits: false,
+  pay: { transfer: true, iban: '', bic: '', holder: '', paypalOn: false, paypal: '', linkOn: false, link: '', chequeOn: false, cheque: '' },
+  terms: { payDays: 30, validDays: 30, penalty: '3 fois le taux d’intérêt légal', discount: 'Pas d’escompte pour paiement anticipé.' },
+  prefix: { devis: 'D', facture: 'F', avoir: 'A' },
+  counters: {}, footerNote: '', logo: '', accent: '#4f46e5'
+});
+const merge = (base, saved) => { // fusionne un état sauvegardé dans les valeurs par défaut (nouvelles clés conservées)
+  if (!saved || typeof saved !== 'object') return base;
+  for (const k of Object.keys(base)) {
+    if (base[k] && typeof base[k] === 'object' && !Array.isArray(base[k])) base[k] = merge(base[k], saved[k]);
+    else if (saved[k] !== undefined) base[k] = saved[k];
+  }
+  if (base.counters !== undefined && saved.counters) base.counters = saved.counters;
+  return base;
+};
+const blankClient = () => ({ id: uid(), type: 'pro', name: '', contact: '', address: '', zip: '', city: '', country: 'France', siren: '', vatNumber: '', deliveryAddress: '', email: '', phone: '' });
+
+/* =====================================================================
+   8. LOGIQUE APPLICATIVE (Alpine.js)
    ===================================================================== */
 function app() {
-  const uid = () => Math.random().toString(36).slice(2, 9);
-  const blankQuote = rate => ({
-    id: uid(), client: '', project: '', rate, vat: 20, coef: 1.15, deposit: 30, gistId: '',
-    lines: [{ id: uid(), label: 'Cadrage & conception', days: 3 }, { id: uid(), label: 'Développement', days: 10 }]
-  });
-  const totalsOf = q => {
-    const days = q.lines.reduce((s, l) => s + (Number(l.days) || 0), 0);
-    const subtotal = days * (Number(q.rate) || 0), ht = subtotal * (Number(q.coef) || 1);
-    const vat = ht * (Number(q.vat) || 0) / 100;
-    return { days, subtotal, complexity: ht - subtotal, ht, vat, ttc: ht + vat };
-  };
-  const clone = o => JSON.parse(JSON.stringify(o));
-
   return {
     dark: document.documentElement.classList.contains('dark'),
-    toast: '', busy: false,
-    acct: { google: null, github: null },
-    syncState: '',            // '' | 'sync' | 'ok' | 'err'
+    toast: '', busy: false, tab: 'docs',
+    tabs: [{ id: 'tjm', label: 'Calculateur TJM' }, { id: 'docs', label: 'Documents' }, { id: 'clients', label: 'Clients' }, { id: 'settings', label: 'Réglages' }],
+    acct: { google: null, github: null }, syncState: '',
     ghModal: false, ghToken: '', ghTokenUrl: Integrations.github.tokenUrl,
     savedAt: 0, _last: '',
 
-    // --- État : calculateur TJM ---
+    // --- État persistant ---
     tjm: { netMonthly: 3000, chargesRate: 22, expensesMonthly: 300, buffer: 10, daysWorked: 218, billableRate: 80, hoursPerDay: 7 },
+    tjmRate: 0,
+    profile: defaultProfile(),
+    clients: [],
+    docs: [],
 
-    // --- État : devis courant + bibliothèque ---
-    complexities: [
-      { label: 'Simple',   value: 1.00 }, { label: 'Standard', value: 1.15 },
-      { label: 'Complexe', value: 1.30 }, { label: 'Critique', value: 1.50 }
-    ],
-    quote: blankQuote(500),
-    library: [],
+    // --- État d'interface ---
+    editId: '', filter: 'all', search: '', cm: null, cmFromDoc: false,
+    filters: [{ id: 'all', label: 'Tout' }, { id: 'devis', label: 'Devis' }, { id: 'facture', label: 'Factures' }, { id: 'avoir', label: 'Avoirs' }, { id: 'draft', label: 'Brouillons' }, { id: 'unpaid', label: 'À encaisser' }],
+    complexities: [{ label: 'Simple', value: 1 }, { label: 'Standard', value: 1.15 }, { label: 'Complexe', value: 1.3 }, { label: 'Critique', value: 1.5 }],
+    legalForms: LEGAL_FORMS,
+    qr: '',
 
-    // --- Cycle de vie ---
+    // ---------------------------------------------------------------
+    // Cycle de vie
+    // ---------------------------------------------------------------
     async init() {
       const saved = Store.load();
-      if (saved) this.apply(saved); else this.quote.rate = Math.round(this.tjmResult.tjm / 10) * 10;
+      if (saved) this.apply(saved);
+      else { const old = Store.loadLegacy(); if (old) this.apply(old); }
       this._last = this.content();
-      this.$watch('tjm', () => this.persist());
-      this.$watch('quote', () => this.persist());
-      this.$watch('library', () => this.persist());
+      ['tjm', 'tjmRate', 'profile', 'clients', 'docs'].forEach(k => this.$watch(k, () => this.persist()));
       window.addEventListener('fk:toast', e => this.notify(e.detail));
+      // Le QR code de virement se recalcule quand le document ou le profil change
+      this.$watch('cur', () => this.refreshQr()); this.$watch('profile.pay', () => this.refreshQr());
+      this.$watch(() => this.cur && JSON.stringify([this.cur.lines, this.cur.coef, this.cur.discount, this.cur.paid, this.cur.number]), () => this.refreshQr());
+      if (!this.profile.name) this.tab = 'settings';
 
-      // Retour d'une connexion GitHub OAuth (?code=…)
       try { const u = await Integrations.github.finishOAuth(); if (u) { this.acct.github = u; this.notify('GitHub connecté'); } }
       catch (e) { this.notify(e.message); }
-      // Sessions déjà ouvertes
       if (!this.acct.github && Integrations.github.token()) Integrations.github.profile().then(u => this.acct.github = u).catch(() => {});
       if (lsGet('fk:google') && Integrations.google.available()) {
         try { const u = await Integrations.google.restore(); if (u) { this.acct.google = u; this.pull(); } } catch (e) {}
       }
     },
+    go(t) { this.tab = t; window.scrollTo({ top: 0 }); },
 
-    // --- Persistance & synchronisation ---
-    content() { return JSON.stringify({ tjm: this.tjm, quote: this.quote, library: this.library }); },
+    // ---------------------------------------------------------------
+    // Persistance & synchronisation
+    // ---------------------------------------------------------------
+    content() { return JSON.stringify({ tjm: this.tjm, tjmRate: this.tjmRate, profile: this.profile, clients: this.clients, docs: this.docs }); },
     snapshot() { return { ...JSON.parse(this.content()), savedAt: this.savedAt }; },
     apply(d) {
       Object.assign(this.tjm, d.tjm || {});
-      if (d.quote) this.quote = d.quote;
-      this.library = d.library || [];
+      this.tjmRate = d.tjmRate || 0;
+      if (d.profile) this.profile = merge(defaultProfile(), d.profile);
+      this.clients = d.clients || [];
+      this.docs = d.docs || [];
+      // Ancien format (v1) : les devis de la bibliothèque deviennent des brouillons de devis
+      if (!d.docs && Array.isArray(d.library)) {
+        this.docs = d.library.map(q => ({ ...this.newDoc('devis'), title: q.project || '', coef: q.coef || 1, deposit: q.deposit || 0,
+          lines: (q.lines || []).map(l => ({ id: uid(), label: l.label || '', desc: '', qty: l.days || 1, unit: 'jour', price: q.rate || 0, disc: 0, vat: q.vat || 0 })) }));
+      }
       this.savedAt = d.savedAt || 0;
     },
-    persist() { // appelé à chaque modification (pas quand on applique des données reçues du cloud)
+    persist() {
       const c = this.content(); if (c === this._last) return;
       this._last = c; this.savedAt = Date.now();
       Store.save(this.snapshot());
@@ -515,8 +971,11 @@ function app() {
     },
     async push() {
       this.syncState = 'sync';
-      try { await Integrations.google.save(JSON.stringify(this.snapshot()), this.savedAt); this.syncState = 'ok'; }
-      catch (e) { this.syncState = 'err'; this.notify('Synchro Google : ' + e.message); }
+      try {
+        const text = JSON.stringify(this.snapshot());
+        if (text.length > 950000) throw new Error('données trop volumineuses (logo ou historique) — exportez une sauvegarde');
+        await Integrations.google.save(text, this.savedAt); this.syncState = 'ok';
+      } catch (e) { this.syncState = 'err'; this.notify('Synchro Google : ' + e.message); }
     },
     async pull() { // au login : la version la plus récente gagne
       this.syncState = 'sync';
@@ -524,14 +983,15 @@ function app() {
         const remote = await Integrations.google.load();
         if (remote && remote.at > this.savedAt) {
           this.apply(JSON.parse(remote.text)); this._last = this.content(); Store.save(this.snapshot());
-          this.notify('Données récupérées depuis Google');
-          this.syncState = 'ok';
+          this.notify('Données récupérées depuis Google'); this.syncState = 'ok';
         } else await this.push();
       } catch (e) { this.syncState = 'err'; this.notify('Synchro Google : ' + e.message); }
     },
     get syncLabel() { return { sync: '⟳', ok: '✓', err: '!' }[this.syncState] || ''; },
 
-    // --- Comptes ---
+    // ---------------------------------------------------------------
+    // Comptes
+    // ---------------------------------------------------------------
     async signIn(provider) {
       if (provider === 'google') {
         if (!Integrations.google.available()) return this.notify('Connexion Google : disponible uniquement sur la version publiée (https)');
@@ -552,78 +1012,359 @@ function app() {
       else { Integrations.github.signOut(); this.acct.github = null; }
     },
 
-    // --- Calculs TJM ---
+    // ---------------------------------------------------------------
+    // Calculateur TJM
+    // ---------------------------------------------------------------
     get tjmResult() {
       const t = this.tjm, n = v => Math.max(0, Number(v) || 0);
       const netYear = n(t.netMonthly) * 12, expenses = n(t.expensesMonthly) * 12;
       const rate = Math.min(n(t.chargesRate), 90) / 100;
-      // CA = (net + frais) / (1 - charges) , majoré de la marge de sécurité
-      const revenue = ((netYear + expenses) / (1 - rate)) * (1 + n(t.buffer) / 100);
+      const revenue = ((netYear + expenses) / (1 - rate)) * (1 + n(t.buffer) / 100); // CA = (net + frais) / (1 - charges) + marge
       const billable = n(t.daysWorked) * Math.min(n(t.billableRate), 100) / 100;
       const tjm = billable ? revenue / billable : 0;
       return { revenue, billableDays: billable, tjm, hourly: n(t.hoursPerDay) ? tjm / t.hoursPerDay : 0 };
     },
+    useTjm() { this.tjmRate = Math.round(this.tjmResult.tjm); this.notify('Tarif jour par défaut : ' + this.eur(this.tjmRate)); },
+    eur(v) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v || 0); },
 
-    // --- Calculs devis ---
-    get totals() { return totalsOf(this.quote); },
-    quoteTotals: totalsOf,
+    // ---------------------------------------------------------------
+    // Helpers de format exposés aux templates
+    // ---------------------------------------------------------------
+    money, fmtDate, addDays, fmtSiren, sirenOk, siretOk, ibanOk,
+    get today() { return isoToday(); },
+    typeLabel: t => ({ devis: 'Devis', facture: 'Facture', avoir: 'Avoir' }[t] || t),
+    isFR: c => !c.country || /^(france|fr)$/i.test(c.country.trim()),
+    get isCompany() { return COMPANY_FORMS.includes(this.profile.legalForm); },
+    addrBlock: o => [o.address, [o.zip, o.city].filter(Boolean).join(' '), o.country && !/^(france|fr)$/i.test(o.country.trim()) ? o.country : ''].filter(Boolean).join('\n'),
 
-    // --- Actions devis ---
-    addLine() { this.quote.lines.push({ id: uid(), label: '', days: 1 }); },
-    removeLine(i) { this.quote.lines.splice(i, 1); },
-    useTjmInQuote() {
-      this.quote.rate = Math.round(this.tjmResult.tjm);
-      this.notify('TJM reporté dans le devis');
-      document.getElementById('h-quote').scrollIntoView({ behavior: 'smooth' });
+    // ---------------------------------------------------------------
+    // Documents : création, ouverture, liste
+    // ---------------------------------------------------------------
+    newLine(useTjm) { return { id: uid(), label: '', desc: '', qty: 1, unit: useTjm ? 'jour' : 'forfait', price: useTjm ? (this.tjmRate || 0) : 0, disc: 0, vat: this.profile.vatRegime === 'reel' ? this.profile.vatDefault : 0 }; },
+    newDoc(type) {
+      const t = this.profile.terms, now = Date.now();
+      return { id: uid(), type, number: '', status: 'draft', issueDate: isoToday(), serviceDate: isoToday(), dueDate: '', validUntil: '',
+        clientId: '', title: '', lines: [this.newLine(true)], coef: 1, discount: { mode: 'pct', value: 0 }, vatMode: 'normal',
+        paid: 0, deposit: type === 'devis' ? 30 : 0, payDays: t.payDays, validDays: t.validDays, notes: '', opType: 'services',
+        ref: null, isDeposit: false, paidAt: '', paidMethod: '', snap: null, gistId: '', createdAt: now, updatedAt: now };
     },
-    saveToLibrary() {
-      const q = { ...clone(this.quote), updatedAt: Date.now() }, i = this.library.findIndex(x => x.id === q.id);
-      i >= 0 ? this.library.splice(i, 1, q) : this.library.unshift(q);
-      this.notify('Devis enregistré');
+    createDoc(type) { const d = this.newDoc(type); this.docs.unshift(d); this.openDoc(d.id); },
+    openDoc(id) { this.editId = id; this.tab = 'edit'; window.scrollTo({ top: 0 }); },
+    get cur() { return this.docs.find(d => d.id === this.editId) || null; },
+    get locked() { return !!this.cur && this.cur.status !== 'draft'; },
+    get visibleDocs() {
+      const q = this.search.trim().toLowerCase(), f = this.filter;
+      return this.docs.filter(d => {
+        if (f === 'draft' ? d.status !== 'draft' : f === 'unpaid' ? !(d.type === 'facture' && d.status === 'issued') : f !== 'all' && d.type !== f) return false;
+        return !q || [d.number, d.title, this.clientName(d)].join(' ').toLowerCase().includes(q);
+      }).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     },
-    newQuote() { this.quote = blankQuote(Math.round(this.tjmResult.tjm / 10) * 10 || 500); },
-    openQuote(id) {
-      const q = this.library.find(x => x.id === id); if (!q) return;
-      this.quote = clone(q); document.getElementById('h-quote').scrollIntoView({ behavior: 'smooth' });
-    },
-    deleteQuote(id) { if (confirm('Supprimer ce devis ?')) this.library = this.library.filter(x => x.id !== id); },
+    clientOf(d) { return d.snap ? d.snap.client : this.clients.find(c => c.id === d.clientId) || null; },
+    clientName(d) { const c = this.clientOf(d); return c ? c.name : ''; },
+    issuerOf(d) { return d.snap ? d.snap.issuer : this.profile; },
+    get iss() { return this.cur ? this.issuerOf(this.cur) : this.profile; },
+    get cl() { return this.cur ? this.clientOf(this.cur) : null; },
 
-    // --- Exports ---
-    fileName() { return (this.quote.project || 'devis').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'devis'; },
+    stateOf(d) {
+      const today = isoToday(), C = { g: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300', b: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300', ok: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300', w: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-200', r: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300' };
+      if (d.status === 'draft') return { label: 'Brouillon', cls: C.g };
+      if (d.type === 'devis') {
+        if (d.status === 'accepted') return { label: 'Accepté', cls: C.ok };
+        if (d.status === 'refused') return { label: 'Refusé', cls: C.r };
+        return d.validUntil && d.validUntil < today ? { label: 'Expiré', cls: C.w } : { label: 'Envoyé', cls: C.b };
+      }
+      if (d.type === 'avoir') return { label: 'Émis', cls: C.b };
+      if (d.status === 'paid') return { label: 'Payée', cls: C.ok };
+      return d.dueDate && d.dueDate < today ? { label: 'En retard', cls: C.r } : { label: 'À encaisser', cls: C.w };
+    },
+
+    get kpis() {
+      const y = String(new Date().getFullYear()), today = isoToday();
+      const inv = this.docs.filter(d => d.type !== 'devis' && d.status !== 'draft' && (d.issueDate || '').startsWith(y));
+      const sum = (arr, k) => r2(arr.reduce((s, d) => s + this.calc(d)[k], 0));
+      const unpaid = inv.filter(d => d.type === 'facture' && d.status === 'issued'), late = unpaid.filter(d => d.dueDate && d.dueDate < today);
+      return [
+        { label: 'Facturé ' + y + ' (HT)', value: sum(inv, 'ht'), sub: inv.filter(d => d.type === 'facture').length + ' facture(s)', cls: '' },
+        { label: 'Encaissé (TTC)', value: sum(inv.filter(d => d.status === 'paid'), 'due'), sub: 'factures payées', cls: 'text-emerald-600 dark:text-emerald-400' },
+        { label: 'À encaisser (TTC)', value: sum(unpaid, 'due'), sub: unpaid.length + ' en attente', cls: 'text-amber-600 dark:text-amber-400' },
+        { label: 'En retard (TTC)', value: sum(late, 'due'), sub: late.length + ' facture(s)', cls: late.length ? 'text-red-600 dark:text-red-400' : '' }
+      ];
+    },
+
+    // ---------------------------------------------------------------
+    // Calculs d'un document (HT, remises, TVA par taux, TTC, reste à payer)
+    // ---------------------------------------------------------------
+    vatActiveOf(d) { return this.issuerOf(d).vatRegime === 'reel' && (d.vatMode || 'normal') === 'normal'; },
+    get vatActive() { return this.cur ? this.vatActiveOf(this.cur) : false; },
+    vatRateOf(l) { return this.vatActive ? Number(l.vat) || 0 : 0; },
+    lineNet(l) { return r2((Number(l.qty) || 0) * (Number(l.price) || 0) * (1 - Math.min(Number(l.disc) || 0, 100) / 100)); },
+    get sign() { return this.cur && this.cur.type === 'avoir' ? -1 : 1; },
+    get anyLineDisc() { return !!this.cur && this.cur.lines.some(l => Number(l.disc) > 0); },
+    calc(d) {
+      const sign = d.type === 'avoir' ? -1 : 1, vatOn = this.vatActiveOf(d);
+      const sub = r2(d.lines.reduce((s, l) => s + this.lineNet(l), 0));
+      const coefAmt = r2(sub * ((Number(d.coef) || 1) - 1));
+      const after = r2(sub + coefAmt), dv = Number(d.discount && d.discount.value) || 0;
+      const discAmt = Math.min(after, r2(d.discount && d.discount.mode === 'eur' ? dv : after * Math.min(dv, 100) / 100));
+      const ht = r2(after - discAmt), scale = sub ? ht / sub : 0;
+      // TVA : la base de chaque taux est ajustée au prorata des majorations / remises
+      const byRate = {};
+      d.lines.forEach(l => { const rate = vatOn ? Number(l.vat) || 0 : 0; byRate[rate] = (byRate[rate] || 0) + this.lineNet(l); });
+      const rates = Object.keys(byRate).map(Number).sort((a, b) => b - a);
+      let left = ht;
+      const vatLines = rates.map((rate, i) => {
+        const base = i === rates.length - 1 ? r2(left) : r2(byRate[rate] * scale); left = r2(left - base);
+        return { rate, base: r2(base * sign), vat: r2(base * rate / 100 * sign) };
+      });
+      const vat = r2(vatLines.reduce((s, v) => s + v.vat, 0)), ttc = r2(ht * sign + vat), paid = r2(Number(d.paid) || 0);
+      return { sub: r2(sub * sign), coefAmt: r2(coefAmt * sign), discAmt: r2(discAmt * sign), ht: r2(ht * sign), vatLines, vat, ttc, paid, due: r2(ttc - paid * sign) };
+    },
+    get t() { return this.cur ? this.calc(this.cur) : { sub: 0, coefAmt: 0, discAmt: 0, ht: 0, vatLines: [], vat: 0, ttc: 0, paid: 0, due: 0 }; },
+    addLine(useTjm) { this.cur.lines.push(this.newLine(useTjm)); },
+
+    // ---------------------------------------------------------------
+    // Numérotation, conformité, finalisation
+    // ---------------------------------------------------------------
+    numberFor(type, iso, preview) {
+      const y = (iso || isoToday()).slice(0, 4), key = type + '-' + y, n = (this.profile.counters[key] || 0) + 1;
+      return `${this.profile.prefix[type] || type[0].toUpperCase()}-${y}-${pad(n)}`;
+    },
+    get profileErrors() { return this.issuerErrors(this.profile, true); },
+    get completeness() { const total = 9, miss = this.issuerErrors(this.profile, true).length; return Math.max(0, Math.round((total - Math.min(miss, total)) / total * 100)); },
+    issuerErrors(p, needPay) {
+      const e = [], R = 'Réglages : ';
+      if (!p.name.trim()) e.push(R + 'nom ou raison sociale');
+      if (!p.address.trim() || !p.zip.trim() || !p.city.trim()) e.push(R + 'adresse complète');
+      if (digits(p.siret).length !== 14) e.push(R + 'SIRET (14 chiffres)'); else if (!siretOk(p.siret)) e.push(R + 'SIRET invalide');
+      if (!p.email.trim() && !p.phone.trim()) e.push(R + 'e-mail ou téléphone');
+      if (COMPANY_FORMS.includes(p.legalForm) && (!String(p.capital).trim() || !p.rcs.trim())) e.push(R + 'capital social et immatriculation RCS');
+      if (p.vatRegime === 'reel' && !p.vatNumber.trim()) e.push(R + 'n° de TVA intracommunautaire');
+      if (needPay) {
+        const pay = p.pay, ok = (pay.transfer && ibanOk(pay.iban)) || (pay.paypalOn && pay.paypal.trim()) || (pay.linkOn && pay.link.trim()) || (pay.chequeOn);
+        if (!ok) e.push(R + 'au moins un moyen de paiement (IBAN valide, PayPal, lien ou chèque)');
+        if (pay.transfer && pay.iban && !ibanOk(pay.iban)) e.push(R + 'IBAN invalide');
+      }
+      return e;
+    },
+    get check() {
+      const d = this.cur, errors = [], warnings = [];
+      if (!d) return { errors, warnings };
+      const cl = this.clientOf(d), inv = d.type !== 'devis';
+      this.issuerErrors(this.profile, inv && d.type !== 'avoir').forEach(x => errors.push(x));
+      if (!cl) errors.push('Choisissez un client');
+      else {
+        if (!cl.name.trim() || !cl.address.trim() || !cl.zip.trim() || !cl.city.trim()) errors.push('Client : nom et adresse complète');
+        if (inv && cl.type === 'pro') {
+          if (this.isFR(cl) && !sirenOk(cl.siren)) errors.push('Client professionnel : SIREN valide (mention obligatoire depuis le 1er septembre 2026)');
+          if (!this.isFR(cl) && !cl.vatNumber.trim()) warnings.push('Client étranger : ajoutez son n° de TVA intracommunautaire');
+        }
+        if (d.vatMode !== 'normal' && cl.type !== 'pro') warnings.push('Autoliquidation / hors champ : normalement réservé aux clients professionnels');
+      }
+      if (!d.lines.length || d.lines.some(l => !l.label.trim())) errors.push('Chaque ligne doit avoir une désignation');
+      if (d.lines.some(l => !(Number(l.qty) > 0))) errors.push('Chaque ligne doit avoir une quantité supérieure à 0');
+      if (d.lines.some(l => Number(l.price) < 0)) errors.push('Les prix unitaires ne peuvent pas être négatifs');
+      if (!d.issueDate) errors.push('Date d\'émission manquante');
+      if (inv && !d.serviceDate) errors.push('Date de la prestation manquante');
+      if (d.type === 'avoir' && !d.ref) errors.push('Un avoir doit se rapporter à une facture');
+      if (Number(d.discount.value) < 0 || (d.discount.mode === 'pct' && Number(d.discount.value) > 100)) errors.push('Remise globale invalide');
+      if (this.calc(d).ht <= 0 && d.type !== 'avoir') warnings.push('Le total du document est nul');
+      const last = this.docs.filter(x => x.type === d.type && x.status !== 'draft' && x.issueDate).map(x => x.issueDate).sort().pop();
+      if (last && d.issueDate < last) warnings.push('Date antérieure au dernier ' + this.typeLabel(d.type).toLowerCase() + ' émis (' + fmtDate(last) + ') : la numérotation doit rester chronologique');
+      return { errors: [...new Set(errors)], warnings };
+    },
+    finalize() {
+      const d = this.cur; if (!d) return;
+      if (this.check.errors.length) { this.notify('Complétez les mentions obligatoires avant de finaliser'); return; }
+      if (!confirm(`Finaliser ce document ? Il sera numéroté et ne pourra plus être modifié.`)) return;
+      const key = d.type + '-' + d.issueDate.slice(0, 4);
+      d.number = this.numberFor(d.type, d.issueDate);
+      this.profile.counters[key] = (this.profile.counters[key] || 0) + 1;
+      d.snap = { issuer: clone(this.profile), client: clone(this.clientOf(d)) };
+      delete d.snap.issuer.counters;
+      d.dueDate = d.type === 'facture' ? addDays(d.issueDate, d.payDays) : '';
+      d.validUntil = d.type === 'devis' ? addDays(d.issueDate, d.validDays) : '';
+      d.status = d.type === 'devis' ? 'sent' : 'issued';
+      d.updatedAt = Date.now();
+      this.notify(this.typeLabel(d.type) + ' ' + d.number + ' finalisé');
+    },
+    setStatus(s) { this.cur.status = s; this.notify('Statut mis à jour'); },
+    markPaid() { const d = this.cur; d.paidAt = d.paidAt || isoToday(); d.status = 'paid'; this.notify('Facture marquée payée'); },
+    removeDraft() { if (this.cur.status !== 'draft') return; if (!confirm('Supprimer ce brouillon ?')) return; this.docs = this.docs.filter(d => d.id !== this.editId); this.go('docs'); },
+    duplicate() {
+      const src = this.cur, d = { ...clone(src), id: uid(), number: '', status: 'draft', snap: null, issueDate: isoToday(), serviceDate: isoToday(), dueDate: '', validUntil: '', paidAt: '', paidMethod: '', gistId: '', createdAt: Date.now(), updatedAt: Date.now() };
+      d.lines.forEach(l => l.id = uid());
+      if (src.type === 'avoir') d.ref = src.ref;
+      this.docs.unshift(d); this.openDoc(d.id); this.notify('Copie créée en brouillon');
+    },
+    creditNote() {
+      const f = this.cur, d = { ...this.newDoc('avoir'), clientId: f.clientId, title: f.title, lines: clone(f.lines), coef: f.coef, discount: clone(f.discount), vatMode: f.vatMode, opType: f.opType, serviceDate: f.serviceDate, ref: { id: f.id, number: f.number, type: 'facture' }, notes: 'Avoir relatif à la facture ' + f.number + '.' };
+      d.lines.forEach(l => l.id = uid());
+      this.docs.unshift(d); this.openDoc(d.id); this.notify('Brouillon d\'avoir créé — vérifiez les lignes à créditer');
+    },
+    invoiceFromQuote(kind) {
+      const q = this.cur, c = this.calc(q), d = this.newDoc('facture');
+      Object.assign(d, { clientId: q.clientId, title: q.title, opType: q.opType, vatMode: q.vatMode, payDays: q.payDays, ref: { id: q.id, number: q.number, type: 'devis' } });
+      if (kind === 'deposit') {
+        d.isDeposit = true;
+        d.lines = c.vatLines.map(v => ({ id: uid(), label: `Acompte de ${q.deposit} % — devis n° ${q.number}`, desc: q.title, qty: 1, unit: 'forfait', price: r2(v.base * q.deposit / 100), disc: 0, vat: v.rate }));
+      } else {
+        d.lines = clone(q.lines); d.lines.forEach(l => l.id = uid()); d.coef = q.coef; d.discount = clone(q.discount);
+        d.paid = r2(this.docs.filter(x => x.type === 'facture' && x.isDeposit && x.ref && x.ref.id === q.id && x.status !== 'draft').reduce((s, x) => s + this.calc(x).ttc, 0));
+      }
+      if (q.status === 'sent') q.status = 'accepted';
+      this.docs.unshift(d); this.openDoc(d.id); this.notify('Brouillon de facture créé');
+    },
+    printDoc() { const t = document.title; document.title = (this.cur.number || 'brouillon') + (this.clientName(this.cur) ? ' - ' + this.clientName(this.cur) : ''); window.print(); setTimeout(() => document.title = t, 500); },
+
+    // ---------------------------------------------------------------
+    // Mentions légales, bloc de règlement, QR de virement
+    // ---------------------------------------------------------------
+    get legalLine() {
+      const p = this.iss, parts = [];
+      parts.push(LEGAL_FORMS[p.legalForm] + (COMPANY_FORMS.includes(p.legalForm) && p.capital ? ' au capital de ' + p.capital + ' €' : ''));
+      if (digits(p.siren) || digits(p.siret)) parts.push('SIRET ' + fmtSiren(p.siret || p.siren));
+      if (p.rcs) parts.push(p.rcs);
+      if (p.ape) parts.push('APE ' + p.ape);
+      if (p.vatRegime === 'reel' && p.vatNumber) parts.push('TVA intracom. ' + p.vatNumber);
+      if (p.insurance) parts.push('Assurance RC pro : ' + p.insurance);
+      return [p.name, ...parts].filter(Boolean).join(' — ');
+    },
+    get mentions() {
+      const d = this.cur, p = this.iss, cl = this.cl, out = [];
+      if (!d) return out;
+      const pro = cl && cl.type === 'pro', terms = p.terms || this.profile.terms;
+      const payText = n => Number(n) === 0 ? 'paiement à réception' : `paiement à ${n} jours à compter de la date d'émission`;
+      if (d.type === 'devis') {
+        out.push(`Devis valable ${d.validDays} jours, soit jusqu'au ${fmtDate(d.validUntil || addDays(d.issueDate, d.validDays))}.`);
+        if (d.deposit > 0) out.push(`Acompte à la commande : ${d.deposit} % soit ${money(this.t.ttc * d.deposit / 100)}${this.vatActive ? ' TTC' : ''}.`);
+        out.push(`Conditions de règlement : ${payText(d.payDays)}.`);
+        out.push('Devis reçu avant l\'exécution de la prestation : à retourner daté et signé, précédé de la mention « Bon pour accord ».');
+      } else if (d.type === 'avoir') {
+        out.push(`Avoir se rapportant à la facture n° ${d.ref ? d.ref.number : '—'}.`);
+      } else {
+        out.push(`Conditions de règlement : ${payText(d.payDays)}. Date d'échéance : ${fmtDate(d.dueDate || addDays(d.issueDate, d.payDays))}.`);
+        out.push(`Pénalités de retard : ${terms.penalty}, exigibles dès le lendemain de la date d'échéance, sans rappel préalable.`);
+        if (pro) out.push('Indemnité forfaitaire pour frais de recouvrement en cas de retard de paiement : 40 € (art. L.441-10 et D.441-5 du Code de commerce).');
+        if (terms.discount) out.push(terms.discount);
+      }
+      out.push('Nature de l\'opération : ' + OP_LABELS[d.opType] + '.');
+      if (p.vatRegime === 'franchise') out.push(VAT_TEXT.franchise);
+      else if (d.vatMode !== 'normal') out.push(VAT_TEXT[d.vatMode]);
+      else if (p.vatOnDebits && d.opType !== 'biens') out.push('Option pour le paiement de la taxe d\'après les débits.');
+      return out;
+    },
+    get payLines() {
+      const d = this.cur; if (!d) return [];
+      const pay = this.iss.pay || this.profile.pay, out = [];
+      if (pay.transfer && pay.iban) { out.push('Virement — IBAN : ' + fmtIban(pay.iban) + (pay.bic ? ' · BIC : ' + pay.bic : '')); out.push('Titulaire : ' + (pay.holder || this.iss.name)); out.push('Référence à indiquer : ' + (d.number || 'numéro du document')); }
+      if (pay.paypalOn && pay.paypal) {
+        const pp = pay.paypal.trim(), base = d.type === 'devis' ? this.t.ttc * (d.deposit || 0) / 100 : this.t.due, amt = base > 0 ? base.toFixed(2) : '';
+        out.push(/paypal\.me/i.test(pp) ? 'PayPal : ' + (pp.startsWith('http') ? pp : 'https://' + pp).replace(/\/$/, '') + (amt ? '/' + amt + 'EUR' : '') : 'PayPal : ' + pp);
+      }
+      if (pay.linkOn && pay.link) out.push('Paiement en ligne : ' + pay.link);
+      if (pay.chequeOn) out.push('Chèque à l\'ordre de : ' + (pay.cheque || this.iss.name));
+      return out;
+    },
+    refreshQr() { // QR code de virement SEPA (norme EPC / « GiroCode »), lu par la plupart des applis bancaires
+      const d = this.cur, pay = d && (this.iss.pay || this.profile.pay);
+      this.qr = '';
+      if (!d || d.type !== 'facture' || !pay.transfer || !ibanOk(pay.iban) || this.t.due <= 0 || typeof qrcode !== 'function') return;
+      try {
+        const txt = ['BCD', '002', '1', 'SCT', (pay.bic || '').replace(/\s/g, ''), stripAccents(pay.holder || this.iss.name).slice(0, 70), pay.iban.replace(/\s/g, '').toUpperCase(), 'EUR' + this.t.due.toFixed(2), '', '', (d.number || '').slice(0, 140)].join('\n');
+        const q = qrcode(0, 'M'); q.addData(txt); q.make(); this.qr = q.createSvgTag({ cellSize: 2, margin: 0, scalable: true });
+      } catch (e) { this.qr = ''; }
+    },
+
+    // ---------------------------------------------------------------
+    // Clients
+    // ---------------------------------------------------------------
+    openClient(id, fromDoc) { this.cmFromDoc = !!fromDoc; this.cm = id ? clone(this.clients.find(c => c.id === id)) : blankClient(); },
+    saveClient() {
+      const c = this.cm;
+      if (!c.name.trim()) return this.notify('Le nom du client est obligatoire');
+      const i = this.clients.findIndex(x => x.id === c.id);
+      i >= 0 ? this.clients.splice(i, 1, clone(c)) : this.clients.push(clone(c));
+      if (this.cmFromDoc && this.cur && !this.locked) this.cur.clientId = c.id;
+      this.cm = null; this.notify('Client enregistré');
+    },
+    deleteClient(id) {
+      if (this.docs.some(d => d.clientId === id && d.status === 'draft')) return this.notify('Ce client est utilisé par un brouillon');
+      if (confirm('Supprimer ce client ? Les documents déjà finalisés ne sont pas modifiés.')) this.clients = this.clients.filter(c => c.id !== id);
+    },
+
+    // ---------------------------------------------------------------
+    // Réglages : logo, sauvegarde
+    // ---------------------------------------------------------------
+    loadLogo(ev) { // réduit l'image (≤ 320 px) pour rester léger
+      const f = ev.target.files[0]; if (!f) return;
+      const img = new Image(), url = URL.createObjectURL(f);
+      img.onload = () => {
+        const s = Math.min(1, 320 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        this.profile.logo = c.toDataURL('image/png'); URL.revokeObjectURL(url);
+        if (this.profile.logo.length > 200000) { this.profile.logo = c.toDataURL('image/jpeg', 0.8); }
+      };
+      img.onerror = () => this.notify('Image illisible');
+      img.src = url; ev.target.value = '';
+    },
+    exportBackup() { this.download('freelance-kit-sauvegarde-' + isoToday() + '.json', JSON.stringify(this.snapshot(), null, 2), 'application/json'); },
+    importBackup(ev) {
+      const f = ev.target.files[0]; if (!f) return;
+      f.text().then(t => {
+        const d = JSON.parse(t); if (!d || typeof d !== 'object') throw 0;
+        if (!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) return;
+        this.apply(d); this.savedAt = Date.now(); this._last = ''; this.persist(); this.notify('Sauvegarde importée');
+      }).catch(() => this.notify('Fichier de sauvegarde invalide'));
+      ev.target.value = '';
+    },
+    resetAll() {
+      if (!confirm('Effacer TOUTES les données (réglages, clients, documents) ? Cette action est irréversible.')) return;
+      this.tjmRate = 0; this.profile = defaultProfile(); this.clients = []; this.docs = []; this.editId = ''; this.go('settings'); this.notify('Données effacées');
+    },
+
+    // ---------------------------------------------------------------
+    // Exports
+    // ---------------------------------------------------------------
+    fileName() { const d = this.cur; return stripAccents((d.number || d.type) + '-' + (this.clientName(d) || '')).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'document'; },
     markdown() {
-      const q = this.quote, t = this.totals;
-      return `# Devis — ${q.project || 'Projet'}\n\nClient : ${q.client || '—'}  \nDate : ${this.today}\n\n` +
-        `| Prestation | Jours | Montant |\n|---|---:|---:|\n` +
-        q.lines.map(l => `| ${l.label || '—'} | ${l.days} | ${this.eur(l.days * q.rate)} |`).join('\n') +
-        `\n\nTJM appliqué : ${this.eur(q.rate)} · Coefficient de complexité : × ${Number(q.coef).toFixed(2)}\n\n` +
-        `- Total HT : **${this.eur(t.ht)}**\n- TVA ${q.vat} % : ${this.eur(t.vat)}\n- **Total TTC : ${this.eur(t.ttc)}**\n` +
-        (q.deposit > 0 ? `- Acompte ${q.deposit} % : ${this.eur(t.ttc * q.deposit / 100)}\n` : '');
+      const d = this.cur, t = this.t, cl = this.cl, p = this.iss, s = this.sign;
+      return `# ${this.typeLabel(d.type)} ${d.number || '(brouillon)'}\n\n**${p.name}**  \n${this.legalLine}\n\nClient : ${cl ? cl.name : '—'}  \nDate : ${fmtDate(d.issueDate)}\n` + (d.title ? `\nObjet : ${d.title}\n` : '') +
+        `\n| Désignation | Qté | PU HT | Total HT |\n|---|---:|---:|---:|\n` +
+        d.lines.map(l => `| ${l.label || '—'} | ${l.qty} ${l.unit} | ${money(l.price)} | ${money(this.lineNet(l) * s)} |`).join('\n') +
+        `\n\n- Total HT : **${money(t.ht)}**\n` + (this.vatActive ? t.vatLines.map(v => `- TVA ${v.rate} % : ${money(v.vat)}\n`).join('') : '') + `- **Total ${this.vatActive ? 'TTC' : 'à payer'} : ${money(t.ttc)}**\n` +
+        (t.paid ? `- Déjà réglé : ${money(-t.paid)}\n- **Net à payer : ${money(t.due)}**\n` : '') + '\n' + this.mentions.map(m => '- ' + m).join('\n') + '\n';
     },
     download(name, text, type) {
       const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([text], { type })), download: name });
       a.click(); URL.revokeObjectURL(a.href);
     },
-    exportJSON() { this.download(this.fileName() + '.json', JSON.stringify(this.snapshot(), null, 2), 'application/json'); },
+    exportJSON() { this.download(this.fileName() + '.json', JSON.stringify(this.cur, null, 2), 'application/json'); },
     exportMarkdown() { this.download(this.fileName() + '.md', this.markdown(), 'text/markdown'); },
+    exportCSV() { // registre des documents pour le comptable
+      const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      const rows = [['Numéro', 'Type', 'Date', 'Client', 'SIREN client', 'Objet', 'Total HT', 'TVA', 'Total TTC', 'Statut', 'Date de paiement', 'Mode de paiement']];
+      this.docs.filter(d => d.status !== 'draft').sort((a, b) => a.issueDate.localeCompare(b.issueDate)).forEach(d => {
+        const c = this.calc(d), cl = this.clientOf(d) || {};
+        rows.push([d.number, this.typeLabel(d.type), d.issueDate, cl.name, cl.siren, d.title, c.ht.toFixed(2).replace('.', ','), c.vat.toFixed(2).replace('.', ','), c.ttc.toFixed(2).replace('.', ','), this.stateOf(d).label, d.paidAt, d.paidMethod]);
+      });
+      this.download('registre-' + isoToday() + '.csv', '﻿' + rows.map(r => r.map(q).join(';')).join('\n'), 'text/csv');
+    },
     async exportGithub() {
       if (!this.acct.github) return this.signIn('github');
       this.busy = true;
       try {
-        const g = await Integrations.github.exportGist({ id: this.quote.gistId, name: this.fileName(), json: JSON.stringify(this.quote, null, 2), markdown: this.markdown() });
-        this.quote.gistId = g.id; this.notify('Devis exporté sur GitHub'); window.open(g.url, '_blank', 'noopener');
+        const g = await Integrations.github.exportGist({ id: this.cur.gistId, name: this.fileName(), json: JSON.stringify(this.cur, null, 2), markdown: this.markdown() });
+        this.cur.gistId = g.id; this.notify('Document exporté sur GitHub'); window.open(g.url, '_blank', 'noopener');
       } catch (e) { this.notify(e.message); }
       this.busy = false;
     },
 
-    // --- Divers ---
-    toggleTheme() {
-      this.dark = !this.dark;
-      document.documentElement.classList.toggle('dark', this.dark);
-      lsSet('fk:theme', this.dark ? 'dark' : 'light');
-    },
-    notify(msg) { this.toast = msg; clearTimeout(this._t); this._t = setTimeout(() => this.toast = '', 3000); },
-    eur(v) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v || 0); },
-    get today() { return new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }); }
+    // ---------------------------------------------------------------
+    // Divers
+    // ---------------------------------------------------------------
+    toggleTheme() { this.dark = !this.dark; document.documentElement.classList.toggle('dark', this.dark); lsSet('fk:theme', this.dark ? 'dark' : 'light'); },
+    notify(msg) { this.toast = msg; clearTimeout(this._t); this._t = setTimeout(() => this.toast = '', 3500); }
   };
 }
 </script>
