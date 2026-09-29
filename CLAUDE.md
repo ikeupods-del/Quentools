@@ -22,6 +22,7 @@ Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `in
 4. Mettre à jour `wouf/docs/MAINTENANCE.md` si une procédure change.
 
 ## Git et publication
+- L’adresse racine `https://ikeupods-del.github.io/Quentools/` redirige vers `wouf/` (`index.html` à la racine).
 - Branche par défaut : `claude/infirmiere-ordonnances-upload-26nl16` ; la publication (GitHub Pages) se déclenche à chaque push dessus, **après** les tests (`.github/workflows/pages.yml`). Les branches de travail passent par une pull request (le workflow « Wouf — tests » tourne dessus).
 - Ne jamais écrire de clé secrète dans le dépôt (Stripe, Resend) : elles vivent dans Cloudflare.
 - Contenu santé / juridique : indicatif. Signale au propriétaire ce qui mériterait une relecture professionnelle ; n'invente jamais de tarifs d'assureurs ni de faits juridiques.

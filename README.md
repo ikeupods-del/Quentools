@@ -5,7 +5,7 @@
 Tournée, fiches patients, **ordonnances (photo ou PDF)**, fiche d’urgence, transmissions, cotations NGAP / INAMI et compta.
 Application web installable (PWA) : elle s’installe sur l’écran d’accueil comme une vraie app et fonctionne hors connexion.
 
-**Adresse de l’app :** https://ikeupods-del.github.io/Quentools/infikit/
+**Adresse de l’app :** https://ikeupods-del.github.io/Quentools/infikit/ (l’adresse principale https://ikeupods-del.github.io/Quentools/ ouvre Wouf)
 
 ### Pour l’infirmière
 
