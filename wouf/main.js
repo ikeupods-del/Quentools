@@ -1,7 +1,7 @@
 'use strict';
 /* Wouf — routeur, rendu, démarrage. */
 
-const NAV_OF = { home: 'home', carnet: 'carnet', plan: 'carnet', suivi: 'suivi', sos: 'sos', educ: 'educ', lecon: 'educ', seance: 'educ', principes: 'educ', programme: 'educ' };
+const NAV_OF = { balade: 'suivi', 'balade-detail': 'suivi', 'plan-poids': 'plus', bilan: 'plus', gardien: 'plus', home: 'home', carnet: 'carnet', plan: 'carnet', suivi: 'suivi', sos: 'sos', educ: 'educ', lecon: 'educ', seance: 'educ', principes: 'educ', programme: 'educ' };
 let lastRoute = null;
 
 function routeName() { return (location.hash.replace(/^#\/?/, '') || 'home').split('?')[0]; }
@@ -19,8 +19,9 @@ function render(keepScroll) {
   if (keepScroll === true && lastRoute === r) window.scrollTo(0, y); else if (lastRoute !== r) window.scrollTo(0, 0);
   lastRoute = r;
   if (r !== 'seance') clearInterval(SEANCE.iv);
+  if (r !== 'balade') clearInterval(WALK.iv);
   const fn = ROUTES[r]; if (fn && fn.after) fn.after();
-  document.title = 'Wouf — ' + (S.dogs.length && dog() ? dog().name : 'carnet de santé du chien');
+  document.title = 'Wouf — ' + (S.dogs.length && dog() ? dog().name : 'carnet de santé de votre animal');
 }
 
 document.addEventListener('click', e => {
@@ -33,12 +34,14 @@ addEventListener('hashchange', () => { closeAllSheets(); render(); });
 
 /* Bibliothèque de races pour l'autocomplétion */
 $('#breeds').innerHTML = BREEDS.map(b => `<option value="${esc(b.name)}">`).join('');
+$('#breeds_cat').innerHTML = CAT_BREEDS.map(b => `<option value="${esc(b.name)}">`).join('');
 
 /* Service worker */
-if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').then(initUpdates).catch(() => {}));
 
 /* Démarrage */
 render();
 refreshSub().then(() => { if (routeName() === 'abo') render(true); });
 maybeNotify();
 cloudInit();
+walkRecover();

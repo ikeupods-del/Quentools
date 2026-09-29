@@ -78,9 +78,9 @@ const BREEDS = [
   ['Setter Irlandais', 'L', [24, 32], [11, 14], 1.1, ['Torsion d’estomac', 'Atrophie rétinienne', 'Dysplasie']],
   ['Cavapoo / Labradoodle (croisé)', 'M', [7, 30], [12, 15], 1.0, ['Otites', 'Allergies cutanées', 'Problèmes oculaires']]
 ].map(([name, size, w, life, risk, pred]) => ({ name, size, w, life, risk, pred }));
-const SIZE_LABEL = { S: 'Petit', M: 'Moyen', L: 'Grand', XL: 'Géant' };
-const SENIOR_AGE = { S: 8, M: 7, L: 6, XL: 5 };
-const breedOf = name => BREEDS.find(b => b.name.toLowerCase() === String(name || '').toLowerCase());
+const SIZE_LABEL = { S: 'Petit', M: 'Moyen', L: 'Grand', XL: 'Géant', CAT: 'Chat' };
+const SENIOR_AGE = { S: 8, M: 7, L: 6, XL: 5, CAT: 10 };
+const breedOf = name => BREEDS.concat(typeof CAT_BREEDS !== 'undefined' ? CAT_BREEDS : []).find(b => b.name.toLowerCase() === String(name || '').toLowerCase());
 
 /* ---------- Aliments et produits toxiques ---------- */
 const TOXICS = [

@@ -1,5 +1,5 @@
 'use strict';
-/* Wouf — comparateur d'assurance chien.
+/* Wouf — comparateur d'assurance chien et chat.
    Honnêteté d'abord : Wouf n'est pas courtier et ne connaît pas les tarifs en temps réel des assureurs.
    1) un SIMULATEUR de formules types (accident seul → excellence) chiffre le vrai coût d'un scénario de frais vétérinaires ;
    2) un COMPARATEUR de VRAIS DEVIS que l'utilisateur saisit, évalués avec la même méthode ;
@@ -12,7 +12,7 @@ const TIERS = [
   { id: 'prem', name: 'Premium',       taux: 0.9, plafond: 3500, franchise: 0, prev: 100, mult: 2.6, maladie: true, desc: 'Haut niveau de remboursement, forfait prévention (vaccins, antiparasitaires).' },
   { id: 'exc',  name: 'Excellence',    taux: 1.0, plafond: 6000, franchise: 0, prev: 150, mult: 3.4, maladie: true, desc: 'Remboursement à 100 %, plafond élevé, prévention.' }
 ];
-const INS_BASE = { S: 11, M: 15, L: 20, XL: 27 };                  // €/mois, formule « Essentielle », chien adulte
+const INS_BASE = { S: 11, M: 15, L: 20, XL: 27, CAT: 9 };           // €/mois, formule « Essentielle », animal adulte
 const ageFactor = y => y < 1 ? 0.9 : y < 3 ? 1 : y < 6 ? 1.15 : y < 8 ? 1.5 : y < 10 ? 1.95 : 2.4;
 const premiumFor = (t, d, years = ageYears(d.birth || iso(new Date(Date.now() - 3 * 365.25 * 864e5)))) =>
   INS_BASE[dogSize(d)] * t.mult * ageFactor(years) * ((dogBreed(d) || {}).risk || 1);
@@ -124,8 +124,8 @@ ROUTES.assurance = function assurance() {
   const qrows = S.quotes.filter(q => q.dogId === d.id).map(q => ({ q, ...evaluate({ taux: q.taux / 100, plafond: q.plafond, franchise: q.franchise, prev: q.prev, maladie: q.maladie }, q.monthly, sc) })).sort((a, c) => a.net - c.net);
   const aff = CFG.affiliates || {}, hasAff = INSURERS.some(i => aff[i[0]]);
   const chart = barChart([{ l: 'Sans', v: none, cls: 'none' }].concat(rows.map(r => ({ l: r.t.name.split(' ')[0].slice(0, 9), v: r.net, cls: r === best ? 'best' : '' }))));
-  return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>🛡️ Assurance chien</h1></div>
-  <section class="card note"><b>Comment ça marche</b><p>Wouf calcule combien votre chien vous coûterait <em>réellement</em> sur un an avec chaque niveau de couverture, selon les frais vétérinaires que vous imaginez. Les primes des formules types sont des <b>estimations de marché</b> (non contractuelles) ; pour un chiffrage exact, saisissez de vrais devis plus bas.</p></section>
+  return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>🛡️ Assurance ${spOf(d).noun}</h1></div>
+  <section class="card note"><b>Comment ça marche</b><p>Wouf calcule combien votre ${spOf(d).noun} vous coûterait <em>réellement</em> sur un an avec chaque niveau de couverture, selon les frais vétérinaires que vous imaginez. Les primes des formules types sont des <b>estimations de marché</b> (non contractuelles) ; pour un chiffrage exact, saisissez de vrais devis plus bas.</p></section>
 
   <section class="card"><div class="card-h"><h2>Profil de ${esc(d.name)}</h2></div>
     <p class="chips-i"><span class="pill">${SIZE_LABEL[size]}</span><span class="pill">${y !== null ? ageText(d.birth) : 'âge inconnu'}</span><span class="pill">${b ? esc(b.name) : 'race non renseignée'}</span>${b && b.risk >= 1.3 ? '<span class="pill warn">Race à risque santé élevé</span>' : ''}</p>
@@ -151,8 +151,8 @@ ROUTES.assurance = function assurance() {
   <section class="card"><div class="card-h"><h2>3. Comparer de vrais devis</h2><button class="btn sm primary" data-act="add-quote">＋ Devis</button></div>
     ${qrows.length ? qrows.map((r, i) => `<button class="row" data-act="edit-quote" data-id="${r.q.id}"><span class="ico">${i === 0 ? '🏆' : '📋'}</span><span class="grow"><b>${esc(r.q.insurer)}${r.q.formula ? ' – ' + esc(r.q.formula) : ''}</b><small>${fmtMoney(r.q.monthly)}/mois · ${r.q.taux} % · plafond ${r.q.plafond ? fmtMoney(r.q.plafond) : 'illimité'}${r.q.franchise ? ' · franchise ' + fmtMoney(r.q.franchise) : ''}${r.q.maladie ? '' : ' · accident seul'}</small></span><span class="side"><b>${fmtMoney(Math.round(r.net))}</b><small>coût net/an</small></span></button>`).join('') + '<p class="mut small">Classés par coût net pour le scénario choisi. À égalité, comparez aussi carences, exclusions et âge limite.</p>' : '<p class="empty">Demandez 2 ou 3 devis (liens ci-dessous) et saisissez-les ici : Wouf les classe pour vous.</p>'}</section>
 
-  <section class="card"><h2>4. Demander un devis</h2><p class="mut">Assureurs proposant des assurances pour chiens (liste non exhaustive, sans classement ni recommandation).${hasAff ? ' Les liens marqués « partenaire » peuvent rémunérer Wouf, sans surcoût pour vous.' : ''}</p>
-    <div class="ins-links">${INSURERS.map(([id, name]) => aff[id] ? `<a class="btn" href="${esc(aff[id])}" target="_blank" rel="sponsored noopener">${esc(name)} <small>partenaire</small></a>` : `<a class="btn" href="https://www.google.com/search?q=${encodeURIComponent('devis assurance chien ' + name)}" target="_blank" rel="noopener">${esc(name)}</a>`).join('')}</div></section>
+  <section class="card"><h2>4. Demander un devis</h2><p class="mut">Assureurs proposant des assurances pour ${spOf(d).plural} (liste non exhaustive, sans classement ni recommandation).${hasAff ? ' Les liens marqués « partenaire » peuvent rémunérer Wouf, sans surcoût pour vous.' : ''}</p>
+    <div class="ins-links">${INSURERS.map(([id, name]) => aff[id] ? `<a class="btn" href="${esc(aff[id])}" target="_blank" rel="sponsored noopener">${esc(name)} <small>partenaire</small></a>` : `<a class="btn" href="https://www.google.com/search?q=${encodeURIComponent('devis assurance ' + spOf(d).noun + ' ' + name)}" target="_blank" rel="noopener">${esc(name)}</a>`).join('')}</div></section>
 
   <section class="card"><h2>Les 10 points à vérifier avant de signer</h2>${CHECKLIST.map(([t, x]) => `<details><summary>${t}</summary><p>${x}</p></details>`).join('')}
     <p class="mut small">Wouf n’est ni assureur ni courtier. Les estimations sont indicatives et non contractuelles : seul le contrat de l’assureur fait foi.</p></section>`;

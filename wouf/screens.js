@@ -7,24 +7,26 @@ const ROUTES = {};
 
 /* ---------- Bandeau du haut ---------- */
 function avatar(d, cls = '') {
-  return d && d.photo ? `<img class="av ${cls}" src="${d.photo}" alt="">` : `<span class="av ${cls} ph">🐶</span>`;
+  return d && d.photo ? `<img class="av ${cls}" src="${d.photo}" alt="">` : `<span class="av ${cls} ph">${spOf(d).emoji}</span>`;
 }
 function renderTop() {
   const d = dog();
   $('#top').innerHTML = `<div class="top-in"><a class="brand" href="#/home"><svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><use href="#paw"/></svg><span>Wouf</span></a>
+    ${WALK.on && routeName() !== 'balade' ? '<a class="walkpill" href="#/balade">🦮 En balade</a>' : ''}
     ${d ? `<button class="dogchip" data-act="dogs">${avatar(d, 'sm')}<span>${esc(d.name)}</span><i>▾</i></button>` : ''}</div>`;
 }
 
-/* ---------- Chiens ---------- */
-function dogFields(d = {}) {
+/* ---------- Animaux (chiens et chats) ---------- */
+function dogFields(d = {}, isNew = false) {
   return [
+    ...(isNew ? [{ n: 'species', l: 'Espèce', t: 'select', v: d.species || 'dog', opts: [['dog', '🐶 Chien'], ['cat', '🐱 Chat']] }] : []),
     { n: 'name', l: 'Nom', v: d.name, req: true, ph: 'Ex. Nala' },
     { n: 'photo', l: 'Photo', t: 'file', hint: d.photo ? 'Laisser vide pour conserver la photo actuelle' : '' },
-    { n: 'breed', l: 'Race', v: d.breed, list: 'breeds', ph: 'Tapez pour chercher (ou « Croisé »)', hint: 'Utilisée pour le poids idéal, les risques de santé et l’estimation d’assurance.' },
+    { n: 'breed', l: 'Race', v: d.breed, list: (d.species || 'dog') === 'cat' ? 'breeds_cat' : 'breeds', ph: 'Tapez pour chercher (ou « Croisé »)', hint: 'Utilisée pour le poids idéal, les risques de santé et l’estimation d’assurance.' },
     { n: 'sex', l: 'Sexe', t: 'select', v: d.sex || 'F', opts: [['F', 'Femelle'], ['M', 'Mâle']] },
     { n: 'neutered', l: 'Stérilisé(e) / castré(e)', t: 'checkbox', v: d.neutered },
     { n: 'birth', l: 'Date de naissance', t: 'date', v: d.birth, max: today(), hint: 'Approximative si inconnue.' },
-    { n: 'chip', l: 'N° de puce / tatouage', v: d.chip, ph: '250…', attrs: '' },
+    { n: 'chip', l: 'N° de puce / tatouage', v: d.chip, ph: '250…' },
     { n: 'color', l: 'Robe / signes distinctifs', v: d.color },
     { n: 'allergies', l: 'Allergies, maladies connues', t: 'textarea', v: d.allergies },
     { n: 'idealMin', l: 'Poids idéal min. (kg) — facultatif', t: 'number', v: d.idealMin, cls: 'half' },
@@ -34,18 +36,24 @@ function dogFields(d = {}) {
   ];
 }
 async function saveDog(v, existing) {
-  const d = existing || { id: uid(), createdAt: today(), insurance: {} };
+  const d = existing || { id: uid(), createdAt: today(), insurance: {}, species: v.species || 'dog' };
   const photo = v.photo ? await squarePhoto(v.photo) : d.photo;
   Object.assign(d, { name: v.name, breed: v.breed, sex: v.sex, neutered: v.neutered, birth: v.birth, chip: v.chip, color: v.color, allergies: v.allergies, idealMin: v.idealMin, idealMax: v.idealMax, vetName: v.vetName, vetPhone: v.vetPhone, photo });
   if (!existing) S.dogs.push(d);
   return d;
 }
 function newDog(first) {
-  if (!first && !canAddDog()) return paywall('multiDogs');
-  const f = dogFields(); f.splice(3, 0, { n: 'weight', l: 'Poids actuel (kg)', t: 'number' });
+  if (!first && !canAddAnyPet()) return paywall('multiDogs');
+  const f = dogFields({}, true); f.splice(4, 0, { n: 'weight', l: 'Poids actuel (kg)', t: 'number' });
   openForm({
-    title: first ? 'Bienvenue ! Présentez votre chien' : 'Ajouter un chien', fields: f, submit: first ? 'C’est parti 🐾' : 'Ajouter',
+    title: first ? 'Bienvenue ! Présentez votre compagnon' : 'Ajouter un animal', fields: f, submit: first ? 'C’est parti 🐾' : 'Ajouter',
+    intro: first ? '' : '<p class="mut small">Formule gratuite : 1 chien et 1 chat. Avec Wouf Plus : autant d’animaux que vous voulez.</p>',
+    mount(form) {
+      const sync = () => { const cat = form.species.value === 'cat'; form.breed.setAttribute('list', cat ? 'breeds_cat' : 'breeds'); form.breed.placeholder = cat ? 'Tapez pour chercher (ou « Européen »)' : 'Tapez pour chercher (ou « Croisé »)'; };
+      form.species.onchange = sync;
+    },
     async onSubmit(v) {
+      if (!first && !canAddPet(v.species)) { paywall('multiDogs'); return false; }
       const d = await saveDog(v); S.current = d.id;
       if (v.weight) S.weights.push({ id: uid(), dogId: d.id, date: today(), kg: v.weight });
       save(); toast(d.name + ' est ajouté(e) !'); render();
@@ -61,15 +69,15 @@ function editDog(id) {
     onDelete: async () => {
       const ids = S.docs.filter(x => x.dogId === d.id).map(x => x.id); for (const f of ids) await fdel(f).catch(() => {});
       S.dogs = S.dogs.filter(x => x.id !== d.id); if (S.edu) delete S.edu[d.id];
-      for (const k of ['events', 'weights', 'meds', 'journal', 'expenses', 'docs', 'quotes']) S[k] = S[k].filter(x => x.dogId !== d.id);
+      for (const k of ['events', 'weights', 'meds', 'journal', 'expenses', 'docs', 'quotes', 'walks']) S[k] = S[k].filter(x => x.dogId !== d.id);
       S.current = (S.dogs[0] || {}).id || null; save(); render(); toast('Fiche supprimée');
     }
   });
 }
 ACT.dogs = () => {
-  const el = sheet(`<div class="sheet-head"><h2>Mes chiens</h2><button class="x" data-close>✕</button></div>
+  const el = sheet(`<div class="sheet-head"><h2>Mes animaux</h2><button class="x" data-close>✕</button></div>
     <div class="list">${S.dogs.map(d => `<div class="row ${d.id === dog().id ? 'sel' : ''}"><button class="row-main" data-act="pick-dog" data-id="${d.id}">${avatar(d)}<span class="grow"><b>${esc(d.name)}</b><small>${esc(d.breed || 'Race non renseignée')} · ${esc(ageText(d.birth))}</small></span></button><button class="btn sm" data-act="edit-dog" data-id="${d.id}">Modifier</button></div>`).join('')}</div>
-    <div class="form-actions"><button class="btn primary" data-act="new-dog">＋ Ajouter un chien${!canAddDog() ? ' <span class="pill plus">Plus</span>' : ''}</button></div>`);
+    <div class="form-actions"><button class="btn primary" data-act="new-dog">＋ Ajouter un animal${!canAddAnyPet() ? ' <span class="pill plus">Plus</span>' : ''}</button></div>`);
   el.addEventListener('click', e => { if (e.target.closest('[data-act]')) closeSheet(el); });
 };
 ACT['pick-dog'] = ({ id }) => { S.current = id; save(); render(); };
@@ -78,9 +86,9 @@ ACT['new-dog'] = () => setTimeout(() => newDog(false), 50);
 
 function welcome() {
   return `<section class="welcome"><div class="hero-paw"><svg viewBox="0 0 64 64" width="88" height="88"><use href="#paw"/></svg></div>
-    <h1>Le carnet de santé de votre chien, dans votre poche</h1>
+    <h1>Le carnet de santé de votre chien ou chat, dans votre poche</h1>
     <p>Vaccins, vermifuges, poids, traitements, dépenses, vétérinaires de garde, comparateur d’assurance… Tout au même endroit, sans compte à créer.</p>
-    <button class="btn primary big" data-act="first-dog">Ajouter mon chien</button>
+    <button class="btn primary big" data-act="first-dog">Ajouter mon compagnon 🐶🐱</button>
     <ul class="feat"><li>💉 Rappels automatiques</li><li>🚨 Vétos ouverts près de vous</li><li>🛡️ Comparateur d’assurance</li><li>📈 Courbe de poids</li><li>🔒 Données sur votre téléphone</li></ul>
     <button class="btn big" data-act="g-signin"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 019.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 000 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg> Continuer avec Google (retrouver mes données)</button>
     <p class="mut"><a href="#/sauvegarde">J’ai un fichier de sauvegarde à restaurer</a></p></section>`;
@@ -95,7 +103,7 @@ function reminderRow(r) {
 }
 ROUTES.home = function home() {
   const d = dog(), rem = reminders(d.id), late = rem.filter(r => r.days < 0), soon = rem.filter(r => r.days >= 0 && r.days <= 30), miss = missing(d);
-  const sc = score(d), lw = lastWeight(d.id), ws = weightStatus(d), ha = d.birth ? humanAge(d.birth) : null, meds = medsToday(d.id);
+  const sc = score(d), lw = lastWeight(d.id), ws = weightStatus(d), ha = humanAgeOf(d), meds = medsToday(d.id);
   const bd = d.birth ? (() => { const b = parseD(d.birth), n = new Date(); let nx = new Date(n.getFullYear(), b.getMonth(), b.getDate()); if (nx < parseD(today())) nx.setFullYear(n.getFullYear() + 1); return diffDays(iso(nx), today()); })() : null;
   const R = 34, C = 2 * Math.PI * R, ring = `<svg viewBox="0 0 80 80" class="ring"><circle cx="40" cy="40" r="${R}" class="trk"/><circle cx="40" cy="40" r="${R}" class="val ${sc.total >= 80 ? 'ok' : sc.total >= 50 ? 'warn' : 'bad'}" stroke-dasharray="${(C * sc.total / 100).toFixed(1)} ${C.toFixed(1)}"/><text x="40" y="46" text-anchor="middle">${sc.total}</text></svg>`;
   const backupOld = S.settings.lastBackup ? diffDays(today(), S.settings.lastBackup) > 45 : S.events.length + S.weights.length > 5 && diffDays(today(), S.installedAt) > 14;
@@ -124,13 +132,14 @@ ROUTES.home = function home() {
     ${dogWeights(d.id).length > 1 ? lineChart(dogWeights(d.id).map(w => ({ x: w.date, y: w.kg })), { band: idealBand(d), unit: 'kg', height: 140 }) : `<p class="mut">${lw ? 'Ajoutez une nouvelle pesée pour voir la courbe.' : 'Aucune pesée enregistrée.'}</p>`}
     ${ws ? `<p class="${ws.cls}">${ws.txt}</p>` : ''}</section>
 
+  ${spOf(d).id === 'dog' ? `<a class="card banner" href="#/balade"><b>🦮 Balades ${allowed('tracker') ? '' : '<span class="pill plus">Plus</span>'}</b><span>${allowed('tracker') ? (() => { const m = walkMinutes(walksOn(d.id, today())), g = dailyGoal(d); return m + ' / ' + g + ' min aujourd’hui · lancer une balade →'; })() : 'Suivi GPS, tracé et objectif du jour →'}</span></a>` : ''}
   <section class="grid2">
     <button class="tile" data-act="add-event" data-type="vaccine"><span>💉</span>Vaccin</button>
     <button class="tile" data-act="add-event" data-type="parasite"><span>🦟</span>Antipuces</button>
     <button class="tile" data-act="add-event" data-type="visit"><span>🩺</span>Consultation</button>
     <button class="tile" data-act="add-expense"><span>💶</span>Dépense</button>
   </section>
-  <section class="card tip"><b>💡 Le saviez-vous ?</b><p>${TIPS[Math.floor(Date.now() / 864e5) % TIPS.length]}</p></section>`;
+  <section class="card tip"><b>💡 Le saviez-vous ?</b><p>${tipsOf(d)[Math.floor(Date.now() / 864e5) % tipsOf(d).length]}</p></section>`;
 };
 ACT.renew = ({ id }) => {
   const ev = S.events.find(e => e.id === id), gap = ev.next ? diffDays(ev.next, ev.date) : 0;
@@ -141,7 +150,7 @@ ACT['add-event'] = ({ type }) => eventForm({ type: type || 'vaccine', date: toda
 /* ---------- Carnet ---------- */
 function eventForm(ev = {}, editing = false) {
   const d = dog(), t0 = ev.type || 'vaccine';
-  const presets = t => (TYPES[t].presets || []).map(p => `<option value="${esc(p[0])}">`).join('');
+  const presets = t => presetsFor(t, d).map(p => `<option value="${esc(p[0])}">`).join('');
   const el = openForm({
     title: editing ? 'Modifier' : 'Ajouter au carnet',
     fields: [
@@ -163,13 +172,13 @@ function eventForm(ev = {}, editing = false) {
     onDelete: editing ? () => { S.events = S.events.filter(e => e.id !== ev.id); save(); render(); } : null,
     mount(form) {
       const dl = $('#dl_ev', form); let auto = !ev.next;
-      const daysFor = () => { const p = (TYPES[form.type.value].presets || []).find(x => x[0] === form.title.value); return p ? p[1] : null; };
+      const daysFor = () => { const p = presetsFor(form.type.value, d).find(x => x[0] === form.title.value); return p ? p[1] : null; };
       const sync = () => { const n = daysFor(); if (auto && n && form.date.value) form.next.value = addDays(form.date.value, n); };
       const fill = () => { dl.innerHTML = presets(form.type.value); };
       fill();
       form.type.onchange = () => { fill(); if (!editing) form.title.value = ''; };
       form.title.oninput = sync; form.date.oninput = sync; form.next.oninput = () => { auto = false; };
-      if (!editing && !ev.title) { const first = (TYPES[t0].presets || [])[0]; if (first) { form.title.value = first[0]; sync(); } }
+      if (!editing && !ev.title) { const first = presetsFor(t0, d)[0]; if (first) { form.title.value = first[0]; sync(); } }
     }
   });
   return el;
@@ -180,7 +189,7 @@ ROUTES.carnet = function carnet() {
   const young = d.birth && diffDays(today(), d.birth) < 400;
   return `<div class="page-h"><h1>Carnet de santé</h1><button class="btn primary sm" data-act="add-event" data-type="vaccine">＋ Ajouter</button></div>
   <div class="chips scroll">${[['all', 'Tout']].concat(Object.entries(TYPES).map(([k, v]) => [k, v.icon + ' ' + v.label])).map(([k, l]) => `<button class="chip ${f === k ? 'on' : ''}" data-act="carnet-f" data-f="${k}">${l}</button>`).join('')}</div>
-  ${young ? `<a class="card banner" href="#/plan"><b>🐕 Plan chiot</b><span>Calendrier vaccins et vermifuges de ${esc(d.name)} →</span></a>` : ''}
+  ${young ? `<a class="card banner" href="#/plan"><b>${spOf(d).emoji} ${spOf(d).planTitle}</b><span>Calendrier vaccins et vermifuges de ${esc(d.name)} →</span></a>` : ''}
   <div class="list card">${evs.length ? evs.map(e => `<button class="row" data-act="edit-event" data-id="${e.id}"><span class="ico">${TYPES[e.type].icon}</span><span class="grow"><b>${esc(e.title)}</b><small>${fmtDate(e.date)}${e.vet ? ' · ' + esc(e.vet) : ''}${e.product ? ' · ' + esc(e.product) : ''}</small></span>
     <span class="side">${e.cost ? fmtMoney(e.cost) : ''}${e.next ? `<small class="${diffDays(e.next, today()) < 0 ? 'bad' : ''}">↻ ${fmtDate(e.next)}</small>` : ''}</span></button>`).join('') : '<p class="empty">Rien pour l’instant. Ajoutez le dernier vaccin ou vermifuge : Wouf calcule les rappels.</p>'}</div>
   <div class="actions-row"><button class="btn" data-act="report">📄 Fiche pour le véto (PDF)${!allowed('report') ? ' <span class="pill plus">Plus</span>' : ''}</button>
@@ -191,16 +200,16 @@ ACT['carnet-f'] = ({ f }) => { UI.carnet = f; render(true); };
 /* Plan chiot */
 ROUTES.plan = function plan() {
   const d = dog();
-  if (!d.birth) return `<div class="page-h"><h1>Plan chiot</h1></div><p class="empty">Renseignez la date de naissance de ${esc(d.name)} pour obtenir son calendrier.</p><button class="btn primary" data-act="edit-dog" data-id="${d.id}">Modifier la fiche</button>`;
+  if (!d.birth) return `<div class="page-h"><h1>${spOf(d).planTitle}</h1></div><p class="empty">Renseignez la date de naissance de ${esc(d.name)} pour obtenir son calendrier.</p><button class="btn primary" data-act="edit-dog" data-id="${d.id}">Modifier la fiche</button>`;
   const P = puppyPlan(d);
-  return `<div class="page-h"><a class="back" href="#/carnet">‹</a><h1>Plan chiot de ${esc(d.name)}</h1></div>
+  return `<div class="page-h"><a class="back" href="#/carnet">‹</a><h1>${spOf(d).planTitle} de ${esc(d.name)}</h1></div>
   <p class="mut">Calendrier indicatif : votre vétérinaire adapte le protocole selon le vaccin, la race et le risque. Marquez chaque étape faite pour alimenter le carnet et les rappels.</p>
   <div class="list card">${P.map((p, i) => { const dd = diffDays(p.date, today()); return `<div class="row ${p.done ? 'done' : ''}"><span class="ico">${TYPES[p.type].icon}</span><span class="grow"><b>${esc(p.label)}</b><small class="${!p.done && dd < 0 ? 'bad' : ''}">${p.w} sem. · ${fmtDate(p.date)}${p.done ? '' : ' · ' + dueText(dd)}</small></span>
     ${p.done ? '<span class="pill ok">Fait</span>' : `<button class="btn sm" data-act="plan-done" data-i="${i}">Fait ✓</button>`}</div>`; }).join('')}</div>
   <p class="mut">Identification par puce électronique obligatoire avant toute cession ; déclaration au fichier I-CAD.</p>`;
 };
 ACT['plan-done'] = ({ i }) => {
-  const d = dog(), p = puppyPlan(d)[+i], pre = (TYPES[p.type].presets.find(x => x[0] === p.title) || [])[1];
+  const d = dog(), p = puppyPlan(d)[+i], pre = (presetsFor(p.type, d).find(x => x[0] === p.title) || [])[1];
   const date = diffDays(p.date, today()) > 0 ? today() : p.date;
   eventForm({ type: p.type, title: p.title, date, next: pre ? addDays(date, pre) : '' }, false);
 };
@@ -271,7 +280,7 @@ ACT['edit-journal'] = ({ id }) => journalForm(S.journal.find(j => j.id === id), 
 
 ROUTES.suivi = function suivi() {
   const d = dog(), tab = UI.suivi;
-  const tabs = [['poids', '📈 Poids'], ['soins', '💊 Traitements'], ['journal', '📓 Journal']];
+  const tabs = [['poids', '📈 Poids'], ['soins', '💊 Soins'], ['journal', '📓 Journal']];
   let body = '';
   if (tab === 'poids') {
     const ws = dogWeights(d.id), band = idealBand(d), st = weightStatus(d), b = dogBreed(d);
@@ -293,7 +302,7 @@ ROUTES.suivi = function suivi() {
       <div class="chips scroll">${[['all', 'Tout']].concat(JKINDS).map(([k, l]) => `<button class="chip ${f === k ? 'on' : ''}" data-act="journal-f" data-f="${k}">${l}</button>`).join('')}</div>
       <div class="list card">${js.map(j => `<button class="row" data-act="edit-journal" data-id="${j.id}"><span class="ico">${(JKINDS.find(k => k[0] === j.kind) || ['', '📝'])[1].split(' ')[0]}</span><span class="grow"><b>${esc(j.text)}</b><small>${fmtDate(j.date)}</small></span><span class="dot ${['', 'ok', 'warn', 'bad'][j.sev]}"></span></button>`).join('') || '<p class="empty">Aucune note. Notez symptômes, changements d’appétit ou de comportement : très utile pour le vétérinaire.</p>'}</div>`;
   }
-  return `<div class="page-h"><h1>Suivi</h1></div><div class="seg">${tabs.map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-act="tab-suivi" data-tab="${k}">${l}</button>`).join('')}</div>${body}`;
+  return `<div class="page-h"><h1>Suivi</h1></div><div class="seg">${tabs.map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-act="tab-suivi" data-tab="${k}">${l}</button>`).join('')}<a href="#/balade">🦮 Balades</a></div>${body}`;
 };
 ACT['tab-suivi'] = ({ tab }) => { UI.suivi = tab; if (location.hash !== '#/suivi') location.hash = '#/suivi'; else render(true); };
 ACT['journal-f'] = ({ f }) => { UI.journal = f; render(true); };

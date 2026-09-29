@@ -1,0 +1,15 @@
+# Déploiement : `cd wouf/billing-worker && npx wrangler deploy` (voir wouf/docs/MAINTENANCE.md, section « Mise en vente »).
+name = "wouf-billing"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://ikeupods-del.github.io"
+FIREBASE_PROJECT_ID = "quentools-adca1"
+PRICE_LIFETIME = "price_A_REMPLACER"            # id du prix Stripe à paiement unique (19,99 €)
+SUPPORT_TO = "support@A-REMPLACER.fr"           # boîte qui reçoit les demandes
+SUPPORT_FROM = "Wouf <no-reply@A-REMPLACER.fr>" # expéditeur vérifié chez Resend
+
+# SECRETS : ne jamais les écrire ici. Les enregistrer avec :
+#   npx wrangler secret put STRIPE_SECRET_KEY
+#   npx wrangler secret put RESEND_API_KEY

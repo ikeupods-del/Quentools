@@ -1,7 +1,7 @@
 {
-  "name": "Wouf — carnet de santé du chien",
+  "name": "Wouf — carnet de santé chien et chat",
   "short_name": "Wouf",
-  "description": "Vaccins, vermifuges, poids, rappels, vétérinaires de garde et comparateur d’assurance pour votre chien.",
+  "description": "Vaccins, rappels, poids, éducation, balades GPS, vétérinaires de garde et comparateur d’assurance pour votre chien ou votre chat.",
   "lang": "fr",
   "id": "./",
   "start_url": "./",

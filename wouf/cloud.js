@@ -37,6 +37,7 @@ const CloudApi = {
       throw new Error(m[e && e.code] || 'Connexion Google impossible');
     }
   },
+  async token() { const F = await fb(); await F.auth.authStateReady(); if (!F.auth.currentUser) throw new Error('Session Google expirée, reconnectez-vous'); return F.auth.currentUser.getIdToken(); },
   async signOut() { const F = await fb(); await F.Au.signOut(F.auth); },
   async _col(F) {
     await F.auth.authStateReady();
@@ -64,7 +65,7 @@ function setCloud(st, msg) { CLOUD.st = st; CLOUD.msg = msg || ''; if (['reglage
 /* Contenu synchronisé : tout sauf ce qui est propre à l'appareil (préférences de notification, abonnement local géré à part). */
 function cloudPayload() { const c = JSON.parse(JSON.stringify(S)); delete c.settings; return JSON.stringify(c); }
 function applyRemote(text, at) {
-  const r = JSON.parse(text), keepSettings = S.settings, keepSub = S.sub, keepInstall = S.installedAt;
+  const r = migrate(JSON.parse(text)), keepSettings = S.settings, keepSub = S.sub, keepInstall = S.installedAt;
   S = Object.assign(blank(), r, { settings: keepSettings, installedAt: keepInstall < (r.installedAt || keepInstall) ? keepInstall : (r.installedAt || keepInstall) });
   S.sub = [keepSub, r.sub].filter(Boolean).sort((a, b) => Date.parse(b.until || 0) - Date.parse(a.until || 0))[0] || null;
   S.updatedAt = at; flush();
@@ -105,7 +106,7 @@ function ask2(msg, a, b) {
 
 ACT['g-signin'] = async () => {
   if (!CloudApi.available()) return toast('Connexion Google : disponible sur la version publiée (https)');
-  try { toast('Connexion à Google…'); CLOUD.user = await CloudApi.signIn(); try { localStorage.setItem('wouf:google', '1'); } catch (e) { /* ignore */ } await cloudPull(true); }
+  try { toast('Connexion à Google…'); CLOUD.user = await CloudApi.signIn(); try { localStorage.setItem('wouf:google', '1'); } catch (e) { /* ignore */ } await cloudPull(true); refreshSub(true).then(() => render(true)); }
   catch (e) { toast(e.message); }
   render(true);
 };
@@ -118,5 +119,5 @@ ACT['g-signout'] = async () => {
 async function cloudInit() {   // session Google déjà ouverte (ici ou dans une autre app QuenTools) ?
   let on = false; try { on = localStorage.getItem('wouf:google') === '1'; } catch (e) { /* ignore */ }
   if (!on || !CloudApi.available()) return;
-  try { const u = await CloudApi.restore(); if (u) { CLOUD.user = u; await cloudPull(false); } } catch (e) { /* hors ligne */ }
+  try { const u = await CloudApi.restore(); if (u) { CLOUD.user = u; await cloudPull(false); await refreshSub(false); } } catch (e) { /* hors ligne */ }
 }

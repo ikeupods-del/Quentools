@@ -3,6 +3,9 @@
 
 const routeParam = k => new URLSearchParams(location.hash.split('?')[1] || '').get(k);
 const lessonOf = id => LESSONS.find(l => l.id === id);
+const lessonsFor = d => LESSONS.filter(l => (l.sp || 'dog') === spOf(d).id);
+const programsFor = d => PROGRAMS.filter(p => p.sp === spOf(d).id);
+const principlesFor = d => (spOf(d).id === 'cat' ? PRINCIPLES_CAT : PRINCIPLES);
 const eduGet = (dogId, lid) => ((S.edu || {})[dogId] || {})[lid] || { steps: {}, sessions: [], done: false };
 function eduSet(dogId, lid) { S.edu = S.edu || {}; S.edu[dogId] = S.edu[dogId] || {}; return (S.edu[dogId][lid] = S.edu[dogId][lid] || { steps: {}, sessions: [], done: false }); }
 const lessonUnlocked = l => l.free || allowed('lessons');
@@ -11,7 +14,7 @@ const STATE_LABEL = { done: ['Acquis ✓', 'ok'], wip: ['En cours', 'warn'], new
 
 function allSessions(d) {
   const out = []; const m = (S.edu || {})[d.id] || {};
-  for (const [lid, p] of Object.entries(m)) if (lid !== '_prog') for (const s of p.sessions || []) out.push({ ...s, lid });
+  for (const [lid, p] of Object.entries(m)) if (!lid.startsWith('_')) for (const s of p.sessions || []) out.push({ ...s, lid });
   return out.sort((a, b) => b.d.localeCompare(a.d) || (b.t || 0) - (a.t || 0));
 }
 function eduStats(d) {
@@ -19,19 +22,19 @@ function eduStats(d) {
   let streak = 0, cur = today(); if (!days.has(cur)) cur = addDays(cur, -1);
   while (days.has(cur)) { streak++; cur = addDays(cur, -1); }
   const week = ss.filter(s => diffDays(today(), s.d) < 7).length;
-  const done = LESSONS.filter(l => eduGet(d.id, l.id).done);
+  const done = lessonsFor(d).filter(l => eduGet(d.id, l.id).done);
   return { sessions: ss.length, streak, week, minutes: sum(ss.map(s => s.min || 0)), done: done.length, ss };
 }
 function nextLesson(d) {
   const wks = d.birth ? Math.floor(diffDays(today(), d.birth) / 7) : 999;
-  const todo = LESSONS.filter(l => !eduGet(d.id, l.id).done && lessonUnlocked(l));
+  const todo = lessonsFor(d).filter(l => !eduGet(d.id, l.id).done && lessonUnlocked(l));
   return todo.find(l => l.from <= wks) || todo[0] || null;
 }
 const BADGES = [
   ['🌱', 'Première séance', s => s.sessions >= 1], ['🔥', 'Série de 3 jours', s => s.streak >= 3], ['⚡', 'Série de 7 jours', s => s.streak >= 7],
   ['📚', '10 séances', s => s.sessions >= 10], ['⏱️', '2 h d’entraînement', s => s.minutes >= 120], ['🎓', 'Première leçon acquise', s => s.done >= 1],
-  ['🏅', 'Bases solides (leçons gratuites)', (s, d) => LESSONS.filter(l => l.free).every(l => eduGet(d.id, l.id).done)],
-  ['👑', 'Chien modèle (toutes les leçons)', (s, d) => LESSONS.every(l => eduGet(d.id, l.id).done)]
+  ['🏅', 'Bases solides (leçons gratuites)', (s, d) => lessonsFor(d).filter(l => l.free).every(l => eduGet(d.id, l.id).done)],
+  ['👑', 'Élève modèle (toutes les leçons)', (s, d) => lessonsFor(d).every(l => eduGet(d.id, l.id).done)]
 ];
 
 /* ---------- Écran Éducation ---------- */
@@ -41,24 +44,25 @@ ROUTES.educ = function educ() {
     const stt = lessonState(d, l), lock = !lessonUnlocked(l), [lab, cls] = STATE_LABEL[stt];
     return `<a class="row lesson" href="#/lecon?id=${l.id}"><span class="ico">${l.icon}</span><span class="grow"><b>${esc(l.title)}</b><small>${esc(l.cat)} · ${esc(l.level)} · dès ${l.from} sem.</small></span>${lock ? '<span class="pill plus">Plus</span>' : lab ? `<span class="pill ${cls}">${lab}</span>` : '<span class="chev">›</span>'}</a>`;
   };
-  const free = LESSONS.filter(l => l.free), paid = LESSONS.filter(l => !l.free), prog = PROGRAMS[0], pst = (((S.edu || {})[d.id] || {})._prog) || null;
+  const all = lessonsFor(d), free = all.filter(l => l.free), paid = all.filter(l => !l.free), progs = programsFor(d), pst = id => ((((S.edu || {})[d.id] || {})._progs || {})[id]) || null;
   const badges = BADGES.map(([i, n, f]) => ({ i, n, on: f(st, d) }));
   return `<div class="page-h"><h1>🎓 Éducation</h1></div>
-  <section class="card edu-hero"><div class="edu-stats"><div><b>${st.streak}</b><small>jours d’affilée</small></div><div><b>${st.week}</b><small>séances / 7 j</small></div><div><b>${st.done}/${LESSONS.length}</b><small>leçons acquises</small></div></div>
+  <section class="card edu-hero"><div class="edu-stats"><div><b>${st.streak}</b><small>jours d’affilée</small></div><div><b>${st.week}</b><small>séances / 7 j</small></div><div><b>${st.done}/${all.length}</b><small>leçons acquises</small></div></div>
     ${nx ? `<div class="next"><small>Prochaine leçon conseillée pour ${esc(d.name)}</small><b>${nx.icon} ${esc(nx.title)}</b><div class="btn-row"><a class="btn primary" href="#/seance?id=${nx.id}">▶ Démarrer une séance</a><a class="btn" href="#/lecon?id=${nx.id}">Voir la leçon</a></div></div>` : '<p class="okmsg">Bravo, toutes les leçons disponibles sont acquises !</p>'}</section>
-  <a class="card banner" href="#/principes"><b>📖 Les 10 principes d’une bonne éducation</b><span>Renforcement positif, marqueur, règle des 80 %… à lire d’abord (gratuit) →</span></a>
+  <a class="card banner" href="#/principes"><b>📖 Les ${principlesFor(d).length} principes d’une bonne éducation</b><span>${spOf(d).id === 'cat' ? 'Environnement, jeu, respect du chat… à lire d’abord (gratuit) →' : 'Renforcement positif, marqueur, règle des 80 %… à lire d’abord (gratuit) →'}</span></a>
   <section class="card"><div class="card-h"><h2>Leçons gratuites</h2></div><div class="list">${free.map(card).join('')}</div></section>
   <section class="card"><div class="card-h"><h2>Leçons Wouf Plus</h2>${plus() ? '<span class="pill ok">Débloquées</span>' : '<span class="pill plus">Plus</span>'}</div>
-    <p class="mut small">${paid.length} leçons détaillées : étapes progressives, critères de réussite, erreurs fréquentes, dépannage.</p><div class="list">${paid.map(card).join('')}</div></section>
-  <a class="card banner" href="#/programme"><b>${prog.icon} ${esc(prog.title)} ${plus() ? '' : '<span class="pill plus">Plus</span>'}</b><span>${pst ? 'Programme en cours' : prog.sub} →</span></a>
+    <p class="mut small">${paid.length} leçons détaillées : étapes progressives, critères de réussite, erreurs fréquentes, dépannage. Nouvelles leçons ajoutées régulièrement.</p><div class="list">${paid.map(card).join('')}</div></section>
+  ${progs.map(prog => `<a class="card banner" href="#/programme?id=${prog.id}"><b>${prog.icon} ${esc(prog.title)} ${plus() ? '' : '<span class="pill plus">Plus</span>'}</b><span>${pst(prog.id) ? 'Programme en cours' : esc(prog.sub)} →</span></a>`).join('')}
   <section class="card"><h2>Badges</h2><div class="badges">${badges.map(b => `<div class="badge ${b.on ? 'on' : ''}"><span>${b.i}</span><small>${esc(b.n)}</small></div>`).join('')}</div></section>
   ${st.ss.length ? `<section class="card"><h2>Dernières séances</h2>${st.ss.slice(0, 6).map(s => { const l = lessonOf(s.lid) || {}; return `<div class="row"><span class="ico">${l.icon || '🎓'}</span><span class="grow"><b>${esc(l.title || s.lid)}</b><small>${fmtDate(s.d)} · ${s.min || 1} min${s.n ? ` · ${s.ok}/${s.n} réussites` : ''}</small></span>${s.n ? `<span class="pill ${s.ok / s.n >= 0.8 ? 'ok' : s.ok / s.n >= 0.6 ? 'warn' : ''}">${Math.round(100 * s.ok / s.n)} %</span>` : ''}</div>`; }).join('')}</section>` : ''}
   <p class="mut small center">Méthode positive, sans aucune contrainte physique. Un problème de comportement ? Consultez un vétérinaire comportementaliste.</p>`;
 };
 
 ROUTES.principes = function principes() {
-  return `<div class="page-h"><a class="back" href="#/educ">‹</a><h1>📖 Les 10 principes</h1></div>
-  ${PRINCIPLES.map(([t, b], i) => `<section class="card"><h2>${i + 1}. ${esc(t)}</h2><p>${esc(b)}</p></section>`).join('')}`;
+  const P = principlesFor(dog());
+  return `<div class="page-h"><a class="back" href="#/educ">‹</a><h1>📖 Les ${P.length} principes</h1></div>
+  ${P.map(([t, b], i) => `<section class="card"><h2>${i + 1}. ${esc(t)}</h2><p>${esc(b)}</p></section>`).join('')}`;
 };
 
 /* ---------- Fiche d'une leçon ---------- */
@@ -124,18 +128,19 @@ ACT['s-end'] = () => {
   save(); SEANCE.id = null; clearInterval(SEANCE.iv); toast(msg); location.hash = '#/lecon?id=' + l.id;
 };
 
-/* ---------- Programme chiot (Plus) ---------- */
+/* ---------- Programmes guidés (Plus) ---------- */
 ROUTES.programme = function programme() {
-  const d = dog(), pr = PROGRAMS[0];
+  const d = dog(), pr = programsFor(d).find(p => p.id === routeParam('id')) || programsFor(d)[0];
+  if (!pr) return '<p class="empty">Aucun programme pour cet animal.</p>';
   if (!allowed('programs')) return `<div class="page-h"><a class="back" href="#/educ">‹</a><h1>${pr.icon} ${esc(pr.title)}</h1></div><section class="card"><p>${esc(pr.sub)}. Un parcours semaine par semaine qui enchaîne les leçons dans le bon ordre, avec suivi de votre avancée.</p>
     <ol class="bul">${pr.weeks.map(w => `<li><b>${esc(w[0])}</b> · ${esc(w[1])}</li>`).join('')}</ol><button class="btn primary big" data-act="paywall" data-f="programs">⭐ Débloquer avec Wouf Plus</button></section>`;
-  S.edu = S.edu || {}; S.edu[d.id] = S.edu[d.id] || {}; const start = (S.edu[d.id]._prog || {}).start;
+  const start = ((((S.edu || {})[d.id] || {})._progs || {})[pr.id] || {}).start;
   const wk = start ? Math.floor(diffDays(today(), start) / 7) : -1, idx = wk < 0 ? -1 : Math.min(wk, pr.weeks.length - 1);
   const total = pr.weeks.flatMap(w => w[2]), doneN = total.filter(id => eduGet(d.id, id).done).length;
   return `<div class="page-h"><a class="back" href="#/educ">‹</a><h1>${pr.icon} ${esc(pr.title)}</h1></div>
   <section class="card"><p class="mut">${esc(pr.sub)}. Une leçon à la fois : mieux vaut peu, bien et régulièrement.</p><div class="bar"><i style="width:${Math.round(100 * doneN / total.length)}%"></i></div><p><b>${doneN}/${total.length}</b> leçons acquises</p>
-    ${start ? `<p class="mut small">Démarré le ${fmtDate(start)} · semaine ${wk + 1}</p>` : '<button class="btn primary big" data-act="prog-start">Démarrer le programme aujourd’hui</button>'}</section>
+    ${start ? `<p class="mut small">Démarré le ${fmtDate(start)} · semaine ${wk + 1}</p>` : `<button class="btn primary big" data-act="prog-start" data-id="${pr.id}">Démarrer le programme aujourd’hui</button>`}</section>
   ${pr.weeks.map((w, i) => `<section class="card ${i === idx ? 'cur' : ''}"><div class="card-h"><h2>${esc(w[0])} · ${esc(w[1])}</h2>${i === idx ? '<span class="pill">Cette semaine</span>' : ''}</div>
     ${w[2].map(id => { const l = lessonOf(id), stt = lessonState(d, l); return `<a class="row" href="#/lecon?id=${id}"><span class="ico">${l.icon}</span><span class="grow"><b>${esc(l.title)}</b><small>${esc(l.dur)}</small></span>${STATE_LABEL[stt][0] ? `<span class="pill ${STATE_LABEL[stt][1]}">${STATE_LABEL[stt][0]}</span>` : '<span class="chev">›</span>'}</a>`; }).join('')}</section>`).join('')}`;
 };
-ACT['prog-start'] = () => { const d = dog(); S.edu = S.edu || {}; S.edu[d.id] = S.edu[d.id] || {}; S.edu[d.id]._prog = { start: today() }; save(); render(true); };
+ACT['prog-start'] = ({ id }) => { const d = dog(); S.edu = S.edu || {}; S.edu[d.id] = S.edu[d.id] || {}; S.edu[d.id]._progs = S.edu[d.id]._progs || {}; S.edu[d.id]._progs[id] = { start: today() }; save(); render(true); };
