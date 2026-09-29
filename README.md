@@ -11,8 +11,13 @@ Application web installable (PWA) : elle s’installe sur l’écran d’accueil
 
 1. Ouvrir l’adresse ci-dessus sur son téléphone (Safari sur iPhone, Chrome sur Android).
 2. **Installer** : bouton « 📲 Installer l’app » (Android), ou Partager → « Sur l’écran d’accueil » (iPhone).
-3. Réglages → **Synchronisation** → « Se connecter avec Google » ou « Se connecter avec GitHub », puis choisir une phrase secrète.
-4. Sur un autre appareil : installer l’app, puis « Retrouver mes données avec Google / GitHub » et saisir la même phrase secrète.
+3. **Sauvegarder** (rappel automatique chaque semaine sur l’écran Tournée) : une phrase secrète, puis le menu Partager
+   du téléphone → « Enregistrer dans Drive » (Android) ou « Enregistrer dans Fichiers → iCloud Drive » (iPhone).
+   Aucun compte à créer, aucune configuration côté QuenTools.
+4. Nouveau téléphone : installer l’app → « Restaurer ma sauvegarde » → choisir le fichier dans Drive / iCloud → même phrase secrète.
+
+Option avancée : synchronisation automatique entre plusieurs appareils avec un compte GitHub (Réglages → Synchronisation automatique),
+ou avec Google si un identifiant client est renseigné dans `infikit/config.js`.
 
 Ordonnances : fiche patient → **📷 Photographier** ou **📄 Photo ou PDF**. Les photos sont allégées automatiquement (≈ 2000 px) ;
 la date de fin de validité saisie met à jour l’alerte « ordonnance expirée ».

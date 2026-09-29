@@ -546,6 +546,7 @@ function vTournee() {
     <div class="grow"><b>${longDate(date)}</b><button class="tiny muted" onclick="ui.date=today();render()">${isToday ? "Aujourd'hui" : "Revenir à aujourd'hui"}${isHoliday(date, S.country) ? ' · jour férié' : ''}</button></div>
     <button class="icon" onclick="ui.date=addDays(ui.date,1);render()" aria-label="Jour suivant">${I.next}</button></div>`;
   h += `<div class="kpis"><div class="kpi"><b>${done}/${stops.length}</b><span>visites</span></div><div class="kpi"><b>${eur0(total)}</b><span>${done === stops.length && stops.length ? 'réalisé' : 'prévu'}</span></div><div class="kpi"><b>${km ? Math.round(km) + ' km' : '—'}</b><span>trajet estimé</span></div></div>`;
+  if (isToday && backupDue()) h += `<div class="alert"><span class="grow">💾 <b>${S.lastBackup ? 'Dernière sauvegarde il y a ' + Math.round((parseISO(today()) - parseISO(S.lastBackup)) / 864e5) + ' jours.' : 'Aucune sauvegarde pour l’instant.'}</b> Rangez une copie chiffrée dans votre Google Drive ou iCloud : 2 touches, sans compte à créer.</span><button class="btn sm pri" onclick="exportBackup()">Sauvegarder</button></div>`;
   const alerts = [...new Set(stops.map(s => s.pid))].map(patient).filter(Boolean).map(p => [p, ordoState(p)]).filter(x => x[1]);
   for (const [p, a] of alerts) h += `<div class="alert ${a.c}">⚠️ <span><b>${esc(fullName(p))}</b> — ${a.t}. Pensez au renouvellement.</span></div>`;
   const st = (S.started || {})[date], en = (S.ended || {})[date];
@@ -1057,7 +1058,7 @@ function vReglages() {
       <p class="small muted" style="margin:10px 0 0">Indexation de 2,72 %. Le week-end commence le samedi et les jours fériés belges sont reconnus automatiquement. Plafond journalier : ${eur(BE_CAP.wk)} en semaine, ${eur(BE_CAP.we)} le week-end.</p></div>`;
   }
 
-  h += installCard() + cloudCard();
+  h += installCard() + backupCard(nP) + cloudCard();
   h += `<h2>Sécurité</h2><div class="card"><div class="rowitem"><span class="grow"><b>Code d’accès</b><small>${S.pin ? 'Activé : demandé à chaque ouverture' : 'Désactivé : conseillé pour des données de santé'}</small></span>${S.pin ? `<span class="chip ok">activé</span>` : `<span class="chip sun">désactivé</span>`}</div>
     <div class="row" style="margin-top:10px">${S.pin ? `<button class="btn sm grow" onclick="lockNow()">Verrouiller maintenant</button><button class="btn sm grow" onclick="setPin()">Changer</button><button class="btn sm grow danger" onclick="removePin()">Retirer</button>` : `<button class="btn pri block" onclick="setPin()">Définir un code à 4 chiffres</button>`}</div>
     <p class="note" style="padding-bottom:0">${cloudProv() ? 'Seule une copie chiffrée sur ce téléphone quitte l’appareil : ni Google, ni GitHub, ni QuenTools ne peuvent la lire.' : 'Aucune donnée n’est envoyée sur un serveur : tout reste dans ce navigateur, sur ce téléphone.'}</p></div>`;
@@ -1066,10 +1067,6 @@ function vReglages() {
     ${S.encourage !== false ? `<button class="btn sm" style="margin-top:10px" onclick="celebrate('start',{n:stopsFor(today()).length,p:new Set(stopsFor(today()).map(s=>s.pid)).size})">Voir un exemple</button>` : ''}</div>`;
   h += `<h2>Affichage</h2><div class="seg">${[['auto', 'Automatique'], ['light', 'Clair'], ['dark', 'Sombre']].map(([k, l]) => `<button class="${S.theme === k ? 'on' : ''}" onclick="S.theme='${k}';save();render()">${l}</button>`).join('')}</div>`;
 
-  const last = S.lastBackup ? 'Dernière sauvegarde le ' + S.lastBackup.split('-').reverse().join('/') : 'Aucune sauvegarde exportée pour l’instant';
-  h += `<h2>Sauvegarde</h2><div class="card"><div class="rowitem"><span class="grow"><b>${nP} patients · ${S.visits.length} visites</b><small>${last}</small></span></div>
-    <div class="row" style="margin-top:10px"><button class="btn sm grow" onclick="exportBackup()">Exporter</button><label class="btn sm grow" tabindex="0">Importer<input type="file" accept=".json,application/json" hidden onchange="importFile(this)"></label></div>
-    <p class="note" style="padding-bottom:0">${cloudProv() ? 'Le fichier exporté contient aussi les ordonnances : gardez-le en lieu sûr.' : 'Exportez régulièrement (ordonnances comprises) ou connectez-vous à Google ou GitHub : si les données du navigateur sont effacées, elles sont perdues.'}</p></div>`;
 
   h += `<h2>Données</h2><div class="card"><button class="btn block" onclick="loadDemo()">Recharger les patients de démonstration</button><button class="btn block danger" style="margin-top:8px" onclick="wipeAll()">Tout effacer sur cet appareil</button></div>`;
   h += `<div class="about"><span class="brandmark lg">${LOGO(30)}</span><b>${BRAND.name}</b><span>Produit par ${BRAND.by} · version ${BRAND.version}</span><small>Outil personnel d’organisation. Il ne remplace ni votre logiciel de facturation agréé (${FR() ? 'SESAM-Vitale' : 'MyCareNet / eFact'}) ni le dossier de soins réglementaire.</small></div>`;
@@ -1089,24 +1086,65 @@ async function setCountry(c) {
   for (const e of S.extra) e.actes = [...new Set(e.actes.map(a => map[a] || a).filter(a => act(a)))];
   save(); render(); toast(c === 'FR' ? 'Mode France activé 🇫🇷' : 'Mode Belgique activé 🇧🇪');
 }
+const BK = { file: null };
+const backupDue = () => !cloudProv() && S.patients.length > 0 && (!S.lastBackup || (parseISO(today()) - parseISO(S.lastBackup)) / 864e5 >= 7);
+function backupCard(nP) {
+  const last = S.lastBackup ? 'Dernière sauvegarde le ' + S.lastBackup.split('-').reverse().join('/') : 'Aucune sauvegarde pour l’instant';
+  return `<h2>Sauvegarde</h2><div class="card"><div class="rowitem"><span class="grow"><b>${nP} patients · ${S.ordos.length} ordonnance${S.ordos.length > 1 ? 's' : ''}</b><small>${last}</small></span>${backupDue() ? '<span class="chip sun">à faire</span>' : ''}</div>
+    <p class="small" style="margin:10px 0">Rangez une copie <b>chiffrée</b> de tout (patients, ordonnances, compta) dans <b>votre Google Drive, iCloud</b> ou vos e-mails. Aucun compte à créer : votre téléphone s’en charge.</p>
+    <div class="row"><button class="btn sm pri grow" onclick="exportBackup()">💾 Sauvegarder</button><label class="btn sm grow" tabindex="0">Restaurer<input type="file" accept=".json,application/json,.infikit" hidden onchange="importFile(this)"></label></div>
+    <p class="note" style="padding-bottom:0">Pour changer de téléphone : « Restaurer » puis choisissez le fichier dans Drive ou iCloud, avec la même phrase secrète.</p></div>`;
+}
+async function backupPass(confirmNew) {
+  if (G.pass) return true;
+  const r = await askPass(confirmNew ? 'Choisissez une phrase secrète' : 'Phrase secrète', confirmNew ? 'Elle chiffre la sauvegarde : ni Google, ni Apple, ni personne ne pourra la lire. Notez-la bien : elle sera demandée pour restaurer vos données sur un autre téléphone.' : 'Saisissez la phrase secrète utilisée lors de la sauvegarde.', confirmNew);
+  if (!r) return false; setPass(r); return true;
+}
 async function exportBackup() {
-  S.lastBackup = today(); save();
-  const data = Object.assign({}, S, { _files: {} }); delete data.google; delete data.github;
+  if (!await backupPass(true)) return;
+  toast('Préparation de la sauvegarde chiffrée…');
+  const data = Object.assign({}, S, { _files: {} }); delete data.google; delete data.github; delete data.pin;
   for (const o of S.ordos) { try { const f = await fileGet(o.id); if (f) data._files[o.id] = { type: f.type, b64: b64(new Uint8Array(f.data)) }; } catch (e) { } }
-  await offer('infikit-sauvegarde-' + today() + '.json', JSON.stringify(data)); if (ui.tab === 'reglages') render();
+  const text = await seal(new TextEncoder().encode(JSON.stringify(data)), G.pass, { kind: 'backup' });
+  const name = 'infikit-sauvegarde-' + today() + '.json';
+  S.lastBackup = today(); save(true);
+  if (googleHost()) { await offer(name, text); if (ui.tab === 'reglages') render(); return; }
+  BK.file = new File([text], name, { type: 'application/json' });
+  if (BK.url) URL.revokeObjectURL(BK.url); BK.url = URL.createObjectURL(BK.file);
+  const canShare = !!(navigator.canShare && navigator.canShare({ files: [BK.file] }));
+  sheet(`<div class="sh"><h2>Sauvegarde prête 🔒</h2><button class="icon" onclick="closeSheet()">✕</button></div>
+    <p class="small muted" style="margin-top:0">${esc(name)} · ${kb(BK.file.size)} · chiffrée</p>
+    ${canShare ? `<button class="btn pri block" onclick="shareBackup()">Envoyer vers Drive, iCloud…</button>
+      <p class="note">${isIOS() ? 'Choisissez <b>« Enregistrer dans Fichiers »</b> puis <b>iCloud Drive</b> (ou l’app Google Drive).' : 'Choisissez <b>Drive</b> (« Enregistrer dans Drive »), ou envoyez-la-vous par e-mail.'}</p>` : ''}
+    <a class="btn ${canShare ? '' : 'pri'} block" href="${BK.url}" download="${esc(name)}">Télécharger le fichier</a>
+    <p class="note">Sans la phrase secrète, ce fichier est illisible, même pour vous.</p>`);
+  if (ui.tab === 'reglages') render();
+}
+async function shareBackup() {
+  try { await navigator.share({ files: [BK.file], title: 'Sauvegarde Infikit' }); closeSheet(); toast('Sauvegarde envoyée ✔︎'); }
+  catch (e) { if (e.name !== 'AbortError') toast('Partage impossible : utilisez « Télécharger le fichier ».'); }
 }
 function importFile(inp) {
   const f = inp.files[0]; if (!f) return;
   const r = new FileReader();
   r.onload = async () => {
     inp.value = '';
-    let d; try { d = JSON.parse(r.result); if (d.v !== 1 || !Array.isArray(d.patients)) throw 0; } catch (e) { toast('Fichier non reconnu : choisissez une sauvegarde Tournée (.json).'); return; }
-    if (!await ask('Remplacer les données actuelles ?', { detail: `La sauvegarde contient ${d.patients.length} patients et ${(d.visits || []).length} visites. Les données présentes sur ce téléphone${cloudProv() ? ' et dans votre sauvegarde en ligne' : ''} seront remplacées.`, ok: 'Importer', danger: true })) return;
+    let d; try { d = JSON.parse(r.result); } catch (e) { toast('Fichier non reconnu : choisissez une sauvegarde Infikit (.json).'); return; }
+    if (d.app === 'infikit' && d.ct) {
+      let dec = null;
+      for (;;) {
+        if (G.pass) { try { dec = JSON.parse(new TextDecoder().decode((await unseal(d, G.pass)).bytes)); break; } catch (e) { forgetPass(); toast('Phrase secrète incorrecte, réessayez.'); } }
+        if (!await backupPass(false)) return;
+      }
+      d = dec;
+    }
+    if (d.v !== 1 || !Array.isArray(d.patients)) { toast('Fichier non reconnu : choisissez une sauvegarde Infikit (.json).'); return; }
+    if (S && !await ask('Remplacer les données actuelles ?', { detail: `La sauvegarde contient ${d.patients.length} patients et ${(d.ordos || []).length} ordonnances. Les données présentes sur ce téléphone${cloudProv() ? ' et dans votre sauvegarde en ligne' : ''} seront remplacées.`, ok: 'Restaurer', danger: true })) return;
     const files = d._files || {}; delete d._files;
-    const keep = { google: S.google, github: S.github, pin: S.pin };
-    S = Object.assign(blank(d.country || 'FR'), d, keep);
-    for (const [id, f] of Object.entries(files)) { try { await filePut(id, { type: f.type, data: unb64(f.b64).buffer }); } catch (e) { } }
-    await fileGC(); save(); toast('Sauvegarde importée'); go('tournee');
+    const keep = S ? { google: S.google, github: S.github, pin: S.pin } : {};
+    S = Object.assign(blank(d.country || 'FR'), d, keep); S.ordos = S.ordos || []; S.trash = S.trash || [];
+    for (const [id, x] of Object.entries(files)) { try { await filePut(id, { type: x.type, data: unb64(x.b64).buffer }); } catch (e) { } }
+    await fileGC(); save(); ui.date = today(); toast('Données restaurées ✔︎'); go('tournee');
   };
   r.onerror = () => toast('Lecture du fichier impossible.');
   r.readAsText(f);
@@ -1149,14 +1187,15 @@ function unlock() { keypad('Infikit est verrouillée', 'Entrez votre code', asyn
 let OB = { country: 'FR', name: '' };
 function onboarding() {
   $('#app').innerHTML = `<div class="hero"><div class="brandrow"><span class="brandmark lg">${LOGO(30)}</span><span><b>${BRAND.name}</b><small>Produit par ${BRAND.by}</small></span></div>
-    <h1>Votre tournée tient dans la poche.</h1><p>Tournée, fiches patients, ordonnances, fiche d’urgence, transmissions, cotations et compta : tout au même endroit. Synchronisation chiffrée entre vos appareils avec Google ou GitHub, si vous le souhaitez.</p>
+    <h1>Votre tournée tient dans la poche.</h1><p>Tournée, fiches patients, ordonnances, fiche d’urgence, transmissions, cotations et compta : tout au même endroit. Sauvegarde chiffrée dans votre Google Drive ou iCloud, sans compte à créer.</p>
     <label class="f"><span>Vous exercez en</span></label><div class="country"><button class="${OB.country === 'FR' ? 'on' : ''}" onclick="OB.country='FR';onboarding()"><span>🇫🇷</span>France<small>Cotations NGAP</small></button><button class="${OB.country === 'BE' ? 'on' : ''}" onclick="OB.country='BE';onboarding()"><span>🇧🇪</span>Belgique<small>Nomenclature INAMI</small></button></div>
     <label class="f"><span>Votre prénom</span><input id="obn" value="${esc(OB.name)}" oninput="OB.name=this.value" placeholder="ex. Camille"></label>
     <button class="btn pri block" style="margin-top:6px" onclick="start(true)">Découvrir avec des patients fictifs</button>
     <button class="btn block" style="margin-top:8px" onclick="start(false)">Commencer avec une tournée vide</button>
-    <div class="or"><span>déjà inscrite sur un autre téléphone ?</span></div>
-    ${googleReady() ? `<button class="gbtn" onclick="cloudRestore('google')">${GLOGO}<span>Retrouver mes données avec Google</span></button>` : ''}
-    <button class="ghbtn" onclick="cloudRestore('github')">${GHLOGO}<span>Retrouver mes données avec GitHub</span></button>
+    <div class="or"><span>vous changez de téléphone ?</span></div>
+    <label class="btn block" tabindex="0">💾 Restaurer ma sauvegarde (Drive, iCloud…)<input type="file" accept=".json,application/json,.infikit" hidden onchange="importFile(this)"></label>
+    ${googleReady() ? `<button class="gbtn" style="margin-top:8px" onclick="cloudRestore('google')">${GLOGO}<span>Retrouver mes données avec Google</span></button>` : ''}
+    <button class="btn ghost block small" style="margin-top:4px" onclick="cloudRestore('github')">Retrouver mes données avec GitHub</button>
     ${installHint()}
     <p class="note" style="text-align:center;margin-top:16px">Outil personnel d’organisation : il ne transmet aucune facture à ${OB.country === 'FR' ? 'l’Assurance maladie' : 'la mutualité'}.</p></div>`;
 }
@@ -1663,6 +1702,9 @@ async function cloudRestore(prov, signedIn) {
 /* ---------- blocs d'interface ---------- */
 function cloudCard() {
   const prov = cloudProv();
+  if (!prov && !googleReady()) return `<details class="card" style="padding:4px 14px;margin-top:10px"><summary><span class="grow">Synchronisation automatique (avancé)<small>Avec un compte GitHub, entre plusieurs appareils</small></span></summary>
+    <p class="small" style="margin-top:4px">Pour utiliser Infikit en même temps sur deux appareils. Nécessite un compte GitHub gratuit. Tout est chiffré sur ce téléphone avant l’envoi.</p>
+    <button class="ghbtn" style="margin-bottom:10px" onclick="connectCloud('github')">${GHLOGO}<span>Se connecter avec GitHub</span></button></details>`;
   if (!prov) return `<h2>Synchronisation</h2><div class="card"><p class="small" style="margin-top:0">Connectez-vous pour retrouver patients, tournées et <b>ordonnances</b> sur tous vos appareils (téléphone, tablette, ordinateur). Tout est <b>chiffré sur ce téléphone</b> avant l’envoi.</p>
     ${googleReady() ? `<button class="gbtn" onclick="connectCloud('google')">${GLOGO}<span>Se connecter avec Google</span></button>` : (googleHost() ? `<div class="rowitem" style="margin-bottom:4px"><span class="gbadge">${GLOGO}</span><span class="grow"><b>Google</b><small>Disponible dans l’app installée depuis votre adresse GitHub Pages.</small></span></div>` : '')}
     <button class="ghbtn" onclick="connectCloud('github')">${GHLOGO}<span>Se connecter avec GitHub</span></button></div>`;
