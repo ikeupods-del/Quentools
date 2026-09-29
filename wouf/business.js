@@ -8,6 +8,7 @@ const isPriority = () => subActive();
 const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
 
 const CHANGELOG = [
+  { v: '1.2.1', date: '2026-09-29', items: ['🔄 Mises à jour instantanées : la nouvelle version s’installe dès l’ouverture de l’app.', '🛠️ Lien de secours …/wouf/?maj=1 : force la mise à jour sans toucher à vos données.'] },
   { v: '1.2.0', date: '2026-09-29', items: ['🐱 Les chats sont accueillis : 1 chien + 1 chat gratuits, animaux illimités avec Wouf Plus.', '🎓 Éducation : 28 leçons (dont 22 pour chiens et 6 pour chats), 4 programmes guidés.', '🦮 Suivi GPS des balades avec tracé, allure, objectif du jour et export GPX (Plus).', '🧠 Bilan santé intelligent, fiche gardien, plan de perte de poids (Plus).', '⭐ Wouf Plus devient un achat unique à vie, avec assistance prioritaire.'] },
   { v: '1.1.0', date: '2026-09-29', items: ['☁️ Connexion Google et sauvegarde automatique.', '🎓 Éducation : 13 leçons, séances guidées, programme chiot.'] },
   { v: '1.0.0', date: '2026-09-29', items: ['🐾 Carnet de santé, rappels, poids, SOS vétérinaires, assurance, dépenses, documents.'] }

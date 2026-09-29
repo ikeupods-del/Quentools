@@ -61,6 +61,7 @@ for (const f of B.premium) ok(new RegExp('\\b' + f + ':').test(bizFeatures), `fo
 const cl = read('business.js').match(/const CHANGELOG = \[\s*\{ v: '([\d.]+)'/);
 ok(cl && cl[1] === CFG.version, `version de config.js (${CFG.version}) ≠ dernière entrée du CHANGELOG (${cl && cl[1]})`);
 ok(read('package.json').includes(`"version": "${CFG.version}"`), 'package.json : version différente de config.js');
+ok(JSON.parse(read('package-lock.json')).version === CFG.version, 'package-lock.json : version différente de config.js');
 ok(read('sw.js').includes(`wouf-v${CFG.version.split('.').slice(0, 2).join('.')}`), 'sw.js : le nom du cache doit suivre la version (wouf-vX.Y) pour forcer la mise à jour');
 if (B.enabled) {
   const L = CFG.legal, S = CFG.support;
@@ -71,7 +72,9 @@ if (B.enabled) {
 
 section('Fichiers et déploiement');
 const html = read('index.html');
-const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map(m => m[1]);
+const versioned = [...html.matchAll(/(?:src|href)="([a-z0-9_]+\.(?:js|css))(\?v=[\d.]+)?"/g)];
+for (const [, f, q] of versioned) ok(q === `?v=${CFG.version}`, `index.html : ${f} doit porter ?v=${CFG.version} (lancez npm run release -- ${CFG.version})`);
+const scripts = [...html.matchAll(/<script src="([^"?]+)/g)].map(m => m[1]);
 for (const s of scripts) ok(fs.existsSync(path.join(W, s)), `script référencé introuvable : ${s}`);
 const sw = read('sw.js'), shell = (sw.match(/const SHELL = \[([\s\S]*?)\];/) || [, ''])[1];
 for (const f of [...scripts, 'style.css', 'index.html', 'manifest.webmanifest']) ok(shell.includes(`./${f}'`), `sw.js : ${f} absent du cache hors ligne (SHELL)`);

@@ -15,7 +15,7 @@ Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `in
 
 ## Avant de livrer une modification de Wouf
 1. `cd wouf && npm install && npm test` — doit être entièrement vert (contrôles statiques + relais + 18 scénarios navigateur). Sandbox : Chromium est dans `/opt/pw-browsers` (détecté automatiquement).
-2. Nouvelle version visible → mettre à jour `version` dans `config.js` et `package.json`, ajouter une entrée en tête de `CHANGELOG` (business.js), changer `CACHE` dans `sw.js` (`wouf-vX.Y`). `npm run check` signale les oublis.
+2. Nouvelle version visible → `cd wouf && npm run release -- X.Y.Z "nouveauté 1" "nouveauté 2"` : met à jour d'un coup config.js, package.json, package-lock.json, le cache de sw.js, les `?v=` d'index.html et le CHANGELOG (business.js). Ne jamais éditer ces numéros à la main ; `npm run check` signale les oublis. Après une publication, si un utilisateur voit l'ancienne version : lien `…/wouf/?maj=1` (vide le cache de l'app, jamais les données).
 3. Toute nouvelle fonction utilisateur = un scénario dans `wouf/tests/e2e.js`. Tout changement du relais = un test dans `wouf/tests/unit/worker.test.mjs`.
 4. Mettre à jour `wouf/docs/MAINTENANCE.md` si une procédure change.
 

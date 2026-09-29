@@ -18,7 +18,15 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Wouf">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="stylesheet" href="style.css">
+<script>
+/* Lien de secours « ?maj=1 » : supprime le cache de l'app (jamais les données de l'utilisateur) et recharge. */
+if (/[?&]maj=/.test(location.search) && 'serviceWorker' in navigator && window.caches) {
+  navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })
+    .then(function () { return caches.keys(); }).then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })
+    .then(function () { location.replace(location.pathname + location.hash); });
+}
+</script>
+<link rel="stylesheet" href="style.css?v=1.2.1">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -39,23 +47,23 @@
 <datalist id="breeds"></datalist>
 <datalist id="breeds_cat"></datalist>
 <noscript><p style="padding:2rem;font-family:sans-serif">Wouf nécessite JavaScript.</p></noscript>
-<script src="config.js"></script>
-<script src="data.js"></script>
-<script src="species.js"></script>
-<script src="core.js"></script>
-<script src="health.js"></script>
-<script src="screens.js"></script>
-<script src="sos.js"></script>
-<script src="assurance.js"></script>
-<script src="lessons.js"></script>
-<script src="lessons2.js"></script>
-<script src="lessons_cat.js"></script>
-<script src="educ.js"></script>
-<script src="cloud.js"></script>
-<script src="tracker.js"></script>
-<script src="plusfeatures.js"></script>
-<script src="business.js"></script>
-<script src="extras.js"></script>
-<script src="main.js"></script>
+<script src="config.js?v=1.2.1"></script>
+<script src="data.js?v=1.2.1"></script>
+<script src="species.js?v=1.2.1"></script>
+<script src="core.js?v=1.2.1"></script>
+<script src="health.js?v=1.2.1"></script>
+<script src="screens.js?v=1.2.1"></script>
+<script src="sos.js?v=1.2.1"></script>
+<script src="assurance.js?v=1.2.1"></script>
+<script src="lessons.js?v=1.2.1"></script>
+<script src="lessons2.js?v=1.2.1"></script>
+<script src="lessons_cat.js?v=1.2.1"></script>
+<script src="educ.js?v=1.2.1"></script>
+<script src="cloud.js?v=1.2.1"></script>
+<script src="tracker.js?v=1.2.1"></script>
+<script src="plusfeatures.js?v=1.2.1"></script>
+<script src="business.js?v=1.2.1"></script>
+<script src="extras.js?v=1.2.1"></script>
+<script src="main.js?v=1.2.1"></script>
 </body>
 </html>

@@ -23,13 +23,16 @@ Il est écrit pour être suivi sans être développeur. Pour toute modification,
 
 1. Modifier les fichiers (ou demander à Claude).
 2. Lancer les tests : `cd wouf && npm install && npm test` (la première fois seulement pour `npm install`). **Tout doit être vert.** Les tests vérifient le contenu des leçons, la configuration, le relais de paiement et le parcours utilisateur dans un vrai navigateur.
-3. Pour une nouvelle version visible par les utilisateurs, changer le numéro de version **à quatre endroits** (le test `check` vous prévient si vous en oubliez un) :
-   `wouf/config.js` (`version`), `wouf/package.json` (`version`), `wouf/business.js` (nouvelle entrée en haut de `CHANGELOG`), `wouf/sw.js` (`CACHE = 'wouf-vX.Y'`, force la mise à jour hors ligne).
+3. Pour une nouvelle version visible par les utilisateurs, **une seule commande** met à jour tous les numéros de version et ajoute l’annonce dans « Nouveautés » :
+   `npm run release -- 1.3.0 "Première nouveauté" "Deuxième nouveauté"` (le test `check` refuse si un numéro est oublié).
 4. Ouvrir une pull request. La vérification automatique (`Wouf — tests`) tourne toute seule.
 5. Fusionner. Le déploiement (`Publier sur GitHub Pages`) ne démarre que si les tests passent.
 6. En cas de problème : sur la page de la pull request fusionnée, bouton **« Revert »** → nouvelle pull request → fusionner. L’ancienne version revient en 1 minute.
 
 > Petite correction de texte : pas besoin de changer le numéro de version, mais elle ne sera « annoncée » à personne. Les utilisateurs la reçoivent à leur prochaine ouverture de l’app.
+
+### Un utilisateur voit encore l’ancienne version
+Les fichiers de l’app sont revalidés à chaque ouverture, la mise à jour est donc immédiate. Pour un appareil qui traîne une très ancienne version (avant la 1.2), demandez d’ouvrir **`https://ikeupods-del.github.io/Quentools/wouf/?maj=1`** : ce lien vide le cache de l’application (**jamais les données**) puis recharge. Ne dites **jamais** d’« effacer les données du site » : cela supprimerait le carnet (sauf s’il est sauvegardé avec Google).
 
 ## 3. Recettes courantes
 
