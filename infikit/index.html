@@ -1310,12 +1310,11 @@ function checkEnd(date) {
 }
 
 /* ============================================================
-   Synchronisation chiffrée : Google Drive ou GitHub
+   Synchronisation chiffrée : Google (Firebase) ou GitHub
    ------------------------------------------------------------
    Réglages dans config.js (à côté de index.html) :
-   - googleClientId : identifiant client OAuth Google
-     (console.cloud.google.com → Identifiants → « Application Web »,
-      origine autorisée : https://VOTRE-NOM.github.io)
+   - firebase : configuration du projet Firebase QuenTools (connexion
+     Google commune à toutes les apps + Firestore, voir README)
    - githubClientId + githubOAuthProxy : bouton « Se connecter avec
      GitHub » en un clic (voir oauth-worker/). Sans eux, la connexion
      GitHub se fait en collant un jeton « gist ».
@@ -1323,24 +1322,22 @@ function checkEnd(date) {
    phrase secrète) avant l'envoi : le cloud ne voit que du charabia.
    ============================================================ */
 const CFG = window.INFIKIT_CONFIG || {};
-const GOOGLE_CLIENT_ID = CFG.googleClientId || '';
 const GITHUB_CLIENT_ID = CFG.githubClientId || '';
 const GITHUB_OAUTH_PROXY = (CFG.githubOAuthProxy || '').replace(/\/$/, '');
 const MAIN_FILE = 'infikit-sauvegarde.enc.json';
 const GIST_DESC = 'Infikit — sauvegarde chiffrée (ne pas modifier)';
 const GIST_FILE_DESC = 'Infikit — pièce jointe chiffrée (ne pas modifier)';
-const GSCOPE = 'openid email profile https://www.googleapis.com/auth/drive.appdata';
-const PASS_KEY = 'infikit_pass', GTOK_KEY = 'infikit_gtoken', GH_KEY = 'infikit_gh_token';
-const G = { token: null, exp: 0, pass: null, salt: null, verified: false };
+const PASS_KEY = 'infikit_pass', GH_KEY = 'infikit_gh_token';
+const G = { pass: null, salt: null, verified: false };
 const SYNC = { busy: false, timer: null, last: 0, state: '', msg: '' };
 const PENDING = {}; // compte en cours de connexion avant que S existe (premier lancement)
-try { G.pass = localStorage.getItem(PASS_KEY); const t = JSON.parse(localStorage.getItem(GTOK_KEY) || 'null'); if (t && t.exp > Date.now()) { G.token = t.token; G.exp = t.exp; } } catch (e) { }
+try { G.pass = localStorage.getItem(PASS_KEY); } catch (e) { }
 
 function googleHost() { return /(^|\.)claude\.ai$|claudeusercontent|anthropic/.test(location.hostname); }
-function googleReady() { return !!GOOGLE_CLIENT_ID && location.protocol === 'https:' && !googleHost(); }
+function googleReady() { return !!(CFG.firebase && CFG.firebase.apiKey) && location.protocol === 'https:' && !googleHost(); }
 const cloudProv = () => S ? (S.google ? 'google' : S.github ? 'github' : null) : null;
 const acct = prov => (S && S[prov]) || PENDING[prov];
-const PNAME = { google: 'Google Drive', github: 'GitHub' };
+const PNAME = { google: 'Google', github: 'GitHub' };
 const GLOGO = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
 const GHLOGO = '<svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>';
 
@@ -1370,48 +1367,59 @@ async function unseal(txt, pass) {
 const encryptState = (obj, pass) => seal(new TextEncoder().encode(JSON.stringify(obj)), pass);
 async function decryptState(txt, pass) { return JSON.parse(new TextDecoder().decode((await unseal(txt, pass)).bytes)); }
 
-/* ---------- Google : connexion (Google Identity Services) + Drive, dossier privé de l'application ---------- */
-function loadGIS() {
-  return new Promise((res, rej) => {
-    if (window.google?.accounts?.oauth2) return res();
-    const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
-    s.onload = () => res(); s.onerror = () => rej(new Error('Impossible de joindre Google (connexion internet ?)'));
-    document.head.appendChild(s);
-  });
+/* ---------- Google : connexion (Firebase Auth, même compte que les autres apps QuenTools) + Firestore ---------- */
+const FBV = '10.14.1', APP_ID = 'infikit', FB_CHUNK = 900000; // un document Firestore ≈ 1 Mo : les gros fichiers sont découpés
+let FBP = null;
+function fb() {
+  if (!(CFG.firebase && CFG.firebase.apiKey)) return Promise.reject(new Error('Connexion Google non configurée (config.js).'));
+  if (!FBP) FBP = (async () => {
+    const B = `https://www.gstatic.com/firebasejs/${FBV}/`, [A, Au, Fs] = await Promise.all([import(B + 'firebase-app.js'), import(B + 'firebase-auth.js'), import(B + 'firebase-firestore.js')]);
+    const app = A.initializeApp(CFG.firebase); return { A, Au, Fs, auth: Au.getAuth(app), db: Fs.getFirestore(app) };
+  })().catch(() => { FBP = null; throw new Error('Impossible de joindre Google (connexion internet ?)'); });
+  return FBP;
 }
-async function googleToken(interactive = true) {
-  if (G.token && Date.now() < G.exp) return G.token;
-  if (!interactive) throw Object.assign(new Error('Reconnectez-vous à Google'), { needLogin: true });
-  await loadGIS();
-  return new Promise((res, rej) => {
-    const a = acct('google');
-    const tc = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID, scope: GSCOPE,
-      callback: r => { if (r.error) return rej(new Error(r.error_description || r.error)); G.token = r.access_token; G.exp = Date.now() + ((r.expires_in || 3600) - 60) * 1000; try { localStorage.setItem(GTOK_KEY, JSON.stringify({ token: G.token, exp: G.exp })); } catch (e) { } res(G.token); },
-      error_callback: e => rej(new Error(e.type === 'popup_closed' ? 'Connexion annulée' : 'Connexion Google impossible')),
-    });
-    tc.requestAccessToken({ prompt: a ? '' : 'consent', login_hint: a?.email || undefined });
-  });
+async function fbUser() { // -> { F, u } ou erreur needLogin
+  const F = await fb(); await F.auth.authStateReady();
+  if (!F.auth.currentUser) throw Object.assign(new Error('Reconnectez-vous à Google'), { needLogin: true });
+  return { F, u: F.auth.currentUser };
 }
-async function gfetch(url, opt = {}, interactive = true) {
-  const t = await googleToken(interactive);
-  const r = await fetch(url, Object.assign({}, opt, { headers: Object.assign({ Authorization: 'Bearer ' + t }, opt.headers || {}) }));
-  if (r.status === 401) { G.token = null; try { localStorage.removeItem(GTOK_KEY); } catch (e) { } throw Object.assign(new Error('Session Google expirée, reconnectez-vous'), { needLogin: true }); }
-  if (!r.ok) throw new Error('Google Drive a répondu ' + r.status);
-  return r;
+function fbErr(e) {
+  const c = e && e.code || '';
+  if (c === 'permission-denied') return new Error('Accès refusé par Firestore : publiez les règles de sécurité (voir README).');
+  if (c === 'unavailable' || c === 'deadline-exceeded') return new Error('Google injoignable (connexion internet ?)');
+  if (c === 'resource-exhausted') return new Error('Quota Firestore gratuit atteint, réessayez plus tard.');
+  if (c === 'failed-precondition' || c === 'not-found') return new Error('Base Firestore introuvable : créez-la dans la console Firebase (voir README).');
+  return e;
 }
-async function driveFind(name, it) {
-  const q = encodeURIComponent(`name='${name}'`);
-  const j = await (await gfetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id,modifiedTime,size)`, {}, it)).json();
-  return j.files && j.files[0] || null;
+const fref = (F, u, ...p) => F.Fs.doc(F.db, 'users', u.uid, 'apps', APP_ID, ...p);
+async function fbGet(...p) { const { F, u } = await fbUser(); try { const s = await F.Fs.getDoc(fref(F, u, ...p)); return s.exists() ? s.data() : null; } catch (e) { throw fbErr(e); } }
+async function fbFileGet(id) { // recolle les morceaux d'un fichier chiffré
+  const { F, u } = await fbUser();
+  try {
+    const h = await F.Fs.getDoc(fref(F, u, 'files', id + '.0')); if (!h.exists()) return null;
+    const n = h.data().n || 1, parts = [h.data().t];
+    for (let i = 1; i < n; i++) { const s = await F.Fs.getDoc(fref(F, u, 'files', id + '.' + i)); if (!s.exists()) return null; parts.push(s.data().t); }
+    return parts.join('');
+  } catch (e) { throw fbErr(e); }
 }
-async function driveUpload(name, text, id, it) {
-  if (id) { await gfetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: text }, it); return id; }
-  const boundary = 'infikit' + uid(), meta = { name, parents: ['appDataFolder'], mimeType: 'application/json' };
-  const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${text}\r\n--${boundary}--`;
-  return (await (await gfetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + boundary }, body }, it)).json()).id;
+async function fbFilePut(id, text) {
+  const { F, u } = await fbUser(), n = Math.max(1, Math.ceil(text.length / FB_CHUNK));
+  try {
+    for (let i = 0; i < n; i += 8) { // lots de 8 morceaux max (limite de taille d'une requête)
+      const b = F.Fs.writeBatch(F.db);
+      for (let k = i; k < Math.min(n, i + 8); k++) b.set(fref(F, u, 'files', id + '.' + k), { t: text.slice(k * FB_CHUNK, (k + 1) * FB_CHUNK), n, i: k });
+      await b.commit();
+    }
+  } catch (e) { throw fbErr(e); }
+  return id;
 }
-const driveText = (id, it) => gfetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {}, it).then(r => r.text());
+async function fbFileDel(id) {
+  const { F, u } = await fbUser();
+  try {
+    const h = await F.Fs.getDoc(fref(F, u, 'files', id + '.0')), n = h.exists() ? h.data().n || 1 : 0;
+    for (let i = 0; i < n; i++) await F.Fs.deleteDoc(fref(F, u, 'files', id + '.' + i));
+  } catch (e) { throw fbErr(e); }
+}
 
 /* ---------- GitHub : jeton OAuth (ou jeton « gist » collé) + gists secrets ---------- */
 const GH = { token: null };
@@ -1448,11 +1456,15 @@ async function mainGist(create) {
 /* ---------- fournisseurs : même interface pour Google et GitHub ---------- */
 const CP = {
   google: {
-    async loadMain(it) { const a = acct('google'); let id = a.main; if (!id) { const f = await driveFind(MAIN_FILE, it); if (!f) return null; id = a.main = f.id; } try { return await driveText(id, it); } catch (e) { if (/404/.test(e.message)) { a.main = null; return null; } throw e; } },
-    async saveMain(text) { const a = acct('google'); if (!a.main) { const f = await driveFind(MAIN_FILE, false); if (f) a.main = f.id; } a.main = await driveUpload(MAIN_FILE, text, a.main, false); },
-    putFile: (o, text) => driveUpload(`ordo-${o.id}.enc.json`, text, null, false),
-    getFile: async (o, it) => { let id = o.refs.google; if (!id) { const f = await driveFind(`ordo-${o.id}.enc.json`, it); if (!f) return null; id = f.id; } return driveText(id, it); },
-    delFile: ref => gfetch(`https://www.googleapis.com/drive/v3/files/${ref}`, { method: 'DELETE' }, false).catch(e => { if (!/404/.test(e.message)) throw e; }),
+    async loadMain() { const d = await fbGet('main', 'current'); return d && d.text && d.text !== '{}' ? d.text : null; },
+    async saveMain(text) {
+      const { F, u } = await fbUser();
+      if (text.length > FB_CHUNK) throw new Error('Données trop volumineuses pour la sauvegarde Google.');
+      try { await F.Fs.setDoc(fref(F, u, 'main', 'current'), { text, at: Date.now() }); } catch (e) { throw fbErr(e); }
+    },
+    putFile: (o, text) => fbFilePut(o.id, text),
+    getFile: o => fbFileGet(o.refs?.google || o.id),
+    delFile: ref => fbFileDel(ref),
   },
   github: {
     async loadMain() { const id = await mainGist(false); if (!id) return null; const t = await gistText(id, MAIN_FILE); return t && t !== '{}' ? t : null; },
@@ -1473,9 +1485,16 @@ const CP = {
 async function cloudSignIn(prov) {
   if (prov === 'google') {
     PENDING.google = PENDING.google || {};
-    await googleToken(true);
-    const u = await (await gfetch('https://www.googleapis.com/oauth2/v3/userinfo')).json();
-    return { email: u.email, name: u.name || '', picture: u.picture || '', auto: true };
+    const F = await fb(); await F.auth.authStateReady();
+    let u = F.auth.currentUser; // déjà connecté dans une autre app QuenTools : on réutilise la session
+    if (!u) {
+      try { u = (await F.Au.signInWithPopup(F.auth, new F.Au.GoogleAuthProvider())).user; }
+      catch (e) {
+        const c = e && e.code || '';
+        throw new Error(c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request' ? 'Connexion annulée' : c === 'auth/popup-blocked' ? 'Autorisez les fenêtres pop-up pour ce site puis réessayez' : c === 'auth/unauthorized-domain' ? 'Domaine non autorisé dans Firebase (voir README)' : c === 'auth/operation-not-allowed' ? 'Connexion Google non activée dans Firebase (voir README)' : 'Connexion Google impossible');
+      }
+    }
+    return { email: u.email || '', name: u.displayName || '', picture: u.photoURL || '', auto: true };
   }
   if (!ghToken()) return null; // GitHub : la connexion passe par une redirection ou un jeton collé (githubLogin)
   const u = await (await ghfetch('/user')).json();
@@ -1534,7 +1553,7 @@ async function connectCloud(prov) {
   try { await afterSignIn('google', await cloudSignIn('google'), 'connect'); } catch (e) { toast(e.message); }
 }
 function cloudSignOut(prov, quiet) {
-  if (prov === 'google') { try { if (G.token && window.google?.accounts?.oauth2) google.accounts.oauth2.revoke(G.token, () => { }); } catch (e) { } G.token = null; try { localStorage.removeItem(GTOK_KEY); } catch (e) { } }
+  if (prov === 'google') { fb().then(F => F.Au.signOut(F.auth)).catch(() => { }); }
   else ghSetToken(null);
   if (S) { delete S[prov]; for (const o of S.ordos || []) if (o.refs) delete o.refs[prov]; S.trash = []; save(true); }
   if (!quiet) { render(); toast('Déconnecté de ' + PNAME[prov]); }
@@ -1628,7 +1647,7 @@ async function syncNow(opt = {}) {
   const prov = cloudProv(); if (!prov || SYNC.busy) return;
   if (opt.silent && S[prov].auto === false) return;
   if (opt.throttle && Date.now() - SYNC.last < 60000) return;
-  if (opt.silent && (!G.pass || (prov === 'google' && !(G.token && Date.now() < G.exp)))) { syncStatus('err', !G.pass ? 'Phrase secrète à saisir : touchez « Synchroniser »' : 'Touchez « Synchroniser » pour vous reconnecter'); return; }
+  if (opt.silent && (!G.pass)) { syncStatus('err', !G.pass ? 'Phrase secrète à saisir : touchez « Synchroniser »' : 'Touchez « Synchroniser » pour vous reconnecter'); return; }
   SYNC.busy = true; SYNC.last = Date.now(); syncStatus('busy');
   const a = S[prov];
   try {
@@ -1714,7 +1733,7 @@ function cloudCard() {
     <div class="row"><button class="btn sm pri grow" onclick="syncNow()">Synchroniser</button><button class="btn sm grow" onclick="cloudRestore('${prov}',true)">Restaurer</button></div>
     <label class="rowitem" style="margin-top:12px;cursor:pointer"><span class="grow"><b>Synchronisation automatique</b><small>Après chaque modification et à l’ouverture</small></span><span class="switch"><input type="checkbox" role="switch" ${a.auto !== false ? 'checked' : ''} onchange="S.${prov}.auto=this.checked;save(true)"><i></i></span></label>
     <div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn ghost sm" onclick="cloudSignOut('${prov}')">Se déconnecter</button>${G.pass ? `<button class="btn ghost sm" onclick="forgetPass();render();toast('Phrase secrète oubliée sur ce téléphone')">Oublier la phrase secrète</button>` : ''}</div>
-    <p class="note" style="padding-bottom:0">Chiffrement AES-256 sur le téléphone avant l’envoi. ${prov === 'google' ? 'Les fichiers sont rangés dans l’espace privé de l’application sur votre Drive.' : 'Les fichiers sont rangés dans des « gists » secrets de votre compte GitHub.'}</p></div>`;
+    <p class="note" style="padding-bottom:0">Chiffrement AES-256 sur le téléphone avant l’envoi. ${prov === 'google' ? 'Les données sont rangées dans votre espace privé Google (Firebase), séparé de vos autres apps.' : 'Les fichiers sont rangés dans des « gists » secrets de votre compte GitHub.'}</p></div>`;
 }
 
 /* ---------- application installable (PWA) ---------- */
@@ -1722,7 +1741,7 @@ let BIP = null;
 const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 function pwaBoot() {
-  if (!GOOGLE_CLIENT_ID) console.info('Infikit : connexion Google désactivée (googleClientId vide dans config.js, voir README).');
+  if (googleReady()) fb().catch(() => { }); // charge le SDK d'avance : la fenêtre Google s'ouvre alors sans délai au clic
   if ('serviceWorker' in navigator && location.protocol === 'https:' && !googleHost()) navigator.serviceWorker.register('sw.js').catch(() => { });
   addEventListener('beforeinstallprompt', e => { e.preventDefault(); BIP = e; if (!S || ui.tab === 'reglages') render(); });
   addEventListener('appinstalled', () => { BIP = null; toast('Infikit est installée sur l’écran d’accueil 🎉'); render(); });
