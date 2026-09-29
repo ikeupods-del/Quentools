@@ -143,3 +143,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-off
 .avoid li::marker{color:var(--bad)}#sugg{margin-top:10px}
 
 .hours{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.hr{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:14px;background:var(--soft);border-bottom:4px solid var(--ok)}.hr.warn{border-bottom-color:var(--warn)}.hr.bad{border-bottom-color:var(--bad)}.hr span{font-size:1.3rem}.hr small{color:var(--mut)}
+
+.scene{text-align:center;padding:12px}.scene b{display:block;margin-top:8px;font-size:1.05rem}.scene small{display:block;color:var(--mut);margin-top:2px}.dg{width:100%;max-width:320px;height:auto}
+.dg *{transform-box:fill-box}.dg-body{animation:dgbob 3s ease-in-out infinite;transform-origin:50% 100%}.dg-tail{transform-origin:0 100%;animation:dgtail 1s ease-in-out infinite alternate}.dg-tail.low{animation:none}
+.dg-ear.l,.dg-ear.r{transform-origin:50% 0}.dg-ear.flap{animation:dgflap .35s ease-in-out infinite alternate}.dg-body.shiver{animation:dgshiver .12s linear infinite}
+.dg-rain{animation:dgrain .7s linear infinite}.dg-wind{animation:dgwind 1.4s ease-in-out infinite}.dg-leaf{animation:dgleaf 2.2s linear infinite}.dg-snow{animation:dgsnow 3s linear infinite}
+.dg-spin{animation:dgspin 12s linear infinite;transform-origin:50% 50%}.dg-bolt{animation:dgbolt 1.6s steps(1) infinite}.dg-sweat{animation:dgsweat 1.4s ease-in infinite}.dg-tongue{animation:dgtongue .5s ease-in-out infinite alternate;transform-origin:50% 0}.dg-breath{animation:dgbreath 2s ease-out infinite}.dg-twinkle,.dg-zzz{animation:dgtw 2s ease-in-out infinite}
+@keyframes dgbob{50%{transform:translateY(-2px)}}@keyframes dgtail{to{transform:rotate(18deg)}}@keyframes dgflap{to{transform:rotate(-40deg)}}@keyframes dgshiver{50%{transform:translateX(1.5px)}}
+@keyframes dgrain{to{transform:translateY(10px);opacity:.3}}@keyframes dgwind{50%{transform:translateX(10px)}}@keyframes dgleaf{from{transform:translateX(-20px) rotate(0)}to{transform:translateX(40px) rotate(360deg)}}@keyframes dgsnow{to{transform:translateY(14px)}}
+@keyframes dgspin{to{transform:rotate(360deg)}}@keyframes dgbolt{50%{opacity:0}}@keyframes dgsweat{to{transform:translateY(12px);opacity:0}}@keyframes dgtongue{to{transform:scaleY(1.25)}}@keyframes dgbreath{from{opacity:.8}to{opacity:0;transform:translate(6px,-6px)}}@keyframes dgtw{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.dg *{animation:none!important}}

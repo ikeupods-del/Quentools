@@ -218,6 +218,46 @@ test('recherche globale : aliments toxiques, leçons, carnet, journal, documents
   noErrors(b); await b.ctx.close();
 });
 
+test('balades : compteur de pas (capteur de mouvement) et distance de secours quand le GPS est faible', async () => {
+  const b = await boot({ geo: true, hash: '#/balade' }), p = b.page;
+  await p.click('[data-act=w-start]'); await p.waitForSelector('#w-steps'); await p.waitForTimeout(300);
+  // 40 pas simulés : pics d'accélération réguliers autour de la gravité
+  await b.ev(async () => { for (let i = 0; i < 40; i++) { for (const z of [9.8, 13.2, 9.8, 7.0]) { window.dispatchEvent(Object.assign(new Event('devicemotion'), { accelerationIncludingGravity: { x: 0.2, y: 0.3, z } })); await new Promise(r => setTimeout(r, 75)); } } });
+  const steps = await b.ev(() => WALK.steps); assert.ok(steps >= 30 && steps <= 45, 'pas comptés : ' + steps);
+  // le GPS ne bouge pas : la distance vient des pas
+  assert.ok(await b.ev(() => walkDist()) > steps * 0.6, 'distance de secours'); await p.waitForTimeout(1100); assert.match(await text(p, '#w-steps'), /\d/);
+  await p.click('[data-act=w-finish]'); await p.waitForSelector('.big-kv');
+  const w = await b.ev(() => S.walks[0]); assert.ok(w.steps >= 30 && w.src === 'steps' && w.dist > 20, JSON.stringify({ s: w.steps, src: w.src, d: w.dist }));
+  assert.match(await text(p, '.big-kv'), /Pas/);
+  // un promeneur immobile ne compte rien
+  assert.equal(await b.ev(() => { const c = stepCounter(); for (let i = 0; i < 200; i++) c.push(9.81 + Math.sin(i) * 0.1, i * 20); return c.n; }), 0);
+  await b.go('#/balade'); await p.click('[data-act=w-stride]'); await p.fill('input[name=cm]', '80'); await p.click('.sheet button[type=submit], .sheet .primary'); assert.equal(await b.ev(() => S.settings.stride), 0.8);
+  noErrors(b); await b.ctx.close();
+});
+
+test('météo : scène illustrée (soleil, pluie, vent, froid, orage, neige, nuit), conseils et vent', async () => {
+  const b = await boot({ hash: '#/home' }), p = b.page;
+  const r = await b.ev(() => { const lab = { name: 'L', species: 'dog', breed: 'Labrador', birth: '2020-01-01' }, M = (o) => ({ code: 0, feels: 22, wind: 5, day: true, uv: 3, hours: [], ...o });
+    return [weatherScene(M({}), lab), weatherScene(M({ code: 63 }), lab), weatherScene(M({ wind: 50 }), lab), weatherScene(M({ feels: -6 }), lab), weatherScene(M({ code: 96 }), lab), weatherScene(M({ code: 73, feels: 0 }), lab), weatherScene(M({ day: false }), lab), weatherScene(M({ feels: 33 }), lab), weatherScene(M({ code: 3, feels: 12 }), lab)]; });
+  assert.deepEqual(r, ['sun', 'rain', 'wind', 'cold', 'storm', 'snow', 'night', 'hot', 'calm']);
+  const svg = await b.ev(() => Object.keys(SCENE_TXT).every(k => dogScene(k, { name: 'X', species: 'dog' }).includes('<svg') && dogScene(k, { name: 'X', species: 'cat' }).includes('<svg')));
+  assert.ok(svg); assert.ok(await b.ev(() => { const sun = dogScene('sun', { name: 'X', species: 'dog' }), rain = dogScene('rain', { name: 'X', species: 'dog' }); return sun.includes('#151b2b') && sun.includes('#ff5d73') && !rain.includes('#151b2b') && rain.includes('dg-rain') && dogScene('wind', { name: 'X', species: 'dog' }).includes('flap'); }), 'lunettes + parasol au soleil, pluie qui tombe, oreilles au vent');
+  const tips = await b.ev(() => ({ hot: walkTips({ feels: 32, uv: 8, wind: 0, code: 0, day: true }, { name: 'B', breed: 'Bulldog Anglais' }).map(x => x[1]).join('|'), rain: walkTips({ feels: 10, uv: 0, wind: 0, code: 63, day: true }, { name: 'L', breed: 'Labrador' }).length, wind: walkRisk(15, { name: 'L', breed: 'Labrador', birth: '2020-01-01', species: 'dog' }, { wind: 65 }).lvl }));
+  assert.match(tips.hot, /bitume/); assert.match(tips.hot, /museau court/); assert.match(tips.hot, /UV/); assert.ok(tips.rain >= 1); assert.equal(tips.wind, 'bad');
+  noErrors(b); await b.ctx.close();
+});
+
+test('nouvelles leçons Plus : 9 chien + 5 chat, 4 nouveaux programmes, pages qui s’affichent', async () => {
+  const data = seed({ dogs: [dogRec(), dogRec({ id: 'c1', name: 'Miso', species: 'cat', breed: 'Européen', birth: '2024-03-01' })] });
+  const b = await boot({ data }), p = b.page;
+  const ids = { d1: ['focus', 'impulsions', 'reactivite', 'destruction', 'poursuite', 'ville', 'randonnee', 'dents', 'vol'], c1: ['c-mord', 'c-pipi', 'c-demenagement', 'c-solitude', 'c-dents'] };
+  for (const cur of ['d1', 'c1']) { await b.ev(c => { S.current = c; save(); }, cur);
+    for (const id of ids[cur]) { await b.go('#/lecon?id=' + id); await p.waitForSelector('.lesson-h, h1'); const h = await text(p, '#view'); assert.ok(h.length > 900, id + ' trop court'); assert.match(h, /Programme|programme/); }
+    assert.equal(await b.ev(id => lessonsFor(dog()).filter(l => !l.free).length >= (id === 'd1' ? 40 : 15), cur), true); }
+  for (const id of ['ville4', 'reactif8', 'maison4', 'chat-detente4']) { await b.ev(c => { S.current = c; save(); }, id === 'chat-detente4' ? 'c1' : 'd1'); await b.go('#/programme?id=' + id); await p.waitForSelector('h1'); assert.match(await text(p, '#view'), /Semaine/); }
+  noErrors(b); await b.ctx.close();
+});
+
 /* ================= 7. Achat à vie (relais simulé) ================= */
 test('achat à vie : connexion Google requise, consentement, paiement, retour, activation, remboursement', async () => {
   const b = await boot({ query: '?preview=none', hash: '#/abo' }), p = b.page; let seen = {};
