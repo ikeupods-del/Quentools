@@ -1,10 +1,10 @@
-# Publie QuenTools (dont l'app Infikit) sur GitHub Pages à chaque push sur la branche par défaut.
+# Publie QuenTools (Infikit et Patrimoine AI) sur GitHub Pages à chaque push sur la branche par défaut.
 # Une seule fois : Settings → Pages → Source : « GitHub Actions ».
 name: Publier sur GitHub Pages
 
 on:
   push:
-    branches: [main, master, claude/infirmiere-ordonnances-upload-26nl16]
+    branches: [main, master, claude/infirmiere-ordonnances-upload-26nl16, claude/busy-noether-9hb80f]
   workflow_dispatch:
 
 permissions:
@@ -29,6 +29,7 @@ jobs:
           mkdir -p _site
           cp index.html _site/
           rsync -a --exclude oauth-worker infikit _site/
+          rsync -a --exclude cors-worker patrimoine _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

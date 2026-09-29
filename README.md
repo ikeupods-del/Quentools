@@ -1,5 +1,21 @@
 # QuenTools
 
+## Patrimoine AI — suivi de patrimoine, marchés et assistant IA
+
+Application web installable (PWA), **produite par QuenTools**, adaptée à GitHub (plus de Netlify ni de serveur) :
+
+**Adresse de l’app :** https://ikeupods-del.github.io/Quentools/patrimoine/
+
+- **Connexion** : compte GitHub gratuit (Réglages → « Se connecter avec GitHub »). L’app guide la création d’un jeton « gist » et demande une **phrase secrète**.
+- **Synchronisation entre appareils** : automatique, via un gist secret de votre compte. Tout est chiffré sur l’appareil (AES-256-GCM, clé PBKDF2 de la phrase secrète) avant l’envoi : ni GitHub ni QuenTools ne peuvent lire vos données. Une copie par jour est gardée (30 jours) : Réglages → « Sauvegardes GitHub ».
+- **Cours en direct** (Yahoo Finance) : récupérés depuis le navigateur via un relais CORS. Par défaut des relais publics ; pour plus de fiabilité, déployez `patrimoine/cors-worker/worker.js` sur Cloudflare Workers (gratuit) et renseignez `marketProxy` dans `patrimoine/config.js`.
+- **Assistant IA** : IA locale sans clé, ou Gemini / Grok avec votre propre clé (enregistrée sur l’appareil uniquement).
+- Nouveau téléphone : ouvrir l’adresse → se connecter avec le même jeton/compte et la même phrase secrète.
+
+Fichiers : `patrimoine/index.html` (l’app), `config.js`, `manifest.webmanifest`, `sw.js`, icônes, `cors-worker/worker.js` (facultatif). Le workflow Pages publie `infikit/` et `patrimoine/`.
+
+---
+
 ## Infikit — l’assistant des infirmières à domicile
 
 Tournée, fiches patients, **ordonnances (photo ou PDF)**, fiche d’urgence, transmissions, cotations NGAP / INAMI et compta.
