@@ -1,0 +1,20 @@
+{
+  "name": "Infikit — l’assistant des infirmières à domicile",
+  "short_name": "Infikit",
+  "description": "Tournée, fiches patients, ordonnances, cotations et compta pour les infirmières à domicile.",
+  "lang": "fr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef1f7",
+  "theme_color": "#3048c9",
+  "categories": ["medical", "productivity", "business"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

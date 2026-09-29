@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3048c9">
+<title>Infikit — l’assistant des infirmières à domicile · QuenTools</title>
+<meta name="description" content="Tournée, fiches patients, ordonnances, cotations et compta pour les infirmières à domicile.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Infikit">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f7;--card:#ffffff;--ink:#172036;--muted:#5d6780;--line:#dde3ef;--soft:#f5f7fc;
+  --pri:#3048c9;--pri2:#2438a8;--pri-soft:#e7ebff;--sun:#f5a300;--sun-soft:#fff3d6;
+  --ok:#17875b;--ok-soft:#dcf5ea;--bad:#c9341c;--bad-soft:#fde4df;--shadow:0 1px 2px rgba(23,32,54,.06),0 6px 18px rgba(23,32,54,.06);
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  font-family:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1422;--card:#182036;--ink:#eef1f8;--muted:#9aa5c0;--line:#27314b;--soft:#1d2640;
+  --pri:#7d8fff;--pri2:#9aa8ff;--pri-soft:#232e55;--sun:#ffc24d;--sun-soft:#3a2f14;--ok:#4fd39a;--ok-soft:#153a2b;--bad:#ff7d66;--bad-soft:#3e1d18;--shadow:none}}
+:root[data-theme="dark"]{--bg:#0f1422;--card:#182036;--ink:#eef1f8;--muted:#9aa5c0;--line:#27314b;--soft:#1d2640;
+  --pri:#7d8fff;--pri2:#9aa8ff;--pri-soft:#232e55;--sun:#ffc24d;--sun-soft:#3a2f14;--ok:#4fd39a;--ok-soft:#153a2b;--bad:#ff7d66;--bad-soft:#3e1d18;--shadow:none}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--pri);outline-offset:2px}
+a{color:var(--pri)}
+#app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding:14px 18px 10px;display:flex;align-items:center;gap:12px}
+.top h1{margin:0;font-size:21px;letter-spacing:-.01em;flex:1;min-width:0}
+.top h1 small{display:block;font-size:13px;color:var(--muted);font-weight:400;letter-spacing:0}
+.flag{font-size:13px;padding:5px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-weight:700}
+main{flex:1;padding:0 14px 110px}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
+.tabs div{display:flex;max-width:560px;width:100%}
+.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:12px;font-size:12px;color:var(--muted);font-weight:700}
+.tabs button svg{width:24px;height:24px}
+.tabs button.on{color:var(--pri);background:var(--pri-soft)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow);margin-bottom:10px}
+.muted{color:var(--muted)}.small{font-size:14px}.tiny{font-size:12.5px}
+.row{display:flex;align-items:center;gap:10px}.grow{flex:1;min-width:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:10px 16px;border-radius:12px;background:var(--soft);border:1px solid var(--line);font-weight:700}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.ghost{background:transparent}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:14px;border-radius:10px}
+.btn.block{width:100%}
+.btn.danger{color:var(--bad)}
+.icon{width:40px;height:40px;border-radius:12px;display:inline-grid;place-items:center;background:var(--soft);border:1px solid var(--line);flex:none}
+.icon svg{width:20px;height:20px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;background:var(--pri-soft);color:var(--pri2);font-size:13px;font-weight:700;margin:2px 4px 2px 0}
+.chip.sun{background:var(--sun-soft);color:#8a5a00}.chip.ok{background:var(--ok-soft);color:var(--ok)}.chip.bad{background:var(--bad-soft);color:var(--bad)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .chip.sun{color:var(--sun)}}
+:root[data-theme="dark"] .chip.sun{color:var(--sun)}
+.seg{display:flex;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;min-height:36px;border-radius:9px;font-weight:700;font-size:14px;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+h2{font-size:17px;margin:18px 4px 8px}
+label.f{display:block;margin-bottom:10px}
+label.f span{display:block;font-size:13.5px;font-weight:700;color:var(--muted);margin-bottom:4px}
+input,select,textarea{width:100%;min-height:44px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--soft)}
+textarea{min-height:80px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+/* ---- tournée : le fil ---- */
+.dayhead{display:flex;align-items:center;gap:8px;margin:4px 0 10px}
+.dayhead .grow{text-align:center}
+.dayhead b{font-size:18px;display:block}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.kpi b{display:block;font-size:20px;letter-spacing:-.01em}
+.kpi span{font-size:12.5px;color:var(--muted);font-weight:700}
+.fil{position:relative;padding-left:62px}
+.fil::before{content:"";position:absolute;left:30px;top:12px;bottom:12px;width:3px;border-radius:3px;background:repeating-linear-gradient(to bottom,var(--line) 0 8px,transparent 8px 14px)}
+.stop{position:relative}
+.stop .time{position:absolute;left:-62px;top:12px;width:56px;text-align:center;font-weight:700;font-size:14px;padding:5px 0;border-radius:10px;background:var(--card);border:2px solid var(--pri);color:var(--pri)}
+.stop.done .time{background:var(--ok);border-color:var(--ok);color:#fff}
+.stop.done .card{opacity:.82}
+.stop .num{font-size:12px;color:var(--muted);font-weight:700}
+.stop h3{margin:0;font-size:17px}
+.stop .addr{font-size:14px;color:var(--muted);margin:2px 0 6px}
+.stop .acts{margin:4px 0 8px}
+.stop .foot{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.stop .amount{margin-left:auto;font-weight:700}
+.alert{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:var(--sun-soft);font-size:14px;margin-bottom:8px}
+.alert.bad{background:var(--bad-soft)}
+.empty{text-align:center;padding:28px 16px}
+.empty svg{width:56px;height:56px;color:var(--muted)}
+/* carte */
+.map{width:100%;aspect-ratio:1/1;background:var(--card);border:1px solid var(--line);border-radius:16px;display:block}
+/* listes */
+.item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line);margin-bottom:8px;width:100%;text-align:left}
+.avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--pri-soft);color:var(--pri2);flex:none}
+.line{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:15px}
+.line:last-child{border-bottom:0}
+.line code{font-family:inherit;font-size:12.5px;color:var(--muted);font-weight:700}
+.total{display:flex;justify-content:space-between;align-items:baseline;padding-top:10px;margin-top:4px;border-top:2px solid var(--ink);font-size:18px;font-weight:700}
+.pick{display:flex;flex-wrap:wrap;gap:6px}
+.pick button{padding:8px 12px;border-radius:12px;border:1px solid var(--line);background:var(--soft);font-size:14.5px;font-weight:700;text-align:left}
+.pick button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+a.btn{text-decoration:none;color:inherit}
+.line b{white-space:nowrap}
+.pick.g2{display:grid;grid-template-columns:1fr 1fr}
+.pick.g2 button{padding:9px 10px;font-size:14px;line-height:1.25}
+.sel{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.sel .chip{font-size:14px;padding:6px 10px}
+.sel .chip button{margin-left:4px;font-weight:700;color:inherit}
+.pick button small{display:block;font-weight:400;font-size:12px;opacity:.8}
+.note{font-size:13px;color:var(--muted);padding:8px 4px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:110px;padding-top:6px}
+.bars i{flex:1;background:var(--pri);border-radius:4px 4px 0 0;min-height:2px;opacity:.85}
+.bars i.we{background:var(--sun)}
+.tl{border-left:3px solid var(--pri-soft);padding-left:12px;margin-left:6px}
+.tl .t{margin-bottom:12px}
+.tl .t b{font-size:13px;color:var(--muted)}
+/* feuille (bottom sheet) */
+#sheet{position:fixed;inset:0;z-index:50;background:rgba(10,14,30,.45);display:flex;align-items:flex-end;justify-content:center}
+#sheet[hidden]{display:none}
+#sheet .panel{background:var(--bg);width:100%;max-width:560px;max-height:92%;overflow:auto;border-radius:22px 22px 0 0;padding:8px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+#sheet .grab{width:42px;height:5px;border-radius:5px;background:var(--line);margin:6px auto 10px}
+#sheet .sh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+#sheet .sh h2{margin:0;flex:1}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;font-size:14.5px;max-width:90%;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#toast[hidden]{display:none}
+/* onboarding & verrou */
+.hero{padding:34px 20px 10px}
+.hero h1{font-size:40px;line-height:1.02;margin:0 0 10px;letter-spacing:-.025em}
+.hero p{font-size:17px;color:var(--muted);margin:0 0 22px}
+.country{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.country button{padding:18px 12px;border-radius:16px;background:var(--card);border:2px solid var(--line);font-weight:700;font-size:16px;text-align:left}
+.country button.on{border-color:var(--pri);background:var(--pri-soft)}
+.country button span{font-size:28px;display:block;margin-bottom:6px}
+.country button small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+#lock{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+#lock[hidden]{display:none}
+.dots{display:flex;gap:12px;margin:18px 0}
+.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--pri)}
+.dots i.on{background:var(--pri)}
+.keypad{display:grid;grid-template-columns:repeat(3,72px);gap:12px}
+.keypad button{height:64px;border-radius:50%;background:var(--card);border:1px solid var(--line);font-size:24px;font-weight:700}
+.spark{width:100%;height:60px;display:block}
+.brandmark{width:34px;height:34px;border-radius:10px;background:var(--pri);color:#fff;display:grid;place-items:center;flex:none}
+.brandmark.lg{width:48px;height:48px;border-radius:14px}
+.brandrow{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.brandrow b{display:block;font-size:22px;letter-spacing:-.01em}.brandrow small{display:block;color:var(--muted);font-size:13px}
+.about{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:26px 10px 10px}
+.about b{font-size:18px}.about span{color:var(--muted);font-size:14px}.about small{color:var(--muted);font-size:12.5px;max-width:340px;margin-top:6px}
+.allergy{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--bad);color:#fff;font-weight:700;font-size:15px}
+.urgmini{width:44px;height:44px;border-radius:12px;background:var(--bad-soft);border:1px solid var(--bad);font-size:20px;flex:none}
+.urg{display:grid;gap:8px}
+.urgbtn{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.urgbtn b{font-size:24px;min-width:74px;color:var(--bad)}
+.urgbtn span{font-weight:700}.urgbtn small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.urgbtn.main{background:var(--bad);border-color:var(--bad);color:#fff}.urgbtn.main b,.urgbtn.main small{color:#fff}
+.fiche .big{font-size:20px;font-weight:700}
+.btn.start{min-height:56px;font-size:17px;margin-bottom:12px;border-radius:16px}
+.switch{position:relative;width:52px;height:32px;flex:none}
+.switch input{position:absolute;inset:0;opacity:0;margin:0;min-height:0;cursor:pointer;z-index:1}
+.switch i{position:absolute;inset:0;border-radius:32px;background:var(--line);transition:background .15s}
+.switch i::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+.switch input:checked+i{background:var(--ok)}
+.switch input:checked+i::after{transform:translateX(20px)}
+.switch input:focus-visible+i{outline:3px solid var(--pri);outline-offset:2px}
+#cheer{position:fixed;inset:0;z-index:95;background:rgba(10,14,30,.55);display:flex;align-items:center;justify-content:center;padding:20px}
+#cheer[hidden]{display:none}
+.cheerbox{position:relative;overflow:hidden;background:var(--card);border-radius:24px;padding:28px 22px 20px;max-width:400px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.cheerbox h2{margin:12px 0 6px;font-size:26px}
+.cheerbox p{margin:0 0 16px;font-size:17px;line-height:1.5}
+.cheericon{width:92px;height:92px;border-radius:50%;margin:0 auto;display:grid;place-items:center}
+.cheerbox.start .cheericon{background:var(--sun-soft);color:var(--sun)}
+.cheerbox.end .cheericon{background:var(--bad-soft);color:#e2557a}
+.confetti{position:absolute;inset:0;pointer-events:none}
+.confetti i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;opacity:.9;animation:fall 2.4s ease-in forwards}
+@keyframes fall{to{transform:translateY(520px) rotate(540deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.confetti{display:none}}
+.navcard{padding:12px 14px}
+.navpick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.navapp{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border-radius:14px;border:2px solid var(--line);background:var(--soft);font-weight:700;text-decoration:none;color:var(--ink)}
+.navapp.on{border-color:var(--pri);background:var(--pri-soft)}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:48px;border-radius:12px;background:#fff;color:#1f1f1f;border:1px solid #747775;font-family:Roboto,"Atkinson Hyperlegible",system-ui,sans-serif;font-weight:500;font-size:15px}
+.gbtn:active{background:#f2f2f2}
+.gbadge{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1px solid var(--line);flex:none}
+.gavatar{width:40px;height:40px;border-radius:50%;flex:none}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin:14px 0}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+#ask{position:fixed;inset:0;z-index:90;background:rgba(10,14,30,.5);display:flex;align-items:center;justify-content:center;padding:20px}
+#ask[hidden]{display:none}
+.askbox{background:var(--card);border-radius:20px;padding:20px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.askbox h3{margin:0 0 6px;font-size:19px}.askbox p{margin:0 0 16px;color:var(--muted);font-size:15px}
+.btn.dangerfill{background:var(--bad);border-color:var(--bad);color:#fff}
+.profile{display:flex;align-items:center;gap:14px}
+.avatar.big{width:56px;height:56px;font-size:22px;background:var(--pri);color:#fff}
+.seg.big button{min-height:48px;font-size:16px}
+.rowitem{display:flex;align-items:center;gap:10px}
+.rowitem small,summary small{display:block;font-size:13px;color:var(--muted);font-weight:400}
+details{border-top:1px solid var(--line);padding:4px 0}
+details:first-child{border-top:0}
+summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:52px;cursor:pointer;font-weight:700}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";width:9px;height:9px;border-right:2.5px solid var(--muted);border-bottom:2.5px solid var(--muted);transform:rotate(45deg);margin:0 6px 4px 0;transition:transform .15s}
+details[open] summary::after{transform:rotate(225deg);margin-bottom:-4px}
+.lockicon{width:60px;height:60px;border-radius:18px;background:var(--pri);color:#fff;display:grid;place-items:center}
+.keypad button.txt{font-size:15px;background:transparent;border:0;color:var(--muted)}
+.dots.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}}
+@media (prefers-reduced-motion:reduce){.dots.shake{animation:none}}
+@media (prefers-reduced-motion:no-preference){.stop .card{transition:opacity .2s}}
+/* ---- ordonnances ---- */
+.ordos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.ordo{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:0;border-radius:12px;background:var(--soft);border:1px solid var(--line);overflow:hidden;text-align:left}
+.ordo .th{height:96px;display:grid;place-items:center;background:var(--line);color:var(--muted);font-weight:700;font-size:13px}
+.ordo .th img{width:100%;height:96px;object-fit:cover;display:block}
+.ordo span{padding:0 8px 6px;font-size:12px;line-height:1.25;color:var(--muted)}
+.ordo span b{display:block;color:var(--ink);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ordoview{width:100%;border-radius:12px;border:1px solid var(--line);background:var(--soft);display:block;margin-bottom:10px}
+.upl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.upl label{cursor:pointer}
+.ghbtn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:48px;border-radius:12px;background:#24292f;color:#fff;border:1px solid #24292f;font-weight:700;font-size:15px;margin-top:8px}
+.ghbtn svg{fill:currentColor}
+.syncdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ok);margin-right:6px;vertical-align:1px}
+.syncdot.busy{background:var(--sun);animation:pulse 1s infinite alternate}
+.syncdot.err{background:var(--bad)}
+@keyframes pulse{to{opacity:.35}}
+.install{display:flex;align-items:center;gap:12px}
+.choice{display:grid;gap:8px}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<div id="sheet" hidden><div class="panel" role="dialog" aria-modal="true"><div class="grab"></div><div id="sheet-body"></div></div></div>
+<div id="toast" hidden role="status"></div>
+<div id="lock" hidden></div>
+<div id="ask" hidden></div>
+<div id="cheer" hidden></div>
+<script>
+'use strict';
+/* ============================================================
+   Tournée — référentiels, calculs, stockage (100 % local)
+   ============================================================ */
+const KEY = 'tournee_idel_v1';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+const cent = n => Math.round(n * 100 + 1e-6) / 100;
+const eur = n => cent(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u00a0€';
+const eur0 = n => Math.round(n).toLocaleString('fr-FR') + '\u00a0€';
+const pad = n => String(n).padStart(2, '0');
+const iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const today = () => iso(new Date());
+const parseISO = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parseISO(s); d.setDate(d.getDate() + n); return iso(d); };
+const dow = s => (parseISO(s).getDay() + 6) % 7; // 0 = lundi
+const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+const JOURS_C = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const longDate = s => { const d = parseISO(s); return JOURS[dow(s)] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()]; };
+const hm = s => { const [h, m] = (s || '00:00').split(':').map(Number); return h + m / 60; };
+const nowHM = () => { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+
+/* ---------- jours fériés ---------- */
+function easter(y) { const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1; return new Date(y, mo - 1, da); }
+const HOL = {};
+function holidays(y, c) {
+  const k = y + c; if (HOL[k]) return HOL[k];
+  const e = easter(y), plus = n => { const d = new Date(e); d.setDate(d.getDate() + n); return iso(d); };
+  const fixed = c === 'FR' ? ['01-01', '05-01', '05-08', '07-14', '08-15', '11-01', '11-11', '12-25'] : ['01-01', '05-01', '07-21', '08-15', '11-01', '11-11', '12-25'];
+  const s = new Set(fixed.map(f => y + '-' + f)); [1, 39, 50].forEach(n => s.add(plus(n)));
+  return (HOL[k] = s);
+}
+const isHoliday = (d, c) => holidays(+d.slice(0, 4), c).has(d);
+const isWeekendOrHoliday = (d, c) => dow(d) === 6 || (c === 'BE' && dow(d) === 5) || isHoliday(d, c);
+
+/* ---------- France : NGAP (valeurs modifiables dans les réglages) ---------- */
+const FR_TARIFS = {
+  AMI: 3.15, AMX: 3.15, BSA: 13.00, BSB: 18.20, BSC: 28.70, DI: 10.00, IFD: 2.75, IFI: 2.75,
+  IKp: 0.35, IKm: 0.50, IKs: 3.40, abatP: 4, abatM: 2, MAU: 1.35, MCI: 5.00, MIE: 3.15, N1: 9.15, N2: 18.30, DIM: 8.50,
+};
+const FR_ACTS = [
+  { id: 'inj', l: 'Injection IM / SC', k: 'AMI', c: 1 },
+  { id: 'insu', l: "Injection d'insuline", k: 'AMI', c: 1 },
+  { id: 'gly', l: 'Glycémie capillaire', k: 'AMI', c: 1 },
+  { id: 'pilu', l: 'Surveillance traitement oral', k: 'AMI', c: 1 },
+  { id: 'prel', l: 'Prélèvement sanguin', k: 'AMI', c: 1.5 },
+  { id: 'iv', l: 'Injection IV directe', k: 'AMI', c: 2 },
+  { id: 'pans', l: 'Pansement simple', k: 'AMI', c: 2 },
+  { id: 'fils', l: 'Ablation fils ou agrafes (≤ 10)', k: 'AMI', c: 2 },
+  { id: 'sonde', l: 'Sondage urinaire', k: 'AMI', c: 3 },
+  { id: 'panslc', l: 'Pansement lourd et complexe', k: 'AMI', c: 4 },
+  { id: 'perfc', l: 'Perfusion courte (≤ 1 h)', k: 'AMI', c: 9 },
+  { id: 'perfl', l: 'Perfusion longue (> 1 h)', k: 'AMI', c: 14 },
+  { id: 'bsa', l: 'Forfait BSI léger (BSA)', k: 'BSA', flat: 1, bsi: 1 },
+  { id: 'bsb', l: 'Forfait BSI intermédiaire (BSB)', k: 'BSB', flat: 1, bsi: 1 },
+  { id: 'bsc', l: 'Forfait BSI lourd (BSC)', k: 'BSC', flat: 1, bsi: 1 },
+  { id: 'di', l: 'Bilan de soins infirmiers (DI 2,5)', k: 'DI', c: 2.5, flat: 1 },
+  { id: 'mci', l: 'Majoration de coordination (MCI)', k: 'MCI', flat: 1 },
+];
+
+/* ---------- Belgique : INAMI art. 8, tarifs au 1er janvier 2026 (domicile) ---------- */
+// wk = semaine, we = week-end / jour férié : [code, honoraire]
+const BE_ACTS = [
+  { id: 'toil', l: "Soins d'hygiène (toilette)", s: 'B', wk: ['425110', 6.86], we: ['425515', 10.31] },
+  { id: 'imsc', l: 'Injection IM / SC', s: 'B', wk: ['423076', 2.85], we: ['423275', 4.29] },
+  { id: 'ivd', l: 'Médicament IV directe ou cathéter', s: 'B', wk: ['423054', 3.13], we: ['423253', 4.72] },
+  { id: 'multi', l: 'Injections en plusieurs sites', s: 'B', wk: ['423091', 2.99], we: ['423290', 4.50] },
+  { id: 'plaies', l: 'Soins de plaie simples', s: 'B', wk: ['424336', 8.58], we: ['424491', 12.87] },
+  { id: 'plaiec', l: 'Soins de plaie complexes', s: 'B', wk: ['424351', 12.95], we: ['424513', 15.07] },
+  { id: 'bioact', l: 'Surveillance de plaie (pansement bioactif)', s: 'B', wk: ['424255', 4.39], we: ['424410', 5.75] },
+  { id: 'pommade', l: 'Pommade ou produit médicamenteux', s: 'B', wk: ['424270', 2.85], we: ['424432', 4.29] },
+  { id: 'collyre', l: 'Collyre post-opératoire', s: 'B', wk: ['424292', 2.85], we: ['424454', 4.29] },
+  { id: 'bandage', l: 'Bandage de compression', s: 'B', wk: ['424314', 2.85], we: ['424476', 4.29] },
+  { id: 'bas', l: 'Bas de compression (pose/retrait)', s: 'B', wk: ['424933', 2.85], we: ['424955', 4.29] },
+  { id: 'vessie', l: 'Sondage ou lavage vésical', s: 'B', wk: ['425176', 4.73], we: ['425574', 7.09] },
+  { id: 'vulve', l: 'Soins de vulve ou aspiration', s: 'B', wk: ['425191', 4.29], we: ['425596', 6.43] },
+  { id: 'fecal', l: 'Fécalome, lavement ou entérale', s: 'B', wk: ['425213', 4.29], we: ['425611', 6.43] },
+  { id: 'psy', l: 'Médicaments (patient psy chronique)', s: 'B', wk: ['425736', 1.06], we: ['425751', 1.58] },
+  { id: 'semainier', l: 'Préparation hebdo des médicaments', s: 'B', wk: ['424874', 13.91], we: null },
+  { id: 'perf', l: 'Forfait perfusion ou parentérale', s: 'III', wk: ['425375', 52.54], we: ['425773', 78.80] },
+  { id: 'kt', l: 'Pose cathéter chambre implantable', s: 'III', wk: ['423113', 52.54], we: ['423312', 52.54] },
+  { id: 'ktr', l: 'Retrait cathéter chambre implantable', s: 'III', wk: ['421072', 49.00], we: ['421094', 49.00] },
+  { id: 'suspub', l: 'Remplacement sonde sus-pubienne', s: 'III', wk: ['427416', 13.54], we: ['427431', 20.31] },
+  { id: 'gastro', l: 'Remplacement sonde de gastrostomie', s: 'III', wk: ['427475', 13.54], we: ['427490', 20.31] },
+  { id: 'consult', l: 'Consultation infirmière', s: 'III', wk: ['429015', 32.67], we: null },
+  { id: 'depl', l: 'Frais de déplacement supplémentaires', s: 'III', wk: ['418913', 3.21], we: ['418913', 3.21] },
+];
+const BE_BASE = { wk: [['425014', 5.22], ['425036', 5.22], ['425051', 5.22]], we: [['425412', 7.16], ['425434', 7.16], ['425456', 7.16]] };
+const BE_FORF = { A: { wk: ['425272', 22.49], we: ['425670', 33.58] }, B: { wk: ['425294', 43.34], we: ['425692', 64.36] }, C: { wk: ['425316', 59.29], we: ['425714', 88.31] } };
+const BE_PALL = { A: { wk: ['427055', 64.02], we: ['427136', 95.57] }, B: { wk: ['427033', 69.09], we: ['427114', 102.87] }, C: { wk: ['427011', 84.81], we: ['427092', 126.50] } };
+const BE_CAP = { wk: 22.49, we: 33.58 };
+
+/* ---------- état ---------- */
+let S = null;
+function blank(country) {
+  return {
+    v: 1, country, name: '', cabinet: { adresse: '', lat: null, lng: null }, zone: 'plaine',
+    tarifs: Object.assign({}, FR_TARIFS), acteOverrides: {},
+    patients: [], visits: [], trans: [], extra: [], order: {}, charges: [], recettes: [], ordos: [], trash: [],
+    retro: { taux: 85, nom: '' }, pin: null, theme: 'auto', created: today(),
+  };
+}
+function load() { try { const d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (d && d.v === 1) { S = d; S.ordos = S.ordos || []; S.trash = S.trash || []; return true; } } catch (e) { } return false; }
+// meta = true : écriture technique (synchro) qui ne compte pas comme une modification
+function save(meta) {
+  if (!meta && S) S.updatedAt = new Date().toISOString();
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Stockage indisponible : les données ne seront pas conservées.'); }
+  if (!meta && typeof syncSoon === 'function') syncSoon();
+}
+const FR = () => S.country === 'FR';
+const patient = id => S.patients.find(p => p.id === id);
+const acts = () => FR() ? FR_ACTS.map(a => Object.assign({}, a, S.acteOverrides[a.id] || {})) : BE_ACTS;
+const act = id => acts().find(a => a.id === id);
+const fullName = p => p ? (p.civ ? p.civ + ' ' : '') + p.prenom + ' ' + p.nom : '—';
+const initials = p => ((p.prenom || '?')[0] + (p.nom || '?')[0]).toUpperCase();
+
+/* ---------- moteur de cotation France ---------- */
+function coteFR(p, date, heure, actIds, opt = {}) {
+  const T = S.tarifs, lines = [], add = (code, label, amount, note) => lines.push({ code, label, amount: cent(amount), note });
+  const A = actIds.map(act).filter(Boolean);
+  const forfaits = A.filter(a => a.flat), tech = A.filter(a => !a.flat).sort((a, b) => b.c - a.c);
+  let bsi = false;
+  for (const a of forfaits) {
+    if (a.k === 'DI') add('DI ' + String(a.c).replace('.', ','), a.l, a.c * T.DI);
+    else if (a.k === 'MCI') add('MCI', a.l, T.MCI);
+    else { if (!opt.bsiDone) { add(a.k, a.l, T[a.k]); bsi = true; } else add(a.k, a.l + ' (déjà facturé ce jour)', 0); }
+  }
+  tech.forEach((a, i) => {
+    const key = bsi || p?.bsi ? 'AMX' : 'AMI';
+    const coef = String(a.c).replace('.', ',');
+    const base = a.c * T[key];
+    if (i === 0) add(key + ' ' + coef, a.l, base);
+    else if (i === 1) add(key + ' ' + coef + ' ½', a.l, base / 2, 'second acte à 50 %');
+    else add(key + ' ' + coef, a.l, 0, 'non cumulable (3ᵉ acte)');
+  });
+  if (tech.length === 1 && !forfaits.length && tech[0].c <= 1.5) add('MAU', "Majoration d'acte unique", T.MAU);
+  if (p?.enfant && tech.length) add('MIE', 'Majoration enfant de moins de 7 ans', T.MIE);
+  if (A.length) {
+    const h = hm(heure), sun = dow(date) === 6 || isHoliday(date, 'FR');
+    let maj = null;
+    if (opt.nuit && (h >= 23 || h < 5)) maj = ['NUIT', 'Majoration nuit (23 h – 5 h)', T.N2];
+    else if (opt.nuit && (h >= 20 || h < 8)) maj = ['NUIT', 'Majoration nuit (20 h – 23 h, 5 h – 8 h)', T.N1];
+    if (sun && (!maj || T.DIM > maj[2])) maj = ['DIM', dow(date) === 6 ? 'Majoration dimanche' : 'Majoration jour férié', T.DIM];
+    if (maj && opt.maj !== false) add(maj[0], maj[1], maj[2], maj[0] === 'NUIT' ? 'soins prescrits la nuit' : '');
+    add(bsi || p?.bsi ? 'IFI' : 'IFD', 'Indemnité forfaitaire de déplacement', bsi || p?.bsi ? T.IFI : T.IFD);
+    const km = Number(p?.km || 0);
+    if (km > 0) {
+      const zone = p?.zone || S.zone, rate = zone === 'montagne' ? T.IKm : zone === 'pied' ? T.IKs : T.IKp, ab = zone === 'montagne' ? T.abatM : zone === 'pied' ? 0 : T.abatP;
+      const d = Math.max(0, km * 2 - ab);
+      if (d > 0) add('IK', `Indemnités kilométriques (${String(Math.round(d * 10) / 10).replace('.', ',')} km)`, d * rate, `aller-retour ${km * 2} km − abattement ${ab} km`);
+    }
+  }
+  return { lines, total: lines.reduce((s, l) => s + l.amount, 0) };
+}
+
+/* ---------- moteur de tarification Belgique ---------- */
+// nth : rang de la séance du jour pour ce patient (0 = première) ; usedI : honoraires rubrique I déjà attestés ce jour
+function coteBE(p, date, heure, actIds, opt = {}) {
+  const we = isWeekendOrHoliday(date, 'BE'), K = we ? 'we' : 'wk', lines = [], add = (code, label, amount, note) => lines.push({ code, label, amount: cent(amount), note });
+  const A = actIds.map(act).filter(Boolean), nth = opt.nth || 0;
+  let usedI = 0;
+  const tech = A.filter(a => a.s === 'B'), spec = A.filter(a => a.s === 'III');
+  if (p?.katz) {
+    const tbl = p.palliatif ? BE_PALL : BE_FORF, f = tbl[p.katz][K];
+    if (nth === 0) add(f[0], `Forfait ${p.palliatif ? 'palliatif P' : ''}${p.katz} (journée de soins)`, f[1]);
+    else add('—', 'Séance incluse dans le forfait du jour', 0);
+    tech.forEach(a => add(a[K] ? a[K][0] : '—', a.l, 0, 'inclus dans le forfait'));
+  } else if (A.length || opt.forceBase) {
+    const b = BE_BASE[K][Math.min(nth, 2)];
+    let sub = [[b[0], ['Première', 'Deuxième', 'Troisième'][Math.min(nth, 2)] + ' prestation de base de la journée', b[1]]];
+    for (const a of tech) { if (!a[K]) { add('—', a.l + ' (non prévu le week-end)', 0); continue; } sub.push([a[K][0], a.l, a[K][1]]); }
+    const cap = BE_CAP[K], used = opt.usedI || 0, sum = sub.reduce((s, x) => s + x[2], 0);
+    let room = Math.max(0, cap - used), capped = false;
+    for (const [code, l, amt] of sub) { const v = Math.min(amt, room); room -= v; usedI += v; if (v < amt) capped = true; add(code, l, v, v < amt ? 'réduit : plafond journalier' : ''); }
+    if (capped) lines.push({ code: 'PLAF', label: `Plafond journalier atteint (${eur(cap)})`, amount: 0, note: p?.palliatif ? 'patient palliatif : le forfait PP peut s’appliquer' : 'vérifiez l’éligibilité à un forfait A, B ou C (Katz)' });
+  }
+  for (const a of spec) { if (!a[K]) { add('—', a.l + ' (non prévu le week-end)', 0); continue; } add(a[K][0], a.l, a[K][1]); }
+  if (we && A.length) lines.push({ code: '', label: dow(date) >= 5 ? 'Tarif week-end appliqué' : 'Tarif jour férié appliqué', amount: 0, note: '' });
+  return { lines, total: lines.reduce((s, l) => s + l.amount, 0), usedI };
+}
+function cote(p, date, heure, actIds, opt) { return FR() ? coteFR(p, date, heure, actIds, opt) : coteBE(p, date, heure, actIds, opt); }
+// contexte du jour pour un patient : rang de séance, plafond déjà utilisé, BSI déjà facturé
+function dayCtx(pid, date, beforeHeure, excludeId) {
+  const vs = S.visits.filter(v => v.pid === pid && v.date === date && v.id !== excludeId && (beforeHeure == null || hm(v.heure) <= hm(beforeHeure))).sort((a, b) => hm(a.heure) - hm(b.heure));
+  return { nth: vs.length, usedI: vs.reduce((s, v) => s + (v.usedI || 0), 0), bsiDone: vs.some(v => (v.actes || []).some(a => act(a)?.bsi)) };
+}
+
+/* ---------- tournée : arrêts du jour ---------- */
+function stopsFor(date) {
+  const d = dow(date), list = [];
+  for (const p of S.patients) {
+    if (p.archive) continue;
+    for (const pl of p.plan || []) if (pl.jours.includes(d) && (!pl.du || pl.du <= date) && (!pl.au || pl.au >= date)) list.push({ key: p.id + ':' + pl.id, pid: p.id, heure: pl.heure, actes: pl.actes.slice(), note: pl.note || '' });
+  }
+  for (const e of S.extra) if (e.date === date) list.push({ key: 'x:' + e.id, pid: e.pid, heure: e.heure, actes: e.actes.slice(), note: e.note || '', extra: e.id });
+  const ord = S.order[date];
+  list.sort((a, b) => ord ? ((ord.indexOf(a.key) + 1 || 999) - (ord.indexOf(b.key) + 1 || 999)) || hm(a.heure) - hm(b.heure) : hm(a.heure) - hm(b.heure));
+  for (const s of list) s.visit = S.visits.find(v => v.stop === s.key && v.date === date) || null;
+  return list;
+}
+function estimate(stops, date) {
+  const seen = {}, used = {};
+  return stops.map(s => {
+    if (s.visit) return s.visit.total;
+    const p = patient(s.pid), ctx = dayCtx(s.pid, date);
+    const nth = ctx.nth + (seen[s.pid] || 0);
+    const r = cote(p, date, s.heure, s.actes, { nth, usedI: ctx.usedI + (used[s.pid] || 0), bsiDone: ctx.bsiDone || (seen[s.pid] && s.actes.some(a => act(a)?.bsi)) });
+    seen[s.pid] = (seen[s.pid] || 0) + 1; used[s.pid] = (used[s.pid] || 0) + (r.usedI || 0);
+    return r.total;
+  });
+}
+const haversine = (a, b) => { const R = 6371, t = x => x * Math.PI / 180, dLat = t(b.lat - a.lat), dLng = t(b.lng - a.lng); const h = Math.sin(dLat / 2) ** 2 + Math.cos(t(a.lat)) * Math.cos(t(b.lat)) * Math.sin(dLng / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+function routeKm(stops) {
+  let pts = []; if (S.cabinet.lat != null) pts.push(S.cabinet);
+  for (const s of stops) { const p = patient(s.pid); if (p && p.lat != null) pts.push(p); }
+  if (S.cabinet.lat != null && pts.length > 1) pts.push(S.cabinet);
+  let d = 0; for (let i = 1; i < pts.length; i++) d += haversine(pts[i - 1], pts[i]) * 1.3; // facteur route
+  return d;
+}
+function optimize(date) {
+  const stops = stopsFor(date).filter(s => !s.visit), done = stopsFor(date).filter(s => s.visit);
+  const withPos = stops.filter(s => patient(s.pid)?.lat != null), without = stops.filter(s => patient(s.pid)?.lat == null);
+  let cur = S.cabinet.lat != null ? S.cabinet : (withPos[0] ? patient(withPos[0].pid) : null);
+  const out = [], rest = withPos.slice();
+  // on respecte les créneaux horaires : optimisation par tranches de 2 h
+  rest.sort((a, b) => hm(a.heure) - hm(b.heure));
+  while (rest.length) {
+    const t0 = hm(rest[0].heure), win = rest.filter(s => hm(s.heure) < t0 + 2);
+    let best = win[0], bd = Infinity;
+    if (cur) for (const s of win) { const d = haversine(cur, patient(s.pid)); if (d < bd) { bd = d; best = s; } }
+    out.push(best); rest.splice(rest.indexOf(best), 1); cur = patient(best.pid);
+  }
+  S.order[date] = done.map(s => s.key).concat(out.map(s => s.key), without.map(s => s.key));
+  save();
+  return { moved: out.length, missing: without.length };
+}
+
+/* ============================================================
+   Interface
+   ============================================================ */
+const I = {
+  route: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2 .6 3.2 2.5 3.5 5.5"/></svg>',
+  calc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="2.5" width="15" height="19" rx="2.5"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg>',
+  wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5A2.5 2.5 0 0 1 6 5h12.5v4"/><rect x="3.5" y="8.5" width="17" height="11" rx="2.5"/><path d="M16 14h.01"/></svg>',
+  cog: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
+  nav: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 21 3l-8 18-2-8-8-2z"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 9.5 18 20 6.5"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+};
+const ui = { tab: 'tournee', date: today(), view: 'liste', pid: null, month: today().slice(0, 7), q: '', cot: { pid: '', date: today(), heure: nowHM(), actes: [], km: 5, zone: 'plaine' } };
+let DL = null;
+
+function toast(t) { const el = $('#toast'); el.textContent = t; el.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => el.hidden = true, 3200); }
+function sheet(html) { $('#sheet-body').innerHTML = html; $('#sheet').hidden = false; $('#sheet .panel').scrollTop = 0; }
+function closeSheet() { $('#sheet').hidden = true; }
+function go(tab) { ui.tab = tab; ui.pid = null; render(); window.scrollTo(0, 0); }
+function theme() { document.documentElement.dataset.theme = S && S.theme !== 'auto' ? S.theme : ''; if (!S || S.theme === 'auto') delete document.documentElement.dataset.theme; }
+
+/* ---------- squelette ---------- */
+function render() {
+  theme();
+  if (!S) return onboarding();
+  const titles = { tournee: ['Tournée', S.name ? 'Bonne tournée, ' + S.name : 'Vos visites du jour'], patients: ['Patients', S.patients.filter(p => !p.archive).length + ' patients suivis'], cotation: [FR() ? 'Cotation NGAP' : 'Tarification INAMI', FR() ? 'Actes, majorations, déplacements' : 'Article 8 · tarifs au 1ᵉʳ janvier 2026'], compta: ['Compta', 'Recettes, charges, rétrocessions'], reglages: ['Réglages', 'Profil, tarifs, sécurité'] };
+  const [t, sub] = titles[ui.tab];
+  const body = { tournee: vTournee, patients: () => ui.pid ? vPatient(ui.pid) : vPatients(), cotation: vCotation, compta: vCompta, reglages: vReglages }[ui.tab]();
+  const tab = (k, ic, l) => `<button class="${ui.tab === k ? 'on' : ''}" onclick="go('${k}')" aria-label="${l}">${I[ic]}<span>${l}</span></button>`;
+  $('#app').innerHTML = `<header class="top"><span class="brandmark" aria-hidden="true">${LOGO(22)}</span><h1>${t}<small>${esc(sub)}</small></h1><button class="flag" onclick="go('reglages')" aria-label="Pays">${FR() ? '🇫🇷 France' : '🇧🇪 Belgique'}</button></header>
+    <main>${body}</main>
+    <nav class="tabs"><div>${tab('tournee', 'route', 'Tournée')}${tab('patients', 'users', 'Patients')}${tab('cotation', 'calc', FR() ? 'Cotation' : 'Tarifs')}${tab('compta', 'wallet', 'Compta')}${tab('reglages', 'cog', 'Réglages')}</div></nav>`;
+  after();
+}
+let AFTER = [];
+function after() { const f = AFTER; AFTER = []; f.forEach(fn => fn()); }
+
+/* ---------- alertes ordonnance ---------- */
+function ordoState(p) {
+  if (!p.ordoFin) return null;
+  const d = (parseISO(p.ordoFin) - parseISO(today())) / 864e5;
+  if (d < 0) return { c: 'bad', t: 'Ordonnance expirée' };
+  if (d <= 7) return { c: 'sun', t: `Ordonnance : fin dans ${Math.round(d)} j` };
+  return null;
+}
+
+/* ---------- TOURNÉE ---------- */
+function vTournee() {
+  const date = ui.date, stops = stopsFor(date), est = estimate(stops, date);
+  const done = stops.filter(s => s.visit).length, total = est.reduce((a, b) => a + b, 0), km = routeKm(stops);
+  const isToday = date === today();
+  let h = `<div class="dayhead"><button class="icon" onclick="ui.date=addDays(ui.date,-1);render()" aria-label="Jour précédent">${I.back}</button>
+    <div class="grow"><b>${longDate(date)}</b><button class="tiny muted" onclick="ui.date=today();render()">${isToday ? "Aujourd'hui" : "Revenir à aujourd'hui"}${isHoliday(date, S.country) ? ' · jour férié' : ''}</button></div>
+    <button class="icon" onclick="ui.date=addDays(ui.date,1);render()" aria-label="Jour suivant">${I.next}</button></div>`;
+  h += `<div class="kpis"><div class="kpi"><b>${done}/${stops.length}</b><span>visites</span></div><div class="kpi"><b>${eur0(total)}</b><span>${done === stops.length && stops.length ? 'réalisé' : 'prévu'}</span></div><div class="kpi"><b>${km ? Math.round(km) + ' km' : '—'}</b><span>trajet estimé</span></div></div>`;
+  const alerts = [...new Set(stops.map(s => s.pid))].map(patient).filter(Boolean).map(p => [p, ordoState(p)]).filter(x => x[1]);
+  for (const [p, a] of alerts) h += `<div class="alert ${a.c}">⚠️ <span><b>${esc(fullName(p))}</b> — ${a.t}. Pensez au renouvellement.</span></div>`;
+  const st = (S.started || {})[date], en = (S.ended || {})[date];
+  if (isToday && stops.length && !st && !stops.every(s => s.visit)) h += `<button class="btn pri block start" onclick="startTour()">${I.sun.replace('<svg', '<svg width="22" height="22"')} Démarrer ma tournée</button>`;
+  else if (isToday && st && !en) h += `<p class="note" style="margin-top:-4px">🚗 Tournée démarrée à ${esc(st)} · ${stops.length - done} visite${stops.length - done > 1 ? 's' : ''} restante${stops.length - done > 1 ? 's' : ''}</p>`;
+  else if (en) h += `<p class="note" style="margin-top:-4px">✅ Tournée terminée à ${esc(en)}. Merci !</p>`;
+  if (stops.length) {
+    const next = stops.find(x => !x.visit), nP = next ? patient(next.pid) : null, left = stops.filter(x => !x.visit).length;
+    h += `<div class="card navcard"><div class="rowitem"><span class="grow"><b>Itinéraire</b><small>${left ? (S.nav === 'waze' ? `Waze vous guide vers la prochaine visite${nP ? ' : ' + esc(nP.prenom + ' ' + nP.nom) : ''}` : `Google Maps enchaîne les ${Math.min(left, 10)} prochaines visites`) : 'Toutes les visites sont faites'}</small></span></div>
+      <div class="navpick"><a class="navapp ${S.nav !== 'waze' ? 'on' : ''}" href="${left ? fullRouteLink(stops) : '#'}" target="_blank" rel="noopener" onclick="setNav('gmaps', ${left ? 'true' : 'false'}, event)">${GMAPS_ICON}<span>Google Maps</span></a><a class="navapp ${S.nav === 'waze' ? 'on' : ''}" href="${nP ? wazeLink(nP) : '#'}" target="_blank" rel="noopener" onclick="setNav('waze', ${nP ? 'true' : 'false'}, event)">${WAZE_ICON}<span>Waze</span></a></div></div>`;
+  }
+  h += `<div class="row" style="margin-bottom:10px"><div class="seg grow"><button class="${ui.view === 'liste' ? 'on' : ''}" onclick="ui.view='liste';render()">Liste</button><button class="${ui.view === 'carte' ? 'on' : ''}" onclick="ui.view='carte';render()">Carte</button></div></div>
+    <div class="row" style="margin:-2px 0 12px"><button class="btn sm grow" onclick="addExtra()">+ Visite ponctuelle</button><button class="btn sm grow" onclick="doOptimize()">Optimiser l’ordre</button></div>`;
+  if (!stops.length) return h + `<div class="card empty">${I.route}<p><b>Aucune visite prévue ce jour.</b><br><span class="muted small">Ajoutez un patient avec son plan de soins, ou une visite ponctuelle.</span></p><div class="row" style="justify-content:center"><button class="btn pri" onclick="go('patients');editPatient()">Ajouter un patient</button><button class="btn" onclick="addExtra()">Visite ponctuelle</button></div></div>`;
+  if (ui.view === 'carte') { h += mapSVG(stops); AFTER.push(() => { }); }
+  else {
+    h += `<div class="fil">`;
+    stops.forEach((s, i) => {
+      const p = patient(s.pid); if (!p) return;
+      const o = ordoState(p), v = s.visit;
+      h += `<div class="stop ${v ? 'done' : ''}"><div class="time">${v ? I.check.replace('<svg', '<svg width="18" height="18"') : esc(s.heure)}</div><div class="card">
+        <div class="row"><div class="grow"><div class="num">${i + 1}${v ? ' · fait à ' + esc(v.heure) : ' · ' + esc(s.heure)}${s.extra ? ' · ponctuelle' : ''}</div><h3>${esc(fullName(p))}</h3></div>
+        <div class="row" style="gap:4px">${!v ? `<button class="icon" style="width:34px;height:34px" onclick="move('${s.key}',-1)" aria-label="Monter">${I.up}</button><button class="icon" style="width:34px;height:34px" onclick="move('${s.key}',1)" aria-label="Descendre">${I.down}</button>` : ''}</div></div>
+        <div class="addr">${esc(p.adresse || 'Adresse non renseignée')}</div>
+        <div class="acts">${(v ? v.actes : s.actes).map(a => `<span class="chip">${esc(act(a)?.l || a)}</span>`).join('')}${p.katz && !FR() ? `<span class="chip sun">Forfait ${p.palliatif ? 'P' : ''}${p.katz}</span>` : ''}${p.bsi && FR() ? `<span class="chip sun">${p.bsi}</span>` : ''}${o ? `<span class="chip ${o.c}">${o.t}</span>` : ''}${p.allergies ? `<span class="chip bad">⚠️ ${esc(p.allergies)}</span>` : ''}</div>
+        ${s.note ? `<div class="small muted" style="margin-bottom:8px">📝 ${esc(s.note)}</div>` : ''}
+        <div class="foot"><a class="btn sm" href="${S.nav === 'waze' ? wazeLink(p) : navLink(p)}" target="_blank" rel="noopener">${I.nav.replace('<svg', '<svg width="16" height="16"')} Y aller</a>${p.tel ? `<a class="btn sm" href="tel:${esc(p.tel.replace(/\s/g, ''))}">${I.phone.replace('<svg', '<svg width="16" height="16"')}</a>` : ''}
+        <button class="btn sm ${v ? '' : 'ok'}" onclick="openVisit('${s.key}')">${v ? 'Modifier' : 'Valider'}</button><span class="amount">${eur(est[i])}</span></div></div></div>`;
+    });
+    h += `</div>`;
+  }
+  return h;
+}
+const GMAPS_ICON = '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7z" fill="#ea4335"/><circle cx="12" cy="9" r="2.6" fill="#fff"/></svg>';
+const WAZE_ICON = '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c-4.7 0-8.5 3.3-8.5 7.6 0 1.5.5 2.8 1.2 3.9-.3 1.1-1 1.9-1.9 2.3 1.6.6 3.2.3 4.4-.4 1.4.7 3 1.1 4.8 1.1 4.7 0 8.5-3.4 8.5-7.6S16.7 3.5 12 3.5z" fill="#33ccff" stroke="#1a1a1a" stroke-width="1.2"/><circle cx="9.2" cy="10" r="1" fill="#1a1a1a"/><circle cx="14.6" cy="10" r="1" fill="#1a1a1a"/><path d="M9.3 13.2c1.4 1.2 3.9 1.2 5.3 0" stroke="#1a1a1a" stroke-width="1.1" fill="none" stroke-linecap="round"/><circle cx="8" cy="19.6" r="1.6" fill="#1a1a1a"/><circle cx="15.6" cy="19.6" r="1.6" fill="#1a1a1a"/></svg>';
+function wazeLink(p) { return p.lat != null ? `https://waze.com/ul?ll=${p.lat},${p.lng}&navigate=yes` : `https://waze.com/ul?q=${encodeURIComponent(p.adresse || '')}&navigate=yes`; }
+function setNav(app, ok, ev) { if (!ok) { ev?.preventDefault(); toast('Aucune visite restante.'); return; } if (S.nav !== app) { S.nav = app; save(); setTimeout(render, 300); } }
+function navLink(p) { const dest = p.lat != null ? p.lat + ',' + p.lng : p.adresse || ''; return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest) + '&travelmode=driving'; }
+function fullRouteLink(stops) {
+  const pts = stops.filter(s => !s.visit).map(s => patient(s.pid)).filter(p => p && (p.lat != null || p.adresse)).slice(0, 9).map(p => p.lat != null ? p.lat + ',' + p.lng : p.adresse);
+  if (!pts.length) return '#';
+  const dest = pts.pop(), way = pts.join('|');
+  return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest) + (way ? '&waypoints=' + encodeURIComponent(way) : '') + '&travelmode=driving';
+}
+function move(key, d) {
+  const list = stopsFor(ui.date).map(s => s.key), i = list.indexOf(key), j = i + d;
+  if (j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]]; S.order[ui.date] = list; save(); render();
+}
+function doOptimize() {
+  const r = optimize(ui.date);
+  if (!r.moved) toast(r.missing ? 'Ajoutez la position GPS des patients pour optimiser (fiche patient → 📍).' : 'Rien à optimiser.');
+  else toast(`Tournée réordonnée (${r.moved} visites)${r.missing ? ` · ${r.missing} sans position laissées à la fin` : ''}. Les créneaux horaires sont respectés.`);
+  render();
+}
+function mapSVG(stops) {
+  const pts = stops.map((s, i) => ({ s, i, p: patient(s.pid) })).filter(x => x.p && x.p.lat != null);
+  if (!pts.length) return `<div class="card empty">${I.pin}<p><b>Pas encore de positions.</b><br><span class="muted small">Chez un patient, ouvrez sa fiche et touchez « Position ici », ou collez des coordonnées depuis Google Maps.</span></p></div>`;
+  const all = pts.map(x => x.p).concat(S.cabinet.lat != null ? [S.cabinet] : []);
+  const lat0 = all.reduce((a, p) => a + p.lat, 0) / all.length, k = Math.cos(lat0 * Math.PI / 180);
+  const xs = all.map(p => p.lng * k), ys = all.map(p => -p.lat);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const span = Math.max(maxX - minX, maxY - minY, 0.004), P = p => [40 + (p.lng * k - minX) / span * 320, 40 + (-p.lat - minY) / span * 320];
+  let g = `<svg class="map" viewBox="0 0 400 400" role="img" aria-label="Carte schématique de la tournée">`;
+  for (let i = 0; i <= 8; i++) g += `<path d="M${i * 50} 0V400M0 ${i * 50}H400" stroke="var(--line)" stroke-width="1"/>`;
+  const route = []; if (S.cabinet.lat != null) route.push(P(S.cabinet)); pts.forEach(x => route.push(P(x.p)));
+  if (route.length > 1) g += `<path d="M${route.map(r => r.join(' ')).join('L')}" fill="none" stroke="var(--pri)" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round"/>`;
+  if (S.cabinet.lat != null) { const [x, y] = P(S.cabinet); g += `<rect x="${x - 11}" y="${y - 11}" width="22" height="22" rx="6" fill="var(--ink)"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" fill="var(--bg)" font-weight="700">C</text>`; }
+  const groups = {}; for (const x of pts) (groups[x.p.id] = groups[x.p.id] || []).push(x);
+  for (const gr of Object.values(groups)) {
+    const x = gr[0], [cx, cy] = P(x.p), dn = gr.every(y => y.s.visit), nums = gr.map(y => y.i + 1).join('·'), wide = nums.length > 2;
+    g += `<g>${wide ? `<rect x="${cx - 8 - nums.length * 4}" y="${cy - 15}" width="${16 + nums.length * 8}" height="30" rx="15"` : `<circle cx="${cx}" cy="${cy}" r="15"`} fill="${dn ? 'var(--ok)' : 'var(--card)'}" stroke="${dn ? 'var(--ok)' : 'var(--pri)'}" stroke-width="3"/><text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="14" font-weight="700" fill="${dn ? '#fff' : 'var(--pri)'}">${nums}</text><text x="${cx}" y="${cy + 32}" text-anchor="middle" font-size="12" fill="var(--muted)">${esc(x.p.nom)} · ${gr.map(y => esc(y.s.heure)).join(', ')}</text></g>`;
+  }
+  g += `</svg><p class="note">Carte schématique (vol d’oiseau) : les données restent sur votre téléphone. les boutons Google Maps et Waze lancent le guidage réel.</p>`;
+  return g;
+}
+
+/* ---------- valider une visite ---------- */
+let V = null;
+function openVisit(key, visitId) {
+  const date = ui.date;
+  let v = visitId ? S.visits.find(x => x.id === visitId) : S.visits.find(x => x.stop === key && x.date === date);
+  const st = key ? stopsFor(date).find(s => s.key === key) : null;
+  if (!v && !st) return;
+  const pid = v ? v.pid : st.pid;
+  V = v ? JSON.parse(JSON.stringify(v)) : { id: null, stop: key, pid, date, heure: date === today() ? nowHM() : st.heure, actes: st.actes.slice(), remplacant: false, maj: true };
+  V.tr = V.tr || { text: '', ta: '', gly: '', temp: '', douleur: '', spo2: '' };
+  if (v) { const t = S.trans.find(t => t.visit === v.id); if (t) V.tr = Object.assign({ text: t.text }, t.vitals); }
+  drawVisit();
+}
+function drawVisit() {
+  const p = patient(V.pid), ctx = dayCtx(V.pid, V.date, V.heure, V.id);
+  const r = cote(p, V.date, V.heure, V.actes, Object.assign({ maj: V.maj, nuit: V.nuit }, ctx));
+  V.total = r.total; V.usedI = r.usedI || 0; V.lines = r.lines;
+  const A = acts();
+  let h = `<div class="sh"><h2>${esc(fullName(p))}</h2><button class="urgmini" onclick="urgence('${p.id}')" aria-label="Urgence">🚨</button><button class="icon" onclick="closeSheet()" aria-label="Fermer">✕</button></div>`;
+  if (p.allergies) h += `<div class="allergy" style="margin:0 0 10px">⚠️ Allergies : ${esc(p.allergies)}</div>`;
+  h += `<div class="grid2"><label class="f"><span>Date</span><input type="date" value="${V.date}" onchange="V.date=this.value;drawVisit()"></label><label class="f"><span>Heure du passage</span><input type="time" value="${V.heure}" onchange="V.heure=this.value;drawVisit()"></label></div>`;
+  h += `<label class="f"><span>Actes réalisés</span></label><div class="sel">${V.actes.map(id => `<span class="chip">${esc(act(id)?.l || id)}<button onclick="toggleAct('${id}')" aria-label="Retirer">✕</button></span>`).join('')}<button class="btn sm" onclick="V.pick=!V.pick;drawVisit()">${V.pick ? 'Fermer la liste' : '+ Ajouter un acte'}</button></div>`;
+  if (V.pick || !V.actes.length) h += `<div class="pick g2" style="margin-bottom:10px">${A.map(a => `<button class="${V.actes.includes(a.id) ? 'on' : ''}" onclick="toggleAct('${a.id}')">${esc(a.l)}<small>${actTag(a, V.date)}</small></button>`).join('')}</div>`;
+  h += `<div class="card">${lines(r)}</div>`;
+  h += `<div style="margin:4px 2px 12px;display:grid;gap:8px"><label class="row small"><input type="checkbox" style="width:auto;min-height:0" ${V.remplacant ? 'checked' : ''} onchange="V.remplacant=this.checked"> Visite faite par le/la remplaçant·e</label>${FR() ? `<label class="row small"><input type="checkbox" style="width:auto;min-height:0" ${V.nuit ? 'checked' : ''} onchange="V.nuit=this.checked;drawVisit()"> Soins de nuit prescrits (majoration nuit)</label>` : ''}</div>`;
+  h += `<h2 style="margin-top:6px">Transmission</h2><div class="grid3"><label class="f"><span>TA</span><input inputmode="numeric" placeholder="13/8" value="${esc(V.tr.ta)}" oninput="V.tr.ta=this.value"></label><label class="f"><span>Glycémie ${FR() ? 'g/L' : 'mg/dL'}</span><input inputmode="decimal" placeholder="${FR() ? '1,20' : '120'}" value="${esc(V.tr.gly)}" oninput="V.tr.gly=this.value"></label><label class="f"><span>T °C</span><input inputmode="decimal" placeholder="37,2" value="${esc(V.tr.temp)}" oninput="V.tr.temp=this.value"></label>
+    <label class="f"><span>Douleur /10</span><input inputmode="numeric" placeholder="0" value="${esc(V.tr.douleur)}" oninput="V.tr.douleur=this.value"></label><label class="f"><span>SpO₂ %</span><input inputmode="numeric" placeholder="97" value="${esc(V.tr.spo2)}" oninput="V.tr.spo2=this.value"></label></div>
+    <label class="f"><span>Observations</span><textarea placeholder="État général, soins, points de vigilance pour la prochaine visite…" oninput="V.tr.text=this.value">${esc(V.tr.text)}</textarea></label>`;
+  h += `<button class="btn ok block" onclick="saveVisit()">${I.check.replace('<svg', '<svg width="18" height="18"')} Enregistrer la visite · ${eur(r.total)}</button>`;
+  if (V.id) h += `<button class="btn ghost danger block" style="margin-top:8px" onclick="delVisit()">Annuler cette visite</button>`;
+  sheet(h);
+}
+function actTag(a, date) { return FR() ? (a.flat ? a.k : a.k + ' ' + String(a.c).replace('.', ',')) : (isWeekendOrHoliday(date, 'BE') ? (a.we ? a.we[0] + ' · ' + eur(a.we[1]) : 'semaine seulement') : a.wk[0] + ' · ' + eur(a.wk[1])); }
+function toggleAct(id) { const i = V.actes.indexOf(id); if (i >= 0) V.actes.splice(i, 1); else V.actes.push(id); drawVisit(); }
+function lines(r) {
+  if (!r.lines.length) return `<p class="muted small" style="margin:0">Sélectionnez au moins un acte.</p>`;
+  return r.lines.map(l => `<div class="line"><div class="grow"><code>${esc(l.code)}</code> ${esc(l.label)}${l.note ? `<div class="tiny muted">${esc(l.note)}</div>` : ''}</div><b>${l.amount ? eur(l.amount) : (l.code && l.code !== 'PLAF' ? '0,00 €' : '')}</b></div>`).join('') + `<div class="total"><span>Total</span><span>${eur(r.total)}</span></div>`;
+}
+function saveVisit() {
+  if (!V.actes.length) { toast('Sélectionnez au moins un acte.'); return; }
+  const isNew = !V.id;
+  const rec = { id: V.id || uid(), stop: V.stop, pid: V.pid, date: V.date, heure: V.heure, actes: V.actes.slice(), total: V.total, usedI: V.usedI, lines: V.lines, remplacant: !!V.remplacant, maj: V.maj, nuit: !!V.nuit };
+  S.visits = S.visits.filter(x => x.id !== rec.id); S.visits.push(rec);
+  const t = V.tr, vit = { ta: t.ta, gly: t.gly, temp: t.temp, douleur: t.douleur, spo2: t.spo2 };
+  S.trans = S.trans.filter(x => x.visit !== rec.id);
+  if (t.text || Object.values(vit).some(Boolean)) S.trans.push({ id: uid(), visit: rec.id, pid: rec.pid, date: rec.date, heure: rec.heure, text: t.text, vitals: vit });
+  S.started = S.started || {}; if (rec.date === today() && !S.started[rec.date]) S.started[rec.date] = rec.heure;
+  save(); closeSheet(); toast(isNew ? `Visite validée · ${eur(rec.total)}` : 'Visite mise à jour'); render();
+  const al = vitalAlerts(vit);
+  if (al.length) setTimeout(() => showAlerts(rec.pid, al), 250); else if (isNew) checkEnd(rec.date);
+}
+function addExtra(pid) {
+  if (!S.patients.length) { toast("Ajoutez d'abord un patient."); return; }
+  const E = { pid: pid || S.patients[0].id, heure: '12:00', actes: [] };
+  window.E = E;
+  const draw = () => sheet(`<div class="sh"><h2>Visite ponctuelle</h2><button class="icon" onclick="closeSheet()">✕</button></div>
+    <label class="f"><span>Patient</span><select onchange="E.pid=this.value">${S.patients.filter(p => !p.archive).map(p => `<option value="${p.id}" ${p.id === E.pid ? 'selected' : ''}>${esc(fullName(p))}</option>`).join('')}</select></label>
+    <div class="grid2"><label class="f"><span>Date</span><input type="date" id="xd" value="${ui.date}"></label><label class="f"><span>Heure</span><input type="time" value="${E.heure}" onchange="E.heure=this.value"></label></div>
+    <label class="f"><span>Actes prévus</span></label><div class="pick g2">${acts().map(a => `<button class="${E.actes.includes(a.id) ? 'on' : ''}" onclick="E.actes.includes('${a.id}')?E.actes.splice(E.actes.indexOf('${a.id}'),1):E.actes.push('${a.id}');this.classList.toggle('on')">${esc(a.l)}</button>`).join('')}</div>
+    <label class="f" style="margin-top:10px"><span>Note</span><input id="xn" placeholder="ex. retrait de fils, sortie d'hôpital"></label>
+    <button class="btn pri block" onclick="S.extra.push({id:uid(),pid:E.pid,date:$('#xd').value,heure:E.heure,actes:E.actes,note:$('#xn').value});save();closeSheet();toast('Visite ajoutée à la tournée');render()">Ajouter à la tournée</button>`);
+  draw();
+}
+
+/* ---------- ORDONNANCES : photos et PDF, rangés dans IndexedDB sur le téléphone ---------- */
+const FDB = { db: null, urls: new Map() };
+function fdb() {
+  if (FDB.db) return Promise.resolve(FDB.db);
+  return new Promise((res, rej) => {
+    let r; try { r = indexedDB.open('infikit_files', 1); } catch (e) { return rej(e); }
+    r.onupgradeneeded = () => r.result.createObjectStore('files');
+    r.onsuccess = () => { FDB.db = r.result; res(r.result); };
+    r.onerror = () => rej(r.error || new Error('Stockage des fichiers indisponible'));
+  });
+}
+async function fop(mode, fn) {
+  const db = await fdb();
+  return new Promise((res, rej) => { const tx = db.transaction('files', mode), q = fn(tx.objectStore('files')); tx.oncomplete = () => res(q && q.result); tx.onerror = tx.onabort = () => rej(tx.error || new Error('Stockage plein ?')); });
+}
+// on range un ArrayBuffer + type (plus fiable qu'un Blob sur les anciens Safari)
+const fileGet = id => fop('readonly', st => st.get(id));
+const filePut = (id, f) => fop('readwrite', st => st.put(f, id));
+const fileDel = id => fop('readwrite', st => st.delete(id));
+const fileKeys = () => fop('readonly', st => st.getAllKeys());
+async function fileGC() { try { const keep = new Set((S?.ordos || []).map(o => o.id)); for (const k of await fileKeys()) if (!keep.has(k)) await fileDel(k); } catch (e) { } }
+async function fileWipe() { try { for (const k of await fileKeys()) await fileDel(k); } catch (e) { } FDB.urls.forEach(u => URL.revokeObjectURL(u)); FDB.urls.clear(); }
+const ordosOf = pid => (S.ordos || []).map((o, i) => [o, i]).filter(([o]) => o.pid === pid).sort((a, b) => b[0].date.localeCompare(a[0].date) || b[1] - a[1]).map(x => x[0]);
+const isPDF = o => /pdf/.test(o.type);
+const kb = n => n > 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' Mo' : Math.max(1, Math.round(n / 1024)) + ' ko';
+
+async function ordoURL(o, fetchCloud = true) {
+  if (FDB.urls.has(o.id)) return FDB.urls.get(o.id);
+  let f = null; try { f = await fileGet(o.id); } catch (e) { }
+  if (!f && fetchCloud && typeof cloudFetchFile === 'function') f = await cloudFetchFile(o);
+  if (!f) return null;
+  const u = URL.createObjectURL(new Blob([f.data], { type: f.type || o.type }));
+  FDB.urls.set(o.id, u); return u;
+}
+async function shrinkImage(file) {
+  // photo de téléphone (4000 px, 3-6 Mo) → JPEG 2000 px, lisible et ~10 fois plus léger
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const k = Math.min(1, 2000 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(bmp, 0, 0, c.width, c.height);
+    const b = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.82));
+    return b && b.size < file.size ? b : file;
+  } catch (e) { return file; }
+}
+function ordoSection(p) {
+  const list = ordosOf(p.id);
+  let h = `<h2>Ordonnances</h2><div class="card">`;
+  if (list.length) {
+    h += `<div class="ordos">${list.map(o => `<button class="ordo" onclick="viewOrdo('${o.id}')" aria-label="Voir ${esc(o.name)}"><div class="th" data-ordo="${o.id}">${isPDF(o) ? 'PDF' : '…'}</div><span><b>${esc(o.name)}</b>${esc(o.date.split('-').reverse().join('/'))}${o.fin ? ` · jusqu’au ${esc(o.fin.split('-').reverse().slice(0, 2).join('/'))}` : ''}</span></button>`).join('')}</div>`;
+    AFTER.push(() => list.filter(o => !isPDF(o)).forEach(async o => { const u = await ordoURL(o, false); const el = document.querySelector(`[data-ordo="${o.id}"]`); if (el) el.innerHTML = u ? `<img src="${u}" alt="">` : '☁️'; }));
+  } else h += `<p class="small muted" style="margin:0">Aucune ordonnance jointe. Photographiez-la ou importez le PDF reçu du médecin : elle vous suit dans la tournée.</p>`;
+  h += `<div class="upl"><label class="btn sm pri" tabindex="0">📷 Photographier<input type="file" accept="image/*" capture="environment" hidden onchange="addOrdos('${p.id}',this)"></label><label class="btn sm" tabindex="0">📄 Photo ou PDF<input type="file" accept="image/*,application/pdf,.pdf" multiple hidden onchange="addOrdos('${p.id}',this)"></label></div></div>`;
+  return h;
+}
+async function addOrdos(pid, inp) {
+  const files = [...(inp.files || [])]; inp.value = '';
+  if (!files.length) return;
+  const added = [];
+  for (const file of files) {
+    const pdf = /pdf/i.test(file.type) || /\.pdf$/i.test(file.name);
+    if (!pdf && !/^image\//.test(file.type)) { toast(`« ${file.name} » n’est ni une photo ni un PDF.`); continue; }
+    if (file.size > 20 * 1048576) { toast(`« ${file.name} » dépasse 20 Mo.`); continue; }
+    toast(pdf ? 'Enregistrement du PDF…' : 'Optimisation de la photo…');
+    const blob = pdf ? file : await shrinkImage(file), type = pdf ? 'application/pdf' : (blob.type || file.type || 'image/jpeg');
+    const o = { id: uid() + uid(), pid, name: pdf ? file.name.replace(/\.pdf$/i, '') || 'Ordonnance' : 'Ordonnance du ' + today().split('-').reverse().join('/'), type, size: blob.size, date: today(), fin: '', refs: {} };
+    try { await filePut(o.id, { type, data: await blob.arrayBuffer() }); } catch (e) { toast('Impossible d’enregistrer le fichier : mémoire du téléphone pleine ?'); continue; }
+    S.ordos.push(o); added.push(o);
+  }
+  if (!added.length) return;
+  save(); render();
+  editOrdo(added[added.length - 1].id, true);
+}
+function editOrdo(id, fresh) {
+  const o = S.ordos.find(x => x.id === id), p = patient(o.pid);
+  sheet(`<div class="sh"><h2>${fresh ? 'Ordonnance ajoutée ✅' : 'Modifier l’ordonnance'}</h2><button class="icon" onclick="closeSheet()">✕</button></div>
+    <label class="f"><span>Nom</span><input id="on" value="${esc(o.name)}"></label>
+    <div class="grid2"><label class="f"><span>Date de l’ordonnance</span><input id="od" type="date" value="${esc(o.date)}"></label><label class="f"><span>Valable jusqu’au</span><input id="of" type="date" value="${esc(o.fin)}"></label></div>
+    <label class="rowitem" style="cursor:pointer;margin-bottom:12px"><span class="grow"><b>Alerte de fin de validité</b><small>Met à jour l’alerte « ordonnance expirée » de ${esc(fullName(p))}</small></span><span class="switch"><input id="oa" type="checkbox" role="switch" checked><i></i></span></label>
+    <button class="btn pri block" onclick="saveOrdo('${o.id}')">Enregistrer</button>`);
+}
+function saveOrdo(id) {
+  const o = S.ordos.find(x => x.id === id), p = patient(o.pid);
+  o.name = $('#on').value.trim() || 'Ordonnance'; o.date = $('#od').value || o.date; o.fin = $('#of').value;
+  if (o.fin && $('#oa').checked && p) p.ordoFin = o.fin;
+  save(); closeSheet(); render(); toast('Ordonnance enregistrée');
+}
+async function viewOrdo(id) {
+  const o = S.ordos.find(x => x.id === id); if (!o) return;
+  sheet(`<div class="sh"><h2>${esc(o.name)}</h2><button class="icon" onclick="closeSheet()">✕</button></div><p class="small muted">Chargement…</p>`);
+  const u = await ordoURL(o);
+  if ($('#sheet').hidden) return;
+  const safeName = (o.name || 'ordonnance').replace(/[^\w\- àâçéèêëîïôûùüÿœ]/gi, '_') + (isPDF(o) ? '.pdf' : '.jpg');
+  sheet(`<div class="sh"><h2>${esc(o.name)}</h2><button class="icon" onclick="closeSheet()">✕</button></div>
+    <p class="small muted" style="margin-top:0">${esc(fullName(patient(o.pid)))} · ${esc(o.date.split('-').reverse().join('/'))}${o.fin ? ' · valable jusqu’au ' + esc(o.fin.split('-').reverse().join('/')) : ''} · ${kb(o.size)}</p>
+    ${!u ? `<div class="alert bad">Fichier absent de ce téléphone${cloudProv() ? ' et introuvable dans le cloud' : ''}. ${cloudProv() ? 'Lancez une synchronisation depuis Réglages.' : 'Connectez-vous (Réglages) pour le récupérer depuis votre autre appareil.'}</div>`
+      : isPDF(o) ? `<a class="btn pri block" href="${u}" target="_blank" rel="noopener" style="margin-bottom:10px">📄 Ouvrir le PDF</a>` : `<a href="${u}" target="_blank" rel="noopener"><img class="ordoview" src="${u}" alt="Ordonnance"></a>`}
+    <div class="row" style="flex-wrap:wrap">${u ? `<button class="btn sm grow" onclick="shareOrdo('${o.id}')">Partager</button><a class="btn sm grow" href="${u}" download="${esc(safeName)}">Télécharger</a>` : ''}<button class="btn sm grow" onclick="editOrdo('${o.id}')">Modifier</button><button class="btn sm grow danger" onclick="delOrdo('${o.id}')">Supprimer</button></div>`);
+}
+async function shareOrdo(id) {
+  const o = S.ordos.find(x => x.id === id), f = await fileGet(o.id).catch(() => null);
+  if (!f) { toast('Fichier indisponible'); return; }
+  const file = new File([f.data], (o.name || 'ordonnance') + (isPDF(o) ? '.pdf' : '.jpg'), { type: f.type });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: o.name });
+    else toast('Partage non disponible : utilisez « Télécharger ».');
+  } catch (e) { if (e.name !== 'AbortError') toast('Partage impossible'); }
+}
+async function delOrdo(id) {
+  const o = S.ordos.find(x => x.id === id);
+  if (!await ask('Supprimer cette ordonnance ?', { detail: 'Le fichier sera effacé de ce téléphone' + (cloudProv() ? ' et de votre sauvegarde en ligne.' : '.'), ok: 'Supprimer', danger: true })) return;
+  S.ordos = S.ordos.filter(x => x.id !== id);
+  if (o.refs && Object.keys(o.refs).length) S.trash.push({ id: o.id, refs: o.refs });
+  try { await fileDel(id); } catch (e) { }
+  if (FDB.urls.has(id)) { URL.revokeObjectURL(FDB.urls.get(id)); FDB.urls.delete(id); }
+  save(); closeSheet(); render(); toast('Ordonnance supprimée');
+}
+
+/* ---------- PATIENTS ---------- */
+function vPatients() {
+  const q = ui.q.toLowerCase();
+  const list = S.patients.filter(p => !p.archive && (!q || (fullName(p) + ' ' + p.adresse).toLowerCase().includes(q))).sort((a, b) => a.nom.localeCompare(b.nom));
+  let h = `<div class="row" style="margin-bottom:10px"><input class="grow" type="search" placeholder="Rechercher un patient" value="${esc(ui.q)}" oninput="ui.q=this.value;clearTimeout(window._qt);window._qt=setTimeout(()=>{render();const i=document.querySelector('input[type=search]');i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)"><button class="btn pri" onclick="editPatient()">+ Patient</button></div>`;
+  if (!list.length) return h + `<div class="card empty">${I.users}<p><b>${q ? 'Aucun résultat.' : 'Aucun patient pour le moment.'}</b><br><span class="muted small">Chaque fiche regroupe adresse, plan de soins, ordonnance et transmissions.</span></p></div>`;
+  for (const p of list) {
+    const o = ordoState(p), n = (p.plan || []).length;
+    h += `<button class="item" onclick="ui.pid='${p.id}';render();window.scrollTo(0,0)"><span class="avatar">${esc(initials(p))}</span><span class="grow"><b>${esc(fullName(p))}</b><span class="small muted" style="display:block">${esc(p.adresse || '—')}</span>
+      <span>${n ? `<span class="chip">${n} créneau${n > 1 ? 'x' : ''}</span>` : ''}${o ? `<span class="chip ${o.c}">${o.t}</span>` : ''}${ordosOf(p.id).length ? `<span class="chip">📎 ${ordosOf(p.id).length}</span>` : ''}${recentAlert(p.id) ? '<span class="chip bad">Constantes</span>' : ''}${p.allergies ? '<span class="chip bad">Allergie</span>' : ''}${!FR() && p.katz ? `<span class="chip sun">Forfait ${p.palliatif ? 'P' : ''}${p.katz}</span>` : ''}${FR() && p.bsi ? `<span class="chip sun">${p.bsi}</span>` : ''}</span></span>${I.next.replace('<svg', '<svg width="18" height="18"')}</button>`;
+  }
+  return h;
+}
+function spark(vals, label, unit) {
+  const v = vals.filter(x => !isNaN(x)); if (v.length < 2) return '';
+  const mn = Math.min(...v), mx = Math.max(...v), W = 300, H = 60, st = W / (v.length - 1);
+  const pts = v.map((x, i) => [i * st, H - 6 - (x - mn) / Math.max(mx - mn, 0.001) * (H - 12)]);
+  return `<div style="margin-bottom:10px"><div class="row small"><b class="grow">${label}</b><span class="muted">dernier : ${String(v[v.length - 1]).replace('.', ',')} ${unit}</span></div><svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="M${pts.map(p => p.join(' ')).join('L')}" fill="none" stroke="var(--pri)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="var(--pri)"/>`).join('')}</svg></div>`;
+}
+function vPatient(id) {
+  const p = patient(id); if (!p) { ui.pid = null; return vPatients(); }
+  const o = ordoState(p);
+  let h = `<button class="btn ghost sm" onclick="ui.pid=null;render()">${I.back.replace('<svg', '<svg width="16" height="16"')} Patients</button>`;
+  h += `<div class="card" style="margin-top:8px"><div class="row"><span class="avatar" style="width:54px;height:54px;font-size:19px">${esc(initials(p))}</span><div class="grow"><h2 style="margin:0">${esc(fullName(p))}${age(p.ddn) != null ? `<span class="small muted" style="font-weight:400"> · ${age(p.ddn)} ans</span>` : ''}</h2><div class="small muted">${esc(p.adresse || 'Adresse non renseignée')}</div></div><button class="urgmini" onclick="urgence('${p.id}')" aria-label="Urgence">🚨</button></div>
+    ${p.allergies ? `<div class="allergy">⚠️ Allergies : ${esc(p.allergies)}</div>` : ''}${recentAlert(p.id) ? `<div class="alert bad" style="margin-top:8px">📈 Constantes inhabituelles ces dernières 48 h : consultez les transmissions.</div>` : ''}
+    ${o ? `<div class="alert ${o.c}" style="margin-top:10px">⚠️ ${o.t} (${esc(p.ordoFin.split('-').reverse().join('/'))})</div>` : ''}
+    <div class="small" style="margin-top:10px">${p.medecin ? `Médecin : <b>${esc(p.medecin)}</b><br>` : ''}${p.ordoFin && !o ? `Ordonnance valable jusqu'au ${esc(p.ordoFin.split('-').reverse().join('/'))}<br>` : ''}${FR() ? `Déplacement : ${p.km || 0} km (aller), zone ${esc(p.zone || S.zone)}${p.bsi ? ' · ' + p.bsi : ''}${p.enfant ? ' · enfant < 7 ans' : ''}` : `${p.katz ? `Forfait ${p.palliatif ? 'palliatif P' : ''}${p.katz} (échelle de Katz)` : 'Soins à l’acte'}`}${p.antecedents ? `<br>Antécédents : ${esc(p.antecedents)}` : ''}${p.contactNom ? `<br>À prévenir : ${esc(p.contactNom)}${p.contactTel ? ' · ' + esc(p.contactTel) : ''}` : ''}</div>
+    ${p.notes ? `<p class="small muted" style="margin:8px 0 0">📝 ${esc(p.notes)}</p>` : ''}
+    <div class="row" style="flex-wrap:wrap;margin-top:12px">${p.tel ? `<a class="btn sm" href="tel:${esc(p.tel.replace(/\s/g, ''))}">${I.phone.replace('<svg', '<svg width="16" height="16"')} Appeler</a>` : ''}<a class="btn sm" href="${navLink(p)}" target="_blank" rel="noopener">${GMAPS_ICON.replace(/26/g, '18')} Maps</a><a class="btn sm" href="${wazeLink(p)}" target="_blank" rel="noopener">${WAZE_ICON.replace(/26/g, '18')} Waze</a><button class="btn sm" onclick="here('${p.id}')">${I.pin.replace('<svg', '<svg width="16" height="16"')} Position ici</button><button class="btn sm" onclick="editPatient('${p.id}')">Modifier</button></div></div>`;
+  h += ordoSection(p);
+  h += `<h2>Plan de soins</h2>`;
+  h += (p.plan || []).map(pl => `<div class="card"><div class="row"><div class="grow"><b>${esc(pl.heure)}</b> · ${pl.jours.length === 7 ? 'tous les jours' : pl.jours.map(j => JOURS[j].slice(0, 3)).join(', ')}<div>${pl.actes.map(a => `<span class="chip">${esc(act(a)?.l || a)}</span>`).join('')}</div>${pl.note ? `<div class="tiny muted">${esc(pl.note)}</div>` : ''}</div><button class="btn sm" onclick="editPlan('${p.id}','${pl.id}')">Modifier</button></div></div>`).join('') || `<p class="note">Aucun créneau. Ajoutez les passages réguliers pour qu'ils apparaissent dans la tournée.</p>`;
+  h += `<div class="row"><button class="btn sm pri" onclick="editPlan('${p.id}')">+ Créneau</button><button class="btn sm" onclick="addExtra('${p.id}')">+ Visite ponctuelle</button></div>`;
+  const tr = S.trans.filter(t => t.pid === id).sort((a, b) => (a.date + a.heure).localeCompare(b.date + b.heure));
+  const g = tr.map(t => parseFloat(String(t.vitals?.gly || '').replace(',', '.'))), ta = tr.map(t => parseFloat(String(t.vitals?.ta || '').split('/')[0].replace(',', '.')));
+  const sp = spark(g.filter(x => !isNaN(x)).slice(-14), 'Glycémie', FR() ? 'g/L' : 'mg/dL') + spark(ta.filter(x => !isNaN(x)).slice(-14), 'Tension systolique', 'cmHg');
+  if (sp) h += `<h2>Constantes</h2><div class="card">${sp}</div>`;
+  h += `<h2>Transmissions</h2><button class="btn sm" style="margin-bottom:10px" onclick="newTrans('${p.id}')">+ Nouvelle transmission</button>`;
+  h += tr.length ? `<div class="card"><div class="tl">${tr.slice().reverse().slice(0, 12).map(t => `<div class="t"><b>${esc(t.date.split('-').reverse().join('/'))} · ${esc(t.heure)}</b><div>${vitalChips(t.vitals)}</div>${t.text ? `<div class="small">${esc(t.text)}</div>` : ''}</div>`).join('')}</div></div>` : `<p class="note">Aucune transmission pour l'instant.</p>`;
+  const vs = S.visits.filter(v => v.pid === id).sort((a, b) => (b.date + b.heure).localeCompare(a.date + a.heure));
+  h += `<h2>Dernières visites</h2>` + (vs.length ? `<div class="card">${vs.slice(0, 8).map(v => `<div class="line"><span>${esc(v.date.split('-').reverse().join('/'))} ${esc(v.heure)}${v.remplacant ? ' <span class="chip sun">remplaçant·e</span>' : ''}</span><b>${eur(v.total)}</b></div>`).join('')}</div>` : `<p class="note">Aucune visite enregistrée.</p>`);
+  h += `<button class="btn ghost danger block" style="margin-top:14px" onclick="archivePatient('${p.id}')">Archiver le patient</button>`;
+  return h;
+}
+function here(pid) {
+  if (!navigator.geolocation) { toast('Géolocalisation indisponible sur cet appareil.'); return; }
+  toast('Localisation en cours…');
+  navigator.geolocation.getCurrentPosition(pos => {
+    const t = pid === 'cabinet' ? S.cabinet : patient(pid);
+    t.lat = +pos.coords.latitude.toFixed(6); t.lng = +pos.coords.longitude.toFixed(6); save(); toast('Position enregistrée 📍'); render();
+  }, () => toast('Localisation refusée ou indisponible ici. Collez les coordonnées depuis Google Maps dans « Modifier ».'), { enableHighAccuracy: true, timeout: 10000 });
+}
+function parseCoords(s) { const m = String(s || '').match(/(-?\d+(?:[.,]\d+)?)\s*[,; ]\s*(-?\d+(?:[.,]\d+)?)/); if (!m) return null; return [parseFloat(m[1].replace(',', '.')), parseFloat(m[2].replace(',', '.'))]; }
+function editPatient(id) {
+  const p = id ? patient(id) : { civ: 'Mme', prenom: '', nom: '', adresse: '', tel: '', medecin: '', ordoFin: '', km: 3, zone: S.zone, bsi: '', enfant: false, katz: '', palliatif: false, allergies: '', notes: '', lat: null, lng: null };
+  sheet(`<div class="sh"><h2>${id ? 'Modifier la fiche' : 'Nouveau patient'}</h2><button class="icon" onclick="closeSheet()">✕</button></div>
+    <div class="grid3"><label class="f"><span>Civilité</span><select id="pc"><option ${p.civ === 'Mme' ? 'selected' : ''}>Mme</option><option ${p.civ === 'M.' ? 'selected' : ''}>M.</option><option value="" ${!p.civ ? 'selected' : ''}>—</option></select></label><label class="f"><span>Prénom</span><input id="pp" value="${esc(p.prenom)}"></label><label class="f"><span>Nom</span><input id="pn" value="${esc(p.nom)}"></label></div>
+    <label class="f"><span>Adresse</span><input id="pa" value="${esc(p.adresse)}" autocomplete="off"></label>
+    <div class="grid2"><label class="f"><span>Téléphone</span><input id="pt" type="tel" value="${esc(p.tel)}"></label><label class="f"><span>Médecin traitant</span><input id="pm" value="${esc(p.medecin)}"></label></div>
+    <label class="f"><span>Fin de validité de l'ordonnance</span><input id="po" type="date" value="${esc(p.ordoFin)}"></label>
+    ${id ? '' : `<p class="note" style="margin-top:-6px">Vous pourrez photographier ou joindre l’ordonnance (photo ou PDF) depuis la fiche du patient.</p>`}
+    ${FR() ? `<div class="grid2"><label class="f"><span>Distance depuis le cabinet (km, aller)</span><input id="pk" inputmode="decimal" value="${esc(p.km)}"></label><label class="f"><span>Zone IK</span><select id="pz">${['plaine', 'montagne', 'pied'].map(z => `<option value="${z}" ${p.zone === z ? 'selected' : ''}>${{ plaine: 'Plaine', montagne: 'Montagne', pied: 'À pied / ski' }[z]}</option>`).join('')}</select></label></div>
+      <div class="grid2"><label class="f"><span>Forfait BSI</span><select id="pb"><option value="">Aucun</option>${['BSA', 'BSB', 'BSC'].map(b => `<option ${p.bsi === b ? 'selected' : ''}>${b}</option>`).join('')}</select></label><label class="f"><span>Enfant de moins de 7 ans</span><select id="pe"><option value="0">Non</option><option value="1" ${p.enfant ? 'selected' : ''}>Oui (MIE)</option></select></label></div>`
+      : `<div class="grid2"><label class="f"><span>Forfait (échelle de Katz)</span><select id="pkz"><option value="">Aucun (à l'acte)</option>${['A', 'B', 'C'].map(b => `<option ${p.katz === b ? 'selected' : ''}>${b}</option>`).join('')}</select></label><label class="f"><span>Statut palliatif</span><select id="ppal"><option value="0">Non</option><option value="1" ${p.palliatif ? 'selected' : ''}>Oui</option></select></label></div>`}
+    <label class="f"><span>Allergies</span><input id="pal" value="${esc(p.allergies)}" placeholder="ex. pénicilline, latex, iode"></label>
+    <details class="card" style="padding:4px 14px;margin-bottom:10px" ${id ? '' : 'open'}><summary><span class="grow">Informations médicales et urgence<small>Affichées dans la fiche d’urgence à lire aux secours</small></span></summary>
+      <div class="grid2" style="margin-top:6px"><label class="f"><span>Date de naissance</span><input id="pddn" type="date" value="${esc(p.ddn || '')}"></label><label class="f"><span>Tél. du médecin</span><input id="pmt" type="tel" value="${esc(p.medecinTel || '')}"></label></div>
+      <label class="f"><span>Antécédents</span><input id="pant" value="${esc(p.antecedents || '')}" placeholder="ex. diabète type 2, insuffisance cardiaque"></label>
+      <label class="f"><span>Traitements en cours</span><textarea id="ptrt" style="min-height:60px" placeholder="ex. insuline, anticoagulant">${esc(p.traitements || '')}</textarea></label>
+      <div class="grid2"><label class="f"><span>Personne à prévenir</span><input id="pcn" value="${esc(p.contactNom || '')}" placeholder="ex. sa fille, Julie"></label><label class="f"><span>Son téléphone</span><input id="pct" type="tel" value="${esc(p.contactTel || '')}"></label></div></details>
+    <label class="f"><span>Notes (code d'accès, clés, animaux…)</span><textarea id="pno">${esc(p.notes)}</textarea></label>
+    <label class="f"><span>Position GPS (collez « lat, lng » depuis Google Maps)</span><input id="pgps" placeholder="45.7640, 4.8357" value="${p.lat != null ? p.lat + ', ' + p.lng : ''}"></label>
+    <button class="btn pri block" onclick="savePatient('${id || ''}')">${id ? 'Enregistrer' : 'Créer la fiche'}</button>`);
+}
+function savePatient(id) {
+  const g = s => ($(s)?.value ?? '').trim();
+  if (!g('#pn') && !g('#pp')) { toast('Indiquez au moins un nom.'); return; }
+  const p = id ? patient(id) : { id: uid(), plan: [] };
+  Object.assign(p, { ddn: g('#pddn'), medecinTel: g('#pmt'), antecedents: g('#pant'), traitements: g('#ptrt'), contactNom: g('#pcn'), contactTel: g('#pct') });
+  Object.assign(p, { civ: g('#pc'), prenom: g('#pp'), nom: g('#pn'), adresse: g('#pa'), tel: g('#pt'), medecin: g('#pm'), ordoFin: g('#po'), allergies: g('#pal'), notes: g('#pno') });
+  if (FR()) Object.assign(p, { km: parseFloat(g('#pk').replace(',', '.')) || 0, zone: g('#pz'), bsi: g('#pb'), enfant: g('#pe') === '1' });
+  else Object.assign(p, { katz: g('#pkz'), palliatif: g('#ppal') === '1' });
+  const c = parseCoords(g('#pgps')); if (c) { p.lat = c[0]; p.lng = c[1]; } else if (!g('#pgps')) { p.lat = null; p.lng = null; }
+  if (!id) S.patients.push(p);
+  save(); closeSheet(); ui.tab = 'patients'; ui.pid = p.id; render();
+  if (!id) setTimeout(() => editPlan(p.id), 150);
+}
+let PL = null;
+function editPlan(pid, plid) {
+  const p = patient(pid), pl = plid ? p.plan.find(x => x.id === plid) : null;
+  PL = pl ? JSON.parse(JSON.stringify(pl)) : { id: uid(), jours: [0, 1, 2, 3, 4, 5, 6], heure: '08:00', actes: [], note: '' };
+  PL.pid = pid; PL.isNew = !pl; drawPlan();
+}
+function drawPlan() {
+  sheet(`<div class="sh"><h2>${PL.isNew ? 'Nouveau créneau' : 'Modifier le créneau'}</h2><button class="icon" onclick="closeSheet()">✕</button></div>
+    <label class="f"><span>Jours</span></label><div class="pick" style="margin-bottom:10px">${JOURS.map((j, i) => `<button class="${PL.jours.includes(i) ? 'on' : ''}" style="min-width:44px;text-align:center" onclick="PL.jours.includes(${i})?PL.jours.splice(PL.jours.indexOf(${i}),1):PL.jours.push(${i});PL.jours.sort();drawPlan()" aria-label="${j}">${JOURS_C[i]}</button>`).join('')}<button onclick="PL.jours=[0,1,2,3,4];drawPlan()">Semaine</button><button onclick="PL.jours=[0,1,2,3,4,5,6];drawPlan()">Tous</button></div>
+    <label class="f"><span>Heure de passage</span><input type="time" value="${PL.heure}" onchange="PL.heure=this.value"></label>
+    <label class="f"><span>Actes</span></label><div class="pick g2">${acts().map(a => `<button class="${PL.actes.includes(a.id) ? 'on' : ''}" onclick="PL.actes.includes('${a.id}')?PL.actes.splice(PL.actes.indexOf('${a.id}'),1):PL.actes.push('${a.id}');drawPlan()">${esc(a.l)}</button>`).join('')}</div>
+    <label class="f" style="margin-top:10px"><span>Note</span><input value="${esc(PL.note)}" oninput="PL.note=this.value" placeholder="ex. à jeun, glycémie avant insuline"></label>
+    <button class="btn pri block" onclick="savePlan()">Enregistrer</button>${PL.isNew ? '' : `<button class="btn ghost danger block" style="margin-top:8px" onclick="const p=patient(PL.pid);p.plan=p.plan.filter(x=>x.id!==PL.id);save();closeSheet();render()">Supprimer le créneau</button>`}`);
+}
+function savePlan() {
+  if (!PL.jours.length || !PL.actes.length) { toast('Choisissez au moins un jour et un acte.'); return; }
+  const p = patient(PL.pid), { pid, isNew, ...pl } = PL;
+  p.plan = (p.plan || []).filter(x => x.id !== pl.id).concat([pl]).sort((a, b) => hm(a.heure) - hm(b.heure));
+  save(); closeSheet(); toast('Créneau enregistré : il apparaît dans la tournée.'); render();
+}
+function saveTrans(pid) {
+  const vit = { ta: $('#tta').value, gly: $('#tgl').value, temp: $('#tte').value, douleur: $('#tdo').value, spo2: $('#tsp').value };
+  if (!$('#ttx').value.trim() && !Object.values(vit).some(Boolean)) { toast('Saisissez une observation ou une constante.'); return; }
+  S.trans.push({ id: uid(), pid, date: today(), heure: nowHM(), text: $('#ttx').value.trim(), vitals: vit }); save(); closeSheet(); render();
+  const al = vitalAlerts(vit); if (al.length) setTimeout(() => showAlerts(pid, al), 250); else toast('Transmission enregistrée');
+}
+function newTrans(pid) {
+  sheet(`<div class="sh"><h2>Transmission</h2><button class="icon" onclick="closeSheet()">✕</button></div>
+    <div class="grid3"><label class="f"><span>TA</span><input id="tta" placeholder="13/8"></label><label class="f"><span>Glycémie</span><input id="tgl" inputmode="decimal"></label><label class="f"><span>T °C</span><input id="tte" inputmode="decimal"></label><label class="f"><span>Douleur /10</span><input id="tdo" inputmode="numeric"></label><label class="f"><span>SpO₂ %</span><input id="tsp" inputmode="numeric"></label></div>
+    <label class="f"><span>Observations</span><textarea id="ttx"></textarea></label>
+    <button class="btn pri block" onclick="saveTrans('${pid}')">Enregistrer</button>`);
+}
+
+/* ---------- COTATION (calculateur) ---------- */
+function vCotation() {
+  const c = ui.cot, p = c.pid ? patient(c.pid) : (FR() ? { km: c.km, zone: c.zone } : { katz: c.katz || '' });
+  const ctx = c.pid ? dayCtx(c.pid, c.date, c.heure) : { nth: c.nth || 0, usedI: 0 };
+  const r = cote(p, c.date, c.heure, c.actes, Object.assign({ nuit: c.nuit }, ctx));
+  let h = `<div class="card"><label class="f"><span>Patient</span><select onchange="ui.cot.pid=this.value;render()"><option value="">Patient type (calcul rapide)</option>${S.patients.filter(x => !x.archive).map(x => `<option value="${x.id}" ${x.id === c.pid ? 'selected' : ''}>${esc(fullName(x))}</option>`).join('')}</select></label>
+    <div class="grid2"><label class="f"><span>Date</span><input type="date" value="${c.date}" onchange="ui.cot.date=this.value;render()"></label><label class="f"><span>Heure</span><input type="time" value="${c.heure}" onchange="ui.cot.heure=this.value;render()"></label></div>
+    ${!c.pid && FR() ? `<div class="grid2"><label class="f"><span>Distance (km, aller)</span><input inputmode="decimal" value="${c.km}" onchange="ui.cot.km=parseFloat(this.value.replace(',','.'))||0;render()"></label><label class="f"><span>Zone</span><select onchange="ui.cot.zone=this.value;render()">${['plaine', 'montagne', 'pied'].map(z => `<option value="${z}" ${c.zone === z ? 'selected' : ''}>${{ plaine: 'Plaine', montagne: 'Montagne', pied: 'À pied / ski' }[z]}</option>`).join('')}</select></label></div>` : ''}
+    ${!c.pid && !FR() ? `<div class="grid2"><label class="f"><span>Forfait Katz</span><select onchange="ui.cot.katz=this.value;render()"><option value="">Aucun</option>${['A', 'B', 'C'].map(k => `<option ${c.katz === k ? 'selected' : ''}>${k}</option>`).join('')}</select></label><label class="f"><span>Séance du jour</span><select onchange="ui.cot.nth=+this.value;render()">${['1ʳᵉ', '2ᵉ', '3ᵉ ou plus'].map((l, i) => `<option value="${i}" ${(c.nth || 0) === i ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>` : ''}
+    </div>`;
+  if (FR()) h += `<label class="row small" style="margin:0 4px 6px"><input type="checkbox" style="width:auto;min-height:0" ${c.nuit ? 'checked' : ''} onchange="ui.cot.nuit=this.checked;render()"> Soins de nuit prescrits</label>`;
+  h += `<h2>Détail</h2><div class="card">${lines(r)}</div>`;
+  if (c.pid && c.actes.length) h += `<button class="btn ok block" onclick="quickVisit()">Enregistrer comme visite</button>`;
+  h += `<h2>Actes</h2><div class="pick g2">${acts().map(a => `<button class="${c.actes.includes(a.id) ? 'on' : ''}" onclick="const x=ui.cot.actes;x.includes('${a.id}')?x.splice(x.indexOf('${a.id}'),1):x.push('${a.id}');render()">${esc(a.l)}<small>${actTag(a, c.date)}</small></button>`).join('')}</div>`;
+  h += `<p class="note">${FR() ? `Valeurs NGAP en vigueur : AMI ${eur(S.tarifs.AMI)}, IFD ${eur(S.tarifs.IFD)}, IK plaine ${eur(S.tarifs.IKp)}/km. L’avenant 11 prévoit un AMI à 3,35 € fin 2026 : mettez à jour la valeur dans Réglages le jour venu. Règle appliquée : 1ᵉʳ acte à taux plein, 2ᵉ à 50 %. Vérifiez toujours avec la NGAP en vigueur.` : `Honoraires INAMI (prestataire conventionné) au 1ᵉʳ janvier 2026, article 8, soins au domicile. Le week-end et les jours fériés, les codes et montants spécifiques s’appliquent automatiquement. Le plafond journalier (${eur(BE_CAP.wk)} en semaine, ${eur(BE_CAP.we)} le week-end) est calculé sur la journée. Vérifiez toujours avec la nomenclature en vigueur.`}</p>`;
+  return h;
+}
+function quickVisit() {
+  const c = ui.cot, p = patient(c.pid), ctx = dayCtx(c.pid, c.date, c.heure), r = cote(p, c.date, c.heure, c.actes, Object.assign({ nuit: c.nuit }, ctx));
+  S.visits.push({ id: uid(), stop: null, pid: c.pid, date: c.date, heure: c.heure, actes: c.actes.slice(), total: r.total, usedI: r.usedI || 0, lines: r.lines, remplacant: false, nuit: !!c.nuit });
+  save(); toast(`Visite enregistrée · ${eur(r.total)}`); c.actes = []; render();
+}
+
+/* ---------- COMPTA ---------- */
+const CATS_FR = ['Carburant', 'Matériel & consommables', 'URSSAF', 'CARPIMKO (retraite)', 'Assurances', 'Loyer du cabinet', 'Téléphone & internet', 'Logiciel de facturation', 'Comptable', 'Autre'];
+const CATS_BE = ['Carburant', 'Matériel & consommables', 'Cotisations sociales', 'Pension complémentaire', 'Assurances', 'Loyer du cabinet', 'Téléphone & internet', 'Logiciel / tarification', 'Comptable', 'Autre'];
+function monthData(m) {
+  const vis = S.visits.filter(v => v.date.startsWith(m)), rec = S.recettes.filter(r => r.date.startsWith(m)), ch = S.charges.filter(c => c.date.startsWith(m));
+  const recV = vis.reduce((s, v) => s + v.total, 0), recM = rec.reduce((s, r) => s + r.montant, 0), chg = ch.reduce((s, c) => s + c.montant, 0);
+  const remp = vis.filter(v => v.remplacant).reduce((s, v) => s + v.total, 0), retro = remp * S.retro.taux / 100;
+  return { vis, rec, ch, recV, recM, chg, remp, retro, net: recV + recM - chg - retro };
+}
+function vCompta() {
+  const m = ui.month, [y, mo] = m.split('-').map(Number), D = monthData(m);
+  const shift = n => { const d = new Date(y, mo - 1 + n, 1); ui.month = d.getFullYear() + '-' + pad(d.getMonth() + 1); render(); };
+  window._shift = shift;
+  let h = `<div class="dayhead"><button class="icon" onclick="_shift(-1)" aria-label="Mois précédent">${I.back}</button><div class="grow"><b style="text-transform:capitalize">${MOIS[mo - 1]} ${y}</b><span class="tiny muted">${D.vis.length} visites</span></div><button class="icon" onclick="_shift(1)" aria-label="Mois suivant">${I.next}</button></div>`;
+  h += `<div class="kpis"><div class="kpi"><b>${eur0(D.recV + D.recM)}</b><span>recettes</span></div><div class="kpi"><b>${eur0(D.chg + D.retro)}</b><span>charges et rétro.</span></div><div class="kpi"><b style="color:${D.net >= 0 ? 'var(--ok)' : 'var(--bad)'}">${eur0(D.net)}</b><span>résultat</span></div></div>`;
+  const days = new Date(y, mo, 0).getDate(), per = Array(days).fill(0);
+  D.vis.forEach(v => per[+v.date.slice(8) - 1] += v.total);
+  const mx = Math.max(1, ...per);
+  h += `<div class="card"><div class="row small"><b class="grow">Recettes par jour</b><span class="muted">week-end en jaune</span></div><div class="bars">${per.map((v, i) => `<i class="${isWeekendOrHoliday(m + '-' + pad(i + 1), S.country) ? 'we' : ''}" style="height:${v / mx * 100}%" title="${i + 1} : ${eur(v)}"></i>`).join('')}</div></div>`;
+  h += `<h2>Rétrocession remplaçant·e</h2><div class="card"><div class="grid2"><label class="f"><span>Remplaçant·e</span><input value="${esc(S.retro.nom)}" placeholder="Prénom Nom" onchange="S.retro.nom=this.value;save()"></label><label class="f"><span>Taux reversé (%)</span><input inputmode="decimal" value="${S.retro.taux}" onchange="S.retro.taux=parseFloat(this.value.replace(',','.'))||0;save();render()"></label></div>
+    <div class="line"><span>Recettes des visites du/de la remplaçant·e</span><b>${eur(D.remp)}</b></div><div class="line"><span>À reverser${S.retro.nom ? ' à ' + esc(S.retro.nom) : ''} (${S.retro.taux} %)</span><b>${eur(D.retro)}</b></div>
+    <p class="note" style="padding:4px 0 0">Cochez « Visite faite par le/la remplaçant·e » en validant une visite pour qu’elle soit comptée ici.</p></div>`;
+  h += `<h2>Charges</h2><div class="card">${D.ch.length ? D.ch.sort((a, b) => a.date.localeCompare(b.date)).map(c => `<div class="line"><span class="grow">${esc(c.label || c.cat)}<div class="tiny muted">${esc(c.cat)} · ${esc(c.date.split('-').reverse().join('/'))}</div></span><b>${eur(c.montant)}</b><button class="tiny muted" onclick="S.charges=S.charges.filter(x=>x.id!=='${c.id}');save();render()" aria-label="Supprimer">✕</button></div>`).join('') : '<p class="muted small" style="margin:0">Aucune charge ce mois-ci.</p>'}</div>
+    <div class="row"><button class="btn sm pri" onclick="addMoney('charge')">+ Charge</button><button class="btn sm" onclick="addMoney('recette')">+ Autre recette</button></div>`;
+  if (D.rec.length) h += `<h2>Autres recettes</h2><div class="card">${D.rec.map(r => `<div class="line"><span class="grow">${esc(r.label)}<div class="tiny muted">${esc(r.date.split('-').reverse().join('/'))}</div></span><b>${eur(r.montant)}</b><button class="tiny muted" onclick="S.recettes=S.recettes.filter(x=>x.id!=='${r.id}');save();render()">✕</button></div>`).join('')}</div>`;
+  const byCat = {}; D.ch.forEach(c => byCat[c.cat] = (byCat[c.cat] || 0) + c.montant);
+  if (Object.keys(byCat).length) h += `<h2>Répartition des charges</h2><div class="card">${Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div class="small" style="margin-bottom:8px"><div class="row"><span class="grow">${esc(k)}</span><b>${eur(v)}</b></div><div style="height:8px;border-radius:8px;background:var(--soft)"><div style="height:100%;width:${v / D.chg * 100}%;background:var(--pri);border-radius:8px"></div></div></div>`).join('')}</div>`;
+  h += `<button class="btn block" style="margin-top:12px" onclick="exportCSV()">Exporter le mois (CSV)</button><p class="note">Suivi indicatif pour piloter votre activité : la déclaration officielle reste celle de votre comptable${FR() ? ' (déclaration 2035)' : ''}.</p>`;
+  return h;
+}
+function addMoney(kind) {
+  const cats = FR() ? CATS_FR : CATS_BE;
+  sheet(`<div class="sh"><h2>${kind === 'charge' ? 'Nouvelle charge' : 'Autre recette'}</h2><button class="icon" onclick="closeSheet()">✕</button></div>
+    ${kind === 'charge' ? `<label class="f"><span>Catégorie</span><select id="mc">${cats.map(c => `<option>${c}</option>`).join('')}</select></label>` : ''}
+    <label class="f"><span>Libellé</span><input id="ml" placeholder="${kind === 'charge' ? 'ex. plein d’essence' : 'ex. séance de vaccination'}"></label>
+    <div class="grid2"><label class="f"><span>Montant (€)</span><input id="mm" inputmode="decimal"></label><label class="f"><span>Date</span><input id="md" type="date" value="${today()}"></label></div>
+    <button class="btn pri block" onclick="saveMoney('${kind}')">Enregistrer</button>`);
+}
+function saveMoney(kind) {
+  const v = parseFloat(($('#mm').value || '').replace(',', '.')); if (!(v > 0)) { toast('Indiquez un montant.'); return; }
+  const o = { id: uid(), date: $('#md').value || today(), label: $('#ml').value.trim(), montant: v };
+  if (kind === 'charge') { o.cat = $('#mc').value; S.charges.push(o); } else S.recettes.push(o);
+  save(); closeSheet(); render();
+}
+async function offer(filename, data) {
+  if (DL) { try { await DL.save({ filename, data }); toast('Fichier prêt.'); return; } catch (e) { if (e && e.code === 'declined') return; } }
+  if (!googleHost()) {
+    const u = URL.createObjectURL(new Blob([data], { type: /\.csv$/.test(filename) ? 'text/csv' : 'application/json' })), a = document.createElement('a');
+    a.href = u; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 60000); toast('Fichier téléchargé.'); return;
+  }
+  sheet(`<div class="sh"><h2>Copier les données</h2><button class="icon" onclick="closeSheet()">✕</button></div><p class="small muted">Le téléchargement n’est pas disponible ici : copiez le contenu ci-dessous.</p><textarea id="cp" style="min-height:220px;font-size:12px">${esc(data)}</textarea><button class="btn pri block" onclick="navigator.clipboard?.writeText($('#cp').value).then(()=>toast('Copié'),()=>{$('#cp').select();toast('Sélectionné : copiez-le')})">Copier</button>`);
+}
+function exportCSV() {
+  const D = monthData(ui.month), rows = [['Type', 'Date', 'Heure', 'Patient', 'Détail', 'Montant', 'Remplaçant']];
+  D.vis.sort((a, b) => (a.date + a.heure).localeCompare(b.date + b.heure)).forEach(v => rows.push(['Visite', v.date, v.heure, fullName(patient(v.pid)), (v.lines || []).map(l => l.code).filter(Boolean).join(' + '), v.total.toFixed(2).replace('.', ','), v.remplacant ? 'oui' : '']));
+  D.rec.forEach(r => rows.push(['Recette', r.date, '', '', r.label, r.montant.toFixed(2).replace('.', ','), '']));
+  D.ch.forEach(c => rows.push(['Charge', c.date, '', '', c.cat + ' — ' + c.label, (-c.montant).toFixed(2).replace('.', ','), '']));
+  if (D.retro) rows.push(['Rétrocession', ui.month, '', '', S.retro.nom, (-D.retro).toFixed(2).replace('.', ','), '']);
+  const csv = '\ufeff' + rows.map(r => r.map(x => '"' + String(x).replace(/"/g, '""') + '"').join(';')).join('\n');
+  offer(`infikit-compta-${ui.month}.csv`, csv);
+}
+
+/* ---------- boîte de confirmation intégrée (les boîtes natives sont bloquées dans la page publiée) ---------- */
+function ask(title, opt = {}) {
+  return new Promise(res => {
+    const el = $('#ask');
+    el.innerHTML = `<div class="askbox" role="alertdialog" aria-modal="true" aria-labelledby="askt"><h3 id="askt">${esc(title)}</h3>${opt.detail ? `<p>${esc(opt.detail)}</p>` : ''}<div class="row"><button class="btn grow" data-a="0">${esc(opt.cancel || 'Annuler')}</button><button class="btn grow ${opt.danger ? 'dangerfill' : 'pri'}" data-a="1">${esc(opt.ok || 'Confirmer')}</button></div></div>`;
+    el.hidden = false;
+    const done = v => { el.hidden = true; document.removeEventListener('keydown', key); res(v); };
+    const key = e => { if (e.key === 'Escape') done(false); };
+    document.addEventListener('keydown', key);
+    el.onclick = e => { if (e.target === el) done(false); };
+    el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => done(b.dataset.a === '1'));
+    el.querySelector('[data-a="1"]').focus();
+  });
+}
+
+/* ---------- RÉGLAGES ---------- */
+function vReglages() {
+  const nP = S.patients.filter(p => !p.archive).length;
+  let h = `<div class="card profile"><span class="avatar big">${esc((S.name || '?')[0].toUpperCase())}</span><div class="grow"><b>${esc(S.name || 'Votre profil')}</b><div class="small muted">${FR() ? '🇫🇷 Infirmier·e libéral·e · France' : '🇧🇪 Infirmier·e à domicile · Belgique'}</div>${cloudProv() ? `<span class="chip ok" style="margin-top:6px">☁️ Synchronisé · chiffré</span>` : `<span class="chip ok" style="margin-top:6px">🔒 Données sur cet appareil</span>`}</div></div>`;
+
+  h += `<h2>Pays d'exercice</h2><div class="seg big">${[['FR', '🇫🇷 France'], ['BE', '🇧🇪 Belgique']].map(([c, l]) => `<button class="${S.country === c ? 'on' : ''}" onclick="setCountry('${c}')">${l}</button>`).join('')}</div>
+    <p class="note">${FR() ? 'Cotations NGAP · Assurance maladie' : 'Tarification INAMI · article 8 de la nomenclature'}</p>`;
+
+  h += `<h2>Profil</h2><div class="card">
+    <label class="f"><span>Votre prénom</span><input value="${esc(S.name)}" autocomplete="given-name" onchange="S.name=this.value.trim();save();refreshHeader()"></label>
+    <label class="f"><span>Adresse du cabinet (point de départ)</span><input value="${esc(S.cabinet.adresse)}" autocomplete="street-address" onchange="S.cabinet.adresse=this.value.trim();save()"></label>
+    <label class="f" style="margin-bottom:0"><span>Position GPS du cabinet</span></label>
+    <div class="row"><input class="grow" id="cabgps" placeholder="45.7640, 4.8357" value="${S.cabinet.lat != null ? S.cabinet.lat + ', ' + S.cabinet.lng : ''}" onchange="setCabinet(this.value)"><button class="btn sm" onclick="here('cabinet')">${I.pin.replace('<svg', '<svg width="16" height="16"')} Ici</button></div>
+    <p class="note" style="padding:6px 2px 0">Sert de départ et d’arrivée pour optimiser la tournée et estimer les kilomètres.</p>
+    ${FR() ? `<label class="f" style="margin-top:6px;margin-bottom:0"><span>Zone IK par défaut</span><select onchange="S.zone=this.value;save();toast('Zone IK enregistrée')">${['plaine', 'montagne'].map(z => `<option value="${z}" ${S.zone === z ? 'selected' : ''}>${z === 'plaine' ? 'Plaine' : 'Montagne'}</option>`).join('')}</select></label>` : ''}</div>`;
+
+  if (FR()) {
+    const T = S.tarifs, L = { AMI: 'AMI', AMX: 'AMX', BSA: 'BSA', BSB: 'BSB', BSC: 'BSC', DI: 'DI (lettre-clé)', IFD: 'IFD', IFI: 'IFI', IKp: 'IK plaine (€/km)', IKm: 'IK montagne (€/km)', IKs: 'IK pied ou ski (€/km)', abatP: 'Abattement plaine (km)', abatM: 'Abattement montagne (km)', MAU: 'MAU', MCI: 'MCI', MIE: 'MIE', N1: 'Nuit 20h–23h et 5h–8h', N2: 'Nuit 23h–5h', DIM: 'Dimanche et jours fériés' };
+    const changed = Object.keys(FR_TARIFS).some(k => FR_TARIFS[k] !== T[k]);
+    h += `<h2>Tarifs et cotations</h2><div class="card">
+      <details><summary><span class="grow">Tarifs NGAP<small>AMI ${eur(T.AMI)} · IFD ${eur(T.IFD)} · IK ${eur(T.IKp)}/km${changed ? ' · personnalisés' : ''}</small></span></summary>
+        <div class="grid2" style="margin-top:10px">${Object.keys(L).map(k => `<label class="f"><span>${L[k]}</span><input inputmode="decimal" value="${String(T[k]).replace('.', ',')}" onchange="setTarif('${k}',this)"></label>`).join('')}</div>
+        <p class="note" style="padding-top:0">Valeurs conventionnelles 2026. L’avenant 11 porte l’AMI et l’AMX à 3,35 € fin 2026, puis 3,45 € en 2027 : mettez-les à jour à la date d’effet.</p>
+        <button class="btn sm" onclick="resetTarifs()">Revenir aux tarifs par défaut</button></details>
+      <details><summary><span class="grow">Coefficients des actes<small>${FR_ACTS.filter(a => !a.flat || a.k === 'DI').length} actes courants, modifiables</small></span></summary>
+        <div style="margin-top:6px">${FR_ACTS.filter(a => !a.flat || a.k === 'DI').map(a => { const c = (S.acteOverrides[a.id] || {}).c ?? a.c; return `<div class="line"><span class="grow">${esc(a.l)}</span><input style="width:84px;min-height:38px;text-align:center" inputmode="decimal" value="${String(c).replace('.', ',')}" aria-label="Coefficient ${esc(a.l)}" onchange="setCoef('${a.id}',this)"></div>`; }).join('')}</div>
+        <p class="note">Adaptez-les à votre pratique et à la NGAP en vigueur.</p></details></div>`;
+  } else {
+    h += `<h2>Tarifs et cotations</h2><div class="card"><div class="rowitem"><span class="grow"><b>Honoraires INAMI au 1ᵉʳ janvier 2026</b><small>Article 8 · prestataire conventionné · soins au domicile</small></span><span class="chip ok">à jour</span></div>
+      <p class="small muted" style="margin:10px 0 0">Indexation de 2,72 %. Le week-end commence le samedi et les jours fériés belges sont reconnus automatiquement. Plafond journalier : ${eur(BE_CAP.wk)} en semaine, ${eur(BE_CAP.we)} le week-end.</p></div>`;
+  }
+
+  h += installCard() + cloudCard();
+  h += `<h2>Sécurité</h2><div class="card"><div class="rowitem"><span class="grow"><b>Code d’accès</b><small>${S.pin ? 'Activé : demandé à chaque ouverture' : 'Désactivé : conseillé pour des données de santé'}</small></span>${S.pin ? `<span class="chip ok">activé</span>` : `<span class="chip sun">désactivé</span>`}</div>
+    <div class="row" style="margin-top:10px">${S.pin ? `<button class="btn sm grow" onclick="lockNow()">Verrouiller maintenant</button><button class="btn sm grow" onclick="setPin()">Changer</button><button class="btn sm grow danger" onclick="removePin()">Retirer</button>` : `<button class="btn pri block" onclick="setPin()">Définir un code à 4 chiffres</button>`}</div>
+    <p class="note" style="padding-bottom:0">${cloudProv() ? 'Seule une copie chiffrée sur ce téléphone quitte l’appareil : ni Google, ni GitHub, ni QuenTools ne peuvent la lire.' : 'Aucune donnée n’est envoyée sur un serveur : tout reste dans ce navigateur, sur ce téléphone.'}</p></div>`;
+
+  h += `<h2>Messages</h2><div class="card"><label class="rowitem" style="cursor:pointer"><span class="grow"><b>Encouragements et remerciements</b><small>Un mot au démarrage de la tournée, un merci quand elle est terminée</small></span><span class="switch"><input type="checkbox" role="switch" ${S.encourage !== false ? 'checked' : ''} onchange="S.encourage=this.checked;save();toast(this.checked?'Messages activés':'Messages désactivés')"><i></i></span></label>
+    ${S.encourage !== false ? `<button class="btn sm" style="margin-top:10px" onclick="celebrate('start',{n:stopsFor(today()).length,p:new Set(stopsFor(today()).map(s=>s.pid)).size})">Voir un exemple</button>` : ''}</div>`;
+  h += `<h2>Affichage</h2><div class="seg">${[['auto', 'Automatique'], ['light', 'Clair'], ['dark', 'Sombre']].map(([k, l]) => `<button class="${S.theme === k ? 'on' : ''}" onclick="S.theme='${k}';save();render()">${l}</button>`).join('')}</div>`;
+
+  const last = S.lastBackup ? 'Dernière sauvegarde le ' + S.lastBackup.split('-').reverse().join('/') : 'Aucune sauvegarde exportée pour l’instant';
+  h += `<h2>Sauvegarde</h2><div class="card"><div class="rowitem"><span class="grow"><b>${nP} patients · ${S.visits.length} visites</b><small>${last}</small></span></div>
+    <div class="row" style="margin-top:10px"><button class="btn sm grow" onclick="exportBackup()">Exporter</button><label class="btn sm grow" tabindex="0">Importer<input type="file" accept=".json,application/json" hidden onchange="importFile(this)"></label></div>
+    <p class="note" style="padding-bottom:0">${cloudProv() ? 'Le fichier exporté contient aussi les ordonnances : gardez-le en lieu sûr.' : 'Exportez régulièrement (ordonnances comprises) ou connectez-vous à Google ou GitHub : si les données du navigateur sont effacées, elles sont perdues.'}</p></div>`;
+
+  h += `<h2>Données</h2><div class="card"><button class="btn block" onclick="loadDemo()">Recharger les patients de démonstration</button><button class="btn block danger" style="margin-top:8px" onclick="wipeAll()">Tout effacer sur cet appareil</button></div>`;
+  h += `<div class="about"><span class="brandmark lg">${LOGO(30)}</span><b>${BRAND.name}</b><span>Produit par ${BRAND.by} · version ${BRAND.version}</span><small>Outil personnel d’organisation. Il ne remplace ni votre logiciel de facturation agréé (${FR() ? 'SESAM-Vitale' : 'MyCareNet / eFact'}) ni le dossier de soins réglementaire.</small></div>`;
+  return h;
+}
+function refreshHeader() { const s = document.querySelector('.top h1 small'); if (s && ui.tab === 'tournee') s.textContent = S.name ? 'Bonne tournée, ' + S.name : 'Vos visites du jour'; const a = document.querySelector('.profile .avatar'); if (a) a.textContent = (S.name || '?')[0].toUpperCase(); const b = document.querySelector('.profile b'); if (b) b.textContent = S.name || 'Votre profil'; toast('Prénom enregistré'); }
+function setCabinet(v) { const c = parseCoords(v); if (c) { S.cabinet.lat = c[0]; S.cabinet.lng = c[1]; save(); toast('Position du cabinet enregistrée'); } else if (!v.trim()) { S.cabinet.lat = null; S.cabinet.lng = null; save(); toast('Position du cabinet effacée'); } else toast('Format attendu : 45.7640, 4.8357'); }
+function setTarif(k, inp) { const v = parseFloat(inp.value.replace(',', '.')); if (isNaN(v) || v < 0) { inp.value = String(S.tarifs[k]).replace('.', ','); toast('Valeur invalide'); return; } S.tarifs[k] = v; inp.value = String(v).replace('.', ','); save(); toast('Tarif enregistré'); }
+function setCoef(id, inp) { const v = parseFloat(inp.value.replace(',', '.')); if (isNaN(v) || v < 0) { toast('Valeur invalide'); return; } S.acteOverrides[id] = { c: v }; save(); toast('Coefficient enregistré'); }
+async function resetTarifs() { if (!await ask('Revenir aux tarifs par défaut ?', { detail: 'Vos valeurs personnalisées seront remplacées par les tarifs conventionnels 2026.', ok: 'Rétablir' })) return; S.tarifs = Object.assign({}, FR_TARIFS); S.acteOverrides = {}; save(); render(); toast('Tarifs par défaut rétablis'); }
+async function setCountry(c) {
+  if (c === S.country) return;
+  if (!await ask(`Passer en mode ${c === 'FR' ? 'France' : 'Belgique'} ?`, { detail: `Les cotations passeront ${c === 'FR' ? 'à la NGAP' : 'à la nomenclature INAMI'}. Les actes des plans de soins sont convertis automatiquement : vérifiez-les ensuite.`, ok: 'Changer de pays' })) return;
+  const map = c === 'FR' ? { toil: 'bsb', imsc: 'inj', ivd: 'iv', multi: 'inj', plaies: 'pans', plaiec: 'panslc', bioact: 'pans', vessie: 'sonde', perf: 'perfl', semainier: 'pilu', bas: 'pilu' } : { inj: 'imsc', insu: 'imsc', gly: 'imsc', iv: 'ivd', prel: 'ivd', pans: 'plaies', panslc: 'plaiec', fils: 'plaies', sonde: 'vessie', perfl: 'perf', perfc: 'perf', pilu: 'semainier', bsa: 'toil', bsb: 'toil', bsc: 'toil' };
+  S.country = c;
+  for (const p of S.patients) for (const pl of p.plan || []) pl.actes = [...new Set(pl.actes.map(a => map[a] || a).filter(a => act(a)))];
+  for (const e of S.extra) e.actes = [...new Set(e.actes.map(a => map[a] || a).filter(a => act(a)))];
+  save(); render(); toast(c === 'FR' ? 'Mode France activé 🇫🇷' : 'Mode Belgique activé 🇧🇪');
+}
+async function exportBackup() {
+  S.lastBackup = today(); save();
+  const data = Object.assign({}, S, { _files: {} }); delete data.google; delete data.github;
+  for (const o of S.ordos) { try { const f = await fileGet(o.id); if (f) data._files[o.id] = { type: f.type, b64: b64(new Uint8Array(f.data)) }; } catch (e) { } }
+  await offer('infikit-sauvegarde-' + today() + '.json', JSON.stringify(data)); if (ui.tab === 'reglages') render();
+}
+function importFile(inp) {
+  const f = inp.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    inp.value = '';
+    let d; try { d = JSON.parse(r.result); if (d.v !== 1 || !Array.isArray(d.patients)) throw 0; } catch (e) { toast('Fichier non reconnu : choisissez une sauvegarde Tournée (.json).'); return; }
+    if (!await ask('Remplacer les données actuelles ?', { detail: `La sauvegarde contient ${d.patients.length} patients et ${(d.visits || []).length} visites. Les données présentes sur ce téléphone${cloudProv() ? ' et dans votre sauvegarde en ligne' : ''} seront remplacées.`, ok: 'Importer', danger: true })) return;
+    const files = d._files || {}; delete d._files;
+    const keep = { google: S.google, github: S.github, pin: S.pin };
+    S = Object.assign(blank(d.country || 'FR'), d, keep);
+    for (const [id, f] of Object.entries(files)) { try { await filePut(id, { type: f.type, data: unb64(f.b64).buffer }); } catch (e) { } }
+    await fileGC(); save(); toast('Sauvegarde importée'); go('tournee');
+  };
+  r.onerror = () => toast('Lecture du fichier impossible.');
+  r.readAsText(f);
+}
+async function loadDemo() { if (!await ask('Recharger la démonstration ?', { detail: 'Toutes les données de ce téléphone seront remplacées par 7 patients fictifs et 3 semaines d’historique. La synchronisation est coupée pour protéger votre sauvegarde en ligne.', ok: 'Recharger', danger: true })) return; const c = S.country, n = S.name, pin = S.pin, prov = cloudProv(); if (prov) cloudSignOut(prov, true); S = demo(c); S.name = n; S.pin = pin; save(); fileGC(); ui.date = today(); go('tournee'); toast('Démonstration chargée'); }
+async function wipeAll() { if (!await ask('Tout effacer ?', { detail: 'Patients, ordonnances, visites, transmissions et compta seront supprimés définitivement de cet appareil (votre sauvegarde en ligne, elle, est conservée). Pensez à exporter une sauvegarde avant.', ok: 'Tout effacer', danger: true })) return; const prov = cloudProv(); if (prov) cloudSignOut(prov, true); try { localStorage.removeItem(KEY); localStorage.removeItem(PASS_KEY); } catch (e) { } G.pass = null; await fileWipe(); S = null; $('#lock').hidden = true; render(); }
+async function removePin() { if (!await ask('Retirer le code d’accès ?', { detail: 'L’application s’ouvrira sans code sur ce téléphone.', ok: 'Retirer', danger: true })) return; S.pin = null; save(); render(); toast('Code retiré'); }
+function lockNow() { if (S.pin) unlock(); }
+async function archivePatient(id) { if (!await ask('Archiver ce patient ?', { detail: 'Il disparaît de la tournée ; son historique est conservé.', ok: 'Archiver' })) return; patient(id).archive = true; save(); ui.pid = null; render(); toast('Patient archivé'); }
+async function delVisit() { if (!await ask('Annuler cette visite ?', { detail: 'Elle redeviendra « à faire » et son montant sera retiré de la compta.', ok: 'Annuler la visite', cancel: 'Garder', danger: true })) return; S.visits = S.visits.filter(x => x.id !== V.id); S.trans = S.trans.filter(x => x.visit !== V.id); save(); closeSheet(); render(); }
+
+/* ---------- code d'accès ---------- */
+async function hash(s) { try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('tournee:' + s)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); } catch (e) { let h = 0; for (const ch of 'tournee:' + s) h = (h * 31 + ch.charCodeAt(0)) | 0; return String(h); } }
+function keypad(title, sub, onDone, onCancel) {
+  let code = '';
+  const lock = $('#lock');
+  const draw = (err) => {
+    lock.innerHTML = `<div class="lockicon">${LOGO(32)}</div><h2 style="margin:10px 0 2px">${esc(title)}</h2><p class="small muted" style="margin:0">${esc(err || sub || '')}</p>
+      <div class="dots ${err ? 'shake' : ''}">${[0, 1, 2, 3].map(i => `<i class="${i < code.length ? 'on' : ''}"></i>`).join('')}</div>
+      <div class="keypad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 'x', 0, '⌫'].map(k => k === 'x' ? (onCancel ? `<button class="txt" data-cancel>Annuler</button>` : '<span></span>') : `<button data-k="${k}" aria-label="${k === '⌫' ? 'Effacer' : k}">${k}</button>`).join('')}</div>`;
+    lock.querySelectorAll('[data-k]').forEach(b => b.onclick = () => press(b.dataset.k));
+    const c = lock.querySelector('[data-cancel]'); if (c) c.onclick = () => { document.removeEventListener('keydown', kb); lock.hidden = true; onCancel(); };
+  };
+  const press = k => { if (k === '⌫') code = code.slice(0, -1); else if (code.length < 4) code += k; draw(); if (code.length === 4) { const c = code; setTimeout(() => { document.removeEventListener('keydown', kb); onDone(c, msg => { code = ''; draw(msg); document.addEventListener('keydown', kb); }); }, 120); } };
+  const kb = e => { if (/^\d$/.test(e.key)) press(e.key); else if (e.key === 'Backspace') press('⌫'); else if (e.key === 'Escape' && onCancel) lock.querySelector('[data-cancel]')?.click(); };
+  document.addEventListener('keydown', kb);
+  lock.hidden = false; draw();
+}
+function setPin() {
+  keypad('Choisissez un code', '4 chiffres, demandés à chaque ouverture', c1 => {
+    keypad('Confirmez le code', 'Saisissez-le une seconde fois', async (c2, retry) => {
+      if (c1 !== c2) { $('#lock').hidden = true; toast('Les deux codes ne correspondent pas. Recommencez.'); return; }
+      S.pin = await hash(c1); save(); $('#lock').hidden = true; toast('Code d’accès activé 🔒'); render();
+    }, () => toast('Code non modifié'));
+  }, () => toast('Code non modifié'));
+}
+function unlock() { keypad('Infikit est verrouillée', 'Entrez votre code', async (c, retry) => { if (await hash(c) === S.pin) { $('#lock').hidden = true; render(); syncNow({ silent: true }); } else retry('Code incorrect, réessayez'); }); }
+
+/* ---------- premier lancement ---------- */
+let OB = { country: 'FR', name: '' };
+function onboarding() {
+  $('#app').innerHTML = `<div class="hero"><div class="brandrow"><span class="brandmark lg">${LOGO(30)}</span><span><b>${BRAND.name}</b><small>Produit par ${BRAND.by}</small></span></div>
+    <h1>Votre tournée tient dans la poche.</h1><p>Tournée, fiches patients, ordonnances, fiche d’urgence, transmissions, cotations et compta : tout au même endroit. Synchronisation chiffrée entre vos appareils avec Google ou GitHub, si vous le souhaitez.</p>
+    <label class="f"><span>Vous exercez en</span></label><div class="country"><button class="${OB.country === 'FR' ? 'on' : ''}" onclick="OB.country='FR';onboarding()"><span>🇫🇷</span>France<small>Cotations NGAP</small></button><button class="${OB.country === 'BE' ? 'on' : ''}" onclick="OB.country='BE';onboarding()"><span>🇧🇪</span>Belgique<small>Nomenclature INAMI</small></button></div>
+    <label class="f"><span>Votre prénom</span><input id="obn" value="${esc(OB.name)}" oninput="OB.name=this.value" placeholder="ex. Camille"></label>
+    <button class="btn pri block" style="margin-top:6px" onclick="start(true)">Découvrir avec des patients fictifs</button>
+    <button class="btn block" style="margin-top:8px" onclick="start(false)">Commencer avec une tournée vide</button>
+    <div class="or"><span>déjà inscrite sur un autre téléphone ?</span></div>
+    ${googleReady() ? `<button class="gbtn" onclick="cloudRestore('google')">${GLOGO}<span>Retrouver mes données avec Google</span></button>` : ''}
+    <button class="ghbtn" onclick="cloudRestore('github')">${GHLOGO}<span>Retrouver mes données avec GitHub</span></button>
+    ${installHint()}
+    <p class="note" style="text-align:center;margin-top:16px">Outil personnel d’organisation : il ne transmet aucune facture à ${OB.country === 'FR' ? 'l’Assurance maladie' : 'la mutualité'}.</p></div>`;
+}
+function start(withDemo) { S = withDemo ? demo(OB.country) : blank(OB.country); S.name = (OB.name || '').trim(); save(); ui.date = today(); ui.tab = 'tournee'; render(); }
+
+/* ============================================================
+   Infikit — sécurité des soins, urgences, encouragements
+   ============================================================ */
+const BRAND = { name: 'Infikit', by: 'QuenTools', version: '1.3' };
+const LOGO = (s = 28) => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" aria-hidden="true"><rect x="12" y="4" width="8" height="24" rx="3" fill="currentColor"/><rect x="4" y="12" width="24" height="8" rx="3" fill="currentColor"/><circle cx="16" cy="16" r="3.2" fill="var(--pri)"/></svg>`;
+
+/* ---------- numéros d'urgence ---------- */
+const URGENCES = {
+  FR: [['15', 'SAMU', 'Urgence médicale'], ['112', 'Numéro d’urgence européen', 'Depuis n’importe quel téléphone'], ['18', 'Pompiers', 'Chute, incendie, accident'], ['114', 'Urgences par SMS', 'Personnes sourdes ou malentendantes']],
+  BE: [['112', 'Ambulance et pompiers', 'Urgence médicale'], ['101', 'Police', 'Situation dangereuse'], ['070 245 245', 'Centre Antipoisons', 'Intoxication, erreur de médicament']],
+};
+function age(ddn) { if (!ddn) return null; const d = parseISO(ddn), t = parseISO(today()); let a = t.getFullYear() - d.getFullYear(); if (t < new Date(t.getFullYear(), d.getMonth(), d.getDate())) a--; return a; }
+function urgence(pid) {
+  const p = pid ? patient(pid) : null, a = p ? age(p.ddn) : null;
+  let h = `<div class="sh"><h2>🚨 Urgence</h2><button class="icon" onclick="closeSheet()" aria-label="Fermer">✕</button></div>`;
+  h += `<div class="urg">${URGENCES[S.country].map(([n, l, d]) => `<a class="urgbtn ${n === '15' || n === '112' ? 'main' : ''}" href="${n === '114' ? 'sms:114' : 'tel:' + n.replace(/\s/g, '')}"><b>${n}</b><span>${l}<small>${d}</small></span></a>`).join('')}</div>`;
+  if (p) {
+    h += `<h2>Fiche à transmettre</h2><div class="card fiche">
+      <div class="big">${esc(fullName(p))}${a != null ? `, ${a} ans` : ''}</div>
+      <div class="small muted">${esc(p.adresse || 'Adresse non renseignée')}</div>
+      ${p.allergies ? `<div class="allergy">⚠️ Allergies : ${esc(p.allergies)}</div>` : `<div class="small" style="margin-top:8px">Allergies : <b>non renseignées</b> (à vérifier)</div>`}
+      ${p.antecedents ? `<div class="small" style="margin-top:8px"><b>Antécédents :</b> ${esc(p.antecedents)}</div>` : ''}
+      ${p.traitements ? `<div class="small" style="margin-top:6px"><b>Traitements :</b> ${esc(p.traitements)}</div>` : ''}
+      ${lastVitals(p.id)}
+    </div>
+    <div class="row" style="flex-wrap:wrap">${p.medecinTel ? `<a class="btn sm" href="tel:${esc(p.medecinTel.replace(/\s/g, ''))}">📞 ${esc(p.medecin || 'Médecin traitant')}</a>` : ''}${p.contactTel ? `<a class="btn sm" href="tel:${esc(p.contactTel.replace(/\s/g, ''))}">📞 ${esc(p.contactNom || 'Personne à prévenir')}</a>` : ''}</div>
+    ${!p.medecinTel || !p.contactTel || !p.ddn ? `<p class="note">Complétez la fiche (date de naissance, téléphone du médecin, personne à prévenir) pour gagner de précieuses secondes : Modifier → Informations médicales et urgence.</p>` : ''}`;
+  }
+  h += `<p class="note">En cas de détresse vitale, appelez d’abord les secours, puis suivez leurs consignes.</p>`;
+  sheet(h);
+}
+function lastVitals(pid) {
+  const t = S.trans.filter(x => x.pid === pid && x.vitals && Object.values(x.vitals).some(Boolean)).sort((a, b) => (b.date + b.heure).localeCompare(a.date + a.heure))[0];
+  if (!t) return '';
+  return `<div class="small" style="margin-top:8px"><b>Dernières constantes</b> (${esc(t.date.split('-').reverse().join('/'))} ${esc(t.heure)}) : ${vitalChips(t.vitals)}</div>`;
+}
+const VLAB = { ta: 'TA', gly: 'Gly', temp: 'T°', douleur: 'EVA', spo2: 'SpO₂' };
+function vitalChips(v) { const al = new Set(vitalAlerts(v).map(a => a.k)); return Object.entries(v || {}).filter(e => e[1]).map(([k, x]) => `<span class="chip ${al.has(k) ? 'bad' : ''}">${VLAB[k]} ${esc(x)}</span>`).join(''); }
+
+/* ---------- constantes inhabituelles ---------- */
+const num = s => parseFloat(String(s || '').replace(',', '.'));
+function vitalAlerts(v) {
+  if (!v) return [];
+  const out = [], push = (k, t) => out.push({ k, t });
+  const g = num(v.gly);
+  if (!isNaN(g)) { const mg = g < 20 ? g * 100 : g; if (mg < 70) push('gly', `Glycémie basse (${v.gly}) : risque d’hypoglycémie`); else if (mg > 250) push('gly', `Glycémie élevée (${v.gly})`); }
+  if (v.ta) { const sys = num(String(v.ta).split('/')[0]); if (!isNaN(sys)) { const mm = sys < 40 ? sys * 10 : sys; if (mm >= 180) push('ta', `Tension très élevée (${v.ta})`); else if (mm <= 90) push('ta', `Tension basse (${v.ta})`); } }
+  const t = num(v.temp); if (!isNaN(t)) { if (t >= 38.5) push('temp', `Fièvre (${v.temp} °C)`); else if (t < 35.5) push('temp', `Température basse (${v.temp} °C)`); }
+  const s = num(v.spo2); if (!isNaN(s) && s < 92) push('spo2', `Saturation basse (${v.spo2} %)`);
+  const d = num(v.douleur); if (!isNaN(d) && d >= 7) push('douleur', `Douleur intense (${v.douleur}/10)`);
+  return out;
+}
+function recentAlert(pid) { const lim = addDays(today(), -2); return S.trans.some(t => t.pid === pid && t.date >= lim && vitalAlerts(t.vitals).length); }
+function showAlerts(pid, alerts) {
+  const p = patient(pid);
+  sheet(`<div class="sh"><h2>⚠️ Constantes à surveiller</h2><button class="icon" onclick="closeSheet()" aria-label="Fermer">✕</button></div>
+    <div class="card"><b>${esc(fullName(p))}</b>${alerts.map(a => `<div class="alert bad" style="margin:8px 0 0">${esc(a.t)}</div>`).join('')}</div>
+    <p class="small muted">Ces valeurs sortent des repères habituels. Réévaluez le patient et, si besoin, prévenez le médecin traitant ou les secours.</p>
+    <div style="display:grid;gap:8px">${p.medecinTel ? `<a class="btn block" href="tel:${esc(p.medecinTel.replace(/\s/g, ''))}">📞 Appeler ${esc(p.medecin || 'le médecin traitant')}</a>` : ''}<button class="btn block dangerfill" onclick="urgence('${pid}')">🚨 Numéros d’urgence et fiche patient</button><button class="btn block" onclick="closeSheet()">J’ai pris en compte</button></div>`);
+}
+
+/* ---------- encouragements ---------- */
+const MSG_START = [
+  'Belle tournée, {name} ! {p} comptent sur vous aujourd’hui, et ils ont de la chance.',
+  'C’est parti ! Pensez à boire un peu d’eau entre deux visites : prendre soin des autres commence par soi.',
+  'Aujourd’hui encore, vous faites la différence pour {p}. Bonne route !',
+  'Prudence au volant, {name} : on n’est jamais en retard quand on arrive en sécurité.',
+  'Vous êtes souvent le seul visage de la journée pour vos patients. Merci d’être là.',
+  'Un sourire, un geste sûr, une écoute : votre tournée commence. Belle journée !',
+];
+const MSG_END = [
+  'Tournée terminée ! Merci {name} pour tout ce que vous avez donné aujourd’hui.',
+  '{n} visites, {km} : quelle journée ! Merci, et reposez-vous bien.',
+  'Mission accomplie. Grâce à vous, {p} ont été soignées chez elles aujourd’hui.',
+  'Bravo {name} ! Le soin à domicile tient debout grâce à des personnes comme vous.',
+  'Journée bouclée. Prenez un moment pour vous : vous l’avez bien mérité.',
+];
+const fillMsg = (m, d) => m.replace('{name}', S.name || 'à vous').replace('{n}', d.n).replace('{p}', d.p > 1 ? d.p + ' personnes' : 'une personne').replace('{km}', d.km);
+function celebrate(kind, d) {
+  if (S.encourage === false) return;
+  const list = kind === 'start' ? MSG_START : MSG_END;
+  const m = fillMsg(list[Math.floor(Math.random() * list.length)], d);
+  const el = $('#cheer');
+  el.innerHTML = `<div class="cheerbox ${kind}">${kind === 'end' ? '<div class="confetti">' + Array.from({ length: 18 }, (_, i) => `<i style="left:${5 + i * 5.2}%;animation-delay:${(i % 6) * 0.12}s;background:${['#3048c9', '#f5a300', '#17875b', '#e2557a'][i % 4]}"></i>`).join('') + '</div>' : ''}
+    <div class="cheericon">${kind === 'start' ? I.sun.replace('<svg', '<svg width="54" height="54"') : '<svg width="54" height="54" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.1 1.8-1.9 3.3-3.1 5.4-3.1 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21z"/></svg>'}</div>
+    <h2>${kind === 'start' ? 'Bonne tournée !' : 'Merci !'}</h2><p>${esc(m)}</p>
+    ${kind === 'end' ? `<div class="kpis" style="margin:14px 0 4px"><div class="kpi"><b>${d.n}</b><span>visites</span></div><div class="kpi"><b>${esc(d.km)}</b><span>parcourus</span></div><div class="kpi"><b>${eur0(d.total)}</b><span>de soins</span></div></div>` : ''}
+    <button class="btn pri block" onclick="$('#cheer').hidden=true">${kind === 'start' ? 'C’est parti' : 'À demain'}</button>
+    <p class="tiny muted" style="margin:10px 0 0">Messages désactivables dans Réglages</p></div>`;
+  el.hidden = false;
+}
+function startTour() {
+  const stops = stopsFor(today());
+  S.started = S.started || {}; S.started[today()] = nowHM(); save();
+  celebrate('start', { n: stops.filter(s => !s.visit).length, p: new Set(stops.filter(s => !s.visit).map(s => s.pid)).size });
+  render();
+}
+function checkEnd(date) {
+  if (date !== today()) return;
+  const stops = stopsFor(date);
+  if (!stops.length || stops.some(s => !s.visit)) return;
+  S.ended = S.ended || {}; if (S.ended[date]) return;
+  S.ended[date] = nowHM(); save();
+  if (cloudProv()) syncNow({ silent: true });
+  const km = routeKm(stops), total = stops.reduce((a, s) => a + s.visit.total, 0);
+  setTimeout(() => celebrate('end', { n: stops.length, p: new Set(stops.map(s => s.pid)).size, km: km ? Math.round(km) + ' km' : 'des kilomètres', total }), 400);
+}
+
+/* ============================================================
+   Synchronisation chiffrée : Google Drive ou GitHub
+   ------------------------------------------------------------
+   Réglages dans config.js (à côté de index.html) :
+   - googleClientId : identifiant client OAuth Google
+     (console.cloud.google.com → Identifiants → « Application Web »,
+      origine autorisée : https://VOTRE-NOM.github.io)
+   - githubClientId + githubOAuthProxy : bouton « Se connecter avec
+     GitHub » en un clic (voir oauth-worker/). Sans eux, la connexion
+     GitHub se fait en collant un jeton « gist ».
+   Tout est chiffré sur le téléphone (AES-256-GCM, clé tirée d'une
+   phrase secrète) avant l'envoi : le cloud ne voit que du charabia.
+   ============================================================ */
+const CFG = window.INFIKIT_CONFIG || {};
+const GOOGLE_CLIENT_ID = CFG.googleClientId || '';
+const GITHUB_CLIENT_ID = CFG.githubClientId || '';
+const GITHUB_OAUTH_PROXY = (CFG.githubOAuthProxy || '').replace(/\/$/, '');
+const MAIN_FILE = 'infikit-sauvegarde.enc.json';
+const GIST_DESC = 'Infikit — sauvegarde chiffrée (ne pas modifier)';
+const GIST_FILE_DESC = 'Infikit — pièce jointe chiffrée (ne pas modifier)';
+const GSCOPE = 'openid email profile https://www.googleapis.com/auth/drive.appdata';
+const PASS_KEY = 'infikit_pass', GTOK_KEY = 'infikit_gtoken', GH_KEY = 'infikit_gh_token';
+const G = { token: null, exp: 0, pass: null, salt: null, verified: false };
+const SYNC = { busy: false, timer: null, last: 0, state: '', msg: '' };
+const PENDING = {}; // compte en cours de connexion avant que S existe (premier lancement)
+try { G.pass = localStorage.getItem(PASS_KEY); const t = JSON.parse(localStorage.getItem(GTOK_KEY) || 'null'); if (t && t.exp > Date.now()) { G.token = t.token; G.exp = t.exp; } } catch (e) { }
+
+function googleHost() { return /(^|\.)claude\.ai$|claudeusercontent|anthropic/.test(location.hostname); }
+function googleReady() { return !!GOOGLE_CLIENT_ID && location.protocol === 'https:' && !googleHost(); }
+const cloudProv = () => S ? (S.google ? 'google' : S.github ? 'github' : null) : null;
+const acct = prov => (S && S[prov]) || PENDING[prov];
+const PNAME = { google: 'Google Drive', github: 'GitHub' };
+const GLOGO = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+const GHLOGO = '<svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>';
+
+/* ---------- chiffrement (AES-GCM 256, clé dérivée PBKDF2 de la phrase secrète) ---------- */
+const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const KEYS = new Map();
+function deriveKey(pass, salt) {
+  const k = pass + '\u0000' + b64(salt);
+  if (!KEYS.has(k)) KEYS.set(k, (async () => {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  })());
+  return KEYS.get(k);
+}
+async function seal(bytes, pass, extra) {
+  G.salt = G.salt || crypto.getRandomValues(new Uint8Array(16)); // un sel par session : une seule dérivation de clé
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await deriveKey(pass, G.salt), bytes);
+  return JSON.stringify(Object.assign({ app: 'infikit', v: 1, at: new Date().toISOString(), salt: b64(G.salt), iv: b64(iv) }, extra || {}, { ct: b64(new Uint8Array(ct)) }));
+}
+async function unseal(txt, pass) {
+  const o = typeof txt === 'string' ? JSON.parse(txt) : txt;
+  if (o.app !== 'infikit') throw new Error('format');
+  return { env: o, bytes: new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(o.iv) }, await deriveKey(pass, unb64(o.salt)), unb64(o.ct))) };
+}
+const encryptState = (obj, pass) => seal(new TextEncoder().encode(JSON.stringify(obj)), pass);
+async function decryptState(txt, pass) { return JSON.parse(new TextDecoder().decode((await unseal(txt, pass)).bytes)); }
+
+/* ---------- Google : connexion (Google Identity Services) + Drive, dossier privé de l'application ---------- */
+function loadGIS() {
+  return new Promise((res, rej) => {
+    if (window.google?.accounts?.oauth2) return res();
+    const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
+    s.onload = () => res(); s.onerror = () => rej(new Error('Impossible de joindre Google (connexion internet ?)'));
+    document.head.appendChild(s);
+  });
+}
+async function googleToken(interactive = true) {
+  if (G.token && Date.now() < G.exp) return G.token;
+  if (!interactive) throw Object.assign(new Error('Reconnectez-vous à Google'), { needLogin: true });
+  await loadGIS();
+  return new Promise((res, rej) => {
+    const a = acct('google');
+    const tc = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID, scope: GSCOPE,
+      callback: r => { if (r.error) return rej(new Error(r.error_description || r.error)); G.token = r.access_token; G.exp = Date.now() + ((r.expires_in || 3600) - 60) * 1000; try { localStorage.setItem(GTOK_KEY, JSON.stringify({ token: G.token, exp: G.exp })); } catch (e) { } res(G.token); },
+      error_callback: e => rej(new Error(e.type === 'popup_closed' ? 'Connexion annulée' : 'Connexion Google impossible')),
+    });
+    tc.requestAccessToken({ prompt: a ? '' : 'consent', login_hint: a?.email || undefined });
+  });
+}
+async function gfetch(url, opt = {}, interactive = true) {
+  const t = await googleToken(interactive);
+  const r = await fetch(url, Object.assign({}, opt, { headers: Object.assign({ Authorization: 'Bearer ' + t }, opt.headers || {}) }));
+  if (r.status === 401) { G.token = null; try { localStorage.removeItem(GTOK_KEY); } catch (e) { } throw Object.assign(new Error('Session Google expirée, reconnectez-vous'), { needLogin: true }); }
+  if (!r.ok) throw new Error('Google Drive a répondu ' + r.status);
+  return r;
+}
+async function driveFind(name, it) {
+  const q = encodeURIComponent(`name='${name}'`);
+  const j = await (await gfetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id,modifiedTime,size)`, {}, it)).json();
+  return j.files && j.files[0] || null;
+}
+async function driveUpload(name, text, id, it) {
+  if (id) { await gfetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: text }, it); return id; }
+  const boundary = 'infikit' + uid(), meta = { name, parents: ['appDataFolder'], mimeType: 'application/json' };
+  const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${text}\r\n--${boundary}--`;
+  return (await (await gfetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + boundary }, body }, it)).json()).id;
+}
+const driveText = (id, it) => gfetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {}, it).then(r => r.text());
+
+/* ---------- GitHub : jeton OAuth (ou jeton « gist » collé) + gists secrets ---------- */
+const GH = { token: null };
+function ghToken() { if (!GH.token) try { GH.token = localStorage.getItem(GH_KEY); } catch (e) { } return GH.token; }
+function ghSetToken(t) { GH.token = t || null; try { t ? localStorage.setItem(GH_KEY, t) : localStorage.removeItem(GH_KEY); } catch (e) { } }
+async function ghfetch(path, opt = {}) {
+  const t = ghToken(); if (!t) throw Object.assign(new Error('Connectez-vous à GitHub'), { needLogin: true });
+  let r; try { r = await fetch('https://api.github.com' + path, Object.assign({ cache: 'no-store' }, opt, { headers: Object.assign({ Authorization: 'Bearer ' + t, Accept: 'application/vnd.github+json' }, opt.body ? { 'Content-Type': 'application/json' } : {}, opt.headers || {}) })); }
+  catch (e) { throw new Error('GitHub injoignable (connexion internet ?)'); }
+  if (r.status === 401) { ghSetToken(null); throw Object.assign(new Error('Session GitHub expirée, reconnectez-vous'), { needLogin: true }); }
+  if (r.status === 404) return null;
+  if (r.status === 403) throw new Error('GitHub refuse l’accès : le jeton doit avoir le droit « gist »');
+  if (!r.ok) throw new Error('GitHub a répondu ' + r.status);
+  return r;
+}
+async function gistText(id, name) {
+  const r = await ghfetch('/gists/' + id); if (!r) return null;
+  const g = await r.json(), f = name ? g.files[name] : Object.values(g.files)[0];
+  if (!f) return null;
+  return f.truncated ? (await fetch(f.raw_url, { cache: 'no-store' })).text() : f.content;
+}
+async function mainGist(create) {
+  const a = acct('github'); if (a.gist) return a.gist;
+  for (let page = 1; page <= 20; page++) {
+    const l = await (await ghfetch(`/gists?per_page=100&page=${page}`)).json();
+    const g = l.find(x => x.description === GIST_DESC && x.files[MAIN_FILE]); if (g) return (a.gist = g.id);
+    if (l.length < 100) break;
+  }
+  if (!create) return null;
+  const g = await (await ghfetch('/gists', { method: 'POST', body: JSON.stringify({ description: GIST_DESC, public: false, files: { [MAIN_FILE]: { content: '{}' } } }) })).json();
+  return (a.gist = g.id);
+}
+
+/* ---------- fournisseurs : même interface pour Google et GitHub ---------- */
+const CP = {
+  google: {
+    async loadMain(it) { const a = acct('google'); let id = a.main; if (!id) { const f = await driveFind(MAIN_FILE, it); if (!f) return null; id = a.main = f.id; } try { return await driveText(id, it); } catch (e) { if (/404/.test(e.message)) { a.main = null; return null; } throw e; } },
+    async saveMain(text) { const a = acct('google'); if (!a.main) { const f = await driveFind(MAIN_FILE, false); if (f) a.main = f.id; } a.main = await driveUpload(MAIN_FILE, text, a.main, false); },
+    putFile: (o, text) => driveUpload(`ordo-${o.id}.enc.json`, text, null, false),
+    getFile: async (o, it) => { let id = o.refs.google; if (!id) { const f = await driveFind(`ordo-${o.id}.enc.json`, it); if (!f) return null; id = f.id; } return driveText(id, it); },
+    delFile: ref => gfetch(`https://www.googleapis.com/drive/v3/files/${ref}`, { method: 'DELETE' }, false).catch(e => { if (!/404/.test(e.message)) throw e; }),
+  },
+  github: {
+    async loadMain() { const id = await mainGist(false); if (!id) return null; const t = await gistText(id, MAIN_FILE); return t && t !== '{}' ? t : null; },
+    async saveMain(text) {
+      const body = JSON.stringify({ files: { [MAIN_FILE]: { content: text } } });
+      if (await ghfetch('/gists/' + await mainGist(true), { method: 'PATCH', body })) return;
+      acct('github').gist = null; // gist supprimé entre-temps : on en recrée un
+      if (!await ghfetch('/gists/' + await mainGist(true), { method: 'PATCH', body })) throw new Error('Sauvegarde GitHub introuvable');
+    },
+    // une pièce jointe = un gist secret (pas de limite de nombre de fichiers, lecture ciblée)
+    putFile: async (o, text) => (await (await ghfetch('/gists', { method: 'POST', body: JSON.stringify({ description: GIST_FILE_DESC, public: false, files: { [`ordo-${o.id}.enc.json`]: { content: text } } }) })).json()).id,
+    getFile: o => o.refs.github ? gistText(o.refs.github) : null,
+    delFile: ref => ghfetch('/gists/' + ref, { method: 'DELETE' }),
+  },
+};
+
+/* ---------- connexion / déconnexion ---------- */
+async function cloudSignIn(prov) {
+  if (prov === 'google') {
+    PENDING.google = PENDING.google || {};
+    await googleToken(true);
+    const u = await (await gfetch('https://www.googleapis.com/oauth2/v3/userinfo')).json();
+    return { email: u.email, name: u.name || '', picture: u.picture || '', auto: true };
+  }
+  if (!ghToken()) return null; // GitHub : la connexion passe par une redirection ou un jeton collé (githubLogin)
+  const u = await (await ghfetch('/user')).json();
+  return { login: u.login, name: u.name || u.login, picture: u.avatar_url || '', auto: true };
+}
+function githubLogin(intent) {
+  if (GITHUB_CLIENT_ID && GITHUB_OAUTH_PROXY && location.protocol === 'https:') {
+    const st = uid() + uid();
+    try { sessionStorage.setItem('infikit_gh_state', st); sessionStorage.setItem('infikit_gh_intent', intent); } catch (e) { }
+    location.href = `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(GITHUB_CLIENT_ID)}&scope=gist&state=${st}&redirect_uri=${encodeURIComponent(location.origin + location.pathname)}`;
+    return;
+  }
+  const url = 'https://github.com/settings/tokens/new?scopes=gist&description=' + encodeURIComponent('Infikit (' + (navigator.platform || 'téléphone') + ')');
+  sheet(`<div class="sh"><h2>Connexion GitHub</h2><button class="icon" onclick="closeSheet()">✕</button></div>
+    <ol class="small" style="padding-left:20px;margin-top:0;line-height:1.6"><li>Créez un compte gratuit sur <a href="https://github.com/signup" target="_blank" rel="noopener">github.com</a> si besoin.</li>
+    <li><a href="${url}" target="_blank" rel="noopener"><b>Ouvrez cette page</b></a>, choisissez « No expiration » puis « Generate token » (seule la case <b>gist</b> est cochée).</li>
+    <li>Copiez le code qui commence par <code>ghp_</code> et collez-le ici.</li></ol>
+    <label class="f"><span>Jeton GitHub</span><input id="ghtok" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ghp_…"></label>
+    <button class="btn pri block" onclick="githubTokenDone('${intent}')">Se connecter</button>
+    <p class="note">Le jeton reste sur ce téléphone. Il ne donne accès qu’à vos « gists », où Infikit range sa sauvegarde chiffrée.</p>`);
+}
+async function githubTokenDone(intent) {
+  const t = ($('#ghtok').value || '').trim(); if (!t) { toast('Collez le jeton'); return; }
+  ghSetToken(t);
+  try { const u = await cloudSignIn('github'); closeSheet(); await afterSignIn('github', u, intent); } catch (e) { ghSetToken(null); toast(e.message); }
+}
+function githubCallback() {
+  const q = new URLSearchParams(location.search), code = q.get('code'), st = q.get('state');
+  if (!code) return false;
+  history.replaceState(null, '', location.pathname);
+  let ok = false, intent = 'connect'; try { ok = st && st === sessionStorage.getItem('infikit_gh_state'); intent = sessionStorage.getItem('infikit_gh_intent') || 'connect'; sessionStorage.removeItem('infikit_gh_state'); } catch (e) { }
+  if (!ok) { toast('Connexion GitHub refusée (lien expiré), réessayez.'); return false; }
+  (async () => {
+    try {
+      while (!$('#lock').hidden) await new Promise(r => setTimeout(r, 300)); // attendre le code d'accès
+      toast('Connexion à GitHub…');
+      const r = await fetch(GITHUB_OAUTH_PROXY + '/token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) });
+      const j = await r.json().catch(() => ({}));
+      if (!j.access_token) throw new Error('Connexion GitHub impossible' + (j.error ? ' (' + j.error + ')' : ''));
+      ghSetToken(j.access_token);
+      await afterSignIn('github', await cloudSignIn('github'), intent);
+    } catch (e) { toast(e.message); }
+  })();
+  return true;
+}
+async function afterSignIn(prov, u, intent) {
+  if (!u) return;
+  if (intent === 'restore' || !S) { PENDING[prov] = u; return cloudRestore(prov, true); }
+  const other = prov === 'google' ? 'github' : 'google';
+  if (S[other]) cloudSignOut(other, true);
+  S[prov] = u; save(true); render(); toast('Connecté : ' + (u.email || u.login));
+  await syncNow({ first: true });
+}
+async function connectCloud(prov) {
+  if (prov === 'github') return githubLogin('connect');
+  try { await afterSignIn('google', await cloudSignIn('google'), 'connect'); } catch (e) { toast(e.message); }
+}
+function cloudSignOut(prov, quiet) {
+  if (prov === 'google') { try { if (G.token && window.google?.accounts?.oauth2) google.accounts.oauth2.revoke(G.token, () => { }); } catch (e) { } G.token = null; try { localStorage.removeItem(GTOK_KEY); } catch (e) { } }
+  else ghSetToken(null);
+  if (S) { delete S[prov]; for (const o of S.ordos || []) if (o.refs) delete o.refs[prov]; S.trash = []; save(true); }
+  if (!quiet) { render(); toast('Déconnecté de ' + PNAME[prov]); }
+}
+
+/* ---------- phrase secrète ---------- */
+function askPass(title, detail, confirmTwice) {
+  return new Promise(res => {
+    const el = $('#ask');
+    el.innerHTML = `<div class="askbox" role="alertdialog" aria-modal="true"><h3>${esc(title)}</h3><p>${esc(detail)}</p>
+      <label class="f"><span>Phrase secrète</span><input id="gp1" type="password" autocomplete="${confirmTwice ? 'new-password' : 'current-password'}" minlength="8"></label>
+      ${confirmTwice ? '<label class="f"><span>Confirmez</span><input id="gp2" type="password" autocomplete="new-password"></label>' : ''}
+      <label class="rowitem" style="cursor:pointer;margin-bottom:6px"><span class="grow small">Mémoriser sur ce téléphone<small>Pour synchroniser automatiquement</small></span><span class="switch"><input id="gpr" type="checkbox" role="switch" checked><i></i></span></label>
+      <p class="tiny muted" id="gperr" style="min-height:18px;color:var(--bad)"></p>
+      <div class="row"><button class="btn grow" data-a="0">Annuler</button><button class="btn grow pri" data-a="1">Valider</button></div></div>`;
+    el.hidden = false; setTimeout(() => $('#gp1').focus(), 50);
+    const done = v => { el.hidden = true; res(v); };
+    el.querySelector('[data-a="0"]').onclick = () => done(null);
+    el.querySelector('[data-a="1"]').onclick = () => {
+      const a = $('#gp1').value, b = confirmTwice ? $('#gp2').value : a;
+      if (a.length < 8) { $('#gperr').textContent = '8 caractères minimum.'; return; }
+      if (a !== b) { $('#gperr').textContent = 'Les deux phrases ne correspondent pas.'; return; }
+      done({ pass: a, remember: $('#gpr').checked });
+    };
+  });
+}
+function setPass(r) { G.pass = r.pass; G.verified = false; try { r.remember ? localStorage.setItem(PASS_KEY, r.pass) : localStorage.removeItem(PASS_KEY); } catch (e) { } }
+function forgetPass() { G.pass = null; G.verified = false; try { localStorage.removeItem(PASS_KEY); } catch (e) { } }
+
+/* ---------- choix à trois boutons ---------- */
+function choose(title, detail, opts) {
+  return new Promise(res => {
+    const el = $('#ask');
+    el.innerHTML = `<div class="askbox" role="alertdialog" aria-modal="true"><h3>${esc(title)}</h3><p>${esc(detail)}</p><div class="choice">${opts.map(([k, l, cls]) => `<button class="btn block ${cls || ''}" data-k="${k}">${esc(l)}</button>`).join('')}</div></div>`;
+    el.hidden = false;
+    el.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { el.hidden = true; res(b.dataset.k || null); });
+  });
+}
+
+/* ---------- synchronisation ---------- */
+const stateForCloud = () => { const d = Object.assign({}, S); delete d.google; delete d.github; delete d.pin; return d; };
+function applyRemote(d, prov, at) {
+  const keep = { google: S?.google, github: S?.github, pin: S?.pin };
+  if (!S) { keep.google = keep.github = undefined; keep[prov] = PENDING[prov]; delete PENDING[prov]; }
+  S = Object.assign(blank(d.country || 'FR'), d, keep); S.ordos = S.ordos || []; S.trash = S.trash || [];
+  S[prov].lastCloud = at; save(true);
+}
+function syncSoon() {
+  if (!cloudProv() || !G.pass) return;
+  if (S[cloudProv()].auto === false) return;
+  clearTimeout(SYNC.timer); SYNC.timer = setTimeout(() => { SYNC.timer = null; syncNow({ silent: true }); }, 15000);
+}
+function syncStatus(state, msg) { SYNC.state = state; SYNC.msg = msg || ''; const el = document.getElementById('syncstat'); if (el) el.innerHTML = syncLine(); }
+function syncLine() {
+  const a = S && S[cloudProv()]; if (!a) return '';
+  if (SYNC.state === 'busy') return `<span class="syncdot busy"></span>Synchronisation… ${esc(SYNC.msg)}`;
+  if (SYNC.state === 'err') return `<span class="syncdot err"></span>${esc(SYNC.msg)}`;
+  return a.lastCloud ? `<span class="syncdot"></span>Synchronisé · ${new Date(a.lastCloud).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}` : 'Pas encore synchronisé';
+}
+async function cloudFetchFile(o) {
+  const prov = cloudProv(); if (!prov || !G.pass || !o.refs?.[prov] && prov === 'github') return null;
+  try {
+    const t = await CP[prov].getFile(o, true); if (!t) return null;
+    const { env, bytes } = await unseal(t, G.pass), f = { type: env.type || o.type, data: bytes.buffer };
+    await filePut(o.id, f); return f;
+  } catch (e) { return null; }
+}
+async function pushFiles(prov) {
+  for (const t of S.trash.slice()) { if (t.refs?.[prov]) { try { await CP[prov].delFile(t.refs[prov]); } catch (e) { } } S.trash = S.trash.filter(x => x !== t); }
+  const todo = S.ordos.filter(o => !(o.refs || {})[prov]);
+  let i = 0;
+  for (const o of todo) {
+    const f = await fileGet(o.id).catch(() => null); if (!f) continue;
+    syncStatus('busy', `ordonnance ${++i}/${todo.length}`);
+    o.refs = o.refs || {}; o.refs[prov] = await CP[prov].putFile(o, await seal(new Uint8Array(f.data), G.pass, { kind: 'file', type: f.type }));
+    save(true);
+  }
+}
+async function pullFiles(prov) {
+  let have = new Set(); try { have = new Set(await fileKeys()); } catch (e) { }
+  const todo = S.ordos.filter(o => !have.has(o.id) && (o.refs || {})[prov]);
+  let i = 0;
+  for (const o of todo) {
+    syncStatus('busy', `ordonnance ${++i}/${todo.length}`);
+    try { const t = await CP[prov].getFile(o, false); if (t) { const { env, bytes } = await unseal(t, G.pass); await filePut(o.id, { type: env.type || o.type, data: bytes.buffer }); } } catch (e) { if (e.needLogin) throw e; }
+  }
+  await fileGC();
+}
+// silent : sans fenêtre de connexion ; bg : l'app passe en arrière-plan, aucune question possible
+async function syncNow(opt = {}) {
+  const prov = cloudProv(); if (!prov || SYNC.busy) return;
+  if (opt.silent && S[prov].auto === false) return;
+  if (opt.throttle && Date.now() - SYNC.last < 60000) return;
+  if (opt.silent && (!G.pass || (prov === 'google' && !(G.token && Date.now() < G.exp)))) { syncStatus('err', !G.pass ? 'Phrase secrète à saisir : touchez « Synchroniser »' : 'Touchez « Synchroniser » pour vous reconnecter'); return; }
+  SYNC.busy = true; SYNC.last = Date.now(); syncStatus('busy');
+  const a = S[prov];
+  try {
+    const remote = await CP[prov].loadMain(!opt.silent);
+    const remoteAt = remote ? JSON.parse(remote).at : null;
+    if (!G.pass) {
+      const r = await askPass(remote ? 'Phrase secrète' : 'Créez votre phrase secrète', remote ? `Saisissez la phrase secrète de votre sauvegarde Infikit (${PNAME[prov]}).` : `Elle chiffre vos données et ordonnances sur ce téléphone avant l’envoi : ${PNAME[prov]} ne peut pas les lire. Notez-la bien : sans elle, la sauvegarde est irrécupérable.`, !remote);
+      if (!r) { syncStatus('err', 'Synchronisation en attente de la phrase secrète'); return; }
+      setPass(r);
+    }
+    let remoteState = null;
+    if (remote && (!G.verified || (remoteAt !== a.lastCloud))) {
+      try { remoteState = await decryptState(remote, G.pass); G.verified = true; }
+      catch (e) { forgetPass(); throw new Error('Phrase secrète incorrecte'); }
+    }
+    const localDirty = !a.lastCloud || (S.updatedAt || '') > a.lastCloud;
+    const remoteNew = !!remote && remoteAt !== a.lastCloud;
+    let take = false;
+    if (remoteNew && localDirty) {
+      if (opt.bg) return;
+      const k = await choose('Deux versions différentes', `${PNAME[prov]} contient une version du ${new Date(remoteAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}${remoteState ? ` (${remoteState.patients.length} patients)` : ''}, et ce téléphone a des modifications non envoyées (${S.patients.length} patients). Laquelle garder ?`,
+        [['cloud', 'Garder celle de ' + PNAME[prov], 'pri'], ['local', 'Garder celle de ce téléphone'], ['', 'Plus tard', 'ghost']]);
+      if (!k) { syncStatus('err', 'Synchronisation en attente de votre choix'); return; }
+      take = k === 'cloud';
+    } else take = remoteNew;
+    if (take) {
+      applyRemote(remoteState, prov, remoteAt); render();
+      await pullFiles(prov);
+      if (!opt.silent) toast('☁️ Données mises à jour depuis ' + PNAME[prov]);
+    } else if (localDirty || !remote || S.ordos.some(o => !(o.refs || {})[prov]) || S.trash.length) {
+      await pushFiles(prov);
+      const text = await encryptState(stateForCloud(), G.pass);
+      await CP[prov].saveMain(text);
+      S[prov].lastCloud = JSON.parse(text).at; save(true);
+      if (!opt.silent) toast('☁️ Données chiffrées envoyées sur ' + PNAME[prov]);
+    } else if (!opt.silent) toast('Déjà à jour ✔︎');
+    syncStatus('ok');
+  } catch (e) {
+    syncStatus('err', e.message || 'Synchronisation impossible');
+    if (!opt.silent) toast(e.message || 'Synchronisation impossible');
+  } finally { SYNC.busy = false; if (!opt.silent && ui.tab === 'reglages' && $('#sheet').hidden && $('#ask').hidden) render(); }
+}
+async function cloudRestore(prov, signedIn) {
+  try {
+    if (!signedIn) {
+      if (prov === 'github') return githubLogin('restore');
+      PENDING.google = await cloudSignIn('google');
+    }
+    toast('Recherche de la sauvegarde…');
+    const remote = await CP[prov].loadMain(true);
+    if (!remote) {
+      if (!S) { toast(`Aucune sauvegarde Infikit sur ce compte ${PNAME[prov]} : commencez une tournée, elle sera synchronisée.`); return; }
+      return syncNow({ first: true });
+    }
+    const at = JSON.parse(remote).at;
+    let d;
+    for (;;) {
+      const r = await askPass('Phrase secrète', `Sauvegarde du ${new Date(at).toLocaleString('fr-FR')}. Saisissez la phrase secrète utilisée sur votre autre appareil.`);
+      if (!r) return;
+      try { d = await decryptState(remote, r.pass); setPass(r); G.verified = true; break; } catch (e) { toast('Phrase secrète incorrecte, réessayez.'); }
+    }
+    if (S && !await ask('Remplacer les données de ce téléphone ?', { detail: `La sauvegarde contient ${d.patients.length} patients et ${(d.visits || []).length} visites.`, ok: 'Restaurer', danger: true })) return;
+    if (S && !S[prov]) { const other = prov === 'google' ? 'github' : 'google'; if (S[other]) cloudSignOut(other, true); S[prov] = PENDING[prov]; delete PENDING[prov]; }
+    applyRemote(d, prov, at);
+    ui.date = today(); go('tournee'); toast('Données retrouvées ✔︎ Téléchargement des ordonnances…');
+    SYNC.busy = true;
+    try { await pullFiles(prov); syncStatus('ok'); toast('Tout est à jour sur ce téléphone ✔︎'); } finally { SYNC.busy = false; render(); }
+  } catch (e) { toast(e.message || 'Restauration impossible'); }
+}
+
+/* ---------- blocs d'interface ---------- */
+function cloudCard() {
+  const prov = cloudProv();
+  if (!prov) return `<h2>Synchronisation</h2><div class="card"><p class="small" style="margin-top:0">Connectez-vous pour retrouver patients, tournées et <b>ordonnances</b> sur tous vos appareils (téléphone, tablette, ordinateur). Tout est <b>chiffré sur ce téléphone</b> avant l’envoi.</p>
+    ${googleReady() ? `<button class="gbtn" onclick="connectCloud('google')">${GLOGO}<span>Se connecter avec Google</span></button>` : `<div class="rowitem" style="margin-bottom:4px"><span class="gbadge">${GLOGO}</span><span class="grow"><b>Google</b><small>${googleHost() ? 'Disponible dans l’app installée depuis votre adresse GitHub Pages.' : 'À activer : ajoutez l’identifiant client Google dans config.js.'}</small></span></div>`}
+    <button class="ghbtn" onclick="connectCloud('github')">${GHLOGO}<span>Se connecter avec GitHub</span></button></div>`;
+  const a = S[prov];
+  return `<h2>Synchronisation</h2><div class="card"><div class="rowitem">${a.picture ? `<img src="${esc(a.picture)}" alt="" class="gavatar" referrerpolicy="no-referrer">` : `<span class="gbadge">${prov === 'google' ? GLOGO : GHLOGO}</span>`}<span class="grow"><b>${esc(a.name || a.email || a.login)}</b><small>${PNAME[prov]} · ${esc(a.email || '@' + a.login)}</small></span><span class="chip ok">connecté</span></div>
+    <p class="small muted" style="margin:10px 0" id="syncstat">${syncLine()}</p>
+    <div class="row"><button class="btn sm pri grow" onclick="syncNow()">Synchroniser</button><button class="btn sm grow" onclick="cloudRestore('${prov}',true)">Restaurer</button></div>
+    <label class="rowitem" style="margin-top:12px;cursor:pointer"><span class="grow"><b>Synchronisation automatique</b><small>Après chaque modification et à l’ouverture</small></span><span class="switch"><input type="checkbox" role="switch" ${a.auto !== false ? 'checked' : ''} onchange="S.${prov}.auto=this.checked;save(true)"><i></i></span></label>
+    <div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn ghost sm" onclick="cloudSignOut('${prov}')">Se déconnecter</button>${G.pass ? `<button class="btn ghost sm" onclick="forgetPass();render();toast('Phrase secrète oubliée sur ce téléphone')">Oublier la phrase secrète</button>` : ''}</div>
+    <p class="note" style="padding-bottom:0">Chiffrement AES-256 sur le téléphone avant l’envoi. ${prov === 'google' ? 'Les fichiers sont rangés dans l’espace privé de l’application sur votre Drive.' : 'Les fichiers sont rangés dans des « gists » secrets de votre compte GitHub.'}</p></div>`;
+}
+
+/* ---------- application installable (PWA) ---------- */
+let BIP = null;
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function pwaBoot() {
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && !googleHost()) navigator.serviceWorker.register('sw.js').catch(() => { });
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); BIP = e; if (!S || ui.tab === 'reglages') render(); });
+  addEventListener('appinstalled', () => { BIP = null; toast('Infikit est installée sur l’écran d’accueil 🎉'); render(); });
+  if ('storage' in navigator && navigator.storage.persist) navigator.storage.persist().catch(() => { });
+}
+async function installApp() {
+  if (BIP) { BIP.prompt(); const r = await BIP.userChoice.catch(() => null); BIP = null; if (r && r.outcome === 'accepted') toast('Installation…'); render(); return; }
+  sheet(`<div class="sh"><h2>Installer Infikit</h2><button class="icon" onclick="closeSheet()">✕</button></div>
+    ${isIOS() ? `<ol class="small" style="padding-left:20px;line-height:1.7;margin-top:0"><li>Ouvrez cette page dans <b>Safari</b>.</li><li>Touchez le bouton <b>Partager</b> (carré avec une flèche).</li><li>Choisissez <b>« Sur l’écran d’accueil »</b>, puis <b>Ajouter</b>.</li></ol>`
+      : `<ol class="small" style="padding-left:20px;line-height:1.7;margin-top:0"><li>Ouvrez le menu du navigateur (⋮ en haut à droite dans Chrome).</li><li>Choisissez <b>« Installer l’application »</b> ou <b>« Ajouter à l’écran d’accueil »</b>.</li></ol>`}
+    <p class="note">Infikit s’ouvre ensuite comme une vraie application, en plein écran, et fonctionne sans réseau pendant la tournée.</p>`);
+}
+function installHint() {
+  if (isStandalone() || googleHost() || location.protocol !== 'https:') return '';
+  return `<button class="btn block" style="margin-top:14px" onclick="installApp()">📲 Installer l’app sur ce téléphone</button>`;
+}
+function installCard() {
+  if (isStandalone() || googleHost() || location.protocol !== 'https:') return '';
+  return `<h2>Application</h2><div class="card install"><span class="brandmark">${LOGO(22)}</span><span class="grow"><b>Installer Infikit</b><small class="muted" style="display:block;font-size:13px">Sur l’écran d’accueil, en plein écran, utilisable hors connexion</small></span><button class="btn sm pri" onclick="installApp()">Installer</button></div>`;
+}
+
+/* ============================================================
+   Démonstration (patients entièrement fictifs) et démarrage
+   ============================================================ */
+function demo(country) {
+  const s = blank(country), fr = country === 'FR';
+  const base = fr ? { lat: 45.7578, lng: 4.8320, ville: '69003 Lyon', rues: ['rue Paul Bert', 'cours Gambetta', 'rue de la Villette', 'avenue Félix Faure', 'rue Garibaldi', 'rue Servient', 'rue Dunoir'] }
+    : { lat: 50.6326, lng: 5.5797, ville: '4000 Liège', rues: ['rue Saint-Gilles', 'boulevard de la Sauvenière', 'rue Louvrex', 'rue Hors-Château', 'quai de Rome', 'rue du Laveu', 'rue Sainte-Marguerite'] };
+  s.cabinet = { adresse: '12 ' + base.rues[0] + ', ' + base.ville, lat: base.lat, lng: base.lng };
+  const A = fr ? { insu: 'insu', gly: 'gly', pans: 'panslc', toil: 'bsb', inj: 'inj', prel: 'prel', pilu: 'pilu', bas: 'pilu', perf: 'perfl' }
+    : { insu: 'imsc', gly: 'imsc', pans: 'plaiec', toil: 'toil', inj: 'imsc', prel: 'ivd', pilu: 'semainier', bas: 'bas', perf: 'perf' };
+  const P = (civ, prenom, nom, i, dx, dy, extra) => Object.assign({ id: uid(), civ, prenom, nom, adresse: (10 + i * 7) + ' ' + base.rues[i % base.rues.length] + ', ' + base.ville, tel: fr ? '06 00 00 00 0' + i : '0470 00 00 0' + i, medecin: 'Dr ' + ['Aubert', 'Lambert', 'Moreau', 'Simon'][i % 4], lat: +(base.lat + dy).toFixed(5), lng: +(base.lng + dx).toFixed(5), km: +(1.5 + i * 0.8).toFixed(1), zone: 'plaine', plan: [], allergies: '', notes: 'Patient fictif de démonstration', ddn: (1932 + i * 5) + '-0' + (i % 9 + 1) + '-14', medecinTel: fr ? '04 00 00 00 1' + i : '04 000 00 1' + i, contactNom: ['Julie (fille)', 'Marc (fils)', 'Anne (voisine)', 'Sofia (épouse)', 'Paul (mari)', 'Claire (nièce)', 'Luc (fils)'][i], contactTel: fr ? '06 11 00 00 0' + i : '0471 11 00 0' + i }, extra);
+  const addDaysISO = n => addDays(today(), n);
+  const ps = [
+    P('Mme', 'Rose', 'Dupuis', 1, 0.006, 0.004, { notes: 'Fictif · digicode 4512, chat à la maison', antecedents: 'Diabète de type 2, hypertension', traitements: 'Insuline lente le matin, rapide le soir ; metformine', plan: [{ id: uid(), jours: [0, 1, 2, 3, 4, 5, 6], heure: '07:30', actes: [A.gly, A.insu].concat(fr ? ['bsa'] : []).filter((v, i, a) => a.indexOf(v) === i), note: 'Glycémie avant insuline' }, { id: uid(), jours: [0, 1, 2, 3, 4, 5, 6], heure: '19:00', actes: [A.insu], note: '' }], bsi: fr ? 'BSA' : '', ordoFin: addDaysISO(4) }),
+    P('M.', 'Marcel', 'Lefèvre', 2, -0.008, 0.007, { antecedents: 'Insuffisance veineuse', traitements: 'Bas de contention', plan: [{ id: uid(), jours: [0, 2, 4], heure: '09:00', actes: [A.pans], note: 'Ulcère jambe gauche' }], ordoFin: addDaysISO(40), allergies: 'Latex' }),
+    P('Mme', 'Jeanne', 'Morel', 3, 0.011, -0.005, { antecedents: 'Maladie d’Alzheimer', plan: [{ id: uid(), jours: [0, 1, 2, 3, 4, 5, 6], heure: '08:15', actes: [A.toil], note: 'Toilette complète au lit' }], bsi: fr ? 'BSB' : '', katz: fr ? '' : 'B', ordoFin: addDaysISO(-2) }),
+    P('M.', 'Yacine', 'Haddad', 4, -0.004, -0.009, { antecedents: 'Phlébite récente', traitements: 'Anticoagulant injectable', plan: [{ id: uid(), jours: [0, 1, 2, 3, 4, 5, 6], heure: '10:00', actes: [A.inj], note: 'Anticoagulant, 10 jours' }], ordoFin: addDaysISO(9) }),
+    P('Mme', 'Lucie', 'Martin', 5, 0.015, 0.012, { plan: [{ id: uid(), jours: [1], heure: '07:15', actes: [A.prel], note: 'À jeun' }], ordoFin: addDaysISO(60) }),
+    P('M.', 'Paul', 'Girard', 6, -0.013, -0.002, { plan: [{ id: uid(), jours: [0], heure: '11:00', actes: [A.pilu], note: 'Pilulier de la semaine' }, { id: uid(), jours: [0, 1, 2, 3, 4], heure: '08:45', actes: [A.bas], note: 'Bas de contention' }], ordoFin: addDaysISO(25) }),
+    P('Mme', 'Simone', 'Faure', 0, 0.002, -0.013, { antecedents: 'Cancer, prise en charge palliative', traitements: 'Morphine, antalgiques', plan: [{ id: uid(), jours: [0, 1, 2, 3, 4, 5, 6], heure: '14:00', actes: [A.perf], note: 'Surveillance perfusion' }], katz: fr ? '' : 'B', palliatif: !fr, ordoFin: addDaysISO(15) }),
+  ];
+  s.patients = ps;
+  // historique : 24 derniers jours
+  S = s;
+  for (let d = -24; d <= -1; d++) {
+    const date = addDays(today(), d), stops = stopsFor(date);
+    for (const st of stops) {
+      const p = patient(st.pid), ctx = dayCtx(st.pid, date, st.heure), r = cote(p, date, st.heure, st.actes, ctx);
+      const v = { id: uid(), stop: st.key, pid: st.pid, date, heure: st.heure, actes: st.actes, total: r.total, usedI: r.usedI || 0, lines: r.lines, remplacant: dow(date) >= 5 && d < -10 };
+      S.visits.push(v);
+      if (p.prenom === 'Rose' && st.heure === '07:30') S.trans.push({ id: uid(), visit: v.id, pid: p.id, date, heure: st.heure, text: d === -1 ? 'Glycémie un peu haute, alimentation à revoir avec la fille.' : '', vitals: { gly: d === -1 ? (fr ? '2,70' : '270') : fr ? (1.05 + Math.sin(d * 1.3) * 0.25 + (d > -6 ? 0.25 : 0)).toFixed(2).replace('.', ',') : String(Math.round(105 + Math.sin(d * 1.3) * 25 + (d > -6 ? 25 : 0))), ta: (12 + Math.round(Math.cos(d) * 1.4)) + '/8' } });
+      if (p.prenom === 'Marcel' && d % 4 === 0) S.trans.push({ id: uid(), visit: v.id, pid: p.id, date, heure: st.heure, text: 'Plaie propre, bourgeonnement en progression, pas de signe infectieux.', vitals: { douleur: String(Math.max(1, 4 + Math.round(d / 8))) } });
+    }
+  }
+  const m = today().slice(0, 7), pm = addDays(today(), -28).slice(0, 7);
+  const cats = fr ? CATS_FR : CATS_BE;
+  for (const mm of [...new Set([pm, m])]) {
+    S.charges.push({ id: uid(), date: mm + '-03', cat: cats[0], label: 'Carburant', montant: 142.6 }, { id: uid(), date: mm + '-05', cat: cats[1], label: 'Compresses, pansements', montant: 86.4 }, { id: uid(), date: mm + '-10', cat: cats[6], label: 'Forfait mobile', montant: 24.99 }, { id: uid(), date: mm + '-15', cat: cats[7], label: fr ? 'Logiciel de facturation' : 'Logiciel de tarification', montant: 49 });
+  }
+  S.retro = { taux: fr ? 85 : 80, nom: 'Alex (fictif)' };
+  S = null;
+  return s;
+}
+
+/* ---------- démarrage ---------- */
+document.addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
+(function boot() {
+  load();
+  render();
+  if (S && S.pin) unlock();
+  try { if (window.claude && window.claude.use) window.claude.use('downloads').then(d => { DL = d; }).catch(() => { }); } catch (e) { }
+  pwaBoot();
+  if (!githubCallback() && S && !S.pin) syncNow({ silent: true });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && SYNC.timer) { clearTimeout(SYNC.timer); SYNC.timer = null; syncNow({ silent: true, bg: true }); } else if (document.visibilityState === 'visible' && S && $('#lock').hidden) syncNow({ silent: true, throttle: true }); });
+})();
+
+</script>
+</body>
+</html>
