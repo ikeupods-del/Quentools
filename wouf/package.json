@@ -1,6 +1,6 @@
 {
   "name": "wouf",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Wouf — carnet de santé chien et chat (PWA statique). Outils de test et de développement.",
   "scripts": {
@@ -8,7 +8,8 @@
     "check": "node tests/check.js",
     "test:unit": "node --test tests/unit/*.test.mjs",
     "test:e2e": "node tests/e2e.js",
-    "test": "node tests/run.js"
+    "test": "node tests/run.js",
+    "release": "node tests/bump.js"
   },
   "devDependencies": {
     "playwright": "1.56.1"

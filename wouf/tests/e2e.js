@@ -248,6 +248,17 @@ test('migration : anciennes données (sans espèce ni schéma) chargées sans pe
   noErrors(b); await b.ctx.close();
 });
 
+test('mises à jour : fichiers versionnés, lien de secours ?maj=1 (vide le cache, garde les données)', async () => {
+  const b = await boot(), p = b.page;
+  const html = await b.ev(() => document.documentElement.outerHTML); const v = await b.ev(() => CFG.version);
+  assert.ok((html.match(new RegExp('\\.js\\?v=' + v.replace(/\./g, '\\.'), 'g')) || []).length >= 15, 'scripts versionnés');
+  await b.ev(async () => { await navigator.serviceWorker.ready; await caches.open('dummy-ancien-cache'); });
+  assert.ok((await b.ev(() => caches.keys())).includes('dummy-ancien-cache'));
+  await p.goto(BASE() + '?maj=1#/home'); await p.waitForFunction(() => !location.search.includes('maj')); await p.waitForSelector('.hero');
+  assert.equal(await b.ev(() => S.dogs.length), 1, 'les données sont intactes'); assert.equal((await b.ev(() => caches.keys())).includes('dummy-ancien-cache'), false, 'ancien cache supprimé');
+  noErrors(b); await b.ctx.close();
+});
+
 /* ================= 9. Google : sauvegarde cloud ================= */
 test('cloud : envoi, envoi automatique, restauration, conflit dans les deux sens, achat qui suit le compte', async () => {
   const b = await boot({ hash: '#/reglages' }), p = b.page; await fakeCloud(p);
