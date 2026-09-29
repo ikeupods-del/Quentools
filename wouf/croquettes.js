@@ -54,7 +54,8 @@ ROUTES.croquettes = function croquettes() {
   const d = dog(), prof = foodProfile(d), t = nutTargets(prof), need = foodKcalNeed(d, prof), sp = spOf(d), b = dogBreed(d);
   const ranked = foodsFor(d).map(f => evalFood(d, prof, f, need)).sort((a, c) => c.sc.total - a.sc.total);
   const stageLbl = { growth: sp.young, adult: 'Adulte', senior: 'Senior' }[prof.stage], tips = foodTips(d, prof);
-  const top = ranked.filter(r => !r.hits.length)[0];
+  const top = ranked.filter(r => !r.hits.length)[0], rec = recommendFood(prof, { allergies: d.allergies, breed: d.breed });
+  if (SUGG.dogId !== d.id) SUGG = { dogId: d.id, st: 'idle', items: [] };
   const cmp = ranked.slice(0, 4);
   const rows = [
     ['Note d’adéquation', r => `<b class="${r.sc.label[1]}">${r.sc.total}/100</b>`], ['Protéines (% MS)', r => fmt(r.sc.dm.protein)], ['Matières grasses (% MS)', r => fmt(r.sc.dm.fat)], ['Fibres (% MS)', r => fmt(r.sc.dm.fiber)],
@@ -69,7 +70,14 @@ ROUTES.croquettes = function croquettes() {
     <div class="chips">${Object.entries(ACTIVITY).map(([k, l]) => `<button class="chip ${prof.activity === k ? 'on' : ''}" data-act="food-act" data-v="${k}">${l}</button>`).join('')}</div>
     ${need ? `<p><b>Besoin énergétique : ${Math.round(need.kcal)} kcal par jour</b> <small class="mut">(${fmtKg(need.kg)}, coefficient ${nuR1(need.factor)})</small></p>` : `<p class="warn">Ajoutez le poids de ${esc(d.name)} (Suivi) pour calculer la ration et le coût.</p>`}
     ${prof.months != null && prof.months < 3 ? '<p class="warn">Très jeune animal : avis vétérinaire pour le choix de l’alimentation.</p>' : ''}</section>
-  <section class="card"><h2>Ce qu’il faut chercher pour ${esc(d.name)}</h2><p class="mut small">Repères en % de la matière sèche (MS), inspirés des recommandations FEDIAF et AAFCO.</p>
+  <section class="card reco"><div class="reco-tag">🎯 Recommandation pour ${esc(d.name)}</div><h2>${esc(rec.headline)}</h2><p>${esc(rec.why)}</p>
+    <div class="reco-rows"><div><span>🔠</span><p><b>Taille</b>${esc(rec.kibble)}</p></div><div><span>🍽️</span><p><b>Repas</b>${esc(rec.meals)}</p></div><div><span>🥣</span><p><b>Format</b>${esc(rec.format)}</p></div></div>
+    <h3>À exiger sur l’étiquette</h3><ul class="bul">${rec.must.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+    <h3>À éviter</h3><ul class="bul avoid">${rec.avoid.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+    <h3>Trouver des produits adaptés</h3><p class="mut small">Wouf cherche dans la base ouverte Open Pet Food Facts et classe les produits selon le profil de ${esc(d.name)}.</p>
+    <div class="chips">${rec.searches.map(s => `<button class="chip" data-act="sugg-run" data-q="${esc(s.q)}">🔎 ${esc(s.label)}</button>`).join('')}</div>
+    <div id="sugg">${suggHTML()}</div></section>
+  <section class="card"><h2>Repères nutritionnels pour ${esc(d.name)}</h2><p class="mut small">Repères en % de la matière sèche (MS), inspirés des recommandations FEDIAF et AAFCO.</p>
     <table class="kv tgt"><tr><th>Protéines</th><td>${t.protein[0]} à ${t.protein[1]} % <small class="mut">(minimum ${t.protein[2]} %)</small></td></tr><tr><th>Matières grasses</th><td>${t.fat[0]} à ${t.fat[1]} %</td></tr><tr><th>Fibres</th><td>${t.fiber[0]} à ${t.fiber[1]} %</td></tr>
     <tr><th>Énergie</th><td>${t.energy[0]} à ${t.energy[1]} kcal/100 g</td></tr>${prof.stage === 'growth' || t.ca ? `<tr><th>Calcium</th><td>${t.ca[0]} à ${t.ca[t.ca.length > 2 ? 2 : 1]} %${t.largeGrowth ? ' <b class="warn">(maximum strict pour les grands chiots)</b>' : ''}</td></tr>` : ''}</table>
     ${tips.length ? `<ul class="bul">${tips.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
@@ -82,6 +90,39 @@ ROUTES.croquettes = function croquettes() {
   <p class="mut small center">La note évalue l’adéquation aux repères pour le profil de votre animal, à partir des valeurs saisies. Elle ne dit pas qu’un produit est « bon » ou « mauvais » dans l’absolu et ne remplace pas un avis vétérinaire.</p>`;
 };
 ACT['food-act'] = ({ v }) => { dog().activity = v; save(); render(true); };
+
+/* ---------- Suggestions de produits (Open Pet Food Facts, classés selon le profil) ---------- */
+let SUGG = { dogId: null, st: 'idle', items: [] };
+function suggHTML() {
+  const d = dog();
+  if (SUGG.st === 'idle') return '';
+  if (SUGG.st === 'loading') return '<p class="loading">🔎 Recherche et analyse des produits…</p>';
+  if (SUGG.st === 'error') return '<p class="warn">Recherche impossible (hors connexion ou service indisponible). La fiche ci-dessus reste valable : appliquez ses critères aux produits du magasin, ou saisissez-les à la main.</p>';
+  if (!SUGG.items.length) return `<p class="empty">Aucun produit exploitable trouvé (${SUGG.total} résultat(s), sans composition détaillée dans la base). Saisissez les produits à la main depuis l’étiquette.</p>`;
+  return `<p class="mut small"><b>${SUGG.items.length}</b> meilleur(s) produit(s) sur ${SUGG.usable} exploitable(s) (${SUGG.total} trouvés${SUGG.skipped ? ', ' + SUGG.skipped + ' sans composition ignorés' : ''}) pour « ${esc(SUGG.q)} ».</p>
+    <div class="list">${SUGG.items.map((r, i) => `<button class="row food" data-act="sugg-add" data-i="${i}"><span class="rank">${i + 1}</span><span class="grow"><b>${esc(r.f.name)}</b><small>${esc(r.f.brand || '')}${r.f.quantity ? ' · ' + esc(r.f.quantity) : ''} · ${esc(FOOD_STAGES[r.f.stage] || '')}${r.g ? ' · ' + Math.round(r.g) + ' g/jour' : ''}</small>${r.sc.missing ? `<small class="warn">Données incomplètes (${r.sc.missing} manquante(s)) : note partielle</small>` : ''}${r.hits.length ? `<small class="bad">⛔ Contient : ${r.hits.map(k => ALLERGEN_LABEL[k]).join(', ')}</small>` : ''}</span><span class="side"><span class="score-badge ${r.sc.label[1]}">${r.sc.total}${r.sc.missing ? '~' : ''}</span><small>Ajouter</small></span></button>`).join('')}</div>
+    <p class="mut small">Classement d’après les repères de ${esc(d.name)} et les données de la base, souvent incomplètes. Ce n’est pas une recommandation de marque : vérifiez la composition sur le sac et demandez conseil à votre vétérinaire.</p>`;
+}
+function renderSugg() { const el = $('#sugg'); if (el) el.innerHTML = suggHTML(); }
+async function runSuggest(q) {
+  const d = dog(); SUGG = { dogId: d.id, st: 'loading', q, items: [] }; renderSugg();
+  try {
+    const raw = await opffSearch(q, 40), prof = foodProfile(d), need = foodKcalNeed(d, prof), seen = new Set(), items = []; let skipped = 0;
+    for (const p of raw) {
+      const f = fromOPFF(p); if (!f.name) continue;
+      const key = (f.name + '|' + f.brand).toLowerCase(); if (seen.has(key)) continue; seen.add(key);
+      if (f.protein === '' || f.fat === '') { skipped++; continue; }
+      Object.assign(f, { stage: guessFoodStage(f.name), type: guessFoodType(f.name, f.moisture), species: spOf(d).id, quantity: p.quantity || '' });
+      items.push({ ...evalFood(d, prof, f, need), form: f });
+    }
+    const rk = r => r.sc.total - 4 * r.sc.missing - (r.hits.length ? 1000 : 0);   // à note égale, les données complètes passent devant ; les allergènes en dernier
+    items.sort((a, b) => rk(b) - rk(a));
+    SUGG = { dogId: d.id, st: 'done', q, items: items.slice(0, 8), total: raw.length, usable: items.length, skipped };
+  } catch (e) { SUGG = { dogId: d.id, st: 'error', q, items: [] }; }
+  renderSugg();
+}
+ACT['sugg-run'] = ({ q }) => runSuggest(q);
+ACT['sugg-add'] = ({ i }) => { const r = SUGG.items[+i]; if (r) foodForm({ ...r.form }, false, '📥 Produit trouvé dans Open Pet Food Facts (base collaborative). <b>Vérifiez chaque valeur sur le sac</b>, puis ajoutez le prix pour calculer le coût.'); };
 
 /* ---------- Fiche d'un produit ---------- */
 ROUTES.croquette = function croquette() {
@@ -136,10 +177,10 @@ ACT['food-edit'] = ({ id }) => foodForm(S.foods.find(f => f.id === id), true);
 /* ---------- Recherche Open Pet Food Facts (base collaborative : données à vérifier) ---------- */
 const OPFF = 'https://world.openpetfoodfacts.org', OPFF_FIELDS = 'code,product_name,brands,quantity,ingredients_text,ingredients_text_fr,nutriments';
 let OPFF_RES = [];
-async function opffSearch(q) {
+async function opffSearch(q, size = 15) {
   q = q.trim();
   if (/^\d{8,14}$/.test(q)) { const j = await (await fetch(`${OPFF}/api/v2/product/${q}.json?fields=${OPFF_FIELDS}`)).json(); return j.status === 1 && j.product ? [j.product] : []; }
-  const j = await (await fetch(`${OPFF}/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=15&fields=${OPFF_FIELDS}`)).json();
+  const j = await (await fetch(`${OPFF}/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=${size}&fields=${OPFF_FIELDS}`)).json();
   return j.products || [];
 }
 function fromOPFF(p) {

@@ -1,6 +1,6 @@
 /* Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, documents) ne passent jamais par ici :
    elles restent dans le stockage de l'appareil. Seuls les fichiers de l'app sont mis en cache. */
-const CACHE = 'wouf-v1.4';
+const CACHE = 'wouf-v1.5';
 const SHELL = ['./', './index.html', './style.css', './config.js', './data.js', './species.js', './core.js', './health.js', './screens.js', './sos.js', './nutrition.js', './croquettes.js', './lessons.js', './lessons2.js', './lessons_cat.js', './lessons3.js', './lessons_cat2.js', './lessons_plans.js', './educ.js', './cloud.js', './tracker.js', './plusfeatures.js', './business.js', './extras.js', './main.js', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });

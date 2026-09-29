@@ -159,3 +159,70 @@ function scoreFood(food, p) {
   const missing = parts.filter(x => x.na).length;
   return { total, label, parts, flags: [...ing.flags, ...flags], ingredients: ing, targets: t, kcal: kc, dm: { protein: P, fat: F, fiber: Fb, ca, p: ph, nfe: nfe == null ? null : toDM(nfe, food) }, missing };
 }
+
+/* ---------- Devinette du type / de l'âge visé d'après le nom d'un produit (données Open Pet Food Facts) ---------- */
+function guessFoodStage(name) {
+  const n = nuNorm(name);
+  if (/tous (les )?ages|all life ?stages?|toutes? etapes/.test(n)) return 'all';   // « chiot tous âges » n'est PAS un aliment de croissance strict
+  if (nuHas(n, 'chiot|puppy|junior|kitten|chaton|croissance|growth|starter')) return 'growth';
+  if (nuHas(n, 'senior|mature|vieux|ageing|aging|age|7\\+|8\\+')) return 'senior';
+  if (nuHas(n, 'light|sterili[a-z]*|leger|allege|minceur|weight|obesity|neutered|castre')) return 'light';
+  if (nuHas(n, 'adulte?')) return 'adult';
+  return 'all';
+}
+function guessFoodType(name, moisture) {
+  const m = nuNum(moisture);
+  if (m != null) return m >= 60 ? 'wet' : m >= 20 ? 'semi' : 'dry';
+  return nuHas(nuNorm(name), 'patee|terrine|mousse|emince|gelee|sauce|boite|sachet|pouch|wet|humide') ? 'wet' : 'dry';
+}
+
+/* ---------- Recommandation personnalisée : type d'aliment adapté au profil (jamais une marque) ---------- */
+/* p : profil (voir nutTargets) + months ; ctx : { allergies:'texte libre', breed:'nom de race' } */
+function recommendFood(p, ctx = {}) {
+  const cat = p.species === 'cat', big = p.size === 'L' || p.size === 'XL', small = p.size === 'S', t = nutTargets(p);
+  const calm = p.activity === 'low' || p.neutered || p.overweight, animal = cat ? 'chat' : 'chien';
+  let headline, why, searches;
+  if (cat) {
+    if (p.stage === 'growth') { headline = 'Croquettes chaton, complétées de pâtée'; why = 'Le chaton grandit vite : il lui faut un aliment concentré en énergie et en protéines, plusieurs petits repas, et de l’eau (pâtée).'; searches = ['croquettes chaton', 'pâtée chaton']; }
+    else if (p.stage === 'senior') { headline = 'Aliment senior pour chat, humide de préférence'; why = 'Le chat âgé a besoin de protéines de qualité, d’eau (reins) et d’un poids stable : privilégiez la pâtée, en plusieurs petits repas.'; searches = ['croquettes chat senior', 'pâtée chat senior']; }
+    else if (calm) { headline = 'Croquettes chat stérilisé, associées à de la pâtée'; why = 'Après stérilisation (ou en vie d’appartement), l’énergie doit être contrôlée sans baisser les protéines ; l’humide protège reins et voies urinaires.'; searches = ['croquettes chat stérilisé', 'pâtée chat stérilisé']; }
+    else { headline = 'Croquettes chat adulte, associées à de la pâtée'; why = 'Le chat est un carnivore strict : protéines animales élevées, peu de glucides, et beaucoup d’eau grâce à l’alimentation humide.'; searches = ['croquettes chat adulte', 'pâtée chat adulte']; }
+  } else if (p.stage === 'growth') {
+    headline = big ? 'Croquettes croissance grandes races' : small ? 'Croquettes chiot petite race' : 'Croquettes chiot';
+    why = big ? 'Un chiot de grande race doit grandir lentement : énergie maîtrisée et calcium strictement limité protègent ses articulations et ses os.' : 'Le chiot a besoin d’énergie, de protéines et de minéraux adaptés à sa croissance.';
+    searches = [big ? 'croquettes chiot grande race' : small ? 'croquettes chiot petite race' : 'croquettes chiot', 'pâtée chiot'];
+  } else if (p.stage === 'senior') {
+    headline = 'Croquettes senior'; why = 'Le chien âgé garde besoin de protéines de qualité pour préserver ses muscles, avec une énergie modérée pour éviter la prise de poids.';
+    searches = ['croquettes chien senior', big ? 'croquettes chien senior grande race' : 'croquettes chien senior petite race'];
+  } else if (p.overweight) {
+    headline = 'Croquettes allégées (contrôle du poids)'; why = 'Le surpoids se corrige avec une énergie contrôlée, des fibres plus élevées et des protéines maintenues pour garder les muscles.';
+    searches = ['croquettes chien light', 'croquettes chien stérilisé'];
+  } else if (p.activity === 'sport' || p.activity === 'high') {
+    headline = p.activity === 'sport' ? 'Croquettes sport, riches en protéines et en graisses' : 'Croquettes adulte actif, plus énergétiques'; why = 'Un chien actif dépense beaucoup : il lui faut une énergie dense, des protéines et des graisses de qualité, et des repas répartis autour de l’effort.';
+    searches = ['croquettes chien actif', big ? 'croquettes chien adulte grande race' : 'croquettes chien adulte'];
+  } else if (p.neutered || p.activity === 'low') {
+    headline = 'Croquettes adulte stérilisé, énergie modérée'; why = 'Après stérilisation ou avec peu d’activité, les besoins en énergie baissent : mieux vaut un aliment moins gras et plus riche en fibres.';
+    searches = ['croquettes chien stérilisé', big ? 'croquettes chien adulte grande race' : 'croquettes chien adulte'];
+  } else {
+    headline = big ? 'Croquettes adulte grandes races' : small ? 'Croquettes adulte petites races' : 'Croquettes adulte'; why = 'Un aliment complet d’entretien, adapté à la taille : protéines animales nommées, énergie modérée.';
+    searches = [big ? 'croquettes chien adulte grande race' : small ? 'croquettes chien adulte petite race' : 'croquettes chien adulte', 'pâtée chien adulte'];
+  }
+  const kibble = cat ? (nuHas(nuNorm(ctx.breed || ''), 'persan|exotic') ? 'Croquettes à forme adaptée aux museaux plats (persans, exotics)' : 'Petites croquettes adaptées à la mâchoire du chat')
+    : small ? 'Petites croquettes (moins de 10 mm), faciles à croquer et à digérer' : big ? 'Grosses croquettes, qui incitent à mâcher (gamelle anti-glouton si besoin)' : 'Croquettes de taille moyenne';
+  const m = p.months;
+  const meals = cat ? (p.stage === 'growth' ? '4 repas par jour' : '3 à 5 petits repas, ou nourriture cachée dans des jouets')
+    : p.stage === 'growth' ? (m != null && m < 4 ? '4 repas par jour' : m != null && m < 6 ? '3 repas par jour' : '2 à 3 repas par jour')
+    : big ? '2 à 3 repas par jour (limite le risque de torsion d’estomac)' : '2 repas par jour';
+  const format = cat ? 'Mélange sec + humide (hydratation, reins, voies urinaires)' : (p.stage === 'growth' && !small ? 'Croquettes, éventuellement humidifiées les premières semaines' : 'Croquettes, pâtée en complément possible');
+  const must = [`Protéines ${t.protein[0]} à ${t.protein[1]} % de la matière sèche (minimum ${t.protein[2]} %)`, `Matières grasses ${t.fat[0]} à ${t.fat[1]} %`, `Énergie ${t.energy[0]} à ${t.energy[1]} kcal/100 g`, `Fibres ${t.fiber[0]} à ${t.fiber[1]} %`];
+  if (t.largeGrowth) must.push('Calcium entre 1,0 et 1,5 % de la matière sèche (maximum strict 1,8 %)');
+  must.push('Mention « aliment complet » adaptée à ' + (cat ? 'un chat (taurine incluse)' : 'un chien'), 'Première source de protéines animale et nommée (poulet, saumon…)');
+  const avoid = [];
+  if (ctx.allergies) avoid.push(`Tout produit contenant vos allergènes déclarés (« ${String(ctx.allergies).slice(0, 60)} »)`);
+  if (t.largeGrowth) avoid.push('Les aliments « tous âges » et les aliments adulte pour un chiot de grande race');
+  if (p.stage === 'growth' && !t.largeGrowth) avoid.push('Les aliments adulte (carences en énergie, calcium et protéines)');
+  if (p.overweight) avoid.push('Les aliments très énergétiques (plus de 400 kcal/100 g) et les friandises à volonté');
+  if (p.stage === 'senior') avoid.push('Les aliments de croissance, trop riches en énergie');
+  avoid.push('Colorants, sucres ajoutés, BHA / BHT / éthoxyquine, et mentions vagues (« viandes et sous-produits animaux »)');
+  return { headline, why, kibble, meals, format, must, avoid, searches: searches.map(q => ({ q, label: q.replace(/^./, c => c.toUpperCase()) })), animal };
+}

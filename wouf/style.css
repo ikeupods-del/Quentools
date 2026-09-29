@@ -136,3 +136,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-off
 .don-card{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(135deg,#ffe3e3,#fff0f0);border:0;color:#5a1a1a}.don-card small{display:block;color:#7a3a3a;font-size:.82rem}
 @media (prefers-color-scheme:dark){.don-card{background:linear-gradient(135deg,#4a1f1f,#3a1818);color:#ffdede}.don-card small{color:#e8b4b4}}
 .big-heart{font-size:3.2rem}
+
+/* Recommandation croquettes */
+.reco{border-color:color-mix(in srgb,var(--pri) 40%,var(--line));background:linear-gradient(135deg,var(--soft),var(--card))}.reco-tag{font-size:.8rem;font-weight:800;color:var(--priD);text-transform:uppercase;letter-spacing:.04em}.reco h2{font-size:1.25rem;margin:.2rem 0 .3rem}
+.reco-rows{display:grid;gap:8px;margin:10px 0}.reco-rows>div{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 12px}.reco-rows span{font-size:1.3rem}.reco-rows p{margin:0}.reco-rows b{display:block;font-size:.8rem;color:var(--mut)}
+.avoid li::marker{color:var(--bad)}#sugg{margin-top:10px}
