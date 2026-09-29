@@ -309,7 +309,7 @@ test('éducation : 110 leçons (100 Plus + 10 gratuites), recherche sans accents
   await b.ev(() => { EDU.cat = ''; }); noErrors(b); await b.ctx.close();
 });
 
-test('parcours façon Duolingo : unités, XP, niveaux, objectif du jour, quiz de validation, célébration', async () => {
+test('parcours ludique : unités, XP, niveaux, objectif du jour, quiz de validation, célébration', async () => {
   const b = await boot({ hash: '#/educ' }), p = b.page;
   assert.deepEqual(await b.ev(() => [0, 99, 100, 299, 300, 600].map(x => levelOf(x).n)), [1, 1, 2, 2, 3, 4]);
   const qz = await b.ev(() => LESSONS.every(l => { const qs = lessonQuiz(l); return qs.length === 3 && qs.every((q, k) => q.opts.length === 3 && new Set(q.opts).size === 3 && q.opts[q.ok] === QUIZZES[l.id][k][1] && q.why === QUIZZES[l.id][k][4]); }));

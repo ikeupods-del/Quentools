@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.9.1',
+  version: '1.9.2',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant

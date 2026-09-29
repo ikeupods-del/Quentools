@@ -1,5 +1,5 @@
 'use strict';
-/* Wouf Éducation — parcours « façon Duolingo » : unités, étapes à débloquer, points d'expérience (XP), niveaux,
+/* Wouf Éducation — parcours ludique : unités, étapes à débloquer, points d'expérience (XP), niveaux,
    objectif du jour, mini-quiz de validation, célébrations, et offre récompense (Wouf Plus à prix réduit)
    réservée aux personnes qui ont terminé TOUTES les leçons gratuites de leurs animaux. */
 
