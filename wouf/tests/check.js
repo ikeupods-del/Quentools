@@ -14,9 +14,9 @@ for (const f of jsFiles) { try { new vm.Script(read(f), { filename: f }); passes
 
 section('Chargement des données');
 const ctx = vm.createContext({ window: {}, console });
-for (const f of ['config.js', 'data.js', 'species.js', 'lessons.js', 'lessons2.js', 'lessons_cat.js', 'lessons3.js', 'lessons_cat2.js', 'lessons4.js', 'lessons_cat3.js', 'lessons5.js', 'lessons_cat4.js', 'lessons6.js', 'lessons7.js', 'lessons_cat5.js', 'lessons_plans.js']) vm.runInContext(read(f), ctx, { filename: f });
+for (const f of ['config.js', 'data.js', 'species.js', 'lessons.js', 'lessons2.js', 'lessons_cat.js', 'lessons3.js', 'lessons_cat2.js', 'lessons4.js', 'lessons_cat3.js', 'lessons5.js', 'lessons_cat4.js', 'lessons6.js', 'lessons7.js', 'lessons_cat5.js', 'lessons_plans.js', 'quiz.js', 'quiz2.js', 'quiz_chat.js']) vm.runInContext(read(f), ctx, { filename: f });
 const get = e => vm.runInContext(e, ctx);
-const LESSONS = get('LESSONS'), PROGRAMS = get('PROGRAMS'), BREEDS = get('BREEDS.concat(CAT_BREEDS)'), CFG = get('window.WOUF_CONFIG');
+const QUIZZES = get('QUIZZES'), LESSONS = get('LESSONS'), PROGRAMS = get('PROGRAMS'), BREEDS = get('BREEDS.concat(CAT_BREEDS)'), CFG = get('window.WOUF_CONFIG');
 
 section('Leçons');
 const ids = new Set();
@@ -41,6 +41,30 @@ ok(LESSONS.filter(l => !l.free).length >= 100, `au moins 100 leçons Plus attend
 ok(dog.filter(l => !l.free).length >= 30, `chien : au moins 30 leçons Plus (${dog.filter(l => !l.free).length})`);
 ok(cat.filter(l => l.free).length >= 2 && cat.filter(l => !l.free).length >= 10, 'chat : au moins 2 leçons gratuites et 10 Plus');
 console.log(`  ${dog.length} leçons chien (${dog.filter(l => !l.free).length} Plus), ${cat.length} leçons chat (${cat.filter(l => !l.free).length} Plus)`);
+
+section('Quiz');
+{ const norm = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+  const BAD = /(punir|punition|gronder|taper|frapper|collier (étrangleur|à pointes|électrique)|jet d.eau|lui mettre le nez)/i;
+  let longest = 0, total = 0;
+  for (const l of LESSONS) {
+    const qz = QUIZZES[l.id];
+    ok(Array.isArray(qz) && qz.length === 3, `${l.id} : 3 questions de quiz écrites à la main attendues (quiz*.js)`);
+    (qz || []).forEach((x, i) => {
+      const [q, good, w1, w2, why] = x, tag = `${l.id} quiz ${i + 1}`;
+      ok(x.length === 5 && [q, good, w1, w2, why].every(t => typeof t === 'string' && t.trim().length >= 2), `${tag} : format [question, bonne, mauvaise, mauvaise, explication]`);
+      ok(/\?\s*$/.test(q) || /…\s*$/.test(q) || /:\s*$/.test(q), `${tag} : la question doit finir par « ? », « … » ou « : »`);
+      ok(new Set([good, w1, w2].map(norm)).size === 3, `${tag} : réponses en double`);
+      ok(!BAD.test(good) || /jamais|ne pas|non|sans/i.test(good) || /(éviter|proscrire|interdit|danger)/i.test(q), `${tag} : la bonne réponse ne doit pas recommander une punition`);
+      ok(why.length >= 20, `${tag} : explication trop courte`);
+      ok(!(/^(Non|Jamais)\b/.test(good) && /^Oui\b/.test(w1) && /^Oui\b/.test(w2)), `${tag} : la seule réponse négative est la bonne (trop facile à deviner)`);
+      ok(!(/^Oui\b/.test(good) && /^(Non|Jamais)\b/.test(w1) && /^(Non|Jamais)\b/.test(w2)), `${tag} : la seule réponse positive est la bonne (trop facile à deviner)`);
+      ok(q.length >= 18 && !/^Et /.test(q), `${tag} : question trop elliptique`);
+      total++; if (good.length > 1.35 * Math.max(w1.length, w2.length)) longest++;
+    });
+  }
+  for (const id of Object.keys(QUIZZES)) ok(LESSONS.some(l => l.id === id), `quiz pour une leçon inconnue : ${id}`);
+  ok(longest / total <= 0.25, `quiz : la bonne réponse est nettement la plus longue dans ${longest}/${total} questions (trop facile à deviner, 25 % max)`);
+  console.log(`  ${total} questions · bonne réponse nettement la plus longue : ${longest} (${Math.round(100 * longest / total)} %)`); }
 
 section('Programmes');
 for (const p of PROGRAMS) {

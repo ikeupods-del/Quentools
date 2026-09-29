@@ -312,8 +312,9 @@ test('éducation : 110 leçons (100 Plus + 10 gratuites), recherche sans accents
 test('parcours façon Duolingo : unités, XP, niveaux, objectif du jour, quiz de validation, célébration', async () => {
   const b = await boot({ hash: '#/educ' }), p = b.page;
   assert.deepEqual(await b.ev(() => [0, 99, 100, 299, 300, 600].map(x => levelOf(x).n)), [1, 1, 2, 2, 3, 4]);
-  const qz = await b.ev(() => LESSONS.every(l => { const qs = lessonQuiz(l); return qs.length === 3 && qs.every(q => q.opts.length >= 2 && new Set(q.opts).size === q.opts.length && l.steps.some(s => q.q.includes(s.t) && s.crit === q.opts[q.ok])); }));
-  assert.ok(qz, 'chaque leçon a un quiz de 3 questions dont la bonne réponse est le vrai critère de l’étape');
+  const qz = await b.ev(() => LESSONS.every(l => { const qs = lessonQuiz(l); return qs.length === 3 && qs.every((q, k) => q.opts.length === 3 && new Set(q.opts).size === 3 && q.opts[q.ok] === QUIZZES[l.id][k][1] && q.why === QUIZZES[l.id][k][4]); }));
+  assert.ok(qz, 'chaque leçon a ses 3 questions écrites à la main, bonne réponse et explication correctes');
+  const mixed = await b.ev(() => { const seen = new Set(); for (let i = 0; i < 40; i++) seen.add(lessonQuiz(lessonOf('assis'))[0].ok); return seen.size; }); assert.ok(mixed >= 2, 'la bonne réponse change de place');
   await p.waitForSelector('.lvl'); assert.match(await text(p, '.lvl'), /Débutant curieux/); assert.match(await text(p, '.edu-hero'), /objectif du jour/);
   assert.ok((await p.locator('.path .pnode').count()) >= 6, 'unité « Les bases » ouverte'); assert.equal(await p.locator('.pnode.cur').count(), 1);
   assert.ok((await p.locator('.unit-h').count()) >= 8, 'unités par thème');
@@ -321,7 +322,7 @@ test('parcours façon Duolingo : unités, XP, niveaux, objectif du jour, quiz de
   // valider une leçon : quiz (une erreur → réessayer), puis sans faute → XP + célébration
   await b.go('#/lecon?id=assis'); await p.click('[data-act=lesson-done]'); await p.waitForSelector('.qopt');
   assert.ok(await p.$('.sheet .mascot.m-think'), 'le chien réfléchit avant la réponse');
-  await b.ev(() => ACT['quiz-pick']({ k: (QUIZ.qs[0].ok + 1) % QUIZ.qs[0].opts.length })); assert.match(await text(p, '.quiz-fb'), /Pas tout à fait/); assert.ok(await p.$('.sheet .mascot.m-bad'), 'le chien est triste après une erreur');
+  await b.ev(() => ACT['quiz-pick']({ k: (QUIZ.qs[0].ok + 1) % QUIZ.qs[0].opts.length })); assert.match(await text(p, '.quiz-fb'), /Pas tout à fait/); assert.ok((await text(p, '.quiz-why')).length > 15, 'explication affichée après la réponse'); assert.match(await text(p, '.quiz-lesson'), /Assis/); assert.ok(await p.$('.sheet .mascot.m-bad'), 'le chien est triste après une erreur');
   for (let k = 0; k < 2; k++) { await p.click('[data-act=quiz-next]'); await b.ev(() => ACT['quiz-pick']({ k: QUIZ.qs[QUIZ.i].ok })); } await p.click('[data-act=quiz-next]');
   assert.match(await text(p, '.sheet.quiz'), /2\/3/); assert.equal(await b.ev(() => eduGet('d1', 'assis').done), false, 'pas validée avec une erreur');
   assert.ok(await p.$('.sheet .mascot.m-fail'), 'encouragement en fin de quiz raté');
@@ -592,7 +593,9 @@ test('toutes les pages s’affichent sans erreur (chien et chat)', async () => {
   const data = seed({ dogs: [dogRec(), dogRec({ id: 'c1', name: 'Miso', species: 'cat', breed: 'Persan', birth: '2024-03-01' })] });
   const b = await boot({ data }), p = b.page; const routes = Object.keys(await b.ev(() => Object.fromEntries(Object.keys(ROUTES).map(k => [k, 1]))));
   for (const cur of ['d1', 'c1']) { await b.ev(c => { S.current = c; save(); }, cur);
-    for (const r of routes) { await b.go('#/' + r + (r === 'lecon' || r === 'seance' ? '?id=assis' : r === 'programme' ? '?id=chiot8' : r === 'balade-detail' ? '?id=none' : '')); const html = await b.ev(() => document.querySelector('#view').innerHTML); assert.ok(html.length > 30, `page ${r} vide pour ${cur}`); } }
+    for (const r of routes) { await b.go('#/' + r + (r === 'lecon' || r === 'seance' ? (cur === 'c1' ? '?id=c-jeu' : '?id=assis') : r === 'programme' ? (cur === 'c1' ? '?id=chaton4' : '?id=chiot8') : r === 'balade-detail' ? '?id=none' : '')); const html = await b.ev(() => document.querySelector('#view').innerHTML), txt = await b.ev(() => document.querySelector('#view').innerText); assert.ok(html.length > 30, `page ${r} vide pour ${cur}`);
+      assert.doesNotMatch(txt, /undefined|NaN|\[object |\bnull\b|\$\{/, `texte cassé sur la page ${r} (${cur}) : ` + (txt.match(/.{0,40}(undefined|NaN|\[object |\bnull\b|\$\{).{0,40}/) || [''])[0]);
+      if (cur === 'c1') assert.doesNotMatch(txt.replace(/chiens? (et|ou) (de )?chats?|chats? (et|ou) (de )?chiens?|chien de garde|Wouf/gi, ''), /\bvotre chien\b|\bton chien\b/i, `« votre chien » affiché pour un chat sur la page ${r}`); } }
   assert.ok(routes.length >= 25, 'routes : ' + routes.length); noErrors(b); await b.ctx.close();
 });
 

@@ -44,14 +44,15 @@ function pathHTML(d) {
 ACT['unit-open'] = ({ u }) => { PARC.open = PARC.open === u ? '__none' : u; render(true); };
 
 /* ---------- Mini-quiz de validation (3 questions tirées des critères de réussite de la leçon) ---------- */
-/* Fonction pure : chaque question porte sur une étape ; la bonne réponse est SON critère, les autres sont ceux d'autres étapes de la même leçon. */
+/* Fonction pure : les 3 questions écrites à la main pour la leçon (quiz*.js), réponses mélangées.
+   Si une leçon n'a pas encore de quiz (ne devrait pas arriver : `npm run check` le refuse), repli sur les critères des étapes. */
 function lessonQuiz(l, rnd = Math.random) {
   const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-  const idx = shuffle(l.steps.map((_, i) => i)).slice(0, 3);
-  return idx.map(i => {
-    const others = shuffle(l.steps.map((s, k) => k).filter(k => k !== i && l.steps[k].crit !== l.steps[i].crit)).slice(0, 2);
-    const opts = shuffle([i, ...others]);
-    return { q: `Étape « ${l.steps[i].t} » : à quel moment peut-on passer à la suite ?`, opts: opts.map(k => l.steps[k].crit), ok: opts.indexOf(i) };
+  const hand = (typeof QUIZZES !== 'undefined' && QUIZZES[l.id]) || null;
+  if (hand) return hand.slice(0, 3).map(([q, good, ...rest]) => { const why = rest.pop(), opts = shuffle([good, ...rest]); return { q, opts, ok: opts.indexOf(good), why }; });
+  return shuffle(l.steps.map((_, i) => i)).slice(0, 3).map(i => {
+    const opts = shuffle([i, ...shuffle(l.steps.map((s, k) => k).filter(k => k !== i && l.steps[k].crit !== l.steps[i].crit)).slice(0, 2)]);
+    return { q: `Étape « ${l.steps[i].t} » : quel est le critère de réussite ?`, opts: opts.map(k => l.steps[k].crit), ok: opts.indexOf(i), why: '' };
   });
 }
 const QUIZ = { id: null, qs: [], i: 0, score: 0, picked: null, run: 0, salt: 0 };
@@ -59,10 +60,10 @@ function quizHTML() {
   const l = lessonOf(QUIZ.id), q = QUIZ.qs[QUIZ.i];
   if (!q) return `<div class="sheet-head"><h2>${QUIZ.score === QUIZ.qs.length ? '🏆 Sans faute !' : '💪 Presque !'}</h2><button class="x" data-close>✕</button></div>
     ${quizMood()}<div class="quiz-end"><div class="big-n">${QUIZ.score}/${QUIZ.qs.length}</div>${QUIZ.score === QUIZ.qs.length ? `<p>Leçon validée : <b>+${XP_LESSON + XP_QUIZ} XP</b></p><button class="btn primary big" data-act="quiz-finish">Continuer</button>` : `<p>Il faut 3 bonnes réponses pour valider « ${esc(l.title)} ». Relisez les étapes, puis réessayez.</p><button class="btn primary big" data-act="quiz-retry">Réessayer</button>`}</div>`;
-  return `<div class="sheet-head"><h2>${l.icon} Quiz · ${QUIZ.i + 1}/${QUIZ.qs.length}</h2><button class="x" data-close>✕</button></div>
+  return `<div class="sheet-head"><h2>${l.icon} Quiz · ${QUIZ.i + 1}/${QUIZ.qs.length}<small class="quiz-lesson">${esc(l.title)}</small></h2><button class="x" data-close>✕</button></div>
     <div class="qbar">${QUIZ.qs.map((_, k) => `<i class="${k < QUIZ.i ? 'on' : ''}"></i>`).join('')}</div>
     ${quizMood()}<p class="quiz-q">${esc(q.q)}</p><div class="quiz-opts">${q.opts.map((o, k) => `<button class="qopt ${QUIZ.picked == null ? '' : k === q.ok ? 'good' : k === QUIZ.picked ? 'bad' : 'dim'}" data-act="quiz-pick" data-k="${k}" ${QUIZ.picked == null ? '' : 'disabled'}>${esc(o)}</button>`).join('')}</div>
-    ${QUIZ.picked == null ? '' : `<div class="quiz-fb ${QUIZ.picked === q.ok ? 'good' : 'bad'}"><b>${QUIZ.picked === q.ok ? '✅ Bonne réponse !' : '❌ Pas tout à fait.'}</b><button class="btn primary" data-act="quiz-next">Continuer</button></div>`}`;
+    ${QUIZ.picked == null ? '' : `<div class="quiz-fb ${QUIZ.picked === q.ok ? 'good' : 'bad'}"><div><b>${QUIZ.picked === q.ok ? '✅ Bonne réponse !' : '❌ Pas tout à fait.'}</b>${q.why ? `<small class="quiz-why">${esc(q.why)}</small>` : ''}</div><button class="btn primary" data-act="quiz-next">Continuer</button></div>`}`;
 }
 function quizRender() { const s = $('.sheet.quiz'); if (s) s.innerHTML = quizHTML(); }
 function quizOpen(id) {
