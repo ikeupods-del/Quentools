@@ -1664,7 +1664,7 @@ async function cloudRestore(prov, signedIn) {
 function cloudCard() {
   const prov = cloudProv();
   if (!prov) return `<h2>Synchronisation</h2><div class="card"><p class="small" style="margin-top:0">Connectez-vous pour retrouver patients, tournées et <b>ordonnances</b> sur tous vos appareils (téléphone, tablette, ordinateur). Tout est <b>chiffré sur ce téléphone</b> avant l’envoi.</p>
-    ${googleReady() ? `<button class="gbtn" onclick="connectCloud('google')">${GLOGO}<span>Se connecter avec Google</span></button>` : `<div class="rowitem" style="margin-bottom:4px"><span class="gbadge">${GLOGO}</span><span class="grow"><b>Google</b><small>${googleHost() ? 'Disponible dans l’app installée depuis votre adresse GitHub Pages.' : 'À activer : ajoutez l’identifiant client Google dans config.js.'}</small></span></div>`}
+    ${googleReady() ? `<button class="gbtn" onclick="connectCloud('google')">${GLOGO}<span>Se connecter avec Google</span></button>` : (googleHost() ? `<div class="rowitem" style="margin-bottom:4px"><span class="gbadge">${GLOGO}</span><span class="grow"><b>Google</b><small>Disponible dans l’app installée depuis votre adresse GitHub Pages.</small></span></div>` : '')}
     <button class="ghbtn" onclick="connectCloud('github')">${GHLOGO}<span>Se connecter avec GitHub</span></button></div>`;
   const a = S[prov];
   return `<h2>Synchronisation</h2><div class="card"><div class="rowitem">${a.picture ? `<img src="${esc(a.picture)}" alt="" class="gavatar" referrerpolicy="no-referrer">` : `<span class="gbadge">${prov === 'google' ? GLOGO : GHLOGO}</span>`}<span class="grow"><b>${esc(a.name || a.email || a.login)}</b><small>${PNAME[prov]} · ${esc(a.email || '@' + a.login)}</small></span><span class="chip ok">connecté</span></div>
@@ -1680,6 +1680,7 @@ let BIP = null;
 const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 function pwaBoot() {
+  if (!GOOGLE_CLIENT_ID) console.info('Infikit : connexion Google désactivée (googleClientId vide dans config.js, voir README).');
   if ('serviceWorker' in navigator && location.protocol === 'https:' && !googleHost()) navigator.serviceWorker.register('sw.js').catch(() => { });
   addEventListener('beforeinstallprompt', e => { e.preventDefault(); BIP = e; if (!S || ui.tab === 'reglages') render(); });
   addEventListener('appinstalled', () => { BIP = null; toast('Infikit est installée sur l’écran d’accueil 🎉'); render(); });
