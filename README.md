@@ -67,3 +67,44 @@ Outil indépendant d'Infikit : il vit dans `freelance/` et n'utilise que son pro
 |---|---|
 | `freelance/index.html` | l'application (un seul fichier) |
 | `freelance/config.js` | config Firebase / GitHub |
+
+## Wouf — le carnet de santé du chien
+
+Carnet de santé complet (vaccins, vermifuges, antipuces, consultations, chirurgies) avec **rappels automatiques**, plan chiot, courbe de poids
+vs fourchette de la race, traitements du jour, journal de symptômes, dépenses, documents (ordonnances photo/PDF), ration quotidienne,
+fiche d'urgence, affiche « chien perdu », fiche véto en PDF, export des rappels vers l'agenda (.ics) et sauvegarde chiffrée (AES-256).
+**SOS** : vétérinaires ouverts / 24 h/24 autour de soi (OpenStreetMap, sans clé d'API), contacts d'urgence, premiers secours, aliments toxiques.
+**Assurance** : simulateur de coût réel par niveau de couverture + comparateur de vrais devis saisis + liens de devis (affiliation possible).
+
+**Adresse :** https://ikeupods-del.github.io/Quentools/wouf/ — application installable (PWA), hors connexion, aucune inscription, données sur l'appareil.
+
+### Abonnement « Wouf Plus » : activable à tout moment
+Par défaut **tout est gratuit**. Tout se pilote dans `wouf/config.js` (section `billing`) :
+
+| Réglage | Effet |
+|---|---|
+| `enabled: false` | Tout gratuit (état actuel). Passer à `true` puis push = l'abonnement s'active sur tous les appareils à leur prochaine ouverture. |
+| `freeUntil: '2027-03-31'` | Offre de lancement : tout reste gratuit jusqu'à cette date même si `enabled: true`. |
+| `grandfatherBefore` + `grandfatherUntil` | Les utilisateurs arrivés avant la date gardent Plus (jusqu'à une date ou `'lifetime'`). |
+| `limits`, `premium` | Ce que la formule gratuite limite (1 chien, 3 documents) et les fonctions Plus (multi-chiens, documents illimités, fiche PDF, agenda .ics, stats de dépenses). |
+
+Les données déjà saisies ne sont jamais verrouillées : un utilisateur gratuit garde tout, seuls les nouveaux ajouts Plus sont limités. Le carnet, les rappels, SOS, assurance, sauvegarde restent toujours gratuits.
+Tester l'expérience gratuite : ouvrir `…/wouf/?preview=free` (et `?preview=plus`).
+
+**Paiement (à faire seulement le jour J)** — Stripe + relais Cloudflare Worker sans base de données :
+1. Stripe : créer 2 prix récurrents (mensuel, annuel) et activer le *Customer portal* (résiliation à tout moment).
+2. Cloudflare Workers : déployer `wouf/billing-worker/worker.js` avec `STRIPE_SECRET_KEY` (secret), `PRICE_MONTHLY`, `PRICE_YEARLY`, `ALLOWED_ORIGIN=https://ikeupods-del.github.io`.
+3. `wouf/config.js` : `api: 'https://<votre-worker>.workers.dev'`, ajuster `plans` (prix affichés), puis `enabled: true`.
+Le relais est **non testé contre un vrai compte Stripe** : l'essayer en mode test d'abord. Le contrôle d'accès côté app est un modèle « freemium » (contournable par un utilisateur technique), suffisant pour ce type d'app.
+
+### Données d'assurance
+Wouf ne connaît pas les tarifs en temps réel des assureurs et n'affiche donc **aucun prix inventé pour une marque** : les formules types sont des estimations de marché (modifiables dans `wouf/assurance.js`, tableau `TIERS`), les devis réels sont saisis par l'utilisateur. Liens partenaires : `affiliates` dans `wouf/config.js` (mention « partenaire » affichée automatiquement).
+
+| Fichier | Rôle |
+|---|---|
+| `wouf/index.html`, `style.css` | coquille et thème (clair/sombre) |
+| `wouf/config.js` | **interrupteur d'abonnement**, affiliation |
+| `wouf/data.js` | races, vaccins, toxiques, premiers secours |
+| `wouf/core.js`, `health.js` | stockage, formulaires, droits ; rappels, score, plan chiot |
+| `wouf/screens.js`, `sos.js`, `assurance.js`, `extras.js`, `main.js` | écrans |
+| `wouf/billing-worker/worker.js` | relais Stripe (facultatif tant que gratuit) |

@@ -1,0 +1,24 @@
+{
+  "name": "Wouf — carnet de santé du chien",
+  "short_name": "Wouf",
+  "description": "Vaccins, vermifuges, poids, rappels, vétérinaires de garde et comparateur d’assurance pour votre chien.",
+  "lang": "fr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8f4ef",
+  "theme_color": "#f0782a",
+  "categories": ["lifestyle", "health", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "SOS vétérinaire", "url": "./#/sos", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Carnet", "url": "./#/carnet", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
