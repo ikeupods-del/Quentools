@@ -41,17 +41,17 @@ la date de fin de validité saisie met à jour l’alerte « ordonnance expirée
 ### Sécurité des données
 - Les données restent sur le téléphone (localStorage + IndexedDB pour les fichiers).
 - La synchronisation chiffre **tout** sur le téléphone (AES-256-GCM, clé PBKDF2 de la phrase secrète) avant l’envoi :
-  Google Drive (dossier privé de l’app) ou GitHub (gists secrets) ne reçoivent que des données illisibles.
+  Google (Firebase, espace privé de l’app) ou GitHub (gists secrets) ne reçoivent que des données illisibles.
 - Sans la phrase secrète, la sauvegarde est irrécupérable.
 
 ### Mise en ligne (une seule fois)
 
 1. **GitHub Pages** : Settings → Pages → Source : **GitHub Actions**. Le workflow `.github/workflows/pages.yml` publie le site à chaque push.
-2. **Connexion Google** (facultatif) :
-   - https://console.cloud.google.com → nouveau projet → « API et services » → activer **Google Drive API**.
-   - Écran de consentement OAuth : type Externe, ajouter le scope `drive.appdata`.
-   - Identifiants → Créer un **ID client OAuth** « Application Web », origine JavaScript autorisée : `https://ikeupods-del.github.io`.
-   - Coller l’identifiant dans `infikit/config.js` → `googleClientId`.
+2. **Connexion Google** (projet Firebase `quentools-adca1`, commun à toutes les apps QuenTools, config déjà dans `infikit/config.js`) :
+   - Firebase → Authentication → Sign-in method : activer **Google**.
+   - Authentication → Settings → Authorized domains : ajouter `ikeupods-del.github.io`.
+   - Firestore Database : créer la base, puis Rules : coller les règles (voir `firestore.rules` du dépôt `patrimoineai`) et **Publier**.
+   - Données rangées dans `users/{uid}/apps/infikit` ; le même compte Google donne accès à Patrimoine AI et aux futures apps, sans mélanger les données.
 3. **Connexion GitHub** : fonctionne tout de suite en collant un jeton « gist » (l’app guide l’infirmière).
    Pour un bouton en un clic (facultatif) :
    - GitHub → Settings → Developer settings → **OAuth Apps** → New : Homepage et Callback URL = `https://ikeupods-del.github.io/Quentools/infikit/`.
@@ -63,6 +63,6 @@ la date de fin de validité saisie met à jour l’alerte « ordonnance expirée
 | Fichier | Rôle |
 |---|---|
 | `infikit/index.html` | l’application (un seul fichier) |
-| `infikit/config.js` | identifiants Google / GitHub |
+| `infikit/config.js` | config Firebase (Google) / GitHub |
 | `infikit/manifest.webmanifest`, `infikit/sw.js`, `infikit/icons/` | installation et mode hors connexion |
 | `infikit/oauth-worker/worker.js` | relais OAuth GitHub (facultatif) |
