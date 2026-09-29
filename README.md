@@ -50,3 +50,20 @@ la date de fin de validité saisie met à jour l’alerte « ordonnance expirée
 | `infikit/config.js` | config Firebase (Google) / GitHub |
 | `infikit/manifest.webmanifest`, `infikit/sw.js`, `infikit/icons/` | installation et mode hors connexion |
 | `infikit/oauth-worker/worker.js` | relais OAuth GitHub (facultatif) |
+
+## Freelance Kit — TJM & devis pour freelances
+
+Calculateur de TJM (net visé, charges, frais, jours facturables) et générateur de devis sur-mesure (jours-hommes × coefficient de complexité, TVA, acompte).
+Outil indépendant d'Infikit : il vit dans `freelance/` et n'utilise que son propre stockage (`fk:*`).
+
+**Adresse :** https://ikeupods-del.github.io/Quentools/freelance/
+
+- **Connexion Google** : même projet Firebase que les autres apps QuenTools (`freelance/config.js`), même compte. Les données (réglages TJM, devis, bibliothèque) sont synchronisées dans Firestore sous `users/{uid}/apps/freelance/main/current` ; la version la plus récente gagne. Prérequis identiques à Infikit (Google activé dans Firebase Auth, domaine `ikeupods-del.github.io` autorisé, règles Firestore couvrant `users/{uid}/apps/**`).
+- **GitHub** : export du devis en **gist secret** (`.json` + `.md`), mis à jour à chaque nouvel export. Connexion en collant un jeton avec la seule case `gist`, ou en un clic via `githubClientId` / `githubOAuthProxy` dans `freelance/config.js` (OAuth App dont le callback est `.../Quentools/freelance/`).
+- **Exports** : impression / PDF, `.md`, `.json`.
+- Les données synchronisées ne sont **pas** chiffrées côté client (contrairement à Infikit) : ne pas y mettre d'informations sensibles.
+
+| Fichier | Rôle |
+|---|---|
+| `freelance/index.html` | l'application (un seul fichier) |
+| `freelance/config.js` | config Firebase / GitHub |

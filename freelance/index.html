@@ -25,6 +25,7 @@
   };
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 
 <style>
@@ -60,9 +61,27 @@
         <span class="font-semibold tracking-tight">Freelance Kit</span>
       </div>
       <div class="flex items-center gap-2">
-        <!-- HOOK AUTH : brancher ici Google / GitHub (voir section Integrations plus bas) -->
-        <button class="btn btn-ghost" @click="Integrations.signIn('google')" title="Bientôt disponible">Google</button>
-        <button class="btn btn-ghost hidden sm:inline-flex" @click="Integrations.signIn('github')" title="Bientôt disponible">GitHub</button>
+        <!-- Google -->
+        <template x-if="acct.google">
+          <button class="btn btn-ghost !px-2.5" @click="signOut('google')" :title="'Google : ' + acct.google.email + ' — cliquer pour se déconnecter'">
+            <img x-show="acct.google.picture" :src="acct.google.picture" alt="" class="h-5 w-5 rounded-full" referrerpolicy="no-referrer">
+            <span class="hidden max-w-[10rem] truncate sm:inline" x-text="acct.google.name || acct.google.email"></span>
+            <span class="text-xs text-slate-500" x-text="syncLabel"></span>
+          </button>
+        </template>
+        <template x-if="!acct.google">
+          <button class="btn btn-ghost" @click="signIn('google')">Google</button>
+        </template>
+        <!-- GitHub -->
+        <template x-if="acct.github">
+          <button class="btn btn-ghost" @click="signOut('github')" :title="'GitHub : ' + acct.github.login + ' — cliquer pour se déconnecter'">
+            <img x-show="acct.github.picture" :src="acct.github.picture" alt="" class="h-5 w-5 rounded-full">
+            <span class="hidden sm:inline" x-text="acct.github.login"></span>
+          </button>
+        </template>
+        <template x-if="!acct.github">
+          <button class="btn btn-ghost" @click="signIn('github')">GitHub</button>
+        </template>
         <button class="btn btn-ghost !px-2.5" @click="toggleTheme()" aria-label="Basculer le thème">
           <span x-text="dark ? '☀️' : '🌙'"></span>
         </button>
@@ -251,53 +270,171 @@
         <div class="no-print mt-6 flex flex-wrap gap-2 border-t border-slate-200 pt-5 dark:border-slate-800">
           <button class="btn btn-primary" @click="window.print()">Imprimer / PDF</button>
           <button class="btn btn-ghost" @click="exportJSON()">Export JSON</button>
-          <!-- HOOK EXPORT : brancher Integrations.exportToGitHub / saveToDrive ici -->
-          <button class="btn btn-ghost" @click="Integrations.exportToGitHub(snapshot())" title="Bientôt disponible">→ GitHub</button>
-          <button class="btn btn-ghost" @click="Integrations.saveToDrive(snapshot())" title="Bientôt disponible">→ Drive</button>
+          <button class="btn btn-ghost" @click="exportMarkdown()">Export .md</button>
+          <button class="btn btn-ghost" @click="saveToLibrary()">Enregistrer</button>
+          <button class="btn btn-ghost" :disabled="busy" @click="exportGithub()">→ GitHub (gist)</button>
         </div>
       </div>
     </section>
 
+    <!-- ============ BIBLIOTHÈQUE DE DEVIS ============ -->
+    <section class="card no-print" aria-labelledby="h-lib">
+      <div class="flex items-center justify-between gap-3">
+        <h2 id="h-lib" class="text-lg font-semibold">Mes devis</h2>
+        <button class="btn btn-ghost" @click="newQuote()">+ Nouveau devis</button>
+      </div>
+      <p class="mt-3 text-sm text-slate-500" x-show="!library.length">Aucun devis enregistré. Utilisez « Enregistrer » sous l'aperçu.</p>
+      <ul class="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
+        <template x-for="q in library" :key="q.id">
+          <li class="flex items-center justify-between gap-3 py-2.5 text-sm">
+            <div class="min-w-0">
+              <p class="truncate font-medium" x-text="(q.project || 'Sans titre') + (q.client ? ' — ' + q.client : '')"></p>
+              <p class="text-xs text-slate-500" x-text="eur(quoteTotals(q).ttc) + ' TTC · ' + new Date(q.updatedAt).toLocaleDateString('fr-FR')"></p>
+            </div>
+            <div class="flex shrink-0 gap-2">
+              <button class="btn btn-ghost !py-1" @click="openQuote(q.id)">Ouvrir</button>
+              <button class="btn btn-ghost !py-1 hover:!text-red-500" @click="deleteQuote(q.id)" aria-label="Supprimer">✕</button>
+            </div>
+          </li>
+        </template>
+      </ul>
+    </section>
+
     <footer class="no-print pb-6 text-center text-xs text-slate-500">
-      Données enregistrées localement dans votre navigateur · Aucun envoi serveur.
+      Données enregistrées dans votre navigateur · synchronisées avec votre compte Google si vous êtes connecté.
     </footer>
   </main>
+
+  <!-- Modale : jeton GitHub -->
+  <div x-show="ghModal" x-transition.opacity class="no-print fixed inset-0 z-30 grid place-items-center bg-slate-950/60 p-4" @keydown.escape.window="ghModal=false" @click.self="ghModal=false">
+    <div class="card w-full max-w-md">
+      <h3 class="text-lg font-semibold">Connexion GitHub</h3>
+      <ol class="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-slate-600 dark:text-slate-300">
+        <li><a class="text-indigo-600 underline dark:text-indigo-400" target="_blank" rel="noopener" :href="ghTokenUrl">Ouvrez cette page GitHub</a> puis « Generate token » (seule la case <b>gist</b> est cochée).</li>
+        <li>Copiez le code <code>ghp_…</code> et collez-le ici.</li>
+      </ol>
+      <input class="field mt-4" placeholder="ghp_…" autocomplete="off" autocapitalize="off" spellcheck="false" x-model="ghToken" @keydown.enter="ghTokenLogin()">
+      <p class="mt-2 text-xs text-slate-500">Le jeton reste dans ce navigateur. Il ne donne accès qu'à vos gists (devis exportés en gist secret).</p>
+      <div class="mt-4 flex justify-end gap-2">
+        <button class="btn btn-ghost" @click="ghModal=false">Annuler</button>
+        <button class="btn btn-primary" @click="ghTokenLogin()">Se connecter</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Toast -->
   <div x-show="toast" x-transition class="no-print fixed bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-white dark:text-slate-900" x-text="toast"></div>
 
 <script>
 /* =====================================================================
-   5. INTÉGRATIONS (STUBS) — à implémenter dans la prochaine version
+   5. INTÉGRATIONS — Google (Firebase Auth + Firestore) et GitHub (gist)
    ---------------------------------------------------------------------
-   Toute la logique externe passe par cet objet : l'UI n'appelle que
-   ces méthodes, donc rien d'autre à modifier dans le HTML.
-
-   • Google  : Google Identity Services (OAuth2 token client, scope
-               drive.file) puis Drive API v3 pour sauvegarder le JSON.
-   • GitHub  : OAuth via un petit proxy (worker) pour l'échange du code,
-               puis PUT /repos/{owner}/{repo}/contents/{path} pour commiter
-               le devis (JSON/Markdown).
+   Réglages dans config.js (window.FREELANCE_CONFIG). Même projet Firebase
+   que les autres apps QuenTools : un seul compte Google pour tout, mais
+   les données de chaque app sont rangées à part :
+   users/{uid}/apps/freelance/main/current
    ===================================================================== */
+const CFG = window.FREELANCE_CONFIG || {};
+const FBV = '10.14.1', APP_ID = 'freelance';
+const GH_KEY = 'fk:gh', GH_API = 'https://api.github.com';
+const GH_CLIENT_ID = CFG.githubClientId || '';
+const GH_PROXY = (CFG.githubOAuthProxy || '').replace(/\/$/, '');
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
+
+let FBP = null;
+function fb() { // charge Firebase à la demande (aucun coût tant qu'on ne se connecte pas)
+  if (!(CFG.firebase && CFG.firebase.apiKey)) return Promise.reject(new Error('Connexion Google non configurée (config.js)'));
+  if (!FBP) FBP = (async () => {
+    const B = `https://www.gstatic.com/firebasejs/${FBV}/`;
+    const [A, Au, Fs] = await Promise.all([import(B + 'firebase-app.js'), import(B + 'firebase-auth.js'), import(B + 'firebase-firestore.js')]);
+    const app = A.initializeApp(CFG.firebase);
+    return { Au, Fs, auth: Au.getAuth(app), db: Fs.getFirestore(app) };
+  })().catch(() => { FBP = null; throw new Error('Impossible de joindre Google (connexion internet ?)'); });
+  return FBP;
+}
+const gInfo = u => ({ email: u.email || '', name: u.displayName || '', picture: u.photoURL || '' });
+
 const Integrations = {
-  user: null,
-  async signIn(provider /* 'google' | 'github' */) {
-    // TODO: lancer le flux OAuth, stocker le token en mémoire (jamais en clair dans localStorage)
-    window.dispatchEvent(new CustomEvent('fk:toast', { detail: `Connexion ${provider} : à venir` }));
+  google: {
+    // Firebase Auth exige https et un domaine autorisé : indisponible en local (file://) ou dans l'aperçu claude.ai
+    available: () => !!(CFG.firebase && CFG.firebase.apiKey) && location.protocol === 'https:' &&
+      !/(^|\.)claude\.ai$|claudeusercontent|anthropic/.test(location.hostname),
+    async restore() { // session déjà ouverte (ici ou dans une autre app QuenTools) ?
+      const F = await fb(); await F.auth.authStateReady();
+      return F.auth.currentUser ? gInfo(F.auth.currentUser) : null;
+    },
+    async signIn() {
+      const F = await fb(); await F.auth.authStateReady();
+      if (F.auth.currentUser) return gInfo(F.auth.currentUser);
+      try { return gInfo((await F.Au.signInWithPopup(F.auth, new F.Au.GoogleAuthProvider())).user); }
+      catch (e) {
+        const m = { 'auth/popup-closed-by-user': 'Connexion annulée', 'auth/cancelled-popup-request': 'Connexion annulée',
+          'auth/popup-blocked': 'Autorisez les pop-ups pour ce site puis réessayez',
+          'auth/unauthorized-domain': 'Domaine non autorisé dans Firebase (voir README)',
+          'auth/operation-not-allowed': 'Connexion Google non activée dans Firebase (voir README)' };
+        throw new Error(m[e && e.code] || 'Connexion Google impossible');
+      }
+    },
+    async signOut() { const F = await fb(); await F.Au.signOut(F.auth); },
+    async _ref(F) {
+      await F.auth.authStateReady();
+      const u = F.auth.currentUser; if (!u) throw new Error('Session Google expirée, reconnectez-vous');
+      return F.Fs.doc(F.db, 'users', u.uid, 'apps', APP_ID, 'main', 'current');
+    },
+    async load() { // -> { text, at } | null
+      const F = await fb(), s = await F.Fs.getDoc(await this._ref(F));
+      return s.exists() ? s.data() : null;
+    },
+    async save(text, at) { const F = await fb(); await F.Fs.setDoc(await this._ref(F), { text, at }); }
   },
-  async signOut() { this.user = null; },
-  async saveToDrive(snapshot) {
-    // TODO: POST https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart
-    window.dispatchEvent(new CustomEvent('fk:toast', { detail: 'Sauvegarde Drive : à venir' }));
-  },
-  async exportToGitHub(snapshot) {
-    // TODO: PUT https://api.github.com/repos/{owner}/{repo}/contents/devis/{id}.json
-    window.dispatchEvent(new CustomEvent('fk:toast', { detail: 'Export GitHub : à venir' }));
+
+  github: {
+    token: () => lsGet(GH_KEY),
+    oauthAvailable: () => !!(GH_CLIENT_ID && GH_PROXY && location.protocol === 'https:'),
+    tokenUrl: 'https://github.com/settings/tokens/new?scopes=gist&description=' + encodeURIComponent('Freelance Kit'),
+    async api(path, opt = {}) {
+      const r = await fetch(GH_API + path, { ...opt, headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + this.token(), ...(opt.headers || {}) } })
+        .catch(() => { throw new Error('GitHub injoignable (connexion internet ?)'); });
+      if (r.status === 401) { lsSet(GH_KEY, null); throw new Error('Jeton GitHub invalide ou expiré, reconnectez-vous'); }
+      if (!r.ok) throw new Error('GitHub : erreur ' + r.status);
+      return r.json();
+    },
+    async signIn(token) { // valide un jeton collé (scope gist) et renvoie le profil
+      lsSet(GH_KEY, token.trim());
+      try { return await this.profile(); } catch (e) { lsSet(GH_KEY, null); throw e; }
+    },
+    async profile() { const u = await this.api('/user'); return { login: u.login, picture: u.avatar_url || '' }; },
+    signOut() { lsSet(GH_KEY, null); },
+    startOAuth() { // redirection GitHub -> retour sur cette page avec ?code=…
+      const st = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+      try { sessionStorage.setItem('fk:gh_state', st); } catch (e) {}
+      location.href = 'https://github.com/login/oauth/authorize?client_id=' + encodeURIComponent(GH_CLIENT_ID) +
+        '&scope=gist&state=' + st + '&redirect_uri=' + encodeURIComponent(location.origin + location.pathname);
+    },
+    async finishOAuth() { // appelé au chargement : échange ?code contre un jeton via le relais (voir infikit/oauth-worker)
+      const q = new URLSearchParams(location.search), code = q.get('code'), st = q.get('state');
+      if (!code) return null;
+      history.replaceState(null, '', location.pathname);
+      let ok = false; try { ok = st && st === sessionStorage.getItem('fk:gh_state'); sessionStorage.removeItem('fk:gh_state'); } catch (e) {}
+      if (!ok) throw new Error('Connexion GitHub refusée (lien expiré), réessayez');
+      const r = await fetch(GH_PROXY + '/token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) });
+      const j = await r.json().catch(() => ({}));
+      if (!j.access_token) throw new Error('Échange GitHub impossible');
+      return this.signIn(j.access_token);
+    },
+    // Crée (ou met à jour) un gist SECRET contenant le devis en .json et .md. Renvoie { id, url }.
+    async exportGist({ id, name, json, markdown }) {
+      const files = { [name + '.json']: { content: json }, [name + '.md']: { content: markdown } };
+      const body = JSON.stringify(id ? { files } : { description: 'Freelance Kit — devis', public: false, files });
+      try { const g = await this.api(id ? '/gists/' + id : '/gists', { method: id ? 'PATCH' : 'POST', body }); return { id: g.id, url: g.html_url }; }
+      catch (e) { if (id && /404/.test(e.message)) return this.exportGist({ name, json, markdown }); throw e; } // gist supprimé : on en recrée un
+    }
   }
 };
 
 /* =====================================================================
-   6. PERSISTANCE — point d'entrée unique (remplaçable par Drive/GitHub)
+   6. PERSISTANCE LOCALE — point d'entrée unique
    ===================================================================== */
 const Store = {
   key: 'fk:state:v1',
@@ -310,64 +447,128 @@ const Store = {
    ===================================================================== */
 function app() {
   const uid = () => Math.random().toString(36).slice(2, 9);
+  const blankQuote = rate => ({
+    id: uid(), client: '', project: '', rate, vat: 20, coef: 1.15, deposit: 30, gistId: '',
+    lines: [{ id: uid(), label: 'Cadrage & conception', days: 3 }, { id: uid(), label: 'Développement', days: 10 }]
+  });
+  const totalsOf = q => {
+    const days = q.lines.reduce((s, l) => s + (Number(l.days) || 0), 0);
+    const subtotal = days * (Number(q.rate) || 0), ht = subtotal * (Number(q.coef) || 1);
+    const vat = ht * (Number(q.vat) || 0) / 100;
+    return { days, subtotal, complexity: ht - subtotal, ht, vat, ttc: ht + vat };
+  };
+  const clone = o => JSON.parse(JSON.stringify(o));
 
   return {
     dark: document.documentElement.classList.contains('dark'),
-    toast: '',
+    toast: '', busy: false,
+    acct: { google: null, github: null },
+    syncState: '',            // '' | 'sync' | 'ok' | 'err'
+    ghModal: false, ghToken: '', ghTokenUrl: Integrations.github.tokenUrl,
+    savedAt: 0, _last: '',
 
     // --- État : calculateur TJM ---
-    tjm: {
-      netMonthly: 3000, chargesRate: 22, expensesMonthly: 300,
-      buffer: 10, daysWorked: 218, billableRate: 80, hoursPerDay: 7
-    },
+    tjm: { netMonthly: 3000, chargesRate: 22, expensesMonthly: 300, buffer: 10, daysWorked: 218, billableRate: 80, hoursPerDay: 7 },
 
-    // --- État : devis ---
+    // --- État : devis courant + bibliothèque ---
     complexities: [
-      { label: 'Simple',    value: 1.00 },
-      { label: 'Standard',  value: 1.15 },
-      { label: 'Complexe',  value: 1.30 },
-      { label: 'Critique',  value: 1.50 }
+      { label: 'Simple',   value: 1.00 }, { label: 'Standard', value: 1.15 },
+      { label: 'Complexe', value: 1.30 }, { label: 'Critique', value: 1.50 }
     ],
-    quote: {
-      client: '', project: '', rate: 500, vat: 20, coef: 1.15, deposit: 30,
-      lines: [{ id: uid(), label: 'Cadrage & conception', days: 3 }, { id: uid(), label: 'Développement', days: 10 }]
-    },
+    quote: blankQuote(500),
+    library: [],
 
     // --- Cycle de vie ---
-    init() {
+    async init() {
       const saved = Store.load();
-      if (saved) { Object.assign(this.tjm, saved.tjm); Object.assign(this.quote, saved.quote); }
-      else this.quote.rate = Math.round(this.tjmResult.tjm / 10) * 10;
-      // Sauvegarde automatique à chaque changement
-      this.$watch('tjm', () => Store.save(this.snapshot()));
-      this.$watch('quote', () => Store.save(this.snapshot()));
+      if (saved) this.apply(saved); else this.quote.rate = Math.round(this.tjmResult.tjm / 10) * 10;
+      this._last = this.content();
+      this.$watch('tjm', () => this.persist());
+      this.$watch('quote', () => this.persist());
+      this.$watch('library', () => this.persist());
       window.addEventListener('fk:toast', e => this.notify(e.detail));
+
+      // Retour d'une connexion GitHub OAuth (?code=…)
+      try { const u = await Integrations.github.finishOAuth(); if (u) { this.acct.github = u; this.notify('GitHub connecté'); } }
+      catch (e) { this.notify(e.message); }
+      // Sessions déjà ouvertes
+      if (!this.acct.github && Integrations.github.token()) Integrations.github.profile().then(u => this.acct.github = u).catch(() => {});
+      if (lsGet('fk:google') && Integrations.google.available()) {
+        try { const u = await Integrations.google.restore(); if (u) { this.acct.google = u; this.pull(); } } catch (e) {}
+      }
     },
-    snapshot() { return JSON.parse(JSON.stringify({ tjm: this.tjm, quote: this.quote, savedAt: new Date().toISOString() })); },
+
+    // --- Persistance & synchronisation ---
+    content() { return JSON.stringify({ tjm: this.tjm, quote: this.quote, library: this.library }); },
+    snapshot() { return { ...JSON.parse(this.content()), savedAt: this.savedAt }; },
+    apply(d) {
+      Object.assign(this.tjm, d.tjm || {});
+      if (d.quote) this.quote = d.quote;
+      this.library = d.library || [];
+      this.savedAt = d.savedAt || 0;
+    },
+    persist() { // appelé à chaque modification (pas quand on applique des données reçues du cloud)
+      const c = this.content(); if (c === this._last) return;
+      this._last = c; this.savedAt = Date.now();
+      Store.save(this.snapshot());
+      if (this.acct.google) { clearTimeout(this._push); this._push = setTimeout(() => this.push(), 1500); }
+    },
+    async push() {
+      this.syncState = 'sync';
+      try { await Integrations.google.save(JSON.stringify(this.snapshot()), this.savedAt); this.syncState = 'ok'; }
+      catch (e) { this.syncState = 'err'; this.notify('Synchro Google : ' + e.message); }
+    },
+    async pull() { // au login : la version la plus récente gagne
+      this.syncState = 'sync';
+      try {
+        const remote = await Integrations.google.load();
+        if (remote && remote.at > this.savedAt) {
+          this.apply(JSON.parse(remote.text)); this._last = this.content(); Store.save(this.snapshot());
+          this.notify('Données récupérées depuis Google');
+          this.syncState = 'ok';
+        } else await this.push();
+      } catch (e) { this.syncState = 'err'; this.notify('Synchro Google : ' + e.message); }
+    },
+    get syncLabel() { return { sync: '⟳', ok: '✓', err: '!' }[this.syncState] || ''; },
+
+    // --- Comptes ---
+    async signIn(provider) {
+      if (provider === 'google') {
+        if (!Integrations.google.available()) return this.notify('Connexion Google : disponible uniquement sur la version publiée (https)');
+        try { this.acct.google = await Integrations.google.signIn(); lsSet('fk:google', '1'); await this.pull(); }
+        catch (e) { this.notify(e.message); }
+      } else {
+        if (Integrations.github.oauthAvailable()) return Integrations.github.startOAuth();
+        this.ghToken = ''; this.ghModal = true;
+      }
+    },
+    async ghTokenLogin() {
+      if (!this.ghToken.trim()) return this.notify('Collez le jeton');
+      try { this.acct.github = await Integrations.github.signIn(this.ghToken); this.ghModal = false; this.ghToken = ''; this.notify('GitHub connecté'); }
+      catch (e) { this.notify(e.message); }
+    },
+    async signOut(provider) {
+      if (provider === 'google') { try { await Integrations.google.signOut(); } catch (e) {} lsSet('fk:google', null); this.acct.google = null; this.syncState = ''; }
+      else { Integrations.github.signOut(); this.acct.github = null; }
+    },
 
     // --- Calculs TJM ---
     get tjmResult() {
       const t = this.tjm, n = v => Math.max(0, Number(v) || 0);
-      const netYear   = n(t.netMonthly) * 12;
-      const expenses  = n(t.expensesMonthly) * 12;
-      const rate      = Math.min(n(t.chargesRate), 90) / 100;
+      const netYear = n(t.netMonthly) * 12, expenses = n(t.expensesMonthly) * 12;
+      const rate = Math.min(n(t.chargesRate), 90) / 100;
       // CA = (net + frais) / (1 - charges) , majoré de la marge de sécurité
-      const revenue   = ((netYear + expenses) / (1 - rate)) * (1 + n(t.buffer) / 100);
-      const billable  = n(t.daysWorked) * Math.min(n(t.billableRate), 100) / 100;
-      const tjm       = billable ? revenue / billable : 0;
+      const revenue = ((netYear + expenses) / (1 - rate)) * (1 + n(t.buffer) / 100);
+      const billable = n(t.daysWorked) * Math.min(n(t.billableRate), 100) / 100;
+      const tjm = billable ? revenue / billable : 0;
       return { revenue, billableDays: billable, tjm, hourly: n(t.hoursPerDay) ? tjm / t.hoursPerDay : 0 };
     },
 
     // --- Calculs devis ---
-    get totals() {
-      const days = this.quote.lines.reduce((s, l) => s + (Number(l.days) || 0), 0);
-      const subtotal = days * (Number(this.quote.rate) || 0);
-      const ht = subtotal * (Number(this.quote.coef) || 1);
-      const vat = ht * (Number(this.quote.vat) || 0) / 100;
-      return { days, subtotal, complexity: ht - subtotal, ht, vat, ttc: ht + vat };
-    },
+    get totals() { return totalsOf(this.quote); },
+    quoteTotals: totalsOf,
 
-    // --- Actions ---
+    // --- Actions devis ---
     addLine() { this.quote.lines.push({ id: uid(), label: '', days: 1 }); },
     removeLine(i) { this.quote.lines.splice(i, 1); },
     useTjmInQuote() {
@@ -375,19 +576,52 @@ function app() {
       this.notify('TJM reporté dans le devis');
       document.getElementById('h-quote').scrollIntoView({ behavior: 'smooth' });
     },
-    exportJSON() {
-      const blob = new Blob([JSON.stringify(this.snapshot(), null, 2)], { type: 'application/json' });
-      const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'devis.json' });
+    saveToLibrary() {
+      const q = { ...clone(this.quote), updatedAt: Date.now() }, i = this.library.findIndex(x => x.id === q.id);
+      i >= 0 ? this.library.splice(i, 1, q) : this.library.unshift(q);
+      this.notify('Devis enregistré');
+    },
+    newQuote() { this.quote = blankQuote(Math.round(this.tjmResult.tjm / 10) * 10 || 500); },
+    openQuote(id) {
+      const q = this.library.find(x => x.id === id); if (!q) return;
+      this.quote = clone(q); document.getElementById('h-quote').scrollIntoView({ behavior: 'smooth' });
+    },
+    deleteQuote(id) { if (confirm('Supprimer ce devis ?')) this.library = this.library.filter(x => x.id !== id); },
+
+    // --- Exports ---
+    fileName() { return (this.quote.project || 'devis').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'devis'; },
+    markdown() {
+      const q = this.quote, t = this.totals;
+      return `# Devis — ${q.project || 'Projet'}\n\nClient : ${q.client || '—'}  \nDate : ${this.today}\n\n` +
+        `| Prestation | Jours | Montant |\n|---|---:|---:|\n` +
+        q.lines.map(l => `| ${l.label || '—'} | ${l.days} | ${this.eur(l.days * q.rate)} |`).join('\n') +
+        `\n\nTJM appliqué : ${this.eur(q.rate)} · Coefficient de complexité : × ${Number(q.coef).toFixed(2)}\n\n` +
+        `- Total HT : **${this.eur(t.ht)}**\n- TVA ${q.vat} % : ${this.eur(t.vat)}\n- **Total TTC : ${this.eur(t.ttc)}**\n` +
+        (q.deposit > 0 ? `- Acompte ${q.deposit} % : ${this.eur(t.ttc * q.deposit / 100)}\n` : '');
+    },
+    download(name, text, type) {
+      const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([text], { type })), download: name });
       a.click(); URL.revokeObjectURL(a.href);
     },
+    exportJSON() { this.download(this.fileName() + '.json', JSON.stringify(this.snapshot(), null, 2), 'application/json'); },
+    exportMarkdown() { this.download(this.fileName() + '.md', this.markdown(), 'text/markdown'); },
+    async exportGithub() {
+      if (!this.acct.github) return this.signIn('github');
+      this.busy = true;
+      try {
+        const g = await Integrations.github.exportGist({ id: this.quote.gistId, name: this.fileName(), json: JSON.stringify(this.quote, null, 2), markdown: this.markdown() });
+        this.quote.gistId = g.id; this.notify('Devis exporté sur GitHub'); window.open(g.url, '_blank', 'noopener');
+      } catch (e) { this.notify(e.message); }
+      this.busy = false;
+    },
+
+    // --- Divers ---
     toggleTheme() {
       this.dark = !this.dark;
       document.documentElement.classList.toggle('dark', this.dark);
-      try { localStorage.setItem('fk:theme', this.dark ? 'dark' : 'light'); } catch (e) {}
+      lsSet('fk:theme', this.dark ? 'dark' : 'light');
     },
-    notify(msg) { this.toast = msg; clearTimeout(this._t); this._t = setTimeout(() => this.toast = '', 2200); },
-
-    // --- Formatage ---
+    notify(msg) { this.toast = msg; clearTimeout(this._t); this._t = setTimeout(() => this.toast = '', 3000); },
     eur(v) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v || 0); },
     get today() { return new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }); }
   };
