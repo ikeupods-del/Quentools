@@ -119,3 +119,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-off
 .legal h1{font-size:1.3rem;margin-bottom:8px}.legal h2{margin-top:14px}.consent{align-items:flex-start;margin:12px 0;font-size:.9rem}.consent input{margin-top:3px}
 .seg a{flex:1;text-align:center;border-radius:11px;padding:9px 4px;font-weight:650;color:var(--mut)}.seg a.on{background:var(--card);color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.08)}
 #tabs a{min-width:0}
+
+/* Bouton Wouf+ et plan d'entraînement */
+.plusbtn{background:linear-gradient(135deg,#ffcf5a,#f5a623);color:#4a3000;border-radius:99px;padding:5px 12px;font-weight:800;font-size:.85rem;white-space:nowrap;box-shadow:0 3px 10px rgba(245,166,35,.35)}
+.plus-cta{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(135deg,#fff3d6,#ffe1b8);border:0;color:#3b2a08}.plus-cta small{display:block;color:#6b5320;font-size:.82rem}.plus-cta b{display:block}
+@media (prefers-color-scheme:dark){.plus-cta{background:linear-gradient(135deg,#4a3813,#3a2a10);color:#ffe9bd}.plus-cta small{color:#e6cf9c}}
+.cta-plus{margin:6px 0 10px}
+.plan-row{align-items:flex-start;cursor:default}.plan-w{flex:none;width:105px;font-weight:700;color:var(--priD);font-size:.88rem}

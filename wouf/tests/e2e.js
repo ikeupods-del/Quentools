@@ -113,7 +113,7 @@ test('éducation : leçons par espèce (22 Plus pour le chien), contenu complet,
 test('éducation : leçons Plus verrouillées pour un utilisateur gratuit', async () => {
   const b = await boot({ query: '?preview=free', hash: '#/educ' }), p = b.page;
   await p.waitForSelector('.edu-hero'); assert.ok((await p.locator('a.lesson .pill.plus').count()) >= 20);
-  await b.go('#/lecon?id=rappel'); await p.waitForSelector('[data-act=paywall]'); assert.doesNotMatch(await text(p, '#view'), /Erreurs fréquentes/, 'le contenu payant n’est pas affiché');
+  await b.go('#/lecon?id=rappel'); await p.waitForSelector('[data-act=subscribe]'); assert.doesNotMatch(await text(p, '#view'), /Erreurs fréquentes/, 'le contenu payant n’est pas affiché');
   await b.go('#/seance?id=rappel'); assert.match(await text(p, '#view'), /indisponible/);
   await b.go('#/lecon?id=assis'); await p.waitForSelector('.step'); assert.match(await text(p, '#view'), /Erreurs fréquentes/, 'une leçon gratuite reste accessible');
   await b.go('#/programme?id=chiot8'); assert.match(await text(p, '#view'), /Débloquer/);
@@ -181,9 +181,9 @@ test('achat à vie : connexion Google requise, consentement, paiement, retour, a
   await b.ctx.route('https://checkout.example/**', r => r.fulfill({ contentType: 'text/html', body: '<h1>stripe</h1>' }));
   await fakeCloud(p);
   await b.ev(() => { BILL.enabled = true; BILL.api = 'https://api.wouf.test'; BILL.freeUntil = null; Object.assign(LEGAL, { seller: 'Vendeur Test', form: 'EI', address: '1 rue Test', siret: '123', email: 'v@test.fr', mediator: 'Médiateur Test' }); render(); });
-  await p.waitForSelector('[data-act=checkout]'); assert.match(await text(p, '.plus-hero'), /19,99 €/); assert.equal(await b.ev(() => plus()), false);
-  await b.ev(() => { LEGAL.mediator = ''; }); await p.click('[data-act=checkout]'); assert.match(await text(p, '#toast'), /informations légales/); await b.ev(() => { LEGAL.mediator = 'Médiateur Test'; });
-  await p.click('[data-act=checkout]'); await p.waitForSelector('#buy-consent'); assert.equal(await b.ev(() => !!CLOUD.user), true, 'connexion Google déclenchée avant l’achat');
+  await p.waitForSelector('[data-act=subscribe]'); assert.match(await text(p, '.plus-hero'), /19,99 €/); assert.equal(await b.ev(() => plus()), false);
+  await b.ev(() => { LEGAL.mediator = ''; }); await p.click('[data-act=subscribe]'); assert.match(await text(p, '#toast'), /informations légales/); await b.ev(() => { LEGAL.mediator = 'Médiateur Test'; });
+  await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent'); assert.equal(await b.ev(() => !!CLOUD.user), true, 'connexion Google déclenchée avant l’achat');
   assert.match(await text(p, '.sheet'), /19,99 €/); assert.match(await text(p, '.sheet'), /droit de rétractation/);
   await p.click('[data-act=buy-go]'); assert.match(await text(p, '#toast'), /Cochez la case/); assert.equal(seen.checkout, undefined, 'aucun appel sans consentement');
   await p.check('#buy-consent'); await Promise.all([p.waitForURL('https://checkout.example/**'), p.click('[data-act=buy-go]')]);
@@ -257,6 +257,27 @@ test('mises à jour : fichiers versionnés, lien de secours ?maj=1 (vide le cach
   await p.goto(BASE() + '?maj=1#/home'); await p.waitForFunction(() => !location.search.includes('maj')); await p.waitForSelector('.hero');
   assert.equal(await b.ev(() => S.dogs.length), 1, 'les données sont intactes'); assert.equal((await b.ev(() => caches.keys())).includes('dummy-ancien-cache'), false, 'ancien cache supprimé');
   noErrors(b); await b.ctx.close();
+});
+
+test('bouton Wouf+ : visible pour les non-abonnés, présentation de l’offre tant que tout est gratuit, paiement quand la vente est ouverte', async () => {
+  const b = await boot({ query: '?preview=none' }), p = b.page;
+  assert.equal(await p.locator('.plusbtn').isVisible(), true, 'bouton dans l’en-tête'); assert.match(await text(p, '.plus-cta'), /Wouf\+ · 19,99 € paiement unique/); assert.match(await text(p, '.plus-cta'), /Offert pendant le lancement/);
+  await p.click('.plus-cta [data-act=subscribe]'); await p.waitForSelector('.sheet'); assert.match(await text(p, '.sheet'), /tout est offert/); assert.match(await text(p, '.sheet'), /19,99 €/); await p.click('.sheet [data-close]');
+  await p.click('.plusbtn'); await p.waitForSelector('.plus-hero'); assert.match(await text(p, '#view'), /Toutes les fonctions Plus sont incluses/); assert.match(await text(p, '[data-act=subscribe]'), /Découvrir Wouf\+/);
+  // vente ouverte, utilisateur non abonné : libellé d'achat partout
+  await b.ev(() => { BILL.enabled = true; BILL.api = 'https://api.wouf.test'; render(); });
+  assert.match(await text(p, '[data-act=subscribe]'), /Souscrire à Wouf\+ · 19,99 € à vie/); await b.go('#/educ'); await p.waitForSelector('.cta-plus'); assert.match(await text(p, '.cta-plus'), /Souscrire à Wouf\+/);
+  await b.go('#/lecon?id=rappel'); assert.match(await text(p, '[data-act=subscribe]'), /Souscrire/);
+  // abonné : plus de bouton
+  await b.ev(() => { S.sub = { active: true, lifetime: true }; render(); }); assert.equal(await p.locator('.plusbtn').count(), 0);
+  noErrors(b); await b.ctx.close();
+});
+test('leçons complètes : programme d’entraînement, erreurs, dépannage, pistes sur chacune des leçons', async () => {
+  const b = await boot({ hash: '#/educ' }), p = b.page;
+  const ids = await b.ev(() => LESSONS.map(l => l.id)); assert.ok(ids.length >= 50, 'leçons : ' + ids.length);
+  for (const id of ids) { await b.go('#/lecon?id=' + id); const t = await text(p, '#view'); for (const s of ['Objectif', 'Les étapes', 'Programme d’entraînement', 'Erreurs fréquentes', 'Dépannage', 'Test de validation', 'Pour aller plus loin']) assert.ok(t.includes(s), `${id} : section « ${s} » absente`); }
+  const n = await b.ev(() => [LESSONS.filter(l => (l.sp || 'dog') === 'dog' && !l.free).length, LESSONS.filter(l => l.sp === 'cat' && !l.free).length, PROGRAMS.length]);
+  assert.ok(n[0] >= 30 && n[1] >= 10 && n[2] >= 8, JSON.stringify(n)); noErrors(b); await b.ctx.close();
 });
 
 /* ================= 9. Google : sauvegarde cloud ================= */

@@ -12,6 +12,7 @@ function avatar(d, cls = '') {
 function renderTop() {
   const d = dog();
   $('#top').innerHTML = `<div class="top-in"><a class="brand" href="#/home"><svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><use href="#paw"/></svg><span>Wouf</span></a>
+    ${subActive() ? '' : '<a class="plusbtn" href="#/abo">⭐ Wouf+</a>'}
     ${WALK.on && routeName() !== 'balade' ? '<a class="walkpill" href="#/balade">🦮 En balade</a>' : ''}
     ${d ? `<button class="dogchip" data-act="dogs">${avatar(d, 'sm')}<span>${esc(d.name)}</span><i>▾</i></button>` : ''}</div>`;
 }
@@ -112,6 +113,8 @@ ROUTES.home = function home() {
     <div class="hero-txt"><h1>${esc(d.name)}</h1><p>${esc(d.breed || 'Race non renseignée')}${d.sex ? ' · ' + (d.sex === 'F' ? 'Femelle' : 'Mâle') : ''}</p>
     <p class="chips-i"><span class="pill">${esc(ageText(d.birth))}</span><span class="pill">${lifeStage(d)}</span>${ha ? `<span class="pill">≈ ${ha} ans humains</span>` : ''}${lw ? `<span class="pill">${fmtKg(lw.kg)}</span>` : ''}</p>
     ${bd !== null && bd <= 30 ? `<p class="bday">🎂 ${bd === 0 ? 'C’est son anniversaire aujourd’hui !' : 'Anniversaire dans ' + bd + ' j'}</p>` : ''}</div></section>
+
+  ${subActive() ? '' : `<section class="card plus-cta"><div><b>⭐ Wouf+ · ${esc(planLine())}</b><small>${BILL.enabled ? nDog(false) + ' leçons chien, ' + nCat(false) + ' chat, GPS, bilan santé, assistance prioritaire' : 'Offert pendant le lancement : tout est débloqué'}</small></div><button class="btn primary sm" data-act="subscribe">${BILL.enabled ? 'Souscrire' : 'Découvrir'}</button></section>`}
 
   ${backupOld ? `<section class="card note"><b>💾 Pensez à sauvegarder</b><p>Vos données sont sur ce téléphone. Une sauvegarde chiffrée évite de tout perdre en cas de changement d’appareil.</p><a class="btn sm" href="#/sauvegarde">Sauvegarder</a></section>` : ''}
 

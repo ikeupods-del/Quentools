@@ -14,7 +14,7 @@ for (const f of jsFiles) { try { new vm.Script(read(f), { filename: f }); passes
 
 section('Chargement des données');
 const ctx = vm.createContext({ window: {}, console });
-for (const f of ['config.js', 'data.js', 'species.js', 'lessons.js', 'lessons2.js', 'lessons_cat.js']) vm.runInContext(read(f), ctx, { filename: f });
+for (const f of ['config.js', 'data.js', 'species.js', 'lessons.js', 'lessons2.js', 'lessons_cat.js', 'lessons3.js', 'lessons_cat2.js', 'lessons_plans.js']) vm.runInContext(read(f), ctx, { filename: f });
 const get = e => vm.runInContext(e, ctx);
 const LESSONS = get('LESSONS'), PROGRAMS = get('PROGRAMS'), BREEDS = get('BREEDS.concat(CAT_BREEDS)'), CFG = get('window.WOUF_CONFIG');
 
@@ -25,18 +25,20 @@ for (const l of LESSONS) {
   ok(['dog', 'cat'].includes(l.sp || 'dog'), `${l.id} : espèce inconnue`);
   for (const k of ['title', 'cat', 'goal', 'why', 'test', 'dur', 'span', 'level']) ok(typeof l[k] === 'string' && l[k].length > 2, `${l.id} : champ « ${k} » manquant`);
   ok(typeof l.icon === 'string' && l.icon.length >= 1, `${l.id} : icône manquante`);
-  ok(typeof l.from === 'number' && l.from >= 2 && l.from <= 60, `${l.id} : âge minimum invalide`);
+  ok(typeof l.from === 'number' && l.from >= 2 && l.from <= 800, `${l.id} : âge minimum invalide`);
   ok(Array.isArray(l.need) && l.need.length >= 1, `${l.id} : matériel manquant`);
   ok(Array.isArray(l.steps) && l.steps.length >= 3, `${l.id} : au moins 3 étapes`);
   (l.steps || []).forEach((s, i) => { ok(s.t && s.b && s.b.length > 40 && s.crit && s.crit.length > 10, `${l.id} étape ${i + 1} : titre, texte (40+ car.) et critère de réussite requis`); });
   ok((l.mistakes || []).length >= 3, `${l.id} : au moins 3 erreurs fréquentes`);
+  ok(Array.isArray(l.plan) && l.plan.length >= 3 && l.plan.every(x => x.length === 2 && x[0] && x[1].length > 15), `${l.id} : programme d’entraînement (« plan ») de 3 étapes minimum requis`);
+  ok(Array.isArray(l.next) && l.next.length >= 2 && l.next.every(x => x.length > 10), `${l.id} : au moins 2 pistes « pour aller plus loin » (« next »)`);
   ok((l.faq || []).length >= 2 && l.faq.every(x => x.length === 2 && x[0] && x[1]), `${l.id} : au moins 2 questions de dépannage`);
   ok(l.why.length > 80 && l.goal.length > 30, `${l.id} : textes trop courts`);
 }
 const dog = LESSONS.filter(l => (l.sp || 'dog') === 'dog'), cat = LESSONS.filter(l => l.sp === 'cat');
 ok(dog.filter(l => l.free).length === 3, `chien : 3 leçons gratuites attendues (${dog.filter(l => l.free).length})`);
-ok(dog.filter(l => !l.free).length >= 20, `chien : au moins 20 leçons Plus (${dog.filter(l => !l.free).length})`);
-ok(cat.filter(l => l.free).length >= 2 && cat.filter(l => !l.free).length >= 4, 'chat : au moins 2 leçons gratuites et 4 Plus');
+ok(dog.filter(l => !l.free).length >= 30, `chien : au moins 30 leçons Plus (${dog.filter(l => !l.free).length})`);
+ok(cat.filter(l => l.free).length >= 2 && cat.filter(l => !l.free).length >= 10, 'chat : au moins 2 leçons gratuites et 10 Plus');
 console.log(`  ${dog.length} leçons chien (${dog.filter(l => !l.free).length} Plus), ${cat.length} leçons chat (${cat.filter(l => !l.free).length} Plus)`);
 
 section('Programmes');

@@ -11,7 +11,7 @@ Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `in
 - **Droits Plus** : `plus()`, `allowed('fonction')`, `gate('fonction', fn)`, `paywall('fonction')` ; liste dans `config.js` → `billing.premium` ; description commerciale dans `business.js` → `FEATURES` (chaque fonction Plus doit y figurer, test `check`).
 - **Interrupteur d'abonnement** : `billing.enabled` (config.js). Faux = tout gratuit. Ne l'active jamais sans que le propriétaire l'ait demandé : le test refuse si les infos légales manquent.
 - Vente : achat unique « à vie » lié au compte Google, relais Cloudflare `wouf/billing-worker/` (vérifie le jeton Firebase, lit Stripe, envoie l'assistance par e-mail). Prix affiché dans `config.js` doit égaler le prix Stripe.
-- Données de référence : `data.js` (chien), `species.js` (chat + helpers), leçons dans `lessons*.js`. Méthode d'éducation : **renforcement positif uniquement** (jamais de punition, collier de contrainte, etc.).
+- Données de référence : `data.js` (chien), `species.js` (chat + helpers), leçons dans `lessons*.js` (chaque leçon exige `plan` et `next`, contrôlé par les tests ; `lessons_plans.js` complète les leçons de base). Méthode d'éducation : **renforcement positif uniquement** (jamais de punition, collier de contrainte, etc.).
 
 ## Avant de livrer une modification de Wouf
 1. `cd wouf && npm install && npm test` — doit être entièrement vert (contrôles statiques + relais + 18 scénarios navigateur). Sandbox : Chromium est dans `/opt/pw-browsers` (détecté automatiquement).

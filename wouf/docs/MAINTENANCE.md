@@ -13,7 +13,7 @@ Il est écrit pour être suivi sans être développeur. Pour toute modification,
 | Je veux… | Je modifie |
 |---|---|
 | Activer / couper le paiement, changer le prix affiché, les fonctions Plus, les infos légales | `wouf/config.js` |
-| Corriger ou ajouter une leçon | `wouf/lessons.js` (chien, gratuites), `lessons2.js` (chien Plus), `lessons_cat.js` (chat) |
+| Corriger ou ajouter une leçon | `wouf/lessons.js` (chien, gratuites et bases), `lessons2.js` et `lessons3.js` (chien Plus), `lessons_cat.js` et `lessons_cat2.js` (chat), `lessons_plans.js` (programmes d’entraînement des leçons de base) |
 | Ajouter une race, un aliment toxique, un premier secours | `wouf/data.js` (chien) ou `wouf/species.js` (chat) |
 | Changer les textes de vente, la FAQ, les conditions de vente | `wouf/business.js` |
 | Annoncer une nouveauté | `CHANGELOG` dans `wouf/business.js` |
@@ -38,7 +38,9 @@ Les fichiers de l’app sont revalidés à chaque ouverture, la mise à jour est
 
 **Corriger une faute dans une leçon** : ouvrir le fichier, corriger le texte entre guillemets, `npm test`, pull request.
 
-**Ajouter une leçon** : copier une leçon existante dans `lessons2.js` (chien) ou `lessons_cat.js` (chat), changer `id` (unique, sans espace), `free: false` (ou `true` pour l’offrir), et remplir tous les champs. Le test `check` refuse une leçon incomplète (au moins 3 étapes avec critère de réussite, 3 erreurs fréquentes, 2 questions de dépannage). Pour la placer dans un programme, ajouter son `id` à une semaine de `PROGRAMS`. Penser à mettre à jour le nombre annoncé dans `FEATURES.lessons` (« 22 leçons chien… »).
+**Ajouter une leçon** : copier une leçon existante dans `lessons3.js` (chien) ou `lessons_cat2.js` (chat), changer `id` (unique, sans espace), `free: false` (ou `true` pour l’offrir), et remplir tous les champs, y compris `plan` (programme d’entraînement) et `next` (pistes pour aller plus loin). Le test `check` refuse une leçon incomplète (au moins 3 étapes avec critère de réussite, un plan de 3 étapes, 3 erreurs fréquentes, 2 questions de dépannage, 2 pistes). Pour la placer dans un programme, ajouter son `id` à une semaine de `PROGRAMS`. Les nombres de leçons affichés dans l’app (offre, présentation) se calculent tout seuls.
+
+**Le bouton « Wouf+ »** (en-tête, accueil, éducation, fiche de leçon verrouillée) : tant que `billing.enabled` vaut `false` ou que le relais n’est pas configuré, il présente l’offre (« tout est offert pour le moment »). Dès que la vente est ouverte (`enabled: true` et `api` renseignée), il lance le paiement à 19,99 € à vie avec connexion Google et case de consentement.
 
 **Rendre une fonction gratuite ou payante** : dans `config.js`, ajouter ou retirer son nom de `billing.premium`. Noms possibles : `multiDogs`, `documents`, `report`, `calendar`, `stats`, `lessons`, `programs`, `tracker`, `bilan`, `sitter`, `weightplan`. (Le chat gratuit et la limite « 1 chien + 1 chat » se règlent avec `limits.perSpecies`.)
 
