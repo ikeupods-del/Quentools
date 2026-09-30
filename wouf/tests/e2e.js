@@ -619,6 +619,13 @@ test('statistiques anonymes : désactivées par défaut, provenance, adresse, re
   const o = await boot({ query: '?proprio=1', hash: '#/plus' });
   assert.equal(await o.ev(() => OWNER), true); assert.ok(await o.page.$('a[href="https://woufapp.goatcounter.com"]'), 'lien « Mes statistiques » pour le propriétaire');
   noErrors(o); await o.ctx.close();
+  const g = await boot({ hash: '#/plus' }); await fakeCloud(g.page);
+  await g.ev(() => { CloudApi.signIn = async () => ({ email: 'Storacequentin@gmail.com ', name: 'Q', picture: '' }); });
+  await g.page.click('a[href="#/reglages"]'); await g.page.click('[data-act=g-signin]'); await g.page.waitForTimeout(300); await g.go('#/plus');
+  await g.page.waitForSelector('a[href="https://woufapp.goatcounter.com"]', { timeout: 3000 }); assert.equal(await g.ev(() => OWNER), true, 'propriétaire reconnu par son compte Google');
+  const x = await boot({ hash: '#/plus' }); await fakeCloud(x.page); await x.page.click('a[href="#/reglages"]'); await x.page.click('[data-act=g-signin]'); await x.page.waitForTimeout(300); await x.go('#/plus'); await x.page.waitForTimeout(200);
+  assert.equal(await x.page.$('a[href="https://woufapp.goatcounter.com"]'), null, 'un autre compte Google ne voit pas les statistiques');
+  noErrors(g); noErrors(x); await g.ctx.close(); await x.ctx.close();
 });
 
 test('nouvelle adresse : redirection sans carnet, transfert du carnet et des documents vers la nouvelle adresse', async () => {

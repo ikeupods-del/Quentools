@@ -12,6 +12,7 @@ function printHTML(html) {
 
 /* ---------- Menu Plus ---------- */
 ROUTES.plus = function plusMenu() {
+  if (CLOUD.user) ownerCheck(CLOUD.user.email);
   const quick = [['#/triage', '🩺', 'Que faire ?'], ['#/meteo', '🌦️', 'Météo balade'], ['#/recherche', '🔎', 'Rechercher'], ['#/noms', '🏷️', 'Trouver un nom']];
   const groups = [
     ['Santé', [
