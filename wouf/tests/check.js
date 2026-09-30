@@ -88,7 +88,7 @@ for (const f of B.premium) ok(new RegExp('\\b' + f + ':').test(bizFeatures), `fo
 const RW = B.rewardOffer || {};
 ok(!RW.enabled || /\d/.test(RW.price || ''), 'billing.rewardOffer.enabled = true mais aucun prix affiché');
 ok(!B.payee || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(B.payee), 'billing.payee doit être une adresse e-mail');
-for (const k of ['paymentLink', 'rewardLink']) ok(!B[k] || /^https:\/\/(www\.)?paypal\.(com|me)\/[\w./-]+$/i.test(B[k]), `billing.${k} doit être un lien PayPal (https://www.paypal.com/…)`);
+for (const k of ['paymentLink', 'rewardLink']) ok(!B[k] || /^https:\/\/(www\.)?paypal\.(com|me|biz)\/[\w./-]+$/i.test(B[k]), `billing.${k} doit être un lien PayPal (https://www.paypal.com/…)`);
 const cl = read('business.js').match(/const CHANGELOG = \[\s*\{ v: '([\d.]+)'/);
 ok(cl && cl[1] === CFG.version, `version de config.js (${CFG.version}) ≠ dernière entrée du CHANGELOG (${cl && cl[1]})`);
 ok(read('package.json').includes(`"version": "${CFG.version}"`), 'package.json : version différente de config.js');

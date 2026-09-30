@@ -397,7 +397,8 @@ test('achat à vie PayPal : connexion Google, dossier de paiement, consentement,
   await b.ev(async () => { window.__grant = null; await accountSync(); }); assert.equal(await b.ev(() => plus()), false, 'accès retiré');
   assert.equal(await b.ev(() => dog().name), 'Nala', 'les données restent accessibles');
   // lien non PayPal refusé par le format
-  assert.equal(await b.ev(() => PAY_LINK.test('https://buy.stripe.com/abc') || PAY_LINK.test('https://evil.example/paypal.com')), false);
+  assert.equal(await b.ev(() => PAY_LINK.test('https://buy.stripe.com/abc') || PAY_LINK.test('https://evil.example/paypal.com') || PAY_LINK.test('https://www.paypal.biz.evil.fr/x')), false);
+  assert.equal(await b.ev(() => PAY_LINK.test('https://www.paypal.biz/alimnight')), true);
   noErrors(b); await b.ctx.close();
 });
 test('interrupteur : gratuit pour tous, offre de lancement, anciens utilisateurs', async () => {
@@ -660,7 +661,7 @@ test('nouvelle adresse : redirection sans carnet, transfert du carnet et des doc
 test('administration : réservée au propriétaire, comptes, Plus offert, retrait, interrupteur de vente', async () => {
   const b = await boot({ hash: '#/admin' }), p = b.page;
   assert.match(await text(p, '#view'), /Réservé au propriétaire/);
-  await b.ev(() => { OWNER = true; }); await fakeCloud(p);
+  await b.ev(() => { OWNER = true; BILL.paymentLink = ''; }); await fakeCloud(p);
   await b.ev(() => {
     CloudApi.signIn = async () => ({ email: 'patron@test.fr', name: 'Patron', picture: '' });
     window.__adm = { grants: {}, cfg: null };

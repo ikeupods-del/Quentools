@@ -17,7 +17,7 @@ window.WOUF_CONFIG = {
     // dossier (nom, prénom, e-mail PayPal) ; le propriétaire vérifie le paiement et active Wouf Plus dans Plus → Administration.
     // Les liens et les informations légales se règlent aussi depuis l'administration (« Paiement et informations légales »).
     payee: '',                 // adresse e-mail PayPal qui reçoit les paiements (réglable à tout moment dans l'administration)
-    paymentLink: '',           // OU lien PayPal fixe, ex. https://www.paypal.com/ncp/payment/XXXX (prix normal : plans[0].price)
+    paymentLink: 'https://www.paypal.com/ncp/payment/H43ZZST7TFYV2', // lien PayPal fixe (secours, utilisé seulement si aucune adresse payee ; montant = plans[0].price)
     rewardLink: '',            // idem pour l'offre récompense (rewardOffer.price) ; vide = pas d'offre récompense
     // Achat unique « à vie ». Le prix AFFICHÉ ici doit être identique au montant du lien PayPal.
     plans: [{ id: 'lifetime', label: 'Wouf Plus à vie', price: '19,99 €', per: 'paiement unique', badge: 'Sans abonnement' }],

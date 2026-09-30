@@ -66,7 +66,7 @@ const planLine = () => { const p = planOf(); return `${p.price} ${p.per}`; };
    l'app construit elle-même la page de paiement PayPal (montant, référence du dossier, retour sur #/merci). À défaut : lien PayPal fixe.
    Avant d'être redirigé, l'acheteur remplit un « dossier de paiement » (nom, prénom et e-mail PayPal,
    e-mail de contact) enregistré dans wouf_orders : l'administration compare avec l'e-mail de PayPal puis active Wouf Plus. */
-const PAY_LINK = /^https:\/\/(www\.)?paypal\.(com|me)\/[\w./-]+$/i;
+const PAY_LINK = /^https:\/\/(www\.)?paypal\.(com|me|biz)\/[\w./-]+$/i;
 const payName = () => 'PayPal';
 const PAYEE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const payReady = () => !!(PAYEE.test(BILL.payee || '') || BILL.paymentLink);
