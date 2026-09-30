@@ -127,6 +127,35 @@ const dots = (n, i) => `<div class="dots">${Array.from({ length: n }, (_, k) => 
   }
   fs.writeFileSync(path.join(__dirname, 'fiches.json'), JSON.stringify(fdata, null, 1));
 
+  /* ---------- CONTENUS EN SÉRIE tirés des données de l'app : conseils santé, premiers secours, leçons (1 image chacun) ---------- */
+  const series = await ev(() => {
+    const clean = t => String(t).replace(/\s+/g, ' ').trim();
+    const out = { tips: [], aid: [], lessons: [] };
+    TIPS.forEach(t => out.tips.push({ sp: 'chien', text: clean(t) })); TIPS_CAT.forEach(t => out.tips.push({ sp: 'chat', text: clean(t) }));
+    FIRST_AID.forEach(([e, title, steps]) => out.aid.push({ sp: 'chien', e, title, steps: steps.map(clean) })); FIRST_AID_CAT.forEach(([e, title, steps]) => out.aid.push({ sp: 'chat', e, title, steps: steps.map(clean) }));
+    for (const sp of ['dog', 'cat']) lessonsFor({ species: sp }).forEach(l => out.lessons.push({ sp: sp === 'dog' ? 'chien' : 'chat', icon: l.icon, title: clean(l.title), goal: clean(l.goal || ''), level: l.level || '', dur: l.dur || '', free: !!l.free }));
+    return out;
+  });
+  const cut = (t, n) => t.length <= n ? t : t.slice(0, n - 1).replace(/\s+\S*$/, '') + '…';
+  const seriesData = { tips: [], aid: [], lessons: [] };
+  for (let i = 0; i < series.tips.length; i++) {
+    const t = series.tips[i], file = `conseil-${t.sp}-${String(i + 1).padStart(2, '0')}.png`;
+    await render(file, ...P(), `<div class="cv ${t.sp === 'chat' ? 'd' : 'o'}">${logo()}<div class="tag" style="margin-top:60px">💡 Conseil santé · ${t.sp}</div><h1 style="font-size:${t.text.length > 130 ? 62 : t.text.length > 90 ? 72 : 84}px;margin-top:50px;letter-spacing:-1px">${t.text}</h1><div class="foot"><span>🔗 woufapp.fr</span><span>📌 À enregistrer</span></div></div>`);
+    seriesData.tips.push({ file, sp: t.sp, text: t.text });
+  }
+  for (let i = 0; i < series.aid.length; i++) {
+    const a = series.aid[i], file = `secours-${a.sp}-${String(i + 1).padStart(2, '0')}.png`, steps = a.steps.slice(0, 4).map(x => cut(x, 150));
+    await render(file, ...P(), `<div class="cv">${logo()}<div class="tag" style="margin-top:44px;color:#ee6a1c">🚑 Premiers secours · ${a.sp}</div><h1 style="font-size:78px;margin-top:20px">${a.e} ${a.title}</h1><div class="list" style="gap:16px;margin-top:30px">${steps.map((x, k) => `<div class="li" style="padding:20px 26px"><span class="e" style="font-size:44px;font-weight:900;color:#ee6a1c">${k + 1}</span><span style="font-size:32px;font-weight:650;line-height:1.25">${x}</span></div>`).join('')}</div><div class="foot"><span>⚠️ Appelle ton véto en cas de doute</span><span>📌 À enregistrer</span></div></div>`);
+    seriesData.aid.push({ file, sp: a.sp, title: a.title, steps: a.steps });
+  }
+  for (let i = 0; i < series.lessons.length; i++) {
+    const l = series.lessons[i], file = `lecon-${l.sp}-${String(i + 1).padStart(3, '0')}.png`;
+    await render(file, ...P(), `<div class="cv ${i % 2 ? 'o' : ''}">${logo()}<div class="tag" style="margin-top:50px">🎓 Éducation positive · ${l.sp}</div><div class="big" style="margin-top:26px;font-size:190px">${l.icon || '🐾'}</div><h1 style="font-size:${l.title.length > 60 ? 62 : 76}px;margin-top:10px">${l.title}</h1><div class="sub" style="font-size:38px">${cut(l.goal, 170)}</div><div class="pill" style="align-self:flex-start">${[l.level, l.dur].filter(Boolean).join(' · ')}</div><div class="foot"><span>🔗 woufapp.fr · leçons + quiz</span><span>📌 À enregistrer</span></div></div>`);
+    seriesData.lessons.push({ file, sp: l.sp, title: l.title, goal: l.goal, level: l.level, dur: l.dur, free: l.free });
+  }
+  fs.writeFileSync(path.join(__dirname, 'series.json'), JSON.stringify(seriesData, null, 1));
+  console.log(`  ✓ séries : ${seriesData.tips.length} conseils, ${seriesData.aid.length} secours, ${seriesData.lessons.length} leçons`);
+
   /* ---------- STORIES (1080×1920) ---------- */
   const S = [1080, 1920];
   await render('story-01-lancement.png', ...S, `<div class="cv o" style="padding:120px 80px">${logo()}<h1 style="font-size:104px;margin-top:70px">Nouveau : le carnet de santé de ton chien et de ton chat 🐾</h1><div class="sub">Gratuit, sans inscription, sur ton téléphone.</div>${phone(shots.home, 'width:560px;left:260px;bottom:-200px')}<div class="foot" style="bottom:1000px"></div></div>`);
