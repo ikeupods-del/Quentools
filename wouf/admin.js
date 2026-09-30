@@ -25,7 +25,8 @@ const AdminApi = {
     if (!BILL.api) return {}; const r = await fetch(BILL.api.replace(/\/$/, '') + '/admin/paid', { headers: await authHeaders() });
     if (!r.ok) throw new Error('relais ' + r.status); return (await r.json()).paid || {};
   },
-  async supportList() { if (!BILL.api) return []; const r = await fetch(BILL.api.replace(/\/$/, '') + '/admin/support', { headers: await authHeaders() }); if (!r.ok) throw new Error('relais ' + r.status); return (await r.json()).messages || []; },
+  async supportList() { if (!BILL.api) return []; const r = await fetch(BILL.api.replace(/\/$/, '') + '/admin/support', { headers: await authHeaders() }); if (!r.ok) throw new Error('relais ' + r.status); const j = await r.json(); ADM.mailOn = !!j.mailOn; return j.messages || []; },
+  async statsGet() { if (!BILL.api) return null; const r = await fetch(BILL.api.replace(/\/$/, '') + '/admin/stats?days=30', { headers: await authHeaders() }); if (r.status === 501) return { off: true }; if (!r.ok) { let m = ''; try { m = (await r.json()).error || ''; } catch (e) {} throw new Error(m || 'relais ' + r.status); } return r.json(); },
   async supportDelete(id) { const r = await fetch(BILL.api.replace(/\/$/, '') + '/admin/support/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await authHeaders()) }, body: JSON.stringify({ id }) }); if (!r.ok) throw new Error('relais ' + r.status); },
   async setOrder(id, patch) { const F = await this._F(); await F.Fs.setDoc(F.Fs.doc(F.db, 'wouf_orders', id), patch, { merge: true }); },
   async remoteConfig() {   // lecture publique, sans charger Firebase : un simple appel
@@ -103,17 +104,34 @@ function replyLink(m) {
 ACT['adm-copy'] = async ({ mail }) => { try { await navigator.clipboard.writeText(mail); toast('Adresse copiée ✓'); } catch (e) { toast(mail); } };
 
 /* ---------- Écran d'administration ---------- */
-const ADM = { users: null, orders: [], paid: {}, msgs: [], loading: false, err: '', oerr: '', perr: '', merr: '' };
+const ADM = { users: null, orders: [], paid: {}, msgs: [], mailOn: false, stats: null, serr: '', loading: false, err: '', oerr: '', perr: '', merr: '' };
 const grantLabel = g => !g ? '' : g.until === 'lifetime' ? 'Plus offert à vie' : (today() <= g.until ? 'Plus offert jusqu’au ' + fmtDate(g.until) : 'Plus offert (expiré le ' + fmtDate(g.until) + ')');
 const admErr = e => e && /permission|insufficient/i.test(String(e.code || e.message)) ? 'Accès refusé par Firebase : les règles d’administration ne sont pas encore installées (voir le guide).' : (e && e.message) || 'Erreur';
 async function admLoad() {
   ADM.loading = true; ADM.err = '';
-  const [u, o, pd, ms] = await Promise.allSettled([AdminApi.listUsers(), AdminApi.listOrders(), AdminApi.paidList(), AdminApi.supportList()]);
+  const [u, o, pd, ms, st] = await Promise.allSettled([AdminApi.listUsers(), AdminApi.listOrders(), AdminApi.paidList(), AdminApi.supportList(), AdminApi.statsGet()]);
+  if (st.status === 'fulfilled') { ADM.stats = st.value; ADM.serr = ''; } else { ADM.stats = null; ADM.serr = st.reason && st.reason.message || 'erreur'; }
   if (ms.status === 'fulfilled') { ADM.msgs = ms.value; ADM.merr = ''; } else { ADM.msgs = []; ADM.merr = BILL.api ? 'Messages illisibles : le relais est-il à jour ? (' + (ms.reason && ms.reason.message || 'erreur') + ')' : ''; }
   if (pd.status === 'fulfilled') { ADM.paid = pd.value; ADM.perr = ''; } else { ADM.paid = {}; ADM.perr = BILL.api ? 'Relais automatique injoignable : validez à la main (' + (pd.reason && pd.reason.message || 'erreur') + ')' : ''; }
   if (u.status === 'fulfilled') ADM.users = u.value.sort((a, b) => String(b.lastSeen || '').localeCompare(String(a.lastSeen || ''))); else ADM.err = admErr(u.reason);
   if (o.status === 'fulfilled') { ADM.orders = o.value.sort((a, b) => (b.at || 0) - (a.at || 0)); ADM.oerr = ''; } else { ADM.orders = []; ADM.oerr = admErr(o.reason); }
   ADM.loading = false; if (routeName() === 'admin') render(true);
+}
+const STAT_EVT = { 'animal-ajoute-chien': '🐶 Chiens ajoutés', 'animal-ajoute-chat': '🐱 Chats ajoutés', 'lecon-acquise': '🎓 Leçons acquises', 'balade-enregistree': '🦮 Balades', 'offre-recompense-vue': '🏅 Offre récompense vue', 'installation': '📲 Installations' };
+function statsCard() {
+  if (!BILL.api) return '';
+  const st = ADM.stats, head = '<section class="card" id="adm-stats"><h2>📊 Statistiques (30 jours)</h2>';
+  if (ADM.serr) return head + `<p class="bad">${esc(ADM.serr)}</p></section>`;
+  if (!st) return head + '<p class="mut">Chargement…</p></section>';
+  if (st.off) return head + '<p class="mut">Pas encore branchées : dans Cloudflare, ajoutez le secret <b>GOATCOUNTER_TOKEN</b> (clé « lecture des statistiques » créée dans GoatCounter, Paramètres → Clés API). Guide : MAINTENANCE.md.</p></section>';
+  const pd = st.perDay || [], sum = n => pd.slice(-n).reduce((a, d) => a + d.visits, 0), last = pd.slice(-14);
+  const max = Math.max(1, ...last.map(d => d.visits));
+  const list = (arr, lab) => arr.length ? arr.map(x => `<div class="row"><span class="grow">${esc(lab(x))}</span><b>${x.count}</b></div>`).join('') : '<p class="mut small">Rien pour l’instant.</p>';
+  return head + `<div class="adm-tiles"><div><b>${sum(1)}</b><small>Aujourd’hui</small></div><div><b>${sum(7)}</b><small>7 jours</small></div><div><b>${st.total}</b><small>30 jours</small></div></div>
+    <div class="adm-bars" style="display:flex;align-items:flex-end;gap:3px;height:80px;margin:10px 0" aria-label="Visites des 14 derniers jours">${last.map(d => `<div title="${esc(d.day)} : ${d.visits}" style="flex:1;background:var(--accent,#e8743b);border-radius:3px 3px 0 0;height:${Math.max(3, Math.round(d.visits / max * 100))}%"></div>`).join('')}</div>
+    <h3>D’où viennent les visiteurs</h3>${list(st.refs || [], x => x.name)}
+    <h3>Pages les plus vues</h3>${list(st.pages || [], x => x.path)}
+    <h3>Actions dans l’app</h3>${list(st.events || [], x => STAT_EVT[x.path] || x.path)}</section>`;
 }
 ROUTES.admin = function admin() {
   const head = '<div class="page-h"><a class="back" href="#/plus">‹</a><h1>🛠️ Administration</h1></div>';
@@ -161,10 +179,12 @@ ROUTES.admin = function admin() {
     ${ADM.oerr ? `<p class="bad">${esc(ADM.oerr)}</p>` : pend.map(orderRow).join('') || '<p class="mut">Aucun paiement en attente.</p>'}
     ${orphans.length ? `<details open><summary>💳 Paiements PayPal reçus sans dossier (${orphans.length})</summary><p class="mut small">Le relais a reçu ces paiements mais aucun dossier ne correspond à ce compte : le client est probablement connecté avec un autre compte Google que celui de l’achat.</p>${orphans.map(([uid, r]) => `<div class="adm-o"><div class="grow"><b>${esc(r.payerName || '')}</b> <span class="pill-s ${r.active ? 'ok' : ''}">${r.active ? 'Accès actif' : 'Remboursé / annulé'}</span><small>💳 ${esc(r.payerEmail || '')} · ${esc(r.amount || '')} € · réf. ${esc(r.ref || '')}</small><small>👤 Compte Google qui a payé : <b>${esc(acct(uid))}</b></small></div></div>`).join('')}</details>` : ''}
     ${done.length ? `<details><summary>Dossiers traités (${done.length})</summary>${done.slice(0, 30).map(orderRow).join('')}</details>` : ''}</section>
+  ${statsCard()}
   ${BILL.api ? `<section class="card" id="adm-msgs"><h2>📨 Messages (${ADM.msgs.length})</h2>
     <p class="mut small">Les messages envoyés depuis le formulaire de contact de l’app. « Répondre » ouvre votre messagerie vers le client, seulement quand vous le décidez.</p>
+    ${ADM.mailOn ? '<p class="mut small">📧 Chaque message est aussi envoyé sur votre boîte mail.</p>' : '<p class="mut small">📧 Pas de copie par e-mail : ajoutez RESEND_API_KEY, SUPPORT_TO et SUPPORT_FROM dans Cloudflare (guide : MAINTENANCE.md).</p>'}
     ${ADM.merr ? `<p class="bad">${esc(ADM.merr)}</p>` : ADM.msgs.map(m => `<div class="adm-o adm-m"><div class="grow"><b>${esc(m.category || 'Question')}</b> ${m.priority ? '<span class="pill-s ok">⭐ Membre Plus</span>' : ''}
-      <small>✉️ ${esc(m.email || '')} · 🕒 ${m.at ? esc(new Date(m.at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })) : ''}</small>
+      <small>${m.mail === 'sent' ? '📧 copie envoyée · ' : /^error/.test(m.mail || '') ? '⚠️ e-mail non envoyé (' + esc(m.mail) + ') · ' : ''}✉️ ${esc(m.email || '')} · 🕒 ${m.at ? esc(new Date(m.at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })) : ''}</small>
       <p class="adm-txt">${esc(m.message || '')}</p>${m.diagnostics ? `<details><summary>Informations techniques</summary><pre class="adm-txt">${esc(m.diagnostics)}</pre></details>` : ''}</div>
       <div class="btn-row sm"><a class="btn sm primary" href="${esc(replyLink(m))}" target="_blank" rel="noopener">✉️ Répondre</a><button class="btn sm" data-act="adm-copy" data-mail="${esc(m.email || '')}">Copier l’e-mail</button><button class="btn sm danger" data-act="adm-msg-del" data-id="${esc(m.id)}">Supprimer</button></div></div>`).join('') || '<p class="mut">Aucun message.</p>'}</section>` : ''}
   <section class="card"><h2>👥 Comptes (${us.length})</h2>

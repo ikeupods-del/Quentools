@@ -127,4 +127,21 @@ test('contact : transmission par e-mail seulement si Resend est configuré, sans
   globalThis.fetch = async (u, o) => String(u).includes('api.resend.com') ? (calls.push({ url: String(u), opts: o }), new Response('boom', { status: 500 })) : prev(u, o);
   const r = await post('/support', msg({ email: 'a@example.fr' }), undefined, env2, '4.4.4.4'); assert.equal(r.status, 200, 'panne Resend : le message est quand même enregistré');
   const sent = calls.find(c => c.url.includes('api.resend.com')); assert.ok(sent); assert.match(sent.opts.body, /wouf-contact@proton\.me/); assert.match(sent.opts.body, /reply_to/);
+  const owner = await makeToken({ email: 'patron@example.fr', sub: 'patron_uid_1' }), l = await get('/admin/support', owner, ORIGIN, env2);
+  assert.equal(l.json.mailOn, true); assert.match(l.json.messages.find(m => m.email === 'a@example.fr').mail, /^error 500/); assert.equal(l.json.messages.find(m => m.email !== 'a@example.fr').mail, 'off');
+  globalThis.fetch = async (u, o) => String(u).includes('api.resend.com') ? new Response('{}', { status: 200 }) : prev(u, o);
+  await post('/support', msg({ email: 'b@example.fr' }), undefined, env2, '3.3.3.3'); assert.equal((await get('/admin/support', owner, ORIGIN, env2)).json.messages.find(m => m.email === 'b@example.fr').mail, 'sent');
+});
+
+test('statistiques : réservées au propriétaire, 501 sans clé, données GoatCounter simplifiées', async () => {
+  const env2 = { ...ENV, GOATCOUNTER_TOKEN: 'gc_fake' }, owner = await makeToken({ email: 'patron@example.fr', sub: 'patron_uid_1' }), prev = globalThis.fetch;
+  assert.equal((await get('/admin/stats', await makeToken(), ORIGIN, env2)).status, 403, 'un client ne lit pas les stats');
+  assert.equal((await get('/admin/stats', owner, ORIGIN, ENV)).status, 501, 'sans clé GoatCounter');
+  globalThis.fetch = async (u, o) => { u = String(u); if (!u.includes('goatcounter.com')) return prev(u, o); calls.push({ url: u, opts: o });
+    if (u.includes('/stats/total')) return new Response(JSON.stringify({ total: 12, total_events: 3, stats: [{ day: '2026-09-29', daily: 5 }, { day: '2026-09-30', daily: 7 }] }));
+    if (u.includes('/stats/hits')) return new Response(JSON.stringify({ hits: [{ path: '/', count: 9, event: false }, { path: 'lecon-acquise', count: 3, event: true }] }));
+    if (u.includes('/stats/toprefs')) return new Response(JSON.stringify({ stats: [{ name: 'tiktok.com', count: 4 }] })); return new Response('{}', { status: 404 }); };
+  const r = await get('/admin/stats?days=2', owner, ORIGIN, env2); assert.equal(r.status, 200);
+  assert.equal(r.json.total, 12); assert.deepEqual(r.json.perDay.map(d => d.visits), [5, 7]); assert.equal(r.json.pages[0].path, '/'); assert.equal(r.json.events[0].path, 'lecon-acquise'); assert.equal(r.json.refs[0].name, 'tiktok.com');
+  assert.equal(calls.find(c => c.url.includes('goatcounter.com')).opts.headers.Authorization, 'Bearer gc_fake'); globalThis.fetch = prev;
 });

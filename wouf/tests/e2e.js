@@ -825,6 +825,19 @@ test('contact : vrai envoi depuis l’app (aucune messagerie ouverte), repli e-m
   noErrors(b); await b.ctx.close();
 });
 
+test('administration : statistiques visibles dans le panneau, ou consigne claire si la clé manque', async () => {
+  const b = await boot({ hash: '#/plus' }), p = b.page;
+  await b.ev(() => { BILL.api = 'https://relais.test'; OWNER = true; CLOUD.user = { uid: 'u1', email: 'q@test.fr', name: 'Q' }; const d = []; for (let i = 0; i < 30; i++) d.push({ day: '2026-09-' + String(i + 1).padStart(2, '0'), visits: i }); window.__st = { days: 30, total: 435, totalEvents: 9, perDay: d,
+    pages: [{ path: '/', count: 300 }], events: [{ path: 'animal-ajoute-chat', count: 4 }, { path: 'truc-inconnu', count: 1 }], refs: [{ name: 'tiktok.com', count: 120 }] };
+    Object.assign(AdminApi, { listUsers: async () => [], listOrders: async () => [], paidList: async () => ({}), supportList: async () => { ADM.mailOn = true; return []; }, statsGet: async () => window.__st }); });
+  await b.go('#/admin'); await p.waitForSelector('#adm-stats .adm-bars');
+  const t = await text(p, '#adm-stats'); assert.match(t, /29.*Aujourd’hui.*182.*7 jours.*435.*30 jours/); assert.match(t, /tiktok\.com.*120/); assert.match(t, /🐱 Chats ajoutés.*4/); assert.match(t, /truc-inconnu/);
+  assert.equal(await p.locator('#adm-stats .adm-bars > div').count(), 14); assert.match(await text(p, '#adm-msgs'), /Chaque message est aussi envoyé sur votre boîte mail/);
+  await b.ev(() => { window.__off = true; AdminApi.statsGet = async () => ({ off: true }); admLoad(); }); await p.waitForSelector('#adm-stats:has-text("GOATCOUNTER_TOKEN")');
+  await b.ev(() => { AdminApi.statsGet = async () => { throw new Error('GoatCounter refuse la clé'); }; admLoad(); }); await p.waitForSelector('#adm-stats .bad:has-text("refuse la clé")');
+  noErrors(b); await b.ctx.close();
+});
+
 /* ================= exécution ================= */
 (async () => {
   srv = await start(0); PORT = srv.address().port;
