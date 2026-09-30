@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gourmet AI · QuenTools</title>
+    <meta name="description" content="On mange quoi ce soir ? Recettes du monde entier, cuisiner avec ce qu’on a, menu de la semaine, liste de courses et budget.">
+    <meta name="theme-color" content="#1c1917">
+    <script src="config.js"></script>
+    <style>
+        /* === UI VERROUILLÉE (WARM DARK MODE) === */
+        :root {
+            --bg-main: #1c1917; --bg-card: #292524; --bg-hover: #44403c;
+            --primary: #f97316; --primary-glow: rgba(249, 115, 22, 0.2);
+            --accent: #10b981; --text-main: #fafaf9; --text-muted: #a8a29e;
+            --border: rgba(255, 255, 255, 0.08);
+            --radius-lg: 24px; --radius-md: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body { background-color: #0c0a09; color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+
+        .app-container { width: 100%; height: 100vh; height: 100dvh; background-color: var(--bg-main); display: flex; flex-direction: column; position: relative; overflow: hidden; }
+
+        .sidebar { display: none; width: 280px; background-color: var(--bg-card); border-right: 1px solid var(--border); padding: 24px; flex-direction: column; }
+        .sidebar-logo { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 40px; display: flex; align-items: center; gap: 12px; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+        .sidebar-item { padding: 14px 20px; border-radius: var(--radius-md); color: var(--text-muted); text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 16px; cursor: pointer; transition: var(--transition); }
+        .sidebar-item:hover, .sidebar-item.active { background-color: var(--bg-hover); color: var(--text-main); }
+        .sidebar-item.active { background: linear-gradient(135deg, var(--bg-hover), var(--primary-glow)); color: var(--primary); border-left: 4px solid var(--primary); }
+
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; height: 100%; }
+        .app-header { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; background: rgba(28, 25, 23, 0.85); backdrop-filter: blur(16px); z-index: 10; border-bottom: 1px solid var(--border); }
+        .user-greeting h1 { font-size: 18px; font-weight: 700; }
+        .user-greeting p { font-size: 13px; color: var(--primary); font-weight: 600; }
+
+        .app-content { flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 90px; }
+        .view { display: none; animation: fadeSlideUp 0.4s ease forwards; }
+        .view.active { display: block; }
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .glass-panel { background: linear-gradient(135deg, rgba(249,115,22,0.1), rgba(28,25,23,0.5)); border: 1px solid var(--primary-glow); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+
+        .search-container { position: relative; margin-bottom: 24px; }
+        .search-bar { width: 100%; background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 20px; color: var(--text-main); font-size: 16px; outline: none; transition: var(--transition); }
+        .search-bar:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
+        .autocomplete-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); margin-top: 8px; max-height: 250px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .auto-item { padding: 12px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: var(--transition); }
+        .auto-item:hover { background: var(--bg-hover); color: var(--primary); }
+
+        .grid-responsive { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+        .card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; transition: var(--transition); position: relative; overflow: hidden; }
+        .card:hover { transform: translateY(-4px); border-color: var(--primary-glow); }
+        .card-icon { font-size: 32px; margin-bottom: 12px; }
+        .card-title { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+        .card-sub { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+        .btn-icon { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; transition: var(--transition); }
+        .btn-icon:hover { color: #ef4444; }
+
+        /* Chips */
+        .chip-group { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 10px; margin-bottom: 20px; padding-bottom: 8px; scrollbar-width: none; }
+        .chip-group::-webkit-scrollbar { display: none; }
+        .chip-label { background-color: var(--bg-card); border: 1px solid var(--border); padding: 10px 20px; border-radius: 30px; font-size: 14px; font-weight: 600; cursor: pointer; transition: var(--transition); color: var(--text-muted); white-space: nowrap; }
+        .chip-label input { display: none; }
+        .chip-label:has(input:checked) { background-color: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 15px var(--primary-glow); }
+
+        /* Shopping List Specifics */
+        .shop-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; transition: var(--transition); }
+        .shop-item.bought { opacity: 0.5; background: rgba(41, 37, 36, 0.5); }
+        .shop-item.bought .shop-name { text-decoration: line-through; }
+        .shop-actions { display: flex; gap: 12px; }
+        .btn-transfer { background: var(--accent); color: #000; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; display: none; }
+        .shop-item.bought .btn-transfer { display: block; }
+
+        /* Actions Recipes */
+        .btn-action { margin-top: 12px; width: 100%; padding: 8px; background: rgba(249, 115, 22, 0.1); color: var(--primary); border: 1px solid var(--primary-glow); border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; transition: var(--transition); }
+        .btn-action:hover { background: var(--primary); color: #fff; }
+
+        /* Nav & Onboarding */
+        .bottom-nav { position: absolute; bottom: 0; width: 100%; background: rgba(41, 37, 36, 0.95); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 0 24px; z-index: 20; }
+        .bottom-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-muted); font-size: 10px; font-weight: 600; background: none; border: none; cursor: pointer; transition: var(--transition); }
+        .bottom-nav-item.active { color: var(--primary); transform: translateY(-2px); }
+        .bottom-nav-item i { font-size: 20px; font-style: normal; }
+
+        .onboarding-overlay { position: fixed; inset: 0; background: rgba(12, 10, 9, 0.98); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+        .onboarding-box { background: var(--bg-card); width: 100%; max-width: 500px; border-radius: var(--radius-lg); padding: 32px; border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,0.8); margin: auto; }
+        .form-group { margin-bottom: 20px; } .main-label { display: block; font-weight: 600; margin-bottom: 10px; font-size: 15px; }
+        .input-text { width: 100%; background: var(--bg-main); border: 1px solid var(--border); color: white; padding: 14px; border-radius: 12px; outline: none; }
+        .input-text:focus { border-color: var(--primary); }
+        .btn-primary { width: 100%; padding: 16px; background: var(--primary); color: white; font-weight: 700; font-size: 16px; border: none; border-radius: 12px; cursor: pointer; margin-top: 10px; transition: var(--transition); }
+        .btn-primary:hover { background: #ea580c; transform: scale(1.02); }
+
+        .plan-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
+        .plan-day { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:10px; display:flex; flex-direction:column; gap:8px; }
+        .plan-slot { min-height:62px; border:1px dashed var(--border); border-radius:12px; padding:8px; cursor:pointer; font-size:13px; }
+        .plan-slot small { display:block; color:var(--text-muted); font-size:11px; margin-bottom:4px; }
+        .plan-slot.armed { border-color:var(--primary); background:var(--primary-glow); }
+        .plan-r { display:flex; justify-content:space-between; align-items:flex-start; gap:4px; font-weight:600; }
+        .plan-empty { color:var(--text-muted); font-size:18px; }
+        .plan-tray { display:flex; flex-wrap:wrap; gap:8px; max-height:220px; overflow-y:auto; margin:12px 0; }
+        .plan-chip { background:var(--bg-card); border:1px solid var(--border); border-radius:20px; padding:8px 14px; font-size:13px; cursor:grab; }
+        .plan-chip.sel { background:var(--primary); border-color:var(--primary); color:#fff; }
+        @media (min-width: 768px) {
+            .app-container { flex-direction: row; }
+            .sidebar { display: flex; }
+            .bottom-nav { display: none; }
+            .app-content { padding-bottom: 24px; }
+            .grid-responsive { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ONBOARDING PROFIL -->
+<div id="onboarding" class="onboarding-overlay">
+    <div class="onboarding-box">
+        <h2 style="color:var(--primary); font-size: 28px; margin-bottom: 8px;">Bienvenue Chef 👨‍🍳</h2>
+        <p style="color:var(--text-muted); margin-bottom: 24px;">Configurons l'IA pour des repas parfaits.</p>
+        <form onsubmit="saveProfile(event)">
+            <div class="form-group"><label class="main-label">🕊️ Religion</label>
+                <select class="input-text" id="prof-religion" onchange="if(this.value==='mus'){document.querySelector('#diet-chips input[value=Halal]').checked=true}"><option value="nd">Je préfère ne pas répondre</option><option value="ath">Athée / Sans religion</option><option value="chr">✝️ Chrétien</option><option value="mus">☪️ Musulman</option><option value="juif">✡️ Juif</option></select>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:8px; line-height:1.5;">Facultatif : sert uniquement à proposer des recettes pour les fêtes religieuses (Ramadan, Pâques, Hanoucca…) et reste sur cet appareil. Quel que soit votre choix, toutes les recettes restent accessibles.</p></div>
+            <div style="display:flex; gap:16px;">
+                <div class="form-group" style="flex:1;">
+                    <label class="main-label">Sexe</label>
+                    <select class="input-text" id="prof-gender"><option>Homme</option><option>Femme</option></select>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label class="main-label">Poids (kg)</label>
+                    <input type="number" id="prof-weight" class="input-text" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="main-label">Régime & Alimentation</label>
+                <div class="chip-group" id="diet-chips" style="flex-wrap: wrap;">
+                    <label class="chip-label"><input type="checkbox" value="Classique" checked> Classique</label>
+                    <label class="chip-label"><input type="checkbox" value="Sportif"> 💪 Sportif</label>
+                    <label class="chip-label"><input type="checkbox" value="Végétarien"> 🥦 Végétarien</label>
+                    <label class="chip-label"><input type="checkbox" value="Halal"> 🌙 Halal</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="main-label">Ustensiles de cuisson 🍳</label>
+                <div class="chip-group" id="tool-chips" style="flex-wrap: wrap;"></div>
+            </div>
+            <div class="form-group">
+                <label class="main-label">Budget visé (€)</label>
+                <div style="display:flex; gap:16px;">
+                    <input type="number" id="prof-budget" class="input-text" required style="flex:2;">
+                    <select class="input-text" id="prof-budget-type" style="flex:1;"><option>/ Sem</option><option>/ Mois</option></select>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">Lancer Gourmet AI 🚀</button>
+            <button type="button" id="onb-cancel" class="btn-primary" style="display:none; background:transparent; border:1px solid var(--border); color:var(--text-muted);" onclick="document.getElementById('onboarding').style.display='none'">Annuler</button>
+        </form>
+    </div>
+</div>
+
+<div class="app-container">
+    <!-- SIDEBAR PC -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">🍳 Gourmet AI</div>
+        <nav class="sidebar-nav">
+            <a class="sidebar-item active" data-view="home" onclick="switchView('home')"><i>🏠</i> Accueil</a>
+            <a class="sidebar-item" data-view="match" onclick="switchView('match')"><i>🧪</i> IngréMatch</a>
+            <a class="sidebar-item" data-view="shopping" onclick="switchView('shopping')"><i>🛒</i> Courses</a>
+            <a class="sidebar-item" data-view="recipes" onclick="switchView('recipes')"><i>📖</i> Recettes</a>
+            <a class="sidebar-item" data-view="plan" onclick="switchView('plan')"><i>📅</i> Ma semaine</a>
+            <a class="sidebar-item" data-view="profile" onclick="switchView('profile')"><i>⚙️</i> Mon Profil</a>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="app-header">
+            <div class="user-greeting">
+                <h1 id="header-greeting">Bonjour Chef !</h1>
+                <p id="header-subtitle">Mode connecté</p>
+            </div>
+            <div style="display:flex; align-items: center; gap:12px;">
+                <div style="background: var(--bg-card); padding: 8px 12px; border-radius: 20px; font-weight: bold; font-size: 14px;">
+                    <span id="header-budget" style="color: var(--primary);">--€</span> restants
+                </div>
+            </div>
+        </header>
+
+        <main class="app-content">
+            
+            <!-- ACCUEIL -->
+            <section id="view-home" class="view active">
+                <div id="featured"></div>
+                <div class="glass-panel" id="home-controls"></div>
+                <div class="glass-panel">
+                    <h2>Idée du jour ✨</h2>
+                    <p style="color:var(--text-muted); margin: 8px 0 16px;">Une idée de repas selon votre régime et les fêtes du moment, sans rien avoir en stock. Pour cuisiner avec vos ingrédients : IngréMatch.</p>
+                    <div id="ai-suggestion" style="margin-bottom:16px;"></div>
+                    <button class="btn-primary" style="width: auto; padding: 10px 24px;" onclick="suggestMeal()">Générer un repas</button>
+                </div>
+                <div class="section-title">Vos ingrédients (IngréMatch)</div>
+                <div class="grid-responsive" id="home-fridge-preview"></div>
+            </section>
+
+            <!-- INGRÉMATCH -->
+            <section id="view-match" class="view">
+                <div class="section-title">IngréMatch 🧪</div>
+                <p style="color:var(--text-muted); margin-bottom:16px;">Ajoutez ce que vous avez : on ne vous propose que des recettes faisables avec ces ingrédients (sel, poivre et eau exceptés).</p>
+                <div class="search-container">
+                    <input type="text" id="fridge-search" class="search-bar" placeholder="Ex: Steak haché, Riz, Crème...">
+                    <div id="fridge-autocomplete" class="autocomplete-results"></div>
+                </div>
+                <div class="grid-responsive" id="fridge-grid" style="margin-bottom:16px;"></div>
+                <div id="freq-match" style="margin-bottom:16px;"></div>
+                <button class="btn-primary" onclick="generateMatch()">✨ Générer une recette</button>
+                <button class="btn-primary" onclick="aiChef()" style="background:var(--accent); color:#000;">🤖 Chef IA (recette libre avec mes ingrédients)</button>
+                <button class="btn-primary" onclick="useUp()" style="background:#f59e0b; color:#000;">♻️ Qu'est-ce que je peux finir ?</button>
+                <button class="btn-primary" onclick="addBasics()" style="background:transparent; border:1px solid var(--primary); color:var(--primary);">📌 Ajouter mes basiques permanents</button>
+                <button class="btn-primary" onclick="clearMatch()" style="background:transparent; border:1px solid var(--border); color:var(--text-muted);">Tout vider</button>
+                <div id="match-results" style="margin-top:24px;"></div>
+            </section>
+
+            <!-- COURSES -->
+            <section id="view-shopping" class="view">
+                <div class="section-title">Liste de Courses 🛒 <span style="font-size:12px; color:var(--primary); cursor:pointer;" onclick="clearShopping()">Tout vider</span></div>
+                <div class="search-container">
+                    <input type="text" id="shop-search" class="search-bar" placeholder="Ajouter à la liste (aliment, produit ménager ou votre propre article)...">
+                    <div id="shop-autocomplete" class="autocomplete-results"></div>
+                </div>
+                <div class="main-label">📚 Catalogue : touchez une catégorie puis un produit</div>
+                <div class="chip-group" id="cat-chips"></div>
+                <div class="chip-group" id="cat-items" style="flex-wrap:wrap;"></div>
+                <button class="btn-action" style="margin:0 0 16px;" onclick="finishShopping()">✅ Terminer les courses (enregistrer la date et le montant)</button>
+                <div id="freq-shop" style="margin-bottom:16px;"></div>
+                <div class="chip-group">
+                    <label class="chip-label"><input type="radio" name="shopcat" value="all" checked onchange="renderShoppingList()"> 🛒 Tout</label>
+                    <label class="chip-label"><input type="radio" name="shopcat" value="food" onchange="renderShoppingList()"> 🍎 Alimentaire</label>
+                    <label class="chip-label"><input type="radio" name="shopcat" value="non" onchange="renderShoppingList()"> 🧴 Non alimentaire</label>
+                </div>
+                <div id="shopping-list"></div>
+                <div id="shop-history"></div>
+            </section>
+
+            <!-- RECETTES -->
+            <section id="view-recipes" class="view">
+                <div class="section-title">Cuisines du Monde 📖</div>
+                
+                <div class="chip-group" id="cuisine-filters">
+                    <label class="chip-label"><input type="radio" name="cuisine" value="all" checked onchange="recipeLimit=60; renderRecipes()"> 🌍 Toutes</label>
+                    <label class="chip-label"><input type="radio" name="cuisine" value="__fav" onchange="recipeLimit=60; renderRecipes()"> ⭐ Favoris</label>
+                    <label class="chip-label"><input type="radio" name="cuisine" value="__rec" onchange="recipeLimit=60; renderRecipes()"> ✨ Pour vous</label>
+                    <label class="chip-label"><input type="radio" name="cuisine" value="Français" onchange="recipeLimit=60; renderRecipes()"> 🇫🇷 Français</label>
+                    <label class="chip-label"><input type="radio" name="cuisine" value="Italien" onchange="recipeLimit=60; renderRecipes()"> 🇮🇹 Italien</label>
+                    <label class="chip-label"><input type="radio" name="cuisine" value="Américain" onchange="recipeLimit=60; renderRecipes()"> 🇺🇸 Américain</label>
+                    <label class="chip-label"><input type="radio" name="cuisine" value="Espagnol" onchange="recipeLimit=60; renderRecipes()"> 🇪🇸 Espagnol</label>
+                    <label class="chip-label"><input type="radio" name="cuisine" value="Mexicain" onchange="recipeLimit=60; renderRecipes()"> 🇲🇽 Mexicain</label>
+                    <label class="chip-label"><input type="radio" name="cuisine" value="Asiatique" onchange="recipeLimit=60; renderRecipes()"> 🥢 Asiatique</label>
+                    <label class="chip-label"><input type="radio" name="cuisine" value="Arabe" onchange="recipeLimit=60; renderRecipes()"> 🇲🇦 Arabe</label>
+                    <label class="chip-label"><input type="radio" name="cuisine" value="__veg" onchange="recipeLimit=60; renderRecipes()"> 🥦 Végétarien</label>
+                    <label class="chip-label"><input type="radio" name="cuisine" value="Dessert" onchange="recipeLimit=60; renderRecipes()"> 🍰 Desserts</label>
+                </div>
+
+                <div class="search-container">
+                    <input type="text" id="recipe-search" class="search-bar" placeholder="Rechercher une recette en ligne ou hors ligne..." oninput="searchRecipes(this.value)">
+                </div>
+
+                <div id="feast-row"></div>
+                <div id="reco-box"></div>
+                <div class="grid-responsive" id="recipes-grid"></div>
+            </section>
+
+            <!-- PLANNING -->
+            <section id="view-plan" class="view">
+                <div class="section-title">Ma semaine 📅 <span style="font-size:12px; color:var(--primary); cursor:pointer;" onclick="clearPlan()">Tout vider</span></div>
+                <p style="color:var(--text-muted); margin-bottom:16px; font-size:14px;">Glissez une recette sur un créneau, ou touchez une recette puis un créneau (mobile).</p>
+                <div class="plan-grid" id="plan-grid"></div>
+                <button class="btn-primary" onclick="planShop()">🛒 Générer la liste de courses de la semaine</button>
+                <div class="main-label" style="margin-top:20px;">Recettes</div>
+                <input type="text" class="search-bar" placeholder="Filtrer les recettes..." oninput="planQ=this.value; planSel=null; renderPlan()">
+                <div class="plan-tray" id="plan-tray"></div>
+            </section>
+
+            <!-- PROFIL -->
+            <section id="view-profile" class="view">
+                <div class="section-title">Paramètres ⚙️</div>
+                <div class="glass-panel">
+                    <div id="profile-info"></div>
+                    
+                    <!-- SECTION CONNEXION GOOGLE (compte commun QuenTools) -->
+                    <div class="form-group" style="background:var(--bg-main); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:20px;">
+                        <label class="main-label" style="color:var(--primary);">🔐 Compte & Connexion Google</label>
+                        <p style="color:var(--text-muted); font-size:13px; margin-bottom:12px;">Connectez-vous avec votre compte Google : votre liste de courses se synchronise automatiquement entre tous vos appareils.</p>
+                        <div id="auth-container">
+                            <button class="btn-primary" id="btn-login-google" style="background:#4285F4; margin-top:0;" onclick="gLogin()">Se connecter avec Google</button>
+                            <button class="btn-primary" id="btn-logout-google" style="background:#ef4444; margin-top:0; display:none;" onclick="gLogout()">Se déconnecter</button>
+                            <button class="btn-primary" id="btn-sync-now" style="background:transparent; border:1px solid var(--accent); color:var(--accent); margin-top:8px; display:none;" onclick="syncNow(true)">🔄 Synchroniser maintenant</button>
+                            <div id="sync-status" style="margin-top:10px; font-size:13px; color:var(--text-muted);"></div>
+                        </div>
+                    </div>
+
+                    <p style="color:var(--text-muted); margin-bottom: 20px;">L'intelligence artificielle s'adapte à votre profil en temps réel.</p>
+                    <details class="form-group" style="background:var(--bg-main); border:1px solid var(--border); border-radius:12px; padding:14px;"><summary style="cursor:pointer; font-weight:700; color:var(--primary);">🆓 Tuto : activer le Chef IA gratuitement</summary><ol style="padding-left:20px; line-height:1.8; margin-top:10px; color:var(--text-muted);"><li>Ouvrez <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--primary);">aistudio.google.com/apikey</a></li><li>Connectez-vous avec votre compte Google.</li><li>Cliquez sur <b>Créer une clé API</b> (Create API key) et choisissez ou créez un projet.</li><li>Copiez la clé (elle commence par <b>AIza</b>).</li><li>Collez-la dans le champ juste en dessous, puis appuyez sur <b>OK</b>.</li><li>Allez dans IngréMatch, puis <b>🤖 Chef IA</b>.</li></ol><p style="font-size:12px; color:var(--text-muted); margin-top:8px;">L'offre gratuite de Google ne demande pas de carte bancaire, mais elle a des limites d'usage qui peuvent changer. Ne partagez jamais votre clé.</p></details>
+                    <div class="form-group"><label class="main-label">🤖 Clé Google Gemini (Chef IA, stockée sur cet appareil)</label><div style="display:flex; gap:8px;"><input type="password" id="ai-key" class="input-text" placeholder="AIza..."><button class="btn-primary" style="width:auto; margin:0; padding:0 18px;" onclick="saveAiKey()">OK</button></div><button class="btn-primary" style="background:transparent; border:1px solid var(--accent); color:var(--accent); margin-top:8px;" onclick="testAi()">🔌 Tester la connexion</button><div id="ai-status" style="margin-top:8px; font-size:13px;"></div></div>
+                    <button class="btn-primary" onclick="editProfile()" style="margin-bottom:12px;">Modifier mon profil</button>
+                    <button class="btn-primary" onclick="resetBudget()" style="margin-bottom:12px; background:transparent; border:1px solid var(--primary); color:var(--primary);">Remettre le budget à zéro</button>
+                    <button class="btn-primary" onclick="if(confirm('Tout effacer (profil, ingrédients, courses) ?')){localStorage.clear(); location.reload();}" style="background:transparent; border:1px solid #ef4444; color:#ef4444;">Réinitialiser l'application</button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <button class="bottom-nav-item active" data-view="home" onclick="switchView('home')"><i>🏠</i>Accueil</button>
+        <button class="bottom-nav-item" data-view="match" onclick="switchView('match')"><i>🧪</i>IngréMatch</button>
+        <button class="bottom-nav-item" data-view="shopping" onclick="switchView('shopping')"><i>🛒</i>Courses</button>
+        <button class="bottom-nav-item" data-view="recipes" onclick="switchView('recipes')"><i>📖</i>Recettes</button>
+        <button class="bottom-nav-item" data-view="plan" onclick="switchView('plan')"><i>📅</i>Semaine</button>
+        <button class="bottom-nav-item" data-view="profile" onclick="switchView('profile')"><i>⚙️</i>Profil</button>
+    </nav>
+</div>
+
+<div id="recipe-modal" class="onboarding-overlay" style="display:none;" onclick="if(event.target===this)closeRecipe()"><div class="onboarding-box" id="recipe-modal-box"></div></div>
+
+<script>
+// ===== 1. BASE D'ALIMENTS (format: Catégorie=prixDéfaut:Nom emoji[=prix],...) =====
+const DB_RAW = "Légumes=1.5:Tomate 🍅,Carotte 🥕,Oignon 🧅,Ail 🧄,Brocoli 🥦,Poivron 🫑,Aubergine 🍆,Courgette 🥒,Salade 🥬,Épinard 🍃,Champignon 🍄,Pomme de terre 🥔,Patate douce 🍠,Céleri 🥬,Poireau 🧅,Chou 🥬,Chou-fleur 🥦,Radis 🔴,Asperge 🌱,Maïs 🌽,Haricot 🫘,Haricot vert 🫛,Petit pois 🫛,Concombre 🥒,Citrouille 🎃,Fenouil 🌿,Betterave 🟣,Navet 🥕,Endive 🥬,Artichaut 🌿=2.5,Échalote 🧅,Avocat 🥑=1.8|Fruits=2.5:Pomme 🍏,Banane 🍌,Orange 🍊,Clémentine 🍊,Citron 🍋=1.5,Citron vert 🍋=1.5,Fraise 🍓=3.5,Raisin 🍇,Pastèque 🍉=4,Melon 🍈=2.5,Cerise 🍒=6,Pêche 🍑,Abricot 🍑,Mangue 🥭,Ananas 🍍,Kiwi 🥝,Poire 🍐,Prune 🍑,Framboise 🍓=4,Myrtille 🫐=4,Mûre 🫐=4,Coco 🥥,Grenade 🍎,Figue 🟣=4|Viandes=7:Poulet 🍗=8,Filet de poulet 🍗=9,Blanc de poulet 🍗=9,Cuisse de poulet 🍗=5,Pilon de poulet 🍗=5,Aile de poulet 🍗=4,Escalope de poulet 🍗=8,Poulet rôti 🍗=9,Boeuf 🥩=10,Steak 🥩=6,Steak haché 5% MG 🥩=7,Steak haché 10% MG 🥩=6.5,Steak haché 12% MG 🥩=6,Steak haché 15% MG 🥩=5.5,Steak haché 20% MG 🥩=5,Steak haché façon bouchère 🥩=8,Steak haché pur boeuf 🥩=7,Steak haché surgelé 🥩=4.5,Steak haché halal 🥩=6.5,Viande hachée 🥩=6,Viande hachée égrenée 🥩=6,Boeuf haché égrené 5% MG 🥩=7,Boeuf haché égrené 15% MG 🥩=6,Boeuf haché égrené 20% MG 🥩=5.5,Viande hachée de veau 🥩=9,Viande hachée de porc 🥓=5,Viande hachée mixte boeuf-porc 🥩=5.5,Viande hachée de dinde 🦃=6,Viande hachée d'agneau 🍖=9,Tartare de boeuf 🥩=8,Entrecôte 🥩=14,Faux-filet 🥩=15,Rumsteck 🥩=14,Bavette 🥩=13,Onglet 🥩=14,Côte de boeuf 🥩=22,Filet de boeuf 🥩=25,Rôti de boeuf 🥩=12,Paleron 🥩=10,Jarret de boeuf 🥩=9,Joue de boeuf 🥩=10,Macreuse 🥩=11,Boeuf bourguignon 🥩=10,Porc 🥓,Côte de porc 🥓=6,Filet mignon de porc 🥓=9,Échine de porc 🥓=6,Poitrine de porc 🥓=6,Rôti de porc 🥓=7,Travers de porc 🥓=8,Jambonneau 🍖=5,Dinde 🦃,Escalope de dinde 🦃=8,Blanc de dinde 🦃=9,Cuisse de dinde 🦃=6,Agneau 🍖=12,Gigot d'agneau 🍖=18,Côtelette d'agneau 🍖=14,Épaule d'agneau 🍖=12,Souris d'agneau 🍖=12,Carré d'agneau 🍖=22,Canard 🦆=10,Magret de canard 🦆=12,Cuisse de canard 🦆=8,Confit de canard 🦆=12,Foie gras 🦆=25,Veau 🥩=12,Escalope de veau 🥩=14,Côte de veau 🥩=15,Sauté de veau 🥩=12,Osso buco 🥩=13,Rôti de veau 🥩=16,Lapin 🐇=10,Saucisse 🌭=4,Saucisse de Toulouse 🌭=5,Saucisse de Strasbourg 🌭=3.5,Merguez 🌭=5,Chipolata 🌭=5,Chorizo 🌭=4,Andouillette 🌭=5,Boudin noir 🌭=4,Saucisson 🌭=5,Lardon 🥓=2.5,Lardon fumé 🥓=2.5,Bacon 🥓=3,Jambon 🍖=3,Jambon blanc 🍖=3,Jambon cru 🍖=4,Jambon de Bayonne 🍖=5,Pâté 🥫=3,Rillettes 🥫=3,Foie de volaille 🍗=3|Poissons=8:Saumon 🐟,Pavé de saumon 🐟=9,Filet de saumon 🐟=9,Saumon fumé 🐟=5,Saumon sauvage 🐟=14,Thon 🐡=10,Thon en boîte 🥫=2.5,Thon rouge 🐡=20,Steak de thon 🐡=12,Cabillaud 🐟=10,Dos de cabillaud 🐟=12,Filet de cabillaud 🐟=10,Colin 🐟=9,Merlu 🐟=9,Lieu noir 🐟=7,Julienne 🐟=6,Églefin 🐟=9,Morue salée 🐟=10,Sole 🐟=20,Turbot 🐟=25,Bar 🐟=18,Dorade royale 🐟=14,Dorade grise 🐟=10,Truite 🐟=8,Maquereau 🐟=5,Hareng 🐟=5,Sardine 🐡=4,Sardines en boîte 🥫=2,Anchois 🐟=3,Rouget 🐟=14,Raie 🐟=12,Lotte 🐟=20,Flétan 🐟=18,Espadon 🐟=16,Tilapia 🐟=7,Pangasius 🐟=5,Surimi 🍥=3,Poisson pané 🐟=4,Crevette 🦐=7,Crevettes roses cuites 🦐=6,Gambas 🦐=12,Langoustine 🦐=15,Écrevisse 🦐=12,Crabe 🦀=8,Tourteau 🦀=10,Homard 🦞=25,Langouste 🦞=30,Calamar 🦑=8,Poulpe 🐙=14,Seiche 🦑=9,Moule 🦪=4,Huître 🦪=10,Noix de St-Jacques 🐚=15,Palourde 🐚=10,Coque 🐚=8,Bulot 🐚=8,Oursin 🐚=15,Caviar 🐟=60,Oeufs de saumon 🐟=8,Tarama 🐟=3.5,Rillettes de thon 🥫=3,Rillettes de saumon 🥫=3.5|Laitages=2:Lait 🥛=1.2,Beurre 🧈,Fromage 🧀,Fromage râpé 🧀,Oeuf 🥚=3,Yaourt 🥣,Crème 🥛,Crème fraîche 🥛,Mozzarella 🧀,Parmesan 🧀=4,Feta 🧀,Cheddar 🧀,Gouda 🧀,Emmental 🧀,Comté 🧀=4,Chèvre 🧀,Ricotta 🧀,Mascarpone 🧀,Roquefort 🧀,Brie 🧀,Camembert 🧀|Céréales=1.8:Pain 🥖=1,Baguette 🥖=1,Pain de mie 🍞,Pain burger 🍔,Tortilla 🫓,Riz 🍚,Riz basmati 🍚,Pâtes 🍝,Spaghetti 🍝,Tagliatelles 🍝,Lasagnes 🍝,Farine 🌾,Avoine 🥣,Quinoa 🌾,Boulgour 🌾,Semoule 🍚,Couscous 🍚,Nouilles 🍜,Vermicelles de riz 🍜,Lentilles 🫘,Chapelure 🍞|Épicerie=2.5:Pois chiches 🫘,Haricots rouges 🫘,Haricots blancs 🫘,Lentilles corail 🫘,Olive 🫒,Câpres 🫙,Sauce tomate 🥫,Coulis de tomate 🥫,Tomates pelées 🥫,Lait de coco 🥥,Pesto 🌿,Harissa 🌶️,Tahini 🫙,Tofu 🟨,Chocolat 🍫,Levure 🧁,Vin blanc 🍾=5|Condiments=2.5:Sel 🧂=1,Poivre 🧂=2,Huile 🫙,Huile d'olive 🫒=6,Vinaigre 🍾,Vinaigre balsamique 🍾=4,Sucre 🧊=1.5,Miel 🍯=5,Ketchup 🍅,Moutarde 🌭,Mayonnaise 🥚,Sauce Soja 🥢,Sauce Piquante 🌶️,Bouillon 🥣,Concentré de Tomate 🥫|Épices=2.5:Basilic 🌿,Origan 🌿,Thym 🌿,Romarin 🌿,Persil 🌿,Ciboulette 🌿,Laurier 🍃,Aneth 🌿,Curry 🍛,Cumin 🌶️,Paprika 🌶️,Paprika fumé 🌶️,Curcuma 🌿,Piment 🌶️,Cannelle 🪵,Muscade 🌰,Gingembre 🫚,Coriandre 🌿,Menthe 🍃,Safran 🌸=5,Herbes de Provence 🌿,Ras el hanout 🌶️,Garam masala 🌶️,Cardamome 🌿,Épices 🌶️|Hygiène=3:Dentifrice 🪥=2.5,Brosse à dents 🪥,Shampoing 🧴=4,Après-shampoing 🧴=4,Gel douche 🧴,Savon 🧼=2,Déodorant 🧴=4,Papier toilette 🧻=6,Mouchoirs 🤧=2,Cotons 🧻=2,Cotons-tiges 🧻=2,Rasoirs 🪒=6,Mousse à raser 🧴,Crème hydratante 🧴=6,Crème solaire ☀️=10,Fil dentaire 🦷,Bain de bouche 🧴,Pansements 🩹|Entretien=3:Liquide vaisselle 🧴,Tablettes lave-vaisselle 🧼=8,Lessive 🧺=10,Adoucissant 🧺=4,Éponges sponges?,Sacs poubelle 🗑️=4,Essuie-tout 🧻=4,Nettoyant sol 🧹,Nettoyant WC 🚽,Javel 🧴=2,Nettoyant multi-surfaces 🧴,Produit vitres 🪟,Gants de ménage 🧤=2,Papier aluminium 🧻,Film alimentaire 🧻,Papier cuisson 🧻,Sacs congélation 🧊,Anticalcaire 🧴|Maison=4:Ampoules 💡=5,Piles 🔋=6,Bougies 🕯️,Allumettes 🔥=1,Ruban adhésif 📎=2,Serviettes en papier 🧻,Gobelets 🥤,Assiettes jetables 🍽️|Animaux=8:Croquettes chien 🐕=15,Croquettes chat 🐈=12,Litière 🐈,Pâtée chat 🐈=5,Os à mâcher 🐕=4";
+
+const foodDB = [];
+const MORE_APPLY = () => [
+['Boissons',1.6,'🥤','Coca-Cola,Coca-Cola Zéro,Coca-Cola Cherry,Coca-Cola Vanille,Pepsi,Pepsi Max,Fanta Orange,Fanta Citron,Fanta Exotic,Fanta Fraise,Sprite,7Up,Schweppes Agrumes,Schweppes Tonic,Orangina,Orangina Rouge,Oasis Tropical,Oasis Pomme Cassis Framboise,Oasis Orange,Oasis Fraise Framboise,Lipton Ice Tea Pêche,Lipton Ice Tea Citron,Lipton Ice Tea Mangue,Nestea,Fuze Tea,Mountain Dew,Dr Pepper,Limonade,Ginger Beer,Ginger Ale,Rubicon Mangue,Tropico,Capri-Sun=2.5,Ice tea,Diabolo menthe'],
+['Boissons',0.7,'💧','Evian,Volvic,Vittel,Contrex,Cristaline,Hépar,Badoit=1.1,Perrier=1.1,San Pellegrino=1.3,Eau pétillante,Eau plate,Eau de coco=2.5'],
+['Boissons',2,'🧃','Jus d\'orange,Jus de pomme,Jus de raisin,Jus d\'ananas,Jus multifruits,Jus de tomate,Jus de pamplemousse,Jus de cranberry,Jus de pêche,Jus d\'abricot,Jus de mangue,Jus de citron,Smoothie fraise-banane=3,Citronnade'],
+['Boissons',1.8,'⚡','Red Bull=2,Monster,Burn,Rockstar,Powerade,Gatorade'],
+['Boissons',3,'☕','Café moulu,Café en grains,Capsules de café=4,Café soluble,Thé vert,Thé noir,Thé à la menthe,Earl Grey,Infusion verveine,Infusion camomille,Rooibos,Chicorée,Chocolat en poudre,Nesquik,Sirop de grenadine,Sirop de menthe,Sirop de citron,Sirop d\'orgeat,Kombucha=3.5,Ayran,Lassi'],
+['Boissons',1.6,'🥛','Lait demi-écrémé,Lait entier,Lait d\'amande,Lait d\'avoine,Lait de soja,Lait de coco,Lait concentré sucré,Lait en poudre'],
+['Alcools',1.6,'🍺','Heineken,Kronenbourg 1664,Leffe,Corona,Desperados,Guinness,Jupiler,Stella Artois,Carlsberg,Grimbergen,Affligem,Bière blonde,Bière blanche,Bière brune,Bière sans alcool,Cidre,Poiré'],
+['Alcools',6,'🍷','Vin rouge,Vin blanc,Vin rosé,Vin blanc moelleux,Vin de cuisine=3,Sangria=4'],
+['Alcools',13,'🍾','Champagne=20,Prosecco,Crémant,Clairette,Cava'],
+['Alcools',18,'🥃','Whisky=20,Vodka,Rhum,Gin,Tequila,Cognac=30,Armagnac=30,Pastis,Ricard,Get 27,Cointreau,Baileys,Martini,Porto,Amaretto,Limoncello,Jägermeister,Malibu'],
+['Fromages',3.5,'🧀','Emmental,Emmental râpé=2,Comté=4.5,Gruyère,Cantal,Salers,Laguiole,Beaufort=6,Abondance,Reblochon,Munster,Maroilles,Camembert,Brie de Meaux,Brie de Melun,Coulommiers,Neufchâtel,Livarot,Pont-l\'Évêque,Époisses,Langres,Mont d\'Or=6,Morbier,Raclette=4,Tomme de Savoie,Tomme des Pyrénées,Ossau-Iraty,Saint-Nectaire,Fourme d\'Ambert,Roquefort=4,Bleu d\'Auvergne,Bleu de Bresse,Gorgonzola,Chèvre bûche,Crottin de Chavignol,Sainte-Maure,Picodon,Rocamadour,Valençay,Selles-sur-Cher,Cabécou,Saint-Marcellin,Saint-Félicien,Vacherin,Boursin=3,Philadelphia=2.5,Kiri=2.5,La Vache qui rit=2.5,Babybel=3,Port-Salut,Saint-Paulin,Edam,Gouda,Mimolette,Cheddar,Parmesan=4,Grana Padano=4,Pecorino,Mozzarella=1.5,Burrata=3,Ricotta,Mascarpone=2.5,Provolone,Feta=2.5,Halloumi=3,Manchego,Tête de moine,Fromage blanc=2,Faisselle=2,Cottage cheese,Petit-suisse=2,Skyr=2,Cream cheese,Fromage à tartiner,Fromage de chèvre frais,Fromage fondu,Fondue savoyarde=6'],
+['Desserts',3.5,'🍦','Glace vanille,Glace chocolat,Glace fraise,Glace pistache,Glace caramel beurre salé,Sorbet citron,Sorbet fraise,Magnum=5,Cornetto=4,Esquimau,Bûche glacée=7,Ben & Jerry\'s=6,Häagen-Dazs=6'],
+['Desserts',2.5,'🍮','Danette chocolat,Danette vanille,Flan,Crème dessert vanille,Crème dessert chocolat,Crème caramel,Île flottante,Mousse au chocolat,Panna cotta,Riz au lait,Semoule au lait,Yaourt nature=1.5,Yaourt aux fruits,Yaourt grec,Yaourt vanille,Petit pot de crème'],
+['Desserts',4,'🍰','Éclair,Macaron=6,Profiteroles,Tarte au citron,Tarte aux fraises,Tarte aux pommes,Tarte tatin,Millefeuille,Paris-Brest,Forêt-noire,Fraisier,Opéra,Tiramisu,Cheesecake,Cannelé,Baba au rhum,Religieuse,Saint-Honoré,Brownie,Muffin,Madeleine,Financier,Cookie,Donut,Gâteau au chocolat,Gâteau marbré,Quatre-quarts'],
+['Desserts',1.4,'🥐','Croissant,Pain au chocolat,Pain aux raisins,Chausson aux pommes,Brioche=2.5,Brioche tressée,Pain viennois,Croissant aux amandes,Kouign-amann,Beignet'],
+['Desserts',2,'🍫','Chocolat noir,Chocolat au lait,Chocolat blanc,Chocolat pâtissier,Kinder Bueno,Kinder Country,Kinder Délice,Kinder Surprise,Snickers,Mars,Twix,KitKat,Bounty,Milka,Lindt=3,Ferrero Rocher=5,Raffaello=4,M&M\'s,Smarties,Nutella=4,Pâte à tartiner,Haribo,Tagada,Carambar,Bonbons,Chewing-gum,Guimauves,Nougat,Calissons=6,Pralines,Marrons glacés=7'],
+['Desserts',2,'🧁','Sucre glace,Sucre vanillé,Levure chimique,Sucre roux,Extrait de vanille=4,Cacao en poudre,Poudre d\'amande=3,Noix de coco râpée,Pépites de chocolat,Colorant alimentaire,Gélatine,Maïzena,Chantilly'],
+['Snacks',2,'🥨','Chips nature,Chips paprika,Lay\'s,Pringles=3,Doritos,Tortilla chips,Cacahuètes,Noix de cajou=3,Amandes=3,Noisettes=3,Pistaches=4,Pop-corn,Cracottes,Biscuits apéro,Bretzels,Petits beurre,Oreo,Prince,Gaufrettes,Speculoos,Belvita,Barres de céréales,Galettes de riz,Fruits secs,Raisins secs,Compote en gourde'],
+['Petit-déjeuner',3,'🥣','Céréales,Corn flakes,Chocapic,Special K,Muesli,Granola,Flocons d\'avoine,Porridge,Confiture de fraise,Confiture d\'abricot,Miel=5,Beurre de cacahuète,Biscottes,Sirop d\'érable=6'],
+['Charcuterie',4,'🥓','Jambon blanc,Jambon cru=5,Jambon de dinde,Saucisson sec,Rosette,Chorizo,Pancetta,Coppa,Mortadelle,Bacon,Pâté de campagne,Rillettes,Foie gras=15,Saucisses de Strasbourg,Saucisses de Toulouse,Merguez,Chipolatas,Boudin noir,Boudin blanc,Salami,Viande des Grisons=5'],
+['Surgelés',3,'❄️','Frites surgelées,Légumes surgelés,Épinards surgelés,Petits pois surgelés,Poêlée surgelée,Pizza surgelée,Nuggets surgelés,Poisson pané,Steak surgelé,Fruits rouges surgelés,Glaçons,Pâte feuilletée,Pâte brisée,Pâte à pizza,Pâte sablée,Cordons bleus,Lasagnes surgelées,Gyoza,Samoussas,Nems'],
+['Épicerie du monde',3,'🌍','Harissa,Tahini,Couscous,Boulgour,Nouilles instantanées,Riz basmati,Riz thaï,Riz à sushi,Nori,Wasabi,Pâte de curry,Sambal,Kimchi,Miso,Sauce hoisin,Sauce nuoc-mâm,Sauce sriracha,Sauce teriyaki,Salsa,Jalapeños,Haricots noirs,Pâte de dattes,Eau de fleur d\'oranger,Feuilles de brick,Pain pita,Naan,Chapati,Wraps'],
+['Sauces et conserves',2,'🥫','Ketchup,Mayonnaise,Moutarde,Moutarde à l\'ancienne,Sauce barbecue,Sauce burger,Sauce samouraï,Sauce algérienne,Sauce blanche,Vinaigrette,Cornichons,Olives vertes,Olives noires,Câpres,Thon en boîte,Sardines,Maquereaux,Maïs en boîte,Tomates concassées,Concentré de tomate,Pesto,Sauce bolognaise,Bouillon cube,Fond de veau,Soupe en brique,Petits pois en conserve,Champignons en conserve,Cœurs d\'artichaut'],
+['Fruits',2.5,'🍓','Mangue,Ananas,Kiwi,Pastèque,Melon,Raisin,Fraise,Framboise,Myrtille,Cerise,Pêche,Nectarine,Abricot,Prune,Poire,Figue,Grenade,Litchi,Papaye,Fruit de la passion,Noix de coco,Mûre,Cassis,Mandarine,Kaki,Datte,Rhubarbe'],
+['Légumes',1.8,'🥬','Betterave,Radis,Navet,Panais,Fenouil,Asperge=4,Artichaut,Endive,Chou-fleur,Chou rouge,Chou de Bruxelles,Haricot vert,Petit pois,Maïs,Poireau,Céleri-rave,Potiron,Butternut,Échalote,Gingembre,Piment,Concombre,Roquette,Mâche,Cresson']
+].forEach(([cat,p,e,names])=>names.split(',').forEach(n=>{ const [nm,pr]=n.split('='); const k=nm.trim().toLowerCase(); if(!foodDB.some(x=>x.name.toLowerCase()===k)) foodDB.push({name:nm.trim(),icon:e,category:cat,price:pr?+pr:p}); }));
+DB_RAW.split('|').forEach(c => {
+    const [h, items] = c.split(':'); const [cat, dp] = h.split('=');
+    items.split(',').forEach(s => {
+        s = s.trim(); if (!s) return;
+        const [t, p] = s.split('='); const i = t.lastIndexOf(' ');
+        foodDB.push({ name: t.slice(0, i), icon: t.slice(i + 1), category: cat, price: p ? +p : +dp });
+    });
+});
+MORE_APPLY();
+
+// ===== 2. RECETTES (Nom|icône|cuisine|temps|ingrédients|étapes) =====
+const RECIPES_RAW = [
+"Spaghetti Carbonara|🍝|Italien|15 min|Pâtes,Oeuf,Lardon,Parmesan,Poivre|Cuire les pâtes al dente / Dorer les lardons / Mélanger œufs, parmesan et poivre / Mélanger le tout hors du feu avec un peu d'eau de cuisson",
+"Burger Maison|🍔|Américain|20 min|Pain burger,Steak haché,Fromage,Salade,Tomate,Oignon|Former les steaks et les saisir 3 min par face / Poser le fromage en fin de cuisson / Toaster le pain / Monter le burger",
+"Steak haché façon bouchère et purée|🥩|Français|30 min|Steak haché,Pomme de terre,Lait,Beurre,Sel,Poivre|Cuire les pommes de terre 20 min / Les écraser avec lait chaud et beurre / Saisir les steaks 3-4 min par face / Servir avec la purée",
+"Steak haché frites|🍟|Français|35 min|Steak haché,Pomme de terre,Huile,Sel|Couper et sécher les frites / Les cuire au four à 220°C 25 min / Saisir les steaks à la poêle / Saler et servir",
+"Spaghetti Bolognaise|🍝|Italien|40 min|Spaghetti,Viande hachée,Oignon,Ail,Tomates pelées,Carotte,Huile d'olive|Faire revenir oignon, ail et carotte / Ajouter la viande égrenée et colorer / Verser les tomates, mijoter 25 min / Servir sur les spaghetti",
+"Lasagnes|🍝|Italien|60 min|Lasagnes,Viande hachée,Sauce tomate,Lait,Beurre,Farine,Fromage râpé|Préparer la bolognaise / Faire une béchamel (beurre, farine, lait) / Alterner pâtes, viande, béchamel / Gratiner 30 min à 180°C",
+"Hachis Parmentier|🥘|Français|50 min|Viande hachée,Pomme de terre,Oignon,Lait,Beurre,Fromage râpé|Cuire et écraser les pommes de terre / Faire revenir oignon et viande / Monter en couches dans un plat / Gratiner 20 min à 200°C",
+"Boulettes sauce tomate|🧆|Italien|35 min|Viande hachée,Oignon,Oeuf,Chapelure,Sauce tomate,Persil|Mélanger viande, oignon, œuf, chapelure / Former des boulettes / Les dorer à la poêle / Mijoter 15 min dans la sauce tomate",
+"Chili con carne|🌶️|Mexicain|45 min|Viande hachée,Haricots rouges,Tomates pelées,Oignon,Poivron,Cumin,Piment,Riz|Faire revenir oignon et poivron / Ajouter la viande et les épices / Verser tomates et haricots / Mijoter 30 min, servir avec du riz",
+"Paella Rapide|🥘|Espagnol|40 min|Riz,Poulet,Crevette,Poivron,Safran,Petit pois|Dorer le poulet et le poivron / Ajouter le riz et le safran / Couvrir de bouillon, cuire 15 min / Ajouter crevettes et petits pois",
+"Tacos au Boeuf|🌮|Mexicain|25 min|Viande hachée,Tortilla,Tomate,Avocat,Fromage,Oignon|Faire revenir viande et oignon avec épices / Réchauffer les tortillas / Garnir de viande, tomate, avocat, fromage",
+"Fajitas au poulet|🌯|Mexicain|25 min|Blanc de poulet,Poivron,Oignon,Tortilla,Paprika,Cumin|Émincer poulet, poivron, oignon / Saisir à feu vif avec paprika et cumin / Garnir les tortillas",
+"Poulet Tikka Masala|🍛|Asiatique|35 min|Poulet,Curry,Crème,Tomate,Riz|Faire dorer le poulet avec le curry / Ajouter tomate et crème / Mijoter 20 min / Servir avec du riz",
+"Poulet rôti et pommes de terre|🍗|Français|75 min|Poulet,Pomme de terre,Ail,Thym,Beurre|Beurrer et assaisonner le poulet / Entourer de pommes de terre et d'ail / Enfourner 1h à 200°C en arrosant",
+"Blanquette de veau|🍲|Français|90 min|Sauté de veau,Carotte,Oignon,Champignon,Crème,Farine,Beurre|Pocher la viande avec carotte et oignon / Faire un roux beurre-farine avec le bouillon / Ajouter champignons et crème / Mijoter 20 min",
+"Pavé de saumon au four|🐟|Français|20 min|Pavé de saumon,Citron,Huile d'olive,Ail,Riz|Déposer le saumon sur du papier cuisson / Arroser d'huile, citron et ail / Cuire 12-15 min à 180°C / Servir avec du riz",
+"Cabillaud en papillote|🐟|Français|25 min|Cabillaud,Citron,Courgette,Carotte,Huile d'olive|Émincer les légumes / Les poser sur une feuille avec le poisson / Ajouter citron et huile, fermer la papillote / Cuire 15-18 min à 190°C",
+"Saumon teriyaki|🍣|Asiatique|20 min|Saumon,Sauce Soja,Miel,Gingembre,Riz|Mélanger soja, miel et gingembre / Mariner le saumon 10 min / Le poêler 4 min par face en nappant de sauce / Servir avec du riz",
+"Poke bowl au saumon|🥗|Asiatique|20 min|Riz,Saumon,Avocat,Concombre,Sauce Soja|Cuire le riz / Couper saumon, avocat, concombre / Dresser dans un bol / Assaisonner de sauce soja",
+"Moules marinières|🦪|Français|20 min|Moule,Échalote,Vin blanc,Beurre,Persil|Faire suer l'échalote au beurre / Ajouter vin blanc et moules / Couvrir 5-7 min jusqu'à ouverture / Parsemer de persil",
+"Crevettes à l'ail|🦐|Espagnol|10 min|Crevette,Ail,Huile d'olive,Piment,Persil|Chauffer l'huile avec ail et piment / Ajouter les crevettes 2-3 min par face / Parsemer de persil",
+"Thon grillé et légumes|🐡|Français|20 min|Steak de thon,Courgette,Poivron,Huile d'olive,Citron|Griller les légumes / Saisir le thon 1-2 min par face / Arroser de citron et d'huile d'olive",
+"Pad Thaï aux crevettes|🍜|Asiatique|25 min|Vermicelles de riz,Crevette,Oeuf,Sauce Soja,Ail,Citron vert|Tremper les vermicelles / Saisir ail et crevettes / Ajouter l'œuf brouillé et les nouilles / Assaisonner de soja et citron vert",
+"Riz cantonais|🍚|Asiatique|20 min|Riz,Oeuf,Jambon,Petit pois,Sauce Soja|Cuire le riz à l'avance / Brouiller l'œuf / Sauter riz, jambon et petits pois / Assaisonner de sauce soja",
+"Couscous royal|🍲|Arabe|60 min|Semoule,Poulet,Merguez,Carotte,Courgette,Pois chiches,Ras el hanout|Mijoter poulet et légumes avec les épices / Ajouter les pois chiches / Griller les merguez / Hydrater la semoule et servir",
+"Tajine de Poulet|🍲|Arabe|50 min|Poulet,Carotte,Pomme de terre,Oignon,Épices|Dorer le poulet avec l'oignon / Ajouter légumes et épices / Couvrir et mijoter 40 min",
+"Kefta grillées|🍢|Arabe|25 min|Viande hachée d'agneau,Oignon,Persil,Cumin,Paprika|Mélanger viande, oignon haché, persil et épices / Façonner sur des piques / Griller 8-10 min",
+"Salade Niçoise|🥗|Français|15 min|Salade,Thon en boîte,Tomate,Oeuf,Olive|Cuire les œufs durs / Composer la salade / Ajouter thon, tomates, olives, œufs",
+"Quiche lorraine|🥧|Français|50 min|Lardon,Oeuf,Crème fraîche,Fromage râpé,Farine,Beurre|Préparer la pâte (farine, beurre) / Garnir de lardons / Verser œufs et crème / Cuire 35 min à 180°C",
+"Omelette Fromage|🍳|Français|10 min|Oeuf,Fromage,Beurre,Sel,Poivre|Battre les œufs / Cuire dans le beurre / Ajouter le fromage et plier",
+"Ratatouille|🍆|Français|50 min|Aubergine,Courgette,Poivron,Tomate,Oignon,Huile d'olive,Herbes de Provence|Couper les légumes / Les faire revenir séparément / Mijoter ensemble 30 min avec les herbes",
+"Risotto aux champignons|🍄|Italien|35 min|Riz,Champignon,Oignon,Parmesan,Vin blanc,Bouillon,Beurre|Suer l'oignon, nacrer le riz / Déglacer au vin blanc / Ajouter le bouillon louche par louche / Finir avec parmesan et beurre",
+"Pizza Margherita|🍕|Italien|30 min|Farine,Levure,Sauce tomate,Mozzarella,Basilic,Huile d'olive|Pétrir la pâte, laisser lever / L'étaler et garnir de sauce et mozzarella / Cuire 12 min à 250°C / Ajouter le basilic",
+"Croque-monsieur|🥪|Français|15 min|Pain de mie,Jambon blanc,Emmental,Beurre|Garnir de jambon et fromage / Refermer / Dorer à la poêle ou au four",
+"Mac & Cheese|🧀|Américain|25 min|Pâtes,Cheddar,Lait,Beurre,Farine|Cuire les pâtes / Préparer une béchamel / Fondre le cheddar dedans / Mélanger aux pâtes",
+"Tortilla espagnole|🍳|Espagnol|30 min|Oeuf,Pomme de terre,Oignon,Huile d'olive|Cuire pommes de terre et oignon dans l'huile / Mélanger aux œufs battus / Cuire 5 min par face",
+"Soupe de légumes|🥣|Français|30 min|Carotte,Pomme de terre,Poireau,Oignon,Bouillon|Éplucher et couper / Cuire 25 min dans le bouillon / Mixer",
+"Guacamole|🥑|Mexicain|10 min|Avocat,Oignon,Tomate,Citron vert,Sel|Écraser les avocats / Ajouter oignon et tomate hachés / Assaisonner de citron vert et sel"
+];
+const offlineRecipes = RECIPES_RAW.map(s => { const [name, icon, cuisine, time, ing, st] = s.split('|'); return { name, icon, cuisine, time, ingredients: ing.split(','), steps: st.split(' / ') }; });
+
+
+(function () {
+    const PR = [['Steak haché', 'h'], ['Viande hachée', 'h'], ['Blanc de poulet', 'v'], ['Escalope de dinde', 'v'], ['Côte de porc', 'v'], ['Filet mignon de porc', 'v'], ['Saucisse', 'v'], ['Merguez', 'v'], ['Bavette', 'v'], ['Entrecôte', 'v'], ['Escalope de veau', 'v'], ["Côtelette d'agneau", 'v'], ['Magret de canard', 'v'], ['Pavé de saumon', 'p'], ['Cabillaud', 'p'], ['Colin', 'p'], ['Steak de thon', 'p'], ['Crevette', 'c'], ['Merlu', 'p'], ['Truite', 'p'], ['Dorade royale', 'p'], ['Lieu noir', 'p'], ['Moule', 'c'], ['Tofu', 't']];
+    const ST = [
+        ['à la crème', ['Crème', 'Champignon', 'Échalote'], "Faire suer l'échalote et les champignons, ajouter la crème et réduire 5 min", 'Français'],
+        ['sauce moutarde', ['Moutarde', 'Crème', 'Échalote'], "Faire suer l'échalote, ajouter la crème et la moutarde, mijoter 4 min", 'Français'],
+        ['au curry', ['Curry', 'Lait de coco', 'Oignon'], "Faire revenir l'oignon avec le curry, ajouter le lait de coco et mijoter 8 min", 'Asiatique'],
+        ['sauce tomate', ['Sauce tomate', 'Oignon', 'Ail', 'Basilic'], "Faire revenir oignon et ail, ajouter la sauce tomate et mijoter 10 min, parsemer de basilic", 'Italien'],
+        ['au citron', ['Citron', 'Ail', "Huile d'olive", 'Persil'], "Mélanger jus de citron, ail haché, huile d'olive et persil", 'Français'],
+        ['à la provençale', ['Tomate', 'Courgette', 'Herbes de Provence', 'Ail'], "Poêler tomate, courgette et ail avec les herbes de Provence 10 min", 'Français'],
+        ['sauce soja-gingembre', ['Sauce Soja', 'Gingembre', 'Ail', 'Miel'], "Chauffer soja, gingembre, ail et miel jusqu'à ce que la sauce nappe", 'Asiatique'],
+        ['au paprika', ['Paprika', 'Poivron', 'Oignon', 'Crème'], "Faire revenir oignon et poivron avec le paprika, ajouter la crème et mijoter 6 min", 'Espagnol'],
+        ['aux herbes', ['Thym', 'Romarin', "Huile d'olive", 'Ail'], "Infuser thym, romarin et ail dans l'huile d'olive chaude", 'Français'],
+        ['sauce poivre', ['Poivre', 'Crème', 'Beurre'], "Faire fondre le beurre, ajouter poivre concassé et crème, réduire 4 min", 'Français']];
+    const SD = [['riz', 'Riz', "Cuire le riz 10-12 min dans l'eau bouillante salée"], ['pâtes', 'Pâtes', 'Cuire les pâtes al dente'], ['pommes de terre', 'Pomme de terre', "Cuire les pommes de terre à l'eau 20 min"], ['semoule', 'Semoule', "Hydrater la semoule avec de l'eau bouillante et un filet d'huile"], ['quinoa', 'Quinoa', 'Rincer et cuire le quinoa 12 min']];
+    const CK = { h: 'Saisir à la poêle 4 min par face', v: 'Saisir à la poêle 4-5 min par face puis laisser reposer 2 min', p: "Cuire à la poêle 4 min d'un côté puis 2-3 min de l'autre", c: 'Saisir à feu vif 3 min', t: 'Couper en cubes et dorer 6 min' };
+    const IC = { h: '🥩', v: '🍖', p: '🐟', c: '🦐', t: '🥢' }, TM = { h: '25 min', v: '30 min', p: '25 min', c: '20 min', t: '25 min' };
+    PR.forEach((p, a) => ST.forEach((s, b) => {
+        const d = SD[(a + b) % SD.length], lab = p[0] === 'Crevette' ? 'Crevettes' : p[0] === 'Moule' ? 'Moules' : p[0];
+        offlineRecipes.push({ name: `${lab} ${s[0]} et ${d[0]}`, icon: IC[p[1]], cuisine: s[3], time: TM[p[1]], ingredients: [p[0], ...s[1], d[1]], steps: [d[2], CK[p[1]], s[2], `Napper de sauce et servir avec ${d[0]}`] });
+    }));
+})();
+
+// ===== 3. OUTILS =====
+const NC = new Map(); const N = s => { let v = NC.get(s); if (v === undefined) { v = N0(s); NC.set(s, v); } return v; };
+const N0 = s => String(s).toLowerCase().replace(/œ/g, 'oe').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9% ]/g, ' ').replace(/\s+/g, ' ').trim();
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const rx = k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+let _uid = 0; const uid = () => Date.now() * 1000 + (_uid++ % 1000);
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+const fmt = n => (Math.round(n * 100) / 100).toString().replace('.', ',');
+
+const ALIAS = {
+    'viande hachee': ['*hache', '*hachee', 'viande'], 'steak hache': ['*hache', '*hachee'], 'steak hache facon bouchere': ['*hache', '*hachee'],
+    'spaghetti': ['spaghetti', 'pates'], 'tagliatelles': ['tagliatelles', 'pates'], 'nouilles': ['nouille', 'vermicelles'],
+    'poisson blanc': ['cabillaud', 'colin', 'merlu', 'lieu noir', 'lieu', 'julienne', 'eglefin', 'sole', 'turbot', 'bar', 'dorade royale', 'dorade'],
+    'fromage': ['*fromage', '*emmental', '*comte', '*cheddar', '*mozzarella', '*gouda', '*brie', '*chevre', '*camembert', '*parmesan', '*gruyere', '*cantal', '*reblochon', '*morbier', '*beaufort', '*raclette', '*maroilles', '*edam', '*mimolette', '*tomme', '*saint nectaire', '*boursin', '*port salut', '*abondance', '*munster'],
+    'fromage rape': ['*fromage', '*emmental', '*comte', '*cheddar', '*gruyere', '*parmesan'],
+    'crevette': ['crevettes', 'gambas'], 'lardon': ['lardons', 'bacon'], 'jambon blanc': ['jambon', 'jambon blanc'],
+    'pates': ['pates', 'spaghetti', 'tagliatelles', 'penne', 'fusilli', 'macaroni', 'coquillettes', 'linguine', 'farfalle', 'rigatoni', 'torsades'],
+    'epices': ['*curry', '*cumin', '*paprika', '*curcuma', '*ras el hanout', '*garam masala', '*cannelle', '*piment', '*epices'],
+    'pain': ['pain', 'baguette'], 'poulet': ['*poulet'], 'blanc de poulet': ['blanc de poulet', 'filet de poulet', 'escalope de poulet', 'poulet'],
+    'saumon': ['saumon', 'pave de saumon', 'filet de saumon'], 'pave de saumon': ['pave de saumon', 'filet de saumon', 'saumon'],
+    'huile': ['huile'], 'bouillon': ['*bouillon'], 'citrouille': ['citrouille', 'potiron'], 'sauce tomate': ['sauce tomate', 'coulis de tomate'],
+    'tomates pelees': ['tomates pelees', 'tomates concassees', 'coulis de tomate']
+};
+const NS = s => N(s).replace(/creme (fraiche|liquide|entiere|epaisse)/, 'creme').replace(/(\w{3,})s\b/g, '$1');
+const ALIASN = {}; Object.keys(ALIAS).forEach(k => ALIASN[NS(k)] = ALIAS[k].map(v => v[0] === '*' ? '*' + NS(v.slice(1)) : NS(v)));
+const QUAL = new Set('bio frais fraiche surgele surgelee boite conserve rape rapee entier entiere demi ecreme mg facon bouchere pur pure halal basmati complet long thai rond moulu moulue sec seche petit gros'.split(' '));
+// Un aliment du frigo ne valide un ingrédient QUE s'il est identique ou une variante (jamais "pomme" pour "pomme de terre", "lait de coco" pour "lait"...)
+const qualOk = (k, f) => { const p = ' ' + f + ' ', q = ' ' + k + ' '; if (!p.includes(q)) return false; return p.replace(q, ' ').trim().split(' ').filter(Boolean).every(w => QUAL.has(w) || /^\d+%?$/.test(w)); };
+function hasIng(ing, name) {
+    const i = NS(ing), f = NS(name); if (i === f) return true;
+    const al = ALIASN[i];
+    if (al) return al.some(k => k[0] === '*' ? (' ' + f + ' ').includes(' ' + k.slice(1) + ' ') : qualOk(k, f));
+    return qualOk(i, f);
+}
+const PORK = /\b(porc|lardon|bacon|jambon|jambonneau|chorizo|saucisse|saucisson|andouillette|boudin|rillettes|travers)\b/;
+const MEAT = /\b(poulet|boeuf|steak|viande|porc|dinde|agneau|canard|veau|lapin|merguez|chipolata|magret|entrecote|bavette|onglet|gigot|foie|lardon|jambon|bacon|chorizo|saucisse|saucisson|andouillette|boudin|hache|rumsteck|blanc de poulet)\b/;
+const FISH = /\b(saumon|thon|cabillaud|colin|merlu|lieu|sole|bar|dorade|truite|maquereau|hareng|sardine|anchois|crevette|gambas|crabe|homard|calamar|poulpe|moule|huitre|surimi|poisson|langoustine|morue|lotte|raie|jacques|carpe)\b/;
+const TOOLS = ['Plaque de cuisson', 'Four', 'Micro-ondes', 'Poêle', 'Casserole', 'Cocotte', 'Cocotte-minute', 'Wok', 'Mixeur', 'Grill / Plancha', 'Air fryer', 'Cuiseur à riz', 'Robot cuiseur'];
+const DEFAULT_TOOLS = ['Plaque de cuisson', 'Four', 'Poêle', 'Casserole'];
+document.getElementById('tool-chips').innerHTML = TOOLS.map(t => `<label class="chip-label"><input type="checkbox" value="${t}" ${DEFAULT_TOOLS.includes(t) ? 'checked' : ''}> ${t}</label>`).join('');
+const TOOLREQ = [
+    [/\bfour\b|enfourn|gratiner|rôtir/, ['Four', 'Air fryer']],
+    [/poêle|poêler|saisir|dorer/, ['Poêle', 'Wok', 'Grill / Plancha']],
+    [/casserole|bouillante|à l'eau|cuire les pâtes|cuire le riz|pocher|hydrater/, ['Casserole', 'Cocotte', 'Cocotte-minute', 'Robot cuiseur', 'Cuiseur à riz']],
+    [/mixer|mixeur/, ['Mixeur', 'Robot cuiseur']],
+    [/griller|piques/, ['Grill / Plancha', 'Four', 'Poêle']],
+    [/cocotte/, ['Cocotte', 'Cocotte-minute']],
+    [/\bwok\b/, ['Wok', 'Poêle']]];
+function needs(r) {
+    if (r._n) return r._n;
+    const t = (Array.isArray(r.steps) ? r.steps.join(' ') : String(r.steps || '')).toLowerCase();
+    return (r._n = TOOLREQ.filter(x => x[0].test(t)).map(x => x[1]));
+}
+let _pf = null;
+const prof = () => _pf || (_pf = load('gourmet_profile', {}));
+function saveProfileObj(p) { try { localStorage.setItem('gourmet_profile', JSON.stringify(p)); } catch (e) { } _pf = null; }
+function diets() { return prof().diets || []; }
+const ALC = /\b(vin|biere|rhum|porto|cognac|cidre|whisky|calvados|marsala|vodka)\b/;
+const isVeg = r => !r.ingredients.map(N).some(i => MEAT.test(i) || FISH.test(i));
+function allowed(r) {
+    const t = r.ingredients.map(N); const d = diets();
+    const meat = t.some(i => MEAT.test(i)), fish = t.some(i => FISH.test(i)), pork = t.some(i => PORK.test(i));
+    if (d.includes('Végétarien') && (meat || fish)) return false;
+    if (d.includes('Halal') && (pork || t.some(i => ALC.test(i)))) return false;
+    const own = prof().tools;
+    if (own && own.length && !needs(r).every(g => g.some(x => own.includes(x)))) return false;
+    return true;
+}
+
+// ===== 3b. FAMILLES DE RECETTES (toutes uniques) =====
+(function () {
+    const R = (name, icon, cuisine, time, ingredients, steps) => offlineRecipes.push({ name, icon, cuisine, time, ingredients, steps });
+    const lc = s => s.toLowerCase();
+    // Pâtes
+    ['Spaghetti', 'Tagliatelles', 'Pâtes'].forEach(b => [
+        ['au saumon fumé', ['Saumon fumé', 'Crème', 'Citron'], 'Ajouter le saumon fumé en lanières, la crème et un peu de jus de citron'],
+        ['crème et champignons', ['Champignon', 'Crème', 'Ail'], "Poêler les champignons avec l'ail puis ajouter la crème"],
+        ['lardons et crème', ['Lardon', 'Crème', 'Oignon'], "Dorer les lardons et l'oignon puis ajouter la crème"],
+        ['thon et olives', ['Thon en boîte', 'Tomates pelées', 'Olive'], 'Chauffer les tomates avec le thon émietté et les olives'],
+        ['poulet et pesto', ['Blanc de poulet', 'Pesto'], 'Poêler le poulet en dés puis ajouter le pesto'],
+        ['courgette et ricotta', ['Courgette', 'Ricotta', 'Citron'], 'Faire sauter la courgette puis ajouter la ricotta et le zeste de citron'],
+        ['crevettes pimentées', ['Crevette', 'Ail', 'Piment'], "Saisir les crevettes avec l'ail et le piment"],
+        ['épinards et chèvre', ['Épinard', 'Chèvre', 'Crème'], 'Faire tomber les épinards puis fondre le chèvre et la crème'],
+        ['chorizo et poivron', ['Chorizo', 'Poivron', 'Sauce tomate'], 'Poêler chorizo et poivron puis ajouter la sauce tomate'],
+        ['poireau et jambon', ['Poireau', 'Jambon blanc', 'Crème'], 'Faire fondre le poireau, ajouter le jambon en lanières et la crème'],
+        ['aubergine et mozzarella', ['Aubergine', 'Tomates pelées', 'Mozzarella'], "Faire revenir l'aubergine, ajouter les tomates puis la mozzarella"],
+        ['sauce express à la viande hachée', ['Viande hachée', 'Sauce tomate', 'Oignon'], "Dorer l'oignon et la viande, ajouter la sauce tomate et laisser réduire"]
+    ].forEach(g => R(`${b} ${g[0]}`, '🍝', 'Italien', '20 min', [b, ...g[1]], [`Cuire les ${lc(b)} al dente dans une casserole d'eau salée`, g[2], `Mélanger aux ${lc(b)} avec un peu d'eau de cuisson et servir`])));
+    // Oeufs
+    [['Omelette', ['Beurre'], 'Battre les œufs, cuire à la poêle à feu moyen puis garnir et plier'], ['Oeufs brouillés', ['Beurre', 'Crème'], 'Cuire les œufs à feu doux en remuant, ajouter la garniture en fin de cuisson'], ['Frittata', ["Huile d'olive", 'Ciboulette'], 'Mélanger œufs et garniture, cuire à la poêle 5 min puis 8 min au four à 180°C']].forEach(f => [
+        ['au fromage', ['Fromage']], ['aux champignons', ['Champignon']], ['au jambon', ['Jambon blanc']], ['épinards et feta', ['Épinard', 'Feta']], ['tomate et basilic', ['Tomate', 'Basilic']], ['au saumon fumé', ['Saumon fumé']], ['poivron et oignon', ['Poivron', 'Oignon']], ['lardons et oignon', ['Lardon', 'Oignon']], ['courgette et chèvre', ['Courgette', 'Chèvre']], ['pommes de terre', ['Pomme de terre', 'Oignon']]
+    ].forEach(g => R(`${f[0]} ${g[0]}`, '🍳', 'Français', '15 min', ['Oeuf', ...g[1], ...f[1]], ['Préparer et couper la garniture', f[2], 'Servir aussitôt'])));
+    // Soupes
+    [['carotte', ['Carotte', 'Oignon']], ['potiron', ['Citrouille', 'Oignon']], ['poireau et pomme de terre', ['Poireau', 'Pomme de terre']], ['tomate', ['Tomate', 'Oignon', 'Basilic']], ['champignon', ['Champignon', 'Oignon']], ['brocoli', ['Brocoli', 'Pomme de terre']], ['courgette', ['Courgette', 'Oignon']], ['épinard', ['Épinard', 'Pomme de terre']], ['chou-fleur', ['Chou-fleur', 'Oignon']], ['lentilles', ['Lentilles', 'Carotte', 'Oignon']], ['pois chiches', ['Pois chiches', 'Tomate', 'Cumin']], ['patate douce', ['Patate douce', 'Gingembre']]].forEach(v => {
+        R(`Velouté de ${v[0]}`, '🥣', 'Français', '35 min', [...v[1], 'Bouillon', 'Crème'], ['Éplucher et couper les légumes', 'Cuire 25 min dans une casserole avec le bouillon', 'Mixer finement et ajouter la crème', "Rectifier l'assaisonnement"]);
+        R(`Soupe rustique de ${v[0]}`, '🥣', 'Français', '35 min', [...v[1], 'Bouillon'], ['Éplucher et couper les légumes en dés', 'Cuire 25 min dans une casserole avec le bouillon', 'Servir chaud, en morceaux']);
+    });
+    // Salades
+    [['Salade de thon et œuf', ['Thon en boîte', 'Oeuf', 'Tomate']], ['Salade de poulet et avocat', ['Blanc de poulet', 'Avocat']], ['Salade de chèvre chaud', ['Chèvre', 'Pain', 'Miel']], ['Salade quinoa et feta', ['Quinoa', 'Feta', 'Concombre']], ['Salade de saumon fumé', ['Saumon fumé', 'Citron', 'Aneth']], ['Salade crevettes et avocat', ['Crevette', 'Avocat']], ['Salade de lentilles et lardons', ['Lentilles', 'Lardon', 'Échalote']], ['Salade mozzarella et tomate', ['Mozzarella', 'Tomate', 'Basilic']], ['Salade de pois chiches et concombre', ['Pois chiches', 'Concombre', 'Menthe']], ['Taboulé', ['Semoule', 'Tomate', 'Concombre', 'Menthe', 'Citron']], ['Salade de pâtes au thon', ['Pâtes', 'Thon en boîte', 'Olive']], ['Salade de pommes de terre et hareng', ['Pomme de terre', 'Hareng', 'Oignon']]].forEach((g, i) => [['vinaigrette moutarde', ['Moutarde', 'Huile', 'Vinaigre']], ['vinaigrette citron', ['Citron', "Huile d'olive"]]].forEach(v =>
+        R(`${g[0]}, ${v[0]}`, '🥗', 'Français', '15 min', [...([0, 1, 2, 4, 5].includes(i) ? ['Salade'] : []), ...g[1], ...v[1]], ['Préparer et couper tous les ingrédients', `Mélanger ${lc(v[1].join(', '))} pour la vinaigrette`, 'Assembler la salade et assaisonner'])));
+    // Gratins
+    ['Pomme de terre', 'Chou-fleur', 'Courgette', 'Brocoli', 'Aubergine', 'Poireau', 'Carotte', 'Endive'].forEach(v => [['à la crème', ['Crème', 'Fromage râpé'], 'Napper de crème et parsemer de fromage râpé'], ['à la béchamel', ['Lait', 'Farine', 'Beurre', 'Emmental'], "Préparer une béchamel (beurre, farine, lait), napper et ajouter l'emmental"], ['au chèvre', ['Chèvre', 'Crème'], 'Ajouter le chèvre en rondelles et un filet de crème']].forEach(s =>
+        R(`Gratin de ${lc(v)} ${s[0]}`, '🧀', 'Français', '50 min', [v, ...s[1]], ["Précuire les légumes 10 min à l'eau", s[2], 'Gratiner 25 min à 190°C'])));
+    // Burgers
+    ['Steak haché', 'Steak haché façon bouchère'].forEach(p => ['Cheddar', 'Chèvre', 'Brie', 'Comté', 'Emmental', 'Roquefort'].forEach(c => [['classique', ['Salade', 'Tomate']], ['au bacon', ['Bacon', 'Oignon']], ['aux champignons', ['Champignon', 'Crème fraîche']]].forEach(g =>
+        R(`Burger ${c} ${g[0]} (${lc(p)})`, '🍔', 'Américain', '25 min', ['Pain burger', p, c, ...g[1]], ['Saisir le steak 3-4 min par face à la poêle', 'Ajouter le fromage en fin de cuisson pour le faire fondre', `Toaster le pain et garnir avec ${lc(g[1].join(', '))}`, 'Refermer et servir']))));
+    // Pizzas
+    [['Reine', ['Jambon blanc', 'Champignon']], ['Chèvre-miel', ['Chèvre', 'Miel']], ['Chorizo', ['Chorizo', 'Oignon']], ['Thon-olives', ['Thon en boîte', 'Olive', 'Oignon']], ['Quatre fromages', ['Emmental', 'Chèvre', 'Roquefort']], ['Végétarienne', ['Poivron', 'Courgette', 'Aubergine']], ['Saumon-crème', ['Saumon fumé', 'Crème fraîche']], ['Lardons-oignons', ['Lardon', 'Oignon', 'Crème fraîche']], ['Merguez', ['Merguez', 'Poivron']], ['Poulet-champignons', ['Blanc de poulet', 'Champignon']], ['Ananas-jambon', ['Ananas', 'Jambon blanc']], ['Poulet-curry', ['Blanc de poulet', 'Curry', 'Crème fraîche']]].forEach(g =>
+        R(`Pizza ${g[0]}`, '🍕', 'Italien', '30 min', ['Farine', 'Levure', 'Sauce tomate', 'Mozzarella', ...g[1]], ['Pétrir la pâte et la laisser lever 1h', "L'étaler, ajouter la sauce tomate, la mozzarella et la garniture", 'Cuire 12 min au four à 250°C']));
+    // Mijotés en cocotte
+    [['Sauté de veau', '1h30'], ['Cuisse de poulet', '50 min'], ['Jarret de boeuf', '2h30'], ['Échine de porc', '1h30'], ["Épaule d'agneau", '2h'], ['Joue de boeuf', '3h'], ['Lapin', '1h15'], ['Paleron', '2h30'], ['Cuisse de canard', '1h30'], ['Jambonneau', '2h']].forEach(p => [['aux carottes', ['Carotte', 'Oignon', 'Vin blanc', 'Thym']], ['à la tomate', ['Tomates pelées', 'Oignon', 'Ail', 'Poivron']], ['aux champignons', ['Champignon', 'Crème', 'Oignon']], ['aux olives', ['Olive', 'Tomates pelées', 'Ail', 'Herbes de Provence']], ['au curry', ['Curry', 'Lait de coco', 'Pomme de terre']], ['à la moutarde', ['Moutarde', 'Crème', 'Oignon']]].forEach(s =>
+        R(`${p[0]} ${s[0]} en cocotte`, '🍲', 'Français', p[1], [p[0], ...s[1]], ['Faire colorer la viande en cocotte sur toutes ses faces', `Ajouter ${lc(s[1].join(', '))}, mouiller à hauteur et couvrir`, `Laisser mijoter à feu doux ${p[1]}`, "Rectifier l'assaisonnement et servir"])));
+    // Légumes rôtis
+    ['Carotte', 'Pomme de terre', 'Patate douce', 'Courgette', 'Brocoli', 'Chou-fleur', 'Aubergine', 'Poivron', 'Betterave', 'Champignon'].forEach(v => [['aux herbes', ['Thym', "Huile d'olive", 'Ail']], ['au paprika', ['Paprika', "Huile d'olive"]], ['au cumin', ['Cumin', "Huile d'olive", 'Citron']], ['au miel', ['Miel', "Huile d'olive", 'Romarin']]].forEach(s =>
+        R(`${v} au four ${s[0]}`, '🥕', 'Français', '40 min', [v, ...s[1]], ['Préchauffer le four à 200°C', "Couper les légumes et les enrober d'huile et d'épices", 'Rôtir 25-30 min en remuant à mi-cuisson'])));
+    // Wok
+    [['Blanc de poulet', 'de poulet'], ['Bavette', 'de boeuf'], ['Crevette', 'de crevettes'], ['Tofu', 'de tofu'], ['Filet mignon de porc', 'de porc'], ['Magret de canard', 'de canard'], ['Pavé de saumon', 'de saumon']].forEach(p => [['sauce soja-gingembre', ['Sauce Soja', 'Gingembre', 'Ail', 'Carotte', 'Poivron']], ['sauce curry-coco', ['Curry', 'Lait de coco', 'Oignon', 'Poivron']], ['sauce miel-soja', ['Sauce Soja', 'Miel', 'Ail', 'Brocoli']]].forEach(s => ['Riz', 'Nouilles'].forEach(b =>
+        R(`Wok ${p[1]} ${s[0]} et ${lc(b)}`, '🥡', 'Asiatique', '25 min', [p[0], ...s[1], b], [b === 'Riz' ? "Cuire le riz 10-12 min à l'eau bouillante" : "Cuire les nouilles 4-5 min à l'eau bouillante", 'Couper la protéine et les légumes en lamelles', `Sauter ${p[1]} au wok à feu vif 4 min puis ajouter les légumes`, 'Ajouter la sauce et laisser réduire 2 min', `Servir sur ${lc(b)}`]))));
+    // Desserts
+    ['Pomme', 'Poire', 'Pêche', 'Abricot', 'Prune', 'Banane', 'Myrtille', 'Framboise'].forEach(f => R(`Crumble ${lc(f)}`, '🥧', 'Dessert', '50 min', [f, 'Farine', 'Beurre', 'Sucre'], ['Couper les fruits et les disposer dans un plat', 'Sabler farine, beurre et sucre du bout des doigts', 'Recouvrir et cuire 35 min au four à 180°C']));
+    ['Cerise', 'Prune', 'Abricot', 'Poire', 'Framboise', 'Pêche'].forEach(f => R(`Clafoutis ${lc(f)}`, '🍰', 'Dessert', '50 min', [f, 'Oeuf', 'Farine', 'Lait', 'Sucre'], ['Mélanger œufs, sucre, farine et lait', 'Verser sur les fruits dans un plat beurré', 'Cuire 35 min au four à 180°C']));
+    ['Fraise', 'Banane', 'Mangue', 'Kiwi', 'Framboise', 'Myrtille', 'Pomme', 'Pêche'].forEach(f => R(`Bol de yaourt ${lc(f)}, miel et avoine`, '🥣', 'Dessert', '5 min', ['Yaourt', f, 'Miel', 'Avoine'], ['Couper les fruits', 'Verser le yaourt dans un bol', 'Ajouter fruits, miel et avoine']));
+    ['Fraise', 'Banane', 'Mangue', 'Ananas', 'Kiwi', 'Myrtille'].forEach(f => R(`Smoothie ${lc(f)}`, '🥤', 'Dessert', '5 min', [f, 'Yaourt', 'Lait'], ['Éplucher et couper les fruits', "Mixer avec le yaourt et le lait jusqu'à obtenir une texture lisse"]));
+    [['au miel', ['Miel']], ['au chocolat', ['Chocolat']], ['à la banane', ['Banane']], ['aux fraises', ['Fraise']], ['citron-sucre', ['Citron', 'Sucre']]].forEach(t => {
+        R(`Crêpes ${t[0]}`, '🥞', 'Dessert', '30 min', ['Farine', 'Oeuf', 'Lait', 'Beurre', ...t[1]], ['Mélanger farine, œufs et lait, laisser reposer 30 min', 'Cuire les crêpes à la poêle beurrée', 'Garnir et servir']);
+        R(`Pancakes ${t[0]}`, '🥞', 'Dessert', '20 min', ['Farine', 'Oeuf', 'Lait', 'Levure', 'Beurre', ...t[1]], ['Mélanger farine, levure, œuf et lait', 'Cuire de petites louches à la poêle 2 min par face', 'Garnir et servir']);
+    });
+    R('Mousse au chocolat', '🍫', 'Dessert', '20 min', ['Chocolat', 'Oeuf', 'Sucre'], ['Faire fondre le chocolat', 'Incorporer les jaunes puis les blancs montés en neige', 'Laisser prendre 3h au frais']);
+    R('Riz au lait', '🍚', 'Dessert', '40 min', ['Riz', 'Lait', 'Sucre'], ['Cuire le riz dans le lait à feu doux 30 min en remuant', 'Sucrer et servir tiède ou froid']);
+    R('Gâteau au yaourt', '🎂', 'Dessert', '45 min', ['Yaourt', 'Farine', 'Oeuf', 'Sucre', 'Huile', 'Levure'], ['Mélanger le yaourt, le sucre, les œufs et l\'huile', 'Ajouter farine et levure', 'Cuire 35 min au four à 180°C']);
+    R('Cookies', '🍪', 'Dessert', '25 min', ['Farine', 'Beurre', 'Sucre', 'Oeuf', 'Chocolat'], ['Mélanger beurre mou, sucre et œuf', 'Ajouter farine et pépites de chocolat', 'Cuire 12 min au four à 180°C']);
+    R('Tarte aux pommes', '🥧', 'Dessert', '60 min', ['Pomme', 'Farine', 'Beurre', 'Sucre'], ['Préparer la pâte avec farine, beurre et un peu d\'eau', 'Garnir de pommes en lamelles et sucrer', 'Cuire 35 min au four à 180°C']);
+    R('Compote de pommes', '🍎', 'Dessert', '25 min', ['Pomme', 'Sucre', 'Cannelle'], ['Éplucher et couper les pommes', 'Cuire 20 min à feu doux dans une casserole avec sucre et cannelle', 'Écraser à la fourchette']);
+    R('Brownie', '🍫', 'Dessert', '40 min', ['Chocolat', 'Beurre', 'Sucre', 'Oeuf', 'Farine'], ['Faire fondre chocolat et beurre', 'Ajouter sucre, œufs et farine', 'Cuire 22 min au four à 180°C']);
+})();
+const EXTRA_RAW = [
+"Quesadillas au poulet|🫓|Mexicain|20 min|Blanc de poulet,Tortilla,Fromage râpé,Poivron|Poêler le poulet et le poivron en lamelles / Garnir une tortilla de poulet et de fromage, refermer / Dorer 2 min par face",
+"Quesadillas au fromage|🫓|Mexicain|10 min|Tortilla,Fromage râpé|Garnir une moitié de tortilla de fromage / Replier / Dorer à la poêle 2 min par face",
+"Burritos au boeuf|🌯|Mexicain|30 min|Viande hachée,Tortilla,Riz,Haricots rouges,Fromage râpé|Cuire le riz / Faire revenir la viande avec les haricots / Garnir les tortillas avec riz, viande et fromage puis rouler",
+"Huevos rancheros|🍳|Mexicain|20 min|Oeuf,Tortilla,Tomates pelées,Oignon,Piment|Cuire oignon, piment et tomates 10 min / Poêler les œufs au plat / Dresser sur les tortillas et napper de sauce",
+"Salade mexicaine|🥗|Mexicain|10 min|Maïs,Haricots rouges,Tomate,Avocat,Oignon,Citron vert|Rincer maïs et haricots / Couper tomate, avocat, oignon / Mélanger et assaisonner de citron vert",
+"Riz mexicain|🍚|Mexicain|30 min|Riz,Tomates pelées,Oignon,Poivron,Cumin|Faire revenir oignon et poivron / Ajouter riz, tomates et cumin / Couvrir d'eau et cuire 15 min",
+"Tacos au poulet|🌮|Mexicain|25 min|Blanc de poulet,Tortilla,Oignon,Avocat,Citron vert,Paprika|Émincer le poulet et le saisir avec paprika et oignon / Réchauffer les tortillas / Garnir d'avocat et de citron vert",
+"Tacos de poisson|🌮|Mexicain|25 min|Cabillaud,Tortilla,Salade,Citron vert,Cumin|Assaisonner le cabillaud de cumin / Le poêler 3 min par face / Garnir les tortillas avec salade et citron vert",
+"Enchiladas au poulet|🌯|Mexicain|40 min|Blanc de poulet,Tortilla,Sauce tomate,Fromage râpé,Oignon|Cuire le poulet effiloché avec l'oignon / Rouler dans les tortillas / Napper de sauce et fromage, gratiner 20 min à 200°C",
+"Chili sin carne|🌶️|Mexicain|40 min|Haricots rouges,Maïs,Tomates pelées,Oignon,Poivron,Cumin,Riz|Faire revenir oignon et poivron / Ajouter haricots, maïs, tomates et cumin / Mijoter 25 min / Servir avec du riz",
+"Salsa fraîche|🍅|Mexicain|10 min|Tomate,Oignon,Piment,Citron vert,Coriandre|Hacher finement tous les légumes / Mélanger avec le citron vert / Laisser reposer 10 min",
+"Couscous végétarien|🍲|Arabe|50 min|Semoule,Carotte,Courgette,Pois chiches,Navet,Ras el hanout|Cuire les légumes avec les épices 30 min / Ajouter les pois chiches / Hydrater la semoule et servir",
+"Houmous|🥣|Arabe|10 min|Pois chiches,Citron,Ail,Huile d'olive,Tahini|Mixer tous les ingrédients / Ajuster avec un peu d'eau / Servir arrosé d'huile d'olive",
+"Taboulé libanais|🥗|Arabe|20 min|Persil,Tomate,Semoule,Menthe,Citron,Huile d'olive,Oignon|Hydrater la semoule / Hacher persil, menthe, tomate, oignon / Mélanger avec citron et huile",
+"Shakshuka|🍳|Arabe|30 min|Oeuf,Tomates pelées,Poivron,Oignon,Ail,Cumin,Paprika|Faire revenir oignon, poivron et ail / Ajouter tomates et épices, mijoter 15 min / Casser les œufs dessus et cuire 5-6 min à couvert",
+"Tajine d'agneau et pruneaux|🍲|Arabe|90 min|Épaule d'agneau,Pruneau,Oignon,Cannelle,Miel|Dorer l'agneau avec l'oignon / Ajouter cannelle et un peu d'eau, mijoter 1h / Ajouter pruneaux et miel 15 min",
+"Tajine de kefta aux œufs|🍲|Arabe|35 min|Viande hachée,Tomates pelées,Oeuf,Oignon,Cumin,Paprika|Former des boulettes épicées / Les cuire dans la sauce tomate-oignon / Casser les œufs dessus et cuire à couvert 5 min",
+"Soupe harira|🥣|Arabe|50 min|Lentilles,Pois chiches,Tomates pelées,Oignon,Céleri,Persil,Vermicelles|Faire revenir oignon et céleri / Ajouter lentilles, pois chiches, tomates et eau, cuire 30 min / Ajouter vermicelles et persil",
+"Falafels|🧆|Arabe|30 min|Pois chiches,Oignon,Ail,Persil,Cumin,Farine|Mixer pois chiches, oignon, ail, persil et cumin / Ajouter la farine, former des boulettes / Dorer à la poêle 3 min par face",
+"Salade marocaine|🥗|Arabe|15 min|Tomate,Concombre,Oignon,Persil,Citron|Couper les légumes en petits dés / Ajouter le persil haché / Assaisonner de jus de citron",
+"Brochettes de poulet au yaourt|🍢|Arabe|30 min|Blanc de poulet,Yaourt,Citron,Ail,Paprika|Mariner le poulet en cubes dans yaourt, citron, ail et paprika / Enfiler sur des piques / Griller 10 min",
+"Brochettes d'agneau|🍢|Arabe|30 min|Épaule d'agneau,Oignon,Cumin,Paprika|Couper l'agneau en cubes et assaisonner / Enfiler avec l'oignon / Griller 10 min",
+"Merguez et semoule|🌭|Arabe|25 min|Merguez,Semoule,Poivron,Oignon|Poêler poivron et oignon / Griller les merguez / Hydrater la semoule et servir ensemble",
+"Zaalouk d'aubergines|🍆|Arabe|35 min|Aubergine,Tomate,Ail,Cumin,Paprika,Huile d'olive|Cuire les aubergines / Mijoter avec tomate, ail et épices / Écraser grossièrement",
+"Poulet aux olives et citron|🍗|Arabe|55 min|Poulet,Olive,Citron,Oignon,Ail|Dorer le poulet avec oignon et ail / Ajouter citron et un peu d'eau, mijoter 35 min / Ajouter les olives 10 min",
+"Baba ganoush|🍆|Arabe|30 min|Aubergine,Ail,Citron,Huile d'olive|Cuire les aubergines entières au four 30 min / Récupérer la chair et écraser / Mélanger à l'ail, citron et huile",
+"Semoule au lait|🍮|Arabe|15 min|Semoule,Lait,Sucre|Chauffer le lait sucré / Verser la semoule en pluie / Cuire 5 min en remuant",
+"Pâtes bolognaise express|🍝|Italien|20 min|Pâtes,Viande hachée,Sauce tomate|Cuire les pâtes al dente / Faire dorer la viande hachée à la poêle / Ajouter la sauce tomate, mijoter 8 min / Mélanger aux pâtes",
+"Pâtes sauce tomate|🍝|Italien|15 min|Pâtes,Sauce tomate|Cuire les pâtes al dente / Chauffer la sauce tomate 5 min / Mélanger et servir",
+"Pâtes au beurre et fromage|🍝|Italien|12 min|Pâtes,Beurre,Fromage râpé|Cuire les pâtes / Ajouter le beurre et un peu d'eau de cuisson / Parsemer de fromage râpé",
+"Carbonara express|🍝|Italien|15 min|Pâtes,Oeuf,Lardon|Cuire les pâtes / Dorer les lardons / Mélanger les œufs battus hors du feu avec les pâtes et les lardons",
+"Pâtes à l'arrabbiata|🌶️|Italien|20 min|Penne,Tomates pelées,Ail,Piment|Faire revenir ail et piment / Ajouter les tomates, mijoter 12 min / Mélanger aux penne cuites",
+"Spaghetti aglio e olio|🍝|Italien|15 min|Spaghetti,Ail,Huile d'olive,Piment|Cuire les spaghetti / Chauffer doucement ail et piment dans l'huile / Mélanger avec un peu d'eau de cuisson",
+"Pâtes cacio e pepe|🍝|Italien|15 min|Pâtes,Parmesan,Poivre|Cuire les pâtes / Mélanger parmesan, poivre et eau de cuisson en crème / Enrober les pâtes",
+"Gnocchis tomate mozzarella|🥟|Italien|20 min|Gnocchis,Sauce tomate,Mozzarella|Cuire les gnocchis à l'eau bouillante / Les napper de sauce tomate et de mozzarella / Gratiner 10 min à 200°C",
+"Bruschetta|🍅|Italien|10 min|Pain,Tomate,Ail,Basilic,Huile d'olive|Griller le pain et le frotter à l'ail / Garnir de tomate en dés et basilic / Arroser d'huile d'olive",
+"Risotto à la tomate|🍅|Italien|35 min|Riz,Tomates pelées,Oignon,Parmesan,Bouillon|Suer l'oignon et nacrer le riz / Ajouter tomates puis bouillon louche par louche / Finir au parmesan",
+"Polenta au parmesan|🌽|Italien|15 min|Polenta,Parmesan,Beurre|Cuire la polenta dans l'eau salée 5 min / Ajouter beurre et parmesan / Servir crémeux",
+"Tiramisu|🍮|Italien|30 min|Mascarpone,Oeuf,Sucre,Café,Biscuit cuillère|Fouetter jaunes et sucre puis incorporer le mascarpone / Ajouter les blancs en neige / Alterner biscuits trempés dans le café et crème, 4h au frais",
+"Saltimbocca de veau|🥩|Italien|20 min|Escalope de veau,Jambon cru,Sauge|Garnir chaque escalope de jambon et de sauge / Piquer avec un pic / Dorer 2-3 min par face",
+"Minestrone|🥣|Italien|40 min|Carotte,Courgette,Haricot,Pâtes,Tomates pelées,Oignon|Faire revenir oignon et légumes / Ajouter tomates et eau, cuire 25 min / Ajouter les pâtes et cuire 8 min",
+"Lasagnes aux légumes|🍝|Italien|60 min|Lasagnes,Courgette,Aubergine,Sauce tomate,Mozzarella|Poêler les légumes / Alterner pâtes, légumes, sauce et mozzarella / Cuire 35 min à 180°C",
+"Curry de pois chiches|🍛|Asiatique|30 min|Pois chiches,Lait de coco,Curry,Oignon,Riz|Faire revenir l'oignon avec le curry / Ajouter pois chiches et lait de coco, mijoter 15 min / Servir avec du riz",
+"Dahl de lentilles|🍛|Asiatique|35 min|Lentilles,Lait de coco,Curry,Oignon,Tomate|Faire revenir oignon et curry / Ajouter lentilles, tomate et eau, cuire 25 min / Ajouter le lait de coco",
+"Curry de légumes|🍛|Asiatique|35 min|Pomme de terre,Carotte,Petit pois,Curry,Lait de coco|Faire revenir les légumes avec le curry / Ajouter le lait de coco / Mijoter 20 min",
+"Tofu sauté sauce soja|🥢|Asiatique|20 min|Tofu,Sauce Soja,Riz,Brocoli|Cuire le riz / Dorer le tofu en cubes et le brocoli / Ajouter la sauce soja",
+"Nouilles sautées aux légumes|🍜|Asiatique|20 min|Nouilles,Carotte,Chou,Sauce Soja|Cuire les nouilles / Sauter carotte et chou en lamelles / Ajouter nouilles et sauce soja",
+"Nouilles sautées au poulet|🍜|Asiatique|25 min|Nouilles,Blanc de poulet,Carotte,Sauce Soja|Cuire les nouilles / Sauter le poulet puis la carotte / Ajouter nouilles et sauce soja",
+"Curry vert de poulet|🍛|Asiatique|30 min|Poulet,Curry,Lait de coco,Poivron,Riz|Dorer le poulet / Ajouter curry, poivron et lait de coco, mijoter 15 min / Servir avec du riz",
+"Ramen express|🍜|Asiatique|25 min|Nouilles,Oeuf,Bouillon,Sauce Soja,Blanc de poulet|Cuire l'œuf 7 min / Chauffer bouillon et sauce soja / Ajouter nouilles, poulet poêlé et œuf coupé",
+"Galettes de pommes de terre|🥔|Français|30 min|Pomme de terre,Oeuf,Oignon,Farine|Râper pommes de terre et oignon, bien presser / Mélanger avec œuf et farine / Dorer à la poêle 4 min par face",
+"Poêlée de légumes et œuf|🍳|Français|20 min|Courgette,Poivron,Oignon,Oeuf|Faire sauter les légumes 10 min / Creuser des puits et casser les œufs / Cuire à couvert 4 min",
+"Pâtes pesto et tomate|🍝|Italien|15 min|Pâtes,Pesto,Tomate|Cuire les pâtes / Couper la tomate en dés / Mélanger avec le pesto",
+"Burger végétarien aux pois chiches|🍔|Américain|25 min|Pain burger,Pois chiches,Oignon,Salade,Tomate|Écraser pois chiches et oignon, former des galettes / Les dorer 3 min par face / Monter le burger",
+"Salade grecque|🥗|Français|10 min|Tomate,Concombre,Feta,Olive,Oignon|Couper les légumes en morceaux / Ajouter feta et olives / Servir frais",
+"Croque végétarien|🥪|Français|15 min|Pain de mie,Emmental,Tomate,Beurre|Garnir le pain de tomate et d'emmental / Refermer et beurrer l'extérieur / Dorer à la poêle",
+"Soupe à l'oignon gratinée|🥣|Français|45 min|Oignon,Bouillon,Pain,Emmental,Beurre|Faire fondre les oignons au beurre 20 min / Ajouter le bouillon, cuire 15 min / Gratiner avec pain et emmental",
+"Gratin dauphinois|🥔|Français|70 min|Pomme de terre,Crème,Ail,Lait|Émincer les pommes de terre / Les disposer avec ail, lait et crème / Cuire 1h à 160°C",
+"Gratin de pâtes au jambon|🧀|Français|30 min|Pâtes,Jambon blanc,Crème,Fromage râpé|Cuire les pâtes / Mélanger avec jambon et crème / Gratiner 15 min",
+"Crêpes jambon fromage|🥞|Français|30 min|Farine,Oeuf,Lait,Jambon blanc,Emmental|Préparer la pâte et cuire les crêpes / Garnir de jambon et emmental / Replier et faire fondre à la poêle",
+"Endives au jambon|🥬|Français|50 min|Endive,Jambon blanc,Lait,Farine,Beurre,Emmental|Cuire les endives 15 min / Les rouler dans le jambon / Napper de béchamel et gratiner 20 min",
+"Oeufs mayonnaise|🥚|Français|15 min|Oeuf,Mayonnaise|Cuire les œufs durs 10 min / Les écaler et les couper en deux / Napper de mayonnaise",
+"Hot dog|🌭|Américain|15 min|Pain burger,Saucisse,Oignon,Moutarde|Cuire les saucisses à la poêle / Réchauffer le pain / Garnir avec oignon et moutarde",
+"Club sandwich|🥪|Américain|15 min|Pain de mie,Blanc de poulet,Bacon,Salade,Tomate|Griller le pain / Poêler poulet et bacon / Monter en étages avec salade et tomate",
+"Grilled cheese|🧀|Américain|10 min|Pain de mie,Cheddar,Beurre|Garnir le pain de cheddar / Beurrer l'extérieur / Dorer 3 min par face",
+"Salade Caesar|🥗|Américain|20 min|Salade,Blanc de poulet,Parmesan,Pain|Poêler le poulet et faire des croûtons / Dresser la salade / Ajouter poulet, croûtons et copeaux de parmesan",
+"Ailes de poulet BBQ|🍗|Américain|45 min|Aile de poulet,Paprika,Miel,Sauce Soja|Mélanger paprika, miel et soja / Enrober les ailes / Cuire 35 min à 200°C",
+"Nuggets de poulet maison|🍗|Américain|30 min|Blanc de poulet,Chapelure,Oeuf,Farine|Couper le poulet en morceaux / Passer dans farine, œuf puis chapelure / Dorer à la poêle ou au four",
+"Meatloaf|🍖|Américain|60 min|Viande hachée,Oeuf,Chapelure,Oignon,Ketchup|Mélanger viande, œuf, chapelure et oignon / Façonner en pain, napper de ketchup / Cuire 45 min à 180°C",
+"Potato wedges|🥔|Américain|35 min|Pomme de terre,Paprika,Huile|Couper en quartiers / Enrober d'huile et de paprika / Cuire 30 min à 210°C",
+"Mac & Cheese au poulet|🧀|Américain|30 min|Pâtes,Cheddar,Lait,Beurre,Farine,Blanc de poulet|Cuire pâtes et poulet / Préparer la béchamel et fondre le cheddar / Mélanger le tout",
+"Banana bread|🍌|Américain|60 min|Banane,Farine,Oeuf,Sucre,Beurre,Levure|Écraser les bananes / Mélanger avec les autres ingrédients / Cuire 50 min à 170°C",
+"Gaspacho|🍅|Espagnol|15 min|Tomate,Concombre,Poivron,Ail,Huile d'olive|Couper les légumes / Mixer avec l'ail et l'huile / Servir bien frais",
+"Patatas bravas|🥔|Espagnol|35 min|Pomme de terre,Paprika,Sauce tomate,Piment|Couper et rôtir les pommes de terre 25 min / Chauffer la sauce tomate avec paprika et piment / Napper",
+"Lentilles au chorizo|🥘|Espagnol|40 min|Lentilles,Chorizo,Carotte,Oignon|Faire revenir oignon, carotte et chorizo / Ajouter lentilles et eau / Cuire 25 min",
+"Paella végétarienne|🥘|Espagnol|40 min|Riz,Poivron,Petit pois,Safran,Haricot vert|Faire revenir poivron et haricots verts / Ajouter riz et safran / Couvrir d'eau, cuire 15 min avec les petits pois",
+"Poulet grillé, riz et brocoli|💪|Français|25 min|Blanc de poulet,Riz,Brocoli|Cuire le riz / Griller le poulet 5 min par face / Cuire le brocoli vapeur",
+"Steak haché et patate douce|💪|Français|35 min|Steak haché,Patate douce,Brocoli|Rôtir la patate douce 25 min / Saisir le steak / Cuire le brocoli",
+"Bowl thon quinoa avocat|💪|Français|20 min|Thon en boîte,Quinoa,Avocat,Concombre|Cuire le quinoa 12 min / Émietter le thon / Dresser avec avocat et concombre",
+"Saumon, quinoa et brocoli|💪|Français|25 min|Saumon,Quinoa,Brocoli|Cuire le quinoa / Poêler le saumon 4 min par face / Cuire le brocoli",
+"Escalope de dinde, riz et haricots verts|💪|Français|25 min|Escalope de dinde,Riz,Haricot vert|Cuire le riz / Poêler la dinde 4 min par face / Cuire les haricots verts",
+"Poulet, patate douce et poivron|💪|Français|35 min|Blanc de poulet,Patate douce,Poivron|Couper patate douce et poivron, rôtir 25 min / Poêler le poulet / Servir ensemble",
+"Pancakes banane et avoine|💪|Dessert|15 min|Oeuf,Banane,Avoine|Écraser la banane et mélanger avec œuf et avoine / Cuire de petites louches à la poêle / Retourner après 2 min",
+"Cabillaud, riz et haricots verts|💪|Français|25 min|Cabillaud,Riz,Haricot vert|Cuire le riz / Poêler le cabillaud 4 min par face / Cuire les haricots verts",
+"Gâteau au chocolat|🍫|Dessert|40 min|Chocolat,Beurre,Sucre,Oeuf,Farine|Faire fondre chocolat et beurre / Ajouter sucre, œufs et farine / Cuire 25 min à 180°C",
+"Crème brûlée|🍮|Dessert|60 min|Crème,Oeuf,Sucre|Chauffer la crème / La verser sur jaunes et sucre battus / Cuire 40 min à 100°C puis caraméliser",
+"Salade de fruits|🍓|Dessert|10 min|Orange,Pomme,Banane,Kiwi|Éplucher et couper les fruits / Mélanger avec le jus d'orange / Servir frais",
+"Pain perdu|🍞|Dessert|15 min|Pain,Oeuf,Lait,Sucre,Beurre|Battre œufs, lait et sucre / Y tremper le pain / Dorer au beurre 3 min par face",
+"Muffins au chocolat|🧁|Dessert|30 min|Farine,Oeuf,Sucre,Beurre,Lait,Levure,Chocolat|Mélanger les secs puis les humides / Ajouter le chocolat / Cuire 20 min à 180°C",
+"Fondant au chocolat|🍫|Dessert|30 min|Chocolat,Beurre,Sucre,Oeuf,Farine|Fondre chocolat et beurre / Ajouter sucre, œufs, un peu de farine / Cuire 10-12 min à 200°C",
+"Gâteau à la banane|🍌|Dessert|45 min|Banane,Farine,Oeuf,Sucre,Yaourt|Écraser les bananes / Mélanger avec le reste / Cuire 35 min à 180°C",
+"Riz sauce tomate et viande hachée|🍚|Français|25 min|Riz,Viande hachée,Sauce tomate|Cuire le riz / Dorer la viande / Ajouter la sauce tomate et mijoter 8 min",
+"Tarte tomate moutarde|🥧|Français|45 min|Tomate,Moutarde,Fromage râpé,Pâte brisée|Étaler la pâte et la tartiner de moutarde / Ajouter tomates et fromage / Cuire 30 min à 200°C",
+"Dinde de Noël aux marrons|🦃|Français|150 min|Dinde,Marron,Beurre,Oignon,Thym|Beurrer la dinde et l'assaisonner de thym / La farcir d'oignon et de marrons / Cuire 2h à 180°C en arrosant|noel",
+"Blinis au saumon fumé|🥞|Français|15 min|Saumon fumé,Blinis,Crème,Citron,Aneth|Réchauffer les blinis / Tartiner de crème citronnée / Garnir de saumon fumé et d'aneth|noel",
+"Foie gras sur toasts|🍞|Français|15 min|Foie gras,Pain de mie,Confiture de figues|Toaster le pain / Poser une tranche de foie gras / Ajouter une touche de confiture de figues|noel",
+"Bûche de Noël au chocolat|🎄|Dessert|60 min|Oeuf,Sucre,Farine,Chocolat,Crème,Beurre|Réaliser un biscuit roulé (œufs, sucre, farine) / Garnir de crème au chocolat et rouler / Napper de ganache et décorer|noel",
+"Velouté de potimarron aux châtaignes|🥣|Français|40 min|Citrouille,Châtaigne,Crème,Oignon|Faire revenir l'oignon et la citrouille / Ajouter les châtaignes et l'eau, cuire 25 min / Mixer avec la crème|noel",
+"Saint-Jacques poêlées|🐚|Français|15 min|Noix de Saint-Jacques,Beurre,Citron,Crème|Saisir les noix 1-2 min par face au beurre / Déglacer au citron / Ajouter la crème et servir aussitôt|noel",
+"Truffes au chocolat|🍫|Dessert|30 min|Chocolat,Crème,Cacao|Verser la crème chaude sur le chocolat et lisser / Laisser prendre au frais / Formant des boules et rouler dans le cacao|noel",
+"Magret de canard aux figues|🦆|Français|30 min|Magret de canard,Figue,Miel|Saisir le magret côté peau 8 min puis 4 min de l'autre côté, laisser reposer / Caraméliser figues et miel / Trancher et servir|noel",
+"Galette des rois|👑|Dessert|55 min|Pâte feuilletée,Poudre d'amande,Beurre,Sucre,Oeuf|Mélanger amandes, beurre, sucre et un œuf / Garnir une pâte, glisser la fève, recouvrir / Dorer et cuire 30 min à 180°C|epiphanie",
+"Crêpes de la Chandeleur|🥞|Dessert|30 min|Farine,Oeuf,Lait,Beurre,Sucre|Mélanger farine, œufs, sucre et lait / Laisser reposer 30 min / Cuire à la poêle en tenant une pièce dans l'autre main|chandeleur",
+"Beignets de carnaval|🍩|Dessert|40 min|Farine,Oeuf,Sucre,Lait,Levure,Huile|Préparer la pâte et laisser lever 1h / Former des beignets / Frire 2 min par face et rouler dans le sucre|mardigras",
+"Gaufres|🧇|Dessert|25 min|Farine,Oeuf,Lait,Beurre,Sucre,Levure|Mélanger tous les ingrédients en pâte lisse / Verser dans le gaufrier / Cuire 4 min|mardigras",
+"Gigot d'agneau pascal|🍖|Français|120 min|Gigot d'agneau,Ail,Romarin,Pomme de terre|Piquer le gigot d'ail et le frotter de romarin / Entourer de pommes de terre / Cuire 1h30 à 180°C, laisser reposer 15 min|paques",
+"Oeufs mimosa|🥚|Français|20 min|Oeuf,Mayonnaise,Moutarde|Cuire les œufs durs 10 min / Mélanger les jaunes avec mayonnaise et moutarde / Garnir les blancs et parsemer de jaune émietté|paques",
+"Tarte aux asperges|🥧|Français|45 min|Asperge,Oeuf,Crème,Pâte brisée,Fromage râpé|Précuire les asperges / Étaler la pâte et garnir d'asperges / Verser œufs, crème et fromage, cuire 30 min à 180°C|paques",
+"Brioche de Pâques|🍞|Dessert|150 min|Farine,Oeuf,Sucre,Beurre,Levure,Lait,Vanille|Pétrir la pâte et laisser lever 1h30 / Former une couronne / Dorer et cuire 25 min à 180°C|paques",
+"Nid de Pâques au chocolat|🐣|Dessert|20 min|Chocolat,Corn flakes,Beurre|Fondre chocolat et beurre / Mélanger aux corn flakes / Former des nids et laisser prendre au frais|paques",
+"Carré d'agneau en croûte de moutarde|🍖|Français|40 min|Carré d'agneau,Moutarde,Chapelure,Ail|Saisir le carré 3 min par face / Tartiner de moutarde, ail et chapelure / Cuire 15 min à 200°C|paques",
+"Brandade de morue|🐟|Français|50 min|Morue,Pomme de terre,Lait,Ail,Huile d'olive|Dessaler et pocher la morue / Écraser avec pommes de terre cuites, ail, lait chaud et huile / Gratiner 15 min|careme",
+"Colin pané au citron|🐟|Français|25 min|Colin,Chapelure,Oeuf,Citron|Passer le colin dans l'œuf puis la chapelure / Dorer 3 min par face / Servir avec du citron|careme",
+"Soupe de poisson|🍲|Français|45 min|Merlu,Tomates pelées,Oignon,Ail,Pomme de terre|Faire revenir oignon et ail / Ajouter tomates, pomme de terre et eau, cuire 20 min / Ajouter le poisson 8 min et mixer grossièrement|careme",
+"Dattes farcies aux amandes|🌴|Arabe|10 min|Datte,Amande,Miel|Dénoyauter les dattes / Les garnir d'une amande / Napper d'un filet de miel|ramadan",
+"Chorba d'agneau|🥣|Arabe|60 min|Sauté d'agneau,Tomates pelées,Pois chiches,Oignon,Vermicelles,Coriandre|Dorer l'agneau avec l'oignon / Ajouter tomates, pois chiches et eau, mijoter 40 min / Ajouter vermicelles et coriandre|ramadan",
+"Briouates au poulet|🥟|Arabe|35 min|Feuille de brick,Blanc de poulet,Oignon,Persil|Cuire poulet et oignon hachés, ajouter le persil / Garnir des triangles de brick / Dorer au four 15 min à 200°C|ramadan",
+"Bricks à l'œuf et au thon|🥟|Arabe|20 min|Feuille de brick,Oeuf,Thon en boîte,Persil|Garnir la brick de thon et de persil, casser un œuf dessus / Replier en triangle / Dorer à la poêle 2 min par face|ramadan",
+"Chebakia|🌸|Arabe|60 min|Farine,Miel,Sésame,Huile,Cannelle|Pétrir la pâte avec la cannelle et former des rosaces / Frire à l'huile / Tremper dans le miel chaud et saupoudrer de sésame|ramadan",
+"Smoothie dattes et banane|🥤|Arabe|5 min|Datte,Banane,Lait|Dénoyauter les dattes / Mixer avec banane et lait froid / Servir pour la rupture du jeûne|ramadan",
+"Ghriba aux amandes|🍪|Arabe|30 min|Poudre d'amande,Sucre,Oeuf,Citron|Mélanger amandes, sucre, zeste et œuf / Former des boules / Cuire 12 min à 170°C|aidfitr",
+"Cornes de gazelle|🌙|Arabe|60 min|Poudre d'amande,Sucre,Farine,Beurre,Cannelle|Préparer une farce amande-sucre-cannelle / Envelopper dans une pâte fine en croissant / Cuire 15 min à 170°C|aidfitr",
+"Makrout aux dattes|🍯|Arabe|60 min|Semoule,Datte,Beurre,Miel|Pétrir semoule et beurre, garnir de pâte de dattes / Découper en losanges / Cuire puis tremper dans le miel|aidfitr",
+"Méchoui d'agneau|🍖|Arabe|180 min|Épaule d'agneau,Ail,Cumin,Beurre,Paprika|Badigeonner l'épaule d'ail, cumin, paprika et beurre / Cuire 2h30 à 160°C en couvrant / Servir fondant|aidadha",
+"Couscous à l'agneau|🍲|Arabe|90 min|Semoule,Épaule d'agneau,Carotte,Courgette,Pois chiches,Navet|Mijoter l'agneau 1h avec les épices / Ajouter légumes et pois chiches / Hydrater la semoule et servir|aidadha",
+"Challah|🍞|Juif|180 min|Farine,Oeuf,Levure,Sucre,Huile|Pétrir et laisser lever 1h30 / Tresser trois brins / Dorer à l'œuf et cuire 30 min à 180°C|shabbat",
+"Poulet du Shabbat|🍗|Juif|75 min|Poulet,Pomme de terre,Paprika,Ail,Oignon|Frotter le poulet de paprika et d'ail / L'entourer de pommes de terre et d'oignon / Cuire 1h à 200°C|shabbat",
+"Soupe de poulet aux vermicelles|🍲|Juif|60 min|Poulet,Carotte,Oignon,Céleri,Vermicelles|Mijoter poulet, carotte, oignon et céleri 45 min / Retirer le poulet et l'effilocher / Cuire les vermicelles dans le bouillon|shabbat,yomkippour",
+"Cholent|🍲|Juif|240 min|Boeuf,Haricot,Pomme de terre,Orge,Oignon|Disposer tous les ingrédients dans une cocotte / Couvrir d'eau / Cuire à feu très doux plusieurs heures|shabbat",
+"Chraime (poisson épicé)|🐟|Juif|35 min|Cabillaud,Tomates pelées,Poivron,Ail,Paprika,Piment|Faire revenir poivron, ail et épices / Ajouter les tomates, mijoter 10 min / Poser le poisson et cuire 12 min|shabbat",
+"Salade de carottes au cumin|🥕|Juif|20 min|Carotte,Cumin,Citron,Huile d'olive,Persil|Cuire les carottes à la vapeur / Assaisonner de cumin, citron et huile / Servir frais|shabbat",
+"Pommes au miel|🍎|Juif|10 min|Pomme,Miel,Cannelle|Couper les pommes en quartiers / Napper de miel / Saupoudrer de cannelle pour une année douce|roshhashana",
+"Gâteau au miel|🍯|Juif|50 min|Farine,Miel,Oeuf,Sucre,Huile,Levure|Mélanger œufs, sucre, miel et huile / Ajouter farine et levure / Cuire 40 min à 170°C|roshhashana",
+"Poulet au miel et citron|🍗|Juif|55 min|Poulet,Miel,Ail,Citron|Mélanger miel, jus de citron et ail / Napper le poulet / Cuire 45 min à 190°C en arrosant|roshhashana",
+"Salade de betterave et grenade|🥗|Juif|15 min|Betterave,Grenade,Citron,Huile d'olive|Cuire et couper la betterave / Ajouter les grains de grenade / Assaisonner de citron et d'huile|roshhashana",
+"Courge farcie|🎃|Juif|60 min|Citrouille,Riz,Viande hachée,Oignon|Vider la citrouille / La garnir de riz, viande et oignon précuits / Cuire 40 min à 190°C|souccot",
+"Chou farci|🥬|Juif|75 min|Chou,Viande hachée,Riz,Sauce tomate|Blanchir les feuilles de chou / Les garnir de viande et de riz et les rouler / Mijoter 45 min dans la sauce tomate|souccot",
+"Sufganiyot|🍩|Juif|60 min|Farine,Levure,Oeuf,Sucre,Lait,Confiture,Huile|Préparer la pâte et laisser lever 1h / Former des boules et les frire / Fourrer de confiture et saupoudrer de sucre|hanoucca",
+"Hamantaschen|🔺|Juif|50 min|Farine,Beurre,Sucre,Oeuf,Confiture|Préparer la pâte sablée et l'étaler / Découper des ronds, garnir de confiture, former un triangle / Cuire 15 min à 180°C|pourim",
+"Soupe de poulet aux boulettes de matza|🍲|Juif|60 min|Poulet,Matza,Oeuf,Carotte,Oignon|Mijoter poulet, carotte et oignon 45 min / Former des boulettes de matza émiettée et d'œuf / Les pocher 15 min dans le bouillon|pessah",
+"Charoset|🍎|Juif|15 min|Pomme,Noix,Miel,Cannelle|Hacher pommes et noix / Lier avec miel et cannelle / Servir en pâte pour le Séder|pessah",
+"Gâteau au chocolat sans farine|🍫|Juif|40 min|Chocolat,Oeuf,Sucre,Poudre d'amande,Huile|Fondre le chocolat avec l'huile / Ajouter œufs, sucre et amande / Cuire 25 min à 180°C|pessah",
+"Cheesecake|🍰|Juif|70 min|Fromage blanc,Oeuf,Sucre,Biscuit,Beurre|Écraser biscuits et beurre au fond du moule / Mélanger fromage blanc, œufs et sucre, verser / Cuire 45 min à 160°C|chavouot",
+"Blintzes au fromage|🥞|Juif|30 min|Farine,Oeuf,Lait,Fromage blanc,Sucre|Cuire de fines crêpes / Garnir de fromage blanc sucré / Replier et dorer à la poêle|chavouot",
+"Quiche aux épinards et fromage|🥧|Juif|50 min|Épinard,Oeuf,Crème,Fromage râpé,Pâte brisée|Faire tomber les épinards / Garnir la pâte, verser œufs, crème et fromage / Cuire 35 min à 180°C|chavouot"
+];
+// Dédoublonnage (nom ou mêmes ingrédients hors sel/poivre/eau) puis sélection de EXACTEMENT 400 recettes variées
+(function () {
+    const nb = offlineRecipes.length;
+    offlineRecipes.forEach((r, i) => r.hand = i < 36);
+    EXTRA_RAW.forEach(s => { const [name, icon, cuisine, time, ing, st, tg] = s.split('|'); offlineRecipes.push({ name, icon, cuisine, time, ingredients: ing.split(','), steps: st.split(' / '), tags: tg ? tg.split(',') : [], hand: true }); });
+    const seenN = new Set(), seenI = new Set(), ST = ['sel', 'poivre', 'eau'];
+    const uniq = offlineRecipes.filter(r => { const k = N(r.name), ik = r.ingredients.map(N).filter(x => !ST.includes(x)).sort().join('|'); if (seenN.has(k) || seenI.has(ik)) return false; seenN.add(k); seenI.add(ik); return true; });
+    const hand = uniq.filter(r => r.hand), groups = new Map();
+    uniq.filter(r => !r.hand).forEach(r => { const g = r.cuisine + '|' + N(r.name).split(' ')[0]; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(r); });
+    const out = hand.slice(), gl = [...groups.values()];
+    for (let round = 0; out.length < 400 && gl.some(g => g.length > round); round++) gl.forEach(g => { if (out.length < 400 && g[round]) out.push(g[round]); });
+    offlineRecipes.length = 0; out.forEach(r => offlineRecipes.push(r));
+    const TM = { 'Soupe harira': ['ramadan'], 'Tajine de Poulet': ['ramadan'], 'Falafels': ['ramadan', 'chavouot'], "Tajine d'agneau et pruneaux": ['aidadha'], "Brochettes d'agneau": ['aidadha'], 'Kefta grillées': ['aidadha'], 'Houmous': ['shabbat', 'ramadan'], 'Baba ganoush': ['shabbat'], 'Shakshuka': ['shabbat', 'chavouot'], 'Salade marocaine': ['shabbat'], "Zaalouk d'aubergines": ['shabbat'], 'Semoule au lait': ['ramadan'], 'Galettes de pommes de terre': ['hanoucca'], 'Lasagnes aux légumes': ['chavouot'], 'Tarte tomate moutarde': ['chavouot'], 'Poulet aux olives et citron': ['shabbat', 'ramadan'], 'Pavé de saumon au four': ['careme'], 'Cabillaud en papillote': ['careme'], 'Salade Niçoise': ['careme'] };
+    offlineRecipes.forEach(r => { r.tags = (r.tags || []).concat(TM[r.name] || []); });
+})();
+
+// ===== 4. DONNÉES =====
+let fridge = load('gourmet_fridge', []);
+let shoppingList = load('gourmet_shopping', []);
+let currentRecipes = offlineRecipes;
+let registry = [];
+const reg = r => { let i = registry.indexOf(r); if (i < 0) { registry.push(r); i = registry.length - 1; } return i; };
+
+function saveData() {
+    try { syncStamp(); } catch (e) { }
+    FM = buildFM(); try { renderHome(); } catch (e) { }
+    try {
+        localStorage.setItem('gourmet_fridge', JSON.stringify(fridge));
+        localStorage.setItem('gourmet_shopping', JSON.stringify(shoppingList));
+    } catch (e) { }
+    renderFridge(); renderShoppingList(); renderRecipes(); updateHeader();
+    if (!applyingRemote) schedulePush();
+}
+
+// ===== 5. PROFIL =====
+function updateHeader() {
+    const p = load('gourmet_profile', null); if (!p) return;
+    const rest = (+p.budget || 0) - (+p.spent || 0);
+    document.getElementById('header-budget').innerText = fmt(rest) + '€';
+    document.getElementById('header-subtitle').innerText = (p.diets && p.diets.length ? p.diets.join(' • ') : 'Mode connecté');
+    const per = p.btype === '/ Mois' ? 'mois' : 'semaine';
+    const prot = Math.round((+p.weight || 0) * (p.diets && p.diets.includes('Sportif') ? 1.6 : 0.83));
+    document.getElementById('profile-info').innerHTML =
+        `<p style="margin-bottom:8px;">👤 ${esc(p.gender || '')} • ${esc(p.weight || '?')} kg</p>
+         <p style="margin-bottom:8px;">🥗 ${esc((p.diets || []).join(', ') || 'Classique')}</p>
+        <p style="margin-bottom:8px;">🕊️ ${RELN[p.religion || 'nd']} <span style="color:var(--text-muted); font-size:12px;">(fêtes uniquement)</span></p>
+         <p style="margin-bottom:8px;">🍳 ${esc((p.tools || []).join(', ') || 'Non renseignés')}</p>
+         <p style="margin-bottom:8px;">💶 Budget : ${fmt(+p.budget || 0)}€ / ${per} — dépensé : ${fmt(+p.spent || 0)}€</p>
+         <p style="margin-bottom:16px; color:var(--text-muted);">🎯 Repère protéines : ≈ ${prot} g / jour (indicatif)</p>`;
+}
+function saveProfile(e) {
+    e.preventDefault();
+    const old = load('gourmet_profile', {});
+    const p = {
+        gender: document.getElementById('prof-gender').value, religion: document.getElementById('prof-religion').value,
+        weight: document.getElementById('prof-weight').value,
+        budget: document.getElementById('prof-budget').value,
+        btype: document.getElementById('prof-budget-type').value,
+        diets: Array.from(document.querySelectorAll('#diet-chips input:checked')).map(cb => cb.value),
+        tools: Array.from(document.querySelectorAll('#tool-chips input:checked')).map(cb => cb.value),
+        spent: old.spent || 0, guests: old.guests || 2
+    };
+    saveProfileObj(p); applyRel();
+    document.getElementById('onboarding').style.display = 'none';
+    saveData();
+}
+function editProfile() {
+    const p = load('gourmet_profile', {});
+    document.getElementById('prof-gender').value = p.gender || 'Homme'; document.getElementById('prof-religion').value = p.religion || 'nd';
+    document.getElementById('prof-weight').value = p.weight || '';
+    document.getElementById('prof-budget').value = p.budget || '';
+    document.getElementById('prof-budget-type').value = p.btype || '/ Sem';
+    document.querySelectorAll('#diet-chips input').forEach(cb => cb.checked = (p.diets || ['Classique']).includes(cb.value));
+    document.querySelectorAll('#tool-chips input').forEach(cb => cb.checked = (p.tools || DEFAULT_TOOLS).includes(cb.value));
+    document.getElementById('onb-cancel').style.display = 'block';
+    document.getElementById('onboarding').style.display = 'flex';
+}
+function resetBudget() {
+    const p = load('gourmet_profile', null); if (!p) return;
+    p.spent = 0; saveProfileObj(p); updateHeader();
+}
+window.onload = () => {
+    gRestore(); // session Google déjà ouverte (ici ou dans une autre app QuenTools) ?
+
+    const has = !!localStorage.getItem('gourmet_profile');
+    document.getElementById('onboarding').style.display = has ? 'none' : 'flex';
+    if (has && (!prof().tools || !prof().religion)) editProfile();
+    applyRel(); saveData();
+};
+
+function updateAuthUI(user) {
+    const btnLogin = document.getElementById('btn-login-google');
+    const btnLogout = document.getElementById('btn-logout-google');
+    const sub = document.getElementById('header-subtitle');
+    if (user) {
+        if (btnLogin) btnLogin.style.display = 'none';
+        if (btnLogout) btnLogout.style.display = 'block';
+        const bs = document.getElementById('btn-sync-now'); if (bs) bs.style.display = 'block';
+        if (sub) sub.innerText = 'Connecté : ' + (user.displayName || user.email);
+    } else {
+        if (btnLogin) btnLogin.style.display = 'block';
+        if (btnLogout) btnLogout.style.display = 'none';
+        const bs = document.getElementById('btn-sync-now'); if (bs) bs.style.display = 'none';
+    }
+}
+
+// ===== 6. AUTOCOMPLÉTION =====
+const NONFOOD = ['Hygiène', 'Entretien', 'Maison', 'Animaux', 'Non alimentaire'];
+const isNonFood = c => NONFOOD.includes(c);
+function setupAutocomplete(inputId, resultId, onSelect, opts = {}) {
+    const input = document.getElementById(inputId), box = document.getElementById(resultId);
+    const clean = () => { const t = input.value.trim().replace(/\s+/g, ' '); return t ? t[0].toUpperCase() + t.slice(1) : ''; };
+    const custom = (cat, icon) => ({ name: clean(), icon, category: cat, price: 0 });
+    const pick = m => { onSelect(m); input.value = ''; box.style.display = 'none'; };
+    const find = () => {
+        const v = N(input.value); if (!v) return [];
+        const starts = [], inside = [];
+        foodDB.forEach(f => { if (opts.foodOnly && isNonFood(f.category)) return; if (f.category === 'Alcools' && noAlc()) return; const n = N(f.name); if (n.startsWith(v)) starts.push(f); else if (n.includes(v)) inside.push(f); });
+        const fq = x => (FM.get(N(x.name)) || {}).n || 0;
+        return starts.sort((a, b) => fq(b) - fq(a)).concat(inside.sort((a, b) => fq(b) - fq(a))).slice(0, 20);
+    };
+    const row = (icon, title, sub, obj) => { const d = document.createElement('div'); d.className = 'auto-item'; d.innerHTML = `<span style="font-size:24px;">${icon}</span><div><div style="font-weight:bold;">${title}</div>${sub ? `<div style="font-size:12px; color:var(--text-muted);">${sub}</div>` : ''}</div>`; d.onclick = () => pick(obj); box.appendChild(d); };
+    input.addEventListener('input', () => {
+        box.innerHTML = ''; const t = clean();
+        if (!t) { box.style.display = 'none'; return; }
+        const m = find(); box.style.display = 'block';
+        m.forEach(x => row(x.icon, esc(x.name), `${esc(x.category)} • ~${fmt(x.price)}€`, x));
+        if (!m.some(x => N(x.name) === N(t))) {
+            row('➕', `Ajouter « ${esc(t)} »`, opts.foodOnly ? 'Ingrédient personnalisé' : 'Ajout personnalisé', custom('Autre', opts.icon || '🛒'));
+            if (opts.nonfood) row('➕', `Ajouter « ${esc(t)} »`, 'Non alimentaire', custom('Non alimentaire', '🧴'));
+        }
+    });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter' && clean()) pick(find()[0] || custom('Autre', opts.icon || '🛒')); });
+    document.addEventListener('click', e => { if (e.target !== input) box.style.display = 'none'; });
+}
+setupAutocomplete('fridge-search', 'fridge-autocomplete', it => { if (!fridge.some(f => N(f.name) === N(it.name))) fridge.push({ ...it, id: uid() }); saveData(); }, { foodOnly: true, icon: '🥄' });
+setupAutocomplete('shop-search', 'shop-autocomplete', it => { shoppingList.push({ ...it, bought: false, id: uid() }); saveData(); }, { nonfood: true });
+
+// ===== 7. FRIGO & COURSES =====
+function renderFridge0() {
+    const grid = document.getElementById('fridge-grid'), prev = document.getElementById('home-fridge-preview');
+    let g = '', p = '';
+    if (!fridge.length) { g = p = '<p style="color:var(--text-muted);">Aucun ingrédient. Ajoutez ce que vous avez sous la main !</p>'; }
+    fridge.forEach((item, i) => {
+        const h = `<div class="card"><div style="display:flex; justify-content:space-between; align-items:flex-start;"><div class="card-icon">${item.icon}</div><div style="display:flex; gap:4px;"><button class="btn-icon" title="Basique permanent" onclick="toggleBasic(${item.id})" style="${item.basic ? '' : 'opacity:.35'}">📌</button><button class="btn-icon" title="Date limite" onclick="setExp(${item.id})">⏳</button><button class="btn-icon" onclick="removeFromFridge(${item.id})">✕</button></div></div><div class="card-title">${esc(item.name)}</div><div class="card-sub">${esc(item.category)}${expBadge(item)}</div></div>`;
+        g += h; if (i < 4) p += h;
+    });
+    grid.innerHTML = g; prev.innerHTML = p;
+}
+function renderShoppingList0() {
+    const list = document.getElementById('shopping-list'); list.innerHTML = '';
+    if (!shoppingList.length) { list.innerHTML = '<p style="color:var(--text-muted);">Liste vide.</p>'; return; }
+    const f = (document.querySelector('input[name="shopcat"]:checked') || {}).value || 'all';
+    const items = shoppingList.filter(i => f === 'all' || (f === 'non') === isNonFood(i.category));
+    const total = shoppingList.filter(i => !i.bought).reduce((s, i) => s + (+i.price || 0), 0);
+    if (!items.length) { list.innerHTML = '<p style="color:var(--text-muted);">Aucun article dans cette catégorie.</p>'; return; }
+    items.forEach(item => {
+        const div = document.createElement('div'); div.className = `shop-item ${item.bought ? 'bought' : ''}`;
+        div.innerHTML = `<div style="display:flex; align-items:center; gap:12px;"><input type="checkbox" ${item.bought ? 'checked' : ''} onchange="toggleBought(${item.id})" style="width:20px; height:20px; accent-color:var(--primary);"><span class="shop-name" style="font-weight:bold;">${item.icon} ${esc(item.name)}</span></div><div class="shop-actions"><span style="font-size:12px; color:var(--text-muted); align-self:center;">~${fmt(+item.price || 0)}€</span><button class="btn-icon" onclick="editItem(${item.id})">✏️</button><button class="btn-transfer" onclick="transferToFridge(${item.id})">IngréMatch ➡️</button><button class="btn-icon" onclick="removeFromShop(${item.id})">✕</button></div>`;
+        list.appendChild(div);
+    });
+    list.insertAdjacentHTML('beforeend', `<p style="color:var(--text-muted); margin-top:12px; text-align:right;">Total estimé restant : <b style="color:var(--primary);">${fmt(total)}€</b></p>`);
+}
+function removeFromFridge(id) { const b = fridge.find(i => i.id === id); if (b && b.basic && !confirm('« ' + b.name + ' » est un basique permanent. Le retirer quand même ?')) return; fridge = fridge.filter(i => i.id !== id); saveData(); }
+function removeFromShop(id) { shoppingList = shoppingList.filter(i => i.id !== id); saveData(); }
+function toggleBought(id) { const it = shoppingList.find(i => i.id === id); if (it) it.bought = !it.bought; saveData(); }
+function transferToFridge(id) {
+    const it = shoppingList.find(i => i.id === id); if (!it) return;
+    fridge.push({ name: it.name, icon: it.icon, category: it.category, price: it.price, id: uid() });
+    const p = load('gourmet_profile', null);
+    if (p) { p.spent = (+p.spent || 0) + (+it.price || 0); saveProfileObj(p); }
+    removeFromShop(id);
+}
+function clearShopping() { if (shoppingList.length && !confirm('Vider toute la liste ?')) return; shoppingList = []; saveData(); }
+
+// ===== 7b. HISTORIQUE DES COURSES & ACHATS FRÉQUENTS =====
+const HKEY = 'gourmet_history';
+let FM = new Map();
+function getHistory() {
+    const lim = new Date(); lim.setMonth(lim.getMonth() - 3);
+    const all = load(HKEY, []), h = all.filter(x => new Date(x.date) >= lim);
+    if (h.length !== all.length) { try { localStorage.setItem(HKEY, JSON.stringify(h)); } catch (e) { } }
+    return h;
+}
+function buildFM() {
+    const m = new Map();
+    getHistory().forEach(h => h.items.forEach(i => { const k = N(i.name), e = m.get(k) || { n: 0, item: i }; e.n++; m.set(k, e); }));
+    return new Map([...m].filter(([k, e]) => e.n >= 2).sort((a, b) => b[1].n - a[1].n).slice(0, 30));
+}
+function freqScore(r) { let s = 0; FM.forEach(e => { if (r.ingredients.some(x => hasIng(x, e.item.name))) s += e.n; }); return s; }
+function finishShopping() {
+    const bought = shoppingList.filter(i => i.bought);
+    if (!bought.length) { alert("Cochez d'abord les articles achetés."); return; }
+    const est = bought.reduce((s, i) => s + (+i.price || 0), 0);
+    const a = prompt('Montant total des courses (€) :', String(Math.round(est * 100) / 100));
+    if (a === null) return;
+    const amount = parseFloat(String(a).replace(',', '.'));
+    if (isNaN(amount) || amount < 0) { alert('Montant invalide.'); return; }
+    const h = getHistory();
+    h.unshift({ id: uid(), date: new Date().toISOString(), amount, items: bought.map(i => ({ name: i.name, icon: i.icon, category: i.category, price: i.price })) });
+    try { localStorage.setItem(HKEY, JSON.stringify(h)); } catch (e) { }
+    const p = load('gourmet_profile', null); if (p) { p.spent = (+p.spent || 0) + amount; saveProfileObj(p); }
+    bought.filter(i => !isNonFood(i.category)).forEach(i => { if (!fridge.some(f => N(f.name) === N(i.name))) fridge.push({ name: i.name, icon: i.icon, category: i.category, price: i.price, id: uid() }); });
+    shoppingList = shoppingList.filter(i => !i.bought); saveData();
+}
+function deleteTrip(id) { try { localStorage.setItem(HKEY, JSON.stringify(getHistory().filter(x => x.id !== id))); } catch (e) { } saveData(); }
+function editItem(id) {
+    const it = shoppingList.find(i => i.id === id); if (!it) return;
+    const n = prompt("Nom de l'article :", it.name); if (n === null) return;
+    const p = prompt('Prix estimé (€) :', String(it.price || 0)); if (p === null) return;
+    const v = parseFloat(String(p).replace(',', '.'));
+    if (n.trim()) it.name = n.trim(); if (!isNaN(v) && v >= 0) it.price = v; saveData();
+}
+function renderFreq(id, mode) {
+    const own = mode === 'shop' ? shoppingList : fridge;
+    const fr = [...FM.values()].filter(e => !own.some(s => N(s.name) === N(e.item.name)) && (mode === 'shop' || !isNonFood(e.item.category))).slice(0, 8);
+    window['_fr_' + mode] = fr.map(e => e.item);
+    document.getElementById(id).innerHTML = fr.length ? `<div class="main-label">⭐ Vos achats fréquents</div><div class="chip-group" style="flex-wrap:wrap;">${fr.map((e, i) => `<span class="chip-label" onclick="addFreq('${mode}', ${i})">${e.item.icon} ${esc(e.item.name)} ×${e.n}</span>`).join('')}</div>` : '';
+}
+function addFreq(mode, i) {
+    const it = window['_fr_' + mode][i]; if (!it) return;
+    if (mode === 'shop') shoppingList.push({ ...it, bought: false, id: uid() }); else fridge.push({ ...it, id: uid() });
+    saveData();
+}
+function renderHistory() {
+    const h = getHistory(), box = document.getElementById('shop-history');
+    if (!h.length) { box.innerHTML = ''; return; }
+    const tot = h.reduce((s, x) => s + x.amount, 0);
+    box.innerHTML = `<div class="section-title" style="margin-top:24px;">🧾 Dernières courses</div><p style="color:var(--text-muted); font-size:13px; margin-bottom:12px;">Total sur 3 mois : <b style="color:var(--primary);">${fmt(tot)}€</b> • chaque entrée s'efface automatiquement après 3 mois</p>` +
+        h.map(x => `<div class="shop-item"><div><div style="font-weight:bold;">${new Date(x.date).toLocaleDateString('fr-FR')} — ${fmt(x.amount)}€</div><div style="font-size:12px; color:var(--text-muted);">${x.items.length} article(s) : ${esc(x.items.slice(0, 4).map(i => i.name).join(', '))}${x.items.length > 4 ? '…' : ''}</div></div><button class="btn-icon" onclick="deleteTrip(${x.id})">✕</button></div>`).join('');
+}
+function renderFridge() { renderFridge0(); renderFreq('freq-match', 'match'); }
+function renderShoppingList() { renderShoppingList0(); renderCatalog(); renderFreq('freq-shop', 'shop'); renderHistory(); }
+
+// ===== 8. RECETTES =====
+const STAPLES = ['sel', 'poivre', 'eau'];
+function calculateMatch(ings) {
+    const need = ings.filter(x => !STAPLES.includes(N(x)));
+    const missing = need.filter(ing => !fridge.some(f => hasIng(ing, f.name)));
+    return { percent: need.length ? Math.round(((need.length - missing.length) / need.length) * 100) : 100, missing };
+}
+function addMissingToShop(idx) {
+    const r = registry[idx]; if (!r) return;
+    const miss = calculateMatch(r.ingredients).missing; let n = 0;
+    miss.forEach(m => {
+        if (shoppingList.some(s => !s.bought && hasIng(m, s.name))) return;
+        const db = foodDB.find(f => N(f.name) === N(m)) || foodDB.find(f => hasIng(m, f.name));
+        shoppingList.push({ ...(db || { name: m, icon: '🛒', category: 'Autre', price: 2 }), name: db && N(db.name) !== N(m) ? m : (db ? db.name : m), id: uid(), bought: false }); n++;
+    });
+    saveData(); alert(n ? `${n} ingrédient(s) ajouté(s) à la liste de courses !` : 'Tout est déjà dans votre liste.');
+}
+let recipeLimit = 60;
+function cardHTML(r, m) {
+    const i = reg(r), c = m.percent > 70 ? 'var(--accent)' : m.percent > 30 ? '#f59e0b' : '#ef4444';
+    return `<div class="card recipe-card"><div style="display:flex; justify-content:space-between; align-items:flex-start;"><div class="card-icon">${r.icon || '🍽️'}</div><div style="background:${c}20; color:${c}; padding:4px 8px; border-radius:8px; font-weight:bold; font-size:12px;">${m.percent}% Match</div></div><div class="card-title">${esc(r.name)}</div><div class="card-sub">${esc(r.cuisine || '')} • ${esc(r.time || '')}</div>
+        ${m.missing.length ? `<button class="btn-action" onclick="addMissingToShop(${i})">🛒 Ajouter manquants (${m.missing.length})</button>` : ''}
+        <button class="btn-action" ${m.missing.length ? '' : 'style="background:var(--accent); color:#000;"'} onclick="openRecipe(${i})">${m.missing.length ? '📖 Voir la recette' : 'Faire la recette 🍳'}</button>${rateBar(i)}</div>`;
+}
+function renderRecipes() {
+    const grid = document.getElementById('recipes-grid');
+    const cuisine = document.querySelector('input[name="cuisine"]:checked').value;
+    const cf = cuisine === '__fav' ? isFav : cuisine === '__veg' ? isVeg : (cuisine === 'all' || cuisine === '__rec') ? (() => true) : (r => r.cuisine === cuisine);
+    let list = currentRecipes.filter(r => cf(r) && allowed(r));
+    if (recFeast) { const f = feastList().find(x => x.id === recFeast), S = new Set(f ? feastRecipes(f) : []); list = list.filter(r => S.has(r)); }
+    const RS = new Map(cuisine === '__rec' ? recoList().map(x => [x.r, x.s]) : []);
+    if (cuisine === '__rec') list = list.filter(r => RS.has(r));
+    list = list.map(r => ({ r, m: calculateMatch(r.ingredients), f: freqScore(r) })).sort((a, b) => (cuisine === '__rec' ? RS.get(b.r) - RS.get(a.r) : 0) || (rateOf(a.r) < 0) - (rateOf(b.r) < 0) || b.m.percent - a.m.percent || b.f - a.f);
+    renderFeastRow(); renderRecoBox();
+    if (!list.length) { grid.innerHTML = `<p style="color:var(--text-muted);">${cuisine === '__fav' ? 'Aucun favori : touchez ☆ sur une recette.' : cuisine === '__rec' ? 'Notez quelques recettes avec 👍 ou 👍👍 pour recevoir des recommandations.' : 'Aucune recette trouvée pour cette catégorie.'}</p>`; return; }
+    grid.innerHTML = list.slice(0, recipeLimit).map(x => cardHTML(x.r, x.m)).join('') +
+        (list.length > recipeLimit ? `<button class="btn-action" style="grid-column:1/-1;" onclick="recipeLimit += 60; renderRecipes()">Voir plus (${list.length - recipeLimit} restantes)</button>` : '');
+}
+let lastSuggest = null;
+const PROT = /poulet|dinde|boeuf|steak|hache|viande|thon|saumon|cabillaud|crevette|oeuf|lentille|pois chiche|tofu|quinoa|colin|merlu|truite|haricot/;
+const usedCount = r => fridge.filter(f => r.ingredients.some(i => hasIng(i, f.name))).length;
+function strictList() {
+    return offlineRecipes.filter(r => allowed(r) && rateOf(r) >= 0).map(r => ({ r, m: calculateMatch(r.ingredients), f: freqScore(r) })).filter(x => !x.m.missing.length)
+        .map(x => (x.u = usedCount(x.r), x.p = x.r.ingredients.filter(i => PROT.test(N(i))).length, x)).sort((a, b) => (diets().includes('Sportif') ? b.p - a.p : 0) || b.u - a.u || b.f - a.f);
+}
+function generateMatch() {
+    const box = document.getElementById('match-results');
+    if (!fridge.length) { box.innerHTML = '<p style="color:var(--text-muted);">Ajoutez d\'abord quelques ingrédients.</p>'; return; }
+    const c = strictList();
+    if (!c.length) { box.innerHTML = '<div class="glass-panel"><b>Aucune recette de la base ne se fait uniquement avec vos ingrédients.</b><p style="color:var(--text-muted); margin:8px 0 12px;">Rien ne vous est proposé avec des ingrédients que vous n\'avez pas. Essayez le Chef IA : il invente une recette avec ce que vous avez.</p><button class="btn-primary" onclick="aiChef()">🤖 Chef IA</button></div>'; return; }
+    const best = c.filter(x => x.u === c[0].u), pick = best[Math.floor(Math.random() * best.length)];
+    box.innerHTML = `<div class="section-title">🎲 Votre recette (100% avec vos ingrédients)</div><div class="grid-responsive">${cardHTML(pick.r, pick.m)}</div>` + (c.length > 1 ? `<div class="section-title" style="margin-top:24px;">Autres idées (${c.length - 1})</div><div class="grid-responsive">${c.filter(x => x !== pick).slice(0, 11).map(x => cardHTML(x.r, x.m)).join('')}</div>` : '');
+}
+// ===== CHEF IA (Google Gemini, clé gratuite stockée uniquement sur cet appareil) =====
+function saveAiKey() { const v = document.getElementById('ai-key').value.trim().replace(/["' ]/g, ''); GM = null; if (v) { try { localStorage.setItem('gourmet_ai_key', v); } catch (e) { } document.getElementById('ai-key').value = ''; alert('Clé enregistrée.'); } }
+let GM = null;
+const NETERR = 'Connexion impossible : vérifiez internet, désactivez un éventuel bloqueur de pub, et ouvrez ce fichier dans Chrome/Safari (pas dans un aperçu de messagerie).';
+async function gfetch(url, opt) { try { return await fetch(url, opt); } catch (e) { throw new Error(NETERR); } }
+async function pickModels(key) {
+    if (GM) return GM;
+    const res = await gfetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=100&key=' + encodeURIComponent(key)), d = await res.json();
+    if (d.error) throw new Error(res.status === 400 || res.status === 403 ? 'Clé refusée par Google (' + d.error.message + '). Vérifiez la clé collée, sans espace.' : d.error.message);
+    const ver = n => parseFloat((n.match(/gemini-([\d.]+)/) || [0, 0])[1]);
+    const l = (d.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => m.name.replace('models/', '')).filter(n => /^gemini-[\d.]+-flash$/.test(n)).sort((a, b) => ver(b) - ver(a));
+    return GM = l.length ? l.slice(0, 3) : ['gemini-2.5-flash', 'gemini-2.0-flash'];
+}
+async function callGemini(key, sys, user) {
+    let last = 'Modèle Gemini indisponible.';
+    for (const m of await pickModels(key)) {
+        for (const mime of [true, false]) {
+            const gc = { temperature: 0.9 }; if (mime) gc.responseMimeType = 'application/json';
+            const res = await gfetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents: [{ role: 'user', parts: [{ text: user }] }], generationConfig: gc }) });
+            const d = await res.json();
+            if (!d.error) { const t = ((d.candidates || [])[0]?.content?.parts || []).map(p => p.text || '').join(''); if (t) return t; last = 'Réponse vide (contenu bloqué ?).'; break; }
+            last = d.error.message;
+            if (res.status === 400 && mime && /mime|json/i.test(last)) continue;
+            if (res.status === 403 || (res.status === 400 && /api key/i.test(last))) throw new Error('Clé refusée par Google : ' + last);
+            break;
+        }
+    }
+    throw new Error(/quota|limit|exhausted/i.test(last) ? 'Limite gratuite atteinte, réessayez dans un moment.' : last);
+}
+async function aiJSON(sys, user) { const t = await callGemini(localStorage.getItem('gourmet_ai_key'), sys, user), m = t.match(/[\[{][\s\S]*[\]}]/); if (!m) throw new Error('Réponse illisible, réessayez.'); return JSON.parse(m[0]); }
+async function testAi() {
+    const st = document.getElementById('ai-status'), key = localStorage.getItem('gourmet_ai_key');
+    if (!key) { st.style.color = '#ef4444'; st.textContent = "Collez d'abord votre clé puis appuyez sur OK."; return; }
+    st.style.color = 'var(--text-muted)'; st.textContent = 'Test en cours…';
+    try { await callGemini(key, 'Réponds uniquement {"ok":true}', 'test'); st.style.color = 'var(--accent)'; st.textContent = '✅ Connexion réussie, le Chef IA est prêt.'; }
+    catch (e) { st.style.color = '#ef4444'; st.textContent = '❌ ' + e.message; }
+}
+async function aiChef() {
+    const box = document.getElementById('match-results'), key = localStorage.getItem('gourmet_ai_key');
+    if (!fridge.length) { box.innerHTML = '<p style="color:var(--text-muted);">Ajoutez d\'abord quelques ingrédients.</p>'; return; }
+    if (!key) { box.innerHTML = '<p style="color:var(--text-muted);">Ajoutez votre clé Google (gratuite) dans Profil ⚙️ : un tuto vous guide pas à pas.</p>'; return; }
+    box.innerHTML = '<p style="color:var(--text-muted);">🤖 Le chef réfléchit…</p>';
+    const names = fridge.map(f => f.name), p = prof();
+    const sys = `Tu es un chef cuisinier. RÈGLE ABSOLUE : utilise UNIQUEMENT les ingrédients de la liste fournie (plus sel, poivre et eau). Il est INTERDIT d'ajouter tout autre ingrédient (pas d'huile, beurre, farine, épice... s'ils ne sont pas dans la liste). Tu n'as pas à tout utiliser. Régimes : ${(p.diets || []).join(', ') || 'aucun'}. Ustensiles disponibles : ${(p.tools || []).join(', ') || 'standards'}. Réponds UNIQUEMENT par un JSON : {"name":"","icon":"un emoji","time":"xx min","ingredients":["noms recopiés EXACTEMENT depuis la liste"],"steps":["étape 1","étape 2"]}`;
+    let feedback = '';
+    for (let t = 0; t < 3; t++) {
+        try {
+            const r = await aiJSON(sys, 'Mes ingrédients : ' + names.join(', ') + '. Pour ' + guests() + ' personne(s).' + feedback + ' Propose une recette (différente à chaque demande, seed ' + Math.random().toString(36).slice(2, 7) + ').');
+            const bad = (r.ingredients || []).filter(i => !STAPLES.includes(N(i)) && !names.some(n => N(n) === N(i)));
+            if (bad.length || !r.name || !Array.isArray(r.steps)) { feedback = ' ATTENTION, ta réponse précédente utilisait des ingrédients non autorisés : ' + bad.join(', ') + '. Recommence sans eux.'; continue; }
+            const rec = { name: r.name, icon: r.icon || '🤖', cuisine: 'Chef IA', time: r.time || '30 min', ingredients: r.ingredients, steps: r.steps };
+            if (!allowed(rec)) { feedback = ' La recette ne respecte pas mon régime ou mes ustensiles, recommence.'; continue; }
+            box.innerHTML = `<div class="section-title">🤖 Recette du Chef IA</div><div class="grid-responsive">${cardHTML(rec, calculateMatch(rec.ingredients))}</div>`; return;
+        } catch (e) { box.innerHTML = '<p style="color:#ef4444;">Erreur Chef IA : ' + esc(e.message) + '</p>'; return; }
+    }
+    box.innerHTML = '<p style="color:var(--text-muted);">Le Chef IA n\'a pas trouvé de recette respectant strictement vos ingrédients. Ajoutez-en un ou deux.</p>';
+}
+function clearMatch() { const keep = fridge.filter(f => f.basic); if (fridge.length > keep.length && !confirm('Vider vos ingrédients ? (vos basiques 📌 sont conservés)')) return; fridge = keep; saveData(); document.getElementById('match-results').innerHTML = ''; }
+const QTY = [[/lardon|bacon|chorizo|jambon|saumon fume/, 50, 'g'], [/hache|steak|boeuf|poulet|dinde|porc|agneau|veau|canard|merguez|saucisse|bavette|escalope|magret|cuisse|epaule|saute|paleron|echine|lapin|filet|entrecote|onglet|jarret|joue|jambonneau/, 150, 'g'], [/saumon|cabillaud|thon|colin|merlu|truite|dorade|crevette|moule|poisson|hareng/, 150, 'g'], [/^(pate|spaghetti|tagliatelle|riz|semoule|quinoa|nouille|vermicelle|penne|lasagne|gnocchi|polenta)/, 90, 'g'], [/pomme de terre/, 250, 'g'], [/^oeuf/, 2, 'pièce(s)'], [/carotte|courgette|aubergine|poivron|champignon|brocoli|chou|epinard|poireau|haricot vert|patate douce|citrouille|tomate|salade|concombre|petit pois|mais|endive/, 150, 'g']];
+const guests = () => +prof().guests || 2;
+function qty(x) { const k = NS(x), q = QTY.find(a => a[0].test(k)); return q ? ` <span style="color:var(--text-muted); font-size:12px;">≈ ${Math.round(q[1] * guests())} ${q[2]}</span>` : ''; }
+function openRecipe(i) {
+    const r = registry[i]; if (!r) return; const m = calculateMatch(r.ingredients);
+    const steps = stepsHTML(r), _unused = `<p style="line-height:1.7; white-space:pre-line;">${esc(r.steps || 'Instructions non disponibles.')}</p>`;
+    document.getElementById('recipe-modal-box').innerHTML = `<h2 style="color:var(--primary); margin-bottom:4px;">${r.icon || '🍽️'} ${esc(r.name)}</h2>${rateBar(i)}<p style="color:var(--text-muted); margin-bottom:16px;">${esc(r.cuisine || '')} • ${esc(r.time || '')}${needs(r).length ? ' • 🔧 ' + needs(r).map(g => esc(g[0])).join(', ') : ''}</p>
+        <div class="main-label">Ingrédients — pour ${guests()} personne(s)</div><p style="margin-bottom:16px; line-height:1.8;">${r.ingredients.map(x => `<span style="color:${m.missing.includes(x) ? '#ef4444' : 'var(--accent)'};">${m.missing.includes(x) ? '✗' : '✓'} ${esc(x)}</span>${qty(x)}`).join('<br>')}</p>
+        ${prepHTML(r)}<div class="main-label">Préparation pas à pas</div><div style="margin-bottom:16px;">${steps}</div>${extraHTML(r)}${similarHTML(r)}
+        ${m.missing.length ? `<button class="btn-primary" onclick="addMissingToShop(${i})">🛒 Ajouter les manquants (${m.missing.length})</button>` : `<button class="btn-primary" onclick="cookRecipe(${i})">Cuisiner : retirer de vos ingrédients</button>`}
+        <div style="display:flex; gap:8px;"><button class="btn-primary" style="flex:1; background:#25d366; color:#000; padding:12px;" onclick="shareRecipe(${i},'wa')">💬 WhatsApp</button><button class="btn-primary" style="flex:1; background:var(--bg-hover); padding:12px;" onclick="shareRecipe(${i},'sms')">✉️ SMS</button><button class="btn-primary" style="flex:1; background:var(--bg-hover); padding:12px;" onclick="shareRecipe(${i},'share')">📤</button></div>
+        <button class="btn-primary" style="background:transparent; border:1px solid var(--border); color:var(--text-muted);" onclick="closeRecipe()">Fermer</button>`;
+    document.getElementById('recipe-modal').style.display = 'flex';
+}
+function closeRecipe() { document.getElementById('recipe-modal').style.display = 'none'; }
+function cookRecipe(i) {
+    const r = registry[i]; if (!r) return;
+    r.ingredients.forEach(ing => { const k = fridge.findIndex(f => !f.basic && hasIng(ing, f.name)); if (k >= 0) fridge.splice(k, 1); });
+    closeRecipe(); saveData(); alert('Bon appétit ! 🍽️ Les ingrédients utilisés ont été retirés de vos ingrédients.');
+}
+function suggestMeal() {
+    const box = document.getElementById('ai-suggestion'), on = bannerFeasts().find(f => { const d = Math.round((f.start - today0()) / 864e5); return d <= 0 && d > -f.dur; });
+    let pool = on && Math.random() < 0.5 ? feastRecipes(on, true) : [];
+    if (!pool.length) { const rl = recoList(); pool = rl.length && Math.random() < 0.5 ? rl.slice(0, 20).map(x => x.r) : offlineRecipes.filter(r => allowed(r) && rateOf(r) >= 0); }
+    pool = pool.filter(r => r !== lastSuggest); const r = pool[Math.floor(Math.random() * pool.length)]; if (!r) return; lastSuggest = r;
+    box.innerHTML = `<div style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; justify-content:space-between; align-items:center; gap:12px;"><div><div class="card-title">${r.icon} ${esc(r.name)}</div><div class="card-sub">${esc(r.cuisine)} • ${esc(r.time)}</div></div><button class="btn-action" style="width:auto; margin:0; padding:8px 14px;" onclick="openRecipe(${reg(r)})">Voir</button></div>`;
+}
+
+// ===== PLAT À L'HONNEUR DE LA SEMAINE =====
+const FEAT = [
+ ['Spaghetti Carbonara','🇮🇹','Italie',"La carbonara est un plat romain devenu célèbre après la Seconde Guerre mondiale. Son nom vient peut-être des « carbonari », les charbonniers. La version traditionnelle se fait sans crème : œuf, fromage, poivre et porc."],
+ ['Paella Rapide','🇪🇸','Espagne',"La paella vient de la région de Valence, où les paysans la préparaient dans une large poêle, la « paellera », avec du riz, des légumes et de la viande. Le poisson et les fruits de mer sont arrivés ensuite, surtout sur la côte."],
+ ['Couscous royal','🇲🇦','Maroc / Maghreb',"Plat berbère très ancien, le couscous est partagé dans tout le Maghreb. Il est inscrit depuis 2020 au patrimoine culturel immatériel de l'UNESCO, à la demande de l'Algérie, du Maroc, de la Mauritanie et de la Tunisie."],
+ ['Chili con carne','🇲🇽','Tex-Mex (Mexique / USA)',"Le chili est né au Texas à la fin du XIXe siècle, avec les « chili queens » de San Antonio. C'est un plat tex-mex, plus texan que mexicain, mais il s'inspire des piments et des haricots de la cuisine mexicaine."],
+ ['Pad Thaï aux crevettes','🇹🇭','Thaïlande',"Le pad thaï se serait répandu dans les années 1930-40, quand le gouvernement thaïlandais a encouragé les nouilles de riz pour construire une identité culinaire nationale. Il est aujourd'hui le plat de rue emblématique du pays."],
+ ['Ratatouille','🇫🇷','France (Provence)',"Plat paysan de l'été niçois et provençal, la ratatouille rassemble les légumes du jardin : aubergine, courgette, poivron et tomate. Son nom vient de l'occitan et du verbe « touiller »."],
+ ['Burger Maison','🇺🇸','États-Unis',"Le hamburger doit son nom à Hambourg, en Allemagne, dont les émigrés ont apporté le steak haché aux États-Unis. Il s'est popularisé entre la fin du XIXe siècle et le début du XXe. Plusieurs villes se disputent son invention."],
+ ['Poulet Tikka Masala','🇮🇳','Inde / Royaume-Uni',"Les origines du tikka masala sont débattues : l'Inde et le Royaume-Uni (Glasgow notamment) revendiquent le plat. En 2001, un ministre britannique l'a même qualifié de véritable plat national du pays."],
+ ['Shakshuka','🇹🇳','Tunisie / Maghreb',"Le mot « shakshuka » signifie « mélange » en berbère. Des œufs pochés dans une sauce de tomates, poivrons et épices, très répandue en Afrique du Nord et au Moyen-Orient, qui fait figure de plat familial."],
+ ['Falafels','🇪🇬','Égypte / Levant',"Les falafels sont très populaires en Égypte, où ils s'appellent « ta'amiya » et se font avec des fèves. Au Levant, on les prépare plutôt avec des pois chiches. Leur origine exacte reste discutée."],
+ ['Saumon teriyaki','🇯🇵','Japon',"« Teriyaki » associe « teri » (éclat) et « yaki » (grillé) : la sauce soja-sucre donne un glaçage brillant. Au Japon on l'utilise surtout pour le poisson ; la version avec du poulet ou du saumon s'est beaucoup diffusée à l'étranger."],
+ ['Quiche lorraine','🇫🇷','France (Lorraine)',"Le mot « quiche » vient de l'alsacien-lorrain « kuchen », le gâteau. La recette d'origine associe œufs, crème et lardons, sans fromage. Elle est devenue un classique de la cuisine française."],
+ ['Lasagnes','🇮🇹','Italie',"Les lasagnes sont l'un des plus anciens plats de pâtes d'Italie. La version la plus connue vient d'Émilie-Romagne, avec ragù et béchamel, alternés avec des feuilles de pâte."],
+ ['Tortilla espagnole','🇪🇸','Espagne',"La tortilla de patatas, œufs, pommes de terre et parfois oignon, est un pilier des bars à tapas. Son origine précise est discutée, plusieurs histoires locales circulent."],
+ ['Mac & Cheese','🇺🇸','États-Unis',"Les macaronis au fromage étaient déjà servis dans l'Amérique du XVIIIe siècle. Le plat est devenu un réconfort national, notamment avec les boîtes prêtes à cuire lancées dans les années 1930."],
+ ['Riz cantonais','🇨🇳','Chine (Canton)',"Le riz cantonais est un plat de riz sauté qui permet d'utiliser les restes de riz de la veille, avec œuf, petits pois et viande. Il s'est diffusé dans le monde avec la cuisine chinoise."],
+ ['Houmous','🇱🇧','Liban / Levant',"« Hummus » signifie « pois chiche » en arabe. Cette purée de pois chiches et de tahini est un incontournable des mezzés du Levant, et son pays d'origine reste un sujet de débat amical."],
+ ['Tiramisu','🇮🇹','Italie (Vénétie)',"Le tiramisu, « remonte-moi » en italien, serait né en Vénétie autour des années 1960-70. Mascarpone, café et biscuits en font le dessert italien le plus copié dans le monde."]
+];
+function weekNum() { const d = new Date(), t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())), n = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - n); const y = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y) / 864e5 + 1) / 7) + t.getUTCFullYear() * 53; }
+function featuredNow() {
+    const l = FEAT.map(f => ({ r: offlineRecipes.find(x => x.name === f[0]), flag: f[1], country: f[2], story: f[3] })).filter(f => f.r && allowed(f.r));
+    return l.length ? l[weekNum() % l.length] : null;
+}
+function showStory() {
+    const f = featuredNow(); if (!f) return;
+    document.getElementById('recipe-modal-box').innerHTML = `<h2 style="color:var(--primary); margin-bottom:4px;">${f.flag} ${esc(f.r.name)}</h2><p style="color:var(--text-muted); margin-bottom:16px;">${esc(f.country)}</p><div class="main-label">📜 L'histoire du plat</div><p style="line-height:1.8; margin-bottom:16px;">${esc(f.story)}</p><button class="btn-primary" onclick="openRecipe(${reg(f.r)})">🍳 Voir la recette</button><button class="btn-primary" style="background:transparent; border:1px solid var(--border); color:var(--text-muted);" onclick="closeRecipe()">Fermer</button>`;
+    document.getElementById('recipe-modal').style.display = 'flex';
+}
+function toggleDiet(v) {
+    const p = { ...load('gourmet_profile', {}) }; let d = p.diets || ['Classique'];
+    if (v === 'Classique') d = ['Classique']; else { d = d.filter(x => x !== 'Classique'); d = d.includes(v) ? d.filter(x => x !== v) : [...d, v]; if (!d.length) d = ['Classique']; }
+    p.diets = d; saveProfileObj(p); saveData();
+}
+function setGuests(n) { const p = { ...load('gourmet_profile', {}) }; p.guests = Math.min(20, Math.max(1, (+p.guests || 2) + n)); saveProfileObj(p); renderHome(); }
+function renderHome() {
+    const d = diets().length ? diets() : ['Classique'], g = guests(), f = featuredNow();
+    const fe = document.getElementById('featured');
+    if (fe) fe.innerHTML = f ? `<div class="glass-panel" style="display:flex; gap:16px; align-items:center;"><div style="font-size:64px; line-height:1;">${f.flag}</div><div style="flex:1;"><div style="color:var(--primary); font-weight:700; font-size:12px; text-transform:uppercase;">⭐ Plat à l'honneur cette semaine</div><div style="font-size:20px; font-weight:800; margin:4px 0;">${f.r.icon} ${esc(f.r.name)}</div><div style="color:var(--text-muted); font-size:13px; margin-bottom:8px;">${esc(f.country)}</div><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn-action" style="width:auto; margin:0; padding:8px 14px;" onclick="showStory()">📜 Son histoire</button><button class="btn-action" style="width:auto; margin:0; padding:8px 14px;" onclick="openRecipe(${reg(f.r)})">🍳 Recette</button></div></div></div>` : '';
+    const nf = bannerFeasts().find(x => { const d = Math.round((x.start - today0()) / 864e5); return d <= 14 && d > -x.dur; });
+    if (fe && nf) fe.innerHTML += `<div class="glass-panel" style="cursor:pointer; padding:16px;" onclick="goFeast('${nf.id}')">🎉 <b>${nf.icon} ${esc(nf.name)}</b> — ${feastLabel(nf)}. <span style="color:var(--primary);">Voir des idées de recettes →</span></div>`;
+    const hc = document.getElementById('home-controls');
+    if (hc) hc.innerHTML = `<div class="main-label">👥 Nombre d'invités</div><div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;"><button class="btn-action" style="width:44px; margin:0; font-size:20px;" onclick="setGuests(-1)">−</button><b style="font-size:24px; min-width:36px; text-align:center;">${g}</b><button class="btn-action" style="width:44px; margin:0; font-size:20px;" onclick="setGuests(1)">+</button><span style="color:var(--text-muted);">personne(s)</span></div><div class="main-label">🥗 Régime alimentaire</div><div class="chip-group" style="flex-wrap:wrap; margin-bottom:0;">${[['Classique', '🍽️'], ['Sportif', '💪'], ['Végétarien', '🥦'], ['Halal', '🌙']].map(v => `<span class="chip-label" style="${d.includes(v[0]) ? 'background:var(--primary); color:#fff; border-color:var(--primary);' : ''}" onclick="toggleDiet('${v[0]}')">${v[1]} ${v[0]}</span>`).join('')}</div>`;
+}
+
+// ===== 9. RECHERCHE (hors-ligne + TheMealDB) =====
+let searchTimer = null, searchToken = 0;
+function searchRecipes(q) {
+    clearTimeout(searchTimer); recipeLimit = 60; const v = N(q), tok = ++searchToken;
+    if (!v) { currentRecipes = offlineRecipes; renderRecipes(); return; }
+    const off = offlineRecipes.filter(r => N(r.name + ' ' + r.cuisine + ' ' + r.ingredients.join(' ')).includes(v));
+    currentRecipes = off; renderRecipes();
+    if (v.length < 3) return;
+    searchTimer = setTimeout(async () => {
+        try {
+            const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 5000);
+            const res = await fetch('https://www.themealdb.com/api/json/v1/1/search.php?s=' + encodeURIComponent(q.trim()), { signal: ctl.signal });
+            clearTimeout(to); const data = await res.json();
+            if (tok !== searchToken || !data.meals) return;
+            const api = data.meals.map(m => {
+                const ing = []; for (let i = 1; i <= 20; i++) { const x = m['strIngredient' + i]; if (x && x.trim()) ing.push(x.trim()); }
+                return { name: m.strMeal, icon: '🌍', cuisine: m.strArea || 'Monde', time: '45 min', ingredients: ing, steps: m.strInstructions };
+            }).filter(a => a.ingredients.length);
+            currentRecipes = off.concat(api); renderRecipes();
+        } catch (e) { /* hors-ligne : on garde les résultats locaux */ }
+    }, 400);
+}
+
+
+// ===== FÊTES, RELIGIONS & IDÉES (indépendant d'IngréMatch) =====
+const SHELL = /\b(crevette|gambas|crabe|homard|calamar|poulpe|moule|huitre|langoustine|jacques|coquille|surimi)\b/;
+const DAIRY = /\b(lait|creme|beurre|fromage|emmental|comte|cheddar|mozzarella|parmesan|mascarpone|feta|chevre|yaourt|brie|camembert|roquefort|ricotta|gruyere|gouda)\b/;
+const halalOk = r => { const t = r.ingredients.map(N); return !t.some(i => PORK.test(i) || ALC.test(i)); };
+const kosherOk = r => { const t = r.ingredients.map(N); return !t.some(i => PORK.test(i) || SHELL.test(i)) && !(t.some(i => MEAT.test(i)) && t.some(i => DAIRY.test(i) && !/coco|amande|soja|avoine/.test(i))); };
+const relOk = (rel, r) => rel === 'mus' ? halalOk(r) : rel === 'juif' ? kosherOk(r) : true;
+const easter = y => { const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451); return new Date(y, Math.floor((h + l - 7 * m + 114) / 31) - 1, (h + l - 7 * m + 114) % 31 + 1); };
+const addD = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const today0 = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
+const byYear = (fn, dur) => { const t = today0(), Y = t.getFullYear(); for (const y of [Y, Y + 1]) { const d = fn(y); if (addD(d, dur) > t) return d; } return fn(Y + 1); };
+const _fm = {};
+function scan(loc, opts, match, from, to) {
+    const f = _fm[loc] || (_fm[loc] = new Intl.DateTimeFormat(loc, opts)), t = today0();
+    for (let i = from; i <= to; i++) { const d = addD(t, i), p = {}; f.formatToParts(d).forEach(x => p[x.type] = x.value); if (match(p.month, +p.day)) return d; }
+    return null;
+}
+const HEB = (ms, d, dur) => scan('en-u-ca-hebrew', { day: 'numeric', month: 'long' }, (mo, da) => ms.includes(mo) && da === d, -dur + 1, 400);
+const ISL = (m, d, dur) => scan('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'numeric' }, (mo, da) => +mo === m && da === d, -dur + 1, 400);
+const FEASTS = [
+    { id: 'epiphanie', rel: 'chr', name: 'Épiphanie', icon: '👑', dur: 20, tag: 'epiphanie', date: () => byYear(y => new Date(y, 0, 6), 20) },
+    { id: 'chandeleur', rel: 'chr', name: 'Chandeleur', icon: '🕯️', dur: 1, tag: 'chandeleur', date: () => byYear(y => new Date(y, 1, 2), 1) },
+    { id: 'mardigras', rel: 'chr', name: 'Mardi gras', icon: '🎭', dur: 1, tag: 'mardigras', date: () => byYear(y => addD(easter(y), -47), 1) },
+    { id: 'careme', rel: 'chr', name: 'Carême', icon: '🐟', dur: 46, tag: 'careme', test: r => r.cuisine !== 'Dessert' && !r.ingredients.some(i => MEAT.test(N(i))), date: () => byYear(y => addD(easter(y), -46), 46), note: '✝️ Carême : recettes sans viande (poisson, œufs, légumes).' },
+    { id: 'paques', rel: 'chr', name: 'Pâques', icon: '🐣', dur: 2, tag: 'paques', date: () => byYear(easter, 2) },
+    { id: 'noel', rel: 'chr', name: 'Noël', icon: '🎄', dur: 2, tag: 'noel', date: () => byYear(y => new Date(y, 11, 24), 2) },
+    { id: 'ramadan', rel: 'mus', name: 'Ramadan', icon: '🌙', dur: 30, tag: 'ramadan', date: () => ISL(9, 1, 30) },
+    { id: 'aidfitr', rel: 'mus', name: 'Aïd el-Fitr', icon: '🍬', dur: 3, tag: 'aidfitr', date: () => ISL(10, 1, 3) },
+    { id: 'aidadha', rel: 'mus', name: 'Aïd al-Adha', icon: '🐑', dur: 3, tag: 'aidadha', date: () => ISL(12, 10, 3) },
+    { id: 'shabbat', rel: 'juif', name: 'Shabbat', icon: '🕯️', dur: 2, tag: 'shabbat', date: () => { const t = today0(); for (let i = -1; i < 8; i++) { const d = addD(t, i); if (d.getDay() === 5) return d; } } },
+    { id: 'roshhashana', rel: 'juif', name: 'Roch Hachana', icon: '🍯', dur: 2, tag: 'roshhashana', date: () => HEB(['Tishri'], 1, 2) },
+    { id: 'yomkippour', rel: 'juif', name: 'Yom Kippour', icon: '🕊️', dur: 1, tag: 'yomkippour', date: () => HEB(['Tishri'], 10, 1) },
+    { id: 'souccot', rel: 'juif', name: 'Souccot', icon: '🌿', dur: 8, tag: 'souccot', date: () => HEB(['Tishri'], 15, 8) },
+    { id: 'hanoucca', rel: 'juif', name: 'Hanoucca', icon: '🕎', dur: 8, tag: 'hanoucca', date: () => HEB(['Kislev'], 25, 8) },
+    { id: 'pourim', rel: 'juif', name: 'Pourim', icon: '🎭', dur: 1, tag: 'pourim', date: () => HEB(['Adar', 'Adar II'], 14, 1) },
+    { id: 'pessah', rel: 'juif', name: 'Pessah', icon: '🍷', dur: 8, tag: 'pessah', date: () => HEB(['Nisan'], 15, 8) },
+    { id: 'chavouot', rel: 'juif', name: 'Chavouot', icon: '🧀', dur: 2, tag: 'chavouot', date: () => HEB(['Sivan'], 6, 2) }
+];
+const RELNOTE = { mus: "☪️ Recettes halal (sans porc ni alcool). Les dates suivent le calendrier astronomique et peuvent varier d'un jour selon l'observation de la lune.", juif: "✡️ Recettes casher : ni porc ni fruits de mer, jamais viande et laitage ensemble. Les fêtes commencent la veille au soir. Vérifiez la certification des produits." };
+let _fl = null, _fd = '';
+function feastList() {
+    const k = today0().toDateString(); if (_fl && _fd === k) return _fl; _fd = k;
+    return _fl = FEASTS.map(f => { try { return { ...f, start: f.date() }; } catch (e) { return null; } }).filter(f => f && f.start).sort((a, b) => a.start - b.start);
+}
+const feastLabel = f => { const d = Math.round((f.start - today0()) / 864e5); return d <= 0 && d > -f.dur ? 'en cours' : d === 0 ? "aujourd'hui" : `dans ${d} j`; };
+const feastRecipes = (f, tagOnly) => offlineRecipes.filter(r => ((r.tags || []).includes(f.tag) || (!tagOnly && f.test && f.test(r))) && relOk(f.rel, r) && allowed(r));
+const ACT = 'background:var(--primary); color:#fff; border-color:var(--primary);';
+
+// ===== AMÉLIORATIONS : RELIGION, CATALOGUE, RECETTES DÉTAILLÉES =====
+const RELN = { nd: 'Non précisée', ath: 'Athée / Sans religion', chr: 'Chrétien', mus: 'Musulman', juif: 'Juif' };
+const noAlc = () => diets().includes('Halal') || prof().religion === 'mus';
+function applyRel() { recFeast = null; }
+function bannerFeasts() { const r = prof().religion; return ['chr', 'mus', 'juif'].includes(r) ? feastList().filter(f => f.rel === r) : []; }
+
+let catSel = null, catList = [];
+function pickCat(i) { catSel = catSel === catList[i] ? null : catList[i]; renderCatalog(); }
+function addCat(i) { const f = foodDB[i]; if (!shoppingList.some(s => !s.bought && N(s.name) === N(f.name))) shoppingList.push({ ...f, bought: false, id: uid() }); saveData(); }
+function renderCatalog() {
+    const el = document.getElementById('cat-chips'), it = document.getElementById('cat-items'); if (!el) return;
+    catList = [...new Set(foodDB.map(f => f.category))].filter(c => !(c === 'Alcools' && noAlc()));
+    el.innerHTML = catList.map((c, i) => `<span class="chip-label" style="${catSel === c ? ACT : ''}" onclick="pickCat(${i})">${esc(c)}</span>`).join('');
+    it.innerHTML = catSel ? foodDB.map((f, i) => [f, i]).filter(x => x[0].category === catSel).map(([f, i]) => { const on = shoppingList.some(s => !s.bought && N(s.name) === N(f.name)); return `<span class="chip-label" style="${on ? 'opacity:.45;' : ''}" onclick="addCat(${i})">${f.icon} ${esc(f.name)}${on ? ' ✓' : ''}</span>`; }).join('') : '';
+}
+
+QTY.unshift([/^(lait|creme|bouillon|vin )/, 100, 'ml'], [/huile|vinaigre/, 1, 'c. à soupe'], [/^beurre/, 15, 'g'], [/^(farine|sucre|chapelure|chocolat|poudre)/, 40, 'g'], [/^miel/, 1, 'c. à soupe'],
+    [/fromage|emmental|cheddar|parmesan|mozzarella|comte|chevre|feta|gruyere|brie|roquefort|mascarpone|ricotta/, 30, 'g'], [/^ail$/, 0.5, 'gousse(s)'], [/^(oignon|echalote)/, 0.5, 'pièce(s)'],
+    [/cumin|paprika|curry|piment|cannelle|ras el hanout|epice|herbes|thym|romarin|origan|safran/, 0.5, 'c. à café'], [/tomates pelee|sauce tomate|coulis/, 100, 'g'], [/tortilla|feuille de brick|pain burger|blinis/, 1, 'pièce(s)'], [/^(pain|baguette|pain de mie)/, 1, 'tranche(s)/portion']);
+
+const PREP = [[/^ail/, 'Éplucher, dégermer et hacher finement'], [/oignon|echalote/, 'Éplucher et émincer finement'], [/carotte/, 'Éplucher, couper en rondelles ou en dés'], [/pomme de terre|patate/, 'Éplucher (ou brosser) et couper en morceaux réguliers pour une cuisson homogène'], [/courgette|aubergine|poivron/, 'Laver, épépiner si besoin, couper en dés ou lamelles de même taille'], [/champignon/, 'Essuyer avec un linge humide (ne pas les tremper) et émincer'], [/tomate/, 'Laver, retirer le pédoncule, couper en dés'], [/persil|coriandre|menthe|basilic|ciboulette|aneth/, 'Laver, sécher, ciseler juste avant de servir'], [/citron|orange/, 'Râper le zeste avant de presser le jus'], [/hache|steak/, 'Sortir du frigo 15-20 min avant la cuisson'], [/poulet|dinde|boeuf|porc|agneau|veau|magret|saumon|cabillaud|thon|colin/, 'Sortir du frigo 15 min avant et éponger avec du papier absorbant'], [/oeuf/, 'Sortir à température ambiante ; les casser dans un bol à part'], [/^beurre/, 'Sortir 30 min avant s\'il doit être mou'], [/fromage|parmesan|emmental|comte|gruyere|cheddar/, 'Râper ou couper juste avant utilisation'], [/avocat/, 'Couper, dénoyauter et arroser de citron pour éviter qu\'il noircisse'], [/pois chiche|haricot rouge|lentille|mais/, 'Égoutter et rincer abondamment (si conserve)'], [/riz|semoule|quinoa/, 'Mesurer au verre : 1 volume de féculent pour la quantité d\'eau indiquée à l\'étape de cuisson']];
+const TECH = [[/al dente|cuire (les )?(pate|spaghetti|tagliatelle|penne)/, 'Eau bouillante à gros bouillons, 10 g de sel par litre. Goûtez 1 min avant la fin du temps du paquet et gardez un verre d\'eau de cuisson pour lier la sauce.'], [/cuire (le )?riz/, 'Rincez le riz jusqu\'à eau claire. Riz long : 1 volume de riz pour 2 d\'eau, couvert, feu doux 10-12 min, puis 5 min hors du feu sans soulever le couvercle.'], [/cuire (les )?pommes? de terre/, 'Départ à l\'eau froide salée. Cuit quand la lame d\'un couteau s\'enfonce sans résistance (environ 20 min).'], [/saisir|steak|magret|poeler le/, 'Poêle bien chaude avant de poser la viande, ne la déplacez pas pendant les 3 premières minutes. Salez en fin de cuisson et laissez reposer 2 min sous une feuille d\'alu.'], [/faire revenir|suer|faire tomber/, 'Feu moyen, remuez souvent : l\'oignon doit devenir translucide sans colorer (5-7 min). Un feu trop vif rend la sauce amère.'], [/mijot/, 'Feu très doux : quelques bulles seulement. Couvercle entrouvert, remuez de temps en temps, rectifiez l\'assaisonnement à la fin.'], [/four|enfourner|prechauffer/, 'Préchauffez 10-15 min avant d\'enfourner, grille au milieu. En chaleur tournante, baissez d\'environ 10 °C.'], [/gratiner/, 'Terminez en position grill et surveillez : 3-5 min suffisent, le dessus doit être doré, pas brûlé.'], [/bechamel|roux/, 'Faites fondre le beurre, ajoutez la farine d\'un coup, cuisez 1-2 min en fouettant, puis versez le lait tiède petit à petit pour éviter les grumeaux.'], [/petrir|lever/, 'Laissez lever à l\'abri des courants d\'air, dans un endroit tiède (25 °C) : la pâte doit doubler de volume.'], [/frire|friture/, 'Huile à 170-180 °C (un cube de pain doit dorer en 30 s). Ne surchargez pas, égouttez sur papier absorbant.'], [/piques|brochette/, 'Trempez les piques en bois 30 min dans l\'eau pour qu\'elles ne brûlent pas.'], [/oeufs? durs?|cuire l oeuf/, 'Plongez les œufs dans l\'eau déjà bouillante : 10 min pour durs, 7 min pour mollets, puis eau glacée pour les écaler facilement.'], [/mixer|mixeur/, 'Mixez par à-coups. Pour une soupe chaude, ne remplissez pas le bol au-delà de la moitié.'], [/marin/, 'Couvrez et laissez au frais minimum 30 min, idéalement 2 h : plus c\'est long, plus c\'est parfumé.'], [/reduire|napper/, 'La sauce est prête quand elle nappe le dos d\'une cuillère et qu\'un trait de doigt reste net.'], [/deglacer/, 'Versez le liquide dans la poêle encore chaude et grattez les sucs au fond : c\'est là que se trouve le goût.'], [/fondre (le )?chocolat|chocolat fondu/, 'Au bain-marie, eau qui frémit sans toucher le fond du bol, ou au micro-ondes par tranches de 30 s en mélangeant.'], [/blancs/, 'Blancs à température ambiante, bol propre et sec, une pincée de sel : ils sont prêts quand ils tiennent dans le fouet retourné.'], [/etaler|abaisser/, 'Farinez légèrement le plan de travail et étalez du centre vers les bords ; piquez le fond à la fourchette pour éviter qu\'il gonfle.'], [/papillote/, 'Fermez bien les bords en pliant le papier pour garder la vapeur : le poisson cuit dans son jus.'], [/hydrater|semoule/, 'Versez la même quantité d\'eau bouillante que de semoule, couvrez 5 min, égrainez à la fourchette avec un filet d\'huile.'], [/vapeur/, 'Comptez 8-10 min à partir de l\'ébullition ; les légumes doivent rester légèrement croquants.'], [/caramel/, 'Caramélisez au chalumeau ou sous le grill du four, sucre étalé en couche fine, en surveillant sans vous éloigner.']];
+const tmin = r => { const t = String(r.time || ''); let m = t.match(/(\d+)\s*h\s*(\d+)?/); if (m) return +m[1] * 60 + +(m[2] || 0); m = t.match(/(\d+)/); return m ? +m[1] : 0; };
+const fmtT = n => n >= 60 ? Math.floor(n / 60) + ' h' + (n % 60 ? ' ' + String(n % 60).padStart(2, '0') : '') : n + ' min';
+function stepList(r) { return Array.isArray(r.steps) ? r.steps : String(r.steps || '').split(/\r?\n+|(?<=[.!?])\s+(?=[A-ZÉÈÀ])/).map(s => s.trim()).filter(s => s.length > 3); }
+function stepsHTML(r) {
+    const L = stepList(r); if (!L.length) return '<p style="line-height:1.7;">Instructions non disponibles.</p>';
+    return L.map((s, i) => { const n = N(s), tips = TECH.filter(t => t[0].test(n)).slice(0, 2).map(t => t[1]);
+        return `<div style="display:flex; gap:12px; margin-bottom:14px;"><div style="min-width:28px; height:28px; border-radius:50%; background:var(--primary); color:#fff; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:14px;">${i + 1}</div><div style="line-height:1.6;">${esc(s)}${tips.map(t => `<div style="margin-top:6px; padding:8px 10px; background:var(--primary-glow); border-radius:8px; font-size:13px; color:var(--text-muted);">💡 ${esc(t)}</div>`).join('')}</div></div>`; }).join('');
+}
+function prepHTML(r) {
+    const t = tmin(r), L = stepList(r); let cook = 0;
+    L.forEach(s => { let m = s.match(/(\d+)\s*h\s*(\d+)?/); if (m) cook += +m[1] * 60 + +(m[2] || 0); else { m = s.match(/(\d+)(?:-(\d+))?\s*min/); if (m) cook += +(m[2] || m[1]); } });
+    cook = Math.min(cook, t); const lv = t >= 90 || L.length >= 8 ? ['Élaboré', '#ef4444'] : t >= 40 || L.length >= 5 ? ['Moyen', '#f59e0b'] : ['Facile', 'var(--accent)'];
+    const c = (a, col) => `<span style="background:var(--bg-main); border:1px solid var(--border); padding:6px 12px; border-radius:20px; font-size:13px; ${col ? 'color:' + col + ';' : ''}">${a}</span>`;
+    const mp = r.ingredients.map(x => { const p = PREP.find(q => q[0].test(N(x))); return p ? `<li><b>${esc(x)}</b> : ${p[1]}</li>` : ''; }).join('');
+    return `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">${c('⏱️ Total ' + fmtT(t))}${cook ? c('🔥 Cuisson ≈ ' + fmtT(cook)) : ''}${t - cook > 4 ? c('🔪 Préparation ≈ ' + fmtT(t - cook)) : ''}${c('📊 ' + lv[0], lv[1])}${c('👥 ' + guests() + ' pers.')}</div>`
+        + (mp ? `<div class="main-label">🔪 Mise en place (avant d'allumer le feu)</div><ul style="padding-left:20px; line-height:1.7; margin-bottom:16px; font-size:14px;">${mp}</ul>` : '');
+}
+function extraHTML(r) {
+    const t = r.ingredients.map(N).join(' '), nm = N(r.name), na = noAlc(), fish = FISH.test(t), meat = MEAT.test(t);
+    const cons = r.cuisine === 'Dessert' ? '2-3 jours au frais, sous cloche ou film alimentaire.' : fish ? 'À consommer dans les 24 h, bien au frais ; ne pas recongeler.' : meat ? '2 jours au réfrigérateur en boîte hermétique ; réchauffer à cœur (au moins 70 °C).' : /soupe|veloute|mijot|lentille|pois chiche|curry|dahl|chili/.test(nm + ' ' + t) ? '3 jours au frigo ; se congèle très bien (2 mois).' : '1 à 2 jours au réfrigérateur en boîte hermétique.';
+    const dr = r.cuisine === 'Dessert' ? ['Café', 'Thé', 'Lait'] : r.cuisine === 'Arabe' ? ['Thé à la menthe', "Jus d'orange", 'Eau pétillante'] : r.cuisine === 'Asiatique' ? ['Thé vert', 'Eau pétillante'] : /Mexicain|Américain/.test(r.cuisine) ? ['Coca-Cola', 'Limonade', na ? 'Jus de citron' : 'Bière blonde'] : fish ? [na ? 'Eau pétillante' : 'Vin blanc', 'Citronnade'] : meat ? [na ? 'Jus de raisin' : 'Vin rouge', 'Eau plate'] : ['Eau pétillante', 'Jus de pomme'];
+    const serve = r.cuisine === 'Dessert' ? 'Sortir 10 min avant de servir (sauf glace). Décorez avec un fruit, du sucre glace ou un coulis.' : /pates|spaghetti|risotto|omelette|crepe/.test(nm + ' ' + t) ? 'Servez immédiatement dans des assiettes chaudes : ce plat n\'attend pas.' : 'Servez chaud, avec un filet d\'huile d\'olive ou des herbes fraîches ciselées pour finir.';
+    const box = (a, b) => `<div style="margin-bottom:10px; padding:10px 12px; background:var(--bg-main); border:1px solid var(--border); border-radius:12px; font-size:14px; line-height:1.5;"><b>${a}</b><br><span style="color:var(--text-muted);">${b}</span></div>`;
+    return `<div class="main-label" style="margin-top:8px;">👨‍🍳 Finitions & conseils</div>${box('🍽️ Service', serve)}${box('🥤 Boisson conseillée', dr.map(esc).join(' • '))}${box('🧊 Conservation', cons)}${box('🧂 Avant de servir', 'Goûtez toujours : rectifiez le sel, le poivre et l\'acidité (citron ou vinaigre) en toute fin de cuisson.')}`;
+}
+
+
+// ===== NOTES (👎 👍 👍👍), FAVORIS, RECOMMANDATIONS, FÊTES =====
+const RK = 'gourmet_rates', FK = 'gourmet_favs';
+let rates = load(RK, {}), favs = load(FK, []), recFeast = null;
+const rateOf = r => rates[r.name] || 0, isFav = r => favs.includes(r.name);
+const saveLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } };
+function rateBtns(i) {
+    const r = registry[i], v = rateOf(r), b = (val, t) => `<button class="btn-icon" style="font-size:19px; padding:4px 7px; border-radius:8px; ${v === val ? 'background:var(--primary-glow);' : 'opacity:.5;'}" onclick="rate(${i},${val})">${t}</button>`;
+    return b(-1, '👎') + b(1, '👍') + b(2, '👍👍') + `<button class="btn-icon" style="font-size:22px; margin-left:auto; ${isFav(r) ? '' : 'opacity:.5;'}" onclick="toggleFav(${i})">${isFav(r) ? '⭐' : '☆'}</button>`;
+}
+const rateBar = i => `<div data-rb="${i}" style="display:flex; align-items:center; gap:2px; margin-top:10px;">${rateBtns(i)}</div>`;
+const refreshBars = i => document.querySelectorAll(`[data-rb="${i}"]`).forEach(el => el.innerHTML = rateBtns(i));
+function rate(i, v) { const r = registry[i]; if (!r) return; if (rates[r.name] === v) delete rates[r.name]; else rates[r.name] = v; saveLS(RK, rates); refreshBars(i); renderRecoBox(); }
+function toggleFav(i) { const r = registry[i]; if (!r) return; favs = isFav(r) ? favs.filter(x => x !== r.name) : [...favs, r.name]; saveLS(FK, favs); refreshBars(i); if (document.querySelector('input[name="cuisine"]:checked').value === '__fav') renderRecipes(); }
+const ingSet = r => new Set(r.ingredients.map(N).filter(x => !STAPLES.includes(x)));
+function sim(a, b) { const A = ingSet(a), B = ingSet(b); let k = 0; A.forEach(x => { if (B.has(x)) k++; }); return k / ((A.size + B.size - k) || 1) + (a.cuisine === b.cuisine ? 0.25 : 0) + (N(a.name).split(' ')[0] === N(b.name).split(' ')[0] ? 0.15 : 0); }
+function recoList() {
+    const rated = offlineRecipes.filter(rateOf); if (!rated.some(r => rateOf(r) > 0)) return [];
+    return offlineRecipes.filter(r => !rateOf(r) && allowed(r)).map(r => ({ r, s: rated.reduce((t, x) => t + rateOf(x) * sim(r, x), 0) })).filter(x => x.s > 0).sort((a, b) => b.s - a.s);
+}
+function renderRecoBox() {
+    const el = document.getElementById('reco-box'); if (!el) return;
+    const c = document.querySelector('input[name="cuisine"]:checked').value, rl = c === 'all' && !recFeast ? recoList().slice(0, 6) : [];
+    const liked = offlineRecipes.filter(r => rateOf(r) > 0).slice(0, 2).map(r => r.name);
+    el.innerHTML = rl.length ? `<div class="section-title" style="margin-bottom:4px;">✨ Recommandé pour vous</div><p style="color:var(--text-muted); font-size:13px; margin-bottom:12px;">D'après vos 👍 : ${liked.map(esc).join(', ')}…</p><div class="grid-responsive" style="margin-bottom:24px;">${rl.map(x => cardHTML(x.r, calculateMatch(x.r.ingredients))).join('')}</div><div class="section-title">Toutes les recettes</div>` : '';
+}
+function similarHTML(r) {
+    const l = offlineRecipes.filter(x => x !== r && x.name !== r.name && allowed(x) && rateOf(x) >= 0).map(x => ({ x, s: sim(r, x) })).sort((a, b) => b.s - a.s).slice(0, 4);
+    return l.length ? `<div class="main-label" style="margin-top:12px;">🔁 Plats similaires</div>${l.map(o => `<div class="shop-item" style="cursor:pointer;" onclick="openRecipe(${reg(o.x)})"><span>${o.x.icon || '🍽️'} ${esc(o.x.name)}</span><span style="font-size:12px; color:var(--text-muted);">${esc(o.x.time || '')}</span></div>`).join('')}` : '';
+}
+function setRecFeast(id) { recFeast = recFeast === id ? null : id; recipeLimit = 60; renderRecipes(); }
+function goFeast(id) { recFeast = id; const rd = document.querySelector('input[name="cuisine"][value="all"]'); if (rd) rd.checked = true; recipeLimit = 60; switchView('recipes'); }
+function renderFeastRow() {
+    const el = document.getElementById('feast-row'); if (!el) return;
+    const fl = bannerFeasts(); if (!fl.some(f => f.id === recFeast)) recFeast = null;
+    if (!fl.length) { el.innerHTML = ''; return; }
+    const cf = fl.find(f => f.id === recFeast);
+    el.innerHTML = `<div class="main-label">🎉 Fêtes — ${esc(RELN[prof().religion])}</div><div class="chip-group" style="flex-wrap:wrap; margin-bottom:8px;">${fl.map(f => `<span class="chip-label" style="${recFeast === f.id ? ACT : ''}" onclick="setRecFeast('${f.id}')">${f.icon} ${esc(f.name)} · ${esc(feastLabel(f))}</span>`).join('')}</div>${cf ? `<div style="color:var(--text-muted); font-size:13px; margin-bottom:16px;">${esc(RELNOTE[cf.rel] || '')}</div>` : ''}`;
+}
+
+// ===== 10. NAVIGATION =====
+function switchView(viewId) {
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById('view-' + viewId).classList.add('active');
+    document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === viewId));
+    document.querySelector('.app-content').scrollTop = 0;
+    if (viewId === 'match') renderFridge();
+    if (viewId === 'shopping') renderShoppingList();
+    if (viewId === 'recipes') renderRecipes();
+    if (viewId === 'profile') updateHeader();
+    if (viewId === 'plan') renderPlan();
+}
+
+// ===== 9. PWA, BASIQUES, ANTI-GASPI, SEMAINE, PARTAGE =====
+// PWA en un seul fichier : icône dessinée et manifest générés à la volée (installable sur l'écran d'accueil)
+(function () {
+    try {
+        const c = document.createElement('canvas'); c.width = c.height = 192; const x = c.getContext('2d');
+        x.fillStyle = '#f97316'; x.fillRect(0, 0, 192, 192); x.fillStyle = '#fafaf9'; x.beginPath(); x.arc(84, 96, 46, 0, 7); x.fill();
+        x.fillStyle = '#1c1917'; x.beginPath(); x.arc(84, 96, 34, 0, 7); x.fill(); x.fillRect(122, 90, 58, 12);
+        const ic = c.toDataURL('image/png');
+        [['icon', ''], ['apple-touch-icon', '']].forEach(([rel]) => { const l = document.createElement('link'); l.rel = rel; l.href = ic; document.head.appendChild(l); });
+        if (/^https?:/.test(location.protocol)) {
+            const m = { name: 'Gourmet AI', short_name: 'Gourmet AI', start_url: location.href.split('#')[0], display: 'standalone', background_color: '#1c1917', theme_color: '#1c1917', icons: [{ src: ic, sizes: '192x192', type: 'image/png' }] };
+            const l = document.createElement('link'); l.rel = 'manifest'; l.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: 'application/manifest+json' })); document.head.appendChild(l);
+        }
+    } catch (e) { }
+})();
+addEventListener('offline', () => alert('📴 Hors-ligne : recettes, frigo et courses restent disponibles. Le Chef IA et la recherche en ligne attendront le réseau.'));
+
+// -- Basiques permanents
+const BASICS = ['Huile', "Huile d'olive", 'Vinaigre', 'Moutarde', 'Paprika', 'Cumin', 'Curry', 'Herbes de Provence', 'Cannelle', 'Sucre', 'Farine'];
+function addBasics() {
+    BASICS.forEach(b => {
+        const ex = fridge.find(f => N(f.name) === N(b)); if (ex) { ex.basic = true; return; }
+        const db = foodDB.find(f => N(f.name) === N(b));
+        fridge.push({ ...(db || { name: b, icon: '🧂', category: 'Basique', price: 0 }), id: uid(), basic: true });
+    });
+    saveData();
+}
+function toggleBasic(id) { const it = fridge.find(f => f.id === id); if (it) { it.basic = !it.basic; saveData(); } }
+
+// -- Anti-gaspillage : durée de vie estimée (depuis la date d'ajout) ou date saisie via ⏳
+const SHELF = [[/poisson|cabillaud|crevette|moule|colin|merlu|truite|saumon frais/, 2], [/hache/, 2], [/poulet|dinde|boeuf|steak|porc|agneau|veau|viande|escalope|saucisse|lardon|jambon|magret|canard/, 3], [/salade|mesclun|roquette|epinard|persil|basilic|coriandre|menthe|ciboulette/, 3], [/yaourt|fromage blanc|creme|petit suisse|skyr|mozzarella|ricotta|^lait\b(?! de coco)/, 6], [/champignon|courgette|concombre|tomate|fraise|framboise|banane|avocat|brocoli/, 5], [/fromage|beurre|carotte|poireau|\bchou\b/, 14]];
+function daysLeft(it) {
+    if (it.basic) return null; if (it.exp) return Math.ceil((it.exp - Date.now()) / 864e5);
+    const n = N(it.name), sh = SHELF.find(x => x[0].test(n)); if (!sh) return null;
+    return sh[1] - Math.max(0, Math.floor((Date.now() - it.id / 1000) / 864e5));
+}
+function expBadge(it) { const d = daysLeft(it); if (d === null || d > 3) return ''; return ` <span style="color:${d <= 1 ? '#ef4444' : '#f59e0b'}; font-weight:700;">⏳ ${d <= 0 ? 'à finir !' : 'J-' + d}</span>`; }
+function setExp(id) {
+    const it = fridge.find(f => f.id === id); if (!it) return;
+    const v = prompt('Dans combien de jours « ' + it.name + ' » périme-t-il ?\n(vide = estimation automatique)'); if (v === null) return;
+    if (!v.trim()) delete it.exp; else { const n = parseInt(v); if (isNaN(n)) return; it.exp = Date.now() + n * 864e5; }
+    saveData();
+}
+function useUp() {
+    const box = document.getElementById('match-results');
+    const urg = fridge.map(f => ({ f, d: daysLeft(f) })).filter(x => x.d !== null && x.d <= 3).sort((a, b) => a.d - b.d);
+    if (!urg.length) { box.innerHTML = '<p style="color:var(--text-muted);">Rien ne presse : aucun ingrédient ne semble proche de sa date limite. Touchez ⏳ sur un aliment pour indiquer sa date précise.</p>'; return; }
+    const w = d => d <= 0 ? 4 : d === 1 ? 3 : d === 2 ? 2 : 1;
+    const list = offlineRecipes.filter(r => allowed(r) && rateOf(r) >= 0).map(r => { let sc = 0; urg.forEach(x => { if (r.ingredients.some(i => hasIng(i, x.f.name))) sc += w(x.d); }); return { r, sc, m: calculateMatch(r.ingredients) }; })
+        .filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc || b.m.percent - a.m.percent).slice(0, 8);
+    box.innerHTML = `<div class="section-title">♻️ À finir en priorité</div><div class="chip-group" style="flex-wrap:wrap;">${urg.map(x => `<span class="chip-label">${x.f.icon} ${esc(x.f.name)}${expBadge(x.f)}</span>`).join('')}</div>` +
+        (list.length ? `<div class="grid-responsive">${list.map(x => cardHTML(x.r, x.m)).join('')}</div>` : '<p style="color:var(--text-muted);">Aucune recette de la base n\'utilise ces ingrédients avec votre profil.</p>');
+}
+
+// -- Planificateur de la semaine
+const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+let plan = load('gourmet_plan', {}), planSel = null, planQ = '', _pp = [];
+const snap = r => ({ name: r.name, icon: r.icon, cuisine: r.cuisine, time: r.time, ingredients: r.ingredients, steps: r.steps });
+const savePlan = () => saveLS('gourmet_plan', plan);
+function renderPlan() {
+    const q = N(planQ); _pp = currentRecipes.filter(r => allowed(r) && rateOf(r) >= 0 && (!q || N(r.name).includes(q))).slice(0, 40);
+    document.getElementById('plan-grid').innerHTML = DAYS.map((d, i) => `<div class="plan-day"><b>${d}</b>${['m', 's'].map(k => { const key = i + '-' + k, r = plan[key];
+        return `<div class="plan-slot ${planSel !== null ? 'armed' : ''}" ondragover="event.preventDefault()" ondrop="dropPlan(event,'${key}')" onclick="slotClick('${key}')"><small>${k === 'm' ? '☀️ Midi' : '🌙 Soir'}</small>${r ? `<div class="plan-r"><span>${r.icon || '🍽️'} ${esc(r.name)}</span><button class="btn-icon" onclick="event.stopPropagation(); planDel('${key}')">✕</button></div>` : '<span class="plan-empty">＋</span>'}</div>`; }).join('')}</div>`).join('');
+    document.getElementById('plan-tray').innerHTML = _pp.map((r, i) => `<div class="plan-chip ${planSel === i ? 'sel' : ''}" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${i}')" onclick="planSel = ${planSel === i ? 'null' : i}; renderPlan()">${r.icon || '🍽️'} ${esc(r.name)}</div>`).join('') || '<p style="color:var(--text-muted);">Aucune recette.</p>';
+}
+function setSlot(key, r) { plan[key] = snap(r); planSel = null; savePlan(); renderPlan(); }
+function slotClick(key) { if (planSel !== null && _pp[planSel]) setSlot(key, _pp[planSel]); else if (plan[key]) openRecipe(reg(plan[key])); }
+function dropPlan(e, key) { e.preventDefault(); const r = _pp[+e.dataTransfer.getData('text/plain')]; if (r) setSlot(key, r); }
+function planDel(key) { delete plan[key]; savePlan(); renderPlan(); }
+function clearPlan() { if (Object.keys(plan).length && !confirm('Vider toute la semaine ?')) return; plan = {}; savePlan(); renderPlan(); }
+function addToShop(names) {
+    let n = 0;
+    names.forEach(m => {
+        if (shoppingList.some(s => !s.bought && hasIng(m, s.name))) return;
+        const db = foodDB.find(f => N(f.name) === N(m)) || foodDB.find(f => hasIng(m, f.name));
+        shoppingList.push({ ...(db || { name: m, icon: '🛒', category: 'Autre', price: 2 }), name: db && N(db.name) !== N(m) ? m : (db ? db.name : m), id: uid(), bought: false }); n++;
+    });
+    saveData(); return n;
+}
+function planShop() {
+    const rs = Object.values(plan); if (!rs.length) { alert('Planifiez au moins un repas.'); return; }
+    const miss = []; rs.forEach(r => r.ingredients.forEach(x => { if (!STAPLES.includes(N(x)) && !fridge.some(f => hasIng(x, f.name))) miss.push(x); }));
+    const n = addToShop(miss); alert(n ? `${n} ingrédient(s) manquant(s) pour la semaine ajouté(s) aux courses 🛒` : 'Rien à acheter : tout est déjà en stock ou dans votre liste !');
+}
+
+// -- Partage d'une recette
+function recipeText(r) {
+    return `🍽️ ${r.name}\n${r.cuisine || ''} • ${r.time || ''}\n\n🛒 Ingrédients (${guests()} pers.)\n${r.ingredients.map(x => '• ' + x).join('\n')}\n\n👨‍🍳 Préparation\n${stepList(r).map((t, k) => `${k + 1}.${t}`).join('\n')}\n\nEnvoyé depuis Gourmet AI`;
+}
+function shareRecipe(i, mode) {
+    const r = registry[i]; if (!r) return; const t = recipeText(r);
+    if (mode === 'wa') window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank');
+    else if (mode === 'sms') location.href = 'sms:?&body=' + encodeURIComponent(t);
+    else if (navigator.share) navigator.share({ title: r.name, text: t }).catch(() => { });
+    else if (navigator.clipboard) navigator.clipboard.writeText(t).then(() => alert('Recette copiée, collez-la où vous voulez !'));
+}
+
+
+// ===== CONNEXION GOOGLE (Firebase, compte commun QuenTools) =====
+// Firebase est chargé à la demande. Firebase Auth n'accepte que https et les domaines autorisés dans sa console :
+// ailleurs (fichier local, aperçu), la connexion est masquée et l'application reste utilisable sans compte.
+const GCFG = window.GOURMET_CONFIG || {}, FBV = '10.14.1', APP_ID = 'gourmet';
+let FBP = null, FBU = null;
+const gAvailable = () => !!(GCFG.firebase && GCFG.firebase.apiKey) && location.protocol === 'https:' && /^ikeupods-del\.github\.io$/.test(location.hostname);
+function fb() {
+    if (!FBP) FBP = (async () => {
+        const B = `https://www.gstatic.com/firebasejs/${FBV}/`;
+        const [A, Au, Fs] = await Promise.all([import(B + 'firebase-app.js'), import(B + 'firebase-auth.js'), import(B + 'firebase-firestore.js')]);
+        const app = A.initializeApp(GCFG.firebase);
+        return { Au, Fs, auth: Au.getAuth(app), db: Fs.getFirestore(app) };
+    })().catch(() => { FBP = null; throw new Error('impossible de joindre Google (connexion internet ?)'); });
+    return FBP;
+}
+async function gRestore() {
+    if (!gAvailable()) { const c = document.getElementById('auth-container'); if (c) c.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">La connexion Google est disponible sur le site officiel de Gourmet AI.</p>'; return; }
+    try {
+        const F = await fb(); await F.auth.authStateReady();
+        FBU = F.auth.currentUser; updateAuthUI(FBU); if (FBU) syncNow();
+        F.Au.onAuthStateChanged(F.auth, u => { const was = FBU; FBU = u; updateAuthUI(u); if (u && (!was || was.uid !== u.uid)) syncNow(); if (!u) setSyncStatus(''); });
+    } catch (e) { setSyncStatus('⚠️ Connexion indisponible : ' + e.message, '#ef4444'); }
+}
+async function gLogin() {
+    try { const F = await fb(); await F.Au.signInWithPopup(F.auth, new F.Au.GoogleAuthProvider()); }
+    catch (e) {
+        const m = { 'auth/popup-closed-by-user': 'Connexion annulée', 'auth/cancelled-popup-request': 'Connexion annulée', 'auth/popup-blocked': 'Autorisez les fenêtres pop-up pour ce site, puis réessayez', 'auth/unauthorized-domain': 'Domaine non autorisé dans Firebase', 'auth/operation-not-allowed': 'Connexion Google non activée dans Firebase' };
+        setSyncStatus('⚠️ ' + (m[e && e.code] || e.message || 'Connexion Google impossible'), '#ef4444');
+    }
+}
+async function gLogout() { try { const F = await fb(); await F.Au.signOut(F.auth); } catch (e) { } }
+
+// ===== SYNCHRO DE LA LISTE DE COURSES (Firestore : users/{uid}/apps/gourmet/main/courses) =====
+// Fusion élément par élément : chaque article porte un horodatage (_t), les suppressions sont
+// mémorisées (tomb) pour que deux appareils se mettent d'accord sans écraser les modifications de l'autre.
+const SMETA = 'gourmet_shop_meta';
+let syncTimer = null, syncBusy = false, syncPending = false, applyingRemote = false;
+const syncUser = () => FBU;
+function setSyncStatus(t, c) { const el = document.getElementById('sync-status'); if (el) { el.textContent = t; el.style.color = c || 'var(--text-muted)'; } }
+const shopHash = it => { const { _t, ...rest } = it; return JSON.stringify(rest); };
+function syncStamp() {
+    const now = Date.now(), meta = load(SMETA, { snap: {}, tomb: {} }), cur = {};
+    shoppingList.forEach(it => {
+        const h = shopHash(it); cur[it.id] = h;
+        if (!it._t || meta.snap[it.id] !== h) it._t = now;
+    });
+    Object.keys(meta.snap).forEach(id => { if (!(id in cur)) meta.tomb[id] = now; });
+    Object.keys(cur).forEach(id => { delete meta.tomb[id]; });
+    meta.snap = cur; saveLS(SMETA, meta);
+}
+function mergeShop(a, ta, b, tb) {
+    const tomb = { ...tb }; for (const k in ta) tomb[k] = Math.max(tomb[k] || 0, ta[k]);
+    const map = new Map();
+    [...a, ...b].forEach(it => { const o = map.get(it.id); if (!o || (it._t || 0) > (o._t || 0)) map.set(it.id, it); });
+    const items = [];
+    map.forEach((it, id) => { if (tomb[id] && tomb[id] >= (it._t || 0)) return; items.push(it); });
+    const lim = Date.now() - 30 * 864e5; for (const k in tomb) if (tomb[k] < lim) delete tomb[k];
+    return { items, tomb };
+}
+const normShop = d => JSON.stringify({ i: [...d.items].sort((x, y) => x.id - y.id), t: d.tomb });
+function schedulePush() { if (!syncUser()) return; clearTimeout(syncTimer); syncTimer = setTimeout(() => syncNow(), 1500); }
+async function syncNow(manual) {
+    const u = syncUser(); if (!u) { if (manual) setSyncStatus('Connectez-vous d’abord.', '#ef4444'); return; }
+    if (!navigator.onLine) { setSyncStatus('📴 Hors-ligne : synchro à la reconnexion.'); return; }
+    if (syncBusy) { syncPending = true; return; }
+    syncBusy = true; setSyncStatus('⏳ Synchronisation…');
+    try {
+        const F = await fb(), ref = F.Fs.doc(F.db, 'users', u.uid, 'apps', APP_ID, 'main', 'courses');
+        const snapDoc = await F.Fs.getDoc(ref), remote = snapDoc.exists() ? snapDoc.data() : {};
+        remote.items = remote.items || []; remote.tomb = remote.tomb || {};
+        syncStamp();
+        const meta = load(SMETA, { snap: {}, tomb: {} });
+        const m = mergeShop(shoppingList, meta.tomb, remote.items, remote.tomb);
+        const before = normShop({ items: shoppingList, tomb: meta.tomb });
+        if (normShop(m) !== before) {
+            shoppingList = m.items;
+            const snap = {}; shoppingList.forEach(it => snap[it.id] = shopHash(it));
+            saveLS(SMETA, { snap, tomb: m.tomb });
+            applyingRemote = true; try { saveData(); } finally { applyingRemote = false; }
+        } else saveLS(SMETA, { snap: meta.snap, tomb: m.tomb });
+        if (normShop(m) !== normShop(remote)) {
+            // Passage par JSON : Firestore refuse les valeurs « undefined ».
+            await F.Fs.setDoc(ref, JSON.parse(JSON.stringify({ items: m.items.slice(0, 2000), tomb: m.tomb, updatedAt: Date.now() })));
+        }
+        setSyncStatus('✅ Synchronisé à ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }), 'var(--accent)');
+    } catch (e) {
+        setSyncStatus('⚠️ Synchro impossible : ' + e.message, '#ef4444');
+    } finally {
+        syncBusy = false;
+        if (syncPending) { syncPending = false; schedulePush(); }
+    }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(); });
+addEventListener('online', () => syncNow());
+setInterval(() => { if (document.visibilityState === 'visible') syncNow(); }, 60000);
+
+</script>
+
+</body>
+</html>

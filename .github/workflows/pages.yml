@@ -1,4 +1,4 @@
-# Publie QuenTools (site vitrine, Infikit, Freelance Kit, Wouf) sur GitHub Pages à chaque push sur la branche par défaut.
+# Publie QuenTools (site vitrine, Infikit, Freelance Kit, Gourmet AI, Wouf) sur GitHub Pages à chaque push sur la branche par défaut.
 # Une seule fois : Settings → Pages → Source : « GitHub Actions ».
 name: Publier sur GitHub Pages
 
@@ -47,6 +47,7 @@ jobs:
           rsync -a assets _site/
           rsync -a --exclude oauth-worker infikit _site/
           rsync -a freelance _site/
+          rsync -a gourmet _site/
           rsync -a --exclude billing-worker --exclude tests --exclude docs --exclude node_modules --exclude 'package*.json' --exclude '.gitignore' wouf _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
