@@ -1,0 +1,1337 @@
+{
+ "tips": [
+  {
+   "file": "conseil-chien-01.png",
+   "sp": "chien",
+   "text": "Pesez votre chien tous les mois : une prise de poids se corrige plus facilement au début."
+  },
+  {
+   "file": "conseil-chien-02.png",
+   "sp": "chien",
+   "text": "Le brossage des dents plusieurs fois par semaine retarde le tartre et les soucis dentaires."
+  },
+  {
+   "file": "conseil-chien-03.png",
+   "sp": "chien",
+   "text": "Par forte chaleur, ne laissez jamais votre chien dans la voiture, même quelques minutes, même fenêtres ouvertes."
+  },
+  {
+   "file": "conseil-chien-04.png",
+   "sp": "chien",
+   "text": "Contrôlez les oreilles, les coussinets et la peau après chaque balade en zone herbeuse (tiques, épillets)."
+  },
+  {
+   "file": "conseil-chien-05.png",
+   "sp": "chien",
+   "text": "Une eau fraîche et propre doit toujours être disponible, en particulier l’été."
+  },
+  {
+   "file": "conseil-chien-06.png",
+   "sp": "chien",
+   "text": "Les chiens de grande taille : ne pas faire d’effort intense juste après le repas (risque de torsion d’estomac)."
+  },
+  {
+   "file": "conseil-chien-07.png",
+   "sp": "chien",
+   "text": "Le sucre, le sel, le chocolat et les restes de table déséquilibrent votre chien : privilégiez de petites récompenses adaptées."
+  },
+  {
+   "file": "conseil-chien-08.png",
+   "sp": "chien",
+   "text": "Faites vérifier la puce électronique chez le vétérinaire de temps en temps et mettez à jour vos coordonnées auprès de l’I-CAD."
+  },
+  {
+   "file": "conseil-chien-09.png",
+   "sp": "chien",
+   "text": "Un chien senior gagne à faire un bilan sanguin chaque année : détecter tôt, c’est soigner mieux."
+  },
+  {
+   "file": "conseil-chien-10.png",
+   "sp": "chien",
+   "text": "Après un traitement antiparasitaire en pipette, évitez le bain pendant 48 h."
+  },
+  {
+   "file": "conseil-chien-11.png",
+   "sp": "chien",
+   "text": "Vous voyagez ? Vérifiez à l’avance les exigences de vaccination antirabique et le passeport européen."
+  },
+  {
+   "file": "conseil-chien-12.png",
+   "sp": "chien",
+   "text": "Le jeu et la stimulation mentale fatiguent autant qu’une longue marche : cachez des friandises, proposez des tapis de fouille."
+  },
+  {
+   "file": "conseil-chien-13.png",
+   "sp": "chien",
+   "text": "Notez tout changement d’appétit, de soif ou de comportement : ils précèdent souvent un problème de santé."
+  },
+  {
+   "file": "conseil-chat-14.png",
+   "sp": "chat",
+   "text": "Un chat ne doit jamais rester plus de 24 heures sans manger : le foie peut être atteint rapidement."
+  },
+  {
+   "file": "conseil-chat-15.png",
+   "sp": "chat",
+   "text": "Surveillez la litière : changement de fréquence, de quantité ou de couleur = premier signe de problème rénal ou urinaire."
+  },
+  {
+   "file": "conseil-chat-16.png",
+   "sp": "chat",
+   "text": "Le lys est mortel pour les chats : ne gardez ni bouquet ni plante de la famille des lys à la maison."
+  },
+  {
+   "file": "conseil-chat-17.png",
+   "sp": "chat",
+   "text": "Beaucoup de chats boivent peu : une fontaine à eau et de l’alimentation humide aident à protéger les reins."
+  },
+  {
+   "file": "conseil-chat-18.png",
+   "sp": "chat",
+   "text": "Pesez votre chat régulièrement : une perte de poids même légère est un signal d’alerte chez un chat âgé."
+  },
+  {
+   "file": "conseil-chat-19.png",
+   "sp": "chat",
+   "text": "Un chat d’intérieur a besoin de jeu et de verticalité : arbre à chat, étagères, séances de chasse simulée de 10 minutes."
+  },
+  {
+   "file": "conseil-chat-20.png",
+   "sp": "chat",
+   "text": "Ne donnez jamais de pipette pour chien à un chat, même en diluant."
+  },
+  {
+   "file": "conseil-chat-21.png",
+   "sp": "chat",
+   "text": "Le brossage des dents avec un dentifrice pour chat retarde les maladies gingivales."
+  },
+  {
+   "file": "conseil-chat-22.png",
+   "sp": "chat",
+   "text": "Un chat qui cache sa douleur peut se cacher, moins se toiletter ou dormir plus : notez ces changements."
+  },
+  {
+   "file": "conseil-chat-23.png",
+   "sp": "chat",
+   "text": "Pensez à la stérilisation (santé et comportement) et à l’identification par puce, obligatoire pour les chats."
+  },
+  {
+   "file": "conseil-chat-24.png",
+   "sp": "chat",
+   "text": "Un seul bac à litière par chat, plus un : à des endroits calmes, loin de la gamelle."
+  }
+ ],
+ "aid": [
+  {
+   "file": "secours-chien-01.png",
+   "sp": "chien",
+   "title": "Coup de chaleur",
+   "steps": [
+    "Signes : halètement intense, langue rouge foncé, salive épaisse, titubation, vomissements, effondrement.",
+    "Mettre le chien à l’ombre, au frais, sans attendre.",
+    "Le mouiller à l’eau tiède ou fraîche (jamais glacée), surtout ventre, pattes, tête ; ventiler.",
+    "Proposer de l’eau par petites quantités, sans forcer.",
+    "Appeler ou aller chez le vétérinaire en urgence, même si le chien semble récupérer : les organes peuvent être touchés."
+   ]
+  },
+  {
+   "file": "secours-chien-02.png",
+   "sp": "chien",
+   "title": "Étouffement",
+   "steps": [
+    "Ouvrir la gueule et regarder ; retirer un corps étranger seulement s’il est bien visible et accessible.",
+    "Petit chien : le tenir tête en bas et donner quelques tapes fermes entre les omoplates.",
+    "Grand chien : soulever l’arrière-train, tête vers le bas, tapes entre les omoplates ; sinon compressions vers le haut juste derrière les côtes.",
+    "Filer chez le vétérinaire, même si le corps étranger est sorti."
+   ]
+  },
+  {
+   "file": "secours-chien-03.png",
+   "sp": "chien",
+   "title": "Saignement",
+   "steps": [
+    "Comprimer directement la plaie avec une compresse ou un linge propre, sans relâcher pendant 5 à 10 minutes.",
+    "Bander sans serrer excessivement, ajouter des couches si le sang traverse.",
+    "Pas de garrot sans avis vétérinaire.",
+    "Consulter : une plaie profonde ou un saignement abondant est une urgence."
+   ]
+  },
+  {
+   "file": "secours-chien-04.png",
+   "sp": "chien",
+   "title": "Morsure de vipère",
+   "steps": [
+    "Signes : gonflement douloureux et rapide, deux petits points, abattement.",
+    "Garder le chien calme ; le porter si possible.",
+    "Ni garrot, ni incision, ni succion, ni glace, ni cortisone donnée maison.",
+    "Direction le vétérinaire immédiatement."
+   ]
+  },
+  {
+   "file": "secours-chien-05.png",
+   "sp": "chien",
+   "title": "Ingestion toxique",
+   "steps": [
+    "Noter le produit, la quantité et l’heure ; garder l’emballage.",
+    "Ne pas faire vomir sans avis d’un professionnel (dangereux selon le produit).",
+    "Appeler immédiatement un vétérinaire ou un centre antipoison vétérinaire."
+   ]
+  },
+  {
+   "file": "secours-chien-06.png",
+   "sp": "chien",
+   "title": "Piqûre de guêpe ou d’abeille",
+   "steps": [
+    "Retirer le dard en le grattant (sans le pincer), appliquer du froid.",
+    "Gonflement de la gueule ou de la gorge, difficulté à respirer, malaise = urgence vétérinaire immédiate (choc allergique)."
+   ]
+  },
+  {
+   "file": "secours-chien-07.png",
+   "sp": "chien",
+   "title": "Ventre gonflé, dur (torsion d’estomac)",
+   "steps": [
+    "Signes : ventre tendu, tentatives de vomissements sans rien rendre, salivation, agitation, gencives pâles ; grands chiens à thorax profond surtout.",
+    "Urgence absolue, chaque heure compte : ne rien donner, partir immédiatement chez le vétérinaire en prévenant par téléphone."
+   ]
+  },
+  {
+   "file": "secours-chien-08.png",
+   "sp": "chien",
+   "title": "Convulsions",
+   "steps": [
+    "Éloigner les objets dangereux, baisser la lumière et le bruit.",
+    "Ne jamais mettre la main dans la gueule.",
+    "Noter la durée. Plus de 5 minutes, crises répétées ou première crise : urgence vétérinaire."
+   ]
+  },
+  {
+   "file": "secours-chien-09.png",
+   "sp": "chien",
+   "title": "Accident, choc, chute",
+   "steps": [
+    "Sécuriser la zone. Un chien qui a mal peut mordre : muselière de fortune ou couverture.",
+    "Le transporter à plat sur une surface rigide (planche, couverture tendue) en évitant de plier le dos.",
+    "Prévenir la clinique pendant le trajet."
+   ]
+  },
+  {
+   "file": "secours-chien-10.png",
+   "sp": "chien",
+   "title": "Brûlure",
+   "steps": [
+    "Rincer abondamment à l’eau tiède ou fraîche pendant 10 minutes.",
+    "Ne rien appliquer (pas de beurre, pas de pommade).",
+    "Consulter : les brûlures sont souvent plus profondes qu’elles n’en ont l’air."
+   ]
+  },
+  {
+   "file": "secours-chien-11.png",
+   "sp": "chien",
+   "title": "Chenilles processionnaires",
+   "steps": [
+    "Ne pas toucher à mains nues ; porter des gants.",
+    "Rincer abondamment la gueule à l’eau tiède, tête vers le bas, sans frotter.",
+    "Urgence vétérinaire : la langue peut nécroser."
+   ]
+  },
+  {
+   "file": "secours-chat-12.png",
+   "sp": "chat",
+   "title": "Blocage urinaire (surtout chez le mâle)",
+   "steps": [
+    "Signes : il va et vient dans la litière, s’accroupit sans uriner, miaule, lèche son sexe, ventre douloureux, vomissements.",
+    "C’est une urgence vitale : sans intervention, l’issue peut être fatale en 24 à 48 heures.",
+    "Ne tentez rien à la maison. Appelez et partez immédiatement chez un vétérinaire, en prévenant par téléphone."
+   ]
+  },
+  {
+   "file": "secours-chat-13.png",
+   "sp": "chat",
+   "title": "Ingestion de lys ou de plante toxique",
+   "steps": [
+    "Même le pollen léché sur le pelage ou l’eau du vase peut suffire.",
+    "Ne faites pas vomir. Notez la plante et l’heure, gardez un échantillon.",
+    "Appelez immédiatement un vétérinaire ou un centre antipoison vétérinaire : plus le traitement est précoce, meilleur est le pronostic."
+   ]
+  },
+  {
+   "file": "secours-chat-14.png",
+   "sp": "chat",
+   "title": "Difficulté à respirer",
+   "steps": [
+    "Signes : respiration bouche ouverte, rapide, avec le ventre qui pompe, museau étiré, gencives bleutées.",
+    "Pas de manipulation inutile : gardez-le calme, sans stress ni contention.",
+    "Transportez-le en caisse couverte d’un linge, fenêtre entrouverte, vers une clinique ouverte, en prévenant à l’avance."
+   ]
+  },
+  {
+   "file": "secours-chat-15.png",
+   "sp": "chat",
+   "title": "Chute (syndrome du chat parachute)",
+   "steps": [
+    "Un chat tombé d’un balcon peut paraître normal alors qu’il a des lésions internes ou de la mâchoire, du palais, du thorax.",
+    "Consultez systématiquement, même s’il semble aller bien.",
+    "Transportez-le en caisse, sans le porter à bras."
+   ]
+  },
+  {
+   "file": "secours-chat-16.png",
+   "sp": "chat",
+   "title": "Saignement",
+   "steps": [
+    "Comprimez la plaie avec une compresse propre pendant 5 à 10 minutes, sans relâcher.",
+    "Bandez sans trop serrer. Pas de garrot sans avis vétérinaire.",
+    "Consultez : une plaie profonde, ou une morsure, est vite infectée."
+   ]
+  },
+  {
+   "file": "secours-chat-17.png",
+   "sp": "chat",
+   "title": "Morsure ou abcès",
+   "steps": [
+    "Signes : boule chaude et douloureuse, fièvre, abattement, souvent après une bagarre.",
+    "Ne percez pas vous-même. Consultez sous 24 heures : antibiotiques et drainage sont nécessaires."
+   ]
+  },
+  {
+   "file": "secours-chat-18.png",
+   "sp": "chat",
+   "title": "Fil ou corps étranger avalé",
+   "steps": [
+    "Ne tirez jamais sur un fil qui sort de la bouche ou de l’anus : vous risquez de couper l’intestin.",
+    "Coupez éventuellement la partie qui dépasse à proximité, sans tirer, et allez en urgence chez le vétérinaire."
+   ]
+  },
+  {
+   "file": "secours-chat-19.png",
+   "sp": "chat",
+   "title": "Intoxication (pipette pour chien, plante, produit)",
+   "steps": [
+    "Signes : salivation, tremblements, vomissements, convulsions, pupilles dilatées.",
+    "Pipette pour chien : lavez délicatement au savon doux avec de l’eau tiède, séchez, puis consultez en urgence.",
+    "Appelez un vétérinaire ou un centre antipoison vétérinaire avec le nom du produit."
+   ]
+  },
+  {
+   "file": "secours-chat-20.png",
+   "sp": "chat",
+   "title": "Convulsions",
+   "steps": [
+    "Éloignez les objets dangereux, baissez lumière et bruit. Ne mettez jamais la main dans sa gueule.",
+    "Notez la durée. Plus de 3 à 5 minutes, crises répétées ou première crise : urgence vétérinaire."
+   ]
+  },
+  {
+   "file": "secours-chat-21.png",
+   "sp": "chat",
+   "title": "Coup de chaleur",
+   "steps": [
+    "Signes : halètement (inhabituel chez le chat), bave, prostration, gencives rouge foncé.",
+    "Placez-le dans un endroit frais, mouillez délicatement les pattes et le ventre avec de l’eau tiède, ventilez.",
+    "Appelez un vétérinaire en urgence."
+   ]
+  },
+  {
+   "file": "secours-chat-22.png",
+   "sp": "chat",
+   "title": "Paralysie des pattes arrière, cris de douleur",
+   "steps": [
+    "Signes : cris soudains, pattes arrière froides, dures ou traînantes : possible caillot (thrombo-embolie).",
+    "Urgence absolue : ne le manipulez pas plus que nécessaire et partez tout de suite."
+   ]
+  }
+ ],
+ "lessons": [
+  {
+   "file": "lecon-chien-001.png",
+   "sp": "chien",
+   "title": "Premiers pas : le marqueur « Oui ! » et son prénom",
+   "goal": "Votre chien associe « Oui ! » à une friandise, et se retourne vers vous dès qu’il entend son prénom.",
+   "level": "Débutant",
+   "dur": "2 min × 3 par jour",
+   "free": true
+  },
+  {
+   "file": "lecon-chien-002.png",
+   "sp": "chien",
+   "title": "Assis",
+   "goal": "Votre chien s’assoit sur signal, avec ou sans geste, dans plusieurs situations.",
+   "level": "Débutant",
+   "dur": "3 min × 3 par jour",
+   "free": true
+  },
+  {
+   "file": "lecon-chien-003.png",
+   "sp": "chien",
+   "title": "Propreté du chiot",
+   "goal": "Votre chiot fait ses besoins dehors, de plus en plus souvent seul, et attend le matin sans accident.",
+   "level": "Débutant",
+   "dur": "Tout au long de la journée",
+   "free": true
+  },
+  {
+   "file": "lecon-chien-004.png",
+   "sp": "chien",
+   "title": "Coucher",
+   "goal": "Votre chien se couche sur signal et y reste quelques secondes, détendu.",
+   "level": "Débutant",
+   "dur": "3 min × 3 par jour",
+   "free": true
+  },
+  {
+   "file": "lecon-chien-005.png",
+   "sp": "chien",
+   "title": "Reste : l’attente et la maîtrise de soi",
+   "goal": "Votre chien reste immobile à sa place jusqu’à ce que vous le libériez (mot de libération).",
+   "level": "Intermédiaire",
+   "dur": "3 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-006.png",
+   "sp": "chien",
+   "title": "Rappel : « Ici ! » fiable",
+   "goal": "Votre chien revient vers vous quand vous l’appelez, même face à une distraction.",
+   "level": "Intermédiaire",
+   "dur": "5 min × 2-3 par jour",
+   "free": true
+  },
+  {
+   "file": "lecon-chien-007.png",
+   "sp": "chien",
+   "title": "Marcher en laisse sans tirer",
+   "goal": "Votre chien marche à vos côtés avec une laisse détendue en forme de « J ».",
+   "level": "Intermédiaire",
+   "dur": "10 min × 2 par jour",
+   "free": true
+  },
+  {
+   "file": "lecon-chien-008.png",
+   "sp": "chien",
+   "title": "Laisse-le et Donne : ne pas ramasser, savoir lâcher",
+   "goal": "Votre chien se détourne d’un objet ou d’une nourriture sur signal, et lâche ce qu’il a dans la gueule contre un échange.",
+   "level": "Intermédiaire",
+   "dur": "3 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-009.png",
+   "sp": "chien",
+   "title": "La Place : un tapis pour se calmer",
+   "goal": "Votre chien va sur son tapis (ou son panier) sur signal et s’y couche calmement pendant que vous vaquez à vos occupations.",
+   "level": "Intermédiaire",
+   "dur": "3 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-010.png",
+   "sp": "chien",
+   "title": "Apprendre la solitude (et prévenir l’anxiété de séparation)",
+   "goal": "Votre chien reste seul, calme, une durée qui augmente lentement.",
+   "level": "Important",
+   "dur": "Séances de quelques minutes, chaque jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-011.png",
+   "sp": "chien",
+   "title": "Socialisation et habituation : bien grandir dans le monde",
+   "goal": "Votre chiot rencontre positivement une grande variété de personnes, animaux, bruits, sols et situations avant 4 à 6 mois.",
+   "level": "Essentiel",
+   "dur": "1 nouvelle expérience positive par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-012.png",
+   "sp": "chien",
+   "title": "Manipulations et soins coopératifs (vétérinaire, griffes, brossage)",
+   "goal": "Votre chien accepte, voire apprécie, d’être touché, brossé, examiné, et de subir les soins de base (pattes, oreilles, gueule, griffes).",
+   "level": "Essentiel",
+   "dur": "3 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-013.png",
+   "sp": "chien",
+   "title": "Ne plus sauter sur les gens : saluer poliment",
+   "goal": "Votre chien salue les personnes en gardant les quatre pattes au sol, même quand il est excité.",
+   "level": "Intermédiaire",
+   "dur": "3 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-014.png",
+   "sp": "chien",
+   "title": "Mordillements du chiot : apprendre la douceur",
+   "goal": "Votre chiot contrôle la force de sa mâchoire, arrête de mordiller les mains et les vêtements, et mâche des objets adaptés.",
+   "level": "Essentiel",
+   "dur": "À chaque jeu, 5 min de séances dédiées",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-015.png",
+   "sp": "chien",
+   "title": "La caisse : une « chambre à soi »",
+   "goal": "Votre chien entre de lui-même dans sa caisse, s’y détend, et y reste calmement quelques heures.",
+   "level": "Essentiel",
+   "dur": "5 min × 4 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-016.png",
+   "sp": "chien",
+   "title": "Voyager en voiture sereinement",
+   "goal": "Votre chien monte en voiture volontiers, voyage installé en sécurité et sans stress ni nausée.",
+   "level": "Intermédiaire",
+   "dur": "5 min × 2-3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-017.png",
+   "sp": "chien",
+   "title": "Aboiements : comprendre et réduire",
+   "goal": "Votre chien aboie moins, sait se taire sur signal, et dispose d’une alternative claire à l’aboiement.",
+   "level": "Intermédiaire",
+   "dur": "5 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-018.png",
+   "sp": "chien",
+   "title": "Sonnette et visiteurs : un accueil calme",
+   "goal": "Votre chien reste calme à la sonnette et accueille les visiteurs sans sauter ni aboyer excessivement.",
+   "level": "Intermédiaire",
+   "dur": "5 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-019.png",
+   "sp": "chien",
+   "title": "Marche au pied : un suivi précis",
+   "goal": "Votre chien marche à hauteur de votre jambe, attentif, en suivant vos changements de rythme et de direction, même sans laisse.",
+   "level": "Avancé",
+   "dur": "5 min × 2-3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-020.png",
+   "sp": "chien",
+   "title": "Rapporter : le jeu de rapport",
+   "goal": "Votre chien poursuit un jouet, le rapporte et le donne, avec plaisir.",
+   "level": "Intermédiaire",
+   "dur": "5 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-021.png",
+   "sp": "chien",
+   "title": "Cherche ! Les jeux d’odorat",
+   "goal": "Votre chien cherche des friandises ou des objets cachés, avec méthode et plaisir, sur le signal « Cherche ! ».",
+   "level": "Tous niveaux",
+   "dur": "5 min par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-022.png",
+   "sp": "chien",
+   "title": "Petits tours : patte, tourne, roule",
+   "goal": "Votre chien apprend « Donne la patte », « Tourne » et « Roule » : de la stimulation mentale et de la complicité.",
+   "level": "Débutant",
+   "dur": "3 min × 2-3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-023.png",
+   "sp": "chien",
+   "title": "Bruits forts, orages et pétards",
+   "goal": "Votre chien reste serein (ou nettement plus calme) face aux bruits forts : orage, pétards, aspirateur, feux d’artifice.",
+   "level": "Important",
+   "dur": "5 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-024.png",
+   "sp": "chien",
+   "title": "Rencontrer d’autres chiens sereinement",
+   "goal": "Votre chien voit un autre chien sans tirer, aboyer ni se jeter dessus, et se tourne vers vous pour sa récompense.",
+   "level": "Avancé",
+   "dur": "10 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-025.png",
+   "sp": "chien",
+   "title": "Muselière : un conditionnement positif",
+   "goal": "Votre chien met son museau dans la muselière volontairement, l’accepte quelques minutes, sans stress.",
+   "level": "Utile",
+   "dur": "3 min × 2-3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-026.png",
+   "sp": "chien",
+   "title": "Stop et demi-tour d’urgence",
+   "goal": "Votre chien s’arrête net au mot « Stop » (assis ou couché, même à distance) et fait demi-tour à côté de vous sur « Demi-tour », pour éviter un danger.",
+   "level": "Avancé",
+   "dur": "5 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-027.png",
+   "sp": "chien",
+   "title": "Attendre : la porte, la gamelle, la voiture",
+   "goal": "Votre chien attend calmement avant de franchir une porte, de manger ou de sortir de la voiture, jusqu’à ce que vous le libériez.",
+   "level": "Intermédiaire",
+   "dur": "3 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-028.png",
+   "sp": "chien",
+   "title": "Debout : un chien facile à examiner",
+   "goal": "Votre chien se met debout sur signal et reste immobile pendant que vous le touchez, le brossez ou que le vétérinaire l’examine.",
+   "level": "Utile",
+   "dur": "3 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-029.png",
+   "sp": "chien",
+   "title": "La gym du chien : équilibre, force et conscience du corps",
+   "goal": "Votre chien renforce ses muscles, améliore son équilibre et sa coordination avec des exercices simples, sûrs et ludiques.",
+   "level": "Utile",
+   "dur": "5 à 10 min × 3 par semaine",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-030.png",
+   "sp": "chien",
+   "title": "Le nom des jouets : « apporte-moi… » et « range »",
+   "goal": "Votre chien connaît le nom de plusieurs jouets, vous apporte celui que vous demandez et sait les ranger dans un panier.",
+   "level": "Avancé",
+   "dur": "5 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-031.png",
+   "sp": "chien",
+   "title": "Partage serein : prévenir la garde de ressources",
+   "goal": "Votre chien accepte qu’on s’approche de sa gamelle, de ses jouets ou de son os, sans tension, et apprend qu’un humain qui approche est une bonne nouvelle.",
+   "level": "Important",
+   "dur": "3 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-032.png",
+   "sp": "chien",
+   "title": "Bain, séchage et toilettage sans stress",
+   "goal": "Votre chien accepte le bain, le séchage, le brossage et la tondeuse dans le calme.",
+   "level": "Utile",
+   "dur": "3 min × 3 par jour puis séances courtes",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-033.png",
+   "sp": "chien",
+   "title": "Chien et enfants : cohabiter en sécurité",
+   "goal": "Enfants et chien vivent ensemble dans le respect, sous surveillance, avec des règles simples que chacun comprend.",
+   "level": "Essentiel",
+   "dur": "Règles à appliquer chaque jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-034.png",
+   "sp": "chien",
+   "title": "Présenter son chien à un chat",
+   "goal": "Votre chien reste calme en présence du chat et le laisse tranquille, dans la maison comme dehors.",
+   "level": "Intermédiaire",
+   "dur": "10 min × 2-3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-035.png",
+   "sp": "chien",
+   "title": "Traverser l’adolescence (6 à 18 mois)",
+   "goal": "Vous traversez sans casse la période où le chien « oublie tout » : rappel, propreté, obéissance, énergie.",
+   "level": "Essentiel",
+   "dur": "Quelques minutes, plusieurs fois par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-036.png",
+   "sp": "chien",
+   "title": "Chien senior : rester en forme et serein",
+   "goal": "Votre chien âgé garde sa mobilité, sa curiosité et son confort, avec un quotidien adapté.",
+   "level": "Essentiel",
+   "dur": "10 min par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-037.png",
+   "sp": "chien",
+   "title": "Adopter un chien adulte : les 3 premières semaines",
+   "goal": "Votre chien adopté (refuge, particulier) prend ses marques, se sent en sécurité et révèle progressivement sa personnalité.",
+   "level": "Essentiel",
+   "dur": "Quelques minutes, plusieurs fois par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-038.png",
+   "sp": "chien",
+   "title": "Partir en vacances avec son chien",
+   "goal": "Vous partez en vacances avec votre chien dans de bonnes conditions : papiers, santé, hébergement, chaleur, tiques, sécurité.",
+   "level": "Utile",
+   "dur": "Préparation avant le départ",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-039.png",
+   "sp": "chien",
+   "title": "Regarde-moi : l’attention à la demande",
+   "goal": "Votre chien vous regarde dans les yeux dès que vous dites « Regarde », dans le calme puis avec des distractions, et garde son attention quelques secondes.",
+   "level": "Débutant",
+   "dur": "3 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-040.png",
+   "sp": "chien",
+   "title": "Maîtrise de soi : le jeu du « c’est ton choix »",
+   "goal": "Votre chien choisit de lui-même de ne pas se jeter sur la nourriture ou le jouet qu’on lui propose, et attend calmement qu’on l’autorise.",
+   "level": "Intermédiaire",
+   "dur": "3 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-041.png",
+   "sp": "chien",
+   "title": "Chien réactif en laisse : aboiements et fonçages",
+   "goal": "Votre chien reste calme en croisant un autre chien (ou un déclencheur) à une distance de plus en plus courte, sans aboyer ni foncer, et se tourne vers vous de lui-même.",
+   "level": "Avancé",
+   "dur": "10 min × 1 à 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-042.png",
+   "sp": "chien",
+   "title": "Mâchouiller sans tout détruire",
+   "goal": "Votre chien mâche ses propres jouets et mâchouilles à la maison, laisse meubles et chaussures tranquilles, et se détend en travaillant un jouet fourré.",
+   "level": "Intermédiaire",
+   "dur": "5 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-043.png",
+   "sp": "chien",
+   "title": "Instinct de chasse : vélos, joggers, chats et gibier",
+   "goal": "Votre chien remarque un cycliste, un coureur ou un animal en mouvement, mais se tourne vers vous au lieu de poursuivre, et vous suit sur « Par ici » ou « Stop ».",
+   "level": "Avancé",
+   "dur": "5 à 10 min × 1 à 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-044.png",
+   "sp": "chien",
+   "title": "Vie en ville : trottoirs, ascenseurs, terrasses, transports",
+   "goal": "Votre chien marche calmement en ville, entre dans un ascenseur, patiente sous une table de café et voyage dans les transports autorisés, sans stress.",
+   "level": "Intermédiaire",
+   "dur": "10 min × 1 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-045.png",
+   "sp": "chien",
+   "title": "Partir en randonnée avec son chien",
+   "goal": "Vous partez en randonnée avec un chien en forme, préparé, équipé, qui boit régulièrement, marche à un rythme adapté et revient sans blessure ni coup de chaleur.",
+   "level": "Intermédiaire",
+   "dur": "Préparation sur 3 semaines",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-046.png",
+   "sp": "chien",
+   "title": "Brossage des dents et hygiène dentaire",
+   "goal": "Votre chien accepte le brossage de ses dents plusieurs fois par semaine, voire chaque jour, sans stress, et vous repérez les signes d’un problème dentaire.",
+   "level": "Utile",
+   "dur": "2 min × 1 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-047.png",
+   "sp": "chien",
+   "title": "Fini les vols de nourriture : plan de travail, poubelle, table",
+   "goal": "Votre chien laisse le plan de travail, la table et la poubelle tranquilles, se couche pendant que vous cuisinez ou mangez et attend sa récompense.",
+   "level": "Intermédiaire",
+   "dur": "5 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-048.png",
+   "sp": "chien",
+   "title": "Chez le vétérinaire sans stress : les visites de plaisir",
+   "goal": "Votre chien entre chez le vétérinaire détendu, monte sur la table ou la balance, se laisse examiner et repart heureux.",
+   "level": "Essentiel",
+   "dur": "5 à 10 min × 2 par semaine",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-049.png",
+   "sp": "chien",
+   "title": "Aimer l’eau : baignade et sécurité aquatique",
+   "goal": "Votre chien entre dans l’eau volontairement, à son rythme, porte un gilet de flottaison si besoin et sort en sécurité.",
+   "level": "Intermédiaire",
+   "dur": "10 min × 2 par semaine",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-050.png",
+   "sp": "chien",
+   "title": "Les premières nuits du chiot",
+   "goal": "Votre chiot dort dans son coin, se réveille de moins en moins souvent et apprend à faire ses nuits, sans pleurs prolongés.",
+   "level": "Essentiel",
+   "dur": "Chaque nuit",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-051.png",
+   "sp": "chien",
+   "title": "Jeux d’intelligence : occuper l’esprit à la maison",
+   "goal": "Votre chien joue chaque jour à des jeux de recherche et de réflexion, se fatigue mentalement et devient plus calme à la maison.",
+   "level": "Tous niveaux",
+   "dur": "10 min × 1 à 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-052.png",
+   "sp": "chien",
+   "title": "Chien et arrivée d’un bébé",
+   "goal": "Votre chien accueille le bébé calmement, s’habitue à ses sons et odeurs, reste sur sa place et n’est jamais laissé seul avec lui.",
+   "level": "Essentiel",
+   "dur": "Préparation sur 3 à 6 mois",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-053.png",
+   "sp": "chien",
+   "title": "Chien craintif avec les inconnus : gagner confiance",
+   "goal": "Votre chien reste détendu en présence d’inconnus, choisit d’aller vers eux à son rythme et n’a plus besoin de fuir ou d’aboyer.",
+   "level": "Avancé",
+   "dur": "5 à 10 min × 1 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-054.png",
+   "sp": "chien",
+   "title": "Deux chiens à la maison : les présenter et les faire cohabiter",
+   "goal": "Vos deux chiens se présentent sereinement, partagent la maison, jouent sans conflit et disposent chacun de leurs ressources.",
+   "level": "Intermédiaire",
+   "dur": "Préparation sur 2 semaines",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-055.png",
+   "sp": "chien",
+   "title": "Prendre un comprimé, des gouttes ou une pommade sans lutte",
+   "goal": "Votre chien avale ses comprimés sans les recracher, accepte les gouttes dans les yeux et les oreilles et se laisse appliquer une pommade, calmement.",
+   "level": "Essentiel",
+   "dur": "2 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-056.png",
+   "sp": "chien",
+   "title": "Couper les griffes sans stress",
+   "goal": "Votre chien donne sa patte, se laisse couper ou limer les griffes, une par une, en restant détendu, et vous savez éviter la partie vivante de l’ongle.",
+   "level": "Utile",
+   "dur": "2 min × 1 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-057.png",
+   "sp": "chien",
+   "title": "Brossage du pelage et entretien selon le type de poil",
+   "goal": "Votre chien apprécie le brossage, vous utilisez la bonne brosse pour son pelage, et son poil reste propre, sans nœuds ni bourre accumulée.",
+   "level": "Utile",
+   "dur": "5 min × 3 par semaine",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-058.png",
+   "sp": "chien",
+   "title": "Courir avec son chien : canicross, jogging et vélo",
+   "goal": "Votre chien court avec vous à un rythme adapté, en harnais de traction ou en laisse, répond aux signaux de direction et termine ses sorties en forme.",
+   "level": "Intermédiaire",
+   "dur": "15 à 30 min × 2 par semaine",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-059.png",
+   "sp": "chien",
+   "title": "Mini-agility à la maison et au jardin",
+   "goal": "Votre chien franchit un petit parcours (tunnel, slalom, sauts bas, table) sur vos signaux, avec entrain et en sécurité.",
+   "level": "Intermédiaire",
+   "dur": "10 min × 2 par semaine",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-060.png",
+   "sp": "chien",
+   "title": "Le jeu de tir (tug) avec des règles : « Prends » et « Lâche »",
+   "goal": "Votre chien joue à tirer sur un jouet avec entrain, lâche immédiatement sur « Lâche », attend « Prends » pour reprendre, et ne touche jamais vos mains.",
+   "level": "Débutant",
+   "dur": "5 min × 1 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-061.png",
+   "sp": "chien",
+   "title": "La longe : de la liberté en toute sécurité",
+   "goal": "Votre chien profite de la balade au bout d’une longe de 5 à 10 mètres sans s’y emmêler, revient quand vous l’appelez, et vous manipulez la longe sans vous brûler les mains.",
+   "level": "Intermédiaire",
+   "dur": "À chaque balade",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-062.png",
+   "sp": "chien",
+   "title": "Accepter le harnais, le manteau, les bottines et le gilet",
+   "goal": "Votre chien tend la tête dans le harnais, accepte le manteau, marche normalement avec des bottines et porte un gilet réfléchissant ou de flottaison sans stress.",
+   "level": "Utile",
+   "dur": "3 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-063.png",
+   "sp": "chien",
+   "title": "Le protocole de relaxation : apprendre à se détendre sur demande",
+   "goal": "Votre chien se couche sur son tapis, se détend (hanche basculée, respiration lente) et reste calme pendant que vous vous déplacez, ouvrez une porte ou qu’on sonne.",
+   "level": "Intermédiaire",
+   "dur": "5 à 10 min × 1 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-064.png",
+   "sp": "chien",
+   "title": "Voyager en train et en avion avec son chien",
+   "goal": "Votre chien voyage en train ou en avion sereinement, dans son sac ou sa caisse, avec tous les documents et l’équipement nécessaires.",
+   "level": "Intermédiaire",
+   "dur": "Préparation sur 3 à 6 semaines",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-065.png",
+   "sp": "chien",
+   "title": "Préparer une garde : pension, pet-sitter ou famille",
+   "goal": "Votre chien passe une garde (pension, pet-sitter ou famille) sans stress, avec ses habitudes respectées et toutes les informations transmises.",
+   "level": "Utile",
+   "dur": "Préparation sur 2 à 4 semaines",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-066.png",
+   "sp": "chien",
+   "title": "Comprendre son chien : le langage du corps",
+   "goal": "Vous savez lire les émotions de votre chien (détente, joie, inconfort, peur, menace) et réagir avant qu’une situation ne dégénère.",
+   "level": "Essentiel",
+   "dur": "10 min d’observation par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-067.png",
+   "sp": "chien",
+   "title": "La balade de reniflage : la sortie qui apaise",
+   "goal": "Votre chien profite régulièrement d’une balade lente, où il renifle librement, et revient plus calme et plus détendu qu’une course au parc.",
+   "level": "Tous niveaux",
+   "dur": "20 à 45 min × 2 par semaine",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-068.png",
+   "sp": "chien",
+   "title": "Chien sourd ou malvoyant : éduquer autrement",
+   "goal": "Votre chien sourd ou malvoyant comprend vos signaux (gestes, vibrations, toucher, odeurs), vient à vous et vit une vie sereine et sûre.",
+   "level": "Utile",
+   "dur": "5 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-069.png",
+   "sp": "chien",
+   "title": "Repos forcé et collerette : occuper un chien en convalescence",
+   "goal": "Votre chien respecte le repos prescrit après une opération ou une blessure, accepte la collerette ou le body, et reste calme et occupé sans se blesser.",
+   "level": "Utile",
+   "dur": "Pendant la convalescence",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-070.png",
+   "sp": "chien",
+   "title": "Manger ce qui traîne : déchets, crottes et objets",
+   "goal": "Votre chien ignore déchets, crottes et objets au sol en balade, les laisse sur « Laisse-le », et se tourne vers vous au lieu de ramasser.",
+   "level": "Important",
+   "dur": "5 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-071.png",
+   "sp": "chien",
+   "title": "Le chien qui creuse le jardin",
+   "goal": "Votre chien creuse uniquement dans son coin autorisé (bac à fouille) et laisse le reste du jardin tranquille.",
+   "level": "Utile",
+   "dur": "10 min × 1 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-072.png",
+   "sp": "chien",
+   "title": "Fugues : clôture, portail et prévention",
+   "goal": "Votre chien ne s’échappe plus du jardin ni par la porte d’entrée, attend votre signal pour sortir, et est identifié pour être retrouvé s’il fugue.",
+   "level": "Important",
+   "dur": "10 min × 1 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-073.png",
+   "sp": "chien",
+   "title": "Règles de la maison : canapé, lit et pièces interdites",
+   "goal": "Votre chien respecte les règles choisies par la famille : il monte sur le canapé uniquement sur invitation (ou jamais), descend sur « Descends » et reste hors des pièces interdites.",
+   "level": "Utile",
+   "dur": "3 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-074.png",
+   "sp": "chien",
+   "title": "Jouer avec les autres chiens : parc canin et bonnes manières",
+   "goal": "Votre chien joue sainement avec des chiens compatibles, respecte les pauses, revient à vous au rappel, et vous savez repérer quand il faut intervenir.",
+   "level": "Intermédiaire",
+   "dur": "15 à 30 min × 2 par semaine",
+   "free": false
+  },
+  {
+   "file": "lecon-chien-075.png",
+   "sp": "chien",
+   "title": "Tours avancés : recule, slalom entre les jambes, salut, fais le mort",
+   "goal": "Votre chien exécute 4 tours spectaculaires sur signal, avec plaisir : recule, slalom entre vos jambes, salut (révérence) et « Pan ! » (fait le mort).",
+   "level": "Avancé",
+   "dur": "5 min × 1 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-076.png",
+   "sp": "chat",
+   "title": "Litière : les bons réglages",
+   "goal": "Votre chat utilise sa litière de façon fiable, et vous savez repérer les signes de problème urinaire.",
+   "level": "Essentiel",
+   "dur": "Réglages une fois, entretien quotidien",
+   "free": true
+  },
+  {
+   "file": "lecon-chat-077.png",
+   "sp": "chat",
+   "title": "Griffoir : préserver les meubles",
+   "goal": "Votre chat utilise ses griffoirs plutôt que le canapé.",
+   "level": "Essentiel",
+   "dur": "5 min × 2 par jour au début",
+   "free": true
+  },
+  {
+   "file": "lecon-chat-078.png",
+   "sp": "chat",
+   "title": "Arrivée du chaton : les 7 premiers jours",
+   "goal": "Votre chaton se sent en sécurité, mange, utilise sa litière, explore et apprend à aimer la vie avec vous.",
+   "level": "Essentiel",
+   "dur": "Quelques minutes, plusieurs fois par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-079.png",
+   "sp": "chat",
+   "title": "Caisse de transport et vétérinaire sans stress",
+   "goal": "Votre chat entre dans sa caisse sans résistance et supporte le trajet et la consultation avec un stress réduit.",
+   "level": "Essentiel",
+   "dur": "3 min × 2 par jour",
+   "free": true
+  },
+  {
+   "file": "lecon-chat-080.png",
+   "sp": "chat",
+   "title": "Jeu et enrichissement : la chasse simulée",
+   "goal": "Votre chat dépense son énergie de chasseur chaque jour, est moins destructeur, moins gras et plus équilibré.",
+   "level": "Essentiel",
+   "dur": "5 à 10 min × 2-3 par jour",
+   "free": true
+  },
+  {
+   "file": "lecon-chat-081.png",
+   "sp": "chat",
+   "title": "Clicker et cible : viens, assis, touche",
+   "goal": "Votre chat vient à l’appel, touche une cible avec le nez et s’assoit sur demande, avec plaisir.",
+   "level": "Débutant",
+   "dur": "2 à 3 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-082.png",
+   "sp": "chat",
+   "title": "Soins et manipulations : brossage, griffes, comprimé",
+   "goal": "Votre chat accepte d’être brossé, d’avoir les griffes coupées, d’être examiné et de prendre un comprimé sans stress.",
+   "level": "Essentiel",
+   "dur": "3 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-083.png",
+   "sp": "chat",
+   "title": "Présenter deux animaux : chat/chat, chat/chien",
+   "goal": "Deux animaux apprennent à cohabiter dans le calme, sans bagarre ni stress.",
+   "level": "Intermédiaire",
+   "dur": "10 min × 2-3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-084.png",
+   "sp": "chat",
+   "title": "Chat craintif : gagner sa confiance",
+   "goal": "Votre chat timide se cache moins, vient à vous de lui-même et accepte votre présence, vos caresses et les visiteurs.",
+   "level": "Important",
+   "dur": "5 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-085.png",
+   "sp": "chat",
+   "title": "Harnais et sorties en sécurité",
+   "goal": "Votre chat accepte un harnais bien ajusté et explore dehors en toute sécurité, à son rythme.",
+   "level": "Utile",
+   "dur": "3 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-086.png",
+   "sp": "chat",
+   "title": "Miaulements et réveils la nuit",
+   "goal": "Votre chat dort la nuit ou reste calme, sans vous réveiller à 4 h du matin.",
+   "level": "Utile",
+   "dur": "Routine du soir",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-087.png",
+   "sp": "chat",
+   "title": "Chat senior : confort, santé et complicité",
+   "goal": "Votre chat âgé garde son confort, sa mobilité et son appétit, avec des soins et un environnement adaptés.",
+   "level": "Essentiel",
+   "dur": "10 min par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-088.png",
+   "sp": "chat",
+   "title": "Aménager sa maison pour un chat épanoui",
+   "goal": "Votre logement offre à votre chat de la verticalité, des cachettes, des zones de chasse et de repos, pour un chat calme et en forme.",
+   "level": "Essentiel",
+   "dur": "Aménagement à faire une fois",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-089.png",
+   "sp": "chat",
+   "title": "Bien nourrir son chat : eau, ration et poids",
+   "goal": "Votre chat mange une alimentation adaptée en quantité, boit assez, garde un poids idéal.",
+   "level": "Essentiel",
+   "dur": "Routine quotidienne",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-090.png",
+   "sp": "chat",
+   "title": "Griffes et morsures pendant le jeu : rediriger l’énergie",
+   "goal": "Votre chat joue avec des jouets (et non avec vos mains ou vos chevilles), s’arrête quand vous stoppez le jeu et se calme après la chasse.",
+   "level": "Essentiel",
+   "dur": "5 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-091.png",
+   "sp": "chat",
+   "title": "Pipi hors de la litière : comprendre et résoudre",
+   "goal": "Votre chat retrouve l’usage de sa litière, avec une cause identifiée (médicale, environnementale ou émotionnelle) et des solutions adaptées.",
+   "level": "Essentiel",
+   "dur": "5 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-092.png",
+   "sp": "chat",
+   "title": "Déménagement et changements : préserver la sérénité",
+   "goal": "Votre chat s’adapte à un nouveau logement, une arrivée ou un changement de rythme avec un minimum de stress, mange, joue et utilise sa litière normalement.",
+   "level": "Utile",
+   "dur": "Préparation sur 2 semaines",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-093.png",
+   "sp": "chat",
+   "title": "Laisser son chat seul : week-ends, journées et vacances",
+   "goal": "Votre chat supporte vos absences (journée, week-end, vacances) sans stress, avec ses besoins vitaux assurés, en sécurité et occupé.",
+   "level": "Utile",
+   "dur": "Préparation progressive",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-094.png",
+   "sp": "chat",
+   "title": "Dents du chat : brossage et repérage des problèmes",
+   "goal": "Votre chat accepte qu’on touche sa bouche et, si possible, le brossage régulier, et vous savez repérer les signes de douleur dentaire.",
+   "level": "Utile",
+   "dur": "2 min × 1 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-095.png",
+   "sp": "chat",
+   "title": "Chat et arrivée d’un bébé",
+   "goal": "Votre chat accueille le bébé sereinement, garde ses repères, ses refuges en hauteur et n’est jamais laissé sans surveillance auprès de lui.",
+   "level": "Essentiel",
+   "dur": "Préparation sur 2 à 3 mois",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-096.png",
+   "sp": "chat",
+   "title": "Faire boire son chat : hydratation et santé urinaire",
+   "goal": "Votre chat boit davantage grâce à plusieurs points d’eau attractifs et à une alimentation adaptée, pour protéger ses reins et sa vessie.",
+   "level": "Essentiel",
+   "dur": "5 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-097.png",
+   "sp": "chat",
+   "title": "Chat en surpoids : perdre du poids en douceur",
+   "goal": "Votre chat retrouve un poids sain, progressivement et sans conflit, grâce à une ration mesurée, davantage de jeu et un suivi régulier.",
+   "level": "Essentiel",
+   "dur": "10 min × 1 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-098.png",
+   "sp": "chat",
+   "title": "Chat qui sort : sécurité, identification et catio",
+   "goal": "Votre chat profite de l’extérieur en sécurité : identifié, protégé, avec un accès contrôlé (catio, harnais ou sorties encadrées) et un retour fiable.",
+   "level": "Utile",
+   "dur": "Préparation sur 2 à 4 semaines",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-099.png",
+   "sp": "chat",
+   "title": "Comprendre son chat : queue, oreilles, yeux et ronronnements",
+   "goal": "Vous savez lire les émotions de votre chat (confiance, envie de jeu, agacement, peur, douleur) et adapter vos gestes avant qu’il ne griffe, ne morde ou ne se cache.",
+   "level": "Essentiel",
+   "dur": "10 min d’observation par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-100.png",
+   "sp": "chat",
+   "title": "Caresses : respecter ses limites (et éviter les morsures)",
+   "goal": "Votre chat vient chercher le contact, apprécie des caresses courtes aux bons endroits, et vous vous arrêtez avant qu’il ne morde ou ne griffe.",
+   "level": "Essentiel",
+   "dur": "3 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-101.png",
+   "sp": "chat",
+   "title": "Brossage et boules de poils",
+   "goal": "Votre chat accepte le brossage avec plaisir, son pelage reste sans nœuds, et les boules de poils diminuent.",
+   "level": "Utile",
+   "dur": "3 min × 3 par semaine",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-102.png",
+   "sp": "chat",
+   "title": "Couper les griffes de son chat",
+   "goal": "Votre chat accepte qu’on lui prenne les pattes, sorte ses griffes et en coupe la pointe, une ou deux à la fois, sans stress.",
+   "level": "Utile",
+   "dur": "2 min × 1 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-103.png",
+   "sp": "chat",
+   "title": "Donner un comprimé ou un sirop à son chat",
+   "goal": "Votre chat avale ses médicaments (comprimé, gélule, sirop) sans lutte, grâce à des techniques douces préparées à l’avance.",
+   "level": "Essentiel",
+   "dur": "2 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-104.png",
+   "sp": "chat",
+   "title": "Tables et plans de travail : offrir mieux en hauteur",
+   "goal": "Votre chat préfère ses perchoirs aux plans de travail et à la table, et vous n’avez plus besoin de le chasser.",
+   "level": "Utile",
+   "dur": "5 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-105.png",
+   "sp": "chat",
+   "title": "Fenêtres et balcons : prévenir les chutes",
+   "goal": "Votre maison est sécurisée (filets, moustiquaires, fenêtres oscillo-battantes protégées) et votre chat profite de la vue sans risque de chute.",
+   "level": "Essentiel",
+   "dur": "Aménagement sur 1 semaine",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-106.png",
+   "sp": "chat",
+   "title": "Faire venir son chat : le rappel au son",
+   "goal": "Votre chat accourt quand il entend un son précis (sifflet, claquement de langue, boîte secouée), à la maison et au jardin.",
+   "level": "Utile",
+   "dur": "2 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-107.png",
+   "sp": "chat",
+   "title": "Tours au clicker : tape m’en cinq, tourne, saute",
+   "goal": "Votre chat réalise 3 tours sur signal (tape m’en cinq, tourne sur lui-même, saute sur un tabouret), avec plaisir, en séances très courtes.",
+   "level": "Intermédiaire",
+   "dur": "3 min × 2 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-108.png",
+   "sp": "chat",
+   "title": "Voyager avec son chat : voiture, train et avion",
+   "goal": "Votre chat voyage en voiture, en train ou en avion dans sa caisse, sereinement, avec l’équipement et les documents nécessaires.",
+   "level": "Utile",
+   "dur": "Préparation sur 2 à 4 semaines",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-109.png",
+   "sp": "chat",
+   "title": "Socialiser son chaton : sons, gens, objets et manipulations",
+   "goal": "Votre chaton découvre sereinement les bruits, les personnes, les objets et les manipulations du quotidien, et devient un adulte confiant.",
+   "level": "Essentiel",
+   "dur": "5 min × 3 par jour",
+   "free": false
+  },
+  {
+   "file": "lecon-chat-110.png",
+   "sp": "chat",
+   "title": "Convalescence et collerette : aider son chat à guérir",
+   "goal": "Votre chat respecte le repos après une opération, garde sa collerette ou son body, mange, boit et utilise sa litière normalement.",
+   "level": "Utile",
+   "dur": "Pendant la convalescence",
+   "free": false
+  }
+ ]
+}
