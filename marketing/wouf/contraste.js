@@ -22,7 +22,17 @@ const SETS = [
     pairs: [
       { bad: ['💉', 'Vaccins et vermifuges oubliés'], good: ['📅', 'Rappels notés, prévenus à temps'] },
       { bad: ['🍖', 'Ration au jugé, poids jamais vérifié'], good: ['⚖️', 'Pesée régulière et ration mesurée'] },
-      { bad: ['🤞', 'On attend que ça passe tout seul'], good: ['🩺', 'Un appel au vétérinaire au moindre doute'] }] }
+      { bad: ['🤞', 'On attend que ça passe tout seul'], good: ['🩺', 'Un appel au vétérinaire au moindre doute'] }] },
+  { id: 'seniors-chiens', e: '👴', cover: [3, 'b'], hook: 'DANS UN MONDE OÙ LES CHIENS SENIORS…', tags: '#chien #chiensenior #vieuxchien #santeanimale',
+    pairs: [
+      { bad: ['🦴', 'Raideurs au lever : « c’est l’âge »'], good: ['🩺', 'Un avis vétérinaire : l’arthrose se soulage'] },
+      { bad: ['🥵', 'Une grande balade d’un coup, comme avant'], good: ['🌳', 'Deux ou trois petites balades douces'] },
+      { bad: ['📅', 'Une visite par an… quand on y pense'], good: ['✅', 'Deux bilans par an, notés dans Wouf'] }] },
+  { id: 'seniors-chats', e: '🐈', cover: [2, 'b'], hook: 'DANS UN MONDE OÙ LES CHATS SENIORS…', tags: '#chat #chatsenior #vieuxchat #santeanimale',
+    pairs: [
+      { bad: ['💧', 'Il boit plus ? On n’y prête pas attention'], good: ['🩺', 'On en parle au vétérinaire (reins, thyroïde)'] },
+      { bad: ['📦', 'Un bac à litière haut, dur à enjamber'], good: ['✨', 'Un bac à bord bas, facile d’accès'] },
+      { bad: ['😿', 'Il saute moins : « il vieillit, c’est tout »'], good: ['🪜', 'Une marche vers ses coins en hauteur et un avis vétérinaire'] }] }
 ];
 const photo = (id, n, ab) => { for (const ext of ['jpg', 'jpeg', 'png']) { const f = path.join(PH, `${id}-${n}-${ab}.${ext}`); if (fs.existsSync(f)) return `data:image/${ext === 'png' ? 'png' : 'jpeg'};base64,` + fs.readFileSync(f).toString('base64'); } return ''; };
 const css = h => `*{box-sizing:border-box}body{margin:0;font-family:"DejaVu Sans","Liberation Sans",system-ui,sans-serif;font-weight:900}.e{font-family:"Noto Color Emoji",sans-serif}.cv{width:1080px;height:${h}px;position:relative;overflow:hidden;color:#fff}
