@@ -392,14 +392,14 @@
  {
   "num": 38,
   "source": "make",
-  "kind": "fiche",
-  "id": "fiche-chien-11",
+  "kind": "leçon",
+  "id": "lecon-chien-075",
   "type": "image",
   "images": [
-   "fiche-chien-11.png"
+   "lecon-chien-075.png"
   ],
-  "caption": "⛔ Alcool : danger pour ton chien !\n\nTrès toxique, y compris dans certains desserts (tiramisu, gâteaux imbibés).\n\nUn doute ? Appelle tout de suite ton vétérinaire ou un centre antipoison vétérinaire.\n\n📌 Enregistre ce post pour t’en souvenir et envoie-le à un propriétaire de chien.\n\n⚠️ Information indicative : Wouf ne remplace jamais un vétérinaire. Retrouve tous les aliments toxiques et les premiers secours dans Wouf (lien dans la bio).\n\n#woufapp #chien #chiot #educationcanine #santeanimale",
-  "sp": "chien"
+  "sp": "chien",
+  "caption": "🎓 Éducation positive (chien) : Tours avancés : recule, slalom entre les jambes, salut, fais le mort\n\n🎯 Votre chien exécute 4 tours spectaculaires sur signal, avec plaisir : recule, slalom entre vos jambes, salut (révérence) et « Pan ! » (fait le mort).\n⏱️ Avancé · 5 min × 1 par jour\n\nDans Wouf, chaque leçon a son plan pas à pas et un petit quiz. Uniquement des méthodes positives : zéro punition.\n\nLien dans la bio 👆 Tu commences par quelle leçon ? 👇\n\n#woufapp #chien #chiot #educationcanine #santeanimale"
  },
  {
   "num": 39,
@@ -2296,17 +2296,5 @@
   ],
   "sp": "chien",
   "caption": "🎓 Éducation positive (chien) : Jouer avec les autres chiens : parc canin et bonnes manières\n\n🎯 Votre chien joue sainement avec des chiens compatibles, respecte les pauses, revient à vous au rappel, et vous savez repérer quand il faut intervenir.\n⏱️ Intermédiaire · 15 à 30 min × 2 par semaine\n\nDans Wouf, chaque leçon a son plan pas à pas et un petit quiz. Uniquement des méthodes positives : zéro punition.\n\nLien dans la bio 👆 Tu commences par quelle leçon ? 👇\n\n#woufapp #chien #chiot #educationcanine #santeanimale"
- },
- {
-  "num": 197,
-  "source": "make",
-  "kind": "leçon",
-  "id": "lecon-chien-075",
-  "type": "image",
-  "images": [
-   "lecon-chien-075.png"
-  ],
-  "sp": "chien",
-  "caption": "🎓 Éducation positive (chien) : Tours avancés : recule, slalom entre les jambes, salut, fais le mort\n\n🎯 Votre chien exécute 4 tours spectaculaires sur signal, avec plaisir : recule, slalom entre vos jambes, salut (révérence) et « Pan ! » (fait le mort).\n⏱️ Avancé · 5 min × 1 par jour\n\nDans Wouf, chaque leçon a son plan pas à pas et un petit quiz. Uniquement des méthodes positives : zéro punition.\n\nLien dans la bio 👆 Tu commences par quelle leçon ? 👇\n\n#woufapp #chien #chiot #educationcanine #santeanimale"
  }
 ]
