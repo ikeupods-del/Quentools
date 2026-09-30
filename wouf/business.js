@@ -10,14 +10,7 @@ const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free ==
 const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
 
 const CHANGELOG = [
-  { v: '1.13.2', date: '2026-09-30', items: ['🔛 Interrupteur des ventes simplifié'] },
-  { v: '1.13.1', date: '2026-09-30', items: ['💳 Paiement PayPal vers l’adresse choisie par l’éditeur, avec référence de dossier'] },
-  { v: '1.13.0', date: '2026-09-30', items: ['💳 Paiement uniquement par PayPal, avec dossier de paiement', '🛠️ Administration : paiements à vérifier et activation en un bouton'] },
-  { v: '1.12.2', date: '2026-09-30', items: ['💳 Paiement par PayPal'] },
-  { v: '1.12.1', date: '2026-09-30', items: ['💳 Réglage du paiement depuis l’administration'] },
-  { v: '1.12.0', date: '2026-09-30', items: ['🛠️ Espace d’administration pour l’éditeur de Wouf', '🔒 Résumé de compte visible par l’éditeur si vous êtes connecté avec Google (voir Confidentialité)'] },
-  { v: '1.11.1', date: '2026-09-30', items: ['🛠️ Petites améliorations'] },
-  { v: '1.11.0', date: '2026-09-30', items: ['🌐 Nouvelle adresse : woufapp.fr', '📊 Statistiques de visite anonymes, sans cookie (désactivables dans Réglages)', '📦 Transfert du carnet depuis l’ancienne adresse'] },
+  { v: '1.11.0', date: '2026-09-30', items: ['🌐 Nouvelle adresse : woufapp.fr', '📦 Transfert du carnet depuis l’ancienne adresse'] },
   { v: '1.10.0', date: '2026-09-29', items: ['🐾 Le parcours d’éducation devient un chemin d’empreintes de pattes : chaque leçon validée dore une empreinte.', '🦴 Les points deviennent des os à gagner : +10 par séance, +70 par leçon validée au quiz.', '✏️ Nouveau style des réponses du quiz (A, B, C).'] },
   { v: '1.9.2', date: '2026-09-29', items: ['✏️ Corrections de textes.'] },
   { v: '1.9.1', date: '2026-09-29', items: ['🏷️ Générateur de noms : un même nom n’apparaît plus deux fois dans les propositions.'] },
@@ -235,6 +228,8 @@ function initUpdates() {
   const had = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (had) showUpdateBanner(); });
   navigator.serviceWorker.getRegistration().then(reg => { if (reg) { setInterval(() => reg.update().catch(() => {}), 3600e3); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); }); } });
-  const seen = S.settings.seenVersion; if (seen && seen !== CFG.version) toast('Wouf a été mis à jour : voir les nouveautés dans « Plus »');
-  if (seen !== CFG.version) { S.settings.seenVersion = CFG.version; flush(); }
+  // « Nouveautés » ne liste que ce qui change pour l'utilisateur : pas de message pour une version purement technique.
+  const top = CHANGELOG[0].v, seen = S.settings.seenVersion, newer = (x, y) => { const a = x.split('.').map(Number), b = String(y || '0').split('.').map(Number); for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0); return false; };
+  if (seen && newer(top, seen)) toast('Wouf a été mis à jour : voir les nouveautés dans « Plus »');
+  if (seen !== top) { S.settings.seenVersion = top; flush(); }
 }

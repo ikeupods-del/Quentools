@@ -429,7 +429,9 @@ test('pages légales, nouveautés et alerte de mise à jour', async () => {
   await b.go('#/nouveautes'); assert.match(await text(p, '#view'), /Version 1\.2\.0/);
   await b.ev(() => showUpdateBanner()); assert.equal(await p.locator('#upd').isVisible(), true);
   noErrors(b); await b.ctx.close();
-  const u = await boot({ data: seed({ settings: { ...seed().settings, seenVersion: '1.0.0' } }) }); await u.page.waitForTimeout(400); assert.equal(await u.ev(() => S.settings.seenVersion), await u.ev(() => CFG.version)); await u.ctx.close();
+  const u = await boot({ data: seed({ settings: { ...seed().settings, seenVersion: '1.0.0' } }) }); await u.page.waitForTimeout(400); assert.equal(await u.ev(() => S.settings.seenVersion), await u.ev(() => CHANGELOG[0].v)); assert.match(await text(u.page, '#toast'), /mis à jour/); await u.ctx.close();
+  // version purement technique : aucun message si les nouveautés n'ont pas changé
+  const tq = await boot({ data: seed({ settings: { ...seed().settings, seenVersion: '9.9.9' } }) }); await tq.page.waitForTimeout(400); assert.doesNotMatch(await tq.ev(() => document.querySelector('#toast').className), /show/); await tq.ctx.close();
 });
 test('migration : anciennes données (sans espèce ni schéma) chargées sans perte', async () => {
   const old = { v: 1, dogs: [{ id: 'd9', name: 'Vieux', breed: 'Beagle', birth: '2018-01-01', insurance: {} }], events: [{ id: 'e', dogId: 'd9', type: 'vaccine', title: 'Rage', date: '2025-01-01', next: '2026-01-01' }], weights: [{ id: 'w', dogId: 'd9', date: '2025-01-01', kg: 12 }], meds: [], medLog: {}, journal: [], expenses: [], docs: [], quotes: [], contacts: [], owner: {}, settings: {}, current: 'd9', installedAt: '2025-01-01' };
