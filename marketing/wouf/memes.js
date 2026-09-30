@@ -1,6 +1,6 @@
 'use strict';
 /* Mèmes Wouf (format du mème « Moi, pendant ce temps : ») : texte en haut sur fond blanc, photo libre de droits en dessous,
-   filigrane Wouf en bas à droite. Textes et légendes : memes.json. Photos : photos/meme-<id>.jpg (workflow « Photos libres »).
+   filigrane Wouf en bas à droite. Textes et légendes : memes.json. Photos : photos/meme-<id>.jpg (workflow « Photos libres ») ou, avec « photo », une autre photo de photos/ (mascotte = le chien du fondateur).
    Sortie : memes/meme-<id>.jpg (Instagram 1080×1350) et memes/meme-<id>-tt.jpg (TikTok 1080×1920).
    node marketing/wouf/memes.js [id…] */
 const fs = require('fs'), path = require('path');
@@ -18,7 +18,7 @@ const page = (m, img, h) => `<style>*{box-sizing:border-box}body{margin:0;width:
   fs.mkdirSync(OUT, { recursive: true });
   const b = await chromium.launch(fs.existsSync('/opt/pw-browsers/chromium') ? { executablePath: '/opt/pw-browsers/chromium' } : {});
   for (const m of list) {
-    const f = path.join(PH, `meme-${m.id}.jpg`); if (!fs.existsSync(f)) { console.log('  (photo manquante)', m.id); continue; }
+    const f = path.join(PH, `${m.photo || 'meme-' + m.id}.jpg`); // « photo » : autre photo de photos/ (ex. mascotte) if (!fs.existsSync(f)) { console.log('  (photo manquante)', m.id); continue; }
     const img = 'data:image/jpeg;base64,' + fs.readFileSync(f).toString('base64');
     for (const [suf, h] of [['', 1350], ['-tt', 1920]]) {
       const p = await b.newPage({ viewport: { width: 1080, height: h } }); await p.setContent(page(m, img, h));
