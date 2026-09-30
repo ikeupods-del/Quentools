@@ -281,6 +281,14 @@ ROUTES.nouveautes = function nouveautes() {
   return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>🆕 Nouveautés</h1></div>${CHANGELOG.map(c => `<section class="card"><div class="card-h"><h2>Version ${esc(c.v)}</h2><span class="mut small">${fmtDate(c.date)}</span></div><ul class="bul">${c.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul></section>`).join('')}
   <div class="actions-row"><button class="btn" data-act="check-update">Rechercher une mise à jour</button></div>`;
 };
+const vNewer = (x, y) => { const a = String(x).split('.').map(Number), b = String(y || '0').split('.').map(Number); for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0); return false; };
+/* Nouvelle version pendant que l'app reste ouverte (ou en arrière-plan) : on compare la version chargée à celle publiée (config.js, jamais en cache)
+   et on propose « Actualiser ». Sans cela, un utilisateur qui ne ferme jamais l'app garde l'ancienne version indéfiniment. */
+async function checkVersion() {
+  if (checkVersion.busy || location.protocol === 'file:') return; checkVersion.busy = true;
+  try { const r = await fetch('config.js?ts=' + Date.now(), { cache: 'no-store' }); const m = r.ok && (await r.text()).match(/version:\s*'(\d+\.\d+\.\d+)'/); if (m && vNewer(m[1], CFG.version)) showUpdateBanner(); }
+  catch (e) { /* hors connexion */ } finally { checkVersion.busy = false; }
+}
 function showUpdateBanner() {
   if ($('#upd')) return;
   const b = document.createElement('div'); b.id = 'upd'; b.innerHTML = '<span>✨ Nouvelle version de Wouf disponible</span><button class="btn sm primary" id="upd-go">Actualiser</button>';
@@ -288,12 +296,13 @@ function showUpdateBanner() {
 }
 ACT['check-update'] = async () => { try { const reg = await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); toast('Vous avez la dernière version (' + (CFG.version || '') + ')'); } catch (e) { toast('Impossible de vérifier (hors connexion ?)'); } };
 function initUpdates() {
+  setTimeout(checkVersion, 4000); setInterval(checkVersion, 30 * 60e3); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); });
   if (!('serviceWorker' in navigator)) return;
   const had = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (had) showUpdateBanner(); });
   navigator.serviceWorker.getRegistration().then(reg => { if (reg) { setInterval(() => reg.update().catch(() => {}), 3600e3); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); }); } });
   // « Nouveautés » ne liste que ce qui change pour l'utilisateur : pas de message pour une version purement technique.
-  const top = CHANGELOG[0].v, seen = S.settings.seenVersion, newer = (x, y) => { const a = x.split('.').map(Number), b = String(y || '0').split('.').map(Number); for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0); return false; };
+  const top = CHANGELOG[0].v, seen = S.settings.seenVersion, newer = vNewer;
   if (seen && newer(top, seen)) toast('Wouf a été mis à jour : voir les nouveautés dans « Plus »');
   if (seen !== top) { S.settings.seenVersion = top; flush(); }
 }
