@@ -3,11 +3,9 @@
 # Test sans rien publier : Actions → « Instagram — publication du jour » → Run workflow → cocher « dry ».
 name: Instagram — publication du jour
 
+# Publication programmée désactivée : la planification Instagram passe par Metricool (mèmes et carrousels validés).
+# Pour la réactiver, rétablir un déclencheur « schedule » (ex. cron: '3 5 * * *') après avoir créé les secrets.
 on:
-  schedule:
-    # UTC : 05:03 et 16:03 = 7 h et 18 h en heure d'été (6 h et 17 h en heure d'hiver). GitHub peut retarder de quelques minutes.
-    - cron: '3 5 * * *'
-    - cron: '3 16 * * *'
   workflow_dispatch:
     inputs:
       dry: { description: 'Simulation (ne publie rien)', type: boolean, default: true }
