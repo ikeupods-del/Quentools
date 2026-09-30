@@ -55,7 +55,7 @@ fs.writeFileSync(path.join(__dirname, 'queue-make.json'), JSON.stringify(catalog
 console.log(`✓ catalogue.json : ${catalogue.length} posts numérotés (${metricoolPart.length} Metricool, ${makeQueue.length} Make) ; queue-make.json`);
 
 /* Fichiers numérotés lus par Make : make/<n>.jpg (image) et make/<n>.txt (légende), n = numéro du catalogue */
-const MK = path.join(__dirname, 'make'); fs.rmSync(MK, { recursive: true, force: true }); fs.mkdirSync(MK, { recursive: true });
+const MK = path.join(__dirname, 'make'); fs.mkdirSync(MK, { recursive: true }); for (const f of fs.readdirSync(MK)) if (/\.(jpg|txt)$/.test(f)) fs.rmSync(path.join(MK, f)); // on garde les Reels (.mp4)
 for (const c of catalogue.filter(c => c.source === 'make' && !c.status)) {
   fs.copyFileSync(path.join(__dirname, 'images-jpg', c.images[0].replace('.png', '.jpg')), path.join(MK, c.num + '.jpg'));
   fs.writeFileSync(path.join(MK, c.num + '.txt'), c.caption);

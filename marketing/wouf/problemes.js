@@ -32,7 +32,7 @@ const logo = c => `<div class="logo" style="color:${c}">${LOGO}<span>Wouf</span>
       for (let i = 0; i < sl.length; i++) { await p.setContent(`<style>${css(h)}</style>${sl[i]}`); await p.screenshot({ path: path.join(OUT, pre + String(i + 1).padStart(2, '0') + '.png') }); }
       await p.close();
     }
-    caps[id] = { hook, slides: sl.length, caption: `${hook} 🐱 Voilà quoi faire (glissez 👉)\n\n${steps.map((s, i) => (i + 1) + '. ' + clean(s.t)).join('\n')}\n\n⚠️ À éviter : ${mist.slice(0, 2).join(' ')}\n\n📌 Enregistrez ce post. Le plan complet, pas à pas, est dans Wouf (lien dans la bio).\n\n${clean(l.safety || 'Un changement qui dure ? Consultez votre vétérinaire.')} Wouf ne remplace jamais un vétérinaire.\n\n#woufapp #chat #chaton #comportementfelin #santeanimale` };
+    caps[id] = { hook, slides: sl.length, caption: `${hook} 🐱 Voilà quoi faire (glissez 👉)\n\n${steps.map((s, i) => (i + 1) + '. ' + clean(s.t)).join('\n')}\n\n⚠️ À éviter : ${mist.slice(0, 2).join(' ')}\n\n📌 Enregistrez ce post. Le plan complet, pas à pas, est dans Wouf (lien dans la bio).\n\n${clean(l.safety || 'Un changement qui dure ? Consultez votre vétérinaire.')} Wouf ne remplace jamais un vétérinaire.\n\n#chat #chaton #chats #chatons #chatmignon` };
     console.log('  ✓', id, sl.length + ' images');
   }
   fs.writeFileSync(path.join(__dirname, 'problemes.json'), JSON.stringify(caps, null, 1)); await b.close();

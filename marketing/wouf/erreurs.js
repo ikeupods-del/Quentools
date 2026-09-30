@@ -9,13 +9,13 @@ const ctx = { ROUTES: {}, ACT: {} }; vm.createContext(ctx); vm.runInContext(fs.r
 const GUIDES = vm.runInContext('GUIDES', ctx), g = id => GUIDES.find(x => x.id === id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SETS = [
-  { id: 'chat-1', g: 'chat-erreurs', from: 0, to: 5, e: '🐱', hook: '5 erreurs que vous faites peut-être avec votre chat', part: 'Partie 1/2', tags: '#chat #chaton #santeanimale #conseilschat' },
-  { id: 'chat-2', g: 'chat-erreurs', from: 5, to: 10, e: '🐱', hook: '5 autres erreurs qui abîment la santé de votre chat', part: 'Partie 2/2', tags: '#chat #chaton #santeanimale #conseilschat' },
-  { id: 'chien-1', g: 'chien-erreurs', from: 0, to: 5, e: '🐶', hook: '5 erreurs que vous faites peut-être avec votre chien', part: 'Partie 1/2', tags: '#chien #chiot #santeanimale #conseilschien' },
-  { id: 'chien-2', g: 'chien-erreurs', from: 5, to: 10, e: '🐶', hook: '5 autres erreurs qui abîment la santé de votre chien', part: 'Partie 2/2', tags: '#chien #chiot #santeanimale #conseilschien' },
-  { id: 'urgences', g: 'urgences', from: 0, to: 8, e: '🚨', hook: '8 gestes à ne JAMAIS faire en cas d’urgence', part: '', tags: '#urgenceveterinaire #chien #chat #premiersecours #santeanimale' },
-  { id: 'arrivee-1', g: 'arrivee', from: 0, to: 6, e: '🍼', hook: 'Un chiot ou un chaton arrive ? 6 points d’attention', part: 'Partie 1/2', tags: '#chiot #chaton #nouveauchiot #nouveauchaton #santeanimale' },
-  { id: 'arrivee-2', g: 'arrivee', from: 6, to: 12, e: '🍼', hook: 'Chiot ou chaton : 6 autres points d’attention', part: 'Partie 2/2', tags: '#chiot #chaton #nouveauchiot #nouveauchaton #santeanimale' }
+  { id: 'chat-1', g: 'chat-erreurs', from: 0, to: 5, e: '🐱', hook: '5 erreurs que vous faites peut-être avec votre chat', part: 'Partie 1/2', tags: '#chat #chaton #chats #chatons #chatmignon' },
+  { id: 'chat-2', g: 'chat-erreurs', from: 5, to: 10, e: '🐱', hook: '5 autres erreurs qui abîment la santé de votre chat', part: 'Partie 2/2', tags: '#chat #chaton #chats #chatons #chatmignon' },
+  { id: 'chien-1', g: 'chien-erreurs', from: 0, to: 5, e: '🐶', hook: '5 erreurs que vous faites peut-être avec votre chien', part: 'Partie 1/2', tags: '#chien #chiot #chiens #instachien #chienstagram' },
+  { id: 'chien-2', g: 'chien-erreurs', from: 5, to: 10, e: '🐶', hook: '5 autres erreurs qui abîment la santé de votre chien', part: 'Partie 2/2', tags: '#chien #chiot #chiens #instachien #chienstagram' },
+  { id: 'urgences', g: 'urgences', from: 0, to: 8, e: '🚨', hook: '8 gestes à ne JAMAIS faire en cas d’urgence', part: '', tags: '#chien #chat #chiot #chaton #chiens' },
+  { id: 'arrivee-1', g: 'arrivee', from: 0, to: 6, e: '🍼', hook: 'Un chiot ou un chaton arrive ? 6 points d’attention', part: 'Partie 1/2', tags: '#chien #chat #chiot #chaton #chiens' },
+  { id: 'arrivee-2', g: 'arrivee', from: 6, to: 12, e: '🍼', hook: 'Chiot ou chaton : 6 autres points d’attention', part: 'Partie 2/2', tags: '#chien #chat #chiot #chaton #chiens' }
 ];
 const css = h => `*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}.cv{width:1080px;height:${h}px;display:flex;flex-direction:column;padding:${h > 1500 ? '230px 150px 520px 80px' : '84px 80px'};position:relative}
 .logo{display:flex;align-items:center;gap:16px;font-weight:900;font-size:44px}.logo svg{width:64px;height:64px;border-radius:16px}.tag{font-size:32px;font-weight:800;letter-spacing:3px;text-transform:uppercase;opacity:.8;margin-top:44px}
@@ -36,8 +36,8 @@ const logo = c => `<div class="logo" style="color:${c}">${LOGO}<span>Wouf</span>
       await p.close();
     }
     caps[s.id] = { hook: s.hook, slides: sl.length,
-      caption: `${s.hook} ${s.e} (glissez 👉)\n\n${items.map((it, i) => (s.from + i + 1) + '. ' + it[0]).join('\n')}\n\n📌 Enregistrez ce post et envoyez-le à un propriétaire d’animal.\nContenu indicatif : votre vétérinaire reste la référence.\n\n#woufapp ${s.tags}`,
-      tiktok: `${s.hook} ${s.e} Lequel vous faisiez ? 👇 Lien en bio 💛\n#pourtoi #fyp #woufapp ${s.tags}` };
+      caption: `${s.hook} ${s.e} (glissez 👉)\n\n${items.map((it, i) => (s.from + i + 1) + '. ' + it[0]).join('\n')}\n\n📌 Enregistrez ce post et envoyez-le à un propriétaire d’animal.\nContenu indicatif : votre vétérinaire reste la référence.\n\n${s.tags}`,
+      tiktok: `${s.hook} ${s.e} Lequel vous faisiez ? 👇 Lien en bio 💛\n#pourtoi #fyp ${s.tags.split(' ').slice(0, 3).join(' ')}` };
     console.log('  ✓', s.id, sl.length + ' images');
   }
   fs.writeFileSync(path.join(__dirname, 'erreurs.json'), JSON.stringify(caps, null, 1)); await b.close();
