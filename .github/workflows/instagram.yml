@@ -1,0 +1,42 @@
+# Publie automatiquement 1 publication Instagram par jour (marketing/wouf/queue.json), via l'API officielle gratuite d'Instagram.
+# Secrets à créer une seule fois (Settings → Secrets and variables → Actions) : IG_USER_ID et IG_TOKEN. Guide : wouf/docs/MAINTENANCE.md, « Instagram automatique ».
+# Test sans rien publier : Actions → « Instagram — publication du jour » → Run workflow → cocher « dry ».
+name: Instagram — publication du jour
+
+on:
+  schedule:
+    - cron: '17 16 * * *'
+  workflow_dispatch:
+    inputs:
+      dry: { description: 'Simulation (ne publie rien)', type: boolean, default: true }
+
+permissions:
+  contents: write
+
+concurrency:
+  group: instagram
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Publier
+        env:
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          IMAGE_BASE: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/marketing/wouf/images/
+          DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry && '--dry' || '' }}
+        run: node marketing/wouf/publish.js $DRY
+      - name: Mémoriser ce qui a été publié
+        run: |
+          if [ -n "$(git status --porcelain marketing/wouf/state.json)" ]; then
+            git config user.name "wouf-bot"; git config user.email "wouf-bot@users.noreply.github.com"
+            git add marketing/wouf/state.json
+            git commit -m "Instagram : publication du jour [skip ci]"
+            git push
+          fi

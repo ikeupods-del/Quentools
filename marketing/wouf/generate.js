@@ -114,6 +114,19 @@ const dots = (n, i) => `<div class="dots">${Array.from({ length: n }, (_, k) => 
   await render('carrousel-chat-douleur-2.png', ...P(), `<div class="cv">${logo()}<div class="list">${pain.map(([e, t]) => `<div class="li"><span class="e">${e}</span><span><b>${t}</b></span></div>`).join('')}</div>${dots(3, 1)}</div>`);
   await render('carrousel-chat-douleur-3.png', ...P(), `<div class="cv o">${logo()}<h1 style="margin-top:60px">Un changement qui dure ? <em>Consulte.</em></h1><div class="sub" style="font-size:46px">Un chat qui ne mange plus depuis 24 à 48 h, ou un mâle qui force pour uriner sans résultat : c’est une urgence.</div><div class="sub" style="font-size:40px;margin-top:40px">📝 Dans Wouf, note chaque changement dans le journal de santé : ton véto aura l’historique.</div>${dots(3, 2)}</div>`);
 
+  /* ---------- FICHES « toxique du jour » (1 image par danger, texte repris tel quel des données de l'app) ---------- */
+  const fiches = await ev(() => ({ chien: TOXICS.filter(t => t.level === 'danger').map(t => ({ name: t.name, why: t.why })), chat: TOXICS_CAT.filter(t => t.level === 'danger').map(t => ({ name: t.name, why: t.why })) }));
+  const fdata = {};
+  for (const sp of ['chien', 'chat']) {
+    fdata[sp] = [];
+    for (let i = 0; i < fiches[sp].length; i++) {
+      const t = fiches[sp][i], m = t.name.match(/^([^(]+?)\s*(?:\((.*)\))?$/), title = m ? m[1] : t.name, more = m && m[2] || '', file = `fiche-${sp}-${String(i + 1).padStart(2, '0')}.png`;
+      await render(file, ...P(), `<div class="cv ${sp === 'chat' ? 'd' : ''}">${logo()}<div class="tag" style="margin-top:50px">⛔ Danger pour ton ${sp}</div><h1 style="font-size:${title.length > 26 ? 84 : title.length > 14 ? 100 : 118}px">${title}</h1>${more ? `<div class="sub" style="opacity:.7">${more}</div>` : ''}<div class="sub" style="font-size:42px;margin-top:40px">${t.why}</div><div class="pill" style="align-self:flex-start">Un doute ? Appelle ton véto</div><div class="foot"><span>🔗 woufapp.fr</span><span>📌 À enregistrer</span></div></div>`);
+      fdata[sp].push({ file, title, more, why: t.why });
+    }
+  }
+  fs.writeFileSync(path.join(__dirname, 'fiches.json'), JSON.stringify(fdata, null, 1));
+
   /* ---------- STORIES (1080×1920) ---------- */
   const S = [1080, 1920];
   await render('story-01-lancement.png', ...S, `<div class="cv o" style="padding:120px 80px">${logo()}<h1 style="font-size:104px;margin-top:70px">Nouveau : le carnet de santé de ton chien et de ton chat 🐾</h1><div class="sub">Gratuit, sans inscription, sur ton téléphone.</div>${phone(shots.home, 'width:560px;left:260px;bottom:-200px')}<div class="foot" style="bottom:1000px"></div></div>`);

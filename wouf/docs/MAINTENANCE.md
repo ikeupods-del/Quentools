@@ -180,3 +180,16 @@ match /wouf_orders/{id} { allow create: if request.auth != null && request.resou
 Le formulaire de l'app (Plus → Assistance) **envoie le message directement** au relais Cloudflare (`POST /support`) : aucune messagerie n'est ouverte chez le client. Les messages sont rangés dans le KV et s'affichent dans **Plus → Administration → 📨 Messages** (lecture, « Répondre » qui ouvre votre messagerie vers le client, suppression). Limite anti-spam : 5 messages par heure et par adresse IP. Un membre Plus vérifié est marqué « ⭐ Membre Plus ». Si le relais est en panne, l'app se replie sur l'ouverture de la messagerie (`support.email`, sinon l'e-mail de contact des mentions légales).
 - **Mise à jour du relais** : après une modification de `billing-worker/worker.js`, coller à nouveau le fichier dans Cloudflare (Worker → Edit code → tout remplacer → Deploy). Aucun autre réglage.
 - **Recevoir aussi les messages par e-mail (facultatif)** : compte gratuit sur resend.com, vérification du domaine d'envoi, puis dans le Worker : secret `RESEND_API_KEY`, variables `SUPPORT_TO` (adresse de réception) et `SUPPORT_FROM` (expéditeur vérifié). Sans cela, les messages restent lisibles dans l'administration.
+
+## Instagram automatique (1 publication par jour, gratuit)
+Une tâche GitHub (`.github/workflows/instagram.yml`, tous les jours vers 18 h, heure de Paris) publie la prochaine image de `marketing/wouf/queue.json` avec sa légende, via l'API officielle et gratuite d'Instagram. Les images et légendes sont générées par `marketing/wouf/generate.js` puis `build-queue.js` (textes repris de l'app : aucune donnée inventée). `state.json` mémorise ce qui est déjà publié. Instagram uniquement (TikTok n'autorise pas la publication automatique gratuite).
+
+**Une seule fois (environ 20 minutes)** — l'interface de Meta change souvent, suivre les intitulés approchants :
+1. Le compte Instagram doit être en mode **Professionnel** (Paramètres → Type de compte).
+2. Sur https://developers.facebook.com → *Mes apps* → *Créer une app* → cas d'usage « Gérer les messages et le contenu sur Instagram » (type Business) → produit **Instagram** → *API avec connexion Instagram*.
+3. Dans *Générer des jetons d'accès*, ajouter le compte Instagram, se connecter, puis **Générer le jeton**. Copier le jeton (permission `instagram_business_content_publish`) et l'**identifiant du compte Instagram** affiché à côté.
+4. Sur GitHub → dépôt → Settings → Secrets and variables → Actions → *New repository secret* : `IG_TOKEN` (le jeton) et `IG_USER_ID` (l'identifiant).
+5. Actions → « Instagram — publication du jour » → *Run workflow* avec « Simulation » cochée : doit finir en vert et afficher la légende. Puis un essai réel en décochant.
+
+**Ensuite** : rien à faire, sauf **renouveler le jeton tous les 60 jours** (refaire l'étape 3 et remplacer le secret `IG_TOKEN`). Si la tâche échoue, GitHub envoie un e-mail. Quand il reste 3 publications ou moins, la tâche affiche un avertissement : régénérer la file (`node marketing/wouf/generate.js && node marketing/wouf/build-queue.js`, ou demander à Claude).
+

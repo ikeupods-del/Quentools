@@ -1,7 +1,7 @@
 'use strict';
 /* `npm test` : contrôles statiques → tests unitaires → tests de bout en bout. Le premier échec arrête tout. */
 const { spawnSync } = require('child_process'), path = require('path');
-const steps = [['Contrôles statiques', ['tests/check.js']], ['Relais PayPal et moteur de nutrition', ['--test', 'tests/unit/worker.test.mjs', 'tests/unit/nutrition.test.mjs']], ['Bout en bout (navigateur)', ['tests/e2e.js']]];
+const steps = [['Contrôles statiques', ['tests/check.js']], ['Relais PayPal et moteur de nutrition', ['--test', 'tests/unit/worker.test.mjs', 'tests/unit/nutrition.test.mjs', 'tests/unit/social.test.mjs']], ['Bout en bout (navigateur)', ['tests/e2e.js']]];
 for (const [name, args] of steps) {
   console.log(`\n=== ${name} ===`);
   const r = spawnSync(process.execPath, args, { cwd: path.resolve(__dirname, '..'), stdio: 'inherit' });
