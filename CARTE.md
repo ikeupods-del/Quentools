@@ -244,6 +244,7 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - signes.js (6 Ko)
 - to-jpeg.js (1 Ko)
 - video-quiz.js (2 Ko)
+- watermark.js (2 Ko)
 
 ## Workflows
 - apercu.yml
