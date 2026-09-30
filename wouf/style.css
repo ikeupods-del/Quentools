@@ -265,6 +265,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-off
 .quiz-lesson{display:block;font-size:.78rem;font-weight:600;color:var(--mut);margin-top:2px}
 
 /* Administration */
-.adm-u{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}.adm-u .grow{min-width:200px;flex:1}.adm-u small{display:block;color:var(--mut)}
+.adm-u,.adm-o{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}.adm-u .grow,.adm-o .grow{min-width:200px;flex:1}.adm-u small,.adm-o small{display:block;color:var(--mut)}
 .pill-s{display:inline-block;margin-top:4px;padding:2px 10px;border-radius:99px;background:var(--soft);font-size:.78rem;font-weight:700}.pill-s.ok{background:#e3f5ea;color:var(--ok)}
 .adm-tiles .tile b{display:block;font-size:1.3rem}

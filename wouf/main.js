@@ -47,7 +47,6 @@ if ('serviceWorker' in navigator) addEventListener('load', () => navigator.servi
 if (!movedRedirect()) {
   render();
   remoteRefresh();
-  refreshSub().then(() => { if (routeName() === 'abo') render(true); });
   maybeNotify();
   cloudInit();
   walkRecover();

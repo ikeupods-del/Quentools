@@ -6,22 +6,22 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.12.1',
+  version: '1.13.0',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
     freeUntil: null,           // ex. '2027-03-31' : offre de lancement, tout reste gratuit jusqu'à cette date même si enabled=true
     grandfatherBefore: null,   // ex. '2027-04-01' : les utilisateurs installés AVANT cette date gardent Plus…
     grandfatherUntil: 'lifetime', // …jusqu'à cette date ('2027-12-31') ou 'lifetime' (à vie)
-    api: '',                   // URL du relais de paiement (voir wouf/billing-worker/) : achat vérifié et activé automatiquement
-    // SANS relais : liens de paiement Stripe (Stripe → Liens de paiement). L'acheteur paie, Stripe prévient le propriétaire,
-    // qui active Wouf Plus dans Plus → Administration (« ⭐ À vie »). Après paiement, rediriger vers https://woufapp.fr/#/merci
-    paymentLink: '',           // ex. https://buy.stripe.com/xxxx (prix normal : plans[0].price)
-    rewardLink: '',            // ex. https://buy.stripe.com/yyyy (offre récompense : rewardOffer.price) ; vide = pas d'offre en mode liens
-    // Achat unique « à vie ». Le prix AFFICHÉ ici doit être identique au prix Stripe (PRICE_LIFETIME) : c'est Stripe qui encaisse.
+    // Paiement par lien PayPal (compte professionnel → Liens et boutons de paiement). Avant de payer, l'acheteur remplit un
+    // dossier (nom, prénom, e-mail PayPal) ; le propriétaire vérifie le paiement et active Wouf Plus dans Plus → Administration.
+    // Les liens et les informations légales se règlent aussi depuis l'administration (« Paiement et informations légales »).
+    paymentLink: '',           // ex. https://www.paypal.com/ncp/payment/XXXX (prix normal : plans[0].price)
+    rewardLink: '',            // idem pour l'offre récompense (rewardOffer.price) ; vide = pas d'offre récompense
+    // Achat unique « à vie ». Le prix AFFICHÉ ici doit être identique au montant du lien PayPal.
     plans: [{ id: 'lifetime', label: 'Wouf Plus à vie', price: '19,99 €', per: 'paiement unique', badge: 'Sans abonnement' }],
     // Offre récompense : quand TOUTES les leçons gratuites sont terminées (quiz compris), Wouf Plus passe à ce prix.
-    // Doit être égal au prix Stripe PRICE_LIFETIME_REWARD du relais. enabled: false = pas d'offre.
+    // Doit être égal au montant du lien PayPal rewardLink. enabled: false = pas d'offre.
     rewardOffer: { enabled: true, price: '9,99 €' },
     limits: { perSpecies: 1, documents: 3 },     // formule gratuite : 1 chien + 1 chat, 3 documents
     // Fonctions réservées à Plus (quand enabled) — retirez une ligne pour la rendre gratuite

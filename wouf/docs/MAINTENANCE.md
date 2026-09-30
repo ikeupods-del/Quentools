@@ -7,7 +7,7 @@ Il est écrit pour être suivi sans être développeur. Pour toute modification,
 
 - Wouf est une **application web statique** : pas de serveur à louer, pas de base de données à gérer. Le dossier `wouf/` est publié tel quel sur **GitHub Pages** (gratuit).
 - Chaque utilisateur garde ses données **sur son téléphone**. S’il se connecte avec Google, elles sont aussi copiées dans **Firebase** (gratuit jusqu’à un très gros volume).
-- Le **paiement** passe par **Stripe**. Un tout petit programme (le « relais », `wouf/billing-worker/`, hébergé gratuitement chez **Cloudflare**) vérifie l’identité Google de l’acheteur et confirme l’achat. Il envoie aussi les messages d’assistance par e-mail (**Resend**).
+- Le **paiement** passe par un **lien PayPal**. Juste avant de payer, l’acheteur remplit un **dossier de paiement** (prénom, nom et e-mail PayPal, e-mail de contact), enregistré dans Firebase. Vous vérifiez le paiement dans PayPal puis activez Wouf Plus en un bouton (Plus → Administration). Aucun serveur à installer.
 - **Publier = fusionner une « pull request »** sur GitHub. Environ 1 minute plus tard, tous les utilisateurs ont la nouvelle version (l’app propose « Actualiser »).
 
 | Je veux… | Je modifie |
@@ -24,7 +24,7 @@ Il est écrit pour être suivi sans être développeur. Pour toute modification,
 ## 2. Publier une modification (routine)
 
 1. Modifier les fichiers (ou demander à Claude).
-2. Lancer les tests : `cd wouf && npm install && npm test` (la première fois seulement pour `npm install`). **Tout doit être vert.** Les tests vérifient le contenu des leçons, la configuration, le relais de paiement et le parcours utilisateur dans un vrai navigateur.
+2. Lancer les tests : `cd wouf && npm install && npm test` (la première fois seulement pour `npm install`). **Tout doit être vert.** Les tests vérifient le contenu des leçons, la configuration, le moteur de nutrition et le parcours utilisateur dans un vrai navigateur.
 3. Pour une nouvelle version visible par les utilisateurs, **une seule commande** met à jour tous les numéros de version et ajoute l’annonce dans « Nouveautés » :
    `npm run release -- 1.3.0 "Première nouveauté" "Deuxième nouveauté"` (le test `check` refuse si un numéro est oublié).
 4. Ouvrir une pull request. La vérification automatique (`Wouf — tests`) tourne toute seule.
@@ -42,14 +42,14 @@ Les fichiers de l’app sont revalidés à chaque ouverture, la mise à jour est
 
 **Ajouter une leçon** : copier une leçon existante dans `lessons7.js` (chien) ou `lessons_cat5.js` (chat), changer `id` (unique, sans espace), `free: false` (ou `true` pour l’offrir), et remplir tous les champs, y compris `plan` (programme d’entraînement) et `next` (pistes pour aller plus loin). Le test `check` refuse une leçon incomplète (au moins 3 étapes avec critère de réussite, un plan de 3 étapes, 3 erreurs fréquentes, 2 questions de dépannage, 2 pistes). Pour la placer dans un programme, ajouter son `id` à une semaine de `PROGRAMS`. Les nombres de leçons affichés dans l’app (offre, présentation) se calculent tout seuls.
 
-**Le bouton « Wouf+ »** (en-tête, accueil, éducation, fiche de leçon verrouillée) : tant que `billing.enabled` vaut `false` ou que le relais n’est pas configuré, il présente l’offre (« tout est offert pour le moment »). Dès que la vente est ouverte (`enabled: true` et `api` renseignée), il lance le paiement à 19,99 € à vie avec connexion Google et case de consentement.
+**Le bouton « Wouf+ »** (en-tête, accueil, éducation, fiche de leçon verrouillée) : tant que la vente n’est pas ouverte ou qu’aucun lien PayPal n’est renseigné, il présente l’offre (« tout est offert pour le moment »). Dès que la vente est ouverte, il ouvre l’achat à 19,99 € à vie : connexion Google, dossier de paiement, case de consentement, puis PayPal.
 
 **Rendre une fonction gratuite ou payante** : dans `config.js`, ajouter ou retirer son nom de `billing.premium`. Noms possibles : `multiDogs`, `documents`, `report`, `calendar`, `stats`, `lessons`, `programs`, `tracker`, `bilan`, `sitter`, `weightplan`. (Le chat gratuit et la limite « 1 chien + 1 chat » se règlent avec `limits.perSpecies`.)
 
 **Offre de lancement** : `freeUntil: '2027-03-31'` garde tout gratuit jusqu’à cette date, même une fois le paiement activé.
 **Récompenser les premiers utilisateurs** : `grandfatherBefore: '2027-04-01'` offre Plus (à vie ou jusqu’à une date, `grandfatherUntil`) à tous ceux installés avant cette date.
 
-**Changer le prix** : (1) dans Stripe, créer un **nouveau prix** de paiement unique (on ne modifie pas un prix existant) ; (2) mettre son identifiant dans `wrangler.toml` (`PRICE_LIFETIME`) et redéployer le relais (`npx wrangler deploy`) ; (3) mettre le prix affiché dans `config.js` (`plans[0].price`) et dans les conditions de vente (elles le reprennent automatiquement). Les acheteurs existants ne sont pas concernés.
+**Changer le prix** : (1) dans PayPal, créer un **nouveau lien de paiement** au nouveau montant ; (2) le coller dans Plus → Administration → « Paiement et informations légales » ; (3) mettre le prix affiché dans `config.js` (`plans[0].price`), repris automatiquement par les conditions de vente. Les acheteurs existants ne sont pas concernés.
 
 **Changer le format des données** (ajout d’un champ obligatoire, renommage) : augmenter `SCHEMA` dans `core.js` et ajouter une étape dans `migrate()`. Les données des utilisateurs sont ainsi mises à niveau à l’ouverture, sans perte. Le test « migration » montre comment vérifier avec d’anciennes données.
 
@@ -66,7 +66,7 @@ Les fichiers de l’app sont revalidés à chaque ouverture, la mise à jour est
 
 ## 4. Mise en vente : la checklist complète
 
-Tant que `billing.enabled` vaut `false`, **tout est gratuit** et rien de ce qui suit n’est nécessaire. Le test `check` refuse volontairement `enabled: true` si les informations légales, l’adresse d’assistance ou l’URL du relais manquent.
+Tant que `billing.enabled` vaut `false`, **tout est gratuit** et rien de ce qui suit n’est nécessaire. Le test `check` refuse volontairement `enabled: true` si les informations légales, l’adresse d’assistance ou le lien PayPal manquent ; l’interrupteur de l’administration fait la même vérification.
 
 ### A. Légal (obligatoire avant d’encaisser)
 1. Avoir un statut pour vendre (par exemple micro-entrepreneur : SIRET). Choisir le régime de TVA.
@@ -74,36 +74,24 @@ Tant que `billing.enabled` vaut `false`, **tout est gratuit** et rien de ce qui 
 3. Relire les pages **Conditions de vente, Confidentialité, Mentions** (menu Plus → Informations légales, générées par `business.js`). **Ce sont des modèles rédigés de bonne foi, pas un avis juridique : faites-les valider** (juriste, expert-comptable, ou organismes d’aide aux entrepreneurs). Points à valider en particulier : la formule « à vie » (engagement de préavis d’arrêt du service : `shutdownNoticeDays`), la renonciation au droit de rétractation (case à cocher avant paiement, art. L221-28 13° du Code de la consommation), le remboursement facultatif (`legal.refund`).
 4. Décider votre politique de remboursement (le modèle n’en promet aucune au-delà de la loi ; un « satisfait ou remboursé 30 jours » est un bon argument de vente, à écrire dans `legal.refund`).
 
-### B. Stripe
-1. Créer le compte, compléter la vérification d’identité et l’IBAN.
-2. Produits → **Nouveau produit « Wouf Plus »** → prix **paiement unique** de 19,99 € en EUR. Copier l’identifiant du prix (`price_…`).
-3. Paramètres → Reçus clients : activer l’envoi de reçus par e-mail.
-4. **Toujours tester en mode test d’abord** (clé `sk_test_…`, carte `4242 4242 4242 4242`), puis refaire avec la clé de production.
-5. Remboursement : Stripe → Paiements → choisir le paiement → Rembourser. L’accès Plus est retiré automatiquement (au prochain contrôle de l’app, sous 6 heures) et les données de l’utilisateur restent intactes.
+### B. PayPal
+1. Créer un compte PayPal **professionnel** (gratuit) et compléter la vérification d’identité et le compte bancaire.
+2. « Liens et boutons de paiement » → créer « Wouf Plus à vie » à **19,99 €** (et un second lien à **9,99 €** pour l’offre récompense). Si PayPal propose une page de retour, indiquer `https://woufapp.fr/#/merci`.
+3. Coller les liens dans Plus → Administration → « Paiement et informations légales ».
+4. Remboursement : PayPal → Activité → choisir le paiement → Rembourser, puis Administration → le compte → « Retirer ». Les données de l’utilisateur restent intactes.
 
 ### C. Firebase (connexion Google) — déjà en place pour QuenTools
 Vérifier une fois : Authentication → Google activé ; domaines autorisés : `ikeupods-del.github.io` ; Firestore → règles : l’utilisateur peut lire et écrire `users/{uid}/apps/**` (déjà le cas si Infikit et Freelance Kit fonctionnent). Wouf écrit dans `users/{uid}/apps/wouf/main`.
 
-### D. Relais Cloudflare
-1. Compte Cloudflare gratuit.
-2. `cd wouf/billing-worker` puis `npx wrangler login`.
-3. Ouvrir `wrangler.toml` et remplacer les valeurs `A-REMPLACER` (prix Stripe, adresses e-mail).
-4. `npx wrangler secret put STRIPE_SECRET_KEY` (coller la clé), puis `npx wrangler secret put RESEND_API_KEY`.
-5. `npx wrangler deploy` : la commande affiche l’URL du relais (`https://wouf-billing.….workers.dev`).
-6. Recommandé : dans Cloudflare, ajouter une règle de limitation de débit (rate limiting) sur ce Worker.
-
-### E. Resend (e-mails d’assistance)
-Créer un compte (gratuit jusqu’à 3 000 e-mails/mois), vérifier votre domaine d’expédition, créer la clé API. Sans Resend, le formulaire ouvre le mail de l’utilisateur vers `support.email` : ça marche, mais sans vérification serveur de la priorité.
-
-### F. Ouvrir la vente
-Dans `config.js` : `billing.api` = URL du relais ; `support.email` ; `legal.*` ; `billing.enabled: true`. Puis `npm test`, pull request, fusion. Vérifiez ensuite **un achat réel** (mode test puis production), un remboursement, et un message d’assistance depuis un compte acheteur : il doit arriver avec `[PRIORITAIRE]` dans l’objet.
+### D. Ouvrir la vente
+Plus → Administration : renseigner lien PayPal, informations légales et e-mail d’assistance → Enregistrer → « Ouvrir la vente » (bloqué tant qu’un élément manque). Faites d’abord **un achat réel** avec un proche (puis remboursez-le) pour vérifier tout le parcours : dossier, paiement, activation.
 
 ## 5. Assistance client
 
-- Les messages arrivent dans la boîte `SUPPORT_TO`. Ceux des acheteurs vérifiés portent `[PRIORITAIRE]` dans l’objet et « MEMBRE PLUS VÉRIFIÉ » dans le corps : **répondez-y d’abord**, dans le délai annoncé (`support.priorityDelay`, aujourd’hui « sous 24 h ouvrées »). Ne promettez que ce que vous pouvez tenir : modifiez ce texte dans `config.js` si besoin.
+- Le formulaire prépare un e-mail vers `support.email`. Ceux des membres Plus portent `[PRIORITAIRE]` dans l’objet : **répondez-y d’abord**, dans le délai annoncé (`support.priorityDelay`, aujourd’hui « sous 24 h ouvrées »). Ne promettez que ce que vous pouvez tenir : modifiez ce texte dans `config.js` si besoin.
 - Chaque message contient (si l’utilisateur l’a coché) la version, le navigateur et les dernières erreurs techniques : très utile pour reproduire un bug.
-- **Suppression de compte (RGPD)** : dans la console Firebase, supprimer le document `users/{uid}/apps/wouf` de l’utilisateur (et son compte d’authentification s’il le demande). L’achat reste dans Stripe (obligation comptable).
-- **Achat non reconnu** : demander à l’utilisateur de se connecter avec le **même compte Google** que l’achat, puis « Restaurer mon achat » (Plus → Wouf Plus). Dans Stripe, le paiement porte l’identifiant Google dans ses métadonnées (`uid`).
+- **Suppression de compte (RGPD)** : dans la console Firebase, supprimer le document `users/{uid}/apps/wouf` de l’utilisateur (et son compte d’authentification s’il le demande). Les dossiers de paiement (`wouf_orders`) et l’historique PayPal restent conservés (obligation comptable).
+- **Achat non activé** : chercher son dossier dans Administration → « Paiements à vérifier » (nom, e-mail PayPal) et le comparer à PayPal ; l’utilisateur doit être connecté avec le **même compte Google** que celui indiqué dans le dossier.
 
 ## 6. Coûts
 
@@ -111,18 +99,16 @@ Dans `config.js` : `billing.api` = URL du relais ; `support.email` ; `legal.*` ;
 |---|---|---|
 | GitHub Pages | usage courant | — |
 | Firebase (connexion + sauvegarde) | ~50 000 lectures/jour | offre à l’usage |
-| Cloudflare Workers | 100 000 requêtes/jour | 5 $/mois |
-| Resend | 3 000 e-mails/mois | à partir de 20 $/mois |
-| Stripe | pas d’abonnement | commission par paiement (environ 1,5 % + 0,25 € sur les cartes européennes : à vérifier sur stripe.com) |
+| PayPal | pas d’abonnement | commission par paiement (de l’ordre de 3 % + 0,35 € : à vérifier sur paypal.com) |
 
-Sur 19,99 €, il reste environ 19,4 € par vente avant impôts et charges.
+Sur 19,99 €, il reste environ 19 € par vente avant impôts et charges (à vérifier avec le barème PayPal en vigueur).
 
 ## 7. Limites techniques à connaître (et à dire aux clients)
 
 - **Suivi GPS** : une application web ne peut suivre le GPS que lorsque l’écran est allumé. Wouf garde l’écran allumé quand le téléphone le permet, et retrouve une balade interrompue. Une application native (App Store / Google Play) lèverait cette limite, mais c’est un autre projet.
 - **Notifications** : pas de notification poussée app fermée sur le web. La solution proposée est l’export des rappels vers l’agenda du téléphone.
 - **Vétérinaires de garde** : les données viennent d’OpenStreetMap (gratuit, sans clé). Ce service gratuit limite le volume : si Wouf grossit beaucoup, il faudra un fournisseur payant ou un cache (à traiter à ce moment-là).
-- **Protection de Plus** : le contrôle d’accès est côté application (modèle « freemium »). Un utilisateur très technique peut le contourner sur son propre appareil. Le paiement, lui, est vérifié côté serveur, et l’assistance prioritaire aussi.
+- **Protection de Plus** : le contrôle d’accès est côté application (modèle « freemium »). Un utilisateur très technique peut le contourner sur son propre appareil. Le paiement, lui, est vérifié par vous dans PayPal avant chaque activation.
 - **Documents (photos, PDF)** : gardés sur l’appareil, pas dans la sauvegarde Google (limite de taille). Ils sont dans la sauvegarde chiffrée manuelle.
 
 ## 8. Contenu médical et éducatif
@@ -131,13 +117,13 @@ Les fiches santé, premiers secours, toxiques, leçons et calculs (ration, plan 
 
 ## 9. Sécurité
 
-- **Aucun secret dans le dépôt** : les clés Stripe et Resend ne vivent que dans Cloudflare (`wrangler secret put`). Le test `check` échoue si une clé Stripe est écrite dans un fichier.
+- **Aucun secret dans le dépôt** : aucune clé privée n’est nécessaire (PayPal par simple lien). Le test `check` échoue si une clé secrète de paiement est écrite dans un fichier.
 - Les clés Firebase de `config.js` sont publiques par conception ; la sécurité vient des règles Firestore.
-- Le relais vérifie la signature du jeton Google (tests inclus : jeton falsifié, expiré, d’un autre projet), n’accepte que vos adresses (`ALLOWED_ORIGIN`) et ne stocke aucune donnée.
+- Les droits (Wouf Plus offert ou acheté), la liste des comptes et les dossiers de paiement sont protégés par les règles Firestore (section Administration).
 
 **Générateur de noms** (`noms.js`) : listes de noms par style dans `NAME_STYLES` (format `Nom.sexe.espèce`, sexe `m`/`f`, espèce `d`/`c`, tout est facultatif). La lettre de l'année des pedigrees (LOF/LOOF) est calculée par `lofLetter(année)` : cycle de 20 lettres sans K Q W X Y Z, repères vérifiés (2025 = A, 2026 = B) ; ne pas la coder « en dur » année par année.
 
-**Parcours et offre récompense** (`parcours.js`) : les leçons sont présentées comme un parcours (unités par catégorie, XP, niveaux). Une leçon est « acquise » après un quiz de 3 questions généré à partir des critères de réussite de ses étapes. Quand **toutes les leçons gratuites** des animaux du foyer sont acquises (chien : 6, chat : 4, les deux : 10), une fenêtre propose Wouf Plus au prix de `billing.rewardOffer.price` (config.js). Pour la vente : créer dans Stripe un second prix à paiement unique (9,99 €) et mettre son identifiant dans `PRICE_LIFETIME_REWARD` (wrangler.toml). Le relais vérifie l'éligibilité en relisant la sauvegarde Google du compte : sans sauvegarde synchronisée, l'offre est refusée. Si vous changez les leçons gratuites, mettez à jour `FREE_LESSONS` dans `billing-worker/worker.js` (le test `check` le signale). Pour arrêter l'offre : `rewardOffer.enabled: false`.
+**Parcours et offre récompense** (`parcours.js`) : les leçons sont présentées comme un parcours (unités par catégorie, XP, niveaux). Une leçon est « acquise » après un quiz de 3 questions généré à partir des critères de réussite de ses étapes. Quand **toutes les leçons gratuites** des animaux du foyer sont acquises (chien : 6, chat : 4, les deux : 10), une fenêtre propose Wouf Plus au prix de `billing.rewardOffer.price` (config.js). Pour la vente : un second lien PayPal à 9,99 € (`rewardLink`, réglable dans l'administration). Le dossier de paiement indique le nombre de leçons acquises : vérifiez-le avant d'activer une offre récompense. Pour arrêter l'offre : `rewardOffer.enabled: false`.
 
 ## Statistiques (tableau de bord privé)
 Wouf compte ses visites avec **GoatCounter** : pas de cookie, pas d'identifiant, aucune donnée saisie par l'utilisateur. Seuls le nom de l'écran ouvert, quelques actions (`animal-ajoute-chien`/`-chat`, `lecon-acquise`, `balade-enregistree`, `offre-recompense-vue`, `installation`), la taille d'écran et la provenance sont envoyés. Le tableau de bord n'est visible que par le titulaire du compte GoatCounter.
@@ -157,19 +143,18 @@ Wouf compte ses visites avec **GoatCounter** : pas de cookie, pas d'identifiant,
 Onglet **Plus → 🛠️ Administration** (visible seulement pour le propriétaire connecté avec Google, voir `ownerHashes`) :
 - **Comptes** : utilisateurs connectés avec Google (nom, e-mail, dernière visite, nombre d'animaux et de leçons). Les utilisateurs sans compte n'apparaissent que dans les statistiques de visite.
 - **Wouf Plus offert** : « À vie », « 1 mois » ou « Retirer ». Pris en compte à la prochaine ouverture de l'app de l'utilisateur (connecté avec Google).
-- **Vente** : bouton « Ouvrir la vente / Repasser en gratuit » (document Firestore `wouf_admin/config`). Il reste bloqué tant que les infos légales (`config.js → legal`) et le relais de paiement (`billing.api`) ne sont pas en place : l'app ignore l'interrupteur dans ce cas.
+- **Paiements à vérifier** : chaque dossier (prénom, nom et e-mail PayPal, compte Google, e-mail de contact, montant, date). Après vérification dans PayPal : « ✅ Paiement reçu : activer » (Wouf Plus à vie sur le compte Google du dossier) ou « Refuser ».
+- **Vente** : bouton « Ouvrir la vente / Repasser en gratuit » (document Firestore `wouf_admin/config`). Il reste bloqué tant que les infos légales et le lien PayPal ne sont pas renseignés : l'app ignore l'interrupteur dans ce cas.
 - **Sécurité = règles Firestore** (Firebase → Firestore Database → Règles), à ajouter dans `match /databases/{database}/documents { … }`, en remplaçant ADRESSE par l'adresse Gmail du propriétaire :
 ```
 function woufAdmin() { return request.auth != null && request.auth.token.email == 'ADRESSE' && request.auth.token.email_verified == true; }
 match /wouf_users/{uid} { allow read, write: if request.auth != null && request.auth.uid == uid; allow read: if woufAdmin(); }
 match /wouf_grants/{uid} { allow read: if request.auth != null && request.auth.uid == uid; allow read, write: if woufAdmin(); }
 match /wouf_admin/{doc} { allow read: if true; allow write: if woufAdmin(); }
+match /wouf_orders/{id} { allow create: if request.auth != null && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'pending'; allow read: if request.auth != null && resource.data.uid == request.auth.uid; allow read, update: if woufAdmin(); }
 ```
 
-## Vendre avec des liens de paiement Stripe (sans relais)
-1. Stripe → **Catalogue de produits** : produit « Wouf Plus à vie », prix unique **19,99 €** (le prix de `plans[0].price`). Optionnel : 2ᵉ prix **9,99 €** pour l'offre récompense.
-2. Stripe → **Liens de paiement** → Créer : un lien par prix. Onglet « Après le paiement » → « Rediriger vers votre site » : `https://woufapp.fr/#/merci`. Activer PayPal / Apple Pay / Google Pay dans Paramètres → Moyens de paiement si souhaité.
-3. Coller les liens et les informations légales dans **Plus → Administration → « Stripe et informations légales »** → Enregistrer (document `wouf_admin/config`, appliqué chez tous à la prochaine ouverture ; ils remplacent `config.js → billing.paymentLink / rewardLink`, `legal` et `support.email`).
-4. Ouvrir la vente : Plus → Administration → « Ouvrir la vente » (bloqué tant qu'un prérequis manque).
-5. **À chaque vente** : Stripe envoie un e-mail (adresse de l'acheteur pré-remplie = son compte Google). Aller dans Administration → rechercher l'e-mail → « ⭐ À vie ». L'acheteur l'a à sa prochaine ouverture de l'app (promesse affichée : sous 24 h).
-Plus tard, le relais Cloudflare (`billing.api`) automatise l'activation ; il prend le pas sur les liens.
+## Vendre avec PayPal
+1. PayPal (compte **professionnel**) → « Liens et boutons de paiement » → « Wouf Plus à vie » 19,99 € (+ 9,99 € pour l'offre récompense) → copier le lien (https://www.paypal.com/…).
+2. Plus → Administration → « Paiement et informations légales » : coller le lien, remplir les informations légales → Enregistrer → « Ouvrir la vente ».
+3. **À chaque vente** : l'acheteur remplit son dossier puis paie ; PayPal vous envoie un e-mail. Administration → « Paiements à vérifier » : comparer nom, e-mail et montant → « ✅ Paiement reçu : activer ». Promesse affichée à l'acheteur : activation sous 24 h.

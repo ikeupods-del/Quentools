@@ -88,7 +88,7 @@ bilan santé intelligent · plan de perte de poids · fiche gardien · carnet PD
 ```
 cd wouf && npm install
 npm run serve      # http://localhost:8099/wouf/
-npm test           # contrôles de contenu + relais de paiement + 18 scénarios dans un vrai navigateur
+npm test           # contrôles de contenu + moteur de nutrition + scénarios dans un vrai navigateur
 ```
 La publication (GitHub Pages) ne se fait que si les tests passent. Détails et procédures : `wouf/docs/MAINTENANCE.md` ; conventions du code : `CLAUDE.md`.
 
@@ -102,5 +102,5 @@ La publication (GitHub Pages) ne se fait que si les tests passent. Détails et p
 | `wouf/nutrition.js`, `croquettes.js` | comparateur de croquettes (calculs purs testés + écrans) |
 | `wouf/cloud.js` | connexion Google et synchronisation |
 | `wouf/business.js` | achat à vie, assistance, pages légales, nouveautés, mises à jour |
-| `wouf/billing-worker/` | relais Cloudflare (paiement Stripe, vérification d'identité, e-mails d'assistance) |
+| `wouf/admin.js` | administration (comptes, dossiers de paiement PayPal, Wouf Plus offert, vente) |
 | `wouf/tests/`, `wouf/docs/` | tests automatiques, guide du propriétaire |
