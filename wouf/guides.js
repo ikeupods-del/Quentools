@@ -76,11 +76,22 @@ ROUTES.guides = function guides() {
       <p class="mut center small">Les informations de santé sont indicatives et ne remplacent pas l’avis d’un vétérinaire.</p>`;
   }
   const spLbl = { dog: '🐶 Chien', cat: '🐱 Chat', all: '🐶🐱 Chien et chat' };
-  return `<div class="page-h">${back}<h1>📚 Guides et formations</h1></div>
-    <p class="mut">Les erreurs à éviter et les points d’attention, expliqués simplement. Un guide est gratuit, les autres sont inclus dans Wouf Plus.</p>
+  return `<div class="page-h">${back}<h1>📚 E-books et guides</h1></div>
+    <p class="mut">Les erreurs à éviter et les points d’attention, expliqués simplement. Les e-books gratuits sont ouverts à tous, les autres sont inclus dans Wouf Plus. À lire ici ou à enregistrer en PDF.</p>
     <div class="list card menu">${GUIDES.map(x => `<button class="row" data-act="guide-open" data-id="${x.id}"><span class="ico">${x.e}</span><span class="grow"><b>${esc(x.title)}</b><small>${esc(x.sub)} · ${spLbl[x.sp]} · ${x.free ? 'Gratuit' : allowed('guides') ? `${x.items.length} points` : 'Plus'}</small></span><span class="chev">›</span></button>`).join('')}</div>
     <p class="mut center small">Les informations de santé sont indicatives et ne remplacent pas l’avis d’un vétérinaire.</p>`;
 };
-ACT['guide-open'] = d => { const g = guideById(d.id); if (!g) return; if (!g.free && !allowed('guides')) return paywall('guides'); GD.open = g.id; track('guide-ouvert', true); render(); window.scrollTo(0, 0); };
+/* Accueil : menu déroulant « E-books » (gratuits puis Wouf Plus), ceux de l'espèce de l'animal en premier ; un appui ouvre l'e-book. */
+function homeEbooks(d) {
+  const sp = spOf(d).id, rank = g => (g.sp === sp || g.sp === 'all' ? 0 : 1), list = GUIDES.slice().sort((a, b) => rank(a) - rank(b));
+  const free = list.filter(g => g.free), paid = list.filter(g => !g.free), ok = allowed('guides');
+  const row = g => `<button class="row" data-act="guide-open" data-id="${g.id}"><span class="ico">${g.e}</span><span class="grow"><b>${esc(g.title)}</b><small>${esc(g.sub)}</small></span><span class="chev">${g.free || ok ? '›' : '🔒'}</span></button>`;
+  return `<details class="card acc" id="h-ebooks"${HOME.eb ? ' open' : ''}><summary><b class="grow">📚 E-books</b><small class="mut">${free.length} gratuit${free.length > 1 ? 's' : ''} · ${paid.length} Wouf Plus</small></summary>
+    <p class="eb-h">🎁 E-books gratuits</p><div class="list menu">${free.map(row).join('')}</div>
+    <p class="eb-h">⭐ E-books Wouf Plus ${ok ? '<span class="pill ok">Débloqués</span>' : '<span class="pill plus">Plus</span>'}</p><div class="list menu">${paid.map(row).join('')}</div>
+    <p class="mut small">À lire dans l’appli ou à enregistrer en PDF. Contenu indicatif.</p></details>`;
+}
+document.addEventListener('toggle', e => { if (e.target && e.target.id === 'h-ebooks') HOME.eb = e.target.open; }, true);
+ACT['guide-open'] = d => { const g = guideById(d.id); if (!g) return; if (!g.free && !allowed('guides')) return paywall('guides'); GD.open = g.id; track('guide-ouvert', true); if (routeName() !== 'guides') location.hash = '#/guides'; else render(); window.scrollTo(0, 0); };
 ACT['guide-close'] = () => { GD.open = ''; render(); window.scrollTo(0, 0); };
 ACT['guide-print'] = () => { const g = guideById(GD.open); if (g && (g.free || allowed('guides'))) printHTML(guideHTML(g)); };

@@ -29,12 +29,12 @@ Wouf — logique santé : rappels, score de suivi, plan chiot, poids, calendrier
 - définit : reminders missing score weightStatus lifeStage medsToday allExpenses puppyPlan buildICS maybeNotify dogEvents dogWeights lastWeight dogBreed dogSize dueText idealBand SLOTS medActive EXPENSE_CATS
 - dépend de : data.js species.js core.js
 
-### wouf/screens.js (327 l.)
+### wouf/screens.js (328 l.)
 Wouf — écrans principaux : chiens, accueil, carnet, suivi (poids, traitements, journal).
 - écrans : #/home #/carnet #/plan #/suivi
 - actions : dogs pick-dog edit-dog new-dog first-dog tip-next renew add-event edit-event carnet-f plan-done add-weight edit-weight add-med edit-med add-journal edit-journal tab-suivi journal-f
 - définit : avatar renderTop dogFields saveDog newDog editDog welcome reminderRow eventForm weightForm medForm medRow journalForm UI ACT ROUTES HOME JKINDS
-- dépend de : data.js species.js core.js health.js educ.js tracker.js guide.js noms.js business.js extras.js main.js
+- dépend de : data.js species.js core.js health.js educ.js tracker.js guide.js noms.js business.js extras.js guides.js main.js
 
 ### wouf/sos.js (184 l.)
 Wouf — SOS : vétérinaires ouverts / de garde autour de soi (données OpenStreetMap), contacts, premiers secours, toxiques.
@@ -170,7 +170,7 @@ Wouf — générateur de noms pour chien et chat : styles, sexe, initiale (dont 
 - définit : lev nameCheck pickNames namesHTML testHTML NAME_STYLES NAME_POOL LOF_LETTERS lofLetter norm syllables NAME_COMMANDS confusedWith NOMS nameFavs isFav chip
 - dépend de : core.js health.js screens.js main.js
 
-### wouf/business.js (315 l.)
+### wouf/business.js (316 l.)
 Wouf — exploitation et vente : achat unique « à vie », assistance prioritaire, pages légales, nouveautés, alerte de mise à jour, diagnostics. Paiement : lien PayPal + dossier de paiement vér
 - écrans : #/merci #/abo #/support #/legal #/nouveautes
 - actions : restore checkout buy-go subscribe paywall support-send check-update
@@ -198,12 +198,12 @@ Wouf — « Test express : dangereux ou OK ? » : 8 aliments tirés au hasard, a
 - définit : taWhy taShuffle taStart TA_POOL TA_LABEL TEST
 - dépend de : data.js species.js core.js health.js screens.js main.js
 
-### wouf/guides.js (87 l.)
+### wouf/guides.js (98 l.)
 Wouf — bibliothèque de guides « erreurs à éviter et points d'attention » (hors éducation). Lecture dans l'app, export PDF. Un guide gratuit (urgences), les autres avec Wouf Plus (fonction « 
 - écrans : #/guides
 - actions : guide-open guide-close guide-print
-- définit : guideHTML GUIDES GD guideById
-- dépend de : core.js screens.js business.js extras.js main.js
+- définit : guideHTML homeEbooks GUIDES GD guideById
+- dépend de : species.js core.js screens.js business.js extras.js main.js
 
 ### wouf/main.js (54 l.)
 Wouf — routeur, rendu, démarrage.

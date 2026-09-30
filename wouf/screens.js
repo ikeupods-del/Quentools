@@ -147,9 +147,10 @@ ROUTES.home = function home() {
     <button data-act="add-expense"><span>💶</span>Dépense</button>
     <button data-act="add-weight"><span>⚖️</span>Poids</button>
     <a href="#/triage"><span>🚑</span>Que faire ?</a>
-    <a href="#/guides"><span>📚</span>Guides</a>
+    <a href="#/guides"><span>📚</span>E-books</a>
     <a href="#/noms"><span>🏷️</span>Noms</a>
   </section>
+  ${homeEbooks(d)}
 
   ${backupOld ? `<section class="card note compact"><b>💾 Pensez à sauvegarder</b> <a class="btn xs" href="#/sauvegarde">Sauvegarder</a></section>` : ''}
   ${(() => { const nx = nextLesson(d), es = eduStats(d); return nx ? `<a class="card banner edu-banner" href="#/seance?id=${nx.id}"><b>🎓 Séance du jour : ${nx.icon} ${esc(nx.title)}</b><span>${es.streak ? '🔥 ' + es.streak + ' j d’affilée · ' : ''}2 à 5 minutes →</span></a>` : ''; })()}
@@ -157,7 +158,7 @@ ROUTES.home = function home() {
   ${subActive() ? '' : `<section class="card plus-cta compact"><div><b>⭐ Wouf+ · ${esc(planLine())}</b><small>${BILL.enabled ? 'Leçons, GPS, bilan santé, guides, assistance prioritaire' : 'Offert pendant le lancement : tout est débloqué'}</small></div><button class="btn primary sm" data-act="subscribe">${BILL.enabled ? 'Souscrire' : 'Découvrir'}</button></section>`}
   <section class="card don-card compact"><div><b>❤️ Aider les animaux sans famille</b><small>Don à ${esc(donation().name)}, sur le site officiel.</small></div><a class="btn sm" href="${esc(donation().url)}" target="_blank" rel="noopener noreferrer">Faire un don</a></section>`;
 };
-const HOME = { tip: 0 };
+const HOME = { tip: 0, eb: false };
 ACT['tip-next'] = () => { HOME.tip++; render(true); };
 ACT.renew = ({ id }) => {
   const ev = S.events.find(e => e.id === id), gap = ev.next ? diffDays(ev.next, ev.date) : 0;
