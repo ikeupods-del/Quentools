@@ -291,3 +291,4 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-off
 .meteo-city{display:flex;gap:6px;margin-top:6px}.meteo-city input{flex:1;min-width:0}
 .hero.hero-c{padding:12px 14px;gap:12px}.hero.hero-c .hero-txt h1{font-size:1.35rem;margin:0}.hero.hero-c .hero-txt p{margin:2px 0}.hero.hero-c .av.xl{width:60px;height:60px;font-size:2rem}
 .eb-h{margin:10px 0 4px;font-weight:700;font-size:.9rem;color:var(--mut);display:flex;align-items:center;gap:8px}#h-ebooks .list.menu{margin:0}
+.gd-ch>summary b{font-size:1rem}.gd-list ul{margin:6px 0 0;padding-left:1.1rem}.gd-list ul li{margin:3px 0;color:var(--ink)}

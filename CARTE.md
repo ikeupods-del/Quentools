@@ -170,7 +170,7 @@ Wouf — générateur de noms pour chien et chat : styles, sexe, initiale (dont 
 - définit : lev nameCheck pickNames namesHTML testHTML NAME_STYLES NAME_POOL LOF_LETTERS lofLetter norm syllables NAME_COMMANDS confusedWith NOMS nameFavs isFav chip
 - dépend de : core.js health.js screens.js main.js
 
-### wouf/business.js (316 l.)
+### wouf/business.js (317 l.)
 Wouf — exploitation et vente : achat unique « à vie », assistance prioritaire, pages légales, nouveautés, alerte de mise à jour, diagnostics. Paiement : lien PayPal + dossier de paiement vér
 - écrans : #/merci #/abo #/support #/legal #/nouveautes
 - actions : restore checkout buy-go subscribe paywall support-send check-update
@@ -198,12 +198,12 @@ Wouf — « Test express : dangereux ou OK ? » : 8 aliments tirés au hasard, a
 - définit : taWhy taShuffle taStart TA_POOL TA_LABEL TEST
 - dépend de : data.js species.js core.js health.js screens.js main.js
 
-### wouf/guides.js (98 l.)
-Wouf — bibliothèque de guides « erreurs à éviter et points d'attention » (hors éducation). Lecture dans l'app, export PDF. Un guide gratuit (urgences), les autres avec Wouf Plus (fonction « 
+### wouf/guides.js (231 l.)
+Wouf — les 2 e-books (hors éducation) : un gratuit (« Le guide de survie du propriétaire ») et un complet avec Wouf Plus (« Le grand guide santé et bien-être », fonction « guides »). Chaque 
 - écrans : #/guides
 - actions : guide-open guide-close guide-print
-- définit : guideHTML homeEbooks GUIDES GD guideById
-- dépend de : species.js core.js screens.js business.js extras.js main.js
+- définit : guideHTML homeEbooks GD_NOTE gdLevel GUIDES GD guideById gdCount gdItem
+- dépend de : data.js species.js core.js screens.js business.js extras.js main.js
 
 ### wouf/main.js (54 l.)
 Wouf — routeur, rendu, démarrage.

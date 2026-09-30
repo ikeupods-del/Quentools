@@ -869,28 +869,33 @@ test('test express « dangereux ou OK ? » : sans carnet, 8 questions, score, pa
   noErrors(b); noErrors(b2); await b.ctx.close(); await b2.ctx.close();
 });
 
-test('guides : un guide gratuit, les autres réservés à Plus, lecture et PDF', async () => {
+test('e-books : un gratuit (guide de survie) et un complet Wouf Plus, sommaire, chapitres et PDF', async () => {
   const b = await boot({}), p = b.page;
-  await b.ev(() => { BILL.enabled = true; BILL.freeUntil = null; BILL.grandfatherBefore = null; S.sub = { active: false }; S.grant = null; }); await b.go('#/guides'); await p.waitForSelector('[data-act=guide-open]');
-  assert.equal(await p.locator('[data-act=guide-open]').count(), 4); assert.match(await text(p, '#view'), /Gratuit/);
-  await p.click('[data-act=guide-open][data-id=chien-erreurs]'); await p.waitForSelector('.modal, .sheet, [data-act=paywall], .paywall').catch(() => {}); assert.equal(await p.locator('.gd-list').count(), 0, 'guide Plus verrouillé');
+  await b.ev(() => { BILL.enabled = true; BILL.freeUntil = null; BILL.grandfatherBefore = null; S.sub = { active: false }; S.grant = null; }); await b.go('#/guides'); await b.ev(() => render()); await p.waitForSelector('[data-act=guide-open]');
+  assert.equal(await p.locator('[data-act=guide-open]').count(), 2); assert.match(await text(p, '#view'), /Gratuit/);
+  await p.click('[data-act=guide-open][data-id=sante]'); await p.waitForTimeout(300); assert.equal(await p.locator('.gd-list').count(), 0, 'e-book Plus verrouillé');
   await p.click('.sheet [data-close]'); await p.waitForTimeout(300);
-  await p.click('[data-act=guide-open][data-id=urgences]'); await p.waitForSelector('.gd-list'); assert.equal(await p.locator('.gd-list li').count(), 8); assert.match(await text(p, '.gd'), /Faire vomir sans avis/);
-  await b.ev(() => { window.print = () => { window.__g = document.getElementById('print-root').textContent; }; }); await p.click('[data-act=guide-print]'); await p.waitForTimeout(500); assert.match(await b.ev(() => window.__g), /Urgences : 8 gestes/);
-  await b.ev(() => { BILL.enabled = false; GD.open = ''; render(); }); await p.click('[data-act=guide-open][data-id=chat-erreurs]'); await p.waitForSelector('.gd-list'); assert.equal(await p.locator('.gd-list li').count(), 10);
-  assert.equal(await b.ev(() => GUIDES.every(g => g.items.length >= 8 && g.items.every(i => i[0] && i[1].length > 40))), true);
+  await p.click('[data-act=guide-open][data-id=survie]'); await p.waitForSelector('.gd-ch');
+  assert.equal(await p.locator('.gd-ch').count(), 9); assert.equal(await p.locator('.gd-ch[open]').count(), 1, 'premier chapitre ouvert');
+  const txt = await b.ev(() => document.querySelector('.gd').textContent); assert.match(txt, /Faire vomir sans avis/); assert.match(txt, /Lys/); assert.match(txt, /02 40 68 77 40/);
+  await b.ev(() => { window.print = () => { window.__g = document.getElementById('print-root').textContent; }; }); await p.click('[data-act=guide-print]'); await p.waitForTimeout(500);
+  const pdf = await b.ev(() => window.__g); assert.match(pdf, /Le guide de survie du propriétaire/); assert.match(pdf, /Sommaire/); assert.match(pdf, /Premiers secours du chat/);
+  await b.ev(() => { BILL.enabled = false; GD.open = ''; render(); }); await p.click('[data-act=guide-open][data-id=sante]'); await p.waitForSelector('.gd-ch'); assert.equal(await p.locator('.gd-ch').count(), 12);
+  assert.match(await b.ev(() => document.querySelector('.gd').textContent), /Puces, tiques et vers[^]*L’animal senior/);
+  const q = await b.ev(() => GUIDES.map(g => ({ ch: g.chapters().length, ok: g.chapters().every(c => c.t && c.items.length >= 3 && c.items.every(i => i[0] && ((i[1] || '').length > 25 || (i[2] || []).length))) })));
+  assert.deepEqual(q, [{ ch: 9, ok: true }, { ch: 12, ok: true }]);
   noErrors(b); await b.ctx.close();
 });
 
-test('accueil : menu déroulant E-books (gratuits / Wouf Plus), ouverture directe', async () => {
+test('accueil : menu déroulant E-books (1 gratuit / 1 Wouf Plus), ouverture directe', async () => {
   const b = await boot({}), p = b.page;
   await b.ev(() => { BILL.enabled = true; BILL.freeUntil = null; BILL.grandfatherBefore = null; S.sub = { active: false }; S.grant = null; }); await b.go('#/home'); await b.ev(() => render()); await p.waitForSelector('#h-ebooks');
-  assert.equal(await p.locator('#h-ebooks[open]').count(), 0, 'replié par défaut'); assert.match(await text(p, '#h-ebooks summary'), /E-books.*1 gratuit · 3 Wouf Plus/);
-  await p.click('#h-ebooks summary'); assert.match(await text(p, '#h-ebooks'), /E-books gratuits[^]*Urgences[^]*E-books Wouf Plus/);
-  assert.equal(await p.locator('#h-ebooks .chev', { hasText: '🔒' }).count(), 3, 'e-books Plus verrouillés');
-  await p.click('#h-ebooks [data-act=guide-open][data-id=chien-erreurs]'); await p.waitForTimeout(300); assert.equal(await p.locator('.gd-list').count(), 0, 'paywall'); await p.click('.sheet [data-close]'); await p.waitForTimeout(300);
+  assert.equal(await p.locator('#h-ebooks[open]').count(), 0, 'replié par défaut'); assert.match(await text(p, '#h-ebooks summary'), /E-books.*1 gratuit · 1 Wouf Plus/);
+  await p.click('#h-ebooks summary'); assert.match(await text(p, '#h-ebooks'), /E-book gratuit[^]*guide de survie[^]*E-book Wouf Plus[^]*grand guide santé/i);
+  assert.equal(await p.locator('#h-ebooks .chev', { hasText: '🔒' }).count(), 1, 'e-book Plus verrouillé');
+  await p.click('#h-ebooks [data-act=guide-open][data-id=sante]'); await p.waitForTimeout(300); assert.equal(await p.locator('.gd-ch').count(), 0, 'paywall'); await p.click('.sheet [data-close]'); await p.waitForTimeout(300);
   assert.equal(await p.locator('#h-ebooks[open]').count(), 1, 'reste ouvert');
-  await p.click('#h-ebooks [data-act=guide-open][data-id=urgences]'); await p.waitForSelector('.gd-list'); assert.equal(await b.ev(() => routeName()), 'guides'); assert.equal(await p.locator('.gd-list li').count(), 8);
+  await p.click('#h-ebooks [data-act=guide-open][data-id=survie]'); await p.waitForSelector('.gd-ch'); assert.equal(await b.ev(() => routeName()), 'guides');
   noErrors(b); await b.ctx.close();
 });
 
