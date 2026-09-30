@@ -232,7 +232,7 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - kit.html (23 Ko)
 - nimes.js (2 Ko)
 - photos-libres.js (3 Ko)
-- photos-libres.json (1 Ko)
+- photos-libres.json (0 Ko)
 - preview.js (3 Ko)
 - problemes.js (6 Ko)
 - problemes.json (9 Ko)

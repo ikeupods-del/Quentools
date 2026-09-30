@@ -11,7 +11,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const okLicence = l => /^(cc0|pdm)$/i.test(l) || /^(cc0|public domain|pd\b|pdm)/i.test(l);
 
 async function openverse(q) {
-  const u = 'https://api.openverse.org/v1/images/?' + new URLSearchParams({ q, license: 'cc0,pdm', page_size: '20', mature: 'false' });
+  const u = 'https://api.openverse.org/v1/images/?' + new URLSearchParams({ q, license: 'cc0,pdm', category: 'photograph', page_size: '20', mature: 'false' });
   const r = await fetch(u, { headers: { 'User-Agent': UA } });
   if (!r.ok) { console.log('  openverse', r.status); return []; }
   return ((await r.json()).results || []).filter(x => okLicence(x.license) && (x.width || 1200) >= 900)
@@ -27,12 +27,13 @@ async function commons(q) {
 }
 
 (async () => {
-  fs.rmSync(OUT, { recursive: true, force: true }); fs.mkdirSync(OUT, { recursive: true });
+  fs.rmSync(OUT, { recursive: true, force: true }); fs.mkdirSync(OUT, { recursive: true }); // les photos retenues vont dans photos/ (+ credits.json)
   const credits = {}, seen = new Set();
   for (const [key, queries] of Object.entries(WANT)) {
     if (key === '_') continue;
     const found = [];
-    for (const q of queries) for (const fn of [openverse, commons]) {
+    // Openverse (vraies photos) d'abord, Wikimedia Commons seulement s'il en manque
+    for (const [q, fn] of [...queries.map(q => [q, openverse]), ...queries.map(q => [q, commons])]) {
       if (found.length >= MAX) break;
       let list = []; try { list = await fn(q); } catch (e) { console.log('  erreur', fn.name, e.message); }
       await sleep(3500);
