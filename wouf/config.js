@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.13.6',
+  version: '1.13.9',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
@@ -45,7 +45,7 @@ window.WOUF_CONFIG = {
   ownerHashes: ['5551fc3e72a62b8fa55d701333c1151c37c9f61e98d805ad7cbba408e313817e'],   // tableau de bord : https://woufapp.goatcounter.com
 
   support: {
-    email: '',                       // ex. support@votre-domaine.fr  ← à renseigner avant la mise en vente
+    email: 'wouf-contact@proton.me', // adresse qui reçoit le formulaire de contact (modifiable dans l'administration : « E-mail d'assistance »)
     priorityDelay: 'sous 24 h ouvrées',
     standardDelay: 'sous 5 jours ouvrés'
   },
@@ -56,7 +56,7 @@ window.WOUF_CONFIG = {
     form: '',                        // ex. « Entrepreneur individuel (micro-entreprise) »
     address: '',
     siret: '',
-    email: '',                       // contact du vendeur
+    email: 'wouf-contact@proton.me', // contact du vendeur (mentions légales, conditions de vente) ; modifiable dans l'administration
     director: '',                    // directeur de la publication
     vat: 'TVA non applicable, art. 293 B du CGI',   // adaptez à votre situation
     mediator: '',                    // médiateur de la consommation (obligatoire pour vendre à des particuliers)
