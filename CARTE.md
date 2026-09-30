@@ -14,14 +14,14 @@ Wouf — données de référence (indicatives : elles ne remplacent jamais l'avi
 - définit : VACCINES TYPES ROUTINE_TYPES BREEDS SIZE_LABEL SENIOR_AGE breedOf TOXICS FIRST_AID URGENT_SIGNS POISON_LINES TIPS
 - dépend de : species.js core.js noms.js
 
-### wouf/species.js (165 l.)
+### wouf/species.js (164 l.)
 Wouf — espèces : chien 🐶 et chat 🐱 (gratuit : 1 chien + 1 chat ; Plus : autant d'animaux qu'on veut). Tout ce qui diffère selon l'espèce est ici : vocabulaire, races, vaccins, toxiques, pr
-- définit : presetsFor humanAgeOf SPECIES spOf CAT_BREEDS CAT_PRESETS breedsFor TOXICS_CAT FIRST_AID_CAT URGENT_CAT TIPS_CAT NUT_FACTORS_DOG NUT_FACTORS_CAT nutFactorsOf toxicsOf firstAidOf urgentOf tipsOf
+- définit : presetsFor humanAgeOf SPECIES spOf CAT_BREEDS CAT_PRESETS TOXICS_CAT FIRST_AID_CAT URGENT_CAT TIPS_CAT NUT_FACTORS_DOG NUT_FACTORS_CAT nutFactorsOf toxicsOf firstAidOf urgentOf tipsOf
 - dépend de : data.js core.js
 
-### wouf/core.js (280 l.)
+### wouf/core.js (279 l.)
 Wouf — noyau : outils, stockage, fenêtres, formulaires, abonnement.
-- définit : logError ageMonths ageText blank migrate load flush save idbOp loadImage imageBlob squarePhoto ownerCheck statsUrl track toast sheet closeSheet ask fieldHTML readForm openForm lineChart barChart grandfathered plus canAddPet canAddDoc gate download shareOrDownload CFG BILL KEY SCHEMA $ $$ esc uid pad iso today parseD addDays addMonths diffDays fmtDate fmtMoney fmtKg num sum ageYears humanAge S dog idb fput fget fdel blobToDataURL …
+- définit : logError ageMonths ageText blank migrate load flush save idbOp loadImage imageBlob squarePhoto ownerCheck statsUrl track toast sheet closeSheet ask fieldHTML readForm openForm lineChart barChart grandfathered plus canAddPet canAddDoc gate download shareOrDownload CFG BILL KEY SCHEMA $ $$ esc uid pad iso today parseD addDays diffDays fmtDate fmtMoney fmtKg num sum ageYears humanAge S dog idb fput fget fdel blobToDataURL STATS_SRC …
 - dépend de : cloud.js noms.js business.js main.js
 
 ### wouf/health.js (137 l.)
@@ -29,11 +29,11 @@ Wouf — logique santé : rappels, score de suivi, plan chiot, poids, calendrier
 - définit : reminders missing score weightStatus lifeStage medsToday allExpenses puppyPlan buildICS maybeNotify dogEvents dogWeights lastWeight dogBreed dogSize dueText idealBand SLOTS medActive EXPENSE_CATS
 - dépend de : data.js species.js core.js
 
-### wouf/screens.js (328 l.)
+### wouf/screens.js (323 l.)
 Wouf — écrans principaux : chiens, accueil, carnet, suivi (poids, traitements, journal).
 - écrans : #/home #/carnet #/plan #/suivi
 - actions : dogs pick-dog edit-dog new-dog first-dog tip-next renew add-event edit-event carnet-f plan-done add-weight edit-weight add-med edit-med add-journal edit-journal tab-suivi journal-f
-- définit : avatar renderTop dogFields saveDog newDog editDog welcome reminderRow eventForm weightForm medForm medRow journalForm UI ACT ROUTES HOME JKINDS
+- définit : avatar renderTop dogFields saveDog newDog editDog welcome eventForm weightForm medForm medRow journalForm UI ACT ROUTES HOME JKINDS
 - dépend de : data.js species.js core.js health.js educ.js tracker.js guide.js noms.js business.js extras.js guides.js main.js
 
 ### wouf/sos.js (184 l.)
@@ -48,11 +48,11 @@ Wouf — nutrition : calculs purs (sans écran ni état) du comparateur de croqu
 - définit : nfeAsFed foodKcal100 nutTargets splitIngredients analyseIngredients allergyHits rangeScore stageFit scoreFood guessFoodStage guessFoodType recommendFood FOOD_TYPES FOOD_STAGES ACTIVITY nuNum nuR1 nuNorm foodMoisture toDM foodPricePerKg dailyKcal rationGrams costPerDay MEATS CEREALS LEGUMES ALLERGENS ALLERGEN_LABEL nuHas
 - dépend de : core.js health.js
 
-### wouf/croquettes.js (225 l.)
+### wouf/croquettes.js (224 l.)
 Wouf — comparateur de croquettes : écrans. Le calcul est dans nutrition.js (testé séparément). Les produits sont ceux que l'utilisateur saisit (ou importe depuis Open Pet Food Facts) : aucun
 - écrans : #/croquettes #/croquette #/croquettes-guide
 - actions : food-act sugg-run sugg-add food-del food-add food-edit food-search food-pick
-- définit : foodProfile foodKcalNeed foodTips evalFood suggHTML renderSugg runSuggest foodForm opffSearch fromOPFF foodsFor fmt lvlIcon FSEL SUGG OPFF OPFF_RES GUIDE_FOOD
+- définit : foodProfile foodKcalNeed foodTips evalFood suggHTML renderSugg runSuggest foodForm opffSearch fromOPFF foodsFor fmt lvlIcon SUGG OPFF OPFF_RES GUIDE_FOOD
 - dépend de : data.js species.js core.js health.js screens.js nutrition.js educ.js tracker.js noms.js main.js
 
 ### wouf/lessons.js (228 l.)
@@ -136,10 +136,10 @@ Wouf Éducation — parcours en empreintes de pattes : unités, étapes à débl
 - définit : xpOf levelOf unitsFor pathHTML lessonQuiz quizHTML quizRender quizOpen celebrate rewardEligible rewardCheck rewardSheet mascot quizMood quizSound XP_SESSION LEVELS todaySessions UNIT_ORDER PARC QUIZ REWARD freeIdsOf rewardOn rewardActive MASCOT_TXT pickTxt
 - dépend de : core.js health.js lessons.js quiz.js educ.js cloud.js business.js main.js
 
-### wouf/cloud.js (153 l.)
+### wouf/cloud.js (155 l.)
 Wouf — connexion Google (Firebase) et sauvegarde automatique dans le cloud. Même projet Firebase que les autres apps QuenTools : un compte Google pour tout, données rangées à part dans users
 - actions : g-signin g-sync g-signout
-- définit : fb setCloud cloudPayload applyRemote cloudSeal askPass cloudOpen cloudQueue cloudPush cloudPull ask2 cloudInit FBV CLOUD FBP gInfo CloudApi cloudLabel CPASS cloudPass hasData
+- définit : fb setCloud cloudPayload applyRemote cloudSeal askPass cloudOpen cloudQueue cloudPush cloudPull ask2 cloudInit FBV CLOUD FBP gInfo AUTH_HOSTS CloudApi cloudLabel CPASS cloudPass hasData
 - dépend de : core.js business.js admin.js extras.js main.js
 
 ### wouf/tracker.js (201 l.)
@@ -170,18 +170,18 @@ Wouf — générateur de noms pour chien et chat : styles, sexe, initiale (dont 
 - définit : lev nameCheck pickNames namesHTML testHTML NAME_STYLES NAME_POOL LOF_LETTERS lofLetter norm syllables NAME_COMMANDS confusedWith NOMS nameFavs isFav chip
 - dépend de : core.js health.js screens.js main.js
 
-### wouf/business.js (317 l.)
+### wouf/business.js (315 l.)
 Wouf — exploitation et vente : achat unique « à vie », assistance prioritaire, pages légales, nouveautés, alerte de mise à jour, diagnostics. Paiement : lien PayPal + dossier de paiement vér
 - écrans : #/merci #/abo #/support #/legal #/nouveautes
 - actions : restore checkout buy-go subscribe paywall support-send check-update
-- définit : errorLog diagnostics api authHeaders applySub refreshSub paypalUrl buySheet soonSheet paywall legalDoc checkVersion showUpdateBanner initUpdates LEGAL planOf isPriority supportTo ctaLabel nDog legalReady CHANGELOG FEATURES planLine autoOn PAY_LINK payName PAYEE payReady rewardBuyable NAV FAQ orTbd vNewer
+- définit : errorLog diagnostics api authHeaders applySub refreshSub paypalUrl buySheet soonSheet paywall legalDoc checkVersion showUpdateBanner initUpdates LEGAL planOf isPriority supportTo ctaLabel nDog CHANGELOG FEATURES planLine autoOn PAY_LINK PAYEE payReady rewardBuyable NAV FAQ orTbd vNewer
 - dépend de : species.js core.js health.js screens.js lessons.js educ.js parcours.js cloud.js admin.js extras.js main.js
 
-### wouf/admin.js (253 l.)
+### wouf/admin.js (252 l.)
 Wouf — administration (propriétaire uniquement) : comptes Google, Wouf Plus offert, interrupteur de vente. La SÉCURITÉ est assurée par les règles Firestore (docs/MAINTENANCE.md, « Administra
 - écrans : #/admin
 - actions : adm-copy adm-reload adm-grant adm-revoke adm-sale adm-save-pay adm-order-ok adm-order-no adm-msg-del
-- définit : remoteStore applySaleConfig remoteRefresh accountSync replyLink admLoad statsCard AdminApi SALE_DEFAULT RELAY_URL REMOTE_FIELDS PERSONAL_FIELDS REMOTE_DEF remoteCached legalFull saleReady saleMissing legalMissing lessonsDone ADM grantLabel admErr STAT_EVT
+- définit : remoteStore applySaleConfig remoteRefresh accountSync replyLink admLoad statsCard AdminApi SALE_DEFAULT RELAY_URL REMOTE_FIELDS PERSONAL_FIELDS REMOTE_DEF remoteCached saleReady saleMissing legalMissing lessonsDone ADM grantLabel admErr STAT_EVT
 - dépend de : core.js screens.js parcours.js cloud.js business.js main.js
 
 ### wouf/extras.js (376 l.)

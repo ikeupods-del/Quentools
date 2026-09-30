@@ -149,7 +149,7 @@ function emergencyHTML(d) {
     <tr><th>Propriétaire</th><td>${esc(S.owner.name || '—')} ${esc(fmtPhone(S.owner.phone))}</td></tr></table></div>`;
 }
 ACT.emergency = () => {
-  const d = dog(), el = sheet(`<div class="sheet-head"><h2>Fiche d’urgence</h2><button class="x" data-close>✕</button></div>${emergencyHTML(d)}
+  const d = dog(); sheet(`<div class="sheet-head"><h2>Fiche d’urgence</h2><button class="x" data-close>✕</button></div>${emergencyHTML(d)}
     <div class="form-actions"><button class="btn" data-act="share-em">Partager</button><button class="btn primary" data-act="print-em">Imprimer / PDF</button></div>`);
 };
 ACT['print-em'] = () => printHTML(`<h1>Fiche d’urgence</h1>${emergencyHTML(dog())}`);

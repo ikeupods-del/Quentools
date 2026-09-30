@@ -52,7 +52,7 @@ function eduFilter(list, q, cat) {
 function eduListHTML(d) {
   const paid = lessonsFor(d).filter(l => !l.free), r = eduFilter(paid, EDU.q, EDU.cat);
   if (EDU.q || EDU.cat) return `<div class="list">${r.map(l => lessonCard(d, l)).join('') || '<p class="empty">Aucune leçon ne correspond. Essayez un autre mot.</p>'}</div>`;
-  return eduCats(paid).map(c => { const ls = paid.filter(l => l.cat === c), n = ls.filter(l => lessonState(d, l)).length; return `<details class="acc-in edu-grp" data-cat="${esc(c)}" ${EDU.cats.includes(c) ? 'open' : ''}><summary><b>${esc(c)}</b><small class="mut">${ls.length} leçon${ls.length > 1 ? 's' : ''}</small></summary><div class="list">${ls.map(l => lessonCard(d, l)).join('')}</div></details>`; }).join('');
+  return eduCats(paid).map(c => { const ls = paid.filter(l => l.cat === c); return `<details class="acc-in edu-grp" data-cat="${esc(c)}" ${EDU.cats.includes(c) ? 'open' : ''}><summary><b>${esc(c)}</b><small class="mut">${ls.length} leçon${ls.length > 1 ? 's' : ''}</small></summary><div class="list">${ls.map(l => lessonCard(d, l)).join('')}</div></details>`; }).join('');
 }
 document.addEventListener('toggle', e => { const t = e.target; if (!t || !t.classList) return; if (t.id === 'edu-plus') EDU.open = t.open; else if (t.classList.contains('edu-grp')) { const c = t.dataset.cat; EDU.cats = EDU.cats.filter(x => x !== c).concat(t.open ? [c] : []); } }, true);
 ACT['edu-cat'] = ({ c }) => { EDU.cat = c; render(true); };

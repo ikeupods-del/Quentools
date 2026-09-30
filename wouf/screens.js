@@ -100,11 +100,6 @@ function welcome() {
 ACT['first-dog'] = () => newDog(true);
 
 /* ---------- Accueil ---------- */
-function reminderRow(r) {
-  const cls = r.days < 0 ? 'bad' : r.days <= 14 ? 'warn' : 'ok';
-  return `<div class="row"><span class="ico">${r.icon}</span><span class="grow"><b>${esc(r.title)}</b><small class="${cls}">${dueText(r.days)} · ${fmtDate(r.due)}</small></span>
-    ${r.kind === 'event' ? `<button class="btn sm primary" data-act="renew" data-id="${r.ev.id}">Fait ✓</button>` : `<button class="btn sm" data-act="edit-dog" data-id="${r.dogId}">Modifier</button>`}</div>`;
-}
 ROUTES.home = function home() {
   const d = dog(), rem = reminders(d.id), late = rem.filter(r => r.days < 0), soon = rem.filter(r => r.days >= 0 && r.days <= 30), miss = missing(d);
   const sc = score(d), lw = lastWeight(d.id), ws = weightStatus(d), ha = humanAgeOf(d), meds = medsToday(d.id);

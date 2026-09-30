@@ -9,7 +9,6 @@ const isPriority = () => subActive();
 const supportTo = () => SUP.email || LEGAL.email || '';
 const ctaLabel = () => subActive() ? '⭐ Wouf Plus actif' : BILL.enabled ? `⭐ Souscrire à Wouf+ · ${planOf().price} ${planOf().per === 'paiement unique' ? 'à vie' : ''}`.trim() : '⭐ Découvrir Wouf+ (gratuit pour le moment)';
 const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free === undefined || !!l.free === free)).length, nCat = (free) => LESSONS.filter(l => l.sp === 'cat' && (free === undefined || !!l.free === free)).length;
-const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
 
 const CHANGELOG = [
   { v: '1.18.0', date: '2026-09-30', items: ['📚 Deux e-books complets : « Le guide de survie du propriétaire » (gratuit : urgences, premiers secours, dangers de la maison) et « Le grand guide santé et bien-être » (Wouf Plus : 12 chapitres, du premier jour aux années senior)', '📖 Lecture par chapitres avec sommaire, et enregistrement en PDF'] },
@@ -112,7 +111,6 @@ const autoOn = () => !!(BILL.api && CLOUD.user && CLOUD.user.uid && PAYEE.test(B
    Avant d'être redirigé, l'acheteur remplit un « dossier de paiement » (nom, prénom et e-mail PayPal,
    e-mail de contact) enregistré dans wouf_orders : l'administration compare avec l'e-mail de PayPal puis active Wouf Plus. */
 const PAY_LINK = /^https:\/\/(www\.)?paypal\.(com|me|biz)\/[\w./-]+$/i;
-const payName = () => 'PayPal';
 const PAYEE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const payReady = () => !!(PAYEE.test(BILL.payee || '') || BILL.paymentLink);
 const rewardBuyable = () => rewardActive() && !!(PAYEE.test(BILL.payee || '') || BILL.rewardLink);

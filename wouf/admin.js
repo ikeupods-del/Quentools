@@ -54,7 +54,6 @@ const PERSONAL_FIELDS = ['seller', 'form', 'siret', 'address', 'mediator'], REMO
 const REMOTE_DEF = Object.fromEntries(Object.entries(REMOTE_FIELDS).map(([k, [o, p]]) => [k, o[p] || '']));
 const remoteCached = () => { try { return JSON.parse(localStorage.getItem('wouf:remote') || 'null') || {}; } catch (e) { return {}; } };
 function remoteStore(c) { const next = { ...remoteCached(), ...c }; try { localStorage.setItem('wouf:remote', JSON.stringify(next)); } catch (e) { /* ignore */ } return applySaleConfig(next); }
-const legalFull = () => ['seller', 'form', 'address', 'siret', 'email', 'mediator'].every(k => LEGAL[k]) && !!supportTo();
 // Interrupteur libre (choix du propriétaire) : seule condition, un moyen de paiement PayPal, sinon le bouton « Payer » ne mènerait nulle part.
 const saleReady = () => !!(payReady() && (BILL.plans || []).length);
 const saleMissing = () => [!payReady() && 'Adresse PayPal (ou lien PayPal) à renseigner'].filter(Boolean);

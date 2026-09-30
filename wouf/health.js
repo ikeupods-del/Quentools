@@ -87,7 +87,7 @@ function allExpenses(id) {
 
 /* Plan chiot / chaton : dates calculées depuis la naissance */
 function puppyPlan(d) {
-  const at = w => addDays(d.birth, w * 7), cat = spOf(d).id === 'cat', P = [], V = presetsFor('vaccine', d), sp = spOf(d);
+  const at = w => addDays(d.birth, w * 7), cat = spOf(d).id === 'cat', P = [], V = presetsFor('vaccine', d);
   const wormT = presetsFor('worm', d)[1][0], parT = presetsFor('parasite', d)[cat ? 1 : 1][0];
   [2, 4, 6, 8, 10, 12, 16, 20, 24].forEach(w => P.push({ w, type: 'worm', title: wormT, label: 'Vermifuge' }));
   if (cat) {

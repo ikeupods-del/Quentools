@@ -42,7 +42,6 @@ function presetsFor(type, d) {
   if (spOf(d).id === 'cat' && CAT_PRESETS[type]) return CAT_PRESETS[type];
   return TYPES[type].presets || [];
 }
-const breedsFor = sp => (sp === 'cat' ? CAT_BREEDS : BREEDS);
 
 /* ---------- Toxiques du chat ---------- */
 const TOXICS_CAT = [

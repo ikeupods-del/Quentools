@@ -16,7 +16,7 @@ const NAME_STYLES = {
 };
 const NAME_POOL = (() => {
   const out = [];
-  for (const [style, [label, list]] of Object.entries(NAME_STYLES)) {
+  for (const [style, [, list]] of Object.entries(NAME_STYLES)) {
     const seen = new Set();
     list.split(/\s+/).forEach(tok => {
       const [name, sex, sp] = tok.split('.'); if (!name || seen.has(name)) return; seen.add(name);

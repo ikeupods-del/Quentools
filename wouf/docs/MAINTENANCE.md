@@ -1,7 +1,7 @@
 # Wouf — guide du propriétaire
 
 Ce document explique **comment faire vivre Wouf** : publier une correction, ajouter une leçon, changer le prix, ouvrir la vente, gérer l’assistance.
-Il est écrit pour être suivi sans être développeur. Pour toute modification, vous pouvez aussi simplement la demander à Claude : il connaît le projet (voir `CLAUDE.md`).
+Il est écrit pour être suivi sans être développeur. Les conventions du code sont décrites dans les notes de développement (`.claude/CLAUDE.md`).
 
 ## 1. Comment ça marche (en 2 minutes)
 
@@ -23,7 +23,7 @@ Il est écrit pour être suivi sans être développeur. Pour toute modification,
 
 ## 2. Publier une modification (routine)
 
-1. Modifier les fichiers (ou demander à Claude).
+1. Modifier les fichiers.
 2. Lancer les tests : `cd wouf && npm install && npm test` (la première fois seulement pour `npm install`). **Tout doit être vert.** Les tests vérifient le contenu des leçons, la configuration, le moteur de nutrition et le parcours utilisateur dans un vrai navigateur.
 3. Pour une nouvelle version visible par les utilisateurs, **une seule commande** met à jour tous les numéros de version et ajoute l’annonce dans « Nouveautés » :
    `npm run release -- 1.3.0 "Première nouveauté" "Deuxième nouveauté"` (le test `check` refuse si un numéro est oublié).
@@ -191,9 +191,9 @@ Une tâche GitHub (`.github/workflows/instagram.yml`, deux fois par jour, vers 7
 4. Sur GitHub → dépôt → Settings → Secrets and variables → Actions → *New repository secret* : `IG_TOKEN` (le jeton) et `IG_USER_ID` (l'identifiant).
 5. Actions → « Instagram — publication du jour » → *Run workflow* avec « Simulation » cochée : doit finir en vert et afficher la légende. Puis un essai réel en décochant.
 
-**Ensuite** : rien à faire, sauf **renouveler le jeton tous les 60 jours** (refaire l'étape 3 et remplacer le secret `IG_TOKEN`). Si la tâche échoue, GitHub envoie un e-mail. Avec 2 publications par jour, 41 images durent 20 jours. Quand il reste 6 publications ou moins, la tâche affiche un avertissement : régénérer la file (`node marketing/wouf/generate.js && node marketing/wouf/build-queue.js`, ou demander à Claude).
+**Ensuite** : rien à faire, sauf **renouveler le jeton tous les 60 jours** (refaire l'étape 3 et remplacer le secret `IG_TOKEN`). Si la tâche échoue, GitHub envoie un e-mail. Avec 2 publications par jour, 41 images durent 20 jours. Quand il reste 6 publications ou moins, la tâche affiche un avertissement : régénérer la file (`node marketing/wouf/generate.js && node marketing/wouf/build-queue.js`).
 
-**Aperçu par e-mail la veille** (`.github/workflows/apercu.yml`, chaque soir vers 20 h) : un e-mail avec les images et légendes des 2 publications du lendemain (7 h et 18 h). Secret GitHub à ajouter : `RESEND_API_KEY` (la même clé que celle du relais). Les mails arrivent sur `wouf-contact@proton.me` (secret facultatif `MAIL_TO` pour changer d'adresse) ; le compte Resend doit être créé avec cette adresse. Test : Actions → « Instagram — aperçu du lendemain » → Run workflow. Pour changer une publication avant sa sortie : le dire à Claude (modification de `queue.json`).
+**Aperçu par e-mail la veille** (`.github/workflows/apercu.yml`, chaque soir vers 20 h) : un e-mail avec les images et légendes des 2 publications du lendemain (7 h et 18 h). Secret GitHub à ajouter : `RESEND_API_KEY` (la même clé que celle du relais). Les mails arrivent sur `wouf-contact@proton.me` (secret facultatif `MAIL_TO` pour changer d'adresse) ; le compte Resend doit être créé avec cette adresse. Test : Actions → « Instagram — aperçu du lendemain » → Run workflow. Pour changer une publication avant sa sortie : modifier `queue.json`.
 
 ## Paiement retrouvé automatiquement + mail de confirmation
 - **Quand un client écrit par le formulaire** de l'app en étant connecté avec Google, le relais cherche un paiement PayPal dont l'adresse du payeur est **l'adresse Google vérifiée** du client. Trouvé : son compte passe **Plus à vie tout de suite**, l'app le lui annonce, et un mail de confirmation part. Le message apparaît dans Administration → Messages avec « ✅ Paiement retrouvé… ».

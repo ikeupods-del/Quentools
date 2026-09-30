@@ -49,7 +49,6 @@ const fmt = (v, u = '', dec = 1) => v == null ? '—' : v.toLocaleString('fr-FR'
 const lvlIcon = l => ({ ok: '✅', warn: '⚠️', bad: '⛔', na: '❔' }[l] || '•');
 
 /* ---------- Écran principal ---------- */
-const FSEL = { compare: true };
 ROUTES.croquettes = function croquettes() {
   const d = dog(), prof = foodProfile(d), t = nutTargets(prof), need = foodKcalNeed(d, prof), sp = spOf(d), b = dogBreed(d);
   const ranked = foodsFor(d).map(f => evalFood(d, prof, f, need)).sort((a, c) => c.sc.total - a.sc.total);
