@@ -1,13 +1,13 @@
 'use strict';
 /* Wouf — routeur, rendu, démarrage. */
 
-const NAV_OF = { croquettes: 'plus', croquette: 'plus', 'croquettes-guide': 'plus', don: 'plus', balade: 'suivi', 'balade-detail': 'suivi', 'plan-poids': 'plus', bilan: 'plus', triage: 'plus', noms: 'plus', admin: 'plus', merci: 'plus', recherche: 'plus', meteo: 'plus', gardien: 'plus', home: 'home', carnet: 'carnet', plan: 'carnet', suivi: 'suivi', sos: 'sos', educ: 'educ', lecon: 'educ', seance: 'educ', principes: 'educ', programme: 'educ' };
+const NAV_OF = { test: 'plus', croquettes: 'plus', croquette: 'plus', 'croquettes-guide': 'plus', don: 'plus', balade: 'suivi', 'balade-detail': 'suivi', 'plan-poids': 'plus', bilan: 'plus', triage: 'plus', noms: 'plus', admin: 'plus', merci: 'plus', recherche: 'plus', meteo: 'plus', gardien: 'plus', home: 'home', carnet: 'carnet', plan: 'carnet', suivi: 'suivi', sos: 'sos', educ: 'educ', lecon: 'educ', seance: 'educ', principes: 'educ', programme: 'educ' };
 let lastRoute = null;
 
 function routeName() { return (location.hash.replace(/^#\/?/, '') || 'home').split('?')[0]; }
 
 function render(keepScroll) {
-  const r = routeName(), open = ['reglages', 'sauvegarde', 'abo', 'plus', 'transfert'];
+  const r = routeName(), open = ['reglages', 'sauvegarde', 'abo', 'plus', 'transfert', 'test'];
   renderTop();
   let html;
   if (!S.dogs.length && !open.includes(r)) html = welcome();
@@ -16,7 +16,7 @@ function render(keepScroll) {
   const y = window.scrollY;
   $('#view').innerHTML = html;
   $$('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.r === (NAV_OF[r] || 'plus')));
-  $('#tabs').hidden = !S.dogs.length && !open.includes(r);
+  $('#tabs').hidden = !S.dogs.length && (!open.includes(r) || r === 'test');
   if (keepScroll === true && lastRoute === r) window.scrollTo(0, y); else if (lastRoute !== r) window.scrollTo(0, 0);
   if (lastRoute !== r) track('/' + (!S.dogs.length && !open.includes(r) ? 'bienvenue' : r));
   lastRoute = r;

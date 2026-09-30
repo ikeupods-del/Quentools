@@ -12,6 +12,7 @@ const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free ==
 const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
 
 const CHANGELOG = [
+  { v: '1.14.0', date: '2026-09-30', items: ['Nouveau : le test express « dangereux ou OK ? » : 8 aliments, 1 minute, sans compte, avec partage de votre score'] },
   { v: '1.11.0', date: '2026-09-30', items: ['🌐 Nouvelle adresse : woufapp.fr', '📦 Transfert du carnet depuis l’ancienne adresse'] },
   { v: '1.10.0', date: '2026-09-29', items: ['🐾 Le parcours d’éducation devient un chemin d’empreintes de pattes : chaque leçon validée dore une empreinte.', '🦴 Les points deviennent des os à gagner : +10 par séance, +70 par leçon validée au quiz.', '✏️ Nouveau style des réponses du quiz (A, B, C).'] },
   { v: '1.9.2', date: '2026-09-29', items: ['✏️ Corrections de textes.'] },

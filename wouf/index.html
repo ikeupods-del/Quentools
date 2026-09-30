@@ -9,8 +9,19 @@
 <meta property="og:title" content="Wouf — le carnet de santé de votre chien et de votre chat">
 <meta property="og:description" content="Vaccins, rappels, vétérinaires de garde, éducation, suivi des balades, comparateur de croquettes. Gratuit, sans inscription.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="icons/icon-512.png">
-<meta name="twitter:card" content="summary">
+<meta property="og:site_name" content="Wouf">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:url" content="https://woufapp.fr/">
+<meta property="og:image" content="https://woufapp.fr/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wouf, le carnet de santé du chien et du chat">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Wouf — le carnet de santé de votre chien et de votre chat">
+<meta name="twitter:description" content="Vaccins, rappels, vétos de garde, éducation. Gratuit, sans inscription.">
+<meta name="twitter:image" content="https://woufapp.fr/icons/og-image.png">
+<link rel="canonical" href="https://woufapp.fr/">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Wouf","applicationCategory":"LifestyleApplication","operatingSystem":"Web, iOS, Android","inLanguage":"fr","url":"https://woufapp.fr/","description":"Carnet de santé du chien et du chat : vaccins, rappels, poids, éducation positive, suivi des balades, vétérinaires de garde.","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -26,7 +37,7 @@ if (/[?&]maj=/.test(location.search) && 'serviceWorker' in navigator && window.c
     .then(function () { location.replace(location.pathname + location.hash); });
 }
 </script>
-<link rel="stylesheet" href="style.css?v=1.13.15">
+<link rel="stylesheet" href="style.css?v=1.14.0">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -47,41 +58,42 @@ if (/[?&]maj=/.test(location.search) && 'serviceWorker' in navigator && window.c
 <datalist id="breeds"></datalist>
 <datalist id="breeds_cat"></datalist>
 <noscript><p style="padding:2rem;font-family:sans-serif">Wouf nécessite JavaScript.</p></noscript>
-<script src="config.js?v=1.13.15"></script>
-<script src="data.js?v=1.13.15"></script>
-<script src="species.js?v=1.13.15"></script>
-<script src="core.js?v=1.13.15"></script>
-<script src="health.js?v=1.13.15"></script>
-<script src="screens.js?v=1.13.15"></script>
-<script src="sos.js?v=1.13.15"></script>
-<script src="nutrition.js?v=1.13.15"></script>
-<script src="croquettes.js?v=1.13.15"></script>
-<script src="lessons.js?v=1.13.15"></script>
-<script src="lessons2.js?v=1.13.15"></script>
-<script src="lessons_cat.js?v=1.13.15"></script>
-<script src="lessons3.js?v=1.13.15"></script>
-<script src="lessons_cat2.js?v=1.13.15"></script>
-<script src="lessons4.js?v=1.13.15"></script>
-<script src="lessons_cat3.js?v=1.13.15"></script>
-<script src="lessons5.js?v=1.13.15"></script>
-<script src="lessons_cat4.js?v=1.13.15"></script>
-<script src="lessons6.js?v=1.13.15"></script>
-<script src="lessons7.js?v=1.13.15"></script>
-<script src="lessons_cat5.js?v=1.13.15"></script>
-<script src="lessons_plans.js?v=1.13.15"></script>
-<script src="quiz.js?v=1.13.15"></script>
-<script src="quiz2.js?v=1.13.15"></script>
-<script src="quiz_chat.js?v=1.13.15"></script>
-<script src="educ.js?v=1.13.15"></script>
-<script src="parcours.js?v=1.13.15"></script>
-<script src="cloud.js?v=1.13.15"></script>
-<script src="tracker.js?v=1.13.15"></script>
-<script src="plusfeatures.js?v=1.13.15"></script>
-<script src="guide.js?v=1.13.15"></script>
-<script src="noms.js?v=1.13.15"></script>
-<script src="business.js?v=1.13.15"></script>
-<script src="admin.js?v=1.13.15"></script>
-<script src="extras.js?v=1.13.15"></script>
-<script src="main.js?v=1.13.15"></script>
+<script src="config.js?v=1.14.0"></script>
+<script src="data.js?v=1.14.0"></script>
+<script src="species.js?v=1.14.0"></script>
+<script src="core.js?v=1.14.0"></script>
+<script src="health.js?v=1.14.0"></script>
+<script src="screens.js?v=1.14.0"></script>
+<script src="sos.js?v=1.14.0"></script>
+<script src="nutrition.js?v=1.14.0"></script>
+<script src="croquettes.js?v=1.14.0"></script>
+<script src="lessons.js?v=1.14.0"></script>
+<script src="lessons2.js?v=1.14.0"></script>
+<script src="lessons_cat.js?v=1.14.0"></script>
+<script src="lessons3.js?v=1.14.0"></script>
+<script src="lessons_cat2.js?v=1.14.0"></script>
+<script src="lessons4.js?v=1.14.0"></script>
+<script src="lessons_cat3.js?v=1.14.0"></script>
+<script src="lessons5.js?v=1.14.0"></script>
+<script src="lessons_cat4.js?v=1.14.0"></script>
+<script src="lessons6.js?v=1.14.0"></script>
+<script src="lessons7.js?v=1.14.0"></script>
+<script src="lessons_cat5.js?v=1.14.0"></script>
+<script src="lessons_plans.js?v=1.14.0"></script>
+<script src="quiz.js?v=1.14.0"></script>
+<script src="quiz2.js?v=1.14.0"></script>
+<script src="quiz_chat.js?v=1.14.0"></script>
+<script src="educ.js?v=1.14.0"></script>
+<script src="parcours.js?v=1.14.0"></script>
+<script src="cloud.js?v=1.14.0"></script>
+<script src="tracker.js?v=1.14.0"></script>
+<script src="plusfeatures.js?v=1.14.0"></script>
+<script src="guide.js?v=1.14.0"></script>
+<script src="noms.js?v=1.14.0"></script>
+<script src="business.js?v=1.14.0"></script>
+<script src="admin.js?v=1.14.0"></script>
+<script src="extras.js?v=1.14.0"></script>
+<script src="testalim.js?v=1.14.0"></script>
+<script src="main.js?v=1.14.0"></script>
 </body>
 </html>

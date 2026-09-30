@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://woufapp.fr/sitemap.xml
