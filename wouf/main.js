@@ -7,11 +7,12 @@ let lastRoute = null;
 function routeName() { return (location.hash.replace(/^#\/?/, '') || 'home').split('?')[0]; }
 
 function render(keepScroll) {
-  const r = routeName(), open = ['reglages', 'sauvegarde', 'abo', 'plus'];
+  const r = routeName(), open = ['reglages', 'sauvegarde', 'abo', 'plus', 'transfert'];
   renderTop();
   let html;
   if (!S.dogs.length && !open.includes(r)) html = welcome();
   else html = (ROUTES[r] || ROUTES.home)();
+  if (r === 'home' && S.dogs.length) html = movedBanner() + html;
   const y = window.scrollY;
   $('#view').innerHTML = html;
   $$('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.r === (NAV_OF[r] || 'plus')));
@@ -42,9 +43,11 @@ addEventListener('appinstalled', () => track('installation', true));
 /* Service worker */
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').then(initUpdates).catch(() => {}));
 
-/* Démarrage */
-render();
-refreshSub().then(() => { if (routeName() === 'abo') render(true); });
-maybeNotify();
-cloudInit();
-walkRecover();
+/* Démarrage (sur l'ancienne adresse sans carnet : redirection vers l'adresse officielle) */
+if (!movedRedirect()) {
+  render();
+  refreshSub().then(() => { if (routeName() === 'abo') render(true); });
+  maybeNotify();
+  cloudInit();
+  walkRecover();
+}

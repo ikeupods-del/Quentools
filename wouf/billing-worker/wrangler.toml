@@ -4,7 +4,7 @@ main = "worker.js"
 compatibility_date = "2025-01-01"
 
 [vars]
-ALLOWED_ORIGIN = "https://ikeupods-del.github.io"
+ALLOWED_ORIGIN = "https://woufapp.fr,https://ikeupods-del.github.io"
 FIREBASE_PROJECT_ID = "quentools-adca1"
 PRICE_LIFETIME = "price_A_REMPLACER"            # id du prix Stripe à paiement unique (19,99 €)
 PRICE_LIFETIME_REWARD = "price_A_REMPLACER"     # id du prix Stripe de l’offre récompense (9,99 €) ; supprimer la ligne = pas d’offre

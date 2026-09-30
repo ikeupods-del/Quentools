@@ -144,3 +144,10 @@ Wouf compte ses visites avec **GoatCounter** : pas de cookie, pas d'identifiant,
 - **Activer** : créer un compte gratuit sur goatcounter.com (code du site, par ex. `wouf`), puis mettre ce code dans `config.js` → `stats.goatcounter`. Vide = aucune mesure.
 - **Provenance des réseaux sociaux** : dans les bios, utiliser `…/wouf/?src=insta` et `…/wouf/?src=tiktok`. La valeur apparaît comme « referrer » dans GoatCounter.
 - La mesure ne part que depuis le site publié (https). L'utilisateur peut la refuser dans Réglages → Confidentialité ; la politique de confidentialité la mentionne automatiquement dès que le code est renseigné.
+
+## Adresse officielle : woufapp.fr
+- Domaine acheté chez **OVH** (renouvellement automatique : à garder actif). Zone DNS : 4 enregistrements **A** sans sous-domaine vers `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` ; **CNAME** `www` → `ikeupods-del.github.io.` ; aucun AAAA.
+- Publication : dépôt **ikeupods-del/woufapp**, workflow « Publier Wouf » (Settings → Pages : Source « GitHub Actions », Custom domain `woufapp.fr`, Enforce HTTPS). Il reprend le dossier `wouf/` de Quentools, relance les tests et publie : toutes les 3 heures, ou tout de suite via Actions → « Publier Wouf » → Run workflow.
+- Firebase → Authentication → Settings → Authorized domains : `woufapp.fr` doit y figurer (connexion Google).
+- Relais de paiement : `ALLOWED_ORIGIN` contient `https://woufapp.fr`.
+- Bascule de l'ancienne adresse : `config.js → site.moved: true`. Sur `ikeupods-del.github.io/Quentools/wouf/`, un visiteur sans carnet est redirigé ; un utilisateur avec un carnet voit « Transférer mon carnet » (copie directe des données et documents vers woufapp.fr, rien n'est supprimé). Les comptes Google retrouvent tout en se reconnectant.

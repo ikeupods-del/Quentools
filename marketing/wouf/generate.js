@@ -8,7 +8,7 @@ let chromium; try { ({ chromium } = require(path.join(W, 'node_modules/playwrigh
 const { start } = require(path.join(W, 'tests/serve'));
 const OUT = path.join(__dirname, 'images'); fs.mkdirSync(OUT, { recursive: true });
 const day = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
-const LINK = 'ikeupods-del.github.io/Quentools/wouf';
+const LINK = 'woufapp.fr';
 
 /* Données de démonstration (fictives, pour les captures uniquement) */
 const demo = sp => ({ v: 1, schema: 2, current: 'a', installedAt: day(-60), owner: { name: '' }, settings: { lastBackup: day(-2) },
