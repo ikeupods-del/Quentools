@@ -92,6 +92,20 @@ const URGENT_CAT = [
   'Œil fermé, très rouge ou douloureux ; pupilles anormales',
   'Chatte gestante en difficulté, chaton qui ne tète plus ou refroidi'
 ];
+const TIPS_SENIOR_CAT = [
+  'À partir d’environ 10 ans, un chat gagne à voir le vétérinaire deux fois par an.',
+  'Un chat âgé qui boit et urine plus peut avoir un souci des reins ou de la thyroïde : consultez.',
+  'Un chat senior qui maigrit en mangeant bien doit être examiné par le vétérinaire.',
+  'Un bac à litière à bord bas aide un vieux chat qui a mal aux articulations.',
+  'Le chat cache l’arthrose : s’il saute moins haut ou hésite avant de sauter, parlez-en au vétérinaire.',
+  'Une petite marche ou un tabouret l’aide à rejoindre ses endroits préférés en hauteur.',
+  'Un chat âgé se toilette moins bien : un brossage doux l’aide et crée un moment complice.',
+  'Plusieurs points d’eau et une part d’aliment humide aident les reins d’un chat senior.',
+  'Mauvaise haleine ou mastication d’un seul côté : faites contrôler la bouche de votre vieux chat.',
+  'Un chat âgé moins actif use moins ses griffes : vérifiez-les régulièrement.',
+  'Un chat senior qui miaule la nuit ou semble désorienté mérite une visite chez le vétérinaire.',
+  'Quelques minutes de jeu doux chaque jour gardent un chat âgé actif et curieux.'
+];
 const TIPS_CAT = [
   'Un chat ne doit jamais rester plus de 24 heures sans manger : le foie peut être atteint rapidement.',
   'Surveillez la litière : changement de fréquence, de quantité ou de couleur = premier signe de problème rénal ou urinaire.',
@@ -152,7 +166,13 @@ const nutFactorsOf = d => (spOf(d).id === 'cat' ? NUT_FACTORS_CAT : NUT_FACTORS_
 const toxicsOf = d => (spOf(d).id === 'cat' ? TOXICS_CAT : TOXICS);
 const firstAidOf = d => (spOf(d).id === 'cat' ? FIRST_AID_CAT : FIRST_AID);
 const urgentOf = d => (spOf(d).id === 'cat' ? URGENT_CAT : URGENT_SIGNS);
-const tipsOf = d => (spOf(d).id === 'cat' ? TIPS_CAT : TIPS);
+/* Astuces du jour : pour un animal senior, une astuce sur deux est consacrée au grand âge. */
+const tipsOf = d => {
+  const base = spOf(d).id === 'cat' ? TIPS_CAT : TIPS;
+  if (!d || lifeStage(d) !== 'Senior') return base;
+  const sen = spOf(d).id === 'cat' ? TIPS_SENIOR_CAT : TIPS_SENIOR;
+  return base.flatMap((t, i) => [sen[i % sen.length], t]);
+};
 
 /* Âge « humain » approximatif */
 function humanAgeOf(d) {

@@ -3,12 +3,12 @@
    (« Le grand guide santé et bien-être », fonction « guides »). Chaque e-book = des chapitres ({e, t, intro, items}),
    un point = [titre, texte] ou [titre, texte, [liste]]. Les chapitres urgences / premiers secours / toxiques reprennent
    les données de l'app (URGENT_SIGNS, FIRST_AID, TOXICS… dans data.js et species.js) : une seule source à corriger.
-   Lecture dans l'app (sommaire + chapitres dépliables), export PDF. Contenu indicatif : ne remplace jamais un vétérinaire. Route #/guides. */
+   Lecture uniquement dans l'app (sommaire + chapitres dépliables) : volontairement pas d'export PDF ni d'impression. Contenu indicatif : ne remplace jamais un vétérinaire. Route #/guides. */
 const GD_NOTE = 'Contenu indicatif : il ne remplace jamais l’avis de votre vétérinaire, qui connaît votre animal.';
 const gdLevel = t => `${t.level === 'danger' ? '⛔ Danger' : '⚠️ Attention'} · ${t.why}`;
 const GUIDES = [
   { id: 'survie', free: true, e: '🚨', title: 'Le guide de survie du propriétaire', sub: 'Urgences, premiers secours, dangers de la maison : chien et chat',
-    intro: 'Ce guide rassemble tout ce qu’il faut savoir le jour où ça ne va pas : reconnaître une urgence, les bons gestes en attendant le vétérinaire, ceux à éviter, et les dangers à écarter de la maison. Lisez-le une fois au calme, et gardez-le à portée de main (enregistrez-le en PDF).',
+    intro: 'Ce guide rassemble tout ce qu’il faut savoir le jour où ça ne va pas : reconnaître une urgence, les bons gestes en attendant le vétérinaire, ceux à éviter, et les dangers à écarter de la maison. Lisez-le une fois au calme : il reste toujours disponible dans Wouf, même sans connexion.',
     chapters: () => [
       { e: '🚦', t: 'Reconnaître une urgence', intro: 'Certains signes ne peuvent pas attendre le lendemain. S’ils apparaissent, appelez tout de suite votre vétérinaire, ou le vétérinaire de garde la nuit et le week-end.',
         items: [
@@ -59,7 +59,7 @@ const GUIDES = [
         items: [
           ['Dans la trousse', 'Le minimum utile :', ['Compresses stériles, bande extensible et sparadrap', 'Sérum physiologique en unidoses (yeux, plaies)', 'Un antiseptique conseillé par votre vétérinaire', 'Ciseaux à bouts ronds et pince à épiler', 'Un tire-tique', 'Un thermomètre (usage exclusif de l’animal)', 'Des gants jetables', 'Une couverture de survie ou une serviette épaisse', 'Pour le chien, une muselière adaptée à sa taille (un animal qui a mal peut mordre)']],
           ['Les numéros à enregistrer', 'Dans votre téléphone et sur la porte du frigo :', ['Votre vétérinaire habituel', 'Le vétérinaire de garde le plus proche (liste « SOS » dans Wouf)', ...POISON_LINES.map(([n, p]) => `Centre antipoison vétérinaire ${n} : ${p.replace(/(\d{2})(?=\d)/g, '$1 ')}`)]],
-          ['Le carnet de santé à jour', 'Vaccins, traitements, poids, allergies et antécédents : en urgence, le vétérinaire de garde gagne un temps précieux. Wouf garde tout cela et l’exporte en PDF.']
+          ['Le carnet de santé à jour', 'Vaccins, traitements, poids, allergies et antécédents : en urgence, le vétérinaire de garde gagne un temps précieux. Wouf garde tout cela et le montre en un instant.']
         ] }
     ],
     outro: 'Dans Wouf : la fiche « Que faire ? » pour savoir s’il faut consulter, la liste des vétérinaires de garde autour de vous, et le carnet de santé à montrer au vétérinaire.' },
@@ -192,13 +192,6 @@ const GD = { open: '' };
 const guideById = id => GUIDES.find(g => g.id === id);
 const gdCount = g => g.chapters().reduce((n, c) => n + c.items.length, 0);
 const gdItem = it => `<b>${esc(it[0])}</b>${it[1] ? `<p>${esc(it[1])}</p>` : ''}${it[2] ? `<ul>${it[2].map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}`;
-function guideHTML(g) {
-  const ch = g.chapters();
-  return `<h1>${g.e} ${esc(g.title)}</h1><p class="mut">E-book Wouf · ${ch.length} chapitres · contenu indicatif</p><p>${esc(g.intro)}</p>
-    <h2>Sommaire</h2><ol>${ch.map(c => `<li>${esc(c.t)}</li>`).join('')}</ol>
-    ${ch.map((c, i) => `<h2>${i + 1}. ${c.e} ${esc(c.t)}</h2>${c.intro ? `<p><i>${esc(c.intro)}</i></p>` : ''}${c.items.map(it => `<h3>${esc(it[0])}</h3>${it[1] ? `<p>${esc(it[1])}</p>` : ''}${it[2] ? `<ul>${it[2].map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}`).join('')}`).join('')}
-    <p>${esc(g.outro)}</p><p class="mut">${GD_NOTE}</p>`;
-}
 ROUTES.guides = function guides() {
   const back = '<a class="back" href="#/plus">‹</a>', g = guideById(GD.open);
   if (g && (g.free || allowed('guides'))) {
@@ -207,11 +200,11 @@ ROUTES.guides = function guides() {
       <section class="card gd"><p>${esc(g.intro)}</p><p class="mut small">${ch.length} chapitres · ${gdCount(g)} fiches · touchez un chapitre pour l’ouvrir</p>
         ${ch.map((c, i) => `<details class="acc-in gd-ch"${i === 0 ? ' open' : ''}><summary><b>${i + 1}. ${c.e} ${esc(c.t)}</b><small class="mut">${c.items.length}</small></summary>${c.intro ? `<p class="mut">${esc(c.intro)}</p>` : ''}<ol class="gd-list">${c.items.map(it => `<li>${gdItem(it)}</li>`).join('')}</ol></details>`).join('')}
         <p>${esc(g.outro)}</p></section>
-      <div class="ta-btns"><button class="btn primary big" data-act="guide-print">🖨️ Enregistrer en PDF / imprimer</button><button class="btn" data-act="guide-close">‹ Les e-books</button></div>
+      <div class="ta-btns"><button class="btn" data-act="guide-close">‹ Les e-books</button></div>
       <p class="mut center small">${GD_NOTE}</p>`;
   }
   return `<div class="page-h">${back}<h1>📚 E-books</h1></div>
-    <p class="mut">Deux e-books complets : le guide de survie est gratuit pour tous, le grand guide santé est inclus dans Wouf Plus. À lire ici ou à enregistrer en PDF.</p>
+    <p class="mut">Deux e-books complets, à lire dans Wouf (même sans connexion) : le guide de survie est gratuit pour tous, le grand guide santé est inclus dans Wouf Plus.</p>
     <div class="list card menu">${GUIDES.map(x => `<button class="row" data-act="guide-open" data-id="${x.id}"><span class="ico">${x.e}</span><span class="grow"><b>${esc(x.title)}</b><small>${esc(x.sub)} · ${x.chapters().length} chapitres · ${x.free ? 'Gratuit' : allowed('guides') ? 'Wouf Plus ✓' : 'Wouf Plus'}</small></span><span class="chev">${x.free || allowed('guides') ? '›' : '🔒'}</span></button>`).join('')}</div>
     <p class="mut center small">${GD_NOTE}</p>`;
 };
@@ -222,9 +215,8 @@ function homeEbooks() {
   return `<details class="card acc" id="h-ebooks"${HOME.eb ? ' open' : ''}><summary><b class="grow">📚 E-books</b><small class="mut">1 gratuit · 1 Wouf Plus</small></summary>
     <p class="eb-h">🎁 E-book gratuit</p><div class="list menu">${GUIDES.filter(g => g.free).map(row).join('')}</div>
     <p class="eb-h">⭐ E-book Wouf Plus ${ok ? '<span class="pill ok">Débloqué</span>' : '<span class="pill plus">Plus</span>'}</p><div class="list menu">${GUIDES.filter(g => !g.free).map(row).join('')}</div>
-    <p class="mut small">À lire dans l’appli ou à enregistrer en PDF. Contenu indicatif.</p></details>`;
+    <p class="mut small">À lire dans Wouf, même sans connexion. Contenu indicatif.</p></details>`;
 }
 document.addEventListener('toggle', e => { if (e.target && e.target.id === 'h-ebooks') HOME.eb = e.target.open; }, true);
 ACT['guide-open'] = d => { const g = guideById(d.id); if (!g) return; if (!g.free && !allowed('guides')) return paywall('guides'); GD.open = g.id; track('guide-ouvert', true); if (routeName() !== 'guides') location.hash = '#/guides'; else render(); window.scrollTo(0, 0); };
 ACT['guide-close'] = () => { GD.open = ''; render(); window.scrollTo(0, 0); };
-ACT['guide-print'] = () => { const g = guideById(GD.open); if (g && (g.free || allowed('guides'))) printHTML(guideHTML(g)); };

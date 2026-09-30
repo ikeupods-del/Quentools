@@ -9,15 +9,15 @@ config.js → data.js → species.js → core.js → health.js → screens.js �
 Wouf — configuration. Guide complet : wouf/docs/MAINTENANCE.md ► WOUF PLUS (achat unique à vie) : tout est GRATUIT tant que `billing.enabled` vaut false. Pour ouvrir la vente : suivre la che
 - dépend de : extras.js
 
-### wouf/data.js (187 l.)
+### wouf/data.js (202 l.)
 Wouf — données de référence (indicatives : elles ne remplacent jamais l'avis d'un vétérinaire).
-- définit : VACCINES TYPES ROUTINE_TYPES BREEDS SIZE_LABEL SENIOR_AGE breedOf TOXICS FIRST_AID URGENT_SIGNS POISON_LINES TIPS
+- définit : VACCINES TYPES ROUTINE_TYPES BREEDS SIZE_LABEL SENIOR_AGE breedOf TOXICS FIRST_AID URGENT_SIGNS POISON_LINES TIPS_SENIOR TIPS
 - dépend de : species.js core.js noms.js
 
-### wouf/species.js (164 l.)
+### wouf/species.js (184 l.)
 Wouf — espèces : chien 🐶 et chat 🐱 (gratuit : 1 chien + 1 chat ; Plus : autant d'animaux qu'on veut). Tout ce qui diffère selon l'espèce est ici : vocabulaire, races, vaccins, toxiques, pr
-- définit : presetsFor humanAgeOf SPECIES spOf CAT_BREEDS CAT_PRESETS TOXICS_CAT FIRST_AID_CAT URGENT_CAT TIPS_CAT NUT_FACTORS_DOG NUT_FACTORS_CAT nutFactorsOf toxicsOf firstAidOf urgentOf tipsOf
-- dépend de : data.js core.js
+- définit : presetsFor humanAgeOf SPECIES spOf CAT_BREEDS CAT_PRESETS TOXICS_CAT FIRST_AID_CAT URGENT_CAT TIPS_SENIOR_CAT TIPS_CAT NUT_FACTORS_DOG NUT_FACTORS_CAT nutFactorsOf toxicsOf firstAidOf urgentOf tipsOf
+- dépend de : data.js core.js health.js
 
 ### wouf/core.js (279 l.)
 Wouf — noyau : outils, stockage, fenêtres, formulaires, abonnement.
@@ -29,7 +29,7 @@ Wouf — logique santé : rappels, score de suivi, plan chiot, poids, calendrier
 - définit : reminders missing score weightStatus lifeStage medsToday allExpenses puppyPlan buildICS maybeNotify dogEvents dogWeights lastWeight dogBreed dogSize dueText idealBand SLOTS medActive EXPENSE_CATS
 - dépend de : data.js species.js core.js
 
-### wouf/screens.js (323 l.)
+### wouf/screens.js (324 l.)
 Wouf — écrans principaux : chiens, accueil, carnet, suivi (poids, traitements, journal).
 - écrans : #/home #/carnet #/plan #/suivi
 - actions : dogs pick-dog edit-dog new-dog first-dog tip-next renew add-event edit-event carnet-f plan-done add-weight edit-weight add-med edit-med add-journal edit-journal tab-suivi journal-f
@@ -170,7 +170,7 @@ Wouf — générateur de noms pour chien et chat : styles, sexe, initiale (dont 
 - définit : lev nameCheck pickNames namesHTML testHTML NAME_STYLES NAME_POOL LOF_LETTERS lofLetter norm syllables NAME_COMMANDS confusedWith NOMS nameFavs isFav chip
 - dépend de : core.js health.js screens.js main.js
 
-### wouf/business.js (315 l.)
+### wouf/business.js (316 l.)
 Wouf — exploitation et vente : achat unique « à vie », assistance prioritaire, pages légales, nouveautés, alerte de mise à jour, diagnostics. Paiement : lien PayPal + dossier de paiement vér
 - écrans : #/merci #/abo #/support #/legal #/nouveautes
 - actions : restore checkout buy-go subscribe paywall support-send check-update
@@ -184,11 +184,11 @@ Wouf — administration (propriétaire uniquement) : comptes Google, Wouf Plus o
 - définit : remoteStore applySaleConfig remoteRefresh accountSync replyLink admLoad statsCard AdminApi SALE_DEFAULT RELAY_URL REMOTE_FIELDS PERSONAL_FIELDS REMOTE_DEF remoteCached saleReady saleMissing legalMissing lessonsDone ADM grantLabel admErr STAT_EVT
 - dépend de : core.js screens.js parcours.js cloud.js business.js main.js
 
-### wouf/extras.js (376 l.)
+### wouf/extras.js (397 l.)
 Wouf — menu Plus, dépenses, documents, nutrition, race, chien perdu, fiche véto, sauvegarde, abonnement, réglages.
 - écrans : #/plus #/depenses #/documents #/nutrition #/race #/perdu #/sauvegarde #/don #/transfert #/reglages
 - actions : report ics add-expense edit-expense xp-period xp-csv add-doc view-doc poster cenc-on cenc-off export import install stats-opt notif wipe move-go
-- définit : printHTML reportHTML expenseForm nutDefault nutCalc deriveKey makeBackup readBackup restoreBackup cloudEncCard movedRedirect movedBanner XP DOC_KINDS b64 unb64 donation installEvt SITE SITE_ORIGIN OLD_ORIGINS onOldSite
+- définit : printHTML reportHTML expenseForm nutDefault nutCalc deriveKey makeBackup readBackup restoreBackup cloudEncCard movedRedirect movedBanner seniorCard XP DOC_KINDS b64 unb64 donation installEvt SITE SITE_ORIGIN OLD_ORIGINS onOldSite SENIOR_WATCH
 - dépend de : data.js species.js core.js health.js screens.js cloud.js business.js main.js
 
 ### wouf/testalim.js (66 l.)
@@ -198,12 +198,12 @@ Wouf — « Test express : dangereux ou OK ? » : 8 aliments tirés au hasard, a
 - définit : taWhy taShuffle taStart TA_POOL TA_LABEL TEST
 - dépend de : data.js species.js core.js health.js screens.js main.js
 
-### wouf/guides.js (231 l.)
+### wouf/guides.js (223 l.)
 Wouf — les 2 e-books (hors éducation) : un gratuit (« Le guide de survie du propriétaire ») et un complet avec Wouf Plus (« Le grand guide santé et bien-être », fonction « guides »). Chaque 
 - écrans : #/guides
-- actions : guide-open guide-close guide-print
-- définit : guideHTML homeEbooks GD_NOTE gdLevel GUIDES GD guideById gdCount gdItem
-- dépend de : data.js species.js core.js screens.js business.js extras.js main.js
+- actions : guide-open guide-close
+- définit : homeEbooks GD_NOTE gdLevel GUIDES GD guideById gdCount gdItem
+- dépend de : data.js species.js core.js screens.js business.js main.js
 
 ### wouf/main.js (54 l.)
 Wouf — routeur, rendu, démarrage.
