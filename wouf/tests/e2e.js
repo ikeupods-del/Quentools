@@ -756,6 +756,10 @@ test('activation automatique PayPal : notify_url et compte transmis, page d’at
   assert.deepEqual(await b.ev(() => [BILL.api, plus(), window.__cfgSent]), ['https://relais.test', true, true], 'statut demandé dès que le relais est connu');
   // bouton « J’ai déjà payé » et retour dans l’app
   active = false; await b.ev(() => refreshSub(true)); await b.go('#/abo'); await p.waitForSelector('[data-act=restore]');
+  // pas de paiement pour CE compte : message précis avec le compte connecté ; relais en panne : message d'erreur (jamais « aucun paiement » à tort)
+  await p.click('[data-act=restore]'); await p.waitForSelector('.sheet h2'); assert.match(await text(p, '.sheet'), /Aucun paiement trouvé.*jean@test\.fr.*autre compte Google/); await p.click('.sheet button[data-close]');
+  await b.ctx.route('https://relais.test/status', r => r.fulfill({ status: 500, headers: cors, contentType: 'application/json', body: '{"error":"Erreur interne"}' }), { times: 1 });
+  await p.click('[data-act=restore]'); await p.waitForSelector('.sheet h2'); assert.match(await text(p, '.sheet'), /Vérification impossible.*Erreur interne/); await p.click('.sheet button[data-close]');
   active = true; await p.click('[data-act=restore]'); await p.waitForFunction(() => subActive()); assert.match(await text(p, '#toast'), /Accès retrouvé/);
   active = false; await b.ev(() => refreshSub(true)); assert.equal(await b.ev(() => plus()), false);
   active = true; await b.ev(() => { Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true }); document.dispatchEvent(new Event('visibilitychange')); });
@@ -772,6 +776,10 @@ test('activation automatique PayPal : notify_url et compte transmis, page d’at
   assert.match(await text(p, '#adm-orders'), /Paiements à vérifier \(1\)/); assert.match(await text(p, '#adm-orders'), /Zoé Lenta/);
   assert.match(await text(p, '#adm-orders details'), /Activé automatiquement.*Jean Client.*jean@paypal\.test.*19\.99/);
   assert.match(await text(p, '.adm-list'), /acheté/);
+  // paiement reçu par le relais sans dossier correspondant (client connecté avec un autre compte) : signalé au propriétaire
+  await b.ev(() => { AdminApi.paidList = async () => ({ uidAuto123: { active: true, payerEmail: 'jean@paypal.test', payerName: 'Jean Client', amount: '19.99' }, autreUid999: { active: true, payerEmail: 'marie@paypal.test', payerName: 'Marie Autre', amount: '19.99', ref: 'WOUF-XYZ' }, uidRembourse1: { active: false, payerEmail: 'x@paypal.test', payerName: 'X', amount: '19.99' } }); ADM.users = null; });
+  await b.go('#/home'); await b.go('#/admin'); await p.waitForSelector('#adm-orders summary');
+  assert.match(await text(p, '#adm-orders'), /Paiements PayPal reçus sans dossier \(2\)/); assert.match(await text(p, '#adm-orders'), /Marie Autre.*marie@paypal\.test.*WOUF-XYZ.*Compte Google qui a payé.*…rbe999|Marie Autre.*Compte Google qui a payé/); assert.match(await text(p, '#adm-orders'), /Remboursé \/ annulé/);
   noErrors(b); await b.ctx.close();
 });
 

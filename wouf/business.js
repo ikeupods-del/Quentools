@@ -70,13 +70,14 @@ function applySub(j) {
 }
 async function refreshSub(force) {
   if (!BILL.api && typeof remoteRefresh === 'function' && remoteRefresh.p) await remoteRefresh.p;   // réglages de vente (adresse du relais) pas encore arrivés
+  refreshSub.err = '';
   if (!BILL.api) return;
   try {
     if (!CLOUD.user) { const u = await CloudApi.restore().catch(() => null); if (u) CLOUD.user = u; }
     if (!CLOUD.user) return;
     // Tant que l'accès n'est pas actif on revérifie à CHAQUE demande (un paiement peut arriver à tout moment) ; une fois actif, toutes les heures (remboursement).
     if (force || !S.sub || !S.sub.active || Date.now() - (S.sub.checked || 0) > 36e5) applySub(await api('/status', { headers: await authHeaders() }));
-  } catch (e) { /* hors ligne ou relais indisponible : on garde l'état connu */ }
+  } catch (e) { refreshSub.err = e && e.message || 'erreur réseau'; /* hors ligne ou relais indisponible : on garde l'état connu */ }
 }
 /* Retour dans l'app (onglet ou application rouverte) : si l'accès n'est pas actif, on redemande au relais (au plus toutes les 20 s). */
 document.addEventListener('visibilitychange', () => {
@@ -87,7 +88,14 @@ ACT.restore = async () => {
   if (!BILL.api) return toast('Vérification automatique indisponible : écrivez-nous depuis « Une question ? »');
   if (!CLOUD.user) { await ACT['g-signin'](); if (!CLOUD.user) return; }
   await refreshSub(true);
-  toast(subActive() ? 'Accès retrouvé : Wouf Plus est actif ⭐' : 'Aucun paiement trouvé pour ce compte Google pour le moment (l’activation peut prendre quelques minutes)'); render(true);
+  if (subActive()) { toast('Accès retrouvé : Wouf Plus est actif ⭐'); return render(true); }
+  render(true);
+  // Message précis : erreur de vérification, ou « aucun paiement pour CE compte Google » (cas d'un paiement fait avec un autre compte).
+  sheet(refreshSub.err
+    ? `<div class="sheet-head"><h2>Vérification impossible</h2><button class="x" data-close>✕</button></div><p>Le service de vérification n’a pas répondu (<b>${esc(refreshSub.err)}</b>). Vérifiez votre connexion internet puis réessayez dans un instant.</p><div class="form-actions"><button class="btn primary" data-close>OK</button></div>`
+    : `<div class="sheet-head"><h2>Aucun paiement trouvé</h2><button class="x" data-close>✕</button></div><p>Aucun paiement Wouf Plus n’est enregistré pour le compte Google <b>${esc(CLOUD.user.email || '')}</b>.</p>
+       <ul class="bul"><li>Vous avez payé <b>il y a moins de 5 minutes</b> ? Patientez un instant puis réessayez.</li><li>Vous avez payé avec <b>un autre compte Google</b> ? Déconnectez-vous (Réglages), puis reconnectez-vous avec le compte utilisé lors de l’achat.</li><li>Toujours rien ? Écrivez-nous depuis « Une question ? » avec l’e-mail de ce compte et celui de votre compte PayPal.</li></ul>
+       <div class="form-actions"><a class="btn" href="#/reglages" data-close>Réglages</a><button class="btn primary" data-close>OK</button></div>`);
 };
 /* Activation automatique possible : relais + compte Google identifié + paiement construit par l'app (adresse PayPal, pas un lien fixe). */
 const autoOn = () => !!(BILL.api && CLOUD.user && CLOUD.user.uid && PAYEE.test(BILL.payee || ''));
