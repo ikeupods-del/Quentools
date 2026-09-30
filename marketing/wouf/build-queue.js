@@ -53,3 +53,11 @@ const BASE = 'https://raw.githubusercontent.com/ikeupods-del/Quentools/claude/in
 fs.writeFileSync(path.join(__dirname, 'catalogue.json'), JSON.stringify(catalogue, null, 1) + '\n');
 fs.writeFileSync(path.join(__dirname, 'queue-make.json'), JSON.stringify(catalogue.filter(c => c.source === 'make' && !c.status).map(c => ({ num: c.num, id: c.id, imageUrl: BASE + 'images-jpg/' + c.images[0].replace('.png', '.jpg'), caption: c.caption })), null, 1) + '\n');
 console.log(`✓ catalogue.json : ${catalogue.length} posts numérotés (${metricoolPart.length} Metricool, ${makeQueue.length} Make) ; queue-make.json`);
+
+/* Fichiers numérotés lus par Make : make/<n>.jpg (image) et make/<n>.txt (légende), n = numéro du catalogue */
+const MK = path.join(__dirname, 'make'); fs.rmSync(MK, { recursive: true, force: true }); fs.mkdirSync(MK, { recursive: true });
+for (const c of catalogue.filter(c => c.source === 'make' && !c.status)) {
+  fs.copyFileSync(path.join(__dirname, 'images-jpg', c.images[0].replace('.png', '.jpg')), path.join(MK, c.num + '.jpg'));
+  fs.writeFileSync(path.join(MK, c.num + '.txt'), c.caption);
+}
+console.log('✓ make/ : ' + fs.readdirSync(MK).length / 2 + ' publications (n° ' + catalogue.filter(c => c.source === 'make' && !c.status)[0].num + ' à ' + catalogue[catalogue.length - 1].num + ')');
