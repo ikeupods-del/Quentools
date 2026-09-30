@@ -626,14 +626,14 @@ test('statistiques anonymes : désactivées par défaut, provenance, adresse, re
   await b.ev(() => { WOUF_CONFIG.stats.goatcounter = 'Pas Valide!'; }); assert.equal(await b.ev(() => statsCode()), '');
   noErrors(b); await b.ctx.close();
   const o = await boot({ query: '?proprio=1', hash: '#/plus' });
-  assert.equal(await o.ev(() => OWNER), true); assert.ok(await o.page.$('a[href="https://woufapp.goatcounter.com"]'), 'lien « Mes statistiques » pour le propriétaire');
+  assert.equal(await o.ev(() => OWNER), true); assert.ok(await o.page.$('a[href="#/admin"]'), 'entrée Administration pour le propriétaire'); assert.equal(await o.page.$('a[href*="goatcounter.com"]'), null, 'plus de lien vers GoatCounter : les statistiques sont dans l’administration');
   noErrors(o); await o.ctx.close();
   const g = await boot({ hash: '#/plus' }); await fakeCloud(g.page);
   await g.ev(() => { CloudApi.signIn = async () => ({ email: 'Storacequentin@gmail.com ', name: 'Q', picture: '' }); });
   await g.page.click('a[href="#/reglages"]'); await g.page.click('[data-act=g-signin]'); await g.page.waitForTimeout(300); await g.go('#/plus');
-  await g.page.waitForSelector('a[href="https://woufapp.goatcounter.com"]', { timeout: 3000 }); assert.equal(await g.ev(() => OWNER), true, 'propriétaire reconnu par son compte Google');
+  await g.page.waitForSelector('a[href="#/admin"]', { timeout: 3000 }); assert.equal(await g.ev(() => OWNER), true, 'propriétaire reconnu par son compte Google');
   const x = await boot({ hash: '#/plus' }); await fakeCloud(x.page); await x.page.click('a[href="#/reglages"]'); await x.page.click('[data-act=g-signin]'); await x.page.waitForTimeout(300); await x.go('#/plus'); await x.page.waitForTimeout(200);
-  assert.equal(await x.page.$('a[href="https://woufapp.goatcounter.com"]'), null, 'un autre compte Google ne voit pas les statistiques');
+  assert.equal(await x.page.$('a[href="#/admin"]'), null, 'un autre compte Google ne voit pas l’administration');
   noErrors(g); noErrors(x); await g.ctx.close(); await x.ctx.close();
 });
 
@@ -832,7 +832,7 @@ test('administration : statistiques visibles dans le panneau, ou consigne claire
     Object.assign(AdminApi, { listUsers: async () => [], listOrders: async () => [], paidList: async () => ({}), supportList: async () => { ADM.mailOn = true; return []; }, statsGet: async () => window.__st }); });
   await b.go('#/admin'); await p.waitForSelector('#adm-stats .adm-bars');
   const t = await text(p, '#adm-stats'); assert.match(t, /29.*Aujourd’hui.*182.*7 jours.*435.*30 jours/); assert.match(t, /tiktok\.com.*120/); assert.match(t, /🐱 Chats ajoutés.*4/); assert.match(t, /truc-inconnu/);
-  assert.equal(await p.locator('#adm-stats .adm-bars > div').count(), 14); assert.match(await text(p, '#adm-msgs'), /Chaque message est aussi envoyé sur votre boîte mail/);
+  assert.equal(await p.locator('#adm-stats .adm-bars > div').count(), 14); assert.equal(await b.ev(() => document.querySelector('#view section.card') === document.querySelector('#adm-stats')), true, 'statistiques tout en haut'); assert.match(await text(p, '#adm-msgs'), /Chaque message est aussi envoyé sur votre boîte mail/);
   await b.ev(() => { window.__off = true; AdminApi.statsGet = async () => ({ off: true }); admLoad(); }); await p.waitForSelector('#adm-stats:has-text("GOATCOUNTER_TOKEN")');
   await b.ev(() => { AdminApi.statsGet = async () => { throw new Error('GoatCounter refuse la clé'); }; admLoad(); }); await p.waitForSelector('#adm-stats .bad:has-text("refuse la clé")');
   noErrors(b); await b.ctx.close();

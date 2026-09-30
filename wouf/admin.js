@@ -156,9 +156,9 @@ ROUTES.admin = function admin() {
       ${u.grant ? `<span class="pill-s ${gOn(u) ? 'ok' : ''}">${esc(grantLabel(u.grant))}</span>` : ''}</div>
       <div class="btn-row sm"><button class="btn sm" data-act="adm-grant" data-uid="${esc(u.uid)}" data-until="lifetime">⭐ À vie</button><button class="btn sm" data-act="adm-grant" data-uid="${esc(u.uid)}" data-until="${addDays(today(), 31)}">1 mois</button>${u.grant ? `<button class="btn sm danger" data-act="adm-revoke" data-uid="${esc(u.uid)}">Retirer</button>` : ''}</div></div>`;
   return head + `
+  ${statsCard()}
   <section class="grid4 adm-tiles">${tiles.map(([i, n, l]) => `<div class="tile sm"><span>${i}</span> <b>${ADM.users ? n : '…'}</b> ${l}</div>`).join('')}</section>
   <section class="card"><h2>🔗 Raccourcis</h2><div class="btn-row">
-    ${statsCode() ? `<a class="btn" href="https://${statsCode()}.goatcounter.com" target="_blank" rel="noopener">📊 Visites</a>` : ''}
     <a class="btn" href="https://www.paypal.com/myaccount/activities" target="_blank" rel="noopener">💳 PayPal</a>
     <a class="btn" href="https://console.firebase.google.com/project/${esc((CFG.firebase || {}).projectId || '')}" target="_blank" rel="noopener">🔥 Firebase</a></div></section>
   <section class="card"><h2>💶 Vente de Wouf Plus</h2>
@@ -179,7 +179,6 @@ ROUTES.admin = function admin() {
     ${ADM.oerr ? `<p class="bad">${esc(ADM.oerr)}</p>` : pend.map(orderRow).join('') || '<p class="mut">Aucun paiement en attente.</p>'}
     ${orphans.length ? `<details open><summary>💳 Paiements PayPal reçus sans dossier (${orphans.length})</summary><p class="mut small">Le relais a reçu ces paiements mais aucun dossier ne correspond à ce compte : le client est probablement connecté avec un autre compte Google que celui de l’achat.</p>${orphans.map(([uid, r]) => `<div class="adm-o"><div class="grow"><b>${esc(r.payerName || '')}</b> <span class="pill-s ${r.active ? 'ok' : ''}">${r.active ? 'Accès actif' : 'Remboursé / annulé'}</span><small>💳 ${esc(r.payerEmail || '')} · ${esc(r.amount || '')} € · réf. ${esc(r.ref || '')}</small><small>👤 Compte Google qui a payé : <b>${esc(acct(uid))}</b></small></div></div>`).join('')}</details>` : ''}
     ${done.length ? `<details><summary>Dossiers traités (${done.length})</summary>${done.slice(0, 30).map(orderRow).join('')}</details>` : ''}</section>
-  ${statsCard()}
   ${BILL.api ? `<section class="card" id="adm-msgs"><h2>📨 Messages (${ADM.msgs.length})</h2>
     <p class="mut small">Les messages envoyés depuis le formulaire de contact de l’app. « Répondre » ouvre votre messagerie vers le client, seulement quand vous le décidez.</p>
     ${ADM.mailOn ? '<p class="mut small">📧 Chaque message est aussi envoyé sur votre boîte mail.</p>' : '<p class="mut small">📧 Pas de copie par e-mail : ajoutez RESEND_API_KEY, SUPPORT_TO et SUPPORT_FROM dans Cloudflare (guide : MAINTENANCE.md).</p>'}
