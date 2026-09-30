@@ -222,6 +222,8 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - README.md (0 Ko)
 - build-queue.js (7 Ko)
 - catalogue.json (128 Ko)
+- erreurs.js (6 Ko)
+- erreurs.json (5 Ko)
 - fiches.json (5 Ko)
 - generate.js (27 Ko)
 - hero-quiz.js (5 Ko)
