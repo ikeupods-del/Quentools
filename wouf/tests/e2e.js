@@ -39,7 +39,7 @@ const fakeCloud = page => page.evaluate(() => {
 const fakeSale = page => page.evaluate(() => {
   window.__orders = []; window.__go = null; NAV.go = u => { window.__go = u; };
   Object.assign(AdminApi, { createOrder: async o => { window.__orders.push(o); return 'ord' + window.__orders.length; } });
-  Object.assign(BILL, { enabled: true, freeUntil: null, paymentLink: 'https://www.paypal.com/ncp/payment/NORMAL1', rewardLink: 'https://www.paypal.com/ncp/payment/REWARD1' });
+  Object.assign(BILL, { enabled: true, freeUntil: null, payee: 'vendeur@test.fr', paymentLink: '', rewardLink: '' });
   Object.assign(LEGAL, { seller: 'Vendeur Test', form: 'EI', address: '1 rue Test', siret: '123', email: 'v@test.fr', mediator: 'Médiateur Test' });
 });
 const noErrors = b => assert.deepEqual(b.errors, [], 'erreurs console : ' + b.errors.join(' | '));
@@ -358,8 +358,8 @@ test('offre récompense : popup uniquement quand TOUTES les leçons gratuites so
   assert.match(await text(p, '.reward'), /19,99 €\s*9,99 €/); assert.ok(await b.ev(() => S.reward.shown));
   await p.click('[data-act=reward-buy]'); await p.waitForSelector('#buy-consent'); assert.match(await text(p, '.sheet'), /Offre récompense/); assert.match(await text(p, '.sheet [data-act=buy-go]'), /9,99 €/);
   await p.fill('#buy-last', 'Dupont'); await p.check('#buy-consent'); await p.click('[data-act=buy-go]'); await p.waitForFunction(() => window.__go);
-  assert.equal(await b.ev(() => window.__go), 'https://www.paypal.com/ncp/payment/REWARD1');
-  const ord = await b.ev(() => window.__orders[0]); assert.equal(ord.offer, 'reward'); assert.equal(ord.price, '9,99 €'); assert.equal(ord.lessons >= 6, true);
+  const rg = new URL(await b.ev(() => window.__go)); assert.equal(rg.searchParams.get('amount'), '9.99'); assert.match(rg.searchParams.get('item_name'), /récompense/);
+  const ord = await b.ev(() => window.__orders[0]); assert.equal(ord.offer, 'reward'); assert.equal(ord.price, '9,99 €'); assert.equal(ord.lessons >= 6, true); assert.equal(ord.ref, rg.searchParams.get('invoice'));
   noErrors(b); await b.ctx.close();
   // une seule fois : pas de nouvelle popup ; et gratuit pour tous → message sans paiement
   const c = await boot({ hash: '#/educ' }); await c.ev(() => { freeIdsOf('dog').forEach(id => { eduSet('d1', id).done = true; }); rewardCheck(); });
@@ -372,7 +372,6 @@ test('achat à vie PayPal : connexion Google, dossier de paiement, consentement,
   const b = await boot({ query: '?preview=none', hash: '#/abo' }), p = b.page;
   await fakeCloud(p); await fakeSale(p); await b.ev(() => render());
   await p.waitForSelector('[data-act=subscribe]'); assert.match(await text(p, '.plus-hero'), /19,99 €/); assert.equal(await b.ev(() => plus()), false);
-  await b.ev(() => { LEGAL.mediator = ''; }); await p.click('[data-act=subscribe]'); assert.match(await text(p, '#toast'), /informations légales/); await b.ev(() => { LEGAL.mediator = 'Médiateur Test'; });
   await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent'); assert.equal(await b.ev(() => !!CLOUD.user), true, 'connexion Google déclenchée avant l’achat');
   assert.match(await text(p, '.sheet'), /19,99 €/); assert.match(await text(p, '.sheet'), /droit de rétractation/); assert.match(await text(p, '.sheet'), /dossier de paiement/);
   assert.equal(await p.inputValue('#buy-paypal'), 'q@test.fr'); assert.equal(await p.inputValue('#buy-first'), 'Quentin');
@@ -381,11 +380,15 @@ test('achat à vie PayPal : connexion Google, dossier de paiement, consentement,
   await p.fill('#buy-paypal', 'q.paypal@test.fr'); await p.click('[data-act=buy-go]'); assert.match(await text(p, '#toast'), /Cochez la case/);
   assert.equal(await b.ev(() => window.__orders.length), 0, 'aucun dossier sans consentement');
   await p.check('#buy-consent'); await p.click('[data-act=buy-go]'); await p.waitForFunction(() => window.__go);
-  assert.equal(await b.ev(() => window.__go), 'https://www.paypal.com/ncp/payment/NORMAL1');
-  const o = await b.ev(() => window.__orders[0]);
+  const g = new URL(await b.ev(() => window.__go)); assert.equal(g.origin + g.pathname, 'https://www.paypal.com/cgi-bin/webscr');
+  assert.deepEqual(['cmd', 'business', 'amount', 'currency_code'].map(k => g.searchParams.get(k)), ['_xclick', 'vendeur@test.fr', '19.99', 'EUR']);
+  assert.match(g.searchParams.get('invoice'), /^WOUF-[A-Z0-9]+$/); assert.match(g.searchParams.get('return'), /#\/merci$/);
+  const o = await b.ev(() => window.__orders[0]); assert.equal(o.ref, g.searchParams.get('invoice')); assert.equal(o.payee, 'vendeur@test.fr');
   assert.deepEqual([o.firstName, o.lastName, o.paypalEmail, o.contactEmail, o.googleEmail, o.offer, o.price, o.status], ['Quentin', 'Martin', 'q.paypal@test.fr', 'q@test.fr', 'q@test.fr', 'lifetime', '19,99 €', 'pending']);
   // retour de PayPal
-  await b.go('#/merci'); assert.match(await text(p, '#view'), /sous 24 h.*q@test\.fr.*q\.paypal@test\.fr/);
+  await b.go('#/merci'); assert.match(await text(p, '#view'), /sous 24 h.*q@test\.fr.*q\.paypal@test\.fr.*référence WOUF-/);
+  // l'adresse PayPal change dans l'administration : le paiement suivant part vers la nouvelle ; sans adresse, lien fixe
+  assert.deepEqual(await b.ev(() => { BILL.payee = 'autre@test.fr'; const a = new URL(paypalUrl(BILL.payee, '19,99 €', 'WOUF-X')).searchParams.get('business'); BILL.payee = ''; const r1 = payReady(); BILL.paymentLink = 'https://www.paypal.com/ncp/payment/L1'; const r2 = payReady(); BILL.paymentLink = ''; BILL.payee = 'vendeur@test.fr'; return [a, r1, r2]; }), ['autre@test.fr', false, true]);
   // l'administration active : Plus à vie, assistance prioritaire ; puis retrait : données intactes
   await b.ev(async () => { Object.assign(AdminApi, { myGrant: async () => window.__grant || null, touch: async () => {} }); window.__grant = { until: 'lifetime' }; await accountSync(); });
   assert.equal(await b.ev(() => subActive() && plus() && canAddPet('dog') && allowed('tracker')), true);
@@ -393,7 +396,8 @@ test('achat à vie PayPal : connexion Google, dossier de paiement, consentement,
   await b.ev(async () => { window.__grant = null; await accountSync(); }); assert.equal(await b.ev(() => plus()), false, 'accès retiré');
   assert.equal(await b.ev(() => dog().name), 'Nala', 'les données restent accessibles');
   // lien non PayPal refusé par le format
-  assert.equal(await b.ev(() => PAY_LINK.test('https://buy.stripe.com/abc') || PAY_LINK.test('https://evil.example/paypal.com')), false);
+  assert.equal(await b.ev(() => PAY_LINK.test('https://buy.stripe.com/abc') || PAY_LINK.test('https://evil.example/paypal.com') || PAY_LINK.test('https://www.paypal.biz.evil.fr/x')), false);
+  assert.equal(await b.ev(() => PAY_LINK.test('https://www.paypal.biz/alimnight')), true);
   noErrors(b); await b.ctx.close();
 });
 test('interrupteur : gratuit pour tous, offre de lancement, anciens utilisateurs', async () => {
@@ -656,7 +660,7 @@ test('nouvelle adresse : redirection sans carnet, transfert du carnet et des doc
 test('administration : réservée au propriétaire, comptes, Plus offert, retrait, interrupteur de vente', async () => {
   const b = await boot({ hash: '#/admin' }), p = b.page;
   assert.match(await text(p, '#view'), /Réservé au propriétaire/);
-  await b.ev(() => { OWNER = true; }); await fakeCloud(p);
+  await b.ev(() => { OWNER = true; BILL.paymentLink = ''; }); await fakeCloud(p);
   await b.ev(() => {
     CloudApi.signIn = async () => ({ email: 'patron@test.fr', name: 'Patron', picture: '' });
     window.__adm = { grants: {}, cfg: null };
@@ -690,11 +694,15 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   await p.click('[data-act=adm-revoke][data-uid=u1]'); await p.click('.sheet [data-ok]');
   await p.waitForFunction(() => window.__adm.grants.u1 === null);
   // vente : bloquée tant que rien n'est prêt
-  assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), true); assert.match(await text(p, '#view'), /Lien de paiement PayPal à renseigner/);
+  assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), true); assert.match(await text(p, '#view'), /Adresse PayPal \(ou lien PayPal\) à renseigner/);
+  // choix du propriétaire : dès qu'un moyen de paiement existe, l'interrupteur marche, même si les mentions légales sont incomplètes (simple avertissement)
+  await b.ev(() => { BILL.payee = 'p@pp.fr'; render(true); }); assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), false);
+  assert.match(await text(p, '#view'), /Mentions légales incomplètes/); assert.match(await text(p, '[data-act=adm-sale]'), /Ventes OFF/);
+  await b.ev(() => { BILL.payee = ''; render(true); });
   await p.fill('#adm-pay [name=paymentLink]', 'pas-un-lien'); await p.click('[data-act=adm-save-pay]'); assert.equal(await b.ev(() => window.__adm.cfg), null, 'lien invalide refusé');
-  for (const [k, v] of Object.entries({ paymentLink: 'https://www.paypal.com/ncp/payment/TEST1', seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur', supportEmail: 'aide@q.fr' })) await p.fill(`#adm-pay [name=${k}]`, v);
-  await p.click('[data-act=adm-save-pay]'); await p.waitForFunction(() => window.__adm.cfg && window.__adm.cfg.paymentLink);
-  assert.deepEqual(await b.ev(() => [BILL.paymentLink, LEGAL.siret, SUP.email, JSON.parse(localStorage.getItem('wouf:remote')).seller]), ['https://www.paypal.com/ncp/payment/TEST1', '123', 'aide@q.fr', 'Q']);
+  await p.fill('#adm-pay [name=paymentLink]', ''); for (const [k, v] of Object.entries({ payee: 'moi@paypal.test', seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur', supportEmail: 'aide@q.fr' })) await p.fill(`#adm-pay [name=${k}]`, v);
+  await p.click('[data-act=adm-save-pay]'); await p.waitForFunction(() => window.__adm.cfg && window.__adm.cfg.payee);
+  assert.deepEqual(await b.ev(() => [BILL.payee, LEGAL.siret, SUP.email, JSON.parse(localStorage.getItem('wouf:remote')).seller]), ['moi@paypal.test', '123', 'aide@q.fr', 'Q']);
   await b.go('#/legal?doc=mentions'); assert.match(await text(p, '#view'), /SIRET : 123/); await b.go('#/admin'); await p.waitForSelector('[data-act=adm-sale]');
   assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), false);
   await p.click('[data-act=adm-sale]'); await p.click('.sheet [data-ok]');

@@ -155,6 +155,7 @@ match /wouf_orders/{id} { allow create: if request.auth != null && request.resou
 ```
 
 ## Vendre avec PayPal
-1. PayPal (compte **professionnel**) → « Liens et boutons de paiement » → « Wouf Plus à vie » 19,99 € (+ 9,99 € pour l'offre récompense) → copier le lien (https://www.paypal.com/…).
-2. Plus → Administration → « Paiement et informations légales » : coller le lien, remplir les informations légales → Enregistrer → « Ouvrir la vente ».
-3. **À chaque vente** : l'acheteur remplit son dossier puis paie ; PayPal vous envoie un e-mail. Administration → « Paiements à vérifier » : comparer nom, e-mail et montant → « ✅ Paiement reçu : activer ». Promesse affichée à l'acheteur : activation sous 24 h.
+1. Plus → Administration → « Paiement et informations légales » : **adresse e-mail PayPal qui reçoit les paiements** (compte professionnel conseillé) + informations légales → Enregistrer → « Ouvrir la vente ». L'adresse peut être changée à tout moment : elle est relue juste avant chaque paiement.
+2. L'app envoie l'acheteur vers une page de paiement PayPal (« Payer » classique, `cgi-bin/webscr?cmd=_xclick`) : montant du prix affiché (19,99 € ou 9,99 € pour l'offre récompense), référence du dossier `WOUF-…` (visible dans le détail du paiement PayPal), retour sur `#/merci`. Faites un **vrai paiement test** avec un proche après chaque changement d'adresse.
+3. Alternative : un lien PayPal fixe créé dans PayPal (« Liens et boutons de paiement ») dans « lien fixe » ; il ne sert que si aucune adresse n'est renseignée.
+4. **À chaque vente** : Administration → « Paiements à vérifier » : comparer la référence, le nom, l'e-mail et le montant avec PayPal → « ✅ Paiement reçu : activer ». Promesse affichée à l'acheteur : activation sous 24 h.
