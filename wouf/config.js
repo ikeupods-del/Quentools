@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.19.2',
+  version: '1.19.3',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
@@ -18,10 +18,10 @@ window.WOUF_CONFIG = {
     // Les liens et les informations légales se règlent aussi depuis l'administration (« Paiement et informations légales »).
     api: '',                   // relais d'activation automatique (voir wouf/billing-worker) : réglable dans l'administration ; vide = validation manuelle
     payee: '',                 // adresse e-mail PayPal qui reçoit les paiements (réglable à tout moment dans l'administration)
-    paymentLink: '',           // lien PayPal fixe (secours, utilisé seulement si aucune adresse payee ; montant = plans[0].price). L'ancien lien à 19,99 € a été retiré au passage à 39,99 €.
+    paymentLink: '',           // lien PayPal fixe (secours, utilisé seulement si aucune adresse payee ; montant = plans[0].price). L'ancien lien à 19,99 € a été retiré au changement de prix.
     rewardLink: '',            // idem pour l'offre récompense (rewardOffer.price) ; vide = pas d'offre récompense
     // Achat unique « à vie ». Le prix AFFICHÉ ici doit être identique au montant du lien PayPal.
-    plans: [{ id: 'lifetime', label: 'Wouf Plus à vie', price: '39,99 €', per: 'paiement unique', badge: 'Sans abonnement' }],
+    plans: [{ id: 'lifetime', label: 'Wouf Plus à vie', price: '29,99 €', per: 'paiement unique', badge: 'Sans abonnement' }],
     // Abonnement ANNUEL proposé à côté de l'achat à vie (PayPal, reconduit chaque année, résiliable à tout moment depuis l'app).
     // Nécessite l'adresse PayPal `payee` (compte professionnel) ; activation et renouvellements automatiques avec le relais `api`.
     // Le prix doit être ≥ MIN_YEAR_EUR du relais (14.99 par défaut). enabled: false = seulement l'achat à vie. Guide : MAINTENANCE, « Abonnement annuel ».
