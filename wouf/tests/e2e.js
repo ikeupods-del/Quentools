@@ -360,7 +360,7 @@ test('offre récompense : popup uniquement quand TOUTES les leçons gratuites so
   const last = await b.ev(() => freeIdsOf('dog')[5]);
   await b.go('#/lecon?id=' + last); await p.click('[data-act=lesson-done]'); for (let k = 0; k < 3; k++) { await b.ev(() => ACT['quiz-pick']({ k: QUIZ.qs[QUIZ.i].ok })); await p.click('[data-act=quiz-next]'); }
   await p.click('[data-act=quiz-finish]'); await p.click('.celebrate [data-cel]'); await p.waitForSelector('.reward');
-  assert.match(await text(p, '.reward'), /39,99 €\s*9,99 €/); assert.ok(await b.ev(() => S.reward.shown));
+  assert.match(await text(p, '.reward'), /29,99 €\s*9,99 €/); assert.ok(await b.ev(() => S.reward.shown));
   await p.click('[data-act=reward-buy]'); await p.waitForSelector('#buy-consent'); assert.match(await text(p, '.sheet'), /Offre récompense/); assert.match(await text(p, '.sheet [data-act=buy-go]'), /9,99 €/);
   await p.fill('#buy-last', 'Dupont'); await p.check('#buy-consent'); await p.click('[data-act=buy-go]'); await p.waitForFunction(() => window.__go);
   const rg = new URL(await b.ev(() => window.__go)); assert.equal(rg.searchParams.get('amount'), '9.99'); assert.match(rg.searchParams.get('item_name'), /récompense/);
@@ -376,9 +376,9 @@ test('offre récompense : popup uniquement quand TOUTES les leçons gratuites so
 test('achat à vie PayPal : connexion Google, dossier de paiement, consentement, retour, activation et retrait par l’administration', async () => {
   const b = await boot({ query: '?preview=none', hash: '#/abo' }), p = b.page;
   await fakeCloud(p); await fakeSale(p); await b.ev(() => render());
-  await p.waitForSelector('[data-act=subscribe]'); assert.match(await text(p, '.plus-hero'), /39,99 €/); assert.equal(await b.ev(() => plus()), false);
+  await p.waitForSelector('[data-act=subscribe]'); assert.match(await text(p, '.plus-hero'), /29,99 €/); assert.equal(await b.ev(() => plus()), false);
   await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent'); assert.equal(await b.ev(() => !!CLOUD.user), true, 'connexion Google déclenchée avant l’achat');
-  assert.match(await text(p, '.sheet'), /39,99 €/); assert.match(await text(p, '.sheet'), /droit de rétractation/); assert.match(await text(p, '.sheet'), /dossier de paiement/); assert.match(await text(p, '.sheet'), /activé manuellement/); assert.match(await text(p, '.sheet'), /n’est pas instantanée/);
+  assert.match(await text(p, '.sheet'), /29,99 €/); assert.match(await text(p, '.sheet'), /droit de rétractation/); assert.match(await text(p, '.sheet'), /dossier de paiement/); assert.match(await text(p, '.sheet'), /activé manuellement/); assert.match(await text(p, '.sheet'), /n’est pas instantanée/);
   assert.equal(await p.inputValue('#buy-paypal'), 'q@test.fr'); assert.equal(await p.inputValue('#buy-first'), 'Quentin');
   await p.click('[data-act=buy-go]'); assert.match(await text(p, '#toast'), /prénom et le nom/);
   await p.fill('#buy-last', 'Martin'); await p.fill('#buy-paypal', 'pas-un-mail'); await p.click('[data-act=buy-go]'); assert.match(await text(p, '#toast'), /adresses e-mail/);
@@ -386,14 +386,14 @@ test('achat à vie PayPal : connexion Google, dossier de paiement, consentement,
   assert.equal(await b.ev(() => window.__orders.length), 0, 'aucun dossier sans consentement');
   await p.check('#buy-consent'); await p.click('[data-act=buy-go]'); await p.waitForFunction(() => window.__go);
   const g = new URL(await b.ev(() => window.__go)); assert.equal(g.origin + g.pathname, 'https://www.paypal.com/cgi-bin/webscr');
-  assert.deepEqual(['cmd', 'business', 'amount', 'currency_code'].map(k => g.searchParams.get(k)), ['_xclick', 'vendeur@test.fr', '39.99', 'EUR']);
+  assert.deepEqual(['cmd', 'business', 'amount', 'currency_code'].map(k => g.searchParams.get(k)), ['_xclick', 'vendeur@test.fr', '29.99', 'EUR']);
   assert.match(g.searchParams.get('invoice'), /^WOUF-[A-Z0-9]+$/); assert.match(g.searchParams.get('return'), /#\/merci$/);
   const o = await b.ev(() => window.__orders[0]); assert.equal(o.ref, g.searchParams.get('invoice')); assert.equal(o.payee, 'vendeur@test.fr');
-  assert.deepEqual([o.firstName, o.lastName, o.paypalEmail, o.contactEmail, o.googleEmail, o.offer, o.price, o.status], ['Quentin', 'Martin', 'q.paypal@test.fr', 'q@test.fr', 'q@test.fr', 'lifetime', '39,99 €', 'pending']);
+  assert.deepEqual([o.firstName, o.lastName, o.paypalEmail, o.contactEmail, o.googleEmail, o.offer, o.price, o.status], ['Quentin', 'Martin', 'q.paypal@test.fr', 'q@test.fr', 'q@test.fr', 'lifetime', '29,99 €', 'pending']);
   // retour de PayPal
   await b.go('#/merci'); assert.match(await text(p, '#view'), /manuellement.*24 h.*q@test\.fr.*q\.paypal@test\.fr.*référence WOUF-/);
   // l'adresse PayPal change dans l'administration : le paiement suivant part vers la nouvelle ; sans adresse, lien fixe
-  assert.deepEqual(await b.ev(() => { BILL.payee = 'autre@test.fr'; const a = new URL(paypalUrl(BILL.payee, '39,99 €', 'WOUF-X')).searchParams.get('business'); BILL.payee = ''; const r1 = payReady(); BILL.paymentLink = 'https://www.paypal.com/ncp/payment/L1'; const r2 = payReady(); BILL.paymentLink = ''; BILL.payee = 'vendeur@test.fr'; return [a, r1, r2]; }), ['autre@test.fr', false, true]);
+  assert.deepEqual(await b.ev(() => { BILL.payee = 'autre@test.fr'; const a = new URL(paypalUrl(BILL.payee, '29,99 €', 'WOUF-X')).searchParams.get('business'); BILL.payee = ''; const r1 = payReady(); BILL.paymentLink = 'https://www.paypal.com/ncp/payment/L1'; const r2 = payReady(); BILL.paymentLink = ''; BILL.payee = 'vendeur@test.fr'; return [a, r1, r2]; }), ['autre@test.fr', false, true]);
   // l'administration active : Plus à vie, assistance prioritaire ; puis retrait : données intactes
   await b.ev(async () => { Object.assign(AdminApi, { myGrant: async () => window.__grant || null, touch: async () => {} }); window.__grant = { until: 'lifetime' }; await accountSync(); });
   assert.equal(await b.ev(() => subActive() && plus() && canAddPet('dog') && allowed('tracker')), true);
@@ -435,7 +435,7 @@ test('assistance : prioritaire pour les acheteurs, mail préparé, FAQ', async (
 });
 test('pages légales, nouveautés et alerte de mise à jour', async () => {
   const b = await boot({ hash: '#/legal?doc=cgv' }), p = b.page;
-  await p.waitForSelector('.legal'); let t = await text(p, '.legal'); assert.match(t, /Conditions générales de vente/); assert.match(t, /39,99 €/); assert.match(t, /rétractation/); assert.match(t, /à vie/);
+  await p.waitForSelector('.legal'); let t = await text(p, '.legal'); assert.match(t, /Conditions générales de vente/); assert.match(t, /29,99 €/); assert.match(t, /rétractation/); assert.match(t, /à vie/);
   await b.go('#/legal?doc=confidentialite'); assert.match(await text(p, '.legal'), /Sous-traitants/); await b.go('#/legal?doc=mentions'); assert.match(await text(p, '.legal'), /GitHub Pages/);
   await b.go('#/nouveautes'); assert.match(await text(p, '#view'), /Version 1\.2\.0/);
   await b.ev(() => showUpdateBanner()); assert.equal(await p.locator('#upd').isVisible(), true);
@@ -470,12 +470,12 @@ test('mises à jour : fichiers versionnés, lien de secours ?maj=1 (vide le cach
 
 test('bouton Wouf+ : visible pour les non-abonnés, présentation de l’offre tant que tout est gratuit, paiement quand la vente est ouverte', async () => {
   const b = await boot({ query: '?preview=none' }), p = b.page;
-  assert.equal(await p.locator('.plusbtn').isVisible(), true, 'bouton dans l’en-tête'); assert.match(await text(p, '.plus-cta'), /Wouf\+ · 39,99 € paiement unique/); assert.match(await text(p, '.plus-cta'), /Offert pendant le lancement/);
-  await p.click('.plus-cta [data-act=subscribe]'); await p.waitForSelector('.sheet'); assert.match(await text(p, '.sheet'), /tout est offert/); assert.match(await text(p, '.sheet'), /39,99 €/); await p.click('.sheet [data-close]');
+  assert.equal(await p.locator('.plusbtn').isVisible(), true, 'bouton dans l’en-tête'); assert.match(await text(p, '.plus-cta'), /Wouf\+ · 29,99 € paiement unique/); assert.match(await text(p, '.plus-cta'), /Offert pendant le lancement/);
+  await p.click('.plus-cta [data-act=subscribe]'); await p.waitForSelector('.sheet'); assert.match(await text(p, '.sheet'), /tout est offert/); assert.match(await text(p, '.sheet'), /29,99 €/); await p.click('.sheet [data-close]');
   await p.click('.plusbtn'); await p.waitForSelector('.plus-hero'); assert.match(await text(p, '#view'), /Toutes les fonctions Plus sont incluses/); assert.match(await text(p, '[data-act=subscribe]'), /Découvrir Wouf\+/);
   // vente ouverte, utilisateur non abonné : libellé d'achat partout
   await b.ev(() => { BILL.enabled = true; BILL.paymentLink = 'https://www.paypal.com/ncp/payment/X1'; render(); });
-  assert.match(await text(p, '[data-act=subscribe]'), /Souscrire à Wouf\+ · 39,99 € à vie/); await b.go('#/educ'); await p.waitForSelector('.cta-plus'); assert.match(await text(p, '.cta-plus'), /Souscrire à Wouf\+/);
+  assert.match(await text(p, '[data-act=subscribe]'), /Souscrire à Wouf\+ · 29,99 € à vie/); await b.go('#/educ'); await p.waitForSelector('.cta-plus'); assert.match(await text(p, '.cta-plus'), /Souscrire à Wouf\+/);
   await b.go('#/lecon?id=stop'); assert.match(await text(p, '[data-act=subscribe]'), /Souscrire/);
   // abonné : plus de bouton
   await b.ev(() => { S.sub = { active: true, lifetime: true }; render(); }); assert.equal(await p.locator('.plusbtn').count(), 0);
@@ -687,8 +687,8 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
       listUsers: async () => [{ uid: 'u1', name: 'Alice', email: 'alice@test.fr', lastSeen: today(), firstSeen: today(), dogs: 1, cats: 0, lessons: 4, grant: window.__adm.grants.u1 || null },
         { uid: 'u2', name: 'Bob', email: 'bob@test.fr', lastSeen: '2026-01-01', firstSeen: '2025-12-01', dogs: 0, cats: 2, lessons: 0, grant: null }],
       setGrant: async (uid, g) => { window.__adm.grants[uid] = g; }, setConfig: async c => { window.__adm.cfg = c; },
-      listOrders: async () => [{ id: 'o1', uid: 'u2', firstName: 'Bob', lastName: 'Durand', paypalEmail: 'bob.pp@test.fr', googleEmail: 'bob@test.fr', contactEmail: 'bob@test.fr', offer: 'lifetime', price: '39,99 €', status: 'pending', at: Date.now() },
-        { id: 'o2', uid: 'u1', firstName: 'Alice', lastName: 'M', paypalEmail: 'a@pp.fr', googleEmail: 'alice@test.fr', contactEmail: 'alice@test.fr', offer: 'lifetime', price: '39,99 €', status: 'pending', at: Date.now() - 1000 }],
+      listOrders: async () => [{ id: 'o1', uid: 'u2', firstName: 'Bob', lastName: 'Durand', paypalEmail: 'bob.pp@test.fr', googleEmail: 'bob@test.fr', contactEmail: 'bob@test.fr', offer: 'lifetime', price: '29,99 €', status: 'pending', at: Date.now() },
+        { id: 'o2', uid: 'u1', firstName: 'Alice', lastName: 'M', paypalEmail: 'a@pp.fr', googleEmail: 'alice@test.fr', contactEmail: 'alice@test.fr', offer: 'lifetime', price: '29,99 €', status: 'pending', at: Date.now() - 1000 }],
       setOrder: async (id, patch) => { (window.__adm.orders = window.__adm.orders || {})[id] = patch; },
       myGrant: async () => window.__adm.mine || null, touch: async pr => { window.__adm.profile = pr; } });
     render();
@@ -697,7 +697,7 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   await p.click('[data-act=g-signin]'); await p.waitForSelector('.adm-u');
   assert.equal(await p.$$eval('.adm-u', l => l.length), 2); assert.match(await text(p, '.adm-tiles'), /2 comptes Google/);
   // dossiers de paiement PayPal : affichés, activation = Plus à vie sur le bon compte, refus
-  assert.match(await text(p, '#adm-orders'), /Paiements à vérifier \(2\)/); assert.match(await text(p, '#adm-orders'), /Bob Durand.*bob\.pp@test\.fr.*39,99 €.*bob@test\.fr/);
+  assert.match(await text(p, '#adm-orders'), /Paiements à vérifier \(2\)/); assert.match(await text(p, '#adm-orders'), /Bob Durand.*bob\.pp@test\.fr.*29,99 €.*bob@test\.fr/);
   await p.click('[data-act=adm-order-ok][data-id=o1]'); await p.click('.sheet [data-ok]');
   await p.waitForFunction(() => window.__adm.orders && window.__adm.orders.o1 && window.__adm.orders.o1.status === 'done');
   assert.equal(await b.ev(() => window.__adm.grants.u2.until), 'lifetime'); assert.equal(await b.ev(() => window.__adm.grants.u2.order), 'o1');
@@ -749,12 +749,12 @@ test('abonnement annuel : choix annuel ou à vie, bouton PayPal d’abonnement, 
     if (u.pathname === '/status') return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify(st) });
     return r.fulfill({ status: 404, headers: cors, body: '{}' }); });
   await b.ev(() => { BILL.api = 'https://relais.test'; BILL.yearly = { ...BILL.yearly, enabled: true }; CloudApi.signIn = async () => ({ uid: 'uidSub123', email: 'ana@test.fr', name: 'Ana Test', picture: '' }); render(); });
-  await p.waitForSelector('.plan-duo'); assert.match(await text(p, '.plus-hero'), /Annuel.*14,99 € par an.*À vie.*39,99 €/); assert.match(await text(p, '[data-act=subscribe]'), /dès 14,99 € par an/);
+  await p.waitForSelector('.plan-duo'); assert.match(await text(p, '.plus-hero'), /Annuel.*14,99 € par an.*À vie.*29,99 €/); assert.match(await text(p, '[data-act=subscribe]'), /dès 14,99 € par an/);
   await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent');
   assert.equal(await p.isChecked('input[name=buy-plan][value=yearly]'), true, 'annuel proposé par défaut');
   assert.match(await text(p, '#buy-terms'), /abonnement annuel à 14,99 €.*reconduit automatiquement.*résilier à tout moment/); assert.match(await text(p, '#buy-btn'), /S’abonner : 14,99 € par an/);
   await p.check('#buy-consent'); await p.check('input[name=buy-plan][value=lifetime]');
-  assert.equal(await p.isChecked('#buy-consent'), false, 'changer de formule demande un nouvel accord'); assert.match(await text(p, '#buy-btn'), /Payer 39,99 €/); assert.doesNotMatch(await text(p, '#buy-terms'), /reconduit/);
+  assert.equal(await p.isChecked('#buy-consent'), false, 'changer de formule demande un nouvel accord'); assert.match(await text(p, '#buy-btn'), /Payer 29,99 €/); assert.doesNotMatch(await text(p, '#buy-terms'), /reconduit/);
   await p.check('input[name=buy-plan][value=yearly]'); await p.check('#buy-consent'); await p.click('[data-act=buy-go]'); await p.waitForFunction(() => window.__go);
   const g = new URL(await b.ev(() => window.__go));
   assert.deepEqual(['cmd', 'business', 'a3', 'p3', 't3', 'src', 'currency_code'].map(k => g.searchParams.get(k)), ['_xclick-subscriptions', 'vendeur@test.fr', '14.99', '1', 'Y', '1', 'EUR']);
@@ -829,8 +829,8 @@ test('activation automatique PayPal : notify_url et compte transmis, page d’at
   await b.ev(() => { CLOUD.user.uid = 'uidAuto123'; BILL.payee = ''; BILL.paymentLink = 'https://www.paypal.com/ncp/payment/X'; }); assert.equal(await b.ev(() => autoOn()), false, 'lien fixe : pas de notification possible');
   // administration : le paiement détecté est classé « activé automatiquement » avec l’identité PayPal
   await b.ev(() => { OWNER = true; BILL.payee = 'vendeur@test.fr'; Object.assign(AdminApi, { listUsers: async () => [{ uid: 'uidAuto123', name: 'Jean', email: 'jean@test.fr', lastSeen: today() }], setGrant: async () => {},
-    listOrders: async () => [{ id: 'o9', uid: 'uidAuto123', firstName: 'Jean', lastName: 'Client', paypalEmail: 'jean@paypal.test', googleEmail: 'jean@test.fr', contactEmail: 'jean@test.fr', offer: 'lifetime', price: '39,99 €', status: 'pending', at: Date.now() },
-      { id: 'o10', uid: 'autre', firstName: 'Zoé', lastName: 'Lenta', paypalEmail: 'zoe@paypal.test', googleEmail: 'zoe@test.fr', contactEmail: 'zoe@test.fr', offer: 'lifetime', price: '39,99 €', status: 'pending', at: Date.now() - 500 }] }); });
+    listOrders: async () => [{ id: 'o9', uid: 'uidAuto123', firstName: 'Jean', lastName: 'Client', paypalEmail: 'jean@paypal.test', googleEmail: 'jean@test.fr', contactEmail: 'jean@test.fr', offer: 'lifetime', price: '29,99 €', status: 'pending', at: Date.now() },
+      { id: 'o10', uid: 'autre', firstName: 'Zoé', lastName: 'Lenta', paypalEmail: 'zoe@paypal.test', googleEmail: 'zoe@test.fr', contactEmail: 'zoe@test.fr', offer: 'lifetime', price: '29,99 €', status: 'pending', at: Date.now() - 500 }] }); });
   await b.go('#/admin'); await p.waitForSelector('#adm-orders .adm-o');
   assert.match(await text(p, '#adm-orders'), /Paiements à vérifier \(1\)/); assert.match(await text(p, '#adm-orders'), /Zoé Lenta/);
   assert.match(await text(p, '#adm-orders details'), /Activé automatiquement.*Jean Client.*jean@paypal\.test.*19\.99/);
