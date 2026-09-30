@@ -688,7 +688,7 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   await p.click('[data-act=adm-revoke][data-uid=u1]'); await p.click('.sheet [data-ok]');
   await p.waitForFunction(() => window.__adm.grants.u1 === null);
   // vente : bloquée tant que rien n'est prêt
-  assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), true); assert.match(await text(p, '#view'), /Lien de paiement Stripe à renseigner/);
+  assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), true); assert.match(await text(p, '#view'), /Lien de paiement PayPal à renseigner/);
   await p.fill('#adm-pay [name=paymentLink]', 'pas-un-lien'); await p.click('[data-act=adm-save-pay]'); assert.equal(await b.ev(() => window.__adm.cfg), null, 'lien invalide refusé');
   for (const [k, v] of Object.entries({ paymentLink: 'https://buy.stripe.com/test_abc', seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur', supportEmail: 'aide@q.fr' })) await p.fill(`#adm-pay [name=${k}]`, v);
   await p.click('[data-act=adm-save-pay]'); await p.waitForFunction(() => window.__adm.cfg && window.__adm.cfg.paymentLink);
@@ -715,13 +715,26 @@ test('vente par lien de paiement Stripe : e-mail pré-rempli, page merci, activa
     Object.assign(BILL, { enabled: true, freeUntil: null, paymentLink: 'https://buy.stripe.com/test_abc', api: '' });
     Object.assign(LEGAL, { seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur' }); render(); });
   await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent');
-  assert.match(await text(p, '.sheet'), /activé sur votre compte sous 24 h/);
+  assert.match(await text(p, '.sheet'), /Paiement sécurisé par Stripe.*activé sur votre compte \(client@test\.fr\) sous 24 h/);
   await p.check('#buy-consent');
   await Promise.all([p.waitForURL(/buy\.stripe\.com/), p.click('[data-act=buy-go]')]);
   const u = new URL(p.url()); assert.equal(u.pathname, '/test_abc'); assert.equal(u.searchParams.get('prefilled_email'), 'client@test.fr');
   await p.goto(`http://localhost:${PORT}/wouf/#/merci`); await p.waitForSelector('#view > *');
   assert.match(await text(p, '#view'), /sous 24 h.*client@test\.fr/);
   noErrors(b); await b.ctx.close();
+  // PayPal : lien tel quel (pas de paramètre ajouté), « PayPal » affiché dans l'achat et les conditions de vente
+  const c = await boot({ hash: '#/abo' }), q = c.page; await fakeCloud(q);
+  await c.ctx.route(/paypal\.com/, r => r.fulfill({ contentType: 'text/html', body: '<h1>PayPal</h1>' }));
+  await c.ev(() => { CloudApi.signIn = async () => ({ email: 'client@test.fr', name: 'Client', picture: '' });
+    Object.assign(BILL, { enabled: true, freeUntil: null, paymentLink: 'https://www.paypal.com/ncp/payment/ABC123', api: '' });
+    Object.assign(LEGAL, { seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur' }); render(); });
+  assert.equal(await c.ev(() => PAY_LINK.test(BILL.paymentLink)), true);
+  await q.click('[data-act=subscribe]'); await q.waitForSelector('#buy-consent'); assert.match(await text(q, '.sheet'), /Paiement sécurisé par PayPal/);
+  await q.check('#buy-consent'); await Promise.all([q.waitForURL(/paypal\.com/), q.click('[data-act=buy-go]')]);
+  assert.equal(q.url(), 'https://www.paypal.com/ncp/payment/ABC123');
+  await q.goto(`http://localhost:${PORT}/wouf/#/legal?doc=cgv`); await q.waitForSelector('#view > *'); await q.evaluate(() => { BILL.paymentLink = 'https://www.paypal.com/ncp/payment/ABC123'; render(); });
+  assert.match(await text(q, '#view'), /plateforme sécurisée PayPal/);
+  noErrors(c); await c.ctx.close();
 });
 
 /* ================= exécution ================= */

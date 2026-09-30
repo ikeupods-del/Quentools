@@ -10,6 +10,7 @@ const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free ==
 const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
 
 const CHANGELOG = [
+  { v: '1.12.2', date: '2026-09-30', items: ['💳 Paiement par PayPal'] },
   { v: '1.12.1', date: '2026-09-30', items: ['💳 Réglage du paiement depuis l’administration'] },
   { v: '1.12.0', date: '2026-09-30', items: ['🛠️ Espace d’administration pour l’éditeur de Wouf', '🔒 Résumé de compte visible par l’éditeur si vous êtes connecté avec Google (voir Confidentialité)'] },
   { v: '1.11.1', date: '2026-09-30', items: ['🛠️ Petites améliorations'] },
@@ -80,7 +81,9 @@ const FEATURES = {
 };
 const planLine = () => { const p = planOf(); return `${p.price} ${p.per}`; };
 
-/* Paiement possible : relais (automatique) ou lien de paiement Stripe (activation manuelle par l'administration). */
+/* Paiement possible : relais Stripe (automatique) ou lien de paiement PayPal / Stripe (activation manuelle par l'administration). */
+const PAY_LINK = /^https:\/\/(buy\.stripe\.com\/[\w-]+|(www\.)?paypal\.(com|me)\/[\w./-]+)$/i;
+const payName = () => /paypal/i.test(BILL.paymentLink || '') ? 'PayPal' : (BILL.api || /stripe/i.test(BILL.paymentLink || '')) ? 'Stripe' : (BILL.provider || 'PayPal');
 const payReady = () => !!(BILL.api || BILL.paymentLink);
 const rewardBuyable = () => rewardActive() && !!(BILL.api || BILL.rewardLink);
 function buySheet() {
@@ -90,7 +93,7 @@ function buySheet() {
     <ul class="bul">${Object.values(FEATURES).map(x => `<li><b>${esc(x[1])}</b></li>`).join('')}</ul>
     <label class="chk consent"><input type="checkbox" id="buy-consent"> <span>J’ai lu les <a href="#/legal?doc=cgv" data-close>conditions de vente</a>. Je demande l’accès immédiat à Wouf Plus et je reconnais perdre mon droit de rétractation de 14 jours dès que l’accès est fourni.</span></label>
     <div class="form-actions"><button class="btn primary big" data-act="buy-go">Payer ${esc(price)} par carte</button></div>
-    <p class="mut small center">Paiement sécurisé par Stripe. Votre achat est lié à votre compte Google : il vous suit sur tous vos appareils.${BILL.api ? '' : ' Wouf Plus est activé sur votre compte sous 24 h après le paiement.'}</p>`);
+    <p class="mut small center">Paiement sécurisé par ${payName()}. Votre achat est lié à votre compte Google : il vous suit sur tous vos appareils.${BILL.api ? '' : ` Wouf Plus est activé sur votre compte (${esc(CLOUD.user ? CLOUD.user.email : '')}) sous 24 h après le paiement.`}</p>`);
   return el;
 }
 ACT.checkout = async () => {
@@ -101,10 +104,10 @@ ACT.checkout = async () => {
 };
 ACT['buy-go'] = async () => {
   if (!$('#buy-consent').checked) return toast('Cochez la case pour continuer');
-  if (!BILL.api) {   // lien de paiement Stripe : l'adresse Google est pré-remplie pour retrouver l'acheteur dans l'administration
+  if (!BILL.api) {   // lien de paiement : chez Stripe l'adresse Google est pré-remplie ; chez PayPal l'administration retrouve l'acheteur par son nom / e-mail
     const link = rewardBuyable() ? BILL.rewardLink : BILL.paymentLink;
     try { localStorage.setItem('wouf:paid', JSON.stringify({ at: Date.now(), email: CLOUD.user.email, reward: rewardBuyable() })); } catch (e) { /* ignore */ }
-    toast('Redirection vers le paiement sécurisé…'); location.href = link + (link.includes('?') ? '&' : '?') + 'prefilled_email=' + encodeURIComponent(CLOUD.user.email || ''); return;
+    toast('Redirection vers le paiement sécurisé…'); location.href = /stripe/i.test(link) ? link + (link.includes('?') ? '&' : '?') + 'prefilled_email=' + encodeURIComponent(CLOUD.user.email || '') : link; return;
   }
   if (rewardActive() && CLOUD.user) await cloudPush().catch(() => {});   // l'offre est vérifiée sur la sauvegarde : on l'envoie à jour
   try { toast('Redirection vers le paiement sécurisé…'); const j = await api('/checkout', { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ returnUrl: location.origin + location.pathname, ...(rewardActive() ? { offer: 'lecons' } : {}) }) }); location.href = j.url; }
@@ -118,11 +121,11 @@ function soonSheet() {
 }
 /* Bouton « Souscrire » : paiement réel si la vente est ouverte, sinon présentation de l'offre (tout est gratuit). */
 ACT.subscribe = () => (BILL.enabled && payReady()) ? ACT.checkout() : soonSheet();
-/* Retour de Stripe (lien de paiement) : l'activation est faite par l'administration. */
+/* Retour du paiement (lien PayPal / Stripe) : l'activation est faite par l'administration. */
 ROUTES.merci = function merci() {
   let p = null; try { p = JSON.parse(localStorage.getItem('wouf:paid') || 'null'); } catch (e) { /* ignore */ }
   return `<div class="page-h"><a class="back" href="#/home">‹</a><h1>🎉 Merci !</h1></div><section class="card plus-hero"><h2>Paiement reçu</h2>
-    ${subActive() ? '<p><b>Wouf Plus est actif ⭐</b> Bonne découverte !</p>' : `<p>Wouf Plus sera activé <b>sous 24 h</b> sur votre compte Google${p && p.email ? ` (<b>${esc(p.email)}</b>)` : ''}. Stripe vous envoie un reçu par e-mail.</p><p class="mut">Restez connecté(e) avec ce compte : l’activation apparaît à l’ouverture de l’app.</p>`}
+    ${subActive() ? '<p><b>Wouf Plus est actif ⭐</b> Bonne découverte !</p>' : `<p>Wouf Plus sera activé <b>sous 24 h</b> sur votre compte Google${p && p.email ? ` (<b>${esc(p.email)}</b>)` : ''}. ${payName()} vous envoie un reçu par e-mail.</p><p class="mut">Restez connecté(e) avec ce compte : l’activation apparaît à l’ouverture de l’app. Pas activé après 24 h ? Écrivez-nous depuis « Une question ? » en indiquant le nom ou l’e-mail utilisé pour payer.</p>`}
     <a class="btn primary" href="#/home">Retour à l’accueil</a> <a class="btn" href="#/support">Une question ?</a></section>`;
 };
 ACT.restore = async () => {
@@ -197,7 +200,7 @@ function legalDoc(kind) {
   if (kind === 'cgv') return `<h1>Conditions générales de vente</h1><p class="mut">Wouf Plus — achat unique</p>
   <h2>1. Vendeur</h2><p>${orTbd(L.seller)} — ${orTbd(L.form)}, ${orTbd(L.address)}. SIRET : ${orTbd(L.siret)}. Contact : ${orTbd(L.email)}. ${esc(L.vat || '')}</p>
   <h2>2. Objet</h2><p>Les présentes conditions régissent la vente de l’accès à « Wouf Plus », ensemble de fonctions supplémentaires de l’application Wouf (${Object.values(FEATURES).map(f => esc(f[1])).join(', ')}). La version gratuite reste disponible sans engagement.</p>
-  <h2>3. Prix et paiement</h2><p>Le prix est de <b>${esc(p.price)} TTC</b>, en un paiement unique. Il n’y a ni abonnement ni reconduction. Le paiement s’effectue par carte bancaire via la plateforme sécurisée Stripe ; le vendeur ne conserve pas vos données bancaires.</p>
+  <h2>3. Prix et paiement</h2><p>Le prix est de <b>${esc(p.price)} TTC</b>, en un paiement unique. Il n’y a ni abonnement ni reconduction. Le paiement s’effectue via la plateforme sécurisée ${payName()} (carte bancaire ou compte ${payName()}) ; le vendeur ne conserve pas vos données bancaires.</p>
   <h2>4. Accès « à vie »</h2><p>L’accès à Wouf Plus est acquis pour toute la durée d’exploitation du service. En cas d’arrêt définitif, le vendeur s’engage à informer les utilisateurs au moins ${esc(String(L.shutdownNoticeDays || 90))} jours à l’avance et à leur permettre d’exporter leurs données. Le contenu de Plus peut être enrichi ; le vendeur ne retirera pas de façon substantielle les fonctions Plus achetées.</p>
   <h2>5. Livraison et compte</h2><p>L’accès est fourni immédiatement après le paiement et est lié au compte Google utilisé lors de l’achat. Il fonctionne sur tous les appareils connectés à ce compte.</p>
   <h2>6. Droit de rétractation</h2><p>Vous disposez en principe d’un délai de 14 jours pour vous rétracter d’un achat à distance. Toutefois, pour un contenu numérique fourni sans support matériel, dont l’exécution commence immédiatement avec votre accord préalable exprès, vous renoncez à ce droit (art. L221-28 du Code de la consommation). Cet accord est recueilli avant le paiement par une case à cocher. ${esc(L.refund || '')}</p>
@@ -209,7 +212,7 @@ function legalDoc(kind) {
   <h2>Responsable du traitement</h2><p>${orTbd(L.seller)}, ${orTbd(L.address)} — ${orTbd(L.email)}.</p>
   <h2>Données traitées</h2><ul class="bul"><li><b>Données de votre animal et du carnet</b> (fiche, soins, poids, notes, balades) : stockées sur votre appareil ; sauvegardées dans votre espace privé Google (Firebase) uniquement si vous vous connectez.</li><li><b>Compte Google</b> (adresse e-mail, nom, photo) : utilisé pour l’authentification et pour lier votre achat.</li><li><b>Paiement</b> : traité par Stripe ; nous recevons seulement la confirmation d’achat, pas votre carte.</li><li><b>Position</b> : utilisée uniquement lorsque vous lancez une recherche de vétérinaire ou une balade, et envoyée à OpenStreetMap (Overpass / Nominatim) pour la recherche de cliniques ; le tracé des balades reste dans vos données.</li><li><b>Assistance</b> : le message, l’adresse e-mail et, si vous le cochez, des informations techniques.</li><li><b>Compte (si vous vous connectez avec Google)</b> : un résumé (nom, adresse e-mail, dates de première et dernière utilisation, nombre d’animaux et de leçons acquises, version de l’app, achat éventuel) est visible par l’éditeur pour l’assistance et la gestion des accès Wouf Plus. Le contenu de votre carnet n’y figure pas.</li>${statsCode() ? '<li><b>Mesure d’audience</b> : nom de l’écran ouvert, principales actions (animal ajouté, leçon acquise, balade enregistrée), taille d’écran et site de provenance, via GoatCounter, sans cookie, sans identifiant et sans aucune donnée saisie. Désactivable dans Réglages.</li>' : ''}</ul>
   <h2>Finalités et bases légales</h2><p>Fournir le service (exécution du contrat), sécuriser et améliorer l’application (intérêt légitime), répondre à vos demandes et gérer l’achat (contrat, obligations légales comptables).</p>
-  <h2>Sous-traitants</h2><p>Google (Firebase Authentication et Firestore), Stripe (paiement), Cloudflare (relais de paiement et d’assistance), GitHub (hébergement du site),${statsCode() ? ' GoatCounter (mesure d’audience anonyme),' : ''} ${'OpenStreetMap Foundation (cartes / recherche)'}. Certains peuvent impliquer des transferts hors Union européenne encadrés par des garanties appropriées.</p>
+  <h2>Sous-traitants</h2><p>Google (Firebase Authentication et Firestore), ${payName()} (paiement), Cloudflare (relais de paiement et d’assistance), GitHub (hébergement du site),${statsCode() ? ' GoatCounter (mesure d’audience anonyme),' : ''} ${'OpenStreetMap Foundation (cartes / recherche)'}. Certains peuvent impliquer des transferts hors Union européenne encadrés par des garanties appropriées.</p>
   <h2>Publicité et suivi</h2><p>Aucun suivi publicitaire, aucune revente de données. Seul le stockage technique nécessaire au fonctionnement est utilisé (stockage local de l’appareil).${statsCode() ? ' La mesure d’audience anonyme ne dépose aucun cookie et peut être désactivée dans Réglages.' : ''}</p>
   <h2>Durée de conservation</h2><p>Les données restent sur votre appareil jusqu’à leur suppression. Les données synchronisées sont conservées tant que votre compte de données existe ; vous pouvez demander leur suppression à tout moment. Les justificatifs d’achat sont conservés selon les obligations légales.</p>
   <h2>Vos droits</h2><p>Accès, rectification, effacement, limitation, portabilité, opposition : écrivez à ${orTbd(L.email)}. Vous pouvez saisir la CNIL (cnil.fr).</p>`;

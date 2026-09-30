@@ -87,7 +87,7 @@ const bizFeatures = (read('business.js').match(/const FEATURES = \{([\s\S]*?)\n\
 for (const f of B.premium) ok(new RegExp('\\b' + f + ':').test(bizFeatures), `fonction Plus « ${f} » sans description dans business.js (FEATURES)`);
 const RW = B.rewardOffer || {};
 ok(!RW.enabled || /\d/.test(RW.price || ''), 'billing.rewardOffer.enabled = true mais aucun prix affiché');
-for (const k of ['paymentLink', 'rewardLink']) ok(!B[k] || /^https:\/\/buy\.stripe\.com\/[\w-]+$/.test(B[k]), `billing.${k} doit être un lien https://buy.stripe.com/…`);
+for (const k of ['paymentLink', 'rewardLink']) ok(!B[k] || /^https:\/\/(buy\.stripe\.com\/[\w-]+|(www\.)?paypal\.(com|me)\/[\w./-]+)$/i.test(B[k]), `billing.${k} doit être un lien PayPal (https://www.paypal.com/…) ou Stripe (https://buy.stripe.com/…)`);
 { const wf = read('billing-worker/worker.js').match(/const FREE_LESSONS = (\{[^\n]*\});/), app = { dog: dog.filter(l => l.free).map(l => l.id), cat: cat.filter(l => l.free).map(l => l.id) };
   const w = wf ? Function('return ' + wf[1])() : null;
   ok(w && ['dog', 'cat'].every(sp => JSON.stringify([...w[sp]].sort()) === JSON.stringify([...app[sp]].sort())), 'billing-worker/worker.js : FREE_LESSONS doit reprendre exactement les leçons gratuites de l’app (offre récompense)'); }

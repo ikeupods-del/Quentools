@@ -33,8 +33,7 @@ const AdminApi = {
    Liens de paiement Stripe et informations légales : saisis dans l'administration (wouf_admin/config, public comme
    les mentions légales), ils remplacent ceux de config.js. La vente ne s'ouvre que si tout est prêt : sinon l'interrupteur est ignoré. */
 const SALE_DEFAULT = !!BILL.enabled;
-const STRIPE_LINK = /^https:\/\/buy\.stripe\.com\/[\w-]+$/;
-const REMOTE_FIELDS = { paymentLink: [BILL, 'paymentLink', 'Lien de paiement Stripe (prix normal)'], rewardLink: [BILL, 'rewardLink', 'Lien de paiement Stripe (offre récompense, facultatif)'],
+const REMOTE_FIELDS = { paymentLink: [BILL, 'paymentLink', 'Lien de paiement PayPal (prix normal)'], rewardLink: [BILL, 'rewardLink', 'Lien de paiement PayPal (offre récompense, facultatif)'],
   seller: [LEGAL, 'seller', 'Nom et prénom (ou raison sociale)'], form: [LEGAL, 'form', 'Statut (ex. Entrepreneur individuel, micro-entreprise)'], siret: [LEGAL, 'siret', 'SIRET'],
   address: [LEGAL, 'address', 'Adresse'], email: [LEGAL, 'email', 'E-mail de contact'], mediator: [LEGAL, 'mediator', 'Médiateur de la consommation (nom et site)'], supportEmail: [SUP, 'email', 'E-mail d’assistance'] };
 const REMOTE_DEF = Object.fromEntries(Object.entries(REMOTE_FIELDS).map(([k, [o, p]]) => [k, o[p] || '']));
@@ -42,13 +41,13 @@ const remoteCached = () => { try { return JSON.parse(localStorage.getItem('wouf:
 function remoteStore(c) { const next = { ...remoteCached(), ...c }; try { localStorage.setItem('wouf:remote', JSON.stringify(next)); } catch (e) { /* ignore */ } return applySaleConfig(next); }
 const legalFull = () => ['seller', 'form', 'address', 'siret', 'email', 'mediator'].every(k => LEGAL[k]) && !!SUP.email;
 const saleReady = () => !!(legalFull() && payReady() && (BILL.plans || []).length);
-const saleMissing = () => [!legalFull() && 'Informations légales (statut, SIRET, adresse, e-mail, médiateur, e-mail d’assistance) à compléter', !payReady() && 'Lien de paiement Stripe à renseigner'].filter(Boolean);
+const saleMissing = () => [!legalFull() && 'Informations légales (statut, SIRET, adresse, e-mail, médiateur, e-mail d’assistance) à compléter', !payReady() && 'Lien de paiement PayPal à renseigner'].filter(Boolean);
 function applySaleConfig(c) {
   if (!c) return false;
   let changed = false;
   for (const [k, [o, p]] of Object.entries(REMOTE_FIELDS)) {
     if (c[k] === undefined) continue;
-    let v = String(c[k] || '').trim().slice(0, 300); if (/Link$/.test(k) && v && !STRIPE_LINK.test(v)) v = '';
+    let v = String(c[k] || '').trim().slice(0, 300); if (/Link$/.test(k) && v && !PAY_LINK.test(v)) v = '';
     v = v || REMOTE_DEF[k]; if (o[p] !== v) { o[p] = v; changed = true; }
   }
   const on = c.billingEnabled === undefined ? SALE_DEFAULT : !!(c.billingEnabled && saleReady());
@@ -107,16 +106,16 @@ ROUTES.admin = function admin() {
   <section class="grid4 adm-tiles">${tiles.map(([i, n, l]) => `<div class="tile sm"><span>${i}</span> <b>${ADM.users ? n : '…'}</b> ${l}</div>`).join('')}</section>
   <section class="card"><h2>🔗 Raccourcis</h2><div class="btn-row">
     ${statsCode() ? `<a class="btn" href="https://${statsCode()}.goatcounter.com" target="_blank" rel="noopener">📊 Visites</a>` : ''}
-    <a class="btn" href="https://dashboard.stripe.com" target="_blank" rel="noopener">💳 Stripe</a>
+    <a class="btn" href="https://www.paypal.com/myaccount/summary" target="_blank" rel="noopener">💳 PayPal</a>
     <a class="btn" href="https://console.firebase.google.com/project/${esc((CFG.firebase || {}).projectId || '')}" target="_blank" rel="noopener">🔥 Firebase</a></div></section>
   <section class="card"><h2>💶 Vente de Wouf Plus</h2>
     <p><b>${sale ? '🟢 Vente ouverte' : '⚪ Tout est gratuit pour le moment'}</b> · prix : ${esc(planLine())}</p>
     ${miss.length ? `<p class="mut">Avant d’ouvrir la vente :</p><ul class="bul">${miss.map(m => `<li>❌ ${esc(m)}</li>`).join('')}</ul>` : '<p class="ok">✅ Tout est prêt pour vendre.</p>'}
     <button class="btn ${sale ? 'danger' : 'primary'}" data-act="adm-sale" ${!sale && miss.length ? 'disabled' : ''}>${sale ? 'Repasser en gratuit' : 'Ouvrir la vente'}</button>
     <p class="mut small">Le changement arrive chez les utilisateurs à leur prochaine ouverture de l’app. Ce qu’ils ont saisi reste toujours accessible.</p></section>
-  <section class="card" id="adm-pay"><h2>💳 Stripe et informations légales</h2>
-    <p class="mut small">Stripe → <b>Liens de paiement</b> → Créer : produit « Wouf Plus à vie » à <b>${esc(planOf().price)}</b>${REWARD.enabled ? ` (et un 2ᵉ lien à <b>${esc(REWARD.price)}</b> pour l’offre récompense)` : ''} ; onglet « Après le paiement » → rediriger vers <b>${esc((SITE.home || location.origin + '/') + '#/merci')}</b>. Collez ici le lien (https://buy.stripe.com/…).</p>
-    ${Object.entries(REMOTE_FIELDS).map(([k, [o, p, l]]) => `<div class="field"><label>${esc(l)}</label><input name="${k}" value="${esc(o[p] || '')}" ${/Link$/.test(k) ? 'type="url" placeholder="https://buy.stripe.com/…"' : /mail/i.test(k) ? 'type="email"' : ''}></div>`).join('')}
+  <section class="card" id="adm-pay"><h2>💳 Paiement et informations légales</h2>
+    <p class="mut small">PayPal (compte <b>professionnel</b>, gratuit) → <b>Liens et boutons de paiement</b> → Créer : « Wouf Plus à vie » à <b>${esc(planOf().price)}</b>${REWARD.enabled ? ` (et un 2ᵉ lien à <b>${esc(REWARD.price)}</b> pour l’offre récompense)` : ''}, page de retour <b>${esc((SITE.home || location.origin + '/') + '#/merci')}</b> si PayPal la propose. Collez ici le lien obtenu (https://www.paypal.com/…). Un lien Stripe (https://buy.stripe.com/…) fonctionne aussi.</p>
+    ${Object.entries(REMOTE_FIELDS).map(([k, [o, p, l]]) => `<div class="field"><label>${esc(l)}</label><input name="${k}" value="${esc(o[p] || '')}" ${/Link$/.test(k) ? 'type="url" placeholder="https://www.paypal.com/…"' : /mail/i.test(k) ? 'type="email"' : ''}></div>`).join('')}
     <button class="btn primary" data-act="adm-save-pay">Enregistrer</button>
     <p class="mut small">Ces informations apparaissent dans les mentions légales et les conditions de vente : faites-les relire avant d’ouvrir la vente.</p></section>
   <section class="card"><h2>👥 Comptes (${us.length})</h2>
@@ -152,7 +151,7 @@ ACT['adm-sale'] = async () => {
 };
 ACT['adm-save-pay'] = async () => {
   const c = {}, bad = [];
-  for (const k of Object.keys(REMOTE_FIELDS)) { const v = ($(`#adm-pay [name=${k}]`) || {}).value; if (v === undefined) continue; c[k] = v.trim(); if (/Link$/.test(k) && c[k] && !STRIPE_LINK.test(c[k])) bad.push(k); }
-  if (bad.length) return toast('Lien invalide : il doit commencer par https://buy.stripe.com/');
+  for (const k of Object.keys(REMOTE_FIELDS)) { const v = ($(`#adm-pay [name=${k}]`) || {}).value; if (v === undefined) continue; c[k] = v.trim(); if (/Link$/.test(k) && c[k] && !PAY_LINK.test(c[k])) bad.push(k); }
+  if (bad.length) return toast('Lien invalide : collez le lien PayPal (https://www.paypal.com/…) ou Stripe (https://buy.stripe.com/…)');
   try { await AdminApi.setConfig({ ...c, at: Date.now(), by: CLOUD.user.email }); remoteStore(c); toast('Enregistré ✓'); render(true); } catch (e) { toast(admErr(e)); }
 };

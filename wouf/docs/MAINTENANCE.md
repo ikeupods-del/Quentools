@@ -166,7 +166,9 @@ match /wouf_grants/{uid} { allow read: if request.auth != null && request.auth.u
 match /wouf_admin/{doc} { allow read: if true; allow write: if woufAdmin(); }
 ```
 
-## Vendre avec des liens de paiement Stripe (sans relais)
+## Vendre avec un lien de paiement PayPal (ou Stripe), sans relais
+**PayPal (choix actuel)** : compte **professionnel** PayPal (gratuit) → « Liens et boutons de paiement » → créer « Wouf Plus à vie » à 19,99 € (et 9,99 € pour l'offre récompense) → copier le lien (https://www.paypal.com/…) → Plus → Administration → « Paiement et informations légales » → Enregistrer. À chaque vente, PayPal envoie un e-mail : retrouver l'acheteur dans l'administration (nom ou e-mail ; l'adresse PayPal peut différer de son compte Google) → « ⭐ À vie ». Le lien Stripe reste accepté ; la procédure Stripe détaillée suit.
+
 1. Stripe → **Catalogue de produits** : produit « Wouf Plus à vie », prix unique **19,99 €** (le prix de `plans[0].price`). Optionnel : 2ᵉ prix **9,99 €** pour l'offre récompense.
 2. Stripe → **Liens de paiement** → Créer : un lien par prix. Onglet « Après le paiement » → « Rediriger vers votre site » : `https://woufapp.fr/#/merci`. Activer PayPal / Apple Pay / Google Pay dans Paramètres → Moyens de paiement si souhaité.
 3. Coller les liens et les informations légales dans **Plus → Administration → « Stripe et informations légales »** → Enregistrer (document `wouf_admin/config`, appliqué chez tous à la prochaine ouverture ; ils remplacent `config.js → billing.paymentLink / rewardLink`, `legal` et `support.email`).
