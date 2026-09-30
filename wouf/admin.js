@@ -107,6 +107,9 @@ function replyLink(m) {
 ACT['adm-copy'] = async ({ mail }) => { try { await navigator.clipboard.writeText(mail); toast('Adresse copiée ✓'); } catch (e) { toast(mail); } };
 
 /* ---------- Écran d'administration ---------- */
+/* Paiement enregistré par le relais : achat à vie actif, ou abonnement annuel dans sa période payée (+ 3 jours de tolérance, comme le relais). */
+const paidOn = r => !!(r && r.active && (!r.plan || r.plan === 'lifetime' || (r.until && addDays(r.until, 3) >= today())));
+const paidPlan = r => r && r.plan === 'yearly' ? ` · abonnement annuel jusqu’au ${fmtDate(r.until)}${r.cancelled ? ' (résilié)' : ''}` : '';
 const ADM = { users: null, orders: [], paid: {}, msgs: [], mailOn: false, stats: null, serr: '', loading: false, err: '', oerr: '', perr: '', merr: '' };
 const grantLabel = g => !g ? '' : g.until === 'lifetime' ? 'Plus offert à vie' : (today() <= g.until ? 'Plus offert jusqu’au ' + fmtDate(g.until) : 'Plus offert (expiré le ' + fmtDate(g.until) + ')');
 const admErr = e => e && /permission|insufficient/i.test(String(e.code || e.message)) ? 'Accès refusé par Firebase : les règles d’administration ne sont pas encore installées (voir le guide).' : (e && e.message) || 'Erreur';
@@ -145,18 +148,18 @@ ROUTES.admin = function admin() {
   const us = ADM.users || [], wk = addDays(today(), -7), gOn = u => u.grant && (u.grant.until === 'lifetime' || today() <= u.grant.until);
   const tiles = [['👤', us.length, 'comptes Google'], ['⭐', us.filter(gOn).length, 'Plus offerts'], ['🟢', us.filter(u => (u.lastSeen || '') >= wk).length, 'actifs (7 j)'], ['🧾', ADM.orders.filter(o => o.status === 'pending').length, 'paiements à vérifier']];
   const sale = BILL.enabled, miss = saleMissing();
-  const autoPaid = o => o.status === 'pending' && ADM.paid[o.uid] && ADM.paid[o.uid].active;
+  const autoPaid = o => o.status === 'pending' && paidOn(ADM.paid[o.uid]);
   const acct = uid => { const u = (ADM.users || []).find(x => x.uid === uid); return u ? (u.email || u.name) : '…' + String(uid).slice(-6); };
   const orphans = Object.entries(ADM.paid).filter(([uid]) => !ADM.orders.some(o => o.uid === uid));
   const pend = ADM.orders.filter(o => o.status === 'pending' && !autoPaid(o)), done = ADM.orders.filter(o => o.status !== 'pending' || autoPaid(o));
   const orderRow = o => `<div class="adm-o"><div class="grow"><b>${esc(o.firstName || '')} ${esc(o.lastName || '')}</b> <span class="pill-s ${o.status === 'done' || autoPaid(o) ? 'ok' : ''}">${autoPaid(o) ? '✅ Activé automatiquement' : o.status === 'done' ? 'Activé' : o.status === 'refused' ? 'Refusé' : 'À vérifier'}</span>
-      <small>💳 PayPal : <b>${esc(o.paypalEmail || '')}</b> · ${esc(o.price || '')}${o.offer === 'reward' ? ' (offre récompense, ' + (+o.lessons || 0) + ' leçons)' : ''}${o.ref ? ' · réf. <b>' + esc(o.ref) + '</b>' : ''}</small>${o.payee ? `<small>📥 Payé à : ${esc(o.payee)}</small>` : ''}${ADM.paid[o.uid] && !ADM.paid[o.uid].active ? `<small class="bad">⚠️ Paiement PayPal annulé ou remboursé : l’accès a été retiré automatiquement.</small>` : ''}${autoPaid(o) ? `<small>💳 PayPal a confirmé : ${esc(ADM.paid[o.uid].payerName || '')} · ${esc(ADM.paid[o.uid].payerEmail || '')} · ${esc(ADM.paid[o.uid].amount || '')} €</small>` : ''}
+      <small>💳 PayPal : <b>${esc(o.paypalEmail || '')}</b> · ${esc(o.price || '')}${o.offer === 'reward' ? ' (offre récompense, ' + (+o.lessons || 0) + ' leçons)' : o.offer === 'yearly' ? ' (abonnement annuel)' : ''}${o.ref ? ' · réf. <b>' + esc(o.ref) + '</b>' : ''}</small>${o.payee ? `<small>📥 Payé à : ${esc(o.payee)}</small>` : ''}${ADM.paid[o.uid] && !paidOn(ADM.paid[o.uid]) ? `<small class="bad">⚠️ ${ADM.paid[o.uid].active ? 'Abonnement échu (non renouvelé)' : 'Paiement PayPal annulé ou remboursé'} : l’accès a été retiré automatiquement.</small>` : ''}${autoPaid(o) ? `<small>💳 PayPal a confirmé : ${esc(ADM.paid[o.uid].payerName || '')} · ${esc(ADM.paid[o.uid].payerEmail || '')} · ${esc(ADM.paid[o.uid].amount || '')} €${paidPlan(ADM.paid[o.uid])}</small>` : ''}
       <small>👤 Compte Google : ${esc(o.googleEmail || '')} · ✉️ Contact : ${esc(o.contactEmail || '')}</small>
       <small>🕒 ${o.at ? esc(new Date(o.at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })) : ''}</small></div>
       ${o.status === 'pending' ? `<div class="btn-row sm"><button class="btn sm primary" data-act="adm-order-ok" data-id="${esc(o.id)}">✅ Paiement reçu : activer</button><button class="btn sm danger" data-act="adm-order-no" data-id="${esc(o.id)}">Refuser</button></div>` : ''}</div>`;
   const row = u => `<div class="adm-u" data-q="${esc(((u.name || '') + ' ' + (u.email || '')).toLowerCase())}">
       <div class="grow"><b>${esc(u.name || u.email || u.uid)}</b><small>${esc(u.email || '')}</small>
-      <small>Vu le ${esc(fmtDate(u.lastSeen) || '?')} · 🐶 ${+u.dogs || 0} · 🐱 ${+u.cats || 0} · 🎓 ${+u.lessons || 0}${u.bought || (ADM.paid[u.uid] && ADM.paid[u.uid].active) ? ' · 💳 acheté' : ''}${u.version ? ' · v' + esc(u.version) : ''}</small>
+      <small>Vu le ${esc(fmtDate(u.lastSeen) || '?')} · 🐶 ${+u.dogs || 0} · 🐱 ${+u.cats || 0} · 🎓 ${+u.lessons || 0}${u.bought || paidOn(ADM.paid[u.uid]) ? ' · 💳 ' + (ADM.paid[u.uid] && ADM.paid[u.uid].plan === 'yearly' ? 'abonné' : 'acheté') : ''}${u.version ? ' · v' + esc(u.version) : ''}</small>
       ${u.grant ? `<span class="pill-s ${gOn(u) ? 'ok' : ''}">${esc(grantLabel(u.grant))}</span>` : ''}</div>
       <div class="btn-row sm"><button class="btn sm" data-act="adm-grant" data-uid="${esc(u.uid)}" data-until="lifetime">⭐ À vie</button><button class="btn sm" data-act="adm-grant" data-uid="${esc(u.uid)}" data-until="${addDays(today(), 31)}">1 mois</button>${u.grant ? `<button class="btn sm danger" data-act="adm-revoke" data-uid="${esc(u.uid)}">Retirer</button>` : ''}</div></div>`;
   return head + `
@@ -232,9 +235,10 @@ ACT['adm-save-pay'] = async () => {
 };
 ACT['adm-order-ok'] = async ({ id }) => {
   const o = ADM.orders.find(x => x.id === id); if (!o) return;
-  if (!(await ask(`Avez-vous bien reçu ${o.price} de ${o.firstName} ${o.lastName} (${o.paypalEmail}) sur PayPal ? Wouf Plus à vie sera activé sur ${o.googleEmail}.`, 'Oui, activer', false))) return;
+  const yr = o.offer === 'yearly', until = yr ? (d => { d.setFullYear(d.getFullYear() + 1); return iso(d); })(new Date()) : 'lifetime';
+  if (!(await ask(`Avez-vous bien reçu ${o.price} de ${o.firstName} ${o.lastName} (${o.paypalEmail}) sur PayPal ? Wouf Plus ${yr ? 'sera activé pour un an (jusqu’au ' + fmtDate(until) + ')' : 'à vie sera activé'} sur ${o.googleEmail}.`, 'Oui, activer', false))) return;
   try {
-    const g = { until: 'lifetime', by: CLOUD.user.email, at: Date.now(), order: id };
+    const g = { until, by: CLOUD.user.email, at: Date.now(), order: id };
     await AdminApi.setGrant(o.uid, g); await AdminApi.setOrder(id, { status: 'done', doneAt: Date.now(), by: CLOUD.user.email });
     o.status = 'done'; const u = (ADM.users || []).find(x => x.uid === o.uid); if (u) u.grant = g;
     toast('Wouf Plus activé ✓'); render(true);

@@ -185,3 +185,49 @@ test('contact : priorité aussi pour un Plus offert depuis l’administration ou
   assert.equal((await post('/support', msg(), await makeToken({ sub: 'patron_uid_1', email: 'patron@example.fr' }), ENV, '1.1.1.5')).json.priority, true, 'le propriétaire est prioritaire');
   assert.equal((await post('/support', msg(), await makeToken({ sub: 'faux_patron_1', email: 'patron@example.fr', email_verified: false }), ENV, '1.1.1.6')).json.priority, false, 'e-mail non vérifié : pas de passe-droit');
 });
+
+/* ---------- Abonnement annuel (PayPal « _xclick-subscriptions ») ---------- */
+const sub = (over = {}) => ({ txn_type: 'subscr_payment', payment_status: 'Completed', subscr_id: 'I-SUB111', txn_id: 'ST1', receiver_email: 'vendeur@example.fr', mc_currency: 'EUR', mc_gross: '14.99', custom: 'uid_abc123|WOUF-SUB1|y', payer_email: 'Client@Example.fr', first_name: 'Jean', last_name: 'Client', ...over });
+const iso = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+const inYear = (from = new Date()) => { const d = new Date(from); d.setUTCFullYear(d.getUTCFullYear() + 1); return d.toISOString().slice(0, 10); };
+test('abonnement annuel : paiement → accès jusqu’à dans un an ; renouvellement → un an de plus ; résiliation → accès gardé jusqu’à la fin de la période', async () => {
+  await ipn(sub()); let s = (await get('/status', await makeToken())).json;
+  assert.equal(s.active, true); assert.equal(s.lifetime, false); assert.equal(s.plan, 'yearly'); assert.equal(s.until, inYear()); assert.equal(s.cancelled, false);
+  assert.equal(s.accessUntil > s.until, true, 'quelques jours de tolérance pour un prélèvement en retard');
+  assert.equal(kvStore.get('sub:I-SUB111'), 'uid_abc123');
+  await ipn(sub({ txn_id: 'ST1' })); assert.equal((await get('/status', await makeToken())).json.until, inYear(), 'doublon PayPal : pas de prolongation');
+  await ipn(sub({ txn_id: 'ST2' })); assert.equal((await get('/status', await makeToken())).json.until, inYear(new Date(inYear() + 'T12:00:00Z')), 'renouvellement : un an de plus à partir de la fin de période');
+  await ipn({ txn_type: 'subscr_cancel', subscr_id: 'I-SUB111', custom: 'autre_compte_999|x|y' });
+  s = (await get('/status', await makeToken())).json; assert.equal(s.active, true, 'résilié : accès conservé jusqu’à la fin de la période payée'); assert.equal(s.cancelled, true);
+});
+test('abonnement annuel : période échue → accès coupé ; montant trop bas, bénéficiaire inconnu, compte invalide → refusés', async () => {
+  await ipn(sub()); const rec = JSON.parse(kvStore.get('paid:uid_abc123')); kvStore.set('paid:uid_abc123', JSON.stringify({ ...rec, until: iso(-4) }));
+  const s = (await get('/status', await makeToken())).json; assert.equal(s.active, false, 'plus de 3 jours après la fin de période'); assert.equal(s.expired, iso(-4));
+  kvStore.set('paid:uid_abc123', JSON.stringify({ ...rec, until: iso(-2) })); assert.equal((await get('/status', await makeToken())).json.active, true, 'dans la tolérance de 3 jours');
+  kvStore.clear();
+  await ipn(sub({ mc_gross: '2.49', txn_id: 'B1' })); assert.equal((await get('/status', await makeToken())).json.active, false, 'annuel payé au prix d’un mois');
+  await ipn(sub({ receiver_email: 'pirate@example.fr', txn_id: 'B2' })); assert.equal((await get('/status', await makeToken())).json.active, false, 'mauvais bénéficiaire');
+  await ipn(sub({ custom: 'uid_abc123|x|z', txn_id: 'B3' })); assert.equal((await get('/status', await makeToken())).json.active, false, 'période inconnue');
+  await ipn(sub({ payment_status: 'Pending', txn_id: 'B4' })); await ipn(sub({ txn_type: 'subscr_signup', txn_id: 'B5' })); await ipn(sub({ txn_type: 'subscr_failed', txn_id: 'B6' }));
+  assert.equal((await get('/status', await makeToken())).json.active, false, 'inscription, échec ou paiement en attente : pas d’accès');
+  await ipn({ txn_type: 'subscr_cancel', subscr_id: 'I-INCONNU' }); assert.equal(kvStore.size, 0, 'résiliation d’un abonnement inconnu : rien');
+});
+test('abonnement : un achat à vie n’est jamais remplacé ; remboursement d’un paiement d’abonnement → accès retiré', async () => {
+  await ipn(good({ txn_id: 'LIFE1' })); await ipn(sub({ txn_id: 'ST9' }));
+  const s = (await get('/status', await makeToken())).json; assert.equal(s.lifetime, true); assert.equal(s.plan, 'lifetime');
+  kvStore.clear(); await ipn(sub({ txn_id: 'ST10' })); assert.equal((await get('/status', await makeToken())).json.active, true);
+  await ipn({ payment_status: 'Refunded', txn_type: 'subscr_payment', txn_id: 'RF10', parent_txn_id: 'ST10', subscr_id: 'I-SUB111', receiver_email: 'vendeur@example.fr', mc_currency: 'EUR', mc_gross: '-14.99' });
+  assert.equal((await get('/status', await makeToken())).json.active, false, 'remboursé : accès retiré');
+});
+test('abonnement annuel : rappel par e-mail 30 à 60 jours avant la reconduction, une seule fois, jamais si résilié', async () => {
+  const run = async env => { let p; await worker.scheduled({}, env, { waitUntil: x => { p = x; } }); return p; };
+  await ipn(sub()); const rec = JSON.parse(kvStore.get('paid:uid_abc123'));
+  assert.deepEqual(await run(ENV), { sent: 0, off: true }, 'sans Resend : rien');
+  resendMock(200); assert.equal((await run(CONF)).sent, 0, 'échéance dans un an : trop tôt');
+  kvStore.set('paid:uid_abc123', JSON.stringify({ ...rec, until: iso(45) })); assert.equal((await run(CONF)).sent, 1);
+  const m = JSON.parse(calls.filter(c => c.url.includes('api.resend.com')).pop().opts.body);
+  assert.deepEqual(m.to, ['client@example.fr']); assert.match(m.subject, /renouvelé le/); assert.match(m.text, /14,99 €/); assert.match(m.text, /Gérer mon abonnement/); assert.match(m.text, /PayPal/);
+  assert.equal((await run(CONF)).sent, 0, 'déjà prévenu pour cette échéance');
+  kvStore.set('paid:uid_abc123', JSON.stringify({ ...rec, until: iso(40), cancelled: true })); assert.equal((await run(CONF)).sent, 0, 'résilié : pas de rappel');
+  kvStore.set('paid:uid_abc123', JSON.stringify({ ...rec, until: iso(10) })); assert.equal((await run(CONF)).sent, 0, 'moins d’un mois : trop tard pour ce rappel');
+});

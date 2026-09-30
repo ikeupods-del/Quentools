@@ -293,3 +293,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-off
 .eb-h{margin:10px 0 4px;font-weight:700;font-size:.9rem;color:var(--mut);display:flex;align-items:center;gap:8px}#h-ebooks .list.menu{margin:0}
 .gd-ch>summary b{font-size:1rem}.gd-list ul{margin:6px 0 0;padding-left:1.1rem}.gd-list ul li{margin:3px 0;color:var(--ink)}
 @media print{.gd{display:none!important}}.gd{-webkit-user-select:none;user-select:none}
+/* Choix de formule Wouf Plus (annuel ou à vie) */
+.plan-pick{display:grid;gap:10px;margin:6px 0 14px}.plan-opt{display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid var(--line);border-radius:16px;background:var(--card);cursor:pointer}
+.plan-opt:has(input:checked){border-color:var(--pri);background:var(--soft)}.plan-opt input{width:20px;height:20px;accent-color:var(--pri);flex:none}.plan-opt small{display:block;color:var(--mut);font-size:.82rem}
+.plan-opt .pp{font-size:1.15rem;color:var(--pri);white-space:nowrap;text-align:right}.plan-opt .pp small{display:inline;font-size:.8rem}.plan-opt .pp s{color:var(--mut);font-weight:500;font-size:.9rem}
+.plan-duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}.plan-duo>div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}.plan-duo small{color:var(--mut)}

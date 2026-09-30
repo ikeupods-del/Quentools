@@ -740,6 +740,47 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   noErrors(b); await b.ctx.close();
 });
 
+test('abonnement annuel : choix annuel ou à vie, bouton PayPal d’abonnement, suivi, résiliation depuis l’app, fin de période', async () => {
+  const b = await boot({ query: '?preview=none', hash: '#/abo' }), p = b.page; await fakeCloud(p); await fakeSale(p);
+  const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' }, posted = [];
+  let st = { active: false };
+  await b.ctx.route('https://relais.test/**', async r => { const u = new URL(r.request().url()); if (r.request().method() === 'OPTIONS') return r.fulfill({ status: 200, headers: cors });
+    if (u.pathname === '/support') { posted.push(JSON.parse(r.request().postData())); return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: '{"ok":true}' }); }
+    if (u.pathname === '/status') return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify(st) });
+    return r.fulfill({ status: 404, headers: cors, body: '{}' }); });
+  await b.ev(() => { BILL.api = 'https://relais.test'; BILL.yearly = { ...BILL.yearly, enabled: true }; CloudApi.signIn = async () => ({ uid: 'uidSub123', email: 'ana@test.fr', name: 'Ana Test', picture: '' }); render(); });
+  await p.waitForSelector('.plan-duo'); assert.match(await text(p, '.plus-hero'), /Annuel.*14,99 € par an.*À vie.*19,99 €/); assert.match(await text(p, '[data-act=subscribe]'), /dès 14,99 € par an/);
+  await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent');
+  assert.equal(await p.isChecked('input[name=buy-plan][value=yearly]'), true, 'annuel proposé par défaut');
+  assert.match(await text(p, '#buy-terms'), /abonnement annuel à 14,99 €.*reconduit automatiquement.*résilier à tout moment/); assert.match(await text(p, '#buy-btn'), /S’abonner : 14,99 € par an/);
+  await p.check('#buy-consent'); await p.check('input[name=buy-plan][value=lifetime]');
+  assert.equal(await p.isChecked('#buy-consent'), false, 'changer de formule demande un nouvel accord'); assert.match(await text(p, '#buy-btn'), /Payer 19,99 €/); assert.doesNotMatch(await text(p, '#buy-terms'), /reconduit/);
+  await p.check('input[name=buy-plan][value=yearly]'); await p.check('#buy-consent'); await p.click('[data-act=buy-go]'); await p.waitForFunction(() => window.__go);
+  const g = new URL(await b.ev(() => window.__go));
+  assert.deepEqual(['cmd', 'business', 'a3', 'p3', 't3', 'src', 'currency_code'].map(k => g.searchParams.get(k)), ['_xclick-subscriptions', 'vendeur@test.fr', '14.99', '1', 'Y', '1', 'EUR']);
+  assert.match(g.searchParams.get('custom'), /^uidSub123\|WOUF-[A-Z0-9]+\|y$/); assert.equal(g.searchParams.get('notify_url'), 'https://relais.test/ipn');
+  const o = await b.ev(() => window.__orders[0]); assert.deepEqual([o.offer, o.price, o.ref], ['yearly', '14,99 €', g.searchParams.get('invoice')]);
+  // le relais confirme l'abonnement : accès jusqu'à la fin de la période, page de gestion
+  st = { active: true, lifetime: false, plan: 'yearly', since: '2026-10-01T10:00:00Z', until: '2027-10-01', accessUntil: '2027-10-04', cancelled: false };
+  await b.ev(() => refreshSub(true)); assert.equal(await b.ev(() => subActive() && plus()), true);
+  await b.ev(() => closeAllSheets()); await b.go('#/home'); await b.go('#/abo'); await p.waitForSelector('[data-act=sub-manage]'); assert.match(await text(p, '.plus-hero'), /Wouf Plus annuel.*2027.*renouvelé automatiquement/);
+  await p.click('[data-act=sub-manage]'); await p.waitForSelector('[data-act=sub-cancel]'); assert.match(await text(p, '.sheet'), /Prochain renouvellement/);
+  await p.click('[data-act=sub-cancel]'); await p.click('.sheet [data-ok]'); await p.waitForFunction(() => /Résiliation enregistrée/.test(document.body.innerText));
+  assert.equal(posted.length, 1); assert.equal(posted[0].category, 'Résiliation'); assert.match(posted[0].message, /ana@test\.fr/);
+  assert.match(await p.getAttribute('.sheet a.btn.primary', 'href'), /cmd=_subscr-find&alias=vendeur%40test\.fr/);
+  // résilié : accès conservé jusqu'à la fin de période, affiché comme tel
+  st = { ...st, cancelled: true }; await b.ev(() => { closeAllSheets(); return refreshSub(true); }); await b.go('#/home'); await b.go('#/abo');
+  assert.match(await text(p, '.plus-hero'), /Abonnement résilié.*reste actif jusqu’au/); assert.equal(await b.ev(() => plus()), true);
+  // période échue : plus d'accès, même hors connexion ; données intactes
+  assert.equal(await b.ev(() => { applySub({ active: true, lifetime: false, plan: 'yearly', until: '2020-01-01', accessUntil: '2020-01-04' }); return subActive(); }), false);
+  st = { active: false }; await b.ev(() => refreshSub(true)); assert.equal(await b.ev(() => plus()), false);
+  // conditions de vente et FAQ adaptées
+  await b.go('#/legal?doc=cgv'); await p.waitForSelector('.legal'); const cgv = await text(p, '.legal');
+  assert.match(cgv, /abonnement annuel.*14,99 € TTC par an/); assert.match(cgv, /reconduit tacitement/); assert.match(cgv, /résilier à tout moment, sans frais/); assert.match(cgv, /L215-1/);
+  await b.go('#/support'); assert.match(await text(p, '#view'), /Au choix : un abonnement annuel/);
+  noErrors(b); await b.ctx.close();
+});
+
 test('activation automatique PayPal : notify_url et compte transmis, page d’attente qui s’active toute seule, administration', async () => {
   const b = await boot({ query: '?preview=none', hash: '#/abo' }), p = b.page; await fakeCloud(p); await fakeSale(p);
   let active = false; const seen = [];
