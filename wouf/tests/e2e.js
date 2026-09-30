@@ -420,6 +420,12 @@ test('assistance : prioritaire pour les acheteurs, mail préparé, FAQ', async (
   await p.fill('#sp-msg', 'court'); await p.click('[data-act=support-send]'); assert.match(await text(p, '#toast'), /10 caractères/);
   await p.fill('#sp-msg', 'Bonjour, mon suivi ne démarre pas.'); await p.click('[data-act=support-send]'); await p.waitForTimeout(200);
   const mail = decodeURIComponent(await b.ev(() => window.__mail)); assert.match(mail, /^mailto:support@test\.fr\?subject=\[PRIORITAIRE\] Wouf – Problème technique/); assert.match(mail, /Wouf 1\./); assert.match(mail, /Plus : oui \(achat\)/);
+  // sans e-mail d'assistance : l'e-mail de contact des mentions légales sert (plus jamais « assistance non configurée » tant qu'un contact existe)
+  await b.ev(() => { window.__mail = null; SUP.email = ''; LEGAL.email = 'contact@test.fr'; });
+  await p.fill('#sp-msg', 'Bonjour, ceci est un troisième message.'); await p.click('[data-act=support-send]'); await p.waitForTimeout(200);
+  assert.match(await b.ev(() => window.__mail), /^mailto:contact@test\.fr\?subject=/);
+  await b.ev(() => { window.__mail = null; LEGAL.email = ''; }); await p.fill('#sp-msg', 'Bonjour, ceci est un quatrième message.'); await p.click('[data-act=support-send]'); await p.waitForTimeout(200);
+  assert.match(await text(p, '#toast'), /Assistance non configurée/); assert.equal(await b.ev(() => window.__mail), null);
   noErrors(b); await b.ctx.close();
 });
 test('pages légales, nouveautés et alerte de mise à jour', async () => {
@@ -744,6 +750,10 @@ test('activation automatique PayPal : notify_url et compte transmis, page d’at
   // RÉGRESSION : « pas actif » vérifié récemment ne bloque plus la vérification suivante (paiement arrivé entre-temps, app rouverte sans repasser par la page Merci)
   assert.equal(await b.ev(() => S.sub && S.sub.active === false && Date.now() - S.sub.checked < 5000), true);
   active = true; await b.ev(() => refreshSub(false)); assert.equal(await b.ev(() => plus()), true, 'l’app rouverte voit le paiement sans attendre 6 h');
+  // RÉGRESSION 2 : l'adresse du relais arrive APRÈS le démarrage (réglages de vente lus en ligne) → le statut est demandé quand même
+  await b.ev(() => { window.__cfgSent = false; BILL.api = ''; S.sub = { active: false, checked: Date.now() }; save(); AdminApi.remoteConfig = async () => { await new Promise(r => setTimeout(r, 150)); window.__cfgSent = true; return { api: 'https://relais.test', payee: 'vendeur@test.fr', billingEnabled: true }; }; });
+  active = true; await b.ev(async () => { const early = refreshSub(false); remoteRefresh(); await early; await remoteRefresh.p; });
+  assert.deepEqual(await b.ev(() => [BILL.api, plus(), window.__cfgSent]), ['https://relais.test', true, true], 'statut demandé dès que le relais est connu');
   // bouton « J’ai déjà payé » et retour dans l’app
   active = false; await b.ev(() => refreshSub(true)); await b.go('#/abo'); await p.waitForSelector('[data-act=restore]');
   active = true; await p.click('[data-act=restore]'); await p.waitForFunction(() => subActive()); assert.match(await text(p, '#toast'), /Accès retrouvé/);
