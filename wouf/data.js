@@ -132,6 +132,21 @@ const POISON_LINES = [
 ];
 
 /* ---------- Astuces ---------- */
+/* Astuces seniors (mélangées aux astuces du jour quand le chien est âgé, voir tipsOf). */
+const TIPS_SENIOR = [
+  'Un chien senior gagne à voir le vétérinaire deux fois par an : on repère plus tôt ce qui change.',
+  'Il boit beaucoup plus qu’avant ? Parlez-en au vétérinaire : cela peut signaler un souci des reins ou un diabète.',
+  'Les raideurs au lever ne sont pas « juste l’âge » : l’arthrose se soulage, demandez conseil au vétérinaire.',
+  'Des tapis antidérapants sur le carrelage aident un chien âgé à se relever sans glisser.',
+  'Deux ou trois petites balades valent mieux qu’une longue pour un chien senior.',
+  'Les jeux de flair fatiguent la tête sans abîmer les articulations : parfaits pour un chien âgé.',
+  'Un chien âgé qui maigrit sans changer de ration doit être examiné par le vétérinaire.',
+  'Mauvaise haleine, mastication gênée : les dents d’un chien senior méritent un contrôle.',
+  'Un couchage épais, au calme et au chaud, soulage les articulations d’un chien âgé.',
+  'Un chien âgé qui semble perdu ou réveillé la nuit peut souffrir d’un trouble cognitif : parlez-en au vétérinaire.',
+  'Garder un poids idéal soulage beaucoup les articulations d’un vieux chien.',
+  'Apprendre de petits tours doux garde l’esprit vif, à tout âge.'
+];
 const TIPS = [
   'Pesez votre chien tous les mois : une prise de poids se corrige plus facilement au début.',
   'Le brossage des dents plusieurs fois par semaine retarde le tartre et les soucis dentaires.',

@@ -18,7 +18,7 @@ ROUTES.plus = function plusMenu() {
     ['Santé', [
       ['#/bilan', '🧠', 'Bilan santé', 'Conseils personnalisés' + (allowed('bilan') ? '' : ' · Plus')],
       ['#/race', '🧬', 'Ma race et sa santé', 'Poids idéal, espérance de vie, risques'],
-      ['#/guides', '📚', 'E-books (PDF)', 'Guide de survie gratuit · grand guide santé' + (allowed('guides') ? '' : ' (Plus)')],
+      ['#/guides', '📚', 'E-books', 'Guide de survie gratuit · grand guide santé' + (allowed('guides') ? '' : ' (Plus)')],
       ['#/documents', '📎', 'Documents', 'Ordonnances, résultats, carte d’identification'],
       ['#/depenses', '💶', 'Dépenses', 'Budget vétérinaire, nourriture, accessoires']]],
     ['Éduquer et bouger', [
@@ -373,3 +373,24 @@ ROUTES.reglages = function reglages() {
   <section class="card"><h2>Zone sensible</h2><button class="btn danger" data-act="wipe">Supprimer toutes mes données</button></section>
   <p class="mut center small made">Conçu avec ❤️ à Nîmes, dans le sud de la France<br>Un produit QuenTools · Wouf ${esc(CFG.version || '')}</p>`;
 };
+
+/* ---------- Bien vieillir : carte d'accueil pour un animal senior (âge selon SENIOR_AGE) ---------- */
+const SENIOR_WATCH = {
+  dog: ['Il boit ou urine plus qu’avant', 'Il maigrit ou grossit sans changement de ration', 'Raideurs au lever, boiterie, hésite devant les escaliers', 'Mauvaise haleine, mastication difficile', 'Semble perdu, dort mal la nuit, aboie sans raison', 'Grosseur nouvelle sous la peau'],
+  cat: ['Il boit ou urine plus qu’avant', 'Il maigrit alors qu’il mange bien', 'Saute moins haut, hésite avant de sauter', 'Toilette négligée, poil terne', 'Mauvaise haleine, mange d’un seul côté', 'Miaule la nuit, semble désorienté']
+};
+function seniorCard(d) {
+  if (!d.birth || lifeStage(d) !== 'Senior') return '';
+  const cat = spOf(d).id === 'cat', last = dogEvents(d.id).find(e => e.type === 'visit'), since = last ? diffDays(today(), last.date) : null;
+  const lesson = cat ? 'c-senior' : 'senior', prog = cat ? 'chat-senior3' : 'senior4';
+  const visit = since === null || since > 183 ? `<div class="band lv-warn"><span class="grow"><b>🩺 ${since === null ? 'Aucune visite notée' : 'Dernière visite il y a ' + Math.round(since / 30) + ' mois'}</b><small>Deux bilans par an sont conseillés pour un senior.</small></span><button class="btn xs" data-act="add-event" data-type="visit">Noter</button></div>` : `<p class="okmsg small">🩺 Dernière visite il y a ${Math.max(0, Math.round(since / 30))} mois : bien suivi.</p>`;
+  return `<details class="card acc" id="h-senior"${HOME.sen ? ' open' : ''}><summary><b class="grow">👴 Bien vieillir</b><small class="mut">${esc(d.name)} · ${esc(ageText(d.birth))}</small></summary>
+    ${visit}
+    <p class="eb-h">À signaler au vétérinaire</p><ul class="bul small">${SENIOR_WATCH[cat ? 'cat' : 'dog'].map(x => `<li>${x}</li>`).join('')}</ul>
+    <div class="list menu">
+      <a class="row" href="#/lecon?id=${lesson}"><span class="ico">🎓</span><span class="grow"><b>Rester en forme</b><small>Leçon : confort, activités douces</small></span><span class="chev">›</span></a>
+      <a class="row" href="#/programme?id=${prog}"><span class="ico">🗓️</span><span class="grow"><b>Programme senior</b><small>Un parcours guidé, semaine par semaine</small></span><span class="chev">›</span></a>
+      <button class="row" data-act="guide-open" data-id="sante"><span class="ico">📘</span><span class="grow"><b>L’animal senior</b><small>Chapitre du grand guide santé (e-book)</small></span><span class="chev">›</span></button>
+    </div></details>`;
+}
+document.addEventListener('toggle', e => { if (e.target && e.target.id === 'h-senior') HOME.sen = e.target.open; }, true);

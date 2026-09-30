@@ -869,7 +869,7 @@ test('test express « dangereux ou OK ? » : sans carnet, 8 questions, score, pa
   noErrors(b); noErrors(b2); await b.ctx.close(); await b2.ctx.close();
 });
 
-test('e-books : un gratuit (guide de survie) et un complet Wouf Plus, sommaire, chapitres et PDF', async () => {
+test('e-books : un gratuit (guide de survie) et un complet Wouf Plus, chapitres, lecture uniquement dans l’app', async () => {
   const b = await boot({}), p = b.page;
   await b.ev(() => { BILL.enabled = true; BILL.freeUntil = null; BILL.grandfatherBefore = null; S.sub = { active: false }; S.grant = null; }); await b.go('#/guides'); await b.ev(() => render()); await p.waitForSelector('[data-act=guide-open]');
   assert.equal(await p.locator('[data-act=guide-open]').count(), 2); assert.match(await text(p, '#view'), /Gratuit/);
@@ -878,8 +878,7 @@ test('e-books : un gratuit (guide de survie) et un complet Wouf Plus, sommaire, 
   await p.click('[data-act=guide-open][data-id=survie]'); await p.waitForSelector('.gd-ch');
   assert.equal(await p.locator('.gd-ch').count(), 9); assert.equal(await p.locator('.gd-ch[open]').count(), 1, 'premier chapitre ouvert');
   const txt = await b.ev(() => document.querySelector('.gd').textContent); assert.match(txt, /Faire vomir sans avis/); assert.match(txt, /Lys/); assert.match(txt, /02 40 68 77 40/);
-  await b.ev(() => { window.print = () => { window.__g = document.getElementById('print-root').textContent; }; }); await p.click('[data-act=guide-print]'); await p.waitForTimeout(500);
-  const pdf = await b.ev(() => window.__g); assert.match(pdf, /Le guide de survie du propriétaire/); assert.match(pdf, /Sommaire/); assert.match(pdf, /Premiers secours du chat/);
+  assert.equal(await p.locator('[data-act=guide-print]').count(), 0, 'pas d’export : lecture uniquement dans Wouf'); assert.match(txt, /Premiers secours du chat/);
   await b.ev(() => { BILL.enabled = false; GD.open = ''; render(); }); await p.click('[data-act=guide-open][data-id=sante]'); await p.waitForSelector('.gd-ch'); assert.equal(await p.locator('.gd-ch').count(), 12);
   assert.match(await b.ev(() => document.querySelector('.gd').textContent), /Puces, tiques et vers[^]*L’animal senior/);
   const q = await b.ev(() => GUIDES.map(g => ({ ch: g.chapters().length, ok: g.chapters().every(c => c.t && c.items.length >= 3 && c.items.every(i => i[0] && ((i[1] || '').length > 25 || (i[2] || []).length))) })));
@@ -896,6 +895,18 @@ test('accueil : menu déroulant E-books (1 gratuit / 1 Wouf Plus), ouverture dir
   await p.click('#h-ebooks [data-act=guide-open][data-id=sante]'); await p.waitForTimeout(300); assert.equal(await p.locator('.gd-ch').count(), 0, 'paywall'); await p.click('.sheet [data-close]'); await p.waitForTimeout(300);
   assert.equal(await p.locator('#h-ebooks[open]').count(), 1, 'reste ouvert');
   await p.click('#h-ebooks [data-act=guide-open][data-id=survie]'); await p.waitForSelector('.gd-ch'); assert.equal(await b.ev(() => routeName()), 'guides');
+  noErrors(b); await b.ctx.close();
+});
+
+test('seniors : carte « Bien vieillir » et astuces dédiées pour un animal âgé, rien pour un jeune', async () => {
+  const b = await boot({ data: seed({ dogs: [dogRec({ birth: '2014-03-01' }), dogRec({ id: 'c1', name: 'Minou', species: 'cat', breed: 'Européen', birth: '2025-01-10' })] }) }), p = b.page;
+  await p.waitForSelector('#h-senior'); assert.match(await text(p, '#h-senior summary'), /Bien vieillir.*Nala/);
+  await p.click('#h-senior summary'); const t = await text(p, '#h-senior'); assert.match(t, /Aucune visite notée/); assert.match(t, /boit ou urine plus/);
+  assert.equal(await p.locator('#h-senior a[href="#/programme?id=senior4"]').count(), 1); assert.equal(await p.locator('#h-senior a[href="#/lecon?id=senior"]').count(), 1);
+  const mix = await b.ev(() => { const l = tipsOf(dog()); return [l.length, l.filter(x => TIPS_SENIOR.includes(x)).length]; }); assert.ok(mix[1] >= mix[0] / 2 - 1, 'une astuce sur deux pour un senior');
+  await p.click('#h-senior [data-act=add-event]'); await p.waitForSelector('.sheet'); assert.equal(await b.ev(() => TIPS_SENIOR.length >= 12 && TIPS_SENIOR_CAT.length >= 12), true);
+  await b.ev(() => { closeAllSheets(); S.current = 'c1'; render(); }); await p.waitForSelector('.tipbar'); assert.equal(await p.locator('#h-senior').count(), 0, 'chaton : pas de carte senior');
+  assert.equal(await b.ev(() => tipsOf(dog()).some(x => TIPS_SENIOR_CAT.includes(x))), false);
   noErrors(b); await b.ctx.close();
 });
 

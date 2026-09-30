@@ -134,6 +134,7 @@ ROUTES.home = function home() {
       ${dogWeights(d.id).length > 1 ? lineChart(dogWeights(d.id).map(w => ({ x: w.date, y: w.kg })), { band: idealBand(d), unit: 'kg', height: 120 }) : `<p class="mut small">${lw ? 'Ajoutez une nouvelle pesée pour voir la courbe.' : 'Aucune pesée enregistrée.'}</p>`}
       <button class="btn sm" data-act="add-weight">＋ Peser</button></details>
   </section>
+  ${seniorCard(d)}
 
   <section class="card qrow" aria-label="Ajouter rapidement">
     <button data-act="add-event" data-type="vaccine"><span>💉</span>Vaccin</button>
@@ -153,7 +154,7 @@ ROUTES.home = function home() {
   ${subActive() ? '' : `<section class="card plus-cta compact"><div><b>⭐ Wouf+ · ${esc(planLine())}</b><small>${BILL.enabled ? 'Leçons, GPS, bilan santé, guides, assistance prioritaire' : 'Offert pendant le lancement : tout est débloqué'}</small></div><button class="btn primary sm" data-act="subscribe">${BILL.enabled ? 'Souscrire' : 'Découvrir'}</button></section>`}
   <section class="card don-card compact"><div><b>❤️ Aider les animaux sans famille</b><small>Don à ${esc(donation().name)}, sur le site officiel.</small></div><a class="btn sm" href="${esc(donation().url)}" target="_blank" rel="noopener noreferrer">Faire un don</a></section>`;
 };
-const HOME = { tip: 0, eb: false };
+const HOME = { tip: 0, eb: false, sen: false };
 ACT['tip-next'] = () => { HOME.tip++; render(true); };
 ACT.renew = ({ id }) => {
   const ev = S.events.find(e => e.id === id), gap = ev.next ? diffDays(ev.next, ev.date) : 0;
