@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.20.0',
+  version: '1.20.1',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
@@ -33,7 +33,7 @@ window.WOUF_CONFIG = {
     stripe: { lifetimeLink: 'https://buy.stripe.com/14A3cv5Es3WodA04kU6c001', yearlyLink: 'https://buy.stripe.com/4gM9AT9UIfF68fG8Ba6c000', portal: '' },
     // Offre récompense : quand TOUTES les leçons gratuites sont terminées (quiz compris), Wouf Plus passe à ce prix.
     // Doit être égal au montant du lien PayPal rewardLink. enabled: false = pas d'offre.
-    rewardOffer: { enabled: true, price: '9,99 €' },
+    rewardOffer: { enabled: false, price: '9,99 €' },
     limits: { perSpecies: 1, documents: 3 },     // formule gratuite : 1 chien + 1 chat, 3 documents
     // Fonctions réservées à Plus (quand enabled) — retirez une ligne pour la rendre gratuite
     premium: ['multiDogs', 'documents', 'report', 'calendar', 'stats', 'lessons', 'programs', 'tracker', 'bilan', 'sitter', 'weightplan', 'weather', 'guides']

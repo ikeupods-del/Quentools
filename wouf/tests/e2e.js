@@ -346,8 +346,11 @@ test('parcours ludique : unités, XP, niveaux, objectif du jour, quiz de validat
   noErrors(b); await b.ctx.close();
 });
 
-test('offre récompense : popup uniquement quand TOUTES les leçons gratuites sont faites, prix réduit au paiement', async () => {
+test('offre récompense (désactivée par défaut) : aucune mention tant qu’elle est coupée ; si réactivée, popup uniquement quand TOUTES les leçons gratuites sont faites, prix réduit au paiement', async () => {
   const b = await boot({ query: '?preview=none', hash: '#/educ' }), p = b.page;
+  assert.equal(await b.ev(() => rewardOn()), false, 'offre récompense coupée dans config.js');
+  assert.doesNotMatch(await b.ev(() => planLine() + ctaLabel()), /(^|[^\d])9,99/);
+  await b.ev(() => { REWARD.enabled = true; render(); });
   const pure = await b.ev(() => { const d = (ids, sp = 'dog') => ({ dogs: [{ id: 'a', species: sp }], edu: { a: Object.fromEntries(ids.map(i => [i, { done: true }])) } }), dogIds = freeIdsOf('dog'), catIds = freeIdsOf('cat');
     return { n: [dogIds.length, catIds.length], dogAll: rewardEligible(d(dogIds)), dogMissing: rewardEligible(d(dogIds.slice(1))), catAll: rewardEligible(d(catIds, 'cat')), both: rewardEligible({ dogs: [{ id: 'a', species: 'dog' }, { id: 'b', species: 'cat' }], edu: { a: Object.fromEntries(dogIds.map(i => [i, { done: true }])) } }), none: rewardEligible({ dogs: [] }) }; });
   assert.deepEqual(pure, { n: [6, 4], dogAll: true, dogMissing: false, catAll: true, both: false, none: false });
@@ -367,7 +370,7 @@ test('offre récompense : popup uniquement quand TOUTES les leçons gratuites so
   const ord = await b.ev(() => window.__orders[0]); assert.equal(ord.offer, 'reward'); assert.equal(ord.price, '9,99 €'); assert.equal(ord.lessons >= 6, true); assert.equal(ord.ref, rg.searchParams.get('invoice'));
   noErrors(b); await b.ctx.close();
   // une seule fois : pas de nouvelle popup ; et gratuit pour tous → message sans paiement
-  const c = await boot({ hash: '#/educ' }); await c.ev(() => { freeIdsOf('dog').forEach(id => { eduSet('d1', id).done = true; }); rewardCheck(); });
+  const c = await boot({ hash: '#/educ' }); await c.ev(() => { REWARD.enabled = true; freeIdsOf('dog').forEach(id => { eduSet('d1', id).done = true; }); rewardCheck(); });
   await c.page.waitForSelector('.sheet'); assert.match(await text(c.page, '.sheet'), /Bases acquises/); assert.match(await text(c.page, '.sheet'), /9,99 €/);
   assert.equal(await c.ev(() => { closeAllSheets(); rewardCheck(); return document.querySelectorAll('.sheet-wrap').length; }), 0, 'la popup ne revient pas'); noErrors(c); await c.ctx.close();
 });
