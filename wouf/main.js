@@ -17,6 +17,7 @@ function render(keepScroll) {
   $$('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.r === (NAV_OF[r] || 'plus')));
   $('#tabs').hidden = !S.dogs.length && !open.includes(r);
   if (keepScroll === true && lastRoute === r) window.scrollTo(0, y); else if (lastRoute !== r) window.scrollTo(0, 0);
+  if (lastRoute !== r) track('/' + (!S.dogs.length && !open.includes(r) ? 'bienvenue' : r));
   lastRoute = r;
   if (r !== 'seance') clearInterval(SEANCE.iv);
   if (r !== 'balade') clearInterval(WALK.iv);
@@ -35,6 +36,8 @@ addEventListener('hashchange', () => { closeAllSheets(); render(); });
 /* Bibliothèque de races pour l'autocomplétion */
 $('#breeds').innerHTML = BREEDS.map(b => `<option value="${esc(b.name)}">`).join('');
 $('#breeds_cat').innerHTML = CAT_BREEDS.map(b => `<option value="${esc(b.name)}">`).join('');
+
+addEventListener('appinstalled', () => track('installation', true));
 
 /* Service worker */
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').then(initUpdates).catch(() => {}));

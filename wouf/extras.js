@@ -273,6 +273,7 @@ ROUTES.don = function don() {
 let installEvt = null;
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (location.hash === '#/reglages') render(true); });
 ACT.install = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; render(true); };
+ACT['stats-opt'] = (_, el) => { S.settings.noStats = !el.checked; save(); toast(el.checked ? 'Statistiques anonymes activées' : 'Statistiques anonymes désactivées'); };
 ACT.notif = async () => {
   if (!('Notification' in window)) return toast('Notifications non disponibles sur cet appareil');
   if (S.settings.notif) { S.settings.notif = false; save(); return render(true); }
@@ -300,6 +301,6 @@ ROUTES.reglages = function reglages() {
   <section class="card"><h2>Rappels</h2><label class="chk"><input type="checkbox" data-act="notif" ${S.settings.notif ? 'checked' : ''}> <span>Me notifier à l’ouverture de l’app quand une échéance approche</span></label>
     <p class="mut small">Pour être prévenu(e) même app fermée, exportez les rappels vers votre agenda (Carnet → « Ajouter les rappels à mon agenda »).</p></section>
   ${!standalone ? `<section class="card"><h2>Installer Wouf</h2>${installEvt ? '<button class="btn primary" data-act="install">📲 Installer l’app</button>' : '<p class="mut">iPhone : Partager → « Sur l’écran d’accueil ». Android : menu du navigateur → « Installer l’application ».</p>'}</section>` : ''}
-  <section class="card"><h2>Confidentialité</h2><p class="mut">Aucun suivi publicitaire. Vos données sont stockées sur cet appareil ; si vous vous connectez avec Google (facultatif), elles sont aussi sauvegardées dans votre espace privé de compte. Les recherches de cliniques (OpenStreetMap) et d’adresse utilisent le réseau, avec votre position uniquement au moment où vous la demandez.</p></section>
+  <section class="card"><h2>Confidentialité</h2><p class="mut">Aucun suivi publicitaire. Vos données sont stockées sur cet appareil ; si vous vous connectez avec Google (facultatif), elles sont aussi sauvegardées dans votre espace privé de compte. Les recherches de cliniques (OpenStreetMap) et d’adresse utilisent le réseau, avec votre position uniquement au moment où vous la demandez.</p>${statsCode() ? `<label class="chk"><input type="checkbox" data-act="stats-opt" ${S.settings.noStats ? '' : 'checked'}> <span>Aider à améliorer Wouf avec des statistiques anonymes (écrans ouverts et actions principales, sans cookie ni donnée saisie)</span></label>` : ''}</section>
   <section class="card"><h2>Zone sensible</h2><button class="btn danger" data-act="wipe">Supprimer toutes mes données</button></section>`;
 };

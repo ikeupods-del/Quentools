@@ -599,6 +599,23 @@ test('toutes les pages s’affichent sans erreur (chien et chat)', async () => {
   assert.ok(routes.length >= 25, 'routes : ' + routes.length); noErrors(b); await b.ctx.close();
 });
 
+test('statistiques anonymes : désactivées par défaut, provenance, adresse, refus dans Réglages', async () => {
+  const b = await boot({ query: '?src=tiktok' }), p = b.page;
+  assert.equal(await b.ev(() => statsCode()), '', 'aucune mesure sans code');
+  assert.equal(await b.ev(() => STATS_SRC), 'tiktok');
+  await b.go('#/reglages'); assert.equal(await p.$('[data-act=stats-opt]'), null, 'pas de case sans code');
+  await b.ev(() => { WOUF_CONFIG.stats.goatcounter = 'wouf-test'; });
+  const u = new URL(await b.ev(() => statsUrl('/home', false, 'tiktok')));
+  assert.equal(u.origin, 'https://wouf-test.goatcounter.com'); assert.equal(u.pathname, '/count');
+  assert.equal(u.searchParams.get('p'), '/home'); assert.equal(u.searchParams.get('r'), 'tiktok'); assert.equal(u.searchParams.get('e'), 'false');
+  assert.equal(new URL(await b.ev(() => statsUrl('lecon-acquise', true))).searchParams.get('e'), 'true');
+  await b.go('#/home'); await b.go('#/reglages'); await p.click('[data-act=stats-opt]');
+  assert.equal(await b.ev(() => S.settings.noStats), true);
+  await b.go('#/legal?doc=confidentialite'); assert.match(await text(p, '#view'), /GoatCounter/);
+  await b.ev(() => { WOUF_CONFIG.stats.goatcounter = 'Pas Valide!'; }); assert.equal(await b.ev(() => statsCode()), '');
+  noErrors(b); await b.ctx.close();
+});
+
 /* ================= exécution ================= */
 (async () => {
   srv = await start(0); PORT = srv.address().port;

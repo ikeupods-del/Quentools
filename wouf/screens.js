@@ -42,7 +42,7 @@ async function saveDog(v, existing) {
   const d = existing || { id: uid(), createdAt: today(), insurance: {}, species: v.species || 'dog' };
   const photo = v.photo ? await squarePhoto(v.photo) : d.photo;
   Object.assign(d, { name: v.name, breed: v.breed, sex: v.sex, neutered: v.neutered, birth: v.birth, chip: v.chip, color: v.color, allergies: v.allergies, idealMin: v.idealMin, idealMax: v.idealMax, vetName: v.vetName, vetPhone: v.vetPhone, insurance: { ...(d.insurance || {}), insurer: v.insurer, renewal: v.renewal }, photo });
-  if (!existing) S.dogs.push(d);
+  if (!existing) { S.dogs.push(d); track('animal-ajoute-' + (d.species === 'cat' ? 'chat' : 'chien'), true); }
   return d;
 }
 function newDog(first) {

@@ -53,7 +53,7 @@ const humanAge = birth => { const a = ageYears(birth); return a < 0.2 ? null : M
 function blank() {
   return {
     v: 1, dogs: [], events: [], weights: [], meds: [], medLog: {}, journal: [], expenses: [], docs: [], foods: [], contacts: [],
-    owner: { name: '', phone: '' }, settings: { notif: false, lastNotif: '', lastBackup: '', home: null }, sub: null,
+    owner: { name: '', phone: '' }, settings: { notif: false, lastNotif: '', lastBackup: '', home: null, noStats: false }, sub: null,
     current: null, installedAt: today(), edu: {}, walks: [], names: [], updatedAt: 0, schema: SCHEMA
   };
 }
@@ -113,6 +113,26 @@ async function squarePhoto(file, size = 320) {
   return c.toDataURL('image/jpeg', 0.8);
 }
 const blobToDataURL = b => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); });
+
+/* ---------- Statistiques anonymes (config.stats) ----------
+   Aucun cookie, aucun identifiant, aucune donnée saisie : seulement le nom de l'écran ou de l'action.
+   Provenance : ?src=tiktok / ?src=insta dans le lien (liens de bio), sinon le site d'origine. Désactivable dans Réglages. */
+const STATS_SRC = (() => {
+  try {
+    const q = new URLSearchParams(location.search).get('src'); if (q) return q.replace(/[^\w.-]/g, '').slice(0, 30);
+    const r = document.referrer && new URL(document.referrer); return r && r.hostname !== location.hostname ? r.hostname : '';
+  } catch (e) { return ''; }
+})();
+const statsCode = () => { const c = ((window.WOUF_CONFIG || {}).stats || {}).goatcounter || ''; return /^[a-z0-9-]{2,50}$/.test(c) ? c : ''; };
+function statsUrl(name, event, ref) {
+  const q = new URLSearchParams({ p: name, t: event ? name : 'Wouf', e: event ? 'true' : 'false', s: `${screen.width}x${screen.height}`, rnd: Math.random().toString(36).slice(2) });
+  if (ref) q.set('r', ref);
+  return `https://${statsCode()}.goatcounter.com/count?${q}`;
+}
+function track(name, event) {
+  if (!statsCode() || (S.settings && S.settings.noStats) || location.protocol !== 'https:') return;
+  try { new Image().src = statsUrl(name, event, !event && !track.sent ? STATS_SRC : ''); track.sent = true; } catch (e) { /* rien */ }
+}
 
 /* ---------- Interface : toast, feuilles, confirmation ---------- */
 function toast(msg) {

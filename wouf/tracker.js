@@ -98,7 +98,7 @@ function walkFinish() {
   const rec = { id: uid(), dogId: WALK.dogId, date: iso(new Date(WALK.t0)), start: WALK.t0, dur, dist, pts: simplify(WALK.pts, WALK.t0), manual: false, steps: WALK.steps, src: viaSteps ? 'steps' : 'gps' };
   watchStop(); motionStop(); wakeLock(false); WALK.on = false; clearInterval(WALK.iv); try { localStorage.removeItem(WALK_KEY); } catch (e) { /* rien */ }
   if (dur < 30 && dist < 30 && WALK.steps < 20) { toast('Balade trop courte : non enregistrée'); return render(); }
-  S.walks = S.walks || []; S.walks.push(rec); save(); toast('Balade enregistrée ✓'); location.hash = '#/balade-detail?id=' + rec.id; render();
+  S.walks = S.walks || []; S.walks.push(rec); save(); track('balade-enregistree', true); toast('Balade enregistrée ✓'); location.hash = '#/balade-detail?id=' + rec.id; render();
 }
 async function walkAbort() {
   if (!(await ask('Abandonner cette balade sans l’enregistrer ?', 'Abandonner'))) return;
