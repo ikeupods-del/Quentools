@@ -1,0 +1,21 @@
+{
+ "_": "Photos recherchées pour les carrousels « Subissent ça / Choisissez ça » (contraste.js). Clé = <serie>-<n>-<a|b> ; valeurs = recherches (anglais) essayées dans l'ordre. Licences acceptées : CC0 et domaine public uniquement (usage commercial libre, sans attribution obligatoire).",
+ "chiens-1-a": ["dog begging food table", "dog eating food plate", "dog chocolate"],
+ "chiens-1-b": ["dog treat", "dog carrot", "dog eating treat"],
+ "chiens-2-a": ["dog car window", "dog inside car", "dog in car"],
+ "chiens-2-b": ["dog drinking water", "dog shade grass", "dog water bowl"],
+ "chiens-3-a": ["sad dog window", "sad dog alone", "lonely dog"],
+ "chiens-3-b": ["dog toy chew", "happy dog bed", "puppy playing toy"],
+ "chats-1-a": ["lily flowers bouquet", "lilies vase", "white lily"],
+ "chats-1-b": ["cat grass", "cat eating grass", "cat plant"],
+ "chats-2-a": ["flea treatment", "dog flea medicine", "pet medicine bottle"],
+ "chats-2-b": ["veterinarian cat", "cat vet", "vet examining cat"],
+ "chats-3-a": ["litter box", "cat litter", "cat toilet"],
+ "chats-3-b": ["cat litter box clean", "cat relaxing clean home", "happy cat home"],
+ "sante-1-a": ["sick dog lying", "tired dog lying", "sad dog lying floor"],
+ "sante-1-b": ["dog vaccination veterinarian", "veterinarian dog", "vet dog"],
+ "sante-2-a": ["fat dog", "overweight dog", "fat cat"],
+ "sante-2-b": ["dog running field", "fit dog running", "active dog"],
+ "sante-3-a": ["sick cat", "sad cat lying", "tired cat"],
+ "sante-3-b": ["veterinarian examining dog", "vet stethoscope dog", "veterinary clinic dog"]
+}
