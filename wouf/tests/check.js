@@ -87,6 +87,7 @@ const bizFeatures = (read('business.js').match(/const FEATURES = \{([\s\S]*?)\n\
 for (const f of B.premium) ok(new RegExp('\\b' + f + ':').test(bizFeatures), `fonction Plus « ${f} » sans description dans business.js (FEATURES)`);
 const RW = B.rewardOffer || {};
 ok(!RW.enabled || /\d/.test(RW.price || ''), 'billing.rewardOffer.enabled = true mais aucun prix affiché');
+ok(!B.api || /^https:\/\/[\w.-]+(\/[\w./-]*)?$/.test(B.api), 'billing.api doit être une adresse https://…');
 ok(!B.payee || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(B.payee), 'billing.payee doit être une adresse e-mail');
 for (const k of ['paymentLink', 'rewardLink']) ok(!B[k] || /^https:\/\/(www\.)?paypal\.(com|me|biz)\/[\w./-]+$/i.test(B[k]), `billing.${k} doit être un lien PayPal (https://www.paypal.com/…)`);
 const cl = read('business.js').match(/const CHANGELOG = \[\s*\{ v: '([\d.]+)'/);

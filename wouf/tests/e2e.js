@@ -720,6 +720,42 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   noErrors(b); await b.ctx.close();
 });
 
+test('activation automatique PayPal : notify_url et compte transmis, page d’attente qui s’active toute seule, administration', async () => {
+  const b = await boot({ query: '?preview=none', hash: '#/abo' }), p = b.page; await fakeCloud(p); await fakeSale(p);
+  let active = false; const seen = [];
+  const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
+  await b.ctx.route('https://relais.test/**', async r => { const u = new URL(r.request().url()); if (r.request().method() === 'OPTIONS') return r.fulfill({ status: 200, headers: cors });
+    seen.push([u.pathname, r.request().headers().authorization]);
+    if (u.pathname === '/status') return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify(active ? { active: true, lifetime: true, plan: 'lifetime', since: '2026-09-30T10:00:00Z' } : { active: false }) });
+    if (u.pathname === '/admin/paid') return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify({ paid: { uidAuto123: { active: true, payerEmail: 'jean@paypal.test', payerName: 'Jean Client', amount: '19.99' } } }) });
+    return r.fulfill({ status: 404, headers: cors, body: '{}' }); });
+  await b.ev(() => { BILL.api = 'https://relais.test'; CloudApi.signIn = async () => ({ uid: 'uidAuto123', email: 'jean@test.fr', name: 'Jean Client', picture: '' }); render(); });
+  await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent');
+  assert.match(await text(p, '.sheet'), /Activation automatique/); assert.match(await text(p, '.sheet'), /dès que PayPal confirme/); assert.doesNotMatch(await text(p, '.sheet'), /n’est pas instantanée/);
+  await p.check('#buy-consent'); await p.click('[data-act=buy-go]'); await p.waitForFunction(() => window.__go);
+  const g = new URL(await b.ev(() => window.__go)); assert.equal(g.searchParams.get('notify_url'), 'https://relais.test/ipn');
+  assert.match(g.searchParams.get('custom'), /^uidAuto123\|WOUF-[A-Z0-9]+$/); assert.equal(await b.ev(() => window.__orders[0].auto), true);
+  // page de remerciement : attente, puis activation quand le relais confirme (sans recharger)
+  await b.go('#/merci'); assert.match(await text(p, '#view'), /PayPal confirme votre paiement/); assert.equal(await b.ev(() => plus()), false);
+  active = true; await p.waitForFunction(() => document.querySelector('#view').innerText.includes('Wouf Plus est actif'), null, { timeout: 15000 });
+  assert.equal(await b.ev(() => subActive() && plus()), true); assert.ok(seen.some(([path, auth]) => path === '/status' && auth === 'Bearer tok123'), 'statut demandé avec le jeton Google');
+  // remboursement côté relais : l’accès est retiré au prochain contrôle
+  active = false; await b.ev(() => refreshSub(true)); assert.equal(await b.ev(() => plus()), false);
+  // sans compte identifiable ou sans relais : retour à la validation manuelle, texte honnête
+  await b.ev(() => { BILL.api = ''; }); assert.equal(await b.ev(() => autoOn()), false);
+  await b.ev(() => { BILL.api = 'https://relais.test'; CLOUD.user.uid = ''; }); assert.equal(await b.ev(() => autoOn()), false);
+  await b.ev(() => { CLOUD.user.uid = 'uidAuto123'; BILL.payee = ''; BILL.paymentLink = 'https://www.paypal.com/ncp/payment/X'; }); assert.equal(await b.ev(() => autoOn()), false, 'lien fixe : pas de notification possible');
+  // administration : le paiement détecté est classé « activé automatiquement » avec l’identité PayPal
+  await b.ev(() => { OWNER = true; BILL.payee = 'vendeur@test.fr'; Object.assign(AdminApi, { listUsers: async () => [{ uid: 'uidAuto123', name: 'Jean', email: 'jean@test.fr', lastSeen: today() }], setGrant: async () => {},
+    listOrders: async () => [{ id: 'o9', uid: 'uidAuto123', firstName: 'Jean', lastName: 'Client', paypalEmail: 'jean@paypal.test', googleEmail: 'jean@test.fr', contactEmail: 'jean@test.fr', offer: 'lifetime', price: '19,99 €', status: 'pending', at: Date.now() },
+      { id: 'o10', uid: 'autre', firstName: 'Zoé', lastName: 'Lenta', paypalEmail: 'zoe@paypal.test', googleEmail: 'zoe@test.fr', contactEmail: 'zoe@test.fr', offer: 'lifetime', price: '19,99 €', status: 'pending', at: Date.now() - 500 }] }); });
+  await b.go('#/admin'); await p.waitForSelector('#adm-orders .adm-o');
+  assert.match(await text(p, '#adm-orders'), /Paiements à vérifier \(1\)/); assert.match(await text(p, '#adm-orders'), /Zoé Lenta/);
+  assert.match(await text(p, '#adm-orders details'), /Activé automatiquement.*Jean Client.*jean@paypal\.test.*19\.99/);
+  assert.match(await text(p, '.adm-list'), /acheté/);
+  noErrors(b); await b.ctx.close();
+});
+
 /* ================= exécution ================= */
 (async () => {
   srv = await start(0); PORT = srv.address().port;

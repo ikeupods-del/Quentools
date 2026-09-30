@@ -56,6 +56,27 @@ const FEATURES = {
 };
 const planLine = () => { const p = planOf(); return `${p.price} ${p.per}`; };
 
+/* ---------- Relais d'activation automatique (billing-worker) : statut d'achat lu avec le jeton Google ---------- */
+async function api(path, opt = {}) {
+  const r = await fetch(BILL.api.replace(/\/$/, '') + path, opt); const j = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(j.error || 'Erreur ' + r.status); e.status = r.status; throw e; } return j;
+}
+async function authHeaders() { const tok = CLOUD.user ? await CloudApi.token().catch(() => null) : null; return tok ? { Authorization: 'Bearer ' + tok } : {}; }
+function applySub(j) {
+  S.sub = j && j.active ? { active: true, lifetime: !!j.lifetime, plan: j.plan || 'lifetime', since: j.since || '', checked: Date.now() } : { active: false, checked: Date.now() };
+  save();
+}
+async function refreshSub(force) {
+  if (!BILL.api) return;
+  try {
+    if (!CLOUD.user) { const u = await CloudApi.restore().catch(() => null); if (u) CLOUD.user = u; }
+    if (!CLOUD.user) return;
+    if (force || !S.sub || Date.now() - (S.sub.checked || 0) > 6 * 36e5) applySub(await api('/status', { headers: await authHeaders() }));
+  } catch (e) { /* hors ligne ou relais indisponible : on garde l'état connu */ }
+}
+/* Activation automatique possible : relais + compte Google identifié + paiement construit par l'app (adresse PayPal, pas un lien fixe). */
+const autoOn = () => !!(BILL.api && CLOUD.user && CLOUD.user.uid && PAYEE.test(BILL.payee || ''));
+
 /* Paiement PayPal, de préférence vers l'adresse PayPal choisie dans l'administration (BILL.payee, modifiable à tout moment) :
    l'app construit elle-même la page de paiement PayPal (montant, référence du dossier, retour sur #/merci). À défaut : lien PayPal fixe.
    Avant d'être redirigé, l'acheteur remplit un « dossier de paiement » (nom, prénom et e-mail PayPal,
@@ -65,9 +86,9 @@ const payName = () => 'PayPal';
 const PAYEE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const payReady = () => !!(PAYEE.test(BILL.payee || '') || BILL.paymentLink);
 const rewardBuyable = () => rewardActive() && !!(PAYEE.test(BILL.payee || '') || BILL.rewardLink);
-function paypalUrl(payee, price, ref, reward) {
-  const home = (typeof SITE !== 'undefined' && SITE.home) || location.origin + location.pathname;
-  const q = new URLSearchParams({ cmd: '_xclick', business: payee, item_name: 'Wouf Plus à vie' + (reward ? ' (offre récompense)' : ''), item_number: ref, invoice: ref, custom: ref,
+function paypalUrl(payee, price, ref, reward, uid) {
+  const home = (typeof SITE !== 'undefined' && SITE.home) || location.origin + location.pathname, auto = !!(uid && BILL.api);
+  const q = new URLSearchParams({ cmd: '_xclick', business: payee, item_name: 'Wouf Plus à vie' + (reward ? ' (offre récompense)' : ''), item_number: ref, invoice: ref, custom: auto ? uid + '|' + ref : ref, ...(auto ? { notify_url: BILL.api.replace(/\/$/, '') + '/ipn' } : {}),
     amount: String(price).replace(/[^\d,.]/g, '').replace(',', '.'), currency_code: 'EUR', no_shipping: '1', lc: 'FR', charset: 'utf-8', return: home + '#/merci', cancel_return: home + '#/abo' });
   return 'https://www.paypal.com/cgi-bin/webscr?' + q;
 }
@@ -82,9 +103,9 @@ function buySheet() {
     <div class="field"><label>Nom (tel qu’affiché sur PayPal)</label><input id="buy-last" autocomplete="family-name" value="${esc(nm.slice(1).join(' '))}"></div>
     <div class="field"><label>E-mail de votre compte PayPal</label><input id="buy-paypal" type="email" autocomplete="email" value="${esc(u.email || '')}"></div>
     <div class="field"><label>E-mail pour vous répondre</label><input id="buy-contact" type="email" autocomplete="email" value="${esc(u.email || '')}"></div>
-    <label class="chk consent"><input type="checkbox" id="buy-consent"> <span>J’ai lu les <a href="#/legal?doc=cgv" data-close>conditions de vente</a>. Je comprends que Wouf Plus est activé <b>manuellement</b> par l’éditeur après vérification de mon paiement (au plus tard sous 24 h). Je demande l’exécution du service dès cette activation et je reconnais perdre mon droit de rétractation de 14 jours dès que l’accès est fourni.</span></label>
+    <label class="chk consent"><input type="checkbox" id="buy-consent"> <span>J’ai lu les <a href="#/legal?doc=cgv" data-close>conditions de vente</a>. ${autoOn() ? 'Je comprends que Wouf Plus est activé dès que PayPal confirme mon paiement (en général en quelques instants ; en cas de souci, à la main par l’éditeur, au plus tard sous 24 h).' : 'Je comprends que Wouf Plus est activé <b>manuellement</b> par l’éditeur après vérification de mon paiement (au plus tard sous 24 h).'} Je demande l’exécution du service dès cette activation et je reconnais perdre mon droit de rétractation de 14 jours dès que l’accès est fourni.</span></label>
     <div class="form-actions"><button class="btn primary big" data-act="buy-go">Payer ${esc(price)} avec PayPal</button></div>
-    <p class="mut small center">Paiement sécurisé par PayPal (compte PayPal ou carte bancaire). <b>L’activation n’est pas instantanée</b> : elle est faite à la main après vérification de votre paiement, au plus tard sous 24 h, sur votre compte Google.</p>`);
+    <p class="mut small center">Paiement sécurisé par PayPal (compte PayPal ou carte bancaire). ${autoOn() ? '<b>Activation automatique</b> sur votre compte Google dès que PayPal confirme le paiement, en général en quelques instants.' : '<b>L’activation n’est pas instantanée</b> : elle est faite à la main après vérification de votre paiement, au plus tard sous 24 h, sur votre compte Google.'}</p>`);
   return el;
 }
 ACT.checkout = async () => {
@@ -102,8 +123,8 @@ ACT['buy-go'] = async () => {
   await remoteRefresh();
   const reward = rewardBuyable(), price = reward ? REWARD.price : planOf().price, payee = PAYEE.test(BILL.payee || '') ? BILL.payee : '';
   const ref = 'WOUF-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
-  const link = payee ? paypalUrl(payee, price, ref, reward) : (reward ? BILL.rewardLink : BILL.paymentLink);
-  Object.assign(o, { ref, payee, googleEmail: CLOUD.user.email || '', name: CLOUD.user.name || '', offer: reward ? 'reward' : 'lifetime', price, lessons: lessonsDone(), status: 'pending', at: Date.now(), version: CFG.version || '' });
+  const auto = !!(payee && autoOn()), link = payee ? paypalUrl(payee, price, ref, reward, auto ? CLOUD.user.uid : '') : (reward ? BILL.rewardLink : BILL.paymentLink);
+  Object.assign(o, { ref, payee, auto, googleEmail: CLOUD.user.email || '', name: CLOUD.user.name || '', offer: reward ? 'reward' : 'lifetime', price, lessons: lessonsDone(), status: 'pending', at: Date.now(), version: CFG.version || '' });
   let id; try { toast('Enregistrement de votre dossier…'); id = await AdminApi.createOrder(o); } catch (e) { return toast('Impossible d’enregistrer votre dossier (connexion internet ?). Réessayez.'); }
   try { localStorage.setItem('wouf:paid', JSON.stringify({ id, ref, at: o.at, email: o.googleEmail, paypal: o.paypalEmail, price: o.price })); } catch (e) { /* ignore */ }
   toast('Redirection vers PayPal…'); NAV.go(link);
@@ -119,9 +140,21 @@ ACT.subscribe = () => (BILL.enabled && payReady()) ? ACT.checkout() : soonSheet(
 /* Retour de PayPal : l'activation est faite par l'administration après vérification du dossier. */
 ROUTES.merci = function merci() {
   let p = null; try { p = JSON.parse(localStorage.getItem('wouf:paid') || 'null'); } catch (e) { /* ignore */ }
-  return `<div class="page-h"><a class="back" href="#/home">‹</a><h1>🎉 Merci !</h1></div><section class="card plus-hero"><h2>Paiement reçu</h2>
-    ${subActive() ? '<p><b>Wouf Plus est actif ⭐</b> Bonne découverte !</p>' : `<p>Merci ! <b>Votre activation est faite manuellement</b> : Wouf Plus sera activé <b>au plus tard sous 24 h</b> sur votre compte Google${p && p.email ? ` (<b>${esc(p.email)}</b>)` : ''}, après vérification de votre paiement PayPal${p && p.paypal ? ` (<b>${esc(p.paypal)}</b>)` : ''}${p && p.ref ? `, référence <b>${esc(p.ref)}</b>` : ''}. PayPal vous envoie un reçu par e-mail.</p><p class="mut">Restez connecté(e) avec ce compte : l’activation apparaît à l’ouverture de l’app. Pas activé après 24 h ? Écrivez-nous depuis « Une question ? » en indiquant le nom ou l’e-mail utilisé pour payer.</p>`}
+  const who = `${p && p.email ? ` (<b>${esc(p.email)}</b>)` : ''}`, ref = p && p.ref ? `, référence <b>${esc(p.ref)}</b>` : '';
+  const wait = autoOn()
+    ? `<p>⏳ <b>PayPal confirme votre paiement…</b> Wouf Plus s’active <b>automatiquement</b> sur votre compte Google${who}, en général en quelques secondes. Cette page se met à jour toute seule.</p><p class="mut">Rien au bout de quelques minutes ? L’activation sera alors faite à la main, au plus tard sous 24 h${ref}. Écrivez-nous depuis « Une question ? » avec le nom ou l’e-mail utilisé pour payer.</p>`
+    : `<p>Merci ! <b>Votre activation est faite manuellement</b> : Wouf Plus sera activé <b>au plus tard sous 24 h</b> sur votre compte Google${who}, après vérification de votre paiement PayPal${p && p.paypal ? ` (<b>${esc(p.paypal)}</b>)` : ''}${ref}. PayPal vous envoie un reçu par e-mail.</p><p class="mut">Restez connecté(e) avec ce compte : l’activation apparaît à l’ouverture de l’app. Pas activé après 24 h ? Écrivez-nous depuis « Une question ? » en indiquant le nom ou l’e-mail utilisé pour payer.</p>`;
+  return `<div class="page-h"><a class="back" href="#/home">‹</a><h1>🎉 Merci !</h1></div><section class="card plus-hero"><h2>${subActive() ? 'Wouf Plus est activé' : 'Paiement en cours'}</h2>
+    ${subActive() ? '<p><b>Wouf Plus est actif ⭐</b> Merci et bonne découverte !</p>' : wait}
     <a class="btn primary" href="#/home">Retour à l’accueil</a> <a class="btn" href="#/support">Une question ?</a></section>`;
+};
+/* Attente de la confirmation PayPal : on interroge le relais toutes les 4 s pendant 3 minutes, la page se met à jour toute seule. */
+ROUTES.merci.after = () => {
+  if (subActive() || !BILL.api || ROUTES.merci.timer) return;
+  let n = 0; ROUTES.merci.timer = setInterval(async () => {
+    if (routeName() !== 'merci' || ++n > 45) { clearInterval(ROUTES.merci.timer); ROUTES.merci.timer = null; return; }
+    await refreshSub(true); if (subActive()) { clearInterval(ROUTES.merci.timer); ROUTES.merci.timer = null; render(true); celebrate && celebrate('⭐ Wouf Plus est activé !', 'Merci pour votre soutien'); }
+  }, 4000);
 };
 function paywall(f) {
   const info = FEATURES[f] || ['⭐', 'Wouf Plus', ''];
