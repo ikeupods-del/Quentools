@@ -6,9 +6,20 @@
 <title>QuenTools — des outils simples qui font gagner du temps</title>
 <meta name="description" content="Outils gratuits, outils et sites sur mesure, et bientôt des guides pour créer les vôtres avec l’IA.">
 <meta name="theme-color" content="#5b3df5">
-<meta property="og:title" content="QuenTools">
+<link rel="canonical" href="https://ikeupods-del.github.io/Quentools/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QuenTools">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:url" content="https://ikeupods-del.github.io/Quentools/">
+<meta property="og:title" content="QuenTools — des outils simples qui font gagner du temps">
 <meta property="og:description" content="Outils gratuits, outils et sites sur mesure, et bientôt des guides pour créer les vôtres avec l’IA.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%235b3df5'/%3E%3Ctext x='32' y='45' font-family='Arial,sans-serif' font-size='38' font-weight='900' text-anchor='middle' fill='%23ffd23f'%3EQ%3C/text%3E%3C/svg%3E">
+<meta property="og:image" content="https://ikeupods-del.github.io/Quentools/assets/partage.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"QuenTools","url":"https://ikeupods-del.github.io/Quentools/","logo":"https://ikeupods-del.github.io/Quentools/assets/apple-touch-icon.png","sameAs":["https://www.tiktok.com/@quentools"]}</script>
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <script>
   // Anciens liens de Wouf (adresse racine avec « # » ou « ? ») : on les renvoie vers l'app.
   if (/^#\//.test(location.hash) || /[?&](maj|proprio)=/.test(location.search)) location.replace('wouf/' + location.search + location.hash);
@@ -35,7 +46,7 @@ header.top .wrap{display:flex;align-items:center;gap:16px;height:60px}
 nav{margin-left:auto;display:flex;align-items:center;gap:18px}
 nav a{color:var(--muted);text-decoration:none;font-weight:600;font-size:15px}
 nav a:hover{color:var(--ink)}
-@media (max-width:640px){nav a:not(.cta-nav){display:none}}
+@media (max-width:640px){header nav a:not(.cta-nav){display:none}}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:999px;font-weight:700;text-decoration:none;border:2px solid transparent;font-size:16px;cursor:pointer}
 .btn.pri{background:var(--pri);color:var(--pri-ink)}
 .btn.pri:hover{background:var(--pri2)}
@@ -69,6 +80,19 @@ section .sub{color:var(--muted);margin:0 0 28px;max-width:40em}
 .tag{align-self:flex-start;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:4px 10px;border-radius:999px;margin-bottom:14px;background:var(--soft);color:var(--pri)}
 .tag.free{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
 .card.wide{grid-column:1/-1}
+.shot{display:block;width:100%;height:auto;aspect-ratio:16/11;object-fit:cover;object-position:top;border-radius:14px;border:1px solid var(--line);margin:0 0 18px;background:var(--soft)}
+@media (min-width:720px){.card.wide{flex-direction:row;gap:28px;align-items:center}.card.wide .shot{width:240px;aspect-ratio:4/5;flex:none;margin:0}.card.wide .txt{display:flex;flex-direction:column}}
+.skip{position:absolute;left:-999px;top:8px;z-index:50;background:var(--pri);color:var(--pri-ink);padding:10px 16px;border-radius:10px}.skip:focus{left:16px}
+.faq{display:grid;gap:10px;max-width:760px}
+.faq details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0 20px}
+.faq summary{cursor:pointer;font-weight:700;padding:16px 0;list-style:none;display:flex;justify-content:space-between;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-size:22px;line-height:1;color:var(--pri);transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{margin:0 0 16px;color:var(--muted)}
+.foot{display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between;align-items:center}
+.foot nav{margin:0;flex-wrap:wrap}
+.foot nav a{display:inline}
 .card.feat{border:2px solid var(--pri)}
 .steps{counter-reset:s;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:28px 0 0;padding:0;list-style:none}
 .steps li{counter-increment:s;background:var(--soft);border-radius:18px;padding:18px 18px 18px 64px;position:relative}
@@ -90,6 +114,7 @@ footer .legal{margin-top:10px;max-width:46em}
 </style>
 </head>
 <body>
+<a class="skip" href="#contenu">Aller au contenu</a>
 <header class="top"><div class="wrap">
   <a class="logo" href="#"><i aria-hidden="true">Q</i>QuenTools</a>
   <nav aria-label="Menu">
@@ -100,7 +125,7 @@ footer .legal{margin-top:10px;max-width:46em}
   </nav>
 </div></header>
 
-<main>
+<main id="contenu">
 <div class="wrap hero">
   <span class="eyebrow">Outils gratuits · Sur mesure · Créer avec l’IA</span>
   <h1>Des outils simples qui font <mark>gagner du temps</mark>.</h1>
@@ -121,39 +146,41 @@ footer .legal{margin-top:10px;max-width:46em}
   <p class="sub">Prêts à l’emploi, sur téléphone comme sur ordinateur. Rien à installer, sinon l’app elle-même sur l’écran d’accueil si vous le souhaitez.</p>
   <div class="grid two">
     <article class="card">
+      <img class="shot" src="assets/apercu-infikit.jpg" alt="Aperçu d’Infikit : la tournée du jour avec les visites et les alertes d’ordonnance" width="480" height="600" loading="lazy" decoding="async">
       <span class="tag free">Gratuit</span>
-      <div class="ic" aria-hidden="true">🩺</div>
       <h3>Infikit</h3>
       <p>L’assistant des infirmières à domicile : tournée, fiches patients, ordonnances en photo, cotations et comptabilité. Fonctionne hors connexion.</p>
       <a class="go" href="infikit/">Ouvrir Infikit</a>
     </article>
     <article class="card">
+      <img class="shot" src="assets/apercu-freelance.jpg" alt="Aperçu de Freelance Kit : le calculateur de TJM" width="480" height="600" loading="lazy" decoding="async">
       <span class="tag free">Gratuit</span>
-      <div class="ic" aria-hidden="true">💼</div>
       <h3>Freelance Kit</h3>
       <p>Pour les indépendants : calculez votre taux journalier (TJM) et préparez vos devis en quelques minutes.</p>
       <a class="go" href="freelance/">Ouvrir Freelance Kit</a>
     </article>
     <article class="card">
+      <img class="shot" src="assets/apercu-patrimoine.jpg" alt="Aperçu de Patrimoine AI : le patrimoine total et sa répartition" width="480" height="600" loading="lazy" decoding="async">
       <span class="tag free">Gratuit</span>
-      <div class="ic" aria-hidden="true">📈</div>
       <h3>Patrimoine AI</h3>
       <p>Tout votre patrimoine au même endroit : bourse, crowdlending, immobilier, livrets. Répartition, échéances et alertes calculées automatiquement, simulateurs et assistant IA. Données chiffrées sur votre appareil.</p>
       <a class="go" href="https://ikeupods-del.github.io/patrimoineai/">Ouvrir Patrimoine AI</a>
     </article>
     <article class="card">
+      <img class="shot" src="assets/apercu-gourmet.jpg" alt="Aperçu de Gourmet AI : le plat de la semaine et les idées de repas" width="480" height="600" loading="lazy" decoding="async">
       <span class="tag free">Gratuit</span>
-      <div class="ic" aria-hidden="true">🍳</div>
       <h3>Gourmet AI</h3>
       <p>« On mange quoi ce soir ? » Des recettes du monde entier, IngréMatch pour cuisiner avec ce que vous avez déjà, le menu de la semaine, la liste de courses et le budget. Un chef IA en option.</p>
       <a class="go" href="https://cute-unicorn-d5abb1.netlify.app" rel="noopener">Ouvrir Gourmet AI</a>
     </article>
     <article class="card wide">
+      <img class="shot" src="assets/apercu-wouf.jpg" alt="Aperçu de Wouf : la page d’accueil du carnet de santé" width="480" height="600" loading="lazy" decoding="async">
+      <div class="txt">
       <span class="tag">Réalisation</span>
-      <div class="ic" aria-hidden="true">🐾</div>
       <h3>Wouf</h3>
       <p>Le carnet de santé du chien et du chat : vaccins, rappels, traitements, éducation et e-books. Une application complète, avec son propre site.</p>
       <a class="go" href="https://woufapp.fr" rel="noopener">Découvrir Wouf</a>
+      </div>
     </article>
   </div>
 </div></section>
@@ -221,6 +248,18 @@ footer .legal{margin-top:10px;max-width:46em}
   </div>
 </div></section>
 
+<section id="faq"><div class="wrap">
+  <h2>Questions fréquentes</h2>
+  <p class="sub">Ce qu’on me demande le plus souvent.</p>
+  <div class="faq">
+    <details><summary>Les outils gratuits le sont-ils vraiment ?</summary><p>Oui : pas d’abonnement, rien à payer pour les utiliser. Certains proposent des options facultatives, comme brancher votre propre clé d’IA.</p></details>
+    <details><summary>Où sont enregistrées mes données ?</summary><p>D’abord sur votre appareil. Quand un outil propose une sauvegarde ou une synchronisation en ligne, ses réglages expliquent comment elle fonctionne ; vous choisissez de l’activer ou non.</p></details>
+    <details><summary>Combien coûte un outil ou un site sur mesure ?</summary><p>Cela dépend de ce qu’il doit faire. Le devis est gratuit : vous connaissez le prix avant que je commence, et vous validez une première version avant la suite.</p></details>
+    <details><summary>Faut-il s’y connaître en informatique ?</summary><p>Non. Vous m’expliquez votre besoin avec vos mots, je m’occupe du reste, mise en ligne comprise.</p></details>
+    <details><summary>Qui est derrière QuenTools ?</summary><p>Un créateur indépendant, pas développeur de métier, qui conçoit ses outils avec l’aide de l’IA. Toutes les applications présentées ici ont été réalisées de cette façon, et c’est ce que les e-books vous apprendront.</p></details>
+  </div>
+</div></section>
+
 <section id="contact"><div class="wrap">
   <div class="contact">
     <h2>Un projet, une question ?</h2>
@@ -231,7 +270,10 @@ footer .legal{margin-top:10px;max-width:46em}
 </main>
 
 <footer><div class="wrap">
-  <div>© <span id="y">2026</span> QuenTools. QuenTools n’est pas affilié à Anthropic, éditeur de Claude.</div>
+  <div class="foot">
+    <div>© <span id="y">2026</span> QuenTools. QuenTools n’est pas affilié à Anthropic, éditeur de Claude.</div>
+    <nav aria-label="Liens du pied de page"><a href="#outils">Outils</a><a href="#sur-mesure">Sur mesure</a><a href="#faq">FAQ</a><a href="https://www.tiktok.com/@quentools" rel="noopener">TikTok</a></nav>
+  </div>
   <details>
     <summary>Mentions légales et confidentialité</summary>
     <div class="legal">
