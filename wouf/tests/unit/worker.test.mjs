@@ -173,3 +173,15 @@ test('contact : paiement retrouvé automatiquement → compte activé + confirma
   await ipn({ payment_status: 'Refunded', txn_type: 'web_accept', txn_id: 'RF9', parent_txn_id: 'P9', receiver_email: 'vendeur@example.fr', mc_currency: 'EUR', mc_gross: '-19.99' }, CONF);
   assert.equal(await st(await makeToken(other)), false, 'remboursement : le compte relié perd aussi l’accès'); assert.equal(await st(await makeToken()), false);
 });
+
+test('contact : priorité aussi pour un Plus offert depuis l’administration ou pour le propriétaire', async () => {
+  let grant = 'lifetime'; const prev = globalThis.fetch;
+  globalThis.fetch = async (u, o) => String(u).includes('/documents/wouf_grants/') ? (grant ? new Response(JSON.stringify({ fields: { until: { stringValue: grant } } })) : new Response('{}', { status: 403 })) : prev(u, o);
+  const tok = await makeToken({ sub: 'offert_uid_1', email: 'ami@example.fr' });
+  assert.equal((await post('/support', msg(), tok, ENV, '1.1.1.1')).json.priority, true, 'Plus offert à vie');
+  grant = '2000-01-01'; assert.equal((await post('/support', msg(), tok, ENV, '1.1.1.2')).json.priority, false, 'Plus offert expiré');
+  grant = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10); assert.equal((await post('/support', msg(), tok, ENV, '1.1.1.3')).json.priority, true, 'Plus offert jusqu’à une date future');
+  grant = ''; assert.equal((await post('/support', msg(), tok, ENV, '1.1.1.4')).json.priority, false, 'aucun accès');
+  assert.equal((await post('/support', msg(), await makeToken({ sub: 'patron_uid_1', email: 'patron@example.fr' }), ENV, '1.1.1.5')).json.priority, true, 'le propriétaire est prioritaire');
+  assert.equal((await post('/support', msg(), await makeToken({ sub: 'faux_patron_1', email: 'patron@example.fr', email_verified: false }), ENV, '1.1.1.6')).json.priority, false, 'e-mail non vérifié : pas de passe-droit');
+});

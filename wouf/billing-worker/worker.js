@@ -91,6 +91,14 @@ async function confirmMail(env, to, name) {
     return r.ok ? 'sent' : 'error ' + r.status;
   } catch (e) { return 'error réseau'; }
 }
+async function hasGrant(env, idToken, uid) {   // Plus offert depuis l'administration (Firestore wouf_grants) : lu avec le jeton du client lui-même (les règles le lui permettent)
+  try {
+    const project = env.FIREBASE_PROJECT_ID || 'quentools-adca1', r = await fetch(`https://firestore.googleapis.com/v1/projects/${project}/databases/(default)/documents/wouf_grants/${uid}`, { headers: { Authorization: 'Bearer ' + idToken } });
+    if (!r.ok) return false;
+    const until = (((await r.json()).fields || {}).until || {}).stringValue || '';
+    return until === 'lifetime' || (/^\d{4}-\d{2}-\d{2}$/.test(until) && until >= new Date().toISOString().slice(0, 10));
+  } catch (e) { return false; }
+}
 async function findPayments(env, emails) {   // paiements PayPal (actifs ou non) dont l'adresse PayPal du payeur correspond à l'une de ces adresses
   const wanted = emails.map(mail).filter(Boolean), out = [];
   if (!wanted.length) return out;
@@ -146,7 +154,7 @@ async function handleSupport(req, env) {
   if (n >= 5) throw new HttpError(429, 'Trop de messages : réessayez dans une heure');
   await env.PAID.put(rk, String(n + 1), { expirationTtl: 7200 });
   let uid = '', priority = false, who = null;
-  if ((req.headers.get('Authorization') || '').startsWith('Bearer ')) { try { who = await authed(req, env); uid = who.uid; priority = !!(JSON.parse((await env.PAID.get('paid:' + who.uid)) || 'null') || {}).active; } catch (e) { /* jeton absent ou invalide : message standard */ } }
+  if ((req.headers.get('Authorization') || '').startsWith('Bearer ')) { try { who = await authed(req, env); uid = who.uid; priority = !!(JSON.parse((await env.PAID.get('paid:' + who.uid)) || 'null') || {}).active || (who.verified && !!env.OWNER_EMAIL && mail(who.email) === mail(env.OWNER_EMAIL)) || await hasGrant(env, (req.headers.get('Authorization') || '').slice(7), who.uid); } catch (e) { /* jeton absent ou invalide : message standard */ } }
   // Contrôle automatique du paiement : si l'adresse Google vérifiée du client est celle de son paiement PayPal, son compte est activé tout de suite
   let auto = '', autoInfo = '', confirm = '';
   try {
