@@ -20,9 +20,10 @@ async function run({ queue, state, env = process.env, fetchFn = fetch, dry = fal
   if (!todo.length) throw new Error('La file est vide : rien à prévisualiser.');
   const items = todo.slice(0, 2), mail = buildMail(items, env.IMAGE_BASE || '', todo.length - items.length);
   if (dry) { log(mail.subject + '\n\n' + mail.text); return { dry: true, mail }; }
-  if (!env.RESEND_API_KEY || !env.MAIL_TO) throw new Error('Configuration incomplète : secrets RESEND_API_KEY et MAIL_TO requis.');
+  const to = env.MAIL_TO || 'wouf-contact@proton.me';   // par défaut : la boîte Proton de Wouf
+  if (!env.RESEND_API_KEY) throw new Error('Configuration incomplète : secret RESEND_API_KEY requis.');
   const r = await fetchFn('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: env.MAIL_FROM || 'Wouf <onboarding@resend.dev>', to: [env.MAIL_TO], subject: mail.subject, html: mail.html, text: mail.text }) });
+    body: JSON.stringify({ from: env.MAIL_FROM || 'Wouf <onboarding@resend.dev>', to: [to], subject: mail.subject, html: mail.html, text: mail.text }) });
   if (!r.ok) throw new Error('Envoi refusé par Resend (' + r.status + ') : ' + (await r.text()).slice(0, 200));
   log('✓ Aperçu envoyé : ' + mail.subject); return { sent: true, mail };
 }

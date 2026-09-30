@@ -1,5 +1,6 @@
 # Chaque soir (vers 20 h, heure de Paris), envoie par e-mail l'aperçu des 2 publications Instagram du lendemain (7 h et 18 h).
-# Secrets à créer (Settings → Secrets and variables → Actions) : RESEND_API_KEY (la même clé que pour le relais) et MAIL_TO (l'adresse du compte Resend, ex. wouf-contact@proton.me).
+# Secret à créer (Settings → Secrets and variables → Actions) : RESEND_API_KEY (la même clé que pour le relais). Destinataire : wouf-contact@proton.me (secret MAIL_TO facultatif pour en changer).
+# Le compte Resend doit avoir été créé avec cette même adresse (limite de l'expéditeur d'essai onboarding@resend.dev).
 # Test : Actions → « Instagram — aperçu du lendemain » → Run workflow.
 name: Instagram — aperçu du lendemain
 

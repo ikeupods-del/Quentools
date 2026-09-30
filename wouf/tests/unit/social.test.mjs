@@ -58,6 +58,8 @@ test('aperçu du lendemain : e-mail avec les 2 prochaines publications (images e
   const b = JSON.parse(sent[0].o.body); assert.deepEqual(b.to, ['moi@example.fr']); assert.match(b.subject, /a \+ c/); assert.match(b.html, /Demain 7 h/); assert.match(b.html, /Demain 18 h/); assert.match(b.html, /https:\/\/img\.test\/images\/c2\.png/); assert.match(b.html, /Légende A/); assert.doesNotMatch(b.html, /Z <b>/, 'la 3e n’est pas dans l’aperçu');
   assert.equal((await preview.run({ queue: q2, state: { posted: ['a'] }, env, fetchFn, log: () => {} })).mail.subject.includes('c'), true, 'les publications déjà faites sont sautées');
   await assert.rejects(preview.run({ queue: q2, state: { posted: [] }, env: {}, fetchFn }), /Configuration incomplète/);
+  sent.length = 0; await preview.run({ queue: q2, state: { posted: [] }, env: { RESEND_API_KEY: 're_x', IMAGE_BASE: 'https://img.test/images/' }, fetchFn, log: () => {} });
+  assert.deepEqual(JSON.parse(sent[0].o.body).to, ['wouf-contact@proton.me'], 'par défaut : la boîte Proton de Wouf');
   await assert.rejects(preview.run({ queue: q2, state: { posted: [] }, env, fetchFn: async () => new Response('non', { status: 403 }) }), /Resend \(403\)/);
   assert.equal((await preview.run({ queue: q2, state: { posted: [] }, env: {}, dry: true, fetchFn, log: () => {} })).dry, true);
 });
