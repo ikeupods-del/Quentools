@@ -801,7 +801,7 @@ test('contact : vrai envoi depuis l’app (aucune messagerie ouverte), repli e-m
       return mode === 'ok' ? r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify({ ok: true, priority: true }) })
         : mode === '429' ? r.fulfill({ status: 429, headers: cors, contentType: 'application/json', body: JSON.stringify({ error: 'Trop de messages : réessayez dans une heure' }) })
         : r.fulfill({ status: 502, headers: cors, contentType: 'application/json', body: '{"error":"panne"}' }); }
-    if (u.pathname === '/admin/support') return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify({ messages: [{ id: '1790000000000-abc12', at: '2026-09-30T10:00:00Z', category: 'Facturation / achat', message: 'Bonjour,\nje ne vois pas mon accès.', email: 'cliente@test.fr', diagnostics: 'Wouf 1.14', priority: false }] }) });
+    if (u.pathname === '/admin/support') return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify({ messages: [{ id: '1790000000000-abc12', at: '2026-09-30T10:00:00Z', category: 'Facturation / achat', message: 'Bonjour,\nje ne vois pas mon accès.', email: 'cliente@test.fr', auto: 'activated', autoInfo: '19.99 € · réf. WOUF-1', confirm: 'sent', diagnostics: 'Wouf 1.14', priority: false }] }) });
     if (u.pathname === '/admin/support/delete') { mode = 'deleted'; return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: '{"ok":true}' }); }
     return r.fulfill({ status: 404, headers: cors, body: '{}' }); });
   await b.ev(() => { BILL.api = 'https://relais.test'; CLOUD.user = { uid: 'u1', email: 'q@test.fr', name: 'Q' }; window.__mail = null; NAV.mail = u => { window.__mail = u; }; SUP.email = 'wouf-contact@proton.me'; render(); });
@@ -816,7 +816,7 @@ test('contact : vrai envoi depuis l’app (aucune messagerie ouverte), repli e-m
   // administration : le message est lu, on peut répondre (lien mailto) et le supprimer
   mode = 'ok'; await b.ev(() => { OWNER = true; Object.assign(AdminApi, { listUsers: async () => [], listOrders: async () => [], paidList: async () => ({}) }); });
   await b.go('#/admin'); await p.waitForSelector('#adm-msgs .adm-m');
-  assert.match(await text(p, '#adm-msgs'), /Messages \(1\).*Facturation \/ achat.*cliente@test\.fr.*je ne vois pas mon accès/);
+  assert.match(await text(p, '#adm-msgs'), /Messages \(1\).*Facturation \/ achat.*Paiement retrouvé : compte activé automatiquement \(19\.99 € · réf\. WOUF-1\) · mail de confirmation : envoyé.*cliente@test\.fr.*je ne vois pas mon accès/);
   assert.equal(await b.ev(() => SUP.replyUrl), 'https://mail.proton.me/compose?mailto=%s');
   const rl = await p.getAttribute('#adm-msgs a.btn', 'href'); assert.match(rl, /^https:\/\/mail\.proton\.me\/compose\?mailto=mailto%3Acliente%40test\.fr%3Fsubject%3DRe%253A/, 'Répondre ouvre Proton Mail');
   assert.equal(new URL(rl).searchParams.get('mailto').startsWith('mailto:cliente@test.fr?subject=Re%3A'), true);

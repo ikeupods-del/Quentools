@@ -235,7 +235,8 @@ ACT['support-send'] = async () => {
   if (BILL.api) {   // vrai envoi depuis l'app (aucune messagerie à ouvrir) ; en cas de panne du relais, repli sur l'e-mail
     try {
       const j = await api('/support', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await authHeaders()) }, body: JSON.stringify({ category: cat, message: msg, email, diagnostics: diag }) });
-      $('#sp-msg').value = ''; return toast(j.priority ? 'Message envoyé : traitement prioritaire ⭐ Réponse par e-mail.' : 'Message envoyé ✓ Nous vous répondons par e-mail.');
+      $('#sp-msg').value = ''; if (j.activated) { try { await refreshSub(true); } catch (e) { /* le statut se mettra à jour à la prochaine ouverture */ } render(true); return toast('Paiement retrouvé : Wouf Plus est activé sur votre compte ✅'); }
+      return toast(j.priority ? 'Message envoyé : traitement prioritaire ⭐ Réponse par e-mail.' : 'Message envoyé ✓ Nous vous répondons par e-mail.');
     } catch (e) { if (e.status === 400 || e.status === 429) return toast(e.message); toast('Envoi impossible pour le moment : votre messagerie va s’ouvrir à la place'); }
   }
   const tag = isPriority() ? '[PRIORITAIRE] ' : '', body = msg + (diag ? '\n\n--- Informations techniques ---\n' + diag : '');

@@ -195,3 +195,9 @@ Une tâche GitHub (`.github/workflows/instagram.yml`, deux fois par jour, vers 7
 
 **Aperçu par e-mail la veille** (`.github/workflows/apercu.yml`, chaque soir vers 20 h) : un e-mail avec les images et légendes des 2 publications du lendemain (7 h et 18 h). Secrets GitHub à ajouter : `RESEND_API_KEY` (la même clé que celle du relais) et `MAIL_TO` (l'adresse du compte Resend, donc l'adresse Proton). Test : Actions → « Instagram — aperçu du lendemain » → Run workflow. Pour changer une publication avant sa sortie : le dire à Claude (modification de `queue.json`).
 
+## Paiement retrouvé automatiquement + mail de confirmation
+- **Quand un client écrit par le formulaire** de l'app en étant connecté avec Google, le relais cherche un paiement PayPal dont l'adresse du payeur est **l'adresse Google vérifiée** du client. Trouvé : son compte passe **Plus à vie tout de suite**, l'app le lui annonce, et un mail de confirmation part. Le message apparaît dans Administration → Messages avec « ✅ Paiement retrouvé… ».
+- **Adresse différente ou client non connecté** : rien n'est activé (ce serait contournable) ; le message est marqué « 💳 Paiement trouvé pour cet e-mail… » et vous reliez le compte à la main (Comptes → ⭐ À vie).
+- **Remboursement** : retire l'accès du compte qui a payé **et** des comptes reliés de cette façon.
+- **Mail de confirmation** (à l'achat automatique aussi) : nécessite un expéditeur d'un domaine **vérifié chez Resend** : dans Resend → Domains → ajouter `woufapp.fr` et copier les enregistrements DNS demandés chez le registrar ; puis dans Cloudflare (Worker) la variable `CONFIRM_FROM` = `Wouf <contact@woufapp.fr>` (avec le secret `RESEND_API_KEY` déjà créé). Les réponses du client arrivent sur `SUPPORT_TO` (Proton). Sans `CONFIRM_FROM`, l'activation marche quand même, seul le mail n'est pas envoyé.
+
