@@ -109,6 +109,10 @@ const versioned = [...html.matchAll(/(?:src|href)="([a-z0-9_]+\.(?:js|css))(\?v=
 for (const [, f, q] of versioned) ok(q === `?v=${CFG.version}`, `index.html : ${f} doit porter ?v=${CFG.version} (lancez npm run release -- ${CFG.version})`);
 const scripts = [...html.matchAll(/<script src="([^"?]+)/g)].map(m => m[1]);
 for (const s of scripts) ok(fs.existsSync(path.join(W, s)), `script référencé introuvable : ${s}`);
+// Scripts partagés (variables globales) : un même nom déclaré deux fois écrase silencieusement le premier.
+const declared = {};
+for (const s of scripts) if (fs.existsSync(path.join(W, s))) for (const m of read(s).matchAll(/^(?:async\s+)?(?:function\s+|const\s+|let\s+|var\s+)([A-Za-z_$][\w$]*)/gm)) (declared[m[1]] = declared[m[1]] || []).push(s);
+for (const [n, fl] of Object.entries(declared)) ok(fl.length === 1, `nom global déclaré plusieurs fois : ${n} (${fl.join(', ')})`);
 const sw = read('sw.js'), shell = (sw.match(/const SHELL = \[([\s\S]*?)\];/) || [, ''])[1];
 for (const f of [...scripts, 'style.css', 'index.html', 'manifest.webmanifest']) ok(shell.includes(`./${f}'`), `sw.js : ${f} absent du cache hors ligne (SHELL)`);
 for (const m of shell.matchAll(/'\.\/([^']+)'/g)) ok(fs.existsSync(path.join(W, m[1])), `sw.js : fichier inexistant ${m[1]}`);

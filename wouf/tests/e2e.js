@@ -662,6 +662,48 @@ test('nouvelle adresse : redirection sans carnet, transfert du carnet et des doc
   const b = await boot(); assert.equal(await b.page.$('.move-card'), null); assert.ok(b.page.url().startsWith(BASE())); noErrors(b); await b.ctx.close();
 });
 
+test('administration : réservée au propriétaire, comptes, Plus offert, retrait, interrupteur de vente', async () => {
+  const b = await boot({ hash: '#/admin' }), p = b.page;
+  assert.match(await text(p, '#view'), /Réservé au propriétaire/);
+  await b.ev(() => { OWNER = true; }); await fakeCloud(p);
+  await b.ev(() => {
+    CloudApi.signIn = async () => ({ email: 'patron@test.fr', name: 'Patron', picture: '' });
+    window.__adm = { grants: {}, cfg: null };
+    Object.assign(AdminApi, {
+      listUsers: async () => [{ uid: 'u1', name: 'Alice', email: 'alice@test.fr', lastSeen: today(), firstSeen: today(), dogs: 1, cats: 0, lessons: 4, grant: window.__adm.grants.u1 || null },
+        { uid: 'u2', name: 'Bob', email: 'bob@test.fr', lastSeen: '2026-01-01', firstSeen: '2025-12-01', dogs: 0, cats: 2, lessons: 0, grant: null }],
+      setGrant: async (uid, g) => { window.__adm.grants[uid] = g; }, setConfig: async c => { window.__adm.cfg = c; },
+      myGrant: async () => window.__adm.mine || null, touch: async pr => { window.__adm.profile = pr; } });
+    render();
+  });
+  assert.match(await text(p, '#view'), /Connectez-vous avec le compte Google/);
+  await p.click('[data-act=g-signin]'); await p.waitForSelector('.adm-u');
+  assert.equal(await p.$$eval('.adm-u', l => l.length), 2); assert.match(await text(p, '.adm-tiles'), /2 comptes Google/);
+  // recherche
+  await p.fill('#adm-q', 'bob'); assert.deepEqual(await p.$$eval('.adm-u', l => l.map(e => e.hidden)), [true, false]); await p.fill('#adm-q', '');
+  // Plus offert à vie puis retrait
+  await p.click('[data-act=adm-grant][data-uid=u1][data-until=lifetime]'); await p.click('.sheet [data-ok]');
+  await p.waitForFunction(() => window.__adm.grants.u1 && window.__adm.grants.u1.until === 'lifetime');
+  assert.match(await text(p, '.adm-u'), /Plus offert à vie/);
+  await p.click('[data-act=adm-revoke][data-uid=u1]'); await p.click('.sheet [data-ok]');
+  await p.waitForFunction(() => window.__adm.grants.u1 === null);
+  // vente : bloquée tant que rien n'est prêt
+  assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), true); assert.match(await text(p, '#view'), /Relais de paiement Stripe à installer/);
+  await b.ev(() => { BILL.api = 'https://relais.test'; Object.assign(LEGAL, { seller: 'Q', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur' }); render(true); });
+  assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), false);
+  await p.click('[data-act=adm-sale]'); await p.click('.sheet [data-ok]');
+  await p.waitForFunction(() => window.__adm.cfg && window.__adm.cfg.billingEnabled === true); assert.equal(await b.ev(() => BILL.enabled), true);
+  await p.click('[data-act=adm-sale]'); await p.click('.sheet [data-ok]');
+  await p.waitForFunction(() => window.__adm.cfg.billingEnabled === false); assert.equal(await b.ev(() => BILL.enabled), false);
+  // côté utilisateur : un Plus offert est pris en compte à la connexion, et retiré avec lui
+  await b.ev(async () => { BILL.enabled = true; BILL.freeUntil = null; window.__adm.mine = { until: 'lifetime' }; await accountSync(); });
+  assert.equal(await b.ev(() => plus()), true, 'Plus offert actif'); assert.equal(await b.ev(() => window.__adm.profile.email), 'patron@test.fr');
+  await b.ev(async () => { window.__adm.mine = null; await accountSync(); }); assert.equal(await b.ev(() => plus()), false, 'Plus retiré');
+  await b.ev(() => { S.grant = { until: '2020-01-01' }; }); assert.equal(await b.ev(() => plus()), false, 'offre expirée');
+  await b.ev(() => { BILL.enabled = false; });
+  noErrors(b); await b.ctx.close();
+});
+
 /* ================= exécution ================= */
 (async () => {
   srv = await start(0); PORT = srv.address().port;

@@ -53,7 +53,7 @@ const humanAge = birth => { const a = ageYears(birth); return a < 0.2 ? null : M
 function blank() {
   return {
     v: 1, dogs: [], events: [], weights: [], meds: [], medLog: {}, journal: [], expenses: [], docs: [], foods: [], contacts: [],
-    owner: { name: '', phone: '' }, settings: { notif: false, lastNotif: '', lastBackup: '', home: null, noStats: false }, sub: null,
+    owner: { name: '', phone: '' }, grant: null, settings: { notif: false, lastNotif: '', lastBackup: '', home: null, noStats: false }, sub: null,
     current: null, installedAt: today(), edu: {}, walks: [], names: [], updatedAt: 0, schema: SCHEMA
   };
 }
@@ -252,7 +252,9 @@ function grandfathered() {
   if (!BILL.enabled || !BILL.grandfatherBefore || S.installedAt >= BILL.grandfatherBefore) return false;
   const u = BILL.grandfatherUntil; return !u || u === 'lifetime' || today() <= u;
 }
-const subActive = () => !!(S.sub && S.sub.active && (S.sub.lifetime || (S.sub.until && Date.now() < Date.parse(S.sub.until))));
+/* Wouf Plus offert par le propriétaire (admin.js) : relu à chaque connexion Google. */
+const grantActive = () => !!(S.grant && (S.grant.until === 'lifetime' || (S.grant.until && today() <= S.grant.until)));
+const subActive = () => grantActive() || !!(S.sub && S.sub.active && (S.sub.lifetime || (S.sub.until && Date.now() < Date.parse(S.sub.until))));
 function plus() { if (PREVIEW === 'free') return false; if (PREVIEW === 'plus') return true; return isFreeWindow() || grandfathered() || subActive(); }
 const isPremium = f => (BILL.premium || []).includes(f);
 const allowed = f => plus() || !isPremium(f);

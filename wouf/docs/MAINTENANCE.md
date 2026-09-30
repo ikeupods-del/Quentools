@@ -152,3 +152,16 @@ Wouf compte ses visites avec **GoatCounter** : pas de cookie, pas d'identifiant,
 - Firebase → Authentication → Settings → Authorized domains : `woufapp.fr` doit y figurer (connexion Google).
 - Relais de paiement : `ALLOWED_ORIGIN` contient `https://woufapp.fr`.
 - Bascule de l'ancienne adresse : `config.js → site.moved: true`. Sur `ikeupods-del.github.io/Quentools/wouf/`, un visiteur sans carnet est redirigé ; un utilisateur avec un carnet voit « Transférer mon carnet » (copie directe des données et documents vers woufapp.fr, rien n'est supprimé). Les comptes Google retrouvent tout en se reconnectant.
+
+## Administration (propriétaire)
+Onglet **Plus → 🛠️ Administration** (visible seulement pour le propriétaire connecté avec Google, voir `ownerHashes`) :
+- **Comptes** : utilisateurs connectés avec Google (nom, e-mail, dernière visite, nombre d'animaux et de leçons). Les utilisateurs sans compte n'apparaissent que dans les statistiques de visite.
+- **Wouf Plus offert** : « À vie », « 1 mois » ou « Retirer ». Pris en compte à la prochaine ouverture de l'app de l'utilisateur (connecté avec Google).
+- **Vente** : bouton « Ouvrir la vente / Repasser en gratuit » (document Firestore `wouf_admin/config`). Il reste bloqué tant que les infos légales (`config.js → legal`) et le relais de paiement (`billing.api`) ne sont pas en place : l'app ignore l'interrupteur dans ce cas.
+- **Sécurité = règles Firestore** (Firebase → Firestore Database → Règles), à ajouter dans `match /databases/{database}/documents { … }`, en remplaçant ADRESSE par l'adresse Gmail du propriétaire :
+```
+function woufAdmin() { return request.auth != null && request.auth.token.email == 'ADRESSE' && request.auth.token.email_verified == true; }
+match /wouf_users/{uid} { allow read, write: if request.auth != null && request.auth.uid == uid; allow read: if woufAdmin(); }
+match /wouf_grants/{uid} { allow read: if request.auth != null && request.auth.uid == uid; allow read, write: if woufAdmin(); }
+match /wouf_admin/{doc} { allow read: if true; allow write: if woufAdmin(); }
+```
