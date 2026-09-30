@@ -1,0 +1,28 @@
+# Chaque soir (vers 20 h, heure de Paris), envoie par e-mail l'aperçu des 2 publications Instagram du lendemain (7 h et 18 h).
+# Secret à créer (Settings → Secrets and variables → Actions) : RESEND_API_KEY (la même clé que pour le relais). Destinataire : wouf-contact@proton.me (secret MAIL_TO facultatif pour en changer).
+# Le compte Resend doit avoir été créé avec cette même adresse (limite de l'expéditeur d'essai onboarding@resend.dev).
+# Test : Actions → « Instagram — aperçu du lendemain » → Run workflow.
+name: Instagram — aperçu du lendemain
+
+on:
+  schedule:
+    - cron: '3 18 * * *'   # UTC : 18:03 = 20 h en heure d'été (19 h en heure d'hiver)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apercu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Envoyer l'aperçu
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          IMAGE_BASE: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/marketing/wouf/images/
+        run: node marketing/wouf/preview.js

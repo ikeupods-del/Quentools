@@ -11,6 +11,8 @@
        OWNER_EMAIL      adresse Google du propriétaire (pour la liste des paiements dans l'administration)
        PAYEE            (facultatif) adresse(s) PayPal acceptées en plus de celle choisie dans l'administration, séparées par des virgules
        MIN_EUR          (facultatif) montant minimum accepté, défaut 9.99 (offre récompense)
+       GOATCOUNTER_TOKEN (SECRET, facultatif) clé d'API GoatCounter « lecture des statistiques » → statistiques dans l'administration
+       GOATCOUNTER_SITE (facultatif) code du site GoatCounter, défaut woufapp
        FIREBASE_PROJECT_ID, FIREBASE_API_KEY  (facultatifs) défaut : projet quentools
 
    Routes :
@@ -19,6 +21,7 @@
      POST /support        {category, message, email, diagnostics}     jeton facultatif (priorité si Wouf Plus actif) → {ok, priority}
      GET  /admin/paid     → {paid: {uid: {…}}}                        Authorization: Bearer <jeton Google du PROPRIÉTAIRE>
      GET  /admin/support  → {messages: [...]}                         idem
+     GET  /admin/stats?days=30 → visites par jour, sources, écrans, actions (GoatCounter)   idem (secret GOATCOUNTER_TOKEN)
      POST /admin/support/delete {id}                                  idem
    Facultatif : RESEND_API_KEY (secret), SUPPORT_TO, SUPPORT_FROM → chaque message est aussi transmis par e-mail (resend.com).
    Documentation : wouf/docs/MAINTENANCE.md */
@@ -76,6 +79,26 @@ async function payees(env) {
   if (c.payee) list.push(c.payee); return list;
 }
 
+/* ---------- E-mail de confirmation au client (Resend ; expéditeur CONFIRM_FROM = adresse d'un domaine vérifié chez Resend) ---------- */
+async function confirmMail(env, to, name) {
+  if (!env.RESEND_API_KEY || !env.CONFIRM_FROM) return 'off';
+  if (!/^\S+@\S+\.\S+$/.test(to || '')) return 'error adresse';
+  const hello = name ? 'Bonjour ' + String(name).split(' ')[0] + ',' : 'Bonjour,';
+  try {
+    const r = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: env.CONFIRM_FROM, to: [to], ...(env.SUPPORT_TO ? { reply_to: env.SUPPORT_TO } : {}), subject: 'Wouf Plus est activé ✅',
+        text: `${hello}\n\nMerci ! Votre accès Wouf Plus (à vie) est activé sur votre compte Google.\n\nSi l’app est déjà ouverte, touchez « Actualiser » ou rouvrez-la : toutes les fonctions Plus sont disponibles.\nUn souci ? Répondez simplement à ce message.\n\nL’équipe Wouf\nhttps://woufapp.fr` }) });
+    return r.ok ? 'sent' : 'error ' + r.status;
+  } catch (e) { return 'error réseau'; }
+}
+async function findPayments(env, emails) {   // paiements PayPal (actifs ou non) dont l'adresse PayPal du payeur correspond à l'une de ces adresses
+  const wanted = emails.map(mail).filter(Boolean), out = [];
+  if (!wanted.length) return out;
+  const list = await env.PAID.list({ prefix: 'paid:', limit: 1000 });
+  for (const k of list.keys) { const r = JSON.parse((await env.PAID.get(k.name)) || 'null'); if (r && !r.linkedFrom && wanted.includes(mail(r.payerEmail))) out.push({ uid: k.name.slice(5), rec: r }); }
+  return out;
+}
+
 /* ---------- Notification PayPal (IPN) ---------- */
 async function handleIpn(req, env) {
   const raw = await req.text();
@@ -88,7 +111,12 @@ async function handleIpn(req, env) {
   // Remboursement / litige : on retire l'accès du compte qui avait payé la transaction d'origine.
   if (['Refunded', 'Reversed'].includes(status)) {
     const orig = p.parent_txn_id ? await env.PAID.get('tx:' + p.parent_txn_id) : null, who = orig || (safeUid(uid) ? uid : '');
-    if (who) { const cur = JSON.parse((await env.PAID.get('paid:' + who)) || 'null'); if (cur) await env.PAID.put('paid:' + who, JSON.stringify({ ...cur, active: false, revokedAt: new Date().toISOString(), revokedBy: status })); }
+    if (who) {
+      const cur = JSON.parse((await env.PAID.get('paid:' + who)) || 'null'); if (cur) await env.PAID.put('paid:' + who, JSON.stringify({ ...cur, active: false, revokedAt: new Date().toISOString(), revokedBy: status }));
+      for (const k of (await env.PAID.list({ prefix: 'paid:', limit: 1000 })).keys) {   // comptes reliés à ce paiement par le formulaire de contact
+        const l = JSON.parse((await env.PAID.get(k.name)) || 'null'); if (l && l.linkedFrom === who && l.active) await env.PAID.put(k.name, JSON.stringify({ ...l, active: false, revokedAt: new Date().toISOString(), revokedBy: status }));
+      }
+    }
     return { ok: true, revoked: !!who };
   }
   if (status !== 'Completed' || p.txn_type !== 'web_accept') return { ok: false, reason: 'ignoré' };
@@ -99,6 +127,8 @@ async function handleIpn(req, env) {
   if (await env.PAID.get('tx:' + p.txn_id)) return { ok: true, duplicate: true };
   await env.PAID.put('tx:' + p.txn_id, uid);
   await env.PAID.put('paid:' + uid, JSON.stringify({ active: true, since: new Date().toISOString(), txn: p.txn_id, amount: p.mc_gross, currency: p.mc_currency, ref: ref || '', payerEmail: mail(p.payer_email), payerName: [p.first_name, p.last_name].filter(Boolean).join(' '), paidTo: to }));
+  const rec = JSON.parse(await env.PAID.get('paid:' + uid)), state = await confirmMail(env, rec.payerEmail, rec.payerName);
+  await env.PAID.put('paid:' + uid, JSON.stringify({ ...rec, confirmMail: state }));
   return { ok: true };
 }
 
@@ -115,27 +145,70 @@ async function handleSupport(req, env) {
   const ip = req.headers.get('CF-Connecting-IP') || 'inconnue', hour = Math.floor(Date.now() / 3600e3), rk = `rl:${ip}:${hour}`, n = parseInt((await env.PAID.get(rk)) || '0', 10);
   if (n >= 5) throw new HttpError(429, 'Trop de messages : réessayez dans une heure');
   await env.PAID.put(rk, String(n + 1), { expirationTtl: 7200 });
-  let uid = '', priority = false;
-  if ((req.headers.get('Authorization') || '').startsWith('Bearer ')) { try { const u = await authed(req, env); uid = u.uid; priority = !!(JSON.parse((await env.PAID.get('paid:' + u.uid)) || 'null') || {}).active; } catch (e) { /* jeton absent ou invalide : message standard */ } }
+  let uid = '', priority = false, who = null;
+  if ((req.headers.get('Authorization') || '').startsWith('Bearer ')) { try { who = await authed(req, env); uid = who.uid; priority = !!(JSON.parse((await env.PAID.get('paid:' + who.uid)) || 'null') || {}).active; } catch (e) { /* jeton absent ou invalide : message standard */ } }
+  // Contrôle automatique du paiement : si l'adresse Google vérifiée du client est celle de son paiement PayPal, son compte est activé tout de suite
+  let auto = '', autoInfo = '', confirm = '';
+  try {
+    if (priority) auto = 'already';
+    else {
+      const found = await findPayments(env, [who && who.verified ? who.email : '', email]), hit = found.find(f => f.rec.active);
+      if (hit && who && who.verified && mail(hit.rec.payerEmail) === mail(who.email)) {
+        await env.PAID.put('paid:' + uid, JSON.stringify({ ...hit.rec, active: true, since: new Date().toISOString(), linkedFrom: hit.uid, via: 'contact' }));
+        auto = 'activated'; priority = true; confirm = await confirmMail(env, who.email, hit.rec.payerName);
+        autoInfo = `${hit.rec.amount || ''} € · réf. ${hit.rec.ref || ''}`;
+      } else if (found.length) { auto = 'found'; const f = found[0]; autoInfo = `${f.rec.payerName || ''} · ${f.rec.amount || ''} € · réf. ${f.rec.ref || ''} · ${f.rec.active ? 'actif' : 'remboursé/annulé'}`; }
+    }
+  } catch (e) { auto = ''; }
   const id = String(Date.now()).padStart(13, '0') + '-' + Math.random().toString(36).slice(2, 7);
-  const rec = { id, at: new Date().toISOString(), category: String(b.category || 'Question').slice(0, 60), message, email, diagnostics: String(b.diagnostics || '').slice(0, 4000), uid, priority };
-  await env.PAID.put('msg:' + id, JSON.stringify(rec));
-  if (env.RESEND_API_KEY && env.SUPPORT_TO && env.SUPPORT_FROM) {   // transmission par e-mail (facultative, sans effet sur l'enregistrement)
-    try { await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: env.SUPPORT_FROM, to: [env.SUPPORT_TO], reply_to: email, subject: `${priority ? '[PRIORITAIRE] ' : ''}Wouf – ${rec.category}`, text: `${message}\n\n--- ${priority ? 'MEMBRE PLUS' : 'Demande standard'} ---\nE-mail : ${email}\n${rec.diagnostics}` }) }); } catch (e) { /* ignoré */ }
+  const rec = { id, at: new Date().toISOString(), category: String(b.category || 'Question').slice(0, 60), message, email, diagnostics: String(b.diagnostics || '').slice(0, 4000), uid, priority, mail: 'off', ...(auto ? { auto, autoInfo, ...(confirm ? { confirm } : {}) } : {}) };
+  if (env.RESEND_API_KEY && env.SUPPORT_TO && env.SUPPORT_FROM) {   // copie par e-mail (facultative) : l'état est gardé avec le message, un échec ne bloque jamais l'enregistrement
+    try {
+      const r = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: env.SUPPORT_FROM, to: [env.SUPPORT_TO], reply_to: email, subject: `${priority ? '[PRIORITAIRE] ' : ''}Wouf – ${rec.category}`, text: `${message}\n\n--- ${priority ? 'MEMBRE PLUS' : 'Demande standard'} ---\nE-mail : ${email}\n${auto === 'activated' ? '✅ Paiement retrouvé : compte activé automatiquement (' + autoInfo + ')\n' : auto === 'found' ? '💳 Paiement trouvé pour cet e-mail (' + autoInfo + ') : compte à relier à la main\n' : ''}${rec.diagnostics}` }) });
+      rec.mail = r.ok ? 'sent' : ('error ' + r.status + ' ' + String(await r.text().catch(() => '')).slice(0, 140));
+    } catch (e) { rec.mail = 'error réseau'; }
   }
-  return { ok: true, priority };
+  await env.PAID.put('msg:' + id, JSON.stringify(rec));
+  return { ok: true, priority, activated: auto === 'activated' };
+}
+
+/* ---------- Statistiques de visite : lues chez GoatCounter avec une clé qui reste ici (secret Cloudflare) ---------- */
+let STATS = null, STATS_AT = 0, STATS_KEY = '';
+async function handleStats(req, env) {
+  await ownerOnly(req, env);
+  if (!env.GOATCOUNTER_TOKEN) throw new HttpError(501, 'Statistiques non configurées : ajoutez le secret GOATCOUNTER_TOKEN dans Cloudflare');
+  const days = Math.min(90, Math.max(1, parseInt(new URL(req.url).searchParams.get('days') || '30', 10) || 30)), site = /^[a-z0-9-]{2,50}$/.test(env.GOATCOUNTER_SITE || 'woufapp') ? (env.GOATCOUNTER_SITE || 'woufapp') : 'woufapp';
+  const key = site + ':' + days + ':' + new Date().toISOString().slice(0, 13);   // mémoire d'une heure : ménage l'API de GoatCounter
+  if (STATS && STATS_KEY === key && Date.now() - STATS_AT < 60e3) return STATS;
+  const end = new Date(), start = new Date(Date.now() - (days - 1) * 864e5); start.setUTCHours(0, 0, 0, 0); end.setUTCHours(23, 59, 59, 0);
+  const q = `start=${encodeURIComponent(start.toISOString().slice(0, 19) + 'Z')}&end=${encodeURIComponent(end.toISOString().slice(0, 19) + 'Z')}`, base = `https://${site}.goatcounter.com/api/v0/stats/`;
+  const call = async (p, extra = '') => {
+    const r = await fetch(base + p + '?' + q + extra, { headers: { Authorization: 'Bearer ' + env.GOATCOUNTER_TOKEN, Accept: 'application/json' } });
+    if (r.status === 401 || r.status === 403) throw new HttpError(502, 'GoatCounter refuse la clé (droit « lecture des statistiques » ?)');
+    if (!r.ok) throw new HttpError(502, 'GoatCounter indisponible (' + r.status + ')');
+    return r.json();
+  };
+  const [t, h, rf] = await Promise.all([call('total'), call('hits', '&limit=40'), call('toprefs', '&limit=10')]);
+  const num = x => Number(x) || 0;
+  const perDay = (t.stats || []).map(d => ({ day: String(d.day || '').slice(0, 10), visits: num(d.daily != null ? d.daily : (d.hourly || []).reduce((a, b) => a + num(b), 0)) })).filter(d => d.day);
+  const hits = (h.hits || []).map(x => ({ path: String(x.path || ''), count: num(x.count), event: !!x.event }));
+  STATS = { days, from: start.toISOString().slice(0, 10), total: num(t.total), totalEvents: num(t.total_events), perDay,
+    pages: hits.filter(x => !x.event).sort((a, b) => b.count - a.count).slice(0, 10), events: hits.filter(x => x.event).sort((a, b) => b.count - a.count).slice(0, 12),
+    refs: (rf.stats || []).map(x => ({ name: String(x.name || x.ref || '(direct)'), count: num(x.count) })).filter(x => x.count).sort((a, b) => b.count - a.count).slice(0, 8) };
+  STATS_KEY = key; STATS_AT = Date.now(); return STATS;
 }
 
 /* ---------- Routes ---------- */
 async function handle(req, env) {
   const path = new URL(req.url).pathname;
+  if (path === '/admin/stats' && req.method === 'GET') return handleStats(req, env);
   if (path === '/support' && req.method === 'POST') return handleSupport(req, env);
   if (path === '/admin/support' && req.method === 'GET') {
     await ownerOnly(req, env);
     const list = await env.PAID.list({ prefix: 'msg:', limit: 200 }), out = [];
     for (const k of list.keys) { const r = JSON.parse((await env.PAID.get(k.name)) || 'null'); if (r) out.push(r); }
-    return { messages: out.sort((a, c) => String(c.id).localeCompare(String(a.id))) };
+    return { mailOn: !!(env.RESEND_API_KEY && env.SUPPORT_TO && env.SUPPORT_FROM), messages: out.sort((a, c) => String(c.id).localeCompare(String(a.id))) };
   }
   if (path === '/admin/support/delete' && req.method === 'POST') {
     await ownerOnly(req, env); const { id } = await req.json().catch(() => ({}));
