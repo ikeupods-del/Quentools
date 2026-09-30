@@ -106,7 +106,7 @@ function ask2(msg, a, b) {
 
 ACT['g-signin'] = async () => {
   if (!CloudApi.available()) return toast('Connexion Google : disponible sur la version publiée (https)');
-  try { toast('Connexion à Google…'); CLOUD.user = await CloudApi.signIn(); try { localStorage.setItem('wouf:google', '1'); } catch (e) { /* ignore */ } await cloudPull(true); refreshSub(true).then(() => render(true)); }
+  try { toast('Connexion à Google…'); CLOUD.user = await CloudApi.signIn(); try { localStorage.setItem('wouf:google', '1'); } catch (e) { /* ignore */ } await cloudPull(true); refreshSub(true).then(() => render(true)); accountSync(); }
   catch (e) { toast(e.message); }
   render(true);
 };
@@ -114,10 +114,10 @@ ACT['g-sync'] = async () => { if (!CLOUD.user) return; S.updatedAt = Date.now();
 ACT['g-signout'] = async () => {
   if (!(await ask('Se déconnecter de Google ? Vos données restent sur cet appareil et dans votre compte.', 'Se déconnecter', false))) return;
   try { await CloudApi.signOut(); } catch (e) { /* ignore */ }
-  CLOUD.user = null; setCloud('off'); try { localStorage.removeItem('wouf:google'); } catch (e) { /* ignore */ } render(true);
+  CLOUD.user = null; S.grant = null; save(); setCloud('off'); try { localStorage.removeItem('wouf:google'); } catch (e) { /* ignore */ } render(true);
 };
 async function cloudInit() {   // session Google déjà ouverte (ici ou dans une autre app QuenTools) ?
   let on = false; try { on = localStorage.getItem('wouf:google') === '1'; } catch (e) { /* ignore */ }
   if (!on || !CloudApi.available()) return;
-  try { const u = await CloudApi.restore(); if (u) { CLOUD.user = u; await cloudPull(false); await refreshSub(false); } } catch (e) { /* hors ligne */ }
+  try { const u = await CloudApi.restore(); if (u) { CLOUD.user = u; await cloudPull(false); await refreshSub(false); accountSync(); } } catch (e) { /* hors ligne */ }
 }

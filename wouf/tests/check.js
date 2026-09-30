@@ -87,6 +87,7 @@ const bizFeatures = (read('business.js').match(/const FEATURES = \{([\s\S]*?)\n\
 for (const f of B.premium) ok(new RegExp('\\b' + f + ':').test(bizFeatures), `fonction Plus « ${f} » sans description dans business.js (FEATURES)`);
 const RW = B.rewardOffer || {};
 ok(!RW.enabled || /\d/.test(RW.price || ''), 'billing.rewardOffer.enabled = true mais aucun prix affiché');
+for (const k of ['paymentLink', 'rewardLink']) ok(!B[k] || /^https:\/\/buy\.stripe\.com\/[\w-]+$/.test(B[k]), `billing.${k} doit être un lien https://buy.stripe.com/…`);
 { const wf = read('billing-worker/worker.js').match(/const FREE_LESSONS = (\{[^\n]*\});/), app = { dog: dog.filter(l => l.free).map(l => l.id), cat: cat.filter(l => l.free).map(l => l.id) };
   const w = wf ? Function('return ' + wf[1])() : null;
   ok(w && ['dog', 'cat'].every(sp => JSON.stringify([...w[sp]].sort()) === JSON.stringify([...app[sp]].sort())), 'billing-worker/worker.js : FREE_LESSONS doit reprendre exactement les leçons gratuites de l’app (offre récompense)'); }
@@ -100,7 +101,7 @@ if (B.enabled) {
   const L = CFG.legal, S = CFG.support;
   for (const k of ['seller', 'form', 'address', 'siret', 'email', 'mediator']) ok(L[k], `billing.enabled = true mais legal.${k} est vide : complétez config.js avant de vendre`);
   ok(S.email, 'billing.enabled = true mais support.email est vide');
-  ok(B.api && /^https:\/\//.test(B.api), 'billing.enabled = true mais billing.api (URL du relais) est vide');
+  ok((B.api && /^https:\/\//.test(B.api)) || B.paymentLink, 'billing.enabled = true mais ni relais (billing.api) ni lien de paiement (billing.paymentLink)');
 }
 
 section('Fichiers et déploiement');
@@ -109,6 +110,10 @@ const versioned = [...html.matchAll(/(?:src|href)="([a-z0-9_]+\.(?:js|css))(\?v=
 for (const [, f, q] of versioned) ok(q === `?v=${CFG.version}`, `index.html : ${f} doit porter ?v=${CFG.version} (lancez npm run release -- ${CFG.version})`);
 const scripts = [...html.matchAll(/<script src="([^"?]+)/g)].map(m => m[1]);
 for (const s of scripts) ok(fs.existsSync(path.join(W, s)), `script référencé introuvable : ${s}`);
+// Scripts partagés (variables globales) : un même nom déclaré deux fois écrase silencieusement le premier.
+const declared = {};
+for (const s of scripts) if (fs.existsSync(path.join(W, s))) for (const m of read(s).matchAll(/^(?:async\s+)?(?:function\s+|const\s+|let\s+|var\s+)([A-Za-z_$][\w$]*)/gm)) (declared[m[1]] = declared[m[1]] || []).push(s);
+for (const [n, fl] of Object.entries(declared)) ok(fl.length === 1, `nom global déclaré plusieurs fois : ${n} (${fl.join(', ')})`);
 const sw = read('sw.js'), shell = (sw.match(/const SHELL = \[([\s\S]*?)\];/) || [, ''])[1];
 for (const f of [...scripts, 'style.css', 'index.html', 'manifest.webmanifest']) ok(shell.includes(`./${f}'`), `sw.js : ${f} absent du cache hors ligne (SHELL)`);
 for (const m of shell.matchAll(/'\.\/([^']+)'/g)) ok(fs.existsSync(path.join(W, m[1])), `sw.js : fichier inexistant ${m[1]}`);

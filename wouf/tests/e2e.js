@@ -619,6 +619,13 @@ test('statistiques anonymes : désactivées par défaut, provenance, adresse, re
   const o = await boot({ query: '?proprio=1', hash: '#/plus' });
   assert.equal(await o.ev(() => OWNER), true); assert.ok(await o.page.$('a[href="https://woufapp.goatcounter.com"]'), 'lien « Mes statistiques » pour le propriétaire');
   noErrors(o); await o.ctx.close();
+  const g = await boot({ hash: '#/plus' }); await fakeCloud(g.page);
+  await g.ev(() => { CloudApi.signIn = async () => ({ email: 'Storacequentin@gmail.com ', name: 'Q', picture: '' }); });
+  await g.page.click('a[href="#/reglages"]'); await g.page.click('[data-act=g-signin]'); await g.page.waitForTimeout(300); await g.go('#/plus');
+  await g.page.waitForSelector('a[href="https://woufapp.goatcounter.com"]', { timeout: 3000 }); assert.equal(await g.ev(() => OWNER), true, 'propriétaire reconnu par son compte Google');
+  const x = await boot({ hash: '#/plus' }); await fakeCloud(x.page); await x.page.click('a[href="#/reglages"]'); await x.page.click('[data-act=g-signin]'); await x.page.waitForTimeout(300); await x.go('#/plus'); await x.page.waitForTimeout(200);
+  assert.equal(await x.page.$('a[href="https://woufapp.goatcounter.com"]'), null, 'un autre compte Google ne voit pas les statistiques');
+  noErrors(g); noErrors(x); await g.ctx.close(); await x.ctx.close();
 });
 
 test('nouvelle adresse : redirection sans carnet, transfert du carnet et des documents vers la nouvelle adresse', async () => {
@@ -653,6 +660,64 @@ test('nouvelle adresse : redirection sans carnet, transfert du carnet et des doc
   assert.deepEqual(errs, []); await ctx.close();
   // 3) sans « moved », aucune redirection ni bandeau
   const b = await boot(); assert.equal(await b.page.$('.move-card'), null); assert.ok(b.page.url().startsWith(BASE())); noErrors(b); await b.ctx.close();
+});
+
+test('administration : réservée au propriétaire, comptes, Plus offert, retrait, interrupteur de vente', async () => {
+  const b = await boot({ hash: '#/admin' }), p = b.page;
+  assert.match(await text(p, '#view'), /Réservé au propriétaire/);
+  await b.ev(() => { OWNER = true; }); await fakeCloud(p);
+  await b.ev(() => {
+    CloudApi.signIn = async () => ({ email: 'patron@test.fr', name: 'Patron', picture: '' });
+    window.__adm = { grants: {}, cfg: null };
+    Object.assign(AdminApi, {
+      listUsers: async () => [{ uid: 'u1', name: 'Alice', email: 'alice@test.fr', lastSeen: today(), firstSeen: today(), dogs: 1, cats: 0, lessons: 4, grant: window.__adm.grants.u1 || null },
+        { uid: 'u2', name: 'Bob', email: 'bob@test.fr', lastSeen: '2026-01-01', firstSeen: '2025-12-01', dogs: 0, cats: 2, lessons: 0, grant: null }],
+      setGrant: async (uid, g) => { window.__adm.grants[uid] = g; }, setConfig: async c => { window.__adm.cfg = c; },
+      myGrant: async () => window.__adm.mine || null, touch: async pr => { window.__adm.profile = pr; } });
+    render();
+  });
+  assert.match(await text(p, '#view'), /Connectez-vous avec le compte Google/);
+  await p.click('[data-act=g-signin]'); await p.waitForSelector('.adm-u');
+  assert.equal(await p.$$eval('.adm-u', l => l.length), 2); assert.match(await text(p, '.adm-tiles'), /2 comptes Google/);
+  // recherche
+  await p.fill('#adm-q', 'bob'); assert.deepEqual(await p.$$eval('.adm-u', l => l.map(e => e.hidden)), [true, false]); await p.fill('#adm-q', '');
+  // Plus offert à vie puis retrait
+  await p.click('[data-act=adm-grant][data-uid=u1][data-until=lifetime]'); await p.click('.sheet [data-ok]');
+  await p.waitForFunction(() => window.__adm.grants.u1 && window.__adm.grants.u1.until === 'lifetime');
+  assert.match(await text(p, '.adm-u'), /Plus offert à vie/);
+  await p.click('[data-act=adm-revoke][data-uid=u1]'); await p.click('.sheet [data-ok]');
+  await p.waitForFunction(() => window.__adm.grants.u1 === null);
+  // vente : bloquée tant que rien n'est prêt
+  assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), true); assert.match(await text(p, '#view'), /Lien de paiement Stripe à renseigner/);
+  await b.ev(() => { BILL.paymentLink = 'https://buy.stripe.com/test_abc'; Object.assign(LEGAL, { seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur' }); SUP.email = 'aide@q.fr'; render(true); });
+  assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), false);
+  await p.click('[data-act=adm-sale]'); await p.click('.sheet [data-ok]');
+  await p.waitForFunction(() => window.__adm.cfg && window.__adm.cfg.billingEnabled === true); assert.equal(await b.ev(() => BILL.enabled), true);
+  await p.click('[data-act=adm-sale]'); await p.click('.sheet [data-ok]');
+  await p.waitForFunction(() => window.__adm.cfg.billingEnabled === false); assert.equal(await b.ev(() => BILL.enabled), false);
+  // côté utilisateur : un Plus offert est pris en compte à la connexion, et retiré avec lui
+  await b.ev(async () => { BILL.enabled = true; BILL.freeUntil = null; window.__adm.mine = { until: 'lifetime' }; await accountSync(); });
+  assert.equal(await b.ev(() => plus()), true, 'Plus offert actif'); assert.equal(await b.ev(() => window.__adm.profile.email), 'patron@test.fr');
+  await b.ev(async () => { window.__adm.mine = null; await accountSync(); }); assert.equal(await b.ev(() => plus()), false, 'Plus retiré');
+  await b.ev(() => { S.grant = { until: '2020-01-01' }; }); assert.equal(await b.ev(() => plus()), false, 'offre expirée');
+  await b.ev(() => { BILL.enabled = false; });
+  noErrors(b); await b.ctx.close();
+});
+
+test('vente par lien de paiement Stripe : e-mail pré-rempli, page merci, activation par l’administration', async () => {
+  const b = await boot({ hash: '#/abo' }), p = b.page; await fakeCloud(p);
+  await b.ctx.route(/buy\.stripe\.com/, r => r.fulfill({ contentType: 'text/html', body: '<h1>Stripe</h1>' }));
+  await b.ev(() => { CloudApi.signIn = async () => ({ email: 'client@test.fr', name: 'Client', picture: '' });
+    Object.assign(BILL, { enabled: true, freeUntil: null, paymentLink: 'https://buy.stripe.com/test_abc', api: '' });
+    Object.assign(LEGAL, { seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur' }); render(); });
+  await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent');
+  assert.match(await text(p, '.sheet'), /activé sur votre compte sous 24 h/);
+  await p.check('#buy-consent');
+  await Promise.all([p.waitForURL(/buy\.stripe\.com/), p.click('[data-act=buy-go]')]);
+  const u = new URL(p.url()); assert.equal(u.pathname, '/test_abc'); assert.equal(u.searchParams.get('prefilled_email'), 'client@test.fr');
+  await p.goto(`http://localhost:${PORT}/wouf/#/merci`); await p.waitForSelector('#view > *');
+  assert.match(await text(p, '#view'), /sous 24 h.*client@test\.fr/);
+  noErrors(b); await b.ctx.close();
 });
 
 /* ================= exécution ================= */

@@ -142,7 +142,7 @@ Les fiches santé, premiers secours, toxiques, leçons et calculs (ration, plan 
 ## Statistiques (tableau de bord privé)
 Wouf compte ses visites avec **GoatCounter** : pas de cookie, pas d'identifiant, aucune donnée saisie par l'utilisateur. Seuls le nom de l'écran ouvert, quelques actions (`animal-ajoute-chien`/`-chat`, `lecon-acquise`, `balade-enregistree`, `offre-recompense-vue`, `installation`), la taille d'écran et la provenance sont envoyés. Le tableau de bord n'est visible que par le titulaire du compte GoatCounter.
 - **Actif** : compte GoatCounter `woufapp` → tableau de bord https://woufapp.goatcounter.com (connexion du propriétaire). Code dans `config.js` → `stats.goatcounter` ; vide = aucune mesure.
-- **Mode propriétaire** : ouvrir une fois `https://woufapp.fr/?proprio=1` sur son téléphone → bouton « 📊 Mes statistiques » en haut de Plus, et ses propres visites ne sont plus comptées (`?proprio=0` pour annuler, à refaire après un transfert d'adresse ou un effacement du navigateur).
+- **Mode propriétaire** : automatique quand on est connecté avec un compte Google listé dans `config.js → ownerHashes` (empreinte SHA-256 de l’adresse en minuscules : `printf %s adresse | sha256sum`). Sinon, ouvrir une fois `https://woufapp.fr/?proprio=1` sur son téléphone → bouton « 📊 Mes statistiques » en haut de Plus, et ses propres visites ne sont plus comptées (`?proprio=0` pour annuler, à refaire après un transfert d'adresse ou un effacement du navigateur).
 - **Provenance des réseaux sociaux** : dans les bios, utiliser `…/wouf/?src=insta` et `…/wouf/?src=tiktok`. La valeur apparaît comme « referrer » dans GoatCounter.
 - La mesure ne part que depuis le site publié (https). L'utilisateur peut la refuser dans Réglages → Confidentialité ; la politique de confidentialité la mentionne automatiquement dès que le code est renseigné.
 
@@ -152,3 +152,24 @@ Wouf compte ses visites avec **GoatCounter** : pas de cookie, pas d'identifiant,
 - Firebase → Authentication → Settings → Authorized domains : `woufapp.fr` doit y figurer (connexion Google).
 - Relais de paiement : `ALLOWED_ORIGIN` contient `https://woufapp.fr`.
 - Bascule de l'ancienne adresse : `config.js → site.moved: true`. Sur `ikeupods-del.github.io/Quentools/wouf/`, un visiteur sans carnet est redirigé ; un utilisateur avec un carnet voit « Transférer mon carnet » (copie directe des données et documents vers woufapp.fr, rien n'est supprimé). Les comptes Google retrouvent tout en se reconnectant.
+
+## Administration (propriétaire)
+Onglet **Plus → 🛠️ Administration** (visible seulement pour le propriétaire connecté avec Google, voir `ownerHashes`) :
+- **Comptes** : utilisateurs connectés avec Google (nom, e-mail, dernière visite, nombre d'animaux et de leçons). Les utilisateurs sans compte n'apparaissent que dans les statistiques de visite.
+- **Wouf Plus offert** : « À vie », « 1 mois » ou « Retirer ». Pris en compte à la prochaine ouverture de l'app de l'utilisateur (connecté avec Google).
+- **Vente** : bouton « Ouvrir la vente / Repasser en gratuit » (document Firestore `wouf_admin/config`). Il reste bloqué tant que les infos légales (`config.js → legal`) et le relais de paiement (`billing.api`) ne sont pas en place : l'app ignore l'interrupteur dans ce cas.
+- **Sécurité = règles Firestore** (Firebase → Firestore Database → Règles), à ajouter dans `match /databases/{database}/documents { … }`, en remplaçant ADRESSE par l'adresse Gmail du propriétaire :
+```
+function woufAdmin() { return request.auth != null && request.auth.token.email == 'ADRESSE' && request.auth.token.email_verified == true; }
+match /wouf_users/{uid} { allow read, write: if request.auth != null && request.auth.uid == uid; allow read: if woufAdmin(); }
+match /wouf_grants/{uid} { allow read: if request.auth != null && request.auth.uid == uid; allow read, write: if woufAdmin(); }
+match /wouf_admin/{doc} { allow read: if true; allow write: if woufAdmin(); }
+```
+
+## Vendre avec des liens de paiement Stripe (sans relais)
+1. Stripe → **Catalogue de produits** : produit « Wouf Plus à vie », prix unique **19,99 €** (le prix de `plans[0].price`). Optionnel : 2ᵉ prix **9,99 €** pour l'offre récompense.
+2. Stripe → **Liens de paiement** → Créer : un lien par prix. Onglet « Après le paiement » → « Rediriger vers votre site » : `https://woufapp.fr/#/merci`. Activer PayPal / Apple Pay / Google Pay dans Paramètres → Moyens de paiement si souhaité.
+3. Mettre les liens dans `config.js` → `billing.paymentLink` (et `rewardLink`), compléter `legal` et `support.email`, publier.
+4. Ouvrir la vente : Plus → Administration → « Ouvrir la vente » (bloqué tant qu'un prérequis manque).
+5. **À chaque vente** : Stripe envoie un e-mail (adresse de l'acheteur pré-remplie = son compte Google). Aller dans Administration → rechercher l'e-mail → « ⭐ À vie ». L'acheteur l'a à sa prochaine ouverture de l'app (promesse affichée : sous 24 h).
+Plus tard, le relais Cloudflare (`billing.api`) automatise l'activation ; il prend le pas sur les liens.

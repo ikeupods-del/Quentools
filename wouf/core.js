@@ -53,7 +53,7 @@ const humanAge = birth => { const a = ageYears(birth); return a < 0.2 ? null : M
 function blank() {
   return {
     v: 1, dogs: [], events: [], weights: [], meds: [], medLog: {}, journal: [], expenses: [], docs: [], foods: [], contacts: [],
-    owner: { name: '', phone: '' }, settings: { notif: false, lastNotif: '', lastBackup: '', home: null, noStats: false }, sub: null,
+    owner: { name: '', phone: '' }, grant: null, settings: { notif: false, lastNotif: '', lastBackup: '', home: null, noStats: false }, sub: null,
     current: null, installedAt: today(), edu: {}, walks: [], names: [], updatedAt: 0, schema: SCHEMA
   };
 }
@@ -123,11 +123,19 @@ const STATS_SRC = (() => {
     const r = document.referrer && new URL(document.referrer); return r && r.hostname !== location.hostname ? r.hostname : '';
   } catch (e) { return ''; }
 })();
-/* Mode propriétaire : ouvrir une fois ?proprio=1 sur son appareil affiche « Mes statistiques » dans Plus
-   et ne compte plus ses propres visites (?proprio=0 pour annuler). Aucun droit : le tableau de bord reste protégé par son mot de passe. */
-const OWNER = (() => {
+/* Mode propriétaire : connexion Google avec un compte de config.ownerHashes, ou ?proprio=1 ouvert une fois sur l'appareil
+   → « Mes statistiques » dans Plus, et ses propres visites ne sont plus comptées (?proprio=0 pour annuler).
+   Aucun droit : le tableau de bord reste protégé par son mot de passe. */
+let OWNER = (() => {
   try { const q = new URLSearchParams(location.search).get('proprio'); if (q === '1') localStorage.setItem('wouf:owner', '1'); if (q === '0') localStorage.removeItem('wouf:owner'); return localStorage.getItem('wouf:owner') === '1'; } catch (e) { return false; }
 })();
+async function ownerCheck(email) {
+  if (OWNER || !email || ownerCheck.last === email || !(window.crypto && crypto.subtle)) return;
+  ownerCheck.last = email;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(email).trim().toLowerCase()));
+  const h = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  if (((window.WOUF_CONFIG || {}).ownerHashes || []).includes(h)) { OWNER = true; try { localStorage.setItem('wouf:owner', '1'); } catch (e) { /* ignore */ } render(true); }
+}
 const statsCode = () => { const c = ((window.WOUF_CONFIG || {}).stats || {}).goatcounter || ''; return /^[a-z0-9-]{2,50}$/.test(c) ? c : ''; };
 function statsUrl(name, event, ref) {
   const q = new URLSearchParams({ p: name, t: event ? name : 'Wouf', e: event ? 'true' : 'false', s: `${screen.width}x${screen.height}`, rnd: Math.random().toString(36).slice(2) });
@@ -244,7 +252,9 @@ function grandfathered() {
   if (!BILL.enabled || !BILL.grandfatherBefore || S.installedAt >= BILL.grandfatherBefore) return false;
   const u = BILL.grandfatherUntil; return !u || u === 'lifetime' || today() <= u;
 }
-const subActive = () => !!(S.sub && S.sub.active && (S.sub.lifetime || (S.sub.until && Date.now() < Date.parse(S.sub.until))));
+/* Wouf Plus offert par le propriétaire (admin.js) : relu à chaque connexion Google. */
+const grantActive = () => !!(S.grant && (S.grant.until === 'lifetime' || (S.grant.until && today() <= S.grant.until)));
+const subActive = () => grantActive() || !!(S.sub && S.sub.active && (S.sub.lifetime || (S.sub.until && Date.now() < Date.parse(S.sub.until))));
 function plus() { if (PREVIEW === 'free') return false; if (PREVIEW === 'plus') return true; return isFreeWindow() || grandfathered() || subActive(); }
 const isPremium = f => (BILL.premium || []).includes(f);
 const allowed = f => plus() || !isPremium(f);

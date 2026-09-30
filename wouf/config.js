@@ -6,14 +6,18 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.11.0',
+  version: '1.12.0',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
     freeUntil: null,           // ex. '2027-03-31' : offre de lancement, tout reste gratuit jusqu'à cette date même si enabled=true
     grandfatherBefore: null,   // ex. '2027-04-01' : les utilisateurs installés AVANT cette date gardent Plus…
     grandfatherUntil: 'lifetime', // …jusqu'à cette date ('2027-12-31') ou 'lifetime' (à vie)
-    api: '',                   // URL du relais de paiement (voir wouf/billing-worker/). Vide = boutons de paiement désactivés
+    api: '',                   // URL du relais de paiement (voir wouf/billing-worker/) : achat vérifié et activé automatiquement
+    // SANS relais : liens de paiement Stripe (Stripe → Liens de paiement). L'acheteur paie, Stripe prévient le propriétaire,
+    // qui active Wouf Plus dans Plus → Administration (« ⭐ À vie »). Après paiement, rediriger vers https://woufapp.fr/#/merci
+    paymentLink: '',           // ex. https://buy.stripe.com/xxxx (prix normal : plans[0].price)
+    rewardLink: '',            // ex. https://buy.stripe.com/yyyy (offre récompense : rewardOffer.price) ; vide = pas d'offre en mode liens
     // Achat unique « à vie ». Le prix AFFICHÉ ici doit être identique au prix Stripe (PRICE_LIFETIME) : c'est Stripe qui encaisse.
     plans: [{ id: 'lifetime', label: 'Wouf Plus à vie', price: '19,99 €', per: 'paiement unique', badge: 'Sans abonnement' }],
     // Offre récompense : quand TOUTES les leçons gratuites sont terminées (quiz compris), Wouf Plus passe à ce prix.
@@ -33,7 +37,10 @@ window.WOUF_CONFIG = {
   // Statistiques anonymes (GoatCounter : sans cookie, sans identifiant, sans aucune donnée saisie).
   // Seuls le nom de l'écran ouvert et quelques actions (animal ajouté, leçon acquise, balade…) sont comptés.
   // Mettre le code du compte GoatCounter (ex. 'wouf' pour https://wouf.goatcounter.com). Vide = aucune mesure.
-  stats: { goatcounter: 'woufapp' },   // tableau de bord : https://woufapp.goatcounter.com
+  stats: { goatcounter: 'woufapp' },
+  // Compte(s) Google du propriétaire (empreinte SHA-256 de l'adresse en minuscules, jamais l'adresse elle-même) :
+  // connecté avec l'un d'eux, on voit « Mes statistiques » dans Plus et ses visites ne sont pas comptées.
+  ownerHashes: ['5551fc3e72a62b8fa55d701333c1151c37c9f61e98d805ad7cbba408e313817e'],   // tableau de bord : https://woufapp.goatcounter.com
 
   support: {
     email: '',                       // ex. support@votre-domaine.fr  ← à renseigner avant la mise en vente

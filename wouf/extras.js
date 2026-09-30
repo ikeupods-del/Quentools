@@ -12,6 +12,7 @@ function printHTML(html) {
 
 /* ---------- Menu Plus ---------- */
 ROUTES.plus = function plusMenu() {
+  if (CLOUD.user) ownerCheck(CLOUD.user.email);
   const quick = [['#/triage', '🩺', 'Que faire ?'], ['#/meteo', '🌦️', 'Météo balade'], ['#/recherche', '🔎', 'Rechercher'], ['#/noms', '🏷️', 'Trouver un nom']];
   const groups = [
     ['Santé', [
@@ -39,7 +40,7 @@ ROUTES.plus = function plusMenu() {
   ];
   const row = ([h, i, t, s]) => `<a class="row" href="${h}"><span class="ico">${i}</span><span class="grow"><b>${t}</b><small>${s}</small></span><span class="chev">›</span></a>`;
   return `<div class="page-h"><h1>Plus</h1></div>
-  ${OWNER && statsCode() ? `<a class="row card" href="https://${statsCode()}.goatcounter.com" target="_blank" rel="noopener"><span class="ico">📊</span><span class="grow"><b>Mes statistiques</b><small>Visiteurs, provenance, actions · réservé au propriétaire</small></span><span class="chev">›</span></a>` : ''}
+  ${OWNER ? `<div class="list card menu"><a class="row" href="#/admin"><span class="ico">🛠️</span><span class="grow"><b>Administration</b><small>Comptes, Wouf Plus offert, ouverture de la vente</small></span><span class="chev">›</span></a>${statsCode() ? `<a class="row" href="https://${statsCode()}.goatcounter.com" target="_blank" rel="noopener"><span class="ico">📊</span><span class="grow"><b>Mes statistiques</b><small>Visiteurs, provenance, actions · réservé au propriétaire</small></span><span class="chev">›</span></a>` : ''}</div>` : ''}
   <section class="grid4">${quick.map(([h, i, t]) => `<a class="tile sm" href="${h}"><span>${i}</span>${t}</a>`).join('')}</section>
   ${groups.map(([g, items]) => `<h2 class="grp">${g}</h2><div class="list card menu">${items.map(row).join('')}</div>`).join('')}
   <p class="mut center small">Wouf ${esc(CFG.version || '')} · Les informations de santé sont indicatives et ne remplacent pas l’avis d’un vétérinaire.</p>`;
