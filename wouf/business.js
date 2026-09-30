@@ -5,6 +5,8 @@
 const LEGAL = CFG.legal || {}, SUP = CFG.support || {};
 const planOf = () => (BILL.plans || [])[0] || { label: 'Wouf Plus', price: '', per: '' };
 const isPriority = () => subActive();
+/* Adresse qui reçoit les demandes d'assistance : celle d'assistance si elle est renseignée, sinon l'e-mail de contact (mentions légales). */
+const supportTo = () => SUP.email || LEGAL.email || '';
 const ctaLabel = () => subActive() ? '⭐ Wouf Plus actif' : BILL.enabled ? `⭐ Souscrire à Wouf+ · ${planOf().price} ${planOf().per === 'paiement unique' ? 'à vie' : ''}`.trim() : '⭐ Découvrir Wouf+ (gratuit pour le moment)';
 const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free === undefined || !!l.free === free)).length, nCat = (free) => LESSONS.filter(l => l.sp === 'cat' && (free === undefined || !!l.free === free)).length;
 const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
@@ -67,6 +69,7 @@ function applySub(j) {
   save();
 }
 async function refreshSub(force) {
+  if (!BILL.api && typeof remoteRefresh === 'function' && remoteRefresh.p) await remoteRefresh.p;   // réglages de vente (adresse du relais) pas encore arrivés
   if (!BILL.api) return;
   try {
     if (!CLOUD.user) { const u = await CloudApi.restore().catch(() => null); if (u) CLOUD.user = u; }
@@ -222,8 +225,8 @@ ACT['support-send'] = async () => {
   if (msg.length < 10) return toast('Décrivez votre demande (10 caractères minimum)');
   if (!/^\S+@\S+\.\S+$/.test(email)) return toast('Indiquez une adresse e-mail valide pour recevoir la réponse');
   const tag = isPriority() ? '[PRIORITAIRE] ' : '', body = msg + (diag ? '\n\n--- Informations techniques ---\n' + diag : '');
-  if (!SUP.email) { try { await navigator.clipboard.writeText(body); } catch (e) { /* ignore */ } return toast('Assistance non configurée : message copié dans le presse-papiers'); }
-  NAV.mail(`mailto:${SUP.email}?subject=${encodeURIComponent(tag + 'Wouf – ' + cat)}&body=${encodeURIComponent(body)}`);
+  if (!supportTo()) { try { await navigator.clipboard.writeText(body); } catch (e) { /* ignore */ } return toast('Assistance non configurée : message copié dans le presse-papiers'); }
+  NAV.mail(`mailto:${supportTo()}?subject=${encodeURIComponent(tag + 'Wouf – ' + cat)}&body=${encodeURIComponent(body)}`);
 };
 
 /* ---------- Pages légales ---------- */

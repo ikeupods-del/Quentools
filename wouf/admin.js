@@ -48,11 +48,11 @@ const REMOTE_FIELDS = { api: [BILL, 'api', 'Adresse du relais d’activation aut
 const REMOTE_DEF = Object.fromEntries(Object.entries(REMOTE_FIELDS).map(([k, [o, p]]) => [k, o[p] || '']));
 const remoteCached = () => { try { return JSON.parse(localStorage.getItem('wouf:remote') || 'null') || {}; } catch (e) { return {}; } };
 function remoteStore(c) { const next = { ...remoteCached(), ...c }; try { localStorage.setItem('wouf:remote', JSON.stringify(next)); } catch (e) { /* ignore */ } return applySaleConfig(next); }
-const legalFull = () => ['seller', 'form', 'address', 'siret', 'email', 'mediator'].every(k => LEGAL[k]) && !!SUP.email;
+const legalFull = () => ['seller', 'form', 'address', 'siret', 'email', 'mediator'].every(k => LEGAL[k]) && !!supportTo();
 // Interrupteur libre (choix du propriétaire) : seule condition, un moyen de paiement PayPal, sinon le bouton « Payer » ne mènerait nulle part.
 const saleReady = () => !!(payReady() && (BILL.plans || []).length);
 const saleMissing = () => [!payReady() && 'Adresse PayPal (ou lien PayPal) à renseigner'].filter(Boolean);
-const legalMissing = () => [['seller', 'nom'], ['form', 'statut'], ['address', 'adresse'], ['siret', 'SIRET'], ['email', 'e-mail'], ['mediator', 'médiateur de la consommation']].filter(([k]) => !LEGAL[k]).map(([, l]) => l).concat(SUP.email ? [] : ['e-mail d’assistance']);
+const legalMissing = () => [['seller', 'nom'], ['form', 'statut'], ['address', 'adresse'], ['siret', 'SIRET'], ['email', 'e-mail'], ['mediator', 'médiateur de la consommation']].filter(([k]) => !LEGAL[k]).map(([, l]) => l).concat(supportTo() ? [] : ['e-mail d’assistance']);
 function applySaleConfig(c) {
   if (!c) return false;
   let changed = false;
@@ -67,10 +67,13 @@ function applySaleConfig(c) {
 }
 try { applySaleConfig(JSON.parse(localStorage.getItem('wouf:remote') || 'null')); } catch (e) { /* stockage indisponible */ }
 function remoteRefresh() {
-  return AdminApi.remoteConfig().then(c => {
+  remoteRefresh.p = AdminApi.remoteConfig().then(c => {
     if (!c) return; try { localStorage.setItem('wouf:remote', JSON.stringify(c)); } catch (e) { /* ignore */ }
     if (applySaleConfig(c)) render(true);
+    // L'adresse du relais vient peut-être d'arriver : on peut enfin demander le statut d'achat (sinon un paiement déjà fait resterait invisible).
+    if (BILL.api && CLOUD.user && !subActive()) return refreshSub(true).then(() => { if (subActive()) render(true); });
   }).catch(() => { /* hors ligne : on garde le dernier état connu */ });
+  return remoteRefresh.p;
 }
 
 /* ---------- Côté utilisateur connecté : droits offerts + résumé du compte ---------- */
