@@ -111,43 +111,54 @@ ROUTES.home = function home() {
   const bd = d.birth ? (() => { const b = parseD(d.birth), n = new Date(); let nx = new Date(n.getFullYear(), b.getMonth(), b.getDate()); if (nx < parseD(today())) nx.setFullYear(n.getFullYear() + 1); return diffDays(iso(nx), today()); })() : null;
   const R = 34, C = 2 * Math.PI * R, ring = `<svg viewBox="0 0 80 80" class="ring"><circle cx="40" cy="40" r="${R}" class="trk"/><circle cx="40" cy="40" r="${R}" class="val ${sc.total >= 80 ? 'ok' : sc.total >= 50 ? 'warn' : 'bad'}" stroke-dasharray="${(C * sc.total / 100).toFixed(1)} ${C.toFixed(1)}"/><text x="40" y="46" text-anchor="middle">${sc.total}</text></svg>`;
   const backupOld = S.settings.lastBackup ? diffDays(today(), S.settings.lastBackup) > 45 : S.events.length + S.weights.length > 5 && diffDays(today(), S.installedAt) > 14;
+  const tips = tipsOf(d), ti = (Math.floor(Date.now() / 864e5) + (HOME.tip || 0)) % tips.length;
+  const todo = late.concat(soon), more = Math.max(0, todo.length + miss.length - 3);
+  const band = r => { const cls = r.days < 0 ? 'bad' : r.days <= 14 ? 'warn' : 'ok'; return `<div class="band lv-${cls}"><span class="ico">${r.icon}</span><span class="grow"><b>${esc(r.title)}</b><small>${dueText(r.days)}</small></span>${r.kind === 'event' ? `<button class="btn xs primary" data-act="renew" data-id="${r.ev.id}">Fait ✓</button>` : `<button class="btn xs" data-act="edit-dog" data-id="${r.dogId}">Modifier</button>`}</div>`; };
+  const mband = m => `<div class="band lv-warn"><span class="ico">${TYPES[m.type].icon}</span><span class="grow"><b>${m.msg}</b><small>Date manquante</small></span><button class="btn xs" data-act="add-event" data-type="${m.type}">Ajouter</button></div>`;
+  const rows = todo.map(band).concat(miss.map(mband));
   return `
-  <section class="card hero"><button class="hero-av" data-act="edit-dog" data-id="${d.id}" aria-label="Modifier la fiche">${avatar(d, 'xl')}</button>
-    <div class="hero-txt"><h1>${esc(d.name)}</h1><p>${esc(d.breed || 'Race non renseignée')}${d.sex ? ' · ' + (d.sex === 'F' ? 'Femelle' : 'Mâle') : ''}</p>
-    <p class="chips-i"><span class="pill">${esc(ageText(d.birth))}</span><span class="pill">${lifeStage(d)}</span>${ha ? `<span class="pill">≈ ${ha} ans humains</span>` : ''}${lw ? `<span class="pill">${fmtKg(lw.kg)}</span>` : ''}</p>
+  <section class="tipbar"><span class="ico">💡</span><p><b>Le saviez-vous ?</b> ${esc(tips[ti])}</p><button class="btn xs" data-act="tip-next" aria-label="Autre astuce">↻</button></section>
+
+  <section class="card hero hero-c"><button class="hero-av" data-act="edit-dog" data-id="${d.id}" aria-label="Modifier la fiche">${avatar(d, 'xl')}</button>
+    <div class="hero-txt"><h1>${esc(d.name)}</h1><p class="mut small">${esc(d.breed || 'Race non renseignée')}${d.sex ? ' · ' + (d.sex === 'F' ? 'Femelle' : 'Mâle') : ''} · ${esc(ageText(d.birth))}${ha ? ` · ≈ ${ha} ans humains` : ''}</p>
     ${bd !== null && bd <= 30 ? `<p class="bday">🎂 ${bd === 0 ? 'C’est son anniversaire aujourd’hui !' : 'Anniversaire dans ' + bd + ' j'}</p>` : ''}</div></section>
 
-  <section class="card"><div class="card-h"><h2>À faire</h2><a class="lnk" href="#/carnet">Carnet →</a></div>
-    ${late.map(reminderRow).join('')}${soon.map(reminderRow).join('')}
-    ${miss.map(m => `<div class="row"><span class="ico">${TYPES[m.type].icon}</span><span class="grow"><b>${m.msg}</b><small>Ajoutez la dernière date pour activer les rappels</small></span><button class="btn sm" data-act="add-event" data-type="${m.type}">Ajouter</button></div>`).join('')}
-    ${!late.length && !soon.length && !miss.length ? `<p class="okmsg">✅ Tout est à jour. ${rem[0] ? `Prochaine échéance : ${esc(rem[0].title)} ${dueText(rem[0].days)}.` : ''}</p>` : ''}</section>
+  <section class="card compact"><div class="card-h"><h2>À faire</h2><a class="lnk" href="#/carnet">Carnet →</a></div>
+    ${rows.length ? rows.slice(0, 3).join('') + (more ? `<details class="acc-in"><summary><small>Voir ${more} de plus</small></summary>${rows.slice(3).join('')}</details>` : '')
+      : `<div class="band lv-ok"><span class="ico">✅</span><span class="grow"><b>Tout est à jour</b><small>${rem[0] ? `Prochaine échéance : ${esc(rem[0].title)} ${dueText(rem[0].days)}` : 'Aucun rappel en attente'}</small></span></div>`}</section>
 
   ${meteoHome(d)}
 
-  ${meds.length ? `<section class="card"><div class="card-h"><h2>Traitements du jour</h2><a class="lnk" href="#/suivi" data-act="tab-suivi" data-tab="soins">Gérer →</a></div>${meds.map(medRow).join('')}</section>` : ''}
+  ${meds.length ? `<section class="card compact"><div class="card-h"><h2>Traitements du jour</h2><a class="lnk" href="#/suivi" data-act="tab-suivi" data-tab="soins">Gérer →</a></div>${meds.map(medRow).join('')}</section>` : ''}
 
-  ${backupOld ? `<section class="card note"><b>💾 Pensez à sauvegarder</b><p>Vos données sont sur ce téléphone. Une sauvegarde chiffrée évite de tout perdre en cas de changement d’appareil.</p><a class="btn sm" href="#/sauvegarde">Sauvegarder</a></section>` : (!CLOUD.user && CloudApi.available() ? `<section class="card note"><b>☁️ Sauvegardez avec Google</b><p>Retrouvez le carnet de ${esc(d.name)} sur un autre téléphone, et ne perdez rien si vous changez d’appareil.</p><button class="btn sm primary" data-act="g-signin">Se connecter avec Google</button></section>` : '')}
-  ${(() => { const nx = nextLesson(d), es = eduStats(d); return nx ? `<a class="card banner edu-banner" href="#/seance?id=${nx.id}"><b>🎓 Séance du jour : ${nx.icon} ${esc(nx.title)}</b><span>${es.streak ? '🔥 ' + es.streak + ' jour' + (es.streak > 1 ? 's' : '') + ' d’affilée · ' : ''}2 à 5 minutes suffisent →</span></a>` : ''; })()}
-
-  <section class="card"><div class="card-h"><h2>Score de suivi</h2></div><div class="score">${ring}<ul>${sc.parts.map(p => `<li><span class="dot ${p[2] >= 1 ? 'ok' : p[2] > 0 ? 'warn' : 'bad'}"></span>${p[0]}</li>`).join('')}</ul></div>
-    ${sc.tips.length ? `<p class="mut">${sc.tips.slice(0, 2).join(' · ')}</p>` : '<p class="okmsg">Suivi exemplaire, bravo 👏</p>'}</section>
-
-  <section class="card"><div class="card-h"><h2>Poids</h2><button class="lnk" data-act="add-weight">＋ Peser</button></div>
-    ${dogWeights(d.id).length > 1 ? lineChart(dogWeights(d.id).map(w => ({ x: w.date, y: w.kg })), { band: idealBand(d), unit: 'kg', height: 140 }) : `<p class="mut">${lw ? 'Ajoutez une nouvelle pesée pour voir la courbe.' : 'Aucune pesée enregistrée.'}</p>`}
-    ${ws ? `<p class="${ws.cls}">${ws.txt}</p>` : ''}</section>
-
-  <section class="grid3"><a class="tile sm" href="#/triage"><span>🩺</span>Que faire ?</a><a class="tile sm" href="#/meteo"><span>🌦️</span>Météo balade</a><a class="tile sm" href="#/noms"><span>🏷️</span>Trouver un nom</a></section>
-  ${spOf(d).id === 'dog' ? `<a class="card banner" href="#/balade"><b>🦮 Balades ${allowed('tracker') ? '' : '<span class="pill plus">Plus</span>'}</b><span>${allowed('tracker') ? (() => { const m = walkMinutes(walksOn(d.id, today())), g = dailyGoal(d); return m + ' / ' + g + ' min aujourd’hui · lancer une balade →'; })() : 'Suivi GPS, tracé et objectif du jour →'}</span></a>` : ''}
-  <section class="grid2">
-    <button class="tile" data-act="add-event" data-type="vaccine"><span>💉</span>Vaccin</button>
-    <button class="tile" data-act="add-event" data-type="parasite"><span>🦟</span>Antipuces</button>
-    <button class="tile" data-act="add-event" data-type="visit"><span>🩺</span>Consultation</button>
-    <button class="tile" data-act="add-expense"><span>💶</span>Dépense</button>
+  <section class="wgrid">
+    <details class="card wdg" id="w-score"><summary><span class="wring">${ring}</span><span class="grow"><b>Suivi santé</b><small>${sc.total >= 80 ? 'Excellent' : sc.total >= 50 ? 'À améliorer' : 'À reprendre'}</small></span></summary>
+      <ul class="wl">${sc.parts.map(p => `<li><span class="dot ${p[2] >= 1 ? 'ok' : p[2] > 0 ? 'warn' : 'bad'}"></span>${p[0]}</li>`).join('')}</ul>
+      ${sc.tips.length ? `<p class="mut small">${sc.tips.slice(0, 2).join(' · ')}</p>` : '<p class="okmsg small">Suivi exemplaire, bravo 👏</p>'}</details>
+    <details class="card wdg" id="w-weight"><summary><span class="wico">⚖️</span><span class="grow"><b>${lw ? fmtKg(lw.kg) : 'Poids'}</b><small class="${ws ? ws.cls : ''}">${ws ? esc(ws.txt) : lw ? 'Pesé il y a ' + Math.max(0, diffDays(today(), lw.date)) + ' j' : 'Aucune pesée'}</small></span></summary>
+      ${dogWeights(d.id).length > 1 ? lineChart(dogWeights(d.id).map(w => ({ x: w.date, y: w.kg })), { band: idealBand(d), unit: 'kg', height: 120 }) : `<p class="mut small">${lw ? 'Ajoutez une nouvelle pesée pour voir la courbe.' : 'Aucune pesée enregistrée.'}</p>`}
+      <button class="btn sm" data-act="add-weight">＋ Peser</button></details>
   </section>
-  ${subActive() ? '' : `<section class="card plus-cta"><div><b>⭐ Wouf+ · ${esc(planLine())}</b><small>${BILL.enabled ? nDog(false) + ' leçons chien, ' + nCat(false) + ' chat, GPS, bilan santé, assistance prioritaire' : 'Offert pendant le lancement : tout est débloqué'}</small></div><button class="btn primary sm" data-act="subscribe">${BILL.enabled ? 'Souscrire' : 'Découvrir'}</button></section>`}
-  <section class="card don-card"><div><b>❤️ Un geste pour les animaux sans famille</b><small>Faites un don à ${esc(donation().name)}, directement sur le site officiel.</small></div><a class="btn primary sm" href="${esc(donation().url)}" target="_blank" rel="noopener noreferrer">Faire un don</a></section>
-  <section class="card tip"><b>💡 Le saviez-vous ?</b><p>${tipsOf(d)[Math.floor(Date.now() / 864e5) % tipsOf(d).length]}</p></section>`;
+
+  <section class="card qrow" aria-label="Ajouter rapidement">
+    <button data-act="add-event" data-type="vaccine"><span>💉</span>Vaccin</button>
+    <button data-act="add-event" data-type="parasite"><span>🦟</span>Antipuces</button>
+    <button data-act="add-event" data-type="visit"><span>🩺</span>Consult.</button>
+    <button data-act="add-expense"><span>💶</span>Dépense</button>
+    <button data-act="add-weight"><span>⚖️</span>Poids</button>
+    <a href="#/triage"><span>🚑</span>Que faire ?</a>
+    <a href="#/guides"><span>📚</span>Guides</a>
+    <a href="#/noms"><span>🏷️</span>Noms</a>
+  </section>
+
+  ${backupOld ? `<section class="card note compact"><b>💾 Pensez à sauvegarder</b> <a class="btn xs" href="#/sauvegarde">Sauvegarder</a></section>` : ''}
+  ${(() => { const nx = nextLesson(d), es = eduStats(d); return nx ? `<a class="card banner edu-banner" href="#/seance?id=${nx.id}"><b>🎓 Séance du jour : ${nx.icon} ${esc(nx.title)}</b><span>${es.streak ? '🔥 ' + es.streak + ' j d’affilée · ' : ''}2 à 5 minutes →</span></a>` : ''; })()}
+  ${spOf(d).id === 'dog' ? `<a class="card banner" href="#/balade"><b>🦮 Balades ${allowed('tracker') ? '' : '<span class="pill plus">Plus</span>'}</b><span>${allowed('tracker') ? (() => { const m = walkMinutes(walksOn(d.id, today())), g = dailyGoal(d); return m + ' / ' + g + ' min aujourd’hui →'; })() : 'Suivi GPS, tracé et objectif du jour →'}</span></a>` : ''}
+  ${subActive() ? '' : `<section class="card plus-cta compact"><div><b>⭐ Wouf+ · ${esc(planLine())}</b><small>${BILL.enabled ? 'Leçons, GPS, bilan santé, guides, assistance prioritaire' : 'Offert pendant le lancement : tout est débloqué'}</small></div><button class="btn primary sm" data-act="subscribe">${BILL.enabled ? 'Souscrire' : 'Découvrir'}</button></section>`}
+  <section class="card don-card compact"><div><b>❤️ Aider les animaux sans famille</b><small>Don à ${esc(donation().name)}, sur le site officiel.</small></div><a class="btn sm" href="${esc(donation().url)}" target="_blank" rel="noopener noreferrer">Faire un don</a></section>`;
 };
+const HOME = { tip: 0 };
+ACT['tip-next'] = () => { HOME.tip++; render(true); };
 ACT.renew = ({ id }) => {
   const ev = S.events.find(e => e.id === id), gap = ev.next ? diffDays(ev.next, ev.date) : 0;
   eventForm({ ...ev, id: null, date: today(), next: gap > 0 ? addDays(today(), gap) : '', cost: '', notes: '' }, false);

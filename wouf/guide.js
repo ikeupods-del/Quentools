@@ -134,7 +134,7 @@ function meteoLocate() {
   const h = S.settings.home, fallback = () => h ? loadMeteo(h.lat, h.lon, h.label) : (METEO.st = 'error', METEO.err = 'Localisation refusée. Enregistrez votre ville dans « SOS vétérinaires » pour l’utiliser ici.', render(true));
   if (!navigator.geolocation) return fallback();
   METEO.st = 'loading'; render(true);
-  navigator.geolocation.getCurrentPosition(p => loadMeteo(p.coords.latitude, p.coords.longitude, 'Ma position'), fallback, { timeout: 10000, maximumAge: 300000 });
+  navigator.geolocation.getCurrentPosition(p => { const lat = Math.round(p.coords.latitude * 100) / 100, lon = Math.round(p.coords.longitude * 100) / 100; S.settings.home = { lat, lon, label: 'Ma position' }; save(); loadMeteo(lat, lon, 'Ma position'); }, fallback, { timeout: 10000, maximumAge: 300000 });   // position arrondie (~1 km) gardée : plus besoin de la redemander
 }
 
 /* ---------- Le chien de la météo : scène illustrée selon le temps ---------- */
@@ -242,25 +242,35 @@ async function meteoNotify(M) {
 }
 const WALK_VERDICT = { ok: ['👍', 'Bon moment pour sortir'], warn: ['⚠️', 'Sortez avec précaution'], bad: ['⛔', 'Mieux vaut éviter de sortir maintenant'] };
 function meteoHome(d) {
-  if (METEO.st === 'idle' && !METEO.homeTried) {
-    METEO.homeTried = true; const c = meteoCacheGet(), h = S.settings.home;
-    if (c) { METEO.data = c.data; METEO.label = c.label; METEO.st = 'done'; } else if (h) setTimeout(() => loadMeteo(h.lat, h.lon, h.label), 0);
+  const h = S.settings.home, stale = !meteoCacheGet();
+  if ((METEO.st === 'idle' || (METEO.st === 'done' && stale && Date.now() - (METEO.homeAt || 0) > METEO_TTL)) && !(METEO.st === 'idle' && METEO.homeTried)) {
+    METEO.homeTried = true; METEO.homeAt = Date.now(); const c = meteoCacheGet();
+    if (c) { METEO.data = c.data; METEO.label = c.label; METEO.st = 'done'; } else if (h) setTimeout(() => loadMeteo(h.lat, h.lon, h.label), 0);   // ville ou position enregistrée : mise à jour automatique
   }
-  const head = t => `<section class="card"><div class="card-h"><h2>🌦️ Balade maintenant</h2><a class="lnk" href="#/meteo">Détail →</a></div>${t}</section>`;
+  const cityForm = `<div class="meteo-city"><input id="mc-q" type="search" placeholder="Votre ville (ex. Nîmes)" autocomplete="address-level2" aria-label="Ville"><button class="btn sm primary" data-act="meteo-city">OK</button></div>`;
+  const head = t => `<section class="card compact" id="meteo-home"><div class="card-h"><h2>🌦️ Balade maintenant</h2><a class="lnk" href="#/meteo">Détail →</a></div>${t}</section>`;
   if (METEO.st === 'loading') return head('<p class="loading">Chargement de la météo…</p>');
-  if (METEO.st === 'error') return head(`<p class="mut">${esc(METEO.err)}</p><button class="btn sm" data-act="meteo-home">Réessayer</button>`);
-  if (METEO.st !== 'done' || !METEO.data) return head(`<p class="mut">Est-ce le bon moment pour sortir avec <b>${esc(d.name)}</b> ? Chaleur, froid, orage, pluie : Wouf vous le dit en un coup d’œil.</p><button class="btn sm primary" data-act="meteo-home">📍 Voir la météo de la balade</button>`);
+  if (METEO.st === 'error') return head(`<p class="mut small">${esc(METEO.err)}</p>${cityForm}`);
+  if (METEO.st !== 'done' || !METEO.data) return head(`<p class="mut small">Bon moment pour sortir avec <b>${esc(d.name)}</b> ? Indiquez votre ville une seule fois : la météo se met ensuite à jour toute seule.</p>${cityForm}<button class="btn sm" data-act="meteo-home">📍 Utiliser ma position</button>`);
   const M = METEO.data, r = walkRisk(M.feels, d, { storm: M.code >= 95, wind: M.wind }), v = WALK_VERDICT[r.lvl], w = WCODE(M.code), plusOk = allowed('weather'), al = walkAlerts(M, d), best = plusOk ? bestHours(M.hours, d)[0] : null;
   return `<section class="card insight ${r.lvl}"><span class="ico">${v[0]}</span><span class="grow"><b>${v[1]}</b><small>${w[0]} ${Math.round(M.temp)} °C · ressenti ${Math.round(M.feels)} °C${METEO.label ? ' · ' + esc(METEO.label) : ''}</small><small>${esc(r.why)}</small>
     ${al.slice(0, plusOk ? 3 : 1).map(a => `<small class="mal ${a.lvl}">${a.e} ${esc(a.t)}</small>`).join('')}
     ${plusOk ? (best ? `<small>🕐 Meilleure heure : <b>${best.time.slice(11, 13)} h</b>${best.time.slice(0, 10) !== today() ? ' (demain)' : ''}</small>` : '') : '<small>🔒 Heures conseillées et alertes complètes avec Wouf Plus</small>'}
-    <a class="lnk" href="#/meteo">Voir le détail →</a></span></section>`;
+    <span><a class="lnk" href="#/meteo">Voir le détail →</a> · <button class="lnk" data-act="meteo-change">Changer de ville</button></span></span></section>`;
 }
 ACT['meteo-home'] = meteoLocate;
+ACT['meteo-city'] = async () => {
+  const q = ($('#mc-q') || {}).value; if (!q || !q.trim()) return toast('Indiquez votre ville');
+  METEO.st = 'loading'; render(true);
+  try { const g = await geocode(q.trim()); S.settings.home = g; save(); try { localStorage.removeItem('wouf:meteo'); } catch (e) { /* ignore */ } await loadMeteo(g.lat, g.lon, g.label); }
+  catch (e) { METEO.st = 'error'; METEO.err = 'Ville introuvable ou pas de connexion. Réessayez.'; render(true); }
+};
+ACT['meteo-change'] = () => { S.settings.home = null; save(); try { localStorage.removeItem('wouf:meteo'); } catch (e) { /* ignore */ } Object.assign(METEO, { st: 'idle', data: null, homeTried: true }); render(true); };
 ACT['meteo-go'] = () => gate('weather', meteoLocate);
 ROUTES.meteo = function meteo() {
   const d = dog(), head = `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>🌦️ Météo balade</h1></div>`;
   if (!allowed('weather')) return `${head}<section class="card"><p>Chaleur, froid, pluie, orage : Wouf calcule si la balade est adaptée à <b>${esc(d.name)}</b> (race, âge, gabarit) et vous donne les meilleures heures pour sortir.</p><button class="btn primary big" data-act="paywall" data-f="weather">⭐ Débloquer avec Wouf Plus</button></section>`;
+  if (METEO.st === 'idle' && S.settings.home) { const hh = S.settings.home; setTimeout(() => loadMeteo(hh.lat, hh.lon, hh.label), 0); return `${head}<p class="loading">Chargement de la météo…</p>`; }
   if (METEO.st === 'idle') return `${head}<section class="card center"><div class="big-heart">🌦️</div><h2>Sortir au bon moment</h2><p>Wouf utilise votre position pour lire la météo locale et l’adapter à ${esc(d.name)}${FLAT_FACE.test(d.breed || '') ? ' (museau court : très sensible à la chaleur)' : ''}.</p><button class="btn primary big" data-act="meteo-go">📍 Voir la météo de la balade</button><p class="mut small">La position n’est envoyée qu’au service météo Open-Meteo, sans compte ni suivi.</p></section>`;
   if (METEO.st === 'loading') return `${head}<p class="loading">Chargement de la météo…</p>`;
   if (METEO.st === 'error') return `${head}<section class="card warnbox"><b>${esc(METEO.err)}</b></section><button class="btn" data-act="meteo-go">Réessayer</button>`;

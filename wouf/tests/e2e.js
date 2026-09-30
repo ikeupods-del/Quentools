@@ -62,11 +62,11 @@ test('premier lancement : ajout d’un chien, accueil, données enregistrées', 
 /* ================= 2. Carnet et rappels ================= */
 test('carnet : vaccin, rappel automatique, retard, « Fait »', async () => {
   const b = await boot(), p = b.page;
-  await p.click('.tile[data-type=vaccine]'); await p.waitForSelector('#f_title');
+  await p.click('.qrow [data-type=vaccine]'); await p.waitForSelector('#f_title');
   assert.match(await p.inputValue('#f_title'), /^CHPPiL/); assert.equal(await p.inputValue('#f_next'), day(0).replace(/^(\d{4})/, y => +y + 1));
   await p.fill('#f_date', '2025-01-15'); assert.equal(await p.inputValue('#f_next'), '2026-01-15'); await p.fill('#f_cost', '65');
   await p.click('form [type=submit]'); await p.waitForSelector('[data-act=renew]');
-  assert.match(await text(p, '.row [class*=bad]'), /en retard/);
+  assert.match(await text(p, '.band.lv-bad'), /en retard/);
   await p.click('[data-act=renew]'); await p.waitForSelector('#f_title'); assert.equal(await p.inputValue('#f_date'), day(0)); await p.click('form [type=submit]');
   assert.equal(await b.ev(() => S.events.length), 2); assert.equal(await b.ev(() => reminders('d1').filter(r => r.days < 0).length), 0, 'après renouvellement plus de retard');
   noErrors(b); await b.ctx.close();
@@ -90,7 +90,7 @@ test('chat : gratuit avec le chien (1 chien + 1 chat), au-delà = Plus', async (
 test('chat : vocabulaire, vaccins, toxiques et premiers secours propres à l’espèce', async () => {
   const b = await boot({ data: seed({ dogs: [dogRec(), dogRec({ id: 'c1', name: 'Miso', species: 'cat', breed: 'Maine Coon', birth: '2024-03-01' })], current: 'c1' }) }), p = b.page;
   assert.match(await text(p, '.hero'), /Maine Coon/); assert.match(await text(p, '.av'), /🐱/);
-  await p.click('.tile[data-type=vaccine]'); await p.waitForSelector('#f_title'); assert.match(await p.inputValue('#f_title'), /Typhus/); await p.click('.sheet [data-close]');
+  await p.click('.qrow [data-type=vaccine]'); await p.waitForSelector('#f_title'); assert.match(await p.inputValue('#f_title'), /Typhus/); await p.click('.sheet [data-close]');
   await b.go('#/sos'); await p.waitForSelector('#tox-q'); await p.fill('#tox-q', 'lys'); assert.ok((await p.locator('.tox').count()) >= 1); assert.match(await text(p, '#tox-list'), /Lys/);
   assert.match(await text(p, 'body'), /Blocage urinaire/); assert.match(await text(p, 'body'), /uriner sans y parvenir/);
   assert.ok((await b.ev(() => humanAgeOf(dog()))) > 0);
@@ -293,8 +293,12 @@ test('noms : lettre de l’année LOF/LOOF, filtres, test d’un nom, favoris, u
 test('accueil et menu Plus : « À faire » en premier, une seule invitation à la fois, menu par rubriques', async () => {
   const b = await boot({ data: seed({ events: [{ id: 'e1', dogId: 'd1', type: 'vaccine', title: 'Rage annuelle', date: day(-300), next: day(-3) }] }) }), p = b.page;
   await p.waitForSelector('.hero'); const order = await b.ev(() => [...document.querySelectorAll('#view > section, #view > a')].map(e => e.querySelector('h2') ? e.querySelector('h2').textContent : e.className.split(' ')[1] || e.className));
-  assert.equal(order[0], 'hero'); assert.equal(order[1], 'À faire', 'la liste À faire vient juste après la fiche : ' + order.join('|'));
-  assert.ok(await p.$('.grid3 a[href="#/noms"]'));
+  assert.deepEqual(order.slice(0, 3), ['tipbar', 'hero', 'À faire'], 'astuce, fiche, puis À faire : ' + order.join('|'));
+  assert.ok(await p.$('.qrow a[href="#/noms"]')); assert.ok(await p.$('.band.lv-bad'), 'rappel en retard en bandeau');
+  assert.equal(await p.$eval('#w-score', e => e.open), false, 'score replié'); await p.click('#w-score > summary'); assert.ok(await p.isVisible('#w-score .wl'));
+  await p.click('#w-weight > summary'); assert.ok(await p.isVisible('#w-weight [data-act=add-weight]'));
+  const t1 = await text(p, '.tipbar'); await p.click('[data-act=tip-next]'); assert.notEqual(await text(p, '.tipbar'), t1, 'autre astuce');
+  assert.deepEqual(await b.ev(() => [TIPS.length, TIPS_CAT.length]), [50, 50]);
   await b.go('#/plus'); await p.waitForSelector('.grid4'); const h = await b.ev(() => [...document.querySelectorAll('.grp')].map(e => e.textContent)); assert.deepEqual(h, ['Santé', 'Éduquer et bouger', 'Alimentation', 'Pratique', 'Wouf']);
   assert.equal(await p.locator('.grid4 a').count(), 4);
   // les liens du menu mènent tous à une page existante
@@ -903,9 +907,14 @@ test('accueil : carte « Balade maintenant » (verdict, alertes chaleur/orage, h
   const b = await boot({ geo: true, data: seed({ dogs: [dogRec({ breed: 'Labrador' })] }) }), p = b.page;
   await p.route(/open-meteo/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(mk(true, true)) }));
   await p.waitForSelector('[data-act=meteo-home]'); assert.match(await text(p, '#view'), /Balade maintenant/); await p.click('[data-act=meteo-home]'); await p.waitForSelector('.insight.bad');
+  assert.deepEqual(await b.ev(() => S.settings.home && [S.settings.home.label, Number.isInteger(S.settings.home.lat * 100)]), ['Ma position', true], 'position arrondie retenue');
   const t = await text(p, '#view'); assert.match(t, /Mieux vaut éviter/); assert.match(t, /Orage prévu/); assert.match(t, /Bitume brûlant/);
   const al = await b.ev(() => { const M = { temp: 15, feels: 15, code: 0, wind: 45, hours: [] }; return walkAlerts(M, { name: 'x', species: 'dog', breed: 'Labrador', birth: '2020-01-01' }).map(a => a.e); }); assert.deepEqual(al, ['💨']);
   assert.ok(await b.ev(() => !!localStorage.getItem('wouf:meteo')), 'météo mise en cache 45 min');
+  await p.route(/nominatim/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify([{ lat: '43.84', lon: '4.36', display_name: 'Nîmes, Gard, France' }]) }));
+  await p.click('[data-act=meteo-change]'); await p.waitForSelector('#mc-q'); await p.fill('#mc-q', 'Nîmes'); await p.click('[data-act=meteo-city]'); await p.waitForSelector('.insight');
+  assert.equal(await b.ev(() => S.settings.home.label), 'Nîmes, Gard'); assert.match(await text(p, '.insight'), /Nîmes/);
+  await b.ev(() => { localStorage.removeItem('wouf:meteo'); Object.assign(METEO, { st: 'idle', data: null, homeTried: false }); }); await b.go('#/carnet'); await b.go('#/home'); await p.waitForSelector('.insight'); assert.match(await text(p, '.insight'), /Nîmes/, 'ville retenue : mise à jour automatique sans rien redemander');
   noErrors(b); await b.ctx.close();
   const f = await boot({ query: '?preview=free', geo: true, data: seed({ dogs: [dogRec({ breed: 'Labrador' })] }) }); await f.page.route(/open-meteo/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(mk(true, false)) }));
   await f.page.waitForSelector('[data-act=meteo-home]'); await f.page.click('[data-act=meteo-home]'); await f.page.waitForSelector('.insight'); assert.match(await text(f.page, '.insight'), /avec Wouf Plus/); noErrors(f); await f.ctx.close();
