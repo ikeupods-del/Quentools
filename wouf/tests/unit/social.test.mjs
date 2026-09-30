@@ -33,7 +33,8 @@ test('publie la première publication non faite avec sa légende, puis la mémor
 test('un seul post par jour (sauf --force) ; la publication suivante le lendemain', async () => {
   const s1 = (await go({ fetchFn: fake().fetchFn })).state; const same = await go({ state: s1, fetchFn: fake().fetchFn }); assert.equal(same.skipped, true);
   assert.equal((await go({ state: s1, force: true, fetchFn: fake().fetchFn })).item.id, 'c');
-  assert.equal((await go({ state: s1, now: new Date('2026-10-02T16:20:00Z'), fetchFn: fake().fetchFn })).item.id, 'c');
+  assert.equal((await go({ state: s1, now: new Date('2026-10-01T22:30:00Z'), fetchFn: fake().fetchFn })).item.id, 'c', 'le soir, plus de 6 h après le matin');
+  assert.equal((await go({ state: s1, now: new Date('2026-10-01T19:00:00Z'), fetchFn: fake().fetchFn })).skipped, true, 'moins de 6 h : pas de doublon');
 });
 test('carrousel : une image par vignette puis un conteneur « CAROUSEL » avec ses enfants', async () => {
   const { fetchFn, calls } = fake(), r = await go({ state: { posted: ['a'] }, fetchFn }); assert.equal(r.item.id, 'c');

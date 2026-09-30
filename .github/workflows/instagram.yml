@@ -1,11 +1,13 @@
-# Publie automatiquement 1 publication Instagram par jour (marketing/wouf/queue.json), via l'API officielle gratuite d'Instagram.
+# Publie automatiquement 2 publications Instagram par jour, à 7 h et 18 h (marketing/wouf/queue.json), via l'API officielle gratuite d'Instagram.
 # Secrets à créer une seule fois (Settings → Secrets and variables → Actions) : IG_USER_ID et IG_TOKEN. Guide : wouf/docs/MAINTENANCE.md, « Instagram automatique ».
 # Test sans rien publier : Actions → « Instagram — publication du jour » → Run workflow → cocher « dry ».
 name: Instagram — publication du jour
 
 on:
   schedule:
-    - cron: '17 16 * * *'
+    # UTC : 05:03 et 16:03 = 7 h et 18 h en heure d'été (6 h et 17 h en heure d'hiver). GitHub peut retarder de quelques minutes.
+    - cron: '3 5 * * *'
+    - cron: '3 16 * * *'
   workflow_dispatch:
     inputs:
       dry: { description: 'Simulation (ne publie rien)', type: boolean, default: true }

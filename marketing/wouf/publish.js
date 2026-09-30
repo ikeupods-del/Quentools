@@ -40,15 +40,15 @@ async function publishItem(item, { fetchFn, uid, token, base, wait }) {
 async function run({ queue, state, env = process.env, fetchFn = fetch, dry = false, force = false, now = new Date(), wait = sleep, log = console.log }) {
   const todo = queue.filter(q => !state.posted.includes(q.id)), today = now.toISOString().slice(0, 10);
   if (!todo.length) throw new Error('La file est vide : plus rien à publier. Demandez de nouvelles publications.');
-  if (!force && state.last && state.last.date === today) { log('Déjà publié aujourd’hui : rien à faire.'); return { skipped: true, state }; }
+  if (!force && state.last && state.last.at && now - new Date(state.last.at) < 6 * 3600e3) { log('Une publication est déjà partie il y a moins de 6 h : rien à faire.'); return { skipped: true, state }; }   // 2 par jour (matin et soir), jamais 2 d’un coup
   const item = todo[0];
   log(`Publication : ${item.id} (${item.type}, ${item.images.length} image(s)) — ${todo.length - 1} restante(s) après celle-ci`);
   if (dry) { log('--- légende ---\n' + item.caption); return { dry: true, item, state }; }
   const uid = env.IG_USER_ID, token = env.IG_TOKEN, base = env.IMAGE_BASE;
   if (!uid || !token || !base) throw new Error('Configuration incomplète : secrets IG_USER_ID et IG_TOKEN (et adresse des images) requis.');
   const mediaId = await publishItem(item, { fetchFn, uid, token, base, wait });
-  const next = { posted: [...state.posted, item.id], last: { id: item.id, date: today, mediaId } };
-  log('✓ Publié : ' + item.id + ' (média ' + mediaId + ')'); if (todo.length - 1 <= 3) log(`::warning::Il ne reste que ${todo.length - 1} publication(s) dans la file.`);
+  const next = { posted: [...state.posted, item.id], last: { id: item.id, date: today, at: now.toISOString(), mediaId } };
+  log('✓ Publié : ' + item.id + ' (média ' + mediaId + ')'); if (todo.length - 1 <= 6) log(`::warning::Il ne reste que ${todo.length - 1} publication(s) dans la file.`);
   return { published: true, item, mediaId, state: next };
 }
 
