@@ -357,9 +357,9 @@ const gInfo = u => ({ email: u.email || '', name: u.displayName || '', picture: 
 
 const Integrations = {
   google: {
-    // Firebase Auth exige https et un domaine autorisé : indisponible en local (file://) ou dans l'aperçu claude.ai
+    // Firebase Auth n'accepte que https et les domaines autorisés dans sa console : ailleurs (file://, aperçus intégrés), connexion masquée
     available: () => !!(CFG.firebase && CFG.firebase.apiKey) && location.protocol === 'https:' &&
-      !/(^|\.)claude\.ai$|claudeusercontent|anthropic/.test(location.hostname),
+      /^(ikeupods-del\.github\.io|(www\.)?woufapp\.fr)$/.test(location.hostname),
     async restore() { // session déjà ouverte (ici ou dans une autre app QuenTools) ?
       const F = await fb(); await F.auth.authStateReady();
       return F.auth.currentUser ? gInfo(F.auth.currentUser) : null;

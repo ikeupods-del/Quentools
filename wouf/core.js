@@ -21,7 +21,6 @@ const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())
 const today = () => iso(new Date());
 const parseD = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
 const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate() + n); return iso(d); };
-const addMonths = (s, n) => { const d = parseD(s); d.setMonth(d.getMonth() + n); return iso(d); };
 const diffDays = (a, b) => Math.round((parseD(a) - parseD(b)) / 864e5);
 const fmtDate = s => s ? parseD(s).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 const fmtMoney = n => Number(n || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: Number.isInteger(Number(n || 0)) ? 0 : 2, maximumFractionDigits: 2 });

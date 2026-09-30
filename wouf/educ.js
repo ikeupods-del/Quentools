@@ -52,7 +52,7 @@ function eduFilter(list, q, cat) {
 function eduListHTML(d) {
   const paid = lessonsFor(d).filter(l => !l.free), r = eduFilter(paid, EDU.q, EDU.cat);
   if (EDU.q || EDU.cat) return `<div class="list">${r.map(l => lessonCard(d, l)).join('') || '<p class="empty">Aucune leçon ne correspond. Essayez un autre mot.</p>'}</div>`;
-  return eduCats(paid).map(c => { const ls = paid.filter(l => l.cat === c), n = ls.filter(l => lessonState(d, l)).length; return `<details class="acc-in edu-grp" data-cat="${esc(c)}" ${EDU.cats.includes(c) ? 'open' : ''}><summary><b>${esc(c)}</b><small class="mut">${ls.length} leçon${ls.length > 1 ? 's' : ''}</small></summary><div class="list">${ls.map(l => lessonCard(d, l)).join('')}</div></details>`; }).join('');
+  return eduCats(paid).map(c => { const ls = paid.filter(l => l.cat === c); return `<details class="acc-in edu-grp" data-cat="${esc(c)}" ${EDU.cats.includes(c) ? 'open' : ''}><summary><b>${esc(c)}</b><small class="mut">${ls.length} leçon${ls.length > 1 ? 's' : ''}</small></summary><div class="list">${ls.map(l => lessonCard(d, l)).join('')}</div></details>`; }).join('');
 }
 document.addEventListener('toggle', e => { const t = e.target; if (!t || !t.classList) return; if (t.id === 'edu-plus') EDU.open = t.open; else if (t.classList.contains('edu-grp')) { const c = t.dataset.cat; EDU.cats = EDU.cats.filter(x => x !== c).concat(t.open ? [c] : []); } }, true);
 ACT['edu-cat'] = ({ c }) => { EDU.cat = c; render(true); };
@@ -74,7 +74,7 @@ ROUTES.educ = function educ() {
     <p class="mut small">${paid.length} leçons détaillées : étapes progressives, programme d’entraînement, critères de réussite, erreurs fréquentes, dépannage. Nouvelles leçons ajoutées régulièrement.</p>
     <input id="edu-q" class="search" type="search" placeholder="Chercher une leçon : rappel, griffes, bébé, peur…" value="${esc(EDU.q)}" autocomplete="off">
     <div id="edu-list">${eduListHTML(d)}</div></details>
-  <a class="card banner" href="#/guides"><b>📚 E-books et guides (PDF)</b><span>Erreurs à éviter, points d’attention, urgences : à lire ou à enregistrer en PDF →</span></a>
+  <a class="card banner" href="#/guides"><b>📚 E-books (PDF)</b><span>Le guide de survie (gratuit) et le grand guide santé : à lire ou à enregistrer en PDF →</span></a>
   <section class="card"><div class="card-h"><h2>Programmes guidés</h2>${plus() ? '' : '<span class="pill plus">Plus</span>'}</div><div class="list">${progs.map(prog => `<a class="row" href="#/programme?id=${prog.id}"><span class="ico">${prog.icon}</span><span class="grow"><b>${esc(prog.title)}</b><small>${pst(prog.id) ? '▶ Programme en cours' : esc(prog.sub)}</small></span><span class="chev">›</span></a>`).join('')}</div></section>
   <section class="card"><h2>Badges</h2><div class="badges">${badges.map(b => `<div class="badge ${b.on ? 'on' : ''}"><span>${b.i}</span><small>${esc(b.n)}</small></div>`).join('')}</div></section>
   ${st.ss.length ? `<section class="card"><h2>Dernières séances</h2>${st.ss.slice(0, 6).map(s => { const l = lessonOf(s.lid) || {}; return `<div class="row"><span class="ico">${l.icon || '🎓'}</span><span class="grow"><b>${esc(l.title || s.lid)}</b><small>${fmtDate(s.d)} · ${s.min || 1} min${s.n ? ` · ${s.ok}/${s.n} réussites` : ''}</small></span>${s.n ? `<span class="pill ${s.ok / s.n >= 0.8 ? 'ok' : s.ok / s.n >= 0.6 ? 'warn' : ''}">${Math.round(100 * s.ok / s.n)} %</span>` : ''}</div>`; }).join('')}</section>` : ''}

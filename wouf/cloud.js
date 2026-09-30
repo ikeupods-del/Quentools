@@ -21,11 +21,13 @@ function fb() {   // charge Firebase à la demande : aucun coût tant qu'on ne s
 }
 const gInfo = u => ({ uid: u.uid || '', email: u.email || '', name: u.displayName || '', picture: u.photoURL || '' });
 
+/* Domaines autorisés dans Firebase → Authentication → Paramètres → Domaines autorisés (à tenir à jour ensemble). */
+const AUTH_HOSTS = /^(localhost|127\.0\.0\.1|(www\.)?woufapp\.fr|ikeupods-del\.github\.io)$/;
+
 /* Adaptateur : remplaçable (tests). */
 const CloudApi = {
-  // Firebase Auth exige https et un domaine autorisé : indisponible en local (file://) ou dans l'aperçu claude.ai
-  available: () => !!(CFG.firebase && CFG.firebase.apiKey) && (location.protocol === 'https:' || location.hostname === 'localhost') &&
-    !/(^|\.)claude\.ai$|claudeusercontent|anthropic/.test(location.hostname),
+  // Firebase Auth n'accepte que les domaines autorisés dans sa console (et https) : ailleurs (file://, aperçus intégrés), la connexion est masquée.
+  available: () => !!(CFG.firebase && CFG.firebase.apiKey) && (location.protocol === 'https:' || location.hostname === 'localhost') && AUTH_HOSTS.test(location.hostname),
   async restore() { const F = await fb(); await F.auth.authStateReady(); return F.auth.currentUser ? gInfo(F.auth.currentUser) : null; },
   async signIn() {
     const F = await fb(); await F.auth.authStateReady();

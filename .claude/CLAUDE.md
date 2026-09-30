@@ -1,6 +1,11 @@
-# QuenTools — notes pour Claude
+# QuenTools — notes de développement
 
 Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `infikit/` (infirmières), `freelance/` (TJM/devis), **`wouf/`** (carnet de santé chien et chat — le projet commercial). Le propriétaire n'est pas développeur : réponds en français simple, agis (ne demande pas de faire soi-même ce que tu peux faire), et explique le résultat, pas la technique.
+
+## Style professionnel (demande du propriétaire, à respecter toujours)
+- Le code, les commentaires, la documentation, les messages de commit et les pull requests doivent ressembler au travail d'un développeur professionnel : **aucune mention de l'assistant, de Claude, d'Anthropic ou d'une IA** (pas de ligne « Co-Authored-By », pas de lien de session, pas de « Generated with »). Écrire les messages de commit et de PR de façon factuelle, en français.
+- Ne pas référencer d'hébergeurs d'aperçu d'IA dans le code : pour masquer une fonction hors du site officiel, utiliser une liste de domaines autorisés.
+- Le nom de la branche par défaut (`claude/…`) est technique ; ne pas en créer de nouvelles mentions ailleurs que dans la configuration de publication.
 
 ## Économiser les jetons : lire `CARTE.md` d'abord
 `CARTE.md` (racine, ~4 000 jetons) liste chaque fichier, ses écrans, actions, fonctions et dépendances : s'en servir pour trouver le bon fichier avant de grepper ou de lire. La régénérer avant de livrer : `node tools/carte.js` (ou `cd wouf && npm run carte`). Lire ensuite seulement les portions utiles (Read avec offset/limit).

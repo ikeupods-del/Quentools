@@ -90,7 +90,7 @@ cd wouf && npm install
 npm run serve      # http://localhost:8099/wouf/
 npm test           # contrôles de contenu + moteur de nutrition + scénarios dans un vrai navigateur
 ```
-La publication (GitHub Pages) ne se fait que si les tests passent. Détails et procédures : `wouf/docs/MAINTENANCE.md` ; conventions du code : `CLAUDE.md`.
+La publication (GitHub Pages) ne se fait que si les tests passent. Détails et procédures : `wouf/docs/MAINTENANCE.md` ; conventions du code : `.claude/CLAUDE.md`.
 
 | Dossier / fichier | Rôle |
 |---|---|

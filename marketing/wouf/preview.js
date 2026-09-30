@@ -7,7 +7,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 function buildMail(items, base, remaining) {
   const url = f => base.replace(/\/?$/, '/') + encodeURIComponent(f), slots = ['🌅 Demain 7 h', '🌆 Demain 18 h'];
   const html = `<div style="font-family:system-ui,sans-serif;max-width:640px;margin:auto"><h2>📅 Publications Instagram de demain</h2>
-    <p style="color:#666">Elles partent toutes seules. Un changement à faire ? Dites-le à Claude avant l’heure (${remaining} publication(s) restent en réserve après celles-ci).</p>` +
+    <p style="color:#666">Elles partent toutes seules. Un changement à faire ? Demandez-le avant l’heure (${remaining} publication(s) restent en réserve après celles-ci).</p>` +
     items.map((it, i) => `<hr><h3>${slots[i] || 'Ensuite'} — ${esc(it.id)}${it.type === 'carousel' ? ' (carrousel, ' + it.images.length + ' images)' : ''}</h3>` +
       it.images.map(f => `<img src="${esc(url(f))}" alt="${esc(f)}" style="max-width:100%;width:320px;border-radius:12px;margin:4px 4px 4px 0">`).join('') +
       `<pre style="white-space:pre-wrap;font-family:inherit;background:#f6f3ef;padding:12px;border-radius:8px">${esc(it.caption)}</pre>`).join('') + '</div>';

@@ -9,9 +9,9 @@ const isPriority = () => subActive();
 const supportTo = () => SUP.email || LEGAL.email || '';
 const ctaLabel = () => subActive() ? '⭐ Wouf Plus actif' : BILL.enabled ? `⭐ Souscrire à Wouf+ · ${planOf().price} ${planOf().per === 'paiement unique' ? 'à vie' : ''}`.trim() : '⭐ Découvrir Wouf+ (gratuit pour le moment)';
 const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free === undefined || !!l.free === free)).length, nCat = (free) => LESSONS.filter(l => l.sp === 'cat' && (free === undefined || !!l.free === free)).length;
-const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
 
 const CHANGELOG = [
+  { v: '1.18.0', date: '2026-09-30', items: ['📚 Deux e-books complets : « Le guide de survie du propriétaire » (gratuit : urgences, premiers secours, dangers de la maison) et « Le grand guide santé et bien-être » (Wouf Plus : 12 chapitres, du premier jour aux années senior)', '📖 Lecture par chapitres avec sommaire, et enregistrement en PDF'] },
   { v: '1.17.1', date: '2026-09-30', items: ['📚 Nouveau menu « E-books » sur l’accueil : e-books gratuits et e-books Wouf Plus, ouverture en un appui'] },
   { v: '1.17.0', date: '2026-09-30', items: ['🏠 Accueil plus clair : astuce du jour, rappels en bandeaux, score et poids en widgets dépliables, raccourcis compacts', '📍 Météo des balades : votre ville ou votre position est retenue, mise à jour automatique', '🎓 Leçons Plus rangées par catégorie en menu déroulant, accès direct aux guides PDF', '💡 50 astuces « Le saviez-vous ? » pour le chien et 50 pour le chat'] },
   { v: '1.16.0', date: '2026-09-30', items: ['🌦️ Météo des balades sur l’accueil : verdict du moment, alertes (orage, chaleur, bitume brûlant, froid, vent) et meilleure heure pour sortir'] },
@@ -59,7 +59,7 @@ const FEATURES = {
   documents: ['📎', 'Documents illimités', 'Ordonnances, résultats, cartes : sans limite. (Gratuit : 3.)'],
   stats: ['📊', 'Statistiques de dépenses', 'Graphiques par catégorie et par mois, export CSV.'],
   weather: ['🌦️', 'Météo des balades', 'Chaleur, froid, pluie et orage adaptés à la race, à l’âge et au gabarit de votre animal, et les meilleures heures pour sortir.'],
-  guides: ['📚', 'Guides : erreurs à éviter et points d’attention', '4 guides à lire dans l’app ou à enregistrer en PDF : les erreurs qui abîment la santé de votre compagnon (chien et chat), l’arrivée d’un chiot ou d’un chaton, les gestes d’urgence à éviter (celui-ci est gratuit).'],
+  guides: ['📚', 'E-book « Le grand guide santé et bien-être »', 'Le guide complet, à lire dans l’app ou à enregistrer en PDF : arrivée d’un chiot ou d’un chaton, vaccins, parasites, alimentation et poids, hygiène, comportement, saisons, années senior, voyages, et les erreurs à éviter (chien et chat). Le « Guide de survie du propriétaire » (urgences, premiers secours, dangers) reste gratuit.'],
   support: ['💬', 'Assistance prioritaire', 'Vos demandes sont traitées en premier, ' + (SUP.priorityDelay || 'sous 24 h ouvrées') + '.']
 };
 const planLine = () => { const p = planOf(); return `${p.price} ${p.per}`; };
@@ -111,7 +111,6 @@ const autoOn = () => !!(BILL.api && CLOUD.user && CLOUD.user.uid && PAYEE.test(B
    Avant d'être redirigé, l'acheteur remplit un « dossier de paiement » (nom, prénom et e-mail PayPal,
    e-mail de contact) enregistré dans wouf_orders : l'administration compare avec l'e-mail de PayPal puis active Wouf Plus. */
 const PAY_LINK = /^https:\/\/(www\.)?paypal\.(com|me|biz)\/[\w./-]+$/i;
-const payName = () => 'PayPal';
 const PAYEE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const payReady = () => !!(PAYEE.test(BILL.payee || '') || BILL.paymentLink);
 const rewardBuyable = () => rewardActive() && !!(PAYEE.test(BILL.payee || '') || BILL.rewardLink);

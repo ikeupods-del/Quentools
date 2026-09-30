@@ -4,7 +4,7 @@ name: Publier sur GitHub Pages
 
 on:
   push:
-    branches: [main, master, claude/infirmiere-ordonnances-upload-26nl16, claude/serene-euler-4xaw9n]
+    branches: [main, master, claude/infirmiere-ordonnances-upload-26nl16]
   workflow_dispatch:
 
 permissions:
