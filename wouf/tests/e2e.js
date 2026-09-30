@@ -35,6 +35,13 @@ const fakeCloud = page => page.evaluate(() => {
   window.__store = null;
   Object.assign(CloudApi, { available: () => true, restore: async () => null, signIn: async () => ({ email: 'q@test.fr', name: 'Quentin', picture: '' }), signOut: async () => {}, token: async () => 'tok123', load: async () => window.__store, save: async (t, a) => { window.__store = { text: t, at: a }; } });
 });
+/* Vente PayPal : lien de paiement + dossier enregistré (Firestore simulé), redirection capturée. */
+const fakeSale = page => page.evaluate(() => {
+  window.__orders = []; window.__go = null; NAV.go = u => { window.__go = u; };
+  Object.assign(AdminApi, { createOrder: async o => { window.__orders.push(o); return 'ord' + window.__orders.length; } });
+  Object.assign(BILL, { enabled: true, freeUntil: null, paymentLink: 'https://www.paypal.com/ncp/payment/NORMAL1', rewardLink: 'https://www.paypal.com/ncp/payment/REWARD1' });
+  Object.assign(LEGAL, { seller: 'Vendeur Test', form: 'EI', address: '1 rue Test', siret: '123', email: 'v@test.fr', mediator: 'Médiateur Test' });
+});
 const noErrors = b => assert.deepEqual(b.errors, [], 'erreurs console : ' + b.errors.join(' | '));
 const text = (page, sel) => page.textContent(sel).then(t => t.replace(/\s+/g, ' ').trim());
 
@@ -335,16 +342,12 @@ test('parcours ludique : unités, XP, niveaux, objectif du jour, quiz de validat
 });
 
 test('offre récompense : popup uniquement quand TOUTES les leçons gratuites sont faites, prix réduit au paiement', async () => {
-  const b = await boot({ query: '?preview=none', hash: '#/educ' }), p = b.page; let body = null;
-  await b.ctx.route('https://api.wouf.test/**', async r => { const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
-    if (r.request().method() === 'OPTIONS') return r.fulfill({ status: 200, headers: cors }); if (new URL(r.request().url()).pathname === '/checkout') body = JSON.parse(r.request().postData());
-    return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify({ url: 'https://checkout.example/pay' }) }); });
-  await b.ctx.route('https://checkout.example/**', r => r.fulfill({ contentType: 'text/html', body: '<h1>stripe</h1>' }));
+  const b = await boot({ query: '?preview=none', hash: '#/educ' }), p = b.page;
   const pure = await b.ev(() => { const d = (ids, sp = 'dog') => ({ dogs: [{ id: 'a', species: sp }], edu: { a: Object.fromEntries(ids.map(i => [i, { done: true }])) } }), dogIds = freeIdsOf('dog'), catIds = freeIdsOf('cat');
     return { n: [dogIds.length, catIds.length], dogAll: rewardEligible(d(dogIds)), dogMissing: rewardEligible(d(dogIds.slice(1))), catAll: rewardEligible(d(catIds, 'cat')), both: rewardEligible({ dogs: [{ id: 'a', species: 'dog' }, { id: 'b', species: 'cat' }], edu: { a: Object.fromEntries(dogIds.map(i => [i, { done: true }])) } }), none: rewardEligible({ dogs: [] }) }; });
   assert.deepEqual(pure, { n: [6, 4], dogAll: true, dogMissing: false, catAll: true, both: false, none: false });
-  await fakeCloud(p);
-  await b.ev(() => { BILL.enabled = true; BILL.api = 'https://api.wouf.test'; BILL.freeUntil = null; Object.assign(LEGAL, { seller: 'V', form: 'EI', address: '1 rue', siret: '1', email: 'v@t.fr', mediator: 'M' });
+  await fakeCloud(p); await fakeSale(p);
+  await b.ev(() => {
     freeIdsOf('dog').slice(0, 5).forEach(id => { const q = eduSet('d1', id); q.done = true; }); save(); });
   await b.go('#/abo'); assert.match(await text(p, '#view'), /Une récompense vous attend/); assert.doesNotMatch(await text(p, '#view'), /Offre récompense débloquée/);
   // les 5 premières ne déclenchent rien ; la 6ᵉ via le quiz ouvre la récompense
@@ -354,7 +357,9 @@ test('offre récompense : popup uniquement quand TOUTES les leçons gratuites so
   await p.click('[data-act=quiz-finish]'); await p.click('.celebrate [data-cel]'); await p.waitForSelector('.reward');
   assert.match(await text(p, '.reward'), /19,99 €\s*9,99 €/); assert.ok(await b.ev(() => S.reward.shown));
   await p.click('[data-act=reward-buy]'); await p.waitForSelector('#buy-consent'); assert.match(await text(p, '.sheet'), /Offre récompense/); assert.match(await text(p, '.sheet [data-act=buy-go]'), /9,99 €/);
-  await p.check('#buy-consent'); await Promise.all([p.waitForURL('https://checkout.example/**'), p.click('[data-act=buy-go]')]); assert.equal(body.offer, 'lecons');
+  await p.fill('#buy-last', 'Dupont'); await p.check('#buy-consent'); await p.click('[data-act=buy-go]'); await p.waitForFunction(() => window.__go);
+  assert.equal(await b.ev(() => window.__go), 'https://www.paypal.com/ncp/payment/REWARD1');
+  const ord = await b.ev(() => window.__orders[0]); assert.equal(ord.offer, 'reward'); assert.equal(ord.price, '9,99 €'); assert.equal(ord.lessons >= 6, true);
   noErrors(b); await b.ctx.close();
   // une seule fois : pas de nouvelle popup ; et gratuit pour tous → message sans paiement
   const c = await boot({ hash: '#/educ' }); await c.ev(() => { freeIdsOf('dog').forEach(id => { eduSet('d1', id).done = true; }); rewardCheck(); });
@@ -362,39 +367,33 @@ test('offre récompense : popup uniquement quand TOUTES les leçons gratuites so
   assert.equal(await c.ev(() => { closeAllSheets(); rewardCheck(); return document.querySelectorAll('.sheet-wrap').length; }), 0, 'la popup ne revient pas'); noErrors(c); await c.ctx.close();
 });
 
-/* ================= 7. Achat à vie (relais simulé) ================= */
-test('achat à vie : connexion Google requise, consentement, paiement, retour, activation, remboursement', async () => {
-  const b = await boot({ query: '?preview=none', hash: '#/abo' }), p = b.page; let seen = {};
-  await b.ctx.route('https://api.wouf.test/**', async r => {
-    const u = new URL(r.request().url()), h = r.request().headers();
-    const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
-    if (r.request().method() === 'OPTIONS') return r.fulfill({ status: 200, headers: cors });
-    if (u.pathname === '/checkout') { seen.checkout = { auth: h.authorization, body: JSON.parse(r.request().postData()) }; return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify({ url: 'https://checkout.example/pay' }) }); }
-    if (u.pathname === '/status') { seen.status = { auth: h.authorization, sid: u.searchParams.get('session_id') }; return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify(seen.answer || { active: false }) }); }
-    return r.fulfill({ status: 404, headers: cors, body: '{}' });
-  });
-  await b.ctx.route('https://checkout.example/**', r => r.fulfill({ contentType: 'text/html', body: '<h1>stripe</h1>' }));
-  await fakeCloud(p);
-  await b.ev(() => { BILL.enabled = true; BILL.api = 'https://api.wouf.test'; BILL.freeUntil = null; Object.assign(LEGAL, { seller: 'Vendeur Test', form: 'EI', address: '1 rue Test', siret: '123', email: 'v@test.fr', mediator: 'Médiateur Test' }); render(); });
+/* ================= 7. Achat à vie (PayPal + dossier, activation par l'administration) ================= */
+test('achat à vie PayPal : connexion Google, dossier de paiement, consentement, retour, activation et retrait par l’administration', async () => {
+  const b = await boot({ query: '?preview=none', hash: '#/abo' }), p = b.page;
+  await fakeCloud(p); await fakeSale(p); await b.ev(() => render());
   await p.waitForSelector('[data-act=subscribe]'); assert.match(await text(p, '.plus-hero'), /19,99 €/); assert.equal(await b.ev(() => plus()), false);
   await b.ev(() => { LEGAL.mediator = ''; }); await p.click('[data-act=subscribe]'); assert.match(await text(p, '#toast'), /informations légales/); await b.ev(() => { LEGAL.mediator = 'Médiateur Test'; });
   await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent'); assert.equal(await b.ev(() => !!CLOUD.user), true, 'connexion Google déclenchée avant l’achat');
-  assert.match(await text(p, '.sheet'), /19,99 €/); assert.match(await text(p, '.sheet'), /droit de rétractation/);
-  await p.click('[data-act=buy-go]'); assert.match(await text(p, '#toast'), /Cochez la case/); assert.equal(seen.checkout, undefined, 'aucun appel sans consentement');
-  await p.check('#buy-consent'); await Promise.all([p.waitForURL('https://checkout.example/**'), p.click('[data-act=buy-go]')]);
-  assert.equal(seen.checkout.auth, 'Bearer tok123'); assert.match(seen.checkout.body.returnUrl, /\/wouf\/$/);
-  // retour du paiement
-  seen.answer = { active: true, lifetime: true, plan: 'lifetime', since: '2026-09-29T10:00:00Z' };
-  await p.goto(BASE() + '?paid=1&session_id=cs_test_1#/abo'); await p.waitForSelector('#view > *'); await fakeCloud(p);
-  await b.ev(() => { CloudApi.restore = async () => ({ email: 'q@test.fr', name: 'Quentin', picture: '' }); });
-  await b.ev(() => { BILL.enabled = true; BILL.api = 'https://api.wouf.test'; return refreshSub(); }); await p.waitForTimeout(200);
-  assert.equal(seen.status.sid, 'cs_test_1'); assert.equal(seen.status.auth, 'Bearer tok123'); assert.equal(await b.ev(() => subActive() && plus()), true);
-  assert.equal(await b.ev(() => location.search), '', 'paramètres de retour nettoyés'); await b.ev(() => render());
-  assert.match(await text(p, '.plus-hero'), /actif à vie/); assert.match(await text(p, '.plus-hero'), /prioritaire/);
-  assert.equal(await b.ev(() => canAddPet('dog') && allowed('tracker')), true);
-  // remboursement côté Stripe : le prochain contrôle révoque l'accès
-  seen.answer = { active: false }; await b.ev(() => refreshSub(true)); assert.equal(await b.ev(() => plus()), false, 'achat remboursé = Plus retiré');
+  assert.match(await text(p, '.sheet'), /19,99 €/); assert.match(await text(p, '.sheet'), /droit de rétractation/); assert.match(await text(p, '.sheet'), /dossier de paiement/);
+  assert.equal(await p.inputValue('#buy-paypal'), 'q@test.fr'); assert.equal(await p.inputValue('#buy-first'), 'Quentin');
+  await p.click('[data-act=buy-go]'); assert.match(await text(p, '#toast'), /prénom et le nom/);
+  await p.fill('#buy-last', 'Martin'); await p.fill('#buy-paypal', 'pas-un-mail'); await p.click('[data-act=buy-go]'); assert.match(await text(p, '#toast'), /adresses e-mail/);
+  await p.fill('#buy-paypal', 'q.paypal@test.fr'); await p.click('[data-act=buy-go]'); assert.match(await text(p, '#toast'), /Cochez la case/);
+  assert.equal(await b.ev(() => window.__orders.length), 0, 'aucun dossier sans consentement');
+  await p.check('#buy-consent'); await p.click('[data-act=buy-go]'); await p.waitForFunction(() => window.__go);
+  assert.equal(await b.ev(() => window.__go), 'https://www.paypal.com/ncp/payment/NORMAL1');
+  const o = await b.ev(() => window.__orders[0]);
+  assert.deepEqual([o.firstName, o.lastName, o.paypalEmail, o.contactEmail, o.googleEmail, o.offer, o.price, o.status], ['Quentin', 'Martin', 'q.paypal@test.fr', 'q@test.fr', 'q@test.fr', 'lifetime', '19,99 €', 'pending']);
+  // retour de PayPal
+  await b.go('#/merci'); assert.match(await text(p, '#view'), /sous 24 h.*q@test\.fr.*q\.paypal@test\.fr/);
+  // l'administration active : Plus à vie, assistance prioritaire ; puis retrait : données intactes
+  await b.ev(async () => { Object.assign(AdminApi, { myGrant: async () => window.__grant || null, touch: async () => {} }); window.__grant = { until: 'lifetime' }; await accountSync(); });
+  assert.equal(await b.ev(() => subActive() && plus() && canAddPet('dog') && allowed('tracker')), true);
+  await b.go('#/abo'); assert.match(await text(p, '.plus-hero'), /actif à vie/); assert.match(await text(p, '.plus-hero'), /prioritaire/);
+  await b.ev(async () => { window.__grant = null; await accountSync(); }); assert.equal(await b.ev(() => plus()), false, 'accès retiré');
   assert.equal(await b.ev(() => dog().name), 'Nala', 'les données restent accessibles');
+  // lien non PayPal refusé par le format
+  assert.equal(await b.ev(() => PAY_LINK.test('https://buy.stripe.com/abc') || PAY_LINK.test('https://evil.example/paypal.com')), false);
   noErrors(b); await b.ctx.close();
 });
 test('interrupteur : gratuit pour tous, offre de lancement, anciens utilisateurs', async () => {
@@ -403,28 +402,20 @@ test('interrupteur : gratuit pour tous, offre de lancement, anciens utilisateurs
     BILL.enabled = true; BILL.freeUntil = null; BILL.grandfatherBefore = null; out.on = plus();
     BILL.freeUntil = '2999-01-01'; out.launch = plus(); BILL.freeUntil = '2000-01-01'; out.launchOver = plus();
     BILL.grandfatherBefore = '2999-01-01'; BILL.grandfatherUntil = 'lifetime'; out.old = plus(); S.installedAt = '2999-06-01'; out.newUser = plus(); S.installedAt = '2026-01-01';
-    S.sub = { active: true, lifetime: true }; BILL.grandfatherBefore = null; out.paid = plus(); Object.assign(BILL, o); return out; });
+    S.grant = { until: 'lifetime' }; BILL.grandfatherBefore = null; out.paid = plus(); S.grant = null; Object.assign(BILL, o); return out; });
   assert.deepEqual(r, { off: true, on: false, launch: true, launchOver: false, old: true, newUser: false, paid: true });
   noErrors(b); await b.ctx.close();
 });
 
 /* ================= 8. Assistance et pages légales ================= */
-test('assistance : prioritaire pour les acheteurs, repli mail sinon, FAQ', async () => {
-  const b = await boot({ hash: '#/support' }), p = b.page; let sent;
+test('assistance : prioritaire pour les acheteurs, mail préparé, FAQ', async () => {
+  const b = await boot({ hash: '#/support' }), p = b.page;
   await p.waitForSelector('#sp-msg'); assert.ok((await p.locator('details').count()) >= 8);
-  await b.ctx.route('https://api.wouf.test/**', async r => { const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' };
-    if (r.request().method() === 'OPTIONS') return r.fulfill({ status: 200, headers: cors });
-    sent = { auth: r.request().headers().authorization, body: JSON.parse(r.request().postData()) }; return r.fulfill({ status: sent.fail ? 501 : 200, headers: cors, contentType: 'application/json', body: JSON.stringify({ ok: true, priority: !!sent.auth }) }); });
-  await fakeCloud(p); await b.ev(async () => { BILL.enabled = true; BILL.api = 'https://api.wouf.test'; CLOUD.user = { email: 'q@test.fr' }; S.sub = { active: true, lifetime: true }; render(); });
+  await fakeCloud(p); await b.ev(() => { BILL.enabled = true; CLOUD.user = { email: 'q@test.fr' }; S.grant = { until: 'lifetime' }; window.__mail = null; NAV.mail = u => { window.__mail = u; }; SUP.email = 'support@test.fr'; render(); });
   await p.waitForSelector('#sp-msg'); assert.match(await text(p, '.plus-hero'), /prioritaire/);
-  await p.fill('#sp-msg', 'Bonjour, mon suivi ne démarre pas.'); await p.click('[data-act=support-send]'); await p.waitForTimeout(300);
-  assert.equal(sent.auth, 'Bearer tok123'); assert.equal(sent.body.category, 'Problème technique'); assert.match(sent.body.diagnostics, /Wouf 1\./); assert.match(sent.body.diagnostics, /Plus : oui \(achat\)/); assert.match(await text(p, '#toast'), /prioritaire/);
   await p.fill('#sp-msg', 'court'); await p.click('[data-act=support-send]'); assert.match(await text(p, '#toast'), /10 caractères/);
-  // repli : relais non configuré → mail préparé
-  await b.ctx.unroute('https://api.wouf.test/**'); await b.ctx.route('https://api.wouf.test/**', r => r.fulfill({ status: r.request().method() === 'OPTIONS' ? 200 : 501, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' }, contentType: 'application/json', body: '{"error":"non configuré"}' }));
-  await b.ev(() => { window.__mail = null; NAV.mail = u => { window.__mail = u; }; SUP.email = 'support@test.fr'; });
-  await p.fill('#sp-msg', 'Bonjour, ceci est un second message.'); await p.click('[data-act=support-send]'); await p.waitForTimeout(300);
-  const mail = await b.ev(() => window.__mail); assert.match(mail, /^mailto:support@test\.fr\?subject=/); assert.match(decodeURIComponent(mail), /\[PRIORITAIRE\]/);
+  await p.fill('#sp-msg', 'Bonjour, mon suivi ne démarre pas.'); await p.click('[data-act=support-send]'); await p.waitForTimeout(200);
+  const mail = decodeURIComponent(await b.ev(() => window.__mail)); assert.match(mail, /^mailto:support@test\.fr\?subject=\[PRIORITAIRE\] Wouf – Problème technique/); assert.match(mail, /Wouf 1\./); assert.match(mail, /Plus : oui \(achat\)/);
   noErrors(b); await b.ctx.close();
 });
 test('pages légales, nouveautés et alerte de mise à jour', async () => {
@@ -460,7 +451,7 @@ test('bouton Wouf+ : visible pour les non-abonnés, présentation de l’offre t
   await p.click('.plus-cta [data-act=subscribe]'); await p.waitForSelector('.sheet'); assert.match(await text(p, '.sheet'), /tout est offert/); assert.match(await text(p, '.sheet'), /19,99 €/); await p.click('.sheet [data-close]');
   await p.click('.plusbtn'); await p.waitForSelector('.plus-hero'); assert.match(await text(p, '#view'), /Toutes les fonctions Plus sont incluses/); assert.match(await text(p, '[data-act=subscribe]'), /Découvrir Wouf\+/);
   // vente ouverte, utilisateur non abonné : libellé d'achat partout
-  await b.ev(() => { BILL.enabled = true; BILL.api = 'https://api.wouf.test'; render(); });
+  await b.ev(() => { BILL.enabled = true; BILL.paymentLink = 'https://www.paypal.com/ncp/payment/X1'; render(); });
   assert.match(await text(p, '[data-act=subscribe]'), /Souscrire à Wouf\+ · 19,99 € à vie/); await b.go('#/educ'); await p.waitForSelector('.cta-plus'); assert.match(await text(p, '.cta-plus'), /Souscrire à Wouf\+/);
   await b.go('#/lecon?id=stop'); assert.match(await text(p, '[data-act=subscribe]'), /Souscrire/);
   // abonné : plus de bouton
@@ -673,12 +664,23 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
       listUsers: async () => [{ uid: 'u1', name: 'Alice', email: 'alice@test.fr', lastSeen: today(), firstSeen: today(), dogs: 1, cats: 0, lessons: 4, grant: window.__adm.grants.u1 || null },
         { uid: 'u2', name: 'Bob', email: 'bob@test.fr', lastSeen: '2026-01-01', firstSeen: '2025-12-01', dogs: 0, cats: 2, lessons: 0, grant: null }],
       setGrant: async (uid, g) => { window.__adm.grants[uid] = g; }, setConfig: async c => { window.__adm.cfg = c; },
+      listOrders: async () => [{ id: 'o1', uid: 'u2', firstName: 'Bob', lastName: 'Durand', paypalEmail: 'bob.pp@test.fr', googleEmail: 'bob@test.fr', contactEmail: 'bob@test.fr', offer: 'lifetime', price: '19,99 €', status: 'pending', at: Date.now() },
+        { id: 'o2', uid: 'u1', firstName: 'Alice', lastName: 'M', paypalEmail: 'a@pp.fr', googleEmail: 'alice@test.fr', contactEmail: 'alice@test.fr', offer: 'lifetime', price: '19,99 €', status: 'pending', at: Date.now() - 1000 }],
+      setOrder: async (id, patch) => { (window.__adm.orders = window.__adm.orders || {})[id] = patch; },
       myGrant: async () => window.__adm.mine || null, touch: async pr => { window.__adm.profile = pr; } });
     render();
   });
   assert.match(await text(p, '#view'), /Connectez-vous avec le compte Google/);
   await p.click('[data-act=g-signin]'); await p.waitForSelector('.adm-u');
   assert.equal(await p.$$eval('.adm-u', l => l.length), 2); assert.match(await text(p, '.adm-tiles'), /2 comptes Google/);
+  // dossiers de paiement PayPal : affichés, activation = Plus à vie sur le bon compte, refus
+  assert.match(await text(p, '#adm-orders'), /Paiements à vérifier \(2\)/); assert.match(await text(p, '#adm-orders'), /Bob Durand.*bob\.pp@test\.fr.*19,99 €.*bob@test\.fr/);
+  await p.click('[data-act=adm-order-ok][data-id=o1]'); await p.click('.sheet [data-ok]');
+  await p.waitForFunction(() => window.__adm.orders && window.__adm.orders.o1 && window.__adm.orders.o1.status === 'done');
+  assert.equal(await b.ev(() => window.__adm.grants.u2.until), 'lifetime'); assert.equal(await b.ev(() => window.__adm.grants.u2.order), 'o1');
+  await p.click('[data-act=adm-order-no][data-id=o2]'); await p.click('.sheet [data-ok]'); await p.waitForFunction(() => window.__adm.orders.o2 && window.__adm.orders.o2.status === 'refused');
+  assert.match(await text(p, '#adm-orders'), /Paiements à vérifier \(0\)/); assert.match(await text(p, '#adm-orders'), /Dossiers traités \(2\)/);
+  await b.ev(() => { window.__adm.grants = {}; });
   // recherche
   await p.fill('#adm-q', 'bob'); assert.deepEqual(await p.$$eval('.adm-u', l => l.map(e => e.hidden)), [true, false]); await p.fill('#adm-q', '');
   // Plus offert à vie puis retrait
@@ -690,9 +692,9 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   // vente : bloquée tant que rien n'est prêt
   assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), true); assert.match(await text(p, '#view'), /Lien de paiement PayPal à renseigner/);
   await p.fill('#adm-pay [name=paymentLink]', 'pas-un-lien'); await p.click('[data-act=adm-save-pay]'); assert.equal(await b.ev(() => window.__adm.cfg), null, 'lien invalide refusé');
-  for (const [k, v] of Object.entries({ paymentLink: 'https://buy.stripe.com/test_abc', seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur', supportEmail: 'aide@q.fr' })) await p.fill(`#adm-pay [name=${k}]`, v);
+  for (const [k, v] of Object.entries({ paymentLink: 'https://www.paypal.com/ncp/payment/TEST1', seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur', supportEmail: 'aide@q.fr' })) await p.fill(`#adm-pay [name=${k}]`, v);
   await p.click('[data-act=adm-save-pay]'); await p.waitForFunction(() => window.__adm.cfg && window.__adm.cfg.paymentLink);
-  assert.deepEqual(await b.ev(() => [BILL.paymentLink, LEGAL.siret, SUP.email, JSON.parse(localStorage.getItem('wouf:remote')).seller]), ['https://buy.stripe.com/test_abc', '123', 'aide@q.fr', 'Q']);
+  assert.deepEqual(await b.ev(() => [BILL.paymentLink, LEGAL.siret, SUP.email, JSON.parse(localStorage.getItem('wouf:remote')).seller]), ['https://www.paypal.com/ncp/payment/TEST1', '123', 'aide@q.fr', 'Q']);
   await b.go('#/legal?doc=mentions'); assert.match(await text(p, '#view'), /SIRET : 123/); await b.go('#/admin'); await p.waitForSelector('[data-act=adm-sale]');
   assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), false);
   await p.click('[data-act=adm-sale]'); await p.click('.sheet [data-ok]');
@@ -706,35 +708,6 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   await b.ev(() => { S.grant = { until: '2020-01-01' }; }); assert.equal(await b.ev(() => plus()), false, 'offre expirée');
   await b.ev(() => { BILL.enabled = false; });
   noErrors(b); await b.ctx.close();
-});
-
-test('vente par lien de paiement Stripe : e-mail pré-rempli, page merci, activation par l’administration', async () => {
-  const b = await boot({ hash: '#/abo' }), p = b.page; await fakeCloud(p);
-  await b.ctx.route(/buy\.stripe\.com/, r => r.fulfill({ contentType: 'text/html', body: '<h1>Stripe</h1>' }));
-  await b.ev(() => { CloudApi.signIn = async () => ({ email: 'client@test.fr', name: 'Client', picture: '' });
-    Object.assign(BILL, { enabled: true, freeUntil: null, paymentLink: 'https://buy.stripe.com/test_abc', api: '' });
-    Object.assign(LEGAL, { seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur' }); render(); });
-  await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent');
-  assert.match(await text(p, '.sheet'), /Paiement sécurisé par Stripe.*activé sur votre compte \(client@test\.fr\) sous 24 h/);
-  await p.check('#buy-consent');
-  await Promise.all([p.waitForURL(/buy\.stripe\.com/), p.click('[data-act=buy-go]')]);
-  const u = new URL(p.url()); assert.equal(u.pathname, '/test_abc'); assert.equal(u.searchParams.get('prefilled_email'), 'client@test.fr');
-  await p.goto(`http://localhost:${PORT}/wouf/#/merci`); await p.waitForSelector('#view > *');
-  assert.match(await text(p, '#view'), /sous 24 h.*client@test\.fr/);
-  noErrors(b); await b.ctx.close();
-  // PayPal : lien tel quel (pas de paramètre ajouté), « PayPal » affiché dans l'achat et les conditions de vente
-  const c = await boot({ hash: '#/abo' }), q = c.page; await fakeCloud(q);
-  await c.ctx.route(/paypal\.com/, r => r.fulfill({ contentType: 'text/html', body: '<h1>PayPal</h1>' }));
-  await c.ev(() => { CloudApi.signIn = async () => ({ email: 'client@test.fr', name: 'Client', picture: '' });
-    Object.assign(BILL, { enabled: true, freeUntil: null, paymentLink: 'https://www.paypal.com/ncp/payment/ABC123', api: '' });
-    Object.assign(LEGAL, { seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur' }); render(); });
-  assert.equal(await c.ev(() => PAY_LINK.test(BILL.paymentLink)), true);
-  await q.click('[data-act=subscribe]'); await q.waitForSelector('#buy-consent'); assert.match(await text(q, '.sheet'), /Paiement sécurisé par PayPal/);
-  await q.check('#buy-consent'); await Promise.all([q.waitForURL(/paypal\.com/), q.click('[data-act=buy-go]')]);
-  assert.equal(q.url(), 'https://www.paypal.com/ncp/payment/ABC123');
-  await q.goto(`http://localhost:${PORT}/wouf/#/legal?doc=cgv`); await q.waitForSelector('#view > *'); await q.evaluate(() => { BILL.paymentLink = 'https://www.paypal.com/ncp/payment/ABC123'; render(); });
-  assert.match(await text(q, '#view'), /plateforme sécurisée PayPal/);
-  noErrors(c); await c.ctx.close();
 });
 
 /* ================= exécution ================= */
