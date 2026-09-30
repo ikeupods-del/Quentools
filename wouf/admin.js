@@ -22,20 +22,38 @@ const AdminApi = {
     const f = CFG.firebase || {}; if (!f.projectId || !f.apiKey || location.protocol !== 'https:') return null;
     const r = await fetch(`https://firestore.googleapis.com/v1/projects/${f.projectId}/databases/(default)/documents/wouf_admin/config?key=${f.apiKey}`);
     if (r.status === 404) return {}; if (!r.ok) return null;
-    const fl = (await r.json()).fields || {}; return fl.billingEnabled ? { billingEnabled: !!fl.billingEnabled.booleanValue } : {};
+    const fl = (await r.json()).fields || {}, c = {};
+    if (fl.billingEnabled) c.billingEnabled = !!fl.billingEnabled.booleanValue;
+    for (const k of Object.keys(REMOTE_FIELDS)) if (fl[k] && typeof fl[k].stringValue === 'string') c[k] = fl[k].stringValue;
+    return c;
   }
 };
 
-/* ---------- Interrupteur de vente à distance ----------
-   La vente ne s'ouvre que si tout est prêt (infos légales + relais de paiement) : sinon l'interrupteur est ignoré. */
+/* ---------- Réglages de vente modifiables depuis l'administration ----------
+   Liens de paiement Stripe et informations légales : saisis dans l'administration (wouf_admin/config, public comme
+   les mentions légales), ils remplacent ceux de config.js. La vente ne s'ouvre que si tout est prêt : sinon l'interrupteur est ignoré. */
 const SALE_DEFAULT = !!BILL.enabled;
+const STRIPE_LINK = /^https:\/\/buy\.stripe\.com\/[\w-]+$/;
+const REMOTE_FIELDS = { paymentLink: [BILL, 'paymentLink', 'Lien de paiement Stripe (prix normal)'], rewardLink: [BILL, 'rewardLink', 'Lien de paiement Stripe (offre récompense, facultatif)'],
+  seller: [LEGAL, 'seller', 'Nom et prénom (ou raison sociale)'], form: [LEGAL, 'form', 'Statut (ex. Entrepreneur individuel, micro-entreprise)'], siret: [LEGAL, 'siret', 'SIRET'],
+  address: [LEGAL, 'address', 'Adresse'], email: [LEGAL, 'email', 'E-mail de contact'], mediator: [LEGAL, 'mediator', 'Médiateur de la consommation (nom et site)'], supportEmail: [SUP, 'email', 'E-mail d’assistance'] };
+const REMOTE_DEF = Object.fromEntries(Object.entries(REMOTE_FIELDS).map(([k, [o, p]]) => [k, o[p] || '']));
+const remoteCached = () => { try { return JSON.parse(localStorage.getItem('wouf:remote') || 'null') || {}; } catch (e) { return {}; } };
+function remoteStore(c) { const next = { ...remoteCached(), ...c }; try { localStorage.setItem('wouf:remote', JSON.stringify(next)); } catch (e) { /* ignore */ } return applySaleConfig(next); }
 const legalFull = () => ['seller', 'form', 'address', 'siret', 'email', 'mediator'].every(k => LEGAL[k]) && !!SUP.email;
 const saleReady = () => !!(legalFull() && payReady() && (BILL.plans || []).length);
 const saleMissing = () => [!legalFull() && 'Informations légales (statut, SIRET, adresse, e-mail, médiateur, e-mail d’assistance) à compléter', !payReady() && 'Lien de paiement Stripe à renseigner'].filter(Boolean);
 function applySaleConfig(c) {
   if (!c) return false;
-  const on = c.billingEnabled === undefined ? SALE_DEFAULT : (c.billingEnabled && saleReady());
-  if (BILL.enabled === on) return false; BILL.enabled = on; return true;
+  let changed = false;
+  for (const [k, [o, p]] of Object.entries(REMOTE_FIELDS)) {
+    if (c[k] === undefined) continue;
+    let v = String(c[k] || '').trim().slice(0, 300); if (/Link$/.test(k) && v && !STRIPE_LINK.test(v)) v = '';
+    v = v || REMOTE_DEF[k]; if (o[p] !== v) { o[p] = v; changed = true; }
+  }
+  const on = c.billingEnabled === undefined ? SALE_DEFAULT : !!(c.billingEnabled && saleReady());
+  if (BILL.enabled !== on) { BILL.enabled = on; changed = true; }
+  return changed;
 }
 try { applySaleConfig(JSON.parse(localStorage.getItem('wouf:remote') || 'null')); } catch (e) { /* stockage indisponible */ }
 function remoteRefresh() {
@@ -96,6 +114,11 @@ ROUTES.admin = function admin() {
     ${miss.length ? `<p class="mut">Avant d’ouvrir la vente :</p><ul class="bul">${miss.map(m => `<li>❌ ${esc(m)}</li>`).join('')}</ul>` : '<p class="ok">✅ Tout est prêt pour vendre.</p>'}
     <button class="btn ${sale ? 'danger' : 'primary'}" data-act="adm-sale" ${!sale && miss.length ? 'disabled' : ''}>${sale ? 'Repasser en gratuit' : 'Ouvrir la vente'}</button>
     <p class="mut small">Le changement arrive chez les utilisateurs à leur prochaine ouverture de l’app. Ce qu’ils ont saisi reste toujours accessible.</p></section>
+  <section class="card" id="adm-pay"><h2>💳 Stripe et informations légales</h2>
+    <p class="mut small">Stripe → <b>Liens de paiement</b> → Créer : produit « Wouf Plus à vie » à <b>${esc(planOf().price)}</b>${REWARD.enabled ? ` (et un 2ᵉ lien à <b>${esc(REWARD.price)}</b> pour l’offre récompense)` : ''} ; onglet « Après le paiement » → rediriger vers <b>${esc((SITE.home || location.origin + '/') + '#/merci')}</b>. Collez ici le lien (https://buy.stripe.com/…).</p>
+    ${Object.entries(REMOTE_FIELDS).map(([k, [o, p, l]]) => `<div class="field"><label>${esc(l)}</label><input name="${k}" value="${esc(o[p] || '')}" ${/Link$/.test(k) ? 'type="url" placeholder="https://buy.stripe.com/…"' : /mail/i.test(k) ? 'type="email"' : ''}></div>`).join('')}
+    <button class="btn primary" data-act="adm-save-pay">Enregistrer</button>
+    <p class="mut small">Ces informations apparaissent dans les mentions légales et les conditions de vente : faites-les relire avant d’ouvrir la vente.</p></section>
   <section class="card"><h2>👥 Comptes (${us.length})</h2>
     <p class="mut small">Seuls les utilisateurs connectés avec Google apparaissent ici. Pour tous les visiteurs, voir « Visites ».</p>
     ${ADM.err ? `<p class="bad">${esc(ADM.err)}</p><button class="btn" data-act="adm-reload">Réessayer</button>` : ADM.loading && !ADM.users ? '<p class="mut">Chargement…</p>'
@@ -124,7 +147,12 @@ ACT['adm-sale'] = async () => {
   if (!(await ask(on ? `Ouvrir la vente ? Les nouvelles fonctions Plus deviendront payantes (${planLine()}). Les données de chacun restent accessibles.` : 'Repasser Wouf en gratuit pour tout le monde ?', on ? 'Ouvrir la vente' : 'Repasser en gratuit', !on))) return;
   try {
     const c = { billingEnabled: on, at: Date.now(), by: CLOUD.user.email }; await AdminApi.setConfig(c);
-    try { localStorage.setItem('wouf:remote', JSON.stringify({ billingEnabled: on })); } catch (e) { /* ignore */ }
-    applySaleConfig({ billingEnabled: on }); toast(on ? 'Vente ouverte ✓' : 'Wouf est de nouveau gratuit ✓'); render(true);
+    remoteStore({ billingEnabled: on }); toast(on ? 'Vente ouverte ✓' : 'Wouf est de nouveau gratuit ✓'); render(true);
   } catch (e) { toast(admErr(e)); }
+};
+ACT['adm-save-pay'] = async () => {
+  const c = {}, bad = [];
+  for (const k of Object.keys(REMOTE_FIELDS)) { const v = ($(`#adm-pay [name=${k}]`) || {}).value; if (v === undefined) continue; c[k] = v.trim(); if (/Link$/.test(k) && c[k] && !STRIPE_LINK.test(c[k])) bad.push(k); }
+  if (bad.length) return toast('Lien invalide : il doit commencer par https://buy.stripe.com/');
+  try { await AdminApi.setConfig({ ...c, at: Date.now(), by: CLOUD.user.email }); remoteStore(c); toast('Enregistré ✓'); render(true); } catch (e) { toast(admErr(e)); }
 };
