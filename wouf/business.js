@@ -10,6 +10,7 @@ const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free ==
 const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
 
 const CHANGELOG = [
+  { v: '1.12.1', date: '2026-09-30', items: ['💳 Réglage du paiement depuis l’administration'] },
   { v: '1.12.0', date: '2026-09-30', items: ['🛠️ Espace d’administration pour l’éditeur de Wouf', '🔒 Résumé de compte visible par l’éditeur si vous êtes connecté avec Google (voir Confidentialité)'] },
   { v: '1.11.1', date: '2026-09-30', items: ['🛠️ Petites améliorations'] },
   { v: '1.11.0', date: '2026-09-30', items: ['🌐 Nouvelle adresse : woufapp.fr', '📊 Statistiques de visite anonymes, sans cookie (désactivables dans Réglages)', '📦 Transfert du carnet depuis l’ancienne adresse'] },

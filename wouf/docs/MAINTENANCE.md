@@ -169,7 +169,7 @@ match /wouf_admin/{doc} { allow read: if true; allow write: if woufAdmin(); }
 ## Vendre avec des liens de paiement Stripe (sans relais)
 1. Stripe → **Catalogue de produits** : produit « Wouf Plus à vie », prix unique **19,99 €** (le prix de `plans[0].price`). Optionnel : 2ᵉ prix **9,99 €** pour l'offre récompense.
 2. Stripe → **Liens de paiement** → Créer : un lien par prix. Onglet « Après le paiement » → « Rediriger vers votre site » : `https://woufapp.fr/#/merci`. Activer PayPal / Apple Pay / Google Pay dans Paramètres → Moyens de paiement si souhaité.
-3. Mettre les liens dans `config.js` → `billing.paymentLink` (et `rewardLink`), compléter `legal` et `support.email`, publier.
+3. Coller les liens et les informations légales dans **Plus → Administration → « Stripe et informations légales »** → Enregistrer (document `wouf_admin/config`, appliqué chez tous à la prochaine ouverture ; ils remplacent `config.js → billing.paymentLink / rewardLink`, `legal` et `support.email`).
 4. Ouvrir la vente : Plus → Administration → « Ouvrir la vente » (bloqué tant qu'un prérequis manque).
 5. **À chaque vente** : Stripe envoie un e-mail (adresse de l'acheteur pré-remplie = son compte Google). Aller dans Administration → rechercher l'e-mail → « ⭐ À vie ». L'acheteur l'a à sa prochaine ouverture de l'app (promesse affichée : sous 24 h).
 Plus tard, le relais Cloudflare (`billing.api`) automatise l'activation ; il prend le pas sur les liens.

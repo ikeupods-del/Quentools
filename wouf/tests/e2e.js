@@ -689,7 +689,11 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   await p.waitForFunction(() => window.__adm.grants.u1 === null);
   // vente : bloquée tant que rien n'est prêt
   assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), true); assert.match(await text(p, '#view'), /Lien de paiement Stripe à renseigner/);
-  await b.ev(() => { BILL.paymentLink = 'https://buy.stripe.com/test_abc'; Object.assign(LEGAL, { seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur' }); SUP.email = 'aide@q.fr'; render(true); });
+  await p.fill('#adm-pay [name=paymentLink]', 'pas-un-lien'); await p.click('[data-act=adm-save-pay]'); assert.equal(await b.ev(() => window.__adm.cfg), null, 'lien invalide refusé');
+  for (const [k, v] of Object.entries({ paymentLink: 'https://buy.stripe.com/test_abc', seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur', supportEmail: 'aide@q.fr' })) await p.fill(`#adm-pay [name=${k}]`, v);
+  await p.click('[data-act=adm-save-pay]'); await p.waitForFunction(() => window.__adm.cfg && window.__adm.cfg.paymentLink);
+  assert.deepEqual(await b.ev(() => [BILL.paymentLink, LEGAL.siret, SUP.email, JSON.parse(localStorage.getItem('wouf:remote')).seller]), ['https://buy.stripe.com/test_abc', '123', 'aide@q.fr', 'Q']);
+  await b.go('#/legal?doc=mentions'); assert.match(await text(p, '#view'), /SIRET : 123/); await b.go('#/admin'); await p.waitForSelector('[data-act=adm-sale]');
   assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), false);
   await p.click('[data-act=adm-sale]'); await p.click('.sheet [data-ok]');
   await p.waitForFunction(() => window.__adm.cfg && window.__adm.cfg.billingEnabled === true); assert.equal(await b.ev(() => BILL.enabled), true);
