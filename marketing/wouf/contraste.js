@@ -8,27 +8,27 @@ const fs = require('fs'), path = require('path');
 let chromium; try { ({ chromium } = require(path.resolve(__dirname, '../../wouf/node_modules/playwright'))); } catch (e) { ({ chromium } = require('playwright')); }
 const OUT = path.join(__dirname, 'images'), JPG = path.join(__dirname, 'images-jpg'), PH = path.join(__dirname, 'photos'), LOGO = fs.readFileSync(path.resolve(__dirname, '../../wouf/icons/icon.svg'), 'utf8');
 const SETS = [
-  { id: 'chiens', e: '🐶', cover: [3, 'a'], hook: 'DANS UN MONDE OÙ LES CHIENS…', tags: '#chien #chiot #santeanimale #conseilschien',
+  { id: 'chiens', e: '🐶', cover: [3, 'a'], hook: 'DANS UN MONDE OÙ LES CHIENS…', tags: '#chien #chiot #chiens #instachien #chienstagram',
     pairs: [
       { bad: ['🍫', 'Restes de table, chocolat, raisins'], good: ['🥕', 'Des friandises adaptées, en petite quantité'] },
       { bad: ['🚗', 'Enfermés dans la voiture, même 5 minutes'], good: ['🌳', 'À l’ombre, avec de l’eau, tôt le matin'] },
       { bad: ['😰', 'Laissés seuls d’un coup, trop longtemps'], good: ['🧸', 'Habitués à la solitude, petit à petit'] }] },
-  { id: 'chats', e: '🐱', cover: [3, 'b'], hook: 'DANS UN MONDE OÙ LES CHATS…', tags: '#chat #chaton #santeanimale #conseilschat',
+  { id: 'chats', e: '🐱', cover: [3, 'b'], hook: 'DANS UN MONDE OÙ LES CHATS…', tags: '#chat #chaton #chats #chatons #chatmignon',
     pairs: [
       { bad: ['💐', 'Un bouquet de lys sur la table'], good: ['🌱', 'De l’herbe à chat, sans danger'] },
       { bad: ['🧴', 'La pipette antiparasitaire du chien'], good: ['🩺', 'Le produit conseillé par le vétérinaire'] },
       { bad: ['🚽', 'Une litière sale, une seule pour tous'], good: ['✨', 'Une litière par chat, plus une, nettoyée chaque jour'] }] },
-  { id: 'sante', e: '🐾', cover: [1, 'a'], hook: 'DANS UN MONDE OÙ LES ANIMAUX…', tags: '#chien #chat #santeanimale #veterinaire',
+  { id: 'sante', e: '🐾', cover: [1, 'a'], hook: 'DANS UN MONDE OÙ LES ANIMAUX…', tags: '#chien #chat #chiot #chaton #chiens',
     pairs: [
       { bad: ['💉', 'Vaccins et vermifuges oubliés'], good: ['📅', 'Rappels notés, prévenus à temps'] },
       { bad: ['🍖', 'Ration au jugé, poids jamais vérifié'], good: ['⚖️', 'Pesée régulière et ration mesurée'] },
       { bad: ['🤞', 'On attend que ça passe tout seul'], good: ['🩺', 'Un appel au vétérinaire au moindre doute'] }] },
-  { id: 'seniors-chiens', e: '👴', cover: [1, 'a'], hook: 'DANS UN MONDE OÙ LES CHIENS SENIORS…', tags: '#chien #chiensenior #vieuxchien #santeanimale',
+  { id: 'seniors-chiens', e: '👴', cover: [1, 'a'], hook: 'DANS UN MONDE OÙ LES CHIENS SENIORS…', tags: '#chien #chiens #instachien #chienstagram #chiendamour',
     pairs: [
       { bad: ['🦴', 'Raideurs au lever : « c’est l’âge »'], good: ['🩺', 'Un avis vétérinaire : l’arthrose se soulage'] },
       { bad: ['🥵', 'Une grande balade d’un coup, comme avant'], good: ['🌳', 'Deux ou trois petites balades douces'] },
       { bad: ['📅', 'Une visite par an… quand on y pense'], good: ['✅', 'Deux bilans par an, notés dans Wouf'] }] },
-  { id: 'seniors-chats', e: '🐈', cover: [2, 'b'], hook: 'DANS UN MONDE OÙ LES CHATS SENIORS…', tags: '#chat #chatsenior #vieuxchat #santeanimale',
+  { id: 'seniors-chats', e: '🐈', cover: [2, 'b'], hook: 'DANS UN MONDE OÙ LES CHATS SENIORS…', tags: '#chat #chats #chatons #chatmignon #chatsdinstagram',
     pairs: [
       { bad: ['💧', 'Il boit plus ? On n’y prête pas attention'], good: ['🩺', 'On en parle au vétérinaire (reins, thyroïde)'] },
       { bad: ['📦', 'Un bac à litière haut, dur à enjamber'], good: ['✨', 'Un bac à bord bas, facile d’accès'] },
@@ -61,8 +61,8 @@ const half = (cls, grad, emo, ph, title, sub) => `<div class="half ${cls}" style
       await p.close();
     }
     const lines = s.pairs.map(p => `❌ ${p.bad[1]}\n✅ ${p.good[1]}`).join('\n\n');
-    caps[s.id] = { slides: sl.length, caption: `${s.hook.charAt(0) + s.hook.slice(1).toLowerCase()} ${s.e}\n\n${lines}\n\nDe quel côté êtes-vous ? 👇\n📌 Enregistrez et envoyez à un propriétaire d’animal.\nContenu indicatif : votre vétérinaire reste la référence.\n\n#woufapp ${s.tags}`,
-      tiktok: `${s.hook.charAt(0) + s.hook.slice(1).toLowerCase()} ${s.e} De quel côté êtes-vous ? 👇 Lien en bio 💛\n#pourtoi #fyp #woufapp ${s.tags}` };
+    caps[s.id] = { slides: sl.length, caption: `${s.hook.charAt(0) + s.hook.slice(1).toLowerCase()} ${s.e}\n\n${lines}\n\nDe quel côté êtes-vous ? 👇\n📌 Enregistrez et envoyez à un propriétaire d’animal.\nContenu indicatif : votre vétérinaire reste la référence.\n\n${s.tags}`,
+      tiktok: `${s.hook.charAt(0) + s.hook.slice(1).toLowerCase()} ${s.e} De quel côté êtes-vous ? 👇 Lien en bio 💛\n#pourtoi #fyp ${s.tags.split(' ').slice(0, 3).join(' ')}` };
     console.log('  ✓', s.id, sl.length + ' images');
   }
   fs.writeFileSync(path.join(__dirname, 'contraste.json'), JSON.stringify(caps, null, 1)); await b.close();

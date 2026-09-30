@@ -219,9 +219,9 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - définit : CACHE SHELL
 
 ## marketing/wouf
-- README.md (0 Ko)
+- README.md (1 Ko)
 - build-queue.js (7 Ko)
-- catalogue.json (128 Ko)
+- catalogue.json (127 Ko)
 - contraste.js (9 Ko)
 - contraste.json (3 Ko)
 - erreurs.js (6 Ko)
@@ -230,8 +230,8 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - generate.js (27 Ko)
 - hero-quiz.js (5 Ko)
 - kit.html (23 Ko)
-- memes.js (2 Ko)
-- memes.json (3 Ko)
+- memes.js (3 Ko)
+- memes.json (4 Ko)
 - nimes.js (2 Ko)
 - photos-libres.js (3 Ko)
 - photos-libres.json (1 Ko)
@@ -239,8 +239,8 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - problemes.js (6 Ko)
 - problemes.json (9 Ko)
 - publish.js (4 Ko)
-- queue-make.json (116 Ko)
-- queue.json (25 Ko)
+- queue-make.json (114 Ko)
+- queue.json (24 Ko)
 - reels.js (3 Ko)
 - series.json (49 Ko)
 - signes.js (6 Ko)
