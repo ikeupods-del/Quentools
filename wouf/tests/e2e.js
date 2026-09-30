@@ -629,7 +629,7 @@ test('statistiques anonymes : désactivées par défaut, provenance, adresse, re
   assert.equal(await o.ev(() => OWNER), true); assert.ok(await o.page.$('a[href="#/admin"]'), 'entrée Administration pour le propriétaire'); assert.equal(await o.page.$('a[href*="goatcounter.com"]'), null, 'plus de lien vers GoatCounter : les statistiques sont dans l’administration');
   noErrors(o); await o.ctx.close();
   const g = await boot({ hash: '#/plus' }); await fakeCloud(g.page);
-  await g.ev(() => { CloudApi.signIn = async () => ({ email: 'Storacequentin@gmail.com ', name: 'Q', picture: '' }); });
+  await g.ev(async () => { const e = 'proprietaire.test@example.fr', buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(e)); window.WOUF_CONFIG.ownerHashes.push([...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('')); CloudApi.signIn = async () => ({ email: e + ' ', name: 'Q', picture: '' }); });
   await g.page.click('a[href="#/reglages"]'); await g.page.click('[data-act=g-signin]'); await g.page.waitForTimeout(300); await g.go('#/plus');
   await g.page.waitForSelector('a[href="#/admin"]', { timeout: 3000 }); assert.equal(await g.ev(() => OWNER), true, 'propriétaire reconnu par son compte Google');
   const x = await boot({ hash: '#/plus' }); await fakeCloud(x.page); await x.page.click('a[href="#/reglages"]'); await x.page.click('[data-act=g-signin]'); await x.page.waitForTimeout(300); await x.go('#/plus'); await x.page.waitForTimeout(200);
@@ -713,10 +713,13 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   await b.ev(() => { BILL.payee = 'p@pp.fr'; render(true); }); assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), false);
   assert.match(await text(p, '#view'), /Mentions légales incomplètes/); assert.match(await text(p, '[data-act=adm-sale]'), /Ventes OFF/);
   await b.ev(() => { BILL.payee = ''; render(true); });
-  await p.fill('#adm-pay [name=paymentLink]', 'pas-un-lien'); await p.click('[data-act=adm-save-pay]'); assert.equal(await b.ev(() => window.__adm.cfg), null, 'lien invalide refusé');
-  await p.fill('#adm-pay [name=paymentLink]', ''); for (const [k, v] of Object.entries({ payee: 'moi@paypal.test', seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur', supportEmail: 'aide@q.fr' })) await p.fill(`#adm-pay [name=${k}]`, v);
+  await p.fill('#adm-pay [name=paymentLink]', 'pas-un-lien'); await p.click('[data-act=adm-save-pay]'); assert.equal(await b.ev(() => (window.__adm.cfg || {}).paymentLink), undefined, 'lien invalide refusé');
+  await p.fill('#adm-pay [name=paymentLink]', ''); for (const [k, v] of Object.entries({ payee: 'moi@paypal.test', seller: 'Q', form: 'EI', siret: '123', address: 'Paris', mediator: 'Médiateur' })) await p.fill(`#adm-pay [name=${k}]`, v);
   await p.click('[data-act=adm-save-pay]'); await p.waitForFunction(() => window.__adm.cfg && window.__adm.cfg.payee);
-  assert.deepEqual(await b.ev(() => [BILL.payee, LEGAL.siret, SUP.email, JSON.parse(localStorage.getItem('wouf:remote')).seller]), ['moi@paypal.test', '123', 'aide@q.fr', 'Q']);
+  assert.deepEqual(await b.ev(() => [BILL.payee, LEGAL.siret, SUP.email, JSON.parse(localStorage.getItem('wouf:remote')).seller]), ['moi@paypal.test', '123', 'wouf-contact@proton.me', 'Q']);
+  assert.equal(await p.$('#adm-pay [name=email], #adm-pay [name=supportEmail]'), null, 'plus de champ e-mail de contact : il vient uniquement de la config du dépôt');
+  assert.deepEqual(await b.ev(() => [window.__adm.cfg.by, window.__adm.cfg.epoch]), ['', 2], 'jamais l’e-mail du propriétaire dans la config publique');
+  assert.equal(await b.ev(() => { const keep = { ...LEGAL }; LEGAL.address = ''; applySaleConfig({ address: 'Rue Perso 1', seller: 'Nom Perso', email: 'perso@gmail.com', supportEmail: 'perso@gmail.com' }); const r = [LEGAL.address, LEGAL.email, SUP.email]; Object.assign(LEGAL, keep); return r.join('|'); }), '|wouf-contact@proton.me|wouf-contact@proton.me', 'anciennes valeurs personnelles ignorées');
   await b.go('#/legal?doc=mentions'); assert.match(await text(p, '#view'), /SIRET : 123/); await b.go('#/admin'); await p.waitForSelector('[data-act=adm-sale]');
   assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), false);
   await p.click('[data-act=adm-sale]'); await p.click('.sheet [data-ok]');
@@ -890,6 +893,21 @@ test('synchro Google chiffrée : Google ne voit que du texte chiffré, relecture
 
 test('réglages : mention « Conçu à Nîmes » par QuenTools', async () => {
   const b = await boot({}), p = b.page; await b.go('#/reglages'); await p.waitForSelector('.made'); assert.match(await text(p, '.made'), /Nîmes.*QuenTools/s); noErrors(b); await b.ctx.close();
+});
+
+test('accueil : carte « Balade maintenant » (verdict, alertes chaleur/orage, heure conseillée), aperçu limité en gratuit', async () => {
+  const mk = (hot, storm) => { const h = { time: [], apparent_temperature: [], precipitation_probability: [], weather_code: [], is_day: [] }, t0 = new Date(); t0.setMinutes(0, 0, 0);
+    for (let i = 0; i < 48; i++) { const d = new Date(t0.getTime() + i * 36e5), H = d.getHours(); h.time.push(new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16)); h.apparent_temperature.push(hot ? 33 : 15); h.precipitation_probability.push(0); h.weather_code.push(storm && i === 3 ? 96 : 0); h.is_day.push(1); }
+    return { current: { time: h.time[0], temperature_2m: hot ? 33 : 15, apparent_temperature: hot ? 33 : 15, weather_code: 0 }, hourly: h }; };
+  const b = await boot({ geo: true, data: seed({ dogs: [dogRec({ breed: 'Labrador' })] }) }), p = b.page;
+  await p.route(/open-meteo/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(mk(true, true)) }));
+  await p.waitForSelector('[data-act=meteo-home]'); assert.match(await text(p, '#view'), /Balade maintenant/); await p.click('[data-act=meteo-home]'); await p.waitForSelector('.insight.bad');
+  const t = await text(p, '#view'); assert.match(t, /Mieux vaut éviter/); assert.match(t, /Orage prévu/); assert.match(t, /Bitume brûlant/);
+  const al = await b.ev(() => { const M = { temp: 15, feels: 15, code: 0, wind: 45, hours: [] }; return walkAlerts(M, { name: 'x', species: 'dog', breed: 'Labrador', birth: '2020-01-01' }).map(a => a.e); }); assert.deepEqual(al, ['💨']);
+  assert.ok(await b.ev(() => !!localStorage.getItem('wouf:meteo')), 'météo mise en cache 45 min');
+  noErrors(b); await b.ctx.close();
+  const f = await boot({ query: '?preview=free', geo: true, data: seed({ dogs: [dogRec({ breed: 'Labrador' })] }) }); await f.page.route(/open-meteo/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(mk(true, false)) }));
+  await f.page.waitForSelector('[data-act=meteo-home]'); await f.page.click('[data-act=meteo-home]'); await f.page.waitForSelector('.insight'); assert.match(await text(f.page, '.insight'), /avec Wouf Plus/); noErrors(f); await f.ctx.close();
 });
 
 /* ================= exécution ================= */

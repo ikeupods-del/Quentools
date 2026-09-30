@@ -276,3 +276,4 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-off
 .ta-no{border-color:var(--bad)}.ta-mid{border-color:var(--warn)}.ta-ok{border-color:var(--ok)}
 
 .gd-list{margin:10px 0;padding-left:1.3em;display:grid;gap:12px}.gd-list p{margin:.2rem 0 0;color:var(--mut)}
+.mal{font-weight:650}.mal.bad{color:var(--bad)}.mal.warn{color:var(--warn)}

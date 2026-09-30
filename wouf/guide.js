@@ -126,7 +126,7 @@ async function loadMeteo(lat, lon, label) {
     if (!r.ok) throw new Error('http ' + r.status); const j = await r.json();
     const now = j.current, H = j.hourly, cur = now.time ? now.time.slice(0, 13) : '', start = Math.max(0, H.time.findIndex(t => t.slice(0, 13) >= cur));
     const hours = H.time.slice(start, start + 24).map((t, i) => ({ time: t, t: H.apparent_temperature[start + i], rain: H.precipitation_probability[start + i] || 0, code: H.weather_code[start + i], day: !!H.is_day[start + i], storm: H.weather_code[start + i] >= 95, wind: (H.wind_speed_10m || [])[start + i] || 0, uv: (H.uv_index || [])[start + i] || 0 }));
-    METEO.data = { temp: now.temperature_2m, feels: now.apparent_temperature, code: now.weather_code, wind: now.wind_speed_10m || 0, day: now.is_day == null ? (hours[0] ? hours[0].day : true) : !!now.is_day, uv: hours.length ? Math.max(...hours.slice(0, 8).map(h => h.uv)) : 0, hours }; METEO.st = 'done';
+    METEO.data = { temp: now.temperature_2m, feels: now.apparent_temperature, code: now.weather_code, wind: now.wind_speed_10m || 0, day: now.is_day == null ? (hours[0] ? hours[0].day : true) : !!now.is_day, uv: hours.length ? Math.max(...hours.slice(0, 8).map(h => h.uv)) : 0, hours }; METEO.st = 'done'; meteoCachePut(); meteoNotify(METEO.data);
   } catch (e) { METEO.st = 'error'; METEO.err = 'Météo indisponible (pas de connexion ?). Réessayez dans un instant.'; }
   render(true);
 }
@@ -216,6 +216,47 @@ function walkTips(M, d) {
   if (cat) t.push(['🐱', 'Pour un chat qui sort : vérifiez qu’il peut rentrer à l’abri et qu’il a de l’eau à disposition.']);
   return t;
 }
+
+/* ---------- Alertes météo (fonction pure) et carte « Balade maintenant » de l'accueil ---------- */
+function walkAlerts(M, d) {
+  const H = (M.hours || []).slice(0, 12), at = h => h.time ? ' vers ' + h.time.slice(11, 13) + ' h' : '', out = [];
+  const hs = H.length ? H : [{ t: M.feels, rain: 0, storm: M.code >= 95, wind: M.wind, time: '' }];
+  const storm = hs.find(h => h.storm); if (storm) out.push({ lvl: 'bad', e: '⛈️', t: 'Orage prévu' + at(storm) + ' : sortie très courte avant, puis restez à l’abri.' });
+  const hot = hs.reduce((a, h) => h.t > a.t ? h : a, hs[0]), rh = walkRisk(hot.t, d);
+  if (hot.t >= 20 && rh.lvl !== 'ok') out.push({ lvl: rh.lvl, e: rh.lvl === 'bad' ? '🥵' : '☀️', t: (rh.lvl === 'bad' ? 'Forte chaleur' : 'Chaleur') + ' : ' + Math.round(hot.t) + ' °C ressentis' + at(hot) + '. Sortez tôt le matin ou tard le soir.' });
+  if (Math.max(M.temp, hot.t) >= 25) out.push({ lvl: 'warn', e: '🖐️', t: 'Bitume brûlant possible : testez le sol avec le dos de la main pendant 5 secondes.' });
+  const cold = hs.reduce((a, h) => h.t < a.t ? h : a, hs[0]), rc = walkRisk(cold.t, d);
+  if (cold.t <= 5 && rc.lvl !== 'ok') out.push({ lvl: rc.lvl, e: '🥶', t: (rc.lvl === 'bad' ? 'Grand froid' : 'Froid') + ' : ' + Math.round(cold.t) + ' °C ressentis' + at(cold) + '. Manteau conseillé, coussinets à rincer au retour.' });
+  const wind = hs.reduce((a, h) => Math.max(a, h.wind || 0), M.wind || 0); if (wind >= 40) out.push({ lvl: wind >= 60 ? 'bad' : 'warn', e: '💨', t: 'Vent fort (' + Math.round(wind) + ' km/h) : évitez les zones arborées.' });
+  const rain = hs.find(h => h.rain >= 70 && !h.storm); if (rain) out.push({ lvl: 'warn', e: '🌧️', t: 'Pluie probable' + at(rain) + ' : imperméable et séchage au retour.' });
+  return out.sort((a, b) => (b.lvl === 'bad') - (a.lvl === 'bad'));
+}
+const METEO_TTL = 45 * 60e3;
+function meteoCacheGet() { try { const c = JSON.parse(localStorage.getItem('wouf:meteo')); return c && Date.now() - c.at < METEO_TTL && c.data ? c : null; } catch (e) { return null; } }
+function meteoCachePut() { try { localStorage.setItem('wouf:meteo', JSON.stringify({ at: Date.now(), label: METEO.label, data: METEO.data })); } catch (e) { /* ignore */ } }
+async function meteoNotify(M) {
+  if (!S.settings.notif || !('Notification' in window) || Notification.permission !== 'granted' || S.settings.lastMeteoNotif === today() || !allowed('weather') || !S.dogs.length) return;
+  const bad = walkAlerts(M, dog()).filter(a => a.lvl === 'bad'); if (!bad.length) return;
+  S.settings.lastMeteoNotif = today(); save();
+  try { const reg = await navigator.serviceWorker.getRegistration(), body = bad.slice(0, 2).map(a => a.e + ' ' + a.t).join('\n'); reg ? reg.showNotification('Météo balade · ' + dog().name, { body, icon: 'icons/icon-192.png', tag: 'wouf-meteo' }) : new Notification('Météo balade · ' + dog().name, { body }); } catch (e) { /* ignore */ }
+}
+const WALK_VERDICT = { ok: ['👍', 'Bon moment pour sortir'], warn: ['⚠️', 'Sortez avec précaution'], bad: ['⛔', 'Mieux vaut éviter de sortir maintenant'] };
+function meteoHome(d) {
+  if (METEO.st === 'idle' && !METEO.homeTried) {
+    METEO.homeTried = true; const c = meteoCacheGet(), h = S.settings.home;
+    if (c) { METEO.data = c.data; METEO.label = c.label; METEO.st = 'done'; } else if (h) setTimeout(() => loadMeteo(h.lat, h.lon, h.label), 0);
+  }
+  const head = t => `<section class="card"><div class="card-h"><h2>🌦️ Balade maintenant</h2><a class="lnk" href="#/meteo">Détail →</a></div>${t}</section>`;
+  if (METEO.st === 'loading') return head('<p class="loading">Chargement de la météo…</p>');
+  if (METEO.st === 'error') return head(`<p class="mut">${esc(METEO.err)}</p><button class="btn sm" data-act="meteo-home">Réessayer</button>`);
+  if (METEO.st !== 'done' || !METEO.data) return head(`<p class="mut">Est-ce le bon moment pour sortir avec <b>${esc(d.name)}</b> ? Chaleur, froid, orage, pluie : Wouf vous le dit en un coup d’œil.</p><button class="btn sm primary" data-act="meteo-home">📍 Voir la météo de la balade</button>`);
+  const M = METEO.data, r = walkRisk(M.feels, d, { storm: M.code >= 95, wind: M.wind }), v = WALK_VERDICT[r.lvl], w = WCODE(M.code), plusOk = allowed('weather'), al = walkAlerts(M, d), best = plusOk ? bestHours(M.hours, d)[0] : null;
+  return `<section class="card insight ${r.lvl}"><span class="ico">${v[0]}</span><span class="grow"><b>${v[1]}</b><small>${w[0]} ${Math.round(M.temp)} °C · ressenti ${Math.round(M.feels)} °C${METEO.label ? ' · ' + esc(METEO.label) : ''}</small><small>${esc(r.why)}</small>
+    ${al.slice(0, plusOk ? 3 : 1).map(a => `<small class="mal ${a.lvl}">${a.e} ${esc(a.t)}</small>`).join('')}
+    ${plusOk ? (best ? `<small>🕐 Meilleure heure : <b>${best.time.slice(11, 13)} h</b>${best.time.slice(0, 10) !== today() ? ' (demain)' : ''}</small>` : '') : '<small>🔒 Heures conseillées et alertes complètes avec Wouf Plus</small>'}
+    <a class="lnk" href="#/meteo">Voir le détail →</a></span></section>`;
+}
+ACT['meteo-home'] = meteoLocate;
 ACT['meteo-go'] = () => gate('weather', meteoLocate);
 ROUTES.meteo = function meteo() {
   const d = dog(), head = `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>🌦️ Météo balade</h1></div>`;
