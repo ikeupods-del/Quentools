@@ -1,15 +1,63 @@
 {
  "_": "Photos recherchées (clé = nom de fichier dans photos/). Licences acceptées : CC0 et domaine public uniquement (usage commercial libre). Crédits dans photos/credits.json.",
- "meme-jouets": ["dog many toys", "dog surrounded toys", "dog toy pile"],
- "meme-lit": ["dog sleeping bed", "dog in human bed", "dog pillow sleeping"],
- "meme-balade": ["excited dog", "happy dog running", "dog ears up excited"],
- "meme-regime": ["dog begging", "dog puppy eyes", "dog looking up food"],
- "meme-clavier": ["cat laptop", "cat keyboard", "cat on computer"],
- "meme-pull": ["dog sweater", "dog wearing clothes", "dog coat"],
- "meme-veto": ["surprised dog", "shocked dog face", "dog funny face"],
- "meme-3h": ["cat night eyes", "cat dark eyes", "cat staring night"],
- "meme-reveil": ["cat face closeup", "cat staring camera", "cat nose close"],
- "meme-chips": ["dog head tilt", "curious dog", "dog tilting head"],
- "meme-boite": ["cat in box", "cat cardboard box", "cat sitting box"],
- "meme-canape": ["dog on couch", "dog sofa", "dog lying sofa"]
+ "meme-halloween": [
+  "dog halloween costume",
+  "dog costume",
+  "dog pumpkin"
+ ],
+ "meme-pluie": [
+  "dog rain",
+  "wet dog rain",
+  "dog raincoat"
+ ],
+ "meme-flaque": [
+  "muddy dog",
+  "dirty dog mud",
+  "dog puddle"
+ ],
+ "meme-chauffage": [
+  "cat radiator",
+  "cat heater warm",
+  "cat sleeping radiator"
+ ],
+ "meme-feuilles": [
+  "dog autumn leaves",
+  "dog playing leaves",
+  "dog fall leaves"
+ ],
+ "meme-plaid": [
+  "dog blanket",
+  "cat blanket",
+  "dog under blanket"
+ ],
+ "meme-aspirateur": [
+  "cat scared",
+  "cat hiding",
+  "scared cat eyes"
+ ],
+ "meme-porte": [
+  "cat door",
+  "cat sitting door",
+  "cat doorway"
+ ],
+ "meme-verre": [
+  "cat table",
+  "cat on table",
+  "cat paw glass"
+ ],
+ "meme-facteur": [
+  "dog window",
+  "dog looking out window",
+  "dog barking window"
+ ],
+ "meme-sieste": [
+  "dog sleeping",
+  "tired dog sleeping",
+  "dog asleep floor"
+ ],
+ "meme-croquettes": [
+  "dog and cat together",
+  "dog cat eating",
+  "dog cat looking up"
+ ]
 }
