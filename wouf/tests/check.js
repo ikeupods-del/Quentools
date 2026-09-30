@@ -83,6 +83,8 @@ section('Configuration');
 const B = CFG.billing;
 ok(B && typeof B.enabled === 'boolean', 'billing.enabled doit être un booléen');
 ok(B.plans && B.plans.length === 1 && /\d/.test(B.plans[0].price), 'un plan à paiement unique avec un prix affiché est attendu');
+ok(['paypal', 'stripe', 'both'].includes(B.provider || 'paypal'), 'billing.provider : paypal, stripe ou both');
+for (const k of ['lifetimeLink', 'yearlyLink', 'portal']) ok(!(B.stripe || {})[k] || /^https:\/\/(buy|billing)\.stripe\.com\/[\w/-]+$/.test(B.stripe[k]), `billing.stripe.${k} doit être un lien Stripe (https://buy.stripe.com/…)`);
 ok(!B.yearly || (typeof B.yearly.enabled === 'boolean' && /\d/.test(B.yearly.price || '') && B.yearly.per), 'billing.yearly : enabled (booléen), prix et période attendus');
 const bizFeatures = (read('business.js').match(/const FEATURES = \{([\s\S]*?)\n\};/) || [, ''])[1];
 for (const f of B.premium) ok(new RegExp('\\b' + f + ':').test(bizFeatures), `fonction Plus « ${f} » sans description dans business.js (FEATURES)`);

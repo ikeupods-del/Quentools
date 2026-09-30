@@ -44,11 +44,16 @@ const AdminApi = {
 /* ---------- Réglages de vente modifiables depuis l'administration ----------
    Liens de paiement PayPal et informations légales : saisis dans l'administration (wouf_admin/config, public comme
    les mentions légales), ils remplacent ceux de config.js. La vente ne s'ouvre que si tout est prêt : sinon l'interrupteur est ignoré. */
+BILL.stripe = BILL.stripe || {};
 const SALE_DEFAULT = !!BILL.enabled;
 const RELAY_URL = /^https:\/\/[\w.-]+(\/[\w./-]*)?$/;
 const REMOTE_FIELDS = { api: [BILL, 'api', 'Adresse du relais d’activation automatique (facultatif)'], payee: [BILL, 'payee', 'Adresse e-mail PayPal qui reçoit les paiements'], paymentLink: [BILL, 'paymentLink', 'OU lien de paiement PayPal fixe (facultatif)'], rewardLink: [BILL, 'rewardLink', 'Lien PayPal fixe pour l’offre récompense (facultatif)'],
   seller: [LEGAL, 'seller', 'Nom et prénom (ou raison sociale)'], form: [LEGAL, 'form', 'Statut (ex. Entrepreneur individuel, micro-entreprise)'], siret: [LEGAL, 'siret', 'SIRET'],
-  address: [LEGAL, 'address', 'Adresse'], mediator: [LEGAL, 'mediator', 'Médiateur de la consommation (nom et site)'] };
+  address: [LEGAL, 'address', 'Adresse'], mediator: [LEGAL, 'mediator', 'Médiateur de la consommation (nom et site)'],
+  stripeLifetime: [BILL.stripe, 'lifetimeLink', 'Stripe : lien de paiement « à vie »'], stripeYearly: [BILL.stripe, 'yearlyLink', 'Stripe : lien de paiement « annuel »'], stripePortal: [BILL.stripe, 'portal', 'Stripe : lien du portail client (résiliation, factures)'] };
+/* L'état « PayPal renseigné » indépendamment du choix affiché (pour le panneau). */
+const paypalReadyCfg = () => !!(PAYEE.test(BILL.payee || '') || BILL.paymentLink);
+const PROVIDERS = { paypal: 'PayPal', stripe: 'Stripe (carte bancaire)', both: 'Les deux' }, PROVIDER_DEF = BILL.provider || 'paypal';
 /* Les e-mails de contact et d'assistance ne viennent QUE de config.js (boîte Wouf dédiée) : jamais de la config publique de Firestore. */
 const PERSONAL_FIELDS = ['seller', 'form', 'siret', 'address', 'mediator'], REMOTE_EPOCH = 2;
 const REMOTE_DEF = Object.fromEntries(Object.entries(REMOTE_FIELDS).map(([k, [o, p]]) => [k, o[p] || '']));
@@ -56,7 +61,7 @@ const remoteCached = () => { try { return JSON.parse(localStorage.getItem('wouf:
 function remoteStore(c) { const next = { ...remoteCached(), ...c }; try { localStorage.setItem('wouf:remote', JSON.stringify(next)); } catch (e) { /* ignore */ } return applySaleConfig(next); }
 // Interrupteur libre (choix du propriétaire) : seule condition, un moyen de paiement PayPal, sinon le bouton « Payer » ne mènerait nulle part.
 const saleReady = () => !!(payReady() && (BILL.plans || []).length);
-const saleMissing = () => [!payReady() && 'Adresse PayPal (ou lien PayPal) à renseigner'].filter(Boolean);
+const saleMissing = () => [!payReady() && (BILL.provider === 'stripe' ? 'Lien de paiement Stripe « à vie » à renseigner' : BILL.provider === 'both' ? 'Adresse PayPal ou lien Stripe à renseigner' : 'Adresse PayPal (ou lien PayPal) à renseigner')].filter(Boolean);
 const legalMissing = () => [['seller', 'nom'], ['form', 'statut'], ['address', 'adresse'], ['siret', 'SIRET'], ['email', 'e-mail'], ['mediator', 'médiateur de la consommation']].filter(([k]) => !LEGAL[k]).map(([, l]) => l).concat(supportTo() ? [] : ['e-mail d’assistance']);
 function applySaleConfig(c) {
   if (!c) return false;
@@ -64,9 +69,10 @@ function applySaleConfig(c) {
   for (const [k, [o, p]] of Object.entries(REMOTE_FIELDS)) {
     if (c[k] === undefined) continue;
     if (PERSONAL_FIELDS.includes(k) && !(c.epoch >= REMOTE_EPOCH)) continue;   // anciennes valeurs (possiblement personnelles) ignorées tant que le propriétaire n'a pas réenregistré
-    let v = String(c[k] || '').trim().slice(0, 300); if (/Link$/.test(k) && v && !PAY_LINK.test(v)) v = ''; if (k === 'payee' && v && !PAYEE.test(v)) v = ''; if (k === 'api' && v && !RELAY_URL.test(v)) v = '';
+    let v = String(c[k] || '').trim().slice(0, 300); if (/Link$/.test(k) && v && !PAY_LINK.test(v)) v = ''; if (/^stripe/.test(k) && v && !STRIPE_LINK.test(v)) v = ''; if (k === 'payee' && v && !PAYEE.test(v)) v = ''; if (k === 'api' && v && !RELAY_URL.test(v)) v = '';
     v = v || REMOTE_DEF[k]; if (o[p] !== v) { o[p] = v; changed = true; }
   }
+  const pv = PROVIDERS[c.provider] ? c.provider : PROVIDER_DEF; if (BILL.provider !== pv) { BILL.provider = pv; changed = true; }
   const on = c.billingEnabled === undefined ? SALE_DEFAULT : !!(c.billingEnabled && saleReady());
   if (BILL.enabled !== on) { BILL.enabled = on; changed = true; }
   return changed;
@@ -153,7 +159,7 @@ ROUTES.admin = function admin() {
   const orphans = Object.entries(ADM.paid).filter(([uid]) => !ADM.orders.some(o => o.uid === uid));
   const pend = ADM.orders.filter(o => o.status === 'pending' && !autoPaid(o)), done = ADM.orders.filter(o => o.status !== 'pending' || autoPaid(o));
   const orderRow = o => `<div class="adm-o"><div class="grow"><b>${esc(o.firstName || '')} ${esc(o.lastName || '')}</b> <span class="pill-s ${o.status === 'done' || autoPaid(o) ? 'ok' : ''}">${autoPaid(o) ? '✅ Activé automatiquement' : o.status === 'done' ? 'Activé' : o.status === 'refused' ? 'Refusé' : 'À vérifier'}</span>
-      <small>💳 PayPal : <b>${esc(o.paypalEmail || '')}</b> · ${esc(o.price || '')}${o.offer === 'reward' ? ' (offre récompense, ' + (+o.lessons || 0) + ' leçons)' : o.offer === 'yearly' ? ' (abonnement annuel)' : ''}${o.ref ? ' · réf. <b>' + esc(o.ref) + '</b>' : ''}</small>${o.payee ? `<small>📥 Payé à : ${esc(o.payee)}</small>` : ''}${ADM.paid[o.uid] && !paidOn(ADM.paid[o.uid]) ? `<small class="bad">⚠️ ${ADM.paid[o.uid].active ? 'Abonnement échu (non renouvelé)' : 'Paiement PayPal annulé ou remboursé'} : l’accès a été retiré automatiquement.</small>` : ''}${autoPaid(o) ? `<small>💳 PayPal a confirmé : ${esc(ADM.paid[o.uid].payerName || '')} · ${esc(ADM.paid[o.uid].payerEmail || '')} · ${esc(ADM.paid[o.uid].amount || '')} €${paidPlan(ADM.paid[o.uid])}</small>` : ''}
+      <small>💳 ${o.method === 'stripe' ? 'Stripe (carte)' : 'PayPal'} : <b>${esc(o.paypalEmail || '')}</b> · ${esc(o.price || '')}${o.offer === 'reward' ? ' (offre récompense, ' + (+o.lessons || 0) + ' leçons)' : o.offer === 'yearly' ? ' (abonnement annuel)' : ''}${o.ref ? ' · réf. <b>' + esc(o.ref) + '</b>' : ''}</small>${o.payee ? `<small>📥 Payé à : ${esc(o.payee)}</small>` : ''}${ADM.paid[o.uid] && !paidOn(ADM.paid[o.uid]) ? `<small class="bad">⚠️ ${ADM.paid[o.uid].active ? 'Abonnement échu (non renouvelé)' : 'Paiement PayPal annulé ou remboursé'} : l’accès a été retiré automatiquement.</small>` : ''}${autoPaid(o) ? `<small>💳 PayPal a confirmé : ${esc(ADM.paid[o.uid].payerName || '')} · ${esc(ADM.paid[o.uid].payerEmail || '')} · ${esc(ADM.paid[o.uid].amount || '')} €${paidPlan(ADM.paid[o.uid])}</small>` : ''}
       <small>👤 Compte Google : ${esc(o.googleEmail || '')} · ✉️ Contact : ${esc(o.contactEmail || '')}</small>
       <small>🕒 ${o.at ? esc(new Date(o.at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })) : ''}</small></div>
       ${o.status === 'pending' ? `<div class="btn-row sm"><button class="btn sm primary" data-act="adm-order-ok" data-id="${esc(o.id)}">✅ Paiement reçu : activer</button><button class="btn sm danger" data-act="adm-order-no" data-id="${esc(o.id)}">Refuser</button></div>` : ''}</div>`;
@@ -167,6 +173,7 @@ ROUTES.admin = function admin() {
   <section class="grid4 adm-tiles">${tiles.map(([i, n, l]) => `<div class="tile sm"><span>${i}</span> <b>${ADM.users ? n : '…'}</b> ${l}</div>`).join('')}</section>
   <section class="card"><h2>🔗 Raccourcis</h2><div class="btn-row">
     <a class="btn" href="https://www.paypal.com/myaccount/activities" target="_blank" rel="noopener">💳 PayPal</a>
+    <a class="btn" href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">💳 Stripe</a>
     <a class="btn" href="https://console.firebase.google.com/project/${esc((CFG.firebase || {}).projectId || '')}" target="_blank" rel="noopener">🔥 Firebase</a></div></section>
   <section class="card"><h2>💶 Vente de Wouf Plus</h2>
     <p><b>${sale ? '🟢 Vente ouverte' : '⚪ Tout est gratuit pour le moment'}</b> · prix : ${esc(planLine())}</p>
@@ -175,9 +182,14 @@ ROUTES.admin = function admin() {
     ${legalMissing().length ? `<p class="mut small">⚠️ Mentions légales incomplètes (${esc(legalMissing().join(', '))}) : elles s’affichent « à compléter » dans les conditions de vente.</p>` : ''}
     <button class="btn big ${sale ? 'danger' : 'primary'}" data-act="adm-sale" ${!sale && miss.length ? 'disabled' : ''}>${sale ? '⏸️ Ventes ON : appuyer pour arrêter' : '▶️ Ventes OFF : appuyer pour ouvrir'}</button>
     <p class="mut small">Le changement arrive chez les utilisateurs à leur prochaine ouverture de l’app. Ce qu’ils ont saisi reste toujours accessible.</p></section>
+  <section class="card" id="adm-provider"><h2>🔀 Moyen de paiement proposé</h2>
+    <p class="mut small">Choisissez ce que voient les acheteurs. « Les deux » leur laisse le choix entre la carte bancaire (Stripe) et PayPal.</p>
+    <div class="seg">${Object.entries(PROVIDERS).map(([k, l]) => `<button class="${BILL.provider === k ? 'on' : ''}" data-act="adm-provider" data-p="${k}">${esc(l)}</button>`).join('')}</div>
+    <p class="mut small">PayPal : ${paypalReadyCfg() ? '✅ prêt' : '⚪ adresse ou lien à renseigner'} · Stripe : ${STRIPE_LINK.test(BILL.stripe.lifetimeLink || '') ? '✅ lien « à vie »' : '⚪ lien « à vie » à renseigner'}${STRIPE_LINK.test(BILL.stripe.yearlyLink || '') ? ', ✅ lien annuel' : ''}${STRIPE_LINK.test(BILL.stripe.portal || '') ? ', ✅ portail client' : ', ⚪ portail client (conseillé pour l’annuel)'}.</p>
+    <p class="mut small">Stripe : activez chaque achat ci-dessous (« Paiements à vérifier ») après l’avoir vu dans votre tableau de bord Stripe ; le compte Google de l’acheteur y figure dans « Référence client ».</p></section>
   <section class="card" id="adm-pay"><h2>💳 Paiement et informations légales</h2>
     <p class="mut small">Indiquez l’<b>adresse e-mail de votre compte PayPal</b> (compte <b>professionnel</b> conseillé) : chaque acheteur est envoyé vers une page PayPal qui paie <b>${esc(planOf().price)}</b>${REWARD.enabled ? ` (ou <b>${esc(REWARD.price)}</b> pour l’offre récompense)` : ''} à cette adresse, avec la référence de son dossier (WOUF-…) visible dans PayPal. Vous pouvez la changer à tout moment : elle s’applique au paiement suivant. Les champs « lien fixe » ne servent que si vous préférez un lien créé dans PayPal (validation manuelle). <b>Activation automatique</b> : renseignez aussi l’adresse du relais (Cloudflare) ; elle ne fonctionne qu’avec l’adresse PayPal ci-dessus, pas avec un lien fixe.</p>
-    ${Object.entries(REMOTE_FIELDS).map(([k, [o, p, l]]) => `<div class="field"><label>${esc(l)}</label><input name="${k}" value="${esc(o[p] || '')}" ${/Link$/.test(k) ? 'type="url" placeholder="https://www.paypal.com/…"' : k === 'api' ? 'type="url" placeholder="https://wouf-billing.votrecompte.workers.dev"' : k === 'payee' ? 'type="email" placeholder="vous@exemple.fr"' : /mail/i.test(k) ? 'type="email"' : ''}></div>`).join('')}
+    ${Object.entries(REMOTE_FIELDS).map(([k, [o, p, l]]) => `<div class="field"><label>${esc(l)}</label><input name="${k}" value="${esc(o[p] || '')}" ${/Link$/.test(k) ? 'type="url" placeholder="https://www.paypal.com/…"' : /^stripe/.test(k) ? 'type="url" placeholder="https://buy.stripe.com/…"' : k === 'api' ? 'type="url" placeholder="https://wouf-billing.votrecompte.workers.dev"' : k === 'payee' ? 'type="email" placeholder="vous@exemple.fr"' : /mail/i.test(k) ? 'type="email"' : ''}></div>`).join('')}
     <button class="btn primary" data-act="adm-save-pay">Enregistrer</button>
     <p class="mut small">Ces informations apparaissent dans les mentions légales et les conditions de vente : faites-les relire avant d’ouvrir la vente.</p></section>
   <section class="card" id="adm-orders"><h2>🧾 Paiements à vérifier (${pend.length})</h2>
@@ -231,12 +243,17 @@ ACT['adm-save-pay'] = async () => {
   if (c.payee && !PAYEE.test(c.payee)) return toast('Adresse PayPal invalide');
   if (c.api && !RELAY_URL.test(c.api)) return toast('Adresse du relais invalide (https://…)');
   if (bad.length) return toast('Lien invalide : collez le lien PayPal (https://www.paypal.com/…)');
+  if (Object.keys(c).some(k => /^stripe/.test(k) && c[k] && !STRIPE_LINK.test(c[k]))) return toast('Lien Stripe invalide : collez le lien (https://buy.stripe.com/… ou https://billing.stripe.com/…)');
   try { await AdminApi.setConfig({ ...c, at: Date.now(), by: '', epoch: REMOTE_EPOCH }); remoteStore({ ...c, epoch: REMOTE_EPOCH }); toast('Enregistré ✓'); render(true); } catch (e) { toast(admErr(e)); }
+};
+ACT['adm-provider'] = async ({ p }) => {
+  if (!PROVIDERS[p] || BILL.provider === p) return;
+  try { await AdminApi.setConfig({ provider: p, at: Date.now(), by: '' }); remoteStore({ provider: p }); toast('Moyen de paiement : ' + PROVIDERS[p] + ' ✓'); render(true); } catch (e) { toast(admErr(e)); }
 };
 ACT['adm-order-ok'] = async ({ id }) => {
   const o = ADM.orders.find(x => x.id === id); if (!o) return;
   const yr = o.offer === 'yearly', until = yr ? (d => { d.setFullYear(d.getFullYear() + 1); return iso(d); })(new Date()) : 'lifetime';
-  if (!(await ask(`Avez-vous bien reçu ${o.price} de ${o.firstName} ${o.lastName} (${o.paypalEmail}) sur PayPal ? Wouf Plus ${yr ? 'sera activé pour un an (jusqu’au ' + fmtDate(until) + ')' : 'à vie sera activé'} sur ${o.googleEmail}.`, 'Oui, activer', false))) return;
+  if (!(await ask(`Avez-vous bien reçu ${o.price} de ${o.firstName} ${o.lastName} (${o.paypalEmail}) sur ${o.method === 'stripe' ? 'Stripe' : 'PayPal'} ? Wouf Plus ${yr ? 'sera activé pour un an (jusqu’au ' + fmtDate(until) + ')' : 'à vie sera activé'} sur ${o.googleEmail}.`, 'Oui, activer', false))) return;
   try {
     const g = { until, by: CLOUD.user.email, at: Date.now(), order: id };
     await AdminApi.setGrant(o.uid, g); await AdminApi.setOrder(id, { status: 'done', doneAt: Date.now(), by: CLOUD.user.email });
