@@ -16,7 +16,11 @@
    Routes :
      POST /ipn            notification PayPal (serveur à serveur)
      GET  /status         → {active, lifetime, since}                 Authorization: Bearer <jeton Google de l'utilisateur>
+     POST /support        {category, message, email, diagnostics}     jeton facultatif (priorité si Wouf Plus actif) → {ok, priority}
      GET  /admin/paid     → {paid: {uid: {…}}}                        Authorization: Bearer <jeton Google du PROPRIÉTAIRE>
+     GET  /admin/support  → {messages: [...]}                         idem
+     POST /admin/support/delete {id}                                  idem
+   Facultatif : RESEND_API_KEY (secret), SUPPORT_TO, SUPPORT_FROM → chaque message est aussi transmis par e-mail (resend.com).
    Documentation : wouf/docs/MAINTENANCE.md */
 
 const JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
@@ -98,16 +102,52 @@ async function handleIpn(req, env) {
   return { ok: true };
 }
 
+/* ---------- Formulaire de contact : messages rangés dans le KV, lus dans l'administration ---------- */
+const ownerOnly = async (req, env) => {
+  const u = await authed(req, env);
+  if (!u.verified || !env.OWNER_EMAIL || mail(u.email) !== mail(env.OWNER_EMAIL)) throw new HttpError(403, 'Réservé au propriétaire');
+  return u;
+};
+async function handleSupport(req, env) {
+  const b = await req.json().catch(() => ({})), message = String(b.message || '').trim(), email = String(b.email || '').trim();
+  if (message.length < 10 || message.length > 4000 || !/^\S+@\S+\.\S+$/.test(email) || email.length > 200) throw new HttpError(400, 'Message ou e-mail invalide');
+  // Anti-spam : 5 messages par heure et par adresse IP
+  const ip = req.headers.get('CF-Connecting-IP') || 'inconnue', hour = Math.floor(Date.now() / 3600e3), rk = `rl:${ip}:${hour}`, n = parseInt((await env.PAID.get(rk)) || '0', 10);
+  if (n >= 5) throw new HttpError(429, 'Trop de messages : réessayez dans une heure');
+  await env.PAID.put(rk, String(n + 1), { expirationTtl: 7200 });
+  let uid = '', priority = false;
+  if ((req.headers.get('Authorization') || '').startsWith('Bearer ')) { try { const u = await authed(req, env); uid = u.uid; priority = !!(JSON.parse((await env.PAID.get('paid:' + u.uid)) || 'null') || {}).active; } catch (e) { /* jeton absent ou invalide : message standard */ } }
+  const id = String(Date.now()).padStart(13, '0') + '-' + Math.random().toString(36).slice(2, 7);
+  const rec = { id, at: new Date().toISOString(), category: String(b.category || 'Question').slice(0, 60), message, email, diagnostics: String(b.diagnostics || '').slice(0, 4000), uid, priority };
+  await env.PAID.put('msg:' + id, JSON.stringify(rec));
+  if (env.RESEND_API_KEY && env.SUPPORT_TO && env.SUPPORT_FROM) {   // transmission par e-mail (facultative, sans effet sur l'enregistrement)
+    try { await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: env.SUPPORT_FROM, to: [env.SUPPORT_TO], reply_to: email, subject: `${priority ? '[PRIORITAIRE] ' : ''}Wouf – ${rec.category}`, text: `${message}\n\n--- ${priority ? 'MEMBRE PLUS' : 'Demande standard'} ---\nE-mail : ${email}\n${rec.diagnostics}` }) }); } catch (e) { /* ignoré */ }
+  }
+  return { ok: true, priority };
+}
+
 /* ---------- Routes ---------- */
 async function handle(req, env) {
   const path = new URL(req.url).pathname;
+  if (path === '/support' && req.method === 'POST') return handleSupport(req, env);
+  if (path === '/admin/support' && req.method === 'GET') {
+    await ownerOnly(req, env);
+    const list = await env.PAID.list({ prefix: 'msg:', limit: 200 }), out = [];
+    for (const k of list.keys) { const r = JSON.parse((await env.PAID.get(k.name)) || 'null'); if (r) out.push(r); }
+    return { messages: out.sort((a, c) => String(c.id).localeCompare(String(a.id))) };
+  }
+  if (path === '/admin/support/delete' && req.method === 'POST') {
+    await ownerOnly(req, env); const { id } = await req.json().catch(() => ({}));
+    if (!/^\d{13}-[a-z0-9]{1,8}$/.test(id || '')) throw new HttpError(400, 'Requête invalide');
+    await env.PAID.delete('msg:' + id); return { ok: true };
+  }
   if (path === '/status' && req.method === 'GET') {
     const u = await authed(req, env), rec = JSON.parse((await env.PAID.get('paid:' + u.uid)) || 'null');
     return rec && rec.active ? { active: true, lifetime: true, plan: 'lifetime', since: rec.since } : { active: false };
   }
   if (path === '/admin/paid' && req.method === 'GET') {
-    const u = await authed(req, env);
-    if (!u.verified || !env.OWNER_EMAIL || mail(u.email) !== mail(env.OWNER_EMAIL)) throw new HttpError(403, 'Réservé au propriétaire');
+    await ownerOnly(req, env);
     const out = {}, list = await env.PAID.list({ prefix: 'paid:', limit: 1000 });
     for (const k of list.keys) { const r = JSON.parse((await env.PAID.get(k.name)) || 'null'); if (r) out[k.name.slice(5)] = r; }
     return { paid: out };
@@ -122,7 +162,7 @@ export default {
       try { await handleIpn(req, env); return new Response('OK', { status: 200 }); }
       catch (e) { return new Response(e.status === 503 ? 'retry' : 'OK', { status: e.status === 503 ? 503 : 200 }); }
     }
-    if (req.method === 'OPTIONS') return new Response(null, { headers: { ...cors(env, origin), 'Access-Control-Allow-Methods': 'GET,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization', 'Access-Control-Max-Age': '86400' } });
+    if (req.method === 'OPTIONS') return new Response(null, { headers: { ...cors(env, origin), 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Authorization', 'Access-Control-Max-Age': '86400' } });
     if (origin && !origins(env).includes(origin)) return reply(env, req, { error: 'Origine non autorisée' }, 403);
     try { return reply(env, req, await handle(req, env)); }
     catch (e) { return reply(env, req, { error: e.status ? e.message : 'Erreur interne' }, e.status || 500); }

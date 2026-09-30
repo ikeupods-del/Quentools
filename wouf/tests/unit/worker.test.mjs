@@ -5,7 +5,7 @@ import worker from '../../billing-worker/worker.js';
 
 const PROJECT = 'quentools-adca1', ORIGIN = 'https://woufapp.fr';
 const kvStore = new Map();
-const KV = { get: async k => kvStore.has(k) ? kvStore.get(k) : null, put: async (k, v) => { kvStore.set(k, v); },
+const KV = { get: async k => kvStore.has(k) ? kvStore.get(k) : null, put: async (k, v) => { kvStore.set(k, v); }, delete: async k => { kvStore.delete(k); },
   list: async ({ prefix }) => ({ keys: [...kvStore.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })) }) };
 const ENV = { PAID: KV, ALLOWED_ORIGIN: ORIGIN + ',https://ikeupods-del.github.io', OWNER_EMAIL: 'patron@example.fr', PAYEE: 'vendeur@example.fr', FIREBASE_PROJECT_ID: PROJECT };
 const b64u = b => Buffer.from(b).toString('base64url');
@@ -95,4 +95,36 @@ test('liste des paiements : réservée au propriétaire (e-mail vérifié)', asy
   assert.equal((await get('/admin/paid', await makeToken({ email: 'patron@example.fr', email_verified: false, sub: 'patron_uid_1' }))).status, 403, 'e-mail non vérifié');
   const r = await get('/admin/paid', await makeToken({ email: 'Patron@Example.fr', sub: 'patron_uid_1' })); assert.equal(r.status, 200);
   const p = r.json.paid.uid_abc123; assert.equal(p.payerEmail, 'client@example.fr'); assert.equal(p.payerName, 'Jean Client'); assert.equal(p.ref, 'WOUF-ABC123'); assert.equal(p.amount, '19.99');
+});
+
+const post = async (path, body, token, env = ENV, ip = '1.2.3.4') => {
+  const r = await worker.fetch(new Request('https://worker.test' + path, { method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': ip, ...(token ? { Authorization: 'Bearer ' + token } : {}) }, body: JSON.stringify(body) }), env);
+  return { status: r.status, json: await r.json().catch(() => ({})) };
+};
+const msg = (over = {}) => ({ category: 'Question', message: 'Bonjour, comment retrouver mon achat ?', email: 'cliente@example.fr', diagnostics: 'Wouf 1.14', ...over });
+test('contact : le message est rangé, lisible seulement par le propriétaire, supprimable', async () => {
+  const r = await post('/support', msg()); assert.equal(r.status, 200); assert.equal(r.json.ok, true); assert.equal(r.json.priority, false);
+  assert.equal((await get('/admin/support', await makeToken())).status, 403, 'un client ne lit pas les messages');
+  const owner = await makeToken({ email: 'patron@example.fr', sub: 'patron_uid_1' }), l = await get('/admin/support', owner);
+  assert.equal(l.status, 200); assert.equal(l.json.messages.length, 1); assert.equal(l.json.messages[0].email, 'cliente@example.fr'); assert.match(l.json.messages[0].message, /retrouver mon achat/);
+  assert.equal((await post('/admin/support/delete', { id: l.json.messages[0].id }, await makeToken())).status, 403, 'un client ne supprime pas');
+  assert.equal((await post('/admin/support/delete', { id: 'pas-un-id' }, owner)).status, 400);
+  assert.equal((await post('/admin/support/delete', { id: l.json.messages[0].id }, owner)).status, 200);
+  assert.equal((await get('/admin/support', owner)).json.messages.length, 0);
+});
+test('contact : refus des messages invalides, limite de 5 par heure et par adresse IP, priorité pour un membre Plus', async () => {
+  assert.equal((await post('/support', msg({ message: 'court' }))).status, 400); assert.equal((await post('/support', msg({ email: 'pas-un-mail' }))).status, 400);
+  assert.equal((await post('/support', msg({ message: 'x'.repeat(4001) }))).status, 400);
+  for (let i = 0; i < 5; i++) assert.equal((await post('/support', msg(), undefined, ENV, '9.9.9.9')).status, 200);
+  assert.equal((await post('/support', msg(), undefined, ENV, '9.9.9.9')).status, 429, 'sixième message dans l’heure');
+  assert.equal((await post('/support', msg(), undefined, ENV, '8.8.8.8')).status, 200, 'une autre adresse IP n’est pas bloquée');
+  await ipn(good({ txn_id: 'S1' })); const r = await post('/support', msg(), await makeToken(), ENV, '7.7.7.7'); assert.equal(r.json.priority, true, 'membre Plus vérifié');
+  const bad = await post('/support', msg(), 'jeton.invalide.xx', ENV, '6.6.6.6'); assert.equal(bad.status, 200); assert.equal(bad.json.priority, false, 'jeton invalide : message standard, jamais prioritaire');
+});
+test('contact : transmission par e-mail seulement si Resend est configuré, sans jamais bloquer l’enregistrement', async () => {
+  await post('/support', msg(), undefined, ENV, '5.5.5.5'); assert.equal(calls.some(c => c.url.includes('api.resend.com')), false);
+  const env2 = { ...ENV, RESEND_API_KEY: 're_fake', SUPPORT_TO: 'wouf-contact@proton.me', SUPPORT_FROM: 'Wouf <no-reply@woufapp.fr>' }; const prev = globalThis.fetch;
+  globalThis.fetch = async (u, o) => String(u).includes('api.resend.com') ? (calls.push({ url: String(u), opts: o }), new Response('boom', { status: 500 })) : prev(u, o);
+  const r = await post('/support', msg({ email: 'a@example.fr' }), undefined, env2, '4.4.4.4'); assert.equal(r.status, 200, 'panne Resend : le message est quand même enregistré');
+  const sent = calls.find(c => c.url.includes('api.resend.com')); assert.ok(sent); assert.match(sent.opts.body, /wouf-contact@proton\.me/); assert.match(sent.opts.body, /reply_to/);
 });
