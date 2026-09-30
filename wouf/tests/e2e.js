@@ -39,7 +39,7 @@ const fakeCloud = page => page.evaluate(() => {
 const fakeSale = page => page.evaluate(() => {
   window.__orders = []; window.__go = null; NAV.go = u => { window.__go = u; };
   Object.assign(AdminApi, { createOrder: async o => { window.__orders.push(o); return 'ord' + window.__orders.length; } });
-  Object.assign(BILL, { enabled: true, freeUntil: null, payee: 'vendeur@test.fr', paymentLink: '', rewardLink: '' });
+  Object.assign(BILL, { enabled: true, freeUntil: null, payee: 'vendeur@test.fr', paymentLink: '', rewardLink: '', provider: 'paypal' }); BILL.yearly.enabled = false;
   Object.assign(LEGAL, { seller: 'Vendeur Test', form: 'EI', address: '1 rue Test', siret: '123', email: 'v@test.fr', mediator: 'Médiateur Test' });
 });
 const noErrors = b => assert.deepEqual(b.errors, [], 'erreurs console : ' + b.errors.join(' | '));
@@ -470,12 +470,12 @@ test('mises à jour : fichiers versionnés, lien de secours ?maj=1 (vide le cach
 
 test('bouton Wouf+ : visible pour les non-abonnés, présentation de l’offre tant que tout est gratuit, paiement quand la vente est ouverte', async () => {
   const b = await boot({ query: '?preview=none' }), p = b.page;
-  assert.equal(await p.locator('.plusbtn').isVisible(), true, 'bouton dans l’en-tête'); assert.match(await text(p, '.plus-cta'), /Wouf\+ · 29,99 € paiement unique/); assert.match(await text(p, '.plus-cta'), /Offert pendant le lancement/);
+  assert.equal(await p.locator('.plusbtn').isVisible(), true, 'bouton dans l’en-tête'); assert.match(await text(p, '.plus-cta'), /Wouf\+ · 14,99 € par an ou 29,99 € à vie/); assert.match(await text(p, '.plus-cta'), /Offert pendant le lancement/);
   await p.click('.plus-cta [data-act=subscribe]'); await p.waitForSelector('.sheet'); assert.match(await text(p, '.sheet'), /tout est offert/); assert.match(await text(p, '.sheet'), /29,99 €/); await p.click('.sheet [data-close]');
   await p.click('.plusbtn'); await p.waitForSelector('.plus-hero'); assert.match(await text(p, '#view'), /Toutes les fonctions Plus sont incluses/); assert.match(await text(p, '[data-act=subscribe]'), /Découvrir Wouf\+/);
   // vente ouverte, utilisateur non abonné : libellé d'achat partout
   await b.ev(() => { BILL.enabled = true; BILL.paymentLink = 'https://www.paypal.com/ncp/payment/X1'; render(); });
-  assert.match(await text(p, '[data-act=subscribe]'), /Souscrire à Wouf\+ · 29,99 € à vie/); await b.go('#/educ'); await p.waitForSelector('.cta-plus'); assert.match(await text(p, '.cta-plus'), /Souscrire à Wouf\+/);
+  assert.match(await text(p, '[data-act=subscribe]'), /Souscrire à Wouf\+ · dès 14,99 € par an/); await b.go('#/educ'); await p.waitForSelector('.cta-plus'); assert.match(await text(p, '.cta-plus'), /Souscrire à Wouf\+/);
   await b.go('#/lecon?id=stop'); assert.match(await text(p, '[data-act=subscribe]'), /Souscrire/);
   // abonné : plus de bouton
   await b.ev(() => { S.sub = { active: true, lifetime: true }; render(); }); assert.equal(await p.locator('.plusbtn').count(), 0);
@@ -679,7 +679,7 @@ test('nouvelle adresse : redirection sans carnet, transfert du carnet et des doc
 test('administration : réservée au propriétaire, comptes, Plus offert, retrait, interrupteur de vente', async () => {
   const b = await boot({ hash: '#/admin' }), p = b.page;
   assert.match(await text(p, '#view'), /Réservé au propriétaire/);
-  await b.ev(() => { OWNER = true; BILL.paymentLink = ''; }); await fakeCloud(p);
+  await b.ev(() => { OWNER = true; BILL.paymentLink = ''; BILL.provider = 'paypal'; }); await fakeCloud(p);
   await b.ev(() => {
     CloudApi.signIn = async () => ({ email: 'patron@test.fr', name: 'Patron', picture: '' });
     window.__adm = { grants: {}, cfg: null };
@@ -737,6 +737,38 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   await b.ev(async () => { window.__adm.mine = null; await accountSync(); }); assert.equal(await b.ev(() => plus()), false, 'Plus retiré');
   await b.ev(() => { S.grant = { until: '2020-01-01' }; }); assert.equal(await b.ev(() => plus()), false, 'offre expirée');
   await b.ev(() => { BILL.enabled = false; });
+  noErrors(b); await b.ctx.close();
+});
+
+test('Stripe : choix carte bancaire ou PayPal, liens Stripe avec le compte Google, sélecteur dans l’administration, activation manuelle', async () => {
+  const b = await boot({ query: '?preview=none', hash: '#/abo' }), p = b.page; await fakeCloud(p); await fakeSale(p);
+  await b.ev(() => { Object.assign(BILL, { provider: 'both' }); BILL.yearly.enabled = true; Object.assign(BILL.stripe, { lifetimeLink: 'https://buy.stripe.com/test_vie', yearlyLink: 'https://buy.stripe.com/test_an', portal: 'https://billing.stripe.com/p/login/test_x' });
+    CloudApi.signIn = async () => ({ uid: 'uidStripe1', email: 'lea@test.fr', name: 'Léa Test', picture: '' }); render(); });
+  await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent');
+  assert.equal(await p.locator('input[name=buy-pay]').count(), 2, 'carte bancaire et PayPal proposés'); assert.equal(await p.isChecked('input[name=buy-pay][value=stripe]'), true);
+  assert.match(await text(p, '#buy-btn'), /S’abonner : 14,99 € par an par carte bancaire/); assert.match(await text(p, '#buy-paylabel'), /E-mail utilisé pour le paiement/);
+  assert.equal(await p.locator('.pp-only:visible').count(), 0, 'pas de mention PayPal pour la carte');
+  await p.check('input[name=buy-plan][value=lifetime]'); assert.match(await text(p, '#buy-btn'), /Payer 29,99 € par carte bancaire/);
+  await p.check('input[name=buy-pay][value=paypal]'); assert.match(await text(p, '#buy-btn'), /PayPal/); assert.equal(await p.isChecked('input[name=buy-plan][value=lifetime]'), true, 'formule conservée');
+  await p.check('input[name=buy-pay][value=stripe]'); await p.check('#buy-consent'); await p.click('[data-act=buy-go]'); await p.waitForFunction(() => window.__go);
+  const g = new URL(await b.ev(() => window.__go)); assert.equal(g.origin + g.pathname, 'https://buy.stripe.com/test_vie');
+  assert.deepEqual(['client_reference_id', 'prefilled_email'].map(k => g.searchParams.get(k)), ['uidStripe1', 'lea@test.fr']);
+  const o = await b.ev(() => window.__orders[0]); assert.deepEqual([o.method, o.offer, o.price, o.status], ['stripe', 'lifetime', '29,99 €', 'pending']);
+  await b.go('#/merci'); assert.match(await text(p, '#view'), /paiement par carte/); assert.doesNotMatch(await text(p, '#view'), /PayPal vous envoie/);
+  // annuel par carte : lien annuel
+  await b.ev(() => { window.__go = null; closeAllSheets(); }); await b.go('#/abo'); await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent');
+  await p.check('#buy-consent'); await p.click('[data-act=buy-go]'); await p.waitForFunction(() => window.__go);
+  assert.match(await b.ev(() => window.__go), /^https:\/\/buy\.stripe\.com\/test_an\?client_reference_id=uidStripe1/); assert.equal(await b.ev(() => window.__orders[1].offer), 'yearly');
+  // Stripe seul : pas de choix ; PayPal seul : pas de carte
+  assert.deepEqual(await b.ev(() => { BILL.provider = 'stripe'; const a = payMethods(); BILL.provider = 'paypal'; const c = payMethods(); BILL.provider = 'stripe'; BILL.stripe.lifetimeLink = ''; const d = payReady(); BILL.stripe.lifetimeLink = 'https://buy.stripe.com/test_vie'; BILL.provider = 'both'; return [a, c, d]; }), [['stripe'], ['paypal'], false]);
+  // accès annuel activé par l'administration : date de fin et portail Stripe pour résilier
+  await b.ev(async () => { Object.assign(AdminApi, { myGrant: async () => ({ until: '2099-10-01' }), touch: async () => {} }); await accountSync(); closeAllSheets(); });
+  await b.go('#/home'); await b.go('#/abo'); assert.match(await text(p, '.plus-hero'), /Actif jusqu’au/); assert.equal(await p.getAttribute('.plus-hero a[target=_blank]', 'href'), 'https://billing.stripe.com/p/login/test_x');
+  // administration : sélecteur de moyen de paiement enregistré dans la configuration publique
+  await b.ev(() => { OWNER = true; window.__cfg = []; Object.assign(AdminApi, { listUsers: async () => [], listOrders: async () => [], setConfig: async c => { window.__cfg.push(c); } }); });
+  await b.go('#/admin'); await p.waitForSelector('#adm-provider'); assert.match(await text(p, '#adm-provider'), /Stripe : ✅ lien « à vie », ✅ lien annuel, ✅ portail client/);
+  await p.click('[data-act=adm-provider][data-p=stripe]'); await p.waitForFunction(() => BILL.provider === 'stripe');
+  assert.equal(await b.ev(() => window.__cfg.pop().provider), 'stripe'); assert.match(await p.getAttribute('#adm-provider button.on', 'data-p'), /stripe/);
   noErrors(b); await b.ctx.close();
 });
 

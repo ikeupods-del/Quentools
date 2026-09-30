@@ -188,6 +188,18 @@ match /wouf_orders/{id} { allow create: if request.auth != null && request.resou
 
 **Résiliation** (obligation de résiliation « en trois clics ») : Wouf Plus → « Gérer mon abonnement » → « Résilier ». L'app enregistre une demande « Résiliation » dans les messages de l'administration **et** propose au client d'arrêter lui-même le prélèvement dans PayPal. À réception d'une demande : PayPal → Paiements automatiques / Abonnements → annuler l'abonnement du client, puis lui confirmer la résiliation par e-mail. Les CGV (section « Abonnement annuel ») décrivent ces règles : **à faire relire par un professionnel**.
 
+## Stripe (carte bancaire), en plus ou à la place de PayPal
+**Choix du moyen de paiement** : Plus → Administration → « Moyen de paiement proposé » : **PayPal**, **Stripe (carte bancaire)** ou **Les deux** (l'acheteur choisit ; carte bancaire proposée en premier). Enregistré dans `wouf_admin/config` (`provider`), appliqué à l'ouverture suivante de l'app. Défaut : `billing.provider` de config.js.
+
+**Liens Stripe** (publics, aucune clé secrète) : `billing.stripe` dans config.js, modifiables dans l'administration (« Paiement et informations légales ») :
+- `lifetimeLink` : lien de paiement du prix « à vie » (29,99 €) ; `yearlyLink` : lien de l'abonnement annuel (14,99 €/an) ; `portal` : lien de connexion au portail client (Stripe → Paramètres → Facturation → Portail client), pour que les abonnés résilient seuls.
+- Montants dans Stripe = prix de config.js. Dans chaque lien, « Après le paiement » → rediriger vers `https://woufapp.fr/#/merci`.
+- L'app ajoute au lien le compte Google de l'acheteur (`client_reference_id`, visible dans Stripe → Paiements → « Référence client ») et son e-mail (`prefilled_email`).
+
+**Activation** : manuelle pour Stripe (pas encore de webhook) : l'acheteur remplit son dossier puis paie ; dans « Paiements à vérifier », le dossier indique « Stripe (carte) » ; vérifier le paiement dans le tableau de bord Stripe puis « Paiement reçu : activer » (à vie, ou un an pour l'annuel). **Renouvellement annuel Stripe** : à chaque prélèvement, prolonger l'accès d'un an depuis la liste des comptes, tant que l'activation automatique par webhook n'est pas en place (elle demandera une clé secrète de webhook à saisir dans Cloudflare, jamais dans le dépôt). L'offre récompense (9,99 €) reste réservée à PayPal.
+
+**Avant d'ouvrir la vente** : les liens actuels sont en mode réel ; faire un test (ou un paiement remboursé) avec un proche, et vérifier la TVA et les informations d'entreprise demandées par Stripe.
+
 ## Formulaire de contact et messages
 Le formulaire de l'app (Plus → Assistance) **envoie le message directement** au relais Cloudflare (`POST /support`) : aucune messagerie n'est ouverte chez le client. Les messages sont rangés dans le KV et s'affichent dans **Plus → Administration → 📨 Messages** (lecture, « Répondre » qui ouvre votre messagerie vers le client, suppression). Limite anti-spam : 5 messages par heure et par adresse IP. Un membre Plus vérifié est marqué « ⭐ Membre Plus ». Si le relais est en panne, l'app se replie sur l'ouverture de la messagerie (`support.email`, sinon l'e-mail de contact des mentions légales).
 - **Mise à jour du relais** : après une modification de `billing-worker/worker.js`, coller à nouveau le fichier dans Cloudflare (Worker → Edit code → tout remplacer → Deploy). Aucun autre réglage.

@@ -112,14 +112,22 @@ ACT.restore = async () => {
 /* Activation automatique possible : relais + compte Google identifié + paiement construit par l'app (adresse PayPal, pas un lien fixe). */
 const autoOn = () => !!(BILL.api && CLOUD.user && CLOUD.user.uid && PAYEE.test(BILL.payee || ''));
 
-/* Paiement PayPal, de préférence vers l'adresse PayPal choisie dans l'administration (BILL.payee, modifiable à tout moment) :
-   l'app construit elle-même la page de paiement PayPal (montant, référence du dossier, retour sur #/merci). À défaut : lien PayPal fixe.
-   Avant d'être redirigé, l'acheteur remplit un « dossier de paiement » (nom, prénom et e-mail PayPal,
-   e-mail de contact) enregistré dans wouf_orders : l'administration compare avec l'e-mail de PayPal puis active Wouf Plus. */
+/* Moyens de paiement : PayPal et/ou Stripe, au choix du propriétaire dans l'administration (BILL.provider : 'paypal' | 'stripe' | 'both').
+   PayPal : l'app construit la page de paiement vers l'adresse PayPal de l'administration (BILL.payee), ou lien PayPal fixe à défaut.
+   Stripe : liens de paiement Stripe (carte bancaire, Apple Pay, Google Pay) ; le compte Google est transmis (client_reference_id)
+   et l'activation se fait dans l'administration après vérification du paiement dans Stripe.
+   Avant d'être redirigé, l'acheteur remplit un « dossier de paiement » enregistré dans wouf_orders. */
 const PAY_LINK = /^https:\/\/(www\.)?paypal\.(com|me|biz)\/[\w./-]+$/i;
+const STRIPE_LINK = /^https:\/\/(buy|billing)\.stripe\.com\/[\w/-]+$/;
 const PAYEE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const payReady = () => !!(PAYEE.test(BILL.payee || '') || BILL.paymentLink);
-const rewardBuyable = () => rewardActive() && !!(PAYEE.test(BILL.payee || '') || BILL.rewardLink);
+const STRIPE = () => BILL.stripe || {};
+const useMethod = m => (BILL.provider || 'paypal') === 'both' || (BILL.provider || 'paypal') === m;
+const paypalReady = () => useMethod('paypal') && !!(PAYEE.test(BILL.payee || '') || BILL.paymentLink);
+const stripeReady = () => useMethod('stripe') && STRIPE_LINK.test(STRIPE().lifetimeLink || '');
+const payMethods = () => [stripeReady() && 'stripe', paypalReady() && 'paypal'].filter(Boolean);
+const payReady = () => payMethods().length > 0;
+const rewardBuyable = (m = 'paypal') => m === 'paypal' && paypalReady() && rewardActive() && !!(PAYEE.test(BILL.payee || '') || BILL.rewardLink);   // offre récompense : PayPal uniquement
+const METHOD_NAME = { stripe: 'carte bancaire', paypal: 'PayPal' };
 function paypalUrl(payee, price, ref, reward, uid) {
   const home = (typeof SITE !== 'undefined' && SITE.home) || location.origin + location.pathname, auto = !!(uid && BILL.api);
   const q = new URLSearchParams({ cmd: '_xclick', business: payee, item_name: 'Wouf Plus à vie' + (reward ? ' (offre récompense)' : ''), item_number: ref, invoice: ref, custom: auto ? uid + '|' + ref : ref, ...(auto ? { notify_url: BILL.api.replace(/\/$/, '') + '/ipn' } : {}),
@@ -134,60 +142,80 @@ function paypalSubUrl(payee, price, ref, uid) {
     a3: String(price).replace(/[^\d,.]/g, '').replace(',', '.'), p3: '1', t3: 'Y', src: '1', sra: '1', no_note: '1', no_shipping: '1', currency_code: 'EUR', lc: 'FR', charset: 'utf-8', return: home + '#/merci', cancel_return: home + '#/abo' });
   return 'https://www.paypal.com/cgi-bin/webscr?' + q;
 }
-const yearlyBuyable = () => !!(yearlyPlan() && PAYEE.test(BILL.payee || ''));   // l'abonnement exige l'adresse PayPal (pas de lien fixe)
-const pickedPlan = () => { const r = document.querySelector('input[name=buy-plan]:checked'); return r ? r.value : 'lifetime'; };
-function consentText(plan) {
-  const act = autoOn() ? 'Je comprends que Wouf Plus est activé dès que PayPal confirme mon paiement (en général en quelques instants ; en cas de souci, à la main par l’éditeur, au plus tard sous 24 h).' : 'Je comprends que Wouf Plus est activé <b>manuellement</b> par l’éditeur après vérification de mon paiement (au plus tard sous 24 h).';
-  const y = yearlyPlan();
-  return `J’ai lu les <a href="#/legal?doc=cgv" data-close>conditions de vente</a>. ${plan === 'yearly' && y ? `Je souscris un <b>abonnement annuel à ${esc(y.price)}</b>, reconduit automatiquement chaque année jusqu’à résiliation. Je peux résilier à tout moment depuis Wouf (Wouf Plus → « Gérer mon abonnement ») ou mon compte PayPal ; l’accès reste actif jusqu’à la fin de l’année payée. ` : ''}${act} Je demande l’exécution du service dès cette activation et je reconnais perdre mon droit de rétractation de 14 jours dès que l’accès est fourni.`;
+/* Lien de paiement Stripe : compte Google et e-mail transmis pour retrouver le paiement (paramètres documentés des Payment Links). */
+function stripeUrl(link, uid, email) {
+  const q = new URLSearchParams({ ...(uid ? { client_reference_id: uid } : {}), ...(email ? { prefilled_email: email } : {}), locale: 'fr' });
+  return link + (link.includes('?') ? '&' : '?') + q;
 }
+/* Abonnement annuel : PayPal exige l'adresse PayPal (pas de lien fixe), Stripe un lien de paiement annuel. */
+const yearlyBuyable = (m = 'paypal') => !!(yearlyPlan() && (m === 'stripe' ? stripeReady() && STRIPE_LINK.test(STRIPE().yearlyLink || '') : paypalReady() && PAYEE.test(BILL.payee || '')));
+const pickedPlan = () => { const r = document.querySelector('input[name=buy-plan]:checked'); return r ? r.value : 'lifetime'; };
+const pickedMethod = () => { const r = document.querySelector('input[name=buy-pay]:checked'); return r ? r.value : payMethods()[0] || 'paypal'; };
+function consentText(plan, m = 'paypal') {
+  const act = m === 'paypal' && autoOn() ? 'Je comprends que Wouf Plus est activé dès que PayPal confirme mon paiement (en général en quelques instants ; en cas de souci, à la main par l’éditeur, au plus tard sous 24 h).' : 'Je comprends que Wouf Plus est activé <b>manuellement</b> par l’éditeur après vérification de mon paiement (au plus tard sous 24 h).';
+  const y = yearlyPlan(), where = m === 'stripe' ? (STRIPE().portal ? 'l’espace client Stripe' : 'en écrivant à l’éditeur') : 'mon compte PayPal';
+  return `J’ai lu les <a href="#/legal?doc=cgv" data-close>conditions de vente</a>. ${plan === 'yearly' && y ? `Je souscris un <b>abonnement annuel à ${esc(y.price)}</b>, reconduit automatiquement chaque année jusqu’à résiliation. Je peux résilier à tout moment depuis Wouf (Wouf Plus → « Gérer mon abonnement ») ou ${where} ; l’accès reste actif jusqu’à la fin de l’année payée. ` : ''}${act} Je demande l’exécution du service dès cette activation et je reconnais perdre mon droit de rétractation de 14 jours dès que l’accès est fourni.`;
+}
+/* Fiche d'achat : moyen de paiement (si plusieurs), formule (si l'annuel est proposé), dossier, accord. Tout se recalcule au changement. */
 function buySheet() {
-  const p = planOf(), rw = rewardBuyable(), price = rw ? REWARD.price : p.price, u = CLOUD.user || {}, nm = String(u.name || '').split(' '), y = yearlyBuyable() ? yearlyPlan() : null;
-  const def = y && !rw ? 'yearly' : 'lifetime';
-  const el = sheet(`<div class="sheet-head"><h2>⭐ ${esc(y ? 'Wouf Plus' : p.label)}</h2><button class="x" data-close>✕</button></div>
-    ${y ? `<div class="plan-pick" role="radiogroup" aria-label="Formule">
+  const u = CLOUD.user || {}, nm = String(u.name || '').split(' '), methods = payMethods();
+  const el = sheet(`<div class="sheet-head"><h2>⭐ Wouf Plus</h2><button class="x" data-close>✕</button></div>
+    ${methods.length > 1 ? `<div class="plan-pick pay-pick" role="radiogroup" aria-label="Moyen de paiement">${methods.map((m, i) => `<label class="plan-opt"><input type="radio" name="buy-pay" value="${m}" ${i === 0 ? 'checked' : ''}><span class="grow"><b>${m === 'stripe' ? '💳 Carte bancaire' : '🅿️ PayPal'}</b><small>${m === 'stripe' ? 'Visa, Mastercard, Apple Pay, Google Pay (paiement sécurisé par Stripe)' : 'Compte PayPal ou carte bancaire via PayPal'}</small></span></label>`).join('')}</div>` : ''}
+    <div id="buy-plans"></div>
+    <ul class="bul">${Object.values(FEATURES).map(x => `<li><b>${esc(x[1])}</b></li>`).join('')}</ul>
+    <h3>🧾 Votre dossier de paiement</h3><p class="mut small">Ces informations nous permettent de retrouver votre paiement et d’activer Wouf Plus sur votre compte Google <b>${esc(u.email || '')}</b>.</p>
+    <div class="field"><label>Prénom <span class="pp-only">(tel qu’affiché sur PayPal)</span></label><input id="buy-first" autocomplete="given-name" value="${esc(nm[0] || '')}"></div>
+    <div class="field"><label>Nom <span class="pp-only">(tel qu’affiché sur PayPal)</span></label><input id="buy-last" autocomplete="family-name" value="${esc(nm.slice(1).join(' '))}"></div>
+    <div class="field"><label id="buy-paylabel">E-mail de votre compte PayPal</label><input id="buy-paypal" type="email" autocomplete="email" value="${esc(u.email || '')}"></div>
+    <div class="field"><label>E-mail pour vous répondre</label><input id="buy-contact" type="email" autocomplete="email" value="${esc(u.email || '')}"></div>
+    <label class="chk consent"><input type="checkbox" id="buy-consent"> <span id="buy-terms"></span></label>
+    <div class="form-actions"><button class="btn primary big" data-act="buy-go" id="buy-btn"></button></div>
+    <p class="mut small center" id="buy-note"></p>`);
+  const refresh = keepPlan => {
+    const m = pickedMethod(), p = planOf(), rw = rewardBuyable(m), price = rw ? REWARD.price : p.price, y = yearlyBuyable(m) ? yearlyPlan() : null;
+    const cur = keepPlan && $('input[name=buy-plan]:checked'), def = cur && (cur.value !== 'yearly' || y) ? cur.value : y && !rw ? 'yearly' : 'lifetime';
+    $('#buy-plans').innerHTML = y ? `<div class="plan-pick" role="radiogroup" aria-label="Formule">
       <label class="plan-opt"><input type="radio" name="buy-plan" value="yearly" ${def === 'yearly' ? 'checked' : ''}><span class="grow"><b>Annuel</b><small>Renouvelé chaque année, résiliable à tout moment</small></span><b class="pp">${esc(y.price)}<small> ${esc(y.per)}</small></b></label>
       <label class="plan-opt"><input type="radio" name="buy-plan" value="lifetime" ${def === 'lifetime' ? 'checked' : ''}><span class="grow"><b>À vie</b><small>${rw ? '🏅 Offre récompense · ' : ''}Un seul paiement, pour toujours</small></span><b class="pp">${rw ? `<s>${esc(p.price)}</s> ` : ''}${esc(price)}</b></label></div>`
-    : `${rw ? `<p class="center reward-tag">🏅 Offre récompense : toutes les leçons gratuites terminées</p><div class="price-cut center"><s>${esc(p.price)}</s> <b>${esc(price)}</b></div>` : `<div class="big-n center">${esc(p.price)}<small> ${esc(p.per)}</small></div>`}
-    <p class="center mut">Un seul paiement, pour toujours. Aucun abonnement, aucune reconduction.</p>`}
-    <ul class="bul">${Object.values(FEATURES).map(x => `<li><b>${esc(x[1])}</b></li>`).join('')}</ul>
-    <h3>🧾 Votre dossier de paiement</h3><p class="mut small">Ces informations nous permettent de retrouver votre paiement PayPal et d’activer Wouf Plus sur votre compte Google <b>${esc(u.email || '')}</b>.</p>
-    <div class="field"><label>Prénom (tel qu’affiché sur PayPal)</label><input id="buy-first" autocomplete="given-name" value="${esc(nm[0] || '')}"></div>
-    <div class="field"><label>Nom (tel qu’affiché sur PayPal)</label><input id="buy-last" autocomplete="family-name" value="${esc(nm.slice(1).join(' '))}"></div>
-    <div class="field"><label>E-mail de votre compte PayPal</label><input id="buy-paypal" type="email" autocomplete="email" value="${esc(u.email || '')}"></div>
-    <div class="field"><label>E-mail pour vous répondre</label><input id="buy-contact" type="email" autocomplete="email" value="${esc(u.email || '')}"></div>
-    <label class="chk consent"><input type="checkbox" id="buy-consent"> <span id="buy-terms">${consentText(def)}</span></label>
-    <div class="form-actions"><button class="btn primary big" data-act="buy-go" id="buy-btn">${def === 'yearly' ? `S’abonner : ${esc(y.price)} ${esc(y.per)} avec PayPal` : `Payer ${esc(price)} avec PayPal`}</button></div>
-    <p class="mut small center">Paiement sécurisé par PayPal (compte PayPal ou carte bancaire). ${autoOn() ? '<b>Activation automatique</b> sur votre compte Google dès que PayPal confirme le paiement, en général en quelques instants.' : '<b>L’activation n’est pas instantanée</b> : elle est faite à la main après vérification de votre paiement, au plus tard sous 24 h, sur votre compte Google.'}</p>`);
-  if (y) el.addEventListener('change', e => {   // changement de formule : texte d'engagement et bouton adaptés (la case doit être recochée)
-    if (e.target.name !== 'buy-plan') return; const pl = pickedPlan();
-    $('#buy-terms').innerHTML = consentText(pl); $('#buy-consent').checked = false;
-    $('#buy-btn').textContent = pl === 'yearly' ? `S’abonner : ${y.price} ${y.per} avec PayPal` : `Payer ${price} avec PayPal`;
-  });
+      : `${rw ? `<p class="center reward-tag">🏅 Offre récompense : toutes les leçons gratuites terminées</p><div class="price-cut center"><s>${esc(p.price)}</s> <b>${esc(price)}</b></div>` : `<div class="big-n center">${esc(p.price)}<small> ${esc(p.per)}</small></div>`}
+      <p class="center mut">Un seul paiement, pour toujours. Aucun abonnement, aucune reconduction.</p>`;
+    const pl = pickedPlan(), who = METHOD_NAME[m];
+    $('#buy-terms').innerHTML = consentText(pl, m); $('#buy-consent').checked = false;
+    $('#buy-btn').textContent = pl === 'yearly' ? `S’abonner : ${y.price} ${y.per} par ${who}` : `Payer ${price} par ${who}`;
+    $('#buy-paylabel').textContent = m === 'stripe' ? 'E-mail utilisé pour le paiement' : 'E-mail de votre compte PayPal';
+    $$('.pp-only').forEach(x => { x.hidden = m !== 'paypal'; });
+    $('#buy-note').innerHTML = m === 'stripe' ? 'Paiement sécurisé par Stripe : vos données bancaires ne nous sont jamais transmises. <b>L’activation n’est pas instantanée</b> : elle est faite à la main après vérification de votre paiement, au plus tard sous 24 h, sur votre compte Google.'
+      : `Paiement sécurisé par PayPal (compte PayPal ou carte bancaire). ${autoOn() ? '<b>Activation automatique</b> sur votre compte Google dès que PayPal confirme le paiement, en général en quelques instants.' : '<b>L’activation n’est pas instantanée</b> : elle est faite à la main après vérification de votre paiement, au plus tard sous 24 h, sur votre compte Google.'}`;
+  };
+  refresh(false);
+  el.addEventListener('change', e => { if (e.target.name === 'buy-pay') refresh(true); else if (e.target.name === 'buy-plan') refresh(true); });   // la case d'accord doit être recochée
   return el;
 }
 ACT.checkout = async () => {
-  await remoteRefresh();   // toujours la dernière adresse PayPal choisie par l'administration
+  await remoteRefresh();   // toujours les derniers réglages de paiement choisis dans l'administration
   if (!payReady()) return toast('Paiement non configuré');
   if (!CLOUD.user) { toast('Connectez-vous avec Google : votre achat sera lié à votre compte'); await ACT['g-signin'](); if (!CLOUD.user) return; }
   closeAllSheets(); buySheet();
 };
 ACT['buy-go'] = async () => {
-  const v = id => ($('#' + id).value || '').trim(), mail = x => /^\S+@\S+\.\S+$/.test(x);
+  const v = id => ($('#' + id).value || '').trim(), mail = x => /^\S+@\S+\.\S+$/.test(x), m = pickedMethod();
   const o = { firstName: v('buy-first').slice(0, 80), lastName: v('buy-last').slice(0, 80), paypalEmail: v('buy-paypal').slice(0, 160), contactEmail: v('buy-contact').slice(0, 160) };
-  if (!o.firstName || !o.lastName) return toast('Indiquez le prénom et le nom de votre compte PayPal');
+  if (!o.firstName || !o.lastName) return toast(m === 'paypal' ? 'Indiquez le prénom et le nom de votre compte PayPal' : 'Indiquez votre prénom et votre nom');
   if (!mail(o.paypalEmail) || !mail(o.contactEmail)) return toast('Vérifiez les adresses e-mail');
   if (!$('#buy-consent').checked) return toast('Cochez la case pour continuer');
+  const yearlyPicked = pickedPlan() === 'yearly';
   await remoteRefresh();
-  const yearly = pickedPlan() === 'yearly' && yearlyBuyable(), reward = !yearly && rewardBuyable();
-  const price = yearly ? yearlyPlan().price : reward ? REWARD.price : planOf().price, payee = PAYEE.test(BILL.payee || '') ? BILL.payee : '';
+  if (!payMethods().includes(m)) return toast('Ce moyen de paiement n’est plus proposé : rouvrez l’offre');
+  const yearly = yearlyPicked && yearlyBuyable(m), reward = !yearly && rewardBuyable(m);
+  const price = yearly ? yearlyPlan().price : reward ? REWARD.price : planOf().price, payee = m === 'paypal' && PAYEE.test(BILL.payee || '') ? BILL.payee : '';
   const ref = 'WOUF-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
   const auto = !!(payee && autoOn()), uid = auto ? CLOUD.user.uid : '';
-  const link = yearly ? paypalSubUrl(payee, price, ref, uid) : payee ? paypalUrl(payee, price, ref, reward, uid) : (reward ? BILL.rewardLink : BILL.paymentLink);
-  Object.assign(o, { ref, payee, auto, googleEmail: CLOUD.user.email || '', name: CLOUD.user.name || '', offer: yearly ? 'yearly' : reward ? 'reward' : 'lifetime', price, lessons: lessonsDone(), status: 'pending', at: Date.now(), version: CFG.version || '' });
+  const link = m === 'stripe' ? stripeUrl(yearly ? STRIPE().yearlyLink : STRIPE().lifetimeLink, CLOUD.user.uid || '', o.paypalEmail)
+    : yearly ? paypalSubUrl(payee, price, ref, uid) : payee ? paypalUrl(payee, price, ref, reward, uid) : (reward ? BILL.rewardLink : BILL.paymentLink);
+  Object.assign(o, { ref, method: m, payee, auto, googleEmail: CLOUD.user.email || '', name: CLOUD.user.name || '', offer: yearly ? 'yearly' : reward ? 'reward' : 'lifetime', price, lessons: lessonsDone(), status: 'pending', at: Date.now(), version: CFG.version || '' });
   let id; try { toast('Enregistrement de votre dossier…'); id = await AdminApi.createOrder(o); } catch (e) { return toast('Impossible d’enregistrer votre dossier (connexion internet ?). Réessayez.'); }
-  try { localStorage.setItem('wouf:paid', JSON.stringify({ id, ref, at: o.at, email: o.googleEmail, paypal: o.paypalEmail, price: o.price })); } catch (e) { /* ignore */ }
-  toast('Redirection vers PayPal…'); NAV.go(link);
+  try { localStorage.setItem('wouf:paid', JSON.stringify({ id, ref, at: o.at, email: o.googleEmail, paypal: o.paypalEmail, price: o.price, method: m })); } catch (e) { /* ignore */ }
+  toast(m === 'stripe' ? 'Redirection vers le paiement sécurisé…' : 'Redirection vers PayPal…'); NAV.go(link);
 };
 function soonSheet() {
   sheet(`<div class="sheet-head"><h2>⭐ Wouf+ : ${esc(planLine())}</h2><button class="x" data-close>✕</button></div>
@@ -197,13 +225,13 @@ function soonSheet() {
 }
 /* Bouton « Souscrire » : paiement si la vente est ouverte, sinon présentation de l'offre (tout est gratuit). */
 ACT.subscribe = () => (BILL.enabled && payReady()) ? ACT.checkout() : soonSheet();
-/* Retour de PayPal : l'activation est faite par l'administration après vérification du dossier. */
+/* Retour du paiement (PayPal ou Stripe) : activation automatique (PayPal + relais) ou par l'administration après vérification du dossier. */
 ROUTES.merci = function merci() {
   let p = null; try { p = JSON.parse(localStorage.getItem('wouf:paid') || 'null'); } catch (e) { /* ignore */ }
   const who = `${p && p.email ? ` (<b>${esc(p.email)}</b>)` : ''}`, ref = p && p.ref ? `, référence <b>${esc(p.ref)}</b>` : '';
-  const wait = autoOn()
+  const stripe = p && p.method === 'stripe', wait = !stripe && autoOn()
     ? `<p>⏳ <b>PayPal confirme votre paiement…</b> Wouf Plus s’active <b>automatiquement</b> sur votre compte Google${who}, en général en quelques secondes. Cette page se met à jour toute seule.</p><p class="mut">Rien au bout de quelques minutes ? L’activation sera alors faite à la main, au plus tard sous 24 h${ref}. Écrivez-nous depuis « Une question ? » avec le nom ou l’e-mail utilisé pour payer.</p>`
-    : `<p>Merci ! <b>Votre activation est faite manuellement</b> : Wouf Plus sera activé <b>au plus tard sous 24 h</b> sur votre compte Google${who}, après vérification de votre paiement PayPal${p && p.paypal ? ` (<b>${esc(p.paypal)}</b>)` : ''}${ref}. PayPal vous envoie un reçu par e-mail.</p><p class="mut">Restez connecté(e) avec ce compte : l’activation apparaît à l’ouverture de l’app. Pas activé après 24 h ? Écrivez-nous depuis « Une question ? » en indiquant le nom ou l’e-mail utilisé pour payer.</p>`;
+    : `<p>Merci ! <b>Votre activation est faite manuellement</b> : Wouf Plus sera activé <b>au plus tard sous 24 h</b> sur votre compte Google${who}, après vérification de votre paiement ${stripe ? 'par carte' : 'PayPal'}${p && p.paypal ? ` (<b>${esc(p.paypal)}</b>)` : ''}${ref}. ${stripe ? 'Vous recevez un reçu par e-mail.' : 'PayPal vous envoie un reçu par e-mail.'}</p><p class="mut">Restez connecté(e) avec ce compte : l’activation apparaît à l’ouverture de l’app. Pas activé après 24 h ? Écrivez-nous depuis « Une question ? » en indiquant le nom ou l’e-mail utilisé pour payer.</p>`;
   return `<div class="page-h"><a class="back" href="#/home">‹</a><h1>🎉 Merci !</h1></div><section class="card plus-hero"><h2>${subActive() ? 'Wouf Plus est activé' : 'Paiement en cours'}</h2>
     ${subActive() ? '<p><b>Wouf Plus est actif ⭐</b> Merci et bonne découverte !</p>' : wait}
     ${!subActive() && BILL.api ? '<button class="btn" data-act="restore">🔄 Vérifier mon accès maintenant</button>' : ''}
@@ -261,6 +289,8 @@ ROUTES.abo = function abo() {
   else if (subPlan()) { const s = subPlan(), end = s.periodEnd ? fmtDate(s.periodEnd) : '';
     status = `<section class="card plus-hero"><h2>⭐ Wouf Plus annuel</h2><p>${s.cancelled ? `<b>Abonnement résilié</b> : aucun nouveau prélèvement. Wouf Plus reste actif jusqu’au <b>${esc(end)}</b>.` : `Actif jusqu’au <b>${esc(end)}</b>, puis renouvelé automatiquement pour un an${yearlyPlan() ? ' (' + esc(yearlyPlan().price) + ')' : ''}.`}</p><p>Votre accès est lié à votre compte Google : il vous suit sur tous vos appareils. <b>💬 Assistance prioritaire incluse.</b></p>
       <button class="btn" data-act="sub-manage">Gérer mon abonnement</button> <a class="btn" href="#/support">Contacter l’assistance</a></section>`; }
+  else if (grantActive() && S.grant.until !== 'lifetime') status = `<section class="card plus-hero"><h2>⭐ Wouf Plus actif</h2><p>Actif jusqu’au <b>${esc(fmtDate(S.grant.until))}</b>. Votre accès est lié à votre compte Google : il vous suit sur tous vos appareils. <b>💬 Assistance prioritaire incluse.</b></p>
+      ${STRIPE_LINK.test(STRIPE().portal || '') ? `<a class="btn" href="${esc(STRIPE().portal)}" target="_blank" rel="noopener">Gérer mon abonnement (carte bancaire)</a> ` : ''}<a class="btn" href="#/support">Contacter l’assistance</a></section>`;
   else if (subActive()) status = `<section class="card plus-hero"><h2>⭐ Wouf Plus actif à vie</h2><p>Merci de votre confiance ! Votre accès est lié à votre compte Google : il vous suit sur tous vos appareils.</p><p><b>💬 Assistance prioritaire incluse</b> : ${esc(SUP.priorityDelay || '')}.</p><a class="btn" href="#/support">Contacter l’assistance</a></section>`;
   else if (grandfathered()) status = `<section class="card plus-hero"><h2>⭐ Wouf Plus offert</h2><p>Merci d’être là depuis le début : Plus vous est offert ${!BILL.grandfatherUntil || BILL.grandfatherUntil === 'lifetime' ? 'à vie' : 'jusqu’au ' + fmtDate(BILL.grandfatherUntil)}.</p></section>`;
   else if (isFreeWindow()) status = `<section class="card plus-hero"><h2>⭐ Offre de lancement</h2><p>Wouf Plus est offert jusqu’au ${fmtDate(BILL.freeUntil)}. Ensuite : ${esc(planLine())}.</p></section>`;
@@ -319,6 +349,9 @@ ACT['support-send'] = async () => {
 };
 
 /* ---------- Pages légales ---------- */
+/* Prestataires de paiement réellement proposés (pages légales). */
+const payProviders = () => ({ paypal: 'PayPal', stripe: 'Stripe', both: 'PayPal et Stripe' })[BILL.provider || 'paypal'];
+const payLabel = () => ({ paypal: 'la plateforme sécurisée PayPal (compte PayPal ou carte bancaire)', stripe: 'la plateforme sécurisée Stripe (carte bancaire, Apple Pay, Google Pay)', both: 'les plateformes sécurisées Stripe (carte bancaire) ou PayPal, au choix' })[BILL.provider || 'paypal'];
 const orTbd = v => v ? esc(v) : '<em>[à compléter]</em>';
 function legalDoc(kind) {
   const L = LEGAL, p = planOf();
@@ -326,7 +359,7 @@ function legalDoc(kind) {
   if (kind === 'cgv') return `<h1>Conditions générales de vente</h1><p class="mut">Wouf Plus — ${y ? 'abonnement annuel ou achat unique' : 'achat unique'}</p>
   <h2>1. Vendeur</h2><p>${orTbd(L.seller)} — ${orTbd(L.form)}, ${orTbd(L.address)}. SIRET : ${orTbd(L.siret)}. Contact : ${orTbd(L.email)}. ${esc(L.vat || '')}</p>
   <h2>2. Objet</h2><p>Les présentes conditions régissent la vente de l’accès à « Wouf Plus », ensemble de fonctions supplémentaires de l’application Wouf (${Object.values(FEATURES).map(f => esc(f[1])).join(', ')}). La version gratuite reste disponible sans engagement.</p>
-  <h2>3. Prix et paiement</h2><p>${y ? `Deux formules : l’<b>abonnement annuel</b> à <b>${esc(y.price)} TTC par an</b>, ou l’<b>accès à vie</b> à <b>${esc(p.price)} TTC</b> en un paiement unique, sans abonnement ni reconduction.` : `Le prix est de <b>${esc(p.price)} TTC</b>, en un paiement unique. Il n’y a ni abonnement ni reconduction.`} Le paiement s’effectue via la plateforme sécurisée PayPal (compte PayPal ou carte bancaire) ; le vendeur ne reçoit pas vos données bancaires. Wouf Plus est activé <b>manuellement</b> par le vendeur, sur le compte Google de l’acheteur, après vérification du paiement et au plus tard 24 h après celui-ci : l’accès n’est donc pas instantané.</p>
+  <h2>3. Prix et paiement</h2><p>${y ? `Deux formules : l’<b>abonnement annuel</b> à <b>${esc(y.price)} TTC par an</b>, ou l’<b>accès à vie</b> à <b>${esc(p.price)} TTC</b> en un paiement unique, sans abonnement ni reconduction.` : `Le prix est de <b>${esc(p.price)} TTC</b>, en un paiement unique. Il n’y a ni abonnement ni reconduction.`} Le paiement s’effectue via ${payLabel()} ; le vendeur ne reçoit pas vos données bancaires. Wouf Plus est activé <b>manuellement</b> par le vendeur, sur le compte Google de l’acheteur, après vérification du paiement et au plus tard 24 h après celui-ci : l’accès n’est donc pas instantané.</p>
   <h2>4. Accès « à vie »</h2><p>L’accès à Wouf Plus est acquis pour toute la durée d’exploitation du service. En cas d’arrêt définitif, le vendeur s’engage à informer les utilisateurs au moins ${esc(String(L.shutdownNoticeDays || 90))} jours à l’avance et à leur permettre d’exporter leurs données. Le contenu de Plus peut être enrichi ; le vendeur ne retirera pas de façon substantielle les fonctions Plus achetées.</p>
   ${y ? `<h2>4 bis. Abonnement annuel</h2><p>L’abonnement est conclu pour une durée d’un an à compter du paiement, au prix de ${esc(y.price)} TTC, puis <b>reconduit tacitement</b> par périodes d’un an, prélevées automatiquement par PayPal. Le vendeur vous informe par e-mail, au plus tôt trois mois et au plus tard un mois avant chaque échéance, de la date de reconduction et de la possibilité de ne pas la reconduire (art. L215-1 du Code de la consommation). Vous pouvez <b>résilier à tout moment, sans frais</b>, depuis l’application (Wouf Plus → « Gérer mon abonnement ») ou depuis votre compte PayPal ; la résiliation prend effet à la fin de la période payée, pendant laquelle l’accès reste actif. Si un prélèvement échoue, l’accès prend fin quelques jours après la fin de la période payée ; vos données restent accessibles dans la version gratuite.</p>` : ''}
   <h2>5. Livraison et compte</h2><p>L’accès est fourni immédiatement après le paiement et est lié au compte Google utilisé lors de l’achat. Il fonctionne sur tous les appareils connectés à ce compte.</p>
@@ -337,9 +370,9 @@ function legalDoc(kind) {
   <h2>10. Médiation et droit applicable</h2><p>Médiateur de la consommation : ${orTbd(L.mediator)}. Les présentes conditions sont soumises au droit français.</p>`;
   if (kind === 'confidentialite') return `<h1>Politique de confidentialité</h1>
   <h2>Responsable du traitement</h2><p>${orTbd(L.seller)}, ${orTbd(L.address)} — ${orTbd(L.email)}.</p>
-  <h2>Données traitées</h2><ul class="bul"><li><b>Données de votre animal et du carnet</b> (fiche, soins, poids, notes, balades) : stockées sur votre appareil ; sauvegardées dans votre espace privé Google (Firebase) uniquement si vous vous connectez.</li><li><b>Compte Google</b> (adresse e-mail, nom, photo) : utilisé pour l’authentification et pour lier votre achat.</li><li><b>Paiement</b> : traité par PayPal, qui ne nous transmet pas vos données bancaires. Pour activer Wouf Plus, votre dossier de paiement (prénom, nom et e-mail du compte PayPal, e-mail de contact, compte Google, date et montant) est conservé et consulté par l’éditeur.</li><li><b>Position</b> : utilisée uniquement lorsque vous lancez une recherche de vétérinaire ou une balade, et envoyée à OpenStreetMap (Overpass / Nominatim) pour la recherche de cliniques ; le tracé des balades reste dans vos données.</li><li><b>Assistance</b> : le message, l’adresse e-mail et, si vous le cochez, des informations techniques, enregistrés sur notre relais (Cloudflare) et consultés par l’éditeur pour vous répondre.</li><li><b>Compte (si vous vous connectez avec Google)</b> : un résumé (nom, adresse e-mail, dates de première et dernière utilisation, nombre d’animaux et de leçons acquises, version de l’app, achat éventuel) est visible par l’éditeur pour l’assistance et la gestion des accès Wouf Plus. Le contenu de votre carnet n’y figure pas.</li>${statsCode() ? '<li><b>Mesure d’audience</b> : nom de l’écran ouvert, principales actions (animal ajouté, leçon acquise, balade enregistrée), taille d’écran et site de provenance, via GoatCounter, sans cookie, sans identifiant et sans aucune donnée saisie. Désactivable dans Réglages.</li>' : ''}</ul>
+  <h2>Données traitées</h2><ul class="bul"><li><b>Données de votre animal et du carnet</b> (fiche, soins, poids, notes, balades) : stockées sur votre appareil ; sauvegardées dans votre espace privé Google (Firebase) uniquement si vous vous connectez.</li><li><b>Compte Google</b> (adresse e-mail, nom, photo) : utilisé pour l’authentification et pour lier votre achat.</li><li><b>Paiement</b> : traité par ${payLabel()}, qui ne nous transmet pas vos données bancaires. Pour activer Wouf Plus, votre dossier de paiement (prénom, nom et e-mail du compte PayPal, e-mail de contact, compte Google, date et montant) est conservé et consulté par l’éditeur.</li><li><b>Position</b> : utilisée uniquement lorsque vous lancez une recherche de vétérinaire ou une balade, et envoyée à OpenStreetMap (Overpass / Nominatim) pour la recherche de cliniques ; le tracé des balades reste dans vos données.</li><li><b>Assistance</b> : le message, l’adresse e-mail et, si vous le cochez, des informations techniques, enregistrés sur notre relais (Cloudflare) et consultés par l’éditeur pour vous répondre.</li><li><b>Compte (si vous vous connectez avec Google)</b> : un résumé (nom, adresse e-mail, dates de première et dernière utilisation, nombre d’animaux et de leçons acquises, version de l’app, achat éventuel) est visible par l’éditeur pour l’assistance et la gestion des accès Wouf Plus. Le contenu de votre carnet n’y figure pas.</li>${statsCode() ? '<li><b>Mesure d’audience</b> : nom de l’écran ouvert, principales actions (animal ajouté, leçon acquise, balade enregistrée), taille d’écran et site de provenance, via GoatCounter, sans cookie, sans identifiant et sans aucune donnée saisie. Désactivable dans Réglages.</li>' : ''}</ul>
   <h2>Finalités et bases légales</h2><p>Fournir le service (exécution du contrat), sécuriser et améliorer l’application (intérêt légitime), répondre à vos demandes et gérer l’achat (contrat, obligations légales comptables).</p>
-  <h2>Sous-traitants</h2><p>Google (Firebase Authentication et Firestore), PayPal (paiement), Cloudflare (relais : paiement et messages d’assistance), GitHub (hébergement du site),${statsCode() ? ' GoatCounter (mesure d’audience anonyme),' : ''} ${'OpenStreetMap Foundation (cartes / recherche)'}. Certains peuvent impliquer des transferts hors Union européenne encadrés par des garanties appropriées.</p>
+  <h2>Sous-traitants</h2><p>Google (Firebase Authentication et Firestore), ${payProviders()} (paiement), Cloudflare (relais : paiement et messages d’assistance), GitHub (hébergement du site),${statsCode() ? ' GoatCounter (mesure d’audience anonyme),' : ''} ${'OpenStreetMap Foundation (cartes / recherche)'}. Certains peuvent impliquer des transferts hors Union européenne encadrés par des garanties appropriées.</p>
   <h2>Publicité et suivi</h2><p>Aucun suivi publicitaire, aucune revente de données. Seul le stockage technique nécessaire au fonctionnement est utilisé (stockage local de l’appareil).${statsCode() ? ' La mesure d’audience anonyme ne dépose aucun cookie et peut être désactivée dans Réglages.' : ''}</p>
   <h2>Durée de conservation</h2><p>Les données restent sur votre appareil jusqu’à leur suppression. Les données synchronisées sont conservées tant que votre compte de données existe ; vous pouvez demander leur suppression à tout moment. Les justificatifs d’achat sont conservés selon les obligations légales.</p>
   <h2>Vos droits</h2><p>Accès, rectification, effacement, limitation, portabilité, opposition : écrivez à ${orTbd(L.email)}. Vous pouvez saisir la CNIL (cnil.fr).</p>`;
