@@ -1,11 +1,9 @@
 # Télécharge des photos libres de droits (CC0 / domaine public) pour les carrousels marketing, puis les enregistre dans la branche.
-# Se lance quand marketing/wouf/photos-libres.json change sur une branche de travail, ou à la main (Actions → « Photos libres » → Run workflow).
+# Se lance uniquement à la main (Actions → « Photos libres » → Run workflow, en choisissant la branche de travail) : les photos candidates
+# sont enregistrées dans cette branche (photos-candidats/), on garde les meilleures dans photos/ puis on supprime le dossier.
 name: Photos libres
 
 on:
-  push:
-    branches: ['claude/**']
-    paths: ['marketing/wouf/photos-libres.json', 'marketing/wouf/photos-libres.js']
   workflow_dispatch:
 
 permissions:
