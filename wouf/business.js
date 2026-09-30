@@ -12,6 +12,7 @@ const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free ==
 const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
 
 const CHANGELOG = [
+  { v: '1.17.0', date: '2026-09-30', items: ['🏠 Accueil plus clair : astuce du jour, rappels en bandeaux, score et poids en widgets dépliables, raccourcis compacts', '📍 Météo des balades : votre ville ou votre position est retenue, mise à jour automatique', '🎓 Leçons Plus rangées par catégorie en menu déroulant, accès direct aux guides PDF', '💡 50 astuces « Le saviez-vous ? » pour le chien et 50 pour le chat'] },
   { v: '1.16.0', date: '2026-09-30', items: ['🌦️ Météo des balades sur l’accueil : verdict du moment, alertes (orage, chaleur, bitume brûlant, froid, vent) et meilleure heure pour sortir'] },
   { v: '1.15.0', date: '2026-09-30', items: ['📚 Nouveau : Guides (erreurs à éviter, points d’attention, urgences), à lire dans l’app ou en PDF', '🔒 Synchronisation Google chiffrée avec une phrase secrète (optionnel)'] },
   { v: '1.14.0', date: '2026-09-30', items: ['Nouveau : le test express « dangereux ou OK ? » : 8 aliments, 1 minute, sans compte, avec partage de votre score'] },

@@ -9,12 +9,12 @@ config.js → data.js → species.js → core.js → health.js → screens.js �
 Wouf — configuration. Guide complet : wouf/docs/MAINTENANCE.md ► WOUF PLUS (achat unique à vie) : tout est GRATUIT tant que `billing.enabled` vaut false. Pour ouvrir la vente : suivre la che
 - dépend de : extras.js
 
-### wouf/data.js (150 l.)
+### wouf/data.js (187 l.)
 Wouf — données de référence (indicatives : elles ne remplacent jamais l'avis d'un vétérinaire).
 - définit : VACCINES TYPES ROUTINE_TYPES BREEDS SIZE_LABEL SENIOR_AGE breedOf TOXICS FIRST_AID URGENT_SIGNS POISON_LINES TIPS
-- dépend de : species.js core.js
+- dépend de : species.js core.js noms.js
 
-### wouf/species.js (126 l.)
+### wouf/species.js (165 l.)
 Wouf — espèces : chien 🐶 et chat 🐱 (gratuit : 1 chien + 1 chat ; Plus : autant d'animaux qu'on veut). Tout ce qui diffère selon l'espèce est ici : vocabulaire, races, vaccins, toxiques, pr
 - définit : presetsFor humanAgeOf SPECIES spOf CAT_BREEDS CAT_PRESETS breedsFor TOXICS_CAT FIRST_AID_CAT URGENT_CAT TIPS_CAT NUT_FACTORS_DOG NUT_FACTORS_CAT nutFactorsOf toxicsOf firstAidOf urgentOf tipsOf
 - dépend de : data.js core.js
@@ -29,12 +29,12 @@ Wouf — logique santé : rappels, score de suivi, plan chiot, poids, calendrier
 - définit : reminders missing score weightStatus lifeStage medsToday allExpenses puppyPlan buildICS maybeNotify dogEvents dogWeights lastWeight dogBreed dogSize dueText idealBand SLOTS medActive EXPENSE_CATS
 - dépend de : data.js species.js core.js
 
-### wouf/screens.js (316 l.)
+### wouf/screens.js (327 l.)
 Wouf — écrans principaux : chiens, accueil, carnet, suivi (poids, traitements, journal).
 - écrans : #/home #/carnet #/plan #/suivi
-- actions : dogs pick-dog edit-dog new-dog first-dog renew add-event edit-event carnet-f plan-done add-weight edit-weight add-med edit-med add-journal edit-journal tab-suivi journal-f
-- définit : avatar renderTop dogFields saveDog newDog editDog welcome reminderRow eventForm weightForm medForm medRow journalForm UI ACT ROUTES JKINDS
-- dépend de : data.js species.js core.js health.js educ.js cloud.js tracker.js guide.js noms.js business.js extras.js main.js
+- actions : dogs pick-dog edit-dog new-dog first-dog tip-next renew add-event edit-event carnet-f plan-done add-weight edit-weight add-med edit-med add-journal edit-journal tab-suivi journal-f
+- définit : avatar renderTop dogFields saveDog newDog editDog welcome reminderRow eventForm weightForm medForm medRow journalForm UI ACT ROUTES HOME JKINDS
+- dépend de : data.js species.js core.js health.js educ.js tracker.js guide.js noms.js business.js extras.js main.js
 
 ### wouf/sos.js (184 l.)
 Wouf — SOS : vétérinaires ouverts / de garde autour de soi (données OpenStreetMap), contacts, premiers secours, toxiques.
@@ -123,12 +123,12 @@ Wouf — quiz de validation, série 2 : leçons chien des fichiers lessons4.js �
 Wouf — quiz de validation, série 3 : toutes les leçons chat. Même format que quiz.js.
 - dépend de : core.js quiz.js
 
-### wouf/educ.js (169 l.)
+### wouf/educ.js (172 l.)
 Wouf Éducation — leçons, séances guidées, progression, badges, programme chiot.
 - écrans : #/educ #/principes #/lecon #/seance #/programme
 - actions : edu-cat step-tick lesson-done s-step s-click s-ok s-ko s-end prog-start
 - définit : eduSet allSessions eduStats nextLesson lessonCard eduFilter eduListHTML clickSound routeParam lessonOf lessonsFor programsFor principlesFor eduGet lessonUnlocked lessonState STATE_LABEL BADGES EDU eduCats SEANCE
-- dépend de : species.js core.js health.js screens.js lessons.js lessons_cat.js parcours.js noms.js business.js main.js
+- dépend de : species.js core.js health.js screens.js lessons.js lessons_cat.js parcours.js business.js main.js
 
 ### wouf/parcours.js (194 l.)
 Wouf Éducation — parcours en empreintes de pattes : unités, étapes à débloquer, os à gagner (points), niveaux, objectif du jour, mini-quiz de validation, célébrations, et offre récompense (W
@@ -156,12 +156,12 @@ Wouf Plus — Bilan santé intelligent, fiche gardien (pet-sitter), plan de pert
 - définit : healthInsights sitterHTML weightPlanCalc SITTER_FIELDS WP
 - dépend de : data.js species.js core.js health.js screens.js tracker.js business.js extras.js main.js
 
-### wouf/guide.js (303 l.)
+### wouf/guide.js (313 l.)
 Wouf — « Que faire ? » (triage des symptômes) et météo des balades. Règles simples et transparentes : elles orientent (urgence / vétérinaire sous 24 h / surveiller), elles ne diagnostiquent 
 - écrans : #/triage #/meteo #/recherche
-- actions : tri-pick tri-back tri-flag tri-note meteo-home meteo-go
+- actions : tri-pick tri-back tri-flag tri-note meteo-home meteo-city meteo-change meteo-go
 - définit : triageResult walkRisk bestHours loadMeteo meteoLocate weatherScene dogScene walkTips walkAlerts meteoCacheGet meteoCachePut meteoNotify meteoHome searchAll searchHTML TRIAGE TRI TRI_LVL METEO FLAT_FACE WCODE SCENE_TXT METEO_TTL WALK_VERDICT
-- dépend de : data.js species.js core.js health.js screens.js educ.js business.js main.js
+- dépend de : data.js species.js core.js health.js screens.js sos.js educ.js business.js main.js
 
 ### wouf/noms.js (111 l.)
 Wouf — générateur de noms pour chien et chat : styles, sexe, initiale (dont la « lettre de l'année » LOF/LOOF des pedigrees), test d'un nom (court ? ressemble-t-il à un ordre ?), noms favori
@@ -170,7 +170,7 @@ Wouf — générateur de noms pour chien et chat : styles, sexe, initiale (dont 
 - définit : lev nameCheck pickNames namesHTML testHTML NAME_STYLES NAME_POOL LOF_LETTERS lofLetter norm syllables NAME_COMMANDS confusedWith NOMS nameFavs isFav chip
 - dépend de : core.js health.js screens.js main.js
 
-### wouf/business.js (314 l.)
+### wouf/business.js (315 l.)
 Wouf — exploitation et vente : achat unique « à vie », assistance prioritaire, pages légales, nouveautés, alerte de mise à jour, diagnostics. Paiement : lien PayPal + dossier de paiement vér
 - écrans : #/merci #/abo #/support #/legal #/nouveautes
 - actions : restore checkout buy-go subscribe paywall support-send check-update
@@ -222,6 +222,8 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - README.md (0 Ko)
 - build-queue.js (7 Ko)
 - catalogue.json (128 Ko)
+- contraste.js (7 Ko)
+- contraste.json (2 Ko)
 - erreurs.js (6 Ko)
 - erreurs.json (5 Ko)
 - fiches.json (5 Ko)

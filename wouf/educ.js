@@ -38,7 +38,7 @@ const BADGES = [
 ];
 
 /* ---------- Écran Éducation ---------- */
-const EDU = { q: '', cat: '' };
+const EDU = { q: '', cat: '', open: false, cats: [] };   // open : section Plus dépliée ; cats : catégories dépliées
 const eduCats = list => [...new Set(list.map(l => l.cat))].sort((a, b) => a.localeCompare(b, 'fr'));
 function lessonCard(d, l) {
     const stt = lessonState(d, l), lock = !lessonUnlocked(l), [lab, cls] = STATE_LABEL[stt];
@@ -51,8 +51,10 @@ function eduFilter(list, q, cat) {
 }
 function eduListHTML(d) {
   const paid = lessonsFor(d).filter(l => !l.free), r = eduFilter(paid, EDU.q, EDU.cat);
-  return r.map(l => lessonCard(d, l)).join('') || '<p class="empty">Aucune leçon ne correspond. Essayez un autre mot.</p>';
+  if (EDU.q || EDU.cat) return `<div class="list">${r.map(l => lessonCard(d, l)).join('') || '<p class="empty">Aucune leçon ne correspond. Essayez un autre mot.</p>'}</div>`;
+  return eduCats(paid).map(c => { const ls = paid.filter(l => l.cat === c), n = ls.filter(l => lessonState(d, l)).length; return `<details class="acc-in edu-grp" data-cat="${esc(c)}" ${EDU.cats.includes(c) ? 'open' : ''}><summary><b>${esc(c)}</b><small class="mut">${ls.length} leçon${ls.length > 1 ? 's' : ''}</small></summary><div class="list">${ls.map(l => lessonCard(d, l)).join('')}</div></details>`; }).join('');
 }
+document.addEventListener('toggle', e => { const t = e.target; if (!t || !t.classList) return; if (t.id === 'edu-plus') EDU.open = t.open; else if (t.classList.contains('edu-grp')) { const c = t.dataset.cat; EDU.cats = EDU.cats.filter(x => x !== c).concat(t.open ? [c] : []); } }, true);
 ACT['edu-cat'] = ({ c }) => { EDU.cat = c; render(true); };
 document.addEventListener('input', e => { if (e.target.id === 'edu-q') { EDU.q = e.target.value; const el = $('#edu-list'); if (el) el.innerHTML = eduListHTML(dog()); } });
 
@@ -67,11 +69,12 @@ ROUTES.educ = function educ() {
   <section class="card"><h2>🐾 Mon parcours</h2><p class="mut small">Gagnez des os : +${XP_SESSION} 🦴 par séance, +${XP_LESSON + XP_QUIZ} 🦴 par leçon validée au quiz.</p>${pathHTML(d)}</section>
   <a class="card banner" href="#/principes"><b>📖 Les ${principlesFor(d).length} principes d’une bonne éducation</b><span>${spOf(d).id === 'cat' ? 'Environnement, jeu, respect du chat… à lire d’abord (gratuit) →' : 'Renforcement positif, marqueur, règle des 80 %… à lire d’abord (gratuit) →'}</span></a>
   <section class="card"><div class="card-h"><h2>Leçons gratuites</h2></div><div class="list">${free.map(l => lessonCard(d, l)).join('')}</div></section>
-  <section class="card"><div class="card-h"><h2>Leçons Wouf Plus</h2>${plus() ? '<span class="pill ok">Débloquées</span>' : '<span class="pill plus">Plus</span>'}</div>
-    <p class="mut small">${paid.length} leçons détaillées : étapes progressives, programme d’entraînement, critères de réussite, erreurs fréquentes, dépannage. Nouvelles leçons ajoutées régulièrement.</p>${plus() && !BILL.enabled ? '' : (subActive() ? '' : `<button class="btn primary big cta-plus" data-act="subscribe">${ctaLabel()}</button>`)}
+  ${plus() && !BILL.enabled ? '' : (subActive() ? '' : `<button class="btn primary big cta-plus" data-act="subscribe">${ctaLabel()}</button>`)}
+  <details class="card acc" id="edu-plus" ${EDU.open ? 'open' : ''}><summary><h2>Leçons Wouf Plus <small class="mut">(${paid.length})</small></h2>${plus() ? '<span class="pill ok">Débloquées</span>' : '<span class="pill plus">Plus</span>'}</summary>
+    <p class="mut small">${paid.length} leçons détaillées : étapes progressives, programme d’entraînement, critères de réussite, erreurs fréquentes, dépannage. Nouvelles leçons ajoutées régulièrement.</p>
     <input id="edu-q" class="search" type="search" placeholder="Chercher une leçon : rappel, griffes, bébé, peur…" value="${esc(EDU.q)}" autocomplete="off">
-    <div class="chips scroll">${[['', 'Toutes (' + paid.length + ')']].concat(eduCats(paid).map(c => [c, c + ' (' + paid.filter(l => l.cat === c).length + ')'])).map(([c, t]) => `<button class="chip ${EDU.cat === c ? 'on' : ''}" data-act="edu-cat" data-c="${esc(c)}">${esc(t)}</button>`).join('')}</div>
-    <div class="list" id="edu-list">${eduListHTML(d)}</div></section>
+    <div id="edu-list">${eduListHTML(d)}</div></details>
+  <a class="card banner" href="#/guides"><b>📚 Guides et formations (PDF)</b><span>Erreurs à éviter, points d’attention, urgences : à lire ou à enregistrer en PDF →</span></a>
   <section class="card"><div class="card-h"><h2>Programmes guidés</h2>${plus() ? '' : '<span class="pill plus">Plus</span>'}</div><div class="list">${progs.map(prog => `<a class="row" href="#/programme?id=${prog.id}"><span class="ico">${prog.icon}</span><span class="grow"><b>${esc(prog.title)}</b><small>${pst(prog.id) ? '▶ Programme en cours' : esc(prog.sub)}</small></span><span class="chev">›</span></a>`).join('')}</div></section>
   <section class="card"><h2>Badges</h2><div class="badges">${badges.map(b => `<div class="badge ${b.on ? 'on' : ''}"><span>${b.i}</span><small>${esc(b.n)}</small></div>`).join('')}</div></section>
   ${st.ss.length ? `<section class="card"><h2>Dernières séances</h2>${st.ss.slice(0, 6).map(s => { const l = lessonOf(s.lid) || {}; return `<div class="row"><span class="ico">${l.icon || '🎓'}</span><span class="grow"><b>${esc(l.title || s.lid)}</b><small>${fmtDate(s.d)} · ${s.min || 1} min${s.n ? ` · ${s.ok}/${s.n} réussites` : ''}</small></span>${s.n ? `<span class="pill ${s.ok / s.n >= 0.8 ? 'ok' : s.ok / s.n >= 0.6 ? 'warn' : ''}">${Math.round(100 * s.ok / s.n)} %</span>` : ''}</div>`; }).join('')}</section>` : ''}
