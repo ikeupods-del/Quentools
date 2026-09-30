@@ -861,6 +861,33 @@ test('test express « dangereux ou OK ? » : sans carnet, 8 questions, score, pa
   noErrors(b); noErrors(b2); await b.ctx.close(); await b2.ctx.close();
 });
 
+test('guides : un guide gratuit, les autres réservés à Plus, lecture et PDF', async () => {
+  const b = await boot({}), p = b.page;
+  await b.ev(() => { BILL.enabled = true; BILL.freeUntil = null; BILL.grandfatherBefore = null; S.sub = { active: false }; S.grant = null; }); await b.go('#/guides'); await p.waitForSelector('[data-act=guide-open]');
+  assert.equal(await p.locator('[data-act=guide-open]').count(), 4); assert.match(await text(p, '#view'), /Gratuit/);
+  await p.click('[data-act=guide-open][data-id=chien-erreurs]'); await p.waitForSelector('.modal, .sheet, [data-act=paywall], .paywall').catch(() => {}); assert.equal(await p.locator('.gd-list').count(), 0, 'guide Plus verrouillé');
+  await p.click('.sheet [data-close]'); await p.waitForTimeout(300);
+  await p.click('[data-act=guide-open][data-id=urgences]'); await p.waitForSelector('.gd-list'); assert.equal(await p.locator('.gd-list li').count(), 8); assert.match(await text(p, '.gd'), /Faire vomir sans avis/);
+  await b.ev(() => { window.print = () => { window.__g = document.getElementById('print-root').textContent; }; }); await p.click('[data-act=guide-print]'); await p.waitForTimeout(500); assert.match(await b.ev(() => window.__g), /Urgences : 8 gestes/);
+  await b.ev(() => { BILL.enabled = false; GD.open = ''; render(); }); await p.click('[data-act=guide-open][data-id=chat-erreurs]'); await p.waitForSelector('.gd-list'); assert.equal(await p.locator('.gd-list li').count(), 10);
+  assert.equal(await b.ev(() => GUIDES.every(g => g.items.length >= 8 && g.items.every(i => i[0] && i[1].length > 40))), true);
+  noErrors(b); await b.ctx.close();
+});
+
+test('synchro Google chiffrée : Google ne voit que du texte chiffré, relecture avec la phrase, mauvaise phrase refusée', async () => {
+  const b = await boot({}), p = b.page; await fakeCloud(p);
+  await b.ev(() => { CLOUD.user = { email: 'q@test.fr', name: 'Q' }; render(); }); await b.go('#/sauvegarde'); await p.waitForSelector('[data-act=cenc-on]');
+  await p.fill('#cenc-pass', 'abc'); await p.click('[data-act=cenc-on]'); assert.equal(await b.ev(() => cloudPass()), '', 'phrase trop courte refusée');
+  await p.fill('#cenc-pass', 'ma phrase secrète'); await p.click('[data-act=cenc-on]'); await p.waitForFunction(() => window.__store && CLOUD.st === 'ok');
+  const st = await b.ev(() => window.__store.text); assert.match(st, /cloud-enc/); assert.ok(!/Nala|dogs/.test(st), 'aucune donnée lisible côté Google');
+  const back = await b.ev(async () => { const t = await cloudOpen(window.__store.text); return JSON.parse(t).dogs.length; }); assert.ok(back >= 1);
+  await b.ev(() => { localStorage.setItem(CPASS, 'mauvaise'); window.__r = 'en cours'; cloudOpen(window.__store.text).then(() => { window.__r = 'ouvert'; }, e => { window.__r = e.message; }); });
+  await p.waitForSelector('#cp-in'); await p.click('.sheet [data-b]'); await p.waitForFunction(() => window.__r !== 'en cours'); assert.match(await b.ev(() => window.__r), /requise/, 'mauvaise phrase puis annulation : refus');
+  await b.ev(() => { window.__r = 'en cours'; cloudOpen(window.__store.text).then(() => { window.__r = 'ouvert'; }, e => { window.__r = e.message; }); }); await p.waitForSelector('#cp-in'); await p.fill('#cp-in', 'ma phrase secrète'); await p.click('.sheet [data-a]');
+  await p.waitForFunction(() => window.__r !== 'en cours'); assert.equal(await b.ev(() => window.__r), 'ouvert', 'bonne phrase saisie : lecture possible');
+  noErrors(b); await b.ctx.close();
+});
+
 /* ================= exécution ================= */
 (async () => {
   srv = await start(0); PORT = srv.address().port;

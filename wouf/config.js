@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.14.0',
+  version: '1.15.0',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
@@ -27,7 +27,7 @@ window.WOUF_CONFIG = {
     rewardOffer: { enabled: true, price: '9,99 €' },
     limits: { perSpecies: 1, documents: 3 },     // formule gratuite : 1 chien + 1 chat, 3 documents
     // Fonctions réservées à Plus (quand enabled) — retirez une ligne pour la rendre gratuite
-    premium: ['multiDogs', 'documents', 'report', 'calendar', 'stats', 'lessons', 'programs', 'tracker', 'bilan', 'sitter', 'weightplan', 'weather']
+    premium: ['multiDogs', 'documents', 'report', 'calendar', 'stats', 'lessons', 'programs', 'tracker', 'bilan', 'sitter', 'weightplan', 'weather', 'guides']
   },
 
   // Assistance : le support prioritaire est réservé aux acheteurs de Wouf Plus (vérifié côté serveur).

@@ -207,3 +207,11 @@ Une tâche GitHub (`.github/workflows/instagram.yml`, deux fois par jour, vers 7
 - Suivi (anonyme) : `test-aliments-commence` et `test-aliments-termine`, visibles dans la carte Statistiques de l'administration.
 - Aperçu des liens partagés : image `icons/og-image.png` (1200×630), balises Open Graph/Twitter, `canonical`, données structurées ; `robots.txt` et `sitemap.xml` à la racine.
 
+
+## Sécurité et confidentialité
+- **Données** : sur l'appareil (localStorage + IndexedDB), jamais envoyées sans action de l'utilisateur. Synchro Google (Firestore `users/{uid}/apps/wouf`) protégée par les règles Firestore.
+- **Synchro chiffrée (optionnelle)** : Sauvegarde → « Chiffrer ma synchronisation Google » : AES-256-GCM, clé PBKDF2 (250 000 tours) dérivée d'une phrase secrète ; Google ne voit que `{"wouf":"cloud-enc",…}`. La phrase est gardée dans `wouf:cpass` (appareil seulement), effacée à la déconnexion Google et par « Tout supprimer ». Perdue = sauvegarde Google illisible (les données locales restent).
+- **Sauvegarde fichier** : déjà chiffrée AES-256 par phrase secrète.
+- **Politique de contenu** : `index.html` interdit les objets embarqués et le changement de base d'URL ; pas de CSP stricte (la connexion Google popup a besoin de domaines Google, non testables en dehors de la production).
+- **À faire par le propriétaire** : vérifier les règles Firestore (chaque utilisateur ne lit que `users/{uid}`), ne jamais publier de clé secrète, garder l'accès Cloudflare/GitHub en double authentification.
+- **Carte du code** : `node tools/carte.js` régénère `CARTE.md`.

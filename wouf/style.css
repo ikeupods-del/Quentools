@@ -274,3 +274,5 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-off
 .ta h2{margin:.2rem 0 .6rem}.ta-btns{display:grid;gap:10px;margin:14px 0}.ta-e{font-size:5rem;line-height:1.1}.ta-score{font-size:4.2rem;font-weight:900;color:var(--pri);line-height:1}.ta-score small{font-size:1.6rem;color:var(--mut)}
 .ta-res{border-radius:14px;padding:12px 14px;margin:12px 0;text-align:left;background:var(--soft)}.ta-res.ok{border:2px solid var(--ok)}.ta-res.bad{border:2px solid var(--bad)}.ta-res p{margin:.4rem 0 0}
 .ta-no{border-color:var(--bad)}.ta-mid{border-color:var(--warn)}.ta-ok{border-color:var(--ok)}
+
+.gd-list{margin:10px 0;padding-left:1.3em;display:grid;gap:12px}.gd-list p{margin:.2rem 0 0;color:var(--mut)}

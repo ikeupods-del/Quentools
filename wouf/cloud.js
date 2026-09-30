@@ -70,6 +70,34 @@ function applyRemote(text, at) {
   S.sub = [keepSub, r.sub].filter(Boolean).sort((a, b) => Date.parse(b.until || 0) - Date.parse(a.until || 0))[0] || null;
   S.updatedAt = at; flush();
 }
+/* Chiffrement de bout en bout (optionnel) : avec une phrase secrète, Google ne stocke que du texte chiffré (AES-256-GCM, clé dérivée PBKDF2).
+   La phrase est gardée sur l'appareil pour que la synchro reste automatique ; sur un nouvel appareil elle est demandée une fois. Perdue = sauvegarde Google illisible. */
+const CPASS = 'wouf:cpass';
+const cloudPass = () => { try { return localStorage.getItem(CPASS) || ''; } catch (e) { return ''; } };
+async function cloudSeal(text) {
+  const pass = cloudPass(); if (!pass) return text;
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), key = await deriveKey(pass, salt);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(text)));
+  return JSON.stringify({ wouf: 'cloud-enc', v: 1, salt: b64(salt), iv: b64(iv), data: b64(ct) });
+}
+function askPass() {
+  return new Promise(res => {
+    const el = sheet(`<p class="ask">Votre sauvegarde Google est chiffrée. Saisissez votre phrase secrète pour la lire.</p><div class="field"><input id="cp-in" type="password" autocomplete="off" aria-label="Phrase secrète"></div>
+      <div class="form-actions"><button class="btn" data-b>Annuler</button><button class="btn primary" data-a>Déverrouiller</button></div>`, 'dlg');
+    const done = v => { el.remove(); if (!$('.sheet-wrap')) document.body.classList.remove('noscroll'); res(v); };
+    $('[data-a]', el).onclick = () => done($('#cp-in', el).value); $('[data-b]', el).onclick = () => done(null);
+  });
+}
+async function cloudOpen(text) {
+  let j; try { j = JSON.parse(text); } catch (e) { return text; }
+  if (!j || j.wouf !== 'cloud-enc') return text;
+  for (let pass = cloudPass(), n = 0; ; n++) {
+    if (!pass) pass = await askPass();
+    if (!pass) throw new Error('Phrase secrète requise pour lire votre sauvegarde Google');
+    try { const t = new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(j.iv) }, await deriveKey(pass, unb64(j.salt)), unb64(j.data))); try { localStorage.setItem(CPASS, pass); } catch (e) { /* ignore */ } return t; }
+    catch (e) { if (n >= 2) throw new Error('Phrase secrète incorrecte'); pass = ''; toast('Phrase secrète incorrecte'); }
+  }
+}
 const hasData = () => S.dogs.length > 0;
 
 let pushT, pushing = false;
@@ -77,7 +105,7 @@ function cloudQueue() { if (!CLOUD.user) return; clearTimeout(pushT); pushT = se
 async function cloudPush() {
   if (!CLOUD.user || pushing) return;
   pushing = true; setCloud('sync');
-  try { const at = S.updatedAt || Date.now(); S.updatedAt = at; await CloudApi.save(cloudPayload(), at); CLOUD.at = at; setCloud('ok'); }
+  try { const at = S.updatedAt || Date.now(); S.updatedAt = at; await CloudApi.save(await cloudSeal(cloudPayload()), at); CLOUD.at = at; setCloud('ok'); }
   catch (e) { setCloud('err', e.message); }
   pushing = false;
 }
@@ -85,6 +113,7 @@ async function cloudPull(first) {
   setCloud('sync');
   try {
     const remote = await CloudApi.load(), local = S.updatedAt || 0;
+    if (remote) remote.text = await cloudOpen(remote.text);
     if (!remote) { if (hasData()) await cloudPush(); else setCloud('ok'); return; }
     if (remote.at === local) { CLOUD.at = remote.at; return setCloud('ok'); }
     if (!hasData()) { applyRemote(remote.text, remote.at); CLOUD.at = remote.at; setCloud('ok'); render(); toast('Données récupérées depuis Google ✓'); return; }
@@ -114,7 +143,7 @@ ACT['g-sync'] = async () => { if (!CLOUD.user) return; S.updatedAt = Date.now();
 ACT['g-signout'] = async () => {
   if (!(await ask('Se déconnecter de Google ? Vos données restent sur cet appareil et dans votre compte.', 'Se déconnecter', false))) return;
   try { await CloudApi.signOut(); } catch (e) { /* ignore */ }
-  CLOUD.user = null; S.grant = null; save(); setCloud('off'); try { localStorage.removeItem('wouf:google'); } catch (e) { /* ignore */ } render(true);
+  CLOUD.user = null; S.grant = null; save(); setCloud('off'); try { localStorage.removeItem('wouf:google'); localStorage.removeItem(CPASS); } catch (e) { /* ignore */ } render(true);
 };
 async function cloudInit() {   // session Google déjà ouverte (ici ou dans une autre app QuenTools) ?
   let on = false; try { on = localStorage.getItem('wouf:google') === '1'; } catch (e) { /* ignore */ }
