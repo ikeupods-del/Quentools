@@ -102,5 +102,6 @@ La publication (GitHub Pages) ne se fait que si les tests passent. Détails et p
 | `wouf/nutrition.js`, `croquettes.js` | comparateur de croquettes (calculs purs testés + écrans) |
 | `wouf/cloud.js` | connexion Google et synchronisation |
 | `wouf/business.js` | achat à vie, assistance, pages légales, nouveautés, mises à jour |
+| `wouf/billing-worker/` | relais Cloudflare : activation automatique après paiement PayPal (IPN) |
 | `wouf/admin.js` | administration (comptes, dossiers de paiement PayPal, Wouf Plus offert, vente) |
 | `wouf/tests/`, `wouf/docs/` | tests automatiques, guide du propriétaire |

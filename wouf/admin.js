@@ -21,6 +21,10 @@ const AdminApi = {
   async touch(p) { const F = await this._F(); await F.Fs.setDoc(F.Fs.doc(F.db, 'wouf_users', F.auth.currentUser.uid), p, { merge: true }); },
   async createOrder(o) { const F = await this._F(); return (await F.Fs.addDoc(F.Fs.collection(F.db, 'wouf_orders'), { ...o, uid: F.auth.currentUser.uid })).id; },
   async listOrders() { const F = await this._F(), q = await F.Fs.getDocs(F.Fs.collection(F.db, 'wouf_orders')), out = []; q.forEach(d => out.push({ ...d.data(), id: d.id })); return out; },
+  async paidList() {   // paiements détectés automatiquement par le relais (réservé au propriétaire : le relais vérifie le jeton)
+    if (!BILL.api) return {}; const r = await fetch(BILL.api.replace(/\/$/, '') + '/admin/paid', { headers: await authHeaders() });
+    if (!r.ok) throw new Error('relais ' + r.status); return (await r.json()).paid || {};
+  },
   async setOrder(id, patch) { const F = await this._F(); await F.Fs.setDoc(F.Fs.doc(F.db, 'wouf_orders', id), patch, { merge: true }); },
   async remoteConfig() {   // lecture publique, sans charger Firebase : un simple appel
     const f = CFG.firebase || {}; if (!f.projectId || !f.apiKey || location.protocol !== 'https:') return null;
@@ -37,7 +41,8 @@ const AdminApi = {
    Liens de paiement PayPal et informations légales : saisis dans l'administration (wouf_admin/config, public comme
    les mentions légales), ils remplacent ceux de config.js. La vente ne s'ouvre que si tout est prêt : sinon l'interrupteur est ignoré. */
 const SALE_DEFAULT = !!BILL.enabled;
-const REMOTE_FIELDS = { payee: [BILL, 'payee', 'Adresse e-mail PayPal qui reçoit les paiements'], paymentLink: [BILL, 'paymentLink', 'OU lien de paiement PayPal fixe (facultatif)'], rewardLink: [BILL, 'rewardLink', 'Lien PayPal fixe pour l’offre récompense (facultatif)'],
+const RELAY_URL = /^https:\/\/[\w.-]+(\/[\w./-]*)?$/;
+const REMOTE_FIELDS = { api: [BILL, 'api', 'Adresse du relais d’activation automatique (facultatif)'], payee: [BILL, 'payee', 'Adresse e-mail PayPal qui reçoit les paiements'], paymentLink: [BILL, 'paymentLink', 'OU lien de paiement PayPal fixe (facultatif)'], rewardLink: [BILL, 'rewardLink', 'Lien PayPal fixe pour l’offre récompense (facultatif)'],
   seller: [LEGAL, 'seller', 'Nom et prénom (ou raison sociale)'], form: [LEGAL, 'form', 'Statut (ex. Entrepreneur individuel, micro-entreprise)'], siret: [LEGAL, 'siret', 'SIRET'],
   address: [LEGAL, 'address', 'Adresse'], email: [LEGAL, 'email', 'E-mail de contact'], mediator: [LEGAL, 'mediator', 'Médiateur de la consommation (nom et site)'], supportEmail: [SUP, 'email', 'E-mail d’assistance'] };
 const REMOTE_DEF = Object.fromEntries(Object.entries(REMOTE_FIELDS).map(([k, [o, p]]) => [k, o[p] || '']));
@@ -53,7 +58,7 @@ function applySaleConfig(c) {
   let changed = false;
   for (const [k, [o, p]] of Object.entries(REMOTE_FIELDS)) {
     if (c[k] === undefined) continue;
-    let v = String(c[k] || '').trim().slice(0, 300); if (/Link$/.test(k) && v && !PAY_LINK.test(v)) v = ''; if (k === 'payee' && v && !PAYEE.test(v)) v = '';
+    let v = String(c[k] || '').trim().slice(0, 300); if (/Link$/.test(k) && v && !PAY_LINK.test(v)) v = ''; if (k === 'payee' && v && !PAYEE.test(v)) v = ''; if (k === 'api' && v && !RELAY_URL.test(v)) v = '';
     v = v || REMOTE_DEF[k]; if (o[p] !== v) { o[p] = v; changed = true; }
   }
   const on = c.billingEnabled === undefined ? SALE_DEFAULT : !!(c.billingEnabled && saleReady());
@@ -86,12 +91,13 @@ async function accountSync() {
 }
 
 /* ---------- Écran d'administration ---------- */
-const ADM = { users: null, orders: [], loading: false, err: '', oerr: '' };
+const ADM = { users: null, orders: [], paid: {}, loading: false, err: '', oerr: '', perr: '' };
 const grantLabel = g => !g ? '' : g.until === 'lifetime' ? 'Plus offert à vie' : (today() <= g.until ? 'Plus offert jusqu’au ' + fmtDate(g.until) : 'Plus offert (expiré le ' + fmtDate(g.until) + ')');
 const admErr = e => e && /permission|insufficient/i.test(String(e.code || e.message)) ? 'Accès refusé par Firebase : les règles d’administration ne sont pas encore installées (voir le guide).' : (e && e.message) || 'Erreur';
 async function admLoad() {
   ADM.loading = true; ADM.err = '';
-  const [u, o] = await Promise.allSettled([AdminApi.listUsers(), AdminApi.listOrders()]);
+  const [u, o, pd] = await Promise.allSettled([AdminApi.listUsers(), AdminApi.listOrders(), AdminApi.paidList()]);
+  if (pd.status === 'fulfilled') { ADM.paid = pd.value; ADM.perr = ''; } else { ADM.paid = {}; ADM.perr = BILL.api ? 'Relais automatique injoignable : validez à la main (' + (pd.reason && pd.reason.message || 'erreur') + ')' : ''; }
   if (u.status === 'fulfilled') ADM.users = u.value.sort((a, b) => String(b.lastSeen || '').localeCompare(String(a.lastSeen || ''))); else ADM.err = admErr(u.reason);
   if (o.status === 'fulfilled') { ADM.orders = o.value.sort((a, b) => (b.at || 0) - (a.at || 0)); ADM.oerr = ''; } else { ADM.orders = []; ADM.oerr = admErr(o.reason); }
   ADM.loading = false; if (routeName() === 'admin') render(true);
@@ -104,15 +110,16 @@ ROUTES.admin = function admin() {
   const us = ADM.users || [], wk = addDays(today(), -7), gOn = u => u.grant && (u.grant.until === 'lifetime' || today() <= u.grant.until);
   const tiles = [['👤', us.length, 'comptes Google'], ['⭐', us.filter(gOn).length, 'Plus offerts'], ['🟢', us.filter(u => (u.lastSeen || '') >= wk).length, 'actifs (7 j)'], ['🧾', ADM.orders.filter(o => o.status === 'pending').length, 'paiements à vérifier']];
   const sale = BILL.enabled, miss = saleMissing();
-  const pend = ADM.orders.filter(o => o.status === 'pending'), done = ADM.orders.filter(o => o.status !== 'pending');
-  const orderRow = o => `<div class="adm-o"><div class="grow"><b>${esc(o.firstName || '')} ${esc(o.lastName || '')}</b> <span class="pill-s ${o.status === 'done' ? 'ok' : ''}">${o.status === 'done' ? 'Activé' : o.status === 'refused' ? 'Refusé' : 'À vérifier'}</span>
-      <small>💳 PayPal : <b>${esc(o.paypalEmail || '')}</b> · ${esc(o.price || '')}${o.offer === 'reward' ? ' (offre récompense, ' + (+o.lessons || 0) + ' leçons)' : ''}${o.ref ? ' · réf. <b>' + esc(o.ref) + '</b>' : ''}</small>${o.payee ? `<small>📥 Payé à : ${esc(o.payee)}</small>` : ''}
+  const autoPaid = o => o.status === 'pending' && ADM.paid[o.uid] && ADM.paid[o.uid].active;
+  const pend = ADM.orders.filter(o => o.status === 'pending' && !autoPaid(o)), done = ADM.orders.filter(o => o.status !== 'pending' || autoPaid(o));
+  const orderRow = o => `<div class="adm-o"><div class="grow"><b>${esc(o.firstName || '')} ${esc(o.lastName || '')}</b> <span class="pill-s ${o.status === 'done' || autoPaid(o) ? 'ok' : ''}">${autoPaid(o) ? '✅ Activé automatiquement' : o.status === 'done' ? 'Activé' : o.status === 'refused' ? 'Refusé' : 'À vérifier'}</span>
+      <small>💳 PayPal : <b>${esc(o.paypalEmail || '')}</b> · ${esc(o.price || '')}${o.offer === 'reward' ? ' (offre récompense, ' + (+o.lessons || 0) + ' leçons)' : ''}${o.ref ? ' · réf. <b>' + esc(o.ref) + '</b>' : ''}</small>${o.payee ? `<small>📥 Payé à : ${esc(o.payee)}</small>` : ''}${autoPaid(o) ? `<small>💳 PayPal a confirmé : ${esc(ADM.paid[o.uid].payerName || '')} · ${esc(ADM.paid[o.uid].payerEmail || '')} · ${esc(ADM.paid[o.uid].amount || '')} €</small>` : ''}
       <small>👤 Compte Google : ${esc(o.googleEmail || '')} · ✉️ Contact : ${esc(o.contactEmail || '')}</small>
       <small>🕒 ${o.at ? esc(new Date(o.at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })) : ''}</small></div>
       ${o.status === 'pending' ? `<div class="btn-row sm"><button class="btn sm primary" data-act="adm-order-ok" data-id="${esc(o.id)}">✅ Paiement reçu : activer</button><button class="btn sm danger" data-act="adm-order-no" data-id="${esc(o.id)}">Refuser</button></div>` : ''}</div>`;
   const row = u => `<div class="adm-u" data-q="${esc(((u.name || '') + ' ' + (u.email || '')).toLowerCase())}">
       <div class="grow"><b>${esc(u.name || u.email || u.uid)}</b><small>${esc(u.email || '')}</small>
-      <small>Vu le ${esc(fmtDate(u.lastSeen) || '?')} · 🐶 ${+u.dogs || 0} · 🐱 ${+u.cats || 0} · 🎓 ${+u.lessons || 0}${u.bought ? ' · 💳 acheté' : ''}${u.version ? ' · v' + esc(u.version) : ''}</small>
+      <small>Vu le ${esc(fmtDate(u.lastSeen) || '?')} · 🐶 ${+u.dogs || 0} · 🐱 ${+u.cats || 0} · 🎓 ${+u.lessons || 0}${u.bought || (ADM.paid[u.uid] && ADM.paid[u.uid].active) ? ' · 💳 acheté' : ''}${u.version ? ' · v' + esc(u.version) : ''}</small>
       ${u.grant ? `<span class="pill-s ${gOn(u) ? 'ok' : ''}">${esc(grantLabel(u.grant))}</span>` : ''}</div>
       <div class="btn-row sm"><button class="btn sm" data-act="adm-grant" data-uid="${esc(u.uid)}" data-until="lifetime">⭐ À vie</button><button class="btn sm" data-act="adm-grant" data-uid="${esc(u.uid)}" data-until="${addDays(today(), 31)}">1 mois</button>${u.grant ? `<button class="btn sm danger" data-act="adm-revoke" data-uid="${esc(u.uid)}">Retirer</button>` : ''}</div></div>`;
   return head + `
@@ -129,12 +136,13 @@ ROUTES.admin = function admin() {
     <button class="btn big ${sale ? 'danger' : 'primary'}" data-act="adm-sale" ${!sale && miss.length ? 'disabled' : ''}>${sale ? '⏸️ Ventes ON : appuyer pour arrêter' : '▶️ Ventes OFF : appuyer pour ouvrir'}</button>
     <p class="mut small">Le changement arrive chez les utilisateurs à leur prochaine ouverture de l’app. Ce qu’ils ont saisi reste toujours accessible.</p></section>
   <section class="card" id="adm-pay"><h2>💳 Paiement et informations légales</h2>
-    <p class="mut small">Indiquez l’<b>adresse e-mail de votre compte PayPal</b> (compte <b>professionnel</b> conseillé) : chaque acheteur est envoyé vers une page PayPal qui paie <b>${esc(planOf().price)}</b>${REWARD.enabled ? ` (ou <b>${esc(REWARD.price)}</b> pour l’offre récompense)` : ''} à cette adresse, avec la référence de son dossier (WOUF-…) visible dans PayPal. Vous pouvez la changer à tout moment : elle s’applique au paiement suivant. Les champs « lien fixe » ne servent que si vous préférez un lien créé dans PayPal.</p>
-    ${Object.entries(REMOTE_FIELDS).map(([k, [o, p, l]]) => `<div class="field"><label>${esc(l)}</label><input name="${k}" value="${esc(o[p] || '')}" ${/Link$/.test(k) ? 'type="url" placeholder="https://www.paypal.com/…"' : k === 'payee' ? 'type="email" placeholder="vous@exemple.fr"' : /mail/i.test(k) ? 'type="email"' : ''}></div>`).join('')}
+    <p class="mut small">Indiquez l’<b>adresse e-mail de votre compte PayPal</b> (compte <b>professionnel</b> conseillé) : chaque acheteur est envoyé vers une page PayPal qui paie <b>${esc(planOf().price)}</b>${REWARD.enabled ? ` (ou <b>${esc(REWARD.price)}</b> pour l’offre récompense)` : ''} à cette adresse, avec la référence de son dossier (WOUF-…) visible dans PayPal. Vous pouvez la changer à tout moment : elle s’applique au paiement suivant. Les champs « lien fixe » ne servent que si vous préférez un lien créé dans PayPal (validation manuelle). <b>Activation automatique</b> : renseignez aussi l’adresse du relais (Cloudflare) ; elle ne fonctionne qu’avec l’adresse PayPal ci-dessus, pas avec un lien fixe.</p>
+    ${Object.entries(REMOTE_FIELDS).map(([k, [o, p, l]]) => `<div class="field"><label>${esc(l)}</label><input name="${k}" value="${esc(o[p] || '')}" ${/Link$/.test(k) ? 'type="url" placeholder="https://www.paypal.com/…"' : k === 'api' ? 'type="url" placeholder="https://wouf-billing.votrecompte.workers.dev"' : k === 'payee' ? 'type="email" placeholder="vous@exemple.fr"' : /mail/i.test(k) ? 'type="email"' : ''}></div>`).join('')}
     <button class="btn primary" data-act="adm-save-pay">Enregistrer</button>
     <p class="mut small">Ces informations apparaissent dans les mentions légales et les conditions de vente : faites-les relire avant d’ouvrir la vente.</p></section>
   <section class="card" id="adm-orders"><h2>🧾 Paiements à vérifier (${pend.length})</h2>
-    <p class="mut small">Chaque acheteur remplit ce dossier juste avant de payer sur PayPal. Vérifiez dans PayPal (e-mail « Vous avez reçu un paiement ») que le nom, l’e-mail et le montant correspondent, puis activez.</p>
+    <p class="mut small">Chaque acheteur remplit ce dossier juste avant de payer sur PayPal. ${BILL.api ? 'Les paiements confirmés par PayPal sont activés automatiquement (dossiers « traités »). Ceux qui restent ici n’ont pas été détectés : vérifiez dans PayPal' : 'Vérifiez dans PayPal'} (e-mail « Vous avez reçu un paiement ») que le nom, l’e-mail et le montant correspondent, puis activez.</p>
+    ${ADM.perr ? `<p class="bad">${esc(ADM.perr)}</p>` : ''}
     ${ADM.oerr ? `<p class="bad">${esc(ADM.oerr)}</p>` : pend.map(orderRow).join('') || '<p class="mut">Aucun paiement en attente.</p>'}
     ${done.length ? `<details><summary>Dossiers traités (${done.length})</summary>${done.slice(0, 30).map(orderRow).join('')}</details>` : ''}</section>
   <section class="card"><h2>👥 Comptes (${us.length})</h2>
@@ -172,6 +180,7 @@ ACT['adm-save-pay'] = async () => {
   const c = {}, bad = [];
   for (const k of Object.keys(REMOTE_FIELDS)) { const v = ($(`#adm-pay [name=${k}]`) || {}).value; if (v === undefined) continue; c[k] = v.trim(); if (/Link$/.test(k) && c[k] && !PAY_LINK.test(c[k])) bad.push(k); }
   if (c.payee && !PAYEE.test(c.payee)) return toast('Adresse PayPal invalide');
+  if (c.api && !RELAY_URL.test(c.api)) return toast('Adresse du relais invalide (https://…)');
   if (bad.length) return toast('Lien invalide : collez le lien PayPal (https://www.paypal.com/…)');
   try { await AdminApi.setConfig({ ...c, at: Date.now(), by: CLOUD.user.email }); remoteStore(c); toast('Enregistré ✓'); render(true); } catch (e) { toast(admErr(e)); }
 };

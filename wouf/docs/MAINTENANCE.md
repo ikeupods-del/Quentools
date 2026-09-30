@@ -159,3 +159,17 @@ match /wouf_orders/{id} { allow create: if request.auth != null && request.resou
 2. L'app envoie l'acheteur vers une page de paiement PayPal (« Payer » classique, `cgi-bin/webscr?cmd=_xclick`) : montant du prix affiché (19,99 € ou 9,99 € pour l'offre récompense), référence du dossier `WOUF-…` (visible dans le détail du paiement PayPal), retour sur `#/merci`. Faites un **vrai paiement test** avec un proche après chaque changement d'adresse.
 3. Alternative : un lien PayPal fixe créé dans PayPal (« Liens et boutons de paiement ») dans « lien fixe » ; il ne sert que si aucune adresse n'est renseignée.
 4. **À chaque vente** : Administration → « Paiements à vérifier » : comparer la référence, le nom, l'e-mail et le montant avec PayPal → « ✅ Paiement reçu : activer ». Promesse affichée à l'acheteur : activation sous 24 h.
+
+## Activation automatique après paiement PayPal (relais Cloudflare)
+**Principe** : l'app construit la page de paiement PayPal (adresse PayPal choisie dans l'administration) et y ajoute l'identifiant du compte Google (`custom = uid|WOUF-…`) et l'adresse du relais (`notify_url`). À chaque paiement, PayPal prévient le relais (« IPN ») ; le relais **re-vérifie le message auprès de PayPal**, contrôle bénéficiaire (adresse PayPal de l'administration), devise (EUR) et montant (≥ 9,99 €), puis mémorise « ce compte a payé » (stockage KV Cloudflare). L'app lit ce statut avec le jeton Google de l'utilisateur ; la page « Merci » se met à jour toute seule. Un remboursement ou un litige PayPal retire l'accès. **Aucune clé secrète.** Sans relais (ou avec un lien PayPal fixe, qui ne transmet pas le compte), on revient à la validation manuelle (« Paiements à vérifier »), et les textes affichés au client changent en conséquence.
+
+**Installation (10 minutes, sur ordinateur)** :
+1. Compte gratuit sur cloudflare.com → **Workers & Pages** → **Create** → **Create Worker** → nom `wouf-billing` → **Deploy**.
+2. **Edit code** → tout effacer, coller le contenu de `wouf/billing-worker/worker.js` → **Deploy**.
+3. **Storage & Databases → KV** → **Create** : namespace `wouf-paid`.
+4. Worker → **Settings → Bindings → Add → KV namespace** : nom de variable **`PAID`**, choisir `wouf-paid`.
+5. Worker → **Settings → Variables and Secrets** : `ALLOWED_ORIGIN` = `https://woufapp.fr,https://ikeupods-del.github.io` ; `OWNER_EMAIL` = adresse Google du propriétaire.
+6. Copier l'adresse du Worker (`https://wouf-billing.….workers.dev`) dans **Plus → Administration → « Adresse du relais d'activation automatique »** → Enregistrer. Renseigner aussi **l'adresse PayPal** (pas un lien fixe).
+7. **Test réel** avec un proche : le paiement (19,99 €) doit activer son compte en quelques secondes ; le rembourser ensuite dans PayPal doit retirer l'accès.
+
+**Limites à connaître** : IPN est l'ancien mécanisme de notification de PayPal (toujours en service à la date de rédaction : à vérifier si PayPal l'arrête un jour). L'offre récompense (9,99 €) n'est pas re-contrôlée côté serveur (le montant minimum accepté est `MIN_EUR`, défaut 9,99) : c'est le même niveau de confiance que le reste du contrôle d'accès de Plus. Modifier le code du relais = mettre à jour `worker.test.mjs`.

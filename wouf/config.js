@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.13.3',
+  version: '1.13.4',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
@@ -16,6 +16,7 @@ window.WOUF_CONFIG = {
     // Paiement par lien PayPal (compte professionnel → Liens et boutons de paiement). Avant de payer, l'acheteur remplit un
     // dossier (nom, prénom, e-mail PayPal) ; le propriétaire vérifie le paiement et active Wouf Plus dans Plus → Administration.
     // Les liens et les informations légales se règlent aussi depuis l'administration (« Paiement et informations légales »).
+    api: '',                   // relais d'activation automatique (voir wouf/billing-worker) : réglable dans l'administration ; vide = validation manuelle
     payee: '',                 // adresse e-mail PayPal qui reçoit les paiements (réglable à tout moment dans l'administration)
     paymentLink: 'https://www.paypal.com/ncp/payment/H43ZZST7TFYV2', // lien PayPal fixe (secours, utilisé seulement si aucune adresse payee ; montant = plans[0].price)
     rewardLink: '',            // idem pour l'offre récompense (rewardOffer.price) ; vide = pas d'offre récompense
