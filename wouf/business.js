@@ -71,9 +71,21 @@ async function refreshSub(force) {
   try {
     if (!CLOUD.user) { const u = await CloudApi.restore().catch(() => null); if (u) CLOUD.user = u; }
     if (!CLOUD.user) return;
-    if (force || !S.sub || Date.now() - (S.sub.checked || 0) > 6 * 36e5) applySub(await api('/status', { headers: await authHeaders() }));
+    // Tant que l'accès n'est pas actif on revérifie à CHAQUE demande (un paiement peut arriver à tout moment) ; une fois actif, toutes les heures (remboursement).
+    if (force || !S.sub || !S.sub.active || Date.now() - (S.sub.checked || 0) > 36e5) applySub(await api('/status', { headers: await authHeaders() }));
   } catch (e) { /* hors ligne ou relais indisponible : on garde l'état connu */ }
 }
+/* Retour dans l'app (onglet ou application rouverte) : si l'accès n'est pas actif, on redemande au relais (au plus toutes les 20 s). */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !BILL.api || !CLOUD.user || subActive() || Date.now() - (refreshSub.last || 0) < 20e3) return;
+  refreshSub.last = Date.now(); refreshSub(true).then(() => { if (subActive()) render(true); });
+});
+ACT.restore = async () => {
+  if (!BILL.api) return toast('Vérification automatique indisponible : écrivez-nous depuis « Une question ? »');
+  if (!CLOUD.user) { await ACT['g-signin'](); if (!CLOUD.user) return; }
+  await refreshSub(true);
+  toast(subActive() ? 'Accès retrouvé : Wouf Plus est actif ⭐' : 'Aucun paiement trouvé pour ce compte Google pour le moment (l’activation peut prendre quelques minutes)'); render(true);
+};
 /* Activation automatique possible : relais + compte Google identifié + paiement construit par l'app (adresse PayPal, pas un lien fixe). */
 const autoOn = () => !!(BILL.api && CLOUD.user && CLOUD.user.uid && PAYEE.test(BILL.payee || ''));
 
@@ -146,6 +158,7 @@ ROUTES.merci = function merci() {
     : `<p>Merci ! <b>Votre activation est faite manuellement</b> : Wouf Plus sera activé <b>au plus tard sous 24 h</b> sur votre compte Google${who}, après vérification de votre paiement PayPal${p && p.paypal ? ` (<b>${esc(p.paypal)}</b>)` : ''}${ref}. PayPal vous envoie un reçu par e-mail.</p><p class="mut">Restez connecté(e) avec ce compte : l’activation apparaît à l’ouverture de l’app. Pas activé après 24 h ? Écrivez-nous depuis « Une question ? » en indiquant le nom ou l’e-mail utilisé pour payer.</p>`;
   return `<div class="page-h"><a class="back" href="#/home">‹</a><h1>🎉 Merci !</h1></div><section class="card plus-hero"><h2>${subActive() ? 'Wouf Plus est activé' : 'Paiement en cours'}</h2>
     ${subActive() ? '<p><b>Wouf Plus est actif ⭐</b> Merci et bonne découverte !</p>' : wait}
+    ${!subActive() && BILL.api ? '<button class="btn" data-act="restore">🔄 Vérifier mon accès maintenant</button>' : ''}
     <a class="btn primary" href="#/home">Retour à l’accueil</a> <a class="btn" href="#/support">Une question ?</a></section>`;
 };
 /* Attente de la confirmation PayPal : on interroge le relais toutes les 4 s pendant 3 minutes, la page se met à jour toute seule. */
@@ -172,7 +185,7 @@ ROUTES.abo = function abo() {
   else if (grandfathered()) status = `<section class="card plus-hero"><h2>⭐ Wouf Plus offert</h2><p>Merci d’être là depuis le début : Plus vous est offert ${!BILL.grandfatherUntil || BILL.grandfatherUntil === 'lifetime' ? 'à vie' : 'jusqu’au ' + fmtDate(BILL.grandfatherUntil)}.</p></section>`;
   else if (isFreeWindow()) status = `<section class="card plus-hero"><h2>⭐ Offre de lancement</h2><p>Wouf Plus est offert jusqu’au ${fmtDate(BILL.freeUntil)}. Ensuite : ${esc(planLine())}.</p></section>`;
   else status = `<section class="card plus-hero"><h2>${esc(p.label)}</h2><div class="big-n">${esc(p.price)}<small> ${esc(p.per)}</small></div><p>Un seul paiement, pour toujours. Toutes les nouveautés Plus incluses, assistance prioritaire comprise.</p>
-    <button class="btn primary big" data-act="subscribe">${ctaLabel()}</button></section>`;
+    <button class="btn primary big" data-act="subscribe">${ctaLabel()}</button>${BILL.api ? '<button class="lnk" data-act="restore">J’ai déjà payé : vérifier mon accès</button>' : ''}</section>`;
   const rw = rewardOn() && !subActive() ? (rewardEligible() ? `<section class="card reward-card"><b>🏅 Offre récompense débloquée</b><p>Vous avez terminé toutes les leçons gratuites : Wouf Plus à vie pour <b>${esc(REWARD.price)}</b> au lieu de ${esc(p.price)}${on ? '' : ' (dès l’ouverture de la vente)'}.</p>${on ? '<button class="btn primary" data-act="subscribe">Profiter de l’offre</button>' : ''}</section>` : `<section class="card note"><b>🏅 Une récompense vous attend</b><p>Terminez toutes les leçons gratuites (quiz compris) et débloquez Wouf Plus à vie pour <b>${esc(REWARD.price)}</b> au lieu de ${esc(p.price)}.</p><a class="btn sm" href="#/educ">Voir mon parcours</a></section>`) : '';
   return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>⭐ Wouf Plus</h1></div>${status}${rw}
   <section class="card"><h2>Ce que comprend Plus</h2>${Object.values(FEATURES).map(x => `<div class="row"><span class="ico">${x[0]}</span><span class="grow"><b>${esc(x[1])}</b><small>${esc(x[2])}</small></span>${plus() ? '<span class="pill ok">Inclus</span>' : '<span class="pill plus">Plus</span>'}</div>`).join('')}</section>

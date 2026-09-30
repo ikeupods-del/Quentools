@@ -741,6 +741,15 @@ test('activation automatique PayPal : notify_url et compte transmis, page d’at
   assert.equal(await b.ev(() => subActive() && plus()), true); assert.ok(seen.some(([path, auth]) => path === '/status' && auth === 'Bearer tok123'), 'statut demandé avec le jeton Google');
   // remboursement côté relais : l’accès est retiré au prochain contrôle
   active = false; await b.ev(() => refreshSub(true)); assert.equal(await b.ev(() => plus()), false);
+  // RÉGRESSION : « pas actif » vérifié récemment ne bloque plus la vérification suivante (paiement arrivé entre-temps, app rouverte sans repasser par la page Merci)
+  assert.equal(await b.ev(() => S.sub && S.sub.active === false && Date.now() - S.sub.checked < 5000), true);
+  active = true; await b.ev(() => refreshSub(false)); assert.equal(await b.ev(() => plus()), true, 'l’app rouverte voit le paiement sans attendre 6 h');
+  // bouton « J’ai déjà payé » et retour dans l’app
+  active = false; await b.ev(() => refreshSub(true)); await b.go('#/abo'); await p.waitForSelector('[data-act=restore]');
+  active = true; await p.click('[data-act=restore]'); await p.waitForFunction(() => subActive()); assert.match(await text(p, '#toast'), /Accès retrouvé/);
+  active = false; await b.ev(() => refreshSub(true)); assert.equal(await b.ev(() => plus()), false);
+  active = true; await b.ev(() => { Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true }); document.dispatchEvent(new Event('visibilitychange')); });
+  await p.waitForFunction(() => subActive(), null, { timeout: 5000 });
   // sans compte identifiable ou sans relais : retour à la validation manuelle, texte honnête
   await b.ev(() => { BILL.api = ''; }); assert.equal(await b.ev(() => autoOn()), false);
   await b.ev(() => { BILL.api = 'https://relais.test'; CLOUD.user.uid = ''; }); assert.equal(await b.ev(() => autoOn()), false);
