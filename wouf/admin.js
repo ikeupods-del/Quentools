@@ -117,7 +117,7 @@ async function admLoad() {
   if (o.status === 'fulfilled') { ADM.orders = o.value.sort((a, b) => (b.at || 0) - (a.at || 0)); ADM.oerr = ''; } else { ADM.orders = []; ADM.oerr = admErr(o.reason); }
   ADM.loading = false; if (routeName() === 'admin') render(true);
 }
-const STAT_EVT = { 'animal-ajoute-chien': '🐶 Chiens ajoutés', 'animal-ajoute-chat': '🐱 Chats ajoutés', 'lecon-acquise': '🎓 Leçons acquises', 'balade-enregistree': '🦮 Balades', 'offre-recompense-vue': '🏅 Offre récompense vue', 'installation': '📲 Installations' };
+const STAT_EVT = { 'test-aliments-commence': '🧠 Tests commencés', 'test-aliments-termine': '🏁 Tests terminés', 'animal-ajoute-chien': '🐶 Chiens ajoutés', 'animal-ajoute-chat': '🐱 Chats ajoutés', 'lecon-acquise': '🎓 Leçons acquises', 'balade-enregistree': '🦮 Balades', 'offre-recompense-vue': '🏅 Offre récompense vue', 'installation': '📲 Installations' };
 function statsCard() {
   if (!BILL.api) return '';
   const st = ADM.stats, head = '<section class="card" id="adm-stats"><h2>📊 Statistiques (30 jours)</h2>';

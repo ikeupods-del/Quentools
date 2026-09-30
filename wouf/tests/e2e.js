@@ -838,6 +838,29 @@ test('administration : statistiques visibles dans le panneau, ou consigne claire
   noErrors(b); await b.ctx.close();
 });
 
+test('test express « dangereux ou OK ? » : sans carnet, 8 questions, score, partage, jamais de onglets sans animal', async () => {
+  const b = await boot({ data: null, hash: '#/test' }), p = b.page;
+  await p.waitForSelector('.ta'); assert.match(await text(p, '#view'), /Dangereux ou OK.*Pour mon chien.*Pour mon chat/); assert.equal(await b.ev(() => $('#tabs').hidden), true, 'pas d’onglets sans animal');
+  await p.click('[data-act=ta-start][data-sp=cat]'); assert.equal(await b.ev(() => TEST.q.length), 8); assert.ok(await b.ev(() => TEST.q.filter(x => x.v === 'ok').length >= 2), 'au moins 2 aliments sans danger');
+  assert.equal(await b.ev(() => TEST.q.every(x => x.key || x.why)), true);
+  for (let i = 0; i < 8; i++) {
+    await p.waitForSelector('[data-act=ta-answer]'); assert.match(await text(p, '.page-h'), new RegExp('Question ' + (i + 1) + '/8'));
+    const good = await b.ev(() => TEST.q[TEST.i].v);
+    if (i === 0) { const bad = ['no', 'mid', 'ok'].find(k => k !== good); await p.click(`[data-act=ta-answer][data-v=${bad}]`); await p.waitForSelector('.ta-res.bad'); assert.match(await text(p, '.ta-res'), /Pas tout à fait/); }
+    else { await p.click(`[data-act=ta-answer][data-v=${good}]`); await p.waitForSelector('.ta-res.ok'); }
+    assert.ok((await text(p, '.ta-res')).length > 30, 'explication affichée'); await p.click('[data-act=ta-next]');
+  }
+  await p.waitForSelector('.ta-score'); assert.match(await text(p, '.ta-score'), /7\s*\/8/); assert.match(await text(p, '#view'), /Partager mon score.*Ajouter mon compagnon/);
+  await b.ev(() => { window.__clip = ''; Object.defineProperty(navigator, 'share', { value: undefined, configurable: true }); Object.defineProperty(navigator, 'clipboard', { value: { writeText: async t => { window.__clip = t; } }, configurable: true }); });
+  await p.click('[data-act=ta-share]'); await p.waitForTimeout(200); const clip = await b.ev(() => window.__clip);
+  assert.match(clip, /J’ai eu 7\/8 au test Wouf « dangereux ou OK pour ton chat \? »/); assert.match(clip, /https:\/\/woufapp\.fr\/\?src=partage#\/test/);
+  await p.click('[data-act=ta-restart]'); await p.waitForSelector('[data-act=ta-start]');
+  const b2 = await boot({}); await b2.go('#/test'); await p.waitForTimeout(50); assert.equal(await b2.ev(() => $('#tabs').hidden), false, 'avec un animal, la barre reste visible');
+  await b2.page.click('[data-act=ta-start][data-sp=dog]'); assert.match(await text(b2.page, '.ta'), /Pour un chien/);
+  await b.go('#/home'); await p.waitForSelector('.welcome'); assert.ok(await p.$('a[href="#/test"]'), 'accès au test depuis l’accueil');
+  noErrors(b); noErrors(b2); await b.ctx.close(); await b2.ctx.close();
+});
+
 /* ================= exécution ================= */
 (async () => {
   srv = await start(0); PORT = srv.address().port;
