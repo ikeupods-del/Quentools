@@ -23,7 +23,7 @@ const SETS = [
       { bad: ['💉', 'Vaccins et vermifuges oubliés'], good: ['📅', 'Rappels notés, prévenus à temps'] },
       { bad: ['🍖', 'Ration au jugé, poids jamais vérifié'], good: ['⚖️', 'Pesée régulière et ration mesurée'] },
       { bad: ['🤞', 'On attend que ça passe tout seul'], good: ['🩺', 'Un appel au vétérinaire au moindre doute'] }] },
-  { id: 'seniors-chiens', e: '👴', cover: [3, 'b'], hook: 'DANS UN MONDE OÙ LES CHIENS SENIORS…', tags: '#chien #chiensenior #vieuxchien #santeanimale',
+  { id: 'seniors-chiens', e: '👴', cover: [1, 'a'], hook: 'DANS UN MONDE OÙ LES CHIENS SENIORS…', tags: '#chien #chiensenior #vieuxchien #santeanimale',
     pairs: [
       { bad: ['🦴', 'Raideurs au lever : « c’est l’âge »'], good: ['🩺', 'Un avis vétérinaire : l’arthrose se soulage'] },
       { bad: ['🥵', 'Une grande balade d’un coup, comme avant'], good: ['🌳', 'Deux ou trois petites balades douces'] },
