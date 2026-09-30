@@ -79,7 +79,7 @@ ACT['quiz-next'] = () => { QUIZ.i++; QUIZ.picked = null; quizRender(); };
 ACT['quiz-retry'] = () => { const id = QUIZ.id; closeSheet(); quizOpen(id); };
 ACT['quiz-finish'] = () => {
   const d = dog(), l = lessonOf(QUIZ.id), p = eduSet(d.id, l.id), before = levelOf(xpOf(d)).n;
-  p.done = true; p.quiz = 3; l.steps.forEach((_, i) => { p.steps[i] = 1; }); save(); closeSheet();
+  p.done = true; p.quiz = 3; l.steps.forEach((_, i) => { p.steps[i] = 1; }); save(); closeSheet(); track('lecon-acquise', true);
   const lv = levelOf(xpOf(d));
   celebrate.pet = l.sp === 'cat' ? 'cat' : 'dog'; celebrate(`${l.icon} Leçon acquise !`, `+${XP_LESSON + XP_QUIZ} 🦴${lv.n > before ? ` · Niveau ${lv.n} : ${lv.name} 🎉` : ''}`, () => rewardCheck());
   render(true);
@@ -110,7 +110,7 @@ const rewardOn = () => !!(REWARD.enabled && REWARD.price);
 function rewardCheck() {
   if (!rewardOn() || subActive() || !rewardEligible()) return;
   if (S.reward && S.reward.shown) return;
-  S.reward = { shown: today() }; save(); rewardSheet();
+  S.reward = { shown: today() }; save(); track('offre-recompense-vue', true); rewardSheet();
 }
 function rewardSheet() {
   const p = planOf();

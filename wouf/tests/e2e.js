@@ -599,6 +599,57 @@ test('toutes les pages s’affichent sans erreur (chien et chat)', async () => {
   assert.ok(routes.length >= 25, 'routes : ' + routes.length); noErrors(b); await b.ctx.close();
 });
 
+test('statistiques anonymes : désactivées par défaut, provenance, adresse, refus dans Réglages', async () => {
+  const b = await boot({ query: '?src=tiktok' }), p = b.page;
+  assert.equal(await b.ev(() => statsCode()), '', 'aucune mesure sans code');
+  assert.equal(await b.ev(() => STATS_SRC), 'tiktok');
+  await b.go('#/reglages'); assert.equal(await p.$('[data-act=stats-opt]'), null, 'pas de case sans code');
+  await b.ev(() => { WOUF_CONFIG.stats.goatcounter = 'wouf-test'; });
+  const u = new URL(await b.ev(() => statsUrl('/home', false, 'tiktok')));
+  assert.equal(u.origin, 'https://wouf-test.goatcounter.com'); assert.equal(u.pathname, '/count');
+  assert.equal(u.searchParams.get('p'), '/home'); assert.equal(u.searchParams.get('r'), 'tiktok'); assert.equal(u.searchParams.get('e'), 'false');
+  assert.equal(new URL(await b.ev(() => statsUrl('lecon-acquise', true))).searchParams.get('e'), 'true');
+  await b.go('#/home'); await b.go('#/reglages'); await p.click('[data-act=stats-opt]');
+  assert.equal(await b.ev(() => S.settings.noStats), true);
+  await b.go('#/legal?doc=confidentialite'); assert.match(await text(p, '#view'), /GoatCounter/);
+  await b.ev(() => { WOUF_CONFIG.stats.goatcounter = 'Pas Valide!'; }); assert.equal(await b.ev(() => statsCode()), '');
+  noErrors(b); await b.ctx.close();
+});
+
+test('nouvelle adresse : redirection sans carnet, transfert du carnet et des documents vers la nouvelle adresse', async () => {
+  const fs = require('fs'), path = require('path'), NEW = `http://127.0.0.1:${PORT}/wouf/`, OLD = `http://localhost:${PORT}`;
+  const cfg = fs.readFileSync(path.join(__dirname, '..', 'config.js'), 'utf8');
+  assert.match(cfg, /site: \{ home: 'https:\/\/woufapp\.fr\/', moved: (true|false) \}/, 'réglage site introuvable');
+  const conf = cfg.replace(/site: \{[^}]*\}/, `site: { home: '${NEW}', moved: true, old: ['${OLD}'] }`);
+  const mk = async data => {
+    const ctx = await browser.newContext({ viewport: { width: 400, height: 860 }, locale: 'fr-FR' });
+    await ctx.route(/config\.js/, r => r.fulfill({ contentType: 'application/javascript', body: conf }));
+    await ctx.route(/gstatic\.com/, r => r.abort());
+    if (data) await ctx.addInitScript(s => { if (location.hostname === 'localhost' && !localStorage.getItem('wouf:data')) localStorage.setItem('wouf:data', JSON.stringify(s)); }, data);
+    return ctx;
+  };
+  // 1) ancienne adresse, aucun carnet : redirection immédiate (le lien ?src est conservé)
+  let ctx = await mk(null), p = await ctx.newPage();
+  await p.goto(BASE() + '?src=tiktok#/home'); await p.waitForURL(u => u.href.startsWith(NEW)); assert.ok(p.url().includes('src=tiktok'));
+  await ctx.close();
+  // 2) ancienne adresse avec un carnet : bandeau, transfert en un geste
+  ctx = await mk(seed()); p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.goto(BASE() + '#/home'); await p.waitForSelector('.move-card'); assert.match(await text(p, '.move-card'), /127\.0\.0\.1/);
+  await p.evaluate(async () => { await fput('doc1', new Blob(['bonjour'])); S.docs.push({ id: 'doc1', dogId: 'd1', name: 'Ordonnance', type: 'text/plain', date: today() }); save(); flush(); });
+  const [np] = await Promise.all([ctx.waitForEvent('page'), p.click('[data-act=move-go]')]);
+  np.on('pageerror', e => errs.push('nouvelle adresse : ' + e.message));
+  await np.waitForFunction(() => typeof S !== 'undefined' && S.dogs.length === 1, null, { timeout: 15000 });
+  assert.equal(await np.evaluate(() => S.dogs[0].name), 'Nala');
+  assert.equal(await np.evaluate(async () => (await fget('doc1')).text()), 'bonjour');
+  assert.equal(await np.evaluate(() => JSON.parse(localStorage.getItem('wouf:data')).dogs[0].name), 'Nala', 'carnet enregistré sur la nouvelle adresse');
+  assert.equal(await np.evaluate(() => location.hash), '#/home'); assert.equal(await np.$('.move-card'), null, 'pas de bandeau sur la nouvelle adresse');
+  await p.waitForFunction(() => !!S.settings.movedAt); assert.match(await text(p, '.move-card'), /transféré/);
+  assert.equal(await p.evaluate(() => S.dogs.length), 1, 'rien n’est supprimé sur l’ancienne adresse');
+  assert.deepEqual(errs, []); await ctx.close();
+  // 3) sans « moved », aucune redirection ni bandeau
+  const b = await boot(); assert.equal(await b.page.$('.move-card'), null); assert.ok(b.page.url().startsWith(BASE())); noErrors(b); await b.ctx.close();
+});
+
 /* ================= exécution ================= */
 (async () => {
   srv = await start(0); PORT = srv.address().port;

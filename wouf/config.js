@@ -26,6 +26,15 @@ window.WOUF_CONFIG = {
 
   // Assistance : le support prioritaire est réservé aux acheteurs de Wouf Plus (vérifié côté serveur).
   // Tant que le relais n'est pas configuré, le formulaire ouvre le mail de l'utilisateur vers `email`.
+  // Adresse officielle de Wouf (dépôt de publication ikeupods-del/woufapp). `moved: true` = l'ancienne adresse
+  // (ikeupods-del.github.io/Quentools/wouf/) renvoie vers `home` ; ceux qui y ont un carnet peuvent le transférer.
+  site: { home: 'https://woufapp.fr/', moved: false },
+
+  // Statistiques anonymes (GoatCounter : sans cookie, sans identifiant, sans aucune donnée saisie).
+  // Seuls le nom de l'écran ouvert et quelques actions (animal ajouté, leçon acquise, balade…) sont comptés.
+  // Mettre le code du compte GoatCounter (ex. 'wouf' pour https://wouf.goatcounter.com). Vide = aucune mesure.
+  stats: { goatcounter: '' },
+
   support: {
     email: '',                       // ex. support@votre-domaine.fr  ← à renseigner avant la mise en vente
     priorityDelay: 'sous 24 h ouvrées',

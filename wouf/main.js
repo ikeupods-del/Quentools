@@ -7,16 +7,18 @@ let lastRoute = null;
 function routeName() { return (location.hash.replace(/^#\/?/, '') || 'home').split('?')[0]; }
 
 function render(keepScroll) {
-  const r = routeName(), open = ['reglages', 'sauvegarde', 'abo', 'plus'];
+  const r = routeName(), open = ['reglages', 'sauvegarde', 'abo', 'plus', 'transfert'];
   renderTop();
   let html;
   if (!S.dogs.length && !open.includes(r)) html = welcome();
   else html = (ROUTES[r] || ROUTES.home)();
+  if (r === 'home' && S.dogs.length) html = movedBanner() + html;
   const y = window.scrollY;
   $('#view').innerHTML = html;
   $$('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.r === (NAV_OF[r] || 'plus')));
   $('#tabs').hidden = !S.dogs.length && !open.includes(r);
   if (keepScroll === true && lastRoute === r) window.scrollTo(0, y); else if (lastRoute !== r) window.scrollTo(0, 0);
+  if (lastRoute !== r) track('/' + (!S.dogs.length && !open.includes(r) ? 'bienvenue' : r));
   lastRoute = r;
   if (r !== 'seance') clearInterval(SEANCE.iv);
   if (r !== 'balade') clearInterval(WALK.iv);
@@ -36,12 +38,16 @@ addEventListener('hashchange', () => { closeAllSheets(); render(); });
 $('#breeds').innerHTML = BREEDS.map(b => `<option value="${esc(b.name)}">`).join('');
 $('#breeds_cat').innerHTML = CAT_BREEDS.map(b => `<option value="${esc(b.name)}">`).join('');
 
+addEventListener('appinstalled', () => track('installation', true));
+
 /* Service worker */
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').then(initUpdates).catch(() => {}));
 
-/* Démarrage */
-render();
-refreshSub().then(() => { if (routeName() === 'abo') render(true); });
-maybeNotify();
-cloudInit();
-walkRecover();
+/* Démarrage (sur l'ancienne adresse sans carnet : redirection vers l'adresse officielle) */
+if (!movedRedirect()) {
+  render();
+  refreshSub().then(() => { if (routeName() === 'abo') render(true); });
+  maybeNotify();
+  cloudInit();
+  walkRecover();
+}

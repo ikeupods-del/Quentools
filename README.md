@@ -70,7 +70,7 @@ Outil indépendant d'Infikit : il vit dans `freelance/` et n'utilise que son pro
 
 ## Wouf — le carnet de santé du chien et du chat
 
-**Adresse :** https://ikeupods-del.github.io/Quentools/wouf/ — application installable (PWA), hors connexion, sans inscription obligatoire, données sur l'appareil.
+**Adresse :** https://woufapp.fr (publiée par le dépôt [ikeupods-del/woufapp](https://github.com/ikeupods-del/woufapp) ; l’ancienne adresse https://ikeupods-del.github.io/Quentools/wouf/ reste en ligne) — application installable (PWA), hors connexion, sans inscription obligatoire, données sur l'appareil.
 **Guide du propriétaire (publier, corriger, vendre, assistance) : [`wouf/docs/MAINTENANCE.md`](wouf/docs/MAINTENANCE.md).**
 
 ### Gratuit, pour toujours

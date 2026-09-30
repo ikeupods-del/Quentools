@@ -23,6 +23,7 @@ Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `in
 
 ## Git et publication
 - L’adresse racine `https://ikeupods-del.github.io/Quentools/` redirige vers `wouf/` (`index.html` à la racine).
+- **Adresse officielle de Wouf : https://woufapp.fr**, publiée par le dépôt `ikeupods-del/woufapp` (workflow « Publier Wouf » : récupère `wouf/` de la branche par défaut, relance les tests, publie ; toutes les 3 h ou à la main via `actions_run_trigger`). Après chaque fusion, déclencher ce workflow. `config.js → site.moved: true` fait basculer l’ancienne adresse (redirection sans carnet, bandeau « Transférer mon carnet » sinon).
 - Branche par défaut : `claude/infirmiere-ordonnances-upload-26nl16` ; la publication (GitHub Pages) se déclenche à chaque push dessus, **après** les tests (`.github/workflows/pages.yml`). Les branches de travail passent par une pull request (le workflow « Wouf — tests » tourne dessus).
 - Ne jamais écrire de clé secrète dans le dépôt (Stripe, Resend) : elles vivent dans Cloudflare.
 - Contenu santé / juridique : indicatif. Signale au propriétaire ce qui mériterait une relecture professionnelle ; n'invente jamais de tarifs d'assureurs ni de faits juridiques.

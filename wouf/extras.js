@@ -273,6 +273,7 @@ ROUTES.don = function don() {
 let installEvt = null;
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (location.hash === '#/reglages') render(true); });
 ACT.install = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; render(true); };
+ACT['stats-opt'] = (_, el) => { S.settings.noStats = !el.checked; save(); toast(el.checked ? 'Statistiques anonymes activées' : 'Statistiques anonymes désactivées'); };
 ACT.notif = async () => {
   if (!('Notification' in window)) return toast('Notifications non disponibles sur cet appareil');
   if (S.settings.notif) { S.settings.notif = false; save(); return render(true); }
@@ -286,6 +287,57 @@ ACT.wipe = async () => {
   for (const x of S.docs) await fdel(x.id).catch(() => {});
   S = blank(); flush(); try { localStorage.removeItem('wouf:vets'); } catch (e) { /* rien */ } location.hash = '#/home'; render();
 };
+/* ---------- Déménagement vers l'adresse officielle (config.site) ----------
+   Ancienne adresse sans carnet → redirection immédiate. Avec un carnet → bandeau et transfert direct
+   (données + documents) vers la nouvelle adresse par postMessage, entre les deux onglets, sans serveur. Rien n'est supprimé. */
+const SITE = (window.WOUF_CONFIG || {}).site || {};
+const SITE_ORIGIN = (() => { try { return new URL(SITE.home).origin; } catch (e) { return ''; } })();
+const OLD_ORIGINS = ['https://ikeupods-del.github.io'].concat(SITE.old || []); // SITE.old : réservé aux tests
+const onOldSite = () => !!(SITE.moved && SITE_ORIGIN && OLD_ORIGINS.includes(location.origin));
+function movedRedirect() {
+  if (!onOldSite() || S.dogs.length) return false;
+  location.replace(SITE.home + location.search + location.hash); return true;
+}
+function movedBanner() {
+  if (!onOldSite() || !S.dogs.length) return '';
+  const host = SITE_ORIGIN.replace('https://', ''), done = S.settings.movedAt;
+  return `<section class="card move-card"><h2>📦 Wouf a une nouvelle adresse : ${esc(host)}</h2><p>${done ? 'Votre carnet a été transféré ✓. Utilisez désormais la nouvelle adresse et ajoutez-la à votre écran d’accueil.' : 'Transférez votre carnet en un geste : il est copié vers la nouvelle adresse, rien n’est supprimé ici.'}</p>
+    <div class="btn-row"><button class="btn primary" data-act="move-go">${done ? 'Ouvrir ' + esc(host) : 'Transférer mon carnet'}</button></div>
+    <p class="mut small">Connecté(e) avec Google ? Reconnectez-vous simplement sur la nouvelle adresse. Sinon : Réglages → Sauvegarde, puis restauration sur ${esc(host)}.</p></section>`;
+}
+ACT['move-go'] = async () => {
+  if (S.settings.movedAt) { location.href = SITE.home; return; }
+  const w = window.open(SITE.home + '#/transfert', '_blank'); // ouvert tout de suite : sinon le navigateur bloque la fenêtre
+  if (!w) { toast('Autorisez l’ouverture de la nouvelle page, puis réessayez'); return; }
+  flush();
+  const files = (async () => { const f = []; for (const x of S.docs || []) { try { const b = await fget(x.id); if (b) f.push([x.id, b]); } catch (e) { /* document illisible : ignoré */ } } return f; })();
+  const onMsg = async ev => {
+    if (ev.origin !== SITE_ORIGIN || ev.source !== w || !ev.data) return;
+    if (ev.data.type === 'wouf-ready') w.postMessage({ type: 'wouf-transfer', data: localStorage.getItem(KEY), files: await files }, SITE_ORIGIN);
+    if (ev.data.type === 'wouf-done') { removeEventListener('message', onMsg); S.settings.movedAt = today(); save(); render(true); }
+  };
+  addEventListener('message', onMsg);
+  setTimeout(() => { if (!S.settings.movedAt) toast('Rien ne se passe ? Ouvrez Wouf dans le navigateur (pas l’app installée) et réessayez.'); }, 20000);
+};
+ROUTES.transfert = function transfert() {
+  return `<div class="page-h"><h1>📦 Transfert du carnet</h1></div><section class="card"><p id="tr-st">${window.opener ? 'Réception de votre carnet…' : 'Pour transférer un carnet, ouvrez l’ancienne adresse de Wouf et appuyez sur « Transférer mon carnet ».'}</p><a class="btn" href="#/home">Continuer</a></section>`;
+};
+ROUTES.transfert.after = () => {
+  if (!window.opener || location.origin !== SITE_ORIGIN || ROUTES.transfert.on) return;
+  ROUTES.transfert.on = true;
+  addEventListener('message', async ev => {
+    if (!OLD_ORIGINS.includes(ev.origin) || !ev.data || ev.data.type !== 'wouf-transfer') return;
+    let r = null; try { r = JSON.parse(ev.data.data); } catch (e) { /* données illisibles */ }
+    if (!r || !r.v || !Array.isArray(r.dogs)) { toast('Transfert impossible : carnet illisible'); return; }
+    if (S.dogs.length && !(await ask('Un carnet existe déjà sur cette adresse. Le remplacer par celui que vous transférez ?', 'Remplacer'))) return;
+    for (const [id, b] of ev.data.files || []) { try { await fput(id, b); } catch (e) { /* document ignoré */ } }
+    S = Object.assign(blank(), migrate(r)); delete S.settings.movedAt; save(); flush();
+    ev.source.postMessage({ type: 'wouf-done' }, ev.origin);
+    location.hash = '#/home'; render(); toast('Carnet transféré ✓ Bienvenue sur la nouvelle adresse !');
+  });
+  OLD_ORIGINS.forEach(o => { try { window.opener.postMessage({ type: 'wouf-ready' }, o); } catch (e) { /* onglet fermé */ } });
+};
+
 ROUTES.reglages = function reglages() {
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   return `<div class="page-h"><a class="back" href="#/plus">‹</a><h1>⚙️ Réglages</h1></div>
@@ -300,6 +352,6 @@ ROUTES.reglages = function reglages() {
   <section class="card"><h2>Rappels</h2><label class="chk"><input type="checkbox" data-act="notif" ${S.settings.notif ? 'checked' : ''}> <span>Me notifier à l’ouverture de l’app quand une échéance approche</span></label>
     <p class="mut small">Pour être prévenu(e) même app fermée, exportez les rappels vers votre agenda (Carnet → « Ajouter les rappels à mon agenda »).</p></section>
   ${!standalone ? `<section class="card"><h2>Installer Wouf</h2>${installEvt ? '<button class="btn primary" data-act="install">📲 Installer l’app</button>' : '<p class="mut">iPhone : Partager → « Sur l’écran d’accueil ». Android : menu du navigateur → « Installer l’application ».</p>'}</section>` : ''}
-  <section class="card"><h2>Confidentialité</h2><p class="mut">Aucun suivi publicitaire. Vos données sont stockées sur cet appareil ; si vous vous connectez avec Google (facultatif), elles sont aussi sauvegardées dans votre espace privé de compte. Les recherches de cliniques (OpenStreetMap) et d’adresse utilisent le réseau, avec votre position uniquement au moment où vous la demandez.</p></section>
+  <section class="card"><h2>Confidentialité</h2><p class="mut">Aucun suivi publicitaire. Vos données sont stockées sur cet appareil ; si vous vous connectez avec Google (facultatif), elles sont aussi sauvegardées dans votre espace privé de compte. Les recherches de cliniques (OpenStreetMap) et d’adresse utilisent le réseau, avec votre position uniquement au moment où vous la demandez.</p>${statsCode() ? `<label class="chk"><input type="checkbox" data-act="stats-opt" ${S.settings.noStats ? '' : 'checked'}> <span>Aider à améliorer Wouf avec des statistiques anonymes (écrans ouverts et actions principales, sans cookie ni donnée saisie)</span></label>` : ''}</section>
   <section class="card"><h2>Zone sensible</h2><button class="btn danger" data-act="wipe">Supprimer toutes mes données</button></section>`;
 };
