@@ -601,7 +601,9 @@ test('toutes les pages s’affichent sans erreur (chien et chat)', async () => {
 
 test('statistiques anonymes : désactivées par défaut, provenance, adresse, refus dans Réglages', async () => {
   const b = await boot({ query: '?src=tiktok' }), p = b.page;
-  assert.equal(await b.ev(() => statsCode()), '', 'aucune mesure sans code');
+  assert.equal(await b.ev(() => statsCode()), 'woufapp');
+  await b.go('#/plus'); assert.equal(await p.$('a[href="https://woufapp.goatcounter.com"]'), null, 'lien statistiques caché aux utilisateurs');
+  await b.ev(() => { WOUF_CONFIG.stats.goatcounter = ''; }); assert.equal(await b.ev(() => statsCode()), '', 'aucune mesure sans code');
   assert.equal(await b.ev(() => STATS_SRC), 'tiktok');
   await b.go('#/reglages'); assert.equal(await p.$('[data-act=stats-opt]'), null, 'pas de case sans code');
   await b.ev(() => { WOUF_CONFIG.stats.goatcounter = 'wouf-test'; });
@@ -614,6 +616,9 @@ test('statistiques anonymes : désactivées par défaut, provenance, adresse, re
   await b.go('#/legal?doc=confidentialite'); assert.match(await text(p, '#view'), /GoatCounter/);
   await b.ev(() => { WOUF_CONFIG.stats.goatcounter = 'Pas Valide!'; }); assert.equal(await b.ev(() => statsCode()), '');
   noErrors(b); await b.ctx.close();
+  const o = await boot({ query: '?proprio=1', hash: '#/plus' });
+  assert.equal(await o.ev(() => OWNER), true); assert.ok(await o.page.$('a[href="https://woufapp.goatcounter.com"]'), 'lien « Mes statistiques » pour le propriétaire');
+  noErrors(o); await o.ctx.close();
 });
 
 test('nouvelle adresse : redirection sans carnet, transfert du carnet et des documents vers la nouvelle adresse', async () => {

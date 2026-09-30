@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.10.0',
+  version: '1.11.0',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
@@ -33,7 +33,7 @@ window.WOUF_CONFIG = {
   // Statistiques anonymes (GoatCounter : sans cookie, sans identifiant, sans aucune donnée saisie).
   // Seuls le nom de l'écran ouvert et quelques actions (animal ajouté, leçon acquise, balade…) sont comptés.
   // Mettre le code du compte GoatCounter (ex. 'wouf' pour https://wouf.goatcounter.com). Vide = aucune mesure.
-  stats: { goatcounter: '' },
+  stats: { goatcounter: 'woufapp' },   // tableau de bord : https://woufapp.goatcounter.com
 
   support: {
     email: '',                       // ex. support@votre-domaine.fr  ← à renseigner avant la mise en vente

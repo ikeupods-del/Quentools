@@ -141,7 +141,8 @@ Les fiches santé, premiers secours, toxiques, leçons et calculs (ration, plan 
 
 ## Statistiques (tableau de bord privé)
 Wouf compte ses visites avec **GoatCounter** : pas de cookie, pas d'identifiant, aucune donnée saisie par l'utilisateur. Seuls le nom de l'écran ouvert, quelques actions (`animal-ajoute-chien`/`-chat`, `lecon-acquise`, `balade-enregistree`, `offre-recompense-vue`, `installation`), la taille d'écran et la provenance sont envoyés. Le tableau de bord n'est visible que par le titulaire du compte GoatCounter.
-- **Activer** : créer un compte gratuit sur goatcounter.com (code du site, par ex. `wouf`), puis mettre ce code dans `config.js` → `stats.goatcounter`. Vide = aucune mesure.
+- **Actif** : compte GoatCounter `woufapp` → tableau de bord https://woufapp.goatcounter.com (connexion du propriétaire). Code dans `config.js` → `stats.goatcounter` ; vide = aucune mesure.
+- **Mode propriétaire** : ouvrir une fois `https://woufapp.fr/?proprio=1` sur son téléphone → bouton « 📊 Mes statistiques » en haut de Plus, et ses propres visites ne sont plus comptées (`?proprio=0` pour annuler, à refaire après un transfert d'adresse ou un effacement du navigateur).
 - **Provenance des réseaux sociaux** : dans les bios, utiliser `…/wouf/?src=insta` et `…/wouf/?src=tiktok`. La valeur apparaît comme « referrer » dans GoatCounter.
 - La mesure ne part que depuis le site publié (https). L'utilisateur peut la refuser dans Réglages → Confidentialité ; la politique de confidentialité la mentionne automatiquement dès que le code est renseigné.
 

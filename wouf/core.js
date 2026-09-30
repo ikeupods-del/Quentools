@@ -123,6 +123,11 @@ const STATS_SRC = (() => {
     const r = document.referrer && new URL(document.referrer); return r && r.hostname !== location.hostname ? r.hostname : '';
   } catch (e) { return ''; }
 })();
+/* Mode propriétaire : ouvrir une fois ?proprio=1 sur son appareil affiche « Mes statistiques » dans Plus
+   et ne compte plus ses propres visites (?proprio=0 pour annuler). Aucun droit : le tableau de bord reste protégé par son mot de passe. */
+const OWNER = (() => {
+  try { const q = new URLSearchParams(location.search).get('proprio'); if (q === '1') localStorage.setItem('wouf:owner', '1'); if (q === '0') localStorage.removeItem('wouf:owner'); return localStorage.getItem('wouf:owner') === '1'; } catch (e) { return false; }
+})();
 const statsCode = () => { const c = ((window.WOUF_CONFIG || {}).stats || {}).goatcounter || ''; return /^[a-z0-9-]{2,50}$/.test(c) ? c : ''; };
 function statsUrl(name, event, ref) {
   const q = new URLSearchParams({ p: name, t: event ? name : 'Wouf', e: event ? 'true' : 'false', s: `${screen.width}x${screen.height}`, rnd: Math.random().toString(36).slice(2) });
@@ -130,7 +135,7 @@ function statsUrl(name, event, ref) {
   return `https://${statsCode()}.goatcounter.com/count?${q}`;
 }
 function track(name, event) {
-  if (!statsCode() || (S.settings && S.settings.noStats) || location.protocol !== 'https:') return;
+  if (!statsCode() || OWNER || (S.settings && S.settings.noStats) || location.protocol !== 'https:') return;
   try { new Image().src = statsUrl(name, event, !event && !track.sent ? STATS_SRC : ''); track.sent = true; } catch (e) { /* rien */ }
 }
 
