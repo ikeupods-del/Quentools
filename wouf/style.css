@@ -290,3 +290,4 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);outline-off
 .qrow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px}.qrow>*{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;color:inherit;font-family:inherit;font-size:.74rem;font-weight:600;line-height:1.2;text-decoration:none;padding:6px 2px;border-radius:10px;cursor:pointer;min-height:52px;text-align:center}.qrow>* span{font-size:1.35rem}.qrow>*:hover{background:var(--soft)}
 .meteo-city{display:flex;gap:6px;margin-top:6px}.meteo-city input{flex:1;min-width:0}
 .hero.hero-c{padding:12px 14px;gap:12px}.hero.hero-c .hero-txt h1{font-size:1.35rem;margin:0}.hero.hero-c .hero-txt p{margin:2px 0}.hero.hero-c .av.xl{width:60px;height:60px;font-size:2rem}
+.eb-h{margin:10px 0 4px;font-weight:700;font-size:.9rem;color:var(--mut);display:flex;align-items:center;gap:8px}#h-ebooks .list.menu{margin:0}

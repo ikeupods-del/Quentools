@@ -1,0 +1,31 @@
+# Télécharge des photos libres de droits (CC0 / domaine public) pour les carrousels marketing, puis les enregistre dans la branche.
+# Se lance quand marketing/wouf/photos-libres.json change sur une branche de travail, ou à la main (Actions → « Photos libres » → Run workflow).
+name: Photos libres
+
+on:
+  push:
+    branches: ['claude/**']
+    paths: ['marketing/wouf/photos-libres.json', 'marketing/wouf/photos-libres.js']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  photos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install --prefix /tmp/sharp sharp@0.33
+      - name: Chercher les photos
+        env: { SHARP: /tmp/sharp/node_modules/sharp }
+        run: node marketing/wouf/photos-libres.js
+      - name: Enregistrer
+        run: |
+          git config user.name "wouf-bot"; git config user.email "wouf-bot@users.noreply.github.com"
+          git add marketing/wouf/photos-candidats
+          git commit -m "Marketing : photos libres de droits candidates [skip ci]" || exit 0
+          git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}"

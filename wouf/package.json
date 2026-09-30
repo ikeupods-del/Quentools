@@ -1,6 +1,6 @@
 {
   "name": "wouf",
-  "version": "1.17.0",
+  "version": "1.17.1",
   "private": true,
   "description": "Wouf — carnet de santé chien et chat (PWA statique). Outils de test et de développement.",
   "scripts": {

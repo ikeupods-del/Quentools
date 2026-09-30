@@ -882,6 +882,18 @@ test('guides : un guide gratuit, les autres réservés à Plus, lecture et PDF',
   noErrors(b); await b.ctx.close();
 });
 
+test('accueil : menu déroulant E-books (gratuits / Wouf Plus), ouverture directe', async () => {
+  const b = await boot({}), p = b.page;
+  await b.ev(() => { BILL.enabled = true; BILL.freeUntil = null; BILL.grandfatherBefore = null; S.sub = { active: false }; S.grant = null; }); await b.go('#/home'); await b.ev(() => render()); await p.waitForSelector('#h-ebooks');
+  assert.equal(await p.locator('#h-ebooks[open]').count(), 0, 'replié par défaut'); assert.match(await text(p, '#h-ebooks summary'), /E-books.*1 gratuit · 3 Wouf Plus/);
+  await p.click('#h-ebooks summary'); assert.match(await text(p, '#h-ebooks'), /E-books gratuits[^]*Urgences[^]*E-books Wouf Plus/);
+  assert.equal(await p.locator('#h-ebooks .chev', { hasText: '🔒' }).count(), 3, 'e-books Plus verrouillés');
+  await p.click('#h-ebooks [data-act=guide-open][data-id=chien-erreurs]'); await p.waitForTimeout(300); assert.equal(await p.locator('.gd-list').count(), 0, 'paywall'); await p.click('.sheet [data-close]'); await p.waitForTimeout(300);
+  assert.equal(await p.locator('#h-ebooks[open]').count(), 1, 'reste ouvert');
+  await p.click('#h-ebooks [data-act=guide-open][data-id=urgences]'); await p.waitForSelector('.gd-list'); assert.equal(await b.ev(() => routeName()), 'guides'); assert.equal(await p.locator('.gd-list li').count(), 8);
+  noErrors(b); await b.ctx.close();
+});
+
 test('synchro Google chiffrée : Google ne voit que du texte chiffré, relecture avec la phrase, mauvaise phrase refusée', async () => {
   const b = await boot({}), p = b.page; await fakeCloud(p);
   await b.ev(() => { CLOUD.user = { email: 'q@test.fr', name: 'Q' }; render(); }); await b.go('#/sauvegarde'); await p.waitForSelector('[data-act=cenc-on]');
