@@ -12,6 +12,7 @@ const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free ==
 const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
 
 const CHANGELOG = [
+  { v: '1.15.0', date: '2026-09-30', items: ['📚 Nouveau : Guides (erreurs à éviter, points d’attention, urgences), à lire dans l’app ou en PDF', '🔒 Synchronisation Google chiffrée avec une phrase secrète (optionnel)'] },
   { v: '1.14.0', date: '2026-09-30', items: ['Nouveau : le test express « dangereux ou OK ? » : 8 aliments, 1 minute, sans compte, avec partage de votre score'] },
   { v: '1.11.0', date: '2026-09-30', items: ['🌐 Nouvelle adresse : woufapp.fr', '📦 Transfert du carnet depuis l’ancienne adresse'] },
   { v: '1.10.0', date: '2026-09-29', items: ['🐾 Le parcours d’éducation devient un chemin d’empreintes de pattes : chaque leçon validée dore une empreinte.', '🦴 Les points deviennent des os à gagner : +10 par séance, +70 par leçon validée au quiz.', '✏️ Nouveau style des réponses du quiz (A, B, C).'] },
@@ -55,6 +56,7 @@ const FEATURES = {
   documents: ['📎', 'Documents illimités', 'Ordonnances, résultats, cartes : sans limite. (Gratuit : 3.)'],
   stats: ['📊', 'Statistiques de dépenses', 'Graphiques par catégorie et par mois, export CSV.'],
   weather: ['🌦️', 'Météo des balades', 'Chaleur, froid, pluie et orage adaptés à la race, à l’âge et au gabarit de votre animal, et les meilleures heures pour sortir.'],
+  guides: ['📚', 'Guides : erreurs à éviter et points d’attention', '4 guides à lire dans l’app ou à enregistrer en PDF : les erreurs qui abîment la santé de votre compagnon (chien et chat), l’arrivée d’un chiot ou d’un chaton, les gestes d’urgence à éviter (celui-ci est gratuit).'],
   support: ['💬', 'Assistance prioritaire', 'Vos demandes sont traitées en premier, ' + (SUP.priorityDelay || 'sous 24 h ouvrées') + '.']
 };
 const planLine = () => { const p = planOf(); return `${p.price} ${p.per}`; };

@@ -18,6 +18,7 @@ ROUTES.plus = function plusMenu() {
     ['Santé', [
       ['#/bilan', '🧠', 'Bilan santé', 'Conseils personnalisés' + (allowed('bilan') ? '' : ' · Plus')],
       ['#/race', '🧬', 'Ma race et sa santé', 'Poids idéal, espérance de vie, risques'],
+      ['#/guides', '📚', 'Guides', 'Erreurs à éviter, points d’attention' + (allowed('guides') ? '' : ' · Plus')],
       ['#/documents', '📎', 'Documents', 'Ordonnances, résultats, carte d’identification'],
       ['#/depenses', '💶', 'Dépenses', 'Budget vétérinaire, nourriture, accessoires']]],
     ['Éduquer et bouger', [
@@ -240,7 +241,21 @@ ROUTES.sauvegarde = function sauvegarde() {
     <p class="mut small">Dernière sauvegarde : ${S.settings.lastBackup ? fmtDate(S.settings.lastBackup) : 'jamais'}. <b>Attention :</b> phrase perdue = sauvegarde irrécupérable.</p></section>
   <section class="card"><h2>Restaurer</h2><p class="mut">Choisissez un fichier .wouf ou .json. Les données actuelles de cet appareil seront remplacées.</p>
     <input type="file" id="bk-file" accept=".wouf,.json,application/json"><div class="field" id="bk-pass2-wrap" hidden><label>Phrase secrète</label><input id="bk-pass2" type="password" autocomplete="off"></div>
-    <button class="btn" data-act="import">Restaurer</button></section>`;
+    <button class="btn" data-act="import">Restaurer</button></section>${CLOUD.user ? cloudEncCard() : ''}`;
+};
+function cloudEncCard() {
+  return cloudPass() ? `<section class="card"><h2>🔒 Synchronisation Google chiffrée</h2><p class="mut">Actif : Google ne stocke que du texte chiffré, illisible sans votre phrase secrète (gardée sur cet appareil, à ressaisir sur un nouvel appareil). <b>Phrase perdue = sauvegarde Google irrécupérable.</b></p><button class="btn" data-act="cenc-off">Désactiver le chiffrement</button></section>`
+    : `<section class="card"><h2>🔒 Chiffrer ma synchronisation Google</h2><p class="mut">Vos données (animaux, santé, poids…) sont protégées par les règles de Google. Pour aller plus loin, une phrase secrète les chiffre avant l’envoi : ni Google ni nous ne pouvons les lire.</p>
+    <div class="field"><label>Phrase secrète</label><input id="cenc-pass" type="password" autocomplete="new-password" placeholder="Au moins 6 caractères"></div><button class="btn primary" data-act="cenc-on">Activer le chiffrement</button><p class="mut small"><b>Attention :</b> phrase perdue = sauvegarde Google irrécupérable (les données de cet appareil restent intactes).</p></section>`;
+}
+ACT['cenc-on'] = async () => {
+  const pass = $('#cenc-pass').value; if (pass.length < 6) return toast('Choisissez une phrase secrète d’au moins 6 caractères');
+  try { localStorage.setItem(CPASS, pass); } catch (e) { return toast('Impossible d’enregistrer la phrase sur cet appareil'); }
+  S.updatedAt = Date.now(); await cloudPush(); toast(CLOUD.st === 'ok' ? 'Synchronisation chiffrée ✓' : 'Échec : réessayez'); render(true);
+};
+ACT['cenc-off'] = async () => {
+  if (!(await ask('Désactiver le chiffrement ? Votre sauvegarde Google sera de nouveau enregistrée en clair (protégée par les règles Google).', 'Désactiver', false))) return;
+  try { localStorage.removeItem(CPASS); } catch (e) { /* ignore */ } S.updatedAt = Date.now(); await cloudPush(); render(true);
 };
 ACT.export = async () => {
   const pass = $('#bk-pass').value;
@@ -287,7 +302,7 @@ document.addEventListener('change', e => { const t = e.target.closest('[data-set
 ACT.wipe = async () => {
   if (!(await ask('Supprimer TOUTES les données (animaux, carnet, documents) de cet appareil ? Faites une sauvegarde avant.', 'Tout supprimer'))) return;
   for (const x of S.docs) await fdel(x.id).catch(() => {});
-  S = blank(); flush(); try { localStorage.removeItem('wouf:vets'); } catch (e) { /* rien */ } location.hash = '#/home'; render();
+  S = blank(); flush(); try { ['wouf:vets', 'wouf:walk', 'wouf:errors', 'wouf:paid', 'wouf:cpass', 'wouf:remote'].forEach(k => localStorage.removeItem(k)); } catch (e) { /* rien */ } location.hash = '#/home'; render();
 };
 /* ---------- Déménagement vers l'adresse officielle (config.site) ----------
    Ancienne adresse sans carnet → redirection immédiate. Avec un carnet → bandeau et transfert direct
@@ -355,5 +370,6 @@ ROUTES.reglages = function reglages() {
     <p class="mut small">Pour être prévenu(e) même app fermée, exportez les rappels vers votre agenda (Carnet → « Ajouter les rappels à mon agenda »).</p></section>
   ${!standalone ? `<section class="card"><h2>Installer Wouf</h2>${installEvt ? '<button class="btn primary" data-act="install">📲 Installer l’app</button>' : '<p class="mut">iPhone : Partager → « Sur l’écran d’accueil ». Android : menu du navigateur → « Installer l’application ».</p>'}</section>` : ''}
   <section class="card"><h2>Confidentialité</h2><p class="mut">Aucun suivi publicitaire. Vos données sont stockées sur cet appareil ; si vous vous connectez avec Google (facultatif), elles sont aussi sauvegardées dans votre espace privé de compte. Les recherches de cliniques (OpenStreetMap) et d’adresse utilisent le réseau, avec votre position uniquement au moment où vous la demandez.</p>${statsCode() ? `<label class="chk"><input type="checkbox" data-act="stats-opt" ${S.settings.noStats ? '' : 'checked'}> <span>Aider à améliorer Wouf avec des statistiques anonymes (écrans ouverts et actions principales, sans cookie ni donnée saisie)</span></label>` : ''}</section>
-  <section class="card"><h2>Zone sensible</h2><button class="btn danger" data-act="wipe">Supprimer toutes mes données</button></section>`;
+  <section class="card"><h2>Zone sensible</h2><button class="btn danger" data-act="wipe">Supprimer toutes mes données</button></section>
+  <p class="mut center small made">Conçu avec ❤️ à Nîmes, dans le sud de la France<br>Un produit QuenTools · Wouf ${esc(CFG.version || '')}</p>`;
 };
