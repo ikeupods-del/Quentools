@@ -184,7 +184,7 @@ Wouf — administration (propriétaire uniquement) : comptes Google, Wouf Plus o
 - définit : remoteStore applySaleConfig remoteRefresh accountSync replyLink admLoad statsCard AdminApi SALE_DEFAULT RELAY_URL REMOTE_FIELDS REMOTE_DEF remoteCached legalFull saleReady saleMissing legalMissing lessonsDone ADM grantLabel admErr STAT_EVT
 - dépend de : core.js screens.js parcours.js cloud.js business.js main.js
 
-### wouf/extras.js (375 l.)
+### wouf/extras.js (376 l.)
 Wouf — menu Plus, dépenses, documents, nutrition, race, chien perdu, fiche véto, sauvegarde, abonnement, réglages.
 - écrans : #/plus #/depenses #/documents #/nutrition #/race #/perdu #/sauvegarde #/don #/transfert #/reglages
 - actions : report ics add-expense edit-expense xp-period xp-csv add-doc view-doc poster cenc-on cenc-off export import install stats-opt notif wipe move-go
@@ -226,6 +226,7 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - generate.js (27 Ko)
 - hero-quiz.js (5 Ko)
 - kit.html (23 Ko)
+- nimes.js (2 Ko)
 - preview.js (3 Ko)
 - problemes.js (6 Ko)
 - problemes.json (9 Ko)

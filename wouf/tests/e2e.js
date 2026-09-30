@@ -888,6 +888,10 @@ test('synchro Google chiffrée : Google ne voit que du texte chiffré, relecture
   noErrors(b); await b.ctx.close();
 });
 
+test('réglages : mention « Conçu à Nîmes » par QuenTools', async () => {
+  const b = await boot({}), p = b.page; await b.go('#/reglages'); await p.waitForSelector('.made'); assert.match(await text(p, '.made'), /Nîmes.*QuenTools/s); noErrors(b); await b.ctx.close();
+});
+
 /* ================= exécution ================= */
 (async () => {
   srv = await start(0); PORT = srv.address().port;
