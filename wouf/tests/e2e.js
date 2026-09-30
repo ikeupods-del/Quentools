@@ -783,6 +783,35 @@ test('activation automatique PayPal : notify_url et compte transmis, page d’at
   noErrors(b); await b.ctx.close();
 });
 
+test('contact : vrai envoi depuis l’app (aucune messagerie ouverte), repli e-mail si le relais est en panne, messages lus dans l’administration', async () => {
+  const b = await boot({ hash: '#/support' }), p = b.page; await fakeCloud(p);
+  const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' }; const got = []; let mode = 'ok';
+  await b.ctx.route('https://relais.test/**', async r => { const u = new URL(r.request().url()); if (r.request().method() === 'OPTIONS') return r.fulfill({ status: 200, headers: cors });
+    if (u.pathname === '/support') { got.push({ auth: r.request().headers().authorization, body: JSON.parse(r.request().postData()) });
+      return mode === 'ok' ? r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify({ ok: true, priority: true }) })
+        : mode === '429' ? r.fulfill({ status: 429, headers: cors, contentType: 'application/json', body: JSON.stringify({ error: 'Trop de messages : réessayez dans une heure' }) })
+        : r.fulfill({ status: 502, headers: cors, contentType: 'application/json', body: '{"error":"panne"}' }); }
+    if (u.pathname === '/admin/support') return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: JSON.stringify({ messages: [{ id: '1790000000000-abc12', at: '2026-09-30T10:00:00Z', category: 'Facturation / achat', message: 'Bonjour,\nje ne vois pas mon accès.', email: 'cliente@test.fr', diagnostics: 'Wouf 1.14', priority: false }] }) });
+    if (u.pathname === '/admin/support/delete') { mode = 'deleted'; return r.fulfill({ status: 200, headers: cors, contentType: 'application/json', body: '{"ok":true}' }); }
+    return r.fulfill({ status: 404, headers: cors, body: '{}' }); });
+  await b.ev(() => { BILL.api = 'https://relais.test'; CLOUD.user = { uid: 'u1', email: 'q@test.fr', name: 'Q' }; window.__mail = null; NAV.mail = u => { window.__mail = u; }; SUP.email = 'wouf-contact@proton.me'; render(); });
+  await p.waitForSelector('#sp-msg');
+  await p.fill('#sp-msg', 'Bonjour, mon suivi ne démarre pas.'); await p.click('[data-act=support-send]'); await p.waitForTimeout(400);
+  assert.equal(got.length, 1); assert.equal(got[0].body.email, 'q@test.fr'); assert.equal(got[0].body.category, 'Problème technique'); assert.equal(got[0].auth, 'Bearer tok123');
+  assert.match(await text(p, '#toast'), /Message envoyé.*prioritaire/); assert.equal(await b.ev(() => window.__mail), null, 'aucune messagerie ouverte'); assert.equal(await p.inputValue('#sp-msg'), '', 'formulaire vidé');
+  mode = '429'; await p.fill('#sp-msg', 'Bonjour, ceci est un second message.'); await p.click('[data-act=support-send]'); await p.waitForTimeout(400);
+  assert.match(await text(p, '#toast'), /Trop de messages/); assert.equal(await b.ev(() => window.__mail), null, 'limite atteinte : pas de repli qui contournerait la limite');
+  mode = '502'; await p.click('[data-act=support-send]'); await p.waitForTimeout(500);
+  assert.match(decodeURIComponent(await b.ev(() => window.__mail)), /^mailto:wouf-contact@proton\.me\?subject=/, 'relais en panne : repli sur la messagerie'); 
+  // administration : le message est lu, on peut répondre (lien mailto) et le supprimer
+  mode = 'ok'; await b.ev(() => { OWNER = true; Object.assign(AdminApi, { listUsers: async () => [], listOrders: async () => [], paidList: async () => ({}) }); });
+  await b.go('#/admin'); await p.waitForSelector('#adm-msgs .adm-m');
+  assert.match(await text(p, '#adm-msgs'), /Messages \(1\).*Facturation \/ achat.*cliente@test\.fr.*je ne vois pas mon accès/);
+  assert.match(await p.getAttribute('#adm-msgs a.btn', 'href'), /^mailto:cliente@test\.fr\?subject=Re%3A/);
+  await p.click('[data-act=adm-msg-del]'); await p.click('.sheet [data-ok]'); await p.waitForSelector('#adm-msgs .mut:has-text("Aucun message")'); assert.match(await text(p, '#adm-msgs'), /Messages \(0\)/);
+  noErrors(b); await b.ctx.close();
+});
+
 /* ================= exécution ================= */
 (async () => {
   srv = await start(0); PORT = srv.address().port;
