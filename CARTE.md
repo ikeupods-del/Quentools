@@ -230,9 +230,11 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - generate.js (27 Ko)
 - hero-quiz.js (5 Ko)
 - kit.html (23 Ko)
+- memes.js (2 Ko)
+- memes.json (3 Ko)
 - nimes.js (2 Ko)
 - photos-libres.js (3 Ko)
-- photos-libres.json (0 Ko)
+- photos-libres.json (1 Ko)
 - preview.js (3 Ko)
 - problemes.js (6 Ko)
 - problemes.json (9 Ko)
@@ -244,6 +246,7 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - signes.js (6 Ko)
 - to-jpeg.js (1 Ko)
 - video-quiz.js (2 Ko)
+- watermark.js (2 Ko)
 
 ## Workflows
 - apercu.yml
