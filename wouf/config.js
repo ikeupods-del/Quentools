@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.19.0',
+  version: '1.19.1',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
@@ -22,6 +22,10 @@ window.WOUF_CONFIG = {
     rewardLink: '',            // idem pour l'offre récompense (rewardOffer.price) ; vide = pas d'offre récompense
     // Achat unique « à vie ». Le prix AFFICHÉ ici doit être identique au montant du lien PayPal.
     plans: [{ id: 'lifetime', label: 'Wouf Plus à vie', price: '19,99 €', per: 'paiement unique', badge: 'Sans abonnement' }],
+    // Abonnement ANNUEL proposé à côté de l'achat à vie (PayPal, reconduit chaque année, résiliable à tout moment depuis l'app).
+    // Nécessite l'adresse PayPal `payee` (compte professionnel) ; activation et renouvellements automatiques avec le relais `api`.
+    // Le prix doit être ≥ MIN_YEAR_EUR du relais (14.99 par défaut). enabled: false = seulement l'achat à vie. Guide : MAINTENANCE, « Abonnement annuel ».
+    yearly: { enabled: false, label: 'Wouf Plus annuel', price: '14,99 €', per: 'par an' },
     // Offre récompense : quand TOUTES les leçons gratuites sont terminées (quiz compris), Wouf Plus passe à ce prix.
     // Doit être égal au montant du lien PayPal rewardLink. enabled: false = pas d'offre.
     rewardOffer: { enabled: true, price: '9,99 €' },

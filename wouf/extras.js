@@ -33,7 +33,7 @@ ROUTES.plus = function plusMenu() {
       ['#/sauvegarde', '💾', 'Sauvegarde', 'Exporter / restaurer (chiffrée)'],
       ['#/reglages', '⚙️', 'Réglages', 'Profil, notifications, installation']]],
     ['Wouf', [
-      ['#/abo', '⭐', 'Wouf Plus', plus() && !BILL.enabled ? 'Toutes les fonctions sont gratuites pour le moment' : subActive() ? 'Actif à vie' : planLine() + ' · sans abonnement'],
+      ['#/abo', '⭐', 'Wouf Plus', plus() && !BILL.enabled ? 'Toutes les fonctions sont gratuites pour le moment' : subActive() ? (subPlan() ? 'Abonnement annuel actif' : 'Actif à vie') : planLine() + (yearlyPlan() ? '' : ' · sans abonnement')],
       ['#/don', '❤️', 'Faire un don à la SPA', 'Aider les animaux sans famille'],
       ['#/support', '💬', 'Assistance', isPriority() ? 'Prioritaire ⭐' : 'FAQ et contact'],
       ['#/nouveautes', '🆕', 'Nouveautés', 'Version ' + (CFG.version || '')],

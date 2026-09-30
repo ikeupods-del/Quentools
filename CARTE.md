@@ -5,7 +5,7 @@ Lire ceci AVANT de chercher dans le code. `dépend de` = fichiers dont les fonct
 ## Wouf : ordre de chargement
 config.js → data.js → species.js → core.js → health.js → screens.js → sos.js → nutrition.js → croquettes.js → lessons.js → lessons2.js → lessons_cat.js → lessons3.js → lessons_cat2.js → lessons4.js → lessons_cat3.js → lessons5.js → lessons_cat4.js → lessons6.js → lessons7.js → lessons_cat5.js → lessons_plans.js → quiz.js → quiz2.js → quiz_chat.js → educ.js → parcours.js → cloud.js → tracker.js → plusfeatures.js → guide.js → noms.js → business.js → admin.js → extras.js → testalim.js → guides.js → main.js
 
-### wouf/config.js (89 l.)
+### wouf/config.js (93 l.)
 Wouf — configuration. Guide complet : wouf/docs/MAINTENANCE.md ► WOUF PLUS (achat unique à vie) : tout est GRATUIT tant que `billing.enabled` vaut false. Pour ouvrir la vente : suivre la che
 - dépend de : extras.js
 
@@ -170,18 +170,18 @@ Wouf — générateur de noms pour chien et chat : styles, sexe, initiale (dont 
 - définit : lev nameCheck pickNames namesHTML testHTML NAME_STYLES NAME_POOL LOF_LETTERS lofLetter norm syllables NAME_COMMANDS confusedWith NOMS nameFavs isFav chip
 - dépend de : core.js health.js screens.js main.js
 
-### wouf/business.js (316 l.)
-Wouf — exploitation et vente : achat unique « à vie », assistance prioritaire, pages légales, nouveautés, alerte de mise à jour, diagnostics. Paiement : lien PayPal + dossier de paiement vér
+### wouf/business.js (386 l.)
+Wouf — exploitation et vente : achat unique « à vie » et abonnement annuel (facultatif), assistance prioritaire, pages légales, nouveautés, alerte de mise à jour, diagnostics. Paiement : Pay
 - écrans : #/merci #/abo #/support #/legal #/nouveautes
-- actions : restore checkout buy-go subscribe paywall support-send check-update
-- définit : errorLog diagnostics api authHeaders applySub refreshSub paypalUrl buySheet soonSheet paywall legalDoc checkVersion showUpdateBanner initUpdates LEGAL planOf isPriority supportTo ctaLabel nDog CHANGELOG FEATURES planLine autoOn PAY_LINK PAYEE payReady rewardBuyable NAV FAQ orTbd vNewer
+- actions : restore checkout buy-go subscribe paywall sub-manage sub-cancel support-send check-update
+- définit : errorLog diagnostics api authHeaders applySub refreshSub paypalUrl paypalSubUrl consentText buySheet soonSheet paywall legalDoc checkVersion showUpdateBanner initUpdates LEGAL planOf yearlyPlan subPlan isPriority supportTo ctaLabel nDog CHANGELOG FEATURES planLine noSubText autoOn PAY_LINK PAYEE payReady rewardBuyable yearlyBuyable pickedPlan paypalCancelUrl NAV FAQ faqList orTbd vNewer
 - dépend de : species.js core.js health.js screens.js lessons.js educ.js parcours.js cloud.js admin.js extras.js main.js
 
-### wouf/admin.js (252 l.)
+### wouf/admin.js (256 l.)
 Wouf — administration (propriétaire uniquement) : comptes Google, Wouf Plus offert, interrupteur de vente. La SÉCURITÉ est assurée par les règles Firestore (docs/MAINTENANCE.md, « Administra
 - écrans : #/admin
 - actions : adm-copy adm-reload adm-grant adm-revoke adm-sale adm-save-pay adm-order-ok adm-order-no adm-msg-del
-- définit : remoteStore applySaleConfig remoteRefresh accountSync replyLink admLoad statsCard AdminApi SALE_DEFAULT RELAY_URL REMOTE_FIELDS PERSONAL_FIELDS REMOTE_DEF remoteCached saleReady saleMissing legalMissing lessonsDone ADM grantLabel admErr STAT_EVT
+- définit : remoteStore applySaleConfig remoteRefresh accountSync replyLink admLoad statsCard AdminApi SALE_DEFAULT RELAY_URL REMOTE_FIELDS PERSONAL_FIELDS REMOTE_DEF remoteCached saleReady saleMissing legalMissing lessonsDone paidOn paidPlan ADM grantLabel admErr STAT_EVT
 - dépend de : core.js screens.js parcours.js cloud.js business.js main.js
 
 ### wouf/extras.js (397 l.)
@@ -210,9 +210,9 @@ Wouf — routeur, rendu, démarrage.
 - définit : routeName render NAV_OF lastRoute
 - dépend de : data.js species.js core.js health.js screens.js educ.js cloud.js tracker.js business.js admin.js extras.js
 
-### wouf/billing-worker/worker.js (252 l.)
+### wouf/billing-worker/worker.js (323 l.)
 Wouf — relais d'activation automatique de Wouf Plus après un paiement PayPal (Cloudflare Worker gratuit). Principe : PayPal prévient ce relais à chaque paiement (IPN, « notify_url » ajouté p
-- définit : getJwks verifyToken authed siteConfig payees confirmMail hasGrant findPayments handleIpn handleSupport handleStats handle JWKS_URL IPN_VERIFY DEFAULT_KEY JWKS b64uBytes b64uJson origins cors reply safeUid mail ownerOnly STATS
+- définit : getJwks verifyToken authed siteConfig payees confirmMail hasGrant findPayments handleIpn handleSubscription renewalReminders handleSupport handleStats handle JWKS_URL IPN_VERIFY DEFAULT_KEY JWKS b64uBytes b64uJson origins cors reply safeUid mail day addDays addPeriod grace isLifetime recActive frDate ownerOnly STATS
 
 ### wouf/sw.js (18 l.)
 Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, documents) ne passent jamais par ici : elles restent dans le stockage de l'appareil. Seuls les fichiers de l'app sont 
@@ -233,7 +233,7 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - hero-quiz.js (5 Ko)
 - kit.html (23 Ko)
 - memes.js (3 Ko)
-- memes.json (4 Ko)
+- memes.json (8 Ko)
 - nimes.js (2 Ko)
 - photos-libres.js (3 Ko)
 - photos-libres.json (1 Ko)

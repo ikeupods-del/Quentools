@@ -176,6 +176,18 @@ match /wouf_orders/{id} { allow create: if request.auth != null && request.resou
 
 **Limites à connaître** : IPN est l'ancien mécanisme de notification de PayPal (toujours en service à la date de rédaction : à vérifier si PayPal l'arrête un jour). L'offre récompense (9,99 €) n'est pas re-contrôlée côté serveur (le montant minimum accepté est `MIN_EUR`, défaut 9,99) : c'est le même niveau de confiance que le reste du contrôle d'accès de Plus. Modifier le code du relais = mettre à jour `worker.test.mjs`.
 
+## Abonnement annuel (PayPal, en plus de l'achat à vie)
+**Principe** : quand `billing.yearly.enabled` vaut `true` (config.js), l'acheteur choisit **Annuel** (14,99 €/an par défaut) ou **À vie**. L'annuel ouvre un abonnement PayPal (bouton « _xclick-subscriptions », `custom = uid|WOUF-…|y`) prélevé chaque année. Le relais prolonge l'accès d'un an à chaque paiement confirmé (`subscr_payment`), garde l'accès jusqu'à la fin de la période payée après une résiliation (`subscr_cancel`), et coupe l'accès 3 jours après la fin de période si rien n'est payé (`GRACE_DAYS`). Un achat à vie n'est jamais remplacé par un abonnement.
+
+**Prérequis** : micro-entreprise et informations légales (comme pour l'achat à vie), compte PayPal **professionnel** (adresse renseignée dans l'administration : les abonnements ne marchent pas avec un lien fixe), relais d'activation installé (section précédente).
+
+**Mise en place** :
+1. Choisir le prix dans `config.js` → `billing.yearly.price` ; le même montant (ou moins) dans la variable du relais `MIN_YEAR_EUR` (défaut 14.99).
+2. **Rappel avant reconduction (obligatoire)** : le Code de la consommation (art. L215-1) impose de prévenir le client 1 à 3 mois avant chaque renouvellement. Le relais l'envoie tout seul si : secret `RESEND_API_KEY` + variable `CONFIRM_FROM` configurés, et **déclencheur Cron** ajouté (Worker → Settings → Triggers → Cron Triggers → `0 8 * * *`). Le rappel part entre 30 et 60 jours avant l'échéance.
+3. Passer `billing.yearly.enabled` à `true`, faire un test réel (abonnement puis résiliation) avec un proche.
+
+**Résiliation** (obligation de résiliation « en trois clics ») : Wouf Plus → « Gérer mon abonnement » → « Résilier ». L'app enregistre une demande « Résiliation » dans les messages de l'administration **et** propose au client d'arrêter lui-même le prélèvement dans PayPal. À réception d'une demande : PayPal → Paiements automatiques / Abonnements → annuler l'abonnement du client, puis lui confirmer la résiliation par e-mail. Les CGV (section « Abonnement annuel ») décrivent ces règles : **à faire relire par un professionnel**.
+
 ## Formulaire de contact et messages
 Le formulaire de l'app (Plus → Assistance) **envoie le message directement** au relais Cloudflare (`POST /support`) : aucune messagerie n'est ouverte chez le client. Les messages sont rangés dans le KV et s'affichent dans **Plus → Administration → 📨 Messages** (lecture, « Répondre » qui ouvre votre messagerie vers le client, suppression). Limite anti-spam : 5 messages par heure et par adresse IP. Un membre Plus vérifié est marqué « ⭐ Membre Plus ». Si le relais est en panne, l'app se replie sur l'ouverture de la messagerie (`support.email`, sinon l'e-mail de contact des mentions légales).
 - **Mise à jour du relais** : après une modification de `billing-worker/worker.js`, coller à nouveau le fichier dans Cloudflare (Worker → Edit code → tout remplacer → Deploy). Aucun autre réglage.
