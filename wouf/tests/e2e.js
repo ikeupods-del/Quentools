@@ -373,7 +373,7 @@ test('achat à vie PayPal : connexion Google, dossier de paiement, consentement,
   await fakeCloud(p); await fakeSale(p); await b.ev(() => render());
   await p.waitForSelector('[data-act=subscribe]'); assert.match(await text(p, '.plus-hero'), /19,99 €/); assert.equal(await b.ev(() => plus()), false);
   await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent'); assert.equal(await b.ev(() => !!CLOUD.user), true, 'connexion Google déclenchée avant l’achat');
-  assert.match(await text(p, '.sheet'), /19,99 €/); assert.match(await text(p, '.sheet'), /droit de rétractation/); assert.match(await text(p, '.sheet'), /dossier de paiement/);
+  assert.match(await text(p, '.sheet'), /19,99 €/); assert.match(await text(p, '.sheet'), /droit de rétractation/); assert.match(await text(p, '.sheet'), /dossier de paiement/); assert.match(await text(p, '.sheet'), /activé manuellement/); assert.match(await text(p, '.sheet'), /n’est pas instantanée/);
   assert.equal(await p.inputValue('#buy-paypal'), 'q@test.fr'); assert.equal(await p.inputValue('#buy-first'), 'Quentin');
   await p.click('[data-act=buy-go]'); assert.match(await text(p, '#toast'), /prénom et le nom/);
   await p.fill('#buy-last', 'Martin'); await p.fill('#buy-paypal', 'pas-un-mail'); await p.click('[data-act=buy-go]'); assert.match(await text(p, '#toast'), /adresses e-mail/);
@@ -386,7 +386,7 @@ test('achat à vie PayPal : connexion Google, dossier de paiement, consentement,
   const o = await b.ev(() => window.__orders[0]); assert.equal(o.ref, g.searchParams.get('invoice')); assert.equal(o.payee, 'vendeur@test.fr');
   assert.deepEqual([o.firstName, o.lastName, o.paypalEmail, o.contactEmail, o.googleEmail, o.offer, o.price, o.status], ['Quentin', 'Martin', 'q.paypal@test.fr', 'q@test.fr', 'q@test.fr', 'lifetime', '19,99 €', 'pending']);
   // retour de PayPal
-  await b.go('#/merci'); assert.match(await text(p, '#view'), /sous 24 h.*q@test\.fr.*q\.paypal@test\.fr.*référence WOUF-/);
+  await b.go('#/merci'); assert.match(await text(p, '#view'), /manuellement.*24 h.*q@test\.fr.*q\.paypal@test\.fr.*référence WOUF-/);
   // l'adresse PayPal change dans l'administration : le paiement suivant part vers la nouvelle ; sans adresse, lien fixe
   assert.deepEqual(await b.ev(() => { BILL.payee = 'autre@test.fr'; const a = new URL(paypalUrl(BILL.payee, '19,99 €', 'WOUF-X')).searchParams.get('business'); BILL.payee = ''; const r1 = payReady(); BILL.paymentLink = 'https://www.paypal.com/ncp/payment/L1'; const r2 = payReady(); BILL.paymentLink = ''; BILL.payee = 'vendeur@test.fr'; return [a, r1, r2]; }), ['autre@test.fr', false, true]);
   // l'administration active : Plus à vie, assistance prioritaire ; puis retrait : données intactes
