@@ -372,7 +372,6 @@ test('achat à vie PayPal : connexion Google, dossier de paiement, consentement,
   const b = await boot({ query: '?preview=none', hash: '#/abo' }), p = b.page;
   await fakeCloud(p); await fakeSale(p); await b.ev(() => render());
   await p.waitForSelector('[data-act=subscribe]'); assert.match(await text(p, '.plus-hero'), /19,99 €/); assert.equal(await b.ev(() => plus()), false);
-  await b.ev(() => { LEGAL.mediator = ''; }); await p.click('[data-act=subscribe]'); assert.match(await text(p, '#toast'), /informations légales/); await b.ev(() => { LEGAL.mediator = 'Médiateur Test'; });
   await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent'); assert.equal(await b.ev(() => !!CLOUD.user), true, 'connexion Google déclenchée avant l’achat');
   assert.match(await text(p, '.sheet'), /19,99 €/); assert.match(await text(p, '.sheet'), /droit de rétractation/); assert.match(await text(p, '.sheet'), /dossier de paiement/);
   assert.equal(await p.inputValue('#buy-paypal'), 'q@test.fr'); assert.equal(await p.inputValue('#buy-first'), 'Quentin');
@@ -696,6 +695,10 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   await p.waitForFunction(() => window.__adm.grants.u1 === null);
   // vente : bloquée tant que rien n'est prêt
   assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), true); assert.match(await text(p, '#view'), /Adresse PayPal \(ou lien PayPal\) à renseigner/);
+  // choix du propriétaire : dès qu'un moyen de paiement existe, l'interrupteur marche, même si les mentions légales sont incomplètes (simple avertissement)
+  await b.ev(() => { BILL.payee = 'p@pp.fr'; render(true); }); assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), false);
+  assert.match(await text(p, '#view'), /Mentions légales incomplètes/); assert.match(await text(p, '[data-act=adm-sale]'), /Ventes OFF/);
+  await b.ev(() => { BILL.payee = ''; render(true); });
   await p.fill('#adm-pay [name=paymentLink]', 'pas-un-lien'); await p.click('[data-act=adm-save-pay]'); assert.equal(await b.ev(() => window.__adm.cfg), null, 'lien invalide refusé');
   await p.fill('#adm-pay [name=paymentLink]', ''); for (const [k, v] of Object.entries({ payee: 'moi@paypal.test', seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur', supportEmail: 'aide@q.fr' })) await p.fill(`#adm-pay [name=${k}]`, v);
   await p.click('[data-act=adm-save-pay]'); await p.waitForFunction(() => window.__adm.cfg && window.__adm.cfg.payee);

@@ -10,6 +10,7 @@ const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free ==
 const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
 
 const CHANGELOG = [
+  { v: '1.13.2', date: '2026-09-30', items: ['🔛 Interrupteur des ventes simplifié'] },
   { v: '1.13.1', date: '2026-09-30', items: ['💳 Paiement PayPal vers l’adresse choisie par l’éditeur, avec référence de dossier'] },
   { v: '1.13.0', date: '2026-09-30', items: ['💳 Paiement uniquement par PayPal, avec dossier de paiement', '🛠️ Administration : paiements à vérifier et activation en un bouton'] },
   { v: '1.12.2', date: '2026-09-30', items: ['💳 Paiement par PayPal'] },
@@ -96,7 +97,6 @@ function buySheet() {
 ACT.checkout = async () => {
   await remoteRefresh();   // toujours la dernière adresse PayPal choisie par l'administration
   if (!payReady()) return toast('Paiement non configuré');
-  if (!legalReady()) return toast('Vente non ouverte : informations légales à compléter');
   if (!CLOUD.user) { toast('Connectez-vous avec Google : votre achat sera lié à votre compte'); await ACT['g-signin'](); if (!CLOUD.user) return; }
   closeAllSheets(); buySheet();
 };

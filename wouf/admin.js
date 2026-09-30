@@ -44,8 +44,10 @@ const REMOTE_DEF = Object.fromEntries(Object.entries(REMOTE_FIELDS).map(([k, [o,
 const remoteCached = () => { try { return JSON.parse(localStorage.getItem('wouf:remote') || 'null') || {}; } catch (e) { return {}; } };
 function remoteStore(c) { const next = { ...remoteCached(), ...c }; try { localStorage.setItem('wouf:remote', JSON.stringify(next)); } catch (e) { /* ignore */ } return applySaleConfig(next); }
 const legalFull = () => ['seller', 'form', 'address', 'siret', 'email', 'mediator'].every(k => LEGAL[k]) && !!SUP.email;
-const saleReady = () => !!(legalFull() && payReady() && (BILL.plans || []).length);
-const saleMissing = () => [!legalFull() && 'Informations légales (statut, SIRET, adresse, e-mail, médiateur, e-mail d’assistance) à compléter', !payReady() && 'Adresse PayPal (ou lien PayPal) à renseigner'].filter(Boolean);
+// Interrupteur libre (choix du propriétaire) : seule condition, un moyen de paiement PayPal, sinon le bouton « Payer » ne mènerait nulle part.
+const saleReady = () => !!(payReady() && (BILL.plans || []).length);
+const saleMissing = () => [!payReady() && 'Adresse PayPal (ou lien PayPal) à renseigner'].filter(Boolean);
+const legalMissing = () => [['seller', 'nom'], ['form', 'statut'], ['address', 'adresse'], ['siret', 'SIRET'], ['email', 'e-mail'], ['mediator', 'médiateur de la consommation']].filter(([k]) => !LEGAL[k]).map(([, l]) => l).concat(SUP.email ? [] : ['e-mail d’assistance']);
 function applySaleConfig(c) {
   if (!c) return false;
   let changed = false;
@@ -121,8 +123,10 @@ ROUTES.admin = function admin() {
     <a class="btn" href="https://console.firebase.google.com/project/${esc((CFG.firebase || {}).projectId || '')}" target="_blank" rel="noopener">🔥 Firebase</a></div></section>
   <section class="card"><h2>💶 Vente de Wouf Plus</h2>
     <p><b>${sale ? '🟢 Vente ouverte' : '⚪ Tout est gratuit pour le moment'}</b> · prix : ${esc(planLine())}</p>
-    ${miss.length ? `<p class="mut">Avant d’ouvrir la vente :</p><ul class="bul">${miss.map(m => `<li>❌ ${esc(m)}</li>`).join('')}</ul>` : '<p class="ok">✅ Tout est prêt pour vendre.</p>'}
-    <button class="btn ${sale ? 'danger' : 'primary'}" data-act="adm-sale" ${!sale && miss.length ? 'disabled' : ''}>${sale ? 'Repasser en gratuit' : 'Ouvrir la vente'}</button>
+    <p class="mut small">Paiement : ${esc(BILL.payee ? 'adresse PayPal ' + BILL.payee : BILL.paymentLink ? 'lien PayPal' : 'aucun')}${BILL.payee || BILL.rewardLink ? ' · offre récompense ' + esc(REWARD.price || '') + ' ✓' : REWARD.enabled ? ' · offre récompense : ajoutez un 2ᵉ lien' : ''}</p>
+    ${miss.length ? `<p class="bad">❌ ${esc(miss.join(' ; '))}</p>` : ''}
+    ${legalMissing().length ? `<p class="mut small">⚠️ Mentions légales incomplètes (${esc(legalMissing().join(', '))}) : elles s’affichent « à compléter » dans les conditions de vente.</p>` : ''}
+    <button class="btn big ${sale ? 'danger' : 'primary'}" data-act="adm-sale" ${!sale && miss.length ? 'disabled' : ''}>${sale ? '⏸️ Ventes ON : appuyer pour arrêter' : '▶️ Ventes OFF : appuyer pour ouvrir'}</button>
     <p class="mut small">Le changement arrive chez les utilisateurs à leur prochaine ouverture de l’app. Ce qu’ils ont saisi reste toujours accessible.</p></section>
   <section class="card" id="adm-pay"><h2>💳 Paiement et informations légales</h2>
     <p class="mut small">Indiquez l’<b>adresse e-mail de votre compte PayPal</b> (compte <b>professionnel</b> conseillé) : chaque acheteur est envoyé vers une page PayPal qui paie <b>${esc(planOf().price)}</b>${REWARD.enabled ? ` (ou <b>${esc(REWARD.price)}</b> pour l’offre récompense)` : ''} à cette adresse, avec la référence de son dossier (WOUF-…) visible dans PayPal. Vous pouvez la changer à tout moment : elle s’applique au paiement suivant. Les champs « lien fixe » ne servent que si vous préférez un lien créé dans PayPal.</p>
