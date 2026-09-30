@@ -76,7 +76,7 @@ Tant que `billing.enabled` vaut `false`, **tout est gratuit** et rien de ce qui 
 
 ### B. PayPal
 1. Créer un compte PayPal **professionnel** (gratuit) et compléter la vérification d’identité et le compte bancaire.
-2. « Liens et boutons de paiement » → créer « Wouf Plus à vie » à **19,99 €** (et un second lien à **9,99 €** pour l’offre récompense). Si PayPal propose une page de retour, indiquer `https://woufapp.fr/#/merci`.
+2. « Liens et boutons de paiement » → créer « Wouf Plus à vie » à **39,99 €** (et un second lien à **9,99 €** pour l’offre récompense). Si PayPal propose une page de retour, indiquer `https://woufapp.fr/#/merci`.
 3. Coller les liens dans Plus → Administration → « Paiement et informations légales ».
 4. Remboursement : PayPal → Activité → choisir le paiement → Rembourser, puis Administration → le compte → « Retirer ». Les données de l’utilisateur restent intactes.
 
@@ -101,7 +101,7 @@ Plus → Administration : renseigner lien PayPal, informations légales et e-mai
 | Firebase (connexion + sauvegarde) | ~50 000 lectures/jour | offre à l’usage |
 | PayPal | pas d’abonnement | commission par paiement (de l’ordre de 3 % + 0,35 € : à vérifier sur paypal.com) |
 
-Sur 19,99 €, il reste environ 19 € par vente avant impôts et charges (à vérifier avec le barème PayPal en vigueur).
+Sur 39,99 €, il reste environ 38 € par vente avant impôts et charges (à vérifier avec le barème PayPal en vigueur).
 
 ## 7. Limites techniques à connaître (et à dire aux clients)
 
@@ -172,7 +172,7 @@ match /wouf_orders/{id} { allow create: if request.auth != null && request.resou
 4. Worker → **Settings → Bindings → Add → KV namespace** : nom de variable **`PAID`**, choisir `wouf-paid`.
 5. Worker → **Settings → Variables and Secrets** : `ALLOWED_ORIGIN` = `https://woufapp.fr,https://ikeupods-del.github.io` ; `OWNER_EMAIL` = adresse Google du propriétaire.
 6. Copier l'adresse du Worker (`https://wouf-billing.….workers.dev`) dans **Plus → Administration → « Adresse du relais d'activation automatique »** → Enregistrer. Renseigner aussi **l'adresse PayPal** (pas un lien fixe).
-7. **Test réel** avec un proche : le paiement (19,99 €) doit activer son compte en quelques secondes ; le rembourser ensuite dans PayPal doit retirer l'accès.
+7. **Test réel** avec un proche : le paiement (39,99 €) doit activer son compte en quelques secondes ; le rembourser ensuite dans PayPal doit retirer l'accès.
 
 **Limites à connaître** : IPN est l'ancien mécanisme de notification de PayPal (toujours en service à la date de rédaction : à vérifier si PayPal l'arrête un jour). L'offre récompense (9,99 €) n'est pas re-contrôlée côté serveur (le montant minimum accepté est `MIN_EUR`, défaut 9,99) : c'est le même niveau de confiance que le reste du contrôle d'accès de Plus. Modifier le code du relais = mettre à jour `worker.test.mjs`.
 
