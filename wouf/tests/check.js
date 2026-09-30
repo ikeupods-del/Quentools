@@ -90,7 +90,8 @@ ok(!RW.enabled || /\d/.test(RW.price || ''), 'billing.rewardOffer.enabled = true
 ok(!B.payee || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(B.payee), 'billing.payee doit être une adresse e-mail');
 for (const k of ['paymentLink', 'rewardLink']) ok(!B[k] || /^https:\/\/(www\.)?paypal\.(com|me|biz)\/[\w./-]+$/i.test(B[k]), `billing.${k} doit être un lien PayPal (https://www.paypal.com/…)`);
 const cl = read('business.js').match(/const CHANGELOG = \[\s*\{ v: '([\d.]+)'/);
-ok(cl && cl[1] === CFG.version, `version de config.js (${CFG.version}) ≠ dernière entrée du CHANGELOG (${cl && cl[1]})`);
+{ const n = x => x.split('.').map(Number).reduce((a, k) => a * 1000 + k, 0);
+  ok(cl && n(cl[1]) <= n(CFG.version), `dernière entrée du CHANGELOG (${cl && cl[1]}) plus récente que config.js (${CFG.version})`); }
 ok(read('package.json').includes(`"version": "${CFG.version}"`), 'package.json : version différente de config.js');
 ok(JSON.parse(read('package-lock.json')).version === CFG.version, 'package-lock.json : version différente de config.js');
 ok(read('sw.js').includes(`wouf-v${CFG.version.split('.').slice(0, 2).join('.')}`), 'sw.js : le nom du cache doit suivre la version (wouf-vX.Y) pour forcer la mise à jour');
