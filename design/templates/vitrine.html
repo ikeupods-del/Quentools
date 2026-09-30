@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- MODÈLE « Site vitrine » (artisan, commerce, indépendant). Remplacer tout ce qui est entre crochets [ ]. -->
+<title>[Nom de l’entreprise] — [métier] à [ville]</title>
+<meta name="description" content="[Métier] à [ville] et alentours : [service 1], [service 2], [service 3]. Devis gratuit sous 48 h.">
+<link rel="preload" href="../../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../../assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/qt.css">
+<style>
+  /* Marque du client : 3 jetons suffisent (voir design/README.md). */
+  :root{--accent:#0f766e;--accent-soft:#dcf2ee;--lime:#fbbf24}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#34d3bd;--accent-soft:#0f2b27}}
+  .hero-photo{border-radius:var(--r-xl);overflow:hidden;aspect-ratio:4/5;background:var(--bg-2);box-shadow:var(--sh-3)}
+  .hero-photo img{width:100%;height:100%;object-fit:cover}
+  .review{padding:var(--s-6)}.review .stars{color:var(--lime);letter-spacing:2px;font-size:1.1rem}
+  .review blockquote{margin:var(--s-3) 0 var(--s-4);font:500 var(--t-lg)/1.45 var(--f-text)}
+  .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-5)}@media (max-width:760px){.contact-grid{grid-template-columns:1fr}}
+  .field{display:grid;gap:6px;margin-bottom:var(--s-4)}.field label{font-weight:600;font-size:var(--t-sm)}
+  .field input,.field textarea,.field select{font:inherit;padding:14px 16px;border-radius:var(--r-md);border:1px solid var(--line-2);background:var(--surface);color:var(--ink)}
+  .field input:focus,.field textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .cta-band form p{color:var(--muted)}
+</style>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="./">[Nom]</a>
+  <ul class="nav-links"><li><a href="#services">Services</a></li><li><a href="#realisations">Réalisations</a></li><li><a href="#avis">Avis</a></li><li><a href="#zone">Zone</a></li></ul>
+  <a class="btn btn-sm btn-accent" href="tel:[+33600000000]">📞 [06 00 00 00 00]</a>
+</div></header>
+
+<main id="contenu">
+  <section class="hero"><div class="bg-grid" aria-hidden="true"></div>
+    <div class="wrap hero-grid">
+      <div>
+        <span class="chip chip-ok reveal"><span class="dot"></span> Disponible cette semaine</span>
+        <h1 class="display reveal" style="--i:1">[Votre métier], <em>[promesse courte]</em>.</h1>
+        <p class="lede reveal" style="--i:2">[Une phrase : pour qui, quoi, où. Ex. « Plombier à Nîmes depuis 12 ans : dépannage, rénovation de salle de bains et chauffe-eau, avec devis clair avant intervention. »]</p>
+        <div class="hero-cta reveal" style="--i:3"><a class="btn btn-accent" href="#contact">Demander un devis gratuit</a><a class="btn btn-ghost" href="#realisations">Voir les réalisations</a></div>
+        <p class="hero-note reveal" style="--i:4">[★ 4,9 sur Google · 120 avis] · [Assurance décennale] · [Devis sous 48 h]</p>
+      </div>
+      <div class="hero-photo reveal" style="--i:2"><img src="[photo-principale.jpg]" alt="[Description de la photo]" width="800" height="1000"></div>
+    </div>
+  </section>
+
+  <section class="section" id="services" style="padding-top:0"><div class="wrap">
+    <div class="section-head"><span class="eyebrow">Services</span><h2 class="h-section">[Ce que je fais pour vous]</h2></div>
+    <div class="grid grid-3">
+      <article class="card offer reveal"><h3>[Service 1]</h3><p>[Description en une phrase.]</p><ul><li>[Point fort]</li><li>[Point fort]</li></ul><a class="more" href="#contact">Devis gratuit →</a></article>
+      <article class="card offer is-featured reveal" style="--i:1"><span class="chip chip-lime" style="align-self:flex-start">Le plus demandé</span><h3>[Service 2]</h3><p>[Description.]</p><ul><li>[Point fort]</li><li>[Point fort]</li></ul><a class="more" href="#contact">Devis gratuit →</a></article>
+      <article class="card offer reveal" style="--i:2"><h3>[Service 3]</h3><p>[Description.]</p><ul><li>[Point fort]</li><li>[Point fort]</li></ul><a class="more" href="#contact">Devis gratuit →</a></article>
+    </div>
+  </div></section>
+
+  <section class="section" id="realisations" style="background:var(--bg-2)"><div class="wrap">
+    <div class="section-head"><span class="eyebrow">Réalisations</span><h2 class="h-section">[Quelques chantiers récents]</h2></div>
+    <div class="bento">
+      <figure class="card w4 reveal" style="margin:0"><div class="card-media" style="margin-bottom:var(--s-3)"><img src="[realisation-1.jpg]" alt="[Description]" loading="lazy"></div><figcaption><b>[Titre]</b> · <span class="muted">[Ville, année]</span></figcaption></figure>
+      <figure class="card reveal" style="margin:0;--i:1"><div class="card-media" style="margin-bottom:var(--s-3)"><img src="[realisation-2.jpg]" alt="[Description]" loading="lazy"></div><figcaption><b>[Titre]</b></figcaption></figure>
+      <figure class="card reveal" style="margin:0"><div class="card-media" style="margin-bottom:var(--s-3)"><img src="[realisation-3.jpg]" alt="[Description]" loading="lazy"></div><figcaption><b>[Titre]</b></figcaption></figure>
+      <figure class="card w4 reveal" style="margin:0;--i:1"><div class="card-media" style="margin-bottom:var(--s-3)"><img src="[realisation-4.jpg]" alt="[Description]" loading="lazy"></div><figcaption><b>[Titre]</b> · <span class="muted">[Ville, année]</span></figcaption></figure>
+    </div>
+  </div></section>
+
+  <section class="section" id="avis"><div class="wrap">
+    <div class="section-head"><span class="eyebrow">Avis clients</span><h2 class="h-section">[Ils m’ont fait confiance]</h2><p class="lede">Avis authentiques, recopiés depuis [Google] avec l’accord des clients.</p></div>
+    <div class="grid grid-3">
+      <figure class="card review reveal" style="margin:0"><div class="stars" aria-label="5 sur 5">★★★★★</div><blockquote>« [Avis réel du client] »</blockquote><figcaption class="muted">[Prénom], [ville]</figcaption></figure>
+      <figure class="card review reveal" style="margin:0;--i:1"><div class="stars" aria-label="5 sur 5">★★★★★</div><blockquote>« [Avis réel du client] »</blockquote><figcaption class="muted">[Prénom], [ville]</figcaption></figure>
+      <figure class="card review reveal" style="margin:0;--i:2"><div class="stars" aria-label="5 sur 5">★★★★★</div><blockquote>« [Avis réel du client] »</blockquote><figcaption class="muted">[Prénom], [ville]</figcaption></figure>
+    </div>
+  </div></section>
+
+  <section class="section" id="zone" style="padding-top:0"><div class="wrap">
+    <div class="stats reveal">
+      <div class="stat"><b>[12]</b><span>ans d’expérience</span></div><div class="stat"><b>[30 km]</b><span>autour de [ville]</span></div>
+      <div class="stat"><b>[48 h]</b><span>pour recevoir le devis</span></div><div class="stat"><b>[4,9/5]</b><span>sur [Google]</span></div>
+    </div>
+  </div></section>
+
+  <section class="section" id="faq" style="padding-top:0"><div class="wrap faq-grid">
+    <div class="section-head"><span class="eyebrow">FAQ</span><h2 class="h-section">Questions fréquentes</h2></div>
+    <div class="faq">
+      <details><summary>[Le devis est-il gratuit ?]</summary><p>[Réponse.]</p></details>
+      <details><summary>[Dans quel délai intervenez-vous ?]</summary><p>[Réponse.]</p></details>
+      <details><summary>[Quels moyens de paiement acceptez-vous ?]</summary><p>[Réponse.]</p></details>
+    </div>
+  </div></section>
+
+  <section class="section" id="contact" style="padding-top:0"><div class="wrap">
+    <div class="cta-band">
+      <div class="contact-grid">
+        <div><span class="eyebrow" style="color:var(--lime)">Contact</span><h2 style="margin:var(--s-4) 0">[Parlons de votre projet]</h2>
+          <p>Réponse sous [24 h]. Vous pouvez aussi appeler au <a href="tel:[+33600000000]" style="color:var(--lime)">[06 00 00 00 00]</a>.</p>
+          <p style="font-size:var(--t-sm)">[Adresse] · [Horaires]</p></div>
+        <!-- Formulaire : brancher sur un service d'envoi (ex. relais Cloudflare) ou remplacer par un lien mailto. -->
+        <form action="[adresse-du-service-d-envoi]" method="post" style="background:var(--surface);color:var(--ink);padding:var(--s-5);border-radius:var(--r-lg)">
+          <div class="field"><label for="n">Nom</label><input id="n" name="nom" autocomplete="name" required></div>
+          <div class="field"><label for="t">Téléphone ou e-mail</label><input id="t" name="contact" required></div>
+          <div class="field"><label for="m">Votre besoin</label><textarea id="m" name="message" rows="4" required></textarea></div>
+          <p class="muted" style="font-size:var(--t-xs)">Vos informations servent uniquement à vous répondre. <a href="legal.html">Confidentialité</a>.</p>
+          <button class="btn btn-accent" type="submit" style="width:100%">Envoyer ma demande</button>
+        </form>
+      </div>
+    </div>
+  </div></section>
+</main>
+
+<footer class="footer"><div class="wrap">
+  <div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
+    <span>© <span data-year>2026</span> [Nom de l’entreprise] · SIRET [000 000 000 00000]</span>
+    <span><a href="legal.html">Mentions légales</a> · Site réalisé par <a href="https://ikeupods-del.github.io/Quentools/">QuenTools</a></span>
+  </div>
+</div></footer>
+<script src="../../assets/qt.js" defer></script>
+</body>
+</html>

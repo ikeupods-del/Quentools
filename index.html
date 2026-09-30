@@ -4,294 +4,272 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>QuenTools — des outils simples qui font gagner du temps</title>
-<meta name="description" content="Outils gratuits, outils et sites sur mesure, et bientôt des guides pour créer les vôtres avec l’IA.">
-<meta name="theme-color" content="#5b3df5">
+<meta name="description" content="Outils gratuits, outils et sites sur mesure, et des guides pour créer les vôtres avec l’IA.">
+<meta name="theme-color" content="#f6f4ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d0c12" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="https://ikeupods-del.github.io/Quentools/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="QuenTools">
 <meta property="og:locale" content="fr_FR">
 <meta property="og:url" content="https://ikeupods-del.github.io/Quentools/">
 <meta property="og:title" content="QuenTools — des outils simples qui font gagner du temps">
-<meta property="og:description" content="Outils gratuits, outils et sites sur mesure, et bientôt des guides pour créer les vôtres avec l’IA.">
+<meta property="og:description" content="Outils gratuits, outils et sites sur mesure, et des guides pour créer les vôtres avec l’IA.">
 <meta property="og:image" content="https://ikeupods-del.github.io/Quentools/assets/partage.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"QuenTools","url":"https://ikeupods-del.github.io/Quentools/","logo":"https://ikeupods-del.github.io/Quentools/assets/apple-touch-icon.png","sameAs":["https://www.tiktok.com/@quentools"]}</script>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preload" href="assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/qt.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"QuenTools","url":"https://ikeupods-del.github.io/Quentools/","logo":"https://ikeupods-del.github.io/Quentools/assets/apple-touch-icon.png","sameAs":["https://www.tiktok.com/@quentools"]}</script>
 <script>
   // Anciens liens de Wouf (adresse racine avec « # » ou « ? ») : on les renvoie vers l'app.
   if (/^#\//.test(location.hash) || /[?&](maj|proprio)=/.test(location.search)) location.replace('wouf/' + location.search + location.hash);
 </script>
-<style>
-:root{
-  --bg:#f7f6f2;--card:#fff;--ink:#16141f;--muted:#5f5b6e;--line:#e6e3dc;--soft:#efedf8;
-  --pri:#5b3df5;--pri2:#4527d6;--pri-ink:#fff;--sun:#ffd23f;--ok:#12805c;--shadow:0 1px 2px rgba(22,20,31,.05),0 10px 30px rgba(22,20,31,.07);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0f0e15;--card:#1a1824;--ink:#f3f1fa;--muted:#a9a4bd;--line:#2c2939;--soft:#221f33;--pri:#8b76ff;--pri2:#a594ff;--pri-ink:#0f0e15;--ok:#4fd39a;--shadow:none}}
-:root[data-theme="dark"]{--bg:#0f0e15;--card:#1a1824;--ink:#f3f1fa;--muted:#a9a4bd;--line:#2c2939;--soft:#221f33;--pri:#8b76ff;--pri2:#a594ff;--pri-ink:#0f0e15;--ok:#4fd39a;--shadow:none}
-*,*::before,*::after{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
-a{color:var(--pri)}
-a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--pri);outline-offset:3px;border-radius:6px}
-.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
-header.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-header.top .wrap{display:flex;align-items:center;gap:16px;height:60px}
-.logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:20px;color:var(--ink);text-decoration:none;letter-spacing:-.3px}
-.logo i{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#5b3df5;color:#ffd23f;font-style:normal;font-size:21px}
-nav{margin-left:auto;display:flex;align-items:center;gap:18px}
-nav a{color:var(--muted);text-decoration:none;font-weight:600;font-size:15px}
-nav a:hover{color:var(--ink)}
-@media (max-width:640px){header nav a:not(.cta-nav){display:none}}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:999px;font-weight:700;text-decoration:none;border:2px solid transparent;font-size:16px;cursor:pointer}
-.btn.pri{background:var(--pri);color:var(--pri-ink)}
-.btn.pri:hover{background:var(--pri2)}
-.btn.sec{border-color:var(--line);color:var(--ink);background:var(--card)}
-.btn.sec:hover{border-color:var(--pri)}
-.cta-nav{background:var(--pri);color:var(--pri-ink)!important;padding:8px 16px;border-radius:999px}
-.hero{padding-top:72px;padding-bottom:56px}
-@media (max-width:640px){.hero{padding-top:40px}}
-.eyebrow{display:inline-block;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--pri);background:var(--soft);padding:6px 12px;border-radius:999px}
-h1{font-size:clamp(36px,7vw,64px);line-height:1.04;letter-spacing:-1.5px;margin:18px 0 18px;max-width:14em}
-h1 mark{background:linear-gradient(transparent 62%,var(--sun) 62%);color:inherit;padding:0 .08em}
-.lead{font-size:clamp(18px,2.4vw,21px);color:var(--muted);max-width:36em;margin:0 0 28px}
-.actions{display:flex;flex-wrap:wrap;gap:12px}
-.proof{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:44px}
-.proof div{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;box-shadow:var(--shadow)}
-.proof b{display:block;font-size:26px;letter-spacing:-.5px}
-.proof span{color:var(--muted);font-size:14px}
-@media (max-width:640px){.proof{grid-template-columns:1fr;gap:8px}.proof div{padding:12px 16px;display:flex;align-items:baseline;gap:10px}.proof b{font-size:21px;white-space:nowrap}}
-section{padding:56px 0;scroll-margin-top:44px}
-section h2{font-size:clamp(28px,4.6vw,40px);letter-spacing:-1px;line-height:1.1;margin:0 0 10px}
-section .sub{color:var(--muted);margin:0 0 28px;max-width:40em}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-.grid.two{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
-.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;box-shadow:var(--shadow);display:flex;flex-direction:column}
-.card .ic{font-size:34px;line-height:1;margin-bottom:14px}
-.card h3{margin:0 0 6px;font-size:21px;letter-spacing:-.3px}
-.card p{margin:0 0 16px;color:var(--muted)}
-.card ul{margin:0 0 18px;padding-left:20px;color:var(--muted)}
-.card .go{margin-top:auto;font-weight:700;text-decoration:none}
-.card .go::after{content:" →"}
-.tag{align-self:flex-start;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:4px 10px;border-radius:999px;margin-bottom:14px;background:var(--soft);color:var(--pri)}
-.tag.free{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
-.card.wide{grid-column:1/-1}
-.shot{display:block;width:100%;height:auto;aspect-ratio:16/11;object-fit:cover;object-position:top;border-radius:14px;border:1px solid var(--line);margin:0 0 18px;background:var(--soft)}
-@media (min-width:720px){.card.wide{flex-direction:row;gap:28px;align-items:center}.card.wide .shot{width:240px;aspect-ratio:4/5;flex:none;margin:0}.card.wide .txt{display:flex;flex-direction:column}}
-.skip{position:absolute;left:-999px;top:8px;z-index:50;background:var(--pri);color:var(--pri-ink);padding:10px 16px;border-radius:10px}.skip:focus{left:16px}
-.faq{display:grid;gap:10px;max-width:760px}
-.faq details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0 20px}
-.faq summary{cursor:pointer;font-weight:700;padding:16px 0;list-style:none;display:flex;justify-content:space-between;gap:12px}
-.faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";font-size:22px;line-height:1;color:var(--pri);transition:transform .2s}
-.faq details[open] summary::after{transform:rotate(45deg)}
-.faq details p{margin:0 0 16px;color:var(--muted)}
-.foot{display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between;align-items:center}
-.foot nav{margin:0;flex-wrap:wrap}
-.foot nav a{display:inline}
-.card.feat{border:2px solid var(--pri)}
-.steps{counter-reset:s;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:28px 0 0;padding:0;list-style:none}
-.steps li{counter-increment:s;background:var(--soft);border-radius:18px;padding:18px 18px 18px 64px;position:relative}
-.steps li::before{content:counter(s);position:absolute;left:18px;top:16px;width:32px;height:32px;border-radius:50%;background:var(--pri);color:var(--pri-ink);display:grid;place-items:center;font-weight:900}
-.steps b{display:block}
-.steps span{color:var(--muted);font-size:15px}
-.story{background:var(--card);border:1px solid var(--line);border-radius:26px;padding:clamp(22px,4vw,40px);box-shadow:var(--shadow)}
-.story p{max-width:44em}
-.contact{text-align:center;background:var(--ink);color:var(--bg);border-radius:28px;padding:clamp(28px,6vw,56px) 20px}
-.contact h2{color:var(--bg)}
-.contact .sub{color:color-mix(in srgb,var(--bg) 75%,transparent);margin:0 auto 26px}
-.contact .actions{justify-content:center}
-.contact .btn.sec{background:transparent;color:var(--bg);border-color:color-mix(in srgb,var(--bg) 35%,transparent)}
-.soon{font-weight:700;opacity:.8}
-footer{padding:40px 0 56px;color:var(--muted);font-size:14px}
-footer details{margin-top:14px}
-footer summary{cursor:pointer;font-weight:700;color:var(--ink)}
-footer .legal{margin-top:10px;max-width:46em}
-</style>
 </head>
 <body>
 <a class="skip" href="#contenu">Aller au contenu</a>
-<header class="top"><div class="wrap">
-  <a class="logo" href="#"><i aria-hidden="true">Q</i>QuenTools</a>
-  <nav aria-label="Menu">
-    <a href="#outils">Outils gratuits</a>
-    <a href="#sur-mesure">Sur mesure</a>
-    <a href="#ebooks">E-books</a>
-    <a class="cta-nav" href="#contact">Me contacter</a>
-  </nav>
-</div></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="qt-mark" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#5b3df5"/><circle cx="30" cy="30" r="14" fill="none" stroke="#fff" stroke-width="7"/><path d="M37 37l12 12" stroke="#d7f24a" stroke-width="8" stroke-linecap="round"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M8 19h8"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+</svg>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="QuenTools, accueil"><svg class="brand-mark"><use href="#qt-mark"/></svg>QuenTools</a>
+    <ul class="nav-links">
+      <li><a href="#outils">Outils</a></li>
+      <li><a href="#sur-mesure">Sur mesure</a></li>
+      <li><a href="#ebooks">E-books</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a class="btn btn-sm" href="#contact">Me contacter</a>
+  </div>
+</header>
 
 <main id="contenu">
-<div class="wrap hero">
-  <span class="eyebrow">Outils gratuits · Sur mesure · Créer avec l’IA</span>
-  <h1>Des outils simples qui font <mark>gagner du temps</mark>.</h1>
-  <p class="lead">Je ne suis pas développeur. Pourtant, avec l’IA comme copilote, j’ai conçu et mis en ligne de vraies applications. Ici, je partage mes outils gratuits, je crée les vôtres, et bientôt je vous montre comment faire.</p>
-  <div class="actions">
-    <a class="btn pri" href="#outils">Voir les outils gratuits</a>
-    <a class="btn sec" href="#sur-mesure">Faire créer mon outil</a>
-  </div>
-  <div class="proof">
-    <div><b>5 applications</b><span>conçues et en ligne</span></div>
-    <div><b>0 €</b><span>pour les outils QuenTools</span></div>
-    <div><b>+ de 6 700</b><span>vérifications automatiques avant chaque mise à jour de Wouf</span></div>
-  </div>
-</div>
-
-<section id="outils"><div class="wrap">
-  <h2>Outils gratuits</h2>
-  <p class="sub">Prêts à l’emploi, sur téléphone comme sur ordinateur. Rien à installer, sinon l’app elle-même sur l’écran d’accueil si vous le souhaitez.</p>
-  <div class="grid two">
-    <article class="card">
-      <img class="shot" src="assets/apercu-infikit.jpg" alt="Aperçu d’Infikit : la tournée du jour avec les visites et les alertes d’ordonnance" width="480" height="600" loading="lazy" decoding="async">
-      <span class="tag free">Gratuit</span>
-      <h3>Infikit</h3>
-      <p>L’assistant des infirmières à domicile : tournée, fiches patients, ordonnances en photo, cotations et comptabilité. Fonctionne hors connexion.</p>
-      <a class="go" href="infikit/">Ouvrir Infikit</a>
-    </article>
-    <article class="card">
-      <img class="shot" src="assets/apercu-freelance.jpg" alt="Aperçu de Freelance Kit : le calculateur de TJM" width="480" height="600" loading="lazy" decoding="async">
-      <span class="tag free">Gratuit</span>
-      <h3>Freelance Kit</h3>
-      <p>Pour les indépendants : calculez votre taux journalier (TJM) et préparez vos devis en quelques minutes.</p>
-      <a class="go" href="freelance/">Ouvrir Freelance Kit</a>
-    </article>
-    <article class="card">
-      <img class="shot" src="assets/apercu-patrimoine.jpg" alt="Aperçu de Patrimoine AI : le patrimoine total et sa répartition" width="480" height="600" loading="lazy" decoding="async">
-      <span class="tag free">Gratuit</span>
-      <h3>Patrimoine AI</h3>
-      <p>Tout votre patrimoine au même endroit : bourse, crowdlending, immobilier, livrets. Répartition, échéances et alertes calculées automatiquement, simulateurs et assistant IA. Données chiffrées sur votre appareil.</p>
-      <a class="go" href="https://ikeupods-del.github.io/patrimoineai/">Ouvrir Patrimoine AI</a>
-    </article>
-    <article class="card">
-      <img class="shot" src="assets/apercu-gourmet.jpg" alt="Aperçu de Gourmet AI : le plat de la semaine et les idées de repas" width="480" height="600" loading="lazy" decoding="async">
-      <span class="tag free">Gratuit</span>
-      <h3>Gourmet AI</h3>
-      <p>« On mange quoi ce soir ? » Des recettes du monde entier, IngréMatch pour cuisiner avec ce que vous avez déjà, le menu de la semaine, la liste de courses et le budget. Un chef IA en option.</p>
-      <a class="go" href="gourmet/">Ouvrir Gourmet AI</a>
-    </article>
-    <article class="card wide">
-      <img class="shot" src="assets/apercu-wouf.jpg" alt="Aperçu de Wouf : la page d’accueil du carnet de santé" width="480" height="600" loading="lazy" decoding="async">
-      <div class="txt">
-      <span class="tag">Réalisation</span>
-      <h3>Wouf</h3>
-      <p>Le carnet de santé du chien et du chat : vaccins, rappels, traitements, éducation et e-books. Une application complète, avec son propre site.</p>
-      <a class="go" href="https://woufapp.fr" rel="noopener">Découvrir Wouf</a>
+  <section class="hero">
+    <div class="bg-grid" aria-hidden="true"></div><div class="glow" aria-hidden="true"></div>
+    <div class="wrap hero-grid">
+      <div>
+        <span class="chip chip-ok reveal"><span class="dot"></span> 5 applications en ligne</span>
+        <h1 class="display reveal" style="--i:1">Des outils simples qui font <em>gagner du temps</em>.</h1>
+        <p class="lede reveal" style="--i:2">Je ne suis pas développeur. Pourtant, avec l’IA comme copilote, j’ai conçu et mis en ligne de vraies applications. Ici, je partage mes outils gratuits, je crée les vôtres, et je vous montre comment faire.</p>
+        <div class="hero-cta reveal" style="--i:3">
+          <a class="btn btn-accent" href="#outils">Voir les outils gratuits <svg width="18" height="18" class="arrow"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-ghost" href="#sur-mesure">Faire créer mon outil</a>
+        </div>
+        <p class="hero-note reveal" style="--i:4">Gratuit · Sans inscription · Données gardées sur votre appareil</p>
       </div>
-    </article>
-  </div>
-</div></section>
+      <div class="stack reveal" style="--i:2" aria-label="Aperçus des applications QuenTools">
+        <div class="phone"><img src="assets/ecran-patrimoine.jpg" alt="Patrimoine AI" width="400" height="800"></div>
+        <div class="phone"><img src="assets/ecran-infikit.jpg" alt="Infikit" width="400" height="800"></div>
+        <div class="phone"><img src="assets/ecran-gourmet.jpg" alt="Gourmet AI" width="400" height="800"></div>
+        <div class="float-card" style="left:-4%;bottom:10%"><b data-count="6700" data-prefix="+ ">+ 6 700</b> vérifications<br>avant chaque mise à jour</div>
+        <div class="float-card" style="right:-2%;top:2%;animation-delay:-3s"><span class="chip chip-lime">0 €</span> outils gratuits</div>
+      </div>
+    </div>
+  </section>
 
-<section id="sur-mesure"><div class="wrap">
-  <h2>Je crée votre outil ou votre site</h2>
-  <p class="sub">Vous perdez du temps sur une tâche répétitive, vous jonglez entre dix tableaux Excel, ou il vous manque un site simple pour être trouvé ? Expliquez-moi votre besoin, je construis la solution.</p>
-  <div class="grid">
-    <article class="card">
-      <div class="ic" aria-hidden="true">🌐</div>
-      <h3>Site vitrine</h3>
-      <p>Une page claire pour présenter votre activité et être contacté.</p>
-      <ul><li>Adapté au téléphone</li><li>Votre nom de domaine</li><li>Mise en ligne incluse</li></ul>
-      <a class="go" href="#contact">Demander un devis</a>
-    </article>
-    <article class="card feat">
-      <span class="tag">Le cœur de QuenTools</span>
-      <div class="ic" aria-hidden="true">🧮</div>
-      <h3>Outil sur mesure</h3>
-      <p>Un calculateur, un simulateur de devis, un suivi de clients ou de stock : l’outil qui remplace votre tableau bricolé.</p>
-      <ul><li>Pensé pour votre métier</li><li>Fonctionne hors connexion</li><li>Données gardées sur l’appareil</li></ul>
-      <a class="go" href="#contact">Demander un devis</a>
-    </article>
-    <article class="card">
-      <div class="ic" aria-hidden="true">📱</div>
-      <h3>Application complète</h3>
-      <p>Une vraie application installable, avec comptes utilisateurs et synchronisation, comme Wouf ou Infikit.</p>
-      <ul><li>Installable sur l’écran d’accueil</li><li>Comptes et sauvegarde</li><li>Vérifications automatiques</li></ul>
-      <a class="go" href="#contact">Demander un devis</a>
-    </article>
-  </div>
-  <ol class="steps">
-    <li><b>Vous m’expliquez</b><span>Votre besoin, en mots simples. Devis gratuit.</span></li>
-    <li><b>Je vous montre</b><span>Une première version à tester, avant tout engagement sur la suite.</span></li>
-    <li><b>On ajuste et on publie</b><span>Les retouches, puis la mise en ligne.</span></li>
-  </ol>
-</div></section>
+  <div class="marquee" aria-hidden="true"><div class="marquee-track">
+    <span>Infikit</span><span>Freelance Kit</span><span>Patrimoine AI</span><span>Gourmet AI</span><span>Wouf</span><span>Sites vitrines</span><span>Outils sur mesure</span><span>Applications</span>
+    <span>Infikit</span><span>Freelance Kit</span><span>Patrimoine AI</span><span>Gourmet AI</span><span>Wouf</span><span>Sites vitrines</span><span>Outils sur mesure</span><span>Applications</span>
+  </div></div>
 
-<section id="ebooks"><div class="wrap">
-  <h2>Apprendre à créer avec Claude</h2>
-  <p class="sub">Tout ce que j’ai appris en construisant mes applications avec l’IA, sans savoir coder au départ. Deux guides sont en préparation.</p>
-  <div class="grid">
-    <article class="card">
-      <span class="tag free">Gratuit · bientôt</span>
-      <div class="ic" aria-hidden="true">🎁</div>
-      <h3>L’indispensable pour débuter avec Claude</h3>
-      <p>Les bases pour bien démarrer : bien formuler ses demandes, éviter les pièges, et réaliser un premier petit outil.</p>
-      <a class="go" href="#contact">Être prévenu de sa sortie</a>
-    </article>
-    <article class="card">
-      <span class="tag">Formation complète · en préparation</span>
-      <div class="ic" aria-hidden="true">🚀</div>
-      <h3>Lancer son premier projet avec Claude</h3>
-      <p>De l’idée à la mise en ligne : un vrai projet de bout en bout, avec la méthode que j’utilise au quotidien.</p>
-      <a class="go" href="#contact">Être prévenu de sa sortie</a>
-    </article>
-  </div>
-</div></section>
+  <section class="section" id="outils">
+    <div class="wrap">
+      <div class="section-head split">
+        <div><span class="eyebrow reveal">Outils gratuits</span><h2 class="h-section reveal" style="--i:1">Prêts à l’emploi,<br>sur téléphone comme sur ordinateur.</h2></div>
+        <p class="lede reveal" style="--i:2">Rien à installer, sinon l’app elle-même sur l’écran d’accueil si vous le souhaitez.</p>
+      </div>
+      <div class="bento">
+        <article class="card is-link w3 reveal">
+          <div class="card-media"><img src="assets/apercu-infikit.jpg" alt="Infikit : la tournée du jour avec les visites et les alertes d’ordonnance" width="480" height="600" loading="lazy" decoding="async"></div>
+          <div class="card-top"><span class="chip chip-ok">Gratuit</span><span class="chip">Santé</span></div>
+          <h3>Infikit</h3>
+          <p>L’assistant des infirmières à domicile : tournée, fiches patients, ordonnances en photo, cotations et comptabilité. Fonctionne hors connexion.</p>
+          <a class="more" href="infikit/">Ouvrir Infikit <svg width="16" height="16"><use href="#i-arrow"/></svg></a>
+        </article>
+        <article class="card is-link w3 reveal" style="--i:1">
+          <div class="card-media"><img src="assets/apercu-patrimoine.jpg" alt="Patrimoine AI : le patrimoine total et sa répartition" width="480" height="600" loading="lazy" decoding="async"></div>
+          <div class="card-top"><span class="chip chip-ok">Gratuit</span><span class="chip">Finances</span></div>
+          <h3>Patrimoine AI</h3>
+          <p>Bourse, crowdlending, immobilier, livrets : tout au même endroit. Répartition, échéances et alertes calculées automatiquement, simulateurs et assistant IA.</p>
+          <a class="more" href="https://ikeupods-del.github.io/patrimoineai/">Ouvrir Patrimoine AI <svg width="16" height="16"><use href="#i-arrow"/></svg></a>
+        </article>
+        <article class="card is-link reveal">
+          <div class="card-media"><img src="assets/apercu-gourmet.jpg" alt="Gourmet AI : le plat de la semaine et les idées de repas" width="480" height="600" loading="lazy" decoding="async"></div>
+          <div class="card-top"><span class="chip chip-ok">Gratuit</span><span class="chip">Cuisine</span></div>
+          <h3>Gourmet AI</h3>
+          <p>« On mange quoi ce soir ? » Recettes du monde, cuisiner avec ce qu’on a, menu de la semaine, courses et budget.</p>
+          <a class="more" href="gourmet/">Ouvrir Gourmet AI <svg width="16" height="16"><use href="#i-arrow"/></svg></a>
+        </article>
+        <article class="card is-link reveal" style="--i:1">
+          <div class="card-media"><img src="assets/apercu-freelance.jpg" alt="Freelance Kit : le calculateur de TJM" width="480" height="600" loading="lazy" decoding="async"></div>
+          <div class="card-top"><span class="chip chip-ok">Gratuit</span><span class="chip">Indépendants</span></div>
+          <h3>Freelance Kit</h3>
+          <p>Calculez votre taux journalier et préparez vos devis en quelques minutes.</p>
+          <a class="more" href="freelance/">Ouvrir Freelance Kit <svg width="16" height="16"><use href="#i-arrow"/></svg></a>
+        </article>
+        <article class="card is-link reveal" style="--i:2">
+          <div class="card-media"><img src="assets/apercu-wouf.jpg" alt="Wouf : la page d’accueil du carnet de santé" width="480" height="600" loading="lazy" decoding="async"></div>
+          <div class="card-top"><span class="chip chip-accent">Réalisation</span><span class="chip">Animaux</span></div>
+          <h3>Wouf</h3>
+          <p>Le carnet de santé du chien et du chat : vaccins, rappels, éducation, e-books. Une application complète, avec son propre site.</p>
+          <a class="more" href="https://woufapp.fr" rel="noopener">Découvrir Wouf <svg width="16" height="16"><use href="#i-arrow"/></svg></a>
+        </article>
+      </div>
 
-<section class="story-sec"><div class="wrap">
-  <div class="story">
-    <h2>Pourquoi QuenTools ?</h2>
-    <p>J’ai commencé par un besoin simple : un outil qui n’existait pas, ou alors trop cher et trop compliqué. Je l’ai construit. Puis un deuxième. Puis Wouf, une application complète qui tourne aujourd’hui sur son propre site.</p>
-    <p>Mon idée : des outils qui font une chose, et qui la font bien. Gratuits quand c’est possible, sur mesure quand il le faut.</p>
-  </div>
-</div></section>
+      <div class="stats reveal" style="margin-top:var(--s-6)">
+        <div class="stat"><b data-count="5">5</b><span>applications en ligne</span></div>
+        <div class="stat"><b>0 €</b><span>pour les outils QuenTools</span></div>
+        <div class="stat"><b data-count="110">110</b><span>leçons d’éducation dans Wouf</span></div>
+        <div class="stat"><b data-count="6700" data-prefix="+ ">+ 6 700</b><span>vérifications automatiques</span></div>
+      </div>
+    </div>
+  </section>
 
-<section id="faq"><div class="wrap">
-  <h2>Questions fréquentes</h2>
-  <p class="sub">Ce qu’on me demande le plus souvent.</p>
-  <div class="faq">
-    <details><summary>Les outils gratuits le sont-ils vraiment ?</summary><p>Oui : pas d’abonnement, rien à payer pour les utiliser. Certains proposent des options facultatives, comme brancher votre propre clé d’IA.</p></details>
-    <details><summary>Où sont enregistrées mes données ?</summary><p>D’abord sur votre appareil. Quand un outil propose une sauvegarde ou une synchronisation en ligne, ses réglages expliquent comment elle fonctionne ; vous choisissez de l’activer ou non.</p></details>
-    <details><summary>Combien coûte un outil ou un site sur mesure ?</summary><p>Cela dépend de ce qu’il doit faire. Le devis est gratuit : vous connaissez le prix avant que je commence, et vous validez une première version avant la suite.</p></details>
-    <details><summary>Faut-il s’y connaître en informatique ?</summary><p>Non. Vous m’expliquez votre besoin avec vos mots, je m’occupe du reste, mise en ligne comprise.</p></details>
-    <details><summary>Qui est derrière QuenTools ?</summary><p>Un créateur indépendant, pas développeur de métier, qui conçoit ses outils avec l’aide de l’IA. Toutes les applications présentées ici ont été réalisées de cette façon, et c’est ce que les e-books vous apprendront.</p></details>
-  </div>
-</div></section>
+  <section class="section" id="sur-mesure" style="background:var(--bg-2)">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow reveal">Sur mesure</span>
+        <h2 class="h-section reveal" style="--i:1">Je crée votre outil ou votre site.</h2>
+        <p class="lede reveal" style="--i:2">Vous perdez du temps sur une tâche répétitive, vous jonglez entre dix tableaux Excel, ou il vous manque un site simple pour être trouvé ? Expliquez-moi votre besoin, je construis la solution.</p>
+      </div>
+      <div class="grid grid-3">
+        <article class="card offer reveal">
+          <span class="icon"><svg><use href="#i-globe"/></svg></span>
+          <h3>Site vitrine</h3>
+          <p>Une page claire pour présenter votre activité et être contacté.</p>
+          <ul><li>Adapté au téléphone</li><li>Votre nom de domaine</li><li>Mise en ligne incluse</li></ul>
+          <a class="more" href="#contact">Demander un devis →</a>
+        </article>
+        <article class="card offer is-featured reveal" style="--i:1">
+          <div class="card-top"><span class="icon"><svg><use href="#i-tool"/></svg></span><span class="chip chip-lime">Le cœur de QuenTools</span></div>
+          <h3>Outil sur mesure</h3>
+          <p>Un calculateur, un simulateur de devis, un suivi de clients ou de stock : l’outil qui remplace votre tableau bricolé.</p>
+          <ul><li>Pensé pour votre métier</li><li>Fonctionne hors connexion</li><li>Données gardées sur l’appareil</li></ul>
+          <a class="more" href="#contact">Demander un devis →</a>
+        </article>
+        <article class="card offer reveal" style="--i:2">
+          <span class="icon"><svg><use href="#i-phone"/></svg></span>
+          <h3>Application complète</h3>
+          <p>Une vraie application installable, avec comptes et synchronisation, comme Wouf ou Infikit.</p>
+          <ul><li>Installable sur l’écran d’accueil</li><li>Comptes et sauvegarde</li><li>Vérifications automatiques</li></ul>
+          <a class="more" href="#contact">Demander un devis →</a>
+        </article>
+      </div>
+      <div class="steps">
+        <div class="step reveal"><h3>Vous m’expliquez</h3><p>Votre besoin, avec vos mots. Le devis est gratuit.</p></div>
+        <div class="step reveal" style="--i:1"><h3>Je vous montre</h3><p>Une première version à tester, avant tout engagement sur la suite.</p></div>
+        <div class="step reveal" style="--i:2"><h3>On ajuste et on publie</h3><p>Les retouches, puis la mise en ligne. Vous êtes autonome.</p></div>
+      </div>
+    </div>
+  </section>
 
-<section id="contact"><div class="wrap">
-  <div class="contact">
-    <h2>Un projet, une question ?</h2>
-    <p class="sub">Décrivez votre besoin en quelques lignes : ce que vous faites aujourd’hui, et ce qui vous fait perdre du temps. En attendant l’adresse e-mail, écrivez-moi en message privé sur TikTok.</p>
-    <div class="actions" id="contact-actions"><span class="soon">Le formulaire de contact arrive très bientôt.</span></div>
-  </div>
-</div></section>
+  <section class="section" id="ebooks">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow reveal">Apprendre</span>
+        <h2 class="h-section reveal" style="--i:1">Créer avec Claude, sans savoir coder.</h2>
+        <p class="lede reveal" style="--i:2">Tout ce que j’ai appris en construisant mes applications avec l’IA. Deux guides sont en préparation.</p>
+      </div>
+      <div class="grid grid-2">
+        <article class="card reveal">
+          <div class="card-top"><span class="chip chip-ok">Gratuit · bientôt</span><span class="muted" style="font-size:var(--t-xs)">17 chapitres</span></div>
+          <h3>L’indispensable pour débuter avec Claude</h3>
+          <p>Bien formuler ses demandes, éviter les pièges, créer un premier petit outil, et un défi de 7 jours pour prendre les bons réflexes.</p>
+          <a class="more" href="https://www.tiktok.com/@quentools" rel="noopener">Être prévenu de sa sortie →</a>
+        </article>
+        <article class="card reveal" style="--i:1">
+          <div class="card-top"><span class="chip chip-accent">Formation complète · en préparation</span></div>
+          <h3>Lancer son premier projet avec Claude</h3>
+          <p>De l’idée à la mise en ligne : un vrai projet de bout en bout, avec la méthode que j’utilise au quotidien.</p>
+          <a class="more" href="https://www.tiktok.com/@quentools" rel="noopener">Être prévenu de sa sortie →</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+      <figure class="story reveal" style="margin:0">
+        <span class="mark" aria-hidden="true">“</span>
+        <div>
+          <blockquote>J’ai commencé par un besoin simple : un outil qui n’existait pas, ou alors trop cher et trop compliqué. Je l’ai construit. Puis un deuxième. Puis une application complète.</blockquote>
+          <p class="muted" style="margin-top:var(--s-4)">Mon idée : des outils qui font une chose, et qui la font bien. Gratuits quand c’est possible, sur mesure quand il le faut.</p>
+          <figcaption class="eyebrow">Le créateur de QuenTools</figcaption>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section" id="faq" style="padding-top:0">
+    <div class="wrap faq-grid">
+      <div class="section-head">
+        <span class="eyebrow reveal">FAQ</span>
+        <h2 class="h-section reveal" style="--i:1">Questions fréquentes</h2>
+        <p class="lede reveal" style="--i:2">Une autre question ? Écrivez-moi en message privé sur TikTok.</p>
+      </div>
+      <div class="faq reveal">
+        <details><summary>Les outils gratuits le sont-ils vraiment ?</summary><p>Oui : pas d’abonnement, rien à payer pour les utiliser. Certains proposent des options facultatives, comme brancher votre propre clé d’IA.</p></details>
+        <details><summary>Où sont enregistrées mes données ?</summary><p>D’abord sur votre appareil. Quand un outil propose une sauvegarde ou une synchronisation en ligne, ses réglages expliquent comment elle fonctionne ; vous choisissez de l’activer ou non.</p></details>
+        <details><summary>Combien coûte un outil ou un site sur mesure ?</summary><p>Cela dépend de ce qu’il doit faire. Le devis est gratuit : vous connaissez le prix avant que je commence, et vous validez une première version avant la suite.</p></details>
+        <details><summary>Faut-il s’y connaître en informatique ?</summary><p>Non. Vous m’expliquez votre besoin avec vos mots, je m’occupe du reste, mise en ligne comprise.</p></details>
+        <details><summary>Qui est derrière QuenTools ?</summary><p>Un créateur indépendant, pas développeur de métier, qui conçoit ses outils avec l’aide de l’IA. Toutes les applications présentées ici ont été réalisées de cette façon.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="contact" style="padding-top:0">
+    <div class="wrap">
+      <div class="cta-band reveal">
+        <span class="big-q" aria-hidden="true">Q</span>
+        <span class="eyebrow" style="color:var(--lime)">Contact</span>
+        <h2 style="margin:var(--s-4) 0">Un projet, une question ?</h2>
+        <p>Décrivez votre besoin en quelques lignes : ce que vous faites aujourd’hui, et ce qui vous fait perdre du temps. En attendant l’adresse e-mail, écrivez-moi en message privé sur TikTok.</p>
+        <div class="hero-cta" id="contact-actions" style="margin-top:var(--s-6)"></div>
+      </div>
+    </div>
+  </section>
 </main>
 
-<footer><div class="wrap">
-  <div class="foot">
-    <div>© <span id="y">2026</span> QuenTools. QuenTools n’est pas affilié à Anthropic, éditeur de Claude.</div>
-    <nav aria-label="Liens du pied de page"><a href="#outils">Outils</a><a href="#sur-mesure">Sur mesure</a><a href="#faq">FAQ</a><a href="https://www.tiktok.com/@quentools" rel="noopener">TikTok</a></nav>
-  </div>
-  <details>
-    <summary>Mentions légales et confidentialité</summary>
-    <div class="legal">
-      <p><b>Éditeur :</b> QuenTools, site personnel édité par un particulier (non professionnel). Contact : voir la rubrique « Un projet, une question ? ».</p>
-      <p><b>Hébergeur :</b> GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis (service GitHub Pages).</p>
-      <p><b>Données personnelles :</b> cette page ne dépose aucun cookie, n’utilise aucun outil de mesure d’audience et ne collecte aucune donnée. Chaque outil gratuit précise, dans ses réglages, où il enregistre vos données.</p>
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="./"><svg class="brand-mark"><use href="#qt-mark"/></svg>QuenTools</a>
+        <p style="margin-top:var(--s-4);max-width:34ch">Des outils simples qui font gagner du temps. Gratuits quand c’est possible, sur mesure quand il le faut.</p>
+      </div>
+      <div><h4>Outils</h4><ul><li><a href="infikit/">Infikit</a></li><li><a href="freelance/">Freelance Kit</a></li><li><a href="gourmet/">Gourmet AI</a></li><li><a href="https://ikeupods-del.github.io/patrimoineai/">Patrimoine AI</a></li><li><a href="https://woufapp.fr">Wouf</a></li></ul></div>
+      <div><h4>QuenTools</h4><ul><li><a href="#sur-mesure">Sur mesure</a></li><li><a href="#ebooks">E-books</a></li><li><a href="#faq">FAQ</a></li><li><a href="https://www.tiktok.com/@quentools" rel="noopener">TikTok</a></li></ul></div>
+      <div><h4>Légal</h4><ul><li><details><summary>Mentions et confidentialité</summary>
+        <p style="margin-top:10px"><b>Éditeur :</b> QuenTools, site personnel édité par un particulier (non professionnel). Contact : TikTok @quentools.</p>
+        <p><b>Hébergeur :</b> GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis (GitHub Pages).</p>
+        <p><b>Données :</b> ce site ne dépose aucun cookie, n’utilise aucune mesure d’audience et ne collecte aucune donnée. Chaque outil précise dans ses réglages où il enregistre vos données.</p>
+      </details></li></ul></div>
     </div>
-  </details>
-</div></footer>
+    <div class="footer-bottom">
+      <span>© <span data-year>2026</span> QuenTools. Non affilié à Anthropic, éditeur de Claude.</span>
+      <span>Polices Bricolage Grotesque et Inter (licence SIL OFL).</span>
+    </div>
+  </div>
+</footer>
 
+<script src="assets/qt.js" defer></script>
 <script>
-  // Coordonnées publiques (laisser vide tant qu'elles ne sont pas prêtes : le bouton correspondant est masqué).
+  // Coordonnées publiques (vide = bouton masqué).
   const QT = { email: '', tiktok: 'quentools' };
   const box = document.getElementById('contact-actions'), btns = [];
-  if (QT.email) btns.push(`<a class="btn pri" href="mailto:${QT.email}?subject=${encodeURIComponent('Projet QuenTools')}">✉️ M’écrire</a>`);
-  if (QT.tiktok) btns.push(`<a class="btn sec" href="https://www.tiktok.com/@${QT.tiktok}" rel="noopener">Suivre sur TikTok</a>`);
-  if (btns.length) box.innerHTML = btns.join('');
-  document.getElementById('y').textContent = new Date().getFullYear();
+  if (QT.email) btns.push(`<a class="btn btn-lime" href="mailto:${QT.email}?subject=${encodeURIComponent('Projet QuenTools')}">M’écrire</a>`);
+  if (QT.tiktok) btns.push(`<a class="btn ${QT.email ? 'btn-ghost' : 'btn-lime'}" href="https://www.tiktok.com/@${QT.tiktok}" rel="noopener">Suivre et écrire sur TikTok</a>`);
+  box.innerHTML = btns.join('');
 </script>
 </body>
 </html>
