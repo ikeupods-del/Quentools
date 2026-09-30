@@ -122,6 +122,8 @@ ROUTES.home = function home() {
     ${miss.map(m => `<div class="row"><span class="ico">${TYPES[m.type].icon}</span><span class="grow"><b>${m.msg}</b><small>Ajoutez la dernière date pour activer les rappels</small></span><button class="btn sm" data-act="add-event" data-type="${m.type}">Ajouter</button></div>`).join('')}
     ${!late.length && !soon.length && !miss.length ? `<p class="okmsg">✅ Tout est à jour. ${rem[0] ? `Prochaine échéance : ${esc(rem[0].title)} ${dueText(rem[0].days)}.` : ''}</p>` : ''}</section>
 
+  ${meteoHome(d)}
+
   ${meds.length ? `<section class="card"><div class="card-h"><h2>Traitements du jour</h2><a class="lnk" href="#/suivi" data-act="tab-suivi" data-tab="soins">Gérer →</a></div>${meds.map(medRow).join('')}</section>` : ''}
 
   ${backupOld ? `<section class="card note"><b>💾 Pensez à sauvegarder</b><p>Vos données sont sur ce téléphone. Une sauvegarde chiffrée évite de tout perdre en cas de changement d’appareil.</p><a class="btn sm" href="#/sauvegarde">Sauvegarder</a></section>` : (!CLOUD.user && CloudApi.available() ? `<section class="card note"><b>☁️ Sauvegardez avec Google</b><p>Retrouvez le carnet de ${esc(d.name)} sur un autre téléphone, et ne perdez rien si vous changez d’appareil.</p><button class="btn sm primary" data-act="g-signin">Se connecter avec Google</button></section>` : '')}

@@ -36,6 +36,7 @@ const AdminApi = {
     const fl = (await r.json()).fields || {}, c = {};
     if (fl.billingEnabled) c.billingEnabled = !!fl.billingEnabled.booleanValue;
     for (const k of Object.keys(REMOTE_FIELDS)) if (fl[k] && typeof fl[k].stringValue === 'string') c[k] = fl[k].stringValue;
+    c.epoch = fl.epoch ? Number(fl.epoch.integerValue || 0) : 0;
     return c;
   }
 };
@@ -47,7 +48,9 @@ const SALE_DEFAULT = !!BILL.enabled;
 const RELAY_URL = /^https:\/\/[\w.-]+(\/[\w./-]*)?$/;
 const REMOTE_FIELDS = { api: [BILL, 'api', 'Adresse du relais d’activation automatique (facultatif)'], payee: [BILL, 'payee', 'Adresse e-mail PayPal qui reçoit les paiements'], paymentLink: [BILL, 'paymentLink', 'OU lien de paiement PayPal fixe (facultatif)'], rewardLink: [BILL, 'rewardLink', 'Lien PayPal fixe pour l’offre récompense (facultatif)'],
   seller: [LEGAL, 'seller', 'Nom et prénom (ou raison sociale)'], form: [LEGAL, 'form', 'Statut (ex. Entrepreneur individuel, micro-entreprise)'], siret: [LEGAL, 'siret', 'SIRET'],
-  address: [LEGAL, 'address', 'Adresse'], email: [LEGAL, 'email', 'E-mail de contact'], mediator: [LEGAL, 'mediator', 'Médiateur de la consommation (nom et site)'], supportEmail: [SUP, 'email', 'E-mail d’assistance'] };
+  address: [LEGAL, 'address', 'Adresse'], mediator: [LEGAL, 'mediator', 'Médiateur de la consommation (nom et site)'] };
+/* Les e-mails de contact et d'assistance ne viennent QUE de config.js (boîte Wouf dédiée) : jamais de la config publique de Firestore. */
+const PERSONAL_FIELDS = ['seller', 'form', 'siret', 'address', 'mediator'], REMOTE_EPOCH = 2;
 const REMOTE_DEF = Object.fromEntries(Object.entries(REMOTE_FIELDS).map(([k, [o, p]]) => [k, o[p] || '']));
 const remoteCached = () => { try { return JSON.parse(localStorage.getItem('wouf:remote') || 'null') || {}; } catch (e) { return {}; } };
 function remoteStore(c) { const next = { ...remoteCached(), ...c }; try { localStorage.setItem('wouf:remote', JSON.stringify(next)); } catch (e) { /* ignore */ } return applySaleConfig(next); }
@@ -61,6 +64,7 @@ function applySaleConfig(c) {
   let changed = false;
   for (const [k, [o, p]] of Object.entries(REMOTE_FIELDS)) {
     if (c[k] === undefined) continue;
+    if (PERSONAL_FIELDS.includes(k) && !(c.epoch >= REMOTE_EPOCH)) continue;   // anciennes valeurs (possiblement personnelles) ignorées tant que le propriétaire n'a pas réenregistré
     let v = String(c[k] || '').trim().slice(0, 300); if (/Link$/.test(k) && v && !PAY_LINK.test(v)) v = ''; if (k === 'payee' && v && !PAYEE.test(v)) v = ''; if (k === 'api' && v && !RELAY_URL.test(v)) v = '';
     v = v || REMOTE_DEF[k]; if (o[p] !== v) { o[p] = v; changed = true; }
   }
@@ -109,6 +113,7 @@ const grantLabel = g => !g ? '' : g.until === 'lifetime' ? 'Plus offert à vie' 
 const admErr = e => e && /permission|insufficient/i.test(String(e.code || e.message)) ? 'Accès refusé par Firebase : les règles d’administration ne sont pas encore installées (voir le guide).' : (e && e.message) || 'Erreur';
 async function admLoad() {
   ADM.loading = true; ADM.err = '';
+  if (!admLoad.clean) { admLoad.clean = true; Promise.resolve().then(() => AdminApi.setConfig({ by: '' })).catch(() => { /* hors ligne : réessayé à la prochaine ouverture */ }); }   // efface l'ancienne adresse e-mail éventuellement laissée dans la config publique
   const [u, o, pd, ms, st] = await Promise.allSettled([AdminApi.listUsers(), AdminApi.listOrders(), AdminApi.paidList(), AdminApi.supportList(), AdminApi.statsGet()]);
   if (st.status === 'fulfilled') { ADM.stats = st.value; ADM.serr = ''; } else { ADM.stats = null; ADM.serr = st.reason && st.reason.message || 'erreur'; }
   if (ms.status === 'fulfilled') { ADM.msgs = ms.value; ADM.merr = ''; } else { ADM.msgs = []; ADM.merr = BILL.api ? 'Messages illisibles : le relais est-il à jour ? (' + (ms.reason && ms.reason.message || 'erreur') + ')' : ''; }
@@ -224,7 +229,7 @@ ACT['adm-save-pay'] = async () => {
   if (c.payee && !PAYEE.test(c.payee)) return toast('Adresse PayPal invalide');
   if (c.api && !RELAY_URL.test(c.api)) return toast('Adresse du relais invalide (https://…)');
   if (bad.length) return toast('Lien invalide : collez le lien PayPal (https://www.paypal.com/…)');
-  try { await AdminApi.setConfig({ ...c, at: Date.now(), by: CLOUD.user.email }); remoteStore(c); toast('Enregistré ✓'); render(true); } catch (e) { toast(admErr(e)); }
+  try { await AdminApi.setConfig({ ...c, at: Date.now(), by: '', epoch: REMOTE_EPOCH }); remoteStore({ ...c, epoch: REMOTE_EPOCH }); toast('Enregistré ✓'); render(true); } catch (e) { toast(admErr(e)); }
 };
 ACT['adm-order-ok'] = async ({ id }) => {
   const o = ADM.orders.find(x => x.id === id); if (!o) return;

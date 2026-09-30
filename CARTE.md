@@ -29,12 +29,12 @@ Wouf — logique santé : rappels, score de suivi, plan chiot, poids, calendrier
 - définit : reminders missing score weightStatus lifeStage medsToday allExpenses puppyPlan buildICS maybeNotify dogEvents dogWeights lastWeight dogBreed dogSize dueText idealBand SLOTS medActive EXPENSE_CATS
 - dépend de : data.js species.js core.js
 
-### wouf/screens.js (314 l.)
+### wouf/screens.js (316 l.)
 Wouf — écrans principaux : chiens, accueil, carnet, suivi (poids, traitements, journal).
 - écrans : #/home #/carnet #/plan #/suivi
 - actions : dogs pick-dog edit-dog new-dog first-dog renew add-event edit-event carnet-f plan-done add-weight edit-weight add-med edit-med add-journal edit-journal tab-suivi journal-f
 - définit : avatar renderTop dogFields saveDog newDog editDog welcome reminderRow eventForm weightForm medForm medRow journalForm UI ACT ROUTES JKINDS
-- dépend de : data.js species.js core.js health.js educ.js cloud.js tracker.js noms.js business.js extras.js main.js
+- dépend de : data.js species.js core.js health.js educ.js cloud.js tracker.js guide.js noms.js business.js extras.js main.js
 
 ### wouf/sos.js (184 l.)
 Wouf — SOS : vétérinaires ouverts / de garde autour de soi (données OpenStreetMap), contacts, premiers secours, toxiques.
@@ -156,11 +156,11 @@ Wouf Plus — Bilan santé intelligent, fiche gardien (pet-sitter), plan de pert
 - définit : healthInsights sitterHTML weightPlanCalc SITTER_FIELDS WP
 - dépend de : data.js species.js core.js health.js screens.js tracker.js business.js extras.js main.js
 
-### wouf/guide.js (262 l.)
+### wouf/guide.js (303 l.)
 Wouf — « Que faire ? » (triage des symptômes) et météo des balades. Règles simples et transparentes : elles orientent (urgence / vétérinaire sous 24 h / surveiller), elles ne diagnostiquent 
 - écrans : #/triage #/meteo #/recherche
-- actions : tri-pick tri-back tri-flag tri-note meteo-go
-- définit : triageResult walkRisk bestHours loadMeteo meteoLocate weatherScene dogScene walkTips searchAll searchHTML TRIAGE TRI TRI_LVL METEO FLAT_FACE WCODE SCENE_TXT
+- actions : tri-pick tri-back tri-flag tri-note meteo-home meteo-go
+- définit : triageResult walkRisk bestHours loadMeteo meteoLocate weatherScene dogScene walkTips walkAlerts meteoCacheGet meteoCachePut meteoNotify meteoHome searchAll searchHTML TRIAGE TRI TRI_LVL METEO FLAT_FACE WCODE SCENE_TXT METEO_TTL WALK_VERDICT
 - dépend de : data.js species.js core.js health.js screens.js educ.js business.js main.js
 
 ### wouf/noms.js (111 l.)
@@ -170,18 +170,18 @@ Wouf — générateur de noms pour chien et chat : styles, sexe, initiale (dont 
 - définit : lev nameCheck pickNames namesHTML testHTML NAME_STYLES NAME_POOL LOF_LETTERS lofLetter norm syllables NAME_COMMANDS confusedWith NOMS nameFavs isFav chip
 - dépend de : core.js health.js screens.js main.js
 
-### wouf/business.js (313 l.)
+### wouf/business.js (314 l.)
 Wouf — exploitation et vente : achat unique « à vie », assistance prioritaire, pages légales, nouveautés, alerte de mise à jour, diagnostics. Paiement : lien PayPal + dossier de paiement vér
 - écrans : #/merci #/abo #/support #/legal #/nouveautes
 - actions : restore checkout buy-go subscribe paywall support-send check-update
 - définit : errorLog diagnostics api authHeaders applySub refreshSub paypalUrl buySheet soonSheet paywall legalDoc checkVersion showUpdateBanner initUpdates LEGAL planOf isPriority supportTo ctaLabel nDog legalReady CHANGELOG FEATURES planLine autoOn PAY_LINK payName PAYEE payReady rewardBuyable NAV FAQ orTbd vNewer
 - dépend de : species.js core.js health.js screens.js lessons.js educ.js parcours.js cloud.js admin.js extras.js main.js
 
-### wouf/admin.js (248 l.)
+### wouf/admin.js (253 l.)
 Wouf — administration (propriétaire uniquement) : comptes Google, Wouf Plus offert, interrupteur de vente. La SÉCURITÉ est assurée par les règles Firestore (docs/MAINTENANCE.md, « Administra
 - écrans : #/admin
 - actions : adm-copy adm-reload adm-grant adm-revoke adm-sale adm-save-pay adm-order-ok adm-order-no adm-msg-del
-- définit : remoteStore applySaleConfig remoteRefresh accountSync replyLink admLoad statsCard AdminApi SALE_DEFAULT RELAY_URL REMOTE_FIELDS REMOTE_DEF remoteCached legalFull saleReady saleMissing legalMissing lessonsDone ADM grantLabel admErr STAT_EVT
+- définit : remoteStore applySaleConfig remoteRefresh accountSync replyLink admLoad statsCard AdminApi SALE_DEFAULT RELAY_URL REMOTE_FIELDS PERSONAL_FIELDS REMOTE_DEF remoteCached legalFull saleReady saleMissing legalMissing lessonsDone ADM grantLabel admErr STAT_EVT
 - dépend de : core.js screens.js parcours.js cloud.js business.js main.js
 
 ### wouf/extras.js (376 l.)

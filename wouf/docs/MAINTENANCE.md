@@ -215,3 +215,12 @@ Une tâche GitHub (`.github/workflows/instagram.yml`, deux fois par jour, vers 7
 - **Politique de contenu** : `index.html` interdit les objets embarqués et le changement de base d'URL ; pas de CSP stricte (la connexion Google popup a besoin de domaines Google, non testables en dehors de la production).
 - **À faire par le propriétaire** : vérifier les règles Firestore (chaque utilisateur ne lit que `users/{uid}`), ne jamais publier de clé secrète, garder l'accès Cloudflare/GitHub en double authentification.
 - **Carte du code** : `node tools/carte.js` régénère `CARTE.md`.
+
+## Confidentialité de la configuration publique (important)
+- Le document Firestore `wouf_admin/config` est **lisible par tout le monde** (l'app le lit sans connexion). Il ne doit contenir **aucune donnée personnelle** : l'e-mail du propriétaire n'y est plus jamais écrit (`by` vide, nettoyé à l'ouverture de l'Administration) ; les e-mails de contact et d'assistance viennent **uniquement de `config.js`** (`wouf-contact@proton.me`), ils ne sont plus modifiables dans l'administration.
+- Nom, statut, adresse, SIRET et médiateur (mentions légales) restent saisis dans Administration → Paiement et informations légales, donc publics par nature. Ils ne s'affichent qu'après un nouvel enregistrement (`epoch` 2) : d'anciennes valeurs sont ignorées. Utilisez une adresse professionnelle (domiciliation) plutôt qu'un domicile personnel, à faire valider (obligations légales : voir un professionnel).
+- L'adresse PayPal du vendeur est visible dans le lien de paiement : préférez une adresse PayPal dédiée à Wouf.
+- Ne jamais coller de jeton ou de clé dans une conversation ni dans le dépôt : les secrets (Météo-France, Resend, GoatCounter) se saisissent uniquement dans Cloudflare → Worker → Settings → Variables and Secrets.
+
+## Météo des balades (accueil)
+- Carte « Balade maintenant » sur l'accueil (`meteoHome`, guide.js) : verdict, alertes calculées (`walkAlerts` : orage, chaleur, bitume, froid, vent, pluie), meilleure heure (Plus). Aperçu limité en gratuit. Données Open-Meteo (sans clé), mises en cache 45 min (`wouf:meteo`, sans coordonnées). Notification à l'ouverture si alerte grave et notifications activées.

@@ -53,7 +53,7 @@ const humanAge = birth => { const a = ageYears(birth); return a < 0.2 ? null : M
 function blank() {
   return {
     v: 1, dogs: [], events: [], weights: [], meds: [], medLog: {}, journal: [], expenses: [], docs: [], foods: [], contacts: [],
-    owner: { name: '', phone: '' }, grant: null, settings: { notif: false, lastNotif: '', lastBackup: '', home: null, noStats: false }, sub: null,
+    owner: { name: '', phone: '' }, grant: null, settings: { notif: false, lastNotif: '', lastMeteoNotif: '', lastBackup: '', home: null, noStats: false }, sub: null,
     current: null, installedAt: today(), edu: {}, walks: [], names: [], updatedAt: 0, schema: SCHEMA
   };
 }

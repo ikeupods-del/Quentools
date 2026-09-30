@@ -1,6 +1,6 @@
 /* Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, documents) ne passent jamais par ici :
    elles restent dans le stockage de l'appareil. Seuls les fichiers de l'app sont mis en cache. */
-const CACHE = 'wouf-v1.15';
+const CACHE = 'wouf-v1.16';
 const SHELL = ['./', './index.html', './style.css', './config.js', './data.js', './species.js', './core.js', './health.js', './screens.js', './sos.js', './nutrition.js', './croquettes.js', './lessons.js', './lessons2.js', './lessons_cat.js', './lessons3.js', './lessons_cat2.js', './lessons4.js', './lessons_cat3.js', './lessons5.js', './lessons_cat4.js', './lessons6.js', './lessons7.js', './lessons_cat5.js', './lessons_plans.js', './quiz.js', './quiz2.js', './quiz_chat.js', './educ.js', './parcours.js', './cloud.js', './tracker.js', './plusfeatures.js', './guide.js', './noms.js', './business.js', './admin.js', './extras.js', './testalim.js', './guides.js', './main.js', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });

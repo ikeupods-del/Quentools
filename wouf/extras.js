@@ -302,7 +302,7 @@ document.addEventListener('change', e => { const t = e.target.closest('[data-set
 ACT.wipe = async () => {
   if (!(await ask('Supprimer TOUTES les données (animaux, carnet, documents) de cet appareil ? Faites une sauvegarde avant.', 'Tout supprimer'))) return;
   for (const x of S.docs) await fdel(x.id).catch(() => {});
-  S = blank(); flush(); try { ['wouf:vets', 'wouf:walk', 'wouf:errors', 'wouf:paid', 'wouf:cpass', 'wouf:remote'].forEach(k => localStorage.removeItem(k)); } catch (e) { /* rien */ } location.hash = '#/home'; render();
+  S = blank(); flush(); try { ['wouf:vets', 'wouf:walk', 'wouf:errors', 'wouf:paid', 'wouf:cpass', 'wouf:remote', 'wouf:meteo'].forEach(k => localStorage.removeItem(k)); } catch (e) { /* rien */ } location.hash = '#/home'; render();
 };
 /* ---------- Déménagement vers l'adresse officielle (config.site) ----------
    Ancienne adresse sans carnet → redirection immédiate. Avec un carnet → bandeau et transfert direct
