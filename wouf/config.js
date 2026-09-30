@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.13.8',
+  version: '1.13.9',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
@@ -56,7 +56,7 @@ window.WOUF_CONFIG = {
     form: '',                        // ex. « Entrepreneur individuel (micro-entreprise) »
     address: '',
     siret: '',
-    email: '',                       // contact du vendeur
+    email: 'wouf-contact@proton.me', // contact du vendeur (mentions légales, conditions de vente) ; modifiable dans l'administration
     director: '',                    // directeur de la publication
     vat: 'TVA non applicable, art. 293 B du CGI',   // adaptez à votre situation
     mediator: '',                    // médiateur de la consommation (obligatoire pour vendre à des particuliers)
