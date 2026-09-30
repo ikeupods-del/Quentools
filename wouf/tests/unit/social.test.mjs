@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs';
 const require = createRequire(import.meta.url);
 const { run } = require('../../../marketing/wouf/publish.js');
+const preview = require('../../../marketing/wouf/preview.js');
 const queue = JSON.parse(fs.readFileSync(new URL('../../../marketing/wouf/queue.json', import.meta.url), 'utf8'));
 const ENV = { IG_USER_ID: '123', IG_TOKEN: 'tok', IMAGE_BASE: 'https://img.test/images/' };
 const NOW = new Date('2026-10-01T16:20:00Z'), q2 = [{ id: 'a', type: 'image', images: ['a.png'], caption: 'Légende A' }, { id: 'c', type: 'carousel', images: ['c1.png', 'c2.png'], caption: 'Légende C' }];
@@ -47,4 +48,16 @@ test('simulation, file vide, configuration absente, image introuvable, refus d�
   await assert.rejects(go({ env: {}, fetchFn }), /Configuration incomplète/);
   await assert.rejects(go({ fetchFn: fake({ head: 404 }).fetchFn }), /Image introuvable en ligne \(404\)/);
   await assert.rejects(go({ fetchFn: fake({ fail: true }).fetchFn }), /Application request limit reached \(code 4\)/);
+});
+
+test('aperçu du lendemain : e-mail avec les 2 prochaines publications (images et légendes), sans rien publier', async () => {
+  const sent = []; const fetchFn = async (u, o) => { sent.push({ u: String(u), o }); return new Response('{}', { status: 200 }); };
+  const env = { RESEND_API_KEY: 're_x', MAIL_TO: 'moi@example.fr', IMAGE_BASE: 'https://img.test/images/' };
+  const r = await preview.run({ queue: q2.concat([{ id: 'z', type: 'image', images: ['z.png'], caption: 'Z <b>' }]), state: { posted: [] }, env, fetchFn, log: () => {} });
+  assert.equal(r.sent, true); assert.equal(sent.length, 1); assert.equal(sent[0].u, 'https://api.resend.com/emails');
+  const b = JSON.parse(sent[0].o.body); assert.deepEqual(b.to, ['moi@example.fr']); assert.match(b.subject, /a \+ c/); assert.match(b.html, /Demain 7 h/); assert.match(b.html, /Demain 18 h/); assert.match(b.html, /https:\/\/img\.test\/images\/c2\.png/); assert.match(b.html, /Légende A/); assert.doesNotMatch(b.html, /Z <b>/, 'la 3e n’est pas dans l’aperçu');
+  assert.equal((await preview.run({ queue: q2, state: { posted: ['a'] }, env, fetchFn, log: () => {} })).mail.subject.includes('c'), true, 'les publications déjà faites sont sautées');
+  await assert.rejects(preview.run({ queue: q2, state: { posted: [] }, env: {}, fetchFn }), /Configuration incomplète/);
+  await assert.rejects(preview.run({ queue: q2, state: { posted: [] }, env, fetchFn: async () => new Response('non', { status: 403 }) }), /Resend \(403\)/);
+  assert.equal((await preview.run({ queue: q2, state: { posted: [] }, env: {}, dry: true, fetchFn, log: () => {} })).dry, true);
 });

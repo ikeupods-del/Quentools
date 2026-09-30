@@ -193,3 +193,5 @@ Une tâche GitHub (`.github/workflows/instagram.yml`, deux fois par jour, vers 7
 
 **Ensuite** : rien à faire, sauf **renouveler le jeton tous les 60 jours** (refaire l'étape 3 et remplacer le secret `IG_TOKEN`). Si la tâche échoue, GitHub envoie un e-mail. Avec 2 publications par jour, 41 images durent 20 jours. Quand il reste 6 publications ou moins, la tâche affiche un avertissement : régénérer la file (`node marketing/wouf/generate.js && node marketing/wouf/build-queue.js`, ou demander à Claude).
 
+**Aperçu par e-mail la veille** (`.github/workflows/apercu.yml`, chaque soir vers 20 h) : un e-mail avec les images et légendes des 2 publications du lendemain (7 h et 18 h). Secrets GitHub à ajouter : `RESEND_API_KEY` (la même clé que celle du relais) et `MAIL_TO` (l'adresse du compte Resend, donc l'adresse Proton). Test : Actions → « Instagram — aperçu du lendemain » → Run workflow. Pour changer une publication avant sa sortie : le dire à Claude (modification de `queue.json`).
+
