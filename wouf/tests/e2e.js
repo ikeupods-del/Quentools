@@ -767,6 +767,10 @@ test('activation automatique PayPal : notify_url et compte transmis, page d’at
   await b.ctx.route('https://relais.test/status', r => r.fulfill({ status: 500, headers: cors, contentType: 'application/json', body: '{"error":"Erreur interne"}' }), { times: 1 });
   await p.click('[data-act=restore]'); await p.waitForSelector('.sheet h2'); assert.match(await text(p, '.sheet'), /Vérification impossible.*Erreur interne/); await p.click('.sheet button[data-close]');
   active = true; await p.click('[data-act=restore]'); await p.waitForFunction(() => subActive()); assert.match(await text(p, '#toast'), /Accès retrouvé/);
+  // un accès accordé par l'administration est repris par le même bouton (sans passer par le relais)
+  active = false; await b.ev(() => { S.sub = { active: false, checked: Date.now() }; S.grant = null; Object.assign(AdminApi, { myGrant: async () => ({ until: 'lifetime' }), touch: async () => {} }); });
+  await b.ev(() => ACT.restore()); await p.waitForFunction(() => grantActive() && plus()); assert.match(await text(p, '#toast'), /Accès retrouvé/);
+  await b.ev(() => { S.grant = null; });
   active = false; await b.ev(() => refreshSub(true)); assert.equal(await b.ev(() => plus()), false);
   active = true; await b.ev(() => { Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true }); document.dispatchEvent(new Event('visibilitychange')); });
   await p.waitForFunction(() => subActive(), null, { timeout: 5000 });
@@ -813,7 +817,10 @@ test('contact : vrai envoi depuis l’app (aucune messagerie ouverte), repli e-m
   mode = 'ok'; await b.ev(() => { OWNER = true; Object.assign(AdminApi, { listUsers: async () => [], listOrders: async () => [], paidList: async () => ({}) }); });
   await b.go('#/admin'); await p.waitForSelector('#adm-msgs .adm-m');
   assert.match(await text(p, '#adm-msgs'), /Messages \(1\).*Facturation \/ achat.*cliente@test\.fr.*je ne vois pas mon accès/);
-  assert.match(await p.getAttribute('#adm-msgs a.btn', 'href'), /^mailto:cliente@test\.fr\?subject=Re%3A/);
+  assert.equal(await b.ev(() => SUP.replyUrl), 'https://mail.proton.me/compose?mailto=%s');
+  const rl = await p.getAttribute('#adm-msgs a.btn', 'href'); assert.match(rl, /^https:\/\/mail\.proton\.me\/compose\?mailto=mailto%3Acliente%40test\.fr%3Fsubject%3DRe%253A/, 'Répondre ouvre Proton Mail');
+  assert.equal(new URL(rl).searchParams.get('mailto').startsWith('mailto:cliente@test.fr?subject=Re%3A'), true);
+  assert.equal(await b.ev(() => { const sv = SUP.replyUrl; SUP.replyUrl = ''; const r = replyLink({ email: 'x@y.fr', category: 'Q' }); SUP.replyUrl = sv; return r.startsWith('mailto:x@y.fr'); }), true, 'sans modèle : messagerie du téléphone');
   await p.click('[data-act=adm-msg-del]'); await p.click('.sheet [data-ok]'); await p.waitForSelector('#adm-msgs .mut:has-text("Aucun message")'); assert.match(await text(p, '#adm-msgs'), /Messages \(0\)/);
   noErrors(b); await b.ctx.close();
 });

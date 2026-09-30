@@ -95,6 +95,13 @@ async function accountSync() {
   } catch (e) { /* idem */ }
 }
 
+/* « Répondre » : ouvre Proton Mail (config.support.replyUrl) avec le destinataire et l'objet prêts ; sans modèle, la messagerie du téléphone. */
+function replyLink(m) {
+  const mt = `mailto:${m.email || ''}?subject=${encodeURIComponent('Re: Wouf – ' + (m.category || 'Question'))}`, tpl = SUP.replyUrl || '';
+  return /^https:\/\/[^\s]+%s/.test(tpl) ? tpl.replace('%s', encodeURIComponent(mt)) : mt;
+}
+ACT['adm-copy'] = async ({ mail }) => { try { await navigator.clipboard.writeText(mail); toast('Adresse copiée ✓'); } catch (e) { toast(mail); } };
+
 /* ---------- Écran d'administration ---------- */
 const ADM = { users: null, orders: [], paid: {}, msgs: [], loading: false, err: '', oerr: '', perr: '', merr: '' };
 const grantLabel = g => !g ? '' : g.until === 'lifetime' ? 'Plus offert à vie' : (today() <= g.until ? 'Plus offert jusqu’au ' + fmtDate(g.until) : 'Plus offert (expiré le ' + fmtDate(g.until) + ')');
@@ -159,7 +166,7 @@ ROUTES.admin = function admin() {
     ${ADM.merr ? `<p class="bad">${esc(ADM.merr)}</p>` : ADM.msgs.map(m => `<div class="adm-o adm-m"><div class="grow"><b>${esc(m.category || 'Question')}</b> ${m.priority ? '<span class="pill-s ok">⭐ Membre Plus</span>' : ''}
       <small>✉️ ${esc(m.email || '')} · 🕒 ${m.at ? esc(new Date(m.at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })) : ''}</small>
       <p class="adm-txt">${esc(m.message || '')}</p>${m.diagnostics ? `<details><summary>Informations techniques</summary><pre class="adm-txt">${esc(m.diagnostics)}</pre></details>` : ''}</div>
-      <div class="btn-row sm"><a class="btn sm primary" href="mailto:${esc(m.email || '')}?subject=${encodeURIComponent('Re: Wouf – ' + (m.category || 'Question'))}">✉️ Répondre</a><button class="btn sm danger" data-act="adm-msg-del" data-id="${esc(m.id)}">Supprimer</button></div></div>`).join('') || '<p class="mut">Aucun message.</p>'}</section>` : ''}
+      <div class="btn-row sm"><a class="btn sm primary" href="${esc(replyLink(m))}" target="_blank" rel="noopener">✉️ Répondre</a><button class="btn sm" data-act="adm-copy" data-mail="${esc(m.email || '')}">Copier l’e-mail</button><button class="btn sm danger" data-act="adm-msg-del" data-id="${esc(m.id)}">Supprimer</button></div></div>`).join('') || '<p class="mut">Aucun message.</p>'}</section>` : ''}
   <section class="card"><h2>👥 Comptes (${us.length})</h2>
     <p class="mut small">Seuls les utilisateurs connectés avec Google apparaissent ici. Pour tous les visiteurs, voir « Visites ».</p>
     ${ADM.err ? `<p class="bad">${esc(ADM.err)}</p><button class="btn" data-act="adm-reload">Réessayer</button>` : ADM.loading && !ADM.users ? '<p class="mut">Chargement…</p>'

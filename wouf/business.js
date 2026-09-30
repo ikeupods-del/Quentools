@@ -87,7 +87,7 @@ document.addEventListener('visibilitychange', () => {
 ACT.restore = async () => {
   if (!BILL.api) return toast('Vérification automatique indisponible : écrivez-nous depuis « Une question ? »');
   if (!CLOUD.user) { await ACT['g-signin'](); if (!CLOUD.user) return; }
-  await refreshSub(true);
+  await Promise.all([refreshSub(true), typeof accountSync === 'function' ? accountSync() : null]);   // achat détecté par le relais ET accès accordé par l'éditeur
   if (subActive()) { toast('Accès retrouvé : Wouf Plus est actif ⭐'); return render(true); }
   render(true);
   // Message précis : erreur de vérification, ou « aucun paiement pour CE compte Google » (cas d'un paiement fait avec un autre compte).
