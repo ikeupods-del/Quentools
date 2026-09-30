@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.13.0',
+  version: '1.13.1',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
@@ -16,7 +16,8 @@ window.WOUF_CONFIG = {
     // Paiement par lien PayPal (compte professionnel → Liens et boutons de paiement). Avant de payer, l'acheteur remplit un
     // dossier (nom, prénom, e-mail PayPal) ; le propriétaire vérifie le paiement et active Wouf Plus dans Plus → Administration.
     // Les liens et les informations légales se règlent aussi depuis l'administration (« Paiement et informations légales »).
-    paymentLink: '',           // ex. https://www.paypal.com/ncp/payment/XXXX (prix normal : plans[0].price)
+    payee: '',                 // adresse e-mail PayPal qui reçoit les paiements (réglable à tout moment dans l'administration)
+    paymentLink: '',           // OU lien PayPal fixe, ex. https://www.paypal.com/ncp/payment/XXXX (prix normal : plans[0].price)
     rewardLink: '',            // idem pour l'offre récompense (rewardOffer.price) ; vide = pas d'offre récompense
     // Achat unique « à vie ». Le prix AFFICHÉ ici doit être identique au montant du lien PayPal.
     plans: [{ id: 'lifetime', label: 'Wouf Plus à vie', price: '19,99 €', per: 'paiement unique', badge: 'Sans abonnement' }],

@@ -10,6 +10,7 @@ const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free ==
 const legalReady = () => !!(LEGAL.seller && LEGAL.address && LEGAL.email && LEGAL.mediator);
 
 const CHANGELOG = [
+  { v: '1.13.1', date: '2026-09-30', items: ['💳 Paiement PayPal vers l’adresse choisie par l’éditeur, avec référence de dossier'] },
   { v: '1.13.0', date: '2026-09-30', items: ['💳 Paiement uniquement par PayPal, avec dossier de paiement', '🛠️ Administration : paiements à vérifier et activation en un bouton'] },
   { v: '1.12.2', date: '2026-09-30', items: ['💳 Paiement par PayPal'] },
   { v: '1.12.1', date: '2026-09-30', items: ['💳 Réglage du paiement depuis l’administration'] },
@@ -61,12 +62,21 @@ const FEATURES = {
 };
 const planLine = () => { const p = planOf(); return `${p.price} ${p.per}`; };
 
-/* Paiement : lien PayPal. Avant d'être redirigé, l'acheteur remplit un « dossier de paiement » (nom, prénom et e-mail PayPal,
+/* Paiement PayPal, de préférence vers l'adresse PayPal choisie dans l'administration (BILL.payee, modifiable à tout moment) :
+   l'app construit elle-même la page de paiement PayPal (montant, référence du dossier, retour sur #/merci). À défaut : lien PayPal fixe.
+   Avant d'être redirigé, l'acheteur remplit un « dossier de paiement » (nom, prénom et e-mail PayPal,
    e-mail de contact) enregistré dans wouf_orders : l'administration compare avec l'e-mail de PayPal puis active Wouf Plus. */
 const PAY_LINK = /^https:\/\/(www\.)?paypal\.(com|me)\/[\w./-]+$/i;
 const payName = () => 'PayPal';
-const payReady = () => !!BILL.paymentLink;
-const rewardBuyable = () => rewardActive() && !!BILL.rewardLink;
+const PAYEE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const payReady = () => !!(PAYEE.test(BILL.payee || '') || BILL.paymentLink);
+const rewardBuyable = () => rewardActive() && !!(PAYEE.test(BILL.payee || '') || BILL.rewardLink);
+function paypalUrl(payee, price, ref, reward) {
+  const home = (typeof SITE !== 'undefined' && SITE.home) || location.origin + location.pathname;
+  const q = new URLSearchParams({ cmd: '_xclick', business: payee, item_name: 'Wouf Plus à vie' + (reward ? ' (offre récompense)' : ''), item_number: ref, invoice: ref, custom: ref,
+    amount: String(price).replace(/[^\d,.]/g, '').replace(',', '.'), currency_code: 'EUR', no_shipping: '1', lc: 'FR', charset: 'utf-8', return: home + '#/merci', cancel_return: home + '#/abo' });
+  return 'https://www.paypal.com/cgi-bin/webscr?' + q;
+}
 function buySheet() {
   const p = planOf(), rw = rewardBuyable(), price = rw ? REWARD.price : p.price, u = CLOUD.user || {}, nm = String(u.name || '').split(' ');
   const el = sheet(`<div class="sheet-head"><h2>⭐ ${esc(p.label)}</h2><button class="x" data-close>✕</button></div>
@@ -84,6 +94,7 @@ function buySheet() {
   return el;
 }
 ACT.checkout = async () => {
+  await remoteRefresh();   // toujours la dernière adresse PayPal choisie par l'administration
   if (!payReady()) return toast('Paiement non configuré');
   if (!legalReady()) return toast('Vente non ouverte : informations légales à compléter');
   if (!CLOUD.user) { toast('Connectez-vous avec Google : votre achat sera lié à votre compte'); await ACT['g-signin'](); if (!CLOUD.user) return; }
@@ -95,10 +106,13 @@ ACT['buy-go'] = async () => {
   if (!o.firstName || !o.lastName) return toast('Indiquez le prénom et le nom de votre compte PayPal');
   if (!mail(o.paypalEmail) || !mail(o.contactEmail)) return toast('Vérifiez les adresses e-mail');
   if (!$('#buy-consent').checked) return toast('Cochez la case pour continuer');
-  const reward = rewardBuyable(), link = reward ? BILL.rewardLink : BILL.paymentLink;
-  Object.assign(o, { googleEmail: CLOUD.user.email || '', name: CLOUD.user.name || '', offer: reward ? 'reward' : 'lifetime', price: reward ? REWARD.price : planOf().price, lessons: lessonsDone(), status: 'pending', at: Date.now(), version: CFG.version || '' });
+  await remoteRefresh();
+  const reward = rewardBuyable(), price = reward ? REWARD.price : planOf().price, payee = PAYEE.test(BILL.payee || '') ? BILL.payee : '';
+  const ref = 'WOUF-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
+  const link = payee ? paypalUrl(payee, price, ref, reward) : (reward ? BILL.rewardLink : BILL.paymentLink);
+  Object.assign(o, { ref, payee, googleEmail: CLOUD.user.email || '', name: CLOUD.user.name || '', offer: reward ? 'reward' : 'lifetime', price, lessons: lessonsDone(), status: 'pending', at: Date.now(), version: CFG.version || '' });
   let id; try { toast('Enregistrement de votre dossier…'); id = await AdminApi.createOrder(o); } catch (e) { return toast('Impossible d’enregistrer votre dossier (connexion internet ?). Réessayez.'); }
-  try { localStorage.setItem('wouf:paid', JSON.stringify({ id, at: o.at, email: o.googleEmail, paypal: o.paypalEmail, price: o.price })); } catch (e) { /* ignore */ }
+  try { localStorage.setItem('wouf:paid', JSON.stringify({ id, ref, at: o.at, email: o.googleEmail, paypal: o.paypalEmail, price: o.price })); } catch (e) { /* ignore */ }
   toast('Redirection vers PayPal…'); NAV.go(link);
 };
 function soonSheet() {
@@ -113,7 +127,7 @@ ACT.subscribe = () => (BILL.enabled && payReady()) ? ACT.checkout() : soonSheet(
 ROUTES.merci = function merci() {
   let p = null; try { p = JSON.parse(localStorage.getItem('wouf:paid') || 'null'); } catch (e) { /* ignore */ }
   return `<div class="page-h"><a class="back" href="#/home">‹</a><h1>🎉 Merci !</h1></div><section class="card plus-hero"><h2>Paiement reçu</h2>
-    ${subActive() ? '<p><b>Wouf Plus est actif ⭐</b> Bonne découverte !</p>' : `<p>Wouf Plus sera activé <b>sous 24 h</b> sur votre compte Google${p && p.email ? ` (<b>${esc(p.email)}</b>)` : ''}, après vérification de votre paiement PayPal${p && p.paypal ? ` (<b>${esc(p.paypal)}</b>)` : ''}. PayPal vous envoie un reçu par e-mail.</p><p class="mut">Restez connecté(e) avec ce compte : l’activation apparaît à l’ouverture de l’app. Pas activé après 24 h ? Écrivez-nous depuis « Une question ? » en indiquant le nom ou l’e-mail utilisé pour payer.</p>`}
+    ${subActive() ? '<p><b>Wouf Plus est actif ⭐</b> Bonne découverte !</p>' : `<p>Wouf Plus sera activé <b>sous 24 h</b> sur votre compte Google${p && p.email ? ` (<b>${esc(p.email)}</b>)` : ''}, après vérification de votre paiement PayPal${p && p.paypal ? ` (<b>${esc(p.paypal)}</b>)` : ''}${p && p.ref ? `, référence <b>${esc(p.ref)}</b>` : ''}. PayPal vous envoie un reçu par e-mail.</p><p class="mut">Restez connecté(e) avec ce compte : l’activation apparaît à l’ouverture de l’app. Pas activé après 24 h ? Écrivez-nous depuis « Une question ? » en indiquant le nom ou l’e-mail utilisé pour payer.</p>`}
     <a class="btn primary" href="#/home">Retour à l’accueil</a> <a class="btn" href="#/support">Une question ?</a></section>`;
 };
 function paywall(f) {
