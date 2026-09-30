@@ -87,6 +87,7 @@ const bizFeatures = (read('business.js').match(/const FEATURES = \{([\s\S]*?)\n\
 for (const f of B.premium) ok(new RegExp('\\b' + f + ':').test(bizFeatures), `fonction Plus « ${f} » sans description dans business.js (FEATURES)`);
 const RW = B.rewardOffer || {};
 ok(!RW.enabled || /\d/.test(RW.price || ''), 'billing.rewardOffer.enabled = true mais aucun prix affiché');
+for (const k of ['paymentLink', 'rewardLink']) ok(!B[k] || /^https:\/\/buy\.stripe\.com\/[\w-]+$/.test(B[k]), `billing.${k} doit être un lien https://buy.stripe.com/…`);
 { const wf = read('billing-worker/worker.js').match(/const FREE_LESSONS = (\{[^\n]*\});/), app = { dog: dog.filter(l => l.free).map(l => l.id), cat: cat.filter(l => l.free).map(l => l.id) };
   const w = wf ? Function('return ' + wf[1])() : null;
   ok(w && ['dog', 'cat'].every(sp => JSON.stringify([...w[sp]].sort()) === JSON.stringify([...app[sp]].sort())), 'billing-worker/worker.js : FREE_LESSONS doit reprendre exactement les leçons gratuites de l’app (offre récompense)'); }
@@ -100,7 +101,7 @@ if (B.enabled) {
   const L = CFG.legal, S = CFG.support;
   for (const k of ['seller', 'form', 'address', 'siret', 'email', 'mediator']) ok(L[k], `billing.enabled = true mais legal.${k} est vide : complétez config.js avant de vendre`);
   ok(S.email, 'billing.enabled = true mais support.email est vide');
-  ok(B.api && /^https:\/\//.test(B.api), 'billing.enabled = true mais billing.api (URL du relais) est vide');
+  ok((B.api && /^https:\/\//.test(B.api)) || B.paymentLink, 'billing.enabled = true mais ni relais (billing.api) ni lien de paiement (billing.paymentLink)');
 }
 
 section('Fichiers et déploiement');

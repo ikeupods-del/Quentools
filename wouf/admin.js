@@ -29,8 +29,9 @@ const AdminApi = {
 /* ---------- Interrupteur de vente à distance ----------
    La vente ne s'ouvre que si tout est prêt (infos légales + relais de paiement) : sinon l'interrupteur est ignoré. */
 const SALE_DEFAULT = !!BILL.enabled;
-const saleReady = () => !!(legalReady() && BILL.api && (BILL.plans || []).length);
-const saleMissing = () => [!legalReady() && 'Informations légales (vendeur, adresse, e-mail, médiateur) à compléter', !BILL.api && 'Relais de paiement Stripe à installer'].filter(Boolean);
+const legalFull = () => ['seller', 'form', 'address', 'siret', 'email', 'mediator'].every(k => LEGAL[k]) && !!SUP.email;
+const saleReady = () => !!(legalFull() && payReady() && (BILL.plans || []).length);
+const saleMissing = () => [!legalFull() && 'Informations légales (statut, SIRET, adresse, e-mail, médiateur, e-mail d’assistance) à compléter', !payReady() && 'Lien de paiement Stripe à renseigner'].filter(Boolean);
 function applySaleConfig(c) {
   if (!c) return false;
   const on = c.billingEnabled === undefined ? SALE_DEFAULT : (c.billingEnabled && saleReady());

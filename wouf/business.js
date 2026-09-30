@@ -79,24 +79,32 @@ const FEATURES = {
 };
 const planLine = () => { const p = planOf(); return `${p.price} ${p.per}`; };
 
+/* Paiement possible : relais (automatique) ou lien de paiement Stripe (activation manuelle par l'administration). */
+const payReady = () => !!(BILL.api || BILL.paymentLink);
+const rewardBuyable = () => rewardActive() && !!(BILL.api || BILL.rewardLink);
 function buySheet() {
-  const p = planOf(), rw = rewardActive(), price = rw ? REWARD.price : p.price, el = sheet(`<div class="sheet-head"><h2>⭐ ${esc(p.label)}</h2><button class="x" data-close>✕</button></div>
+  const p = planOf(), rw = rewardBuyable(), price = rw ? REWARD.price : p.price, el = sheet(`<div class="sheet-head"><h2>⭐ ${esc(p.label)}</h2><button class="x" data-close>✕</button></div>
     ${rw ? `<p class="center reward-tag">🏅 Offre récompense : toutes les leçons gratuites terminées</p><div class="price-cut center"><s>${esc(p.price)}</s> <b>${esc(price)}</b></div>` : `<div class="big-n center">${esc(p.price)}<small> ${esc(p.per)}</small></div>`}
     <p class="center mut">Un seul paiement, pour toujours. Aucun abonnement, aucune reconduction.</p>
     <ul class="bul">${Object.values(FEATURES).map(x => `<li><b>${esc(x[1])}</b></li>`).join('')}</ul>
     <label class="chk consent"><input type="checkbox" id="buy-consent"> <span>J’ai lu les <a href="#/legal?doc=cgv" data-close>conditions de vente</a>. Je demande l’accès immédiat à Wouf Plus et je reconnais perdre mon droit de rétractation de 14 jours dès que l’accès est fourni.</span></label>
     <div class="form-actions"><button class="btn primary big" data-act="buy-go">Payer ${esc(price)} par carte</button></div>
-    <p class="mut small center">Paiement sécurisé par Stripe. Votre achat est lié à votre compte Google : il vous suit sur tous vos appareils.</p>`);
+    <p class="mut small center">Paiement sécurisé par Stripe. Votre achat est lié à votre compte Google : il vous suit sur tous vos appareils.${BILL.api ? '' : ' Wouf Plus est activé sur votre compte sous 24 h après le paiement.'}</p>`);
   return el;
 }
 ACT.checkout = async () => {
-  if (!BILL.api) return toast('Paiement non configuré');
+  if (!payReady()) return toast('Paiement non configuré');
   if (!legalReady()) return toast('Vente non ouverte : informations légales à compléter');
   if (!CLOUD.user) { toast('Connectez-vous avec Google : votre achat sera lié à votre compte'); await ACT['g-signin'](); if (!CLOUD.user) return; }
   closeAllSheets(); buySheet();
 };
 ACT['buy-go'] = async () => {
   if (!$('#buy-consent').checked) return toast('Cochez la case pour continuer');
+  if (!BILL.api) {   // lien de paiement Stripe : l'adresse Google est pré-remplie pour retrouver l'acheteur dans l'administration
+    const link = rewardBuyable() ? BILL.rewardLink : BILL.paymentLink;
+    try { localStorage.setItem('wouf:paid', JSON.stringify({ at: Date.now(), email: CLOUD.user.email, reward: rewardBuyable() })); } catch (e) { /* ignore */ }
+    toast('Redirection vers le paiement sécurisé…'); location.href = link + (link.includes('?') ? '&' : '?') + 'prefilled_email=' + encodeURIComponent(CLOUD.user.email || ''); return;
+  }
   if (rewardActive() && CLOUD.user) await cloudPush().catch(() => {});   // l'offre est vérifiée sur la sauvegarde : on l'envoie à jour
   try { toast('Redirection vers le paiement sécurisé…'); const j = await api('/checkout', { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ returnUrl: location.origin + location.pathname, ...(rewardActive() ? { offer: 'lecons' } : {}) }) }); location.href = j.url; }
   catch (e) { toast(e.message); }
@@ -108,7 +116,14 @@ function soonSheet() {
     <ul class="bul">${Object.values(FEATURES).map(x => `<li>${esc(x[1])}</li>`).join('')}</ul><div class="form-actions"><button class="btn primary" data-close>Super, je découvre</button></div>`);
 }
 /* Bouton « Souscrire » : paiement réel si la vente est ouverte, sinon présentation de l'offre (tout est gratuit). */
-ACT.subscribe = () => (BILL.enabled && BILL.api) ? ACT.checkout() : soonSheet();
+ACT.subscribe = () => (BILL.enabled && payReady()) ? ACT.checkout() : soonSheet();
+/* Retour de Stripe (lien de paiement) : l'activation est faite par l'administration. */
+ROUTES.merci = function merci() {
+  let p = null; try { p = JSON.parse(localStorage.getItem('wouf:paid') || 'null'); } catch (e) { /* ignore */ }
+  return `<div class="page-h"><a class="back" href="#/home">‹</a><h1>🎉 Merci !</h1></div><section class="card plus-hero"><h2>Paiement reçu</h2>
+    ${subActive() ? '<p><b>Wouf Plus est actif ⭐</b> Bonne découverte !</p>' : `<p>Wouf Plus sera activé <b>sous 24 h</b> sur votre compte Google${p && p.email ? ` (<b>${esc(p.email)}</b>)` : ''}. Stripe vous envoie un reçu par e-mail.</p><p class="mut">Restez connecté(e) avec ce compte : l’activation apparaît à l’ouverture de l’app.</p>`}
+    <a class="btn primary" href="#/home">Retour à l’accueil</a> <a class="btn" href="#/support">Une question ?</a></section>`;
+};
 ACT.restore = async () => {
   if (!BILL.api) return toast('Paiement non configuré');
   if (!CLOUD.user) { await ACT['g-signin'](); if (!CLOUD.user) return; }

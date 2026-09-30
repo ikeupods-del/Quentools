@@ -688,8 +688,8 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   await p.click('[data-act=adm-revoke][data-uid=u1]'); await p.click('.sheet [data-ok]');
   await p.waitForFunction(() => window.__adm.grants.u1 === null);
   // vente : bloquée tant que rien n'est prêt
-  assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), true); assert.match(await text(p, '#view'), /Relais de paiement Stripe à installer/);
-  await b.ev(() => { BILL.api = 'https://relais.test'; Object.assign(LEGAL, { seller: 'Q', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur' }); render(true); });
+  assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), true); assert.match(await text(p, '#view'), /Lien de paiement Stripe à renseigner/);
+  await b.ev(() => { BILL.paymentLink = 'https://buy.stripe.com/test_abc'; Object.assign(LEGAL, { seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur' }); SUP.email = 'aide@q.fr'; render(true); });
   assert.equal(await p.$eval('[data-act=adm-sale]', e => e.disabled), false);
   await p.click('[data-act=adm-sale]'); await p.click('.sheet [data-ok]');
   await p.waitForFunction(() => window.__adm.cfg && window.__adm.cfg.billingEnabled === true); assert.equal(await b.ev(() => BILL.enabled), true);
@@ -701,6 +701,22 @@ test('administration : réservée au propriétaire, comptes, Plus offert, retrai
   await b.ev(async () => { window.__adm.mine = null; await accountSync(); }); assert.equal(await b.ev(() => plus()), false, 'Plus retiré');
   await b.ev(() => { S.grant = { until: '2020-01-01' }; }); assert.equal(await b.ev(() => plus()), false, 'offre expirée');
   await b.ev(() => { BILL.enabled = false; });
+  noErrors(b); await b.ctx.close();
+});
+
+test('vente par lien de paiement Stripe : e-mail pré-rempli, page merci, activation par l’administration', async () => {
+  const b = await boot({ hash: '#/abo' }), p = b.page; await fakeCloud(p);
+  await b.ctx.route(/buy\.stripe\.com/, r => r.fulfill({ contentType: 'text/html', body: '<h1>Stripe</h1>' }));
+  await b.ev(() => { CloudApi.signIn = async () => ({ email: 'client@test.fr', name: 'Client', picture: '' });
+    Object.assign(BILL, { enabled: true, freeUntil: null, paymentLink: 'https://buy.stripe.com/test_abc', api: '' });
+    Object.assign(LEGAL, { seller: 'Q', form: 'EI', siret: '123', address: 'Paris', email: 'q@q.fr', mediator: 'Médiateur' }); render(); });
+  await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent');
+  assert.match(await text(p, '.sheet'), /activé sur votre compte sous 24 h/);
+  await p.check('#buy-consent');
+  await Promise.all([p.waitForURL(/buy\.stripe\.com/), p.click('[data-act=buy-go]')]);
+  const u = new URL(p.url()); assert.equal(u.pathname, '/test_abc'); assert.equal(u.searchParams.get('prefilled_email'), 'client@test.fr');
+  await p.goto(`http://localhost:${PORT}/wouf/#/merci`); await p.waitForSelector('#view > *');
+  assert.match(await text(p, '#view'), /sous 24 h.*client@test\.fr/);
   noErrors(b); await b.ctx.close();
 });
 
