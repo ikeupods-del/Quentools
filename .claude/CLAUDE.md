@@ -1,6 +1,6 @@
 # QuenTools — notes de développement
 
-Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `infikit/` (infirmières), `freelance/` (TJM/devis), **`wouf/`** (carnet de santé chien et chat — le projet commercial). Le propriétaire n'est pas développeur : réponds en français simple, agis (ne demande pas de faire soi-même ce que tu peux faire), et explique le résultat, pas la technique.
+Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `infikit/` (infirmières), `freelance/` (TJM/devis), **`wouf/`** (carnet de santé chien et chat — le projet commercial). Patrimoine AI est un dépôt séparé (`ikeupods-del/patrimoineai`), présenté sur le site vitrine. Le propriétaire n'est pas développeur : réponds en français simple, agis (ne demande pas de faire soi-même ce que tu peux faire), et explique le résultat, pas la technique.
 
 ## Style professionnel (demande du propriétaire, à respecter toujours)
 - Le code, les commentaires, la documentation, les messages de commit et les pull requests doivent ressembler au travail d'un développeur professionnel : **aucune mention de l'assistant, de Claude, d'Anthropic ou d'une IA** (pas de ligne « Co-Authored-By », pas de lien de session, pas de « Generated with »). Écrire les messages de commit et de PR de façon factuelle, en français.
