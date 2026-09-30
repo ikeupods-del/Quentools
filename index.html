@@ -68,6 +68,7 @@ section .sub{color:var(--muted);margin:0 0 28px;max-width:40em}
 .card .go::after{content:" →"}
 .tag{align-self:flex-start;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:4px 10px;border-radius:999px;margin-bottom:14px;background:var(--soft);color:var(--pri)}
 .tag.free{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.card.wide{grid-column:1/-1}
 .card.feat{border:2px solid var(--pri)}
 .steps{counter-reset:s;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:28px 0 0;padding:0;list-style:none}
 .steps li{counter-increment:s;background:var(--soft);border-radius:18px;padding:18px 18px 18px 64px;position:relative}
@@ -109,7 +110,7 @@ footer .legal{margin-top:10px;max-width:46em}
     <a class="btn sec" href="#sur-mesure">Faire créer mon outil</a>
   </div>
   <div class="proof">
-    <div><b>4 applications</b><span>conçues et en ligne</span></div>
+    <div><b>5 applications</b><span>conçues et en ligne</span></div>
     <div><b>0 €</b><span>pour les outils QuenTools</span></div>
     <div><b>+ de 6 700</b><span>vérifications automatiques avant chaque mise à jour de Wouf</span></div>
   </div>
@@ -141,6 +142,13 @@ footer .legal{margin-top:10px;max-width:46em}
       <a class="go" href="https://ikeupods-del.github.io/patrimoineai/">Ouvrir Patrimoine AI</a>
     </article>
     <article class="card">
+      <span class="tag free">Gratuit</span>
+      <div class="ic" aria-hidden="true">🍳</div>
+      <h3>Gourmet AI</h3>
+      <p>« On mange quoi ce soir ? » Des recettes du monde entier, IngréMatch pour cuisiner avec ce que vous avez déjà, le menu de la semaine, la liste de courses et le budget. Un chef IA en option.</p>
+      <a class="go" href="https://cute-unicorn-d5abb1.netlify.app" rel="noopener">Ouvrir Gourmet AI</a>
+    </article>
+    <article class="card wide">
       <span class="tag">Réalisation</span>
       <div class="ic" aria-hidden="true">🐾</div>
       <h3>Wouf</h3>
