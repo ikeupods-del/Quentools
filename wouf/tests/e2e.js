@@ -435,6 +435,12 @@ test('pages légales, nouveautés et alerte de mise à jour', async () => {
   await b.go('#/nouveautes'); assert.match(await text(p, '#view'), /Version 1\.2\.0/);
   await b.ev(() => showUpdateBanner()); assert.equal(await p.locator('#upd').isVisible(), true);
   noErrors(b); await b.ctx.close();
+  // nouvelle version publiée pendant que l'app est ouverte : bandeau « Actualiser » (jamais pour la même version ni une plus ancienne)
+  const nv = await boot(); let pub = '99.0.0';
+  await nv.ctx.route(/config\.js\?ts=/, r => r.fulfill({ contentType: 'application/javascript', body: `window.WOUF_CONFIG = { version: '${pub}' };` }));
+  await nv.ev(() => checkVersion()); await nv.page.waitForSelector('#upd'); assert.match(await text(nv.page, '#upd'), /Nouvelle version de Wouf disponible/);
+  await nv.ev(() => { document.querySelector('#upd').remove(); }); pub = await nv.ev(() => CFG.version); await nv.ev(() => checkVersion()); await nv.page.waitForTimeout(200); assert.equal(await nv.page.$('#upd'), null, 'même version : rien');
+  pub = '0.0.1'; await nv.ev(() => checkVersion()); await nv.page.waitForTimeout(200); assert.equal(await nv.page.$('#upd'), null, 'version plus ancienne (cache du serveur) : rien'); await nv.ctx.close();
   const u = await boot({ data: seed({ settings: { ...seed().settings, seenVersion: '1.0.0' } }) }); await u.page.waitForTimeout(400); assert.equal(await u.ev(() => S.settings.seenVersion), await u.ev(() => CHANGELOG[0].v)); assert.match(await text(u.page, '#toast'), /mis à jour/); await u.ctx.close();
   // version purement technique : aucun message si les nouveautés n'ont pas changé
   const tq = await boot({ data: seed({ settings: { ...seed().settings, seenVersion: '9.9.9' } }) }); await tq.page.waitForTimeout(400); assert.doesNotMatch(await tq.ev(() => document.querySelector('#toast').className), /show/); await tq.ctx.close();
