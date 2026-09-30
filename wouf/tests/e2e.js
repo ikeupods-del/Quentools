@@ -306,12 +306,13 @@ test('éducation : 110 leçons (100 Plus + 10 gratuites), recherche sans accents
   const b = await boot({ hash: '#/educ' }), p = b.page;
   const tot = await b.ev(() => ({ all: LESSONS.length, plus: LESSONS.filter(l => !l.free).length, free: LESSONS.filter(l => l.free).length }));
   assert.deepEqual(tot, { all: 110, plus: 100, free: 10 });
-  await p.waitForSelector('#edu-q'); const n0 = await p.locator('#edu-list a.lesson').count(); assert.ok(n0 >= 60);
+  await p.waitForSelector('#edu-plus'); assert.equal(await p.$eval('#edu-plus', e => e.open), false, 'section Plus repliée par défaut'); assert.equal(await p.isVisible('#edu-q'), false); await p.click('#edu-plus > summary'); await p.waitForSelector('#edu-q', { state: 'visible' });
+  const n0 = await p.locator('#edu-list a.lesson').count(); assert.ok(n0 >= 60); assert.equal(await p.locator('#edu-list details.edu-grp[open]').count(), 0, 'catégories repliées'); assert.ok(await p.locator('#edu-list details.edu-grp').count() >= 5);
   await p.fill('#edu-q', 'griffes'); assert.ok((await p.locator('#edu-list a.lesson').count()) >= 1); assert.match(await text(p, '#edu-list'), /griffes/i);
   await p.fill('#edu-q', 'bebe'); assert.match(await text(p, '#edu-list'), /bébé/);
   await p.fill('#edu-q', 'zzzz'); assert.match(await text(p, '#edu-list'), /Aucune leçon/);
   await p.fill('#edu-q', ''); await b.ev(() => { EDU.q = ''; });
-  await p.click('[data-act=edu-cat][data-c="Soins"]'); const cats = await b.ev(() => [...document.querySelectorAll('#edu-list a.lesson small')].map(s => s.textContent.split(' · ')[0])); assert.ok(cats.length >= 5 && cats.every(c => c === 'Soins'), cats.join('|'));
+  await p.click('#edu-list details.edu-grp[data-cat="Soins"] > summary'); const cats = await b.ev(() => [...document.querySelectorAll('#edu-list details.edu-grp[data-cat="Soins"] a.lesson small')].map(s => s.textContent.split(' · ')[0])); assert.ok(cats.length >= 5 && cats.every(c => c === 'Soins'), cats.join('|'));
   assert.ok((await p.locator('a.row[href^="#/programme"]').count()) >= 10, 'programmes listés');
   await b.ev(() => { EDU.cat = ''; }); noErrors(b); await b.ctx.close();
 });

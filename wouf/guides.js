@@ -76,7 +76,7 @@ ROUTES.guides = function guides() {
       <p class="mut center small">Les informations de santé sont indicatives et ne remplacent pas l’avis d’un vétérinaire.</p>`;
   }
   const spLbl = { dog: '🐶 Chien', cat: '🐱 Chat', all: '🐶🐱 Chien et chat' };
-  return `<div class="page-h">${back}<h1>📚 Guides</h1></div>
+  return `<div class="page-h">${back}<h1>📚 Guides et formations</h1></div>
     <p class="mut">Les erreurs à éviter et les points d’attention, expliqués simplement. Un guide est gratuit, les autres sont inclus dans Wouf Plus.</p>
     <div class="list card menu">${GUIDES.map(x => `<button class="row" data-act="guide-open" data-id="${x.id}"><span class="ico">${x.e}</span><span class="grow"><b>${esc(x.title)}</b><small>${esc(x.sub)} · ${spLbl[x.sp]} · ${x.free ? 'Gratuit' : allowed('guides') ? `${x.items.length} points` : 'Plus'}</small></span><span class="chev">›</span></button>`).join('')}</div>
     <p class="mut center small">Les informations de santé sont indicatives et ne remplacent pas l’avis d’un vétérinaire.</p>`;

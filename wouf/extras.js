@@ -18,7 +18,7 @@ ROUTES.plus = function plusMenu() {
     ['Santé', [
       ['#/bilan', '🧠', 'Bilan santé', 'Conseils personnalisés' + (allowed('bilan') ? '' : ' · Plus')],
       ['#/race', '🧬', 'Ma race et sa santé', 'Poids idéal, espérance de vie, risques'],
-      ['#/guides', '📚', 'Guides', 'Erreurs à éviter, points d’attention' + (allowed('guides') ? '' : ' · Plus')],
+      ['#/guides', '📚', 'Guides et formations (PDF)', 'Erreurs à éviter, points d’attention, urgences' + (allowed('guides') ? '' : ' · Plus')],
       ['#/documents', '📎', 'Documents', 'Ordonnances, résultats, carte d’identification'],
       ['#/depenses', '💶', 'Dépenses', 'Budget vétérinaire, nourriture, accessoires']]],
     ['Éduquer et bouger', [

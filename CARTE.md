@@ -123,12 +123,12 @@ Wouf — quiz de validation, série 2 : leçons chien des fichiers lessons4.js �
 Wouf — quiz de validation, série 3 : toutes les leçons chat. Même format que quiz.js.
 - dépend de : core.js quiz.js
 
-### wouf/educ.js (169 l.)
+### wouf/educ.js (172 l.)
 Wouf Éducation — leçons, séances guidées, progression, badges, programme chiot.
 - écrans : #/educ #/principes #/lecon #/seance #/programme
 - actions : edu-cat step-tick lesson-done s-step s-click s-ok s-ko s-end prog-start
 - définit : eduSet allSessions eduStats nextLesson lessonCard eduFilter eduListHTML clickSound routeParam lessonOf lessonsFor programsFor principlesFor eduGet lessonUnlocked lessonState STATE_LABEL BADGES EDU eduCats SEANCE
-- dépend de : species.js core.js health.js screens.js lessons.js lessons_cat.js parcours.js noms.js business.js main.js
+- dépend de : species.js core.js health.js screens.js lessons.js lessons_cat.js parcours.js business.js main.js
 
 ### wouf/parcours.js (194 l.)
 Wouf Éducation — parcours en empreintes de pattes : unités, étapes à débloquer, os à gagner (points), niveaux, objectif du jour, mini-quiz de validation, célébrations, et offre récompense (W
@@ -222,6 +222,8 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - README.md (0 Ko)
 - build-queue.js (7 Ko)
 - catalogue.json (128 Ko)
+- contraste.js (7 Ko)
+- contraste.json (2 Ko)
 - erreurs.js (6 Ko)
 - erreurs.json (5 Ko)
 - fiches.json (5 Ko)
