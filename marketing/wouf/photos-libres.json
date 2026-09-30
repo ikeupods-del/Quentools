@@ -1,15 +1,9 @@
 {
  "_": "Photos recherchées pour les carrousels « Subissent ça / Choisissez ça » (contraste.js). Clé = <serie>-<n>-<a|b> ; valeurs = recherches (anglais) essayées dans l'ordre. Licences acceptées : CC0 et domaine public uniquement (usage commercial libre). Les photos retenues sont copiées dans photos/ avec leur crédit (photos/credits.json).",
- "seniors-chiens-1-a": ["old dog lying", "senior dog tired", "old dog resting"],
- "seniors-chiens-1-b": ["veterinarian old dog", "vet examining dog", "dog veterinarian"],
- "seniors-chiens-2-a": ["tired dog panting", "dog exhausted", "dog panting heat"],
- "seniors-chiens-2-b": ["old dog walking", "senior dog walk grass", "old dog park"],
- "seniors-chiens-3-a": ["old dog sad", "grey muzzle dog", "old dog window"],
- "seniors-chiens-3-b": ["happy old dog", "senior dog portrait", "old labrador"],
- "seniors-chats-1-a": ["cat drinking water", "cat drinking faucet", "cat water bowl"],
- "seniors-chats-1-b": ["veterinarian cat", "vet cat exam", "cat veterinary clinic"],
- "seniors-chats-2-a": ["cat litter box", "litter tray cat", "cat toilet"],
- "seniors-chats-2-b": ["old cat", "senior cat relaxing", "old cat portrait"],
- "seniors-chats-3-a": ["old cat sleeping", "old cat lying", "tired old cat"],
- "seniors-chats-3-b": ["cat on shelf", "cat tree", "cat climbing stairs"]
+ "seniors-chiens-3-b": [
+  "old dog smiling",
+  "senior golden retriever",
+  "elderly dog happy",
+  "old beagle"
+ ]
 }
