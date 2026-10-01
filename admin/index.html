@@ -8,6 +8,7 @@
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/qt.css?v=20261001h">
 <script src="../assets/qt-config.js"></script>
+<script src="../assets/qt-devis.js"></script>
 <style>
   .adm-head{display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;margin-bottom:var(--s-5)}
   .tabs{display:flex;gap:6px;overflow-x:auto;padding:4px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line);margin-bottom:var(--s-6);scrollbar-width:none}
@@ -49,6 +50,33 @@
   .msg small{display:block;color:var(--muted);font-size:11px;margin-bottom:2px}
   .msg.client{justify-self:start}.msg.admin{justify-self:end;background:var(--accent-soft)}.msg.systeme{justify-self:center;background:transparent;border-style:dashed;color:var(--muted)}
   .empty{text-align:center;color:var(--muted);padding:var(--s-7) var(--s-4)}
+  /* Agenda */
+  .ag{display:grid;gap:10px;padding:var(--s-4);margin-bottom:var(--s-3)}
+  .ag-main{display:flex;gap:12px;align-items:flex-start}.ag-check{width:22px;height:22px;margin-top:3px;flex:0 0 auto;accent-color:var(--accent)}
+  .ag-when{font-size:var(--t-xs);color:var(--muted)}.ag-title{display:block;font-size:var(--t-md)}.ag-who{font-size:var(--t-sm)}.ag-note{margin:4px 0 0;white-space:pre-wrap;font-size:var(--t-sm);overflow-wrap:anywhere}
+  .ag-done{opacity:.55}.ag-done .ag-title{text-decoration:line-through}.ag-late{border-color:var(--warn)}
+  .ag-act{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .ag-act input{font:inherit;font-size:var(--t-sm);padding:8px 10px;border-radius:10px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);min-height:40px}
+  .ag-strip{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin-bottom:var(--s-4)}
+  @media (max-width:560px){.ag-strip{grid-template-columns:repeat(4,1fr)}}
+  .ag-strip button{display:grid;gap:2px;justify-items:center;padding:10px 4px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;font:inherit}
+  .ag-strip button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .ag-strip small{font-size:11px;opacity:.75}.ag-strip b{font:700 var(--t-lg)/1 var(--f-display)}.ag-strip span{font-size:11px}
+  .ag-h{margin:var(--s-5) 0 var(--s-3);font-size:var(--t-md)}
+  .ag-form{display:grid;gap:8px}
+  .ag-form select,.ag-form input,.ag-form textarea{font:inherit;font-size:var(--t-sm);padding:9px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);min-width:0;width:100%}
+  .ag-form textarea{min-height:56px;resize:vertical}
+  .ag-form .row3{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+  .ag-donebox summary{cursor:pointer;color:var(--muted);margin:var(--s-5) 0 var(--s-3)}
+  button.flag{border:0;cursor:pointer}
+  /* Devis détaillé */
+  #dv input,#dv textarea{font:inherit;font-size:var(--t-sm);padding:9px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);min-width:0;width:100%}
+  #dv textarea{min-height:44px;resize:vertical}
+  .dv-line{display:grid;grid-template-columns:1fr 70px 120px 44px;gap:8px;align-items:start;margin-bottom:8px}
+  @media (max-width:560px){.dv-line{grid-template-columns:1fr 1fr 44px}.dv-line textarea{grid-column:1/-1}}
+  .dv-x{min-height:42px;border-radius:10px;border:1px solid var(--line-2);background:transparent;color:var(--ink);cursor:pointer}
+  .dv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+  #dv label{display:grid;gap:4px;font-size:var(--t-xs);color:var(--muted)}
 </style>
 </head>
 <body>
@@ -100,6 +128,131 @@ const demo = {
 };
 const ms = v => !v ? 0 : typeof v === 'string' ? Date.parse(v) : v.toMillis ? v.toMillis() : +v;
 let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false, ebookPdf = null, lq = '';
+
+/* ---------- Agenda : appels, travail sur les projets, rendez-vous, rappels (collection privée qt_agenda) ---------- */
+const KINDS = { appel: ['📞', 'Appel'], projet: ['🛠️', 'Travail projet'], rdv: ['🤝', 'Rendez-vous'], rappel: ['🔔', 'Rappel'] };
+let agenda = [], agendaErr = false, planFor = null, agDay = '';
+const isoDay = t => { const d = new Date(t); return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const today = () => isoDay(Date.now());
+const addDays = (iso, n) => { const [y, m, d] = iso.split('-').map(Number); return isoDay(new Date(y, m - 1, d + n)); };
+const dayName = iso => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }); };
+const first = n => String(n || '').trim().split(' ')[0];
+const readForm = el => Object.fromEntries([...el.querySelectorAll('[name]')].map(i => [i.name, i.value.trim()]));
+async function agCreate(ev) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ev.date || '')) throw new Error('date');
+  const rec = { kind: KINDS[ev.kind] ? ev.kind : 'rappel', titre: String(ev.titre || '').slice(0, 200), date: ev.date, heure: /^\d{2}:\d{2}$/.test(ev.heure || '') ? ev.heure : '',
+    duree: Math.min(480, Math.max(5, +ev.duree || 30)), devisId: String(ev.devisId || ''), note: String(ev.note || '').slice(0, 1000), done: false };
+  if (DEMO) { agenda.push({ ...rec, id: 'a' + Date.now() }); return; }
+  const { Fs, db } = await fb();
+  const r = await Fs.addDoc(Fs.collection(db, 'qt_agenda'), { ...rec, created: Fs.serverTimestamp() });
+  agenda.push({ ...rec, id: r.id });
+}
+async function agPatch(id, data) {
+  const a = agenda.find(x => x.id === id); if (!a) return; Object.assign(a, data);
+  if (DEMO) return;
+  const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_agenda', id), { ...data, updated: Fs.serverTimestamp() }, { merge: true });
+}
+async function agDel(id) { agenda = agenda.filter(a => a.id !== id); if (DEMO) return; const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_agenda', id)); }
+/* Les échéances privées des demandes apparaissent aussi dans l'agenda (lecture seule). */
+const agEntries = () => [...agenda, ...items.filter(x => x.echeance && !['livre', 'perdu'].includes(x.status || 'nouveau'))
+  .map(x => ({ id: 'ech-' + x.id, virtual: true, kind: 'rappel', titre: 'Échéance : ' + x.nom, date: x.echeance, heure: '', devisId: x.id, done: false }))]
+  .filter(a => /^\d{4}-\d{2}-\d{2}$/.test(a.date || '')).sort((a, b) => (a.date + (a.heure || '99')).localeCompare(b.date + (b.heure || '99')));
+const agLate = () => agEntries().filter(a => !a.done && a.date < today());
+const agToday = () => agEntries().filter(a => !a.done && a.date === today());
+const stamp = (date, heure) => date.replace(/-/g, '') + (heure ? 'T' + heure.replace(':', '') + '00' : '');
+function agEnd(a) {
+  if (!a.heure) return addDays(a.date, 1).replace(/-/g, '');
+  const [h, m] = a.heure.split(':').map(Number), [y, mo, d] = a.date.split('-').map(Number), e = new Date(y, mo - 1, d, h, m + (+a.duree || 30));
+  return isoDay(e).replace(/-/g, '') + 'T' + String(e.getHours()).padStart(2, '0') + String(e.getMinutes()).padStart(2, '0') + '00';
+}
+const agLabel = a => (KINDS[a.kind] || KINDS.rappel)[1] + ' · ' + a.titre;
+const agDetails = a => { const x = a.devisId && items.find(i => i.id === a.devisId); return [a.note, x && `${x.nom} · ${x.email}${x.tel ? ' · ' + x.tel : ''}`].filter(Boolean).join('\n'); };
+const gcal = a => 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(agLabel(a)) + '&dates=' + stamp(a.date, a.heure) + '/' + agEnd(a) + '&ctz=Europe/Paris&details=' + encodeURIComponent(agDetails(a));
+function ics(list) {
+  const e = s => String(s || '').replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
+  const now = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+  const ev = list.map(a => ['BEGIN:VEVENT', 'UID:' + a.id + '@quentools.fr', 'DTSTAMP:' + now,
+    a.heure ? 'DTSTART:' + stamp(a.date, a.heure) : 'DTSTART;VALUE=DATE:' + stamp(a.date), a.heure ? 'DTEND:' + agEnd(a) : 'DTEND;VALUE=DATE:' + agEnd(a),
+    'SUMMARY:' + e(agLabel(a)), 'DESCRIPTION:' + e(agDetails(a)),
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + e(a.titre), 'TRIGGER:' + (a.heure ? '-PT15M' : 'PT9H'), 'END:VALARM', 'END:VEVENT'].join('\r\n'));
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//QuenTools//Agenda//FR', ...ev, 'END:VCALENDAR', ''].join('\r\n');
+}
+const dl = (name, text, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); };
+const agFormHtml = (p, id) => `<div class="ag-form" id="${id}"><div class="row3">
+    <select name="kind" aria-label="Type">${Object.entries(KINDS).map(([k, [i, l]]) => `<option value="${k}"${k === (p.kind || 'appel') ? ' selected' : ''}>${i} ${l}</option>`).join('')}</select>
+    <input name="date" type="date" value="${esc(p.date || today())}" aria-label="Date">
+    <input name="heure" type="time" value="${esc(p.heure || '')}" aria-label="Heure (facultatif)">
+    <select name="duree" aria-label="Durée">${[15, 30, 60, 120, 240].map(m => `<option value="${m}"${m === (p.duree || 30) ? ' selected' : ''}>${m < 60 ? m + ' min' : m / 60 + ' h'}</option>`).join('')}</select></div>
+  <input name="titre" maxlength="200" placeholder="Quoi ? Ex. Appeler pour cadrer le projet" value="${esc(p.titre || '')}" aria-label="Titre">
+  ${p.devisId !== undefined ? `<input type="hidden" name="devisId" value="${esc(p.devisId)}">`
+    : `<select name="devisId" aria-label="Client lié"><option value="">Aucun client lié</option>${items.filter(x => (x.status || 'nouveau') !== 'perdu').map(x => `<option value="${esc(x.id)}">${esc(x.nom)} · ${esc(x.type)}</option>`).join('')}</select>`}
+  <textarea name="note" maxlength="1000" placeholder="Note (facultatif) : ce qu’il faut préparer, les questions à poser…" aria-label="Note"></textarea></div>`;
+function agRow(a) {
+  const k = KINDS[a.kind] || KINDS.rappel, x = a.devisId && items.find(i => i.id === a.devisId), late = !a.done && a.date < today();
+  return `<article class="card ag${a.done ? ' ag-done' : ''}${late ? ' ag-late' : ''}" data-ag="${esc(a.id)}">
+    <div class="ag-main">${a.virtual ? '<span class="ag-check" aria-hidden="true">📌</span>' : `<input type="checkbox" class="ag-check" data-agdo="done"${a.done ? ' checked' : ''} aria-label="Marquer comme fait">`}
+      <div><div class="ag-when">${k[0]} ${esc(k[1])} · ${esc(dayName(a.date))}${a.heure ? ' à ' + esc(a.heure) : ''}${late ? ' · <b>en retard</b>' : ''}</div>
+        <b class="ag-title">${esc(a.titre || k[1])}</b>${x ? `<div class="muted ag-who">${esc(x.nom)}${x.tel ? ' · ' + esc(x.tel) : ''}</div>` : ''}${a.note ? `<p class="ag-note">${esc(a.note)}</p>` : ''}</div></div>
+    <div class="ag-act">${x && x.tel ? `<a class="btn btn-sm btn-accent" href="tel:${esc(String(x.tel).replace(/[^\d+]/g, ''))}">Appeler</a>` : ''}
+      ${x ? '<button class="btn btn-sm btn-ghost" data-agdo="open">Voir la demande</button>' : ''}
+      ${a.virtual || a.done ? '' : `<button class="btn btn-sm btn-ghost" data-agdo="later">+1 jour</button><input type="date" data-agf="date" value="${esc(a.date)}" aria-label="Changer la date"><input type="time" data-agf="heure" value="${esc(a.heure || '')}" aria-label="Changer l’heure">`}
+      <a class="btn btn-sm btn-ghost" href="${esc(gcal(a))}" target="_blank" rel="noopener">Google Agenda</a><button class="btn btn-sm btn-ghost" data-agdo="ics">Ajouter au téléphone</button>
+      ${a.virtual ? '' : '<button class="btn btn-sm btn-ghost" data-agdo="del" style="margin-left:auto">Supprimer</button>'}</div></article>`;
+}
+function viewAgenda() {
+  if (agendaErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Une mise à jour des règles</h2><p>L’agenda s’enregistre dans une collection privée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase, puis revenez ici.</p>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-tab="regles">Voir les règles</button><button class="btn btn-ghost" data-do="reload">J’ai publié les règles</button></div></section>`;
+  const all = agEntries(), t0 = today(), open = all.filter(a => !a.done), days = Array.from({ length: 7 }, (_, i) => addDays(t0, i));
+  const strip = `<div class="ag-strip">${days.map((d, i) => { const n = open.filter(a => a.date === d).length; return `<button data-agday="${d}" aria-pressed="${agDay === d}"><small>${i ? esc(dayName(d).split(' ')[0]) : 'auj.'}</small><b>${+d.slice(8)}</b><span>${n || '–'}</span></button>`; }).join('')}<button data-agday="" aria-pressed="${!agDay}"><small>tout</small><b>${open.length}</b><span>à faire</span></button></div>`;
+  const groups = agDay ? [[dayName(agDay), all.filter(a => a.date === agDay)]] : [
+    ['En retard', open.filter(a => a.date < t0)], ['Aujourd’hui', open.filter(a => a.date === t0)], ['Demain', open.filter(a => a.date === addDays(t0, 1))],
+    ['Cette semaine', open.filter(a => a.date > addDays(t0, 1) && a.date <= addDays(t0, 7))], ['Plus tard', open.filter(a => a.date > addDays(t0, 7))]];
+  const done = all.filter(a => a.done && a.date >= addDays(t0, -14));
+  const body = groups.map(([l, list]) => list.length ? `<h3 class="ag-h">${esc(l)} <span class="muted">(${list.length})</span></h3>${list.map(agRow).join('')}` : '').join('');
+  return `<section class="card" style="padding:var(--s-5);margin-bottom:var(--s-5)"><h2 style="margin:0 0 var(--s-3)">Ajouter à l’agenda</h2>${agFormHtml({}, 'ag-new')}
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:var(--s-3)"><button class="btn btn-accent" data-do="ag-add">Ajouter</button><button class="btn btn-ghost" data-do="ag-ics-all">Exporter tout ce qui est prévu vers mon téléphone</button></div></section>
+    ${strip}${body || `<div class="card empty">${agDay ? 'Rien de prévu ce jour-là.' : 'Rien de prévu. Ajoutez un appel, une session de travail ou un rappel ci-dessus.'}</div>`}
+    ${!agDay && done.length ? `<details class="ag-donebox"><summary>Faits ces 14 derniers jours (${done.length})</summary>${done.map(agRow).join('')}</details>` : ''}`;
+}
+
+/* ---------- Devis détaillé (numéroté, mentions obligatoires, publié dans l'espace client) ---------- */
+const SELLER_DEF = { marque: 'QuenTools', titulaire: 'Quentin Storace EI', adresse: '231 rue Saint-Honoré, 75001 Paris', siren: '912026713', email: C.email || '',
+  conditions: 'La première version est présentée avant la suite du travail ; les modifications demandées après sa validation peuvent faire l’objet d’un devis complémentaire.\nEn cas de retard de paiement : pénalités égales à trois fois le taux d’intérêt légal et, pour les clients professionnels, indemnité forfaitaire de 40 € pour frais de recouvrement.' };
+const seller = () => ({ ...SELLER_DEF, ...(notes._vendeur || {}) });
+let dv = null;
+const dvDoc = () => ({ num: dv.num || '', date: dv.date || today(), validite: +dv.validite || 30, delai: dv.delai || '', acompte: +dv.acompte || 0, notes: dv.notes || '',
+  conditions: seller().conditions || '', lignes: dv.lignes, vendeur: (({ marque, titulaire, adresse, siren, email }) => ({ marque, titulaire, adresse, siren, email }))(seller()), client: dv.client });
+function dvInit() {
+  const x = estFor && items.find(i => i.id === estFor);
+  if (x && x.devisData) { try { const d = JSON.parse(x.devisData); dv = { for: x.id, num: d.num, validite: d.validite, delai: d.delai, acompte: d.acompte, notes: d.notes, lignes: d.lignes || [], client: d.client || {} }; return; } catch (e) { /* devis illisible : on repart de zéro */ } }
+  const g = id => document.getElementById(id), type = g('e-type') ? g('e-type').value : (x && x.type) || 'Site vitrine';
+  const lvl = g('e-lvl') ? g('e-lvl').selectedOptions[0].textContent.split(' (')[0].toLowerCase() : 'standard';
+  const lignes = [{ l: `${type} (${lvl}) : conception, réalisation et mise en ligne`, q: 1, pu: estMid || '' }];
+  dv = { for: x ? x.id : null, num: '', validite: 30, delai: '', acompte: 30, notes: g('e-maint') && g('e-maint').checked ? `Maintenance facultative : ${eur(MAINT[0])} à ${eur(MAINT[1])} par mois (hébergement, sauvegardes, petites modifications).` : '',
+    lignes, client: { nom: x ? x.nom : '', email: x ? x.email : '', adresse: '' } };
+}
+function dvHtml() {
+  if (!dv) return `<section class="card" style="padding:clamp(20px,4vw,36px);margin-top:var(--s-5)"><h2 style="margin-top:0">Devis détaillé</h2>
+    <p class="muted">Transformez cette estimation en vrai devis : numéro, lignes, acompte et mentions obligatoires. Le client le voit dans son espace, peut l’imprimer et l’accepter en un clic.</p>
+    <button class="btn btn-accent" data-do="dv-new">${estFor && (items.find(i => i.id === estFor) || {}).devisData ? 'Modifier le devis envoyé' : 'Préparer le devis'}</button></section>`;
+  const line = (l, i) => `<div class="dv-line"><textarea data-dvl="${i}:l" placeholder="Désignation (ex. Site vitrine 5 pages)" aria-label="Désignation">${esc(l.l)}</textarea>
+    <input data-dvl="${i}:q" type="number" min="0" step="1" inputmode="numeric" value="${esc(l.q ?? 1)}" aria-label="Quantité" title="Quantité">
+    <input data-dvl="${i}:pu" type="number" min="0" step="10" inputmode="decimal" value="${esc(l.pu ?? '')}" placeholder="Prix €" aria-label="Prix unitaire en euros">
+    <button class="dv-x" data-do="dv-del" data-i="${i}" aria-label="Retirer la ligne">✕</button></div>`;
+  return `<section class="card" id="dv" style="padding:clamp(20px,4vw,36px);margin-top:var(--s-5);display:grid;gap:var(--s-3)">
+    <h2 style="margin:0">Devis ${dv.num ? esc(dv.num) : '<span class="muted" style="font-size:var(--t-sm);font-weight:500">(numéro attribué à la publication)</span>'}</h2>
+    <div class="dv-grid"><label>Client<input data-dv="client.nom" value="${esc(dv.client.nom)}"></label><label>E-mail<input data-dv="client.email" type="email" value="${esc(dv.client.email)}"></label></div>
+    <label>Adresse du client (obligatoire si c’est un professionnel)<textarea data-dv="client.adresse" rows="2">${esc(dv.client.adresse || '')}</textarea></label>
+    <div><b style="display:block;margin-bottom:8px">Lignes</b>${dv.lignes.map(line).join('')}<button class="btn btn-sm btn-ghost" data-do="dv-add">Ajouter une ligne</button></div>
+    <div class="dv-grid"><label>Acompte à la commande (%)<input data-dv="acompte" type="number" min="0" max="100" step="5" value="${esc(dv.acompte)}"></label>
+      <label>Validité (jours)<input data-dv="validite" type="number" min="1" max="365" value="${esc(dv.validite)}"></label>
+      <label>Délai de réalisation<input data-dv="delai" placeholder="Ex. 2 semaines après l’acompte" value="${esc(dv.delai)}"></label></div>
+    <label>Remarques (visibles sur le devis)<textarea data-dv="notes" rows="2">${esc(dv.notes)}</textarea></label>
+    <p class="muted" style="margin:0">Total</p><div class="est-out" id="dv-total" style="margin:0">${eur(QTD.total({ lignes: dv.lignes }))}</div>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" data-do="dv-preview">Aperçu / PDF</button>
+      ${estFor ? `<button class="btn btn-accent" data-do="dv-publish">${dv.num ? 'Mettre à jour dans l’espace client' : 'Publier dans l’espace client'}</button><button class="btn btn-ghost" data-do="dv-mail">Prévenir par e-mail</button>` : '<span class="muted" style="font-size:var(--t-xs)">Ouvrez une demande puis « Estimer » pour publier le devis chez ce client.</span>'}</div>
+    <p class="muted" style="font-size:var(--t-xs);margin:0">Vos coordonnées et conditions de paiement se règlent dans <b>Réglages du site</b>. TVA non applicable (art. 293 B du CGI) ajoutée automatiquement.</p></section>`;
+}
 async function loadLeads() {
   leadsErr = false;
   if (DEMO) { leads = [{ name: 'Camille Durand', email: 'camille@example.com', at: new Date(), source: 'ebook' }, { name: 'Yanis K.', email: 'yanis@example.com', at: new Date(Date.now() - 864e5), source: 'ebook' }]; return; }
@@ -121,7 +274,7 @@ function viewContacts() {
     <p class="muted" style="font-size:var(--t-xs)">Chaque contact a accepté de recevoir l’e-book et des nouvelles de QuenTools. Pour une demande de suppression, utilisez le bouton « Supprimer » du contact.</p>`;
 }
 async function load() {
-  if (DEMO) { items = demo.items; site = demo.site; return; }
+  if (DEMO) { items = demo.items; site = demo.site; if (!agenda.length) agenda = [{ id: 'a1', kind: 'appel', titre: 'Appeler pour cadrer le site', date: today(), heure: '14:00', duree: 15, devisId: 'd1', note: 'Demander les photos et les horaires.', done: false }, { id: 'a2', kind: 'projet', titre: 'Maquette de l’accueil', date: addDays(today(), 1), heure: '09:30', duree: 120, devisId: 'd3', note: '', done: false }, { id: 'a3', kind: 'rappel', titre: 'Relancer le devis', date: addDays(today(), -1), heure: '', duree: 30, devisId: 'd2', note: '', done: false }]; return; }
   const { Fs, db } = await fb();
   try {
     const snap = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_devis'), Fs.orderBy('at', 'desc'), Fs.limit(300)));
@@ -132,6 +285,8 @@ async function load() {
   catch (e) { rulesOld = !denied && /permission/i.test(e.code || e.message); }
   for (const it of items) { const n = notes[it.id]; if (n) { it.note = n.text ?? it.note; it.echeance = n.echeance ?? it.echeance; } }
   try { const s = await Fs.getDoc(Fs.doc(db, 'qt_admin', 'config')); site = s.exists() ? s.data() : {}; } catch (e) { site = {}; }
+  try { const a = await Fs.getDocs(Fs.collection(db, 'qt_agenda')); agenda = a.docs.map(d => ({ id: d.id, ...d.data() })); agendaErr = false; }
+  catch (e) { agenda = []; agendaErr = !denied && /permission/i.test(e.code || e.message); }
 }
 async function patch(id, data) {
   const it = items.find(x => x.id === id); Object.assign(it, data);
@@ -155,6 +310,9 @@ async function addMsg(id, m) {
   await Fs.addDoc(Fs.collection(db, 'qt_devis', id, 'messages'), { ...rec, at: Fs.serverTimestamp() });
 }
 const TPL = {
+  cadrage: 'Bonjour {prenom},\n\nMerci pour votre demande. Pour vous faire un devis précis, j’ai quelques questions :\n\n1. Avez-vous déjà un site, un nom de domaine ou un logo ?\n2. Quelles pages ou fonctions sont indispensables pour vous ?\n3. Avez-vous des exemples de sites ou d’outils que vous aimez ?\n4. Pour quand en auriez-vous besoin ?\n\nSi c’est plus simple, on peut en parler 15 minutes au téléphone : dites-moi quand vous êtes disponible.\n\nBien à vous,\nQuenTools',
+  appel: 'Bonjour {prenom},\n\nPour avancer sur votre projet, je vous propose un court appel de 15 minutes. Quels jours et horaires vous arrangent cette semaine ?\n\nBien à vous,\nQuenTools',
+  demarrage: 'Bonjour {prenom},\n\nMerci pour votre accord ! Je commence le travail et je vous montre une première version très vite. Vous pouvez suivre l’avancement ici, dans votre espace.\n\nBien à vous,\nQuenTools',
   recu: 'Bonjour {prenom},\n\nMerci pour votre demande, je l’ai bien reçue. Je reviens vers vous sous 48 h avec mes questions ou une première proposition.\n\nBien à vous,\nQuenTools',
   devis: 'Bonjour {prenom},\n\nVotre devis est prêt : vous le trouverez via le bouton « Voir le devis » de cet espace. Il précise ce qui est inclus et le prix, fixé avant de commencer. Dites-moi si vous avez des questions, ou acceptez-le directement ici.\n\nBien à vous,\nQuenTools',
   relance: 'Bonjour {prenom},\n\nJe me permets de revenir vers vous au sujet du devis envoyé. Avez-vous eu le temps d’y jeter un œil ? Je reste disponible pour l’ajuster si besoin.\n\nBien à vous,\nQuenTools',
@@ -175,16 +333,16 @@ async function saveSite(data) {
 /* ---------- Écrans ---------- */
 const toast = (m, warn) => { const n = document.getElementById('toast'); if (!n) return; n.innerHTML = `<div class="notice${warn ? ' warn' : ''}">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => n.innerHTML = '', 3500); };
 function shell(body) {
-  const nb = items.filter(x => (x.status || 'nouveau') === 'nouveau').length;
+  const nb = items.filter(x => (x.status || 'nouveau') === 'nouveau').length, na = agLate().length + agToday().length;
   document.title = (nb ? `(${nb}) ` : '') + 'Administration · QuenTools';
   const t = (k, l) => `<button role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`;
   app.innerHTML = `<div class="adm-head"><div><span class="eyebrow">Tableau de bord</span><h1 class="h-section" style="margin:var(--s-2) 0 0">Bonjour 👋</h1></div>
     <div class="row" style="display:flex;gap:8px;align-items:center"><span class="muted" style="font-size:var(--t-xs)">${esc(DEMO ? 'Démonstration' : user && user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></div>
-    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('estimer', 'Estimer un prix')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}${t('contacts', 'Contacts')}${t('regles', 'Règles')}${rulesOld ? '<span class="count">!</span>' : ''}</div>
+    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('agenda', `Agenda${na ? `<span class="count">${na}</span>` : ''}`)}${t('estimer', 'Devis et prix')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}${t('contacts', 'Contacts')}${t('regles', 'Règles')}${rulesOld ? '<span class="count">!</span>' : ''}</div>
     <div id="toast" role="status" aria-live="polite"></div>${body}`;
 }
 function render() {
-  shell(tab === 'demandes' ? viewRequests() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : viewLinks());
+  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : viewLinks());
   if (tab === 'estimer') estimate();
 }
 
@@ -194,6 +352,7 @@ function rulesText() {
 function qtClient(d) { return request.auth != null && request.auth.token.email_verified == true && d.emailLower == request.auth.token.email.lower(); }
 match /qt_admin/{doc} { allow read: if true; allow write: if qtAdmin(); }
 match /qt_notes/{id} { allow read, write: if qtAdmin(); }
+match /qt_agenda/{id} { allow read, write: if qtAdmin(); }
 match /qt_ebook/{id} { allow read: if request.auth != null && request.auth.token.email_verified == true; allow write: if qtAdmin(); }
 match /qt_leads/{id} {
   allow create, update: if request.auth != null && request.auth.token.email_verified == true && id == request.auth.token.email.lower()
@@ -250,7 +409,9 @@ function viewRequests() {
     <div><b>${items.filter(x => ms(x.at) > month).length}</b><span>demandes sur 30 jours</span></div>
     <div><b>${closed.length ? Math.round(100 * won.length / closed.length) + ' %' : '—'}</b><span>taux de réussite</span></div>
     <div><b>${eur(won.reduce((s, x) => s + (+x.montant || 0), 0))}</b><span>acceptés (${eur(items.filter(x => st0(x) === 'envoye').reduce((s, x) => s + (+x.montant || 0), 0))} en attente)</span></div></div>`;
-  const todo = [msgs.length && `<span class="flag">💬 ${msgs.length} nouveau${msgs.length > 1 ? 'x' : ''} message${msgs.length > 1 ? 's' : ''} client</span>`,
+  const todo = [agLate().length && `<button class="flag" data-tab="agenda">⚠️ ${agLate().length} tâche${agLate().length > 1 ? 's' : ''} en retard dans l’agenda</button>`,
+    agToday().length && `<button class="flag" data-tab="agenda">📅 ${agToday().length} à faire aujourd’hui</button>`,
+    msgs.length && `<span class="flag">💬 ${msgs.length} nouveau${msgs.length > 1 ? 'x' : ''} message${msgs.length > 1 ? 's' : ''} client</span>`,
     relance.length && `<span class="flag">⏰ ${relance.length} devis à relancer (plus de 7 jours)</span>`,
     echus.length && `<span class="flag">📅 ${echus.length} échéance${echus.length > 1 ? 's' : ''} proche${echus.length > 1 ? 's' : ''}</span>`,
     items.filter(x => x.reponse === 'accepte' && st0(x) === 'envoye').length && `<span class="flag">✅ devis accepté par le client : à confirmer</span>`].filter(Boolean);
@@ -261,13 +422,13 @@ function viewRequests() {
     .filter(x => !qq || [x.nom, x.email, x.besoin, x.type, x.note].join(' ').toLowerCase().includes(qq));
   const thread = x => { const t = threads[x.id];
     return `<div class="thread">${!t ? '<span class="muted">Chargement…</span>' : t.length ? t.map(m => `<div class="msg ${esc(m.from)}"><small>${m.from === 'client' ? 'Client' : m.from === 'admin' ? 'Vous' : 'Suivi'} · ${ms(m.at) ? new Date(ms(m.at)).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</small>${esc(m.text)}</div>`).join('') : '<span class="muted">Aucun échange pour l’instant.</span>'}
-      <select data-tpl aria-label="Réponse type"><option value="">Réponse type…</option><option value="recu">Demande reçue</option><option value="devis">Devis envoyé</option><option value="relance">Relance</option><option value="livraison">Livraison</option></select>
+      <select data-tpl aria-label="Réponse type"><option value="">Réponse type…</option><option value="recu">Demande reçue</option><option value="cadrage">Questions pour le devis</option><option value="appel">Proposer un appel</option><option value="devis">Devis envoyé</option><option value="relance">Relance</option><option value="demarrage">Démarrage du projet</option><option value="livraison">Livraison</option></select>
       <textarea data-msg placeholder="Votre message au client (visible dans son espace)" maxlength="2000" aria-label="Message au client"></textarea>
       <div class="row"><button class="btn btn-sm btn-accent" data-do="send">Envoyer dans l’espace client</button></div></div>`; };
   const card = x => { const st = st0(x), d = ms(x.at), nb = items.filter(i => String(i.email).toLowerCase() === String(x.email).toLowerCase()).length, unread = ms(x.clientMsgAt) > ms(x.seenAt);
     return `<article class="card req" data-id="${esc(x.id)}">
       <div class="req-top"><h3>${esc(x.nom)}</h3><span class="chip st-${st}">${stLabel(st)}</span></div>
-      <div class="meta"><span class="chip">${esc(x.type)}</span><span class="chip">⏱ ${esc(x.delai)}</span><span class="chip">💶 ${esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR')}</span>` : ''}${nb > 1 ? `<span class="chip">🔁 ${nb} demandes de ce client</span>` : ''}${x.reponse === 'accepte' ? '<span class="flag">✅ Devis accepté par le client</span>' : x.reponse === 'refuse' ? '<span class="flag">❌ Devis refusé par le client</span>' : ''}${unread ? '<span class="flag">💬 Nouveau message</span>' : ''}</div>
+      <div class="meta"><span class="chip">${esc(x.type)}</span><span class="chip">⏱ ${esc(x.delai)}</span><span class="chip">💶 ${esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR')}</span>` : ''}${nb > 1 ? `<span class="chip">🔁 ${nb} demandes de ce client</span>` : ''}${(() => { const nx = agenda.filter(a => a.devisId === x.id && !a.done).sort((a, b) => (a.date + a.heure).localeCompare(b.date + b.heure))[0]; return nx ? `<span class="chip">${(KINDS[nx.kind] || KINDS.rappel)[0]} ${esc(dayName(nx.date))}${nx.heure ? ' ' + esc(nx.heure) : ''}</span>` : ''; })()}${x.devisData ? '<span class="chip">📄 devis détaillé</span>' : ''}${x.reponse === 'accepte' ? '<span class="flag">✅ Devis accepté par le client</span>' : x.reponse === 'refuse' ? '<span class="flag">❌ Devis refusé par le client</span>' : ''}${unread ? '<span class="flag">💬 Nouveau message</span>' : ''}</div>
       <p class="need">${esc(x.besoin)}</p>
       <div class="who">✉️ ${esc(x.email)}${x.tel ? ` · 📞 ${esc(x.tel)}` : ''}</div>
       <div class="row3"><select data-field="status" aria-label="Statut">${STATUS.map(([k, l]) => `<option value="${k}"${k === st ? ' selected' : ''}>${l}</option>`).join('')}</select>
@@ -277,8 +438,9 @@ function viewRequests() {
       <textarea data-field="note" placeholder="Note privée (rappel, ce qui a été dit…) : jamais visible par le client" aria-label="Note privée">${esc(x.note || '')}</textarea>
       <div class="row"><button class="btn btn-sm btn-accent" data-do="thread">${openId === x.id ? 'Masquer les échanges' : 'Échanges avec le client'}</button><button class="btn btn-sm btn-ghost" data-do="reply">E-mail</button>
         ${x.tel ? `<a class="btn btn-sm btn-ghost" href="tel:${esc(String(x.tel).replace(/[^\d+]/g, ''))}">Appeler</a>` : ''}
-        <button class="btn btn-sm btn-ghost" data-do="estimate">Estimer</button><button class="btn btn-sm btn-ghost" data-do="copy">Copier</button>
+        <button class="btn btn-sm btn-ghost" data-do="plan">${planFor === x.id ? 'Fermer' : 'Planifier'}</button><button class="btn btn-sm btn-ghost" data-do="estimate">Devis</button><button class="btn btn-sm btn-ghost" data-do="copy">Copier</button>
         <button class="btn btn-sm btn-ghost" data-do="del" style="margin-left:auto">Supprimer</button></div>
+      ${planFor === x.id ? `<div class="thread">${agFormHtml({ kind: 'appel', date: addDays(today(), 1), heure: '10:00', duree: 15, titre: 'Appeler ' + x.nom, devisId: x.id }, 'plan-' + x.id)}<div class="row"><button class="btn btn-sm btn-accent" data-do="plan-save">Ajouter à l’agenda</button></div></div>` : ''}
       ${openId === x.id ? thread(x) : ''}</article>`; };
   return (rulesOld ? '<div class="notice warn" style="margin-bottom:var(--s-4)">Les règles Firebase ne sont pas à jour (notes privées, espace client) : ouvrez l’onglet <b>Règles</b>.</div>' : '') + kpis + (todo.length ? `<div class="row" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--s-4)">${todo.join('')}</div>` : '') + filters
     + (list.length ? list.map(card).join('') : `<div class="card empty">${items.length ? 'Aucune demande dans ce filtre.' : 'Aucune demande pour l’instant. Elles arrivent ici dès qu’un visiteur remplit le formulaire de devis.'}</div>`);
@@ -299,7 +461,7 @@ function viewEstimate() {
     </form>
     <p class="muted" style="margin:var(--s-5) 0 0">Prix conseillé</p><div class="est-out" id="e-out"></div><p class="muted" id="e-sub" style="margin-top:0"></p>
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">${x ? '<button class="btn btn-accent" data-do="est-reply">Envoyer cette proposition</button><button class="btn btn-ghost" data-do="est-save">Noter ce montant sur la demande</button>' : ''}<button class="btn btn-ghost" data-do="est-copy">Copier le texte</button></div>
-    <p class="muted" style="font-size:var(--t-xs)">Fourchettes de la grille QuenTools (design/TARIFS.md). À ajuster selon le client : c’est une aide, pas un engagement.</p></section>`;
+    <p class="muted" style="font-size:var(--t-xs)">Fourchettes de la grille QuenTools (design/TARIFS.md). À ajuster selon le client : c’est une aide, pas un engagement.</p></section>${dvHtml()}`;
 }
 let estText = '', estMid = 0;
 function estimate() {
@@ -331,7 +493,14 @@ function viewSite() {
       <div class="field"><label for="s-k">Pseudo TikTok</label><input id="s-k" name="tiktok" maxlength="40" value="${v('tiktok')}" placeholder="${esc(C.tiktok || 'quentools')}"></div></div>
     <div class="field"><label for="s-f">Relais des demandes (facultatif)</label><input id="s-f" name="formEndpoint" maxlength="300" value="${v('formEndpoint')}" placeholder="https://…workers.dev/support"><small>Copie de chaque demande envoyée à ce relais (par ex. celui de Wouf). Les demandes arrivent ici dans tous les cas.</small></div>
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="save-site">Enregistrer</button><a class="btn btn-ghost" href="../" target="_blank" rel="noopener">Voir le site</a></div>
-    <p class="muted" style="font-size:var(--t-xs);margin:0">Visible par les visiteurs sous 10 minutes environ.</p></form>`;
+    <p class="muted" style="font-size:var(--t-xs);margin:0">Visible par les visiteurs sous 10 minutes environ.</p></form>
+    <form class="form card" id="seller-form" style="padding:clamp(20px,4vw,36px);margin-top:var(--s-5)" onsubmit="return false">
+    <h2 style="margin:0">Vos informations sur les devis</h2><p class="muted" style="margin:0">Privées : elles n’apparaissent que sur les devis que vous envoyez.</p>
+    ${(() => { const v = seller(), f = (n, l, ph) => `<div class="field"><label for="v-${n}">${l}</label><input id="v-${n}" name="${n}" maxlength="200" value="${esc(v[n] || '')}" placeholder="${esc(ph || '')}"></div>`;
+      return `<div class="form-grid">${f('marque', 'Nom commercial')}${f('titulaire', 'Titulaire (nom suivi de « EI »)')}${f('siren', 'SIREN ou SIRET')}${f('email', 'E-mail')}</div>
+      <div class="field"><label for="v-adresse">Adresse</label><textarea id="v-adresse" name="adresse" maxlength="300" rows="2">${esc(v.adresse || '')}</textarea></div>
+      <div class="field"><label for="v-cond">Conditions affichées sur chaque devis</label><textarea id="v-cond" name="conditions" maxlength="1500" rows="5">${esc(v.conditions || '')}</textarea></div>`; })()}
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="save-seller">Enregistrer</button></div></form>`;
 }
 function viewLinks() {
   const L = [
@@ -352,9 +521,21 @@ const copy = async t => { try { await navigator.clipboard.writeText(t); toast('C
 const mailto = (x, body) => `mailto:${encodeURIComponent(x.email)}?subject=${encodeURIComponent('Votre demande de devis : ' + x.type)}&body=${encodeURIComponent(body)}`;
 const fail = e => toast(/permission/i.test(e && (e.code || e.message)) ? 'Refusé : vérifiez les règles Firestore.' : 'Enregistrement impossible (connexion ?)', true);
 app.addEventListener('click', async e => {
-  const b = e.target.closest('[data-tab],[data-filter],[data-do]'); if (!b) return;
+  const ag = e.target.closest('[data-agdo]');
+  if (ag && ag.tagName !== 'INPUT') {
+    const row = ag.closest('[data-ag]'), id = row.dataset.ag, a = agEntries().find(z => z.id === id), k = ag.dataset.agdo;
+    try {
+      if (k === 'later') { await agPatch(id, { date: addDays(a.date < today() ? today() : a.date, 1) }); render(); toast('Reporté au ' + dayName(a.date)); }
+      else if (k === 'del') { if (confirm('Supprimer « ' + a.titre + ' » de l’agenda ?')) { await agDel(id); render(); } }
+      else if (k === 'ics') dl((a.titre || 'agenda').replace(/[^\w-]+/g, '-').slice(0, 40) + '.ics', ics([a]), 'text/calendar;charset=utf-8');
+      else if (k === 'open') { const x = items.find(i => i.id === a.devisId); tab = 'demandes'; filter = 'tous'; q = x ? x.email : ''; render(); }
+    } catch (err) { fail(err); }
+    return;
+  }
+  const b = e.target.closest('[data-tab],[data-filter],[data-do],[data-agday]'); if (!b) return;
   if (b.dataset.tab) { tab = b.dataset.tab; if (tab !== 'estimer') estFor = null; if (tab === 'contacts') { await loadLeads(); } return render(); }
   if (b.dataset.filter) { filter = b.dataset.filter; return render(); }
+  if (b.dataset.agday !== undefined) { agDay = b.dataset.agday; return render(); }
   const card = b.closest('.req'), x = card && items.find(i => i.id === card.dataset.id), d = b.dataset.do;
   try {
     if (d === 'logout') { const { Au, auth } = await fb(); await Au.signOut(auth); }
@@ -403,7 +584,39 @@ app.addEventListener('click', async e => {
     }
     else if (d === 'reply') { location.href = mailto(x, `Bonjour ${String(x.nom).split(' ')[0]},\n\nMerci pour votre demande. \n\nBien à vous,\nQuenTools\n\n---\nVotre message :\n${x.besoin}`); if ((x.status || 'nouveau') === 'nouveau') { await patch(x.id, { status: 'discussion' }); render(); } }
     else if (d === 'copy') copy(`${x.nom} <${x.email}>${x.tel ? ' · ' + x.tel : ''}\n${x.type} · ${x.delai} · ${x.budget}\n\n${x.besoin}`);
-    else if (d === 'estimate') { estFor = x.id; tab = 'estimer'; render(); }
+    else if (d === 'estimate') { estFor = x.id; dv = null; tab = 'estimer'; render(); if (x.devisData) { dvInit(); render(); } }
+    else if (d === 'plan') { planFor = planFor === x.id ? null : x.id; render(); }
+    else if (d === 'plan-save' || d === 'ag-add') {
+      const f = readForm(document.getElementById(d === 'ag-add' ? 'ag-new' : 'plan-' + x.id));
+      if (!f.titre) f.titre = (KINDS[f.kind] || KINDS.rappel)[1] + (f.devisId ? ' · ' + ((items.find(i => i.id === f.devisId) || {}).nom || '') : '');
+      await agCreate(f); if (d === 'plan-save') planFor = null; render(); toast(`Ajouté à l’agenda : ${dayName(f.date)}${f.heure ? ' à ' + f.heure : ''} ✓`);
+    }
+    else if (d === 'ag-ics-all') { const up = agEntries().filter(a => !a.done && a.date >= today()); if (!up.length) return toast('Rien de prévu à exporter', true); dl('agenda-quentools.ics', ics(up), 'text/calendar;charset=utf-8'); }
+    else if (d === 'dv-new') { dvInit(); render(); }
+    else if (d === 'dv-add') { dv.lignes.push({ l: '', q: 1, pu: '' }); render(); }
+    else if (d === 'dv-del') { dv.lignes.splice(+b.dataset.i, 1); if (!dv.lignes.length) dv.lignes.push({ l: '', q: 1, pu: '' }); render(); }
+    else if (d === 'dv-preview') QTD.open(dvDoc());
+    else if (d === 'dv-publish' || d === 'dv-mail') {
+      const y = items.find(i => i.id === estFor); if (!y) return;
+      if (d === 'dv-mail') { if (!y.devisData) return toast('Publiez d’abord le devis', true);
+        return void (location.href = mailto(y, `Bonjour ${first(y.nom)},\n\nVotre devis ${dv.num} est prêt (${eur(QTD.total(dvDoc()))}). Vous pouvez le consulter, l’imprimer et l’accepter dans votre espace client : https://quentools.fr/espace/ (connexion avec l’adresse ${y.email}).\n\nJe reste disponible pour toute question.\n\nBien à vous,\nQuenTools`)); }
+      if (!dv.lignes.some(l => String(l.l).trim() && +l.pu > 0)) return toast('Ajoutez au moins une ligne avec un prix', true);
+      if (!dv.num) {
+        const yr = new Date().getFullYear(), c = notes._compteur || {}, n = (c.year === yr ? +c.n || 0 : 0) + 1;
+        if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_compteur'), { year: yr, n }); }
+        notes._compteur = { year: yr, n }; dv.num = `QT-${yr}-${String(n).padStart(3, '0')}`;
+      }
+      dv.date = today(); const doc = dvDoc(), tot = Math.round(QTD.total(doc)), again = !!y.devisData;
+      await patch(y.id, { devisData: JSON.stringify(doc), montant: tot, status: WON.includes(y.status) ? y.status : 'envoye' });
+      await addMsg(y.id, { from: 'systeme', text: `Devis ${dv.num} ${again ? 'mis à jour' : 'publié'} : ${eur(tot)}` });
+      if (!again) await addMsg(y.id, { from: 'admin', text: TPL.devis.replace('{prenom}', first(y.nom)) });
+      render(); toast(again ? 'Devis mis à jour ✓' : 'Devis publié dans l’espace client ✓');
+    }
+    else if (d === 'save-seller') {
+      const v = readForm(document.getElementById('seller-form')); notes._vendeur = v;
+      if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_vendeur'), v); }
+      toast('Informations des devis enregistrées ✓');
+    }
     else if (d === 'del') { if (confirm(`Supprimer définitivement la demande de ${x.nom} ?`)) { await remove(x.id); render(); toast('Demande supprimée'); } }
     else if (d === 'est-copy') copy(estText);
     else if (d === 'est-reply' || d === 'est-save') {
@@ -425,7 +638,21 @@ app.addEventListener('click', async e => {
 });
 app.addEventListener('change', async e => {
   const el = e.target;
-  if (el.closest('#est')) return estimate();
+  if (el.closest('#est')) { estimate(); if (dv && !dv.num && dv.lignes.length === 1 && dv.lignes[0].q == 1) { dv.lignes[0].pu = estMid; render(); } return; }
+  if (el.dataset.agdo === 'done' || el.dataset.agf) {
+    const id = el.closest('[data-ag]').dataset.ag;
+    try { if (el.dataset.agdo === 'done') { await agPatch(id, { done: el.checked }); if (el.checked) toast('Fait ✓'); }
+      else if (el.dataset.agf === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(el.value)) await agPatch(id, { date: el.value });
+      else if (el.dataset.agf === 'heure') await agPatch(id, { heure: el.value });
+      render(); } catch (err) { fail(err); }
+    return;
+  }
+  if (dv && (el.dataset.dv || el.dataset.dvl)) {
+    if (el.dataset.dvl) { const [i, f] = el.dataset.dvl.split(':'); dv.lignes[+i][f] = f === 'l' ? el.value.slice(0, 500) : el.value; }
+    else { const [a, k] = el.dataset.dv.split('.'); if (k) dv[a][k] = el.value.slice(0, 300); else dv[a] = el.value.slice(0, 1000); }
+    const t = document.getElementById('dv-total'); if (t) t.textContent = eur(QTD.total({ lignes: dv.lignes }));
+    return;
+  }
   const card = el.closest('.req'); if (!card || !el.dataset.field) return;
   const v = el.dataset.field === 'montant' ? (el.value === '' ? null : Math.max(0, Math.round(+el.value))) : el.value.slice(0, 2000);
   try { await patch(card.dataset.id, { [el.dataset.field]: v }); if (el.dataset.field === 'status') { await addMsg(card.dataset.id, { from: 'systeme', text: 'Statut : ' + stLabel(v) }); if (openId === card.dataset.id) threads[openId] = await loadThread(openId); } if (!['note', 'echeance', 'lien'].includes(el.dataset.field)) render(); toast('Enregistré ✓'); } catch (err) { fail(err); }
