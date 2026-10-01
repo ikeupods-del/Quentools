@@ -93,7 +93,7 @@ p{margin:0 0 var(--s-4);text-wrap:pretty}
 @media (max-width:960px){.hero-grid{grid-template-columns:1fr}}
 .display{font-size:var(--t-3xl);letter-spacing:-.045em;line-height:.95;margin:var(--s-5) 0}
 .display em{font-style:normal;position:relative;white-space:nowrap}
-.display em::after{content:"";position:absolute;left:-.04em;right:-.04em;bottom:.06em;height:.32em;background:var(--lime);z-index:-1;border-radius:4px;transform-origin:left;animation:hl 1s var(--ease-out) .5s both}
+.display em::after{content:"";position:absolute;left:-.04em;right:-.04em;bottom:-.04em;height:.2em;background:var(--lime);z-index:-1;border-radius:4px;transform-origin:left;animation:hl 1s var(--ease-out) .5s both}
 @keyframes hl{from{transform:scaleX(0)}}
 .hero .lede{margin-bottom:var(--s-6)}
 .hero-cta{display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center}
@@ -109,6 +109,7 @@ p{margin:0 0 var(--s-4);text-wrap:pretty}
 .stack:hover .phone:nth-child(1){transform:rotate(-10deg) translateX(-12px)}.stack:hover .phone:nth-child(3){transform:rotate(11deg) translateX(12px)}
 .float-card{position:absolute;z-index:3;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-2);font-size:var(--t-xs);font-weight:600;animation:bob 6s ease-in-out infinite}
 .float-card b{font:700 1.1rem/1 var(--f-display)}
+@media (max-width:640px){.hero-cta{flex-direction:column;align-items:stretch}.hero-cta .btn{justify-content:center}.hero-note{display:block;line-height:1.7}.float-card{display:none}.display{line-height:1.02}}
 @keyframes bob{50%{transform:translateY(-8px)}}
 
 /* Bandeau défilant */
@@ -260,3 +261,4 @@ fieldset.field{border:0;padding:0;margin:0}
 
 .price{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;margin:0}.price b{font:700 var(--t-2xl,2rem)/1.1 var(--f-display);letter-spacing:-.03em;color:inherit}.price span{font-size:var(--t-sm);opacity:.7}
 .offer p.price{color:var(--ink)}.offer.is-featured p.price{color:var(--bg)}
+@media (max-width:640px){.section{padding-block:44px}.section-head{gap:var(--s-3);margin-bottom:24px}.lede{font-size:var(--t-md)}.card{padding:var(--s-4)}.grid-2,.grid-3,.bento{gap:var(--s-4)}.stat{padding:var(--s-4)}.cta-band h2{max-width:none}.stack{max-width:420px;margin-top:var(--s-4)}}
