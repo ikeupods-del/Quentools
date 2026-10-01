@@ -6,7 +6,7 @@
 <title>Administration · QuenTools</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/qt.css?v=20261001e">
+<link rel="stylesheet" href="../assets/qt.css?v=20261001f">
 <script src="../assets/qt-config.js"></script>
 <style>
   .adm-head{display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;margin-bottom:var(--s-5)}
@@ -99,7 +99,7 @@ const demo = {
   ], site: { announceOn: false, announce: '', announceUrl: '', available: true, availText: '' }
 };
 const ms = v => !v ? 0 : typeof v === 'string' ? Date.parse(v) : v.toMillis ? v.toMillis() : +v;
-let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false, ebook = null;
+let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false, ebook = null, ebookPdf = null;
 const EBOOK_SRC = 'https://raw.githubusercontent.com/ikeupods-del/Quentools/HEAD/ebook-source/contenu.html';
 async function loadLeads() {
   leadsErr = false;
@@ -107,6 +107,7 @@ async function loadLeads() {
   try {
     const { Fs, db } = await fb();
     try { const e = await Fs.getDoc(Fs.doc(db, 'qt_ebook', 'v1')); ebook = e.exists() ? { size: (e.data().html || '').length, at: e.data().updated } : null; } catch (x) { ebook = null; }
+    try { const e = await Fs.getDoc(Fs.doc(db, 'qt_ebook', 'pdf')); ebookPdf = e.exists() ? { size: Math.round((e.data().b64 || '').length * 0.75), at: e.data().updated } : null; } catch (x) { ebookPdf = null; }
     const r = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_leads'), Fs.orderBy('at', 'desc'), Fs.limit(2000)));
     leads = r.docs.map(d => d.data());
   } catch (e) { leads = []; leadsErr = true; }
@@ -114,7 +115,9 @@ async function loadLeads() {
 function viewContacts() {
   if (leadsErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Règles à mettre à jour</h2><p>Les contacts de l’e-book s’enregistrent dans une collection protégée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><button class="btn btn-accent" data-tab="regles">Voir les règles</button></section>`;
   const week = Date.now() - 7 * 864e5;
-  const eb = `<section class="card" style="padding:var(--s-4);margin-bottom:var(--s-4)"><h3 style="margin:0 0 6px">E-book réservé aux inscrits</h3><p class="muted" style="margin:0 0 10px">${ebook ? `En ligne (${Math.round(ebook.size / 1024)} Ko${ms(ebook.at) ? ', mis à jour le ' + new Date(ms(ebook.at)).toLocaleDateString('fr-FR') : ''}).` : 'Pas encore publié : les inscrits voient « en cours de mise en ligne ».'}</p><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-sm btn-accent" data-do="ebook-pub">${ebook ? 'Mettre à jour' : 'Publier'} l’e-book</button>${ebook ? '<button class="btn btn-sm btn-ghost" data-do="ebook-del">Retirer l’e-book</button>' : ''}</div></section>`;
+  const eb = `<section class="card" style="padding:var(--s-4);margin-bottom:var(--s-4)"><h3 style="margin:0 0 6px">E-book réservé aux inscrits</h3><p class="muted" style="margin:0 0 10px">${ebook ? `En ligne (${Math.round(ebook.size / 1024)} Ko${ms(ebook.at) ? ', mis à jour le ' + new Date(ms(ebook.at)).toLocaleDateString('fr-FR') : ''}).` : 'Pas encore publié : les inscrits voient « en cours de mise en ligne ».'}</p><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-sm btn-accent" data-do="ebook-pub">${ebook ? 'Mettre à jour' : 'Publier'} l’e-book</button>${ebook ? '<button class="btn btn-sm btn-ghost" data-do="ebook-del">Retirer l’e-book</button>' : ''}</div>
+    <h3 style="margin:16px 0 6px">PDF à télécharger</h3><p class="muted" style="margin:0 0 10px">${ebookPdf ? `PDF en ligne (${Math.round(ebookPdf.size / 1024)} Ko${ms(ebookPdf.at) ? ', mis à jour le ' + new Date(ms(ebookPdf.at)).toLocaleDateString('fr-FR') : ''}). Les inscrits le téléchargent depuis la page e-book.` : 'Pas de PDF en ligne : choisissez le fichier PDF de l’e-book sur votre ordinateur, puis cliquez sur Publier le PDF.'}</p>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="file" id="pdf-file" accept="application/pdf"><button class="btn btn-sm btn-accent" data-do="pdf-pub">${ebookPdf ? 'Remplacer' : 'Publier'} le PDF</button>${ebookPdf ? '<button class="btn btn-sm btn-ghost" data-do="pdf-del">Retirer le PDF</button>' : ''}</div></section>`;
   return eb + `<div class="kpis"><div><b>${leads.length}</b><span>contacts inscrits à l’e-book</span></div><div><b>${leads.filter(l => ms(l.at) > week).length}</b><span>sur les 7 derniers jours</span></div></div>
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--s-4)"><button class="btn btn-sm btn-accent" data-do="copy-mails">Copier les e-mails</button><button class="btn btn-sm btn-ghost" data-do="csv">Exporter en CSV</button></div>
     ${leads.length ? leads.map(l => `<article class="card" style="padding:var(--s-4);margin-bottom:var(--s-3);display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center"><div><b>${esc(l.name || 'Sans nom')}</b><div class="muted" style="overflow-wrap:anywhere">${esc(l.email)}</div></div><span class="chip">${ms(l.at) ? new Date(ms(l.at)).toLocaleDateString('fr-FR') : ''} · ${esc(l.source || '')}</span></article>`).join('') : '<div class="card empty">Aucun contact pour l’instant. Ils apparaissent ici dès qu’un visiteur s’inscrit pour recevoir l’e-book.</div>'}
@@ -371,6 +374,22 @@ app.addEventListener('click', async e => {
       if (!confirm('Retirer l’e-book ? Les inscrits ne pourront plus l’ouvrir.')) return;
       if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_ebook', 'v1')); }
       ebook = null; render(); toast('E-book retiré');
+    }
+    else if (d === 'pdf-pub') {
+      const f = document.getElementById('pdf-file') && document.getElementById('pdf-file').files[0];
+      if (!f) return toast('Choisissez d’abord le fichier PDF', true);
+      if (f.type !== 'application/pdf') return toast('Ce fichier n’est pas un PDF', true);
+      if (f.size > 700000) return toast('PDF trop lourd (700 Ko maximum)', true);
+      toast('Publication du PDF…');
+      const buf = new Uint8Array(await f.arrayBuffer()); let bin = ''; for (let i = 0; i < buf.length; i += 8192) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 8192));
+      if (DEMO) { ebookPdf = { size: f.size, at: new Date() }; return render(); }
+      const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_ebook', 'pdf'), { b64: btoa(bin), name: f.name.slice(0, 120), updated: Fs.serverTimestamp() });
+      await loadLeads(); render(); toast('PDF publié ✓');
+    }
+    else if (d === 'pdf-del') {
+      if (!confirm('Retirer le PDF ? Le bouton de téléchargement ne fonctionnera plus.')) return;
+      if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_ebook', 'pdf')); }
+      ebookPdf = null; render(); toast('PDF retiré');
     }
     else if (d === 'copy-mails') copy(leads.map(l => l.email).join(', '));
     else if (d === 'csv') {
