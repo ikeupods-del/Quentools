@@ -170,7 +170,7 @@ Wouf — générateur de noms pour chien et chat : styles, sexe, initiale (dont 
 - définit : lev nameCheck pickNames namesHTML testHTML NAME_STYLES NAME_POOL LOF_LETTERS lofLetter norm syllables NAME_COMMANDS confusedWith NOMS nameFavs isFav chip
 - dépend de : core.js health.js screens.js main.js
 
-### wouf/business.js (422 l.)
+### wouf/business.js (423 l.)
 Wouf — exploitation et vente : achat unique « à vie » et abonnement annuel (facultatif), assistance prioritaire, pages légales, nouveautés, alerte de mise à jour, diagnostics. Paiement : Pay
 - écrans : #/merci #/abo #/support #/legal #/nouveautes
 - actions : restore checkout buy-go subscribe paywall sub-manage sub-cancel support-send check-update
@@ -204,7 +204,7 @@ Wouf — « Test express : dangereux ou OK ? » : 8 aliments tirés au hasard, a
 - définit : taWhy taShuffle taStart TA_POOL TA_LABEL TEST
 - dépend de : data.js species.js core.js health.js screens.js main.js
 
-### wouf/guides.js (223 l.)
+### wouf/guides.js (310 l.)
 Wouf — les 2 e-books (hors éducation) : un gratuit (« Le guide de survie du propriétaire ») et un complet avec Wouf Plus (« Le grand guide santé et bien-être », fonction « guides »). Chaque 
 - écrans : #/guides
 - actions : guide-open guide-close
