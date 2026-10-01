@@ -12,7 +12,7 @@ Mémo commercial à relire avant un devis (évite de tout recalculer). Estimatio
 | **Total** | **105–145** | **≈ 40 000–85 000 €** (agence : 80 000–150 000 €) |
 
 ## Grille à proposer aux clients (QuenTools)
-Voir `design/OFFRES.md` (formules du site et services Fiverr, validées par le propriétaire). Positionnement : le marché des boutiques Shopify démarre vers 75 € sur Fiverr ; QuenTools vend le français, le suivi et le sur mesure plutôt que le prix seul.
+Voir `design/OFFRES.md` (formules du site et services Fiverr, validées par le propriétaire) ; trousse boutique Shopify réutilisable dans `design/shopify/`. Positionnement : le marché des boutiques Shopify démarre vers 75 € sur Fiverr ; QuenTools vend le français, le suivi et le sur mesure plutôt que le prix seul.
 
 | Offre | Départ | Mensuel | Contenu |
 |---|---|---|---|
