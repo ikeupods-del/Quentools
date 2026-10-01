@@ -54,7 +54,7 @@ async function fb() {
   if (F) return F;
   const B = `https://www.gstatic.com/firebasejs/${FBV}/`;
   const [A, Au, Fs] = await Promise.all([import(B + 'firebase-app.js'), import(B + 'firebase-auth.js'), import(B + 'firebase-firestore.js')]);
-  const a = A.initializeApp(C.firebase, 'qt-client');
+  const a = A.initializeApp(C.firebase, 'qt-admin');   // même nom que l'administration : la connexion est partagée
   F = { Au, Fs, auth: Au.getAuth(a), db: Fs.getFirestore(a) };
   return F;
 }
@@ -140,6 +140,10 @@ app.addEventListener('click', async e => {
     }
   } catch (err) { toast('Action impossible pour le moment (connexion ?)', true); }
 });
+async function isOwner(email) {   // empreinte de l'adresse du propriétaire (les droits réels sont dans les règles Firestore)
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(email || '').trim().toLowerCase()));
+  return (C.ownerHashes || []).includes([...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(''));
+}
 const gate = html => { app.innerHTML = `<section class="card" style="padding:clamp(24px,5vw,48px);max-width:560px;margin:0 auto;text-align:center">${html}</section>`; };
 async function start() {
   if (DEMO) { await load(); return render(); }
@@ -149,6 +153,10 @@ async function start() {
   A.Au.onAuthStateChanged(A.auth, async u => {
     user = u;
     if (!u) return gate('<h1 class="h-section">Espace client</h1><p class="muted">Suivez vos demandes de devis, échangez avec moi et retrouvez vos devis. Connectez-vous avec l’adresse e-mail de votre demande.</p><button class="btn btn-accent" id="login" style="margin-top:var(--s-4)">Se connecter avec Google</button>');
+    if (!new URLSearchParams(location.search).has('client') && await isOwner(u.email)) {
+      gate('<h1 class="h-section">Bonjour 👋</h1><p class="muted">Ouverture de l’administration…</p><a class="btn btn-accent" href="../admin/">Ouvrir l’administration</a>');
+      return location.replace('../admin/');
+    }
     app.innerHTML = '<p class="muted">Chargement de vos demandes…</p>';
     try { await load(); } catch (e) { items = []; return gate('<h1 class="h-section">Espace en préparation</h1><p class="muted">Le suivi en ligne n’est pas encore activé. Écrivez-moi en message privé TikTok pour suivre votre demande.</p>'); }
     render();
