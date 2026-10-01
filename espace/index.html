@@ -116,6 +116,7 @@ function render() {
   app.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:var(--s-5)"><div><span class="eyebrow">Espace client</span><h1 class="h-section" style="margin:var(--s-2) 0 0">Mes demandes</h1></div>
     <div class="row"><span class="muted" style="font-size:var(--t-xs)">${esc(DEMO ? 'Démonstration' : user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></div>
     <div id="toast" role="status" aria-live="polite"></div>
+    <a class="card" href="../ebook/" style="display:flex;align-items:center;gap:var(--s-4);padding:var(--s-4) var(--s-5);margin-bottom:var(--s-5);text-decoration:none;color:inherit"><span style="font-size:1.6rem" aria-hidden="true">📘</span><span><b>Mon e-book gratuit</b><br><span class="muted" style="font-size:var(--t-sm)">Débuter avec Claude : ouvrir le guide</span></span><span style="margin-left:auto" aria-hidden="true">→</span></a>
     ${items.length ? items.map(card).join('') : `<div class="card" style="padding:var(--s-6);text-align:center"><p style="margin-top:0"><b>Aucune demande liée à ce compte.</b></p>
       <p class="muted">Connectez-vous avec la même adresse e-mail que celle indiquée dans votre demande de devis. Pas encore de demande ?</p><a class="btn btn-accent" href="../devis/">Demander un devis gratuit</a></div>`}
     <p class="muted" style="font-size:var(--t-xs)">Vos données servent uniquement au suivi de votre demande. Pour les faire supprimer, écrivez-moi dans les échanges ou en message privé TikTok.</p>`;
