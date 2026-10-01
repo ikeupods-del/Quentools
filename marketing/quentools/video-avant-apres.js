@@ -4,7 +4,7 @@
    Prérequis : serveur local à la racine du dépôt (python3 -m http.server 8123) et ffmpeg.
    node marketing/quentools/video-avant-apres.js [dossier-de-sortie] [exemple]  → quentools-avant-apres-<exemple>.mp4
    Exemples pris en charge : climatisation (par défaut), plombier.
-   Variante « histoire du fondateur » : node marketing/quentools/video-avant-apres.js <dossier> histoire → quentools-histoire.mp4 */
+   Vidéo « mon histoire » : voir video-histoire.js. */
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
 let chromium; try { ({ chromium } = require(path.resolve(__dirname, '../../wouf/node_modules/playwright'))); } catch (e) { ({ chromium } = require('playwright')); }
 const BASE = process.env.BASE || 'http://localhost:8123', FF = process.env.FFMPEG || 'ffmpeg';
