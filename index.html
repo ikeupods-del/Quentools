@@ -23,6 +23,13 @@
 <link rel="preload" href="assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/qt.css">
+<style>
+  .showcase{display:grid;grid-template-columns:1.15fr 1fr;gap:var(--s-6);align-items:center;margin-top:var(--s-7,64px);padding:var(--s-5);border-radius:var(--r-xl);background:var(--surface);border:1px solid var(--line)}
+  .showcase img{display:block;width:100%;height:auto;border-radius:var(--r-lg);border:1px solid var(--line)}
+  .showcase h3{font-size:var(--t-xl);margin:var(--s-3) 0}.showcase p{margin:0 0 var(--s-4)}
+  .showcase .acts{display:flex;flex-wrap:wrap;gap:8px}
+  @media (max-width:860px){.showcase{grid-template-columns:1fr}}
+</style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"QuenTools","url":"https://ikeupods-del.github.io/Quentools/","logo":"https://ikeupods-del.github.io/Quentools/assets/apple-touch-icon.png","sameAs":["https://www.tiktok.com/@quentools"]}</script>
 <script>
   // Anciens liens de Wouf (adresse racine avec « # » ou « ? ») : on les renvoie vers l'app.
@@ -174,6 +181,15 @@
         </article>
       </div>
       <p class="muted reveal" style="font-size:var(--t-sm);margin-top:var(--s-5)">Mensuel : hébergement, sauvegardes, mises à jour et modifications simples selon la formule, engagement de 12 mois. Noms de domaine et abonnements Shopify au prix du fournisseur. Application complète (comptes, synchronisation, paiements) : sur devis. Prix indicatifs, confirmés dans le devis.</p>
+      <article class="showcase reveal">
+        <a href="exemples/bois/" tabindex="-1" aria-hidden="true"><img src="assets/ex-bois.jpg" alt="" loading="lazy" width="1280" height="800"></a>
+        <div>
+          <span class="chip chip-accent">Nouvel exemple</span>
+          <h3>Un vendeur de bois de chauffage qui ne passe plus ses soirées au téléphone</h3>
+          <p class="muted">Prix affiché dès l’accueil, calcul au stère avec 7 longueurs de coupe, livraison par zone et bon de commande déjà rempli. Le même principe s’adapte à votre métier.</p>
+          <div class="acts"><a class="btn btn-accent" href="exemples/bois/">Voir l’exemple</a><a class="btn btn-ghost" href="devis/?type=Site%20vitrine">Je veux le mien</a></div>
+        </div>
+      </article>
       <div class="steps">
         <div class="step reveal"><h3>Vous m’expliquez</h3><p>Votre besoin, avec vos mots. Le devis est gratuit.</p></div>
         <div class="step reveal" style="--i:1"><h3>Je vous montre</h3><p>Une première version à tester, avant tout engagement sur la suite.</p></div>

@@ -4,19 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Réalisations · QuenTools</title>
-<meta name="description" content="Applications et outils conçus par QuenTools : Wouf (carnet de santé chien et chat), Infikit, Patrimoine AI, Gourmet AI, Freelance Kit. Le problème, la solution, le résultat.">
+<meta name="description" content="Applications et outils conçus par QuenTools : Wouf (carnet de santé chien et chat), Patrimoine AI, Gourmet AI, un site de vente de bois de chauffage, Infikit, Freelance Kit. Le problème, la solution, le résultat.">
 <link rel="canonical" href="https://ikeupods-del.github.io/Quentools/realisations/">
 <meta property="og:title" content="Réalisations · QuenTools">
 <meta property="og:image" content="https://ikeupods-del.github.io/Quentools/assets/partage.jpg">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../assets/qt.css">
+<style>
+  .case.flip>:first-child{order:2}@media (max-width:900px){.case.flip>:first-child{order:0}}
+  .shot{margin:0;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--line);box-shadow:var(--sh-2);background:var(--surface)}
+  .shot img{display:block;width:100%;height:auto}
+  .case .btn+.btn{margin-left:8px}
+</style>
 </head>
 <body>
 <a class="skip" href="#contenu">Aller au contenu</a>
 <header class="nav"><div class="wrap">
   <a class="brand" href="../" aria-label="QuenTools, accueil"><img class="brand-mark" src="../assets/logo.svg" alt="" width="32" height="32">QuenTools</a>
-  <ul class="nav-links"><li><a href="../#outils">Outils</a></li><li><a href="#wouf">Wouf</a></li><li><a href="#demo">Démo</a></li><li><a href="../exemples/">Exemples</a></li><li><a href="#autres">Autres projets</a></li><li><a href="../ebook/">E-book</a></li></ul>
+  <ul class="nav-links"><li><a href="#wouf">Wouf</a></li><li><a href="#patrimoine">Patrimoine</a></li><li><a href="#gourmet">Gourmet</a></li><li><a href="#bois">Site client</a></li><li><a href="../exemples/">Exemples</a></li><li><a href="#autres">Autres</a></li></ul>
   <a class="btn btn-sm btn-accent" href="../devis/">Demander un devis</a>
 </div></header>
 
@@ -33,7 +39,7 @@
   <section class="section" id="wouf" style="padding-top:0">
     <div class="wrap case">
       <div>
-        <span class="chip chip-accent reveal">Étude de cas · Application complète</span>
+        <span class="chip chip-lime reveal">Projet phare · Application complète</span>
         <h2 class="h-section reveal" style="--i:1;margin:var(--s-4) 0">Wouf, le carnet de santé du chien et du chat</h2>
         <div class="tag-row reveal" style="--i:2"><span class="chip">Application installable</span><span class="chip">Hors connexion</span><span class="chip">Compte Google</span><span class="chip">Paiements</span><span class="chip">Administration</span></div>
         <h3 class="reveal">Le problème</h3>
@@ -62,6 +68,97 @@
     </div>
   </section>
 
+  <section class="section" id="patrimoine" style="background:var(--bg-2)">
+    <div class="wrap case flip">
+      <div>
+        <span class="chip chip-accent reveal">Étude de cas · Finances personnelles</span>
+        <h2 class="h-section reveal" style="--i:1;margin:var(--s-4) 0">Patrimoine AI, tous ses placements au même endroit</h2>
+        <div class="tag-row reveal" style="--i:2"><span class="chip">Application installable</span><span class="chip">Assistant IA</span><span class="chip">Import de contrats</span><span class="chip">Synchronisation</span></div>
+        <h3 class="reveal">Le problème</h3>
+        <p class="muted reveal">Un compte-titres ici, du crowdlending là, de l’immobilier fractionné ailleurs : impossible de savoir combien on a vraiment, ni quand chaque projet rembourse.</p>
+        <h3 class="reveal">La solution</h3>
+        <ul class="ticks reveal">
+          <li>Une vue unique : bourse, crowdlending, immobilier fractionné, assurance-vie, livrets et divers, avec la répartition et la courbe d’évolution.</li>
+          <li>Un contrat ou une fiche de projet en PDF, en photo ou en texte est analysé directement sur l’appareil, et chaque plateforme de crowdfunding reçoit une note de fiabilité.</li>
+          <li>Alertes sur les retards, la concentration et les échéances, cours de bourse en direct, et trois simulateurs : impôt, projection, avant d’investir.</li>
+          <li>Un assistant qui répond aux questions sur le portefeuille, y compris hors connexion, et une synchronisation chiffrée entre appareils.</li>
+        </ul>
+        <a class="btn btn-accent reveal" href="https://ikeupods-del.github.io/patrimoineai/">Ouvrir Patrimoine AI <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="arrow"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn btn-ghost reveal" href="../devis/?type=Outil%20sur%20mesure">Un outil comme ça pour moi</a>
+      </div>
+      <div>
+        <div class="case-shots stack reveal" style="--i:2" aria-label="Aperçu de Patrimoine AI">
+          <div class="phone"><img src="../assets/ecran-patrimoine.jpg" alt="Patrimoine AI : le patrimoine total et sa répartition" loading="lazy" width="400" height="800"></div>
+        </div>
+        <div class="kv reveal" style="--i:3">
+          <div><b>6</b><span>familles de placements</span></div>
+          <div><b>11</b><span>plateformes de crowdfunding notées</span></div>
+          <div><b>3</b><span>simulateurs : impôt, projection, avant d’investir</span></div>
+          <div><b>0 €</b><span>pour l’utiliser</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="gourmet">
+    <div class="wrap case">
+      <div>
+        <span class="chip chip-accent reveal">Étude de cas · Cuisine et budget</span>
+        <h2 class="h-section reveal" style="--i:1;margin:var(--s-4) 0">Gourmet AI, la réponse à « on mange quoi ce soir ? »</h2>
+        <div class="tag-row reveal" style="--i:2"><span class="chip">Application installable</span><span class="chip">Hors connexion</span><span class="chip">Compte Google</span><span class="chip">Assistant IA</span></div>
+        <h3 class="reveal">Le problème</h3>
+        <p class="muted reveal">Toujours les mêmes repas, un frigo plein d’ingrédients qu’on ne sait pas quoi faire, et un budget courses qui dérape chaque mois.</p>
+        <h3 class="reveal">La solution</h3>
+        <ul class="ticks reveal">
+          <li>400 recettes du monde entier disponibles même sans connexion.</li>
+          <li>IngréMatch : on coche ce qu’on a dans le frigo, l’app propose ce qu’on peut cuisiner tout de suite.</li>
+          <li>Ma semaine : on place ses recettes sur les jours, et la liste de courses se génère en un clic.</li>
+          <li>La liste de courses synchronisée sur tous les appareils avec un compte Google.</li>
+        </ul>
+        <a class="btn btn-accent reveal" href="../gourmet/">Ouvrir Gourmet AI <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="arrow"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn btn-ghost reveal" href="../devis/?type=Outil%20sur%20mesure">Un outil comme ça pour moi</a>
+      </div>
+      <div>
+        <div class="case-shots stack reveal" style="--i:2" aria-label="Aperçu de Gourmet AI">
+          <div class="phone"><img src="../assets/ecran-gourmet.jpg" alt="Gourmet AI : le plat de la semaine et les idées de repas" loading="lazy" width="400" height="800"></div>
+        </div>
+        <div class="kv reveal" style="--i:3">
+          <div><b>400</b><span>recettes hors connexion</span></div>
+          <div><b>1 clic</b><span>pour la liste de courses de la semaine</span></div>
+          <div><b>1</b><span>liste de courses sur tous les appareils</span></div>
+          <div><b>0 €</b><span>pour l’utiliser</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="bois" style="background:var(--bg-2)">
+    <div class="wrap case flip">
+      <div>
+        <span class="chip chip-accent reveal">Exemple de site client · Commerce local</span>
+        <h2 class="h-section reveal" style="--i:1;margin:var(--s-4) 0">Un site qui donne le prix du bois avant même qu’on appelle</h2>
+        <h3 class="reveal">Le problème</h3>
+        <p class="muted reveal">Un vendeur de bois de chauffage passe ses soirées au téléphone : combien coûte le stère, en quelle longueur, est-ce que vous livrez chez moi ?</p>
+        <h3 class="reveal">La solution</h3>
+        <ul class="ticks reveal">
+          <li>Le prix s’affiche dès l’accueil : essence, longueur, nombre de stères.</li>
+          <li>Un calculateur complet : 4 essences, 7 longueurs de coupe, livraison par zone, rangement et petit bois en option.</li>
+          <li>Le client voit le volume livré, le poids et la place à prévoir, puis envoie un bon de commande déjà rempli.</li>
+          <li>Les questions qui reviennent sans cesse ont leur réponse : stère ou m³, bois vraiment sec, stockage.</li>
+        </ul>
+        <a class="btn btn-accent reveal" href="../exemples/bois/">Voir l’exemple <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="arrow"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn btn-ghost reveal" href="../devis/?type=Site%20vitrine">Je veux le mien</a>
+      </div>
+      <div>
+        <figure class="shot reveal" style="--i:2"><img src="../assets/ex-bois.jpg" alt="Accueil de l’exemple de site pour un vendeur de bois de chauffage, avec le prix express" loading="lazy" width="1280" height="800"></figure>
+        <div class="kv reveal" style="--i:3">
+          <div><b>10 s</b><span>pour obtenir un prix</span></div>
+          <div><b>7</b><span>longueurs de coupe</span></div>
+          <div><b>4</b><span>zones de livraison</span></div>
+          <div><b>24 h/24</b><span>des commandes qui arrivent</span></div>
+        </div>
+        <p class="muted reveal" style="font-size:var(--t-sm)">Entreprise fictive : textes et prix sont des illustrations. Le même principe marche pour un paysagiste, un traiteur ou un loueur de matériel.</p>
+      </div>
+    </div>
+  </section>
+
   <section class="section" id="demo">
     <div class="wrap case">
       <div>
@@ -85,20 +182,6 @@
           <h3>Infikit</h3>
           <p><b>Problème :</b> tournée, ordonnances, cotations et comptabilité éparpillées. <b>Solution :</b> tout dans une app de poche qui marche hors connexion, avec sauvegarde chiffrée.</p>
           <a class="more" href="../infikit/">Ouvrir Infikit →</a>
-        </article>
-        <article class="card is-link reveal" style="--i:1">
-          <div class="card-media"><img src="../assets/apercu-patrimoine.jpg" alt="Patrimoine AI" loading="lazy" width="480" height="600"></div>
-          <div class="card-top"><span class="chip">Finances personnelles</span></div>
-          <h3>Patrimoine AI</h3>
-          <p><b>Problème :</b> placements dispersés entre banques et plateformes. <b>Solution :</b> une vue unique, répartition, échéances, alertes et assistant, données chiffrées.</p>
-          <a class="more" href="https://ikeupods-del.github.io/patrimoineai/">Ouvrir Patrimoine AI →</a>
-        </article>
-        <article class="card is-link reveal">
-          <div class="card-media"><img src="../assets/apercu-gourmet.jpg" alt="Gourmet AI" loading="lazy" width="480" height="600"></div>
-          <div class="card-top"><span class="chip">Cuisine · Budget</span></div>
-          <h3>Gourmet AI</h3>
-          <p><b>Problème :</b> « on mange quoi ce soir ? » et un budget courses qui dérape. <b>Solution :</b> recettes, cuisine avec ce qu’on a, menu de la semaine, liste de courses chiffrée.</p>
-          <a class="more" href="../gourmet/">Ouvrir Gourmet AI →</a>
         </article>
         <article class="card is-link reveal" style="--i:1">
           <div class="card-media"><img src="../assets/apercu-freelance.jpg" alt="Freelance Kit" loading="lazy" width="480" height="600"></div>
