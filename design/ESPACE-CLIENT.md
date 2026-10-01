@@ -21,3 +21,9 @@ Tant que les règles ne sont pas mises à jour, le formulaire de devis continue 
 - Aucun e-mail automatique : le propriétaire est averti dans l'administration (badge « nouveau message »), le client doit revenir sur l'espace. Un relais d'e-mails pourra être ajouté plus tard.
 - Pas de dépôt de fichiers : le devis et les fichiers passent par un lien (Drive, PDF en ligne).
 - Les demandes antérieures à cette mise en service n'ont pas d'`emailLower` et n'apparaissent pas côté client.
+
+## Inscription à l'e-book (contacts)
+- Sur `/ebook/`, le guide est masqué tant que le visiteur ne s'est pas connecté avec Google (case de consentement obligatoire). Le contact est enregistré dans `qt_leads/{adresse}` (nom, e-mail, date, source, consentement) ; un drapeau local (`qt:ebook`) évite de redemander l'inscription au même appareil.
+- L'onglet **Contacts** de `/admin/` liste les inscrits, copie les e-mails et exporte un CSV. Les règles à publier sont dans l'onglet **Règles** (bloc `qt_leads`).
+- Verrou « doux » : le texte reste dans la page (site statique) ; il retient la grande majorité des visiteurs mais pas un lecteur qui lit le code source. Si le guide doit être strictement réservé, le servir depuis un serveur après connexion.
+- Aucun envoi d'e-mails automatique : exporter le CSV vers un outil d'envoi (avec lien de désinscription) pour les nouvelles. Les mentions de confidentialité de l'accueil sont à faire relire (contenu juridique indicatif).
