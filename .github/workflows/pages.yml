@@ -55,6 +55,7 @@ jobs:
           rsync -a demo _site/
           rsync -a exemples _site/
           rsync -a outils _site/
+          rsync -a creation-site _site/
           rsync -a --exclude oauth-worker infikit _site/
           rsync -a freelance _site/
           rsync -a gourmet _site/
