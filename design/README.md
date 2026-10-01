@@ -1,5 +1,7 @@
 # Système de design QuenTools
 
+Documents commerciaux (e-mails, devis, contrat, facture, questionnaire, fiches Fiverr) : `business/`. Boutique Shopify : `shopify/`.
+
 Tout ce qu'il faut pour produire vite un site ou un outil au niveau du site vitrine, pour QuenTools comme pour un client.
 
 ## Fichiers
@@ -10,6 +12,7 @@ Tout ce qu'il faut pour produire vite un site ou un outil au niveau du site vitr
 | `../assets/fonts/` | Bricolage Grotesque (titres) et Inter (texte), auto-hébergées, licence SIL OFL. |
 | `templates/vitrine.html` | Site vitrine client (artisan, commerce, indépendant) : accueil, services, avis, zone, contact. |
 | `templates/outil.html` | Page de lancement d'un outil ou d'une application (SaaS, calculateur, app). |
+| `templates/rendez-vous.html` | Prestations sur rendez-vous (coiffeur, thérapeute, coach, restaurateur) : prestations, tarifs, horaires, demande de créneau. |
 | `templates/legal.html` | Mentions légales et confidentialité à compléter. |
 | `templates/merci.html` | Page de confirmation (après un formulaire ou un paiement). |
 
