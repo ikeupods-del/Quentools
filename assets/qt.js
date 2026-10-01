@@ -25,8 +25,8 @@
   // Lecteur déjà inscrit à l'e-book : les liens d'accès deviennent « Mon e-book » (accès direct, sans nouvelle inscription).
   try {
     if (localStorage.getItem('qt:ebook') === '1') {
-      document.querySelectorAll('.announce a[href$="ebook/"]').forEach(a => { a.textContent = '📘 Ouvrir mon e-book →'; });
-      document.querySelectorAll('.btn[href$="ebook/"]').forEach(a => { a.textContent = '📘 Ouvrir mon e-book'; });
+      document.querySelectorAll('.announce a[href$="ebook/"]').forEach(a => { a.textContent = '📘 Télécharger mon e-book →'; });
+      document.querySelectorAll('.btn[href$="ebook/"]').forEach(a => { a.textContent = '📘 Télécharger mon e-book'; });
       document.querySelectorAll('.nav-links a[href$="#ebooks"]').forEach(a => { a.textContent = 'Mon e-book'; a.setAttribute('href', 'ebook/'); });
     }
   } catch (e) { /* stockage indisponible */ }

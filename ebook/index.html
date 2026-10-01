@@ -116,7 +116,7 @@ html.open .gate{display:none}
 
 <section class="gate" id="gate" aria-labelledby="gate-t">
   <h2 id="gate-t">Recevez l’e-book gratuitement</h2>
-  <p>Inscription en un clic avec votre compte Google, puis le guide s’ouvre tout de suite sur cette page.</p><noscript><p class="err">Activez JavaScript pour recevoir l’e-book.</p></noscript>
+  <p>Inscription en un clic avec votre compte Google, puis vous téléchargez le guide en PDF sur cette page.</p><noscript><p class="err">Activez JavaScript pour recevoir l’e-book.</p></noscript>
   <ul><li>18 chapitres, environ 45 minutes de lecture</li><li>40 demandes prêtes à copier et les commandes indispensables</li><li>Un défi de 7 jours pour prendre les bons réflexes</li></ul>
   <label class="ok"><input type="checkbox" id="gate-ok"> <span>J’accepte que QuenTools enregistre mon nom et mon adresse e-mail pour m’envoyer l’e-book et, de temps en temps, des nouvelles et des offres de QuenTools, dont la future formation. Je peux me désinscrire ou demander la suppression à tout moment.</span></label>
   <button type="button" id="gate-go">Récupérer mon e-book gratuit</button>
@@ -124,7 +124,7 @@ html.open .gate{display:none}
   <p class="small">Connexion via Google : QuenTools ne reçoit ni votre mot de passe ni d’autre donnée que votre nom et votre adresse e-mail.</p>
 </section>
 
-<div class="dlbar" id="dlbar"><button type="button" id="dl-btn">📥 Télécharger le PDF</button><span class="msg" id="dl-msg" role="status"></span></div>
+<div class="dlbar" id="dlbar"><strong>Merci ! Votre e-book est prêt.</strong><button type="button" id="dl-btn">📥 Télécharger le PDF</button><span class="msg" id="dl-msg" role="status"></span></div>
 
 <div id="lecture">
 
@@ -168,20 +168,10 @@ html.open .gate{display:none}
     const app = A.initializeApp(C.firebase, 'qt-admin');
     return { Au, Fs, auth: Au.getAuth(app), db: Fs.getFirestore(app) };
   })();
-  async function ouvrir() {
-    const { Fs, db } = await fb();
-    try {
-      const d = await Fs.getDoc(Fs.doc(db, 'qt_ebook', 'v1'));
-      if (!d.exists()) throw new Error('absent');
-      lecture.innerHTML = d.data().html;
-      if (window.qtInitLecture) window.qtInitLecture();
-      root.classList.add('open');
-      document.getElementById('sommaire').scrollIntoView({ behavior: 'smooth' });
-      return true;
-    } catch (e) {
-      say('L’e-book est en cours de mise en ligne : revenez dans quelques minutes. Votre inscription est bien enregistrée.');
-      return false;
-    }
+  async function ouvrir() {   // le guide ne se lit plus en ligne : une fois connecté, on propose uniquement le PDF
+    root.classList.add('open'); say('');
+    document.getElementById('dlbar').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return true;
   }
   let reconnu = false; try { reconnu = localStorage.getItem('qt:ebook') === '1'; } catch (e) { /* stockage indisponible */ }
   if (reconnu) {   // visiteur déjà inscrit : on rouvre le guide si sa session Google est toujours active
