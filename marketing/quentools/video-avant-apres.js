@@ -2,12 +2,15 @@
 /* Vidéo verticale « avant / après » pour TikTok (≈ 20 s, 1080×1920, sans son : ajouter le son tendance dans l'application).
    Scènes : « avant » (ancien site fictif), « c'est décidé », défilement d'un exemple de site, carte finale.
    Prérequis : serveur local à la racine du dépôt (python3 -m http.server 8123) et ffmpeg.
-   node marketing/quentools/video-avant-apres.js [dossier-de-sortie]  → quentools-avant-apres.mp4 */
+   node marketing/quentools/video-avant-apres.js [dossier-de-sortie] [exemple]  → quentools-avant-apres-<exemple>.mp4
+   Exemples pris en charge : climatisation (par défaut), plombier. */
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
 let chromium; try { ({ chromium } = require(path.resolve(__dirname, '../../wouf/node_modules/playwright'))); } catch (e) { ({ chromium } = require('playwright')); }
 const BASE = process.env.BASE || 'http://localhost:8123', FF = process.env.FFMPEG || 'ffmpeg';
 const OUT = path.resolve(process.argv[2] || __dirname), TMP = fs.mkdtempSync(path.join(require('os').tmpdir(), 'qt-video-'));
-const W = 1080, H = 1920, FPS = 30, FADE = 0.3, SCROLL_S = 12;
+const W = 1080, H = 1920, FPS = 30, FADE = 0.3, SCROLL_S = 14;
+const EX = { climatisation: { titre: 'Clim Services Martin', metier: 'climatisation', label: 'site de climatisation' }, plombier: { titre: 'Plomberie Martin', metier: 'plombier', label: 'site de plombier' } };
+const SLUG = process.argv[3] || 'climatisation', CFG = EX[SLUG]; if (!CFG) throw new Error('Exemple inconnu : ' + SLUG);
 
 const fonts = `@font-face{font-family:Bricolage;src:url(${BASE}/assets/fonts/bricolage.woff2);font-weight:200 800}
 @font-face{font-family:Inter;src:url(${BASE}/assets/fonts/inter.woff2);font-weight:100 900}`;
@@ -21,8 +24,8 @@ p{font-size:30px;margin:12px 0}a{color:#00e}.small{font-size:20px;color:#555}.cn
 .tag span{background:#e5484d;padding:6px 30px;border-radius:14px;-webkit-text-stroke:0}
 .q{position:absolute;bottom:90px;left:50px;right:50px;text-align:center;font:800 78px/1.05 Bricolage,Arial;color:#121019}</style>
 <div class=tag><span>AVANT</span></div>
-<div class=old><div class=ban>★ BIENVENUE SUR NOTRE SITE ★</div><h1>Plomberie Martin - Site officiel</h1>
-<p>Nous sommes plombier depuis longtemps. <a href=#>Cliquez ici</a> pour nous contacter. Site optimisé pour Internet Explorer.</p>
+<div class=old><div class=ban>★ BIENVENUE SUR NOTRE SITE ★</div><h1>${CFG.titre} - Site officiel</h1>
+<p>Nous faisons de la ${CFG.metier} depuis longtemps. <a href=#>Cliquez ici</a> pour nous contacter. Site optimisé pour Internet Explorer.</p>
 <p class=small>Horaires : voir page 3. Tarifs : nous appeler. Contact : <a href=#>formulaire (bientôt)</a>.</p>
 <p>Vous êtes le visiteur n° <span class=cnt>004127</span></p>
 <p class=small>Dernière mise à jour : 2014. Site fictif pour l'exemple.</p></div>
@@ -48,15 +51,15 @@ p{font:600 58px Inter,Arial;margin:0;color:#cfcbe0}b{display:inline-block;backgr
   // Scène de défilement : l'exemple « plombier » du site, rendu en mobile puis mis à l'échelle 1080×1920
   const c = await b.newContext({ viewport: { width: 390, height: 693 }, deviceScaleFactor: 2.7692, isMobile: true, hasTouch: true, colorScheme: 'light' });
   const p = await c.newPage();
-  await p.goto(BASE + '/exemples/plombier/', { waitUntil: 'networkidle' }); await p.waitForTimeout(1200);
-  await p.addStyleTag({ content: '#qt-announce,.announce{display:none!important}' });
-  await p.evaluate(() => { const t = document.createElement('div'); t.textContent = 'Exemple fictif · site de plombier'; t.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:99999;background:#121019;color:#d7f24a;font:700 13px Arial;padding:8px 14px;border-radius:99px;white-space:nowrap'; document.body.appendChild(t); });
-  const max = Math.min(await p.evaluate(() => document.documentElement.scrollHeight - innerHeight), 2600), N = SCROLL_S * FPS;
+  await p.goto(BASE + '/exemples/' + SLUG + '/', { waitUntil: 'networkidle' }); await p.waitForTimeout(1200);
+  // Rendu image par image : pas de défilement animé du navigateur (cause des saccades), pas d'animation CSS en cours de route
+  await p.addStyleTag({ content: 'html,body{scroll-behavior:auto!important}*{scroll-behavior:auto!important;animation:none!important;transition:none!important}#qt-announce,.announce{display:none!important}' });
+  await p.evaluate(label => { const t = document.createElement('div'); t.textContent = 'Exemple fictif · ' + label; t.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:99999;background:#121019;color:#d7f24a;font:700 13px Arial;padding:8px 14px;border-radius:99px;white-space:nowrap'; document.body.appendChild(t); }, CFG.label);
+  const max = Math.min(await p.evaluate(() => document.documentElement.scrollHeight - innerHeight), 3600), N = SCROLL_S * FPS;
   fs.mkdirSync(path.join(TMP, 's'));
   for (let i = 0; i < N; i++) {
-    const t = i / (N - 1), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;   // défilement doux
-    await p.evaluate(y => window.scrollTo(0, y), Math.round(max * e));
-    await p.waitForTimeout(30);
+    const t = i / (N - 1), sm = t * t * (3 - 2 * t), e = .7 * t + .3 * sm;   // vitesse presque constante, départ et arrivée adoucis
+    await p.evaluate(y => new Promise(r => { window.scrollTo(0, y); requestAnimationFrame(() => requestAnimationFrame(r)); }), Math.round(max * e));
     await p.screenshot({ path: path.join(TMP, 's', String(i).padStart(4, '0') + '.png') });
   }
   await b.close();
@@ -72,7 +75,7 @@ p{font:600 58px Inter,Arial;margin:0;color:#cfcbe0}b{display:inline-block;backgr
     filter += `${last}[${i}:v]xfade=transition=fade:duration=${FADE}:offset=${off.toFixed(2)}${out};`; last = out;
   }
   fs.mkdirSync(OUT, { recursive: true });
-  const dest = path.join(OUT, 'quentools-avant-apres.mp4');
+  const dest = path.join(OUT, `quentools-avant-apres-${SLUG}.mp4`);
   execFileSync(FF, ['-y', ...inputs, '-filter_complex', filter.slice(0, -1), '-map', '[v]', '-c:v', 'libx264', '-crf', '21', '-preset', 'medium', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', dest], { stdio: 'ignore' });
   fs.rmSync(TMP, { recursive: true, force: true });
   console.log('Vidéo créée :', dest);
