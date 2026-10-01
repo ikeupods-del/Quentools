@@ -288,3 +288,17 @@ fieldset.field{border:0;padding:0;margin:0}
 .rail-note .more{margin-left:6px;white-space:nowrap}
 @media (max-width:640px){.hero-note a{white-space:nowrap}}
 .section-compact .rail-item .card-media{margin:0 0 var(--s-2);border-radius:var(--r-sm,10px)}
+
+.nav-actions{display:flex;align-items:center;gap:8px;margin-left:var(--s-2)}
+.nav .nav-actions .btn{margin-left:0}
+.nav-espace{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:var(--r-pill);border:1px solid var(--line-2);font-size:var(--t-sm);font-weight:600;color:var(--ink);text-decoration:none;white-space:nowrap;transition:background var(--d-1),border-color var(--d-1)}
+.nav-espace:hover{background:color-mix(in srgb,var(--ink) 6%,transparent);border-color:var(--ink)}
+@media (max-width:820px){.nav-actions{margin-left:auto}}
+@media (max-width:520px){.nav-espace{width:36px;padding:0;justify-content:center}.nav-espace span{display:none}}
+.espace-hint{margin:var(--s-4) 0 0;font-size:var(--t-sm);opacity:.85}
+.espace-hint a{color:inherit;font-weight:600}
+.nav .btn,.nav-links a,.nav-espace{white-space:nowrap}
+.nav-links a{padding-inline:10px}
+@media (max-width:1000px){.nav-links{display:none}.nav-actions{margin-left:auto}}
+@media (max-width:520px){.nav .wrap{gap:var(--s-3)}.nav-actions{gap:6px}.nav .btn-sm{padding-inline:14px}}
+@media (max-width:420px){.nav .w{display:inline-block}.nav .lg{display:none}.nav .w::first-letter{text-transform:uppercase}}
