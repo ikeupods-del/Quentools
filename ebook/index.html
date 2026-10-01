@@ -154,6 +154,7 @@ html.open .gate{display:none}
   // Verrou : connexion Google, enregistrement du contact (qt_leads), puis chargement du guide depuis Firebase (qt_ebook),
   // lisible uniquement par une personne connectée. Le texte n'est plus dans les fichiers publiés du site.
   const C = window.QT || {}, root = document.documentElement, lecture = document.getElementById('lecture');
+  if (/^https:\/\//.test(C.ebookUrl || '')) location.replace(C.ebookUrl);   // inscription chez la plateforme d'envoi
   const btn = document.getElementById('gate-go'), ok = document.getElementById('gate-ok'), err = document.getElementById('gate-err');
   const say = (t, info) => { err.className = 'err' + (info ? ' info' : ''); err.textContent = t; };
   let fbp = null;
