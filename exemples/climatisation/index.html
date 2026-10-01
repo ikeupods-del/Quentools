@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Alizé Clim · exemple de site (climatisation et entretien)</title>
+<meta name="description" content="Exemple fictif de site pour un installateur et dépanneur de climatisation, réalisé par QuenTools.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+<link rel="preload" href="../../assets/fonts/ex/syne-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../ex.css">
+<style>
+@font-face{font-family:Syne;src:url(../../assets/fonts/ex/syne-normal.woff2) format("woff2");font-weight:400 800;font-display:swap}
+@font-face{font-family:"DM Sans";src:url(../../assets/fonts/ex/dm-sans-normal.woff2) format("woff2");font-weight:100 1000;font-display:swap}
+:root{--ice:#eaf7fb;--ice2:#d3eef6;--deep:#0a3a4a;--cyan:#06b6d4;--cyan-d:#0e7490;--hot:#ff7a3d;--ink:#0b2630;--mut:#4d6b75;--line:#c4e3ec}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--ice);color:var(--ink);font:400 17px/1.65 "DM Sans",system-ui,sans-serif}
+h1,h2,h3,.sy{font-family:Syne,system-ui,sans-serif;font-weight:700;letter-spacing:-.02em;margin:0}a{color:inherit}.wrap{max-width:1140px;margin:0 auto;padding:0 22px}
+header{padding:20px 0}header .wrap{display:flex;justify-content:space-between;align-items:center;gap:14px}.logo{font:800 24px Syne,sans-serif;text-decoration:none;display:flex;align-items:center;gap:10px}.logo i{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--cyan),var(--cyan-d));color:#fff;font-style:normal}
+nav a{margin-left:24px;text-decoration:none;font-weight:500;font-size:15px;color:var(--mut)}nav a:hover{color:var(--cyan-d)}
+.btn{display:inline-block;border:0;cursor:pointer;background:var(--deep);color:#fff;text-decoration:none;font:600 16px "DM Sans",sans-serif;padding:15px 28px;border-radius:999px;transition:.2s}.btn:hover{background:var(--cyan-d)}.btn.o{background:#fff;color:var(--deep);box-shadow:inset 0 0 0 1.5px var(--line)}.btn.h{background:var(--hot)}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:50px;align-items:center;padding-top:36px;padding-bottom:80px}.pill{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 16px;font-size:14px;font-weight:500;color:var(--cyan-d)}
+.hero h1{font-size:clamp(2.5rem,5.6vw,4.5rem);line-height:1.02;margin:18px 0}.hero h1 span{color:var(--cyan-d)}.hero p{font-size:19px;color:var(--mut);max-width:46ch;margin:0 0 28px}.cta{display:flex;flex-wrap:wrap;gap:12px}
+.dial{background:#fff;border-radius:36px;padding:30px;text-align:center;box-shadow:0 30px 70px rgba(14,116,144,.18);border:1px solid var(--line)}
+.ring{--t:21;--c:var(--cyan);width:min(280px,80%);aspect-ratio:1;border-radius:50%;margin:8px auto 18px;display:grid;place-items:center;background:conic-gradient(var(--c) calc((var(--t) - 16) / 12 * 270deg),#e4f1f5 0 270deg,transparent 0);transform:rotate(-135deg);position:relative;transition:.4s}
+.ring::before{content:"";position:absolute;inset:16px;border-radius:50%;background:#fff}.ring div{transform:rotate(135deg);position:relative;font:800 clamp(3.4rem,10vw,5rem)/1 Syne,sans-serif}.ring small{display:block;font:500 14px "DM Sans",sans-serif;color:var(--mut);letter-spacing:.04em;text-transform:uppercase}
+.ctl{display:flex;justify-content:center;gap:16px;margin-bottom:12px}.ctl button{width:54px;height:54px;border-radius:50%;border:1.5px solid var(--line);background:var(--ice);font:600 26px Syne,sans-serif;cursor:pointer;color:var(--deep)}.ctl button:hover{background:var(--cyan);color:#fff;border-color:var(--cyan)}
+.dial p{margin:0;font-size:14px;color:var(--mut)}
+section{padding:80px 0}h2.t{font-size:clamp(1.9rem,4vw,3rem);line-height:1.08;margin-bottom:10px}.sub{color:var(--mut);max-width:58ch;margin:0 0 38px}
+.svc{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.sv{background:#fff;border:1px solid var(--line);border-radius:24px;padding:24px;transition:.2s}.sv:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(14,116,144,.14)}.sv .e{display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:var(--ice2);font-size:26px;margin-bottom:14px}.sv h3{font-size:19px;margin-bottom:6px}.sv p{margin:0;color:var(--mut);font-size:15px}
+.deep{background:var(--deep);color:#e6f6fb;border-radius:48px;margin:0 22px;padding:70px 0}.deep .wrap{display:grid;grid-template-columns:.9fr 1.1fr;gap:56px;align-items:center}.deep h2{font-size:clamp(1.9rem,4vw,3rem);line-height:1.12}.deep p{color:#b3d9e5}
+.chk{list-style:none;padding:0;margin:0;display:grid;gap:10px}.chk li{display:flex;gap:14px;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:16px 18px}.chk b{display:grid;place-items:center;flex:0 0 34px;height:34px;border-radius:50%;background:var(--cyan);color:var(--deep);font-size:15px}
+.tog{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px;margin-bottom:28px}.tog button{border:0;background:transparent;font:600 15px "DM Sans",sans-serif;padding:10px 22px;border-radius:999px;cursor:pointer;color:var(--mut)}.tog button.on{background:var(--deep);color:#fff}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.pl{background:#fff;border:1px solid var(--line);border-radius:28px;padding:30px}.pl.f{background:linear-gradient(160deg,var(--cyan-d),var(--deep));color:#fff;border:0;transform:translateY(-10px)}.pl h3{font-size:22px}.pl .pr{font:800 44px/1 "DM Sans",sans-serif;letter-spacing:-.03em;margin:14px 0 2px}.pl small{opacity:.7}.pl ul{list-style:none;padding:0;margin:18px 0 0;font-size:15px}.pl li{padding:7px 0;border-top:1px solid rgba(127,127,127,.25)}.pl li::before{content:"✓ ";color:var(--cyan)}
+.zone{display:flex;flex-wrap:wrap;gap:10px}.zone span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:9px 18px;font-weight:500}
+.box{background:#fff;border:1px solid var(--line);border-radius:36px;padding:clamp(26px,5vw,56px);display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}form{display:grid;gap:12px}input,select,textarea{font:inherit;padding:14px 16px;border:1.5px solid var(--line);border-radius:16px;background:var(--ice);color:var(--ink);width:100%}input:focus,select:focus,textarea:focus{outline:0;border-color:var(--cyan)}
+footer{padding:30px 0;font-size:14px;color:var(--mut)}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
+@media (max-width:900px){nav{display:none}.hero .wrap,.deep .wrap,.box{grid-template-columns:1fr}.svc{grid-template-columns:1fr 1fr}.plans{grid-template-columns:1fr}.pl.f{transform:none}.deep{margin:0 10px;border-radius:30px}}
+@media (max-width:480px){.svc{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="qt-ex"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
+<header><div class="wrap"><a class="logo" href="./"><i>❄</i>Alizé Clim</a><nav><a href="#services">Services</a><a href="#entretien">Entretien</a><a href="#tarifs">Formules</a><a href="#contact">Contact</a></nav><a class="btn" href="#contact">Devis gratuit</a></div></header>
+
+<main>
+<section class="hero" style="padding:0"><div class="wrap">
+  <div><span class="pill">Installation · entretien · dépannage</span>
+    <h1>Gardez la tête fraîche, <span>on s'occupe de la clim.</span></h1>
+    <p>Installation de climatisations réversibles, entretien annuel et dépannage rapide, pour les maisons, les commerces et les bureaux autour de Montpellier.</p>
+    <div class="cta"><a class="btn" href="#contact">Demander un devis</a><a class="btn o" href="#entretien">Pourquoi entretenir ?</a></div></div>
+  <div class="dial"><div class="ring" id="ring"><div><span id="deg">21</span>°<small id="mode">Confort</small></div></div>
+    <div class="ctl"><button type="button" id="dn" aria-label="Baisser">−</button><button type="button" id="up" aria-label="Augmenter">+</button></div>
+    <p id="hint">Essayez le thermostat : c'est la température que vous aimeriez chez vous.</p></div>
+</div></section>
+
+<section id="services" style="padding-top:20px"><div class="wrap"><h2 class="t sy">Du premier devis au dépannage.</h2><p class="sub">Quatre services, un seul interlocuteur.</p>
+  <div class="svc"><div class="sv"><div class="e">🏠</div><h3>Installation</h3><p>Étude, pose et mise en service d'une clim réversible.</p></div><div class="sv"><div class="e">🧼</div><h3>Entretien annuel</h3><p>Nettoyage des filtres, contrôle, conseils d'utilisation.</p></div><div class="sv"><div class="e">🛠️</div><h3>Dépannage</h3><p>Panne, fuite, bruit anormal : diagnostic et réparation.</p></div><div class="sv"><div class="e">🏢</div><h3>Locaux pro</h3><p>Bureaux, boutiques, restaurants, contrat de maintenance.</p></div></div></div></section>
+
+<section class="deep" id="entretien"><div class="wrap">
+  <div><h2 class="sy">Un entretien, c'est de l'air plus sain et une facture plus douce.</h2><p>Des filtres propres aident l'appareil à bien respirer. Un contrôle régulier permet de repérer une usure avant la panne, souvent au pire moment : les premières chaleurs.</p></div>
+  <ul class="chk"><li><b>1</b>Nettoyage des filtres et de l'unité intérieure</li><li><b>2</b>Contrôle de l'unité extérieure et de l'écoulement des condensats</li><li><b>3</b>Vérification du bon fonctionnement en froid et en chaud</li><li><b>4</b>Compte rendu et conseils d'utilisation</li></ul>
+</div></section>
+
+<section id="tarifs"><div class="wrap"><h2 class="t sy">Des formules claires.</h2><p class="sub">Tarifs d'exemple, fictifs. Un devis précis est remis avant toute intervention.</p>
+  <div class="tog" id="tog" role="group" aria-label="Type de lieu"><button type="button" class="on" data-m="0">Maison</button><button type="button" data-m="1">Local professionnel</button></div>
+  <div class="plans">
+    <div class="pl"><h3>Visite d'entretien</h3><div class="pr" data-p="89,149">89 €</div><small>par appareil · par an</small><ul><li>Nettoyage et contrôle</li><li>Compte rendu écrit</li></ul></div>
+    <div class="pl f"><h3>Contrat annuel</h3><div class="pr" data-p="79,129">79 €</div><small>par appareil · engagement 1 an</small><ul><li>Visite annuelle incluse</li><li>Rappel automatique</li><li>Déplacement dépannage offert</li></ul></div>
+    <div class="pl"><h3>Dépannage</h3><div class="pr" data-p="59,89">59 €</div><small>déplacement et diagnostic</small><ul><li>Intervention sous 48 h</li><li>Devis avant réparation</li></ul></div>
+  </div></div></section>
+
+<section style="padding-top:0"><div class="wrap"><h2 class="t sy">Autour de Montpellier.</h2><p class="sub">Je me déplace dans un rayon d'environ 30 km (exemple).</p><div class="zone"><span>Montpellier</span><span>Castelnau-le-Lez</span><span>Lattes</span><span>Pérols</span><span>Juvignac</span><span>Saint-Jean-de-Védas</span><span>Mauguio</span></div></div></section>
+
+<section id="contact" style="padding-top:0"><div class="wrap"><div class="box">
+  <div><h2 class="t sy">Parlons de votre confort.</h2><p style="color:var(--mut)">Dites-moi le type de lieu et ce que vous cherchez. Réponse sous 24 h avec une première estimation.</p></div>
+  <form><input placeholder="Votre nom" aria-label="Nom" required><input placeholder="Téléphone ou e-mail" aria-label="Contact" required><select aria-label="Besoin"><option>Installation</option><option>Entretien annuel</option><option>Dépannage</option><option>Local professionnel</option></select><textarea rows="3" placeholder="Surface, nombre de pièces, appareil existant…" aria-label="Message"></textarea><button class="btn" type="submit">Envoyer ma demande</button></form>
+</div></div></section>
+</main>
+<footer><div class="wrap"><span>© <span data-year>2026</span> Alizé Clim (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
+<script src="../ex.js" defer></script>
+<script>
+(function(){var t=21,r=document.getElementById('ring'),d=document.getElementById('deg'),m=document.getElementById('mode'),h=document.getElementById('hint');
+function up(){t=Math.max(16,Math.min(28,t));d.textContent=t;r.style.setProperty('--t',t);var c=t<=19?'#06b6d4':t<=23?'#22c55e':'#ff7a3d';r.style.setProperty('--c',c);
+m.textContent=t<=19?'Fraîcheur':t<=23?'Confort':'Chaleur';h.textContent=t<=19?'Une température franche : pensez à bien entretenir les filtres.':t<=23?'Une température de confort courante, économe en énergie.':'Plutôt chaud : un coup de clim fait du bien, avec mesure.'}
+document.getElementById('up').onclick=function(){t++;up()};document.getElementById('dn').onclick=function(){t--;up()};up();
+var tg=document.getElementById('tog');tg.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;tg.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b)});
+document.querySelectorAll('[data-p]').forEach(function(p){p.textContent=p.dataset.p.split(',')[+b.dataset.m]+' €'})})})();
+</script>
+</body>
+</html>
