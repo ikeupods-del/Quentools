@@ -1,10 +1,12 @@
 // Génère les vignettes de la galerie des exemples (assets/ex-<secteur>.jpg) et contrôle chaque page (erreurs, défilement horizontal).
+// Chaque exemple est une page autonome (exemples/<secteur>/index.html) avec son propre design : les modifier à la main.
 // Prérequis : un serveur statique à la racine du dépôt (ex. python3 -m http.server 8765) et Playwright (wouf/node_modules).
 const { chromium } = require('../wouf/node_modules/playwright');
 const fs = require('fs');
 const base = process.argv[2] || 'http://localhost:8765';
 (async () => {
-  const list = JSON.parse(fs.readFileSync(__dirname + '/../exemples/liste.json', 'utf8'));
+  const dir = __dirname + '/../exemples';
+  const list = fs.readdirSync(dir).filter(d => fs.existsSync(`${dir}/${d}/index.html`)).map(slug => ({ slug }));
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium' });
   let bad = 0;
   for (const s of list) {

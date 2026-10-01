@@ -1,0 +1,3 @@
+Polices des sites d'exemple (exemples/) : toutes sous licence SIL Open Font License 1.1 (https://openfontlicense.org), auto-hébergées.
+Archivo, Fraunces, Cormorant, Syne, Nunito, Playfair Display, Figtree, Oswald, DM Sans, DM Serif Display, Caveat, Space Grotesk :
+copyright de leurs auteurs respectifs, distribuées via le projet Fontsource (https://fontsource.org).

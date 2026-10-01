@@ -3,80 +3,127 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Dupont Plomberie · exemple de site (Plombier chauffagiste)</title>
-<meta name="description" content="Exemple fictif de site pour plombier chauffagiste, réalisé par QuenTools.">
+<title>Dupont Plomberie · exemple de site (plombier)</title>
+<meta name="description" content="Exemple fictif de site pour un plombier chauffagiste, réalisé par QuenTools.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
-<link rel="preload" href="../../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../../assets/qt.css">
+<link rel="preload" href="../../assets/fonts/ex/archivo-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../ex.css">
 <style>
-  :root{--accent:#0f5fa8;--accent-soft:#dbeafe;--lime:#fbbf24}
-  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#7cb7ff;--accent-soft:#0e2238}}
-  .ph{aspect-ratio:4/3;border-radius:var(--r-lg);display:grid;place-items:center;font-size:clamp(2.4rem,6vw,3.6rem);background:linear-gradient(135deg,var(--accent-soft),var(--bg-2));border:1px solid var(--line)}
-  .two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-6);align-items:start}@media (max-width:760px){.two{grid-template-columns:1fr}}
-  .price-list{display:grid;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
-  .price-row{display:flex;gap:var(--s-4);justify-content:space-between;align-items:baseline;padding:18px 22px;border-top:1px solid var(--line)}
-  .price-row:first-child{border-top:0}.price-row b{font-weight:600}.price-row small{display:block;color:var(--muted)}.price-row .amount{font:700 var(--t-lg)/1 var(--f-display);white-space:nowrap}
-  .hours{width:100%;border-collapse:collapse}.hours td{padding:10px 0;border-top:1px solid var(--line)}.hours td:last-child{text-align:right;color:var(--muted)}
-  .today{padding:var(--s-6);border-radius:var(--r-xl);background:#1b1712;color:#f6efe6}.today h3{color:var(--lime);margin:0 0 var(--s-3)}.today p{color:#e9dfd2;margin:0 0 6px}
-  .dish{display:flex;gap:var(--s-4);justify-content:space-between;align-items:baseline;padding:14px 0;border-top:1px solid var(--line)}
-  .dish b{font-weight:600}.dish small{display:block;color:var(--muted)}.dish .amount{font:700 var(--t-md)/1 var(--f-display);white-space:nowrap}
-  .menu h3{margin:var(--s-5) 0 var(--s-2);font-size:var(--t-lg)}
-  .cover{aspect-ratio:3/4;max-width:340px;margin-inline:auto;border-radius:var(--r-lg);background:linear-gradient(150deg,var(--accent),#1b1340);color:#fff;display:grid;align-content:end;padding:28px;box-shadow:var(--sh-3);transform:rotate(2deg)}
-  .cover b{font:700 clamp(1.4rem,3vw,2rem)/1.1 var(--f-display)}.cover small{opacity:.8}
-  .toc{columns:2;column-gap:var(--s-6);padding:0;list-style:none;margin:0}@media (max-width:640px){.toc{columns:1}}.toc li{break-inside:avoid;padding:10px 0;border-top:1px solid var(--line)}
-  .cta-band form p,.cta-band form a{color:var(--muted)}
-  .demo-note{margin-top:var(--s-3);font-size:var(--t-sm)}
+@font-face{font-family:Archivo;src:url(../../assets/fonts/ex/archivo-normal.woff2) format("woff2");font-weight:100 900;font-display:swap}
+:root{--blue:#0b3d91;--blue-d:#08275c;--sun:#ffc20e;--ink:#0f1a2e;--mut:#51607a;--bg:#f3f6fb;--line:#d6deec}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font:400 17px/1.6 Archivo,system-ui,sans-serif;color:var(--ink);background:#fff}
+a{color:inherit}.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+.urgent{background:var(--sun);color:var(--ink);font-weight:700;text-align:center;padding:10px 16px;font-size:15px}
+.urgent a{text-decoration:none;border-bottom:2px solid var(--ink)}
+header.top{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:68px;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;text-decoration:none;color:var(--blue)}
+.logo i{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:var(--blue);color:var(--sun);font-style:normal}
+nav a{margin-left:22px;text-decoration:none;font-weight:600;font-size:15px;color:var(--mut)}nav a:hover{color:var(--blue)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 24px;border-radius:10px;font-weight:700;text-decoration:none;border:0;cursor:pointer;font:700 16px Archivo,sans-serif}
+.btn-y{background:var(--sun);color:var(--ink)}.btn-b{background:var(--blue);color:#fff}.btn-o{border:2px solid var(--blue);color:var(--blue);background:transparent}
+.hero{background:linear-gradient(120deg,var(--blue-d),var(--blue));color:#fff;position:relative;overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center;padding-top:72px;padding-bottom:72px}
+.hero h1{font-size:clamp(2.4rem,5.4vw,4.2rem);line-height:1;letter-spacing:-.03em;font-weight:900;text-transform:uppercase;margin:0 0 20px}
+.hero h1 span{color:var(--sun)}.hero p{font-size:19px;max-width:46ch;color:#cfdcf5;margin:0 0 28px}
+.hero .cta{display:flex;flex-wrap:wrap;gap:12px}
+.quote{background:#fff;color:var(--ink);border-radius:18px;padding:26px;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.quote h2{margin:0 0 4px;font-size:22px}.quote p{margin:0 0 16px;color:var(--mut);font-size:15px}
+.quote label{display:block;font-weight:700;font-size:13px;margin:12px 0 4px}
+.quote input,.quote select,.quote textarea{width:100%;font:inherit;padding:12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.quote .btn{width:100%;justify-content:center;margin-top:16px}
+.facts{background:var(--bg);border-bottom:1px solid var(--line)}
+.facts .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding-top:22px;padding-bottom:22px}
+.facts div{display:flex;gap:12px;align-items:center;font-weight:700;font-size:15px}.facts b{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:#fff;border:1px solid var(--line);font-size:20px}
+section{padding:80px 0}h2.t{font-size:clamp(1.8rem,3.6vw,2.7rem);letter-spacing:-.02em;line-height:1.1;margin:0 0 12px;font-weight:800}
+.sub{color:var(--mut);max-width:60ch;margin:0 0 40px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.tile{border:1.5px solid var(--line);border-radius:16px;padding:26px;background:#fff;transition:.2s}.tile:hover{border-color:var(--blue);transform:translateY(-3px);box-shadow:0 14px 30px rgba(11,61,145,.12)}
+.tile .ic{display:grid;place-items:center;width:56px;height:56px;border-radius:14px;background:var(--bg);font-size:28px;margin-bottom:14px}
+.tile h3{margin:0 0 6px;font-size:20px}.tile p{margin:0;color:var(--mut);font-size:15px}.tile em{display:block;margin-top:12px;font-style:normal;font-weight:800;color:var(--blue)}
+.zone{background:var(--blue-d);color:#fff}.zone .wrap{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.zone p{color:#cfdcf5}.chips{display:flex;flex-wrap:wrap;gap:8px}.chips span{padding:8px 14px;border:1.5px solid #4666a8;border-radius:999px;font-weight:600;font-size:15px}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;counter-reset:s}
+.flow div{padding:22px 22px 0 0;border-top:3px solid var(--line);position:relative;counter-increment:s}
+.flow div::before{content:counter(s);position:absolute;top:-17px;left:0;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;font-weight:800;font-size:14px}
+.flow b{display:block;margin-top:14px;font-size:18px}.flow span{color:var(--mut);font-size:15px}
+.rate{background:var(--bg)}.rate table{width:100%;border-collapse:collapse;background:#fff;border-radius:16px;overflow:hidden;border:1.5px solid var(--line)}
+.rate td{padding:18px 22px;border-top:1px solid var(--line)}.rate tr:first-child td{border-top:0}.rate td:last-child{text-align:right;font-weight:800;color:var(--blue);white-space:nowrap}
+.faq details{border-bottom:1px solid var(--line);padding:18px 0}.faq summary{font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between}.faq summary::after{content:"+";font-size:22px;color:var(--blue)}.faq details[open] summary::after{content:"–"}.faq p{margin:10px 0 0;color:var(--mut)}
+footer{background:var(--ink);color:#9fb0cf;padding:36px 0;font-size:14px}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}footer a{color:#fff}
+.callbar{display:none}
+@media (max-width:860px){nav{display:none}.hero .wrap,.zone .wrap{grid-template-columns:1fr}.facts .wrap{grid-template-columns:1fr 1fr}.tiles{grid-template-columns:1fr}.flow{grid-template-columns:1fr 1fr;row-gap:30px}
+ .callbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--sun);padding:12px 16px;justify-content:center;font-weight:800}.callbar a{text-decoration:none}body{padding-bottom:56px}}
 </style>
 </head>
 <body>
-<div class="announce"><div class="wrap"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div></div>
-<a class="skip" href="#contenu">Aller au contenu</a>
-<header class="nav"><div class="wrap">
-  <a class="brand" href="./">Dupont Plomberie</a>
-  <ul class="nav-links"><li><a href="#services">Services</a></li><li><a href="#realisations">Réalisations</a></li><li><a href="#faq">FAQ</a></li></ul>
-  <a class="btn btn-sm btn-accent" href="#contact">Devis gratuit</a>
+<div class="qt-ex"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
+<div class="urgent">Urgence fuite ou panne ? Appelez le <a href="tel:0400000000">04 00 00 00 00</a> (numéro d'exemple)</div>
+<header class="top"><div class="wrap">
+  <a class="logo" href="./"><i>💧</i>Dupont Plomberie</a>
+  <nav><a href="#services">Services</a><a href="#zone">Zone</a><a href="#tarifs">Tarifs</a><a href="#faq">FAQ</a></nav>
+  <a class="btn btn-b" href="#devis">Devis gratuit</a>
 </div></header>
 
-<main id="contenu">
-  <section class="hero"><div class="bg-grid" aria-hidden="true"></div>
-    <div class="wrap">
-      <span class="chip chip-ok reveal"><span class="dot"></span> Dépannage sous 24 h</span>
-      <h1 class="display reveal" style="--i:1">Votre plombier à Lyon, <em>sans mauvaise surprise.</em></h1>
-      <p class="lede reveal" style="--i:2">Dépannage, chauffe-eau et salle de bains : un devis clair avant chaque intervention, un artisan qui vient quand il l&#x27;a dit.</p>
-      <div class="hero-cta reveal" style="--i:3"><a class="btn btn-accent" href="#contact">Demander un devis gratuit</a><a class="btn btn-ghost" href="#services">Voir les services</a></div>
-    </div>
-  </section>
-  <section class="section" id="services" style="padding-top:0"><div class="wrap">
-    <div class="section-head"><span class="eyebrow">Services</span><h2 class="h-section">Ce que je répare et installe</h2></div>
-    <div class="grid grid-3"><article class="card offer reveal" style="--i:0"><h3>Dépannage</h3><p>Fuite, canalisation bouchée, panne de chauffe-eau.</p><ul><li>Intervention rapide</li><li>Prix annoncé avant de commencer</li></ul></article><article class="card offer is-featured reveal" style="--i:1"><span class="chip chip-lime" style="align-self:flex-start">Le plus demandé</span><h3>Chauffe-eau et chauffage</h3><p>Remplacement et entretien de chaudières et ballons.</p><ul><li>Conseil sur le modèle adapté</li><li>Reprise de l&#x27;ancien appareil</li></ul></article><article class="card offer reveal" style="--i:2"><h3>Salle de bains</h3><p>Rénovation complète ou remplacement de la douche.</p><ul><li>Plan et devis détaillé</li><li>Chantier propre</li></ul></article></div>
-  </div></section>
-  <section class="section" id="realisations" style="background:var(--bg-2)"><div class="wrap">
-    <div class="section-head"><span class="eyebrow">Réalisations</span><h2 class="h-section">Quelques types de chantiers</h2><p class="lede">Visuels d'illustration : sur un vrai site, vos photos remplacent ces cadres.</p></div>
-    <div class="grid grid-2"><figure class="card reveal" style="margin:0;--i:0"><div class="ph" aria-hidden="true">🚿</div><figcaption style="margin-top:var(--s-3)"><b>Salle de bains rénovée</b><br><span class="muted">Lyon 3e</span></figcaption></figure><figure class="card reveal" style="margin:0;--i:1"><div class="ph" aria-hidden="true">🔥</div><figcaption style="margin-top:var(--s-3)"><b>Chaudière remplacée</b><br><span class="muted">Villeurbanne</span></figcaption></figure><figure class="card reveal" style="margin:0;--i:0"><div class="ph" aria-hidden="true">🚰</div><figcaption style="margin-top:var(--s-3)"><b>Cuisine : nouvelle arrivée d&#x27;eau</b><br><span class="muted">Lyon 7e</span></figcaption></figure><figure class="card reveal" style="margin:0;--i:1"><div class="ph" aria-hidden="true">🛁</div><figcaption style="margin-top:var(--s-3)"><b>Douche à l&#x27;italienne</b><br><span class="muted">Caluire</span></figcaption></figure></div>
-  </div></section>
-  <section class="section"><div class="wrap"><div class="section-head"><span class="eyebrow">Comment ça se passe</span><h2 class="h-section">Un devis, une date, un chantier propre</h2></div><div class="steps"><div class="step reveal" style="--i:0"><h3>Vous décrivez</h3><p>Photo et description par message.</p></div><div class="step reveal" style="--i:1"><h3>Je chiffre</h3><p>Devis détaillé sous 48 h.</p></div><div class="step reveal" style="--i:2"><h3>J&#x27;interviens</h3><p>À la date convenue, chantier nettoyé.</p></div></div></div></section>
-  <section class="section" id="faq" style="padding-top:0"><div class="wrap faq-grid">
-    <div class="section-head"><span class="eyebrow">FAQ</span><h2 class="h-section">Questions fréquentes</h2></div>
-    <div class="faq"><details><summary>Le devis est-il gratuit ?</summary><p>Oui, sans engagement.</p></details><details><summary>Intervenez-vous le week-end ?</summary><p>Pour les urgences, selon disponibilité.</p></details><details><summary>Quels moyens de paiement ?</summary><p>Virement, carte ou chèque.</p></details></div>
-  </div></section>
-  <section class="section" id="contact" style="padding-top:0"><div class="wrap" style="max-width:820px">
-    <div class="cta-band">
-      <span class="eyebrow" style="color:var(--lime)">Contact</span>
-      <h2 style="margin:var(--s-4) 0">Décrivez-moi votre problème</h2>
-      <p>Réponse sous 24 h avec une première estimation.</p>
-      <form class="form" style="background:var(--surface);color:var(--ink);padding:var(--s-5);border-radius:var(--r-lg);margin-top:var(--s-5)">
-        <div class="form-grid"><div class="field"><label for="n">Nom</label><input id="n" name="nom" autocomplete="name" required></div><div class="field"><label for="t">Téléphone ou e-mail</label><input id="t" name="contact" required></div></div><div class="field"><label for="m">Votre besoin</label><textarea id="m" name="message" rows="3" required></textarea></div>
-        <button class="btn btn-accent" type="submit">Envoyer ma demande</button>
-      </form>
-    </div>
-  </div></section>
+<main>
+<section class="hero" style="padding:0"><div class="wrap">
+  <div>
+    <h1>Votre plombier à Lyon, <span>sans mauvaise surprise.</span></h1>
+    <p>Dépannage, chauffe-eau, chaudière et salle de bains. Le prix est annoncé avant l'intervention, le chantier est laissé propre.</p>
+    <div class="cta"><a class="btn btn-y" href="tel:0400000000">📞 Appeler maintenant</a><a class="btn btn-o" style="border-color:#fff;color:#fff" href="#services">Voir les services</a></div>
+  </div>
+  <form class="quote" id="devis">
+    <h2>Devis gratuit en 2 minutes</h2><p>Réponse sous 24 h.</p>
+    <label for="q1">Type de travaux</label><select id="q1"><option>Dépannage urgent</option><option>Chauffe-eau</option><option>Chaudière</option><option>Salle de bains</option></select>
+    <label for="q2">Votre téléphone</label><input id="q2" type="tel" required>
+    <label for="q3">Ce qui se passe</label><textarea id="q3" rows="2"></textarea>
+    <button class="btn btn-b" type="submit">Recevoir mon devis</button>
+  </form>
+</div></section>
+
+<div class="facts"><div class="wrap">
+  <div><b>⏱</b>Intervention sous 24 h</div><div><b>🧾</b>Devis avant travaux</div><div><b>🧹</b>Chantier propre</div><div><b>🛡</b>Assurance décennale (à confirmer)</div>
+</div></div>
+
+<section id="services"><div class="wrap">
+  <h2 class="t">Ce que je répare et installe</h2><p class="sub">Six interventions courantes, un seul interlocuteur du premier appel à la facture.</p>
+  <div class="tiles">
+    <div class="tile"><div class="ic">🚰</div><h3>Fuite et dépannage</h3><p>Recherche de fuite, canalisation bouchée, robinetterie.</p><em>à partir de 80 €</em></div>
+    <div class="tile"><div class="ic">🔥</div><h3>Chauffe-eau</h3><p>Remplacement, entretien, groupe de sécurité.</p><em>sur devis</em></div>
+    <div class="tile"><div class="ic">♨️</div><h3>Chaudière</h3><p>Entretien annuel, dépannage, remplacement.</p><em>entretien dès 110 €</em></div>
+    <div class="tile"><div class="ic">🚿</div><h3>Salle de bains</h3><p>Douche à l'italienne, meuble vasque, WC suspendu.</p><em>sur devis</em></div>
+    <div class="tile"><div class="ic">🚽</div><h3>Sanitaires</h3><p>Pose et remplacement de WC, lavabos, éviers.</p><em>à partir de 90 €</em></div>
+    <div class="tile"><div class="ic">🧰</div><h3>Petits travaux</h3><p>Joints, siphons, flexibles, purge de radiateurs.</p><em>forfait 1 h : 65 €</em></div>
+  </div>
+</div></section>
+
+<section class="zone" id="zone"><div class="wrap">
+  <div><h2 class="t">Je me déplace près de chez vous.</h2><p>Lyon et alentours, avec une intervention rapide dans un rayon de 20 km. Dites-moi votre commune, je vous confirme le délai.</p></div>
+  <div class="chips"><span>Lyon 1er – 9e</span><span>Villeurbanne</span><span>Caluire</span><span>Bron</span><span>Vénissieux</span><span>Oullins</span><span>Tassin</span><span>Écully</span></div>
+</div></section>
+
+<section><div class="wrap">
+  <h2 class="t">Un chantier, quatre étapes.</h2><p class="sub">Vous savez toujours où on en est.</p>
+  <div class="flow"><div><b>Vous décrivez</b><span>Appel ou formulaire, photo si possible.</span></div><div><b>Je chiffre</b><span>Devis détaillé, prix ferme.</span></div><div><b>J'interviens</b><span>À la date convenue.</span></div><div><b>Je contrôle</b><span>Essai, nettoyage, facture.</span></div></div>
+</div></section>
+
+<section class="rate" id="tarifs"><div class="wrap">
+  <h2 class="t">Des repères de prix.</h2><p class="sub">Tarifs d'exemple, fictifs. Un devis précis est toujours remis avant les travaux.</p>
+  <table><tr><td>Déplacement et diagnostic</td><td>49 €</td></tr><tr><td>Heure de main-d'œuvre</td><td>65 €</td></tr><tr><td>Remplacement d'un mitigeur</td><td>à partir de 120 €</td></tr><tr><td>Débouchage de canalisation</td><td>à partir de 90 €</td></tr></table>
+</div></section>
+
+<section class="faq" id="faq"><div class="wrap" style="max-width:820px">
+  <h2 class="t">Questions fréquentes</h2>
+  <details><summary>Le devis est-il gratuit ?</summary><p>Oui, et il est remis avant le début des travaux.</p></details>
+  <details><summary>Intervenez-vous le week-end ?</summary><p>Pour les urgences, selon disponibilité. Appelez-moi.</p></details>
+  <details><summary>Comment payer ?</summary><p>Virement, carte ou chèque à la fin du chantier.</p></details>
+</div></section>
 </main>
-<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
-  <span>© <span data-year>2026</span> Dupont Plomberie (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span>
-  <span><a href="../">Autres exemples</a> · Site réalisé par <a href="https://ikeupods-del.github.io/Quentools/">QuenTools</a></span>
-</div></div></footer>
-<script src="../../assets/qt.js" defer></script>
-<script>document.addEventListener('submit',function(e){e.preventDefault();var n=e.target.querySelector('.demo-note');if(!n){n=document.createElement('p');n.className='demo-note';e.target.appendChild(n)}n.textContent='Démonstration : ce formulaire n\u2019envoie rien. Sur un vrai site, la demande arrive directement chez le professionnel.'});</script>
+
+<footer><div class="wrap"><span>© <span data-year>2026</span> Dupont Plomberie (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
+<div class="callbar"><a href="tel:0400000000">📞 Appeler le 04 00 00 00 00</a></div>
+<script src="../ex.js" defer></script>
 </body>
 </html>

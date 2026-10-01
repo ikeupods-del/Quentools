@@ -3,80 +3,67 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Atelier Lumière · exemple de site (Photographe)</title>
-<meta name="description" content="Exemple fictif de site pour photographe, réalisé par QuenTools.">
+<title>Atelier Lumière · exemple de site (photographe)</title>
+<meta name="description" content="Exemple fictif de site pour un photographe, réalisé par QuenTools.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
-<link rel="preload" href="../../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../../assets/qt.css">
+<link rel="preload" href="../../assets/fonts/ex/cormorant-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../ex.css">
 <style>
-  :root{--accent:#7c3aed;--accent-soft:#ede9fe;--lime:#fde68a}
-  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#c4b5fd;--accent-soft:#221640}}
-  .ph{aspect-ratio:4/3;border-radius:var(--r-lg);display:grid;place-items:center;font-size:clamp(2.4rem,6vw,3.6rem);background:linear-gradient(135deg,var(--accent-soft),var(--bg-2));border:1px solid var(--line)}
-  .two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-6);align-items:start}@media (max-width:760px){.two{grid-template-columns:1fr}}
-  .price-list{display:grid;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
-  .price-row{display:flex;gap:var(--s-4);justify-content:space-between;align-items:baseline;padding:18px 22px;border-top:1px solid var(--line)}
-  .price-row:first-child{border-top:0}.price-row b{font-weight:600}.price-row small{display:block;color:var(--muted)}.price-row .amount{font:700 var(--t-lg)/1 var(--f-display);white-space:nowrap}
-  .hours{width:100%;border-collapse:collapse}.hours td{padding:10px 0;border-top:1px solid var(--line)}.hours td:last-child{text-align:right;color:var(--muted)}
-  .today{padding:var(--s-6);border-radius:var(--r-xl);background:#1b1712;color:#f6efe6}.today h3{color:var(--lime);margin:0 0 var(--s-3)}.today p{color:#e9dfd2;margin:0 0 6px}
-  .dish{display:flex;gap:var(--s-4);justify-content:space-between;align-items:baseline;padding:14px 0;border-top:1px solid var(--line)}
-  .dish b{font-weight:600}.dish small{display:block;color:var(--muted)}.dish .amount{font:700 var(--t-md)/1 var(--f-display);white-space:nowrap}
-  .menu h3{margin:var(--s-5) 0 var(--s-2);font-size:var(--t-lg)}
-  .cover{aspect-ratio:3/4;max-width:340px;margin-inline:auto;border-radius:var(--r-lg);background:linear-gradient(150deg,var(--accent),#1b1340);color:#fff;display:grid;align-content:end;padding:28px;box-shadow:var(--sh-3);transform:rotate(2deg)}
-  .cover b{font:700 clamp(1.4rem,3vw,2rem)/1.1 var(--f-display)}.cover small{opacity:.8}
-  .toc{columns:2;column-gap:var(--s-6);padding:0;list-style:none;margin:0}@media (max-width:640px){.toc{columns:1}}.toc li{break-inside:avoid;padding:10px 0;border-top:1px solid var(--line)}
-  .cta-band form p,.cta-band form a{color:var(--muted)}
-  .demo-note{margin-top:var(--s-3);font-size:var(--t-sm)}
+@font-face{font-family:Cormorant;src:url(../../assets/fonts/ex/cormorant-normal.woff2) format("woff2");font-weight:300 700;font-display:swap}
+@font-face{font-family:Cormorant;src:url(../../assets/fonts/ex/cormorant-italic.woff2) format("woff2");font-weight:300 700;font-style:italic;font-display:swap}
+@font-face{font-family:Syne;src:url(../../assets/fonts/ex/syne-normal.woff2) format("woff2");font-weight:400 800;font-display:swap}
+:root{--bg:#0c0c0d;--fg:#ece7de;--mut:#8d887f;--line:#2a2927}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 17px/1.7 Cormorant,Georgia,serif}
+a{color:inherit}.lab{font:500 11px/1 Syne,system-ui,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:var(--mut)}
+header{position:fixed;top:36px;left:0;right:0;z-index:30;mix-blend-mode:difference}header .in{display:flex;justify-content:space-between;align-items:center;padding:22px clamp(20px,4vw,56px)}
+header a{text-decoration:none;font:500 12px Syne,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#fff;margin-left:28px}header a:first-child{margin:0;font-size:13px}
+.hero{min-height:100vh;display:grid;align-content:end;padding:0 clamp(20px,4vw,56px) 64px;position:relative;overflow:hidden;background:radial-gradient(60% 50% at 70% 30%,#3a2e22 0,transparent 70%),radial-gradient(40% 40% at 20% 80%,#1d2733 0,transparent 70%),#0c0c0d}
+.hero h1{font:italic 300 clamp(4.2rem,17vw,15rem)/.86 Cormorant,serif;margin:0 0 28px;letter-spacing:-.04em}.hero h1 span{display:block;font:500 clamp(.8rem,1.3vw,1rem)/1 Syne,sans-serif;letter-spacing:.4em;text-transform:uppercase;margin-bottom:22px;color:var(--mut)}
+.hero p{max-width:40ch;font-size:21px;color:#c9c3b8;margin:0}.scroll{position:absolute;right:clamp(20px,4vw,56px);bottom:64px}
+.gal{padding:100px clamp(12px,3vw,40px)}.gal .head{display:flex;justify-content:space-between;align-items:end;margin-bottom:40px;padding:0 8px}.gal h2{font:italic 300 clamp(2.4rem,6vw,4.4rem)/1 Cormorant,serif;margin:0}
+.mas{columns:3;column-gap:14px}.ph{break-inside:avoid;margin:0 0 14px;position:relative;overflow:hidden;display:block}
+.ph::after{content:"";position:absolute;inset:0;background:repeating-radial-gradient(circle at 50% 50%,rgba(255,255,255,.03) 0 1px,transparent 1px 3px);mix-blend-mode:overlay}
+.ph span{position:absolute;left:14px;bottom:12px;font:500 10px Syne,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.85)}
+.g1{aspect-ratio:3/4;background:linear-gradient(160deg,#c9a47a,#4a2e1f)}.g2{aspect-ratio:1/1;background:radial-gradient(circle at 30% 30%,#e8d5b5,#6b4c3a 60%,#1c1410)}.g3{aspect-ratio:4/5;background:linear-gradient(200deg,#6f8fa6,#101820)}
+.g4{aspect-ratio:3/2;background:linear-gradient(120deg,#d9b49a,#7a4b4b 60%,#2b1b24)}.g5{aspect-ratio:2/3;background:linear-gradient(180deg,#b9c3a5,#3c4a3a)}.g6{aspect-ratio:1/1;background:conic-gradient(from 200deg at 60% 40%,#eadbc2,#8e6a4b,#2c1f18,#eadbc2)}
+.sv{padding:90px clamp(20px,4vw,56px);border-top:1px solid var(--line)}.sv .grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:64px}.sv h2{font:italic 300 clamp(2.2rem,5vw,3.8rem)/1.05 Cormorant,serif;margin:0}
+.li{display:grid;grid-template-columns:60px 1fr auto;gap:18px;align-items:baseline;padding:26px 0;border-top:1px solid var(--line)}.li:first-child{border-top:0;padding-top:0}.li .n{font:500 11px Syne,sans-serif;color:var(--mut);letter-spacing:.2em}.li h3{margin:0;font:400 clamp(1.6rem,3vw,2.2rem)/1.1 Cormorant,serif}.li p{margin:6px 0 0;color:var(--mut);font-size:17px}.li .pr{font:500 12px Syne,sans-serif;letter-spacing:.14em;white-space:nowrap}
+.ct{padding:110px clamp(20px,4vw,56px) 70px;border-top:1px solid var(--line);text-align:center}.ct h2{font:italic 300 clamp(2.6rem,8vw,6.4rem)/.95 Cormorant,serif;margin:0 0 20px}.ct p{color:var(--mut);max-width:44ch;margin:0 auto 40px;font-size:20px}
+form{max-width:620px;margin:0 auto;display:grid;gap:22px;text-align:left}input,textarea,select{width:100%;background:transparent;border:0;border-bottom:1px solid #4a4640;color:var(--fg);padding:12px 0;font:400 19px Cormorant,serif;border-radius:0}input::placeholder,textarea::placeholder{color:#6d685f}input:focus,textarea:focus,select:focus{outline:0;border-color:var(--fg)}select option{color:#000}
+.btn{justify-self:start;margin-top:10px;background:var(--fg);color:#0c0c0d;border:0;padding:16px 34px;font:600 11px Syne,sans-serif;letter-spacing:.26em;text-transform:uppercase;cursor:pointer}
+footer{padding:36px clamp(20px,4vw,56px);border-top:1px solid var(--line);display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font:11px Syne,sans-serif;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+@media (max-width:860px){.mas{columns:2}.sv .grid{grid-template-columns:1fr;gap:32px}.li{grid-template-columns:36px 1fr}.li .pr{grid-column:2}header a:not(:first-child){display:none}}
+@media (max-width:520px){.mas{columns:1}}
 </style>
 </head>
 <body>
-<div class="announce"><div class="wrap"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div></div>
-<a class="skip" href="#contenu">Aller au contenu</a>
-<header class="nav"><div class="wrap">
-  <a class="brand" href="./">Atelier Lumière</a>
-  <ul class="nav-links"><li><a href="#services">Services</a></li><li><a href="#realisations">Portfolio</a></li><li><a href="#faq">FAQ</a></li></ul>
-  <a class="btn btn-sm btn-accent" href="#contact">Réserver</a>
-</div></header>
+<div class="qt-ex"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
+<header><div class="in"><a href="./">Atelier Lumière</a><span><a href="#portfolio">Portfolio</a><a href="#formules">Formules</a><a href="#contact">Contact</a></span></div></header>
 
-<main id="contenu">
-  <section class="hero"><div class="bg-grid" aria-hidden="true"></div>
-    <div class="wrap">
-      <span class="chip chip-ok reveal"><span class="dot"></span> Dates disponibles cet été</span>
-      <h1 class="display reveal" style="--i:1">Des photos qui racontent <em>votre histoire.</em></h1>
-      <p class="lede reveal" style="--i:2">Mariages, portraits et reportages d&#x27;entreprise : un regard sincère, des images livrées en galerie privée.</p>
-      <div class="hero-cta reveal" style="--i:3"><a class="btn btn-accent" href="#contact">Réserver une date</a><a class="btn btn-ghost" href="#services">Voir les formules</a></div>
-    </div>
-  </section>
-  <section class="section" id="services" style="padding-top:0"><div class="wrap">
-    <div class="section-head"><span class="eyebrow">Services</span><h2 class="h-section">Les formules</h2></div>
-    <div class="grid grid-3"><article class="card offer reveal" style="--i:0"><h3>Portrait</h3><p>Séance en studio ou en extérieur.</p><ul><li>1 heure</li><li>15 photos retouchées</li></ul></article><article class="card offer is-featured reveal" style="--i:1"><span class="chip chip-lime" style="align-self:flex-start">Le plus demandé</span><h3>Mariage</h3><p>Du préparatif à la soirée.</p><ul><li>Journée complète</li><li>Galerie privée en ligne</li></ul></article><article class="card offer reveal" style="--i:2"><h3>Entreprise</h3><p>Équipe, locaux, produits.</p><ul><li>Demi-journée</li><li>Droits d&#x27;usage inclus</li></ul></article></div>
+<main>
+<section class="hero"><h1><span>Photographe · portrait, mariage, entreprise</span>Lumière</h1><p>Des images sincères, une présence discrète. Chaque séance est pensée comme une histoire, livrée en galerie privée.</p><div class="scroll lab">Défiler ↓</div></section>
+
+<section class="gal" id="portfolio"><div class="head"><h2>Portfolio</h2><span class="lab">Visuels d'illustration</span></div>
+  <div class="mas">
+    <a class="ph g1" href="#contact"><span>Portrait · lumière naturelle</span></a><a class="ph g2" href="#contact"><span>Détails</span></a><a class="ph g3" href="#contact"><span>Mariage · crépuscule</span></a>
+    <a class="ph g4" href="#contact"><span>Famille</span></a><a class="ph g5" href="#contact"><span>Reportage</span></a><a class="ph g6" href="#contact"><span>Studio</span></a>
   </div></section>
-  <section class="section" id="realisations" style="background:var(--bg-2)"><div class="wrap">
-    <div class="section-head"><span class="eyebrow">Portfolio</span><h2 class="h-section">Quelques ambiances</h2><p class="lede">Visuels d'illustration : sur un vrai site, vos photos remplacent ces cadres.</p></div>
-    <div class="grid grid-2"><figure class="card reveal" style="margin:0;--i:0"><div class="ph" aria-hidden="true">📷</div><figcaption style="margin-top:var(--s-3)"><b>Portrait lumineux</b><br><span class="muted">Séance en extérieur</span></figcaption></figure><figure class="card reveal" style="margin:0;--i:1"><div class="ph" aria-hidden="true">💍</div><figcaption style="margin-top:var(--s-3)"><b>Mariage champêtre</b><br><span class="muted">Cérémonie</span></figcaption></figure><figure class="card reveal" style="margin:0;--i:0"><div class="ph" aria-hidden="true">🏢</div><figcaption style="margin-top:var(--s-3)"><b>Reportage d&#x27;équipe</b><br><span class="muted">Entreprise</span></figcaption></figure><figure class="card reveal" style="margin:0;--i:1"><div class="ph" aria-hidden="true">👶</div><figcaption style="margin-top:var(--s-3)"><b>Séance famille</b><br><span class="muted">À domicile</span></figcaption></figure></div>
-  </div></section>
-  <section class="section"><div class="wrap"><div class="section-head"><span class="eyebrow">Comment ça se passe</span><h2 class="h-section">De la rencontre à la galerie</h2></div><div class="steps"><div class="step reveal" style="--i:0"><h3>On se rencontre</h3><p>Échange sur vos envies, sans engagement.</p></div><div class="step reveal" style="--i:1"><h3>Jour J</h3><p>Séance détendue, direction douce.</p></div><div class="step reveal" style="--i:2"><h3>Galerie</h3><p>Livraison en ligne sous trois semaines.</p></div></div></div></section>
-  <section class="section" id="faq" style="padding-top:0"><div class="wrap faq-grid">
-    <div class="section-head"><span class="eyebrow">FAQ</span><h2 class="h-section">Questions fréquentes</h2></div>
-    <div class="faq"><details><summary>Livrez-vous les fichiers bruts ?</summary><p>Seules les images retouchées sont livrées.</p></details><details><summary>Peut-on imprimer ?</summary><p>Oui, droits d&#x27;impression privée inclus.</p></details><details><summary>Déplacez-vous ?</summary><p>Oui, frais de déplacement selon la distance.</p></details></div>
-  </div></section>
-  <section class="section" id="contact" style="padding-top:0"><div class="wrap" style="max-width:820px">
-    <div class="cta-band">
-      <span class="eyebrow" style="color:var(--lime)">Contact</span>
-      <h2 style="margin:var(--s-4) 0">Parlons de votre projet</h2>
-      <p>Donnez la date et le lieu : je vérifie ma disponibilité.</p>
-      <form class="form" style="background:var(--surface);color:var(--ink);padding:var(--s-5);border-radius:var(--r-lg);margin-top:var(--s-5)">
-        <div class="form-grid"><div class="field"><label for="n">Nom</label><input id="n" name="nom" autocomplete="name" required></div><div class="field"><label for="t">Téléphone ou e-mail</label><input id="t" name="contact" required></div></div><div class="field"><label for="m">Votre projet</label><textarea id="m" name="message" rows="3" required></textarea></div>
-        <button class="btn btn-accent" type="submit">Envoyer ma demande</button>
-      </form>
-    </div>
-  </div></section>
+
+<section class="sv" id="formules"><div class="grid"><div><span class="lab">Formules</span><h2 style="margin-top:18px">Pour chaque histoire,<br>un format.</h2></div>
+  <div>
+    <div class="li"><span class="n">01</span><div><h3>Portrait</h3><p>Une heure, en studio ou en extérieur, 15 images retouchées.</p></div><span class="pr">190 €</span></div>
+    <div class="li"><span class="n">02</span><div><h3>Mariage</h3><p>Du préparatif à la soirée, galerie privée et album en option.</p></div><span class="pr">sur devis</span></div>
+    <div class="li"><span class="n">03</span><div><h3>Entreprise</h3><p>Équipe, locaux, produits : une demi-journée, droits d'usage inclus.</p></div><span class="pr">dès 350 €</span></div>
+    <div class="li"><span class="n">04</span><div><h3>Famille</h3><p>À domicile ou dehors, dans le naturel, 20 images.</p></div><span class="pr">230 €</span></div>
+    <p class="lab" style="margin-top:6px">Tarifs d'exemple, fictifs</p>
+  </div></div></section>
+
+<section class="ct" id="contact"><span class="lab">Réserver une date</span><h2 style="margin-top:22px">Parlons de<br><em>votre histoire.</em></h2><p>Date, lieu, ambiance souhaitée : je vous réponds sous 48 heures.</p>
+  <form><input placeholder="Votre nom" aria-label="Nom" required><input placeholder="E-mail" type="email" aria-label="E-mail" required><select aria-label="Type de séance"><option>Portrait</option><option>Mariage</option><option>Entreprise</option><option>Famille</option></select><textarea rows="3" placeholder="Date et lieu envisagés" aria-label="Message"></textarea><button class="btn" type="submit">Envoyer</button></form></section>
 </main>
-<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
-  <span>© <span data-year>2026</span> Atelier Lumière (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span>
-  <span><a href="../">Autres exemples</a> · Site réalisé par <a href="https://ikeupods-del.github.io/Quentools/">QuenTools</a></span>
-</div></div></footer>
-<script src="../../assets/qt.js" defer></script>
-<script>document.addEventListener('submit',function(e){e.preventDefault();var n=e.target.querySelector('.demo-note');if(!n){n=document.createElement('p');n.className='demo-note';e.target.appendChild(n)}n.textContent='Démonstration : ce formulaire n\u2019envoie rien. Sur un vrai site, la demande arrive directement chez le professionnel.'});</script>
+<footer><span>© <span data-year>2026</span> Atelier Lumière (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></footer>
+<script src="../ex.js" defer></script>
 </body>
 </html>
