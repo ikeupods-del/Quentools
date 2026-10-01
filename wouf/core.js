@@ -276,5 +276,8 @@ async function shareOrDownload(file, text) {
   try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); return; } } catch (e) { if (e.name === 'AbortError') return; }
   download(file.name, file);
 }
+/* Données venues d'ailleurs (sauvegarde importée, synchronisation, OpenStreetMap) : on n'accepte que des images encodées et des liens web. */
+const safeImg = s => /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(String(s || '')) ? s : '';
+const safeUrl = s => /^https?:\/\/[^\s"'<>]+$/i.test(String(s || '').trim()) ? String(s).trim() : '';
 const phoneLink = p => 'tel:' + String(p || '').replace(/[^\d+]/g, '');
 const fmtPhone = p => { const d = String(p || '').replace(/\D/g, ''); return d.length === 10 ? d.replace(/(\d{2})(?=\d)/g, '$1 ') : (p || ''); };

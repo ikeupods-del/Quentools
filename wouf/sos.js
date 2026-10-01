@@ -115,7 +115,7 @@ function vetsHTML() {
       return `<div class="vet"><div class="vet-h"><b>${esc(v.name)}</b><span class="dist">${v.dist < 10 ? v.dist.toFixed(1) : Math.round(v.dist)} km</span></div>
         <p class="mut">${esc(v.addr || 'Adresse non renseignée')}</p>
         <p>${v.h24 ? '<span class="pill ok">24 h/24</span>' : v.open === true ? '<span class="pill ok">Ouvert maintenant</span>' : v.open === false ? '<span class="pill">Fermé</span>' : '<span class="pill">Horaires inconnus</span>'}${v.hours && !v.h24 ? ` <small class="mut">${esc(v.hours)}</small>` : ''}</p>
-        <div class="btn-row">${v.phone ? `<a class="btn primary sm" href="${phoneLink(v.phone)}">📞 ${esc(fmtPhone(v.phone.split(';')[0]))}</a>` : '<span class="mut">Téléphone non renseigné</span>'}<a class="btn sm" href="${dirs}" target="_blank" rel="noopener">🧭 Itinéraire</a>${v.web ? `<a class="btn sm" href="${esc(v.web)}" target="_blank" rel="noopener">Site</a>` : ''}</div></div>`;
+        <div class="btn-row">${v.phone ? `<a class="btn primary sm" href="${phoneLink(v.phone)}">📞 ${esc(fmtPhone(v.phone.split(';')[0]))}</a>` : '<span class="mut">Téléphone non renseigné</span>'}<a class="btn sm" href="${dirs}" target="_blank" rel="noopener">🧭 Itinéraire</a>${safeUrl(v.web) ? `<a class="btn sm" href="${esc(safeUrl(v.web))}" target="_blank" rel="noopener">Site</a>` : ''}</div></div>`;
     }).join('') : '<p class="empty">Aucune clinique pour ce filtre. Essayez « Toutes » ou la recherche Google Maps.</p>'}</div>`;
   }
   out += `<p class="mut"><a class="btn sm" href="${g}" target="_blank" rel="noopener">🗺️ Chercher « urgence vétérinaire » sur Google Maps</a></p>

@@ -857,7 +857,7 @@ function renderFridge0() {
     let g = '', p = '';
     if (!fridge.length) { g = p = '<p style="color:var(--text-muted);">Aucun ingrédient. Ajoutez ce que vous avez sous la main !</p>'; }
     fridge.forEach((item, i) => {
-        const h = `<div class="card"><div style="display:flex; justify-content:space-between; align-items:flex-start;"><div class="card-icon">${item.icon}</div><div style="display:flex; gap:4px;"><button class="btn-icon" title="Basique permanent" onclick="toggleBasic(${item.id})" style="${item.basic ? '' : 'opacity:.35'}">📌</button><button class="btn-icon" title="Date limite" onclick="setExp(${item.id})">⏳</button><button class="btn-icon" onclick="removeFromFridge(${item.id})">✕</button></div></div><div class="card-title">${esc(item.name)}</div><div class="card-sub">${esc(item.category)}${expBadge(item)}</div></div>`;
+        const h = `<div class="card"><div style="display:flex; justify-content:space-between; align-items:flex-start;"><div class="card-icon">${item.icon}</div><div style="display:flex; gap:4px;"><button class="btn-icon" title="Basique permanent" onclick="toggleBasic(${+item.id || 0})" style="${item.basic ? '' : 'opacity:.35'}">📌</button><button class="btn-icon" title="Date limite" onclick="setExp(${+item.id || 0})">⏳</button><button class="btn-icon" onclick="removeFromFridge(${+item.id || 0})">✕</button></div></div><div class="card-title">${esc(item.name)}</div><div class="card-sub">${esc(item.category)}${expBadge(item)}</div></div>`;
         g += h; if (i < 4) p += h;
     });
     grid.innerHTML = g; prev.innerHTML = p;
@@ -871,7 +871,7 @@ function renderShoppingList0() {
     if (!items.length) { list.innerHTML = '<p style="color:var(--text-muted);">Aucun article dans cette catégorie.</p>'; return; }
     items.forEach(item => {
         const div = document.createElement('div'); div.className = `shop-item ${item.bought ? 'bought' : ''}`;
-        div.innerHTML = `<div style="display:flex; align-items:center; gap:12px;"><input type="checkbox" ${item.bought ? 'checked' : ''} onchange="toggleBought(${item.id})" style="width:20px; height:20px; accent-color:var(--primary);"><span class="shop-name" style="font-weight:bold;">${item.icon} ${esc(item.name)}</span></div><div class="shop-actions"><span style="font-size:12px; color:var(--text-muted); align-self:center;">~${fmt(+item.price || 0)}€</span><button class="btn-icon" onclick="editItem(${item.id})">✏️</button><button class="btn-transfer" onclick="transferToFridge(${item.id})">IngréMatch ➡️</button><button class="btn-icon" onclick="removeFromShop(${item.id})">✕</button></div>`;
+        div.innerHTML = `<div style="display:flex; align-items:center; gap:12px;"><input type="checkbox" ${item.bought ? 'checked' : ''} onchange="toggleBought(${+item.id || 0})" style="width:20px; height:20px; accent-color:var(--primary);"><span class="shop-name" style="font-weight:bold;">${esc(item.icon || '')} ${esc(item.name)}</span></div><div class="shop-actions"><span style="font-size:12px; color:var(--text-muted); align-self:center;">~${fmt(+item.price || 0)}€</span><button class="btn-icon" onclick="editItem(${+item.id || 0})">✏️</button><button class="btn-transfer" onclick="transferToFridge(${+item.id || 0})">IngréMatch ➡️</button><button class="btn-icon" onclick="removeFromShop(${+item.id || 0})">✕</button></div>`;
         list.appendChild(div);
     });
     list.insertAdjacentHTML('beforeend', `<p style="color:var(--text-muted); margin-top:12px; text-align:right;">Total estimé restant : <b style="color:var(--primary);">${fmt(total)}€</b></p>`);
@@ -930,7 +930,7 @@ function renderFreq(id, mode) {
     const own = mode === 'shop' ? shoppingList : fridge;
     const fr = [...FM.values()].filter(e => !own.some(s => N(s.name) === N(e.item.name)) && (mode === 'shop' || !isNonFood(e.item.category))).slice(0, 8);
     window['_fr_' + mode] = fr.map(e => e.item);
-    document.getElementById(id).innerHTML = fr.length ? `<div class="main-label">⭐ Vos achats fréquents</div><div class="chip-group" style="flex-wrap:wrap;">${fr.map((e, i) => `<span class="chip-label" onclick="addFreq('${mode}', ${i})">${e.item.icon} ${esc(e.item.name)} ×${e.n}</span>`).join('')}</div>` : '';
+    document.getElementById(id).innerHTML = fr.length ? `<div class="main-label">⭐ Vos achats fréquents</div><div class="chip-group" style="flex-wrap:wrap;">${fr.map((e, i) => `<span class="chip-label" onclick="addFreq('${mode}', ${i})">${esc(e.item.icon || '')} ${esc(e.item.name)} ×${e.n}</span>`).join('')}</div>` : '';
 }
 function addFreq(mode, i) {
     const it = window['_fr_' + mode][i]; if (!it) return;
@@ -967,7 +967,7 @@ function addMissingToShop(idx) {
 let recipeLimit = 60;
 function cardHTML(r, m) {
     const i = reg(r), c = m.percent > 70 ? 'var(--accent)' : m.percent > 30 ? '#f59e0b' : '#ef4444';
-    return `<div class="card recipe-card"><div style="display:flex; justify-content:space-between; align-items:flex-start;"><div class="card-icon">${r.icon || '🍽️'}</div><div style="background:${c}20; color:${c}; padding:4px 8px; border-radius:8px; font-weight:bold; font-size:12px;">${m.percent}% Match</div></div><div class="card-title">${esc(r.name)}</div><div class="card-sub">${esc(r.cuisine || '')} • ${esc(r.time || '')}</div>
+    return `<div class="card recipe-card"><div style="display:flex; justify-content:space-between; align-items:flex-start;"><div class="card-icon">${esc(r.icon || '🍽️')}</div><div style="background:${c}20; color:${c}; padding:4px 8px; border-radius:8px; font-weight:bold; font-size:12px;">${m.percent}% Match</div></div><div class="card-title">${esc(r.name)}</div><div class="card-sub">${esc(r.cuisine || '')} • ${esc(r.time || '')}</div>
         ${m.missing.length ? `<button class="btn-action" onclick="addMissingToShop(${i})">🛒 Ajouter manquants (${m.missing.length})</button>` : ''}
         <button class="btn-action" ${m.missing.length ? '' : 'style="background:var(--accent); color:#000;"'} onclick="openRecipe(${i})">${m.missing.length ? '📖 Voir la recette' : 'Faire la recette 🍳'}</button>${rateBar(i)}</div>`;
 }
@@ -1065,7 +1065,7 @@ function qty(x) { const k = NS(x), q = QTY.find(a => a[0].test(k)); return q ? `
 function openRecipe(i) {
     const r = registry[i]; if (!r) return; const m = calculateMatch(r.ingredients);
     const steps = stepsHTML(r), _unused = `<p style="line-height:1.7; white-space:pre-line;">${esc(r.steps || 'Instructions non disponibles.')}</p>`;
-    document.getElementById('recipe-modal-box').innerHTML = `<h2 style="color:var(--primary); margin-bottom:4px;">${r.icon || '🍽️'} ${esc(r.name)}</h2>${rateBar(i)}<p style="color:var(--text-muted); margin-bottom:16px;">${esc(r.cuisine || '')} • ${esc(r.time || '')}${needs(r).length ? ' • 🔧 ' + needs(r).map(g => esc(g[0])).join(', ') : ''}</p>
+    document.getElementById('recipe-modal-box').innerHTML = `<h2 style="color:var(--primary); margin-bottom:4px;">${esc(r.icon || '🍽️')} ${esc(r.name)}</h2>${rateBar(i)}<p style="color:var(--text-muted); margin-bottom:16px;">${esc(r.cuisine || '')} • ${esc(r.time || '')}${needs(r).length ? ' • 🔧 ' + needs(r).map(g => esc(g[0])).join(', ') : ''}</p>
         <div class="main-label">Ingrédients — pour ${guests()} personne(s)</div><p style="margin-bottom:16px; line-height:1.8;">${r.ingredients.map(x => `<span style="color:${m.missing.includes(x) ? '#ef4444' : 'var(--accent)'};">${m.missing.includes(x) ? '✗' : '✓'} ${esc(x)}</span>${qty(x)}`).join('<br>')}</p>
         ${prepHTML(r)}<div class="main-label">Préparation pas à pas</div><div style="margin-bottom:16px;">${steps}</div>${extraHTML(r)}${similarHTML(r)}
         ${m.missing.length ? `<button class="btn-primary" onclick="addMissingToShop(${i})">🛒 Ajouter les manquants (${m.missing.length})</button>` : `<button class="btn-primary" onclick="cookRecipe(${i})">Cuisiner : retirer de vos ingrédients</button>`}
@@ -1084,7 +1084,7 @@ function suggestMeal() {
     let pool = on && Math.random() < 0.5 ? feastRecipes(on, true) : [];
     if (!pool.length) { const rl = recoList(); pool = rl.length && Math.random() < 0.5 ? rl.slice(0, 20).map(x => x.r) : offlineRecipes.filter(r => allowed(r) && rateOf(r) >= 0); }
     pool = pool.filter(r => r !== lastSuggest); const r = pool[Math.floor(Math.random() * pool.length)]; if (!r) return; lastSuggest = r;
-    box.innerHTML = `<div style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; justify-content:space-between; align-items:center; gap:12px;"><div><div class="card-title">${r.icon} ${esc(r.name)}</div><div class="card-sub">${esc(r.cuisine)} • ${esc(r.time)}</div></div><button class="btn-action" style="width:auto; margin:0; padding:8px 14px;" onclick="openRecipe(${reg(r)})">Voir</button></div>`;
+    box.innerHTML = `<div style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; justify-content:space-between; align-items:center; gap:12px;"><div><div class="card-title">${esc(r.icon || '')} ${esc(r.name)}</div><div class="card-sub">${esc(r.cuisine)} • ${esc(r.time)}</div></div><button class="btn-action" style="width:auto; margin:0; padding:8px 14px;" onclick="openRecipe(${reg(r)})">Voir</button></div>`;
 }
 
 // ===== PLAT À L'HONNEUR DE LA SEMAINE =====
@@ -1127,7 +1127,7 @@ function setGuests(n) { const p = { ...load('gourmet_profile', {}) }; p.guests =
 function renderHome() {
     const d = diets().length ? diets() : ['Classique'], g = guests(), f = featuredNow();
     const fe = document.getElementById('featured');
-    if (fe) fe.innerHTML = f ? `<div class="glass-panel" style="display:flex; gap:16px; align-items:center;"><div style="font-size:64px; line-height:1;">${f.flag}</div><div style="flex:1;"><div style="color:var(--primary); font-weight:700; font-size:12px; text-transform:uppercase;">⭐ Plat à l'honneur cette semaine</div><div style="font-size:20px; font-weight:800; margin:4px 0;">${f.r.icon} ${esc(f.r.name)}</div><div style="color:var(--text-muted); font-size:13px; margin-bottom:8px;">${esc(f.country)}</div><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn-action" style="width:auto; margin:0; padding:8px 14px;" onclick="showStory()">📜 Son histoire</button><button class="btn-action" style="width:auto; margin:0; padding:8px 14px;" onclick="openRecipe(${reg(f.r)})">🍳 Recette</button></div></div></div>` : '';
+    if (fe) fe.innerHTML = f ? `<div class="glass-panel" style="display:flex; gap:16px; align-items:center;"><div style="font-size:64px; line-height:1;">${f.flag}</div><div style="flex:1;"><div style="color:var(--primary); font-weight:700; font-size:12px; text-transform:uppercase;">⭐ Plat à l'honneur cette semaine</div><div style="font-size:20px; font-weight:800; margin:4px 0;">${esc(f.r.icon || '')} ${esc(f.r.name)}</div><div style="color:var(--text-muted); font-size:13px; margin-bottom:8px;">${esc(f.country)}</div><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn-action" style="width:auto; margin:0; padding:8px 14px;" onclick="showStory()">📜 Son histoire</button><button class="btn-action" style="width:auto; margin:0; padding:8px 14px;" onclick="openRecipe(${reg(f.r)})">🍳 Recette</button></div></div></div>` : '';
     const nf = bannerFeasts().find(x => { const d = Math.round((x.start - today0()) / 864e5); return d <= 14 && d > -x.dur; });
     if (fe && nf) fe.innerHTML += `<div class="glass-panel" style="cursor:pointer; padding:16px;" onclick="goFeast('${nf.id}')">🎉 <b>${nf.icon} ${esc(nf.name)}</b> — ${feastLabel(nf)}. <span style="color:var(--primary);">Voir des idées de recettes →</span></div>`;
     const hc = document.getElementById('home-controls');
@@ -1368,8 +1368,8 @@ const savePlan = () => saveLS('gourmet_plan', plan);
 function renderPlan() {
     const q = N(planQ); _pp = currentRecipes.filter(r => allowed(r) && rateOf(r) >= 0 && (!q || N(r.name).includes(q))).slice(0, 40);
     document.getElementById('plan-grid').innerHTML = DAYS.map((d, i) => `<div class="plan-day"><b>${d}</b>${['m', 's'].map(k => { const key = i + '-' + k, r = plan[key];
-        return `<div class="plan-slot ${planSel !== null ? 'armed' : ''}" ondragover="event.preventDefault()" ondrop="dropPlan(event,'${key}')" onclick="slotClick('${key}')"><small>${k === 'm' ? '☀️ Midi' : '🌙 Soir'}</small>${r ? `<div class="plan-r"><span>${r.icon || '🍽️'} ${esc(r.name)}</span><button class="btn-icon" onclick="event.stopPropagation(); planDel('${key}')">✕</button></div>` : '<span class="plan-empty">＋</span>'}</div>`; }).join('')}</div>`).join('');
-    document.getElementById('plan-tray').innerHTML = _pp.map((r, i) => `<div class="plan-chip ${planSel === i ? 'sel' : ''}" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${i}')" onclick="planSel = ${planSel === i ? 'null' : i}; renderPlan()">${r.icon || '🍽️'} ${esc(r.name)}</div>`).join('') || '<p style="color:var(--text-muted);">Aucune recette.</p>';
+        return `<div class="plan-slot ${planSel !== null ? 'armed' : ''}" ondragover="event.preventDefault()" ondrop="dropPlan(event,'${key}')" onclick="slotClick('${key}')"><small>${k === 'm' ? '☀️ Midi' : '🌙 Soir'}</small>${r ? `<div class="plan-r"><span>${esc(r.icon || '🍽️')} ${esc(r.name)}</span><button class="btn-icon" onclick="event.stopPropagation(); planDel('${key}')">✕</button></div>` : '<span class="plan-empty">＋</span>'}</div>`; }).join('')}</div>`).join('');
+    document.getElementById('plan-tray').innerHTML = _pp.map((r, i) => `<div class="plan-chip ${planSel === i ? 'sel' : ''}" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${i}')" onclick="planSel = ${planSel === i ? 'null' : i}; renderPlan()">${esc(r.icon || '🍽️')} ${esc(r.name)}</div>`).join('') || '<p style="color:var(--text-muted);">Aucune recette.</p>';
 }
 function setSlot(key, r) { plan[key] = snap(r); planSel = null; savePlan(); renderPlan(); }
 function slotClick(key) { if (planSel !== null && _pp[planSel]) setSlot(key, _pp[planSel]); else if (plan[key]) openRecipe(reg(plan[key])); }
