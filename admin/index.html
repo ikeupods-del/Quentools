@@ -99,13 +99,12 @@ const demo = {
   ], site: { announceOn: false, announce: '', announceUrl: '', available: true, availText: '' }
 };
 const ms = v => !v ? 0 : typeof v === 'string' ? Date.parse(v) : v.toMillis ? v.toMillis() : +v;
-let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false, ebook = null, ebookPdf = null;
+let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false, ebookPdf = null, lq = '';
 async function loadLeads() {
   leadsErr = false;
-  if (DEMO) { ebook = ebook || null; leads = [{ name: 'Camille Durand', email: 'camille@example.com', at: new Date(), source: 'ebook' }, { name: 'Yanis K.', email: 'yanis@example.com', at: new Date(Date.now() - 864e5), source: 'ebook' }]; return; }
+  if (DEMO) { leads = [{ name: 'Camille Durand', email: 'camille@example.com', at: new Date(), source: 'ebook' }, { name: 'Yanis K.', email: 'yanis@example.com', at: new Date(Date.now() - 864e5), source: 'ebook' }]; return; }
   try {
     const { Fs, db } = await fb();
-    try { const e = await Fs.getDoc(Fs.doc(db, 'qt_ebook', 'v1')); ebook = e.exists() ? { size: (e.data().html || '').length, at: e.data().updated } : null; } catch (x) { ebook = null; }
     try { const e = await Fs.getDoc(Fs.doc(db, 'qt_ebook', 'pdf')); ebookPdf = e.exists() ? { size: Math.round((e.data().b64 || '').length * 0.75), at: e.data().updated } : null; } catch (x) { ebookPdf = null; }
     const r = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_leads'), Fs.orderBy('at', 'desc'), Fs.limit(2000)));
     leads = r.docs.map(d => d.data());
@@ -113,13 +112,13 @@ async function loadLeads() {
 }
 function viewContacts() {
   if (leadsErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Règles à mettre à jour</h2><p>Les contacts de l’e-book s’enregistrent dans une collection protégée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><button class="btn btn-accent" data-tab="regles">Voir les règles</button></section>`;
-  const week = Date.now() - 7 * 864e5;
+  const week = Date.now() - 7 * 864e5, lqq = lq.trim().toLowerCase(), shown = leads.filter(l => !lqq || [l.name, l.email].join(' ').toLowerCase().includes(lqq));
   const eb = `<section class="card" style="padding:var(--s-4);margin-bottom:var(--s-4)"><h3 style="margin:0 0 6px">E-book gratuit (PDF)</h3><p class="muted" style="margin:0 0 10px">${ebookPdf ? `PDF en ligne (${Math.round(ebookPdf.size / 1024)} Ko${ms(ebookPdf.at) ? ', mis à jour le ' + new Date(ms(ebookPdf.at)).toLocaleDateString('fr-FR') : ''}). Les inscrits le téléchargent depuis la page e-book.` : 'Pas de PDF en ligne : choisissez le fichier PDF de l’e-book sur votre ordinateur, puis cliquez sur Publier le PDF.'}</p>
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="file" id="pdf-file" accept="application/pdf"><button class="btn btn-sm btn-accent" data-do="pdf-pub">${ebookPdf ? 'Remplacer' : 'Publier'} le PDF</button>${ebookPdf ? '<button class="btn btn-sm btn-ghost" data-do="pdf-del">Retirer le PDF</button>' : ''}</div></section>`;
   return eb + `<div class="kpis"><div><b>${leads.length}</b><span>contacts inscrits à l’e-book</span></div><div><b>${leads.filter(l => ms(l.at) > week).length}</b><span>sur les 7 derniers jours</span></div></div>
-    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--s-4)"><button class="btn btn-sm btn-accent" data-do="copy-mails">Copier les e-mails</button><button class="btn btn-sm btn-ghost" data-do="csv">Exporter en CSV</button></div>
-    ${leads.length ? leads.map(l => `<article class="card" style="padding:var(--s-4);margin-bottom:var(--s-3);display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center"><div><b>${esc(l.name || 'Sans nom')}</b><div class="muted" style="overflow-wrap:anywhere">${esc(l.email)}</div></div><span class="chip">${ms(l.at) ? new Date(ms(l.at)).toLocaleDateString('fr-FR') : ''} · ${esc(l.source || '')}</span></article>`).join('') : '<div class="card empty">Aucun contact pour l’instant. Ils apparaissent ici dès qu’un visiteur s’inscrit pour recevoir l’e-book.</div>'}
-    <p class="muted" style="font-size:var(--t-xs)">Chaque contact a accepté de recevoir l’e-book et des nouvelles de QuenTools. Supprimez-les sur demande depuis la console Firebase (collection qt_leads).</p>`;
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--s-4)"><button class="btn btn-sm btn-accent" data-do="copy-mails">Copier les e-mails</button><button class="btn btn-sm btn-ghost" data-do="csv">Exporter en CSV</button><input type="search" id="lq" placeholder="Rechercher un contact…" value="${esc(lq)}" aria-label="Rechercher un contact" style="flex:1;min-width:160px"></div>
+    ${shown.length ? shown.map(l => `<article class="card" style="padding:var(--s-4);margin-bottom:var(--s-3);display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center"><div><b>${esc(l.name || 'Sans nom')}</b><div class="muted" style="overflow-wrap:anywhere">${esc(l.email)}</div></div><span class="row" style="display:flex;gap:8px;align-items:center"><span class="chip">${ms(l.at) ? new Date(ms(l.at)).toLocaleDateString('fr-FR') : ''} · ${esc(l.source || '')}</span><button class="btn btn-sm btn-ghost" data-do="lead-del" data-email="${esc(l.email)}" aria-label="Supprimer ce contact">Supprimer</button></span></article>`).join('') : '<div class="card empty">Aucun contact pour l’instant. Ils apparaissent ici dès qu’un visiteur s’inscrit pour recevoir l’e-book.</div>'}
+    <p class="muted" style="font-size:var(--t-xs)">Chaque contact a accepté de recevoir l’e-book et des nouvelles de QuenTools. Pour une demande de suppression, utilisez le bouton « Supprimer » du contact.</p>`;
 }
 async function load() {
   if (DEMO) { items = demo.items; site = demo.site; return; }
@@ -177,6 +176,7 @@ async function saveSite(data) {
 const toast = (m, warn) => { const n = document.getElementById('toast'); if (!n) return; n.innerHTML = `<div class="notice${warn ? ' warn' : ''}">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => n.innerHTML = '', 3500); };
 function shell(body) {
   const nb = items.filter(x => (x.status || 'nouveau') === 'nouveau').length;
+  document.title = (nb ? `(${nb}) ` : '') + 'Administration · QuenTools';
   const t = (k, l) => `<button role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`;
   app.innerHTML = `<div class="adm-head"><div><span class="eyebrow">Tableau de bord</span><h1 class="h-section" style="margin:var(--s-2) 0 0">Bonjour 👋</h1></div>
     <div class="row" style="display:flex;gap:8px;align-items:center"><span class="muted" style="font-size:var(--t-xs)">${esc(DEMO ? 'Démonstration' : user && user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></div>
@@ -255,7 +255,7 @@ function viewRequests() {
     echus.length && `<span class="flag">📅 ${echus.length} échéance${echus.length > 1 ? 's' : ''} proche${echus.length > 1 ? 's' : ''}</span>`,
     items.filter(x => x.reponse === 'accepte' && st0(x) === 'envoye').length && `<span class="flag">✅ devis accepté par le client : à confirmer</span>`].filter(Boolean);
   const fl = [['actifs', 'À traiter'], ...STATUS, ['tous', 'Toutes']];
-  const filters = `<div class="filters">${fl.map(([k, l]) => `<button data-filter="${k}" aria-pressed="${filter === k}">${l}</button>`).join('')}<input type="search" id="q" placeholder="Rechercher un nom, un mot…" value="${esc(q)}" aria-label="Rechercher"></div>`;
+  const filters = `<div class="filters">${fl.map(([k, l]) => `<button data-filter="${k}" aria-pressed="${filter === k}">${l}</button>`).join('')}<input type="search" id="q" placeholder="Rechercher un nom, un mot…" value="${esc(q)}" aria-label="Rechercher"><button class="btn btn-sm btn-ghost" data-do="csv-demandes">Exporter (CSV)</button></div>`;
   const qq = q.trim().toLowerCase();
   const list = items.filter(x => filter === 'tous' ? true : filter === 'actifs' ? act(x) : st0(x) === filter)
     .filter(x => !qq || [x.nom, x.email, x.besoin, x.type, x.note].join(' ').toLowerCase().includes(qq));
@@ -264,10 +264,10 @@ function viewRequests() {
       <select data-tpl aria-label="Réponse type"><option value="">Réponse type…</option><option value="recu">Demande reçue</option><option value="devis">Devis envoyé</option><option value="relance">Relance</option><option value="livraison">Livraison</option></select>
       <textarea data-msg placeholder="Votre message au client (visible dans son espace)" maxlength="2000" aria-label="Message au client"></textarea>
       <div class="row"><button class="btn btn-sm btn-accent" data-do="send">Envoyer dans l’espace client</button></div></div>`; };
-  const card = x => { const st = st0(x), d = ms(x.at), unread = ms(x.clientMsgAt) > ms(x.seenAt);
+  const card = x => { const st = st0(x), d = ms(x.at), nb = items.filter(i => String(i.email).toLowerCase() === String(x.email).toLowerCase()).length, unread = ms(x.clientMsgAt) > ms(x.seenAt);
     return `<article class="card req" data-id="${esc(x.id)}">
       <div class="req-top"><h3>${esc(x.nom)}</h3><span class="chip st-${st}">${stLabel(st)}</span></div>
-      <div class="meta"><span class="chip">${esc(x.type)}</span><span class="chip">⏱ ${esc(x.delai)}</span><span class="chip">💶 ${esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR')}</span>` : ''}${x.reponse === 'accepte' ? '<span class="flag">✅ Devis accepté par le client</span>' : x.reponse === 'refuse' ? '<span class="flag">❌ Devis refusé par le client</span>' : ''}${unread ? '<span class="flag">💬 Nouveau message</span>' : ''}</div>
+      <div class="meta"><span class="chip">${esc(x.type)}</span><span class="chip">⏱ ${esc(x.delai)}</span><span class="chip">💶 ${esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR')}</span>` : ''}${nb > 1 ? `<span class="chip">🔁 ${nb} demandes de ce client</span>` : ''}${x.reponse === 'accepte' ? '<span class="flag">✅ Devis accepté par le client</span>' : x.reponse === 'refuse' ? '<span class="flag">❌ Devis refusé par le client</span>' : ''}${unread ? '<span class="flag">💬 Nouveau message</span>' : ''}</div>
       <p class="need">${esc(x.besoin)}</p>
       <div class="who">✉️ ${esc(x.email)}${x.tel ? ` · 📞 ${esc(x.tel)}` : ''}</div>
       <div class="row3"><select data-field="status" aria-label="Statut">${STATUS.map(([k, l]) => `<option value="${k}"${k === st ? ' selected' : ''}>${l}</option>`).join('')}</select>
@@ -376,6 +376,16 @@ app.addEventListener('click', async e => {
       if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_ebook', 'pdf')); }
       ebookPdf = null; render(); toast('PDF retiré');
     }
+    else if (d === 'lead-del') {
+      const em = b.dataset.email; if (!em || !confirm('Supprimer définitivement le contact ' + em + ' ?')) return;
+      if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_leads', String(em).toLowerCase())); }
+      leads = leads.filter(l => l.email !== em); render(); toast('Contact supprimé');
+    }
+    else if (d === 'csv-demandes') {
+      const q2 = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      const csv = '\ufeffdate;nom;email;telephone;type;delai;budget;statut;montant;besoin\n' + items.map(x => [ms(x.at) ? new Date(ms(x.at)).toISOString().slice(0, 10) : '', x.nom, x.email, x.tel, x.type, x.delai, x.budget, stLabel(x.status || 'nouveau'), x.montant, x.besoin].map(q2).join(';')).join('\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'demandes-quentools.csv'; a.click();
+    }
     else if (d === 'copy-mails') copy(leads.map(l => l.email).join(', '));
     else if (d === 'csv') {
       const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
@@ -420,7 +430,7 @@ app.addEventListener('change', async e => {
   const v = el.dataset.field === 'montant' ? (el.value === '' ? null : Math.max(0, Math.round(+el.value))) : el.value.slice(0, 2000);
   try { await patch(card.dataset.id, { [el.dataset.field]: v }); if (el.dataset.field === 'status') { await addMsg(card.dataset.id, { from: 'systeme', text: 'Statut : ' + stLabel(v) }); if (openId === card.dataset.id) threads[openId] = await loadThread(openId); } if (!['note', 'echeance', 'lien'].includes(el.dataset.field)) render(); toast('Enregistré ✓'); } catch (err) { fail(err); }
 });
-app.addEventListener('input', e => { if (e.target.id === 'q') { q = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); } });
+app.addEventListener('input', e => { if (e.target.id === 'lq') { lq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('lq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'q') { q = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); } });
 
 app.addEventListener('change', e => {
   const sel = e.target.closest('[data-tpl]'); if (!sel || !sel.value) return;
@@ -434,6 +444,12 @@ async function isOwner(email) {
   return (C.ownerHashes || []).includes([...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(''));
 }
 const gate = html => { app.innerHTML = `<section class="card" style="padding:clamp(24px,5vw,48px);max-width:560px;margin:0 auto;text-align:center">${html}</section>`; };
+// Actualisation automatique des demandes toutes les 90 s (sans toucher à ce que vous êtes en train de saisir).
+setInterval(async () => {
+  if (DEMO || !user || tab !== 'demandes' || document.hidden) return;
+  const f = document.activeElement; if (f && /^(INPUT|TEXTAREA|SELECT)$/.test(f.tagName)) return;
+  try { await load(); render(); } catch (e) { /* réseau indisponible : on réessaiera */ }
+}, 90000);
 async function start() {
   if (DEMO) { await load(); return render(); }
   if (!official && !local) return gate('<h1 class="h-section">Administration</h1><p class="muted">Disponible uniquement sur le site officiel de QuenTools.</p>');
