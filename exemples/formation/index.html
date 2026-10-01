@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cuisine en 1 heure · exemple de site (Formation en ligne)</title>
+<meta name="description" content="Exemple fictif de site pour formation en ligne, réalisé par QuenTools.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+<link rel="preload" href="../../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/qt.css">
+<style>
+  :root{--accent:#4f46e5;--accent-soft:#e0e7ff;--lime:#d9f56b}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#a5b4fc;--accent-soft:#1c1d4a}}
+  .ph{aspect-ratio:4/3;border-radius:var(--r-lg);display:grid;place-items:center;font-size:clamp(2.4rem,6vw,3.6rem);background:linear-gradient(135deg,var(--accent-soft),var(--bg-2));border:1px solid var(--line)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-6);align-items:start}@media (max-width:760px){.two{grid-template-columns:1fr}}
+  .price-list{display:grid;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
+  .price-row{display:flex;gap:var(--s-4);justify-content:space-between;align-items:baseline;padding:18px 22px;border-top:1px solid var(--line)}
+  .price-row:first-child{border-top:0}.price-row b{font-weight:600}.price-row small{display:block;color:var(--muted)}.price-row .amount{font:700 var(--t-lg)/1 var(--f-display);white-space:nowrap}
+  .hours{width:100%;border-collapse:collapse}.hours td{padding:10px 0;border-top:1px solid var(--line)}.hours td:last-child{text-align:right;color:var(--muted)}
+  .today{padding:var(--s-6);border-radius:var(--r-xl);background:#1b1712;color:#f6efe6}.today h3{color:var(--lime);margin:0 0 var(--s-3)}.today p{color:#e9dfd2;margin:0 0 6px}
+  .dish{display:flex;gap:var(--s-4);justify-content:space-between;align-items:baseline;padding:14px 0;border-top:1px solid var(--line)}
+  .dish b{font-weight:600}.dish small{display:block;color:var(--muted)}.dish .amount{font:700 var(--t-md)/1 var(--f-display);white-space:nowrap}
+  .menu h3{margin:var(--s-5) 0 var(--s-2);font-size:var(--t-lg)}
+  .cover{aspect-ratio:3/4;max-width:340px;margin-inline:auto;border-radius:var(--r-lg);background:linear-gradient(150deg,var(--accent),#1b1340);color:#fff;display:grid;align-content:end;padding:28px;box-shadow:var(--sh-3);transform:rotate(2deg)}
+  .cover b{font:700 clamp(1.4rem,3vw,2rem)/1.1 var(--f-display)}.cover small{opacity:.8}
+  .toc{columns:2;column-gap:var(--s-6);padding:0;list-style:none;margin:0}@media (max-width:640px){.toc{columns:1}}.toc li{break-inside:avoid;padding:10px 0;border-top:1px solid var(--line)}
+  .cta-band form p,.cta-band form a{color:var(--muted)}
+  .demo-note{margin-top:var(--s-3);font-size:var(--t-sm)}
+</style>
+</head>
+<body>
+<div class="announce"><div class="wrap"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div></div>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="./">Cuisine en 1 heure</a>
+  <ul class="nav-links"><li><a href="#programme">Au programme</a></li><li><a href="#faq">FAQ</a></li></ul>
+  <a class="btn btn-sm btn-accent" href="#acheter">Acheter</a>
+</div></header>
+
+<main id="contenu">
+  <section class="hero"><div class="bg-grid" aria-hidden="true"></div>
+    <div class="wrap two" style="align-items:center">
+      <div><span class="chip chip-accent reveal">E-book · PDF · accès immédiat</span>
+        <h1 class="display reveal" style="--i:1">Préparer ses repas de la semaine <em>en une heure.</em></h1>
+        <p class="lede reveal" style="--i:2">Pour ceux qui n&#x27;ont pas le temps de cuisiner chaque soir : une méthode simple, des listes de courses et des recettes à doubler.</p>
+        <div class="hero-cta reveal" style="--i:3"><a class="btn btn-accent" href="#acheter">Obtenir le guide · 12 €</a><a class="btn btn-ghost" href="#programme">Voir le programme</a></div></div>
+      <div class="cover reveal" style="--i:2"><small>Guide pratique</small><b>Cuisine en 1 heure</b><small>Exemple fictif</small></div>
+    </div>
+  </section>
+  <section class="section" style="padding-top:0"><div class="wrap"><div class="section-head"><span class="eyebrow">Le problème</span><h2 class="h-section">Ce qui vous bloque aujourd&#x27;hui</h2></div><div class="grid grid-3"><article class="card reveal" style="--i:0"><h3>Pas le temps</h3><p>Le soir, on finit par commander ou grignoter.</p></article><article class="card reveal" style="--i:1"><h3>Pas d&#x27;idées</h3><p>On refait toujours les mêmes plats.</p></article><article class="card reveal" style="--i:2"><h3>Du gaspillage</h3><p>On jette des restes faute de les avoir prévus.</p></article></div></div></section>
+  <section class="section" id="programme" style="background:var(--bg-2)"><div class="wrap"><div class="section-head"><span class="eyebrow">Au programme</span><h2 class="h-section">Ce que vous allez apprendre</h2></div><ol class="toc reveal"><li><b>Chapitre 1</b> : planifier sa semaine en 10 minutes</li><li><b>Chapitre 2</b> : la liste de courses qui évite les oublis</li><li><b>Chapitre 3</b> : cuisiner en lot sans s&#x27;ennuyer</li><li><b>Chapitre 4</b> : conserver et réchauffer sans perdre le goût</li></ol></div></section>
+  <section class="section" id="acheter"><div class="wrap" style="max-width:520px"><div class="card reveal" style="padding:var(--s-6);text-align:center"><span class="chip chip-ok">Accès immédiat</span>
+    <div class="display" style="margin:var(--s-3) 0">12 €</div><p class="muted">Paiement unique · PDF · exemple fictif</p>
+    <a class="btn btn-accent" href="#acheter" style="width:100%">Acheter maintenant</a><p class="demo-note muted">Démonstration : aucun achat possible sur cet exemple.</p></div></div></section>
+  <section class="section" id="faq" style="padding-top:0"><div class="wrap faq-grid">
+    <div class="section-head"><span class="eyebrow">FAQ</span><h2 class="h-section">Questions fréquentes</h2></div>
+    <div class="faq"><details><summary>Sous quelle forme le reçoit-on ?</summary><p>En PDF, par lien de téléchargement.</p></details><details><summary>Convient-il aux débutants ?</summary><p>Oui, les étapes sont expliquées.</p></details><details><summary>Y a-t-il des recettes ?</summary><p>Oui, avec les quantités à doubler.</p></details></div>
+  </div></section>
+</main>
+<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
+  <span>© <span data-year>2026</span> Cuisine en 1 heure (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span>
+  <span><a href="../">Autres exemples</a> · Site réalisé par <a href="https://ikeupods-del.github.io/Quentools/">QuenTools</a></span>
+</div></div></footer>
+<script src="../../assets/qt.js" defer></script>
+<script>document.addEventListener('submit',function(e){e.preventDefault();var n=e.target.querySelector('.demo-note');if(!n){n=document.createElement('p');n.className='demo-note';e.target.appendChild(n)}n.textContent='Démonstration : ce formulaire n\u2019envoie rien. Sur un vrai site, la demande arrive directement chez le professionnel.'});</script>
+</body>
+</html>
