@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- MODÈLE « Page de vente » (e-book, formation, guide, atelier). Remplacer tout ce qui est entre crochets [ ].
+     Paiement : lien de paiement externe (Stripe, PayPal…) dans les boutons « Acheter ». N'affichez que des chiffres et avis réels. -->
+<title>[Titre du produit] — [promesse courte]</title>
+<meta name="description" content="[Titre] : [à qui ça s'adresse et le résultat concret]. [Prix], accès immédiat.">
+<link rel="preload" href="../../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/qt.css">
+<style>
+  :root{--accent:#5b3df5;--accent-soft:#ece8ff;--lime:#d9f56b}
+  .two{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--s-7);align-items:center}@media (max-width:860px){.two{grid-template-columns:1fr}}
+  .cover{aspect-ratio:3/4;max-width:340px;margin-inline:auto;border-radius:var(--r-lg);background:linear-gradient(150deg,var(--accent),#1b1340);color:#fff;display:grid;align-content:end;padding:28px;box-shadow:var(--sh-3);transform:rotate(2deg)}
+  .cover b{font:700 clamp(1.4rem,3vw,2rem)/1.1 var(--f-display)}.cover small{opacity:.8}
+  .buy{padding:var(--s-6);text-align:center}.buy .big{font:700 var(--t-3xl)/1 var(--f-display);margin:var(--s-3) 0}
+  .buy s{color:var(--muted)}
+  .toc{columns:2;column-gap:var(--s-6);padding:0;list-style:none;margin:0}@media (max-width:640px){.toc{columns:1}}
+  .toc li{break-inside:avoid;padding:10px 0;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="./">[Nom de l'auteur]</a>
+  <ul class="nav-links"><li><a href="#contenu-produit">Au programme</a></li><li><a href="#auteur">L'auteur</a></li><li><a href="#faq">FAQ</a></li></ul>
+  <a class="btn btn-sm btn-accent" href="[lien-de-paiement]">Acheter</a>
+</div></header>
+
+<main id="contenu">
+  <section class="hero"><div class="bg-grid" aria-hidden="true"></div>
+    <div class="wrap two">
+      <div>
+        <span class="chip chip-accent reveal">[E-book · PDF · accès immédiat]</span>
+        <h1 class="display reveal" style="--i:1">[Résultat concret] <em>[sans ce qui fait peur]</em>.</h1>
+        <p class="lede reveal" style="--i:2">[Pour qui : « Pour les [public] qui veulent [objectif] sans [obstacle]. »]</p>
+        <div class="hero-cta reveal" style="--i:3"><a class="btn btn-accent" href="[lien-de-paiement]">Obtenir le guide · [00] €</a><a class="btn btn-ghost" href="[lien-extrait-gratuit]">Lire un extrait gratuit</a></div>
+        <p class="hero-note reveal" style="--i:4">[Paiement sécurisé] · [Accès immédiat] · [Satisfait ou remboursé sous [n] jours, uniquement si vous le garantissez réellement]</p>
+      </div>
+      <div class="cover reveal" style="--i:2"><small>[Sous-titre]</small><b>[Titre du produit]</b><small>[Nom de l'auteur]</small></div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0"><div class="wrap">
+    <div class="section-head"><span class="eyebrow">Le problème</span><h2 class="h-section">[Ce qui vous bloque aujourd'hui]</h2></div>
+    <div class="grid grid-3">
+      <article class="card reveal"><h3>[Obstacle 1]</h3><p>[Une phrase qui décrit la situation du lecteur.]</p></article>
+      <article class="card reveal" style="--i:1"><h3>[Obstacle 2]</h3><p>[Une phrase.]</p></article>
+      <article class="card reveal" style="--i:2"><h3>[Obstacle 3]</h3><p>[Une phrase.]</p></article>
+    </div>
+  </div></section>
+
+  <section class="section" id="contenu-produit" style="background:var(--bg-2)"><div class="wrap">
+    <div class="section-head"><span class="eyebrow">Au programme</span><h2 class="h-section">[Ce que vous allez apprendre]</h2><p class="lede">[n] chapitres, [n] pages, avec [exemples, modèles, check-lists].</p></div>
+    <ol class="toc reveal">
+      <li><b>[Chapitre 1]</b> : [ce que vous saurez faire]</li><li><b>[Chapitre 2]</b> : [résultat]</li>
+      <li><b>[Chapitre 3]</b> : [résultat]</li><li><b>[Chapitre 4]</b> : [résultat]</li>
+    </ol>
+  </div></section>
+
+  <section class="section" id="auteur"><div class="wrap two">
+    <div><span class="eyebrow">L'auteur</span><h2 class="h-section" style="margin:var(--s-4) 0">[Qui écrit, et pourquoi lui]</h2>
+      <p class="lede">[Parcours réel et pertinent, en 3 ou 4 phrases. Pas de titres ni de résultats inventés.]</p></div>
+    <aside class="card buy reveal">
+      <span class="chip chip-ok">[Accès immédiat]</span>
+      <div class="big">[00] €</div>
+      <p class="muted">[Paiement unique · PDF · mises à jour incluses]</p>
+      <a class="btn btn-accent" href="[lien-de-paiement]" style="width:100%">Acheter maintenant</a>
+      <p class="muted" style="font-size:var(--t-xs)">[Vente en ligne : droit de rétractation et conditions détaillés dans les CGV. Contenu numérique : à vérifier avec un professionnel.]</p>
+    </aside>
+  </div></section>
+
+  <section class="section" id="faq" style="padding-top:0"><div class="wrap faq-grid">
+    <div class="section-head"><span class="eyebrow">FAQ</span><h2 class="h-section">Questions fréquentes</h2></div>
+    <div class="faq">
+      <details><summary>[À qui s'adresse ce guide ?]</summary><p>[Réponse : public, niveau requis.]</p></details>
+      <details><summary>[Sous quelle forme le reçoit-on ?]</summary><p>[Réponse : PDF, lien de téléchargement par e-mail.]</p></details>
+      <details><summary>[Puis-je être remboursé ?]</summary><p>[Réponse conforme aux CGV.]</p></details>
+      <details><summary>[Et si j'ai une question ?]</summary><p>[Réponse : e-mail de contact et délai.]</p></details>
+    </div>
+  </div></section>
+</main>
+
+<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
+  <span>© <span data-year>2026</span> [Nom] · [Statut et SIRET]</span>
+  <span><a href="legal.html">Mentions légales et CGV</a> · Site réalisé par <a href="https://ikeupods-del.github.io/Quentools/">QuenTools</a></span>
+</div></div></footer>
+<script src="../../assets/qt.js" defer></script>
+</body>
+</html>

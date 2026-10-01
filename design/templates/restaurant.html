@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- MODÈLE « Restaurant » (restaurant, bar, boulangerie, traiteur). Remplacer tout ce qui est entre crochets [ ]. -->
+<title>[Nom du restaurant] — [type de cuisine] à [ville]</title>
+<meta name="description" content="[Nom] à [ville] : [type de cuisine], carte, plat du jour, horaires et réservation.">
+<link rel="preload" href="../../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/qt.css">
+<style>
+  :root{--accent:#b45309;--accent-soft:#fef0d7;--lime:#fcd34d}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#f59e0b;--accent-soft:#33210a}}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-6);align-items:start}@media (max-width:760px){.two{grid-template-columns:1fr}}
+  .today{padding:var(--s-6);border-radius:var(--r-xl);background:#1b1712;color:#f6efe6}
+  .today h3{color:#fcd34d;margin:0 0 var(--s-3)}.today p{color:#e9dfd2;margin:0 0 6px}
+  .menu-block{display:grid;gap:0}.menu-block h3{margin:var(--s-5) 0 var(--s-2);font-size:var(--t-lg)}
+  .dish{display:flex;gap:var(--s-4);justify-content:space-between;align-items:baseline;padding:14px 0;border-top:1px solid var(--line)}
+  .dish b{font-weight:600}.dish small{display:block;color:var(--muted)}.dish .amount{font:700 var(--t-md)/1 var(--f-display);white-space:nowrap}
+  .tags{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle}
+  .hours{width:100%;border-collapse:collapse}.hours td{padding:10px 0;border-top:1px solid var(--line)}.hours td:last-child{text-align:right;color:var(--muted)}
+  .cta-band form p,.cta-band form a{color:var(--muted)}
+</style>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="./">[Nom]</a>
+  <ul class="nav-links"><li><a href="#carte">La carte</a></li><li><a href="#infos">Infos</a></li><li><a href="#reserver">Réserver</a></li></ul>
+  <a class="btn btn-sm btn-accent" href="tel:[+33400000000]">📞 Réserver</a>
+</div></header>
+
+<main id="contenu">
+  <section class="hero"><div class="bg-grid" aria-hidden="true"></div>
+    <div class="wrap two">
+      <div>
+        <span class="chip chip-ok reveal"><span class="dot"></span> [Ouvert ce soir dès 19 h]</span>
+        <h1 class="display reveal" style="--i:1">[Une cuisine <em>[adjectif]</em>], à [ville].</h1>
+        <p class="lede reveal" style="--i:2">[Une phrase : le lieu, la cuisine, les produits. Ex. « Cuisine de saison, produits locaux, à deux pas du marché. »]</p>
+        <div class="hero-cta reveal" style="--i:3"><a class="btn btn-accent" href="#reserver">Réserver une table</a><a class="btn btn-ghost" href="#carte">Voir la carte</a></div>
+      </div>
+      <div class="today reveal" style="--i:2">
+        <h3>Plat du jour · [jj/mm]</h3>
+        <p><b>[Entrée]</b></p><p><b>[Plat]</b></p><p><b>[Dessert]</b></p>
+        <p style="margin-top:var(--s-4)">[Formule] : [00] € · [Plat seul] : [00] €</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="carte" style="padding-top:0"><div class="wrap two">
+    <div><span class="eyebrow">La carte</span><h2 class="h-section" style="margin:var(--s-4) 0">[Ce que nous cuisinons]</h2>
+      <p class="lede">[Une phrase sur vos produits, vos fournisseurs, la saison.]</p>
+      <p class="muted" style="font-size:var(--t-sm)">Allergènes : la liste des allergènes de chaque plat est disponible sur demande auprès du personnel. [À confirmer et à tenir à jour avec le restaurateur.]</p></div>
+    <div class="menu-block reveal">
+      <h3>Entrées</h3>
+      <div class="dish"><div><b>[Plat]<span class="tags"><span class="chip chip-ok">végétarien</span></span></b><small>[ingrédients]</small></div><span class="amount">[00] €</span></div>
+      <div class="dish"><div><b>[Plat]</b><small>[ingrédients]</small></div><span class="amount">[00] €</span></div>
+      <h3>Plats</h3>
+      <div class="dish"><div><b>[Plat]</b><small>[ingrédients]</small></div><span class="amount">[00] €</span></div>
+      <div class="dish"><div><b>[Plat]</b><small>[ingrédients]</small></div><span class="amount">[00] €</span></div>
+      <h3>Desserts</h3>
+      <div class="dish"><div><b>[Dessert]</b><small>[ingrédients]</small></div><span class="amount">[00] €</span></div>
+    </div>
+  </div></section>
+
+  <section class="section" id="infos" style="background:var(--bg-2)"><div class="wrap two">
+    <div><span class="eyebrow">Infos pratiques</span><h2 class="h-section" style="margin:var(--s-4) 0">[Où et quand]</h2>
+      <p class="lede">[Adresse complète]<br>[Accès, stationnement, accessibilité]<br>[Téléphone]</p></div>
+    <table class="hours reveal"><caption class="muted" style="text-align:left;padding-bottom:8px">Horaires</caption>
+      <tr><td>Lundi</td><td>[fermé]</td></tr><tr><td>Mardi – Vendredi</td><td>[12:00 – 14:00 · 19:00 – 22:00]</td></tr>
+      <tr><td>Samedi</td><td>[19:00 – 23:00]</td></tr><tr><td>Dimanche</td><td>[12:00 – 15:00]</td></tr>
+    </table>
+  </div></section>
+
+  <section class="section" id="reserver"><div class="wrap" style="max-width:820px">
+    <div class="cta-band">
+      <span class="eyebrow" style="color:var(--lime)">Réservation</span>
+      <h2 style="margin:var(--s-4) 0">[Réservez votre table]</h2>
+      <p>Indiquez la date, l'heure et le nombre de couverts : nous confirmons sous [2 h]. Pour plus de [8] personnes, appelez-nous.</p>
+      <!-- Brancher sur un service d'envoi ou remplacer par un lien mailto. -->
+      <form action="[adresse-du-service-d-envoi]" method="post" class="form" style="background:var(--surface);color:var(--ink);padding:var(--s-5);border-radius:var(--r-lg);margin-top:var(--s-5)">
+        <div class="form-grid"><div class="field"><label for="n">Nom</label><input id="n" name="nom" autocomplete="name" required></div><div class="field"><label for="t">Téléphone</label><input id="t" name="tel" type="tel" autocomplete="tel" required></div></div>
+        <div class="form-grid"><div class="field"><label for="d">Date et heure</label><input id="d" name="date" type="datetime-local" required></div><div class="field"><label for="c">Couverts</label><input id="c" name="couverts" type="number" min="1" max="12" value="2" required></div></div>
+        <div class="field"><label for="m">Précisions (allergies, anniversaire…)</label><textarea id="m" name="message" rows="2"></textarea></div>
+        <p class="muted" style="font-size:var(--t-xs)">Vos informations servent uniquement à gérer la réservation. <a href="legal.html">Confidentialité</a>.</p>
+        <button class="btn btn-accent" type="submit">Envoyer ma demande</button>
+      </form>
+    </div>
+  </div></section>
+</main>
+
+<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
+  <span>© <span data-year>2026</span> [Nom de l'établissement] · SIRET [000 000 000 00000] · [Licence éventuelle]</span>
+  <span><a href="legal.html">Mentions légales</a> · Site réalisé par <a href="https://ikeupods-del.github.io/Quentools/">QuenTools</a></span>
+</div></div></footer>
+<script src="../../assets/qt.js" defer></script>
+</body>
+</html>
