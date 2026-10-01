@@ -16,7 +16,7 @@
 - [ ] Facultatif : `www.quentools.fr` (CNAME bloqué par une ligne TXT OVH ; ticket au support).
 
 ## À faire côté développement (sur demande)
-- [ ] Après bascule vers Systeme.io : renseigner `ebookUrl`, retirer `ebook-source`, le bouton « Publier l'e-book » et la règle `qt_ebook` ; ajouter Systeme.io aux mentions de confidentialité.
+- [ ] Après bascule vers Systeme.io : renseigner `ebookUrl`, remplacer le PDF par un envoi automatique (le texte en ligne et `ebook-source` sont déjà retirés) ; ajouter Systeme.io aux mentions de confidentialité.
 - [ ] Remplacer Tailwind et Alpine chargés depuis un CDN par des fichiers hébergés (Infikit, Freelance Kit, Gourmet AI), avec vérification visuelle.
 - [ ] Firebase App Check (anti-spam du formulaire de devis).
 - [ ] Notifications par e-mail des nouvelles demandes et messages (relais d'envoi).
