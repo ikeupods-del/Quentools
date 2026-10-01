@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Demander un devis · QuenTools</title>
 <meta name="description" content="Décrivez votre projet de site, d’outil ou d’application : devis gratuit, réponse rapide, première version montrée avant tout engagement.">
@@ -72,7 +73,7 @@
 <script src="../assets/qt.js" defer></script>
 <script>
 (() => {
-  const C = window.QT || {}, f = document.getElementById('devis'), msg = document.getElementById('msg');
+  const t0 = Date.now(), C = window.QT || {}, f = document.getElementById('devis'), msg = document.getElementById('msg');
   const say = (html, warn) => { msg.innerHTML = `<div class="notice${warn ? ' warn' : ''}">${html}</div>`; };
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // Type de projet présélectionné depuis l'accueil : /devis/?type=Outil%20sur%20mesure
@@ -81,6 +82,7 @@
     e.preventDefault();
     const d = Object.fromEntries(new FormData(f)), type = (f.querySelector('input[name=type]:checked') || {}).value;
     if (d.site) return;   // champ piège anti-robots
+    if (Date.now() - t0 < 4000) return say('Encore un instant, puis réessayez.', true);   // envoi trop rapide pour un humain
     if (!type) return say('Choisissez le type de projet.', true);
     if (!f.checkValidity()) { f.reportValidity(); return; }
     if (!document.getElementById('ok').checked) return say('Cochez la case d’accord pour envoyer.', true);
