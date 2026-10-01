@@ -9,6 +9,7 @@ const ko = (page, msg) => erreurs.push(`${page} : ${msg}`);
 
 const plan = [...lire('sitemap.xml').matchAll(/<loc>https:\/\/quentools\.fr\/([^<]*)<\/loc>/g)].map(m => m[1]);
 if (!plan.includes('')) ko('sitemap.xml', 'l’accueil manque');
+if (/\/Quentools\//.test(lire('404.html'))) ko('404.html', 'chemins vers l’ancienne adresse du dépôt');
 if (!/Sitemap: https:\/\/quentools\.fr\/sitemap\.xml/.test(lire('robots.txt'))) ko('robots.txt', 'adresse du plan du site absente');
 
 const pages = new Set([...plan.map(p => p + 'index.html'), 'index.html', 'devis/index.html', 'realisations/index.html', 'ebook/index.html', 'exemples/index.html']);
