@@ -6,7 +6,7 @@
 <title>Administration · QuenTools</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/qt.css?v=20261001b">
+<link rel="stylesheet" href="../assets/qt.css?v=20261001c">
 <script src="../assets/qt-config.js"></script>
 <style>
   .adm-head{display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;margin-bottom:var(--s-5)}
@@ -99,12 +99,14 @@ const demo = {
   ], site: { announceOn: false, announce: '', announceUrl: '', available: true, availText: '' }
 };
 const ms = v => !v ? 0 : typeof v === 'string' ? Date.parse(v) : v.toMillis ? v.toMillis() : +v;
-let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false;
+let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false, ebook = null;
+const EBOOK_SRC = 'https://raw.githubusercontent.com/ikeupods-del/Quentools/HEAD/ebook-source/contenu.html';
 async function loadLeads() {
   leadsErr = false;
-  if (DEMO) { leads = [{ name: 'Camille Durand', email: 'camille@example.com', at: new Date(), source: 'ebook' }, { name: 'Yanis K.', email: 'yanis@example.com', at: new Date(Date.now() - 864e5), source: 'ebook' }]; return; }
+  if (DEMO) { ebook = ebook || null; leads = [{ name: 'Camille Durand', email: 'camille@example.com', at: new Date(), source: 'ebook' }, { name: 'Yanis K.', email: 'yanis@example.com', at: new Date(Date.now() - 864e5), source: 'ebook' }]; return; }
   try {
     const { Fs, db } = await fb();
+    try { const e = await Fs.getDoc(Fs.doc(db, 'qt_ebook', 'v1')); ebook = e.exists() ? { size: (e.data().html || '').length, at: e.data().updated } : null; } catch (x) { ebook = null; }
     const r = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_leads'), Fs.orderBy('at', 'desc'), Fs.limit(2000)));
     leads = r.docs.map(d => d.data());
   } catch (e) { leads = []; leadsErr = true; }
@@ -112,7 +114,8 @@ async function loadLeads() {
 function viewContacts() {
   if (leadsErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Règles à mettre à jour</h2><p>Les contacts de l’e-book s’enregistrent dans une collection protégée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><button class="btn btn-accent" data-tab="regles">Voir les règles</button></section>`;
   const week = Date.now() - 7 * 864e5;
-  return `<div class="kpis"><div><b>${leads.length}</b><span>contacts inscrits à l’e-book</span></div><div><b>${leads.filter(l => ms(l.at) > week).length}</b><span>sur les 7 derniers jours</span></div></div>
+  const eb = `<section class="card" style="padding:var(--s-4);margin-bottom:var(--s-4)"><h3 style="margin:0 0 6px">E-book réservé aux inscrits</h3><p class="muted" style="margin:0 0 10px">${ebook ? `En ligne (${Math.round(ebook.size / 1024)} Ko${ms(ebook.at) ? ', mis à jour le ' + new Date(ms(ebook.at)).toLocaleDateString('fr-FR') : ''}).` : 'Pas encore publié : les inscrits voient « en cours de mise en ligne ».'}</p><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-sm btn-accent" data-do="ebook-pub">${ebook ? 'Mettre à jour' : 'Publier'} l’e-book</button>${ebook ? '<button class="btn btn-sm btn-ghost" data-do="ebook-del">Retirer l’e-book</button>' : ''}</div></section>`;
+  return eb + `<div class="kpis"><div><b>${leads.length}</b><span>contacts inscrits à l’e-book</span></div><div><b>${leads.filter(l => ms(l.at) > week).length}</b><span>sur les 7 derniers jours</span></div></div>
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--s-4)"><button class="btn btn-sm btn-accent" data-do="copy-mails">Copier les e-mails</button><button class="btn btn-sm btn-ghost" data-do="csv">Exporter en CSV</button></div>
     ${leads.length ? leads.map(l => `<article class="card" style="padding:var(--s-4);margin-bottom:var(--s-3);display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center"><div><b>${esc(l.name || 'Sans nom')}</b><div class="muted" style="overflow-wrap:anywhere">${esc(l.email)}</div></div><span class="chip">${ms(l.at) ? new Date(ms(l.at)).toLocaleDateString('fr-FR') : ''} · ${esc(l.source || '')}</span></article>`).join('') : '<div class="card empty">Aucun contact pour l’instant. Ils apparaissent ici dès qu’un visiteur s’inscrit pour recevoir l’e-book.</div>'}
     <p class="muted" style="font-size:var(--t-xs)">Chaque contact a accepté de recevoir l’e-book et des nouvelles de QuenTools. Supprimez-les sur demande depuis la console Firebase (collection qt_leads).</p>`;
@@ -190,6 +193,7 @@ function rulesText() {
 function qtClient(d) { return request.auth != null && request.auth.token.email_verified == true && d.emailLower == request.auth.token.email.lower(); }
 match /qt_admin/{doc} { allow read: if true; allow write: if qtAdmin(); }
 match /qt_notes/{id} { allow read, write: if qtAdmin(); }
+match /qt_ebook/{id} { allow read: if request.auth != null && request.auth.token.email_verified == true; allow write: if qtAdmin(); }
 match /qt_leads/{id} {
   allow create, update: if request.auth != null && request.auth.token.email_verified == true && id == request.auth.token.email.lower()
     && request.resource.data.keys().hasOnly(['email','name','at','source','consent'])
@@ -355,6 +359,19 @@ app.addEventListener('click', async e => {
     if (d === 'logout') { const { Au, auth } = await fb(); await Au.signOut(auth); }
     else if (d === 'reload') { await load(); render(); }
     else if (d === 'copy-rules') copy(rulesText());
+    else if (d === 'ebook-pub') {
+      toast('Publication…');
+      if (DEMO) { ebook = { size: 42000, at: new Date() }; return render(); }
+      const r = await fetch(EBOOK_SRC, { cache: 'no-store' }); if (!r.ok) throw new Error('source');
+      const html = await r.text(); if (html.length < 2000 || html.length > 900000) throw new Error('taille');
+      const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_ebook', 'v1'), { html, updated: Fs.serverTimestamp() });
+      await loadLeads(); render(); toast('E-book publié ✓');
+    }
+    else if (d === 'ebook-del') {
+      if (!confirm('Retirer l’e-book ? Les inscrits ne pourront plus l’ouvrir.')) return;
+      if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_ebook', 'v1')); }
+      ebook = null; render(); toast('E-book retiré');
+    }
     else if (d === 'copy-mails') copy(leads.map(l => l.email).join(', '));
     else if (d === 'csv') {
       const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
