@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- MODÈLE « Rendez-vous » (coiffeur, thérapeute, restaurateur, coach, artisan sur rendez-vous). Remplacer tout ce qui est entre crochets [ ]. -->
+<title>[Nom] — [métier] à [ville], sur rendez-vous</title>
+<meta name="description" content="[Métier] à [ville] : [prestation 1], [prestation 2]. Tarifs clairs, horaires et prise de rendez-vous en ligne.">
+<link rel="preload" href="../../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/qt.css">
+<style>
+  :root{--accent:#9a3b5f;--accent-soft:#f6e4ec;--lime:#f5c26b}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#e58aae;--accent-soft:#321623}}
+  .price-list{display:grid;gap:0;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
+  .price-row{display:flex;gap:var(--s-4);justify-content:space-between;align-items:baseline;padding:18px 22px;border-top:1px solid var(--line)}
+  .price-row:first-child{border-top:0}.price-row b{font-weight:600}.price-row small{display:block;color:var(--muted)}
+  .price-row .amount{font:700 var(--t-lg)/1 var(--f-display);white-space:nowrap}
+  .hours{width:100%;border-collapse:collapse}.hours td{padding:10px 0;border-top:1px solid var(--line)}.hours td:last-child{text-align:right;color:var(--muted)}
+  .cta-band form p,.cta-band form a{color:var(--muted)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-6);align-items:start}@media (max-width:760px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="./">[Nom]</a>
+  <ul class="nav-links"><li><a href="#prestations">Prestations</a></li><li><a href="#tarifs">Tarifs</a></li><li><a href="#horaires">Horaires</a></li><li><a href="#faq">FAQ</a></li></ul>
+  <a class="btn btn-sm btn-accent" href="#rdv">Prendre rendez-vous</a>
+</div></header>
+
+<main id="contenu">
+  <section class="hero"><div class="bg-grid" aria-hidden="true"></div>
+    <div class="wrap">
+      <span class="chip chip-ok reveal"><span class="dot"></span> [Prochaine disponibilité : jj/mm]</span>
+      <h1 class="display reveal" style="--i:1">[Votre métier], <em>[promesse courte]</em>.</h1>
+      <p class="lede reveal" style="--i:2">[Une phrase : pour qui, quoi, où. Ex. « Coiffeuse à domicile à Lyon : coupes, couleurs et soins, sur rendez-vous. »]</p>
+      <div class="hero-cta reveal" style="--i:3"><a class="btn btn-accent" href="#rdv">Prendre rendez-vous</a><a class="btn btn-ghost" href="tel:[+33600000000]">📞 [06 00 00 00 00]</a></div>
+    </div>
+  </section>
+
+  <section class="section" id="prestations" style="padding-top:0"><div class="wrap">
+    <div class="section-head"><span class="eyebrow">Prestations</span><h2 class="h-section">[Ce que je propose]</h2></div>
+    <div class="grid grid-3">
+      <article class="card offer reveal"><h3>[Prestation 1]</h3><p>[Description en une phrase.]</p><ul><li>[Durée]</li><li>[Point fort]</li></ul></article>
+      <article class="card offer is-featured reveal" style="--i:1"><span class="chip chip-lime" style="align-self:flex-start">La plus demandée</span><h3>[Prestation 2]</h3><p>[Description.]</p><ul><li>[Durée]</li><li>[Point fort]</li></ul></article>
+      <article class="card offer reveal" style="--i:2"><h3>[Prestation 3]</h3><p>[Description.]</p><ul><li>[Durée]</li><li>[Point fort]</li></ul></article>
+    </div>
+  </div></section>
+
+  <section class="section" id="tarifs" style="background:var(--bg-2)"><div class="wrap two">
+    <div><span class="eyebrow">Tarifs</span><h2 class="h-section" style="margin:var(--s-4) 0">[Des prix affichés, sans surprise]</h2><p class="lede">[Conditions : acompte, annulation sous [24 h], moyens de paiement.]</p></div>
+    <div class="price-list reveal">
+      <div class="price-row"><div><b>[Prestation 1]</b><small>[durée]</small></div><span class="amount">[00] €</span></div>
+      <div class="price-row"><div><b>[Prestation 2]</b><small>[durée]</small></div><span class="amount">[00] €</span></div>
+      <div class="price-row"><div><b>[Prestation 3]</b><small>[durée]</small></div><span class="amount">[00] €</span></div>
+    </div>
+  </div></section>
+
+  <section class="section" id="horaires"><div class="wrap two">
+    <div><span class="eyebrow">Horaires</span><h2 class="h-section" style="margin:var(--s-4) 0">[Quand me trouver]</h2><p class="lede">[Adresse ou zone d'intervention]. [Accès, stationnement.]</p></div>
+    <table class="hours reveal"><caption class="muted" style="text-align:left;padding-bottom:8px">Horaires d'ouverture</caption>
+      <tr><td>Lundi</td><td>[09:00 – 18:00]</td></tr><tr><td>Mardi</td><td>[09:00 – 18:00]</td></tr><tr><td>Mercredi</td><td>[fermé]</td></tr>
+      <tr><td>Jeudi</td><td>[09:00 – 18:00]</td></tr><tr><td>Vendredi</td><td>[09:00 – 18:00]</td></tr><tr><td>Samedi</td><td>[09:00 – 13:00]</td></tr><tr><td>Dimanche</td><td>fermé</td></tr>
+    </table>
+  </div></section>
+
+  <section class="section" id="faq" style="padding-top:0"><div class="wrap faq-grid">
+    <div class="section-head"><span class="eyebrow">FAQ</span><h2 class="h-section">Questions fréquentes</h2></div>
+    <div class="faq">
+      <details><summary>[Comment prendre rendez-vous ?]</summary><p>[Réponse : formulaire ci-dessous, téléphone, délai de réponse.]</p></details>
+      <details><summary>[Que se passe-t-il si j'annule ?]</summary><p>[Réponse : délai, acompte.]</p></details>
+      <details><summary>[Quels moyens de paiement ?]</summary><p>[Réponse.]</p></details>
+    </div>
+  </div></section>
+
+  <section class="section" id="rdv" style="padding-top:0"><div class="wrap" style="max-width:820px">
+    <div class="cta-band">
+      <span class="eyebrow" style="color:var(--lime)">Rendez-vous</span>
+      <h2 style="margin:var(--s-4) 0">[Réservez votre créneau]</h2>
+      <p>Indiquez la prestation et deux créneaux possibles : je confirme sous [24 h].</p>
+      <!-- Brancher sur un service d'envoi (relais, formulaire hébergé) ou remplacer par un lien mailto. -->
+      <form action="[adresse-du-service-d-envoi]" method="post" class="form" style="background:var(--surface);color:var(--ink);padding:var(--s-5);border-radius:var(--r-lg);margin-top:var(--s-5)">
+        <div class="form-grid"><div class="field"><label for="n">Nom</label><input id="n" name="nom" autocomplete="name" required></div>
+          <div class="field"><label for="t">Téléphone ou e-mail</label><input id="t" name="contact" required></div></div>
+        <div class="field"><label for="p">Prestation</label><select id="p" name="prestation"><option>[Prestation 1]</option><option>[Prestation 2]</option><option>[Prestation 3]</option></select></div>
+        <div class="field"><label for="m">Créneaux souhaités</label><textarea id="m" name="message" rows="3" required></textarea></div>
+        <p class="muted" style="font-size:var(--t-xs)">Vos informations servent uniquement à vous répondre. <a href="legal.html">Confidentialité</a>.</p>
+        <button class="btn btn-accent" type="submit">Envoyer ma demande</button>
+      </form>
+    </div>
+  </div></section>
+</main>
+
+<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
+  <span>© <span data-year>2026</span> [Nom de l'entreprise] · SIRET [000 000 000 00000]</span>
+  <span><a href="legal.html">Mentions légales</a> · Site réalisé par <a href="https://ikeupods-del.github.io/Quentools/">QuenTools</a></span>
+</div></div></footer>
+<script src="../../assets/qt.js" defer></script>
+</body>
+</html>
