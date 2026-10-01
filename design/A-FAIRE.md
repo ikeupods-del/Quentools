@@ -29,3 +29,5 @@
 - [x] Espace client, administration enrichie (suivi, échanges, indicateurs, contacts), inscription à l'e-book.
 - [x] Contrôle automatique du site avant publication ; plan de lancement et scripts vidéo (`marketing/quentools/`).
 - [x] 11 pages de référencement par métier (`/creation-site/`) ; vidéo « avant / après » (`marketing/quentools/video-avant-apres.js`, exemple au choix).
+
+- [x] Micro-entreprise : formalité déposée et validée par l'INSEE le 01/10/2026 (entrepreneur individuel, SIREN 912026713, domiciliation, franchise de TVA). Mentions légales du site mises à jour. À faire : vérifier la radiation de l'ancienne activité, relever le SIRET sur l'avis de situation Sirene, faire relire les mentions légales par un professionnel.
