@@ -40,6 +40,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}wouf/
     steps:
       - uses: actions/checkout@v4
+      - name: Contrôler le site vitrine
+        run: node tools/verifier-site.js
       - name: Préparer le site
         run: |
           mkdir -p _site
