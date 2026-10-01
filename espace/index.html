@@ -7,7 +7,7 @@
 <title>Espace client · QuenTools</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/qt.css?v=20261001f">
+<link rel="stylesheet" href="../assets/qt.css?v=20261001g">
 <script src="../assets/qt-config.js"></script>
 <style>
   .esp{display:grid;gap:var(--s-4);margin-bottom:var(--s-5)}
@@ -116,7 +116,7 @@ function render() {
   app.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:var(--s-5)"><div><span class="eyebrow">Espace client</span><h1 class="h-section" style="margin:var(--s-2) 0 0">Mes demandes</h1></div>
     <div class="row"><span class="muted" style="font-size:var(--t-xs)">${esc(DEMO ? 'Démonstration' : user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></div>
     <div id="toast" role="status" aria-live="polite"></div>
-    <a class="card" href="../ebook/" style="display:flex;align-items:center;gap:var(--s-4);padding:var(--s-4) var(--s-5);margin-bottom:var(--s-5);text-decoration:none;color:inherit"><span style="font-size:1.6rem" aria-hidden="true">📘</span><span><b>Mon e-book gratuit</b><br><span class="muted" style="font-size:var(--t-sm)">Débuter avec Claude : ouvrir le guide</span></span><span style="margin-left:auto" aria-hidden="true">→</span></a>
+    <div class="card" style="display:flex;align-items:center;gap:var(--s-4);flex-wrap:wrap;padding:var(--s-4) var(--s-5);margin-bottom:var(--s-5)"><span style="font-size:1.6rem" aria-hidden="true">📘</span><span style="flex:1;min-width:180px"><b>Mon e-book gratuit</b><br><span class="muted" style="font-size:var(--t-sm)">Débuter avec Claude</span></span><span class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-sm btn-accent" data-do="pdf">📥 Télécharger le PDF</button><a class="btn btn-sm btn-ghost" href="../ebook/">Lire en ligne</a></span></div>
     ${items.length ? items.map(card).join('') : `<div class="card" style="padding:var(--s-6);text-align:center"><p style="margin-top:0"><b>Aucune demande liée à ce compte.</b></p>
       <p class="muted">Connectez-vous avec la même adresse e-mail que celle indiquée dans votre demande de devis. Pas encore de demande ?</p><a class="btn btn-accent" href="../devis/">Demander un devis gratuit</a></div>`}
     <p class="muted" style="font-size:var(--t-xs)">Vos données servent uniquement au suivi de votre demande. Pour les faire supprimer, écrivez-moi dans les échanges ou en message privé TikTok.</p>`;
@@ -127,6 +127,13 @@ app.addEventListener('click', async e => {
   const card = b.closest('.esp'), x = card && items.find(i => i.id === card.dataset.id), d = b.dataset.do;
   try {
     if (d === 'logout') { const { Au, auth } = await fb(); await Au.signOut(auth); }
+    else if (d === 'pdf') {
+      if (DEMO) return toast('Démonstration : le PDF est disponible dans l’espace réel.');
+      const { Fs, db } = await fb(), snap = await Fs.getDoc(Fs.doc(db, 'qt_ebook', 'pdf'));
+      if (!snap.exists()) return toast('Le PDF sera disponible très bientôt. Vous pouvez déjà lire le guide en ligne.', true);
+      const bin = atob(snap.data().b64), u8 = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([u8], { type: 'application/pdf' })); a.download = 'QuenTools-ebook-debuter-avec-Claude.pdf'; document.body.appendChild(a); a.click(); a.remove();
+    }
     else if (d === 'thread') {
       if (openId === x.id) { openId = null; return render(); }
       openId = x.id; threads[x.id] = null; render(); threads[x.id] = await loadThread(x.id); render();
