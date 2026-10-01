@@ -77,6 +77,50 @@
   .dv-x{min-height:42px;border-radius:10px;border:1px solid var(--line-2);background:transparent;color:var(--ink);cursor:pointer}
   .dv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
   #dv label{display:grid;gap:4px;font-size:var(--t-xs);color:var(--muted)}
+  /* Demandes repliables, agenda mois, devis, chiffres */
+  .filters .n{display:inline-block;min-width:18px;margin-left:4px;padding:1px 6px;border-radius:999px;background:var(--bg-2);font-size:11px;color:var(--muted)}
+  .filters button[aria-pressed=true] .n{background:rgba(255,255,255,.2);color:inherit}
+  .req-sum{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+  .req-toggle{all:unset;box-sizing:border-box;flex:1;min-width:0;cursor:pointer;display:grid;gap:8px;padding:2px 0}
+  .req-toggle:focus-visible{outline:3px solid var(--accent);outline-offset:4px;border-radius:10px}
+  .req-toggle h3{overflow-wrap:anywhere}
+  .req-top{justify-content:flex-start}
+  .chev{display:inline-block;transition:transform .15s;color:var(--muted)}.req-toggle[aria-expanded=true] .chev{transform:rotate(90deg)}
+  .excerpt{color:var(--muted);font-size:var(--t-sm);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .req-quick{display:flex;gap:6px;flex:0 0 auto}
+  .req-body{display:grid;gap:var(--s-3);padding-top:var(--s-3);border-top:1px dashed var(--line)}
+  .up-list{display:grid;gap:8px;margin-bottom:var(--s-4)}
+  .card.up{flex-direction:row;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:var(--s-3) var(--s-4)}
+  .next{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;padding:var(--s-4);margin-bottom:var(--s-4);border-radius:var(--r-md);background:var(--accent-soft);border:1px solid var(--line)}
+  .mo-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--s-3)}
+  .mo{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:var(--s-4)}
+  .mo .dow{font-size:11px;color:var(--muted);text-align:center;padding:4px 0}
+  .mo button{aspect-ratio:1/1;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:grid;align-content:center;justify-items:center;gap:4px;font:600 var(--t-sm)/1 var(--f-text);padding:2px}
+  .mo button.out{opacity:.4}.mo button.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .mo button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .mo .dots{display:flex;gap:3px;min-height:7px}.mo .dots i{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .mo .dots i.k-appel{background:#2b7de9}.mo .dots i.k-projet{background:#12a37f}.mo .dots i.k-rdv{background:#e08a00}.mo .dots i.k-rappel{background:#d6455d}
+  .seg button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .mini{display:grid;gap:4px;font-size:var(--t-xs);color:var(--muted)}
+  .mini select{font:inherit;font-size:var(--t-sm);padding:10px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);min-height:44px;width:100%}
+  .dv-cat{display:flex;flex-wrap:wrap;gap:6px}
+  .dv-cat button{font:600 var(--t-xs)/1.2 var(--f-text);padding:9px 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);cursor:pointer;min-height:40px;text-align:left}
+  .dv-cat button:hover{border-color:var(--accent)}
+  .cchip{display:inline-flex;gap:2px;align-items:center}.cchip .cx{padding:9px 10px;min-width:40px}
+  .dv-l{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--bg);margin-bottom:8px}
+  .dv-l .r{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px;align-items:end}
+  .dv-l .lt{text-align:right;font-weight:700;align-self:center}
+  #dv label.chk{display:flex;gap:8px;align-items:center;justify-content:space-between;min-height:44px}
+  #dv label.chk input{width:22px;height:22px;accent-color:var(--accent)}
+  .dv-rem{display:grid;gap:8px;padding:12px;border:1px dashed var(--line-2);border-radius:var(--r-md)}
+  .dv-sum{position:sticky;bottom:8px;z-index:5;display:grid;gap:10px;padding:14px 16px;background:var(--surface);border:2px solid var(--ink);border-radius:var(--r-md);box-shadow:var(--sh-2)}
+  .dv-sum .ln{display:flex;justify-content:space-between;gap:12px;font-size:var(--t-sm)}
+  .dv-sum .big{font:800 var(--t-lg)/1.2 var(--f-display)}
+  .dv-save{font-size:var(--t-xs);color:var(--muted)}
+  .dv-warn{padding:10px 12px;border-radius:12px;background:var(--warn-soft);font-size:var(--t-sm);margin-top:6px}
+  .fun{display:grid;grid-template-columns:120px 1fr 36px;gap:10px;align-items:center;font-size:var(--t-sm);margin:8px 0}
+  .fun div{height:10px;border-radius:999px;background:var(--bg-2);overflow:hidden}.fun i{display:block;height:100%;background:var(--accent);border-radius:999px}
+  .fun b{text-align:right}
 </style>
 </head>
 <body>
@@ -126,26 +170,42 @@ const demo = {
     { id: 'd3', type: 'Application complète', nom: 'Asso Les Pattes', email: 'contact@example.org', tel: '', delai: 'Dans les 3 mois', budget: '3 000 à 6 000 €', besoin: 'Application pour suivre les adoptions et les familles d’accueil.', status: 'gagne', montant: 4200, at: new Date(Date.now() - 20 * 864e5).toISOString() }
   ], site: { announceOn: false, announce: '', announceUrl: '', available: true, availText: '' }
 };
+const demoExtra = () => [
+  { id: 'd4', type: 'Site vitrine', nom: 'Léa Coiffure', email: 'lea@example.com', tel: '06 11 22 33 44', delai: 'Dans le mois', budget: '1 000 à 3 000 €', besoin: 'Site pour mon salon de coiffure à domicile, avec prise de rendez-vous par téléphone.', status: 'gagne', montant: 450, at: new Date(Date.now() - 40 * 864e5) },
+  { id: 'd5', type: 'Outil sur mesure', nom: 'Plomberie Dupont', email: 'dupont@example.com', tel: '', delai: 'Dès que possible', budget: '3 000 à 6 000 €', besoin: 'Outil de devis et de suivi de chantier sur téléphone pour mes deux salariés.', status: 'livre', montant: 1800, at: new Date(Date.now() - 75 * 864e5) },
+  { id: 'd6', type: 'Boutique Shopify', nom: 'Atelier Bois', email: 'atelier@example.com', tel: '', delai: 'Dans les 3 mois', budget: 'Moins de 1 000 €', besoin: 'Petite boutique pour vendre mes planches à découper faites main.', status: 'envoye', montant: 320, at: new Date(Date.now() - 9 * 864e5) }];
 const ms = v => !v ? 0 : typeof v === 'string' ? Date.parse(v) : v.toMillis ? v.toMillis() : +v;
 let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false, ebookPdf = null, lq = '';
 
 /* ---------- Agenda : appels, travail sur les projets, rendez-vous, rappels (collection privée qt_agenda) ---------- */
 const KINDS = { appel: ['📞', 'Appel'], projet: ['🛠️', 'Travail projet'], rdv: ['🤝', 'Rendez-vous'], rappel: ['🔔', 'Rappel'] };
-let agenda = [], agendaErr = false, planFor = null, agDay = '';
+let agenda = [], agendaErr = false, planFor = null, agDay = '', agView = 'liste', agMonth = '', agEdit = null, expd = new Set(), estOpen = false;
+const notified = new Set();
 const isoDay = t => { const d = new Date(t); return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 const today = () => isoDay(Date.now());
 const addDays = (iso, n) => { const [y, m, d] = iso.split('-').map(Number); return isoDay(new Date(y, m - 1, d + n)); };
+const addMonths = (iso, n) => { const [y, m, d] = iso.split('-').map(Number), t = new Date(y, m - 1 + n, 1), last = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate(); return isoDay(new Date(t.getFullYear(), t.getMonth(), Math.min(d, last))); };
 const dayName = iso => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }); };
+const monthName = ym => { const [y, m] = ym.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }); };
+const nextDow = wd => { let d = addDays(today(), 1); for (let i = 0; i < 7 && new Date(d + 'T12:00:00').getDay() !== wd; i++) d = addDays(d, 1); return d; };
 const first = n => String(n || '').trim().split(' ')[0];
 const readForm = el => Object.fromEntries([...el.querySelectorAll('[name]')].map(i => [i.name, i.value.trim()]));
+const mins = h => { const [a, b] = String(h).split(':').map(Number); return a * 60 + (b || 0); };
+const atMs = a => { const [y, m, d] = a.date.split('-').map(Number), [h, mi] = a.heure ? a.heure.split(':').map(Number) : [9, 0]; return new Date(y, m - 1, d, h, mi).getTime(); };
 async function agCreate(ev) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ev.date || '')) throw new Error('date');
-  const rec = { kind: KINDS[ev.kind] ? ev.kind : 'rappel', titre: String(ev.titre || '').slice(0, 200), date: ev.date, heure: /^\d{2}:\d{2}$/.test(ev.heure || '') ? ev.heure : '',
+  const base = { kind: KINDS[ev.kind] ? ev.kind : 'rappel', titre: String(ev.titre || '').slice(0, 200), heure: /^\d{2}:\d{2}$/.test(ev.heure || '') ? ev.heure : '',
     duree: Math.min(480, Math.max(5, +ev.duree || 30)), devisId: String(ev.devisId || ''), note: String(ev.note || '').slice(0, 1000), done: false };
-  if (DEMO) { agenda.push({ ...rec, id: 'a' + Date.now() }); return; }
-  const { Fs, db } = await fb();
-  const r = await Fs.addDoc(Fs.collection(db, 'qt_agenda'), { ...rec, created: Fs.serverTimestamp() });
-  agenda.push({ ...rec, id: r.id });
+  const extra = ev.rep === 'w4' ? 3 : ev.rep === 'm3' ? 2 : 0, dates = [ev.date];
+  for (let i = 1; i <= extra; i++) dates.push(ev.rep === 'm3' ? addMonths(ev.date, i) : addDays(ev.date, 7 * i));
+  for (const date of dates) {
+    const rec = { ...base, date };
+    if (DEMO) { agenda.push({ ...rec, id: 'a' + Date.now() + date }); continue; }
+    const { Fs, db } = await fb();
+    const r = await Fs.addDoc(Fs.collection(db, 'qt_agenda'), { ...rec, created: Fs.serverTimestamp() });
+    agenda.push({ ...rec, id: r.id });
+  }
+  return dates.length;
 }
 async function agPatch(id, data) {
   const a = agenda.find(x => x.id === id); if (!a) return; Object.assign(a, data);
@@ -159,6 +219,14 @@ const agEntries = () => [...agenda, ...items.filter(x => x.echeance && !['livre'
   .filter(a => /^\d{4}-\d{2}-\d{2}$/.test(a.date || '')).sort((a, b) => (a.date + (a.heure || '99')).localeCompare(b.date + (b.heure || '99')));
 const agLate = () => agEntries().filter(a => !a.done && a.date < today());
 const agToday = () => agEntries().filter(a => !a.done && a.date === today());
+const agClash = a => { if (!a.heure || a.done) return null; const s = mins(a.heure), e = s + (+a.duree || 30);
+  return agEntries().find(b => b.id !== a.id && !b.done && b.date === a.date && b.heure && mins(b.heure) < e && s < mins(b.heure) + (+b.duree || 30)); };
+const nextUp = () => { const n = Date.now() - 10 * 60e3; return agEntries().filter(a => !a.done && !a.virtual && atMs(a) >= n && (a.heure || a.date > today())).sort((a, b) => atMs(a) - atMs(b))[0]; };
+const inTxt = a => { const m = Math.round((atMs(a) - Date.now()) / 6e4);
+  if (a.heure && m <= 60 && m >= -10) return m <= 1 ? 'maintenant' : 'dans ' + m + ' min';
+  if (a.date === today()) return a.heure ? 'à ' + a.heure : 'aujourd’hui';
+  if (a.date === addDays(today(), 1)) return 'demain' + (a.heure ? ' à ' + a.heure : '');
+  return dayName(a.date) + (a.heure ? ' à ' + a.heure : ''); };
 const stamp = (date, heure) => date.replace(/-/g, '') + (heure ? 'T' + heure.replace(':', '') + '00' : '');
 function agEnd(a) {
   if (!a.heure) return addDays(a.date, 1).replace(/-/g, '');
@@ -178,81 +246,174 @@ function ics(list) {
   return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//QuenTools//Agenda//FR', ...ev, 'END:VCALENDAR', ''].join('\r\n');
 }
 const dl = (name, text, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); };
-const agFormHtml = (p, id) => `<div class="ag-form" id="${id}"><div class="row3">
-    <select name="kind" aria-label="Type">${Object.entries(KINDS).map(([k, [i, l]]) => `<option value="${k}"${k === (p.kind || 'appel') ? ' selected' : ''}>${i} ${l}</option>`).join('')}</select>
-    <input name="date" type="date" value="${esc(p.date || today())}" aria-label="Date">
-    <input name="heure" type="time" value="${esc(p.heure || '')}" aria-label="Heure (facultatif)">
-    <select name="duree" aria-label="Durée">${[15, 30, 60, 120, 240].map(m => `<option value="${m}"${m === (p.duree || 30) ? ' selected' : ''}>${m < 60 ? m + ' min' : m / 60 + ' h'}</option>`).join('')}</select></div>
+const kindOpts = v => Object.entries(KINDS).map(([k, [i, l]]) => `<option value="${k}"${k === v ? ' selected' : ''}>${i} ${l}</option>`).join('');
+const durOpts = v => [...new Set([15, 30, 45, 60, 90, 120, 180, 240, +v || 30])].sort((a, b) => a - b).map(m => `<option value="${m}"${m === (+v || 30) ? ' selected' : ''}>${m < 60 ? m + ' min' : (m % 60 ? Math.floor(m / 60) + ' h ' + (m % 60) : m / 60 + ' h')}</option>`).join('');
+const agFormHtml = (p, id) => `<div class="ag-form" id="${id}">
+  <div class="seg" role="group" aria-label="Date rapide">${[['today', 'Aujourd’hui'], ['tom', 'Demain'], ['mon', 'Lundi'], ['week', 'Dans 1 semaine']].map(([k, l]) => `<button type="button" class="btn btn-sm btn-ghost" data-do="ag-quick" data-k="${k}">${l}</button>`).join('')}</div>
+  <div class="row3"><select name="kind" aria-label="Type">${kindOpts(p.kind || 'appel')}</select>
+    <input name="date" type="date" value="${esc(p.date || today())}" aria-label="Date"><input name="heure" type="time" value="${esc(p.heure || '')}" aria-label="Heure (facultatif)">
+    <select name="duree" aria-label="Durée">${durOpts(p.duree || 30)}</select></div>
   <input name="titre" maxlength="200" placeholder="Quoi ? Ex. Appeler pour cadrer le projet" value="${esc(p.titre || '')}" aria-label="Titre">
   ${p.devisId !== undefined ? `<input type="hidden" name="devisId" value="${esc(p.devisId)}">`
     : `<select name="devisId" aria-label="Client lié"><option value="">Aucun client lié</option>${items.filter(x => (x.status || 'nouveau') !== 'perdu').map(x => `<option value="${esc(x.id)}">${esc(x.nom)} · ${esc(x.type)}</option>`).join('')}</select>`}
-  <textarea name="note" maxlength="1000" placeholder="Note (facultatif) : ce qu’il faut préparer, les questions à poser…" aria-label="Note"></textarea></div>`;
+  <textarea name="note" maxlength="1000" placeholder="Note (facultatif) : ce qu’il faut préparer, les questions à poser…" aria-label="Note"></textarea>
+  <select name="rep" aria-label="Répétition"><option value="">Une seule fois</option><option value="w4">Chaque semaine (4 fois)</option><option value="m3">Chaque mois (3 fois)</option></select></div>`;
 function agRow(a) {
-  const k = KINDS[a.kind] || KINDS.rappel, x = a.devisId && items.find(i => i.id === a.devisId), late = !a.done && a.date < today();
+  const k = KINDS[a.kind] || KINDS.rappel, x = a.devisId && items.find(i => i.id === a.devisId), late = !a.done && a.date < today(), clash = agClash(a);
+  if (agEdit === a.id && !a.virtual) return `<article class="card ag" data-ag="${esc(a.id)}"><div class="ag-form" id="ag-edit">
+      <div class="row3"><select name="kind" aria-label="Type">${kindOpts(a.kind)}</select><input name="date" type="date" value="${esc(a.date)}" aria-label="Date"><input name="heure" type="time" value="${esc(a.heure || '')}" aria-label="Heure"><select name="duree" aria-label="Durée">${durOpts(a.duree)}</select></div>
+      <input name="titre" maxlength="200" value="${esc(a.titre)}" aria-label="Titre"><textarea name="note" maxlength="1000" aria-label="Note">${esc(a.note || '')}</textarea></div>
+    <div class="ag-act"><button class="btn btn-sm btn-accent" data-agdo="edit-save">Enregistrer</button><button class="btn btn-sm btn-ghost" data-agdo="edit-cancel">Annuler</button></div></article>`;
   return `<article class="card ag${a.done ? ' ag-done' : ''}${late ? ' ag-late' : ''}" data-ag="${esc(a.id)}">
     <div class="ag-main">${a.virtual ? '<span class="ag-check" aria-hidden="true">📌</span>' : `<input type="checkbox" class="ag-check" data-agdo="done"${a.done ? ' checked' : ''} aria-label="Marquer comme fait">`}
-      <div><div class="ag-when">${k[0]} ${esc(k[1])} · ${esc(dayName(a.date))}${a.heure ? ' à ' + esc(a.heure) : ''}${late ? ' · <b>en retard</b>' : ''}</div>
-        <b class="ag-title">${esc(a.titre || k[1])}</b>${x ? `<div class="muted ag-who">${esc(x.nom)}${x.tel ? ' · ' + esc(x.tel) : ''}</div>` : ''}${a.note ? `<p class="ag-note">${esc(a.note)}</p>` : ''}</div></div>
+      <div><div class="ag-when">${k[0]} ${esc(k[1])} · ${esc(dayName(a.date))}${a.heure ? ' à ' + esc(a.heure) + (a.duree ? ' · ' + (a.duree < 60 ? a.duree + ' min' : Math.round(a.duree / 6) / 10 + ' h') : '') : ''}${late ? ' · <b>en retard</b>' : ''}</div>
+        <b class="ag-title">${esc(a.titre || k[1])}</b>${x ? `<div class="muted ag-who">${esc(x.nom)}${x.tel ? ' · ' + esc(x.tel) : ''}</div>` : ''}${a.note ? `<p class="ag-note">${esc(a.note)}</p>` : ''}
+        ${clash ? `<div class="flag" style="margin-top:6px">⚠️ Chevauche « ${esc(clash.titre)} » (${esc(clash.heure)})</div>` : ''}</div></div>
     <div class="ag-act">${x && x.tel ? `<a class="btn btn-sm btn-accent" href="tel:${esc(String(x.tel).replace(/[^\d+]/g, ''))}">Appeler</a>` : ''}
       ${x ? '<button class="btn btn-sm btn-ghost" data-agdo="open">Voir la demande</button>' : ''}
-      ${a.virtual || a.done ? '' : `<button class="btn btn-sm btn-ghost" data-agdo="later">+1 jour</button><input type="date" data-agf="date" value="${esc(a.date)}" aria-label="Changer la date"><input type="time" data-agf="heure" value="${esc(a.heure || '')}" aria-label="Changer l’heure">`}
+      ${a.virtual || a.done ? '' : `<button class="btn btn-sm btn-ghost" data-agdo="later">+1 jour</button><button class="btn btn-sm btn-ghost" data-agdo="edit">Modifier</button><input type="date" data-agf="date" value="${esc(a.date)}" aria-label="Changer la date"><input type="time" data-agf="heure" value="${esc(a.heure || '')}" aria-label="Changer l’heure">`}
       <a class="btn btn-sm btn-ghost" href="${esc(gcal(a))}" target="_blank" rel="noopener">Google Agenda</a><button class="btn btn-sm btn-ghost" data-agdo="ics">Ajouter au téléphone</button>
       ${a.virtual ? '' : '<button class="btn btn-sm btn-ghost" data-agdo="del" style="margin-left:auto">Supprimer</button>'}</div></article>`;
+}
+function monthGrid(all, t0) {
+  const ym = agMonth || t0.slice(0, 7), [y, m] = ym.split('-').map(Number), offset = (new Date(y, m - 1, 1).getDay() + 6) % 7, start = isoDay(new Date(y, m - 1, 1 - offset)), by = {};
+  all.filter(a => !a.done).forEach(a => { (by[a.date] = by[a.date] || []).push(a); });
+  const cells = Array.from({ length: 42 }, (_, i) => addDays(start, i)).map(d => { const ev = by[d] || [];
+    return `<button data-agday="${d}" class="${d.slice(0, 7) !== ym ? 'out ' : ''}${d === t0 ? 'today' : ''}" aria-pressed="${agDay === d}" aria-label="${esc(dayName(d))} : ${ev.length} à faire"><span>${+d.slice(8)}</span><span class="dots">${ev.slice(0, 4).map(a => `<i class="k-${esc(a.kind)}"></i>`).join('')}</span></button>`; }).join('');
+  return `<div class="mo-h"><button class="btn btn-sm btn-ghost" data-do="ag-mo" data-n="-1" aria-label="Mois précédent">‹</button><b style="text-transform:capitalize">${esc(monthName(ym))}</b><button class="btn btn-sm btn-ghost" data-do="ag-mo" data-n="1" aria-label="Mois suivant">›</button></div>
+    <div class="mo">${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(l => `<span class="dow" aria-hidden="true">${l}</span>`).join('')}${cells}</div>`;
 }
 function viewAgenda() {
   if (agendaErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Une mise à jour des règles</h2><p>L’agenda s’enregistre dans une collection privée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase, puis revenez ici.</p>
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-tab="regles">Voir les règles</button><button class="btn btn-ghost" data-do="reload">J’ai publié les règles</button></div></section>`;
-  const all = agEntries(), t0 = today(), open = all.filter(a => !a.done), days = Array.from({ length: 7 }, (_, i) => addDays(t0, i));
-  const strip = `<div class="ag-strip">${days.map((d, i) => { const n = open.filter(a => a.date === d).length; return `<button data-agday="${d}" aria-pressed="${agDay === d}"><small>${i ? esc(dayName(d).split(' ')[0]) : 'auj.'}</small><b>${+d.slice(8)}</b><span>${n || '–'}</span></button>`; }).join('')}<button data-agday="" aria-pressed="${!agDay}"><small>tout</small><b>${open.length}</b><span>à faire</span></button></div>`;
-  const groups = agDay ? [[dayName(agDay), all.filter(a => a.date === agDay)]] : [
-    ['En retard', open.filter(a => a.date < t0)], ['Aujourd’hui', open.filter(a => a.date === t0)], ['Demain', open.filter(a => a.date === addDays(t0, 1))],
-    ['Cette semaine', open.filter(a => a.date > addDays(t0, 1) && a.date <= addDays(t0, 7))], ['Plus tard', open.filter(a => a.date > addDays(t0, 7))]];
-  const done = all.filter(a => a.done && a.date >= addDays(t0, -14));
-  const body = groups.map(([l, list]) => list.length ? `<h3 class="ag-h">${esc(l)} <span class="muted">(${list.length})</span></h3>${list.map(agRow).join('')}` : '').join('');
-  return `<section class="card" style="padding:var(--s-5);margin-bottom:var(--s-5)"><h2 style="margin:0 0 var(--s-3)">Ajouter à l’agenda</h2>${agFormHtml({}, 'ag-new')}
-      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:var(--s-3)"><button class="btn btn-accent" data-do="ag-add">Ajouter</button><button class="btn btn-ghost" data-do="ag-ics-all">Exporter tout ce qui est prévu vers mon téléphone</button></div></section>
-    ${strip}${body || `<div class="card empty">${agDay ? 'Rien de prévu ce jour-là.' : 'Rien de prévu. Ajoutez un appel, une session de travail ou un rappel ci-dessus.'}</div>`}
-    ${!agDay && done.length ? `<details class="ag-donebox"><summary>Faits ces 14 derniers jours (${done.length})</summary>${done.map(agRow).join('')}</details>` : ''}`;
+  const all = agEntries(), t0 = today(), open = all.filter(a => !a.done), nx = nextUp();
+  const week = open.filter(a => a.date >= t0 && a.date <= addDays(t0, 6)), projMin = week.filter(a => a.kind === 'projet').reduce((s, a) => s + (+a.duree || 0), 0), calls = week.filter(a => a.kind === 'appel').length;
+  const head = `<div class="next"><div>${nx ? `<span class="muted" style="font-size:var(--t-xs)">Prochain</span><div><b>${(KINDS[nx.kind] || KINDS.rappel)[0]} ${esc(nx.titre)}</b> · ${esc(inTxt(nx))}</div>` : '<b>Rien de prévu prochainement</b>'}</div>
+    <div class="muted" style="font-size:var(--t-sm)">Cette semaine : ${calls} appel${calls > 1 ? 's' : ''} · ${projMin ? Math.round(projMin / 6) / 10 + ' h de travail projet' : 'pas de travail projet planifié'}</div></div>`;
+  const notif = 'Notification' in window ? (Notification.permission === 'granted' ? '<span class="chip">🔔 Alertes actives tant que cette page est ouverte</span>' : Notification.permission === 'denied' ? '<span class="chip">🔕 Alertes bloquées dans le navigateur</span>' : '<button class="btn btn-sm btn-ghost" data-do="notif">🔔 Activer les alertes</button>') : '';
+  const bar = `<div class="filters"><button data-do="ag-view" data-v="liste" aria-pressed="${agView === 'liste'}">Liste</button><button data-do="ag-view" data-v="mois" aria-pressed="${agView === 'mois'}">Mois</button><span style="flex:1"></span>${notif}</div>`;
+  const form = `<details class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"${open.length ? '' : ' open'}><summary style="cursor:pointer;font-weight:700;padding:6px 0">+ Ajouter à l’agenda</summary><div style="margin-top:var(--s-3)">${agFormHtml({ date: agDay || t0 }, 'ag-new')}
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:var(--s-3)"><button class="btn btn-accent" data-do="ag-add">Ajouter</button><button class="btn btn-ghost" data-do="ag-ics-all">Tout exporter vers mon téléphone</button></div></div></details>`;
+  let body;
+  if (agView === 'mois') {
+    const dayList = agDay ? all.filter(a => a.date === agDay) : [];
+    body = monthGrid(all, t0) + (agDay ? `<h3 class="ag-h">${esc(dayName(agDay))} <span class="muted">(${dayList.length})</span></h3>${dayList.map(agRow).join('') || '<div class="card empty">Rien de prévu ce jour-là.</div>'}` : '<p class="muted" style="text-align:center">Touchez un jour pour voir ce qui est prévu.</p>');
+  } else {
+    const days = Array.from({ length: 7 }, (_, i) => addDays(t0, i));
+    const strip = `<div class="ag-strip">${days.map((d, i) => { const n = open.filter(a => a.date === d).length; return `<button data-agday="${d}" aria-pressed="${agDay === d}"><small>${i ? esc(dayName(d).split(' ')[0]) : 'auj.'}</small><b>${+d.slice(8)}</b><span>${n || '–'}</span></button>`; }).join('')}<button data-agday="" aria-pressed="${!agDay}"><small>tout</small><b>${open.length}</b><span>à faire</span></button></div>`;
+    const groups = agDay ? [[dayName(agDay), all.filter(a => a.date === agDay)]] : [
+      ['En retard', open.filter(a => a.date < t0)], ['Aujourd’hui', open.filter(a => a.date === t0)], ['Demain', open.filter(a => a.date === addDays(t0, 1))],
+      ['Cette semaine', open.filter(a => a.date > addDays(t0, 1) && a.date <= addDays(t0, 7))], ['Plus tard', open.filter(a => a.date > addDays(t0, 7))]];
+    const done = all.filter(a => a.done && a.date >= addDays(t0, -14));
+    const list = groups.map(([l, li]) => li.length ? `<h3 class="ag-h">${esc(l)} <span class="muted">(${li.length})</span></h3>${li.map(agRow).join('')}` : '').join('');
+    body = strip + (list || `<div class="card empty">${agDay ? 'Rien de prévu ce jour-là.' : 'Rien de prévu. Ajoutez un appel, une session de travail ou un rappel ci-dessus.'}</div>`)
+      + (!agDay && done.length ? `<details class="ag-donebox"><summary>Faits ces 14 derniers jours (${done.length})</summary>${done.map(agRow).join('')}</details>` : '');
+  }
+  return head + bar + form + body;
 }
+function notifTick() {
+  if (DEMO || !('Notification' in window) || Notification.permission !== 'granted') return;
+  const n = Date.now();
+  agEntries().forEach(a => { if (a.done || a.virtual || !a.heure) return; const dt = atMs(a) - n, k = a.id + a.date + a.heure;
+    if (dt <= 10 * 60e3 && dt > -5 * 60e3 && !notified.has(k)) { notified.add(k); try { new Notification(agLabel(a), { body: (inTxt(a) + '\n' + agDetails(a)).trim(), tag: k }); } catch (e) { /* non pris en charge */ } } });
+}
+setInterval(notifTick, 30000);
 
-/* ---------- Devis détaillé (numéroté, mentions obligatoires, publié dans l'espace client) ---------- */
+/* ---------- Devis détaillé (numéroté, remises, mentions obligatoires, publié dans l'espace client) ---------- */
 const SELLER_DEF = { marque: 'QuenTools', titulaire: 'Quentin Storace EI', adresse: '231 rue Saint-Honoré, 75001 Paris', siren: '912026713', email: C.email || '',
   conditions: 'La première version est présentée avant la suite du travail ; les modifications demandées après sa validation peuvent faire l’objet d’un devis complémentaire.\nEn cas de retard de paiement : pénalités égales à trois fois le taux d’intérêt légal et, pour les clients professionnels, indemnité forfaitaire de 40 € pour frais de recouvrement.' };
 const seller = () => ({ ...SELLER_DEF, ...(notes._vendeur || {}) });
+/* Préréglages de prestations (prix indicatifs, dans la grille QuenTools : à adapter). [désignation, prix, mensuel] */
+const CAT_BASE = [['Site vitrine (jusqu’à 5 pages)', 300], ['Page supplémentaire', 50], ['Boutique Shopify : configuration et mise en ligne', 200], ['Outil sur mesure', 1500],
+  ['Paiement en ligne et administration', 800], ['Rédaction des textes', 80], ['Nom de domaine (1 an)', 12], ['Prise en main (1 h en visio)', 40],
+  ['Maintenance mensuelle : hébergement, sauvegardes, petites modifications', 25, true]];
+const catCustom = () => { try { const c = JSON.parse((notes._catalogue || {}).items || '[]'); return Array.isArray(c) ? c.filter(x => x && x[0]) : []; } catch (e) { return []; } };
+async function catSave(list) { notes._catalogue = { items: JSON.stringify(list) }; if (DEMO) return; const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_catalogue'), notes._catalogue); }
 let dv = null;
+const blankLine = () => ({ l: '', q: 1, pu: '', rem: '', m: false });
 const dvDoc = () => ({ num: dv.num || '', date: dv.date || today(), validite: +dv.validite || 30, delai: dv.delai || '', acompte: +dv.acompte || 0, notes: dv.notes || '',
-  conditions: seller().conditions || '', lignes: dv.lignes, vendeur: (({ marque, titulaire, adresse, siren, email }) => ({ marque, titulaire, adresse, siren, email }))(seller()), client: dv.client });
+  conditions: seller().conditions || '',
+  lignes: dv.lignes.map(l => ({ l: l.l, q: l.q === '' || l.q == null ? 1 : +l.q, pu: +l.pu || 0, rem: +l.rem || 0, m: !!l.m })),
+  remise: { type: dv.remise.type === 'eur' ? 'eur' : 'pct', val: +dv.remise.val || 0, label: dv.remise.label || '' },
+  vendeur: (({ marque, titulaire, adresse, siren, email }) => ({ marque, titulaire, adresse, siren, email }))(seller()), client: dv.client });
+const dvFloor = () => { const x = estFor && items.find(i => i.id === estFor); return x && GRID[x.type] ? GRID[x.type][0] : 0; };
+const lineTxt = l => QTD.eur(QTD.line(l).net) + (l.m ? ' / mois' : '');
+function dvSumHtml() {
+  const k = QTD.calc(dvDoc()), ac = Math.min(100, Math.max(0, +dv.acompte || 0)), fl = dvFloor(), r = dv.remise, e = QTD.eur;
+  return `<div class="ln"><span>Sous-total</span><b>${e(k.sub)}</b></div>
+    ${k.remLines ? `<div class="ln"><span>Remises par ligne</span><b>− ${e(k.remLines)}</b></div>` : ''}
+    ${k.remise ? `<div class="ln"><span>${esc(r.label || 'Remise')}${r.type !== 'eur' ? ` (${+r.val} %)` : ''}</span><b>− ${e(k.remise)}</b></div>` : ''}
+    <div class="ln big"><span>Total</span><span>${e(k.total)}</span></div>
+    ${ac ? `<div class="ln"><span>Acompte ${ac} %</span><b>${e(k.acompte)}</b></div><div class="ln"><span>Solde à la livraison</span><b>${e(k.solde)}</b></div>` : ''}
+    ${k.rec ? `<div class="ln"><span>Abonnement mensuel (en plus)</span><b>${e(k.rec)} / mois</b></div>` : ''}
+    ${fl && k.total > 0 && k.total < fl ? `<div class="dv-warn">Sous le bas de votre grille pour ce type de projet (${eur(fl)}).</div>` : ''}`;
+}
 function dvInit() {
-  const x = estFor && items.find(i => i.id === estFor);
-  if (x && x.devisData) { try { const d = JSON.parse(x.devisData); dv = { for: x.id, num: d.num, validite: d.validite, delai: d.delai, acompte: d.acompte, notes: d.notes, lignes: d.lignes || [], client: d.client || {} }; return; } catch (e) { /* devis illisible : on repart de zéro */ } }
-  const g = id => document.getElementById(id), type = g('e-type') ? g('e-type').value : (x && x.type) || 'Site vitrine';
+  const x = estFor && items.find(i => i.id === estFor), g = id => document.getElementById(id);
+  const from = d => ({ for: x ? x.id : null, num: d.num || '', validite: d.validite ?? 30, delai: d.delai || '', acompte: d.acompte ?? 30, notes: d.notes || '',
+    lignes: (d.lignes && d.lignes.length ? d.lignes : [blankLine()]).map(l => ({ l: l.l || '', q: l.q ?? 1, pu: l.pu ?? '', rem: l.rem || '', m: !!l.m })),
+    client: { nom: '', email: '', adresse: '', ...(d.client || {}) }, remise: { type: 'pct', val: '', label: '', ...(d.remise || {}) } });
+  for (const raw of x ? [x.devisDraft, x.devisData] : []) { if (!raw) continue; try { dv = from(JSON.parse(raw)); return; } catch (e) { /* illisible : on essaie la suite */ } }
+  const type = g('e-type') ? g('e-type').value : (x && GRID[x.type] ? x.type : 'Site vitrine'), gm = GRID[type] || GRID['Site vitrine'];
   const lvl = g('e-lvl') ? g('e-lvl').selectedOptions[0].textContent.split(' (')[0].toLowerCase() : 'standard';
-  const lignes = [{ l: `${type} (${lvl}) : conception, réalisation et mise en ligne`, q: 1, pu: estMid || '' }];
-  dv = { for: x ? x.id : null, num: '', validite: 30, delai: '', acompte: 30, notes: g('e-maint') && g('e-maint').checked ? `Maintenance facultative : ${eur(MAINT[0])} à ${eur(MAINT[1])} par mois (hébergement, sauvegardes, petites modifications).` : '',
-    lignes, client: { nom: x ? x.nom : '', email: x ? x.email : '', adresse: '' } };
+  dv = from({ lignes: [{ l: `${type} (${lvl}) : conception, réalisation et mise en ligne`, q: 1, pu: estMid || Math.round((gm[0] + gm[1]) / 100) * 50 }], acompte: 30, validite: 30,
+    notes: g('e-maint') && g('e-maint').checked ? `Maintenance facultative : ${eur(MAINT[0])} à ${eur(MAINT[1])} par mois (hébergement, sauvegardes, petites modifications).` : '',
+    client: { nom: x ? x.nom : '', email: x ? x.email : '' } });
+}
+function dvDirty() {
+  clearTimeout(dvDirty.t); const s = document.getElementById('dv-saved'); if (!estFor) return;
+  if (s) s.textContent = 'Modifications non enregistrées…'; dvDirty.t = setTimeout(dvSaveDraft, 900);
+}
+async function dvSaveDraft() {
+  if (!dv || !dv.for || !items.find(i => i.id === dv.for)) return; const s = () => document.getElementById('dv-saved');
+  try { await patch(dv.for, { devisDraft: JSON.stringify(dvDoc()) }); if (s()) s().textContent = 'Brouillon enregistré ✓'; } catch (e) { if (s()) s().textContent = 'Brouillon non enregistré (connexion ou règles ?)'; }
+}
+function dvRefresh() {
+  const s = document.getElementById('dv-sum'); if (s) s.innerHTML = dvSumHtml();
+  dv.lignes.forEach((l, i) => { const n = document.querySelector(`[data-lt="${i}"]`); if (n) n.textContent = lineTxt(l); });
+}
+function dvSet(el) {
+  if (!dv) return;
+  if (el.dataset.dvl) { const [i, f] = el.dataset.dvl.split(':'), l = dv.lignes[+i]; if (!l) return; l[f] = f === 'm' ? el.checked : f === 'l' ? el.value.slice(0, 500) : el.value; }
+  else { const [a, k] = el.dataset.dv.split('.'); if (k) dv[a][k] = el.value.slice(0, 300); else dv[a] = el.value.slice(0, 1000); }
+  dvRefresh(); dvDirty();
 }
 function dvHtml() {
-  if (!dv) return `<section class="card" style="padding:clamp(20px,4vw,36px);margin-top:var(--s-5)"><h2 style="margin-top:0">Devis détaillé</h2>
-    <p class="muted">Transformez cette estimation en vrai devis : numéro, lignes, acompte et mentions obligatoires. Le client le voit dans son espace, peut l’imprimer et l’accepter en un clic.</p>
-    <button class="btn btn-accent" data-do="dv-new">${estFor && (items.find(i => i.id === estFor) || {}).devisData ? 'Modifier le devis envoyé' : 'Préparer le devis'}</button></section>`;
-  const line = (l, i) => `<div class="dv-line"><textarea data-dvl="${i}:l" placeholder="Désignation (ex. Site vitrine 5 pages)" aria-label="Désignation">${esc(l.l)}</textarea>
-    <input data-dvl="${i}:q" type="number" min="0" step="1" inputmode="numeric" value="${esc(l.q ?? 1)}" aria-label="Quantité" title="Quantité">
-    <input data-dvl="${i}:pu" type="number" min="0" step="10" inputmode="decimal" value="${esc(l.pu ?? '')}" placeholder="Prix €" aria-label="Prix unitaire en euros">
-    <button class="dv-x" data-do="dv-del" data-i="${i}" aria-label="Retirer la ligne">✕</button></div>`;
-  return `<section class="card" id="dv" style="padding:clamp(20px,4vw,36px);margin-top:var(--s-5);display:grid;gap:var(--s-3)">
-    <h2 style="margin:0">Devis ${dv.num ? esc(dv.num) : '<span class="muted" style="font-size:var(--t-sm);font-weight:500">(numéro attribué à la publication)</span>'}</h2>
+  if (!dv) return '';
+  const cus = catCustom(), cur = estFor && items.find(i => i.id === estFor), r = dv.remise, copyable = items.filter(i => i.devisData && i.id !== estFor);
+  const short = s => String(s).split(' : ')[0].split(' (')[0];
+  const chips = CAT_BASE.map((c, i) => `<button type="button" data-do="cat-add" data-i="b${i}">+ ${esc(short(c[0]))} · ${eur(c[1])}${c[2] ? '/mois' : ''}</button>`).join('')
+    + cus.map((c, i) => `<span class="cchip"><button type="button" data-do="cat-add" data-i="c${i}">★ ${esc(short(c[0]).slice(0, 26))} · ${eur(+c[1])}${c[2] ? '/mois' : ''}</button><button type="button" class="cx" data-do="cat-del" data-i="${i}" aria-label="Retirer ce préréglage">✕</button></span>`).join('');
+  const line = (l, i) => `<div class="dv-l"><label>Désignation<textarea data-dvl="${i}:l" rows="2" maxlength="500" placeholder="Ex. Site vitrine 5 pages">${esc(l.l)}</textarea></label>
+    <div class="r"><label>Qté<input data-dvl="${i}:q" type="number" min="0" step="1" inputmode="numeric" value="${esc(l.q ?? 1)}"></label>
+      <label>Prix unitaire (€)<input data-dvl="${i}:pu" type="number" min="0" step="1" inputmode="decimal" value="${esc(l.pu ?? '')}"></label>
+      <label>Remise (%)<input data-dvl="${i}:rem" type="number" min="0" max="100" step="1" inputmode="decimal" value="${esc(l.rem ?? '')}"></label>
+      <label class="chk"><span>Par mois</span><input type="checkbox" data-dvl="${i}:m"${l.m ? ' checked' : ''}></label>
+      <b class="lt" data-lt="${i}">${lineTxt(l)}</b></div>
+    <div class="ag-act"><button class="btn btn-sm btn-ghost" data-do="line-star" data-i="${i}" title="Garder cette ligne comme préréglage">★ Préréglage</button><button class="btn btn-sm btn-ghost" data-do="dv-del" data-i="${i}" style="margin-left:auto">Retirer la ligne</button></div></div>`;
+  return `<section class="card" id="dv" style="padding:clamp(20px,4vw,36px);display:grid;gap:var(--s-4)">
+    <div class="req-top"><h2 style="margin:0">Devis ${dv.num ? esc(dv.num) : '<span class="muted" style="font-size:var(--t-sm);font-weight:500">(numéro attribué à la publication)</span>'}</h2>${cur && cur.devisData ? '<span class="chip st-envoye">Déjà publié</span>' : ''}</div>
+    ${copyable.length ? `<label class="mini">Reprendre un devis existant<select id="dv-copy"><option value="">Choisir…</option>${copyable.map(i => `<option value="${esc(i.id)}">${esc(i.nom)} · ${esc(i.type)}</option>`).join('')}</select></label>` : ''}
     <div class="dv-grid"><label>Client<input data-dv="client.nom" value="${esc(dv.client.nom)}"></label><label>E-mail<input data-dv="client.email" type="email" value="${esc(dv.client.email)}"></label></div>
-    <label>Adresse du client (obligatoire si c’est un professionnel)<textarea data-dv="client.adresse" rows="2">${esc(dv.client.adresse || '')}</textarea></label>
-    <div><b style="display:block;margin-bottom:8px">Lignes</b>${dv.lignes.map(line).join('')}<button class="btn btn-sm btn-ghost" data-do="dv-add">Ajouter une ligne</button></div>
-    <div class="dv-grid"><label>Acompte à la commande (%)<input data-dv="acompte" type="number" min="0" max="100" step="5" value="${esc(dv.acompte)}"></label>
+    <label>Adresse du client (obligatoire pour un professionnel)<textarea data-dv="client.adresse" rows="2">${esc(dv.client.adresse || '')}</textarea></label>
+    <div><b style="display:block;margin-bottom:8px">Prestations</b><div class="dv-cat">${chips}</div></div>
+    <div>${dv.lignes.map(line).join('')}<button class="btn btn-sm btn-ghost" data-do="dv-add">+ Ajouter une ligne libre</button></div>
+    <div class="dv-rem"><b>Remise sur le devis</b>
+      <div class="seg" role="group" aria-label="Remises rapides">${[5, 10, 15, 20].map(p => `<button type="button" class="btn btn-sm btn-ghost" data-do="rem-pct" data-p="${p}" aria-pressed="${r.type === 'pct' && +r.val === p}">−${p} %</button>`).join('')}<button type="button" class="btn btn-sm btn-ghost" data-do="rem-round">Arrondir à la dizaine</button><button type="button" class="btn btn-sm btn-ghost" data-do="rem-none">Aucune</button></div>
+      <div class="dv-grid"><label>Type<select data-dv="remise.type"><option value="pct"${r.type !== 'eur' ? ' selected' : ''}>Pourcentage (%)</option><option value="eur"${r.type === 'eur' ? ' selected' : ''}>Montant (€)</option></select></label>
+        <label>Valeur<input data-dv="remise.val" type="number" min="0" step="1" inputmode="decimal" value="${esc(r.val ?? '')}"></label>
+        <label>Intitulé affiché<input data-dv="remise.label" maxlength="60" placeholder="Ex. Offre de lancement" value="${esc(r.label || '')}"></label></div></div>
+    <div class="dv-grid"><label>Acompte à la commande<select data-dv="acompte">${[0, 30, 40, 50, 100].map(p => `<option value="${p}"${+dv.acompte === p ? ' selected' : ''}>${p ? p + ' %' : 'Pas d’acompte'}</option>`).join('')}</select></label>
       <label>Validité (jours)<input data-dv="validite" type="number" min="1" max="365" value="${esc(dv.validite)}"></label>
       <label>Délai de réalisation<input data-dv="delai" placeholder="Ex. 2 semaines après l’acompte" value="${esc(dv.delai)}"></label></div>
     <label>Remarques (visibles sur le devis)<textarea data-dv="notes" rows="2">${esc(dv.notes)}</textarea></label>
-    <p class="muted" style="margin:0">Total</p><div class="est-out" id="dv-total" style="margin:0">${eur(QTD.total({ lignes: dv.lignes }))}</div>
-    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" data-do="dv-preview">Aperçu / PDF</button>
-      ${estFor ? `<button class="btn btn-accent" data-do="dv-publish">${dv.num ? 'Mettre à jour dans l’espace client' : 'Publier dans l’espace client'}</button><button class="btn btn-ghost" data-do="dv-mail">Prévenir par e-mail</button>` : '<span class="muted" style="font-size:var(--t-xs)">Ouvrez une demande puis « Estimer » pour publier le devis chez ce client.</span>'}</div>
+    <div class="dv-sum"><div id="dv-sum">${dvSumHtml()}</div>
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" data-do="dv-preview">Aperçu / PDF</button>
+        ${estFor ? `<button class="btn btn-ghost" data-do="dv-save">Enregistrer le brouillon</button><button class="btn btn-accent" data-do="dv-publish">${dv.num ? 'Mettre à jour dans l’espace client' : 'Publier dans l’espace client'}</button>${cur && cur.devisData ? '<button class="btn btn-ghost" data-do="dv-mail">Prévenir par e-mail</button>' : ''}` : ''}</div>
+      <span class="dv-save" id="dv-saved">${estFor ? 'Le brouillon s’enregistre tout seul.' : 'Devis libre : à imprimer en PDF, il n’est pas conservé. Choisissez une demande pour le publier chez un client.'}</span></div>
     <p class="muted" style="font-size:var(--t-xs);margin:0">Vos coordonnées et conditions de paiement se règlent dans <b>Réglages du site</b>. TVA non applicable (art. 293 B du CGI) ajoutée automatiquement.</p></section>`;
 }
+
 async function loadLeads() {
   leadsErr = false;
   if (DEMO) { leads = [{ name: 'Camille Durand', email: 'camille@example.com', at: new Date(), source: 'ebook' }, { name: 'Yanis K.', email: 'yanis@example.com', at: new Date(Date.now() - 864e5), source: 'ebook' }]; return; }
@@ -274,7 +435,7 @@ function viewContacts() {
     <p class="muted" style="font-size:var(--t-xs)">Chaque contact a accepté de recevoir l’e-book et des nouvelles de QuenTools. Pour une demande de suppression, utilisez le bouton « Supprimer » du contact.</p>`;
 }
 async function load() {
-  if (DEMO) { items = demo.items; site = demo.site; if (!agenda.length) agenda = [{ id: 'a1', kind: 'appel', titre: 'Appeler pour cadrer le site', date: today(), heure: '14:00', duree: 15, devisId: 'd1', note: 'Demander les photos et les horaires.', done: false }, { id: 'a2', kind: 'projet', titre: 'Maquette de l’accueil', date: addDays(today(), 1), heure: '09:30', duree: 120, devisId: 'd3', note: '', done: false }, { id: 'a3', kind: 'rappel', titre: 'Relancer le devis', date: addDays(today(), -1), heure: '', duree: 30, devisId: 'd2', note: '', done: false }]; return; }
+  if (DEMO) { items = demo.items.concat(demoExtra()); site = demo.site; if (!agenda.length) agenda = [{ id: 'a1', kind: 'appel', titre: 'Appeler pour cadrer le site', date: today(), heure: '14:00', duree: 15, devisId: 'd1', note: 'Demander les photos et les horaires.', done: false }, { id: 'a2', kind: 'projet', titre: 'Maquette de l’accueil', date: addDays(today(), 1), heure: '09:30', duree: 120, devisId: 'd3', note: '', done: false }, { id: 'a3', kind: 'rappel', titre: 'Relancer le devis', date: addDays(today(), -1), heure: '', duree: 30, devisId: 'd2', note: '', done: false }]; return; }
   const { Fs, db } = await fb();
   try {
     const snap = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_devis'), Fs.orderBy('at', 'desc'), Fs.limit(300)));
@@ -283,7 +444,7 @@ async function load() {
   rulesOld = false; notes = {};
   try { const n = await Fs.getDocs(Fs.collection(db, 'qt_notes')); n.docs.forEach(d => { notes[d.id] = d.data(); }); }
   catch (e) { rulesOld = !denied && /permission/i.test(e.code || e.message); }
-  for (const it of items) { const n = notes[it.id]; if (n) { it.note = n.text ?? it.note; it.echeance = n.echeance ?? it.echeance; } }
+  for (const it of items) { const n = notes[it.id]; if (n) { it.note = n.text ?? it.note; it.echeance = n.echeance ?? it.echeance; it.devisDraft = n.devisDraft || ''; } }
   try { const s = await Fs.getDoc(Fs.doc(db, 'qt_admin', 'config')); site = s.exists() ? s.data() : {}; } catch (e) { site = {}; }
   try { const a = await Fs.getDocs(Fs.collection(db, 'qt_agenda')); agenda = a.docs.map(d => ({ id: d.id, ...d.data() })); agendaErr = false; }
   catch (e) { agenda = []; agendaErr = !denied && /permission/i.test(e.code || e.message); }
@@ -293,7 +454,7 @@ async function patch(id, data) {
   if (DEMO) return;
   const { Fs, db } = await fb();
   const priv = {}, pub = {};
-  for (const [k, v] of Object.entries(data)) (k === 'note' || k === 'echeance' ? priv : pub)[k === 'note' ? 'text' : k] = v;
+  for (const [k, v] of Object.entries(data)) (k === 'note' || k === 'echeance' || k === 'devisDraft' ? priv : pub)[k === 'note' ? 'text' : k] = v;
   if (Object.keys(priv).length) await Fs.setDoc(Fs.doc(db, 'qt_notes', id), priv, { merge: true });
   if (Object.keys(pub).length) await Fs.updateDoc(Fs.doc(db, 'qt_devis', id), { ...pub, updated: Fs.serverTimestamp() });
 }
@@ -338,11 +499,11 @@ function shell(body) {
   const t = (k, l) => `<button role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`;
   app.innerHTML = `<div class="adm-head"><div><span class="eyebrow">Tableau de bord</span><h1 class="h-section" style="margin:var(--s-2) 0 0">Bonjour 👋</h1></div>
     <div class="row" style="display:flex;gap:8px;align-items:center"><span class="muted" style="font-size:var(--t-xs)">${esc(DEMO ? 'Démonstration' : user && user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></div>
-    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('agenda', `Agenda${na ? `<span class="count">${na}</span>` : ''}`)}${t('estimer', 'Devis et prix')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}${t('contacts', 'Contacts')}${t('regles', 'Règles')}${rulesOld ? '<span class="count">!</span>' : ''}</div>
+    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('agenda', `Agenda${na ? `<span class="count">${na}</span>` : ''}`)}${t('estimer', 'Devis')}${t('stats', 'Chiffres')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}${t('contacts', 'Contacts')}${t('regles', 'Règles')}${rulesOld ? '<span class="count">!</span>' : ''}</div>
     <div id="toast" role="status" aria-live="polite"></div>${body}`;
 }
 function render() {
-  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : viewLinks());
+  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : viewLinks());
   if (tab === 'estimer') estimate();
 }
 
@@ -415,8 +576,14 @@ function viewRequests() {
     relance.length && `<span class="flag">⏰ ${relance.length} devis à relancer (plus de 7 jours)</span>`,
     echus.length && `<span class="flag">📅 ${echus.length} échéance${echus.length > 1 ? 's' : ''} proche${echus.length > 1 ? 's' : ''}</span>`,
     items.filter(x => x.reponse === 'accepte' && st0(x) === 'envoye').length && `<span class="flag">✅ devis accepté par le client : à confirmer</span>`].filter(Boolean);
+  const upcoming = agEntries().filter(a => !a.done && a.date >= today()).slice(0, 3);
+  const up = upcoming.length ? `<div class="up-list" aria-label="À venir">${upcoming.map(a => { const k = KINDS[a.kind] || KINDS.rappel, y = a.devisId && items.find(i => i.id === a.devisId);
+    return `<div class="card up"><div style="min-width:0"><span class="ag-when">${k[0]} ${esc(k[1])} · ${esc(inTxt(a))}</span><b class="ag-title">${esc(a.titre)}</b></div>
+      <div class="ag-act">${y && y.tel ? `<a class="btn btn-sm btn-accent" href="tel:${esc(String(y.tel).replace(/[^\d+]/g, ''))}">Appeler</a>` : ''}<button class="btn btn-sm btn-ghost" data-tab="agenda">Agenda</button></div></div>`; }).join('')}</div>` : '';
+  const cnt = k => k === 'actifs' ? items.filter(act).length : k === 'tous' ? items.length : items.filter(x => st0(x) === k).length;
   const fl = [['actifs', 'À traiter'], ...STATUS, ['tous', 'Toutes']];
-  const filters = `<div class="filters">${fl.map(([k, l]) => `<button data-filter="${k}" aria-pressed="${filter === k}">${l}</button>`).join('')}<input type="search" id="q" placeholder="Rechercher un nom, un mot…" value="${esc(q)}" aria-label="Rechercher"><button class="btn btn-sm btn-ghost" data-do="csv-demandes">Exporter (CSV)</button></div>`;
+  const filters = `<div class="filters">${fl.map(([k, l]) => `<button data-filter="${k}" aria-pressed="${filter === k}">${l} <span class="n">${cnt(k)}</span></button>`).join('')}</div>
+    <div class="filters"><input type="search" id="q" placeholder="Rechercher un nom, un mot…" value="${esc(q)}" aria-label="Rechercher"><button class="btn btn-sm btn-ghost" data-do="exp-all">${items.some(x => !expd.has(x.id)) ? 'Tout déplier' : 'Tout replier'}</button><button class="btn btn-sm btn-ghost" data-do="csv-demandes">Exporter (CSV)</button></div>`;
   const qq = q.trim().toLowerCase();
   const list = items.filter(x => filter === 'tous' ? true : filter === 'actifs' ? act(x) : st0(x) === filter)
     .filter(x => !qq || [x.nom, x.email, x.besoin, x.type, x.note].join(' ').toLowerCase().includes(qq));
@@ -426,9 +593,15 @@ function viewRequests() {
       <textarea data-msg placeholder="Votre message au client (visible dans son espace)" maxlength="2000" aria-label="Message au client"></textarea>
       <div class="row"><button class="btn btn-sm btn-accent" data-do="send">Envoyer dans l’espace client</button></div></div>`; };
   const card = x => { const st = st0(x), d = ms(x.at), nb = items.filter(i => String(i.email).toLowerCase() === String(x.email).toLowerCase()).length, unread = ms(x.clientMsgAt) > ms(x.seenAt);
+    const exp = expd.has(x.id) || openId === x.id || planFor === x.id;
+    const nx = agenda.filter(a => a.devisId === x.id && !a.done).sort((a, b) => (a.date + a.heure).localeCompare(b.date + b.heure))[0];
     return `<article class="card req" data-id="${esc(x.id)}">
-      <div class="req-top"><h3>${esc(x.nom)}</h3><span class="chip st-${st}">${stLabel(st)}</span></div>
-      <div class="meta"><span class="chip">${esc(x.type)}</span><span class="chip">⏱ ${esc(x.delai)}</span><span class="chip">💶 ${esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR')}</span>` : ''}${nb > 1 ? `<span class="chip">🔁 ${nb} demandes de ce client</span>` : ''}${(() => { const nx = agenda.filter(a => a.devisId === x.id && !a.done).sort((a, b) => (a.date + a.heure).localeCompare(b.date + b.heure))[0]; return nx ? `<span class="chip">${(KINDS[nx.kind] || KINDS.rappel)[0]} ${esc(dayName(nx.date))}${nx.heure ? ' ' + esc(nx.heure) : ''}</span>` : ''; })()}${x.devisData ? '<span class="chip">📄 devis détaillé</span>' : ''}${x.reponse === 'accepte' ? '<span class="flag">✅ Devis accepté par le client</span>' : x.reponse === 'refuse' ? '<span class="flag">❌ Devis refusé par le client</span>' : ''}${unread ? '<span class="flag">💬 Nouveau message</span>' : ''}</div>
+      <div class="req-sum"><button class="req-toggle" data-do="exp" aria-expanded="${exp}"><span class="req-top"><span class="chev" aria-hidden="true">▸</span><h3>${esc(x.nom)}</h3><span class="chip st-${st}">${stLabel(st)}</span></span>
+        <span class="meta"><span class="chip">${esc(x.type)}</span><span class="chip">💶 ${x.montant ? eur(x.montant) : esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR')}</span>` : ''}${nx ? `<span class="chip">${(KINDS[nx.kind] || KINDS.rappel)[0]} ${esc(dayName(nx.date))}${nx.heure ? ' ' + esc(nx.heure) : ''}</span>` : ''}${x.devisData ? '<span class="chip">📄 devis</span>' : ''}${x.reponse === 'accepte' ? '<span class="flag">✅ Devis accepté</span>' : x.reponse === 'refuse' ? '<span class="flag">❌ Devis refusé</span>' : ''}${unread ? '<span class="flag">💬 Nouveau message</span>' : ''}</span>
+        ${exp ? '' : `<span class="excerpt">${esc(String(x.besoin).replace(/\s+/g, ' ').slice(0, 140))}</span>`}</button>
+        <div class="req-quick">${x.tel ? `<a class="btn btn-sm btn-ghost" href="tel:${esc(String(x.tel).replace(/[^\d+]/g, ''))}" aria-label="Appeler ${esc(x.nom)}">📞</a>` : ''}<button class="btn btn-sm btn-ghost" data-do="reply" aria-label="Écrire à ${esc(x.nom)}">✉️</button></div></div>
+      ${exp ? `<div class="req-body">
+      <div class="meta"><span class="chip">⏱ ${esc(x.delai)}</span><span class="chip">💶 ${esc(x.budget)}</span>${nb > 1 ? `<span class="chip">🔁 ${nb} demandes de ce client</span>` : ''}</div>
       <p class="need">${esc(x.besoin)}</p>
       <div class="who">✉️ ${esc(x.email)}${x.tel ? ` · 📞 ${esc(x.tel)}` : ''}</div>
       <div class="row3"><select data-field="status" aria-label="Statut">${STATUS.map(([k, l]) => `<option value="${k}"${k === st ? ' selected' : ''}>${l}</option>`).join('')}</select>
@@ -436,13 +609,12 @@ function viewRequests() {
         <input data-field="echeance" type="date" value="${esc(x.echeance || '')}" aria-label="Échéance (rappel privé)" title="Échéance (rappel privé)"></div>
       <input data-field="lien" type="url" maxlength="400" placeholder="Lien du devis (visible client)" value="${esc(x.lien || '')}" aria-label="Lien du devis">
       <textarea data-field="note" placeholder="Note privée (rappel, ce qui a été dit…) : jamais visible par le client" aria-label="Note privée">${esc(x.note || '')}</textarea>
-      <div class="row"><button class="btn btn-sm btn-accent" data-do="thread">${openId === x.id ? 'Masquer les échanges' : 'Échanges avec le client'}</button><button class="btn btn-sm btn-ghost" data-do="reply">E-mail</button>
-        ${x.tel ? `<a class="btn btn-sm btn-ghost" href="tel:${esc(String(x.tel).replace(/[^\d+]/g, ''))}">Appeler</a>` : ''}
-        <button class="btn btn-sm btn-ghost" data-do="plan">${planFor === x.id ? 'Fermer' : 'Planifier'}</button><button class="btn btn-sm btn-ghost" data-do="estimate">Devis</button><button class="btn btn-sm btn-ghost" data-do="copy">Copier</button>
+      <div class="row"><button class="btn btn-sm btn-accent" data-do="thread">${openId === x.id ? 'Masquer les échanges' : 'Échanges avec le client'}</button>
+        <button class="btn btn-sm btn-ghost" data-do="plan">${planFor === x.id ? 'Fermer' : 'Planifier'}</button><button class="btn btn-sm btn-ghost" data-do="estimate">${x.devisData || x.devisDraft ? 'Ouvrir le devis' : 'Faire le devis'}</button><button class="btn btn-sm btn-ghost" data-do="copy">Copier</button>
         <button class="btn btn-sm btn-ghost" data-do="del" style="margin-left:auto">Supprimer</button></div>
       ${planFor === x.id ? `<div class="thread">${agFormHtml({ kind: 'appel', date: addDays(today(), 1), heure: '10:00', duree: 15, titre: 'Appeler ' + x.nom, devisId: x.id }, 'plan-' + x.id)}<div class="row"><button class="btn btn-sm btn-accent" data-do="plan-save">Ajouter à l’agenda</button></div></div>` : ''}
-      ${openId === x.id ? thread(x) : ''}</article>`; };
-  return (rulesOld ? '<div class="notice warn" style="margin-bottom:var(--s-4)">Les règles Firebase ne sont pas à jour (notes privées, espace client) : ouvrez l’onglet <b>Règles</b>.</div>' : '') + kpis + (todo.length ? `<div class="row" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--s-4)">${todo.join('')}</div>` : '') + filters
+      ${openId === x.id ? thread(x) : ''}</div>` : ''}</article>`; };
+  return (rulesOld ? '<div class="notice warn" style="margin-bottom:var(--s-4)">Les règles Firebase ne sont pas à jour (notes privées, espace client) : ouvrez l’onglet <b>Règles</b>.</div>' : '') + kpis + (todo.length ? `<div class="row" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--s-4)">${todo.join('')}</div>` : '') + up + filters
     + (list.length ? list.map(card).join('') : `<div class="card empty">${items.length ? 'Aucune demande dans ce filtre.' : 'Aucune demande pour l’instant. Elles arrivent ici dès qu’un visiteur remplit le formulaire de devis.'}</div>`);
 }
 
@@ -451,17 +623,19 @@ function viewEstimate() {
   const x = estFor && items.find(i => i.id === estFor);
   const opt = (v, l, sel) => `<option value="${esc(v)}"${sel ? ' selected' : ''}>${esc(l)}</option>`;
   const type = x && GRID[x.type] ? x.type : 'Site vitrine';
-  return `<section class="card" style="padding:clamp(20px,4vw,36px)">
-    ${x ? `<p class="muted" style="margin-top:0">Pour la demande de <b>${esc(x.nom)}</b> (budget indiqué : ${esc(x.budget)})</p>` : ''}
-    <form class="form" id="est" onsubmit="return false">
+  const pick = `<section class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"><label class="mini">Devis pour<select id="dv-for" aria-label="Demande concernée"><option value="">Devis libre (sans demande)</option>${items.filter(i => (i.status || 'nouveau') !== 'perdu' || i.id === estFor).map(i => `<option value="${esc(i.id)}"${i.id === estFor ? ' selected' : ''}>${esc(i.nom)} · ${esc(i.type)}${i.devisData ? ' · devis publié' : i.devisDraft ? ' · brouillon' : ''}</option>`).join('')}</select></label>
+    ${x ? `<p class="muted" style="margin:8px 0 0;font-size:var(--t-sm)">Budget indiqué par le client : <b>${esc(x.budget)}</b> · délai souhaité : ${esc(x.delai)}</p>` : ''}</section>`;
+  const est = `<details id="est-box" class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"${estOpen ? ' open' : ''}><summary style="cursor:pointer;font-weight:700;padding:6px 0">Estimer un prix conseillé</summary>
+    <form class="form" id="est" onsubmit="return false" style="margin-top:var(--s-3)">
       <div class="form-grid"><div class="field"><label for="e-type">Type de projet</label><select id="e-type">${Object.keys(GRID).map(k => opt(k, k, k === type)).join('')}</select></div>
         <div class="field"><label for="e-lvl">Ampleur</label><select id="e-lvl">${opt('simple', 'Simple (peu de pages ou d’écrans)')}${opt('standard', 'Standard', true)}${opt('avance', 'Avancée (beaucoup de fonctions)')}</select></div></div>
       <label class="check"><input type="checkbox" id="e-pay"> <span>Paiements en ligne et administration (+ ${eur(EXTRA_PAY[0])} à ${eur(EXTRA_PAY[1])})</span></label>
       <label class="check"><input type="checkbox" id="e-maint"> <span>Maintenance mensuelle (${eur(MAINT[0])} à ${eur(MAINT[1])} par mois)</span></label>
     </form>
     <p class="muted" style="margin:var(--s-5) 0 0">Prix conseillé</p><div class="est-out" id="e-out"></div><p class="muted" id="e-sub" style="margin-top:0"></p>
-    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">${x ? '<button class="btn btn-accent" data-do="est-reply">Envoyer cette proposition</button><button class="btn btn-ghost" data-do="est-save">Noter ce montant sur la demande</button>' : ''}<button class="btn btn-ghost" data-do="est-copy">Copier le texte</button></div>
-    <p class="muted" style="font-size:var(--t-xs)">Fourchettes de la grille QuenTools (design/TARIFS.md). À ajuster selon le client : c’est une aide, pas un engagement.</p></section>${dvHtml()}`;
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="est-apply">Mettre ce prix dans le devis</button>${x ? '<button class="btn btn-ghost" data-do="est-reply">Envoyer cette proposition par e-mail</button><button class="btn btn-ghost" data-do="est-save">Noter ce montant</button>' : ''}<button class="btn btn-ghost" data-do="est-copy">Copier le texte</button></div>
+    <p class="muted" style="font-size:var(--t-xs)">Fourchettes de la grille QuenTools (design/TARIFS.md). À ajuster selon le client : c’est une aide, pas un engagement.</p></details>`;
+  return pick + est + dvHtml();
 }
 let estText = '', estMid = 0;
 function estimate() {
@@ -476,6 +650,25 @@ function estimate() {
   g('e-sub').textContent = `Proposition équilibrée : ${eur(estMid)}${m ? ` + maintenance ${eur(MAINT[0])} à ${eur(MAINT[1])}/mois` : ''}`;
   const x = estFor && items.find(i => i.id === estFor), first = x ? String(x.nom).split(' ')[0] : '';
   estText = `Bonjour${first ? ' ' + first : ''},\n\nMerci pour votre demande. D’après ce que vous m’avez décrit (${g('e-type').value.toLowerCase()}${g('e-pay').checked ? ', avec paiement en ligne et administration' : ''}), je vous propose une réalisation entre ${eur(min)} et ${eur(max)}, le prix exact étant fixé ensemble avant de commencer.${m ? `\nEn option, une maintenance (mises à jour, sauvegardes, petites évolutions) entre ${eur(MAINT[0])} et ${eur(MAINT[1])} par mois.` : ''}\n\nPour la suite : un court échange pour préciser le besoin, puis une première version à tester avant de vous engager sur le reste.\n\nBien à vous,\nQuenTools`;
+}
+
+function viewStats() {
+  const st0 = x => x.status || 'nouveau', won = items.filter(x => WON.includes(st0(x))), pend = items.filter(x => st0(x) === 'envoye'), closed = items.filter(x => [...WON, 'perdu'].includes(st0(x)));
+  const sum = a => a.reduce((s, x) => s + (+x.montant || 0), 0);
+  const months = Array.from({ length: 6 }, (_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 5 + i); return { key: isoDay(d).slice(0, 7), label: d.toLocaleDateString('fr-FR', { month: 'short' }), v: 0 }; });
+  won.forEach(x => { const m = months.find(z => z.key === isoDay(ms(x.at) || Date.now()).slice(0, 7)); if (m) m.v += +x.montant || 0; });
+  let remises = 0; items.forEach(x => { if (x.devisData && WON.includes(st0(x))) { try { const k = QTD.calc(JSON.parse(x.devisData)); remises += k.remise + k.remLines; } catch (e) { /* devis illisible */ } } });
+  const max = Math.max(1, ...months.map(m => m.v)), bw = 600 / months.length;
+  const svg = `<svg viewBox="0 0 600 200" role="img" aria-label="Chiffre d’affaires des devis acceptés, par mois" style="width:100%;height:auto;display:block">${months.map((m, i) => { const h = Math.round(140 * m.v / max), x = i * bw + bw * .18;
+    return `<rect x="${x}" y="${160 - h}" width="${bw * .64}" height="${h || 2}" rx="8" style="fill:${m.v ? 'var(--accent)' : 'var(--line-2)'}"/>${m.v ? `<text x="${x + bw * .32}" y="${152 - h}" text-anchor="middle" font-size="20" font-weight="700" style="fill:var(--ink)">${eur(m.v)}</text>` : ''}<text x="${x + bw * .32}" y="186" text-anchor="middle" font-size="20" style="fill:var(--muted)">${esc(m.label)}</text>`; }).join('')}</svg>`;
+  const fun = [['Demandes reçues', items.length], ['Devis envoyés', items.filter(x => ['envoye', ...WON, 'perdu'].includes(st0(x))).length], ['Acceptés', won.length], ['Livrés', items.filter(x => st0(x) === 'livre').length]];
+  const fmax = Math.max(1, fun[0][1]), types = {}; items.forEach(x => { const t = types[x.type] = types[x.type] || { n: 0, w: 0, v: 0 }; t.n++; if (WON.includes(st0(x))) { t.w++; t.v += +x.montant || 0; } });
+  return `<div class="kpis"><div><b>${eur(sum(won))}</b><span>acceptés au total</span></div><div><b>${won.length ? eur(sum(won) / won.length) : '—'}</b><span>panier moyen</span></div>
+      <div><b>${closed.length ? Math.round(100 * won.length / closed.length) + ' %' : '—'}</b><span>taux de réussite</span></div><div><b>${eur(sum(pend))}</b><span>en attente de réponse (${pend.length})</span></div></div>
+    <section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><h2 style="margin:0 0 var(--s-3);font-size:var(--t-lg)">Devis acceptés par mois</h2>${svg}<p class="muted" style="margin:var(--s-2) 0 0;font-size:var(--t-xs)">Classés par mois de la demande, sur 6 mois.</p></section>
+    <section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><h2 style="margin:0 0 var(--s-3);font-size:var(--t-lg)">De la demande à la livraison</h2>${fun.map(([l, n]) => `<div class="fun"><span>${l}</span><div><i style="width:${Math.round(100 * n / fmax)}%"></i></div><b>${n}</b></div>`).join('')}</section>
+    <section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><h2 style="margin:0 0 var(--s-3);font-size:var(--t-lg)">Par type de projet</h2>${Object.entries(types).sort((a, b) => b[1].n - a[1].n).map(([t, v]) => `<div class="fun" style="grid-template-columns:1fr"><span><b>${esc(t)}</b><br><span class="muted">${v.n} demande${v.n > 1 ? 's' : ''} · ${v.w} accepté${v.w > 1 ? 's' : ''}${v.v ? ' · ' + eur(v.v) : ''}</span></span></div>`).join('') || '<p class="muted">Pas encore de données.</p>'}
+      <p class="muted" style="margin:var(--s-3) 0 0;font-size:var(--t-sm)">Remises accordées sur les devis acceptés : <b>${eur(remises)}</b></p></section>`;
 }
 
 function viewSite() {
@@ -528,12 +721,19 @@ app.addEventListener('click', async e => {
       if (k === 'later') { await agPatch(id, { date: addDays(a.date < today() ? today() : a.date, 1) }); render(); toast('Reporté au ' + dayName(a.date)); }
       else if (k === 'del') { if (confirm('Supprimer « ' + a.titre + ' » de l’agenda ?')) { await agDel(id); render(); } }
       else if (k === 'ics') dl((a.titre || 'agenda').replace(/[^\w-]+/g, '-').slice(0, 40) + '.ics', ics([a]), 'text/calendar;charset=utf-8');
-      else if (k === 'open') { const x = items.find(i => i.id === a.devisId); tab = 'demandes'; filter = 'tous'; q = x ? x.email : ''; render(); }
+      else if (k === 'open') { const x = items.find(i => i.id === a.devisId); tab = 'demandes'; filter = 'tous'; q = x ? x.email : ''; if (x) expd.add(x.id); render(); }
+      else if (k === 'edit') { agEdit = id; render(); }
+      else if (k === 'edit-cancel') { agEdit = null; render(); }
+      else if (k === 'edit-save') {
+        const f = readForm(row.querySelector('#ag-edit'));
+        await agPatch(id, { kind: KINDS[f.kind] ? f.kind : a.kind, titre: f.titre.slice(0, 200), date: /^\d{4}-\d{2}-\d{2}$/.test(f.date) ? f.date : a.date, heure: /^\d{2}:\d{2}$/.test(f.heure) ? f.heure : '', duree: +f.duree || a.duree, note: f.note.slice(0, 1000) });
+        agEdit = null; render(); toast('Modifié ✓');
+      }
     } catch (err) { fail(err); }
     return;
   }
   const b = e.target.closest('[data-tab],[data-filter],[data-do],[data-agday]'); if (!b) return;
-  if (b.dataset.tab) { tab = b.dataset.tab; if (tab !== 'estimer') estFor = null; if (tab === 'contacts') { await loadLeads(); } return render(); }
+  if (b.dataset.tab) { tab = b.dataset.tab; if (tab === 'estimer' && !dv) dvInit(); if (tab === 'contacts') { await loadLeads(); } return render(); }
   if (b.dataset.filter) { filter = b.dataset.filter; return render(); }
   if (b.dataset.agday !== undefined) { agDay = b.dataset.agday; return render(); }
   const card = b.closest('.req'), x = card && items.find(i => i.id === card.dataset.id), d = b.dataset.do;
@@ -584,31 +784,54 @@ app.addEventListener('click', async e => {
     }
     else if (d === 'reply') { location.href = mailto(x, `Bonjour ${String(x.nom).split(' ')[0]},\n\nMerci pour votre demande. \n\nBien à vous,\nQuenTools\n\n---\nVotre message :\n${x.besoin}`); if ((x.status || 'nouveau') === 'nouveau') { await patch(x.id, { status: 'discussion' }); render(); } }
     else if (d === 'copy') copy(`${x.nom} <${x.email}>${x.tel ? ' · ' + x.tel : ''}\n${x.type} · ${x.delai} · ${x.budget}\n\n${x.besoin}`);
-    else if (d === 'estimate') { estFor = x.id; dv = null; tab = 'estimer'; render(); if (x.devisData) { dvInit(); render(); } }
-    else if (d === 'plan') { planFor = planFor === x.id ? null : x.id; render(); }
+    else if (d === 'estimate') { estFor = x.id; dv = null; tab = 'estimer'; dvInit(); render(); window.scrollTo({ top: 0 }); }
+    else if (d === 'exp') { expd.has(x.id) ? expd.delete(x.id) : expd.add(x.id); render(); }
+    else if (d === 'exp-all') { if (items.some(i => !expd.has(i.id))) items.forEach(i => expd.add(i.id)); else expd.clear(); render(); }
+    else if (d === 'plan') { planFor = planFor === x.id ? null : x.id; if (planFor) expd.add(x.id); render(); }
     else if (d === 'plan-save' || d === 'ag-add') {
       const f = readForm(document.getElementById(d === 'ag-add' ? 'ag-new' : 'plan-' + x.id));
       if (!f.titre) f.titre = (KINDS[f.kind] || KINDS.rappel)[1] + (f.devisId ? ' · ' + ((items.find(i => i.id === f.devisId) || {}).nom || '') : '');
-      await agCreate(f); if (d === 'plan-save') planFor = null; render(); toast(`Ajouté à l’agenda : ${dayName(f.date)}${f.heure ? ' à ' + f.heure : ''} ✓`);
+      const n = await agCreate(f); if (d === 'plan-save') planFor = null; render(); toast(`Ajouté à l’agenda : ${dayName(f.date)}${f.heure ? ' à ' + f.heure : ''}${n > 1 ? ` (${n} fois)` : ''} ✓`);
     }
+    else if (d === 'ag-quick') { const f = b.closest('.ag-form'), k = b.dataset.k; f.querySelector('[name=date]').value = k === 'today' ? today() : k === 'tom' ? addDays(today(), 1) : k === 'mon' ? nextDow(1) : addDays(today(), 7); }
+    else if (d === 'ag-view') { agView = b.dataset.v; render(); }
+    else if (d === 'ag-mo') { const ym = agMonth || today().slice(0, 7); agMonth = isoDay(new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + (+b.dataset.n), 1)).slice(0, 7); render(); }
+    else if (d === 'notif') { const p = await Notification.requestPermission(); render(); toast(p === 'granted' ? 'Alertes activées tant que cette page reste ouverte' : 'Alertes non autorisées par le navigateur', p !== 'granted'); }
     else if (d === 'ag-ics-all') { const up = agEntries().filter(a => !a.done && a.date >= today()); if (!up.length) return toast('Rien de prévu à exporter', true); dl('agenda-quentools.ics', ics(up), 'text/calendar;charset=utf-8'); }
-    else if (d === 'dv-new') { dvInit(); render(); }
-    else if (d === 'dv-add') { dv.lignes.push({ l: '', q: 1, pu: '' }); render(); }
-    else if (d === 'dv-del') { dv.lignes.splice(+b.dataset.i, 1); if (!dv.lignes.length) dv.lignes.push({ l: '', q: 1, pu: '' }); render(); }
+    else if (d === 'dv-add') { dv.lignes.push(blankLine()); render(); dvDirty(); }
+    else if (d === 'dv-del') { dv.lignes.splice(+b.dataset.i, 1); if (!dv.lignes.length) dv.lignes.push(blankLine()); render(); dvDirty(); }
+    else if (d === 'cat-add') {
+      const k = b.dataset.i, c = k[0] === 'b' ? CAT_BASE[+k.slice(1)] : catCustom()[+k.slice(1)]; if (!c) return;
+      const l = { l: c[0], q: 1, pu: c[1], rem: '', m: !!c[2] }, only = dv.lignes.length === 1 && !String(dv.lignes[0].l).trim() && !dv.lignes[0].pu;
+      if (only) dv.lignes[0] = l; else dv.lignes.push(l); render(); dvDirty(); toast('Ligne ajoutée : ' + String(c[0]).split(' : ')[0]);
+    }
+    else if (d === 'cat-del') { const c = catCustom(); c.splice(+b.dataset.i, 1); await catSave(c); render(); }
+    else if (d === 'line-star') {
+      const l = dv.lignes[+b.dataset.i]; if (!l || !String(l.l).trim()) return toast('Écrivez d’abord la désignation', true);
+      const c = catCustom(); c.push([l.l.slice(0, 200), +l.pu || 0, !!l.m]); await catSave(c.slice(-12)); render(); toast('Préréglage enregistré ★');
+    }
+    else if (d === 'rem-pct') { dv.remise = { type: 'pct', val: +b.dataset.p, label: dv.remise.label || 'Remise commerciale' }; render(); dvDirty(); }
+    else if (d === 'rem-none') { dv.remise = { type: 'pct', val: '', label: '' }; render(); dvDirty(); }
+    else if (d === 'rem-round') {
+      const k = QTD.calc({ ...dvDoc(), remise: { type: 'pct', val: 0 } }), v = Math.round((k.sub - Math.floor(k.sub / 10) * 10) * 100) / 100;
+      if (!v) return toast('Le total est déjà un compte rond');
+      dv.remise = { type: 'eur', val: v, label: dv.remise.label || 'Geste commercial' }; render(); dvDirty();
+    }
     else if (d === 'dv-preview') QTD.open(dvDoc());
+    else if (d === 'dv-save') { clearTimeout(dvDirty.t); await dvSaveDraft(); toast('Brouillon enregistré ✓'); }
     else if (d === 'dv-publish' || d === 'dv-mail') {
-      const y = items.find(i => i.id === estFor); if (!y) return;
+      const y = items.find(i => i.id === estFor); if (!y || !dv) return;
       if (d === 'dv-mail') { if (!y.devisData) return toast('Publiez d’abord le devis', true);
-        return void (location.href = mailto(y, `Bonjour ${first(y.nom)},\n\nVotre devis ${dv.num} est prêt (${eur(QTD.total(dvDoc()))}). Vous pouvez le consulter, l’imprimer et l’accepter dans votre espace client : https://quentools.fr/espace/ (connexion avec l’adresse ${y.email}).\n\nJe reste disponible pour toute question.\n\nBien à vous,\nQuenTools`)); }
-      if (!dv.lignes.some(l => String(l.l).trim() && +l.pu > 0)) return toast('Ajoutez au moins une ligne avec un prix', true);
+        return void (location.href = mailto(y, `Bonjour ${first(y.nom)},\n\nVotre devis ${dv.num} est prêt (${QTD.eur(QTD.total(dvDoc()))}). Vous pouvez le consulter, l’imprimer et l’accepter dans votre espace client : https://quentools.fr/espace/ (connexion avec l’adresse ${y.email}).\n\nJe reste disponible pour toute question.\n\nBien à vous,\nQuenTools`)); }
+      if (!QTD.calc(dvDoc()).rows.some(r => r.pu > 0)) return toast('Ajoutez au moins une ligne avec un prix', true);
       if (!dv.num) {
         const yr = new Date().getFullYear(), c = notes._compteur || {}, n = (c.year === yr ? +c.n || 0 : 0) + 1;
         if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_compteur'), { year: yr, n }); }
         notes._compteur = { year: yr, n }; dv.num = `QT-${yr}-${String(n).padStart(3, '0')}`;
       }
-      dv.date = today(); const doc = dvDoc(), tot = Math.round(QTD.total(doc)), again = !!y.devisData;
-      await patch(y.id, { devisData: JSON.stringify(doc), montant: tot, status: WON.includes(y.status) ? y.status : 'envoye' });
-      await addMsg(y.id, { from: 'systeme', text: `Devis ${dv.num} ${again ? 'mis à jour' : 'publié'} : ${eur(tot)}` });
+      clearTimeout(dvDirty.t); dv.date = today(); const doc = dvDoc(), k = QTD.calc(doc), again = !!y.devisData, saved = k.remise + k.remLines;
+      await patch(y.id, { devisData: JSON.stringify(doc), devisDraft: '', montant: Math.round(k.total), status: WON.includes(y.status) ? y.status : 'envoye' });
+      await addMsg(y.id, { from: 'systeme', text: `Devis ${dv.num} ${again ? 'mis à jour' : 'publié'} : ${QTD.eur(k.total)}${saved ? ` (remise de ${QTD.eur(saved)} incluse)` : ''}` });
       if (!again) await addMsg(y.id, { from: 'admin', text: TPL.devis.replace('{prenom}', first(y.nom)) });
       render(); toast(again ? 'Devis mis à jour ✓' : 'Devis publié dans l’espace client ✓');
     }
@@ -617,7 +840,12 @@ app.addEventListener('click', async e => {
       if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_vendeur'), v); }
       toast('Informations des devis enregistrées ✓');
     }
-    else if (d === 'del') { if (confirm(`Supprimer définitivement la demande de ${x.nom} ?`)) { await remove(x.id); render(); toast('Demande supprimée'); } }
+    else if (d === 'del') { if (confirm(`Supprimer définitivement la demande de ${x.nom} ?`)) { if (estFor === x.id) { estFor = null; dv = null; } await remove(x.id); render(); toast('Demande supprimée'); } }
+    else if (d === 'est-apply') {
+      if (!dv) dvInit(); const l = dv.lignes[0]; if (!l) dv.lignes.push(blankLine()); dv.lignes[0].pu = estMid;
+      if (!String(dv.lignes[0].l).trim()) dv.lignes[0].l = `${document.getElementById('e-type').value} : conception, réalisation et mise en ligne`;
+      render(); dvDirty(); toast(`Prix de ${eur(estMid)} mis dans la première ligne`);
+    }
     else if (d === 'est-copy') copy(estText);
     else if (d === 'est-reply' || d === 'est-save') {
       const y = items.find(i => i.id === estFor); if (!y) return;
@@ -638,7 +866,14 @@ app.addEventListener('click', async e => {
 });
 app.addEventListener('change', async e => {
   const el = e.target;
-  if (el.closest('#est')) { estimate(); if (dv && !dv.num && dv.lignes.length === 1 && dv.lignes[0].q == 1) { dv.lignes[0].pu = estMid; render(); } return; }
+  if (el.id === 'dv-for') { estFor = el.value || null; dv = null; dvInit(); render(); return; }
+  if (el.id === 'dv-copy') {
+    const src = items.find(i => i.id === el.value); if (!src || !dv) return;
+    try { const d = JSON.parse(src.devisData); dv.lignes = (d.lignes || []).map(l => ({ l: l.l || '', q: l.q ?? 1, pu: l.pu ?? '', rem: l.rem || '', m: !!l.m })); dv.remise = { type: 'pct', val: '', label: '', ...(d.remise || {}) };
+      dv.acompte = d.acompte ?? dv.acompte; dv.validite = d.validite ?? dv.validite; dv.delai = d.delai || ''; dv.notes = d.notes || ''; render(); dvDirty(); toast('Lignes reprises du devis de ' + src.nom); } catch (err) { toast('Ce devis n’a pas pu être repris', true); }
+    return;
+  }
+  if (el.closest('#est')) { estimate(); return; }
   if (el.dataset.agdo === 'done' || el.dataset.agf) {
     const id = el.closest('[data-ag]').dataset.ag;
     try { if (el.dataset.agdo === 'done') { await agPatch(id, { done: el.checked }); if (el.checked) toast('Fait ✓'); }
@@ -647,18 +882,15 @@ app.addEventListener('change', async e => {
       render(); } catch (err) { fail(err); }
     return;
   }
-  if (dv && (el.dataset.dv || el.dataset.dvl)) {
-    if (el.dataset.dvl) { const [i, f] = el.dataset.dvl.split(':'); dv.lignes[+i][f] = f === 'l' ? el.value.slice(0, 500) : el.value; }
-    else { const [a, k] = el.dataset.dv.split('.'); if (k) dv[a][k] = el.value.slice(0, 300); else dv[a] = el.value.slice(0, 1000); }
-    const t = document.getElementById('dv-total'); if (t) t.textContent = eur(QTD.total({ lignes: dv.lignes }));
-    return;
-  }
+  if (dv && (el.dataset.dv || el.dataset.dvl)) { dvSet(el); return; }
   const card = el.closest('.req'); if (!card || !el.dataset.field) return;
   const v = el.dataset.field === 'montant' ? (el.value === '' ? null : Math.max(0, Math.round(+el.value))) : el.value.slice(0, 2000);
   try { await patch(card.dataset.id, { [el.dataset.field]: v }); if (el.dataset.field === 'status') { await addMsg(card.dataset.id, { from: 'systeme', text: 'Statut : ' + stLabel(v) }); if (openId === card.dataset.id) threads[openId] = await loadThread(openId); } if (!['note', 'echeance', 'lien'].includes(el.dataset.field)) render(); toast('Enregistré ✓'); } catch (err) { fail(err); }
 });
 app.addEventListener('input', e => { if (e.target.id === 'lq') { lq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('lq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'q') { q = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); } });
 
+app.addEventListener('input', e => { const el = e.target; if (dv && el.closest && el.closest('#dv') && (el.dataset.dv || el.dataset.dvl)) dvSet(el); });
+app.addEventListener('toggle', e => { if (e.target.id === 'est-box') estOpen = e.target.open; }, true);
 app.addEventListener('change', e => {
   const sel = e.target.closest('[data-tpl]'); if (!sel || !sel.value) return;
   const card = sel.closest('.req'), x = items.find(i => i.id === card.dataset.id), ta = card.querySelector('[data-msg]');
