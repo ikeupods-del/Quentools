@@ -186,7 +186,94 @@ const GUIDES = [
           ['La prévention coûte moins cher', 'Vaccins à jour, poids maîtrisé, dents entretenues et visite annuelle évitent une grande partie des soins lourds.']
         ] }
     ],
-    outro: 'Dans Wouf : les rappels de vaccins et de traitements, la courbe de poids, le comparateur de croquettes, les leçons d’éducation positive et le carnet de santé à exporter en PDF.' }
+    outro: 'Dans Wouf : les rappels de vaccins et de traitements, la courbe de poids, le comparateur de croquettes, les leçons d’éducation positive et le carnet de santé à exporter en PDF.' },
+  { id: 'secours', e: '🩹', title: 'Les gestes de premiers secours pour son chien', sub: 'Réagir vite et bien en attendant le vétérinaire : étouffement, chaleur, plaies, poison, massage cardiaque',
+    intro: 'Les bons gestes, pas à pas, pour les situations où chaque minute compte. Lisez ce guide au calme, avant d’en avoir besoin : le jour J, vous saurez quoi faire. Dans tous les cas, prévenez le vétérinaire au plus vite : ces gestes servent à tenir jusqu’à lui, jamais à le remplacer. Une formation pratique aux premiers secours canins reste le meilleur investissement.',
+    chapters: () => [
+      { e: '🧭', t: 'Avant tout : se protéger et appeler', intro: 'Un animal qui souffre peut mordre, même le plus doux. Votre sécurité passe en premier.',
+        items: [
+          ['Sécuriser les lieux', 'Éloignez le danger (route, eau, produit, câble électrique : coupez le courant avant de toucher l’animal). Ne vous mettez jamais en danger.'],
+          ['Appeler le vétérinaire ou les urgences vétérinaires', 'Décrivez ce qui se passe, l’âge, le poids et les signes observés. Prévenez de votre arrivée : l’équipe se prépare. L’onglet SOS de Wouf liste les vétérinaires ouverts et de garde autour de vous.'],
+          ['Poser une muselière si nécessaire', 'Une muselière, ou une bande ou une laisse nouée autour du museau, évite une morsure de douleur. Jamais en cas de vomissement, de difficulté à respirer ou chez un chien au museau très court.'],
+          ['Rester calme et parler doucement', 'Votre calme rassure l’animal et vous aide à faire les bons gestes dans le bon ordre.']
+        ] },
+      { e: '🩺', t: 'Vérifier les signes vitaux', intro: 'Prenez ces repères au calme, chez vous, sur un animal en bonne santé : vous saurez ce qui est normal pour lui.',
+        items: [
+          ['La respiration', 'Comptez les mouvements de la cage thoracique pendant 15 secondes et multipliez par 4. Au repos, un chien adulte respire en général entre 10 et 30 fois par minute.'],
+          ['Le pouls', 'Placez les doigts à l’intérieur de la cuisse, en haut (artère fémorale), ou contre le thorax derrière le coude. Au repos, il est le plus souvent entre 60 et 140 battements par minute chez l’adulte : plus lent chez les grands chiens, plus rapide chez les petits et les chiots.'],
+          ['La température', 'Prise au thermomètre rectal, elle se situe normalement entre 38 °C et 39,2 °C environ. Au-dessus de 40 °C ou en dessous de 37,5 °C : appelez le vétérinaire.'],
+          ['Les gencives', 'Elles doivent être roses et humides. Pâles, blanches, bleutées ou rouge vif : urgence. Appuyez une seconde avec le doigt : la couleur doit revenir en moins de 2 secondes.']
+        ] },
+      { e: '😮‍💨', t: 'Étouffement et corps étranger', intro: 'Signes : le chien panique, se frotte la gueule, tousse, bave, respire avec difficulté ou bruyamment.',
+        items: [
+          ['Regarder dans la gueule', 'Ouvrez doucement la gueule en tenant la mâchoire du haut. Si l’objet est visible et facile à saisir, retirez-le délicatement. Ne poussez jamais à l’aveugle : vous risquez de l’enfoncer.'],
+          ['Petit chien', 'Tenez-le par les cuisses, tête vers le bas, et secouez doucement, ou donnez quelques tapes fermes entre les omoplates.'],
+          ['Grand chien', 'Placez-vous derrière lui, entourez son ventre juste sous les côtes avec vos bras, poings fermés, et donnez plusieurs poussées fermes vers le haut et vers l’avant.'],
+          ['Ensuite, chez le vétérinaire', 'Même si l’objet est sorti, faites contrôler la gorge et les poumons : des lésions ou un morceau restant sont possibles.']
+        ] },
+      { e: '🥵', t: 'Coup de chaleur', intro: 'Halètement intense, langue très rouge, bave épaisse, faiblesse, vomissements, chute : c’est une urgence vitale, en particulier pour les chiens au museau court, âgés ou en surpoids.',
+        items: [
+          ['Mettre à l’ombre et ventiler', 'Installez-le immédiatement au frais, à l’ombre ou dans une pièce climatisée, avec un courant d’air.'],
+          ['Refroidir progressivement', 'Mouillez le corps avec de l’eau fraîche, pas glacée, en insistant sur le ventre, l’intérieur des cuisses, les coussinets et le cou. Pas de serviette mouillée posée sur le dos : elle garde la chaleur.'],
+          ['Proposer de l’eau, sans forcer', 'S’il est conscient, laissez-le boire de petites quantités d’eau fraîche. Ne versez jamais d’eau dans la gueule d’un chien affaibli.'],
+          ['Partir chez le vétérinaire', 'Même s’il semble aller mieux : un coup de chaleur peut abîmer les organes dans les heures qui suivent. Continuez à le rafraîchir pendant le trajet.']
+        ] },
+      { e: '🩸', t: 'Saignements et plaies', intro: 'L’objectif : arrêter le saignement et éviter l’infection jusqu’à la consultation.',
+        items: [
+          ['Comprimer', 'Appuyez fermement sur la plaie avec une compresse ou un linge propre, pendant au moins 5 à 10 minutes, sans regarder toutes les 30 secondes.'],
+          ['Ne pas retirer la compresse imbibée', 'Si le sang traverse, ajoutez une compresse par-dessus et continuez d’appuyer. Retirer la première rouvrirait la plaie.'],
+          ['Bander sans serrer', 'Maintenez la compresse avec une bande, assez serrée pour tenir mais sans couper la circulation : vous devez pouvoir glisser un doigt dessous. Un garrot est réservé aux personnes formées.'],
+          ['Petites plaies', 'Rincez abondamment au sérum physiologique ou à l’eau propre. Évitez l’alcool et les produits colorés. Une plaie profonde, une morsure ou une plaie qui saigne encore doit être vue par le vétérinaire.']
+        ] },
+      { e: '🦴', t: 'Chute, fracture, accident', intro: 'Boiterie soudaine, patte déformée, cri de douleur, impossibilité de se lever.',
+        items: [
+          ['Ne pas remettre en place', 'N’essayez jamais de réaligner un membre : vous aggraveriez la blessure et la douleur.'],
+          ['Limiter les mouvements', 'Gardez le chien au calme. Pour un membre, vous pouvez maintenir une attelle improvisée (journal roulé, carton) avec une bande, sans serrer, si cela ne fait pas souffrir l’animal.'],
+          ['Transporter à plat', 'Pour un dos ou un bassin touché, glissez le chien sur une planche, une couverture tendue ou une porte, et déplacez-le le moins possible.'],
+          ['Après un choc avec une voiture', 'Consultez même sans blessure visible : les hémorragies internes ne se voient pas tout de suite.']
+        ] },
+      { e: '☠️', t: 'Empoisonnement', intro: 'Chocolat, raisin, xylitol, médicaments humains, raticide, plantes, produits ménagers : la rapidité change tout.',
+        items: [
+          ['Ne pas le faire vomir sans avis', 'Faire vomir peut être dangereux (produits corrosifs, objets pointus, animal somnolent). Seul le vétérinaire ou un centre antipoison vétérinaire peut le conseiller.'],
+          ['Appeler immédiatement', 'Les numéros des centres antipoison vétérinaires sont dans l’onglet SOS de Wouf. Indiquez le produit, la quantité estimée, l’heure et le poids du chien.'],
+          ['Garder l’emballage', 'Apportez l’emballage, la plante ou un échantillon au vétérinaire.'],
+          ['Produit sur le pelage ou les yeux', 'Rincez abondamment à l’eau tiède, en vous protégeant les mains, puis appelez.']
+        ] },
+      { e: '🐍', t: 'Morsures, piqûres et vipères', intro: 'Les gestes diffèrent selon l’origine : restez simple et rapide.',
+        items: [
+          ['Morsure de vipère', 'Gardez le chien au calme et portez-le si possible pour limiter ses mouvements. Pas de garrot, pas d’incision, pas d’aspiration. Direction le vétérinaire, en urgence.'],
+          ['Piqûre de guêpe ou d’abeille', 'Retirez le dard d’abeille en grattant avec une carte, sans pincer. Posez une compresse froide. Gonflement de la tête ou de la gorge, difficulté à respirer : urgence.'],
+          ['Morsure d’un autre animal', 'Même petite en surface, elle peut être profonde et s’infecter : rincez, comprimez si elle saigne, et consultez.'],
+          ['Tiques', 'Retirez-la avec un tire-tique en tournant, sans écraser le corps. Surveillez fièvre, fatigue ou boiterie dans les jours suivants.']
+        ] },
+      { e: '⚡', t: 'Convulsions', intro: 'Raideur, pédalage, perte de conscience, bave : c’est impressionnant, mais vos gestes doivent rester simples.',
+        items: [
+          ['Ne pas mettre la main dans la gueule', 'Le chien ne peut pas avaler sa langue, et il pourrait vous mordre sans le vouloir.'],
+          ['Protéger', 'Écartez les meubles et les objets, éloignez-le des escaliers, baissez la lumière et le bruit.'],
+          ['Chronométrer', 'Notez l’heure de début et la durée, ou filmez : ces informations aident beaucoup le vétérinaire.'],
+          ['Urgence immédiate', 'Si la crise dure plus de 5 minutes, si plusieurs crises se suivent ou s’il ne reprend pas conscience entre elles : partez tout de suite.']
+        ] },
+      { e: '🎈', t: 'Ventre gonflé : la torsion d’estomac', intro: 'Une urgence absolue, surtout chez les grands chiens au thorax profond (dogue, berger, braque…).',
+        items: [
+          ['Les signes', 'Ventre qui gonfle et se tend, efforts pour vomir sans rien rejeter, salive abondante, agitation, respiration difficile, faiblesse.'],
+          ['Partir immédiatement', 'N’attendez pas que « ça passe » et ne donnez rien à manger ni à boire : seule une intervention vétérinaire rapide peut le sauver. Prévenez la clinique en route.'],
+          ['Prévenir', 'Fractionnez les repas, évitez l’exercice intense juste avant et juste après le repas, et parlez-en à votre vétérinaire pour les races à risque.']
+        ] },
+      { e: '❤️', t: 'Inconscient : vérifier et masser le cœur', intro: 'Ces gestes ne s’improvisent pas bien : une formation pratique est vivement conseillée. Pendant que vous agissez, qu’une autre personne appelle le vétérinaire et prépare le départ.',
+        items: [
+          ['Vérifier', 'Appelez-le, touchez-le. Regardez si la poitrine se soulève et cherchez le pouls à l’intérieur de la cuisse. Ouvrez la gueule : dégagez ce qui l’encombre et tirez la langue vers l’avant.'],
+          ['Position', 'Allongez-le sur le côté, sur une surface ferme. Pour un chien au thorax en tonneau (bouledogue), il peut être placé sur le dos.'],
+          ['Les compressions', 'Mains l’une sur l’autre, bras tendus, sur la partie la plus large de la poitrine (au-dessus du cœur, juste derrière le coude, pour un petit chien). Rythme : 100 à 120 compressions par minute, en enfonçant d’un tiers à la moitié de la largeur de la poitrine et en laissant bien remonter.'],
+          ['Les insufflations', 'Seul : après 30 compressions, fermez la gueule, soufflez deux fois dans la truffe jusqu’à voir la poitrine se soulever, puis reprenez. Continuez jusqu’à l’arrivée chez le vétérinaire ou la reprise de la respiration.']
+        ] },
+      { e: '🧰', t: 'La trousse de secours du chien', intro: 'Rangée au même endroit à la maison, et une version réduite dans la voiture pour les balades.',
+        items: [
+          ['L’essentiel', '', ['Compresses stériles et bandes (dont une bande cohésive)', 'Sérum physiologique en dosettes', 'Antiseptique adapté aux animaux (demandez conseil à votre vétérinaire)', 'Tire-tique et pince à épiler', 'Ciseaux à bouts ronds', 'Thermomètre et gants jetables']],
+          ['Pour les urgences', '', ['Muselière à sa taille', 'Couverture de survie', 'Laisse supplémentaire', 'Lampe de poche']],
+          ['Les informations', 'Le numéro de votre vétérinaire, celui des urgences de garde et d’un centre antipoison vétérinaire, son poids et ses traitements en cours : tout est dans Wouf, même sans connexion.']
+        ] }
+    ],
+    outro: 'Dans Wouf : l’onglet SOS (vétérinaires ouverts et de garde, toxiques, premiers secours), « Que faire ? » pour évaluer un symptôme, et la fiche d’urgence de votre animal à partager. Ces gestes sont indicatifs et ne remplacent ni le vétérinaire ni une formation pratique.' }
 ];
 const GD = { open: '' };
 const guideById = id => GUIDES.find(g => g.id === id);
@@ -204,7 +291,7 @@ ROUTES.guides = function guides() {
       <p class="mut center small">${GD_NOTE}</p>`;
   }
   return `<div class="page-h">${back}<h1>📚 E-books</h1></div>
-    <p class="mut">Deux e-books complets, à lire dans Wouf (même sans connexion) : le guide de survie est gratuit pour tous, le grand guide santé est inclus dans Wouf Plus.</p>
+    <p class="mut">Trois e-books complets, à lire dans Wouf (même sans connexion) : le guide de survie est gratuit pour tous ; le grand guide santé et les gestes de premiers secours sont inclus dans Wouf Plus.</p>
     <div class="list card menu">${GUIDES.map(x => `<button class="row" data-act="guide-open" data-id="${x.id}"><span class="ico">${x.e}</span><span class="grow"><b>${esc(x.title)}</b><small>${esc(x.sub)} · ${x.chapters().length} chapitres · ${x.free ? 'Gratuit' : allowed('guides') ? 'Wouf Plus ✓' : 'Wouf Plus'}</small></span><span class="chev">${x.free || allowed('guides') ? '›' : '🔒'}</span></button>`).join('')}</div>
     <p class="mut center small">${GD_NOTE}</p>`;
 };
@@ -212,9 +299,9 @@ ROUTES.guides = function guides() {
 function homeEbooks() {
   const ok = allowed('guides');
   const row = g => `<button class="row" data-act="guide-open" data-id="${g.id}"><span class="ico">${g.e}</span><span class="grow"><b>${esc(g.title)}</b><small>${esc(g.sub)} · ${g.chapters().length} chapitres</small></span><span class="chev">${g.free || ok ? '›' : '🔒'}</span></button>`;
-  return `<details class="card acc" id="h-ebooks"${HOME.eb ? ' open' : ''}><summary><b class="grow">📚 E-books</b><small class="mut">1 gratuit · 1 Wouf Plus</small></summary>
+  return `<details class="card acc" id="h-ebooks"${HOME.eb ? ' open' : ''}><summary><b class="grow">📚 E-books</b><small class="mut">1 gratuit · ${GUIDES.filter(g => !g.free).length} Wouf Plus</small></summary>
     <p class="eb-h">🎁 E-book gratuit</p><div class="list menu">${GUIDES.filter(g => g.free).map(row).join('')}</div>
-    <p class="eb-h">⭐ E-book Wouf Plus ${ok ? '<span class="pill ok">Débloqué</span>' : '<span class="pill plus">Plus</span>'}</p><div class="list menu">${GUIDES.filter(g => !g.free).map(row).join('')}</div>
+    <p class="eb-h">⭐ E-books Wouf Plus ${ok ? '<span class="pill ok">Débloqué</span>' : '<span class="pill plus">Plus</span>'}</p><div class="list menu">${GUIDES.filter(g => !g.free).map(row).join('')}</div>
     <p class="mut small">À lire dans Wouf, même sans connexion. Contenu indicatif.</p></details>`;
 }
 document.addEventListener('toggle', e => { if (e.target && e.target.id === 'h-ebooks') HOME.eb = e.target.open; }, true);

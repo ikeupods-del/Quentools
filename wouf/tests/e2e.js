@@ -982,7 +982,7 @@ test('test express « dangereux ou OK ? » : sans carnet, 8 questions, score, pa
 test('e-books : un gratuit (guide de survie) et un complet Wouf Plus, chapitres, lecture uniquement dans l’app', async () => {
   const b = await boot({}), p = b.page;
   await b.ev(() => { BILL.enabled = true; BILL.freeUntil = null; BILL.grandfatherBefore = null; S.sub = { active: false }; S.grant = null; }); await b.go('#/guides'); await b.ev(() => render()); await p.waitForSelector('[data-act=guide-open]');
-  assert.equal(await p.locator('[data-act=guide-open]').count(), 2); assert.match(await text(p, '#view'), /Gratuit/);
+  assert.equal(await p.locator('[data-act=guide-open]').count(), 3); assert.match(await text(p, '#view'), /Gratuit/);
   await p.click('[data-act=guide-open][data-id=sante]'); await p.waitForTimeout(300); assert.equal(await p.locator('.gd-list').count(), 0, 'e-book Plus verrouillé');
   await p.click('.sheet [data-close]'); await p.waitForTimeout(300);
   await p.click('[data-act=guide-open][data-id=survie]'); await p.waitForSelector('.gd-ch');
@@ -992,16 +992,18 @@ test('e-books : un gratuit (guide de survie) et un complet Wouf Plus, chapitres,
   await b.ev(() => { BILL.enabled = false; GD.open = ''; render(); }); await p.click('[data-act=guide-open][data-id=sante]'); await p.waitForSelector('.gd-ch'); assert.equal(await p.locator('.gd-ch').count(), 12);
   assert.match(await b.ev(() => document.querySelector('.gd').textContent), /Puces, tiques et vers[^]*L’animal senior/);
   const q = await b.ev(() => GUIDES.map(g => ({ ch: g.chapters().length, ok: g.chapters().every(c => c.t && c.items.length >= 3 && c.items.every(i => i[0] && ((i[1] || '').length > 25 || (i[2] || []).length))) })));
-  assert.deepEqual(q, [{ ch: 9, ok: true }, { ch: 12, ok: true }]);
+  assert.deepEqual(q, [{ ch: 9, ok: true }, { ch: 12, ok: true }, { ch: 12, ok: true }]);
+  await b.ev(() => { GD.open = ''; render(); }); await p.click('[data-act=guide-open][data-id=secours]'); await p.waitForSelector('.gd-ch'); const sc = await b.ev(() => document.querySelector('.gd').textContent);
+  assert.match(sc, /Étouffement[^]*Coup de chaleur[^]*Ne pas le faire vomir sans avis[^]*100 à 120 compressions/); assert.doesNotMatch(sc, /\bvotre chien\b/i);
   noErrors(b); await b.ctx.close();
 });
 
 test('accueil : menu déroulant E-books (1 gratuit / 1 Wouf Plus), ouverture directe', async () => {
   const b = await boot({}), p = b.page;
   await b.ev(() => { BILL.enabled = true; BILL.freeUntil = null; BILL.grandfatherBefore = null; S.sub = { active: false }; S.grant = null; }); await b.go('#/home'); await b.ev(() => render()); await p.waitForSelector('#h-ebooks');
-  assert.equal(await p.locator('#h-ebooks[open]').count(), 0, 'replié par défaut'); assert.match(await text(p, '#h-ebooks summary'), /E-books.*1 gratuit · 1 Wouf Plus/);
-  await p.click('#h-ebooks summary'); assert.match(await text(p, '#h-ebooks'), /E-book gratuit[^]*guide de survie[^]*E-book Wouf Plus[^]*grand guide santé/i);
-  assert.equal(await p.locator('#h-ebooks .chev', { hasText: '🔒' }).count(), 1, 'e-book Plus verrouillé');
+  assert.equal(await p.locator('#h-ebooks[open]').count(), 0, 'replié par défaut'); assert.match(await text(p, '#h-ebooks summary'), /E-books.*1 gratuit · 2 Wouf Plus/);
+  await p.click('#h-ebooks summary'); assert.match(await text(p, '#h-ebooks'), /E-book gratuit[^]*guide de survie[^]*E-books? Wouf Plus[^]*grand guide santé[^]*premiers secours/i);
+  assert.equal(await p.locator('#h-ebooks .chev', { hasText: '🔒' }).count(), 2, 'e-books Plus verrouillés');
   await p.click('#h-ebooks [data-act=guide-open][data-id=sante]'); await p.waitForTimeout(300); assert.equal(await p.locator('.gd-ch').count(), 0, 'paywall'); await p.click('.sheet [data-close]'); await p.waitForTimeout(300);
   assert.equal(await p.locator('#h-ebooks[open]').count(), 1, 'reste ouvert');
   await p.click('#h-ebooks [data-act=guide-open][data-id=survie]'); await p.waitForSelector('.gd-ch'); assert.equal(await b.ev(() => routeName()), 'guides');

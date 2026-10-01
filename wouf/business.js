@@ -14,6 +14,7 @@ const ctaLabel = () => subActive() ? '⭐ Wouf Plus actif' : BILL.enabled ? (yea
 const nDog = (free) => LESSONS.filter(l => (l.sp || 'dog') === 'dog' && (free === undefined || !!l.free === free)).length, nCat = (free) => LESSONS.filter(l => l.sp === 'cat' && (free === undefined || !!l.free === free)).length;
 
 const CHANGELOG = [
+  { v: '1.22.0', date: '2026-10-01', items: ['🩹 Nouvel e-book Wouf Plus : « Les gestes de premiers secours pour son chien » (étouffement, coup de chaleur, plaies, fractures, poison, convulsions, massage cardiaque, trousse)'] },
   { v: '1.21.0', date: '2026-10-01', items: ['📸 Partagez la carte de votre animal en story en un appui', '🔔 Sur Android, Wouf vous prévient de vos rappels même quand l’app est fermée'] },
   { v: '1.19.0', date: '2026-09-30', items: ['👴 Nouvelle carte « Bien vieillir » sur l’accueil pour les chiens et chats seniors : points à surveiller, rappel des 2 bilans par an, leçon et programme dédiés', '💡 Pour un animal senior, une astuce du jour sur deux lui est consacrée', '📚 Les e-books se lisent directement dans Wouf, même sans connexion'] },
   { v: '1.18.0', date: '2026-09-30', items: ['📚 Deux e-books complets : « Le guide de survie du propriétaire » (gratuit : urgences, premiers secours, dangers de la maison) et « Le grand guide santé et bien-être » (Wouf Plus : 12 chapitres, du premier jour aux années senior)', '📖 Lecture par chapitres avec sommaire, et enregistrement en PDF'] },
@@ -64,7 +65,7 @@ const FEATURES = {
   documents: ['📎', 'Documents illimités', 'Ordonnances, résultats, cartes : sans limite. (Gratuit : 3.)'],
   stats: ['📊', 'Statistiques de dépenses', 'Graphiques par catégorie et par mois, export CSV.'],
   weather: ['🌦️', 'Météo des balades', 'Chaleur, froid, pluie et orage adaptés à la race, à l’âge et au gabarit de votre animal, et les meilleures heures pour sortir.'],
-  guides: ['📚', 'E-book « Le grand guide santé et bien-être »', 'Le guide complet, à lire dans Wouf : arrivée d’un chiot ou d’un chaton, vaccins, parasites, alimentation et poids, hygiène, comportement, saisons, années senior, voyages, et les erreurs à éviter (chien et chat). Le « Guide de survie du propriétaire » (urgences, premiers secours, dangers) reste gratuit.'],
+  guides: ['📚', '2 e-books : santé et bien-être, premiers secours', 'À lire dans Wouf : « Le grand guide santé et bien-être » (arrivée d’un chiot ou d’un chaton, vaccins, parasites, alimentation, hygiène, comportement, saisons, années senior, voyages, erreurs à éviter) et « Les gestes de premiers secours pour son chien » (étouffement, coup de chaleur, plaies, fractures, poison, convulsions, massage cardiaque, trousse). Le « Guide de survie du propriétaire » reste gratuit.'],
   support: ['💬', 'Assistance prioritaire', 'Vos demandes sont traitées en premier, ' + (SUP.priorityDelay || 'sous 24 h ouvrées') + '.']
 };
 const planLine = () => { const p = planOf(), y = yearlyPlan(); return y ? `${y.price} ${y.per} ou ${p.price} à vie` : `${p.price} ${p.per}`; };

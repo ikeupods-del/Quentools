@@ -7,6 +7,9 @@ Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `in
 - Ne pas référencer d'hébergeurs d'aperçu d'IA dans le code : pour masquer une fonction hors du site officiel, utiliser une liste de domaines autorisés.
 - Le nom de la branche par défaut (`claude/…`) est technique ; ne pas en créer de nouvelles mentions ailleurs que dans la configuration de publication.
 
+## Devis et prix
+Avant tout devis ou question de prix (client, estimation, « combien coûterait… »), lire `design/TARIFS.md` : estimations, grille QuenTools, réponses types. Le mettre à jour si les prix changent.
+
 ## Économiser les jetons : lire `CARTE.md` d'abord
 `CARTE.md` (racine, ~4 000 jetons) liste chaque fichier, ses écrans, actions, fonctions et dépendances : s'en servir pour trouver le bon fichier avant de grepper ou de lire. La régénérer avant de livrer : `node tools/carte.js` (ou `cd wouf && npm run carte`). Lire ensuite seulement les portions utiles (Read avec offset/limit).
 
