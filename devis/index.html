@@ -12,6 +12,7 @@
 <link rel="preload" href="../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../assets/qt.css">
 <script src="../assets/qt-config.js"></script>
+<script src="../assets/qt-cloud.js"></script>
 </head>
 <body>
 <a class="skip" href="#contenu">Aller au contenu</a>
@@ -84,11 +85,18 @@
     if (!document.getElementById('ok').checked) return say('Cochez la case d’accord pour envoyer.', true);
     const text = `Demande de devis QuenTools\nType : ${type}\nDélai : ${d.delai}\nBudget : ${d.budget}\nNom : ${d.nom}\nE-mail : ${d.email}${d.tel ? '\nTéléphone : ' + d.tel : ''}\n\n${d.besoin}`;
     const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
+    const ok = () => { f.reset(); say(`✅ <b>Merci ${esc(d.nom.split(' ')[0])}, votre demande est bien partie.</b> Je vous réponds sous 48 h à <b>${esc(d.email)}</b>.`); };
     try {
+      if (window.QTC) await QTC.config();
+      // 1) Directement dans l'administration (/admin/)
+      let sent = false;
+      try { sent = !!(window.QTC && await QTC.devis({ type, besoin: d.besoin, delai: d.delai, budget: d.budget, nom: d.nom, email: d.email, tel: d.tel || '' })); } catch (err) { /* règles absentes ou hors ligne : solutions de repli */ }
+      if (sent) { if (C.formEndpoint) fetch(C.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ category: 'Devis QuenTools', message: text, email: d.email, diagnostics: '' }) }).catch(() => {}); return ok(); }
+      // 2) Relais, 3) e-mail, 4) TikTok
       if (C.formEndpoint) {
         const r = await fetch(C.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ category: 'Devis QuenTools', message: text, email: d.email, diagnostics: '', type, nom: d.nom, tel: d.tel || '', delai: d.delai, budget: d.budget }) });
         if (!r.ok) throw new Error('envoi');
-        f.reset(); return say(`✅ <b>Merci ${esc(d.nom.split(' ')[0])}, votre demande est bien partie.</b> Je vous réponds sous 48 h à <b>${esc(d.email)}</b>.`);
+        return ok();
       }
       if (C.email) { location.href = `mailto:${C.email}?subject=${encodeURIComponent('Demande de devis : ' + type)}&body=${encodeURIComponent(text)}`; return say('Votre messagerie s’ouvre avec la demande prête : il ne reste qu’à l’envoyer.'); }
       try { await navigator.clipboard.writeText(text); } catch (err) { /* presse-papiers indisponible */ }
