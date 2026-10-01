@@ -218,7 +218,8 @@ ROUTES.admin.after = () => {
   q.addEventListener('input', () => { const v = q.value.trim().toLowerCase(); $$('.adm-u').forEach(el => { el.hidden = !!v && !el.dataset.q.includes(v); }); });
 };
 /* Parrainages : filleul (referredBy) relié au parrain (refCode) ; « Offrir 1 mois aux deux » ajoute 31 jours à chacun. */
-const refPairs = us => us.filter(u => u.referredBy).map(f => ({ f, p: us.find(x => x.refCode === f.referredBy && x.uid !== f.uid) })).filter(x => x.p);
+/* Un code de parrainage est écrit par l'utilisateur lui-même : un code partagé par plusieurs comptes (copie volontaire) est ignoré. */
+const refPairs = us => us.filter(u => u.referredBy).map(f => { const owners = us.filter(x => x.refCode === f.referredBy && x.uid !== f.uid); return { f, p: owners.length === 1 ? owners[0] : null }; }).filter(x => x.p);
 const plusMonth = g => { const base = g && g.until && g.until !== 'lifetime' && g.until >= today() ? g.until : today(); return g && g.until === 'lifetime' ? g : { ...(g || {}), until: addDays(base, 31) }; };
 function refSection(us) {
   const pairs = refPairs(us); if (!pairs.length) return '';

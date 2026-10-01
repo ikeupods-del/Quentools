@@ -195,7 +195,8 @@ async function stripeVerify(raw, header, secret) {
   if (!secret || !t || !sigs.length || Math.abs(Date.now() / 1000 - t) > 300) return false;
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const want = hex(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(t + '.' + raw)));
-  return sigs.some(s => s.length === want.length && [...s].every((c, i) => c === want[i]));
+  const same = (a, b) => { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };   // comparaison à temps constant
+  return sigs.some(s => same(s, want));
 }
 const unixDay = s => day(new Date(s * 1000));
 async function handleStripe(req, env) {
