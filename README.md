@@ -5,7 +5,7 @@
 Tournée, fiches patients, **ordonnances (photo ou PDF)**, fiche d’urgence, transmissions, cotations NGAP / INAMI et compta.
 Application web installable (PWA) : elle s’installe sur l’écran d’accueil comme une vraie app et fonctionne hors connexion.
 
-**Adresse de l’app :** https://ikeupods-del.github.io/Quentools/infikit/ (l’adresse principale https://ikeupods-del.github.io/Quentools/ ouvre le site QuenTools)
+**Adresse de l’app :** https://quentools.fr/infikit/ (l’adresse principale https://quentools.fr/ ouvre le site QuenTools)
 
 ### Pour l’infirmière
 
@@ -38,7 +38,7 @@ la date de fin de validité saisie met à jour l’alerte « ordonnance expirée
    - Données rangées dans `users/{uid}/apps/infikit` ; le même compte Google donne accès aux autres apps QuenTools, sans mélanger les données.
 3. **Connexion GitHub** : fonctionne tout de suite en collant un jeton « gist » (l’app guide l’infirmière).
    Pour un bouton en un clic (facultatif) :
-   - GitHub → Settings → Developer settings → **OAuth Apps** → New : Homepage et Callback URL = `https://ikeupods-del.github.io/Quentools/infikit/`.
+   - GitHub → Settings → Developer settings → **OAuth Apps** → New : Homepage et Callback URL = `https://quentools.fr/infikit/`.
    - Déployer `infikit/oauth-worker/worker.js` sur Cloudflare Workers (gratuit) avec les variables `GITHUB_CLIENT_ID`,
      `GITHUB_CLIENT_SECRET` (secret) et `ALLOWED_ORIGIN=https://ikeupods-del.github.io`.
    - Renseigner `githubClientId` et `githubOAuthProxy` dans `infikit/config.js`.
@@ -56,7 +56,7 @@ la date de fin de validité saisie met à jour l’alerte « ordonnance expirée
 Calculateur de TJM (net visé, charges, frais, jours facturables) et générateur de devis sur-mesure (jours-hommes × coefficient de complexité, TVA, acompte).
 Outil indépendant d'Infikit : il vit dans `freelance/` et n'utilise que son propre stockage (`fk:*`).
 
-**Adresse :** https://ikeupods-del.github.io/Quentools/freelance/
+**Adresse :** https://quentools.fr/freelance/
 
 - **Connexion Google** : même projet Firebase que les autres apps QuenTools (`freelance/config.js`), même compte. Les données (réglages TJM, devis, bibliothèque) sont synchronisées dans Firestore sous `users/{uid}/apps/freelance/main/current` ; la version la plus récente gagne. Prérequis identiques à Infikit (Google activé dans Firebase Auth, domaine `ikeupods-del.github.io` autorisé, règles Firestore couvrant `users/{uid}/apps/**`).
 - **GitHub** : export du devis en **gist secret** (`.json` + `.md`), mis à jour à chaque nouvel export. Connexion en collant un jeton avec la seule case `gist`, ou en un clic via `githubClientId` / `githubOAuthProxy` dans `freelance/config.js` (OAuth App dont le callback est `.../Quentools/freelance/`).

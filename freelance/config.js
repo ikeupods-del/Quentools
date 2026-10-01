@@ -13,7 +13,7 @@ window.FREELANCE_CONFIG = {
   },
   // GitHub en un clic (facultatif). Sans ces valeurs : connexion en collant un jeton « gist ».
   // Le relais OAuth peut être celui d'Infikit (infikit/oauth-worker), mais l'OAuth App GitHub
-  // doit avoir https://ikeupods-del.github.io/Quentools/freelance/ comme URL de callback.
+  // doit avoir https://quentools.fr/freelance/ comme URL de callback.
   githubClientId: '',
   githubOAuthProxy: '',
 };
