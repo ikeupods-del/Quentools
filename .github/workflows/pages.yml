@@ -46,6 +46,8 @@ jobs:
           cp index.html 404.html _site/
           rsync -a assets _site/
           rsync -a ebook _site/
+          rsync -a realisations _site/
+          rsync -a devis _site/
           rsync -a --exclude oauth-worker infikit _site/
           rsync -a freelance _site/
           rsync -a gourmet _site/

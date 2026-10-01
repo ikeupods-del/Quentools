@@ -215,3 +215,41 @@ p{margin:0 0 var(--s-4);text-wrap:pretty}
 /* ---------- 7. Utilitaires ---------- */
 .muted{color:var(--muted)}.center{text-align:center}.mt-0{margin-top:0}.nowrap{white-space:nowrap}
 .visually-hidden{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- 8. Formulaires ---------- */
+.form{display:grid;gap:var(--s-5)}
+.field{display:grid;gap:8px}
+.field>label,.field>legend{font-weight:600;font-size:var(--t-sm);color:var(--ink)}
+.field small{color:var(--muted);font-size:var(--t-xs)}
+.input,.field input:not([type=checkbox]):not([type=radio]),.field textarea,.field select{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-md);padding:14px 16px;min-height:50px;transition:border-color var(--d-1),box-shadow var(--d-1)}
+.field textarea{min-height:140px;resize:vertical;line-height:1.5}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+.field input:user-invalid,.field textarea:user-invalid{border-color:#d64040}
+fieldset.field{border:0;padding:0;margin:0}
+.choices{display:flex;flex-wrap:wrap;gap:10px}
+.choice{position:relative}
+.choice input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.choice span{display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border-radius:var(--r-pill);border:1px solid var(--line-2);background:var(--surface);font-weight:600;font-size:var(--t-sm);transition:all var(--d-1)}
+.choice input:checked+span{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.choice input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.check{display:flex;gap:12px;align-items:flex-start;font-size:var(--t-sm);color:var(--ink-2)}
+.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex:none}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-4)}
+@media (max-width:640px){.form-grid{grid-template-columns:1fr}}
+.notice{padding:16px 20px;border-radius:var(--r-md);background:var(--ok-soft);color:var(--ink);border:1px solid color-mix(in srgb,var(--ok) 30%,transparent)}
+.notice.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+
+/* ---------- 9. Études de cas ---------- */
+.case{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(24px,5vw,64px);align-items:center}
+@media (max-width:900px){.case{grid-template-columns:1fr}}
+.case>*{min-width:0}
+.case-shots .phone{position:relative;inset:auto;width:min(52%,250px);margin:0 auto;transform:rotate(-4deg)}
+.case-shots{min-height:0;aspect-ratio:auto;display:flex;justify-content:center;padding:var(--s-4) 0}
+.kv{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--s-3);margin:var(--s-5) 0}
+.kv div{padding:14px 16px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line)}
+.kv b{display:block;font:700 var(--t-xl)/1 var(--f-display);letter-spacing:-.03em}
+.kv span{font-size:var(--t-xs);color:var(--muted)}
+.ticks{list-style:none;padding:0;margin:0 0 var(--s-5);display:grid;gap:10px}
+.ticks li{display:flex;gap:10px;align-items:flex-start}
+.ticks li::before{content:"✓";flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:12px}
+.tag-row{display:flex;flex-wrap:wrap;gap:8px;margin:var(--s-3) 0 var(--s-4)}
