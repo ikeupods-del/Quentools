@@ -3,14 +3,15 @@
    Scènes : « avant » (ancien site fictif), « c'est décidé », défilement d'un exemple de site, carte finale.
    Prérequis : serveur local à la racine du dépôt (python3 -m http.server 8123) et ffmpeg.
    node marketing/quentools/video-avant-apres.js [dossier-de-sortie] [exemple]  → quentools-avant-apres-<exemple>.mp4
-   Exemples pris en charge : climatisation (par défaut), plombier. */
+   Exemples pris en charge : climatisation (par défaut), plombier.
+   Variante « histoire du fondateur » : node marketing/quentools/video-avant-apres.js <dossier> histoire → quentools-histoire.mp4 */
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
 let chromium; try { ({ chromium } = require(path.resolve(__dirname, '../../wouf/node_modules/playwright'))); } catch (e) { ({ chromium } = require('playwright')); }
 const BASE = process.env.BASE || 'http://localhost:8123', FF = process.env.FFMPEG || 'ffmpeg';
 const OUT = path.resolve(process.argv[2] || __dirname), TMP = fs.mkdtempSync(path.join(require('os').tmpdir(), 'qt-video-'));
 const W = 1080, H = 1920, FPS = 30, FADE = 0.3, SCROLL_S = 14;
 const EX = { climatisation: { titre: 'Clim Services Martin', metier: 'climatisation', label: 'site de climatisation' }, plombier: { titre: 'Plomberie Martin', metier: 'plombier', label: 'site de plombier' } };
-const SLUG = process.argv[3] || 'climatisation', CFG = EX[SLUG]; if (!CFG) throw new Error('Exemple inconnu : ' + SLUG);
+const HISTOIRE = process.argv[3] === 'histoire', SLUG = HISTOIRE ? 'histoire' : (process.argv[3] || 'climatisation'), CFG = EX[SLUG] || {}; if (!HISTOIRE && !EX[SLUG]) throw new Error('Exemple inconnu : ' + SLUG);
 
 const fonts = `@font-face{font-family:Bricolage;src:url(${BASE}/assets/fonts/bricolage.woff2);font-weight:200 800}
 @font-face{font-family:Inter;src:url(${BASE}/assets/fonts/inter.woff2);font-weight:100 900}`;
@@ -39,6 +40,16 @@ img{width:210px;height:210px;border-radius:50px}h1{font-size:128px;line-height:1
 p{font:600 58px Inter,Arial;margin:0;color:#cfcbe0}b{display:inline-block;background:#d7f24a;color:#121019;padding:20px 50px;border-radius:99px;font:800 66px Bricolage,Arial}</style>
 <img src="${BASE}/assets/apple-touch-icon.png" alt=""><h1>Votre site <em>pro</em>,<br>sur devis gratuit</h1><p>Prix fixé avant de commencer</p><b>quentools.fr</b><p>Lien dans la bio</p>`;
 
+const intro = `<!doctype html><meta charset=utf-8><style>${fonts}
+body{margin:0;width:${W}px;height:${H}px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:40px;background:#0d0c12;color:#f4f2fb;text-align:center;font-family:Bricolage,Arial}
+h1{font-size:156px;line-height:1;margin:0;letter-spacing:-5px;padding:0 60px}em{font-style:normal;color:#d7f24a}p{font:600 64px Inter,Arial;margin:0;color:#cfcbe0}</style>
+<h1>Pas<br>développeur.</h1><p>Juste une <em style="font-weight:800">idée</em>.</p>`;
+const finH = `<!doctype html><meta charset=utf-8><style>${fonts}
+body{margin:0;width:${W}px;height:${H}px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:48px;background:#0d0c12;color:#f4f2fb;text-align:center;font-family:Bricolage,Arial}
+img{width:210px;height:210px;border-radius:50px}h1{font-size:132px;line-height:1;margin:0;letter-spacing:-4px;padding:0 60px}em{font-style:normal;color:#d7f24a}
+p{font:600 56px Inter,Arial;margin:0;color:#cfcbe0}b{display:inline-block;background:#d7f24a;color:#121019;padding:20px 50px;border-radius:99px;font:800 66px Bricolage,Arial}</style>
+<img src="${BASE}/assets/apple-touch-icon.png" alt=""><h1>Quen<em>Tools</em></h1><p>Votre site ou votre outil sur mesure</p><p>Devis gratuit</p><b>quentools.fr</b><p>Lien dans la bio</p>`;
+
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium' });
   const still = async (name, html) => {
@@ -46,16 +57,20 @@ p{font:600 58px Inter,Arial;margin:0;color:#cfcbe0}b{display:inline-block;backgr
     await p.setContent(html, { waitUntil: 'networkidle' }); await p.waitForTimeout(400);
     await p.screenshot({ path: path.join(TMP, name + '.png') }); await p.close();
   };
-  await still('a', avant); await still('b1', carte('C’est décidé.')); await still('b2', carte('Je deviens', 'pro.')); await still('d', fin);
+  await still('a', HISTOIRE ? intro : avant); await still('b1', carte('C’est décidé.')); await still('b2', carte('Je deviens', 'pro.')); await still('d', HISTOIRE ? finH : fin);
 
   // Scène de défilement : l'exemple « plombier » du site, rendu en mobile puis mis à l'échelle 1080×1920
   const c = await b.newContext({ viewport: { width: 390, height: 693 }, deviceScaleFactor: 2.7692, isMobile: true, hasTouch: true, colorScheme: 'light' });
   const p = await c.newPage();
-  await p.goto(BASE + '/exemples/' + SLUG + '/', { waitUntil: 'networkidle' }); await p.waitForTimeout(1200);
+  await p.goto(BASE + (HISTOIRE ? '/' : '/exemples/' + SLUG + '/'), { waitUntil: 'networkidle' }); await p.waitForTimeout(1200);
   // Rendu image par image : pas de défilement animé du navigateur (cause des saccades), pas d'animation CSS en cours de route
-  await p.addStyleTag({ content: 'html,body{scroll-behavior:auto!important}*{scroll-behavior:auto!important;animation:none!important;transition:none!important}#qt-announce,.announce{display:none!important}' });
-  await p.evaluate(label => { const t = document.createElement('div'); t.textContent = 'Exemple fictif · ' + label; t.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:99999;background:#121019;color:#d7f24a;font:700 13px Arial;padding:8px 14px;border-radius:99px;white-space:nowrap'; document.body.appendChild(t); }, CFG.label);
-  const max = Math.min(await p.evaluate(() => document.documentElement.scrollHeight - innerHeight), 3600), N = SCROLL_S * FPS;
+  await p.addStyleTag({ content: 'html,body{scroll-behavior:auto!important}*{scroll-behavior:auto!important;animation:none!important;transition:none!important}' + (HISTOIRE ? '' : '#qt-announce,.announce{display:none!important}') });
+  await p.evaluate(label => { const t = document.createElement('div'); t.textContent = label; t.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:99999;background:#121019;color:#d7f24a;font:700 13px Arial;padding:8px 14px;border-radius:99px;white-space:nowrap'; document.body.appendChild(t); }, HISTOIRE ? 'quentools.fr' : 'Exemple fictif · ' + CFG.label);
+  const max = Math.min(await p.evaluate(() => document.documentElement.scrollHeight - innerHeight), HISTOIRE ? 5200 : 3600), N = SCROLL_S * FPS;
+  // Préparation : tout est visible (pas d'apparition au défilement) et les images différées sont chargées
+  await p.evaluate(() => document.querySelectorAll('.reveal').forEach(e => e.classList.add('is-in')));
+  for (let y = 0; y <= max; y += 700) { await p.evaluate(v => window.scrollTo(0, v), y); await p.waitForTimeout(120); }
+  await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(500);
   fs.mkdirSync(path.join(TMP, 's'));
   for (let i = 0; i < N; i++) {
     const t = i / (N - 1), sm = t * t * (3 - 2 * t), e = .7 * t + .3 * sm;   // vitesse presque constante, départ et arrivée adoucis
@@ -75,7 +90,7 @@ p{font:600 58px Inter,Arial;margin:0;color:#cfcbe0}b{display:inline-block;backgr
     filter += `${last}[${i}:v]xfade=transition=fade:duration=${FADE}:offset=${off.toFixed(2)}${out};`; last = out;
   }
   fs.mkdirSync(OUT, { recursive: true });
-  const dest = path.join(OUT, `quentools-avant-apres-${SLUG}.mp4`);
+  const dest = path.join(OUT, HISTOIRE ? 'quentools-histoire.mp4' : `quentools-avant-apres-${SLUG}.mp4`);
   execFileSync(FF, ['-y', ...inputs, '-filter_complex', filter.slice(0, -1), '-map', '[v]', '-c:v', 'libx264', '-crf', '21', '-preset', 'medium', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', dest], { stdio: 'ignore' });
   fs.rmSync(TMP, { recursive: true, force: true });
   console.log('Vidéo créée :', dest);
