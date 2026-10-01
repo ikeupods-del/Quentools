@@ -4,12 +4,15 @@ Brouillon à valider avant publication. Montants indicatifs : les premières com
 
 ## Offres du site QuenTools (clients directs)
 
-| Formule | Départ | Par mois | Contenu |
+Sur le site, trois offres, toutes « sur devis » (aucun prix affiché) :
+
+| Offre | Départ (interne) | Par mois | Contenu |
 |---|---|---|---|
-| **Essentiel** | 200 € | 15 € | 1 page : présentation, coordonnées, formulaire de contact, adaptée au téléphone, mise en ligne |
-| **Pro** | 400 € | 25 € | 4 à 5 pages, photos, formulaire de devis, référencement de base, 1 modification par mois |
-| **Boutique** | 250 € | 20 € | Boutique Shopify simple (jusqu'à 20 produits), thème personnalisé, pages légales, paiement, fiches produit rédigées |
-| **Sur mesure** | à partir de 1 000 € | 30 à 50 € | Outil métier (calcul de devis, suivi, réservation), sur devis |
+| **Site vitrine** | 200 € (1 page, « Essentiel ») à 400 € (4 à 5 pages, « Pro ») | 15 à 25 € | 1 à 5 pages, formulaire de contact ou de devis, référencement de base, mise en ligne ; 1 modification par mois pour la formule 4 à 5 pages |
+| **Boutique en ligne** | 250 € | 20 € | Boutique Shopify simple (jusqu'à 20 produits), thème personnalisé, pages légales, paiement, fiches produit rédigées |
+| **Outil sur mesure** | à partir de 1 000 € | 30 à 50 € | Outil métier (calcul de devis, suivi, réservation), sur devis |
+
+La taille du site vitrine (1 page ou plusieurs) se règle dans le devis, pas dans le choix de la carte.
 
 Inclus dans le mensuel : hébergement, sauvegardes, mises à jour et modifications simples selon la formule ; le délai de réponse (48 h ouvrées) est tenu par le propriétaire, les corrections sont faites à sa demande. Engagement de 12 mois sur le mensuel. Les abonnements Shopify, noms de domaine et applications payantes restent à la charge du client, au prix du fournisseur. Hébergement gratuit sur GitHub Pages : le code du site est public, donc adapté à un site vitrine ou à un outil sans données sensibles ; sinon prévoir un hébergement payant.
 
