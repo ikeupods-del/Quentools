@@ -211,7 +211,7 @@ footer.site a{color:var(--sun)}
 </div></section>
 </main>
 
-<footer class="site"><div class="wrap"><span>© <span id="year">2026</span> Alimentation des Tilleuls (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
+<footer class="site"><div class="wrap"><span>© <span id="year">2026</span> Alimentation des Tilleuls (entreprise fictive) · SIRET 000 000 000 00000 (exemple) · Marques citées à titre d’exemple, appartenant à leurs propriétaires respectifs</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
 
 <div class="drawer" id="drawer" aria-hidden="true">
   <div class="veil" data-close></div>
@@ -238,14 +238,14 @@ footer.site a{color:var(--sun)}
   // 0 = dimanche. Horaires en heures décimales ; une fermeture après minuit s'écrit 24 ou plus.
   const HOURS = [[9, 23], [8, 23], [8, 23], [8, 23], [8, 23], [8, 24], [8, 24]];
 
-  /* ---------- Boissons (marques fictives) ---------- */
+  /* ---------- Boissons (noms de marques cités à titre d'exemple, visuels génériques) ---------- */
   const CANS = [
-    { id: 'volt', brand: 'VOLT', flavor: 'Énergie · Original', price: 1.9, c1: '#1f4fff', c2: '#0a1c66', ink: '#ffffff', acc: '#c8d2e6', news: true },
-    { id: 'volt-mangue', brand: 'VOLT', flavor: 'Énergie · Mangue', price: 1.9, c1: '#ff8a00', c2: '#b34700', ink: '#ffffff', acc: '#ffe08a', news: true },
-    { id: 'fizz', brand: 'FIZZ&CO', flavor: 'Cola · Cerise', price: 1.5, c1: '#d1123f', c2: '#6e0820', ink: '#fff3e0', acc: '#ffb3c4', news: true },
-    { id: 'bulle', brand: 'BULLE', flavor: 'Limonade · Citron', price: 1.4, c1: '#ffe14d', c2: '#e0a800', ink: '#14213d', acc: '#ffffff', news: true },
-    { id: 'kai', brand: 'KAÏ', flavor: 'Thé glacé · Pêche', price: 1.6, c1: '#ffb38a', c2: '#e2683c', ink: '#24452c', acc: '#9fd4a3', news: true },
-    { id: 'tropika', brand: 'TROPIKA', flavor: 'Ananas · Coco', price: 1.7, c1: '#16b3a4', c2: '#076b62', ink: '#ffffff', acc: '#ffd23f', news: true }
+    { id: 'coca', brand: 'COCA-COLA', flavor: 'Cola · Original', price: 1.5, c1: '#e41e2b', c2: '#7d0710', ink: '#ffffff', acc: '#ffd0d4', news: true },
+    { id: 'redbull', brand: 'RED BULL', flavor: 'Énergie · Original', price: 2.2, c1: '#2b4a8c', c2: '#12254d', ink: '#ffffff', acc: '#c9d3ea', news: true },
+    { id: 'fanta', brand: 'FANTA', flavor: 'Orange · Original', price: 1.4, c1: '#ff8a00', c2: '#b34700', ink: '#ffffff', acc: '#ffe08a', news: true },
+    { id: 'sprite', brand: 'SPRITE', flavor: 'Citron · Citron vert', price: 1.4, c1: '#1fae4b', c2: '#0b6425', ink: '#ffffff', acc: '#e3f7a8', news: true },
+    { id: 'nestea', brand: 'NESTEA', flavor: 'Thé glacé · Pêche', price: 1.6, c1: '#ffb38a', c2: '#e2683c', ink: '#3a2412', acc: '#fff0e0', news: true },
+    { id: 'monster', brand: 'MONSTER', flavor: 'Énergie · Ultra', price: 2.1, c1: '#222222', c2: '#050505', ink: '#9dff3a', acc: '#d8ffa8', news: true }
   ];
   const AISLES = ['Boissons', 'Snacks', 'Épicerie', 'Frais', 'Maison'];
   const ITEMS = [
