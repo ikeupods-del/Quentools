@@ -3,83 +3,67 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Move Coaching · exemple de site (Coach sportif)</title>
-<meta name="description" content="Exemple fictif de site pour coach sportif, réalisé par QuenTools.">
+<title>Move Coaching · exemple de site (coach sportif)</title>
+<meta name="description" content="Exemple fictif de site pour un coach sportif, réalisé par QuenTools.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
-<link rel="preload" href="../../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../../assets/qt.css">
+<link rel="preload" href="../../assets/fonts/ex/oswald-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../ex.css">
 <style>
-  :root{--accent:#c2410c;--accent-soft:#ffedd5;--lime:#fde047}
-  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#fb923c;--accent-soft:#3a1d0c}}
-  .ph{aspect-ratio:4/3;border-radius:var(--r-lg);display:grid;place-items:center;font-size:clamp(2.4rem,6vw,3.6rem);background:linear-gradient(135deg,var(--accent-soft),var(--bg-2));border:1px solid var(--line)}
-  .two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-6);align-items:start}@media (max-width:760px){.two{grid-template-columns:1fr}}
-  .price-list{display:grid;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
-  .price-row{display:flex;gap:var(--s-4);justify-content:space-between;align-items:baseline;padding:18px 22px;border-top:1px solid var(--line)}
-  .price-row:first-child{border-top:0}.price-row b{font-weight:600}.price-row small{display:block;color:var(--muted)}.price-row .amount{font:700 var(--t-lg)/1 var(--f-display);white-space:nowrap}
-  .hours{width:100%;border-collapse:collapse}.hours td{padding:10px 0;border-top:1px solid var(--line)}.hours td:last-child{text-align:right;color:var(--muted)}
-  .today{padding:var(--s-6);border-radius:var(--r-xl);background:#1b1712;color:#f6efe6}.today h3{color:var(--lime);margin:0 0 var(--s-3)}.today p{color:#e9dfd2;margin:0 0 6px}
-  .dish{display:flex;gap:var(--s-4);justify-content:space-between;align-items:baseline;padding:14px 0;border-top:1px solid var(--line)}
-  .dish b{font-weight:600}.dish small{display:block;color:var(--muted)}.dish .amount{font:700 var(--t-md)/1 var(--f-display);white-space:nowrap}
-  .menu h3{margin:var(--s-5) 0 var(--s-2);font-size:var(--t-lg)}
-  .cover{aspect-ratio:3/4;max-width:340px;margin-inline:auto;border-radius:var(--r-lg);background:linear-gradient(150deg,var(--accent),#1b1340);color:#fff;display:grid;align-content:end;padding:28px;box-shadow:var(--sh-3);transform:rotate(2deg)}
-  .cover b{font:700 clamp(1.4rem,3vw,2rem)/1.1 var(--f-display)}.cover small{opacity:.8}
-  .toc{columns:2;column-gap:var(--s-6);padding:0;list-style:none;margin:0}@media (max-width:640px){.toc{columns:1}}.toc li{break-inside:avoid;padding:10px 0;border-top:1px solid var(--line)}
-  .cta-band form p,.cta-band form a{color:var(--muted)}
-  .demo-note{margin-top:var(--s-3);font-size:var(--t-sm)}
+@font-face{font-family:Oswald;src:url(../../assets/fonts/ex/oswald-normal.woff2) format("woff2");font-weight:200 700;font-display:swap}
+:root{--vol:#c6ff00;--bg:#0a0a0a;--card:#151515;--fg:#f5f5f0;--mut:#9a9a92}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 17px/1.6 "Helvetica Neue",Arial,sans-serif;overflow-x:hidden}
+h1,h2,h3,.os{font-family:Oswald,Impact,"Arial Narrow",sans-serif;text-transform:uppercase;font-weight:700;letter-spacing:.01em;margin:0}a{color:inherit}.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+header{position:sticky;top:0;z-index:40;background:rgba(10,10,10,.9);backdrop-filter:blur(8px);border-bottom:2px solid var(--vol)}header .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{font:700 26px Oswald,sans-serif;text-transform:uppercase;text-decoration:none;letter-spacing:.04em}.logo b{color:var(--vol)}nav a{margin-left:24px;text-decoration:none;font:600 14px Oswald,sans-serif;text-transform:uppercase;letter-spacing:.12em}nav a:hover{color:var(--vol)}
+.btn{display:inline-block;background:var(--vol);color:#000;border:0;text-decoration:none;font:700 17px Oswald,sans-serif;text-transform:uppercase;letter-spacing:.08em;padding:16px 32px;clip-path:polygon(0 0,100% 0,calc(100% - 14px) 100%,0 100%);cursor:pointer;transition:.15s}.btn:hover{background:#fff}.btn.o{background:transparent;color:var(--fg);box-shadow:inset 0 0 0 2px var(--fg);clip-path:none}.btn.o:hover{background:var(--fg);color:#000}
+.hero{position:relative;padding:80px 0 120px;overflow:hidden;background:radial-gradient(50% 60% at 85% 20%,rgba(198,255,0,.18),transparent 70%)}
+.hero h1{font-size:clamp(3.6rem,13vw,11rem);line-height:.88;letter-spacing:-.02em}.hero h1 span{color:var(--vol);display:block}.hero h1 s{text-decoration:none;-webkit-text-stroke:2px var(--fg);color:transparent}
+.hero p{max-width:46ch;font-size:20px;color:#cfcfc8;margin:26px 0 32px}.hero .cta{display:flex;flex-wrap:wrap;gap:14px}
+.tick{background:var(--vol);color:#000;transform:skewY(-2deg);margin:-30px 0 0;overflow:hidden;white-space:nowrap;border-block:3px solid #000}.tick div{display:inline-block;padding:14px 0;font:700 clamp(1.2rem,3vw,1.9rem) Oswald,sans-serif;text-transform:uppercase;animation:mq 22s linear infinite}.tick span{margin:0 26px}
+@keyframes mq{to{transform:translateX(-50%)}}
+section{padding:90px 0}.h2{font-size:clamp(2.4rem,7vw,5rem);line-height:.95;margin-bottom:40px}.h2 span{color:var(--vol)}
+.prog{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.pc{background:var(--card);padding:30px;position:relative;border-top:4px solid var(--vol);overflow:hidden}.pc .no{font:700 120px/0.8 Oswald,sans-serif;-webkit-text-stroke:2px #333;color:transparent;position:absolute;right:10px;top:12px}
+.pc h3{font-size:30px;margin:60px 0 10px;position:relative}.pc p{color:var(--mut);margin:0 0 14px;position:relative}.pc ul{padding:0;margin:0;list-style:none;font-size:15px;position:relative}.pc li{padding:5px 0 5px 24px;position:relative}.pc li::before{content:"▶";position:absolute;left:0;color:var(--vol);font-size:11px;top:10px}
+.nums{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:2px solid #222}.nums div{padding:30px 22px;border-left:2px solid #222}.nums div:first-child{border-left:0}.nums b{display:block;font:700 clamp(2.4rem,5vw,4rem)/1 Oswald,sans-serif;color:var(--vol)}.nums span{color:var(--mut);font-size:14px;text-transform:uppercase;letter-spacing:.1em}
+.pr{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}.pt{border:2px solid #262626;padding:32px;display:flex;flex-direction:column}.pt.f{background:var(--vol);color:#000;border-color:var(--vol);transform:translateY(-14px)}.pt h3{font-size:26px}.pt .p{font:700 64px/1 Oswald,sans-serif;margin:14px 0 4px}.pt small{opacity:.7}.pt ul{padding:0;margin:20px 0 26px;list-style:none;flex:1}.pt li{padding:6px 0;border-top:1px solid rgba(127,127,127,.35)}
+.pt .btn{text-align:center}.pt.f .btn{background:#000;color:var(--vol)}
+.ct{background:#111;border-top:4px solid var(--vol)}.ct .grid{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center}form{display:grid;gap:12px}input,select,textarea{font:inherit;padding:16px;background:#1b1b1b;border:2px solid #2d2d2d;color:var(--fg);width:100%;border-radius:0}input:focus,select:focus,textarea:focus{outline:0;border-color:var(--vol)}
+footer{padding:28px 0;font-size:13px;color:var(--mut);border-top:1px solid #222}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
+@media (max-width:860px){nav{display:none}.prog,.pr,.ct .grid{grid-template-columns:1fr}.nums{grid-template-columns:1fr 1fr}.nums div:nth-child(3){border-left:0}.nums div:nth-child(n+3){border-top:2px solid #222}.pt.f{transform:none}}
 </style>
 </head>
 <body>
-<div class="announce"><div class="wrap"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div></div>
-<a class="skip" href="#contenu">Aller au contenu</a>
-<header class="nav"><div class="wrap">
-  <a class="brand" href="./">Move Coaching</a>
-  <ul class="nav-links"><li><a href="#services">Prestations</a></li><li><a href="#tarifs">Tarifs</a></li><li><a href="#horaires">Horaires</a></li><li><a href="#faq">FAQ</a></li></ul>
-  <a class="btn btn-sm btn-accent" href="#contact">Prendre rendez-vous</a>
-</div></header>
+<div class="qt-ex"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
+<header><div class="wrap"><a class="logo" href="./">Move<b>.</b>Coaching</a><nav><a href="#programmes">Programmes</a><a href="#tarifs">Tarifs</a><a href="#essai">Séance d'essai</a></nav><a class="btn" href="#essai" style="padding:11px 20px;font-size:14px">Essai offert</a></div></header>
 
-<main id="contenu">
-  <section class="hero"><div class="bg-grid" aria-hidden="true"></div>
-    <div class="wrap">
-      <span class="chip chip-ok reveal"><span class="dot"></span> 3 places pour les cours collectifs</span>
-      <h1 class="display reveal" style="--i:1">Bougez régulièrement, <em>sans vous forcer.</em></h1>
-      <p class="lede reveal" style="--i:2">Coaching individuel et petits groupes, à domicile, en salle ou en extérieur. Un programme adapté à votre rythme.</p>
-      <div class="hero-cta reveal" style="--i:3"><a class="btn btn-accent" href="#contact">Réserver une séance d&#x27;essai</a><a class="btn btn-ghost" href="#tarifs">Voir les tarifs</a></div>
-    </div>
-  </section>
-  <section class="section" id="services" style="padding-top:0"><div class="wrap">
-    <div class="section-head"><span class="eyebrow">Services</span><h2 class="h-section">Les formats</h2></div>
-    <div class="grid grid-3"><article class="card offer reveal" style="--i:0"><h3>Coaching individuel</h3><p>Un programme à votre mesure.</p><ul><li>Bilan de départ</li><li>Suivi entre les séances</li></ul></article><article class="card offer is-featured reveal" style="--i:1"><span class="chip chip-lime" style="align-self:flex-start">Le plus demandé</span><h3>Petit groupe</h3><p>Jusqu&#x27;à 6 personnes, ambiance motivante.</p><ul><li>En extérieur ou en salle</li><li>Tous niveaux</li></ul></article><article class="card offer reveal" style="--i:2"><h3>Remise en forme</h3><p>Reprise douce après une pause.</p><ul><li>Rythme progressif</li><li>Conseils du quotidien</li></ul></article></div>
-  </div></section>
-  <section class="section" id="tarifs" style="background:var(--bg-2)"><div class="wrap two">
-    <div><span class="eyebrow">Tarifs</span><h2 class="h-section" style="margin:var(--s-4) 0">Des tarifs simples</h2><p class="lede">Une séance d&#x27;essai pour se rencontrer. Pour un problème de santé, avis médical conseillé avant de commencer.</p></div>
-    <div class="price-list reveal"><div class="price-row"><div><b>Séance individuelle</b><small>1 h</small></div><span class="amount">50 €</span></div><div class="price-row"><div><b>Séance en groupe</b><small>1 h</small></div><span class="amount">15 €</span></div><div class="price-row"><div><b>Pack 10 séances</b><small>individuel</small></div><span class="amount">450 €</span></div></div>
-  </div></section>
-  <section class="section" id="horaires"><div class="wrap two">
-    <div><span class="eyebrow">Horaires</span><h2 class="h-section" style="margin:var(--s-4) 0">Quand me trouver</h2><p class="lede">Séances à domicile, en salle partenaire ou au parc.</p></div>
-    <table class="hours reveal"><caption class="muted" style="text-align:left;padding-bottom:8px">Horaires d'ouverture</caption><tr><td>Lundi – Vendredi</td><td>7 h – 20 h</td></tr><tr><td>Samedi</td><td>8 h – 12 h</td></tr><tr><td>Dimanche</td><td>Fermé</td></tr></table>
-  </div></section>
-  <section class="section" id="faq" style="padding-top:0"><div class="wrap faq-grid">
-    <div class="section-head"><span class="eyebrow">FAQ</span><h2 class="h-section">Questions fréquentes</h2></div>
-    <div class="faq"><details><summary>Faut-il être sportif ?</summary><p>Non, on part de votre niveau.</p></details><details><summary>Quel matériel ?</summary><p>Tenue de sport, le reste est fourni.</p></details><details><summary>Et en cas de pluie ?</summary><p>Séance repliée en salle ou reportée.</p></details></div>
-  </div></section>
-  <section class="section" id="contact" style="padding-top:0"><div class="wrap" style="max-width:820px">
-    <div class="cta-band">
-      <span class="eyebrow" style="color:var(--lime)">Contact</span>
-      <h2 style="margin:var(--s-4) 0">Réservez votre créneau</h2>
-      <p>Indiquez la prestation et deux créneaux possibles : confirmation sous 24 h.</p>
-      <form class="form" style="background:var(--surface);color:var(--ink);padding:var(--s-5);border-radius:var(--r-lg);margin-top:var(--s-5)">
-        <div class="form-grid"><div class="field"><label for="n">Nom</label><input id="n" name="nom" autocomplete="name" required></div><div class="field"><label for="t">Téléphone ou e-mail</label><input id="t" name="contact" required></div></div><div class="field"><label for="p">Prestation</label><select id="p" name="prestation"><option>Séance individuelle</option><option>Séance en groupe</option><option>Pack 10 séances</option></select></div><div class="field"><label for="m">Créneaux souhaités</label><textarea id="m" name="message" rows="3" required></textarea></div>
-        <button class="btn btn-accent" type="submit">Envoyer ma demande</button>
-      </form>
-    </div>
-  </div></section>
+<main>
+<section class="hero"><div class="wrap"><h1>Bouge.<span>Progresse.</span><s>Dure.</s></h1>
+  <p>Coaching sportif individuel et en petit groupe, à domicile, en salle ou en plein air. Un programme à votre niveau, des séances qui donnent envie de revenir.</p>
+  <div class="cta"><a class="btn" href="#essai">Réserver ma séance d'essai</a><a class="btn o" href="#programmes">Voir les programmes</a></div></div></section>
+<div class="tick" aria-hidden="true"><div><span>Cardio</span>✦<span>Force</span>✦<span>Mobilité</span>✦<span>Énergie</span>✦<span>Régularité</span>✦<span>Cardio</span>✦<span>Force</span>✦<span>Mobilité</span>✦<span>Énergie</span>✦<span>Régularité</span>✦</div></div>
+
+<section id="programmes"><div class="wrap"><h2 class="h2 os">Trois façons <span>de s'y mettre.</span></h2>
+  <div class="prog">
+    <article class="pc"><span class="no">01</span><h3>Coaching solo</h3><p>Toi, moi, un programme sur mesure.</p><ul><li>Bilan de départ</li><li>Objectifs clairs</li><li>Suivi entre les séances</li></ul></article>
+    <article class="pc"><span class="no">02</span><h3>Petit groupe</h3><p>Jusqu'à 6 personnes, ambiance motivante.</p><ul><li>En extérieur ou en salle</li><li>Tous niveaux</li><li>Tarif plus doux</li></ul></article>
+    <article class="pc"><span class="no">03</span><h3>Reprise douce</h3><p>Pour recommencer sans te blesser.</p><ul><li>Rythme progressif</li><li>Exercices du quotidien</li><li>Avis médical conseillé avant de démarrer</li></ul></article>
+  </div></div></section>
+
+<section style="padding-top:0"><div class="wrap"><div class="nums"><div><b>3</b><span>formats</span></div><div><b>1 h</b><span>par séance</span></div><div><b>6</b><span>max. en groupe</span></div><div><b>0</b><span>engagement pour l'essai</span></div></div></div></section>
+
+<section id="tarifs"><div class="wrap"><h2 class="h2 os">Des tarifs <span>sans piège.</span></h2>
+  <div class="pr">
+    <div class="pt"><h3>À la séance</h3><div class="p">50 €</div><small>1 heure, en solo · tarif d'exemple</small><ul><li>Programme adapté</li><li>Lieu à choisir</li><li>Sans engagement</li></ul><a class="btn o" href="#essai">Réserver</a></div>
+    <div class="pt f"><h3>Pack 10 séances</h3><div class="p">450 €</div><small>soit 45 € la séance</small><ul><li>Bilan de départ inclus</li><li>Suivi entre les séances</li><li>Valable 4 mois</li></ul><a class="btn" href="#essai">Je prends le pack</a></div>
+    <div class="pt"><h3>En groupe</h3><div class="p">15 €</div><small>1 heure, par personne</small><ul><li>6 personnes maximum</li><li>Extérieur ou salle</li><li>Tous niveaux</li></ul><a class="btn o" href="#essai">Rejoindre</a></div>
+  </div></div></section>
+
+<section class="ct" id="essai"><div class="wrap grid"><div><h2 class="h2 os" style="margin-bottom:18px">Ta séance <span>d'essai.</span></h2><p style="color:#cfcfc8;font-size:19px">Dis-moi où tu en es et ce que tu veux. Je te propose un créneau pour une première séance, sans engagement.</p></div>
+  <form><input placeholder="Ton prénom" aria-label="Prénom" required><input placeholder="Téléphone ou e-mail" aria-label="Contact" required><select aria-label="Objectif"><option>Perdre du poids</option><option>Prendre du muscle</option><option>Reprendre le sport</option><option>Préparer une course</option></select><textarea rows="3" placeholder="Ton niveau, tes contraintes, tes blessures éventuelles" aria-label="Message"></textarea><button class="btn" type="submit">Je me lance</button></form></div></section>
 </main>
-<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
-  <span>© <span data-year>2026</span> Move Coaching (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span>
-  <span><a href="../">Autres exemples</a> · Site réalisé par <a href="https://ikeupods-del.github.io/Quentools/">QuenTools</a></span>
-</div></div></footer>
-<script src="../../assets/qt.js" defer></script>
-<script>document.addEventListener('submit',function(e){e.preventDefault();var n=e.target.querySelector('.demo-note');if(!n){n=document.createElement('p');n.className='demo-note';e.target.appendChild(n)}n.textContent='Démonstration : ce formulaire n\u2019envoie rien. Sur un vrai site, la demande arrive directement chez le professionnel.'});</script>
+<footer><div class="wrap"><span>© <span data-year>2026</span> Move Coaching (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
+<script src="../ex.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,4 @@
+/* Bandeau commun des exemples : signale qu'il s'agit d'un exemple fictif (ne pas retirer). */
+.qt-ex{position:relative;z-index:50;background:#14121c;color:#fff;font:600 13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:center;padding:9px 12px}
+.qt-ex a{color:#d9f56b;text-decoration:none}.qt-ex a:hover{text-decoration:underline}
+.qt-note{margin-top:12px;padding:10px 14px;border-radius:10px;background:rgba(127,127,127,.15);font:500 14px/1.4 system-ui,sans-serif}

@@ -3,66 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cuisine en 1 heure · exemple de site (Formation en ligne)</title>
-<meta name="description" content="Exemple fictif de site pour formation en ligne, réalisé par QuenTools.">
+<title>Cuisine en 1 heure · exemple de page de vente (e-book)</title>
+<meta name="description" content="Exemple fictif de page de vente pour un e-book, réalisé par QuenTools.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
-<link rel="preload" href="../../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../../assets/qt.css">
+<link rel="preload" href="../../assets/fonts/ex/space-grotesk-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../ex.css">
 <style>
-  :root{--accent:#4f46e5;--accent-soft:#e0e7ff;--lime:#d9f56b}
-  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#a5b4fc;--accent-soft:#1c1d4a}}
-  .ph{aspect-ratio:4/3;border-radius:var(--r-lg);display:grid;place-items:center;font-size:clamp(2.4rem,6vw,3.6rem);background:linear-gradient(135deg,var(--accent-soft),var(--bg-2));border:1px solid var(--line)}
-  .two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-6);align-items:start}@media (max-width:760px){.two{grid-template-columns:1fr}}
-  .price-list{display:grid;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}
-  .price-row{display:flex;gap:var(--s-4);justify-content:space-between;align-items:baseline;padding:18px 22px;border-top:1px solid var(--line)}
-  .price-row:first-child{border-top:0}.price-row b{font-weight:600}.price-row small{display:block;color:var(--muted)}.price-row .amount{font:700 var(--t-lg)/1 var(--f-display);white-space:nowrap}
-  .hours{width:100%;border-collapse:collapse}.hours td{padding:10px 0;border-top:1px solid var(--line)}.hours td:last-child{text-align:right;color:var(--muted)}
-  .today{padding:var(--s-6);border-radius:var(--r-xl);background:#1b1712;color:#f6efe6}.today h3{color:var(--lime);margin:0 0 var(--s-3)}.today p{color:#e9dfd2;margin:0 0 6px}
-  .dish{display:flex;gap:var(--s-4);justify-content:space-between;align-items:baseline;padding:14px 0;border-top:1px solid var(--line)}
-  .dish b{font-weight:600}.dish small{display:block;color:var(--muted)}.dish .amount{font:700 var(--t-md)/1 var(--f-display);white-space:nowrap}
-  .menu h3{margin:var(--s-5) 0 var(--s-2);font-size:var(--t-lg)}
-  .cover{aspect-ratio:3/4;max-width:340px;margin-inline:auto;border-radius:var(--r-lg);background:linear-gradient(150deg,var(--accent),#1b1340);color:#fff;display:grid;align-content:end;padding:28px;box-shadow:var(--sh-3);transform:rotate(2deg)}
-  .cover b{font:700 clamp(1.4rem,3vw,2rem)/1.1 var(--f-display)}.cover small{opacity:.8}
-  .toc{columns:2;column-gap:var(--s-6);padding:0;list-style:none;margin:0}@media (max-width:640px){.toc{columns:1}}.toc li{break-inside:avoid;padding:10px 0;border-top:1px solid var(--line)}
-  .cta-band form p,.cta-band form a{color:var(--muted)}
-  .demo-note{margin-top:var(--s-3);font-size:var(--t-sm)}
+@font-face{font-family:"Space Grotesk";src:url(../../assets/fonts/ex/space-grotesk-normal.woff2) format("woff2");font-weight:300 700;font-display:swap}
+:root{--bg:#07061a;--fg:#eceaff;--mut:#a7a3cf;--p:#7c5cff;--k:#ff5fa2;--c:#3de0ff;--glass:rgba(255,255,255,.06);--line:rgba(255,255,255,.12)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 17px/1.65 "Space Grotesk",system-ui,sans-serif;overflow-x:hidden}a{color:inherit}.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+.mesh{position:absolute;inset:0;height:900px;overflow:hidden;z-index:0;pointer-events:none}.mesh i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}.mesh i:nth-child(1){width:520px;height:520px;background:var(--p);left:-120px;top:-60px}.mesh i:nth-child(2){width:460px;height:460px;background:var(--k);right:-100px;top:60px;opacity:.4}.mesh i:nth-child(3){width:380px;height:380px;background:var(--c);left:40%;top:340px;opacity:.28}
+header{position:relative;z-index:5}header .wrap{display:flex;justify-content:space-between;align-items:center;height:76px}.logo{font-weight:700;font-size:19px;text-decoration:none}.logo b{background:linear-gradient(90deg,var(--c),var(--k));-webkit-background-clip:text;background-clip:text;color:transparent}nav a{margin-left:26px;text-decoration:none;color:var(--mut);font-size:15px}nav a:hover{color:#fff}
+.btn{display:inline-block;border:0;cursor:pointer;background:linear-gradient(90deg,var(--p),var(--k));color:#fff;font:600 16px "Space Grotesk",sans-serif;padding:15px 28px;border-radius:14px;text-decoration:none;box-shadow:0 10px 30px rgba(124,92,255,.4);transition:.2s}.btn:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(255,95,162,.4)}.btn.g{background:var(--glass);box-shadow:none;border:1px solid var(--line)}
+.hero{position:relative;z-index:2;padding:64px 0 90px}.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:50px;align-items:center}
+.pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:var(--glass);border-radius:999px;padding:7px 16px;font-size:14px;color:var(--mut)}.pill b{width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 12px var(--c)}
+.hero h1{font-size:clamp(2.6rem,6vw,5rem);line-height:1;letter-spacing:-.04em;font-weight:700;margin:22px 0 20px}.hero h1 span{background:linear-gradient(90deg,var(--c),var(--p) 50%,var(--k));-webkit-background-clip:text;background-clip:text;color:transparent}.hero p{font-size:19px;color:var(--mut);max-width:46ch;margin:0 0 30px}
+.book{perspective:900px;display:grid;place-items:center}.cover{width:min(300px,80%);aspect-ratio:3/4;border-radius:14px;background:linear-gradient(150deg,#1b1650,#4a2a9c 55%,#ff5fa2);transform:rotateY(-18deg) rotateX(4deg);box-shadow:30px 30px 70px rgba(0,0,0,.5),inset 4px 0 0 rgba(255,255,255,.2);padding:26px;display:flex;flex-direction:column;justify-content:space-between;position:relative}.cover::after{content:"";position:absolute;right:-12px;top:8px;bottom:8px;width:12px;background:repeating-linear-gradient(#e8e6ff 0 2px,#bfbce6 2px 4px);border-radius:0 4px 4px 0;transform:skewY(-2deg)}
+.cover small{letter-spacing:.2em;text-transform:uppercase;font-size:11px;opacity:.8}.cover b{font-size:30px;line-height:1.05;letter-spacing:-.03em}.cover .em{font-size:60px}
+section.s{position:relative;z-index:2;padding:80px 0}h2.t{font-size:clamp(2rem,4.4vw,3.2rem);line-height:1.05;letter-spacing:-.03em;margin:0 0 12px}.sub{color:var(--mut);max-width:56ch;margin:0 0 40px}
+.bento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:minmax(150px,auto);gap:16px}.bx{background:var(--glass);border:1px solid var(--line);border-radius:22px;padding:26px;backdrop-filter:blur(8px)}.bx h3{margin:0 0 6px;font-size:20px}.bx p{margin:0;color:var(--mut);font-size:15px}.bx .e{font-size:34px;display:block;margin-bottom:10px}.w2{grid-column:span 2}.h2{grid-row:span 2}.hl{background:linear-gradient(140deg,rgba(124,92,255,.35),rgba(255,95,162,.25))}
+.toc{counter-reset:c;display:grid;gap:10px}.toc details{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px 22px;counter-increment:c}.toc summary{cursor:pointer;font-weight:600;list-style:none;display:flex;gap:14px;align-items:center}.toc summary::before{content:"0" counter(c);color:var(--c);font-variant-numeric:tabular-nums}.toc summary::after{content:"+";margin-left:auto;color:var(--mut);font-size:22px}.toc details[open] summary::after{content:"–"}.toc p{margin:10px 0 0 34px;color:var(--mut);font-size:15px}
+.buy{text-align:center;max-width:520px;margin:0 auto;padding:42px 30px;border-radius:30px;background:linear-gradient(180deg,rgba(124,92,255,.22),rgba(255,255,255,.04));border:1px solid rgba(124,92,255,.5);box-shadow:0 30px 80px rgba(124,92,255,.25)}.buy .pr{font-size:76px;font-weight:700;letter-spacing:-.05em;line-height:1;margin:14px 0 4px}.buy small{color:var(--mut)}.buy ul{list-style:none;padding:0;margin:22px 0;text-align:left;font-size:15px}.buy li{padding:7px 0;border-top:1px solid var(--line)}.buy li::before{content:"✓ ";color:var(--c)}
+.faq{max-width:760px;margin:0 auto}.faq details{border-bottom:1px solid var(--line);padding:18px 0}.faq summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between}.faq summary::after{content:"+";color:var(--c);font-size:22px}.faq details[open] summary::after{content:"–"}.faq p{margin:10px 0 0;color:var(--mut)}
+footer{position:relative;z-index:2;border-top:1px solid var(--line);padding:30px 0;font-size:14px;color:var(--mut)}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
+@media (max-width:860px){nav{display:none}.hero .wrap{grid-template-columns:1fr}.bento{grid-template-columns:1fr 1fr}.w2{grid-column:span 2}.h2{grid-row:auto}.cover{transform:none}}
+@media (max-width:520px){.bento{grid-template-columns:1fr}.w2{grid-column:auto}}
 </style>
 </head>
 <body>
-<div class="announce"><div class="wrap"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div></div>
-<a class="skip" href="#contenu">Aller au contenu</a>
-<header class="nav"><div class="wrap">
-  <a class="brand" href="./">Cuisine en 1 heure</a>
-  <ul class="nav-links"><li><a href="#programme">Au programme</a></li><li><a href="#faq">FAQ</a></li></ul>
-  <a class="btn btn-sm btn-accent" href="#acheter">Acheter</a>
-</div></header>
+<div class="qt-ex"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
+<div class="mesh" aria-hidden="true"><i></i><i></i><i></i></div>
+<header><div class="wrap"><a class="logo" href="./">Cuisine<b>.en1h</b></a><nav><a href="#contenu">Au programme</a><a href="#inclus">Ce que vous recevez</a><a href="#faq">FAQ</a></nav><a class="btn g" href="#acheter" style="padding:11px 20px;font-size:14px">Obtenir le guide</a></div></header>
 
-<main id="contenu">
-  <section class="hero"><div class="bg-grid" aria-hidden="true"></div>
-    <div class="wrap two" style="align-items:center">
-      <div><span class="chip chip-accent reveal">E-book · PDF · accès immédiat</span>
-        <h1 class="display reveal" style="--i:1">Préparer ses repas de la semaine <em>en une heure.</em></h1>
-        <p class="lede reveal" style="--i:2">Pour ceux qui n&#x27;ont pas le temps de cuisiner chaque soir : une méthode simple, des listes de courses et des recettes à doubler.</p>
-        <div class="hero-cta reveal" style="--i:3"><a class="btn btn-accent" href="#acheter">Obtenir le guide · 12 €</a><a class="btn btn-ghost" href="#programme">Voir le programme</a></div></div>
-      <div class="cover reveal" style="--i:2"><small>Guide pratique</small><b>Cuisine en 1 heure</b><small>Exemple fictif</small></div>
-    </div>
-  </section>
-  <section class="section" style="padding-top:0"><div class="wrap"><div class="section-head"><span class="eyebrow">Le problème</span><h2 class="h-section">Ce qui vous bloque aujourd&#x27;hui</h2></div><div class="grid grid-3"><article class="card reveal" style="--i:0"><h3>Pas le temps</h3><p>Le soir, on finit par commander ou grignoter.</p></article><article class="card reveal" style="--i:1"><h3>Pas d&#x27;idées</h3><p>On refait toujours les mêmes plats.</p></article><article class="card reveal" style="--i:2"><h3>Du gaspillage</h3><p>On jette des restes faute de les avoir prévus.</p></article></div></div></section>
-  <section class="section" id="programme" style="background:var(--bg-2)"><div class="wrap"><div class="section-head"><span class="eyebrow">Au programme</span><h2 class="h-section">Ce que vous allez apprendre</h2></div><ol class="toc reveal"><li><b>Chapitre 1</b> : planifier sa semaine en 10 minutes</li><li><b>Chapitre 2</b> : la liste de courses qui évite les oublis</li><li><b>Chapitre 3</b> : cuisiner en lot sans s&#x27;ennuyer</li><li><b>Chapitre 4</b> : conserver et réchauffer sans perdre le goût</li></ol></div></section>
-  <section class="section" id="acheter"><div class="wrap" style="max-width:520px"><div class="card reveal" style="padding:var(--s-6);text-align:center"><span class="chip chip-ok">Accès immédiat</span>
-    <div class="display" style="margin:var(--s-3) 0">12 €</div><p class="muted">Paiement unique · PDF · exemple fictif</p>
-    <a class="btn btn-accent" href="#acheter" style="width:100%">Acheter maintenant</a><p class="demo-note muted">Démonstration : aucun achat possible sur cet exemple.</p></div></div></section>
-  <section class="section" id="faq" style="padding-top:0"><div class="wrap faq-grid">
-    <div class="section-head"><span class="eyebrow">FAQ</span><h2 class="h-section">Questions fréquentes</h2></div>
-    <div class="faq"><details><summary>Sous quelle forme le reçoit-on ?</summary><p>En PDF, par lien de téléchargement.</p></details><details><summary>Convient-il aux débutants ?</summary><p>Oui, les étapes sont expliquées.</p></details><details><summary>Y a-t-il des recettes ?</summary><p>Oui, avec les quantités à doubler.</p></details></div>
-  </div></section>
+<main>
+<section class="hero"><div class="wrap">
+  <div><span class="pill"><b></b>E-book · PDF · accès immédiat</span>
+    <h1>Préparez vos repas de la semaine <span>en une heure.</span></h1>
+    <p>Pour ceux qui n'ont pas le temps de cuisiner chaque soir : une méthode simple, des listes de courses et des recettes à doubler. Moins de stress, moins de gaspillage.</p>
+    <a class="btn" href="#acheter">Obtenir le guide · 12 €</a> <a class="btn g" href="#contenu" style="margin-left:8px">Voir le programme</a></div>
+  <div class="book" aria-hidden="true"><div class="cover"><small>Guide pratique</small><span class="em">🥘</span><b>Cuisine<br>en 1 heure</b><small>Exemple fictif</small></div></div>
+</div></section>
+
+<section class="s" id="inclus"><div class="wrap"><h2 class="t">Tout pour s'organiser, sans prise de tête.</h2><p class="sub">Un guide court, concret, à appliquer dès le week-end prochain.</p>
+  <div class="bento">
+    <div class="bx w2 h2 hl"><span class="e">📅</span><h3>La méthode en 10 minutes</h3><p>Planifier ses repas de la semaine à partir de ce qu'on aime et de ce qu'on a déjà. Un tableau simple, à imprimer ou à remplir sur téléphone.</p></div>
+    <div class="bx"><span class="e">🛒</span><h3>Listes de courses</h3><p>Prêtes à cocher, classées par rayon.</p></div>
+    <div class="bx"><span class="e">🍲</span><h3>Recettes à doubler</h3><p>Quantités indiquées pour 2 et pour 4.</p></div>
+    <div class="bx w2"><span class="e">🧊</span><h3>Conserver et réchauffer</h3><p>Combien de temps garder, comment réchauffer sans perdre le goût.</p></div>
+  </div></div></section>
+
+<section class="s" id="contenu"><div class="wrap" style="max-width:820px"><h2 class="t">Au programme</h2><p class="sub">Quatre chapitres, à lire en une soirée.</p>
+  <div class="toc"><details open><summary>Planifier sa semaine</summary><p>Choisir ses repas, répartir les jours, repérer ce qui se cuisine en lot.</p></details><details><summary>La liste de courses qui évite les oublis</summary><p>Une trame par rayon et par budget.</p></details><details><summary>Cuisiner en lot sans s'ennuyer</summary><p>Varier les assaisonnements à partir d'une même base.</p></details><details><summary>Conserver et réchauffer</summary><p>Durées de conservation courantes et astuces.</p></details></div></div></section>
+
+<section class="s" id="acheter"><div class="wrap"><div class="buy"><span class="pill"><b></b>Accès immédiat</span><div class="pr">12 €</div><small>Paiement unique · PDF · exemple fictif</small>
+  <ul><li>Le guide en PDF (4 chapitres)</li><li>Les listes de courses imprimables</li><li>Les recettes à doubler</li></ul><a class="btn" href="#acheter" style="width:100%" onclick="return false">Acheter maintenant</a><p class="qt-note">Démonstration : aucun achat possible sur cet exemple.</p></div></div></section>
+
+<section class="s" id="faq" style="padding-top:20px"><div class="wrap faq"><h2 class="t">Questions fréquentes</h2>
+  <details><summary>Sous quelle forme le reçoit-on ?</summary><p>En PDF, par un lien de téléchargement envoyé par e-mail.</p></details>
+  <details><summary>Convient-il aux débutants ?</summary><p>Oui, chaque étape est expliquée simplement.</p></details>
+  <details><summary>Puis-je l'imprimer ?</summary><p>Oui, pour votre usage personnel.</p></details></div></section>
 </main>
-<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
-  <span>© <span data-year>2026</span> Cuisine en 1 heure (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span>
-  <span><a href="../">Autres exemples</a> · Site réalisé par <a href="https://ikeupods-del.github.io/Quentools/">QuenTools</a></span>
-</div></div></footer>
-<script src="../../assets/qt.js" defer></script>
-<script>document.addEventListener('submit',function(e){e.preventDefault();var n=e.target.querySelector('.demo-note');if(!n){n=document.createElement('p');n.className='demo-note';e.target.appendChild(n)}n.textContent='Démonstration : ce formulaire n\u2019envoie rien. Sur un vrai site, la demande arrive directement chez le professionnel.'});</script>
+<footer><div class="wrap"><span>© <span data-year>2026</span> Cuisine en 1 heure (exemple fictif)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
+<script src="../ex.js" defer></script>
 </body>
 </html>
