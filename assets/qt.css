@@ -257,3 +257,6 @@ fieldset.field{border:0;padding:0;margin:0}
 /* ---------- 10. Bandeau d'annonce (réglé dans l'administration) ---------- */
 .announce{background:var(--ink);color:var(--bg);font-size:var(--t-sm);font-weight:600;text-align:center;padding:10px 0}
 .announce a{color:var(--lime);text-decoration:none}.announce a:hover{text-decoration:underline}
+
+.price{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;margin:0}.price b{font:700 var(--t-2xl,2rem)/1.1 var(--f-display);letter-spacing:-.03em;color:inherit}.price span{font-size:var(--t-sm);opacity:.7}
+.offer p.price{color:var(--ink)}.offer.is-featured p.price{color:var(--bg)}
