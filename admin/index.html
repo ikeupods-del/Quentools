@@ -99,7 +99,24 @@ const demo = {
   ], site: { announceOn: false, announce: '', announceUrl: '', available: true, availText: '' }
 };
 const ms = v => !v ? 0 : typeof v === 'string' ? Date.parse(v) : v.toMillis ? v.toMillis() : +v;
-let notes = {}, threads = {}, openId = null, rulesOld = false;
+let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false;
+async function loadLeads() {
+  leadsErr = false;
+  if (DEMO) { leads = [{ name: 'Camille Durand', email: 'camille@example.com', at: new Date(), source: 'ebook' }, { name: 'Yanis K.', email: 'yanis@example.com', at: new Date(Date.now() - 864e5), source: 'ebook' }]; return; }
+  try {
+    const { Fs, db } = await fb();
+    const r = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_leads'), Fs.orderBy('at', 'desc'), Fs.limit(2000)));
+    leads = r.docs.map(d => d.data());
+  } catch (e) { leads = []; leadsErr = true; }
+}
+function viewContacts() {
+  if (leadsErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Règles à mettre à jour</h2><p>Les contacts de l’e-book s’enregistrent dans une collection protégée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><button class="btn btn-accent" data-tab="regles">Voir les règles</button></section>`;
+  const week = Date.now() - 7 * 864e5;
+  return `<div class="kpis"><div><b>${leads.length}</b><span>contacts inscrits à l’e-book</span></div><div><b>${leads.filter(l => ms(l.at) > week).length}</b><span>sur les 7 derniers jours</span></div></div>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--s-4)"><button class="btn btn-sm btn-accent" data-do="copy-mails">Copier les e-mails</button><button class="btn btn-sm btn-ghost" data-do="csv">Exporter en CSV</button></div>
+    ${leads.length ? leads.map(l => `<article class="card" style="padding:var(--s-4);margin-bottom:var(--s-3);display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center"><div><b>${esc(l.name || 'Sans nom')}</b><div class="muted" style="overflow-wrap:anywhere">${esc(l.email)}</div></div><span class="chip">${ms(l.at) ? new Date(ms(l.at)).toLocaleDateString('fr-FR') : ''} · ${esc(l.source || '')}</span></article>`).join('') : '<div class="card empty">Aucun contact pour l’instant. Ils apparaissent ici dès qu’un visiteur s’inscrit pour recevoir l’e-book.</div>'}
+    <p class="muted" style="font-size:var(--t-xs)">Chaque contact a accepté de recevoir l’e-book et des nouvelles de QuenTools. Supprimez-les sur demande depuis la console Firebase (collection qt_leads).</p>`;
+}
 async function load() {
   if (DEMO) { items = demo.items; site = demo.site; return; }
   const { Fs, db } = await fb();
@@ -159,11 +176,11 @@ function shell(body) {
   const t = (k, l) => `<button role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`;
   app.innerHTML = `<div class="adm-head"><div><span class="eyebrow">Tableau de bord</span><h1 class="h-section" style="margin:var(--s-2) 0 0">Bonjour 👋</h1></div>
     <div class="row" style="display:flex;gap:8px;align-items:center"><span class="muted" style="font-size:var(--t-xs)">${esc(DEMO ? 'Démonstration' : user && user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></div>
-    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('estimer', 'Estimer un prix')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}${t('regles', 'Règles')}${rulesOld ? '<span class="count">!</span>' : ''}</div>
+    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('estimer', 'Estimer un prix')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}${t('contacts', 'Contacts')}${t('regles', 'Règles')}${rulesOld ? '<span class="count">!</span>' : ''}</div>
     <div id="toast" role="status" aria-live="polite"></div>${body}`;
 }
 function render() {
-  shell(tab === 'demandes' ? viewRequests() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : viewLinks());
+  shell(tab === 'demandes' ? viewRequests() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : viewLinks());
   if (tab === 'estimer') estimate();
 }
 
@@ -173,6 +190,13 @@ function rulesText() {
 function qtClient(d) { return request.auth != null && request.auth.token.email_verified == true && d.emailLower == request.auth.token.email.lower(); }
 match /qt_admin/{doc} { allow read: if true; allow write: if qtAdmin(); }
 match /qt_notes/{id} { allow read, write: if qtAdmin(); }
+match /qt_leads/{id} {
+  allow create, update: if request.auth != null && request.auth.token.email_verified == true && id == request.auth.token.email.lower()
+    && request.resource.data.keys().hasOnly(['email','name','at','source','consent'])
+    && request.resource.data.consent == true && request.resource.data.at is timestamp
+    && request.resource.data.email == request.auth.token.email;
+  allow read, delete: if qtAdmin();
+}
 match /qt_devis/{id} {
   allow create: if request.resource.data.keys().hasOnly(['type','besoin','delai','budget','nom','email','emailLower','tel','status','at'])
     && request.resource.data.status == 'nouveau' && request.resource.data.at is timestamp
@@ -324,13 +348,19 @@ const mailto = (x, body) => `mailto:${encodeURIComponent(x.email)}?subject=${enc
 const fail = e => toast(/permission/i.test(e && (e.code || e.message)) ? 'Refusé : vérifiez les règles Firestore.' : 'Enregistrement impossible (connexion ?)', true);
 app.addEventListener('click', async e => {
   const b = e.target.closest('[data-tab],[data-filter],[data-do]'); if (!b) return;
-  if (b.dataset.tab) { tab = b.dataset.tab; if (tab !== 'estimer') estFor = null; return render(); }
+  if (b.dataset.tab) { tab = b.dataset.tab; if (tab !== 'estimer') estFor = null; if (tab === 'contacts') { await loadLeads(); } return render(); }
   if (b.dataset.filter) { filter = b.dataset.filter; return render(); }
   const card = b.closest('.req'), x = card && items.find(i => i.id === card.dataset.id), d = b.dataset.do;
   try {
     if (d === 'logout') { const { Au, auth } = await fb(); await Au.signOut(auth); }
     else if (d === 'reload') { await load(); render(); }
     else if (d === 'copy-rules') copy(rulesText());
+    else if (d === 'copy-mails') copy(leads.map(l => l.email).join(', '));
+    else if (d === 'csv') {
+      const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      const csv = '\ufeffnom;email;date;source\n' + leads.map(l => [l.name, l.email, ms(l.at) ? new Date(ms(l.at)).toISOString().slice(0, 10) : '', l.source].map(q).join(';')).join('\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'contacts-quentools.csv'; a.click();
+    }
     else if (d === 'thread') {
       if (openId === x.id) { openId = null; return render(); }
       openId = x.id; threads[x.id] = null; render();
