@@ -40,6 +40,7 @@
   <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
 </svg>
 
+<div class="announce" id="qt-announce" hidden></div>
 <header class="nav">
   <div class="wrap">
     <a class="brand" href="./" aria-label="QuenTools, accueil"><svg class="brand-mark"><use href="#qt-mark"/></svg>QuenTools</a>
@@ -59,7 +60,7 @@
     <div class="bg-grid" aria-hidden="true"></div><div class="glow" aria-hidden="true"></div>
     <div class="wrap hero-grid">
       <div>
-        <span class="chip chip-ok reveal"><span class="dot"></span> 5 applications en ligne</span>
+        <span class="chip chip-ok reveal" id="qt-avail"><span class="dot"></span> 5 applications en ligne</span>
         <h1 class="display reveal" style="--i:1">Des outils simples qui font <em>gagner du temps</em>.</h1>
         <p class="lede reveal" style="--i:2">Je ne suis pas développeur. Pourtant, avec l’IA comme copilote, j’ai conçu et mis en ligne de vraies applications. Ici, je partage mes outils gratuits, je crée les vôtres, et je vous montre comment faire.</p>
         <div class="hero-cta reveal" style="--i:3">
@@ -253,7 +254,7 @@
       <div><h4>Légal</h4><ul><li><details><summary>Mentions et confidentialité</summary>
         <p style="margin-top:10px"><b>Éditeur :</b> QuenTools, site personnel édité par un particulier (non professionnel). Contact : TikTok @quentools.</p>
         <p><b>Hébergeur :</b> GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis (GitHub Pages).</p>
-        <p><b>Données :</b> ce site ne dépose aucun cookie, n’utilise aucune mesure d’audience et ne collecte aucune donnée, sauf ce que vous saisissez dans le formulaire de devis, utilisé uniquement pour vous répondre. Chaque outil précise dans ses réglages où il enregistre vos données.</p>
+        <p><b>Données :</b> ce site ne dépose aucun cookie, n’utilise aucune mesure d’audience et ne collecte aucune donnée, sauf ce que vous saisissez dans le formulaire de devis : enregistré chez Google Firebase (Union européenne ou États-Unis), lu uniquement par l’éditeur pour vous répondre, supprimé sur simple demande. Chaque outil précise dans ses réglages où il enregistre vos données.</p>
       </details></li></ul></div>
     </div>
     <div class="footer-bottom">
@@ -265,12 +266,27 @@
 
 <script src="assets/qt.js" defer></script>
 <script src="assets/qt-config.js"></script>
+<script src="assets/qt-cloud.js"></script>
 <script>
   // Coordonnées publiques : assets/qt-config.js (vide = bouton masqué).
-  const C = window.QT || {}, box = document.getElementById('contact-actions'), btns = ['<a class="btn btn-lime" href="devis/">Demander un devis</a>'];
-  if (C.email) btns.push(`<a class="btn btn-ghost" href="mailto:${C.email}?subject=${encodeURIComponent('Projet QuenTools')}">M’écrire</a>`);
-  if (C.tiktok) btns.push(`<a class="btn btn-ghost" href="https://www.tiktok.com/@${C.tiktok}" rel="noopener">Suivre et écrire sur TikTok</a>`);
-  box.innerHTML = btns.join('');
+  // Réglages modifiables dans /admin/ (annonce, disponibilité, coordonnées) ; sans réponse, les valeurs par défaut restent.
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const safe = u => /^(https:\/\/|mailto:|\.{0,2}\/|#|[a-z0-9-]+\/)/i.test(u || '') ? u : '';
+  function contacts(C) {
+    const btns = ['<a class="btn btn-lime" href="devis/">Demander un devis</a>'];
+    if (C.email) btns.push(`<a class="btn btn-ghost" href="mailto:${esc(C.email)}?subject=${encodeURIComponent('Projet QuenTools')}">M’écrire</a>`);
+    if (C.tiktok) btns.push(`<a class="btn btn-ghost" href="https://www.tiktok.com/@${encodeURIComponent(C.tiktok)}" rel="noopener">Suivre et écrire sur TikTok</a>`);
+    document.getElementById('contact-actions').innerHTML = btns.join('');
+  }
+  contacts(window.QT || {});
+  if (window.QTC) QTC.config().then(C => {
+    contacts(C); const s = C.site || {};
+    if (s.announceOn && s.announce) {
+      const a = document.getElementById('qt-announce'), u = safe(s.announceUrl);
+      a.innerHTML = `<div class="wrap">${u ? `<a href="${esc(u)}">${esc(s.announce)} →</a>` : esc(s.announce)}</div>`; a.hidden = false;
+    }
+    if (s.availText) { const c = document.getElementById('qt-avail'); c.className = 'chip reveal is-in ' + (s.available === false ? 'chip-accent' : 'chip-ok'); c.innerHTML = '<span class="dot"></span> ' + esc(s.availText); }
+  });
 </script>
 </body>
 </html>
