@@ -26,6 +26,9 @@
      GET  /admin/stats?days=30 → visites par jour, sources, écrans, actions (GoatCounter)   idem (secret GOATCOUNTER_TOKEN)
      POST /admin/support/delete {id}                                  idem
    Facultatif : RESEND_API_KEY (secret), SUPPORT_TO, SUPPORT_FROM → chaque message est aussi transmis par e-mail (resend.com).
+   Stripe (facultatif) : STRIPE_WEBHOOK_SECRET (SECRET, « whsec_… ») → route POST /stripe à déclarer dans Stripe (Développeurs → Webhooks,
+   événements checkout.session.completed, invoice.paid, customer.subscription.updated, customer.subscription.deleted, charge.refunded).
+   MIN_STRIPE_LIFETIME / MIN_STRIPE_YEAR (centimes, défaut 2999 / 1499).
    Abonnement annuel : déclencheur Cron (Cloudflare → Worker → Settings → Triggers → Cron, ex. « 0 8 * * * ») → rappel par e-mail
    entre 30 et 60 jours avant chaque reconduction (obligation d'information, Code de la consommation art. L215-1). Nécessite RESEND_API_KEY et CONFIRM_FROM.
    Documentation : wouf/docs/MAINTENANCE.md */
@@ -184,6 +187,61 @@ async function handleSubscription(p, env, uid, ref, per) {
   return { ok: true, until };
 }
 
+/* ---------- Stripe : paiements par carte (liens de paiement), signature vérifiée avec le secret du webhook ---------- */
+const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+async function stripeVerify(raw, header, secret) {
+  const parts = Object.fromEntries(String(header || '').split(',').map(x => x.split('=').map(y => y.trim())).filter(x => x.length === 2 && x[0] !== 'v1'));
+  const sigs = String(header || '').split(',').map(x => x.trim()).filter(x => x.startsWith('v1=')).map(x => x.slice(3)), t = parseInt(parts.t, 10);
+  if (!secret || !t || !sigs.length || Math.abs(Date.now() / 1000 - t) > 300) return false;
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const want = hex(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(t + '.' + raw)));
+  return sigs.some(s => s.length === want.length && [...s].every((c, i) => c === want[i]));
+}
+const unixDay = s => day(new Date(s * 1000));
+async function handleStripe(req, env) {
+  const raw = await req.text();
+  if (!raw || raw.length > 200000) throw new HttpError(400, 'Requête invalide');
+  if (!(await stripeVerify(raw, req.headers.get('Stripe-Signature'), env.STRIPE_WEBHOOK_SECRET))) throw new HttpError(400, 'Signature invalide');
+  const ev = JSON.parse(raw), o = (ev.data || {}).object || {};
+  if (await env.PAID.get('evt:' + ev.id)) return { ok: true, duplicate: true };
+  const done = async r => { await env.PAID.put('evt:' + ev.id, '1', { expirationTtl: 60 * 864e2 }); return r; };
+  const get = async uid => JSON.parse((await env.PAID.get('paid:' + uid)) || 'null');
+  if (ev.type === 'checkout.session.completed') {
+    const uid = o.client_reference_id, amount = +o.amount_total || 0, mail0 = mail((o.customer_details || {}).email || o.customer_email), name = (o.customer_details || {}).name || '';
+    if (!safeUid(uid) || o.payment_status !== 'paid' || String(o.currency).toLowerCase() !== 'eur') return done({ ok: false, reason: 'ignoré' });
+    const cur = await get(uid), base = { amount: (amount / 100).toFixed(2), currency: 'EUR', payerEmail: mail0, payerName: name, provider: 'stripe', txn: o.id, since: new Date().toISOString() };
+    if (o.mode === 'subscription') {
+      if (amount < +(env.MIN_STRIPE_YEAR || 1499) || !o.subscription) return done({ ok: false, reason: 'montant' });
+      await env.PAID.put('sub:' + o.subscription, uid);
+      if (cur && cur.active && isLifetime(cur)) return done({ ok: true, lifetime: true });
+      const until = cur && cur.subscrId === o.subscription && cur.until > addDays(day(new Date()), 300) ? cur.until : addPeriod(day(new Date()), 'y');
+      const rec = { ...base, active: true, plan: 'yearly', until, subscrId: o.subscription, cancelled: false };
+      rec.confirmMail = await confirmMail(env, mail0, name, 'yearly'); await env.PAID.put('paid:' + uid, JSON.stringify(rec)); return done({ ok: true, until });
+    }
+    if (amount < +(env.MIN_STRIPE_LIFETIME || 2999)) return done({ ok: false, reason: 'montant' });
+    if (o.payment_intent) await env.PAID.put('pi:' + o.payment_intent, uid);
+    const rec = { ...base, active: true, plan: 'lifetime' }; rec.confirmMail = await confirmMail(env, mail0, name, 'lifetime');
+    await env.PAID.put('paid:' + uid, JSON.stringify(rec)); return done({ ok: true });
+  }
+  if (ev.type === 'invoice.paid' && o.subscription) {   // renouvellement (et premier paiement) : accès jusqu'à la fin de la période facturée
+    const uid = await env.PAID.get('sub:' + o.subscription), cur = uid ? await get(uid) : null;
+    const end = Math.max(0, ...((o.lines || {}).data || []).map(l => +((l.period || {}).end) || 0)); if (!cur || !end || isLifetime(cur)) return done({ ok: false, reason: 'ignoré' });
+    const until = unixDay(end); await env.PAID.put('paid:' + uid, JSON.stringify({ ...cur, active: true, until: until > (cur.until || '') ? until : cur.until, lastPaymentAt: new Date().toISOString() }));
+    return done({ ok: true, until });
+  }
+  if ((ev.type === 'customer.subscription.updated' || ev.type === 'customer.subscription.deleted') && o.id) {
+    const uid = await env.PAID.get('sub:' + o.id), cur = uid ? await get(uid) : null; if (!cur || cur.subscrId !== o.id) return done({ ok: false, reason: 'ignoré' });
+    const cancelled = ev.type === 'customer.subscription.deleted' || !!o.cancel_at_period_end;
+    await env.PAID.put('paid:' + uid, JSON.stringify({ ...cur, cancelled, ...(o.current_period_end && !cancelled ? { until: unixDay(o.current_period_end) } : {}) })); return done({ ok: true, cancelled });
+  }
+  if (ev.type === 'charge.refunded' && o.payment_intent) {
+    const uid = await env.PAID.get('pi:' + o.payment_intent), cur = uid ? await get(uid) : null;
+    if (cur && o.refunded) await env.PAID.put('paid:' + uid, JSON.stringify({ ...cur, active: false, revokedAt: new Date().toISOString(), revokedBy: 'Refunded' }));
+    return done({ ok: true, revoked: !!(cur && o.refunded) });
+  }
+  return done({ ok: true, ignored: ev.type });
+}
+
 /* ---------- Rappel avant la reconduction d'un abonnement annuel (tâche planifiée quotidienne) ---------- */
 const frDate = iso => new Date(iso + 'T12:00:00Z').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 async function renewalReminders(env) {
@@ -309,6 +367,10 @@ async function handle(req, env) {
 export default {
   async fetch(req, env) {
     const origin = req.headers.get('Origin'), path = new URL(req.url).pathname;
+    if (path === '/stripe' && req.method === 'POST') {   // serveur Stripe : signature obligatoire ; 400 = Stripe réessaiera
+      try { return new Response(JSON.stringify(await handleStripe(req, env)), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
+      catch (e) { return new Response(JSON.stringify({ error: e.message }), { status: e.status || 500, headers: { 'Content-Type': 'application/json' } }); }
+    }
     if (path === '/ipn' && req.method === 'POST') {   // serveur PayPal : ni Origin ni CORS ; toujours répondre 200 sauf panne temporaire
       try { await handleIpn(req, env); return new Response('OK', { status: 200 }); }
       catch (e) { return new Response(e.status === 503 ? 'retry' : 'OK', { status: e.status === 503 ? 503 : 200 }); }

@@ -6,7 +6,7 @@
    à tout ce qu'il a saisi, seuls les nouveaux ajouts « Plus » sont soumis à l'abonnement. */
 window.WOUF_CONFIG = {
   appName: 'Wouf',
-  version: '1.20.1',
+  version: '1.21.0',
 
   billing: {
     enabled: false,            // ← INTERRUPTEUR GLOBAL : false = tout est gratuit ; true = Wouf Plus devient payant
@@ -26,6 +26,7 @@ window.WOUF_CONFIG = {
     // Nécessite l'adresse PayPal `payee` (compte professionnel) ; activation et renouvellements automatiques avec le relais `api`.
     // Le prix doit être ≥ MIN_YEAR_EUR du relais (14.99 par défaut). enabled: false = seulement l'achat à vie. Guide : MAINTENANCE, « Abonnement annuel ».
     yearly: { enabled: true, label: 'Wouf Plus annuel', price: '14,99 €', per: 'par an' },
+    trialDays: 7,              // essai gratuit de Wouf Plus (jours, une fois par carnet), proposé quand la vente est ouverte ; 0 = pas d'essai
     // Moyen de paiement proposé : 'paypal', 'stripe' ou 'both' (les deux, au choix de l'acheteur). Réglable dans Plus → Administration.
     provider: 'both',
     // Stripe : liens de paiement (Stripe → Liens de paiement), montants identiques aux prix ci-dessus ; portail client pour résilier seul.

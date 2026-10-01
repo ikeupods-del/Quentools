@@ -126,6 +126,7 @@ function buildICS() {
 
 /* Notification locale (quand l'app est ouverte) */
 async function maybeNotify() {
+  if (typeof syncBackgroundReminders === 'function') syncBackgroundReminders();
   if (!S.settings.notif || !('Notification' in window) || Notification.permission !== 'granted' || S.settings.lastNotif === today() || !S.dogs.length) return;
   const items = [];
   for (const d of S.dogs) for (const r of reminders(d.id)) if (r.days <= 7) items.push(`${d.name} : ${r.title} (${dueText(r.days)})`);

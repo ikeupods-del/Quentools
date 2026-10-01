@@ -52,7 +52,7 @@ const humanAge = birth => { const a = ageYears(birth); return a < 0.2 ? null : M
 function blank() {
   return {
     v: 1, dogs: [], events: [], weights: [], meds: [], medLog: {}, journal: [], expenses: [], docs: [], foods: [], contacts: [],
-    owner: { name: '', phone: '' }, grant: null, settings: { notif: false, lastNotif: '', lastMeteoNotif: '', lastBackup: '', home: null, noStats: false }, sub: null,
+    owner: { name: '', phone: '' }, grant: null, trial: null, refCode: '', settings: { notif: false, lastNotif: '', lastMeteoNotif: '', lastBackup: '', home: null, noStats: false }, sub: null,
     current: null, installedAt: today(), edu: {}, walks: [], names: [], updatedAt: 0, schema: SCHEMA
   };
 }
@@ -254,7 +254,7 @@ function grandfathered() {
 /* Wouf Plus offert par le propriétaire (admin.js) : relu à chaque connexion Google. */
 const grantActive = () => !!(S.grant && (S.grant.until === 'lifetime' || (S.grant.until && today() <= S.grant.until)));
 const subActive = () => grantActive() || !!(S.sub && S.sub.active && (S.sub.lifetime || (S.sub.until && Date.now() < Date.parse(S.sub.until))));
-function plus() { if (PREVIEW === 'free') return false; if (PREVIEW === 'plus') return true; return isFreeWindow() || grandfathered() || subActive(); }
+function plus() { if (PREVIEW === 'free') return false; if (PREVIEW === 'plus') return true; return isFreeWindow() || grandfathered() || subActive() || !!(S.trial && S.trial.until && today() <= S.trial.until); }
 const isPremium = f => (BILL.premium || []).includes(f);
 const allowed = f => plus() || !isPremium(f);
 /* Formule gratuite : 1 chien + 1 chat. Plus : autant d'animaux que l'on veut. */
