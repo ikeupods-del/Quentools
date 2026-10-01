@@ -19,7 +19,7 @@ Wouf — espèces : chien 🐶 et chat 🐱 (gratuit : 1 chien + 1 chat ; Plus :
 - définit : presetsFor humanAgeOf SPECIES spOf CAT_BREEDS CAT_PRESETS TOXICS_CAT FIRST_AID_CAT URGENT_CAT TIPS_SENIOR_CAT TIPS_CAT NUT_FACTORS_DOG NUT_FACTORS_CAT nutFactorsOf toxicsOf firstAidOf urgentOf tipsOf
 - dépend de : data.js core.js health.js
 
-### wouf/core.js (279 l.)
+### wouf/core.js (281 l.)
 Wouf — noyau : outils, stockage, fenêtres, formulaires, abonnement.
 - définit : logError ageMonths ageText blank migrate load flush save idbOp loadImage imageBlob squarePhoto ownerCheck statsUrl track toast sheet closeSheet ask fieldHTML readForm openForm lineChart barChart grandfathered plus canAddPet canAddDoc gate download shareOrDownload CFG BILL KEY SCHEMA $ $$ esc uid pad iso today parseD addDays diffDays fmtDate fmtMoney fmtKg num sum ageYears humanAge S dog idb fput fget fdel blobToDataURL STATS_SRC …
 - dépend de : cloud.js noms.js business.js croissance.js main.js
@@ -177,7 +177,7 @@ Wouf — exploitation et vente : achat unique « à vie » et abonnement annuel 
 - définit : errorLog diagnostics api authHeaders applySub refreshSub paypalUrl paypalSubUrl stripeUrl consentText buySheet soonSheet paywall legalDoc checkVersion showUpdateBanner initUpdates LEGAL planOf yearlyPlan subPlan isPriority supportTo ctaLabel nDog CHANGELOG FEATURES planLine noSubText autoOn autoOnFor PAY_LINK STRIPE_LINK PAYEE STRIPE useMethod paypalReady stripeReady payMethods payReady rewardBuyable METHOD_NAME yearlyBuyable pickedPlan pickedMethod paypalCancelUrl NAV FAQ faqList payProviders payLabel orTbd vNewer
 - dépend de : species.js core.js health.js screens.js lessons.js educ.js parcours.js cloud.js admin.js extras.js croissance.js main.js
 
-### wouf/admin.js (291 l.)
+### wouf/admin.js (292 l.)
 Wouf — administration (propriétaire uniquement) : comptes Google, Wouf Plus offert, interrupteur de vente. La SÉCURITÉ est assurée par les règles Firestore (docs/MAINTENANCE.md, « Administra
 - écrans : #/admin
 - actions : adm-copy adm-ref-ok adm-reload adm-grant adm-revoke adm-sale adm-save-pay adm-provider adm-order-ok adm-order-no adm-msg-del
@@ -216,7 +216,7 @@ Wouf — routeur, rendu, démarrage.
 - définit : routeName render NAV_OF lastRoute
 - dépend de : data.js species.js core.js health.js screens.js educ.js cloud.js tracker.js business.js admin.js extras.js
 
-### wouf/billing-worker/worker.js (385 l.)
+### wouf/billing-worker/worker.js (386 l.)
 Wouf — relais d'activation automatique de Wouf Plus après un paiement PayPal (Cloudflare Worker gratuit). Principe : PayPal prévient ce relais à chaque paiement (IPN, « notify_url » ajouté p
 - définit : getJwks verifyToken authed siteConfig payees confirmMail hasGrant findPayments handleIpn handleSubscription stripeVerify handleStripe renewalReminders handleSupport handleStats handle JWKS_URL IPN_VERIFY DEFAULT_KEY JWKS b64uBytes b64uJson origins cors reply safeUid mail day addDays addPeriod grace isLifetime recActive hex unixDay frDate ownerOnly STATS
 

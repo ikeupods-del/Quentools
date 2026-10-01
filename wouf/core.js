@@ -254,7 +254,9 @@ function grandfathered() {
 /* Wouf Plus offert par le propriétaire (admin.js) : relu à chaque connexion Google. */
 const grantActive = () => !!(S.grant && (S.grant.until === 'lifetime' || (S.grant.until && today() <= S.grant.until)));
 const subActive = () => grantActive() || !!(S.sub && S.sub.active && (S.sub.lifetime || (S.sub.until && Date.now() < Date.parse(S.sub.until))));
-function plus() { if (PREVIEW === 'free') return false; if (PREVIEW === 'plus') return true; return isFreeWindow() || grandfathered() || subActive() || !!(S.trial && S.trial.until && today() <= S.trial.until); }
+/* Aperçu « ?preview=plus » : réservé au poste de développement (sinon n'importe qui débloquerait Plus par l'adresse). « free » reste permis (il ne fait que retirer des droits). */
+const LOCAL_HOST = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+function plus() { if (PREVIEW === 'free') return false; if (PREVIEW === 'plus' && LOCAL_HOST) return true; return isFreeWindow() || grandfathered() || subActive() || !!(S.trial && S.trial.until && today() <= S.trial.until); }
 const isPremium = f => (BILL.premium || []).includes(f);
 const allowed = f => plus() || !isPremium(f);
 /* Formule gratuite : 1 chien + 1 chat. Plus : autant d'animaux que l'on veut. */
