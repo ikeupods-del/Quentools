@@ -464,7 +464,7 @@ test('mises à jour : fichiers versionnés, lien de secours ?maj=1 (vide le cach
   const b = await boot(), p = b.page;
   const html = await b.ev(() => document.documentElement.outerHTML); const v = await b.ev(() => CFG.version);
   assert.ok((html.match(new RegExp('\\.js\\?v=' + v.replace(/\./g, '\\.'), 'g')) || []).length >= 15, 'scripts versionnés');
-  await b.ev(async () => { await navigator.serviceWorker.ready; await caches.open('dummy-ancien-cache'); });
+  await b.ev(async () => { const r = await navigator.serviceWorker.ready; while (r.active.state !== 'activated') await new Promise(x => setTimeout(x, 50)); await new Promise(x => setTimeout(x, 300)); await caches.open('dummy-ancien-cache'); });   // attendre la fin du nettoyage d'installation
   assert.ok((await b.ev(() => caches.keys())).includes('dummy-ancien-cache'));
   await p.goto(BASE() + '?maj=1#/home'); await p.waitForFunction(() => !location.search.includes('maj')); await p.waitForSelector('.hero');
   assert.equal(await b.ev(() => S.dogs.length), 1, 'les données sont intactes'); assert.equal((await b.ev(() => caches.keys())).includes('dummy-ancien-cache'), false, 'ancien cache supprimé');
@@ -748,7 +748,10 @@ test('Stripe : choix carte bancaire ou PayPal, liens Stripe avec le compte Googl
   await b.ev(() => { Object.assign(BILL, { provider: 'both' }); BILL.yearly.enabled = true; Object.assign(BILL.stripe, { lifetimeLink: 'https://buy.stripe.com/test_vie', yearlyLink: 'https://buy.stripe.com/test_an', portal: 'https://billing.stripe.com/p/login/test_x' });
     CloudApi.signIn = async () => ({ uid: 'uidStripe1', email: 'lea@test.fr', name: 'Léa Test', picture: '' }); render(); });
   await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent');
-  assert.equal(await p.locator('input[name=buy-pay]').count(), 2, 'carte bancaire et PayPal proposés'); assert.equal(await p.isChecked('input[name=buy-pay][value=stripe]'), true);
+  assert.equal(await p.locator('input[name=buy-pay]').count(), 2, 'carte bancaire et PayPal proposés');
+  assert.ok((await p.$$eval('.sheet input[type=radio]', l => l.map(e => e.getBoundingClientRect().width))).every(w => w > 0 && w <= 30), 'boutons ronds de taille normale');
+  assert.ok(await p.$$eval('.plan-opt', l => l.every(e => e.querySelector('.grow').getBoundingClientRect().width > 140)), 'textes des formules lisibles');
+  if (process.env.SHOT) { await p.waitForTimeout(800); await p.screenshot({ path: process.env.SHOT }); } assert.equal(await p.isChecked('input[name=buy-pay][value=stripe]'), true);
   assert.match(await text(p, '#buy-btn'), /S’abonner : 14,99 € par an par carte bancaire/); assert.match(await text(p, '#buy-paylabel'), /E-mail utilisé pour le paiement/);
   assert.equal(await p.locator('.pp-only:visible').count(), 0, 'pas de mention PayPal pour la carte');
   await p.check('input[name=buy-plan][value=lifetime]'); assert.match(await text(p, '#buy-btn'), /Payer 29,99 € par carte bancaire/);
