@@ -275,3 +275,16 @@ fieldset.field{border:0;padding:0;margin:0}
 .rail-item .card-media img{width:100%;height:100%;object-fit:cover;object-position:top}
 .rail:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:var(--r-md)}
 @media (max-width:640px){.rail-btn{width:40px;height:40px}}
+
+.section-compact{padding-block:clamp(28px,5vw,56px)}
+.section-compact .rail-head{align-items:flex-end;margin-bottom:var(--s-3)}
+.h-compact{font-size:clamp(1.35rem,3.2vw,2rem);margin:6px 0 0;letter-spacing:-.03em}
+.section-compact .rail{padding-bottom:var(--s-3)}
+.section-compact .rail-item{flex:0 0 min(58%,230px);padding:var(--s-3);gap:var(--s-2)}
+.section-compact .rail-item .card-media{aspect-ratio:16/10;margin-bottom:var(--s-2)}
+.section-compact .rail-item h3{font-size:var(--t-md);margin:0}
+.section-compact .rail-item .more{font-size:var(--t-sm);margin-top:2px}
+.rail-note{font-size:var(--t-sm);margin:var(--s-2) 0 0}
+.rail-note .more{margin-left:6px;white-space:nowrap}
+@media (max-width:640px){.hero-note a{white-space:nowrap}}
+.section-compact .rail-item .card-media{margin:0 0 var(--s-2);border-radius:var(--r-sm,10px)}
