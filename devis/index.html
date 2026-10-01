@@ -88,7 +88,7 @@
     if (!document.getElementById('ok').checked) return say('Cochez la case d’accord pour envoyer.', true);
     const text = `Demande de devis QuenTools\nType : ${type}\nDélai : ${d.delai}\nBudget : ${d.budget}\nNom : ${d.nom}\nE-mail : ${d.email}${d.tel ? '\nTéléphone : ' + d.tel : ''}\n\n${d.besoin}`;
     const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
-    const ok = () => { f.reset(); say(`✅ <b>Merci ${esc(d.nom.split(' ')[0])}, votre demande est bien partie.</b> Je vous réponds sous 48 h à <b>${esc(d.email)}</b>.`); };
+    const ok = () => { f.reset(); say(`✅ <b>Merci ${esc(d.nom.split(' ')[0])}, votre demande est bien partie.</b> Je vous réponds sous 48 h à <b>${esc(d.email)}</b>. Suivez-la dans l’<a href="../espace/">espace client</a> (connexion Google avec cette adresse).`); };
     try {
       if (window.QTC) await QTC.config();
       // 1) Directement dans l'administration (/admin/)
