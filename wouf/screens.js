@@ -116,6 +116,7 @@ ROUTES.home = function home() {
 
   <section class="card hero hero-c"><button class="hero-av" data-act="edit-dog" data-id="${d.id}" aria-label="Modifier la fiche">${avatar(d, 'xl')}</button>
     <div class="hero-txt"><h1>${esc(d.name)}</h1><p class="mut small">${esc(d.breed || 'Race non renseignée')}${d.sex ? ' · ' + (d.sex === 'F' ? 'Femelle' : 'Mâle') : ''} · ${esc(ageText(d.birth))}${ha ? ` · ≈ ${ha} ans humains` : ''}</p>
+    <button class="lnk" data-act="pet-card" data-id="${d.id}">📸 Partager sa carte</button>
     ${bd !== null && bd <= 30 ? `<p class="bday">🎂 ${bd === 0 ? 'C’est son anniversaire aujourd’hui !' : 'Anniversaire dans ' + bd + ' j'}</p>` : ''}</div></section>
 
   <section class="card compact"><div class="card-h"><h2>À faire</h2><a class="lnk" href="#/carnet">Carnet →</a></div>

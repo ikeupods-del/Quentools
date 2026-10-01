@@ -100,7 +100,7 @@ async function accountSync() {
   if (S.settings.profileAt === today()) return;
   try {
     await AdminApi.touch({ email: CLOUD.user.email || '', name: CLOUD.user.name || '', firstSeen: S.installedAt || today(), lastSeen: today(), version: CFG.version || '',
-      dogs: petsOf('dog').length, cats: petsOf('cat').length, lessons: lessonsDone(), bought: !!(S.sub && S.sub.active) });
+      dogs: petsOf('dog').length, cats: petsOf('cat').length, lessons: lessonsDone(), bought: !!(S.sub && S.sub.active), refCode: typeof refCode === 'function' ? refCode() : '', ...(typeof referredBy === 'function' && referredBy() ? { referredBy: referredBy() } : {}), ...(S.trial ? { trialUntil: S.trial.until } : {}) });
     S.settings.profileAt = today(); save();
   } catch (e) { /* idem */ }
 }
@@ -186,7 +186,7 @@ ROUTES.admin = function admin() {
     <p class="mut small">Choisissez ce que voient les acheteurs. « Les deux » leur laisse le choix entre la carte bancaire (Stripe) et PayPal.</p>
     <div class="seg">${Object.entries(PROVIDERS).map(([k, l]) => `<button class="${BILL.provider === k ? 'on' : ''}" data-act="adm-provider" data-p="${k}">${esc(l)}</button>`).join('')}</div>
     <p class="mut small">PayPal : ${paypalReadyCfg() ? '✅ prêt' : '⚪ adresse ou lien à renseigner'} · Stripe : ${STRIPE_LINK.test(BILL.stripe.lifetimeLink || '') ? '✅ lien « à vie »' : '⚪ lien « à vie » à renseigner'}${STRIPE_LINK.test(BILL.stripe.yearlyLink || '') ? ', ✅ lien annuel' : ''}${STRIPE_LINK.test(BILL.stripe.portal || '') ? ', ✅ portail client' : ', ⚪ portail client (conseillé pour l’annuel)'}.</p>
-    <p class="mut small">Stripe : activez chaque achat ci-dessous (« Paiements à vérifier ») après l’avoir vu dans votre tableau de bord Stripe ; le compte Google de l’acheteur y figure dans « Référence client ».</p></section>
+    <p class="mut small">Stripe : ${BILL.api ? 'activation automatique si le webhook Stripe est branché sur le relais (guide : MAINTENANCE, « Stripe ») ; sinon' : ''} activez chaque achat ci-dessous (« Paiements à vérifier ») après l’avoir vu dans votre tableau de bord Stripe ; le compte Google de l’acheteur y figure dans « Référence client ».</p></section>
   <section class="card" id="adm-pay"><h2>💳 Paiement et informations légales</h2>
     <p class="mut small">Indiquez l’<b>adresse e-mail de votre compte PayPal</b> (compte <b>professionnel</b> conseillé) : chaque acheteur est envoyé vers une page PayPal qui paie <b>${esc(planOf().price)}</b>${REWARD.enabled ? ` (ou <b>${esc(REWARD.price)}</b> pour l’offre récompense)` : ''} à cette adresse, avec la référence de son dossier (WOUF-…) visible dans PayPal. Vous pouvez la changer à tout moment : elle s’applique au paiement suivant. Les champs « lien fixe » ne servent que si vous préférez un lien créé dans PayPal (validation manuelle). <b>Activation automatique</b> : renseignez aussi l’adresse du relais (Cloudflare) ; elle ne fonctionne qu’avec l’adresse PayPal ci-dessus, pas avec un lien fixe.</p>
     ${Object.entries(REMOTE_FIELDS).map(([k, [o, p, l]]) => `<div class="field"><label>${esc(l)}</label><input name="${k}" value="${esc(o[p] || '')}" ${/Link$/.test(k) ? 'type="url" placeholder="https://www.paypal.com/…"' : /^stripe/.test(k) ? 'type="url" placeholder="https://buy.stripe.com/…"' : k === 'api' ? 'type="url" placeholder="https://wouf-billing.votrecompte.workers.dev"' : k === 'payee' ? 'type="email" placeholder="vous@exemple.fr"' : /mail/i.test(k) ? 'type="email"' : ''}></div>`).join('')}
@@ -206,6 +206,7 @@ ROUTES.admin = function admin() {
       <small>${m.mail === 'sent' ? '📧 copie envoyée · ' : /^error/.test(m.mail || '') ? '⚠️ e-mail non envoyé (' + esc(m.mail) + ') · ' : ''}✉️ ${esc(m.email || '')} · 🕒 ${m.at ? esc(new Date(m.at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })) : ''}</small>
       <p class="adm-txt">${esc(m.message || '')}</p>${m.diagnostics ? `<details><summary>Informations techniques</summary><pre class="adm-txt">${esc(m.diagnostics)}</pre></details>` : ''}</div>
       <div class="btn-row sm"><a class="btn sm primary" href="${esc(replyLink(m))}" target="_blank" rel="noopener">✉️ Répondre</a><button class="btn sm" data-act="adm-copy" data-mail="${esc(m.email || '')}">Copier l’e-mail</button><button class="btn sm danger" data-act="adm-msg-del" data-id="${esc(m.id)}">Supprimer</button></div></div>`).join('') || '<p class="mut">Aucun message.</p>'}</section>` : ''}
+  ${refSection(us)}
   <section class="card"><h2>👥 Comptes (${us.length})</h2>
     <p class="mut small">Seuls les utilisateurs connectés avec Google apparaissent ici. Pour tous les visiteurs, voir « Visites ».</p>
     ${ADM.err ? `<p class="bad">${esc(ADM.err)}</p><button class="btn" data-act="adm-reload">Réessayer</button>` : ADM.loading && !ADM.users ? '<p class="mut">Chargement…</p>'
@@ -215,6 +216,23 @@ ROUTES.admin = function admin() {
 ROUTES.admin.after = () => {
   const q = $('#adm-q'); if (!q) return;
   q.addEventListener('input', () => { const v = q.value.trim().toLowerCase(); $$('.adm-u').forEach(el => { el.hidden = !!v && !el.dataset.q.includes(v); }); });
+};
+/* Parrainages : filleul (referredBy) relié au parrain (refCode) ; « Offrir 1 mois aux deux » ajoute 31 jours à chacun. */
+const refPairs = us => us.filter(u => u.referredBy).map(f => ({ f, p: us.find(x => x.refCode === f.referredBy && x.uid !== f.uid) })).filter(x => x.p);
+const plusMonth = g => { const base = g && g.until && g.until !== 'lifetime' && g.until >= today() ? g.until : today(); return g && g.until === 'lifetime' ? g : { ...(g || {}), until: addDays(base, 31) }; };
+function refSection(us) {
+  const pairs = refPairs(us); if (!pairs.length) return '';
+  return `<section class="card" id="adm-refs"><h2>🤝 Parrainages (${pairs.length})</h2><p class="mut small">Un filleul s’est connecté avec Google depuis le lien d’un parrain. Vérifiez que le compte du filleul est réel, puis offrez 1 mois aux deux.</p>
+    ${pairs.map(({ f, p }) => `<div class="adm-o"><div class="grow"><b>${esc(p.name || p.email)}</b> → <b>${esc(f.name || f.email)}</b><small>Filleul vu le ${esc(fmtDate(f.lastSeen) || '?')} · 🐶 ${+f.dogs || 0} · 🐱 ${+f.cats || 0}</small></div>
+      ${f.grant && f.grant.ref ? '<span class="pill-s ok">Mois offert</span>' : `<button class="btn sm primary" data-act="adm-ref-ok" data-f="${esc(f.uid)}" data-p="${esc(p.uid)}">Offrir 1 mois aux deux</button>`}</div>`).join('')}</section>`;
+}
+ACT['adm-ref-ok'] = async ({ f, p }) => {
+  const us = ADM.users || [], uf = us.find(x => x.uid === f), up = us.find(x => x.uid === p); if (!uf || !up) return;
+  if (!(await ask(`Offrir 1 mois de Wouf Plus à ${up.name || up.email} (parrain) et à ${uf.name || uf.email} (filleul) ?`, 'Offrir', false))) return;
+  try {
+    const gf = { ...plusMonth(uf.grant), ref: up.uid, by: CLOUD.user.email, at: Date.now() }, gp = { ...plusMonth(up.grant), by: CLOUD.user.email, at: Date.now() };
+    await AdminApi.setGrant(f, gf); await AdminApi.setGrant(p, gp); uf.grant = gf; up.grant = gp; toast('1 mois offert aux deux ✓'); render(true);
+  } catch (e) { toast(admErr(e)); }
 };
 ACT['adm-reload'] = () => { ADM.users = null; ADM.err = ''; render(true); };
 ACT['adm-grant'] = async ({ uid, until }) => {

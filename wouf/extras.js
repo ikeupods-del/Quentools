@@ -293,9 +293,9 @@ ACT.install = async () => { if (!installEvt) return; installEvt.prompt(); await 
 ACT['stats-opt'] = (_, el) => { S.settings.noStats = !el.checked; save(); toast(el.checked ? 'Statistiques anonymes activées' : 'Statistiques anonymes désactivées'); };
 ACT.notif = async () => {
   if (!('Notification' in window)) return toast('Notifications non disponibles sur cet appareil');
-  if (S.settings.notif) { S.settings.notif = false; save(); return render(true); }
+  if (S.settings.notif) { S.settings.notif = false; save(); syncBackgroundReminders(); return render(true); }
   const p = await Notification.requestPermission();
-  if (p === 'granted') { S.settings.notif = true; S.settings.lastNotif = ''; save(); maybeNotify(); toast('Notifications activées à l’ouverture de l’app'); } else toast('Notifications refusées par le navigateur');
+  if (p === 'granted') { S.settings.notif = true; S.settings.lastNotif = ''; save(); maybeNotify(); toast(bgRemindersOk() ? 'Rappels activés : Wouf vous prévient même app fermée (app installée)' : 'Notifications activées à l’ouverture de l’app'); } else toast('Notifications refusées par le navigateur');
   render(true);
 };
 document.addEventListener('change', e => { const t = e.target.closest('[data-set]'); if (t) { const [a, b] = t.dataset.set.split('.'); S[a][b] = t.value.trim(); save(); } });

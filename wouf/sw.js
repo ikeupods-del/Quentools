@@ -1,11 +1,11 @@
 /* Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, documents) ne passent jamais par ici :
    elles restent dans le stockage de l'appareil. Seuls les fichiers de l'app sont mis en cache. */
-const CACHE = 'wouf-v1.20';
-const SHELL = ['./', './index.html', './style.css', './config.js', './data.js', './species.js', './core.js', './health.js', './screens.js', './sos.js', './nutrition.js', './croquettes.js', './lessons.js', './lessons2.js', './lessons_cat.js', './lessons3.js', './lessons_cat2.js', './lessons4.js', './lessons_cat3.js', './lessons5.js', './lessons_cat4.js', './lessons6.js', './lessons7.js', './lessons_cat5.js', './lessons_plans.js', './quiz.js', './quiz2.js', './quiz_chat.js', './educ.js', './parcours.js', './cloud.js', './tracker.js', './plusfeatures.js', './guide.js', './noms.js', './business.js', './admin.js', './extras.js', './testalim.js', './guides.js', './main.js', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+const CACHE = 'wouf-v1.21';
+const SHELL = ['./', './index.html', './style.css', './config.js', './data.js', './species.js', './core.js', './health.js', './screens.js', './sos.js', './nutrition.js', './croquettes.js', './lessons.js', './lessons2.js', './lessons_cat.js', './lessons3.js', './lessons_cat2.js', './lessons4.js', './lessons_cat3.js', './lessons5.js', './lessons_cat4.js', './lessons6.js', './lessons7.js', './lessons_cat5.js', './lessons_plans.js', './quiz.js', './quiz2.js', './quiz_chat.js', './educ.js', './parcours.js', './cloud.js', './tracker.js', './plusfeatures.js', './guide.js', './noms.js', './business.js', './admin.js', './extras.js', './croissance.js', './testalim.js', './guides.js', './main.js', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== 'wouf-rappels').map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
   const req = e.request, url = new URL(req.url);
@@ -15,3 +15,18 @@ self.addEventListener('fetch', e => {
     .catch(() => caches.match(req, { ignoreSearch: true }).then(hit => hit || (req.mode === 'navigate' ? caches.match('./index.html') : undefined))));
 });
 self.addEventListener('notificationclick', e => { e.notification.close(); e.waitUntil(clients.matchAll({ type: 'window' }).then(l => l[0] ? l[0].focus() : clients.openWindow('./'))); });
+/* Rappels en arrière-plan (Android, app installée) : la page confie la liste des échéances (cache « wouf-rappels ») ;
+   une fois par jour au plus, on prévient des échéances à 7 jours ou moins, même app fermée. */
+self.addEventListener('periodicsync', e => {
+  if (e.tag !== 'wouf-rappels') return;
+  e.waitUntil((async () => {
+    const c = await caches.open('wouf-rappels'), r = await c.match('./__rappels.json'); if (!r) return;
+    const d = await r.json(), now = new Date(), day = now.toISOString().slice(0, 10), last = await c.match('./__vu.txt');
+    if (!d.on || (last && (await last.text()) === day)) return;
+    const soon = (d.items || []).map(i => ({ ...i, n: Math.round((Date.parse(i.due) - Date.parse(day)) / 864e5) })).filter(i => i.n <= 7).sort((a, b) => a.n - b.n);
+    if (!soon.length) return;
+    const when = n => n < 0 ? 'en retard' : n === 0 ? 'aujourd’hui' : n === 1 ? 'demain' : 'dans ' + n + ' j';
+    await self.registration.showNotification('Wouf 🐾', { body: soon.slice(0, 4).map(i => i.name + ' : ' + i.title + ' (' + when(i.n) + ')').join('\n'), icon: 'icons/icon-192.png', tag: 'wouf-rappels' });
+    await c.put('./__vu.txt', new Response(day));
+  })());
+});

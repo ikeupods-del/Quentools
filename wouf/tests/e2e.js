@@ -757,7 +757,8 @@ test('Stripe : choix carte bancaire ou PayPal, liens Stripe avec le compte Googl
   const g = new URL(await b.ev(() => window.__go)); assert.equal(g.origin + g.pathname, 'https://buy.stripe.com/test_vie');
   assert.deepEqual(['client_reference_id', 'prefilled_email'].map(k => g.searchParams.get(k)), ['uidStripe1', 'lea@test.fr']);
   const o = await b.ev(() => window.__orders[0]); assert.deepEqual([o.method, o.offer, o.price, o.status], ['stripe', 'lifetime', '29,99 €', 'pending']);
-  await b.go('#/merci'); assert.match(await text(p, '#view'), /paiement par carte/); assert.doesNotMatch(await text(p, '#view'), /PayPal vous envoie/);
+  await b.go('#/merci'); assert.match(await text(p, '#view'), /paiement par carte/);
+  assert.deepEqual(await b.ev(() => { const off = autoOnFor('stripe'); BILL.api = 'https://relais.test'; const on = autoOnFor('stripe'), txt = consentText('lifetime', 'stripe'); BILL.api = ''; return [off, on, /dès que le paiement est confirmé/.test(txt)]; }), [false, true, true], 'activation automatique Stripe avec le relais'); assert.doesNotMatch(await text(p, '#view'), /PayPal vous envoie/);
   // annuel par carte : lien annuel
   await b.ev(() => { window.__go = null; closeAllSheets(); }); await b.go('#/abo'); await p.click('[data-act=subscribe]'); await p.waitForSelector('#buy-consent');
   await p.check('#buy-consent'); await p.click('[data-act=buy-go]'); await p.waitForFunction(() => window.__go);
@@ -772,6 +773,36 @@ test('Stripe : choix carte bancaire ou PayPal, liens Stripe avec le compte Googl
   await b.go('#/admin'); await p.waitForSelector('#adm-provider'); assert.match(await text(p, '#adm-provider'), /Stripe : ✅ lien « à vie », ✅ lien annuel, ✅ portail client/);
   await p.click('[data-act=adm-provider][data-p=stripe]'); await p.waitForFunction(() => BILL.provider === 'stripe');
   assert.equal(await b.ev(() => window.__cfg.pop().provider), 'stripe'); assert.match(await p.getAttribute('#adm-provider button.on', 'data-p'), /stripe/);
+  noErrors(b); await b.ctx.close();
+});
+
+test('croissance : essai gratuit 7 jours, parrainage (lien, profil, administration), carte de l’animal, rappels confiés au service worker', async () => {
+  const b = await boot({ query: '?preview=none&parrain=ABC2345', hash: '#/home' }), p = b.page; await fakeCloud(p); await fakeSale(p);
+  // carte de l'animal : image générée et partagée/téléchargée
+  await b.ev(() => { window.__file = null; window.shareOrDownload = async f => { window.__file = { name: f.name, type: f.type, size: f.size }; }; render(); });
+  await p.click('[data-act=pet-card]'); await p.waitForFunction(() => window.__file);
+  const f = await b.ev(() => window.__file); assert.equal(f.type, 'image/jpeg'); assert.ok(f.size > 20000, 'image non vide'); assert.match(f.name, /-wouf\.jpg$/);
+  // essai gratuit : proposé quand la vente est ouverte, une seule fois, débloque Plus puis s'arrête
+  await b.go('#/abo'); await p.waitForSelector('[data-act=trial-start]'); assert.equal(await b.ev(() => plus()), false);
+  await p.click('[data-act=trial-start]'); await p.click('.sheet [data-ok]'); await p.waitForFunction(() => plus());
+  assert.equal(await b.ev(() => S.trial.until), await b.ev(() => addDays(today(), 6)));
+  await b.ev(() => { closeAllSheets(); render(); }); assert.match(await text(p, '#view'), /Essai Wouf Plus en cours/); assert.equal(await p.locator('[data-act=trial-start]').count(), 0);
+  assert.equal(await b.ev(() => { S.trial.until = addDays(today(), -1); return plus() || trialAvailable(); }), false, 'essai terminé, non renouvelable');
+  // parrainage : code mémorisé depuis le lien, transmis avec le profil ; lien du membre ; administration
+  assert.equal(await b.ev(() => referredBy()), 'ABC2345');
+  await b.ev(async () => { window.__touch = null; S.settings.profileAt = ''; Object.assign(AdminApi, { myGrant: async () => null, touch: async x => { window.__touch = x; } }); CLOUD.user = { uid: 'uidF', email: 'f@test.fr', name: 'Filleul' }; await accountSync(); });
+  const t = await b.ev(() => window.__touch); assert.equal(t.referredBy, 'ABC2345'); assert.match(t.refCode, /^[A-Z0-9]{7}$/);
+  await b.ev(() => { S.grant = { until: 'lifetime' }; render(); }); await b.go('#/home'); await b.go('#/abo'); assert.match(await text(p, '#view'), /Parrainez un ami/);
+  assert.match(await p.inputValue('input[aria-label="Votre lien de parrainage"]'), /\?parrain=[A-Z0-9]{7}$/);
+  await b.ev(() => { OWNER = true; window.__g = {}; Object.assign(AdminApi, { listOrders: async () => [], setGrant: async (u, g) => { window.__g[u] = g; },
+    listUsers: async () => [{ uid: 'uidP', name: 'Parrain', email: 'p@test.fr', refCode: 'ABC2345', lastSeen: today() }, { uid: 'uidF', name: 'Filleul', email: 'f@test.fr', referredBy: 'ABC2345', lastSeen: today() }] }); });
+  await b.go('#/admin'); await p.waitForSelector('#adm-refs'); assert.match(await text(p, '#adm-refs'), /Parrain → Filleul/);
+  await p.click('[data-act=adm-ref-ok]'); await p.click('.sheet [data-ok]'); await p.waitForFunction(() => window.__g.uidP && window.__g.uidF);
+  assert.deepEqual(await b.ev(() => [window.__g.uidP.until, window.__g.uidF.until, window.__g.uidF.ref]), await b.ev(() => [addDays(today(), 31), addDays(today(), 31), 'uidP']));
+  assert.match(await text(p, '#adm-refs'), /Mois offert/);
+  // rappels confiés au service worker (cache) quand les notifications sont activées
+  await b.ev(async () => { S.settings.notif = true; await syncBackgroundReminders(); });
+  const cached = await b.ev(async () => { const r = await (await caches.open('wouf-rappels')).match('./__rappels.json'); return r ? r.json() : null; }); assert.equal(cached.on, true); assert.ok(Array.isArray(cached.items));
   noErrors(b); await b.ctx.close();
 });
 

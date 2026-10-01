@@ -231,3 +231,54 @@ test('abonnement annuel : rappel par e-mail 30 à 60 jours avant la reconduction
   kvStore.set('paid:uid_abc123', JSON.stringify({ ...rec, until: iso(40), cancelled: true })); assert.equal((await run(CONF)).sent, 0, 'résilié : pas de rappel');
   kvStore.set('paid:uid_abc123', JSON.stringify({ ...rec, until: iso(10) })); assert.equal((await run(CONF)).sent, 0, 'moins d’un mois : trop tard pour ce rappel');
 });
+
+/* ---------- Stripe (webhook signé) ---------- */
+const SENV = { ...ENV, STRIPE_WEBHOOK_SECRET: 'whsec_test123' };
+const stripeSign = async (body, secret = 'whsec_test123', t = Math.floor(Date.now() / 1000)) => {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return `t=${t},v1=${Buffer.from(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(t + '.' + body))).toString('hex')}`;
+};
+let evtN = 0;
+const stripe = async (type, object, { env = SENV, sig } = {}) => {
+  const body = JSON.stringify({ id: 'evt_' + (++evtN), type, data: { object } });
+  const r = await worker.fetch(new Request('https://worker.test/stripe', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Stripe-Signature': sig || await stripeSign(body) }, body }), env);
+  return { status: r.status, json: await r.json().catch(() => ({})) };
+};
+const session = (over = {}) => ({ id: 'cs_1', client_reference_id: 'uid_abc123', payment_status: 'paid', currency: 'eur', mode: 'payment', amount_total: 2999, payment_intent: 'pi_1', customer_details: { email: 'Client@Example.fr', name: 'Jean Client' }, ...over });
+test('Stripe : signature obligatoire (absente, fausse, trop ancienne, secret absent) → refusé sans rien enregistrer', async () => {
+  const body = JSON.stringify({ id: 'evt_x', type: 'checkout.session.completed', data: { object: session() } });
+  const call = async (sig, env = SENV) => (await worker.fetch(new Request('https://worker.test/stripe', { method: 'POST', headers: sig ? { 'Stripe-Signature': sig } : {}, body }), env)).status;
+  assert.equal(await call(''), 400); assert.equal(await call(await stripeSign(body, 'whsec_autre')), 400);
+  assert.equal(await call(await stripeSign(body, 'whsec_test123', Math.floor(Date.now() / 1000) - 600)), 400, 'rejeu ancien');
+  assert.equal(await call(await stripeSign(body), ENV), 400, 'secret non configuré');
+  assert.equal(kvStore.size, 0);
+});
+test('Stripe : paiement « à vie » → accès à vie pour le compte du lien ; montant trop bas ou non payé → rien ; remboursement → accès retiré', async () => {
+  assert.equal((await stripe('checkout.session.completed', session({ amount_total: 999 }))).json.reason, 'montant');
+  await stripe('checkout.session.completed', session({ payment_status: 'unpaid' })); assert.equal((await get('/status', await makeToken())).json.active, false);
+  const r = await stripe('checkout.session.completed', session()); assert.equal(r.status, 200);
+  let s = (await get('/status', await makeToken())).json; assert.equal(s.active, true); assert.equal(s.lifetime, true);
+  assert.equal(JSON.parse(kvStore.get('paid:uid_abc123')).provider, 'stripe'); assert.equal(JSON.parse(kvStore.get('paid:uid_abc123')).payerEmail, 'client@example.fr');
+  assert.equal((await get('/status', await makeToken({ sub: 'autre_compte_999' }))).json.active, false, 'autre compte non activé');
+  await stripe('charge.refunded', { id: 'ch_1', payment_intent: 'pi_1', refunded: true });
+  assert.equal((await get('/status', await makeToken())).json.active, false, 'remboursé');
+});
+test('Stripe : abonnement annuel → accès un an, renouvellement par facture, résiliation → accès jusqu’à la fin de période', async () => {
+  await stripe('checkout.session.completed', session({ mode: 'subscription', amount_total: 1499, subscription: 'sub_1', payment_intent: null }));
+  let s = (await get('/status', await makeToken())).json; assert.equal(s.plan, 'yearly'); assert.equal(s.until, inYear()); assert.equal(s.cancelled, false);
+  const end = Math.floor(Date.parse(inYear(new Date(inYear() + 'T12:00:00Z')) + 'T12:00:00Z') / 1000);
+  await stripe('invoice.paid', { id: 'in_2', subscription: 'sub_1', lines: { data: [{ period: { end } }] } });
+  assert.equal((await get('/status', await makeToken())).json.until, inYear(new Date(inYear() + 'T12:00:00Z')), 'renouvellement : un an de plus');
+  await stripe('customer.subscription.updated', { id: 'sub_1', cancel_at_period_end: true });
+  s = (await get('/status', await makeToken())).json; assert.equal(s.active, true); assert.equal(s.cancelled, true);
+  await stripe('invoice.paid', { id: 'in_x', subscription: 'sub_inconnu', lines: { data: [{ period: { end } }] } });
+  assert.equal(kvStore.get('sub:sub_inconnu'), undefined);
+});
+test('Stripe : événement rejoué (même id) ignoré ; achat à vie jamais remplacé par un abonnement', async () => {
+  await stripe('checkout.session.completed', session());
+  const body = JSON.stringify({ id: 'evt_dup', type: 'checkout.session.completed', data: { object: session({ amount_total: 2999 }) } }), sig = await stripeSign(body);
+  const send = async () => (await worker.fetch(new Request('https://worker.test/stripe', { method: 'POST', headers: { 'Stripe-Signature': sig }, body }), SENV)).json();
+  await send(); assert.equal((await send()).duplicate, true);
+  await stripe('checkout.session.completed', session({ mode: 'subscription', amount_total: 1499, subscription: 'sub_9' }));
+  assert.equal((await get('/status', await makeToken())).json.lifetime, true);
+});
