@@ -13,6 +13,9 @@ Tout ce qu'il faut pour produire vite un site ou un outil au niveau du site vitr
 | `templates/vitrine.html` | Site vitrine client (artisan, commerce, indépendant) : accueil, services, avis, zone, contact. |
 | `templates/outil.html` | Page de lancement d'un outil ou d'une application (SaaS, calculateur, app). |
 | `templates/rendez-vous.html` | Prestations sur rendez-vous (coiffeur, thérapeute, coach, restaurateur) : prestations, tarifs, horaires, demande de créneau. |
+| `templates/restaurant.html` | Restaurant, bar, boulangerie : plat du jour, carte, horaires, réservation. |
+| `templates/outil-devis.html` | Outil de devis pour artisan : lignes, TVA, remise, acompte, export PDF par impression ; données gardées dans le navigateur. À vendre comme outil sur mesure. |
+| `templates/vente-ebook.html` | Page de vente d'un e-book ou d'une formation : problème, programme, auteur, prix, FAQ. |
 | `templates/legal.html` | Mentions légales et confidentialité à compléter. |
 | `templates/merci.html` | Page de confirmation (après un formulaire ou un paiement). |
 
