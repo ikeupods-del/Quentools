@@ -150,7 +150,7 @@ Onglet **Plus → 🛠️ Administration** (visible seulement pour le propriéta
 - **Sécurité = règles Firestore** (Firebase → Firestore Database → Règles), à ajouter dans `match /databases/{database}/documents { … }`, en remplaçant ADRESSE par l'adresse Gmail du propriétaire :
 ```
 function woufAdmin() { return request.auth != null && request.auth.token.email == 'ADRESSE' && request.auth.token.email_verified == true; }
-match /wouf_users/{uid} { allow read, write: if request.auth != null && request.auth.uid == uid && request.resource.data.size() <= 30; allow read: if woufAdmin(); }
+match /wouf_users/{uid} { allow read: if request.auth != null && (request.auth.uid == uid || woufAdmin()); allow write: if request.auth != null && request.auth.uid == uid && request.resource.data.size() <= 30; }
 match /wouf_grants/{uid} { allow read: if request.auth != null && request.auth.uid == uid; allow read, write: if woufAdmin(); }
 match /wouf_admin/{doc} { allow read: if true; allow write: if woufAdmin(); }
 match /wouf_orders/{id} { allow create: if request.auth != null && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'pending' && request.resource.data.size() <= 30 && request.resource.data.firstName.size() <= 80 && request.resource.data.lastName.size() <= 80 && request.resource.data.paypalEmail.size() <= 160 && request.resource.data.contactEmail.size() <= 160; allow read: if request.auth != null && resource.data.uid == request.auth.uid; allow read, update: if woufAdmin(); }
