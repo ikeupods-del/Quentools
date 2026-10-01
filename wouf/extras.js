@@ -195,7 +195,7 @@ ACT.poster = () => {
     title: 'Affiche « ' + spOf(d).noun + ' perdu »', submit: 'Aperçu / imprimer',
     fields: [{ n: 'where', l: 'Lieu de disparition', v: '', req: true, ph: 'Rue, quartier, ville' }, { n: 'when', l: 'Date', t: 'date', v: today(), req: true }, { n: 'phone', l: 'Téléphone à appeler', t: 'tel', v: S.owner.phone, req: true }, { n: 'msg', l: 'Message', t: 'textarea', v: 'Il/elle est très craintif(ve), ne pas courir après lui/elle. Récompense.' }],
     onSubmit(v) {
-      printHTML(`<div class="poster"><h1>${spOf(d).noun.toUpperCase()} PERDU</h1>${d.photo ? `<img src="${d.photo}" alt="">` : ''}<h2>${esc(d.name)}</h2><p class="pl">${esc(d.breed || '')} ${d.sex === 'F' ? '· Femelle' : '· Mâle'}${d.color ? ' · ' + esc(d.color) : ''}</p>
+      printHTML(`<div class="poster"><h1>${spOf(d).noun.toUpperCase()} PERDU</h1>${safeImg(d.photo) ? `<img src="${safeImg(d.photo)}" alt="">` : ''}<h2>${esc(d.name)}</h2><p class="pl">${esc(d.breed || '')} ${d.sex === 'F' ? '· Femelle' : '· Mâle'}${d.color ? ' · ' + esc(d.color) : ''}</p>
         <p class="pl">Perdu(e) le <b>${fmtDate(v.when)}</b> à <b>${esc(v.where)}</b></p>${d.chip ? `<p>Identifié(e) par puce : ${esc(d.chip)}</p>` : ''}<p>${esc(v.msg)}</p><div class="tel">${esc(fmtPhone(v.phone))}</div></div>`);
     }
   });

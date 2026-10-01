@@ -19,7 +19,7 @@ Wouf — espèces : chien 🐶 et chat 🐱 (gratuit : 1 chien + 1 chat ; Plus :
 - définit : presetsFor humanAgeOf SPECIES spOf CAT_BREEDS CAT_PRESETS TOXICS_CAT FIRST_AID_CAT URGENT_CAT TIPS_SENIOR_CAT TIPS_CAT NUT_FACTORS_DOG NUT_FACTORS_CAT nutFactorsOf toxicsOf firstAidOf urgentOf tipsOf
 - dépend de : data.js core.js health.js
 
-### wouf/core.js (281 l.)
+### wouf/core.js (284 l.)
 Wouf — noyau : outils, stockage, fenêtres, formulaires, abonnement.
 - définit : logError ageMonths ageText blank migrate load flush save idbOp loadImage imageBlob squarePhoto ownerCheck statsUrl track toast sheet closeSheet ask fieldHTML readForm openForm lineChart barChart grandfathered plus canAddPet canAddDoc gate download shareOrDownload CFG BILL KEY SCHEMA $ $$ esc uid pad iso today parseD addDays diffDays fmtDate fmtMoney fmtKg num sum ageYears humanAge S dog idb fput fget fdel blobToDataURL STATS_SRC …
 - dépend de : cloud.js noms.js business.js croissance.js main.js

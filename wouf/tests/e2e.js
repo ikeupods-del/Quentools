@@ -779,6 +779,16 @@ test('Stripe : choix carte bancaire ou PayPal, liens Stripe avec le compte Googl
   noErrors(b); await b.ctx.close();
 });
 
+test('sécurité : photo et lien de clinique filtrés (sauvegarde importée ou données externes), aperçu Plus réservé au poste local', async () => {
+  const b = await boot({ query: '?preview=none' }), p = b.page;
+  const r = await b.ev(() => ({ img: [safeImg('data:image/jpeg;base64,AAAA'), safeImg('x" onerror="alert(1)'), safeImg('javascript:alert(1)')],
+    url: [safeUrl('https://clinique.fr/'), safeUrl('javascript:alert(1)'), safeUrl('https://a.fr/" onmouseover="x')] }));
+  assert.deepEqual(r, { img: ['data:image/jpeg;base64,AAAA', '', ''], url: ['https://clinique.fr/', '', ''] });
+  await b.ev(() => { dog().photo = 'x" onerror="window.__xss=1'; render(); }); await p.waitForTimeout(200);
+  assert.equal(await b.ev(() => window.__xss), undefined, 'aucun code exécuté depuis une photo trafiquée'); assert.equal(await p.locator('img.av').count(), 0);
+  noErrors(b); await b.ctx.close();
+});
+
 test('croissance : essai gratuit 7 jours, parrainage (lien, profil, administration), carte de l’animal, rappels confiés au service worker', async () => {
   const b = await boot({ query: '?preview=none&parrain=ABC2345', hash: '#/home' }), p = b.page; await fakeCloud(p); await fakeSale(p);
   // carte de l'animal : image générée et partagée/téléchargée

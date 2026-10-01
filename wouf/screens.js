@@ -7,7 +7,7 @@ const ROUTES = {};
 
 /* ---------- Bandeau du haut ---------- */
 function avatar(d, cls = '') {
-  return d && d.photo ? `<img class="av ${cls}" src="${d.photo}" alt="">` : `<span class="av ${cls} ph">${spOf(d).emoji}</span>`;
+  return d && safeImg(d.photo) ? `<img class="av ${cls}" src="${safeImg(d.photo)}" alt="">` : `<span class="av ${cls} ph">${spOf(d).emoji}</span>`;
 }
 function renderTop() {
   const d = dog();
