@@ -261,3 +261,4 @@ fieldset.field{border:0;padding:0;margin:0}
 
 .price{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;margin:0}.price b{font:700 var(--t-2xl,2rem)/1.1 var(--f-display);letter-spacing:-.03em;color:inherit}.price span{font-size:var(--t-sm);opacity:.7}
 .offer p.price{color:var(--ink)}.offer.is-featured p.price{color:var(--bg)}
+@media (max-width:640px){.section{padding-block:44px}.section-head{gap:var(--s-3);margin-bottom:24px}.lede{font-size:var(--t-md)}.card{padding:var(--s-4)}.grid-2,.grid-3,.bento{gap:var(--s-4)}.stat{padding:var(--s-4)}.cta-band h2{max-width:none}.stack{max-width:420px;margin-top:var(--s-4)}}
