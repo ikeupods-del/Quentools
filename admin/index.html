@@ -40,6 +40,14 @@
   .links a{display:block;padding:16px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none}
   .links a:hover{border-color:var(--accent)}.links small{display:block;color:var(--muted);margin-top:4px}
   pre.rules{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;background:var(--bg-2);padding:14px;border-radius:var(--r-md);max-height:280px;overflow:auto}
+  .st-encours{background:var(--accent-soft);color:var(--ink)}.st-livre{background:var(--ok-soft);color:var(--ok)}
+  .req .row3{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+  .req .row3 input{width:100%;min-width:0}
+  .flag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font:600 var(--t-xs)/1 var(--f-text);background:var(--warn-soft);color:var(--ink)}
+  .thread{display:grid;gap:8px;padding:12px;border-radius:var(--r-md);background:var(--bg-2);border:1px solid var(--line)}
+  .msg{padding:8px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);max-width:90%;overflow-wrap:anywhere;white-space:pre-wrap;font-size:var(--t-sm)}
+  .msg small{display:block;color:var(--muted);font-size:11px;margin-bottom:2px}
+  .msg.client{justify-self:start}.msg.admin{justify-self:end;background:var(--accent-soft)}.msg.systeme{justify-self:center;background:transparent;border-style:dashed;color:var(--muted)}
   .empty{text-align:center;color:var(--muted);padding:var(--s-7) var(--s-4)}
 </style>
 </head>
@@ -60,9 +68,10 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const eur = n => (Math.round(n) || 0).toLocaleString('fr-FR') + ' €';
 const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const DEMO = local && new URLSearchParams(location.search).has('demo');
-const official = location.protocol === 'https:' && /^ikeupods-del\.github\.io$/.test(location.hostname);
+const official = location.protocol === 'https:' && /^(www\.)?quentools\.fr$|^ikeupods-del\.github\.io$/.test(location.hostname);
 
-const STATUS = [['nouveau', 'Nouvelle'], ['discussion', 'En discussion'], ['envoye', 'Devis envoyé'], ['gagne', 'Gagnée'], ['perdu', 'Perdue']];
+const STATUS = [['nouveau', 'Nouvelle'], ['discussion', 'En discussion'], ['envoye', 'Devis envoyé'], ['gagne', 'Acceptée'], ['encours', 'En cours'], ['livre', 'Livrée'], ['perdu', 'Perdue']];
+const WON = ['gagne', 'encours', 'livre'];
 const stLabel = k => (STATUS.find(s => s[0] === k) || STATUS[0])[1];
 
 /* Grille QuenTools (design/TARIFS.md, « Prix QuenTools conseillé ») */
@@ -90,6 +99,7 @@ const demo = {
   ], site: { announceOn: false, announce: '', announceUrl: '', available: true, availText: '' }
 };
 const ms = v => !v ? 0 : typeof v === 'string' ? Date.parse(v) : v.toMillis ? v.toMillis() : +v;
+let notes = {}, threads = {}, openId = null, rulesOld = false;
 async function load() {
   if (DEMO) { items = demo.items; site = demo.site; return; }
   const { Fs, db } = await fb();
@@ -97,13 +107,39 @@ async function load() {
     const snap = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_devis'), Fs.orderBy('at', 'desc'), Fs.limit(300)));
     items = snap.docs.map(d => ({ id: d.id, ...d.data() })); denied = false;
   } catch (e) { items = []; denied = /permission/i.test(e.code || e.message); }
+  rulesOld = false; notes = {};
+  try { const n = await Fs.getDocs(Fs.collection(db, 'qt_notes')); n.docs.forEach(d => { notes[d.id] = d.data(); }); }
+  catch (e) { rulesOld = !denied && /permission/i.test(e.code || e.message); }
+  for (const it of items) { const n = notes[it.id]; if (n) { it.note = n.text ?? it.note; it.echeance = n.echeance ?? it.echeance; } }
   try { const s = await Fs.getDoc(Fs.doc(db, 'qt_admin', 'config')); site = s.exists() ? s.data() : {}; } catch (e) { site = {}; }
 }
 async function patch(id, data) {
   const it = items.find(x => x.id === id); Object.assign(it, data);
   if (DEMO) return;
-  const { Fs, db } = await fb(); await Fs.updateDoc(Fs.doc(db, 'qt_devis', id), { ...data, updated: Fs.serverTimestamp() });
+  const { Fs, db } = await fb();
+  const priv = {}, pub = {};
+  for (const [k, v] of Object.entries(data)) (k === 'note' || k === 'echeance' ? priv : pub)[k === 'note' ? 'text' : k] = v;
+  if (Object.keys(priv).length) await Fs.setDoc(Fs.doc(db, 'qt_notes', id), priv, { merge: true });
+  if (Object.keys(pub).length) await Fs.updateDoc(Fs.doc(db, 'qt_devis', id), { ...pub, updated: Fs.serverTimestamp() });
 }
+async function loadThread(id) {
+  if (DEMO) return threads[id] || [];
+  const { Fs, db } = await fb();
+  const r = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_devis', id, 'messages'), Fs.orderBy('at', 'asc'), Fs.limit(200)));
+  return r.docs.map(d => d.data());
+}
+async function addMsg(id, m) {
+  const rec = { from: m.from, text: String(m.text).slice(0, 2000) };
+  if (DEMO) { threads[id] = [...(threads[id] || []), { ...rec, at: new Date() }]; return; }
+  const { Fs, db } = await fb();
+  await Fs.addDoc(Fs.collection(db, 'qt_devis', id, 'messages'), { ...rec, at: Fs.serverTimestamp() });
+}
+const TPL = {
+  recu: 'Bonjour {prenom},\n\nMerci pour votre demande, je l’ai bien reçue. Je reviens vers vous sous 48 h avec mes questions ou une première proposition.\n\nBien à vous,\nQuenTools',
+  devis: 'Bonjour {prenom},\n\nVotre devis est prêt : vous le trouverez via le bouton « Voir le devis » de cet espace. Il précise ce qui est inclus et le prix, fixé avant de commencer. Dites-moi si vous avez des questions, ou acceptez-le directement ici.\n\nBien à vous,\nQuenTools',
+  relance: 'Bonjour {prenom},\n\nJe me permets de revenir vers vous au sujet du devis envoyé. Avez-vous eu le temps d’y jeter un œil ? Je reste disponible pour l’ajuster si besoin.\n\nBien à vous,\nQuenTools',
+  livraison: 'Bonjour {prenom},\n\nVotre projet est prêt et en ligne. Prenez le temps de tout vérifier : je corrige volontiers ce qui doit l’être. Merci pour votre confiance !\n\nBien à vous,\nQuenTools'
+};
 async function remove(id) {
   items = items.filter(x => x.id !== id);
   if (DEMO) return;
@@ -123,62 +159,100 @@ function shell(body) {
   const t = (k, l) => `<button role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`;
   app.innerHTML = `<div class="adm-head"><div><span class="eyebrow">Tableau de bord</span><h1 class="h-section" style="margin:var(--s-2) 0 0">Bonjour 👋</h1></div>
     <div class="row" style="display:flex;gap:8px;align-items:center"><span class="muted" style="font-size:var(--t-xs)">${esc(DEMO ? 'Démonstration' : user && user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></div>
-    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('estimer', 'Estimer un prix')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}</div>
+    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('estimer', 'Estimer un prix')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}${t('regles', 'Règles')}${rulesOld ? '<span class="count">!</span>' : ''}</div>
     <div id="toast" role="status" aria-live="polite"></div>${body}`;
 }
 function render() {
-  shell(tab === 'demandes' ? viewRequests() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : viewLinks());
+  shell(tab === 'demandes' ? viewRequests() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : viewLinks());
   if (tab === 'estimer') estimate();
 }
 
 function rulesText() {
   const mail = (user && user.email) || 'VOTRE_ADRESSE_GMAIL';
   return `function qtAdmin() { return request.auth != null && request.auth.token.email == '${mail}' && request.auth.token.email_verified == true; }
+function qtClient(d) { return request.auth != null && request.auth.token.email_verified == true && d.emailLower == request.auth.token.email.lower(); }
 match /qt_admin/{doc} { allow read: if true; allow write: if qtAdmin(); }
+match /qt_notes/{id} { allow read, write: if qtAdmin(); }
 match /qt_devis/{id} {
-  allow create: if request.resource.data.keys().hasOnly(['type','besoin','delai','budget','nom','email','tel','status','at'])
+  allow create: if request.resource.data.keys().hasOnly(['type','besoin','delai','budget','nom','email','emailLower','tel','status','at'])
     && request.resource.data.status == 'nouveau' && request.resource.data.at is timestamp
     && request.resource.data.besoin is string && request.resource.data.besoin.size() >= 20 && request.resource.data.besoin.size() <= 3000
     && request.resource.data.nom is string && request.resource.data.nom.size() > 0 && request.resource.data.nom.size() <= 120
     && request.resource.data.email is string && request.resource.data.email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$') && request.resource.data.email.size() <= 160
+    && (!('emailLower' in request.resource.data) || request.resource.data.emailLower == request.resource.data.email.lower())
     && request.resource.data.type is string && request.resource.data.type.size() <= 40
     && request.resource.data.delai is string && request.resource.data.delai.size() <= 40
     && request.resource.data.budget is string && request.resource.data.budget.size() <= 40
     && request.resource.data.tel is string && request.resource.data.tel.size() <= 30;
-  allow read, update, delete: if qtAdmin();
+  allow read: if qtAdmin() || qtClient(resource.data);
+  allow update: if qtAdmin() || (qtClient(resource.data)
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reponse','reponseAt','clientMsgAt'])
+    && request.resource.data.get('reponse', '') in ['', 'accepte', 'refuse']);
+  allow delete: if qtAdmin();
+  match /messages/{mid} {
+    allow read: if qtAdmin() || qtClient(get(/databases/$(database)/documents/qt_devis/$(id)).data);
+    allow create: if request.resource.data.keys().hasOnly(['from','text','at'])
+      && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000
+      && request.resource.data.at is timestamp
+      && ((qtAdmin() && request.resource.data.from in ['admin','systeme'])
+        || (qtClient(get(/databases/$(database)/documents/qt_devis/$(id)).data) && request.resource.data.from == 'client'));
+    allow update, delete: if qtAdmin();
+  }
 }`;
 }
-
+function viewRules() {
+  return `<section class="card" style="padding:clamp(20px,4vw,36px)"><h2 style="margin-top:0">Règles de sécurité Firestore</h2>
+    <p>À coller dans Firebase pour activer l’espace client et le suivi complet : ouvrez <a href="https://console.firebase.google.com/project/${esc(C.firebase.projectId)}/firestore/rules" target="_blank" rel="noopener">les règles</a>, remplacez le bloc <code>match /qt_…</code> existant par celui-ci (gardez les règles des autres applications), puis cliquez sur « Publier ».</p>
+    ${rulesOld ? '<div class="notice warn" style="margin-bottom:var(--s-4)">Les règles actuelles ne contiennent pas encore les notes privées : mettez-les à jour.</div>' : ''}
+    <pre class="rules">${esc(rulesText())}</pre><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="copy-rules">Copier les règles</button></div></section>`;
+}
 function viewRequests() {
   if (denied) return `<section class="card" style="padding:var(--s-6)"><h2>Une étape à faire une seule fois</h2>
-    <p>Pour recevoir les demandes ici, Firebase doit savoir que vous êtes le propriétaire. Ouvrez <a href="https://console.firebase.google.com/project/${esc(C.firebase.projectId)}/firestore/rules" rel="noopener">Firebase → Firestore → Règles</a>, collez ce bloc à l’intérieur de <code>match /databases/{database}/documents { … }</code> (à côté des règles de Wouf), puis « Publier ».</p>
-    <pre class="rules">${esc(rulesText())}</pre><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="copy-rules">Copier les règles</button><button class="btn btn-ghost" data-do="reload">J’ai publié, recharger</button></div></section>`;
-  const act = x => !['gagne', 'perdu'].includes(x.status || 'nouveau');
-  const month = Date.now() - 30 * 864e5;
-  const won = items.filter(x => x.status === 'gagne'), closed = items.filter(x => ['gagne', 'perdu'].includes(x.status));
-  const kpis = `<div class="kpis"><div><b>${items.filter(x => (x.status || 'nouveau') === 'nouveau').length}</b><span>nouvelles demandes</span></div>
+    <p>Pour recevoir les demandes ici, Firebase doit savoir que vous êtes le propriétaire. Ouvrez l’onglet <b>Règles</b> et suivez les instructions.</p>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-tab="regles">Voir les règles</button><button class="btn btn-ghost" data-do="reload">J’ai publié les règles</button></div></section>`;
+  const st0 = x => x.status || 'nouveau', act = x => !['livre', 'perdu'].includes(st0(x));
+  const month = Date.now() - 30 * 864e5, day = 864e5;
+  const won = items.filter(x => WON.includes(st0(x))), closed = items.filter(x => [...WON, 'perdu'].includes(st0(x)));
+  const relance = items.filter(x => st0(x) === 'envoye' && !x.reponse && Date.now() - (ms(x.updated) || ms(x.at)) > 7 * day);
+  const retard = items.filter(x => st0(x) === 'nouveau' && Date.now() - ms(x.at) > 2 * day);
+  const echus = items.filter(x => x.echeance && act(x) && Date.parse(x.echeance) <= Date.now() + day);
+  const msgs = items.filter(x => ms(x.clientMsgAt) > ms(x.seenAt));
+  const kpis = `<div class="kpis"><div><b>${items.filter(x => st0(x) === 'nouveau').length}</b><span>nouvelles demandes${retard.length ? ` (dont ${retard.length} sans réponse depuis 48 h)` : ''}</span></div>
     <div><b>${items.filter(x => ms(x.at) > month).length}</b><span>demandes sur 30 jours</span></div>
     <div><b>${closed.length ? Math.round(100 * won.length / closed.length) + ' %' : '—'}</b><span>taux de réussite</span></div>
-    <div><b>${eur(won.reduce((s, x) => s + (+x.montant || 0), 0))}</b><span>gagné (${eur(items.filter(x => x.status === 'envoye').reduce((s, x) => s + (+x.montant || 0), 0))} en attente)</span></div></div>`;
+    <div><b>${eur(won.reduce((s, x) => s + (+x.montant || 0), 0))}</b><span>acceptés (${eur(items.filter(x => st0(x) === 'envoye').reduce((s, x) => s + (+x.montant || 0), 0))} en attente)</span></div></div>`;
+  const todo = [msgs.length && `<span class="flag">💬 ${msgs.length} nouveau${msgs.length > 1 ? 'x' : ''} message${msgs.length > 1 ? 's' : ''} client</span>`,
+    relance.length && `<span class="flag">⏰ ${relance.length} devis à relancer (plus de 7 jours)</span>`,
+    echus.length && `<span class="flag">📅 ${echus.length} échéance${echus.length > 1 ? 's' : ''} proche${echus.length > 1 ? 's' : ''}</span>`,
+    items.filter(x => x.reponse === 'accepte' && st0(x) === 'envoye').length && `<span class="flag">✅ devis accepté par le client : à confirmer</span>`].filter(Boolean);
   const fl = [['actifs', 'À traiter'], ...STATUS, ['tous', 'Toutes']];
-  const filters = `<div class="filters">${fl.map(([k, l]) => `<button data-filter="${k}" aria-pressed="${filter === k}">${l}</button>`).join('')}<input type="search" id="q" placeholder="Rechercher un nom, un e-mail…" value="${esc(q)}" aria-label="Rechercher"></div>`;
+  const filters = `<div class="filters">${fl.map(([k, l]) => `<button data-filter="${k}" aria-pressed="${filter === k}">${l}</button>`).join('')}<input type="search" id="q" placeholder="Rechercher un nom, un mot…" value="${esc(q)}" aria-label="Rechercher"></div>`;
   const qq = q.trim().toLowerCase();
-  const list = items.filter(x => filter === 'tous' ? true : filter === 'actifs' ? act(x) : (x.status || 'nouveau') === filter)
+  const list = items.filter(x => filter === 'tous' ? true : filter === 'actifs' ? act(x) : st0(x) === filter)
     .filter(x => !qq || [x.nom, x.email, x.besoin, x.type, x.note].join(' ').toLowerCase().includes(qq));
-  const card = x => { const st = x.status || 'nouveau', d = ms(x.at);
+  const thread = x => { const t = threads[x.id];
+    return `<div class="thread">${!t ? '<span class="muted">Chargement…</span>' : t.length ? t.map(m => `<div class="msg ${esc(m.from)}"><small>${m.from === 'client' ? 'Client' : m.from === 'admin' ? 'Vous' : 'Suivi'} · ${ms(m.at) ? new Date(ms(m.at)).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</small>${esc(m.text)}</div>`).join('') : '<span class="muted">Aucun échange pour l’instant.</span>'}
+      <select data-tpl aria-label="Réponse type"><option value="">Réponse type…</option><option value="recu">Demande reçue</option><option value="devis">Devis envoyé</option><option value="relance">Relance</option><option value="livraison">Livraison</option></select>
+      <textarea data-msg placeholder="Votre message au client (visible dans son espace)" maxlength="2000" aria-label="Message au client"></textarea>
+      <div class="row"><button class="btn btn-sm btn-accent" data-do="send">Envoyer dans l’espace client</button></div></div>`; };
+  const card = x => { const st = st0(x), d = ms(x.at), unread = ms(x.clientMsgAt) > ms(x.seenAt);
     return `<article class="card req" data-id="${esc(x.id)}">
       <div class="req-top"><h3>${esc(x.nom)}</h3><span class="chip st-${st}">${stLabel(st)}</span></div>
-      <div class="meta"><span class="chip">${esc(x.type)}</span><span class="chip">⏱ ${esc(x.delai)}</span><span class="chip">💶 ${esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}</div>
+      <div class="meta"><span class="chip">${esc(x.type)}</span><span class="chip">⏱ ${esc(x.delai)}</span><span class="chip">💶 ${esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR')}</span>` : ''}${x.reponse === 'accepte' ? '<span class="flag">✅ Devis accepté par le client</span>' : x.reponse === 'refuse' ? '<span class="flag">❌ Devis refusé par le client</span>' : ''}${unread ? '<span class="flag">💬 Nouveau message</span>' : ''}</div>
       <p class="need">${esc(x.besoin)}</p>
       <div class="who">✉️ ${esc(x.email)}${x.tel ? ` · 📞 ${esc(x.tel)}` : ''}</div>
-      <div class="row"><select data-field="status" aria-label="Statut">${STATUS.map(([k, l]) => `<option value="${k}"${k === st ? ' selected' : ''}>${l}</option>`).join('')}</select>
-        <input data-field="montant" type="number" min="0" step="50" inputmode="numeric" placeholder="Montant du devis (€)" value="${x.montant ?? ''}" style="width:190px" aria-label="Montant du devis"></div>
-      <textarea data-field="note" placeholder="Note privée (rappel, ce qui a été dit…)" aria-label="Note privée">${esc(x.note || '')}</textarea>
-      <div class="row"><button class="btn btn-sm btn-accent" data-do="reply">Répondre par e-mail</button>
+      <div class="row3"><select data-field="status" aria-label="Statut">${STATUS.map(([k, l]) => `<option value="${k}"${k === st ? ' selected' : ''}>${l}</option>`).join('')}</select>
+        <input data-field="montant" type="number" min="0" step="50" inputmode="numeric" placeholder="Montant (€)" value="${x.montant ?? ''}" aria-label="Montant du devis en euros">
+        <input data-field="echeance" type="date" value="${esc(x.echeance || '')}" aria-label="Échéance (rappel privé)" title="Échéance (rappel privé)"></div>
+      <input data-field="lien" type="url" maxlength="400" placeholder="Lien du devis (visible client)" value="${esc(x.lien || '')}" aria-label="Lien du devis">
+      <textarea data-field="note" placeholder="Note privée (rappel, ce qui a été dit…) : jamais visible par le client" aria-label="Note privée">${esc(x.note || '')}</textarea>
+      <div class="row"><button class="btn btn-sm btn-accent" data-do="thread">${openId === x.id ? 'Masquer les échanges' : 'Échanges avec le client'}</button><button class="btn btn-sm btn-ghost" data-do="reply">E-mail</button>
         ${x.tel ? `<a class="btn btn-sm btn-ghost" href="tel:${esc(String(x.tel).replace(/[^\d+]/g, ''))}">Appeler</a>` : ''}
         <button class="btn btn-sm btn-ghost" data-do="estimate">Estimer</button><button class="btn btn-sm btn-ghost" data-do="copy">Copier</button>
-        <button class="btn btn-sm btn-ghost" data-do="del" style="margin-left:auto">Supprimer</button></div></article>`; };
-  return kpis + filters + (list.length ? list.map(card).join('') : `<div class="card empty">${items.length ? 'Aucune demande dans ce filtre.' : 'Aucune demande pour l’instant. Elles arrivent ici dès qu’un visiteur remplit le <a href="../devis/">formulaire de devis</a>.'}</div>`);
+        <button class="btn btn-sm btn-ghost" data-do="del" style="margin-left:auto">Supprimer</button></div>
+      ${openId === x.id ? thread(x) : ''}</article>`; };
+  return (rulesOld ? '<div class="notice warn" style="margin-bottom:var(--s-4)">Les règles Firebase ne sont pas à jour (notes privées, espace client) : ouvrez l’onglet <b>Règles</b>.</div>' : '') + kpis + (todo.length ? `<div class="row" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--s-4)">${todo.join('')}</div>` : '') + filters
+    + (list.length ? list.map(card).join('') : `<div class="card empty">${items.length ? 'Aucune demande dans ce filtre.' : 'Aucune demande pour l’instant. Elles arrivent ici dès qu’un visiteur remplit le formulaire de devis.'}</div>`);
 }
 
 let estFor = null;
@@ -257,6 +331,15 @@ app.addEventListener('click', async e => {
     if (d === 'logout') { const { Au, auth } = await fb(); await Au.signOut(auth); }
     else if (d === 'reload') { await load(); render(); }
     else if (d === 'copy-rules') copy(rulesText());
+    else if (d === 'thread') {
+      if (openId === x.id) { openId = null; return render(); }
+      openId = x.id; threads[x.id] = null; render();
+      threads[x.id] = await loadThread(x.id); await patch(x.id, { seenAt: new Date() }); render();
+    }
+    else if (d === 'send') {
+      const t = card.querySelector('[data-msg]').value.trim(); if (!t) return toast('Écrivez un message', true);
+      await addMsg(x.id, { from: 'admin', text: t }); threads[x.id] = await loadThread(x.id); render(); toast('Message envoyé ✓');
+    }
     else if (d === 'reply') { location.href = mailto(x, `Bonjour ${String(x.nom).split(' ')[0]},\n\nMerci pour votre demande. \n\nBien à vous,\nQuenTools\n\n---\nVotre message :\n${x.besoin}`); if ((x.status || 'nouveau') === 'nouveau') { await patch(x.id, { status: 'discussion' }); render(); } }
     else if (d === 'copy') copy(`${x.nom} <${x.email}>${x.tel ? ' · ' + x.tel : ''}\n${x.type} · ${x.delai} · ${x.budget}\n\n${x.besoin}`);
     else if (d === 'estimate') { estFor = x.id; tab = 'estimer'; render(); }
@@ -284,9 +367,15 @@ app.addEventListener('change', async e => {
   if (el.closest('#est')) return estimate();
   const card = el.closest('.req'); if (!card || !el.dataset.field) return;
   const v = el.dataset.field === 'montant' ? (el.value === '' ? null : Math.max(0, Math.round(+el.value))) : el.value.slice(0, 2000);
-  try { await patch(card.dataset.id, { [el.dataset.field]: v }); if (el.dataset.field !== 'note') render(); toast('Enregistré ✓'); } catch (err) { fail(err); }
+  try { await patch(card.dataset.id, { [el.dataset.field]: v }); if (el.dataset.field === 'status') { await addMsg(card.dataset.id, { from: 'systeme', text: 'Statut : ' + stLabel(v) }); if (openId === card.dataset.id) threads[openId] = await loadThread(openId); } if (!['note', 'echeance', 'lien'].includes(el.dataset.field)) render(); toast('Enregistré ✓'); } catch (err) { fail(err); }
 });
 app.addEventListener('input', e => { if (e.target.id === 'q') { q = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); } });
+
+app.addEventListener('change', e => {
+  const sel = e.target.closest('[data-tpl]'); if (!sel || !sel.value) return;
+  const card = sel.closest('.req'), x = items.find(i => i.id === card.dataset.id), ta = card.querySelector('[data-msg]');
+  ta.value = TPL[sel.value].replace('{prenom}', String(x.nom).split(' ')[0]); sel.value = '';
+});
 
 /* ---------- Connexion ---------- */
 async function isOwner(email) {

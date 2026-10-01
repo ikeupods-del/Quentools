@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /demo/
+Disallow: /espace/
 
 Sitemap: https://quentools.fr/sitemap.xml

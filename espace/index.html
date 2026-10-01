@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Espace client · QuenTools</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/qt.css">
+<script src="../assets/qt-config.js"></script>
+<style>
+  .esp{display:grid;gap:var(--s-4);margin-bottom:var(--s-5)}
+  .esp-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+  .esp h2{margin:0;font-size:var(--t-xl)}
+  .steps-line{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:0;padding:0;list-style:none}
+  .steps-line li{font-size:11px;line-height:1.25;color:var(--muted);text-align:center}
+  .steps-line li::before{content:"";display:block;height:6px;border-radius:99px;background:var(--line-2);margin-bottom:6px}
+  .steps-line li.done::before{background:var(--accent)}.steps-line li.now{color:var(--ink);font-weight:700}.steps-line li.now::before{background:var(--accent)}
+  @media (max-width:560px){.steps-line{grid-template-columns:repeat(3,1fr);row-gap:10px}}
+  .amount{font:700 var(--t-xl)/1.1 var(--f-display)}
+  .thread{display:grid;gap:8px;padding:12px;border-radius:var(--r-md);background:var(--bg-2);border:1px solid var(--line)}
+  .msg{padding:8px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);max-width:90%;overflow-wrap:anywhere;white-space:pre-wrap;font-size:var(--t-sm)}
+  .msg small{display:block;color:var(--muted);font-size:11px;margin-bottom:2px}
+  .msg.client{justify-self:end;background:var(--accent-soft)}.msg.admin{justify-self:start}.msg.systeme{justify-self:center;background:transparent;border-style:dashed;color:var(--muted)}
+  .thread textarea{width:100%;min-height:72px;resize:vertical;font:inherit;font-size:var(--t-sm);padding:10px 12px;border-radius:var(--r-sm,10px);border:1px solid var(--line-2);background:var(--bg);color:var(--ink)}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="../" aria-label="QuenTools, accueil"><img class="brand-mark" src="../assets/logo.svg" alt="" width="32" height="32">QuenTools</a>
+  <span class="chip">Espace client</span>
+</div></header>
+
+<main class="section" style="padding-top:var(--s-6)">
+  <div class="wrap" style="max-width:820px" id="app"><p class="muted">Chargement…</p></div>
+</main>
+
+<script type="module">
+const C = window.QT || {}, FBV = '10.14.1';
+const app = document.getElementById('app');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const eur = n => (Math.round(n) || 0).toLocaleString('fr-FR') + ' €';
+const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const DEMO = local && new URLSearchParams(location.search).has('demo');
+const official = location.protocol === 'https:' && /^(www\.)?quentools\.fr$|^ikeupods-del\.github\.io$/.test(location.hostname);
+const STEPS = [['nouveau', 'Demande reçue'], ['discussion', 'En discussion'], ['envoye', 'Devis envoyé'], ['gagne', 'Devis accepté'], ['encours', 'En cours'], ['livre', 'Livré']];
+const ms = v => !v ? 0 : typeof v === 'string' ? Date.parse(v) : v.toMillis ? v.toMillis() : +v;
+const safeUrl = u => /^https:\/\//i.test(u || '') ? u : '';
+
+let F = null, user = null, items = [], threads = {}, openId = null;
+async function fb() {
+  if (F) return F;
+  const B = `https://www.gstatic.com/firebasejs/${FBV}/`;
+  const [A, Au, Fs] = await Promise.all([import(B + 'firebase-app.js'), import(B + 'firebase-auth.js'), import(B + 'firebase-firestore.js')]);
+  const a = A.initializeApp(C.firebase, 'qt-client');
+  F = { Au, Fs, auth: Au.getAuth(a), db: Fs.getFirestore(a) };
+  return F;
+}
+const demo = [
+  { id: 'x1', type: 'Site vitrine', at: new Date(Date.now() - 6 * 864e5), status: 'envoye', montant: 450, lien: 'https://example.com/devis', besoin: 'Site pour mon activité de fleuriste, avec photos et formulaire de contact.' },
+  { id: 'x2', type: 'Outil sur mesure', at: new Date(Date.now() - 2 * 864e5), status: 'discussion', besoin: 'Outil de devis pour mon entreprise de plomberie.' }
+];
+threads.x1 = [{ from: 'systeme', text: 'Statut : Devis envoyé', at: new Date(Date.now() - 864e5) }, { from: 'admin', text: 'Bonjour, votre devis est prêt : voyez le bouton « Voir le devis ».', at: new Date(Date.now() - 864e5) }];
+
+async function load() {
+  if (DEMO) { items = demo; return; }
+  const { Fs, db } = await fb();
+  const snap = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_devis'), Fs.where('emailLower', '==', String(user.email).toLowerCase()), Fs.limit(50)));
+  items = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => ms(b.at) - ms(a.at));
+}
+async function loadThread(id) {
+  if (DEMO) return threads[id] || [];
+  const { Fs, db } = await fb();
+  const r = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_devis', id, 'messages'), Fs.orderBy('at', 'asc'), Fs.limit(200)));
+  return r.docs.map(d => d.data());
+}
+async function addMsg(id, text) {
+  if (DEMO) { threads[id] = [...(threads[id] || []), { from: 'client', text, at: new Date() }]; return; }
+  const { Fs, db } = await fb();
+  await Fs.addDoc(Fs.collection(db, 'qt_devis', id, 'messages'), { from: 'client', text: text.slice(0, 2000), at: Fs.serverTimestamp() });
+  await Fs.updateDoc(Fs.doc(db, 'qt_devis', id), { clientMsgAt: Fs.serverTimestamp() });
+}
+async function answer(id, rep) {
+  const it = items.find(x => x.id === id); it.reponse = rep;
+  if (!DEMO) { const { Fs, db } = await fb(); await Fs.updateDoc(Fs.doc(db, 'qt_devis', id), { reponse: rep, reponseAt: Fs.serverTimestamp() }); }
+  await addMsg(id, rep === 'accepte' ? 'J’accepte le devis.' : 'Je ne donne pas suite au devis.');
+}
+
+function tracker(st) {
+  if (st === 'perdu') return '<p class="muted" style="margin:0">Cette demande est clôturée. Une nouvelle idée ? <a href="../devis/">Faites une nouvelle demande</a>.</p>';
+  const i = Math.max(0, STEPS.findIndex(s => s[0] === st));
+  return `<ol class="steps-line" aria-label="Avancement de la demande">${STEPS.map(([k, l], n) => `<li class="${n < i ? 'done' : n === i ? 'now' : ''}"${n === i ? ' aria-current="step"' : ''}>${l}</li>`).join('')}</ol>`;
+}
+function thread(x) {
+  const t = threads[x.id];
+  return `<div class="thread">${!t ? '<span class="muted">Chargement…</span>' : t.length ? t.map(m => `<div class="msg ${esc(m.from)}"><small>${m.from === 'client' ? 'Vous' : m.from === 'admin' ? 'QuenTools' : 'Suivi'} · ${ms(m.at) ? new Date(ms(m.at)).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</small>${esc(m.text)}</div>`).join('') : '<span class="muted">Aucun échange pour l’instant.</span>'}
+    <textarea data-msg placeholder="Votre message" maxlength="2000" aria-label="Votre message"></textarea>
+    <div class="row"><button class="btn btn-sm btn-accent" data-do="send">Envoyer</button></div></div>`;
+}
+function card(x) {
+  const st = x.status || 'nouveau', d = ms(x.at), url = safeUrl(x.lien), shown = ['envoye', 'gagne', 'encours', 'livre'].includes(st) && x.montant;
+  return `<article class="card esp" data-id="${esc(x.id)}">
+    <div class="esp-top"><h2>${esc(x.type)}</h2><span class="chip">${d ? 'Demandée le ' + new Date(d).toLocaleDateString('fr-FR') : ''}</span></div>
+    ${tracker(st)}
+    ${shown ? `<p style="margin:0">Montant du devis : <span class="amount">${eur(x.montant)}</span></p>` : ''}
+    ${url ? `<div class="row"><a class="btn btn-sm btn-accent" href="${esc(url)}" target="_blank" rel="noopener">Voir le devis et les fichiers</a></div>` : ''}
+    ${st === 'envoye' && !x.reponse ? `<div class="row"><button class="btn btn-sm btn-lime" data-do="accepte">Accepter le devis</button><button class="btn btn-sm btn-ghost" data-do="refuse">Refuser</button></div>` : ''}
+    ${x.reponse ? `<p class="muted" style="margin:0">${x.reponse === 'accepte' ? '✅ Vous avez accepté le devis. Je reviens vers vous pour la suite.' : 'Vous avez indiqué ne pas donner suite.'}</p>` : ''}
+    <details${openId === x.id ? ' open' : ''}><summary class="muted" style="cursor:pointer">Votre demande</summary><p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(x.besoin)}</p></details>
+    <div class="row"><button class="btn btn-sm btn-ghost" data-do="thread">${openId === x.id ? 'Masquer les échanges' : 'Échanges avec QuenTools'}</button></div>
+    ${openId === x.id ? thread(x) : ''}</article>`;
+}
+function render() {
+  app.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:var(--s-5)"><div><span class="eyebrow">Espace client</span><h1 class="h-section" style="margin:var(--s-2) 0 0">Mes demandes</h1></div>
+    <div class="row"><span class="muted" style="font-size:var(--t-xs)">${esc(DEMO ? 'Démonstration' : user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    ${items.length ? items.map(card).join('') : `<div class="card" style="padding:var(--s-6);text-align:center"><p style="margin-top:0"><b>Aucune demande liée à ce compte.</b></p>
+      <p class="muted">Connectez-vous avec la même adresse e-mail que celle indiquée dans votre demande de devis. Pas encore de demande ?</p><a class="btn btn-accent" href="../devis/">Demander un devis gratuit</a></div>`}
+    <p class="muted" style="font-size:var(--t-xs)">Vos données servent uniquement au suivi de votre demande. Pour les faire supprimer, écrivez-moi dans les échanges ou en message privé TikTok.</p>`;
+}
+const toast = (m, warn) => { const n = document.getElementById('toast'); if (!n) return; n.innerHTML = `<div class="notice${warn ? ' warn' : ''}">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => { n.innerHTML = ''; }, 3500); };
+app.addEventListener('click', async e => {
+  const b = e.target.closest('[data-do]'); if (!b) return;
+  const card = b.closest('.esp'), x = card && items.find(i => i.id === card.dataset.id), d = b.dataset.do;
+  try {
+    if (d === 'logout') { const { Au, auth } = await fb(); await Au.signOut(auth); }
+    else if (d === 'thread') {
+      if (openId === x.id) { openId = null; return render(); }
+      openId = x.id; threads[x.id] = null; render(); threads[x.id] = await loadThread(x.id); render();
+    }
+    else if (d === 'send') {
+      const t = card.querySelector('[data-msg]').value.trim(); if (!t) return toast('Écrivez un message', true);
+      await addMsg(x.id, t); threads[x.id] = await loadThread(x.id); render(); toast('Message envoyé ✓');
+    }
+    else if (d === 'accepte' || d === 'refuse') {
+      if (!confirm(d === 'accepte' ? 'Accepter ce devis ?' : 'Refuser ce devis ?')) return;
+      await answer(x.id, d); if (openId === x.id) threads[x.id] = await loadThread(x.id); render(); toast('Réponse enregistrée ✓');
+    }
+  } catch (err) { toast('Action impossible pour le moment (connexion ?)', true); }
+});
+const gate = html => { app.innerHTML = `<section class="card" style="padding:clamp(24px,5vw,48px);max-width:560px;margin:0 auto;text-align:center">${html}</section>`; };
+async function start() {
+  if (DEMO) { await load(); return render(); }
+  if (!official && !local) return gate('<h1 class="h-section">Espace client</h1><p class="muted">Disponible uniquement sur le site officiel de QuenTools.</p>');
+  let A;
+  try { A = await fb(); } catch (e) { return gate('<h1 class="h-section">Hors connexion</h1><p class="muted">Impossible de joindre Google. Vérifiez la connexion puis rechargez.</p>'); }
+  A.Au.onAuthStateChanged(A.auth, async u => {
+    user = u;
+    if (!u) return gate('<h1 class="h-section">Espace client</h1><p class="muted">Suivez vos demandes de devis, échangez avec moi et retrouvez vos devis. Connectez-vous avec l’adresse e-mail de votre demande.</p><button class="btn btn-accent" id="login" style="margin-top:var(--s-4)">Se connecter avec Google</button>');
+    app.innerHTML = '<p class="muted">Chargement de vos demandes…</p>';
+    try { await load(); } catch (e) { items = []; return gate('<h1 class="h-section">Espace en préparation</h1><p class="muted">Le suivi en ligne n’est pas encore activé. Écrivez-moi en message privé TikTok pour suivre votre demande.</p>'); }
+    render();
+  });
+}
+app.addEventListener('click', async e => {
+  if (e.target.id !== 'login') return;
+  try { const { Au, auth } = await fb(); await Au.signInWithPopup(auth, new Au.GoogleAuthProvider()); }
+  catch (err) { const m = { 'auth/popup-closed-by-user': 'Connexion annulée', 'auth/popup-blocked': 'Autorisez les fenêtres pop-up pour ce site, puis réessayez', 'auth/unauthorized-domain': 'Domaine non autorisé dans Firebase' }[err.code]; if (m) alert(m); }
+});
+start();
+</script>
+</body>
+</html>
