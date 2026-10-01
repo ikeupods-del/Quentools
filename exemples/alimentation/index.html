@@ -211,7 +211,7 @@ footer.site a{color:var(--sun)}
 </div></section>
 </main>
 
-<footer class="site"><div class="wrap"><span>© <span id="year">2026</span> Alimentation des Tilleuls (entreprise fictive) · SIRET 000 000 000 00000 (exemple) · Marques citées à titre d’exemple, appartenant à leurs propriétaires respectifs</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
+<footer class="site"><div class="wrap"><span>© <span id="year">2026</span> Alimentation des Tilleuls (entreprise fictive) · SIRET 000 000 000 00000 (exemple) · Marques et photos produits © leurs propriétaires, cités à titre d’exemple (photos : Open Food Facts, CC BY-SA)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
 
 <div class="drawer" id="drawer" aria-hidden="true">
   <div class="veil" data-close></div>
@@ -232,7 +232,16 @@ footer.site a{color:var(--sun)}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-(() => {
+/* Photos des produits (Open Food Facts, licence CC BY-SA) : zone de l'étiquette découpée dans chaque photo [gauche, haut, droite, bas] */
+const PH = {
+  coca: { src: '../../assets/boissons/coca.jpg', crop: [.03, .1, .97, .9] },
+  redbull: { src: '../../assets/boissons/redbull.jpg', crop: [.06, .12, .94, .88] },
+  fanta: { src: '../../assets/boissons/fanta.jpg', crop: [.1, .1, .9, .88] },
+  sprite: { src: '../../assets/boissons/sprite.jpg', crop: [.08, .1, .92, .88] },
+  nestea: { src: '../../assets/boissons/nestea.jpg', crop: [.12, .1, .88, .88] },
+  monster: { src: '../../assets/boissons/monster.jpg', crop: [.06, .1, .94, .9] }
+};
+Promise.all(Object.values(PH).map(p => new Promise(r => { p.img = new Image(); p.img.onload = p.img.onerror = r; p.img.src = p.src; }))).then(() => {
   /* ---------- Réglages du magasin (à remplacer pour un vrai client) ---------- */
   const SHOP = { name: 'Alimentation des Tilleuls', address: '12 place des Tilleuls, 00000 Votreville', lat: 48.8566, lng: 2.3522, whatsapp: '33600000000' };
   // 0 = dimanche. Horaires en heures décimales ; une fermeture après minuit s'écrit 24 ou plus.
@@ -240,12 +249,12 @@ footer.site a{color:var(--sun)}
 
   /* ---------- Boissons (noms de marques cités à titre d'exemple, visuels génériques) ---------- */
   const CANS = [
-    { id: 'coca', brand: 'COCA-COLA', flavor: 'Cola · Original', price: 1.5, c1: '#e41e2b', c2: '#7d0710', ink: '#ffffff', acc: '#ffd0d4', news: true },
-    { id: 'redbull', brand: 'RED BULL', flavor: 'Énergie · Original', price: 2.2, c1: '#2b4a8c', c2: '#12254d', ink: '#ffffff', acc: '#c9d3ea', news: true },
-    { id: 'fanta', brand: 'FANTA', flavor: 'Orange · Original', price: 1.4, c1: '#ff8a00', c2: '#b34700', ink: '#ffffff', acc: '#ffe08a', news: true },
-    { id: 'sprite', brand: 'SPRITE', flavor: 'Citron · Citron vert', price: 1.4, c1: '#1fae4b', c2: '#0b6425', ink: '#ffffff', acc: '#e3f7a8', news: true },
-    { id: 'nestea', brand: 'NESTEA', flavor: 'Thé glacé · Pêche', price: 1.6, c1: '#ffb38a', c2: '#e2683c', ink: '#3a2412', acc: '#fff0e0', news: true },
-    { id: 'monster', brand: 'MONSTER', flavor: 'Énergie · Ultra', price: 2.1, c1: '#222222', c2: '#050505', ink: '#9dff3a', acc: '#d8ffa8', news: true }
+    { id: 'coca', brand: 'COCA-COLA', flavor: 'Cola · Original', size: '33 cl', price: 1.5, c1: '#e41e2b', c2: '#7d0710', ink: '#ffffff', acc: '#ffd0d4', news: true },
+    { id: 'redbull', brand: 'RED BULL', flavor: 'Énergie · Original', size: '25 cl', price: 2.2, c1: '#2b4a8c', c2: '#12254d', ink: '#ffffff', acc: '#c9d3ea', news: true },
+    { id: 'fanta', brand: 'FANTA', flavor: 'Orange · Original', size: '33 cl', price: 1.4, c1: '#ff8a00', c2: '#b34700', ink: '#ffffff', acc: '#ffe08a', news: true },
+    { id: 'sprite', brand: 'SPRITE', flavor: 'Citron · Concombre', size: '25 cl', price: 1.4, c1: '#1fae4b', c2: '#0b6425', ink: '#ffffff', acc: '#e3f7a8', news: true },
+    { id: 'nestea', brand: 'NESTEA', flavor: 'Thé glacé · Citron', size: '33 cl', price: 1.6, c1: '#3d8fd1', c2: '#1d4f8c', ink: '#ffffff', acc: '#cfe6f7', news: true },
+    { id: 'monster', brand: 'MONSTER', flavor: 'Énergie · Original', size: '50 cl', price: 2.1, c1: '#222222', c2: '#050505', ink: '#9dff3a', acc: '#d8ffa8', news: true }
   ];
   const AISLES = ['Boissons', 'Snacks', 'Épicerie', 'Frais', 'Maison'];
   const ITEMS = [
@@ -267,6 +276,12 @@ footer.site a{color:var(--sun)}
   function label(c) {
     const W = 1024, H = 512, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
     const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, c.c1); bg.addColorStop(1, c.c2); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    const ph = PH[c.id];
+    if (ph && ph.img.naturalWidth) {   // vraie photo du produit, face avant et dos
+      const im = ph.img, [x0, y0, x1, y1] = ph.crop, w = im.naturalWidth, h = im.naturalHeight;
+      [W * .25, W * .75].forEach(cx => g.drawImage(im, w * x0, h * y0, w * (x1 - x0), h * (y1 - y0), cx - 210, 0, 420, H));
+      return cv;
+    }
     g.fillStyle = c.acc; g.globalAlpha = .9;   // bandes diagonales
     for (let x = -H; x < W; x += 170) { g.beginPath(); g.moveTo(x, H); g.lineTo(x + 46, H); g.lineTo(x + 46 + H * .55, 0); g.lineTo(x + H * .55, 0); g.fill(); }
     g.globalAlpha = 1; g.fillStyle = c.c1; g.fillRect(W * .25 - 150, 0, 300, H);   // panneau avant (centré sur la face visible)
@@ -274,7 +289,7 @@ footer.site a{color:var(--sun)}
     const fs = Math.min(150, 1700 / (c.brand.length + 3)); g.font = `900 ${fs}px Archivo, Impact, sans-serif`;
     g.save(); g.translate(W * .25, H * .46); g.scale(.62, 1.35); g.fillText(c.brand, 0, 0); g.restore();
     g.font = '700 30px Archivo, sans-serif'; g.fillText(c.flavor.toUpperCase(), W * .25, H * .78);
-    g.font = '700 22px Archivo, sans-serif'; g.fillText('33 cl', W * .25, H * .9);
+    g.font = '700 22px Archivo, sans-serif'; g.fillText(c.size, W * .25, H * .9);
     g.fillStyle = c.ink; g.globalAlpha = .85; g.fillRect(W * .75 - 110, H * .3, 220, 4); g.fillRect(W * .75 - 110, H * .7, 220, 4);   // dos
     g.font = `900 ${fs * .6}px Archivo, Impact, sans-serif`; g.fillText(c.brand, W * .75, H * .5); g.globalAlpha = 1;
     return cv;
@@ -297,7 +312,7 @@ footer.site a{color:var(--sun)}
 
   /* ---------- Panier ---------- */
   const cart = new Map(); let last = null;
-  const all = [...CANS.map(c => ({ id: c.id, name: `${c.brand} ${c.flavor.split(' · ')[1]}`, format: '33 cl', price: c.price })), ...ITEMS];
+  const all = [...CANS.map(c => ({ id: c.id, name: `${c.brand} ${c.flavor.split(' · ')[1]}`, format: c.size, price: c.price })), ...ITEMS];
   const find = id => all.find(x => x.id === id);
   try { JSON.parse(localStorage.getItem('tilleuls:cart') || '[]').forEach(([id, q]) => find(id) && cart.set(id, q)); } catch (e) { /* stockage indisponible */ }
   const save = () => { try { localStorage.setItem('tilleuls:cart', JSON.stringify([...cart])); } catch (e) { /* ignore */ } };
@@ -330,7 +345,7 @@ footer.site a{color:var(--sun)}
   /* ---------- Contenu ---------- */
   const imgs = Object.fromEntries(CANS.map(c => [c.id, canImage(c)]));
   $('#news').innerHTML = CANS.filter(c => c.news).map(c => `<article class="can-card"><span class="tag">NOUVEAU</span><div class="img" style="background:linear-gradient(160deg,${c.c1}22,${c.c2}33)"><img src="${imgs[c.id]}" alt="Canette ${esc(c.brand)} ${esc(c.flavor)}" width="83" height="150"></div>
-    <b>${esc(c.brand)}</b><small>${esc(c.flavor)} · 33 cl</small><div class="row-buy"><span class="p">${eur(c.price)}</span><button class="add" data-add="${c.id}">+ Ajouter</button></div></article>`).join('');
+    <b>${esc(c.brand)}</b><small>${esc(c.flavor)} · ${esc(c.size)}</small><div class="row-buy"><span class="p">${eur(c.price)}</span><button class="add" data-add="${c.id}">+ Ajouter</button></div></article>`).join('');
   const shape = (s, col) => ({
     bottle: `<path d="M27 6h10v8l5 8v34a4 4 0 0 1-4 4H26a4 4 0 0 1-4-4V22l5-8z" fill="${col}" stroke="#14213d" stroke-width="2.5"/><rect x="26" y="30" width="12" height="14" fill="#fff" opacity=".8"/>`,
     brick: `<path d="M18 16l6-8h16l6 8v42H18z" fill="${col}" stroke="#14213d" stroke-width="2.5"/><rect x="22" y="28" width="20" height="16" fill="#fff" opacity=".8"/>`,
@@ -341,7 +356,7 @@ footer.site a{color:var(--sun)}
   let aisle = 'Boissons';
   function paintAisles() {
     $('#aisles').innerHTML = AISLES.map(a => `<button aria-pressed="${a === aisle}" data-aisle="${a}">${a}</button>`).join('');
-    const list = aisle === 'Boissons' ? [...CANS.map(c => ({ id: c.id, name: `${c.brand} ${c.flavor.split(' · ')[1]}`, format: '33 cl', price: c.price, img: imgs[c.id] })), ...ITEMS.filter(x => x.aisle === aisle)] : ITEMS.filter(x => x.aisle === aisle);
+    const list = aisle === 'Boissons' ? [...CANS.map(c => ({ id: c.id, name: `${c.brand} ${c.flavor.split(' · ')[1]}`, format: c.size, price: c.price, img: imgs[c.id] })), ...ITEMS.filter(x => x.aisle === aisle)] : ITEMS.filter(x => x.aisle === aisle);
     $('#grid').innerHTML = list.map(x => `<article class="item">${x.img ? `<img src="${x.img}" alt="" style="height:64px;width:auto;margin:auto">` : `<svg viewBox="0 0 64 64" aria-hidden="true">${shape(x.shape, x.col)}</svg>`}<div><b>${esc(x.name)}</b><small>${esc(x.format)}</small></div>
       <div class="row-buy"><span class="p">${eur(x.price)}</span><button class="add" data-add="${x.id}">+ Ajouter</button></div></article>`).join('');
   }
@@ -370,7 +385,7 @@ footer.site a{color:var(--sun)}
   /* ---------- Carrousel 3D ---------- */
   const stage = $('#stage'), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let sel = 0;
-  const showNow = () => { const c = CANS[sel]; $('#now-name').textContent = c.brand; $('#now-flavor').textContent = c.flavor + ' · 33 cl'; $('#now-price').textContent = eur(c.price); $('#fallback-img').src = imgs[c.id]; $('#fallback-img').alt = `Canette ${c.brand} ${c.flavor}`; };
+  const showNow = () => { const c = CANS[sel]; $('#now-name').textContent = c.brand; $('#now-flavor').textContent = c.flavor + ' · ' + c.size; $('#now-price').textContent = eur(c.price); $('#fallback-img').src = imgs[c.id]; $('#fallback-img').alt = `Canette ${c.brand} ${c.flavor}`; };
   $('#now-add').onclick = () => add(CANS[sel].id);
   let target = 0, spin = 0;
   const go = i => { sel = (i % CANS.length + CANS.length) % CANS.length; target = -sel * (Math.PI * 2 / CANS.length); showNow(); };
@@ -445,7 +460,7 @@ footer.site a{color:var(--sun)}
     });
     renderer.render(scene, cam);
   })();
-})();
+});
 </script>
 </body>
 </html>
