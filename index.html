@@ -46,10 +46,11 @@
     <ul class="nav-links">
       <li><a href="#outils">Outils</a></li>
       <li><a href="#sur-mesure">Sur mesure</a></li>
+      <li><a href="realisations/">Réalisations</a></li>
       <li><a href="#ebooks">E-books</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
-    <a class="btn btn-sm" href="#contact">Me contacter</a>
+    <a class="btn btn-sm" href="devis/">Demander un devis</a>
   </div>
 </header>
 
@@ -148,21 +149,21 @@
           <h3>Site vitrine</h3>
           <p>Une page claire pour présenter votre activité et être contacté.</p>
           <ul><li>Adapté au téléphone</li><li>Votre nom de domaine</li><li>Mise en ligne incluse</li></ul>
-          <a class="more" href="#contact">Demander un devis →</a>
+          <a class="more" href="devis/?type=Site%20vitrine">Demander un devis →</a>
         </article>
         <article class="card offer is-featured reveal" style="--i:1">
           <div class="card-top"><span class="icon"><svg><use href="#i-tool"/></svg></span><span class="chip chip-lime">Le cœur de QuenTools</span></div>
           <h3>Outil sur mesure</h3>
           <p>Un calculateur, un simulateur de devis, un suivi de clients ou de stock : l’outil qui remplace votre tableau bricolé.</p>
           <ul><li>Pensé pour votre métier</li><li>Fonctionne hors connexion</li><li>Données gardées sur l’appareil</li></ul>
-          <a class="more" href="#contact">Demander un devis →</a>
+          <a class="more" href="devis/?type=Outil%20sur%20mesure">Demander un devis →</a>
         </article>
         <article class="card offer reveal" style="--i:2">
           <span class="icon"><svg><use href="#i-phone"/></svg></span>
           <h3>Application complète</h3>
           <p>Une vraie application installable, avec comptes et synchronisation, comme Wouf ou Infikit.</p>
           <ul><li>Installable sur l’écran d’accueil</li><li>Comptes et sauvegarde</li><li>Vérifications automatiques</li></ul>
-          <a class="more" href="#contact">Demander un devis →</a>
+          <a class="more" href="devis/?type=Application%20compl%C3%A8te">Demander un devis →</a>
         </article>
       </div>
       <div class="steps">
@@ -248,11 +249,11 @@
         <p style="margin-top:var(--s-4);max-width:34ch">Des outils simples qui font gagner du temps. Gratuits quand c’est possible, sur mesure quand il le faut.</p>
       </div>
       <div><h4>Outils</h4><ul><li><a href="infikit/">Infikit</a></li><li><a href="freelance/">Freelance Kit</a></li><li><a href="gourmet/">Gourmet AI</a></li><li><a href="https://ikeupods-del.github.io/patrimoineai/">Patrimoine AI</a></li><li><a href="https://woufapp.fr">Wouf</a></li></ul></div>
-      <div><h4>QuenTools</h4><ul><li><a href="#sur-mesure">Sur mesure</a></li><li><a href="#ebooks">E-books</a></li><li><a href="#faq">FAQ</a></li><li><a href="https://www.tiktok.com/@quentools" rel="noopener">TikTok</a></li></ul></div>
+      <div><h4>QuenTools</h4><ul><li><a href="#sur-mesure">Sur mesure</a></li><li><a href="realisations/">Réalisations</a></li><li><a href="devis/">Demander un devis</a></li><li><a href="#ebooks">E-books</a></li><li><a href="#faq">FAQ</a></li><li><a href="https://www.tiktok.com/@quentools" rel="noopener">TikTok</a></li></ul></div>
       <div><h4>Légal</h4><ul><li><details><summary>Mentions et confidentialité</summary>
         <p style="margin-top:10px"><b>Éditeur :</b> QuenTools, site personnel édité par un particulier (non professionnel). Contact : TikTok @quentools.</p>
         <p><b>Hébergeur :</b> GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis (GitHub Pages).</p>
-        <p><b>Données :</b> ce site ne dépose aucun cookie, n’utilise aucune mesure d’audience et ne collecte aucune donnée. Chaque outil précise dans ses réglages où il enregistre vos données.</p>
+        <p><b>Données :</b> ce site ne dépose aucun cookie, n’utilise aucune mesure d’audience et ne collecte aucune donnée, sauf ce que vous saisissez dans le formulaire de devis, utilisé uniquement pour vous répondre. Chaque outil précise dans ses réglages où il enregistre vos données.</p>
       </details></li></ul></div>
     </div>
     <div class="footer-bottom">
@@ -263,12 +264,12 @@
 </footer>
 
 <script src="assets/qt.js" defer></script>
+<script src="assets/qt-config.js"></script>
 <script>
-  // Coordonnées publiques (vide = bouton masqué).
-  const QT = { email: '', tiktok: 'quentools' };
-  const box = document.getElementById('contact-actions'), btns = [];
-  if (QT.email) btns.push(`<a class="btn btn-lime" href="mailto:${QT.email}?subject=${encodeURIComponent('Projet QuenTools')}">M’écrire</a>`);
-  if (QT.tiktok) btns.push(`<a class="btn ${QT.email ? 'btn-ghost' : 'btn-lime'}" href="https://www.tiktok.com/@${QT.tiktok}" rel="noopener">Suivre et écrire sur TikTok</a>`);
+  // Coordonnées publiques : assets/qt-config.js (vide = bouton masqué).
+  const C = window.QT || {}, box = document.getElementById('contact-actions'), btns = ['<a class="btn btn-lime" href="devis/">Demander un devis</a>'];
+  if (C.email) btns.push(`<a class="btn btn-ghost" href="mailto:${C.email}?subject=${encodeURIComponent('Projet QuenTools')}">M’écrire</a>`);
+  if (C.tiktok) btns.push(`<a class="btn btn-ghost" href="https://www.tiktok.com/@${C.tiktok}" rel="noopener">Suivre et écrire sur TikTok</a>`);
   box.innerHTML = btns.join('');
 </script>
 </body>
