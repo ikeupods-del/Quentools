@@ -170,11 +170,11 @@ Wouf — générateur de noms pour chien et chat : styles, sexe, initiale (dont 
 - définit : lev nameCheck pickNames namesHTML testHTML NAME_STYLES NAME_POOL LOF_LETTERS lofLetter norm syllables NAME_COMMANDS confusedWith NOMS nameFavs isFav chip
 - dépend de : core.js health.js screens.js main.js
 
-### wouf/business.js (423 l.)
+### wouf/business.js (425 l.)
 Wouf — exploitation et vente : achat unique « à vie » et abonnement annuel (facultatif), assistance prioritaire, pages légales, nouveautés, alerte de mise à jour, diagnostics. Paiement : Pay
 - écrans : #/merci #/abo #/support #/legal #/nouveautes
 - actions : restore checkout buy-go subscribe paywall sub-manage sub-cancel support-send check-update
-- définit : errorLog diagnostics api authHeaders applySub refreshSub paypalUrl paypalSubUrl stripeUrl consentText buySheet soonSheet paywall legalDoc checkVersion showUpdateBanner initUpdates LEGAL planOf yearlyPlan subPlan isPriority supportTo ctaLabel nDog CHANGELOG FEATURES planLine noSubText autoOn autoOnFor PAY_LINK STRIPE_LINK PAYEE STRIPE useMethod paypalReady stripeReady payMethods payReady rewardBuyable METHOD_NAME yearlyBuyable pickedPlan pickedMethod paypalCancelUrl NAV FAQ faqList payProviders payLabel orTbd vNewer
+- définit : errorLog diagnostics api authHeaders applySub refreshSub paypalUrl paypalSubUrl stripeUrl consentText buySheet soonSheet paywall legalDoc checkVersion showUpdateBanner initUpdates LEGAL planOf yearlyPlan subPlan isPriority supportTo ctaLabel nDog CHANGELOG FEATURES planLine noSubText autoOn autoOnFor PAY_LINK STRIPE_LINK PAYEE STRIPE useMethod paypalReady stripeReady payMethods payReady rewardBuyable METHOD_NAME yearlyBuyable pickedPlan pickedMethod paypalCancelUrl NAV FAQ faqList payProviders payLabel orTbd idLabel vNewer
 - dépend de : species.js core.js health.js screens.js lessons.js educ.js parcours.js cloud.js admin.js extras.js croissance.js main.js
 
 ### wouf/admin.js (292 l.)

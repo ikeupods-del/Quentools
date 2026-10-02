@@ -78,6 +78,9 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // Type de projet présélectionné depuis l'accueil : /devis/?type=Outil%20sur%20mesure
   const pre = new URLSearchParams(location.search).get('type'); if (pre) { const r = f.querySelector(`input[name=type][value="${CSS.escape(pre)}"]`); if (r) r.checked = true; }
+  // Carte cadeau : /devis/?cadeau=QT-XXXX-XXXX ajoute le code en tête de la demande (le montant est déduit du devis).
+  const gift = (new URLSearchParams(location.search).get('cadeau') || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 14);
+  if (gift) { const b = document.getElementById('besoin'); b.value = `Carte cadeau : ${gift}\n\n`; b.placeholder = ''; }
   f.addEventListener('submit', async e => {
     e.preventDefault();
     const d = Object.fromEntries(new FormData(f)), type = (f.querySelector('input[name=type]:checked') || {}).value;

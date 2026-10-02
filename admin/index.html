@@ -435,7 +435,7 @@ function viewContacts() {
     <p class="muted" style="font-size:var(--t-xs)">Chaque contact a accepté de recevoir l’e-book et des nouvelles de QuenTools. Pour une demande de suppression, utilisez le bouton « Supprimer » du contact.</p>`;
 }
 async function load() {
-  if (DEMO) { items = demo.items.concat(demoExtra()); site = demo.site; if (!agenda.length) agenda = [{ id: 'a1', kind: 'appel', titre: 'Appeler pour cadrer le site', date: today(), heure: '14:00', duree: 15, devisId: 'd1', note: 'Demander les photos et les horaires.', done: false }, { id: 'a2', kind: 'projet', titre: 'Maquette de l’accueil', date: addDays(today(), 1), heure: '09:30', duree: 120, devisId: 'd3', note: '', done: false }, { id: 'a3', kind: 'rappel', titre: 'Relancer le devis', date: addDays(today(), -1), heure: '', duree: 30, devisId: 'd2', note: '', done: false }]; return; }
+  if (DEMO) { items = demo.items.concat(demoExtra()); site = demo.site; if (!agenda.length) agenda = [{ id: 'a1', kind: 'appel', titre: 'Appeler pour cadrer le site', date: today(), heure: '14:00', duree: 15, devisId: 'd1', note: 'Demander les photos et les horaires.', done: false }, { id: 'a2', kind: 'projet', titre: 'Maquette de l’accueil', date: addDays(today(), 1), heure: '09:30', duree: 120, devisId: 'd3', note: '', done: false }, { id: 'a3', kind: 'rappel', titre: 'Relancer le devis', date: addDays(today(), -1), heure: '', duree: 30, devisId: 'd2', note: '', done: false }]; await loadGifts(); return; }
   const { Fs, db } = await fb();
   try {
     const snap = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_devis'), Fs.orderBy('at', 'desc'), Fs.limit(300)));
@@ -448,6 +448,7 @@ async function load() {
   try { const s = await Fs.getDoc(Fs.doc(db, 'qt_admin', 'config')); site = s.exists() ? s.data() : {}; } catch (e) { site = {}; }
   try { const a = await Fs.getDocs(Fs.collection(db, 'qt_agenda')); agenda = a.docs.map(d => ({ id: d.id, ...d.data() })); agendaErr = false; }
   catch (e) { agenda = []; agendaErr = !denied && /permission/i.test(e.code || e.message); }
+  await loadGifts();
 }
 async function patch(id, data) {
   const it = items.find(x => x.id === id); Object.assign(it, data);
@@ -491,6 +492,126 @@ async function saveSite(data) {
   const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_admin', 'config'), data, { merge: true });
 }
 
+/* ---------- Cartes cadeaux : commandes (qt_cadeaux, privées) et cartes émises (qt_cartes/{code}, lisibles par qui a le code) ---------- */
+const GIFT_ST = { attente: 'Paiement à vérifier', payee: 'Carte envoyée', annulee: 'Annulée' };
+const GA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+let gifts = [], cards = [], giftErr = false, gq = '', gFilter = 'attente', gOpen = null;
+const r2 = n => Math.round((+n || 0) * 100) / 100;
+const eur2 = n => (+n || 0).toLocaleString('fr-FR', { minimumFractionDigits: Number.isInteger(r2(n)) ? 0 : 2, maximumFractionDigits: 2 }) + ' €';
+const giftMonths = () => Math.min(36, Math.max(12, +site.cadeauMois || 12));
+const newCode = () => { const b = new Uint8Array(8); crypto.getRandomValues(b); const s = [...b].map(x => GA[x % 32]).join(''); return 'QT-' + s.slice(0, 4) + '-' + s.slice(4); };
+const cardUrl = code => new URL('../cadeau/carte/?code=' + encodeURIComponent(code), location.href).href;
+const frDate = iso => iso ? new Date(iso + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+const hist = c => { try { const h = JSON.parse(c.historique || '[]'); return Array.isArray(h) ? h : []; } catch (e) { return []; } };
+const cardState = c => c.statut === 'annulee' ? ['Annulée', 'st-perdu'] : c.expire && c.expire < today() ? ['Expirée', 'st-perdu'] : !(+c.solde > 0) ? ['Utilisée', 'st-livre'] : +c.solde < +c.montant ? ['Entamée', 'st-encours'] : ['Active', 'st-gagne'];
+const cardLive = c => c.statut !== 'annulee' && !(c.expire && c.expire < today()) && +c.solde > 0;
+const giftCode = t => { const m = String(t || '').toUpperCase().match(/QT-?([A-Z0-9]{4})-?([A-Z0-9]{4})/); return m ? `QT-${m[1]}-${m[2]}` : ''; };
+async function loadGifts() {
+  if (DEMO) {
+    if (!gifts.length && !cards.length) {
+      gifts = [{ id: 'CCK7M2PX', montant: 100, pour: 'Camille', de: 'Léo', message: 'Pour que ton atelier ait enfin son site !', nom: 'Léo Durand', email: 'leo@example.com', envoi: 'destinataire', destEmail: 'camille@example.com', dateEnvoi: addDays(today(), 3), paiement: 'paypal', status: 'attente', at: new Date(Date.now() - 2 * 3600e3) },
+        { id: 'CC9H3TQA', montant: 200, pour: 'Papa', de: 'Inès', message: '', nom: 'Inès B.', email: 'ines@example.com', envoi: 'moi', destEmail: '', dateEnvoi: '', paiement: 'paypal', status: 'payee', code: 'QT-8XWD-4M2K', at: new Date(Date.now() - 12 * 864e5) }];
+      cards = [{ id: 'QT-8XWD-4M2K', montant: 200, solde: 120, pour: 'Papa', de: 'Inès', message: 'Joyeux anniversaire !', expire: addMonths(today(), 11), statut: 'active', ref: 'CC9H3TQA', historique: JSON.stringify([{ d: addDays(today(), -5), m: 80, n: 'Devis site vitrine' }]), at: new Date(Date.now() - 12 * 864e5) }];
+    }
+    return;
+  }
+  const { Fs, db } = await fb();
+  try {
+    const [o, c] = await Promise.all([Fs.getDocs(Fs.query(Fs.collection(db, 'qt_cadeaux'), Fs.orderBy('at', 'desc'), Fs.limit(500))), Fs.getDocs(Fs.collection(db, 'qt_cartes'))]);
+    gifts = o.docs.map(d => ({ id: d.id, ...d.data() })); cards = c.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => ms(b.at) - ms(a.at)); giftErr = false;
+  } catch (e) { gifts = []; cards = []; giftErr = !denied && /permission/i.test(e.code || e.message); }
+}
+async function cardCreate(p) {
+  const montant = r2(p.montant);
+  if (!(montant >= 1 && montant <= 5000)) throw new Error('montant');
+  const rec = { montant, solde: montant, pour: String(p.pour || '').slice(0, 60), de: String(p.de || '').slice(0, 60), message: String(p.message || '').slice(0, 200),
+    expire: addMonths(today(), giftMonths()), statut: 'active', ref: String(p.ref || ''), historique: '[]' };
+  let code = newCode();
+  if (DEMO) { cards.unshift({ ...rec, id: code, at: new Date() }); return code; }
+  const { Fs, db } = await fb();
+  for (let i = 0; i < 5 && (await Fs.getDoc(Fs.doc(db, 'qt_cartes', code))).exists(); i++) code = newCode();
+  await Fs.setDoc(Fs.doc(db, 'qt_cartes', code), { ...rec, at: Fs.serverTimestamp() });
+  cards.unshift({ ...rec, id: code, at: new Date() });
+  return code;
+}
+async function cardPatch(code, data) {
+  const c = cards.find(x => x.id === code); if (c) Object.assign(c, data);
+  if (DEMO) return;
+  const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_cartes', code), { ...data, updated: Fs.serverTimestamp() }, { merge: true });
+}
+async function giftPatch(id, data) {
+  const g = gifts.find(x => x.id === id); if (g) Object.assign(g, data);
+  if (DEMO) return;
+  const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_cadeaux', id), { ...data, updated: Fs.serverTimestamp() }, { merge: true });
+}
+async function giftDel(id) { gifts = gifts.filter(x => x.id !== id); if (DEMO) return; const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_cadeaux', id)); }
+/* Lien de paiement à envoyer soi-même (commande sans paiement en ligne, ou paiement abandonné). */
+function giftPayUrl(g) {
+  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(site.cadeauPaypal || '')) {
+    const back = new URL('../cadeau/', location.href).href;
+    return 'https://www.paypal.com/cgi-bin/webscr?' + new URLSearchParams({ cmd: '_xclick', business: site.cadeauPaypal, item_name: `Carte cadeau QuenTools ${g.montant} € (pour ${g.pour})`, item_number: g.id, invoice: g.id,
+      amount: String(g.montant), currency_code: 'EUR', no_shipping: '1', lc: 'FR', charset: 'utf-8', return: back + '?merci=' + g.id, cancel_return: back });
+  }
+  if (/^https:\/\/(buy|checkout)\.stripe\.com\//.test(site.cadeauStripe || '')) { const u = new URL(site.cadeauStripe); u.searchParams.set('client_reference_id', g.id); u.searchParams.set('prefilled_email', g.email); return u.toString(); }
+  return '';
+}
+function giftMail(c, g) {
+  const to = g ? (g.envoi === 'destinataire' && g.destEmail ? g.destEmail : g.email) : '', toDest = !!(g && g.envoi === 'destinataire' && g.destEmail) || !g;
+  const subject = `🎁 Une carte cadeau QuenTools${c.pour ? ' pour ' + c.pour : ''}`;
+  const body = toDest
+    ? `Bonjour${c.pour ? ' ' + c.pour : ''},\n\n${c.de ? c.de + ' vous offre' : 'Voici'} une carte cadeau QuenTools de ${eur2(c.montant)} !${c.message ? `\n\n« ${c.message} »` : ''}\n\nVoir la carte : ${cardUrl(c.id)}\nCode : ${c.id}\nValable jusqu’au ${frDate(c.expire)} sur toutes les prestations QuenTools : site internet, outil sur mesure, améliorations et maintenance.\n\nPour l’utiliser, il suffit de demander un devis en indiquant ce code : le montant est déduit, en une ou plusieurs fois.\n\nBelle journée,\nQuenTools`
+    : `Bonjour ${first(g.nom)},\n\nMerci pour votre achat ! Voici la carte cadeau de ${eur2(c.montant)} pour ${c.pour}, prête à imprimer ou à transférer :\n${cardUrl(c.id)}\n\nCode : ${c.id}\nValable jusqu’au ${frDate(c.expire)} sur toutes les prestations QuenTools.\nPour l’utiliser, ${c.pour} demande un devis en indiquant ce code : le montant est déduit.\n\nBelle journée,\nQuenTools`;
+  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+function payMail(g) {
+  const u = giftPayUrl(g);
+  const body = `Bonjour ${first(g.nom)},\n\nMerci pour votre commande d’une carte cadeau QuenTools de ${eur2(g.montant)} pour ${g.pour} (réf. ${g.id}).\n\n${u ? 'Voici le lien de paiement sécurisé :\n' + u : 'Vous pouvez régler par virement ou PayPal : je vous indique les coordonnées en réponse à ce message.'}\n\nDès le paiement reçu, ${g.envoi === 'destinataire' ? 'la carte est envoyée à ' + g.destEmail + (g.dateEnvoi ? ' le ' + frDate(g.dateEnvoi) : '') : 'je vous envoie la carte'}.\n\nBelle journée,\nQuenTools`;
+  return `mailto:${encodeURIComponent(g.email)}?subject=${encodeURIComponent('Votre carte cadeau QuenTools : lien de paiement')}&body=${encodeURIComponent(body)}`;
+}
+function viewGifts() {
+  if (giftErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Une mise à jour des règles</h2><p>Les cartes cadeaux s’enregistrent dans deux collections protégées. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-tab="regles">Voir les règles</button><button class="btn btn-ghost" data-do="reload">J’ai publié les règles</button></div></section>`;
+  const wait = gifts.filter(g => (g.status || 'attente') === 'attente'), live = cards.filter(cardLive);
+  const sold = gifts.filter(g => g.status === 'payee').reduce((s, g) => s + (+g.montant || 0), 0), used = cards.reduce((s, c) => s + hist(c).reduce((t, h) => t + (+h.m || 0), 0), 0);
+  const noPay = !giftPayUrl({ id: 'X', montant: 1, pour: '', email: '' });
+  const kpis = `<div class="kpis"><div><b>${wait.length}</b><span>commande${wait.length > 1 ? 's' : ''} à vérifier (${eur2(wait.reduce((s, g) => s + (+g.montant || 0), 0))})</span></div>
+    <div><b>${eur2(sold)}</b><span>cartes vendues</span></div><div><b>${eur2(live.reduce((s, c) => s + (+c.solde || 0), 0))}</b><span>à honorer (${live.length} carte${live.length > 1 ? 's' : ''} active${live.length > 1 ? 's' : ''})</span></div>
+    <div><b>${eur2(used)}</b><span>déjà utilisés</span></div></div>`;
+  const warn = (site.cadeauOn === false ? '<div class="notice warn" style="margin-bottom:var(--s-4)">La vente est fermée : la page <b>/cadeau/</b> affiche « bientôt disponible ». Réouverture dans <b>Réglages du site</b>.</div>' : '')
+    + (noPay ? '<div class="notice warn" style="margin-bottom:var(--s-4)">Aucun paiement en ligne réglé : les commandes arrivent ici et vous envoyez le lien de paiement vous-même. Ajoutez votre adresse PayPal ou un lien Stripe dans <b>Réglages du site → Cartes cadeaux</b>.</div>' : '');
+  const fl = [['attente', 'À vérifier', wait.length], ['cartes', 'Cartes émises', cards.length], ['commandes', 'Toutes les commandes', gifts.length]];
+  const bar = `<div class="filters">${fl.map(([k, l, n]) => `<button data-do="gf-filter" data-k="${k}" aria-pressed="${gFilter === k}">${l} <span class="n">${n}</span></button>`).join('')}</div>
+    <div class="filters"><input type="search" id="gq" placeholder="Code, prénom, e-mail…" value="${esc(gq)}" aria-label="Rechercher une carte"><a class="btn btn-sm btn-ghost" href="../cadeau/" target="_blank" rel="noopener">Voir la page publique</a></div>`;
+  const newForm = `<details class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"><summary style="cursor:pointer;font-weight:700;padding:6px 0">+ Offrir une carte (concours, geste commercial…)</summary>
+    <div class="ag-form" id="cd-new" style="margin-top:var(--s-3)"><div class="row3"><input name="montant" type="number" min="1" max="5000" step="1" inputmode="numeric" placeholder="Montant (€)" aria-label="Montant"><input name="pour" maxlength="60" placeholder="Pour (prénom)" aria-label="Pour"><input name="de" maxlength="60" value="QuenTools" placeholder="De la part de" aria-label="De la part de"></div>
+      <textarea name="message" maxlength="200" placeholder="Petit mot (facultatif)" aria-label="Petit mot"></textarea>
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="cd-new">Créer la carte</button><span class="muted" style="font-size:var(--t-xs);align-self:center">Valable ${giftMonths()} mois. Vous obtenez le lien à envoyer.</span></div></div></details>`;
+  const qq = gq.trim().toLowerCase(), match = (...a) => !qq || a.join(' ').toLowerCase().includes(qq);
+  const orderCard = g => { const st = g.status || 'attente', c = g.code && cards.find(x => x.id === g.code), exp = gOpen === g.id || st === 'attente';
+    return `<article class="card req" data-gid="${esc(g.id)}"><div class="req-sum"><button class="req-toggle" data-do="gf-open" aria-expanded="${exp}"><span class="req-top"><span class="chev" aria-hidden="true">▸</span><h3>🎁 ${esc(eur2(g.montant))} pour ${esc(g.pour)}</h3><span class="chip ${st === 'attente' ? 'st-nouveau' : st === 'payee' ? 'st-gagne' : 'st-perdu'}">${esc(GIFT_ST[st] || st)}</span></span>
+      <span class="meta"><span class="chip">de ${esc(g.de)}</span><span class="chip">${esc(g.paiement === 'stripe' ? '💳 Stripe' : g.paiement === 'paypal' ? '🅿️ PayPal' : '✉️ lien à envoyer')}</span><span class="chip">${ms(g.at) ? new Date(ms(g.at)).toLocaleDateString('fr-FR') : ''}</span><span class="chip">réf. ${esc(g.id)}</span>${g.code ? `<span class="chip">${esc(g.code)}</span>` : ''}</span></button></div>
+      ${exp ? `<div class="req-body"><div class="who">Acheteur : <b>${esc(g.nom)}</b> · ✉️ ${esc(g.email)}</div>
+        <div class="who">Envoi : ${g.envoi === 'destinataire' ? `directement à <b>${esc(g.destEmail)}</b>${g.dateEnvoi ? ' le <b>' + esc(frDate(g.dateEnvoi)) + '</b>' : ''}` : 'à l’acheteur, qui l’offre lui-même'}</div>
+        ${g.message ? `<p class="need">« ${esc(g.message)} »</p>` : ''}
+        ${st === 'attente' ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Vérifiez dans ${g.paiement === 'stripe' ? '<a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">Stripe</a>' : '<a href="https://www.paypal.com/myaccount/transactions" target="_blank" rel="noopener">PayPal</a>'} qu’un paiement de <b>${esc(eur2(g.montant))}</b> (réf. ${esc(g.id)}) est bien arrivé, puis créez la carte.</p>` : ''}
+        <div class="row">${st === 'attente' ? `<button class="btn btn-sm btn-accent" data-do="gf-paid">✅ Paiement reçu : créer la carte</button><a class="btn btn-sm btn-ghost" href="${esc(payMail(g))}">Envoyer le lien de paiement</a><button class="btn btn-sm btn-ghost" data-do="gf-cancel">Annuler</button>` : ''}
+          ${c ? `<a class="btn btn-sm btn-accent" href="${esc(giftMail(c, g))}">✉️ Envoyer la carte${g.envoi === 'destinataire' ? ' à ' + esc(first(g.pour)) : ''}</a><a class="btn btn-sm btn-ghost" href="${esc(cardUrl(c.id))}" target="_blank" rel="noopener">Voir la carte</a><button class="btn btn-sm btn-ghost" data-do="gf-card">Gérer la carte</button>` : ''}
+          ${st === 'annulee' ? '<button class="btn btn-sm btn-ghost" data-do="gf-reopen">Remettre à vérifier</button>' : ''}
+          <button class="btn btn-sm btn-ghost" data-do="gf-del" style="margin-left:auto">Supprimer</button></div></div>` : ''}</article>`; };
+  const cardCard = c => { const [sl, sc] = cardState(c), h = hist(c), g = gifts.find(x => x.code === c.id), exp = gOpen === c.id;
+    return `<article class="card req" data-code="${esc(c.id)}"><div class="req-sum"><button class="req-toggle" data-do="cd-open" aria-expanded="${exp}"><span class="req-top"><span class="chev" aria-hidden="true">▸</span><h3 style="font-family:var(--f-mono);letter-spacing:.04em">${esc(c.id)}</h3><span class="chip ${sc}">${sl}</span></span>
+      <span class="meta"><span class="chip">💶 ${esc(eur2(c.solde))} / ${esc(eur2(c.montant))}</span>${c.pour ? `<span class="chip">pour ${esc(c.pour)}</span>` : ''}<span class="chip">jusqu’au ${esc(new Date(c.expire + 'T12:00').toLocaleDateString('fr-FR'))}</span>${c.ref ? '' : '<span class="chip">offerte</span>'}</span></button></div>
+      ${exp ? `<div class="req-body">${c.message ? `<p class="need">« ${esc(c.message)} »</p>` : ''}
+        ${h.length ? `<div class="thread">${h.map(x => `<div class="msg systeme">${esc(new Date(x.d + 'T12:00').toLocaleDateString('fr-FR'))} · − ${esc(eur2(x.m))}${x.n ? ' · ' + esc(x.n) : ''}</div>`).join('')}</div>` : '<p class="muted" style="margin:0;font-size:var(--t-sm)">Pas encore utilisée.</p>'}
+        ${cardLive(c) ? `<div class="row3"><input data-cd="m" type="number" min="0.01" max="${esc(c.solde)}" step="0.01" inputmode="decimal" placeholder="Montant utilisé (€)" aria-label="Montant utilisé"><input data-cd="n" maxlength="120" placeholder="Pour quoi ? Ex. devis site vitrine" aria-label="Pour quoi"><button class="btn btn-sm btn-accent" data-do="cd-use">Déduire</button></div>` : ''}
+        <div class="row"><a class="btn btn-sm btn-ghost" href="${esc(giftMail(c, g))}">✉️ Envoyer</a><button class="btn btn-sm btn-ghost" data-do="cd-copy">Copier le lien</button><a class="btn btn-sm btn-ghost" href="${esc(cardUrl(c.id))}" target="_blank" rel="noopener">Voir / imprimer</a>
+          ${c.statut === 'annulee' ? '<button class="btn btn-sm btn-ghost" data-do="cd-on" style="margin-left:auto">Réactiver</button>' : `${c.expire < today() ? '<button class="btn btn-sm btn-ghost" data-do="cd-extend">Prolonger de 3 mois</button>' : ''}<button class="btn btn-sm btn-ghost" data-do="cd-off" style="margin-left:auto">Annuler la carte</button>`}</div></div>` : ''}</article>`; };
+  let list;
+  if (gFilter === 'cartes') list = cards.filter(c => match(c.id, c.pour, c.de, c.ref, (gifts.find(g => g.code === c.id) || {}).email)).map(cardCard);
+  else list = gifts.filter(g => (gFilter === 'commandes' || (g.status || 'attente') === 'attente') && match(g.id, g.code, g.pour, g.de, g.nom, g.email, g.destEmail)).map(orderCard);
+  return warn + kpis + bar + (gFilter === 'cartes' ? newForm : '') + (list.length ? list.join('') : `<div class="card empty">${gFilter === 'attente' ? 'Aucune commande à vérifier. Elles arrivent ici dès qu’un visiteur achète une carte sur <b>/cadeau/</b>.' : gFilter === 'cartes' ? 'Aucune carte émise pour l’instant.' : 'Aucune commande pour l’instant.'}</div>`);
+}
+
 /* ---------- Écrans ---------- */
 const toast = (m, warn) => { const n = document.getElementById('toast'); if (!n) return; n.innerHTML = `<div class="notice${warn ? ' warn' : ''}">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => n.innerHTML = '', 3500); };
 function shell(body) {
@@ -499,11 +620,11 @@ function shell(body) {
   const t = (k, l) => `<button role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`;
   app.innerHTML = `<div class="adm-head"><div><span class="eyebrow">Tableau de bord</span><h1 class="h-section" style="margin:var(--s-2) 0 0">Bonjour 👋</h1></div>
     <div class="row" style="display:flex;gap:8px;align-items:center"><span class="muted" style="font-size:var(--t-xs)">${esc(DEMO ? 'Démonstration' : user && user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></div>
-    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('agenda', `Agenda${na ? `<span class="count">${na}</span>` : ''}`)}${t('estimer', 'Devis')}${t('stats', 'Chiffres')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}${t('contacts', 'Contacts')}${t('regles', 'Règles')}${rulesOld ? '<span class="count">!</span>' : ''}</div>
+    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('agenda', `Agenda${na ? `<span class="count">${na}</span>` : ''}`)}${t('estimer', 'Devis')}${t('cadeaux', `Cadeaux${gifts.filter(g => (g.status || 'attente') === 'attente').length ? `<span class="count">${gifts.filter(g => (g.status || 'attente') === 'attente').length}</span>` : ''}`)}${t('stats', 'Chiffres')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}${t('contacts', 'Contacts')}${t('regles', 'Règles')}${rulesOld ? '<span class="count">!</span>' : ''}</div>
     <div id="toast" role="status" aria-live="polite"></div>${body}`;
 }
 function render() {
-  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : viewLinks());
+  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'cadeaux' ? viewGifts() : viewLinks());
   if (tab === 'estimer') estimate();
 }
 
@@ -522,6 +643,24 @@ match /qt_leads/{id} {
     && request.resource.data.email == request.auth.token.email;
   allow read, delete: if qtAdmin();
 }
+match /qt_cadeaux/{id} {
+  allow create: if id.matches('^CC[A-Z0-9]{6}$')
+    && request.resource.data.keys().hasOnly(['montant','pour','de','message','nom','email','emailLower','envoi','destEmail','dateEnvoi','paiement','status','at'])
+    && request.resource.data.status == 'attente' && request.resource.data.at is timestamp
+    && request.resource.data.montant is int && request.resource.data.montant >= 20 && request.resource.data.montant <= 2000
+    && request.resource.data.pour is string && request.resource.data.pour.size() > 0 && request.resource.data.pour.size() <= 60
+    && request.resource.data.de is string && request.resource.data.de.size() > 0 && request.resource.data.de.size() <= 60
+    && request.resource.data.message is string && request.resource.data.message.size() <= 200
+    && request.resource.data.nom is string && request.resource.data.nom.size() > 0 && request.resource.data.nom.size() <= 120
+    && request.resource.data.email is string && request.resource.data.email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$') && request.resource.data.email.size() <= 160
+    && request.resource.data.emailLower == request.resource.data.email.lower()
+    && request.resource.data.envoi in ['moi','destinataire']
+    && request.resource.data.destEmail is string && request.resource.data.destEmail.size() <= 160
+    && request.resource.data.dateEnvoi is string && request.resource.data.dateEnvoi.size() <= 10
+    && request.resource.data.paiement in ['paypal','stripe','manuel'];
+  allow read, update, delete: if qtAdmin();
+}
+match /qt_cartes/{code} { allow get: if true; allow list, create, update, delete: if qtAdmin(); }
 match /qt_devis/{id} {
   allow create: if request.resource.data.keys().hasOnly(['type','besoin','delai','budget','nom','email','emailLower','tel','status','at'])
     && request.resource.data.status == 'nouveau' && request.resource.data.at is timestamp
@@ -597,7 +736,7 @@ function viewRequests() {
     const nx = agenda.filter(a => a.devisId === x.id && !a.done).sort((a, b) => (a.date + a.heure).localeCompare(b.date + b.heure))[0];
     return `<article class="card req" data-id="${esc(x.id)}">
       <div class="req-sum"><button class="req-toggle" data-do="exp" aria-expanded="${exp}"><span class="req-top"><span class="chev" aria-hidden="true">▸</span><h3>${esc(x.nom)}</h3><span class="chip st-${st}">${stLabel(st)}</span></span>
-        <span class="meta"><span class="chip">${esc(x.type)}</span><span class="chip">💶 ${x.montant ? eur(x.montant) : esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR')}</span>` : ''}${nx ? `<span class="chip">${(KINDS[nx.kind] || KINDS.rappel)[0]} ${esc(dayName(nx.date))}${nx.heure ? ' ' + esc(nx.heure) : ''}</span>` : ''}${x.devisData ? '<span class="chip">📄 devis</span>' : ''}${x.reponse === 'accepte' ? '<span class="flag">✅ Devis accepté</span>' : x.reponse === 'refuse' ? '<span class="flag">❌ Devis refusé</span>' : ''}${unread ? '<span class="flag">💬 Nouveau message</span>' : ''}</span>
+        <span class="meta"><span class="chip">${esc(x.type)}</span><span class="chip">💶 ${x.montant ? eur(x.montant) : esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR')}</span>` : ''}${nx ? `<span class="chip">${(KINDS[nx.kind] || KINDS.rappel)[0]} ${esc(dayName(nx.date))}${nx.heure ? ' ' + esc(nx.heure) : ''}</span>` : ''}${x.devisData ? '<span class="chip">📄 devis</span>' : ''}${(() => { const gc = giftCode(x.besoin), cc = gc && cards.find(c => c.id === gc); return gc ? `<span class="flag">🎁 ${esc(gc)}${cc ? ' · ' + esc(eur2(cc.solde)) + ' dispo' : ' · code inconnu'}</span>` : ''; })()}${x.reponse === 'accepte' ? '<span class="flag">✅ Devis accepté</span>' : x.reponse === 'refuse' ? '<span class="flag">❌ Devis refusé</span>' : ''}${unread ? '<span class="flag">💬 Nouveau message</span>' : ''}</span>
         ${exp ? '' : `<span class="excerpt">${esc(String(x.besoin).replace(/\s+/g, ' ').slice(0, 140))}</span>`}</button>
         <div class="req-quick">${x.tel ? `<a class="btn btn-sm btn-ghost" href="tel:${esc(String(x.tel).replace(/[^\d+]/g, ''))}" aria-label="Appeler ${esc(x.nom)}">📞</a>` : ''}<button class="btn btn-sm btn-ghost" data-do="reply" aria-label="Écrire à ${esc(x.nom)}">✉️</button></div></div>
       ${exp ? `<div class="req-body">
@@ -685,6 +824,13 @@ function viewSite() {
     <div class="form-grid"><div class="field"><label for="s-e">E-mail public</label><input id="s-e" name="email" type="email" maxlength="160" value="${v('email')}" placeholder="vide = bouton masqué"></div>
       <div class="field"><label for="s-k">Pseudo TikTok</label><input id="s-k" name="tiktok" maxlength="40" value="${v('tiktok')}" placeholder="${esc(C.tiktok || 'quentools')}"></div></div>
     <div class="field"><label for="s-f">Relais des demandes (facultatif)</label><input id="s-f" name="formEndpoint" maxlength="300" value="${v('formEndpoint')}" placeholder="https://…workers.dev/support"><small>Copie de chaque demande envoyée à ce relais (par ex. celui de Wouf). Les demandes arrivent ici dans tous les cas.</small></div>
+    <h2 style="margin:var(--s-4) 0 0">Cartes cadeaux</h2><p class="muted" style="margin:0">Page publique <a href="../cadeau/" target="_blank" rel="noopener">/cadeau/</a> ; les commandes arrivent dans l’onglet <b>Cadeaux</b>.</p>
+    <label class="switch"><input type="checkbox" name="cadeauOn"${s.cadeauOn !== false ? ' checked' : ''}> Vendre des cartes cadeaux</label>
+    <div class="form-grid"><div class="field"><label for="s-cp">Adresse PayPal qui reçoit les paiements</label><input id="s-cp" name="cadeauPaypal" type="email" maxlength="160" value="${v('cadeauPaypal')}" placeholder="vide = pas de PayPal"></div>
+      <div class="field"><label for="s-cs">Lien Stripe « montant libre » (facultatif)</label><input id="s-cs" name="cadeauStripe" maxlength="300" value="${v('cadeauStripe')}" placeholder="https://buy.stripe.com/…"></div></div>
+    <div class="form-grid"><div class="field"><label for="s-cm">Montants proposés (€)</label><input id="s-cm" name="cadeauMontants" maxlength="60" value="${v('cadeauMontants')}" placeholder="50, 100, 200, 300, 500"><small>Le client peut aussi choisir un autre montant (20 à 2 000 €).</small></div>
+      <div class="field"><label for="s-cv">Validité</label><select id="s-cv" name="cadeauMois">${[12, 18, 24, 36].map(n => `<option value="${n}"${(+s.cadeauMois || 12) === n ? ' selected' : ''}>${n} mois</option>`).join('')}</select></div></div>
+    <small class="muted">Sans PayPal ni Stripe, la commande arrive quand même : vous envoyez le lien de paiement depuis l’onglet Cadeaux. L’adresse PayPal est publique (elle apparaît de toute façon sur la page de paiement).</small>
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="save-site">Enregistrer</button><a class="btn btn-ghost" href="../" target="_blank" rel="noopener">Voir le site</a></div>
     <p class="muted" style="font-size:var(--t-xs);margin:0">Visible par les visiteurs sous 10 minutes environ.</p></form>
     <form class="form card" id="seller-form" style="padding:clamp(20px,4vw,36px);margin-top:var(--s-5)" onsubmit="return false">
@@ -740,6 +886,43 @@ app.addEventListener('click', async e => {
   try {
     if (d === 'logout') { const { Au, auth } = await fb(); await Au.signOut(auth); }
     else if (d === 'reload') { await load(); render(); }
+    else if (d === 'gf-filter') { gFilter = b.dataset.k; gOpen = null; render(); }
+    else if (d.startsWith('gf-')) {
+      const id = b.closest('[data-gid]').dataset.gid, g = gifts.find(z => z.id === id);
+      if (d === 'gf-open') { gOpen = gOpen === id ? null : id; return render(); }
+      if (d === 'gf-paid') {
+        if (g.code) return toast('Carte déjà créée : ' + g.code);
+        if (!confirm(`Confirmer : ${eur2(g.montant)} bien reçus pour la référence ${g.id} ?`)) return;
+        const code = await cardCreate({ montant: g.montant, pour: g.pour, de: g.de, message: g.message, ref: g.id });
+        await giftPatch(id, { status: 'payee', code, paidAt: new Date().toISOString() });
+        gOpen = id; render(); toast('Carte ' + code + ' créée ✓ Il reste à l’envoyer.');
+      }
+      else if (d === 'gf-cancel') { if (confirm('Annuler cette commande (aucun paiement reçu) ?')) { await giftPatch(id, { status: 'annulee' }); render(); } }
+      else if (d === 'gf-reopen') { await giftPatch(id, { status: 'attente' }); render(); }
+      else if (d === 'gf-del') { if (confirm('Supprimer définitivement cette commande ?' + (g.code ? ' La carte ' + g.code + ' reste valable.' : ''))) { await giftDel(id); render(); } }
+      else if (d === 'gf-card') { gFilter = 'cartes'; gOpen = g.code; gq = g.code; render(); }
+    }
+    else if (d === 'cd-new') {
+      const f = readForm(document.getElementById('cd-new')), m = r2(f.montant);
+      if (!(m >= 1 && m <= 5000)) return toast('Indiquez un montant entre 1 € et 5 000 €', true);
+      const code = await cardCreate({ montant: m, pour: f.pour, de: f.de, message: f.message });
+      gOpen = code; gq = ''; render(); toast('Carte ' + code + ' créée ✓'); copy(cardUrl(code));
+    }
+    else if (d.startsWith('cd-')) {
+      const row = b.closest('[data-code]'), code = row.dataset.code, c = cards.find(z => z.id === code);
+      if (d === 'cd-open') { gOpen = gOpen === code ? null : code; return render(); }
+      if (d === 'cd-copy') copy(cardUrl(code));
+      else if (d === 'cd-use') {
+        const m = r2(row.querySelector('[data-cd=m]').value), n = row.querySelector('[data-cd=n]').value.trim().slice(0, 120);
+        if (!(m > 0)) return toast('Indiquez le montant utilisé', true);
+        if (m > r2(c.solde)) return toast(`Le solde n’est que de ${eur2(c.solde)}`, true);
+        await cardPatch(code, { solde: r2(c.solde - m), historique: JSON.stringify([...hist(c), { d: today(), m, n }]) });
+        render(); toast(`${eur2(m)} déduits ✓ Reste ${eur2(c.solde)}`);
+      }
+      else if (d === 'cd-off') { if (confirm('Annuler la carte ' + code + ' ? Elle ne pourra plus être utilisée.')) { await cardPatch(code, { statut: 'annulee' }); render(); } }
+      else if (d === 'cd-on') { await cardPatch(code, { statut: 'active' }); render(); toast('Carte réactivée'); }
+      else if (d === 'cd-extend') { await cardPatch(code, { expire: addMonths(today(), 3) }); render(); toast('Valable jusqu’au ' + frDate(c.expire)); }
+    }
     else if (d === 'copy-rules') copy(rulesText());
     else if (d === 'pdf-pub') {
       const f = document.getElementById('pdf-file') && document.getElementById('pdf-file').files[0];
@@ -858,6 +1041,11 @@ app.addEventListener('click', async e => {
       if (url && !/^(https:\/\/|\.{0,2}\/|#|[a-z0-9-]+\/)/i.test(url)) return toast('Le lien doit commencer par https:// ou être une page du site (ex. ebook/)', true);
       if (fe && !/^https:\/\//.test(fe)) return toast('Le relais doit commencer par https://', true);
       if (g('email').value && !g('email').checkValidity()) return toast('Adresse e-mail invalide', true);
+      const cp = g('cadeauPaypal').value.trim(), cs = g('cadeauStripe').value.trim();
+      if (cp && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cp)) return toast('Adresse PayPal invalide', true);
+      if (cs && !/^https:\/\/(buy|checkout)\.stripe\.com\/[\w/-]+$/.test(cs)) return toast('Le lien Stripe doit commencer par https://buy.stripe.com/', true);
+      const cm = g('cadeauMontants').value.split(/[^\d]+/).map(Number).filter(n => n >= 20 && n <= 2000);
+      await saveSite({ cadeauOn: g('cadeauOn').checked, cadeauPaypal: cp, cadeauStripe: cs, cadeauMontants: [...new Set(cm)].slice(0, 6).join(', '), cadeauMois: +g('cadeauMois').value || 12 });
       await saveSite({ announceOn: g('announceOn').checked, announce: g('announce').value.trim(), announceUrl: url, available: g('available').checked,
         availText: g('availText').value.trim(), email: g('email').value.trim(), tiktok: g('tiktok').value.trim().replace(/^@/, ''), formEndpoint: fe });
       toast('Réglages enregistrés ✓');
@@ -887,7 +1075,7 @@ app.addEventListener('change', async e => {
   const v = el.dataset.field === 'montant' ? (el.value === '' ? null : Math.max(0, Math.round(+el.value))) : el.value.slice(0, 2000);
   try { await patch(card.dataset.id, { [el.dataset.field]: v }); if (el.dataset.field === 'status') { await addMsg(card.dataset.id, { from: 'systeme', text: 'Statut : ' + stLabel(v) }); if (openId === card.dataset.id) threads[openId] = await loadThread(openId); } if (!['note', 'echeance', 'lien'].includes(el.dataset.field)) render(); toast('Enregistré ✓'); } catch (err) { fail(err); }
 });
-app.addEventListener('input', e => { if (e.target.id === 'lq') { lq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('lq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'q') { q = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); } });
+app.addEventListener('input', e => { if (e.target.id === 'gq') { gq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('gq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'lq') { lq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('lq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'q') { q = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); } });
 
 app.addEventListener('input', e => { const el = e.target; if (dv && el.closest && el.closest('#dv') && (el.dataset.dv || el.dataset.dvl)) dvSet(el); });
 app.addEventListener('toggle', e => { if (e.target.id === 'est-box') estOpen = e.target.open; }, true);
