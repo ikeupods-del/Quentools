@@ -1,0 +1,11 @@
+# Secrets et fichiers locaux : ne jamais les versionner
+.env
+.env.*
+*.pem
+*.key
+.dev.vars
+.wrangler/
+service-account*.json
+firebase-adminsdk*.json
+node_modules/
+.DS_Store
