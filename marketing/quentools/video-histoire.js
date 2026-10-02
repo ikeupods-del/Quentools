@@ -3,12 +3,12 @@
    Scènes : « Pas développeur », « C'est décidé / Je deviens pro », haut de l'accueil, exemples de sites, applications, carte finale.
    Prérequis : serveur local à la racine du dépôt (python3 -m http.server 8123) et ffmpeg.
    node marketing/quentools/video-histoire.js [dossier-de-sortie] [exemples]  → quentools-histoire.mp4
-   exemples : liste séparée par des virgules (défaut : climatisation,boulangerie). */
+   exemples : liste séparée par des virgules (défaut : climatisation,plombier). */
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
 let chromium; try { ({ chromium } = require(path.resolve(__dirname, '../../wouf/node_modules/playwright'))); } catch (e) { ({ chromium } = require('playwright')); }
 const BASE = process.env.BASE || 'http://localhost:8123', FF = process.env.FFMPEG || 'ffmpeg';
 const OUT = path.resolve(process.argv[2] || __dirname), TMP = fs.mkdtempSync(path.join(require('os').tmpdir(), 'qt-histoire-'));
-const EXEMPLES = (process.argv[3] || 'climatisation,boulangerie').split(',');
+const EXEMPLES = (process.argv[3] || 'climatisation,plombier').split(',');
 const LABEL = { climatisation: 'climatisation', boulangerie: 'boulangerie', plombier: 'plombier', coiffeuse: 'coiffeuse', coach: 'coach', paysagiste: 'paysagiste', fleuriste: 'fleuriste', restaurant: 'restaurant', photographe: 'photographe', osteopathe: 'ostéopathe' };
 const W = 1080, H = 1920, FPS = 30, FADE = 0.3;
 const fonts = `@font-face{font-family:Bricolage;src:url(${BASE}/assets/fonts/bricolage.woff2);font-weight:200 800}

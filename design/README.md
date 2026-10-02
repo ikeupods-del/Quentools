@@ -14,7 +14,6 @@ Tout ce qu'il faut pour produire vite un site ou un outil au niveau du site vitr
 | `templates/outil.html` | Page de lancement d'un outil ou d'une application (SaaS, calculateur, app). |
 | `templates/rendez-vous.html` | Prestations sur rendez-vous (coiffeur, thérapeute, coach, restaurateur) : prestations, tarifs, horaires, demande de créneau. |
 | `templates/restaurant.html` | Restaurant, bar, boulangerie : plat du jour, carte, horaires, réservation. |
-| `templates/outil-devis.html` | Outil de devis pour artisan : lignes, TVA, remise, acompte, export PDF par impression ; données gardées dans le navigateur. À vendre comme outil sur mesure. | Démonstration publique : `demo/devis-artisan/`. |
 | `templates/vente-formation.html` | Page de vente d'une formation ou d'un guide : problème, programme, auteur, prix, FAQ. |
 | `../demo/barbier/` | Barbier (modèle complet, voir son README) : réservation, paiement carte/espèces, abonnement, fidélité, boutique, administration. |
 | `../demo/maison-blade/` | Barbier de luxe « Quiet Luxury » (Tailwind compilé), démo complète : réservation en 3 choix, paiement, abonnement, fidélité, boutique, administration. Voir son README. |
