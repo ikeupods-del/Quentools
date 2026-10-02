@@ -4,71 +4,263 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cabinet Bien-Être · exemple de site (ostéopathe)</title>
-<meta name="description" content="Exemple fictif de site pour un cabinet d'ostéopathie, réalisé par QuenTools.">
+<meta name="description" content="Exemple fictif de site pour un ostéopathe : carte du corps interactive, déroulé d'une séance, tarifs et prise de rendez-vous avec calendrier, réalisé par QuenTools.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
 <link rel="preload" href="../../assets/fonts/ex/figtree-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../ex.css">
 <style>
 @font-face{font-family:Figtree;src:url(../../assets/fonts/ex/figtree-normal.woff2) format("woff2");font-weight:300 900;font-display:swap}
-:root{--teal:#0f766e;--teal-d:#0b4f4a;--mint:#e5f4f1;--sand:#f7f5f0;--ink:#16302e;--mut:#5b7370;--line:#d5e3e0}
-*{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;background:#fff;color:var(--ink);font:400 17px/1.7 Figtree,system-ui,sans-serif}a{color:inherit}.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
-header{border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:40}header .wrap{display:flex;align-items:center;justify-content:space-between;height:72px}
-.logo{display:flex;gap:10px;align-items:center;text-decoration:none;font-weight:700;font-size:19px}.logo i{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--mint);font-style:normal}
-nav a{margin-left:26px;text-decoration:none;color:var(--mut);font-weight:500;font-size:15px}nav a:hover{color:var(--teal)}
-.btn{display:inline-block;background:var(--teal);color:#fff;border:0;text-decoration:none;font:600 15px Figtree,sans-serif;padding:14px 24px;border-radius:12px;cursor:pointer}.btn:hover{background:var(--teal-d)}.btn.o{background:#fff;color:var(--teal);border:1.5px solid var(--teal)}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:60px;padding-top:56px;padding-bottom:80px;align-items:start}
-.hero h1{font-size:clamp(2.2rem,4.8vw,3.6rem);line-height:1.08;letter-spacing:-.025em;font-weight:700;margin:0 0 18px}.hero h1 span{color:var(--teal)}.hero p.l{font-size:19px;color:var(--mut);max-width:52ch;margin:0 0 26px}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 28px}.chips span{background:var(--mint);color:var(--teal-d);border-radius:999px;padding:6px 14px;font-weight:600;font-size:14px}
-aside .card{position:sticky;top:96px;border:1px solid var(--line);border-radius:20px;padding:24px;background:#fff;box-shadow:0 18px 40px rgba(15,118,110,.08)}
-aside h2{font-size:18px;margin:0 0 4px}aside p{font-size:14px;color:var(--mut);margin:0 0 14px}.sl{display:grid;gap:8px;margin-bottom:16px}.sl button{display:flex;justify-content:space-between;align-items:center;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:12px 14px;font:600 14px Figtree,sans-serif;cursor:pointer;color:var(--ink);text-align:left}.sl button small{color:var(--mut);font-weight:500}.sl button.on{border-color:var(--teal);background:var(--mint)}
-.sec{padding-top:70px}.sec h2{font-size:clamp(1.6rem,3vw,2.2rem);letter-spacing:-.02em;margin:0 0 8px}.sec>p{color:var(--mut);margin:0 0 26px;max-width:60ch}
-.motifs{display:grid;grid-template-columns:1fr 1fr;gap:12px}.motifs details{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:#fff}.motifs summary{font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px}.motifs summary::after{content:"+";color:var(--teal);font-size:20px;line-height:1}.motifs details[open] summary::after{content:"–"}.motifs details[open]{background:var(--sand)}.motifs p{margin:10px 0 0;color:var(--mut);font-size:15px}
-.steps{display:grid;gap:0;border-left:2px solid var(--line);margin-left:14px}.stp{position:relative;padding:0 0 28px 30px}.stp::before{content:"";position:absolute;left:-9px;top:6px;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--teal)}.stp b{display:block;font-size:17px}.stp span{color:var(--mut);font-size:15px}
-.tar{border:1px solid var(--line);border-radius:16px;overflow:hidden}.tar div{display:flex;justify-content:space-between;gap:12px;padding:16px 20px;border-top:1px solid var(--line)}.tar div:first-child{border-top:0}.tar b{font-weight:600}.tar span{color:var(--teal);font-weight:700;white-space:nowrap}
-.note{background:var(--sand);border-radius:14px;padding:16px 18px;color:var(--mut);font-size:14px;margin-top:18px}
-form{display:grid;gap:10px}input,select,textarea{font:inherit;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;width:100%;color:var(--ink);background:#fff}input:focus,textarea:focus,select:focus{outline:0;border-color:var(--teal)}
-footer{background:var(--sand);padding:30px 0;color:var(--mut);font-size:14px;border-top:1px solid var(--line)}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
-@media (max-width:900px){nav{display:none}.layout{grid-template-columns:1fr;gap:30px}aside .card{position:static}.motifs{grid-template-columns:1fr}}
+:root{--teal:#0f766e;--teal-d:#0b4f4a;--teal-l:#14a095;--mint:#e5f4f1;--mint2:#d3ece7;--sand:#f7f5f0;--ink:#16302e;--mut:#5b7370;--line:#d5e3e0;--warm:#f2b680}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{margin:0;background:#fff;color:var(--ink);font:400 17px/1.7 Figtree,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-weight:700;line-height:1.12;margin:0;letter-spacing:-.015em}h1 em,h2 em{font-style:normal;color:var(--teal)}
+a{color:inherit}.wrap{width:min(1140px,100% - 40px);margin:0 auto}section{padding:clamp(56px,8vw,100px) 0}
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+h2.t{font-size:clamp(1.9rem,4vw,2.9rem);margin:10px 0 14px}.lead{color:var(--mut);max-width:38em;margin:0}
+:focus-visible{outline:3px solid var(--teal-l);outline-offset:3px;border-radius:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 26px;border-radius:14px;background:var(--teal);color:#fff;font:700 15px Figtree,sans-serif;text-decoration:none;border:2px solid var(--teal);cursor:pointer;transition:transform .25s,background .25s}
+.btn:hover{transform:translateY(-2px);background:var(--teal-d)}.btn.o{background:#fff;color:var(--teal)}.btn.o:hover{background:var(--mint)}.btn[disabled]{opacity:.4;pointer-events:none}
+/* en-tête */
+.nav{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:68px;gap:20px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;text-decoration:none}.logo i{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--mint);font-style:normal}
+.nav ul{display:flex;gap:28px;list-style:none;margin:0;padding:0;font-weight:500}.nav ul a{text-decoration:none;color:var(--mut)}.nav ul a:hover{color:var(--teal)}
+@media (max-width:860px){.nav ul{display:none}}
+/* héros */
+.hero{background:linear-gradient(180deg,var(--mint),#fff 78%);padding:clamp(36px,6vw,72px) 0 clamp(50px,7vw,90px)}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:start}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}.chips span{padding:6px 14px;border-radius:99px;background:#fff;border:1px solid var(--mint2);font-weight:600;font-size:14px;color:var(--teal-d)}
+.hero h1{font-size:clamp(2.5rem,5.4vw,4.1rem)}.hero p.lead{font-size:1.12rem;margin:20px 0 28px}.btns{display:flex;flex-wrap:wrap;gap:12px}
+.pts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:38px}.pts div{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px}.pts b{display:block;font-size:1.5rem;color:var(--teal)}.pts span{font-size:13px;color:var(--mut)}
+@media (max-width:900px){.hero .wrap{grid-template-columns:1fr}.pts{grid-template-columns:1fr 1fr 1fr}}
+@media (max-width:520px){.pts{grid-template-columns:1fr}}
+/* agenda */
+.agenda{background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 30px 70px -36px rgba(15,118,110,.45);padding:clamp(20px,3vw,30px);position:sticky;top:90px}
+.agenda h3{font-size:1.25rem}.agenda .sub{color:var(--mut);font-size:14px;margin:4px 0 16px}
+.wk{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.wk button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:18px;color:var(--teal)}.wk button:hover{background:var(--mint)}.wk button:disabled{opacity:.3;cursor:default}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:16px}
+.days button{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:8px 0;cursor:pointer;font:600 12px Figtree,sans-serif;color:var(--mut);line-height:1.2;transition:all .2s}
+.days button b{display:block;font-size:1.15rem;color:var(--ink)}.days button:hover:not(:disabled){border-color:var(--teal-l)}
+.days button[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:#fff}.days button[aria-pressed=true] b{color:#fff}.days button:disabled{opacity:.35;cursor:default;background:var(--sand)}
+.sl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-height:92px;align-content:start}
+.sl button{padding:11px 0;border:1.5px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;font:600 14px Figtree,sans-serif;font-variant-numeric:tabular-nums;transition:all .2s}.sl button:hover:not(:disabled){border-color:var(--teal-l);background:var(--mint)}
+.sl button[aria-pressed=true]{background:var(--teal);color:#fff;border-color:var(--teal)}.sl button:disabled{opacity:.3;text-decoration:line-through;cursor:default}
+.sl .none{grid-column:1/-1;color:var(--mut);font-size:14px}
+.agenda .sel{margin:16px 0 12px;padding:12px 14px;background:var(--mint);border-radius:12px;font-weight:600;color:var(--teal-d);font-size:15px}
+.agenda form{display:grid;gap:10px}.agenda input{font:inherit;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;width:100%}.agenda input:focus{outline:0;border-color:var(--teal)}
+.agenda .info{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:14px;color:var(--mut);display:grid;gap:4px}
+.ok{padding:14px 16px;border-radius:14px;background:#e3f6ea;border:1px solid #9ad3af;color:#14502c;font-size:15px;margin-top:12px}
+/* motifs */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:38px}
+.card{background:var(--sand);border:1px solid var(--line);border-radius:20px;padding:0;overflow:hidden;transition:box-shadow .4s,transform .4s}
+.card:hover{transform:translateY(-3px);box-shadow:0 24px 50px -30px rgba(15,118,110,.5)}
+.card summary{cursor:pointer;list-style:none;padding:22px 22px;display:flex;gap:14px;align-items:center;font-weight:700;font-size:1.1rem}
+.card summary::-webkit-details-marker{display:none}.card summary i{flex:none;width:44px;height:44px;border-radius:14px;background:#fff;display:grid;place-items:center;font-style:normal;font-size:22px}
+.card summary::after{content:"+";margin-left:auto;color:var(--teal);font-size:1.6rem;font-weight:500;transition:transform .3s}.card[open] summary::after{transform:rotate(45deg)}
+.card p{margin:0;padding:0 22px 22px;color:var(--mut);font-size:15px}
+@media (max-width:900px){.cards{grid-template-columns:1fr 1fr}}@media (max-width:560px){.cards{grid-template-columns:1fr}}
+.warn{margin-top:22px;padding:16px 20px;border-radius:16px;background:#fff6ea;border:1px solid #f1d6ae;color:#7a4b12;font-size:15px}
+/* carte du corps */
+.map{display:grid;grid-template-columns:.8fr 1.2fr;gap:50px;align-items:center;margin-top:36px}
+.body{max-width:340px;margin:0 auto;width:100%}.body svg{width:100%;height:auto;display:block}
+.zone{cursor:pointer}.zone .dot{fill:var(--teal);opacity:.22;transition:opacity .3s,r .3s}.zone:hover .dot,.zone:focus .dot{opacity:.5}.zone[aria-pressed=true] .dot{opacity:.9;fill:var(--teal-d)}.zone .ring{fill:none;stroke:var(--teal);stroke-width:2;opacity:0}.zone[aria-pressed=true] .ring{opacity:.6}
+.zone:focus{outline:none}.zone:focus-visible .ring{opacity:1;stroke:var(--warm);stroke-width:3}
+.zinfo{background:#fff;border:1px solid var(--line);border-radius:24px;padding:clamp(22px,3vw,34px);box-shadow:0 24px 60px -40px rgba(15,118,110,.4)}
+.zinfo h3{font-size:1.7rem;margin-bottom:6px}.zinfo dl{margin:18px 0 0;display:grid;gap:16px}.zinfo dt{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}.zinfo dd{margin:4px 0 0;color:var(--ink)}
+@media (max-width:860px){.map{grid-template-columns:1fr;gap:26px}}
+/* déroulé */
+.tl{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:44px;position:relative}
+.tl::before{content:"";position:absolute;left:5%;right:5%;top:19px;height:2px;background:var(--mint2)}
+.tl div{position:relative;padding:0 14px;text-align:center}
+.tl div::before{content:attr(data-n);display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--teal);color:#fff;font-weight:700;margin:0 auto 14px;position:relative;z-index:1;box-shadow:0 0 0 6px #fff}
+.tl b{display:block;font-size:1.15rem}.tl p{margin:6px 0 0;color:var(--mut);font-size:15px}
+@media (max-width:760px){.tl{grid-template-columns:1fr;gap:26px}.tl::before{left:19px;right:auto;top:0;bottom:0;width:2px;height:auto}.tl div{text-align:left;padding-left:60px}.tl div::before{position:absolute;left:0;top:0;margin:0}}
+/* tarifs */
+.rates{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:36px}
+.rate{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px}.rate.hi{border-color:var(--teal);box-shadow:0 24px 50px -34px rgba(15,118,110,.6)}
+.rate .p{font-size:2.3rem;font-weight:800;color:var(--teal);line-height:1;margin:12px 0 4px}.rate small{color:var(--mut)}.rate ul{list-style:none;margin:14px 0 0;padding:0;color:var(--mut);display:grid;gap:6px;font-size:15px}.rate li::before{content:"✓ ";color:var(--teal);font-weight:700}
+@media (max-width:860px){.rates{grid-template-columns:1fr}}
+.note{margin-top:20px;padding:16px 20px;border-radius:14px;background:var(--sand);color:var(--mut);font-size:15px}
+/* faq + contact */
+details.q{border-bottom:1px solid var(--line);padding:18px 0}details.q summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:16px;font-weight:700;font-size:1.1rem}details.q summary::-webkit-details-marker{display:none}
+details.q summary::after{content:"+";color:var(--teal);font-size:1.5rem;line-height:1}details.q[open] summary::after{content:"−"}details.q p{margin:10px 0 0;color:var(--mut)}
+.contact{display:grid;grid-template-columns:.9fr 1.1fr;gap:44px;background:var(--mint);border-radius:28px;padding:clamp(26px,5vw,56px)}
+.contact form{display:grid;gap:12px}.contact input,.contact textarea{font:inherit;padding:14px 16px;border:1.5px solid var(--mint2);border-radius:12px;width:100%;background:#fff}.contact input:focus,.contact textarea:focus{outline:0;border-color:var(--teal)}
+@media (max-width:860px){.contact{grid-template-columns:1fr}}
+footer{padding:28px 0;color:var(--mut);font-size:14px;border-top:1px solid var(--line);margin-top:40px}footer .wrap{display:flex;flex-wrap:wrap;gap:10px 30px;justify-content:space-between}
+.mbar{display:none}
+@media (max-width:860px){.mbar{display:flex;position:fixed;left:12px;right:12px;bottom:12px;z-index:50;gap:8px}.mbar .btn{flex:1;box-shadow:0 14px 30px -10px rgba(0,0,0,.35)}body{padding-bottom:76px}}
+.rv{opacity:0;transform:translateY(18px);transition:opacity .8s,transform .8s}.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.rv{opacity:1;transform:none;transition:none}}
 </style>
 </head>
 <body>
-<div class="qt-ex"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
-<header><div class="wrap"><a class="logo" href="./"><i>🌿</i>Cabinet Bien-Être</a><nav><a href="#motifs">Motifs</a><a href="#deroule">Déroulé</a><a href="#tarifs">Tarifs</a><a href="#contact">Contact</a></nav><a class="btn" href="#rdv">Prendre rendez-vous</a></div></header>
+<div class="qt-ex"><a href="../../devis/?type=Template&amp;template=Ost%C3%A9opathe">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
 
-<main class="wrap layout">
-<div>
-  <div class="hero"><div class="chips"><span>Adultes</span><span>Enfants</span><span>Sportifs</span></div>
-    <h1>Un geste précis, <span>pour retrouver du confort.</span></h1>
-    <p class="l">Ostéopathe à Lyon. Je prends le temps d'écouter, d'examiner et de vous expliquer ce que je fais, avec des conseils simples à appliquer chez vous.</p>
-    <a class="btn" href="#rdv">Voir les disponibilités</a> <a class="btn o" href="#motifs">Pourquoi consulter ?</a></div>
+<header class="nav"><div class="wrap">
+  <a class="logo" href="#top"><i aria-hidden="true">🌿</i>Cabinet Bien-Être</a>
+  <ul><li><a href="#motifs">Motifs</a></li><li><a href="#corps">Carte du corps</a></li><li><a href="#seance">Déroulé</a></li><li><a href="#tarifs">Tarifs</a></li><li><a href="#contact">Contact</a></li></ul>
+  <a class="btn" href="#rdv" style="min-height:44px;padding:0 20px">Prendre rendez-vous</a>
+</div></header>
 
-  <div class="sec" id="motifs"><h2>Motifs de consultation</h2><p>Quelques raisons courantes. Pour un symptôme inquiétant (douleur thoracique, fièvre, perte de force), consultez un médecin ou appelez le 15.</p>
-    <div class="motifs"><details><summary>Mal de dos et lombalgies</summary><p>Un bilan complet de la posture et des mouvements, puis un accompagnement adapté.</p></details><details><summary>Nuque, épaules, tensions</summary><p>Souvent liées au travail sur écran : gestes doux et conseils d'ergonomie.</p></details><details><summary>Sportifs</summary><p>Récupération, prévention, reprise après une pause.</p></details><details><summary>Nourrissons et enfants</summary><p>Consultation en douceur, en présence d'un parent.</p></details><details><summary>Femmes enceintes</summary><p>Suivi du confort pendant la grossesse, avec l'avis de votre équipe médicale.</p></details><details><summary>Maux de tête, stress</summary><p>Un temps d'écoute et un travail de détente.</p></details></div></div>
+<main id="top">
+<section class="hero"><div class="wrap">
+  <div>
+    <div class="chips"><span>Adultes</span><span>Enfants</span><span>Sportifs</span><span>Femmes enceintes</span></div>
+    <h1>Un geste précis, <em>pour retrouver du confort.</em></h1>
+    <p class="lead">Ostéopathe à Lyon. Je prends le temps d’écouter, d’examiner et de vous expliquer ce que je fais, avec des conseils simples à appliquer chez vous.</p>
+    <div class="btns"><a class="btn" href="#rdv">Voir les disponibilités</a><a class="btn o" href="#corps">Où avez-vous mal ?</a></div>
+    <div class="pts"><div><b>45 min</b><span>par séance, sans précipitation</span></div><div><b>Sans surprise</b><span>je vous explique avant chaque geste</span></div><div><b>Conseils</b><span>exercices simples pour la maison</span></div></div>
+  </div>
+  <aside class="agenda" id="rdv" aria-label="Prise de rendez-vous">
+    <h3>Prochaines disponibilités</h3><p class="sub">Exemple : choisissez un créneau pour voir le fonctionnement.</p>
+    <div class="wk"><button type="button" id="pw" aria-label="Semaine précédente">‹</button><strong id="wl" aria-live="polite"></strong><button type="button" id="nw" aria-label="Semaine suivante">›</button></div>
+    <div class="days" id="days" role="group" aria-label="Jour"></div>
+    <div class="sl" id="sl" role="group" aria-label="Heure" aria-live="polite"></div>
+    <div class="sel" id="sel" hidden></div>
+    <form id="rf" novalidate hidden><input name="n" placeholder="Votre nom" autocomplete="name" aria-label="Votre nom"><input name="t" type="tel" placeholder="Téléphone" autocomplete="tel" aria-label="Téléphone"><p id="re" role="alert" style="margin:0;color:#b4261b;font-size:14px" hidden></p><button class="btn" type="submit">Réserver ce créneau</button></form>
+    <div class="ok" id="rk" role="status" hidden></div>
+    <div class="info"><span>📍 12 rue Exemple, Lyon</span><span>♿ Accès PMR · 🅿️ Parking proche</span><span>📞 04 00 00 00 00 (numéro d’exemple)</span></div>
+  </aside>
+</div></section>
 
-  <div class="sec" id="deroule"><h2>Le déroulé d'une séance</h2><p>Environ 45 minutes, sans surprise.</p>
-    <div class="steps"><div class="stp"><b>Échange</b><span>Votre histoire, vos douleurs, vos antécédents.</span></div><div class="stp"><b>Examen</b><span>Observation et tests de mobilité.</span></div><div class="stp"><b>Séance</b><span>Gestes doux, expliqués au fur et à mesure.</span></div><div class="stp"><b>Conseils</b><span>Exercices simples et suivi si nécessaire.</span></div></div></div>
+<section id="motifs"><div class="wrap">
+  <div class="rv"><p class="eyebrow">Motifs de consultation</p><h2 class="t">Quelques raisons <em>courantes</em></h2><p class="lead">Un aperçu des situations pour lesquelles on me consulte. Cliquez pour en savoir plus.</p></div>
+  <div class="cards">
+    <details class="card rv"><summary><i>🦴</i>Mal de dos et lombalgies</summary><p>Gêne en position assise prolongée, « tour de reins », raideur au réveil. Je fais un bilan de mobilité et je vous donne des conseils de posture.</p></details>
+    <details class="card rv"><summary><i>💻</i>Nuque, épaules, tensions</summary><p>Fréquent chez les personnes qui travaillent sur écran. On regarde la posture, la mobilité et les habitudes du quotidien.</p></details>
+    <details class="card rv"><summary><i>🏃</i>Sportifs</summary><p>Gêne après un effort, reprise d’activité, préparation à une compétition : un bilan pour comprendre et mieux répartir les contraintes.</p></details>
+    <details class="card rv"><summary><i>👶</i>Nourrissons et enfants</summary><p>Un bilan en douceur, en présence des parents, pour les gênes du quotidien. Je m’adapte à l’âge et au rythme de l’enfant.</p></details>
+    <details class="card rv"><summary><i>🤰</i>Femmes enceintes</summary><p>Accompagnement des gênes de la grossesse (dos, bassin, sommeil), avec des gestes adaptés à chaque trimestre.</p></details>
+    <details class="card rv"><summary><i>🧠</i>Maux de tête, stress</summary><p>Quand les tensions du cou et des épaules jouent un rôle. Séance et conseils de relaxation simples.</p></details>
+  </div>
+  <p class="warn rv"><b>Important :</b> pour un symptôme inquiétant (douleur thoracique, fièvre, perte de force, difficulté à respirer), consultez un médecin ou appelez le 15. L’ostéopathie ne remplace pas un avis médical.</p>
+</div></section>
 
-  <div class="sec" id="tarifs"><h2>Tarifs</h2><p>Tarifs d'exemple, fictifs. Aucune promesse de guérison : la séance est un accompagnement.</p>
-    <div class="tar"><div><b>Consultation adulte · 45 min</b><span>60 €</span></div><div><b>Consultation sportif · 45 min</b><span>60 €</span></div><div><b>Consultation enfant · 30 min</b><span>50 €</span></div></div>
-    <div class="note">Remboursement possible par certaines mutuelles : renseignez-vous auprès de la vôtre.</div></div>
+<section id="corps" style="background:var(--sand);border-block:1px solid var(--line)"><div class="wrap">
+  <div class="rv"><p class="eyebrow">Carte du corps</p><h2 class="t">Où avez-vous <em>mal ?</em></h2><p class="lead">Touchez une zone pour voir comment se déroule une séance et quels conseils simples peuvent aider. Ce n’est pas un diagnostic.</p></div>
+  <div class="map">
+    <div class="body rv"><svg viewBox="0 0 240 520" role="group" aria-label="Silhouette : choisissez une zone">
+      <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe9e4"/><stop offset="1" stop-color="#a9d6cd"/></linearGradient></defs>
+      <g fill="url(#bg)" stroke="#7fbab0" stroke-width="2"><circle cx="120" cy="52" r="34"/><path d="M104 84 h32 v24 q54 8 62 40 l12 128 q2 14 -12 16 q-12 0 -14 -14 l-10 -84 v120 l10 178 q0 14 -16 14 h-14 q-10 0 -12 -12 l-8 -150 l-8 150 q-2 12 -12 12 h-14 q-16 0 -16 -14 l10 -178 v-120 l-10 84 q-2 14 -14 14 q-14 -2 -12 -16 l12 -128 q8 -32 62 -40z"/></g>
+      <g id="zones"></g></svg></div>
+    <div class="zinfo rv" id="zinfo" aria-live="polite"></div>
+  </div>
+</div></section>
 
-  <div class="sec" id="contact"><h2>Une question avant de venir ?</h2><p>Écrivez-moi, je réponds sous 48 h.</p>
-    <form><input placeholder="Votre nom" aria-label="Nom" required><input placeholder="E-mail ou téléphone" aria-label="Contact" required><textarea rows="3" placeholder="Votre question" aria-label="Message"></textarea><button class="btn" type="submit" style="justify-self:start">Envoyer</button></form></div>
-</div>
+<section id="seance"><div class="wrap">
+  <div class="rv" style="text-align:center"><p class="eyebrow">Le déroulé</p><h2 class="t">Une séance, <em>étape par étape</em></h2><p class="lead" style="margin:0 auto">Environ 45 minutes, sans surprise.</p></div>
+  <div class="tl">
+    <div data-n="1" class="rv"><b>Échange</b><p>Votre histoire, vos douleurs, vos antécédents.</p></div>
+    <div data-n="2" class="rv" style="transition-delay:.08s"><b>Examen</b><p>Observation et tests de mobilité.</p></div>
+    <div data-n="3" class="rv" style="transition-delay:.16s"><b>Séance</b><p>Gestes doux, expliqués au fur et à mesure.</p></div>
+    <div data-n="4" class="rv" style="transition-delay:.24s"><b>Conseils</b><p>Exercices simples et suivi si nécessaire.</p></div>
+  </div>
+</div></section>
 
-<aside id="rdv"><div class="card"><h2>Prochaines disponibilités</h2><p>Exemple : choisissez un créneau pour voir le fonctionnement.</p>
-  <div class="sl" id="sl"><button type="button">Mardi 13 · 10:00<small>45 min</small></button><button type="button">Mardi 13 · 17:30<small>45 min</small></button><button type="button">Jeudi 15 · 09:00<small>45 min</small></button><button type="button">Samedi 17 · 11:00<small>45 min</small></button></div>
-  <button class="btn" type="button" id="go" style="width:100%">Réserver ce créneau</button><p id="msg" style="margin:12px 0 0" role="status"></p>
-  <hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><p style="margin:0">📍 12 rue Exemple, Lyon<br>♿ Accès PMR · 🅿️ Parking proche<br>📞 04 00 00 00 00</p></div></aside>
+<section id="tarifs" style="background:var(--sand);border-block:1px solid var(--line)"><div class="wrap">
+  <div class="rv"><p class="eyebrow">Tarifs</p><h2 class="t">Des tarifs <em>clairs</em></h2><p class="lead">Tarifs d’exemple, fictifs. Aucune promesse de guérison : la séance est un accompagnement.</p></div>
+  <div class="rates">
+    <article class="rate hi rv"><h3>Consultation adulte</h3><div class="p">60 €</div><small>45 minutes</small><ul><li>Bilan complet</li><li>Séance et conseils</li><li>Compte rendu si besoin</li></ul></article>
+    <article class="rate rv" style="transition-delay:.08s"><h3>Consultation sportif</h3><div class="p">60 €</div><small>45 minutes</small><ul><li>Bilan du geste sportif</li><li>Conseils de reprise</li><li>Suivi possible</li></ul></article>
+    <article class="rate rv" style="transition-delay:.16s"><h3>Consultation enfant</h3><div class="p">50 €</div><small>30 minutes</small><ul><li>Bilan en douceur</li><li>Parents présents</li><li>Conseils adaptés</li></ul></article>
+  </div>
+  <p class="note rv">Remboursement possible par certaines mutuelles : renseignez-vous auprès de la vôtre. Une facture vous est remise à chaque séance.</p>
+</div></section>
+
+<section><div class="wrap" style="max-width:820px">
+  <div class="rv"><p class="eyebrow">Questions fréquentes</p><h2 class="t">Avant de <em>venir</em></h2></div>
+  <details class="q rv"><summary>Combien de séances faut-il ?</summary><p>Cela dépend de chaque situation. Souvent une première séance suffit pour faire le point ; je vous dis honnêtement si un suivi est utile.</p></details>
+  <details class="q rv"><summary>Dois-je apporter quelque chose ?</summary><p>Vos éventuels comptes rendus, radios ou ordonnances, et une tenue souple. Pour un enfant, son carnet de santé.</p></details>
+  <details class="q rv"><summary>Une séance est-elle douloureuse ?</summary><p>Non : les gestes sont doux et expliqués. Vous pouvez m’arrêter à tout moment.</p></details>
+  <details class="q rv"><summary>Puis-je annuler ?</summary><p>Oui, en prévenant au moins 24 h à l’avance, pour laisser le créneau à quelqu’un d’autre.</p></details>
+</div></section>
+
+<section id="contact" style="padding-top:0"><div class="wrap"><div class="contact rv">
+  <div><p class="eyebrow">Contact</p><h2 class="t">Une question avant de <em>venir ?</em></h2><p class="lead">Écrivez-moi, je réponds sous 48 h.</p></div>
+  <form novalidate><input name="n" placeholder="Votre nom" autocomplete="name" aria-label="Votre nom"><input name="c" placeholder="E-mail ou téléphone" aria-label="E-mail ou téléphone"><textarea name="m" rows="4" placeholder="Votre question" aria-label="Votre question"></textarea><button class="btn" type="submit" style="justify-self:start">Envoyer</button></form>
+</div></div></section>
 </main>
+
 <footer><div class="wrap"><span>© <span data-year>2026</span> Cabinet Bien-Être (entreprise fictive) · RPPS/SIRET 000 000 000 (exemple)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
-<script src="../ex.js" defer></script>
+<div class="mbar"><a class="btn" href="#rdv">Prendre rendez-vous</a><a class="btn o" href="tel:+33400000000">Appeler</a></div>
+
+<script src="../ex.js"></script>
 <script>
-var sl=document.getElementById('sl'),m=document.getElementById('msg');
-sl.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;sl.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b)});m.textContent=''});
-document.getElementById('go').addEventListener('click',function(){var o=sl.querySelector('.on');m.textContent=o?'Démonstration : « '+o.firstChild.textContent+' » serait réservé ici.':'Choisissez d’abord un créneau.'});
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pad = n => String(n).padStart(2, '0'), ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const hash = s => { let x = 2166136261; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); } return (x >>> 0) / 4294967295; };
+
+  /* Agenda : mardi à samedi (exemple), 45 min */
+  const OPEN = { 2: [9, 19], 3: [9, 19], 4: [9, 19], 5: [9, 19], 6: [9, 13] }, DN = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+  let week = 0, sel = { d: null, t: null };
+  function slots(day) {
+    const h = OPEN[day.getDay()]; if (!h) return [];
+    const out = [], now = new Date(), isToday = ymd(day) === ymd(now), lim = now.getHours() * 60 + now.getMinutes() + 60;
+    for (let m = h[0] * 60; m + 45 <= h[1] * 60; m += 60) { const t = pad(Math.floor(m / 60)) + ':' + pad(m % 60); out.push({ t, free: hash(ymd(day) + t) > .38 && !(isToday && m < lim) }); }
+    return out;
+  }
+  function render() {
+    const start = new Date(); start.setHours(12, 0, 0, 0); start.setDate(start.getDate() + week * 7);
+    const days = [...Array(7)].map((_, i) => { const d = new Date(start); d.setDate(d.getDate() + i); return d; });
+    $('#wl').textContent = days[0].toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ' – ' + days[6].toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    $('#pw').disabled = week === 0; $('#nw').disabled = week >= 3;
+    const today = ymd(new Date());
+    $('#days').innerHTML = days.map(d => { const k = ymd(d), has = OPEN[d.getDay()] && k >= today && slots(d).some(s => s.free); return `<button type="button" data-d="${k}" aria-pressed="${sel.d === k}"${has ? '' : ' disabled'}>${DN[d.getDay()]}<b>${d.getDate()}</b></button>`; }).join('');
+    paintSlots();
+  }
+  function paintSlots() {
+    const box = $('#sl');
+    if (!sel.d) { box.innerHTML = '<p class="none">Choisissez un jour pour voir les heures.</p>'; return; }
+    const sl = slots(new Date(sel.d + 'T12:00'));
+    box.innerHTML = sl.map(s => `<button type="button" data-t="${s.t}" aria-pressed="${sel.t === s.t}"${s.free ? '' : ' disabled'}>${s.t}</button>`).join('') || '<p class="none">Fermé ce jour-là.</p>';
+  }
+  function summary() {
+    const s = $('#sel'), f = $('#rf'); $('#rk').hidden = true;
+    if (!sel.d || !sel.t) { s.hidden = true; f.hidden = true; return; }
+    s.hidden = false; f.hidden = false;
+    s.textContent = new Date(sel.d + 'T12:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) + ' à ' + sel.t.replace(':', ' h ') + ' · 45 min';
+  }
+  $('#days').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; sel = { d: b.dataset.d, t: null }; $$('#days button').forEach(x => x.setAttribute('aria-pressed', x === b)); paintSlots(); summary(); });
+  $('#sl').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; sel.t = b.dataset.t; $$('#sl button').forEach(x => x.setAttribute('aria-pressed', x === b)); summary(); });
+  $('#pw').onclick = () => { week = Math.max(0, week - 1); sel = { d: null, t: null }; render(); summary(); };
+  $('#nw').onclick = () => { week = Math.min(3, week + 1); sel = { d: null, t: null }; render(); summary(); };
+  $('#rf').addEventListener('submit', e => {
+    e.preventDefault(); e.stopPropagation();
+    const n = e.target.n.value.trim(), t = e.target.t.value.trim(), err = $('#re'); err.hidden = true;
+    if (!n || t.replace(/\D/g, '').length < 8) { err.textContent = 'Indiquez votre nom et un numéro de téléphone valide.'; err.hidden = false; return; }
+    $('#rf').hidden = true; $('#sel').hidden = true; const k = $('#rk'); k.hidden = false;
+    k.innerHTML = `<b>Rendez-vous réservé, ${esc(n.split(' ')[0])}.</b><br>${esc($('#sel').textContent)}<br><span style="font-size:13px">Démonstration : rien n’est enregistré. Sur un vrai site, vous recevez la demande et le patient une confirmation.</span>`;
+  });
+  render();
+
+  /* Carte du corps : informations générales, pas de diagnostic */
+  const Z = [
+    { id: 'nuque', n: 'Nuque et cervicales', x: 120, y: 98, r: 20, m: 'Tensions, raideur, gêne en tournant la tête, maux de tête liés aux tensions.', s: 'Bilan de mobilité du cou et des épaules, gestes doux, conseils sur la posture au travail.', c: 'Faire une pause toutes les heures, régler la hauteur de l’écran, mobiliser doucement le cou sans forcer.' },
+    { id: 'epaules', n: 'Épaules', x: 70, y: 138, r: 24, m: 'Raideur, gêne après un effort ou en position de bureau, douleurs en levant le bras.', s: 'Examen de la mobilité de l’épaule et du haut du dos, travail doux, exercices simples.', c: 'Alterner les positions, éviter de porter toujours du même côté, respirer calmement.' },
+    { id: 'dos', n: 'Haut du dos', x: 120, y: 190, r: 28, m: 'Gêne entre les omoplates, position penchée prolongée, sensation de dos « bloqué ».', s: 'Évaluation de la posture et de la respiration, gestes doux sur le dos et les côtes.', c: 'Se lever régulièrement, marcher un peu chaque jour, s’étirer en douceur le matin.' },
+    { id: 'lombaires', n: 'Bas du dos', x: 120, y: 262, r: 28, m: 'Lombalgie, « tour de reins », raideur au réveil ou après une position assise longue.', s: 'Bilan de la mobilité du bas du dos et du bassin, séance douce, conseils pour les gestes du quotidien.', c: 'Éviter le repos strict : bouger doucement aide souvent. Plier les genoux pour soulever une charge.' },
+    { id: 'hanches', n: 'Hanches et bassin', x: 120, y: 318, r: 32, m: 'Gêne à la marche, asymétrie ressentie, inconfort pendant la grossesse.', s: 'Examen du bassin et des hanches, gestes adaptés à votre situation.', c: 'Marcher régulièrement, changer souvent de position assise, dormir avec un coussin entre les genoux.' },
+    { id: 'jambes', n: 'Genoux et jambes', x: 92, y: 410, r: 26, m: 'Gêne de course, reprise du sport, sensation de jambes lourdes.', s: 'Bilan du mouvement (course, marche), travail doux, conseils de reprise progressive.', c: 'Reprendre progressivement, soigner ses chaussures, s’échauffer avant l’effort.' }
+  ];
+  const zs = $('#zones');
+  zs.innerHTML = Z.map(z => `<g class="zone" tabindex="0" role="button" aria-pressed="false" aria-label="${esc(z.n)}" data-z="${z.id}"><circle class="ring" cx="${z.x}" cy="${z.y}" r="${z.r + 8}"/><circle class="dot" cx="${z.x}" cy="${z.y}" r="${z.r}"/></g>`).join('');
+  function pick(id) {
+    const z = Z.find(x => x.id === id);
+    $$('.zone').forEach(g => g.setAttribute('aria-pressed', g.dataset.z === id));
+    $('#zinfo').innerHTML = `<p class="eyebrow">Zone sélectionnée</p><h3>${esc(z.n)}</h3><dl><div><dt>Motifs fréquents</dt><dd>${esc(z.m)}</dd></div><div><dt>En séance</dt><dd>${esc(z.s)}</dd></div><div><dt>Conseil simple</dt><dd>${esc(z.c)}</dd></div></dl><p class="warn" style="margin-top:22px">Informations générales, sans valeur de diagnostic. En cas de douleur intense, de fièvre ou de perte de force : médecin ou 15.</p><a class="btn" href="#rdv" style="margin-top:18px">Prendre rendez-vous</a>`;
+  }
+  zs.addEventListener('click', e => { const g = e.target.closest('.zone'); if (g) pick(g.dataset.z); });
+  zs.addEventListener('keydown', e => { const g = e.target.closest('.zone'); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pick(g.dataset.z); } });
+  pick('lombaires');
+
+  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .1 });
+  $$('.rv').forEach(n => io.observe(n));
+})();
 </script>
 </body>
 </html>
