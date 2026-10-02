@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Votre carte cadeau · QuenTools</title>
+<meta name="description" content="Votre carte cadeau QuenTools : montant disponible, validité et code à indiquer lors de votre demande de devis.">
+<link rel="canonical" href="https://quentools.fr/cadeau/">
+<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/qt.css?v=20261001h">
+<script src="../../assets/qt-config.js"></script>
+<script src="../../assets/qt-cloud.js"></script>
+<style>
+  .wrap{max-width:720px}
+  .gc{position:relative;overflow:hidden;aspect-ratio:1.586/1;border-radius:26px;padding:clamp(20px,5vw,36px);color:#fff;isolation:isolate;
+    background:radial-gradient(120% 90% at 100% 0%,#8f7bff 0%,transparent 55%),linear-gradient(135deg,#5b3df5 0%,#2a1a8f 60%,#121019 100%);
+    box-shadow:0 30px 70px -25px rgba(40,20,120,.6);display:grid;grid-template-rows:auto 1fr auto;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .gc::after{content:"";position:absolute;z-index:-1;width:46%;aspect-ratio:1;right:-12%;bottom:-22%;border-radius:50%;border:20px solid rgba(215,242,74,.9)}
+  .gc-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .gc-brand{display:flex;align-items:center;gap:10px;font:700 1.2rem/1 var(--f-display);letter-spacing:-.02em}
+  .gc-brand img{width:30px;height:30px;border-radius:9px}
+  .gc-tag{font:600 11px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.14)}
+  .gc-amount{align-self:center;font:800 clamp(48px,13vw,84px)/1 var(--f-display);letter-spacing:-.04em}
+  .gc-amount small{font-size:.45em;margin-left:4px;color:#d7f24a}
+  .gc-for{font-size:clamp(14px,3.4vw,17px);max-width:68%;overflow-wrap:anywhere}
+  .gc-code{margin-top:8px;font:700 clamp(15px,3.8vw,20px)/1 var(--f-mono);letter-spacing:.1em;color:#d7f24a}
+  .note{font:italic 500 clamp(17px,4vw,21px)/1.45 var(--f-display);margin:var(--s-6) 0 0;padding:var(--s-5);border-left:4px solid var(--lime);background:var(--surface);border-radius:0 var(--r-md) var(--r-md) 0;overflow-wrap:anywhere}
+  .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s-3);margin-top:var(--s-5)}
+  @media (max-width:560px){.kv{grid-template-columns:1fr}}
+  .kv div{padding:14px 16px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line)}
+  .kv span{display:block;font-size:var(--t-xs);color:var(--muted)}.kv b{font:700 var(--t-lg)/1.2 var(--f-display)}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:var(--s-5)}
+  .how{margin-top:var(--s-6);font-size:var(--t-sm);color:var(--ink-2)}
+  @media print{
+    .nav,.acts,.footer,.no-print{display:none!important}
+    body{background:#fff}.section{padding:0}.gc{box-shadow:none}
+    .kv div,.note{border-color:#ddd}
+  }
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="../../" aria-label="QuenTools, accueil"><img class="brand-mark" src="../../assets/logo.svg" alt="" width="32" height="32">QuenTools</a>
+  <a class="btn btn-sm btn-ghost" href="../">Cartes cadeaux</a>
+</div></header>
+
+<main class="section" style="padding-top:var(--s-6)">
+  <div class="wrap" id="app">
+    <h1 class="h-section" style="margin-bottom:var(--s-5)" id="title">Votre carte cadeau</h1>
+    <p class="muted" id="state">Chargement de la carte…</p>
+  </div>
+</main>
+
+<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
+  <span>© <span data-year>2026</span> QuenTools</span><span><a href="../">Cartes cadeaux</a> · <a href="../../">Accueil</a></span>
+</div></div></footer>
+<script src="../../assets/qt.js?v=20261001h" defer></script>
+<script>
+(async () => {
+  const app = document.getElementById('app'), code = new URLSearchParams(location.search).get('code') || '';
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const eur = n => (+n || 0).toLocaleString('fr-FR', { minimumFractionDigits: Number.isInteger(+n) ? 0 : 2, maximumFractionDigits: 2 }) + ' €';
+  const date = iso => iso ? new Date(iso + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+  const fail = t => { app.innerHTML = `<h1 class="h-section" style="margin-bottom:var(--s-5)">Carte introuvable</h1><div class="notice warn">${t}</div><p style="margin-top:var(--s-4)"><a class="btn btn-ghost" href="../#verifier">Saisir un code</a></p>`; };
+  if (!code) return fail('Aucun code dans le lien. Ouvrez le lien reçu par e-mail, ou saisissez le code de la carte.');
+  let c;
+  try { c = window.QTC && await QTC.carte(code); } catch (e) { return fail('Impossible de charger la carte pour le moment (connexion ?). Réessayez dans un instant.'); }
+  if (!c) return fail('Ce code ne correspond à aucune carte. Vérifiez le lien ou les caractères du code (QT-XXXX-XXXX).');
+  const today = new Date().toISOString().slice(0, 10), exp = c.expire && c.expire < today, off = c.statut === 'annulee', solde = +c.solde || 0, usable = solde > 0 && !exp && !off;
+  document.title = `Carte cadeau ${eur(c.montant)}${c.pour ? ' pour ' + c.pour : ''} · QuenTools`;
+  app.innerHTML = `<h1 class="h-section" style="margin-bottom:var(--s-5)">${c.pour ? esc(c.pour) + ', une carte cadeau pour vous 🎁' : 'Votre carte cadeau 🎁'}</h1>
+    <div class="gc" role="img" aria-label="Carte cadeau QuenTools de ${esc(eur(c.montant))}">
+      <div class="gc-top"><span class="gc-brand"><img src="../../assets/logo.svg" alt="">QuenTools</span><span class="gc-tag">Carte cadeau</span></div>
+      <div class="gc-amount">${esc((+c.montant || 0).toLocaleString('fr-FR'))}<small>€</small></div>
+      <div><div class="gc-for">${c.pour ? `Pour <b>${esc(c.pour)}</b>` : ''}${c.pour && c.de ? ' · ' : ''}${c.de ? `de <b>${esc(c.de)}</b>` : ''}</div><div class="gc-code">${esc(c.code)}</div></div>
+    </div>
+    ${c.message ? `<p class="note">« ${esc(c.message)} »</p>` : ''}
+    ${off ? '<div class="notice warn" style="margin-top:var(--s-5)">Cette carte a été annulée.</div>' : exp ? `<div class="notice warn" style="margin-top:var(--s-5)">Cette carte a expiré le ${esc(date(c.expire))}.</div>` : !solde ? '<div class="notice warn" style="margin-top:var(--s-5)">Cette carte a été entièrement utilisée.</div>' : ''}
+    <div class="kv"><div><span>Disponible</span><b>${esc(eur(solde))}</b></div><div><span>Valeur de la carte</span><b>${esc(eur(c.montant))}</b></div><div><span>Valable jusqu’au</span><b>${esc(date(c.expire))}</b></div></div>
+    <div class="acts">${usable ? `<a class="btn btn-accent" href="../../devis/?cadeau=${encodeURIComponent(c.code)}">Utiliser ma carte</a>` : ''}<button class="btn btn-ghost" id="print">Imprimer / PDF</button><button class="btn btn-ghost" id="share">Partager</button></div>
+    <p class="how">Valable sur toutes les prestations QuenTools : site internet, outil sur mesure, améliorations et maintenance. Pour l’utiliser, demandez un devis en indiquant le code <b>${esc(c.code)}</b> : le montant est déduit de la facture, en une ou plusieurs fois. Solde et conditions sur <b>quentools.fr/cadeau</b>.</p>`;
+  document.getElementById('print').onclick = () => print();
+  document.getElementById('share').onclick = async () => {
+    const data = { title: 'Carte cadeau QuenTools', text: `Une carte cadeau QuenTools de ${eur(c.montant)}${c.pour ? ' pour ' + c.pour : ''} 🎁`, url: location.href };
+    try { if (navigator.share) return await navigator.share(data); await navigator.clipboard.writeText(location.href); document.getElementById('share').textContent = 'Lien copié ✓'; }
+    catch (e) { /* partage annulé */ }
+  };
+})();
+</script>
+</body>
+</html>

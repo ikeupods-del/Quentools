@@ -22,9 +22,3 @@ Tant que les règles ne sont pas mises à jour, le formulaire de devis continue 
 - Pas de dépôt de fichiers : le devis et les fichiers passent par un lien (Drive, PDF en ligne).
 - Les demandes antérieures à cette mise en service n'ont pas d'`emailLower` et n'apparaissent pas côté client.
 
-## Inscription à l'e-book (contacts)
-- Sur `/ebook/`, le guide est masqué tant que le visiteur ne s'est pas connecté avec Google (case de consentement obligatoire). Le contact est enregistré dans `qt_leads/{adresse}` (nom, e-mail, date, source, consentement) ; un drapeau local (`qt:ebook`) évite de redemander l'inscription au même appareil.
-- L'onglet **Contacts** de `/admin/` liste les inscrits, copie les e-mails et exporte un CSV. Les règles à publier sont dans l'onglet **Règles** (bloc `qt_leads`).
-- E-book gratuit : après connexion Google (consentement enregistré dans `qt_leads`), l'inscrit télécharge uniquement le PDF, stocké dans Firebase (`qt_ebook/pdf`, lisible seulement par une personne connectée). Le guide ne se lit plus en ligne et son texte n'est plus dans le dépôt.
-- Mise en ligne ou remplacement du PDF : `/admin/`, onglet **Contacts**, section « E-book gratuit (PDF) » : choisir le fichier (700 Ko maximum) puis « Publier le PDF ».
-- Le consentement mentionne les nouvelles et offres, dont la future formation : on peut donc écrire aux inscrits pour la lancer. Chaque envoi doit nommer l'expéditeur et contenir un lien de désinscription ; honorer immédiatement les désinscriptions. Aucun envoi d'e-mails automatique : exporter le CSV vers un outil d'envoi (avec lien de désinscription) pour les nouvelles. Les mentions de confidentialité de l'accueil sont à faire relire (contenu juridique indicatif).

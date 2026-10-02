@@ -203,7 +203,7 @@ p{margin:0 0 var(--s-4);text-wrap:pretty}
 .footer details summary{cursor:pointer}
 @media (max-width:760px){.footer-grid{grid-template-columns:1fr 1fr}.footer-grid>:first-child{grid-column:1/-1}}
 
-/* Documents longs (e-book, mentions légales) */
+/* Documents longs (mentions légales) */
 .prose{max-width:720px;font-size:1.0625rem;line-height:1.75}
 .prose h2{font-size:var(--t-xl);margin:var(--s-7) 0 var(--s-4)}.prose h3{font-size:var(--t-lg);margin:var(--s-6) 0 var(--s-3)}
 .prose ul,.prose ol{padding-left:1.3em}.prose li{margin:.35em 0}
