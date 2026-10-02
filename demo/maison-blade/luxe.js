@@ -290,5 +290,6 @@
     const bar = barOf(qs.get('barbier')); if (bar && bar.does.includes(st.svc)) { st.barber = bar.id; st.step = 3; }
     refresh(); setStep(st.step);
   }
+  if (me && me.favBarber && !qs.get('barbier') && barOf(me.favBarber)) { st.barber = me.favBarber; refresh(); }
   if (me) $$('[data-account]').forEach(n => { n.textContent = 'Mon espace'; });
 })();

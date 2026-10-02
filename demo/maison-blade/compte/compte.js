@@ -13,6 +13,16 @@
   const when = a => new Date(a.date + 'T' + a.start).getTime();
   const field = (name, label, type, extra) => `<label class="block text-xs uppercase tracking-wide2 text-mist">${label}<input class="field mt-1 text-base normal-case tracking-normal" name="${name}" type="${type || 'text'}" ${extra || ''}></label>`;
   const box = (t, c) => `<p class="border p-4 text-sm ${c || 'border-white/10 text-mist'}" role="status">${esc(t)}</p>`;
+  const LEVELS = [{ n: 'Bronze', min: 0, perk: 'Boisson signature et serviette chaude à chaque visite' }, { n: 'Argent', min: 500, perk: 'Rappel prioritaire et créneaux du matin réservés' }, { n: 'Or', min: 1000, perk: 'Un produit de l’Officine offert chaque année' }];
+  const pointsOf = me => Math.floor(mine(me).filter(a => a.status === 'terminé').reduce((t, a) => t + a.total, 0));
+  const favOf = me => {
+    const list = D().barbers.filter(b => b.active !== false);
+    const fixed = list.find(b => b.id === me.favBarber);
+    if (fixed) return fixed;
+    const n = {}; mine(me).filter(a => a.status === 'terminé' && a.barber).forEach(a => { n[a.barber] = (n[a.barber] || 0) + 1; });
+    return list.find(b => b.id === Object.keys(n).sort((x, y) => n[y] - n[x])[0]) || null;
+  };
+  const lastDone = me => mine(me).filter(a => a.status === 'terminé').sort((a, b) => when(b) - when(a))[0] || null;
   const bad = 'border-[#a0524a] text-[#e0a39a]', good = 'border-bronze/50 text-champagne';
 
   /* ---------- Connexion / création ---------- */
@@ -57,6 +67,35 @@
     return `<article class="glass p-6 md:p-8"><p class="eyebrow">Le Cercle</p><h3 class="mt-3 text-3xl">${L.done} coupe${L.done > 1 ? 's' : ''} réalisée${L.done > 1 ? 's' : ''}</h3>
       <div class="mt-6 grid gap-2.5" style="grid-template-columns:repeat(${N > 10 ? 6 : 5},minmax(0,1fr))">${st}</div><p class="mt-5 text-sm ${L.freeNext ? 'text-champagne' : 'text-mist'}">${m}</p></article>`;
   }
+  function pointsBlock(me) {
+    const pts = pointsOf(me), lv = LEVELS.filter(l => pts >= l.min).pop(), nx = LEVELS.find(l => l.min > pts);
+    const pct = nx ? Math.round((pts - lv.min) / (nx.min - lv.min) * 100) : 100;
+    return `<article class="glass p-6 md:p-8"><p class="eyebrow">Points Maison</p><div class="mt-3 flex items-baseline justify-between gap-4"><h3 class="text-4xl">${pts} <span class="text-lg text-mist">pts</span></h3><span class="border border-bronze/60 px-3 py-1 text-[.65rem] uppercase tracking-wide2 text-champagne">Niveau ${lv.n}</span></div>
+      <div class="mt-5 h-1 w-full bg-white/10" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><div class="h-1 bg-gradient-to-r from-bronze to-champagne" style="width:${pct}%"></div></div>
+      <p class="mt-3 text-xs text-mist">${nx ? (nx.min - pts) + ' pts avant le niveau ' + nx.n : 'Niveau maximum atteint'} · 1 € dépensé = 1 point</p>
+      <p class="mt-4 border-t border-white/10 pt-4 text-sm">${esc(lv.perk)}</p>
+      <ul class="mt-4 grid gap-1 text-xs text-mist">${LEVELS.map(l => `<li class="${pts >= l.min ? 'text-champagne' : ''}">${pts >= l.min ? '✓' : '○'} ${l.n} · dès ${l.min} pts</li>`).join('')}</ul></article>`;
+  }
+  function barberBlock(me) {
+    const b = favOf(me);
+    if (!b) return '';
+    const n = mine(me).filter(a => a.status === 'terminé' && a.barber === b.id).length;
+    return `<article class="glass p-6 md:p-8"><p class="eyebrow">Mon barbier</p><div class="mt-5 flex items-center gap-5"><div class="grid h-16 w-16 flex-none place-items-center rounded-full border border-bronze/50 font-serif text-2xl text-champagne">${esc(b.name.split(' ').map(x => x[0]).join(''))}</div>
+      <div><h3 class="text-3xl">${esc(b.name)}</h3><p class="text-xs uppercase tracking-wide2 text-mist">${esc(b.role || '')}</p></div></div>
+      <p class="mt-4 text-sm text-mist">${n ? n + ' passage' + (n > 1 ? 's' : '') + ' avec lui. ' : ''}${me.favBarber === b.id ? 'Votre barbier préféré.' : 'Votre barbier le plus fréquent.'}</p>
+      <div class="mt-5 flex flex-wrap gap-4"><a class="btn !min-h-[44px] !px-5" href="../?rdv=${esc((lastDone(me) || { serviceId: 'coupe' }).serviceId)}&barbier=${esc(b.id)}#reserver">Réserver avec ${esc(b.name.split(' ')[0])}</a><button type="button" class="link self-center text-[.68rem] uppercase tracking-wide2" data-tab="profil">Changer</button></div></article>`;
+  }
+  function habitBlock(me) {
+    const l = lastDone(me);
+    if (!l) return '';
+    const b = favOf(me), bid = b ? b.id : l.barber;
+    return `<article class="glass p-6 md:p-8"><p class="eyebrow">Comme d’habitude</p><h3 class="mt-3 text-3xl">${esc(l.serviceName)}</h3>
+      <p class="mt-2 text-sm text-mist">${bid ? 'Avec ' + esc((D().barbers.find(x => x.id === bid) || { name: l.barberName }).name) + ' · ' : ''}dernière fois le ${esc(fr(l.date, { day: 'numeric', month: 'long' }))}.</p>
+      <a class="btn mt-5 !min-h-[44px] !px-5" href="../?rdv=${esc(l.serviceId)}${bid ? '&barbier=' + esc(bid) : ''}#reserver">Réserver la même chose</a></article>`;
+  }
+  function notesBlock(me) {
+    return `<article class="glass p-6 md:p-8"><p class="eyebrow">Mes préférences</p><p class="mt-4 text-sm ${me.notes ? '' : 'text-mist'}">${me.notes ? '« ' + esc(me.notes) + ' »' : 'Aucune préférence enregistrée.'}</p><p class="mt-3 text-xs text-mist">Votre barbier les lit avant chaque rendez-vous.</p><button type="button" class="link mt-4 text-[.68rem] uppercase tracking-wide2" data-tab="profil">Modifier</button></article>`;
+  }
   function subBlock(me, full) {
     const S = D().settings.sub, sub = B.activeSub(me.email, B.today()), pending = D().subs.find(s => B.norm(s.email) === B.norm(me.email) && !s.paid);
     if (sub) {
@@ -78,19 +117,21 @@
     const nav = TABS.map(t => `<button type="button" data-tab="${t[0]}" class="min-h-[44px] border px-5 text-[.68rem] uppercase tracking-wide2 transition duration-500 ${tab === t[0] ? 'border-brass bg-brass/15 text-champagne' : 'border-white/10 text-mist hover:border-champagne/40 hover:text-ivory'}" aria-current="${tab === t[0]}">${t[1]}</button>`).join('');
     let body = '';
     if (tab === 'apercu') {
-      body = `<div class="grid gap-6 lg:grid-cols-[1.4fr_1fr]"><div class="grid gap-6">${next.length ? `<div><p class="eyebrow mb-4">Prochain rendez-vous</p>${apptCard(next[0], me, true)}</div>` : `<article class="glass p-8"><p class="eyebrow">Prochain rendez-vous</p><h3 class="mt-3 text-3xl">Aucun rendez-vous prévu</h3><p class="mt-3 text-sm text-mist">Réservez votre prochain rituel en trois choix.</p><a class="btn mt-6" href="../#reserver">Réserver</a></article>`}</div>
-        <div class="grid content-start gap-6">${loyaltyBlock(me)}${subBlock(me, false)}</div></div>`;
+      body = `<div class="grid gap-6 lg:grid-cols-2"><div class="grid content-start gap-6">${next.length ? `<div><p class="eyebrow mb-4">Prochain rendez-vous</p>${apptCard(next[0], me, true)}</div>` : `<article class="glass p-8"><p class="eyebrow">Prochain rendez-vous</p><h3 class="mt-3 text-3xl">Aucun rendez-vous prévu</h3><p class="mt-3 text-sm text-mist">Réservez votre prochain rituel en trois choix.</p><a class="btn mt-6" href="../#reserver">Réserver</a></article>`}${habitBlock(me)}${barberBlock(me)}</div>
+        <div class="grid content-start gap-6">${pointsBlock(me)}${loyaltyBlock(me)}${subBlock(me, false)}${notesBlock(me)}</div></div>`;
     } else if (tab === 'rdv') {
       body = `<p class="eyebrow mb-4">À venir (${next.length})</p><div class="grid gap-4">${next.map(a => apptCard(a, me)).join('') || '<p class="text-mist">Aucun rendez-vous à venir.</p>'}</div>
         <p class="eyebrow mb-2 mt-14">Historique</p><div>${hist.map(histRow).join('') || '<p class="text-mist">Votre historique apparaîtra ici.</p>'}</div>
         <p class="mt-6 text-xs text-mist">Annulation gratuite jusqu’à 24 h avant. Passé ce délai, appelez le salon.</p>`;
     } else if (tab === 'prive') {
-      body = `<div class="grid gap-6 md:grid-cols-2">${loyaltyBlock(me)}${subBlock(me, true)}</div>`;
+      body = `<div class="grid gap-6 md:grid-cols-2"><div class="grid content-start gap-6">${pointsBlock(me)}${loyaltyBlock(me)}</div><div class="grid content-start gap-6">${subBlock(me, true)}</div></div>`;
     } else {
       body = `<form id="profForm" class="glass grid max-w-xl gap-6 p-8" novalidate>
         ${field('name', 'Nom', 'text', `value="${esc(me.name)}" required`)}
         <label class="block text-xs uppercase tracking-wide2 text-mist">E-mail<input class="field mt-1 text-base normal-case tracking-normal opacity-60" value="${esc(me.email)}" disabled></label>
         ${field('phone', 'Téléphone', 'tel', `value="${esc(me.phone || '')}"`)}
+        <label class="block text-xs uppercase tracking-wide2 text-mist">Barbier préféré<select class="field mt-1 text-base normal-case tracking-normal" name="favBarber"><option value=""${me.favBarber ? '' : ' selected'} class="bg-graphite">Aucune préférence</option>${D().barbers.filter(b => b.active !== false).map(b => `<option value="${b.id}"${me.favBarber === b.id ? ' selected' : ''} class="bg-graphite">${esc(b.name)}</option>`).join('')}</select></label>
+        <label class="block text-xs uppercase tracking-wide2 text-mist">Mes préférences de coupe (lues par votre barbier)<textarea class="field mt-1 text-base normal-case tracking-normal" name="notes" rows="3" maxlength="400" placeholder="Longueurs, sensibilités, produits à éviter…">${esc(me.notes || '')}</textarea></label>
         ${field('password', 'Nouveau mot de passe (laisser vide pour ne pas changer)', 'password', 'autocomplete="new-password"')}
         <label class="flex items-center gap-3 text-sm"><input type="checkbox" name="notify" class="h-5 w-5 accent-[#bfa57a]"${me.notify !== false ? ' checked' : ''}>Recevoir les confirmations et rappels par e-mail</label>
         <button class="btn" type="submit">Enregistrer</button>
@@ -133,7 +174,7 @@
       msg = r.error || ''; if (!r.error) keep = {}; if (!r.error) flash = mode === 'register' ? 'Votre compte est créé. Bienvenue !' : '';
       render();
     } else if (e.target.id === 'profForm') {
-      const r = await B.updateAccount({ name: f.name, phone: f.phone, notify: !!f.notify, password: f.password || '' });
+      const r = await B.updateAccount({ name: f.name, phone: f.phone, notify: !!f.notify, favBarber: f.favBarber, notes: f.notes, password: f.password || '' });
       flash = r.error || 'Profil enregistré.'; render();
     } else if (e.target.id === 'subForm' && me) {
       const S = D().settings.sub;
@@ -143,7 +184,7 @@
   });
   $('#payNo').addEventListener('click', () => $('#payDlg').close());
   $('#out').addEventListener('click', () => { B.logout(); mode = 'login'; });
-  addEventListener('hashchange', () => { const h = location.hash.slice(1); if (TABS.some(t => t[0] === h)) { tab = h; render(); } });
+  addEventListener('hashchange', () => { const h = location.hash.slice(1); if (TABS.some(t => t[0] === h) && h !== tab) { tab = h; render(); } });
   B.onChange(() => { if (!$('#payDlg').open && !(document.activeElement && document.activeElement.closest('form'))) render(); });
   /* Démonstration : « Vue client » (?demo) ouvre le compte de démonstration sans identifiant */
   if (/[?&]demo\b/.test(location.search)) { history.replaceState(null, '', location.pathname); B.login('karim@exemple.fr', 'demo').then(render); }

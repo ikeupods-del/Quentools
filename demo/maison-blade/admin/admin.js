@@ -163,7 +163,7 @@
     const t = B.today(), cs = customers();
     return `<p class="lead" style="margin-top:0">Les clients se créent tout seuls à la première réservation (reconnus par leur e-mail).</p>` +
       (cs.map(c => { const L = B.loyalty(c.email), sub = B.activeSub(c.email, t);
-        return `<div class="row"><div class="main"><b>${esc(c.name)}</b> <span class="muted">${esc(c.email)}</span><br>${c.done} coupe${c.done > 1 ? 's' : ''} terminée${c.done > 1 ? 's' : ''} · dépensé ${money(c.spent)}${c.last ? ' · dernière visite ' + esc(B.frDate(c.last)) : ''}</div>
+        return `<div class="row"><div class="main"><b>${esc(c.name)}</b> <span class="muted">${esc(c.email)}</span><br>${(() => { const ac = D().accounts.find(x => B.norm(x.email) === B.norm(c.email)), fb = ac && D().barbers.find(x => x.id === ac.favBarber); return (fb ? 'Barbier préféré : ' + esc(fb.name) + '<br>' : '') + (ac && ac.notes ? '<i class="muted">« ' + esc(ac.notes) + ' »</i><br>' : ''); })()}${c.done} coupe${c.done > 1 ? 's' : ''} terminée${c.done > 1 ? 's' : ''} · dépensé ${money(c.spent)}${c.last ? ' · dernière visite ' + esc(B.frDate(c.last)) : ''}</div>
         <div>${D().accounts.some(x => B.norm(x.email) === B.norm(c.email)) ? '<span class="st">Compte client</span>' : ''}${sub ? '<span class="st ok">Abonné</span>' : ''}${S().loyaltyEvery ? (L.freeNext ? '<span class="st free">Prochaine coupe offerte</span>' : `<span class="st">Fidélité ${L.inCycle}/${L.N}</span>`) : ''}</div></div>`; }).join('') || '<p class="notice">Aucun client pour le moment.</p>');
   }
 

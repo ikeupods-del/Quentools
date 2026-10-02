@@ -4,7 +4,7 @@
 (function () {
   'use strict';
   const CFG = window.BARBER_CONFIG || {};
-  const KEY = 'maison-blade:v3';
+  const KEY = 'maison-blade:v4';
   const SESSION = 'maison-blade:session';
   const pad = n => String(n).padStart(2, '0');
   const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -54,14 +54,14 @@
         { id: 'p6', name: 'Rasoir coupe-chou', price: 140, stock: 0, active: true }
       ],
       appointments: [
-        ...[70, 63, 56, 49, 42, 35].map((off, i) => mk(10 + i, 'Karim B.', 'karim@exemple.fr', S[0], B[i % 2], -off, '11:00', 'card', { paid: true, status: 'terminé' })),
+        ...[70, 63, 56, 49, 42, 35].map((off, i) => mk(10 + i, 'Karim B.', 'karim@exemple.fr', S[0], i === 2 || i === 5 ? B[1] : B[0], -off, '11:00', 'card', Object.assign({ paid: true, status: 'terminé' }, i === 5 ? { items: [{ id: 'p1', name: 'Pommade mate', price: 28, qty: 1 }], total: 113 } : {}))),
         mk(1, 'Karim B.', 'karim@exemple.fr', S[0], B[0], 3, '10:00', 'card', { paid: true, cover: 'sub', total: 0, pay: 'none' }),
         mk(4, 'Hugo P.', 'hugo@exemple.fr', S[1], B[0], 0, '16:30', 'cash', { paid: false }),
         mk(2, 'Thomas L.', 'thomas@exemple.fr', S[3], B[1], 0, '14:00', 'cash', { paid: false }),
         mk(3, 'Lucas M.', 'lucas@exemple.fr', S[2], B[2], 1, '11:00', 'card', { paid: true })
       ],
       subs: [{ id: 'sub1', name: 'Karim B.', email: 'karim@exemple.fr', phone: '', plan: 'Abonnement Privilège', price: 280, weeks: 4, perWeek: 1, paid: true, start: addDays(t, -10), end: addDays(t, 17), pay: 'card' }],
-      accounts: [{ email: 'karim@exemple.fr', name: 'Karim B.', phone: '06 00 00 00 00', pass: 'c5e34aa90d3c746e995aed00d8c05d9f5604163ec0febb91434f91c920c76d17', notify: true, created: Date.now() - 86400000 * 90 }],
+      accounts: [{ email: 'karim@exemple.fr', name: 'Karim B.', phone: '06 00 00 00 00', pass: 'c5e34aa90d3c746e995aed00d8c05d9f5604163ec0febb91434f91c920c76d17', notify: true, created: Date.now() - 86400000 * 90, favBarber: 'matteo', notes: 'Dégradé court, 3 mm sur les côtés, ciseaux sur le dessus. Pas de produit parfumé, peau sensible.' }],
       outbox: []
     };
   }
@@ -253,6 +253,8 @@
     if (patch.name != null) { if (!String(patch.name).trim()) return { error: 'Indiquez votre nom.' }; a.name = patch.name.trim(); }
     if (patch.phone != null) a.phone = String(patch.phone).trim();
     if (patch.notify != null) a.notify = !!patch.notify;
+    if (patch.favBarber != null) a.favBarber = patch.favBarber;
+    if (patch.notes != null) a.notes = String(patch.notes).slice(0, 400);
     if (patch.password) { if (patch.password.length < 6) return { error: 'Le mot de passe doit faire au moins 6 caractères.' }; a.pass = await sha(patch.password); }
     save();
     return { account: a };
