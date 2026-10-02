@@ -45,14 +45,14 @@
       <span class="whitespace-nowrap font-serif text-base uppercase tracking-[.2em] md:text-xl md:tracking-[.28em]">Maison Blade</span>
     </a>
     <nav class="hidden items-center gap-10 text-[.72rem] uppercase tracking-wide2 md:flex" aria-label="Navigation principale">
-      <a class="link" href="#maison">La Maison</a><a class="link" href="#rituels">Rituels</a><a class="link" href="#galerie">Galerie</a><a class="link" href="#equipe">Barbiers</a>
+      <a class="link" href="#maison">La Maison</a><a class="link" href="#rituels">Rituels</a><a class="link" href="#galerie">Galerie</a><a class="link" href="#equipe">Barbiers</a><a class="link" href="#prive">Privilège</a><a class="link" href="#officine">Officine</a>
       <a class="btn-line !min-h-[42px] !px-6" href="#reserver">Réserver</a>
     </nav>
     <button id="menuBtn" class="btn-line !min-h-[42px] !px-5 md:hidden" aria-expanded="false" aria-controls="menu">Menu</button>
   </div>
   <div id="menu" hidden class="glass mx-4 mb-4 p-6 md:hidden">
     <div class="grid gap-5 text-center text-xs uppercase tracking-wide2">
-      <a href="#maison">La Maison</a><a href="#rituels">Rituels</a><a href="#galerie">Galerie</a><a href="#equipe">Barbiers</a><a href="#reserver" class="btn">Réserver</a>
+      <a href="#maison">La Maison</a><a href="#rituels">Rituels</a><a href="#galerie">Galerie</a><a href="#equipe">Barbiers</a><a href="#prive">Privilège</a><a href="#officine">Officine</a><a href="#reserver" class="btn">Réserver</a>
     </div>
   </div>
 </header>
@@ -118,13 +118,43 @@
   </div>
 </section>
 
+<!-- Privilège : abonnement et fidélité -->
+<section id="prive" class="relative py-28 md:py-40">
+  <div class="absolute inset-0 -z-10" style="background:radial-gradient(800px 500px at 10% 20%,rgba(191,165,122,.08),transparent 60%)"></div>
+  <div class="mx-auto max-w-[1280px] px-6 md:px-10">
+    <p class="eyebrow rv">Privilège</p>
+    <h2 class="rv mt-5 text-[clamp(2.6rem,6vw,5rem)]" style="--i:1">Pour ceux qui <em class="text-champagne">reviennent</em></h2>
+    <div class="mt-14 grid gap-6 lg:grid-cols-2">
+      <article class="glass rv flex flex-col p-8 md:p-12" id="aboCard"></article>
+      <article class="glass rv flex flex-col p-8 md:p-12" style="--i:1" id="fidCard">
+        <p class="eyebrow">Le Cercle</p>
+        <h3 class="mt-5 text-[2.4rem]" id="fidTitle">Une coupe offerte.</h3>
+        <p class="mt-4 text-sm text-mist">Chaque coupe réalisée au salon compte. Entrez votre e-mail pour consulter votre carte : elle se remplit seule, sans papier à perdre.</p>
+        <label class="mt-8 block text-xs uppercase tracking-wide2 text-mist">Votre e-mail<input class="field mt-1 text-base normal-case tracking-normal" id="fidMail" type="email" autocomplete="email" placeholder="karim@exemple.fr"></label>
+        <div id="fidOut" class="mt-6" aria-live="polite"></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- Officine : boutique -->
+<section id="officine" class="border-y border-white/[.07] bg-coal py-28 md:py-40">
+  <div class="mx-auto max-w-[1280px] px-6 md:px-10">
+    <p class="eyebrow rv">L’Officine</p>
+    <h2 class="rv mt-5 text-[clamp(2.6rem,6vw,5rem)]" style="--i:1">Le geste, <em class="text-champagne">à la maison</em></h2>
+    <p class="rv mt-6 max-w-lg text-mist" style="--i:2">Ajoutez ce qu’il vous faut à votre rendez-vous : nous le préparons, vous le retirez au salon et le réglez avec votre rituel.</p>
+    <div class="mt-14 grid gap-5 sm:grid-cols-2 xl:grid-cols-3" id="shop"></div>
+  </div>
+</section>
+
 <!-- Réservation -->
 <section id="reserver" class="relative py-28 md:py-40">
   <div class="absolute inset-0 -z-10" style="background:radial-gradient(900px 600px at 15% 30%,rgba(191,165,122,.09),transparent 60%)"></div>
   <div class="mx-auto max-w-[1280px] px-6 md:px-10">
     <p class="eyebrow rv">Réservation</p>
     <h2 class="rv mt-5 text-[clamp(2.6rem,6vw,5rem)]" style="--i:1">Trois choix, <em class="text-champagne">une chaise</em></h2>
-    <div class="mt-14 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+    <div id="bk-closed" hidden class="glass mt-14 max-w-2xl p-8 md:p-10"><p class="eyebrow">Réservations fermées</p><p class="mt-4 font-serif text-3xl">Le salon ne prend plus de rendez-vous en ligne pour le moment.</p><p class="mt-3 text-sm text-mist">Appelez-nous au <a class="link" href="tel:+33100000000">01 00 00 00 00</a> : nous trouverons le bon créneau.</p></div>
+    <div id="bk-grid" class="mt-14 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div class="glass divide-y divide-white/[.08]" id="bk">
         <div class="step open p-6 md:p-8" id="st1"><button class="step-h" type="button" data-step="1" aria-expanded="true"><span class="flex items-center gap-4"><span class="num">1</span><span><span class="eyebrow block">Le rituel</span><span class="block font-serif text-2xl" id="v1">Choisir</span></span></span><span class="text-xs uppercase tracking-wide2 text-mist link">Modifier</span></button>
           <div class="collapsible"><div><div class="grid gap-3 pt-6 md:grid-cols-2" id="bk-svc"></div></div></div></div>
@@ -132,6 +162,8 @@
           <div class="collapsible"><div><div class="grid gap-3 pt-6 md:grid-cols-2" id="bk-bar"></div></div></div></div>
         <div class="step p-6 md:p-8" id="st3"><button class="step-h" type="button" data-step="3" aria-expanded="false"><span class="flex items-center gap-4"><span class="num">3</span><span><span class="eyebrow block">Le créneau</span><span class="block font-serif text-2xl" id="v3">Choisir</span></span></span><span class="text-xs uppercase tracking-wide2 text-mist link">Modifier</span></button>
           <div class="collapsible"><div><div class="pt-6"><div class="flex gap-2 overflow-x-auto pb-3" id="bk-days" role="group" aria-label="Jour"></div><div class="mt-5 flex flex-wrap gap-2" id="bk-slots" role="group" aria-label="Heure" aria-live="polite"></div></div></div></div></div>
+        <div class="step p-6 md:p-8" id="st4"><button class="step-h" type="button" data-step="4" aria-expanded="false"><span class="flex items-center gap-4"><span class="num">4</span><span><span class="eyebrow block">L’Officine · facultatif</span><span class="block font-serif text-2xl" id="v4">Aucun produit</span></span></span><span class="text-xs uppercase tracking-wide2 text-mist link">Modifier</span></button>
+          <div class="collapsible"><div><div class="grid gap-3 pt-6 md:grid-cols-2" id="bk-prod"></div></div></div></div>
       </div>
 
       <aside class="glass p-6 md:p-8 lg:sticky lg:top-28" aria-live="polite">
@@ -140,9 +172,12 @@
         <form id="bk-form" class="mt-8 grid gap-5" novalidate hidden>
           <label class="block text-xs uppercase tracking-wide2 text-mist">Prénom et nom<input class="field mt-1 text-base normal-case tracking-normal" name="name" autocomplete="name" required placeholder="Votre nom"></label>
           <label class="block text-xs uppercase tracking-wide2 text-mist">E-mail<input class="field mt-1 text-base normal-case tracking-normal" type="email" name="email" autocomplete="email" required placeholder="vous@exemple.fr"></label>
+          <label class="block text-xs uppercase tracking-wide2 text-mist">Téléphone (facultatif)<input class="field mt-1 text-base normal-case tracking-normal" type="tel" name="phone" autocomplete="tel" placeholder="06 00 00 00 00"></label>
+          <div id="bk-note"></div>
+          <fieldset id="bk-pay" class="grid gap-3"></fieldset>
           <p id="bk-err" class="text-sm text-[#e0a39a]" role="alert" hidden></p>
           <button class="btn mt-2" type="submit">Confirmer le rendez-vous</button>
-          <p class="text-xs text-mist">Règlement au salon. Annulation gratuite jusqu’à 24 h avant.</p>
+          <p class="text-xs text-mist">Annulation gratuite jusqu’à 24 h avant.</p>
         </form>
         <div id="bk-done" hidden></div>
       </aside>
@@ -169,7 +204,7 @@
 <footer class="border-t border-white/[.07] py-10 text-xs text-mist">
   <div class="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-6 md:px-10">
     <span>© <span id="yr"></span> Maison Blade · site d’exemple fictif, aucun vrai rendez-vous</span>
-    <span class="flex gap-6"><a class="link" href="../barbier/">Version « street » avec paiement et administration</a><a class="link" href="../../mentions-legales/">Mentions légales</a></span>
+    <span class="flex gap-6"><a class="link" href="admin/">Espace barbier (administration)</a><a class="link" href="../../mentions-legales/">Mentions légales</a></span>
   </div>
 </footer>
 
@@ -181,6 +216,16 @@
   </div>
 </dialog>
 
+<dialog id="payDlg" aria-labelledby="payT" class="m-auto w-[min(440px,calc(100%-32px))] border border-white/15 bg-graphite p-0 text-ivory shadow-deep backdrop:bg-black/70 backdrop:backdrop-blur-sm">
+  <div class="grid gap-5 p-8">
+    <p class="eyebrow">Paiement sécurisé</p><h3 class="font-serif text-3xl" id="payT">Régler par carte</h3><p id="payTxt" class="font-serif text-4xl text-champagne"></p>
+    <p class="border border-white/10 p-4 text-sm text-mist">Démonstration : aucune carte n’est demandée et rien n’est prélevé. Sur un vrai site, cette fenêtre est celle du prestataire de paiement (Stripe).</p>
+    <div class="flex flex-wrap gap-3"><button class="btn" id="payOk" type="button">Payer (simulation)</button><button class="btn-line" id="payNo" type="button">Annuler</button></div>
+  </div>
+</dialog>
+
+<script src="config.js"></script>
+<script src="store.js"></script>
 <script src="luxe.js"></script>
 </body>
 </html>

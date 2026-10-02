@@ -1,178 +1,233 @@
-/* Maison Blade : rituels, galerie, barbiers, réservation en 3 choix, animations au défilement. Sans dépendance.
-   Les disponibilités sont simulées (déterministes) et les rendez-vous gardés dans le navigateur : à brancher sur la base de données pour un vrai salon. */
+/* Maison Blade : site public (rituels, galerie, barbiers, abonnement, fidélité, boutique, réservation) et animations.
+   Toutes les règles (créneaux, prix, abonnement, fidélité, stock, e-mails) viennent de store.js, réglable dans l'administration. */
 (function () {
   'use strict';
+  const B = window.Barber, CFG = B.CFG, D = () => B.data, esc = B.esc, eur = B.money;
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const eur = n => n.toLocaleString('fr-FR') + '\u00a0€';
-  const pad = n => String(n).padStart(2, '0');
+  const ico = (n, c) => `<svg class="${c}" aria-hidden="true"><use href="#i-${n || 'brush'}"/></svg>`;
+  const dur = n => n >= 60 ? (n % 60 ? Math.floor(n / 60) + ' h ' + (n % 60) : n / 60 + ' h') : n + ' min';
 
-  /* ---------- Contenu (à adapter) ---------- */
-  const SERVICES = [
-    { id: 'coupe', name: 'Coupe signature', desc: 'Consultation, coupe aux ciseaux, finitions à la lame, coiffage.', price: 85, dur: 60, icon: 'scissors' },
-    { id: 'barbe', name: 'Taille de barbe', desc: 'Dessin des contours, taille au peigne, huile et baume.', price: 55, dur: 30, icon: 'razor' },
-    { id: 'serviette', name: 'Soin du visage à la serviette chaude', desc: 'Gommage doux, vapeur, massage, masque, serviettes chaudes.', price: 75, dur: 60, icon: 'towel' },
-    { id: 'maison', name: 'Le Rituel Maison', desc: 'Coupe, barbe et soin du visage : l’expérience complète.', price: 190, dur: 120, icon: 'brush', star: true }
-  ];
-  const BARBERS = [
-    { id: 'matteo', name: 'Matteo Rossi', role: 'Maître barbier · fondateur', bio: 'Vingt ans de ciseaux, formé à Milan. La coupe signature, c’est lui.', does: ['coupe', 'barbe', 'serviette', 'maison'] },
-    { id: 'julien', name: 'Julien Marchand', role: 'Barbe & rasage', bio: 'Le rasage d’autrefois, la lame droite et la patience.', does: ['barbe', 'serviette', 'maison', 'coupe'] },
-    { id: 'elias', name: 'Elias Kaddour', role: 'Soin du visage & finitions', bio: 'Mains douces, œil précis : le rituel bien-être.', does: ['serviette', 'barbe', 'maison'] }
-  ];
+  /* Plaques de la galerie : décor tonal à remplacer par les photos du salon */
   const PLATES = [
     { t: 'La coupe signature', k: 'Ciseaux & peigne', icon: 'scissors', cls: 'col-span-2 row-span-2 md:col-span-7', bg: 'radial-gradient(75% 75% at 28% 18%,#6a4a31,#251912 70%)' },
     { t: 'Finitions à la lame', k: 'Détail', icon: 'razor', cls: 'md:col-span-5', bg: 'radial-gradient(80% 80% at 70% 15%,#45423e,#131211 72%)' },
     { t: 'Serviette chaude', k: 'Rituel', icon: 'towel', cls: 'md:col-span-5', bg: 'radial-gradient(80% 80% at 25% 20%,#7a5d3b,#1b1511 72%)' },
     { t: 'L’atelier', k: 'Le salon', icon: 'brush', cls: 'md:col-span-4', bg: 'radial-gradient(80% 80% at 60% 20%,#3a352f,#12100e 72%)' },
-    { t: 'Huiles & baumes', k: 'Produits', icon: 'bottle', cls: 'md:col-span-4', bg: 'radial-gradient(80% 80% at 30% 20%,#5b4630,#17120e 72%)' },
+    { t: 'Huiles & baumes', k: 'Officine', icon: 'bottle', cls: 'md:col-span-4', bg: 'radial-gradient(80% 80% at 30% 20%,#5b4630,#17120e 72%)' },
     { t: 'Peigne en corne', k: 'Accessoires', icon: 'comb', cls: 'col-span-2 md:col-span-4', bg: 'radial-gradient(80% 80% at 70% 20%,#4a4035,#141210 72%)' }
   ];
-  const ico = (n, c) => `<svg class="${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 
-  /* ---------- Rituels, galerie, barbiers ---------- */
-  $('#rituals').innerHTML = SERVICES.map((s, i) => `<article class="glass glass-hover rv flex flex-col p-7${s.star ? ' !border-bronze/50' : ''}" style="--i:${i}">
+  /* ---------- Contenu qui vient de l'administration ---------- */
+  function renderRituals() {
+    $('#rituals').innerHTML = D().services.map((s, i) => `<article class="glass glass-hover flex flex-col p-7${s.star ? ' !border-bronze/50' : ''}">
       <div class="flex items-start justify-between">${ico(s.icon, 'h-11 w-11 text-bronze')}${s.star ? '<span class="eyebrow">La signature</span>' : ''}</div>
       <h3 class="mt-8 text-[1.85rem]">${esc(s.name)}</h3>
-      <p class="mt-3 flex-1 text-sm text-mist">${esc(s.desc)}</p>
-      <div class="mt-8 flex items-baseline justify-between border-t border-white/10 pt-5"><span class="font-serif text-4xl text-champagne">${eur(s.price)}</span><span class="text-xs uppercase tracking-wide2 text-mist">${s.dur >= 60 ? s.dur / 60 + ' h' : s.dur + ' min'}${s.dur % 60 && s.dur > 60 ? '' : ''}</span></div>
+      <p class="mt-3 flex-1 text-sm text-mist">${esc(s.desc || '')}</p>
+      <div class="mt-8 flex items-baseline justify-between border-t border-white/10 pt-5"><span class="font-serif text-4xl text-champagne">${eur(s.price)}</span><span class="text-xs uppercase tracking-wide2 text-mist">${dur(s.dur)}</span></div>
       <button type="button" class="link mt-5 self-start text-[.72rem] uppercase tracking-wide2" data-book="${s.id}">Réserver ce rituel <span class="arrow">→</span></button></article>`).join('');
-
+  }
+  function renderTeam() {
+    $('#team').innerHTML = D().barbers.filter(b => b.active !== false).map(b => `<article class="bg-coal p-8 transition duration-700 ease-lux hover:bg-graphite md:p-10">
+      <div class="grid h-20 w-20 place-items-center rounded-full border border-bronze/50 font-serif text-3xl text-champagne">${esc(b.name.split(' ').map(x => x[0]).join(''))}</div>
+      <h3 class="mt-8 text-3xl">${esc(b.name)}</h3><p class="eyebrow mt-3">${esc(b.role || '')}</p><p class="mt-5 text-sm text-mist">${esc(b.bio || '')}</p>
+      <button type="button" class="link mt-6 text-[.72rem] uppercase tracking-wide2" data-barber="${b.id}">Réserver avec ${esc(b.name.split(' ')[0])} <span class="arrow">→</span></button></article>`).join('');
+  }
   $('#gallery').innerHTML = PLATES.map((p, i) => `<figure class="plate rv ${p.cls}" tabindex="0" role="button" aria-label="Agrandir : ${esc(p.t)}" data-i="${i}" style="--bg:${p.bg};--i:${i % 3}">
       <div class="art absolute inset-0">${ico(p.icon, 'absolute left-1/2 top-1/2 aspect-square h-[58%] -translate-x-1/2 -translate-y-1/2 text-champagne/35')}<div class="absolute inset-0" style="background:radial-gradient(60% 40% at 50% 0%,rgba(255,255,255,.08),transparent)"></div></div>
       <div class="sk"></div><figcaption><span class="eyebrow">${esc(p.k)}</span><h3 class="mt-1 font-serif text-2xl md:text-3xl">${esc(p.t)}</h3></figcaption></figure>`).join('');
 
-  $('#team').innerHTML = BARBERS.map((b, i) => `<article class="rv bg-coal p-8 transition duration-700 ease-lux hover:bg-graphite md:p-10" style="--i:${i}">
-      <div class="grid h-20 w-20 place-items-center rounded-full border border-bronze/50 font-serif text-3xl text-champagne">${esc(b.name.split(' ').map(x => x[0]).join(''))}</div>
-      <h3 class="mt-8 text-3xl">${esc(b.name)}</h3><p class="eyebrow mt-3">${esc(b.role)}</p><p class="mt-5 text-sm text-mist">${esc(b.bio)}</p>
-      <button type="button" class="link mt-6 text-[.72rem] uppercase tracking-wide2" data-barber="${b.id}">Réserver avec ${esc(b.name.split(' ')[0])} <span class="arrow">→</span></button></article>`).join('');
-
-  /* ---------- Réservation : rituel → barbier → créneau ---------- */
-  const KEY = 'maison-blade:rdv';
-  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } };
-  const store = list => { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) { /* stockage indisponible */ } };
-  const hash = s => { let x = 2166136261; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); } return (x >>> 0) / 4294967295; };
-  const st = { svc: null, barber: null, date: null, time: null, step: 1 };
-  const svcOf = id => SERVICES.find(s => s.id === id), barOf = id => BARBERS.find(b => b.id === id);
-  const slotsOf = d => { const w = new Date(d + 'T12:00').getDay(); if (w === 0 || w === 1) return []; const end = w === 6 ? 18 : 20, out = []; for (let m = (w === 6 ? 9 : 10) * 60; m < end * 60; m += 30) out.push(pad(Math.floor(m / 60)) + ':' + pad(m % 60)); return out; };
-  const addMin = (t, n) => { const m = +t.slice(0, 2) * 60 + +t.slice(3) + n; return pad(Math.floor(m / 60)) + ':' + pad(m % 60); };
-  const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
-  const days = () => { const out = [], d = new Date(); for (let i = 0; out.length < 10 && i < 30; i++) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate() + i); if (slotsOf(ymd(x)).length) out.push(x); } return out; };
-  const fr = (s, o) => new Date(s + 'T12:00').toLocaleDateString('fr-FR', o);
-  const eligible = () => BARBERS.filter(b => !st.svc || b.does.includes(st.svc));
-
-  function free(date, time, barberId) {
-    const n = Math.ceil(svcOf(st.svc).dur / 30), all = slotsOf(date), at = all.indexOf(time), mine = load();
-    if (at < 0 || at + n > all.length) return false;
-    for (let k = 0; k < n; k++) {
-      const t = all[at + k];
-      if (hash(date + barberId + t) < 0.22) return false;
-      if (mine.some(r => r.date === date && r.barber === barberId && r.slots.includes(t))) return false;
-      if (date === ymd(new Date())) { const now = new Date(); if (+t.slice(0, 2) * 60 + +t.slice(3) < now.getHours() * 60 + now.getMinutes() + 60) return false; }
-    }
-    return true;
+  /* Panier de produits partagé entre l'Officine et la réservation */
+  const st = { svc: null, barber: null, date: null, time: null, step: 1, cart: {}, pay: '', name: '', email: '', phone: '' };
+  let err = '', busyPay = false, done = null;
+  const prods = () => D().products.filter(p => p.active);
+  const qtyHtml = p => { const q = st.cart[p.id] || 0; return `<div class="flex items-center" role="group" aria-label="Quantité : ${esc(p.name)}"><button type="button" class="grid h-11 w-11 place-items-center border border-white/15 transition hover:border-champagne/60" data-act="dec" data-id="${p.id}" aria-label="Retirer">−</button><output class="grid h-11 min-w-[52px] place-items-center border-y border-white/15 text-sm tabular-nums" aria-live="polite">${q}</output><button type="button" class="grid h-11 w-11 place-items-center border border-white/15 transition hover:border-champagne/60 disabled:opacity-30" data-act="inc" data-id="${p.id}" aria-label="Ajouter"${q >= p.stock ? ' disabled' : ''}>+</button></div>`; };
+  function renderShop() {
+    $('#shop').innerHTML = prods().map(p => `<article class="glass glass-hover flex flex-col p-7">
+      <div class="grid h-28 place-items-center border border-white/10 text-champagne/40" style="background:radial-gradient(70% 90% at 30% 10%,#3d332a,#14110f)">${ico('bottle', 'h-14 w-14')}</div>
+      <h3 class="mt-6 text-2xl">${esc(p.name)}</h3><p class="mt-2 font-serif text-3xl text-champagne">${eur(p.price)}</p>
+      <div class="mt-6">${p.stock > 0 ? qtyHtml(p) : '<span class="text-xs uppercase tracking-wide2 text-mist">Épuisé</span>'}</div></article>`).join('') || '<p class="text-mist">L’Officine arrive bientôt.</p>';
   }
-  const barberFor = (date, time) => (st.barber ? [barOf(st.barber)] : eligible()).find(b => free(date, time, b.id)) || null;
+
+  /* ---------- Abonnement et fidélité ---------- */
+  let aboMsg = '';
+  function renderAbo() {
+    const S = D().settings.sub, card = D().settings.card;
+    $('#aboCard').hidden = !S.on;
+    if (!S.on) return;
+    $('#aboCard').innerHTML = `<p class="eyebrow">Abonnement</p><h3 class="mt-5 text-[2.4rem]">${esc(S.name)}</h3>
+      <p class="mt-6 font-serif text-[clamp(3.6rem,8vw,5.5rem)] leading-none text-champagne">${eur(S.price)}</p>
+      <ul class="mt-6 grid gap-3 text-sm text-mist"><li>${S.perWeek} coupe${S.perWeek > 1 ? 's' : ''} par semaine pendant ${S.weeks} semaines</li><li>Réservation en ligne, la coupe est automatiquement incluse</li><li>Sans engagement au-delà de la période</li></ul>
+      <form id="aboForm" class="mt-8 grid gap-5" novalidate>
+        <label class="block text-xs uppercase tracking-wide2 text-mist">Nom<input class="field mt-1 text-base normal-case tracking-normal" name="name" autocomplete="name" required></label>
+        <label class="block text-xs uppercase tracking-wide2 text-mist">E-mail<input class="field mt-1 text-base normal-case tracking-normal" type="email" name="email" autocomplete="email" required></label>
+        <fieldset class="grid gap-3 sm:grid-cols-2"><legend class="sr-only">Paiement de l’abonnement</legend>
+          <label class="rad"><input type="radio" name="pay" value="card"${card ? ' checked' : ' disabled'}><span>Carte en ligne</span></label>
+          <label class="rad"><input type="radio" name="pay" value="cash"${card ? '' : ' checked'}><span>Au salon</span></label></fieldset>
+        <button class="btn" type="submit">Je m’abonne</button>
+        <p class="border p-4 text-sm ${aboMsg.startsWith('!') ? 'border-[#a0524a] text-[#e0a39a]' : 'border-bronze/50 text-champagne'}" role="status"${aboMsg ? '' : ' hidden'}>${esc(aboMsg.replace(/^!/, ''))}</p>
+      </form><p class="mt-auto pt-6 text-xs text-mist">Déjà abonné ? Réservez plus bas avec le même e-mail : la coupe de la semaine s’affiche à 0 €.</p>`;
+  }
+  function renderFid() {
+    const N = D().settings.loyaltyEvery;
+    $('#fidCard').hidden = !N;
+    if (!N) return;
+    $('#fidTitle').textContent = 'La ' + N + 'ᵉ coupe est offerte.';
+    const mail = $('#fidMail').value, out = $('#fidOut');
+    if (!/^\S+@\S+\.\S+$/.test(mail)) { out.innerHTML = '<p class="text-sm text-mist">Saisissez votre e-mail pour voir votre carte.</p>'; return; }
+    const L = B.loyalty(mail), sub = B.activeSub(mail, B.today());
+    let stamps = '';
+    for (let i = 1; i <= N; i++) stamps += i === N ? '<div class="stamp free" title="Coupe offerte">★</div>' : `<div class="stamp${i <= L.inCycle ? ' on' : ''}">${i <= L.inCycle ? '✓' : i}</div>`;
+    const msg = L.freeNext ? 'Votre prochaine coupe est offerte : réservez-la ci-dessous.' : L.toFree === 0 ? 'Votre prochaine coupe est la ' + N + 'ᵉ : offerte.' : 'Encore ' + L.toFree + ' coupe' + (L.toFree > 1 ? 's' : '') + ' avant votre coupe offerte.';
+    out.innerHTML = `<div class="grid gap-2.5" style="grid-template-columns:repeat(${N > 10 ? 6 : 5},minmax(0,1fr))">${stamps}</div><p class="mt-5 border border-white/10 p-4 text-sm"><span class="text-champagne">${L.done} coupe${L.done > 1 ? 's' : ''} réalisée${L.done > 1 ? 's' : ''}.</span> ${msg}</p>` +
+      (sub ? `<p class="mt-3 border border-bronze/40 p-4 text-sm text-champagne">Abonnement actif jusqu’au ${esc(B.frDate(sub.end))}.</p>` : '');
+  }
+
+  /* ---------- Réservation : rituel → barbier → créneau (→ produits) ---------- */
+  const svcOf = id => D().services.find(s => s.id === id);
+  const barOf = id => D().barbers.find(b => b.id === id);
+  const fr = (s, o) => new Date(s + 'T12:00').toLocaleDateString('fr-FR', o);
+  const quote = () => B.quote({ serviceId: st.svc, date: st.date, email: st.email, cart: st.cart });
 
   function setStep(n) {
     st.step = n;
-    $$('#bk .step').forEach((el, i) => {
-      el.classList.toggle('open', i + 1 === n);
-      el.classList.toggle('done', i + 1 < n);
-      $('.step-h', el).setAttribute('aria-expanded', i + 1 === n);
-    });
+    $$('#bk .step').forEach((el, i) => { el.classList.toggle('open', i + 1 === n); el.classList.toggle('done', i + 1 < n); $('.step-h', el).setAttribute('aria-expanded', i + 1 === n); });
   }
-
   function renderSvc() {
-    $('#bk-svc').innerHTML = SERVICES.map(s => `<button type="button" class="opt" data-svc="${s.id}" aria-pressed="${st.svc === s.id}"><span class="flex items-baseline justify-between gap-4"><span class="font-serif text-xl">${esc(s.name)}</span><span class="font-serif text-xl text-champagne">${eur(s.price)}</span></span><span class="mt-1 block text-xs text-mist">${s.dur >= 60 ? s.dur / 60 + ' h' : s.dur + ' min'}</span></button>`).join('');
+    $('#bk-svc').innerHTML = D().services.map(s => `<button type="button" class="opt" data-svc="${s.id}" aria-pressed="${st.svc === s.id}"><span class="flex items-baseline justify-between gap-4"><span class="font-serif text-xl">${esc(s.name)}</span><span class="font-serif text-xl text-champagne">${eur(s.price)}</span></span><span class="mt-1 block text-xs text-mist">${dur(s.dur)}</span></button>`).join('');
   }
   function renderBar() {
-    const list = eligible();
+    const list = B.eligible(st.svc);
+    if (st.barber && !list.some(b => b.id === st.barber)) st.barber = null;
     $('#bk-bar').innerHTML = `<button type="button" class="opt" data-bar="any" aria-pressed="${st.barber === null && st.step > 2}"><span class="font-serif text-xl">Sans préférence</span><span class="mt-1 block text-xs text-mist">Le premier barbier disponible</span></button>` +
-      list.map(b => `<button type="button" class="opt" data-bar="${b.id}" aria-pressed="${st.barber === b.id}"><span class="font-serif text-xl">${esc(b.name)}</span><span class="mt-1 block text-xs text-mist">${esc(b.role)}</span></button>`).join('');
+      list.map(b => `<button type="button" class="opt" data-bar="${b.id}" aria-pressed="${st.barber === b.id}"><span class="font-serif text-xl">${esc(b.name)}</span><span class="mt-1 block text-xs text-mist">${esc(b.role || '')}</span></button>`).join('');
+  }
+  function renderDays() {
+    const days = B.openDays();
+    if (st.date && !days.includes(st.date)) st.date = null;
+    $('#bk-days').innerHTML = days.map(k => { const d = B.parse(k); return `<button type="button" class="chip shrink-0" data-day="${k}" aria-pressed="${st.date === k}"><span class="block text-[.62rem] uppercase tracking-wide2 opacity-70">${d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '')}</span><span class="font-serif text-xl">${d.getDate()}</span><span class="block text-[.62rem] uppercase tracking-wide2 opacity-70">${d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '')}</span></button>`; }).join('');
   }
   let skTimer;
-  function renderDays() {
-    $('#bk-days').innerHTML = days().map(d => { const k = ymd(d); return `<button type="button" class="chip shrink-0" data-day="${k}" aria-pressed="${st.date === k}"><span class="block text-[.62rem] uppercase tracking-wide2 opacity-70">${d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '')}</span><span class="font-serif text-xl">${d.getDate()}</span><span class="block text-[.62rem] uppercase tracking-wide2 opacity-70">${d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '')}</span></button>`; }).join('');
-  }
-  function renderSlots(withSkeleton) {
-    const box = $('#bk-slots');
+  function renderSlots(skeleton) {
+    const box = $('#bk-slots'), s = svcOf(st.svc);
     clearTimeout(skTimer);
+    if (!s) { box.innerHTML = '<p class="text-sm text-mist">Choisissez d’abord votre rituel.</p>'; return; }
     if (!st.date) { box.innerHTML = '<p class="text-sm text-mist">Choisissez un jour pour voir les heures disponibles.</p>'; return; }
     const paint = () => {
-      const all = slotsOf(st.date).map(t => [t, !!barberFor(st.date, t)]);
-      box.innerHTML = all.some(x => x[1]) ? all.map(x => `<button type="button" class="chip" data-time="${x[0]}" aria-pressed="${st.time === x[0]}"${x[1] ? '' : ' disabled'}>${x[0]}</button>`).join('') : '<p class="text-sm text-mist">Complet ce jour-là : essayez un autre jour ou « Sans préférence ».</p>';
+      const all = B.slotsFor(st.date, s.dur, s.id, st.barber);
+      if (st.time && !(all.find(x => x.t === st.time) || {}).free) st.time = null;
+      box.innerHTML = all.some(x => x.free) ? all.map(x => `<button type="button" class="chip" data-time="${x.t}" aria-pressed="${st.time === x.t}"${x.free ? '' : ' disabled'}>${x.t}</button>`).join('') : '<p class="text-sm text-mist">Complet ce jour-là : essayez un autre jour ou « Sans préférence ».</p>';
     };
-    if (withSkeleton && !reduced) {
-      box.innerHTML = Array.from({ length: 10 }, () => '<span class="sk h-[46px] w-[76px]"></span>').join('');
-      skTimer = setTimeout(paint, 520);
-    } else paint();
+    if (skeleton && !reduced) { box.innerHTML = Array.from({ length: 10 }, () => '<span class="sk h-[46px] w-[76px]"></span>').join(''); skTimer = setTimeout(paint, 520); } else paint();
+  }
+  function renderProd() {
+    $('#bk-prod').innerHTML = prods().filter(p => p.stock > 0).map(p => `<div class="flex items-center justify-between gap-4 border border-white/10 p-4"><span><span class="font-serif text-xl">${esc(p.name)}</span><span class="block text-sm text-champagne">${eur(p.price)}</span></span>${qtyHtml(p)}</div>`).join('') || '<p class="text-sm text-mist">Aucun produit disponible.</p>';
+  }
+  function renderPay(q) {
+    const S = D().settings, box = $('#bk-pay');
+    if (!q.total) { box.hidden = true; st.pay = ''; return; }
+    box.hidden = false;
+    if (!st.pay || (st.pay === 'card' && !S.card)) st.pay = S.card ? 'card' : 'cash';
+    box.innerHTML = `<legend class="mb-1 text-xs uppercase tracking-wide2 text-mist">Paiement</legend>
+      <label class="rad"><input type="radio" name="pay" value="card"${st.pay === 'card' ? ' checked' : ''}${S.card ? '' : ' disabled'}><span>Carte en ligne<small class="mt-0.5 block text-xs text-mist">${S.card ? 'Réglez maintenant, installez-vous à l’arrivée.' : 'Indisponible pour le moment.'}</small></span></label>
+      <label class="rad"><input type="radio" name="pay" value="cash"${st.pay === 'cash' ? ' checked' : ''}><span>Au salon<small class="mt-0.5 block text-xs text-mist">Vous réglez sur place, après le rituel.</small></span></label>`;
   }
   function renderSum() {
-    const s = st.svc && svcOf(st.svc), b = st.time && barberFor(st.date, st.time);
+    const q = quote(), s = q.svc, bar = st.barber && barOf(st.barber);
     const row = (k, v) => `<div class="flex items-baseline justify-between gap-4 border-b border-white/[.07] pb-3"><span class="text-xs uppercase tracking-wide2 text-mist">${k}</span><span class="text-right">${v}</span></div>`;
-    $('#sum').innerHTML = row('Rituel', s ? esc(s.name) : '<span class="text-mist">À choisir</span>') +
-      row('Barbier', st.step > 2 || st.barber ? (st.barber ? esc(barOf(st.barber).name) : (b ? esc(b.name) : 'Sans préférence')) : '<span class="text-mist">À choisir</span>') +
-      row('Créneau', st.time ? esc(fr(st.date, { weekday: 'long', day: 'numeric', month: 'long' })) + ' · ' + st.time : '<span class="text-mist">À choisir</span>') +
-      `<div class="flex items-baseline justify-between pt-2"><span class="text-xs uppercase tracking-wide2 text-mist">Total</span><span class="font-serif text-4xl text-champagne">${s ? eur(s.price) : '—'}</span></div>`;
-    $('#bk-form').hidden = !(st.time && !$('#bk-done').innerHTML);
+    const to = '<span class="text-mist">À choisir</span>';
+    $('#sum').innerHTML = (q.lines.length ? q.lines.map(l => row(esc(l.label) + (l.tag ? ` <span class="ml-1 border border-bronze/60 px-1.5 text-[.6rem] uppercase tracking-wide2 text-bronze">${l.tag}</span>` : ''), eur(l.amount))).join('') : row('Rituel', to)) +
+      row('Barbier', st.step > 2 || bar ? (bar ? esc(bar.name) : 'Sans préférence') : to) +
+      row('Créneau', st.time ? esc(fr(st.date, { weekday: 'long', day: 'numeric', month: 'long' })) + ' · ' + st.time : to) +
+      `<div class="flex items-baseline justify-between pt-2"><span class="text-xs uppercase tracking-wide2 text-mist">Total</span><span class="font-serif text-4xl text-champagne">${s ? eur(q.total) : '—'}</span></div>`;
+    $('#bk-form').hidden = !(st.time && !done);
+    $('#bk-note').innerHTML = q.note ? `<p class="border border-bronze/40 p-4 text-sm text-champagne">${esc(q.note)}</p>` : '';
+    renderPay(q);
+    const btn = $('#bk-form button[type=submit]');
+    btn.textContent = q.total && st.pay === 'card' ? 'Payer et réserver' : 'Confirmer le rendez-vous'; btn.disabled = busyPay;
+    const n = Object.values(st.cart).reduce((a, b) => a + b, 0);
     $('#v1').textContent = s ? s.name : 'Choisir';
-    $('#v2').textContent = st.step > 2 || st.barber ? (st.barber ? barOf(st.barber).name : 'Sans préférence') : 'Choisir';
+    $('#v2').textContent = st.step > 2 || bar ? (bar ? bar.name : 'Sans préférence') : 'Choisir';
     $('#v3').textContent = st.time ? fr(st.date, { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + st.time : 'Choisir';
+    $('#v4').textContent = n ? n + ' produit' + (n > 1 ? 's' : '') : 'Aucun produit';
+    const e = $('#bk-err'); e.hidden = !err; e.textContent = err;
   }
-  function refresh(skeleton) { renderSvc(); renderBar(); renderDays(); renderSlots(skeleton); renderSum(); setStep(st.step); }
+  function refresh(skeleton) { renderSvc(); renderBar(); renderDays(); renderSlots(skeleton); renderProd(); renderSum(); setStep(st.step); }
 
-  function pick(kind, v) {
-    if (kind === 'svc') {
-      st.svc = v; if (st.barber && !barOf(st.barber).does.includes(v)) st.barber = null; st.time = null; refresh(); setStep(2);
-    } else if (kind === 'bar') {
-      st.barber = v === 'any' ? null : v; st.time = null; st.step = 3; refresh(); setStep(3);
-    } else if (kind === 'day') { st.date = v; st.time = null; renderDays(); renderSlots(true); renderSum(); }
-    else if (kind === 'time') { st.time = v; renderSlots(); renderSum(); $('#bk-form').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' }); }
-    renderSum();
+  function setBooking() {
+    const open = D().settings.booking;
+    $('#bk-closed').hidden = open; $('#bk-grid').hidden = !open;
   }
   $('#bk').addEventListener('click', e => {
     const t = e.target.closest('button');
     if (!t) return;
-    if (t.dataset.svc) pick('svc', t.dataset.svc);
-    else if (t.dataset.bar) pick('bar', t.dataset.bar);
-    else if (t.dataset.day) pick('day', t.dataset.day);
-    else if (t.dataset.time) pick('time', t.dataset.time);
+    err = '';
+    if (t.dataset.svc) { st.svc = t.dataset.svc; st.time = null; refresh(); setStep(2); }
+    else if (t.dataset.bar) { st.barber = t.dataset.bar === 'any' ? null : t.dataset.bar; st.time = null; st.step = 3; refresh(); setStep(3); }
+    else if (t.dataset.day) { st.date = t.dataset.day; st.time = null; renderDays(); renderSlots(true); renderSum(); }
+    else if (t.dataset.time) { st.time = t.dataset.time; renderSlots(); renderSum(); $('#bk-form').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' }); }
     else if (t.dataset.step) { if (+t.dataset.step === 1 || st.svc) { setStep(+t.dataset.step); refresh(); } }
   });
   document.addEventListener('click', e => {
-    const b = e.target.closest('[data-book],[data-barber]');
-    if (!b) return;
-    if (b.dataset.book) { st.svc = b.dataset.book; st.barber = null; st.time = null; st.step = 2; }
-    else { st.barber = b.dataset.barber; if (!st.svc) st.step = 1; else if (!barOf(st.barber).does.includes(st.svc)) { st.svc = null; st.step = 1; } else st.step = 3; }
-    refresh(); setStep(st.step);
-    $('#reserver').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+    const t = e.target.closest('[data-act],[data-book],[data-barber]');
+    if (!t) return;
+    const p = t.dataset.id && D().products.find(x => x.id === t.dataset.id);
+    if (t.dataset.act === 'inc' && p) { st.cart[p.id] = Math.min(p.stock, (st.cart[p.id] || 0) + 1); }
+    else if (t.dataset.act === 'dec' && p) { st.cart[p.id] = Math.max(0, (st.cart[p.id] || 0) - 1); if (!st.cart[p.id]) delete st.cart[p.id]; }
+    else if (t.dataset.book) { st.svc = t.dataset.book; st.barber = null; st.time = null; st.step = 2; err = ''; refresh(); setStep(2); $('#reserver').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }); return; }
+    else if (t.dataset.barber) {
+      st.barber = t.dataset.barber; st.time = null; err = '';
+      if (st.svc && !barOf(st.barber).does.includes(st.svc)) st.svc = null;
+      st.step = st.svc ? 3 : 1; refresh(); setStep(st.step); $('#reserver').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }); return;
+    } else return;
+    err = ''; renderShop(); renderProd(); renderSum();
   });
+  $('#bk-form').addEventListener('input', e => {
+    const n = e.target;
+    if (['name', 'email', 'phone'].includes(n.name)) { st[n.name] = n.value; if (n.name === 'email') renderSum(); }
+  });
+  $('#bk-form').addEventListener('change', e => { if (e.target.name === 'pay') { st.pay = e.target.value; renderSum(); } });
 
-  const ics = r => ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Maison Blade//FR', 'BEGIN:VEVENT', 'UID:' + r.id + '@maison-blade', 'DTSTAMP:' + r.date.replace(/-/g, '') + 'T000000', 'DTSTART:' + r.date.replace(/-/g, '') + 'T' + r.time.replace(':', '') + '00', 'DTEND:' + r.date.replace(/-/g, '') + 'T' + addMin(r.time, r.dur).replace(':', '') + '00', 'SUMMARY:' + r.svcName + ' · Maison Blade', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
-  $('#bk-form').addEventListener('submit', e => {
-    e.preventDefault();
-    const f = new FormData(e.target), name = String(f.get('name') || '').trim(), mail = String(f.get('email') || '').trim(), err = $('#bk-err');
-    err.hidden = true;
-    if (!name || !/^\S+@\S+\.\S+$/.test(mail)) { err.textContent = 'Indiquez votre nom et un e-mail valide.'; err.hidden = false; return; }
-    const b = barberFor(st.date, st.time), s = svcOf(st.svc);
-    if (!b) { err.textContent = 'Ce créneau vient d’être pris. Choisissez-en un autre.'; err.hidden = false; renderSlots(); return; }
-    const all = slotsOf(st.date), at = all.indexOf(st.time), n = Math.ceil(s.dur / 30);
-    const r = { id: Math.random().toString(36).slice(2, 8).toUpperCase(), date: st.date, time: st.time, dur: s.dur, barber: b.id, slots: all.slice(at, at + n), svc: s.id, svcName: s.name, name, mail };
-    store(load().concat(r));
-    $('#bk-form').hidden = true; $('#bk-form').reset();
-    const d = $('#bk-done');
+  function finish() {
+    const r = B.book({ serviceId: st.svc, date: st.date, time: st.time, barber: st.barber || 'any', cart: st.cart, name: st.name, email: st.email, phone: st.phone, pay: st.pay });
+    busyPay = false;
+    if (r.error) { err = r.error; refresh(); return; }
+    err = ''; done = r.appt;
+    const a = done, d = $('#bk-done');
     d.hidden = false;
-    d.innerHTML = `<div class="mt-8 border-t border-white/10 pt-8"><p class="eyebrow">Rendez-vous confirmé</p><p class="mt-4 font-serif text-3xl">À très bientôt, ${esc(name.split(' ')[0])}.</p>
-      <p class="mt-3 text-sm text-mist">${esc(s.name)} avec ${esc(b.name)}<br>${esc(fr(r.date, { weekday: 'long', day: 'numeric', month: 'long' }))} à ${esc(r.time)}<br>Référence ${r.id}</p>
+    d.innerHTML = `<div class="mt-8 border-t border-white/10 pt-8"><p class="eyebrow">Rendez-vous confirmé</p><p class="mt-4 font-serif text-3xl">À très bientôt, ${esc(a.name.split(' ')[0])}.</p>
+      <p class="mt-3 text-sm text-mist">${esc(a.serviceName)}${a.barberName ? ' avec ' + esc(a.barberName) : ''}<br>${esc(fr(a.date, { weekday: 'long', day: 'numeric', month: 'long' }))} à ${esc(a.start)}<br>${a.items.length ? 'À retirer : ' + a.items.map(i => esc(i.name) + ' × ' + i.qty).join(', ') + '<br>' : ''}Total ${eur(a.total)}${a.total ? (a.paid ? ' · réglé par carte' : ' · à régler au salon') : ''}<br>Référence ${esc(a.ref)}</p>
+      ${a.email && D().settings.email ? `<p class="mt-4 border border-bronze/40 p-3 text-sm text-champagne">Une confirmation a été envoyée à ${esc(a.email)}.</p>` : ''}
       <div class="mt-6 flex flex-wrap gap-3"><button class="btn-line !min-h-[44px] !px-5" id="icsBtn" type="button">Ajouter à l’agenda</button><button class="link text-[.72rem] uppercase tracking-wide2" id="again" type="button">Nouveau rendez-vous</button></div></div>`;
-    $('#icsBtn').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ics(r)], { type: 'text/calendar' })); a.download = 'maison-blade.ics'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
-    $('#again').onclick = () => { d.innerHTML = ''; d.hidden = true; st.svc = st.barber = st.date = st.time = null; st.step = 1; refresh(); };
-    refresh();
+    $('#icsBtn').onclick = () => { const l = document.createElement('a'); l.href = URL.createObjectURL(new Blob([B.ics(a)], { type: 'text/calendar' })); l.download = 'maison-blade.ics'; l.click(); setTimeout(() => URL.revokeObjectURL(l.href), 1000); };
+    $('#again').onclick = () => { d.innerHTML = ''; d.hidden = true; done = null; Object.assign(st, { svc: null, barber: null, date: null, time: null, cart: {}, pay: '', step: 1 }); $('#bk-form').reset(); refresh(); renderShop(); };
+    st.cart = {}; st.time = null; refresh(); renderShop(); renderFid();
+  }
+  $('#bk-form').addEventListener('submit', e => {
+    e.preventDefault(); err = '';
+    const q = quote();
+    if (!q.svc) err = 'Choisissez un rituel.';
+    else if (!st.date || !st.time) err = 'Choisissez un jour et une heure.';
+    else if (!st.name.trim()) err = 'Indiquez votre nom.';
+    else if (!/^\S+@\S+\.\S+$/.test(st.email.trim())) err = 'Indiquez un e-mail valide pour la confirmation.';
+    if (err) return renderSum();
+    if (q.total && st.pay === 'card') { $('#payTxt').textContent = eur(q.total); busyPay = true; renderSum(); $('#payDlg').showModal(); }
+    else finish();
   });
-  st.date = null;
-  refresh(); setStep(1);
+  $('#payOk').addEventListener('click', () => { $('#payDlg').close(); finish(); });
+  $('#payNo').addEventListener('click', () => { $('#payDlg').close(); busyPay = false; renderSum(); });
+  $('#payDlg').addEventListener('cancel', () => { busyPay = false; renderSum(); });
+
+  /* Abonnement / fidélité : événements */
+  document.addEventListener('submit', e => {
+    if (e.target.id !== 'aboForm') return;
+    e.preventDefault();
+    const f = new FormData(e.target), r = B.buySub({ name: f.get('name'), email: f.get('email'), pay: f.get('pay') });
+    aboMsg = r.error ? '!' + r.error : r.sub.paid ? 'Abonnement activé jusqu’au ' + B.frDate(r.sub.end) + '. Réservez avec ' + r.sub.email + '.' : 'Abonnement enregistré : il s’active dès le règlement de ' + eur(r.sub.price) + ' au salon.';
+    renderAbo(); renderFid(); renderSum();
+  });
+  $('#fidMail').addEventListener('input', renderFid);
 
   /* ---------- Galerie : squelettes, lightbox ---------- */
   const plates = $$('.plate');
@@ -200,26 +255,30 @@
   curtain.addEventListener('click', () => curtain.classList.add('gone'));
 
   const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .12, rootMargin: '0px 0px -6% 0px' });
-  $$('.rv').forEach(n => io.observe(n));
+  const watch = () => $$('.rv:not(.in)').forEach(n => io.observe(n));
   setTimeout(() => $$('#hero .rv').forEach(n => n.classList.add('in')), seen || reduced ? 50 : 1500);
 
   const words = $('[data-words]');
-  if (words) { words.innerHTML = words.textContent.trim().split(/\s+/).map(w => `<span class="w" style="opacity:.18;transition:opacity .5s">${esc(w)}</span>`).join(' '); }
+  if (words) words.innerHTML = words.textContent.trim().split(/\s+/).map(w => `<span class="w" style="opacity:.18;transition:opacity .5s">${esc(w)}</span>`).join(' ');
   const ws = words ? $$('.w', words) : [];
   const hdr = $('#hdr'), prog = $('#prog');
   function onScroll() {
-    const y = scrollY;
-    hdr.classList.toggle('solid', y > 40);
-    prog.style.transform = 'scaleX(' + Math.min(1, y / Math.max(1, document.documentElement.scrollHeight - innerHeight)) + ')';
+    hdr.classList.toggle('solid', scrollY > 40);
+    prog.style.transform = 'scaleX(' + Math.min(1, scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight)) + ')';
     if (ws.length) { const r = words.getBoundingClientRect(), p = Math.min(1, Math.max(0, (innerHeight * .85 - r.top) / (r.height + innerHeight * .3))); ws.forEach((w, i) => { w.style.opacity = i / ws.length < p * 1.1 ? 1 : .18; }); }
   }
   addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
   const hero = $('#hero');
   if (!reduced) hero.addEventListener('pointermove', e => { const r = hero.getBoundingClientRect(); hero.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%'); hero.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%'); });
-
   const mb = $('#menuBtn'), mn = $('#menu');
   mb.addEventListener('click', () => { mn.hidden = !mn.hidden; mb.setAttribute('aria-expanded', !mn.hidden); });
   mn.addEventListener('click', e => { if (e.target.closest('a')) { mn.hidden = true; mb.setAttribute('aria-expanded', 'false'); } });
+  $$('[data-shop]').forEach(n => { n.textContent = CFG[n.dataset.shop] || ''; });
   $('#yr').textContent = new Date().getFullYear();
+
+  /* ---------- Rendu initial et mises à jour depuis l'administration ---------- */
+  function renderAll() { renderRituals(); renderTeam(); renderShop(); renderAbo(); renderFid(); setBooking(); if (!done) refresh(); watch(); }
+  B.onChange(renderAll);
+  renderAll(); setStep(1);
 })();
