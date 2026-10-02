@@ -145,5 +145,7 @@
   $('#out').addEventListener('click', () => { B.logout(); mode = 'login'; });
   addEventListener('hashchange', () => { const h = location.hash.slice(1); if (TABS.some(t => t[0] === h)) { tab = h; render(); } });
   B.onChange(() => { if (!$('#payDlg').open && !(document.activeElement && document.activeElement.closest('form'))) render(); });
-  render();
+  /* Démonstration : « Vue client » (?demo) ouvre le compte de démonstration sans identifiant */
+  if (/[?&]demo\b/.test(location.search)) { history.replaceState(null, '', location.pathname); B.login('karim@exemple.fr', 'demo').then(render); }
+  else render();
 })();
