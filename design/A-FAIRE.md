@@ -3,9 +3,8 @@
 État au 1er octobre 2026. Les cases cochées sont faites.
 
 ## À faire par le propriétaire (par ordre de priorité)
-- [ ] **Règles Firebase** : `/admin/`, onglet Règles, copier et publier dans Firebase (espace client, contacts, e-book). Sans cela, ni l'espace client ni l'enregistrement des contacts ne fonctionnent.
-- [ ] **Systeme.io** : compte gratuit, entonnoir d'inscription à l'e-book (consentement : nouvelles et offres, dont la future formation), PDF `QuenTools-ebook-debuter-avec-Claude.pdf` envoyé par e-mail automatique, tag « ebook » ; communiquer l'adresse de la page d'inscription (réglage `ebookUrl`).
-- [ ] **Tests réels** : demande de devis puis `/espace/` avec un second compte Google ; inscription à l'e-book ; connexion du propriétaire sur `/espace/` (redirigée vers `/admin/`).
+- [ ] **Règles Firebase** : `/admin/`, onglet Règles, copier et publier dans Firebase (espace client, contacts). Sans cela, ni l'espace client ni l'enregistrement des contacts ne fonctionnent.
+- [ ] **Tests réels** : demande de devis puis `/espace/` avec un second compte Google  ; connexion du propriétaire sur `/espace/` (redirigée vers `/admin/`).
 - [ ] **Google Search Console** : ajouter `quentools.fr` (ligne TXT dans la zone DNS OVH) et envoyer `sitemap.xml`.
 - [ ] Vérifier « Enforce HTTPS » dans GitHub, Pages.
 - [ ] Ouvrir Infikit, Freelance Kit et Gourmet AI sur téléphone (mise en forme dépendante de bibliothèques externes).
@@ -16,17 +15,16 @@
 - [ ] Facultatif : `www.quentools.fr` (CNAME bloqué par une ligne TXT OVH ; ticket au support).
 
 ## À faire côté développement (sur demande)
-- [ ] Après bascule vers Systeme.io : renseigner `ebookUrl`, remplacer le PDF par un envoi automatique (le texte en ligne et `ebook-source` sont déjà retirés) ; ajouter Systeme.io aux mentions de confidentialité.
 - [ ] Remplacer Tailwind et Alpine chargés depuis un CDN par des fichiers hébergés (Infikit, Freelance Kit, Gourmet AI), avec vérification visuelle.
 - [ ] Firebase App Check (anti-spam du formulaire de devis).
 - [ ] Notifications par e-mail des nouvelles demandes et messages (relais d'envoi).
-- [ ] Messages de prospection par métier ; fiches Fiverr alignées sur les trois offres ; e-mails types (accueil, e-book, annonce de la formation).
+- [ ] Messages de prospection par métier ; fiches Fiverr alignées sur les trois offres ; e-mails types (accueil, annonce de la formation).
 
 ## Fait
 - [x] E-mail public `contact.quentools@gmail.com` affiché sur le site (accueil, mentions, données structurées) ; une adresse `@quentools.fr` pourra le remplacer plus tard.
 - [x] Domaine `quentools.fr`, adresses canoniques, plan du site, robots.txt, données structurées.
-- [x] Trois offres sur devis, carrousel d'exemples, page Outils, bandeau e-book, en-tête adapté aux petits écrans.
-- [x] Espace client, administration enrichie (suivi, échanges, indicateurs, contacts), inscription à l'e-book.
+- [x] Trois offres sur devis, carrousel d'exemples, page Outils, en-tête adapté aux petits écrans.
+- [x] Espace client, administration enrichie (suivi, échanges, indicateurs, contacts).
 - [x] Contrôle automatique du site avant publication ; plan de lancement et scripts vidéo (`marketing/quentools/`).
 - [x] 11 pages de référencement par métier (`/creation-site/`) ; vidéo « avant / après » (`marketing/quentools/video-avant-apres.js`, exemple au choix).
 

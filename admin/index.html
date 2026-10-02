@@ -175,7 +175,7 @@ const demoExtra = () => [
   { id: 'd5', type: 'Outil sur mesure', nom: 'Plomberie Dupont', email: 'dupont@example.com', tel: '', delai: 'Dès que possible', budget: '3 000 à 6 000 €', besoin: 'Outil de devis et de suivi de chantier sur téléphone pour mes deux salariés.', status: 'livre', montant: 1800, at: new Date(Date.now() - 75 * 864e5) },
   { id: 'd6', type: 'Boutique Shopify', nom: 'Atelier Bois', email: 'atelier@example.com', tel: '', delai: 'Dans les 3 mois', budget: 'Moins de 1 000 €', besoin: 'Petite boutique pour vendre mes planches à découper faites main.', status: 'envoye', montant: 320, at: new Date(Date.now() - 9 * 864e5) }];
 const ms = v => !v ? 0 : typeof v === 'string' ? Date.parse(v) : v.toMillis ? v.toMillis() : +v;
-let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false, ebookPdf = null, lq = '';
+let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false, lq = '';
 
 /* ---------- Agenda : appels, travail sur les projets, rendez-vous, rappels (collection privée qt_agenda) ---------- */
 const KINDS = { appel: ['📞', 'Appel'], projet: ['🛠️', 'Travail projet'], rdv: ['🤝', 'Rendez-vous'], rappel: ['🔔', 'Rappel'] };
@@ -416,23 +416,20 @@ function dvHtml() {
 
 async function loadLeads() {
   leadsErr = false;
-  if (DEMO) { leads = [{ name: 'Camille Durand', email: 'camille@example.com', at: new Date(), source: 'ebook' }, { name: 'Yanis K.', email: 'yanis@example.com', at: new Date(Date.now() - 864e5), source: 'ebook' }]; return; }
+  if (DEMO) { leads = [{ name: 'Camille Durand', email: 'camille@example.com', at: new Date(), source: 'site' }, { name: 'Yanis K.', email: 'yanis@example.com', at: new Date(Date.now() - 864e5), source: 'site' }]; return; }
   try {
     const { Fs, db } = await fb();
-    try { const e = await Fs.getDoc(Fs.doc(db, 'qt_ebook', 'pdf')); ebookPdf = e.exists() ? { size: Math.round((e.data().b64 || '').length * 0.75), at: e.data().updated } : null; } catch (x) { ebookPdf = null; }
     const r = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_leads'), Fs.orderBy('at', 'desc'), Fs.limit(2000)));
     leads = r.docs.map(d => d.data());
   } catch (e) { leads = []; leadsErr = true; }
 }
 function viewContacts() {
-  if (leadsErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Règles à mettre à jour</h2><p>Les contacts de l’e-book s’enregistrent dans une collection protégée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><button class="btn btn-accent" data-tab="regles">Voir les règles</button></section>`;
+  if (leadsErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Règles à mettre à jour</h2><p>Les contacts s’enregistrent dans une collection protégée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><button class="btn btn-accent" data-tab="regles">Voir les règles</button></section>`;
   const week = Date.now() - 7 * 864e5, lqq = lq.trim().toLowerCase(), shown = leads.filter(l => !lqq || [l.name, l.email].join(' ').toLowerCase().includes(lqq));
-  const eb = `<section class="card" style="padding:var(--s-4);margin-bottom:var(--s-4)"><h3 style="margin:0 0 6px">E-book gratuit (PDF)</h3><p class="muted" style="margin:0 0 10px">${ebookPdf ? `PDF en ligne (${Math.round(ebookPdf.size / 1024)} Ko${ms(ebookPdf.at) ? ', mis à jour le ' + new Date(ms(ebookPdf.at)).toLocaleDateString('fr-FR') : ''}). Les inscrits le téléchargent depuis la page e-book.` : 'Pas de PDF en ligne : choisissez le fichier PDF de l’e-book sur votre ordinateur, puis cliquez sur Publier le PDF.'}</p>
-    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="file" id="pdf-file" accept="application/pdf"><button class="btn btn-sm btn-accent" data-do="pdf-pub">${ebookPdf ? 'Remplacer' : 'Publier'} le PDF</button>${ebookPdf ? '<button class="btn btn-sm btn-ghost" data-do="pdf-del">Retirer le PDF</button>' : ''}</div></section>`;
-  return eb + `<div class="kpis"><div><b>${leads.length}</b><span>contacts inscrits à l’e-book</span></div><div><b>${leads.filter(l => ms(l.at) > week).length}</b><span>sur les 7 derniers jours</span></div></div>
+  return `<div class="kpis"><div><b>${leads.length}</b><span>contacts enregistrés</span></div><div><b>${leads.filter(l => ms(l.at) > week).length}</b><span>sur les 7 derniers jours</span></div></div>
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--s-4)"><button class="btn btn-sm btn-accent" data-do="copy-mails">Copier les e-mails</button><button class="btn btn-sm btn-ghost" data-do="csv">Exporter en CSV</button><input type="search" id="lq" placeholder="Rechercher un contact…" value="${esc(lq)}" aria-label="Rechercher un contact" style="flex:1;min-width:160px"></div>
-    ${shown.length ? shown.map(l => `<article class="card" style="padding:var(--s-4);margin-bottom:var(--s-3);display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center"><div><b>${esc(l.name || 'Sans nom')}</b><div class="muted" style="overflow-wrap:anywhere">${esc(l.email)}</div></div><span class="row" style="display:flex;gap:8px;align-items:center"><span class="chip">${ms(l.at) ? new Date(ms(l.at)).toLocaleDateString('fr-FR') : ''} · ${esc(l.source || '')}</span><button class="btn btn-sm btn-ghost" data-do="lead-del" data-email="${esc(l.email)}" aria-label="Supprimer ce contact">Supprimer</button></span></article>`).join('') : '<div class="card empty">Aucun contact pour l’instant. Ils apparaissent ici dès qu’un visiteur s’inscrit pour recevoir l’e-book.</div>'}
-    <p class="muted" style="font-size:var(--t-xs)">Chaque contact a accepté de recevoir l’e-book et des nouvelles de QuenTools. Pour une demande de suppression, utilisez le bouton « Supprimer » du contact.</p>`;
+    ${shown.length ? shown.map(l => `<article class="card" style="padding:var(--s-4);margin-bottom:var(--s-3);display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center"><div><b>${esc(l.name || 'Sans nom')}</b><div class="muted" style="overflow-wrap:anywhere">${esc(l.email)}</div></div><span class="row" style="display:flex;gap:8px;align-items:center"><span class="chip">${ms(l.at) ? new Date(ms(l.at)).toLocaleDateString('fr-FR') : ''} · ${esc(l.source || '')}</span><button class="btn btn-sm btn-ghost" data-do="lead-del" data-email="${esc(l.email)}" aria-label="Supprimer ce contact">Supprimer</button></span></article>`).join('') : '<div class="card empty">Aucun contact pour l’instant. Ils apparaissent ici dès qu’un visiteur s’inscrit.</div>'}
+    <p class="muted" style="font-size:var(--t-xs)">Chaque contact a accepté de recevoir des nouvelles de QuenTools. Pour une demande de suppression, utilisez le bouton « Supprimer » du contact.</p>`;
 }
 async function load() {
   if (DEMO) { items = demo.items.concat(demoExtra()); site = demo.site; if (!agenda.length) agenda = [{ id: 'a1', kind: 'appel', titre: 'Appeler pour cadrer le site', date: today(), heure: '14:00', duree: 15, devisId: 'd1', note: 'Demander les photos et les horaires.', done: false }, { id: 'a2', kind: 'projet', titre: 'Maquette de l’accueil', date: addDays(today(), 1), heure: '09:30', duree: 120, devisId: 'd3', note: '', done: false }, { id: 'a3', kind: 'rappel', titre: 'Relancer le devis', date: addDays(today(), -1), heure: '', duree: 30, devisId: 'd2', note: '', done: false }]; await loadGifts(); return; }
@@ -635,7 +632,6 @@ function qtClient(d) { return request.auth != null && request.auth.token.email_v
 match /qt_admin/{doc} { allow read: if true; allow write: if qtAdmin(); }
 match /qt_notes/{id} { allow read, write: if qtAdmin(); }
 match /qt_agenda/{id} { allow read, write: if qtAdmin(); }
-match /qt_ebook/{id} { allow read: if request.auth != null && request.auth.token.email_verified == true; allow write: if qtAdmin(); }
 match /qt_leads/{id} {
   allow create, update: if request.auth != null && request.auth.token.email_verified == true && id == request.auth.token.email.lower()
     && request.resource.data.keys().hasOnly(['email','name','at','source','consent'])
@@ -813,10 +809,10 @@ function viewStats() {
 function viewSite() {
   const s = site || {}, v = k => esc(s[k] ?? '');
   return `<form class="form card" id="site-form" style="padding:clamp(20px,4vw,36px)" onsubmit="return false">
-    <h2 style="margin:0">Bandeau d’annonce</h2><p class="muted" style="margin:0">Une phrase en haut de l’accueil : promotion, nouvel outil, e-book…</p>
+    <h2 style="margin:0">Bandeau d’annonce</h2><p class="muted" style="margin:0">Une phrase en haut de l’accueil : promotion, nouvel outil, carte cadeau…</p>
     <label class="switch"><input type="checkbox" name="announceOn"${s.announceOn ? ' checked' : ''}> Afficher le bandeau</label>
-    <div class="field"><label for="s-a">Texte</label><input id="s-a" name="announce" maxlength="140" value="${v('announce')}" placeholder="Ex. Nouveau : l’e-book gratuit est disponible"></div>
-    <div class="field"><label for="s-u">Lien (facultatif)</label><input id="s-u" name="announceUrl" maxlength="300" value="${v('announceUrl')}" placeholder="ebook/ ou https://…"></div>
+    <div class="field"><label for="s-a">Texte</label><input id="s-a" name="announce" maxlength="140" value="${v('announce')}" placeholder="Ex. Nouveau : la carte cadeau est disponible"></div>
+    <div class="field"><label for="s-u">Lien (facultatif)</label><input id="s-u" name="announceUrl" maxlength="300" value="${v('announceUrl')}" placeholder="cadeau/ ou https://…"></div>
     <h2 style="margin:var(--s-4) 0 0">Disponibilité</h2><p class="muted" style="margin:0">Remplace la pastille verte de l’accueil (vide = « 5 applications en ligne »).</p>
     <label class="switch"><input type="checkbox" name="available"${s.available !== false ? ' checked' : ''}> J’accepte de nouveaux projets</label>
     <div class="field"><label for="s-t">Texte de la pastille</label><input id="s-t" name="availText" maxlength="60" value="${v('availText')}" placeholder="Ex. 2 places pour novembre"></div>
@@ -924,22 +920,6 @@ app.addEventListener('click', async e => {
       else if (d === 'cd-extend') { await cardPatch(code, { expire: addMonths(today(), 3) }); render(); toast('Valable jusqu’au ' + frDate(c.expire)); }
     }
     else if (d === 'copy-rules') copy(rulesText());
-    else if (d === 'pdf-pub') {
-      const f = document.getElementById('pdf-file') && document.getElementById('pdf-file').files[0];
-      if (!f) return toast('Choisissez d’abord le fichier PDF', true);
-      if (f.type !== 'application/pdf') return toast('Ce fichier n’est pas un PDF', true);
-      if (f.size > 700000) return toast('PDF trop lourd (700 Ko maximum)', true);
-      toast('Publication du PDF…');
-      const buf = new Uint8Array(await f.arrayBuffer()); let bin = ''; for (let i = 0; i < buf.length; i += 8192) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 8192));
-      if (DEMO) { ebookPdf = { size: f.size, at: new Date() }; return render(); }
-      const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_ebook', 'pdf'), { b64: btoa(bin), name: f.name.slice(0, 120), updated: Fs.serverTimestamp() });
-      await loadLeads(); render(); toast('PDF publié ✓');
-    }
-    else if (d === 'pdf-del') {
-      if (!confirm('Retirer le PDF ? Le bouton de téléchargement ne fonctionnera plus.')) return;
-      if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_ebook', 'pdf')); }
-      ebookPdf = null; render(); toast('PDF retiré');
-    }
     else if (d === 'lead-del') {
       const em = b.dataset.email; if (!em || !confirm('Supprimer définitivement le contact ' + em + ' ?')) return;
       if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_leads', String(em).toLowerCase())); }
@@ -1038,7 +1018,7 @@ app.addEventListener('click', async e => {
     else if (d === 'save-site') {
       const f = document.getElementById('site-form'), g = n => f.elements[n];
       const url = g('announceUrl').value.trim(), fe = g('formEndpoint').value.trim();
-      if (url && !/^(https:\/\/|\.{0,2}\/|#|[a-z0-9-]+\/)/i.test(url)) return toast('Le lien doit commencer par https:// ou être une page du site (ex. ebook/)', true);
+      if (url && !/^(https:\/\/|\.{0,2}\/|#|[a-z0-9-]+\/)/i.test(url)) return toast('Le lien doit commencer par https:// ou être une page du site (ex. cadeau/)', true);
       if (fe && !/^https:\/\//.test(fe)) return toast('Le relais doit commencer par https://', true);
       if (g('email').value && !g('email').checkValidity()) return toast('Adresse e-mail invalide', true);
       const cp = g('cadeauPaypal').value.trim(), cs = g('cadeauStripe').value.trim();

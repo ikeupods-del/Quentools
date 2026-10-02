@@ -47,7 +47,6 @@ jobs:
           mkdir -p _site
           cp index.html 404.html robots.txt sitemap.xml _site/
           rsync -a assets _site/
-          rsync -a ebook _site/
           rsync -a realisations _site/
           rsync -a devis _site/
           rsync -a cadeau _site/
