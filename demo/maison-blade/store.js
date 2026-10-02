@@ -4,7 +4,8 @@
 (function () {
   'use strict';
   const CFG = window.BARBER_CONFIG || {};
-  const KEY = 'maison-blade:v2';
+  const KEY = 'maison-blade:v3';
+  const SESSION = 'maison-blade:session';
   const pad = n => String(n).padStart(2, '0');
   const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   const parse = s => new Date(s + 'T12:00:00');
@@ -53,11 +54,14 @@
         { id: 'p6', name: 'Rasoir coupe-chou', price: 140, stock: 0, active: true }
       ],
       appointments: [
-        mk(1, 'Karim B.', 'karim@exemple.fr', S[0], B[0], 0, '10:00', 'card', { paid: true, cover: 'sub', total: 0, pay: 'none' }),
+        ...[70, 63, 56, 49, 42, 35].map((off, i) => mk(10 + i, 'Karim B.', 'karim@exemple.fr', S[0], B[i % 2], -off, '11:00', 'card', { paid: true, status: 'terminé' })),
+        mk(1, 'Karim B.', 'karim@exemple.fr', S[0], B[0], 3, '10:00', 'card', { paid: true, cover: 'sub', total: 0, pay: 'none' }),
+        mk(4, 'Hugo P.', 'hugo@exemple.fr', S[1], B[0], 0, '16:30', 'cash', { paid: false }),
         mk(2, 'Thomas L.', 'thomas@exemple.fr', S[3], B[1], 0, '14:00', 'cash', { paid: false }),
         mk(3, 'Lucas M.', 'lucas@exemple.fr', S[2], B[2], 1, '11:00', 'card', { paid: true })
       ],
       subs: [{ id: 'sub1', name: 'Karim B.', email: 'karim@exemple.fr', phone: '', plan: 'Abonnement Privilège', price: 280, weeks: 4, perWeek: 1, paid: true, start: addDays(t, -10), end: addDays(t, 17), pay: 'card' }],
+      accounts: [{ email: 'karim@exemple.fr', name: 'Karim B.', phone: '06 00 00 00 00', pass: 'c5e34aa90d3c746e995aed00d8c05d9f5604163ec0febb91434f91c920c76d17', notify: true, created: Date.now() - 86400000 * 90 }],
       outbox: []
     };
   }
@@ -66,6 +70,7 @@
   function load() {
     try { D = JSON.parse(localStorage.getItem(KEY)); } catch (e) { D = null; }
     if (!D || !D.settings) { D = seed(); save(true); }
+    if (!D.accounts) D.accounts = [];
   }
   function save(quiet) { try { localStorage.setItem(KEY, JSON.stringify(D)); } catch (e) { /* stockage indisponible */ } if (!quiet) emit(); }
   const listeners = [];
@@ -141,6 +146,8 @@
   /* E-mails : simulés (journal visible dans l'administration) ; envoyés pour de vrai si un relais est configuré */
   function sendMail(to, subject, body) {
     if (!D.settings.email || !to) return false;
+    const ac = D.accounts.find(a => norm(a.email) === norm(to));
+    if (ac && ac.notify === false) return false;
     D.outbox.unshift({ id: uid(), to, subject, body, at: Date.now(), real: !!CFG.formEndpoint });
     D.outbox = D.outbox.slice(0, 200);
     if (CFG.formEndpoint) { try { fetch(CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to, subject, body }) }).catch(() => {}); } catch (e) { /* relais injoignable */ } }
@@ -218,6 +225,49 @@
     return { sub };
   }
 
+  /* Comptes clients (démonstration : mot de passe haché dans le navigateur ; en vrai : connexion Google ou e-mail côté serveur) */
+  const sha = async s => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('mb:' + s)))).map(b => b.toString(16).padStart(2, '0')).join('');
+  const setSession = e => { try { e ? localStorage.setItem(SESSION, e) : localStorage.removeItem(SESSION); } catch (x) { /* ignoré */ } };
+  const account = () => { let e = ''; try { e = localStorage.getItem(SESSION) || ''; } catch (x) { /* ignoré */ } return D.accounts.find(a => norm(a.email) === e) || null; };
+  async function signup(o) {
+    const email = norm(o.email);
+    if (!String(o.name || '').trim()) return { error: 'Indiquez votre nom.' };
+    if (!/^\S+@\S+\.\S+$/.test(email)) return { error: 'Indiquez un e-mail valide.' };
+    if (String(o.password || '').length < 6) return { error: 'Le mot de passe doit faire au moins 6 caractères.' };
+    if (D.accounts.some(a => norm(a.email) === email)) return { error: 'Un compte existe déjà avec cet e-mail : connectez-vous.' };
+    const a = { email, name: o.name.trim(), phone: String(o.phone || '').trim(), pass: await sha(o.password), notify: true, created: Date.now() };
+    D.accounts.push(a); setSession(email); save();
+    sendMail(email, 'Bienvenue chez ' + (CFG.name || 'nous'), 'Bonjour ' + a.name + ',\n\nVotre espace client est créé : vous y retrouvez vos rendez-vous, votre carte de fidélité et votre abonnement.' + sign);
+    return { account: a };
+  }
+  async function login(email, password) {
+    const a = D.accounts.find(x => norm(x.email) === norm(email));
+    if (!a || a.pass !== await sha(password)) return { error: 'E-mail ou mot de passe incorrect.' };
+    setSession(a.email); emit();
+    return { account: a };
+  }
+  const logout = () => { setSession(''); emit(); };
+  async function updateAccount(patch) {
+    const a = account();
+    if (!a) return { error: 'Session expirée.' };
+    if (patch.name != null) { if (!String(patch.name).trim()) return { error: 'Indiquez votre nom.' }; a.name = patch.name.trim(); }
+    if (patch.phone != null) a.phone = String(patch.phone).trim();
+    if (patch.notify != null) a.notify = !!patch.notify;
+    if (patch.password) { if (patch.password.length < 6) return { error: 'Le mot de passe doit faire au moins 6 caractères.' }; a.pass = await sha(patch.password); }
+    save();
+    return { account: a };
+  }
+  function deleteAccount() { const a = account(); if (a) { D.accounts = D.accounts.filter(x => x !== a); setSession(''); save(); } }
+  /* Annulation par le client : gratuite jusqu'à 24 h avant */
+  function clientCancel(id) {
+    const a = D.appointments.find(x => x.id === id), me = account();
+    if (!a || !me || norm(a.email) !== norm(me.email)) return { error: 'Rendez-vous introuvable.' };
+    if (a.status !== 'confirmé') return { error: 'Ce rendez-vous n’est plus actif.' };
+    if (new Date(a.date + 'T' + a.start) - Date.now() < 86400000) return { error: 'Moins de 24 h avant le rendez-vous : appelez le salon pour l’annuler.' };
+    setStatus(id, 'annulé');
+    return { ok: true };
+  }
+
   /* Fichier calendrier (.ics) */
   function ics(a) {
     const f = (d, t) => d.replace(/-/g, '') + 'T' + t.replace(':', '') + '00', end = hhmm(mins(a.start) + a.dur);
@@ -229,6 +279,6 @@
   window.Barber = {
     CFG, get data() { return D; }, save, reset() { D = seed(); save(); }, onChange: f => listeners.push(f),
     esc, money, ymd, parse, addDays, today, mins, hhmm, norm, uid, frDate, DAYS, weekStart,
-    openDays, slotsFor, eligible, activeSub, subUsed, loyalty, quote, book, setStatus, remove, activate, buySub, sendMail, mailRemind, ics
+    signup, login, logout, account, updateAccount, deleteAccount, clientCancel, openDays, slotsFor, eligible, activeSub, subUsed, loyalty, quote, book, setStatus, remove, activate, buySub, sendMail, mailRemind, ics
   };
 })();

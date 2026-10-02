@@ -1,6 +1,6 @@
 /* Jetons de la marque « Maison Blade » : noir mat, anthracite, bronze, champagne, blanc cassé chaud. */
 module.exports = {
-  content: ['./index.html', './luxe.js', './admin/index.html', './admin/admin.js'],
+  content: ['./index.html', './luxe.js', './admin/index.html', './admin/admin.js', './compte/index.html', './compte/compte.js'],
   theme: {
     extend: {
       colors: {

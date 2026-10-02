@@ -281,4 +281,14 @@
   function renderAll() { renderRituals(); renderTeam(); renderShop(); renderAbo(); renderFid(); setBooking(); if (!done) refresh(); watch(); }
   B.onChange(renderAll);
   renderAll(); setStep(1);
+
+  /* Client connecté : coordonnées préremplies. Lien « Réserver à nouveau » : ?rdv=<rituel>&barbier=<id> */
+  const me = B.account(), qs = new URLSearchParams(location.search);
+  if (me) { Object.assign(st, { name: me.name, email: me.email, phone: me.phone || '' }); ['name', 'email', 'phone'].forEach(k => { $('#bk-form [name=' + k + ']').value = st[k]; }); }
+  if (qs.get('rdv') && svcOf(qs.get('rdv'))) {
+    st.svc = qs.get('rdv'); st.step = 2;
+    const bar = barOf(qs.get('barbier')); if (bar && bar.does.includes(st.svc)) { st.barber = bar.id; st.step = 3; }
+    refresh(); setStep(st.step);
+  }
+  if (me) $$('[data-account]').forEach(n => { n.textContent = 'Mon espace'; });
 })();
