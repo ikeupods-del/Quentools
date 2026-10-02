@@ -40,51 +40,153 @@ input,select,textarea{font:inherit;padding:14px 16px;border:2px solid var(--peac
 footer{padding:36px 0;font-size:14px;color:var(--mut)}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
 @media (max-width:900px){nav{display:none}.hero .wrap,.shop{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.plans,.steps{grid-template-columns:1fr}.sub-sec{margin:0 12px;border-radius:30px}}
 @media (max-width:480px){.grid{gap:10px}.card .im{font-size:3rem}}
+
+.ico{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.ico.big{width:30px;height:30px;stroke:var(--pink-d)}
+.blob svg{width:100%;height:auto;aspect-ratio:1;display:block}.b1 svg{position:absolute;inset:6%;width:88%;height:88%}.b2 svg,.b3 svg{position:absolute;inset:8%;width:84%;height:84%}
+.card .im{overflow:hidden;position:relative}.card .im svg{width:100%;height:100%;display:block;transition:transform .8s cubic-bezier(.2,.8,.2,1)}.card:hover .im svg{transform:scale(1.08) rotate(-2deg)}
+.add[aria-pressed=true]{background:var(--pink)}.stock{font-size:12px;font-weight:800;color:var(--pink-d);background:var(--blush);border-radius:99px;padding:2px 10px;margin-left:8px;vertical-align:2px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:center;background:#fff;border-radius:36px;padding:clamp(22px,4vw,48px)}.cmpv{aspect-ratio:1;border-radius:28px;background:linear-gradient(140deg,var(--peach),var(--blush));overflow:hidden;max-width:440px;width:100%;margin-inline:auto}.cmpv svg{width:100%;height:100%;display:block}
+.lb{font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:18px 0 8px;display:flex;justify-content:space-between}fieldset.ch{border:0;padding:0;margin:0}
+.ch{display:flex;flex-wrap:wrap;gap:8px}.ch label{position:relative;cursor:pointer}.ch input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.ch span{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;border:2px solid var(--peach);background:#fff;font-weight:800;font-size:15px}.ch span i{width:16px;height:16px;border-radius:50%}.ch input:checked+span{background:var(--ink);color:#fff;border-color:var(--ink)}.ch input:focus-visible+span{outline:3px solid var(--pink);outline-offset:2px}
+.cmpt{display:flex;justify-content:space-between;align-items:baseline;margin:26px 0 14px;font-weight:800}.cmpt b{font:400 2.4rem "DM Serif Display",serif;color:var(--pink-d)}
+.ovl{position:fixed;inset:0;background:rgba(58,35,48,.5);z-index:80}.drw{position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);background:#fff;z-index:90;display:flex;flex-direction:column;box-shadow:-20px 0 60px rgba(58,35,48,.3)}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:2px solid var(--peach)}.dh h3{font-size:26px}.dh button{border:0;background:var(--blush);width:40px;height:40px;border-radius:50%;cursor:pointer;color:var(--ink)}
+.dl{flex:1;overflow:auto;padding:12px 24px}.dl .empty{color:var(--mut);padding:30px 0;text-align:center}
+.li{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--peach)}.li .t{width:64px;height:64px;border-radius:14px;overflow:hidden}.li .t svg{width:100%;height:100%}.li b{display:block;font-family:"DM Serif Display",serif;font-weight:400;font-size:18px;line-height:1.2}.li small{color:var(--mut)}
+.q{display:flex;align-items:center;gap:6px}.q button{width:30px;height:30px;border-radius:50%;border:2px solid var(--peach);background:#fff;font-weight:800;cursor:pointer}.q output{min-width:18px;text-align:center;font-weight:800}
+.df{padding:12px 24px 24px;border-top:2px solid var(--peach);background:var(--blush)}.dnote{margin:6px 0 0;font-size:13px;color:var(--mut)}.dt{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 12px;font-weight:800}.dt b{font:400 2rem "DM Serif Display",serif;color:var(--pink-d)}
+.dok{margin:14px 0 0;padding:14px;border-radius:16px;background:#e3f6ea;color:#14502c;font-weight:700;font-size:15px}
+.rv{opacity:0;transform:translateY(20px);transition:opacity .7s,transform .7s}.rv.in{opacity:1;transform:none}@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
+@media (max-width:900px){.cmp{grid-template-columns:1fr}}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+<symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="18" r="3"/><circle cx="14" cy="19" r="3"/><path d="M8 16L19 4M12 16.500L5 4"/></symbol>
+<symbol id="i-bike" viewBox="0 0 24 24"><circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l4-8h5l3 8M10 8H8M13 8l-3 8"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+</defs></svg>
 <div class="qt-ex"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
-<div class="free">🌸 Commande avant 15 h, livraison le jour même (exemple)</div>
-<header><div class="wrap"><a class="logo" href="./">Fleurs de Marie <i>🌷</i></a><nav><a href="#bouquets">Bouquets</a><a href="#abo">Abonnement</a><a href="#events">Événements</a></nav><button class="cart" type="button" id="cart">🛒 Panier<b id="n">0</b></button></div></header>
+<div class="free" id="free">Commande avant 15 h, livraison le jour même (exemple)</div>
+<header><div class="wrap"><a class="logo" href="./">Fleurs de Marie</a><nav><a href="#bouquets">Bouquets</a><a href="#compose">Composer</a><a href="#abo">Abonnement</a><a href="#events">Événements</a></nav><button class="cart" type="button" id="cart"><svg class="ico" aria-hidden="true" style="vertical-align:-4px;margin-right:6px"><use href="#i-bag"/></svg>Panier<b id="n">0</b></button></div></header>
 
 <main>
 <section class="hero"><div class="wrap">
   <div><h1>Des bouquets de saison, <em>faits main</em> chaque matin.</h1><p>Je choisis les fleurs au marché à l'aube, je compose, et je vous livre avec un petit mot. Pour dire merci, pardon ou simplement bonjour.</p>
     <a class="btn" href="#bouquets">Choisir un bouquet</a><a class="btn s" href="#events">Mariage ou événement</a></div>
-  <div class="blob" aria-hidden="true"><div class="b1">💐</div><div class="b2">🌼</div><div class="b3">🌿</div></div>
+  <div class="blob" aria-hidden="true"><div class="b1" id="hb1"></div><div class="b2" id="hb2"></div><div class="b3" id="hb3"></div></div>
 </div></section>
 
 <section id="bouquets" style="padding-top:20px"><div class="wrap">
   <h2 class="t">Les bouquets du moment</h2><p class="sub">Prix et visuels d'exemple. Les fleurs changent selon la saison.</p>
   <div class="cats" id="cats"><button class="on" data-c="all">Tous</button><button data-c="a">Anniversaire</button><button data-c="s">Saison</button><button data-c="d">Douceur</button></div>
-  <div class="grid" id="grid">
-    <article class="card" data-c="a"><div class="im" style="background:linear-gradient(140deg,#ffd0e0,#ff9fbe)">🌸</div><h3>Le Sucre d'orge</h3><p class="d">Pivoines et roses, tons rose pâle</p><div class="row"><span class="pr">39 €</span><button class="add" type="button">Ajouter</button></div></article>
-    <article class="card" data-c="s"><div class="im" style="background:linear-gradient(140deg,#ffe9a8,#ffc261)">🌻</div><h3>Le Soleil</h3><p class="d">Tournesols et verdure</p><div class="row"><span class="pr">32 €</span><button class="add" type="button">Ajouter</button></div></article>
-    <article class="card" data-c="d"><div class="im" style="background:linear-gradient(140deg,#e8e1ff,#bfaef0)">🪻</div><h3>La Lavande</h3><p class="d">Lavande, eucalyptus et gypsophile</p><div class="row"><span class="pr">29 €</span><button class="add" type="button">Ajouter</button></div></article>
-    <article class="card" data-c="a"><div class="im" style="background:linear-gradient(140deg,#ffd6c9,#ff9a85)">🌹</div><h3>Rouge Passion</h3><p class="d">Roses rouges, la douzaine</p><div class="row"><span class="pr">45 €</span><button class="add" type="button">Ajouter</button></div></article>
-    <article class="card" data-c="s"><div class="im" style="background:linear-gradient(140deg,#d7f0d2,#9fd49a)">🌷</div><h3>Le Printemps</h3><p class="d">Tulipes mélangées</p><div class="row"><span class="pr">27 €</span><button class="add" type="button">Ajouter</button></div></article>
-    <article class="card" data-c="d"><div class="im" style="background:linear-gradient(140deg,#fff1d6,#f6d29b)">🌼</div><h3>Les Champs</h3><p class="d">Fleurs des champs, esprit libre</p><div class="row"><span class="pr">34 €</span><button class="add" type="button">Ajouter</button></div></article>
-    <article class="card" data-c="d"><div class="im" style="background:linear-gradient(140deg,#e1f1ee,#a8d5cd)">🪴</div><h3>Plante verte</h3><p class="d">Cache-pot en céramique inclus</p><div class="row"><span class="pr">24 €</span><button class="add" type="button">Ajouter</button></div></article>
-    <article class="card" data-c="s"><div class="im" style="background:linear-gradient(140deg,#ffe0b8,#e8a46c)">🍂</div><h3>L'Automne</h3><p class="d">Dahlias, feuillages et baies</p><div class="row"><span class="pr">36 €</span><button class="add" type="button">Ajouter</button></div></article>
+  <div class="grid" id="grid"></div></div></section>
+
+
+<section id="compose"><div class="wrap"><h2 class="t">Composez votre bouquet</h2><p class="sub">Choisissez la taille et les couleurs : l’aperçu et le prix se mettent à jour.</p>
+  <div class="cmp">
+    <div class="cmpv" id="cmpv" aria-hidden="true"></div>
+    <div class="cmpf">
+      <p class="lb">Taille</p><div class="ch" id="csize"><label><input type="radio" name="size" value="1" checked><span>Petit · 25 €</span></label><label><input type="radio" name="size" value="1.4"><span>Moyen · 35 €</span></label><label><input type="radio" name="size" value="1.9"><span>Généreux · 48 €</span></label></div>
+      <p class="lb">Couleurs dominantes</p><div class="ch" id="ccol"><label><input type="radio" name="col" value="rose" checked><span><i style="background:#ff8fb1"></i>Rose</span></label><label><input type="radio" name="col" value="jaune"><span><i style="background:#ffc261"></i>Soleil</span></label><label><input type="radio" name="col" value="blanc"><span><i style="background:#f4efe6;border:1px solid #d8cfc0"></i>Blanc</span></label><label><input type="radio" name="col" value="violet"><span><i style="background:#9b83e0"></i>Violet</span></label></div>
+      <p class="lb">Feuillage</p><div class="ch" id="cfol"><label><input type="radio" name="fol" value="eucalyptus" checked><span>Eucalyptus</span></label><label><input type="radio" name="fol" value="fougere"><span>Fougère</span></label></div>
+      <div class="cmpt"><span>Votre bouquet</span><b id="cprice">—</b></div><button class="btn" type="button" id="cadd">Ajouter au panier</button>
+    </div>
   </div></div></section>
 
 <section id="abo"><div class="sub-sec"><div class="wrap"><h2 class="t">Un bouquet chaque semaine.</h2><p style="opacity:.8;margin:0">Chez vous ou au bureau, à jour fixe, résiliable à tout moment.</p>
   <div class="plans"><div class="plan"><h3>Petit</h3><div class="n">19 €/sem.</div><p>Petit bouquet de saison</p></div><div class="plan f"><h3>Classique</h3><div class="n">29 €/sem.</div><p>Bouquet moyen, livraison incluse</p></div><div class="plan"><h3>Généreux</h3><div class="n">45 €/sem.</div><p>Grand bouquet, fleurs plus rares</p></div></div></div></div></section>
 
 <section id="events"><div class="wrap"><h2 class="t">Comment ça marche</h2><p class="sub">Trois étapes, aucune complication.</p>
-  <div class="steps"><div class="st"><b>🛍️</b><h3>Choisissez</h3><p>Un bouquet ou une envie, un budget.</p></div><div class="st"><b>✂️</b><h3>Je compose</h3><p>Avec les fleurs du jour, à la main.</p></div><div class="st"><b>🚲</b><h3>Livré ou retiré</h3><p>En boutique ou à votre porte.</p></div></div></div></section>
+  <div class="steps"><div class="st"><b><svg class="ico big" aria-hidden="true"><use href="#i-bag"/></svg></b><h3>Choisissez</h3><p>Un bouquet ou une envie, un budget.</p></div><div class="st"><b><svg class="ico big" aria-hidden="true"><use href="#i-scissors"/></svg></b><h3>Je compose</h3><p>Avec les fleurs du jour, à la main.</p></div><div class="st"><b><svg class="ico big" aria-hidden="true"><use href="#i-bike"/></svg></b><h3>Livré ou retiré</h3><p>En boutique ou à votre porte.</p></div></div></div></section>
 
 <section><div class="wrap"><div class="shop"><div><h2 class="t">Un mariage, un deuil, une grande occasion ?</h2><p class="sub" style="margin:0">Je prépare arches, centres de table et bouquets sur rendez-vous. Décrivez-moi la date et l'ambiance.</p></div>
   <form><input placeholder="Votre nom" aria-label="Nom" required><input placeholder="Téléphone ou e-mail" aria-label="Contact" required><textarea rows="3" placeholder="Date, lieu, couleurs…" aria-label="Message"></textarea><button class="btn" type="submit">Demander un devis</button></form></div></div></section>
 </main>
+
+<div class="ovl" id="ovl" hidden></div>
+<aside class="drw" id="drw" aria-label="Panier" aria-hidden="true" hidden>
+  <div class="dh"><h3>Mon panier</h3><button type="button" id="dclose" aria-label="Fermer"><svg class="ico"><use href="#i-x"/></svg></button></div>
+  <div class="dl" id="dl"></div>
+  <div class="df" id="df" hidden>
+    <fieldset class="ch"><legend class="lb">Réception</legend><label><input type="radio" name="mode" value="liv" checked><span>Livraison · 6 €</span></label><label><input type="radio" name="mode" value="ret"><span>Retrait · gratuit</span></label></fieldset>
+    <label class="lb" for="ddate">Pour quel jour ?</label><input type="date" id="ddate"><p id="dnote" class="dnote"></p>
+    <label class="lb" for="dmsg">Petit mot sur la carte <span id="dcnt">0/120</span></label><textarea id="dmsg" rows="2" maxlength="120" placeholder="Joyeux anniversaire !"></textarea>
+    <div class="dt"><span>Total</span><b id="dtot">0 €</b></div><button class="btn" type="button" id="dgo" style="width:100%">Commander</button><p id="dok" class="dok" hidden></p>
+  </div>
+</aside>
 <footer><div class="wrap"><span>© <span data-year>2026</span> Fleurs de Marie (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
 <script src="../ex.js" defer></script>
 <script>
-(function(){var n=0,c=document.getElementById('n');
-document.getElementById('grid').addEventListener('click',function(e){var b=e.target.closest('.add');if(!b)return;n++;c.textContent=n;b.textContent='Ajouté ✓';setTimeout(function(){b.textContent='Ajouter'},900)});
-document.getElementById('cats').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;document.querySelectorAll('#cats button').forEach(function(x){x.classList.toggle('on',x===b)});
-document.querySelectorAll('#grid .card').forEach(function(k){k.style.display=(b.dataset.c==='all'||k.dataset.c===b.dataset.c)?'':'none'})});
-document.getElementById('cart').addEventListener('click',function(){alert('Démonstration : sur une vraie boutique, le panier mène au paiement.')});})();
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const eur = n => n.toLocaleString('fr-FR') + ' €';
+  /* Bouquets illustrés */
+  const PAL = { rose: ['#ff8fb1', '#ffc2d4', '#e8588d'], jaune: ['#ffc261', '#ffe08a', '#f29b30'], blanc: ['#f6f1e8', '#ffffff', '#e4dccb'], violet: ['#9b83e0', '#c5b6f2', '#7c62c9'], rouge: ['#e0384f', '#ff6a7e', '#b4233a'], mix: ['#ffb36b', '#ff8fb1', '#ffe08a'], vert: ['#f6f1e8', '#cfe7c8', '#9fd49a'], terre: ['#e8a46c', '#d9694b', '#f2c078'] };
+  const flower = (x, y, r, c) => `<g transform="translate(${x} ${y})">${[0, 60, 120, 180, 240, 300].map(a => `<ellipse cx="0" cy="${-r * .62}" rx="${r * .38}" ry="${r * .62}" transform="rotate(${a})" fill="${c[a % 120 ? 0 : 1]}"/>`).join('')}<circle r="${r * .26}" fill="${c[2]}"/><circle r="${r * .1}" cx="${-r * .06}" cy="${-r * .06}" fill="#fff" opacity=".5"/></g>`;
+  const leaf = (x, y, rot, l, c) => `<path d="M0 0 q${l * .3} ${-l * .5} 0 ${-l} q${-l * .3} ${l * .5} 0 ${l}z" transform="translate(${x} ${y}) rotate(${rot})" fill="${c}"/>`;
+  function bouquet(key, scale, fol) {
+    const c = PAL[key] || PAL.rose, sc = scale || 1, n = Math.min(11, Math.round(4 + sc * 3)), fc = fol === 'fougere' ? '#4f9a58' : '#7fb08a';
+    let o = `<svg viewBox="0 0 200 200" role="img" aria-hidden="true"><rect width="200" height="200" fill="none"/>`;
+    for (let i = 0; i < 9; i++) o += leaf(100, 120, -80 + i * 20, 60 + (i % 3) * 14, i % 2 ? fc : '#5f9b6c');
+    for (let i = 0; i < n; i++) { const a = (i / (n - 1) - .5) * 2, x = 100 + a * 46 * Math.min(1.25, sc), y = 82 - Math.cos(a * 1.4) * 22 + (i % 2) * 14, r = (15 + (i % 3) * 3) * Math.min(1.15, .9 + sc * .15); o += `<path d="M${x} ${y} Q${(x + 100) / 2} ${(y + 140) / 2} 100 150" stroke="#4f8a58" stroke-width="3" fill="none"/>` + flower(x, y, r, [c[i % 2 ? 0 : 1], c[i % 2 ? 1 : 0], c[2]]); }
+    o += `<path d="M62 118 L138 118 L112 190 L88 190z" fill="#f4ecdf" stroke="#d9cdb8"/><path d="M62 118 L100 138 L138 118" fill="#fff" opacity=".7"/><path d="M92 150 q8 6 16 0" stroke="#e8588d" stroke-width="3" fill="none"/></svg>`;
+    return o;
+  }
+  const BG = { rose: 'linear-gradient(140deg,#ffd0e0,#ff9fbe)', jaune: 'linear-gradient(140deg,#ffe9a8,#ffc261)', violet: 'linear-gradient(140deg,#e8e1ff,#bfaef0)', rouge: 'linear-gradient(140deg,#ffd6c9,#ff9a85)', vert: 'linear-gradient(140deg,#d7f0d2,#9fd49a)', mix: 'linear-gradient(140deg,#fff1d6,#f6d29b)', terre: 'linear-gradient(140deg,#ffe0b8,#e8a46c)', blanc: 'linear-gradient(140deg,#fbf5ea,#e9dfcd)' };
+  const ITEMS = [
+    { id: 'sucre', n: 'Le Sucre d’orge', d: 'Pivoines et roses, tons rose pâle', p: 39, c: 'a', k: 'rose', s: 1.3 }, { id: 'soleil', n: 'Le Soleil', d: 'Tournesols et verdure', p: 32, c: 's', k: 'jaune', s: 1.1 },
+    { id: 'lavande', n: 'La Lavande', d: 'Lavande, eucalyptus et gypsophile', p: 29, c: 'd', k: 'violet', s: 1 }, { id: 'passion', n: 'Rouge Passion', d: 'Roses rouges, la douzaine', p: 45, c: 'a', k: 'rouge', s: 1.5 },
+    { id: 'printemps', n: 'Le Printemps', d: 'Tulipes mélangées', p: 27, c: 's', k: 'vert', s: 1 }, { id: 'champs', n: 'Les Champs', d: 'Fleurs des champs, esprit libre', p: 34, c: 'd', k: 'mix', s: 1.2 },
+    { id: 'nuage', n: 'Le Nuage', d: 'Blanc et vert, apaisant', p: 31, c: 'd', k: 'blanc', s: 1.1 }, { id: 'automne', n: 'L’Automne', d: 'Dahlias, feuillages et baies', p: 36, c: 's', k: 'terre', s: 1.2 }
+  ];
+  $('#grid').innerHTML = ITEMS.map(i => `<article class="card rv" data-c="${i.c}"><div class="im" style="background:${BG[i.k]}">${bouquet(i.k, i.s)}</div><h3>${esc(i.n)}</h3><p class="d">${esc(i.d)}</p><div class="row"><span class="pr">${eur(i.p)}</span><button class="add" type="button" data-id="${i.id}">Ajouter</button></div></article>`).join('');
+  $('#hb1').innerHTML = bouquet('rose', 1.7); $('#hb2').innerHTML = bouquet('jaune', .8); $('#hb3').innerHTML = bouquet('vert', .8);
+  $('#cats').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $$('#cats button').forEach(x => x.classList.toggle('on', x === b)); $$('#grid .card').forEach(k => { k.style.display = (b.dataset.c === 'all' || k.dataset.c === b.dataset.c) ? '' : 'none'; }); });
+
+  /* Composer */
+  const SZ = { '1': ['Petit', 25], '1.4': ['Moyen', 35], '1.9': ['Généreux', 48] };
+  const cur = () => ({ size: $('input[name=size]:checked').value, col: $('input[name=col]:checked').value, fol: $('input[name=fol]:checked').value });
+  function drawCmp() { const c = cur(); $('#cmpv').innerHTML = bouquet(c.col, +c.size, c.fol); $('#cprice').textContent = eur(SZ[c.size][1]); }
+  $$('#compose input').forEach(i => i.addEventListener('change', drawCmp)); drawCmp();
+
+  /* Panier */
+  const cart = new Map();
+  const count = () => Array.from(cart.values()).reduce((a, b) => a + b.q, 0);
+  const sub = () => Array.from(cart.values()).reduce((a, b) => a + b.q * b.p, 0);
+  function lines() {
+    $('#n').textContent = count();
+    $('#dl').innerHTML = cart.size ? Array.from(cart.entries()).map(([k, v]) => `<div class="li"><div class="t" style="background:${BG[v.k]}">${bouquet(v.k, v.s, v.f)}</div><div><b>${esc(v.n)}</b><small>${eur(v.p)}</small></div><div class="q"><button type="button" data-k="${esc(k)}" data-d="-1" aria-label="Moins">−</button><output>${v.q}</output><button type="button" data-k="${esc(k)}" data-d="1" aria-label="Plus">+</button></div></div>`).join('') : '<p class="empty">Votre panier est vide. Ajoutez un bouquet !</p>';
+    $('#df').hidden = !cart.size; total();
+  }
+  const ship = () => $('input[name=mode]:checked').value === 'liv' ? 6 : 0;
+  function total() { $('#dtot').textContent = eur(sub() + (cart.size ? ship() : 0)); }
+  function add(k, v) { const it = cart.get(k) || Object.assign({ q: 0 }, v); it.q++; cart.set(k, it); lines(); }
+  $('#grid').addEventListener('click', e => { const b = e.target.closest('.add'); if (!b) return; const i = ITEMS.find(x => x.id === b.dataset.id); add(i.id, { n: i.n, p: i.p, k: i.k, s: i.s }); b.textContent = 'Ajouté ✓'; setTimeout(() => { b.textContent = 'Ajouter'; }, 900); });
+  $('#cadd').addEventListener('click', () => { const c = cur(), z = SZ[c.size]; add('compose-' + c.size + c.col + c.fol, { n: 'Mon bouquet ' + z[0].toLowerCase() + ' · ' + c.col, p: z[1], k: c.col, s: +c.size, f: c.fol }); $('#cadd').textContent = 'Ajouté ✓'; setTimeout(() => { $('#cadd').textContent = 'Ajouter au panier'; }, 900); });
+  $('#dl').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; const it = cart.get(b.dataset.k); it.q += +b.dataset.d; if (it.q <= 0) cart.delete(b.dataset.k); lines(); });
+  const open = o => { $('#drw').hidden = $('#ovl').hidden = !o; $('#drw').setAttribute('aria-hidden', !o); if (o) { $('#dclose').focus(); } };
+  $('#cart').addEventListener('click', () => open(true)); $('#dclose').addEventListener('click', () => open(false)); $('#ovl').addEventListener('click', () => open(false));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#drw').hidden) open(false); });
+  $('#dmsg').addEventListener('input', e => { $('#dcnt').textContent = e.target.value.length + '/120'; });
+  $$('input[name=mode]').forEach(i => i.addEventListener('change', total));
+  /* Jour de livraison : avant 15 h → aujourd'hui possible */
+  const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const now = new Date(), before = now.getHours() < 15, first = new Date(now); if (!before) first.setDate(first.getDate() + 1);
+  $('#ddate').min = ymd(first); $('#ddate').value = ymd(first);
+  $('#dnote').textContent = before ? 'Commandé avant 15 h : livraison possible aujourd’hui.' : 'Il est plus de 15 h : le plus tôt possible est demain.';
+  const cd = () => { const n = new Date(), t = new Date(n); t.setHours(15, 0, 0, 0); const ms = t - n; $('#free').textContent = ms > 0 ? 'Plus que ' + Math.floor(ms / 3600000) + ' h ' + String(Math.floor(ms % 3600000 / 60000)).padStart(2, '0') + ' min pour une livraison aujourd’hui (exemple)' : 'Commandez avant 15 h pour une livraison dès le lendemain (exemple)'; };
+  cd(); setInterval(cd, 30000);
+  $('#dgo').addEventListener('click', () => { const ok = $('#dok'); ok.hidden = false; ok.textContent = 'Merci ! Démonstration : aucune commande n’est envoyée. Sur une vraie boutique, vous passez au paiement.'; });
+  lines();
+  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .1 });
+  $$('.st,.plan,.cmp,.card').forEach(n => { n.classList.add('rv'); io.observe(n); });
+})();
 </script>
 </body>
 </html>
