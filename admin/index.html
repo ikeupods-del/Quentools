@@ -497,13 +497,26 @@ const r2 = n => Math.round((+n || 0) * 100) / 100;
 const eur2 = n => (+n || 0).toLocaleString('fr-FR', { minimumFractionDigits: Number.isInteger(r2(n)) ? 0 : 2, maximumFractionDigits: 2 }) + ' €';
 const giftMonths = () => Math.min(36, Math.max(12, +site.cadeauMois || 12));
 const newCode = () => { const b = new Uint8Array(8); crypto.getRandomValues(b); const s = [...b].map(x => GA[x % 32]).join(''); return 'QT-' + s.slice(0, 4) + '-' + s.slice(4); };
-const cardUrl = code => new URL('../cadeau/carte/?code=' + encodeURIComponent(code), location.href).href;
+/* Cartes locales : tant que les règles Firestore ne sont pas publiées, une carte créée ici est gardée sur cet appareil et le lien porte ses données. */
+const LOCAL_KEY = 'qt:cartes-locales';
+const localCards = () => { try { const a = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+const saveLocalCards = () => { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(cards.filter(c => c.local))); } catch (e) { /* stockage indisponible */ } };
+const cardUrl = code => {
+  const c = cards.find(x => x.id === code), u = new URL('../cadeau/carte/?code=' + encodeURIComponent(code), location.href);
+  if (c && c.local) u.searchParams.set('d', btoa(unescape(encodeURIComponent(JSON.stringify({ m: c.montant, s: c.solde, p: c.pour, f: c.de, t: c.message, e: c.expire, o: c.statut === 'annulee' ? 1 : 0 })))));
+  return u.href;
+};
 const frDate = iso => iso ? new Date(iso + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
 const hist = c => { try { const h = JSON.parse(c.historique || '[]'); return Array.isArray(h) ? h : []; } catch (e) { return []; } };
 const cardState = c => c.statut === 'annulee' ? ['Annulée', 'st-perdu'] : c.expire && c.expire < today() ? ['Expirée', 'st-perdu'] : !(+c.solde > 0) ? ['Utilisée', 'st-livre'] : +c.solde < +c.montant ? ['Entamée', 'st-encours'] : ['Active', 'st-gagne'];
 const cardLive = c => c.statut !== 'annulee' && !(c.expire && c.expire < today()) && +c.solde > 0;
 const giftCode = t => { const m = String(t || '').toUpperCase().match(/QT-?([A-Z0-9]{4})-?([A-Z0-9]{4})/); return m ? `QT-${m[1]}-${m[2]}` : ''; };
 async function loadGifts() {
+  await loadGiftsBase();
+  const known = new Set(cards.map(c => c.id));
+  cards = [...cards, ...localCards().filter(c => c && c.id && !known.has(c.id)).map(c => ({ ...c, local: true }))].sort((a, b) => ms(b.at) - ms(a.at));
+}
+async function loadGiftsBase() {
   if (DEMO) {
     if (!gifts.length && !cards.length) {
       gifts = [{ id: 'CCK7M2PX', montant: 100, pour: 'Camille', de: 'Léo', message: 'Pour que ton atelier ait enfin son site !', nom: 'Léo Durand', email: 'leo@example.com', envoi: 'destinataire', destEmail: 'camille@example.com', dateEnvoi: addDays(today(), 3), paiement: 'paypal', status: 'attente', at: new Date(Date.now() - 2 * 3600e3) },
@@ -525,15 +538,20 @@ async function cardCreate(p) {
     expire: addMonths(today(), giftMonths()), statut: 'active', ref: String(p.ref || ''), historique: '[]' };
   let code = newCode();
   if (DEMO) { cards.unshift({ ...rec, id: code, at: new Date() }); return code; }
-  const { Fs, db } = await fb();
-  for (let i = 0; i < 5 && (await Fs.getDoc(Fs.doc(db, 'qt_cartes', code))).exists(); i++) code = newCode();
-  await Fs.setDoc(Fs.doc(db, 'qt_cartes', code), { ...rec, at: Fs.serverTimestamp() });
-  cards.unshift({ ...rec, id: code, at: new Date() });
+  try {
+    const { Fs, db } = await fb();
+    for (let i = 0; i < 5 && (await Fs.getDoc(Fs.doc(db, 'qt_cartes', code))).exists(); i++) code = newCode();
+    await Fs.setDoc(Fs.doc(db, 'qt_cartes', code), { ...rec, at: Fs.serverTimestamp() });
+    cards.unshift({ ...rec, id: code, at: new Date() });
+  } catch (e) {
+    cards.unshift({ ...rec, id: code, at: new Date().toISOString(), local: true }); saveLocalCards();
+  }
   return code;
 }
 async function cardPatch(code, data) {
   const c = cards.find(x => x.id === code); if (c) Object.assign(c, data);
   if (DEMO) return;
+  if (c && c.local) return saveLocalCards();
   const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_cartes', code), { ...data, updated: Fs.serverTimestamp() }, { merge: true });
 }
 async function giftPatch(id, data) {
@@ -566,8 +584,8 @@ function payMail(g) {
   return `mailto:${encodeURIComponent(g.email)}?subject=${encodeURIComponent('Votre carte cadeau QuenTools : lien de paiement')}&body=${encodeURIComponent(body)}`;
 }
 function viewGifts() {
-  if (giftErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Une mise à jour des règles</h2><p>Les cartes cadeaux s’enregistrent dans deux collections protégées. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p>
-    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-tab="regles">Voir les règles</button><button class="btn btn-ghost" data-do="reload">J’ai publié les règles</button></div></section>`;
+  const rulesNote = giftErr ? `<div class="notice warn" style="margin-bottom:var(--s-4)"><b>Mode sans base de données.</b> Les cartes que vous créez ici sont gardées sur cet appareil (navigateur) et leur lien contient leurs données ; les commandes du site ne sont pas reçues. Pour tout activer, publiez les règles de l’onglet <b>Règles</b> dans Firebase. <button class="btn btn-sm btn-ghost" data-tab="regles">Voir les règles</button> <button class="btn btn-sm btn-ghost" data-do="reload">J’ai publié les règles</button></div>` : '';
+  if (giftErr) gFilter = 'cartes';
   const wait = gifts.filter(g => (g.status || 'attente') === 'attente'), live = cards.filter(cardLive);
   const sold = gifts.filter(g => g.status === 'payee').reduce((s, g) => s + (+g.montant || 0), 0), used = cards.reduce((s, c) => s + hist(c).reduce((t, h) => t + (+h.m || 0), 0), 0);
   const noPay = !giftPayUrl({ id: 'X', montant: 1, pour: '', email: '' });
@@ -606,7 +624,7 @@ function viewGifts() {
   let list;
   if (gFilter === 'cartes') list = cards.filter(c => match(c.id, c.pour, c.de, c.ref, (gifts.find(g => g.code === c.id) || {}).email)).map(cardCard);
   else list = gifts.filter(g => (gFilter === 'commandes' || (g.status || 'attente') === 'attente') && match(g.id, g.code, g.pour, g.de, g.nom, g.email, g.destEmail)).map(orderCard);
-  return warn + kpis + bar + (gFilter === 'cartes' ? newForm : '') + (list.length ? list.join('') : `<div class="card empty">${gFilter === 'attente' ? 'Aucune commande à vérifier. Elles arrivent ici dès qu’un visiteur achète une carte sur <b>/cadeau/</b>.' : gFilter === 'cartes' ? 'Aucune carte émise pour l’instant.' : 'Aucune commande pour l’instant.'}</div>`);
+  return rulesNote + warn + kpis + bar + (gFilter === 'cartes' ? newForm : '') + (list.length ? list.join('') : `<div class="card empty">${gFilter === 'attente' ? 'Aucune commande à vérifier. Elles arrivent ici dès qu’un visiteur achète une carte sur <b>/cadeau/</b>.' : gFilter === 'cartes' ? 'Aucune carte émise pour l’instant.' : 'Aucune commande pour l’instant.'}</div>`);
 }
 
 /* ---------- Écrans ---------- */

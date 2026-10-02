@@ -67,7 +67,13 @@
   const fail = t => { app.innerHTML = `<h1 class="h-section" style="margin-bottom:var(--s-5)">Carte introuvable</h1><div class="notice warn">${t}</div><p style="margin-top:var(--s-4)"><a class="btn btn-ghost" href="../#verifier">Saisir un code</a></p>`; };
   if (!code) return fail('Aucun code dans le lien. Ouvrez le lien reçu par e-mail, ou saisissez le code de la carte.');
   let c;
-  try { c = window.QTC && await QTC.carte(code); } catch (e) { return fail('Impossible de charger la carte pour le moment (connexion ?). Réessayez dans un instant.'); }
+  try { c = window.QTC && await QTC.carte(code); } catch (e) { if (!new URLSearchParams(location.search).get('d')) return fail('Impossible de charger la carte pour le moment (connexion ?). Réessayez dans un instant.'); }
+  if (!c) {   // carte créée sans base de données : ses données sont dans le lien
+    try {
+      const o = JSON.parse(decodeURIComponent(escape(atob(new URLSearchParams(location.search).get('d') || ''))));
+      if (o && o.m > 0) c = { code, montant: +o.m, solde: +o.s || 0, pour: o.p, de: o.f, message: o.t, expire: o.e, statut: o.o ? 'annulee' : 'active' };
+    } catch (e) { /* lien sans données */ }
+  }
   if (!c) return fail('Ce code ne correspond à aucune carte. Vérifiez le lien ou les caractères du code (QT-XXXX-XXXX).');
   const today = new Date().toISOString().slice(0, 10), exp = c.expire && c.expire < today, off = c.statut === 'annulee', solde = +c.solde || 0, usable = solde > 0 && !exp && !off;
   document.title = `Carte cadeau ${eur(c.montant)}${c.pour ? ' pour ' + c.pour : ''} · QuenTools`;
