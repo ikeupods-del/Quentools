@@ -6,7 +6,7 @@
   const app = $('#app'), dlg = $('#dlg');
   const THEME = document.documentElement.getAttribute('data-theme') || 'tropical';
   $('#back').href = $('#site').href = '../' + THEME + '/';
-  $('#mark').innerHTML = Art.fruit(THEME === 'gourmand' ? 'choco' : THEME === 'atelier' ? 'cherry' : 'strawberry');
+  $('#mark').innerHTML = Art.fruit('strawberry');
   let tab = (location.hash || '#apercu').slice(1), mode = 'login', msg = '', flash = '', keep = {};
   const TABS = [['apercu', 'Aperçu'], ['commandes', 'Mes commandes'], ['profil', 'Profil']];
   if (!TABS.some(t => t[0] === tab)) tab = 'apercu';

@@ -1,14 +1,14 @@
 # Naw Fruity : projet client (plateaux de fruits)
 
-Trois propositions de design pour présenter à la cliente, sur une même base fonctionnelle. Page de présentation : `index.html` (à ouvrir en premier).
+Site de commande de plateaux de fruits (style retenu : « Solaire »). `index.html` renvoie vers `tropical/`.
 
 | Dossier | Rôle |
 |---|---|
-| `tropical/` · `atelier/` · `gourmand/` | Les trois propositions (HTML et `theme.css` : mise en page et style uniquement). |
+| `tropical/` | Le site (HTML et `theme.css` : mise en page et style). |
 | `shared/store.js` | Moteur : plateaux et options, calendrier et capacité par jour, commandes, acompte et solde, comptes clients, e-mails. Données dans `localStorage`. |
 | `shared/app.js` | Interface commune : catalogue, personnalisation d'un plateau, panier, calendrier, commande en 3 étapes (date, informations, paiement). |
-| `shared/art.js`, `base.css`, `themes.css` | Illustrations SVG des plateaux, composants, jetons des trois styles. |
-| `compte/` | Espace client (reprend le style de la proposition visitée en dernier) : suivi, solde en ligne, annulation, reçu, « commander à nouveau », profil et allergies. |
+| `shared/art.js`, `base.css`, `themes.css` | Photos (dossier `img/`), composants, jetons de style. |
+| `compte/` | Espace client : suivi, solde en ligne, annulation, reçu, « commander à nouveau », profil et allergies. |
 | `admin/` | Administration : calendrier de charge, commandes, fiche de production, plateaux et options, paiements, clients, réglages (interrupteurs, acompte, délai, capacité, créneaux, zones de livraison), e-mails. Code : `config.js`. |
 
 ## Règles principales
@@ -19,10 +19,10 @@ Trois propositions de design pour présenter à la cliente, sur une même base f
 - La corbeille d'entreprise se commande sur devis.
 
 ## Démonstration : réel / simulé
-Simulés : paiement par carte (aucune carte demandée), e-mails (journal dans l'administration), stockage (navigateur du visiteur). Boutons « Vue client » et « Vue admin » et barre « Proposition » : démonstration seulement.
+Simulés : paiement par carte (aucune carte demandée), e-mails (journal dans l'administration), stockage (navigateur du visiteur). Boutons « Vue client » et « Vue admin » : démonstration seulement.
 
 ## Pour la vraie mise en ligne
-1. Garder **une** proposition : supprimer les deux autres dossiers, la barre de démonstration (`demoBar()` dans `shared/app.js`) et la page `index.html`.
+1. Retirer la barre de démonstration (`demoBar()` dans `shared/app.js`).
 2. Remplacer les photos de démonstration par celles de la cliente : mêmes noms de fichiers dans `img/` (voir `CREDITS-PHOTOS.md`), ou changer la correspondance dans `shared/art.js`.
 3. Brancher : base de données (Firestore) à la place de `load()`/`save()`, paiement par Stripe (acompte puis solde, confirmé côté serveur), e-mails via `formEndpoint`, connexion Google ou e-mail pour l'administration et les clients (retirer `?demo` et le code d'accès).
 4. Conditions de vente, politique d'annulation et d'allergènes : à faire relire par un professionnel.

@@ -2,61 +2,13 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Naw Fruity · trois propositions de design</title>
-<meta name="description" content="Naw Fruity, plateaux de fruits frais : trois propositions de design pour le site, avec commande, calendrier de réservation, acompte, espace client et administration.">
-<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="shared/themes.css">
-<style>
-:root{--bg:#fbf7f0;--ink:#2b2320;--mut:#7a6b62;--line:#e8ddd0;--accent:#e0405a}
-*{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.65 Nunito,system-ui,sans-serif}
-a{color:inherit}.wrap{width:min(1160px,100% - 40px);margin:0 auto}
-h1,h2,h3{font-family:Syne,system-ui,sans-serif;font-weight:800;letter-spacing:-.03em;margin:0;line-height:1.04}
-.kick{margin:0 0 12px;font:800 12px Nunito;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
-header{padding:clamp(50px,8vw,100px) 0 40px}header h1{font-size:clamp(2.6rem,7vw,5.4rem)}header h1 em{font-style:normal;color:var(--accent)}header p.lead{max-width:40em;color:var(--mut);font-size:1.15rem;margin:22px 0 0}
-.feat{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}.feat span{padding:8px 16px;border-radius:99px;background:#fff;border:1px solid var(--line);font-weight:700;font-size:14px}
-section{padding:30px 0 clamp(50px,7vw,90px)}
-.props{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}@media (max-width:980px){.props{grid-template-columns:1fr}}
-.p{background:#fff;border:1px solid var(--line);border-radius:26px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 60px -40px rgba(60,30,10,.5);transition:transform .5s cubic-bezier(.2,.8,.2,1)}.p:hover{transform:translateY(-6px)}
-.p img{display:block;width:100%;height:auto;aspect-ratio:16/10;object-fit:cover;object-position:top;border-bottom:1px solid var(--line)}
-.p .b{padding:26px;display:flex;flex-direction:column;gap:12px;flex:1}.p h2{font-size:1.9rem}.p .n{font:800 12px Nunito;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}.p p{margin:0;color:var(--mut)}
-.sw{display:flex;gap:6px;margin:4px 0}.sw i{width:26px;height:26px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}
-.p ul{margin:4px 0 0;padding-left:20px;color:var(--mut);font-size:15px}.p .go{margin-top:auto;padding-top:14px}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 26px;border-radius:14px;background:var(--ink);color:#fff;font:800 15px Nunito;text-decoration:none;border:2px solid var(--ink);transition:transform .2s}.btn:hover{transform:translateY(-2px)}.btn.o{background:#fff;color:var(--ink)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}@media (max-width:820px){.grid2{grid-template-columns:1fr}}
-.c{background:#fff;border:1px solid var(--line);border-radius:22px;padding:28px}.c h3{font-size:1.5rem;margin-bottom:10px}.c ul{margin:8px 0 18px;padding-left:20px;color:var(--mut)}.c li{margin:5px 0}
-.try{background:var(--ink);color:#fff;border-radius:30px;padding:clamp(28px,5vw,56px);display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:center}.try h2{font-size:clamp(1.9rem,4vw,3rem);margin-bottom:12px}.try p{color:#d9cbbf;max-width:34em;margin:0}.try .acts{display:grid;gap:12px}.try .btn{background:#fff;color:var(--ink);border-color:#fff}.try .btn.o{background:transparent;color:#fff;border-color:rgba(255,255,255,.4)}@media (max-width:820px){.try{grid-template-columns:1fr}}
-.note{background:#fff7e0;border:1px solid #f0d58a;border-radius:16px;padding:16px 20px;color:#6b4d0a;font-size:15px}
-footer{padding:30px 0 60px;color:var(--mut);font-size:14px}
-</style>
+<meta http-equiv="refresh" content="0;url=tropical/">
+<title>Naw Fruity</title>
 </head>
 <body>
-<header><div class="wrap">
-  <p class="kick">Projet Naw Fruity · plateaux de fruits frais</p>
-  <h1>Trois façons de <em>vous présenter.</em></h1>
-  <p class="lead">Une même base, trois univers visuels. Chaque proposition permet de choisir un plateau, <b>réserver une date dans un calendrier</b>, <b>verser un acompte</b> ou payer en totalité, puis suivre sa commande dans un <b>espace client</b>. De votre côté, une <b>administration</b> gère les commandes, les jours, les plateaux et les paiements.</p>
-  <div class="feat"><span>7 types de plateaux</span><span>Tailles et accompagnements</span><span>Calendrier avec capacité par jour</span><span>Acompte, paiement total ou à la remise</span><span>Retrait ou livraison par zone</span><span>Espace client</span><span>Administration</span></div>
-</div></header>
-
-<section><div class="wrap">
-  <div class="props">
-    <article class="p"><img src="previews/tropical.jpg" alt="Aperçu de la proposition Solaire" width="1280" height="800"><div class="b"><span class="n">Proposition 1</span><h2>Solaire</h2><p>Joyeux et coloré : des fruits qui flottent, des formes franches, un ton léger. Parfait pour les familles, les anniversaires, les réseaux sociaux.</p><div class="sw" aria-hidden="true"><i style="background:#ff4d6d"></i><i style="background:#ffb01f"></i><i style="background:#3a1738"></i><i style="background:#fff3de"></i></div><ul><li>Cartes colorées à bord franc</li><li>Ambiance fête et partage</li></ul><div class="go"><a class="btn" href="tropical/">Voir cette proposition</a></div></div></article>
-    <article class="p"><img src="previews/atelier.jpg" alt="Aperçu de la proposition Atelier" width="1280" height="800"><div class="b"><span class="n">Proposition 2</span><h2>Atelier</h2><p>Sobre et éditorial : beaucoup d’air, une carte qui se lit comme celle d’un restaurant. Parfait pour mettre le savoir-faire en valeur.</p><div class="sw" aria-hidden="true"><i style="background:#c4502f"></i><i style="background:#d8a24a"></i><i style="background:#1d1b18"></i><i style="background:#f6f1e9"></i></div><ul><li>Typographie élégante</li><li>Ambiance artisan et raffinée</li></ul><div class="go"><a class="btn" href="atelier/">Voir cette proposition</a></div></div></article>
-    <article class="p"><img src="previews/gourmand.jpg" alt="Aperçu de la proposition Gourmand" width="1280" height="800"><div class="b"><span class="n">Proposition 3</span><h2>Gourmand</h2><p>Chocolat et or : les fruits ressortent sur fond sombre, avec un effet haut de gamme. Parfait pour les événements, les cadeaux et les entreprises.</p><div class="sw" aria-hidden="true"><i style="background:#dcb062"></i><i style="background:#e0426a"></i><i style="background:#1b110e"></i><i style="background:#f6ead8"></i></div><ul><li>Frise horizontale des plateaux</li><li>Ambiance luxe et réception</li></ul><div class="go"><a class="btn" href="gourmand/">Voir cette proposition</a></div></div></article>
-  </div>
-</div></section>
-
-<section><div class="wrap"><div class="try">
-  <div><p class="kick" style="color:#ffb01f">À essayer maintenant</p><h2>Côté client, côté pro.</h2><p>Passez une commande de test sur n’importe quelle proposition, puis retrouvez-la dans l’espace client et dans l’administration. Aucune connexion nécessaire : tout est préparé pour la démonstration.</p></div>
-  <div class="acts"><a class="btn" href="compte/?demo">Ouvrir l’espace client</a><a class="btn o" href="admin/?demo">Ouvrir l’administration</a></div>
-</div></div></section>
-
-<section><div class="wrap"><div class="grid2">
-  <div class="c"><h3>Ce que vous pouvez tester</h3><ul><li>Choisir un plateau, sa taille, des accompagnements</li><li>Réserver sur le calendrier : jours complets, presque complets, fermés</li><li>Retrait ou livraison (zones et frais)</li><li>Acompte de 30 %, paiement total ou à la remise</li><li>Espace client : suivi, solde en ligne, annulation, reçu, « commander à nouveau »</li><li>Administration : calendrier de charge, fiche de production, plateaux, paiements, réglages</li></ul></div>
-  <div class="c"><h3>Ce qui est simulé ici</h3><ul><li>Le paiement par carte : aucune carte demandée, rien n’est prélevé</li><li>Les e-mails : visibles dans l’administration, pas réellement envoyés</li><li>Les données : gardées dans votre navigateur seulement</li><li>Les photos : images libres de droits, à remplacer par les vôtres</li><li>Les prix, adresses et horaires : exemples</li></ul><p class="note">Pour la vraie mise en ligne : paiement par prestataire sécurisé (acompte et solde), base de données partagée, e-mails réels et connexion sécurisée pour vous et vos clients.</p></div>
-</div></div></section>
-<footer><div class="wrap">Naw Fruity · propositions de démonstration, prix et visuels d’exemple.</div></footer>
+<p><a href="tropical/">Accéder au site Naw Fruity</a></p>
+<script>location.replace('tropical/'+location.search)</script>
 </body>
 </html>

@@ -219,9 +219,8 @@
   /* ---------- Barre de démonstration (à retirer pour la livraison) ---------- */
   function demoBar() {
     if ($('.nf-demo') || window.NF_NO_DEMOBAR) return;
-    const cur = window.NF_THEME || '', T = [['tropical', 'Solaire'], ['atelier', 'Atelier'], ['gourmand', 'Gourmand']];
-    const w = document.createElement('div'); w.className = 'nf-demo';
-    w.innerHTML = `<div class="nf-demo-g" aria-label="Propositions de design"><span>Proposition</span>${T.map(([k, l], i) => `<a href="${BASE}${k}/"${k === cur ? ' aria-current="page"' : ''}>${i + 1} · ${l}</a>`).join('')}</div><div class="nf-demo-g"><a href="${BASE}compte/?demo">Vue client</a><a href="${BASE}admin/?demo">Vue admin</a></div>`;
+        const w = document.createElement('div'); w.className = 'nf-demo';
+    w.innerHTML = `<div class="nf-demo-g"><span>Démonstration</span><a href="${BASE}tropical/">Site</a><a href="${BASE}compte/?demo">Vue client</a><a href="${BASE}admin/?demo">Vue admin</a></div>`;
     document.body.appendChild(w);
   }
 
