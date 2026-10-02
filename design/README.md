@@ -16,6 +16,7 @@ Tout ce qu'il faut pour produire vite un site ou un outil au niveau du site vitr
 | `templates/restaurant.html` | Restaurant, bar, boulangerie : plat du jour, carte, horaires, réservation. |
 | `templates/outil-devis.html` | Outil de devis pour artisan : lignes, TVA, remise, acompte, export PDF par impression ; données gardées dans le navigateur. À vendre comme outil sur mesure. | Démonstration publique : `demo/devis-artisan/`. |
 | `templates/vente-formation.html` | Page de vente d'une formation ou d'un guide : problème, programme, auteur, prix, FAQ. |
+| `../demo/barbier/` | Barbier (modèle complet, voir son README) : réservation, paiement carte/espèces, abonnement, fidélité, boutique, administration. |
 | `templates/legal.html` | Mentions légales et confidentialité à compléter. |
 | `templates/merci.html` | Page de confirmation (après un formulaire ou un paiement). |
 

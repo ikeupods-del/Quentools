@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<!-- MODÈLE « Barbier » : réservation en ligne, paiement carte ou espèces, abonnement, fidélité, boutique. Exemple fictif.
+     Réglages du salon : config.js. Prix, horaires, produits et options : administration (admin/). Voir README.md. -->
+<title>Kings Ave Barber · exemple de site de barbier</title>
+<meta name="description" content="Exemple fictif de site de barbier avec réservation en ligne, paiement à l'avance, abonnement, carte de fidélité et boutique, réalisé par QuenTools.">
+<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+<link rel="preload" href="../../assets/fonts/ex/oswald-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../exemples/ex.css">
+<link rel="stylesheet" href="barber.css">
+</head>
+<body>
+<div class="qt-ex"><a href="../../devis/?type=Outil%20sur%20mesure">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
+<a class="sr" href="#reserver">Aller à la réservation</a>
+
+<header class="top"><div class="wrap">
+  <a class="logo" href="./"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="11" y="2" width="10" height="28" fill="#f2ebdc" stroke="#f2ebdc"/><path d="M11 8l10-4v6l-10 4zM11 18l10-4v6l-10 4z" fill="#c8281e"/><path d="M11 24l10-4v4l-10 4z" fill="#17345f"/></svg><span><span data-shop="name">Kings Ave Barber</span><small data-shop="tagline"></small></span></a>
+  <nav aria-label="Navigation principale"><a href="#prix">Prix</a><a href="#abo">Abonnement</a><a href="#fidelite">Fidélité</a><a href="#boutique">Boutique</a><a href="#reserver" class="btn sm red">Réserver</a></nav>
+</div></header>
+
+<main>
+<section class="hero"><div class="wrap">
+  <div>
+    <h1>Fresh cuts.<span>Clean fades.</span></h1>
+    <p>Barbier de quartier, esprit Brooklyn : dégradés nets, barbe taillée au cordeau, serviette chaude. Tu réserves en 30 secondes, tu paies en ligne ou au salon.</p>
+    <div class="cta"><a class="btn red" href="#reserver">Prendre rendez-vous</a><a class="btn ghost" href="#abo">Abonnement 45 €</a></div>
+  </div>
+  <div class="sign" aria-hidden="true"><b>EST.<br>2024</b><span>Barber shop</span><div class="neon">OPEN</div></div>
+</div></section>
+
+<div class="tick" aria-hidden="true"><div>
+  <span>Fades<i>✂</i>Beards<i>✂</i>Hot towel<i>✂</i>Walk-ins welcome<i>✂</i>Brooklyn style<i>✂</i>Fades<i>✂</i>Beards<i>✂</i>Hot towel<i>✂</i>Walk-ins welcome<i>✂</i>Brooklyn style<i>✂</i></span>
+  <span>Fades<i>✂</i>Beards<i>✂</i>Hot towel<i>✂</i>Walk-ins welcome<i>✂</i>Brooklyn style<i>✂</i>Fades<i>✂</i>Beards<i>✂</i>Hot towel<i>✂</i>Walk-ins welcome<i>✂</i>Brooklyn style<i>✂</i></span>
+</div></div>
+
+<section id="prix"><div class="wrap">
+  <span class="kick">La carte</span><h2>Prix du shop</h2>
+  <p class="lead">Des prix clairs, pas de mauvaise surprise. Les tarifs ci-dessous viennent de l'administration : le barbier les change quand il veut.</p>
+  <div class="menu" id="menu"></div>
+</div></section>
+
+<div class="pole" aria-hidden="true"></div>
+
+<section id="abo" class="alt"><div class="wrap grid g2" style="align-items:center">
+  <div class="card pass" id="aboCard"></div>
+  <div>
+    <span class="kick">Pour les habitués</span><h2>Une coupe par semaine, un prix fixe.</h2>
+    <p class="lead">Tu prends l'abonnement une fois, tu réserves ta coupe chaque semaine avec ton e-mail : elle est automatiquement gratuite. Pas de paperasse.</p>
+    <div id="aboNote"></div>
+  </div>
+</div></section>
+
+<section id="fidelite"><div class="wrap grid g2" style="align-items:start">
+  <div>
+    <span class="kick">Carte de fidélité</span><h2 id="fidTitle">La 12ᵉ coupe est offerte.</h2>
+    <p class="lead">Chaque coupe terminée compte. Entre ton e-mail pour voir où tu en es : la carte se remplit toute seule, sans papier à perdre.</p>
+  </div>
+  <div class="card">
+    <label class="f">Ton e-mail<input class="in" id="fidMail" type="email" placeholder="karim@exemple.fr" autocomplete="email"></label>
+    <div id="fidOut" aria-live="polite"></div>
+  </div>
+</div></section>
+
+<section id="boutique" class="dark-sec"><div class="wrap">
+  <span class="kick" style="background:var(--gold);color:var(--ink)">Le shop</span><h2>Cire, peignes, huile à barbe</h2>
+  <p class="lead">Ajoute ce qu'il te faut à ton rendez-vous : on te le prépare, tu le récupères et tu le règles avec ta coupe.</p>
+  <div class="grid g3" id="shop"></div>
+</div></section>
+
+<section id="reserver"><div class="wrap">
+  <span class="kick">Réservation</span><h2>Ta chaise t'attend</h2>
+  <div id="bookArea"></div>
+</div></section>
+
+<section class="alt" id="infos"><div class="wrap grid g2">
+  <div><span class="kick">Horaires</span><h2 style="margin-bottom:22px">Quand passer</h2><div class="hours" id="hours"></div></div>
+  <div><span class="kick">Où ?</span><h2 style="margin-bottom:22px">Le shop</h2>
+    <p style="font-size:1.2rem;font-weight:700" data-shop="address"></p>
+    <p>Tel : <a data-shop-link="phone"></a><br>E-mail : <a data-shop-link="email"></a></p>
+    <p class="lead" style="margin:0">Paiement : carte en ligne à l'avance, ou espèces sur place. Annulation gratuite en prévenant le salon.</p></div>
+</div></section>
+</main>
+
+<footer class="footer"><div class="wrap">
+  <span>© <span data-year></span> <span data-shop="name"></span> · site d'exemple fictif, aucun vrai paiement ni rendez-vous</span>
+  <span><a href="admin/">Espace barbier (administration)</a> · <a href="../../mentions-legales/">Mentions légales</a></span>
+</div></footer>
+
+<dialog id="payDlg" aria-labelledby="payT"><div class="in-d">
+  <h3 id="payT">Paiement par carte</h3>
+  <p id="payTxt"></p>
+  <p class="notice warn">Démonstration : aucun numéro de carte n'est demandé et aucun argent n'est prélevé. Sur un vrai site, cette fenêtre est celle du prestataire de paiement (Stripe).</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn red" id="payOk" type="button">Payer (simulation)</button><button class="btn ghost" id="payNo" type="button">Annuler</button></div>
+</div></dialog>
+
+<script src="config.js"></script>
+<script src="store.js"></script>
+<script src="site.js"></script>
+</body>
+</html>
