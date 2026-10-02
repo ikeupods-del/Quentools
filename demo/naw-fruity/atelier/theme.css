@@ -44,3 +44,11 @@ details{border-top:1px solid var(--nf-line);padding:22px 0}details:last-of-type{
 dialog.nf-dlg{border-radius:2px}.nf-drawer{border-left:1px solid var(--nf-ink)}.nf-pd-art{background:var(--nf-bg)}.nf-pd-body h3,.nf-dh h3,.nf-co-h h3{font-weight:300}.nf-optc span,.nf-segc span{border-width:1px;border-radius:2px}.nf-fields input,.nf-fields select,.nf-fields textarea{border-width:0 0 1px;border-radius:0;border-color:var(--nf-ink);padding-inline:0;background:none}.nf-slot,.nf-qty button{border-width:1px;border-radius:2px}
 
 .nf-gal{margin-bottom:clamp(40px,6vw,80px)}.nf-gal figure{border-radius:2px}
+
+/* Héros : grande photo verticale à droite */
+.hero{padding-block:0;overflow:hidden}.hero .wrap{max-width:none;padding:0;gap:0;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);align-items:stretch;min-height:min(92vh,860px)}
+.hero-t{padding:clamp(60px,9vw,130px) clamp(24px,6vw,100px);align-self:center;max-width:760px;justify-self:end}
+.hx-a{margin:0;position:relative;min-height:520px;overflow:hidden}.hx-a img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:nf-kb 22s ease-in-out infinite alternate}
+.hx-a figcaption{position:absolute;left:24px;bottom:22px;color:#fff;font:500 11px var(--nf-font);letter-spacing:.2em;text-transform:uppercase;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+@media (max-width:900px){.hero .wrap{grid-template-columns:1fr}.hx-a{min-height:420px;order:-1}.hero-t{padding:44px 22px 60px}}
+.nf-card .nf-art{aspect-ratio:1}

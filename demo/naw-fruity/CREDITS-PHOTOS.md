@@ -17,3 +17,6 @@ Photographies placées dans le domaine public (CC0 1.0), sources : Wikimedia Com
 | ananas.jpg | Tropical Fruits (Unsplash).jpg |
 | cerises.jpg | Bowl of Fresh Fruit (Unsplash).jpg |
 | marche.jpg | Fruit Presentation (Unsplash).jpg |
+| hero1.jpg | Fruit Platter 1 (Unsplash).jpg |
+| hero2.jpg | Winter Fruit Platter (Unsplash).jpg |
+| hero4.jpg | Fruit Presentation (Unsplash).jpg |
