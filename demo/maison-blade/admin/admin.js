@@ -12,6 +12,8 @@
 
   /* Accès (démonstration) */
   const ok = () => { try { return sessionStorage.getItem('mb-admin') === '1'; } catch (e) { return false; } };
+  /* Démonstration : le lien « Vue admin » du site ouvre l'administration sans code (?demo) */
+  if (/[?&]demo\b/.test(location.search)) { try { sessionStorage.setItem('mb-admin', '1'); } catch (e) { /* ignoré */ } history.replaceState(null, '', location.pathname); }
   function gate() {
     const on = ok();
     $('#gate').hidden = on; $('#app').hidden = !on;

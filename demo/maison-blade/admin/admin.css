@@ -65,3 +65,4 @@ input[type=checkbox]{accent-color:#bfa57a}
 .mail{border:1px solid var(--line);background:rgba(255,255,255,.025);padding:14px 18px;margin-bottom:10px;border-radius:3px}.mail pre{white-space:pre-wrap;font:300 .85rem "DM Sans",sans-serif;margin:8px 0 0;color:var(--mist)}
 .gate{max-width:440px;margin:12vh auto;padding:0 16px}
 .sr{position:absolute;left:-9999px}
+@media (max-width:620px){.logo>span:last-child{display:none}.top nav{gap:6px}.top .btn.sm{padding:0 12px;letter-spacing:.1em}}
