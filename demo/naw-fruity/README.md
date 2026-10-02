@@ -23,6 +23,6 @@ Simulés : paiement par carte (aucune carte demandée), e-mails (journal dans l'
 
 ## Pour la vraie mise en ligne
 1. Garder **une** proposition : supprimer les deux autres dossiers, la barre de démonstration (`demoBar()` dans `shared/app.js`) et la page `index.html`.
-2. Remplacer les illustrations par les photographies (`NFArt.svg` dans les cartes et les fenêtres).
+2. Remplacer les photos de démonstration par celles de la cliente : mêmes noms de fichiers dans `img/` (voir `CREDITS-PHOTOS.md`), ou changer la correspondance dans `shared/art.js`.
 3. Brancher : base de données (Firestore) à la place de `load()`/`save()`, paiement par Stripe (acompte puis solde, confirmé côté serveur), e-mails via `formEndpoint`, connexion Google ou e-mail pour l'administration et les clients (retirer `?demo` et le code d'accès).
 4. Conditions de vente, politique d'annulation et d'allergènes : à faire relire par un professionnel.

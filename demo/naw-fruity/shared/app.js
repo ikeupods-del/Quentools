@@ -15,7 +15,7 @@
     const box = $('#nf-catalog'); if (!box) return;
     const list = D().products.filter(p => p.active !== false), f = box.dataset.filter || 'all';
     box.innerHTML = list.filter(p => f === 'all' || p.type === f || (f === 'tray' && p.type === 'tray')).map((p, i) => `<article class="nf-card" data-pid="${p.id}" data-type="${p.type}" style="--i:${i}">
-      <div class="nf-art" aria-hidden="true">${Art.svg(p.art, p.name)}</div>
+      <div class="nf-art">${Art.svg(p.art, p.name)}</div>
       <div class="nf-card-body"><span class="nf-tag">${esc(p.tag || '')}</span><h3 class="nf-name">${esc(p.name)}</h3><p class="nf-desc">${esc(p.desc)}</p>
       <div class="nf-foot"><div><span class="nf-price">${esc(priceLabel(p))}</span><small class="nf-sub">${esc(sub(p))}</small></div><button type="button" class="nf-btn nf-btn-sm" data-nf-open="${p.id}">${p.type === 'quote' ? 'Demander un devis' : 'Choisir'}</button></div></div></article>`).join('');
   }
@@ -25,7 +25,9 @@
     box.innerHTML = F.map(([k, l]) => `<button type="button" class="nf-chip" data-f="${k}" aria-pressed="${(($('#nf-catalog') || {}).dataset || {}).filter === k || (k === 'all' && !(($('#nf-catalog') || {}).dataset || {}).filter)}">${l}</button>`).join('');
     box.onclick = e => { const b = e.target.closest('button'); if (!b) return; $('#nf-catalog').dataset.filter = b.dataset.f; renderFilters(); renderCatalog(); };
   }
-  $$('[data-nf-art]').forEach(n => { n.innerHTML = Art.svg(n.dataset.nfArt, n.dataset.label); });
+  $$('[data-nf-art]').forEach(n => { n.innerHTML = Art.svg(n.dataset.nfArt, n.dataset.label); const im = n.querySelector('img'); if (im) { im.loading = 'eager'; im.fetchPriority = 'high'; } });
+  /* Galerie défilante : data-nf-gallery="baies,fraises,…" */
+  $$('[data-nf-gallery]').forEach(n => { const k = n.dataset.nfGallery.split(','), one = k.map(x => `<figure>${Art.svg(x.trim(), '')}</figure>`).join(''); n.innerHTML = `<div class="nf-gal-t" aria-hidden="true">${one}${one}</div>`; });
   $$('[data-nf-fruit]').forEach(n => { n.innerHTML = Art.fruit(n.dataset.nfFruit); });
 
   /* ---------- Fenêtre « personnaliser un plateau » ---------- */
@@ -41,7 +43,7 @@
     const st = { size: tray ? p.sizes[0].id : '', qty: unit ? p.minUnits : 1, opts: [] };
     const lineNow = () => NF.lineOf({ pid, size: st.size, qty: st.qty, opts: st.opts });
     d.innerHTML = `<form class="nf-pd" novalidate><button type="button" class="nf-x" data-close aria-label="Fermer">×</button>
-      <div class="nf-pd-art" aria-hidden="true">${Art.svg(p.art, p.name)}</div>
+      <div class="nf-pd-art">${Art.svg(p.art, p.name)}</div>
       <div class="nf-pd-body"><span class="nf-tag">${esc(p.tag || '')}</span><h3>${esc(p.name)}</h3><p class="nf-desc">${esc(p.desc)}</p>
       ${quote ? `<div class="nf-fields"><label>Votre nom<input name="n" autocomplete="name"></label><label>E-mail<input name="e" type="email" autocomplete="email"></label><label class="nf-full">Votre besoin (fréquence, nombre de personnes, budget)<textarea name="m" rows="3"></textarea></label></div><p class="nf-err" id="nf-pd-err" hidden></p><p class="nf-ok" id="nf-pd-ok" hidden></p><button type="submit" class="nf-btn">Envoyer ma demande</button>` : `
       ${tray ? `<fieldset class="nf-fs"><legend>Taille</legend><div class="nf-opts">${p.sizes.map((s, i) => `<label class="nf-optc"><input type="radio" name="size" value="${s.id}"${i ? '' : ' checked'}><span><b>${esc(s.label)}</b><em>${eur(s.price)}</em></span></label>`).join('')}</div></fieldset>` : ''}
@@ -63,7 +65,7 @@
         NF.sendMail(NF.CFG.email, 'Demande de devis : ' + p.name, 'De : ' + n + ' <' + m + '>\n\n' + form.m.value); NF.save();
         ok.textContent = 'Demande envoyée, ' + n.split(' ')[0] + ' ! Démonstration : rien n’est réellement transmis.'; ok.hidden = false; return;
       }
-      NF.cartAdd({ pid, size: st.size, qty: st.qty, opts: st.opts }); d.close(); openDrawer(true);
+      fly($('.nf-pd-art img', d)); NF.cartAdd({ pid, size: st.size, qty: st.qty, opts: st.opts }); d.close(); setTimeout(() => openDrawer(true), reduced ? 0 : 750);
     });
     upd(); d.showModal();
   }
@@ -233,8 +235,26 @@
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#nf-drawer').hidden) openDrawer(false); });
   coEvents();
+  /* La photo du plateau « vole » jusqu’au bouton Panier */
+  function fly(img) {
+    const btn = $('[data-nf-cart]'); if (!img || !btn || reduced) return;
+    const a = img.getBoundingClientRect(), b = btn.getBoundingClientRect(), c = document.createElement('img');
+    c.src = img.src; c.className = 'nf-fly'; c.alt = ''; const s = 96;
+    c.style.cssText = `left:${a.left + a.width / 2 - s / 2}px;top:${a.top + a.height / 2 - s / 2}px;width:${s}px;height:${s}px`;
+    document.body.appendChild(c);
+    requestAnimationFrame(() => requestAnimationFrame(() => { c.style.transform = `translate(${b.left + b.width / 2 - a.left - a.width / 2}px,${b.top + b.height / 2 - a.top - a.height / 2}px) scale(.2)`; c.style.opacity = '.4'; }));
+    setTimeout(() => { c.remove(); btn.classList.remove('bump'); void btn.offsetWidth; btn.classList.add('bump'); }, 850);
+  }
+  /* Parallaxe douce au défilement et inclinaison à la souris */
+  (function () {
+    const P = $$('[data-par]'), T = $$('[data-tilt]'); if (reduced || !(P.length || T.length)) return;
+    let y = 0, tick = false;
+    const run = () => { tick = false; P.forEach(n => { const r = n.getBoundingClientRect(); if (r.bottom < -200 || r.top > innerHeight + 200) return; const k = parseFloat(n.dataset.par) || .08; n.style.transform = `translate3d(0,${((r.top + r.height / 2 - innerHeight / 2) * -k).toFixed(1)}px,0)`; }); };
+    addEventListener('scroll', () => { if (!tick) { tick = true; requestAnimationFrame(run); } }, { passive: true }); run();
+    T.forEach(n => { const z = n.closest('.hero') || n; z.addEventListener('pointermove', e => { const r = z.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, yy = (e.clientY - r.top) / r.height - .5; n.style.setProperty('--tx', (x * 18).toFixed(1) + 'px'); n.style.setProperty('--ty', (yy * 14).toFixed(1) + 'px'); }); });
+  })();
   const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .12 });
-  function reveal() { $$('.nf-rv:not(.in)').forEach(n => io.observe(n)); }
+  function reveal() { $$('.nf-rv:not(.in),.nf-img-rv:not(.in)').forEach(n => io.observe(n)); }
   function all() { renderFilters(); renderCatalog(); renderDrawer(); refreshAccount(); closedBanner(); if (!$('#nf-co') || !$('#nf-co').open) { /* ne pas redessiner pendant une commande */ } reveal(); }
   NF.onChange(() => { renderCatalog(); renderDrawer(); refreshAccount(); closedBanner(); });
   try { if (window.NF_THEME) localStorage.setItem('naw-fruity:theme', window.NF_THEME); } catch (e) { /* ignoré */ }

@@ -1,5 +1,5 @@
-/* Illustrations de plateaux de fruits (vue de dessus), en SVG. Les couleurs du plateau viennent du thème : --nf-tray et --nf-rim.
-   À remplacer par les photographies de la cliente : même emplacement, même taille. */
+/* Visuels : photographies des plateaux (dossier img/, voir CREDITS-PHOTOS.md) et petits fruits en SVG pour les logos.
+   Pour mettre les photos de la cliente : remplacer les fichiers de img/ en gardant les noms. */
 (function () {
   'use strict';
   let uid = 0;
@@ -33,30 +33,19 @@
     swirl: () => `<circle r="1" fill="#3a2016"/><circle r=".8" fill="#4a2a1a"/><path d="M-.5 0 q.25 -.45 .5 0 t.5 0" stroke="#7a4a30" stroke-width=".12" fill="none"/><circle cx="-.3" cy="-.3" r=".16" fill="#fff" fill-opacity=".25"/>`
   };
 
-  const ring = (n, R, a0, fn) => Array.from({ length: n }, (_, i) => { const a = a0 + i * 2 * Math.PI / n; return fn(i, 200 + Math.cos(a) * R, 200 + Math.sin(a) * R, a * 180 / Math.PI); }).join('');
-  const tray = (shape, extra) => {
-    if (shape === 'oval') return '<ellipse cx="200" cy="200" rx="188" ry="150" style="fill:var(--nf-rim,#e7dfd3)"/><ellipse cx="200" cy="200" rx="172" ry="134" style="fill:var(--nf-tray,#fff)"/>';
-    if (shape === 'rect') return '<rect x="14" y="60" width="372" height="280" rx="34" style="fill:var(--nf-rim,#e7dfd3)"/><rect x="30" y="76" width="340" height="248" rx="22" style="fill:var(--nf-tray,#fff)"/>';
-    return '<circle cx="200" cy="200" r="190" style="fill:var(--nf-rim,#e7dfd3)"/><circle cx="200" cy="200" r="172" style="fill:var(--nf-tray,#fff)"/>' + (extra || '');
-  };
-
-  const ART = {
-    saison: () => tray('round') + ring(8, 128, .2, (i, x, y, r) => g(x, y, 42, r, [F.strawberry(false), F.slice('#ff9f2f', '#ffc766', 9), F.grapes(), F.slice('#7cb342', '#b7e36a', 0, true), F.blue(), F.strawberry(false), F.slice('#ff9f2f', '#ffc766', 9), F.grapes()][i])) + ring(5, 62, 0, (i, x, y, r) => g(x, y, 30, r * 2, [F.slice('#ff9f2f', '#ffc766', 9), F.banana(), F.slice('#7cb342', '#b7e36a', 0, true), F.cherry(), F.banana()][i])) + g(200, 200, 26, 0, F.pom()),
-    tropical: () => tray('oval') + g(120, 170, 54, -20, F.pine()) + g(180, 130, 54, 10, F.pine()) + g(290, 150, 56, 20, F.mango()) + g(240, 230, 56, -10, F.mango()) + g(130, 250, 42, 0, F.slice('#7cb342', '#b7e36a', 0, true)) + g(205, 195, 40, 0, F.dragon()) + g(300, 235, 38, 0, F.passion()) + g(95, 215, 26, 0, F.lychee()) + g(270, 100, 26, 0, F.lychee()) + g(165, 265, 30, 0, F.slice('#ffd34d', '#fff0a6', 8)) + g(330, 195, 30, 0, F.lychee()),
-    gourmand: () => tray('round') + ring(8, 128, 0, (i, x, y, r) => g(x, y, 40, r + 90, i % 2 ? F.strawberry(true) : F.strawberry(false))) + ring(5, 78, .4, (i, x, y, r) => g(x, y, 30, r, [F.strawberry(true), F.grapes(), F.slice('#7cb342', '#b7e36a', 0, true), F.strawberry(true), F.blue()][i])) + g(200, 200, 34, 0, F.swirl()),
-    vitamine: () => tray('round') + ring(8, 128, .1, (i, x, y, r) => g(x, y, 44, r, [F.slice('#ff9f2f', '#ffc766', 10), F.slice('#ffd84d', '#fff08c', 8), F.slice('#ff7a6b', '#ffb3a8', 9), F.slice('#ff9f2f', '#ffc766', 10), F.slice('#ffd84d', '#fff08c', 8), F.slice('#ff7a6b', '#ffb3a8', 9), F.slice('#7cb342', '#b7e36a', 0, true), F.slice('#ff9f2f', '#ffc766', 10)][i])) + ring(6, 66, 0, (i, x, y, r) => g(x, y, 28, r, i % 2 ? F.blue() : F.grapes())) + g(200, 200, 34, 0, F.pom()),
-    fete: () => tray('rect') + [0, 1, 2, 3, 4].map(i => g(70 + i * 65, 200, 100, -62 + i * 8, F.stick([['#e23b52', '#ffd34d', '#7cb342', '#6a2f86'], ['#ff9f2f', '#e23b52', '#35458f', '#ffd34d'], ['#7cb342', '#ec2f7a', '#ff9f2f', '#e23b52'], ['#6a2f86', '#ffd34d', '#e23b52', '#7cb342'], ['#ec2f7a', '#7cb342', '#ffd34d', '#ff9f2f']][i].slice(0, 3)))) + g(70, 290, 26, 0, F.strawberry(false)) + g(330, 120, 26, 0, F.slice('#ff9f2f', '#ffc766', 9)) + g(330, 290, 24, 0, F.grapes()) + g(70, 118, 22, 0, F.blue()),
-    mini: () => '<g transform="translate(-52 -50) scale(1.26)">' + [0, 1, 2].map(i => `<g transform="translate(${34 + i * 118} 120)"><rect width="104" height="150" rx="16" style="fill:var(--nf-rim,#e7dfd3)"/><rect x="8" y="8" width="88" height="134" rx="10" fill="#fff" fill-opacity=".85"/>${g(52, 44, 26, 0, [F.strawberry(false), F.slice('#ff9f2f', '#ffc766', 9), F.grapes()][i])}${g(30, 92, 20, 0, [F.blue(), F.slice('#7cb342', '#b7e36a', 0, true), F.strawberry(false)][i])}${g(74, 94, 22, 0, [F.grapes(), F.banana(), F.blue()][i])}${g(52, 124, 14, 0, F.cherry())}<rect x="0" y="-10" width="104" height="16" rx="8" fill="#fff" fill-opacity=".6"/></g>`).join('') + '</g>',
-    corbeille: () => '<ellipse cx="200" cy="300" rx="180" ry="60" fill="#c99b62"/><path d="M30 230 Q30 330 200 340 Q370 330 370 230z" fill="#b8854a"/>' + Array.from({ length: 9 }, (_, i) => `<path d="M${50 + i * 40} 245 q-6 50 6 85" stroke="#8d6532" stroke-width="5" fill="none"/>`).join('') + g(120, 200, 52, 0, F.apple('#d8223e')) + g(200, 175, 56, 0, '<circle r="1" fill="#ff9f2f"/><circle cx="-.3" cy="-.3" r=".22" fill="#fff" fill-opacity=".35"/><circle cx=".1" cy="-.95" r=".12" fill="#4f9a45"/>') + g(285, 200, 50, 0, F.apple('#7cb342')) + g(160, 130, 44, 0, F.pear()) + g(245, 128, 42, 0, F.apple('#e8533a')) + g(205, 105, 36, 0, F.grapes())
-  };
+  const PHOTO = { saison: 'decouverte', tropical: 'tropical', gourmand: 'gourmand', vitamine: 'vitamine', fete: 'fete', mini: 'mini', corbeille: 'corbeille', baies: 'baies', fraises: 'fraises', cagette: 'cagette', ananas: 'ananas', cerises: 'cerises', marche: 'marche' };
+  const ALT = { saison: 'Plateau de fruits de saison', tropical: 'Plateau de fruits tropicaux', gourmand: 'Plateau de fruits au chocolat', vitamine: 'Fruits rouges et agrumes', fete: 'Plateau de fête', mini: 'Mini-box de fruits frais', corbeille: 'Corbeille de fruits' };
+  const cur = document.currentScript, BASE = cur && cur.src ? cur.src.replace(/shared\/art\.js.*$/, 'img/') : '../img/';
 
   window.NFArt = {
-    svg(kind, label) { const fn = ART[kind] || ART.saison; uid = 0; return `<svg viewBox="0 0 400 400" role="img" aria-label="${label || 'Plateau de fruits'}" xmlns="http://www.w3.org/2000/svg">${fn()}</svg>`; },
+    svg(kind, label) { const f = PHOTO[kind] || 'decouverte'; return `<img src="${BASE}${f}.jpg" alt="${String(label || ALT[kind] || 'Plateau de fruits').replace(/"/g, '&quot;')}" loading="lazy" decoding="async" draggable="false">`; },
+    photo(kind, label) { return this.svg(kind, label); },
+    url(kind) { return BASE + (PHOTO[kind] || 'decouverte') + '.jpg'; },
     /* Un seul fruit, pour la décoration */
     fruit(name) {
       const M = { strawberry: () => F.strawberry(false), choco: () => F.strawberry(true), orange: () => F.slice('#ff9f2f', '#ffc766', 9), lemon: () => F.slice('#ffd84d', '#fff08c', 8), grapefruit: () => F.slice('#ff7a6b', '#ffb3a8', 9), kiwi: () => F.slice('#7cb342', '#b7e36a', 0, true), grapes: F.grapes, blueberry: F.blue, cherry: F.cherry, pineapple: F.pine, mango: F.mango, dragon: F.dragon, pomegranate: F.pom, passion: F.passion, banana: F.banana };
       uid = 100; return `<svg viewBox="-1.15 -1.15 2.3 2.3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">${(M[name] || M.strawberry)()}</svg>`;
     },
-    kinds: Object.keys(ART)
+    kinds: ['saison', 'tropical', 'gourmand', 'vitamine', 'fete', 'mini', 'corbeille']
   };
 })();
