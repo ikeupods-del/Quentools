@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="fr" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a0908">
+<!-- MODÈLE « Barbier de luxe » (Quiet Luxury). Exemple fictif. Tailwind compilé : src/input.css + tailwind.config.js → luxe.css (voir README.md).
+     Photos : remplacer chaque <div class="art"> de la galerie par <img src="..." alt="..." class="h-full w-full object-cover">. -->
+<title>Maison Blade · exemple de site de barbier de luxe</title>
+<meta name="description" content="Exemple fictif d'un site de barbier de luxe : univers feutré, rituels, galerie et réservation en trois clics. Réalisé par QuenTools.">
+<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+<link rel="preload" href="../../assets/fonts/ex/cormorant-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../../assets/fonts/ex/dm-sans-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../exemples/ex.css">
+<link rel="stylesheet" href="luxe.css">
+<script>document.documentElement.classList.remove('no-js')</script>
+</head>
+<body class="grain">
+
+<!-- Symboles des plaques de galerie et pictogrammes (trait fin, laiton) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-razor" viewBox="0 0 100 100"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round"><path d="M18 64 L80 28 L84 35 L26 72Z"/><path d="M26 72 Q14 86 30 90 L52 80"/><circle cx="27" cy="71" r="2.2"/></g></symbol>
+  <symbol id="i-comb" viewBox="0 0 100 100"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><rect x="10" y="34" width="80" height="14" rx="3"/><path d="M16 48v24M24 48v24M32 48v24M40 48v24M48 48v24M56 48v24M64 48v24M72 48v24M80 48v24"/></g></symbol>
+  <symbol id="i-scissors" viewBox="0 0 100 100"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><circle cx="30" cy="76" r="9"/><circle cx="56" cy="82" r="9"/><path d="M35 68 L78 18M50 74 L24 18"/></g></symbol>
+  <symbol id="i-towel" viewBox="0 0 100 100"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><path d="M22 78h56l-6 12H28z"/><path d="M36 66c-6-8 6-12 0-20s6-12 0-20M50 66c-6-8 6-12 0-20s6-12 0-20M64 66c-6-8 6-12 0-20s6-12 0-20"/></g></symbol>
+  <symbol id="i-brush" viewBox="0 0 100 100"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><ellipse cx="50" cy="34" rx="22" ry="17"/><path d="M36 30c4 3 8 3 12 0M50 30c4 3 8 3 12 0"/><path d="M44 51l-3 38M56 51l3 38M41 89h18"/></g></symbol>
+  <symbol id="i-bottle" viewBox="0 0 100 100"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round"><path d="M42 12h16v12l9 9v55H33V33l9-9z"/><path d="M33 56h34M33 70h34"/></g></symbol>
+</defs></svg>
+
+<div class="curtain" id="curtain" aria-hidden="true"><div class="text-center">
+  <div class="mono font-serif text-4xl tracking-[.4em] uppercase text-champagne pl-[.4em]">Maison Blade</div>
+  <div class="line mx-auto mt-6 h-px w-48 bg-bronze/70"></div>
+</div></div>
+<div id="prog" class="fixed left-0 top-0 z-[70] h-px w-full origin-left scale-x-0 bg-bronze"></div>
+
+<div class="qt-ex"><a href="../../devis/?type=Site%20vitrine">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
+<a href="#reserver" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[90] focus:bg-ivory focus:px-4 focus:py-2 focus:text-ink">Aller à la réservation</a>
+
+<!-- En-tête -->
+<header id="hdr" class="sticky top-0 z-50 transition-all duration-700 ease-lux">
+  <div class="mx-auto flex h-[84px] max-w-[1280px] items-center justify-between px-6 md:px-10">
+    <a href="#top" class="group flex items-center gap-3" aria-label="Maison Blade, accueil">
+      <span class="grid h-9 w-9 place-items-center rounded-full border border-bronze/70 font-serif text-sm tracking-widest text-champagne transition duration-500 group-hover:bg-bronze/15">MB</span>
+      <span class="whitespace-nowrap font-serif text-base uppercase tracking-[.2em] md:text-xl md:tracking-[.28em]">Maison Blade</span>
+    </a>
+    <nav class="hidden items-center gap-10 text-[.72rem] uppercase tracking-wide2 md:flex" aria-label="Navigation principale">
+      <a class="link" href="#maison">La Maison</a><a class="link" href="#rituels">Rituels</a><a class="link" href="#galerie">Galerie</a><a class="link" href="#equipe">Barbiers</a>
+      <a class="btn-line !min-h-[42px] !px-6" href="#reserver">Réserver</a>
+    </nav>
+    <button id="menuBtn" class="btn-line !min-h-[42px] !px-5 md:hidden" aria-expanded="false" aria-controls="menu">Menu</button>
+  </div>
+  <div id="menu" hidden class="glass mx-4 mb-4 p-6 md:hidden">
+    <div class="grid gap-5 text-center text-xs uppercase tracking-wide2">
+      <a href="#maison">La Maison</a><a href="#rituels">Rituels</a><a href="#galerie">Galerie</a><a href="#equipe">Barbiers</a><a href="#reserver" class="btn">Réserver</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<!-- Hero -->
+<section id="hero" class="relative -mt-[84px] flex min-h-[100svh] items-end overflow-hidden pb-24 pt-40 md:items-center md:pb-0" style="--mx:68%;--my:30%">
+  <div class="absolute inset-0" style="background:radial-gradient(900px 600px at var(--mx) var(--my),rgba(191,165,122,.18),transparent 60%),radial-gradient(1200px 700px at 10% 110%,rgba(120,84,50,.22),transparent 60%),linear-gradient(180deg,#0a0908,#131211 60%,#0a0908)"></div>
+  <div class="pointer-events-none absolute inset-y-0 right-[8%] hidden w-px bg-gradient-to-b from-transparent via-bronze/40 to-transparent md:block"></div>
+  <svg class="pointer-events-none absolute -right-10 top-1/2 hidden h-[640px] w-[640px] -translate-y-1/2 text-champagne/[.09] md:block" aria-hidden="true"><use href="#i-razor"/></svg>
+  <div class="relative mx-auto w-full max-w-[1280px] px-6 md:px-10">
+    <p class="eyebrow rv">Barbier · Salon privé · Paris 8ᵉ</p>
+    <h1 class="rv mt-7 max-w-[13ch] text-[clamp(3.6rem,10.5vw,9rem)]" style="--i:1">L’art du geste <em class="text-champagne">juste</em>.</h1>
+    <p class="rv mt-9 max-w-md text-base text-mist md:text-lg" style="--i:2">Un salon feutré, du cuir, du noyer sombre et le temps qu’il faut. Le rasage d’autrefois, pensé comme un rituel de bien-être.</p>
+    <div class="rv mt-12 flex flex-wrap items-center gap-6" style="--i:3">
+      <a href="#reserver" class="btn">Réserver mon rituel <span class="arrow">→</span></a>
+      <a href="#rituels" class="link text-[.72rem] uppercase tracking-wide2">Découvrir les rituels</a>
+    </div>
+  </div>
+  <a href="#maison" class="absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-3 text-[.62rem] uppercase tracking-wide3 text-mist md:flex" aria-label="Défiler">
+    Défiler<span class="h-12 w-px bg-gradient-to-b from-bronze to-transparent"></span></a>
+</section>
+
+<!-- Manifeste -->
+<section id="maison" class="mx-auto max-w-[1100px] px-6 py-32 md:px-10 md:py-48">
+  <p class="eyebrow rv">La Maison</p>
+  <p data-words class="mt-10 font-serif text-[clamp(1.9rem,4.6vw,3.8rem)] font-light leading-[1.18]">Ici, rien ne se presse. La lumière est basse, le cuir est patiné, la lame est affûtée le matin même. Nous ne coiffons pas : nous prenons soin, avec la précision d’un atelier milanais et le calme d’un club londonien.</p>
+  <div class="mt-16 grid gap-10 border-t border-white/10 pt-10 text-sm text-mist md:grid-cols-3">
+    <div class="rv"><span class="eyebrow">Sur rendez-vous</span><p class="mt-3">Un seul client par fauteuil, jamais d’attente, jamais de précipitation.</p></div>
+    <div class="rv" style="--i:1"><span class="eyebrow">Artisanat</span><p class="mt-3">Lames japonaises, serviettes chaudes, huiles essentielles : peu de gestes, tous maîtrisés.</p></div>
+    <div class="rv" style="--i:2"><span class="eyebrow">Discrétion</span><p class="mt-3">Un salon privé : espresso, silence ou conversation, selon votre humeur.</p></div>
+  </div>
+</section>
+
+<!-- Rituels -->
+<section id="rituels" class="relative py-28 md:py-40">
+  <div class="absolute inset-0 -z-10" style="background:radial-gradient(800px 500px at 90% 20%,rgba(191,165,122,.08),transparent 60%)"></div>
+  <div class="mx-auto max-w-[1280px] px-6 md:px-10">
+    <div class="flex flex-wrap items-end justify-between gap-8">
+      <div><p class="eyebrow rv">Les rituels</p><h2 class="rv mt-5 text-[clamp(2.6rem,6vw,5rem)]" style="--i:1">Quatre manières<br><em class="text-champagne">de prendre son temps</em></h2></div>
+      <p class="rv max-w-sm text-sm text-mist" style="--i:2">Tarifs d’exemple, fictifs. Chaque rituel inclut une boisson, une serviette chaude et un conseil d’entretien.</p>
+    </div>
+    <div class="mt-16 grid gap-6 md:grid-cols-2 xl:grid-cols-4" id="rituals"></div>
+  </div>
+</section>
+
+<!-- Galerie -->
+<section id="galerie" class="py-28 md:py-40">
+  <div class="mx-auto max-w-[1280px] px-6 md:px-10">
+    <p class="eyebrow rv">Le savoir-faire</p>
+    <h2 class="rv mt-5 text-[clamp(2.6rem,6vw,5rem)]" style="--i:1">Des finitions <em class="text-champagne">qui se voient</em></h2>
+    <div class="mt-14 grid auto-rows-[210px] grid-cols-2 gap-3 md:auto-rows-[240px] md:grid-cols-12 md:gap-4" id="gallery"></div>
+    <p class="mt-6 text-xs text-mist">Plaques d’illustration : à remplacer par les photographies du salon.</p>
+  </div>
+</section>
+
+<!-- Barbiers -->
+<section id="equipe" class="border-y border-white/[.07] bg-coal py-28 md:py-40">
+  <div class="mx-auto max-w-[1280px] px-6 md:px-10">
+    <p class="eyebrow rv">Les barbiers</p>
+    <h2 class="rv mt-5 text-[clamp(2.6rem,6vw,5rem)]" style="--i:1">Une main, <em class="text-champagne">un nom</em></h2>
+    <div class="mt-16 grid gap-px overflow-hidden rounded-[4px] border border-white/10 bg-white/10 md:grid-cols-3" id="team"></div>
+  </div>
+</section>
+
+<!-- Réservation -->
+<section id="reserver" class="relative py-28 md:py-40">
+  <div class="absolute inset-0 -z-10" style="background:radial-gradient(900px 600px at 15% 30%,rgba(191,165,122,.09),transparent 60%)"></div>
+  <div class="mx-auto max-w-[1280px] px-6 md:px-10">
+    <p class="eyebrow rv">Réservation</p>
+    <h2 class="rv mt-5 text-[clamp(2.6rem,6vw,5rem)]" style="--i:1">Trois choix, <em class="text-champagne">une chaise</em></h2>
+    <div class="mt-14 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div class="glass divide-y divide-white/[.08]" id="bk">
+        <div class="step open p-6 md:p-8" id="st1"><button class="step-h" type="button" data-step="1" aria-expanded="true"><span class="flex items-center gap-4"><span class="num">1</span><span><span class="eyebrow block">Le rituel</span><span class="block font-serif text-2xl" id="v1">Choisir</span></span></span><span class="text-xs uppercase tracking-wide2 text-mist link">Modifier</span></button>
+          <div class="collapsible"><div><div class="grid gap-3 pt-6 md:grid-cols-2" id="bk-svc"></div></div></div></div>
+        <div class="step p-6 md:p-8" id="st2"><button class="step-h" type="button" data-step="2" aria-expanded="false"><span class="flex items-center gap-4"><span class="num">2</span><span><span class="eyebrow block">Le barbier</span><span class="block font-serif text-2xl" id="v2">Choisir</span></span></span><span class="text-xs uppercase tracking-wide2 text-mist link">Modifier</span></button>
+          <div class="collapsible"><div><div class="grid gap-3 pt-6 md:grid-cols-2" id="bk-bar"></div></div></div></div>
+        <div class="step p-6 md:p-8" id="st3"><button class="step-h" type="button" data-step="3" aria-expanded="false"><span class="flex items-center gap-4"><span class="num">3</span><span><span class="eyebrow block">Le créneau</span><span class="block font-serif text-2xl" id="v3">Choisir</span></span></span><span class="text-xs uppercase tracking-wide2 text-mist link">Modifier</span></button>
+          <div class="collapsible"><div><div class="pt-6"><div class="flex gap-2 overflow-x-auto pb-3" id="bk-days" role="group" aria-label="Jour"></div><div class="mt-5 flex flex-wrap gap-2" id="bk-slots" role="group" aria-label="Heure" aria-live="polite"></div></div></div></div></div>
+      </div>
+
+      <aside class="glass p-6 md:p-8 lg:sticky lg:top-28" aria-live="polite">
+        <p class="eyebrow">Votre rendez-vous</p>
+        <div id="sum" class="mt-6 grid gap-3 text-sm"></div>
+        <form id="bk-form" class="mt-8 grid gap-5" novalidate hidden>
+          <label class="block text-xs uppercase tracking-wide2 text-mist">Prénom et nom<input class="field mt-1 text-base normal-case tracking-normal" name="name" autocomplete="name" required placeholder="Votre nom"></label>
+          <label class="block text-xs uppercase tracking-wide2 text-mist">E-mail<input class="field mt-1 text-base normal-case tracking-normal" type="email" name="email" autocomplete="email" required placeholder="vous@exemple.fr"></label>
+          <p id="bk-err" class="text-sm text-[#e0a39a]" role="alert" hidden></p>
+          <button class="btn mt-2" type="submit">Confirmer le rendez-vous</button>
+          <p class="text-xs text-mist">Règlement au salon. Annulation gratuite jusqu’à 24 h avant.</p>
+        </form>
+        <div id="bk-done" hidden></div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- Lieu -->
+<section class="border-t border-white/[.07] bg-coal py-24 md:py-32">
+  <div class="mx-auto grid max-w-[1280px] gap-14 px-6 md:grid-cols-[1.2fr_1fr] md:px-10">
+    <div><p class="eyebrow">Le salon</p><h2 class="mt-5 text-[clamp(2.2rem,5vw,4rem)]">Au calme, <em class="text-champagne">au premier étage</em></h2>
+      <p class="mt-6 max-w-md text-mist">12 rue du Faubourg, 75008 Paris (adresse fictive). Un porche, un escalier de pierre, une porte noire : vous êtes arrivé.</p>
+      <p class="mt-8 font-serif text-2xl italic text-champagne">« Le luxe, c’est le temps qu’on vous donne. »</p></div>
+    <dl class="grid content-start gap-0 text-sm">
+      <div class="flex justify-between border-b border-white/10 py-4"><dt class="uppercase tracking-wide2 text-mist">Mardi – Vendredi</dt><dd>10 h – 20 h</dd></div>
+      <div class="flex justify-between border-b border-white/10 py-4"><dt class="uppercase tracking-wide2 text-mist">Samedi</dt><dd>9 h – 18 h</dd></div>
+      <div class="flex justify-between border-b border-white/10 py-4"><dt class="uppercase tracking-wide2 text-mist">Dimanche – Lundi</dt><dd>Fermé</dd></div>
+      <div class="flex justify-between py-4"><dt class="uppercase tracking-wide2 text-mist">Téléphone</dt><dd><a class="link" href="tel:+33100000000">01 00 00 00 00</a></dd></div>
+    </dl>
+  </div>
+</section>
+</main>
+
+<footer class="border-t border-white/[.07] py-10 text-xs text-mist">
+  <div class="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-6 md:px-10">
+    <span>© <span id="yr"></span> Maison Blade · site d’exemple fictif, aucun vrai rendez-vous</span>
+    <span class="flex gap-6"><a class="link" href="../barbier/">Version « street » avec paiement et administration</a><a class="link" href="../../mentions-legales/">Mentions légales</a></span>
+  </div>
+</footer>
+
+<dialog class="lb" id="lb" aria-label="Galerie">
+  <div class="grid h-full w-full grid-rows-[auto_1fr_auto] p-4 md:p-10">
+    <div class="flex items-center justify-between"><span class="eyebrow" id="lbc"></span><button class="btn-line !min-h-[42px] !px-5" id="lbx" type="button">Fermer</button></div>
+    <div class="relative my-6 min-h-0"><div id="lbm" class="h-full w-full overflow-hidden rounded-[4px] border border-white/10"></div></div>
+    <div class="flex items-center justify-between"><button class="btn-line !min-h-[42px] !px-5" id="lbp" type="button">← Précédent</button><span class="font-serif text-xl italic text-champagne" id="lbt"></span><button class="btn-line !min-h-[42px] !px-5" id="lbn" type="button">Suivant →</button></div>
+  </div>
+</dialog>
+
+<script src="luxe.js"></script>
+</body>
+</html>
