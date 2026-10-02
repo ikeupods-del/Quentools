@@ -4,13 +4,15 @@ Brouillon à valider avant publication. Montants indicatifs : les premières com
 
 ## Offres du site QuenTools (clients directs)
 
-Sur le site, trois offres, toutes « sur devis » (aucun prix affiché) :
+Sur le site, trois offres « sur devis » (aucun prix affiché) et une offre **Templates prêts à l'emploi, dès 299 €** (page `templates/`, seul prix affiché publiquement) :
 
 | Offre | Départ (interne) | Par mois | Contenu |
 |---|---|---|---|
 | **Site vitrine** | 200 € (1 page, « Essentiel ») à 400 € (4 à 5 pages, « Pro ») | 15 à 25 € | 1 à 5 pages, formulaire de contact ou de devis, référencement de base, mise en ligne ; 1 modification par mois pour la formule 4 à 5 pages |
 | **Boutique en ligne** | 250 € | 20 € | Boutique Shopify simple (jusqu'à 20 produits), thème personnalisé, pages légales, paiement, fiches produit rédigées |
 | **Outil sur mesure** | à partir de 1 000 € | 30 à 50 € | Outil métier (calcul de devis, suivi, réservation), sur devis |
+
+**Templates (dès 299 €)** : barbier de luxe, barbier « street », outil de devis, sites vitrines par métier. Inclus : personnalisation (nom, couleurs, textes, photos, prix, horaires), mise en ligne, une série de retouches, notice. En option sur devis : réservations/comptes réellement enregistrés, paiement PayPal ou Stripe, e-mails réellement envoyés, nom de domaine, suivi mensuel. Les démonstrations simulent ces fonctions : le dire clairement au client.
 
 La taille du site vitrine (1 page ou plusieurs) se règle dans le devis, pas dans le choix de la carte.
 
