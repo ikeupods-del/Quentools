@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
@@ -66,12 +67,12 @@
   const date = iso => iso ? new Date(iso + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
   const fail = t => { app.innerHTML = `<h1 class="h-section" style="margin-bottom:var(--s-5)">Carte introuvable</h1><div class="notice warn">${t}</div><p style="margin-top:var(--s-4)"><a class="btn btn-ghost" href="../#verifier">Saisir un code</a></p>`; };
   if (!code) return fail('Aucun code dans le lien. Ouvrez le lien reçu par e-mail, ou saisissez le code de la carte.');
-  let c;
+  let c, fromLink = false;
   try { c = window.QTC && await QTC.carte(code); } catch (e) { if (!new URLSearchParams(location.search).get('d')) return fail('Impossible de charger la carte pour le moment (connexion ?). Réessayez dans un instant.'); }
   if (!c) {   // carte créée sans base de données : ses données sont dans le lien
     try {
       const o = JSON.parse(decodeURIComponent(escape(atob(new URLSearchParams(location.search).get('d') || ''))));
-      if (o && o.m > 0) c = { code, montant: +o.m, solde: +o.s || 0, pour: o.p, de: o.f, message: o.t, expire: o.e, statut: o.o ? 'annulee' : 'active' };
+      if (o && o.m > 0) fromLink = true, c = { code, montant: +o.m, solde: +o.s || 0, pour: o.p, de: o.f, message: o.t, expire: o.e, statut: o.o ? 'annulee' : 'active' };
     } catch (e) { /* lien sans données */ }
   }
   if (!c) return fail('Ce code ne correspond à aucune carte. Vérifiez le lien ou les caractères du code (QT-XXXX-XXXX).');
@@ -83,6 +84,7 @@
       <div class="gc-amount">${esc((+c.montant || 0).toLocaleString('fr-FR'))}<small>€</small></div>
       <div><div class="gc-for">${c.pour ? `Pour <b>${esc(c.pour)}</b>` : ''}${c.pour && c.de ? ' · ' : ''}${c.de ? `de <b>${esc(c.de)}</b>` : ''}</div><div class="gc-code">${esc(c.code)}</div></div>
     </div>
+    ${fromLink ? '<div class="notice warn" style="margin-top:var(--s-5)">Carte lue dans le lien : le montant et le solde ne sont confirmés par QuenTools qu’au moment de l’utilisation du code.</div>' : ''}
     ${c.message ? `<p class="note">« ${esc(c.message)} »</p>` : ''}
     ${off ? '<div class="notice warn" style="margin-top:var(--s-5)">Cette carte a été annulée.</div>' : exp ? `<div class="notice warn" style="margin-top:var(--s-5)">Cette carte a expiré le ${esc(date(c.expire))}.</div>` : !solde ? '<div class="notice warn" style="margin-top:var(--s-5)">Cette carte a été entièrement utilisée.</div>' : ''}
     <div class="kv"><div><span>Disponible</span><b>${esc(eur(solde))}</b></div><div><span>Valeur de la carte</span><b>${esc(eur(c.montant))}</b></div><div><span>Valable jusqu’au</span><b>${esc(date(c.expire))}</b></div></div>
