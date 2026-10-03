@@ -30,5 +30,11 @@ Rendez-vous chaque dimanche. Objectif : savoir ce qui marche, corriger ce qui ne
 - Performance : images compressées, pas de script externe (déjà respecté).
 - Vérifier dans Google Search Console (propriété `quentools.fr`) : pages indexées, requêtes, clics, erreurs.
 
+## Veille concurrence
+- Chaque dimanche : relever les publications concurrentes dans les groupes visés (offre, prix affichés, accroche, réponses obtenues) et les noter ci-dessous.
+- Ne jamais citer ni dénigrer un concurrent ; se différencier par la preuve.
+- Nos points forts à répéter : adresse à son propre nom (quentools.fr), SIRET public, prix fixé avant de commencer, sans cookie ni publicité, exemples réels par métier, audit de sécurité, outils gratuits.
+- Concurrent repéré le 2026-10-03 (groupe Facebook) : studio individuel qui vend site, fiche Google, publicité, flyers et maintenance en abonnement ; prix affichés (site dès 499,99 €, maintenance 99,99 €/mois) ; site sous sous-domaine gratuit et adresse Gmail ; message « écrivez-moi en privé » juste après le nôtre. Pas de spécialisation par métier.
+
 ## Journal
 - 2026-10-03 : base en place. Site : titres, descriptions, canonical et `og:*` présents sur les pages principales ; JSON-LD seulement sur l'accueil. 22 carrousels programmés du 4 au 25 octobre. À faire : Facebook à relier à Metricool, Search Console, fiche Google Business, lien conseils en bio.
