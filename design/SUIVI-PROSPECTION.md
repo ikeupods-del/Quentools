@@ -11,7 +11,7 @@ Modèle : « une question sur votre site » (présentation, retour gratuit sur l
 | 2026-10-03 | Cadereau Serrurerie | Serrurerie | Nîmes | olivier.novela@free.fr | envoyé |
 | 2026-10-03 | Cyril Ducasse | Serrurerie | Nîmes | cyril.ducasse@orange.fr | envoyé |
 | 2026-10-03 | Menuiserie Massire | Menuiserie | Beaucaire | menuiseriemassire@orange.fr | envoyé |
-| 2026-10-03 | Ardesign | Menuiserie | Poulx | contact@menuiserie-ardesign.fr | envoyé |
+| 2026-10-03 | Ardesign | Menuiserie | Poulx | contact@menuiserie-ardesign.fr | rebond (domaine introuvable) : ne pas relancer |
 | 2026-10-03 | Nîmes Menuiserie | Menuiserie | Bernis | contact.nimes-menuiserie@orange.fr | envoyé |
 
 ## Pistes préparées (non envoyées)
