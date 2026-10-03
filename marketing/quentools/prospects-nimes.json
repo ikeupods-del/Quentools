@@ -1,0 +1,254 @@
+[
+ {
+  "name": "Madame la Fleuriste",
+  "email": "madamelafleuriste.nimes@gmail.com",
+  "city": "Nîmes",
+  "trade": "Fleuriste",
+  "site": "",
+  "status": "todo",
+  "notes": "21 av. Franklin Roosevelt · 04 48 68 07 85 · e-mail relevé par recherche web, à vérifier"
+ },
+ {
+  "name": "Fleurs de Nila",
+  "email": "fleursdenila@icloud.com",
+  "city": "Nîmes",
+  "trade": "Fleuriste",
+  "site": "fleursdenila.fr",
+  "status": "todo",
+  "notes": "3 rue Auguste-Pellet · 04 34 39 04 29 · a déjà un site, observation à constater · e-mail à vérifier"
+ },
+ {
+  "name": "Bonheurs Nature",
+  "email": "nimes@bonheurs-nature.com",
+  "city": "Nîmes",
+  "trade": "Fleuriste",
+  "site": "bonheurs-nature.com",
+  "status": "todo",
+  "notes": "18 av. Franklin Roosevelt · 04 34 32 35 23 · probablement une enseigne, moins adapté · e-mail à vérifier"
+ },
+ {
+  "name": "HL Plomberie",
+  "email": "hlplomberie@hotmail.com",
+  "city": "Nîmes",
+  "trade": "Plombier",
+  "site": "hlplomberienimes.fr",
+  "status": "todo",
+  "notes": "06 59 62 40 68 · a un site, observation à constater · e-mail à vérifier"
+ },
+ {
+  "name": "SOS Plombier Nîmes",
+  "email": "plombier.a.nimes@gmail.com",
+  "city": "Nîmes",
+  "trade": "Plombier",
+  "site": "sos-plombier-nimes.fr",
+  "status": "todo",
+  "notes": "543 chemin du Sanglier · 06 52 16 32 69 · a un site, observation à constater · e-mail à vérifier"
+ },
+ {
+  "name": "Wolf Alain, plombier chauffagiste",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Plombier",
+  "site": "plombier-chauffagiste-gard.fr",
+  "status": "todo",
+  "notes": "113 impasse de la Clapeyrole · 04 34 04 51 12 · pas d'e-mail trouvé (formulaire sur le site)"
+ },
+ {
+  "name": "Plomberie Fernandes",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Plombier",
+  "site": "plomberie-fernandes.fr",
+  "status": "todo",
+  "notes": "7 rue Henri Revoil · 06 73 17 87 39 · pas d'e-mail trouvé"
+ },
+ {
+  "name": "Emma Saint-Jalmes, ostéopathe (Valmedica)",
+  "email": "emma.saintjalmes@outlook.fr",
+  "city": "Nîmes",
+  "trade": "Ostéopathe",
+  "site": "saint-jalmes-osteopathe.fr",
+  "status": "todo",
+  "notes": "221 rue Claude Nicolas Ledoux · 06 61 46 43 94 · e-mail à vérifier"
+ },
+ {
+  "name": "Logan Fontenay-Stipa, ostéopathe",
+  "email": "osteosecretariat@yahoo.com",
+  "city": "Nîmes",
+  "trade": "Ostéopathe",
+  "site": "osteopathe-nimes.org",
+  "status": "todo",
+  "notes": "20 av. Jean Jaurès · 04 11 83 46 89 · e-mail à vérifier"
+ },
+ {
+  "name": "Camille Chaudesaigues, ostéopathe",
+  "email": "contact@osteo-nimes.com",
+  "city": "Nîmes",
+  "trade": "Ostéopathe",
+  "site": "osteo-nimes.com",
+  "status": "todo",
+  "notes": "443 av. Jean Prouvé · 07 60 97 34 74 · e-mail à vérifier"
+ },
+ {
+  "name": "Vanessa Plaisent, ostéopathe",
+  "email": "contact@osteo-nimes.fr",
+  "city": "Nîmes",
+  "trade": "Ostéopathe",
+  "site": "vp.osteo-nimes.fr",
+  "status": "todo",
+  "notes": "06 59 63 98 13 · e-mail à vérifier"
+ },
+ {
+  "name": "Marie Sophie Poulain Mouls, ostéopathe",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Ostéopathe",
+  "site": "osteonimes.fr",
+  "status": "todo",
+  "notes": "13 quai Fontaine · 06 48 24 96 73 · pas d'e-mail trouvé"
+ },
+ {
+  "name": "Angélique Lebreton, ostéopathe",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Ostéopathe",
+  "site": "",
+  "status": "todo",
+  "notes": "1 rue Rouget de Lisle · 06 84 55 56 35 · pas d'e-mail, pas de site trouvé (à vérifier)"
+ },
+ {
+  "name": "L'Adresse Coiffure",
+  "email": "camille.sammut@gmail.com",
+  "city": "Nîmes",
+  "trade": "Coiffeur",
+  "site": "",
+  "status": "todo",
+  "notes": "3 rue de la Madeleine · 04 66 67 61 06 · site non trouvé (à vérifier) · e-mail à vérifier"
+ },
+ {
+  "name": "Créa'Tifs",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Coiffeur",
+  "site": "creatifs-coiffure-nimes.fr",
+  "status": "todo",
+  "notes": "71 rue du Temple · a un site, observation à constater"
+ },
+ {
+  "name": "Le Coiffeur Français",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Coiffeur",
+  "site": "",
+  "status": "todo",
+  "notes": "3 ter rue de la Violette · 04 66 26 68 63 · page Facebook seulement ? à vérifier"
+ },
+ {
+  "name": "SOS Électricien Nîmes",
+  "email": "sos.electricien.nimes@gmail.com",
+  "city": "Nîmes",
+  "trade": "Électricien",
+  "site": "sos-electricien-nimes.fr",
+  "status": "todo",
+  "notes": "a un site, observation à constater · e-mail à vérifier"
+ },
+ {
+  "name": "Mr Électricien",
+  "email": "mr.electricien30@gmail.com",
+  "city": "Nîmes",
+  "trade": "Électricien",
+  "site": "mr-electricien.com",
+  "status": "todo",
+  "notes": "220 rue Guy Arnaud · 06 52 96 12 81 · a un site · e-mail à vérifier"
+ },
+ {
+  "name": "Eutrope Elec",
+  "email": "eutrope.elec@live.fr",
+  "city": "Nîmes",
+  "trade": "Électricien",
+  "site": "eutrope-elec.com",
+  "status": "todo",
+  "notes": "465 impasse des Huppes · 06 34 24 54 87 · a un site · e-mail à vérifier"
+ },
+ {
+  "name": "Midi Électricité",
+  "email": "midi.electricite@gmail.com",
+  "city": "Nîmes",
+  "trade": "Électricien",
+  "site": "midi-electricite-nimes.fr",
+  "status": "todo",
+  "notes": "09 84 42 70 57 · a un site · e-mail à vérifier"
+ },
+ {
+  "name": "Pâtisserie Francin",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Pâtissier",
+  "site": "patisseriefrancin.fr",
+  "status": "todo",
+  "notes": "25 rue de la République · 04 66 76 04 20 · e-mail sur le site (masqué)"
+ },
+ {
+  "name": "Boulangerie Alle",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Boulanger",
+  "site": "",
+  "status": "todo",
+  "notes": "31 rue Fresque · 04 66 67 29 76 · site non trouvé (à vérifier)"
+ },
+ {
+  "name": "La Case aux Pains",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Boulanger",
+  "site": "lacaseauxpains.fr",
+  "status": "todo",
+  "notes": "14 rue Edmond Rostand · 04 66 29 13 04"
+ },
+ {
+  "name": "La Cour des Marchands",
+  "email": "contact@restaurantlacoursdesmarchands.fr",
+  "city": "Nîmes",
+  "trade": "Restaurant",
+  "site": "restaurantlacoursdesmarchands.fr",
+  "status": "todo",
+  "notes": "7 rue des Marchands · a un site · e-mail à vérifier"
+ },
+ {
+  "name": "Le Resto",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Restaurant",
+  "site": "leresto-nimes.com",
+  "status": "todo",
+  "notes": "6 rue Saint-Thomas · 04 66 21 80 12"
+ },
+ {
+  "name": "Chez Rani",
+  "email": "alitalukder1977@gmail.com",
+  "city": "Nîmes",
+  "trade": "Restaurant",
+  "site": "",
+  "status": "todo",
+  "notes": "place du Marché · pas de site propre (page eatbu) · adresse personnelle · e-mail à vérifier"
+ },
+ {
+  "name": "Nimoasis",
+  "email": "ab.zitouni@yahoo.fr",
+  "city": "Nîmes",
+  "trade": "Restaurant",
+  "site": "",
+  "status": "todo",
+  "notes": "06 27 65 20 76 · pas de site propre (page eatbu) · adresse personnelle · e-mail à vérifier"
+ },
+ {
+  "name": "Menna",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Restaurant",
+  "site": "restaurant-menna.fr",
+  "status": "todo",
+  "notes": "7 rue de Bernis · 04 66 21 04 45"
+ }
+]
