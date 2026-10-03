@@ -1,21 +1,21 @@
 [
  {
   "name": "Madame la Fleuriste",
-  "email": "madamelafleuriste.nimes@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Fleuriste",
   "site": "",
   "status": "todo",
-  "notes": "21 av. Franklin Roosevelt · 04 48 68 07 85 · e-mail relevé par recherche web, à vérifier"
+  "notes": "21 av. Franklin Roosevelt · 04 48 68 07 85 · e-mail relevé par recherche web, à vérifier · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Fleurs de Nila",
-  "email": "fleursdenila@icloud.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Fleuriste",
   "site": "fleursdenila.fr",
   "status": "todo",
-  "notes": "3 rue Auguste-Pellet · 04 34 39 04 29 · a déjà un site, observation à constater · e-mail à vérifier"
+  "notes": "3 rue Auguste-Pellet · 04 34 39 04 29 · a déjà un site, observation à constater · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Bonheurs Nature",
@@ -28,21 +28,21 @@
  },
  {
   "name": "HL Plomberie",
-  "email": "hlplomberie@hotmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Plombier",
   "site": "hlplomberienimes.fr",
   "status": "todo",
-  "notes": "06 59 62 40 68 · a un site, observation à constater · e-mail à vérifier"
+  "notes": "06 59 62 40 68 · a un site, observation à constater · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "SOS Plombier Nîmes",
-  "email": "plombier.a.nimes@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Plombier",
   "site": "sos-plombier-nimes.fr",
   "status": "todo",
-  "notes": "543 chemin du Sanglier · 06 52 16 32 69 · a un site, observation à constater · e-mail à vérifier"
+  "notes": "543 chemin du Sanglier · 06 52 16 32 69 · a un site, observation à constater · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Wolf Alain, plombier chauffagiste",
@@ -64,21 +64,21 @@
  },
  {
   "name": "Emma Saint-Jalmes, ostéopathe (Valmedica)",
-  "email": "emma.saintjalmes@outlook.fr",
+  "email": "",
   "city": "Nîmes",
   "trade": "Ostéopathe",
   "site": "saint-jalmes-osteopathe.fr",
   "status": "todo",
-  "notes": "221 rue Claude Nicolas Ledoux · 06 61 46 43 94 · e-mail à vérifier"
+  "notes": "221 rue Claude Nicolas Ledoux · 06 61 46 43 94 · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Logan Fontenay-Stipa, ostéopathe",
-  "email": "osteosecretariat@yahoo.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Ostéopathe",
   "site": "osteopathe-nimes.org",
   "status": "todo",
-  "notes": "20 av. Jean Jaurès · 04 11 83 46 89 · e-mail à vérifier"
+  "notes": "20 av. Jean Jaurès · 04 11 83 46 89 · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Camille Chaudesaigues, ostéopathe",
@@ -118,12 +118,12 @@
  },
  {
   "name": "L'Adresse Coiffure",
-  "email": "camille.sammut@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Coiffeur",
   "site": "",
   "status": "todo",
-  "notes": "3 rue de la Madeleine · 04 66 67 61 06 · site non trouvé (à vérifier) · e-mail à vérifier"
+  "notes": "3 rue de la Madeleine · 04 66 67 61 06 · site non trouvé (à vérifier) · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Créa'Tifs",
@@ -145,39 +145,39 @@
  },
  {
   "name": "SOS Électricien Nîmes",
-  "email": "sos.electricien.nimes@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Électricien",
   "site": "sos-electricien-nimes.fr",
   "status": "todo",
-  "notes": "a un site, observation à constater · e-mail à vérifier"
+  "notes": "a un site, observation à constater · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Mr Électricien",
-  "email": "mr.electricien30@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Électricien",
   "site": "mr-electricien.com",
   "status": "todo",
-  "notes": "220 rue Guy Arnaud · 06 52 96 12 81 · a un site · e-mail à vérifier"
+  "notes": "220 rue Guy Arnaud · 06 52 96 12 81 · a un site · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Eutrope Elec",
-  "email": "eutrope.elec@live.fr",
+  "email": "",
   "city": "Nîmes",
   "trade": "Électricien",
   "site": "eutrope-elec.com",
   "status": "todo",
-  "notes": "465 impasse des Huppes · 06 34 24 54 87 · a un site · e-mail à vérifier"
+  "notes": "465 impasse des Huppes · 06 34 24 54 87 · a un site · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Midi Électricité",
-  "email": "midi.electricite@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Électricien",
   "site": "midi-electricite-nimes.fr",
   "status": "todo",
-  "notes": "09 84 42 70 57 · a un site · e-mail à vérifier"
+  "notes": "09 84 42 70 57 · a un site · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Pâtisserie Francin",
@@ -226,21 +226,21 @@
  },
  {
   "name": "Chez Rani",
-  "email": "alitalukder1977@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Restaurant",
   "site": "",
   "status": "todo",
-  "notes": "place du Marché · pas de site propre (page eatbu) · adresse personnelle · e-mail à vérifier"
+  "notes": "place du Marché · pas de site propre (page eatbu) · adresse personnelle · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Nimoasis",
-  "email": "ab.zitouni@yahoo.fr",
+  "email": "",
   "city": "Nîmes",
   "trade": "Restaurant",
   "site": "",
   "status": "todo",
-  "notes": "06 27 65 20 76 · pas de site propre (page eatbu) · adresse personnelle · e-mail à vérifier"
+  "notes": "06 27 65 20 76 · pas de site propre (page eatbu) · adresse personnelle · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Menna",
@@ -253,12 +253,12 @@
  },
  {
   "name": "Perif' Auto",
-  "email": "perifauto@live.fr",
+  "email": "",
   "city": "Nîmes",
   "trade": "Garagiste",
   "site": "",
   "status": "todo",
-  "notes": "04 66 29 00 60 · site non trouvé (à vérifier) · e-mail à vérifier"
+  "notes": "04 66 29 00 60 · site non trouvé (à vérifier) · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Normauto / Auto Pro",
@@ -298,66 +298,66 @@
  },
  {
   "name": "Auto-école 30",
-  "email": "autoecole30@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Auto-école",
   "site": "autoecole30.fr",
   "status": "todo",
-  "notes": "04 66 21 99 49 · a un site · e-mail à vérifier"
+  "notes": "04 66 21 99 49 · a un site · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Auto-école Nîmes Ouest",
-  "email": "autoecole30.nimesouest@orange.fr",
+  "email": "",
   "city": "Nîmes",
   "trade": "Auto-école",
   "site": "",
   "status": "todo",
-  "notes": "04 66 64 26 18 · site non trouvé · e-mail à vérifier"
+  "notes": "04 66 64 26 18 · site non trouvé · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Auto-école ABC",
-  "email": "autoecoleabc@orange.fr",
+  "email": "",
   "city": "Nîmes",
   "trade": "Auto-école",
   "site": "autoecoleabc.com",
   "status": "todo",
-  "notes": "06 98 65 56 59 · a un site · e-mail à vérifier"
+  "notes": "06 98 65 56 59 · a un site · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Auto-école Route de Beaucaire",
-  "email": "autoecole.rdb@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Auto-école",
   "site": "autoecole-rdb.com",
   "status": "todo",
-  "notes": "06 68 70 02 33 · a un site · e-mail à vérifier"
+  "notes": "06 68 70 02 33 · a un site · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Auto-école ABC Camus",
-  "email": "abccamus@orange.fr",
+  "email": "",
   "city": "Nîmes",
   "trade": "Auto-école",
   "site": "",
   "status": "todo",
-  "notes": "06 61 54 46 42 · site propre non trouvé · e-mail à vérifier"
+  "notes": "06 61 54 46 42 · site propre non trouvé · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "L'Occitane Traiteur",
-  "email": "loccitanetraiteur@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Traiteur",
   "site": "loccitane-traiteur-nimes.fr",
   "status": "todo",
-  "notes": "22 rue Émile Jamais · 04 66 67 99 05 · e-mail à vérifier"
+  "notes": "22 rue Émile Jamais · 04 66 67 99 05 · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Ô Délices de Sam",
-  "email": "odelicesdesam@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Traiteur",
   "site": "odelicesdesam-traiteurnimes.fr",
   "status": "todo",
-  "notes": "07 45 16 21 10 · e-mail à vérifier"
+  "notes": "07 45 16 21 10 · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Le M",
@@ -379,21 +379,21 @@
  },
  {
   "name": "Au Rituel des Sens",
-  "email": "auritueldessens@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Esthéticienne",
   "site": "estheticienne-nimes.fr",
   "status": "todo",
-  "notes": "306 rue des Pélicans · 06 85 90 44 75 · a un site · e-mail à vérifier"
+  "notes": "306 rue des Pélicans · 06 85 90 44 75 · a un site · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Institut Val'Esthetic",
-  "email": "valerie.munto@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Esthéticienne",
   "site": "institut-valesthetic.com",
   "status": "todo",
-  "notes": "31 bis rue du Cirque Romain · 04 66 21 51 12 · e-mail à vérifier"
+  "notes": "31 bis rue du Cirque Romain · 04 66 21 51 12 · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Isabelle en Particulier",
@@ -460,21 +460,21 @@
  },
  {
   "name": "Julien Lefebvre Photographe",
-  "email": "julien_lefebvre@live.fr",
+  "email": "",
   "city": "Nîmes",
   "trade": "Photographe",
   "site": "",
   "status": "todo",
-  "notes": "page Facebook seulement ? à vérifier · e-mail à vérifier"
+  "notes": "page Facebook seulement ? à vérifier · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Beauty Hacker",
-  "email": "beautyhacker.photographe@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Photographe",
   "site": "beauty-hacker.fr",
   "status": "todo",
-  "notes": "a un site · e-mail à vérifier"
+  "notes": "a un site · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "PixinShot",
@@ -514,30 +514,30 @@
  },
  {
   "name": "Soloma Sud",
-  "email": "jlamorichsolomasud@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Peintre",
   "site": "soloma-sud30.fr",
   "status": "todo",
-  "notes": "80 rue Gustave Eiffel · 07 60 51 37 39 · e-mail à vérifier"
+  "notes": "80 rue Gustave Eiffel · 07 60 51 37 39 · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "DR Construction",
-  "email": "debordraymond30@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Peintre",
   "site": "drconstruction.fr",
   "status": "todo",
-  "notes": "10 bd Natoire · 06 62 81 81 13 · e-mail à vérifier"
+  "notes": "10 bd Natoire · 06 62 81 81 13 · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Peintre Express",
-  "email": "peintre.express30@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Peintre",
   "site": "",
   "status": "todo",
-  "notes": "06 37 76 45 25 · site non trouvé · e-mail à vérifier"
+  "notes": "06 37 76 45 25 · site non trouvé · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Optisport",
@@ -568,12 +568,12 @@
  },
  {
   "name": "Lutz Menuiserie Ébénisterie",
-  "email": "daniel-lutz@wanadoo.fr",
+  "email": "",
   "city": "Nîmes",
   "trade": "Menuisier",
   "site": "lutz-menuiserie.fr",
   "status": "todo",
-  "notes": "106 rue Louis Proust · adresse ancienne (wanadoo) · e-mail à vérifier"
+  "notes": "106 rue Louis Proust · adresse ancienne (wanadoo) · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Ardesign Menuiserie",
@@ -586,12 +586,12 @@
  },
  {
   "name": "O'Callaghan Menuisier-Ébéniste",
-  "email": "taylorseamus@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Menuisier",
   "site": "menuiserie-traditionnelle-ocallaghan.com",
   "status": "todo",
-  "notes": "478 chemin de Pareloup · 09 74 56 58 72 · e-mail à vérifier"
+  "notes": "478 chemin de Pareloup · 09 74 56 58 72 · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Nimestore Menuiseries",
@@ -604,21 +604,21 @@
  },
  {
   "name": "Ai Rénovation",
-  "email": "ai.renovation30@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Maçon",
   "site": "ai-renovation.com",
   "status": "todo",
-  "notes": "06 29 93 32 50 · e-mail à vérifier"
+  "notes": "06 29 93 32 50 · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Maçonnerie Nîmes",
-  "email": "jackgenc687@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Maçon",
   "site": "maconnerienimes.fr",
   "status": "todo",
-  "notes": "4 rue Jean XXIII · 06 68 83 68 52 · e-mail à vérifier"
+  "notes": "4 rue Jean XXIII · 06 68 83 68 52 · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "VS Maçonnerie",
@@ -640,12 +640,12 @@
  },
  {
   "name": "Clinique ABC'Vet",
-  "email": "dupouyvet@gmail.com",
+  "email": "",
   "city": "Nîmes",
   "trade": "Vétérinaire",
   "site": "veterinairedupouybonnefond.fr",
   "status": "todo",
-  "notes": "04 66 36 10 61 · e-mail à vérifier"
+  "notes": "04 66 36 10 61 · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "Clinique Rajaut-Camallonga",
@@ -658,12 +658,12 @@
  },
  {
   "name": "Clinique vétérinaire l'Avenir",
-  "email": "cva30@free.fr",
+  "email": "",
   "city": "Nîmes",
   "trade": "Vétérinaire",
   "site": "cliniqueveterinairelavenir.com",
   "status": "todo",
-  "notes": "145 route d'Avignon · 04 66 26 76 70 · e-mail à vérifier"
+  "notes": "145 route d'Avignon · 04 66 26 76 70 · adresse personnelle retirée, contacter par téléphone ou formulaire"
  },
  {
   "name": "VET30000",
