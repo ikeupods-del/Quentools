@@ -12,6 +12,8 @@ Mémo commercial à relire avant un devis (évite de tout recalculer). Estimatio
 | **Total** | **105–145** | **≈ 40 000–85 000 €** (agence : 80 000–150 000 €) |
 
 ## Grille à proposer aux clients (QuenTools)
+**Applications complètes (type Wouf) : non proposées.** Trop de temps de travail pour trop peu de demandes ; elles ne figurent ni dans le formulaire de devis ni dans l'estimateur. Wouf reste présenté comme réalisation (page `realisations/`) et comme référence de coût ci-dessus. Si un client en demande une, répondre par un outil sur mesure ou décliner.
+
 Voir `design/OFFRES.md` (formules du site et services Fiverr, validées par le propriétaire) ; trousse boutique Shopify réutilisable dans `design/shopify/`. Positionnement : le marché des boutiques Shopify démarre vers 75 € sur Fiverr ; QuenTools vend le français, le suivi et le sur mesure plutôt que le prix seul.
 
 | Offre | Départ | Mensuel | Contenu |
@@ -22,7 +24,6 @@ Voir `design/OFFRES.md` (formules du site et services Fiverr, validées par le p
 | **Template prêt à l'emploi** | **dès 399 €** | 6 premiers mois offerts, ensuite optionnel (grille Essentiel/Pro) | template personnalisé (nom, couleurs, textes, photos, prix) + mise en ligne sur nom de domaine **offert (1re année)** + **assistance et maintenance offertes 6 mois** + une série de retouches ; fonctions réelles (base de données, paiement, e-mails) en option sur devis |
 | **Audit de sécurité express** | **100 €** (prix de lancement) | — | contrôle automatisé des points visibles de l'extérieur (page `audit/`, outil `tools/audit-express.js`), rapport PDF sous 48 h ; corrections sur devis ; voir `design/AUDIT-EXPRESS.md` |
 | Outil sur mesure | dès 1 000 € | 30-50 € | calcul de devis, suivi, réservation |
-| Application « type Wouf » | 3 000-6 000 € | 50-150 € | comptes, fiches, rappels, installable |
 | + Paiements et administration | +500-1 500 € | | PayPal et/ou Stripe, relais Cloudflare |
 
 Templates (catalogue : site `templates/`, démonstrations dans `demo/` et `exemples/`) : prix de départ **399 €** affiché publiquement, pour la personnalisation et la mise en ligne. Les démonstrations simulent paiement, e-mails et comptes : brancher le réel (voir « Paiements et administration », +500-1 500 €) se chiffre dans le devis, ne jamais le promettre dans les 399 €. Coût réel à absorber par offre : un nom de domaine (≈ 10-15 €/an, acheté au nom du client) et le temps d'assistance des 6 mois (hébergement GitHub Pages gratuit ; réponse sous 48 h ouvrées, modifications simples seulement) : garder les 399 € rentables. Ouvre un devis via `devis/?type=Template&template=<nom>`.

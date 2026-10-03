@@ -198,7 +198,7 @@ const stLabel = k => (STATUS.find(s => s[0] === k) || STATUS[0])[1];
 
 /* Grille QuenTools (design/TARIFS.md, « Prix QuenTools conseillé ») */
 const GRID = {
-  'Site vitrine': [200, 400], 'Boutique Shopify': [150, 260], 'Outil sur mesure': [1000, 3000], 'Application complète': [3000, 6000], 'Audit express': [100, 100]
+  'Site vitrine': [200, 400], 'Boutique Shopify': [150, 260], 'Outil sur mesure': [1000, 3000], 'Audit express': [100, 100]
 };
 const EXTRA_PAY = [500, 1500], MAINT = [15, 50];
 const LEVEL = { simple: [0, .4], standard: [.3, .7], avance: [.6, 1] };
@@ -218,7 +218,7 @@ const demo = {
     { id: 'd0', type: 'Template', nom: 'Salon Mistral', email: 'mistral@example.com', tel: '06 22 33 44 55', delai: 'Dans le mois', budget: 'Moins de 1 000 €', besoin: 'Template souhaité : Barbier de luxe\nOptions souhaitées : Paiement en ligne réel (PayPal ou Stripe); E-mails de confirmation et de rappel réellement envoyés\n\nJe tiens un salon de coiffure homme à Aix et je voudrais prendre les réservations en ligne.', status: 'nouveau', at: new Date(Date.now() - 3600e3) },
     { id: 'd1', type: 'Site vitrine', nom: 'Julie Martin', email: 'julie@example.com', tel: '06 00 00 00 00', delai: 'Dans le mois', budget: '1 000 à 3 000 €', besoin: 'Je suis fleuriste à Nîmes et je voudrais un site simple avec mes horaires, des photos et un bouton pour commander.', status: 'nouveau', at: new Date(Date.now() - 3600e3).toISOString() },
     { id: 'd2', type: 'Outil sur mesure', nom: 'Karim B.', email: 'karim@example.com', tel: '', delai: 'Dès que possible', budget: 'Je ne sais pas encore', besoin: 'Plombier, je fais mes devis sur Excel. Je veux un outil sur téléphone pour faire un devis devant le client.', status: 'envoye', montant: 1800, note: 'Rappeler jeudi', at: new Date(Date.now() - 5 * 864e5).toISOString() },
-    { id: 'd3', type: 'Application complète', nom: 'Asso Les Pattes', email: 'contact@example.org', tel: '', delai: 'Dans les 3 mois', budget: '3 000 à 6 000 €', besoin: 'Application pour suivre les adoptions et les familles d’accueil.', status: 'gagne', montant: 4200, at: new Date(Date.now() - 20 * 864e5).toISOString() }
+    { id: 'd3', type: 'Outil sur mesure', nom: 'Asso Les Pattes', email: 'contact@example.org', tel: '', delai: 'Dans les 3 mois', budget: '3 000 à 6 000 €', besoin: 'Outil pour suivre les adoptions et les familles d’accueil.', status: 'gagne', montant: 4200, at: new Date(Date.now() - 20 * 864e5).toISOString() }
   ], site: { announceOn: false, announce: '', announceUrl: '', available: true, availText: '' }
 };
 const demoExtra = () => [
