@@ -15,7 +15,6 @@ Tout ce qu'il faut pour produire vite un site ou un outil au niveau du site vitr
 | `templates/rendez-vous.html` | Prestations sur rendez-vous (coiffeur, thérapeute, coach, restaurateur) : prestations, tarifs, horaires, demande de créneau. |
 | `templates/restaurant.html` | Restaurant, bar, boulangerie : plat du jour, carte, horaires, réservation. |
 | `templates/vente-formation.html` | Page de vente d'une formation ou d'un guide : problème, programme, auteur, prix, FAQ. |
-| `../demo/barbier/` | Barbier (modèle complet, voir son README) : réservation, paiement carte/espèces, abonnement, fidélité, boutique, administration. |
 | `../demo/maison-blade/` | Barbier de luxe « Quiet Luxury » (Tailwind compilé), démo complète : réservation en 3 choix, paiement, abonnement, fidélité, boutique, administration. Voir son README. |
 | `templates/legal.html` | Mentions légales et confidentialité à compléter. |
 | `templates/merci.html` | Page de confirmation (après un formulaire ou un paiement). |
