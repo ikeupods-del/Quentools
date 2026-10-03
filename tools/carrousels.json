@@ -695,5 +695,36 @@
   "c1": "#d7f24a",
   "c2": "#8f7bff",
   "hidePrices": true
+ },
+ {
+  "id": "revisions",
+  "site": "outils/revisions/?demo",
+  "pill": "Outil gratuit",
+  "hook": [
+   "Réviser sans",
+   "se prendre la tête ?"
+  ],
+  "accent": "Un outil 100 % gratuit pour les étudiants.",
+  "prob": "Réviser, c’est souvent…",
+  "pb": [
+   "Des fiches qu’on ne relit jamais",
+   "Des examens qui arrivent trop vite",
+   "Aucun suivi de ce qu’on retient"
+  ],
+  "sol": "Une aide à la révision complète",
+  "sb": [
+   "Des fiches qui reviennent au bon moment",
+   "Planning, minuteur et moyennes",
+   "Gratuit, sans inscription ni pub"
+  ],
+  "ctaPill": "Et vous ?",
+  "ctaTitle": "Vous *révisez* pour quel examen ?",
+  "ctaText": "Dites-le en commentaire.",
+  "note": "",
+  "cap": "Réviser sans se prendre la tête 📚\n\nL’aide à la révision QuenTools est 100 % gratuite : des fiches qui reviennent au bon moment pour mieux retenir, un planning d’examens, un minuteur de concentration, le calcul de vos moyennes et vos statistiques.\n\nPas d’inscription, pas de publicité : tout reste sur votre téléphone. Retrouvez-la dans les outils gratuits de QuenTools (lien en bio).\n\nVous révisez pour quel examen en ce moment ? Dites-le en commentaire 👇",
+  "tt": "Un outil gratuit pour réviser",
+  "tags": "#etudiant #revisions #examens #outilgratuit #pomodoro",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff"
  }
 ]
