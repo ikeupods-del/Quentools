@@ -198,7 +198,7 @@ const stLabel = k => (STATUS.find(s => s[0] === k) || STATUS[0])[1];
 
 /* Grille QuenTools (design/TARIFS.md, « Prix QuenTools conseillé ») */
 const GRID = {
-  'Site vitrine': [200, 400], 'Boutique Shopify': [150, 260], 'Outil sur mesure': [1000, 3000], 'Application complète': [3000, 6000]
+  'Site vitrine': [200, 400], 'Boutique Shopify': [150, 260], 'Outil sur mesure': [1000, 3000], 'Application complète': [3000, 6000], 'Audit express': [100, 100]
 };
 const EXTRA_PAY = [500, 1500], MAINT = [15, 50];
 const LEVEL = { simple: [0, .4], standard: [.3, .7], avance: [.6, 1] };
@@ -376,7 +376,7 @@ const SELLER_DEF = { marque: 'QuenTools', titulaire: 'Quentin Storace EI', adres
   conditions: 'La première version est présentée avant la suite du travail ; les modifications demandées après sa validation peuvent faire l’objet d’un devis complémentaire.\nEn cas de retard de paiement : pénalités égales à trois fois le taux d’intérêt légal et, pour les clients professionnels, indemnité forfaitaire de 40 € pour frais de recouvrement.\n' + CLAUSE };
 const seller = () => ({ ...SELLER_DEF, ...(notes._vendeur || {}) });
 /* Préréglages de prestations (prix indicatifs, dans la grille QuenTools : à adapter). [désignation, prix, mensuel] */
-const CAT_BASE = [['Site vitrine (jusqu’à 5 pages)', 300], ['Page supplémentaire', 50], ['Boutique Shopify : configuration et mise en ligne', 200], ['Outil sur mesure', 1500],
+const CAT_BASE = [['Site vitrine (jusqu’à 5 pages)', 300], ['Page supplémentaire', 50], ['Boutique Shopify : configuration et mise en ligne', 200], ['Outil sur mesure', 1500], ['Audit de sécurité express (1 site, rapport PDF sous 48 h)', 100],
   ['Paiement en ligne et administration', 800], ['Rédaction des textes', 80], ['Nom de domaine (1 an)', 12], ['Prise en main (1 h en visio)', 40],
   ['Maintenance mensuelle : hébergement, sauvegardes, petites modifications', 25, true]];
 const catCustom = () => { try { const c = JSON.parse((notes._catalogue || {}).items || '[]'); return Array.isArray(c) ? c.filter(x => x && x[0]) : []; } catch (e) { return []; } };

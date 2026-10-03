@@ -20,6 +20,7 @@ Voir `design/OFFRES.md` (formules du site et services Fiverr, validées par le p
 | Pro | 400 € | 25 € | 4-5 pages, formulaire de devis, 1 modification par mois |
 | Boutique Shopify | 250 € | 20 € | jusqu'à 20 produits, pages légales, paiement (abonnement Shopify à la charge du client) |
 | **Template prêt à l'emploi** | **dès 399 €** | 6 premiers mois offerts, ensuite optionnel (grille Essentiel/Pro) | template personnalisé (nom, couleurs, textes, photos, prix) + mise en ligne sur nom de domaine **offert (1re année)** + **assistance et maintenance offertes 6 mois** + une série de retouches ; fonctions réelles (base de données, paiement, e-mails) en option sur devis |
+| **Audit de sécurité express** | **100 €** (prix de lancement) | — | contrôle automatisé des points visibles de l'extérieur (page `audit/`, outil `tools/audit-express.js`), rapport PDF sous 48 h ; corrections sur devis ; voir `design/AUDIT-EXPRESS.md` |
 | Outil sur mesure | dès 1 000 € | 30-50 € | calcul de devis, suivi, réservation |
 | Application « type Wouf » | 3 000-6 000 € | 50-150 € | comptes, fiches, rappels, installable |
 | + Paiements et administration | +500-1 500 € | | PayPal et/ou Stripe, relais Cloudflare |

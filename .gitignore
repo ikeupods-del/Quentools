@@ -9,3 +9,6 @@ service-account*.json
 firebase-adminsdk*.json
 node_modules/
 .DS_Store
+
+# Rapports d'audit des clients (confidentiels)
+audits/
