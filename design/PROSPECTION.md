@@ -5,11 +5,14 @@ Principe : pas de lien, pas de prix, pas de « promo » dans la publication. On 
 Règles à respecter :
 - Lire les règles de chaque groupe et préférer les groupes où les indépendants et commerçants se parlent.
 - Ne jamais envoyer de message privé à quelqu'un qui n'a pas réagi : répondre d'abord en commentaire, puis proposer d'en parler en privé.
+- Toujours commencer par « Bonjour à tous » : c'est exigé dans beaucoup de groupes.
 - Une publication par groupe, espacée de plusieurs jours. Ne pas copier-coller le même texte partout.
 - Ne jamais promettre ce qu'on ne peut pas tenir, ne jamais inventer d'avis ou de chiffre.
 - Dans l'audit, ne contrôler un site qu'avec l'accord écrit de son propriétaire.
 
 ## Message 1 : la question (création de site)
+
+Bonjour à tous 👋
 
 Question pour les pros du groupe 🤔
 
@@ -21,6 +24,8 @@ Dites-moi en commentaire votre métier et si vous avez un site : je vous répond
 
 ## Message 2 : le service (création de site)
 
+Bonjour à tous 👋
+
 Je regarde gratuitement 5 sites ou pages de pros du groupe cette semaine 👀
 
 Je vous dis en 3 lignes ce qui fait fuir les clients et ce que je changerais en premier. Sans engagement.
@@ -29,6 +34,8 @@ Commentez avec votre métier et je vous réponds en commentaire.
 
 ## Message 3 : l'histoire (création de site)
 
+Bonjour à tous 👋
+
 Un artisan m'a dit : « Mon site, je ne sais même pas s'il marche sur téléphone. »
 
 Il avait raison de se poser la question : la majorité des visiteurs viennent de leur téléphone.
@@ -36,6 +43,8 @@ Il avait raison de se poser la question : la majorité des visiteurs viennent de
 Et vous, vous l'avez déjà testé sur le vôtre ? 😅
 
 ## Message 4 : la curiosité (audit de sécurité)
+
+Bonjour à tous 👋
 
 Petite question : savez-vous si votre site est en sécurité ?
 
