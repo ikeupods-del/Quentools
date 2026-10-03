@@ -64,6 +64,30 @@ Je contrôle des sites gratuitement pour 3 personnes du groupe cette semaine. Di
 2. Proposer d'en parler en privé seulement s'ils sont intéressés.
 3. En privé, donner les prix et envoyer les exemples (quentools.fr/exemples/, quentools.fr/templates/) ou le formulaire (quentools.fr/devis/).
 
+## Prospection active par métier (message privé, après un premier contact)
+
+Règle : jamais de message privé à froid. D'abord un commentaire utile sous leur publication ou sur leur page, puis le message privé seulement s'ils répondent ou réagissent. Pas de lien ni de prix dans le premier message ; ne rien affirmer qu'on n'a pas vu (regarder leur page ou leur site avant).
+
+Commentaire d'approche (à adapter, sous la publication d'un pro) :
+> Bonjour, j'ai regardé votre page, vos réalisations donnent vraiment envie. Une petite idée en passant : [un point précis et vrai vu sur leur page]. Bonne continuation !
+
+Message privé après réponse (base commune, remplacer [métier] et le détail) :
+> Bonjour [prénom], merci pour votre réponse ! Comme je le disais, [détail vu sur leur page]. Je crée des sites pour les [métier] et je regarde volontiers votre situation. Aujourd'hui, comment vos clients vous trouvent-ils ?
+
+Variantes de la dernière question :
+- Plombier, électricien, chauffagiste : « Quand quelqu'un a une urgence, il vous trouve comment ? Par le bouche-à-oreille, Google ? »
+- Restaurant, boulangerie, commerce : « Vos horaires et votre carte sont-ils faciles à trouver sur téléphone ? »
+- Coiffeur, barbier, esthéticienne : « Les rendez-vous, vous les prenez surtout par téléphone ou en ligne ? »
+- Fleuriste, artisan d'art : « Vos clients peuvent-ils voir et commander vos créations sans vous appeler ? »
+- Coach, ostéopathe, indépendant : « Quand quelqu'un hésite à vous contacter, qu'est-ce qui lui manque pour se décider ? »
+- Photographe : « Votre portfolio, vous l'avez surtout sur Instagram ou sur un site à vous ? »
+
+Si la personne répond : poser une seule question à la fois, proposer ensuite de montrer un exemple de son métier (quentools.fr/exemples/), puis le devis gratuit. Prix seulement si elle le demande.
+
+Cadence : 5 contacts personnalisés par jour au maximum, une relance au bout de 4 jours (« Bonjour [prénom], je me permets de revenir vers vous, avez-vous pu y réfléchir ? »), puis on arrête. Noter chaque contact (nom, métier, date, réponse) dans le suivi de `marketing/quentools/PROSPECTION.md`.
+
+Face à un concurrent dans le même groupe : ne pas le citer. Répondre plus vite, montrer un exemple de leur métier, rappeler l'adresse à leur nom, le prix fixé avant de commencer et l'assistance offerte.
+
 ## Réseaux sociaux : priorité à QuenTools
 
 Depuis le 3 octobre 2026, les 42 publications Instagram de Wouf (compte wouf.officiel, programmées jusqu'au 31 octobre dans Metricool) ont été passées en brouillon : elles ne partent plus, mais textes et images sont conservés dans Metricool (calendrier → brouillons). Pour relancer Wouf plus tard : rouvrir chaque brouillon et le reprogrammer.
