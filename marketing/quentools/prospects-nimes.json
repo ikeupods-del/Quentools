@@ -250,5 +250,167 @@
   "site": "restaurant-menna.fr",
   "status": "todo",
   "notes": "7 rue de Bernis · 04 66 21 04 45"
+ },
+ {
+  "name": "Perif' Auto",
+  "email": "perifauto@live.fr",
+  "city": "Nîmes",
+  "trade": "Garagiste",
+  "site": "",
+  "status": "todo",
+  "notes": "04 66 29 00 60 · site non trouvé (à vérifier) · e-mail à vérifier"
+ },
+ {
+  "name": "Normauto / Auto Pro",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Garagiste",
+  "site": "",
+  "status": "todo",
+  "notes": "2049 route de Saint-Gilles · 04 66 84 06 67 · site non trouvé"
+ },
+ {
+  "name": "Garage Séverine",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Garagiste",
+  "site": "",
+  "status": "todo",
+  "notes": "76 av. Jean Jaurès · 04 66 64 66 48 · site non trouvé"
+ },
+ {
+  "name": "Nîmes Négoce Pneus",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Garagiste",
+  "site": "",
+  "status": "todo",
+  "notes": "52 route de Beaucaire · 04 66 27 48 82 · site non trouvé"
+ },
+ {
+  "name": "Nimes Services Autos",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Garagiste",
+  "site": "",
+  "status": "todo",
+  "notes": "1692 av. Pierre Mendès France · 04 66 21 62 91 · site non trouvé"
+ },
+ {
+  "name": "Auto-école 30",
+  "email": "autoecole30@gmail.com",
+  "city": "Nîmes",
+  "trade": "Auto-école",
+  "site": "autoecole30.fr",
+  "status": "todo",
+  "notes": "04 66 21 99 49 · a un site · e-mail à vérifier"
+ },
+ {
+  "name": "Auto-école Nîmes Ouest",
+  "email": "autoecole30.nimesouest@orange.fr",
+  "city": "Nîmes",
+  "trade": "Auto-école",
+  "site": "",
+  "status": "todo",
+  "notes": "04 66 64 26 18 · site non trouvé · e-mail à vérifier"
+ },
+ {
+  "name": "Auto-école ABC",
+  "email": "autoecoleabc@orange.fr",
+  "city": "Nîmes",
+  "trade": "Auto-école",
+  "site": "autoecoleabc.com",
+  "status": "todo",
+  "notes": "06 98 65 56 59 · a un site · e-mail à vérifier"
+ },
+ {
+  "name": "Auto-école Route de Beaucaire",
+  "email": "autoecole.rdb@gmail.com",
+  "city": "Nîmes",
+  "trade": "Auto-école",
+  "site": "autoecole-rdb.com",
+  "status": "todo",
+  "notes": "06 68 70 02 33 · a un site · e-mail à vérifier"
+ },
+ {
+  "name": "Auto-école ABC Camus",
+  "email": "abccamus@orange.fr",
+  "city": "Nîmes",
+  "trade": "Auto-école",
+  "site": "",
+  "status": "todo",
+  "notes": "06 61 54 46 42 · site propre non trouvé · e-mail à vérifier"
+ },
+ {
+  "name": "L'Occitane Traiteur",
+  "email": "loccitanetraiteur@gmail.com",
+  "city": "Nîmes",
+  "trade": "Traiteur",
+  "site": "loccitane-traiteur-nimes.fr",
+  "status": "todo",
+  "notes": "22 rue Émile Jamais · 04 66 67 99 05 · e-mail à vérifier"
+ },
+ {
+  "name": "Ô Délices de Sam",
+  "email": "odelicesdesam@gmail.com",
+  "city": "Nîmes",
+  "trade": "Traiteur",
+  "site": "odelicesdesam-traiteurnimes.fr",
+  "status": "todo",
+  "notes": "07 45 16 21 10 · e-mail à vérifier"
+ },
+ {
+  "name": "Le M",
+  "email": "contact@le-m-nimes.fr",
+  "city": "Nîmes",
+  "trade": "Traiteur",
+  "site": "le-m-nimes.fr",
+  "status": "todo",
+  "notes": "903 chemin du Mas de Sorbier · 04 66 06 07 63 · e-mail à vérifier"
+ },
+ {
+  "name": "Traiteur La Cigale",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Traiteur",
+  "site": "repaslacigale.fr",
+  "status": "todo",
+  "notes": "25 rue Sainte-Perpétue · 04 66 38 26 30"
+ },
+ {
+  "name": "Au Rituel des Sens",
+  "email": "auritueldessens@gmail.com",
+  "city": "Nîmes",
+  "trade": "Esthéticienne",
+  "site": "estheticienne-nimes.fr",
+  "status": "todo",
+  "notes": "306 rue des Pélicans · 06 85 90 44 75 · a un site · e-mail à vérifier"
+ },
+ {
+  "name": "Institut Val'Esthetic",
+  "email": "valerie.munto@gmail.com",
+  "city": "Nîmes",
+  "trade": "Esthéticienne",
+  "site": "institut-valesthetic.com",
+  "status": "todo",
+  "notes": "31 bis rue du Cirque Romain · 04 66 21 51 12 · e-mail à vérifier"
+ },
+ {
+  "name": "Isabelle en Particulier",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Esthéticienne",
+  "site": "institut-beaute-nimes.fr",
+  "status": "todo",
+  "notes": "1 rue Auguste Pelet · a un site"
+ },
+ {
+  "name": "Institut Marion",
+  "email": "",
+  "city": "Nîmes",
+  "trade": "Esthéticienne",
+  "site": "",
+  "status": "todo",
+  "notes": "2 bis rue Grand Couvent · 04 66 21 25 57 · site non trouvé"
  }
 ]
