@@ -13,3 +13,9 @@ Modèle : « une question sur votre site » (présentation, retour gratuit sur l
 | 2026-10-03 | Menuiserie Massire | Menuiserie | Beaucaire | menuiseriemassire@orange.fr | envoyé |
 | 2026-10-03 | Ardesign | Menuiserie | Poulx | contact@menuiserie-ardesign.fr | envoyé |
 | 2026-10-03 | Nîmes Menuiserie | Menuiserie | Bernis | contact.nimes-menuiserie@orange.fr | envoyé |
+
+## Pistes préparées (non envoyées)
+
+| Date | Entreprise | Métier | Ville | Contact | Statut |
+|---|---|---|---|---|---|
+| 2026-10-03 | Onayah (Garde Toutous et Compagnie) | Pet-sitter | Arles | contact@onayah.fr, page Facebook Charlenegardedanimaux | message préparé, à valider |
