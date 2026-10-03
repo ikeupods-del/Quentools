@@ -63,3 +63,14 @@ Je contrôle des sites gratuitement pour 3 personnes du groupe cette semaine. Di
 1. Regarder réellement leur site ou leur page, et donner un conseil concret, vrai et vérifiable.
 2. Proposer d'en parler en privé seulement s'ils sont intéressés.
 3. En privé, donner les prix et envoyer les exemples (quentools.fr/exemples/, quentools.fr/templates/) ou le formulaire (quentools.fr/devis/).
+
+## Réseaux sociaux : priorité à QuenTools
+
+Depuis le 3 octobre 2026, les 42 publications Instagram de Wouf (compte wouf.officiel, programmées jusqu'au 31 octobre dans Metricool) ont été passées en brouillon : elles ne partent plus, mais textes et images sont conservés dans Metricool (calendrier → brouillons). Pour relancer Wouf plus tard : rouvrir chaque brouillon et le reprogrammer.
+
+Rythme conseillé pour QuenTools : une publication par jour, en alternant :
+1. une question aux commerçants (« Quand un client cherche votre activité sur son téléphone, il trouve quoi ? ») ;
+2. un avant/après d'un site (capture d'écran d'un exemple de `exemples/`) ;
+3. un conseil court et vérifiable (horaires visibles, bouton « appeler », cadenas) ;
+4. une coulisse (comment se passe la création d'un site, de la demande à la mise en ligne).
+Sans lien ni prix dans la publication : « lien dans la bio » ou réponse en message privé.
