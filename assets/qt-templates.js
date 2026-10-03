@@ -10,9 +10,10 @@
   const templates = [
     { id: 'barbier-luxe', name: 'Barbier de luxe', demo: 'demo/maison-blade/', base: 399, resume: 'Réservation en trois choix, paiement, abonnement, fidélité, boutique, espace client et administration.' },
     { id: 'plateaux', name: 'Plateaux et commandes', demo: 'demo/naw-fruity/', base: 399, resume: 'Catalogue, calendrier avec capacité par jour, acompte, retrait ou livraison, espace client et administration.' },
+    { id: 'reparateur', name: 'Réparateur de téléphones', demo: 'demo/reparateur-mobile/', base: 399, resume: 'Téléphone 3D à 360°, estimation de prix par modèle et par panne, suivi de réparation par code, prise de rendez-vous.' },
     { id: 'vitrines', name: 'Sites vitrines par métier', demo: 'exemples/', base: 399, resume: 'Un univers graphique par métier, adapté au téléphone, formulaire de contact ou de devis.' }
   ];
-  const app = ['barbier-luxe', 'plateaux'];
+  const app = ['barbier-luxe', 'plateaux', 'reparateur'];
   const options = [
     { id: 'bdd', name: 'Réservations et comptes réellement enregistrés', hint: 'Base de données : les demandes, comptes et commandes sont conservés (les démonstrations ne gardent rien).', price: 249.99, for: app },
     { id: 'paiement', name: 'Paiement en ligne réel (PayPal ou Stripe)', hint: 'Le client paie vraiment ; les démonstrations simulent le paiement.', price: 99.99, for: app },
