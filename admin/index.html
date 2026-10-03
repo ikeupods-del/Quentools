@@ -431,6 +431,62 @@ function viewContacts() {
     ${shown.length ? shown.map(l => `<article class="card" style="padding:var(--s-4);margin-bottom:var(--s-3);display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center"><div><b>${esc(l.name || 'Sans nom')}</b><div class="muted" style="overflow-wrap:anywhere">${esc(l.email)}</div></div><span class="row" style="display:flex;gap:8px;align-items:center"><span class="chip">${ms(l.at) ? new Date(ms(l.at)).toLocaleDateString('fr-FR') : ''} · ${esc(l.source || '')}</span><button class="btn btn-sm btn-ghost" data-do="lead-del" data-email="${esc(l.email)}" aria-label="Supprimer ce contact">Supprimer</button></span></article>`).join('') : '<div class="card empty">Aucun contact pour l’instant. Ils apparaissent ici dès qu’un visiteur s’inscrit.</div>'}
     <p class="muted" style="font-size:var(--t-xs)">Chaque contact a accepté de recevoir des nouvelles de QuenTools. Pour une demande de suppression, utilisez le bouton « Supprimer » du contact.</p>`;
 }
+/* ---------- Prospection : entreprises démarchées par e-mail (collection privée qt_prospects) ---------- */
+const PR_ST = [['todo', 'À contacter'], ['sent', 'Contactés'], ['reply', 'Réponses'], ['out', 'Écartés']];
+const PR_CHIP = { todo: 'st-nouveau', sent: 'st-envoye', reply: 'st-gagne', out: 'st-perdu' };
+const PR_MAX = { name: 120, email: 120, city: 80, trade: 80, site: 200, template: 80, notes: 2000 };
+let prospects = [], prErr = false, prFilter = 'todo', prq = '', prForm = false, prImp = false;
+const prId = s => String(s || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 150)
+const prClean = o => {
+  const r = {}, s = (k, v) => String(v ?? '').trim().slice(0, PR_MAX[k])
+  for (const k of Object.keys(PR_MAX)) if (o[k] !== undefined) r[k] = k === 'email' ? s(k, o[k]).toLowerCase() : s(k, o[k])
+  if (o.status !== undefined) r.status = PR_ST.some(x => x[0] === o.status) ? o.status : 'todo'
+  if (o.sentOn !== undefined) r.sentOn = /^\d{4}-\d{2}-\d{2}$/.test(String(o.sentOn)) ? String(o.sentOn) : ''
+  return r
+}
+async function loadProspects() {
+  prErr = false
+  if (DEMO) { prospects = [{ id: 'demo_example_com', name: 'Exemple Fleuriste', email: 'demo@example.com', city: 'Nîmes', trade: 'Fleuriste', site: 'example.com', status: 'todo', sentOn: '', template: 'Modèle A', notes: 'Fiche d’exemple (démonstration).' }]; return }
+  try {
+    const { Fs, db } = await fb()
+    const r = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_prospects'), Fs.limit(2000)))
+    prospects = r.docs.map(d => ({ ...d.data(), id: d.id }))
+  } catch (e) { prospects = []; prErr = true }
+}
+async function prSave(id, data, merge) {
+  const rec = { ...data, updated: new Date() }
+  if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_prospects', id), { ...data, updated: Fs.serverTimestamp() }, { merge: !!merge }) }
+  const i = prospects.findIndex(p => p.id === id)
+  if (i < 0) prospects.push({ ...rec, id }); else prospects[i] = merge ? { ...prospects[i], ...rec } : { ...rec, id }
+}
+function prShown() {
+  const qq = prq.trim().toLowerCase()
+  return prospects.filter(p => (prFilter === 'all' || (p.status || 'todo') === prFilter) && (!qq || [p.name, p.email, p.city, p.trade, p.site].join(' ').toLowerCase().includes(qq)))
+    .sort((a, b) => String(a.name || a.email).localeCompare(String(b.name || b.email), 'fr'))
+}
+function viewProspects() {
+  if (prErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Règles à mettre à jour</h2><p>La prospection s’enregistre dans une collection protégée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><button class="btn btn-accent" data-tab="regles">Voir les règles</button></section>`
+  const st = p => p.status || 'todo', n = k => prospects.filter(p => st(p) === k).length, t = today()
+  const sentToday = prospects.filter(p => p.sentOn === t && st(p) !== 'todo').length, contacted = prospects.filter(p => st(p) === 'sent' || st(p) === 'reply').length
+  const fl = [['all', 'Tous', prospects.length], ...PR_ST.map(([k, l]) => [k, l, n(k)])], shown = prShown()
+  const fld = (name, ph, extra = '') => `<input name="${name}" maxlength="${PR_MAX[name]}" placeholder="${ph}" aria-label="${ph}" ${extra}>`
+  const form = prForm ? `<div class="card req" id="pr-new" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"><div class="row3">${fld('name', 'Nom (obligatoire)')}${fld('email', 'E-mail', 'type="email"')}${fld('city', 'Commune')}${fld('trade', 'Métier')}${fld('site', 'Site')}${fld('template', 'Modèle d’e-mail')}</div>
+    <textarea name="notes" maxlength="${PR_MAX.notes}" placeholder="Notes" aria-label="Notes"></textarea>
+    <div class="row"><button class="btn btn-accent" data-do="pr-add">Ajouter</button><button class="btn btn-ghost" data-do="pr-form">Annuler</button></div></div>` : ''
+  const imp = prImp ? `<div class="card req" id="pr-imp" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"><textarea name="json" placeholder='[{"name":"…","email":"…","city":"…","trade":"…","site":"…","status":"todo","sentOn":"2026-01-31","template":"…","notes":"…"}]' aria-label="JSON à importer" style="min-height:140px;font-family:var(--f-mono)"></textarea>
+    <div class="row"><button class="btn btn-accent" data-do="pr-import">Importer</button><button class="btn btn-ghost" data-do="pr-imp">Annuler</button><span class="muted" style="font-size:var(--t-xs)">Tableau d’objets, 500 lignes maximum. Une entreprise déjà présente (même e-mail) est mise à jour.</span></div></div>` : ''
+  const fiche = p => `<article class="card req" data-pid="${esc(p.id)}" style="padding:var(--s-4)"><div class="req-top"><h3>${esc(p.name || p.email)}</h3><span class="chip ${PR_CHIP[st(p)]}">${esc(PR_ST.find(x => x[0] === st(p))[1])}</span></div>
+    <div class="meta">${[p.trade, p.city].filter(Boolean).map(v => `<span class="chip">${esc(v)}</span>`).join('')}${p.sentOn ? `<span class="chip">Envoyé le ${esc(p.sentOn.split('-').reverse().join('/'))}${p.template ? ' · ' + esc(p.template) : ''}</span>` : p.template ? `<span class="chip">${esc(p.template)}</span>` : ''}</div>
+    <div class="who">${p.email ? `<a href="mailto:${esc(p.email)}">${esc(p.email)}</a>` : ''}${p.email && p.site ? ' · ' : ''}${p.site ? esc(p.site) : ''}</div>
+    ${p.notes ? `<p class="need">${esc(p.notes)}</p>` : ''}
+    <div class="row">${st(p) !== 'sent' ? '<button class="btn btn-sm btn-accent" data-do="pr-st" data-s="sent">Marquer contacté</button>' : ''}${st(p) !== 'reply' ? '<button class="btn btn-sm btn-ghost" data-do="pr-st" data-s="reply">A répondu</button>' : ''}${st(p) !== 'todo' ? '<button class="btn btn-sm btn-ghost" data-do="pr-st" data-s="todo">À contacter</button>' : ''}${st(p) !== 'out' ? '<button class="btn btn-sm btn-ghost" data-do="pr-st" data-s="out">Écarter</button>' : ''}<button class="btn btn-sm btn-ghost" data-do="pr-del" style="margin-left:auto">Supprimer</button></div></article>`
+  return `<div class="kpis"><div><b>${sentToday}</b><span>envoyés aujourd’hui</span></div><div><b>${contacted}</b><span>contactés au total</span></div><div><b>${n('reply')}</b><span>réponses</span></div><div><b>${n('todo')}</b><span>à contacter</span></div></div>
+    <div class="filters">${fl.map(([k, l, c]) => `<button data-do="pr-filter" data-k="${k}" aria-pressed="${prFilter === k}">${l} <span class="n">${c}</span></button>`).join('')}</div>
+    <div class="filters"><input type="search" id="prq" placeholder="Rechercher (nom, e-mail, commune, métier, site)…" value="${esc(prq)}" aria-label="Rechercher une entreprise"></div>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--s-4)"><button class="btn btn-sm btn-accent" data-do="pr-form">+ Ajouter</button><button class="btn btn-sm btn-ghost" data-do="pr-mails">Copier les e-mails</button><button class="btn btn-sm btn-ghost" data-do="pr-json">Copier tout (JSON)</button><button class="btn btn-sm btn-ghost" data-do="pr-imp">Importer (JSON)</button></div>
+    ${form}${imp}
+    ${shown.length ? shown.map(fiche).join('') : '<div class="card empty">Aucune entreprise ici pour l’instant. Utilisez « Importer (JSON) » ou « + Ajouter ».</div>'}`
+}
 async function load() {
   if (DEMO) { items = demo.items.concat(demoExtra()); site = demo.site; if (!agenda.length) agenda = [{ id: 'a1', kind: 'appel', titre: 'Appeler pour cadrer le site', date: today(), heure: '14:00', duree: 15, devisId: 'd1', note: 'Demander les photos et les horaires.', done: false }, { id: 'a2', kind: 'projet', titre: 'Maquette de l’accueil', date: addDays(today(), 1), heure: '09:30', duree: 120, devisId: 'd3', note: '', done: false }, { id: 'a3', kind: 'rappel', titre: 'Relancer le devis', date: addDays(today(), -1), heure: '', duree: 30, devisId: 'd2', note: '', done: false }]; await loadGifts(); return; }
   const { Fs, db } = await fb();
@@ -635,11 +691,11 @@ function shell(body) {
   const t = (k, l) => `<button role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`;
   app.innerHTML = `<div class="adm-head"><div><span class="eyebrow">Tableau de bord</span><h1 class="h-section" style="margin:var(--s-2) 0 0">Bonjour 👋</h1></div>
     <div class="row" style="display:flex;gap:8px;align-items:center"><span class="muted" style="font-size:var(--t-xs)">${esc(DEMO ? 'Démonstration' : user && user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></div>
-    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('agenda', `Agenda${na ? `<span class="count">${na}</span>` : ''}`)}${t('estimer', 'Devis')}${t('cadeaux', `Cadeaux${gifts.filter(g => (g.status || 'attente') === 'attente').length ? `<span class="count">${gifts.filter(g => (g.status || 'attente') === 'attente').length}</span>` : ''}`)}${t('stats', 'Chiffres')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}${t('contacts', 'Contacts')}${t('regles', 'Règles')}${rulesOld ? '<span class="count">!</span>' : ''}</div>
+    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('agenda', `Agenda${na ? `<span class="count">${na}</span>` : ''}`)}${t('estimer', 'Devis')}${t('cadeaux', `Cadeaux${gifts.filter(g => (g.status || 'attente') === 'attente').length ? `<span class="count">${gifts.filter(g => (g.status || 'attente') === 'attente').length}</span>` : ''}`)}${t('stats', 'Chiffres')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}${t('contacts', 'Contacts')}${t('prospection', 'Prospection')}${t('regles', 'Règles')}${rulesOld ? '<span class="count">!</span>' : ''}</div>
     <div id="toast" role="status" aria-live="polite"></div>${body}`;
 }
 function render() {
-  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'cadeaux' ? viewGifts() : viewLinks());
+  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'prospection' ? viewProspects() : tab === 'cadeaux' ? viewGifts() : viewLinks());
   if (tab === 'estimer') estimate();
 }
 
@@ -650,6 +706,7 @@ function qtClient(d) { return request.auth != null && request.auth.token.email_v
 match /qt_admin/{doc} { allow read: if true; allow write: if qtAdmin(); }
 match /qt_notes/{id} { allow read, write: if qtAdmin(); }
 match /qt_agenda/{id} { allow read, write: if qtAdmin(); }
+match /qt_prospects/{id} { allow read, write: if qtAdmin(); }
 match /qt_leads/{id} {
   allow create, update: if request.auth != null && request.auth.token.email_verified == true && id == request.auth.token.email.lower()
     && request.resource.data.keys().hasOnly(['email','name','at','source','consent'])
@@ -893,7 +950,7 @@ app.addEventListener('click', async e => {
     return;
   }
   const b = e.target.closest('[data-tab],[data-filter],[data-do],[data-agday]'); if (!b) return;
-  if (b.dataset.tab) { tab = b.dataset.tab; if (tab === 'estimer' && !dv) dvInit(); if (tab === 'contacts') { await loadLeads(); } return render(); }
+  if (b.dataset.tab) { tab = b.dataset.tab; if (tab === 'estimer' && !dv) dvInit(); if (tab === 'contacts') { await loadLeads(); } if (tab === 'prospection') { await loadProspects(); } return render(); }
   if (b.dataset.filter) { filter = b.dataset.filter; return render(); }
   if (b.dataset.agday !== undefined) { agDay = b.dataset.agday; return render(); }
   const card = b.closest('.req'), x = card && items.find(i => i.id === card.dataset.id), d = b.dataset.do;
@@ -938,6 +995,45 @@ app.addEventListener('click', async e => {
       else if (d === 'cd-extend') { await cardPatch(code, { expire: addMonths(today(), 3) }); render(); toast('Valable jusqu’au ' + frDate(c.expire)); }
     }
     else if (d === 'copy-rules') copy(rulesText());
+    else if (d === 'pr-filter') { prFilter = b.dataset.k; render(); }
+    else if (d === 'pr-form') { prForm = !prForm; prImp = false; render(); }
+    else if (d === 'pr-imp') { prImp = !prImp; prForm = false; render(); }
+    else if (d === 'pr-add') {
+      const f = prClean({ ...readForm(document.getElementById('pr-new')), status: 'todo' }), id = prId(f.email || f.name)
+      if (!f.name) return toast('Indiquez le nom de l’entreprise', true)
+      if (prospects.some(p => p.id === id)) return toast('Cette entreprise existe déjà', true)
+      await prSave(id, { name: '', email: '', city: '', trade: '', site: '', status: 'todo', sentOn: '', template: '', notes: '', ...f }); prForm = false; render(); toast('Entreprise ajoutée ✓')
+    }
+    else if (d === 'pr-import') {
+      let rows; try { rows = JSON.parse(readForm(document.getElementById('pr-imp')).json) } catch (err) { return toast('JSON invalide', true) }
+      if (!Array.isArray(rows)) return toast('Il faut un tableau d’objets [ {…}, {…} ]', true)
+      if (rows.length > 500) return toast('500 lignes maximum par import', true)
+      const seen = new Map(); let skip = 0
+      for (const r of rows) {
+        if (!r || typeof r !== 'object' || Array.isArray(r)) { skip++; continue }
+        const f = prClean(r), id = prId(f.email || f.name)
+        if (!f.name && !f.email) { skip++; continue }
+        seen.set(id, { ...(seen.get(id) || {}), ...f })
+      }
+      let nNew = 0, nUp = 0
+      for (const [id, f] of seen) {
+        if (prospects.some(p => p.id === id)) { nUp++; await prSave(id, f, true) }
+        else { nNew++; await prSave(id, { name: '', email: '', city: '', trade: '', site: '', status: 'todo', sentOn: '', template: '', notes: '', ...f }) }
+      }
+      prImp = false; render(); toast(`${nNew} ajoutée${nNew > 1 ? 's' : ''}, ${nUp} mise${nUp > 1 ? 's' : ''} à jour${skip ? ', ' + skip + ' ignorée' + (skip > 1 ? 's' : '') : ''} ✓`)
+    }
+    else if (d === 'pr-mails') copy(prShown().map(p => p.email).filter(Boolean).join(', '))
+    else if (d === 'pr-json') copy(JSON.stringify(prospects.map(({ id, updated, ...p }) => p), null, 1))
+    else if (d === 'pr-st') {
+      const id = b.closest('[data-pid]').dataset.pid, p = prospects.find(z => z.id === id), s = b.dataset.s
+      await prSave(id, { status: s, ...(s === 'sent' && !p.sentOn ? { sentOn: today() } : {}) }, true); render()
+    }
+    else if (d === 'pr-del') {
+      const id = b.closest('[data-pid]').dataset.pid, p = prospects.find(z => z.id === id)
+      if (!confirm('Supprimer définitivement « ' + (p.name || p.email) + ' » ?')) return
+      if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_prospects', id)) }
+      prospects = prospects.filter(z => z.id !== id); render(); toast('Entreprise supprimée')
+    }
     else if (d === 'lead-del') {
       const em = b.dataset.email; if (!em || !confirm('Supprimer définitivement le contact ' + em + ' ?')) return;
       if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_leads', String(em).toLowerCase())); }
@@ -1073,7 +1169,7 @@ app.addEventListener('change', async e => {
   const v = el.dataset.field === 'montant' ? (el.value === '' ? null : Math.max(0, Math.round(+el.value))) : el.value.slice(0, 2000);
   try { await patch(card.dataset.id, { [el.dataset.field]: v }); if (el.dataset.field === 'status') { await addMsg(card.dataset.id, { from: 'systeme', text: 'Statut : ' + stLabel(v) }); if (openId === card.dataset.id) threads[openId] = await loadThread(openId); } if (!['note', 'echeance', 'lien'].includes(el.dataset.field)) render(); toast('Enregistré ✓'); } catch (err) { fail(err); }
 });
-app.addEventListener('input', e => { if (e.target.id === 'gq') { gq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('gq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'lq') { lq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('lq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'q') { q = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); } });
+app.addEventListener('input', e => { if (e.target.id === 'gq') { gq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('gq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'lq') { lq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('lq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'prq') { prq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('prq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'q') { q = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); } });
 
 app.addEventListener('input', e => { const el = e.target; if (dv && el.closest && el.closest('#dv') && (el.dataset.dv || el.dataset.dvl)) dvSet(el); });
 app.addEventListener('toggle', e => { if (e.target.id === 'est-box') estOpen = e.target.open; }, true);
