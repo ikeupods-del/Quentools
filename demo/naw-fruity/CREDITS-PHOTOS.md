@@ -1,13 +1,11 @@
 # Crédits photos (démonstration)
 
-Photos fournies par le propriétaire du projet : decouverte.jpg, tropical.jpg, hero4.jpg, fete.jpg (à confirmer avec la cliente, droits et mention éventuelle de l’enseigne). Autres : photographies placées dans le domaine public (CC0 1.0), sources : Wikimedia Commons. Aucune obligation de mention ; indiquées ici par transparence. À remplacer par les photos de la cliente à la mise en ligne.
+Photos fournies par le propriétaire du projet : decouverte.jpg, tropical.jpg, vitamine.jpg, corbeille.jpg, hero4.jpg, fete.jpg (à confirmer avec la cliente, droits et mention éventuelle de l’enseigne). Autres : photographies placées dans le domaine public (CC0 1.0), sources : Wikimedia Commons. Aucune obligation de mention ; indiquées ici par transparence. À remplacer par les photos de la cliente à la mise en ligne.
 
 | Fichier | Source (Wikimedia Commons) |
 |---|---|
 | gourmand.jpg | Fruits dipped in chocolate (Unsplash).jpg |
-| vitamine.jpg | Fruit Platter 1 (Unsplash).jpg (détail) |
 | mini.jpg | Cup of Berries (Unsplash).jpg |
-| corbeille.jpg | Healthy Fruit (Unsplash).jpg |
 | baies.jpg | Fruit Platter (Unsplash).jpg |
 | fraises.jpg | Fruits on a platter including grapes strawberries blueberries.jpg |
 | cagette.jpg | Box of Strawberries (Unsplash).jpg |
