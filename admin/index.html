@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Administration · QuenTools</title>
 <meta name="robots" content="noindex, nofollow">
@@ -1166,13 +1167,13 @@ app.addEventListener('click', async e => {
       leads = leads.filter(l => l.email !== em); render(); toast('Contact supprimé');
     }
     else if (d === 'csv-demandes') {
-      const q2 = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      const q2 = v => { v = String(v ?? ''); return '"' + (/^[=+\-@\t\r]/.test(v) && !/^[+-]?\d+([.,]\d+)?$/.test(v) ? "'" + v : v).replace(/"/g, '""') + '"'; };   // « ' » devant = ou + - @ : une demande hostile ne devient pas une formule dans Excel
       const csv = '\ufeffdate;nom;email;telephone;type;delai;budget;statut;montant;besoin\n' + items.map(x => [ms(x.at) ? new Date(ms(x.at)).toISOString().slice(0, 10) : '', x.nom, x.email, x.tel, x.type, x.delai, x.budget, stLabel(x.status || 'nouveau'), x.montant, x.besoin].map(q2).join(';')).join('\n');
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'demandes-quentools.csv'; a.click();
     }
     else if (d === 'copy-mails') copy(leads.map(l => l.email).join(', '));
     else if (d === 'csv') {
-      const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      const q = v => { v = String(v ?? ''); return '"' + (/^[=+\-@\t\r]/.test(v) && !/^[+-]?\d+([.,]\d+)?$/.test(v) ? "'" + v : v).replace(/"/g, '""') + '"'; };   // « ' » devant = ou + - @ : une demande hostile ne devient pas une formule dans Excel
       const csv = '\ufeffnom;email;date;source\n' + leads.map(l => [l.name, l.email, ms(l.at) ? new Date(ms(l.at)).toISOString().slice(0, 10) : '', l.source].map(q).join(';')).join('\n');
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'contacts-quentools.csv'; a.click();
     }
