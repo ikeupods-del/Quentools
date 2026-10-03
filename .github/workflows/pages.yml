@@ -50,6 +50,7 @@ jobs:
           rsync -a realisations _site/
           rsync -a templates _site/
           rsync -a audit _site/
+          rsync -a conseils _site/
           rsync -a devis _site/
           rsync -a cadeau _site/
           rsync -a admin _site/
