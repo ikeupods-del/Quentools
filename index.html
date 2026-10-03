@@ -34,7 +34,7 @@
   .showcase .acts{display:flex;flex-wrap:wrap;gap:8px}
   @media (max-width:860px){.showcase{grid-template-columns:1fr}}
 </style>
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"ProfessionalService","@id":"https://quentools.fr/#organisation","name":"QuenTools","url":"https://quentools.fr/","logo":"https://quentools.fr/assets/apple-touch-icon.png","image":"https://quentools.fr/assets/partage.jpg?v=2","description":"Création de sites vitrines, de boutiques et d’outils sur mesure pour les indépendants et les petites entreprises, et outils gratuits.","areaServed":"FR","knowsLanguage":"fr","serviceType":["Création de site vitrine","Boutique en ligne Shopify","Outil sur mesure"],"sameAs":["https://www.tiktok.com/@quentools"],"email":"contact.quentools@gmail.com"},{"@type":"WebSite","@id":"https://quentools.fr/#site","url":"https://quentools.fr/","name":"QuenTools","inLanguage":"fr-FR","publisher":{"@id":"https://quentools.fr/#organisation"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Les outils gratuits le sont-ils vraiment ?","acceptedAnswer":{"@type":"Answer","text":"Oui : pas d’abonnement, rien à payer pour les utiliser. Certains proposent des options facultatives, comme brancher votre propre clé d’IA."}},{"@type":"Question","name":"Où sont enregistrées mes données ?","acceptedAnswer":{"@type":"Answer","text":"D’abord sur votre appareil. Quand un outil propose une sauvegarde ou une synchronisation en ligne, ses réglages expliquent comment elle fonctionne ; vous choisissez de l’activer ou non."}},{"@type":"Question","name":"Combien coûte un outil ou un site sur mesure ?","acceptedAnswer":{"@type":"Answer","text":"Cela dépend de ce qu’il doit faire. Le devis est gratuit : vous connaissez le prix avant que je commence, et vous validez une première version avant la suite."}},{"@type":"Question","name":"Faut-il s’y connaître en informatique ?","acceptedAnswer":{"@type":"Answer","text":"Non. Vous m’expliquez votre besoin avec vos mots, je m’occupe du reste, mise en ligne comprise."}},{"@type":"Question","name":"Qui est derrière QuenTools ?","acceptedAnswer":{"@type":"Answer","text":"Un créateur indépendant, basé en France, qui conçoit et met en ligne chaque projet lui-même. Toutes les applications présentées ici sont les siennes."}}]}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"ProfessionalService","@id":"https://quentools.fr/#organisation","name":"QuenTools","url":"https://quentools.fr/","logo":"https://quentools.fr/assets/apple-touch-icon.png","image":"https://quentools.fr/assets/partage.jpg?v=2","description":"Création de sites vitrines, de boutiques et d’outils sur mesure pour les indépendants et les petites entreprises, et outils gratuits.","areaServed":"FR","knowsLanguage":"fr","serviceType":["Création de site vitrine","Boutique en ligne Shopify","Outil sur mesure"],"sameAs":["https://www.tiktok.com/@quentools"],"email":"contact.quentools@gmail.com"},{"@type":"WebSite","@id":"https://quentools.fr/#site","url":"https://quentools.fr/","name":"QuenTools","inLanguage":"fr-FR","publisher":{"@id":"https://quentools.fr/#organisation"}}]}</script>
 <script>
   // Anciens liens de Wouf (adresse racine avec « # » ou « ? ») : on les renvoie vers l'app.
   if (/^#\//.test(location.hash) || /[?&](maj|proprio)=/.test(location.search)) location.replace('wouf/' + location.search + location.hash);
@@ -56,12 +56,9 @@
   <div class="wrap">
     <a class="brand" href="./" aria-label="QuenTools, accueil"><svg class="brand-mark"><use href="#qt-mark"/></svg>QuenTools</a>
     <ul class="nav-links">
-      <li><a href="outils/">Outils</a></li>
-      <li><a href="#sur-mesure">Offres et tarifs</a></li>
       <li><a href="templates/">Templates</a></li>
-      <li><a href="realisations/">Réalisations</a></li>
-      <li><a href="#exemples">Exemples</a></li>
-      <li><a href="#faq">FAQ</a></li>
+      <li><a href="outils/">Outils</a></li>
+      <li><a href="#sur-mesure">Sur mesure</a></li>
     </ul>
     <span class="nav-actions"><a class="nav-espace" href="espace/" aria-label="Espace client"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>Espace client</span></a><a class="btn btn-sm" href="devis/"><span class="lg">Demander un </span><span class="w">devis</span></a></span>
   </div>
@@ -73,196 +70,55 @@
     <div class="wrap hero-grid">
       <div>
         <span class="chip chip-ok reveal" id="qt-avail"><span class="dot"></span> 5 applications en ligne</span>
-        <h1 class="display reveal" style="--i:1">Des outils simples qui font <em>gagner du temps</em>.</h1>
-        <p class="lede reveal" style="--i:2">Je conçois et mets en ligne des sites et des outils simples pour les indépendants et les petites entreprises. Prix fixé avant de commencer, première version montrée avant de vous engager.</p>
+        <h1 class="display reveal" style="--i:1">Votre site et vos outils, <em>prêts à servir</em>.</h1>
+        <p class="lede reveal" style="--i:2">Des templates prêts à l’emploi dès 299 €, des outils gratuits, ou un projet entièrement sur mesure. Prix fixé avant de commencer.</p>
         <div class="hero-cta reveal" style="--i:3">
-          <a class="btn btn-accent" href="outils/">Voir les outils gratuits <svg width="18" height="18" class="arrow"><use href="#i-arrow"/></svg></a>
-          <a class="btn btn-ghost" href="#sur-mesure">Faire créer mon outil</a>
+          <a class="btn btn-accent" href="templates/">Voir les templates <svg width="18" height="18" class="arrow"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-ghost" href="#sur-mesure">Demande sur mesure</a>
         </div>
-        <p class="hero-note reveal" style="--i:4">Outils gratuits, sans inscription</p>
       </div>
       <div class="stack reveal" style="--i:2" aria-label="Aperçus des applications QuenTools">
         <div class="phone"><img src="assets/ecran-patrimoine.jpg" alt="Patrimoine AI" width="400" height="800"></div>
         <div class="phone"><img src="assets/ecran-infikit.jpg" alt="Infikit" width="400" height="800"></div>
         <div class="phone"><img src="assets/ecran-gourmet.jpg" alt="Gourmet AI" width="400" height="800"></div>
-        <div class="float-card" style="left:-4%;bottom:10%"><b data-count="6700" data-prefix="+ ">+ 6 700</b> vérifications<br>avant chaque mise à jour</div>
-        <div class="float-card" style="right:-2%;top:2%;animation-delay:-3s"><span class="chip chip-lime">0 €</span> outils gratuits</div>
       </div>
     </div>
   </section>
 
-  <div class="marquee" aria-hidden="true"><div class="marquee-track">
-    <span>Infikit</span><span>Freelance Kit</span><span>Patrimoine AI</span><span>Gourmet AI</span><span>Wouf</span><span>Sites vitrines</span><span>Outils sur mesure</span><span>Applications</span>
-    <span>Infikit</span><span>Freelance Kit</span><span>Patrimoine AI</span><span>Gourmet AI</span><span>Wouf</span><span>Sites vitrines</span><span>Outils sur mesure</span><span>Applications</span>
-  </div></div>
-
-  <section class="section section-compact" id="exemples">
+  <section class="section section-compact">
     <div class="wrap">
-      <div class="rail-head reveal">
-        <div><span class="eyebrow">Exemples de sites</span><h2 class="h-compact">Un style pour chaque métier</h2></div>
-        <div class="rail-btns">
-          <button type="button" class="rail-btn" data-rail="prev" aria-label="Exemples précédents" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
-          <button type="button" class="rail-btn" data-rail="next" aria-label="Exemples suivants"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
-        </div>
-      </div>
-      <div class="rail" id="exemples-rail" tabindex="0" role="region" aria-label="Exemples de sites par métier">
-        <article class="card is-link rail-item">
-          <div class="card-media"><img src="assets/ex-alimentation.jpg" alt="Aperçu de l’exemple alimentation de quartier" width="1280" height="800" loading="lazy" decoding="async"></div>
-          <h3>Alimentation de quartier</h3>
-          <a class="more" href="exemples/alimentation/">Voir →</a>
-        </article>
-        <article class="card is-link rail-item">
-          <div class="card-media"><img src="assets/ex-barbier.jpg" alt="Aperçu de l’exemple barbier de luxe" width="1280" height="800" loading="lazy" decoding="async"></div>
-          <h3>Barbier de luxe</h3>
-          <a class="more" href="demo/maison-blade/">Voir →</a>
-        </article>
-        <article class="card is-link rail-item">
-          <div class="card-media"><img src="assets/ex-bois.jpg" alt="Aperçu de l’exemple vendeur de bois de chauffage" width="1280" height="800" loading="lazy" decoding="async"></div>
-          <h3>Vendeur de bois de chauffage</h3>
-          <a class="more" href="exemples/bois/">Voir →</a>
-        </article>
-        <article class="card is-link rail-item">
-          <div class="card-media"><img src="assets/ex-plombier.jpg" alt="Aperçu de l’exemple plombier chauffagiste" width="1280" height="800" loading="lazy" decoding="async"></div>
-          <h3>Plombier chauffagiste</h3>
-          <a class="more" href="exemples/plombier/">Voir →</a>
-        </article>
-        <article class="card is-link rail-item">
-          <div class="card-media"><img src="assets/ex-paysagiste.jpg" alt="Aperçu de l’exemple paysagiste" width="1280" height="800" loading="lazy" decoding="async"></div>
-          <h3>Paysagiste</h3>
-          <a class="more" href="exemples/paysagiste/">Voir →</a>
-        </article>
-        <article class="card is-link rail-item">
-          <div class="card-media"><img src="assets/ex-photographe.jpg" alt="Aperçu de l’exemple photographe" width="1280" height="800" loading="lazy" decoding="async"></div>
-          <h3>Photographe</h3>
-          <a class="more" href="exemples/photographe/">Voir →</a>
-        </article>
-        <article class="card is-link rail-item">
-          <div class="card-media"><img src="assets/ex-fleuriste.jpg" alt="Aperçu de l’exemple fleuriste" width="1280" height="800" loading="lazy" decoding="async"></div>
-          <h3>Fleuriste</h3>
-          <a class="more" href="exemples/fleuriste/">Voir →</a>
-        </article>
-        <article class="card is-link rail-item">
-          <div class="card-media"><img src="assets/ex-osteopathe.jpg" alt="Aperçu de l’exemple ostéopathe" width="1280" height="800" loading="lazy" decoding="async"></div>
-          <h3>Ostéopathe</h3>
-          <a class="more" href="exemples/osteopathe/">Voir →</a>
-        </article>
-        <article class="card is-link rail-item">
-          <div class="card-media"><img src="assets/ex-coach.jpg" alt="Aperçu de l’exemple coach sportif" width="1280" height="800" loading="lazy" decoding="async"></div>
-          <h3>Coach sportif</h3>
-          <a class="more" href="exemples/coach/">Voir →</a>
-        </article>
-        <article class="card is-link rail-item">
-          <div class="card-media"><img src="assets/ex-restaurant.jpg" alt="Aperçu de l’exemple restaurant" width="1280" height="800" loading="lazy" decoding="async"></div>
-          <h3>Restaurant</h3>
-          <a class="more" href="exemples/restaurant/">Voir →</a>
-        </article>
-        <article class="card is-link rail-item">
-          <div class="card-media"><img src="assets/ex-formation.jpg" alt="Aperçu de l’exemple page de vente de formation" width="1280" height="800" loading="lazy" decoding="async"></div>
-          <h3>Page de vente de formation</h3>
-          <a class="more" href="exemples/formation/">Voir →</a>
-        </article>
-        <article class="card is-link rail-item">
-          <div class="card-media"><img src="assets/ex-climatisation.jpg" alt="Aperçu de l’exemple climatisation et entretien" width="1280" height="800" loading="lazy" decoding="async"></div>
-          <h3>Climatisation et entretien</h3>
-          <a class="more" href="exemples/climatisation/">Voir →</a>
-        </article>
-      </div>
-      <p class="muted rail-note">Entreprises fictives, à titre d’exemple. <a class="more" href="exemples/">Voir tous les exemples →</a></p>
-    </div>
-  </section>
-
-  <section class="section" id="sur-mesure" style="background:var(--bg-2)">
-    <span id="tarifs"></span>
-    <div class="wrap">
-      <div class="section-head">
-        <span class="eyebrow reveal">Offres et tarifs</span>
-        <h2 class="h-section reveal" style="--i:1">Plusieurs offres, toutes sur devis.</h2>
-        <p class="lede reveal" style="--i:2">Une tâche répétitive qui vous fait perdre du temps, ou un site qui vous manque pour être trouvé ? Choisissez la formule qui vous ressemble, ou décrivez-moi votre besoin : je vous réponds avec un devis gratuit, adapté à votre projet et à votre budget.</p>
-      </div>
       <div class="grid grid-3">
         <article class="card offer is-featured reveal">
-          <span class="chip chip-lime" style="align-self:flex-start">Le plus choisi</span>
-          <h3>Site vitrine</h3>
-          <p class="price"><span class="chip">Sur devis</span></p>
-          <ul><li>De 1 à 5 pages, selon votre activité</li><li>Formulaire de contact ou de devis, référencement de base</li><li>Adapté au téléphone, mise en ligne incluse</li></ul>
-          <a class="more" href="devis/?type=Site%20vitrine">Demander un devis →</a>
+          <span class="chip chip-lime" style="align-self:flex-start">Dès 299 €</span>
+          <h3>Templates</h3>
+          <p class="muted">Un site prêt à l’emploi, personnalisé à votre marque et mis en ligne.</p>
+          <a class="more" href="templates/">Voir les templates →</a>
         </article>
         <article class="card offer reveal" style="--i:1">
-          <h3>Boutique en ligne</h3>
-          <p class="price"><span class="chip">Sur devis</span></p>
-          <ul><li>Boutique Shopify, produits et fiches rédigées</li><li>Pages légales, paiement et livraison réglés</li><li>Abonnement Shopify à votre charge</li></ul>
-          <a class="more" href="devis/?type=Boutique%20Shopify">Demander un devis →</a>
+          <span class="chip" style="align-self:flex-start">Gratuit</span>
+          <h3>Outils</h3>
+          <p class="muted">Applications simples, sans inscription, qui font gagner du temps.</p>
+          <a class="more" href="outils/">Voir les outils →</a>
         </article>
         <article class="card offer reveal" style="--i:2">
-          <h3>Outil sur mesure</h3>
-          <p class="price"><span class="chip">Sur devis</span></p>
-          <ul><li>Calcul de devis, suivi, réservation…</li><li>Pensé pour votre métier, installable sur téléphone</li><li>Cahier des charges simple, avant de démarrer</li></ul>
-          <a class="more" href="devis/?type=Outil%20sur%20mesure">Demander un devis →</a>
+          <span class="chip" style="align-self:flex-start">Sur devis</span>
+          <h3>Sur mesure</h3>
+          <p class="muted">Site, boutique ou outil conçu pour votre métier.</p>
+          <a class="more" href="#sur-mesure">Faire ma demande →</a>
         </article>
       </div>
-      <article class="card reveal" style="margin-top:var(--s-6);display:grid;gap:var(--s-3);justify-items:start;border-color:var(--lime)">
-        <span class="chip chip-lime">Nouveau · dès 299 €</span>
-        <h3>Templates prêts à l’emploi</h3>
-        <p class="muted" style="max-width:60ch">Sites de barbier (réservation, paiement, abonnement, fidélité), sites vitrines par métier : essayez la démonstration, je la personnalise à votre marque et la mets en ligne. Nom de domaine offert et 6 mois d’assistance et de maintenance offerts.</p>
-        <a class="more" href="templates/">Voir les templates →</a>
-      </article>
-      <p class="muted reveal" style="font-size:var(--t-sm);margin-top:var(--s-5)">Chaque devis est gratuit et sans engagement. Il précise ce qui est inclus, le prix de la création et, si besoin, le suivi (hébergement, sauvegardes, modifications). Noms de domaine et abonnements Shopify au prix du fournisseur.</p>
-      <article class="showcase reveal">
-        <a href="exemples/bois/" tabindex="-1" aria-hidden="true"><img src="assets/ex-bois.jpg" alt="" loading="lazy" width="1280" height="800"></a>
-        <div>
-          <span class="chip chip-accent">Nouvel exemple</span>
-          <h3>Un vendeur de bois de chauffage qui ne passe plus ses soirées au téléphone</h3>
-          <p class="muted">Prix affiché dès l’accueil, calcul au stère avec 7 longueurs de coupe, livraison par zone et bon de commande déjà rempli. Le même principe s’adapte à votre métier.</p>
-          <div class="acts"><a class="btn btn-accent" href="exemples/bois/">Voir l’exemple</a><a class="btn btn-ghost" href="devis/?type=Site%20vitrine">Je veux le mien</a></div>
-        </div>
-      </article>
-      <div class="steps">
-        <div class="step reveal"><h3>Vous m’expliquez</h3><p>Votre besoin, avec vos mots. Le devis est gratuit.</p></div>
-        <div class="step reveal" style="--i:1"><h3>Je vous montre</h3><p>Une première version à tester, avant tout engagement sur la suite.</p></div>
-        <div class="step reveal" style="--i:2"><h3>On ajuste et on publie</h3><p>Les retouches, puis la mise en ligne. Vous êtes autonome.</p></div>
-      </div>
     </div>
   </section>
 
-  <section class="section" style="padding-top:0">
-    <div class="wrap">
-      <figure class="story reveal" style="margin:0">
-        <span class="mark" aria-hidden="true">“</span>
-        <div>
-          <blockquote>J’ai commencé par un besoin simple : un outil qui n’existait pas, ou alors trop cher et trop compliqué. Je l’ai construit. Puis un deuxième. Puis une application complète.</blockquote>
-          <p class="muted" style="margin-top:var(--s-4)">Mon idée : des outils qui font une chose, et qui la font bien. Gratuits quand c’est possible, sur mesure quand il le faut.</p>
-          <figcaption class="eyebrow">Le créateur de QuenTools</figcaption>
-        </div>
-      </figure>
-    </div>
-  </section>
-
-  <section class="section" id="faq" style="padding-top:0">
-    <div class="wrap faq-grid">
-      <div class="section-head">
-        <span class="eyebrow reveal">FAQ</span>
-        <h2 class="h-section reveal" style="--i:1">Questions fréquentes</h2>
-        <p class="lede reveal" style="--i:2">Une autre question ? Écrivez-moi par e-mail ou en message privé sur TikTok.</p>
-      </div>
-      <div class="faq reveal">
-        <details><summary>Les outils gratuits le sont-ils vraiment ?</summary><p>Oui : pas d’abonnement, rien à payer pour les utiliser. Certains proposent des options facultatives, comme brancher votre propre clé d’IA.</p></details>
-        <details><summary>Où sont enregistrées mes données ?</summary><p>D’abord sur votre appareil. Quand un outil propose une sauvegarde ou une synchronisation en ligne, ses réglages expliquent comment elle fonctionne ; vous choisissez de l’activer ou non.</p></details>
-        <details><summary>Combien coûte un outil ou un site sur mesure ?</summary><p>Cela dépend de ce qu’il doit faire. Le devis est gratuit : vous connaissez le prix avant que je commence, et vous validez une première version avant la suite.</p></details>
-        <details><summary>Faut-il s’y connaître en informatique ?</summary><p>Non. Vous m’expliquez votre besoin avec vos mots, je m’occupe du reste, mise en ligne comprise.</p></details>
-        <details><summary>Qui est derrière QuenTools ?</summary><p>Un créateur indépendant, basé en France, qui conçoit et met en ligne chaque projet lui-même. Toutes les applications présentées ici sont les siennes.</p></details>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="contact" style="padding-top:0">
+  <section class="section" id="sur-mesure" style="padding-top:0">
+    <span id="tarifs"></span>
     <div class="wrap">
       <div class="cta-band reveal">
         <span class="big-q" aria-hidden="true">Q</span>
-        <span class="eyebrow" style="color:var(--lime)">Contact</span>
-        <h2 style="margin:var(--s-4) 0">Un projet, une question ?</h2>
-        <p>Décrivez votre besoin en quelques lignes : ce que vous faites aujourd’hui, et ce qui vous fait perdre du temps. Je vous réponds sous 48 h, par le formulaire, par e-mail ou en message privé sur TikTok.</p>
+        <span class="eyebrow" style="color:var(--lime)">Sur mesure</span>
+        <h2 style="margin:var(--s-4) 0">Décrivez-moi votre projet.</h2>
+        <p>Quelques lignes suffisent. Devis gratuit et sans engagement, réponse sous 48 h, première version montrée avant de vous engager.</p>
         <div class="hero-cta" id="contact-actions" style="margin-top:var(--s-6)"></div>
-        <p class="espace-hint">Déjà client ? <a href="espace/">Accéder à mon espace client →</a></p>
       </div>
     </div>
   </section>
@@ -276,7 +132,7 @@
         <p style="margin-top:var(--s-4);max-width:34ch">Des outils simples qui font gagner du temps. Gratuits quand c’est possible, sur mesure quand il le faut.</p>
       </div>
       <div><h4>Outils</h4><ul><li><a href="infikit/">Infikit</a></li><li><a href="freelance/">Freelance Kit</a></li><li><a href="gourmet/">Gourmet AI</a></li><li><a href="https://ikeupods-del.github.io/patrimoineai/">Patrimoine AI</a></li><li><a href="https://woufapp.fr">Wouf</a></li></ul></div>
-      <div><h4>QuenTools</h4><ul><li><a href="#sur-mesure">Offres et tarifs</a></li><li><a href="realisations/">Réalisations</a></li><li><a href="exemples/">Exemples</a></li><li><a href="creation-site/">Création de site par métier</a></li><li><a href="devis/">Demander un devis</a></li><li><a href="cadeau/">Carte cadeau</a></li><li><a href="espace/">Espace client</a></li><li><a href="#faq">FAQ</a></li><li><a href="https://www.tiktok.com/@quentools" rel="noopener">TikTok</a></li></ul></div>
+      <div><h4>QuenTools</h4><ul><li><a href="#sur-mesure">Offres et tarifs</a></li><li><a href="realisations/">Réalisations</a></li><li><a href="exemples/">Exemples</a></li><li><a href="creation-site/">Création de site par métier</a></li><li><a href="devis/">Demander un devis</a></li><li><a href="cadeau/">Carte cadeau</a></li><li><a href="espace/">Espace client</a></li><li><a href="https://www.tiktok.com/@quentools" rel="noopener">TikTok</a></li></ul></div>
       <div><h4>Légal</h4><ul><li><a href="mentions-legales/" rel="nofollow">Mentions légales et confidentialité</a></li></ul></div>
     </div>
     <div class="footer-bottom">
@@ -295,7 +151,7 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const safe = u => /^(https:\/\/|mailto:|\.{0,2}\/|#|[a-z0-9-]+\/)/i.test(u || '') ? u : '';
   function contacts(C) {
-    const btns = ['<a class="btn btn-lime" href="devis/">Demander un devis</a>'];
+    const btns = ['<a class="btn btn-lime" href="devis/">Remplir le formulaire</a>'];
     if (C.email) btns.push(`<a class="btn btn-ghost" href="mailto:${esc(C.email)}?subject=${encodeURIComponent('Projet QuenTools')}">M’écrire</a>`);
     if (C.tiktok) btns.push(`<a class="btn btn-ghost" href="https://www.tiktok.com/@${encodeURIComponent(C.tiktok)}" rel="noopener">Suivre et écrire sur TikTok</a>`);
     document.getElementById('contact-actions').innerHTML = btns.join('');
@@ -310,16 +166,6 @@
     if (s.availText) { const c = document.getElementById('qt-avail'); c.className = 'chip reveal is-in ' + (s.available === false ? 'chip-accent' : 'chip-ok'); c.innerHTML = '<span class="dot"></span> ' + esc(s.availText); }
   });
 </script>
-<script>
-(() => {
-  const rail = document.getElementById('exemples-rail'); if (!rail) return;
-  const prev = document.querySelector('[data-rail=prev]'), next = document.querySelector('[data-rail=next]');
-  const maj = () => { prev.disabled = rail.scrollLeft <= 4; next.disabled = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 4; };
-  const pas = () => Math.max(rail.clientWidth * .85, 240);
-  prev.addEventListener('click', () => rail.scrollBy({ left: -pas(), behavior: 'smooth' }));
-  next.addEventListener('click', () => rail.scrollBy({ left: pas(), behavior: 'smooth' }));
-  rail.addEventListener('scroll', maj, { passive: true }); addEventListener('resize', maj); maj();
-})();
-</script>
+
 </body>
 </html>
