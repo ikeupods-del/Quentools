@@ -14,6 +14,8 @@
 <link rel="stylesheet" href="../assets/qt.css?v=20261001h">
 <script src="../assets/qt-config.js"></script>
 <script src="../assets/qt-cloud.js"></script>
+<script src="../assets/qt-templates.js"></script>
+<style>#tpl-box[hidden],#opt-box[hidden]{display:none!important}#tpl-list{display:grid;gap:10px}#tpl-list .choice span{display:block;border-radius:var(--r-md);text-align:left;width:100%}#tpl-list .choice input:checked+span small{color:inherit;opacity:.85}</style>
 </head>
 <body>
 <a class="skip" href="#contenu">Aller au contenu</a>
@@ -39,6 +41,11 @@
           <label class="choice"><input type="radio" name="type" value="Application complète"><span>📱 Une application</span></label>
           <label class="choice"><input type="radio" name="type" value="Autre"><span>💡 Autre / je ne sais pas</span></label>
         </div>
+      </fieldset>
+      <fieldset class="field" id="tpl-box" hidden><legend>Votre template</legend>
+        <div class="choices" id="tpl-list"></div>
+        <div id="opt-box" hidden style="margin-top:var(--s-4)"><b style="display:block;margin-bottom:8px">Options souhaitées <span class="muted" style="font-weight:400">(facultatif)</span></b><div id="opt-list" style="display:grid;gap:8px"></div>
+        <small>Ce qui est compris dans le prix de départ : personnalisation, mise en ligne, nom de domaine offert la première année, 6 mois d’assistance, une série de retouches. Les options sont chiffrées dans votre devis, sans engagement.</small></div>
       </fieldset>
       <div class="field"><label for="besoin">Votre activité et votre besoin</label>
         <textarea id="besoin" name="besoin" required minlength="20" maxlength="3000" placeholder="Ex. « Je suis plombier, je fais mes devis à la main sur Excel et je perds une heure par jour. J’aimerais un outil sur téléphone pour faire un devis devant le client. »"></textarea>
@@ -79,9 +86,31 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   // Type de projet présélectionné depuis l'accueil : /devis/?type=Outil%20sur%20mesure
   const pre = new URLSearchParams(location.search).get('type'); if (pre) { const r = f.querySelector(`input[name=type][value="${CSS.escape(pre)}"]`); if (r) r.checked = true; }
-  // Template choisi depuis le catalogue : /devis/?type=Template&template=Barbier%20de%20luxe
-  const tpl = (new URLSearchParams(location.search).get('template') || '').slice(0, 80);
-  if (tpl) { const b = document.getElementById('besoin'); b.value = `Template souhaité : ${tpl}\nMon activité : `; }
+  // Template choisi depuis le catalogue : /devis/?type=Template&template=Barbier%20de%20luxe (choix du template et des options dans le formulaire)
+  const tplQ = (new URLSearchParams(location.search).get('template') || '').slice(0, 80);
+  const tbox = document.getElementById('tpl-box'), tlist = document.getElementById('tpl-list'), obox = document.getElementById('opt-box'), olist = document.getElementById('opt-list');
+  let tplSel = window.QTT && tplQ ? (QTT.find(tplQ) || null) : null;
+  const selType = () => (f.querySelector('input[name=type]:checked') || {}).value;
+  function drawOptions() {
+    const keep = {}; olist.querySelectorAll('input[type=checkbox]:checked').forEach(c => { keep[c.value] = (olist.querySelector(`input[data-q="${c.value}"]`) || {}).value || 1; });
+    const opts = tplSel ? QTT.optionsFor(tplSel.id) : [];
+    obox.hidden = !opts.length;
+    olist.innerHTML = opts.map(o => `<label class="check"><input type="checkbox" value="${o.id}"${keep[o.id] ? ' checked' : ''}> <span><b>${esc(o.name)}</b>${o.monthly ? ' <span class="muted">(par mois)</span>' : ''}<br><span class="muted">${esc(o.hint)}</span></span>${o.qty ? `<input type="number" data-q="${o.id}" min="1" max="20" value="${esc(keep[o.id] || 1)}" aria-label="Quantité : ${esc(o.name)}" style="width:72px;margin-left:auto">` : ''}</label>`).join('');
+  }
+  function drawTemplates() {
+    const on = selType() === 'Template' && window.QTT; tbox.hidden = !on; if (!on) return;
+    tlist.innerHTML = QTT.templates.map(t => `<label class="choice"><input type="radio" name="tpl" value="${t.id}"${tplSel && tplSel.id === t.id ? ' checked' : ''}><span><b>${esc(t.name)}</b> · dès ${t.base} €<br><small class="muted" style="font-weight:400">${esc(t.resume)}</small></span></label>`).join('');
+    drawOptions();
+  }
+  tlist.addEventListener('change', e => { if (e.target.name === 'tpl') { tplSel = QTT.templates.find(t => t.id === e.target.value) || null; drawOptions(); } });
+  f.addEventListener('change', e => { if (e.target.name === 'type') drawTemplates(); });
+  if (tplSel) { const r = f.querySelector('input[name=type][value="Template"]'); if (r) r.checked = true; }
+  drawTemplates();
+  const tplText = () => {
+    if (selType() !== 'Template' || !tplSel) return '';
+    const chosen = [...olist.querySelectorAll('input[type=checkbox]:checked')].map(c => { const o = QTT.options.find(z => z.id === c.value), q = o.qty ? Math.max(1, +(olist.querySelector(`input[data-q="${o.id}"]`) || {}).value || 1) : 1; return o.name + (q > 1 ? ' × ' + q : ''); });
+    return `Template souhaité : ${tplSel.name}\n` + (chosen.length ? `Options souhaitées : ${chosen.join('; ')}\n` : '') + '\n';
+  };
   // Carte cadeau : /devis/?cadeau=QT-XXXX-XXXX ajoute le code en tête de la demande (le montant est déduit du devis).
   const gift = (new URLSearchParams(location.search).get('cadeau') || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 14);
   if (gift) { const b = document.getElementById('besoin'); b.value = `Carte cadeau : ${gift}\n\n`; b.placeholder = ''; }
@@ -93,6 +122,7 @@
     if (!type) return say('Choisissez le type de projet.', true);
     if (!f.checkValidity()) { f.reportValidity(); return; }
     if (!document.getElementById('ok').checked) return say('Cochez la case d’accord pour envoyer.', true);
+    d.besoin = tplText() + d.besoin;
     const text = `Demande de devis QuenTools\nType : ${type}\nDélai : ${d.delai}\nBudget : ${d.budget}\nNom : ${d.nom}\nE-mail : ${d.email}${d.tel ? '\nTéléphone : ' + d.tel : ''}\n\n${d.besoin}`;
     const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
     const ok = () => { f.reset(); say(`✅ <b>Merci ${esc(d.nom.split(' ')[0])}, votre demande est bien partie.</b> Je vous réponds sous 48 h à <b>${esc(d.email)}</b>. Suivez-la dans l’<a href="../espace/">espace client</a> (connexion Google avec cette adresse).`); };

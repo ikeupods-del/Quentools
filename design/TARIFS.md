@@ -26,6 +26,22 @@ Voir `design/OFFRES.md` (formules du site et services Fiverr, validées par le p
 
 Templates (catalogue : site `templates/`, démonstrations dans `demo/` et `exemples/`) : prix de départ **399 €** affiché publiquement, pour la personnalisation et la mise en ligne. Les démonstrations simulent paiement, e-mails et comptes : brancher le réel (voir « Paiements et administration », +500-1 500 €) se chiffre dans le devis, ne jamais le promettre dans les 399 €. Coût réel à absorber par offre : un nom de domaine (≈ 10-15 €/an, acheté au nom du client) et le temps d'assistance des 6 mois (hébergement GitHub Pages gratuit ; réponse sous 48 h ouvrées, modifications simples seulement) : garder les 399 € rentables. Ouvre un devis via `devis/?type=Template&template=<nom>`.
 
+### Options des templates dans le devis (administration → Devis → « Template et options »)
+Le catalogue (templates et options) est dans `assets/qt-templates.js` ; le formulaire public `devis/` laisse choisir le template et ses options **sans afficher de prix** (seul le « dès 399 € » est public). Dans l'administration, le choix du client est repris en un clic et chaque option arrive avec un prix de départ, toujours modifiable ligne par ligne. **Prix de départ proposés par l'administration, à valider ou ajuster** (la grille ne fixe que « paiements et administration : +500 à 1 500 € ») :
+
+| Option | Prix de départ |
+|---|---|
+| Réservations et comptes réellement enregistrés (base de données) | 500 € |
+| Paiement en ligne réel (PayPal ou Stripe) | 500 € |
+| E-mails de confirmation et de rappel réellement envoyés | 150 € |
+| Page supplémentaire (sites vitrines) | 50 € l'unité |
+| Rédaction des textes | 80 € |
+| Prise en main (1 h en visio) | 40 € |
+| Modification importante ou nouvelle fonction | 150 € l'unité |
+| Suivi mensuel après les 6 mois offerts | 15 € / mois |
+
+Pour changer ces montants : `OPT_PRICE` dans `admin/index.html`.
+
 Règles : devis gratuit, prix fixé avant de commencer, première version montrée avant la suite (acompte non remboursé une fois la première version proposée), acompte 30 à 50 %, engagement de 12 mois sur le mensuel. Noter le temps réellement passé sur les premières commandes et ajuster. Micro-entreprise obligatoire pour facturer. Hébergement gratuit sur GitHub Pages : code public, donc pas pour des données sensibles.
 
 ## Réponses types

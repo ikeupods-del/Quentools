@@ -9,12 +9,28 @@
 <link rel="stylesheet" href="../assets/qt.css?v=20261001h">
 <script src="../assets/qt-config.js"></script>
 <script src="../assets/qt-devis.js"></script>
+<script src="../assets/qt-templates.js"></script>
 <style>
-  .adm-head{display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;margin-bottom:var(--s-5)}
-  .tabs{display:flex;gap:6px;overflow-x:auto;padding:4px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line);margin-bottom:var(--s-6);scrollbar-width:none}
-  .tabs button{flex:0 0 auto;font:600 var(--t-sm)/1 var(--f-text);padding:11px 16px;border-radius:999px;border:0;background:transparent;color:var(--muted);cursor:pointer}
-  .tabs button[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:var(--sh-1)}
-  .tabs .count{display:inline-block;min-width:20px;padding:2px 6px;margin-left:6px;border-radius:999px;background:var(--accent);color:#fff;font-size:11px}
+  .adm{display:grid;grid-template-columns:232px minmax(0,1fr);gap:var(--s-6);align-items:start}
+  .side{position:sticky;top:88px;display:grid;gap:var(--s-5)}
+  .side-g{margin:0 0 6px 12px;font:700 11px/1 var(--f-text);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .side nav{display:grid;gap:2px}
+  .side button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;border:0;border-radius:12px;background:transparent;color:var(--ink-2);font:600 var(--t-sm)/1.2 var(--f-text);cursor:pointer}
+  .side button:hover{background:var(--bg-2)}
+  .side button[aria-current=page]{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line-2),var(--sh-1)}
+  .side button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .side svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .side .count{margin-left:auto;min-width:20px;padding:2px 6px;border-radius:999px;background:var(--accent);color:#fff;font-size:11px;text-align:center}
+  .adm-top{display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:flex-start;justify-content:space-between;margin-bottom:var(--s-5)}
+  .adm-top h1{margin:0;font:700 var(--t-xl)/1.15 var(--f-display)}.adm-top p{margin:4px 0 0;font-size:var(--t-sm)}
+  .adm-who{display:flex;gap:8px;align-items:center;font-size:var(--t-xs);color:var(--muted)}
+  @media (max-width:900px){
+    .adm{grid-template-columns:minmax(0,1fr);gap:var(--s-4)}
+    .side{position:static;display:flex;gap:6px;overflow-x:auto;padding:4px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line);scrollbar-width:none}
+    .side-grp,.side nav{display:contents}.side-g{display:none}
+    .side button{width:auto;flex:0 0 auto;white-space:nowrap;padding:10px 14px;border-radius:999px}
+    .side svg{display:none}
+  }
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s-3);margin-bottom:var(--s-5)}
   @media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
   .kpis div{padding:16px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line)}
@@ -113,7 +129,31 @@
   #dv label.chk{display:flex;gap:8px;align-items:center;justify-content:space-between;min-height:44px}
   #dv label.chk input{width:22px;height:22px;accent-color:var(--accent)}
   .dv-rem{display:grid;gap:8px;padding:12px;border:1px dashed var(--line-2);border-radius:var(--r-md)}
-  .dv-sum{position:sticky;bottom:8px;z-index:5;display:grid;gap:10px;padding:14px 16px;background:var(--surface);border:2px solid var(--ink);border-radius:var(--r-md);box-shadow:var(--sh-2)}
+  .dv-sum{display:grid;gap:10px;padding:14px 16px;background:var(--surface);border:2px solid var(--ink);border-radius:var(--r-md);box-shadow:var(--sh-2)}
+  .dv-wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:var(--s-5);align-items:start}
+  .dv-main{display:grid;gap:var(--s-4)}
+  .dv-card{display:grid;gap:var(--s-4);padding:clamp(18px,3vw,28px)}
+  .dv-h{margin:0;font-size:var(--t-lg)}
+  .dv-side{position:sticky;top:88px;display:grid;gap:var(--s-3)}
+  .dv-side .dv-sum .row{display:grid!important;grid-template-columns:1fr}
+  .tpl-picks{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+  .tpl-pick{display:grid;gap:4px;text-align:left;padding:12px 14px;border-radius:var(--r-md);border:1px solid var(--line-2);background:var(--surface);color:var(--ink);cursor:pointer;font:inherit}
+  .tpl-pick small{color:var(--muted);font-size:var(--t-xs);line-height:1.35}
+  .tpl-pick:hover{border-color:var(--accent)}
+  .tpl-pick[aria-pressed=true]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--accent-soft)}
+  .tpl-opts{display:grid;gap:8px}
+  .tpl-opt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--bg)}
+  .tpl-opt .chk{justify-content:flex-start!important;gap:12px!important;min-height:0!important;color:var(--ink)!important;font-size:var(--t-sm)!important}
+  .tpl-opt .chk input{flex:none}
+  .tpl-nums{display:flex;gap:8px}.tpl-nums label{width:92px}
+  .tpl-tot{font-weight:700}
+  @media (max-width:1180px){
+    .dv-wrap{grid-template-columns:minmax(0,1fr)}
+    .dv-side{position:sticky;top:auto;bottom:8px;z-index:5}
+    .dv-side .dv-sum #dv-sum .ln:not(.big){display:none}
+    .dv-side .dv-warn,.dv-side>p{display:none}
+  }
+  @media (max-width:560px){.tpl-opt{grid-template-columns:1fr}.tpl-nums label{flex:1}}
   .dv-sum .ln{display:flex;justify-content:space-between;gap:12px;font-size:var(--t-sm)}
   .dv-sum .big{font:800 var(--t-lg)/1.2 var(--f-display)}
   .dv-save{font-size:var(--t-xs);color:var(--muted)}
@@ -165,6 +205,7 @@ async function fb() {
 }
 const demo = {
   items: [
+    { id: 'd0', type: 'Template', nom: 'Salon Mistral', email: 'mistral@example.com', tel: '06 22 33 44 55', delai: 'Dans le mois', budget: 'Moins de 1 000 €', besoin: 'Template souhaité : Barbier de luxe\nOptions souhaitées : Paiement en ligne réel (PayPal ou Stripe); E-mails de confirmation et de rappel réellement envoyés\n\nJe tiens un salon de coiffure homme à Aix et je voudrais prendre les réservations en ligne.', status: 'nouveau', at: new Date(Date.now() - 3600e3) },
     { id: 'd1', type: 'Site vitrine', nom: 'Julie Martin', email: 'julie@example.com', tel: '06 00 00 00 00', delai: 'Dans le mois', budget: '1 000 à 3 000 €', besoin: 'Je suis fleuriste à Nîmes et je voudrais un site simple avec mes horaires, des photos et un bouton pour commander.', status: 'nouveau', at: new Date(Date.now() - 3600e3).toISOString() },
     { id: 'd2', type: 'Outil sur mesure', nom: 'Karim B.', email: 'karim@example.com', tel: '', delai: 'Dès que possible', budget: 'Je ne sais pas encore', besoin: 'Plombier, je fais mes devis sur Excel. Je veux un outil sur téléphone pour faire un devis devant le client.', status: 'envoye', montant: 1800, note: 'Rappeler jeudi', at: new Date(Date.now() - 5 * 864e5).toISOString() },
     { id: 'd3', type: 'Application complète', nom: 'Asso Les Pattes', email: 'contact@example.org', tel: '', delai: 'Dans les 3 mois', budget: '3 000 à 6 000 €', besoin: 'Application pour suivre les adoptions et les familles d’accueil.', status: 'gagne', montant: 4200, at: new Date(Date.now() - 20 * 864e5).toISOString() }
@@ -349,11 +390,18 @@ function dvSumHtml() {
     ${fl && k.total > 0 && k.total < fl ? `<div class="dv-warn">Sous le bas de votre grille pour ce type de projet (${eur(fl)}).</div>` : ''}`;
 }
 function dvInit() {
+  tplReset();
   const x = estFor && items.find(i => i.id === estFor), g = id => document.getElementById(id);
   const from = d => ({ for: x ? x.id : null, num: d.num || '', validite: d.validite ?? 30, delai: d.delai || '', acompte: d.acompte ?? 30, notes: d.notes || '',
     lignes: (d.lignes && d.lignes.length ? d.lignes : [blankLine()]).map(l => ({ l: l.l || '', q: l.q ?? 1, pu: l.pu ?? '', rem: l.rem || '', m: !!l.m })),
     client: { nom: '', email: '', adresse: '', ...(d.client || {}) }, remise: { type: 'pct', val: '', label: '', ...(d.remise || {}) } });
   for (const raw of x ? [x.devisDraft, x.devisData] : []) { if (!raw) continue; try { dv = from(JSON.parse(raw)); return; } catch (e) { /* illisible : on essaie la suite */ } }
+  const cl = x ? QTT.parse(x.besoin) : null;
+  if (cl && cl.template) {   // demande d'un template : le devis démarre avec le template et les options choisis par le client
+    tpl = { id: cl.template.id, opts: Object.fromEntries(cl.options.map(o => [o.id, o.qty])), price: {} };
+    const r = tplBuild(cl.template, tpl.opts, tpl.price);
+    dv = from({ lignes: r.lignes, acompte: 30, validite: 30, notes: r.notes, client: { nom: x.nom, email: x.email } }); return;
+  }
   const type = g('e-type') ? g('e-type').value : (x && GRID[x.type] ? x.type : 'Site vitrine'), gm = GRID[type] || GRID['Site vitrine'];
   const lvl = g('e-lvl') ? g('e-lvl').selectedOptions[0].textContent.split(' (')[0].toLowerCase() : 'standard';
   dv = from({ lignes: [{ l: `${type} (${lvl}) : conception, réalisation et mise en ligne`, q: 1, pu: estMid || Math.round((gm[0] + gm[1]) / 100) * 50 }], acompte: 30, validite: 30,
@@ -378,6 +426,40 @@ function dvSet(el) {
   else { const [a, k] = el.dataset.dv.split('.'); if (k) dv[a][k] = el.value.slice(0, 300); else dv[a] = el.value.slice(0, 1000); }
   dvRefresh(); dvDirty();
 }
+/* Templates et options : le catalogue vient de assets/qt-templates.js. Les prix par défaut des options sont des points de départ, toujours modifiables dans le devis. */
+const OPT_PRICE = { bdd: 500, paiement: 500, emails: 150, pages: 50, textes: 80, priseenmain: 40, modifs: 150, suivi: 15 };
+const TPL_COMPRIS = 'Compris : personnalisation (nom, couleurs, textes, photos, prix, horaires) ; mise en ligne sur votre nom de domaine (offert la première année) ; assistance et maintenance offertes pendant 6 mois ; une série de retouches et une notice.';
+let tpl = { id: '', opts: {}, price: {} };
+const tplReset = () => { tpl = { id: '', opts: {}, price: {} }; };
+const tplOf = () => QTT.templates.find(t => t.id === tpl.id) || null;
+const optPrice = id => tpl.price[id] ?? OPT_PRICE[id] ?? 0;
+/* Lignes de devis d'un template et de ses options ; « notes » liste ce qui n'est pas inclus (option sur devis). */
+function tplBuild(t, opts, price) {
+  const lignes = [{ l: `Template « ${t.name} » personnalisé et mis en ligne\n${TPL_COMPRIS}`, q: 1, pu: t.base, rem: '', m: false }], off = [];
+  QTT.optionsFor(t.id).forEach(o => {
+    if (opts[o.id]) lignes.push({ l: o.name, q: o.qty ? opts[o.id] : 1, pu: price[o.id] ?? OPT_PRICE[o.id] ?? 0, rem: '', m: !!o.monthly });
+    else if (['bdd', 'paiement', 'emails'].includes(o.id)) off.push(o.name.charAt(0).toLowerCase() + o.name.slice(1));
+  });
+  return { lignes, notes: off.length ? `Non inclus, disponible en option sur devis : ${off.join(', ')}.` : '' };
+}
+function tplTotals() {
+  const t = tplOf(); if (!t) return { once: 0, rec: 0 };
+  let once = t.base, rec = 0;
+  QTT.optionsFor(t.id).forEach(o => { if (tpl.opts[o.id]) { const v = (o.qty ? tpl.opts[o.id] : 1) * optPrice(o.id); if (o.monthly) rec += v; else once += v; } });
+  return { once, rec };
+}
+const tplTotTxt = () => { const k = tplTotals(); return `Template et options : ${eur(k.once)}${k.rec ? ` + ${eur(k.rec)} / mois` : ''}`; };
+function tplHtml() {
+  const t = tplOf(), x = estFor && items.find(i => i.id === estFor), cl = x ? QTT.parse(x.besoin) : { template: null, options: [] };
+  const banner = cl.template && !tpl.id ? `<div class="notice">Le client a demandé le template <b>${esc(cl.template.name)}</b>${cl.options.length ? ', avec : ' + cl.options.map(o => esc(QTT.options.find(z => z.id === o.id).name.toLowerCase())).join(', ') : ', sans option'}. <button type="button" class="btn btn-sm btn-accent" data-do="tpl-client" style="margin-left:8px">Reprendre son choix</button></div>` : '';
+  const picks = QTT.templates.map(z => `<button type="button" class="tpl-pick" data-do="tpl-pick" data-id="${z.id}" aria-pressed="${z.id === tpl.id}"><b>${esc(z.name)}</b><small>Dès ${eur(z.base)} · ${esc(z.resume)}</small></button>`).join('');
+  const opts = t ? QTT.optionsFor(t.id).map(o => { const on = !!tpl.opts[o.id];
+    return `<div class="tpl-opt"><label class="chk"><input type="checkbox" data-tplopt="${o.id}"${on ? ' checked' : ''}><span><b>${esc(o.name)}</b>${o.monthly ? ' <span class="muted">(par mois)</span>' : ''}<br><small class="muted">${esc(o.hint)}</small></span></label>${on ? `<div class="tpl-nums">${o.qty ? `<label>Qté<input type="number" min="1" max="50" data-tplqty="${o.id}" value="${tpl.opts[o.id]}"></label>` : ''}<label>${o.monthly ? '€ / mois' : o.qty ? '€ l’unité' : 'Prix (€)'}<input type="number" min="0" step="10" data-tplprice="${o.id}" value="${optPrice(o.id)}"></label></div>` : ''}</div>`; }).join('') : '';
+  return `<section class="card dv-card"><h3 class="dv-h">Template et options</h3>${banner}<div class="tpl-picks">${picks}</div>
+    ${t ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Prix de départ ${eur(t.base)} : personnalisation, mise en ligne, nom de domaine offert (1re année), 6 mois d’assistance, une série de retouches.${t.demo ? ` <a href="../${esc(t.demo)}" target="_blank" rel="noopener">Voir la démonstration</a>.` : ''}</p>
+      <div class="tpl-opts">${opts}</div><div class="ag-act"><button type="button" class="btn btn-accent" data-do="tpl-add">Ajouter au devis</button><span class="tpl-tot" id="tpl-tot">${tplTotTxt()}</span></div>`
+      : '<p class="muted" style="margin:0;font-size:var(--t-sm)">Choisissez un template pour ajouter son prix de départ et ses options au devis, en un clic. Les lignes restent modifiables ensuite.</p>'}</section>`;
+}
 function dvHtml() {
   if (!dv) return '';
   const cus = catCustom(), cur = estFor && items.find(i => i.id === estFor), r = dv.remise, copyable = items.filter(i => i.devisData && i.id !== estFor);
@@ -391,14 +473,14 @@ function dvHtml() {
       <label class="chk"><span>Par mois</span><input type="checkbox" data-dvl="${i}:m"${l.m ? ' checked' : ''}></label>
       <b class="lt" data-lt="${i}">${lineTxt(l)}</b></div>
     <div class="ag-act"><button class="btn btn-sm btn-ghost" data-do="line-star" data-i="${i}" title="Garder cette ligne comme préréglage">★ Préréglage</button><button class="btn btn-sm btn-ghost" data-do="dv-del" data-i="${i}" style="margin-left:auto">Retirer la ligne</button></div></div>`;
-  return `<section class="card" id="dv" style="padding:clamp(20px,4vw,36px);display:grid;gap:var(--s-4)">
+  return `<div id="dv" class="dv-wrap"><div class="dv-main"><section class="card dv-card">
     <div class="req-top"><h2 style="margin:0">Devis ${dv.num ? esc(dv.num) : '<span class="muted" style="font-size:var(--t-sm);font-weight:500">(numéro attribué à la publication)</span>'}</h2>${cur && cur.devisData ? '<span class="chip st-envoye">Déjà publié</span>' : ''}</div>
     ${copyable.length ? `<label class="mini">Reprendre un devis existant<select id="dv-copy"><option value="">Choisir…</option>${copyable.map(i => `<option value="${esc(i.id)}">${esc(i.nom)} · ${esc(i.type)}</option>`).join('')}</select></label>` : ''}
     <div class="dv-grid"><label>Client<input data-dv="client.nom" value="${esc(dv.client.nom)}"></label><label>E-mail<input data-dv="client.email" type="email" value="${esc(dv.client.email)}"></label></div>
     <label>Adresse du client (obligatoire pour un professionnel)<textarea data-dv="client.adresse" rows="2">${esc(dv.client.adresse || '')}</textarea></label>
-    <div><b style="display:block;margin-bottom:8px">Prestations</b><div class="dv-cat">${chips}</div></div>
+    </section>${tplHtml()}<section class="card dv-card"><h3 class="dv-h">Prestations</h3><div><span class="muted" style="font-size:var(--t-xs)">Préréglages à ajouter en un clic</span><div class="dv-cat" style="margin-top:8px">${chips}</div></div>
     <div>${dv.lignes.map(line).join('')}<button class="btn btn-sm btn-ghost" data-do="dv-add">+ Ajouter une ligne libre</button></div>
-    <div class="dv-rem"><b>Remise sur le devis</b>
+    </section><section class="card dv-card"><h3 class="dv-h">Conditions et remise</h3><div class="dv-rem"><b>Remise sur le devis</b>
       <div class="seg" role="group" aria-label="Remises rapides">${[5, 10, 15, 20].map(p => `<button type="button" class="btn btn-sm btn-ghost" data-do="rem-pct" data-p="${p}" aria-pressed="${r.type === 'pct' && +r.val === p}">−${p} %</button>`).join('')}<button type="button" class="btn btn-sm btn-ghost" data-do="rem-round">Arrondir à la dizaine</button><button type="button" class="btn btn-sm btn-ghost" data-do="rem-none">Aucune</button></div>
       <div class="dv-grid"><label>Type<select data-dv="remise.type"><option value="pct"${r.type !== 'eur' ? ' selected' : ''}>Pourcentage (%)</option><option value="eur"${r.type === 'eur' ? ' selected' : ''}>Montant (€)</option></select></label>
         <label>Valeur<input data-dv="remise.val" type="number" min="0" step="1" inputmode="decimal" value="${esc(r.val ?? '')}"></label>
@@ -407,11 +489,11 @@ function dvHtml() {
       <label>Validité (jours)<input data-dv="validite" type="number" min="1" max="365" value="${esc(dv.validite)}"></label>
       <label>Délai de réalisation<input data-dv="delai" placeholder="Ex. 2 semaines après l’acompte" value="${esc(dv.delai)}"></label></div>
     <label>Remarques (visibles sur le devis)<textarea data-dv="notes" rows="2">${esc(dv.notes)}</textarea></label>
-    <div class="dv-sum"><div id="dv-sum">${dvSumHtml()}</div>
+    </section></div><aside class="dv-side"><div class="dv-sum"><div id="dv-sum">${dvSumHtml()}</div>
       <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" data-do="dv-preview">Aperçu / PDF</button>
         ${estFor ? `<button class="btn btn-ghost" data-do="dv-save">Enregistrer le brouillon</button><button class="btn btn-accent" data-do="dv-publish">${dv.num ? 'Mettre à jour dans l’espace client' : 'Publier dans l’espace client'}</button>${cur && cur.devisData ? '<button class="btn btn-ghost" data-do="dv-mail">Prévenir par e-mail</button>' : ''}` : ''}</div>
       <span class="dv-save" id="dv-saved">${estFor ? 'Le brouillon s’enregistre tout seul.' : 'Devis libre : à imprimer en PDF, il n’est pas conservé. Choisissez une demande pour le publier chez un client.'}</span></div>
-    <p class="muted" style="font-size:var(--t-xs);margin:0">Vos coordonnées et conditions de paiement se règlent dans <b>Réglages du site</b>. TVA non applicable (art. 293 B du CGI) ajoutée automatiquement.</p></section>`;
+    <p class="muted" style="font-size:var(--t-xs);margin:0">Vos coordonnées et conditions de paiement se règlent dans <b>Réglages du site</b>. TVA non applicable (art. 293 B du CGI) ajoutée automatiquement.</p></aside></div>`;
 }
 
 async function loadLeads() {
@@ -629,14 +711,31 @@ function viewGifts() {
 
 /* ---------- Écrans ---------- */
 const toast = (m, warn) => { const n = document.getElementById('toast'); if (!n) return; n.innerHTML = `<div class="notice${warn ? ' warn' : ''}">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => n.innerHTML = '', 3500); };
+const NAV = [
+  ['Activité', [['demandes', 'Demandes', 'M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z'], ['agenda', 'Agenda', 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4'], ['estimer', 'Devis', 'M7 3h8l4 4v14H7zM14 3v5h5M10 13h6M10 17h6']]],
+  ['Gestion', [['cadeaux', 'Cartes cadeaux', 'M3 9h18v4H3zM5 13v8h14v-8M12 9v12M12 9c-2-4-6-3-5 0 1 2 5 0 5 0zM12 9c2-4 6-3 5 0-1 2-5 0-5 0z'], ['contacts', 'Contacts', 'M4 20c0-4 3.500-6 8-6s8 2 8 6M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'], ['stats', 'Chiffres', 'M5 20V10M12 20V4M19 20v-7']]],
+  ['Site', [['site', 'Réglages du site', 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18'], ['liens', 'Raccourcis', 'M14 4h6v6M20 4l-9 9M10 6H5v13h13v-5'], ['regles', 'Règles de sécurité', 'M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z']]]];
+const TITLES = {
+  demandes: ['Demandes', 'Les projets qui arrivent, de la première demande à la livraison.'],
+  agenda: ['Agenda', 'Appels, travail sur les projets, rendez-vous et rappels.'],
+  estimer: ['Devis', 'Estimez un prix, composez le devis avec un template et ses options, puis publiez-le chez le client.'],
+  cadeaux: ['Cartes cadeaux', 'Commandes à valider et cartes émises.'],
+  contacts: ['Contacts', 'Les adresses laissées sur le site.'],
+  stats: ['Chiffres', 'Ce que rapportent les demandes et les devis.'],
+  site: ['Réglages du site', 'Bandeau d’annonce, disponibilité, coordonnées et informations sur les devis.'],
+  liens: ['Raccourcis', 'Les services que vous utilisez, en un clic.'],
+  regles: ['Règles de sécurité', 'À coller une fois dans Firebase pour protéger les données.']
+};
 function shell(body) {
-  const nb = items.filter(x => (x.status || 'nouveau') === 'nouveau').length, na = agLate().length + agToday().length;
+  const nb = items.filter(x => (x.status || 'nouveau') === 'nouveau').length, na = agLate().length + agToday().length, ng = gifts.filter(g => (g.status || 'attente') === 'attente').length;
   document.title = (nb ? `(${nb}) ` : '') + 'Administration · QuenTools';
-  const t = (k, l) => `<button role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`;
-  app.innerHTML = `<div class="adm-head"><div><span class="eyebrow">Tableau de bord</span><h1 class="h-section" style="margin:var(--s-2) 0 0">Bonjour 👋</h1></div>
-    <div class="row" style="display:flex;gap:8px;align-items:center"><span class="muted" style="font-size:var(--t-xs)">${esc(DEMO ? 'Démonstration' : user && user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></div>
-    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('agenda', `Agenda${na ? `<span class="count">${na}</span>` : ''}`)}${t('estimer', 'Devis')}${t('cadeaux', `Cadeaux${gifts.filter(g => (g.status || 'attente') === 'attente').length ? `<span class="count">${gifts.filter(g => (g.status || 'attente') === 'attente').length}</span>` : ''}`)}${t('stats', 'Chiffres')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}${t('contacts', 'Contacts')}${t('regles', 'Règles')}${rulesOld ? '<span class="count">!</span>' : ''}</div>
-    <div id="toast" role="status" aria-live="polite"></div>${body}`;
+  const counts = { demandes: nb, agenda: na, cadeaux: ng, regles: rulesOld ? '!' : 0 };
+  const t = ([k, l, ic]) => `<button type="button" data-tab="${k}"${tab === k ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ic}"/></svg>${l}${counts[k] ? `<span class="count">${counts[k]}</span>` : ''}</button>`;
+  const [h1, sub] = TITLES[tab] || TITLES.demandes;
+  app.innerHTML = `<div class="adm"><aside class="side" aria-label="Sections">${NAV.map(([g, list]) => `<div class="side-grp"><p class="side-g">${g}</p><nav>${list.map(t).join('')}</nav></div>`).join('')}</aside>
+    <div class="adm-main"><header class="adm-top"><div><h1>${h1}</h1><p class="muted">${sub}</p></div>
+      <div class="adm-who"><span>${esc(DEMO ? 'Démonstration' : user && user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></header>
+    <div id="toast" role="status" aria-live="polite"></div>${body}</div></div>`;
 }
 function render() {
   shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'cadeaux' ? viewGifts() : viewLinks());
@@ -750,7 +849,7 @@ function viewRequests() {
     const nx = agenda.filter(a => a.devisId === x.id && !a.done).sort((a, b) => (a.date + a.heure).localeCompare(b.date + b.heure))[0];
     return `<article class="card req" data-id="${esc(x.id)}">
       <div class="req-sum"><button class="req-toggle" data-do="exp" aria-expanded="${exp}"><span class="req-top"><span class="chev" aria-hidden="true">▸</span><h3>${esc(x.nom)}</h3><span class="chip st-${st}">${stLabel(st)}</span></span>
-        <span class="meta"><span class="chip">${esc(x.type)}</span><span class="chip">💶 ${x.montant ? eur(x.montant) : esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR')}</span>` : ''}${nx ? `<span class="chip">${(KINDS[nx.kind] || KINDS.rappel)[0]} ${esc(dayName(nx.date))}${nx.heure ? ' ' + esc(nx.heure) : ''}</span>` : ''}${x.devisData ? '<span class="chip">📄 devis</span>' : ''}${(() => { const gc = giftCode(x.besoin), cc = gc && cards.find(c => c.id === gc); return gc ? `<span class="flag">🎁 ${esc(gc)}${cc ? ' · ' + esc(eur2(cc.solde)) + ' dispo' : ' · code inconnu'}</span>` : ''; })()}${x.reponse === 'accepte' ? '<span class="flag">✅ Devis accepté</span>' : x.reponse === 'refuse' ? '<span class="flag">❌ Devis refusé</span>' : ''}${unread ? '<span class="flag">💬 Nouveau message</span>' : ''}</span>
+        <span class="meta"><span class="chip">${esc(x.type)}</span>${(() => { const c = QTT.parse(x.besoin); return c.template ? `<span class="chip">🎨 ${esc(c.template.name)}${c.options.length ? ' + ' + c.options.length + ' option' + (c.options.length > 1 ? 's' : '') : ''}</span>` : ''; })()}<span class="chip">💶 ${x.montant ? eur(x.montant) : esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR')}</span>` : ''}${nx ? `<span class="chip">${(KINDS[nx.kind] || KINDS.rappel)[0]} ${esc(dayName(nx.date))}${nx.heure ? ' ' + esc(nx.heure) : ''}</span>` : ''}${x.devisData ? '<span class="chip">📄 devis</span>' : ''}${(() => { const gc = giftCode(x.besoin), cc = gc && cards.find(c => c.id === gc); return gc ? `<span class="flag">🎁 ${esc(gc)}${cc ? ' · ' + esc(eur2(cc.solde)) + ' dispo' : ' · code inconnu'}</span>` : ''; })()}${x.reponse === 'accepte' ? '<span class="flag">✅ Devis accepté</span>' : x.reponse === 'refuse' ? '<span class="flag">❌ Devis refusé</span>' : ''}${unread ? '<span class="flag">💬 Nouveau message</span>' : ''}</span>
         ${exp ? '' : `<span class="excerpt">${esc(String(x.besoin).replace(/\s+/g, ' ').slice(0, 140))}</span>`}</button>
         <div class="req-quick">${x.tel ? `<a class="btn btn-sm btn-ghost" href="tel:${esc(String(x.tel).replace(/[^\d+]/g, ''))}" aria-label="Appeler ${esc(x.nom)}">📞</a>` : ''}<button class="btn btn-sm btn-ghost" data-do="reply" aria-label="Écrire à ${esc(x.nom)}">✉️</button></div></div>
       ${exp ? `<div class="req-body">
@@ -979,6 +1078,17 @@ app.addEventListener('click', async e => {
     else if (d === 'ag-mo') { const ym = agMonth || today().slice(0, 7); agMonth = isoDay(new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + (+b.dataset.n), 1)).slice(0, 7); render(); }
     else if (d === 'notif') { const p = await Notification.requestPermission(); render(); toast(p === 'granted' ? 'Alertes activées tant que cette page reste ouverte' : 'Alertes non autorisées par le navigateur', p !== 'granted'); }
     else if (d === 'ag-ics-all') { const up = agEntries().filter(a => !a.done && a.date >= today()); if (!up.length) return toast('Rien de prévu à exporter', true); dl('agenda-quentools.ics', ics(up), 'text/calendar;charset=utf-8'); }
+    else if (d === 'tpl-pick') { tpl = { id: b.dataset.id, opts: tpl.id === b.dataset.id ? tpl.opts : {}, price: tpl.price }; render(); }
+    else if (d === 'tpl-client') {
+      const rq = estFor && items.find(i => i.id === estFor), cl = rq && QTT.parse(rq.besoin); if (!cl || !cl.template) return;
+      tpl = { id: cl.template.id, opts: Object.fromEntries(cl.options.map(o => [o.id, o.qty])), price: {} }; render();
+    }
+    else if (d === 'tpl-add') {
+      const t = tplOf(); if (!t || !dv) return; const r = tplBuild(t, tpl.opts, tpl.price), only = dv.lignes.length === 1 && !String(dv.lignes[0].l).trim() && !dv.lignes[0].pu;
+      if (only) dv.lignes = r.lignes; else dv.lignes.push(...r.lignes);
+      if (r.notes && !String(dv.notes || '').includes('Non inclus')) dv.notes = (dv.notes ? dv.notes + '\n' : '') + r.notes;
+      render(); dvDirty(); toast(`${r.lignes.length} ligne${r.lignes.length > 1 ? 's' : ''} ajoutée${r.lignes.length > 1 ? 's' : ''} au devis`);
+    }
     else if (d === 'dv-add') { dv.lignes.push(blankLine()); render(); dvDirty(); }
     else if (d === 'dv-del') { dv.lignes.splice(+b.dataset.i, 1); if (!dv.lignes.length) dv.lignes.push(blankLine()); render(); dvDirty(); }
     else if (d === 'cat-add') {
@@ -1059,6 +1169,9 @@ app.addEventListener('change', async e => {
       dv.acompte = d.acompte ?? dv.acompte; dv.validite = d.validite ?? dv.validite; dv.delai = d.delai || ''; dv.notes = d.notes || ''; render(); dvDirty(); toast('Lignes reprises du devis de ' + src.nom); } catch (err) { toast('Ce devis n’a pas pu être repris', true); }
     return;
   }
+  if (el.dataset.tplopt) { if (el.checked) tpl.opts[el.dataset.tplopt] = 1; else delete tpl.opts[el.dataset.tplopt]; render(); return; }
+  if (el.dataset.tplqty) { tpl.opts[el.dataset.tplqty] = Math.max(1, Math.round(+el.value) || 1); tplTotRefresh(); return; }
+  if (el.dataset.tplprice) { tpl.price[el.dataset.tplprice] = Math.max(0, +el.value || 0); tplTotRefresh(); return; }
   if (el.closest('#est')) { estimate(); return; }
   if (el.dataset.agdo === 'done' || el.dataset.agf) {
     const id = el.closest('[data-ag]').dataset.ag;
@@ -1075,6 +1188,12 @@ app.addEventListener('change', async e => {
 });
 app.addEventListener('input', e => { if (e.target.id === 'gq') { gq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('gq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'lq') { lq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('lq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'q') { q = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); } });
 
+function tplTotRefresh() { const n = document.getElementById('tpl-tot'); if (n) n.textContent = tplTotTxt(); }
+app.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset && el.dataset.tplqty) { tpl.opts[el.dataset.tplqty] = Math.max(1, Math.round(+el.value) || 1); tplTotRefresh(); }
+  if (el.dataset && el.dataset.tplprice) { tpl.price[el.dataset.tplprice] = Math.max(0, +el.value || 0); tplTotRefresh(); }
+});
 app.addEventListener('input', e => { const el = e.target; if (dv && el.closest && el.closest('#dv') && (el.dataset.dv || el.dataset.dvl)) dvSet(el); });
 app.addEventListener('toggle', e => { if (e.target.id === 'est-box') estOpen = e.target.open; }, true);
 app.addEventListener('change', e => {
