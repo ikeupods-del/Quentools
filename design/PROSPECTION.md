@@ -1,71 +1,56 @@
 # Messages de prospection (groupes Facebook)
 
-Avant de publier : lire les règles du groupe (beaucoup interdisent la publicité ; demander l'accord d'un administrateur ou publier le jour « promo » s'il existe). Ne jamais écrire à des inconnus en message privé sans qu'ils aient répondu. Ne contrôler un site qu'avec l'accord écrit de son propriétaire.
+Principe : pas de lien, pas de prix, pas de « promo » dans la publication. On pose une question ou on rend service, et on répond en message privé à ceux qui commentent. C'est ce qui évite le bannissement et attise la curiosité.
 
-## Message principal (création de site)
+Règles à respecter :
+- Lire les règles de chaque groupe et préférer les groupes où les indépendants et commerçants se parlent.
+- Ne jamais envoyer de message privé à quelqu'un qui n'a pas réagi : répondre d'abord en commentaire, puis proposer d'en parler en privé.
+- Une publication par groupe, espacée de plusieurs jours. Ne pas copier-coller le même texte partout.
+- Ne jamais promettre ce qu'on ne peut pas tenir, ne jamais inventer d'avis ou de chiffre.
+- Dans l'audit, ne contrôler un site qu'avec l'accord écrit de son propriétaire.
 
-Bonjour à tous 👋
+## Message 1 : la question (création de site)
 
-Vous avez une activité (artisan, commerce, coiffeur, restaurant, indépendant…) et pas de site, ou un site qui ne vous ressemble plus ?
+Question pour les pros du groupe 🤔
 
-Je crée des **sites professionnels dès 399 €**, prêts à l'emploi et personnalisés à votre image :
+Quand quelqu'un cherche votre activité sur son téléphone, il tombe sur quoi ? Un vrai site, une page Facebook, ou rien du tout ?
 
-✅ Adapté au téléphone, rapide, sans cookie ni traceur
-✅ Votre nom de domaine offert la première année
-✅ Mise en ligne comprise
-✅ 6 mois d'assistance et de maintenance offerts
-✅ Prix fixé avant de commencer, devis gratuit et sans engagement
+Je pose la question parce que je fais des sites pour des indépendants et des commerçants, et je suis souvent surpris de voir à quel point on perd des clients sans le savoir.
 
-Selon votre métier : site vitrine, prise de rendez-vous, commandes, boutique.
+Dites-moi en commentaire votre métier et si vous avez un site : je vous réponds avec un conseil précis pour vous 👇
 
-👉 Exemples par métier : https://quentools.fr/exemples/
-👉 Templates et prix : https://quentools.fr/templates/
-👉 Demande de devis (2 minutes) : https://quentools.fr/devis/
+## Message 2 : le service (création de site)
 
-Une question ? Écrivez-moi en commentaire ou en message privé.
+Je regarde gratuitement 5 sites ou pages de pros du groupe cette semaine 👀
 
-Quentin, QuenTools
+Je vous dis en 3 lignes ce qui fait fuir les clients et ce que je changerais en premier. Sans engagement.
 
-## Version courte (commentaire ou réponse)
+Commentez avec votre métier et je vous réponds en commentaire.
 
-Je crée des sites pour les professionnels dès 399 € (nom de domaine offert la première année, mise en ligne et 6 mois d'assistance compris). Exemples par métier : https://quentools.fr/exemples/
+## Message 3 : l'histoire (création de site)
 
-## Variante « pas de site du tout »
+Un artisan m'a dit : « Mon site, je ne sais même pas s'il marche sur téléphone. »
 
-Vos clients vous cherchent sur Google ou Facebook et ne trouvent pas de site ? Un site simple, clair et adapté au téléphone, avec vos horaires, vos prix et un bouton pour vous contacter, dès 399 €. Exemples : https://quentools.fr/exemples/
+Il avait raison de se poser la question : la majorité des visiteurs viennent de leur téléphone.
 
-## Variante « site à refaire »
+Et vous, vous l'avez déjà testé sur le vôtre ? 😅
 
-Votre site est ancien, lent ou difficile à lire sur téléphone ? Je le refais à votre image, prix fixé avant de commencer. Devis gratuit : https://quentools.fr/devis/
+## Message 4 : la curiosité (audit de sécurité)
 
-## Message pour l'audit de sécurité express
+Petite question : savez-vous si votre site est en sécurité ?
 
-Bonjour à tous 👋
+Pas besoin d'être informaticien : certains oublis sont visibles de l'extérieur et mettent les clients mal à l'aise (connexion non sécurisée, cookies, mentions manquantes).
 
-Votre site est en ligne, mais est-il vraiment bien protégé ?
+Je contrôle des sites gratuitement pour 3 personnes du groupe cette semaine. Dites « moi » en commentaire 👇
 
-Je propose un **audit de sécurité express à 100 €** : je contrôle votre site vu de l'extérieur et je vous remets un rapport clair, en français, sans jargon.
+## Réponses types en commentaire
 
-✅ Connexion sécurisée et certificat
-✅ Cookies, traceurs et services externes
-✅ Formulaires, mentions légales, fichiers exposés par erreur
-✅ Un plan d'action classé par priorité
+- Au commentaire d'un pro : « Merci ! Je regarde votre activité et je reviens vers vous ici même avec un conseil précis. »
+- À la demande « c'est combien ? » : « Ça dépend de ce qu'il vous faut. Je vous envoie un message pour en parler, ça évite de dire n'importe quoi en public. » (le prix se donne en message privé, après leur accord)
+- À la demande d'un lien : « Je vous écris en privé. »
 
-Je ne contrôle que ce que je peux réellement vérifier, et uniquement avec votre accord écrit. Prix fixe, sans abonnement.
+## Après le commentaire
 
-👉 Exemple de rapport et détails : https://quentools.fr/audit/
-Une question ? Écrivez-moi en commentaire ou en message privé.
-
-Quentin, QuenTools
-
-## Version courte (commentaire ou réponse)
-
-Je fais des audits de sécurité express de sites web à 100 € (rapport clair en français, plan d'action par priorité). Exemple de rapport : https://quentools.fr/audit/
-
-## Variante pour les commerçants et artisans
-
-Un site vitrine, une page de réservation, un formulaire de contact : si vos clients y laissent leurs informations, vous avez des obligations. Pour 100 €, je vérifie les points essentiels (sécurité, cookies, mentions légales) et je vous dis quoi corriger en premier. https://quentools.fr/audit/
-
-## Variante création de site (courte)
-
-Création de site par métier dès 399 €, prix fixé avant de commencer, mise en ligne comprise. Exemples : https://quentools.fr/exemples/
+1. Regarder réellement leur site ou leur page, et donner un conseil concret, vrai et vérifiable.
+2. Proposer d'en parler en privé seulement s'ils sont intéressés.
+3. En privé, donner les prix et envoyer les exemples (quentools.fr/exemples/, quentools.fr/templates/) ou le formulaire (quentools.fr/devis/).
