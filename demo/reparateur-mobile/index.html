@@ -15,21 +15,23 @@
 @font-face{font-family:SG;src:url(../../assets/fonts/ex/space-grotesk-normal.woff2) format("woff2");font-weight:300 700;font-display:swap}
 @font-face{font-family:Inter;src:url(../../assets/fonts/inter.woff2) format("woff2-variations");font-weight:100 900;font-display:swap}
 :root{--bg:#070b14;--bg2:#0c1220;--card:#101a2e;--line:#1f2d49;--ink:#e9eefc;--mut:#98a6c6;--cy:#22d3ee;--cy2:#0aa5c0;--or:#ff8a1f;--ok:#34d399;--r:18px;color-scheme:dark}
-*{box-sizing:border-box}html{scroll-behavior:smooth}
+*{box-sizing:border-box}html{scroll-behavior:smooth}main:focus{outline:none}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 h1,h2,h3{font-family:SG,Inter,sans-serif;margin:0;letter-spacing:-.02em;line-height:1.08}
 a{color:var(--cy)}
 .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
 header.top{position:sticky;top:0;z-index:40;background:rgba(7,11,20,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px}
-.brand{display:flex;align-items:center;gap:10px;font:700 20px SG,sans-serif;color:var(--ink);text-decoration:none}
+.brand{display:flex;align-items:center;gap:10px;min-height:44px;font:700 20px SG,sans-serif;color:var(--ink);text-decoration:none}
 .brand i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--cy),var(--or));display:grid;place-items:center}
 .brand i svg{width:18px;height:18px}
 nav.m{display:flex;gap:22px;font-size:15px;font-weight:500}
-nav.m a{color:var(--mut);text-decoration:none}nav.m a:hover{color:var(--ink)}
+nav.m a{color:#b4c0dc;text-decoration:none;padding:10px 4px;border-radius:8px}nav.m a:hover{color:var(--ink);text-decoration:underline}nav.m a:focus-visible{outline:3px solid var(--cy);outline-offset:2px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:999px;padding:13px 24px;font:600 16px Inter,sans-serif;cursor:pointer;text-decoration:none;min-height:46px}
 .btn.p{background:var(--or);color:#1b0d00}.btn.p:hover{filter:brightness(1.08)}
-.btn.g{background:transparent;color:var(--ink);border:1px solid var(--line)}.btn.g:hover{border-color:var(--cy)}
+.skip{position:absolute;left:12px;top:-60px;z-index:100;background:#fff;color:#000;font-weight:700;padding:12px 18px;border-radius:10px;text-decoration:none}.skip:focus{top:12px}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0}
+.btn.g{background:transparent;color:var(--ink);border:1px solid #3a4c72}.btn.g:hover{border-color:var(--cy)}
 .btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,.stage:focus-visible{outline:3px solid var(--cy);outline-offset:3px}
 .hero{position:relative;overflow:hidden;padding:56px 0 40px}
 .hero::before{content:"";position:absolute;inset:-20% -10% auto auto;width:720px;height:720px;background:radial-gradient(closest-side,rgba(34,211,238,.20),transparent 70%);pointer-events:none}
@@ -39,7 +41,7 @@ nav.m a{color:var(--mut);text-decoration:none}nav.m a:hover{color:var(--ink)}
 .kick b{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(52,211,153,.2)}
 h1{font-size:clamp(2.4rem,6vw,4.1rem)}
 h1 em{font-style:normal;background:linear-gradient(90deg,var(--cy),var(--or));-webkit-background-clip:text;background-clip:text;color:transparent}
-.lede{color:var(--mut);font-size:1.15rem;max-width:34em;margin:18px 0 26px}
+.lede{color:#b4c0dc;font-size:1.15rem;max-width:34em;margin:18px 0 26px}
 .cta{display:flex;flex-wrap:wrap;gap:12px}
 .proof{display:flex;flex-wrap:wrap;gap:10px 22px;margin:28px 0 0;padding:0;list-style:none;color:var(--mut);font-size:15px}
 .proof li::before{content:"✓";color:var(--ok);font-weight:700;margin-right:8px}
@@ -75,7 +77,7 @@ h1 em{font-style:normal;background:linear-gradient(90deg,var(--cy),var(--or));-w
 .key{position:absolute;width:5px;border-radius:4px;background:#8793b0}
 .k1{left:-4px;top:112px;height:46px}.k2{left:-4px;top:170px;height:46px}.k3{right:-4px;top:150px;height:76px}
 .hint{font-size:13px;color:var(--mut);display:flex;gap:10px;align-items:center}
-.hint button{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:6px 14px;font:600 13px Inter,sans-serif;cursor:pointer;min-height:36px}
+.hint button{border:1px solid #3a4c72;background:transparent;color:var(--ink);border-radius:999px;padding:8px 18px;font:600 14px Inter,sans-serif;cursor:pointer;min-height:44px;min-width:44px}.hint button:focus-visible{outline:3px solid var(--cy);outline-offset:3px}
 section{padding:72px 0}
 section.alt{background:var(--bg2);border-block:1px solid var(--line)}
 .eyebrow{font:700 13px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--cy);margin-bottom:10px}
@@ -88,8 +90,8 @@ h2{font-size:clamp(1.8rem,4vw,2.6rem)}
 .card h3{font-size:1.2rem;margin-bottom:6px}.card p{margin:0;color:var(--mut);font-size:15px}
 .price{display:block;margin-top:12px;font:700 15px SG,sans-serif;color:var(--or)}
 .est{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;margin-top:32px;align-items:start}
-label{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:0 0 6px}
-input,select,textarea{width:100%;font:inherit;color:var(--ink);background:#0a1120;border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-height:46px}
+label{display:block;font-size:14px;font-weight:600;color:#b4c0dc;margin:0 0 6px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:#0a1120;border:1px solid #3a4c72;border-radius:12px;padding:12px 14px;min-height:46px}
 .f{margin-bottom:14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .res{position:sticky;top:84px;text-align:center;background:linear-gradient(160deg,#10243d,#101a2e);border-color:#245175}
 .res .big{font:700 clamp(2.6rem,7vw,3.6rem) SG,sans-serif;color:var(--cy);line-height:1}
@@ -98,11 +100,11 @@ input,select,textarea{width:100%;font:inherit;color:var(--ink);background:#0a112
 .stepper{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:22px;list-style:none;padding:0}
 .stepper li{text-align:center;font-size:13px;color:var(--mut)}
 .stepper li i{display:block;height:6px;border-radius:9px;background:var(--line);margin-bottom:8px}
-.stepper li.done{color:var(--ink)}.stepper li.done i{background:var(--cy)}.stepper li.now i{background:var(--or)}
+.stepper li b{display:block;font-weight:600;font-size:12px;margin-top:2px;color:var(--ok)}.stepper li.now b{color:var(--or)}.stepper li.done{color:var(--ink)}.stepper li.done i{background:var(--cy)}.stepper li.now i{background:var(--or)}.stepper li.now{color:var(--ink)}
 .track{display:flex;gap:12px;flex-wrap:wrap}.track input{flex:1 1 220px}
 .msg{margin:14px 0 0;color:var(--mut);font-size:15px}
 details{border-bottom:1px solid var(--line);padding:16px 0}
-summary{cursor:pointer;font:600 18px SG,sans-serif;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary{cursor:pointer;font:600 18px SG,sans-serif;list-style:none;display:flex;justify-content:space-between;gap:12px;min-height:44px;align-items:center}summary::-webkit-details-marker{display:none}
 summary::after{content:"+";color:var(--cy);font-size:24px;line-height:1}
 details[open] summary::after{content:"–"}
 details p{color:var(--mut);margin:10px 0 0}
@@ -110,32 +112,34 @@ details p{color:var(--mut);margin:10px 0 0}
 .hours{list-style:none;padding:0;margin:14px 0 0}.hours li{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);color:var(--mut)}.hours b{color:var(--ink);font-weight:600}
 footer{padding:30px 0 40px;color:var(--mut);font-size:14px;border-top:1px solid var(--line)}
 footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
-.qt-ex{background:#0d1426;border-bottom:1px solid var(--line)}
-@media (max-width:860px){nav.m{display:none}.hero .wrap{grid-template-columns:1fr}.est,.two{grid-template-columns:1fr}.res{position:static}.stage{width:100%;max-width:340px}.stepper{grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px}.stepper li{font-size:11px}.row{grid-template-columns:1fr}}
+.qt-ex{background:#0d1426;border-bottom:1px solid var(--line)}.qt-ex a{display:inline-block;padding:10px 4px}
+@media (max-width:860px){header.top .wrap{flex-wrap:wrap;height:auto;padding-top:10px;padding-bottom:6px}nav.m{order:3;width:100%;overflow-x:auto;gap:6px;padding-bottom:6px}nav.m a{padding:10px 14px;white-space:nowrap}.hero .wrap{grid-template-columns:1fr}.est,.two{grid-template-columns:1fr}.res{position:static}.stage{width:100%;max-width:340px}.stepper{grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px}.stepper li{font-size:11px}.row{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.s-ok i{animation:none}}
+@media (forced-colors:active){.btn.p{border:2px solid ButtonText}.stepper li i{border:1px solid CanvasText}}
 </style>
 </head>
 <body>
+<a class="skip" href="#top">Aller au contenu</a>
 <div class="qt-ex"><a href="../../devis/?type=Template&amp;template=R%C3%A9parateur%20de%20t%C3%A9l%C3%A9phones">Modèle de démonstration réalisé par QuenTools : tout est fictif. Demander le mien →</a></div>
 
 <header class="top"><div class="wrap">
-  <a class="brand" href="#top"><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#06101f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5 5L4 17l3 3 5.7-5.7a4 4 0 0 0 5-5l-2.4 2.4-2.6-.6-.6-2.6z"/></svg></i>Atelier Phoenix</a>
+  <a class="brand" href="#top" aria-label="Atelier Phoenix, retour en haut de page"><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#06101f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5 5L4 17l3 3 5.7-5.7a4 4 0 0 0 5-5l-2.4 2.4-2.6-.6-.6-2.6z"/></svg></i>Atelier Phoenix</a>
   <nav class="m" aria-label="Menu"><a href="#prix">Estimer</a><a href="#services">Réparations</a><a href="#suivi">Suivi</a><a href="#faq">Questions</a><a href="#contact">Contact</a></nav>
   <a class="btn p" href="#prix">Devis gratuit</a>
 </div></header>
 
-<main id="top">
+<main id="top" tabindex="-1">
 <section class="hero"><div class="wrap">
   <div>
-    <span class="kick"><b></b> Ouvert aujourd’hui · sans rendez-vous</span>
+    <span class="kick"><b aria-hidden="true"></b> Ouvert aujourd’hui · sans rendez-vous</span>
     <h1>Votre téléphone <em>comme neuf</em> en 30 minutes.</h1>
     <p class="lede">Écran cassé, batterie à plat, connecteur de charge qui ne tient plus : on diagnostique gratuitement, on vous annonce le prix avant de toucher à l’appareil, et vous repartez avec une garantie.</p>
     <div class="cta"><a class="btn p" href="#prix">Estimer ma réparation</a><a class="btn g" href="#suivi">Suivre ma réparation</a></div>
     <ul class="proof"><li>Diagnostic offert</li><li>Prix annoncé avant réparation</li><li>Garantie sur les pièces</li></ul>
   </div>
   <div class="stage-wrap">
-    <div class="stage" id="stage" tabindex="0" role="img" aria-label="Smartphone en 3D qui tourne sur lui-même. Faites-le glisser ou utilisez les flèches gauche et droite pour le faire pivoter.">
-      <div class="phone" id="phone">
+    <div class="stage" id="stage" tabindex="0" role="group" aria-roledescription="visionneuse 3D" aria-label="Smartphone en 3D" aria-describedby="stageHelp">
+      <div class="phone" id="phone" aria-hidden="true">
         <div class="key k1"></div><div class="key k2"></div><div class="key k3"></div>
         <div id="slices"></div>
         <div class="face front"><div class="notch"></div>
@@ -152,7 +156,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-bet
         <div class="face back"><div class="cam"><i></i><i></i><i></i><em></em></div><div class="logo-b">Phoenix</div></div>
       </div>
     </div>
-    <div class="hint"><span>Faites-le glisser pour le tourner à 360°</span><button type="button" id="pause" aria-pressed="false">Pause</button></div>
+    <div class="hint"><span id="stageHelp">Faites-le glisser, ou utilisez les flèches gauche et droite, pour le tourner à 360°. Il décrit l’écran « Écran remplacé, prêt à récupérer aujourd’hui » puis l’arrière avec trois objectifs.</span><button type="button" id="pause" aria-pressed="false">Mettre en pause la rotation</button></div>
   </div>
 </div></section>
 
@@ -161,17 +165,17 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-bet
   <h2>Combien coûte ma réparation ?</h2>
   <p class="sub">Choisissez votre téléphone et la panne : vous voyez tout de suite un prix de départ et la durée. Le prix final est confirmé après diagnostic, jamais avant votre accord.</p>
   <div class="est">
-    <form class="card" id="estForm" novalidate>
+    <form class="card" id="estForm" novalidate aria-label="Estimation de réparation">
       <div class="row"><div class="f"><label for="brand">Marque</label><select id="brand"></select></div><div class="f"><label for="model">Modèle</label><select id="model"></select></div></div>
       <div class="f"><label for="issue">Panne</label><select id="issue"></select></div>
       <div class="f"><label for="note">Un détail à ajouter ? (facultatif)</label><textarea id="note" rows="3" placeholder="Ex. : l’écran est noir mais le téléphone vibre"></textarea></div>
       <a class="btn p" href="#contact" id="goRdv">Réserver ce créneau</a>
     </form>
-    <aside class="card res" aria-live="polite">
-      <div class="eyebrow" style="margin:0">Prix de départ</div>
-      <div class="big" id="resPrice">59 €</div>
+    <aside class="card res" aria-labelledby="resTitle">
+      <h3 class="eyebrow" id="resTitle" style="margin:0;font-family:Inter,sans-serif">Prix de départ</h3>
+      <div aria-live="polite" aria-atomic="true"><div class="big" id="resPrice">59 €</div>
       <small id="resFor">iPhone 11 · remplacement d’écran</small>
-      <div class="t" id="resTime">Réparé en 30 min</div>
+      <div class="t" id="resTime">Réparé en 30 min</div></div>
       <p class="msg" style="margin:0">Tarifs d’exemple, à remplacer par les vôtres. Diagnostic offert, devis confirmé avant toute intervention.</p>
     </aside>
   </div>
@@ -195,9 +199,9 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-bet
   <h2>Où en est mon téléphone ?</h2>
   <p class="sub">Entrez le code reçu au dépôt. Pour la démonstration, essayez DEMO-1, DEMO-2 ou DEMO-3.</p>
   <div class="card" style="margin-top:28px">
-    <form class="track" id="trackForm" novalidate><label class="sr" for="code" style="position:absolute;left:-9999px">Code de suivi</label><input id="code" placeholder="Ex. : DEMO-2" autocomplete="off" maxlength="12"><button class="btn p" type="submit">Voir l’avancement</button></form>
-    <p class="msg" id="trackMsg" aria-live="polite"></p>
-    <ol class="stepper" id="stepper"><li><i></i>Reçu</li><li><i></i>Diagnostic</li><li><i></i>Pièce</li><li><i></i>Réparation</li><li><i></i>Prêt</li></ol>
+    <form class="track" id="trackForm" novalidate role="search" aria-label="Suivi de réparation"><label class="sr" for="code">Code de suivi</label><input id="code" placeholder="Ex. : DEMO-2" autocomplete="off" maxlength="12" aria-describedby="trackMsg"><button class="btn p" type="submit">Voir l’avancement</button></form>
+    <p class="msg" id="trackMsg" role="status"></p>
+    <ol class="stepper" id="stepper" aria-label="Étapes de la réparation"><li><i aria-hidden="true"></i>Reçu<b></b></li><li><i aria-hidden="true"></i>Diagnostic<b></b></li><li><i aria-hidden="true"></i>Pièce<b></b></li><li><i aria-hidden="true"></i>Réparation<b></b></li><li><i aria-hidden="true"></i>Prêt<b></b></li></ol>
   </div>
 </div></section>
 
@@ -229,16 +233,16 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-bet
     <p class="sub">12 rue de l’Exemple, 00000 Votre ville<br>01 23 45 67 89 · contact@exemple.fr</p>
     <ul class="hours"><li><span>Lundi – vendredi</span><b>9 h – 19 h</b></li><li><span>Samedi</span><b>10 h – 18 h</b></li><li><span>Dimanche</span><b>Fermé</b></li></ul>
   </div>
-  <form class="card" id="rdv" novalidate>
-    <div class="f"><label for="n">Votre nom</label><input id="n" autocomplete="name" required></div>
-    <div class="row"><div class="f"><label for="t">Téléphone</label><input id="t" type="tel" autocomplete="tel"></div><div class="f"><label for="d">Jour souhaité</label><input id="d" type="date"></div></div>
+  <form class="card" id="rdv" novalidate aria-label="Demande de rendez-vous"><p class="msg" style="margin:0 0 14px">Les champs marqués d’un * sont obligatoires.</p>
+    <div class="f"><label for="n">Votre nom <span aria-hidden="true">*</span></label><input id="n" autocomplete="name" required aria-required="true"></div>
+    <div class="row"><div class="f"><label for="t">Téléphone</label><input id="t" type="tel" autocomplete="tel" inputmode="tel"></div><div class="f"><label for="d">Jour souhaité</label><input id="d" type="date"></div></div>
     <div class="f"><label for="m">Votre téléphone et la panne</label><textarea id="m" rows="3"></textarea></div>
     <button class="btn p" type="submit" style="width:100%">Réserver un créneau</button>
   </form>
 </div></section>
 </main>
 
-<footer><div class="wrap"><span>© <span data-year></span> Atelier Phoenix · exemple fictif, SIRET et mentions légales à renseigner</span><span>Modèle de site <a href="../../templates/">QuenTools</a></span></div></footer>
+<footer role="contentinfo"><div class="wrap"><span>© <span data-year></span> Atelier Phoenix · exemple fictif, SIRET et mentions légales à renseigner</span><span>Modèle de site <a href="../../templates/">QuenTools</a></span></div></footer>
 
 <script src="../../exemples/ex.js" defer></script>
 <script>
@@ -250,11 +254,11 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-bet
   for (i = 0; i < N; i++) { el = document.createElement('div'); el.className = 'sl'; el.style.transform = 'translateZ(' + ((i - (N - 1) / 2) * (D / (N - 1))).toFixed(2) + 'px)'; host.appendChild(el); }
   host.style.cssText = 'position:absolute;inset:0;transform-style:preserve-3d';
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var ang = 24, vel = 0, auto = reduce ? 0 : 0.45, dragging = false, paused = reduce, lastX = 0, tilt = -9;
+  var ang = 24, vel = 0, auto = reduce ? 0 : 0.45, dragging = false, paused = reduce, hovering = false, lastX = 0, tilt = -9;
   function draw() { phone.style.transform = 'rotateX(' + tilt + 'deg) rotateY(' + ang + 'deg)'; }
   function loop() {
     if (!dragging) {
-      ang += vel + (paused ? 0 : auto);
+      ang += vel + ((paused || hovering) ? 0 : auto);
       vel *= 0.94; if (Math.abs(vel) < 0.01) vel = 0;
     }
     draw(); requestAnimationFrame(loop);
@@ -264,8 +268,11 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-bet
   function up() { dragging = false; stage.classList.remove('drag'); }
   stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
   stage.addEventListener('keydown', function (e) { if (e.key === 'ArrowLeft') { vel = -9; e.preventDefault(); } else if (e.key === 'ArrowRight') { vel = 9; e.preventDefault(); } });
-  pauseBtn.addEventListener('click', function () { paused = !paused; pauseBtn.setAttribute('aria-pressed', paused); pauseBtn.textContent = paused ? 'Lecture' : 'Pause'; });
-  if (reduce) pauseBtn.textContent = 'Lecture';
+  function labelBtn() { pauseBtn.setAttribute('aria-pressed', paused); pauseBtn.textContent = paused ? 'Relancer la rotation' : 'Mettre en pause la rotation'; }
+  pauseBtn.addEventListener('click', function () { paused = !paused; labelBtn(); });
+  stage.addEventListener('mouseenter', function () { hovering = true; }); stage.addEventListener('mouseleave', function () { hovering = false; });
+  stage.addEventListener('focus', function () { hovering = true; }); stage.addEventListener('blur', function () { hovering = false; });
+  labelBtn();
   if (reduce) { pauseBtn.addEventListener('click', function () { auto = paused ? 0 : 0.45; }); }
   draw(); requestAnimationFrame(loop);
   var now = new Date(); document.getElementById('clk').textContent = now.getHours() + ':' + ('0' + now.getMinutes()).slice(-2);
@@ -308,12 +315,12 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-bet
   var DB = { 'DEMO-1': 2, 'DEMO-2': 4, 'DEMO-3': 5 };
   var LAB = ['', 'Votre téléphone est bien reçu.', 'Diagnostic en cours : on vous appelle avec le prix.', 'Pièce commandée, elle arrive demain.', 'Réparation en cours.', 'C’est prêt : vous pouvez venir le chercher.'];
   var steps = document.querySelectorAll('#stepper li');
-  function show(n) { steps.forEach(function (li, k) { li.className = k < n - 1 ? 'done' : k === n - 1 ? (n === 5 ? 'done' : 'now') : ''; }); }
+  function show(n) { steps.forEach(function (li, k) { var st = k < n - 1 ? 'done' : k === n - 1 ? (n === 5 ? 'done' : 'now') : ''; li.className = st; li.querySelector('b').textContent = st === 'done' ? 'terminée' : st === 'now' ? 'en cours' : ''; }); }
   document.getElementById('trackForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var v = document.getElementById('code').value.trim().toUpperCase(), msg = document.getElementById('trackMsg');
-    if (DB[v]) { show(DB[v]); msg.textContent = LAB[DB[v]]; }
-    else { show(0); msg.textContent = v ? 'Code introuvable. Pour la démonstration, essayez DEMO-1, DEMO-2 ou DEMO-3.' : 'Entrez votre code de suivi.'; }
+    if (DB[v]) { show(DB[v]); msg.textContent = 'Étape ' + DB[v] + ' sur 5 : ' + LAB[DB[v]]; }
+    else { show(0); msg.textContent = v ? 'Code introuvable. Pour la démonstration, essayez DEMO-1, DEMO-2 ou DEMO-3.' : 'Entrez votre code de suivi.'; if (!v) document.getElementById('code').focus(); }
   });
 })();
 </script>
