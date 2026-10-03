@@ -12,13 +12,15 @@ const VERSION = '1.0';
 
 /* ---------- Ligne de commande ---------- */
 const argv = process.argv.slice(2), opt = (n, d = '') => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
-const target = argv.find(a => /^https?:\/\//i.test(a));
-if (!target) { console.error('Usage : node tools/audit-express.js https://exemple.fr --client "Nom" --accord [--sortie dossier]'); process.exit(1); }
-if (!argv.includes('--accord')) {
-  console.error('Audit non lancé. Ajoutez --accord uniquement si le propriétaire du site vous a donné son accord écrit pour ce contrôle.');
-  process.exit(2);
+const rendu = opt('rendu'), target = argv.find(a => /^https?:\/\//i.test(a));
+if (!rendu) {
+  if (!target) { console.error('Usage : node tools/audit-express.js https://exemple.fr --client "Nom" --accord [--sortie dossier]\n        node tools/audit-express.js --rendu rapport.json   (régénère rapport.html et rapport.pdf après relecture du JSON)'); process.exit(1); }
+  if (!argv.includes('--accord')) {
+    console.error('Audit non lancé. Ajoutez --accord uniquement si le propriétaire du site vous a donné son accord écrit pour ce contrôle.');
+    process.exit(2);
+  }
 }
-const base = new URL(target), client = opt('client', base.hostname), outDir = path.resolve(opt('sortie', path.join('audits', base.hostname.replace(/[^\w.-]/g, '_') + '-' + new Date().toISOString().slice(0, 10))));
+const base = new URL(target || 'https://rendu.invalid/'), client = opt('client', base.hostname), outDir = path.resolve(opt('sortie', rendu ? path.dirname(path.resolve(rendu)) : path.join('audits', base.hostname.replace(/[^\w.-]/g, '_') + '-' + new Date().toISOString().slice(0, 10))));
 const isHttps = base.protocol === 'https:';
 
 /* ---------- Résultats ---------- */
@@ -248,7 +250,19 @@ p{margin:0 0 6pt}.k{font-size:9pt;letter-spacing:.1em;text-transform:uppercase;c
 }
 
 /* ---------- Exécution ---------- */
+async function ecrire(data) {
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(path.join(outDir, 'rapport.json'), JSON.stringify(data, null, 1));
+  const html = rapportHtml(data); fs.writeFileSync(path.join(outDir, 'rapport.html'), html);
+  try {
+    const { chromium } = require('../wouf/node_modules/playwright'), br = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium' }), pg = await br.newPage();
+    await pg.setContent(html, { waitUntil: 'load' }); await pg.pdf({ path: path.join(outDir, 'rapport.pdf'), format: 'A4', printBackground: true, margin: { top: '16mm', bottom: '16mm', left: '15mm', right: '15mm' } }); await br.close();
+  } catch (e) { console.error('PDF non généré :', e.message); }
+}
 (async () => {
+  if (rendu) {   // relecture : on corrige le JSON (faux positif retiré, texte précisé) puis on régénère le HTML et le PDF
+    const data = JSON.parse(fs.readFileSync(rendu, 'utf8')); await ecrire(data); console.log('Rapport régénéré dans ' + outDir); return;
+  }
   console.log(`Audit express de ${base.href} (client : ${client})`);
   const home = await get(base.href, { maxBytes: 1e6 });
   if (home.error && !home.status) { console.error('Le site ne répond pas : ' + home.error); process.exit(3); }
@@ -260,13 +274,7 @@ p{margin:0 0 6pt}.k{font-size:9pt;letter-spacing:.1em;text-transform:uppercase;c
   const order = ['acces', 'https', 'entetes', 'externes', 'traceurs', 'formulaires', 'hygiene', 'legal', 'bibliotheques', 'secrets', 'exposes'];
   R.sort((x, y) => order.indexOf(x.id) - order.indexOf(y.id));
   const data = { outil: 'QuenTools audit express', version: VERSION, date: new Date().toISOString(), client, url: base.href, resultats: R };
-  fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(path.join(outDir, 'rapport.json'), JSON.stringify(data, null, 1));
-  const html = rapportHtml(data); fs.writeFileSync(path.join(outDir, 'rapport.html'), html);
-  try {
-    const { chromium } = require('../wouf/node_modules/playwright'), br = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium' }), pg = await br.newPage();
-    await pg.setContent(html, { waitUntil: 'load' }); await pg.pdf({ path: path.join(outDir, 'rapport.pdf'), format: 'A4', printBackground: true, margin: { top: '16mm', bottom: '16mm', left: '15mm', right: '15mm' } }); await br.close();
-  } catch (e) { console.error('PDF non généré :', e.message); }
+  await ecrire(data);
   const n = k => R.filter(r => r.statut === k).length;
   console.log(`Terminé : ${n('probleme')} à corriger, ${n('attention')} à améliorer, ${n('info')} à savoir, ${n('ok')} conformes.\nRapport : ${outDir}`);
   R.forEach(r => console.log(`  [${r.statut.padEnd(9)}] ${r.titre} — ${r.resume}`));

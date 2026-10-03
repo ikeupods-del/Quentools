@@ -15,6 +15,16 @@ cd .. && node tools/audit-express.js https://site-du-client.fr --client "Nom du 
 ```
 `--accord` confirme que l'accord écrit existe ; sans lui, l'outil refuse de tourner. Les rapports (`rapport.json`, `rapport.html`, `rapport.pdf`) sont écrits dans `audits/<site>-<date>/` : ce dossier est ignoré par git, **ne jamais commiter un rapport client** (le dépôt est public).
 
+## Relire avant d'envoyer
+L'outil peut se tromper (faux positifs). Ouvrir `rapport.json`, corriger ou retirer ce qui ne tient pas (texte, statut `ok` | `info` | `attention` | `probleme`), puis régénérer le rapport :
+```
+node tools/audit-express.js --rendu audits/<site>-<date>/rapport.json
+```
+Cela réécrit `rapport.html` et `rapport.pdf` à partir du JSON corrigé.
+
+## Visuels de la page `audit/`
+`assets/audit-rapport-1.jpg` et `audit-rapport-2.jpg` (pages d'un rapport d'exemple, **site et résultats fictifs** : « Boulangerie Martin (exemple fictif) »), `audit/exemple-rapport.pdf` (le même rapport complet), `assets/audit-schema.jpg` (les cinq zones contrôlées) et `assets/audit-lire.jpg` (comment lire un point). Si la mise en page ou les textes du rapport changent, régénérer l'exemple avec `--rendu` à partir d'un JSON fictif, puis refaire les images (`pdftoppm -jpeg -r 110 -f 1 -l 2`).
+
 ## Ce que l'outil contrôle (page d'accueil du site)
 | Point | Comment |
 |---|---|
