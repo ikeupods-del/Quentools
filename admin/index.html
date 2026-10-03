@@ -557,12 +557,12 @@ function relanceLevel(c) {
 const RELANCES = [[0, 'Avant l’échéance'], [1, 'Rappel amical'], [2, 'Relance'], [3, 'Dernier avis avant suspension']];
 function relanceText(c, niv) {
   const v = seller(), p = first(c.nom), num = c.devisNum ? ` du devis ${c.devisNum}` : '', s = QTD.eur(clSolde(c)), ech = fdate(c.echeance) || 'la date convenue', lim = fdate(clLimit(c));
-  const pay = v.paiement ? `\n${v.paiement}\n` : '', sign = `\nBien à vous,\n${v.marque || 'QuenTools'}`;
-  const hello = `Bonjour${p ? ' ' + p : ''},\n\n`;
-  if (+niv === 0) return `${hello}Pour information, le solde de ${s}${num} est à régler avant le ${ech}.${pay}${sign}`;
-  if (+niv === 1) return `${hello}Petit rappel : le solde de ${s}${num} était attendu le ${ech}. Si le règlement est déjà parti, merci de ne pas tenir compte de ce message.${pay}${sign}`;
-  if (+niv === 2) return `${hello}Sauf erreur de ma part, le solde de ${s}${num}, attendu le ${ech}, n’a pas encore été réglé. Je vous remercie de procéder au règlement dans les 8 jours. Conformément aux conditions du devis, des pénalités de retard peuvent s’appliquer.${pay}\nSi un problème vous empêche de payer, répondez-moi simplement : nous trouverons une solution.${sign}`;
-  return `${hello}Malgré mes relances, le solde de ${s}${num} reste impayé. Sans règlement avant le ${lim || 'délai indiqué'}, l’accès à votre site sera suspendu, conformément aux conditions du devis. Il sera rétabli dès réception du paiement.${pay}\nSi le règlement est déjà parti, ou si vous souhaitez en parler, répondez-moi vite.${sign}`;
+  const pay = v.paiement ? `\n${v.paiement}\n` : '', sign = `\nCordialement,\n${v.marque || 'QuenTools'}`;
+  const hello = `Bonjour${p ? ' ' + p : ''},\n\n`, after = (c.relances || []).length ? 'Malgré mes précédents rappels' : 'À ce jour';
+  if (+niv === 0) return `${hello}Pour information, le solde de ${s}${num} est à régler avant le ${ech}.${pay}\nJe reste à votre disposition pour toute question.\n${sign}`;
+  if (+niv === 1) return `${hello}Je me permets de vous rappeler que le solde de ${s}${num} était attendu le ${ech}. Si votre règlement a déjà été effectué, merci de ne pas tenir compte de ce message.${pay}\nJe reste à votre disposition pour toute question.\n${sign}`;
+  if (+niv === 2) return `${hello}Sauf erreur de ma part, le solde de ${s}${num}, attendu le ${ech}, n’a pas encore été réglé. Je vous remercie de bien vouloir procéder au règlement dans un délai de 8 jours. Conformément aux conditions du devis, des pénalités de retard peuvent s’appliquer.${pay}\nSi vous rencontrez une difficulté, je vous invite à me contacter afin d’envisager une solution.\n${sign}`;
+  return `${hello}${after}, le solde de ${s}${num} demeure impayé. À défaut de règlement avant le ${lim || 'délai indiqué'}, l’accès à votre site sera suspendu, conformément aux conditions du devis. Il sera rétabli dès réception du paiement.${pay}\nSi votre règlement est en cours, ou si vous souhaitez en discuter, je vous invite à me contacter avant cette date.\n${sign}`;
 }
 function clFromRequest(x) {
   let total = +x.montant || 0, num = '';
