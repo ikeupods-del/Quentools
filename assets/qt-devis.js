@@ -68,7 +68,7 @@ td{padding:10px 6px;border-bottom:1px solid #e3dfd3;vertical-align:top}.n{text-a
   <div class="top"><div><div class="brand"><span class="mark"><svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><circle cx="30" cy="30" r="14" fill="none" stroke="#fff" stroke-width="7"/><path d="M37 37l12 12" stroke="#d7f24a" stroke-width="8" stroke-linecap="round"/></svg></span>${esc(v.marque || 'QuenTools')}</div></div>
     <div style="text-align:right"><h1>Devis</h1><div class="muted">N° ${esc(d.num || '—')}<br>Émis le ${fdate(d.date)}${d.validite ? `<br>Valable jusqu’au ${fdate(plus(d.date, num(d.validite)))}` : ''}</div></div></div>
   <div class="parties">
-    <div class="box"><b class="l">Prestataire</b><b>${esc(v.marque || 'QuenTools')}</b><br>${esc(v.titulaire)}${v.adresse ? '<br>' + nl(v.adresse) : ''}${v.siren ? '<br>SIREN ' + esc(v.siren) : ''}${v.email ? '<br>' + esc(v.email) : ''}</div>
+    <div class="box"><b class="l">Prestataire</b><b>${esc(v.marque || 'QuenTools')}</b><br>${esc(v.titulaire)}${v.adresse ? '<br>' + nl(v.adresse) : ''}${v.siren ? '<br>' + (String(v.siren).replace(/\D/g, '').length === 14 ? 'SIRET ' : 'SIREN ') + esc(v.siren) : ''}${v.email ? '<br>' + esc(v.email) : ''}</div>
     <div class="box"><b class="l">Client</b><b>${esc(c.nom)}</b>${c.adresse ? '<br>' + nl(c.adresse) : ''}${c.email ? '<br>' + esc(c.email) : ''}</div>
   </div>
   <div class="tw"><table><thead><tr><th>Désignation</th><th class="n">Qté</th><th class="n">Prix unitaire</th>${hasRem ? '<th class="n">Remise</th>' : ''}<th class="n">Total</th></tr></thead><tbody>${rows || `<tr><td colspan="${hasRem ? 5 : 4}" class="muted">Aucune ligne</td></tr>`}</tbody></table></div>

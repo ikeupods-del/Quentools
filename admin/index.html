@@ -372,7 +372,7 @@ setInterval(notifTick, 30000);
 
 /* ---------- Devis détaillé (numéroté, remises, mentions obligatoires, publié dans l'espace client) ---------- */
 const CLAUSE = 'Le site reste en ligne tant que les sommes dues sont réglées : à défaut de paiement du solde à l’échéance indiquée, l’accès au site peut être suspendu après relance, puis rétabli dès réception du règlement.';
-const SELLER_DEF = { marque: 'QuenTools', titulaire: 'Quentin Storace EI', adresse: '231 rue Saint-Honoré, 75001 Paris', siren: '912026713', email: C.email || '',
+const SELLER_DEF = { marque: 'QuenTools', titulaire: 'Quentin Storace EI', adresse: '231 rue Saint-Honoré, 75001 Paris', siren: '912 026 713 00046', email: C.email || '',
   conditions: 'La première version est présentée avant la suite du travail ; les modifications demandées après sa validation peuvent faire l’objet d’un devis complémentaire.\nEn cas de retard de paiement : pénalités égales à trois fois le taux d’intérêt légal et, pour les clients professionnels, indemnité forfaitaire de 40 € pour frais de recouvrement.\n' + CLAUSE };
 const seller = () => ({ ...SELLER_DEF, ...(notes._vendeur || {}) });
 /* Préréglages de prestations (prix indicatifs, dans la grille QuenTools : à adapter). [désignation, prix, mensuel] */
