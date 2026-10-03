@@ -12,7 +12,7 @@ Mémo commercial à relire avant un devis (évite de tout recalculer). Estimatio
 | **Total** | **105–145** | **≈ 40 000–85 000 €** (agence : 80 000–150 000 €) |
 
 ## Grille à proposer aux clients (QuenTools)
-**Applications complètes (type Wouf) : non proposées.** Trop de temps de travail pour trop peu de demandes ; elles ne figurent ni dans le formulaire de devis ni dans l'estimateur. Wouf reste présenté comme réalisation (page `realisations/`) et comme référence de coût ci-dessus. Si un client en demande une, répondre par un outil sur mesure ou décliner.
+**Applications complètes (type Wouf) : non proposées.** Trop de temps de travail pour trop peu de demandes ; elles ne figurent ni dans le formulaire de devis ni dans l'estimateur. Wouf reste présenté comme réalisation (page `realisations/`) et comme référence de coût ci-dessus. Si un client en demande une, répondre par un outil sur mesure ou décliner. Même logique pour tout projet complexe ou de grande envergure : le formulaire de devis ne propose plus de budget au-delà de « plus de 3 000 € (à discuter d'abord) » et précise ce que QuenTools prend en charge ; un outil sur mesure reste un outil ciblé (grille 1 000 à 3 000 €).
 
 Voir `design/OFFRES.md` (formules du site et services Fiverr, validées par le propriétaire) ; trousse boutique Shopify réutilisable dans `design/shopify/`. Positionnement : le marché des boutiques Shopify démarre vers 75 € sur Fiverr ; QuenTools vend le français, le suivi et le sur mesure plutôt que le prix seul.
 
