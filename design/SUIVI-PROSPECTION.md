@@ -18,4 +18,4 @@ Modèle : « une question sur votre site » (présentation, retour gratuit sur l
 
 | Date | Entreprise | Métier | Ville | Contact | Statut |
 |---|---|---|---|---|---|
-| 2026-10-03 | Onayah (Garde Toutous et Compagnie) | Pet-sitter | Arles | contact@onayah.fr, page Facebook Charlenegardedanimaux | message préparé, à valider |
+| 2026-10-03 | Onayah (Garde Toutous et Compagnie) | Pet-sitter | Arles | contact@onayah.fr, page Facebook Charlenegardedanimaux | brouillon Gmail prêt (mentions légales non trouvées par le propriétaire, à confirmer avant envoi) |
