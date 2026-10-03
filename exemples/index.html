@@ -12,6 +12,18 @@
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../assets/qt.css?v=20261001h">
+<style>
+.live{position:relative;z-index:3}
+.live iframe{position:absolute;z-index:1;top:0;left:0;width:1280px;border:0;transform-origin:0 0;background:#fff;pointer-events:none;opacity:0;transition:opacity .4s}
+.live iframe.ready{opacity:1}
+.live-go,.live-stop{position:absolute;z-index:2;font:600 13px var(--f-text);border:0;cursor:pointer}
+.live-go{inset:0;width:100%;background:transparent;display:flex;align-items:flex-end;justify-content:center;padding:0 0 12px}
+.live-go span,.live-stop{background:rgba(18,16,25,.82);color:#fff;border-radius:999px;padding:7px 14px;backdrop-filter:blur(6px)}
+.live-go:hover span{background:var(--accent,#5b3df5)}
+.live-stop{top:10px;right:10px;display:none}
+.live.on iframe{pointer-events:auto}.live.on .live-go{display:none}.live.on .live-stop{display:block}
+.live-go:focus-visible,.live-stop:focus-visible{outline:3px solid var(--accent,#5b3df5);outline-offset:-3px}
+</style>
 </head>
 <body>
 <a class="skip" href="#contenu">Aller au contenu</a>
@@ -27,7 +39,7 @@
     <div class="wrap">
       <span class="eyebrow reveal">Exemples</span>
       <h1 class="display reveal" style="--i:1;max-width:18ch">Un style pour <em>chaque métier.</em></h1>
-      <p class="lede reveal" style="--i:2">Treize métiers, treize univers graphiques : chaque site est dessiné pour son activité, pas coulé dans le même moule. Ce sont des entreprises fictives : textes, prix et visuels sont des illustrations. Sur votre site, tout est remplacé par votre activité, vos photos et vos vrais tarifs.</p>
+      <p class="lede reveal" style="--i:2">Treize métiers, treize univers graphiques : chaque site est dessiné pour son activité, pas coulé dans le même moule. Ce sont des entreprises fictives : textes, prix et visuels sont des illustrations. Survolez ou touchez « Explorer ici » pour essayer chaque site directement dans sa vignette. Sur votre site, tout est remplacé par votre activité, vos photos et vos vrais tarifs.</p>
     </div>
   </section>
 
@@ -35,95 +47,95 @@
     <div class="wrap">
       <div class="grid grid-2">
         <article class="card is-link reveal" style="--i:0">
-          <div class="card-media"><img src="../assets/ex-petsitter.jpg" alt="Aperçu de l’exemple garde d’animaux et pension de chevaux" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="petsitter/"><img src="../assets/ex-petsitter.jpg" alt="Aperçu de l’exemple garde d’animaux et pension de chevaux" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Nouveau · ferme et prairie</span></div>
           <h3>Garde d’animaux et pension de chevaux</h3>
           <p class="muted">Ciel, grange et prairie : visites, balades et gardes pour chiens et chats, pension au pré ou au box, calendrier des places libres et estimation du séjour.</p>
-          <a class="more" href="petsitter/">Voir cet exemple →</a>
+          <a class="more" href="petsitter/">Ouvrir en grand →</a>
         </article>
         <article class="card is-link reveal" style="--i:0">
-          <div class="card-media"><img src="../assets/ex-alimentation.jpg" alt="Aperçu de l’exemple alimentation de quartier" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="alimentation/"><img src="../assets/ex-alimentation.jpg" alt="Aperçu de l’exemple alimentation de quartier" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Nouveau · canettes en 3D</span></div>
           <h3>Alimentation de quartier</h3>
           <p class="muted">Bleu nuit et néon, nouveautés qui tournent en 3D, panier envoyé sur WhatsApp, boutons Waze et Maps.</p>
-          <a class="more" href="alimentation/">Voir cet exemple →</a>
+          <a class="more" href="alimentation/">Ouvrir en grand →</a>
         </article>
         <article class="card is-link reveal" style="--i:0">
-          <div class="card-media"><img src="../assets/ex-barbier.jpg" alt="Aperçu de l’exemple barbier de luxe" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="../demo/maison-blade/"><img src="../assets/ex-barbier.jpg" alt="Aperçu de l’exemple barbier de luxe" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Nouveau · Quiet Luxury</span></div>
           <h3>Barbier de luxe</h3>
           <p class="muted">Noir mat et bronze, galerie avec zoom, réservation en trois choix, paiement, abonnement, fidélité, boutique et administration.</p>
-          <a class="more" href="../demo/maison-blade/">Voir cet exemple →</a>
+          <a class="more" href="../demo/maison-blade/">Ouvrir en grand →</a>
         </article>
         <article class="card is-link reveal" style="--i:0">
-          <div class="card-media"><img src="../assets/ex-plombier.jpg" alt="Aperçu de l’exemple plombier chauffagiste" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="plombier/"><img src="../assets/ex-plombier.jpg" alt="Aperçu de l’exemple plombier chauffagiste" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Net et rassurant</span></div>
           <h3>Plombier chauffagiste</h3>
           <p class="muted">Bleu et jaune, diagnostic express « que se passe-t-il chez vous ? », vérificateur de zone, disponibilité du jour et devis en haut de page.</p>
-          <a class="more" href="plombier/">Voir cet exemple →</a>
+          <a class="more" href="plombier/">Ouvrir en grand →</a>
         </article>
         <article class="card is-link reveal" style="--i:1">
-          <div class="card-media"><img src="../assets/ex-paysagiste.jpg" alt="Aperçu de l’exemple paysagiste" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="paysagiste/"><img src="../assets/ex-paysagiste.jpg" alt="Aperçu de l’exemple paysagiste" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Organique et chaleureux</span></div>
           <h3>Paysagiste</h3>
           <p class="muted">Arches végétales illustrées, avant/après à faire glisser, calendrier des saisons et estimateur d’entretien.</p>
-          <a class="more" href="paysagiste/">Voir cet exemple →</a>
+          <a class="more" href="paysagiste/">Ouvrir en grand →</a>
         </article>
         <article class="card is-link reveal" style="--i:2">
-          <div class="card-media"><img src="../assets/ex-photographe.jpg" alt="Aperçu de l’exemple photographe" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="photographe/"><img src="../assets/ex-photographe.jpg" alt="Aperçu de l’exemple photographe" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Sombre et élégant</span></div>
           <h3>Photographe</h3>
           <p class="muted">Fond noir, portfolio filtrable avec visionneuse plein écran, formules et demande de date.</p>
-          <a class="more" href="photographe/">Voir cet exemple →</a>
+          <a class="more" href="photographe/">Ouvrir en grand →</a>
         </article>
         <article class="card is-link reveal" style="--i:0">
-          <div class="card-media"><img src="../assets/ex-fleuriste.jpg" alt="Aperçu de l’exemple fleuriste" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="fleuriste/"><img src="../assets/ex-fleuriste.jpg" alt="Aperçu de l’exemple fleuriste" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Boutique ludique</span></div>
           <h3>Fleuriste</h3>
           <p class="muted">Pastel, bouquets illustrés, composeur de bouquet avec prix en direct, vrai panier avec jour de livraison et petit mot.</p>
-          <a class="more" href="fleuriste/">Voir cet exemple →</a>
+          <a class="more" href="fleuriste/">Ouvrir en grand →</a>
         </article>
         <article class="card is-link reveal" style="--i:2">
-          <div class="card-media"><img src="../assets/ex-osteopathe.jpg" alt="Aperçu de l’exemple ostéopathe" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="osteopathe/"><img src="../assets/ex-osteopathe.jpg" alt="Aperçu de l’exemple ostéopathe" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Calme et rassurant</span></div>
           <h3>Ostéopathe</h3>
           <p class="muted">Carte du corps cliquable, agenda de rendez-vous réel, déroulé de séance et tarifs.</p>
-          <a class="more" href="osteopathe/">Voir cet exemple →</a>
+          <a class="more" href="osteopathe/">Ouvrir en grand →</a>
         </article>
         <article class="card is-link reveal" style="--i:0">
-          <div class="card-media"><img src="../assets/ex-coach.jpg" alt="Aperçu de l’exemple coach sportif" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="coach/"><img src="../assets/ex-coach.jpg" alt="Aperçu de l’exemple coach sportif" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Énergique et brut</span></div>
           <h3>Coach sportif</h3>
           <p class="muted">Noir et vert fluo, quiz « quel programme pour toi ? », planning des séances en groupe avec places restantes, tarifs en relief.</p>
-          <a class="more" href="coach/">Voir cet exemple →</a>
+          <a class="more" href="coach/">Ouvrir en grand →</a>
         </article>
         <article class="card is-link reveal" style="--i:1">
-          <div class="card-media"><img src="../assets/ex-restaurant.jpg" alt="Aperçu de l’exemple restaurant" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="restaurant/"><img src="../assets/ex-restaurant.jpg" alt="Aperçu de l’exemple restaurant" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Bistrot chic</span></div>
           <h3>Restaurant</h3>
           <p class="muted">Ardoise du jour, carte filtrable (végétarien, sans gluten), « ouvert maintenant » et réservation de table.</p>
-          <a class="more" href="restaurant/">Voir cet exemple →</a>
+          <a class="more" href="restaurant/">Ouvrir en grand →</a>
         </article>
         <article class="card is-link reveal" style="--i:0">
-          <div class="card-media"><img src="../assets/ex-formation.jpg" alt="Aperçu de l’exemple page de vente de formation" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="formation/"><img src="../assets/ex-formation.jpg" alt="Aperçu de l’exemple page de vente de formation" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Moderne et lumineux</span></div>
           <h3>Page de vente de formation</h3>
           <p class="muted">Dégradés, livre en 3D qui suit la souris, planificateur de repas qui fabrique la liste de courses, calcul du temps gagné.</p>
-          <a class="more" href="formation/">Voir cet exemple →</a>
+          <a class="more" href="formation/">Ouvrir en grand →</a>
         </article>
         <article class="card is-link reveal" style="--i:1">
-          <div class="card-media"><img src="../assets/ex-climatisation.jpg" alt="Aperçu de l’exemple climatisation et entretien" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="climatisation/"><img src="../assets/ex-climatisation.jpg" alt="Aperçu de l’exemple climatisation et entretien" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Frais et technique</span></div>
           <h3>Climatisation et entretien</h3>
           <p class="muted">Bleu glacier, thermostat interactif, calculateur de puissance, formules maison ou local pro et prochain entretien conseillé.</p>
-          <a class="more" href="climatisation/">Voir cet exemple →</a>
+          <a class="more" href="climatisation/">Ouvrir en grand →</a>
         </article>
         <article class="card is-link reveal" style="--i:2">
-          <div class="card-media"><img src="../assets/ex-bois.jpg" alt="Aperçu de l’exemple vendeur de bois de chauffage" loading="lazy" width="1280" height="800"></div>
+          <div class="card-media live" data-live="bois/"><img src="../assets/ex-bois.jpg" alt="Aperçu de l’exemple vendeur de bois de chauffage" loading="lazy" width="1280" height="800"></div>
           <div class="card-top"><span class="chip chip-accent">Rustique et pratique</span></div>
           <h3>Vendeur de bois de chauffage</h3>
           <p class="muted">Prix express dès l’accueil, mur de bûches, sept longueurs de coupe, calcul au stère et livraison par zone.</p>
-          <a class="more" href="bois/">Voir cet exemple →</a>
+          <a class="more" href="bois/">Ouvrir en grand →</a>
         </article>
       </div>
     </div>
@@ -147,6 +159,31 @@
 <footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
   <span>© <span data-year>2026</span> QuenTools</span><span><a href="../devis/">Devis</a> · <a href="../realisations/">Réalisations</a> · <a href="../">Accueil</a></span>
 </div></div></footer>
+<script>
+(function () {
+  var items = document.querySelectorAll('.live[data-live]');
+  function fit(box) { var f = box.querySelector('iframe'); if (!f) return; var k = box.clientWidth / 1280; f.style.transform = 'scale(' + k + ')'; f.style.height = (box.clientHeight / k) + 'px'; }
+  function build(box) {
+    if (box.querySelector('iframe')) return;
+    var title = (box.closest('article').querySelector('h3') || {}).textContent || 'Exemple';
+    var f = document.createElement('iframe'); f.title = 'Aperçu interactif : ' + title; f.src = box.getAttribute('data-live'); f.loading = 'lazy'; f.setAttribute('tabindex', '-1');
+    f.addEventListener('load', function () { f.classList.add('ready'); });
+    box.insertBefore(f, box.firstChild); fit(box);
+    var go = document.createElement('button'); go.type = 'button'; go.className = 'live-go'; go.innerHTML = '<span>Explorer ici</span>'; go.setAttribute('aria-label', 'Explorer l’exemple ' + title + ' dans cet aperçu');
+    var stop = document.createElement('button'); stop.type = 'button'; stop.className = 'live-stop'; stop.textContent = 'Terminer l’aperçu';
+    go.addEventListener('click', function () { box.classList.add('on'); f.removeAttribute('tabindex'); stop.focus(); });
+    function off() { box.classList.remove('on'); f.setAttribute('tabindex', '-1'); }
+    stop.addEventListener('click', function () { off(); go.focus(); });
+    box.addEventListener('mouseleave', function () { if (box.classList.contains('on') && matchMedia('(hover:hover)').matches) off(); });
+    box.appendChild(go); box.appendChild(stop);
+  }
+  if ('ResizeObserver' in window) { var ro = new ResizeObserver(function (es) { es.forEach(function (e) { fit(e.target); }); }); items.forEach(function (b) { ro.observe(b); }); }
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { build(e.target); io.unobserve(e.target); } }); }, { rootMargin: '300px 0px' });
+    items.forEach(function (b) { io.observe(b); });
+  }
+})();
+</script>
 <script src="../assets/qt.js?v=20261001h" defer></script>
 </body>
 </html>
