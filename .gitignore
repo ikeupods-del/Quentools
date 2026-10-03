@@ -12,3 +12,4 @@ node_modules/
 
 # Rapports d'audit des clients (confidentiels)
 audits/
+assets/social/_tmp.html
