@@ -427,7 +427,7 @@ function dvSet(el) {
   dvRefresh(); dvDirty();
 }
 /* Templates et options : le catalogue vient de assets/qt-templates.js. Les prix par défaut des options sont des points de départ, toujours modifiables dans le devis. */
-const OPT_PRICE = { bdd: 500, paiement: 500, emails: 150, pages: 50, textes: 80, priseenmain: 40, modifs: 150, suivi: 15 };
+const OPT_PRICE = { bdd: 249.99, paiement: 99.99, emails: 150, pages: 50, textes: 80, priseenmain: 40, modifs: 150, suivi: 19.99 };
 const TPL_COMPRIS = 'Compris : personnalisation (nom, couleurs, textes, photos, prix, horaires) ; mise en ligne sur votre nom de domaine (offert la première année) ; assistance et maintenance offertes pendant 6 mois ; une série de retouches et une notice.';
 let tpl = { id: '', opts: {}, price: {} };
 const tplReset = () => { tpl = { id: '', opts: {}, price: {} }; };
@@ -448,13 +448,13 @@ function tplTotals() {
   QTT.optionsFor(t.id).forEach(o => { if (tpl.opts[o.id]) { const v = (o.qty ? tpl.opts[o.id] : 1) * optPrice(o.id); if (o.monthly) rec += v; else once += v; } });
   return { once, rec };
 }
-const tplTotTxt = () => { const k = tplTotals(); return `Template et options : ${eur(k.once)}${k.rec ? ` + ${eur(k.rec)} / mois` : ''}`; };
+const tplTotTxt = () => { const k = tplTotals(); return `Template et options : ${QTD.eur(k.once)}${k.rec ? ` + ${QTD.eur(k.rec)} / mois` : ''}`; };
 function tplHtml() {
   const t = tplOf(), x = estFor && items.find(i => i.id === estFor), cl = x ? QTT.parse(x.besoin) : { template: null, options: [] };
   const banner = cl.template && !tpl.id ? `<div class="notice">Le client a demandé le template <b>${esc(cl.template.name)}</b>${cl.options.length ? ', avec : ' + cl.options.map(o => esc(QTT.options.find(z => z.id === o.id).name.toLowerCase())).join(', ') : ', sans option'}. <button type="button" class="btn btn-sm btn-accent" data-do="tpl-client" style="margin-left:8px">Reprendre son choix</button></div>` : '';
   const picks = QTT.templates.map(z => `<button type="button" class="tpl-pick" data-do="tpl-pick" data-id="${z.id}" aria-pressed="${z.id === tpl.id}"><b>${esc(z.name)}</b><small>Dès ${eur(z.base)} · ${esc(z.resume)}</small></button>`).join('');
   const opts = t ? QTT.optionsFor(t.id).map(o => { const on = !!tpl.opts[o.id];
-    return `<div class="tpl-opt"><label class="chk"><input type="checkbox" data-tplopt="${o.id}"${on ? ' checked' : ''}><span><b>${esc(o.name)}</b>${o.monthly ? ' <span class="muted">(par mois)</span>' : ''}<br><small class="muted">${esc(o.hint)}</small></span></label>${on ? `<div class="tpl-nums">${o.qty ? `<label>Qté<input type="number" min="1" max="50" data-tplqty="${o.id}" value="${tpl.opts[o.id]}"></label>` : ''}<label>${o.monthly ? '€ / mois' : o.qty ? '€ l’unité' : 'Prix (€)'}<input type="number" min="0" step="10" data-tplprice="${o.id}" value="${optPrice(o.id)}"></label></div>` : ''}</div>`; }).join('') : '';
+    return `<div class="tpl-opt"><label class="chk"><input type="checkbox" data-tplopt="${o.id}"${on ? ' checked' : ''}><span><b>${esc(o.name)}</b>${o.monthly ? ' <span class="muted">(par mois)</span>' : ''}<br><small class="muted">${esc(o.hint)}</small></span></label>${on ? `<div class="tpl-nums">${o.qty ? `<label>Qté<input type="number" min="1" max="50" data-tplqty="${o.id}" value="${tpl.opts[o.id]}"></label>` : ''}<label>${o.monthly ? '€ / mois' : o.qty ? '€ l’unité' : 'Prix (€)'}<input type="number" min="0" step="0.01" data-tplprice="${o.id}" value="${optPrice(o.id)}"></label></div>` : ''}</div>`; }).join('') : '';
   return `<section class="card dv-card"><h3 class="dv-h">Template et options</h3>${banner}<div class="tpl-picks">${picks}</div>
     ${t ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Prix de départ ${eur(t.base)} : personnalisation, mise en ligne, nom de domaine offert (1re année), 6 mois d’assistance, une série de retouches.${t.demo ? ` <a href="../${esc(t.demo)}" target="_blank" rel="noopener">Voir la démonstration</a>.` : ''}</p>
       <div class="tpl-opts">${opts}</div><div class="ag-act"><button type="button" class="btn btn-accent" data-do="tpl-add">Ajouter au devis</button><span class="tpl-tot" id="tpl-tot">${tplTotTxt()}</span></div>`
