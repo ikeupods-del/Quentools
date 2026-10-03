@@ -802,7 +802,7 @@ function estimate() {
   const m = g('e-maint').checked;
   g('e-sub').textContent = `Proposition équilibrée : ${eur(estMid)}${m ? ` + maintenance ${eur(MAINT[0])} à ${eur(MAINT[1])}/mois` : ''}`;
   const x = estFor && items.find(i => i.id === estFor), first = x ? String(x.nom).split(' ')[0] : '';
-  estText = `Bonjour${first ? ' ' + first : ''},\n\nMerci pour votre demande. D’après ce que vous m’avez décrit (${g('e-type').value.toLowerCase()}${g('e-pay').checked ? ', avec paiement en ligne et administration' : ''}), je vous propose une réalisation entre ${eur(min)} et ${eur(max)}, le prix exact étant fixé ensemble avant de commencer.${m ? `\nEn option, une maintenance (mises à jour, sauvegardes, petites évolutions) entre ${eur(MAINT[0])} et ${eur(MAINT[1])} par mois.` : ''}\n\nPour la suite : un court échange pour préciser le besoin, puis une première version à tester avant de vous engager sur le reste.\n\nBien à vous,\nQuenTools`;
+  estText = `Bonjour${first ? ' ' + first : ''},\n\nMerci pour votre demande. D’après ce que vous m’avez décrit (${g('e-type').value.toLowerCase()}${g('e-pay').checked ? ', avec paiement en ligne et administration' : ''}), je vous propose une réalisation entre ${eur(min)} et ${eur(max)}, le prix exact étant fixé ensemble avant de commencer.${m ? `\nEn option, une maintenance (mises à jour, sauvegardes, petites évolutions) entre ${eur(MAINT[0])} et ${eur(MAINT[1])} par mois.` : ''}\n\nPour la suite : un court échange pour préciser le besoin, puis une première version à valider avant la suite.\n\nBien à vous,\nQuenTools`;
 }
 
 function viewStats() {

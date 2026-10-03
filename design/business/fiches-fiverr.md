@@ -4,7 +4,7 @@ Montants : voir `../OFFRES.md`. Rappels : ne promettre que ce qui est réalisabl
 
 ## Profil
 **Titre** : Création de sites et boutiques en ligne, en français
-**Présentation** : Je crée des sites vitrines, des boutiques Shopify et des outils web sur mesure pour les commerçants, artisans et indépendants francophones. Vous m'expliquez votre besoin avec vos mots, je m'occupe du reste et je reste joignable après la livraison. Devis clair, première version à tester avant de vous engager.
+**Présentation** : Je crée des sites vitrines, des boutiques Shopify et des outils web sur mesure pour les commerçants, artisans et indépendants francophones. Vous m'expliquez votre besoin avec vos mots, je m'occupe du reste et je reste joignable après la livraison. Devis clair, première version à valider avant la suite.
 
 ## Service 1 : Boutique Shopify clé en main, en français
 **Titre** : Je vais créer votre boutique Shopify en français, prête à vendre
