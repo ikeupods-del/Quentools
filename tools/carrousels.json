@@ -1,667 +1,699 @@
 [
-{
-"id": "plombier",
-"site": "exemples/plombier/",
-"c1": "#ffc20e",
-"c2": "#ff7a45",
-"hook": [
-"Une fuite, un dimanche.",
-"Qui appelle-t-on ?"
-],
-"accent": "Celui qu’on trouve en 5 secondes.",
-"prob": "Dans l’urgence, on appelle le premier qu’on trouve",
-"pb": [
-"Un numéro difficile à trouver",
-"Aucun moyen de décrire la panne",
-"Ni zone d’intervention, ni idée du prix"
-],
-"sol": "Un site qui rassure avant l’appel",
-"sb": [
-"Numéro et bouton « Appeler » visibles tout de suite",
-"Un devis demandé en 2 minutes",
-"Votre zone et des repères de prix"
-],
-"cap": "Une fuite un dimanche : on appelle le premier plombier qu’on trouve en quelques secondes 💧\n\nUn bon site met le numéro et le bouton « Appeler » sous le pouce, propose un devis rapide et dit clairement où vous intervenez.\n\nVotre métier a-t-il un site aussi simple ? Dites-le en commentaire 👇\n\n(Modèle de démonstration, exemple fictif)",
-"tt": "Une fuite un dimanche : qui appelle-t-on ?",
-"tags": "#plombier #artisan #siteweb #entrepreneur #creationdesite"
-},
-{
-"id": "restaurant",
-"site": "exemples/restaurant/",
-"c1": "#e8c27a",
-"c2": "#d98a4a",
-"hook": [
-"23 h 30.",
-"La cuisine est fermée."
-],
-"accent": "Votre table, elle, se réserve encore.",
-"prob": "Le client veut réserver, pas chercher",
-"pb": [
-"Il cherche votre carte sur son téléphone",
-"Il veut savoir si vous êtes ouvert",
-"Il abandonne si c’est compliqué"
-],
-"sol": "Une ardoise toujours à jour",
-"sb": [
-"La carte et l’ardoise de la semaine",
-"Les formules et les horaires",
-"Une demande de réservation en un formulaire"
-],
-"cap": "23 h 30, la cuisine est fermée… mais vos futurs clients, eux, choisissent déjà où dîner demain 🍽️\n\nUne carte lisible, des horaires clairs et un formulaire de réservation simple : c’est souvent ce qui fait la différence.\n\nVous réservez plutôt par téléphone ou en ligne ? Dites-le en commentaire 👇\n\n(Modèle de démonstration, exemple fictif)",
-"tt": "23 h 30 : la cuisine est fermée, la réservation non",
-"tags": "#restaurant #restaurateur #siteweb #entrepreneur #commerce"
-},
-{
-"id": "fleuriste",
-"site": "exemples/fleuriste/",
-"c1": "#ff8fb1",
-"c2": "#ff5c8a",
-"hook": [
-"Dimanche, 18 h.",
-"Une fête à ne pas oublier."
-],
-"accent": "Votre fleuriste prend la commande.",
-"prob": "Un bouquet se choisit avec les yeux",
-"pb": [
-"Sans belles photos, pas de commande",
-"Les clients ne savent pas quoi choisir",
-"Les demandes d’événement se perdent"
-],
-"sol": "Choisir ou composer son bouquet",
-"sb": [
-"Les bouquets du moment, avec leur prix",
-"Un bouquet composé sur mesure",
-"Un abonnement hebdomadaire et les demandes d’événement"
-],
-"cap": "Dimanche, 18 h : on se souvient d’un anniversaire… et on cherche un bouquet 💐\n\nUn site de fleuriste clair, c’est des bouquets en photo, la possibilité de composer le sien, un abonnement, et une demande dédiée pour les mariages et les grandes occasions.\n\nEt vous, vous offrez des fleurs pour quelle occasion ? 👇\n\n(Modèle de démonstration, exemple fictif)",
-"tt": "Dimanche 18 h : un bouquet, vite !",
-"tags": "#fleuriste #fleurs #siteweb #entrepreneur #commerce"
-},
-{
-"id": "bois",
-"site": "exemples/bois/",
-"c1": "#ffb36b",
-"c2": "#e0542b",
-"hook": [
-"Il fait froid.",
-"Combien pour une corde de bois ?"
-],
-"accent": "Le prix en 10 secondes.",
-"prob": "Personne n’aime appeler pour un simple prix",
-"pb": [
-"Aucun prix affiché",
-"Appeler juste pour une estimation",
-"Livre-t-on chez moi ?"
-],
-"sol": "Un calculateur simple, un prix clair",
-"sb": [
-"Calculez votre commande en quelques secondes",
-"Des bois durs, secs, présentés clairement",
-"La zone de livraison autour du dépôt"
-],
-"cap": "Il fait froid et on se demande combien coûte le bois de chauffage 🔥\n\nUn site qui affiche le prix, calcule la commande et précise la zone de livraison évite bien des appels… et fait gagner des clients.\n\nVous chauffez au bois ? Dites-le en commentaire 👇\n\n(Modèle de démonstration, exemple fictif)",
-"tt": "Combien pour une corde de bois ? Le prix en 10 secondes",
-"tags": "#boisdechauffage #artisan #siteweb #entrepreneur #commerce"
-},
-{
-"id": "climatisation",
-"site": "exemples/climatisation/",
-"c1": "#7fd6ff",
-"c2": "#3d8bff",
-"hook": [
-"Il fait 35 degrés.",
-"Quelle clim pour ma pièce ?"
-],
-"accent": "La réponse est sur votre site.",
-"prob": "Choisir une clim, c’est vite compliqué",
-"pb": [
-"Quelle puissance pour quelle pièce ?",
-"Des devis difficiles à comparer",
-"L’entretien, on l’oublie"
-],
-"sol": "Aider le client à choisir",
-"sb": [
-"Un outil : quelle puissance pour votre pièce ?",
-"Des formules d’entretien claires",
-"Votre zone d’intervention"
-],
-"cap": "Il fait 35 degrés et on veut une clim… mais laquelle ? ❄️\n\nUn site qui aide à choisir la puissance, présente des formules d’entretien claires et indique la zone d’intervention rassure avant même le premier appel.\n\nVous y avez déjà pensé pour cet été ? 👇\n\n(Modèle de démonstration, exemple fictif)",
-"tt": "Quelle clim pour ma pièce ?",
-"tags": "#climatisation #artisan #siteweb #entrepreneur #chauffagiste"
-},
-{
-"id": "coach",
-"site": "exemples/coach/",
-"c1": "#c6ff4d",
-"c2": "#2fe0a1",
-"hook": [
-"Lundi matin.",
-"On se met enfin au sport."
-],
-"accent": "Encore faut-il trouver la bonne séance.",
-"prob": "Se lancer, c’est déjà difficile",
-"pb": [
-"Trop de programmes, pas de repères",
-"Des tarifs flous",
-"On n’ose pas pousser la porte"
-],
-"sol": "Un site qui donne envie de venir",
-"sb": [
-"« Quel programme pour toi ? » en quelques questions",
-"Des séances en groupe et des tarifs clairs",
-"Une séance d’essai pour se lancer"
-],
-"cap": "Lundi matin, grande résolution : on s’y met enfin 💪\n\nPour un coach, un site efficace, c’est aider à choisir son programme, afficher des tarifs sans piège et proposer une séance d’essai.\n\nVous vous y mettez quand ? Dites-le en commentaire 👇\n\n(Modèle de démonstration, exemple fictif)",
-"tt": "Lundi : on se met enfin au sport",
-"tags": "#coachsportif #sport #siteweb #entrepreneur #coaching"
-},
-{
-"id": "formation",
-"site": "exemples/formation/",
-"c1": "#ffd84d",
-"c2": "#ff9f1c",
-"hook": [
-"Dimanche soir.",
-"Les repas de la semaine ?"
-],
-"accent": "Une page qui vend votre méthode.",
-"prob": "Une bonne méthode a besoin d’être expliquée",
-"pb": [
-"On ne sait pas ce que contient la formation",
-"On ne sait pas si c’est pour soi",
-"Aucun moyen de tester avant d’acheter"
-],
-"sol": "Une page de vente claire",
-"sb": [
-"Un aperçu de la méthode, tout de suite",
-"« Combien de temps pour vous ? » pour choisir",
-"Le programme et les questions fréquentes"
-],
-"cap": "Dimanche soir, la question revient : qu’est-ce qu’on mange cette semaine ? 🥗\n\nSi vous vendez une formation, votre page doit répondre à trois choses : ce qu’on apprend, si c’est pour moi, et comment essayer avant d’acheter.\n\nVous préparez vos repas à l’avance ? 👇\n\n(Modèle de démonstration, exemple fictif)",
-"tt": "Les repas de la semaine en une heure",
-"tags": "#formation #infopreneur #siteweb #entrepreneur #pagedevente"
-},
-{
-"id": "osteopathe",
-"site": "exemples/osteopathe/",
-"c1": "#9be7c4",
-"c2": "#4cc9a0",
-"hook": [
-"Mal au dos.",
-"Mais chez qui aller ?"
-],
-"accent": "Un site qui rassure avant le rendez-vous.",
-"prob": "Avant de prendre rendez-vous, on se pose des questions",
-"pb": [
-"Où avez-vous mal ?",
-"À quoi ressemble une séance ?",
-"Combien ça coûte ?"
-],
-"sol": "Répondre avant qu’on ne pose la question",
-"sb": [
-"Où avez-vous mal ? Un guide simple",
-"Une séance, étape par étape",
-"Des tarifs clairs et ce qu’il faut savoir avant de venir"
-],
-"cap": "Un mal de dos, et on cherche un ostéopathe près de chez soi 🧘\n\nAvant de prendre rendez-vous, on veut savoir comment se passe une séance, combien elle coûte et si on est au bon endroit. Un site clair répond à tout cela.\n\nVous avez déjà hésité à consulter ? 👇\n\n(Modèle de démonstration, exemple fictif. Contenu indicatif, ne remplace pas un avis médical.)",
-"tt": "Mal au dos : un site qui rassure",
-"tags": "#osteopathe #sante #siteweb #entrepreneur #bienetre"
-},
-{
-"id": "paysagiste",
-"site": "exemples/paysagiste/",
-"c1": "#a6e36e",
-"c2": "#3fa34d",
-"hook": [
-"Le jardin pousse.",
-"Le temps, non."
-],
-"accent": "Votre paysagiste a un site à son image.",
-"prob": "Un jardin, c’est un projet qui se raconte",
-"pb": [
-"Les réalisations restent cachées",
-"Les formules d’entretien sont floues",
-"On ne sait pas comment ça se passe"
-],
-"sol": "Montrer, expliquer, rassurer",
-"sb": [
-"Des réalisations présentées avec soin",
-"Des formules d’entretien claires",
-"Du rendez-vous à la première floraison"
-],
-"cap": "Le jardin pousse… et le temps manque pour s’en occuper 🌿\n\nPour un paysagiste, un bon site montre ses réalisations, explique ses formules d’entretien et raconte les étapes du rendez-vous à la première floraison.\n\nVotre jardin, plutôt sauvage ou bien rangé ? 👇\n\n(Modèle de démonstration, exemple fictif)",
-"tt": "Le jardin pousse, le temps non",
-"tags": "#paysagiste #jardin #siteweb #entrepreneur #artisan"
-},
-{
-"id": "petsitter",
-"site": "exemples/petsitter/",
-"c1": "#ffb05c",
-"c2": "#e0663a",
-"hook": [
-"Départ en vacances.",
-"Et le chien ?"
-],
-"accent": "Une garde qu’on peut estimer en ligne.",
-"prob": "Confier son animal demande de la confiance",
-"pb": [
-"On veut savoir qui s’en occupe",
-"On veut une idée du prix",
-"On veut réserver ses dates vite"
-],
-"sol": "Un site qui met en confiance",
-"sb": [
-"Garde à domicile et pension pour chevaux",
-"Dates et estimation du séjour",
-"Les informations à donner avant de confier son animal"
-],
-"cap": "Départ en vacances dans une semaine… et le chien, on en fait quoi ? 🐕\n\nUn site de garde d’animaux clair présente les services, permet d’estimer les dates et rassure sur la manière dont l’animal sera accueilli.\n\nVotre animal part avec vous ou reste ? 👇\n\n(Modèle de démonstration, exemple fictif)",
-"tt": "Départ en vacances : et le chien ?",
-"tags": "#gardedanimaux #petsitter #siteweb #entrepreneur #animaux"
-},
-{
-"id": "photographe",
-"site": "exemples/photographe/",
-"c1": "#f5d6a8",
-"c2": "#d99a5b",
-"hook": [
-"Un mariage, un portrait.",
-"Chaque image a une histoire."
-],
-"accent": "Votre portfolio doit la raconter.",
-"prob": "Une galerie en vrac ne donne pas envie",
-"pb": [
-"Trop de photos, pas de fil conducteur",
-"Les formules ne sont pas claires",
-"Réserver une date est compliqué"
-],
-"sol": "Un portfolio qui se lit comme un récit",
-"sb": [
-"Des histoires, pas une galerie en vrac",
-"Un format adapté à chaque histoire",
-"La réservation d’une date"
-],
-"cap": "Un mariage, un portrait, une entreprise : chaque image raconte quelque chose 📸\n\nPour un photographe, un site efficace présente des histoires plutôt qu’une galerie en vrac, des formats clairs, et permet de réserver une date simplement.\n\nVotre photo préférée, c’est laquelle ? 👇\n\n(Modèle de démonstration, exemple fictif)",
-"tt": "Un portfolio qui raconte une histoire",
-"tags": "#photographe #photographie #siteweb #entrepreneur #portfolio"
-},
-{
-"id": "barbier",
-"site": "demo/maison-blade/",
-"wait": 6500,
-"c1": "#e6c995",
-"c2": "#b88a4a",
-"hook": [
-"Samedi, 9 h.",
-"Le salon est complet."
-],
-"accent": "Votre réservation, en trois choix.",
-"prob": "Le client veut réserver sans appeler",
-"pb": [
-"Le téléphone sonne pendant la coupe",
-"Les rendez-vous se perdent",
-"Les clients fidèles ne sont pas récompensés"
-],
-"sol": "Réservation, fidélité, espace client",
-"sb": [
-"Réservation en trois choix",
-"Paiement, abonnement et fidélité",
-"Un espace client et une administration"
-],
-"cap": "Samedi, 9 h : le salon est complet et le téléphone n’arrête pas de sonner ✂️\n\nUne réservation en trois choix, un espace client et un programme de fidélité : c’est ce que propose le modèle de démonstration « Maison Blade ».\n\nVous réservez plutôt en ligne ou par téléphone chez votre barbier ? 👇\n\n(Modèle de démonstration, exemple fictif)",
-"tt": "Samedi 9 h : le salon est complet",
-"tags": "#barbier #barbershop #siteweb #entrepreneur #reservation"
-},
-{
-"id": "audit",
-"site": "audit/",
-"pill": "Audit de sécurité",
-"hook": [
-"Votre site est en ligne.",
-"Mais qui l’a regardé de l’extérieur ?"
-],
-"accent": "Un rapport clair en 48 h.",
-"prob": "Un site peut sembler normal… et avoir des failles",
-"pb": [
-"Une connexion mal configurée",
-"Des cookies posés sans le savoir",
-"Un fichier oublié, visible par tous"
-],
-"sol": "Un contrôle express, un rapport clair",
-"sb": [
-"Connexion, cookies, formulaires, fichiers exposés",
-"Un rapport PDF sous 48 h",
-"Uniquement avec votre accord écrit"
-],
-"ctaPill": "Votre site",
-"ctaTitle": "Votre site est-il *protégé* ?",
-"ctaText": "Posez votre question en commentaire : je vous réponds en toute transparence.",
-"note": "",
-"cap": "Votre site est en ligne et semble fonctionner normalement. Mais qui l’a regardé de l’extérieur ? 🔍\n\nL’audit de sécurité express contrôle la connexion, les cookies, les formulaires et les fichiers exposés par erreur, puis remet un rapport clair en 48 h. Uniquement avec votre accord écrit.\n\nUne question sur la sécurité de votre site ? Posez-la en commentaire 👇",
-"tt": "Votre site est-il bien protégé ?",
-"tags": "#securite #siteweb #audit #entrepreneur #commerce",
-"c1": "#d7f24a",
-"c2": "#8f7bff",
-"hidePrices": true
-},
-{
-"id": "templates",
-"site": "templates/",
-"pill": "Templates",
-"hook": [
-"Pas le temps de partir de zéro ?",
-"Votre site, déjà dessiné."
-],
-"accent": "Il ne reste qu’à le personnaliser.",
-"prob": "Partir d’une page blanche prend du temps",
-"pb": [
-"Il faut tout choisir : couleurs, textes, boutons",
-"Il faut tout tester sur téléphone",
-"Il faut tout relire, encore et encore"
-],
-"sol": "Un modèle prêt à personnaliser",
-"sb": [
-"Des modèles complets, adaptés au téléphone",
-"Votre nom, vos couleurs, vos textes, vos photos",
-"Mise en ligne sur votre nom de domaine"
-],
-"ctaPill": "Votre choix",
-"ctaTitle": "Lequel vous *plaît* ?",
-"ctaText": "Dites-le en commentaire : je vous explique ce qu’on peut personnaliser.",
-"note": "",
-"cap": "Partir d’une page blanche, c’est long. Et si votre site existait déjà, prêt à être personnalisé à votre image ? 🎨\n\nDes modèles complets, adaptés au téléphone : vous choisissez, je personnalise (nom, couleurs, textes, photos) et je mets en ligne.\n\nQuel métier voudriez-vous voir en modèle ? 👇",
-"tt": "Votre site, déjà dessiné",
-"tags": "#siteweb #template #entrepreneur #creationdesite #petiteentreprise",
-"c1": "#d7f24a",
-"c2": "#8f7bff",
-"hidePrices": true
-},
-{
-"id": "exemples",
-"site": "exemples/",
-"pill": "Exemples fictifs",
-"hook": [
-"Un plombier. Une fleuriste.",
-"Un photographe."
-],
-"accent": "Un style pour chaque métier.",
-"prob": "Un site identique pour tous n’inspire personne",
-"pb": [
-"Les mêmes couleurs partout",
-"Les mêmes boutons, quel que soit le métier",
-"Le même message pour tout le monde"
-],
-"sol": "Un univers pour chaque activité",
-"sb": [
-"Un design propre à chaque métier",
-"Adapté au téléphone",
-"Des exemples fictifs pour voir ce qui est possible"
-],
-"ctaPill": "Le vôtre",
-"ctaTitle": "Et pour *vous*, ce serait quoi ?",
-"ctaText": "Dites votre métier en commentaire : je vous montre l’exemple le plus proche.",
-"note": "Exemples fictifs réalisés par QuenTools",
-"cap": "Un plombier, une fleuriste, un photographe… leurs clients ne cherchent pas la même chose, leur site ne devrait pas se ressembler 🎨\n\nChaque exemple a son propre style, adapté au téléphone, pour montrer ce qui est possible.\n\nQuel est votre métier ? Dites-le en commentaire 👇",
-"tt": "Un style pour chaque métier",
-"tags": "#siteweb #design #artisan #entrepreneur #creationdesite",
-"c1": "#d7f24a",
-"c2": "#8f7bff",
-"hidePrices": true
-},
-{
-"id": "freelance",
-"site": "freelance/",
-"pill": "Outil gratuit",
-"hook": [
-"Vous êtes indépendant.",
-"Facturez-vous assez ?"
-],
-"accent": "Calculez votre TJM.",
-"prob": "Fixer son tarif au hasard coûte cher",
-"pb": [
-"Un tarif choisi « à peu près »",
-"Des devis refaits à la main",
-"Des documents éparpillés"
-],
-"sol": "Un outil pour les indépendants",
-"sb": [
-"Un calculateur de TJM",
-"Un devis sur mesure",
-"Vos devis rassemblés au même endroit"
-],
-"ctaPill": "Votre tarif",
-"ctaTitle": "Vous facturez *combien* ?",
-"ctaText": "Dites-le en commentaire, ou posez votre question sur votre tarif.",
-"note": "Outil QuenTools",
-"cap": "Indépendant, freelance, auto-entrepreneur : facturez-vous vraiment au bon prix ? 💶\n\nQuenTools propose un outil gratuit pour calculer votre TJM, préparer un devis sur mesure et retrouver tous vos devis au même endroit.\n\nVous calculez comment votre tarif aujourd’hui ? 👇",
-"tt": "Calculez votre TJM",
-"tags": "#freelance #independant #tjm #entrepreneur #devis",
-"c1": "#d7f24a",
-"c2": "#8f7bff"
-},
-{
-"id": "outils",
-"site": "outils/",
-"pill": "Outils gratuits",
-"hook": [
-"Un outil, un besoin.",
-"Pas de superflu."
-],
-"accent": "Des outils gratuits sur téléphone.",
-"prob": "Trop d’outils compliqués",
-"pb": [
-"Trop d’applications à installer",
-"Trop d’abonnements",
-"Trop de fonctions dont on n’a pas besoin"
-],
-"sol": "Des outils simples, prêts à l’emploi",
-"sb": [
-"Un carnet d’entretien auto",
-"Un calculateur de TJM pour indépendants",
-"Sur téléphone comme sur ordinateur"
-],
-"ctaPill": "Votre besoin",
-"ctaTitle": "Quel outil vous *ferait gagner* du temps ?",
-"ctaText": "Décrivez-le en commentaire : je vous dis si c’est faisable.",
-"note": "Outils QuenTools",
-"cap": "Un outil, un besoin, pas de superflu 🧰\n\nQuenTools propose des outils simples et gratuits, sur téléphone comme sur ordinateur : un carnet d’entretien auto, un calculateur de TJM pour les indépendants…\n\nQuel outil vous ferait gagner du temps ? Dites-le en commentaire 👇",
-"tt": "Des outils gratuits, simples et utiles",
-"tags": "#outils #gratuit #entrepreneur #productivite #application",
-"c1": "#d7f24a",
-"c2": "#8f7bff",
-"hidePrices": true
-},
-{
-"id": "conseils",
-"site": "conseils/",
-"pill": "Conseils",
-"hook": [
-"Un doute sur votre site ?",
-"Les réponses sont là."
-],
-"accent": "Des conseils simples, sans jargon.",
-"prob": "Le vocabulaire technique décourage",
-"pb": [
-"Domaine, hébergement, cookies : on s’y perd",
-"Personne n’explique simplement",
-"Alors on repousse le projet"
-],
-"sol": "Des conseils concrets",
-"sb": [
-"3 questions avant de créer un site",
-"Votre fiche Google, vos horaires, vos mentions légales",
-"Des tests simples à faire soi-même"
-],
-"ctaPill": "Votre question",
-"ctaTitle": "Votre *question* ?",
-"ctaText": "Posez-la en commentaire : je réponds à tout le monde.",
-"note": "",
-"cap": "Domaine, hébergement, cookies, mentions légales… on s’y perd vite 😵\n\nJ’explique tout simplement : trois questions avant de créer un site, votre fiche Google, des tests à faire vous-même.\n\nUne question sur votre site ? Posez-la en commentaire 👇",
-"tt": "Votre site, sans jargon",
-"tags": "#siteweb #conseil #entrepreneur #petiteentreprise #commerce",
-"c1": "#d7f24a",
-"c2": "#8f7bff"
-},
-{
-"id": "devis",
-"site": "devis/",
-"pill": "Devis gratuit",
-"hook": [
-"Un projet de site ?",
-"Deux minutes suffisent."
-],
-"accent": "Décrivez-le, je vous réponds.",
-"prob": "Les devis qui traînent font fuir",
-"pb": [
-"Des devis qui arrivent après des semaines",
-"Des prix qui changent en route",
-"Des inconnues avant de commencer"
-],
-"sol": "Un devis gratuit, sans engagement",
-"sb": [
-"Quelques lignes sur votre activité",
-"Un prix fixé avant de commencer",
-"Une réponse sous 48 h"
-],
-"ctaPill": "Votre projet",
-"ctaTitle": "Parlez-moi de *votre projet*",
-"ctaText": "Dites-m’en un mot en commentaire : je vous explique comment faire.",
-"note": "",
-"cap": "Un projet de site ? Pas besoin d’un dossier de vingt pages 📝\n\nQuelques lignes sur votre activité suffisent. Je vous réponds sous 48 h avec un devis gratuit, sans engagement, et un prix fixé avant de commencer.\n\nVotre projet, c’est quoi ? Dites-le en commentaire 👇",
-"tt": "Un projet de site ? Deux minutes",
-"tags": "#devis #siteweb #entrepreneur #creationdesite #freelance",
-"c1": "#d7f24a",
-"c2": "#8f7bff",
-"hidePrices": true
-},
-{
-"id": "accueil",
-"site": "",
-"pill": "QuenTools",
-"hook": [
-"Un petit site bien fait",
-"vaut mieux qu’un projet sans fin."
-],
-"accent": "On commence simple, on ajoute ensuite.",
-"prob": "Les gros projets s’enlisent",
-"pb": [
-"Les délais qui s’allongent",
-"Les budgets qui gonflent",
-"Des fonctions que personne n’utilise"
-],
-"sol": "L’approche QuenTools",
-"sb": [
-"Des templates prêts à l’emploi",
-"Des outils gratuits",
-"Un prix fixé avant de commencer"
-],
-"ctaPill": "Et vous ?",
-"ctaTitle": "Vous préférez *tout d’un coup* ou étape par étape ?",
-"ctaText": "Dites-le en commentaire.",
-"note": "",
-"cap": "Un petit site bien fait vaut mieux qu’un projet sans fin 🎯\n\nOn commence par l’essentiel, on met en ligne, puis on ajoute ce qui est vraiment utile. Des templates prêts à l’emploi, des outils gratuits, un prix fixé avant de commencer.\n\nVous préférez tout d’un coup ou étape par étape ? 👇",
-"tt": "Un petit site bien fait",
-"tags": "#siteweb #entrepreneur #freelance #conseil #creationdesite",
-"c1": "#d7f24a",
-"c2": "#8f7bff",
-"hidePrices": true
-},
-{
-"id": "carnet",
-"site": "outils/carnet-entretien/",
-"pill": "Outil gratuit",
-"hook": [
-"Votre voiture",
-"a-t-elle fait sa révision ?"
-],
-"accent": "Un carnet gratuit, sur votre téléphone.",
-"prob": "Le carnet papier est… quelque part",
-"pb": [
-"Dans la boîte à gants, ou perdu",
-"On ne sait plus ce qui a été fait",
-"On ne sait plus combien ça a coûté"
-],
-"sol": "Un carnet d’entretien sur téléphone",
-"sb": [
-"Votre véhicule et son historique",
-"Les coûts d’entretien au même endroit",
-"Gratuit, sans abonnement"
-],
-"ctaPill": "Et vous ?",
-"ctaTitle": "Votre dernière *révision*, c’était quand ?",
-"ctaText": "Dites-le en commentaire, sans tricher.",
-"note": "Outil QuenTools",
-"cap": "Votre voiture a-t-elle fait sa révision ? 🚗\n\nLe carnet papier est dans la boîte à gants… ou perdu. Le carnet d’entretien QuenTools garde l’historique de votre véhicule et ses coûts d’entretien, gratuitement, sur votre téléphone.\n\nVotre dernière révision, c’était quand ? Dites-le en commentaire 👇",
-"tt": "Votre voiture a-t-elle fait sa révision ?",
-"tags": "#voiture #entretien #auto #gratuit #astuce",
-"c1": "#d7f24a",
-"c2": "#8f7bff"
-},
-{
-"id": "sur-mesure",
-"site": "demo/naw-fruity/tropical/",
-"pill": "Outil sur mesure",
-"hook": [
-"Vos devis sur Excel,",
-"une heure perdue par jour ?"
-],
-"accent": "Un outil fait pour votre métier.",
-"prob": "Un logiciel standard ne colle jamais vraiment",
-"pb": [
-"Des fonctions dont vous n’avez pas besoin",
-"Celles qu’il vous faudrait n’existent pas",
-"Alors tout se fait encore à la main"
-],
-"sol": "Un outil conçu pour votre façon de travailler",
-"sb": [
-"Utilisable sur téléphone, même devant le client",
-"Des écrans simples, rien de superflu",
-"Un projet limité et bien cadré"
-],
-"ctaPill": "Votre idée",
-"ctaTitle": "Quel outil vous *ferait gagner* du temps ?",
-"ctaText": "Décrivez votre besoin en commentaire : je vous dis si c’est faisable.",
-"note": "Exemple : commandes sur calendrier",
-"cap": "Vos devis sur Excel, une heure perdue chaque jour… 😮‍💨\n\nUn outil sur mesure, c’est une application simple, pensée pour votre façon de travailler, utilisable sur téléphone même devant le client. Un projet limité et bien cadré, sans fonctions inutiles.\n\nQuel outil vous ferait gagner du temps ? Décrivez-le en commentaire 👇",
-"tt": "Un outil fait pour votre métier",
-"tags": "#outilsurmesure #artisan #gaindetemps #entrepreneur #application",
-"c1": "#d7f24a",
-"c2": "#8f7bff"
-},
-{
-"id": "devis-options",
-"site": "devis/?type=Template&template=Barbier%20de%20luxe",
-"scroll": [
-330,
-900,
-1500
-],
-"pill": "Devis en ligne",
-"hook": [
-"Choisir son modèle,",
-"cocher ses options."
-],
-"accent": "Voir l’estimation avant de vous engager.",
-"prob": "Les devis classiques sont opaques",
-"pb": [
-"Des jours d’attente pour une réponse",
-"On ne sait pas ce qui est compris",
-"Les options se découvrent après coup"
-],
-"sol": "Un devis lisible, option par option",
-"sb": [
-"Choisir un modèle de site",
-"Cocher les options souhaitées",
-"Voir l’estimation avant tout engagement"
-],
-"ctaPill": "Votre devis",
-"ctaTitle": "Quelle *option* vous intéresse ?",
-"ctaText": "Dites-le en commentaire, je vous explique ce que chaque option apporte.",
-"note": "",
-"cap": "Un devis qui arrive des jours plus tard, avec des options qu’on découvre après coup ? Non merci 🙅\n\nChez QuenTools, on choisit un modèle de site, on coche ses options et on voit l’estimation tout de suite, avant tout engagement. Devis gratuit, prix fixé avant de commencer.\n\nQuelle option vous intéresse le plus ? 👇",
-"tt": "Un devis lisible, option par option",
-"tags": "#devis #siteweb #transparence #entrepreneur #creationdesite",
-"c1": "#d7f24a",
-"c2": "#8f7bff"
-}
+ {
+  "id": "plombier",
+  "site": "exemples/plombier/",
+  "c1": "#ffc20e",
+  "c2": "#ff7a45",
+  "hook": [
+   "Une fuite, un dimanche.",
+   "Qui appelle-t-on ?"
+  ],
+  "accent": "Celui qu’on trouve en 5 secondes.",
+  "prob": "Dans l’urgence, on appelle le premier qu’on trouve",
+  "pb": [
+   "Un numéro difficile à trouver",
+   "Aucun moyen de décrire la panne",
+   "Ni zone d’intervention, ni idée du prix"
+  ],
+  "sol": "Un site qui rassure avant l’appel",
+  "sb": [
+   "Numéro et bouton « Appeler » visibles tout de suite",
+   "Un devis demandé en 2 minutes",
+   "Votre zone et des repères de prix"
+  ],
+  "cap": "Une fuite un dimanche : on appelle le premier plombier qu’on trouve en quelques secondes 💧\n\nUn bon site met le numéro et le bouton « Appeler » sous le pouce, propose un devis rapide et dit clairement où vous intervenez.\n\nVotre métier a-t-il un site aussi simple ? Dites-le en commentaire 👇\n\n(Modèle de démonstration, exemple fictif)",
+  "tt": "Une fuite un dimanche : qui appelle-t-on ?",
+  "tags": "#plombier #artisan #siteweb #entrepreneur #creationdesite"
+ },
+ {
+  "id": "restaurant",
+  "site": "exemples/restaurant/",
+  "c1": "#e8c27a",
+  "c2": "#d98a4a",
+  "hook": [
+   "23 h 30.",
+   "La cuisine est fermée."
+  ],
+  "accent": "Votre table, elle, se réserve encore.",
+  "prob": "Le client veut réserver, pas chercher",
+  "pb": [
+   "Il cherche votre carte sur son téléphone",
+   "Il veut savoir si vous êtes ouvert",
+   "Il abandonne si c’est compliqué"
+  ],
+  "sol": "Une ardoise toujours à jour",
+  "sb": [
+   "La carte et l’ardoise de la semaine",
+   "Les formules et les horaires",
+   "Une demande de réservation en un formulaire"
+  ],
+  "cap": "23 h 30, la cuisine est fermée… mais vos futurs clients, eux, choisissent déjà où dîner demain 🍽️\n\nUne carte lisible, des horaires clairs et un formulaire de réservation simple : c’est souvent ce qui fait la différence.\n\nVous réservez plutôt par téléphone ou en ligne ? Dites-le en commentaire 👇\n\n(Modèle de démonstration, exemple fictif)",
+  "tt": "23 h 30 : la cuisine est fermée, la réservation non",
+  "tags": "#restaurant #restaurateur #siteweb #entrepreneur #commerce"
+ },
+ {
+  "id": "fleuriste",
+  "site": "exemples/fleuriste/",
+  "c1": "#ff8fb1",
+  "c2": "#ff5c8a",
+  "hook": [
+   "Dimanche, 18 h.",
+   "Une fête à ne pas oublier."
+  ],
+  "accent": "Votre fleuriste prend la commande.",
+  "prob": "Un bouquet se choisit avec les yeux",
+  "pb": [
+   "Sans belles photos, pas de commande",
+   "Les clients ne savent pas quoi choisir",
+   "Les demandes d’événement se perdent"
+  ],
+  "sol": "Choisir ou composer son bouquet",
+  "sb": [
+   "Les bouquets du moment, avec leur prix",
+   "Un bouquet composé sur mesure",
+   "Un abonnement hebdomadaire et les demandes d’événement"
+  ],
+  "cap": "Dimanche, 18 h : on se souvient d’un anniversaire… et on cherche un bouquet 💐\n\nUn site de fleuriste clair, c’est des bouquets en photo, la possibilité de composer le sien, un abonnement, et une demande dédiée pour les mariages et les grandes occasions.\n\nEt vous, vous offrez des fleurs pour quelle occasion ? 👇\n\n(Modèle de démonstration, exemple fictif)",
+  "tt": "Dimanche 18 h : un bouquet, vite !",
+  "tags": "#fleuriste #fleurs #siteweb #entrepreneur #commerce"
+ },
+ {
+  "id": "bois",
+  "site": "exemples/bois/",
+  "c1": "#ffb36b",
+  "c2": "#e0542b",
+  "hook": [
+   "Il fait froid.",
+   "Combien pour une corde de bois ?"
+  ],
+  "accent": "Le prix en 10 secondes.",
+  "prob": "Personne n’aime appeler pour un simple prix",
+  "pb": [
+   "Aucun prix affiché",
+   "Appeler juste pour une estimation",
+   "Livre-t-on chez moi ?"
+  ],
+  "sol": "Un calculateur simple, un prix clair",
+  "sb": [
+   "Calculez votre commande en quelques secondes",
+   "Des bois durs, secs, présentés clairement",
+   "La zone de livraison autour du dépôt"
+  ],
+  "cap": "Il fait froid et on se demande combien coûte le bois de chauffage 🔥\n\nUn site qui affiche le prix, calcule la commande et précise la zone de livraison évite bien des appels… et fait gagner des clients.\n\nVous chauffez au bois ? Dites-le en commentaire 👇\n\n(Modèle de démonstration, exemple fictif)",
+  "tt": "Combien pour une corde de bois ? Le prix en 10 secondes",
+  "tags": "#boisdechauffage #artisan #siteweb #entrepreneur #commerce"
+ },
+ {
+  "id": "climatisation",
+  "site": "exemples/climatisation/",
+  "c1": "#7fd6ff",
+  "c2": "#3d8bff",
+  "hook": [
+   "Il fait 35 degrés.",
+   "Quelle clim pour ma pièce ?"
+  ],
+  "accent": "La réponse est sur votre site.",
+  "prob": "Choisir une clim, c’est vite compliqué",
+  "pb": [
+   "Quelle puissance pour quelle pièce ?",
+   "Des devis difficiles à comparer",
+   "L’entretien, on l’oublie"
+  ],
+  "sol": "Aider le client à choisir",
+  "sb": [
+   "Un outil : quelle puissance pour votre pièce ?",
+   "Des formules d’entretien claires",
+   "Votre zone d’intervention"
+  ],
+  "cap": "Il fait 35 degrés et on veut une clim… mais laquelle ? ❄️\n\nUn site qui aide à choisir la puissance, présente des formules d’entretien claires et indique la zone d’intervention rassure avant même le premier appel.\n\nVous y avez déjà pensé pour cet été ? 👇\n\n(Modèle de démonstration, exemple fictif)",
+  "tt": "Quelle clim pour ma pièce ?",
+  "tags": "#climatisation #artisan #siteweb #entrepreneur #chauffagiste"
+ },
+ {
+  "id": "coach",
+  "site": "exemples/coach/",
+  "c1": "#c6ff4d",
+  "c2": "#2fe0a1",
+  "hook": [
+   "Lundi matin.",
+   "On se met enfin au sport."
+  ],
+  "accent": "Encore faut-il trouver la bonne séance.",
+  "prob": "Se lancer, c’est déjà difficile",
+  "pb": [
+   "Trop de programmes, pas de repères",
+   "Des tarifs flous",
+   "On n’ose pas pousser la porte"
+  ],
+  "sol": "Un site qui donne envie de venir",
+  "sb": [
+   "« Quel programme pour toi ? » en quelques questions",
+   "Des séances en groupe et des tarifs clairs",
+   "Une séance d’essai pour se lancer"
+  ],
+  "cap": "Lundi matin, grande résolution : on s’y met enfin 💪\n\nPour un coach, un site efficace, c’est aider à choisir son programme, afficher des tarifs sans piège et proposer une séance d’essai.\n\nVous vous y mettez quand ? Dites-le en commentaire 👇\n\n(Modèle de démonstration, exemple fictif)",
+  "tt": "Lundi : on se met enfin au sport",
+  "tags": "#coachsportif #sport #siteweb #entrepreneur #coaching"
+ },
+ {
+  "id": "formation",
+  "site": "exemples/formation/",
+  "c1": "#ffd84d",
+  "c2": "#ff9f1c",
+  "hook": [
+   "Dimanche soir.",
+   "Les repas de la semaine ?"
+  ],
+  "accent": "Une page qui vend votre méthode.",
+  "prob": "Une bonne méthode a besoin d’être expliquée",
+  "pb": [
+   "On ne sait pas ce que contient la formation",
+   "On ne sait pas si c’est pour soi",
+   "Aucun moyen de tester avant d’acheter"
+  ],
+  "sol": "Une page de vente claire",
+  "sb": [
+   "Un aperçu de la méthode, tout de suite",
+   "« Combien de temps pour vous ? » pour choisir",
+   "Le programme et les questions fréquentes"
+  ],
+  "cap": "Dimanche soir, la question revient : qu’est-ce qu’on mange cette semaine ? 🥗\n\nSi vous vendez une formation, votre page doit répondre à trois choses : ce qu’on apprend, si c’est pour moi, et comment essayer avant d’acheter.\n\nVous préparez vos repas à l’avance ? 👇\n\n(Modèle de démonstration, exemple fictif)",
+  "tt": "Les repas de la semaine en une heure",
+  "tags": "#formation #infopreneur #siteweb #entrepreneur #pagedevente"
+ },
+ {
+  "id": "osteopathe",
+  "site": "exemples/osteopathe/",
+  "c1": "#9be7c4",
+  "c2": "#4cc9a0",
+  "hook": [
+   "Mal au dos.",
+   "Mais chez qui aller ?"
+  ],
+  "accent": "Un site qui rassure avant le rendez-vous.",
+  "prob": "Avant de prendre rendez-vous, on se pose des questions",
+  "pb": [
+   "Où avez-vous mal ?",
+   "À quoi ressemble une séance ?",
+   "Combien ça coûte ?"
+  ],
+  "sol": "Répondre avant qu’on ne pose la question",
+  "sb": [
+   "Où avez-vous mal ? Un guide simple",
+   "Une séance, étape par étape",
+   "Des tarifs clairs et ce qu’il faut savoir avant de venir"
+  ],
+  "cap": "Un mal de dos, et on cherche un ostéopathe près de chez soi 🧘\n\nAvant de prendre rendez-vous, on veut savoir comment se passe une séance, combien elle coûte et si on est au bon endroit. Un site clair répond à tout cela.\n\nVous avez déjà hésité à consulter ? 👇\n\n(Modèle de démonstration, exemple fictif. Contenu indicatif, ne remplace pas un avis médical.)",
+  "tt": "Mal au dos : un site qui rassure",
+  "tags": "#osteopathe #sante #siteweb #entrepreneur #bienetre"
+ },
+ {
+  "id": "paysagiste",
+  "site": "exemples/paysagiste/",
+  "c1": "#a6e36e",
+  "c2": "#3fa34d",
+  "hook": [
+   "Le jardin pousse.",
+   "Le temps, non."
+  ],
+  "accent": "Votre paysagiste a un site à son image.",
+  "prob": "Un jardin, c’est un projet qui se raconte",
+  "pb": [
+   "Les réalisations restent cachées",
+   "Les formules d’entretien sont floues",
+   "On ne sait pas comment ça se passe"
+  ],
+  "sol": "Montrer, expliquer, rassurer",
+  "sb": [
+   "Des réalisations présentées avec soin",
+   "Des formules d’entretien claires",
+   "Du rendez-vous à la première floraison"
+  ],
+  "cap": "Le jardin pousse… et le temps manque pour s’en occuper 🌿\n\nPour un paysagiste, un bon site montre ses réalisations, explique ses formules d’entretien et raconte les étapes du rendez-vous à la première floraison.\n\nVotre jardin, plutôt sauvage ou bien rangé ? 👇\n\n(Modèle de démonstration, exemple fictif)",
+  "tt": "Le jardin pousse, le temps non",
+  "tags": "#paysagiste #jardin #siteweb #entrepreneur #artisan"
+ },
+ {
+  "id": "petsitter",
+  "site": "exemples/petsitter/",
+  "c1": "#ffb05c",
+  "c2": "#e0663a",
+  "hook": [
+   "Départ en vacances.",
+   "Et le chien ?"
+  ],
+  "accent": "Une garde qu’on peut estimer en ligne.",
+  "prob": "Confier son animal demande de la confiance",
+  "pb": [
+   "On veut savoir qui s’en occupe",
+   "On veut une idée du prix",
+   "On veut réserver ses dates vite"
+  ],
+  "sol": "Un site qui met en confiance",
+  "sb": [
+   "Garde à domicile et pension pour chevaux",
+   "Dates et estimation du séjour",
+   "Les informations à donner avant de confier son animal"
+  ],
+  "cap": "Départ en vacances dans une semaine… et le chien, on en fait quoi ? 🐕\n\nUn site de garde d’animaux clair présente les services, permet d’estimer les dates et rassure sur la manière dont l’animal sera accueilli.\n\nVotre animal part avec vous ou reste ? 👇\n\n(Modèle de démonstration, exemple fictif)",
+  "tt": "Départ en vacances : et le chien ?",
+  "tags": "#gardedanimaux #petsitter #siteweb #entrepreneur #animaux"
+ },
+ {
+  "id": "photographe",
+  "site": "exemples/photographe/",
+  "c1": "#f5d6a8",
+  "c2": "#d99a5b",
+  "hook": [
+   "Un mariage, un portrait.",
+   "Chaque image a une histoire."
+  ],
+  "accent": "Votre portfolio doit la raconter.",
+  "prob": "Une galerie en vrac ne donne pas envie",
+  "pb": [
+   "Trop de photos, pas de fil conducteur",
+   "Les formules ne sont pas claires",
+   "Réserver une date est compliqué"
+  ],
+  "sol": "Un portfolio qui se lit comme un récit",
+  "sb": [
+   "Des histoires, pas une galerie en vrac",
+   "Un format adapté à chaque histoire",
+   "La réservation d’une date"
+  ],
+  "cap": "Un mariage, un portrait, une entreprise : chaque image raconte quelque chose 📸\n\nPour un photographe, un site efficace présente des histoires plutôt qu’une galerie en vrac, des formats clairs, et permet de réserver une date simplement.\n\nVotre photo préférée, c’est laquelle ? 👇\n\n(Modèle de démonstration, exemple fictif)",
+  "tt": "Un portfolio qui raconte une histoire",
+  "tags": "#photographe #photographie #siteweb #entrepreneur #portfolio"
+ },
+ {
+  "id": "barbier",
+  "site": "demo/maison-blade/",
+  "wait": 6500,
+  "c1": "#e6c995",
+  "c2": "#b88a4a",
+  "hook": [
+   "Samedi, 9 h.",
+   "Le salon est complet."
+  ],
+  "accent": "Votre réservation, en trois choix.",
+  "prob": "Le client veut réserver sans appeler",
+  "pb": [
+   "Le téléphone sonne pendant la coupe",
+   "Les rendez-vous se perdent",
+   "Les clients fidèles ne sont pas récompensés"
+  ],
+  "sol": "Réservation, fidélité, espace client",
+  "sb": [
+   "Réservation en trois choix",
+   "Paiement, abonnement et fidélité",
+   "Un espace client et une administration"
+  ],
+  "cap": "Samedi, 9 h : le salon est complet et le téléphone n’arrête pas de sonner ✂️\n\nUne réservation en trois choix, un espace client et un programme de fidélité : c’est ce que propose le modèle de démonstration « Maison Blade ».\n\nVous réservez plutôt en ligne ou par téléphone chez votre barbier ? 👇\n\n(Modèle de démonstration, exemple fictif)",
+  "tt": "Samedi 9 h : le salon est complet",
+  "tags": "#barbier #barbershop #siteweb #entrepreneur #reservation"
+ },
+ {
+  "id": "audit",
+  "site": "audit/",
+  "pill": "Audit de sécurité",
+  "hook": [
+   "Votre site est en ligne.",
+   "Mais qui l’a regardé de l’extérieur ?"
+  ],
+  "accent": "Un rapport clair en 48 h.",
+  "prob": "Un site peut sembler normal… et avoir des failles",
+  "pb": [
+   "Une connexion mal configurée",
+   "Des cookies posés sans le savoir",
+   "Un fichier oublié, visible par tous"
+  ],
+  "sol": "Un contrôle express, un rapport clair",
+  "sb": [
+   "Connexion, cookies, formulaires, fichiers exposés",
+   "Un rapport PDF sous 48 h",
+   "Uniquement avec votre accord écrit"
+  ],
+  "ctaPill": "Votre site",
+  "ctaTitle": "Votre site est-il *protégé* ?",
+  "ctaText": "Posez votre question en commentaire : je vous réponds en toute transparence.",
+  "note": "",
+  "cap": "Votre site est en ligne et semble fonctionner normalement. Mais qui l’a regardé de l’extérieur ? 🔍\n\nL’audit de sécurité express contrôle la connexion, les cookies, les formulaires et les fichiers exposés par erreur, puis remet un rapport clair en 48 h. Uniquement avec votre accord écrit.\n\nUne question sur la sécurité de votre site ? Posez-la en commentaire 👇",
+  "tt": "Votre site est-il bien protégé ?",
+  "tags": "#securite #siteweb #audit #entrepreneur #commerce",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff",
+  "hidePrices": true
+ },
+ {
+  "id": "templates",
+  "site": "templates/",
+  "pill": "Templates",
+  "hook": [
+   "Pas le temps de partir de zéro ?",
+   "Votre site, déjà dessiné."
+  ],
+  "accent": "Il ne reste qu’à le personnaliser.",
+  "prob": "Partir d’une page blanche prend du temps",
+  "pb": [
+   "Il faut tout choisir : couleurs, textes, boutons",
+   "Il faut tout tester sur téléphone",
+   "Il faut tout relire, encore et encore"
+  ],
+  "sol": "Un modèle prêt à personnaliser",
+  "sb": [
+   "Des modèles complets, adaptés au téléphone",
+   "Votre nom, vos couleurs, vos textes, vos photos",
+   "Mise en ligne sur votre nom de domaine"
+  ],
+  "ctaPill": "Votre choix",
+  "ctaTitle": "Lequel vous *plaît* ?",
+  "ctaText": "Dites-le en commentaire : je vous explique ce qu’on peut personnaliser.",
+  "note": "",
+  "cap": "Partir d’une page blanche, c’est long. Et si votre site existait déjà, prêt à être personnalisé à votre image ? 🎨\n\nDes modèles complets, adaptés au téléphone : vous choisissez, je personnalise (nom, couleurs, textes, photos) et je mets en ligne.\n\nQuel métier voudriez-vous voir en modèle ? 👇",
+  "tt": "Votre site, déjà dessiné",
+  "tags": "#siteweb #template #entrepreneur #creationdesite #petiteentreprise",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff",
+  "hidePrices": true
+ },
+ {
+  "id": "exemples",
+  "site": "exemples/",
+  "pill": "Exemples fictifs",
+  "hook": [
+   "Un plombier. Une fleuriste.",
+   "Un photographe."
+  ],
+  "accent": "Un style pour chaque métier.",
+  "prob": "Un site identique pour tous n’inspire personne",
+  "pb": [
+   "Les mêmes couleurs partout",
+   "Les mêmes boutons, quel que soit le métier",
+   "Le même message pour tout le monde"
+  ],
+  "sol": "Un univers pour chaque activité",
+  "sb": [
+   "Un design propre à chaque métier",
+   "Adapté au téléphone",
+   "Des exemples fictifs pour voir ce qui est possible"
+  ],
+  "ctaPill": "Le vôtre",
+  "ctaTitle": "Et pour *vous*, ce serait quoi ?",
+  "ctaText": "Dites votre métier en commentaire : je vous montre l’exemple le plus proche.",
+  "note": "Exemples fictifs réalisés par QuenTools",
+  "cap": "Un plombier, une fleuriste, un photographe… leurs clients ne cherchent pas la même chose, leur site ne devrait pas se ressembler 🎨\n\nChaque exemple a son propre style, adapté au téléphone, pour montrer ce qui est possible.\n\nQuel est votre métier ? Dites-le en commentaire 👇",
+  "tt": "Un style pour chaque métier",
+  "tags": "#siteweb #design #artisan #entrepreneur #creationdesite",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff",
+  "hidePrices": true
+ },
+ {
+  "id": "freelance",
+  "site": "freelance/",
+  "pill": "Outil gratuit",
+  "hook": [
+   "Vous êtes indépendant.",
+   "Facturez-vous assez ?"
+  ],
+  "accent": "Calculez votre TJM.",
+  "prob": "Fixer son tarif au hasard coûte cher",
+  "pb": [
+   "Un tarif choisi « à peu près »",
+   "Des devis refaits à la main",
+   "Des documents éparpillés"
+  ],
+  "sol": "Un outil pour les indépendants",
+  "sb": [
+   "Un calculateur de TJM",
+   "Un devis sur mesure",
+   "Vos devis rassemblés au même endroit"
+  ],
+  "ctaPill": "Votre tarif",
+  "ctaTitle": "Vous facturez *combien* ?",
+  "ctaText": "Dites-le en commentaire, ou posez votre question sur votre tarif.",
+  "note": "Outil QuenTools",
+  "cap": "Indépendant, freelance, auto-entrepreneur : facturez-vous vraiment au bon prix ? 💶\n\nQuenTools propose un outil gratuit pour calculer votre TJM, préparer un devis sur mesure et retrouver tous vos devis au même endroit.\n\nVous calculez comment votre tarif aujourd’hui ? 👇",
+  "tt": "Calculez votre TJM",
+  "tags": "#freelance #independant #tjm #entrepreneur #devis",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff"
+ },
+ {
+  "id": "outils",
+  "site": "outils/",
+  "pill": "Outils gratuits",
+  "hook": [
+   "Un outil, un besoin.",
+   "Pas de superflu."
+  ],
+  "accent": "Des outils gratuits sur téléphone.",
+  "prob": "Trop d’outils compliqués",
+  "pb": [
+   "Trop d’applications à installer",
+   "Trop d’abonnements",
+   "Trop de fonctions dont on n’a pas besoin"
+  ],
+  "sol": "Des outils simples, prêts à l’emploi",
+  "sb": [
+   "Un carnet d’entretien auto",
+   "Un calculateur de TJM pour indépendants",
+   "Sur téléphone comme sur ordinateur"
+  ],
+  "ctaPill": "Votre besoin",
+  "ctaTitle": "Quel outil vous *ferait gagner* du temps ?",
+  "ctaText": "Décrivez-le en commentaire : je vous dis si c’est faisable.",
+  "note": "Outils QuenTools",
+  "cap": "Un outil, un besoin, pas de superflu 🧰\n\nQuenTools propose des outils simples et gratuits, sur téléphone comme sur ordinateur : un carnet d’entretien auto, un calculateur de TJM pour les indépendants…\n\nQuel outil vous ferait gagner du temps ? Dites-le en commentaire 👇",
+  "tt": "Des outils gratuits, simples et utiles",
+  "tags": "#outils #gratuit #entrepreneur #productivite #application",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff",
+  "hidePrices": true
+ },
+ {
+  "id": "conseils",
+  "site": "conseils/",
+  "pill": "Conseils",
+  "hook": [
+   "Un doute sur votre site ?",
+   "Les réponses sont là."
+  ],
+  "accent": "Des conseils simples, sans jargon.",
+  "prob": "Le vocabulaire technique décourage",
+  "pb": [
+   "Domaine, hébergement, cookies : on s’y perd",
+   "Personne n’explique simplement",
+   "Alors on repousse le projet"
+  ],
+  "sol": "Des conseils concrets",
+  "sb": [
+   "3 questions avant de créer un site",
+   "Votre fiche Google, vos horaires, vos mentions légales",
+   "Des tests simples à faire soi-même"
+  ],
+  "ctaPill": "Votre question",
+  "ctaTitle": "Votre *question* ?",
+  "ctaText": "Posez-la en commentaire : je réponds à tout le monde.",
+  "note": "",
+  "cap": "Domaine, hébergement, cookies, mentions légales… on s’y perd vite 😵\n\nJ’explique tout simplement : trois questions avant de créer un site, votre fiche Google, des tests à faire vous-même.\n\nUne question sur votre site ? Posez-la en commentaire 👇",
+  "tt": "Votre site, sans jargon",
+  "tags": "#siteweb #conseil #entrepreneur #petiteentreprise #commerce",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff"
+ },
+ {
+  "id": "devis",
+  "site": "devis/",
+  "pill": "Devis gratuit",
+  "hook": [
+   "Un projet de site ?",
+   "Deux minutes suffisent."
+  ],
+  "accent": "Décrivez-le, je vous réponds.",
+  "prob": "Les devis qui traînent font fuir",
+  "pb": [
+   "Des devis qui arrivent après des semaines",
+   "Des prix qui changent en route",
+   "Des inconnues avant de commencer"
+  ],
+  "sol": "Un devis gratuit, sans engagement",
+  "sb": [
+   "Quelques lignes sur votre activité",
+   "Un prix fixé avant de commencer",
+   "Une réponse sous 48 h"
+  ],
+  "ctaPill": "Votre projet",
+  "ctaTitle": "Parlez-moi de *votre projet*",
+  "ctaText": "Dites-m’en un mot en commentaire : je vous explique comment faire.",
+  "note": "",
+  "cap": "Un projet de site ? Pas besoin d’un dossier de vingt pages 📝\n\nQuelques lignes sur votre activité suffisent. Je vous réponds sous 48 h avec un devis gratuit, sans engagement, et un prix fixé avant de commencer.\n\nVotre projet, c’est quoi ? Dites-le en commentaire 👇",
+  "tt": "Un projet de site ? Deux minutes",
+  "tags": "#devis #siteweb #entrepreneur #creationdesite #freelance",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff",
+  "hidePrices": true
+ },
+ {
+  "id": "accueil",
+  "site": "",
+  "pill": "QuenTools",
+  "hook": [
+   "Un petit site bien fait",
+   "vaut mieux qu’un projet sans fin."
+  ],
+  "accent": "On commence simple, on ajoute ensuite.",
+  "prob": "Les gros projets s’enlisent",
+  "pb": [
+   "Les délais qui s’allongent",
+   "Les budgets qui gonflent",
+   "Des fonctions que personne n’utilise"
+  ],
+  "sol": "L’approche QuenTools",
+  "sb": [
+   "Des templates prêts à l’emploi",
+   "Des outils gratuits",
+   "Un prix fixé avant de commencer"
+  ],
+  "ctaPill": "Et vous ?",
+  "ctaTitle": "Vous préférez *tout d’un coup* ou étape par étape ?",
+  "ctaText": "Dites-le en commentaire.",
+  "note": "",
+  "cap": "Un petit site bien fait vaut mieux qu’un projet sans fin 🎯\n\nOn commence par l’essentiel, on met en ligne, puis on ajoute ce qui est vraiment utile. Des templates prêts à l’emploi, des outils gratuits, un prix fixé avant de commencer.\n\nVous préférez tout d’un coup ou étape par étape ? 👇",
+  "tt": "Un petit site bien fait",
+  "tags": "#siteweb #entrepreneur #freelance #conseil #creationdesite",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff",
+  "hidePrices": true
+ },
+ {
+  "id": "carnet",
+  "site": "outils/carnet-entretien/",
+  "pill": "Outil gratuit",
+  "hook": [
+   "Votre voiture",
+   "a-t-elle fait sa révision ?"
+  ],
+  "accent": "Un carnet gratuit, sur votre téléphone.",
+  "prob": "Le carnet papier est… quelque part",
+  "pb": [
+   "Dans la boîte à gants, ou perdu",
+   "On ne sait plus ce qui a été fait",
+   "On ne sait plus combien ça a coûté"
+  ],
+  "sol": "Un carnet d’entretien sur téléphone",
+  "sb": [
+   "Votre véhicule et son historique",
+   "Les coûts d’entretien au même endroit",
+   "Gratuit, sans abonnement"
+  ],
+  "ctaPill": "Et vous ?",
+  "ctaTitle": "Votre dernière *révision*, c’était quand ?",
+  "ctaText": "Dites-le en commentaire, sans tricher.",
+  "note": "Outil QuenTools",
+  "cap": "Votre voiture a-t-elle fait sa révision ? 🚗\n\nLe carnet papier est dans la boîte à gants… ou perdu. Le carnet d’entretien QuenTools garde l’historique de votre véhicule et ses coûts d’entretien, gratuitement, sur votre téléphone.\n\nVotre dernière révision, c’était quand ? Dites-le en commentaire 👇",
+  "tt": "Votre voiture a-t-elle fait sa révision ?",
+  "tags": "#voiture #entretien #auto #gratuit #astuce",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff"
+ },
+ {
+  "id": "sur-mesure",
+  "site": "demo/naw-fruity/tropical/",
+  "pill": "Outil sur mesure",
+  "hook": [
+   "Vos devis sur Excel,",
+   "une heure perdue par jour ?"
+  ],
+  "accent": "Un outil fait pour votre métier.",
+  "prob": "Un logiciel standard ne colle jamais vraiment",
+  "pb": [
+   "Des fonctions dont vous n’avez pas besoin",
+   "Celles qu’il vous faudrait n’existent pas",
+   "Alors tout se fait encore à la main"
+  ],
+  "sol": "Un outil conçu pour votre façon de travailler",
+  "sb": [
+   "Utilisable sur téléphone, même devant le client",
+   "Des écrans simples, rien de superflu",
+   "Un projet limité et bien cadré"
+  ],
+  "ctaPill": "Votre idée",
+  "ctaTitle": "Quel outil vous *ferait gagner* du temps ?",
+  "ctaText": "Décrivez votre besoin en commentaire : je vous dis si c’est faisable.",
+  "note": "Exemple : commandes sur calendrier",
+  "cap": "Vos devis sur Excel, une heure perdue chaque jour… 😮‍💨\n\nUn outil sur mesure, c’est une application simple, pensée pour votre façon de travailler, utilisable sur téléphone même devant le client. Un projet limité et bien cadré, sans fonctions inutiles.\n\nQuel outil vous ferait gagner du temps ? Décrivez-le en commentaire 👇",
+  "tt": "Un outil fait pour votre métier",
+  "tags": "#outilsurmesure #artisan #gaindetemps #entrepreneur #application",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff"
+ },
+ {
+  "id": "devis-options",
+  "site": "devis/?type=Template&template=Barbier%20de%20luxe",
+  "scroll": [
+   330,
+   900,
+   1500
+  ],
+  "pill": "Devis en ligne",
+  "hook": [
+   "Choisir son modèle,",
+   "cocher ses options."
+  ],
+  "accent": "Voir l’estimation avant de vous engager.",
+  "prob": "Les devis classiques sont opaques",
+  "pb": [
+   "Des jours d’attente pour une réponse",
+   "On ne sait pas ce qui est compris",
+   "Les options se découvrent après coup"
+  ],
+  "sol": "Un devis lisible, option par option",
+  "sb": [
+   "Choisir un modèle de site",
+   "Cocher les options souhaitées",
+   "Voir l’estimation avant tout engagement"
+  ],
+  "ctaPill": "Votre devis",
+  "ctaTitle": "Quelle *option* vous intéresse ?",
+  "ctaText": "Dites-le en commentaire, je vous explique ce que chaque option apporte.",
+  "note": "",
+  "cap": "Un devis qui arrive des jours plus tard, avec des options qu’on découvre après coup ? Non merci 🙅\n\nChez QuenTools, on choisit un modèle de site, on coche ses options et on voit l’estimation tout de suite, avant tout engagement. Devis gratuit, prix fixé avant de commencer.\n\nQuelle option vous intéresse le plus ? 👇",
+  "tt": "Un devis lisible, option par option",
+  "tags": "#devis #siteweb #transparence #entrepreneur #creationdesite",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff"
+ },
+ {
+  "id": "pourquoi",
+  "site": "",
+  "pill": "QuenTools",
+  "hook": [
+   "Pourquoi choisir",
+   "QuenTools ?"
+  ],
+  "accent": "Des raisons simples, sans jargon.",
+  "prob": "Ce qui inquiète quand on commande un site",
+  "pb": [
+   "Une facture qui grossit en route",
+   "Un site qui ne vous appartient pas",
+   "Quelqu’un qu’on ne sait pas joindre"
+  ],
+  "sol": "Ma façon de travailler",
+  "sb": [
+   "Un prix fixé avant de commencer",
+   "Un site à votre nom",
+   "Une réponse sous 48 h, de la région"
+  ],
+  "ctaPill": "Et vous ?",
+  "ctaTitle": "Qu’est-ce qui compte *le plus* pour vous ?",
+  "ctaText": "Dites-le en commentaire.",
+  "note": "",
+  "cap": "Bonjour à tous 👋\n\nPourquoi choisir QuenTools ? Voici ma réponse honnête 👇\n\n🔹 Votre site est à votre nom : l’adresse de votre entreprise vous appartient\n🔹 Le prix est fixé avant de commencer, sans mauvaise surprise\n🔹 Je suis de la région et je réponds sous 48 h\n🔹 Un site simple, rapide, lisible sur téléphone, sans cookies ni pop-ups\n🔹 Je vous montre une première version avant de continuer\n\nEt vous, qu’est-ce qui compte le plus quand vous choisissez la personne qui crée votre site ? 👇",
+  "tt": "Pourquoi choisir QuenTools ?",
+  "tags": "#siteweb #entrepreneur #creationdesite #artisan #freelance",
+  "c1": "#d7f24a",
+  "c2": "#8f7bff",
+  "hidePrices": true
+ }
 ]
