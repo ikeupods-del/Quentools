@@ -46,7 +46,8 @@
       <fieldset class="field" id="tpl-box" hidden><legend>Votre template</legend>
         <div class="choices" id="tpl-list"></div>
         <div id="opt-box" hidden style="margin-top:var(--s-4)"><b style="display:block;margin-bottom:8px">Options souhaitées <span class="muted" style="font-weight:400">(facultatif)</span></b><div id="opt-list" style="display:grid;gap:8px"></div>
-        <small>Ce qui est compris dans le prix de départ : personnalisation, mise en ligne, nom de domaine offert la première année, 6 mois d’assistance, une série de retouches. Les options sont chiffrées dans votre devis, sans engagement.</small></div>
+        <div class="notice" id="tpl-est" aria-live="polite" style="margin-top:var(--s-4)"></div>
+        <small>Ce qui est compris dans le prix de départ : personnalisation, mise en ligne, nom de domaine offert la première année, 6 mois d’assistance, une série de retouches. Prix indicatifs : le devis les confirme avant tout engagement.</small></div>
       </fieldset>
       <div class="field"><label for="besoin">Votre activité et votre besoin</label>
         <textarea id="besoin" name="besoin" required minlength="20" maxlength="3000" placeholder="Ex. « Je suis plombier, je fais mes devis à la main sur Excel et je perds une heure par jour. J’aimerais un outil sur téléphone pour faire un devis devant le client. »"></textarea>
@@ -97,21 +98,28 @@
     const keep = {}; olist.querySelectorAll('input[type=checkbox]:checked').forEach(c => { keep[c.value] = (olist.querySelector(`input[data-q="${c.value}"]`) || {}).value || 1; });
     const opts = tplSel ? QTT.optionsFor(tplSel.id) : [];
     obox.hidden = !opts.length;
-    olist.innerHTML = opts.map(o => `<label class="check"><input type="checkbox" value="${o.id}"${keep[o.id] ? ' checked' : ''}> <span><b>${esc(o.name)}</b>${o.monthly ? ' <span class="muted">(par mois)</span>' : ''}<br><span class="muted">${esc(o.hint)}</span></span>${o.qty ? `<input type="number" data-q="${o.id}" min="1" max="20" value="${esc(keep[o.id] || 1)}" aria-label="Quantité : ${esc(o.name)}" style="width:72px;margin-left:auto">` : ''}</label>`).join('');
+    olist.innerHTML = opts.map(o => `<label class="check"><input type="checkbox" value="${o.id}"${keep[o.id] ? ' checked' : ''}> <span><b>${esc(o.name)}</b> · <b style="color:var(--accent)">${esc(QTT.priceText(o))}</b><br><span class="muted">${esc(o.hint)}</span></span>${o.qty ? `<input type="number" data-q="${o.id}" min="1" max="20" value="${esc(keep[o.id] || 1)}" aria-label="Quantité : ${esc(o.name)}" style="width:72px;margin-left:auto">` : ''}</label>`).join('');
   }
+  function chosenOpts() { const o = {}; olist.querySelectorAll('input[type=checkbox]:checked').forEach(c => { o[c.value] = Math.max(1, +(olist.querySelector(`input[data-q="${c.value}"]`) || {}).value || 1); }); return o; }
+  function drawEst() {
+    const est = document.getElementById('tpl-est'); if (!tplSel || !est) return; const k = QTT.total(tplSel.id, chosenOpts());
+    est.innerHTML = `<b>Estimation : ${esc(QTT.fmt(k.once))}</b>${k.rec ? ` + ${esc(QTT.fmt(k.rec))} par mois` : ''}<br><span class="muted" style="font-size:var(--t-sm)">Template ${esc(QTT.fmt(tplSel.base))} + options cochées. Indicatif : le prix exact est confirmé dans le devis gratuit.</span>`;
+  }
+  olist.addEventListener('change', drawEst); olist.addEventListener('input', drawEst);
   function drawTemplates() {
     const on = selType() === 'Template' && window.QTT; tbox.hidden = !on; if (!on) return;
     tlist.innerHTML = QTT.templates.map(t => `<label class="choice"><input type="radio" name="tpl" value="${t.id}"${tplSel && tplSel.id === t.id ? ' checked' : ''}><span><b>${esc(t.name)}</b> · dès ${t.base} €<br><small class="muted" style="font-weight:400">${esc(t.resume)}</small></span></label>`).join('');
-    drawOptions();
+    drawOptions(); drawEst();
   }
-  tlist.addEventListener('change', e => { if (e.target.name === 'tpl') { tplSel = QTT.templates.find(t => t.id === e.target.value) || null; drawOptions(); } });
+  tlist.addEventListener('change', e => { if (e.target.name === 'tpl') { tplSel = QTT.templates.find(t => t.id === e.target.value) || null; drawOptions(); drawEst(); } });
   f.addEventListener('change', e => { if (e.target.name === 'type') drawTemplates(); });
   if (tplSel) { const r = f.querySelector('input[name=type][value="Template"]'); if (r) r.checked = true; }
   drawTemplates();
   const tplText = () => {
     if (selType() !== 'Template' || !tplSel) return '';
     const chosen = [...olist.querySelectorAll('input[type=checkbox]:checked')].map(c => { const o = QTT.options.find(z => z.id === c.value), q = o.qty ? Math.max(1, +(olist.querySelector(`input[data-q="${o.id}"]`) || {}).value || 1) : 1; return o.name + (q > 1 ? ' × ' + q : ''); });
-    return `Template souhaité : ${tplSel.name}\n` + (chosen.length ? `Options souhaitées : ${chosen.join('; ')}\n` : '') + '\n';
+    const k = QTT.total(tplSel.id, chosenOpts());
+    return `Template souhaité : ${tplSel.name}\n` + (chosen.length ? `Options souhaitées : ${chosen.join('; ')}\n` : '') + `Estimation affichée : ${QTT.fmt(k.once)}${k.rec ? ' + ' + QTT.fmt(k.rec) + ' par mois' : ''}\n\n`;
   };
   // Carte cadeau : /devis/?cadeau=QT-XXXX-XXXX ajoute le code en tête de la demande (le montant est déduit du devis).
   const gift = (new URLSearchParams(location.search).get('cadeau') || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 14);

@@ -4,7 +4,7 @@ Brouillon à valider avant publication. Montants indicatifs : les premières com
 
 ## Offres du site QuenTools (clients directs)
 
-Sur le site, trois offres « sur devis » (aucun prix affiché) et une offre **Templates prêts à l'emploi, dès 399 €** (page `templates/`, seul prix affiché publiquement) :
+Sur le site, trois offres « sur devis » (aucun prix affiché) et une offre **Templates prêts à l'emploi, dès 399 €** (page `templates/`, avec les prix des options : voir `design/TARIFS.md`) :
 
 | Offre | Départ (interne) | Par mois | Contenu |
 |---|---|---|---|

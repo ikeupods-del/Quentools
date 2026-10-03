@@ -438,7 +438,7 @@ function dvSet(el) {
   dvRefresh(); dvDirty();
 }
 /* Templates et options : le catalogue vient de assets/qt-templates.js. Les prix par défaut des options sont des points de départ, toujours modifiables dans le devis. */
-const OPT_PRICE = { bdd: 249.99, paiement: 99.99, emails: 150, pages: 50, textes: 80, priseenmain: 40, modifs: 150, suivi: 19.99 };
+const OPT_PRICE = Object.fromEntries(QTT.options.map(o => [o.id, o.price]));   // prix publics du catalogue (assets/qt-templates.js)
 const TPL_COMPRIS = 'Compris : personnalisation (nom, couleurs, textes, photos, prix, horaires) ; mise en ligne sur votre nom de domaine (offert la première année) ; assistance et maintenance offertes pendant 6 mois ; une série de retouches et une notice.';
 let tpl = { id: '', opts: {}, price: {} };
 const tplReset = () => { tpl = { id: '', opts: {}, price: {} }; };
