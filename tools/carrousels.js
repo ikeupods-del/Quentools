@@ -39,7 +39,7 @@ const slides = (d, shots) => [
     await sp.evaluate(() => document.querySelectorAll('.reveal,[data-reveal]').forEach(e => e.classList.add('in', 'is-in', 'visible', 'on')));
     if (d.hidePrices) await sp.evaluate(() => { const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); const t = []; while (w.nextNode()) t.push(w.currentNode); t.forEach(n => { n.nodeValue = n.nodeValue.replace(/\s*[·,]?\s*d[èe]s\s+\d[\d\s.,]*\s?€/gi, '').replace(/\s*·\s*\d[\d\s.,]*\s?€/g, '').replace(/\d[\d\s.,]*\s?€/g, 'Prix fixe');}); });
     const shots = [];
-    for (const [i, y] of [0, 900, 1900].entries()) { await sp.evaluate(y => window.scrollTo(0, y), y); await sp.waitForTimeout(500); const f = path.join(tmp, d.id + i + '.png'); await sp.screenshot({ path: f }); shots.push('file://' + f); }
+    for (const [i, y] of (d.scroll || [0, 900, 1900]).entries()) { await sp.evaluate(y => window.scrollTo(0, y), y); await sp.waitForTimeout(500); const f = path.join(tmp, d.id + i + '.png'); await sp.screenshot({ path: f }); shots.push('file://' + f); }
     await sp.close();
     for (const [i, s] of slides(d, shots).entries()) {
       const f = path.join(tmp, 'slide.html'); fs.writeFileSync(f, `<!doctype html><meta charset="utf-8"><style>${css(d)}</style>${s}`);

@@ -596,5 +596,72 @@
 "tags": "#voiture #entretien #auto #gratuit #astuce",
 "c1": "#d7f24a",
 "c2": "#8f7bff"
+},
+{
+"id": "sur-mesure",
+"site": "demo/naw-fruity/tropical/",
+"pill": "Outil sur mesure",
+"hook": [
+"Vos devis sur Excel,",
+"une heure perdue par jour ?"
+],
+"accent": "Un outil fait pour votre métier.",
+"prob": "Un logiciel standard ne colle jamais vraiment",
+"pb": [
+"Des fonctions dont vous n’avez pas besoin",
+"Celles qu’il vous faudrait n’existent pas",
+"Alors tout se fait encore à la main"
+],
+"sol": "Un outil conçu pour votre façon de travailler",
+"sb": [
+"Utilisable sur téléphone, même devant le client",
+"Des écrans simples, rien de superflu",
+"Un projet limité et bien cadré"
+],
+"ctaPill": "Votre idée",
+"ctaTitle": "Quel outil vous *ferait gagner* du temps ?",
+"ctaText": "Décrivez votre besoin en commentaire : je vous dis si c’est faisable.",
+"note": "Exemple : commandes sur calendrier",
+"cap": "Vos devis sur Excel, une heure perdue chaque jour… 😮‍💨\n\nUn outil sur mesure, c’est une application simple, pensée pour votre façon de travailler, utilisable sur téléphone même devant le client. Un projet limité et bien cadré, sans fonctions inutiles.\n\nQuel outil vous ferait gagner du temps ? Décrivez-le en commentaire 👇",
+"tt": "Un outil fait pour votre métier",
+"tags": "#outilsurmesure #artisan #gaindetemps #entrepreneur #application",
+"c1": "#d7f24a",
+"c2": "#8f7bff"
+},
+{
+"id": "devis-options",
+"site": "devis/?type=Template&template=Barbier%20de%20luxe",
+"scroll": [
+330,
+900,
+1500
+],
+"pill": "Devis en ligne",
+"hook": [
+"Choisir son modèle,",
+"cocher ses options."
+],
+"accent": "Voir l’estimation avant de vous engager.",
+"prob": "Les devis classiques sont opaques",
+"pb": [
+"Des jours d’attente pour une réponse",
+"On ne sait pas ce qui est compris",
+"Les options se découvrent après coup"
+],
+"sol": "Un devis lisible, option par option",
+"sb": [
+"Choisir un modèle de site",
+"Cocher les options souhaitées",
+"Voir l’estimation avant tout engagement"
+],
+"ctaPill": "Votre devis",
+"ctaTitle": "Quelle *option* vous intéresse ?",
+"ctaText": "Dites-le en commentaire, je vous explique ce que chaque option apporte.",
+"note": "",
+"cap": "Un devis qui arrive des jours plus tard, avec des options qu’on découvre après coup ? Non merci 🙅\n\nChez QuenTools, on choisit un modèle de site, on coche ses options et on voit l’estimation tout de suite, avant tout engagement. Devis gratuit, prix fixé avant de commencer.\n\nQuelle option vous intéresse le plus ? 👇",
+"tt": "Un devis lisible, option par option",
+"tags": "#devis #siteweb #transparence #entrepreneur #creationdesite",
+"c1": "#d7f24a",
+"c2": "#8f7bff"
 }
 ]
