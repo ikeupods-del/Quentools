@@ -1053,7 +1053,7 @@ function viewSite() {
     <label class="switch"><input type="checkbox" name="announceOn"${s.announceOn ? ' checked' : ''}> Afficher le bandeau</label>
     <div class="field"><label for="s-a">Texte</label><input id="s-a" name="announce" maxlength="140" value="${v('announce')}" placeholder="Ex. Nouveau : la carte cadeau est disponible"></div>
     <div class="field"><label for="s-u">Lien (facultatif)</label><input id="s-u" name="announceUrl" maxlength="300" value="${v('announceUrl')}" placeholder="cadeau/ ou https://…"></div>
-    <h2 style="margin:var(--s-4) 0 0">Disponibilité</h2><p class="muted" style="margin:0">Remplace la pastille verte de l’accueil (vide = « 5 applications en ligne »).</p>
+    <h2 style="margin:var(--s-4) 0 0">Disponibilité</h2><p class="muted" style="margin:0">Remplace la pastille verte de l’accueil (vide = « 6 applications en ligne »).</p>
     <label class="switch"><input type="checkbox" name="available"${s.available !== false ? ' checked' : ''}> J’accepte de nouveaux projets</label>
     <div class="field"><label for="s-t">Texte de la pastille</label><input id="s-t" name="availText" maxlength="60" value="${v('availText')}" placeholder="Ex. 2 places pour novembre"></div>
     <h2 style="margin:var(--s-4) 0 0">Coordonnées</h2>
