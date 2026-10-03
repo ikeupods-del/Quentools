@@ -136,6 +136,15 @@
   .dv-h{margin:0;font-size:var(--t-lg)}
   .dv-side{position:sticky;top:88px;display:grid;gap:var(--s-3)}
   .dv-side .dv-sum .row{display:grid!important;grid-template-columns:1fr}
+  .cl{display:grid;gap:var(--s-3);margin-bottom:var(--s-4)}
+  .cl h3{margin:0;font-size:var(--t-lg)}.cl .meta{display:flex;flex-wrap:wrap;gap:6px}
+  .cl input,.cl select,.cl textarea,.cl-form input,.cl-form select{font:inherit;font-size:var(--t-sm);padding:9px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);min-width:0;width:100%}
+  .cl textarea{resize:vertical}
+  .cl-form{display:grid;gap:var(--s-3);padding:clamp(18px,3vw,28px);margin-bottom:var(--s-4)}
+  .cl-bar{height:8px;border-radius:999px;background:var(--bg-2);overflow:hidden}.cl-bar i{display:block;height:100%;background:var(--ok)}
+  .cl-retard .cl-bar i{background:var(--warn)}.cl-susp .cl-bar i{background:#c0392b}.cl-susp{border-color:#c0392b}
+  .cl-chip-paye{background:var(--ok-soft);color:var(--ok)}.cl-chip-retard{background:var(--warn-soft);color:var(--ink)}.cl-chip-attente{background:var(--accent-soft);color:var(--ink)}.cl-chip-susp{background:#fde2e0;color:#8f1d15}
+  @media (prefers-color-scheme:dark){.cl-chip-susp{background:#3a1713;color:#ffb3aa}}
   .tpl-picks{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
   .tpl-pick{display:grid;gap:4px;text-align:left;padding:12px 14px;border-radius:var(--r-md);border:1px solid var(--line-2);background:var(--surface);color:var(--ink);cursor:pointer;font:inherit}
   .tpl-pick small{color:var(--muted);font-size:var(--t-xs);line-height:1.35}
@@ -361,8 +370,9 @@ function notifTick() {
 setInterval(notifTick, 30000);
 
 /* ---------- Devis détaillé (numéroté, remises, mentions obligatoires, publié dans l'espace client) ---------- */
+const CLAUSE = 'Le site reste en ligne tant que les sommes dues sont réglées : à défaut de paiement du solde à l’échéance indiquée, l’accès au site peut être suspendu après relance, puis rétabli dès réception du règlement.';
 const SELLER_DEF = { marque: 'QuenTools', titulaire: 'Quentin Storace EI', adresse: '231 rue Saint-Honoré, 75001 Paris', siren: '912026713', email: C.email || '',
-  conditions: 'La première version est présentée avant la suite du travail ; les modifications demandées après sa validation peuvent faire l’objet d’un devis complémentaire.\nEn cas de retard de paiement : pénalités égales à trois fois le taux d’intérêt légal et, pour les clients professionnels, indemnité forfaitaire de 40 € pour frais de recouvrement.' };
+  conditions: 'La première version est présentée avant la suite du travail ; les modifications demandées après sa validation peuvent faire l’objet d’un devis complémentaire.\nEn cas de retard de paiement : pénalités égales à trois fois le taux d’intérêt légal et, pour les clients professionnels, indemnité forfaitaire de 40 € pour frais de recouvrement.\n' + CLAUSE };
 const seller = () => ({ ...SELLER_DEF, ...(notes._vendeur || {}) });
 /* Préréglages de prestations (prix indicatifs, dans la grille QuenTools : à adapter). [désignation, prix, mensuel] */
 const CAT_BASE = [['Site vitrine (jusqu’à 5 pages)', 300], ['Page supplémentaire', 50], ['Boutique Shopify : configuration et mise en ligne', 200], ['Outil sur mesure', 1500],
@@ -505,6 +515,113 @@ async function loadLeads() {
     leads = r.docs.map(d => d.data());
   } catch (e) { leads = []; leadsErr = true; }
 }
+/* ---------- Sites clients : encaissement, verrouillage du site tant que le solde n'est pas payé, relances ---------- */
+/* Données privées dans qt_notes/_clients. Seule l'information « ce site est verrouillé ou le sera à telle date » est publique : champ « acces » de qt_admin/config, lu par assets/qt-garde.js. */
+let clEdit = null, clPay = null, clRel = null, clCode = null;
+const clients = () => { try { const c = JSON.parse((notes._clients || {}).items || '[]'); return Array.isArray(c) ? c.filter(x => x && x.id) : []; } catch (e) { return []; } };
+const clPaid = c => Math.round((c.paiements || []).reduce((s, p) => s + (+p.m || 0), 0) * 100) / 100;
+const clSolde = c => Math.round(((+c.total || 0) - clPaid(c)) * 100) / 100;
+const clLimit = c => c.prolonge || (c.echeance ? addDays(c.echeance, +c.grace || 15) : '');
+const fdate = iso => /^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? new Date(iso + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+function clState(c) {
+  const solde = clSolde(c), t = today();
+  if ((+c.total || 0) > 0 && solde <= 0) return { k: 'paye', l: 'Payé en totalité', solde };
+  if (c.bloque) return { k: 'susp', l: 'Site suspendu', solde };
+  const lim = clLimit(c);
+  if (lim && t > lim) return { k: 'susp', l: 'Site verrouillé (date limite dépassée)', solde, auto: true };
+  if (c.echeance && t > c.echeance) { const dl = daysBetween(c.echeance, t); return { k: 'retard', l: `En retard de ${dl} j`, solde, dl }; }
+  return { k: 'attente', l: c.echeance ? `Solde attendu le ${dayName(c.echeance)}` : 'Solde à encaisser', solde };
+}
+const clLate = () => clients().filter(c => ['retard', 'susp'].includes(clState(c).k));
+/* Publie le verrouillage : jamais de nom ni de montant, seulement l'identifiant du site et la date limite (ou « suspendu maintenant »). */
+async function clPublish(list) {
+  const acces = {};
+  list.forEach(c => {
+    if (!/^[a-z0-9-]{2,40}$/.test(c.site || '') || !(+c.total > 0) || clSolde(c) <= 0) return;
+    if (c.bloque) acces[c.site] = { b: 1 }; else { const lim = clLimit(c); if (lim) acces[c.site] = { u: lim }; }
+  });
+  await saveSite({ acces: JSON.stringify(acces) });
+}
+async function clSave(list) {
+  notes._clients = { items: JSON.stringify(list) };
+  if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_clients'), notes._clients); }
+  await clPublish(list);
+}
+function relanceLevel(c) {
+  const s = clState(c); if (s.k === 'attente') return 0;
+  const lim = clLimit(c); if (s.dl != null && s.dl < 7) return 1;
+  return lim && today() >= addDays(lim, -5) ? 3 : 2;
+}
+const RELANCES = [[0, 'Avant l’échéance'], [1, 'Rappel amical'], [2, 'Relance'], [3, 'Dernier avis avant suspension']];
+function relanceText(c, niv) {
+  const v = seller(), p = first(c.nom), num = c.devisNum ? ` du devis ${c.devisNum}` : '', s = QTD.eur(clSolde(c)), ech = fdate(c.echeance) || 'la date convenue', lim = fdate(clLimit(c));
+  const pay = v.paiement ? `\n${v.paiement}\n` : '', sign = `\nBien à vous,\n${v.marque || 'QuenTools'}`;
+  const hello = `Bonjour${p ? ' ' + p : ''},\n\n`;
+  if (+niv === 0) return `${hello}Pour information, le solde de ${s}${num} est à régler avant le ${ech}.${pay}${sign}`;
+  if (+niv === 1) return `${hello}Petit rappel : le solde de ${s}${num} était attendu le ${ech}. Si le règlement est déjà parti, merci de ne pas tenir compte de ce message.${pay}${sign}`;
+  if (+niv === 2) return `${hello}Sauf erreur de ma part, le solde de ${s}${num}, attendu le ${ech}, n’a pas encore été réglé. Je vous remercie de procéder au règlement dans les 8 jours. Conformément aux conditions du devis, des pénalités de retard peuvent s’appliquer.${pay}\nSi un problème vous empêche de payer, répondez-moi simplement : nous trouverons une solution.${sign}`;
+  return `${hello}Malgré mes relances, le solde de ${s}${num} reste impayé. Sans règlement avant le ${lim || 'délai indiqué'}, l’accès à votre site sera suspendu, conformément aux conditions du devis. Il sera rétabli dès réception du paiement.${pay}\nSi le règlement est déjà parti, ou si vous souhaitez en parler, répondez-moi vite.${sign}`;
+}
+function clFromRequest(x) {
+  let total = +x.montant || 0, num = '';
+  if (x.devisData) { try { const d = JSON.parse(x.devisData); total = QTD.calc(d).total; num = d.num || ''; } catch (e) { /* devis illisible : montant noté */ } }
+  return { nom: x.nom, email: x.email, total, devisNum: num, devisId: x.id, site: String(x.nom || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) };
+}
+function clFormHtml(c) {
+  const f = (n, l, t = 'text', extra = '') => `<div class="field"><label for="cl-${n}">${l}</label><input id="cl-${n}" name="${n}" type="${t}" value="${esc(c[n] ?? '')}" ${extra}></div>`;
+  const linked = items.filter(i => i.status !== 'perdu');
+  return `<section class="card cl-form" id="cl-form"><h3 style="margin:0">${c.id ? 'Modifier ce site client' : 'Ajouter un site client'}</h3>
+    ${c.id ? '' : `<label class="mini">Reprendre une demande (remplit le nom, l’e-mail et le montant du devis)<select data-clfrom><option value="">Saisir à la main…</option>${linked.map(i => `<option value="${esc(i.id)}">${esc(i.nom)} · ${esc(i.type)}${i.devisData ? ' · devis publié' : ''}</option>`).join('')}</select></label>`}
+    <div class="form-grid">${f('nom', 'Client', 'text', 'maxlength="120"')}${f('email', 'E-mail du client', 'email', 'maxlength="160"')}</div>
+    <div class="form-grid">${f('site', 'Identifiant du site (lettres, chiffres, tirets)', 'text', 'maxlength="40" placeholder="ex. boulangerie-martin"')}${f('url', 'Adresse du site (facultatif)', 'url', 'maxlength="200" placeholder="https://…"')}</div>
+    <div class="form-grid">${f('total', 'Montant total à payer (€)', 'number', 'min="0" step="0.01" inputmode="decimal"')}${f('echeance', 'Solde attendu le', 'date')}${f('grace', 'Jours de grâce avant verrouillage', 'number', 'min="0" max="90" step="1" placeholder="15"')}</div>
+    <input type="hidden" name="devisId" value="${esc(c.devisId || '')}"><input type="hidden" name="devisNum" value="${esc(c.devisNum || '')}">
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="cl-save" data-id="${esc(c.id || '')}">Enregistrer</button><button class="btn btn-ghost" data-do="cl-cancel">Annuler</button></div></section>`;
+}
+function clCardHtml(c) {
+  const s = clState(c), paid = clPaid(c), total = +c.total || 0, pct = total ? Math.min(100, Math.round(100 * paid / total)) : 0, lim = clLimit(c), e = QTD.eur;
+  const lastR = (c.relances || []).slice(-1)[0], sug = relanceLevel(c), rq = items.find(i => i.id === c.devisId);
+  const snippet = `<script src="https://quentools.fr/assets/qt-config.js"><\/script>\n<script src="https://quentools.fr/assets/qt-garde.js" data-site="${c.site}" defer><\/script>`;
+  return `<article class="card cl cl-${s.k}" data-cl="${esc(c.id)}">
+    <div class="req-top"><h3>${esc(c.nom)}</h3><span class="chip cl-chip-${s.k}">${esc(s.l)}</span></div>
+    <div class="meta"><span class="chip">🌐 ${esc(c.site || 'sans identifiant')}</span>${c.url ? `<a class="chip" href="${esc(c.url)}" target="_blank" rel="noopener">Ouvrir le site ↗</a>` : ''}${c.devisNum ? `<span class="chip">Devis ${esc(c.devisNum)}</span>` : ''}${c.email ? `<span class="chip">✉️ ${esc(c.email)}</span>` : ''}</div>
+    <div class="cl-bar" role="img" aria-label="${pct} % payé"><i style="width:${pct}%"></i></div>
+    <p style="margin:0">${e(paid)} encaissés sur ${e(total)}${s.k === 'paye' ? '' : ` · <b>reste ${e(s.solde)}</b>`}</p>
+    ${s.k !== 'paye' && lim ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">${s.k === 'susp' ? 'Verrouillé depuis le ' + fdate(c.bloque ? (c.bloqueLe || today()) : addDays(lim, 1)) : 'Verrouillage automatique après le ' + fdate(lim) + (c.prolonge ? ' (prolongé)' : ` (échéance + ${+c.grace || 15} jours)`)}.</p>` : ''}
+    ${!c.site || !(total > 0) ? '<p class="muted" style="margin:0;font-size:var(--t-sm)">⚠️ Sans identifiant de site ou sans montant, aucun verrouillage n’est publié.</p>' : ''}
+    ${lastR ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Dernière relance : « ${esc((RELANCES.find(r => r[0] === +lastR.niv) || [0, ''])[1])} » le ${esc(fdate(lastR.d))}${(c.relances || []).length > 1 ? ` (${c.relances.length} au total)` : ''}</p>` : ''}
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+      ${s.k !== 'paye' ? `<button class="btn btn-sm btn-accent" data-do="cl-pay" data-id="${esc(c.id)}">Encaisser un paiement</button><button class="btn btn-sm btn-ghost" data-do="cl-rel" data-id="${esc(c.id)}">Relancer${s.k === 'attente' ? '' : ' · conseillé : ' + esc(RELANCES[sug][1].toLowerCase())}</button>` : ''}
+      ${s.k !== 'paye' ? (s.k === 'susp' ? `<button class="btn btn-sm btn-ghost" data-do="cl-restore" data-id="${esc(c.id)}">Rétablir l’accès</button>` : `<button class="btn btn-sm btn-ghost" data-do="cl-suspend" data-id="${esc(c.id)}">Suspendre maintenant</button>`) : ''}
+      <button class="btn btn-sm btn-ghost" data-do="cl-code" data-id="${esc(c.id)}">${clCode === c.id ? 'Masquer le code' : 'Code du site'}</button>
+      <button class="btn btn-sm btn-ghost" data-do="cl-edit" data-id="${esc(c.id)}">Modifier</button>
+      <button class="btn btn-sm btn-ghost" data-do="cl-del" data-id="${esc(c.id)}" style="margin-left:auto">Supprimer</button></div>
+    ${clCode === c.id ? `<div class="thread"><span class="muted" style="font-size:var(--t-sm)">À coller dans la page d’accueil du site client, juste avant la fin de la page (déjà prévu dans les modèles de <code>design/templates/</code>) :</span><pre class="rules" style="max-height:none">${esc(snippet)}</pre><div class="row"><button class="btn btn-sm btn-accent" data-do="cl-copycode" data-id="${esc(c.id)}">Copier le code</button></div></div>` : ''}
+    ${clPay === c.id ? `<div class="thread cl-pay"><div class="form-grid"><label class="mini">Montant reçu (€)<input name="m" type="number" min="0" step="0.01" inputmode="decimal" value="${s.solde > 0 ? s.solde : ''}"></label><label class="mini">Date<input name="d" type="date" value="${today()}"></label><label class="mini">Note<input name="n" maxlength="80" placeholder="Virement, PayPal…"></label></div>
+      <div class="row"><button class="btn btn-sm btn-accent" data-do="cl-pay-save" data-id="${esc(c.id)}">Enregistrer le paiement</button><button class="btn btn-sm btn-ghost" data-do="cl-cancel">Annuler</button></div></div>` : ''}
+    ${clRel && clRel.id === c.id ? `<div class="thread"><label class="mini">Type de message<select data-clniv>${RELANCES.map(r => `<option value="${r[0]}"${r[0] === clRel.niv ? ' selected' : ''}>${r[1]}${r[0] === sug ? ' (conseillé)' : ''}</option>`).join('')}</select></label>
+      <textarea id="cl-rtext" rows="9" aria-label="Message de relance">${esc(relanceText(c, clRel.niv))}</textarea>
+      <div class="row"><button class="btn btn-sm btn-ghost" data-do="cl-rcopy">Copier</button><button class="btn btn-sm btn-ghost" data-do="cl-rmail" data-id="${esc(c.id)}">Écrire par e-mail</button>${rq ? `<button class="btn btn-sm btn-ghost" data-do="cl-rspace" data-id="${esc(c.id)}">Envoyer dans l’espace client</button>` : ''}<button class="btn btn-sm btn-accent" data-do="cl-rdone" data-id="${esc(c.id)}">Marquer comme envoyée</button><button class="btn btn-sm btn-ghost" data-do="cl-cancel">Fermer</button></div>
+      <span class="muted" style="font-size:var(--t-xs)">« Marquer comme envoyée » note la relance dans la fiche et ajoute un rappel dans l’agenda pour dans 7 jours.</span></div>` : ''}
+    ${(c.paiements || []).length ? `<details><summary class="muted" style="cursor:pointer;font-size:var(--t-sm)">${c.paiements.length} paiement${c.paiements.length > 1 ? 's' : ''} enregistré${c.paiements.length > 1 ? 's' : ''}</summary>${c.paiements.map((p, i) => `<div class="fun" style="grid-template-columns:110px 1fr auto auto"><span>${esc(fdate(p.d) || p.d)}</span><span class="muted">${esc(p.n || '')}</span><b>${e(+p.m || 0)}</b><button class="btn btn-sm btn-ghost" data-do="cl-pay-del" data-id="${esc(c.id)}" data-i="${i}" aria-label="Supprimer ce paiement">✕</button></div>`).join('')}</details>` : ''}
+  </article>`;
+}
+function viewClients() {
+  const list = clients(), st = list.map(c => ({ c, s: clState(c) })), e = QTD.eur;
+  const ord = { susp: 0, retard: 1, attente: 2, paye: 3 }, sorted = st.slice().sort((a, b) => ord[a.s.k] - ord[b.s.k]);
+  const encaisse = list.reduce((n, c) => n + clPaid(c), 0), reste = st.reduce((n, x) => n + Math.max(0, x.s.solde), 0), retard = st.filter(x => x.s.k === 'retard').length, susp = st.filter(x => x.s.k === 'susp').length;
+  const clause = String(seller().conditions || '').includes('suspendu');
+  const intro = `<details class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"><summary style="cursor:pointer;font-weight:700">Comment ça marche ?</summary><div style="margin-top:var(--s-3);display:grid;gap:8px;font-size:var(--t-sm)">
+    <p style="margin:0">1. Vous ajoutez le site du client, le montant total et la date du solde.<br>2. Le site se verrouille tout seul quand la date limite est dépassée sans paiement complet (ou tout de suite si vous le suspendez).<br>3. Il se rouvre dès que vous enregistrez le paiement.</p>
+    <p style="margin:0">Le visiteur voit seulement « site momentanément indisponible » : jamais de montant ni de nom du client.</p>
+    <p class="muted" style="margin:0">Le verrou fonctionne dans le navigateur : il arrête un visiteur ordinaire, mais ne remplace pas la coupure de l’hébergement face à un client de mauvaise foi. Il faut aussi installer le petit code du site (bouton « Code du site ») sur la page du client.</p></div></details>`;
+  const clauseBox = clause ? '' : `<div class="notice warn" style="margin-bottom:var(--s-4)"><b>Avant de suspendre un site :</b> la possibilité de suspension doit figurer dans les conditions du devis accepté par le client. Elle n’est pas dans vos conditions actuelles. <button class="btn btn-sm btn-accent" data-do="add-clause" style="margin-left:8px">Ajouter la clause à mes conditions</button><br><span class="muted">Faites relire cette clause par un professionnel du droit : je ne peux pas valider sa portée juridique.</span></div>`;
+  const kpis = `<div class="kpis"><div><b>${e(encaisse)}</b><span>encaissés</span></div><div><b>${e(reste)}</b><span>reste à encaisser</span></div><div><b>${retard}</b><span>en retard de paiement</span></div><div><b>${susp}</b><span>sites verrouillés</span></div></div>`;
+  const form = clEdit === 'new' ? clFormHtml({}) : clEdit ? clFormHtml(list.find(c => c.id === clEdit) || {}) : '';
+  const add = clEdit ? '' : '<div class="row" style="display:flex;gap:8px;margin-bottom:var(--s-4)"><button class="btn btn-accent" data-do="cl-new">+ Ajouter un site client</button></div>';
+  return intro + clauseBox + (list.length ? kpis : '') + add + form + (sorted.length ? sorted.map(x => clCardHtml(x.c)).join('') : (clEdit ? '' : '<div class="card empty">Aucun site client suivi pour l’instant. Ajoutez le premier avec le bouton ci-dessus.</div>'));
+}
 function viewContacts() {
   if (leadsErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Règles à mettre à jour</h2><p>Les contacts s’enregistrent dans une collection protégée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><button class="btn btn-accent" data-tab="regles">Voir les règles</button></section>`;
   const week = Date.now() - 7 * 864e5, lqq = lq.trim().toLowerCase(), shown = leads.filter(l => !lqq || [l.name, l.email].join(' ').toLowerCase().includes(lqq));
@@ -514,6 +631,10 @@ function viewContacts() {
     <p class="muted" style="font-size:var(--t-xs)">Chaque contact a accepté de recevoir des nouvelles de QuenTools. Pour une demande de suppression, utilisez le bouton « Supprimer » du contact.</p>`;
 }
 async function load() {
+  if (DEMO && !notes._clients) notes._clients = { items: JSON.stringify([
+    { id: 'c1', nom: 'Naw Fruity', email: 'naw@example.com', site: 'naw-fruity', url: 'https://quentools.fr/demo/naw-fruity/', total: 1200, paiements: [{ d: addDays(today(), -40), m: 360, n: 'Acompte 30 %' }], echeance: addDays(today(), -9), grace: 15, devisNum: 'D-2026-004', relances: [{ d: addDays(today(), -2), niv: 1 }] },
+    { id: 'c2', nom: 'Atelier Bois', email: 'atelier@example.com', site: 'atelier-bois', total: 650, paiements: [{ d: addDays(today(), -20), m: 650, n: 'Virement' }], echeance: addDays(today(), -25), grace: 15 },
+    { id: 'c3', nom: 'Léa Coiffure', email: 'lea@example.com', site: 'lea-coiffure', total: 450, paiements: [{ d: addDays(today(), -5), m: 135, n: 'Acompte 30 %' }], echeance: addDays(today(), 12), grace: 15 }]) };
   if (DEMO) { items = demo.items.concat(demoExtra()); site = demo.site; if (!agenda.length) agenda = [{ id: 'a1', kind: 'appel', titre: 'Appeler pour cadrer le site', date: today(), heure: '14:00', duree: 15, devisId: 'd1', note: 'Demander les photos et les horaires.', done: false }, { id: 'a2', kind: 'projet', titre: 'Maquette de l’accueil', date: addDays(today(), 1), heure: '09:30', duree: 120, devisId: 'd3', note: '', done: false }, { id: 'a3', kind: 'rappel', titre: 'Relancer le devis', date: addDays(today(), -1), heure: '', duree: 30, devisId: 'd2', note: '', done: false }]; await loadGifts(); return; }
   const { Fs, db } = await fb();
   try {
@@ -713,12 +834,13 @@ function viewGifts() {
 const toast = (m, warn) => { const n = document.getElementById('toast'); if (!n) return; n.innerHTML = `<div class="notice${warn ? ' warn' : ''}">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => n.innerHTML = '', 3500); };
 const NAV = [
   ['Activité', [['demandes', 'Demandes', 'M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z'], ['agenda', 'Agenda', 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4'], ['estimer', 'Devis', 'M7 3h8l4 4v14H7zM14 3v5h5M10 13h6M10 17h6']]],
-  ['Gestion', [['cadeaux', 'Cartes cadeaux', 'M3 9h18v4H3zM5 13v8h14v-8M12 9v12M12 9c-2-4-6-3-5 0 1 2 5 0 5 0zM12 9c2-4 6-3 5 0-1 2-5 0-5 0z'], ['contacts', 'Contacts', 'M4 20c0-4 3.500-6 8-6s8 2 8 6M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'], ['stats', 'Chiffres', 'M5 20V10M12 20V4M19 20v-7']]],
+  ['Gestion', [['clients', 'Sites clients', 'M5 11h14v10H5zM8 11V8a4 4 0 0 1 8 0v3'], ['cadeaux', 'Cartes cadeaux', 'M3 9h18v4H3zM5 13v8h14v-8M12 9v12M12 9c-2-4-6-3-5 0 1 2 5 0 5 0zM12 9c2-4 6-3 5 0-1 2-5 0-5 0z'], ['contacts', 'Contacts', 'M4 20c0-4 3.500-6 8-6s8 2 8 6M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'], ['stats', 'Chiffres', 'M5 20V10M12 20V4M19 20v-7']]],
   ['Site', [['site', 'Réglages du site', 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18'], ['liens', 'Raccourcis', 'M14 4h6v6M20 4l-9 9M10 6H5v13h13v-5'], ['regles', 'Règles de sécurité', 'M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z']]]];
 const TITLES = {
   demandes: ['Demandes', 'Les projets qui arrivent, de la première demande à la livraison.'],
   agenda: ['Agenda', 'Appels, travail sur les projets, rendez-vous et rappels.'],
   estimer: ['Devis', 'Estimez un prix, composez le devis avec un template et ses options, puis publiez-le chez le client.'],
+  clients: ['Sites clients', 'Suivez les paiements, verrouillez un site tant que le solde n’est pas réglé, relancez en un clic.'],
   cadeaux: ['Cartes cadeaux', 'Commandes à valider et cartes émises.'],
   contacts: ['Contacts', 'Les adresses laissées sur le site.'],
   stats: ['Chiffres', 'Ce que rapportent les demandes et les devis.'],
@@ -729,7 +851,7 @@ const TITLES = {
 function shell(body) {
   const nb = items.filter(x => (x.status || 'nouveau') === 'nouveau').length, na = agLate().length + agToday().length, ng = gifts.filter(g => (g.status || 'attente') === 'attente').length;
   document.title = (nb ? `(${nb}) ` : '') + 'Administration · QuenTools';
-  const counts = { demandes: nb, agenda: na, cadeaux: ng, regles: rulesOld ? '!' : 0 };
+  const counts = { demandes: nb, agenda: na, clients: clLate().length, cadeaux: ng, regles: rulesOld ? '!' : 0 };
   const t = ([k, l, ic]) => `<button type="button" data-tab="${k}"${tab === k ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ic}"/></svg>${l}${counts[k] ? `<span class="count">${counts[k]}</span>` : ''}</button>`;
   const [h1, sub] = TITLES[tab] || TITLES.demandes;
   app.innerHTML = `<div class="adm"><aside class="side" aria-label="Sections">${NAV.map(([g, list]) => `<div class="side-grp"><p class="side-g">${g}</p><nav>${list.map(t).join('')}</nav></div>`).join('')}</aside>
@@ -738,7 +860,7 @@ function shell(body) {
     <div id="toast" role="status" aria-live="polite"></div>${body}</div></div>`;
 }
 function render() {
-  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'cadeaux' ? viewGifts() : viewLinks());
+  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'cadeaux' ? viewGifts() : tab === 'clients' ? viewClients() : viewLinks());
   if (tab === 'estimer') estimate();
 }
 
@@ -822,7 +944,7 @@ function viewRequests() {
     <div><b>${items.filter(x => ms(x.at) > month).length}</b><span>demandes sur 30 jours</span></div>
     <div><b>${closed.length ? Math.round(100 * won.length / closed.length) + ' %' : '—'}</b><span>taux de réussite</span></div>
     <div><b>${eur(won.reduce((s, x) => s + (+x.montant || 0), 0))}</b><span>acceptés (${eur(items.filter(x => st0(x) === 'envoye').reduce((s, x) => s + (+x.montant || 0), 0))} en attente)</span></div></div>`;
-  const todo = [agLate().length && `<button class="flag" data-tab="agenda">⚠️ ${agLate().length} tâche${agLate().length > 1 ? 's' : ''} en retard dans l’agenda</button>`,
+  const todo = [clLate().length && `<button class="flag" data-tab="clients">💶 ${clLate().length} site${clLate().length > 1 ? 's' : ''} client${clLate().length > 1 ? 's' : ''} en retard de paiement</button>`, agLate().length && `<button class="flag" data-tab="agenda">⚠️ ${agLate().length} tâche${agLate().length > 1 ? 's' : ''} en retard dans l’agenda</button>`,
     agToday().length && `<button class="flag" data-tab="agenda">📅 ${agToday().length} à faire aujourd’hui</button>`,
     msgs.length && `<span class="flag">💬 ${msgs.length} nouveau${msgs.length > 1 ? 'x' : ''} message${msgs.length > 1 ? 's' : ''} client</span>`,
     relance.length && `<span class="flag">⏰ ${relance.length} devis à relancer (plus de 7 jours)</span>`,
@@ -951,6 +1073,7 @@ function viewSite() {
     ${(() => { const v = seller(), f = (n, l, ph) => `<div class="field"><label for="v-${n}">${l}</label><input id="v-${n}" name="${n}" maxlength="200" value="${esc(v[n] || '')}" placeholder="${esc(ph || '')}"></div>`;
       return `<div class="form-grid">${f('marque', 'Nom commercial')}${f('titulaire', 'Titulaire (nom suivi de « EI »)')}${f('siren', 'SIREN ou SIRET')}${f('email', 'E-mail')}</div>
       <div class="field"><label for="v-adresse">Adresse</label><textarea id="v-adresse" name="adresse" maxlength="300" rows="2">${esc(v.adresse || '')}</textarea></div>
+      <div class="field"><label for="v-paiement">Comment vous payer (repris dans les relances)</label><textarea id="v-paiement" name="paiement" maxlength="300" rows="2" placeholder="Ex. Virement : IBAN …, ou PayPal à …">${esc(v.paiement || '')}</textarea></div>
       <div class="field"><label for="v-cond">Conditions affichées sur chaque devis</label><textarea id="v-cond" name="conditions" maxlength="1500" rows="5">${esc(v.conditions || '')}</textarea></div>`; })()}
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="save-seller">Enregistrer</button></div></form>`;
 }
@@ -1078,6 +1201,74 @@ app.addEventListener('click', async e => {
     else if (d === 'ag-mo') { const ym = agMonth || today().slice(0, 7); agMonth = isoDay(new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + (+b.dataset.n), 1)).slice(0, 7); render(); }
     else if (d === 'notif') { const p = await Notification.requestPermission(); render(); toast(p === 'granted' ? 'Alertes activées tant que cette page reste ouverte' : 'Alertes non autorisées par le navigateur', p !== 'granted'); }
     else if (d === 'ag-ics-all') { const up = agEntries().filter(a => !a.done && a.date >= today()); if (!up.length) return toast('Rien de prévu à exporter', true); dl('agenda-quentools.ics', ics(up), 'text/calendar;charset=utf-8'); }
+    else if (d === 'cl-new') { clEdit = 'new'; clPay = clRel = null; render(); }
+    else if (d === 'cl-cancel') { clEdit = clPay = clRel = null; render(); }
+    else if (d === 'cl-edit') { clEdit = b.dataset.id; clPay = clRel = null; render(); const fm = document.getElementById('cl-form'); if (fm) fm.scrollIntoView({ block: 'center' }); }
+    else if (d === 'cl-save') {
+      const f = readForm(document.getElementById('cl-form')), id = b.dataset.id, list = clients(), old = list.find(c => c.id === id), site = String(f.site || '').toLowerCase().trim();
+      if (!f.nom) return toast('Indiquez le nom du client', true);
+      if (site && !/^[a-z0-9-]{2,40}$/.test(site)) return toast('Identifiant du site : 2 à 40 lettres minuscules, chiffres ou tirets', true);
+      if (site && list.some(c => c.site === site && c.id !== id)) return toast('Cet identifiant est déjà utilisé par un autre client', true);
+      if (f.url && !/^https:\/\//.test(f.url)) return toast('L’adresse du site doit commencer par https://', true);
+      const rec = { ...(old || { id: 'c' + Date.now().toString(36), paiements: [], relances: [] }), nom: f.nom.slice(0, 120), email: f.email.slice(0, 160), site, url: f.url.slice(0, 200), total: Math.max(0, +f.total || 0),
+        echeance: /^\d{4}-\d{2}-\d{2}$/.test(f.echeance) ? f.echeance : '', grace: Math.min(90, Math.max(0, f.grace === '' ? 15 : (+f.grace || 0))), devisId: f.devisId || '', devisNum: f.devisNum || '' };
+      await clSave(old ? list.map(c => c.id === id ? rec : c) : [...list, rec]); clEdit = null; render();
+      toast('Site client enregistré ✓' + (rec.site && rec.total > 0 && rec.echeance ? ' · verrouillage après le ' + fdate(clLimit(rec)) : ''));
+    }
+    else if (d === 'cl-del') {
+      const c = clients().find(z => z.id === b.dataset.id);
+      if (c && confirm(`Supprimer le suivi de « ${c.nom} » ? Si son site est verrouillé, il sera rouvert.`)) { await clSave(clients().filter(z => z.id !== c.id)); render(); toast('Suivi supprimé'); }
+    }
+    else if (d === 'cl-pay') { clPay = b.dataset.id; clRel = null; clEdit = null; render(); }
+    else if (d === 'cl-pay-save') {
+      const f = readForm(b.closest('.cl-pay')), list = clients(), c = list.find(z => z.id === b.dataset.id), m = Math.round((+f.m || 0) * 100) / 100;
+      if (!c) return; if (!(m > 0)) return toast('Indiquez le montant reçu', true);
+      c.paiements = [...(c.paiements || []), { d: /^\d{4}-\d{2}-\d{2}$/.test(f.d) ? f.d : today(), m, n: f.n.slice(0, 80) }];
+      if (clSolde(c) <= 0) { c.bloque = false; c.prolonge = ''; }
+      await clSave(list); clPay = null; render();
+      toast(clSolde(c) <= 0 ? 'Payé en totalité : le site est accessible ✓' : `Paiement noté : il reste ${QTD.eur(clSolde(c))}`);
+    }
+    else if (d === 'cl-pay-del') {
+      const list = clients(), c = list.find(z => z.id === b.dataset.id); if (!c || !confirm('Supprimer ce paiement ?')) return;
+      c.paiements.splice(+b.dataset.i, 1); await clSave(list); render();
+    }
+    else if (d === 'cl-suspend') {
+      const list = clients(), c = list.find(z => z.id === b.dataset.id); if (!c) return;
+      if (!c.site) return toast('Ajoutez d’abord un identifiant de site (Modifier)', true);
+      if (!confirm(`Suspendre le site de « ${c.nom} » maintenant ? Ses visiteurs verront « site momentanément indisponible ».`)) return;
+      c.bloque = true; c.bloqueLe = today(); await clSave(list); render(); toast('Site suspendu');
+    }
+    else if (d === 'cl-restore') {
+      const list = clients(), c = list.find(z => z.id === b.dataset.id); if (!c) return;
+      const until = prompt('Rétablir l’accès jusqu’à quelle date ? (AAAA-MM-JJ). Passé ce jour sans paiement complet, le site se reverrouille.', addDays(today(), 7));
+      if (until === null) return;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(until.trim()) || until.trim() <= today()) return toast('Date invalide : indiquez un jour futur (AAAA-MM-JJ)', true);
+      c.bloque = false; c.prolonge = until.trim(); await clSave(list); render(); toast('Accès rétabli jusqu’au ' + fdate(c.prolonge));
+    }
+    else if (d === 'cl-code') { clCode = clCode === b.dataset.id ? null : b.dataset.id; render(); }
+    else if (d === 'cl-copycode') { const c = clients().find(z => z.id === b.dataset.id); if (c) copy(`<script src="https://quentools.fr/assets/qt-config.js"><\/script>\n<script src="https://quentools.fr/assets/qt-garde.js" data-site="${c.site}" defer><\/script>`); }
+    else if (d === 'cl-rel') { const c = clients().find(z => z.id === b.dataset.id); if (!c) return; clRel = { id: c.id, niv: relanceLevel(c) }; clPay = clEdit = null; render(); }
+    else if (d === 'cl-rcopy') copy(document.getElementById('cl-rtext').value);
+    else if (d === 'cl-rmail') {
+      const c = clients().find(z => z.id === b.dataset.id); if (!c || !c.email) return toast('Ajoutez l’e-mail du client (Modifier)', true);
+      location.href = `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent('Règlement de votre site' + (c.devisNum ? ' · devis ' + c.devisNum : ''))}&body=${encodeURIComponent(document.getElementById('cl-rtext').value)}`;
+    }
+    else if (d === 'cl-rspace') {
+      const c = clients().find(z => z.id === b.dataset.id), rq = c && items.find(i => i.id === c.devisId); if (!rq) return;
+      if (!confirm('Envoyer ce message dans l’espace client de ' + rq.nom + ' ?')) return;
+      await addMsg(rq.id, { from: 'admin', text: document.getElementById('cl-rtext').value.slice(0, 2000) }); toast('Message envoyé dans l’espace client ✓');
+    }
+    else if (d === 'cl-rdone') {
+      const list = clients(), c = list.find(z => z.id === b.dataset.id); if (!c) return;
+      c.relances = [...(c.relances || []), { d: today(), niv: clRel ? +clRel.niv : 1 }];
+      try { await agCreate({ kind: 'rappel', titre: 'Relancer ' + c.nom + ' (paiement)', date: addDays(today(), 7), devisId: c.devisId || '', note: 'Solde restant : ' + QTD.eur(clSolde(c)) }); } catch (err) { /* l'agenda est facultatif */ }
+      await clSave(list); clRel = null; render(); toast('Relance notée · rappel ajouté à l’agenda dans 7 jours');
+    }
+    else if (d === 'add-clause') {
+      const v = seller(), cond = String(v.conditions || '').trim(); notes._vendeur = { ...v, conditions: (cond ? cond + '\n' : '') + CLAUSE };
+      if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_vendeur'), notes._vendeur); }
+      render(); toast('Clause ajoutée à vos conditions ✓');
+    }
     else if (d === 'tpl-pick') { tpl = { id: b.dataset.id, opts: tpl.id === b.dataset.id ? tpl.opts : {}, price: tpl.price }; render(); }
     else if (d === 'tpl-client') {
       const rq = estFor && items.find(i => i.id === estFor), cl = rq && QTT.parse(rq.besoin); if (!cl || !cl.template) return;
@@ -1169,6 +1360,11 @@ app.addEventListener('change', async e => {
       dv.acompte = d.acompte ?? dv.acompte; dv.validite = d.validite ?? dv.validite; dv.delai = d.delai || ''; dv.notes = d.notes || ''; render(); dvDirty(); toast('Lignes reprises du devis de ' + src.nom); } catch (err) { toast('Ce devis n’a pas pu être repris', true); }
     return;
   }
+  if (el.dataset.clfrom !== undefined) {
+    const x = items.find(i => i.id === el.value), f = document.getElementById('cl-form'); if (!x || !f) return;
+    const r = clFromRequest(x); for (const k of ['nom', 'email', 'total', 'site', 'devisId', 'devisNum']) { const i = f.querySelector(`[name=${k}]`); if (i) i.value = r[k] ?? ''; } return;
+  }
+  if (el.dataset.clniv !== undefined) { const c = clRel && clients().find(z => z.id === clRel.id); if (!c) return; clRel.niv = +el.value; document.getElementById('cl-rtext').value = relanceText(c, clRel.niv); return; }
   if (el.dataset.tplopt) { if (el.checked) tpl.opts[el.dataset.tplopt] = 1; else delete tpl.opts[el.dataset.tplopt]; render(); return; }
   if (el.dataset.tplqty) { tpl.opts[el.dataset.tplqty] = Math.max(1, Math.round(+el.value) || 1); tplTotRefresh(); return; }
   if (el.dataset.tplprice) { tpl.price[el.dataset.tplprice] = Math.max(0, +el.value || 0); tplTotRefresh(); return; }

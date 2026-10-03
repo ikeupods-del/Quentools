@@ -37,6 +37,7 @@ Tout ce qu'il faut pour produire vite un site ou un outil au niveau du site vitr
 - **Mouvement** : `.reveal` (+ `style="--i:n"` pour le décalage), jamais plus de 0,8 s ; tout est coupé si l'utilisateur réduit les animations.
 - **Accessibilité** : lien « Aller au contenu », focus visible, textes alternatifs, contrastes, boutons de 48 px de haut.
 - **Performance** : images JPEG 400–1 400 px, `loading="lazy"` hors du premier écran, polices préchargées, aucun script externe.
+- **Garde d'accès** : chaque modèle contient le petit script `qt-garde.js` de QuenTools (le seul script de ce type), qui verrouille le site d'un client tant que le solde n'est pas réglé. Mode d'emploi, limites et cadre juridique : `design/ACCES-CLIENT.md`.
 - **Confidentialité** : aucun cookie ni mesure d'audience par défaut ; si le client en veut, bandeau de consentement obligatoire.
 
 ## Composants disponibles
