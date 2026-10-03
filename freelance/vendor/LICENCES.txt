@@ -1,0 +1,2 @@
+Alpine.js 3.14.1 (alpine-3.14.1.min.js) — licence MIT, https://github.com/alpinejs/alpine
+Copie du fichier dist/cdn.min.js du paquet npm « alpinejs@3.14.1 », hébergée ici pour ne dépendre d'aucun service externe.

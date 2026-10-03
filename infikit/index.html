@@ -15,8 +15,40 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/atkinson-400-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/atkinson-400-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(fonts/atkinson-700-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(fonts/atkinson-700-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
 <style>
 :root{
   --bg:#eef1f7;--card:#ffffff;--ink:#172036;--muted:#5d6780;--line:#dde3ef;--soft:#f5f7fc;
@@ -1525,7 +1557,7 @@ function githubLogin(intent) {
   const url = 'https://github.com/settings/tokens/new?scopes=gist&description=' + encodeURIComponent('Infikit (' + (navigator.platform || 'téléphone') + ')');
   sheet(`<div class="sh"><h2>Connexion GitHub</h2><button class="icon" onclick="closeSheet()">✕</button></div>
     <ol class="small" style="padding-left:20px;margin-top:0;line-height:1.6"><li>Créez un compte gratuit sur <a href="https://github.com/signup" target="_blank" rel="noopener">github.com</a> si besoin.</li>
-    <li><a href="${url}" target="_blank" rel="noopener"><b>Ouvrez cette page</b></a>, choisissez « No expiration » puis « Generate token » (seule la case <b>gist</b> est cochée).</li>
+    <li><a href="${url}" target="_blank" rel="noopener"><b>Ouvrez cette page</b></a>, choisissez une durée limitée (« 90 days ») puis « Generate token » (seule la case <b>gist</b> est cochée).</li>
     <li>Copiez le code qui commence par <code>ghp_</code> et collez-le ici.</li></ol>
     <label class="f"><span>Jeton GitHub</span><input id="ghtok" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ghp_…"></label>
     <button class="btn pri block" onclick="githubTokenDone('${intent}')">Se connecter</button>

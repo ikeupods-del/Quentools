@@ -1,8 +1,8 @@
 /* Infikit — service worker : l'app s'ouvre même sans réseau pendant la tournée.
    Les données (patients, ordonnances) ne passent jamais par ici : elles restent
    dans le stockage du téléphone. Seuls les fichiers de l'app sont mis en cache. */
-const CACHE = 'infikit-v1.4';
-const SHELL = ['./', './index.html', './config.js', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+const CACHE = 'infikit-v1.5';
+const SHELL = ['./', './index.html', './config.js', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './fonts/atkinson-400-latin.woff2', './fonts/atkinson-700-latin.woff2'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

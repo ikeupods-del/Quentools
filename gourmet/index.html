@@ -1007,9 +1007,14 @@ function saveAiKey() { const v = document.getElementById('ai-key').value.trim().
 let GM = null;
 const NETERR = 'Connexion impossible : vérifiez internet, désactivez un éventuel bloqueur de pub, et ouvrez ce fichier dans Chrome/Safari (pas dans un aperçu de messagerie).';
 async function gfetch(url, opt) { try { return await fetch(url, opt); } catch (e) { throw new Error(NETERR); } }
+/* La clé Google voyage dans l'en-tête x-goog-api-key (elle n'apparaît ni dans l'adresse, ni dans les journaux, ni dans l'historique). Dernier recours seulement : dans l'adresse. */
+async function gfetchKey(url, key, opt) {
+  try { return await fetch(url, { ...opt, headers: { ...((opt || {}).headers || {}), 'x-goog-api-key': key } }); }
+  catch (e) { return gfetch(url + (url.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(key), opt); }
+}
 async function pickModels(key) {
     if (GM) return GM;
-    const res = await gfetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=100&key=' + encodeURIComponent(key)), d = await res.json();
+    const res = await gfetchKey('https://generativelanguage.googleapis.com/v1beta/models?pageSize=100', key), d = await res.json();
     if (d.error) throw new Error(res.status === 400 || res.status === 403 ? 'Clé refusée par Google (' + d.error.message + '). Vérifiez la clé collée, sans espace.' : d.error.message);
     const ver = n => parseFloat((n.match(/gemini-([\d.]+)/) || [0, 0])[1]);
     const l = (d.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => m.name.replace('models/', '')).filter(n => /^gemini-[\d.]+-flash$/.test(n)).sort((a, b) => ver(b) - ver(a));
@@ -1020,7 +1025,7 @@ async function callGemini(key, sys, user) {
     for (const m of await pickModels(key)) {
         for (const mime of [true, false]) {
             const gc = { temperature: 0.9 }; if (mime) gc.responseMimeType = 'application/json';
-            const res = await gfetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'content-type': 'application/json' },
+            const res = await gfetchKey(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, key, { method: 'POST', headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents: [{ role: 'user', parts: [{ text: user }] }], generationConfig: gc }) });
             const d = await res.json();
             if (!d.error) { const t = ((d.candidates || [])[0]?.content?.parts || []).map(p => p.text || '').join(''); if (t) return t; last = 'Réponse vide (contenu bloqué ?).'; break; }

@@ -19,16 +19,11 @@
     } catch (e) {}
   })();
 </script>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    darkMode: 'class',
-    theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } }
-  };
-</script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tailwind.css?v=3.4.17">
+<link rel="preload" href="../assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+<style>@font-face{font-family:"Inter";src:url("../assets/fonts/inter.woff2") format("woff2-variations");font-weight:100 900;font-display:swap}</style>
 <script src="config.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<script defer src="vendor/alpine-3.14.1.min.js"></script>
 
 <style>
   [x-cloak] { display: none !important; }
@@ -37,17 +32,6 @@
     body { background: #fff !important; }
     .no-print { display: none !important; }
     #quote-card { box-shadow: none !important; border: 0 !important; }
-  }
-</style>
-<!-- Composants (le CDN Tailwind interprète @apply dans text/tailwindcss) -->
-<style type="text/tailwindcss">
-  @layer components {
-    .field { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100; }
-    .lbl { @apply mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400; }
-    .card { @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6; }
-    .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-500/40; }
-    .btn-primary { @apply bg-indigo-600 text-white hover:bg-indigo-500; }
-    .btn-ghost { @apply border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800; }
   }
 </style>
 </head>

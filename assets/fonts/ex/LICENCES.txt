@@ -1,3 +1,5 @@
 Polices des sites d'exemple (exemples/) : toutes sous licence SIL Open Font License 1.1 (https://openfontlicense.org), auto-hébergées.
 Archivo, Bitter, Fraunces, Cormorant, Syne, Nunito, Playfair Display, Figtree, Oswald, DM Sans, DM Serif Display, Caveat, Space Grotesk :
 copyright de leurs auteurs respectifs, distribuées via le projet Fontsource (https://fontsource.org).
+
+Archivo (archivo-wdth-latin*.woff2) — police variable (axes largeur et graisse), licence SIL OFL 1.1, © The Archivo Project Authors, https://github.com/Omnibus-Type/Archivo
