@@ -25,10 +25,10 @@
     const sizes = (a, b, c) => [{ id: 'S', label: '4 à 6 personnes', price: a, load: 1 }, { id: 'M', label: '8 à 10 personnes', price: b, load: 2 }, { id: 'L', label: '12 à 15 personnes', price: c, load: 3 }];
     const products = [
       { id: 'decouverte', name: 'Le Découverte', desc: 'Fruits de saison variés, découpés et dressés à la main : le plateau qui plaît à tout le monde.', type: 'tray', sizes: sizes(39, 69, 99), art: 'saison', tag: 'Le classique', active: true },
-      { id: 'tropical', name: 'Le Tropical', desc: 'Ananas, mangue, kiwi, fruit de la passion et litchi : un voyage, sans quitter la table.', type: 'tray', sizes: sizes(45, 79, 115), art: 'tropical', tag: 'Exotique', active: true },
+      { id: 'tropical', name: 'Le Tropical', desc: 'Mangue, kiwi, agrumes, pomme et baies : un voyage, sans quitter la table.', type: 'tray', sizes: sizes(45, 79, 115), art: 'tropical', tag: 'Exotique', active: true },
       { id: 'gourmand', name: 'Le Gourmand', desc: 'Fruits frais, fraises enrobées de chocolat et brochettes : pour les gourmands.', type: 'tray', sizes: sizes(49, 85, 125), art: 'gourmand', tag: 'Chocolat', active: true },
-      { id: 'vitamine', name: 'Le Vitaminé', desc: 'Agrumes, grenade, baies et raisin : frais, acidulé, coloré.', type: 'tray', sizes: sizes(42, 72, 105), art: 'vitamine', tag: 'Frais', active: true },
-      { id: 'fete', name: 'Le Fête', desc: 'Fruits en brochettes et formes amusantes, pensé pour les anniversaires et les enfants.', type: 'tray', sizes: sizes(44, 76, 110), art: 'fete', tag: 'Anniversaires', active: true },
+      { id: 'vitamine', name: 'Le Vitaminé', desc: 'Poires, baies, grenade et banane : frais, acidulé, coloré.', type: 'tray', sizes: sizes(42, 72, 105), art: 'vitamine', tag: 'Frais', active: true },
+      { id: 'fete', name: 'Le Fête', desc: 'Raisin, poires, oranges sanguines et cerises : un plateau généreux pour les anniversaires et les grandes tablées.', type: 'tray', sizes: sizes(44, 76, 110), art: 'fete', tag: 'Anniversaires', active: true },
       { id: 'mini', name: 'La Mini-box', desc: 'Une barquette individuelle de fruits frais, avec sa fourchette : idéale pour une équipe ou un buffet.', type: 'unit', unitPrice: 6.5, minUnits: 6, loadPerUnit: .25, art: 'mini', tag: 'Individuelle', active: true },
       { id: 'entreprise', name: 'La Corbeille d’entreprise', desc: 'Corbeille de fruits pour réunions, séminaires et accueil : composition et fréquence sur mesure.', type: 'quote', art: 'corbeille', tag: 'Sur devis', active: true }
     ];

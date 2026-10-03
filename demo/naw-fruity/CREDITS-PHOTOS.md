@@ -5,10 +5,10 @@ Photographies placées dans le domaine public (CC0 1.0), sources : Wikimedia Com
 | Fichier | Source (Wikimedia Commons) |
 |---|---|
 | decouverte.jpg | Fruit Platter 1 (Unsplash).jpg |
-| tropical.jpg | Collection of fruits (Unsplash).jpg |
+| tropical.jpg | Fruit Platter 1 (Unsplash).jpg (détail) |
 | gourmand.jpg | Fruits dipped in chocolate (Unsplash).jpg |
-| vitamine.jpg | Pieces of Watermelon (Unsplash).jpg |
-| fete.jpg | Winter Fruit Platter (Unsplash).jpg |
+| vitamine.jpg | Fruit Platter 1 (Unsplash).jpg (détail) |
+| fete.jpg | Winter Fruit Platter (Unsplash).jpg (détail) |
 | mini.jpg | Cup of Berries (Unsplash).jpg |
 | corbeille.jpg | Healthy Fruit (Unsplash).jpg |
 | baies.jpg | Fruit Platter (Unsplash).jpg |
@@ -20,3 +20,4 @@ Photographies placées dans le domaine public (CC0 1.0), sources : Wikimedia Com
 | hero1.jpg | Fruit Platter 1 (Unsplash).jpg |
 | hero2.jpg | Winter Fruit Platter (Unsplash).jpg |
 | hero4.jpg | Fruit Presentation (Unsplash).jpg |
+
