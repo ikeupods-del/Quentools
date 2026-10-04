@@ -8,7 +8,7 @@ Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `in
 - Le nom de la branche par défaut (`claude/…`) est technique ; ne pas en créer de nouvelles mentions ailleurs que dans la configuration de publication.
 
 ## Savoir-faire retenu
-`design/SAVOIR-FAIRE.md` : notes de veille tirées de guides lus (méthode de site à défilement cinématique sans framework, pièges de la génération d'images et de vidéos par IA). Les compléter quand le propriétaire envoie un nouveau cours.
+`design/SAVOIR-FAIRE.md` : notes de veille tirées de guides lus (méthode de site à défilement cinématique sans framework, pièges de la génération d'images et de vidéos par IA). Les compléter quand le propriétaire envoie un nouveau cours. Recettes applicables (suite d'images sur canvas, vidéo pilotée, diaporama « Coffee Drift », règles IA) : `design/CINEMATIQUE.md` ; moteur `assets/qt-scroll.js`, démonstration `demo/cinematique/` (`node tools/verifier-cinematique.js` pour la contrôler).
 
 ## Devis et prix
 Avant tout devis ou question de prix (client, estimation, « combien coûterait… »), lire `design/TARIFS.md` : estimations, grille QuenTools, réponses types. Le mettre à jour si les prix changent.
