@@ -19,6 +19,9 @@ Tout ce qu'il faut pour produire vite un site ou un outil au niveau du site vitr
 | `templates/legal.html` | Mentions légales et confidentialité à compléter. |
 | `templates/merci.html` | Page de confirmation (après un formulaire ou un paiement). |
 
+## Démarrer un client en quelques minutes (outil)
+`node tools/nouveau-client.js --exemple > fiche.json` donne une fiche à remplir (modèle, dossier, nom, métier, ville, accroche, couleur, 3 services, téléphone) ; `node tools/nouveau-client.js fiche.json` crée `clients/<dossier>/` (jamais versionné) avec le système de design, la marque appliquée (contraste du texte blanc contrôlé, mode sombre dérivé), les mentions légales et la page de remerciement, puis liste les champs restant à compléter. Modèles : `node tools/nouveau-client.js --modeles` (vitrine, rendez-vous, restaurant, vente-formation, outil). Reste à la main : photos réelles, textes, avis réels, mentions légales (SIRET, hébergeur), aperçu 390 px / 1440 px en clair et en sombre.
+
 ## Démarrer un projet client
 1. Copier `assets/` (qt.css, qt.js, fonts) et le modèle voulu dans un nouveau dossier ; renommer le modèle en `index.html` et corriger le chemin `../../assets/` en `assets/`.
 2. **Marque du client** : redéfinir 3 jetons dans un `<style>` après qt.css, rien d'autre :

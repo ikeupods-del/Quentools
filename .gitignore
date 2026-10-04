@@ -16,3 +16,6 @@ assets/social/_tmp.html
 
 # Contrats et documents nominatifs : jamais dans le dépôt
 contrats/
+
+# Sites clients en préparation (outil tools/nouveau-client.js) : jamais versionnés
+clients/
