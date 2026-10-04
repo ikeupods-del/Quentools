@@ -9,6 +9,7 @@ Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `in
 
 ## Activité principale (à garder en tête)
 QuenTools est avant tout une **agence de communication digitale et de création de sites web** (indépendants, artisans, commerçants, TPE). Wouf et les outils gratuits sont des réalisations, pas le cœur de l'offre. Lire `design/POSITIONNEMENT.md` (offres et prix publics, repères du marché, règles : jamais l'IA comme moyen de création, pas d'e-book, pas de nom ni de prénom sur le site) avant tout texte, devis ou page. Prix de départ des sites : 299 € (source unique : `assets/qt-templates.js`).
+**Nouveau client : ne rien refaire à la main.** Utiliser `node tools/nouveau-client.js` (fiche JSON → `clients/<dossier>/`, jamais versionné ; mode d'emploi dans `design/README.md`), puis `design/CHECKLIST-CLIENT.md`, `design/business/` (devis, contrat, e-mails types) et `design/TARIFS.md`. Ne lire que ces fichiers, pas tout le dépôt.
 
 ## Savoir-faire retenu
 `design/SAVOIR-FAIRE.md` : notes de veille tirées de guides lus (méthode de site à défilement cinématique sans framework, pièges de la génération d'images et de vidéos par IA). Les compléter quand le propriétaire envoie un nouveau cours. Recettes applicables (suite d'images sur canvas, vidéo pilotée, diaporama « Coffee Drift », règles IA) : `design/CINEMATIQUE.md` ; moteur `assets/qt-scroll.js`, démonstration `demo/cinematique/` (`node tools/verifier-cinematique.js` pour la contrôler).
