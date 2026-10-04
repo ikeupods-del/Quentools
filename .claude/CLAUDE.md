@@ -7,6 +7,9 @@ Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `in
 - Ne pas référencer d'hébergeurs d'aperçu d'IA dans le code : pour masquer une fonction hors du site officiel, utiliser une liste de domaines autorisés.
 - Le nom de la branche par défaut (`claude/…`) est technique ; ne pas en créer de nouvelles mentions ailleurs que dans la configuration de publication.
 
+## Activité principale (à garder en tête)
+QuenTools est avant tout une **agence de communication digitale et de création de sites web** (indépendants, artisans, commerçants, TPE). Wouf et les outils gratuits sont des réalisations, pas le cœur de l'offre. Lire `design/POSITIONNEMENT.md` (offres et prix publics, repères du marché, règles : jamais l'IA comme moyen de création, pas d'e-book, pas de nom ni de prénom sur le site) avant tout texte, devis ou page. Prix de départ des sites : 299 € (source unique : `assets/qt-templates.js`).
+
 ## Savoir-faire retenu
 `design/SAVOIR-FAIRE.md` : notes de veille tirées de guides lus (méthode de site à défilement cinématique sans framework, pièges de la génération d'images et de vidéos par IA). Les compléter quand le propriétaire envoie un nouveau cours. Recettes applicables (suite d'images sur canvas, vidéo pilotée, diaporama « Coffee Drift », règles IA) : `design/CINEMATIQUE.md` ; moteur `assets/qt-scroll.js`, démonstration `demo/cinematique/` (`node tools/verifier-cinematique.js` pour la contrôler).
 
