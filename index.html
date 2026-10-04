@@ -5,8 +5,8 @@
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>QuenTools — Création de sites web et d’outils sur mesure</title>
-<meta name="description" content="Sites vitrines, boutiques Shopify et outils sur mesure pour indépendants et petites entreprises, sur devis gratuit. Applications gratuites sans inscription.">
+<title>QuenTools — Agence de communication digitale</title>
+<meta name="description" content="Agence de communication digitale : sites web, boutiques, contenus pour les réseaux sociaux et outils sur mesure pour indépendants et petites entreprises. Prix fixé avant de commencer.">
 <meta name="theme-color" content="#f6f4ee" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d0c12" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="https://quentools.fr/">
@@ -14,14 +14,14 @@
 <meta property="og:site_name" content="QuenTools">
 <meta property="og:locale" content="fr_FR">
 <meta property="og:url" content="https://quentools.fr/">
-<meta property="og:title" content="QuenTools — Création de sites web et d’outils sur mesure">
-<meta property="og:description" content="Sites vitrines, boutiques Shopify et outils sur mesure pour indépendants et petites entreprises, sur devis gratuit. Applications gratuites sans inscription.">
+<meta property="og:title" content="QuenTools — Agence de communication digitale">
+<meta property="og:description" content="Agence de communication digitale : sites web, boutiques, contenus pour les réseaux sociaux et outils sur mesure pour indépendants et petites entreprises. Prix fixé avant de commencer.">
 <meta property="og:image" content="https://quentools.fr/assets/partage.jpg?v=2">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="QuenTools — Création de sites web et d’outils sur mesure">
-<meta name="twitter:description" content="Sites vitrines, boutiques Shopify et outils sur mesure pour indépendants et petites entreprises, sur devis gratuit. Applications gratuites sans inscription.">
+<meta name="twitter:title" content="QuenTools — Agence de communication digitale">
+<meta name="twitter:description" content="Agence de communication digitale : sites web, boutiques, contenus pour les réseaux sociaux et outils sur mesure pour indépendants et petites entreprises. Prix fixé avant de commencer.">
 <meta property="og:image:alt" content="QuenTools : outils et sites sur mesure">
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -29,13 +29,46 @@
 <link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/qt.css?v=20261001h">
 <style>
-  .showcase{display:grid;grid-template-columns:1.15fr 1fr;gap:var(--s-6);align-items:center;margin-top:var(--s-7,64px);padding:var(--s-5);border-radius:var(--r-xl);background:var(--surface);border:1px solid var(--line)}
-  .showcase img{display:block;width:100%;height:auto;border-radius:var(--r-lg);border:1px solid var(--line)}
-  .showcase h3{font-size:var(--t-xl);margin:var(--s-3) 0}.showcase p{margin:0 0 var(--s-4)}
-  .showcase .acts{display:flex;flex-wrap:wrap;gap:8px}
-  @media (max-width:860px){.showcase{grid-template-columns:1fr}}
+  /* Accueil agence : habillage propre à cette page, sur les jetons du système de design */
+  .hero h1.display{font-size:clamp(2.2rem,4.5vw,3.7rem);line-height:1.04}
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 var(--s-5);padding:0;list-style:none}
+  .tags li{padding:7px 14px;border:1px solid var(--line-2);border-radius:var(--r-pill);font-size:var(--t-sm);color:var(--ink-2);background:var(--surface)}
+  .proof{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin-top:var(--s-7);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:var(--line)}
+  .proof div{background:var(--surface);padding:var(--s-5);display:grid;gap:4px}
+  .proof b{font:700 var(--t-xl)/1 var(--f-display);letter-spacing:-.03em}.proof span{font-size:var(--t-sm);color:var(--muted)}
+  .svc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s-4)}
+  .svc article{position:relative;display:flex;flex-direction:column;gap:var(--s-3);padding:var(--s-6);border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--line);transition:transform var(--d-2) var(--ease),border-color var(--d-2),box-shadow var(--d-2)}
+  .svc article:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:var(--sh-2)}
+  .svc .ico{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+  .svc .ico svg{width:24px;height:24px}
+  .svc h3{font-size:var(--t-lg);margin-top:var(--s-2)}.svc p{margin:0;color:var(--muted);font-size:var(--t-sm)}
+  .svc .go{margin-top:auto;padding-top:var(--s-3);font-weight:600;font-size:var(--t-sm);color:var(--accent);text-decoration:none}
+  .svc .num{position:absolute;right:var(--s-5);top:var(--s-5);font:700 var(--t-sm)/1 var(--f-display);color:var(--line-2)}
+  .work{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s-4)}
+  .work a{display:block;position:relative;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--line);background:var(--surface);text-decoration:none;transition:transform var(--d-2) var(--ease),box-shadow var(--d-2)}
+  .work a:hover{transform:translateY(-4px);box-shadow:var(--sh-2)}
+  .work img{width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top;border-bottom:1px solid var(--line)}
+  .work span{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 18px;font-weight:600;font-size:var(--t-sm)}
+  .work small{color:var(--muted);font-weight:500}
+  .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s-4);counter-reset:s;padding:0;list-style:none;margin:0}
+  .steps li{counter-increment:s;padding:var(--s-5);border-top:2px solid var(--ink);display:grid;gap:var(--s-2)}
+  .steps li::before{content:"0" counter(s);font:700 var(--t-sm)/1 var(--f-display);color:var(--accent)}
+  .steps h3{font-size:var(--t-lg)}.steps p{margin:0;color:var(--muted);font-size:var(--t-sm)}
+  .tarifs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s-4)}
+  .tarifs article{display:flex;flex-direction:column;gap:var(--s-2);padding:var(--s-5);border-radius:var(--r-lg);border:1px solid var(--line);background:var(--surface)}
+  .tarifs article.is-main{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .tarifs h3{font-size:var(--t-md);font-family:var(--f-text);font-weight:600;letter-spacing:0}
+  .tarifs .pr{font:700 var(--t-2xl)/1 var(--f-display);letter-spacing:-.04em;margin:var(--s-2) 0}
+  .tarifs .pr small{font:500 var(--t-sm)/1 var(--f-text);letter-spacing:0;opacity:.7}
+  .tarifs p{margin:0;font-size:var(--t-sm);color:var(--muted)}.tarifs .is-main p{color:color-mix(in srgb,var(--bg) 72%,transparent)}
+  .tarifs a{margin-top:auto;padding-top:var(--s-3);font-weight:600;font-size:var(--t-sm);text-decoration:none;color:var(--accent)}.tarifs .is-main a{color:var(--lime)}
+  .note{margin-top:var(--s-4);font-size:var(--t-sm);color:var(--muted)}
+  .audit-band{display:grid;grid-template-columns:1.1fr 1fr;gap:var(--s-6);align-items:center;padding:clamp(24px,4vw,48px)}
+  .audit-band img{width:100%;height:auto;border-radius:var(--r-md);border:1px solid var(--line-2)}
+  @media (max-width:960px){.svc,.work{grid-template-columns:1fr 1fr}.steps,.tarifs{grid-template-columns:1fr 1fr}.proof{grid-template-columns:1fr 1fr}}
+  @media (max-width:640px){.svc,.work,.steps,.tarifs{grid-template-columns:1fr}.svc article{padding:var(--s-5)}.audit-band{grid-template-columns:1fr}.proof div{padding:var(--s-4)}}
 </style>
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"ProfessionalService","@id":"https://quentools.fr/#organisation","name":"QuenTools","url":"https://quentools.fr/","logo":"https://quentools.fr/assets/apple-touch-icon.png","image":"https://quentools.fr/assets/partage.jpg?v=2","description":"Création de sites vitrines, de boutiques et d’outils sur mesure pour les indépendants et les petites entreprises, et outils gratuits.","areaServed":"FR","knowsLanguage":"fr","serviceType":["Création de site vitrine","Boutique en ligne Shopify","Outil sur mesure"],"sameAs":["https://www.tiktok.com/@quentools"],"email":"contact.quentools@gmail.com"},{"@type":"WebSite","@id":"https://quentools.fr/#site","url":"https://quentools.fr/","name":"QuenTools","inLanguage":"fr-FR","publisher":{"@id":"https://quentools.fr/#organisation"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"ProfessionalService","@id":"https://quentools.fr/#organisation","name":"QuenTools","url":"https://quentools.fr/","logo":"https://quentools.fr/assets/apple-touch-icon.png","image":"https://quentools.fr/assets/partage.jpg?v=2","description":"Agence de communication digitale : sites vitrines, boutiques, contenus pour les réseaux sociaux et outils sur mesure pour les indépendants et les petites entreprises.","areaServed":"FR","knowsLanguage":"fr","serviceType":["Création de site vitrine","Boutique en ligne Shopify","Contenus pour les réseaux sociaux","Outil sur mesure","Audit de sécurité de site web"],"sameAs":["https://www.tiktok.com/@quentools"],"email":"contact.quentools@gmail.com"},{"@type":"WebSite","@id":"https://quentools.fr/#site","url":"https://quentools.fr/","name":"QuenTools","inLanguage":"fr-FR","publisher":{"@id":"https://quentools.fr/#organisation"}}]}</script>
 <script>
   // Anciens liens de Wouf (adresse racine avec « # » ou « ? ») : on les renvoie vers l'app.
   if (/^#\//.test(location.hash) || /[?&](maj|proprio)=/.test(location.search)) location.replace('wouf/' + location.search + location.hash);
@@ -51,6 +84,9 @@
   <symbol id="i-tool" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M8 19h8"/></symbol>
   <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.200" cy="6.800" r="1"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h3l2 11h10l2-8H7"/><circle cx="9" cy="19" r="1.500"/><circle cx="17" cy="19" r="1.500"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.500-3.200 8-8 9-4.800-1-8-4.500-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
 </svg>
 
 <div class="announce" id="qt-announce" hidden></div>
@@ -58,8 +94,9 @@
   <div class="wrap">
     <a class="brand" href="./" aria-label="QuenTools, accueil"><svg class="brand-mark"><use href="#qt-mark"/></svg>QuenTools</a>
     <ul class="nav-links">
-      <li><a href="templates/">Templates</a></li>
-      <li><a href="#sur-mesure">Sur mesure</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#realisations">Réalisations</a></li>
+      <li><a href="#tarifs">Tarifs</a></li>
       <li><a href="outils/">Outils</a></li>
     </ul>
     <span class="nav-actions" style="margin-left:var(--s-2)"><a class="nav-espace" href="espace/" aria-label="Espace client"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>Espace client</span></a><a class="btn btn-sm" href="devis/"><span class="lg">Demander un </span><span class="w">devis</span></a></span>
@@ -71,78 +108,116 @@
     <div class="bg-grid" aria-hidden="true"></div><div class="glow" aria-hidden="true"></div>
     <div class="wrap hero-grid">
       <div>
-        <span class="chip chip-ok reveal" id="qt-avail"><span class="dot"></span> 6 applications en ligne</span>
-        <h1 class="display reveal" style="--i:1">Votre site et vos outils, <em>prêts à servir</em>.</h1>
-        <p class="lede reveal" style="--i:2">Des templates prêts à l’emploi dès 299 €, des outils gratuits, ou un projet entièrement sur mesure. Prix fixé avant de commencer.</p>
-        <p class="muted reveal" style="--i:2;font-size:var(--t-sm);margin:0 0 var(--s-4)">✓ Adresse à votre nom &nbsp;·&nbsp; ✓ Prix fixé avant de commencer &nbsp;·&nbsp; ✓ Assistance offerte 6 mois (templates) &nbsp;·&nbsp; ✓ Sans cookie ni publicité</p>
+        <span class="chip chip-ok reveal" id="qt-avail"><span class="dot"></span> Agence de communication digitale</span>
+        <h1 class="display reveal" style="--i:1">On vous rend <em>visible</em>, on vous rend <em>joignable</em>.</h1>
+        <p class="lede reveal" style="--i:2">Site web, boutique, contenus pour les réseaux sociaux et outils sur mesure&nbsp;: une seule équipe pour toute votre présence en ligne, avec un prix fixé avant de commencer.</p>
+        <ul class="tags reveal" style="--i:2"><li>Site web</li><li>Boutique en ligne</li><li>Réseaux sociaux</li><li>Outils métier</li></ul>
         <div class="hero-cta reveal" style="--i:3">
-          <a class="btn btn-accent" href="templates/">Voir les templates <svg width="18" height="18" class="arrow"><use href="#i-arrow"/></svg></a>
-          <a class="btn btn-ghost" href="audit/">Audit de sécurité · 100 €</a>
+          <a class="btn btn-accent" href="devis/">Demander un devis gratuit <svg width="18" height="18" class="arrow"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-ghost" href="#realisations">Voir nos réalisations</a>
         </div>
       </div>
-      <div class="stack reveal" style="--i:2" aria-label="Aperçus des applications QuenTools">
-        <div class="phone"><img src="assets/ecran-patrimoine.jpg" alt="Patrimoine AI" width="400" height="800"></div>
-        <div class="phone"><img src="assets/ecran-infikit.jpg" alt="Infikit" width="400" height="800"></div>
-        <div class="phone"><img src="assets/ecran-gourmet.jpg" alt="Gourmet AI" width="400" height="800"></div>
+      <div class="stack reveal" style="--i:2" aria-label="Aperçus de réalisations QuenTools">
+        <div class="phone"><img src="assets/ecran-patrimoine.jpg" alt="Application de gestion de patrimoine" width="400" height="800"></div>
+        <div class="phone"><img src="assets/ecran-infikit.jpg" alt="Application pour infirmières" width="400" height="800"></div>
+        <div class="phone"><img src="assets/ecran-gourmet.jpg" alt="Application de recettes et de courses" width="400" height="800"></div>
+      </div>
+    </div>
+    <div class="wrap">
+      <div class="proof reveal">
+        <div><b data-tpl="base"></b><span>Un site prêt à l’emploi, dès</span></div>
+        <div><b>6 mois</b><span>d’assistance offerts</span></div>
+        <div><b>48 h</b><span>pour recevoir votre devis</span></div>
+        <div><b>0 cookie</b><span>ni traceur, ni publicité</span></div>
       </div>
     </div>
   </section>
 
-  <section class="section section-compact">
+  <section class="section" id="services" style="padding-top:clamp(24px,4vw,48px)">
     <div class="wrap">
-      <div class="grid grid-3">
-        <article class="card offer is-featured reveal">
-          <span class="chip chip-lime" style="align-self:flex-start">Dès 299 €</span>
-          <h3>Templates</h3>
-          <p class="muted">Un site prêt à l’emploi, personnalisé à votre marque et mis en ligne.</p>
-          <a class="more" href="templates/">Voir les templates →</a>
-        </article>
-        <article class="card offer reveal" style="--i:1">
-          <span class="chip" style="align-self:flex-start">Sur devis</span>
-          <h3>Sur mesure</h3>
-          <p class="muted">Site, boutique ou outil conçu pour votre métier.</p>
-          <a class="more" href="#sur-mesure">Faire ma demande →</a>
-        </article>
-        <article class="card offer reveal" style="--i:2">
-          <span class="chip" style="align-self:flex-start">Gratuit</span>
-          <h3>Outils</h3>
-          <p class="muted">Applications simples, sans inscription, qui font gagner du temps.</p>
-          <a class="more" href="outils/">Voir les outils →</a>
-        </article>
+      <div class="section-head split">
+        <div><span class="eyebrow reveal">Ce que nous faisons</span><h2 class="h-section reveal" style="--i:1">Toute votre communication, au même endroit.</h2></div>
+        <p class="lede reveal" style="--i:2">Un interlocuteur unique, un style cohérent du site aux publications, et quelqu’un de joignable après la livraison.</p>
+      </div>
+      <div class="svc">
+        <article class="reveal"><span class="num">01</span><span class="ico"><svg><use href="#i-globe"/></svg></span><h3>Sites web</h3><p>Site vitrine adapté au téléphone, rapide, avec formulaire de contact ou de devis, référencement de base et mise en ligne à votre nom.</p><a class="go" href="templates/">Voir les templates →</a></article>
+        <article class="reveal" style="--i:1"><span class="num">02</span><span class="ico"><svg><use href="#i-cart"/></svg></span><h3>Boutiques en ligne</h3><p>Une boutique simple, prête à vendre&nbsp;: fiches produit, paiement, livraison et pages légales en français.</p><a class="go" href="devis/?type=Boutique%20Shopify">Demander un devis →</a></article>
+        <article class="reveal" style="--i:2"><span class="num">03</span><span class="ico"><svg><use href="#i-share"/></svg></span><h3>Réseaux sociaux</h3><p>Visuels et carrousels à votre image, textes clairs, idées de publications&nbsp;: une présence régulière sans y passer vos soirées.</p><a class="go" href="conseils/">Voir des exemples →</a></article>
+        <article class="reveal"><span class="num">04</span><span class="ico"><svg><use href="#i-tool"/></svg></span><h3>Outils sur mesure</h3><p>Calcul de devis, suivi, réservation&nbsp;: un petit outil conçu pour votre métier, qui vous fait gagner du temps chaque semaine.</p><a class="go" href="devis/?type=Outil%20sur%20mesure">Parler de mon besoin →</a></article>
+        <article class="reveal" style="--i:1"><span class="num">05</span><span class="ico"><svg><use href="#i-shield"/></svg></span><h3>Audit de sécurité</h3><p>Un contrôle express de votre site vu de l’extérieur, avec un rapport clair en français et un plan d’action par priorité.</p><a class="go" href="audit/">Découvrir l’audit →</a></article>
+        <article class="reveal" style="--i:2"><span class="num">06</span><span class="ico"><svg><use href="#i-phone"/></svg></span><h3>Outils gratuits</h3><p>Applications simples, sans inscription, pour les infirmières, les freelances, la cuisine ou les propriétaires d’animaux.</p><a class="go" href="outils/">Voir les outils →</a></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="realisations" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head split">
+        <div><span class="eyebrow reveal">Réalisations</span><h2 class="h-section reveal" style="--i:1">Des univers qui ne se ressemblent pas.</h2></div>
+        <p class="lede reveal" style="--i:2">Chaque métier a son style. Voici des démonstrations à visiter&nbsp;: tout y est fictif, signalé comme tel.</p>
+      </div>
+      <div class="work">
+        <a class="reveal" href="demo/maison-blade/"><img src="assets/tpl-barbier-luxe.jpg" alt="Site de barbier de luxe avec réservation" width="1280" height="800" loading="lazy"><span>Barbier de luxe <small>Réservation et boutique</small></span></a>
+        <a class="reveal" style="--i:1" href="demo/naw-fruity/"><img src="assets/tpl-plateaux-fruits.jpg" alt="Site de plateaux de fruits sur commande" width="1280" height="800" loading="lazy"><span>Plateaux et commandes <small>Calendrier et acompte</small></span></a>
+        <a class="reveal" style="--i:2" href="demo/reparateur-mobile/"><img src="assets/tpl-reparateur.jpg" alt="Site de réparateur de téléphones" width="1280" height="800" loading="lazy"><span>Réparateur de téléphones <small>Estimation et suivi</small></span></a>
+        <a class="reveal" href="exemples/restaurant/"><img src="assets/ex-restaurant.jpg" alt="Site vitrine d’un restaurant" width="1280" height="800" loading="lazy"><span>Restaurant <small>Site vitrine</small></span></a>
+        <a class="reveal" style="--i:1" href="exemples/photographe/"><img src="assets/ex-photographe.jpg" alt="Site vitrine d’un photographe" width="1280" height="800" loading="lazy"><span>Photographe <small>Portfolio</small></span></a>
+        <a class="reveal" style="--i:2" href="exemples/fleuriste/"><img src="assets/ex-fleuriste.jpg" alt="Site vitrine d’un fleuriste" width="1280" height="800" loading="lazy"><span>Fleuriste <small>Abonnements</small></span></a>
+      </div>
+      <p class="note reveal"><a href="exemples/">Voir tous les exemples</a> · <a href="realisations/">Études de cas</a></p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head"><span class="eyebrow reveal">Méthode</span><h2 class="h-section reveal" style="--i:1">Simple, rapide, sans surprise.</h2></div>
+      <ol class="steps">
+        <li class="reveal"><h3>On écoute</h3><p>Quelques lignes sur votre activité suffisent. Devis gratuit sous 48 h.</p></li>
+        <li class="reveal" style="--i:1"><h3>On propose</h3><p>Un prix fixé avant de commencer, sans frais cachés.</p></li>
+        <li class="reveal" style="--i:2"><h3>On montre</h3><p>Une première version à valider avant d’aller plus loin.</p></li>
+        <li class="reveal" style="--i:3"><h3>On suit</h3><p>Mise en ligne, notice et assistance offerte pendant 6 mois.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" id="tarifs" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head split">
+        <div><span class="eyebrow reveal">Tarifs</span><h2 class="h-section reveal" style="--i:1">Des prix affichés, ça change tout.</h2></div>
+        <p class="lede reveal" style="--i:2">Le reste (boutique, outil sur mesure, réseaux sociaux) est chiffré sur devis, toujours avant de commencer. TVA non applicable, art. 293 B du CGI.</p>
+      </div>
+      <div class="tarifs">
+        <article class="is-main reveal"><h3>Site prêt à l’emploi</h3><div class="pr"><small>dès </small><span data-tpl="base"></span></div><p>Personnalisé à votre marque, mis en ligne sur votre nom de domaine (offert la première année), 6 mois d’assistance.</p><a href="templates/">Voir les templates →</a></article>
+        <article class="reveal" style="--i:1"><h3>Réservation intégrée</h3><div class="pr"><span data-opt="reservation"></span></div><p>Prise de rendez-vous directement sur votre site. Paiement unique, aucun abonnement.</p><a href="templates/">Ajouter à mon site →</a></article>
+        <article class="reveal" style="--i:2"><h3>Audit de sécurité express</h3><div class="pr">100 €</div><p>Rapport PDF sous 48 h ouvrées, un site, sans rien installer.</p><a href="audit/">Découvrir l’audit →</a></article>
+        <article class="reveal" style="--i:3"><h3>Suivi mensuel</h3><div class="pr"><span data-opt="suivi"></span><small> /mois</small></div><p>Hébergement, sauvegardes, mises à jour et modifications simples, après les 6 mois offerts.</p><a href="devis/">En parler →</a></article>
       </div>
     </div>
   </section>
 
   <section class="section" style="padding-top:0">
     <div class="wrap">
-      <div class="card reveal" style="display:grid;grid-template-columns:1.1fr 1fr;gap:var(--s-6);align-items:center;padding:clamp(24px,4vw,48px)" id="audit-accueil">
+      <div class="card audit-band reveal" id="audit-accueil">
         <div>
-          <span class="chip chip-lime">Nouveau · 100 €</span>
+          <span class="chip chip-lime">100 €</span>
           <h2 style="margin:var(--s-4) 0 var(--s-3)">Votre site est-il bien protégé ?</h2>
-          <p class="muted">Un contrôle de sécurité express de votre site, vu de l’extérieur, avec un rapport clair en français. Seuls les points que je peux réellement vérifier sont contrôlés.</p>
-          <ul class="muted" style="margin:var(--s-4) 0;padding-left:1.1em">
-            <li>Connexion sécurisée et certificat</li>
-            <li>Cookies, traceurs et services externes</li>
-            <li>Formulaires, mentions légales, fichiers exposés par erreur</li>
-            <li>Un plan d’action classé par priorité</li>
-          </ul>
+          <p class="muted">Un contrôle de sécurité express, vu de l’extérieur, avec un rapport clair en français. Seuls les points réellement vérifiables sont contrôlés.</p>
           <div class="hero-cta"><a class="btn btn-accent" href="audit/">Découvrir l’audit <svg width="18" height="18" class="arrow"><use href="#i-arrow"/></svg></a><a class="btn btn-ghost" href="audit/exemple-rapport.pdf">Voir un exemple de rapport</a></div>
-          <p class="muted" style="font-size:var(--t-sm);margin-top:var(--s-3)">Réalisé uniquement avec votre accord écrit. Prix fixe, sans abonnement.</p>
+          <p class="muted" style="font-size:var(--t-sm);margin:var(--s-3) 0 0">Réalisé uniquement avec votre accord écrit. Prix fixe, sans abonnement.</p>
         </div>
-        <img src="assets/audit-rapport-1.jpg" alt="Exemple de page d’un rapport d’audit QuenTools" loading="lazy" style="width:100%;height:auto;border-radius:var(--r-md);border:1px solid var(--line-2)">
+        <img src="assets/audit-rapport-1.jpg" alt="Exemple de page d’un rapport d’audit QuenTools" width="900" height="1200" loading="lazy">
       </div>
     </div>
   </section>
-  <style>@media (max-width:760px){#audit-accueil{grid-template-columns:1fr!important}}</style>
 
   <section class="section" id="sur-mesure" style="padding-top:0">
-    <span id="tarifs"></span>
+    <span id="contact"></span>
     <div class="wrap">
       <div class="cta-band reveal">
         <span class="big-q" aria-hidden="true">Q</span>
-        <span class="eyebrow" style="color:var(--lime)">Sur mesure</span>
-        <h2 style="margin:var(--s-4) 0">Décrivez-moi votre projet.</h2>
-        <p>Quelques lignes suffisent. Devis gratuit et sans engagement, réponse sous 48 h, première version montrée avant la suite.</p>
+        <span class="eyebrow" style="color:var(--lime)">Parlons de votre projet</span>
+        <h2 style="margin:var(--s-4) 0">Décrivez votre activité en quelques lignes.</h2>
+        <p>Devis gratuit et sans engagement, réponse sous 48 h, première version montrée avant la suite.</p>
         <div class="hero-cta" id="contact-actions" style="margin-top:var(--s-6)"></div>
       </div>
     </div>
@@ -154,10 +229,10 @@
     <div class="footer-grid">
       <div>
         <a class="brand" href="./"><svg class="brand-mark"><use href="#qt-mark"/></svg>QuenTools</a>
-        <p style="margin-top:var(--s-4);max-width:34ch">Des outils simples qui font gagner du temps. Gratuits quand c’est possible, sur mesure quand il le faut.</p>
+        <p style="margin-top:var(--s-4);max-width:34ch">Agence de communication digitale : sites, boutiques, réseaux sociaux et outils sur mesure.</p>
       </div>
       <div><h4>Outils</h4><ul><li><a href="infikit/">Infikit</a></li><li><a href="freelance/">Freelance Kit</a></li><li><a href="gourmet/">Gourmet AI</a></li><li><a href="https://ikeupods-del.github.io/patrimoineai/">Patrimoine AI</a></li><li><a href="https://woufapp.fr">Wouf</a></li></ul></div>
-      <div><h4>QuenTools</h4><ul><li><a href="#sur-mesure">Offres et tarifs</a></li><li><a href="realisations/">Réalisations</a></li><li><a href="exemples/">Exemples</a></li><li><a href="creation-site/">Création de site par métier</a></li><li><a href="devis/">Demander un devis</a></li><li><a href="audit/">Audit de sécurité express</a></li><li><a href="conseils/">Conseils</a></li><li><a href="cadeau/">Carte cadeau</a></li><li><a href="espace/">Espace client</a></li><li><a href="https://www.tiktok.com/@quentools" rel="noopener">TikTok</a></li></ul></div>
+      <div><h4>QuenTools</h4><ul><li><a href="#tarifs">Offres et tarifs</a></li><li><a href="realisations/">Réalisations</a></li><li><a href="exemples/">Exemples</a></li><li><a href="creation-site/">Création de site par métier</a></li><li><a href="devis/">Demander un devis</a></li><li><a href="audit/">Audit de sécurité express</a></li><li><a href="conseils/">Conseils</a></li><li><a href="cadeau/">Carte cadeau</a></li><li><a href="espace/">Espace client</a></li><li><a href="https://www.tiktok.com/@quentools" rel="noopener">TikTok</a></li></ul></div>
       <div><h4>Légal</h4><ul><li><a href="mentions-legales/" rel="nofollow">Mentions légales et confidentialité</a></li></ul></div>
     </div>
     <div class="footer-bottom">
@@ -170,6 +245,7 @@
 <script src="assets/qt.js?v=20261001h" defer></script>
 <script src="assets/assistant-qt.js?v=2" defer></script>
 <script src="assets/assistant.js?v=2" defer data-nom="QuenTools" data-api="" data-lead="0"></script>
+<script src="assets/qt-templates.js"></script>
 <script src="assets/qt-config.js"></script>
 <script src="assets/qt-cloud.js"></script>
 <script>
@@ -178,11 +254,18 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const safe = u => /^(https:\/\/|mailto:|\.{0,2}\/|#|[a-z0-9-]+\/)/i.test(u || '') ? u : '';
   function contacts(C) {
-    const btns = ['<a class="btn btn-lime" href="devis/">Remplir le formulaire</a>'];
+    const btns = ['<a class="btn btn-lime" href="devis/">Demander un devis</a>'];
     if (C.email) btns.push(`<a class="btn btn-ghost" href="mailto:${esc(C.email)}?subject=${encodeURIComponent('Projet QuenTools')}">M’écrire</a>`);
     if (C.tiktok) btns.push(`<a class="btn btn-ghost" href="https://www.tiktok.com/@${encodeURIComponent(C.tiktok)}" rel="noopener">Suivre et écrire sur TikTok</a>`);
     document.getElementById('contact-actions').innerHTML = btns.join('');
   }
+  // Prix lus dans le catalogue partagé (assets/qt-templates.js) : une seule source avec /devis/ et /templates/.
+  (function () {
+    const T = window.QTT; if (!T) return;
+    const base = Math.min.apply(null, T.templates.map(t => t.base));
+    document.querySelectorAll('[data-tpl="base"]').forEach(e => { e.textContent = T.fmt(base); });
+    document.querySelectorAll('[data-opt]').forEach(e => { const o = T.options.find(x => x.id === e.dataset.opt); if (o) e.textContent = T.fmt(o.price); });
+  })();
   contacts(window.QT || {});
   if (window.QTC) QTC.config().then(C => {
     contacts(C); const s = C.site || {};
