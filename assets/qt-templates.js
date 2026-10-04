@@ -18,6 +18,7 @@
     { id: 'bdd', name: 'Réservations et comptes réellement enregistrés', hint: 'Base de données : les demandes, comptes et commandes sont conservés (les démonstrations ne gardent rien).', price: 249.99, for: app },
     { id: 'paiement', name: 'Paiement en ligne réel (PayPal ou Stripe)', hint: 'Le client paie vraiment ; les démonstrations simulent le paiement.', price: 99.99, for: app },
     { id: 'emails', name: 'E-mails de confirmation et de rappel réellement envoyés', hint: 'Confirmation de rendez-vous ou de commande, rappels.', price: 150, for: app },
+    { id: 'reservation', name: 'Système de réservation intégré', hint: 'Réservation intégrée : prise de rendez-vous et réservation d’appels directement sur ton site. 99 €, paiement unique, zéro abonnement.', price: 99, for: null },
     { id: 'pages', name: 'Pages supplémentaires', hint: 'Au-delà de celles du modèle.', price: 50, qty: true, for: ['vitrines'] },
     { id: 'textes', name: 'Rédaction des textes', hint: 'Je rédige les textes à partir de vos informations.', price: 80, for: null },
     { id: 'priseenmain', name: 'Prise en main (1 h en visio)', hint: 'Pour apprendre à modifier vos textes, prix et horaires.', price: 40, for: null },

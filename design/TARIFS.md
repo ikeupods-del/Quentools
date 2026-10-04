@@ -37,6 +37,7 @@ Le catalogue (templates et options) est dans `assets/qt-templates.js` ; le formu
 | Réservations et comptes réellement enregistrés (base de données) | 249,99 € |
 | Paiement en ligne réel (PayPal ou Stripe) | 99,99 € |
 | E-mails de confirmation et de rappel réellement envoyés | 150 € |
+| Système de réservation intégré (paiement unique, sans abonnement) | 99 € |
 | Page supplémentaire (sites vitrines) | 50 € l'unité |
 | Rédaction des textes | 80 € |
 | Prise en main (1 h en visio) | 40 € |
