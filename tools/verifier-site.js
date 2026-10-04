@@ -15,7 +15,7 @@ if (!/Sitemap: https:\/\/quentools\.fr\/sitemap\.xml/.test(lire('robots.txt'))) 
 // Prix des options : la page templates est écrite à la main, elle doit rester alignée sur le catalogue (assets/qt-templates.js) ; pas d'option en double.
 { const w = {}; new Function('window', lire('assets/qt-templates.js'))(w); const T = w.QTT, page = lire('templates/index.html').replace(/\u00a0|\u202f/g, ' ');
   const noms = T.options.map(o => o.name.toLowerCase()); if (new Set(noms).size !== noms.length) ko('assets/qt-templates.js', 'option en double');
-  for (const o of T.options) if (o.price && ['bdd', 'paiement', 'emails', 'reservation', 'suivi'].includes(o.id) && !page.includes(T.fmt(o.price).replace(/ €$/, ' €'))) ko('templates/index.html', `prix de l’option « ${o.name} » (${T.fmt(o.price)}) absent ou différent du catalogue`);
+  for (const o of T.options) if (o.price && !page.includes(T.fmt(o.price).replace(/ €$/, ' €'))) ko('templates/index.html', `prix de l’option « ${o.name} » (${T.fmt(o.price)}) absent ou différent du catalogue`);
   for (const t of T.templates) if (!fs.existsSync(path.join(root, t.demo))) ko('assets/qt-templates.js', `démonstration introuvable : ${t.demo}`); }
 const pages = new Set([...plan.map(p => p + 'index.html'), 'index.html', 'devis/index.html', 'realisations/index.html', 'exemples/index.html']);
 for (const p of pages) {

@@ -20,9 +20,12 @@
     { id: 'paiement', name: 'Paiement en ligne réel (PayPal ou Stripe)', hint: 'Le client paie vraiment ; les démonstrations simulent le paiement.', price: 99.99, for: app },
     { id: 'emails', name: 'E-mails de confirmation et de rappel réellement envoyés', hint: 'Confirmation de rendez-vous ou de commande, rappels.', price: 150, for: app },
     { id: 'reservation', name: 'Système de réservation intégré', hint: 'Pour les sites vitrines : prise de rendez-vous et réservation d’appels directement sur votre site. Paiement unique, aucun abonnement. (Les templates à réservation incluent déjà la réservation : voir « Réservations et comptes réellement enregistrés ».)', price: 99, for: ['vitrines'] },
+    { id: 'seo', name: 'Référencement local de base', hint: 'Titres et descriptions travaillés, données structurées (entreprise, horaires, zone), plan du site, adresse canonique et liens internes, pour être mieux trouvé sur Google dans votre ville.', price: 90, for: null },
+    { id: 'social', name: 'Pack de 5 visuels pour les réseaux sociaux', hint: 'Un carrousel de 5 visuels à votre image (situation, constat, solution, téléphone, question) avec la légende, prêt à publier.', price: 90, for: null },
+    { id: 'logo', name: 'Logo simple et couleurs', hint: 'Un logo typographique (fichiers SVG et PNG) et trois couleurs de marque appliquées au site, si vous n’avez pas encore de logo.', price: 60, for: null },
+    { id: 'anglais', name: 'Version en anglais', hint: 'Une seconde langue du site, avec bouton de changement de langue, traduction de vos textes.', price: 120, for: null },
     { id: 'pages', name: 'Pages supplémentaires', hint: 'Au-delà de celles du modèle.', price: 50, qty: true, for: ['vitrines'] },
     { id: 'textes', name: 'Rédaction des textes', hint: 'Je rédige les textes à partir de vos informations.', price: 80, for: null },
-    { id: 'priseenmain', name: 'Prise en main (1 h en visio)', hint: 'Pour apprendre à modifier vos textes, prix et horaires.', price: 40, for: null },
     { id: 'modifs', name: 'Modifications importantes ou nouvelle fonction', hint: 'Au-delà de la série de retouches comprise.', price: 150, qty: true, for: null },
     { id: 'suivi', name: 'Suivi mensuel après les 6 mois offerts', hint: 'Hébergement, sauvegardes, mises à jour et modifications simples.', price: 69.99, monthly: true, for: null }
   ];

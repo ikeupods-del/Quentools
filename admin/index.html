@@ -377,8 +377,8 @@ const SELLER_DEF = { marque: 'QuenTools', titulaire: 'Quentin Storace EI', adres
 const seller = () => ({ ...SELLER_DEF, ...(notes._vendeur || {}) });
 /* Préréglages de prestations (prix indicatifs, dans la grille QuenTools : à adapter). [désignation, prix, mensuel] */
 const CAT_BASE = [['Site vitrine (jusqu’à 5 pages)', 300], ['Page supplémentaire', 50], ['Boutique Shopify : configuration et mise en ligne', 200], ['Outil sur mesure', 1500], ['Audit de sécurité express (1 site, rapport PDF sous 48 h)', 100],
-  ['Paiement en ligne et administration', 800], ['Rédaction des textes', 80], ['Nom de domaine (1 an)', 12], ['Prise en main (1 h en visio)', 40],
-  ['Maintenance mensuelle : hébergement, sauvegardes, petites modifications', 25, true]];
+  ['Paiement en ligne et administration', 800], ['Rédaction des textes', 80], ['Nom de domaine (1 an)', 12], ['Référencement local de base', 90], ['Pack de 5 visuels pour les réseaux sociaux', 90], ['Logo simple et couleurs', 60], ['Version en anglais', 120],
+  ['Maintenance mensuelle : hébergement, sauvegardes, petites modifications', 69.99, true]];
 const catCustom = () => { try { const c = JSON.parse((notes._catalogue || {}).items || '[]'); return Array.isArray(c) ? c.filter(x => x && x[0]) : []; } catch (e) { return []; } };
 async function catSave(list) { notes._catalogue = { items: JSON.stringify(list) }; if (DEMO) return; const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_catalogue'), notes._catalogue); }
 let dv = null;
