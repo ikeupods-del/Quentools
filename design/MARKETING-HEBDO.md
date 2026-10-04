@@ -38,3 +38,4 @@ Rendez-vous chaque dimanche. Objectif : savoir ce qui marche, corriger ce qui ne
 
 ## Journal
 - 2026-10-03 : base en place. Site : titres, descriptions, canonical et `og:*` présents sur les pages principales ; JSON-LD seulement sur l'accueil. 22 carrousels programmés du 4 au 25 octobre. À faire : Facebook à relier à Metricool, Search Console, fiche Google Business, lien conseils en bio.
+- 2026-10-04 : 1re mise au point. Réseaux : un seul carrousel publié, métriques à zéro (compte neuf, trop tôt pour comparer ; hashtags inchangés). Prospection : voir `SUIVI-PROSPECTION.md` (1 STOP, environ 15 % de rebonds sur le lot du soir). SEO : données structurées « Service » ajoutées à la page audit. Planning : une publication par jour jusqu'au 27 octobre. À faire : Facebook à relier, Search Console, mentions légales/Google Business en cours.

@@ -19,3 +19,11 @@ Modèle : « une question sur votre site » (présentation, retour gratuit sur l
 | Date | Entreprise | Métier | Ville | Contact | Statut |
 |---|---|---|---|---|---|
 | 2026-10-03 | Onayah (Garde Toutous et Compagnie) | Pet-sitter | Arles | contact@onayah.fr, page Facebook Charlenegardedanimaux | brouillon Gmail prêt (mentions légales non trouvées par le propriétaire, à confirmer avant envoi) |
+
+## Bilan du dimanche 4 octobre
+
+- Envois du 3 octobre : 49 (matin) + 9 (après-midi) + environ 38 (soir, lot de recherche automatique, au-delà de la limite de 10 par jour).
+- Réponses humaines : 1 « STOP » (MS Menuiserie) : ne plus écrire. Aucune demande de devis.
+- Rebonds ou blocages : Ardesign, Novadia Énergie, Little Worker (adresses inexistantes), Mallet / Charantelec, Habitat Référence (blocage serveur), Addor (boîte pleine), Cauret Stive Peinture (retard de livraison). Ne pas relancer ces adresses.
+- Deux filtres anti-spam demandent une validation de l'expéditeur (Sarl Simon, Erige) : non traités.
+- Décision : plus aucun nouvel envoi de masse tant que la liste n'est pas vérifiée ; maximum 10 par jour ensuite.
