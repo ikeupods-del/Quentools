@@ -7,6 +7,9 @@ Dépôt de plusieurs petites apps web statiques publiées sur GitHub Pages : `in
 - Ne pas référencer d'hébergeurs d'aperçu d'IA dans le code : pour masquer une fonction hors du site officiel, utiliser une liste de domaines autorisés.
 - Le nom de la branche par défaut (`claude/…`) est technique ; ne pas en créer de nouvelles mentions ailleurs que dans la configuration de publication.
 
+## Savoir-faire retenu
+`design/SAVOIR-FAIRE.md` : notes de veille tirées de guides lus (méthode de site à défilement cinématique sans framework, pièges de la génération d'images et de vidéos par IA). Les compléter quand le propriétaire envoie un nouveau cours.
+
 ## Devis et prix
 Avant tout devis ou question de prix (client, estimation, « combien coûterait… »), lire `design/TARIFS.md` : estimations, grille QuenTools, réponses types. Le mettre à jour si les prix changent.
 
