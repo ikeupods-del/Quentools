@@ -200,7 +200,7 @@ const stLabel = k => (STATUS.find(s => s[0] === k) || STATUS[0])[1];
 const GRID = {
   'Site vitrine': [200, 400], 'Boutique Shopify': [150, 260], 'Outil sur mesure': [1000, 3000], 'Audit express': [100, 100]
 };
-const EXTRA_PAY = [500, 1500], MAINT = [15, 50];
+const EXTRA_PAY = [500, 1500], MAINT = 69.99;
 const LEVEL = { simple: [0, .4], standard: [.3, .7], avance: [.6, 1] };
 
 /* ---------- Données : Firestore (ou démonstration locale) ---------- */
@@ -416,7 +416,7 @@ function dvInit() {
   const type = g('e-type') ? g('e-type').value : (x && GRID[x.type] ? x.type : 'Site vitrine'), gm = GRID[type] || GRID['Site vitrine'];
   const lvl = g('e-lvl') ? g('e-lvl').selectedOptions[0].textContent.split(' (')[0].toLowerCase() : 'standard';
   dv = from({ lignes: [{ l: `${type} (${lvl}) : conception, réalisation et mise en ligne`, q: 1, pu: estMid || Math.round((gm[0] + gm[1]) / 100) * 50 }], acompte: 30, validite: 30,
-    notes: g('e-maint') && g('e-maint').checked ? `Maintenance facultative : ${eur(MAINT[0])} à ${eur(MAINT[1])} par mois (hébergement, sauvegardes, petites modifications).` : '',
+    notes: g('e-maint') && g('e-maint').checked ? `Maintenance facultative : ${eur2(MAINT)} par mois (hébergement, sauvegardes, petites modifications).` : '',
     client: { nom: x ? x.nom : '', email: x ? x.email : '' } });
 }
 function dvDirty() {
@@ -1005,7 +1005,7 @@ function viewEstimate() {
       <div class="form-grid"><div class="field"><label for="e-type">Type de projet</label><select id="e-type">${Object.keys(GRID).map(k => opt(k, k, k === type)).join('')}</select></div>
         <div class="field"><label for="e-lvl">Ampleur</label><select id="e-lvl">${opt('simple', 'Simple (peu de pages ou d’écrans)')}${opt('standard', 'Standard', true)}${opt('avance', 'Avancée (beaucoup de fonctions)')}</select></div></div>
       <label class="check"><input type="checkbox" id="e-pay"> <span>Paiements en ligne et administration (+ ${eur(EXTRA_PAY[0])} à ${eur(EXTRA_PAY[1])})</span></label>
-      <label class="check"><input type="checkbox" id="e-maint"> <span>Maintenance mensuelle (${eur(MAINT[0])} à ${eur(MAINT[1])} par mois)</span></label>
+      <label class="check"><input type="checkbox" id="e-maint"> <span>Maintenance mensuelle (${eur2(MAINT)} par mois)</span></label>
     </form>
     <p class="muted" style="margin:var(--s-5) 0 0">Prix conseillé</p><div class="est-out" id="e-out"></div><p class="muted" id="e-sub" style="margin-top:0"></p>
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="est-apply">Mettre ce prix dans le devis</button>${x ? '<button class="btn btn-ghost" data-do="est-reply">Envoyer cette proposition par e-mail</button><button class="btn btn-ghost" data-do="est-save">Noter ce montant</button>' : ''}<button class="btn btn-ghost" data-do="est-copy">Copier le texte</button></div>
@@ -1022,9 +1022,9 @@ function estimate() {
   estMid = r50((min + max) / 2);
   g('e-out').textContent = `${eur(min)} – ${eur(max)}`;
   const m = g('e-maint').checked;
-  g('e-sub').textContent = `Proposition équilibrée : ${eur(estMid)}${m ? ` + maintenance ${eur(MAINT[0])} à ${eur(MAINT[1])}/mois` : ''}`;
+  g('e-sub').textContent = `Proposition équilibrée : ${eur(estMid)}${m ? ` + maintenance ${eur2(MAINT)}/mois` : ''}`;
   const x = estFor && items.find(i => i.id === estFor), first = x ? String(x.nom).split(' ')[0] : '';
-  estText = `Bonjour${first ? ' ' + first : ''},\n\nMerci pour votre demande. D’après ce que vous m’avez décrit (${g('e-type').value.toLowerCase()}${g('e-pay').checked ? ', avec paiement en ligne et administration' : ''}), je vous propose une réalisation entre ${eur(min)} et ${eur(max)}, le prix exact étant fixé ensemble avant de commencer.${m ? `\nEn option, une maintenance (mises à jour, sauvegardes, petites évolutions) entre ${eur(MAINT[0])} et ${eur(MAINT[1])} par mois.` : ''}\n\nPour la suite : un court échange pour préciser le besoin, puis une première version à valider avant la suite.\n\nBien à vous,\nQuenTools`;
+  estText = `Bonjour${first ? ' ' + first : ''},\n\nMerci pour votre demande. D’après ce que vous m’avez décrit (${g('e-type').value.toLowerCase()}${g('e-pay').checked ? ', avec paiement en ligne et administration' : ''}), je vous propose une réalisation entre ${eur(min)} et ${eur(max)}, le prix exact étant fixé ensemble avant de commencer.${m ? `\nEn option, une maintenance (mises à jour, sauvegardes, petites évolutions) de ${eur2(MAINT)} par mois.` : ''}\n\nPour la suite : un court échange pour préciser le besoin, puis une première version à valider avant la suite.\n\nBien à vous,\nQuenTools`;
 }
 
 function viewStats() {
