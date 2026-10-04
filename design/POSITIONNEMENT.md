@@ -9,7 +9,7 @@
 | Site prêt à l'emploi (template personnalisé) | dès 299 € (6 mois d'assistance offerts, domaine offert la 1re année) |
 | Système de réservation intégré | 99 € (paiement unique) |
 | Audit de sécurité express | 100 € |
-| Suivi mensuel après les 6 mois offerts | 19,99 €/mois |
+| Suivi mensuel après les 6 mois offerts | 69,99 €/mois |
 | Boutique Shopify, site vitrine sur mesure, outil sur mesure, contenus réseaux sociaux | sur devis |
 
 Source des prix : `assets/qt-templates.js` (catalogue partagé accueil, devis, templates, admin) et `design/TARIFS.md`. Les réseaux sociaux (carrousels, visuels, publications) existent déjà dans le dépôt (`tools/carrousels.js`, `conseils/`), mais sans tarif défini : à fixer avec le propriétaire avant de l'afficher.

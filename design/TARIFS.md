@@ -18,12 +18,12 @@ Voir `design/OFFRES.md` (formules du site et services Fiverr, validées par le p
 
 | Offre | Départ | Mensuel | Contenu |
 |---|---|---|---|
-| Essentiel | 200 € | 15 € | 1 page, contact, mise en ligne |
-| Pro | 400 € | 25 € | 4-5 pages, formulaire de devis, 1 modification par mois |
-| Boutique Shopify | 250 € | 20 € | jusqu'à 20 produits, pages légales, paiement (abonnement Shopify à la charge du client) |
-| **Template prêt à l'emploi** | **dès 299 €** | 6 premiers mois offerts, ensuite optionnel (grille Essentiel/Pro) | template personnalisé (nom, couleurs, textes, photos, prix) + mise en ligne sur nom de domaine **offert (1re année)** + **assistance et maintenance offertes 6 mois** + une série de retouches ; fonctions réelles (base de données, paiement, e-mails) en option sur devis |
+| Essentiel | 200 € | 69,99 € | 1 page, contact, mise en ligne |
+| Pro | 400 € | 69,99 € | 4-5 pages, formulaire de devis, 1 modification par mois |
+| Boutique Shopify | 250 € | 69,99 € | jusqu'à 20 produits, pages légales, paiement (abonnement Shopify à la charge du client) |
+| **Template prêt à l'emploi** | **dès 299 €** | 6 premiers mois offerts, ensuite suivi optionnel à 69,99 €/mois | template personnalisé (nom, couleurs, textes, photos, prix) + mise en ligne sur nom de domaine **offert (1re année)** + **assistance et maintenance offertes 6 mois** + une série de retouches ; fonctions réelles (base de données, paiement, e-mails) en option sur devis |
 | **Audit de sécurité express** | **100 €** (prix de lancement) | — | contrôle automatisé des points visibles de l'extérieur (page `audit/`, outil `tools/audit-express.js`), rapport PDF sous 48 h ; corrections sur devis ; voir `design/AUDIT-EXPRESS.md` |
-| Outil sur mesure | dès 1 000 € | 30-50 € | calcul de devis, suivi, réservation |
+| Outil sur mesure | dès 1 000 € | 69,99 € | calcul de devis, suivi, réservation |
 | + Paiements et administration | +500-1 500 € | | PayPal et/ou Stripe, relais Cloudflare |
 | **Assistant de site** (option d'un site) | **249,99 €** (à valider) | 9,99 € (facultatif, couvre l'usage de l'IA au-delà du plafond) | bulle de discussion réglée sur la fiche du client (horaires, prestations, tarifs), recueil prénom + téléphone + demande par e-mail, réglages 1 mois ; ne confirme jamais un rendez-vous ; démonstration `demo/assistant-ia/`, mise en service et précautions : `design/assistant-ia/README.md` |
 
@@ -42,7 +42,7 @@ Le catalogue (templates et options) est dans `assets/qt-templates.js` ; le formu
 | Rédaction des textes | 80 € |
 | Prise en main (1 h en visio) | 40 € |
 | Modification importante ou nouvelle fonction | 150 € l'unité |
-| Suivi mensuel après les 6 mois offerts | 19,99 € / mois |
+| Suivi mensuel après les 6 mois offerts | 69,99 € / mois |
 
 Pour changer ces montants : `price` de chaque option dans `assets/qt-templates.js` (source unique : formulaire public, page templates à mettre à jour à la main, administration).
 
