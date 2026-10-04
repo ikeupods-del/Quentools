@@ -31,6 +31,11 @@
 <style>
   /* Accueil agence : habillage propre à cette page, sur les jetons du système de design */
   .hero h1.display{font-size:clamp(2.2rem,4.5vw,3.7rem);line-height:1.04}
+  .top-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-3)}
+  .price-badge{display:inline-flex;align-items:center;gap:10px;padding:6px 8px 6px 14px;border-radius:var(--r-pill);background:var(--lime);color:#121019;text-decoration:none;font-size:var(--t-sm);font-weight:600;box-shadow:0 6px 20px -8px color-mix(in srgb,var(--lime) 90%,transparent);transition:transform var(--d-2) var(--ease)}
+  .price-badge:hover{transform:translateY(-2px)}
+  .price-badge b{font:800 1.1rem/1 var(--f-display);letter-spacing:-.02em;background:#121019;color:var(--lime);padding:8px 14px;border-radius:var(--r-pill)}
+  .price-badge svg{display:none}
   .tags{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 var(--s-5);padding:0;list-style:none}
   .tags li{padding:7px 14px;border:1px solid var(--line-2);border-radius:var(--r-pill);font-size:var(--t-sm);color:var(--ink-2);background:var(--surface)}
   .proof{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin-top:var(--s-7);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:var(--line)}
@@ -108,13 +113,13 @@
     <div class="bg-grid" aria-hidden="true"></div><div class="glow" aria-hidden="true"></div>
     <div class="wrap hero-grid">
       <div>
-        <span class="chip chip-ok reveal" id="qt-avail"><span class="dot"></span> Agence de communication digitale</span>
+        <div class="top-row reveal"><span class="chip chip-ok" id="qt-avail"><span class="dot"></span> Agence de communication digitale</span><a class="price-badge" href="templates/"><span>Site web clé en main</span><b>dès <span data-tpl="base"></span></b><svg width="16" height="16" aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
         <h1 class="display reveal" style="--i:1">On vous rend <em>visible</em>, on vous rend <em>joignable</em>.</h1>
         <p class="lede reveal" style="--i:2">Site web, boutique, contenus pour les réseaux sociaux et outils sur mesure&nbsp;: une seule équipe pour toute votre présence en ligne, avec un prix fixé avant de commencer.</p>
         <ul class="tags reveal" style="--i:2"><li>Site web</li><li>Boutique en ligne</li><li>Réseaux sociaux</li><li>Outils métier</li></ul>
         <div class="hero-cta reveal" style="--i:3">
-          <a class="btn btn-accent" href="devis/">Demander un devis gratuit <svg width="18" height="18" class="arrow"><use href="#i-arrow"/></svg></a>
-          <a class="btn btn-ghost" href="#realisations">Voir nos réalisations</a>
+          <a class="btn btn-accent" href="templates/"><span>Mon site dès <span data-tpl="base"></span></span> <svg width="18" height="18" class="arrow"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-ghost" href="devis/">Devis gratuit</a>
         </div>
       </div>
       <div class="stack reveal" style="--i:2" aria-label="Aperçus de réalisations QuenTools">
@@ -273,7 +278,7 @@
       const a = document.getElementById('qt-announce'), u = safe(s.announceUrl);
       a.innerHTML = `<div class="wrap">${u ? `<a href="${esc(u)}">${esc(s.announce)} →</a>` : esc(s.announce)}</div>`; a.hidden = false;
     }
-    if (s.availText) { const c = document.getElementById('qt-avail'); c.className = 'chip reveal is-in ' + (s.available === false ? 'chip-accent' : 'chip-ok'); c.innerHTML = '<span class="dot"></span> ' + esc(s.availText); }
+    if (s.availText) { const c = document.getElementById('qt-avail'); c.className = 'chip ' + (s.available === false ? 'chip-accent' : 'chip-ok'); c.innerHTML = '<span class="dot"></span> ' + esc(s.availText); }
   });
 </script>
 
