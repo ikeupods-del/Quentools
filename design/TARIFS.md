@@ -34,15 +34,17 @@ Le catalogue (templates et options) est dans `assets/qt-templates.js` ; le formu
 
 | Option | Prix de départ |
 |---|---|
-| Réservations et comptes réellement enregistrés (base de données) | 249,99 € |
+| Réservations et comptes réellement enregistrés (base de données) : templates à réservation ou à commande | 249,99 € |
 | Paiement en ligne réel (PayPal ou Stripe) | 99,99 € |
 | E-mails de confirmation et de rappel réellement envoyés | 150 € |
-| Système de réservation intégré (paiement unique, sans abonnement) | 99 € |
+| Système de réservation intégré : sites vitrines uniquement (paiement unique, sans abonnement) | 99 € |
 | Page supplémentaire (sites vitrines) | 50 € l'unité |
 | Rédaction des textes | 80 € |
 | Prise en main (1 h en visio) | 40 € |
 | Modification importante ou nouvelle fonction | 150 € l'unité |
 | Suivi mensuel après les 6 mois offerts | 69,99 € / mois |
+
+Pas de doublon : les templates à réservation (barbier, institut, réparateur, plateaux) n'ont pas l'option « Système de réservation intégré » (déjà dans le template) ; elle ne concerne que les sites vitrines. `node tools/verifier-site.js` contrôle que la page `templates/` reprend les prix du catalogue.
 
 Pour changer ces montants : `price` de chaque option dans `assets/qt-templates.js` (source unique : formulaire public, page templates à mettre à jour à la main, administration).
 
