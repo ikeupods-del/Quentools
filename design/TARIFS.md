@@ -40,6 +40,7 @@ Le catalogue (templates et options) est dans `assets/qt-templates.js` ; le formu
 | Système de réservation intégré : sites vitrines uniquement (paiement unique, sans abonnement) | 99 € |
 | Page supplémentaire (sites vitrines) | 50 € l'unité |
 | Rédaction des textes | 80 € |
+| Prise en main (1 h en visio) | 50 € |
 | Référencement local de base | 90 € |
 | Pack de 5 visuels pour les réseaux sociaux | 90 € |
 | Logo simple et couleurs | 60 € |

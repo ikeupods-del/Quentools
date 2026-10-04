@@ -39,6 +39,7 @@ Fiche Google Business et avis ; référencement local ; logo et charte simple ; 
 | Pack de 5 visuels réseaux sociaux | Carrousel 5 visuels + légende | Photos et textes de son activité | `tools/carrousels.js`, `tools/carrousels.json` |
 | Logo simple et couleurs | Logo typographique SVG/PNG, trois couleurs appliquées | Nom et couleurs préférées | `tools/nouveau-client.js` (couleurs) |
 | Version en anglais | Seconde version et bouton de langue | Rien, il valide la traduction | — |
+| Prise en main (1 h en visio) | Rien : préparer la notice et un plan de séance ; la visio est faite par le propriétaire | Un créneau | `design/CHECKLIST-CLIENT.md` |
 | Pages, textes, modifications, suivi mensuel | Direct, sur le site hébergé | Ses demandes | `tools/nouveau-client.js`, `design/CHECKLIST-CLIENT.md` |
 
-Limites à dire au client : aucun accès à son compte Google (fiche Google Business, Search Console) n'est possible sans lui ; la prise en main en visio a été retirée du catalogue (elle ne peut pas être faite sans intervention humaine). La notice d'utilisation reste comprise dans le prix de départ.
+Limites à dire au client : aucun accès à son compte Google (fiche Google Business, Search Console) n'est possible sans lui ; la prise en main en visio (50 €) est faite par le propriétaire en personne, pas par l'assistant : prévoir un créneau avec le client. La notice d'utilisation reste comprise dans le prix de départ.

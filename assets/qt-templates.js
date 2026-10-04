@@ -25,6 +25,7 @@
     { id: 'logo', name: 'Logo simple et couleurs', hint: 'Un logo typographique (fichiers SVG et PNG) et trois couleurs de marque appliquées au site, si vous n’avez pas encore de logo.', price: 60, for: null },
     { id: 'anglais', name: 'Version en anglais', hint: 'Une seconde langue du site, avec bouton de changement de langue, traduction de vos textes.', price: 120, for: null },
     { id: 'pages', name: 'Pages supplémentaires', hint: 'Au-delà de celles du modèle.', price: 50, qty: true, for: ['vitrines'] },
+    { id: 'priseenmain', name: 'Prise en main (1 h en visio)', hint: 'Une heure en visio pour apprendre à modifier vos textes, prix et horaires.', price: 50, for: null },
     { id: 'textes', name: 'Rédaction des textes', hint: 'Je rédige les textes à partir de vos informations.', price: 80, for: null },
     { id: 'modifs', name: 'Modifications importantes ou nouvelle fonction', hint: 'Au-delà de la série de retouches comprise.', price: 150, qty: true, for: null },
     { id: 'suivi', name: 'Suivi mensuel après les 6 mois offerts', hint: 'Hébergement, sauvegardes, mises à jour et modifications simples.', price: 69.99, monthly: true, for: null }
