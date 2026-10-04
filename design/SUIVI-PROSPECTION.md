@@ -1,6 +1,6 @@
 # Suivi de la prospection par e-mail
 
-Modèle : « une question sur votre site » (présentation, retour gratuit sur le site, SIRET, mention STOP). Une relance unique 4 jours plus tard, dans le même fil. Adresses trouvées par recherche sur le web (fiches professionnelles publiques) : suivre les rebonds.
+Modèle d'origine : « une question sur votre site » (présentation, retour gratuit sur le site, SIRET, mention STOP). Nouveau modèle, orienté communication et visibilité : `MAILING.md`. Une relance unique 4 jours plus tard, dans le même fil. Adresses trouvées par recherche sur le web (fiches professionnelles publiques) : suivre les rebonds.
 
 | Date | Entreprise | Métier | Ville | Adresse | Statut |
 |---|---|---|---|---|---|

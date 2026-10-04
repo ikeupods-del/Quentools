@@ -66,6 +66,11 @@ const INTERDITS = [
   ['e-mail de confirmation', /Le devis est gratuit et sans engagement, avec un prix fixé/]
 ];
 
+/* Aucun prix écrit en dur dans les connaissances de l'assistant : seuls le catalogue et l'audit (100 €) sont admis. */
+{ const src = fs.readFileSync(path.join(racine, 'assets', 'assistant-qt.js'), 'utf8'), permis = new Set(['100']);
+  T.templates.forEach(x => permis.add(String(x.base).replace('.', ','))); T.options.forEach(o => permis.add(String(o.price).replace('.', ',')));
+  const faux = [...src.matchAll(/(\d[\d ]*(?:,\d+)?) ?€/g)].map(m => m[1].trim()).filter(n => !permis.has(n));
+  if (faux.length) { console.log('✗ prix écrits en dur absents du catalogue :', [...new Set(faux)].join(', ')); process.exitCode = 1; } }
 (async () => {
   const srv = http.createServer((req, res) => {
     let f = path.join(racine, decodeURIComponent(req.url.split('?')[0])); if (f.endsWith('/')) f += 'index.html';
