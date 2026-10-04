@@ -3,7 +3,7 @@
 Une bulle de discussion en bas du site : elle répond aux visiteurs à partir des informations du client (horaires, prestations, tarifs) et recueille prénom, téléphone et demande, transmis par e-mail. Elle ne confirme jamais un rendez-vous.
 
 - **Démonstration publique** : `demo/assistant-ia/` (salon fictif, mode démonstration : réponses prédéfinies, rien n'est envoyé).
-- **Widget** : `assets/assistant.js` + `assets/assistant.css` (déjà actifs en mode démonstration sur l'accueil, `templates/` et `audit/` du site QuenTools) (un fichier, sans bibliothèque ni cookie). À copier dans le site du client et à appeler avant `</body>` :
+- **Widget** : `assets/assistant.js` + `assets/assistant.css` (déjà actifs en mode local sur l'accueil, `templates/` et `audit/` du site QuenTools) (un fichier, sans bibliothèque ni cookie). À copier dans le site du client et à appeler avant `</body>` :
   `<script src="assistant.js" data-nom="Salon Éclat" data-tel="01 23 45 67 89" data-api="https://relais-client.workers.dev" data-faq='[…]' defer></script>` (+ `assistant.css`). `data-api` vide = mode démonstration. Couleurs : variables `--qa-*` de `.qa`. Un élément avec `data-assistant-open` ouvre la bulle.
 - **Relais** : `design/assistant-ia/worker.js` (Cloudflare Worker, gratuit). Il garde la clé de l'IA côté serveur. Un relais par client (sa fiche, son plafond, son adresse autorisée). Test : `node design/assistant-ia/worker.test.mjs`.
 
@@ -18,3 +18,6 @@ Une bulle de discussion en bas du site : elle répond aux visiteurs à partir de
 - **Réponses** : l'assistant peut se tromper malgré la consigne. Le limiter à une fiche courte et vraie, ne pas lui confier de devis ni d'engagement.
 - **Pas d'enregistrement** : ni le widget ni le relais ne conservent les conversations (seule la demande de rappel part vers l'adresse `LEAD_WEBHOOK`).
 - **Coût et plafond** : `DAILY_CAP` limite les réponses par jour ; au-delà, le widget affiche le téléphone du client. Surveiller la facture du fournisseur la première semaine.
+
+## Mode local (sans IA, sans clé)
+Quand `data-api` est vide, l'assistant comprend la question lui-même : mots-clés (début de mot, accents et petites fautes tolérés), sujet précédent (« et le prix ? », « en savoir plus »), suites proposées. Les connaissances sont des données : `assets/assistant-qt.js` pour QuenTools (offres, templates et options avec les prix du catalogue `qt-templates.js`, audit, outils, métiers, devis…), ou `data-faq` pour une petite liste chez un client. Ne mettre que des faits déjà publics, et mettre à jour ce fichier quand une offre ou un prix change.
