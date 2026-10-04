@@ -25,6 +25,7 @@ Voir `design/OFFRES.md` (formules du site et services Fiverr, validées par le p
 | **Audit de sécurité express** | **100 €** (prix de lancement) | — | contrôle automatisé des points visibles de l'extérieur (page `audit/`, outil `tools/audit-express.js`), rapport PDF sous 48 h ; corrections sur devis ; voir `design/AUDIT-EXPRESS.md` |
 | Outil sur mesure | dès 1 000 € | 30-50 € | calcul de devis, suivi, réservation |
 | + Paiements et administration | +500-1 500 € | | PayPal et/ou Stripe, relais Cloudflare |
+| **Assistant de site** (option d'un site) | **249,99 €** (à valider) | 9,99 € (facultatif, couvre l'usage de l'IA au-delà du plafond) | bulle de discussion réglée sur la fiche du client (horaires, prestations, tarifs), recueil prénom + téléphone + demande par e-mail, réglages 1 mois ; ne confirme jamais un rendez-vous ; démonstration `demo/assistant-ia/`, mise en service et précautions : `design/assistant-ia/README.md` |
 
 Templates (catalogue : site `templates/`, démonstrations dans `demo/` et `exemples/` ; dernier ajouté : « Réparateur de téléphones », `demo/reparateur-mobile/`, avec téléphone 3D à 360°, estimateur de prix et suivi par code, tarifs d'exemple fictifs) : prix de départ **399 €** affiché publiquement, pour la personnalisation et la mise en ligne. Les démonstrations simulent paiement, e-mails et comptes : brancher le réel (voir « Paiements et administration », +500-1 500 €) se chiffre dans le devis, ne jamais le promettre dans les 399 €. Coût réel à absorber par offre : un nom de domaine (≈ 10-15 €/an, acheté au nom du client) et le temps d'assistance des 6 mois (hébergement GitHub Pages gratuit ; réponse sous 48 h ouvrées, modifications simples seulement) : garder les 399 € rentables. Ouvre un devis via `devis/?type=Template&template=<nom>`.
 
@@ -45,6 +46,8 @@ Le catalogue (templates et options) est dans `assets/qt-templates.js` ; le formu
 Pour changer ces montants : `price` de chaque option dans `assets/qt-templates.js` (source unique : formulaire public, page templates à mettre à jour à la main, administration).
 
 Règles : devis gratuit, prix fixé avant de commencer, première version montrée avant la suite (acompte non remboursé une fois la première version proposée), acompte 30 à 50 %, engagement de 12 mois sur le mensuel. Noter le temps réellement passé sur les premières commandes et ajuster. Micro-entreprise obligatoire pour facturer. Hébergement gratuit sur GitHub Pages : code public, donc pas pour des données sensibles.
+
+**Assistant de site** : le palier gratuit de Gemini suffit aux démonstrations ; chez un client, passer par l'API payante (quelques centimes la conversation, un plafond journalier protège la facture) et vérifier les conditions de Google (utilisateurs européens, réutilisation des données). Le prix de 249,99 € est une proposition alignée sur le marché (concurrent observé : 249,99 € sans abonnement obligatoire) : à valider avant de l'afficher publiquement.
 
 ## Réponses types
 - **« C'est fait avec l'IA ? »** Oui, assumé : outils modernes + tests automatiques = plus rapide et moins cher qu'une agence, même niveau d'exigence (Wouf : 6 700+ vérifications, 53 scénarios de test). Un développeur expérimenté le soupçonnerait (volume produit en peu de temps, style très uniforme, architecture sans outils de compilation) ; la qualité ne trahit pas un amateur.
