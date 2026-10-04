@@ -165,7 +165,7 @@
     busy = true; send.disabled = true; $('.qa-chips').textContent = '';
     add('me', question); history.push({ role: 'user', text: question }); input.value = '';
     var wait = typing(); log.setAttribute('aria-busy', 'true');
-    var done = function (reply, next) { wait.classList.remove('qa-typing'); wait.removeAttribute('aria-label'); put(wait, reply); log.scrollTop = Math.max(0, wait.offsetTop - 12); log.removeAttribute('aria-busy');   // on lit la réponse depuis son début history.push({ role: 'assistant', text: reply }); if (wait.className.indexOf('note') < 0) saved.push(['bot', reply]); busy = false; send.disabled = false; if (next) chips(next); remember(next); input.focus(); };
+    var done = function (reply, next) { wait.classList.remove('qa-typing'); wait.removeAttribute('aria-label'); put(wait, reply); log.scrollTop = Math.max(0, wait.offsetTop - 12); log.removeAttribute('aria-busy') /* on lit la réponse depuis son début */; history.push({ role: 'assistant', text: reply }); if (wait.className.indexOf('note') < 0) saved.push(['bot', reply]); busy = false; send.disabled = false; if (next) chips(next); remember(next); input.focus(); };
     if (!api) {
       var out = local(question, forced); if (out.id && !(byId[out.id] && byId[out.id].social)) last = out.id;
       setTimeout(function () { done(out.a, out.next); }, 350 + Math.min(out.a.length * 3, 600));
