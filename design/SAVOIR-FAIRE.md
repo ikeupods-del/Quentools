@@ -60,3 +60,15 @@ Le guide RÖSTWERK a été reçu deux fois (même fichier). Même logique pour l
 3. **Avant toute publication d'un site dérivé d'un modèle** : auditer les restes du modèle (textes, libellés, médias, scripts qui se lancent) et le poids du dossier (supprimer les doublons).
 4. **Contenu IA** : acceptable pour des exemples fictifs signalés comme tels ; pas pour de fausses photos de produits réels d'un client, ni de faux avis.
 5. **Offre** : ces sites « cinématiques » existent chez d'autres à 2 500 € et plus. Notre positionnement reste le français, le suivi et le sur-mesure ciblé ; ne pas s'aligner sur ce créneau sans demande, et sans le chiffrer sur devis avec les contraintes ci-dessus.
+
+## Dix guides de plus (Nike, Villa, Chronos, Noir Brew, Chanel, Brace Pizza, Cosmos, Echoes, Sultan Al-Oud, Coca-Cola)
+Les dix autres guides du même auteur ont été lus ; les doublons (Smash, Obsidian, Explosion, Roestwerk, Villa) ont été ignorés. **La synthèse exploitable et les recettes sont dans `design/CINEMATIQUE.md`**, avec un moteur testé (`assets/qt-scroll.js`) et une démonstration (`demo/cinematique/`).
+
+Points marquants, en plus de ce qui précède :
+- **Villa et Chronos** : la suite d'images vient de 3 à 5 clips (images de départ et d'arrivée), extraite par ffmpeg ; chapitres (labels) liés à des plages de progression ; Chronos : 200 images ordinateur, 100 images mobile (une sur deux, autre dossier) pour éviter le plantage de mémoire sur téléphone ; canvas masqué jusqu'au chargement ; unités et chiffres dans un prompt vidéo s'impriment à l'image.
+- **Noir Brew et Nike** : le diaporama « Coffee Drift » (trois couches, huit pièges) ; produits par IA détourés (rembg) et remplissage des zones fermées pour les lacets.
+- **Brace Pizza** : une seule page HTML, suite de 242 images à 8 i/s, configurateur dont les miniatures volent vers le prix, viseur « REC » ; prompt vidéo en six temps (sujet, action, décor, caméra, style, suffixe qualité).
+- **Cosmos** : canvas 2D sans WebGL, boucle d'animation protégée, six pièges de canvas.
+- **Echoes** : vidéo à fond transparent (chaîne blanc → masque → ProRes 4444 → VP9 + HEVC, deux `<source>`).
+- **Chanel, Sultan, Coca-Cola** : publicités verticales de 12 à 27 s : images clés chaînées, un mouvement de caméra par clip, bruitages calés à l'image, montage sur les temps forts ; ligne de temps seconde par seconde pour un sujet unique ; garder la même lumière nommée et les mêmes indices de réfraction sur toute la série.
+- **Tous** : l'auteur vend ces réalisations (entonnoir « commenter un mot-clé, recevoir le guide gratuit »). Prix annoncés par lui : 2 500 à 5 000 € pour un site, 15 000 à 50 000 € « en studio » pour une publicité : affirmations non vérifiées, sans effet sur nos tarifs.

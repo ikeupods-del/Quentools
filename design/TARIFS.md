@@ -49,6 +49,8 @@ Règles : devis gratuit, prix fixé avant de commencer, première version montr�
 
 **Assistant de site** : le palier gratuit de Gemini suffit aux démonstrations ; chez un client, passer par l'API payante (quelques centimes la conversation, un plafond journalier protège la facture) et vérifier les conditions de Google (utilisateurs européens, réutilisation des données). Le prix de 249,99 € est une proposition alignée sur le marché (concurrent observé : 249,99 € sans abonnement obligatoire) : à valider avant de l'afficher publiquement.
 
+**Site « cinématique » (défilement, images et vidéos)** : non proposé dans l'offre publique ; si un client le demande, le chiffrer sur devis à partir du temps réel et des contraintes de `design/CINEMATIQUE.md` (images ou vidéos à fournir ou à générer, poids, téléphone). Aucun prix n'est annoncé.
+
 ## Réponses types
 - **« C'est fait avec l'IA ? »** Oui, assumé : outils modernes + tests automatiques = plus rapide et moins cher qu'une agence, même niveau d'exigence (Wouf : 6 700+ vérifications, 53 scénarios de test). Un développeur expérimenté le soupçonnerait (volume produit en peu de temps, style très uniforme, architecture sans outils de compilation) ; la qualité ne trahit pas un amateur.
 - **Sécurité** : pas de clé secrète dans le code, paiements vérifiés côté serveur, textes utilisateurs échappés, règles Firestore. Limite des apps web : le contenu payant téléchargé sur l'appareil peut être débloqué par un utilisateur très technique ; pour l'empêcher, servir le contenu payant depuis un serveur (plus cher).
