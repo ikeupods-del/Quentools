@@ -43,6 +43,8 @@ const CAS = [
   ['y a-t-il des cookies ?', /ni cookie/],
   ['qjuelle est la prise en mian', /50 €/],
   ['merci beaucoup', /plaisir/],
+  ['combien coûte un chatbot pour mon site ?', new RegExp(prix('assistant'))],
+  ['vous pouvez mettre un assistant comme ça sur mon site ?', new RegExp(prix('assistant'))],
   ['bonjour, quels sont vos horaires ?', /48 h ouvrées/],
   ['vous pouvez créer un réseau social ?', /ne propose pas/],
   ['je cherche quelqu\'un pour mes réseaux sociaux', new RegExp(prix('social'))],

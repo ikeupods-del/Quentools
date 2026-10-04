@@ -25,7 +25,7 @@ Voir `design/OFFRES.md` (formules du site et services Fiverr, validées par le p
 | **Audit de sécurité express** | **100 €** (prix de lancement) | — | contrôle automatisé des points visibles de l'extérieur (page `audit/`, outil `tools/audit-express.js`), rapport PDF sous 48 h ; corrections sur devis ; voir `design/AUDIT-EXPRESS.md` |
 | Outil sur mesure | dès 1 000 € | 69,99 € | calcul de devis, suivi, réservation |
 | + Paiements et administration | +500-1 500 € | | PayPal et/ou Stripe, relais Cloudflare |
-| **Assistant de site** (option d'un site) | **249,99 €** (à valider) | 9,99 € (facultatif, couvre l'usage de l'IA au-delà du plafond) | bulle de discussion réglée sur la fiche du client (horaires, prestations, tarifs), recueil prénom + téléphone + demande par e-mail, réglages 1 mois ; ne confirme jamais un rendez-vous ; démonstration `demo/assistant-ia/`, mise en service et précautions : `design/assistant-ia/README.md` |
+| **Assistant de site** (option d'un site) | **79,99 €** (paiement unique, option du catalogue) | aucun | bulle de discussion en **mode local** : réponses préparées à partir de la fiche du client (horaires, prestations, tarifs, coordonnées), aucune donnée envoyée, aucun coût de fonctionnement ; ne confirme jamais un rendez-vous. Générée par `tools/nouveau-client.js` (champ `assistant` de la fiche). Version avec réponses libres par IA : **sur devis** (relais payant, voir ci-dessous) ; démonstration `demo/assistant-ia/`, mise en service et précautions : `design/assistant-ia/README.md` |
 
 Templates (catalogue : site `templates/`, démonstrations dans `demo/` et `exemples/` ; dernier ajouté : « Institut de beauté et coiffure », `demo/institut-beaute/`, réservation en trois étapes, tarifs d'exemple fictifs ; avant lui : « Réparateur de téléphones », `demo/reparateur-mobile/`, avec téléphone 3D à 360°, estimateur de prix et suivi par code, tarifs d'exemple fictifs) : prix de départ **299 €** affiché publiquement, pour la personnalisation et la mise en ligne. Les démonstrations simulent paiement, e-mails et comptes : brancher le réel (voir « Paiements et administration », +500-1 500 €) se chiffre dans le devis, ne jamais le promettre dans les 299 €. Coût réel à absorber par offre : un nom de domaine (≈ 10-15 €/an, acheté au nom du client) et le temps d'assistance des 3 mois (hébergement GitHub Pages gratuit ; réponse sous 48 h ouvrées, modifications simples seulement) : garder les 299 € rentables. Ouvre un devis via `devis/?type=Template&template=<nom>`.
 
@@ -41,6 +41,7 @@ Le catalogue (templates et options) est dans `assets/qt-templates.js` ; le formu
 | Page supplémentaire (sites vitrines) | 50 € l'unité |
 | Rédaction des textes | 80 € |
 | Prise en main (1 h en visio) | 50 € |
+| Assistant de site (bulle de discussion, mode local) | 79,99 € |
 | Référencement local de base | 90 € |
 | Pack de 5 visuels pour les réseaux sociaux | 90 € |
 | Logo simple et couleurs | 60 € |
@@ -54,7 +55,7 @@ Pour changer ces montants : `price` de chaque option dans `assets/qt-templates.j
 
 Règles : devis gratuit, prix fixé avant de commencer, première version montrée avant la suite (acompte non remboursé une fois la première version proposée), acompte 30 à 50 %, engagement de 12 mois sur le mensuel. Noter le temps réellement passé sur les premières commandes et ajuster. Micro-entreprise obligatoire pour facturer. Hébergement gratuit sur GitHub Pages : code public, donc pas pour des données sensibles.
 
-**Assistant de site** : le palier gratuit de Gemini suffit aux démonstrations ; chez un client, passer par l'API payante (quelques centimes la conversation, un plafond journalier protège la facture) et vérifier les conditions de Google (utilisateurs européens, réutilisation des données). Le prix de 249,99 € est une proposition alignée sur le marché (concurrent observé : 249,99 € sans abonnement obligatoire) : à valider avant de l'afficher publiquement.
+**Assistant de site** : le palier gratuit de Gemini suffit aux démonstrations ; chez un client, passer par l'API payante (quelques centimes la conversation, un plafond journalier protège la facture) et vérifier les conditions de Google (utilisateurs européens, réutilisation des données). La version avec réponses libres par IA reste sur devis (ancienne proposition : 249,99 € + 9,99 €/mois pour l'usage au-delà du plafond ; concurrent observé : 249,99 € sans abonnement obligatoire). L'option publique à 79,99 € est la version à réponses préparées.
 
 **Site « cinématique » (défilement, images et vidéos)** : non proposé dans l'offre publique ; si un client le demande, le chiffrer sur devis à partir du temps réel et des contraintes de `design/CINEMATIQUE.md` (images ou vidéos à fournir ou à générer, poids, téléphone). Aucun prix n'est annoncé.
 
