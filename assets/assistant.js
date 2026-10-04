@@ -1,10 +1,12 @@
 /* Assistant de site (QuenTools). Un seul fichier, sans bibliothèque ni cookie.
    <script src="assistant.js" data-nom="Salon Éclat" data-tel="01 23 45 67 89" data-api="https://relais.exemple.workers.dev" defer></script>
-   data-api vide = mode démonstration : réponses prédéfinies, rien n'est envoyé nulle part. */
+   data-api vide = mode démonstration : réponses prédéfinies, rien n'est envoyé nulle part.
+   data-intro : message d'accueil ; data-lead="0" : pas de parcours « demande de rendez-vous » ; data-faq : [{q, k (mots-clés, expression), a}]. Les adresses https:// des réponses deviennent des liens. */
 (function () {
   var s = document.currentScript;
   var nom = s.dataset.nom || 'Notre assistant', tel = s.dataset.tel || '', api = s.dataset.api || '';
   var faq = []; try { faq = JSON.parse(s.dataset.faq || '[]'); } catch (e) {}
+  var leadOn = s.dataset.lead !== '0', intro = s.dataset.intro || 'Bonjour ! Je réponds à vos questions sur ' + nom + ' et je peux transmettre une demande de rendez-vous.';
   var history = [], lead = null, busy = false;
 
   var root = document.createElement('div'); root.className = 'qa';
@@ -20,14 +22,20 @@
   $('.qa-head strong').textContent = nom;
   var log = $('.qa-log'), input = $('.qa-in'), send = $('.qa-send');
 
-  function add(cls, text) { var d = document.createElement('div'); d.className = 'qa-m ' + cls; d.textContent = text; log.appendChild(d); log.scrollTop = log.scrollHeight; return d; }
+  function put(d, text) {
+    d.textContent = '';
+    text.split(/(https?:\/\/[^\s]+[^\s.,;:!?)])/).forEach(function (part, i) {
+      if (i % 2) { var a = document.createElement('a'); a.href = part; a.textContent = part.replace(/^https?:\/\//, ''); a.style.color = 'inherit'; d.appendChild(a); } else d.appendChild(document.createTextNode(part));
+    });
+  }
+  function add(cls, text) { var d = document.createElement('div'); d.className = 'qa-m ' + cls; put(d, text); log.appendChild(d); log.scrollTop = log.scrollHeight; return d; }
   function chips() {
     var box = $('.qa-chips'); box.textContent = '';
     faq.forEach(function (f) { var b = document.createElement('button'); b.type = 'button'; b.className = 'qa-chip'; b.textContent = f.q; b.onclick = function () { ask(f.q); }; box.appendChild(b); });
   }
   function toggle(open) {
     root.classList.toggle('is-open', open); $('.qa-open').setAttribute('aria-expanded', open);
-    if (open) { if (!log.children.length) { add('bot', 'Bonjour ! Je réponds à vos questions sur ' + nom + ' et je peux transmettre une demande de rendez-vous.'); chips(); } input.focus(); }
+    if (open) { if (!log.children.length) { add('bot', intro); chips(); } input.focus(); }
     else $('.qa-open').focus();
   }
   $('.qa-open').onclick = function () { toggle(true); };
@@ -47,7 +55,7 @@
       lead = null;
       return 'C’est noté, la demande est transmise (simulation : rien n’a été envoyé dans cette démonstration). Sur un vrai site, vous la recevez par e-mail et vous rappelez pour confirmer.';
     }
-    if (/rendez|rdv|reserv|creneau|dispo/.test(t)) { lead = { step: 'prenom' }; return 'Avec plaisir. Quel est votre prénom ?'; }
+    if (leadOn && /rendez|rdv|reserv|creneau|dispo/.test(t)) { lead = { step: 'prenom' }; return 'Avec plaisir. Quel est votre prénom ?'; }
     var hit = faq.filter(function (f) { return f.k && new RegExp(f.k).test(t); })[0];
     if (hit) return hit.a;
     return 'Je n’ai pas cette information. Le plus simple est d’appeler' + (tel ? ' le ' + tel : ' directement') + ' : on vous répondra.';
@@ -58,7 +66,7 @@
     busy = true; send.disabled = true; $('.qa-chips').textContent = '';
     add('me', text); history.push({ role: 'user', text: text }); input.value = '';
     var wait = add('bot', '…');
-    var done = function (reply) { wait.textContent = reply; log.scrollTop = log.scrollHeight; history.push({ role: 'assistant', text: reply }); busy = false; send.disabled = false; input.focus(); };
+    var done = function (reply) { put(wait, reply); log.scrollTop = log.scrollHeight; history.push({ role: 'assistant', text: reply }); busy = false; send.disabled = false; input.focus(); };
     if (!api) { setTimeout(function () { done(demo(text)); }, 450); return; }
     fetch(api.replace(/\/$/, '') + '/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: history.slice(-12) }) })
       .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })

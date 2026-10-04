@@ -3,7 +3,7 @@
 Une bulle de discussion en bas du site : elle répond aux visiteurs à partir des informations du client (horaires, prestations, tarifs) et recueille prénom, téléphone et demande, transmis par e-mail. Elle ne confirme jamais un rendez-vous.
 
 - **Démonstration publique** : `demo/assistant-ia/` (salon fictif, mode démonstration : réponses prédéfinies, rien n'est envoyé).
-- **Widget** : `demo/assistant-ia/assistant.js` + `assistant.css` (un fichier, sans bibliothèque ni cookie). À copier dans le site du client et à appeler avant `</body>` :
+- **Widget** : `assets/assistant.js` + `assets/assistant.css` (déjà actifs en mode démonstration sur l'accueil, `templates/` et `audit/` du site QuenTools) (un fichier, sans bibliothèque ni cookie). À copier dans le site du client et à appeler avant `</body>` :
   `<script src="assistant.js" data-nom="Salon Éclat" data-tel="01 23 45 67 89" data-api="https://relais-client.workers.dev" data-faq='[…]' defer></script>` (+ `assistant.css`). `data-api` vide = mode démonstration. Couleurs : variables `--qa-*` de `.qa`. Un élément avec `data-assistant-open` ouvre la bulle.
 - **Relais** : `design/assistant-ia/worker.js` (Cloudflare Worker, gratuit). Il garde la clé de l'IA côté serveur. Un relais par client (sa fiche, son plafond, son adresse autorisée). Test : `node design/assistant-ia/worker.test.mjs`.
 

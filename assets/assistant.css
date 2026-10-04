@@ -1,5 +1,5 @@
-/* Assistant de site (QuenTools) : bulle de discussion réutilisable. Couleurs réglables par variables. */
-.qa{--qa-bg:#fff;--qa-ink:#1c1a22;--qa-acc:#7c3aed;--qa-acc-ink:#fff;--qa-soft:#f1eef8;--qa-line:#ddd8ea;position:fixed;right:16px;bottom:16px;z-index:60;font:400 16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--qa-ink)}
+/* Assistant de site (QuenTools) : bulle de discussion réutilisable. Reprend les couleurs du site (--surface, --ink, --accent…), réglables par variables --qa-*. */
+.qa{--qa-bg:var(--surface,#fff);--qa-ink:var(--ink,#1c1a22);--qa-acc:var(--accent,#7c3aed);--qa-acc-ink:var(--accent-ink,#fff);--qa-soft:var(--accent-soft,#f1eef8);--qa-line:var(--line-2,#ddd8ea);--qa-mut:var(--muted,#6b6578);position:fixed;right:16px;bottom:16px;z-index:60;font:400 16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--qa-ink)}
 .qa *{box-sizing:border-box}
 .qa-open{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 20px;border:0;border-radius:999px;background:var(--qa-acc);color:var(--qa-acc-ink);font:600 16px system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .qa-open:focus-visible,.qa-x:focus-visible,.qa-send:focus-visible,.qa-chip:focus-visible,.qa-in:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
@@ -12,12 +12,12 @@
 .qa-m{max-width:86%;padding:10px 13px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere}
 .qa-m.bot{align-self:flex-start;background:var(--qa-soft);border-bottom-left-radius:4px}
 .qa-m.me{align-self:flex-end;background:var(--qa-acc);color:var(--qa-acc-ink);border-bottom-right-radius:4px}
-.qa-m.note{align-self:center;background:transparent;color:#6b6578;font-size:13px;text-align:center}
+.qa-m.note{align-self:center;background:transparent;color:var(--qa-mut);font-size:13px;text-align:center}
 .qa-chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 10px}
 .qa-chip{min-height:40px;padding:0 14px;border:1px solid var(--qa-line);border-radius:999px;background:var(--qa-bg);color:var(--qa-ink);font:500 14px system-ui,sans-serif;cursor:pointer}
 .qa-form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--qa-line)}
 .qa-in{flex:1;min-width:0;min-height:44px;padding:0 14px;border:1px solid var(--qa-line);border-radius:999px;font:16px system-ui,sans-serif;background:var(--qa-bg);color:var(--qa-ink)}
 .qa-send{min-height:44px;padding:0 18px;border:0;border-radius:999px;background:var(--qa-acc);color:var(--qa-acc-ink);font:600 15px system-ui,sans-serif;cursor:pointer}
 .qa-send[disabled]{opacity:.5;cursor:default}
-.qa-legal{padding:0 14px 10px;color:#6b6578;font-size:12px}
+.qa-legal{padding:0 14px 10px;color:var(--qa-mut);font-size:12px}
 @media (prefers-reduced-motion:no-preference){.qa-panel{animation:qa-up .2s ease-out}@keyframes qa-up{from{opacity:0;transform:translateY(10px)}}}
