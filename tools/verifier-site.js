@@ -24,6 +24,9 @@ for (const p of pages) {
   if (/ikeupods-del\.github\.io\/Quentools/i.test(h) && !p.startsWith('wouf')) ko(p, 'ancienne adresse du site');
   if (!/<html lang="fr"/.test(h)) ko(p, 'langue absente');
   if (!/<title>[^<]{10,}<\/title>/.test(h)) ko(p, 'titre absent ou trop court');
+  { const t = (h.match(/<title>([^<]*)<\/title>/) || [])[1] || '', d = (h.match(/<meta name="description" content="([^"]*)"/) || [])[1] || '';
+    if (t.length > 60) ko(p, `titre trop long (${t.length} caractères, 60 maximum)`);
+    if (d && (d.length < 60 || d.length > 160)) ko(p, `description de ${d.length} caractères (60 à 160 attendus)`); }
   if (!/<meta name="description" content="[^"]{50,}/.test(h)) ko(p, 'description absente ou trop courte');
   if (!/<link rel="canonical" href="https:\/\/quentools\.fr\//.test(h)) ko(p, 'adresse canonique absente');
   if (!/^(infikit|freelance|gourmet)\//.test(p) && (h.match(/<h1[\s>]/g) || []).length !== 1) ko(p, 'il faut exactement un titre h1');   // les applications affichent leurs titres dynamiquement

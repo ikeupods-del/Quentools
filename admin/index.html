@@ -439,7 +439,7 @@ function dvSet(el) {
 }
 /* Templates et options : le catalogue vient de assets/qt-templates.js. Les prix par défaut des options sont des points de départ, toujours modifiables dans le devis. */
 const OPT_PRICE = Object.fromEntries(QTT.options.map(o => [o.id, o.price]));   // prix publics du catalogue (assets/qt-templates.js)
-const TPL_COMPRIS = 'Compris : personnalisation (nom, couleurs, textes, photos, prix, horaires) ; mise en ligne sur votre nom de domaine (offert la première année) ; assistance et maintenance offertes pendant 6 mois ; une série de retouches et une notice.';
+const TPL_COMPRIS = 'Compris : personnalisation (nom, couleurs, textes, photos, prix, horaires) ; mise en ligne sur votre nom de domaine (offert la première année) ; assistance et maintenance offertes pendant 3 mois ; une série de retouches et une notice.';
 let tpl = { id: '', opts: {}, price: {} };
 const tplReset = () => { tpl = { id: '', opts: {}, price: {} }; };
 const tplOf = () => QTT.templates.find(t => t.id === tpl.id) || null;
@@ -467,7 +467,7 @@ function tplHtml() {
   const opts = t ? QTT.optionsFor(t.id).map(o => { const on = !!tpl.opts[o.id];
     return `<div class="tpl-opt"><label class="chk"><input type="checkbox" data-tplopt="${o.id}"${on ? ' checked' : ''}><span><b>${esc(o.name)}</b>${o.monthly ? ' <span class="muted">(par mois)</span>' : ''}<br><small class="muted">${esc(o.hint)}</small></span></label>${on ? `<div class="tpl-nums">${o.qty ? `<label>Qté<input type="number" min="1" max="50" data-tplqty="${o.id}" value="${tpl.opts[o.id]}"></label>` : ''}<label>${o.monthly ? '€ / mois' : o.qty ? '€ l’unité' : 'Prix (€)'}<input type="number" min="0" step="0.01" data-tplprice="${o.id}" value="${optPrice(o.id)}"></label></div>` : ''}</div>`; }).join('') : '';
   return `<section class="card dv-card"><h3 class="dv-h">Template et options</h3>${banner}<div class="tpl-picks">${picks}</div>
-    ${t ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Prix de départ ${eur(t.base)} : personnalisation, mise en ligne, nom de domaine offert (1re année), 6 mois d’assistance, une série de retouches.${t.demo ? ` <a href="../${esc(t.demo)}" target="_blank" rel="noopener">Voir la démonstration</a>.` : ''}</p>
+    ${t ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Prix de départ ${eur(t.base)} : personnalisation, mise en ligne, nom de domaine offert (1re année), 3 mois d’assistance, une série de retouches.${t.demo ? ` <a href="../${esc(t.demo)}" target="_blank" rel="noopener">Voir la démonstration</a>.` : ''}</p>
       <div class="tpl-opts">${opts}</div><div class="ag-act"><button type="button" class="btn btn-accent" data-do="tpl-add">Ajouter au devis</button><span class="tpl-tot" id="tpl-tot">${tplTotTxt()}</span></div>`
       : '<p class="muted" style="margin:0;font-size:var(--t-sm)">Choisissez un template pour ajouter son prix de départ et ses options au devis, en un clic. Les lignes restent modifiables ensuite.</p>'}</section>`;
 }
@@ -544,10 +544,22 @@ async function clPublish(list) {
   });
   await saveSite({ acces: JSON.stringify(acces) });
 }
+/* Rappels automatiques de fin d'offre : liste (prénom, e-mail, site, date) envoyée au relais ; réglages gardés dans ce navigateur seulement. */
+const rpConf = () => { try { return JSON.parse(localStorage.getItem('qt:relais') || '{}'); } catch (e) { return {}; } };
+let rpState = '';
+async function rpSync(list) {
+  const r = rpConf(); if (!r.url || !r.key || DEMO) { rpState = ''; return; }
+  const clients = list.filter(c => c.email && c.finOffre).map(c => ({ id: c.id, prenom: first(c.nom), email: c.email, site: c.site || '', finOffre: c.finOffre }));
+  try {
+    const res = await fetch(r.url.replace(/\/$/, '') + '/clients', { method: 'PUT', headers: { Authorization: 'Bearer ' + r.key, 'Content-Type': 'application/json' }, body: JSON.stringify({ clients }) });
+    rpState = res.ok ? `Rappels automatiques actifs : ${(await res.json()).count} client(s) suivi(s) ✓` : res.status === 401 ? 'Clé du relais refusée : vérifiez-la.' : 'Relais injoignable (erreur ' + res.status + ').';
+  } catch (e) { rpState = 'Relais injoignable : vérifiez l’adresse.'; }
+}
 async function clSave(list) {
   notes._clients = { items: JSON.stringify(list) };
   if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_clients'), notes._clients); }
   await clPublish(list);
+  await rpSync(list);
 }
 function relanceLevel(c) {
   const s = clState(c); if (s.k === 'attente') return 0;
@@ -577,6 +589,7 @@ function clFormHtml(c) {
     <div class="form-grid">${f('nom', 'Client', 'text', 'maxlength="120"')}${f('email', 'E-mail du client', 'email', 'maxlength="160"')}</div>
     <div class="form-grid">${f('site', 'Identifiant du site (lettres, chiffres, tirets)', 'text', 'maxlength="40" placeholder="ex. boulangerie-martin"')}${f('url', 'Adresse du site (facultatif)', 'url', 'maxlength="200" placeholder="https://…"')}</div>
     <div class="form-grid">${f('total', 'Montant total à payer (€)', 'number', 'min="0" step="0.01" inputmode="decimal"')}${f('echeance', 'Solde attendu le', 'date')}${f('grace', 'Jours de grâce avant verrouillage', 'number', 'min="0" max="90" step="1" placeholder="15"')}</div>
+    <div class="form-grid">${f('enLigne', 'Mis en ligne le (début des 3 mois offerts)', 'date')}<p class="muted" style="margin:0;align-self:end;font-size:var(--t-sm)">Un e-mail de rappel est envoyé automatiquement au client 14 jours avant la fin de l’offre (relais à activer en haut de cette page).</p></div>
     <input type="hidden" name="devisId" value="${esc(c.devisId || '')}"><input type="hidden" name="devisNum" value="${esc(c.devisNum || '')}">
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="cl-save" data-id="${esc(c.id || '')}">Enregistrer</button><button class="btn btn-ghost" data-do="cl-cancel">Annuler</button></div></section>`;
 }
@@ -590,6 +603,7 @@ function clCardHtml(c) {
     <div class="cl-bar" role="img" aria-label="${pct} % payé"><i style="width:${pct}%"></i></div>
     <p style="margin:0">${e(paid)} encaissés sur ${e(total)}${s.k === 'paye' ? '' : ` · <b>reste ${e(s.solde)}</b>`}</p>
     ${s.k !== 'paye' && lim ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">${s.k === 'susp' ? 'Verrouillé depuis le ' + fdate(c.bloque ? (c.bloqueLe || today()) : addDays(lim, 1)) : 'Verrouillage automatique après le ' + fdate(lim) + (c.prolonge ? ' (prolongé)' : ` (échéance + ${+c.grace || 15} jours)`)}.</p>` : ''}
+    ${c.finOffre ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Assistance offerte jusqu’au ${esc(fdate(c.finOffre))}${today() > c.finOffre ? ' (terminée)' : ' · rappel automatique prévu le ' + esc(fdate(addDays(c.finOffre, -14)))}</p>` : ''}
     ${!c.site || !(total > 0) ? '<p class="muted" style="margin:0;font-size:var(--t-sm)">⚠️ Sans identifiant de site ou sans montant, aucun verrouillage n’est publié.</p>' : ''}
     ${lastR ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Dernière relance : « ${esc((RELANCES.find(r => r[0] === +lastR.niv) || [0, ''])[1])} » le ${esc(fdate(lastR.d))}${(c.relances || []).length > 1 ? ` (${c.relances.length} au total)` : ''}</p>` : ''}
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
@@ -617,11 +631,15 @@ function viewClients() {
     <p style="margin:0">1. Vous ajoutez le site du client, le montant total et la date du solde.<br>2. Le site se verrouille tout seul quand la date limite est dépassée sans paiement complet (ou tout de suite si vous le suspendez).<br>3. Il se rouvre dès que vous enregistrez le paiement.</p>
     <p style="margin:0">Le visiteur voit seulement « site momentanément indisponible » : jamais de montant ni de nom du client.</p>
     <p class="muted" style="margin:0">Le verrou fonctionne dans le navigateur : il arrête un visiteur ordinaire, mais ne remplace pas la coupure de l’hébergement face à un client de mauvaise foi. Il faut aussi installer le petit code du site (bouton « Code du site ») sur la page du client.</p></div></details>`;
+  const rc = rpConf(), rappels = `<details class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"${rc.url ? '' : ' open'}><summary style="cursor:pointer;font-weight:700">Rappels automatiques de fin d’offre ${rc.url ? '· activés' : '· à activer'}</summary><div style="margin-top:var(--s-3);display:grid;gap:8px;font-size:var(--t-sm)">
+    <p style="margin:0">Quand vous indiquez la date de mise en ligne d’un site, la fin de l’offre gratuite est calculée (3 mois) et le client reçoit un e-mail de rappel 14 jours avant. Mise en place unique : voir <code>design/RAPPELS-FIN-OFFRE.md</code>.</p>
+    <div class="form-grid"><label class="mini">Adresse du relais<input id="rp-url" type="url" placeholder="https://rappels.….workers.dev" value="${esc(rc.url || '')}"></label><label class="mini">Clé du relais<input id="rp-key" type="password" autocomplete="off" value="${esc(rc.key || '')}"></label></div>
+    <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-sm btn-accent" data-do="rp-save">Enregistrer et synchroniser</button><span class="muted" id="rp-state">${esc(rpState)}</span></div></div></details>`;
   const clauseBox = clause ? '' : `<div class="notice warn" style="margin-bottom:var(--s-4)"><b>Avant de suspendre un site :</b> la possibilité de suspension doit figurer dans les conditions du devis accepté par le client. Elle n’est pas dans vos conditions actuelles. <button class="btn btn-sm btn-accent" data-do="add-clause" style="margin-left:8px">Ajouter la clause à mes conditions</button><br><span class="muted">Faites relire cette clause par un professionnel du droit : je ne peux pas valider sa portée juridique.</span></div>`;
   const kpis = `<div class="kpis"><div><b>${e(encaisse)}</b><span>encaissés</span></div><div><b>${e(reste)}</b><span>reste à encaisser</span></div><div><b>${retard}</b><span>en retard de paiement</span></div><div><b>${susp}</b><span>sites verrouillés</span></div></div>`;
   const form = clEdit === 'new' ? clFormHtml({}) : clEdit ? clFormHtml(list.find(c => c.id === clEdit) || {}) : '';
   const add = clEdit ? '' : '<div class="row" style="display:flex;gap:8px;margin-bottom:var(--s-4)"><button class="btn btn-accent" data-do="cl-new">+ Ajouter un site client</button></div>';
-  return intro + clauseBox + (list.length ? kpis : '') + add + form + (sorted.length ? sorted.map(x => clCardHtml(x.c)).join('') : (clEdit ? '' : '<div class="card empty">Aucun site client suivi pour l’instant. Ajoutez le premier avec le bouton ci-dessus.</div>'));
+  return intro + rappels + clauseBox + (list.length ? kpis : '') + add + form + (sorted.length ? sorted.map(x => clCardHtml(x.c)).join('') : (clEdit ? '' : '<div class="card empty">Aucun site client suivi pour l’instant. Ajoutez le premier avec le bouton ci-dessus.</div>'));
 }
 function viewContacts() {
   if (leadsErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Règles à mettre à jour</h2><p>Les contacts s’enregistrent dans une collection protégée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><button class="btn btn-accent" data-tab="regles">Voir les règles</button></section>`;
@@ -1202,6 +1220,12 @@ app.addEventListener('click', async e => {
     else if (d === 'ag-mo') { const ym = agMonth || today().slice(0, 7); agMonth = isoDay(new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + (+b.dataset.n), 1)).slice(0, 7); render(); }
     else if (d === 'notif') { const p = await Notification.requestPermission(); render(); toast(p === 'granted' ? 'Alertes activées tant que cette page reste ouverte' : 'Alertes non autorisées par le navigateur', p !== 'granted'); }
     else if (d === 'ag-ics-all') { const up = agEntries().filter(a => !a.done && a.date >= today()); if (!up.length) return toast('Rien de prévu à exporter', true); dl('agenda-quentools.ics', ics(up), 'text/calendar;charset=utf-8'); }
+    else if (d === 'rp-save') {
+      const url = document.getElementById('rp-url').value.trim(), key = document.getElementById('rp-key').value.trim();
+      if (url && !/^https:\/\//.test(url)) return toast('L’adresse du relais doit commencer par https://', true);
+      try { localStorage.setItem('qt:relais', JSON.stringify(url && key ? { url, key } : {})); } catch (e) { return toast('Enregistrement impossible dans ce navigateur', true); }
+      await rpSync(clients()); render(); toast(rpState || 'Réglages enregistrés');
+    }
     else if (d === 'cl-new') { clEdit = 'new'; clPay = clRel = null; render(); }
     else if (d === 'cl-cancel') { clEdit = clPay = clRel = null; render(); }
     else if (d === 'cl-edit') { clEdit = b.dataset.id; clPay = clRel = null; render(); const fm = document.getElementById('cl-form'); if (fm) fm.scrollIntoView({ block: 'center' }); }
@@ -1212,7 +1236,8 @@ app.addEventListener('click', async e => {
       if (site && list.some(c => c.site === site && c.id !== id)) return toast('Cet identifiant est déjà utilisé par un autre client', true);
       if (f.url && !/^https:\/\//.test(f.url)) return toast('L’adresse du site doit commencer par https://', true);
       const rec = { ...(old || { id: 'c' + Date.now().toString(36), paiements: [], relances: [] }), nom: f.nom.slice(0, 120), email: f.email.slice(0, 160), site, url: f.url.slice(0, 200), total: Math.max(0, +f.total || 0),
-        echeance: /^\d{4}-\d{2}-\d{2}$/.test(f.echeance) ? f.echeance : '', grace: Math.min(90, Math.max(0, f.grace === '' ? 15 : (+f.grace || 0))), devisId: f.devisId || '', devisNum: f.devisNum || '' };
+        echeance: /^\d{4}-\d{2}-\d{2}$/.test(f.echeance) ? f.echeance : '', grace: Math.min(90, Math.max(0, f.grace === '' ? 15 : (+f.grace || 0))), devisId: f.devisId || '', devisNum: f.devisNum || '',
+        enLigne: /^\d{4}-\d{2}-\d{2}$/.test(f.enLigne) ? f.enLigne : '', finOffre: /^\d{4}-\d{2}-\d{2}$/.test(f.enLigne) ? addMonths(f.enLigne, 3) : '' };
       await clSave(old ? list.map(c => c.id === id ? rec : c) : [...list, rec]); clEdit = null; render();
       toast('Site client enregistré ✓' + (rec.site && rec.total > 0 && rec.echeance ? ' · verrouillage après le ' + fdate(clLimit(rec)) : ''));
     }

@@ -6,10 +6,10 @@
 ## Ce que QuenTools vend aujourd'hui
 | Offre | Prix public |
 |---|---|
-| Site prêt à l'emploi (template personnalisé) | dès 299 € (6 mois d'assistance offerts, domaine offert la 1re année) |
+| Site prêt à l'emploi (template personnalisé) | dès 299 € (3 mois d'assistance offerts, domaine offert la 1re année) |
 | Système de réservation intégré | 99 € (paiement unique) |
 | Audit de sécurité express | 100 € |
-| Suivi mensuel après les 6 mois offerts | 69,99 €/mois |
+| Suivi mensuel après les 3 mois offerts | 69,99 €/mois |
 | Boutique Shopify, site vitrine sur mesure, outil sur mesure, contenus réseaux sociaux | sur devis |
 
 Source des prix : `assets/qt-templates.js` (catalogue partagé accueil, devis, templates, admin) et `design/TARIFS.md`. Les réseaux sociaux (carrousels, visuels, publications) existent déjà dans le dépôt (`tools/carrousels.js`, `conseils/`), mais sans tarif défini : à fixer avec le propriétaire avant de l'afficher.
@@ -17,7 +17,7 @@ Source des prix : `assets/qt-templates.js` (catalogue partagé accueil, devis, t
 ## Repères du marché (recherche du 2026-10-04, ordres de grandeur)
 - Site vitrine pour une TPE : freelance 900 à 3 000 €, petite agence 2 000 à 8 000 € ; entrée de gamme freelance vers 800 €. Sources : [Creagenzia](https://creagenzia.fr/tarif-creation-site-internet-2026/), [Fenxi](https://fenxi.fr/blog/combien-coute-site-internet-2026-prix-delais/), [iPaoo](https://www.ipaoo.fr/blog/prix-site-vitrine-2026/), [Tandem Studio](https://www.tandem-studio.fr/prix-creation-site-internet/).
 - Agences locales concurrentes (ALEO, Local.fr, Linkeo, Komunike, ComLocal…) vendent un **bouquet** : site, référencement local, fiche Google, Google Ads, community management, logo et supports imprimés, hébergement et maintenance. Exemple de tarifs publics : référencement local dès 250 € HT/mois par fiche, site dès 1 500 € HT ([Komunike](https://komunike.fr/)). Concurrent repéré en groupe Facebook : site dès 499,99 €, maintenance 99,99 €/mois (voir `MARKETING-HEBDO.md`).
-- Conséquence : 299 € est très en dessous du marché ; l'argument est « prix fixé avant de commencer, template personnalisé, assistance 6 mois », pas « le moins cher ». Ne pas baisser davantage.
+- Conséquence : 299 € est très en dessous du marché ; l'argument est « prix fixé avant de commencer, template personnalisé, assistance 3 mois », pas « le moins cher ». Ne pas baisser davantage.
 
 ## Pistes à discuter avec le propriétaire (rien n'est proposé au public)
 Fiche Google Business et avis ; référencement local ; logo et charte simple ; gestion mensuelle des réseaux sociaux ; supports imprimés. Chaque ajout = tarif décidé par le propriétaire, puis catalogue, devis, page d'accueil et `TARIFS.md`.
@@ -35,11 +35,12 @@ Fiche Google Business et avis ; référencement local ; logo et charte simple ; 
 | Paiement en ligne réel | Liens PayPal ou Stripe (liens de paiement), page de confirmation, suivi des commandes | Son compte PayPal ou Stripe | Principe de Wouf (`wouf/docs/MAINTENANCE.md`) ; aucune clé secrète dans le dépôt |
 | E-mails de confirmation et de rappel | Relais Cloudflare + envoi par e-mail, texte des messages | Un compte Cloudflare et un domaine d'envoi vérifié | `wouf/billing-worker/worker.js` (route `/support`, envoi par Resend) |
 | Système de réservation intégré (sites vitrines) | Formulaire de créneaux, e-mail de demande, confirmation | Ses horaires et son adresse e-mail | Modèle `design/templates/rendez-vous.html` et démonstration `demo/institut-beaute/` |
-| Référencement local de base | Titres, descriptions, données structurées, plan du site, liens internes | Ville, zone, horaires, services | `tools/verifier-site.js` pour contrôler |
+| Référencement local de base | `domaine`, `adresse` et `horaires` dans la fiche de `tools/nouveau-client.js` : adresse canonique, balises de partage, données LocalBusiness, sitemap.xml, robots.txt, contrôle des longueurs de titre et de description | Ville, adresse, horaires, services ; pour la fiche Google Business et la Search Console : un accès à son compte Google (je prépare les textes et le guide) | `tools/nouveau-client.js`, `tools/seo-site.js` (site QuenTools), `tools/verifier-site.js` |
 | Pack de 5 visuels réseaux sociaux | Carrousel 5 visuels + légende | Photos et textes de son activité | `tools/carrousels.js`, `tools/carrousels.json` |
 | Logo simple et couleurs | Logo typographique SVG/PNG, trois couleurs appliquées | Nom et couleurs préférées | `tools/nouveau-client.js` (couleurs) |
 | Version en anglais | Seconde version et bouton de langue | Rien, il valide la traduction | — |
 | Prise en main (1 h en visio) | Rien : préparer la notice et un plan de séance ; la visio est faite par le propriétaire | Un créneau | `design/CHECKLIST-CLIENT.md` |
+| Rappel automatique de fin d'offre (3 mois) | Relais Cloudflare + e-mail 14 jours avant la fin, déjà écrit et testé | Compte Cloudflare et Resend (mise en place unique) | `relais-quentools/`, `design/RAPPELS-FIN-OFFRE.md` |
 | Pages, textes, modifications, suivi mensuel | Direct, sur le site hébergé | Ses demandes | `tools/nouveau-client.js`, `design/CHECKLIST-CLIENT.md` |
 
 Limites à dire au client : aucun accès à son compte Google (fiche Google Business, Search Console) n'est possible sans lui ; la prise en main en visio (50 €) est faite par le propriétaire en personne, pas par l'assistant : prévoir un créneau avec le client. La notice d'utilisation reste comprise dans le prix de départ.

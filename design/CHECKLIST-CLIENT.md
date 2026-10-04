@@ -17,6 +17,6 @@
 
 ## Cadrage
 - [ ] Ce qui est simulé dans la démo et réel dans la livraison : écrit dans le devis
-- [ ] Délai de réponse annoncé : 48 h ouvrées ; assistance de 6 mois limitée aux modifications simples
+- [ ] Délai de réponse annoncé : 48 h ouvrées ; assistance de 3 mois limitée aux modifications simples
 - [ ] Première version validée par le client avant la suite
 - [ ] À la livraison : retirer la barre de démonstration, remplacer les photos de démo
