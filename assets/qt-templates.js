@@ -23,7 +23,7 @@
     { id: 'textes', name: 'Rédaction des textes', hint: 'Je rédige les textes à partir de vos informations.', price: 80, for: null },
     { id: 'priseenmain', name: 'Prise en main (1 h en visio)', hint: 'Pour apprendre à modifier vos textes, prix et horaires.', price: 40, for: null },
     { id: 'modifs', name: 'Modifications importantes ou nouvelle fonction', hint: 'Au-delà de la série de retouches comprise.', price: 150, qty: true, for: null },
-    { id: 'suivi', name: 'Suivi mensuel après les 6 mois offerts', hint: 'Hébergement, sauvegardes, mises à jour et modifications simples.', price: 19.99, monthly: true, for: null }
+    { id: 'suivi', name: 'Suivi mensuel après les 6 mois offerts', hint: 'Hébergement, sauvegardes, mises à jour et modifications simples.', price: 69.99, monthly: true, for: null }
   ];
   const included = ['Personnalisation : nom, couleurs, textes, photos, prix, horaires',
     'Adapté au téléphone, sans cookie ni traceur',
@@ -43,7 +43,7 @@
     return out;
   }
   const fmt = n => n.toLocaleString('fr-FR', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' €';
-  /* Texte du prix d'une option : « 249,99 € », « 150 € l'unité », « 19,99 € par mois » */
+  /* Texte du prix d'une option : « 249,99 € », « 150 € l'unité », « 69,99 € par mois » */
   const priceText = o => fmt(o.price) + (o.monthly ? ' par mois' : o.qty ? ' l’unité' : '');
   /* Total indicatif d'un template et de ses options : { once, rec } (rec = montant mensuel) ; chosen = { idOption: quantité } */
   function total(templateId, chosen) {
