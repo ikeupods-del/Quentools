@@ -18,9 +18,9 @@
   const options = [
     { id: 'bdd', name: 'Réservations et comptes réellement enregistrés', hint: 'Base de données : les demandes, comptes et commandes sont conservés (les démonstrations ne gardent rien).', price: 249.99, for: app },
     { id: 'paiement', name: 'Paiement en ligne réel (PayPal ou Stripe)', hint: 'Le client paie vraiment ; les démonstrations simulent le paiement.', price: 99.99, for: app },
-    { id: 'emails', name: 'E-mails de confirmation et de rappel réellement envoyés', hint: 'Confirmation de rendez-vous ou de commande, rappels.', price: 150, for: app },
+    { id: 'emails', name: 'E-mails de confirmation et de rappel réellement envoyés', hint: 'Quand un client réserve ou commande sur votre site, il reçoit tout de suite un e-mail de confirmation, puis un rappel avant son rendez-vous : moins d’oublis et de rendez-vous manqués.', price: 150, for: app },
     { id: 'reservation', name: 'Système de réservation intégré', hint: 'Pour les sites vitrines : prise de rendez-vous et réservation d’appels directement sur votre site. Paiement unique, aucun abonnement. (Les templates à réservation incluent déjà la réservation : voir « Réservations et comptes réellement enregistrés ».)', price: 99, for: ['vitrines'] },
-    { id: 'seo', name: 'Référencement local de base', hint: 'Titres et descriptions travaillés, données structurées (entreprise, horaires, zone), plan du site, adresse canonique et liens internes, pour être mieux trouvé sur Google dans votre ville.', price: 90, for: null },
+    { id: 'seo', name: 'Référencement local de base', hint: 'Titres et descriptions travaillés, données structurées (entreprise, adresse, horaires, zone), plan du site et adresse canonique, pour être mieux trouvé sur Google dans votre ville. La fiche Google Business et la Search Console se créent avec votre compte : je prépare les textes et je vous guide.', price: 90, for: null },
     { id: 'social', name: 'Pack de 5 visuels pour les réseaux sociaux', hint: 'Un carrousel de 5 visuels à votre image (situation, constat, solution, téléphone, question) avec la légende, prêt à publier.', price: 90, for: null },
     { id: 'logo', name: 'Logo simple et couleurs', hint: 'Un logo typographique (fichiers SVG et PNG) et trois couleurs de marque appliquées au site, si vous n’avez pas encore de logo.', price: 60, for: null },
     { id: 'anglais', name: 'Version en anglais', hint: 'Une seconde langue du site, avec bouton de changement de langue, traduction de vos textes.', price: 120, for: null },
@@ -28,12 +28,12 @@
     { id: 'priseenmain', name: 'Prise en main (1 h en visio)', hint: 'Une heure en visio pour apprendre à modifier vos textes, prix et horaires.', price: 50, for: null },
     { id: 'textes', name: 'Rédaction des textes', hint: 'Je rédige les textes à partir de vos informations.', price: 80, for: null },
     { id: 'modifs', name: 'Modifications importantes ou nouvelle fonction', hint: 'Au-delà de la série de retouches comprise.', price: 150, qty: true, for: null },
-    { id: 'suivi', name: 'Suivi mensuel après les 6 mois offerts', hint: 'Hébergement, sauvegardes, mises à jour et modifications simples.', price: 69.99, monthly: true, for: null }
+    { id: 'suivi', name: 'Suivi mensuel après les 3 mois offerts', hint: 'Hébergement, sauvegardes, mises à jour et modifications simples.', price: 69.99, monthly: true, for: null }
   ];
   const included = ['Personnalisation : nom, couleurs, textes, photos, prix, horaires',
     'Adapté au téléphone, sans cookie ni traceur',
     'Mise en ligne sur votre nom de domaine, offert la première année',
-    'Assistance et maintenance offertes pendant 6 mois (hébergement, sauvegardes, mises à jour, modifications simples, réponse sous 48 h ouvrées)',
+    'Assistance et maintenance offertes pendant 3 mois (hébergement, sauvegardes, mises à jour, modifications simples, réponse sous 48 h ouvrées)',
     'Une série de retouches et une notice d’utilisation'];
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
   const find = name => templates.find(t => norm(t.name) === norm(name)) || null;

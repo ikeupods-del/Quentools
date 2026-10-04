@@ -11,7 +11,8 @@ const modeles = fs.readdirSync(tpl).filter(f => f.endsWith('.html')).map(f => f.
 const arg = process.argv[2];
 const EXEMPLE = { modele: 'vitrine', dossier: 'dupont-plomberie', nom: 'Dupont Plomberie', metier: 'plombier chauffagiste', ville: 'Lyon',
   accroche: 'une panne réparée dans la journée', couleur: '#0f766e', services: ['Dépannage urgent', 'Chauffe-eau', 'Salle de bains'],
-  telephone: '06 12 34 56 78', email: 'contact@exemple.fr' };
+  telephone: '06 12 34 56 78', email: 'contact@exemple.fr',
+  domaine: 'dupont-plomberie.fr', adresse: { rue: '12 rue des Lilas', codePostal: '69006' }, horaires: ['Mo-Fr 08:00-18:00', 'Sa 09:00-12:00'] };
 
 if (arg === '--exemple') { console.log(JSON.stringify(EXEMPLE, null, 2)); process.exit(0); }
 if (arg === '--modeles') { console.log(modeles.join('\n')); process.exit(0); }
@@ -54,6 +55,25 @@ const sortie = path.join(racine, 'clients', f.dossier);
 fs.mkdirSync(path.join(sortie, 'assets', 'fonts'), { recursive: true });
 for (const x of ['qt.css', 'qt.js']) fs.copyFileSync(path.join(racine, 'assets', x), path.join(sortie, 'assets', x));
 for (const x of fs.readdirSync(path.join(racine, 'assets', 'fonts'))) if (/^(bricolage|inter)\.woff2$|^OFL-/.test(x)) fs.copyFileSync(path.join(racine, 'assets', 'fonts', x), path.join(sortie, 'assets', 'fonts', x));
+/* Référencement local de base (option « Référencement local de base ») : si la fiche donne un « domaine », adresse canonique, balises de partage,
+   données structurées LocalBusiness (nom, téléphone, adresse, horaires, zone), plan du site et robots.txt. Rien n'est inventé : champs absents = non écrits. */
+const seoMsgs = [];
+if (f.domaine) {
+  const url = 'https://' + String(f.domaine).replace(/^https?:\/\//, '').replace(/\/$/, '') + '/';
+  const titre = (h.match(/<title>([^<]*)<\/title>/) || [])[1] || '', desc = (h.match(/<meta name="description" content="([^"]*)"/) || [])[1] || '';
+  if (titre.length > 60) seoMsgs.push(`titre de ${titre.length} caractères (60 maximum) : à raccourcir`);
+  if (desc.length > 160) seoMsgs.push(`description de ${desc.length} caractères (160 maximum) : à raccourcir`);
+  const ld = { '@context': 'https://schema.org', '@type': 'LocalBusiness', name: f.nom, url, description: desc || undefined, telephone: e164 || undefined, email: f.email || undefined,
+    areaServed: f.ville || undefined, openingHours: Array.isArray(f.horaires) && f.horaires.length ? f.horaires : undefined,
+    address: f.adresse && f.adresse.rue ? { '@type': 'PostalAddress', streetAddress: f.adresse.rue, postalCode: f.adresse.codePostal || undefined, addressLocality: f.ville || undefined, addressCountry: 'FR' } : undefined };
+  const tete = `<link rel="canonical" href="${url}">\n<meta property="og:type" content="website">\n<meta property="og:title" content="${titre.replace(/"/g, '&quot;')}">\n<meta property="og:description" content="${desc}">\n<meta property="og:url" content="${url}">\n<meta property="og:locale" content="fr_FR">\n<script type="application/ld+json">${JSON.stringify(ld)}</script>\n`;
+  h = h.replace('</head>', tete + '</head>');
+  fs.mkdirSync(sortie, { recursive: true });
+  fs.writeFileSync(path.join(sortie, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${url}</loc><priority>1.0</priority></url>\n  <url><loc>${url}mentions-legales/</loc><priority>0.3</priority></url>\n</urlset>\n`);
+  fs.writeFileSync(path.join(sortie, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${url}sitemap.xml\n`);
+  if (!f.adresse) seoMsgs.push('pas d’adresse dans la fiche : les données LocalBusiness n’ont pas d’adresse (à ajouter si le client reçoit du public)');
+  if (!Array.isArray(f.horaires) || !f.horaires.length) seoMsgs.push('pas d’horaires dans la fiche : non écrits dans les données structurées');
+}
 fs.writeFileSync(path.join(sortie, 'index.html'), h.split('../../assets/').join('assets/'));
 for (const [src, dir] of [['legal', 'mentions-legales'], ['merci', 'merci']]) {
   fs.mkdirSync(path.join(sortie, dir), { recursive: true });
@@ -73,4 +93,5 @@ console.log(`Contraste texte blanc sur ${accent} : ${contraste.toFixed(1)}:1 ${c
 console.log(`Titres h1 : ${h1} ${h1 === 1 ? '(correct)' : '(il en faut exactement un)'} · images sans texte alternatif : ${sansAlt}`);
 console.log(`À compléter dans index.html : ${reste.length} champ(s)`);
 console.log(reste.slice(0, 60).join('\n'));
-console.log('Ensuite : photos réelles, mentions légales (SIRET, hébergeur), aperçu sur 390 px et 1440 px, clair et sombre (design/CHECKLIST-CLIENT.md).');
+if (f.domaine) { console.log(`Référencement local de base : adresse canonique, balises de partage, données LocalBusiness, sitemap.xml et robots.txt écrits pour ${f.domaine}.`); seoMsgs.forEach(m => console.log('  ⚠ ' + m)); }
+console.log('Ensuite : Google Business Profile (fiche à créer par le client : je prépare les textes), Search Console (propriété à vérifier par le client) ; photos réelles, mentions légales (SIRET, hébergeur), aperçu sur 390 px et 1440 px, clair et sombre (design/CHECKLIST-CLIENT.md).');
