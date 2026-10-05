@@ -37,11 +37,37 @@ section{padding:80px 0}h2.t{font-size:clamp(1.9rem,4vw,3rem);line-height:1.08;ma
 footer{padding:30px 0;font-size:14px;color:var(--mut)}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
 @media (max-width:900px){nav{display:none}.hero .wrap,.deep .wrap,.box{grid-template-columns:1fr}.svc{grid-template-columns:1fr 1fr}.plans{grid-template-columns:1fr}.pl.f{transform:none}.deep{margin:0 10px;border-radius:30px}}
 @media (max-width:480px){.svc{grid-template-columns:1fr}}
+
+.ico{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sv .e .ico{width:28px;height:28px;stroke:var(--cyan-d)}.logo i .ico{stroke:#fff}
+.sizing .box2{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:start}
+.pan{background:#fff;border:1px solid var(--line);border-radius:28px;padding:clamp(22px,3vw,34px)}
+.pan label.l{display:flex;justify-content:space-between;font-weight:600;margin:0 0 8px}.pan label.l output{font:800 1.3rem Syne,sans-serif;color:var(--cyan-d)}
+.pan input[type=range]{width:100%;accent-color:var(--cyan-d);height:30px;padding:0;border:0;background:none}
+.seg{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 22px}.seg label{position:relative;cursor:pointer}.seg input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.seg span{display:block;padding:10px 18px;border-radius:999px;border:1.5px solid var(--line);font-weight:500;background:var(--ice)}.seg input:checked+span{background:var(--deep);color:#fff;border-color:var(--deep)}.seg input:focus-visible+span{outline:3px solid var(--cyan);outline-offset:2px}
+.res2{background:linear-gradient(160deg,var(--cyan-d),var(--deep));color:#fff;border-radius:28px;padding:clamp(24px,3vw,36px);position:sticky;top:20px}
+.res2 .big{font:800 clamp(3rem,7vw,4.6rem)/1 Syne,sans-serif;margin:6px 0}.res2 small{opacity:.8}
+.gauge{height:10px;border-radius:99px;background:rgba(255,255,255,.2);overflow:hidden;margin:16px 0 6px}.gauge i{display:block;height:100%;background:linear-gradient(90deg,#7ee8fa,#fff);border-radius:99px;transition:width .5s}
+.res2 .btn{background:#fff;color:var(--deep);margin-top:18px}
+.next{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:34px;background:var(--ice2);border-radius:20px;padding:18px 22px}.next input{width:auto;padding:10px 14px;border-radius:12px}.next b{font-family:Syne,sans-serif}
+.callbar{display:none}
+@media (max-width:900px){.sizing .box2{grid-template-columns:1fr}.res2{position:static}.callbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--deep);padding:12px 16px;justify-content:center}.callbar a{color:#fff;font-weight:700;text-decoration:none;display:flex;gap:8px;align-items:center}body{padding-bottom:56px}}
+.rv{opacity:0;transform:translateY(18px);transition:opacity .7s,transform .7s}.rv.in{opacity:1;transform:none}@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 3v18M4.200 7.500l15.600 9M4.200 16.500l15.600-9"/><path d="M9.500 4.500L12 6.500l2.500-2M9.500 19.500L12 17.500l2.500 2"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></symbol>
+<symbol id="i-wind" viewBox="0 0 24 24"><path d="M3 9h11a3 3 0 1 0-3-3"/><path d="M3 15h15a3 3 0 1 1-3 3"/><path d="M3 12h7"/></symbol>
+<symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.500 6.500a4 4 0 0 0-5 5L4 17l3 3 5.500-5.500a4 4 0 0 0 5-5l-3 3-2-2z"/></symbol>
+<symbol id="i-office" viewBox="0 0 24 24"><path d="M5 21V4h9v17"/><path d="M14 9h5v12"/><path d="M8 8h3M8 12h3M8 16h3M17 13v.5M17 17v.5"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.500 1.500a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol>
+</defs></svg>
 <div class="qt-ex"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
-<header><div class="wrap"><a class="logo" href="./"><i>❄</i>Alizé Clim</a><nav><a href="#services">Services</a><a href="#entretien">Entretien</a><a href="#tarifs">Formules</a><a href="#contact">Contact</a></nav><a class="btn" href="#contact">Devis gratuit</a></div></header>
+<header><div class="wrap"><a class="logo" href="./"><i><svg class="ico" aria-hidden="true"><use href="#i-snow"/></svg></i>Alizé Clim</a><nav><a href="#services">Services</a><a href="#entretien">Entretien</a><a href="#tarifs">Formules</a><a href="#contact">Contact</a></nav><a class="btn" href="#contact">Devis gratuit</a></div></header>
 
 <main>
 <section class="hero" style="padding:0"><div class="wrap">
@@ -55,11 +81,26 @@ footer{padding:30px 0;font-size:14px;color:var(--mut)}footer .wrap{display:flex;
 </div></section>
 
 <section id="services" style="padding-top:20px"><div class="wrap"><h2 class="t sy">Du premier devis au dépannage.</h2><p class="sub">Quatre services, un seul interlocuteur.</p>
-  <div class="svc"><div class="sv"><div class="e">🏠</div><h3>Installation</h3><p>Étude, pose et mise en service d'une clim réversible.</p></div><div class="sv"><div class="e">🧼</div><h3>Entretien annuel</h3><p>Nettoyage des filtres, contrôle, conseils d'utilisation.</p></div><div class="sv"><div class="e">🛠️</div><h3>Dépannage</h3><p>Panne, fuite, bruit anormal : diagnostic et réparation.</p></div><div class="sv"><div class="e">🏢</div><h3>Locaux pro</h3><p>Bureaux, boutiques, restaurants, contrat de maintenance.</p></div></div></div></section>
+  <div class="svc"><div class="sv"><div class="e"><svg class="ico" aria-hidden="true"><use href="#i-home"/></svg></div><h3>Installation</h3><p>Étude, pose et mise en service d'une clim réversible.</p></div><div class="sv"><div class="e"><svg class="ico" aria-hidden="true"><use href="#i-wind"/></svg></div><h3>Entretien annuel</h3><p>Nettoyage des filtres, contrôle, conseils d'utilisation.</p></div><div class="sv"><div class="e"><svg class="ico" aria-hidden="true"><use href="#i-wrench"/></svg></div><h3>Dépannage</h3><p>Panne, fuite, bruit anormal : diagnostic et réparation.</p></div><div class="sv"><div class="e"><svg class="ico" aria-hidden="true"><use href="#i-office"/></svg></div><h3>Locaux pro</h3><p>Bureaux, boutiques, restaurants, contrat de maintenance.</p></div></div></div></section>
 
 <section class="deep" id="entretien"><div class="wrap">
   <div><h2 class="sy">Un entretien, c'est de l'air plus sain et une facture plus douce.</h2><p>Des filtres propres aident l'appareil à bien respirer. Un contrôle régulier permet de repérer une usure avant la panne, souvent au pire moment : les premières chaleurs.</p></div>
   <ul class="chk"><li><b>1</b>Nettoyage des filtres et de l'unité intérieure</li><li><b>2</b>Contrôle de l'unité extérieure et de l'écoulement des condensats</li><li><b>3</b>Vérification du bon fonctionnement en froid et en chaud</li><li><b>4</b>Compte rendu et conseils d'utilisation</li></ul>
+</div></section>
+
+
+<section class="sizing" id="puissance"><div class="wrap"><h2 class="t sy rv">Quelle puissance pour votre pièce&nbsp;?</h2><p class="sub rv">Une première idée en dix secondes. Le dimensionnement exact se fait sur place, lors d’une visite gratuite.</p>
+  <div class="box2">
+    <div class="pan rv">
+      <label class="l" for="m2">Surface à rafraîchir <output id="m2v">30 m²</output></label><input type="range" id="m2" min="10" max="120" step="5" value="30">
+      <p class="l" style="font-weight:600;margin:18px 0 6px">Exposition de la pièce</p><div class="seg" id="expo"><label><input type="radio" name="expo" value="1" checked><span>Normale</span></label><label><input type="radio" name="expo" value="1.15"><span>Très ensoleillée</span></label></div>
+      <p class="l" style="font-weight:600;margin:0 0 6px">Isolation du logement</p><div class="seg" id="iso"><label><input type="radio" name="iso" value="0.9"><span>Bonne</span></label><label><input type="radio" name="iso" value="1" checked><span>Moyenne</span></label><label><input type="radio" name="iso" value="1.25"><span>Faible (combles, vieux bâti)</span></label></div>
+      <p class="l" style="font-weight:600;margin:0 0 6px">Nombre de pièces à équiper</p><div class="seg" id="nb"><label><input type="radio" name="nb" value="1" checked><span>1</span></label><label><input type="radio" name="nb" value="2"><span>2</span></label><label><input type="radio" name="nb" value="3"><span>3 ou plus</span></label></div>
+    </div>
+    <div class="res2 rv" aria-live="polite"><p class="sy" style="margin:0;opacity:.85">Puissance indicative</p><div class="big" id="kw">—</div><small id="kwt"></small>
+      <div class="gauge" aria-hidden="true"><i id="gg" style="width:20%"></i></div><p id="kwa" style="margin:12px 0 0;font-size:15px"></p><a class="btn" href="#contact">Demander une visite gratuite</a></div>
+  </div>
+  <div class="next rv"><span class="ico-wrap"><svg class="ico" aria-hidden="true"><use href="#i-cal"/></svg></span><b>Prochain entretien conseillé</b><label for="last" style="font-weight:500">Dernier entretien :</label><input type="month" id="last"><span id="nxt" aria-live="polite"></span></div>
 </div></section>
 
 <section id="tarifs"><div class="wrap"><h2 class="t sy">Des formules claires.</h2><p class="sub">Tarifs d'exemple, fictifs. Un devis précis est remis avant toute intervention.</p>
@@ -78,6 +119,7 @@ footer{padding:30px 0;font-size:14px;color:var(--mut)}footer .wrap{display:flex;
 </div></div></section>
 </main>
 <footer><div class="wrap"><span>© <span data-year>2026</span> Alizé Clim (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
+<div class="callbar"><a href="tel:0400000000"><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg> Appeler Alizé Clim · 04 00 00 00 00</a></div>
 <script src="../ex.js" defer></script>
 <script>
 (function(){var t=21,r=document.getElementById('ring'),d=document.getElementById('deg'),m=document.getElementById('mode'),h=document.getElementById('hint');
@@ -86,6 +128,32 @@ m.textContent=t<=19?'Fraîcheur':t<=23?'Confort':'Chaleur';h.textContent=t<=19?'
 document.getElementById('up').onclick=function(){t++;up()};document.getElementById('dn').onclick=function(){t--;up()};up();
 var tg=document.getElementById('tog');tg.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;tg.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b)});
 document.querySelectorAll('[data-p]').forEach(function(p){p.textContent=p.dataset.p.split(',')[+b.dataset.m]+' €'})})})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  /* Puissance indicative : règle simple d'exemple, pas un dimensionnement */
+  const SIZES = [2.0, 2.5, 3.5, 5.0, 7.0];
+  function calc() {
+    const m2 = +$('#m2').value, e = +$('input[name=expo]:checked').value, i = +$('input[name=iso]:checked').value, n = +$('input[name=nb]:checked').value;
+    $('#m2v').textContent = m2 + ' m²';
+    const kw = m2 * 0.09 * e * i, pick = SIZES.find(s => s >= kw);
+    if (n > 1 || !pick) { $('#kw').textContent = n > 1 ? 'Multi-split' : '≈ ' + kw.toFixed(1) + ' kW'; $('#kwt').textContent = n > 1 ? 'Une unité extérieure pour ' + n + (n > 2 ? '+' : '') + ' pièces' : 'Au-delà de 7 kW'; $('#kwa').textContent = 'Plusieurs unités ou un système adapté : une étude sur place est nécessaire.'; $('#gg').style.width = '100%'; return; }
+    $('#kw').textContent = pick.toFixed(1).replace('.', ',') + ' kW'; $('#kwt').textContent = 'Besoin estimé : ' + kw.toFixed(1).replace('.', ',') + ' kW';
+    $('#kwa').textContent = pick <= 2.5 ? 'Un petit mono-split suffit probablement.' : pick <= 3.5 ? 'Un mono-split de taille moyenne : le choix courant pour un salon.' : 'Une unité plus puissante : la visite permet de confirmer.';
+    $('#gg').style.width = Math.min(100, pick / 7 * 100) + '%';
+  }
+  $$('#m2,.seg input').forEach(i => i.addEventListener('input', calc)); calc();
+  $('#last').addEventListener('input', e => {
+    const v = e.target.value; if (!v) { $('#nxt').textContent = ''; return; }
+    const d = new Date(v + '-01T12:00'); d.setFullYear(d.getFullYear() + 1);
+    $('#nxt').innerHTML = '→ <b>' + d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) + '</b> (un entretien par an, idéalement avant l’été)';
+  });
+  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .1 });
+  $$('.sv,.pl,.chk li,.zone span').forEach(n => n.classList.add('rv')); $$('.rv').forEach(n => io.observe(n));
+})();
 </script>
 </body>
 </html>

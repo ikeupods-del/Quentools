@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Les Bois Granger · exemple de site (vendeur de bois de chauffage)</title>
+<meta name="description" content="Exemple fictif de site pour un vendeur de bois de chauffage, réalisé par QuenTools : essences, calcul de commande au stère, zones de livraison.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+<link rel="preload" href="../../assets/fonts/ex/bitter-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../ex.css">
+<style>
+@font-face{font-family:Bitter;src:url(../../assets/fonts/ex/bitter-normal.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:Archivo;src:url(../../assets/fonts/ex/archivo-normal.woff2) format("woff2");font-weight:100 900;font-display:swap}
+:root{--fir:#20362a;--fir2:#2c4638;--bark:#4b2f1e;--sap:#ecd3a2;--heart:#a85a24;--ash:#e9e7de;--paper:#f8f7f2;--ink:#1f1c18;--muted:#625b51;--line:#d3cdbf;--ok:#3f7a4f}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--ash);color:var(--ink);font:400 17px/1.6 Archivo,system-ui,sans-serif}
+h1,h2,h3{font-family:Bitter,Georgia,serif;font-weight:800;margin:0;letter-spacing:-.015em;line-height:1.05}
+a{color:inherit}.wrap{max-width:1140px;margin:0 auto;padding:0 22px}
+:focus-visible{outline:3px solid var(--heart);outline-offset:3px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 24px;border-radius:8px;border:2px solid var(--bark);background:var(--heart);color:#fff;font:700 16px Archivo,sans-serif;text-decoration:none;cursor:pointer}
+.btn:hover{background:#934d1d}.btn.ghost{background:transparent;color:inherit;border-color:currentColor}.btn.ghost:hover{background:rgba(255,255,255,.08)}
+
+/* En-tête et héros, sur fond clair */
+.top{background:var(--paper)}
+header{border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:16px;padding-bottom:16px}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--fir)}.logo svg{width:42px;height:42px;flex:none}
+.logo b{display:block;font:800 22px/1 Bitter,serif}.logo small{display:block;font:500 13px/1.4 Archivo,sans-serif;color:var(--muted);margin-top:3px}
+nav{display:flex;gap:26px;align-items:center}nav a{text-decoration:none;font-weight:600;font-size:15px;color:var(--ink)}nav a:hover{color:var(--heart)}
+nav .tel{background:var(--fir);color:#fbf3e2;border-radius:8px;padding:10px 16px;white-space:nowrap}nav .tel:hover{color:#fff;background:var(--fir2)}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center;padding-top:60px;padding-bottom:64px}
+.hero h1{font-size:clamp(2.4rem,4.8vw,3.9rem);color:var(--fir);max-width:15ch;text-wrap:balance}
+.hero .lede{max-width:46ch;font-size:19px;margin:20px 0 28px;color:#3c372f}
+.stock{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;margin-bottom:20px;color:var(--ok);background:#e3eedf;padding:6px 12px;border-radius:99px}
+.stock i{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.keys{list-style:none;margin:0 0 30px;padding:0;display:grid;grid-template-columns:repeat(3,auto);justify-content:start;gap:12px 28px}
+.keys li{display:flex;gap:10px;align-items:center;font-size:15px;line-height:1.3}.keys li b{display:block;font:800 18px Bitter,serif;color:var(--ink)}
+.keys svg{width:30px;height:30px;flex:none}
+.hero .acts{display:flex;flex-wrap:wrap;gap:12px}
+.quick{background:#fff;border:2px solid var(--bark);border-radius:12px;padding:24px;box-shadow:10px 10px 0 rgba(75,47,30,.16)}
+.quick h2{font-size:22px;margin-bottom:4px}.quick > p{margin:0 0 18px;color:var(--muted);font-size:15px}
+.quick .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.quick label{display:grid;gap:6px;font-weight:600;font-size:14px}
+.quick .row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
+.quick .price{border-top:1px dashed var(--line);padding-top:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.quick .price b{font:800 38px/1 Bitter,serif}.quick .price small{color:var(--muted);font-size:13px;display:block;max-width:20ch}
+.quick .btn{width:100%}
+.band{position:relative;background:var(--ash)}
+.band svg{display:block;width:100%;height:220px}
+.tag{position:absolute;right:max(22px,calc((100% - 1140px) / 2 + 22px));top:-30px;background:var(--sap);color:var(--bark);padding:12px 16px 10px;border-radius:4px;transform:rotate(3deg);box-shadow:0 8px 20px rgba(0,0,0,.25);font:700 14px/1.3 Archivo,sans-serif;max-width:190px;z-index:2}
+.tag b{display:block;font:800 32px/1 Bitter,serif}
+.tag::before{content:"";position:absolute;left:50%;top:-7px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--fir);border:3px solid var(--sap)}
+.ground{height:14px;background:var(--bark)}
+
+section{padding:76px 0}
+.head{max-width:640px;margin-bottom:36px}.head h2{font-size:clamp(2rem,4.4vw,3rem);text-wrap:balance}.head p{color:var(--muted);margin:12px 0 0;font-size:18px}
+
+/* Essences */
+.ess{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.wood{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:22px;display:flex;flex-direction:column;gap:6px}
+.wood svg{width:84px;height:84px;margin-bottom:8px}
+.wood h3{font-size:24px}.wood p{margin:0;color:var(--muted);font-size:15px;flex:1}
+.wood .price{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);font-size:14px;color:var(--muted)}.wood .price b{font:800 26px Bitter,serif;color:var(--ink)}
+.lens{margin-top:46px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:26px}
+.lens h3{font-size:24px;margin-bottom:4px}.lens > p{margin:0 0 20px;color:var(--muted)}
+.len{display:grid;grid-template-columns:64px minmax(0,1fr) 130px 150px;gap:16px;align-items:center;padding:8px 0}
+.len > b{font:800 18px Bitter,serif}.len .sup{font-weight:700;text-align:right}.len small{color:var(--muted);font-size:14px}
+.bar{height:22px;border-radius:11px 5px 5px 11px;background:linear-gradient(#5d3b24,#94643f 45%,#6a4329);position:relative;min-width:30px}
+.bar::after{content:"";position:absolute;right:-5px;top:-1px;width:16px;height:24px;border-radius:50%;background:radial-gradient(circle,#b98a4e 0 1.5px,#ecd3a2 2.5px 4px,#d9b47a 5px 6px,#ecd3a2 7px);border:2px solid #5d3b24;box-sizing:border-box}
+.rule-cap{font-size:14px;color:var(--muted);margin:14px 0 0}
+
+/* Calculateur */
+.calc{background:var(--paper);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.calc-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:start}
+fieldset{border:0;padding:0;margin:0 0 26px}legend{font:800 19px Bitter,serif;margin-bottom:10px;padding:0}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pills label{position:relative}.pills input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.pills span{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 16px;border:2px solid var(--line);border-radius:8px;background:#fff;font-weight:600;font-size:15px}
+.pills input:checked+span{border-color:var(--fir);background:var(--fir);color:#fbf3e2}
+.pills input:focus-visible+span{outline:3px solid var(--heart);outline-offset:2px}
+.pills small{font-weight:500;opacity:.75}
+.qty{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.step{display:flex;align-items:center;border:2px solid var(--fir);border-radius:8px;overflow:hidden;background:#fff}
+.step button{width:52px;height:52px;border:0;background:var(--fir);color:#fbf3e2;font:700 24px Archivo,sans-serif;cursor:pointer}
+.step input{width:72px;height:52px;border:0;text-align:center;font:800 24px Bitter,serif;color:var(--ink);background:#fff;-moz-appearance:textfield}
+.step input::-webkit-inner-spin-button{-webkit-appearance:none}
+.qty .u{font-weight:600}.hint{font-size:14px;color:var(--muted);margin:8px 0 0}
+select,input[type=text],input[type=tel],input[type=date],textarea{font:inherit;width:100%;padding:13px 14px;border:2px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+select:focus,input:focus,textarea:focus{outline:0;border-color:var(--fir)}
+.check{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
+.check input{width:22px;height:22px;margin:2px 0 0;accent-color:var(--fir);flex:none}.check span b{display:block}.check span small{color:var(--muted);font-size:14px}
+.check.off{opacity:.45;pointer-events:none}
+
+.bon{position:sticky;top:20px;background:#fff;border:2px solid var(--bark);border-radius:10px;overflow:hidden;box-shadow:8px 8px 0 rgba(75,47,30,.18)}
+.bon-pile{background:linear-gradient(var(--fir2),var(--fir));padding:22px 18px 0;border-bottom:8px solid var(--bark)}.bon-pile svg{transition:none}
+.bon-pile svg{display:block;width:100%;height:auto}
+.bon-body{padding:20px 22px 22px}
+.bon h3{font-size:20px;margin-bottom:12px}
+.ln{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:15px}.ln span:last-child{white-space:nowrap;font-weight:600}
+.ln.free span:last-child{color:var(--ok)}
+.total{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 2px}.total span{font-weight:700}.total b{font:800 40px/1 Bitter,serif}
+.tva{font-size:13px;color:var(--muted);text-align:right;margin:0 0 16px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 18px}
+.facts div{background:var(--ash);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--muted);line-height:1.3}.facts b{display:block;font:800 19px Bitter,serif;color:var(--ink)}
+.warn{background:#fbecd9;border-left:4px solid var(--heart);padding:10px 12px;font-size:14px;margin:0 0 14px;border-radius:0 6px 6px 0}
+.bon .btn{width:100%}
+
+/* Livraison */
+.liv{display:grid;grid-template-columns:.9fr 1.1fr;gap:44px;align-items:center}
+.rings svg{width:100%;height:auto;display:block}
+.zone{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.zone i{width:18px;height:18px;border-radius:50%;border:2px solid var(--bark)}
+.zone b{display:block;font:800 19px Bitter,serif}.zone small{color:var(--muted);font-size:14px}.zone strong{font:800 20px Bitter,serif;white-space:nowrap}
+.access{margin-top:26px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.access div{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px;font-size:15px}.access b{display:block;font-family:Bitter,serif;font-size:17px;margin-bottom:4px}
+
+/* Questions */
+.faq{max-width:800px}
+details{border-bottom:1px solid var(--line)}summary{cursor:pointer;list-style:none;padding:20px 40px 20px 0;font:800 20px/1.3 Bitter,serif;position:relative}
+summary::-webkit-details-marker{display:none}summary::after{content:"+";position:absolute;right:6px;top:16px;font:700 28px Archivo,sans-serif;color:var(--heart)}
+details[open] summary::after{content:"−"}details p{margin:0 0 20px;color:#3c372f;max-width:66ch}
+.coef{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin:0 0 20px;max-width:720px}
+.coef div{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center;font-size:13px;color:var(--muted)}.coef b{display:block;font:800 20px Bitter,serif;color:var(--ink)}
+
+/* Commande */
+.order{background:var(--fir);color:#fbf3e2}
+.order .head p{color:#d9cdb3}
+.order form{display:grid;gap:14px;background:var(--paper);color:var(--ink);padding:28px;border-radius:10px;max-width:760px}
+.order .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.order label{display:grid;gap:6px;font-weight:600;font-size:15px}
+.order .small{font-size:13px;color:var(--muted);margin:0}
+.hours{display:flex;flex-wrap:wrap;gap:12px 46px;margin-top:40px;font-size:15px;color:#d9cdb3}.hours b{display:block;color:#fbf3e2;font:800 18px Bitter,serif}
+
+/* Barre de total sur téléphone, tant que le bon de commande n'est pas à l'écran */
+.mbar{display:none}
+@media (max-width:960px){.mbar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:40;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--fir);color:#fbf3e2;border:2px solid var(--bark);border-radius:10px;padding:10px 12px 10px 16px;box-shadow:0 10px 24px rgba(0,0,0,.25);transform:translateY(160%);transition:transform .25s}
+.mbar.on{transform:none}.mbar b{font:800 22px Bitter,serif}.mbar a{color:var(--fir);background:var(--sap);border-radius:8px;padding:10px 14px;font-weight:700;font-size:14px;text-decoration:none;white-space:nowrap}}
+@media (prefers-reduced-motion:reduce){.mbar{transition:none}}
+footer{background:var(--bark);color:var(--sap);padding:28px 0;font-size:14px}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
+
+@keyframes drop{from{transform:translateY(-34px);opacity:0}to{transform:none;opacity:1}}
+.band .log{animation:drop .5s cubic-bezier(.3,1.4,.6,1) both;animation-delay:calc(var(--d) * 5ms)}
+.bon .log.new{animation:drop .35s ease-out both}
+@media (prefers-reduced-motion:reduce){.band .log,.bon .log.new{animation:none}html{scroll-behavior:auto}}
+
+@media (max-width:960px){.hero .wrap{grid-template-columns:1fr;gap:36px;padding-top:40px}#calcForm{margin-bottom:60px}.ess{grid-template-columns:1fr 1fr}.calc-grid,.liv{grid-template-columns:1fr}.bon{position:static}}
+@media (max-width:760px){nav a:not(.tel){display:none}nav .tel{font-size:14px;padding:8px 10px}.logo{font-size:21px}.tag{top:-40px}.keys{grid-template-columns:1fr}.len{grid-template-columns:52px minmax(0,1fr) auto}.len .ps{display:none}.len .sup{white-space:nowrap}.len small{display:none}.lens{padding:20px 16px}
+  .order .g2,.access{grid-template-columns:1fr}.coef{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:480px){.ess{grid-template-columns:1fr}.logo small{display:none}}
+</style>
+</head>
+<body>
+<div class="qt-ex"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
+
+<div class="top">
+<header><div class="wrap">
+  <a class="logo" href="./"><svg id="logoLog" viewBox="0 0 84 84" aria-hidden="true"></svg><span><b>Les Bois Granger</b><small>Bois de chauffage du Bugey, depuis 1994</small></span></a>
+  <nav aria-label="Navigation principale"><a href="#essences">Nos bois</a><a href="#calcul">Commander</a><a href="#livraison">Livraison</a><a href="#questions">Questions</a><a class="tel" href="tel:+33400000000">04 00 00 00 00</a></nav>
+</div></header>
+
+<section class="hero" style="padding:0"><div class="wrap">
+  <div>
+    <span class="stock"><i aria-hidden="true"></i>Bois sec en stock pour l'hiver 2026-2027</span>
+    <h1>Bois de chauffage sec, livré chez vous.</h1>
+    <p class="lede">Chêne, hêtre et charme de nos forêts, fendus, coupés à la longueur de votre poêle et séchés deux ans sous abri.</p>
+    <ul class="keys">
+      <li><svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="#ecd3a2" stroke="#4b2f1e" stroke-width="3"/><circle cx="15" cy="15" r="7" fill="none" stroke="#b98a4e" stroke-width="1.5"/></svg><span><b>Dès 88 €</b>le stère</span></li>
+      <li><svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="#e3eedf" stroke="#3f7a4f" stroke-width="3"/><path d="M9 15.5l4 4 8-9" fill="none" stroke="#3f7a4f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Moins de 20 %</b>d'humidité</span></li>
+      <li><svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="#fbecd9" stroke="#a85a24" stroke-width="3"/><circle cx="15" cy="15" r="3" fill="#a85a24"/></svg><span><b>Livraison offerte</b>jusqu'à 10 km</span></li>
+    </ul>
+    <div class="acts"><a class="btn" href="#calcul">Calculer ma commande</a><a class="btn ghost" href="#essences">Voir nos bois</a></div>
+  </div>
+  <form class="quick" id="quick" aria-labelledby="qTitle">
+    <h2 id="qTitle">Votre prix en 10 secondes</h2>
+    <p>Prix TTC, sans engagement.</p>
+    <div class="g2">
+      <label>Essence<select id="qEss"></select></label>
+      <label>Longueur<select id="qLen"></select></label>
+    </div>
+    <div class="row"><span style="font-weight:600;font-size:14px">Nombre de stères</span>
+      <div class="step"><button type="button" id="qMinus" aria-label="Un stère de moins">−</button><input id="qQ" type="number" inputmode="numeric" min="1" max="30" value="4" aria-label="Nombre de stères"><button type="button" id="qPlus" aria-label="Un stère de plus">+</button></div></div>
+    <div class="price" aria-live="polite"><small id="qNote">Bois seul. Livraison offerte jusqu'à 10 km.</small><b id="qTot">0 €</b></div>
+    <button class="btn" type="submit">Continuer ma commande</button>
+  </form>
+</div></section>
+<div class="band"><svg id="heroPile" role="img" aria-label="Un mur de bûches empilées, vues de face" preserveAspectRatio="xMidYMax slice"></svg>
+  <div class="tag" aria-hidden="true"><b>18 %</b>d'humidité, mesuré au dépôt ce matin</div></div>
+<div class="ground" aria-hidden="true"></div>
+</div>
+
+<main>
+<section id="essences"><div class="wrap">
+  <div class="head"><h2>Quatre bois durs, rien que du sec</h2><p>Que des feuillus denses, pour une flamme longue et une bonne braise. Prix au stère, bûches de 1 m, livraison en sus.</p></div>
+  <div class="ess" id="essList"></div>
+
+  <div class="lens">
+    <h3>Coupé à votre longueur</h3>
+    <p>Sept longueurs au choix, supplément par stère. Plus la coupe est courte, plus le bois se tasse : le volume livré diminue, la quantité de bois reste la même.</p>
+    <div id="lenList"></div>
+  <p class="rule-cap">Pour choisir : mesurez la profondeur de votre foyer et retirez 5 cm. Petit poêle : 20 à 25 cm. Poêle courant : 30 à 33 cm. Insert : 40 à 50 cm. Cheminée ouverte : 50 cm à 1 m.</p>
+  </div>
+</div></section>
+
+<section class="calc" id="calcul"><div class="wrap">
+  <div class="head"><h2>Calculez votre commande</h2><p>Le prix s'affiche au fur et à mesure, livraison comprise. Aucun engagement : on vous rappelle pour fixer le jour.</p></div>
+  <div class="calc-grid">
+    <form id="calcForm" novalidate>
+      <fieldset><legend>Essence</legend><div class="pills" id="pEss"></div></fieldset>
+      <fieldset><legend>Longueur des bûches</legend><div class="pills" id="pLen"></div></fieldset>
+      <fieldset><legend>Nombre de stères</legend>
+        <div class="qty"><div class="step"><button type="button" id="minus" aria-label="Un stère de moins">−</button><input id="q" type="number" inputmode="numeric" min="1" max="30" value="4" aria-label="Nombre de stères"><button type="button" id="plus" aria-label="Un stère de plus">+</button></div><span class="u">stères</span></div>
+        <p class="hint">Une maison chauffée au bois en appoint consomme souvent 4 à 6 stères par hiver, en chauffage principal 8 à 12.</p>
+      </fieldset>
+      <fieldset><legend>Réception</legend>
+        <div class="pills" id="pMode">
+          <label><input type="radio" name="mode" value="liv" checked><span>Livraison</span></label>
+          <label><input type="radio" name="mode" value="ret"><span>Retrait au dépôt</span></label>
+        </div>
+        <div id="zoneBox" style="margin-top:14px"><label for="zone" style="display:block;font-weight:600;font-size:15px;margin-bottom:6px">Distance depuis Hauteville</label><select id="zone"></select></div>
+      </fieldset>
+      <fieldset><legend>Options</legend>
+        <label class="check" id="optStack"><input type="checkbox" id="stack"><span><b>Rangement sur place</b><small>On empile le bois là où vous voulez, à moins de 30 m du camion. 15 € le stère.</small></span></label>
+        <label class="check"><input type="checkbox" id="kind"><span><b>Un sac de petit bois d'allumage</b><small>Environ 25 L de chêne fin, sec. 9 €.</small></span></label>
+      </fieldset>
+    </form>
+
+    <aside class="bon" aria-labelledby="bonTitle">
+      <div class="bon-pile"><svg id="calcPile" viewBox="0 0 400 100" role="img" aria-label="Votre tas de bois"></svg></div>
+      <div class="bon-body" aria-live="polite">
+        <h3 id="bonTitle">Votre bon de commande</h3>
+        <div id="lines"></div>
+        <div class="total"><span>Total TTC</span><b id="tot">0 €</b></div>
+        <p class="tva" id="tva"></p>
+        <div class="facts" id="facts"></div>
+        <p class="warn" id="warn" hidden></p>
+        <a class="btn" href="#commande" id="go">Commander ce chargement</a>
+      </div>
+    </aside>
+  </div>
+</div></section>
+
+<section id="livraison"><div class="wrap">
+  <div class="head"><h2>On livre autour du dépôt</h2><p>Du mardi au samedi, avec notre camion-benne. Le créneau vous est confirmé par SMS la veille.</p></div>
+  <div class="liv">
+    <div class="rings"><svg id="rings" viewBox="0 0 400 400" role="img" aria-label="Zones de livraison en cercles autour du dépôt : jusqu'à 10 km offerte, 10 à 25 km 30 euros, 25 à 40 km 55 euros"></svg></div>
+    <div>
+      <div id="zoneList"></div>
+      <div class="access">
+        <div><b>Accès du camion</b>Un passage de 3 m de large et un sol porteur. Le bois est déchargé en vrac au plus près.</div>
+        <div><b>Plus de 8 stères</b>La commande part en plusieurs tours de camion, le même jour si possible.</div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="questions" style="background:var(--paper);border-top:1px solid var(--line)"><div class="wrap">
+  <div class="head"><h2>Vos questions</h2></div>
+  <div class="faq">
+    <details open><summary>Un stère, c'est combien une fois coupé ?</summary>
+      <p>Le stère, c'est 1 m³ de bûches de 1 m bien rangées. Recoupées plus court, elles se tassent : le même bois prend moins de place. Vous ne perdez rien en quantité, seulement en volume apparent.</p>
+      <div class="coef" id="coef"></div><p style="font-size:14px;color:var(--muted)">Valeurs moyennes, selon la façon dont les bûches sont rangées.</p></details>
+    <details><summary>Comment savoir si le bois est vraiment sec ?</summary><p>On fend une bûche devant vous à la livraison et on la mesure à l'humidimètre. Notre bois sec est sous 20 % d'humidité. Au-dessus, il chauffe mal, encrasse le conduit et fume.</p></details>
+    <details><summary>Quand commander ?</summary><p>Idéalement entre avril et septembre : délais courts et tout le choix de longueurs. En plein hiver, comptez une à deux semaines selon la demande.</p></details>
+    <details><summary>Comment stocker mon bois ?</summary><p>Sous un abri aéré, surélevé du sol par des palettes, les côtés à l'air libre. Une bâche fermée sur tout le tas fait reprendre l'humidité.</p></details>
+    <details><summary>Comment se passe le paiement ?</summary><p>À la livraison ou au retrait, par chèque, virement ou carte. Une facture vous est remise avec l'essence, la longueur et la quantité livrée.</p></details>
+  </div>
+</div></section>
+
+<section class="order" id="commande"><div class="wrap">
+  <div class="head"><h2>Passer commande</h2><p>Envoyez votre demande, on vous rappelle sous 24 h pour confirmer le jour de livraison. Rien n'est à payer avant.</p></div>
+  <form>
+    <div class="g2"><label>Nom<input type="text" autocomplete="name" required></label><label>Téléphone<input type="tel" autocomplete="tel" required></label></div>
+    <div class="g2"><label>Adresse de livraison<input type="text" autocomplete="street-address" placeholder="Rue, commune"></label><label>Date souhaitée<input type="date" id="when"></label></div>
+    <label>Ma commande<textarea id="recap" rows="4"></textarea></label>
+    <label>Précisions<textarea rows="2" placeholder="Accès, portail, chien, horaires…"></textarea></label>
+    <p class="small">Vos informations servent uniquement à organiser la livraison.</p>
+    <button class="btn" type="submit">Envoyer ma demande</button>
+  </form>
+  <div class="hours">
+    <div><b>Dépôt</b>Route Exemple, Hauteville (01)</div>
+    <div><b>Retrait</b>Mardi au samedi, 8 h – 12 h</div>
+    <div><b>Téléphone</b>04 00 00 00 00</div>
+  </div>
+</div></section>
+</main>
+
+<div class="mbar" id="mbar" aria-hidden="true"><span>Total <b id="mtot"></b></span><a href="#bonTitle" tabindex="-1">Voir mon bon</a></div>
+<footer><div class="wrap"><span>© <span data-year>2026</span> Les Bois Granger (entreprise fictive) · SIRET 000 000 000 00000 (exemple) · prix d'exemple, TVA 10 % incluse</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
+
+<script>
+(function () {
+  'use strict';
+  // Tarifs d'exemple : prix TTC au stère, bûches de 1 m.
+  var ESS = {
+    chene:   { n: 'Chêne',   d: 'Le plus dense : longue flamme, braise qui tient la nuit.', p: 95, kg: 500, c: ['#d9b47a', '#b98a4e', '#5b3a22'] },
+    hetre:   { n: 'Hêtre',   d: 'Belle flamme vive, s’allume vite, chauffe fort.',          p: 90, kg: 450, c: ['#e6c3a0', '#c99c78', '#6a4630'] },
+    charme:  { n: 'Charme',  d: 'Très dense, peu d’étincelles, idéal en poêle.',            p: 98, kg: 500, c: ['#efe0bf', '#d2bd92', '#6b5a3c'] },
+    melange: { n: 'Mélange', d: 'Chêne, hêtre et charme : le choix le plus courant.',       p: 88, kg: 480, c: null }
+  };
+  var LEN = {
+    100: { n: '1 m', add: 0, k: 1 }, 50: { n: '50 cm', add: 12, k: .8 }, 40: { n: '40 cm', add: 16, k: .75 }, 33: { n: '33 cm', add: 20, k: .7 },
+    30: { n: '30 cm', add: 22, k: .68 }, 25: { n: '25 cm', add: 26, k: .6 }, 20: { n: '20 cm', add: 30, k: .55 }
+  };
+  var LORDER = ['100', '50', '40', '33', '30', '25', '20'];
+  var ZONES = [
+    { n: 'Jusqu’à 10 km', s: 'Hauteville et communes voisines', fee: 0, col: '#8bd17c' },
+    { n: '10 à 25 km', s: 'Offerte dès 6 stères', fee: 30, free: 6, col: '#e9c46a' },
+    { n: '25 à 40 km', s: 'Par tour de camion', fee: 55, col: '#d98c4a' },
+    { n: 'Plus de 40 km', s: 'Prix fixé avec vous au téléphone', fee: null, col: '#b9b2a3' }
+  ];
+  var TRUCK = 8, STACK = 15, KINDLING = 9, TRAILER = 500, MIN_LIV = 2, MAXQ = 30;
+  var $ = function (id) { return document.getElementById(id); };
+  var eur = function (n) { return n.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' €'; };
+  var nf = function (n, d) { return n.toLocaleString('fr-FR', { maximumFractionDigits: d == null ? 2 : d }); };
+  var MIX = ['chene', 'hetre', 'charme'];
+
+  // Bûches vues de face : cernes en dégradé radial répété, écorce en contour.
+  function grads(prefix) {
+    return Object.keys(ESS).filter(function (k) { return ESS[k].c; }).map(function (k) {
+      var c = ESS[k].c;
+      return '<radialGradient id="' + prefix + k + '" r="0.14" spreadMethod="repeat"><stop offset="0" stop-color="' + c[0] + '"/><stop offset=".72" stop-color="' + c[0] + '"/><stop offset=".86" stop-color="' + c[1] + '"/><stop offset="1" stop-color="' + c[0] + '"/></radialGradient>';
+    }).join('');
+  }
+  function rnd(seed) { return function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }; }
+  function log(x, y, r, k, prefix, i, cls) {
+    var e = ESS[k], R = r.toFixed(1), a = (i * 47) % 360;
+    return '<g class="log' + (cls || '') + '" style="--d:' + i + '"><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + R + '" fill="url(#' + prefix + k + ')" stroke="' + e.c[2] + '" stroke-width="' + (r * .16).toFixed(1) + '"/>' +
+      '<path d="M' + x.toFixed(1) + ' ' + y.toFixed(1) + 'l' + (Math.cos(a) * r * .7).toFixed(1) + ' ' + (Math.sin(a) * r * .7).toFixed(1) + '" stroke="' + e.c[2] + '" stroke-opacity=".45" stroke-width="1.2"/>' +
+      '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (r * .1).toFixed(1) + '" fill="' + e.c[2] + '" fill-opacity=".6"/></g>';
+  }
+  // Empile n bûches de bas en haut dans une grille décalée.
+  function pile(svg, n, kind, cols, rows, W, H, prefix, prev) {
+    var r = W / cols / 2, dy = r * 1.74, out = '<defs>' + grads(prefix) + '</defs>', R = rnd(7);
+    for (var i = 0; i < n && i < cols * rows; i++) {
+      var row = Math.floor(i / cols), col = i % cols, off = row % 2 ? r : 0;
+      if (row % 2 && col === cols - 1) { continue; }
+      var x = r + col * 2 * r + off + (R() - .5) * r * .12, y = H - r - row * dy + (R() - .5) * r * .1;
+      var k = kind === 'melange' || kind === 'mix' ? MIX[Math.floor(R() * 3)] : kind;
+      out += log(x, y, r * (.86 + R() * .12), k, prefix, i, prev != null && i >= prev ? ' new' : '');
+    }
+    svg.innerHTML = out;
+  }
+
+  // Héros : grand tas mélangé.
+  // Bande de bûches, bord à bord, recalculée à la largeur de l'écran.
+  function band() {
+    var svg = $('heroPile'), W = Math.max(320, svg.clientWidth || window.innerWidth), r = W < 600 ? 22 : 30, H = 220, cols = Math.ceil(W / (2 * r)) + 1;
+    var rows = Math.ceil((H - r) / (r * 1.74)) + 1;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    pile(svg, cols * rows, 'mix', cols, rows, cols * 2 * r, H, 'h');
+  }
+  band();
+  var bt; window.addEventListener('resize', function () { clearTimeout(bt); bt = setTimeout(band, 150); });
+  $('logoLog').innerHTML = '<defs>' + grads('l') + '</defs>' + log(42, 42, 36, 'chene', 'l', 0);
+
+  // Longueurs de coupe, à l'échelle.
+  $('lenList').innerHTML = LORDER.map(function (k) {
+    var l = LEN[k];
+    return '<div class="len"><b>' + l.n + '</b><div><div class="bar" style="width:' + k + '%"></div></div><span class="sup">' + (l.add ? '+' + l.add + ' €<span class="ps"> / stère</span>' : 'base') + '</span><small>≈ ' + nf(l.k) + ' m³ par stère</small></div>';
+  }).join('');
+  $('coef').innerHTML = LORDER.map(function (k) { return '<div><b>' + nf(LEN[k].k) + '</b>m³ en ' + LEN[k].n + '</div>'; }).join('');
+
+  // Cartes des essences.
+  $('essList').innerHTML = Object.keys(ESS).map(function (k) {
+    var e = ESS[k], ic = '<svg viewBox="0 0 84 84" aria-hidden="true"><defs>' + grads('c' + k) + '</defs>';
+    if (e.c) ic += log(42, 42, 38, k, 'c' + k, 0);
+    else ic += log(26, 54, 22, 'chene', 'c' + k, 0) + log(58, 54, 22, 'hetre', 'c' + k, 1) + log(42, 27, 22, 'charme', 'c' + k, 2);
+    return '<article class="wood">' + ic + '</svg><h3>' + e.n + '</h3><p>' + e.d + '</p><div class="price"><b>' + e.p + ' €</b> le stère en 1 m</div></article>';
+  }).join('');
+
+  // Choix du calculateur.
+  $('pEss').innerHTML = Object.keys(ESS).map(function (k, i) { return '<label><input type="radio" name="ess" value="' + k + '"' + (k === 'melange' ? ' checked' : '') + '><span>' + ESS[k].n + '</span></label>'; }).join('');
+  $('pLen').innerHTML = LORDER.map(function (k) { var l = LEN[k]; return '<label><input type="radio" name="len" value="' + k + '"' + (k === '33' ? ' checked' : '') + '><span>' + l.n + (l.add ? ' <small>+' + l.add + ' €</small>' : '') + '</span></label>'; }).join('');
+  $('zone').innerHTML = ZONES.map(function (z, i) { return '<option value="' + i + '">' + z.n + (z.fee === 0 ? ' : livraison offerte' : z.fee ? ' : ' + z.fee + ' €' + (z.free ? ' (offerte dès ' + z.free + ' stères)' : '') : ' : sur devis') + '</option>'; }).join('');
+  $('zone').value = '1';
+
+  // Zones en cernes.
+  var ring = '<circle cx="200" cy="200" r="190" fill="' + ZONES[3].col + '" fill-opacity=".25"/>';
+  [[150, 2], [105, 1], [58, 0]].forEach(function (a) { ring += '<circle cx="200" cy="200" r="' + a[0] + '" fill="' + ZONES[a[1]].col + '" fill-opacity=".55" stroke="#4b2f1e" stroke-width="2"/>'; });
+  ring += '<circle cx="200" cy="200" r="7" fill="#4b2f1e"/><text x="200" y="228" text-anchor="middle" font-family="Bitter,serif" font-weight="800" font-size="15" fill="#1f1c18">Dépôt</text>' +
+    '<text x="200" y="76" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="700" font-size="13" fill="#1f1c18">25 – 40 km</text>' +
+    '<text x="200" y="120" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="700" font-size="13" fill="#1f1c18">10 – 25 km</text>' +
+    '<text x="200" y="168" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="700" font-size="13" fill="#1f1c18">10 km</text>' +
+    '<text x="200" y="30" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="600" font-size="12" fill="#625b51">au-delà : sur devis</text>';
+  $('rings').innerHTML = ring;
+  $('zoneList').innerHTML = ZONES.map(function (z) { return '<div class="zone"><i style="background:' + z.col + '"></i><div><b>' + z.n + '</b><small>' + z.s + '</small></div><strong>' + (z.fee === 0 ? 'Offerte' : z.fee ? z.fee + ' €' : 'Sur devis') + '</strong></div>'; }).join('');
+
+  var lastN = null, recapText = '';
+  function val(name) { var c = document.querySelector('input[name="' + name + '"]:checked'); return c && c.value; }
+  function update() {
+    var q = Math.round(+$('q').value); if (!(q >= 1)) q = 1; if (q > MAXQ) q = MAXQ;
+    var k = val('ess'), e = ESS[k], l = LEN[val('len')], liv = val('mode') === 'liv', z = ZONES[+$('zone').value];
+    $('zoneBox').hidden = !liv; $('optStack').classList.toggle('off', !liv); if (!liv) $('stack').checked = false;
+    var unit = e.p + l.add, wood = q * unit, tours = Math.ceil(q / TRUCK), fee = 0, quote = false, warn = '';
+    var lines = [[q + ' stère' + (q > 1 ? 's' : '') + ' de ' + e.n.toLowerCase() + ', ' + l.n, eur(wood)]];
+    if (liv) {
+      if (z.fee === null) { quote = true; lines.push(['Livraison au-delà de 40 km', 'sur devis']); }
+      else if (z.fee === 0 || (z.free && q >= z.free)) lines.push(['Livraison' + (tours > 1 ? ' en ' + tours + ' tours' : ''), 'offerte', 1]);
+      else { fee = z.fee * tours; lines.push(['Livraison ' + z.n.replace('Jusqu’à', 'jusqu’à') + (tours > 1 ? ', ' + tours + ' tours' : ''), eur(fee)]); }
+      if (q < MIN_LIV) warn = 'Livraison à partir de ' + MIN_LIV + ' stères. Pour 1 stère, le retrait au dépôt est possible.';
+      else if (z.free && q < z.free && z.fee) warn = 'Encore ' + (z.free - q) + ' stère' + (z.free - q > 1 ? 's' : '') + ' et la livraison est offerte.';
+    } else lines.push(['Retrait au dépôt', 'gratuit', 1]);
+    var st = $('stack').checked ? q * STACK : 0, kd = $('kind').checked ? KINDLING : 0;
+    if (st) lines.push(['Rangement sur place', eur(st)]);
+    if (kd) lines.push(['Sac de petit bois', eur(kd)]);
+    var total = wood + fee + st + kd, vol = q * l.k, kg = q * e.kg;
+    $('lines').innerHTML = lines.map(function (x) { return '<div class="ln' + (x[2] ? ' free' : '') + '"><span>' + x[0] + '</span><span>' + x[1] + '</span></div>'; }).join('');
+    $('tot').textContent = $('mtot').textContent = (quote ? 'dès ' : '') + eur(total);
+    $('tva').textContent = 'dont TVA 10 % : ' + eur(Math.round(total / 11 * 100) / 100);
+    $('facts').innerHTML = '<div><b>' + nf(vol) + ' m³</b>de bûches empilées</div><div><b>≈ ' + nf(kg / 1000, 1) + ' t</b>de bois sec</div>' +
+      '<div><b>≈ ' + nf(Math.ceil(vol * 2) / 2, 1) + ' m²</b>au sol, tas de 1 m de haut</div>' +
+      (liv ? '<div><b>' + tours + ' tour' + (tours > 1 ? 's' : '') + '</b>de camion</div>' : '<div><b>' + Math.ceil(kg / TRAILER) + ' voyage' + (Math.ceil(kg / TRAILER) > 1 ? 's' : '') + '</b>en remorque de 750 kg</div>');
+    $('warn').hidden = !warn; $('warn').textContent = warn;
+    var n = q * 4, cols = 13, r = 400 / cols / 2, rows = Math.max(2, Math.ceil(n / (cols - .5))), H = Math.round(r * 2 + (rows - 1) * r * 1.74 + 6);
+    $('calcPile').setAttribute('viewBox', '0 0 400 ' + H); pile($('calcPile'), n + Math.floor(n / (2 * cols - 1)), k, cols, rows, 400, H, 'b', lastN); lastN = n + Math.floor(n / (2 * cols - 1));
+    recapText = q + ' stère' + (q > 1 ? 's' : '') + ' de ' + e.n.toLowerCase() + ', coupe ' + l.n + (liv ? ', livraison (' + z.n.toLowerCase() + ')' : ', retrait au dépôt') + (st ? ', avec rangement' : '') + (kd ? ', + 1 sac de petit bois' : '') + '. Total estimé : ' + (quote ? 'dès ' : '') + eur(total) + ' TTC.';
+  }
+  $('q').addEventListener('input', update);
+  $('q').addEventListener('change', function () { var v = Math.min(MAXQ, Math.max(1, Math.round(+this.value) || 1)); this.value = v; update(); });
+  $('minus').onclick = function () { $('q').value = Math.max(1, (+$('q').value || 1) - 1); update(); };
+  $('plus').onclick = function () { $('q').value = Math.min(MAXQ, (+$('q').value || 0) + 1); update(); };
+  $('calcForm').addEventListener('change', update);
+  $('calcForm').addEventListener('submit', function (ev) { ev.preventDefault(); ev.stopImmediatePropagation(); });
+  $('go').addEventListener('click', function () { $('recap').value = recapText; });
+  var t = new Date(); t.setDate(t.getDate() + 2); $('when').min = t.toISOString().slice(0, 10);
+  // Prix express du héros, puis passage au calculateur complet avec les mêmes choix.
+  $('qEss').innerHTML = Object.keys(ESS).map(function (k) { return '<option value="' + k + '"' + (k === 'melange' ? ' selected' : '') + '>' + ESS[k].n + '</option>'; }).join('');
+  $('qLen').innerHTML = LORDER.map(function (k) { return '<option value="' + k + '"' + (k === '33' ? ' selected' : '') + '>' + LEN[k].n + '</option>'; }).join('');
+  function quick() {
+    var q = Math.min(MAXQ, Math.max(1, Math.round(+$('qQ').value) || 1)), e = ESS[$('qEss').value], l = LEN[$('qLen').value];
+    $('qTot').textContent = eur(q * (e.p + l.add));
+    $('qNote').textContent = (e.p + l.add) + ' € le stère. Livraison offerte jusqu’à 10 km' + (q < MIN_LIV ? ', dès ' + MIN_LIV + ' stères.' : '.');
+  }
+  $('quick').addEventListener('change', quick); $('qQ').addEventListener('input', quick);
+  $('qMinus').onclick = function () { $('qQ').value = Math.max(1, (+$('qQ').value || 1) - 1); quick(); };
+  $('qPlus').onclick = function () { $('qQ').value = Math.min(MAXQ, (+$('qQ').value || 0) + 1); quick(); };
+  $('quick').addEventListener('submit', function (ev) {
+    ev.preventDefault(); ev.stopImmediatePropagation();
+    document.querySelector('input[name="ess"][value="' + $('qEss').value + '"]').checked = true;
+    document.querySelector('input[name="len"][value="' + $('qLen').value + '"]').checked = true;
+    $('q').value = Math.min(MAXQ, Math.max(1, Math.round(+$('qQ').value) || 1)); $('zone').value = '0'; update();
+    $('calcul').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  });
+  quick();
+  update();
+  if ('IntersectionObserver' in window) {
+    var inForm = false, inBon = false, bar = $('mbar');
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (x) { if (x.target.id === 'calcForm') inForm = x.isIntersecting; else inBon = x.isIntersecting; });
+      bar.classList.toggle('on', inForm && !inBon);
+    });
+    io.observe($('calcForm')); io.observe(document.querySelector('.bon'));
+  }
+})();
+</script>
+<script src="../ex.js" defer></script>
+</body>
+</html>

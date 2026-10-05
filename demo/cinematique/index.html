@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; media-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Lumen · site à défilement cinématique (modèle de démonstration)</title>
+<meta name="description" content="Démonstration d'un site qui se raconte au défilement : suite d'images sur canvas, vidéo pilotée, lettres qui se dispersent, diaporama produit. Marque et images fictives, réalisé par QuenTools.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+<link rel="preload" href="../../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../exemples/ex.css">
+<style>
+@font-face{font-family:Bric;src:url(../../assets/fonts/bricolage.woff2) format("woff2-variations");font-weight:200 800;font-display:swap}
+@font-face{font-family:Inter;src:url(../../assets/fonts/inter.woff2) format("woff2-variations");font-weight:100 900;font-display:swap}
+:root{--bg:#07060b;--ink:#f4f1fb;--mut:#a9a3bd;--or:#ff9a3d;--vi:#8f7bff;--ok:#4fd39a;color-scheme:dark}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 Inter,system-ui,sans-serif;overflow-x:hidden}
+h1,h2,h3{font-family:Bric,Inter,sans-serif;margin:0;line-height:1.02;letter-spacing:-.025em}
+a{color:var(--or)}a:focus-visible,button:focus-visible{outline:3px solid var(--or);outline-offset:3px}
+.qt-ex{background:#0d0b16;border-bottom:1px solid #26232f}.qt-ex a{display:inline-block;padding:10px 4px}
+.skip{position:absolute;left:12px;top:-60px;z-index:100;background:#fff;color:#000;font-weight:700;padding:12px 18px;border-radius:10px;text-decoration:none}.skip:focus{top:12px}
+header.top{position:fixed;left:0;right:0;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:14px 20px;mix-blend-mode:difference;pointer-events:none}
+header.top b{font:800 20px Bric,sans-serif;letter-spacing:.18em}header.top span{font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+/* sections hautes : le contenu reste collé pendant que l'on défile */
+.tall{position:relative}.sticky{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;display:grid;place-items:center}
+#intro{height:240vh}#hero{height:480vh}#assemble{height:220vh}#vid{height:320vh}
+@media (max-width:768px){#intro{height:200vh}#hero{height:380vh}#assemble{height:180vh}#vid{height:260vh}}
+.big{font-weight:800;text-align:center;font-size:clamp(3.2rem,15vw,11rem);letter-spacing:.04em}
+.kick{position:absolute;bottom:9vh;left:0;right:0;text-align:center;color:var(--mut);letter-spacing:.14em;text-transform:uppercase;font-size:13px}
+.kick i{display:block;width:1px;height:42px;margin:10px auto 0;background:linear-gradient(var(--or),transparent)}
+#hero canvas{position:absolute;inset:0;width:100%;height:100%;background:#07060b}
+.chap{position:absolute;left:6vw;right:6vw;bottom:14vh;max-width:560px;opacity:0;transform:translateY(18px);transition:opacity .45s,transform .45s}
+.chap.is-on{opacity:1;transform:none}.chap small{display:block;color:var(--or);letter-spacing:.2em;font-size:12px;text-transform:uppercase;margin-bottom:8px}
+.chap h2{font-size:clamp(2rem,6vw,3.6rem)}.chap p{color:var(--mut);margin:12px 0 0}
+.chap{z-index:2;text-shadow:0 2px 18px #000}#hero .sticky::after{content:"";position:absolute;inset:auto 0 0;height:55%;background:linear-gradient(transparent,rgba(7,6,11,.82));pointer-events:none}
+.bar{z-index:3;position:absolute;left:0;bottom:0;height:3px;background:linear-gradient(90deg,var(--or),var(--vi));width:0}
+.load{position:absolute;top:70px;right:20px;font-size:12px;color:var(--mut);letter-spacing:.1em}
+#vid video{width:min(92vw,720px);aspect-ratio:16/9;border-radius:18px;border:1px solid #26232f;background:#000;box-shadow:0 30px 80px -30px #000}
+.cap{position:absolute;left:6vw;right:6vw;bottom:9vh;text-align:center;color:var(--mut);max-width:640px;margin:0 auto}
+.cap b{color:var(--ink)}
+/* Diaporama « Coffee Drift » */
+.qd{position:relative;height:100vh;height:100svh;overflow:hidden;background:var(--qd-bg,#2a1456);color:var(--qd-ink,#fff);transition:background .9s cubic-bezier(.76,0,.24,1);display:grid;place-items:center;--qd-bg:#2a1456}
+.qd-bg{position:absolute;inset:0;perspective:900px;display:grid;place-items:center;pointer-events:none}
+.qd-word{position:absolute;inset:0;display:grid;place-items:center}
+.qd-word span{font:800 clamp(4.4rem,26vw,22rem)/1 Bric,sans-serif;letter-spacing:-.04em;opacity:.16;white-space:nowrap}
+.qd-stage{position:relative;z-index:2;display:grid;place-items:center;width:100%;height:100%}
+.qd-product{grid-area:1/1;width:min(64vw,360px)}.qd-product svg{display:block;width:100%;height:auto;filter:drop-shadow(0 30px 40px rgba(0,0,0,.45))}
+.qd-floats{position:absolute;inset:0;z-index:3;pointer-events:none}
+.qd-float{position:absolute;width:clamp(56px,13vw,110px)}.qd-float svg{display:block;width:100%;height:auto;filter:drop-shadow(0 12px 16px rgba(0,0,0,.4))}
+.qd-f0{left:8vw;top:18vh}.qd-f1{right:9vw;top:24vh}.qd-f2{right:14vw;bottom:20vh}
+.qd-info{position:absolute;left:0;right:0;bottom:calc(3.5vh + 84px);text-align:center;z-index:4}
+.qd-info small{display:block;letter-spacing:.2em;text-transform:uppercase;font-size:12px;opacity:.8}.qd-info h3{font-size:clamp(1.6rem,5vw,2.6rem);margin-top:6px}
+.qd-btn{position:absolute;bottom:3.5vh;z-index:5;width:56px;height:56px;border-radius:50%;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.25);color:inherit;font-size:22px;cursor:pointer;backdrop-filter:blur(6px)}
+.qd-btn[data-qd-dir="-1"]{left:calc(50% - 68px)}.qd-btn[data-qd-dir="1"]{left:calc(50% + 12px)}
+.qd-top{position:absolute;left:0;right:0;top:80px;text-align:center;z-index:4;font-size:13px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.info{max-width:760px;margin:0 auto;padding:12vh 20px 16vh}.info h2{font-size:clamp(2rem,6vw,3.2rem);margin-bottom:20px}
+.info li{margin:10px 0;color:var(--mut)}.info li b{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;min-height:48px;padding:0 26px;border-radius:999px;background:var(--or);color:#1b0d00;font-weight:700;text-decoration:none;margin-top:18px}
+/* mouvement réduit : plus de sections épinglées, tout se lit simplement */
+@media (prefers-reduced-motion:reduce){
+ #intro,#hero,#assemble,#vid{height:auto}.sticky{position:relative;height:auto;min-height:70vh;padding:12vh 0}
+ #hero .sticky{min-height:92vh}.chap{position:relative;left:auto;right:auto;bottom:auto;opacity:1;transform:none;margin:0 6vw 4vh}.bar,.load,.kick i{display:none}
+ #hero .sticky{display:block}#hero canvas{position:relative;height:60vh}
+ .qd,.qd-bg,.qd-word{transition:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#info">Aller à l’explication</a>
+<div class="qt-ex"><a href="../../devis/">Modèle de démonstration réalisé par QuenTools : marque et images fictives, dessinées par programme. Demander le mien →</a></div>
+<header class="top" aria-hidden="true"><b>LUMEN</b><span>Démonstration</span></header>
+<main>
+  <section id="intro" class="tall" aria-label="Introduction"><div class="sticky"><h1 class="big" id="t1">LUMEN</h1><div class="kick">Faites défiler<i></i></div></div></section>
+
+  <section id="hero" class="tall" aria-label="Scène principale : suite d’images pilotée par le défilement"><div class="sticky">
+    <canvas id="cv" role="img" aria-label="Des points de lumière convergent en sphère, explosent, puis forment un anneau en orbite"></canvas>
+    <div class="load" id="load" aria-hidden="true"></div>
+    <div class="chap" id="c1"><small>01 · Charge</small><h2>Tout converge.</h2><p>Les points de lumière se rassemblent en un seul centre.</p></div>
+    <div class="chap" id="c2"><small>02 · Éclat</small><h2>Puis tout éclate.</h2><p>Le moment fort de l’histoire tombe pile au milieu du défilement.</p></div>
+    <div class="chap" id="c3"><small>03 · Orbite</small><h2>Et se met en orbite.</h2><p>Le final se pose en anneau : la scène se lit aussi à l’envers, en remontant.</p></div>
+    <div class="bar" id="bar"></div>
+  </div></section>
+
+  <section id="assemble" class="tall" aria-label="Titre qui se reconstruit"><div class="sticky"><h2 class="big" id="t2">ORBITE</h2><div class="kick">Le titre du début se disloque, celui-ci se reconstruit</div></div></section>
+
+  <section id="vid" class="tall" aria-label="Vidéo pilotée par le défilement"><div class="sticky">
+    <video id="v" src="scrub.mp4" muted playsinline preload="auto" aria-label="Même scène en vidéo, avancée par le défilement"></video>
+    <p class="cap"><b>Technique n° 2 : la vidéo pilotée.</b> Même scène, mais en vidéo dont on déplace seulement le temps. Elle n’est fluide que si chaque image est une image clé : ce fichier pèse peu mais a été préparé pour cela.</p>
+  </div></section>
+
+  <section class="qd" id="qd" tabindex="0" aria-roledescription="diaporama" aria-label="Trois produits fictifs">
+    <div class="qd-bg"></div><div class="qd-stage"></div><div class="qd-floats"></div>
+    <div class="qd-top">Technique n° 3 · trois couches, un seul mouvement</div>
+    <div class="qd-info"><small data-qd-tag></small><h3 data-qd-title></h3></div>
+    <button class="qd-btn" data-qd-dir="-1" aria-label="Produit précédent">←</button><button class="qd-btn" data-qd-dir="1" aria-label="Produit suivant">→</button>
+    <p class="sr qd-live" aria-live="polite"></p>
+  </section>
+
+  <section class="info" id="info">
+    <h2>Ce que montre cette page</h2>
+    <ul>
+      <li><b>Suite d’images sur canvas.</b> <span id="stat">…</span> Une suite plus légère est servie aux téléphones.</li>
+      <li><b>Vidéo pilotée</b> : une seule vidéo, toutes les images sont des images clés (<code>-g 1</code>).</li>
+      <li><b>Lettres</b> qui se dispersent puis se reconstruisent, <b>chapitres</b> qui apparaissent par plage de défilement.</li>
+      <li><b>Diaporama produit</b> : le produit, le mot d’arrière-plan et les éléments flottants sortent ensemble, sans conflit au clic rapide.</li>
+      <li><b>Accessibilité</b> : avec « réduire les animations » activé dans votre téléphone, tout s’affiche sans mouvement.</li>
+      <li>Aucune bibliothèque, aucun cookie, aucun service externe. Les images sont dessinées par programme : aucune photo, aucun droit.</li>
+    </ul>
+    <a class="btn" href="../../devis/">Demander un site comme celui-ci</a>
+  </section>
+</main>
+<script src="../../assets/qt-scroll.js"></script>
+<script src="cinematique.js"></script>
+</body>
+</html>

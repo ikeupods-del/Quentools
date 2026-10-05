@@ -88,7 +88,7 @@ ACT['edit-expense'] = ({ id, ev }) => ev === '1' ? eventForm(S.events.find(e => 
 ACT['xp-period'] = ({ p }) => { XP.period = p; render(true); };
 ACT['xp-csv'] = () => gate('stats', () => {
   const d = dog(), rows = [['Date', 'Catégorie', 'Libellé', 'Montant']].concat(allExpenses(d.id).map(e => [e.date, e.cat, e.label || '', String(e.amount).replace('.', ',')]));
-  download(`depenses-${d.name}.csv`, '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n'), 'text/csv');
+  download(`depenses-${d.name}.csv`, '﻿' + rows.map(r => r.map(c => { c = String(c); return `"${(/^[=+\-@\t\r]/.test(c) && !/^[+-]?\d+([.,]\d+)?$/.test(c) ? "'" + c : c).replace(/"/g, '""')}"`; }).join(';')).join('\n'), 'text/csv');
 });
 ROUTES.depenses = function depenses() {
   const d = dog(), all = allExpenses(d.id), n = new Date();

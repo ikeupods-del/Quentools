@@ -12,18 +12,52 @@ Mémo commercial à relire avant un devis (évite de tout recalculer). Estimatio
 | **Total** | **105–145** | **≈ 40 000–85 000 €** (agence : 80 000–150 000 €) |
 
 ## Grille à proposer aux clients (QuenTools)
+**Applications complètes (type Wouf) : non proposées.** Trop de temps de travail pour trop peu de demandes ; elles ne figurent ni dans le formulaire de devis ni dans l'estimateur. Wouf reste présenté comme réalisation (page `realisations/`) et comme référence de coût ci-dessus. Si un client en demande une, répondre par un outil sur mesure ou décliner. Même logique pour tout projet complexe ou de grande envergure : le formulaire de devis ne propose plus de budget au-delà de « plus de 3 000 € (à discuter d'abord) » et précise ce que QuenTools prend en charge ; un outil sur mesure reste un outil ciblé (grille 1 000 à 3 000 €).
+
 Voir `design/OFFRES.md` (formules du site et services Fiverr, validées par le propriétaire) ; trousse boutique Shopify réutilisable dans `design/shopify/`. Positionnement : le marché des boutiques Shopify démarre vers 75 € sur Fiverr ; QuenTools vend le français, le suivi et le sur mesure plutôt que le prix seul.
 
 | Offre | Départ | Mensuel | Contenu |
 |---|---|---|---|
-| Essentiel | 200 € | 15 € | 1 page, contact, mise en ligne |
-| Pro | 400 € | 25 € | 4-5 pages, formulaire de devis, 1 modification par mois |
-| Boutique Shopify | 250 € | 20 € | jusqu'à 20 produits, pages légales, paiement (abonnement Shopify à la charge du client) |
-| Outil sur mesure | dès 1 000 € | 30-50 € | calcul de devis, suivi, réservation |
-| Application « type Wouf » | 3 000-6 000 € | 50-150 € | comptes, fiches, rappels, installable |
+| Essentiel | 200 € | 69,99 € | 1 page, contact, mise en ligne |
+| Pro | 400 € | 69,99 € | 4-5 pages, formulaire de devis, 1 modification par mois |
+| Boutique Shopify | 250 € | 69,99 € | jusqu'à 20 produits, pages légales, paiement (abonnement Shopify à la charge du client) |
+| **Template prêt à l'emploi** | **dès 299 €** | 3 premiers mois offerts, ensuite suivi optionnel à 69,99 €/mois | template personnalisé (nom, couleurs, textes, photos, prix) + mise en ligne sur nom de domaine **offert (1re année)** + **assistance et maintenance offertes 3 mois** + une série de retouches ; fonctions réelles (base de données, paiement, e-mails) en option sur devis |
+| **Audit de sécurité express** | **100 €** (prix de lancement) | — | contrôle automatisé des points visibles de l'extérieur (page `audit/`, outil `tools/audit-express.js`), rapport PDF sous 48 h ; corrections sur devis ; voir `design/AUDIT-EXPRESS.md` |
+| Outil sur mesure | dès 1 000 € | 69,99 € | calcul de devis, suivi, réservation |
 | + Paiements et administration | +500-1 500 € | | PayPal et/ou Stripe, relais Cloudflare |
+| **Assistant de site** (option d'un site) | **79,99 €** (paiement unique, option du catalogue) | aucun | bulle de discussion en **mode local** : réponses préparées à partir de la fiche du client (horaires, prestations, tarifs, coordonnées), aucune donnée envoyée, aucun coût de fonctionnement ; ne confirme jamais un rendez-vous. Générée par `tools/nouveau-client.js` (champ `assistant` de la fiche). Version avec réponses libres par IA : **sur devis** (relais payant, voir ci-dessous) ; démonstration `demo/assistant-ia/`, mise en service et précautions : `design/assistant-ia/README.md` |
 
-Règles : devis gratuit, prix fixé avant de commencer, première version montrée avant engagement sur la suite, acompte 30 à 50 %, engagement de 12 mois sur le mensuel. Noter le temps réellement passé sur les premières commandes et ajuster. Micro-entreprise obligatoire pour facturer. Hébergement gratuit sur GitHub Pages : code public, donc pas pour des données sensibles.
+Templates (catalogue : site `templates/`, démonstrations dans `demo/` et `exemples/` ; dernier ajouté : « Institut de beauté et coiffure », `demo/institut-beaute/`, réservation en trois étapes, tarifs d'exemple fictifs ; avant lui : « Réparateur de téléphones », `demo/reparateur-mobile/`, avec téléphone 3D à 360°, estimateur de prix et suivi par code, tarifs d'exemple fictifs) : prix de départ **299 €** affiché publiquement, pour la personnalisation et la mise en ligne. Les démonstrations simulent paiement, e-mails et comptes : brancher le réel (voir « Paiements et administration », +500-1 500 €) se chiffre dans le devis, ne jamais le promettre dans les 299 €. Coût réel à absorber par offre : un nom de domaine (≈ 10-15 €/an, acheté au nom du client) et le temps d'assistance des 3 mois (hébergement GitHub Pages gratuit ; réponse sous 48 h ouvrées, modifications simples seulement) : garder les 299 € rentables. Ouvre un devis via `devis/?type=Template&template=<nom>`.
+
+### Options des templates dans le devis (administration → Devis → « Template et options »)
+Le catalogue (templates et options) est dans `assets/qt-templates.js` ; le formulaire public `devis/` laisse choisir le template et ses options **avec leur prix** (affichés aussi sur la page `templates/`) et une estimation indicative en direct ; le devis les confirme. Dans l'administration, le choix du client est repris en un clic et chaque option arrive avec un prix de départ, toujours modifiable ligne par ligne. **Prix de départ de l'administration** (validés par le propriétaire ; la fourchette « paiements et administration : +500 à 1 500 € » concerne les projets sur mesure, pas les templates) :
+
+| Option | Prix de départ |
+|---|---|
+| Réservations et comptes réellement enregistrés (base de données) : templates à réservation ou à commande | 249,99 € |
+| Paiement en ligne réel (PayPal ou Stripe) | 99,99 € |
+| E-mails de confirmation et de rappel réellement envoyés | 150 € |
+| Système de réservation intégré : sites vitrines uniquement (paiement unique, sans abonnement) | 99 € |
+| Page supplémentaire (sites vitrines) | 50 € l'unité |
+| Rédaction des textes | 80 € |
+| Prise en main (1 h en visio) | 50 € |
+| Assistant de site (bulle de discussion, mode local) | 79,99 € |
+| Référencement local de base | 90 € |
+| Pack de 5 visuels pour les réseaux sociaux | 90 € |
+| Logo simple et couleurs | 60 € |
+| Version en anglais | 120 € |
+| Modification importante ou nouvelle fonction | 150 € l'unité |
+| Suivi mensuel après les 3 mois offerts | 69,99 € / mois |
+
+Pas de doublon : les templates à réservation (barbier, institut, réparateur, plateaux) n'ont pas l'option « Système de réservation intégré » (déjà dans le template) ; elle ne concerne que les sites vitrines. `node tools/verifier-site.js` contrôle que la page `templates/` reprend les prix du catalogue.
+
+Pour changer ces montants : `price` de chaque option dans `assets/qt-templates.js` (source unique : formulaire public, page templates à mettre à jour à la main, administration).
+
+Règles : devis gratuit, prix fixé avant de commencer, première version montrée avant la suite (acompte non remboursé une fois la première version proposée), acompte 30 à 50 %, engagement de 12 mois sur le mensuel. Noter le temps réellement passé sur les premières commandes et ajuster. Micro-entreprise obligatoire pour facturer. Hébergement gratuit sur GitHub Pages : code public, donc pas pour des données sensibles.
+
+**Assistant de site** : le palier gratuit de Gemini suffit aux démonstrations ; chez un client, passer par l'API payante (quelques centimes la conversation, un plafond journalier protège la facture) et vérifier les conditions de Google (utilisateurs européens, réutilisation des données). La version avec réponses libres par IA reste sur devis (ancienne proposition : 249,99 € + 9,99 €/mois pour l'usage au-delà du plafond ; concurrent observé : 249,99 € sans abonnement obligatoire). L'option publique à 79,99 € est la version à réponses préparées.
+
+**Site « cinématique » (défilement, images et vidéos)** : non proposé dans l'offre publique ; si un client le demande, le chiffrer sur devis à partir du temps réel et des contraintes de `design/CINEMATIQUE.md` (images ou vidéos à fournir ou à générer, poids, téléphone). Aucun prix n'est annoncé.
 
 ## Réponses types
 - **« C'est fait avec l'IA ? »** Oui, assumé : outils modernes + tests automatiques = plus rapide et moins cher qu'une agence, même niveau d'exigence (Wouf : 6 700+ vérifications, 53 scénarios de test). Un développeur expérimenté le soupçonnerait (volume produit en peu de temps, style très uniforme, architecture sans outils de compilation) ; la qualité ne trahit pas un amateur.

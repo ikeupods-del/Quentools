@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carte cadeau · QuenTools</title>
+<meta name="description" content="Offrez une carte cadeau QuenTools : un site internet, un outil sur mesure ou un coup de pouce numérique. Montant au choix, carte personnalisée, valable un an.">
+<link rel="canonical" href="https://quentools.fr/cadeau/">
+<meta property="og:title" content="Carte cadeau · QuenTools">
+<meta property="og:description" content="Offrez un site internet ou un outil sur mesure : montant au choix, carte personnalisée, valable un an.">
+<meta property="og:image" content="https://quentools.fr/assets/partage.jpg?v=2">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/qt.css?v=20261001h">
+<script src="../assets/qt-config.js"></script>
+<script src="../assets/qt-cloud.js"></script>
+<style>
+  .gc-grid{display:grid;grid-template-columns:1.05fr .95fr;grid-template-areas:"intro aside" "form aside";column-gap:clamp(24px,5vw,64px);align-items:start}
+  .gc-intro{grid-area:intro}.gc-grid>form{grid-area:form}.gc-sticky{grid-area:aside}
+  .gc-sticky{position:sticky;top:96px;display:grid;gap:var(--s-4)}
+  @media (max-width:860px){.gc-grid{grid-template-columns:1fr;grid-template-areas:"intro" "aside" "form"}.gc-sticky{position:static;margin-top:var(--s-5)}}
+  .gc{position:relative;overflow:hidden;aspect-ratio:1.586/1;border-radius:22px;padding:clamp(18px,4vw,28px);color:#fff;
+    background:radial-gradient(120% 90% at 100% 0%,#8f7bff 0%,transparent 55%),linear-gradient(135deg,#5b3df5 0%,#2a1a8f 60%,#121019 100%);
+    box-shadow:0 30px 70px -25px rgba(40,20,120,.6);display:grid;grid-template-rows:auto 1fr auto;isolation:isolate}
+  .gc::after{content:"";position:absolute;z-index:-1;width:46%;aspect-ratio:1;right:-12%;bottom:-22%;border-radius:50%;border:18px solid rgba(215,242,74,.9)}
+  .gc-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .gc-brand{display:flex;align-items:center;gap:8px;font:700 1.05rem/1 var(--f-display);letter-spacing:-.02em}
+  .gc-brand img{width:26px;height:26px;border-radius:8px}
+  .gc-tag{font:600 11px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.14)}
+  .gc-amount{align-self:center;font:800 clamp(40px,10vw,64px)/1 var(--f-display);letter-spacing:-.04em}
+  .gc-amount small{font-size:.45em;margin-left:4px;color:#d7f24a}
+  .gc-for{font-size:var(--t-sm);opacity:.92;max-width:70%;overflow-wrap:anywhere}
+  .gc-for b{font-weight:700}
+  .gc-msg{font-style:italic;opacity:.85;font-size:var(--t-xs);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .amounts .choice span{min-width:76px;justify-content:center}
+  .other{display:none;max-width:220px}.other.on{display:grid}
+  .verify{display:flex;gap:8px;flex-wrap:wrap}
+  .verify input{flex:1 1 200px;font:600 var(--t-md)/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:14px 16px;border-radius:var(--r-md);border:1px solid var(--line-2);background:var(--surface);color:var(--ink);min-height:50px;min-width:0}
+  .uses{display:grid;gap:12px;margin:0;padding:0;list-style:none}
+  .uses li{display:flex;gap:12px;align-items:flex-start}.uses li span{flex:none;font-size:1.4rem;line-height:1}
+  [hidden]{display:none!important}
+</style>
+<script type="application/ld+json" data-seo="fil">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://quentools.fr/"},{"@type":"ListItem","position":2,"name":"Carte cadeau","item":"https://quentools.fr/cadeau/"}]}</script>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="../" aria-label="QuenTools, accueil"><img class="brand-mark" src="../assets/logo.svg" alt="" width="32" height="32">QuenTools</a>
+  <ul class="nav-links"><li><a href="../outils/">Outils</a></li><li><a href="../realisations/">Réalisations</a></li><li><a href="../#sur-mesure">Offres et tarifs</a></li><li><a href="../devis/">Devis</a></li></ul>
+  <span class="nav-actions"><a class="btn btn-sm btn-ghost" href="../">← Accueil</a></span>
+</div></header>
+
+<main id="contenu" class="section">
+  <div class="wrap">
+    <div id="merci" hidden></div>
+    <div class="gc-grid">
+      <div class="gc-intro">
+        <span class="eyebrow">Carte cadeau</span>
+        <h1 class="h-section" style="margin:var(--s-4) 0">Offrez un site, un outil… ou un vrai coup de pouce.</h1>
+        <p class="lede">Un proche lance son activité, une association a besoin d’un site, un artisan perd du temps sur ses devis ? Offrez-lui une carte QuenTools : il choisit ensuite ce qu’il veut en faire.</p>
+
+        <div id="closed" class="notice warn" style="margin-top:var(--s-6)" hidden>Les cartes cadeaux ne sont pas disponibles pour le moment. Revenez très vite, ou <a href="../devis/">demandez un devis</a>.</div>
+      </div>
+
+        <form class="form card" id="gc-form" style="padding:clamp(20px,4vw,36px);margin-top:var(--s-6)" novalidate>
+          <fieldset class="field"><legend>Montant</legend>
+            <div class="choices amounts" id="amounts"></div>
+            <div class="field other" id="other"><label for="autre">Autre montant (€)</label><input id="autre" type="number" inputmode="numeric" min="20" max="2000" step="1" placeholder="Ex. 250"></div>
+          </fieldset>
+          <div class="form-grid">
+            <div class="field"><label for="pour">Pour (prénom)</label><input id="pour" name="pour" maxlength="60" required autocomplete="off" placeholder="Ex. Camille"></div>
+            <div class="field"><label for="de">De la part de</label><input id="de" name="de" maxlength="60" required autocomplete="given-name" placeholder="Ex. Léo"></div>
+          </div>
+          <div class="field"><label for="message">Petit mot <span class="muted">(facultatif)</span></label><textarea id="message" name="message" maxlength="200" style="min-height:90px" placeholder="Ex. Pour que ton atelier ait enfin le site qu’il mérite !"></textarea><small><span id="mcount">0</span> / 200</small></div>
+
+          <fieldset class="field"><legend>Qui reçoit la carte ?</legend>
+            <div class="choices">
+              <label class="choice"><input type="radio" name="envoi" value="moi" checked><span>📩 Moi, je l’offre en main propre</span></label>
+              <label class="choice"><input type="radio" name="envoi" value="destinataire"><span>🎁 Directement la personne</span></label>
+            </div>
+          </fieldset>
+          <div class="form-grid" id="dest" hidden>
+            <div class="field"><label for="destEmail">E-mail de la personne</label><input id="destEmail" name="destEmail" type="email" maxlength="160" autocomplete="off"></div>
+            <div class="field"><label for="dateEnvoi">Envoyer le <span class="muted">(facultatif)</span></label><input id="dateEnvoi" name="dateEnvoi" type="date"></div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field"><label for="nom">Votre nom et prénom</label><input id="nom" name="nom" autocomplete="name" required maxlength="120"></div>
+            <div class="field"><label for="email">Votre e-mail</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="160"><small>Pour recevoir la carte et la confirmation de paiement.</small></div>
+          </div>
+
+          <fieldset class="field" id="pay" hidden><legend>Paiement</legend><div class="choices" id="pay-list"></div></fieldset>
+
+          <input type="text" name="site" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" id="site">
+          <label class="check"><input type="checkbox" id="ok" required> <span>J’ai lu les <a href="#conditions">conditions de la carte cadeau</a>. Mes informations servent uniquement à préparer et envoyer la carte.</span></label>
+          <div id="msg" role="status" aria-live="polite"></div>
+          <button class="btn btn-accent" type="submit" style="justify-self:start" id="buy">Offrir cette carte</button>
+        </form>
+
+      <aside class="gc-sticky" aria-label="Aperçu de la carte">
+        <div class="gc" id="preview" aria-hidden="true">
+          <div class="gc-top"><span class="gc-brand"><img src="../assets/logo.svg" alt="">QuenTools</span><span class="gc-tag">Carte cadeau</span></div>
+          <div class="gc-amount"><span id="p-amount">100</span><small>€</small></div>
+          <div><div class="gc-for">Pour <b id="p-pour">…</b> · de <b id="p-de">…</b></div><div class="gc-msg" id="p-msg"></div></div>
+        </div>
+        <p class="muted" style="font-size:var(--t-sm);margin:0">La carte arrive par e-mail avec un code unique, prête à imprimer ou à transférer. Valable <b id="valid">12 mois</b> sur toutes les prestations QuenTools.</p>
+      </aside>
+    </div>
+
+    <section class="section-compact" style="margin-top:var(--s-8)">
+      <h2 class="h-compact" style="margin-bottom:var(--s-5)">Ce qu’on peut en faire</h2>
+      <ul class="uses">
+        <li><span>🌐</span><div><b>Un site vitrine</b><div class="muted">Pour présenter une activité, une association, un projet.</div></div></li>
+        <li><span>🧮</span><div><b>Un outil sur mesure</b><div class="muted">Devis, planning, suivi de clients : ce qui fait perdre du temps au quotidien.</div></div></li>
+        <li><span>🛠️</span><div><b>Des améliorations ou de la maintenance</b><div class="muted">Sur un site existant : mises à jour, nouvelles pages, petites évolutions.</div></div></li>
+      </ul>
+      <div class="steps">
+        <div class="step"><h3>Vous choisissez</h3><p>Le montant, le prénom, un petit mot. Le paiement est sécurisé.</p></div>
+        <div class="step"><h3>La carte arrive</h3><p>Par e-mail, avec son code unique, à imprimer ou à transférer.</p></div>
+        <div class="step"><h3>La personne en profite</h3><p>Elle demande un devis en indiquant son code : le montant est déduit.</p></div>
+      </div>
+    </section>
+
+    <section class="section-compact" id="verifier" style="margin-top:var(--s-8)">
+      <div class="card" style="padding:clamp(20px,4vw,36px)">
+        <h2 class="h-compact" style="margin:0 0 var(--s-3)">Vous avez reçu une carte ?</h2>
+        <p class="muted" style="margin:0 0 var(--s-4)">Saisissez son code pour voir le montant disponible et sa date de validité.</p>
+        <form class="verify" id="v-form"><input id="v-code" placeholder="QT-XXXX-XXXX" maxlength="14" autocomplete="off" aria-label="Code de la carte"><button class="btn btn-accent" type="submit">Vérifier</button></form>
+        <div id="v-out" role="status" aria-live="polite" style="margin-top:var(--s-4)"></div>
+      </div>
+    </section>
+
+    <section class="section-compact faq-grid" id="conditions" style="margin-top:var(--s-8)">
+      <div><h2 class="h-compact">Conditions de la carte cadeau</h2><p class="muted">Simples et sans surprise.</p></div>
+      <div class="faq">
+        <details><summary>Combien de temps est-elle valable ?</summary><p>Elle est valable <span data-valid>12 mois</span> à compter de l’achat. La date limite est écrite sur la carte.</p></details>
+        <details><summary>Peut-on l’utiliser en plusieurs fois ?</summary><p>Oui. Le montant utilisé est déduit et le reste demeure disponible jusqu’à la date limite. Le solde se vérifie à tout moment sur cette page.</p></details>
+        <details><summary>Et si le projet coûte plus cher que la carte ?</summary><p>La carte est déduite du devis et seule la différence reste à payer. Le prix est toujours fixé ensemble avant de commencer.</p></details>
+        <details><summary>Comment l’utiliser ?</summary><p>En demandant un devis et en indiquant le code de la carte (le bouton « Utiliser ma carte » le fait automatiquement). Le montant est déduit de la facture.</p></details>
+        <details><summary>Peut-on changer d’avis ?</summary><p>Oui : pendant 14 jours après l’achat, tant que la carte n’a pas été utilisée, elle est remboursée intégralement sur simple demande. Ensuite, elle n’est ni remboursable ni échangeable contre de l’argent.</p></details>
+        <details><summary>Une facture est-elle fournie ?</summary><p>Oui, sur demande, au nom de l’acheteur. TVA non applicable, article 293 B du CGI.</p></details>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
+  <span>© <span data-year>2026</span> QuenTools</span><span><a href="../devis/">Demander un devis</a> · <a href="../mentions-legales/" rel="nofollow">Mentions légales</a> · <a href="../">Accueil</a></span>
+</div></div></footer>
+<script src="../assets/qt.js?v=20261001h" defer></script>
+<script>
+(() => {
+  const t0 = Date.now(), C = window.QT || {}, $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const eur = n => (+n || 0).toLocaleString('fr-FR', { minimumFractionDigits: Number.isInteger(+n) ? 0 : 2, maximumFractionDigits: 2 }) + ' €';
+  const f = $('gc-form'), msg = $('msg'), say = (h, warn) => { msg.innerHTML = `<div class="notice${warn ? ' warn' : ''}">${h}</div>`; };
+  const PAYEE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/, STRIPE = /^https:\/\/(buy|checkout)\.stripe\.com\/[\w/-]+$/;
+  let S = {}, amount = 100;
+
+  /* Réglages (administration → Réglages du site → Cartes cadeaux) */
+  const amounts = () => { const l = String(S.cadeauMontants || '').split(/[^\d]+/).map(Number).filter(n => n >= 20 && n <= 2000); return l.length ? [...new Set(l)].slice(0, 6) : [50, 100, 200, 300, 500]; };
+  const months = () => Math.min(36, Math.max(12, +S.cadeauMois || 12));
+  const methods = () => [PAYEE.test(S.cadeauPaypal || '') && ['paypal', '🅿️ PayPal ou carte'], STRIPE.test(S.cadeauStripe || '') && ['stripe', '💳 Carte bancaire']].filter(Boolean);
+  function setup() {
+    const l = amounts(); amount = l.includes(100) ? 100 : l[0];
+    $('amounts').innerHTML = l.map(n => `<label class="choice"><input type="radio" name="montant" value="${n}"${n === amount ? ' checked' : ''}><span>${n} €</span></label>`).join('')
+      + '<label class="choice"><input type="radio" name="montant" value="autre"><span>Autre</span></label>';
+    const v = months() + ' mois'; $('valid').textContent = v; document.querySelectorAll('[data-valid]').forEach(e => { e.textContent = v; });
+    const m = methods(); $('pay').hidden = m.length < 2;
+    $('pay-list').innerHTML = m.map(([k, l], i) => `<label class="choice"><input type="radio" name="paiement" value="${k}"${i ? '' : ' checked'}><span>${l}</span></label>`).join('');
+    $('dateEnvoi').min = new Date().toISOString().slice(0, 10);
+    preview();
+  }
+  function preview() {
+    const r = f.querySelector('input[name=montant]:checked');
+    amount = r && r.value === 'autre' ? Math.round(+$('autre').value || 0) : +(r ? r.value : amount);
+    $('other').classList.toggle('on', !!(r && r.value === 'autre'));
+    $('p-amount').textContent = amount ? amount.toLocaleString('fr-FR') : '…';
+    $('p-pour').textContent = $('pour').value.trim() || '…'; $('p-de').textContent = $('de').value.trim() || '…';
+    $('p-msg').textContent = $('message').value.trim(); $('mcount').textContent = $('message').value.length;
+    $('dest').hidden = (f.querySelector('input[name=envoi]:checked') || {}).value !== 'destinataire';
+  }
+  f.addEventListener('input', preview); f.addEventListener('change', preview);
+
+  /* Retour de paiement : /cadeau/?merci=REF */
+  const back = new URLSearchParams(location.search).get('merci');
+  if (back) {
+    let o = null; try { o = JSON.parse(sessionStorage.getItem('qt:cadeau') || 'null'); } catch (e) { /* ignore */ }
+    $('merci').hidden = false;
+    $('merci').innerHTML = `<div class="notice" style="margin-bottom:var(--s-6)">🎁 <b>Merci${o && o.de ? ' ' + esc(o.de) : ''} !</b> Dès que le paiement est confirmé, la carte${o && o.pour ? ' pour ' + esc(o.pour) : ''} est envoyée${o && o.email ? ' à <b>' + esc(o.envoi === 'destinataire' ? o.destEmail : o.email) + '</b>' : ' par e-mail'} (sous 24 h, souvent bien plus vite). Référence : <b>${esc(back)}</b>.</div>`;
+  }
+
+  /* Achat */
+  const ref = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = new Uint8Array(6); crypto.getRandomValues(b); return 'CC' + [...b].map(x => a[x % 32]).join(''); };
+  function payUrl(m, r, d) {
+    const here = location.origin + location.pathname;
+    if (m === 'stripe') { const u = new URL(S.cadeauStripe); u.searchParams.set('client_reference_id', r); u.searchParams.set('prefilled_email', d.email); return u.toString(); }
+    return 'https://www.paypal.com/cgi-bin/webscr?' + new URLSearchParams({ cmd: '_xclick', business: S.cadeauPaypal, item_name: `Carte cadeau QuenTools ${d.montant} € (pour ${d.pour})`, item_number: r, invoice: r,
+      amount: String(d.montant), currency_code: 'EUR', no_shipping: '1', lc: 'FR', charset: 'utf-8', return: here + '?merci=' + r, cancel_return: here + '?annule=' + r });
+  }
+  f.addEventListener('submit', async e => {
+    e.preventDefault(); preview();
+    if ($('site').value) return;   // champ piège anti-robots
+    if (Date.now() - t0 < 4000) return say('Encore un instant, puis réessayez.', true);
+    if (!amount || amount < 20 || amount > 2000) return say('Choisissez un montant entre 20 € et 2 000 €.', true);
+    const envoi = f.querySelector('input[name=envoi]:checked').value;
+    $('destEmail').required = envoi === 'destinataire';
+    if (!f.checkValidity()) { f.reportValidity(); return; }
+    if (!$('ok').checked) return say('Cochez la case d’accord pour continuer.', true);
+    const m = methods(), pm = (f.querySelector('input[name=paiement]:checked') || {}).value || (m[0] && m[0][0]) || 'manuel';
+    const d = { montant: amount, pour: $('pour').value.trim(), de: $('de').value.trim(), message: $('message').value.trim(), nom: $('nom').value.trim(), email: $('email').value.trim(),
+      envoi, destEmail: envoi === 'destinataire' ? $('destEmail').value.trim() : '', dateEnvoi: envoi === 'destinataire' ? $('dateEnvoi').value : '', paiement: pm };
+    const r = ref(), btn = $('buy'); btn.disabled = true;
+    try {
+      let saved = false;
+      try { saved = !!(window.QTC && await QTC.cadeau(r, d)); } catch (err) { /* hors ligne ou règles absentes : repli par e-mail */ }
+      try { sessionStorage.setItem('qt:cadeau', JSON.stringify({ ref: r, ...d })); } catch (err) { /* ignore */ }
+      if (!saved) {
+        const text = `Commande de carte cadeau QuenTools (réf. ${r})\nMontant : ${d.montant} €\nPour : ${d.pour}\nDe : ${d.de}\nMessage : ${d.message || '—'}\nEnvoi : ${envoi === 'destinataire' ? 'à ' + d.destEmail + (d.dateEnvoi ? ' le ' + d.dateEnvoi : '') : 'à moi'}\nNom : ${d.nom}\nE-mail : ${d.email}`;
+        if (C.email) { location.href = `mailto:${C.email}?subject=${encodeURIComponent('Carte cadeau ' + d.montant + ' €')}&body=${encodeURIComponent(text)}`; return say('Votre messagerie s’ouvre avec la commande prête : envoyez-la, je vous réponds avec le lien de paiement.'); }
+        return say('La commande n’a pas pu être enregistrée. Réessayez dans un instant.', true);
+      }
+      if (pm === 'manuel') { f.reset(); setup(); return say(`✅ <b>Commande enregistrée (réf. ${esc(r)}).</b> Je vous envoie le lien de paiement à <b>${esc(d.email)}</b> sous 24 h, puis la carte dès le paiement reçu.`); }
+      say('Redirection vers le paiement sécurisé…');
+      location.href = payUrl(pm, r, d);
+    } finally { btn.disabled = false; }
+  });
+
+  /* Vérifier une carte */
+  $('v-form').addEventListener('submit', async e => {
+    e.preventDefault(); const out = $('v-out'), code = $('v-code').value.trim();
+    if (!code) return;
+    out.innerHTML = '<span class="muted">Vérification…</span>';
+    try {
+      const c = window.QTC && await QTC.carte(code);
+      if (!c) { out.innerHTML = '<div class="notice warn">Ce code ne correspond à aucune carte. Vérifiez les caractères (le code ressemble à QT-XXXX-XXXX).</div>'; return; }
+      const exp = c.expire && c.expire < new Date().toISOString().slice(0, 10), off = c.statut === 'annulee', solde = +c.solde || 0;
+      out.innerHTML = `<div class="notice${exp || off || !solde ? ' warn' : ''}"><b>${esc(c.code)}</b> · ${off ? 'carte annulée' : exp ? 'carte expirée le ' + esc(new Date(c.expire + 'T12:00').toLocaleDateString('fr-FR')) : solde ? `<b>${eur(solde)}</b> disponibles sur ${eur(c.montant)}, jusqu’au ${esc(new Date(c.expire + 'T12:00').toLocaleDateString('fr-FR'))}` : 'carte entièrement utilisée'}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:var(--s-3)"><a class="btn btn-sm btn-ghost" href="carte/?code=${encodeURIComponent(c.code)}">Voir la carte</a>${solde && !exp && !off ? `<a class="btn btn-sm btn-accent" href="../devis/?cadeau=${encodeURIComponent(c.code)}">Utiliser ma carte</a>` : ''}</div>`;
+    } catch (err) { out.innerHTML = '<div class="notice warn">Vérification impossible pour le moment (connexion ?). Réessayez dans un instant.</div>'; }
+  });
+  const pre = new URLSearchParams(location.search).get('code'); if (pre) { $('v-code').value = pre; $('verifier').scrollIntoView(); $('v-form').requestSubmit(); }
+
+  /* Réglages publics puis affichage */
+  setup();
+  (async () => {
+    try { if (window.QTC) await QTC.config(); } catch (e) { /* valeurs par défaut */ }
+    S = C.site || {};
+    if (S.cadeauOn === false) { f.hidden = true; $('closed').hidden = false; }
+    setup();
+  })();
+})();
+</script>
+</body>
+</html>

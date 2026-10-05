@@ -357,11 +357,13 @@ ACT['support-send'] = async () => {
 const payProviders = () => ({ paypal: 'PayPal', stripe: 'Stripe', both: 'PayPal et Stripe' })[BILL.provider || 'paypal'];
 const payLabel = () => ({ paypal: 'la plateforme sécurisée PayPal (compte PayPal ou carte bancaire)', stripe: 'la plateforme sécurisée Stripe (carte bancaire, Apple Pay, Google Pay)', both: 'les plateformes sécurisées Stripe (carte bancaire) ou PayPal, au choix' })[BILL.provider || 'paypal'];
 const orTbd = v => v ? esc(v) : '<em>[à compléter]</em>';
+/* SIREN (9 chiffres) tant que le SIRET (14 chiffres) n'est pas connu : le libellé suit le numéro saisi. */
+const idLabel = v => /^\d{9}$/.test(String(v || '').replace(/\s/g, '')) ? 'SIREN' : 'SIRET';
 function legalDoc(kind) {
   const L = LEGAL, p = planOf();
   const y = yearlyPlan();
   if (kind === 'cgv') return `<h1>Conditions générales de vente</h1><p class="mut">Wouf Plus — ${y ? 'abonnement annuel ou achat unique' : 'achat unique'}</p>
-  <h2>1. Vendeur</h2><p>${orTbd(L.seller)} — ${orTbd(L.form)}, ${orTbd(L.address)}. SIRET : ${orTbd(L.siret)}. Contact : ${orTbd(L.email)}. ${esc(L.vat || '')}</p>
+  <h2>1. Vendeur</h2><p>${orTbd(L.seller)} — ${orTbd(L.form)}, ${orTbd(L.address)}. ${idLabel(L.siret)} : ${orTbd(L.siret)}. Contact : ${orTbd(L.email)}. ${esc(L.vat || '')}</p>
   <h2>2. Objet</h2><p>Les présentes conditions régissent la vente de l’accès à « Wouf Plus », ensemble de fonctions supplémentaires de l’application Wouf (${Object.values(FEATURES).map(f => esc(f[1])).join(', ')}). La version gratuite reste disponible sans engagement.</p>
   <h2>3. Prix et paiement</h2><p>${y ? `Deux formules : l’<b>abonnement annuel</b> à <b>${esc(y.price)} TTC par an</b>, ou l’<b>accès à vie</b> à <b>${esc(p.price)} TTC</b> en un paiement unique, sans abonnement ni reconduction.` : `Le prix est de <b>${esc(p.price)} TTC</b>, en un paiement unique. Il n’y a ni abonnement ni reconduction.`} Le paiement s’effectue via ${payLabel()} ; le vendeur ne reçoit pas vos données bancaires. Wouf Plus est activé <b>manuellement</b> par le vendeur, sur le compte Google de l’acheteur, après vérification du paiement et au plus tard 24 h après celui-ci : l’accès n’est donc pas instantané.</p>
   <h2>4. Accès « à vie »</h2><p>L’accès à Wouf Plus est acquis pour toute la durée d’exploitation du service. En cas d’arrêt définitif, le vendeur s’engage à informer les utilisateurs au moins ${esc(String(L.shutdownNoticeDays || 90))} jours à l’avance et à leur permettre d’exporter leurs données. Le contenu de Plus peut être enrichi ; le vendeur ne retirera pas de façon substantielle les fonctions Plus achetées.</p>
@@ -380,7 +382,7 @@ function legalDoc(kind) {
   <h2>Publicité et suivi</h2><p>Aucun suivi publicitaire, aucune revente de données. Seul le stockage technique nécessaire au fonctionnement est utilisé (stockage local de l’appareil).${statsCode() ? ' La mesure d’audience anonyme ne dépose aucun cookie et peut être désactivée dans Réglages.' : ''}</p>
   <h2>Durée de conservation</h2><p>Les données restent sur votre appareil jusqu’à leur suppression. Les données synchronisées sont conservées tant que votre compte de données existe ; vous pouvez demander leur suppression à tout moment. Les justificatifs d’achat sont conservés selon les obligations légales.</p>
   <h2>Vos droits</h2><p>Accès, rectification, effacement, limitation, portabilité, opposition : écrivez à ${orTbd(L.email)}. Vous pouvez saisir la CNIL (cnil.fr).</p>`;
-  return `<h1>Mentions légales</h1><h2>Éditeur</h2><p>${orTbd(L.seller)} — ${orTbd(L.form)}<br>${orTbd(L.address)}<br>SIRET : ${orTbd(L.siret)}<br>Contact : ${orTbd(L.email)}<br>Directeur de la publication : ${orTbd(L.director || L.seller)}</p>
+  return `<h1>Mentions légales</h1><h2>Éditeur</h2><p>${orTbd(L.seller)} — ${orTbd(L.form)}<br>${orTbd(L.address)}<br>${idLabel(L.siret)} : ${orTbd(L.siret)}<br>Contact : ${orTbd(L.email)}<br>Directeur de la publication : ${orTbd(L.director || L.seller)}</p>
   <h2>Hébergement</h2><p>Site hébergé par GitHub Pages (GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis).</p>
   <h2>Propriété intellectuelle</h2><p>Les textes, leçons et l’identité de Wouf sont protégés. Toute reproduction sans autorisation est interdite.</p>
   <h2>Avertissement</h2><p>Wouf ne fournit pas de conseil vétérinaire.</p>`;

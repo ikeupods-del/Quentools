@@ -32,6 +32,22 @@ section{padding:90px 0}.h2{font-size:clamp(2.4rem,7vw,5rem);line-height:.95;marg
 .ct{background:#111;border-top:4px solid var(--vol)}.ct .grid{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center}form{display:grid;gap:12px}input,select,textarea{font:inherit;padding:16px;background:#1b1b1b;border:2px solid #2d2d2d;color:var(--fg);width:100%;border-radius:0}input:focus,select:focus,textarea:focus{outline:0;border-color:var(--vol)}
 footer{padding:28px 0;font-size:13px;color:var(--mut);border-top:1px solid #222}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
 @media (max-width:860px){nav{display:none}.prog,.pr,.ct .grid{grid-template-columns:1fr}.nums{grid-template-columns:1fr 1fr}.nums div:nth-child(3){border-left:0}.nums div:nth-child(n+3){border-top:2px solid #222}.pt.f{transform:none}}
+
+.live{display:inline-flex;align-items:center;gap:10px;border:2px solid #2d2d2d;padding:8px 16px;font:600 13px Oswald,sans-serif;text-transform:uppercase;letter-spacing:.12em;margin-bottom:22px}.live i{width:9px;height:9px;border-radius:50%;background:var(--vol);box-shadow:0 0 0 0 rgba(198,255,0,.6);animation:pu 1.8s infinite}
+@keyframes pu{70%{box-shadow:0 0 0 10px rgba(198,255,0,0)}100%{box-shadow:0 0 0 0 rgba(198,255,0,0)}}
+.quiz{background:#111;border-block:4px solid var(--vol)}.qbox{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:start}
+.qs{display:grid;gap:26px}.qs fieldset{border:0;padding:0;margin:0}.qs legend{font:700 22px Oswald,sans-serif;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.opts{display:flex;flex-wrap:wrap;gap:10px}.opts label{position:relative;cursor:pointer}.opts input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.opts span{display:block;padding:13px 20px;border:2px solid #333;font:600 15px Oswald,sans-serif;text-transform:uppercase;letter-spacing:.08em;transition:.15s;background:#181818}.opts label:hover span{border-color:var(--vol)}.opts input:checked+span{background:var(--vol);color:#000;border-color:var(--vol)}.opts input:focus-visible+span{outline:3px solid #fff;outline-offset:2px}
+.reco{background:var(--card);border:2px solid var(--vol);padding:34px;position:sticky;top:90px}.reco .os{font-size:clamp(2rem,4vw,3rem);line-height:1;color:var(--vol);margin:10px 0 14px}.reco p{color:#cfcfc8;margin:0 0 12px}.reco .btn{margin-top:14px}
+.week{overflow-x:auto;padding-bottom:6px}.wk{display:grid;grid-template-columns:70px repeat(6,minmax(96px,1fr));gap:6px;min-width:760px}
+.wk .h{font:700 14px Oswald,sans-serif;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);text-align:center;padding:6px 0}.wk .t{font:700 15px Oswald,sans-serif;color:var(--mut);align-self:center}
+.slot{border:2px solid #262626;background:var(--card);padding:10px 8px;text-align:center;cursor:pointer;font:600 13px Oswald,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--fg);transition:.15s;min-height:62px}.slot small{display:block;color:var(--mut);font:500 12px "Helvetica Neue",Arial,sans-serif;text-transform:none;letter-spacing:0}
+.slot:hover:not(:disabled){border-color:var(--vol)}.slot[aria-pressed=true]{background:var(--vol);color:#000;border-color:var(--vol)}.slot[aria-pressed=true] small{color:#222}.slot:disabled{opacity:.35;cursor:default}.slot.empty{visibility:hidden}
+.wkres{margin-top:20px;padding:18px 22px;border:2px dashed #333;font:600 17px Oswald,sans-serif;text-transform:uppercase;letter-spacing:.06em;min-height:62px}.wkres.ok{border-color:var(--vol);color:var(--vol)}
+.bar{display:flex;height:64px;margin-top:10px;border:2px solid #222}.bar div{display:grid;align-content:center;padding:0 14px;font:700 14px Oswald,sans-serif;text-transform:uppercase;letter-spacing:.08em;border-left:2px solid #000;min-width:0;overflow:hidden;white-space:nowrap}.bar div:first-child{border-left:0}.bar small{font:500 12px "Helvetica Neue",Arial,sans-serif;text-transform:none;letter-spacing:0;opacity:.8}
+.callbar{display:none}@media (max-width:860px){.qbox{grid-template-columns:1fr}.reco{position:static}.callbar{display:block;position:fixed;left:0;right:0;bottom:0;z-index:60;padding:10px 14px;background:#000;border-top:2px solid var(--vol)}.callbar .btn{display:block;text-align:center;clip-path:none}body{padding-bottom:70px}}
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s}.rv.in{opacity:1;transform:none}@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}.tick div{animation:none}.live i{animation:none}}
 </style>
 </head>
 <body>
@@ -39,7 +55,7 @@ footer{padding:28px 0;font-size:13px;color:var(--mut);border-top:1px solid #222}
 <header><div class="wrap"><a class="logo" href="./">Move<b>.</b>Coaching</a><nav><a href="#programmes">Programmes</a><a href="#tarifs">Tarifs</a><a href="#essai">Séance d'essai</a></nav><a class="btn" href="#essai" style="padding:11px 20px;font-size:14px">Essai offert</a></div></header>
 
 <main>
-<section class="hero"><div class="wrap"><h1>Bouge.<span>Progresse.</span><s>Dure.</s></h1>
+<section class="hero"><div class="wrap"><div class="live" id="live"><i></i><span>…</span></div><h1>Bouge.<span>Progresse.</span><s>Dure.</s></h1>
   <p>Coaching sportif individuel et en petit groupe, à domicile, en salle ou en plein air. Un programme à votre niveau, des séances qui donnent envie de revenir.</p>
   <div class="cta"><a class="btn" href="#essai">Réserver ma séance d'essai</a><a class="btn o" href="#programmes">Voir les programmes</a></div></div></section>
 <div class="tick" aria-hidden="true"><div><span>Cardio</span>✦<span>Force</span>✦<span>Mobilité</span>✦<span>Énergie</span>✦<span>Régularité</span>✦<span>Cardio</span>✦<span>Force</span>✦<span>Mobilité</span>✦<span>Énergie</span>✦<span>Régularité</span>✦</div></div>
@@ -51,7 +67,25 @@ footer{padding:28px 0;font-size:13px;color:var(--mut);border-top:1px solid #222}
     <article class="pc"><span class="no">03</span><h3>Reprise douce</h3><p>Pour recommencer sans te blesser.</p><ul><li>Rythme progressif</li><li>Exercices du quotidien</li><li>Avis médical conseillé avant de démarrer</li></ul></article>
   </div></div></section>
 
+
+<section class="quiz" id="quiz"><div class="wrap"><h2 class="h2 os rv">Quel programme <span>pour toi ?</span></h2>
+  <div class="qbox">
+    <div class="qs rv">
+      <fieldset><legend>Ton objectif</legend><div class="opts" id="g"><label><input type="radio" name="g" value="poids" checked><span>Perdre du poids</span></label><label><input type="radio" name="g" value="muscle"><span>Prendre du muscle</span></label><label><input type="radio" name="g" value="reprise"><span>Reprendre le sport</span></label><label><input type="radio" name="g" value="course"><span>Préparer une course</span></label></div></fieldset>
+      <fieldset><legend>Ton niveau</legend><div class="opts"><label><input type="radio" name="l" value="deb" checked><span>Débutant</span></label><label><input type="radio" name="l" value="inter"><span>Intermédiaire</span></label><label><input type="radio" name="l" value="conf"><span>Confirmé</span></label></div></fieldset>
+      <fieldset><legend>Tu aimes s’entraîner…</legend><div class="opts"><label><input type="radio" name="w" value="solo" checked><span>En tête-à-tête</span></label><label><input type="radio" name="w" value="grp"><span>À plusieurs</span></label></div></fieldset>
+    </div>
+    <div class="reco rv" aria-live="polite"><p class="os" style="font-size:14px;letter-spacing:.14em;color:var(--mut)">Ma proposition</p><div class="os" id="rt">—</div><p id="rp"></p><p id="rr" style="color:var(--fg)"></p><a class="btn" href="#essai" id="rc">Réserver mon essai</a></div>
+  </div></div></section>
+
 <section style="padding-top:0"><div class="wrap"><div class="nums"><div><b>3</b><span>formats</span></div><div><b>1 h</b><span>par séance</span></div><div><b>6</b><span>max. en groupe</span></div><div><b>0</b><span>engagement pour l'essai</span></div></div></div></section>
+
+
+<section id="planning"><div class="wrap"><h2 class="h2 os rv">Les séances <span>en groupe.</span></h2><p class="rv" style="color:var(--mut);max-width:52ch;margin:-14px 0 30px">Planning d’exemple. Touche un créneau pour voir les places et réserver (démonstration).</p>
+  <div class="week rv"><div class="wk" id="wk" role="group" aria-label="Séances en groupe"></div></div><div class="wkres" id="wkres" aria-live="polite">Choisis un créneau.</div>
+  <h3 class="os rv" style="font-size:26px;margin:60px 0 6px">Une séance type, <span style="color:var(--vol)">1 heure</span></h3>
+  <div class="bar rv" aria-hidden="false"><div style="flex:10;background:#1b1b1b">Échauffement<small>10 min</small></div><div style="flex:35;background:var(--vol);color:#000">Travail principal<small>35 min</small></div><div style="flex:10;background:#262626">Finisher<small>10 min</small></div><div style="flex:5;background:#1b1b1b">Étirements<small>5 min</small></div></div>
+</div></section>
 
 <section id="tarifs"><div class="wrap"><h2 class="h2 os">Des tarifs <span>sans piège.</span></h2>
   <div class="pr">
@@ -64,6 +98,56 @@ footer{padding:28px 0;font-size:13px;color:var(--mut);border-top:1px solid #222}
   <form><input placeholder="Ton prénom" aria-label="Prénom" required><input placeholder="Téléphone ou e-mail" aria-label="Contact" required><select aria-label="Objectif"><option>Perdre du poids</option><option>Prendre du muscle</option><option>Reprendre le sport</option><option>Préparer une course</option></select><textarea rows="3" placeholder="Ton niveau, tes contraintes, tes blessures éventuelles" aria-label="Message"></textarea><button class="btn" type="submit">Je me lance</button></form></div></section>
 </main>
 <footer><div class="wrap"><span>© <span data-year>2026</span> Move Coaching (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
+<div class="callbar"><a class="btn" href="#essai">Réserver ma séance d'essai</a></div>
 <script src="../ex.js" defer></script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const hash = s => { let x = 2166136261; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); } return (x >>> 0) / 4294967295; };
+
+  /* Planning de groupe (exemple) : jours × horaires, places restantes */
+  const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'], TIMES = ['07:00', '12:30', '18:30', '19:30'];
+  const KIND = { '07:00': 'Réveil musculaire', '12:30': 'Pause active', '18:30': 'Cardio & force', '19:30': 'Full body' };
+  const OFF = { 'Sam': ['12:30', '18:30', '19:30'], 'Mer': ['07:00'], 'Ven': ['07:00', '19:30'] };
+  let html = '<span></span>' + DAYS.map(d => `<span class="h">${d}</span>`).join('');
+  TIMES.forEach(t => { html += `<span class="t">${t}</span>`; DAYS.forEach(d => { if ((OFF[d] || []).includes(t)) { html += '<span class="slot empty"></span>'; return; } const left = Math.floor(hash(d + t) * 6.99), full = left === 0; html += `<button type="button" class="slot" data-d="${d}" data-t="${t}" data-l="${left}"${full ? ' disabled' : ''}>${KIND[t].split(' ')[0]}<small>${full ? 'Complet' : left + ' place' + (left > 1 ? 's' : '')}</small></button>`; }); });
+  $('#wk').innerHTML = html;
+  $('#wk').addEventListener('click', e => {
+    const b = e.target.closest('.slot[data-d]'); if (!b || b.disabled) return;
+    $$('.slot').forEach(x => x.setAttribute('aria-pressed', x === b));
+    const r = $('#wkres'); r.className = 'wkres ok'; r.innerHTML = `${esc(b.dataset.d)} ${esc(b.dataset.t)} · ${esc(KIND[b.dataset.t])} · ${b.dataset.l} place(s) restante(s) <a class="btn" href="#essai" style="margin-left:14px;padding:10px 20px;font-size:14px">Réserver ma place</a>`;
+  });
+  /* Prochaine séance : badge d'en-tête */
+  (function () {
+    const now = new Date(); let best = null;
+    for (let add = 0; add < 8 && !best; add++) { const d = new Date(now); d.setDate(d.getDate() + add); const n = DAYS[(d.getDay() + 6) % 7]; if (d.getDay() === 0) continue; for (const t of TIMES) { if ((OFF[n] || []).includes(t)) continue; const [h, m] = t.split(':'); const dt = new Date(d); dt.setHours(+h, +m, 0, 0); if (dt > now && Math.floor(hash(n + t) * 6.99) > 0) { best = { n, t, add, l: Math.floor(hash(n + t) * 6.99) }; break; } } }
+    $('#live span').textContent = best ? 'Prochaine séance : ' + (best.add === 0 ? 'aujourd’hui ' : best.add === 1 ? 'demain ' : best.n + ' ') + best.t + ' · ' + best.l + ' place' + (best.l > 1 ? 's' : '') : 'Séances du lundi au samedi';
+  })();
+  /* Quel programme */
+  const REC = {
+    poids: ['Coaching solo + cardio', 'Un programme qui mêle renforcement et cardio, progressif, avec des habitudes simples à tenir.'],
+    muscle: ['Coaching solo force', 'Charges progressives, technique d’abord, suivi des progrès séance après séance.'],
+    reprise: ['Reprise douce', 'On redémarre sans se blesser : rythme progressif et exercices du quotidien. Avis médical conseillé avant de démarrer.'],
+    course: ['Préparation course', 'Plan d’entraînement sur plusieurs semaines : endurance, fractionné, renforcement et récupération.']
+  };
+  function reco() {
+    const g = $('input[name=g]:checked').value, l = $('input[name=l]:checked').value, w = $('input[name=w]:checked').value;
+    let t = REC[g][0], p = REC[g][1], r;
+    if (w === 'grp' && g !== 'reprise') { t = 'Petit groupe'; r = 'Jusqu’à 6 personnes, ambiance motivante, tarif plus doux (15 € la séance).'; }
+    else r = 'À la séance 50 €, ou le pack de 10 séances à 450 €. (Tarifs d’exemple.)';
+    if (l === 'deb' && g !== 'reprise') p += ' Niveau débutant : on commence par un bilan.';
+    $('#rt').textContent = t; $('#rp').textContent = p; $('#rr').textContent = r;
+    const sel = $('#essai select'); if (sel) { const m = { poids: 'Perdre du poids', muscle: 'Prendre du muscle', reprise: 'Reprendre le sport', course: 'Préparer une course' }[g]; Array.from(sel.options).forEach(o => { if (o.text === m) sel.value = o.value || o.text; }); }
+  }
+  $$('#quiz input').forEach(i => i.addEventListener('change', reco)); reco();
+  /* Compteurs et apparitions */
+  const count = el => { const m = /^(\d+)(.*)$/.exec(el.textContent.trim()); if (!m || matchMedia('(prefers-reduced-motion:reduce)').matches) return; const to = +m[1], suf = m[2], t0 = performance.now(); (function f(t) { const k = Math.min(1, (t - t0) / 900); el.textContent = Math.round(to * k) + suf; if (k < 1) requestAnimationFrame(f); })(t0); };
+  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); if (en.target.matches('.nums')) $$('b', en.target).forEach(count); io.unobserve(en.target); } }), { threshold: .15 });
+  $$('.pc,.pt,.nums,.rv').forEach(n => { n.classList.add('rv'); io.observe(n); });
+})();
+</script>
 </body>
 </html>

@@ -1,0 +1,10 @@
+/* Jetons des trois propositions, pour l'espace client (qui reprend le style choisi). */
+@font-face{font-family:Syne;src:url(../../../assets/fonts/ex/syne-normal.woff2) format("woff2");font-weight:400 800;font-display:swap}
+@font-face{font-family:Nunito;src:url(../../../assets/fonts/ex/nunito-normal.woff2) format("woff2");font-weight:200 1000;font-display:swap}
+@font-face{font-family:Fraunces;src:url(../../../assets/fonts/ex/fraunces-normal.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:Fraunces;src:url(../../../assets/fonts/ex/fraunces-italic.woff2) format("woff2");font-weight:100 900;font-style:italic;font-display:swap}
+@font-face{font-family:"DM Sans";src:url(../../../assets/fonts/ex/dm-sans-normal.woff2) format("woff2");font-weight:300 700;font-display:swap}
+@font-face{font-family:"Playfair Display";src:url(../../../assets/fonts/ex/playfair-display-normal.woff2) format("woff2");font-weight:400 900;font-display:swap}
+@font-face{font-family:"Playfair Display";src:url(../../../assets/fonts/ex/playfair-display-italic.woff2) format("woff2");font-weight:400 900;font-style:italic;font-display:swap}
+html[data-theme=tropical]{--nf-bg:#fff3de;--nf-surface:#fff;--nf-ink:#3a1738;--nf-mut:#80577a;--nf-line:#f0d3b4;--nf-accent:#ff4d6d;--nf-accent-ink:#fff;--nf-accent2:#ffb01f;--nf-radius:26px;--nf-radius-sm:16px;--nf-font:Nunito,system-ui,sans-serif;--nf-display:Syne,system-ui,sans-serif;--nf-tray:#fffaf0;--nf-rim:#ffd9a8;--nf-shadow:6px 6px 0 var(--nf-ink)}
+html[data-theme=tropical] .nf-btn{border:3px solid var(--nf-ink);box-shadow:4px 4px 0 var(--nf-ink);font-weight:800}html[data-theme=tropical] .nf-btn:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--nf-ink)}html[data-theme=tropical] .nf-btn-ghost{background:#fff;color:var(--nf-ink)}

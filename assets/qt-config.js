@@ -7,7 +7,7 @@
    firebase : clés publiques par conception (même projet que les autres apps) ; la sécurité vient des règles Firestore.
    ownerHashes : empreinte SHA-256 de l'adresse Google du propriétaire (affichage de l'administration ; les droits réels sont dans les règles). */
 window.QT = {
-  email: '', tiktok: 'quentools', formEndpoint: '',
+  email: 'contact.quentools@gmail.com', tiktok: 'quentools', formEndpoint: '',
   firebase: {
     apiKey: 'AIzaSyA-JS7hnSQXeNXnAPqbF3MV8rkPQ5_JVY8',
     authDomain: 'quentools-adca1.firebaseapp.com',

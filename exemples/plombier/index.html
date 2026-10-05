@@ -56,13 +56,49 @@ footer{background:var(--ink);color:#9fb0cf;padding:36px 0;font-size:14px}footer 
 .callbar{display:none}
 @media (max-width:860px){nav{display:none}.hero .wrap,.zone .wrap{grid-template-columns:1fr}.facts .wrap{grid-template-columns:1fr 1fr}.tiles{grid-template-columns:1fr}.flow{grid-template-columns:1fr 1fr;row-gap:30px}
  .callbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--sun);padding:12px 16px;justify-content:center;font-weight:800}.callbar a{text-decoration:none}body{padding-bottom:56px}}
+
+.ico{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.logo .ico.sun{stroke:var(--sun);width:22px;height:22px}.facts b .ico{stroke:var(--blue)}.tile .ic .ico{width:30px;height:30px;stroke:var(--blue)}
+.tile{position:relative;overflow:hidden}.tile::after{content:"";position:absolute;inset:auto 0 0 0;height:3px;background:var(--sun);transform:scaleX(0);transform-origin:left;transition:transform .4s}.tile:hover::after{transform:scaleX(1)}
+.dispo{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);font-size:14px;font-weight:600;margin-bottom:22px}
+.dispo i{width:9px;height:9px;border-radius:50%;background:#7a8aa8}.dispo.on i{background:#4ee08a;box-shadow:0 0 0 4px rgba(78,224,138,.25)}
+.diag{background:var(--bg)}
+.pbtns{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pbtn{display:flex;align-items:center;gap:14px;padding:18px 20px;border:1.5px solid var(--line);border-radius:14px;background:#fff;cursor:pointer;font:700 16px Archivo,sans-serif;color:var(--ink);text-align:left;transition:.2s}
+.pbtn:hover{border-color:var(--blue)}.pbtn[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}.pbtn .ico{width:26px;height:26px}
+.diagres{margin-top:22px;display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+.dcard{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:24px}.dcard h3{margin:0 0 10px;font-size:19px}.dcard ul{margin:0;padding-left:20px;color:var(--mut)}.dcard li{margin:6px 0}
+.urg{display:inline-block;padding:4px 12px;border-radius:99px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px}
+.urg.hi{background:#ffe1dc;color:#a4281b}.urg.mid{background:#fff0c4;color:#7a5400}.urg.lo{background:#dff3e6;color:#1c6a3a}
+.alert{display:flex;gap:12px;margin-top:14px;padding:14px 16px;border-radius:12px;background:#fff1ef;border:1.5px solid #f3b6ad;color:#7a1f14;font-size:15px}.alert .ico{stroke:#a4281b;margin-top:2px}
+.zchk{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 12px}.zchk input{flex:1 1 200px;font:inherit;padding:13px 16px;border-radius:10px;border:1.5px solid #4666a8;background:rgba(255,255,255,.08);color:#fff}.zchk input::placeholder{color:#9db2dc}
+.zres{min-height:52px;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,.1);font-weight:600}.zres.ok{background:rgba(78,224,138,.18)}
+.rv{opacity:0;transform:translateY(18px);transition:opacity .7s,transform .7s}.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
+@media (max-width:860px){.pbtns{grid-template-columns:1fr 1fr}.diagres{grid-template-columns:1fr}}@media (max-width:520px){.pbtns{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3c3.5 4.5 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 2.5-6.5 6-11z"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></symbol>
+<symbol id="i-broom" viewBox="0 0 24 24"><path d="M15 3l-4 8"/><path d="M6 12h10l2.500 9H4z"/><path d="M9 16v3M13 16v3"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol>
+<symbol id="i-faucet" viewBox="0 0 24 24"><path d="M4 11h10a4 4 0 0 1 4 4v1"/><path d="M8 11V7h6"/><path d="M6 7h4"/><path d="M18 19v1"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-9z"/></symbol>
+<symbol id="i-radiator" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 6v12M12 6v12M16 6v12"/></symbol>
+<symbol id="i-shower" viewBox="0 0 24 24"><path d="M5 21V8a4 4 0 0 1 8 0"/><path d="M9 11h8l-1 3h-6z"/><path d="M11 17v1M14 17v1M17 17v1"/></symbol>
+<symbol id="i-toilet" viewBox="0 0 24 24"><path d="M7 3h8v7H7z"/><path d="M4 10h16c0 4-2.500 7-8 7s-8-3-8-7z"/><path d="M9 21h6"/></symbol>
+<symbol id="i-tools" viewBox="0 0 24 24"><path d="M4 8h16v12H4z"/><path d="M9 8V5h6v3"/><path d="M4 14h16"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/></symbol>
+</defs></svg>
 <div class="qt-ex"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
 <div class="urgent">Urgence fuite ou panne ? Appelez le <a href="tel:0400000000">04 00 00 00 00</a> (numéro d'exemple)</div>
 <header class="top"><div class="wrap">
-  <a class="logo" href="./"><i>💧</i>Dupont Plomberie</a>
+  <a class="logo" href="./"><i><svg class="ico sun" aria-hidden="true"><use href="#i-drop"/></svg></i>Dupont Plomberie</a>
   <nav><a href="#services">Services</a><a href="#zone">Zone</a><a href="#tarifs">Tarifs</a><a href="#faq">FAQ</a></nav>
   <a class="btn btn-b" href="#devis">Devis gratuit</a>
 </div></header>
@@ -70,9 +106,10 @@ footer{background:var(--ink);color:#9fb0cf;padding:36px 0;font-size:14px}footer 
 <main>
 <section class="hero" style="padding:0"><div class="wrap">
   <div>
+    <span class="dispo" id="dispo"><i></i><span>…</span></span>
     <h1>Votre plombier à Lyon, <span>sans mauvaise surprise.</span></h1>
     <p>Dépannage, chauffe-eau, chaudière et salle de bains. Le prix est annoncé avant l'intervention, le chantier est laissé propre.</p>
-    <div class="cta"><a class="btn btn-y" href="tel:0400000000">📞 Appeler maintenant</a><a class="btn btn-o" style="border-color:#fff;color:#fff" href="#services">Voir les services</a></div>
+    <div class="cta"><a class="btn btn-y" href="tel:0400000000"><svg class="ico " aria-hidden="true"><use href="#i-phone"/></svg> Appeler maintenant</a><a class="btn btn-o" style="border-color:#fff;color:#fff" href="#services">Voir les services</a></div>
   </div>
   <form class="quote" id="devis">
     <h2>Devis gratuit en 2 minutes</h2><p>Réponse sous 24 h.</p>
@@ -84,23 +121,30 @@ footer{background:var(--ink);color:#9fb0cf;padding:36px 0;font-size:14px}footer 
 </div></section>
 
 <div class="facts"><div class="wrap">
-  <div><b>⏱</b>Intervention sous 24 h</div><div><b>🧾</b>Devis avant travaux</div><div><b>🧹</b>Chantier propre</div><div><b>🛡</b>Assurance décennale (à confirmer)</div>
+  <div><b><svg class="ico " aria-hidden="true"><use href="#i-clock"/></svg></b>Intervention sous 24 h</div><div><b><svg class="ico " aria-hidden="true"><use href="#i-receipt"/></svg></b>Devis avant travaux</div><div><b><svg class="ico " aria-hidden="true"><use href="#i-broom"/></svg></b>Chantier propre</div><div><b><svg class="ico " aria-hidden="true"><use href="#i-shield"/></svg></b>Assurance décennale (à confirmer)</div>
 </div></div>
+
+
+<section class="diag" id="diag"><div class="wrap">
+  <h2 class="t rv">Que se passe-t-il chez vous&nbsp;?</h2><p class="sub rv">Choisissez la situation : voici quoi faire en attendant, le degré d’urgence et un repère de prix (exemple).</p>
+  <div class="pbtns" id="pbtns" role="group" aria-label="Situation"></div>
+  <div class="diagres" id="dres" aria-live="polite"></div>
+</div></section>
 
 <section id="services"><div class="wrap">
   <h2 class="t">Ce que je répare et installe</h2><p class="sub">Six interventions courantes, un seul interlocuteur du premier appel à la facture.</p>
   <div class="tiles">
-    <div class="tile"><div class="ic">🚰</div><h3>Fuite et dépannage</h3><p>Recherche de fuite, canalisation bouchée, robinetterie.</p><em>à partir de 80 €</em></div>
-    <div class="tile"><div class="ic">🔥</div><h3>Chauffe-eau</h3><p>Remplacement, entretien, groupe de sécurité.</p><em>sur devis</em></div>
-    <div class="tile"><div class="ic">♨️</div><h3>Chaudière</h3><p>Entretien annuel, dépannage, remplacement.</p><em>entretien dès 110 €</em></div>
-    <div class="tile"><div class="ic">🚿</div><h3>Salle de bains</h3><p>Douche à l'italienne, meuble vasque, WC suspendu.</p><em>sur devis</em></div>
-    <div class="tile"><div class="ic">🚽</div><h3>Sanitaires</h3><p>Pose et remplacement de WC, lavabos, éviers.</p><em>à partir de 90 €</em></div>
-    <div class="tile"><div class="ic">🧰</div><h3>Petits travaux</h3><p>Joints, siphons, flexibles, purge de radiateurs.</p><em>forfait 1 h : 65 €</em></div>
+    <div class="tile"><div class="ic"><svg class="ico " aria-hidden="true"><use href="#i-faucet"/></svg></div><h3>Fuite et dépannage</h3><p>Recherche de fuite, canalisation bouchée, robinetterie.</p><em>à partir de 80 €</em></div>
+    <div class="tile"><div class="ic"><svg class="ico " aria-hidden="true"><use href="#i-flame"/></svg></div><h3>Chauffe-eau</h3><p>Remplacement, entretien, groupe de sécurité.</p><em>sur devis</em></div>
+    <div class="tile"><div class="ic"><svg class="ico " aria-hidden="true"><use href="#i-radiator"/></svg></div><h3>Chaudière</h3><p>Entretien annuel, dépannage, remplacement.</p><em>entretien dès 110 €</em></div>
+    <div class="tile"><div class="ic"><svg class="ico " aria-hidden="true"><use href="#i-shower"/></svg></div><h3>Salle de bains</h3><p>Douche à l'italienne, meuble vasque, WC suspendu.</p><em>sur devis</em></div>
+    <div class="tile"><div class="ic"><svg class="ico " aria-hidden="true"><use href="#i-toilet"/></svg></div><h3>Sanitaires</h3><p>Pose et remplacement de WC, lavabos, éviers.</p><em>à partir de 90 €</em></div>
+    <div class="tile"><div class="ic"><svg class="ico " aria-hidden="true"><use href="#i-tools"/></svg></div><h3>Petits travaux</h3><p>Joints, siphons, flexibles, purge de radiateurs.</p><em>forfait 1 h : 65 €</em></div>
   </div>
 </div></section>
 
 <section class="zone" id="zone"><div class="wrap">
-  <div><h2 class="t">Je me déplace près de chez vous.</h2><p>Lyon et alentours, avec une intervention rapide dans un rayon de 20 km. Dites-moi votre commune, je vous confirme le délai.</p></div>
+  <div><h2 class="t">Je me déplace près de chez vous.</h2><p>Lyon et alentours, avec une intervention rapide dans un rayon de 20 km. Tapez votre commune pour connaître le délai.</p><div class="zchk"><input id="zin" list="zlist" placeholder="Votre commune" autocomplete="off" aria-label="Votre commune"><datalist id="zlist"></datalist></div><div class="zres" id="zres" aria-live="polite">Exemple : Villeurbanne, Écully, Givors…</div></div>
   <div class="chips"><span>Lyon 1er – 9e</span><span>Villeurbanne</span><span>Caluire</span><span>Bron</span><span>Vénissieux</span><span>Oullins</span><span>Tassin</span><span>Écully</span></div>
 </div></section>
 
@@ -123,7 +167,54 @@ footer{background:var(--ink);color:#9fb0cf;padding:36px 0;font-size:14px}footer 
 </main>
 
 <footer><div class="wrap"><span>© <span data-year>2026</span> Dupont Plomberie (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
-<div class="callbar"><a href="tel:0400000000">📞 Appeler le 04 00 00 00 00</a></div>
+<div class="callbar"><a href="tel:0400000000"><svg class="ico " aria-hidden="true"><use href="#i-phone"/></svg> Appeler le 04 00 00 00 00</a></div>
 <script src="../ex.js" defer></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ico = n => `<svg class="ico" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+  /* Disponibilité du jour (horaires d'exemple) */
+  (function () {
+    const n = new Date(), d = n.getDay(), h = n.getHours() + n.getMinutes() / 60, el = $('#dispo');
+    const hrs = d === 0 ? null : d === 6 ? [9, 13] : [8, 19], on = hrs && h >= hrs[0] && h < hrs[1];
+    el.classList.toggle('on', !!on);
+    $('span', el).textContent = on ? 'Disponible maintenant · jusqu’à ' + hrs[1] + ' h' : 'Hors horaires · urgences au 04 00 00 00 00';
+  })();
+  /* Diagnostic express : conseils généraux, repères de prix d'exemple */
+  const P = [
+    { k: 'fuite', i: 'faucet', n: 'Une fuite d’eau', u: ['hi', 'Urgent'], t: ['Fermez le robinet d’arrêt général (souvent près du compteur).', 'Coupez l’électricité si l’eau touche des prises ou le tableau.', 'Épongez et prenez une photo : elle m’aide à chiffrer.'], p: 'Déplacement et diagnostic 49 €, réparation selon la fuite (à partir de 80 €).', type: 'Dépannage urgent' },
+    { k: 'chaud', i: 'drop', n: 'Plus d’eau chaude', u: ['mid', 'Sous 24 h'], t: ['Vérifiez que le chauffe-eau est bien alimenté (disjoncteur).', 'Notez la marque et l’âge de l’appareil.', 'Ne forcez pas le groupe de sécurité.'], p: 'Diagnostic 49 €, remplacement de chauffe-eau sur devis.', type: 'Chauffe-eau' },
+    { k: 'radiateurs', i: 'radiator', n: 'Radiateurs froids', u: ['mid', 'Sous 48 h'], t: ['Purgez doucement les radiateurs du haut vers le bas.', 'Vérifiez la pression de la chaudière (souvent entre 1 et 1,5 bar).', 'Notez le code erreur affiché, s’il y en a un.'], p: 'Purge ou diagnostic dès 49 €, entretien chaudière dès 110 €.', type: 'Chaudière' },
+    { k: 'bouche', i: 'toilet', n: 'WC ou évier bouché', u: ['lo', 'Dans la semaine'], t: ['Évitez les produits chimiques agressifs.', 'Utilisez une ventouse, sans insister si l’eau remonte.', 'Si le problème revient, la canalisation est peut-être en cause.'], p: 'Débouchage à partir de 90 €.', type: 'Dépannage urgent' },
+    { k: 'gaz', i: 'flame', n: 'Chaudière en panne', u: ['hi', 'Urgent si odeur de gaz'], t: ['Odeur de gaz : ouvrez les fenêtres, n’actionnez aucun interrupteur, quittez le logement et appelez le numéro d’urgence gaz de votre distributeur ou le 112.', 'Sans odeur : notez le code erreur et la marque.', 'Ne démontez pas l’appareil vous-même.'], p: 'Diagnostic dès 49 €, remplacement sur devis.', type: 'Chaudière', alert: true },
+    { k: 'autre', i: 'tools', n: 'Autre chose', u: ['lo', 'Selon le cas'], t: ['Décrivez-moi le problème, avec une photo si possible.', 'Je vous réponds avec un prix avant de me déplacer.'], p: 'Forfait petits travaux 1 h : 65 €.', type: 'Salle de bains' }
+  ];
+  $('#pbtns').innerHTML = P.map(p => `<button type="button" class="pbtn" data-k="${p.k}" aria-pressed="false">${ico(p.i)}${esc(p.n)}</button>`).join('');
+  function pick(k) {
+    const p = P.find(x => x.k === k); $$('.pbtn').forEach(b => b.setAttribute('aria-pressed', b.dataset.k === k));
+    $('#dres').innerHTML = `<div class="dcard"><span class="urg ${p.u[0]}">${esc(p.u[1])}</span><h3>En attendant mon arrivée</h3><ul>${p.t.map(x => `<li>${esc(x)}</li>`).join('')}</ul>${p.alert ? `<div class="alert">${ico('alert')}<span>La sécurité d’abord : en cas de doute sur une odeur de gaz, ne cherchez pas la cause vous-même.</span></div>` : ''}</div>
+      <div class="dcard"><h3>Repère de prix</h3><p style="color:var(--mut);margin:0 0 16px">${esc(p.p)}<br><small>Tarifs d’exemple, fictifs. Devis ferme avant travaux.</small></p><a class="btn btn-y" href="tel:0400000000">${ico('phone')} Appeler</a> <a class="btn btn-b" href="#devis" data-type="${esc(p.type)}">Devis prérempli</a></div>`;
+  }
+  $('#pbtns').addEventListener('click', e => { const b = e.target.closest('.pbtn'); if (b) pick(b.dataset.k); });
+  $('#dres').addEventListener('click', e => { const a = e.target.closest('[data-type]'); if (a) { const s = $('#q1'); Array.from(s.options).forEach(o => { if (o.text === a.dataset.type) s.value = o.value || o.text; }); } });
+  /* Zone : communes d'exemple et délais */
+  const Z = { 'Lyon': 2, 'Villeurbanne': 2, 'Caluire-et-Cuire': 3, 'Bron': 3, 'Vénissieux': 3, 'Oullins': 3, 'Tassin-la-Demi-Lune': 4, 'Écully': 3, 'Saint-Priest': 4, 'Décines-Charpieu': 4, 'Meyzieu': 5, 'Givors': 8, 'Vaulx-en-Velin': 3, 'Francheville': 4 };
+  $('#zlist').innerHTML = Object.keys(Z).map(k => `<option value="${k}">`).join('');
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  $('#zin').addEventListener('input', e => {
+    const v = norm(e.target.value), box = $('#zres');
+    if (!v) { box.className = 'zres'; box.textContent = 'Exemple : Villeurbanne, Écully, Givors…'; return; }
+    const hit = Object.keys(Z).find(k => norm(k) === v) || Object.keys(Z).find(k => norm(k).startsWith(v) && v.length > 2);
+    if (hit) { box.className = 'zres ok'; box.textContent = '✓ ' + hit + ' : intervention en général sous ' + (Z[hit] <= 3 ? 'moins de 3 h pour une urgence' : Z[hit] + ' h pour une urgence') + ' (exemple).'; }
+    else { box.className = 'zres'; box.textContent = 'Je ne vois pas cette commune dans ma liste : appelez-moi, je vous confirme le délai.'; }
+  });
+  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .1 });
+  $$('.tile,.flow div,.rate table,.faq details').forEach(n => { n.classList.add('rv'); io.observe(n); });
+  pick('fuite');
+})();
+</script>
+
 </body>
 </html>

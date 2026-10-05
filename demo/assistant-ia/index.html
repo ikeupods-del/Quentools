@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Salon Éclat · coiffeur avec assistant (modèle de démonstration)</title>
+<meta name="description" content="Modèle de site de coiffeur avec un assistant automatique qui répond aux visiteurs et recueille les demandes de rendez-vous. Démonstration fictive réalisée par QuenTools.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+<link rel="preload" href="../../assets/fonts/ex/dm-serif-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../exemples/ex.css">
+<link rel="stylesheet" href="../../assets/assistant.css">
+<style>
+@font-face{font-family:DMS;src:url(../../assets/fonts/ex/dm-serif-display.woff2) format("woff2");font-display:swap}
+@font-face{font-family:DMSans;src:url(../../assets/fonts/ex/dm-sans-normal.woff2) format("woff2-variations");font-weight:100 1000;font-display:swap}
+:root{--bg:#faf6f1;--ink:#241b2f;--mut:#5d5368;--acc:#7c3aed;--acc2:#5b21b6;--card:#fff;--line:#e6dfd6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 DMSans,system-ui,sans-serif}
+h1,h2,h3{font-family:DMS,Georgia,serif;font-weight:400;margin:0;line-height:1.1}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+.qt-ex a{display:inline-block;padding:10px 4px}
+header{padding:18px 0;border-bottom:1px solid var(--line)}header .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.logo{font:400 26px DMS,serif}.logo b{color:var(--acc)}
+.tel{color:var(--ink);font-weight:600;text-decoration:none;padding:10px 4px}
+.hero{padding:64px 0 48px}.hero h1{font-size:clamp(2.4rem,7vw,4.4rem);max-width:12ch}.hero h1 em{color:var(--acc);font-style:italic}
+.hero p{color:var(--mut);font-size:1.15rem;max-width:32em;margin:18px 0 26px}
+.btn{display:inline-flex;align-items:center;min-height:48px;padding:0 26px;border:0;border-radius:999px;background:var(--acc);color:#fff;font:600 16px DMSans,sans-serif;text-decoration:none;cursor:pointer}
+.btn:hover{background:var(--acc2)}.btn:focus-visible,a:focus-visible{outline:3px solid #f59e0b;outline-offset:3px}
+section.s{padding:40px 0}section.s h2{font-size:2rem;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.card h3{font-size:1.3rem;margin-bottom:8px}.card p{margin:0;color:var(--mut)}
+table{width:100%;border-collapse:collapse}td{padding:10px 0;border-bottom:1px solid var(--line)}td:last-child{text-align:right;font-weight:600}
+.how{background:#241b2f;color:#f3eefb;border-radius:20px;padding:28px}.how h2{color:#fff}.how li{margin:8px 0}.how p{color:#cfc6dc}
+footer{padding:32px 0 96px;color:var(--mut);font-size:14px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="qt-ex"><a href="../../devis/?type=Template">Modèle de démonstration réalisé par QuenTools : tout est fictif. Demander le mien →</a></div>
+<header><div class="wrap"><span class="logo">Salon <b>Éclat</b></span><a class="tel" href="tel:+33100000000">01 00 00 00 00</a></div></header>
+<main>
+  <section class="hero"><div class="wrap">
+    <h1>Votre coupe, <em>sans attendre</em> au téléphone.</h1>
+    <p>Posez vos questions à notre assistant, à toute heure : horaires, tarifs, prestations. Il note votre demande de rendez-vous et on vous rappelle pour la confirmer.</p>
+    <a class="btn" href="#assistant" data-assistant-open>Essayer l’assistant</a>
+  </div></section>
+  <section class="s"><div class="wrap"><h2>Nos prestations</h2><div class="grid">
+    <article class="card"><h3>Coupe femme</h3><p>Shampoing, coupe et coiffage.</p></article>
+    <article class="card"><h3>Coupe homme</h3><p>Coupe aux ciseaux ou à la tondeuse.</p></article>
+    <article class="card"><h3>Couleur</h3><p>Diagnostic, couleur et soin.</p></article>
+  </div></div></section>
+  <section class="s"><div class="wrap"><div class="grid">
+    <div class="card"><h3>Tarifs (exemple)</h3><table><tr><td>Coupe femme</td><td>45 €</td></tr><tr><td>Coupe homme</td><td>25 €</td></tr><tr><td>Couleur</td><td>dès 60 €</td></tr></table></div>
+    <div class="card"><h3>Horaires (exemple)</h3><table><tr><td>Mardi au vendredi</td><td>9 h – 18 h</td></tr><tr><td>Samedi</td><td>9 h – 16 h</td></tr><tr><td>Dimanche et lundi</td><td>fermé</td></tr></table></div>
+  </div></div></section>
+  <section class="s" id="assistant"><div class="wrap"><div class="how">
+    <h2>Ce que fait l’assistant</h2>
+    <ul><li>Répond aux visiteurs quand vous êtes fermé ou en rendez-vous.</li><li>S’appuie uniquement sur vos horaires, vos prestations et vos tarifs : il n’invente rien.</li><li>Récupère le prénom, le téléphone et la demande, et vous les envoie par e-mail.</li><li>Ne confirme jamais un rendez-vous : c’est vous qui rappelez.</li></ul>
+    <p>Dans cette démonstration, il répond avec des phrases prédéfinies et n’envoie rien. Sur un vrai site, il est relié à une IA et reste réglé sur vos informations. Essayez : « Quels sont vos horaires ? » ou « Je voudrais un rendez-vous ».</p>
+  </div></div></section>
+</main>
+<footer><div class="wrap">Salon Éclat est un salon fictif. Adresse, horaires et tarifs sont donnés à titre d’exemple.</div></footer>
+<script src="../../assets/assistant.js" defer data-nom="Salon Éclat" data-tel="01 00 00 00 00" data-api=""
+  data-faq='[{"q":"Quels sont vos horaires ?","k":"horaire|ouvert|ferme","a":"Nous sommes ouverts du mardi au vendredi de 9 h à 18 h, et le samedi de 9 h à 16 h. Fermé le dimanche et le lundi."},{"q":"Combien coûte une coupe ?","k":"prix|tarif|combien|coute","a":"Coupe femme 45 €, coupe homme 25 €, couleur dès 60 €."},{"q":"Prendre rendez-vous"}]'></script>
+</body>
+</html>

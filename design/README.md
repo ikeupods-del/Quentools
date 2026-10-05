@@ -14,10 +14,13 @@ Tout ce qu'il faut pour produire vite un site ou un outil au niveau du site vitr
 | `templates/outil.html` | Page de lancement d'un outil ou d'une application (SaaS, calculateur, app). |
 | `templates/rendez-vous.html` | Prestations sur rendez-vous (coiffeur, thérapeute, coach, restaurateur) : prestations, tarifs, horaires, demande de créneau. |
 | `templates/restaurant.html` | Restaurant, bar, boulangerie : plat du jour, carte, horaires, réservation. |
-| `templates/outil-devis.html` | Outil de devis pour artisan : lignes, TVA, remise, acompte, export PDF par impression ; données gardées dans le navigateur. À vendre comme outil sur mesure. | Démonstration publique : `demo/devis-artisan/`. |
-| `templates/vente-ebook.html` | Page de vente d'un e-book ou d'une formation : problème, programme, auteur, prix, FAQ. |
+| `templates/vente-formation.html` | Page de vente d'une formation ou d'un guide : problème, programme, auteur, prix, FAQ. |
+| `../demo/maison-blade/` | Barbier de luxe « Quiet Luxury » (Tailwind compilé), démo complète : réservation en 3 choix, paiement, abonnement, fidélité, boutique, administration. Voir son README. |
 | `templates/legal.html` | Mentions légales et confidentialité à compléter. |
 | `templates/merci.html` | Page de confirmation (après un formulaire ou un paiement). |
+
+## Démarrer un client en quelques minutes (outil)
+`node tools/nouveau-client.js --exemple > fiche.json` donne une fiche à remplir (modèle, dossier, nom, métier, ville, accroche, couleur, 3 services, téléphone ; facultatifs pour le référencement local : `domaine`, `adresse` {rue, codePostal}, `horaires` ; option assistant de site : `assistant` {tarifs: [{nom, prix}], faq: [{q, k, a}]} ou `true`) ; `node tools/nouveau-client.js fiche.json` crée `clients/<dossier>/` (jamais versionné) avec le système de design, la marque appliquée (contraste du texte blanc contrôlé, mode sombre dérivé), les mentions légales et la page de remerciement, puis liste les champs restant à compléter. Modèles : `node tools/nouveau-client.js --modeles` (vitrine, rendez-vous, restaurant, vente-formation, outil). Reste à la main : photos réelles, textes, avis réels, mentions légales (SIRET, hébergeur), aperçu 390 px / 1440 px en clair et en sombre.
 
 ## Démarrer un projet client
 1. Copier `assets/` (qt.css, qt.js, fonts) et le modèle voulu dans un nouveau dossier ; renommer le modèle en `index.html` et corriger le chemin `../../assets/` en `assets/`.
@@ -37,6 +40,7 @@ Tout ce qu'il faut pour produire vite un site ou un outil au niveau du site vitr
 - **Mouvement** : `.reveal` (+ `style="--i:n"` pour le décalage), jamais plus de 0,8 s ; tout est coupé si l'utilisateur réduit les animations.
 - **Accessibilité** : lien « Aller au contenu », focus visible, textes alternatifs, contrastes, boutons de 48 px de haut.
 - **Performance** : images JPEG 400–1 400 px, `loading="lazy"` hors du premier écran, polices préchargées, aucun script externe.
+- **Garde d'accès** : chaque modèle contient le petit script `qt-garde.js` de QuenTools (le seul script de ce type), qui verrouille le site d'un client tant que le solde n'est pas réglé. Mode d'emploi, limites et cadre juridique : `design/ACCES-CLIENT.md`.
 - **Confidentialité** : aucun cookie ni mesure d'audience par défaut ; si le client en veut, bandeau de consentement obligatoire.
 
 ## Composants disponibles

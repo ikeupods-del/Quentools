@@ -58,7 +58,7 @@ const page = (w, h) => {
 <div class="logo-move"><svg class="logo" viewBox="0 0 64 64"><rect class="sq" width="64" height="64" rx="18" fill="#5b3df5"/><circle class="ring" cx="30" cy="30" r="14" fill="none" stroke="#fff" stroke-width="7" pathLength="90" transform="rotate(-90 30 30)"/><path class="tail" d="M37 37l12 12" stroke="#d7f24a" stroke-width="8" stroke-linecap="round" pathLength="18"/></svg></div>
 <div class="name-out"><div class="name">${[...'QuenTools'].map((c, i) => `<span style="animation-delay:${1.7 + i * .05}s">${c}</span>`).join('')}</div></div>
 <div class="tag"><span class="l"><span style="animation-delay:3.9s">Des outils simples</span></span><span class="l"><span style="animation-delay:4.05s">qui font</span></span><span class="l"><span style="animation-delay:4.2s"><em>gagner du temps</em>.</span></span></div>
-<div class="chips">${[['Outils gratuits', 5.9], ['Sur mesure', 6.05], ['Créer avec l’IA', 6.2, 1]].map(([t, d, l]) => `<span class="chip${l ? ' lime' : ''}" style="animation-delay:${d}s">${t}</span>`).join('')}</div>
+<div class="chips">${[['Outils gratuits', 5.9], ['Sur mesure', 6.05], ['Cartes cadeaux', 6.2, 1]].map(([t, d, l]) => `<span class="chip${l ? ' lime' : ''}" style="animation-delay:${d}s">${t}</span>`).join('')}</div>
 <div class="phones">${['patrimoine', 'infikit', 'gourmet'].map(n => `<div class="ph"><img src="data:image/jpeg;base64,${b64('ecran-' + n + '.jpg')}"></div>`).join('')}</div>
 <div class="end"><b>QuenTools</b><span>@quentools · outils gratuits et sur mesure</span></div>`;
 };

@@ -48,7 +48,7 @@ BILL.stripe = BILL.stripe || {};
 const SALE_DEFAULT = !!BILL.enabled;
 const RELAY_URL = /^https:\/\/[\w.-]+(\/[\w./-]*)?$/;
 const REMOTE_FIELDS = { api: [BILL, 'api', 'Adresse du relais d’activation automatique (facultatif)'], payee: [BILL, 'payee', 'Adresse e-mail PayPal qui reçoit les paiements'], paymentLink: [BILL, 'paymentLink', 'OU lien de paiement PayPal fixe (facultatif)'], rewardLink: [BILL, 'rewardLink', 'Lien PayPal fixe pour l’offre récompense (facultatif)'],
-  seller: [LEGAL, 'seller', 'Nom et prénom (ou raison sociale)'], form: [LEGAL, 'form', 'Statut (ex. Entrepreneur individuel, micro-entreprise)'], siret: [LEGAL, 'siret', 'SIRET'],
+  seller: [LEGAL, 'seller', 'Nom et prénom (ou raison sociale)'], form: [LEGAL, 'form', 'Statut (ex. Entrepreneur individuel, micro-entreprise)'], siret: [LEGAL, 'siret', 'SIREN ou SIRET'],
   address: [LEGAL, 'address', 'Adresse'], mediator: [LEGAL, 'mediator', 'Médiateur de la consommation (nom et site)'],
   stripeLifetime: [BILL.stripe, 'lifetimeLink', 'Stripe : lien de paiement « à vie »'], stripeYearly: [BILL.stripe, 'yearlyLink', 'Stripe : lien de paiement « annuel »'], stripePortal: [BILL.stripe, 'portal', 'Stripe : lien du portail client (résiliation, factures)'] };
 /* L'état « PayPal renseigné » indépendamment du choix affiché (pour le panneau). */
@@ -62,7 +62,7 @@ function remoteStore(c) { const next = { ...remoteCached(), ...c }; try { localS
 // Interrupteur libre (choix du propriétaire) : seule condition, un moyen de paiement PayPal, sinon le bouton « Payer » ne mènerait nulle part.
 const saleReady = () => !!(payReady() && (BILL.plans || []).length);
 const saleMissing = () => [!payReady() && (BILL.provider === 'stripe' ? 'Lien de paiement Stripe « à vie » à renseigner' : BILL.provider === 'both' ? 'Adresse PayPal ou lien Stripe à renseigner' : 'Adresse PayPal (ou lien PayPal) à renseigner')].filter(Boolean);
-const legalMissing = () => [['seller', 'nom'], ['form', 'statut'], ['address', 'adresse'], ['siret', 'SIRET'], ['email', 'e-mail'], ['mediator', 'médiateur de la consommation']].filter(([k]) => !LEGAL[k]).map(([, l]) => l).concat(supportTo() ? [] : ['e-mail d’assistance']);
+const legalMissing = () => [['seller', 'nom'], ['form', 'statut'], ['address', 'adresse'], ['siret', 'SIREN ou SIRET'], ['email', 'e-mail'], ['mediator', 'médiateur de la consommation']].filter(([k]) => !LEGAL[k]).map(([, l]) => l).concat(supportTo() ? [] : ['e-mail d’assistance']);
 function applySaleConfig(c) {
   if (!c) return false;
   let changed = false;

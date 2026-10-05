@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a0908">
+<title>Mon espace · Maison Blade</title>
+<link rel="icon" href="../../../assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../../exemples/ex.css">
+<link rel="stylesheet" href="../luxe.css">
+</head>
+<body class="grain min-h-screen">
+<div class="qt-ex"><a href="../../../devis/?type=Outil%20sur%20mesure">Espace client de démonstration, réalisé par QuenTools : demander le mien →</a></div>
+
+<header class="sticky top-0 z-50 border-b border-white/[.08] bg-ink/85 backdrop-blur-xl">
+  <div class="mx-auto flex h-[72px] max-w-[1100px] items-center justify-between px-6">
+    <a href="../" class="flex items-center gap-3"><span class="grid h-9 w-9 place-items-center rounded-full border border-bronze/70 font-serif text-sm tracking-widest text-champagne">MB</span><span class="hidden font-serif text-lg uppercase tracking-[.26em] sm:inline">Maison Blade</span></a>
+    <nav class="flex items-center gap-3"><a class="btn-line !min-h-[40px] !px-4" href="../#reserver">Réserver</a><button id="out" type="button" class="btn-line !min-h-[40px] !px-4" hidden>Déconnexion</button></nav>
+  </div>
+</header>
+
+<main class="mx-auto max-w-[1100px] px-6 py-14 md:py-20" id="app" aria-live="polite"></main>
+
+<dialog id="payDlg" aria-labelledby="payT" class="m-auto w-[min(440px,calc(100%-32px))] border border-white/15 bg-graphite p-0 text-ivory shadow-deep backdrop:bg-black/70 backdrop:backdrop-blur-sm">
+  <div class="grid gap-5 p-8">
+    <p class="eyebrow">Paiement sécurisé</p><h3 class="font-serif text-3xl" id="payT">Régler par carte</h3><p id="payTxt" class="font-serif text-4xl text-champagne"></p>
+    <p class="border border-white/10 p-4 text-sm text-mist">Démonstration : aucune carte n’est demandée et rien n’est prélevé.</p>
+    <div class="flex flex-wrap gap-3"><button class="btn" id="payOk" type="button">Payer (simulation)</button><button class="btn-line" id="payNo" type="button">Annuler</button></div>
+  </div>
+</dialog>
+
+<div class="fixed bottom-5 right-5 z-[80] flex flex-wrap justify-end gap-2"><a href="../admin/?demo" class="inline-flex min-h-[44px] items-center gap-2 border border-bronze/60 bg-ink/85 px-5 text-[.68rem] uppercase tracking-wide2 text-champagne shadow-deep backdrop-blur-xl transition duration-500 ease-lux hover:border-champagne hover:bg-bronze/15" title="Démonstration : ouvre l’administration sans code">Vue admin <span class="arrow">→</span></a></div>
+<script src="../config.js"></script>
+<script src="../store.js"></script>
+<script src="compte.js"></script>
+</body>
+</html>

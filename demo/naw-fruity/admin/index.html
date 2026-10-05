@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Administration · Naw Fruity</title>
+<link rel="icon" href="../../../assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/themes.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="gate" id="gate" hidden><div class="card gatec">
+  <p class="kick">Espace professionnel</p><h1>Naw Fruity</h1><p class="mut">Entrez votre code pour gérer les commandes, le calendrier et les plateaux.</p>
+  <form id="gateForm"><label>Code d’accès<input id="code" type="password" autocomplete="current-password" required></label><p class="nf-err" id="gateErr" hidden>Code incorrect.</p><button class="nf-btn" type="submit" style="width:100%">Entrer</button></form>
+  <p class="nf-demo-note mut">Démonstration : le code est <b id="hint"></b>. Sur un vrai site, la connexion se fait avec un compte Google.</p>
+</div></div>
+
+<div id="app" hidden>
+  <header class="top"><div class="wrap"><a class="logo" href="../"><span class="mk" id="mk"></span><span><span data-shop="name"></span><small>Espace professionnel</small></span></a>
+    <nav><a class="nf-btn nf-btn-sm nf-btn-ghost" href="../tropical/">Voir le site</a><a class="nf-btn nf-btn-sm nf-btn-ghost" href="../compte/?demo">Vue client</a><button class="nf-btn nf-btn-sm nf-btn-ghost" id="logout" type="button">Sortir</button></nav></div></header>
+  <div class="bar"><div class="wrap"><div class="switches" id="switches"></div></div></div>
+  <div class="wrap"><div class="tabs" role="tablist" id="tabs"></div><div class="panel" id="panel" role="tabpanel"></div></div>
+</div>
+<dialog class="nf-dlg" id="dlg"></dialog>
+
+<script src="../shared/config.js"></script><script src="../shared/store.js"></script><script src="../shared/art.js"></script><script src="admin.js"></script>
+</body>
+</html>

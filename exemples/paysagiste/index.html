@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Verdure &amp; Co · exemple de site (paysagiste)</title>
-<meta name="description" content="Exemple fictif de site pour un paysagiste, réalisé par QuenTools.">
+<meta name="description" content="Exemple fictif de site pour un paysagiste : avant/après interactif, calendrier des saisons, estimateur d'entretien et demande de visite, réalisé par QuenTools.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
 <link rel="preload" href="../../assets/fonts/ex/fraunces-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -12,76 +12,297 @@
 <style>
 @font-face{font-family:Fraunces;src:url(../../assets/fonts/ex/fraunces-normal.woff2) format("woff2");font-weight:100 900;font-display:swap}
 @font-face{font-family:Fraunces;src:url(../../assets/fonts/ex/fraunces-italic.woff2) format("woff2");font-weight:100 900;font-style:italic;font-display:swap}
-:root{--cream:#f4efe3;--leaf:#2f5d3a;--moss:#7a9a5b;--clay:#c1683b;--ink:#23301f;--mut:#5d6b55}
+@font-face{font-family:"DM Sans";src:url(../../assets/fonts/ex/dm-sans-normal.woff2) format("woff2");font-weight:300 700;font-display:swap}
+:root{--cream:#f4efe3;--cream2:#ece5d3;--paper:#fbf8f0;--leaf:#2f5d3a;--leaf2:#234a2e;--moss:#7a9a5b;--clay:#c1683b;--ink:#23301f;--mut:#5d6b55;--line:#d9d2bd}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;background:var(--cream);color:var(--ink);font:400 18px/1.7 Georgia,"Times New Roman",serif}
-h1,h2,h3,.serif{font-family:Fraunces,Georgia,serif;font-weight:500;letter-spacing:-.01em}
-a{color:inherit}.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
-header{padding:22px 0}header .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px}
-.logo{font:600 24px Fraunces,Georgia,serif;text-decoration:none;color:var(--leaf)}.logo span{color:var(--clay)}
-nav a{margin-left:26px;text-decoration:none;font:500 15px system-ui,sans-serif}nav a:hover{color:var(--clay)}
-.pill{display:inline-block;padding:13px 26px;border-radius:999px;background:var(--leaf);color:#fff;text-decoration:none;font:600 15px system-ui,sans-serif}.pill.alt{background:transparent;color:var(--leaf);border:1.5px solid var(--leaf)}
-.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;padding-top:40px;padding-bottom:80px}
-.hero h1{font-size:clamp(2.6rem,6vw,4.6rem);line-height:1.02;margin:0 0 22px}.hero h1 em{color:var(--clay);font-style:italic}
-.hero p{font-size:20px;color:var(--mut);max-width:44ch;margin:0 0 30px}.hero .cta{display:flex;gap:12px;flex-wrap:wrap}
-.arches{position:relative;height:460px}
-.arch{position:absolute;border-radius:999px 999px 24px 24px;display:grid;place-items:center;font-size:72px;overflow:hidden}
-.arch.a{left:0;top:60px;width:46%;height:380px;background:linear-gradient(170deg,#cfe0b2,#8fb078)}
-.arch.b{left:36%;top:0;width:34%;height:300px;background:linear-gradient(170deg,#f3d3b6,#d98f5f)}
-.arch.c{right:0;top:120px;width:36%;height:320px;background:linear-gradient(170deg,#b9d2c1,#4f7c5d)}
-.leaf{position:absolute;left:44%;bottom:-6px;width:110px;height:110px;border-radius:0 100% 0 100%;background:var(--moss);opacity:.5}
-.rows section{padding:70px 0}.row{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}.row.rev .vis{order:2}
-.vis{aspect-ratio:5/4;border-radius:200px 200px 28px 28px;display:grid;place-items:center;font-size:96px}
-.v1{background:linear-gradient(160deg,#dbe8c5,#9cbc7a)}.v2{background:linear-gradient(160deg,#f6e0c8,#e0a070)}.v3{background:linear-gradient(160deg,#cfe3da,#6fa088)}
-.row h2{font-size:clamp(1.9rem,3.8vw,3rem);line-height:1.1;margin:0 0 14px}.row p{color:var(--mut);margin:0 0 18px}.row ul{padding:0;margin:0 0 22px;list-style:none;font:500 16px system-ui,sans-serif}.row li{padding:6px 0 6px 28px;position:relative}.row li::before{content:"🌱";position:absolute;left:0}
-.seasons{background:var(--leaf);color:#f1ecd9;padding:80px 0}.seasons h2{font-size:clamp(2rem,4vw,3.2rem);margin:0 0 36px;max-width:16ch;line-height:1.1}
-.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.s{border:1px solid rgba(255,255,255,.28);border-radius:22px;padding:24px}.s b{display:block;font:italic 500 26px Fraunces,Georgia,serif;margin-bottom:8px;color:#e9d9a6}.s p{margin:0;font:400 15px/1.6 system-ui,sans-serif;color:#d6dec9}
-.price{padding:80px 0}.price h2{font-size:clamp(2rem,4vw,3rem);margin:0 0 30px}.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.p{background:#fffaf0;border-radius:26px;padding:30px;border:1px solid #e4dbc3}.p.f{background:var(--clay);color:#fff;border:0}.p h3{margin:0 0 4px;font-size:26px}.p .n{font:600 40px Fraunces,serif;margin:6px 0}.p small{font:400 14px system-ui,sans-serif;opacity:.8}.p ul{padding:0;margin:14px 0 0;list-style:none;font:15px/1.9 system-ui,sans-serif}
-.contact{padding:20px 0 90px}.box{background:#fffaf0;border-radius:36px;padding:clamp(26px,5vw,56px);display:grid;grid-template-columns:1fr 1fr;gap:40px;border:1px solid #e4dbc3}
-.box h2{font-size:clamp(1.9rem,3.5vw,2.8rem);margin:0 0 12px;line-height:1.1}.box p{color:var(--mut)}
-form{display:grid;gap:12px}input,textarea,select{font:16px system-ui,sans-serif;padding:14px 16px;border:1.5px solid #d8cfb5;border-radius:16px;background:#fff;color:var(--ink);width:100%}
-footer{padding:30px 0 40px;font:14px system-ui,sans-serif;color:var(--mut)}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
-@media (max-width:860px){nav{display:none}.hero .wrap,.row,.box{grid-template-columns:1fr}.row.rev .vis{order:0}.arches{height:340px}.sgrid{grid-template-columns:1fr 1fr}.pgrid{grid-template-columns:1fr}.arch{font-size:48px}}
+body{margin:0;background:var(--cream);color:var(--ink);font:400 17px/1.7 "DM Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:500;line-height:1.08;margin:0;letter-spacing:-.01em}
+h1 em,h2 em{color:var(--clay);font-weight:400}a{color:inherit}
+.wrap{width:min(1140px,100% - 40px);margin:0 auto}section{padding:clamp(64px,9vw,116px) 0}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--clay)}
+h2.t{font-size:clamp(2rem,4.6vw,3.3rem);margin:12px 0 14px}
+.lead{color:var(--mut);max-width:36em;margin:0}
+:focus-visible{outline:3px solid var(--clay);outline-offset:3px;border-radius:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 28px;border-radius:99px;background:var(--leaf);color:#fff;font:600 15px "DM Sans",sans-serif;text-decoration:none;border:2px solid var(--leaf);cursor:pointer;transition:transform .3s,background .3s}
+.btn:hover{transform:translateY(-2px);background:var(--leaf2)}.btn.o{background:transparent;color:var(--leaf)}.btn.o:hover{background:rgba(47,93,58,.08)}.btn.clay{background:var(--clay);border-color:var(--clay)}
+/* en-tête */
+.nav{position:sticky;top:0;z-index:40;background:rgba(244,239,227,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid transparent;transition:border-color .3s}
+.nav.solid{border-color:var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:72px;gap:20px}
+.logo{font:600 1.5rem Fraunces,serif;text-decoration:none;color:var(--leaf)}.logo b{color:var(--clay);font-weight:500}
+.nav ul{display:flex;gap:30px;list-style:none;margin:0;padding:0;font-weight:500}.nav ul a{text-decoration:none}.nav ul a:hover{color:var(--clay)}
+@media (max-width:820px){.nav ul{display:none}}
+/* héros */
+.hero{padding:clamp(40px,6vw,80px) 0 clamp(60px,8vw,100px);overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
+.hero h1{font-size:clamp(2.8rem,6.4vw,5rem)}
+.hero p.lead{font-size:1.15rem;margin:22px 0 32px}.hero .btns{display:flex;flex-wrap:wrap;gap:12px}
+.arches{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:14px;align-items:end}
+.arch{border-radius:999px 999px 18px 18px;overflow:hidden;position:relative;aspect-ratio:3/5}
+.arch:nth-child(2){aspect-ratio:3/6;transform:translateY(-4%)}.arch svg{width:100%;height:100%;display:block}
+.hero .badge{position:absolute;left:-14px;bottom:10%;z-index:2;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:12px 16px;box-shadow:0 18px 40px -18px rgba(35,48,31,.4);font-size:14px;line-height:1.35}
+.hero .badge b{display:block;font:500 1.15rem Fraunces,serif;color:var(--leaf)}
+.heroart{position:relative}
+@media (max-width:860px){.hero .wrap{grid-template-columns:1fr}.heroart{max-width:420px}}
+/* bandeau confiance */
+.trust{background:var(--leaf);color:#e6efdc}.trust .wrap{display:flex;flex-wrap:wrap;gap:10px 40px;justify-content:space-between;padding:20px 0;font-weight:500}
+.trust span::before{content:"✓ ";color:#b9d79a}
+/* avant / après */
+.ba{display:grid;grid-template-columns:.8fr 1.2fr;gap:56px;align-items:center}
+.slider{position:relative;border-radius:24px;overflow:hidden;box-shadow:0 40px 80px -40px rgba(35,48,31,.55);aspect-ratio:3/2;--pos:50%;user-select:none;touch-action:pan-y}
+.slider svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.slider .before{clip-path:inset(0 calc(100% - var(--pos)) 0 0)}
+.slider .bar{position:absolute;top:0;bottom:0;left:var(--pos);width:3px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1);transform:translateX(-50%);pointer-events:none}
+.slider .bar::after{content:"↔";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:20px;color:var(--leaf);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.slider input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0}
+.slider .lbl{position:absolute;top:14px;padding:6px 14px;border-radius:99px;background:rgba(251,248,240,.92);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+.slider .lbl.a{left:14px}.slider .lbl.b{right:14px;background:var(--leaf);color:#fff}
+.slider:focus-within{outline:3px solid var(--clay);outline-offset:3px}
+.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:28px}.meta div{border-top:2px solid var(--moss);padding-top:10px}.meta b{display:block;font:500 1.6rem Fraunces,serif;color:var(--leaf)}.meta span{font-size:13px;color:var(--mut)}
+@media (max-width:860px){.ba{grid-template-columns:1fr;gap:30px}}
+/* prestations */
+.svc{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:46px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:14px 14px 26px;transition:transform .6s cubic-bezier(.2,.8,.2,1),box-shadow .6s}
+.card:hover{transform:translateY(-6px);box-shadow:0 30px 60px -34px rgba(35,48,31,.5)}
+.card .art{border-radius:999px 999px 14px 14px;overflow:hidden;aspect-ratio:4/3;margin-bottom:18px}.card .art svg{width:100%;height:100%;display:block}
+.card h3{font-size:1.55rem;padding:0 10px}.card p{color:var(--mut);padding:0 10px;margin:8px 0 14px}
+.card ul{list-style:none;margin:0;padding:0 10px;display:grid;gap:6px;font-size:15px}.card li::before{content:"🌱 ";font-size:13px}
+@media (max-width:900px){.svc{grid-template-columns:1fr}}
+/* saisons */
+.seasons{background:var(--leaf);color:#eaf2e0}
+.seasons h2{color:#fff}.seasons h2 em{color:#f0b58f}.seasons .eyebrow{color:#f0b58f}
+.stabs{display:flex;flex-wrap:wrap;gap:8px;margin:30px 0 26px}
+.stabs button{border:1.5px solid rgba(255,255,255,.35);background:none;color:#fff;border-radius:99px;padding:11px 24px;font:600 15px "DM Sans",sans-serif;cursor:pointer;transition:all .3s}
+.stabs button:hover{background:rgba(255,255,255,.1)}.stabs button[aria-selected=true]{background:#fff;color:var(--leaf);border-color:#fff}
+.sbody{display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:stretch}
+.sbody ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.sbody li{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:16px 20px;display:flex;gap:14px;align-items:flex-start}
+.sbody li b{font:500 1.15rem Fraunces,serif;display:block;color:#fff}.sbody li span.n{flex:none;width:30px;height:30px;border-radius:50%;background:#f0b58f;color:var(--leaf2);display:grid;place-items:center;font-weight:700;font-size:14px}
+.pal{border-radius:24px;overflow:hidden;position:relative;min-height:280px;transition:background .6s}.pal svg{position:absolute;inset:0;width:100%;height:100%}
+.pal .cap{position:absolute;left:18px;bottom:16px;right:18px;background:rgba(251,248,240,.94);color:var(--ink);border-radius:14px;padding:12px 16px;font-size:14px}.pal .cap b{font-family:Fraunces,serif;font-weight:500;font-size:1.05rem;display:block}
+@media (max-width:860px){.sbody{grid-template-columns:1fr}.pal{min-height:240px}}
+/* estimateur */
+.est{display:grid;grid-template-columns:1.1fr .9fr;gap:30px;align-items:start;margin-top:40px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:clamp(22px,3vw,36px)}
+.panel label.l{display:flex;justify-content:space-between;font-weight:600;margin-bottom:8px}.panel label.l output{color:var(--clay);font-family:Fraunces,serif;font-size:1.3rem}
+input[type=range]{width:100%;accent-color:var(--leaf);height:30px}
+.opts{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 24px}
+.opts label{position:relative;cursor:pointer}.opts input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.opts span{display:block;padding:10px 18px;border-radius:99px;border:1.5px solid var(--line);font-weight:500;transition:all .25s;background:#fff}
+.opts input:checked+span{background:var(--leaf);color:#fff;border-color:var(--leaf)}.opts input:focus-visible+span{outline:3px solid var(--clay);outline-offset:2px}
+.res{background:var(--clay);color:#fff;border-radius:24px;padding:clamp(24px,3vw,36px);position:sticky;top:96px}
+.res .big{font:500 clamp(3rem,6vw,4.4rem)/1 Fraunces,serif;margin:8px 0}.res p{margin:4px 0;opacity:.95}.res .btn{background:#fff;color:var(--clay);border-color:#fff;margin-top:20px}
+@media (max-width:860px){.est{grid-template-columns:1fr}.res{position:static}}
+/* méthode */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:44px;counter-reset:s}
+.steps div{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:24px;counter-increment:s}
+.steps div::before{content:counter(s);display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--moss);color:#fff;font:500 1.2rem Fraunces,serif;margin-bottom:14px}
+.steps b{font:500 1.25rem Fraunces,serif;display:block;margin-bottom:6px}.steps p{margin:0;color:var(--mut);font-size:15px}
+@media (max-width:900px){.steps{grid-template-columns:1fr 1fr}}@media (max-width:520px){.steps{grid-template-columns:1fr}}
+/* formules */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px}
+.plan{background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:30px;display:flex;flex-direction:column;gap:12px}
+.plan.hi{background:var(--clay);color:#fff;border-color:var(--clay);transform:translateY(-10px)}.plan h3{font-size:1.5rem}.plan .pr{font:500 2.4rem Fraunces,serif;color:var(--leaf)}.plan.hi .pr{color:#fff}
+.plan small{opacity:.8}.plan ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:8px;flex:1}.plan li::before{content:"✓ ";font-weight:700}
+@media (max-width:900px){.plans{grid-template-columns:1fr}.plan.hi{transform:none}}
+/* faq */
+details{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px 24px;margin-bottom:10px}summary{cursor:pointer;font:500 1.2rem Fraunces,serif;list-style:none;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}summary::after{content:"+";color:var(--clay);font-size:1.6rem;line-height:1;transition:transform .3s}details[open] summary::after{transform:rotate(45deg)}details p{color:var(--mut);margin:12px 0 2px}
+/* contact */
+.contact{background:var(--paper);border:1px solid var(--line);border-radius:32px;padding:clamp(26px,5vw,58px);display:grid;grid-template-columns:.9fr 1.1fr;gap:44px}
+form{display:grid;gap:12px}input,select,textarea{font:inherit;padding:14px 16px;border:1.5px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);width:100%}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--leaf)}
+@media (max-width:860px){.contact{grid-template-columns:1fr}}
+footer{padding:30px 0;color:var(--mut);font-size:14px}footer .wrap{display:flex;flex-wrap:wrap;gap:10px 30px;justify-content:space-between}
+.rv{opacity:0;transform:translateY(22px);transition:opacity .9s cubic-bezier(.2,.8,.2,1),transform .9s cubic-bezier(.2,.8,.2,1)}.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.rv{opacity:1;transform:none;transition:none}}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
-<div class="qt-ex"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
-<header><div class="wrap"><a class="logo" href="./">Verdure<span> &amp; </span>Co</a><nav><a href="#creation">Création</a><a href="#saisons">Entretien</a><a href="#tarifs">Formules</a><a href="#contact">Contact</a></nav><a class="pill" href="#contact">Visite gratuite</a></div></header>
+<div class="qt-ex"><a href="../../devis/?type=Template&amp;template=Paysagiste">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
 
-<main>
+<header class="nav" id="nav"><div class="wrap">
+  <a class="logo" href="#top">Verdure <b>&amp;</b> Co</a>
+  <ul><li><a href="#realisation">Réalisation</a></li><li><a href="#prestations">Prestations</a></li><li><a href="#saisons">Saisons</a></li><li><a href="#estimation">Estimation</a></li></ul>
+  <a class="btn" href="#contact" style="min-height:44px;padding:0 22px">Visite gratuite</a>
+</div></header>
+
+<main id="top">
 <section class="hero"><div class="wrap">
-  <div><h1>Un jardin qui vous ressemble, <em>et qui reste facile à vivre.</em></h1>
-    <p>Je dessine, je plante et je reviens quand les saisons changent. Terrasses, massifs, haies : un jardin pensé pour vous et pour le terrain que vous avez.</p>
-    <div class="cta"><a class="pill" href="#contact">Prendre rendez-vous</a><a class="pill alt" href="#creation">Découvrir mon travail</a></div></div>
-  <div class="arches" aria-hidden="true"><div class="arch a">🌿</div><div class="arch b">🌸</div><div class="arch c">🪴</div><div class="leaf"></div></div>
+  <div>
+    <p class="eyebrow">Paysagiste · Création et entretien</p>
+    <h1 style="margin-top:14px">Un jardin qui vous ressemble, <em>et qui reste facile à vivre.</em></h1>
+    <p class="lead">Je dessine, je plante et je reviens quand les saisons changent. Terrasses, massifs, haies : un jardin pensé pour vous et pour le terrain que vous avez.</p>
+    <div class="btns"><a class="btn" href="#contact">Prendre rendez-vous</a><a class="btn o" href="#realisation">Découvrir mon travail</a></div>
+  </div>
+  <div class="heroart" aria-hidden="true"><div class="arches" id="arches"></div>
+    <div class="badge"><b>Visite gratuite</b>Sans engagement, sous 7 jours</div></div>
 </div></section>
 
-<div class="rows">
-<section id="creation"><div class="wrap row"><div class="vis v1" aria-hidden="true">🌳</div>
-  <div><h2>Créer le jardin dont vous rêvez.</h2><p>Je commence par vous écouter et regarder la lumière, le sol, le vent. Puis je propose un plan et des plantes adaptées, qui demandent peu d'eau et de soin.</p><ul><li>Plan et choix des végétaux</li><li>Plantation, arrosage, éclairage</li><li>Suivi après la première saison</li></ul><a class="pill alt" href="#contact">Parler de mon terrain</a></div></div></section>
-<section><div class="wrap row rev"><div class="vis v2" aria-hidden="true">🪵</div>
-  <div><h2>Terrasses, allées et clôtures.</h2><p>Bois, pierre ou dalles : des aménagements qui prolongent la maison et vieillissent bien. Les finitions comptent autant que le dessin.</p><ul><li>Pose soignée, drainage prévu</li><li>Matériaux choisis ensemble</li><li>Devis détaillé poste par poste</li></ul><a class="pill alt" href="#contact">Demander un devis</a></div></div></section>
-<section><div class="wrap row"><div class="vis v3" aria-hidden="true">🌼</div>
-  <div><h2>L'entretien qui vous libère.</h2><p>Un passage régulier à date fixe : tonte, taille, désherbage et évacuation des déchets. Vous profitez du jardin, je m'occupe du reste.</p><ul><li>Forfait annuel ou à la visite</li><li>Calendrier des tâches par saison</li><li>Conseils d'arrosage et de paillage</li></ul><a class="pill alt" href="#contact">Choisir une formule</a></div></div></section>
-</div>
+<div class="trust"><div class="wrap"><span>Visite et conseils gratuits</span><span>Devis détaillé sous 48 h</span><span>Plantes adaptées au climat local</span><span>Passage à date fixe</span></div></div>
 
-<section class="seasons" id="saisons"><div class="wrap"><h2>Au rythme des saisons.</h2>
-  <div class="sgrid"><div class="s"><b>Printemps</b><p>Plantations, semis, première tonte, paillage.</p></div><div class="s"><b>Été</b><p>Arrosage raisonné, taille des haies, entretien régulier.</p></div><div class="s"><b>Automne</b><p>Feuilles, bulbes, taille des arbustes, préparation du sol.</p></div><div class="s"><b>Hiver</b><p>Élagage, protection du gel, planification des projets.</p></div></div></div></section>
+<section id="realisation"><div class="wrap ba">
+  <div class="rv"><p class="eyebrow">Avant / après</p><h2 class="t">Une terrasse <em>transformée</em></h2>
+    <p class="lead">Un terrain nu et un coin de pelouse fatiguée sont devenus un lieu de vie : dalles, massifs, arbre et pergola. Glissez pour comparer.</p>
+    <div class="meta"><div><b>80 m²</b><span>surface</span></div><div><b>3 sem.</b><span>de chantier</span></div><div><b>1 an</b><span>de suivi inclus</span></div></div>
+    <p style="font-size:13px;color:var(--mut);margin-top:18px">Chantier d’illustration : chiffres fictifs.</p></div>
+  <div class="slider rv" id="slider" style="--i:1">
+    <div id="after"></div><div class="before" id="before"></div><span class="lbl a">Avant</span><span class="lbl b">Après</span><div class="bar"></div>
+    <input type="range" min="0" max="100" value="50" id="range" aria-label="Comparer l’avant et l’après">
+  </div>
+</div></section>
 
-<section class="price" id="tarifs"><div class="wrap"><h2>Des formules claires.</h2>
-  <div class="pgrid">
-    <div class="p"><h3>Visite conseil</h3><div class="n">gratuite</div><small>sans engagement</small><ul><li>Écoute et relevé du terrain</li><li>Premières idées</li><li>Estimation de budget</li></ul></div>
-    <div class="p f"><h3>Entretien annuel</h3><div class="n">dès 55 €</div><small>par passage · tarif d'exemple</small><ul><li>Passage à date fixe</li><li>Tonte, taille, désherbage</li><li>Évacuation des déchets</li></ul></div>
-    <div class="p"><h3>Création</h3><div class="n">sur devis</div><small>selon surface et matériaux</small><ul><li>Plan du projet</li><li>Plantation et pose</li><li>Suivi la première année</li></ul></div>
-  </div></div></section>
+<section id="prestations" style="background:var(--cream2);border-block:1px solid var(--line)"><div class="wrap">
+  <div class="rv"><p class="eyebrow">Prestations</p><h2 class="t">Trois façons de <em>prendre soin</em> de votre jardin</h2></div>
+  <div class="svc" id="svc"></div>
+</div></section>
 
-<section class="contact" id="contact"><div class="wrap"><div class="box">
-  <div><h2>Parlons de votre jardin.</h2><p>Indiquez la surface approximative, vos envies et la commune : je vous rappelle pour fixer une visite.</p></div>
-  <form><input placeholder="Votre nom" aria-label="Nom" required><input placeholder="Téléphone ou e-mail" aria-label="Contact" required><select aria-label="Projet"><option>Création de jardin</option><option>Terrasse ou allée</option><option>Entretien régulier</option></select><textarea rows="3" placeholder="Vos envies" aria-label="Message"></textarea><button class="pill" style="border:0;cursor:pointer" type="submit">Envoyer ma demande</button></form>
+<section class="seasons" id="saisons"><div class="wrap">
+  <p class="eyebrow rv">Au rythme des saisons</p><h2 class="t rv">Ce que nous faisons, <em>quand</em></h2>
+  <div class="stabs" role="tablist" id="stabs"></div>
+  <div class="sbody"><ul id="slist"></ul><div class="pal" id="spal"></div></div>
+</div></section>
+
+<section id="estimation"><div class="wrap">
+  <div class="rv"><p class="eyebrow">Estimation</p><h2 class="t">Combien pour <em>l’entretien</em> ?</h2><p class="lead">Une première idée en dix secondes. Le devis exact vient après la visite : c’est gratuit.</p></div>
+  <div class="est">
+    <div class="panel rv">
+      <label class="l" for="surf">Surface du jardin <output id="surfv">150 m²</output></label>
+      <input type="range" id="surf" min="20" max="600" step="10" value="150">
+      <p class="l" style="font-weight:600;margin:26px 0 8px">Ce dont vous avez besoin</p>
+      <div class="opts" id="opts">
+        <label><input type="checkbox" value="tonte" checked><span>Tonte</span></label><label><input type="checkbox" value="haies" checked><span>Taille des haies</span></label>
+        <label><input type="checkbox" value="desherbage"><span>Désherbage</span></label><label><input type="checkbox" value="dechets" checked><span>Évacuation des déchets</span></label></div>
+      <label class="l" for="freq">Passages par an <output id="freqv">8</output></label>
+      <input type="range" id="freq" min="4" max="24" step="2" value="8">
+    </div>
+    <div class="res rv" aria-live="polite">
+      <p class="eyebrow" style="color:#fff;opacity:.9">Estimation indicative</p>
+      <div class="big" id="per">—</div><p>par passage, à partir de</p>
+      <p id="yr" style="margin-top:14px;font-weight:600"></p><p style="font-size:14px;opacity:.85">Estimation d’exemple, fictive : le devis dépend de l’état du terrain et de l’accès.</p>
+      <a class="btn" href="#contact">Demander ma visite</a>
+    </div>
+  </div>
+</div></section>
+
+<section style="background:var(--cream2);border-block:1px solid var(--line)"><div class="wrap">
+  <div class="rv"><p class="eyebrow">Ma méthode</p><h2 class="t">Du rendez-vous à <em>la première floraison</em></h2></div>
+  <div class="steps">
+    <div class="rv"><b>Visite</b><p>Je regarde la lumière, le sol, le vent et je vous écoute.</p></div>
+    <div class="rv" style="transition-delay:.08s"><b>Plan et devis</b><p>Un plan clair, une liste de plantes et un prix détaillé poste par poste.</p></div>
+    <div class="rv" style="transition-delay:.16s"><b>Réalisation</b><p>Chantier propre, planning tenu, vous restez informé.</p></div>
+    <div class="rv" style="transition-delay:.24s"><b>Suivi</b><p>Je repasse après la première saison pour ajuster.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="rv"><p class="eyebrow">Formules</p><h2 class="t">Des formules <em>claires</em></h2></div>
+  <div class="plans">
+    <article class="plan rv"><h3>Visite conseil</h3><div class="pr">gratuite</div><small>sans engagement</small><ul><li>Écoute et relevé du terrain</li><li>Premières idées</li><li>Estimation de budget</li></ul><a class="btn o" href="#contact">Réserver</a></article>
+    <article class="plan hi rv" style="transition-delay:.08s"><h3>Entretien annuel</h3><div class="pr">dès 55 €</div><small>par passage · tarif d’exemple</small><ul><li>Passage à date fixe</li><li>Tonte, taille, désherbage</li><li>Évacuation des déchets</li></ul><a class="btn" href="#estimation" style="background:#fff;color:var(--clay);border-color:#fff">Estimer</a></article>
+    <article class="plan rv" style="transition-delay:.16s"><h3>Création</h3><div class="pr">sur devis</div><small>selon surface et matériaux</small><ul><li>Plan du projet</li><li>Plantation et pose</li><li>Suivi la première année</li></ul><a class="btn o" href="#contact">Demander un devis</a></article>
+  </div>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap" style="max-width:820px">
+  <div class="rv"><p class="eyebrow">Questions fréquentes</p><h2 class="t">Avant de vous <em>lancer</em></h2></div>
+  <details class="rv"><summary>Quand faut-il planter ?</summary><p>Idéalement à l’automne ou au début du printemps : la reprise est meilleure et l’arrosage plus léger. On planifie selon les plantes choisies.</p></details>
+  <details class="rv"><summary>Faut-il être présent pendant le chantier ?</summary><p>Non. Nous convenons des accès et du planning ; vous recevez des nouvelles et des photos à chaque étape.</p></details>
+  <details class="rv"><summary>Mon jardin est petit, est-ce que cela vaut le coup ?</summary><p>Oui : un petit espace bien pensé (massif, bacs, grimpantes) change beaucoup une façade ou un balcon. La visite conseil est gratuite.</p></details>
+  <details class="rv"><summary>Que se passe-t-il si une plante ne reprend pas ?</summary><p>Je vérifie lors du passage de suivi et je remplace les plantes concernées selon les conditions du devis (exemple).</p></details>
+</div></section>
+
+<section id="contact" style="padding-top:0"><div class="wrap"><div class="contact rv">
+  <div><p class="eyebrow">Contact</p><h2 class="t">Parlons de votre <em>jardin.</em></h2><p class="lead">Indiquez la surface approximative, vos envies et la commune : je vous rappelle pour fixer une visite.</p>
+    <p style="margin-top:26px;color:var(--mut)">Verdure &amp; Co · 8 chemin Exemple, Lyon<br>06 00 00 00 00 (numéro d’exemple)</p></div>
+  <form novalidate><input name="nom" placeholder="Votre nom" autocomplete="name" aria-label="Votre nom"><input name="tel" placeholder="Téléphone ou e-mail" aria-label="Téléphone ou e-mail"><select name="type" aria-label="Type de projet"><option>Création de jardin</option><option>Terrasse, allée, clôture</option><option>Entretien</option><option>Autre</option></select><textarea name="msg" rows="4" placeholder="Vos envies" aria-label="Vos envies"></textarea><button class="btn clay" type="submit">Envoyer ma demande</button></form>
 </div></div></section>
 </main>
+
 <footer><div class="wrap"><span>© <span data-year>2026</span> Verdure &amp; Co (entreprise fictive) · SIRET 000 000 000 00000 (exemple)</span><span><a href="../">Autres exemples</a> · Site réalisé par <a href="../../">QuenTools</a></span></div></footer>
-<script src="../ex.js" defer></script>
+
+<script src="../ex.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  /* Plantes en illustration */
+  const leaf = (x, y, r, rot, c) => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * .38}" transform="rotate(${rot} ${x} ${y})" fill="${c}"/>`;
+  const bush = (x, y, s, c1, c2) => `<g transform="translate(${x} ${y}) scale(${s})"><circle cx="-22" cy="-14" r="26" fill="${c2}"/><circle cx="22" cy="-14" r="26" fill="${c2}"/><circle cx="0" cy="-30" r="32" fill="${c1}"/><circle cx="-10" cy="-38" r="14" fill="#fff" opacity=".08"/></g>`;
+  const flower = (x, y, s, c) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M0 0 v30" stroke="#3f6b3a" stroke-width="3"/>${[0, 72, 144, 216, 288].map(a => `<ellipse cx="0" cy="-9" rx="6" ry="10" transform="rotate(${a})" fill="${c}"/>`).join('')}<circle r="5" fill="#f6d34a"/></g>`;
+  const grass = (x, y, s, c) => `<g transform="translate(${x} ${y}) scale(${s})" stroke="${c}" stroke-width="3.5" fill="none" stroke-linecap="round"><path d="M0 0 q-10 -30 -22 -48"/><path d="M0 0 q-2 -34 4 -58"/><path d="M0 0 q10 -28 24 -44"/><path d="M0 0 q-16 -18 -34 -26"/><path d="M0 0 q16 -16 34 -22"/></g>`;
+  const tree = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-6 0 q2 -40 -2 -78 h18 q-4 38 -2 78z" fill="#6b4a32"/><circle cx="2" cy="-100" r="42" fill="#4d7d3f"/><circle cx="-26" cy="-82" r="28" fill="#5c8c49"/><circle cx="30" cy="-84" r="28" fill="#437236"/><circle cx="-6" cy="-116" r="16" fill="#fff" opacity=".07"/></g>`;
+  const arch = (bg, body) => `<svg viewBox="0 0 300 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="300" height="500" fill="${bg}"/>${body}</svg>`;
+  $('#arches').innerHTML =
+    `<div class="arch">${arch('#cbdcb0', `<circle cx="210" cy="110" r="60" fill="#f4eed0" opacity=".7"/><path d="M0 420 q150 -40 300 0 v80 h-300z" fill="#6f9250"/>${grass(70, 440, 1.5, '#4a7439')}${grass(200, 450, 1.2, '#3d6a33')}${[[-20, 3.2], [40, 2.5], [90, 2]].map((p, i) => leaf(150 + p[0], 360 - i * 50, 70, -30 + i * 40, i % 2 ? '#3f7a3b' : '#5a9448')).join('')}`)}</div>` +
+    `<div class="arch">${arch('#f0cdb0', `<circle cx="150" cy="140" r="80" fill="#fff0dc" opacity=".6"/><path d="M0 470 q150 -50 300 0 v30 h-300z" fill="#b27a4f"/>${flower(80, 400, 1.7, '#e0518a')}${flower(150, 380, 2.1, '#f27a45')}${flower(220, 410, 1.6, '#d63f7a')}${flower(120, 440, 1.3, '#f7a34b')}${bush(60, 470, 1, '#4f8a43', '#3b6f34')}${bush(240, 470, 1, '#4f8a43', '#3b6f34')}`)}</div>` +
+    `<div class="arch">${arch('#a9c9bb', `<circle cx="80" cy="120" r="52" fill="#eef7e8" opacity=".6"/><path d="M0 440 q150 -30 300 0 v60 h-300z" fill="#3f7660"/>${tree(170, 440, 1.25)}${bush(70, 450, 1.1, '#4d8a5a', '#3a7048')}<rect x="190" y="440" width="50" height="40" rx="4" fill="#c1683b"/><path d="M215 440 q-20 -40 -2 -60 M215 440 q22 -30 6 -56" stroke="#3f7a3b" stroke-width="5" fill="none"/>`)}</div>`;
+
+  /* Avant / après (mêmes dimensions : le curseur révèle l'un ou l'autre) */
+  const garden = after => {
+    const bg = after ? '#cfe2b8' : '#d9cfb8';
+    let o = `<svg viewBox="0 0 600 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="600" height="400" fill="${bg}"/><rect y="0" width="600" height="150" fill="${after ? '#bcd9ef' : '#d4dbe0'}"/><circle cx="500" cy="62" r="34" fill="#fff5d0" opacity="${after ? .9 : .6}"/>`;
+    o += after ? `<path d="M0 150 h600 v250 h-600z" fill="#86ad62"/>` : `<path d="M0 150 h600 v250 h-600z" fill="#a69a77"/>`;
+    o += `<rect x="0" y="128" width="600" height="30" fill="${after ? '#8a6a4a' : '#8f8672'}"/>` + [...Array(14)].map((_, i) => `<rect x="${i * 46 + 8}" y="118" width="8" height="42" fill="${after ? '#9a7752' : '#837a68'}"/>`).join('');
+    if (after) {
+      o += `<path d="M120 400 L210 250 H430 L520 400z" fill="#d8cdb6"/>` + [[240, 290], [330, 290], [420, 290], [210, 335], [310, 335], [410, 335], [190, 380], [300, 380], [410, 380]].map(p => `<rect x="${p[0] - 38}" y="${p[1] - 14}" width="76" height="28" rx="4" fill="#c9bda3" stroke="#b5a98d"/>`).join('');
+      o += tree(90, 262, 1.2) + bush(520, 250, 1.1, '#4f8a43', '#3b6f34') + bush(30, 330, 1, '#5a9448', '#3f7a3b') + bush(570, 340, 1.2, '#4f8a43', '#3b6f34');
+      o += [[110, 340, '#e0518a'], [150, 360, '#f27a45'], [470, 330, '#d63f7a'], [510, 360, '#f7a34b'], [440, 372, '#e0518a']].map(f => flower(f[0], f[1], 1, f[2])).join('');
+      o += `<g fill="#8a5d3a"><rect x="190" y="150" width="10" height="110"/><rect x="400" y="150" width="10" height="110"/><rect x="180" y="146" width="240" height="12"/><rect x="190" y="166" width="220" height="6" opacity=".7"/></g><path d="M190 166 q40 24 80 0 t80 0" stroke="#4f8a43" stroke-width="6" fill="none"/>`;
+    } else {
+      o += `<path d="M0 260 q150 -20 300 10 t300 -6 v136 h-600z" fill="#b8ad8c"/><path d="M0 330 q200 -26 330 6 t270 -10 v74 h-600z" fill="#ada17f"/>`;
+      o += [[90, 300], [250, 340], [420, 310], [520, 360], [160, 372]].map(p => grass(p[0], p[1], .7, '#8d8a58')).join('');
+      o += `<ellipse cx="330" cy="300" rx="70" ry="16" fill="#9d9372"/><ellipse cx="140" cy="340" rx="40" ry="9" fill="#9d9372"/><rect x="420" y="340" width="80" height="40" fill="#8f8672" opacity=".5"/>`;
+    }
+    return o + '</svg>';
+  };
+  $('#after').innerHTML = garden(true); $('#before').innerHTML = garden(false);
+  $('#after svg').style.cssText = $('#before svg').style.cssText = 'position:absolute;inset:0;width:100%;height:100%';
+  const sl = $('#slider'); $('#range').addEventListener('input', e => sl.style.setProperty('--pos', e.target.value + '%'));
+
+  /* Prestations */
+  const SVC = [
+    ['Créer le jardin dont vous rêvez', 'Je commence par vous écouter et regarder la lumière, le sol, le vent. Puis je propose un plan et des plantes qui demandent peu d’eau.', ['Plan et choix des végétaux', 'Plantation, arrosage, éclairage', 'Suivi après la première saison'], arch('#cbdcb0', tree(150, 420, 1.5) + bush(60, 440, 1.2, '#5a9448', '#3f7a3b') + bush(250, 440, 1.2, '#4f8a43', '#3b6f34') + flower(110, 430, 1.4, '#e0518a') + flower(200, 440, 1.3, '#f27a45'))],
+    ['Terrasses, allées et clôtures', 'Bois, pierre ou dalles : des aménagements qui prolongent la maison et vieillissent bien. Les finitions comptent autant que le dessin.', ['Pose soignée, drainage prévu', 'Matériaux choisis ensemble', 'Devis détaillé poste par poste'], arch('#f0cdb0', '<path d="M0 300 h300 v200 h-300z" fill="#c9a37a"/>' + [...Array(7)].map((_, i) => `<rect x="${i * 44 - 4}" y="300" width="40" height="200" fill="${i % 2 ? '#b98f66' : '#c9a37a'}" stroke="#a8825a"/>`).join('') + '<rect x="30" y="250" width="240" height="14" fill="#8a6a4a"/>' + [50, 140, 230].map(x => `<rect x="${x}" y="190" width="10" height="74" fill="#8a6a4a"/>`).join('') + bush(240, 300, 1, '#4f8a43', '#3b6f34'))],
+    ['L’entretien qui vous libère', 'Un passage régulier à date fixe : tonte, taille, désherbage et évacuation des déchets. Vous profitez du jardin, je m’occupe du reste.', ['Forfait annuel ou à la visite', 'Calendrier des tâches par saison', 'Conseils d’arrosage et de paillage'], arch('#a9c9bb', '<path d="M0 360 q150 -30 300 0 v140 h-300z" fill="#3f7660"/>' + [...Array(8)].map((_, i) => `<path d="M0 ${380 + i * 16} h300" stroke="#4f8a6c" stroke-width="6" opacity=".6"/>`).join('') + '<rect x="120" y="270" width="70" height="40" rx="8" fill="#c1683b"/><circle cx="135" cy="318" r="12" fill="#23301f"/><circle cx="178" cy="318" r="12" fill="#23301f"/><path d="M190 280 l60 -70" stroke="#23301f" stroke-width="8" stroke-linecap="round"/>')]
+  ];
+  $('#svc').innerHTML = SVC.map((s, i) => `<article class="card rv" style="transition-delay:${i * .08}s"><div class="art">${s[3]}</div><h3>${s[0]}</h3><p>${s[1]}</p><ul>${s[2].map(x => `<li>${x}</li>`).join('')}</ul></article>`).join('');
+
+  /* Saisons */
+  const SEA = {
+    Printemps: { bg: '#cfe2b8', c: '#e0518a', tasks: [['Plantations et semis', 'Massifs, potager, nouvelles haies.'], ['Première tonte', 'Dès que l’herbe repart, à hauteur haute.'], ['Paillage', 'Pour garder l’humidité avant l’été.']], plant: ['Pivoines et tulipes', 'Les premières couleurs, faciles à vivre.'] },
+    Été: { bg: '#f6e3b0', c: '#f27a45', tasks: [['Arrosage raisonné', 'Tôt le matin, au pied, selon les plantes.'], ['Taille des haies', 'Entretien régulier, hors période de nidification.'], ['Entretien régulier', 'Tonte, désherbage, ramassage des fleurs fanées.']], plant: ['Lavande et graminées', 'Résistantes à la chaleur, peu gourmandes en eau.'] },
+    Automne: { bg: '#efc9a0', c: '#c1683b', tasks: [['Feuilles, bulbes', 'Ramassage, plantation des bulbes de printemps.'], ['Taille des arbustes', 'Selon l’espèce, après la floraison.'], ['Préparation du sol', 'Compost et amendements avant l’hiver.']], plant: ['Érables et asters', 'De belles couleurs, de bonnes plantations d’automne.'] },
+    Hiver: { bg: '#cfdde0', c: '#8fb1c4', tasks: [['Élagage', 'Arbres au repos, plaies plus faciles à cicatriser.'], ['Protection du gel', 'Voile d’hivernage, paillage des pieds fragiles.'], ['Planification des projets', 'Le bon moment pour dessiner le jardin de demain.']], plant: ['Hellébores et cornouillers', 'Floraison ou écorce colorée quand tout dort.'] }
+  };
+  let season = 'Printemps';
+  $('#stabs').innerHTML = Object.keys(SEA).map(k => `<button type="button" role="tab" data-s="${k}" aria-selected="${k === season}">${k}</button>`).join('');
+  function renderSeason() {
+    const s = SEA[season];
+    $$('#stabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.s === season));
+    $('#slist').innerHTML = s.tasks.map((t, i) => `<li><span class="n">${i + 1}</span><div><b>${t[0]}</b>${t[1]}</div></li>`).join('');
+    $('#spal').style.background = s.bg;
+    $('#spal').innerHTML = `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M0 220 q200 -40 400 0 v80 h-400z" fill="#6f9250" opacity=".8"/>${bush(90, 240, 1.2, '#4f8a43', '#3b6f34')}${bush(310, 250, 1.1, '#4f8a43', '#3b6f34')}${[110, 170, 230, 290].map((x, i) => flower(x, 215 + (i % 2) * 14, 1.6, s.c)).join('')}</svg><div class="cap"><b>${s.plant[0]}</b>${s.plant[1]}</div>`;
+  }
+  $('#stabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { season = b.dataset.s; renderSeason(); } });
+  renderSeason();
+
+  /* Estimateur (valeurs d'exemple) */
+  const prices = { tonte: 0.07, haies: 18, desherbage: 14, dechets: 9 };
+  function est() {
+    const m2 = +$('#surf').value, n = +$('#freq').value, on = $$('#opts input:checked').map(i => i.value);
+    $('#surfv').textContent = m2 + ' m²'; $('#freqv').textContent = n;
+    if (!on.length) { $('#per').textContent = '—'; $('#yr').textContent = 'Choisissez au moins une prestation.'; return; }
+    const per = Math.max(45, Math.round(30 + (on.includes('tonte') ? m2 * prices.tonte : 0) + (on.includes('haies') ? prices.haies : 0) + (on.includes('desherbage') ? prices.desherbage + m2 * .02 : 0) + (on.includes('dechets') ? prices.dechets : 0)));
+    $('#per').textContent = per + ' €'; $('#yr').textContent = 'Soit environ ' + (per * n).toLocaleString('fr-FR') + ' € par an (' + n + ' passages)';
+  }
+  $$('#surf,#freq,#opts input').forEach(i => i.addEventListener('input', est)); est();
+
+  const nav = $('#nav'); const onS = () => nav.classList.toggle('solid', scrollY > 10); addEventListener('scroll', onS, { passive: true }); onS();
+  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .1 });
+  $$('.rv').forEach(n => io.observe(n));
+})();
+</script>
 </body>
 </html>

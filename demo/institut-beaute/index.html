@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<title>Maison Rosée — Institut de beauté à Lyon (exemple fictif)</title>
+<meta name="description" content="Exemple fictif de site pour institut de beauté et coiffure : soins, tarifs affichés, réservation en trois étapes. Template QuenTools.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#f7efe9">
+<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:Cormorant;src:url(../../assets/fonts/ex/cormorant-normal.woff2) format("woff2");font-weight:300 700;font-display:swap}
+@font-face{font-family:Cormorant;src:url(../../assets/fonts/ex/cormorant-italic.woff2) format("woff2");font-style:italic;font-weight:300 700;font-display:swap}
+@font-face{font-family:"DM Sans";src:url(../../assets/fonts/ex/dm-sans-normal.woff2) format("woff2");font-weight:100 1000;font-display:swap}
+:root{--bg:#f7efe9;--bg2:#efe1d8;--card:#fffaf6;--ink:#2b1f1d;--mut:#6f5d58;--line:#e2d0c5;--rose:#b5566b;--rose-d:#8f3a4f;--gold:#b98a4b;--ok:#2f7a56;--r:22px;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#171112;--bg2:#201719;--card:#251b1d;--ink:#f6ece6;--mut:#c4b0a8;--line:#3a2b2d;--rose:#e58aa0;--rose-d:#f2a9ba;--gold:#d9ae72;--ok:#6fd1a0;color-scheme:dark}}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1.0625rem/1.65 "DM Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:Cormorant,Georgia,serif;font-weight:500;line-height:1.05;letter-spacing:-.01em;margin:0}
+a{color:inherit}img,svg{max-width:100%;display:block}
+.wrap{max-width:1120px;margin:0 auto;padding:0 clamp(16px,4vw,32px)}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:99}.skip:focus{left:8px}
+:focus-visible{outline:2px solid var(--rose);outline-offset:3px;border-radius:8px}
+.bar{background:var(--ink);color:var(--bg);font-size:.8125rem;text-align:center;padding:8px 16px}.bar a{color:var(--gold);font-weight:600}
+header.nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;gap:20px;height:68px}
+.logo{font:600 1.7rem/1 Cormorant,serif;text-decoration:none;letter-spacing:.01em}.logo i{color:var(--rose)}
+nav ul{display:flex;gap:22px;list-style:none;margin:0 0 0 auto;padding:0;font-size:.9375rem}nav a{text-decoration:none;color:var(--mut)}nav a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 26px;border-radius:99px;border:1px solid var(--rose);background:var(--rose);color:#fff;font:600 .95rem "DM Sans",sans-serif;text-decoration:none;cursor:pointer;transition:transform .2s,background .2s}
+.btn:hover{background:var(--rose-d);transform:translateY(-1px)}.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}.btn.ghost:hover{border-color:var(--ink);background:transparent}
+.btn.sm{min-height:40px;padding:0 18px}
+.hero{padding:clamp(40px,8vw,96px) 0 clamp(40px,6vw,72px)}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(24px,5vw,72px);align-items:center}
+.eyebrow{font:600 .75rem/1 "DM Sans";letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.hero h1{font-size:clamp(2.8rem,7vw,5.6rem);margin:18px 0 20px}.hero h1 em{color:var(--rose)}
+.hero p.lede{font-size:1.2rem;color:var(--mut);max-width:46ch}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;padding:0;list-style:none}.chips li{font-size:.85rem;padding:6px 14px;border:1px solid var(--line);border-radius:99px;color:var(--mut);background:var(--card)}
+.arch{aspect-ratio:4/5;border-radius:999px 999px 28px 28px;background:radial-gradient(120% 90% at 30% 20%,#f3c9cf,transparent 60%),radial-gradient(90% 70% at 80% 80%,#e9c98f55,transparent 60%),linear-gradient(160deg,#e9b4bd,#b5566b);position:relative;overflow:hidden;box-shadow:0 40px 80px -30px #b5566b88}
+.arch svg{position:absolute;inset:0;margin:auto;width:56%;height:auto;color:#fff;opacity:.92}
+.arch small{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#fff;font:italic 500 1.25rem Cormorant,serif;letter-spacing:.02em}
+section{padding:clamp(48px,7vw,96px) 0}
+.head{max-width:60ch;margin-bottom:36px}.head h2{font-size:clamp(2rem,4.6vw,3.4rem);margin-top:12px}.head p{color:var(--mut);margin:14px 0 0}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:28px;display:flex;flex-direction:column;gap:10px;transition:transform .3s,box-shadow .3s}
+.card:hover{transform:translateY(-4px);box-shadow:0 24px 50px -28px #8f3a4f66}
+.card h3{font-size:1.7rem}.card p{margin:0;color:var(--mut);font-size:.97rem}.card .meta{margin-top:auto;padding-top:12px;display:flex;justify-content:space-between;font-weight:600;border-top:1px dashed var(--line)}
+.tag{align-self:flex-start;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;background:var(--rose);color:#fff;padding:5px 11px;border-radius:99px;font-weight:600}
+.band{background:var(--bg2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,5vw,64px);align-items:start}
+.rows{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.rows div{display:flex;justify-content:space-between;gap:16px;padding:16px 22px;border-top:1px solid var(--line)}.rows div:first-child{border:0}
+.rows b{font-weight:600}.rows small{display:block;color:var(--mut)}.rows .p{font:600 1.5rem Cormorant,serif;white-space:nowrap}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}td{padding:12px 20px;border-top:1px solid var(--line)}tr:first-child td{border:0}td:last-child{text-align:right;color:var(--mut)}
+details{border-top:1px solid var(--line);padding:18px 0}details:last-child{border-bottom:1px solid var(--line)}summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:16px}summary::after{content:"+";color:var(--rose);font-size:1.4rem;line-height:1}details[open] summary::after{content:"–"}details p{color:var(--mut);margin:10px 0 0}
+/* Réservation */
+.book{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:clamp(20px,4vw,40px);box-shadow:0 30px 70px -40px #8f3a4f66}
+.steps{display:flex;gap:8px;margin:0 0 24px;padding:0;list-style:none;flex-wrap:wrap}.steps li{font-size:.85rem;padding:6px 14px;border-radius:99px;border:1px solid var(--line);color:var(--mut)}.steps li[aria-current="step"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}.steps li.done{color:var(--ok);border-color:var(--ok)}
+.choices{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;border:0;padding:0;margin:0}
+.choices legend{font-weight:600;margin-bottom:12px}
+.pick{position:relative}.pick input{position:absolute;opacity:0;inset:0;cursor:pointer}.pick span{display:flex;flex-direction:column;gap:2px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--bg);min-height:64px;transition:border-color .2s,background .2s}
+.pick input:checked+span{border-color:var(--rose);background:color-mix(in srgb,var(--rose) 10%,var(--bg));box-shadow:inset 0 0 0 1px var(--rose)}.pick input:focus-visible+span{outline:2px solid var(--rose);outline-offset:2px}
+.pick input:disabled+span{opacity:.4;text-decoration:line-through;cursor:not-allowed}.pick small{color:var(--mut)}
+.days{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;margin-bottom:18px}.days .pick{flex:0 0 84px}.days .pick span{align-items:center;text-align:center;min-height:76px}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:10px}
+.field{display:grid;gap:6px;margin-bottom:14px}.field label{font-weight:600;font-size:.92rem}.field input,.field textarea{font:inherit;padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:22px;flex-wrap:wrap}
+.recap{background:var(--bg);border:1px dashed var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px}.recap b{color:var(--rose-d)}
+.done-box{text-align:center;padding:24px 0}.done-box h3{font-size:2.2rem;margin-bottom:10px}
+.note{font-size:.85rem;color:var(--mut)}
+footer{border-top:1px solid var(--line);padding:28px 0;font-size:.875rem;color:var(--mut)}footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .8s,transform .8s}.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}.btn,.card{transition:none}}
+@media (max-width:860px){nav ul{display:none}header .btn{margin-left:auto}.hero .wrap,.two{grid-template-columns:1fr}.arch{max-width:340px;margin:0 auto;order:-1;aspect-ratio:1/1;border-radius:999px 999px 28px 28px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<div class="bar">Exemple fictif réalisé par <a href="../../templates/">QuenTools</a> · l’institut, les prix et les horaires sont inventés · <a href="../../devis/?type=Template&amp;template=Institut%20de%20beaut%C3%A9%20et%20coiffure">Demander ce template</a></div>
+<header class="nav"><div class="wrap">
+  <a class="logo" href="#top" aria-label="Maison Rosée, accueil">Maison <i>Rosée</i></a>
+  <nav aria-label="Navigation principale"><ul><li><a href="#soins">Soins</a></li><li><a href="#tarifs">Tarifs</a></li><li><a href="#horaires">Horaires</a></li><li><a href="#faq">Questions</a></li></ul></nav>
+  <a class="btn sm" href="#reserver">Réserver</a>
+</div></header>
+
+<main id="contenu">
+<section class="hero" id="top"><div class="wrap">
+  <div>
+    <span class="eyebrow">Institut de beauté · Lyon 6e</span>
+    <h1>Prenez le temps <em>d’être belle</em>.</h1>
+    <p class="lede">Soins du visage, beauté des mains et des pieds, épilation et mise en beauté, dans un cabinet calme, sur rendez-vous uniquement.</p>
+    <div class="cta"><a class="btn" href="#reserver">Réserver un soin</a><a class="btn ghost" href="#tarifs">Voir les tarifs</a></div>
+    <ul class="chips"><li>Réservation en 3 étapes</li><li>Tarifs affichés</li><li>Annulation gratuite 24 h avant</li></ul>
+  </div>
+  <div class="arch" role="img" aria-label="Illustration décorative"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M32 8c6 8 14 12 14 22a14 14 0 0 1-28 0c0-10 8-14 14-22z"/><path d="M32 30c3 4 7 6 7 11a7 7 0 0 1-14 0c0-5 4-7 7-11z"/></svg><small>Un moment pour vous</small></div>
+</div></section>
+
+<section id="soins" class="band"><div class="wrap">
+  <div class="head reveal"><span class="eyebrow">Les soins</span><h2>Quatre rituels, simples à choisir.</h2><p>Chaque soin a une durée et un prix annoncés avant de réserver.</p></div>
+  <div class="grid">
+    <article class="card reveal"><h3>Soin visage éclat</h3><p>Nettoyage, gommage doux, masque et massage du visage pour une peau reposée.</p><div class="meta"><span>1 h</span><span>65 €</span></div></article>
+    <article class="card reveal"><span class="tag">La plus demandée</span><h3>Beauté des mains</h3><p>Limage, soin des cuticules, gommage et pose de vernis, couleur au choix.</p><div class="meta"><span>45 min</span><span>35 €</span></div></article>
+    <article class="card reveal"><h3>Beauté des pieds</h3><p>Bain, gommage, soin des ongles et de la peau, massage et vernis.</p><div class="meta"><span>1 h</span><span>45 €</span></div></article>
+  </div>
+</div></section>
+
+<section id="tarifs"><div class="wrap two">
+  <div class="reveal"><span class="eyebrow">Tarifs</span><h2 style="font-size:clamp(2rem,4.6vw,3.4rem);margin:12px 0 14px">Des prix clairs, sans surprise.</h2><p style="color:var(--mut)">Paiement sur place par carte ou espèces. Un acompte de 10 € peut être demandé pour les soins de plus d’une heure (option du template).</p></div>
+  <div class="rows reveal">
+    <div><span><b>Soin visage éclat</b><small>1 h</small></span><span class="p">65 €</span></div>
+    <div><span><b>Beauté des mains</b><small>45 min</small></span><span class="p">35 €</span></div>
+    <div><span><b>Beauté des pieds</b><small>1 h</small></span><span class="p">45 €</span></div>
+    <div><span><b>Épilation sourcils</b><small>20 min</small></span><span class="p">15 €</span></div>
+  </div>
+</div></section>
+
+<section id="reserver" class="band"><div class="wrap" style="max-width:820px">
+  <div class="head reveal"><span class="eyebrow">Réservation</span><h2>Réservez en trois étapes.</h2></div>
+  <div class="book reveal" id="book">
+    <ol class="steps" aria-label="Étapes"><li id="s1" aria-current="step">1. Soin</li><li id="s2">2. Créneau</li><li id="s3">3. Vos coordonnées</li></ol>
+    <form id="f" novalidate>
+      <div id="p1"><fieldset class="choices"><legend>Choisissez votre soin</legend></fieldset></div>
+      <div id="p2" hidden><fieldset class="choices" style="display:block"><legend>Choisissez le jour puis l’heure</legend><div class="days" id="days" role="radiogroup" aria-label="Jour"></div><div class="slots" id="slots" role="radiogroup" aria-label="Heure"></div></fieldset></div>
+      <div id="p3" hidden>
+        <div class="recap" id="recap" aria-live="polite"></div>
+        <div class="field"><label for="n">Prénom et nom</label><input id="n" autocomplete="name" required></div>
+        <div class="field"><label for="t">Téléphone</label><input id="t" type="tel" autocomplete="tel" inputmode="tel" required></div>
+        <p class="note">Démonstration : rien n’est envoyé, la réservation reste dans votre navigateur.</p>
+      </div>
+      <p id="err" role="alert" class="note" style="color:var(--rose-d)" hidden></p>
+      <div class="row"><button type="button" class="btn ghost" id="back" hidden>Retour</button><button type="submit" class="btn" id="next" style="margin-left:auto">Continuer</button></div>
+    </form>
+    <div id="ok" class="done-box" hidden><h3>Réservation enregistrée</h3><p id="okmsg" style="color:var(--mut)"></p><button type="button" class="btn ghost" id="again">Nouvelle réservation</button></div>
+  </div>
+</div></section>
+
+<section id="horaires"><div class="wrap two">
+  <div class="reveal"><span class="eyebrow">Horaires</span><h2 style="font-size:clamp(2rem,4.6vw,3.4rem);margin:12px 0 14px">Nous trouver.</h2><p style="color:var(--mut)">12 rue des Lilas, 69006 Lyon (adresse fictive).<br>Métro à 4 minutes, stationnement dans la rue.</p></div>
+  <table class="reveal"><caption class="note" style="text-align:left;padding-bottom:8px">Horaires d’ouverture</caption>
+    <tr><td>Lundi</td><td>Fermé</td></tr><tr><td>Mardi – Vendredi</td><td>9 h – 19 h</td></tr><tr><td>Samedi</td><td>9 h – 17 h</td></tr><tr><td>Dimanche</td><td>Fermé</td></tr></table>
+</div></section>
+
+<section id="faq" class="band"><div class="wrap" style="max-width:820px">
+  <div class="head reveal"><span class="eyebrow">Questions</span><h2>Avant de venir.</h2></div>
+  <div class="reveal">
+    <details><summary>Comment annuler ou déplacer un rendez-vous ?</summary><p>Par téléphone ou en répondant au message de confirmation, gratuitement jusqu’à 24 h avant.</p></details>
+    <details><summary>Quels moyens de paiement ?</summary><p>Carte bancaire ou espèces, sur place, à la fin du soin.</p></details>
+    <details><summary>Faut-il prévenir en cas d’allergie ?</summary><p>Oui, indiquez-le à la réservation ou à l’arrivée : les produits sont adaptés à votre peau.</p></details>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap"><span>© <span id="y">2026</span> Maison Rosée · exemple fictif, SIRET et mentions légales à renseigner</span><span>Modèle de site <a href="../../templates/">QuenTools</a></span></div></footer>
+
+<script>
+(function () {
+  var SOINS = [
+    { id: 'visage', n: 'Soin visage éclat', d: 60, p: 65 }, { id: 'mains', n: 'Beauté des mains', d: 45, p: 35 },
+    { id: 'pieds', n: 'Beauté des pieds', d: 60, p: 45 }, { id: 'sourcils', n: 'Épilation sourcils', d: 20, p: 15 }];
+  var JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'], MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  var $ = function (id) { return document.getElementById(id); }, st = { step: 1, soin: null, jour: null, heure: null };
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pick(name, value, title, sub, dis) { return '<label class="pick"><input type="radio" name="' + name + '" value="' + esc(value) + '"' + (dis ? ' disabled' : '') + '><span><b>' + title + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></label>'; }
+  $('p1').querySelector('fieldset').insertAdjacentHTML('beforeend', SOINS.map(function (s) { return pick('soin', s.id, esc(s.n), s.d + ' min · ' + s.p + ' €'); }).join(''));
+  // Jours ouverts : mardi à samedi ; quelques créneaux déjà pris pour la démonstration (déterministes).
+  var days = [], d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + 1);
+  while (days.length < 8) { var w = d.getDay(); if (w >= 2 && w <= 6) days.push(new Date(d)); d.setDate(d.getDate() + 1); }
+  var key = function (x) { return x.getFullYear() + '-' + (x.getMonth() + 1) + '-' + x.getDate(); };
+  $('days').innerHTML = days.map(function (x) { return pick('jour', key(x), JOURS[x.getDay()].slice(0, 3) + '.', x.getDate() + ' ' + MOIS[x.getMonth()]); }).join('');
+  function slots(x) { var end = x.getDay() === 6 ? 17 : 19, out = []; for (var h = 9; h < end; h++) { out.push(h + ':00'); out.push(h + ':30'); } return out; }
+  function taken(x, s) { return (x.getDate() * 7 + s.length * 3 + parseInt(s, 10)) % 5 === 0; }
+  function showSlots() { var x = days.filter(function (y) { return key(y) === st.jour; })[0]; if (!x) { $('slots').innerHTML = '<p class="note">Choisissez d’abord un jour.</p>'; return; } st.heure = null;
+    $('slots').innerHTML = slots(x).map(function (s) { return pick('heure', s, s.replace(':', ' h ').replace(' 00', ''), '', taken(x, s)); }).join(''); }
+  showSlots();
+  function render() {
+    ['p1', 'p2', 'p3'].forEach(function (id, i) { $(id).hidden = st.step !== i + 1; });
+    ['s1', 's2', 's3'].forEach(function (id, i) { var li = $(id); if (st.step === i + 1) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current'); li.className = st.step > i + 1 ? 'done' : ''; });
+    $('back').hidden = st.step === 1; $('next').textContent = st.step === 3 ? 'Confirmer la réservation' : 'Continuer'; $('err').hidden = true;
+    if (st.step === 3) { var s = SOINS.filter(function (z) { return z.id === st.soin; })[0], x = days.filter(function (y) { return key(y) === st.jour; })[0];
+      var quand = JOURS[x.getDay()] + ' ' + x.getDate() + ' ' + MOIS[x.getMonth()] + ' à ' + st.heure.replace(':', ' h ').replace(' 00', ''); st.txt = s.n + ' · ' + s.d + ' min · ' + s.p + ' € · ' + quand;
+      $('recap').innerHTML = '<b>' + esc(s.n) + '</b> · ' + s.d + ' min · ' + s.p + ' €<br>' + quand; }
+  }
+  function fail(m) { var e = $('err'); e.textContent = m; e.hidden = false; }
+  $('f').addEventListener('change', function (e) { var t = e.target; if (t.name === 'soin') st.soin = t.value; if (t.name === 'jour') { st.jour = t.value; showSlots(); } if (t.name === 'heure') st.heure = t.value; });
+  $('back').addEventListener('click', function () { st.step--; render(); });
+  $('f').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (st.step === 1) { if (!st.soin) return fail('Choisissez un soin pour continuer.'); st.step = 2; render(); return; }
+    if (st.step === 2) { if (!st.jour || !st.heure) return fail('Choisissez un jour et une heure.'); st.step = 3; render(); return; }
+    var n = $('n').value.trim(), t = $('t').value.trim(); if (!n || t.replace(/\D/g, '').length < 8) return fail('Indiquez votre nom et un numéro de téléphone valide.');
+    try { localStorage.setItem('maison-rosee:demo', JSON.stringify({ soin: st.soin, jour: st.jour, heure: st.heure, nom: n })); } catch (x) { }
+    $('okmsg').textContent = st.txt + '. Un SMS de confirmation serait envoyé à ' + t + ' (simulé dans cette démonstration).';
+    $('f').hidden = true; $('ok').hidden = false; $('ok').querySelector('h3').setAttribute('tabindex', '-1'); $('ok').querySelector('h3').focus();
+  });
+  $('again').addEventListener('click', function () { st = { step: 1, soin: null, jour: null, heure: null }; $('f').reset(); showSlots(); $('f').hidden = false; $('ok').hidden = true; render(); });
+  $('y').textContent = new Date().getFullYear();
+  var els = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion:reduce)').matches) els.forEach(function (x) { x.classList.add('in'); });
+  else { var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -8% 0px' }); els.forEach(function (x) { io.observe(x); }); }
+})();
+</script>
+</body>
+</html>

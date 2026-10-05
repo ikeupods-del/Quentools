@@ -40,17 +40,27 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}wouf/
     steps:
       - uses: actions/checkout@v4
+      - name: Contrôler le site vitrine
+        run: node tools/verifier-site.js
       - name: Préparer le site
         run: |
           mkdir -p _site
-          cp index.html 404.html _site/
+          cp index.html 404.html robots.txt sitemap.xml _site/
           rsync -a assets _site/
-          rsync -a ebook _site/
           rsync -a realisations _site/
+          rsync -a templates _site/
+          rsync -a audit _site/
+          rsync -a formation _site/
+          rsync -a conseils _site/
           rsync -a devis _site/
+          rsync -a cadeau _site/
           rsync -a admin _site/
+          rsync -a espace _site/
           rsync -a demo _site/
           rsync -a exemples _site/
+          rsync -a outils _site/
+          rsync -a creation-site _site/
+          rsync -a mentions-legales _site/
           rsync -a --exclude oauth-worker infikit _site/
           rsync -a freelance _site/
           rsync -a gourmet _site/

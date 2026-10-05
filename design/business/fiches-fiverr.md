@@ -4,7 +4,7 @@ Montants : voir `../OFFRES.md`. Rappels : ne promettre que ce qui est réalisabl
 
 ## Profil
 **Titre** : Création de sites et boutiques en ligne, en français
-**Présentation** : Je crée des sites vitrines, des boutiques Shopify et des outils web sur mesure pour les commerçants, artisans et indépendants francophones. Vous m'expliquez votre besoin avec vos mots, je m'occupe du reste et je reste joignable après la livraison. Devis clair, première version à tester avant de vous engager.
+**Présentation** : Je crée des sites vitrines, des boutiques Shopify et des outils web sur mesure pour les commerçants, artisans et indépendants francophones. Vous m'expliquez votre besoin avec vos mots, je m'occupe du reste et je reste joignable après la livraison. Devis clair, première version à valider avant la suite.
 
 ## Service 1 : Boutique Shopify clé en main, en français
 **Titre** : Je vais créer votre boutique Shopify en français, prête à vendre
@@ -33,7 +33,7 @@ Montants : voir `../OFFRES.md`. Rappels : ne promettre que ce qui est réalisabl
 ## Service 4 : Outil web sur mesure
 **Titre** : Je vais créer votre outil web sur mesure (calcul de devis, suivi, réservation)
 **Description** : Un calculateur, un outil de devis, un suivi de clients ou de stock, qui remplace votre fichier Excel. Pensé pour votre métier, utilisable sur téléphone, avec sauvegarde et export.
-**Exemples de réalisations** : voir https://ikeupods-del.github.io/Quentools/realisations/
+**Exemples de réalisations** : voir https://quentools.fr/realisations/
 
 ## Messages utiles
 - **Remise de lancement** : « Pour mes premières commandes, je vous propose [montant] € au lieu de [montant] € en échange d'un retour honnête. »

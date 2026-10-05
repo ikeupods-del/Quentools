@@ -26,7 +26,7 @@ Voici la proposition pour [projet] (en pièce jointe) :
 - Ce que vous recevez : [résumé en 2 lignes]
 - Prix : [montant] € [+ forfait mensuel de [montant] €]
 - Délai : [durée] à partir de la réception de [ce dont j'ai besoin]
-- Première version à tester avant de vous engager sur la suite.
+- Première version à valider avant la suite.
 
 Pour démarrer, il suffit de me répondre « OK » ; un acompte de [30 à 50] % lance le travail.
 

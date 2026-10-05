@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La Ferme du Petit Pré · exemple de site (garde d’animaux et pension de chevaux)</title>
+<meta name="description" content="Exemple fictif de site pour une garde d’animaux à domicile et une pension de chevaux, réalisé par QuenTools.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+<link rel="preload" href="../../assets/fonts/ex/bitter-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../ex.css">
+<style>
+@font-face{font-family:Bitter;src:url(../../assets/fonts/ex/bitter-normal.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"DM Sans";src:url(../../assets/fonts/ex/dm-sans-normal.woff2) format("woff2");font-weight:100 1000;font-display:swap}
+@font-face{font-family:Caveat;src:url(../../assets/fonts/ex/caveat-normal.woff2) format("woff2");font-weight:400 700;font-display:swap}
+:root{--sky:#e3f1f6;--sky2:#c9e5ee;--grass:#4f8a3c;--grass-d:#2e5a24;--hay:#f2c14e;--hay-d:#c98f12;--barn:#b2402f;--barn-d:#842a1d;--paper:#fbf8ef;--ink:#1c2a33;--mut:#586a73;--line:#d9e3de}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.65 "DM Sans",system-ui,sans-serif}
+h1,h2,h3{font-family:Bitter,Georgia,serif;font-weight:800;line-height:1.12;margin:0}a{color:inherit}.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+.hand{font:700 1.5rem Caveat,cursive;color:var(--barn)}
+header{background:var(--paper);position:sticky;top:0;z-index:40;border-bottom:3px solid var(--grass)}header .wrap{display:flex;align-items:center;justify-content:space-between;height:68px;gap:14px}
+.logo{display:flex;align-items:center;gap:10px;font:800 20px Bitter,serif;text-decoration:none;color:var(--grass-d)}.logo svg{width:34px;height:34px;color:var(--barn)}
+nav a{margin-left:22px;text-decoration:none;font-weight:700;font-size:15px}nav a:hover{color:var(--barn)}
+.btn{display:inline-block;border:0;cursor:pointer;background:var(--barn);color:#fff;text-decoration:none;font:700 16px "DM Sans",sans-serif;padding:14px 26px;border-radius:12px;box-shadow:0 5px 0 var(--barn-d);transition:.12s}.btn:hover{background:#c24b39}.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--barn-d)}
+.btn.g{background:var(--grass);box-shadow:0 5px 0 var(--grass-d)}.btn.g:hover{background:#5a9a46}.btn.g:active{box-shadow:0 1px 0 var(--grass-d)}
+.btn:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.cal button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.hero{background:linear-gradient(var(--sky),var(--sky2));overflow:hidden}.hero .wrap{display:grid;grid-template-columns:1.05fr 1fr;gap:30px;align-items:center;padding-top:30px}
+.hero h1{font-size:clamp(2.1rem,4.6vw,3.3rem);margin:4px 0 14px}.hero h1 em{font-style:normal;color:var(--barn)}.hero p{max-width:44ch;margin:0 0 20px;font-size:18px;color:#34484f}
+.hero .scene{align-self:end;margin-bottom:-4px}.scene svg{display:block;width:100%;height:auto;-webkit-mask-image:linear-gradient(90deg,transparent,#000 16%);mask-image:linear-gradient(90deg,transparent,#000 16%)}
+.doors{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:520px}
+.door{display:block;text-decoration:none;background:var(--paper);border:3px solid var(--ink);border-radius:14px 14px 4px 4px;padding:16px 16px 14px;box-shadow:0 5px 0 var(--ink);transition:.12s}.door:hover{transform:translateY(-2px);background:#fff}
+.door b{display:block;font:800 18px Bitter,serif}.door span{font-size:14px;color:var(--mut);line-height:1.35;display:block;margin-top:4px}.door svg{width:30px;height:30px;color:var(--barn);margin-bottom:6px}
+section{padding:68px 0}h2.t{font-size:clamp(1.9rem,4vw,2.8rem);margin-bottom:8px}.sub{color:var(--mut);margin:0 0 30px;max-width:60ch}
+.band{background:#fff;border-block:3px solid var(--line)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.cards.c4{grid-template-columns:repeat(4,1fr)}
+.card{background:#fff;border:3px solid var(--ink);border-radius:16px;padding:22px;position:relative}.band .card{background:var(--paper)}
+.card .ic{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--sky);color:var(--grass-d);margin-bottom:12px}.card .ic svg{width:28px;height:28px}
+.card h3{font-size:21px;margin-bottom:6px}.card p{margin:0;color:var(--mut);font-size:15.5px}
+.price{font:800 28px Bitter,serif;margin:12px 0 2px;color:var(--grass-d)}.price small{font:500 14px "DM Sans",sans-serif;color:var(--mut)}
+.card.f{background:var(--hay);border-color:var(--ink)}.card.f p,.card.f .price small{color:#3a3016}.card.f .price{color:var(--ink)}.tag{position:absolute;top:-14px;right:16px;background:var(--barn);color:#fff;font:700 13px "DM Sans";padding:3px 12px;border-radius:99px;border:2px solid var(--ink)}
+ul.ck{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:7px;font-size:15px}ul.ck li{display:flex;gap:9px;align-items:flex-start}ul.ck svg{flex:none;width:19px;height:19px;color:var(--grass);margin-top:3px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:start}
+.eq{display:grid;grid-template-columns:1fr 1fr;gap:10px}.eq div{display:flex;gap:10px;align-items:center;background:#fff;border:2px solid var(--line);border-radius:12px;padding:12px 14px;font-weight:600;font-size:15px}.eq svg{flex:none;width:22px;height:22px;color:var(--grass)}
+.day{list-style:none;margin:0;padding:0 0 0 22px;border-left:4px dotted var(--grass)}.day li{position:relative;padding:0 0 18px 14px}.day li::before{content:"";position:absolute;left:-31px;top:6px;width:16px;height:16px;border-radius:50%;background:var(--hay);border:3px solid var(--ink)}.day b{font-family:Bitter,serif;margin-right:8px}
+.steps{counter-reset:s}.step{counter-increment:s}.step::before{content:counter(s);display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--barn);color:#fff;font:800 20px Bitter,serif;margin-bottom:12px;border:3px solid var(--ink)}
+.news{background:var(--paper);border:3px solid var(--ink);border-radius:20px;padding:20px;box-shadow:8px 8px 0 var(--hay);max-width:430px}.band .news{background:var(--sky)}
+.news header{all:unset;display:flex;align-items:center;gap:12px;margin-bottom:14px}.news .av{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--hay);border:3px solid var(--ink);font:800 18px Bitter,serif}
+.news .m{background:#fff;border-radius:14px 14px 14px 4px;padding:12px 14px;margin:0 0 10px;font-size:15px;border:2px solid var(--line)}.news .m small{display:block;color:var(--mut);margin-top:4px}
+.book{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+.panel{background:#fff;border:3px solid var(--ink);border-radius:20px;padding:clamp(18px,3vw,30px)}
+.cal h3{font-size:20px;text-transform:capitalize;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}.cal .nv{display:flex;gap:6px}.cal .nv button{width:38px;height:38px;border-radius:10px;border:2px solid var(--ink);background:var(--paper);cursor:pointer;font:800 16px "DM Sans"}.cal .nv button:disabled{opacity:.35;cursor:default}
+.cal .g{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.cal .w{font-size:12px;font-weight:800;color:var(--mut);text-align:center;padding:2px 0}
+.cal .g button{aspect-ratio:1;border:2px solid transparent;border-radius:10px;background:#e8f3df;font:700 15px "DM Sans";color:var(--grass-d);cursor:pointer;padding:0;min-width:0}.cal .g button:hover:not(:disabled){border-color:var(--grass)}
+.cal .g button:disabled{cursor:default}.cal .g .full{background:#f3dcd7;color:#9a4a3d;text-decoration:line-through}.cal .g .past{background:transparent;color:#aab6b0}
+.cal .g .in{background:var(--hay);color:var(--ink)}.cal .g .edge{background:var(--barn);color:#fff;border-color:var(--ink)}.cal .g .blank{visibility:hidden}
+.leg{display:flex;flex-wrap:wrap;gap:14px;margin:14px 0 0;font-size:13px;color:var(--mut)}.leg i{display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:6px;vertical-align:-2px;border:1px solid var(--line)}
+label{display:block;font-weight:700;font-size:14px;margin:0 0 5px}.fld{margin-bottom:14px}.r2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+input,select,textarea{font:inherit;padding:12px 14px;border:2px solid var(--ink);border-radius:12px;background:var(--paper);color:var(--ink);width:100%}
+.chk{display:flex;align-items:center;gap:10px;font-weight:600;margin:0 0 8px}.chk input{width:22px;height:22px;accent-color:var(--grass)}.chk label{margin:0;font-weight:600}
+.tot{background:var(--paper);border:2px dashed var(--grass);border-radius:14px;padding:14px 16px;margin:16px 0}.tot div{display:flex;justify-content:space-between;gap:12px;font-size:15px;padding:2px 0}.tot .T{border-top:2px solid var(--ink);margin-top:8px;padding-top:8px;font:800 22px Bitter,serif}
+.tot p{margin:8px 0 0;font-size:13px;color:var(--mut)}
+details{border-bottom:2px solid var(--line);padding:16px 0}summary{cursor:pointer;font:800 18px Bitter,serif;list-style:none;display:flex;justify-content:space-between;gap:14px}summary::after{content:"+";font-size:26px;line-height:1;color:var(--barn)}details[open] summary::after{content:"–"}details p{margin:10px 0 0;color:var(--mut)}
+.contact{background:var(--grass-d);color:#fff;border-radius:28px;padding:clamp(24px,5vw,54px);display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:center}.contact h2{font-size:clamp(1.8rem,3.6vw,2.6rem);margin-bottom:10px}.contact p{margin:0 0 12px;opacity:.9}
+.contact form{background:#fff;color:var(--ink);border-radius:20px;padding:20px;display:grid;gap:12px}.contact .recap{font-size:14px;background:var(--sky);border-radius:10px;padding:10px 12px;margin:0}
+footer{padding:34px 0;font-size:14px;color:var(--mut);border-top:3px solid var(--grass)}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
+.rv{opacity:0;transform:translateY(18px);transition:opacity .6s,transform .6s}.rv.on{opacity:1;transform:none}@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+@media (max-width:900px){nav{display:none}.hero .wrap,.two,.book,.contact{grid-template-columns:1fr}.cards,.cards.c4{grid-template-columns:1fr 1fr}.hero .scene{max-width:520px;margin-inline:auto}}
+@media (max-width:560px){.cards,.cards.c4,.doors,.eq,.r2{grid-template-columns:1fr}.news{box-shadow:5px 5px 0 var(--hay)}section{padding:52px 0}.logo{font-size:17px}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-shoe" viewBox="0 0 24 24"><path d="M6 20c-2-2-3-5-3-8a9 9 0 0 1 18 0c0 3-1 6-3 8h-3c1-2 2-4 2-8a4 4 0 0 0-8 0c0 4 1 6 2 8z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-paw" viewBox="0 0 24 24"><g fill="currentColor"><ellipse cx="5.500" cy="11" rx="2.200" ry="3"/><ellipse cx="10" cy="6.500" rx="2.200" ry="3"/><ellipse cx="14.500" cy="6.500" rx="2.200" ry="3"/><ellipse cx="19" cy="11" rx="2.200" ry="3"/><path d="M12 11c-3 0-6 3-6 6 0 2 1.500 3 3 3 1.300 0 2-.6 3-.6s1.700.6 3 .6c1.500 0 3-1 3-3 0-3-3-6-6-6z"/></g></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10M10 20v-6h4v6"/></symbol>
+<symbol id="i-walk" viewBox="0 0 24 24"><circle cx="13" cy="4.500" r="2"/><path d="M12 8l-3 4 3 3v5M12 8l4 3 3 1M9 12l-3 1M12 15l3 5"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.500A8 8 0 0 1 9.500 4 8 8 0 1 0 20 14.500z"/></symbol>
+<symbol id="i-ok" viewBox="0 0 24 24"><path d="M4 12.500l5 5L20 6.500" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-ring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/></symbol>
+<symbol id="i-roof" viewBox="0 0 24 24"><path d="M2 12l10-8 10 8M5 11v9h14v-9"/></symbol>
+<symbol id="i-loop" viewBox="0 0 24 24"><path d="M17 3l4 4-4 4M21 7H8a5 5 0 0 0 0 10h1M7 21l-4-4 4-4M3 17h13"/></symbol>
+<symbol id="i-saddle" viewBox="0 0 24 24"><path d="M3 14c0-4 3-6 7-6h3c2 0 3 1 4 3 2 0 4 1 4 3 0 1-1 2-2 2H5c-1 0-2-1-2-2z"/><path d="M8 17v3M16 17v3"/></symbol>
+<symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s6 6.500 6 11a6 6 0 0 1-12 0c0-4.500 6-11 6-11z"/></symbol>
+<symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.500"/></symbol>
+</defs></svg>
+<div class="qt-ex"><a href="../../devis/">Exemple fictif réalisé par QuenTools : demander le mien →</a></div>
+<header><div class="wrap"><a class="logo" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-shoe"/></svg>La Ferme du Petit Pré</a>
+<nav aria-label="Navigation principale"><a href="#petsitting">Garde d’animaux</a><a href="#chevaux">Pension chevaux</a><a href="#reserver">Dates et tarifs</a><a href="#faq">Questions</a></nav>
+<a class="btn g" href="#contact" style="padding:10px 18px;font-size:15px">Contact</a></div></header>
+
+<main>
+<section class="hero" style="padding:0"><div class="wrap">
+  <div style="padding-bottom:40px">
+    <span class="hand">Chez nous, chacun a sa place.</span>
+    <h1>Votre animal est <em>bien gardé</em>, que vous partiez un week-end ou un mois.</h1>
+    <p>Garde à domicile pour chiens, chats et petits compagnons. Pension au pré ou au box pour chevaux et poneys. Et des nouvelles avec photos, chaque jour.</p>
+    <div class="doors">
+      <a class="door" href="#petsitting"><svg aria-hidden="true"><use href="#i-paw"/></svg><b>Chiens, chats…</b><span>Visites, balades, garde de nuit</span></a>
+      <a class="door" href="#chevaux"><svg aria-hidden="true"><use href="#i-shoe"/></svg><b>Chevaux, poneys</b><span>Pré, box, demi-pension</span></a>
+    </div>
+  </div>
+  <div class="scene" aria-hidden="true"><svg viewBox="0 0 600 440"><circle cx="476" cy="96" r="46" fill="#f2c14e"/><ellipse cx="150" cy="84" rx="58" ry="17" fill="#fff"/><ellipse cx="186" cy="74" rx="38" ry="15" fill="#fff"/><ellipse cx="360" cy="136" rx="46" ry="13" fill="#fff" opacity=".85"/>
+    <path d="M0 290Q150 200 330 262T600 238V440H0z" fill="#9ccb8a"/><path d="M0 346Q200 272 400 334T600 312V440H0z" fill="#4f8a3c"/><path d="M0 400Q240 350 600 392V440H0z" fill="#2e5a24"/>
+    <rect x="410" y="238" width="12" height="56" fill="#6b4a2b"/><circle cx="416" cy="222" r="38" fill="#2e5a24"/><circle cx="392" cy="244" r="26" fill="#3d7230"/><circle cx="442" cy="246" r="24" fill="#3d7230"/>
+    <polygon points="68,250 160,178 252,250" fill="#842a1d"/><rect x="82" y="248" width="156" height="112" fill="#b2402f"/><rect x="132" y="282" width="56" height="78" fill="#f6e9d3"/><path d="M132 282l56 78M188 282l-56 78" stroke="#b2402f" stroke-width="5"/><rect x="132" y="282" width="56" height="78" fill="none" stroke="#842a1d" stroke-width="5"/><rect x="146" y="214" width="28" height="22" fill="#f6e9d3"/>
+    <g transform="translate(160 152) scale(.9)" fill="#f2c14e"><path d="M-17 14c-6-5-9-12-9-20a26 26 0 0 1 52 0c0 8-3 15-9 20h-9c3-5 6-10 6-20a10 10 0 0 0-20 0c0 10 3 15 6 20z"/></g>
+    <g fill="#fbf8ef" stroke="#1c2a33" stroke-width="2.500"><rect x="300" y="332" width="9" height="62"/><rect x="354" y="336" width="9" height="62"/><rect x="408" y="340" width="9" height="62"/><rect x="462" y="344" width="9" height="62"/><rect x="516" y="346" width="9" height="62"/><rect x="570" y="348" width="9" height="62"/><rect x="296" y="346" width="290" height="8"/><rect x="296" y="368" width="290" height="8"/></g>
+    <g fill="#fbf8ef" opacity=".9"><ellipse cx="76" cy="418" rx="9" ry="11"/><circle cx="58" cy="404" r="4.500"/><circle cx="70" cy="396" r="4.500"/><circle cx="84" cy="396" r="4.500"/><circle cx="95" cy="404" r="4.500"/><ellipse cx="148" cy="404" rx="8" ry="10" transform="rotate(14 148 404)"/><circle cx="131" cy="391" r="4"/><circle cx="143" cy="384" r="4"/><circle cx="156" cy="385" r="4"/><circle cx="166" cy="393" r="4"/></g></svg></div>
+</div></section>
+
+<section id="petsitting" class="band"><div class="wrap">
+  <span class="hand">Pour les animaux de la maison</span><h2 class="t">Garde d’animaux à domicile</h2>
+  <p class="sub">Votre animal garde ses habitudes : sa gamelle, son panier, ses balades. Je viens chez vous ou je l’accueille chez moi.</p>
+  <div class="cards c4 rv-g">
+    <article class="card"><div class="ic"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-home"/></svg></div><h3>Visite à domicile</h3><p>30 minutes : repas, eau, litière, câlins et un tour de maison. Idéal pour les chats et les petits compagnons.</p><div class="price">15 € <small>/ visite</small></div></article>
+    <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-walk"/></svg></div><h3>Promenade</h3><p>Une heure dehors, adaptée à l’âge et à l’énergie de votre chien, avec de l’eau et un compte rendu.</p><div class="price">14 € <small>/ balade d’1 h</small></div></article>
+    <article class="card f"><span class="tag">Le plus demandé</span><div class="ic" style="background:#fff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-paw"/></svg></div><h3>Chez moi, en famille</h3><p>Votre chien dort à la maison, avec jardin et sorties. Pas de box, pas de chenil.</p><div class="price">28 € <small>/ nuit</small></div></article>
+    <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-moon"/></svg></div><h3>Nuit chez vous</h3><p>Je dors à votre domicile : parfait pour les animaux âgés, anxieux ou sous traitement.</p><div class="price">42 € <small>/ nuit</small></div></article>
+  </div>
+  <p class="sub" style="margin:14px 0 0;font-size:14px">Prix d’exemple. Sur votre site, ce sont vos vrais tarifs et vos zones d’intervention.</p>
+  <div class="two" style="margin-top:50px;align-items:center">
+    <div><h3 style="font-size:28px;margin-bottom:14px">Des nouvelles, pas des inquiétudes</h3>
+      <ul class="ck"><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Une rencontre avant la première garde, pour faire connaissance avec votre animal.</li><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Un message avec photo à chaque passage.</li><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Une fiche avec ses habitudes, son vétérinaire et la marche à suivre en cas de souci.</li><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Un traitement ou des soins à donner : dites-le-moi, c’est prévu.</li></ul></div>
+    <div class="news" aria-label="Exemple de messages reçus pendant la garde"><header><span class="av">N</span><div><b style="font-family:Bitter,serif">Nougat</b><br><small style="color:var(--mut)">Message d’exemple</small></div></header>
+      <p class="m">Balade d’une heure au bord de l’étang, il a fait ami-ami avec un labrador. <small>10 h 12</small></p><p class="m">A fini sa gamelle et dort sur le canapé (chut). <small>13 h 40</small></p><p class="m" style="margin:0">Dernière sortie faite, tout va bien. Bonne soirée ! <small>20 h 05</small></p></div>
+  </div>
+</div></section>
+
+<section id="chevaux"><div class="wrap">
+  <span class="hand">Pour les chevaux et poneys</span><h2 class="t">Pension chevaux</h2>
+  <p class="sub">Un cadre calme, des soins quotidiens et de l’espace pour vivre dehors. Séjour d’une semaine ou pension à l’année.</p>
+  <div class="cards">
+    <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-loop"/></svg></div><h3>Pension au pré</h3><p>Vie en troupeau, abri naturel, foin l’hiver. Pour les chevaux robustes qui aiment le grand air.</p><div class="price">180 € <small>/ mois</small></div>
+      <ul class="ck"><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Pré de 2 hectares</li><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Eau et foin fournis</li><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Surveillance quotidienne</li></ul></article>
+    <article class="card f"><span class="tag">Formule complète</span><div class="ic" style="background:#fff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-roof"/></svg></div><h3>Box et paddock</h3><p>Box de 12 m² paillé chaque jour et paddock individuel, pour les chevaux qui ont besoin de calme.</p><div class="price">420 € <small>/ mois</small></div>
+      <ul class="ck"><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Paille et foin inclus</li><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Sortie quotidienne</li><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Accès carrière et manège</li></ul></article>
+    <article class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-saddle"/></svg></div><h3>Demi-pension</h3><p>Vous partagez votre cheval ou poney : nous le travaillons ou le sortons quand vous n’êtes pas là.</p><div class="price">Sur devis</div>
+      <ul class="ck"><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Selon votre disponibilité</li><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Séance d’essai à prévoir</li><li><svg aria-hidden="true"><use href="#i-ok"/></svg>Compte rendu régulier</li></ul></article>
+  </div>
+  <p class="sub" style="margin:14px 0 0;font-size:14px">Prix et surfaces d’exemple, à remplacer par les vôtres.</p>
+  <div class="two" style="margin-top:56px">
+    <div><h3 style="font-size:28px;margin-bottom:16px">Les installations</h3>
+      <div class="eq"><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-ring"/></svg>Carrière de sable</div><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-roof"/></svg>Manège couvert</div><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-loop"/></svg>Rond de longe</div><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-saddle"/></svg>Sellerie fermée</div><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-drop"/></svg>Aire de douche</div><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-walk"/></svg>Chemins de balade</div></div></div>
+    <div><h3 style="font-size:28px;margin-bottom:16px">Une journée type</h3>
+      <ol class="day"><li><b>7 h 30</b>Eau fraîche et foin, contrôle de chacun.</li><li><b>9 h</b>Sortie au pré ou au paddock.</li><li><b>12 h</b>Deuxième passage et ration de midi.</li><li><b>14 h</b>Travail, balade ou soins selon la formule.</li><li><b>17 h 30</b>Rentrée, paillage, foin du soir.</li><li><b>19 h</b>Dernier tour avant la nuit.</li></ol></div>
+  </div>
+</div></section>
+
+<section id="reserver" class="band"><div class="wrap">
+  <span class="hand">Vérifiez nos places</span><h2 class="t">Dates et estimation</h2>
+  <p class="sub">Cliquez sur votre jour d’arrivée puis sur votre jour de départ. Disponibilités et prix sont des exemples : sur votre site, ils sont à jour.</p>
+  <div class="book">
+    <div class="panel cal" id="cal"><h3><span id="cmonth"></span><span class="nv"><button type="button" id="cprev" aria-label="Mois précédent">‹</button><button type="button" id="cnext" aria-label="Mois suivant">›</button></span></h3>
+      <div class="g" id="cgrid" role="group" aria-label="Calendrier"></div>
+      <p class="leg"><span><i style="background:#e8f3df"></i>Libre</span><span><i style="background:#f3dcd7"></i>Complet</span><span><i style="background:var(--hay)"></i>Votre séjour</span></p></div>
+    <form class="panel" id="est" novalidate>
+      <div class="fld"><label for="svc">Service</label><select id="svc"></select></div>
+      <div class="r2"><div class="fld"><label for="from">Arrivée</label><input type="date" id="from"></div><div class="fld"><label for="to">Départ</label><input type="date" id="to"></div></div>
+      <div class="fld"><label for="nb">Nombre d’animaux</label><select id="nb"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
+      <div class="chk"><input type="checkbox" id="meds"><label for="meds">Médicaments ou soins à donner (+ 3 € / jour)</label></div>
+      <div class="chk"><input type="checkbox" id="vet"><label for="vet">Accompagnement chez le vétérinaire (+ 25 €)</label></div>
+      <div class="tot" id="tot" aria-live="polite"></div>
+      <a class="btn" href="#contact" id="go" style="text-align:center;display:block">Demander ces dates</a>
+    </form>
+  </div>
+</div></section>
+
+<section id="faq"><div class="wrap two">
+  <div><span class="hand">Vos questions</span><h2 class="t">Avant de nous confier votre animal</h2><p class="sub" style="margin:0">Une autre question ? Écrivez-nous, la réponse arrive vite.</p></div>
+  <div>
+    <details open><summary>Comment se passe la première rencontre ?</summary><p>Nous nous voyons chez vous (ou à la ferme pour un cheval), sans engagement : je fais connaissance avec votre animal, je note ses habitudes et nous fixons ensemble ce qui est important pour lui.</p></details>
+    <details><summary>Quels documents faut-il fournir ?</summary><p>Le carnet de santé ou le document d’identification, avec les vaccinations à jour, et les coordonnées de votre vétérinaire. La liste exacte vous est précisée à la réservation.</p></details>
+    <details><summary>Et en cas de problème de santé ?</summary><p>Je vous préviens tout de suite et j’emmène l’animal chez le vétérinaire que vous m’avez indiqué. Vous décidez des soins avec lui.</p></details>
+    <details><summary>Puis-je venir voir mon cheval ?</summary><p>Oui, la pension est ouverte aux propriétaires tous les jours aux heures indiquées à l’inscription.</p></details>
+    <details><summary>Comment réserver ?</summary><p>Choisissez vos dates ci-dessus, puis envoyez la demande : je confirme la disponibilité et les conditions avant tout règlement.</p></details>
+  </div>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap"><div class="contact" id="contact">
+  <div><h2>Parlons de votre compagnon.</h2><p>Dites-moi qui il est, quand vous partez et ce qui compte pour lui. Je vous réponds sous 24 heures.</p><p class="hand" style="color:var(--hay);font-size:1.7rem;margin:18px 0 0">À très vite au Petit Pré !</p></div>
+  <form><p class="recap" id="recap">Votre demande apparaîtra ici après le choix des dates.</p><input placeholder="Votre nom" aria-label="Nom" required><input placeholder="Téléphone ou e-mail" aria-label="Contact" required><textarea rows="3" placeholder="Nom, âge et caractère de votre animal…" aria-label="Message"></textarea><button class="btn" type="submit">Envoyer la demande</button></form>
+</div></div></section>
+</main>
+<footer><div class="wrap"><span>© <span data-year>2026</span> La Ferme du Petit Pré · entreprise fictive</span><span>Exemple réalisé par <a href="../../">QuenTools</a></span></div></footer>
+
+<script src="../ex.js"></script>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var SV = [
+    ['visit', 'Visite à domicile (30 min)', 15, 'jour', 'visite'],
+    ['walk', 'Promenade d’une heure', 14, 'jour', 'promenade'],
+    ['dog', 'Chien chez moi, en famille', 28, 'nuit', 'nuit'],
+    ['home', 'Nuit à votre domicile', 42, 'nuit', 'nuit'],
+    ['field', 'Cheval au pré', 12, 'jour', 'jour'],
+    ['box', 'Cheval en box et paddock', 24, 'jour', 'jour']
+  ];
+  $('#svc').innerHTML = SV.map(function (s, i) { return '<option value="' + i + '">' + s[1] + '</option>'; }).join('');
+  var eur = function (n) { return n.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: n % 1 ? 2 : 0 }); };
+  function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function pd(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  var now = new Date(); now.setHours(0, 0, 0, 0);
+  var start = new Date(now); start.setDate(start.getDate() + 7); var end = new Date(start); end.setDate(end.getDate() + 3);
+  $('#from').min = $('#to').min = ymd(now); $('#from').value = ymd(start); $('#to').value = ymd(end);
+
+  /* Calendrier : « complet » = jours d'exemple générés par une règle simple, pas de vraies réservations. */
+  var view = new Date(now.getFullYear(), now.getMonth(), 1), WD = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  function full(d) { return (d.getDate() * 7 + d.getMonth() * 3) % 11 === 0 || (d.getDate() % 13 === 4); }
+  function cal() {
+    var a = $('#from').value, b = $('#to').value, y = view.getFullYear(), m = view.getMonth();
+    $('#cmonth').textContent = view.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    $('#cprev').disabled = y === now.getFullYear() && m === now.getMonth();
+    var first = (new Date(y, m, 1).getDay() + 6) % 7, n = new Date(y, m + 1, 0).getDate(), h = WD.map(function (w) { return '<span class="w" aria-hidden="true">' + w + '</span>'; }).join('');
+    for (var i = 0; i < first; i++) h += '<button class="blank" tabindex="-1" aria-hidden="true" disabled></button>';
+    for (var d = 1; d <= n; d++) {
+      var dt = new Date(y, m, d), k = ymd(dt), past = dt < now, f = !past && full(dt), cls = past ? 'past' : f ? 'full' : '';
+      if (a && b && k > a && k < b) cls = 'in'; if (k === a || k === b) cls = 'edge';
+      h += '<button type="button" class="' + cls + '" data-d="' + k + '"' + (past || f ? ' disabled' : '') + ' aria-label="' + dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) + (f ? ', complet' : '') + '">' + d + '</button>';
+    }
+    $('#cgrid').innerHTML = h;
+  }
+  var pick = 0;
+  $('#cgrid').addEventListener('click', function (e) {
+    var k = e.target.closest('[data-d]'); if (!k) return; var v = k.getAttribute('data-d');
+    if (!pick || v <= $('#from').value) { $('#from').value = v; $('#to').value = v; pick = 1; } else { $('#to').value = v; pick = 0; }
+    calc(); cal();
+  });
+  $('#cprev').addEventListener('click', function () { view.setMonth(view.getMonth() - 1); cal(); });
+  $('#cnext').addEventListener('click', function () { view.setMonth(view.getMonth() + 1); cal(); });
+
+  function calc() {
+    var s = SV[+$('#svc').value], a = $('#from').value, b = $('#to').value, nb = +$('#nb').value, t = $('#tot');
+    if (!a || !b || b < a) { t.innerHTML = '<p style="margin:0">Choisissez des dates d’arrivée et de départ cohérentes.</p>'; $('#recap').textContent = 'Votre demande apparaîtra ici après le choix des dates.'; return; }
+    var days = Math.round((pd(b) - pd(a)) / 86400000), cnt = s[3] === 'nuit' ? Math.max(1, days) : days + 1, unit = cnt > 1 ? (s[4] === 'nuit' ? 'nuits' : s[4] + 's') : s[4];
+    var base = s[2] * cnt, rows = [[cnt + ' ' + unit + ' × ' + eur(s[2]), base]], tot = base;
+    if (nb > 1) { var extra = Math.round(base * 0.7 * (nb - 1)); rows.push([(nb - 1) + (nb > 2 ? ' animaux' : ' animal') + ' en plus (−30 %)', extra]); tot += extra; }
+    if ($('#meds').checked) { var md = 3 * (days + 1); rows.push(['Soins : ' + (days + 1) + ' j × ' + eur(3), md]); tot += md; }
+    if ($('#vet').checked) { rows.push(['Accompagnement chez le vétérinaire', 25]); tot += 25; }
+    t.innerHTML = rows.map(function (r) { return '<div><span>' + r[0] + '</span><span>' + eur(r[1]) + '</span></div>'; }).join('') + '<div class="T"><span>Estimation</span><span>' + eur(tot) + '</span></div><p>Estimation indicative avec des prix d’exemple, sans engagement. Le tarif définitif est confirmé à la réservation.</p>';
+    var fd = function (s2) { return pd(s2).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }); };
+    $('#recap').textContent = s[1] + ' · du ' + fd(a) + ' au ' + fd(b) + ' · ' + nb + (nb > 1 ? ' animaux' : ' animal') + ' · estimation ' + eur(tot);
+  }
+  ['#svc', '#nb', '#meds', '#vet'].forEach(function (s) { $(s).addEventListener('change', calc); });
+  ['#from', '#to'].forEach(function (s) { $(s).addEventListener('change', function () { if ($('#to').value < $('#from').value) $('#to').value = $('#from').value; var d = pd($('#from').value); if (!isNaN(d)) { view = new Date(d.getFullYear(), d.getMonth(), 1); } calc(); cal(); }); });
+  $('#est').addEventListener('submit', function (e) { e.preventDefault(); });
+  calc(); cal();
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('on'); io.unobserve(en.target); } }); }, { threshold: .08 });
+    document.querySelectorAll('.card,.news,.panel').forEach(function (n) { n.classList.add('rv'); io.observe(n); });
+  }
+})();
+</script>
+</body>
+</html>

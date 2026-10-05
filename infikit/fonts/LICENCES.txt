@@ -1,0 +1,2 @@
+Atkinson Hyperlegible (atkinson-*.woff2) — licence SIL OFL 1.1, © Braille Institute of America, Inc., https://github.com/googlefonts/atkinson-hyperlegible
+Polices hébergées ici pour que l'adresse IP des utilisateurs ne soit pas transmise à un service externe.

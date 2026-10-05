@@ -2,18 +2,36 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Administration · QuenTools</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/qt.css">
+<link rel="stylesheet" href="../assets/qt.css?v=20261001h">
 <script src="../assets/qt-config.js"></script>
+<script src="../assets/qt-devis.js"></script>
+<script src="../assets/qt-templates.js?v=3"></script>
 <style>
-  .adm-head{display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;margin-bottom:var(--s-5)}
-  .tabs{display:flex;gap:6px;overflow-x:auto;padding:4px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line);margin-bottom:var(--s-6);scrollbar-width:none}
-  .tabs button{flex:0 0 auto;font:600 var(--t-sm)/1 var(--f-text);padding:11px 16px;border-radius:999px;border:0;background:transparent;color:var(--muted);cursor:pointer}
-  .tabs button[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:var(--sh-1)}
-  .tabs .count{display:inline-block;min-width:20px;padding:2px 6px;margin-left:6px;border-radius:999px;background:var(--accent);color:#fff;font-size:11px}
+  .adm{display:grid;grid-template-columns:232px minmax(0,1fr);gap:var(--s-6);align-items:start}
+  .side{position:sticky;top:88px;display:grid;gap:var(--s-5)}
+  .side-g{margin:0 0 6px 12px;font:700 11px/1 var(--f-text);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .side nav{display:grid;gap:2px}
+  .side button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;border:0;border-radius:12px;background:transparent;color:var(--ink-2);font:600 var(--t-sm)/1.2 var(--f-text);cursor:pointer}
+  .side button:hover{background:var(--bg-2)}
+  .side button[aria-current=page]{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line-2),var(--sh-1)}
+  .side button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .side svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .side .count{margin-left:auto;min-width:20px;padding:2px 6px;border-radius:999px;background:var(--accent);color:#fff;font-size:11px;text-align:center}
+  .adm-top{display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:flex-start;justify-content:space-between;margin-bottom:var(--s-5)}
+  .adm-top h1{margin:0;font:700 var(--t-xl)/1.15 var(--f-display)}.adm-top p{margin:4px 0 0;font-size:var(--t-sm)}
+  .adm-who{display:flex;gap:8px;align-items:center;font-size:var(--t-xs);color:var(--muted)}
+  @media (max-width:900px){
+    .adm{grid-template-columns:minmax(0,1fr);gap:var(--s-4)}
+    .side{position:static;display:flex;gap:6px;overflow-x:auto;padding:4px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line);scrollbar-width:none}
+    .side-grp,.side nav{display:contents}.side-g{display:none}
+    .side button{width:auto;flex:0 0 auto;white-space:nowrap;padding:10px 14px;border-radius:999px}
+    .side svg{display:none}
+  }
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s-3);margin-bottom:var(--s-5)}
   @media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
   .kpis div{padding:16px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line)}
@@ -40,7 +58,119 @@
   .links a{display:block;padding:16px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none}
   .links a:hover{border-color:var(--accent)}.links small{display:block;color:var(--muted);margin-top:4px}
   pre.rules{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;background:var(--bg-2);padding:14px;border-radius:var(--r-md);max-height:280px;overflow:auto}
+  .st-encours{background:var(--accent-soft);color:var(--ink)}.st-livre{background:var(--ok-soft);color:var(--ok)}
+  .req .row3{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+  .req .row3 input{width:100%;min-width:0}
+  .flag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font:600 var(--t-xs)/1 var(--f-text);background:var(--warn-soft);color:var(--ink)}
+  .thread{display:grid;gap:8px;padding:12px;border-radius:var(--r-md);background:var(--bg-2);border:1px solid var(--line)}
+  .msg{padding:8px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);max-width:90%;overflow-wrap:anywhere;white-space:pre-wrap;font-size:var(--t-sm)}
+  .msg small{display:block;color:var(--muted);font-size:11px;margin-bottom:2px}
+  .msg.client{justify-self:start}.msg.admin{justify-self:end;background:var(--accent-soft)}.msg.systeme{justify-self:center;background:transparent;border-style:dashed;color:var(--muted)}
   .empty{text-align:center;color:var(--muted);padding:var(--s-7) var(--s-4)}
+  /* Agenda */
+  .ag{display:grid;gap:10px;padding:var(--s-4);margin-bottom:var(--s-3)}
+  .ag-main{display:flex;gap:12px;align-items:flex-start}.ag-check{width:22px;height:22px;margin-top:3px;flex:0 0 auto;accent-color:var(--accent)}
+  .ag-when{font-size:var(--t-xs);color:var(--muted)}.ag-title{display:block;font-size:var(--t-md)}.ag-who{font-size:var(--t-sm)}.ag-note{margin:4px 0 0;white-space:pre-wrap;font-size:var(--t-sm);overflow-wrap:anywhere}
+  .ag-done{opacity:.55}.ag-done .ag-title{text-decoration:line-through}.ag-late{border-color:var(--warn)}
+  .ag-act{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .ag-act input{font:inherit;font-size:var(--t-sm);padding:8px 10px;border-radius:10px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);min-height:40px}
+  .ag-strip{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin-bottom:var(--s-4)}
+  @media (max-width:560px){.ag-strip{grid-template-columns:repeat(4,1fr)}}
+  .ag-strip button{display:grid;gap:2px;justify-items:center;padding:10px 4px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;font:inherit}
+  .ag-strip button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .ag-strip small{font-size:11px;opacity:.75}.ag-strip b{font:700 var(--t-lg)/1 var(--f-display)}.ag-strip span{font-size:11px}
+  .ag-h{margin:var(--s-5) 0 var(--s-3);font-size:var(--t-md)}
+  .ag-form{display:grid;gap:8px}
+  .ag-form select,.ag-form input,.ag-form textarea{font:inherit;font-size:var(--t-sm);padding:9px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);min-width:0;width:100%}
+  .ag-form textarea{min-height:56px;resize:vertical}
+  .ag-form .row3{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+  .ag-donebox summary{cursor:pointer;color:var(--muted);margin:var(--s-5) 0 var(--s-3)}
+  button.flag{border:0;cursor:pointer}
+  /* Devis détaillé */
+  #dv input,#dv textarea{font:inherit;font-size:var(--t-sm);padding:9px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);min-width:0;width:100%}
+  #dv textarea{min-height:44px;resize:vertical}
+  .dv-line{display:grid;grid-template-columns:1fr 70px 120px 44px;gap:8px;align-items:start;margin-bottom:8px}
+  @media (max-width:560px){.dv-line{grid-template-columns:1fr 1fr 44px}.dv-line textarea{grid-column:1/-1}}
+  .dv-x{min-height:42px;border-radius:10px;border:1px solid var(--line-2);background:transparent;color:var(--ink);cursor:pointer}
+  .dv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+  #dv label{display:grid;gap:4px;font-size:var(--t-xs);color:var(--muted)}
+  /* Demandes repliables, agenda mois, devis, chiffres */
+  .filters .n{display:inline-block;min-width:18px;margin-left:4px;padding:1px 6px;border-radius:999px;background:var(--bg-2);font-size:11px;color:var(--muted)}
+  .filters button[aria-pressed=true] .n{background:rgba(255,255,255,.2);color:inherit}
+  .req-sum{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+  .req-toggle{all:unset;box-sizing:border-box;flex:1;min-width:0;cursor:pointer;display:grid;gap:8px;padding:2px 0}
+  .req-toggle:focus-visible{outline:3px solid var(--accent);outline-offset:4px;border-radius:10px}
+  .req-toggle h3{overflow-wrap:anywhere}
+  .req-top{justify-content:flex-start}
+  .chev{display:inline-block;transition:transform .15s;color:var(--muted)}.req-toggle[aria-expanded=true] .chev{transform:rotate(90deg)}
+  .excerpt{color:var(--muted);font-size:var(--t-sm);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .req-quick{display:flex;gap:6px;flex:0 0 auto}
+  .req-body{display:grid;gap:var(--s-3);padding-top:var(--s-3);border-top:1px dashed var(--line)}
+  .up-list{display:grid;gap:8px;margin-bottom:var(--s-4)}
+  .card.up{flex-direction:row;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:var(--s-3) var(--s-4)}
+  .next{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;padding:var(--s-4);margin-bottom:var(--s-4);border-radius:var(--r-md);background:var(--accent-soft);border:1px solid var(--line)}
+  .mo-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--s-3)}
+  .mo{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:var(--s-4)}
+  .mo .dow{font-size:11px;color:var(--muted);text-align:center;padding:4px 0}
+  .mo button{aspect-ratio:1/1;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:grid;align-content:center;justify-items:center;gap:4px;font:600 var(--t-sm)/1 var(--f-text);padding:2px}
+  .mo button.out{opacity:.4}.mo button.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+  .mo button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .mo .dots{display:flex;gap:3px;min-height:7px}.mo .dots i{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .mo .dots i.k-appel{background:#2b7de9}.mo .dots i.k-projet{background:#12a37f}.mo .dots i.k-rdv{background:#e08a00}.mo .dots i.k-rappel{background:#d6455d}
+  .seg button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .mini{display:grid;gap:4px;font-size:var(--t-xs);color:var(--muted)}
+  .mini select{font:inherit;font-size:var(--t-sm);padding:10px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);min-height:44px;width:100%}
+  .dv-cat{display:flex;flex-wrap:wrap;gap:6px}
+  .dv-cat button{font:600 var(--t-xs)/1.2 var(--f-text);padding:9px 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);cursor:pointer;min-height:40px;text-align:left}
+  .dv-cat button:hover{border-color:var(--accent)}
+  .cchip{display:inline-flex;gap:2px;align-items:center}.cchip .cx{padding:9px 10px;min-width:40px}
+  .dv-l{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--bg);margin-bottom:8px}
+  .dv-l .r{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px;align-items:end}
+  .dv-l .lt{text-align:right;font-weight:700;align-self:center}
+  #dv label.chk{display:flex;gap:8px;align-items:center;justify-content:space-between;min-height:44px}
+  #dv label.chk input{width:22px;height:22px;accent-color:var(--accent)}
+  .dv-rem{display:grid;gap:8px;padding:12px;border:1px dashed var(--line-2);border-radius:var(--r-md)}
+  .dv-sum{display:grid;gap:10px;padding:14px 16px;background:var(--surface);border:2px solid var(--ink);border-radius:var(--r-md);box-shadow:var(--sh-2)}
+  .dv-wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:var(--s-5);align-items:start}
+  .dv-main{display:grid;gap:var(--s-4)}
+  .dv-card{display:grid;gap:var(--s-4);padding:clamp(18px,3vw,28px)}
+  .dv-h{margin:0;font-size:var(--t-lg)}
+  .dv-side{position:sticky;top:88px;display:grid;gap:var(--s-3)}
+  .dv-side .dv-sum .row{display:grid!important;grid-template-columns:1fr}
+  .cl{display:grid;gap:var(--s-3);margin-bottom:var(--s-4)}
+  .cl h3{margin:0;font-size:var(--t-lg)}.cl .meta{display:flex;flex-wrap:wrap;gap:6px}
+  .cl input,.cl select,.cl textarea,.cl-form input,.cl-form select{font:inherit;font-size:var(--t-sm);padding:9px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);min-width:0;width:100%}
+  .cl textarea{resize:vertical}
+  .cl-form{display:grid;gap:var(--s-3);padding:clamp(18px,3vw,28px);margin-bottom:var(--s-4)}
+  .cl-bar{height:8px;border-radius:999px;background:var(--bg-2);overflow:hidden}.cl-bar i{display:block;height:100%;background:var(--ok)}
+  .cl-retard .cl-bar i{background:var(--warn)}.cl-susp .cl-bar i{background:#c0392b}.cl-susp{border-color:#c0392b}
+  .cl-chip-paye{background:var(--ok-soft);color:var(--ok)}.cl-chip-retard{background:var(--warn-soft);color:var(--ink)}.cl-chip-attente{background:var(--accent-soft);color:var(--ink)}.cl-chip-susp{background:#fde2e0;color:#8f1d15}
+  @media (prefers-color-scheme:dark){.cl-chip-susp{background:#3a1713;color:#ffb3aa}}
+  .tpl-picks{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+  .tpl-pick{display:grid;gap:4px;text-align:left;padding:12px 14px;border-radius:var(--r-md);border:1px solid var(--line-2);background:var(--surface);color:var(--ink);cursor:pointer;font:inherit}
+  .tpl-pick small{color:var(--muted);font-size:var(--t-xs);line-height:1.35}
+  .tpl-pick:hover{border-color:var(--accent)}
+  .tpl-pick[aria-pressed=true]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--accent-soft)}
+  .tpl-opts{display:grid;gap:8px}
+  .tpl-opt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--bg)}
+  .tpl-opt .chk{justify-content:flex-start!important;gap:12px!important;min-height:0!important;color:var(--ink)!important;font-size:var(--t-sm)!important}
+  .tpl-opt .chk input{flex:none}
+  .tpl-nums{display:flex;gap:8px}.tpl-nums label{width:92px}
+  .tpl-tot{font-weight:700}
+  @media (max-width:1180px){
+    .dv-wrap{grid-template-columns:minmax(0,1fr)}
+    .dv-side{position:sticky;top:auto;bottom:8px;z-index:5}
+    .dv-side .dv-sum #dv-sum .ln:not(.big){display:none}
+    .dv-side .dv-warn,.dv-side>p{display:none}
+  }
+  @media (max-width:560px){.tpl-opt{grid-template-columns:1fr}.tpl-nums label{flex:1}}
+  .dv-sum .ln{display:flex;justify-content:space-between;gap:12px;font-size:var(--t-sm)}
+  .dv-sum .big{font:800 var(--t-lg)/1.2 var(--f-display)}
+  .dv-save{font-size:var(--t-xs);color:var(--muted)}
+  .dv-warn{padding:10px 12px;border-radius:12px;background:var(--warn-soft);font-size:var(--t-sm);margin-top:6px}
+  .fun{display:grid;grid-template-columns:120px 1fr 36px;gap:10px;align-items:center;font-size:var(--t-sm);margin:8px 0}
+  .fun div{height:10px;border-radius:999px;background:var(--bg-2);overflow:hidden}.fun i{display:block;height:100%;background:var(--accent);border-radius:999px}
+  .fun b{text-align:right}
 </style>
 </head>
 <body>
@@ -60,16 +190,17 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const eur = n => (Math.round(n) || 0).toLocaleString('fr-FR') + ' €';
 const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const DEMO = local && new URLSearchParams(location.search).has('demo');
-const official = location.protocol === 'https:' && /^ikeupods-del\.github\.io$/.test(location.hostname);
+const official = location.protocol === 'https:' && /^(www\.)?quentools\.fr$|^ikeupods-del\.github\.io$/.test(location.hostname);
 
-const STATUS = [['nouveau', 'Nouvelle'], ['discussion', 'En discussion'], ['envoye', 'Devis envoyé'], ['gagne', 'Gagnée'], ['perdu', 'Perdue']];
+const STATUS = [['nouveau', 'Nouvelle'], ['discussion', 'En discussion'], ['envoye', 'Devis envoyé'], ['gagne', 'Acceptée'], ['encours', 'En cours'], ['livre', 'Livrée'], ['perdu', 'Perdue']];
+const WON = ['gagne', 'encours', 'livre'];
 const stLabel = k => (STATUS.find(s => s[0] === k) || STATUS[0])[1];
 
 /* Grille QuenTools (design/TARIFS.md, « Prix QuenTools conseillé ») */
 const GRID = {
-  'Site vitrine': [200, 400], 'Boutique Shopify': [150, 260], 'Outil sur mesure': [1000, 3000], 'Application complète': [3000, 6000]
+  'Site vitrine': [200, 400], 'Boutique Shopify': [150, 260], 'Outil sur mesure': [1000, 3000], 'Audit express': [100, 100]
 };
-const EXTRA_PAY = [500, 1500], MAINT = [15, 50];
+const EXTRA_PAY = [500, 1500], MAINT = 69.99;
 const LEVEL = { simple: [0, .4], standard: [.3, .7], avance: [.6, 1] };
 
 /* ---------- Données : Firestore (ou démonstration locale) ---------- */
@@ -84,26 +215,490 @@ async function fb() {
 }
 const demo = {
   items: [
+    { id: 'd0', type: 'Template', nom: 'Salon Mistral', email: 'mistral@example.com', tel: '06 22 33 44 55', delai: 'Dans le mois', budget: 'Moins de 1 000 €', besoin: 'Template souhaité : Barbier de luxe\nOptions souhaitées : Paiement en ligne réel (PayPal ou Stripe); E-mails de confirmation et de rappel réellement envoyés\n\nJe tiens un salon de coiffure homme à Aix et je voudrais prendre les réservations en ligne.', status: 'nouveau', at: new Date(Date.now() - 3600e3) },
     { id: 'd1', type: 'Site vitrine', nom: 'Julie Martin', email: 'julie@example.com', tel: '06 00 00 00 00', delai: 'Dans le mois', budget: '1 000 à 3 000 €', besoin: 'Je suis fleuriste à Nîmes et je voudrais un site simple avec mes horaires, des photos et un bouton pour commander.', status: 'nouveau', at: new Date(Date.now() - 3600e3).toISOString() },
     { id: 'd2', type: 'Outil sur mesure', nom: 'Karim B.', email: 'karim@example.com', tel: '', delai: 'Dès que possible', budget: 'Je ne sais pas encore', besoin: 'Plombier, je fais mes devis sur Excel. Je veux un outil sur téléphone pour faire un devis devant le client.', status: 'envoye', montant: 1800, note: 'Rappeler jeudi', at: new Date(Date.now() - 5 * 864e5).toISOString() },
-    { id: 'd3', type: 'Application complète', nom: 'Asso Les Pattes', email: 'contact@example.org', tel: '', delai: 'Dans les 3 mois', budget: '3 000 à 6 000 €', besoin: 'Application pour suivre les adoptions et les familles d’accueil.', status: 'gagne', montant: 4200, at: new Date(Date.now() - 20 * 864e5).toISOString() }
+    { id: 'd3', type: 'Outil sur mesure', nom: 'Asso Les Pattes', email: 'contact@example.org', tel: '', delai: 'Dans les 3 mois', budget: '3 000 à 6 000 €', besoin: 'Outil pour suivre les adoptions et les familles d’accueil.', status: 'gagne', montant: 4200, at: new Date(Date.now() - 20 * 864e5).toISOString() }
   ], site: { announceOn: false, announce: '', announceUrl: '', available: true, availText: '' }
 };
+const demoExtra = () => [
+  { id: 'd4', type: 'Site vitrine', nom: 'Léa Coiffure', email: 'lea@example.com', tel: '06 11 22 33 44', delai: 'Dans le mois', budget: '1 000 à 3 000 €', besoin: 'Site pour mon salon de coiffure à domicile, avec prise de rendez-vous par téléphone.', status: 'gagne', montant: 450, at: new Date(Date.now() - 40 * 864e5) },
+  { id: 'd5', type: 'Outil sur mesure', nom: 'Plomberie Dupont', email: 'dupont@example.com', tel: '', delai: 'Dès que possible', budget: '3 000 à 6 000 €', besoin: 'Outil de devis et de suivi de chantier sur téléphone pour mes deux salariés.', status: 'livre', montant: 1800, at: new Date(Date.now() - 75 * 864e5) },
+  { id: 'd6', type: 'Boutique Shopify', nom: 'Atelier Bois', email: 'atelier@example.com', tel: '', delai: 'Dans les 3 mois', budget: 'Moins de 1 000 €', besoin: 'Petite boutique pour vendre mes planches à découper faites main.', status: 'envoye', montant: 320, at: new Date(Date.now() - 9 * 864e5) }];
 const ms = v => !v ? 0 : typeof v === 'string' ? Date.parse(v) : v.toMillis ? v.toMillis() : +v;
+let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false, lq = '';
+
+/* ---------- Agenda : appels, travail sur les projets, rendez-vous, rappels (collection privée qt_agenda) ---------- */
+const KINDS = { appel: ['📞', 'Appel'], projet: ['🛠️', 'Travail projet'], rdv: ['🤝', 'Rendez-vous'], rappel: ['🔔', 'Rappel'] };
+let agenda = [], agendaErr = false, planFor = null, agDay = '', agView = 'liste', agMonth = '', agEdit = null, expd = new Set(), estOpen = false;
+const notified = new Set();
+const isoDay = t => { const d = new Date(t); return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const today = () => isoDay(Date.now());
+const addDays = (iso, n) => { const [y, m, d] = iso.split('-').map(Number); return isoDay(new Date(y, m - 1, d + n)); };
+const addMonths = (iso, n) => { const [y, m, d] = iso.split('-').map(Number), t = new Date(y, m - 1 + n, 1), last = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate(); return isoDay(new Date(t.getFullYear(), t.getMonth(), Math.min(d, last))); };
+const dayName = iso => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }); };
+const monthName = ym => { const [y, m] = ym.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }); };
+const nextDow = wd => { let d = addDays(today(), 1); for (let i = 0; i < 7 && new Date(d + 'T12:00:00').getDay() !== wd; i++) d = addDays(d, 1); return d; };
+const first = n => String(n || '').trim().split(' ')[0];
+const readForm = el => Object.fromEntries([...el.querySelectorAll('[name]')].map(i => [i.name, i.value.trim()]));
+const mins = h => { const [a, b] = String(h).split(':').map(Number); return a * 60 + (b || 0); };
+const atMs = a => { const [y, m, d] = a.date.split('-').map(Number), [h, mi] = a.heure ? a.heure.split(':').map(Number) : [9, 0]; return new Date(y, m - 1, d, h, mi).getTime(); };
+async function agCreate(ev) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ev.date || '')) throw new Error('date');
+  const base = { kind: KINDS[ev.kind] ? ev.kind : 'rappel', titre: String(ev.titre || '').slice(0, 200), heure: /^\d{2}:\d{2}$/.test(ev.heure || '') ? ev.heure : '',
+    duree: Math.min(480, Math.max(5, +ev.duree || 30)), devisId: String(ev.devisId || ''), note: String(ev.note || '').slice(0, 1000), done: false };
+  const extra = ev.rep === 'w4' ? 3 : ev.rep === 'm3' ? 2 : 0, dates = [ev.date];
+  for (let i = 1; i <= extra; i++) dates.push(ev.rep === 'm3' ? addMonths(ev.date, i) : addDays(ev.date, 7 * i));
+  for (const date of dates) {
+    const rec = { ...base, date };
+    if (DEMO) { agenda.push({ ...rec, id: 'a' + Date.now() + date }); continue; }
+    const { Fs, db } = await fb();
+    const r = await Fs.addDoc(Fs.collection(db, 'qt_agenda'), { ...rec, created: Fs.serverTimestamp() });
+    agenda.push({ ...rec, id: r.id });
+  }
+  return dates.length;
+}
+async function agPatch(id, data) {
+  const a = agenda.find(x => x.id === id); if (!a) return; Object.assign(a, data);
+  if (DEMO) return;
+  const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_agenda', id), { ...data, updated: Fs.serverTimestamp() }, { merge: true });
+}
+async function agDel(id) { agenda = agenda.filter(a => a.id !== id); if (DEMO) return; const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_agenda', id)); }
+/* Les échéances privées des demandes apparaissent aussi dans l'agenda (lecture seule). */
+const agEntries = () => [...agenda, ...items.filter(x => x.echeance && !['livre', 'perdu'].includes(x.status || 'nouveau'))
+  .map(x => ({ id: 'ech-' + x.id, virtual: true, kind: 'rappel', titre: 'Échéance : ' + x.nom, date: x.echeance, heure: '', devisId: x.id, done: false }))]
+  .filter(a => /^\d{4}-\d{2}-\d{2}$/.test(a.date || '')).sort((a, b) => (a.date + (a.heure || '99')).localeCompare(b.date + (b.heure || '99')));
+const agLate = () => agEntries().filter(a => !a.done && a.date < today());
+const agToday = () => agEntries().filter(a => !a.done && a.date === today());
+const agClash = a => { if (!a.heure || a.done) return null; const s = mins(a.heure), e = s + (+a.duree || 30);
+  return agEntries().find(b => b.id !== a.id && !b.done && b.date === a.date && b.heure && mins(b.heure) < e && s < mins(b.heure) + (+b.duree || 30)); };
+const nextUp = () => { const n = Date.now() - 10 * 60e3; return agEntries().filter(a => !a.done && !a.virtual && atMs(a) >= n && (a.heure || a.date > today())).sort((a, b) => atMs(a) - atMs(b))[0]; };
+const inTxt = a => { const m = Math.round((atMs(a) - Date.now()) / 6e4);
+  if (a.heure && m <= 60 && m >= -10) return m <= 1 ? 'maintenant' : 'dans ' + m + ' min';
+  if (a.date === today()) return a.heure ? 'à ' + a.heure : 'aujourd’hui';
+  if (a.date === addDays(today(), 1)) return 'demain' + (a.heure ? ' à ' + a.heure : '');
+  return dayName(a.date) + (a.heure ? ' à ' + a.heure : ''); };
+const stamp = (date, heure) => date.replace(/-/g, '') + (heure ? 'T' + heure.replace(':', '') + '00' : '');
+function agEnd(a) {
+  if (!a.heure) return addDays(a.date, 1).replace(/-/g, '');
+  const [h, m] = a.heure.split(':').map(Number), [y, mo, d] = a.date.split('-').map(Number), e = new Date(y, mo - 1, d, h, m + (+a.duree || 30));
+  return isoDay(e).replace(/-/g, '') + 'T' + String(e.getHours()).padStart(2, '0') + String(e.getMinutes()).padStart(2, '0') + '00';
+}
+const agLabel = a => (KINDS[a.kind] || KINDS.rappel)[1] + ' · ' + a.titre;
+const agDetails = a => { const x = a.devisId && items.find(i => i.id === a.devisId); return [a.note, x && `${x.nom} · ${x.email}${x.tel ? ' · ' + x.tel : ''}`].filter(Boolean).join('\n'); };
+const gcal = a => 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(agLabel(a)) + '&dates=' + stamp(a.date, a.heure) + '/' + agEnd(a) + '&ctz=Europe/Paris&details=' + encodeURIComponent(agDetails(a));
+function ics(list) {
+  const e = s => String(s || '').replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
+  const now = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+  const ev = list.map(a => ['BEGIN:VEVENT', 'UID:' + a.id + '@quentools.fr', 'DTSTAMP:' + now,
+    a.heure ? 'DTSTART:' + stamp(a.date, a.heure) : 'DTSTART;VALUE=DATE:' + stamp(a.date), a.heure ? 'DTEND:' + agEnd(a) : 'DTEND;VALUE=DATE:' + agEnd(a),
+    'SUMMARY:' + e(agLabel(a)), 'DESCRIPTION:' + e(agDetails(a)),
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + e(a.titre), 'TRIGGER:' + (a.heure ? '-PT15M' : 'PT9H'), 'END:VALARM', 'END:VEVENT'].join('\r\n'));
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//QuenTools//Agenda//FR', ...ev, 'END:VCALENDAR', ''].join('\r\n');
+}
+const dl = (name, text, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); };
+const kindOpts = v => Object.entries(KINDS).map(([k, [i, l]]) => `<option value="${k}"${k === v ? ' selected' : ''}>${i} ${l}</option>`).join('');
+const durOpts = v => [...new Set([15, 30, 45, 60, 90, 120, 180, 240, +v || 30])].sort((a, b) => a - b).map(m => `<option value="${m}"${m === (+v || 30) ? ' selected' : ''}>${m < 60 ? m + ' min' : (m % 60 ? Math.floor(m / 60) + ' h ' + (m % 60) : m / 60 + ' h')}</option>`).join('');
+const agFormHtml = (p, id) => `<div class="ag-form" id="${id}">
+  <div class="seg" role="group" aria-label="Date rapide">${[['today', 'Aujourd’hui'], ['tom', 'Demain'], ['mon', 'Lundi'], ['week', 'Dans 1 semaine']].map(([k, l]) => `<button type="button" class="btn btn-sm btn-ghost" data-do="ag-quick" data-k="${k}">${l}</button>`).join('')}</div>
+  <div class="row3"><select name="kind" aria-label="Type">${kindOpts(p.kind || 'appel')}</select>
+    <input name="date" type="date" value="${esc(p.date || today())}" aria-label="Date"><input name="heure" type="time" value="${esc(p.heure || '')}" aria-label="Heure (facultatif)">
+    <select name="duree" aria-label="Durée">${durOpts(p.duree || 30)}</select></div>
+  <input name="titre" maxlength="200" placeholder="Quoi ? Ex. Appeler pour cadrer le projet" value="${esc(p.titre || '')}" aria-label="Titre">
+  ${p.devisId !== undefined ? `<input type="hidden" name="devisId" value="${esc(p.devisId)}">`
+    : `<select name="devisId" aria-label="Client lié"><option value="">Aucun client lié</option>${items.filter(x => (x.status || 'nouveau') !== 'perdu').map(x => `<option value="${esc(x.id)}">${esc(x.nom)} · ${esc(x.type)}</option>`).join('')}</select>`}
+  <textarea name="note" maxlength="1000" placeholder="Note (facultatif) : ce qu’il faut préparer, les questions à poser…" aria-label="Note"></textarea>
+  <select name="rep" aria-label="Répétition"><option value="">Une seule fois</option><option value="w4">Chaque semaine (4 fois)</option><option value="m3">Chaque mois (3 fois)</option></select></div>`;
+function agRow(a) {
+  const k = KINDS[a.kind] || KINDS.rappel, x = a.devisId && items.find(i => i.id === a.devisId), late = !a.done && a.date < today(), clash = agClash(a);
+  if (agEdit === a.id && !a.virtual) return `<article class="card ag" data-ag="${esc(a.id)}"><div class="ag-form" id="ag-edit">
+      <div class="row3"><select name="kind" aria-label="Type">${kindOpts(a.kind)}</select><input name="date" type="date" value="${esc(a.date)}" aria-label="Date"><input name="heure" type="time" value="${esc(a.heure || '')}" aria-label="Heure"><select name="duree" aria-label="Durée">${durOpts(a.duree)}</select></div>
+      <input name="titre" maxlength="200" value="${esc(a.titre)}" aria-label="Titre"><textarea name="note" maxlength="1000" aria-label="Note">${esc(a.note || '')}</textarea></div>
+    <div class="ag-act"><button class="btn btn-sm btn-accent" data-agdo="edit-save">Enregistrer</button><button class="btn btn-sm btn-ghost" data-agdo="edit-cancel">Annuler</button></div></article>`;
+  return `<article class="card ag${a.done ? ' ag-done' : ''}${late ? ' ag-late' : ''}" data-ag="${esc(a.id)}">
+    <div class="ag-main">${a.virtual ? '<span class="ag-check" aria-hidden="true">📌</span>' : `<input type="checkbox" class="ag-check" data-agdo="done"${a.done ? ' checked' : ''} aria-label="Marquer comme fait">`}
+      <div><div class="ag-when">${k[0]} ${esc(k[1])} · ${esc(dayName(a.date))}${a.heure ? ' à ' + esc(a.heure) + (a.duree ? ' · ' + (a.duree < 60 ? a.duree + ' min' : Math.round(a.duree / 6) / 10 + ' h') : '') : ''}${late ? ' · <b>en retard</b>' : ''}</div>
+        <b class="ag-title">${esc(a.titre || k[1])}</b>${x ? `<div class="muted ag-who">${esc(x.nom)}${x.tel ? ' · ' + esc(x.tel) : ''}</div>` : ''}${a.note ? `<p class="ag-note">${esc(a.note)}</p>` : ''}
+        ${clash ? `<div class="flag" style="margin-top:6px">⚠️ Chevauche « ${esc(clash.titre)} » (${esc(clash.heure)})</div>` : ''}</div></div>
+    <div class="ag-act">${x && x.tel ? `<a class="btn btn-sm btn-accent" href="tel:${esc(String(x.tel).replace(/[^\d+]/g, ''))}">Appeler</a>` : ''}
+      ${x ? '<button class="btn btn-sm btn-ghost" data-agdo="open">Voir la demande</button>' : ''}
+      ${a.virtual || a.done ? '' : `<button class="btn btn-sm btn-ghost" data-agdo="later">+1 jour</button><button class="btn btn-sm btn-ghost" data-agdo="edit">Modifier</button><input type="date" data-agf="date" value="${esc(a.date)}" aria-label="Changer la date"><input type="time" data-agf="heure" value="${esc(a.heure || '')}" aria-label="Changer l’heure">`}
+      <a class="btn btn-sm btn-ghost" href="${esc(gcal(a))}" target="_blank" rel="noopener">Google Agenda</a><button class="btn btn-sm btn-ghost" data-agdo="ics">Ajouter au téléphone</button>
+      ${a.virtual ? '' : '<button class="btn btn-sm btn-ghost" data-agdo="del" style="margin-left:auto">Supprimer</button>'}</div></article>`;
+}
+function monthGrid(all, t0) {
+  const ym = agMonth || t0.slice(0, 7), [y, m] = ym.split('-').map(Number), offset = (new Date(y, m - 1, 1).getDay() + 6) % 7, start = isoDay(new Date(y, m - 1, 1 - offset)), by = {};
+  all.filter(a => !a.done).forEach(a => { (by[a.date] = by[a.date] || []).push(a); });
+  const cells = Array.from({ length: 42 }, (_, i) => addDays(start, i)).map(d => { const ev = by[d] || [];
+    return `<button data-agday="${d}" class="${d.slice(0, 7) !== ym ? 'out ' : ''}${d === t0 ? 'today' : ''}" aria-pressed="${agDay === d}" aria-label="${esc(dayName(d))} : ${ev.length} à faire"><span>${+d.slice(8)}</span><span class="dots">${ev.slice(0, 4).map(a => `<i class="k-${esc(a.kind)}"></i>`).join('')}</span></button>`; }).join('');
+  return `<div class="mo-h"><button class="btn btn-sm btn-ghost" data-do="ag-mo" data-n="-1" aria-label="Mois précédent">‹</button><b style="text-transform:capitalize">${esc(monthName(ym))}</b><button class="btn btn-sm btn-ghost" data-do="ag-mo" data-n="1" aria-label="Mois suivant">›</button></div>
+    <div class="mo">${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(l => `<span class="dow" aria-hidden="true">${l}</span>`).join('')}${cells}</div>`;
+}
+function viewAgenda() {
+  if (agendaErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Une mise à jour des règles</h2><p>L’agenda s’enregistre dans une collection privée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase, puis revenez ici.</p>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-tab="regles">Voir les règles</button><button class="btn btn-ghost" data-do="reload">J’ai publié les règles</button></div></section>`;
+  const all = agEntries(), t0 = today(), open = all.filter(a => !a.done), nx = nextUp();
+  const week = open.filter(a => a.date >= t0 && a.date <= addDays(t0, 6)), projMin = week.filter(a => a.kind === 'projet').reduce((s, a) => s + (+a.duree || 0), 0), calls = week.filter(a => a.kind === 'appel').length;
+  const head = `<div class="next"><div>${nx ? `<span class="muted" style="font-size:var(--t-xs)">Prochain</span><div><b>${(KINDS[nx.kind] || KINDS.rappel)[0]} ${esc(nx.titre)}</b> · ${esc(inTxt(nx))}</div>` : '<b>Rien de prévu prochainement</b>'}</div>
+    <div class="muted" style="font-size:var(--t-sm)">Cette semaine : ${calls} appel${calls > 1 ? 's' : ''} · ${projMin ? Math.round(projMin / 6) / 10 + ' h de travail projet' : 'pas de travail projet planifié'}</div></div>`;
+  const notif = 'Notification' in window ? (Notification.permission === 'granted' ? '<span class="chip">🔔 Alertes actives tant que cette page est ouverte</span>' : Notification.permission === 'denied' ? '<span class="chip">🔕 Alertes bloquées dans le navigateur</span>' : '<button class="btn btn-sm btn-ghost" data-do="notif">🔔 Activer les alertes</button>') : '';
+  const bar = `<div class="filters"><button data-do="ag-view" data-v="liste" aria-pressed="${agView === 'liste'}">Liste</button><button data-do="ag-view" data-v="mois" aria-pressed="${agView === 'mois'}">Mois</button><span style="flex:1"></span>${notif}</div>`;
+  const form = `<details class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"${open.length ? '' : ' open'}><summary style="cursor:pointer;font-weight:700;padding:6px 0">+ Ajouter à l’agenda</summary><div style="margin-top:var(--s-3)">${agFormHtml({ date: agDay || t0 }, 'ag-new')}
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:var(--s-3)"><button class="btn btn-accent" data-do="ag-add">Ajouter</button><button class="btn btn-ghost" data-do="ag-ics-all">Tout exporter vers mon téléphone</button></div></div></details>`;
+  let body;
+  if (agView === 'mois') {
+    const dayList = agDay ? all.filter(a => a.date === agDay) : [];
+    body = monthGrid(all, t0) + (agDay ? `<h3 class="ag-h">${esc(dayName(agDay))} <span class="muted">(${dayList.length})</span></h3>${dayList.map(agRow).join('') || '<div class="card empty">Rien de prévu ce jour-là.</div>'}` : '<p class="muted" style="text-align:center">Touchez un jour pour voir ce qui est prévu.</p>');
+  } else {
+    const days = Array.from({ length: 7 }, (_, i) => addDays(t0, i));
+    const strip = `<div class="ag-strip">${days.map((d, i) => { const n = open.filter(a => a.date === d).length; return `<button data-agday="${d}" aria-pressed="${agDay === d}"><small>${i ? esc(dayName(d).split(' ')[0]) : 'auj.'}</small><b>${+d.slice(8)}</b><span>${n || '–'}</span></button>`; }).join('')}<button data-agday="" aria-pressed="${!agDay}"><small>tout</small><b>${open.length}</b><span>à faire</span></button></div>`;
+    const groups = agDay ? [[dayName(agDay), all.filter(a => a.date === agDay)]] : [
+      ['En retard', open.filter(a => a.date < t0)], ['Aujourd’hui', open.filter(a => a.date === t0)], ['Demain', open.filter(a => a.date === addDays(t0, 1))],
+      ['Cette semaine', open.filter(a => a.date > addDays(t0, 1) && a.date <= addDays(t0, 7))], ['Plus tard', open.filter(a => a.date > addDays(t0, 7))]];
+    const done = all.filter(a => a.done && a.date >= addDays(t0, -14));
+    const list = groups.map(([l, li]) => li.length ? `<h3 class="ag-h">${esc(l)} <span class="muted">(${li.length})</span></h3>${li.map(agRow).join('')}` : '').join('');
+    body = strip + (list || `<div class="card empty">${agDay ? 'Rien de prévu ce jour-là.' : 'Rien de prévu. Ajoutez un appel, une session de travail ou un rappel ci-dessus.'}</div>`)
+      + (!agDay && done.length ? `<details class="ag-donebox"><summary>Faits ces 14 derniers jours (${done.length})</summary>${done.map(agRow).join('')}</details>` : '');
+  }
+  return head + bar + form + body;
+}
+function notifTick() {
+  if (DEMO || !('Notification' in window) || Notification.permission !== 'granted') return;
+  const n = Date.now();
+  agEntries().forEach(a => { if (a.done || a.virtual || !a.heure) return; const dt = atMs(a) - n, k = a.id + a.date + a.heure;
+    if (dt <= 10 * 60e3 && dt > -5 * 60e3 && !notified.has(k)) { notified.add(k); try { new Notification(agLabel(a), { body: (inTxt(a) + '\n' + agDetails(a)).trim(), tag: k }); } catch (e) { /* non pris en charge */ } } });
+}
+setInterval(notifTick, 30000);
+
+/* ---------- Devis détaillé (numéroté, remises, mentions obligatoires, publié dans l'espace client) ---------- */
+const CLAUSE = 'Le site reste en ligne tant que les sommes dues sont réglées : à défaut de paiement du solde à l’échéance indiquée, l’accès au site peut être suspendu après relance, puis rétabli dès réception du règlement.';
+const SELLER_DEF = { marque: 'QuenTools', titulaire: 'Quentin Storace EI', adresse: '231 rue Saint-Honoré, 75001 Paris', siren: '912 026 713 00046', email: C.email || '',
+  conditions: 'La première version est présentée avant la suite du travail ; les modifications demandées après sa validation peuvent faire l’objet d’un devis complémentaire.\nEn cas de retard de paiement : pénalités égales à trois fois le taux d’intérêt légal et, pour les clients professionnels, indemnité forfaitaire de 40 € pour frais de recouvrement.\n' + CLAUSE };
+const seller = () => ({ ...SELLER_DEF, ...(notes._vendeur || {}) });
+/* Préréglages de prestations (prix indicatifs, dans la grille QuenTools : à adapter). [désignation, prix, mensuel] */
+const CAT_BASE = [['Site vitrine (jusqu’à 5 pages)', 300], ['Page supplémentaire', 50], ['Boutique Shopify : configuration et mise en ligne', 200], ['Outil sur mesure', 1500], ['Audit de sécurité express (1 site, rapport PDF sous 48 h)', 100],
+  ['Paiement en ligne et administration', 800], ['Rédaction des textes', 80], ['Nom de domaine (1 an)', 12], ['Prise en main (1 h en visio)', 50], ['Assistant de site (bulle de discussion)', 79.99], ['Référencement local de base', 90], ['Pack de 5 visuels pour les réseaux sociaux', 90], ['Logo simple et couleurs', 60], ['Version en anglais', 120],
+  ['Maintenance mensuelle : hébergement, sauvegardes, petites modifications', 69.99, true]];
+const catCustom = () => { try { const c = JSON.parse((notes._catalogue || {}).items || '[]'); return Array.isArray(c) ? c.filter(x => x && x[0]) : []; } catch (e) { return []; } };
+async function catSave(list) { notes._catalogue = { items: JSON.stringify(list) }; if (DEMO) return; const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_catalogue'), notes._catalogue); }
+let dv = null;
+const blankLine = () => ({ l: '', q: 1, pu: '', rem: '', m: false });
+const dvDoc = () => ({ num: dv.num || '', date: dv.date || today(), validite: +dv.validite || 30, delai: dv.delai || '', acompte: +dv.acompte || 0, notes: dv.notes || '',
+  conditions: seller().conditions || '',
+  lignes: dv.lignes.map(l => ({ l: l.l, q: l.q === '' || l.q == null ? 1 : +l.q, pu: +l.pu || 0, rem: +l.rem || 0, m: !!l.m })),
+  remise: { type: dv.remise.type === 'eur' ? 'eur' : 'pct', val: +dv.remise.val || 0, label: dv.remise.label || '' },
+  vendeur: (({ marque, titulaire, adresse, siren, email }) => ({ marque, titulaire, adresse, siren, email }))(seller()), client: dv.client });
+const dvFloor = () => { const x = estFor && items.find(i => i.id === estFor); return x && GRID[x.type] ? GRID[x.type][0] : 0; };
+const lineTxt = l => QTD.eur(QTD.line(l).net) + (l.m ? ' / mois' : '');
+function dvSumHtml() {
+  const k = QTD.calc(dvDoc()), ac = Math.min(100, Math.max(0, +dv.acompte || 0)), fl = dvFloor(), r = dv.remise, e = QTD.eur;
+  return `<div class="ln"><span>Sous-total</span><b>${e(k.sub)}</b></div>
+    ${k.remLines ? `<div class="ln"><span>Remises par ligne</span><b>− ${e(k.remLines)}</b></div>` : ''}
+    ${k.remise ? `<div class="ln"><span>${esc(r.label || 'Remise')}${r.type !== 'eur' ? ` (${+r.val} %)` : ''}</span><b>− ${e(k.remise)}</b></div>` : ''}
+    <div class="ln big"><span>Total</span><span>${e(k.total)}</span></div>
+    ${ac ? `<div class="ln"><span>Acompte ${ac} %</span><b>${e(k.acompte)}</b></div><div class="ln"><span>Solde à la livraison</span><b>${e(k.solde)}</b></div>` : ''}
+    ${k.rec ? `<div class="ln"><span>Abonnement mensuel (en plus)</span><b>${e(k.rec)} / mois</b></div>` : ''}
+    ${fl && k.total > 0 && k.total < fl ? `<div class="dv-warn">Sous le bas de votre grille pour ce type de projet (${eur(fl)}).</div>` : ''}`;
+}
+function dvInit() {
+  tplReset();
+  const x = estFor && items.find(i => i.id === estFor), g = id => document.getElementById(id);
+  const from = d => ({ for: x ? x.id : null, num: d.num || '', validite: d.validite ?? 30, delai: d.delai || '', acompte: d.acompte ?? 30, notes: d.notes || '',
+    lignes: (d.lignes && d.lignes.length ? d.lignes : [blankLine()]).map(l => ({ l: l.l || '', q: l.q ?? 1, pu: l.pu ?? '', rem: l.rem || '', m: !!l.m })),
+    client: { nom: '', email: '', adresse: '', ...(d.client || {}) }, remise: { type: 'pct', val: '', label: '', ...(d.remise || {}) } });
+  for (const raw of x ? [x.devisDraft, x.devisData] : []) { if (!raw) continue; try { dv = from(JSON.parse(raw)); return; } catch (e) { /* illisible : on essaie la suite */ } }
+  const cl = x ? QTT.parse(x.besoin) : null;
+  if (cl && cl.template) {   // demande d'un template : le devis démarre avec le template et les options choisis par le client
+    tpl = { id: cl.template.id, opts: Object.fromEntries(cl.options.map(o => [o.id, o.qty])), price: {} };
+    const r = tplBuild(cl.template, tpl.opts, tpl.price);
+    dv = from({ lignes: r.lignes, acompte: 30, validite: 30, notes: r.notes, client: { nom: x.nom, email: x.email } }); return;
+  }
+  const type = g('e-type') ? g('e-type').value : (x && GRID[x.type] ? x.type : 'Site vitrine'), gm = GRID[type] || GRID['Site vitrine'];
+  const lvl = g('e-lvl') ? g('e-lvl').selectedOptions[0].textContent.split(' (')[0].toLowerCase() : 'standard';
+  dv = from({ lignes: [{ l: `${type} (${lvl}) : conception, réalisation et mise en ligne`, q: 1, pu: estMid || Math.round((gm[0] + gm[1]) / 100) * 50 }], acompte: 30, validite: 30,
+    notes: g('e-maint') && g('e-maint').checked ? `Maintenance facultative : ${eur2(MAINT)} par mois (hébergement, sauvegardes, petites modifications).` : '',
+    client: { nom: x ? x.nom : '', email: x ? x.email : '' } });
+}
+function dvDirty() {
+  clearTimeout(dvDirty.t); const s = document.getElementById('dv-saved'); if (!estFor) return;
+  if (s) s.textContent = 'Modifications non enregistrées…'; dvDirty.t = setTimeout(dvSaveDraft, 900);
+}
+async function dvSaveDraft() {
+  if (!dv || !dv.for || !items.find(i => i.id === dv.for)) return; const s = () => document.getElementById('dv-saved');
+  try { await patch(dv.for, { devisDraft: JSON.stringify(dvDoc()) }); if (s()) s().textContent = 'Brouillon enregistré ✓'; } catch (e) { if (s()) s().textContent = 'Brouillon non enregistré (connexion ou règles ?)'; }
+}
+function dvRefresh() {
+  const s = document.getElementById('dv-sum'); if (s) s.innerHTML = dvSumHtml();
+  dv.lignes.forEach((l, i) => { const n = document.querySelector(`[data-lt="${i}"]`); if (n) n.textContent = lineTxt(l); });
+}
+function dvSet(el) {
+  if (!dv) return;
+  if (el.dataset.dvl) { const [i, f] = el.dataset.dvl.split(':'), l = dv.lignes[+i]; if (!l) return; l[f] = f === 'm' ? el.checked : f === 'l' ? el.value.slice(0, 500) : el.value; }
+  else { const [a, k] = el.dataset.dv.split('.'); if (k) dv[a][k] = el.value.slice(0, 300); else dv[a] = el.value.slice(0, 1000); }
+  dvRefresh(); dvDirty();
+}
+/* Templates et options : le catalogue vient de assets/qt-templates.js. Les prix par défaut des options sont des points de départ, toujours modifiables dans le devis. */
+const OPT_PRICE = Object.fromEntries(QTT.options.map(o => [o.id, o.price]));   // prix publics du catalogue (assets/qt-templates.js)
+const TPL_COMPRIS = 'Compris : personnalisation (nom, couleurs, textes, photos, prix, horaires) ; mise en ligne sur votre nom de domaine (offert la première année) ; assistance et maintenance offertes pendant 3 mois ; une série de retouches et une notice.';
+let tpl = { id: '', opts: {}, price: {} };
+const tplReset = () => { tpl = { id: '', opts: {}, price: {} }; };
+const tplOf = () => QTT.templates.find(t => t.id === tpl.id) || null;
+const optPrice = id => tpl.price[id] ?? OPT_PRICE[id] ?? 0;
+/* Lignes de devis d'un template et de ses options ; « notes » liste ce qui n'est pas inclus (option sur devis). */
+function tplBuild(t, opts, price) {
+  const lignes = [{ l: `Template « ${t.name} » personnalisé et mis en ligne\n${TPL_COMPRIS}`, q: 1, pu: t.base, rem: '', m: false }], off = [];
+  QTT.optionsFor(t.id).forEach(o => {
+    if (opts[o.id]) lignes.push({ l: o.name, q: o.qty ? opts[o.id] : 1, pu: price[o.id] ?? OPT_PRICE[o.id] ?? 0, rem: '', m: !!o.monthly });
+    else if (['bdd', 'paiement', 'emails'].includes(o.id)) off.push(o.name.charAt(0).toLowerCase() + o.name.slice(1));
+  });
+  return { lignes, notes: off.length ? `Non inclus, disponible en option sur devis : ${off.join(', ')}.` : '' };
+}
+function tplTotals() {
+  const t = tplOf(); if (!t) return { once: 0, rec: 0 };
+  let once = t.base, rec = 0;
+  QTT.optionsFor(t.id).forEach(o => { if (tpl.opts[o.id]) { const v = (o.qty ? tpl.opts[o.id] : 1) * optPrice(o.id); if (o.monthly) rec += v; else once += v; } });
+  return { once, rec };
+}
+const tplTotTxt = () => { const k = tplTotals(); return `Template et options : ${QTD.eur(k.once)}${k.rec ? ` + ${QTD.eur(k.rec)} / mois` : ''}`; };
+function tplHtml() {
+  const t = tplOf(), x = estFor && items.find(i => i.id === estFor), cl = x ? QTT.parse(x.besoin) : { template: null, options: [] };
+  const banner = cl.template && !tpl.id ? `<div class="notice">Le client a demandé le template <b>${esc(cl.template.name)}</b>${cl.options.length ? ', avec : ' + cl.options.map(o => esc(QTT.options.find(z => z.id === o.id).name.toLowerCase())).join(', ') : ', sans option'}. <button type="button" class="btn btn-sm btn-accent" data-do="tpl-client" style="margin-left:8px">Reprendre son choix</button></div>` : '';
+  const picks = QTT.templates.map(z => `<button type="button" class="tpl-pick" data-do="tpl-pick" data-id="${z.id}" aria-pressed="${z.id === tpl.id}"><b>${esc(z.name)}</b><small>Dès ${eur(z.base)} · ${esc(z.resume)}</small></button>`).join('');
+  const opts = t ? QTT.optionsFor(t.id).map(o => { const on = !!tpl.opts[o.id];
+    return `<div class="tpl-opt"><label class="chk"><input type="checkbox" data-tplopt="${o.id}"${on ? ' checked' : ''}><span><b>${esc(o.name)}</b>${o.monthly ? ' <span class="muted">(par mois)</span>' : ''}<br><small class="muted">${esc(o.hint)}</small></span></label>${on ? `<div class="tpl-nums">${o.qty ? `<label>Qté<input type="number" min="1" max="50" data-tplqty="${o.id}" value="${tpl.opts[o.id]}"></label>` : ''}<label>${o.monthly ? '€ / mois' : o.qty ? '€ l’unité' : 'Prix (€)'}<input type="number" min="0" step="0.01" data-tplprice="${o.id}" value="${optPrice(o.id)}"></label></div>` : ''}</div>`; }).join('') : '';
+  return `<section class="card dv-card"><h3 class="dv-h">Template et options</h3>${banner}<div class="tpl-picks">${picks}</div>
+    ${t ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Prix de départ ${eur(t.base)} : personnalisation, mise en ligne, nom de domaine offert (1re année), 3 mois d’assistance, une série de retouches.${t.demo ? ` <a href="../${esc(t.demo)}" target="_blank" rel="noopener">Voir la démonstration</a>.` : ''}</p>
+      <div class="tpl-opts">${opts}</div><div class="ag-act"><button type="button" class="btn btn-accent" data-do="tpl-add">Ajouter au devis</button><span class="tpl-tot" id="tpl-tot">${tplTotTxt()}</span></div>`
+      : '<p class="muted" style="margin:0;font-size:var(--t-sm)">Choisissez un template pour ajouter son prix de départ et ses options au devis, en un clic. Les lignes restent modifiables ensuite.</p>'}</section>`;
+}
+function dvHtml() {
+  if (!dv) return '';
+  const cus = catCustom(), cur = estFor && items.find(i => i.id === estFor), r = dv.remise, copyable = items.filter(i => i.devisData && i.id !== estFor);
+  const short = s => String(s).split(' : ')[0].split(' (')[0];
+  const chips = CAT_BASE.map((c, i) => `<button type="button" data-do="cat-add" data-i="b${i}">+ ${esc(short(c[0]))} · ${eur(c[1])}${c[2] ? '/mois' : ''}</button>`).join('')
+    + cus.map((c, i) => `<span class="cchip"><button type="button" data-do="cat-add" data-i="c${i}">★ ${esc(short(c[0]).slice(0, 26))} · ${eur(+c[1])}${c[2] ? '/mois' : ''}</button><button type="button" class="cx" data-do="cat-del" data-i="${i}" aria-label="Retirer ce préréglage">✕</button></span>`).join('');
+  const line = (l, i) => `<div class="dv-l"><label>Désignation<textarea data-dvl="${i}:l" rows="2" maxlength="500" placeholder="Ex. Site vitrine 5 pages">${esc(l.l)}</textarea></label>
+    <div class="r"><label>Qté<input data-dvl="${i}:q" type="number" min="0" step="1" inputmode="numeric" value="${esc(l.q ?? 1)}"></label>
+      <label>Prix unitaire (€)<input data-dvl="${i}:pu" type="number" min="0" step="1" inputmode="decimal" value="${esc(l.pu ?? '')}"></label>
+      <label>Remise (%)<input data-dvl="${i}:rem" type="number" min="0" max="100" step="1" inputmode="decimal" value="${esc(l.rem ?? '')}"></label>
+      <label class="chk"><span>Par mois</span><input type="checkbox" data-dvl="${i}:m"${l.m ? ' checked' : ''}></label>
+      <b class="lt" data-lt="${i}">${lineTxt(l)}</b></div>
+    <div class="ag-act"><button class="btn btn-sm btn-ghost" data-do="line-star" data-i="${i}" title="Garder cette ligne comme préréglage">★ Préréglage</button><button class="btn btn-sm btn-ghost" data-do="dv-del" data-i="${i}" style="margin-left:auto">Retirer la ligne</button></div></div>`;
+  return `<div id="dv" class="dv-wrap"><div class="dv-main"><section class="card dv-card">
+    <div class="req-top"><h2 style="margin:0">Devis ${dv.num ? esc(dv.num) : '<span class="muted" style="font-size:var(--t-sm);font-weight:500">(numéro attribué à la publication)</span>'}</h2>${cur && cur.devisData ? '<span class="chip st-envoye">Déjà publié</span>' : ''}</div>
+    ${copyable.length ? `<label class="mini">Reprendre un devis existant<select id="dv-copy"><option value="">Choisir…</option>${copyable.map(i => `<option value="${esc(i.id)}">${esc(i.nom)} · ${esc(i.type)}</option>`).join('')}</select></label>` : ''}
+    <div class="dv-grid"><label>Client<input data-dv="client.nom" value="${esc(dv.client.nom)}"></label><label>E-mail<input data-dv="client.email" type="email" value="${esc(dv.client.email)}"></label></div>
+    <label>Adresse du client (obligatoire pour un professionnel)<textarea data-dv="client.adresse" rows="2">${esc(dv.client.adresse || '')}</textarea></label>
+    </section>${tplHtml()}<section class="card dv-card"><h3 class="dv-h">Prestations</h3><div><span class="muted" style="font-size:var(--t-xs)">Préréglages à ajouter en un clic</span><div class="dv-cat" style="margin-top:8px">${chips}</div></div>
+    <div>${dv.lignes.map(line).join('')}<button class="btn btn-sm btn-ghost" data-do="dv-add">+ Ajouter une ligne libre</button></div>
+    </section><section class="card dv-card"><h3 class="dv-h">Conditions et remise</h3><div class="dv-rem"><b>Remise sur le devis</b>
+      <div class="seg" role="group" aria-label="Remises rapides">${[5, 10, 15, 20].map(p => `<button type="button" class="btn btn-sm btn-ghost" data-do="rem-pct" data-p="${p}" aria-pressed="${r.type === 'pct' && +r.val === p}">−${p} %</button>`).join('')}<button type="button" class="btn btn-sm btn-ghost" data-do="rem-round">Arrondir à la dizaine</button><button type="button" class="btn btn-sm btn-ghost" data-do="rem-none">Aucune</button></div>
+      <div class="dv-grid"><label>Type<select data-dv="remise.type"><option value="pct"${r.type !== 'eur' ? ' selected' : ''}>Pourcentage (%)</option><option value="eur"${r.type === 'eur' ? ' selected' : ''}>Montant (€)</option></select></label>
+        <label>Valeur<input data-dv="remise.val" type="number" min="0" step="1" inputmode="decimal" value="${esc(r.val ?? '')}"></label>
+        <label>Intitulé affiché<input data-dv="remise.label" maxlength="60" placeholder="Ex. Offre de lancement" value="${esc(r.label || '')}"></label></div></div>
+    <div class="dv-grid"><label>Acompte à la commande<select data-dv="acompte">${[0, 30, 40, 50, 100].map(p => `<option value="${p}"${+dv.acompte === p ? ' selected' : ''}>${p ? p + ' %' : 'Pas d’acompte'}</option>`).join('')}</select></label>
+      <label>Validité (jours)<input data-dv="validite" type="number" min="1" max="365" value="${esc(dv.validite)}"></label>
+      <label>Délai de réalisation<input data-dv="delai" placeholder="Ex. 2 semaines après l’acompte" value="${esc(dv.delai)}"></label></div>
+    <label>Remarques (visibles sur le devis)<textarea data-dv="notes" rows="2">${esc(dv.notes)}</textarea></label>
+    </section></div><aside class="dv-side"><div class="dv-sum"><div id="dv-sum">${dvSumHtml()}</div>
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" data-do="dv-preview">Aperçu / PDF</button>
+        ${estFor ? `<button class="btn btn-ghost" data-do="dv-save">Enregistrer le brouillon</button><button class="btn btn-accent" data-do="dv-publish">${dv.num ? 'Mettre à jour dans l’espace client' : 'Publier dans l’espace client'}</button>${cur && cur.devisData ? '<button class="btn btn-ghost" data-do="dv-mail">Prévenir par e-mail</button>' : ''}` : ''}</div>
+      <span class="dv-save" id="dv-saved">${estFor ? 'Le brouillon s’enregistre tout seul.' : 'Devis libre : à imprimer en PDF, il n’est pas conservé. Choisissez une demande pour le publier chez un client.'}</span></div>
+    <p class="muted" style="font-size:var(--t-xs);margin:0">Vos coordonnées et conditions de paiement se règlent dans <b>Réglages du site</b>. TVA non applicable (art. 293 B du CGI) ajoutée automatiquement.</p></aside></div>`;
+}
+
+async function loadLeads() {
+  leadsErr = false;
+  if (DEMO) { leads = [{ name: 'Camille Durand', email: 'camille@example.com', at: new Date(), source: 'site' }, { name: 'Yanis K.', email: 'yanis@example.com', at: new Date(Date.now() - 864e5), source: 'site' }]; return; }
+  try {
+    const { Fs, db } = await fb();
+    const r = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_leads'), Fs.orderBy('at', 'desc'), Fs.limit(2000)));
+    leads = r.docs.map(d => d.data());
+  } catch (e) { leads = []; leadsErr = true; }
+}
+/* ---------- Sites clients : encaissement, verrouillage du site tant que le solde n'est pas payé, relances ---------- */
+/* Données privées dans qt_notes/_clients. Seule l'information « ce site est verrouillé ou le sera à telle date » est publique : champ « acces » de qt_admin/config, lu par assets/qt-garde.js. */
+let clEdit = null, clPay = null, clRel = null, clCode = null;
+const clients = () => { try { const c = JSON.parse((notes._clients || {}).items || '[]'); return Array.isArray(c) ? c.filter(x => x && x.id) : []; } catch (e) { return []; } };
+const clPaid = c => Math.round((c.paiements || []).reduce((s, p) => s + (+p.m || 0), 0) * 100) / 100;
+const clSolde = c => Math.round(((+c.total || 0) - clPaid(c)) * 100) / 100;
+const clLimit = c => c.prolonge || (c.echeance ? addDays(c.echeance, +c.grace || 15) : '');
+const fdate = iso => /^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? new Date(iso + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+function clState(c) {
+  const solde = clSolde(c), t = today();
+  if ((+c.total || 0) > 0 && solde <= 0) return { k: 'paye', l: 'Payé en totalité', solde };
+  if (c.bloque) return { k: 'susp', l: 'Site suspendu', solde };
+  const lim = clLimit(c);
+  if (lim && t > lim) return { k: 'susp', l: 'Site verrouillé (date limite dépassée)', solde, auto: true };
+  if (c.echeance && t > c.echeance) { const dl = daysBetween(c.echeance, t); return { k: 'retard', l: `En retard de ${dl} j`, solde, dl }; }
+  return { k: 'attente', l: c.echeance ? `Solde attendu le ${dayName(c.echeance)}` : 'Solde à encaisser', solde };
+}
+const clLate = () => clients().filter(c => ['retard', 'susp'].includes(clState(c).k));
+/* Publie le verrouillage : jamais de nom ni de montant, seulement l'identifiant du site et la date limite (ou « suspendu maintenant »). */
+async function clPublish(list) {
+  const acces = {};
+  list.forEach(c => {
+    if (!/^[a-z0-9-]{2,40}$/.test(c.site || '') || !(+c.total > 0) || clSolde(c) <= 0) return;
+    if (c.bloque) acces[c.site] = { b: 1 }; else { const lim = clLimit(c); if (lim) acces[c.site] = { u: lim }; }
+  });
+  await saveSite({ acces: JSON.stringify(acces) });
+}
+/* Rappels automatiques de fin d'offre : liste (prénom, e-mail, site, date) envoyée au relais ; réglages gardés dans ce navigateur seulement. */
+const rpConf = () => { try { return JSON.parse(localStorage.getItem('qt:relais') || '{}'); } catch (e) { return {}; } };
+let rpState = '';
+async function rpSync(list) {
+  const r = rpConf(); if (!r.url || !r.key || DEMO) { rpState = ''; return; }
+  const clients = list.filter(c => c.email && c.finOffre).map(c => ({ id: c.id, prenom: first(c.nom), email: c.email, site: c.site || '', finOffre: c.finOffre }));
+  try {
+    const res = await fetch(r.url.replace(/\/$/, '') + '/clients', { method: 'PUT', headers: { Authorization: 'Bearer ' + r.key, 'Content-Type': 'application/json' }, body: JSON.stringify({ clients }) });
+    rpState = res.ok ? `Rappels automatiques actifs : ${(await res.json()).count} client(s) suivi(s) ✓` : res.status === 401 ? 'Clé du relais refusée : vérifiez-la.' : 'Relais injoignable (erreur ' + res.status + ').';
+  } catch (e) { rpState = 'Relais injoignable : vérifiez l’adresse.'; }
+}
+async function clSave(list) {
+  notes._clients = { items: JSON.stringify(list) };
+  if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_clients'), notes._clients); }
+  await clPublish(list);
+  await rpSync(list);
+}
+function relanceLevel(c) {
+  const s = clState(c); if (s.k === 'attente') return 0;
+  const lim = clLimit(c); if (s.dl != null && s.dl < 7) return 1;
+  return lim && today() >= addDays(lim, -5) ? 3 : 2;
+}
+const RELANCES = [[0, 'Avant l’échéance'], [1, 'Rappel amical'], [2, 'Relance'], [3, 'Dernier avis avant suspension']];
+function relanceText(c, niv) {
+  const v = seller(), p = first(c.nom), num = c.devisNum ? ` du devis ${c.devisNum}` : '', s = QTD.eur(clSolde(c)), ech = fdate(c.echeance) || 'la date convenue', lim = fdate(clLimit(c));
+  const pay = v.paiement ? `\n${v.paiement}\n` : '', sign = `\nCordialement,\n${v.marque || 'QuenTools'}`;
+  const hello = `Bonjour${p ? ' ' + p : ''},\n\n`, after = (c.relances || []).length ? 'Malgré mes précédents rappels' : 'À ce jour';
+  if (+niv === 0) return `${hello}Pour information, le solde de ${s}${num} est à régler avant le ${ech}.${pay}\nJe reste à votre disposition pour toute question.\n${sign}`;
+  if (+niv === 1) return `${hello}Je me permets de vous rappeler que le solde de ${s}${num} était attendu le ${ech}. Si votre règlement a déjà été effectué, merci de ne pas tenir compte de ce message.${pay}\nJe reste à votre disposition pour toute question.\n${sign}`;
+  if (+niv === 2) return `${hello}Sauf erreur de ma part, le solde de ${s}${num}, attendu le ${ech}, n’a pas encore été réglé. Je vous remercie de bien vouloir procéder au règlement dans un délai de 8 jours. Conformément aux conditions du devis, des pénalités de retard peuvent s’appliquer.${pay}\nSi vous rencontrez une difficulté, je vous invite à me contacter afin d’envisager une solution.\n${sign}`;
+  return `${hello}${after}, le solde de ${s}${num} demeure impayé. À défaut de règlement avant le ${lim || 'délai indiqué'}, l’accès à votre site sera suspendu, conformément aux conditions du devis. Il sera rétabli dès réception du paiement.${pay}\nSi votre règlement est en cours, ou si vous souhaitez en discuter, je vous invite à me contacter avant cette date.\n${sign}`;
+}
+function clFromRequest(x) {
+  let total = +x.montant || 0, num = '';
+  if (x.devisData) { try { const d = JSON.parse(x.devisData); total = QTD.calc(d).total; num = d.num || ''; } catch (e) { /* devis illisible : montant noté */ } }
+  return { nom: x.nom, email: x.email, total, devisNum: num, devisId: x.id, site: String(x.nom || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) };
+}
+function clFormHtml(c) {
+  const f = (n, l, t = 'text', extra = '') => `<div class="field"><label for="cl-${n}">${l}</label><input id="cl-${n}" name="${n}" type="${t}" value="${esc(c[n] ?? '')}" ${extra}></div>`;
+  const linked = items.filter(i => i.status !== 'perdu');
+  return `<section class="card cl-form" id="cl-form"><h3 style="margin:0">${c.id ? 'Modifier ce site client' : 'Ajouter un site client'}</h3>
+    ${c.id ? '' : `<label class="mini">Reprendre une demande (remplit le nom, l’e-mail et le montant du devis)<select data-clfrom><option value="">Saisir à la main…</option>${linked.map(i => `<option value="${esc(i.id)}">${esc(i.nom)} · ${esc(i.type)}${i.devisData ? ' · devis publié' : ''}</option>`).join('')}</select></label>`}
+    <div class="form-grid">${f('nom', 'Client', 'text', 'maxlength="120"')}${f('email', 'E-mail du client', 'email', 'maxlength="160"')}</div>
+    <div class="form-grid">${f('site', 'Identifiant du site (lettres, chiffres, tirets)', 'text', 'maxlength="40" placeholder="ex. boulangerie-martin"')}${f('url', 'Adresse du site (facultatif)', 'url', 'maxlength="200" placeholder="https://…"')}</div>
+    <div class="form-grid">${f('total', 'Montant total à payer (€)', 'number', 'min="0" step="0.01" inputmode="decimal"')}${f('echeance', 'Solde attendu le', 'date')}${f('grace', 'Jours de grâce avant verrouillage', 'number', 'min="0" max="90" step="1" placeholder="15"')}</div>
+    <div class="form-grid">${f('enLigne', 'Mis en ligne le (début des 3 mois offerts)', 'date')}<p class="muted" style="margin:0;align-self:end;font-size:var(--t-sm)">Un e-mail de rappel est envoyé automatiquement au client 14 jours avant la fin de l’offre (relais à activer en haut de cette page).</p></div>
+    <input type="hidden" name="devisId" value="${esc(c.devisId || '')}"><input type="hidden" name="devisNum" value="${esc(c.devisNum || '')}">
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="cl-save" data-id="${esc(c.id || '')}">Enregistrer</button><button class="btn btn-ghost" data-do="cl-cancel">Annuler</button></div></section>`;
+}
+function clCardHtml(c) {
+  const s = clState(c), paid = clPaid(c), total = +c.total || 0, pct = total ? Math.min(100, Math.round(100 * paid / total)) : 0, lim = clLimit(c), e = QTD.eur;
+  const lastR = (c.relances || []).slice(-1)[0], sug = relanceLevel(c), rq = items.find(i => i.id === c.devisId);
+  const snippet = `<script src="https://quentools.fr/assets/qt-config.js"><\/script>\n<script src="https://quentools.fr/assets/qt-garde.js" data-site="${c.site}" defer><\/script>`;
+  return `<article class="card cl cl-${s.k}" data-cl="${esc(c.id)}">
+    <div class="req-top"><h3>${esc(c.nom)}</h3><span class="chip cl-chip-${s.k}">${esc(s.l)}</span></div>
+    <div class="meta"><span class="chip">🌐 ${esc(c.site || 'sans identifiant')}</span>${c.url ? `<a class="chip" href="${esc(c.url)}" target="_blank" rel="noopener">Ouvrir le site ↗</a>` : ''}${c.devisNum ? `<span class="chip">Devis ${esc(c.devisNum)}</span>` : ''}${c.email ? `<span class="chip">✉️ ${esc(c.email)}</span>` : ''}</div>
+    <div class="cl-bar" role="img" aria-label="${pct} % payé"><i style="width:${pct}%"></i></div>
+    <p style="margin:0">${e(paid)} encaissés sur ${e(total)}${s.k === 'paye' ? '' : ` · <b>reste ${e(s.solde)}</b>`}</p>
+    ${s.k !== 'paye' && lim ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">${s.k === 'susp' ? 'Verrouillé depuis le ' + fdate(c.bloque ? (c.bloqueLe || today()) : addDays(lim, 1)) : 'Verrouillage automatique après le ' + fdate(lim) + (c.prolonge ? ' (prolongé)' : ` (échéance + ${+c.grace || 15} jours)`)}.</p>` : ''}
+    ${c.finOffre ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Assistance offerte jusqu’au ${esc(fdate(c.finOffre))}${today() > c.finOffre ? ' (terminée)' : ' · rappel automatique prévu le ' + esc(fdate(addDays(c.finOffre, -14)))}</p>` : ''}
+    ${!c.site || !(total > 0) ? '<p class="muted" style="margin:0;font-size:var(--t-sm)">⚠️ Sans identifiant de site ou sans montant, aucun verrouillage n’est publié.</p>' : ''}
+    ${lastR ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Dernière relance : « ${esc((RELANCES.find(r => r[0] === +lastR.niv) || [0, ''])[1])} » le ${esc(fdate(lastR.d))}${(c.relances || []).length > 1 ? ` (${c.relances.length} au total)` : ''}</p>` : ''}
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+      ${s.k !== 'paye' ? `<button class="btn btn-sm btn-accent" data-do="cl-pay" data-id="${esc(c.id)}">Encaisser un paiement</button><button class="btn btn-sm btn-ghost" data-do="cl-rel" data-id="${esc(c.id)}">Relancer${s.k === 'attente' ? '' : ' · conseillé : ' + esc(RELANCES[sug][1].toLowerCase())}</button>` : ''}
+      ${s.k !== 'paye' ? (s.k === 'susp' ? `<button class="btn btn-sm btn-ghost" data-do="cl-restore" data-id="${esc(c.id)}">Rétablir l’accès</button>` : `<button class="btn btn-sm btn-ghost" data-do="cl-suspend" data-id="${esc(c.id)}">Suspendre maintenant</button>`) : ''}
+      <button class="btn btn-sm btn-ghost" data-do="cl-code" data-id="${esc(c.id)}">${clCode === c.id ? 'Masquer le code' : 'Code du site'}</button>
+      <button class="btn btn-sm btn-ghost" data-do="cl-edit" data-id="${esc(c.id)}">Modifier</button>
+      <button class="btn btn-sm btn-ghost" data-do="cl-del" data-id="${esc(c.id)}" style="margin-left:auto">Supprimer</button></div>
+    ${clCode === c.id ? `<div class="thread"><span class="muted" style="font-size:var(--t-sm)">À coller dans la page d’accueil du site client, juste avant la fin de la page (déjà prévu dans les modèles de <code>design/templates/</code>) :</span><pre class="rules" style="max-height:none">${esc(snippet)}</pre><div class="row"><button class="btn btn-sm btn-accent" data-do="cl-copycode" data-id="${esc(c.id)}">Copier le code</button></div></div>` : ''}
+    ${clPay === c.id ? `<div class="thread cl-pay"><div class="form-grid"><label class="mini">Montant reçu (€)<input name="m" type="number" min="0" step="0.01" inputmode="decimal" value="${s.solde > 0 ? s.solde : ''}"></label><label class="mini">Date<input name="d" type="date" value="${today()}"></label><label class="mini">Note<input name="n" maxlength="80" placeholder="Virement, PayPal…"></label></div>
+      <div class="row"><button class="btn btn-sm btn-accent" data-do="cl-pay-save" data-id="${esc(c.id)}">Enregistrer le paiement</button><button class="btn btn-sm btn-ghost" data-do="cl-cancel">Annuler</button></div></div>` : ''}
+    ${clRel && clRel.id === c.id ? `<div class="thread"><label class="mini">Type de message<select data-clniv>${RELANCES.map(r => `<option value="${r[0]}"${r[0] === clRel.niv ? ' selected' : ''}>${r[1]}${r[0] === sug ? ' (conseillé)' : ''}</option>`).join('')}</select></label>
+      <textarea id="cl-rtext" rows="9" aria-label="Message de relance">${esc(relanceText(c, clRel.niv))}</textarea>
+      <div class="row"><button class="btn btn-sm btn-ghost" data-do="cl-rcopy">Copier</button><button class="btn btn-sm btn-ghost" data-do="cl-rmail" data-id="${esc(c.id)}">Écrire par e-mail</button>${rq ? `<button class="btn btn-sm btn-ghost" data-do="cl-rspace" data-id="${esc(c.id)}">Envoyer dans l’espace client</button>` : ''}<button class="btn btn-sm btn-accent" data-do="cl-rdone" data-id="${esc(c.id)}">Marquer comme envoyée</button><button class="btn btn-sm btn-ghost" data-do="cl-cancel">Fermer</button></div>
+      <span class="muted" style="font-size:var(--t-xs)">« Marquer comme envoyée » note la relance dans la fiche et ajoute un rappel dans l’agenda pour dans 7 jours.</span></div>` : ''}
+    ${(c.paiements || []).length ? `<details><summary class="muted" style="cursor:pointer;font-size:var(--t-sm)">${c.paiements.length} paiement${c.paiements.length > 1 ? 's' : ''} enregistré${c.paiements.length > 1 ? 's' : ''}</summary>${c.paiements.map((p, i) => `<div class="fun" style="grid-template-columns:110px 1fr auto auto"><span>${esc(fdate(p.d) || p.d)}</span><span class="muted">${esc(p.n || '')}</span><b>${e(+p.m || 0)}</b><button class="btn btn-sm btn-ghost" data-do="cl-pay-del" data-id="${esc(c.id)}" data-i="${i}" aria-label="Supprimer ce paiement">✕</button></div>`).join('')}</details>` : ''}
+  </article>`;
+}
+function viewClients() {
+  const list = clients(), st = list.map(c => ({ c, s: clState(c) })), e = QTD.eur;
+  const ord = { susp: 0, retard: 1, attente: 2, paye: 3 }, sorted = st.slice().sort((a, b) => ord[a.s.k] - ord[b.s.k]);
+  const encaisse = list.reduce((n, c) => n + clPaid(c), 0), reste = st.reduce((n, x) => n + Math.max(0, x.s.solde), 0), retard = st.filter(x => x.s.k === 'retard').length, susp = st.filter(x => x.s.k === 'susp').length;
+  const clause = String(seller().conditions || '').includes('suspendu');
+  const intro = `<details class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"><summary style="cursor:pointer;font-weight:700">Comment ça marche ?</summary><div style="margin-top:var(--s-3);display:grid;gap:8px;font-size:var(--t-sm)">
+    <p style="margin:0">1. Vous ajoutez le site du client, le montant total et la date du solde.<br>2. Le site se verrouille tout seul quand la date limite est dépassée sans paiement complet (ou tout de suite si vous le suspendez).<br>3. Il se rouvre dès que vous enregistrez le paiement.</p>
+    <p style="margin:0">Le visiteur voit seulement « site momentanément indisponible » : jamais de montant ni de nom du client.</p>
+    <p class="muted" style="margin:0">Le verrou fonctionne dans le navigateur : il arrête un visiteur ordinaire, mais ne remplace pas la coupure de l’hébergement face à un client de mauvaise foi. Il faut aussi installer le petit code du site (bouton « Code du site ») sur la page du client.</p></div></details>`;
+  const rc = rpConf(), rappels = `<details class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"${rc.url ? '' : ' open'}><summary style="cursor:pointer;font-weight:700">Rappels automatiques de fin d’offre ${rc.url ? '· activés' : '· à activer'}</summary><div style="margin-top:var(--s-3);display:grid;gap:8px;font-size:var(--t-sm)">
+    <p style="margin:0">Quand vous indiquez la date de mise en ligne d’un site, la fin de l’offre gratuite est calculée (3 mois) et le client reçoit un e-mail de rappel 14 jours avant. Mise en place unique : voir <code>design/RAPPELS-FIN-OFFRE.md</code>.</p>
+    <div class="form-grid"><label class="mini">Adresse du relais<input id="rp-url" type="url" placeholder="https://rappels.….workers.dev" value="${esc(rc.url || '')}"></label><label class="mini">Clé du relais<input id="rp-key" type="password" autocomplete="off" value="${esc(rc.key || '')}"></label></div>
+    <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-sm btn-accent" data-do="rp-save">Enregistrer et synchroniser</button><span class="muted" id="rp-state">${esc(rpState)}</span></div></div></details>`;
+  const clauseBox = clause ? '' : `<div class="notice warn" style="margin-bottom:var(--s-4)"><b>Avant de suspendre un site :</b> la possibilité de suspension doit figurer dans les conditions du devis accepté par le client. Elle n’est pas dans vos conditions actuelles. <button class="btn btn-sm btn-accent" data-do="add-clause" style="margin-left:8px">Ajouter la clause à mes conditions</button><br><span class="muted">Faites relire cette clause par un professionnel du droit : je ne peux pas valider sa portée juridique.</span></div>`;
+  const kpis = `<div class="kpis"><div><b>${e(encaisse)}</b><span>encaissés</span></div><div><b>${e(reste)}</b><span>reste à encaisser</span></div><div><b>${retard}</b><span>en retard de paiement</span></div><div><b>${susp}</b><span>sites verrouillés</span></div></div>`;
+  const form = clEdit === 'new' ? clFormHtml({}) : clEdit ? clFormHtml(list.find(c => c.id === clEdit) || {}) : '';
+  const add = clEdit ? '' : '<div class="row" style="display:flex;gap:8px;margin-bottom:var(--s-4)"><button class="btn btn-accent" data-do="cl-new">+ Ajouter un site client</button></div>';
+  return intro + rappels + clauseBox + (list.length ? kpis : '') + add + form + (sorted.length ? sorted.map(x => clCardHtml(x.c)).join('') : (clEdit ? '' : '<div class="card empty">Aucun site client suivi pour l’instant. Ajoutez le premier avec le bouton ci-dessus.</div>'));
+}
+function viewContacts() {
+  if (leadsErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Règles à mettre à jour</h2><p>Les contacts s’enregistrent dans une collection protégée. Ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><button class="btn btn-accent" data-tab="regles">Voir les règles</button></section>`;
+  const week = Date.now() - 7 * 864e5, lqq = lq.trim().toLowerCase(), shown = leads.filter(l => !lqq || [l.name, l.email].join(' ').toLowerCase().includes(lqq));
+  return `<div class="kpis"><div><b>${leads.length}</b><span>contacts enregistrés</span></div><div><b>${leads.filter(l => ms(l.at) > week).length}</b><span>sur les 7 derniers jours</span></div></div>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--s-4)"><button class="btn btn-sm btn-accent" data-do="copy-mails">Copier les e-mails</button><button class="btn btn-sm btn-ghost" data-do="csv">Exporter en CSV</button><input type="search" id="lq" placeholder="Rechercher un contact…" value="${esc(lq)}" aria-label="Rechercher un contact" style="flex:1;min-width:160px"></div>
+    ${shown.length ? shown.map(l => `<article class="card" style="padding:var(--s-4);margin-bottom:var(--s-3);display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center"><div><b>${esc(l.name || 'Sans nom')}</b><div class="muted" style="overflow-wrap:anywhere">${esc(l.email)}</div></div><span class="row" style="display:flex;gap:8px;align-items:center"><span class="chip">${ms(l.at) ? new Date(ms(l.at)).toLocaleDateString('fr-FR') : ''} · ${esc(l.source || '')}</span><button class="btn btn-sm btn-ghost" data-do="lead-del" data-email="${esc(l.email)}" aria-label="Supprimer ce contact">Supprimer</button></span></article>`).join('') : '<div class="card empty">Aucun contact pour l’instant. Ils apparaissent ici dès qu’un visiteur s’inscrit.</div>'}
+    <p class="muted" style="font-size:var(--t-xs)">Chaque contact a accepté de recevoir des nouvelles de QuenTools. Pour une demande de suppression, utilisez le bouton « Supprimer » du contact.</p>`;
+}
 async function load() {
-  if (DEMO) { items = demo.items; site = demo.site; return; }
+  if (DEMO && !notes._clients) notes._clients = { items: JSON.stringify([
+    { id: 'c1', nom: 'Naw Fruity', email: 'naw@example.com', site: 'naw-fruity', url: 'https://quentools.fr/demo/naw-fruity/', total: 1200, paiements: [{ d: addDays(today(), -40), m: 360, n: 'Acompte 30 %' }], echeance: addDays(today(), -9), grace: 15, devisNum: 'D-2026-004', relances: [{ d: addDays(today(), -2), niv: 1 }] },
+    { id: 'c2', nom: 'Atelier Bois', email: 'atelier@example.com', site: 'atelier-bois', total: 650, paiements: [{ d: addDays(today(), -20), m: 650, n: 'Virement' }], echeance: addDays(today(), -25), grace: 15 },
+    { id: 'c3', nom: 'Léa Coiffure', email: 'lea@example.com', site: 'lea-coiffure', total: 450, paiements: [{ d: addDays(today(), -5), m: 135, n: 'Acompte 30 %' }], echeance: addDays(today(), 12), grace: 15 }]) };
+  if (DEMO) { items = demo.items.concat(demoExtra()); site = demo.site; if (!agenda.length) agenda = [{ id: 'a1', kind: 'appel', titre: 'Appeler pour cadrer le site', date: today(), heure: '14:00', duree: 15, devisId: 'd1', note: 'Demander les photos et les horaires.', done: false }, { id: 'a2', kind: 'projet', titre: 'Maquette de l’accueil', date: addDays(today(), 1), heure: '09:30', duree: 120, devisId: 'd3', note: '', done: false }, { id: 'a3', kind: 'rappel', titre: 'Relancer le devis', date: addDays(today(), -1), heure: '', duree: 30, devisId: 'd2', note: '', done: false }]; await loadGifts(); return; }
   const { Fs, db } = await fb();
   try {
     const snap = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_devis'), Fs.orderBy('at', 'desc'), Fs.limit(300)));
     items = snap.docs.map(d => ({ id: d.id, ...d.data() })); denied = false;
   } catch (e) { items = []; denied = /permission/i.test(e.code || e.message); }
+  rulesOld = false; notes = {};
+  try { const n = await Fs.getDocs(Fs.collection(db, 'qt_notes')); n.docs.forEach(d => { notes[d.id] = d.data(); }); }
+  catch (e) { rulesOld = !denied && /permission/i.test(e.code || e.message); }
+  for (const it of items) { const n = notes[it.id]; if (n) { it.note = n.text ?? it.note; it.echeance = n.echeance ?? it.echeance; it.devisDraft = n.devisDraft || ''; } }
   try { const s = await Fs.getDoc(Fs.doc(db, 'qt_admin', 'config')); site = s.exists() ? s.data() : {}; } catch (e) { site = {}; }
+  try { const a = await Fs.getDocs(Fs.collection(db, 'qt_agenda')); agenda = a.docs.map(d => ({ id: d.id, ...d.data() })); agendaErr = false; }
+  catch (e) { agenda = []; agendaErr = !denied && /permission/i.test(e.code || e.message); }
+  await loadGifts();
 }
 async function patch(id, data) {
   const it = items.find(x => x.id === id); Object.assign(it, data);
   if (DEMO) return;
-  const { Fs, db } = await fb(); await Fs.updateDoc(Fs.doc(db, 'qt_devis', id), { ...data, updated: Fs.serverTimestamp() });
+  const { Fs, db } = await fb();
+  const priv = {}, pub = {};
+  for (const [k, v] of Object.entries(data)) (k === 'note' || k === 'echeance' || k === 'devisDraft' ? priv : pub)[k === 'note' ? 'text' : k] = v;
+  if (Object.keys(priv).length) await Fs.setDoc(Fs.doc(db, 'qt_notes', id), priv, { merge: true });
+  if (Object.keys(pub).length) await Fs.updateDoc(Fs.doc(db, 'qt_devis', id), { ...pub, updated: Fs.serverTimestamp() });
 }
+async function loadThread(id) {
+  if (DEMO) return threads[id] || [];
+  const { Fs, db } = await fb();
+  const r = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_devis', id, 'messages'), Fs.orderBy('at', 'asc'), Fs.limit(200)));
+  return r.docs.map(d => d.data());
+}
+async function addMsg(id, m) {
+  const rec = { from: m.from, text: String(m.text).slice(0, 2000) };
+  if (DEMO) { threads[id] = [...(threads[id] || []), { ...rec, at: new Date() }]; return; }
+  const { Fs, db } = await fb();
+  await Fs.addDoc(Fs.collection(db, 'qt_devis', id, 'messages'), { ...rec, at: Fs.serverTimestamp() });
+}
+const TPL = {
+  cadrage: 'Bonjour {prenom},\n\nMerci pour votre demande. Pour vous faire un devis précis, j’ai quelques questions :\n\n1. Avez-vous déjà un site, un nom de domaine ou un logo ?\n2. Quelles pages ou fonctions sont indispensables pour vous ?\n3. Avez-vous des exemples de sites ou d’outils que vous aimez ?\n4. Pour quand en auriez-vous besoin ?\n\nSi c’est plus simple, on peut en parler 15 minutes au téléphone : dites-moi quand vous êtes disponible.\n\nBien à vous,\nQuenTools',
+  appel: 'Bonjour {prenom},\n\nPour avancer sur votre projet, je vous propose un court appel de 15 minutes. Quels jours et horaires vous arrangent cette semaine ?\n\nBien à vous,\nQuenTools',
+  demarrage: 'Bonjour {prenom},\n\nMerci pour votre accord ! Je commence le travail et je vous montre une première version très vite. Vous pouvez suivre l’avancement ici, dans votre espace.\n\nBien à vous,\nQuenTools',
+  recu: 'Bonjour {prenom},\n\nMerci pour votre demande, je l’ai bien reçue. Je reviens vers vous sous 48 h avec mes questions ou une première proposition.\n\nBien à vous,\nQuenTools',
+  devis: 'Bonjour {prenom},\n\nVotre devis est prêt : vous le trouverez via le bouton « Voir le devis » de cet espace. Il précise ce qui est inclus et le prix, fixé avant de commencer. Dites-moi si vous avez des questions, ou acceptez-le directement ici.\n\nBien à vous,\nQuenTools',
+  relance: 'Bonjour {prenom},\n\nJe me permets de revenir vers vous au sujet du devis envoyé. Avez-vous eu le temps d’y jeter un œil ? Je reste disponible pour l’ajuster si besoin.\n\nBien à vous,\nQuenTools',
+  livraison: 'Bonjour {prenom},\n\nVotre projet est prêt et en ligne. Prenez le temps de tout vérifier : je corrige volontiers ce qui doit l’être. Merci pour votre confiance !\n\nBien à vous,\nQuenTools'
+};
 async function remove(id) {
   items = items.filter(x => x.id !== id);
   if (DEMO) return;
@@ -116,69 +711,304 @@ async function saveSite(data) {
   const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_admin', 'config'), data, { merge: true });
 }
 
+/* ---------- Cartes cadeaux : commandes (qt_cadeaux, privées) et cartes émises (qt_cartes/{code}, lisibles par qui a le code) ---------- */
+const GIFT_ST = { attente: 'Paiement à vérifier', payee: 'Carte envoyée', annulee: 'Annulée' };
+const GA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+let gifts = [], cards = [], giftErr = false, gq = '', gFilter = 'attente', gOpen = null;
+const r2 = n => Math.round((+n || 0) * 100) / 100;
+const eur2 = n => (+n || 0).toLocaleString('fr-FR', { minimumFractionDigits: Number.isInteger(r2(n)) ? 0 : 2, maximumFractionDigits: 2 }) + ' €';
+const giftMonths = () => Math.min(36, Math.max(12, +site.cadeauMois || 12));
+const newCode = () => { const b = new Uint8Array(8); crypto.getRandomValues(b); const s = [...b].map(x => GA[x % 32]).join(''); return 'QT-' + s.slice(0, 4) + '-' + s.slice(4); };
+/* Cartes locales : tant que les règles Firestore ne sont pas publiées, une carte créée ici est gardée sur cet appareil et le lien porte ses données. */
+const LOCAL_KEY = 'qt:cartes-locales';
+const localCards = () => { try { const a = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+const saveLocalCards = () => { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(cards.filter(c => c.local))); } catch (e) { /* stockage indisponible */ } };
+const cardUrl = code => {
+  const c = cards.find(x => x.id === code), u = new URL('../cadeau/carte/?code=' + encodeURIComponent(code), location.href);
+  if (c && c.local) u.searchParams.set('d', btoa(unescape(encodeURIComponent(JSON.stringify({ m: c.montant, s: c.solde, p: c.pour, f: c.de, t: c.message, e: c.expire, o: c.statut === 'annulee' ? 1 : 0 })))));
+  return u.href;
+};
+const frDate = iso => iso ? new Date(iso + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+const hist = c => { try { const h = JSON.parse(c.historique || '[]'); return Array.isArray(h) ? h : []; } catch (e) { return []; } };
+const cardState = c => c.statut === 'annulee' ? ['Annulée', 'st-perdu'] : c.expire && c.expire < today() ? ['Expirée', 'st-perdu'] : !(+c.solde > 0) ? ['Utilisée', 'st-livre'] : +c.solde < +c.montant ? ['Entamée', 'st-encours'] : ['Active', 'st-gagne'];
+const cardLive = c => c.statut !== 'annulee' && !(c.expire && c.expire < today()) && +c.solde > 0;
+const giftCode = t => { const m = String(t || '').toUpperCase().match(/QT-?([A-Z0-9]{4})-?([A-Z0-9]{4})/); return m ? `QT-${m[1]}-${m[2]}` : ''; };
+async function loadGifts() {
+  await loadGiftsBase();
+  const known = new Set(cards.map(c => c.id));
+  cards = [...cards, ...localCards().filter(c => c && c.id && !known.has(c.id)).map(c => ({ ...c, local: true }))].sort((a, b) => ms(b.at) - ms(a.at));
+}
+async function loadGiftsBase() {
+  if (DEMO) {
+    if (!gifts.length && !cards.length) {
+      gifts = [{ id: 'CCK7M2PX', montant: 100, pour: 'Camille', de: 'Léo', message: 'Pour que ton atelier ait enfin son site !', nom: 'Léo Durand', email: 'leo@example.com', envoi: 'destinataire', destEmail: 'camille@example.com', dateEnvoi: addDays(today(), 3), paiement: 'paypal', status: 'attente', at: new Date(Date.now() - 2 * 3600e3) },
+        { id: 'CC9H3TQA', montant: 200, pour: 'Papa', de: 'Inès', message: '', nom: 'Inès B.', email: 'ines@example.com', envoi: 'moi', destEmail: '', dateEnvoi: '', paiement: 'paypal', status: 'payee', code: 'QT-8XWD-4M2K', at: new Date(Date.now() - 12 * 864e5) }];
+      cards = [{ id: 'QT-8XWD-4M2K', montant: 200, solde: 120, pour: 'Papa', de: 'Inès', message: 'Joyeux anniversaire !', expire: addMonths(today(), 11), statut: 'active', ref: 'CC9H3TQA', historique: JSON.stringify([{ d: addDays(today(), -5), m: 80, n: 'Devis site vitrine' }]), at: new Date(Date.now() - 12 * 864e5) }];
+    }
+    return;
+  }
+  const { Fs, db } = await fb();
+  try {
+    const [o, c] = await Promise.all([Fs.getDocs(Fs.query(Fs.collection(db, 'qt_cadeaux'), Fs.orderBy('at', 'desc'), Fs.limit(500))), Fs.getDocs(Fs.collection(db, 'qt_cartes'))]);
+    gifts = o.docs.map(d => ({ id: d.id, ...d.data() })); cards = c.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => ms(b.at) - ms(a.at)); giftErr = false;
+  } catch (e) { gifts = []; cards = []; giftErr = !denied && /permission/i.test(e.code || e.message); }
+}
+async function cardCreate(p) {
+  const montant = r2(p.montant);
+  if (!(montant >= 1 && montant <= 5000)) throw new Error('montant');
+  const rec = { montant, solde: montant, pour: String(p.pour || '').slice(0, 60), de: String(p.de || '').slice(0, 60), message: String(p.message || '').slice(0, 200),
+    expire: addMonths(today(), giftMonths()), statut: 'active', ref: String(p.ref || ''), historique: '[]' };
+  let code = newCode();
+  if (DEMO) { cards.unshift({ ...rec, id: code, at: new Date() }); return code; }
+  try {
+    const { Fs, db } = await fb();
+    for (let i = 0; i < 5 && (await Fs.getDoc(Fs.doc(db, 'qt_cartes', code))).exists(); i++) code = newCode();
+    await Fs.setDoc(Fs.doc(db, 'qt_cartes', code), { ...rec, at: Fs.serverTimestamp() });
+    cards.unshift({ ...rec, id: code, at: new Date() });
+  } catch (e) {
+    cards.unshift({ ...rec, id: code, at: new Date().toISOString(), local: true }); saveLocalCards();
+  }
+  return code;
+}
+async function cardPatch(code, data) {
+  const c = cards.find(x => x.id === code); if (c) Object.assign(c, data);
+  if (DEMO) return;
+  if (c && c.local) return saveLocalCards();
+  const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_cartes', code), { ...data, updated: Fs.serverTimestamp() }, { merge: true });
+}
+async function giftPatch(id, data) {
+  const g = gifts.find(x => x.id === id); if (g) Object.assign(g, data);
+  if (DEMO) return;
+  const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_cadeaux', id), { ...data, updated: Fs.serverTimestamp() }, { merge: true });
+}
+async function giftDel(id) { gifts = gifts.filter(x => x.id !== id); if (DEMO) return; const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_cadeaux', id)); }
+/* Lien de paiement à envoyer soi-même (commande sans paiement en ligne, ou paiement abandonné). */
+function giftPayUrl(g) {
+  if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(site.cadeauPaypal || '')) {
+    const back = new URL('../cadeau/', location.href).href;
+    return 'https://www.paypal.com/cgi-bin/webscr?' + new URLSearchParams({ cmd: '_xclick', business: site.cadeauPaypal, item_name: `Carte cadeau QuenTools ${g.montant} € (pour ${g.pour})`, item_number: g.id, invoice: g.id,
+      amount: String(g.montant), currency_code: 'EUR', no_shipping: '1', lc: 'FR', charset: 'utf-8', return: back + '?merci=' + g.id, cancel_return: back });
+  }
+  if (/^https:\/\/(buy|checkout)\.stripe\.com\//.test(site.cadeauStripe || '')) { const u = new URL(site.cadeauStripe); u.searchParams.set('client_reference_id', g.id); u.searchParams.set('prefilled_email', g.email); return u.toString(); }
+  return '';
+}
+function giftMail(c, g) {
+  const to = g ? (g.envoi === 'destinataire' && g.destEmail ? g.destEmail : g.email) : '', toDest = !!(g && g.envoi === 'destinataire' && g.destEmail) || !g;
+  const subject = `🎁 Une carte cadeau QuenTools${c.pour ? ' pour ' + c.pour : ''}`;
+  const body = toDest
+    ? `Bonjour${c.pour ? ' ' + c.pour : ''},\n\n${c.de ? c.de + ' vous offre' : 'Voici'} une carte cadeau QuenTools de ${eur2(c.montant)} !${c.message ? `\n\n« ${c.message} »` : ''}\n\nVoir la carte : ${cardUrl(c.id)}\nCode : ${c.id}\nValable jusqu’au ${frDate(c.expire)} sur toutes les prestations QuenTools : site internet, outil sur mesure, améliorations et maintenance.\n\nPour l’utiliser, il suffit de demander un devis en indiquant ce code : le montant est déduit, en une ou plusieurs fois.\n\nBelle journée,\nQuenTools`
+    : `Bonjour ${first(g.nom)},\n\nMerci pour votre achat ! Voici la carte cadeau de ${eur2(c.montant)} pour ${c.pour}, prête à imprimer ou à transférer :\n${cardUrl(c.id)}\n\nCode : ${c.id}\nValable jusqu’au ${frDate(c.expire)} sur toutes les prestations QuenTools.\nPour l’utiliser, ${c.pour} demande un devis en indiquant ce code : le montant est déduit.\n\nBelle journée,\nQuenTools`;
+  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+function payMail(g) {
+  const u = giftPayUrl(g);
+  const body = `Bonjour ${first(g.nom)},\n\nMerci pour votre commande d’une carte cadeau QuenTools de ${eur2(g.montant)} pour ${g.pour} (réf. ${g.id}).\n\n${u ? 'Voici le lien de paiement sécurisé :\n' + u : 'Vous pouvez régler par virement ou PayPal : je vous indique les coordonnées en réponse à ce message.'}\n\nDès le paiement reçu, ${g.envoi === 'destinataire' ? 'la carte est envoyée à ' + g.destEmail + (g.dateEnvoi ? ' le ' + frDate(g.dateEnvoi) : '') : 'je vous envoie la carte'}.\n\nBelle journée,\nQuenTools`;
+  return `mailto:${encodeURIComponent(g.email)}?subject=${encodeURIComponent('Votre carte cadeau QuenTools : lien de paiement')}&body=${encodeURIComponent(body)}`;
+}
+function viewGifts() {
+  const rulesNote = giftErr ? `<div class="notice warn" style="margin-bottom:var(--s-4)"><b>Mode sans base de données.</b> Les cartes que vous créez ici sont gardées sur cet appareil (navigateur) et leur lien contient leurs données ; les commandes du site ne sont pas reçues. Pour tout activer, publiez les règles de l’onglet <b>Règles</b> dans Firebase. <button class="btn btn-sm btn-ghost" data-tab="regles">Voir les règles</button> <button class="btn btn-sm btn-ghost" data-do="reload">J’ai publié les règles</button></div>` : '';
+  if (giftErr) gFilter = 'cartes';
+  const wait = gifts.filter(g => (g.status || 'attente') === 'attente'), live = cards.filter(cardLive);
+  const sold = gifts.filter(g => g.status === 'payee').reduce((s, g) => s + (+g.montant || 0), 0), used = cards.reduce((s, c) => s + hist(c).reduce((t, h) => t + (+h.m || 0), 0), 0);
+  const noPay = !giftPayUrl({ id: 'X', montant: 1, pour: '', email: '' });
+  const kpis = `<div class="kpis"><div><b>${wait.length}</b><span>commande${wait.length > 1 ? 's' : ''} à vérifier (${eur2(wait.reduce((s, g) => s + (+g.montant || 0), 0))})</span></div>
+    <div><b>${eur2(sold)}</b><span>cartes vendues</span></div><div><b>${eur2(live.reduce((s, c) => s + (+c.solde || 0), 0))}</b><span>à honorer (${live.length} carte${live.length > 1 ? 's' : ''} active${live.length > 1 ? 's' : ''})</span></div>
+    <div><b>${eur2(used)}</b><span>déjà utilisés</span></div></div>`;
+  const warn = (site.cadeauOn === false ? '<div class="notice warn" style="margin-bottom:var(--s-4)">La vente est fermée : la page <b>/cadeau/</b> affiche « bientôt disponible ». Réouverture dans <b>Réglages du site</b>.</div>' : '')
+    + (noPay ? '<div class="notice warn" style="margin-bottom:var(--s-4)">Aucun paiement en ligne réglé : les commandes arrivent ici et vous envoyez le lien de paiement vous-même. Ajoutez votre adresse PayPal ou un lien Stripe dans <b>Réglages du site → Cartes cadeaux</b>.</div>' : '');
+  const fl = [['attente', 'À vérifier', wait.length], ['cartes', 'Cartes émises', cards.length], ['commandes', 'Toutes les commandes', gifts.length]];
+  const bar = `<div class="filters">${fl.map(([k, l, n]) => `<button data-do="gf-filter" data-k="${k}" aria-pressed="${gFilter === k}">${l} <span class="n">${n}</span></button>`).join('')}</div>
+    <div class="filters"><input type="search" id="gq" placeholder="Code, prénom, e-mail…" value="${esc(gq)}" aria-label="Rechercher une carte"><a class="btn btn-sm btn-ghost" href="../cadeau/" target="_blank" rel="noopener">Voir la page publique</a></div>`;
+  const newForm = `<details class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"><summary style="cursor:pointer;font-weight:700;padding:6px 0">+ Offrir une carte (concours, geste commercial…)</summary>
+    <div class="ag-form" id="cd-new" style="margin-top:var(--s-3)"><div class="row3"><input name="montant" type="number" min="1" max="5000" step="1" inputmode="numeric" placeholder="Montant (€)" aria-label="Montant"><input name="pour" maxlength="60" placeholder="Pour (prénom)" aria-label="Pour"><input name="de" maxlength="60" value="QuenTools" placeholder="De la part de" aria-label="De la part de"></div>
+      <textarea name="message" maxlength="200" placeholder="Petit mot (facultatif)" aria-label="Petit mot"></textarea>
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="cd-new">Créer la carte</button><span class="muted" style="font-size:var(--t-xs);align-self:center">Valable ${giftMonths()} mois. Vous obtenez le lien à envoyer.</span></div></div></details>`;
+  const qq = gq.trim().toLowerCase(), match = (...a) => !qq || a.join(' ').toLowerCase().includes(qq);
+  const orderCard = g => { const st = g.status || 'attente', c = g.code && cards.find(x => x.id === g.code), exp = gOpen === g.id || st === 'attente';
+    return `<article class="card req" data-gid="${esc(g.id)}"><div class="req-sum"><button class="req-toggle" data-do="gf-open" aria-expanded="${exp}"><span class="req-top"><span class="chev" aria-hidden="true">▸</span><h3>🎁 ${esc(eur2(g.montant))} pour ${esc(g.pour)}</h3><span class="chip ${st === 'attente' ? 'st-nouveau' : st === 'payee' ? 'st-gagne' : 'st-perdu'}">${esc(GIFT_ST[st] || st)}</span></span>
+      <span class="meta"><span class="chip">de ${esc(g.de)}</span><span class="chip">${esc(g.paiement === 'stripe' ? '💳 Stripe' : g.paiement === 'paypal' ? '🅿️ PayPal' : '✉️ lien à envoyer')}</span><span class="chip">${ms(g.at) ? new Date(ms(g.at)).toLocaleDateString('fr-FR') : ''}</span><span class="chip">réf. ${esc(g.id)}</span>${g.code ? `<span class="chip">${esc(g.code)}</span>` : ''}</span></button></div>
+      ${exp ? `<div class="req-body"><div class="who">Acheteur : <b>${esc(g.nom)}</b> · ✉️ ${esc(g.email)}</div>
+        <div class="who">Envoi : ${g.envoi === 'destinataire' ? `directement à <b>${esc(g.destEmail)}</b>${g.dateEnvoi ? ' le <b>' + esc(frDate(g.dateEnvoi)) + '</b>' : ''}` : 'à l’acheteur, qui l’offre lui-même'}</div>
+        ${g.message ? `<p class="need">« ${esc(g.message)} »</p>` : ''}
+        ${st === 'attente' ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Vérifiez dans ${g.paiement === 'stripe' ? '<a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">Stripe</a>' : '<a href="https://www.paypal.com/myaccount/transactions" target="_blank" rel="noopener">PayPal</a>'} qu’un paiement de <b>${esc(eur2(g.montant))}</b> (réf. ${esc(g.id)}) est bien arrivé, puis créez la carte.</p>` : ''}
+        <div class="row">${st === 'attente' ? `<button class="btn btn-sm btn-accent" data-do="gf-paid">✅ Paiement reçu : créer la carte</button><a class="btn btn-sm btn-ghost" href="${esc(payMail(g))}">Envoyer le lien de paiement</a><button class="btn btn-sm btn-ghost" data-do="gf-cancel">Annuler</button>` : ''}
+          ${c ? `<a class="btn btn-sm btn-accent" href="${esc(giftMail(c, g))}">✉️ Envoyer la carte${g.envoi === 'destinataire' ? ' à ' + esc(first(g.pour)) : ''}</a><a class="btn btn-sm btn-ghost" href="${esc(cardUrl(c.id))}" target="_blank" rel="noopener">Voir la carte</a><button class="btn btn-sm btn-ghost" data-do="gf-card">Gérer la carte</button>` : ''}
+          ${st === 'annulee' ? '<button class="btn btn-sm btn-ghost" data-do="gf-reopen">Remettre à vérifier</button>' : ''}
+          <button class="btn btn-sm btn-ghost" data-do="gf-del" style="margin-left:auto">Supprimer</button></div></div>` : ''}</article>`; };
+  const cardCard = c => { const [sl, sc] = cardState(c), h = hist(c), g = gifts.find(x => x.code === c.id), exp = gOpen === c.id;
+    return `<article class="card req" data-code="${esc(c.id)}"><div class="req-sum"><button class="req-toggle" data-do="cd-open" aria-expanded="${exp}"><span class="req-top"><span class="chev" aria-hidden="true">▸</span><h3 style="font-family:var(--f-mono);letter-spacing:.04em">${esc(c.id)}</h3><span class="chip ${sc}">${sl}</span></span>
+      <span class="meta"><span class="chip">💶 ${esc(eur2(c.solde))} / ${esc(eur2(c.montant))}</span>${c.pour ? `<span class="chip">pour ${esc(c.pour)}</span>` : ''}<span class="chip">jusqu’au ${esc(new Date(c.expire + 'T12:00').toLocaleDateString('fr-FR'))}</span>${c.ref ? '' : '<span class="chip">offerte</span>'}</span></button></div>
+      ${exp ? `<div class="req-body">${c.message ? `<p class="need">« ${esc(c.message)} »</p>` : ''}
+        ${h.length ? `<div class="thread">${h.map(x => `<div class="msg systeme">${esc(new Date(x.d + 'T12:00').toLocaleDateString('fr-FR'))} · − ${esc(eur2(x.m))}${x.n ? ' · ' + esc(x.n) : ''}</div>`).join('')}</div>` : '<p class="muted" style="margin:0;font-size:var(--t-sm)">Pas encore utilisée.</p>'}
+        ${cardLive(c) ? `<div class="row3"><input data-cd="m" type="number" min="0.01" max="${esc(c.solde)}" step="0.01" inputmode="decimal" placeholder="Montant utilisé (€)" aria-label="Montant utilisé"><input data-cd="n" maxlength="120" placeholder="Pour quoi ? Ex. devis site vitrine" aria-label="Pour quoi"><button class="btn btn-sm btn-accent" data-do="cd-use">Déduire</button></div>` : ''}
+        <div class="row"><a class="btn btn-sm btn-ghost" href="${esc(giftMail(c, g))}">✉️ Envoyer</a><button class="btn btn-sm btn-ghost" data-do="cd-copy">Copier le lien</button><a class="btn btn-sm btn-ghost" href="${esc(cardUrl(c.id))}" target="_blank" rel="noopener">Voir / imprimer</a>
+          ${c.statut === 'annulee' ? '<button class="btn btn-sm btn-ghost" data-do="cd-on" style="margin-left:auto">Réactiver</button>' : `${c.expire < today() ? '<button class="btn btn-sm btn-ghost" data-do="cd-extend">Prolonger de 3 mois</button>' : ''}<button class="btn btn-sm btn-ghost" data-do="cd-off" style="margin-left:auto">Annuler la carte</button>`}</div></div>` : ''}</article>`; };
+  let list;
+  if (gFilter === 'cartes') list = cards.filter(c => match(c.id, c.pour, c.de, c.ref, (gifts.find(g => g.code === c.id) || {}).email)).map(cardCard);
+  else list = gifts.filter(g => (gFilter === 'commandes' || (g.status || 'attente') === 'attente') && match(g.id, g.code, g.pour, g.de, g.nom, g.email, g.destEmail)).map(orderCard);
+  return rulesNote + warn + kpis + bar + (gFilter === 'cartes' ? newForm : '') + (list.length ? list.join('') : `<div class="card empty">${gFilter === 'attente' ? 'Aucune commande à vérifier. Elles arrivent ici dès qu’un visiteur achète une carte sur <b>/cadeau/</b>.' : gFilter === 'cartes' ? 'Aucune carte émise pour l’instant.' : 'Aucune commande pour l’instant.'}</div>`);
+}
+
 /* ---------- Écrans ---------- */
 const toast = (m, warn) => { const n = document.getElementById('toast'); if (!n) return; n.innerHTML = `<div class="notice${warn ? ' warn' : ''}">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => n.innerHTML = '', 3500); };
+const NAV = [
+  ['Activité', [['demandes', 'Demandes', 'M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z'], ['agenda', 'Agenda', 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4'], ['estimer', 'Devis', 'M7 3h8l4 4v14H7zM14 3v5h5M10 13h6M10 17h6']]],
+  ['Gestion', [['clients', 'Sites clients', 'M5 11h14v10H5zM8 11V8a4 4 0 0 1 8 0v3'], ['cadeaux', 'Cartes cadeaux', 'M3 9h18v4H3zM5 13v8h14v-8M12 9v12M12 9c-2-4-6-3-5 0 1 2 5 0 5 0zM12 9c2-4 6-3 5 0-1 2-5 0-5 0z'], ['contacts', 'Contacts', 'M4 20c0-4 3.500-6 8-6s8 2 8 6M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'], ['stats', 'Chiffres', 'M5 20V10M12 20V4M19 20v-7']]],
+  ['Site', [['site', 'Réglages du site', 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18'], ['liens', 'Raccourcis', 'M14 4h6v6M20 4l-9 9M10 6H5v13h13v-5'], ['regles', 'Règles de sécurité', 'M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z']]]];
+const TITLES = {
+  demandes: ['Demandes', 'Les projets qui arrivent, de la première demande à la livraison.'],
+  agenda: ['Agenda', 'Appels, travail sur les projets, rendez-vous et rappels.'],
+  estimer: ['Devis', 'Estimez un prix, composez le devis avec un template et ses options, puis publiez-le chez le client.'],
+  clients: ['Sites clients', 'Suivez les paiements, verrouillez un site tant que le solde n’est pas réglé, relancez en un clic.'],
+  cadeaux: ['Cartes cadeaux', 'Commandes à valider et cartes émises.'],
+  contacts: ['Contacts', 'Les adresses laissées sur le site.'],
+  stats: ['Chiffres', 'Ce que rapportent les demandes et les devis.'],
+  site: ['Réglages du site', 'Bandeau d’annonce, disponibilité, coordonnées et informations sur les devis.'],
+  liens: ['Raccourcis', 'Les services que vous utilisez, en un clic.'],
+  regles: ['Règles de sécurité', 'À coller une fois dans Firebase pour protéger les données.']
+};
 function shell(body) {
-  const nb = items.filter(x => (x.status || 'nouveau') === 'nouveau').length;
-  const t = (k, l) => `<button role="tab" data-tab="${k}" aria-selected="${tab === k}">${l}</button>`;
-  app.innerHTML = `<div class="adm-head"><div><span class="eyebrow">Tableau de bord</span><h1 class="h-section" style="margin:var(--s-2) 0 0">Bonjour 👋</h1></div>
-    <div class="row" style="display:flex;gap:8px;align-items:center"><span class="muted" style="font-size:var(--t-xs)">${esc(DEMO ? 'Démonstration' : user && user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></div>
-    <div class="tabs" role="tablist">${t('demandes', `Demandes${nb ? `<span class="count">${nb}</span>` : ''}`)}${t('estimer', 'Estimer un prix')}${t('site', 'Réglages du site')}${t('liens', 'Raccourcis')}</div>
-    <div id="toast" role="status" aria-live="polite"></div>${body}`;
+  const nb = items.filter(x => (x.status || 'nouveau') === 'nouveau').length, na = agLate().length + agToday().length, ng = gifts.filter(g => (g.status || 'attente') === 'attente').length;
+  document.title = (nb ? `(${nb}) ` : '') + 'Administration · QuenTools';
+  const counts = { demandes: nb, agenda: na, clients: clLate().length, cadeaux: ng, regles: rulesOld ? '!' : 0 };
+  const t = ([k, l, ic]) => `<button type="button" data-tab="${k}"${tab === k ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ic}"/></svg>${l}${counts[k] ? `<span class="count">${counts[k]}</span>` : ''}</button>`;
+  const [h1, sub] = TITLES[tab] || TITLES.demandes;
+  app.innerHTML = `<div class="adm"><aside class="side" aria-label="Sections">${NAV.map(([g, list]) => `<div class="side-grp"><p class="side-g">${g}</p><nav>${list.map(t).join('')}</nav></div>`).join('')}</aside>
+    <div class="adm-main"><header class="adm-top"><div><h1>${h1}</h1><p class="muted">${sub}</p></div>
+      <div class="adm-who"><span>${esc(DEMO ? 'Démonstration' : user && user.email)}</span>${DEMO ? '' : '<button class="btn btn-sm btn-ghost" data-do="logout">Se déconnecter</button>'}</div></header>
+    <div id="toast" role="status" aria-live="polite"></div>${body}</div></div>`;
 }
 function render() {
-  shell(tab === 'demandes' ? viewRequests() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : viewLinks());
+  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'cadeaux' ? viewGifts() : tab === 'clients' ? viewClients() : viewLinks());
   if (tab === 'estimer') estimate();
 }
 
 function rulesText() {
   const mail = (user && user.email) || 'VOTRE_ADRESSE_GMAIL';
   return `function qtAdmin() { return request.auth != null && request.auth.token.email == '${mail}' && request.auth.token.email_verified == true; }
+function qtClient(d) { return request.auth != null && request.auth.token.email_verified == true && d.emailLower == request.auth.token.email.lower(); }
 match /qt_admin/{doc} { allow read: if true; allow write: if qtAdmin(); }
+match /qt_notes/{id} { allow read, write: if qtAdmin(); }
+match /qt_agenda/{id} { allow read, write: if qtAdmin(); }
+match /qt_leads/{id} {
+  allow create, update: if request.auth != null && request.auth.token.email_verified == true && id == request.auth.token.email.lower()
+    && request.resource.data.keys().hasOnly(['email','name','at','source','consent'])
+    && request.resource.data.consent == true && request.resource.data.at is timestamp
+    && request.resource.data.email == request.auth.token.email;
+  allow read, delete: if qtAdmin();
+}
+match /qt_cadeaux/{id} {
+  allow create: if id.matches('^CC[A-Z0-9]{6}$')
+    && request.resource.data.keys().hasOnly(['montant','pour','de','message','nom','email','emailLower','envoi','destEmail','dateEnvoi','paiement','status','at'])
+    && request.resource.data.status == 'attente' && request.resource.data.at is timestamp
+    && request.resource.data.montant is int && request.resource.data.montant >= 20 && request.resource.data.montant <= 2000
+    && request.resource.data.pour is string && request.resource.data.pour.size() > 0 && request.resource.data.pour.size() <= 60
+    && request.resource.data.de is string && request.resource.data.de.size() > 0 && request.resource.data.de.size() <= 60
+    && request.resource.data.message is string && request.resource.data.message.size() <= 200
+    && request.resource.data.nom is string && request.resource.data.nom.size() > 0 && request.resource.data.nom.size() <= 120
+    && request.resource.data.email is string && request.resource.data.email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$') && request.resource.data.email.size() <= 160
+    && request.resource.data.emailLower == request.resource.data.email.lower()
+    && request.resource.data.envoi in ['moi','destinataire']
+    && request.resource.data.destEmail is string && request.resource.data.destEmail.size() <= 160
+    && request.resource.data.dateEnvoi is string && request.resource.data.dateEnvoi.size() <= 10
+    && request.resource.data.paiement in ['paypal','stripe','manuel'];
+  allow read, update, delete: if qtAdmin();
+}
+match /qt_cartes/{code} { allow get: if true; allow list, create, update, delete: if qtAdmin(); }
 match /qt_devis/{id} {
-  allow create: if request.resource.data.keys().hasOnly(['type','besoin','delai','budget','nom','email','tel','status','at'])
+  allow create: if request.resource.data.keys().hasOnly(['type','besoin','delai','budget','nom','email','emailLower','tel','status','at'])
     && request.resource.data.status == 'nouveau' && request.resource.data.at is timestamp
     && request.resource.data.besoin is string && request.resource.data.besoin.size() >= 20 && request.resource.data.besoin.size() <= 3000
     && request.resource.data.nom is string && request.resource.data.nom.size() > 0 && request.resource.data.nom.size() <= 120
     && request.resource.data.email is string && request.resource.data.email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$') && request.resource.data.email.size() <= 160
+    && (!('emailLower' in request.resource.data) || request.resource.data.emailLower == request.resource.data.email.lower())
     && request.resource.data.type is string && request.resource.data.type.size() <= 40
     && request.resource.data.delai is string && request.resource.data.delai.size() <= 40
     && request.resource.data.budget is string && request.resource.data.budget.size() <= 40
     && request.resource.data.tel is string && request.resource.data.tel.size() <= 30;
-  allow read, update, delete: if qtAdmin();
+  allow read: if qtAdmin() || qtClient(resource.data);
+  allow update: if qtAdmin() || (qtClient(resource.data)
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reponse','reponseAt','clientMsgAt'])
+    && request.resource.data.get('reponse', '') in ['', 'accepte', 'refuse']);
+  allow delete: if qtAdmin();
+  match /messages/{mid} {
+    allow read: if qtAdmin() || qtClient(get(/databases/$(database)/documents/qt_devis/$(id)).data);
+    allow create: if request.resource.data.keys().hasOnly(['from','text','at'])
+      && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000
+      && request.resource.data.at is timestamp
+      && ((qtAdmin() && request.resource.data.from in ['admin','systeme'])
+        || (qtClient(get(/databases/$(database)/documents/qt_devis/$(id)).data) && request.resource.data.from == 'client'));
+    allow update, delete: if qtAdmin();
+  }
 }`;
 }
-
+function viewRules() {
+  return `<section class="card" style="padding:clamp(20px,4vw,36px)"><h2 style="margin-top:0">Règles de sécurité Firestore</h2>
+    <p>À coller dans Firebase pour activer l’espace client et le suivi complet : ouvrez <a href="https://console.firebase.google.com/project/${esc(C.firebase.projectId)}/firestore/rules" target="_blank" rel="noopener">les règles</a>, remplacez le bloc <code>match /qt_…</code> existant par celui-ci (gardez les règles des autres applications), puis cliquez sur « Publier ».</p>
+    ${rulesOld ? '<div class="notice warn" style="margin-bottom:var(--s-4)">Les règles actuelles ne contiennent pas encore les notes privées : mettez-les à jour.</div>' : ''}
+    <pre class="rules">${esc(rulesText())}</pre><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="copy-rules">Copier les règles</button></div></section>`;
+}
 function viewRequests() {
   if (denied) return `<section class="card" style="padding:var(--s-6)"><h2>Une étape à faire une seule fois</h2>
-    <p>Pour recevoir les demandes ici, Firebase doit savoir que vous êtes le propriétaire. Ouvrez <a href="https://console.firebase.google.com/project/${esc(C.firebase.projectId)}/firestore/rules" rel="noopener">Firebase → Firestore → Règles</a>, collez ce bloc à l’intérieur de <code>match /databases/{database}/documents { … }</code> (à côté des règles de Wouf), puis « Publier ».</p>
-    <pre class="rules">${esc(rulesText())}</pre><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="copy-rules">Copier les règles</button><button class="btn btn-ghost" data-do="reload">J’ai publié, recharger</button></div></section>`;
-  const act = x => !['gagne', 'perdu'].includes(x.status || 'nouveau');
-  const month = Date.now() - 30 * 864e5;
-  const won = items.filter(x => x.status === 'gagne'), closed = items.filter(x => ['gagne', 'perdu'].includes(x.status));
-  const kpis = `<div class="kpis"><div><b>${items.filter(x => (x.status || 'nouveau') === 'nouveau').length}</b><span>nouvelles demandes</span></div>
+    <p>Pour recevoir les demandes ici, Firebase doit savoir que vous êtes le propriétaire. Ouvrez l’onglet <b>Règles</b> et suivez les instructions.</p>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-tab="regles">Voir les règles</button><button class="btn btn-ghost" data-do="reload">J’ai publié les règles</button></div></section>`;
+  const st0 = x => x.status || 'nouveau', act = x => !['livre', 'perdu'].includes(st0(x));
+  const month = Date.now() - 30 * 864e5, day = 864e5;
+  const won = items.filter(x => WON.includes(st0(x))), closed = items.filter(x => [...WON, 'perdu'].includes(st0(x)));
+  const relance = items.filter(x => st0(x) === 'envoye' && !x.reponse && Date.now() - (ms(x.updated) || ms(x.at)) > 7 * day);
+  const retard = items.filter(x => st0(x) === 'nouveau' && Date.now() - ms(x.at) > 2 * day);
+  const echus = items.filter(x => x.echeance && act(x) && Date.parse(x.echeance) <= Date.now() + day);
+  const msgs = items.filter(x => ms(x.clientMsgAt) > ms(x.seenAt));
+  const kpis = `<div class="kpis"><div><b>${items.filter(x => st0(x) === 'nouveau').length}</b><span>nouvelles demandes${retard.length ? ` (dont ${retard.length} sans réponse depuis 48 h)` : ''}</span></div>
     <div><b>${items.filter(x => ms(x.at) > month).length}</b><span>demandes sur 30 jours</span></div>
     <div><b>${closed.length ? Math.round(100 * won.length / closed.length) + ' %' : '—'}</b><span>taux de réussite</span></div>
-    <div><b>${eur(won.reduce((s, x) => s + (+x.montant || 0), 0))}</b><span>gagné (${eur(items.filter(x => x.status === 'envoye').reduce((s, x) => s + (+x.montant || 0), 0))} en attente)</span></div></div>`;
+    <div><b>${eur(won.reduce((s, x) => s + (+x.montant || 0), 0))}</b><span>acceptés (${eur(items.filter(x => st0(x) === 'envoye').reduce((s, x) => s + (+x.montant || 0), 0))} en attente)</span></div></div>`;
+  const todo = [clLate().length && `<button class="flag" data-tab="clients">💶 ${clLate().length} site${clLate().length > 1 ? 's' : ''} client${clLate().length > 1 ? 's' : ''} en retard de paiement</button>`, agLate().length && `<button class="flag" data-tab="agenda">⚠️ ${agLate().length} tâche${agLate().length > 1 ? 's' : ''} en retard dans l’agenda</button>`,
+    agToday().length && `<button class="flag" data-tab="agenda">📅 ${agToday().length} à faire aujourd’hui</button>`,
+    msgs.length && `<span class="flag">💬 ${msgs.length} nouveau${msgs.length > 1 ? 'x' : ''} message${msgs.length > 1 ? 's' : ''} client</span>`,
+    relance.length && `<span class="flag">⏰ ${relance.length} devis à relancer (plus de 7 jours)</span>`,
+    echus.length && `<span class="flag">📅 ${echus.length} échéance${echus.length > 1 ? 's' : ''} proche${echus.length > 1 ? 's' : ''}</span>`,
+    items.filter(x => x.reponse === 'accepte' && st0(x) === 'envoye').length && `<span class="flag">✅ devis accepté par le client : à confirmer</span>`].filter(Boolean);
+  const upcoming = agEntries().filter(a => !a.done && a.date >= today()).slice(0, 3);
+  const up = upcoming.length ? `<div class="up-list" aria-label="À venir">${upcoming.map(a => { const k = KINDS[a.kind] || KINDS.rappel, y = a.devisId && items.find(i => i.id === a.devisId);
+    return `<div class="card up"><div style="min-width:0"><span class="ag-when">${k[0]} ${esc(k[1])} · ${esc(inTxt(a))}</span><b class="ag-title">${esc(a.titre)}</b></div>
+      <div class="ag-act">${y && y.tel ? `<a class="btn btn-sm btn-accent" href="tel:${esc(String(y.tel).replace(/[^\d+]/g, ''))}">Appeler</a>` : ''}<button class="btn btn-sm btn-ghost" data-tab="agenda">Agenda</button></div></div>`; }).join('')}</div>` : '';
+  const cnt = k => k === 'actifs' ? items.filter(act).length : k === 'tous' ? items.length : items.filter(x => st0(x) === k).length;
   const fl = [['actifs', 'À traiter'], ...STATUS, ['tous', 'Toutes']];
-  const filters = `<div class="filters">${fl.map(([k, l]) => `<button data-filter="${k}" aria-pressed="${filter === k}">${l}</button>`).join('')}<input type="search" id="q" placeholder="Rechercher un nom, un e-mail…" value="${esc(q)}" aria-label="Rechercher"></div>`;
+  const filters = `<div class="filters">${fl.map(([k, l]) => `<button data-filter="${k}" aria-pressed="${filter === k}">${l} <span class="n">${cnt(k)}</span></button>`).join('')}</div>
+    <div class="filters"><input type="search" id="q" placeholder="Rechercher un nom, un mot…" value="${esc(q)}" aria-label="Rechercher"><button class="btn btn-sm btn-ghost" data-do="exp-all">${items.some(x => !expd.has(x.id)) ? 'Tout déplier' : 'Tout replier'}</button><button class="btn btn-sm btn-ghost" data-do="csv-demandes">Exporter (CSV)</button></div>`;
   const qq = q.trim().toLowerCase();
-  const list = items.filter(x => filter === 'tous' ? true : filter === 'actifs' ? act(x) : (x.status || 'nouveau') === filter)
+  const list = items.filter(x => filter === 'tous' ? true : filter === 'actifs' ? act(x) : st0(x) === filter)
     .filter(x => !qq || [x.nom, x.email, x.besoin, x.type, x.note].join(' ').toLowerCase().includes(qq));
-  const card = x => { const st = x.status || 'nouveau', d = ms(x.at);
+  const thread = x => { const t = threads[x.id];
+    return `<div class="thread">${!t ? '<span class="muted">Chargement…</span>' : t.length ? t.map(m => `<div class="msg ${esc(m.from)}"><small>${m.from === 'client' ? 'Client' : m.from === 'admin' ? 'Vous' : 'Suivi'} · ${ms(m.at) ? new Date(ms(m.at)).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</small>${esc(m.text)}</div>`).join('') : '<span class="muted">Aucun échange pour l’instant.</span>'}
+      <select data-tpl aria-label="Réponse type"><option value="">Réponse type…</option><option value="recu">Demande reçue</option><option value="cadrage">Questions pour le devis</option><option value="appel">Proposer un appel</option><option value="devis">Devis envoyé</option><option value="relance">Relance</option><option value="demarrage">Démarrage du projet</option><option value="livraison">Livraison</option></select>
+      <textarea data-msg placeholder="Votre message au client (visible dans son espace)" maxlength="2000" aria-label="Message au client"></textarea>
+      <div class="row"><button class="btn btn-sm btn-accent" data-do="send">Envoyer dans l’espace client</button></div></div>`; };
+  const card = x => { const st = st0(x), d = ms(x.at), nb = items.filter(i => String(i.email).toLowerCase() === String(x.email).toLowerCase()).length, unread = ms(x.clientMsgAt) > ms(x.seenAt);
+    const exp = expd.has(x.id) || openId === x.id || planFor === x.id;
+    const nx = agenda.filter(a => a.devisId === x.id && !a.done).sort((a, b) => (a.date + a.heure).localeCompare(b.date + b.heure))[0];
     return `<article class="card req" data-id="${esc(x.id)}">
-      <div class="req-top"><h3>${esc(x.nom)}</h3><span class="chip st-${st}">${stLabel(st)}</span></div>
-      <div class="meta"><span class="chip">${esc(x.type)}</span><span class="chip">⏱ ${esc(x.delai)}</span><span class="chip">💶 ${esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>` : ''}</div>
+      <div class="req-sum"><button class="req-toggle" data-do="exp" aria-expanded="${exp}"><span class="req-top"><span class="chev" aria-hidden="true">▸</span><h3>${esc(x.nom)}</h3><span class="chip st-${st}">${stLabel(st)}</span></span>
+        <span class="meta"><span class="chip">${esc(x.type)}</span>${(() => { const c = QTT.parse(x.besoin); return c.template ? `<span class="chip">🎨 ${esc(c.template.name)}${c.options.length ? ' + ' + c.options.length + ' option' + (c.options.length > 1 ? 's' : '') : ''}</span>` : ''; })()}<span class="chip">💶 ${x.montant ? eur(x.montant) : esc(x.budget)}</span>${d ? `<span class="chip">${new Date(d).toLocaleDateString('fr-FR')}</span>` : ''}${nx ? `<span class="chip">${(KINDS[nx.kind] || KINDS.rappel)[0]} ${esc(dayName(nx.date))}${nx.heure ? ' ' + esc(nx.heure) : ''}</span>` : ''}${x.devisData ? '<span class="chip">📄 devis</span>' : ''}${(() => { const gc = giftCode(x.besoin), cc = gc && cards.find(c => c.id === gc); return gc ? `<span class="flag">🎁 ${esc(gc)}${cc ? ' · ' + esc(eur2(cc.solde)) + ' dispo' : ' · code inconnu'}</span>` : ''; })()}${x.reponse === 'accepte' ? '<span class="flag">✅ Devis accepté</span>' : x.reponse === 'refuse' ? '<span class="flag">❌ Devis refusé</span>' : ''}${unread ? '<span class="flag">💬 Nouveau message</span>' : ''}</span>
+        ${exp ? '' : `<span class="excerpt">${esc(String(x.besoin).replace(/\s+/g, ' ').slice(0, 140))}</span>`}</button>
+        <div class="req-quick">${x.tel ? `<a class="btn btn-sm btn-ghost" href="tel:${esc(String(x.tel).replace(/[^\d+]/g, ''))}" aria-label="Appeler ${esc(x.nom)}">📞</a>` : ''}<button class="btn btn-sm btn-ghost" data-do="reply" aria-label="Écrire à ${esc(x.nom)}">✉️</button></div></div>
+      ${exp ? `<div class="req-body">
+      <div class="meta"><span class="chip">⏱ ${esc(x.delai)}</span><span class="chip">💶 ${esc(x.budget)}</span>${nb > 1 ? `<span class="chip">🔁 ${nb} demandes de ce client</span>` : ''}</div>
       <p class="need">${esc(x.besoin)}</p>
       <div class="who">✉️ ${esc(x.email)}${x.tel ? ` · 📞 ${esc(x.tel)}` : ''}</div>
-      <div class="row"><select data-field="status" aria-label="Statut">${STATUS.map(([k, l]) => `<option value="${k}"${k === st ? ' selected' : ''}>${l}</option>`).join('')}</select>
-        <input data-field="montant" type="number" min="0" step="50" inputmode="numeric" placeholder="Montant du devis (€)" value="${x.montant ?? ''}" style="width:190px" aria-label="Montant du devis"></div>
-      <textarea data-field="note" placeholder="Note privée (rappel, ce qui a été dit…)" aria-label="Note privée">${esc(x.note || '')}</textarea>
-      <div class="row"><button class="btn btn-sm btn-accent" data-do="reply">Répondre par e-mail</button>
-        ${x.tel ? `<a class="btn btn-sm btn-ghost" href="tel:${esc(String(x.tel).replace(/[^\d+]/g, ''))}">Appeler</a>` : ''}
-        <button class="btn btn-sm btn-ghost" data-do="estimate">Estimer</button><button class="btn btn-sm btn-ghost" data-do="copy">Copier</button>
-        <button class="btn btn-sm btn-ghost" data-do="del" style="margin-left:auto">Supprimer</button></div></article>`; };
-  return kpis + filters + (list.length ? list.map(card).join('') : `<div class="card empty">${items.length ? 'Aucune demande dans ce filtre.' : 'Aucune demande pour l’instant. Elles arrivent ici dès qu’un visiteur remplit le <a href="../devis/">formulaire de devis</a>.'}</div>`);
+      <div class="row3"><select data-field="status" aria-label="Statut">${STATUS.map(([k, l]) => `<option value="${k}"${k === st ? ' selected' : ''}>${l}</option>`).join('')}</select>
+        <input data-field="montant" type="number" min="0" step="50" inputmode="numeric" placeholder="Montant (€)" value="${x.montant ?? ''}" aria-label="Montant du devis en euros">
+        <input data-field="echeance" type="date" value="${esc(x.echeance || '')}" aria-label="Échéance (rappel privé)" title="Échéance (rappel privé)"></div>
+      <input data-field="lien" type="url" maxlength="400" placeholder="Lien du devis (visible client)" value="${esc(x.lien || '')}" aria-label="Lien du devis">
+      <textarea data-field="note" placeholder="Note privée (rappel, ce qui a été dit…) : jamais visible par le client" aria-label="Note privée">${esc(x.note || '')}</textarea>
+      <div class="row"><button class="btn btn-sm btn-accent" data-do="thread">${openId === x.id ? 'Masquer les échanges' : 'Échanges avec le client'}</button>
+        <button class="btn btn-sm btn-ghost" data-do="plan">${planFor === x.id ? 'Fermer' : 'Planifier'}</button><button class="btn btn-sm btn-ghost" data-do="estimate">${x.devisData || x.devisDraft ? 'Ouvrir le devis' : 'Faire le devis'}</button><button class="btn btn-sm btn-ghost" data-do="copy">Copier</button>
+        <button class="btn btn-sm btn-ghost" data-do="del" style="margin-left:auto">Supprimer</button></div>
+      ${planFor === x.id ? `<div class="thread">${agFormHtml({ kind: 'appel', date: addDays(today(), 1), heure: '10:00', duree: 15, titre: 'Appeler ' + x.nom, devisId: x.id }, 'plan-' + x.id)}<div class="row"><button class="btn btn-sm btn-accent" data-do="plan-save">Ajouter à l’agenda</button></div></div>` : ''}
+      ${openId === x.id ? thread(x) : ''}</div>` : ''}</article>`; };
+  return (rulesOld ? '<div class="notice warn" style="margin-bottom:var(--s-4)">Les règles Firebase ne sont pas à jour (notes privées, espace client) : ouvrez l’onglet <b>Règles</b>.</div>' : '') + kpis + (todo.length ? `<div class="row" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--s-4)">${todo.join('')}</div>` : '') + up + filters
+    + (list.length ? list.map(card).join('') : `<div class="card empty">${items.length ? 'Aucune demande dans ce filtre.' : 'Aucune demande pour l’instant. Elles arrivent ici dès qu’un visiteur remplit le formulaire de devis.'}</div>`);
 }
 
 let estFor = null;
@@ -186,17 +1016,19 @@ function viewEstimate() {
   const x = estFor && items.find(i => i.id === estFor);
   const opt = (v, l, sel) => `<option value="${esc(v)}"${sel ? ' selected' : ''}>${esc(l)}</option>`;
   const type = x && GRID[x.type] ? x.type : 'Site vitrine';
-  return `<section class="card" style="padding:clamp(20px,4vw,36px)">
-    ${x ? `<p class="muted" style="margin-top:0">Pour la demande de <b>${esc(x.nom)}</b> (budget indiqué : ${esc(x.budget)})</p>` : ''}
-    <form class="form" id="est" onsubmit="return false">
+  const pick = `<section class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"><label class="mini">Devis pour<select id="dv-for" aria-label="Demande concernée"><option value="">Devis libre (sans demande)</option>${items.filter(i => (i.status || 'nouveau') !== 'perdu' || i.id === estFor).map(i => `<option value="${esc(i.id)}"${i.id === estFor ? ' selected' : ''}>${esc(i.nom)} · ${esc(i.type)}${i.devisData ? ' · devis publié' : i.devisDraft ? ' · brouillon' : ''}</option>`).join('')}</select></label>
+    ${x ? `<p class="muted" style="margin:8px 0 0;font-size:var(--t-sm)">Budget indiqué par le client : <b>${esc(x.budget)}</b> · délai souhaité : ${esc(x.delai)}</p>` : ''}</section>`;
+  const est = `<details id="est-box" class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"${estOpen ? ' open' : ''}><summary style="cursor:pointer;font-weight:700;padding:6px 0">Estimer un prix conseillé</summary>
+    <form class="form" id="est" onsubmit="return false" style="margin-top:var(--s-3)">
       <div class="form-grid"><div class="field"><label for="e-type">Type de projet</label><select id="e-type">${Object.keys(GRID).map(k => opt(k, k, k === type)).join('')}</select></div>
         <div class="field"><label for="e-lvl">Ampleur</label><select id="e-lvl">${opt('simple', 'Simple (peu de pages ou d’écrans)')}${opt('standard', 'Standard', true)}${opt('avance', 'Avancée (beaucoup de fonctions)')}</select></div></div>
       <label class="check"><input type="checkbox" id="e-pay"> <span>Paiements en ligne et administration (+ ${eur(EXTRA_PAY[0])} à ${eur(EXTRA_PAY[1])})</span></label>
-      <label class="check"><input type="checkbox" id="e-maint"> <span>Maintenance mensuelle (${eur(MAINT[0])} à ${eur(MAINT[1])} par mois)</span></label>
+      <label class="check"><input type="checkbox" id="e-maint"> <span>Maintenance mensuelle (${eur2(MAINT)} par mois)</span></label>
     </form>
     <p class="muted" style="margin:var(--s-5) 0 0">Prix conseillé</p><div class="est-out" id="e-out"></div><p class="muted" id="e-sub" style="margin-top:0"></p>
-    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">${x ? '<button class="btn btn-accent" data-do="est-reply">Envoyer cette proposition</button><button class="btn btn-ghost" data-do="est-save">Noter ce montant sur la demande</button>' : ''}<button class="btn btn-ghost" data-do="est-copy">Copier le texte</button></div>
-    <p class="muted" style="font-size:var(--t-xs)">Fourchettes de la grille QuenTools (design/TARIFS.md). À ajuster selon le client : c’est une aide, pas un engagement.</p></section>`;
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="est-apply">Mettre ce prix dans le devis</button>${x ? '<button class="btn btn-ghost" data-do="est-reply">Envoyer cette proposition par e-mail</button><button class="btn btn-ghost" data-do="est-save">Noter ce montant</button>' : ''}<button class="btn btn-ghost" data-do="est-copy">Copier le texte</button></div>
+    <p class="muted" style="font-size:var(--t-xs)">Fourchettes de la grille QuenTools (design/TARIFS.md). À ajuster selon le client : c’est une aide, pas un engagement.</p></details>`;
+  return pick + est + dvHtml();
 }
 let estText = '', estMid = 0;
 function estimate() {
@@ -208,27 +1040,61 @@ function estimate() {
   estMid = r50((min + max) / 2);
   g('e-out').textContent = `${eur(min)} – ${eur(max)}`;
   const m = g('e-maint').checked;
-  g('e-sub').textContent = `Proposition équilibrée : ${eur(estMid)}${m ? ` + maintenance ${eur(MAINT[0])} à ${eur(MAINT[1])}/mois` : ''}`;
+  g('e-sub').textContent = `Proposition équilibrée : ${eur(estMid)}${m ? ` + maintenance ${eur2(MAINT)}/mois` : ''}`;
   const x = estFor && items.find(i => i.id === estFor), first = x ? String(x.nom).split(' ')[0] : '';
-  estText = `Bonjour${first ? ' ' + first : ''},\n\nMerci pour votre demande. D’après ce que vous m’avez décrit (${g('e-type').value.toLowerCase()}${g('e-pay').checked ? ', avec paiement en ligne et administration' : ''}), je vous propose une réalisation entre ${eur(min)} et ${eur(max)}, le prix exact étant fixé ensemble avant de commencer.${m ? `\nEn option, une maintenance (mises à jour, sauvegardes, petites évolutions) entre ${eur(MAINT[0])} et ${eur(MAINT[1])} par mois.` : ''}\n\nPour la suite : un court échange pour préciser le besoin, puis une première version à tester avant de vous engager sur le reste.\n\nBien à vous,\nQuenTools`;
+  estText = `Bonjour${first ? ' ' + first : ''},\n\nMerci pour votre demande. D’après ce que vous m’avez décrit (${g('e-type').value.toLowerCase()}${g('e-pay').checked ? ', avec paiement en ligne et administration' : ''}), je vous propose une réalisation entre ${eur(min)} et ${eur(max)}, le prix exact étant fixé ensemble avant de commencer.${m ? `\nEn option, une maintenance (mises à jour, sauvegardes, petites évolutions) de ${eur2(MAINT)} par mois.` : ''}\n\nPour la suite : un court échange pour préciser le besoin, puis une première version à valider avant la suite.\n\nBien à vous,\nQuenTools`;
+}
+
+function viewStats() {
+  const st0 = x => x.status || 'nouveau', won = items.filter(x => WON.includes(st0(x))), pend = items.filter(x => st0(x) === 'envoye'), closed = items.filter(x => [...WON, 'perdu'].includes(st0(x)));
+  const sum = a => a.reduce((s, x) => s + (+x.montant || 0), 0);
+  const months = Array.from({ length: 6 }, (_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 5 + i); return { key: isoDay(d).slice(0, 7), label: d.toLocaleDateString('fr-FR', { month: 'short' }), v: 0 }; });
+  won.forEach(x => { const m = months.find(z => z.key === isoDay(ms(x.at) || Date.now()).slice(0, 7)); if (m) m.v += +x.montant || 0; });
+  let remises = 0; items.forEach(x => { if (x.devisData && WON.includes(st0(x))) { try { const k = QTD.calc(JSON.parse(x.devisData)); remises += k.remise + k.remLines; } catch (e) { /* devis illisible */ } } });
+  const max = Math.max(1, ...months.map(m => m.v)), bw = 600 / months.length;
+  const svg = `<svg viewBox="0 0 600 200" role="img" aria-label="Chiffre d’affaires des devis acceptés, par mois" style="width:100%;height:auto;display:block">${months.map((m, i) => { const h = Math.round(140 * m.v / max), x = i * bw + bw * .18;
+    return `<rect x="${x}" y="${160 - h}" width="${bw * .64}" height="${h || 2}" rx="8" style="fill:${m.v ? 'var(--accent)' : 'var(--line-2)'}"/>${m.v ? `<text x="${x + bw * .32}" y="${152 - h}" text-anchor="middle" font-size="20" font-weight="700" style="fill:var(--ink)">${eur(m.v)}</text>` : ''}<text x="${x + bw * .32}" y="186" text-anchor="middle" font-size="20" style="fill:var(--muted)">${esc(m.label)}</text>`; }).join('')}</svg>`;
+  const fun = [['Demandes reçues', items.length], ['Devis envoyés', items.filter(x => ['envoye', ...WON, 'perdu'].includes(st0(x))).length], ['Acceptés', won.length], ['Livrés', items.filter(x => st0(x) === 'livre').length]];
+  const fmax = Math.max(1, fun[0][1]), types = {}; items.forEach(x => { const t = types[x.type] = types[x.type] || { n: 0, w: 0, v: 0 }; t.n++; if (WON.includes(st0(x))) { t.w++; t.v += +x.montant || 0; } });
+  return `<div class="kpis"><div><b>${eur(sum(won))}</b><span>acceptés au total</span></div><div><b>${won.length ? eur(sum(won) / won.length) : '—'}</b><span>panier moyen</span></div>
+      <div><b>${closed.length ? Math.round(100 * won.length / closed.length) + ' %' : '—'}</b><span>taux de réussite</span></div><div><b>${eur(sum(pend))}</b><span>en attente de réponse (${pend.length})</span></div></div>
+    <section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><h2 style="margin:0 0 var(--s-3);font-size:var(--t-lg)">Devis acceptés par mois</h2>${svg}<p class="muted" style="margin:var(--s-2) 0 0;font-size:var(--t-xs)">Classés par mois de la demande, sur 6 mois.</p></section>
+    <section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><h2 style="margin:0 0 var(--s-3);font-size:var(--t-lg)">De la demande à la livraison</h2>${fun.map(([l, n]) => `<div class="fun"><span>${l}</span><div><i style="width:${Math.round(100 * n / fmax)}%"></i></div><b>${n}</b></div>`).join('')}</section>
+    <section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><h2 style="margin:0 0 var(--s-3);font-size:var(--t-lg)">Par type de projet</h2>${Object.entries(types).sort((a, b) => b[1].n - a[1].n).map(([t, v]) => `<div class="fun" style="grid-template-columns:1fr"><span><b>${esc(t)}</b><br><span class="muted">${v.n} demande${v.n > 1 ? 's' : ''} · ${v.w} accepté${v.w > 1 ? 's' : ''}${v.v ? ' · ' + eur(v.v) : ''}</span></span></div>`).join('') || '<p class="muted">Pas encore de données.</p>'}
+      <p class="muted" style="margin:var(--s-3) 0 0;font-size:var(--t-sm)">Remises accordées sur les devis acceptés : <b>${eur(remises)}</b></p></section>`;
 }
 
 function viewSite() {
   const s = site || {}, v = k => esc(s[k] ?? '');
   return `<form class="form card" id="site-form" style="padding:clamp(20px,4vw,36px)" onsubmit="return false">
-    <h2 style="margin:0">Bandeau d’annonce</h2><p class="muted" style="margin:0">Une phrase en haut de l’accueil : promotion, nouvel outil, e-book…</p>
+    <h2 style="margin:0">Bandeau d’annonce</h2><p class="muted" style="margin:0">Une phrase en haut de l’accueil : promotion, nouvel outil, carte cadeau…</p>
     <label class="switch"><input type="checkbox" name="announceOn"${s.announceOn ? ' checked' : ''}> Afficher le bandeau</label>
-    <div class="field"><label for="s-a">Texte</label><input id="s-a" name="announce" maxlength="140" value="${v('announce')}" placeholder="Ex. Nouveau : l’e-book gratuit est disponible"></div>
-    <div class="field"><label for="s-u">Lien (facultatif)</label><input id="s-u" name="announceUrl" maxlength="300" value="${v('announceUrl')}" placeholder="ebook/ ou https://…"></div>
-    <h2 style="margin:var(--s-4) 0 0">Disponibilité</h2><p class="muted" style="margin:0">Remplace la pastille verte de l’accueil (vide = « 5 applications en ligne »).</p>
+    <div class="field"><label for="s-a">Texte</label><input id="s-a" name="announce" maxlength="140" value="${v('announce')}" placeholder="Ex. Nouveau : la carte cadeau est disponible"></div>
+    <div class="field"><label for="s-u">Lien (facultatif)</label><input id="s-u" name="announceUrl" maxlength="300" value="${v('announceUrl')}" placeholder="cadeau/ ou https://…"></div>
+    <h2 style="margin:var(--s-4) 0 0">Disponibilité</h2><p class="muted" style="margin:0">Remplace la pastille verte de l’accueil (vide = « 6 applications en ligne »).</p>
     <label class="switch"><input type="checkbox" name="available"${s.available !== false ? ' checked' : ''}> J’accepte de nouveaux projets</label>
     <div class="field"><label for="s-t">Texte de la pastille</label><input id="s-t" name="availText" maxlength="60" value="${v('availText')}" placeholder="Ex. 2 places pour novembre"></div>
     <h2 style="margin:var(--s-4) 0 0">Coordonnées</h2>
     <div class="form-grid"><div class="field"><label for="s-e">E-mail public</label><input id="s-e" name="email" type="email" maxlength="160" value="${v('email')}" placeholder="vide = bouton masqué"></div>
       <div class="field"><label for="s-k">Pseudo TikTok</label><input id="s-k" name="tiktok" maxlength="40" value="${v('tiktok')}" placeholder="${esc(C.tiktok || 'quentools')}"></div></div>
     <div class="field"><label for="s-f">Relais des demandes (facultatif)</label><input id="s-f" name="formEndpoint" maxlength="300" value="${v('formEndpoint')}" placeholder="https://…workers.dev/support"><small>Copie de chaque demande envoyée à ce relais (par ex. celui de Wouf). Les demandes arrivent ici dans tous les cas.</small></div>
+    <h2 style="margin:var(--s-4) 0 0">Cartes cadeaux</h2><p class="muted" style="margin:0">Page publique <a href="../cadeau/" target="_blank" rel="noopener">/cadeau/</a> ; les commandes arrivent dans l’onglet <b>Cadeaux</b>.</p>
+    <label class="switch"><input type="checkbox" name="cadeauOn"${s.cadeauOn !== false ? ' checked' : ''}> Vendre des cartes cadeaux</label>
+    <div class="form-grid"><div class="field"><label for="s-cp">Adresse PayPal qui reçoit les paiements</label><input id="s-cp" name="cadeauPaypal" type="email" maxlength="160" value="${v('cadeauPaypal')}" placeholder="vide = pas de PayPal"></div>
+      <div class="field"><label for="s-cs">Lien Stripe « montant libre » (facultatif)</label><input id="s-cs" name="cadeauStripe" maxlength="300" value="${v('cadeauStripe')}" placeholder="https://buy.stripe.com/…"></div></div>
+    <div class="form-grid"><div class="field"><label for="s-cm">Montants proposés (€)</label><input id="s-cm" name="cadeauMontants" maxlength="60" value="${v('cadeauMontants')}" placeholder="50, 100, 200, 300, 500"><small>Le client peut aussi choisir un autre montant (20 à 2 000 €).</small></div>
+      <div class="field"><label for="s-cv">Validité</label><select id="s-cv" name="cadeauMois">${[12, 18, 24, 36].map(n => `<option value="${n}"${(+s.cadeauMois || 12) === n ? ' selected' : ''}>${n} mois</option>`).join('')}</select></div></div>
+    <small class="muted">Sans PayPal ni Stripe, la commande arrive quand même : vous envoyez le lien de paiement depuis l’onglet Cadeaux. L’adresse PayPal est publique (elle apparaît de toute façon sur la page de paiement).</small>
     <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="save-site">Enregistrer</button><a class="btn btn-ghost" href="../" target="_blank" rel="noopener">Voir le site</a></div>
-    <p class="muted" style="font-size:var(--t-xs);margin:0">Visible par les visiteurs sous 10 minutes environ.</p></form>`;
+    <p class="muted" style="font-size:var(--t-xs);margin:0">Visible par les visiteurs sous 10 minutes environ.</p></form>
+    <form class="form card" id="seller-form" style="padding:clamp(20px,4vw,36px);margin-top:var(--s-5)" onsubmit="return false">
+    <h2 style="margin:0">Vos informations sur les devis</h2><p class="muted" style="margin:0">Privées : elles n’apparaissent que sur les devis que vous envoyez.</p>
+    ${(() => { const v = seller(), f = (n, l, ph) => `<div class="field"><label for="v-${n}">${l}</label><input id="v-${n}" name="${n}" maxlength="200" value="${esc(v[n] || '')}" placeholder="${esc(ph || '')}"></div>`;
+      return `<div class="form-grid">${f('marque', 'Nom commercial')}${f('titulaire', 'Titulaire (nom suivi de « EI »)')}${f('siren', 'SIREN ou SIRET')}${f('email', 'E-mail')}</div>
+      <div class="field"><label for="v-adresse">Adresse</label><textarea id="v-adresse" name="adresse" maxlength="300" rows="2">${esc(v.adresse || '')}</textarea></div>
+      <div class="field"><label for="v-paiement">Comment vous payer (repris dans les relances)</label><textarea id="v-paiement" name="paiement" maxlength="300" rows="2" placeholder="Ex. Virement : IBAN …, ou PayPal à …">${esc(v.paiement || '')}</textarea></div>
+      <div class="field"><label for="v-cond">Conditions affichées sur chaque devis</label><textarea id="v-cond" name="conditions" maxlength="1500" rows="5">${esc(v.conditions || '')}</textarea></div>`; })()}
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="save-seller">Enregistrer</button></div></form>`;
 }
 function viewLinks() {
   const L = [
@@ -250,18 +1116,245 @@ const mailto = (x, body) => `https://mail.google.com/mail/?view=cm&fs=1&to=${enc
 const openMail = url => { if (!window.open(url, '_blank', 'noopener')) location.href = url; };
 const fail = e => toast(/permission/i.test(e && (e.code || e.message)) ? 'Refusé : vérifiez les règles Firestore.' : 'Enregistrement impossible (connexion ?)', true);
 app.addEventListener('click', async e => {
-  const b = e.target.closest('[data-tab],[data-filter],[data-do]'); if (!b) return;
-  if (b.dataset.tab) { tab = b.dataset.tab; if (tab !== 'estimer') estFor = null; return render(); }
+  const ag = e.target.closest('[data-agdo]');
+  if (ag && ag.tagName !== 'INPUT') {
+    const row = ag.closest('[data-ag]'), id = row.dataset.ag, a = agEntries().find(z => z.id === id), k = ag.dataset.agdo;
+    try {
+      if (k === 'later') { await agPatch(id, { date: addDays(a.date < today() ? today() : a.date, 1) }); render(); toast('Reporté au ' + dayName(a.date)); }
+      else if (k === 'del') { if (confirm('Supprimer « ' + a.titre + ' » de l’agenda ?')) { await agDel(id); render(); } }
+      else if (k === 'ics') dl((a.titre || 'agenda').replace(/[^\w-]+/g, '-').slice(0, 40) + '.ics', ics([a]), 'text/calendar;charset=utf-8');
+      else if (k === 'open') { const x = items.find(i => i.id === a.devisId); tab = 'demandes'; filter = 'tous'; q = x ? x.email : ''; if (x) expd.add(x.id); render(); }
+      else if (k === 'edit') { agEdit = id; render(); }
+      else if (k === 'edit-cancel') { agEdit = null; render(); }
+      else if (k === 'edit-save') {
+        const f = readForm(row.querySelector('#ag-edit'));
+        await agPatch(id, { kind: KINDS[f.kind] ? f.kind : a.kind, titre: f.titre.slice(0, 200), date: /^\d{4}-\d{2}-\d{2}$/.test(f.date) ? f.date : a.date, heure: /^\d{2}:\d{2}$/.test(f.heure) ? f.heure : '', duree: +f.duree || a.duree, note: f.note.slice(0, 1000) });
+        agEdit = null; render(); toast('Modifié ✓');
+      }
+    } catch (err) { fail(err); }
+    return;
+  }
+  const b = e.target.closest('[data-tab],[data-filter],[data-do],[data-agday]'); if (!b) return;
+  if (b.dataset.tab) { tab = b.dataset.tab; if (tab === 'estimer' && !dv) dvInit(); if (tab === 'contacts') { await loadLeads(); } return render(); }
   if (b.dataset.filter) { filter = b.dataset.filter; return render(); }
+  if (b.dataset.agday !== undefined) { agDay = b.dataset.agday; return render(); }
   const card = b.closest('.req'), x = card && items.find(i => i.id === card.dataset.id), d = b.dataset.do;
   try {
     if (d === 'logout') { const { Au, auth } = await fb(); await Au.signOut(auth); }
     else if (d === 'reload') { await load(); render(); }
+    else if (d === 'gf-filter') { gFilter = b.dataset.k; gOpen = null; render(); }
+    else if (d.startsWith('gf-')) {
+      const id = b.closest('[data-gid]').dataset.gid, g = gifts.find(z => z.id === id);
+      if (d === 'gf-open') { gOpen = gOpen === id ? null : id; return render(); }
+      if (d === 'gf-paid') {
+        if (g.code) return toast('Carte déjà créée : ' + g.code);
+        if (!confirm(`Confirmer : ${eur2(g.montant)} bien reçus pour la référence ${g.id} ?`)) return;
+        const code = await cardCreate({ montant: g.montant, pour: g.pour, de: g.de, message: g.message, ref: g.id });
+        await giftPatch(id, { status: 'payee', code, paidAt: new Date().toISOString() });
+        gOpen = id; render(); toast('Carte ' + code + ' créée ✓ Il reste à l’envoyer.');
+      }
+      else if (d === 'gf-cancel') { if (confirm('Annuler cette commande (aucun paiement reçu) ?')) { await giftPatch(id, { status: 'annulee' }); render(); } }
+      else if (d === 'gf-reopen') { await giftPatch(id, { status: 'attente' }); render(); }
+      else if (d === 'gf-del') { if (confirm('Supprimer définitivement cette commande ?' + (g.code ? ' La carte ' + g.code + ' reste valable.' : ''))) { await giftDel(id); render(); } }
+      else if (d === 'gf-card') { gFilter = 'cartes'; gOpen = g.code; gq = g.code; render(); }
+    }
+    else if (d === 'cd-new') {
+      const f = readForm(document.getElementById('cd-new')), m = r2(f.montant);
+      if (!(m >= 1 && m <= 5000)) return toast('Indiquez un montant entre 1 € et 5 000 €', true);
+      const code = await cardCreate({ montant: m, pour: f.pour, de: f.de, message: f.message });
+      gOpen = code; gq = ''; render(); toast('Carte ' + code + ' créée ✓'); copy(cardUrl(code));
+    }
+    else if (d.startsWith('cd-')) {
+      const row = b.closest('[data-code]'), code = row.dataset.code, c = cards.find(z => z.id === code);
+      if (d === 'cd-open') { gOpen = gOpen === code ? null : code; return render(); }
+      if (d === 'cd-copy') copy(cardUrl(code));
+      else if (d === 'cd-use') {
+        const m = r2(row.querySelector('[data-cd=m]').value), n = row.querySelector('[data-cd=n]').value.trim().slice(0, 120);
+        if (!(m > 0)) return toast('Indiquez le montant utilisé', true);
+        if (m > r2(c.solde)) return toast(`Le solde n’est que de ${eur2(c.solde)}`, true);
+        await cardPatch(code, { solde: r2(c.solde - m), historique: JSON.stringify([...hist(c), { d: today(), m, n }]) });
+        render(); toast(`${eur2(m)} déduits ✓ Reste ${eur2(c.solde)}`);
+      }
+      else if (d === 'cd-off') { if (confirm('Annuler la carte ' + code + ' ? Elle ne pourra plus être utilisée.')) { await cardPatch(code, { statut: 'annulee' }); render(); } }
+      else if (d === 'cd-on') { await cardPatch(code, { statut: 'active' }); render(); toast('Carte réactivée'); }
+      else if (d === 'cd-extend') { await cardPatch(code, { expire: addMonths(today(), 3) }); render(); toast('Valable jusqu’au ' + frDate(c.expire)); }
+    }
     else if (d === 'copy-rules') copy(rulesText());
+    else if (d === 'lead-del') {
+      const em = b.dataset.email; if (!em || !confirm('Supprimer définitivement le contact ' + em + ' ?')) return;
+      if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_leads', String(em).toLowerCase())); }
+      leads = leads.filter(l => l.email !== em); render(); toast('Contact supprimé');
+    }
+    else if (d === 'csv-demandes') {
+      const q2 = v => { v = String(v ?? ''); return '"' + (/^[=+\-@\t\r]/.test(v) && !/^[+-]?\d+([.,]\d+)?$/.test(v) ? "'" + v : v).replace(/"/g, '""') + '"'; };   // « ' » devant = ou + - @ : une demande hostile ne devient pas une formule dans Excel
+      const csv = '\ufeffdate;nom;email;telephone;type;delai;budget;statut;montant;besoin\n' + items.map(x => [ms(x.at) ? new Date(ms(x.at)).toISOString().slice(0, 10) : '', x.nom, x.email, x.tel, x.type, x.delai, x.budget, stLabel(x.status || 'nouveau'), x.montant, x.besoin].map(q2).join(';')).join('\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'demandes-quentools.csv'; a.click();
+    }
+    else if (d === 'copy-mails') copy(leads.map(l => l.email).join(', '));
+    else if (d === 'csv') {
+      const q = v => { v = String(v ?? ''); return '"' + (/^[=+\-@\t\r]/.test(v) && !/^[+-]?\d+([.,]\d+)?$/.test(v) ? "'" + v : v).replace(/"/g, '""') + '"'; };   // « ' » devant = ou + - @ : une demande hostile ne devient pas une formule dans Excel
+      const csv = '\ufeffnom;email;date;source\n' + leads.map(l => [l.name, l.email, ms(l.at) ? new Date(ms(l.at)).toISOString().slice(0, 10) : '', l.source].map(q).join(';')).join('\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'contacts-quentools.csv'; a.click();
+    }
+    else if (d === 'thread') {
+      if (openId === x.id) { openId = null; return render(); }
+      openId = x.id; threads[x.id] = null; render();
+      threads[x.id] = await loadThread(x.id); await patch(x.id, { seenAt: new Date() }); render();
+    }
+    else if (d === 'send') {
+      const t = card.querySelector('[data-msg]').value.trim(); if (!t) return toast('Écrivez un message', true);
+      await addMsg(x.id, { from: 'admin', text: t }); threads[x.id] = await loadThread(x.id); render(); toast('Message envoyé ✓');
+    }
     else if (d === 'reply') { openMail(mailto(x, `Bonjour ${String(x.nom).split(' ')[0]},\n\nMerci pour votre demande. \n\nBien à vous,\nQuenTools\n\n---\nVotre message :\n${x.besoin}`)); if ((x.status || 'nouveau') === 'nouveau') { await patch(x.id, { status: 'discussion' }); render(); } }
     else if (d === 'copy') copy(`${x.nom} <${x.email}>${x.tel ? ' · ' + x.tel : ''}\n${x.type} · ${x.delai} · ${x.budget}\n\n${x.besoin}`);
-    else if (d === 'estimate') { estFor = x.id; tab = 'estimer'; render(); }
-    else if (d === 'del') { if (confirm(`Supprimer définitivement la demande de ${x.nom} ?`)) { await remove(x.id); render(); toast('Demande supprimée'); } }
+    else if (d === 'estimate') { estFor = x.id; dv = null; tab = 'estimer'; dvInit(); render(); window.scrollTo({ top: 0 }); }
+    else if (d === 'exp') { expd.has(x.id) ? expd.delete(x.id) : expd.add(x.id); render(); }
+    else if (d === 'exp-all') { if (items.some(i => !expd.has(i.id))) items.forEach(i => expd.add(i.id)); else expd.clear(); render(); }
+    else if (d === 'plan') { planFor = planFor === x.id ? null : x.id; if (planFor) expd.add(x.id); render(); }
+    else if (d === 'plan-save' || d === 'ag-add') {
+      const f = readForm(document.getElementById(d === 'ag-add' ? 'ag-new' : 'plan-' + x.id));
+      if (!f.titre) f.titre = (KINDS[f.kind] || KINDS.rappel)[1] + (f.devisId ? ' · ' + ((items.find(i => i.id === f.devisId) || {}).nom || '') : '');
+      const n = await agCreate(f); if (d === 'plan-save') planFor = null; render(); toast(`Ajouté à l’agenda : ${dayName(f.date)}${f.heure ? ' à ' + f.heure : ''}${n > 1 ? ` (${n} fois)` : ''} ✓`);
+    }
+    else if (d === 'ag-quick') { const f = b.closest('.ag-form'), k = b.dataset.k; f.querySelector('[name=date]').value = k === 'today' ? today() : k === 'tom' ? addDays(today(), 1) : k === 'mon' ? nextDow(1) : addDays(today(), 7); }
+    else if (d === 'ag-view') { agView = b.dataset.v; render(); }
+    else if (d === 'ag-mo') { const ym = agMonth || today().slice(0, 7); agMonth = isoDay(new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + (+b.dataset.n), 1)).slice(0, 7); render(); }
+    else if (d === 'notif') { const p = await Notification.requestPermission(); render(); toast(p === 'granted' ? 'Alertes activées tant que cette page reste ouverte' : 'Alertes non autorisées par le navigateur', p !== 'granted'); }
+    else if (d === 'ag-ics-all') { const up = agEntries().filter(a => !a.done && a.date >= today()); if (!up.length) return toast('Rien de prévu à exporter', true); dl('agenda-quentools.ics', ics(up), 'text/calendar;charset=utf-8'); }
+    else if (d === 'rp-save') {
+      const url = document.getElementById('rp-url').value.trim(), key = document.getElementById('rp-key').value.trim();
+      if (url && !/^https:\/\//.test(url)) return toast('L’adresse du relais doit commencer par https://', true);
+      try { localStorage.setItem('qt:relais', JSON.stringify(url && key ? { url, key } : {})); } catch (e) { return toast('Enregistrement impossible dans ce navigateur', true); }
+      await rpSync(clients()); render(); toast(rpState || 'Réglages enregistrés');
+    }
+    else if (d === 'cl-new') { clEdit = 'new'; clPay = clRel = null; render(); }
+    else if (d === 'cl-cancel') { clEdit = clPay = clRel = null; render(); }
+    else if (d === 'cl-edit') { clEdit = b.dataset.id; clPay = clRel = null; render(); const fm = document.getElementById('cl-form'); if (fm) fm.scrollIntoView({ block: 'center' }); }
+    else if (d === 'cl-save') {
+      const f = readForm(document.getElementById('cl-form')), id = b.dataset.id, list = clients(), old = list.find(c => c.id === id), site = String(f.site || '').toLowerCase().trim();
+      if (!f.nom) return toast('Indiquez le nom du client', true);
+      if (site && !/^[a-z0-9-]{2,40}$/.test(site)) return toast('Identifiant du site : 2 à 40 lettres minuscules, chiffres ou tirets', true);
+      if (site && list.some(c => c.site === site && c.id !== id)) return toast('Cet identifiant est déjà utilisé par un autre client', true);
+      if (f.url && !/^https:\/\//.test(f.url)) return toast('L’adresse du site doit commencer par https://', true);
+      const rec = { ...(old || { id: 'c' + Date.now().toString(36), paiements: [], relances: [] }), nom: f.nom.slice(0, 120), email: f.email.slice(0, 160), site, url: f.url.slice(0, 200), total: Math.max(0, +f.total || 0),
+        echeance: /^\d{4}-\d{2}-\d{2}$/.test(f.echeance) ? f.echeance : '', grace: Math.min(90, Math.max(0, f.grace === '' ? 15 : (+f.grace || 0))), devisId: f.devisId || '', devisNum: f.devisNum || '',
+        enLigne: /^\d{4}-\d{2}-\d{2}$/.test(f.enLigne) ? f.enLigne : '', finOffre: /^\d{4}-\d{2}-\d{2}$/.test(f.enLigne) ? addMonths(f.enLigne, 3) : '' };
+      await clSave(old ? list.map(c => c.id === id ? rec : c) : [...list, rec]); clEdit = null; render();
+      toast('Site client enregistré ✓' + (rec.site && rec.total > 0 && rec.echeance ? ' · verrouillage après le ' + fdate(clLimit(rec)) : ''));
+    }
+    else if (d === 'cl-del') {
+      const c = clients().find(z => z.id === b.dataset.id);
+      if (c && confirm(`Supprimer le suivi de « ${c.nom} » ? Si son site est verrouillé, il sera rouvert.`)) { await clSave(clients().filter(z => z.id !== c.id)); render(); toast('Suivi supprimé'); }
+    }
+    else if (d === 'cl-pay') { clPay = b.dataset.id; clRel = null; clEdit = null; render(); }
+    else if (d === 'cl-pay-save') {
+      const f = readForm(b.closest('.cl-pay')), list = clients(), c = list.find(z => z.id === b.dataset.id), m = Math.round((+f.m || 0) * 100) / 100;
+      if (!c) return; if (!(m > 0)) return toast('Indiquez le montant reçu', true);
+      c.paiements = [...(c.paiements || []), { d: /^\d{4}-\d{2}-\d{2}$/.test(f.d) ? f.d : today(), m, n: f.n.slice(0, 80) }];
+      if (clSolde(c) <= 0) { c.bloque = false; c.prolonge = ''; }
+      await clSave(list); clPay = null; render();
+      toast(clSolde(c) <= 0 ? 'Payé en totalité : le site est accessible ✓' : `Paiement noté : il reste ${QTD.eur(clSolde(c))}`);
+    }
+    else if (d === 'cl-pay-del') {
+      const list = clients(), c = list.find(z => z.id === b.dataset.id); if (!c || !confirm('Supprimer ce paiement ?')) return;
+      c.paiements.splice(+b.dataset.i, 1); await clSave(list); render();
+    }
+    else if (d === 'cl-suspend') {
+      const list = clients(), c = list.find(z => z.id === b.dataset.id); if (!c) return;
+      if (!c.site) return toast('Ajoutez d’abord un identifiant de site (Modifier)', true);
+      if (!confirm(`Suspendre le site de « ${c.nom} » maintenant ? Ses visiteurs verront « site momentanément indisponible ».`)) return;
+      c.bloque = true; c.bloqueLe = today(); await clSave(list); render(); toast('Site suspendu');
+    }
+    else if (d === 'cl-restore') {
+      const list = clients(), c = list.find(z => z.id === b.dataset.id); if (!c) return;
+      const until = prompt('Rétablir l’accès jusqu’à quelle date ? (AAAA-MM-JJ). Passé ce jour sans paiement complet, le site se reverrouille.', addDays(today(), 7));
+      if (until === null) return;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(until.trim()) || until.trim() <= today()) return toast('Date invalide : indiquez un jour futur (AAAA-MM-JJ)', true);
+      c.bloque = false; c.prolonge = until.trim(); await clSave(list); render(); toast('Accès rétabli jusqu’au ' + fdate(c.prolonge));
+    }
+    else if (d === 'cl-code') { clCode = clCode === b.dataset.id ? null : b.dataset.id; render(); }
+    else if (d === 'cl-copycode') { const c = clients().find(z => z.id === b.dataset.id); if (c) copy(`<script src="https://quentools.fr/assets/qt-config.js"><\/script>\n<script src="https://quentools.fr/assets/qt-garde.js" data-site="${c.site}" defer><\/script>`); }
+    else if (d === 'cl-rel') { const c = clients().find(z => z.id === b.dataset.id); if (!c) return; clRel = { id: c.id, niv: relanceLevel(c) }; clPay = clEdit = null; render(); }
+    else if (d === 'cl-rcopy') copy(document.getElementById('cl-rtext').value);
+    else if (d === 'cl-rmail') {
+      const c = clients().find(z => z.id === b.dataset.id); if (!c || !c.email) return toast('Ajoutez l’e-mail du client (Modifier)', true);
+      location.href = `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent('Règlement de votre site' + (c.devisNum ? ' · devis ' + c.devisNum : ''))}&body=${encodeURIComponent(document.getElementById('cl-rtext').value)}`;
+    }
+    else if (d === 'cl-rspace') {
+      const c = clients().find(z => z.id === b.dataset.id), rq = c && items.find(i => i.id === c.devisId); if (!rq) return;
+      if (!confirm('Envoyer ce message dans l’espace client de ' + rq.nom + ' ?')) return;
+      await addMsg(rq.id, { from: 'admin', text: document.getElementById('cl-rtext').value.slice(0, 2000) }); toast('Message envoyé dans l’espace client ✓');
+    }
+    else if (d === 'cl-rdone') {
+      const list = clients(), c = list.find(z => z.id === b.dataset.id); if (!c) return;
+      c.relances = [...(c.relances || []), { d: today(), niv: clRel ? +clRel.niv : 1 }];
+      try { await agCreate({ kind: 'rappel', titre: 'Relancer ' + c.nom + ' (paiement)', date: addDays(today(), 7), devisId: c.devisId || '', note: 'Solde restant : ' + QTD.eur(clSolde(c)) }); } catch (err) { /* l'agenda est facultatif */ }
+      await clSave(list); clRel = null; render(); toast('Relance notée · rappel ajouté à l’agenda dans 7 jours');
+    }
+    else if (d === 'add-clause') {
+      const v = seller(), cond = String(v.conditions || '').trim(); notes._vendeur = { ...v, conditions: (cond ? cond + '\n' : '') + CLAUSE };
+      if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_vendeur'), notes._vendeur); }
+      render(); toast('Clause ajoutée à vos conditions ✓');
+    }
+    else if (d === 'tpl-pick') { tpl = { id: b.dataset.id, opts: tpl.id === b.dataset.id ? tpl.opts : {}, price: tpl.price }; render(); }
+    else if (d === 'tpl-client') {
+      const rq = estFor && items.find(i => i.id === estFor), cl = rq && QTT.parse(rq.besoin); if (!cl || !cl.template) return;
+      tpl = { id: cl.template.id, opts: Object.fromEntries(cl.options.map(o => [o.id, o.qty])), price: {} }; render();
+    }
+    else if (d === 'tpl-add') {
+      const t = tplOf(); if (!t || !dv) return; const r = tplBuild(t, tpl.opts, tpl.price), only = dv.lignes.length === 1 && !String(dv.lignes[0].l).trim() && !dv.lignes[0].pu;
+      if (only) dv.lignes = r.lignes; else dv.lignes.push(...r.lignes);
+      if (r.notes && !String(dv.notes || '').includes('Non inclus')) dv.notes = (dv.notes ? dv.notes + '\n' : '') + r.notes;
+      render(); dvDirty(); toast(`${r.lignes.length} ligne${r.lignes.length > 1 ? 's' : ''} ajoutée${r.lignes.length > 1 ? 's' : ''} au devis`);
+    }
+    else if (d === 'dv-add') { dv.lignes.push(blankLine()); render(); dvDirty(); }
+    else if (d === 'dv-del') { dv.lignes.splice(+b.dataset.i, 1); if (!dv.lignes.length) dv.lignes.push(blankLine()); render(); dvDirty(); }
+    else if (d === 'cat-add') {
+      const k = b.dataset.i, c = k[0] === 'b' ? CAT_BASE[+k.slice(1)] : catCustom()[+k.slice(1)]; if (!c) return;
+      const l = { l: c[0], q: 1, pu: c[1], rem: '', m: !!c[2] }, only = dv.lignes.length === 1 && !String(dv.lignes[0].l).trim() && !dv.lignes[0].pu;
+      if (only) dv.lignes[0] = l; else dv.lignes.push(l); render(); dvDirty(); toast('Ligne ajoutée : ' + String(c[0]).split(' : ')[0]);
+    }
+    else if (d === 'cat-del') { const c = catCustom(); c.splice(+b.dataset.i, 1); await catSave(c); render(); }
+    else if (d === 'line-star') {
+      const l = dv.lignes[+b.dataset.i]; if (!l || !String(l.l).trim()) return toast('Écrivez d’abord la désignation', true);
+      const c = catCustom(); c.push([l.l.slice(0, 200), +l.pu || 0, !!l.m]); await catSave(c.slice(-12)); render(); toast('Préréglage enregistré ★');
+    }
+    else if (d === 'rem-pct') { dv.remise = { type: 'pct', val: +b.dataset.p, label: dv.remise.label || 'Remise commerciale' }; render(); dvDirty(); }
+    else if (d === 'rem-none') { dv.remise = { type: 'pct', val: '', label: '' }; render(); dvDirty(); }
+    else if (d === 'rem-round') {
+      const k = QTD.calc({ ...dvDoc(), remise: { type: 'pct', val: 0 } }), v = Math.round((k.sub - Math.floor(k.sub / 10) * 10) * 100) / 100;
+      if (!v) return toast('Le total est déjà un compte rond');
+      dv.remise = { type: 'eur', val: v, label: dv.remise.label || 'Geste commercial' }; render(); dvDirty();
+    }
+    else if (d === 'dv-preview') QTD.open(dvDoc());
+    else if (d === 'dv-save') { clearTimeout(dvDirty.t); await dvSaveDraft(); toast('Brouillon enregistré ✓'); }
+    else if (d === 'dv-publish' || d === 'dv-mail') {
+      const y = items.find(i => i.id === estFor); if (!y || !dv) return;
+      if (d === 'dv-mail') { if (!y.devisData) return toast('Publiez d’abord le devis', true);
+        return void openMail(mailto(y, `Bonjour ${first(y.nom)},\n\nVotre devis ${dv.num} est prêt (${QTD.eur(QTD.total(dvDoc()))}). Vous pouvez le consulter, l’imprimer et l’accepter dans votre espace client : https://quentools.fr/espace/ (connexion avec l’adresse ${y.email}).\n\nJe reste disponible pour toute question.\n\nBien à vous,\nQuenTools`)); }
+      if (!QTD.calc(dvDoc()).rows.some(r => r.pu > 0)) return toast('Ajoutez au moins une ligne avec un prix', true);
+      if (!dv.num) {
+        const yr = new Date().getFullYear(), c = notes._compteur || {}, n = (c.year === yr ? +c.n || 0 : 0) + 1;
+        if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_compteur'), { year: yr, n }); }
+        notes._compteur = { year: yr, n }; dv.num = `QT-${yr}-${String(n).padStart(3, '0')}`;
+      }
+      clearTimeout(dvDirty.t); dv.date = today(); const doc = dvDoc(), k = QTD.calc(doc), again = !!y.devisData, saved = k.remise + k.remLines;
+      await patch(y.id, { devisData: JSON.stringify(doc), devisDraft: '', montant: Math.round(k.total), status: WON.includes(y.status) ? y.status : 'envoye' });
+      await addMsg(y.id, { from: 'systeme', text: `Devis ${dv.num} ${again ? 'mis à jour' : 'publié'} : ${QTD.eur(k.total)}${saved ? ` (remise de ${QTD.eur(saved)} incluse)` : ''}` });
+      if (!again) await addMsg(y.id, { from: 'admin', text: TPL.devis.replace('{prenom}', first(y.nom)) });
+      render(); toast(again ? 'Devis mis à jour ✓' : 'Devis publié dans l’espace client ✓');
+    }
+    else if (d === 'save-seller') {
+      const v = readForm(document.getElementById('seller-form')); notes._vendeur = v;
+      if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_vendeur'), v); }
+      toast('Informations des devis enregistrées ✓');
+    }
+    else if (d === 'del') { if (confirm(`Supprimer définitivement la demande de ${x.nom} ?`)) { if (estFor === x.id) { estFor = null; dv = null; } await remove(x.id); render(); toast('Demande supprimée'); } }
+    else if (d === 'est-apply') {
+      if (!dv) dvInit(); const l = dv.lignes[0]; if (!l) dv.lignes.push(blankLine()); dv.lignes[0].pu = estMid;
+      if (!String(dv.lignes[0].l).trim()) dv.lignes[0].l = `${document.getElementById('e-type').value} : conception, réalisation et mise en ligne`;
+      render(); dvDirty(); toast(`Prix de ${eur(estMid)} mis dans la première ligne`);
+    }
     else if (d === 'est-copy') copy(estText);
     else if (d === 'est-reply' || d === 'est-save') {
       const y = items.find(i => i.id === estFor); if (!y) return;
@@ -272,9 +1365,14 @@ app.addEventListener('click', async e => {
     else if (d === 'save-site') {
       const f = document.getElementById('site-form'), g = n => f.elements[n];
       const url = g('announceUrl').value.trim(), fe = g('formEndpoint').value.trim();
-      if (url && !/^(https:\/\/|\.{0,2}\/|#|[a-z0-9-]+\/)/i.test(url)) return toast('Le lien doit commencer par https:// ou être une page du site (ex. ebook/)', true);
+      if (url && !/^(https:\/\/|\.{0,2}\/|#|[a-z0-9-]+\/)/i.test(url)) return toast('Le lien doit commencer par https:// ou être une page du site (ex. cadeau/)', true);
       if (fe && !/^https:\/\//.test(fe)) return toast('Le relais doit commencer par https://', true);
       if (g('email').value && !g('email').checkValidity()) return toast('Adresse e-mail invalide', true);
+      const cp = g('cadeauPaypal').value.trim(), cs = g('cadeauStripe').value.trim();
+      if (cp && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cp)) return toast('Adresse PayPal invalide', true);
+      if (cs && !/^https:\/\/(buy|checkout)\.stripe\.com\/[\w/-]+$/.test(cs)) return toast('Le lien Stripe doit commencer par https://buy.stripe.com/', true);
+      const cm = g('cadeauMontants').value.split(/[^\d]+/).map(Number).filter(n => n >= 20 && n <= 2000);
+      await saveSite({ cadeauOn: g('cadeauOn').checked, cadeauPaypal: cp, cadeauStripe: cs, cadeauMontants: [...new Set(cm)].slice(0, 6).join(', '), cadeauMois: +g('cadeauMois').value || 12 });
       await saveSite({ announceOn: g('announceOn').checked, announce: g('announce').value.trim(), announceUrl: url, available: g('available').checked,
         availText: g('availText').value.trim(), email: g('email').value.trim(), tiktok: g('tiktok').value.trim().replace(/^@/, ''), formEndpoint: fe });
       toast('Réglages enregistrés ✓');
@@ -283,12 +1381,50 @@ app.addEventListener('click', async e => {
 });
 app.addEventListener('change', async e => {
   const el = e.target;
-  if (el.closest('#est')) return estimate();
+  if (el.id === 'dv-for') { estFor = el.value || null; dv = null; dvInit(); render(); return; }
+  if (el.id === 'dv-copy') {
+    const src = items.find(i => i.id === el.value); if (!src || !dv) return;
+    try { const d = JSON.parse(src.devisData); dv.lignes = (d.lignes || []).map(l => ({ l: l.l || '', q: l.q ?? 1, pu: l.pu ?? '', rem: l.rem || '', m: !!l.m })); dv.remise = { type: 'pct', val: '', label: '', ...(d.remise || {}) };
+      dv.acompte = d.acompte ?? dv.acompte; dv.validite = d.validite ?? dv.validite; dv.delai = d.delai || ''; dv.notes = d.notes || ''; render(); dvDirty(); toast('Lignes reprises du devis de ' + src.nom); } catch (err) { toast('Ce devis n’a pas pu être repris', true); }
+    return;
+  }
+  if (el.dataset.clfrom !== undefined) {
+    const x = items.find(i => i.id === el.value), f = document.getElementById('cl-form'); if (!x || !f) return;
+    const r = clFromRequest(x); for (const k of ['nom', 'email', 'total', 'site', 'devisId', 'devisNum']) { const i = f.querySelector(`[name=${k}]`); if (i) i.value = r[k] ?? ''; } return;
+  }
+  if (el.dataset.clniv !== undefined) { const c = clRel && clients().find(z => z.id === clRel.id); if (!c) return; clRel.niv = +el.value; document.getElementById('cl-rtext').value = relanceText(c, clRel.niv); return; }
+  if (el.dataset.tplopt) { if (el.checked) tpl.opts[el.dataset.tplopt] = 1; else delete tpl.opts[el.dataset.tplopt]; render(); return; }
+  if (el.dataset.tplqty) { tpl.opts[el.dataset.tplqty] = Math.max(1, Math.round(+el.value) || 1); tplTotRefresh(); return; }
+  if (el.dataset.tplprice) { tpl.price[el.dataset.tplprice] = Math.max(0, +el.value || 0); tplTotRefresh(); return; }
+  if (el.closest('#est')) { estimate(); return; }
+  if (el.dataset.agdo === 'done' || el.dataset.agf) {
+    const id = el.closest('[data-ag]').dataset.ag;
+    try { if (el.dataset.agdo === 'done') { await agPatch(id, { done: el.checked }); if (el.checked) toast('Fait ✓'); }
+      else if (el.dataset.agf === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(el.value)) await agPatch(id, { date: el.value });
+      else if (el.dataset.agf === 'heure') await agPatch(id, { heure: el.value });
+      render(); } catch (err) { fail(err); }
+    return;
+  }
+  if (dv && (el.dataset.dv || el.dataset.dvl)) { dvSet(el); return; }
   const card = el.closest('.req'); if (!card || !el.dataset.field) return;
   const v = el.dataset.field === 'montant' ? (el.value === '' ? null : Math.max(0, Math.round(+el.value))) : el.value.slice(0, 2000);
-  try { await patch(card.dataset.id, { [el.dataset.field]: v }); if (el.dataset.field !== 'note') render(); toast('Enregistré ✓'); } catch (err) { fail(err); }
+  try { await patch(card.dataset.id, { [el.dataset.field]: v }); if (el.dataset.field === 'status') { await addMsg(card.dataset.id, { from: 'systeme', text: 'Statut : ' + stLabel(v) }); if (openId === card.dataset.id) threads[openId] = await loadThread(openId); } if (!['note', 'echeance', 'lien'].includes(el.dataset.field)) render(); toast('Enregistré ✓'); } catch (err) { fail(err); }
 });
-app.addEventListener('input', e => { if (e.target.id === 'q') { q = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); } });
+app.addEventListener('input', e => { if (e.target.id === 'gq') { gq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('gq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'lq') { lq = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('lq'); n.focus(); n.setSelectionRange(pos, pos); return; } if (e.target.id === 'q') { q = e.target.value; const pos = e.target.selectionStart; render(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); } });
+
+function tplTotRefresh() { const n = document.getElementById('tpl-tot'); if (n) n.textContent = tplTotTxt(); }
+app.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset && el.dataset.tplqty) { tpl.opts[el.dataset.tplqty] = Math.max(1, Math.round(+el.value) || 1); tplTotRefresh(); }
+  if (el.dataset && el.dataset.tplprice) { tpl.price[el.dataset.tplprice] = Math.max(0, +el.value || 0); tplTotRefresh(); }
+});
+app.addEventListener('input', e => { const el = e.target; if (dv && el.closest && el.closest('#dv') && (el.dataset.dv || el.dataset.dvl)) dvSet(el); });
+app.addEventListener('toggle', e => { if (e.target.id === 'est-box') estOpen = e.target.open; }, true);
+app.addEventListener('change', e => {
+  const sel = e.target.closest('[data-tpl]'); if (!sel || !sel.value) return;
+  const card = sel.closest('.req'), x = items.find(i => i.id === card.dataset.id), ta = card.querySelector('[data-msg]');
+  ta.value = TPL[sel.value].replace('{prenom}', String(x.nom).split(' ')[0]); sel.value = '';
+});
 
 /* ---------- Connexion ---------- */
 async function isOwner(email) {
@@ -296,6 +1432,12 @@ async function isOwner(email) {
   return (C.ownerHashes || []).includes([...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(''));
 }
 const gate = html => { app.innerHTML = `<section class="card" style="padding:clamp(24px,5vw,48px);max-width:560px;margin:0 auto;text-align:center">${html}</section>`; };
+// Actualisation automatique des demandes toutes les 90 s (sans toucher à ce que vous êtes en train de saisir).
+setInterval(async () => {
+  if (DEMO || !user || tab !== 'demandes' || document.hidden) return;
+  const f = document.activeElement; if (f && /^(INPUT|TEXTAREA|SELECT)$/.test(f.tagName)) return;
+  try { await load(); render(); } catch (e) { /* réseau indisponible : on réessaiera */ }
+}, 90000);
 async function start() {
   if (DEMO) { await load(); return render(); }
   if (!official && !local) return gate('<h1 class="h-section">Administration</h1><p class="muted">Disponible uniquement sur le site officiel de QuenTools.</p>');
