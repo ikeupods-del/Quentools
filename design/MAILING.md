@@ -12,21 +12,28 @@ Positionnement : QuenTools est une **agence de communication digitale** (site, v
 - Signature : QuenTools et l'adresse du site, rien de plus.
 
 ## E-mail 1 : la question sur la visibilité
-**Objet** : Vos clients vous trouvent-ils facilement ?
+**Objet** : à tester, un par e-mail (voir ci-dessous)
 
 > Bonjour [prénom],
 >
-> En cherchant [métier] à [ville], je suis tombé sur votre activité et [observation vraie].
+> En cherchant « [métier] à [ville] » sur internet, je suis tombé sur votre activité et [observation vraie].
 >
 > Je suis QuenTools, une petite agence de communication digitale : je m'occupe du site, des visuels pour les réseaux sociaux et de la visibilité locale des indépendants et des commerces.
 >
-> Question simple : quand un client cherche [métier] à [ville] sur son téléphone, que voit-il de vous ? [phrase de métier ci-dessous]
+> Question simple : quand un client cherche « [métier] à [ville] » sur son téléphone, que voit-il de vous ? [phrase de métier ci-dessous]
 >
 > Si vous voulez, je regarde gratuitement votre présence en ligne (site, Google, réseaux) et je vous écris en 5 lignes ce que je changerais en premier, sans engagement.
 >
 > Bien cordialement,
 > QuenTools · quentools.fr
 > Si vous ne souhaitez pas être recontacté, répondez simplement STOP : je ne vous écrirai plus.
+
+### Objets à tester (un seul par e-mail, noté dans le suivi pour savoir lequel obtient des réponses)
+- **A** : Vos clients vous trouvent-ils facilement ?
+- **B** : Une question sur votre présence en ligne
+- **C** : Un point rapide sur votre visibilité à [ville]
+
+Après 20 envois par objet, garder celui qui obtient le plus de réponses (hors STOP) et remplacer le moins bon par une nouvelle idée.
 
 ### Phrase de métier (une seule, à choisir)
 - **Plombier, électricien, chauffagiste** : « En cas d'urgence, le client appelle le premier qu'il trouve : votre numéro est-il visible tout de suite ? »
@@ -54,6 +61,11 @@ Positionnement : QuenTools est une **agence de communication digitale** (site, v
 - **« J'ai quelqu'un pour mes réseaux »** : « Parfait, je ne veux pas vous déranger. Si un jour vous cherchez un site ou une fiche mieux référencée, n'hésitez pas. »
 - **« Pas le temps »** : « Je comprends. Il me faut seulement 15 minutes de votre temps pour comprendre votre activité, je m'occupe du reste. »
 - **« C'est une pub ? »** : « C'est un message personnel : j'ai regardé votre activité avant de vous écrire. Si vous ne souhaitez pas de contact, répondez STOP. »
+
+## Outil (gain de temps et garde-fous)
+- `node tools/mailing.js nouveau --metier plombier --prenom Julie --ville Nîmes --observation "…" --objet B --adresse contact@…` écrit l'e-mail complet et refuse l'envoi si l'adresse est déjà dans le suivi, si elle a dit STOP ou rebondi, si l'observation est vide ou contient un prix ou un lien.
+- `node tools/mailing.js point` : le point du jour (envois, quota de 10, relances à faire, réponses, rebonds, STOP, objets).
+- `node tools/mailing.js relance --prenom Julie` : le texte de la relance.
 
 ## Suivi
 Noter chaque envoi dans `SUIVI-PROSPECTION.md` (date, entreprise, métier, ville, adresse, statut) ; suivre les rebonds et ne plus jamais écrire à un STOP. Après 3 semaines à 5 à 10 e-mails par jour, noter ce qui fonctionne (réponses, demandes de retour gratuit, devis) avant de conclure : aucune prévision chiffrée n'est promise.
