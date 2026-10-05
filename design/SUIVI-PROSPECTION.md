@@ -13,6 +13,8 @@ Modèle d'origine : « une question sur votre site » (présentation, retour gra
 | 2026-10-03 | Menuiserie Massire | Menuiserie | Beaucaire | menuiseriemassire@orange.fr | envoyé |
 | 2026-10-03 | Ardesign | Menuiserie | Poulx | contact@menuiserie-ardesign.fr | rebond (domaine introuvable) : ne pas relancer |
 | 2026-10-03 | Nîmes Menuiserie | Menuiserie | Bernis | contact.nimes-menuiserie@orange.fr | envoyé |
+| 2026-10-05 | Madame la Fleuriste | Fleuriste | Nîmes | madamelafleuriste.nimes@gmail.com | envoyé (relance prévue le 2026-10-09) |
+| 2026-10-05 | Fleurs de Nila | Fleuriste | Nîmes | fleursdenila@icloud.com | envoyé (relance prévue le 2026-10-09) |
 
 ## Pistes préparées (non envoyées)
 
