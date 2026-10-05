@@ -2,124 +2,78 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>QuenTools · flyer A5 recto-verso</title>
-<!-- Flyer A5 (148 × 210 mm) avec 3 mm de fond perdu : page de 154 × 216 mm. Zone sûre : 13 mm depuis le bord de la page (10 mm du trait de coupe).
-     Recto : accroche + exemples. Verso : offres, contenu, étapes, contact. Génération : node tools/flyer.js -->
+<title>QuenTools · flyer A5 recto</title>
+<!-- Flyer A5 recto (148 × 210 mm) avec 3 mm de fond perdu : page de 154 × 216 mm. Zone sûre : 13 mm depuis le bord de la page (10 mm du trait de coupe).
+     Génération : node tools/flyer.js -->
 <style>
 @font-face{font-family:Bricolage;src:url(../../assets/fonts/bricolage.woff2) format("woff2-variations");font-weight:200 800}
 @font-face{font-family:Inter;src:url(../../assets/fonts/inter.woff2) format("woff2-variations");font-weight:100 900}
 @page{size:154mm 216mm;margin:0}
-:root{--violet:#5b3df5;--violet-d:#4527d6;--lime:#d7f24a;--ink:#121019;--ink2:#3b3848;--mut:#6b6778;--paper:#f6f4ee;--line:#d6d1c2}
+:root{--violet:#5b3df5;--violet-d:#3d22c9;--lime:#d7f24a;--ink:#121019;--paper:#f6f4ee}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:#888}
+html,body{background:#777}
 body{font:400 8.6pt/1.45 Inter,sans-serif;color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;font-feature-settings:"ss01","cv11"}
-.page{width:154mm;height:216mm;position:relative;overflow:hidden;background:var(--paper);page-break-after:always;break-after:page}
-.page:last-child{page-break-after:auto;break-after:auto}
-.safe{position:absolute;left:13mm;right:13mm;top:13mm;bottom:13mm}
-.lab{font:600 6.4pt/1 Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
-.brand{display:flex;align-items:center;gap:3mm}
-.brand img{width:10mm;height:10mm;display:block}.brand b{font:800 15pt/1 Bricolage,sans-serif;letter-spacing:-.02em}
-
-/* ---------- RECTO ---------- */
-.r-top{display:flex;justify-content:space-between;align-items:center}
-.r-top .lab{text-align:right;max-width:46mm;line-height:1.35}
-h1{font:800 27.6pt/1.02 Bricolage,sans-serif;letter-spacing:-.035em;margin-top:11mm}
-h1 mark{background:linear-gradient(transparent 58%,var(--lime) 58% 92%,transparent 92%);color:inherit;padding:0 .4mm}
-.r-sub{margin-top:4.5mm;max-width:100mm;font-size:9pt;line-height:1.5;color:var(--ink2)}
-.r-shots{position:absolute;left:0;right:0;top:63mm}
-.r-shots .cap{display:flex;justify-content:space-between;margin-bottom:2.4mm}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm 2.6mm}
-.shot{display:block}
-.shot .img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top;border:.25mm solid var(--ink);background:#fff}
-.shot span{display:flex;flex-direction:column;margin-top:1.1mm;font:700 6.6pt/1.25 Inter,sans-serif;letter-spacing:.01em}
-.shot span i{font-style:normal;color:var(--mut);font-weight:500;font-size:6pt}
-.r-band{position:absolute;left:0;right:0;bottom:0;height:57mm;background:var(--violet);color:#fff}
-.r-band .safe{display:grid;grid-template-columns:1fr 29mm;gap:6mm;align-items:center;top:0;bottom:0}
-.r-band .from{font:600 6.4pt/1 Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--lime)}
-.r-band .big{font:800 31pt/.95 Bricolage,sans-serif;letter-spacing:-.035em;margin:2.2mm 0 2.6mm}
-.r-band .big small{font:600 10pt/1 Bricolage,sans-serif;letter-spacing:0;margin-left:1mm}
-.r-band p{font-size:8.2pt;line-height:1.45;color:#e4defd;max-width:70mm}
-.qr{background:#fff;padding:2.6mm;border-radius:2.2mm;text-align:center}
-.qr img{display:block;width:100%;aspect-ratio:1}
-.qr span{display:block;margin-top:1.8mm;font:700 6.9pt/1 Inter,sans-serif;color:var(--ink);letter-spacing:.01em}
-
-/* ---------- VERSO ---------- */
-.v-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:.35mm solid var(--ink);padding-bottom:3mm}
-.v-head h2{font:800 20pt/1 Bricolage,sans-serif;letter-spacing:-.03em}
-.rows{margin-top:2mm}
-.row{display:grid;grid-template-columns:7mm 1fr auto;gap:3mm;align-items:baseline;padding:2.5mm 0;border-bottom:.2mm solid var(--line)}
-.row .n{font:700 7pt/1 Inter,sans-serif;color:var(--violet);font-variant-numeric:tabular-nums}
-.row b{display:block;font:700 10.6pt/1.2 Bricolage,sans-serif;letter-spacing:-.01em}
-.row p{margin-top:.8mm;font-size:7.8pt;line-height:1.4;color:var(--ink2);max-width:82mm}
-.row .p{font:800 14pt/1 Bricolage,sans-serif;letter-spacing:-.02em;text-align:right;white-space:nowrap}
-.row .p small{display:block;margin-bottom:.9mm;font:600 5.6pt/1 Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
-.row .p em{font-style:normal;font:600 7.6pt/1.2 Inter,sans-serif;color:var(--ink2)}
-.incl{margin-top:4mm;background:var(--lime);border-radius:3mm;padding:4mm 5mm;display:grid;grid-template-columns:40mm 1fr;gap:3mm}
-.incl h3{font:800 12pt/1.05 Bricolage,sans-serif;letter-spacing:-.02em}
-.incl h3 small{display:block;margin-top:1.4mm;font:600 6.3pt/1.3 Inter,sans-serif;letter-spacing:.04em}
-.incl ul{list-style:none}.incl li{position:relative;padding:0 0 1.4mm 4mm;font-size:7.7pt;line-height:1.38}
-.incl li::before{content:"";position:absolute;left:0;top:1.4mm;width:1.9mm;height:1.9mm;border-radius:50%;background:var(--ink)}
-.steps{margin-top:4.2mm;display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
-.steps div{border-top:.35mm solid var(--ink);padding-top:2mm}
-.steps .n{font:700 6.6pt/1 Inter,sans-serif;color:var(--violet)}.steps b{display:block;margin-top:1mm;font:700 8.8pt/1.2 Bricolage,sans-serif}.steps p{margin-top:.8mm;font-size:7.2pt;line-height:1.38;color:var(--ink2)}
-.v-foot{position:absolute;left:0;right:0;bottom:0;background:var(--ink);color:#fff;height:33mm}
-.v-foot .safe{display:flex;justify-content:space-between;align-items:center;top:0;bottom:0}
-.v-foot .brand b{font-size:13pt}.v-foot .brand img{width:8.6mm;height:8.6mm}
-.v-foot dl{display:grid;grid-template-columns:auto 1fr;gap:1.4mm 3.5mm;font-size:8pt;line-height:1.2}.v-foot dt{color:var(--lime);font:600 6pt/1.5 Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase}.v-foot dd{font-weight:600}
-.legal{position:absolute;left:13mm;right:13mm;bottom:37mm;font-size:5.8pt;line-height:1.4;color:var(--mut)}
+.page{width:154mm;height:216mm;position:relative;overflow:hidden;background:var(--violet)}
+.page::before{content:"";position:absolute;right:-38mm;top:-30mm;width:112mm;height:112mm;border-radius:50%;background:var(--violet-d);opacity:.55}
+.safe{position:absolute;left:13mm;right:13mm;top:13mm}
+.top{display:flex;justify-content:space-between;align-items:center;color:#fff}
+.brand{display:flex;align-items:center;gap:3mm}.brand svg{width:10mm;height:10mm;display:block}.brand b{font:800 15pt/1 Bricolage,sans-serif;letter-spacing:-.02em}
+.top .lab{font:600 6.2pt/1.4 Inter,sans-serif;letter-spacing:.17em;text-transform:uppercase;text-align:right;color:#d9d2ff}
+h1{margin-top:12mm;color:#fff;font:800 33pt/1.03 Bricolage,sans-serif;letter-spacing:-.04em}
+h1 mark{color:var(--ink);background:var(--lime);padding:.2mm 1.6mm .8mm;margin-left:-1.6mm;border-radius:1.2mm;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.sub{margin-top:5.5mm;max-width:92mm;color:#e7e2ff;font-size:9.4pt;line-height:1.5}
+.phones{position:absolute;left:0;right:0;top:86mm;height:80mm}
+.ph{position:absolute;width:41mm;aspect-ratio:390/844;border-radius:6.4mm;background:#0c0b10;padding:5mm 1.15mm 1.15mm;box-shadow:0 5mm 9mm -3mm rgba(15,5,70,.55)}
+.ph img{display:block;width:100%;height:100%;border-radius:.6mm 0.6mm 5.3mm 5.3mm;object-fit:cover;object-position:top}
+.ph::after{content:"";position:absolute;left:50%;top:1.7mm;width:1.7mm;height:1.7mm;border-radius:50%;background:#2a2833;transform:translateX(-50%)}
+.p1{left:13mm;top:9mm}.p2{left:56.5mm;top:0}.p3{left:100mm;top:9mm}
+.cap{position:absolute;top:-6.8mm;font:600 6pt/1 Inter,sans-serif;letter-spacing:.17em;text-transform:uppercase;color:#cfc6ff}
+.panel{position:absolute;left:0;right:0;bottom:0;height:68mm;background:var(--paper)}
+.panel .safe{top:8mm;bottom:auto;display:grid;grid-template-columns:1fr 30mm;gap:7mm;align-items:start}
+.kick{font:600 6.2pt/1 Inter,sans-serif;letter-spacing:.17em;text-transform:uppercase;color:var(--violet)}
+.price{font:800 36pt/.9 Bricolage,sans-serif;letter-spacing:-.045em;margin:2mm 0 2.6mm}
+.price small{font:600 11pt/1 Bricolage,sans-serif;letter-spacing:0;margin-right:1.4mm;color:var(--ink)}
+.pts{list-style:none;font-size:8.2pt;line-height:1.35;font-weight:500}
+.pts li{position:relative;padding-left:4.2mm;margin-bottom:.9mm}.pts li::before{content:"";position:absolute;left:0;top:1.35mm;width:2mm;height:2mm;border-radius:50%;background:var(--violet)}
+.qr{background:#fff;border:.25mm solid #d6d1c2;border-radius:2.4mm;padding:2.6mm;text-align:center}
+.qr img{display:block;width:100%;aspect-ratio:1}.qr span{display:block;margin-top:1.8mm;font:700 7.2pt/1 Inter,sans-serif;letter-spacing:.01em}
+.contact{position:absolute;left:13mm;right:13mm;bottom:19.5mm;display:flex;justify-content:space-between;padding-top:2.6mm;border-top:.25mm solid #cfc9b8;font:600 7pt/1 Inter,sans-serif;color:var(--ink)}
+.legal{position:absolute;left:13mm;right:13mm;bottom:13mm;font-size:5.2pt;line-height:1.2;color:#6b6778}
 </style>
 </head>
 <body>
-
-<!-- RECTO -->
 <section class="page" id="recto">
   <div class="safe">
-    <div class="r-top"><div class="brand"><img src="logo.svg" alt=""><b>QuenTools</b></div><span class="lab">Agence de communication digitale</span></div>
-    <h1>On vous rend <mark>visible</mark>,<br>on vous rend <mark>joignable</mark>.</h1>
-    <p class="r-sub">Site web, boutique, réseaux sociaux : une seule équipe pour toute votre présence en ligne, avec un prix fixé avant de commencer.</p>
-    <div class="r-shots">
-      <div class="cap"><span class="lab">Un style pour chaque métier</span><span class="lab">Exemples fictifs</span></div>
-      <div class="grid">
-        <a class="shot"><img class="img" src="../../assets/ex-plombier.jpg" alt=""><span>Plombier<i>devis en ligne</i></span></a>
-        <a class="shot"><img class="img" src="../../assets/ex-fleuriste.jpg" alt=""><span>Fleuriste<i>boutique</i></span></a>
-        <a class="shot"><img class="img" src="../../assets/ex-photographe.jpg" alt=""><span>Photographe<i>portfolio</i></span></a>
-        <a class="shot"><img class="img" src="../../assets/ex-coach.jpg" alt=""><span>Coach sportif<i>séance d’essai</i></span></a>
-        <a class="shot"><img class="img" src="../../assets/ex-restaurant.jpg" alt=""><span>Restaurant<i>réservation</i></span></a>
-        <a class="shot"><img class="img" src="../../assets/ex-climatisation.jpg" alt=""><span>Climatisation<i>entretien</i></span></a>
+    <div class="top">
+      <div class="brand">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#fff"/><circle cx="30" cy="30" r="14" fill="none" stroke="#5b3df5" stroke-width="7"/><path d="M37 37l12 12" stroke="#5b3df5" stroke-width="8" stroke-linecap="round"/></svg>
+        <b>QuenTools</b>
       </div>
+      <span class="lab">Agence de communication<br>digitale</span>
     </div>
+    <h1>On vous rend <mark>visible</mark>,<br>on vous rend <mark>joignable</mark>.</h1>
+    <p class="sub">Un site à votre image, lisible sur téléphone, avec un prix fixé avant de commencer.</p>
   </div>
-  <div class="r-band"><div class="safe">
-    <div><span class="from">Site prêt à l’emploi</span>
-      <div class="big">dès 299 €</div>
-      <p>3 mois d’assistance offerts, nom de domaine offert la première année. Un devis gratuit, avant tout engagement.</p></div>
-    <div class="qr"><img src="qr.svg" alt="QR code vers quentools.fr"><span>quentools.fr</span></div>
-  </div></div>
-</section>
 
-<!-- VERSO -->
-<section class="page" id="verso">
-  <div class="safe">
-    <div class="v-head"><h2>Ce qu’on fait<br>pour vous</h2><span class="lab">Prix fixés avant de commencer</span></div>
-    <div class="rows">
-      <div class="row"><span class="n">01</span><div><b>Site prêt à l’emploi</b><p>Un modèle personnalisé à votre image : vos textes, vos photos, vos couleurs, vos horaires. Lisible sur téléphone, sans cookie.</p></div><div class="p"><small>dès</small>299 €</div></div>
-      <div class="row"><span class="n">02</span><div><b>Réservation en ligne</b><p>Vos clients prennent rendez-vous directement sur votre site.</p></div><div class="p"><small>paiement unique</small>99 €</div></div>
-      <div class="row"><span class="n">03</span><div><b>Audit de sécurité express</b><p>Les points essentiels de votre site existant contrôlés, avec un rapport clair et sur accord écrit.</p></div><div class="p"><small>forfait</small>100 €</div></div>
-      <div class="row"><span class="n">04</span><div><b>Boutique, réseaux sociaux, outil sur mesure</b><p>Contenus pour vos publications, boutique en ligne, calculateur ou suivi pour votre métier.</p></div><div class="p"><em>sur devis</em></div></div>
-    </div>
-    <div class="incl"><h3>Compris dans<br>le site<small>à partir de 299 €</small></h3>
-      <ul><li>Personnalisation complète du modèle</li><li>3 mois d’assistance et de maintenance offerts</li><li>Nom de domaine offert la première année</li><li>Une série de retouches et une notice d’utilisation</li></ul></div>
-    <div class="steps">
-      <div><span class="n">01</span><b>Vous expliquez</b><p>Votre activité, vos besoins. Le devis est gratuit.</p></div>
-      <div><span class="n">02</span><b>On vous montre</b><p>Une première version à tester, sans engagement.</p></div>
-      <div><span class="n">03</span><b>On publie</b><p>Retouches, mise en ligne, puis suivi mensuel de 69,99 €.</p></div>
-    </div>
+  <div class="phones">
+    <span class="cap" style="left:13mm">Exemples fictifs</span>
+    <div class="ph p1"><img src="tel-plombier.jpg" alt=""></div>
+    <div class="ph p2"><img src="tel-fleuriste.jpg" alt=""></div>
+    <div class="ph p3"><img src="tel-coach.jpg" alt=""></div>
   </div>
-  <p class="legal">TVA non applicable, art. 293 B du CGI. Prix indicatifs, confirmés dans le devis. Les sites présentés au recto sont des exemples fictifs.</p>
-  <div class="v-foot"><div class="safe">
-    <div class="brand"><img src="logo.svg" alt=""><b>QuenTools</b></div>
-    <dl><dt>Web</dt><dd>quentools.fr</dd><dt>E-mail</dt><dd>contact.quentools@gmail.com</dd><dt>TikTok</dt><dd>@quentools</dd></dl>
-  </div></div>
+
+  <div class="panel">
+    <div class="safe">
+      <div>
+        <span class="kick">Site prêt à l’emploi</span>
+        <div class="price"><small>dès</small>299 €</div>
+        <ul class="pts"><li>3 mois d’assistance offerts</li><li>Nom de domaine offert la 1<sup>re</sup> année</li><li>Devis gratuit, sans engagement</li></ul>
+      </div>
+      <div class="qr"><img src="qr.svg" alt="QR code vers quentools.fr"><span>quentools.fr</span></div>
+    </div>
+    <div class="contact"><span>contact.quentools@gmail.com</span><span>TikTok @quentools</span></div>
+    <p class="legal">TVA non applicable, art. 293 B du CGI. Prix indicatifs, confirmés dans le devis. Sites présentés : exemples fictifs.</p>
+  </div>
 </section>
 </body>
 </html>
