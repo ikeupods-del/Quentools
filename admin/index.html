@@ -1112,7 +1112,8 @@ function viewLinks() {
 
 /* ---------- Actions ---------- */
 const copy = async t => { try { await navigator.clipboard.writeText(t); toast('Copié ✓'); } catch (e) { toast('Copie impossible sur cet appareil', true); } };
-const mailto = (x, body) => `mailto:${encodeURIComponent(x.email)}?subject=${encodeURIComponent('Votre demande de devis : ' + x.type)}&body=${encodeURIComponent(body)}`;
+const mailto = (x, body) => `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(x.email)}&su=${encodeURIComponent('Votre demande de devis : ' + x.type)}&body=${encodeURIComponent(body)}`;
+const openMail = url => { if (!window.open(url, '_blank', 'noopener')) location.href = url; };
 const fail = e => toast(/permission/i.test(e && (e.code || e.message)) ? 'Refusé : vérifiez les règles Firestore.' : 'Enregistrement impossible (connexion ?)', true);
 app.addEventListener('click', async e => {
   const ag = e.target.closest('[data-agdo]');
@@ -1204,7 +1205,7 @@ app.addEventListener('click', async e => {
       const t = card.querySelector('[data-msg]').value.trim(); if (!t) return toast('Écrivez un message', true);
       await addMsg(x.id, { from: 'admin', text: t }); threads[x.id] = await loadThread(x.id); render(); toast('Message envoyé ✓');
     }
-    else if (d === 'reply') { location.href = mailto(x, `Bonjour ${String(x.nom).split(' ')[0]},\n\nMerci pour votre demande. \n\nBien à vous,\nQuenTools\n\n---\nVotre message :\n${x.besoin}`); if ((x.status || 'nouveau') === 'nouveau') { await patch(x.id, { status: 'discussion' }); render(); } }
+    else if (d === 'reply') { openMail(mailto(x, `Bonjour ${String(x.nom).split(' ')[0]},\n\nMerci pour votre demande. \n\nBien à vous,\nQuenTools\n\n---\nVotre message :\n${x.besoin}`)); if ((x.status || 'nouveau') === 'nouveau') { await patch(x.id, { status: 'discussion' }); render(); } }
     else if (d === 'copy') copy(`${x.nom} <${x.email}>${x.tel ? ' · ' + x.tel : ''}\n${x.type} · ${x.delai} · ${x.budget}\n\n${x.besoin}`);
     else if (d === 'estimate') { estFor = x.id; dv = null; tab = 'estimer'; dvInit(); render(); window.scrollTo({ top: 0 }); }
     else if (d === 'exp') { expd.has(x.id) ? expd.delete(x.id) : expd.add(x.id); render(); }
@@ -1330,7 +1331,7 @@ app.addEventListener('click', async e => {
     else if (d === 'dv-publish' || d === 'dv-mail') {
       const y = items.find(i => i.id === estFor); if (!y || !dv) return;
       if (d === 'dv-mail') { if (!y.devisData) return toast('Publiez d’abord le devis', true);
-        return void (location.href = mailto(y, `Bonjour ${first(y.nom)},\n\nVotre devis ${dv.num} est prêt (${QTD.eur(QTD.total(dvDoc()))}). Vous pouvez le consulter, l’imprimer et l’accepter dans votre espace client : https://quentools.fr/espace/ (connexion avec l’adresse ${y.email}).\n\nJe reste disponible pour toute question.\n\nBien à vous,\nQuenTools`)); }
+        return void openMail(mailto(y, `Bonjour ${first(y.nom)},\n\nVotre devis ${dv.num} est prêt (${QTD.eur(QTD.total(dvDoc()))}). Vous pouvez le consulter, l’imprimer et l’accepter dans votre espace client : https://quentools.fr/espace/ (connexion avec l’adresse ${y.email}).\n\nJe reste disponible pour toute question.\n\nBien à vous,\nQuenTools`)); }
       if (!QTD.calc(dvDoc()).rows.some(r => r.pu > 0)) return toast('Ajoutez au moins une ligne avec un prix', true);
       if (!dv.num) {
         const yr = new Date().getFullYear(), c = notes._compteur || {}, n = (c.year === yr ? +c.n || 0 : 0) + 1;
@@ -1357,8 +1358,9 @@ app.addEventListener('click', async e => {
     else if (d === 'est-copy') copy(estText);
     else if (d === 'est-reply' || d === 'est-save') {
       const y = items.find(i => i.id === estFor); if (!y) return;
+      if (d === 'est-reply') openMail(mailto(y, estText));
       await patch(y.id, { montant: estMid, status: ['gagne', 'perdu'].includes(y.status) ? y.status : 'envoye' });
-      if (d === 'est-reply') location.href = mailto(y, estText); else toast(`Montant noté : ${eur(estMid)}`);
+      if (d !== 'est-reply') toast(`Montant noté : ${eur(estMid)}`);
     }
     else if (d === 'save-site') {
       const f = document.getElementById('site-form'), g = n => f.elements[n];
