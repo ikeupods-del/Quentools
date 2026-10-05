@@ -21,3 +21,9 @@ Une bulle de discussion en bas du site : elle répond aux visiteurs à partir de
 
 ## Mode local (sans IA, sans clé)
 Quand `data-api` est vide, l'assistant comprend la question lui-même : mots-clés (début de mot, accents et petites fautes tolérés), sujet précédent (« et le prix ? », « en savoir plus »), suites proposées. Les connaissances sont des données : `assets/assistant-qt.js` pour QuenTools (offres, templates et options avec les prix du catalogue `qt-templates.js`, audit, outils, métiers, devis…), ou `data-faq` pour une petite liste chez un client. Ne mettre que des faits déjà publics, et mettre à jour ce fichier quand une offre ou un prix change.
+
+## Améliorations du mode local (octobre 2026)
+- **Compréhension** : pluriels ignorés, lettres inversées (« mian » → « main ») et expressions avec une faute reconnues ; si deux sujets sont proches, le second est proposé en suggestion ; sans correspondance, « Vous parliez peut-être de… » avec les sujets qui partagent un mot.
+- **Conversation** : indicateur de saisie, réponse lue depuis son début, conversation conservée d'une page à l'autre (stockage de session du navigateur, rien n'est envoyé), bouton ↻ « Nouvelle conversation », petite bulle d'accroche une fois par session (`kb.teaser`, `data-persist="0"` pour désactiver la mémoire).
+- **Connaissances du site QuenTools** (`assets/assistant-qt.js`) : agence de communication, une réponse par option avec son prix lu dans le catalogue (`assets/qt-templates.js`), choix entre les deux réservations, fin des 3 mois offerts, « pourquoi QuenTools », propriété du site, conseil par métier ; chaque modèle de métier se termine par le lien du devis avec le template présélectionné.
+- **Test** : `node tools/test-assistant.js` pose 53 questions dans la bulle (téléphone 390 px) et vérifie les réponses, les prix, la conservation de la conversation et la nouvelle conversation. À relancer après toute modification des connaissances ou d'un prix.

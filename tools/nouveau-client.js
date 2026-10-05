@@ -12,7 +12,8 @@ const arg = process.argv[2];
 const EXEMPLE = { modele: 'vitrine', dossier: 'dupont-plomberie', nom: 'Dupont Plomberie', metier: 'plombier chauffagiste', ville: 'Lyon',
   accroche: 'une panne réparée dans la journée', couleur: '#0f766e', services: ['Dépannage urgent', 'Chauffe-eau', 'Salle de bains'],
   telephone: '06 12 34 56 78', email: 'contact@exemple.fr',
-  domaine: 'dupont-plomberie.fr', adresse: { rue: '12 rue des Lilas', codePostal: '69006' }, horaires: ['Mo-Fr 08:00-18:00', 'Sa 09:00-12:00'] };
+  domaine: 'dupont-plomberie.fr', adresse: { rue: '12 rue des Lilas', codePostal: '69006' }, horaires: ['Mo-Fr 08:00-18:00', 'Sa 09:00-12:00'],
+  assistant: { tarifs: [{ nom: 'Déplacement et diagnostic', prix: '49 €' }], faq: [{ q: 'Intervenez-vous le dimanche ?', k: 'dimanche|week end', a: 'Uniquement pour les urgences, au tarif d’astreinte indiqué au téléphone.' }] } };
 
 if (arg === '--exemple') { console.log(JSON.stringify(EXEMPLE, null, 2)); process.exit(0); }
 if (arg === '--modeles') { console.log(modeles.join('\n')); process.exit(0); }
@@ -55,9 +56,32 @@ const sortie = path.join(racine, 'clients', f.dossier);
 fs.mkdirSync(path.join(sortie, 'assets', 'fonts'), { recursive: true });
 for (const x of ['qt.css', 'qt.js']) fs.copyFileSync(path.join(racine, 'assets', x), path.join(sortie, 'assets', x));
 for (const x of fs.readdirSync(path.join(racine, 'assets', 'fonts'))) if (/^(bricolage|inter)\.woff2$|^OFL-/.test(x)) fs.copyFileSync(path.join(racine, 'assets', 'fonts', x), path.join(sortie, 'assets', 'fonts', x));
+const seoMsgs = [];
+/* Option « Assistant de site » : bulle de discussion en mode local, construite uniquement à partir de la fiche (services, horaires, adresse, coordonnées, tarifs et questions fournis).
+   Rien n'est inventé : une rubrique absente de la fiche n'existe pas dans l'assistant. */
+if (f.assistant) {
+  const J = { Mo: 'lundi', Tu: 'mardi', We: 'mercredi', Th: 'jeudi', Fr: 'vendredi', Sa: 'samedi', Su: 'dimanche' };
+  const hum = x => String(x).replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su)-(Mo|Tu|We|Th|Fr|Sa|Su)\b/g, (m, a, b) => `${J[a]} au ${J[b]}`).replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su)\b/g, m => J[m]).replace(/(\d{2}):(\d{2})-(\d{2}):(\d{2})/g, (m, h1, m1, h2, m2) => `de ${+h1} h${m1 === '00' ? '' : m1} à ${+h2} h${m2 === '00' ? '' : m2}`).replace(/ de /, ' : de ');
+  const a = f.assistant === true ? {} : f.assistant, E = [], mots = x => x, q = JSON.stringify;
+  E.push({ id: 'hello', social: true, q: '', k: 'bonjour|bonsoir|salut|coucou|hello', a: `Bonjour ! Que puis-je faire pour vous ?` });
+  E.push({ id: 'thanks', social: true, q: '', k: 'merci|parfait|super|ok|d accord', a: 'Avec plaisir ! Autre chose ?' });
+  if (s.length) E.push({ id: 'services', q: 'Vos services', k: 'service|prestation|que faites vous|vous faites quoi|proposez|propose', a: `${f.nom} (${f.metier}${f.ville ? ' à ' + f.ville : ''}) : ${(f.services || []).join(', ')}.` });
+  if (Array.isArray(f.horaires) && f.horaires.length) E.push({ id: 'horaires', q: 'Horaires', k: 'horaire|ouvert|ferme|quand|heure|disponible', a: 'Nos horaires : ' + f.horaires.map(hum).join(' ; ') + '.' });
+  if (f.adresse && f.adresse.rue) E.push({ id: 'adresse', q: 'Adresse', k: 'adresse|ou etes vous|ou se trouve|situe|venir|plan|acces|localisation', a: `${f.adresse.rue}${f.adresse.codePostal ? ', ' + f.adresse.codePostal : ''}${f.ville ? ' ' + f.ville : ''}.` });
+  if (f.telephone || f.email) E.push({ id: 'contact', q: 'Nous contacter', k: 'contact|contacter|joindre|telephone|appeler|mail|email|numero|rdv|rendez vous|devis', a: `${f.telephone ? 'Par téléphone : ' + f.telephone + '.' : ''}${f.email ? ' Par e-mail : ' + f.email + '.' : ''} Nous vous répondons pour confirmer.` });
+  if (Array.isArray(a.tarifs) && a.tarifs.length) E.push({ id: 'tarifs', q: 'Tarifs', k: 'prix|tarif|combien|cout|coute|budget', a: 'Tarifs : ' + a.tarifs.map(t => `${t.nom} ${t.prix}`).join(' ; ') + '. Pour un devis précis, contactez-nous.' });
+  (a.faq || []).forEach((x, i) => E.push({ id: 'faq' + i, q: x.q, k: x.k || '', a: x.a }));
+  const start = E.filter(e => e.q).map(e => e.id).slice(0, 4), tel = f.telephone ? ` Le plus simple : appelez-nous au ${f.telephone}.` : '';
+  const kb = { intro: `Bonjour ! Je suis l’assistant de ${f.nom}. Posez-moi votre question ou choisissez un sujet.`, start, fallback: 'Je n’ai pas cette information.' + tel, fallback2: 'Je ne trouve pas la réponse.' + tel, entries: E };
+  fs.mkdirSync(path.join(sortie, 'assets'), { recursive: true });
+  fs.writeFileSync(path.join(sortie, 'assets', 'assistant-kb.js'), `/* Connaissances de l’assistant de ${f.nom} : uniquement les informations de la fiche du client, à relire avec lui. */\nwindow.QT_ASSISTANT_KB = ${JSON.stringify(kb, null, 2)};\n`);
+  for (const x of ['assistant.js', 'assistant.css']) fs.copyFileSync(path.join(racine, 'assets', x), path.join(sortie, 'assets', x));
+  h = h.replace('</head>', '<link rel="stylesheet" href="assets/assistant.css">\n</head>');
+  h = h.replace('</body>', `<script src="assets/assistant-kb.js"></script>\n<script src="assets/assistant.js" defer data-nom="${String(f.nom).replace(/"/g, '&quot;')}"${f.telephone ? ` data-tel="${f.telephone}"` : ''} data-api="" data-lead="0"></script>\n</body>`);
+  seoMsgs.push('assistant de site : relire avec le client les horaires, tarifs et réponses générés (assets/assistant-kb.js)');
+}
 /* Référencement local de base (option « Référencement local de base ») : si la fiche donne un « domaine », adresse canonique, balises de partage,
    données structurées LocalBusiness (nom, téléphone, adresse, horaires, zone), plan du site et robots.txt. Rien n'est inventé : champs absents = non écrits. */
-const seoMsgs = [];
 if (f.domaine) {
   const url = 'https://' + String(f.domaine).replace(/^https?:\/\//, '').replace(/\/$/, '') + '/';
   const titre = (h.match(/<title>([^<]*)<\/title>/) || [])[1] || '', desc = (h.match(/<meta name="description" content="([^"]*)"/) || [])[1] || '';
@@ -93,5 +117,6 @@ console.log(`Contraste texte blanc sur ${accent} : ${contraste.toFixed(1)}:1 ${c
 console.log(`Titres h1 : ${h1} ${h1 === 1 ? '(correct)' : '(il en faut exactement un)'} · images sans texte alternatif : ${sansAlt}`);
 console.log(`À compléter dans index.html : ${reste.length} champ(s)`);
 console.log(reste.slice(0, 60).join('\n'));
+if (f.assistant) console.log('Assistant de site : bulle de discussion ajoutée (assets/assistant-kb.js), construite à partir de la fiche uniquement.');
 if (f.domaine) { console.log(`Référencement local de base : adresse canonique, balises de partage, données LocalBusiness, sitemap.xml et robots.txt écrits pour ${f.domaine}.`); seoMsgs.forEach(m => console.log('  ⚠ ' + m)); }
 console.log('Ensuite : Google Business Profile (fiche à créer par le client : je prépare les textes), Search Console (propriété à vérifier par le client) ; photos réelles, mentions légales (SIRET, hébergeur), aperçu sur 390 px et 1440 px, clair et sombre (design/CHECKLIST-CLIENT.md).');

@@ -39,6 +39,7 @@ Fiche Google Business et avis ; référencement local ; logo et charte simple ; 
 | Pack de 5 visuels réseaux sociaux | Carrousel 5 visuels + légende | Photos et textes de son activité | `tools/carrousels.js`, `tools/carrousels.json` |
 | Logo simple et couleurs | Logo typographique SVG/PNG, trois couleurs appliquées | Nom et couleurs préférées | `tools/nouveau-client.js` (couleurs) |
 | Version en anglais | Seconde version et bouton de langue | Rien, il valide la traduction | — |
+| Assistant de site (79,99 €) | Fiche `assistant` dans `tools/nouveau-client.js` : bulle de discussion avec horaires, prestations, tarifs, coordonnées du client ; test des réponses | Ses vraies informations (horaires, prestations, tarifs) à valider | `assets/assistant.js`, `assets/assistant.css`, `tools/test-assistant.js` |
 | Prise en main (1 h en visio) | Rien : préparer la notice et un plan de séance ; la visio est faite par le propriétaire | Un créneau | `design/CHECKLIST-CLIENT.md` |
 | Rappel automatique de fin d'offre (3 mois) | Relais Cloudflare + e-mail 14 jours avant la fin, déjà écrit et testé | Compte Cloudflare et Resend (mise en place unique) | `relais-quentools/`, `design/RAPPELS-FIN-OFFRE.md` |
 | Pages, textes, modifications, suivi mensuel | Direct, sur le site hébergé | Ses demandes | `tools/nouveau-client.js`, `design/CHECKLIST-CLIENT.md` |

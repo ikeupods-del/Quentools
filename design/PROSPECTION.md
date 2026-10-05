@@ -18,17 +18,17 @@ Question pour les pros du groupe 🤔
 
 Quand quelqu'un cherche votre activité sur son téléphone, il tombe sur quoi ? Un vrai site, une page Facebook, ou rien du tout ?
 
-Je pose la question parce que je fais des sites pour des indépendants et des commerçants, et je suis souvent surpris de voir à quel point on perd des clients sans le savoir.
+Je pose la question parce que je m'occupe de la communication des indépendants et des commerçants (site, réseaux sociaux, visibilité locale), et je suis souvent surpris de voir à quel point on perd des clients sans le savoir.
 
 Dites-moi en commentaire votre métier et si vous avez un site : je vous réponds avec un conseil précis pour vous 👇
 
-## Message 2 : le service (création de site)
+## Message 2 : le service (visibilité en ligne)
 
 Bonjour à tous 👋
 
-Je regarde gratuitement 5 sites ou pages de pros du groupe cette semaine 👀
+Je regarde gratuitement la présence en ligne de 5 pros du groupe cette semaine (site, fiche Google, réseaux sociaux) 👀
 
-Je vous dis en 3 lignes ce qui fait fuir les clients et ce que je changerais en premier. Sans engagement.
+Je vous dis en 5 lignes ce qui fait fuir les clients et ce que je changerais en premier. Sans engagement.
 
 Commentez avec votre métier et je vous réponds en commentaire.
 
@@ -42,7 +42,17 @@ Il avait raison de se poser la question : la majorité des visiteurs viennent de
 
 Et vous, vous l'avez déjà testé sur le vôtre ? 😅
 
-## Message 4 : la curiosité (audit de sécurité)
+## Message 4 : les réseaux sociaux (communication)
+
+Bonjour à tous 👋
+
+Question franche 🤔 : votre dernière publication, c'était quand ?
+
+Beaucoup de pros savent qu'ils devraient publier, mais manquent de temps et d'idées. Un bon visuel, une phrase claire, une question à la fin : c'est souvent tout ce qu'il faut pour qu'on pense à vous.
+
+Dites-moi en commentaire votre métier et je vous propose une idée de publication pour cette semaine 👇
+
+## Message 5 : la curiosité (audit de sécurité)
 
 Bonjour à tous 👋
 
@@ -66,13 +76,13 @@ Je contrôle des sites gratuitement pour 3 personnes du groupe cette semaine. Di
 
 ## Prospection active par métier (message privé, après un premier contact)
 
-Règle : jamais de message privé à froid. D'abord un commentaire utile sous leur publication ou sur leur page, puis le message privé seulement s'ils répondent ou réagissent. Pas de lien ni de prix dans le premier message ; ne rien affirmer qu'on n'a pas vu (regarder leur page ou leur site avant).
+Règle : jamais de message privé à froid. D'abord un commentaire utile sous leur publication ou sur leur page, puis le message privé seulement s'ils répondent ou réagissent. Pas de lien ni de prix dans le premier message (ni dans les publications de groupe) ; ne rien affirmer qu'on n'a pas vu (regarder leur page ou leur site avant).
 
 Commentaire d'approche (à adapter, sous la publication d'un pro) :
 > Bonjour, j'ai regardé votre page, vos réalisations donnent vraiment envie. Une petite idée en passant : [un point précis et vrai vu sur leur page]. Bonne continuation !
 
 Message privé après réponse (base commune, remplacer [métier] et le détail) :
-> Bonjour [prénom], merci pour votre réponse ! Comme je le disais, [détail vu sur leur page]. Je crée des sites pour les [métier] et je regarde volontiers votre situation. Aujourd'hui, comment vos clients vous trouvent-ils ?
+> Bonjour [prénom], merci pour votre réponse ! Comme je le disais, [détail vu sur leur page]. Je m'occupe de la communication des [métier] (site, réseaux sociaux, visibilité locale) et je regarde volontiers votre situation. Aujourd'hui, comment vos clients vous trouvent-ils ?
 
 Variantes de la dernière question :
 - Plombier, électricien, chauffagiste : « Quand quelqu'un a une urgence, il vous trouve comment ? Par le bouche-à-oreille, Google ? »

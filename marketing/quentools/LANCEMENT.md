@@ -3,13 +3,13 @@
 Kit prêt à l'emploi pour la sortie officielle. Tout est factuel : aucun faux avis, aucun chiffre inventé. Les exemples sectoriels sont fictifs et toujours présentés comme tels.
 
 ## 1. Positionnement
-- **En une phrase** : « Des sites et des outils simples pour les indépendants et les petits commerces, avec un devis gratuit et un prix fixé avant de commencer. »
+- **En une phrase** : « Agence de communication digitale pour les indépendants et les petits commerces : site, réseaux sociaux, visibilité locale et outils, avec un devis gratuit et un prix fixé avant de commencer. »
 - **Cible** : artisans, indépendants, petits commerces locaux, créateurs de contenu qui n'ont pas de site ou dont le site est dépassé.
 - **Preuves réelles à montrer** : 5 applications en ligne, 11 exemples de sites par métier, outils gratuits sans inscription, Wouf (110 leçons, plus de 6 000 vérifications automatiques).
 - **Promesse de service** : réponse sous 48 h, première version à tester avant l'engagement.
 
 ## 2. Bio (au choix, 80 caractères pour TikTok)
-- `Sites et outils simples pour indépendants 🛠️ Devis gratuit 👇 quentools.fr`
+- `Agence de com digitale : site, réseaux, visibilité 🚀 Devis gratuit 👇`
 - `Des outils qui font gagner du temps. Gratuits ou sur mesure. quentools.fr`
 - `Je crée votre site ou votre outil sur mesure. Devis gratuit 👇`
 
