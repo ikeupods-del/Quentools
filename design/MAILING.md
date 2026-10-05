@@ -4,12 +4,12 @@ Positionnement : QuenTools est une **agence de communication digitale** (site, v
 
 ## Règles (à relire avant chaque envoi)
 - **Un fait vrai et vérifié** sur la personne dans la première phrase (« je n'ai pas trouvé de site », « votre page n'a pas de publication récente », « votre site est difficile à lire sur téléphone »). Rien d'inventé, aucun faux avis, aucun chiffre promis.
-- Adresse **professionnelle** publique (fiche d'entreprise, site, page de l'activité). Se présenter : QuenTools, SIRET, adresse du site.
+- Adresse **professionnelle** publique (fiche d'entreprise, site, page de l'activité). Se présenter : QuenTools et l'adresse du site (les informations légales sont sur la page mentions légales du site, pas besoin de les recopier dans l'e-mail).
 - **Mention d'opposition** dans chaque e-mail (« répondez STOP »). Un STOP est définitif : retirer l'adresse du suivi.
 - **Un e-mail + une seule relance** 4 jours plus tard, dans le même fil. Maximum **10 envois par jour**, pas d'envoi de masse tant que la liste n'est pas vérifiée (voir `SUIVI-PROSPECTION.md`).
 - Ne jamais promettre une place sur Google ni un nombre de clients. Ne jamais citer ni critiquer un concurrent.
 - Ni prix ni lien d'exemple dans le premier e-mail ; les prix viennent s'ils les demandent (réponses types plus bas).
-- Signature : QuenTools, avec l'adresse du site et le SIRET.
+- Signature : QuenTools et l'adresse du site, rien de plus.
 
 ## E-mail 1 : la question sur la visibilité
 **Objet** : Vos clients vous trouvent-ils facilement ?
@@ -25,7 +25,7 @@ Positionnement : QuenTools est une **agence de communication digitale** (site, v
 > Si vous voulez, je regarde gratuitement votre présence en ligne (site, Google, réseaux) et je vous écris en 5 lignes ce que je changerais en premier, sans engagement.
 >
 > Bien cordialement,
-> QuenTools · quentools.fr · SIRET 912 026 713 00046
+> QuenTools · quentools.fr
 > Si vous ne souhaitez pas être recontacté, répondez simplement STOP : je ne vous écrirai plus.
 
 ### Phrase de métier (une seule, à choisir)
