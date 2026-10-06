@@ -14,6 +14,9 @@
 - [ ] Marketing : bio TikTok, publier la vidéo avant / après avec le son tendance (si disponible sur le compte), tournage des vidéos (`marketing/quentools/VIDEOS.md`), prospection.
 - [ ] Facultatif : `www.quentools.fr` (CNAME bloqué par une ligne TXT OVH ; ticket au support).
 
+- [ ] **Sauvegarde** : lancer chaque semaine `sh tools/sauvegarde-depot.sh` et le bouton « Télécharger la sauvegarde » de l'administration (voir `design/SAUVEGARDE.md`) ; double authentification sur tous les comptes.
+- [ ] **Infikit Pro** : publier les règles Firestore, coller le lien Stripe, relecture juridique (voir `design/INFIKIT-PRO.md`).
+
 ## À faire côté développement (sur demande)
 - [ ] Remplacer Tailwind et Alpine chargés depuis un CDN par des fichiers hébergés (Infikit, Freelance Kit, Gourmet AI), avec vérification visuelle.
 - [ ] Firebase App Check (anti-spam du formulaire de devis).

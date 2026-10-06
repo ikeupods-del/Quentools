@@ -951,7 +951,8 @@ function viewRules() {
   return `<section class="card" style="padding:clamp(20px,4vw,36px)"><h2 style="margin-top:0">Règles de sécurité Firestore</h2>
     <p>À coller dans Firebase pour activer l’espace client et le suivi complet : ouvrez <a href="https://console.firebase.google.com/project/${esc(C.firebase.projectId)}/firestore/rules" target="_blank" rel="noopener">les règles</a>, remplacez le bloc <code>match /qt_…</code> existant par celui-ci (gardez les règles des autres applications), puis cliquez sur « Publier ».</p>
     ${rulesOld ? '<div class="notice warn" style="margin-bottom:var(--s-4)">Les règles actuelles ne contiennent pas encore les notes privées : mettez-les à jour.</div>' : ''}
-    <pre class="rules">${esc(rulesText())}</pre><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="copy-rules">Copier les règles</button></div></section>`;
+    <pre class="rules">${esc(rulesText())}</pre><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="copy-rules">Copier les règles</button></div></section>
+  <section class="card" style="padding:clamp(20px,4vw,36px);margin-top:var(--s-5)"><h2 style="margin-top:0">Sauvegarde de la base de données</h2><p class="muted">Télécharge un fichier avec tout ce que contient votre base : demandes de devis et messages, notes, agenda, contacts, cartes cadeaux, réglages, abonnés Infikit. À faire chaque semaine ; gardez une copie hors de cet ordinateur. Le fichier contient des données personnelles de clients : ne le partagez pas.</p><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-do="backup">Télécharger la sauvegarde</button></div></section>`;
 }
 function viewRequests() {
   if (denied) return `<section class="card" style="padding:var(--s-6)"><h2>Une étape à faire une seule fois</h2>
@@ -1177,6 +1178,24 @@ app.addEventListener('click', async e => {
   try {
     if (d === 'logout') { const { Au, auth } = await fb(); await Au.signOut(auth); }
     else if (d === 'reload') { await load(); render(); }
+    else if (d === 'backup') {
+      if (DEMO) return toast('Indisponible en démonstration', true);
+      toast('Sauvegarde en cours…');
+      const { Fs, db } = await fb(), out = { exporte: new Date().toISOString(), collections: {} }, manque = [];
+      for (const c of ['qt_devis', 'qt_notes', 'qt_agenda', 'qt_leads', 'qt_cadeaux', 'qt_cartes', 'qt_admin', 'qt_infikit_pro']) {
+        try {
+          const snap = await Fs.getDocs(Fs.collection(db, c)); out.collections[c] = {};
+          for (const x of snap.docs) {
+            const v = { ...x.data() };
+            if (c === 'qt_devis') { try { v._messages = (await Fs.getDocs(Fs.collection(db, c, x.id, 'messages'))).docs.map(m => m.data()); } catch (e) { v._messages = null; } }
+            out.collections[c][x.id] = v;
+          }
+        } catch (e) { manque.push(c); }
+      }
+      out.collections_non_lues = manque;
+      dl('sauvegarde-quentools-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(out, null, 1), 'application/json');
+      toast(manque.length ? 'Sauvegarde partielle (règles à publier) : ' + manque.join(', ') : 'Sauvegarde téléchargée ✓', !!manque.length);
+    }
     else if (d === 'save-infikit') {
       const g = document.getElementById('ik-form').elements, u = g.payUrl.value.trim(), n = Math.round(+g.freeLimit.value);
       if (u && !/^https:\/\/[^\s"<>]+$/.test(u)) return toast('Le lien de paiement doit commencer par https://', true);
