@@ -906,6 +906,7 @@ function here(pid) {
 }
 function parseCoords(s) { const m = String(s || '').match(/(-?\d+(?:[.,]\d+)?)\s*[,; ]\s*(-?\d+(?:[.,]\d+)?)/); if (!m) return null; return [parseFloat(m[1].replace(',', '.')), parseFloat(m[2].replace(',', '.'))]; }
 function editPatient(id) {
+  if (!id && !canAddPatient()) { paywall('L’offre gratuite est limitée à ' + BILL.freeLimit + ' patients. Vos fiches existantes restent consultables et modifiables.'); return; }
   const p = id ? patient(id) : { civ: 'Mme', prenom: '', nom: '', adresse: '', tel: '', medecin: '', ordoFin: '', km: 3, zone: S.zone, bsi: '', enfant: false, katz: '', palliatif: false, allergies: '', notes: '', lat: null, lng: null };
   sheet(`<div class="sh"><h2>${id ? 'Modifier la fiche' : 'Nouveau patient'}</h2><button class="icon" onclick="closeSheet()">✕</button></div>
     <div class="grid3"><label class="f"><span>Civilité</span><select id="pc"><option ${p.civ === 'Mme' ? 'selected' : ''}>Mme</option><option ${p.civ === 'M.' ? 'selected' : ''}>M.</option><option value="" ${!p.civ ? 'selected' : ''}>—</option></select></label><label class="f"><span>Prénom</span><input id="pp" value="${esc(p.prenom)}"></label><label class="f"><span>Nom</span><input id="pn" value="${esc(p.nom)}"></label></div>
@@ -929,6 +930,7 @@ function editPatient(id) {
 function savePatient(id) {
   const g = s => ($(s)?.value ?? '').trim();
   if (!g('#pn') && !g('#pp')) { toast('Indiquez au moins un nom.'); return; }
+  if (!id && !canAddPatient()) { paywall('L’offre gratuite est limitée à ' + BILL.freeLimit + ' patients.'); return; }
   const p = id ? patient(id) : { id: uid(), plan: [] };
   Object.assign(p, { ddn: g('#pddn'), medecinTel: g('#pmt'), antecedents: g('#pant'), traitements: g('#ptrt'), contactNom: g('#pcn'), contactTel: g('#pct') });
   Object.assign(p, { civ: g('#pc'), prenom: g('#pp'), nom: g('#pn'), adresse: g('#pa'), tel: g('#pt'), medecin: g('#pm'), ordoFin: g('#po'), allergies: g('#pal'), notes: g('#pno') });
@@ -966,6 +968,7 @@ function saveTrans(pid) {
   const al = vitalAlerts(vit); if (al.length) setTimeout(() => showAlerts(pid, al), 250); else toast('Transmission enregistrée');
 }
 function newTrans(pid) {
+  if (!isPro()) { paywall('Les transmissions avec courbes de constantes font partie d’Infikit Pro.'); return; }
   sheet(`<div class="sh"><h2>Transmission</h2><button class="icon" onclick="closeSheet()">✕</button></div>
     <div class="grid3"><label class="f"><span>TA</span><input id="tta" placeholder="13/8"></label><label class="f"><span>Glycémie</span><input id="tgl" inputmode="decimal"></label><label class="f"><span>T °C</span><input id="tte" inputmode="decimal"></label><label class="f"><span>Douleur /10</span><input id="tdo" inputmode="numeric"></label><label class="f"><span>SpO₂ %</span><input id="tsp" inputmode="numeric"></label></div>
     <label class="f"><span>Observations</span><textarea id="ttx"></textarea></label>
@@ -1005,6 +1008,7 @@ function monthData(m) {
   return { vis, rec, ch, recV, recM, chg, remp, retro, net: recV + recM - chg - retro };
 }
 function vCompta() {
+  if (!isPro()) return `<div class="card empty"><p><b>La compta mensuelle fait partie d’Infikit Pro.</b><br><span class="muted small">Recettes, charges par catégorie, rétrocession et export CSV. Vos données déjà saisies sont conservées.</span></p><button class="btn pri" onclick="paywall('La compta mensuelle fait partie d’Infikit Pro.')">Découvrir Infikit Pro</button></div>`;
   const m = ui.month, [y, mo] = m.split('-').map(Number), D = monthData(m);
   const shift = n => { const d = new Date(y, mo - 1 + n, 1); ui.month = d.getFullYear() + '-' + pad(d.getMonth() + 1); render(); };
   window._shift = shift;
@@ -1077,6 +1081,7 @@ function vReglages() {
   const nP = S.patients.filter(p => !p.archive).length;
   let h = `<div class="card profile"><span class="avatar big">${esc((S.name || '?')[0].toUpperCase())}</span><div class="grow"><b>${esc(S.name || 'Votre profil')}</b><div class="small muted">${FR() ? '🇫🇷 Infirmier·e libéral·e · France' : '🇧🇪 Infirmier·e à domicile · Belgique'}</div>${cloudProv() ? `<span class="chip ok" style="margin-top:6px">☁️ Synchronisé · chiffré</span>` : `<span class="chip ok" style="margin-top:6px">🔒 Données sur cet appareil</span>`}</div></div>`;
 
+  h += billCard();
   h += `<h2>Pays d'exercice</h2><div class="seg big">${[['FR', '🇫🇷 France'], ['BE', '🇧🇪 Belgique']].map(([c, l]) => `<button class="${S.country === c ? 'on' : ''}" onclick="setCountry('${c}')">${l}</button>`).join('')}</div>
     <p class="note">${FR() ? 'Cotations NGAP · Assurance maladie' : 'Tarification INAMI · article 8 de la nomenclature'}</p>`;
 
@@ -1596,6 +1601,7 @@ async function afterSignIn(prov, u, intent) {
   await syncNow({ first: true });
 }
 async function connectCloud(prov) {
+  if (!isPro()) { paywall('La sauvegarde chiffrée en ligne fait partie d’Infikit Pro. Vous pouvez toujours exporter un fichier de sauvegarde.'); return; }
   if (prov === 'github') return githubLogin('connect');
   try { await afterSignIn('google', await cloudSignIn('google'), 'connect'); } catch (e) { toast(e.message); }
 }
@@ -1857,9 +1863,67 @@ function demo(country) {
 /* ---------- démarrage ---------- */
 document.addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
+/* ---------- Abonnement Infikit Pro ----------
+   Le mode payant s'active depuis l'administration QuenTools (onglet Infikit) : tant qu'il est coupé, tout est gratuit.
+   Réglages publics : qt_admin/infikit (paid, freeLimit, payUrl). Abonnés : qt_infikit_pro/{adresse Google en minuscules}.
+   Hors connexion, le dernier état connu est gardé ; un abonné vérifié reste Pro 30 jours sans réseau. Aucune donnée de patient n'est envoyée. */
+const BKEY = 'infikit_billing', BILL = { paid: false, freeLimit: 10, payUrl: '', pro: false, proFor: '', proAt: 0 };
+function billLoad() { try { const d = JSON.parse(localStorage.getItem(BKEY) || 'null'); if (d && typeof d === 'object') Object.assign(BILL, { paid: d.paid === true, freeLimit: Math.max(1, +d.freeLimit || 10), payUrl: /^https:\/\//.test(d.payUrl || '') ? d.payUrl : '', pro: d.pro === true, proFor: String(d.proFor || ''), proAt: +d.proAt || 0 }); } catch (e) { } }
+function billSave() { try { localStorage.setItem(BKEY, JSON.stringify(BILL)); } catch (e) { } }
+const isPro = () => !BILL.paid || (BILL.pro && Date.now() - BILL.proAt < 30 * 864e5);
+const activePatients = () => S.patients.filter(p => !p.archive).length;
+const canAddPatient = () => isPro() || activePatients() < BILL.freeLimit;
+async function billRefresh() {
+  const f = CFG.firebase; if (!(f && f.projectId && f.apiKey)) return;
+  try {
+    const r = await fetch(`https://firestore.googleapis.com/v1/projects/${f.projectId}/databases/(default)/documents/qt_admin/infikit?key=${f.apiKey}`, { cache: 'no-store' });
+    if (r.status === 404) { BILL.paid = false; BILL.payUrl = ''; }
+    else if (r.ok) {
+      const d = (await r.json()).fields || {}, u = (d.payUrl || {}).stringValue || '';
+      BILL.paid = (d.paid || {}).booleanValue === true; BILL.freeLimit = Math.max(1, parseInt((d.freeLimit || {}).integerValue) || 10); BILL.payUrl = /^https:\/\//.test(u) ? u : '';
+    } else return;
+  } catch (e) { return; }
+  billSave();
+  if (BILL.paid && BILL.proFor) await proRefresh();
+}
+async function proRefresh(ask) { // vérifie dans Firestore si l'adresse Google connectée est abonnée
+  try {
+    const F = await fb(); await F.auth.authStateReady();
+    let u = F.auth.currentUser;
+    if (!u && ask) u = (await F.Au.signInWithPopup(F.auth, new F.Au.GoogleAuthProvider())).user;
+    if (!u || !u.email) return null;
+    const mail = u.email.toLowerCase(), d = await F.Fs.getDoc(F.Fs.doc(F.db, 'qt_infikit_pro', mail)), v = d.exists() ? d.data() : null;
+    BILL.pro = !!v && !(v.until && Date.parse(v.until) < Date.now()); BILL.proFor = mail; BILL.proAt = Date.now(); billSave();
+    return mail;
+  } catch (e) { if (ask) throw e; return null; }
+}
+async function checkPro() {
+  toast('Vérification…');
+  try {
+    const mail = await proRefresh(true);
+    if (!mail) { toast('Connexion Google impossible.'); return; }
+    if (BILL.pro) { closeSheet(); toast('Infikit Pro est actif ✔︎'); } else toast('Aucun abonnement trouvé pour ' + mail + '.');
+    render();
+  } catch (e) { const c = e && e.code || ''; toast(c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request' ? 'Connexion annulée' : c === 'auth/popup-blocked' ? 'Autorisez les fenêtres pop-up puis réessayez' : 'Vérification impossible pour le moment.'); }
+}
+function paywall(msg) {
+  sheet(`<div class="sh"><h2>Infikit Pro</h2><button class="icon" onclick="closeSheet()">✕</button></div>
+    <p style="margin-top:0">${esc(msg)}</p>
+    <p class="small muted">Infikit Pro : patients illimités, transmissions avec courbes de constantes, compta mensuelle et export CSV, sauvegarde chiffrée. 5 € par mois, résiliable à tout moment.</p>
+    ${BILL.payUrl ? `<a class="btn pri block" href="${esc(BILL.payUrl)}" target="_blank" rel="noopener">S’abonner</a>` : '<p class="note">L’abonnement ouvre très bientôt.</p>'}
+    <button class="btn block" style="margin-top:8px" onclick="checkPro()">J’ai déjà un abonnement</button>
+    <p class="note">L’abonnement est lié à votre compte Google : connectez-vous avec l’adresse utilisée pour payer. Vos données restent sur ce téléphone et ne sont jamais supprimées.</p>`);
+}
+function billCard() {
+  if (!BILL.paid) return '';
+  return `<h2>Abonnement</h2><div class="card"><div class="row"><span class="grow"><b>${isPro() ? 'Infikit Pro' : 'Offre Découverte'}</b><span class="small muted" style="display:block">${isPro() ? 'Patients illimités et toutes les fonctions.' : activePatients() + ' patient' + (activePatients() > 1 ? 's' : '') + ' sur ' + BILL.freeLimit + ' dans l’offre gratuite.'}</span></span>${isPro() ? '' : '<button class="btn pri sm" onclick="paywall(\'Passez à Infikit Pro pour aller plus loin.\')">Passer Pro</button>'}</div></div>`;
+}
+
 (function boot() {
   load();
+  billLoad();
   render();
+  billRefresh().then(() => { if (S && $("#sheet").hidden) render(); });
   if (S && S.pin) unlock();
   pwaBoot();
   if (!githubCallback() && S && !S.pin) syncNow({ silent: true });
