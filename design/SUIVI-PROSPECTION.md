@@ -27,3 +27,10 @@ Modèle d'origine : « une question sur votre site » (présentation, retour gra
 - Rebonds ou blocages : Ardesign, Novadia Énergie, Little Worker (adresses inexistantes), Mallet / Charantelec, Habitat Référence (blocage serveur), Addor (boîte pleine), Cauret Stive Peinture (retard de livraison). Ne pas relancer ces adresses.
 - Deux filtres anti-spam demandent une validation de l'expéditeur (Sarl Simon, Erige) : non traités.
 - Décision : plus aucun nouvel envoi de masse tant que la liste n'est pas vérifiée ; maximum 10 par jour ensuite.
+
+## Relance du 7 octobre
+
+- 48 relances envoyées dans le même fil, uniquement aux destinataires du 3 octobre (matin et après-midi) qui n'avaient ni rebondi, ni répondu, ni demandé STOP.
+- Exclus : STOP (MS Menuiserie), société fermée (Tecnovac), réponse automatique ER Climat (adresse changée, déjà écrit à la nouvelle), filtres anti-spam (Maintenance Thermique, Sarl Simon, Erige), tous les rebonds ou blocages, et les envois automatiques du soir du 3 octobre et du 5 octobre (hors accord).
+- Aucune réponse humaine positive reçue depuis le 3 octobre.
+- Plus aucune relance prévue : ces contacts ne reçoivent plus rien.
