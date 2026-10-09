@@ -45,7 +45,7 @@ jobs:
       - name: Préparer le site
         run: |
           mkdir -p _site
-          cp index.html 404.html robots.txt sitemap.xml _site/
+          cp index.html 404.html robots.txt sitemap.xml favicon.ico _site/
           rsync -a assets _site/
           rsync -a realisations _site/
           rsync -a templates _site/
@@ -60,6 +60,7 @@ jobs:
           rsync -a exemples _site/
           rsync -a outils _site/
           rsync -a creation-site _site/
+          for d in site-internet-*/; do rsync -a "$d" _site/; done
           rsync -a mentions-legales _site/
           rsync -a --exclude oauth-worker infikit _site/
           rsync -a freelance _site/
