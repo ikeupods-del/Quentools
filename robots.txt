@@ -3,5 +3,7 @@ Allow: /
 Disallow: /admin/
 Disallow: /demo/
 Disallow: /espace/
+Disallow: /formation/
+Disallow: /cadeau/carte/
 
 Sitemap: https://quentools.fr/sitemap.xml

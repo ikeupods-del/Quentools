@@ -14,12 +14,12 @@ for (const p of plan) {
   if (!p || /^(wouf|infikit|freelance|gourmet)\//.test(p)) continue;
   const f = path.join(racine, p, 'index.html'); if (!fs.existsSync(f)) continue;
   let h = fs.readFileSync(f, 'utf8');
-  h = h.replace(/\s*<script type="application\/ld\+json" data-seo="[^"]*">.*?<\/script>/gs, '');
-  const parts = p.split('/').filter(Boolean), items = [{ '@type': 'ListItem', position: 1, name: 'Accueil', item: base }];
+  h = h.replace(/\s*<script type="application\/ld\+json" data-seo="(?:fil|offre)">.*?<\/script>/gs, '');
+  const parts = (/^site-internet-/.test(p) ? ['creation-site', ...p.split('/').filter(Boolean)] : p.split('/').filter(Boolean)), items = [{ '@type': 'ListItem', position: 1, name: 'Accueil', item: base }];
   parts.forEach((_, i) => {
     const sub = parts.slice(0, i + 1).join('/') + '/', file = path.join(racine, sub, 'index.html');
     const name = i === parts.length - 1 ? nomPage(h) : fs.existsSync(file) ? nomPage(fs.readFileSync(file, 'utf8')) : parts[i];
-    items.push({ '@type': 'ListItem', position: i + 2, name, item: base + sub });
+    items.push({ '@type': 'ListItem', position: i + 2, name, item: i === parts.length - 1 ? base + p : base + sub });
   });
   let ld = bloc('fil', { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items });
   if (p === 'templates/') ld += '\n' + bloc('offre', { '@context': 'https://schema.org', '@type': 'Service', name: 'Site web prêt à l’emploi, personnalisé à votre marque', serviceType: 'Création de site web', provider: { '@id': base + '#organisation' }, areaServed: 'FR',
