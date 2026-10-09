@@ -1,4 +1,4 @@
-# Le Parvis — 30 publications TikTok prêtes à poster
+# Le Parvis — 31 publications TikTok prêtes à poster
 
 Chaque dossier de `visuels/` est un carrousel photo : poster les images dans l’ordre (`01.jpg`, `02.jpg`…). La dernière image invite à s’abonner. Textes bibliques : Louis Segond 1910.
 
@@ -459,4 +459,22 @@ Chaque dossier de `visuels/` est un carrousel photo : poster les images dans l�
 > Termine ta journée en paix. Prie avec nous, puis écris « Amen » 🙏
 > 
 > #chretien #pourtoi #foi #jesus #bible #prieredusoir #priere
+
+## 31. Verset du jour : Psaume 121:1-2
+*Verset du jour · 3 images · visuels/31-verset-psaume121/*
+
+**Titre TikTok :** Verset du jour : Psaume 121:1-2
+
+**Légende :**
+
+> Verset du jour 🙏
+> 
+> « Je lève mes yeux vers les montagnes… D’où me viendra le secours ? Le secours me vient de l’Éternel, qui a fait les cieux et la terre. »
+> Psaume 121:1-2
+> 
+> Quand le problème paraît trop grand, lève les yeux. Celui qui a fait les cieux et la terre est plus grand que ce que tu traverses.
+> 
+> Écris « Amen » si cette parole te parle.
+> 
+> #chretien #pourtoi #foi #jesus #bible #versetdujour
 

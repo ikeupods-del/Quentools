@@ -285,5 +285,10 @@ module.exports = [
       { kind: 'point', titre: 'Pour y croire', texte: 'Je me couche et je m’endors en paix, car toi seul, ô Éternel, tu me donnes la sécurité dans ma demeure.', ref: 'Psaume 4:9' },
       cta('Amen ?', 'Abonne-toi pour prier avec nous chaque soir.')
     ]
-  }
+  },
+
+  // ── Verset du jour supplémentaire ────────────────────────────────────
+  verset('31-verset-psaume121', 'Je lève mes yeux vers les montagnes… D’où me viendra le secours ? Le secours me vient de l’Éternel, qui a fait les cieux et la terre.', 'Psaume 121:1-2',
+    'Verset du jour : Psaume 121:1-2',
+    'Quand le problème paraît trop grand, lève les yeux. Celui qui a fait les cieux et la terre est plus grand que ce que tu traverses.')
 ];

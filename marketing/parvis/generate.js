@@ -98,7 +98,7 @@ const ajuster = async pg => pg.evaluate(() => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium' });
   const pg = await b.newPage({ viewport: { width: 1080, height: 1350 } });
   const tmp = path.join(__dirname, '_tmp.html');
-  let md = '# Le Parvis — 30 publications TikTok prêtes à poster\n\nChaque dossier de `visuels/` est un carrousel photo : poster les images dans l’ordre (`01.jpg`, `02.jpg`…). La dernière image invite à s’abonner. Textes bibliques : Louis Segond 1910.\n\n';
+  let md = '# Le Parvis — ' + posts.length + ' publications TikTok prêtes à poster\n\nChaque dossier de `visuels/` est un carrousel photo : poster les images dans l’ordre (`01.jpg`, `02.jpg`…). La dernière image invite à s’abonner. Textes bibliques : Louis Segond 1910.\n\n';
   for (const [n, p] of posts.entries()) {
     if (filtre && !p.id.includes(filtre)) continue;
     const dir = path.join(__dirname, 'visuels', p.id); fs.mkdirSync(dir, { recursive: true });
