@@ -72,6 +72,37 @@
   .tarifs article.is-main{background:var(--accent);color:var(--accent-ink);border:0;border-radius:var(--r-lg);padding:30px 28px;margin-block:14px}
   .tarifs .is-main p,.tarifs .is-main a{color:inherit;opacity:.9}
   .note{margin-top:var(--s-4);font-size:var(--t-sm);color:var(--muted)}
+
+  /* Animations : tout reste lisible sans JavaScript ; désactivées si l’utilisateur demande moins de mouvement (qt.css) */
+  .progress{position:fixed;left:0;top:0;height:3px;width:100%;z-index:60;background:linear-gradient(90deg,var(--accent),var(--lime));transform-origin:0 50%;transform:scaleX(0);pointer-events:none}
+  @keyframes rise{from{opacity:0;transform:translateY(.6em)}to{opacity:1;transform:none}}
+  @keyframes sweep{from{background-size:0 100%}to{background-size:100% 100%}}
+  @keyframes drift{0%,100%{translate:0 0}50%{translate:-40px 30px}}
+  @keyframes slide{to{transform:translateX(-50%)}}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,#2fb866 55%,transparent)}100%{box-shadow:0 0 0 10px transparent}}
+  .hero h1 .m{display:inline-block;animation:rise .9s var(--ease-out) both;animation-delay:calc(var(--k) * 90ms + 120ms)}
+  .hero h1 em{background-repeat:no-repeat;animation:sweep .9s var(--ease-out) 1s both}
+  .hero .glow{animation:drift 14s ease-in-out infinite}
+  .chip .dot{animation:pulse 2s ease-out infinite}
+  .marquee{overflow:hidden;border-block:1px solid var(--line);padding-block:18px;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+  .marquee ul{display:flex;gap:var(--s-7);width:max-content;margin:0;padding:0;list-style:none;animation:slide 38s linear infinite;font:700 var(--t-lg)/1 var(--f-display);letter-spacing:-.02em;color:var(--muted)}
+  .marquee li{display:flex;align-items:center;gap:var(--s-7);white-space:nowrap}
+  .marquee li::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--lime)}
+  .marquee:hover ul{animation-play-state:paused}
+  .work img{transition:transform .9s var(--ease-out)}.work a:hover img{transform:scale(1.05)}
+  .work a{overflow:hidden}.work .rond{transition:transform var(--d-2) var(--ease),background var(--d-1)}
+  .work a:hover .rond{transform:rotate(-45deg);background:var(--accent);color:var(--accent-ink)}
+  .svc .ico{transition:transform var(--d-2) var(--ease),background var(--d-1),color var(--d-1)}
+  .svc article:hover .ico{transform:rotate(-8deg) scale(1.08);background:var(--accent);color:var(--accent-ink)}
+  .svc .go{transition:letter-spacing var(--d-2) var(--ease)}.svc article:hover .go{letter-spacing:.02em}
+  .tarifs article{transition:transform var(--d-2) var(--ease)}.tarifs article:not(.is-main):hover{transform:translateX(8px)}
+  .tarifs .pr{transition:color var(--d-1)}.tarifs article:not(.is-main):hover .pr{color:var(--accent)}
+  .js .etapes .big{opacity:0;transform:scale(.55) rotate(-8deg);transform-origin:0 100%;transition:opacity .8s var(--ease-out),transform 1s var(--ease-out)}
+  .js .etapes li{opacity:0;transform:translateX(28px);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
+  .js .etapes.is-in .big{opacity:1;transform:none}
+  .js .etapes.is-in li{opacity:1;transform:none;transition-delay:calc(var(--k) * 140ms + 250ms)}
+  .etapes li{transition:padding-left var(--d-2) var(--ease)}.etapes li:hover{padding-left:10px}
+  .proof div{transition:transform var(--d-2) var(--ease)}.proof div:hover{transform:translateY(-3px)}
   .audit-band{display:grid;grid-template-columns:1.1fr 1fr;gap:var(--s-6);align-items:center;padding:clamp(24px,4vw,48px)}
   .audit-band img{width:100%;height:auto;border-radius:var(--r-md);border:1px solid var(--line-2)}
   @media (max-width:960px){.svc,.work{grid-template-columns:1fr 1fr}}
@@ -99,6 +130,7 @@
   <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.500-3.200 8-8 9-4.800-1-8-4.500-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
 </svg>
 
+<div class="progress" id="progress" aria-hidden="true"></div>
 <div class="announce" id="qt-announce" hidden></div>
 <header class="nav">
   <div class="wrap">
@@ -119,7 +151,7 @@
     <div class="wrap hero-grid">
       <div>
         <div class="top-row reveal"><span class="chip chip-ok" id="qt-avail"><span class="dot"></span> Agence de communication digitale</span></div>
-        <h1 class="display reveal" style="--i:1">Votre site, <em>sur mesure</em> et en ligne en quelques semaines.</h1>
+        <h1 class="display reveal" style="--i:1"><span class="m" style="--k:0">Votre</span> <span class="m" style="--k:1">site,</span> <em><span class="m" style="--k:2">sur</span> <span class="m" style="--k:3">mesure</span></em> <span class="m" style="--k:4">et</span> <span class="m" style="--k:5">en</span> <span class="m" style="--k:6">ligne</span> <span class="m" style="--k:7">en</span> <span class="m" style="--k:8">quelques</span> <span class="m" style="--k:9">semaines.</span></h1>
         <p class="lede reveal" style="--i:2">Site web, boutique, contenus pour les réseaux sociaux et outils sur mesure&nbsp;: une seule équipe pour toute votre présence en ligne, avec un prix fixé avant de commencer.</p>
         <div class="hero-cta reveal" style="--i:3">
           <a class="btn btn-accent" href="templates/"><span>Mon site dès <span data-tpl="base"></span></span> <svg width="18" height="18" class="arrow"><use href="#i-arrow"/></svg></a>
@@ -130,12 +162,14 @@
     <div class="wrap">
       <div class="proof reveal">
         <div><b data-tpl="base"></b><span>Un site prêt à l’emploi, dès</span></div>
-        <div><b>3 mois</b><span>d’assistance offerts</span></div>
-        <div><b>48 h</b><span>pour recevoir votre devis</span></div>
+        <div><b data-count="3" data-suffix=" mois">3 mois</b><span>d’assistance offerts</span></div>
+        <div><b data-count="48" data-suffix=" h">48 h</b><span>pour recevoir votre devis</span></div>
         <div><b>0 cookie</b><span>ni traceur, ni publicité</span></div>
       </div>
     </div>
   </section>
+
+  <div class="marquee" aria-label="Métiers pour lesquels nous créons des sites : restaurants, photographes, fleuristes, coachs, ostéopathes, paysagistes, plombiers, climatisation, menuisiers, formateurs, pet-sitters, artisans du goût"><ul aria-hidden="true"><li>Restaurants</li><li>Photographes</li><li>Fleuristes</li><li>Coachs</li><li>Ostéopathes</li><li>Paysagistes</li><li>Plombiers</li><li>Climatisation</li><li>Menuisiers</li><li>Formateurs</li><li>Pet-sitters</li><li>Artisans du goût</li><li>Restaurants</li><li>Photographes</li><li>Fleuristes</li><li>Coachs</li><li>Ostéopathes</li><li>Paysagistes</li><li>Plombiers</li><li>Climatisation</li><li>Menuisiers</li><li>Formateurs</li><li>Pet-sitters</li><li>Artisans du goût</li></ul></div>
 
   <section class="section" id="services" style="padding-top:clamp(24px,4vw,48px)">
     <div class="wrap">
@@ -177,10 +211,10 @@
       <div class="etapes reveal">
         <div><div class="big" aria-hidden="true">4</div><h2>étapes, sans surprise, du premier message à la mise en ligne.</h2></div>
         <ol>
-          <li data-n="01"><h3>On écoute</h3><p>Quelques lignes sur votre activité suffisent. Devis gratuit sous 48 h.</p></li>
-          <li data-n="02"><h3>On propose</h3><p>Un prix fixé avant de commencer, sans frais cachés.</p></li>
-          <li data-n="03"><h3>On montre</h3><p>Une première version à valider avant d’aller plus loin.</p></li>
-          <li data-n="04"><h3>On suit</h3><p>Mise en ligne, notice et assistance offerte pendant 3 mois.</p></li>
+          <li data-n="01" style="--k:0"><h3>On écoute</h3><p>Quelques lignes sur votre activité suffisent. Devis gratuit sous 48 h.</p></li>
+          <li data-n="02" style="--k:1"><h3>On propose</h3><p>Un prix fixé avant de commencer, sans frais cachés.</p></li>
+          <li data-n="03" style="--k:2"><h3>On montre</h3><p>Une première version à valider avant d’aller plus loin.</p></li>
+          <li data-n="04" style="--k:3"><h3>On suit</h3><p>Mise en ligne, notice et assistance offerte pendant 3 mois.</p></li>
         </ol>
       </div>
     </div>
@@ -271,6 +305,13 @@
     const base = Math.min.apply(null, T.templates.map(t => t.base));
     document.querySelectorAll('[data-tpl="base"]').forEach(e => { e.textContent = T.fmt(base); });
     document.querySelectorAll('[data-opt]').forEach(e => { const o = T.options.find(x => x.id === e.dataset.opt); if (o) e.textContent = T.fmt(o.price); });
+  })();
+  // Mouvement : barre de progression de lecture et léger décalage du halo au passage de la souris
+  (function () {
+    const bar = document.getElementById('progress'), glow = document.querySelector('.hero .glow');
+    const calme = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (bar) { const maj = () => { const h = document.documentElement.scrollHeight - innerHeight; bar.style.transform = 'scaleX(' + (h > 0 ? Math.min(1, scrollY / h) : 0) + ')'; }; maj(); addEventListener('scroll', maj, { passive: true }); }
+    if (glow && !calme && matchMedia('(pointer:fine)').matches) addEventListener('pointermove', e => { glow.style.marginRight = (e.clientX / innerWidth - .5) * 60 + 'px'; glow.style.marginTop = (e.clientY / innerHeight - .5) * 40 + 'px'; }, { passive: true });
   })();
   contacts(window.QT || {});
   if (window.QTC) QTC.config().then(C => {
