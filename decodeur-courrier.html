@@ -3016,8 +3016,8 @@ function bindWItems(box) {
       showTab('money');
     });
     const im = $('[data-w-img]', el); if (im) im.addEventListener('click', async () => {
-      const src = await idb.get('w:' + id).catch(() => null);
-      if (!src) { toast('Photo introuvable sur cet appareil'); return; }
+      const src = await getFile('w:' + id);
+      if (!src) { toast(FBU ? "Photo pas encore reçue : ouvre l'application sur l'appareil où tu l'as prise et laisse-la se synchroniser." : 'Photo introuvable sur cet appareil. Connecte-toi avec Google pour la retrouver.'); return; }
       $('#img-view').src = src; const d = $('#img-dialog'); if (d.showModal) d.showModal(); else d.setAttribute('open', '');
     });
     const ic = $('[data-w-ics]', el); if (ic) ic.addEventListener('click', () => {
@@ -3165,6 +3165,24 @@ async function encodeFile(v) {
   return null;
 }
 async function decodeFile(d) { return d.t === 'b' ? await (await fetch(d.data)).blob() : d.data; }
+// Photo trop lourde : recompressée plus fort pour tenir dans la limite.
+function shrinkData(src) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => { const k = Math.min(1, 1100 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.6)); };
+    img.onerror = () => rej(new Error('image')); img.src = src;
+  });
+}
+// Lecture d'un fichier : sur l'appareil, sinon récupéré à la demande depuis le compte connecté.
+async function getFile(k) {
+  const here = await idb.get(k).catch(() => null);
+  if (here || !FBU || !navigator.onLine) return here || null;
+  try {
+    const F = await fb(), sn = await F.Fs.getDoc(F.Fs.doc(F.db, 'users', FBU.uid, 'apps', APP_ID, 'files', k));
+    if (!sn.exists()) return null;
+    const v = await decodeFile(sn.data()); await idb.set(k, v); return v;
+  } catch (e) { console.error(e); return null; }
+}
 async function syncFiles(F, u, remoteIdx, deleted) {
   const ref = k => F.Fs.doc(F.db, 'users', u.uid, 'apps', APP_ID, 'files', k);
   const have = new Set(await idb.keys()), idx = new Set();
@@ -3172,15 +3190,21 @@ async function syncFiles(F, u, remoteIdx, deleted) {
   let skipped = 0, got = 0;
   for (const k of have) {
     if (!fileLive(k, deleted) || idx.has(k)) continue;
-    const enc = await encodeFile(await idb.get(k).catch(() => null));
-    if (!enc || enc.data.length > FILE_MAX) { skipped++; continue; }
-    await F.Fs.setDoc(ref(k), enc); idx.add(k);
+    try {
+      let v = await idb.get(k).catch(() => null);
+      if (typeof v === 'string' && v.length > FILE_MAX) v = await shrinkData(v).catch(() => v);
+      const enc = await encodeFile(v);
+      if (!enc || enc.data.length > FILE_MAX) { skipped++; continue; }
+      await F.Fs.setDoc(ref(k), enc); idx.add(k);
+    } catch (e) { console.error(e); skipped++; }
   }
   for (const k of [...idx]) {
     if (have.has(k)) continue;
-    const sn = await F.Fs.getDoc(ref(k));
-    if (!sn.exists()) { idx.delete(k); continue; }
-    await idb.set(k, await decodeFile(sn.data())); got++;
+    try {
+      const sn = await F.Fs.getDoc(ref(k));
+      if (!sn.exists()) { idx.delete(k); continue; }
+      await idb.set(k, await decodeFile(sn.data())); got++;
+    } catch (e) { console.error(e); }
   }
   return { fichiers: [...idx], skipped, got };
 }
@@ -4961,8 +4985,8 @@ function renderEdlRoom(box) {
     });
     $$('.th', el).forEach(th => {
       const key = th.dataset.pk;
-      idb.get(key).then(src => { const im = $('img', th); if (src && im) im.src = src; }).catch(() => {});
-      $('[data-pview]', th).addEventListener('click', async () => { const src = await idb.get(key).catch(() => null); if (!src) return; $('#img-view').src = src; const d = $('#img-dialog'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
+      getFile(key).then(src => { const im = $('img', th); if (src && im) im.src = src; }).catch(() => {});
+      $('[data-pview]', th).addEventListener('click', async () => { const src = await getFile(key); if (!src) return; $('#img-view').src = src; const d = $('#img-dialog'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
       $('[data-pdel]', th).addEventListener('click', () => { if (!confirm('Supprimer cette photo ?')) return; const i = it.photos.indexOf(key); it.photos.splice(i, 1); if (it.photoAt) it.photoAt.splice(i, 1); if (it.photoGeo) it.photoGeo.splice(i, 1); if (it.seals) it.seals = it.seals.filter(x => x.key !== key); edlSave(e); idb.del(key).catch(() => {}); rememberDeleted(key); renderTools(); });
     });
   });
@@ -5095,7 +5119,7 @@ async function buildEdlHTML(e) {
       const old = rr && (rr.items.find(x => x.name === it.name) || {}).state;
       rows += `<tr${old && it.state && EDL_RANK[it.state] > EDL_RANK[old] ? ' class="w"' : ''}><td>${esc(it.name)}</td>${ref ? `<td>${old ? esc(edlLabel(old)) : '–'}</td>` : ''}<td>${it.state ? esc(edlLabel(it.state)) : '–'}</td><td>${esc(it.note || '')}</td></tr>`;
       for (const [pi, k] of (it.photos || []).entries()) {
-        const src = await idb.get(k).catch(() => null), at = it.photoAt && it.photoAt[pi], sl = (it.seals || []).find(x => x.key === k);
+        const src = await getFile(k), at = it.photoAt && it.photoAt[pi], sl = (it.seals || []).find(x => x.key === k);
         const g = (it.photoGeo || [])[pi], dd = g ? geoDist(e.geo, g) : null;
         if (src) photos += `<figure><img src="${src}" alt=""><figcaption>${esc(it.name)}${g ? `<br>Position GPS : ${esc(geoText(g))}${dd !== null ? ' | ' + (dd <= GEO_NEAR ? 'sur place' : 'à ' + dd + ' m du logement') : ''} | <a href="${osmLink(g)}">carte</a>` : '<br>Position non disponible'}${at ? ' | pris le ' + esc(new Date(at).toLocaleString('fr-FR')) : ''}${sl && sl.id ? `<br>Date certifiée par serveur : ${esc(new Date(sl.at).toLocaleString('fr-FR'))}<br>Code de contrôle : ${esc(sl.id)}` : '<br>Date de l\'appareil, non certifiée'}</figcaption></figure>`;
       }
@@ -5159,7 +5183,7 @@ function renderVault() {
   $$('[data-vd]', box).forEach(el => {
     const id = el.dataset.vd, get = () => getVault().find(x => x.id === id);
     $('[data-vd-open]', el).addEventListener('click', async () => {
-      const d = get(), data = await idb.get('d:' + id).catch(() => null);
+      const d = get(), data = await getFile('d:' + id);
       if (!data) { toast('Ce fichier est sur un autre appareil'); return; }
       if (d.kind === 'pdf') { const url = URL.createObjectURL(data); window.open(url, '_blank', 'noopener'); setTimeout(() => URL.revokeObjectURL(url), 60000); }
       else { $('#img-view').src = data; const dl = $('#img-dialog'); if (dl.showModal) dl.showModal(); else dl.setAttribute('open', ''); }
