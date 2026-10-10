@@ -233,7 +233,7 @@ const pdfjs = findPdfjs();
     const sans = all.filter(w => !/^1672[,.]06$/.test(w.t));
     eq('net imposable introuvable → vide, jamais inventé', run('rcSolve(__v)', sans).valeurs.netImposable, null);
     const faux = run('rcSolve(__v)', all.map(w => (/^186116$/.test(w.t) ? Object.assign({}, w, { t: '186199' }) : w)));
-    eq('net avant impôt illisible → le calcul brut − cotisations, présent sur la fiche, jamais un montant absent', faux.valeurs.netAvant, 1857.16);
+    eq('net avant impôt illisible → vide : le « net social » (brut − cotisations) n\'est pas pris pour le net avant impôt', faux.valeurs.netAvant, null);
   }
   { // les montants déjà lus par colonnes ne sont jamais écrasés
     const r = run('rcSolve(__v[0], __v[1])', [wordsA(base), { brut: 2330.93 }]).valeurs;

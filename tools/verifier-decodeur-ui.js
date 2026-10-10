@@ -158,7 +158,7 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
     if (!pj) console.log('· lecture PDF par positions : ignorée (pdfjs-dist introuvable)');
     else {
       await pg.route(/pdfjs-dist@3\.11\.174\/build\/pdf(\.worker)?\.min\.js/, r => r.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(pj, 'build', /worker/.test(r.request().url()) ? 'pdf.worker.min.js' : 'pdf.min.js')) }));
-      const envoyer = async buf => { await pg.goto('http://localhost:8766/decodeur-courrier.html#fiche-de-paie'); await pg.reload(); await pg.waitForSelector('#paie-sample'); await pg.setInputFiles('#paie-file', { name: 'fiche.pdf', mimeType: 'application/pdf', buffer: buf }); await pg.waitForSelector('#paie-go'); await pg.click('#paie-go'); await pg.waitForSelector('#paie-valid', { timeout: 20000 }); };
+      const envoyer = async buf => { await pg.goto('http://localhost:8766/decodeur-courrier.html#fiche-de-paie'); await pg.evaluate(() => sessionStorage.clear()); await pg.reload(); await pg.waitForSelector('#paie-sample'); await pg.setInputFiles('#paie-file', { name: 'fiche.pdf', mimeType: 'application/pdf', buffer: buf }); await pg.waitForSelector('#paie-go'); await pg.click('#paie-go'); await pg.waitForSelector('#paie-valid', { timeout: 20000 }); };
       await envoyer(lib.writePdf(lib.layout()));
       const val = k => pg.inputValue('[data-val=' + k + ']');
       ok((await val('brut')) === '2 330,93' && (await val('cotSal')) === '473,77' && (await val('netAvant')) === '1 861,16' && (await val('netImposable')) === '1 672,06' && (await val('netPayer')) === '1 861,16', 'PDF réel : les 5 totaux sont préremplis avec les bonnes valeurs');
@@ -171,7 +171,7 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
       ok(/Qui paie quoi/.test(rs) && /Sécurité sociale maladie/.test(rs) && /163,17/.test(rs), 'PDF réel : « qui paie quoi » affiche la part employeur à sa place');
       // deux fichiers donnés à l'envers, le second ne montrant que la suite (totaux) : rattachés à la même fiche, ordre corrigé
       { const el = lib.layout({ suite: true }), p1 = el.filter(e => e.page === 1), p2 = el.filter(e => e.page === 2).map(e => ({ ...e, page: 1 }));
-        await pg.goto('http://localhost:8766/decodeur-courrier.html#fiche-de-paie'); await pg.reload(); await pg.waitForSelector('#paie-sample');
+        await pg.goto('http://localhost:8766/decodeur-courrier.html#fiche-de-paie'); await pg.evaluate(() => sessionStorage.clear()); await pg.reload(); await pg.waitForSelector('#paie-sample');
         await pg.setInputFiles('#paie-file', [{ name: 'suite.pdf', mimeType: 'application/pdf', buffer: lib.writePdf(p2) }, { name: 'debut.pdf', mimeType: 'application/pdf', buffer: lib.writePdf(p1) }]);
         await pg.waitForSelector('#paie-go'); await pg.click('#paie-go'); await pg.waitForSelector('#paie-valid', { timeout: 20000 });
         const v = await pg.innerText('#paie-valid');
