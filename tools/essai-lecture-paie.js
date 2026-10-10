@@ -157,7 +157,7 @@ function verifier(nom, res) {
   eq(nom + ' lignes du tableau', res.rows.filter(r => r.hasCols && r.label).length, P1.length + P2.length);
   eq(nom + ' aucune valeur ronde inventée', res.rows.some(r => [2, 5, 23, 700].some(v => Object.values(r.cells).includes(v))), false);
 }
-module.exports = { layout, writePdf, T, run, c };
+module.exports = { layout, writePdf, T, run, c, wordsA };
 if (require.main !== module) return;   // utilisé comme bibliothèque par essai-lecture-photo.js
 const variantes = { 'A (une ligne d\'en-tête)': {}, 'A (en-tête sur deux lignes)': { deuxLignes: true } };
 Object.entries(variantes).forEach(([nom, o]) => verifier(nom, run('readPayslipWords(__v)', wordsA(layout(o)))));
@@ -256,6 +256,16 @@ const pdfjs = findPdfjs();
     eq('l\'IA propose des cotisations qui ne tiennent pas au calcul → rejetées, le recoupement garde les bonnes', [m2.rejete.cotSal, m2.r.valeurs.cotSal], [375.95, 473.77]);
     eq('l\'IA contredit un montant lu → signalé', run('rcMerge(__v[0], __v[1], __v[2])', [all, { brut: 2330.93, cotSal: 473.77, netAvant: 1861.16, netImposable: 1672.06, netPayer: 1861.16 }, { netAvant: 1857.16 }]).agree.netAvant, false);
     eq('prompt : montants et consignes', /Montants lus sur la fiche/.test(run('rcPromptText(__v[0], __v[1]).user', [all, M])) && /null/.test(run('rcPromptText(__v[0], __v[1]).user', [all, M])), true);
+  }
+  { // petit modèle local : propose des totaux parmi les montants lus ; sans libellé ni contexte il ne propose rien d'inventé
+    const pg = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'fiche-photo-janvier-2025.json'), 'utf8')); let off = 0; const all = [];
+    pg.forEach(p => { p.words.forEach(w => all.push(Object.assign({}, w, { page: w.page + off }))); off += p.np || 1; });
+    const r = run('rcMini(__v)', all), M = run('rcSolve(__v)', all).montants;
+    eq('petit modèle : brut, cotisations, net avant impôt, net à payer', [r.brut, r.cotSal, r.netAvant, r.netPayer], [2330.93, 473.77, 1861.16, 1861.16]);
+    eq('petit modèle : chaque montant proposé figure sur la fiche', Object.values(r).every(v => M.some(x => Math.abs(x - v) <= 0.021)), true);
+    eq('petit modèle : fiche vide → rien', run('rcMini(__v)', []), {});
+    const m = run('rcMerge(__v[0], __v[1], __v[2])', [all, { brut: null, cotSal: null, netAvant: null, netImposable: null, netPayer: null }, r]);
+    eq('petit modèle + calcul de la fiche : totaux confirmés', [m.r.valeurs.brut, m.r.valeurs.cotSal, m.r.valeurs.netAvant, m.r.valeurs.netPayer], [2330.93, 473.77, 1861.16, 1861.16]);
   }
   console.log(ko ? '✗ ' + ko + ' écarts sur ' + nb + ' contrôles' : '✓ ' + nb + ' contrôles de lecture de fiche de paie');
   process.exit(ko ? 1 : 0);

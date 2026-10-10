@@ -4196,6 +4196,49 @@ function rcSolve(words, hint = {}) {
   const pasOk = res.netAvant !== null && res.netPayer !== null && (near(res.netAvant, res.netPayer) || pasVals.some(p => near(R(res.netAvant - p), res.netPayer)));
   return { valeurs: res, how, calculs: { brut_cot_net: adjOk, net_pas_payer: pasOk }, sur: adjOk && pasOk && Object.values(res).every(v => v !== null), montants: uniq(am.map(a => a.v)) };
 }
+// ---- Petit modèle local (aucun téléchargement) ----
+// Un classeur minuscule (quelques dizaines de nombres), entraîné par tools/entrainer-paie.js sur des fiches de paie : pour chaque total, il note chaque montant lu
+// (libellé voisin, fréquence, proportion du brut, calculs qui tombent juste) et propose le mieux noté. Il tourne partout, iPhone compris.
+// Comme l'assistant IA, il ne propose que des montants réellement lus ; rcMerge ne les retient que si les calculs de la fiche les confirment.
+const RC_FIELDS = ['brut', 'cotSal', 'netAvant', 'netPayer', 'netImposable'];
+const RC_FEAT = 18;
+function rcMiniContext(words) {
+  const { rows, am } = rcAmounts(words), near = (a, b) => Math.abs(a - b) <= 0.021, keys = Object.keys(RC_LABELS), lab = {};
+  keys.forEach(key => {
+    const out = [];
+    rows.forEach((r, ri) => { if (!RC_LABELS[key].test(norm(r.words.map(w => w.t).join(' ')))) return; for (let k = 0; k <= 8; k++) am.filter(a => a.ri === ri + k && a.page === r.page && !a.base).forEach(a => out.push({ v: a.v, w: k === 0 ? 3 : k === 1 ? 2 : k <= 4 ? 1 : 0.7 })); });
+    lab[key] = out;
+  });
+  const bc = {}; am.filter(a => a.base && a.v >= 100).forEach(a => { bc[a.v] = (bc[a.v] || 0) + 1; });
+  const cands = []; am.forEach(a => { if (!cands.some(c => near(c.v, a.v))) cands.push({ v: a.v, base: a.base }); });
+  return { am, near, keys, lab, bc, cands, count: v => am.filter(a => near(a.v, v)).length, has: v => am.some(a => near(a.v, v)), lw: (k, v) => lab[k].filter(o => near(o.v, v)).reduce((a, o) => a + o.w, 0) };
+}
+function rcMiniFeat(x, field, v, pk) {
+  const B = pk.brut || 0, R = n => Math.round(n * 100) / 100, f = new Array(RC_FEAT).fill(0);
+  f[0] = 1; x.keys.forEach((k, i) => { f[1 + i] = Math.min(x.lw(k, v), 6) / 3; });
+  f[9] = Math.min(x.count(v), 6) / 6; f[10] = (x.bc[v] || 0) >= 3 ? 1 : 0; f[11] = x.am.some(a => a.base && x.near(a.v, v)) ? 1 : 0;
+  f[12] = B ? v / B : 0; f[13] = B ? (v / B) * (v / B) : 0; f[14] = Math.log(Math.max(v, 1)) / 10;
+  if (field === 'cotSal') f[15] = B && x.has(R(B - v)) ? 1 : 0;
+  else if (field === 'netAvant') f[15] = pk.cotSal ? ([0, 4].some(j => x.near(R(B - pk.cotSal + j), v)) ? 1 : 0) : 0;
+  else if (field === 'netPayer') f[15] = pk.netAvant ? (x.near(pk.netAvant, v) ? 1 : 0) : 0;
+  f[16] = B && x.near(v, B) ? 1 : 0; f[17] = v <= 60 ? 1 : 0;
+  return f;
+}
+// Un montant par total (softmax) ; chaque choix sert de contexte au suivant. Renvoie {total: montant} pour les choix assez sûrs.
+function rcMini(words) {
+  const x = rcMiniContext(words), pk = {}, out = {};
+  RC_FIELDS.forEach(field => {
+    const W = RC_MINI[field]; if (!W) return;
+    const cs = x.cands.filter(c => field === 'brut' ? c.v >= 100 : !c.base && c.v > 0);
+    if (!cs.length) return;
+    const sc = cs.map(c => rcMiniFeat(x, field, c.v, pk).reduce((a, fv, i) => a + fv * W[i], 0)), mx = Math.max(...sc), ex = sc.map(z => Math.exp(z - mx)), sum = ex.reduce((a, b) => a + b, 0);
+    let bi = 0; sc.forEach((z, i) => { if (z > sc[bi]) bi = i; });
+    if (ex[bi] / sum >= RC_MINI_SEUIL) { pk[field] = cs[bi].v; out[field] = cs[bi].v; }
+  });
+  return out;
+}
+const RC_MINI_SEUIL = 0.4;
+const RC_MINI = {"brut":[0,1.869,-0.547,-0.622,-0.182,-0.389,-0.5,0.083,-0.585,7.071,1.365,1.332,0,0,1.444,0,0,0],"cotSal":[0,0.525,1.878,-0.778,0.099,-0.06,0.16,-0.06,0.396,0.25,-0.08,-0.115,-2.565,-3.775,0.482,6.968,-0.957,-1.798],"netAvant":[0,-1.816,0.236,1.254,0.436,2.131,1.555,-1.438,1.719,1.769,-0.059,-0.101,1.974,-0.462,0.963,5.629,-0.246,-0.882],"netPayer":[0,-0.508,0.087,0.881,0.159,1.106,0.744,0.403,0.774,0.28,-0.07,-0.121,2.685,-1.319,1.215,5.743,-0.167,-1.011],"netImposable":[0,-2.757,-0.903,-0.358,5.285,-1.77,0.074,1.145,0.072,-2.871,-0.032,-0.124,11.001,-9.34,5.274,0,-0.372,-1.87]};
 // Relecture par l'assistant IA : on lui donne le texte lu et la liste des montants trouvés, il désigne les cinq totaux. Sa réponse n'est retenue que si
 // chaque montant figure vraiment parmi ceux lus sur la fiche (jamais un chiffre inventé) et si les calculs de la fiche tiennent.
 function rcPromptText(words, montants) {
@@ -4560,10 +4603,10 @@ function applyRecoupe(gen, words, lec) {
   gen.recoupe = rc; gen.fiable = !!(gen.fiable || (rc.sur && !gen.manquants.length));
 }
 const paieSrc = (g, k) => {
-  const v = g.valeurs[k], ia = g.ia;
-  if (v === null) return ia && ia.rejete && ia.rejete[k] !== undefined ? `L'IA proposait ${PE(ia.rejete[k])} : écarté, ça ne tient pas au calcul de la fiche.` : '';
+  const v = g.valeurs[k], ia = g.ia, who = ia && ia.mini ? 'le petit modèle' : "l'IA", Who = ia && ia.mini ? 'Le petit modèle' : "L'IA";
+  if (v === null) return ia && ia.rejete && ia.rejete[k] !== undefined ? `${Who} proposait ${PE(ia.rejete[k])} : écarté, ça ne tient pas au calcul de la fiche.` : '';
   const a = [g.src && g.src[k] ? g.src[k] : 'lu sur la fiche'];
-  if (ia) { if (ia.fill && ia.fill[k] !== undefined) a.push("proposé par l'IA, confirmé par le calcul"); else if (ia.agree && ia.agree[k] === true) a.push("confirmé par l'IA"); else if (ia.agree && ia.agree[k] === false) a.push(`l'IA lit ${PE(ia.vals[k])} : vérifie`); }
+  if (ia) { if (ia.fill && ia.fill[k] !== undefined) a.push(`proposé par ${who}, confirmé par le calcul`); else if (ia.agree && ia.agree[k] === true) a.push(`confirmé par ${who}`); else if (ia.agree && ia.agree[k] === false) a.push(`${who} lit ${PE(ia.vals[k])} : vérifie`); }
   return a.join(' · ');
 };
 // L'assistant IA relit la fiche indépendamment : il confirme ou contredit chaque montant et complète ce qui manque (si les calculs de la fiche le confirment).
@@ -4573,13 +4616,20 @@ async function paieAIRead(box) {
   g.iaEnCours = true;
   const st = () => $('#paie-ia-status', box), say = t => { const e = st(); if (e) e.textContent = t; };
   try {
-    if (await requireAI() !== 'ok') { say("Montants retrouvés par recoupement, sans relecture de l'IA : vérifie-les avec ta fiche."); g.iaEnCours = false; return; }
-    say("L'assistant IA relit la fiche…");
-    const pr = rcPromptText(g.allWords, g.montants);
-    const out = await enqueueAI(async () => { const r = await engine.chat.completions.create({ messages: [{ role: 'system', content: pr.system }, { role: 'user', content: pr.user }], temperature: 0.1, max_tokens: 220 }); return (r.choices[0] && r.choices[0].message && r.choices[0].message.content) || ''; });
-    const vals = rcParseAI(out, g.montants), m = rcMerge(g.allWords, g.valeurs, vals);
+    const llm = await requireAI() === 'ok';
+    let vals;
+    if (llm) {
+      say("L'assistant IA relit la fiche…");
+      const pr = rcPromptText(g.allWords, g.montants);
+      const out = await enqueueAI(async () => { const r = await engine.chat.completions.create({ messages: [{ role: 'system', content: pr.system }, { role: 'user', content: pr.user }], temperature: 0.1, max_tokens: 220 }); return (r.choices[0] && r.choices[0].message && r.choices[0].message.content) || ''; });
+      vals = rcParseAI(out, g.montants);
+    } else {   // appareil sans assistant (iPhone…) : le petit modèle local relit la fiche
+      say('Relecture par le petit modèle local…');
+      vals = rcMini(g.allWords);
+    }
+    const m = rcMerge(g.allWords, g.valeurs, vals);
     PAIE_NEED.forEach(k => { if (g.valeurs[k] === null && m.r.valeurs[k] !== null) { g.valeurs[k] = m.r.valeurs[k]; if (!(k in m.fill)) g.src[k] = 'retrouvé : ' + m.r.how[k]; } });
-    g.ia = { vals, agree: m.agree, fill: m.fill, rejete: m.rejete }; g.manquants = PAIE_NEED.filter(k => g.valeurs[k] === null);
+    g.ia = { vals, agree: m.agree, fill: m.fill, rejete: m.rejete, mini: !llm }; g.manquants = PAIE_NEED.filter(k => g.valeurs[k] === null);
     g.fiable = !!(g.fiable || (m.r.sur && !g.manquants.length)); track(Object.values(m.agree).every(Boolean) && Object.keys(m.agree).length ? 'paie_ia_accord' : 'paie_ia_lecture');
   } catch (e) { console.error(e); g.ia = { vals: {}, agree: {}, fill: {}, rejete: {} }; }
   g.iaEnCours = false;
@@ -4591,7 +4641,8 @@ async function paieAIRead(box) {
     const sm = $(`[data-src="${k}"]`, box); if (sm) sm.textContent = paieSrc(g, k);
   });
   const n = Object.values(g.ia.agree).filter(Boolean).length, c = Object.values(g.ia.agree).filter(x => x === false).length;
-  say(!Object.keys(g.ia.vals).length ? "L'assistant IA n'a pas pu relire cette fiche : vérifie les montants à la main." : c ? `L'assistant IA a relu la fiche : ${n} montant(s) confirmé(s), ${c} différent(s) : vérifie-les.` : `✓ L'assistant IA a relu la fiche${n ? ' et confirme ' + n + ' montant(s)' : ''}.`);
+  const nom = g.ia.mini ? 'Le petit modèle local' : "L'assistant IA";
+  say(!Object.keys(g.ia.vals).length ? (g.ia.mini ? 'Montants retrouvés par recoupement, sans relecture : vérifie-les avec ta fiche.' : "L'assistant IA n'a pas pu relire cette fiche : vérifie les montants à la main.") : c ? `${nom} a relu la fiche : ${n} montant(s) confirmé(s), ${c} différent(s) : vérifie-les.` : `✓ ${nom} a relu la fiche${n ? ' et confirme ' + n + ' montant(s)' : ''}.`);
 }
 // Chiffres d'un texte (montants, années), pour vérifier qu'une explication n'en invente aucun
 const textNums = t => (String(t).match(/\d[\d   .,]*\d|\d/g) || []).map(x => x.replace(/[\s  .]/g, '').replace(',', '.')).filter(x => x.replace('.', '').length >= 3 || x.includes('.'));
