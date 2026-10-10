@@ -294,6 +294,37 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .sugg{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
 .filters{display:grid;gap:8px;margin:0 0 14px}
 .filters input[type=search]{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--sheet);min-height:46px}
+.tips{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:14px 0;background:var(--sheet)}
+.tips summary{cursor:pointer;font-weight:700}
+.tips h3{margin:12px 0 4px;font-size:1rem}
+.tips li{margin:0 0 5px;max-width:64ch}
+.edl-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 10px}
+.edl-item.worse{border-color:var(--stamp)}
+.edl-item .chips{margin:6px 0}
+.edl-item .chip{padding:5px 10px;font-size:.85rem}
+.edl-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.edl-thumbs .th{position:relative;display:inline-flex;flex-direction:column;align-items:center;font-size:.7rem;color:var(--muted)}
+.edl-thumbs .th img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;background:var(--paper)}
+.edl-thumbs .th>button:first-child{border:0;background:none;padding:0;cursor:pointer}
+.edl-thumbs .ok{position:absolute;top:-6px;left:-6px;width:20px;height:20px;border-radius:50%;background:var(--calm);color:#fff;font-size:.75rem;display:grid;place-items:center}
+.edl-thumbs .geo{position:absolute;bottom:14px;left:2px;min-width:18px;height:18px;border-radius:9px;background:rgba(0,0,0,.65);color:#ffe14d;font-size:.72rem;display:grid;place-items:center;padding:0 3px}
+.edl-thumbs .x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--sheet);cursor:pointer;line-height:1;padding:0}
+#cam-video{width:100%;max-height:60vh;background:#000;border-radius:10px;display:block}
+.edl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.edl-row input[data-note]{flex:1;min-width:160px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--paper);min-height:38px}
+.paie-t{width:100%;border-collapse:collapse;margin:6px 0}
+.paie-t th,.paie-t td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:.98rem}
+.paie-t td{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.paie-t td.strong{font-weight:800}
+.paie-lines details{border:1px solid var(--line);border-radius:9px;padding:8px 12px;margin:0 0 6px}
+.paie-lines summary{cursor:pointer;display:flex;justify-content:space-between;gap:10px;font-weight:700}
+.paie-lines p{margin:6px 0 0}
+.paie-ins{list-style:none;margin:8px 0;padding:0;display:grid;gap:8px}
+.paie-ins li{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:9px;padding:9px 12px}
+.paie-ins li>span{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.8rem;background:var(--paper)}
+.paie-ins li.ok>span{background:var(--calm);color:#fff}
+.paie-ins li.warn{border-color:var(--warn)}
+.paie-ins li.warn>span{background:var(--warn);color:#fff}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -476,6 +507,26 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
   </div>
 </dialog>
 
+<dialog id="cam-dialog" aria-labelledby="cam-label">
+  <div class="dlg">
+    <h2 id="cam-label" style="font-size:1.1rem"></h2>
+    <video id="cam-video" playsinline muted autoplay></video>
+    <p class="note" id="cam-msg" role="status"></p>
+    <div class="dlg-foot"><button class="btn" id="cam-snap" type="button">Prendre la photo</button> <button class="btn ghost" id="cam-cancel" type="button">Annuler</button></div>
+  </div>
+</dialog>
+
+<dialog id="verify-dialog" aria-labelledby="verify-title">
+  <div class="dlg">
+    <h2 id="verify-title">Vérifier une photo</h2>
+    <p class="note">Saisis le code de contrôle imprimé sous la photo et choisis le fichier de la photo : on le compare à l'empreinte enregistrée par le serveur le jour de la prise de vue.</p>
+    <label class="field"><span>Code de contrôle</span><input id="vf-code" autocomplete="off" maxlength="20" placeholder="20 caractères"></label>
+    <label class="field"><span>Fichier de la photo</span><input id="vf-file" type="file" accept="image/*"></label>
+    <p id="vf-out" role="status"></p>
+    <div class="dlg-foot"><button class="btn" id="vf-go" type="button">Vérifier</button> <button class="btn ghost" id="vf-close" type="button">Fermer</button></div>
+  </div>
+</dialog>
+
 <dialog id="img-dialog" aria-label="Photo du ticket">
   <div class="dlg"><img id="img-view" alt="Photo du ticket"><div class="dlg-foot"><button class="btn" id="img-close" type="button">Fermer</button></div></div>
 </dialog>
@@ -572,8 +623,8 @@ async function fillAds(root) {
 }
 const tipHTML = () => CONFIG.TIP_URL ? `<a class="link tip" href="${esc(CONFIG.TIP_URL)}" target="_blank" rel="noopener">Ça t'a aidé ? Soutiens QuenTools</a>` : '';
 Object.assign(KEYS, { claims: 'qt-paperasse:reclamations', garanties: 'qt-paperasse:garanties', premium: 'qt-paperasse:premium', sync: 'qt-paperasse:sync', deleted: 'qt-paperasse:supprimes',
-  abos: 'qt-paperasse:abonnements', coffre: 'qt-paperasse:coffre', coffreRead: 'qt-paperasse:coffre-lecture', nostats: 'qt-paperasse:sans-stats', seen: 'qt-paperasse:vu', notif: 'qt-paperasse:notif', notifDay: 'qt-paperasse:notif-jour' });
-const SYNC_KEYS = [KEYS.list, KEYS.claims, KEYS.garanties, KEYS.me, KEYS.abos, KEYS.coffre];
+  abos: 'qt-paperasse:abonnements', coffre: 'qt-paperasse:coffre', edl: 'qt-paperasse:etats-des-lieux', paies: 'qt-paperasse:fiches-de-paie', lecons: 'qt-paperasse:lecons', coffreRead: 'qt-paperasse:coffre-lecture', nostats: 'qt-paperasse:sans-stats', seen: 'qt-paperasse:vu', notif: 'qt-paperasse:notif', notifDay: 'qt-paperasse:notif-jour' });
+const SYNC_KEYS = [KEYS.list, KEYS.claims, KEYS.garanties, KEYS.me, KEYS.abos, KEYS.coffre, KEYS.edl];
 let markDirty = () => {};
 const _set = store.set;
 store.set = (k, v) => { const ok = _set(k, v); if (ok && SYNC_KEYS.includes(k)) markDirty(); return ok; };
@@ -649,6 +700,7 @@ function scanAmounts(flat) {
     const le0 = flat.indexOf('\n', end), le = le0 < 0 ? flat.length : le0;
     const before = norm(flat.slice(Math.max(ls, prevEnd, m.index - 70), m.index));
     const after = norm(flat.slice(end, Math.min(le, end + 28)));
+    if (/(capital( social)?( de)?|siret|siren|rcs)\s*[:\w]{0,12}\s*$/.test(before)) { prevEnd = end; continue; }
     let kind = lastTag(before.slice(-45));
     if (!kind || /[\/|;]\s*$/.test(before)) kind = adjTag(after) || kind;
     if (!kind && !before.trim() && ls > 0) { const prev = flat.lastIndexOf('\n', ls - 2) + 1; kind = lastTag(norm(flat.slice(prev, ls))); }
@@ -675,6 +727,57 @@ function scanAmounts(flat) {
   if (best && best.kind === 'tva' && ttc) best = ttc;
   return { list, best, ht: ht && ht.value, tva: tva && tva.value, ttc: (ttc && ttc.value) || est, rate, estimated };
 }
+/*TICKET-DEB*/
+/* Lecture d'un ticket de caisse ou d'une facture d'achat (garanties) : magasin, produit, prix TTC, fin de garantie.
+   Les montants des tickets n'ont souvent ni « € » ni « TTC » collé : on lit les libellés (TOTAL TTC, À PAYER, RÈGLEMENT…) et les nombres à deux décimales. */
+const RETAILERS = ['boulanger', 'darty', 'fnac', 'leroy merlin', 'castorama', 'carrefour', 'auchan', 'e\\.?leclerc', 'leclerc', 'amazon', 'cdiscount', 'ikea', 'decathlon', 'apple', 'samsung', 'electro depot', 'electro 1', 'but', 'conforama', 'brico depot', 'bricomarche', 'lidl', 'intermarche', 'super u', 'orange', 'sfr', 'bouygues', 'free mobile', 'action', 'micromania', 'cultura', 'maisons du monde', 'ldlc', 'materiel\\.net', 'rue du commerce', 'back market', 'backmarket', 'zara', 'h&m', 'kiabi', 'gifi', 'norauto', 'feu vert', 'midas', 'truffaut', 'jardiland', 'monoprix', 'casino', 'cora', 'mediamarkt', 'media markt', 'xiaomi', 'dyson', 'miele', 'bosch', 'delonghi', 'rakuten', 'vinted', 'ebay'];
+const RETAILER_RE = new RegExp('(^|[^a-z0-9])(' + RETAILERS.join('|') + ')(?![a-z0-9])');
+const TK_STOP = /(total|tva|ttc|\bht\b|reglement|facture|ticket|client|siret|siren|merci|garantie|eco-?part|capital|\brcs\b|carte|especes|rendu|montant|page|\bdate\b|\btel\b|www|avenue|\brue\b|boulevard|\bcode\b|\bqte\b|\bqty\b|designation|reference de|sous-total|remise|livraison|fidelite|\bcb\b|extension|disponibilite|pendant|commercant|membre du reseau|ape |net a payer|a payer|a regler|offert|avoir|duplicata|caisse|vendeur|n°)/;
+function tkDecimals(line) {
+  const t = String(line).replace(/\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}/g, ' ').replace(/\d+(?:[.,]\d+)?\s*%/g, ' ').replace(/ | /g, ' ');
+  const out = []; const re = /(?:^|[^\d.,])(\d{1,3}(?: \d{3})+|\d+)[.,](\d{2})(?!\d)/g; let m;
+  while ((m = re.exec(t))) out.push(parseFloat(m[1].replace(/ /g, '') + '.' + m[2]));
+  return out;
+}
+function readReceipt(raw) {
+  const lines = String(raw).split(/\n+/).map(l => l.trim()).filter(Boolean), nl = lines.map(norm), res = { store: null, product: null, known: false, price: null, priceFrom: null, warrantyEnd: null, warrantyYears: null, extension: null };
+  // Magasin : enseigne connue, sinon première ligne parlante
+  const rm = norm(raw).match(RETAILER_RE);
+  res.known = !!rm;
+  if (rm) res.store = rm[2].replace(/\\\./g, '.').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  else { const f = lines.find((l, i) => /[a-zA-ZÀ-ÿ]{3,}/.test(l) && l.length <= 42 && !TK_STOP.test(nl[i]) && !/\d{4,}/.test(l)); if (f) res.store = f; }
+  // Prix : libellés de total, valeur sur la ligne ou, sinon, dans la colonne de chiffres qui suit
+  const PRIO = [[/total ttc|montant ttc|total t\.?t\.?c|ttc \(?(euros?|eur)/, 6], [/(net|total|montant) a payer|a regler|reste a payer/, 6], [/reglement (percu|recu)|montant regle|total regle|carte bancaire|especes|paiement/, 4], [/^total\b|total general|total eur|montant total|\btotal\b/, 3]];
+  const BAD = /(capital|siret|siren|\brcs\b|tva i\.?c|\bape\b|telephone|www|n° ?client|total ht|montant ht|hors taxe|dont tva|eco-?part|sous-total|acompte|remise|rendu|monnaie)/;
+  const cand = [];
+  const score = i => { if (BAD.test(nl[i])) return null; for (const [re, s] of PRIO) if (re.test(nl[i])) return s; return null; };
+  for (let i = 0; i < lines.length; i++) { const s = score(i); if (s === null) continue; const d = tkDecimals(lines[i]); if (d.length) cand.push({ v: d[d.length - 1], s: s + 1, i }); }
+  // Libellés empilés puis colonne de montants
+  for (let i = 0; i < lines.length; i++) {
+    let j = i; while (j < lines.length && !tkDecimals(lines[j]).length && /(total|dont|tva|ttc|\bht\b|net|reglement|montant)/.test(nl[j])) j++;
+    const run = j - i; if (run < 2) continue;
+    let k = j; const vals = []; while (k < lines.length && /^[\d\s.,€]+$/.test(lines[k]) && tkDecimals(lines[k]).length) { vals.push(tkDecimals(lines[k])[0]); k++; }
+    if (vals.length >= run) for (let x = 0; x < run; x++) { const s = score(i + x); if (s !== null) cand.push({ v: vals[x], s, i: i + x }); }
+    i = j;
+  }
+  if (cand.length) { cand.sort((a, b) => b.s - a.s || a.i - b.i); res.price = cand[0].v; res.priceFrom = lines[cand[0].i]; }
+  // Produit : ligne qui suit l'en-tête du tableau, sinon première ligne d'article avec prix
+  const clean = l => l.replace(/\s+(\d{6,}|\d+[.,]\d{2})\b.*$/, '').replace(/\s+\d{1,2}\s*$/, '').trim();
+  const okName = (l, i) => /[a-zA-ZÀ-ÿ]{3,}/.test(l) && !TK_STOP.test(nl[i]) && clean(l).length >= 5;
+  const hi = nl.findIndex(l => /(reference de l.?achat|designation|libelle|article|description)/.test(l));
+  if (hi >= 0) for (let i = hi + 1; i < Math.min(lines.length, hi + 4); i++) if (okName(lines[i], i)) { res.product = clean(lines[i]); break; }
+  if (!res.product) for (let i = 0; i < lines.length; i++) if (tkDecimals(lines[i]).length && okName(lines[i], i)) { res.product = clean(lines[i]); break; }
+  // Garantie commerciale annoncée
+  const n = norm(raw);
+  const gm = n.match(/garantie[^\n]{0,60}?jusqu'?\s*au[^\d]{0,6}(\d{2})[.\/-](\d{2})[.\/-](\d{4})/);
+  if (gm) res.warrantyEnd = `${gm[3]}-${gm[2]}-${gm[1]}`;
+  const ym = n.match(/garantie(?! legale)[^\n]{0,25}?(\d{1,2}) ans/);
+  if (ym) res.warrantyYears = +ym[1];
+  if (/extension de garantie non retenue|sans extension de garantie/.test(n)) res.extension = false;
+  else if (/extension de garantie/.test(n)) res.extension = true;
+  return res;
+}
+/*TICKET-FIN*/
 const kindLabel = k => k === 'ttc' ? ' TTC' : k === 'ht' ? ' HT' : '';
 const money = v => (v || v === 0) && isFinite(v) ? fmtMoney(Math.round(v * 100) / 100) : '[montant]';
 function makeICS({ date, summary, desc, alarms }) {
@@ -931,6 +1034,20 @@ const DL_BEFORE = /(avant le|au plus tard le|au plus tard|date limite[a-z' ]*|d'
 const REQ_RE = /(merci de|nous vous (demandons|prions|invitons|remercions de)|veuillez|vous devez|il vous appartient|vous etes (invite|invitee|prie|priee|tenu|tenue)|nous (transmettre|faire parvenir|retourner|adresser)|devez nous|a regler|a payer|est a payer|de bien vouloir|n'oubliez pas|vous mettons en demeure|vous est demande|doivent nous parvenir|doit nous parvenir|a defaut|sans reponse|faute de)/;
 const RECOURS_RE = /(recours|contester (cette|la) decision|contestation|commission de recours|mediateur|reclamation)/;
 
+// Signes d'hameçonnage (faux SMS, faux courriels de l'administration) : on liste des raisons précises plutôt qu'un verdict.
+const OFFICIAL = { impots: /gouv\.fr$/, tresor: /gouv\.fr$/, antai: /gouv\.fr$/, ants: /gouv\.fr$/, caf: /(^|\.)caf\.fr$|gouv\.fr$/, cpam: /(^|\.)ameli\.fr$|gouv\.fr$/, urssaf: /(^|\.)urssaf\.fr$|gouv\.fr$/, francetravail: /(^|\.)(francetravail|pole-emploi)\.fr$|gouv\.fr$/ };
+function phishSignals(n, sites, org) {
+  const out = [], link = /(cliquez|clique|lien ci-dessous|lien suivant|via le lien|ouvrez le lien|scannez)/.test(n);
+  if (/(^|[^a-z0-9])(bit\.ly|tinyurl\.com|cutt\.ly|is\.gd|rb\.gy|t\.co|ow\.ly|shorturl\.at)\//.test(n)) out.push("un lien raccourci qui cache l'adresse réelle du site");
+  if (/(numero de (votre )?carte|code de securite|cryptogramme|mot de passe|code confidentiel|identifiants? de connexion)/.test(n) && /(saisi|renseign|communiqu|fournir|transmet|envoy|confirm|entre)/.test(n)) out.push('une demande de données secrètes (carte bancaire, mot de passe, code)');
+  if (link && /(sous 24 ?h|sous 48 ?h|dans les 24 heures|dans les 48 heures|immediatement|dernier avertissement|derniere chance|urgent)/.test(n)) out.push('un lien à ouvrir en urgence');
+  if (link && /(votre compte (sera|a ete|est) (suspendu|bloque|desactive|ferme|limite)|compte (suspendu|bloque|desactive))/.test(n)) out.push('une menace de blocage de ton compte avec un lien à cliquer');
+  if (link && /(informations? bancaires?|coordonnees bancaires|moyen de paiement|carte bancaire)/.test(n) && /(mettre a jour|actualis|verifi|valid|confirm)/.test(n)) out.push('une demande de « mettre à jour » tes informations bancaires par un lien');
+  if (/(colis|livraison)/.test(n) && /(frais|taxe|redevance|droits de douane)/.test(n) && /(\d+[,.]?\d* ?(€|euros?))/.test(n) && link) out.push('de petits « frais de livraison » à payer par un lien');
+  if (org && /^(impots|cpam|caf|tresor)$/.test(org.id) && link && /(remboursement|rembours|virement|prime|aide)/.test(n) && /(carte|rib|iban|coordonnees)/.test(n)) out.push('un « remboursement » à recevoir en donnant ta carte ou ton IBAN');
+  if (org && OFFICIAL[org.id] && sites.length && !sites.some(x => OFFICIAL[org.id].test(x.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]))) out.push(`un site (${sites[0]}) qui ne ressemble pas au site officiel de ${org.court}`);
+  return out.slice(0, 4);
+}
 function analyze(raw) {
   const text = raw.replace(/\r/g, '');
   const lines = text.replace(/-\n(?=[a-zà-ÿ])/g, '').replace(/[ \t\u00a0\u202f]+/g, ' ').split('\n').map(l => l.trim());
@@ -1037,10 +1154,11 @@ function analyze(raw) {
   // Arnaque
   const scam = [];
   SCAM_KW.forEach((r, i) => { if (r.test(n)) scam.push(SCAM_LABELS[i]); });
+  const phish = phishSignals(n, sites, org);
 
   const docs = extractDocs(flat, sentences);
   const terms = GLOSSARY.filter(g => g.re.test(n)).slice(0, 8);
-  const a = { raw: text, flat, org, type, letterDate, deadline, recoursDl, amount, taxes, refs, emails, sites, phones, requests, recours, scam, docs, docsDone: [], docsFromAI: false, terms };
+  const a = { raw: text, flat, org, type, letterDate, deadline, recoursDl, amount, taxes, refs, emails, sites, phones, requests, recours, scam, phish, docs, docsDone: [], docsFromAI: false, terms };
   a.level = computeLevel(a);
   return a;
 }
@@ -1126,6 +1244,7 @@ function computeLevel(a) {
     else if (dd <= 21) level = Math.max(level, 2);
   }
   if (a.scam && a.scam.length) level = Math.max(level, 3);
+  if (a.phish && a.phish.length >= 2) level = Math.max(level, 3);
   return level;
 }
 
@@ -1140,6 +1259,7 @@ function whoSentence(a) {
 }
 function brief(a) {
   const s = [whoSentence(a), a.type.resume];
+  if (a.phish && a.phish.length) s.push('Méfie-toi : ce message a des signes d\'hameçonnage (' + a.phish[0] + '). Ne clique sur aucun lien et vérifie directement sur le site officiel.');
   if (a.scam.length) s.push("Attention, ça ressemble à une arnaque : ne paye rien avant d'avoir vérifié auprès de l'organisme.");
   const todo = TODO[a.type.id];
   if (a.deadline) {
@@ -1283,6 +1403,25 @@ function stampHTML(a) {
   return `<div class="${cls}"><b>${esc(LEVELS[a.level])}</b><span>Pas de date limite repérée</span></div>`;
 }
 
+/* ---------- Mémoire des corrections ----------
+   Quand tu corrige une lecture (expéditeur, type), Paperdecrypt retient l'en-tête du courrier sur cet appareil et applique ta correction
+   la prochaine fois qu'un courrier du même expéditeur arrive. Les modèles de lecture eux-mêmes ne changent pas : c'est une mémoire personnelle. */
+const lessonSig = raw => norm(raw).split('\n').map(l => l.trim()).filter(l => l.length > 3).slice(0, 3).join(' ').replace(/[0-9]+/g, '').replace(/[^a-z' ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 90);
+const getLessons = () => store.get(KEYS.lecons, []);
+function learnFix(raw, base, ov) {
+  const sig = lessonSig(raw); if (sig.length < 12) return;
+  const e = { sig, at: new Date().toISOString() };
+  if ((base.org ? base.org.id : '') !== (ov.org || '')) e.org = ov.org || '';
+  if (base.type.id !== ov.type) e.type = ov.type;
+  if (e.org === undefined && e.type === undefined) return;
+  store.set(KEYS.lecons, [e, ...getLessons().filter(x => x.sig !== sig)].slice(0, 60));
+}
+function applyLessons(a) {
+  const sig = lessonSig(a.raw), l = getLessons().find(x => x.sig === sig); if (!l) return a;
+  const ov = {}; if (l.org !== undefined) ov.org = l.org; if (l.type) ov.type = l.type;
+  if (!Object.keys(ov).length) return a;
+  const b = applyOverrides(a, ov); b.learned = true; return b;
+}
 function applyOverrides(a, ov) {
   if (!ov) return a;
   if (ov.org !== undefined) a.org = ORGS.find(o => o.id === ov.org) || null;
@@ -1354,8 +1493,11 @@ function renderResult(a, savedId, opts = {}) {
         <span class="kind">${esc(a.type.label)}</span>
       </div>
       <p class="who-desc">${esc(org ? org.desc : "Son nom est en général en haut à gauche du courrier.")}</p>
+      ${a.learned ? '<p class="note">Lecture ajustée d\'après tes corrections précédentes.</p>' : ''}
+      ${a.phish && a.phish.length ? `<div class="scam"><strong>Méfie-toi : ce message a des signes d'hameçonnage.</strong><ul>${a.phish.map(x => `<li>${esc(x)}</li>`).join('')}</ul>Ne clique sur aucun lien et ne donne aucune information. Va directement sur le site officiel, en tapant toi-même l'adresse, ou appelle l'organisme.</div>` : ''}
       ${a.scam.length ? `<div class="scam"><strong>Attention, ça ressemble à une arnaque.</strong> Ce courrier parle de paiement par ${esc(a.scam.join(', '))}. Une administration ou une entreprise sérieuse ne demande jamais ça. Ne paye pas, et vérifie en contactant l'organisme par son site officiel.</div>` : ''}
 
+      ${looksLikePayslip(a.raw) ? '<div class="scam" style="border-color:var(--focus)"><strong style="color:var(--ink)">Ça ressemble à une fiche de paie.</strong> L\'analyse dédiée repère les heures supplémentaires et explique chaque ligne. <button class="btn small" type="button" id="to-paie">Analyser ma fiche de paie</button></div>' : ''}
       <div class="brief">
         <div class="brief-head"><h3>En bref</h3><button class="link" id="speak-btn" type="button" aria-pressed="false">Écouter</button></div>
         <p id="brief-text">${esc(brief(a))}</p>
@@ -1369,6 +1511,7 @@ function renderResult(a, savedId, opts = {}) {
       </div>
 
       <div class="block" id="facts-zone"><h3>Les infos clés</h3>${factsHTML(a)}</div>
+      <p class="note" id="fb-row">Cette lecture est-elle juste ? <button class="link" type="button" data-fb="ok">Oui</button> <button class="link" type="button" data-fb="ko">Non, je corrige</button></p>
 
       <div class="block">
         <h3>Ce que tu dois faire</h3>
@@ -1459,11 +1602,18 @@ function bindResult() {
   $('#undo-draft').addEventListener('click', () => { if (draftBackup != null) { setDraft(draftBackup); draftBackup = null; $('#undo-draft').hidden = true; } });
   $('#save-btn').addEventListener('click', saveCurrent);
   bindShare(current);
+  const tp = $('#to-paie'); if (tp) tp.addEventListener('click', () => { paie$ = { text: current.raw, declared: '', p: parsePayslip(current.raw) }; tools$ = { view: 'paie' }; track('paie'); showTab('tools'); });
   $('#more-letters').addEventListener('click', () => { tools$ = { view: 'lettres' }; showTab('tools'); });
   $('#new-btn').addEventListener('click', resetInput);
   $('#ai-improve').addEventListener('click', () => enqueueAI(() => aiImprove(seq)));
   $('#speak-btn').addEventListener('click', toggleSpeak);
   bindFacts(); bindDocs();
+  $$('[data-fb]', R).forEach(b => b.addEventListener('click', () => {
+    const row = $('#fb-row');
+    if (b.dataset.fb === 'ok') { track('avis_ok'); row.textContent = 'Merci !'; return; }
+    track('avis_ko'); trackFix('avis_ko_' + current.type.id); row.textContent = 'Merci. Corrige ce qui est faux juste au-dessus : Paperdecrypt s\'en souviendra.';
+    const fb = $('#fix-btn'), pn = $('#fix-panel'); if (pn && pn.hidden) fb.click(); if (pn) pn.scrollIntoView({ block: 'center' });
+  }));
 
   // Questions
   $$('[data-q]', R).forEach(b => b.addEventListener('click', () => {
@@ -1496,7 +1646,17 @@ function bindFacts() {
   $('#fix-apply').addEventListener('click', () => {
     const d = $('#fix-date').value, amt = parseFloat($('#fix-amount').value);
     const ov = { org: $('#fix-org').value, type: $('#fix-type').value, deadline: d ? new Date(d + 'T00:00:00').toISOString() : null, amount: isFinite(amt) && amt > 0 ? amt : null, kind: $('#fix-kind').value || null };
-    const a = applyOverrides(analyze(current.raw), ov);
+    const base = analyze(current.raw);
+    { // Ce qui a été corrigé alimente la mémoire locale et, de façon anonyme, les statistiques d'amélioration.
+      const bo = base.org ? base.org.id : 'aucun', no = ov.org || 'aucun';
+      if (bo !== no) trackFix(`org_${bo}_to_${no}`);
+      if (base.type.id !== ov.type) trackFix(`type_${base.type.id}_to_${ov.type}`);
+      if ((base.amount ? base.amount.value : null) !== ov.amount) trackFix('montant');
+      if ((base.deadline ? isoDay(base.deadline.date) : '') !== (ov.deadline ? isoDay(ov.deadline) : '')) trackFix('date');
+      if ((base.amount && base.amount.kind || '') !== (ov.kind || '') && ov.amount) trackFix('ht_ttc');
+      learnFix(current.raw, base, ov);
+    }
+    const a = applyOverrides(base, ov);
     a.docs = current.docs; a.docsFromAI = current.docsFromAI; a.docsDone = current.docsDone;
     const id = currentId;
     renderResult(a, id, { keepIntent: true });
@@ -1559,7 +1719,7 @@ function runDecode() {
   const txt = $('#letter-input').value.trim();
   if (txt.length < 30) { toast('Ajoute le texte du courrier ou une photo'); $('#letter-input').focus(); return; }
   interruptAI();
-  const a = analyze(txt);
+  const a = applyLessons(analyze(txt));
   track('decode'); trackType(a.type.id); if (a.org) trackOrg(a.org.id);
   renderResult(a, null);
   $('#result').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
@@ -1570,9 +1730,10 @@ let ocrWorker = null, readPages = 0;
 function setOcr(p, msg) {
   const box = $('#ocr-progress'); box.classList.add('on');
   $('#ocr-bar').style.width = Math.round(p * 100) + '%'; $('#ocr-text').textContent = msg;
+  const pb = $('#paie-bar'); if (pb && $('#paie-prog')) { $('#paie-prog').classList.add('on'); pb.style.width = Math.round(p * 100) + '%'; $('#paie-ptext').textContent = msg; }
   const vb = $('#vault-bar'); if (vb && $('#vault-prog')) { $('#vault-prog').classList.add('on'); vb.style.width = Math.round(p * 100) + '%'; $('#vault-ptext').textContent = msg; }
 }
-function hideOcr() { $('#ocr-progress').classList.remove('on'); }
+function hideOcr() { $('#ocr-progress').classList.remove('on'); const pp = $('#paie-prog'); if (pp) pp.classList.remove('on'); }
 
 async function getOcr() {
   if (ocrWorker) return ocrWorker;
@@ -1724,6 +1885,7 @@ async function handleFiles(files) {
 
 /* ---------- Mes courriers ---------- */
 const getList = () => store.get(KEYS.list, []);
+let listQ = '';
 function saveCurrent(silent) {
   if (!current) return;
   const list = getList();
@@ -1767,8 +1929,10 @@ function renderList() {
     $('#go-decode').addEventListener('click', () => showTab('decode'));
     return;
   }
-  const sorted = [...list].sort((a, b) => (a.done - b.done) || ((a.deadline ? new Date(a.deadline) : Infinity) - (b.deadline ? new Date(b.deadline) : Infinity)) || (new Date(b.savedAt) - new Date(a.savedAt)));
+  const qn = norm(listQ).split(/\s+/).filter(Boolean);
+  const sorted = [...list].filter(x => qn.every(t => norm([x.org, x.type, x.text].join(' ')).includes(t))).sort((a, b) => (a.done - b.done) || ((a.deadline ? new Date(a.deadline) : Infinity) - (b.deadline ? new Date(b.deadline) : Infinity)) || (new Date(b.savedAt) - new Date(a.savedAt)));
   box.innerHTML = `
+    ${list.length > 4 || listQ ? `<div class="filters"><label class="sr" for="list-q">Rechercher</label><input type="search" id="list-q" placeholder="Rechercher un expéditeur, un mot du courrier…" value="${esc(listQ)}"></div>` : ''}
     ${late ? `<p class="alert">${late === 1 ? 'Un courrier arrive' : late + ' courriers arrivent'} à échéance dans moins de 3 jours.</p>` : ''}
     <div class="items">${sorted.map(x => {
       const dd = x.deadline ? daysUntil(x.deadline) : null;
@@ -1781,7 +1945,8 @@ function renderList() {
           <button class="btn small ghost" data-done="${x.id}" type="button">${x.done ? 'À traiter' : 'Traité'}</button>
           <button class="link" data-del="${x.id}" type="button" aria-label="Supprimer ce courrier">Supprimer</button>
         </div></article>`;
-    }).join('')}</div>`;
+    }).join('')}</div>${sorted.length ? '' : '<p class="note">Aucun courrier ne correspond.</p>'}`;
+  const lq = $('#list-q'); if (lq) lq.addEventListener('input', () => { listQ = lq.value; const pos = lq.selectionStart; renderList(); const n = $('#list-q'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} });
   $$('[data-open]', box).forEach(b => b.addEventListener('click', () => { const it = getList().find(x => x.id === b.dataset.open); if (it) openItem(it); }));
   $$('[data-done]', box).forEach(b => b.addEventListener('click', () => {
     const l = getList(); const it = l.find(x => x.id === b.dataset.done); if (!it) return;
@@ -2072,7 +2237,7 @@ $('#wipe-btn').addEventListener('click', () => {
   store.set(KEYS.list, []); currentId = null; renderList(); toast('Courriers effacés');
 });
 $('#export-btn').addEventListener('click', () => {
-  const data = { app: 'decodeur-courrier', version: 3, exportedAt: new Date().toISOString(), courriers: getList(), reclamations: getClaims(), garanties: getW(), abonnements: getAbos(), coffre: getVault().map(({ text, ...r }) => r), moi: store.get(KEYS.me, {}) };
+  const data = { app: 'decodeur-courrier', version: 3, exportedAt: new Date().toISOString(), courriers: getList(), reclamations: getClaims(), garanties: getW(), abonnements: getAbos(), edl: getEdl(), coffre: getVault().map(({ text, ...r }) => r), moi: store.get(KEYS.me, {}) };
   downloadFile('sauvegarde-courriers-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(data, null, 1), 'application/json');
 });
 $('#import-input').addEventListener('change', async e => {
@@ -2084,7 +2249,7 @@ $('#import-input').addEventListener('change', async e => {
     for (const it of data.courriers) { if (it && it.id && it.text && !list.some(x => x.id === it.id)) { list.push(it); added++; } }
     store.set(KEYS.list, list);
     const add = (key, arr, get) => { if (!Array.isArray(arr)) return; const cur = get(); let n = 0; arr.forEach(it => { if (it && it.id && !cur.some(x => x.id === it.id)) { cur.push(it); n++; } }); if (n) store.set(key, cur); added += n; };
-    add(KEYS.claims, data.reclamations, getClaims); add(KEYS.garanties, data.garanties, getW); add(KEYS.abos, data.abonnements, getAbos); add(KEYS.coffre, data.coffre, getVault);
+    add(KEYS.claims, data.reclamations, getClaims); add(KEYS.garanties, data.garanties, getW); add(KEYS.abos, data.abonnements, getAbos); add(KEYS.edl, data.edl, getEdl); add(KEYS.coffre, data.coffre, getVault);
     if (data.moi && !store.get(KEYS.me, null)) store.set(KEYS.me, data.moi);
     renderList(); toast(added ? `${added} courrier${added > 1 ? 's' : ''} restauré${added > 1 ? 's' : ''}` : 'Rien de nouveau dans cette sauvegarde');
   } catch (err) { toast("Ce fichier n'est pas une sauvegarde du décodeur"); }
@@ -2518,28 +2683,37 @@ function renderWForm(box) {
   $('#wf-back').addEventListener('click', () => { w$ = { mode: 'home' }; renderWarranty(); });
   $('#wf-photo').addEventListener('change', async e => {
     let f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    let pdfFile = null;
     if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
-      $('#wf-photo-state').textContent = 'Lecture du PDF…';
+      $('#wf-photo-state').textContent = 'Lecture du PDF…'; pdfFile = f;
       try { f = await pdfFirstPageFile(f); } catch (err) { $('#wf-photo-state').textContent = 'Impossible de lire ce PDF. Essaie une photo.'; return; }
     }
     try { pendingImg = await compressImage(f); $('#wf-photo-state').textContent = 'Photo prête. Lecture du ticket…'; } catch (err) { toast('Impossible de lire cette photo'); return; }
     try {
       const pr = $('#wf-progress'); pr.classList.add('on');
-      await loadScript(TESSERACT_URL);
-      const wk = await getOcr();
-      const c = await fileToCanvas(f);
-      $('#wf-ptext').textContent = 'Lecture du ticket…';
-      const { data } = await wk.recognize(c, { rotateAuto: true });
+      let t = '';
+      // PDF avec du texte : on le lit directement, c'est bien plus fiable qu'une lecture d'image.
+      if (pdfFile) { try { t = await readPdf(pdfFile); } catch (err) { t = ''; } }
+      if (t.replace(/\s/g, '').length < 60) {
+        await loadScript(TESSERACT_URL);
+        const wk = await getOcr(), c = await fileToCanvas(f);
+        $('#wf-ptext').textContent = 'Lecture du ticket…';
+        t = (await wk.recognize(c, { rotateAuto: true })).data.text || '';
+      }
       pr.classList.remove('on'); hideOcr();
-      const t = data.text || '';
+      const rc = readReceipt(t), got = [];
       const dates = findDates(t).filter(d => d.date <= new Date());
-      if (dates.length && !$('#wf-date').value) $('#wf-date').value = isoDay(dates[0].date);
-      const tx = scanAmounts(t), pick = tx.ttc || (tx.best && tx.best.kind !== 'ht' ? tx.best.value : null) || (tx.best && tx.best.value);
-      const price = pick ? String(pick) : null;
-      if (price && !$('#wf-prix').value) $('#wf-prix').value = parseFloat(price);
-      const first = t.split('\n').map(l => l.trim()).find(l => /[A-Za-z]{3,}/.test(l));
-      if (first && !$('#wf-store').value) $('#wf-store').value = first.slice(0, 40);
-      $('#wf-photo-state').textContent = 'Photo prête. Vérifie les infos lues sur le ticket.';
+      if (dates.length && !$('#wf-date').value) { $('#wf-date').value = isoDay(dates[0].date); got.push('la date'); }
+      let price = rc.price;
+      if (price === null) { const tx = scanAmounts(t), pick = tx.ttc || (tx.best && tx.best.kind !== 'ht' ? tx.best.value : null); if (pick && pick < 50000) price = pick; }
+      if (price && !$('#wf-prix').value) { $('#wf-prix').value = price; got.push('le prix TTC'); }
+      if (rc.store && !$('#wf-store').value) { $('#wf-store').value = rc.store.slice(0, 40); got.push('le magasin'); }
+      if (rc.product && !$('#wf-name').value) { $('#wf-name').value = rc.product.slice(0, 60); got.push('le produit'); }
+      const bought = $('#wf-date').value ? parseDay($('#wf-date').value) : null, legal = $('#wf-etat').value === 'occasion' ? 1 : 2;
+      let years = rc.warrantyYears;
+      if (rc.warrantyEnd && bought) years = Math.round((parseDay(rc.warrantyEnd) - bought) / (365.25 * 864e5) * 2) / 2;
+      if (years && years > legal && !$('#wf-extra').value) { $('#wf-extra').value = years; got.push('la garantie commerciale'); }
+      $('#wf-photo-state').textContent = got.length ? `Lu sur le document : ${got.join(', ')}. Vérifie avant d'enregistrer.` : 'Photo prête. Je n\'ai rien pu lire : remplis les infos à la main.';
     } catch (err) { $('#wf-progress').classList.remove('on'); $('#wf-photo-state').textContent = 'Photo prête. Remplis les infos à la main.'; }
   });
   $('#wf-save').addEventListener('click', async () => {
@@ -2576,8 +2750,8 @@ async function gRestore() {
   if (!gAvailable()) return;
   try {
     const F = await fb(); await F.auth.authStateReady();
-    FBU = F.auth.currentUser; setSyncStatus(); if (FBU) syncNow();
-    F.Au.onAuthStateChanged(F.auth, u => { const was = FBU; FBU = u; setSyncStatus(); if (u && (!was || was.uid !== u.uid)) syncNow(); });
+    FBU = F.auth.currentUser; setSyncStatus(); if (FBU) { syncNow(); sealPending(); }
+    F.Au.onAuthStateChanged(F.auth, u => { const was = FBU; FBU = u; setSyncStatus(); if (u && (!was || was.uid !== u.uid)) { syncNow(); sealPending(); } });
   } catch (e) { setSyncStatus('Connexion indisponible : ' + e.message); }
 }
 async function gLogin() {
@@ -2589,7 +2763,7 @@ async function gLogin() {
 }
 async function gLogout() { try { const F = await fb(); await F.Au.signOut(F.auth); toast('Compte Google déconnecté'); } catch (e) {} }
 async function buildPayload() {
-  return { app: 'quentools-paperasse', v: 1, courriers: getList(), reclamations: getClaims(), garanties: getW(), abonnements: getAbos(), coffre: getVault().map(({ text, ...r }) => r), moi: store.get(KEYS.me, {}), deleted: store.get(KEYS.deleted, []) };
+  return { app: 'quentools-paperasse', v: 1, courriers: getList(), reclamations: getClaims(), garanties: getW(), abonnements: getAbos(), edl: getEdl(), coffre: getVault().map(({ text, ...r }) => r), moi: store.get(KEYS.me, {}), deleted: store.get(KEYS.deleted, []) };
 }
 // Le coffre synchronisé ne contient pas le texte lu : on garde celui de cet appareil quand il existe.
 function mergeVault(local, merged) {
@@ -2618,11 +2792,12 @@ async function syncNow() {
       reclamations: mergeLists(local.reclamations, remote.reclamations, deleted),
       garanties: mergeLists(local.garanties, remote.garanties, deleted),
       abonnements: mergeLists(local.abonnements, remote.abonnements, deleted),
+      edl: mergeLists(local.edl, remote.edl, deleted),
       coffre: mergeLists(local.coffre, remote.coffre, deleted),
       moi: Object.keys(local.moi || {}).length ? local.moi : (remote.moi || {}),
       deleted: [...deleted].slice(-500)
     };
-    _set(KEYS.list, merged.courriers); _set(KEYS.claims, merged.reclamations); _set(KEYS.garanties, merged.garanties); _set(KEYS.abos, merged.abonnements); _set(KEYS.coffre, mergeVault(getVault(), merged.coffre)); _set(KEYS.me, merged.moi); _set(KEYS.deleted, merged.deleted);
+    _set(KEYS.list, merged.courriers); _set(KEYS.claims, merged.reclamations); _set(KEYS.garanties, merged.garanties); _set(KEYS.abos, merged.abonnements); _set(KEYS.edl, merged.edl); _set(KEYS.coffre, mergeVault(getVault(), merged.coffre)); _set(KEYS.me, merged.moi); _set(KEYS.deleted, merged.deleted);
     // Passage par JSON : Firestore refuse les valeurs « undefined ».
     await F.Fs.setDoc(ref, JSON.parse(JSON.stringify(merged)));
     store.set(KEYS.sync, { last: new Date().toISOString() });
@@ -2673,7 +2848,7 @@ const usage = (() => {
     q = {};
     try { fetch(endpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true }).catch(() => {}); } catch (e) { /* hors ligne : tant pis */ }
   }
-  function hit(path) { if (!on() || !/^[vftol](\.[a-z0-9_]+)?$/.test(path)) return; q[path] = (q[path] || 0) + 1; clearTimeout(timer); timer = setTimeout(flush, 5000); }
+  function hit(path) { if (!on() || !/^[vftolk](\.[a-z0-9_]+)?$/.test(path)) return; q[path] = (q[path] || 0) + 1; clearTimeout(timer); timer = setTimeout(flush, 5000); }
   addEventListener('pagehide', flush);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
   return { hit, flush, on };
@@ -2682,6 +2857,7 @@ const track = name => usage.hit('f.' + name);
 const trackType = id => usage.hit('t.' + id);
 const trackOrg = id => usage.hit('o.' + id);
 const trackLetter = id => usage.hit('l.' + id);
+const trackFix = key => usage.hit('k.' + key);
 function startSession() {
   let fresh = true;
   try { fresh = !sessionStorage.getItem('qt-pd-session'); sessionStorage.setItem('qt-pd-session', '1'); } catch (e) { /* stockage indisponible */ }
@@ -2855,6 +3031,16 @@ const LETTRES = [
     build: v => letterFrame({ dest: bracket(v, 'org', 'société'), lrar: true, objet: 'Demande de remboursement de ' + (v.montant ? fmtMoney(+v.montant) : '[montant]'), refs: v.ref ? 'Référence : ' + v.ref : '',
       corps: `Le ${fdate(v.date, 'date du paiement')}, j'ai payé la somme de ${v.montant ? fmtMoney(+v.montant) : '[montant]'}${v.ref ? ' (référence ' + v.ref + ')' : ''}.\n\n${bracket(v, 'raison', 'explique la situation')}\n\nJe vous demande donc de me rembourser cette somme dans un délai de 15 jours, par virement sur mon compte. À défaut, je me réserverai le droit de saisir le médiateur compétent.\n\nVous trouverez ci-joint la preuve de mon paiement.` }) }
 ];
+LETTRES.push({ id: 'heures_supp', title: 'Heures supplémentaires manquantes', teaser: 'Demander le décompte et la régularisation à ton employeur', lrar: false,
+  note: "Garde tes relevés d'horaires (agenda, messages, planning) : ils servent de preuve. Sans réponse, relance par lettre recommandée. En règle générale, tu peux réclamer des salaires non payés jusqu'à 3 ans en arrière. En cas de blocage, rapproche-toi d'un syndicat ou de l'inspection du travail.",
+  fields: [
+    { id: 'employeur', label: 'Ton employeur', type: 'text', ph: 'Nom de la société' },
+    { id: 'mois', label: 'Mois concerné', type: 'text', req: true, ph: 'Ex. septembre 2026' },
+    { id: 'declarees', label: "Heures supplémentaires que tu as faites", type: 'number', req: true },
+    { id: 'payees', label: 'Heures supplémentaires payées sur la fiche', type: 'number', req: true },
+    { id: 'detail', label: 'Jours et horaires concernés', type: 'textarea', ph: 'Ex. le 3 et le 10 : fin à 20 h au lieu de 18 h' }],
+  build: v => letterFrame({ dest: bracket(v, 'employeur', 'employeur'), objet: 'Demande de précisions sur mes heures supplémentaires de ' + bracket(v, 'mois', 'mois'),
+    corps: `En examinant ma fiche de paie de ${bracket(v, 'mois', 'mois')}, je constate que ${v.payees || '[x]'} heure(s) supplémentaire(s) y sont payée(s), alors que j'en ai effectué ${v.declarees || '[y]'}.${v.detail ? '\n\nLes heures concernées sont les suivantes : ' + v.detail : '\n\nLes heures concernées sont les suivantes : [jours et horaires].'}\n\nJe vous demande de bien vouloir me communiquer le décompte détaillé de mes heures du mois et, si l'écart est confirmé, de procéder à la régularisation sur ma prochaine fiche de paie.\n\nJe reste à votre disposition pour en discuter.` }) });
 const lettreById = id => LETTRES.find(l => l.id === id);
 
 /* ---------- Calcul de TVA ---------- */
@@ -2880,26 +3066,32 @@ function renderTools() {
   if (v === 'tva') return renderTVA(box);
   if (v === 'lettres') return renderLettres(box);
   if (v === 'lettre') return renderLettre(box);
+  if (v === 'edl') return renderEdl(box);
+  if (v === 'paie') return renderPaie(box);
   box.innerHTML = `<div class="sheet money-hero">
       <h2>Tes outils du quotidien</h2>
       <p class="lead">Les petits calculs et les lettres qui reviennent tout le temps. Tout reste sur ton appareil.</p>
     </div>
     <div class="cases" style="margin-top:14px">
+      <button class="case" type="button" data-tool="paie"><b>Analyser ma fiche de paie</b><span>Résumée et expliquée, avec repérage des heures supplémentaires</span></button>
       <button class="case" type="button" data-tool="lettres"><b>Modèles de lettres</b><span>Amende, résiliation, échéancier, CAF, impôts, remboursement</span></button>
       <button class="case" type="button" data-tool="abos"><b>Mes abonnements</b><span>Ce que tu paies chaque mois, et quand résilier</span></button>
       <button class="case" type="button" data-tool="tva"><b>Calcul HT, TVA, TTC</b><span>Pour tes devis et factures, avec remise et acompte</span></button>
+      <button class="case" type="button" data-tool="edl"><b>État des lieux</b><span>Entrée et sortie d'un logement, avec photos, comparaison et conseils</span></button>
       <button class="case" type="button" data-tool="dossier"><b>Mon dossier en PDF</b><span>Courriers, garanties, réclamations : tout au même endroit, à imprimer</span></button>
     </div>
     ${adHTML()}`;
   fillAds(box);
   $$('[data-tool]', box).forEach(b => b.addEventListener('click', () => {
     if (b.dataset.tool === 'dossier') return openDossier();
+    if (b.dataset.tool === 'edl') edl$ = { view: 'list' };
+    if (b.dataset.tool === 'paie') paie$ = { text: '', declared: '', p: null };
     tools$ = { view: b.dataset.tool }; track('outil_' + b.dataset.tool); renderTools(); setHash('tools', b.dataset.tool); box.scrollIntoView({ block: 'start' });
   }));
 }
-function toolBack(box) { $('#tool-back', box).addEventListener('click', () => { tools$ = { view: tools$.view === 'lettre' ? 'lettres' : 'home' }; renderTools(); setHash('tools'); }); }
+function toolBack(box) { $('#tool-back', box).addEventListener('click', () => { edl$ = { view: 'list' }; tools$ = { view: tools$.view === 'lettre' ? 'lettres' : 'home' }; renderTools(); setHash('tools'); }); }
 function setHash(which, sub) { try { history.replaceState(null, '', location.pathname + location.search + ((sub && SUBHASH[sub]) || TAB_HASH[which] || '')); } catch (e) {} }
-const SUBHASH = { abos: '#abonnements', tva: '#tva', lettres: '#lettres' };
+const SUBHASH = { abos: '#abonnements', tva: '#tva', lettres: '#lettres', edl: '#etat-des-lieux', paie: '#fiche-de-paie' };
 
 /* Lettres types */
 function renderLettres(box) {
@@ -3054,6 +3246,611 @@ function renderTVA(box) {
   upd();
 }
 
+/* ---------- Fiche de paie ---------- */
+/*PAIE-DEB*/
+const PN = x => String(x).replace(/ | /g, ' ');
+// Nombres d'une ligne (dates et pourcentages retirés). « 1 895,88 » → 1895.88
+function lineNums(line) {
+  const t = PN(line).replace(/\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}/g, ' ').replace(/(\d{1,3})((?:\.\d{3})+)(?=,\d)/g, (m, a, b) => a + b.replace(/\./g, '')).replace(/\d+(?:[.,]\d+)?\s*%/g, ' ');
+  const out = []; const re = /(-?\d+(?: \d{3})*(?:[.,]\d{1,4})?)/g; let m;
+  while ((m = re.exec(t))) { const v = parseFloat(m[1].replace(/ /g, '').replace(',', '.')); if (isFinite(v)) out.push(v); }
+  return out;
+}
+const linePct = line => { const m = PN(line).match(/(\d+(?:[.,]\d+)?)\s*%/); return m ? parseFloat(m[1].replace(',', '.')) : null; };
+const PMONTHS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
+// Explication de chaque ligne type d'une fiche de paie (texte normalisé sans accents, en minuscules).
+const PAIE_LIGNES = [
+  [/(reduction|allegement|exoneration).*(heures|\bhs\b)|heures.*(exonere|defiscalis)/, 'Allègement sur heures supplémentaires', "Une partie de tes cotisations est supprimée sur les heures supplémentaires : ton net est plus élevé."],
+  [/(salaire brut|total brut)/, 'Salaire brut', "Ce que ton employeur déclare avant de retirer les cotisations. Ce n'est pas ce que tu reçois."],
+  [/net (a payer )?(avant|hors) (impot|prelevement)/, 'Net avant impôt', "Ton salaire après tes cotisations, avant le prélèvement de l'impôt sur le revenu."],
+  [/(net a payer|net paye)/, 'Net à payer', "Ce qui est réellement viré sur ton compte, impôt déduit."],
+  [/total (des )?cotisations/, 'Total des cotisations', "La somme de toutes les cotisations. Première colonne : ta part ; deuxième colonne : celle de ton employeur."],
+  [/(conges payes|\brtt\b|repos compensateur|\bcp\b)/, 'Congés et repos', "Tes compteurs de congés payés ou de repos : jours acquis, pris et solde."],
+  [/salaire de base|salaire mensuel/, 'Salaire de base', "Ton salaire pour le temps de travail normal prévu au contrat (151,67 h par mois pour 35 h par semaine)."],
+  [/heures? compl/, 'Heures complémentaires', "Heures faites en plus de ta durée de travail prévue au contrat à temps partiel. Elles sont majorées."],
+  [/(heures? (supp|suppl)|hres? sup|\bhs ?\d)/, 'Heures supplémentaires', "Heures faites au-delà de 35 h par semaine, majorées en principe de 25 % (puis 50 %)."],
+  [/prime d.?anciennete|anciennete/, 'Prime d\'ancienneté', "Un complément de salaire qui augmente avec tes années dans l'entreprise, selon ta convention collective."],
+  [/(prime|gratification|13e mois|treizieme)/, 'Prime', "Un complément de salaire (objectifs, vacances, 13e mois…) prévu par ton contrat, ta convention ou ton employeur."],
+  [/indemnite compensatrice de conges|ind\.? comp.* cp/, 'Indemnité de congés', "Somme versée pour des congés payés non pris, en général à la fin du contrat."],
+  [/(titres? restaurant|ticket restaurant)/, 'Titres-restaurant', "Ta part des titres-restaurant, retirée du net. L'employeur en paie une autre part."],
+  [/(panier|indemnite (de )?(repas|transport|kilometrique)|frais professionnels|remboursement)/, 'Indemnité ou remboursement', "Une somme qui rembourse des frais (repas, transport, déplacement). Elle n'est en général pas soumise à cotisations."],
+  [/(absence|maladie|conges? sans solde|carence)/, 'Absence', "Une retenue sur le salaire pour des heures ou jours non travaillés (ou la somme versée à la place par la Sécurité sociale)."],
+  [/(avantage en nature)/, 'Avantage en nature', "La valeur d'un avantage fourni par l'employeur (véhicule, logement, repas). Elle est ajoutée au salaire pour le calcul des cotisations, puis retirée du net."],
+  [/(acompte|avance)/, 'Acompte ou avance', "Une somme que tu as déjà reçue dans le mois : elle est retirée du net à payer."],
+  [/(securite sociale|maladie|maternite|invalidite|deces)/, 'Sécurité sociale (maladie, maternité…)', "Ta participation à l'assurance maladie, maternité, invalidité et décès."],
+  [/vieillesse/, 'Retraite de base', "Ta cotisation à la retraite de base de la Sécurité sociale. Elle compte pour tes trimestres de retraite."],
+  [/(retraite complementaire|agirc|arrco|\bt1\b|tranche 1|tranche 2|\bt2\b)/, 'Retraite complémentaire', "Ta cotisation à la retraite complémentaire (Agirc-Arrco). Elle te donne des points qui s'ajoutent à ta retraite de base."],
+  [/(chomage|assurance chom|france travail|pole emploi)/, 'Assurance chômage', "Cette cotisation ouvre droit aux allocations si tu perds ton emploi. Aujourd'hui, seul l'employeur la paie, en général."],
+  [/csg.*(non deduct|crds)|crds/, 'CSG non déductible et CRDS', "Contributions sociales prélevées sur ton salaire. Cette part n'est pas déduite de ton revenu imposable."],
+  [/csg/, 'CSG déductible', "Contribution sociale généralisée qui finance la Sécurité sociale. Cette part est déduite de ton revenu imposable."],
+  [/(mutuelle|complementaire sante|frais de sante)/, 'Mutuelle', "Ta complémentaire santé d'entreprise. L'employeur doit en payer au moins la moitié."],
+  [/prevoyance/, 'Prévoyance', "Une assurance en cas d'arrêt de travail long, d'invalidité ou de décès."],
+  [/(accident du travail|at ?\/ ?mp)/, 'Accident du travail', "Cotisation payée par l'employeur pour couvrir les accidents du travail et maladies professionnelles."],
+  [/(allocations? familiales|fnal|versement (mobilite|transport)|formation professionnelle|apprentissage|dialogue social)/, 'Cotisation patronale', "Une contribution payée par l'employeur en plus de ton salaire (famille, logement, transport, formation). Elle ne diminue pas ton net."],
+  [/(reduction generale|allegement general|reduction fillon)/, 'Réduction générale', "Un allègement des cotisations patronales sur les bas salaires. Il ne change pas ton net."],
+  [/(ceg|cet\b|contribution d.?equilibre)/, "Contribution d'équilibre (retraite)", "Une contribution qui équilibre le régime de retraite complémentaire."],
+  [/montant net social/, 'Montant net social', "Le montant à déclarer à la CAF et à certains organismes pour calculer tes aides."],
+  [/net imposable/, 'Net imposable', "La base de calcul de ton impôt sur le revenu."],
+  [/(prelevement a la source|impot sur le revenu)/, 'Prélèvement à la source', "L'impôt sur le revenu retiré chaque mois par ton employeur, au taux fixé par l'administration fiscale."]
+];
+function looksLikePayslip(text) {
+  const n = norm(text);
+  return ['bulletin de paie', 'bulletin de salaire', 'net a payer', 'cotisations', 'salaire de base', 'net imposable', 'conges payes', 'prelevement a la source', 'total brut', 'salaire brut'].filter(k => n.includes(k)).length >= 3;
+}
+function parsePayslip(raw) {
+  const lines = String(raw).split(/\n+/).map(l => l.trim()).filter(Boolean), nl = lines.map(norm);
+  const find = (re, not) => { const i = nl.findIndex(l => re.test(l) && !(not && not.test(l))); return i; };
+  const findAll = (re, not) => nl.map((l, i) => (re.test(l) && !(not && not.test(l)) ? i : -1)).filter(i => i >= 0);
+  const amountAt = (i, last = true) => { if (i < 0) return null; let n = lineNums(lines[i]); if (!n.length && lines[i + 1]) n = lineNums(lines[i + 1]); return n.length ? (last ? n[n.length - 1] : n[0]) : null; };
+  const p = { periode: null, ym: null, brut: null, netAvant: null, netFinal: null, netImposable: null, pas: null, cotSal: null, cotPat: null, base: null, hs: [], primes: [], absences: [], conges: [], found: 0 };
+  // Période
+  const pm = norm(raw).match(/periode[^0-9a-z]{0,12}(?:du\s*)?(\d{2})[\/.-](\d{2})[\/.-](\d{4})/);
+  if (pm) { p.ym = pm[3] + '-' + pm[2]; p.periode = PMONTHS[+pm[2] - 1] + ' ' + pm[3]; }
+  else { const mm = norm(raw).match(new RegExp('(?:mois de|paie de|periode de|bulletin de)?\\s*(' + PMONTHS.join('|') + ')\\s+(20\\d{2})')); if (mm) { p.periode = mm[1] + ' ' + mm[2]; p.ym = mm[2] + '-' + String(PMONTHS.indexOf(mm[1]) + 1).padStart(2, '0'); } }
+  // Brut, nets, impôt
+  let i = find(/(salaire brut|total brut|brut total)/, /(abattu|abattement|plafond|imposable)/); if (i < 0) i = find(/\bbrut\b/, /(abattu|abattement|plafond|imposable|cotisation)/);
+  p.brut = amountAt(i);
+  p.netAvant = amountAt(find(/net (a payer )?(avant|hors) (impot|prelevement)/));
+  const nf = findAll(/(net a payer|net paye)/, /(avant|hors) (impot|prelevement)|imposable/); p.netFinal = nf.length ? amountAt(nf[nf.length - 1]) : null;
+  p.netImposable = amountAt(find(/net imposable/));
+  p.netSocial = amountAt(find(/montant net social/));
+  p.tauxNeutre = /(taux neutre|taux non personnalise|taux par defaut)/.test(norm(raw));
+  const pi = find(/(prelevement a la source|impot sur le revenu|\bpas\b)/, /(avant|hors) (impot|prelevement)|net a payer|net imposable|montant net social/);
+  if (pi >= 0) { const taux = linePct(lines[pi]) ?? (lines[pi + 1] ? linePct(lines[pi + 1]) : null), amt = amountAt(pi); if (amt !== null || taux !== null) p.pas = { amount: amt, taux }; }
+  // Cotisations
+  const ci = find(/total (des )?cotisations/);
+  if (ci >= 0) { const n = lineNums(lines[ci]); if (n.length >= 2) { p.cotSal = n[n.length - 2]; p.cotPat = n[n.length - 1]; } else if (n.length === 1) p.cotSal = n[0]; }
+  // Salaire de base
+  const bi = find(/(salaire de base|salaire mensuel|heures normales|horaire normal)/);
+  if (bi >= 0) { const n = lineNums(lines[bi]); if (n.length >= 2) p.base = { qty: n[0] <= 250 ? n[0] : null, rate: n.length >= 3 ? n[1] : null, amount: n[n.length - 1] }; }
+  const baseRate = p.base && p.base.rate && p.base.rate > 3 && p.base.rate < 200 ? p.base.rate : (p.base && p.base.qty && p.base.amount ? p.base.amount / p.base.qty : null);
+  // Heures supplémentaires
+  findAll(/(heures? (supp|suppl)|h\.? ?sup|hres? sup|\bhs ?(\d|maj)|heures majorees|majoration|heures? compl)/, /(exonere|reduction|allegement|defiscal|cotisations? salariale|contingent)/).forEach(k => {
+    const n = lineNums(lines[k]); if (!n.length) return;
+    const maj = linePct(lines[k]), qty = n.length >= 2 && n[0] <= 200 ? n[0] : null, amount = n[n.length - 1], rate = n.length >= 3 ? n[1] : null;
+    const h = { line: lines[k], qty, amount, rate, maj: maj && maj >= 100 ? maj - 100 : maj, impl: null, compl: /heures? compl/.test(nl[k]) };
+    if (qty && amount && baseRate) h.impl = Math.round((amount / (qty * baseRate) - 1) * 100);
+    p.hs.push(h);
+  });
+  p.hsQty = p.hs.reduce((s, h) => s + (h.qty || 0), 0); p.hsAmount = p.hs.reduce((s, h) => s + (h.amount || 0), 0);
+  p.baseRate = baseRate;
+  p.hsRelief = find(/(reduction|exoneration|allegement|defiscalis).*(heures|\bhs\b)|(heures|\bhs\b).*(exonere|reduction)/) >= 0;
+  // Primes, absences, congés
+  findAll(/(prime|indemnite|gratification|13e mois|treizieme|panier|titres? restaurant|remboursement transport|avantage en nature)/, /(cotisation|plafond|net a payer|licenciement|conges payes)/).slice(0, 8).forEach(k => { const a = amountAt(k); if (a) p.primes.push({ line: lines[k], amount: a }); });
+  findAll(/(absence|maladie|conges? sans solde|retenue|carence)/, /(cotisation|prevoyance|retenue a la source)/).slice(0, 5).forEach(k => p.absences.push({ line: lines[k], amount: amountAt(k) }));
+  findAll(/(conges payes|\bcp\b|\brtt\b|repos compensateur)/, /(indemnite|cotisation)/).slice(0, 5).forEach(k => p.conges.push(lines[k]));
+  p.lignes = [];
+  lines.forEach((l, k) => { const g = PAIE_LIGNES.find(x => x[0].test(nl[k])); if (g) { const n = lineNums(l); p.lignes.push({ line: l, label: g[1], expl: g[2], amount: n.length ? n[n.length - 1] : null }); } });
+  p.found = [p.brut, p.netAvant, p.netFinal, p.netImposable, p.cotSal, p.base].filter(x => x !== null).length + (p.pas ? 1 : 0);
+  return p;
+}
+const PE = v => (v === null || v === undefined || !isFinite(v) ? '?' : v.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }));
+const PH = v => (Math.round(v * 100) / 100).toString().replace('.', ',') + ' h';
+// Constats lisibles : { level: 'ok' | 'warn' | 'info', text }
+function payslipInsights(p, declared) {
+  const out = [];
+  if (p.found < 3) out.push({ level: 'warn', text: "La lecture n'a retrouvé que peu de lignes. Vérifie le texte lu (corrige-le si besoin) ou reprends la photo à plat, bien éclairée." });
+  if (p.brut !== null && p.netAvant !== null && p.brut > 0) {
+    const cut = p.brut - p.netAvant;
+    out.push({ level: 'info', text: `Sur ${PE(p.brut)} de salaire brut, ${PE(cut)} (${Math.round(100 * cut / p.brut)} %) partent en cotisations salariales : il te reste ${PE(p.netAvant)} avant impôt.` });
+  }
+  if (p.netAvant !== null && p.netFinal !== null && p.pas && p.pas.amount !== null) {
+    const diff = Math.abs(p.netAvant - p.pas.amount - p.netFinal);
+    if (diff > 1.5) out.push({ level: 'warn', text: `Le calcul « net avant impôt − prélèvement à la source » donne ${PE(p.netAvant - p.pas.amount)}, pas ${PE(p.netFinal)}. Il peut y avoir une ligne en plus (acompte, avance, remboursement de frais) : regarde le détail.` });
+    else out.push({ level: 'ok', text: `Le calcul tombe juste : ${PE(p.netAvant)} − ${PE(p.pas.amount)} d'impôt = ${PE(p.netFinal)} versés.` });
+  }
+  if (p.tauxNeutre) out.push({ level: 'info', text: "Ta fiche mentionne un taux neutre (ou non personnalisé) : il est souvent appliqué en début de contrat. Il peut être trop élevé ou trop faible pour toi. Tu peux demander un taux personnalisé sur impots.gouv.fr." });
+  if (p.netSocial !== null) out.push({ level: 'info', text: `Le « montant net social » (${PE(p.netSocial)}) sert à calculer certaines aides (prime d'activité, RSA…) : c'est lui qu'il faut déclarer à la CAF, pas le net versé.` });
+  if (p.pas && p.pas.taux !== null) out.push({ level: 'info', text: `L'impôt est prélevé au taux de ${String(p.pas.taux).replace('.', ',')} %. Si ta situation a changé (mariage, naissance, baisse de revenus), tu peux demander à ajuster ce taux sur impots.gouv.fr.` });
+  // Heures supplémentaires
+  if (!p.hs.length) out.push({ level: 'info', text: "Aucune ligne d'heures supplémentaires repérée sur cette fiche." });
+  p.hs.forEach(h => {
+    if (h.impl === null) return;
+    if (h.compl) { if (h.impl >= 8 && h.impl <= 12) out.push({ level: 'ok', text: `Ligne « ${h.line} » : majoration d'environ 10 %, ce qui correspond au taux légal pour les heures complémentaires (temps partiel) jusqu'à 1/10 de la durée prévue au contrat.` }); else if (h.impl >= 22 && h.impl <= 28) out.push({ level: 'ok', text: `Ligne « ${h.line} » : majoration d'environ 25 %, ce qui correspond au taux légal des heures complémentaires au-delà de 1/10 de la durée prévue au contrat.` }); else if (h.impl < 8) out.push({ level: 'warn', text: `Ligne « ${h.line} » : ces heures complémentaires semblent payées sans la majoration légale (10 % jusqu'à 1/10 de ton temps de travail, 25 % au-delà). Vérifie avec ton contrat.` }); else out.push({ level: 'info', text: `Ligne « ${h.line} » : majoration d'environ ${h.impl} %. Compare avec ton contrat.` }); return; }
+    if (h.impl < 10) out.push({ level: 'warn', text: `Ligne « ${h.line} » : ces heures semblent payées au tarif normal (environ +${Math.max(0, h.impl)} %). La majoration légale est en principe de 25 % (puis 50 %), sauf accord de branche ou d'entreprise qui peut aller jusqu'à 10 % minimum.` });
+    else if (Math.abs(h.impl - 25) <= 4) out.push({ level: 'ok', text: `Ligne « ${h.line} » : majoration d'environ 25 %, ce qui correspond au taux légal pour les 8 premières heures supplémentaires de la semaine.` });
+    else if (Math.abs(h.impl - 50) <= 4) out.push({ level: 'ok', text: `Ligne « ${h.line} » : majoration d'environ 50 %, ce qui correspond au taux légal au-delà de la 8e heure supplémentaire de la semaine.` });
+    else out.push({ level: 'info', text: `Ligne « ${h.line} » : majoration d'environ ${h.impl} %. Compare avec ton contrat et ta convention collective.` });
+  });
+  if (p.hsRelief) out.push({ level: 'info', text: "Une ligne d'allègement sur les heures supplémentaires apparaît : c'est normal, une partie des cotisations salariales est supprimée sur ces heures (donc ton net augmente)." });
+  if (declared !== null && declared !== undefined && isFinite(declared)) {
+    const paid = p.hsQty || 0, gap = Math.round((declared - paid) * 100) / 100;
+    if (gap > 0.49) out.unshift({ level: 'warn', text: `Tu indiques ${PH(declared)} supplémentaires, la fiche en paie ${PH(paid)} : il en manque peut-être ${PH(gap)}. Demande à ton employeur le décompte détaillé de tes heures et, si besoin, la régularisation (un modèle de lettre est prêt ci-dessous).` });
+    else if (gap < -0.49) out.unshift({ level: 'info', text: `La fiche paie ${PH(paid)}, plus que les ${PH(declared)} que tu indiques : des heures peuvent venir d'un autre mois (régularisation) ou d'un repos compensateur.` });
+    else out.unshift({ level: 'ok', text: `Les heures supplémentaires payées (${PH(paid)}) correspondent à ce que tu indiques.` });
+  }
+  if (p.conges.length) out.push({ level: 'info', text: 'Compteurs de congés ou de repos repérés : vérifie que les jours acquis augmentent bien chaque mois (en général 2,5 jours ouvrables de congés payés par mois travaillé).' });
+  return out;
+}
+const PAIE_GLOSSAIRE = [
+  [/brut/, 'Salaire brut', "Ce que ton employeur déclare avant de retirer les cotisations. Ce n'est pas ce que tu reçois."],
+  [/cotisations? salariales?|total des cotisations|cotisations et contributions/, 'Cotisations salariales', "Ta part de retraite, chômage, maladie, etc., retirée du brut. L'employeur paie en plus ses propres cotisations (part patronale)."],
+  [/\bcsg\b|\bcrds\b/, 'CSG et CRDS', 'Deux contributions sociales prélevées sur ton salaire, en partie déductibles de ton impôt.'],
+  [/net imposable/, 'Net imposable', "La somme sur laquelle l'impôt sur le revenu est calculé. Elle sert à remplir ta déclaration."],
+  [/(avant|hors) (impot|prelevement)/, 'Net avant impôt', "Ton salaire une fois les cotisations retirées, avant le prélèvement de l'impôt."],
+  [/prelevement a la source|\bpas\b|impot sur le revenu/, 'Prélèvement à la source', "L'impôt sur le revenu retiré chaque mois directement par l'employeur, selon un taux transmis par l'administration fiscale."],
+  [/net a payer|net paye/, 'Net à payer', "Ce qui est réellement viré sur ton compte."],
+  [/heures? (supp|suppl)|\bhs\b|majoration/, 'Heures supplémentaires', 'Les heures au-delà de 35 h par semaine. Elles sont en principe majorées de 25 % (jusqu\'à la 8e heure en plus) puis de 50 %, sauf accord prévoyant mieux.'],
+  [/\brtt\b|repos compensateur/, 'RTT et repos compensateur', "Jours de repos acquis en contrepartie d'heures travaillées en plus. Ils s'ajoutent aux congés payés."],
+  [/mutuelle|complementaire sante/, 'Mutuelle', "Ta complémentaire santé d'entreprise, financée en partie par ton employeur."],
+  [/prevoyance/, 'Prévoyance', "Une assurance qui te protège en cas d'arrêt maladie long, d'invalidité ou de décès."],
+  [/conges payes|\bcp\b/, 'Congés payés', "Les jours de vacances acquis au fil des mois travaillés. Le solde doit apparaître sur ta fiche."],
+  [/titres? restaurant|panier/, 'Titres-restaurant, paniers', "Avantages liés aux repas, financés en partie par l'employeur."]
+];
+/*PAIE-FIN*/
+const getPaies = () => store.get(KEYS.paies, []);
+let paie$ = { text: '', declared: '', p: null };
+function renderPaie(box) {
+  const s = paie$;
+  const p = s.p, ins = p ? payslipInsights(p, s.declared === '' ? null : parseFloat(String(s.declared).replace(',', '.'))) : [];
+  const hist = getPaies().sort((a, b) => (b.ym || '').localeCompare(a.ym || ''));
+  box.innerHTML = `<div class="sheet"><button class="link back" id="tool-back" type="button">Retour</button>
+    <h2>Analyser ma fiche de paie</h2>
+    <p class="lead">Scanne ta fiche de paie : on la résume, on t'explique chaque ligne en mots simples et on repère les heures supplémentaires. Rien ne quitte ton appareil.</p>
+    <div class="actions"><label class="btn" for="paie-cam">Prendre en photo</label><input class="sr" type="file" id="paie-cam" accept="image/*" capture="environment">
+      <label class="btn ghost" for="paie-file">Importer photo ou PDF</label><input class="sr" type="file" id="paie-file" accept="image/*,application/pdf" multiple></div>
+    <div class="progress" id="paie-prog"><div class="bar"><i id="paie-bar"></i></div><p id="paie-ptext"></p></div>
+    <label class="field" for="paie-text"><span>Texte lu (tu peux le corriger ou le coller)</span></label>
+    <textarea id="paie-text" placeholder="Le texte de ta fiche de paie apparaît ici après la lecture. Tu peux aussi le coller.">${esc(s.text)}</textarea>
+    <div class="actions"><button class="btn" id="paie-go" type="button">Analyser</button><button class="link" id="paie-sample" type="button">Voir un exemple</button></div>
+    <p class="note">Une fiche de paie est un document très personnel : elle n'est ni envoyée ni enregistrée tant que tu ne le demandes pas.</p></div>
+    <div id="paie-res">${p ? paieResultHTML(p, ins, hist) : ''}</div>
+    ${hist.length ? `<h3 class="sec-title">Mes fiches enregistrées</h3><div class="items">${hist.map(h => `<article class="item l1" data-ph="${h.id}"><div><h3>${esc(h.periode || 'Fiche de paie')}</h3><p>Brut ${esc(PE(h.brut))} | Net versé ${esc(PE(h.netFinal ?? h.netAvant))}${h.hsQty ? ' | ' + esc(PH(h.hsQty)) + ' supplémentaires' : ''}</p></div><div class="row"><button class="link" data-ph-del type="button">Supprimer</button></div></article>`).join('')}</div>` : ''}`;
+  toolBack(box);
+  const ta = $('#paie-text');
+  const run = () => { const t = ta.value.trim(); if (t.length < 40) { toast('Ajoute une photo ou colle le texte de ta fiche'); return; } paie$ = { ...paie$, text: t, p: parsePayslip(t) }; track('paie'); renderPaie(box); $('#paie-res').scrollIntoView({ block: 'start' }); };
+  $('#paie-go').addEventListener('click', run);
+  $('#paie-sample').addEventListener('click', () => { ta.value = PAIE_SAMPLE; run(); });
+  const onFiles = async fl => {
+    fl = [...fl]; if (!fl.length) return; let all = '';
+    try {
+      for (let i = 0; i < fl.length; i++) {
+        const f = fl[i];
+        if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) all += await readPdf(f) + '\n';
+        else { const w = await getOcr(); setOcr(0, 'Lecture de la fiche…'); all += await ocrImage(w, f) + '\n'; }
+      }
+    } catch (e) { console.error(e); hideOcr(); toast(navigator.onLine ? 'La lecture a échoué. Reprends la photo bien à plat.' : 'Il faut internet la première fois pour préparer la lecture.'); return; }
+    hideOcr(); ta.value = ((ta.value.trim() ? ta.value.trim() + '\n' : '') + all.trim()); run();
+  };
+  $('#paie-cam').addEventListener('change', e => { onFiles(e.target.files); e.target.value = ''; });
+  $('#paie-file').addEventListener('change', e => { onFiles(e.target.files); e.target.value = ''; });
+  const dec = $('#paie-declared'); if (dec) dec.addEventListener('input', () => { paie$.declared = dec.value; const i2 = payslipInsights(paie$.p, dec.value === '' ? null : parseFloat(dec.value.replace(',', '.'))); $('#paie-ins').innerHTML = insightsHTML(i2.filter(i => PAIE_HS_RE.test(i.text))); });
+  $$('[data-pq]', box).forEach(b => b.addEventListener('click', () => { const log = $('#paie-chat', box); const m = document.createElement('div'); m.className = 'msg me'; m.textContent = b.textContent; log.appendChild(m); const a = document.createElement('div'); a.className = 'msg bot'; a.textContent = paieAnswer(b.dataset.pq, paie$.p); log.appendChild(a); a.scrollIntoView({ block: 'nearest' }); track('paie_question'); }));
+  const pq = $('#paie-q'), pask = () => { const q = pq.value.trim(); if (!q) return; pq.value = ''; paieAsk(box, q); };
+  if (pq) { $('#paie-ask').addEventListener('click', pask); pq.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pask(); } }); }
+  const sv = $('#paie-save'); if (sv) sv.addEventListener('click', () => {
+    const l = getPaies(), q = paie$.p, id = q.ym ? 'p' + q.ym : newId('p');
+    const rec = { id, ym: q.ym, periode: q.periode, brut: q.brut, netAvant: q.netAvant, netFinal: q.netFinal, hsQty: q.hsQty, hsAmount: q.hsAmount, updatedAt: new Date().toISOString() };
+    const i = l.findIndex(x => x.id === id); if (i >= 0) l[i] = rec; else l.unshift(rec);
+    store.set(KEYS.paies, l); track('paie_save'); toast('Fiche enregistrée pour comparer les mois'); renderPaie(box);
+  });
+  const lt = $('#paie-lettre'); if (lt) lt.addEventListener('click', () => {
+    const q = paie$.p, d = parseFloat(String(paie$.declared).replace(',', '.'));
+    tools$ = { view: 'lettre', id: 'heures_supp', values: { mois: q.periode || '', declarees: isFinite(d) ? String(d) : '', payees: q.hsQty ? String(q.hsQty) : '0' }, result: false }; track('paie_lettre'); renderTools(); box.scrollIntoView({ block: 'start' });
+  });
+  $$('[data-ph]', box).forEach(el => $('[data-ph-del]', el).addEventListener('click', () => { if (!confirm('Supprimer cette fiche enregistrée ?')) return; store.set(KEYS.paies, getPaies().filter(x => x.id !== el.dataset.ph)); renderPaie(box); }));
+}
+const PAIE_HS_RE = /heures|Ligne|majoration|supplémentaires|complémentaires|allègement/;
+const insightsHTML = ins => ins.length ? `<ul class="paie-ins">${ins.map(i => `<li class="${i.level}"><span aria-hidden="true">${i.level === 'ok' ? '✓' : i.level === 'warn' ? '!' : 'i'}</span><div>${esc(i.text)}</div></li>`).join('')}</ul>` : '<p class="note">Rien de particulier à signaler.</p>';
+function paieResultHTML(p, ins, hist) {
+  const row = (l, v, strong) => v === null || v === undefined ? '' : `<tr><th scope="row">${l}</th><td${strong ? ' class="strong"' : ''}>${esc(PE(v))}</td></tr>`;
+  const prev = hist.find(h => h.ym && p.ym && h.ym < p.ym);
+  let cmp = '';
+  if (prev && p.netFinal !== null && prev.netFinal !== null && prev.netFinal !== undefined) { const d = Math.round((p.netFinal - prev.netFinal) * 100) / 100; cmp = `<p class="note">Par rapport à ${esc(prev.periode)} : net versé ${d >= 0 ? '+' : ''}${esc(PE(d))}${prev.hsQty !== undefined ? `, heures supplémentaires ${esc(PH(p.hsQty))} contre ${esc(PH(prev.hsQty || 0))}` : ''}.</p>`; }
+  const summary = [p.periode ? `Fiche de paie de ${p.periode}.` : 'Fiche de paie.', p.brut !== null ? `Salaire brut : ${PE(p.brut)}.` : '', p.netAvant !== null ? `Net avant impôt : ${PE(p.netAvant)}.` : '', p.pas && p.pas.amount !== null ? `Impôt prélevé : ${PE(p.pas.amount)}.` : '', p.netFinal !== null ? `Net versé sur ton compte : ${PE(p.netFinal)}.` : '', p.hs.length ? `Heures supplémentaires payées : ${PH(p.hsQty)} (${PE(p.hsAmount)}).` : 'Pas d\'heures supplémentaires repérées.'].filter(Boolean).join(' ');
+  const n = norm(paie$.text), terms = PAIE_GLOSSAIRE.filter(g => g[0].test(n));
+  return `<div class="sheet verdict"><h2>${esc(p.periode ? 'Ta fiche de ' + p.periode : 'Ta fiche de paie')}</h2>
+    <div class="brief"><h3>En bref</h3><p>${esc(summary)}</p></div>
+    <div class="block"><h3>Les chiffres clés</h3><table class="paie-t"><tbody>${row('Salaire brut', p.brut)}${row('Cotisations salariales', p.cotSal)}${row('Net avant impôt', p.netAvant)}${p.pas ? row('Impôt prélevé' + (p.pas.taux !== null ? ' (' + String(p.pas.taux).replace('.', ',') + ' %)' : ''), p.pas.amount) : ''}${row('Net versé', p.netFinal, true)}${row('Net imposable (pour ta déclaration)', p.netImposable)}${row('Cotisations de ton employeur', p.cotPat)}</tbody></table>${cmp}</div>
+    <div class="block"><h3>Tes heures supplémentaires</h3>
+      ${p.hs.length ? `<ul>${p.hs.map(h => `<li>${esc(h.line)}${h.impl !== null ? ` <span class="note">(majoration d'environ ${h.impl} %)</span>` : ''}</li>`).join('')}</ul>` : '<p>Aucune ligne repérée.</p>'}
+      <label class="field"><span>Combien d'heures supplémentaires as-tu faites ce mois-ci ?</span><input id="paie-declared" inputmode="decimal" value="${esc(paie$.declared)}" placeholder="Ex. 10"></label>
+      <div id="paie-ins">${insightsHTML(ins.filter(i => PAIE_HS_RE.test(i.text)))}</div></div>
+    <div class="block"><h3>Ce qu'on a repéré d'autre</h3>${insightsHTML(ins.filter(i => !PAIE_HS_RE.test(i.text)))}
+      ${p.primes.length ? `<p><b>Primes et indemnités :</b></p><ul>${p.primes.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
+      ${p.absences.length ? `<p><b>Absences ou retenues :</b></p><ul>${p.absences.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
+      ${p.conges.length ? `<p><b>Congés et repos :</b></p><ul>${p.conges.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>
+    <div class="block"><h3>À vérifier avec ton contrat</h3><ul><li>Le taux horaire est au moins égal au SMIC et au minimum de ta convention collective.</li><li>Les primes prévues dans ton contrat (ancienneté, 13e mois…) apparaissent bien.</li><li>Les jours de congés et de RTT augmentent bien chaque mois.</li><li>Tes heures supplémentaires correspondent à tes relevés d'horaires.</li></ul></div>
+    ${p.lignes && p.lignes.length ? `<div class="block"><h3>Ligne par ligne, en mots simples</h3><div class="paie-lines">${p.lignes.slice(0, 30).map(l => `<details><summary><span>${esc(l.label)}</span>${l.amount !== null ? `<b>${esc(PE(l.amount))}</b>` : ''}</summary><p class="note">${esc(l.line)}</p><p>${esc(l.expl)}</p></details>`).join('')}</div></div>` : ''}
+    <div class="block"><h3>Pose ta question sur ta fiche</h3>
+      <div class="chips" role="group" aria-label="Questions rapides">${PAIE_QUICK.map(([k, q]) => `<button class="chip" type="button" data-pq="${k}">${esc(q)}</button>`).join('')}</div>
+      <div class="chat-log" id="paie-chat" aria-live="polite"></div>
+      <div class="chat-input"><label class="sr" for="paie-q">Ta question</label><input id="paie-q" placeholder="Ex. : pourquoi mon net a baissé ce mois-ci ?" autocomplete="off"><button class="btn small" id="paie-ask" type="button">Demander</button></div></div>
+    ${terms.length ? `<div class="block"><h3>Les mots compliqués de ta fiche</h3><dl class="glossary">${terms.map(g => `<div><dt>${esc(g[1])}</dt><dd>${esc(g[2])}</dd></div>`).join('')}</dl></div>` : ''}
+    <div class="save-row"><button class="btn" id="paie-save" type="button">Enregistrer pour comparer les mois</button><button class="btn ghost" id="paie-lettre" type="button">Écrire à mon employeur (heures supplémentaires)</button></div>
+    <p class="note">Cette analyse t'aide à comprendre ta fiche. Elle peut se tromper, surtout sur une photo : vérifie les chiffres sur l'original. Ce n'est pas un avis juridique ; en cas de doute, rapproche-toi de ton service RH, d'un syndicat ou de l'inspection du travail.</p></div>`;
+}
+const PAIE_QUICK = [['brut', 'Pourquoi mon net est plus bas que mon brut ?'], ['hs', 'Mes heures supp sont-elles bien comptées ?'], ['cot', "C'est quoi les cotisations ?"], ['impot', "Pourquoi un impôt sur ma fiche ?"], ['conges', 'Congés et RTT : comment ça marche ?'], ['erreur', 'Je pense qu\'il y a une erreur : que faire ?']];
+function paieAnswer(k, p) {
+  const ins = payslipInsights(p, paie$.declared === '' ? null : parseFloat(String(paie$.declared).replace(',', '.')));
+  if (k === 'brut') return `Ton salaire brut${p.brut !== null ? ' (' + PE(p.brut) + ')' : ''} est le montant avant prélèvements. On en retire tes cotisations salariales${p.cotSal !== null ? ' (' + PE(p.cotSal) + ')' : ''} : retraite, assurance maladie, chômage, CSG et CRDS${p.netAvant !== null ? ', ce qui laisse ' + PE(p.netAvant) + ' avant impôt' : ''}. Ensuite l'impôt sur le revenu est prélevé directement${p.pas && p.pas.amount !== null ? ' (' + PE(p.pas.amount) + ')' : ''}${p.netFinal !== null ? ' : tu reçois ' + PE(p.netFinal) : ''}. Ces cotisations ne sont pas perdues : elles financent ta retraite, tes soins et ton éventuel chômage.`;
+  if (k === 'hs') { const t = ins.filter(i => /heures|Ligne|majoration|supplémentaires|complémentaires/.test(i.text)).map(i => i.text); return (t.length ? t.join('\n\n') : "Je ne trouve aucune ligne d'heures supplémentaires sur cette fiche.") + '\n\nPour être sûr, compare avec tes relevés d\'horaires : indique plus haut le nombre d\'heures que tu as faites, et on te dit s\'il en manque.'; }
+  if (k === 'cot') return "Les cotisations sont des prélèvements sur ton salaire, partagés entre toi (part salariale) et ton employeur (part patronale). Elles financent la Sécurité sociale (maladie, maternité), la retraite, le chômage et la famille. Ta part est retirée de ton brut ; celle de l'employeur s'ajoute à son coût mais ne baisse pas ton net.";
+  if (k === 'impot') return `Depuis 2019, l'impôt sur le revenu est prélevé chaque mois sur ta fiche (prélèvement à la source)${p.pas && p.pas.taux !== null ? ', ici au taux de ' + String(p.pas.taux).replace('.', ',') + ' %' : ''}. C'est un acompte : en fin d'année, ta déclaration ajuste le total. Si ta situation change, tu peux modifier ton taux sur impots.gouv.fr.`;
+  if (k === 'conges') return "Chaque mois travaillé te fait acquérir des jours de congés payés (2,5 jours ouvrables en général, soit 30 par an). Les RTT et repos compensateurs viennent d'heures faites en plus ou d'un accord dans ton entreprise. Le solde doit apparaître sur ta fiche : vérifie qu'il augmente bien chaque mois.";
+  if (k === 'erreur') return "1) Repère la ligne qui te semble fausse et compare avec ton contrat, tes relevés d'horaires et ta convention collective.\n2) Écris à ton service paie ou ton employeur (un e-mail suffit pour commencer) en demandant le détail du calcul.\n3) Sans réponse, relance par lettre recommandée. Tu peux te faire aider par un syndicat, les représentants du personnel ou l'inspection du travail.\n4) En général, un salaire non payé peut être réclamé jusqu'à 3 ans en arrière. Garde toutes tes fiches de paie.";
+  return null;
+}
+function routePaieQuestion(q) {
+  const n = norm(q);
+  if (/(heure|supp|majore|hs\b)/.test(n)) return 'hs';
+  if (/(impot|prelev|taux|pas\b)/.test(n)) return 'impot';
+  if (/(cotis|csg|crds|retraite|charges)/.test(n)) return 'cot';
+  if (/(conge|rtt|repos)/.test(n)) return 'conges';
+  if (/(erreur|faux|manque|pas bon|anormal|reclam)/.test(n)) return 'erreur';
+  if (/(brut|net|baiss|moins|diminu|plus bas|combien)/.test(n)) return 'brut';
+  return null;
+}
+function paieSummaryForAI(p) {
+  const l = [p.periode && 'Période : ' + p.periode, p.brut !== null && 'Salaire brut : ' + PE(p.brut), p.cotSal !== null && 'Cotisations salariales : ' + PE(p.cotSal), p.netAvant !== null && 'Net avant impôt : ' + PE(p.netAvant), p.pas && p.pas.amount !== null && 'Impôt prélevé : ' + PE(p.pas.amount) + (p.pas.taux !== null ? ' (taux ' + p.pas.taux + ' %)' : ''), p.netFinal !== null && 'Net versé : ' + PE(p.netFinal), p.netImposable !== null && 'Net imposable : ' + PE(p.netImposable), p.base && 'Salaire de base : ' + (p.base.qty ? p.base.qty + ' h, ' : '') + PE(p.base.amount)].filter(Boolean);
+  p.hs.forEach(h => l.push('Heures supplémentaires : ' + h.line + (h.impl !== null ? ' (majoration effective environ ' + h.impl + ' %)' : '')));
+  p.lignes.slice(0, 18).forEach(g => l.push(g.label + (g.amount !== null ? ' : ' + PE(g.amount) : '')));
+  return l.join('\n');
+}
+async function paieAsk(box, q) {
+  const log = $('#paie-chat', box); if (!log) return;
+  const add = (who, t) => { const el = document.createElement('div'); el.className = 'msg ' + who; el.textContent = t; log.appendChild(el); el.scrollIntoView({ block: 'nearest' }); return el; };
+  add('me', q); track('paie_question');
+  if (aiState === 'ready' || (iaPrefs().ready && gpu.ok)) {
+    const el = add('bot', '…');
+    enqueueAI(async () => {
+      try {
+        await ensureEngine();
+        await streamTo([{ role: 'system', content: SYS + `\n\nVoici la fiche de paie de la personne, déjà analysée.\n${paieSummaryForAI(paie$.p)}\n\nRéponds en 2 à 5 phrases, uniquement à partir de ces informations. Si une information manque, dis que tu ne la trouves pas sur la fiche. Pour un désaccord avec l'employeur, conseille de demander le détail par écrit puis de se rapprocher du service RH, d'un syndicat ou de l'inspection du travail.` }, { role: 'user', content: q }], el, { max: 350 });
+      } catch (e) { const k = routePaieQuestion(q); el.textContent = k ? paieAnswer(k, paie$.p) : iaError(e); }
+    });
+    return;
+  }
+  const k = routePaieQuestion(q);
+  add('bot', k ? paieAnswer(k, paie$.p) : "Je sais répondre aux questions de la liste ci-dessus. Pour poser n'importe quelle question sur ta fiche, active l'assistant dans les réglages (il tourne sur ton appareil).");
+}
+const PAIE_SAMPLE = `BULLETIN DE PAIE
+Période du 01/09/2026 au 30/09/2026
+Employeur : SARL Boulangerie Martin
+Salaire de base 151,67 12,0000 1 820,04
+Heures supplémentaires 25% 8,00 12,0000 120,00
+Heures supplémentaires 50% 2,00 12,0000 36,00
+Prime d'ancienneté 45,00
+TOTAL BRUT 2 021,04
+Total des cotisations et contributions 441,07 612,30
+Réduction de cotisations salariales heures supplémentaires -26,10
+NET À PAYER AVANT IMPÔT SUR LE REVENU 1 580,12
+Prélèvement à la source Taux personnalisé 3,80 % 1 580,12 60,04
+NET À PAYER 1 520,08
+Net imposable 1 700,50
+Congés payés acquis 2,5 pris 0 solde 22,5`;
+
+/* ---------- État des lieux (location) ---------- */
+const getEdl = () => store.get(KEYS.edl, []);
+const EDL_STATES = [['neuf', 'Neuf ou très bon'], ['bon', 'Bon état'], ['use', 'Usagé'], ['mauvais', 'Mauvais état'], ['absent', 'Absent ou hors service']];
+const EDL_RANK = { neuf: 0, bon: 1, use: 2, mauvais: 3, absent: 4 };
+const edlLabel = k => (EDL_STATES.find(s => s[0] === k) || [0, 'Non renseigné'])[1];
+const EDL_COMMON = ['Murs', 'Sol', 'Plafond', 'Fenêtres et volets', 'Porte', 'Prises et interrupteurs', 'Éclairage'];
+const EDL_ROOMS = {
+  'Entrée': [...EDL_COMMON, 'Interphone ou sonnette'],
+  'Séjour': [...EDL_COMMON, 'Radiateur ou chauffage'],
+  'Cuisine': ['Murs', 'Sol', 'Plafond', 'Fenêtre', 'Évier et robinetterie', 'Plaques de cuisson', 'Four', 'Hotte', 'Placards', 'Prises et interrupteurs'],
+  'Chambre': [...EDL_COMMON, 'Placards', 'Radiateur ou chauffage'],
+  'Salle de bain': ['Murs', 'Sol', 'Plafond', 'Lavabo', 'Douche ou baignoire', 'Joints', 'Robinetterie', 'Aération (VMC)', 'Prises et interrupteurs'],
+  'WC': ['Murs', 'Sol', "Cuvette et chasse d'eau", 'Aération', 'Éclairage'],
+  'Balcon ou terrasse': ['Sol', 'Garde-corps', 'Étanchéité'],
+  'Cave ou garage': ['Porte et serrure', 'Sol', 'Murs']
+};
+const EDL_TIPS = {
+  entree: ['Fais-le avec le bailleur ou l\'agence, de jour, pièce par pièce, avant d\'emménager.', 'Sois précis : « Sol : trois rayures près de la fenêtre » vaut mieux que « usé ».', 'Prends tout en photo, y compris les défauts. Garde les originaux : ils prouvent la date.', 'Teste vraiment : robinets, chasse d\'eau, volets, plaques, chauffage, prises, fenêtres, serrures.', 'Relève les compteurs (électricité, eau, gaz) et compte les clés.', 'Pas d\'accord sur un point ? Écris tes réserves avant de signer. Ne signe pas un document que tu n\'as pas relu.', 'En règle générale, tu peux demander à compléter l\'état des lieux d\'entrée dans les 10 jours qui suivent (et pendant le premier mois de chauffe pour le chauffage). Fais-le par écrit, de préférence en recommandé. Vérifie ton bail.', 'Chacun garde un exemplaire signé.'],
+  sortie: ['Reprends l\'état des lieux d\'entrée : seules les dégradations qui se sont ajoutées comptent.', 'L\'usure normale liée à la durée de l\'occupation (vétusté) ne peut pas être mise à ta charge.', 'Avant le jour J : vide, nettoie, répare les petits dommages et garde les factures.', 'Relève les compteurs, rends toutes les clés et demande un reçu.', 'Prends des photos le jour de la sortie, pièce par pièce.', 'Donne ta nouvelle adresse par écrit pour recevoir ton dépôt de garantie.', 'En règle générale, le dépôt de garantie doit être rendu sous 1 mois si les deux états des lieux sont identiques, 2 mois sinon. Toute retenue doit être justifiée (devis ou factures).', 'Un retard de restitution peut donner droit à une majoration. Dans ce cas, utilise l\'outil « Caution pas rendue » de l\'onglet Mon argent.']
+};
+let edl$ = { view: 'list' };
+function edlSave(e) { e.updatedAt = new Date().toISOString(); const l = getEdl(), i = l.findIndex(x => x.id === e.id); if (i >= 0) l[i] = e; else l.unshift(e); store.set(KEYS.edl, l); }
+function edlNew(type, f) {
+  const ref = f.ref ? getEdl().find(x => x.id === f.ref) : null;
+  const rooms = ref ? ref.rooms.map(r => ({ name: r.name, items: r.items.map(i => ({ name: i.name, state: '', note: '', photos: [] })) }))
+    : f.rooms.map(r => ({ name: r.name, items: (EDL_ROOMS[r.base] || EDL_COMMON).map(n => ({ name: n, state: '', note: '', photos: [] })) }));
+  return { id: newId('e'), type, ref: ref ? ref.id : '', adresse: f.adresse, date: f.date, locataire: f.locataire, bailleur: f.bailleur, bailleurEmail: f.bailleurEmail || '', rooms, compteurs: { elec: '', eau: '', gaz: '' }, cles: '', remarques: '', createdAt: new Date().toISOString() };
+}
+function edlProgress(e) { const all = e.rooms.flatMap(r => r.items), done = all.filter(i => i.state).length; return { done, total: all.length }; }
+function edlDiffs(e) {
+  const ref = e.ref && getEdl().find(x => x.id === e.ref); if (!ref) return [];
+  const out = [];
+  e.rooms.forEach(r => { const rr = ref.rooms.find(x => x.name === r.name); if (!rr) return; r.items.forEach(i => { const ri = rr.items.find(x => x.name === i.name); if (ri && ri.state && i.state && EDL_RANK[i.state] > EDL_RANK[ri.state]) out.push({ room: r.name, item: i.name, from: ri.state, to: i.state, note: i.note }); }); });
+  return out;
+}
+function renderEdl(box) {
+  const s = edl$;
+  if (s.view === 'new') return renderEdlNew(box);
+  if (s.view === 'room') return renderEdlRoom(box);
+  if (s.view === 'sum') return renderEdlSummary(box);
+  const list = getEdl().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  box.innerHTML = `<div class="sheet money-hero"><button class="link back" id="tool-back" type="button">Retour</button>
+    <h2>État des lieux</h2>
+    <p class="lead">Fais l'état des lieux de ton logement pièce par pièce, avec photos. À la sortie, on le compare à celui d'entrée pour te montrer ce que le propriétaire pourrait te reprocher, ou non.</p>
+    <div class="actions"><button class="btn" data-edl-new="entree" type="button">Je rentre dans un logement</button><button class="btn ghost" data-edl-new="sortie" type="button">Je quitte un logement</button></div></div>
+    <details class="tips"><summary>Nos conseils avant de commencer</summary><h3>À l'entrée</h3><ul>${EDL_TIPS.entree.map(t => `<li>${esc(t)}</li>`).join('')}</ul><h3>À la sortie</h3><ul>${EDL_TIPS.sortie.map(t => `<li>${esc(t)}</li>`).join('')}</ul><p class="note">Conseils généraux et indicatifs : vérifie ton bail et, en cas de litige, rapproche-toi d'une association de locataires (ADIL) ou d'un point-justice.</p></details>
+    <p class="note"><button class="link" type="button" id="edl-verify">Vérifier une photo avec son code de contrôle</button></p>
+    <h3 class="sec-title">Mes états des lieux</h3>
+    ${list.length ? `<div class="items">${list.map(e => { const p = edlProgress(e); return `<article class="item l${p.done === p.total ? 1 : 2}" data-edl="${e.id}"><div><h3>${e.type === 'entree' ? 'Entrée' : 'Sortie'} : ${esc(e.adresse || 'Logement')}</h3><p>${e.date ? esc(fmtDate(parseDay(e.date))) : ''} | ${p.done} / ${p.total} points remplis${e.type === 'sortie' && edlDiffs(e).length ? ' | <b>' + edlDiffs(e).length + ' différence' + (edlDiffs(e).length > 1 ? 's' : '') + '</b>' : ''}</p></div>
+      <div class="row"><button class="btn small" data-edl-open type="button">Continuer</button><button class="btn small ghost" data-edl-sum type="button">Résumé et PDF</button><button class="link" data-edl-del type="button">Supprimer</button></div></article>`; }).join('')}</div>` : '<p class="note">Aucun état des lieux pour l\'instant.</p>'}`;
+  toolBack(box);
+  $('#edl-verify').addEventListener('click', () => { $('#vf-out').textContent = ''; const d = $('#verify-dialog'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
+  $$('[data-edl-new]', box).forEach(b => b.addEventListener('click', () => { edl$ = { view: 'new', type: b.dataset.edlNew }; renderTools(); box.scrollIntoView({ block: 'start' }); }));
+  $$('[data-edl]', box).forEach(el => {
+    const id = el.dataset.edl;
+    $('[data-edl-open]', el).addEventListener('click', () => { edl$ = { view: 'room', id, room: 0 }; renderTools(); box.scrollIntoView({ block: 'start' }); });
+    $('[data-edl-sum]', el).addEventListener('click', () => { edl$ = { view: 'sum', id }; renderTools(); box.scrollIntoView({ block: 'start' }); });
+    $('[data-edl-del]', el).addEventListener('click', () => { if (!confirm('Supprimer cet état des lieux et ses photos ?')) return; const e = getEdl().find(x => x.id === id); (e ? e.rooms : []).forEach(r => r.items.forEach(i => (i.photos || []).forEach(k => idb.del(k).catch(() => {})))); store.set(KEYS.edl, getEdl().filter(x => x.id !== id)); rememberDeleted(id); renderTools(); });
+  });
+}
+function renderEdlNew(box) {
+  const t = edl$.type, entrees = getEdl().filter(x => x.type === 'entree');
+  box.innerHTML = `<div class="sheet"><button class="link back" id="edl-back" type="button">Retour</button>
+    <h2>${t === 'entree' ? "État des lieux d'entrée" : 'État des lieux de sortie'}</h2>
+    <div class="form-grid">
+      <label class="field"><span>Adresse du logement</span><input id="en-adr" placeholder="Ex. 12 rue des Lilas, Lyon 3e"></label>
+      <label class="field"><span>Date</span><input id="en-date" type="date" value="${isoDay(new Date())}"></label>
+      <label class="field"><span>Locataire (toi)</span><input id="en-loc" value="${esc((store.get(KEYS.me, {}).nom) || '')}"></label>
+      <label class="field"><span>Propriétaire ou agence</span><input id="en-bail"></label>
+      <label class="field"><span>Son e-mail (facultatif)</span><input id="en-mail" type="email" autocomplete="off" placeholder="Pour lui envoyer l'état des lieux"></label>
+      ${t === 'sortie' && entrees.length ? `<label class="field" style="grid-column:1/-1"><span>Comparer avec l'état des lieux d'entrée</span><select id="en-ref"><option value="">Aucun, je repars de zéro</option>${entrees.map(e => `<option value="${e.id}">${esc(e.adresse || 'Logement')} (${e.date ? esc(fmtDate(parseDay(e.date))) : ''})</option>`).join('')}</select></label>` : ''}
+    </div>
+    <div class="sugg" id="en-geo-box"><b>Position du logement</b> (recommandé : fais-le une fois sur place)<br><button class="btn small ghost" type="button" id="en-geo">Enregistrer ma position ici</button> <span class="note" id="en-geo-st">Sert à prouver que les photos ont été prises dans le logement.</span></div>
+    <div id="en-rooms">
+      <p class="note"><b>Les pièces du logement</b></p>
+      <div class="form-grid">
+        <label class="field"><span>Chambres</span><select id="en-ch">${[0, 1, 2, 3, 4, 5].map(n => `<option ${n === 1 ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+        <label class="field"><span>Salles de bain</span><select id="en-sdb">${[0, 1, 2].map(n => `<option ${n === 1 ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+        <label class="field"><span>WC séparés</span><select id="en-wc">${[0, 1, 2].map(n => `<option>${n}</option>`).join('')}</select></label>
+      </div>
+      <div class="chips" role="group" aria-label="Autres pièces">${['Entrée', 'Séjour', 'Cuisine', 'Balcon ou terrasse', 'Cave ou garage'].map(r => `<button class="chip" type="button" data-room="${r}" aria-pressed="${['Entrée', 'Séjour', 'Cuisine'].includes(r)}">${r}</button>`).join('')}</div>
+    </div>
+    <p class="note" id="en-err" role="alert"></p>
+    <div class="actions"><button class="btn" id="en-go" type="button">Commencer</button></div></div>`;
+  $('#edl-back').addEventListener('click', () => { edl$ = { view: 'list' }; renderTools(); });
+  let enGeo = null;
+  $('#en-geo').addEventListener('click', async () => { $('#en-geo-st').textContent = 'Recherche de ta position…'; enGeo = await getPosition(); $('#en-geo-st').textContent = enGeo ? `Position enregistrée : ${geoText(enGeo)}` : "Position indisponible : autorise la localisation pour ce site, ou fais-le plus tard (la première photo la fixera)."; });
+  const refSel = $('#en-ref'); if (refSel) refSel.addEventListener('change', () => { $('#en-rooms').hidden = !!refSel.value; });
+  $$('[data-room]', box).forEach(b => b.addEventListener('click', () => b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true')));
+  $('#en-go').addEventListener('click', () => {
+    const adresse = $('#en-adr').value.trim(); if (!adresse) { $('#en-err').textContent = "Indique l'adresse du logement."; return; }
+    const rooms = [];
+    const picked = $$('[data-room]', box).filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.room);
+    ['Entrée', 'Séjour', 'Cuisine'].filter(r => picked.includes(r)).forEach(r => rooms.push({ name: r, base: r }));
+    for (let i = 1; i <= +$('#en-ch').value; i++) rooms.push({ name: 'Chambre ' + i, base: 'Chambre' });
+    for (let i = 1; i <= +$('#en-sdb').value; i++) rooms.push({ name: 'Salle de bain' + (+$('#en-sdb').value > 1 ? ' ' + i : ''), base: 'Salle de bain' });
+    for (let i = 1; i <= +$('#en-wc').value; i++) rooms.push({ name: 'WC' + (+$('#en-wc').value > 1 ? ' ' + i : ''), base: 'WC' });
+    ['Balcon ou terrasse', 'Cave ou garage'].filter(r => picked.includes(r)).forEach(r => rooms.push({ name: r, base: r }));
+    const ref = refSel ? refSel.value : '';
+    if (!ref && !rooms.length) { $('#en-err').textContent = 'Choisis au moins une pièce.'; return; }
+    const e = edlNew(t, { adresse, date: $('#en-date').value, locataire: $('#en-loc').value.trim(), bailleur: $('#en-bail').value.trim(), bailleurEmail: $('#en-mail').value.trim(), ref, rooms });
+    if (enGeo) e.geo = { ...enGeo, from: 'manuel' };
+    edlSave(e); track('edl_new'); edl$ = { view: 'room', id: e.id, room: 0 }; renderTools(); box.scrollIntoView({ block: 'start' });
+  });
+}
+function renderEdlRoom(box) {
+  const e = getEdl().find(x => x.id === edl$.id); if (!e) { edl$ = { view: 'list' }; return renderTools(); }
+  const last = e.rooms.length, ri = Math.min(edl$.room, last), meters = ri === last;
+  const ref = e.ref && getEdl().find(x => x.id === e.ref), p = edlProgress(e);
+  const steps = e.rooms.map((r, i) => `<button class="chip" type="button" data-step="${i}" aria-pressed="${i === ri}">${esc(r.name)}</button>`).join('') + `<button class="chip" type="button" data-step="${last}" aria-pressed="${meters}">Compteurs et clés</button>`;
+  let body;
+  if (meters) {
+    const c = e.compteurs || {};
+    body = `<h3>Compteurs et clés</h3><div class="form-grid">
+      <label class="field"><span>Électricité (index)</span><input data-m="elec" value="${esc(c.elec || '')}" inputmode="decimal"></label>
+      <label class="field"><span>Eau (index)</span><input data-m="eau" value="${esc(c.eau || '')}" inputmode="decimal"></label>
+      <label class="field"><span>Gaz (index)</span><input data-m="gaz" value="${esc(c.gaz || '')}" inputmode="decimal"></label>
+      <label class="field"><span>Nombre de clés remises</span><input data-m="cles" value="${esc(e.cles || '')}" inputmode="numeric"></label>
+      <label class="field" style="grid-column:1/-1"><span>Remarques générales</span><textarea data-m="remarques" style="min-height:80px;font-family:var(--ui)">${esc(e.remarques || '')}</textarea></label></div>
+      <p class="note">Prends une photo de chaque compteur : elle fait foi.</p>`;
+  } else {
+    const r = e.rooms[ri], rr = ref && ref.rooms.find(x => x.name === r.name);
+    body = `<h3>${esc(r.name)}</h3>${r.items.map((it, ii) => { const old = rr && (rr.items.find(x => x.name === it.name) || {}).state, worse = old && it.state && EDL_RANK[it.state] > EDL_RANK[old];
+      return `<div class="edl-item${worse ? ' worse' : ''}" data-ii="${ii}"><b>${esc(it.name)}</b>${old ? `<span class="note"> À l'entrée : ${esc(edlLabel(old))}${worse ? ' (dégradation)' : ''}</span>` : ''}
+        <div class="chips" role="group" aria-label="État : ${esc(it.name)}">${EDL_STATES.map(([k, l]) => `<button class="chip" type="button" data-st="${k}" aria-pressed="${it.state === k}">${l}</button>`).join('')}</div>
+        <div class="edl-row"><input data-note placeholder="Précision (rayure, tache, fissure…)" value="${esc(it.note || '')}" aria-label="Précision : ${esc(it.name)}"><button class="btn small ghost" type="button" data-cam>Prendre une photo${(it.photos || []).length ? ' (' + it.photos.length + ')' : ''}</button></div>${(it.photos || []).length ? `<div class="edl-thumbs">${it.photos.map((k, pi) => `<span class="th" data-pk="${esc(k)}"><button type="button" data-pview aria-label="Voir la photo ${pi + 1}"><img alt="" data-src="${esc(k)}"></button><button type="button" class="x" data-pdel aria-label="Supprimer la photo ${pi + 1}">×</button>${(it.seals || []).find(x => x.key === k && x.id) ? '<span class="ok" title="Date certifiée par un serveur">✓</span>' : ''}${it.photoGeo && it.photoGeo[pi] ? `<span class="geo" title="${esc(geoText(it.photoGeo[pi]))}">${(() => { const dd = geoDist(e.geo, it.photoGeo[pi]); return dd !== null && dd > GEO_NEAR ? '⚠' : '⌖'; })()}</span>` : ''}<small>${it.photoAt && it.photoAt[pi] ? esc(new Date(it.photoAt[pi]).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })) : ''}</small></span>`).join('')}</div>` : ''}</div>`; }).join('')}`;
+  }
+  box.innerHTML = `<div class="sheet"><button class="link back" id="edl-back" type="button">Mes états des lieux</button>
+    <h2>${e.type === 'entree' ? 'Entrée' : 'Sortie'} : ${esc(e.adresse)}</h2>
+    <div class="wbar" aria-hidden="true" style="max-width:none"><i style="width:${p.total ? Math.round(100 * p.done / p.total) : 0}%"></i></div><p class="note">${p.done} point${p.done > 1 ? 's' : ''} sur ${p.total} remplis. Tout s'enregistre tout seul.</p>
+    <div class="chips" role="group" aria-label="Pièces">${steps}</div>${body}
+    <div class="actions" style="margin-top:14px">${ri > 0 ? '<button class="btn ghost" id="edl-prev" type="button">Pièce précédente</button>' : ''}${!meters ? '<button class="btn" id="edl-next" type="button">Pièce suivante</button>' : '<button class="btn" id="edl-end" type="button">Voir le résumé</button>'}</div></div>`;
+  $('#edl-back').addEventListener('click', () => { edl$ = { view: 'list' }; renderTools(); });
+  $$('[data-step]', box).forEach(b => b.addEventListener('click', () => { edl$.room = +b.dataset.step; renderTools(); box.scrollIntoView({ block: 'start' }); }));
+  const go = n => { edl$.room = n; renderTools(); box.scrollIntoView({ block: 'start' }); };
+  const nx = $('#edl-next'); if (nx) nx.addEventListener('click', () => go(ri + 1));
+  const pv = $('#edl-prev'); if (pv) pv.addEventListener('click', () => go(ri - 1));
+  const en = $('#edl-end'); if (en) en.addEventListener('click', () => { edl$ = { view: 'sum', id: e.id }; renderTools(); box.scrollIntoView({ block: 'start' }); });
+  if (meters) $$('[data-m]', box).forEach(i => i.addEventListener('change', () => { const k = i.dataset.m; if (k === 'cles' || k === 'remarques') e[k] = i.value.trim(); else e.compteurs = { ...e.compteurs, [k]: i.value.trim() }; edlSave(e); }));
+  else $$('[data-ii]', box).forEach(el => {
+    const it = e.rooms[ri].items[+el.dataset.ii];
+    $$('[data-st]', el).forEach(b => b.addEventListener('click', () => { it.state = it.state === b.dataset.st ? '' : b.dataset.st; edlSave(e); renderTools(); }));
+    $('[data-note]', el).addEventListener('change', ev => { it.note = ev.target.value.trim(); edlSave(e); });
+    $('[data-cam]', el).addEventListener('click', async () => {
+      const shot = await takeStampedPhoto(`${e.rooms[ri].name} : ${it.name}`); if (!shot) return;
+      try {
+        const key = `e:${e.id}:${ri}:${el.dataset.ii}:${Date.now().toString(36)}`; await idb.set(key, shot.data);
+        it.photos = [...(it.photos || []), key]; it.photoAt = [...(it.photoAt || []), shot.at]; it.photoGeo = [...(it.photoGeo || []), shot.geo || null]; if (shot.geo && !e.geo) e.geo = { ...shot.geo, from: 'photo' }; it.seals = [...(it.seals || []), { key, hash: await sha256Hex(dataUrlBytes(shot.data)), id: null, at: null }];
+        edlSave(e); track('edl_photo'); toast(FBU ? 'Photo ajoutée, date et heure certifiées par un serveur…' : 'Photo ajoutée. Connecte-toi avec Google pour faire certifier sa date.'); renderTools(); sealPending();
+      } catch (err) { toast("La photo n'a pas pu être enregistrée"); }
+    });
+    $$('.th', el).forEach(th => {
+      const key = th.dataset.pk;
+      idb.get(key).then(src => { const im = $('img', th); if (src && im) im.src = src; }).catch(() => {});
+      $('[data-pview]', th).addEventListener('click', async () => { const src = await idb.get(key).catch(() => null); if (!src) return; $('#img-view').src = src; const d = $('#img-dialog'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
+      $('[data-pdel]', th).addEventListener('click', () => { if (!confirm('Supprimer cette photo ?')) return; const i = it.photos.indexOf(key); it.photos.splice(i, 1); if (it.photoAt) it.photoAt.splice(i, 1); if (it.photoGeo) it.photoGeo.splice(i, 1); if (it.seals) it.seals = it.seals.filter(x => x.key !== key); edlSave(e); idb.del(key).catch(() => {}); renderTools(); });
+    });
+  });
+}
+/* Sceau d'une photo : empreinte SHA-256 de l'image + heure du serveur Firebase (collection qt_seals, impossible à modifier après coup).
+   Prouve que la photo existait à cette heure et qu'elle n'a pas été retouchée depuis. Nécessite la connexion Google. */
+function dataUrlBytes(url) { const bin = atob(url.split(',')[1]), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
+async function sha256Hex(bytes) { const d = await crypto.subtle.digest('SHA-256', bytes); return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join(''); }
+let sealing = false, sealAgain = false;
+async function sealPending() {
+  if (sealing) { sealAgain = true; return; }
+  if (!FBU || !navigator.onLine) return;
+  sealing = true; let n = 0;
+  try {
+    const F = await fb();
+    do {
+      sealAgain = false;
+      for (const e of getEdl()) {
+        let touched = false;
+        for (const r of e.rooms) for (const it of r.items) for (const sl of it.seals || []) {
+          if (sl.id) continue;
+          const ref = await F.Fs.addDoc(F.Fs.collection(F.db, 'qt_seals'), { uid: FBU.uid, hash: sl.hash, edl: e.id, at: F.Fs.serverTimestamp() });
+          const snap = await F.Fs.getDoc(ref); sl.id = ref.id; sl.at = snap.data().at.toDate().toISOString(); touched = true; n++;
+        }
+        if (touched) { const fresh = getEdl().find(x => x.id === e.id) || e; fresh.rooms.forEach((r, ri) => r.items.forEach((it, ii) => (it.seals || []).forEach(sl => { const m = e.rooms[ri].items[ii].seals.find(x => x.key === sl.key); if (m && m.id) { sl.id = m.id; sl.at = m.at; } }))); edlSave(fresh); }
+      }
+    } while (sealAgain);
+    if (n) { toast(n > 1 ? `${n} photos certifiées` : 'Photo certifiée'); if (tools$.view === 'edl') renderTools(); }
+  } catch (err) { console.error(err); if (/permission/i.test(err.code || err.message)) toast("La certification n'est pas encore activée sur ce site."); }
+  finally { sealing = false; }
+}
+function geoStats(e) {
+  const all = e.rooms.flatMap(r => r.items.flatMap(i => (i.photos || []).map((_, k) => (i.photoGeo || [])[k] || null)));
+  const withGeo = all.filter(Boolean), dist = withGeo.map(g => geoDist(e.geo, g));
+  const ref = e.ref && getEdl().find(x => x.id === e.ref);
+  return { total: all.length, withGeo: withGeo.length, near: dist.filter(d => d !== null && d <= GEO_NEAR).length, far: dist.filter(d => d !== null && d > GEO_NEAR).length, same: e.geo && ref && ref.geo ? geoDist(e.geo, ref.geo) : null };
+}
+const sealStats = e => { const all = e.rooms.flatMap(r => r.items.flatMap(i => i.seals || [])); return { total: all.length, done: all.filter(x => x.id).length, list: all }; };
+async function verifyPhoto() {
+  const code = $('#vf-code').value.trim(), f = $('#vf-file').files[0], out = $('#vf-out');
+  if (!/^[A-Za-z0-9]{20}$/.test(code)) { out.textContent = 'Le code de contrôle a 20 caractères (lettres et chiffres).'; return; }
+  if (!f) { out.textContent = "Choisis le fichier de la photo à vérifier."; return; }
+  out.textContent = 'Vérification…';
+  try {
+    const hash = await sha256Hex(new Uint8Array(await f.arrayBuffer()));
+    const r = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CFG.projectId}/databases/(default)/documents/qt_seals/${code}?key=${FIREBASE_CFG.apiKey}`);
+    if (r.status === 404 || r.status === 403) { out.textContent = "Ce code de contrôle n'existe pas."; return; }
+    if (!r.ok) throw new Error('réseau');
+    const j = await r.json(), at = j.fields && j.fields.at && j.fields.at.timestampValue, h = j.fields && j.fields.hash && j.fields.hash.stringValue;
+    out.textContent = h === hash ? `Photo authentique : ce fichier est identique à celui enregistré par le serveur le ${new Date(at).toLocaleString('fr-FR')}.` : "Attention : ce fichier ne correspond pas à la photo enregistrée sous ce code. Il a été modifié, ou ce n'est pas le bon fichier.";
+  } catch (err) { out.textContent = 'Vérification impossible pour le moment (connexion internet ?).'; }
+}
+// Photo prise sur le vif avec la caméra (pas d'import de fichier) et datée dans l'image : date et heure de l'appareil, incrustées en bas à droite.
+function geoText(g) { return g ? `${g.lat.toFixed(5)}, ${g.lon.toFixed(5)} (±${Math.round(g.acc)} m)` : 'position non disponible'; }
+function stampCanvas(c, d, geo) {
+  const ctx = c.getContext('2d'), lines = [d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR'), geoText(geo)];
+  const fs = Math.max(16, Math.round(c.width / 36)), pad = Math.round(fs * 0.45), lh = Math.round(fs * 1.35);
+  ctx.font = `700 ${fs}px Arial, sans-serif`; ctx.textBaseline = 'middle';
+  const w = Math.ceil(Math.max(...lines.map(t => ctx.measureText(t).width))) + pad * 2, h = lh * lines.length + pad;
+  ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(c.width - w - pad, c.height - h - pad, w, h);
+  ctx.fillStyle = '#ffe14d'; lines.forEach((t, i) => ctx.fillText(t, c.width - w, c.height - h - pad + pad / 2 + lh * (i + 0.5)));
+}
+// Distance entre deux positions, en mètres.
+function geoDist(a, b) { if (!a || !b) return null; const R = 6371000, r = x => x * Math.PI / 180, dLat = r(b.lat - a.lat), dLon = r(b.lon - a.lon), h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLon / 2) ** 2; return Math.round(2 * R * Math.asin(Math.sqrt(h))); }
+const GEO_NEAR = 250;   // en dessous, la photo est considérée prise sur place (précision du GPS en intérieur)
+function getPosition(timeout = 9000) {
+  return new Promise(res => {
+    if (!navigator.geolocation) return res(null);
+    navigator.geolocation.getCurrentPosition(p => res({ lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy || 0 }), () => res(null), { enableHighAccuracy: true, timeout, maximumAge: 0 });
+  });
+}
+const osmLink = g => `https://www.openstreetmap.org/?mlat=${g.lat.toFixed(6)}&mlon=${g.lon.toFixed(6)}#map=19/${g.lat.toFixed(6)}/${g.lon.toFixed(6)}`;
+function takeStampedPhoto(label) {
+  return new Promise(resolve => {
+    const dlg = $('#cam-dialog'), vid = $('#cam-video'), msg = $('#cam-msg'); let stream = null, done = false, geo = null, watch = null;
+    if (navigator.geolocation) { try { watch = navigator.geolocation.watchPosition(p => { geo = { lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy || 0 }; }, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }); } catch (e) { /* position indisponible */ } }
+    const finish = v => { if (done) return; done = true; if (watch !== null) navigator.geolocation.clearWatch(watch); if (stream) stream.getTracks().forEach(t => t.stop()); vid.srcObject = null; if (dlg.open) dlg.close(); resolve(v); };
+    $('#cam-label').textContent = label; msg.textContent = 'Ouverture de la caméra…'; $('#cam-snap').disabled = true;
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+    dlg.onclose = () => finish(null); $('#cam-cancel').onclick = () => finish(null);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { msg.textContent = "Ton navigateur ne permet pas d'ouvrir la caméra ici. Ouvre Paperdecrypt dans Chrome ou Safari."; return; }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1600 } }, audio: false }).then(st => {
+      if (done) { st.getTracks().forEach(t => t.stop()); return; }
+      stream = st; vid.onloadeddata = () => { if (vid.videoWidth) { msg.textContent = 'La date, l\'heure et ta position GPS seront inscrites sur la photo. Autorise la localisation si le navigateur le demande.'; $('#cam-snap').disabled = false; } }; vid.srcObject = st; vid.play().catch(() => {}); msg.textContent = 'Démarrage de la caméra…';
+    }).catch(() => { msg.textContent = "La caméra n'est pas autorisée. Autorise-la dans les réglages du navigateur pour ce site, puis réessaie."; });
+    $('#cam-snap').onclick = () => {
+      if (!vid.videoWidth) return;
+      const now = new Date(), k = Math.min(1, 1400 / Math.max(vid.videoWidth, vid.videoHeight)), c = document.createElement('canvas');
+      c.width = Math.round(vid.videoWidth * k); c.height = Math.round(vid.videoHeight * k);
+      c.getContext('2d').drawImage(vid, 0, 0, c.width, c.height); stampCanvas(c, now, geo);
+      finish({ data: c.toDataURL('image/jpeg', 0.75), at: now.toISOString(), geo });
+    };
+  });
+}
+function renderEdlSummary(box) {
+  const e = getEdl().find(x => x.id === edl$.id); if (!e) { edl$ = { view: 'list' }; return renderTools(); }
+  const d = edlDiffs(e), p = edlProgress(e), bad = e.rooms.flatMap(r => r.items.filter(i => i.state === 'mauvais' || i.state === 'absent').map(i => ({ room: r.name, ...i })));
+  box.innerHTML = `<div class="sheet"><button class="link back" id="edl-back" type="button">Mes états des lieux</button>
+    <h2>${e.type === 'entree' ? "Résumé de l'état des lieux d'entrée" : "Résumé de l'état des lieux de sortie"}</h2>
+    <p>${esc(e.adresse)}${e.date ? ' | ' + esc(fmtDate(parseDay(e.date))) : ''} | ${p.done} / ${p.total} points remplis</p>
+    ${e.type === 'sortie' ? (e.ref ? (d.length ? `<div class="alert">${d.length} point${d.length > 1 ? 's' : ''} en moins bon état qu'à l'entrée. Vérifie s'il s'agit d'usure normale avant d'accepter une retenue.</div><ul>${d.map(x => `<li><b>${esc(x.room)} : ${esc(x.item)}</b> : ${esc(edlLabel(x.from))} à l'entrée, ${esc(edlLabel(x.to))} à la sortie${x.note ? ' (' + esc(x.note) + ')' : ''}</li>`).join('')}</ul><p class="note">Pour chaque point, demande un devis ou une facture : une retenue doit être justifiée, et la vétusté (usure normale) se déduit.</p>` : '<p><b>Aucune dégradation par rapport à l\'entrée.</b> Le dépôt de garantie doit en principe t\'être rendu en entier.</p>') : '<p class="note">Aucun état des lieux d\'entrée n\'est lié : la comparaison est impossible.</p>') : (bad.length ? `<p><b>Points à signaler dès l'entrée :</b></p><ul>${bad.map(x => `<li>${esc(x.room)} : ${esc(x.name)} (${esc(edlLabel(x.state))})${x.note ? ' : ' + esc(x.note) : ''}</li>`).join('')}</ul><p class="note">Fais-les écrire dans l'état des lieux officiel signé : c'est ce qui te protège à la sortie.</p>` : '<p class="note">Aucun défaut signalé.</p>')}
+    ${(() => { const st = sealStats(e); return st.total ? `<div class="sugg"><b>Photos : ${st.done} sur ${st.total} certifiées par un serveur.</b> ${st.done === st.total ? 'Leur date ne dépend plus de l\'horloge de ton téléphone et elles ne peuvent plus être modifiées sans que ça se voie.' : (FBU ? '<button class="btn small ghost" type="button" id="edl-seal">Certifier maintenant</button>' : 'Connecte-toi avec Google (bouton en haut) pour certifier leur date.')}</div>` : ''; })()}
+    ${(() => { const g = geoStats(e); if (!g.total) return ''; const lines = []; lines.push(`<b>Position GPS : ${g.withGeo} photo${g.withGeo > 1 ? 's' : ''} sur ${g.total} localisée${g.withGeo > 1 ? 's' : ''}${g.withGeo ? `, dont ${g.near} sur place` : ''}.</b>`); if (g.far) lines.push(`⚠ ${g.far} photo${g.far > 1 ? 's' : ''} à plus de ${GEO_NEAR} m du logement de référence.`); if (g.same !== null) lines.push(g.same <= GEO_NEAR ? `Les deux états des lieux ont été faits au même endroit (écart de ${g.same} m) : cela confirme qu'il s'agit du même logement.` : `⚠ Les deux états des lieux n'ont pas été faits au même endroit (${g.same} m d'écart).`); return `<div class="sugg">${lines.join('<br>')}<br><span class="note">La position vient du GPS de l'appareil : en intérieur, la précision est de quelques dizaines de mètres.</span></div>`; })()}
+    <div class="actions"><button class="btn" id="edl-pdf" type="button">Créer le PDF à signer</button><button class="btn ghost" id="edl-mail" type="button">Envoyer par e-mail</button><button class="btn ghost" id="edl-edit" type="button">Modifier</button>${e.type === 'sortie' ? '<button class="btn ghost" id="edl-caution" type="button">Caution pas rendue ?</button>' : ''}</div>
+    <details class="tips" open><summary>Nos conseils</summary><ul>${EDL_TIPS[e.type].map(t => `<li>${esc(t)}</li>`).join('')}</ul></details>
+    <p class="note">Cet outil t'aide à préparer le document. Le seul état des lieux qui compte est celui signé par les deux parties : fais signer ce PDF, ou reporte-le sur le formulaire du propriétaire.</p></div>`;
+  $('#edl-back').addEventListener('click', () => { edl$ = { view: 'list' }; renderTools(); });
+  $('#edl-edit').addEventListener('click', () => { edl$ = { view: 'room', id: e.id, room: 0 }; renderTools(); });
+  $('#edl-pdf').addEventListener('click', async () => { try { const html = await buildEdlHTML(e); track('edl_pdf'); printHTML(html); toast('Choisis « Enregistrer en PDF » dans la fenêtre d\'impression'); } catch (err) { console.error(err); toast("Le PDF n'a pas pu être créé"); } });
+  const sl = $('#edl-seal'); if (sl) sl.addEventListener('click', async () => { await sealPending(); renderTools(); });
+  $('#edl-mail').addEventListener('click', () => {
+    const st = sealStats(e), c = e.compteurs || {};
+    const lines = [`État des lieux ${e.type === 'entree' ? "d'entrée" : 'de sortie'} : ${e.adresse}`, `Date : ${e.date ? fmtDate(parseDay(e.date)) : ''}`, `Locataire : ${e.locataire || ''}`, '', `Compteurs : électricité ${c.elec || '…'}, eau ${c.eau || '…'}, gaz ${c.gaz || '…'}. Clés remises : ${e.cles || '…'}.`, `Points remplis : ${p.done} sur ${p.total}.`];
+    if (d.length) lines.push('', 'Dégradations constatées par rapport à l\'entrée :', ...d.map(x => `- ${x.room}, ${x.item} : ${edlLabel(x.from)} puis ${edlLabel(x.to)}`));
+    { const g = geoStats(e); if (g.withGeo) lines.push('', `Position GPS enregistrée sur ${g.withGeo} photo(s) sur ${g.total}, dont ${g.near} prise(s) sur place${e.geo ? ' (référence : ' + geoText(e.geo) + ')' : ''}.`); }
+    if (st.done) lines.push('', `Photos : ${st.total}, dont ${st.done} avec date certifiée par un serveur. Codes de contrôle (vérifiables dans Paperdecrypt, Outils, État des lieux) :`, ...st.list.filter(x => x.id).map(x => `- ${x.id} (${new Date(x.at).toLocaleString('fr-FR')})`));
+    lines.push('', 'Le PDF détaillé est joint à ce message (à ajouter avant l\'envoi). Je vous invite à me confirmer sa bonne réception.');
+    track('edl_mail');
+    location.href = 'mailto:' + encodeURIComponent(e.bailleurEmail || '') + '?' + (FBU && FBU.email ? 'cc=' + encodeURIComponent(FBU.email) + '&' : '') + 'subject=' + encodeURIComponent(`État des lieux ${e.type === 'entree' ? "d'entrée" : 'de sortie'} : ${e.adresse}`) + '&body=' + encodeURIComponent(lines.join('\n'));
+  });
+  const c = $('#edl-caution'); if (c) c.addEventListener('click', () => { money$ = { mode: 'form', caseId: 'caution', values: { bailleur: e.bailleur || '' } }; showTab('money'); });
+}
+async function buildEdlHTML(e) {
+  const ref = e.ref && getEdl().find(x => x.id === e.ref);
+  let rooms = '';
+  for (const r of e.rooms) {
+    const rr = ref && ref.rooms.find(x => x.name === r.name); let rows = '', photos = '';
+    for (const it of r.items) {
+      const old = rr && (rr.items.find(x => x.name === it.name) || {}).state;
+      rows += `<tr${old && it.state && EDL_RANK[it.state] > EDL_RANK[old] ? ' class="w"' : ''}><td>${esc(it.name)}</td>${ref ? `<td>${old ? esc(edlLabel(old)) : '–'}</td>` : ''}<td>${it.state ? esc(edlLabel(it.state)) : '–'}</td><td>${esc(it.note || '')}</td></tr>`;
+      for (const [pi, k] of (it.photos || []).entries()) {
+        const src = await idb.get(k).catch(() => null), at = it.photoAt && it.photoAt[pi], sl = (it.seals || []).find(x => x.key === k);
+        const g = (it.photoGeo || [])[pi], dd = g ? geoDist(e.geo, g) : null;
+        if (src) photos += `<figure><img src="${src}" alt=""><figcaption>${esc(it.name)}${g ? `<br>Position GPS : ${esc(geoText(g))}${dd !== null ? ' | ' + (dd <= GEO_NEAR ? 'sur place' : 'à ' + dd + ' m du logement') : ''} | <a href="${osmLink(g)}">carte</a>` : '<br>Position non disponible'}${at ? ' | pris le ' + esc(new Date(at).toLocaleString('fr-FR')) : ''}${sl && sl.id ? `<br>Date certifiée par serveur : ${esc(new Date(sl.at).toLocaleString('fr-FR'))}<br>Code de contrôle : ${esc(sl.id)}` : '<br>Date de l\'appareil, non certifiée'}</figcaption></figure>`;
+      }
+    }
+    rooms += `<section><h2>${esc(r.name)}</h2><table><thead><tr><th>Élément</th>${ref ? "<th>À l'entrée</th>" : ''}<th>${e.type === 'entree' ? 'État' : 'À la sortie'}</th><th>Précisions</th></tr></thead><tbody>${rows}</tbody></table>${photos ? `<div class="ph">${photos}</div>` : ''}</section>`;
+  }
+  const c = e.compteurs || {};
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>État des lieux</title><style>
+    @page{size:A4;margin:14mm}body{font:10.5pt/1.4 Georgia,serif;color:#111;margin:0}
+    h1{font:700 19pt Arial,sans-serif;margin:0 0 4px}h2{font:700 12.5pt Arial,sans-serif;margin:16px 0 6px;padding-bottom:3px;border-bottom:2px solid #111}
+    table{width:100%;border-collapse:collapse;font-size:9.5pt;break-inside:auto}th,td{border:1px solid #bbb;padding:4px 6px;text-align:left;vertical-align:top}th{background:#eee;font-family:Arial,sans-serif;font-size:8.5pt}
+    tr.w td{background:#fde8e8}.ph{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}figure{margin:0;width:31%;break-inside:avoid}figure img{width:100%;border:1px solid #bbb}figcaption{font-size:8pt;color:#555}
+    .sig{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px;break-inside:avoid}.sig div{border:1px solid #888;height:80px;padding:6px;font:9pt Arial,sans-serif}
+    footer{margin-top:18px;font-size:8.5pt;color:#555;border-top:1px solid #bbb;padding-top:5px}
+  </style></head><body>
+  <h1>État des lieux ${e.type === 'entree' ? "d'entrée" : 'de sortie'}</h1>
+  <p>Logement : <b>${esc(e.adresse)}</b>${e.geo ? `<br>Position de référence : ${esc(geoText(e.geo))} (<a href="${osmLink(e.geo)}">carte</a>)` : ''}<br>Date : ${e.date ? esc(fmtDate(parseDay(e.date))) : '…'}<br>Locataire : ${esc(e.locataire || '…')}<br>Propriétaire ou agence : ${esc(e.bailleur || '…')}</p>
+  <h2>Compteurs et clés</h2><table><tbody><tr><td>Électricité</td><td>${esc(c.elec || '')}</td><td>Eau</td><td>${esc(c.eau || '')}</td><td>Gaz</td><td>${esc(c.gaz || '')}</td><td>Clés remises</td><td>${esc(e.cles || '')}</td></tr></tbody></table>
+  ${rooms}
+  ${e.remarques ? `<h2>Remarques</h2><p>${esc(e.remarques)}</p>` : ''}
+  <div class="sig"><div>Signature du locataire</div><div>Signature du propriétaire ou de l'agence</div></div>
+  <footer>Document préparé avec Paperdecrypt (QuenTools). Il n'a de valeur que signé par les deux parties. Les photos portant un code de contrôle peuvent être vérifiées dans Paperdecrypt (Outils, État des lieux). Dates et états à vérifier sur place.</footer></body></html>`;
+}
+
 /* ---------- Coffre de documents ---------- */
 const VCATS = [['facture', 'Factures'], ['contrat', 'Contrats'], ['impots', 'Impôts'], ['sante', 'Santé'], ['logement', 'Logement'], ['travail', 'Travail'], ['banque', 'Banque'], ['identite', 'Identité'], ['autre', 'Autres']];
 const vcat = k => (VCATS.find(c => c[0] === k) || VCATS[VCATS.length - 1])[1];
@@ -3148,6 +3945,7 @@ async function addToVault(files) {
         if (a.amount) amount = a.amount.value;
         if (a.org) name = `${a.org.court} : ${a.type.label.toLowerCase()}`;
       } catch (e) { /* analyse impossible : on garde le nom du fichier */ }
+      try { const rc = readReceipt(text); if (rc.known) { name = rc.store + (rc.product ? ' : ' + rc.product : ' : facture'); if (rc.price) amount = rc.price; if (cat === 'autre') cat = 'facture'; } } catch (e) { /* lecture de ticket impossible */ }
     }
     const l = getVault(); l.unshift({ id, name, cat, kind: isPdf ? 'pdf' : 'img', date, amount, note: '', text: text.slice(0, 3000), size: f.size, createdAt: now, updatedAt: now });
     if (!store.set(KEYS.coffre, l)) { toast("L'espace de stockage est plein : supprime des documents"); idb.del('d:' + id).catch(() => {}); break; }
@@ -3232,7 +4030,7 @@ async function createDossier() {
 /* ---------- Onglets ---------- */
 const TABS = ['decode', 'money', 'warranty', 'vault', 'list', 'tools'];
 const TAB_HASH = { decode: '', money: '#argent', warranty: '#garanties', vault: '#coffre', list: '#courriers', tools: '#outils' };
-const START_HASH = { '#argent': ['money'], '#garanties': ['warranty'], '#coffre': ['vault'], '#courriers': ['list'], '#outils': ['tools', 'home'], '#abonnements': ['tools', 'abos'], '#tva': ['tools', 'tva'], '#lettres': ['tools', 'lettres'] };
+const START_HASH = { '#argent': ['money'], '#garanties': ['warranty'], '#coffre': ['vault'], '#courriers': ['list'], '#outils': ['tools', 'home'], '#abonnements': ['tools', 'abos'], '#tva': ['tools', 'tva'], '#lettres': ['tools', 'lettres'], '#etat-des-lieux': ['tools', 'edl'], '#fiche-de-paie': ['tools', 'paie'] };
 function showTab(which) {
   TABS.forEach(t => { $('#tab-' + t).setAttribute('aria-selected', t === which); $('#view-' + t).hidden = t !== which; });
   track('tab_' + which);
@@ -3342,6 +4140,8 @@ $('#dossier-btn').addEventListener('click', () => { $('#settings').close(); open
 $('#list-dossier').addEventListener('click', openDossier);
 $('#do-go').addEventListener('click', createDossier);
 $('#do-close').addEventListener('click', () => $('#dossier').close());
+$('#vf-go').addEventListener('click', verifyPhoto);
+$('#vf-close').addEventListener('click', () => $('#verify-dialog').close());
 $('#stats-off').addEventListener('change', e => { if (e.target.checked) usage.flush(); store.set(KEYS.nostats, e.target.checked); toast(e.target.checked ? 'Tes visites ne sont plus comptées' : 'Merci de participer aux statistiques anonymes'); });
 $('#tablist').addEventListener('keydown', e => {
   if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
@@ -3379,7 +4179,7 @@ renderList(); renderReminders(); notifyUrgent();
 updatePill(); gpuReady.then(updatePill);
 
 // Exposé pour les tests
-window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, textScore, fileToCanvas };
+window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, paieAnswer, textScore, fileToCanvas, buildEdlHTML, geoDist, readReceipt, parsePayslip, payslipInsights, looksLikePayslip, PAIE_SAMPLE };
 })();
 </script>
 </body>

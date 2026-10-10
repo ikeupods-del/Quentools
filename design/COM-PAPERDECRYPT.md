@@ -53,3 +53,15 @@ Je demande parce que j'ai fait un petit outil gratuit pour s'y retrouver. Dites-
 
 ## 6. Rythme conseillé
 Semaine 1 : carrousel + question. Semaine 2 : astuce HT/TTC + vidéo. Semaine 3 : garanties + groupes. Semaine 4 : date limite + confidentialité. Mesurer dans Metricool quelles publications font réagir et reprendre celles-là.
+
+## Nouveaux carrousels (outils ajoutés)
+Deux carrousels de 5 visuels (1080×1350) sont prêts dans `assets/social/` : captures fictives (aucune donnée réelle) produites par `node tools/captures-paperdecrypt.js`, puis `node tools/carrousels.js etat-des-lieux paperdecrypt-outils`.
+
+| Carrousel | Cible | Visuels | Légende, tags, texte TikTok |
+|---|---|---|---|
+| État des lieux | Locataires qui emménagent ou déménagent | `c-etat-des-lieux-1…5.jpg` | `tools/carrousels.json` (id `etat-des-lieux`) |
+| Tous les outils | Grand public (papiers, rappels, coffre, TVA) | `c-paperdecrypt-outils-1…5.jpg` | `tools/carrousels.json` (id `paperdecrypt-outils`) |
+
+Règles à garder : jamais de prix ni de lien dans une publication de groupe (« lien en bio » seulement sur ton profil) ; ne jamais présenter l'outil comme une intelligence artificielle ; ne pas promettre une preuve « infalsifiable » : dire « date certifiée par un serveur » et rappeler que seul l'état des lieux signé par les deux parties fait foi.
+
+Rythme conseillé : état des lieux en premier (sujet saisonnier, fort partage chez les locataires), puis le carrousel « tous les outils » une semaine plus tard. Question finale de chaque carrousel = réponse en commentaire ; répondre à chacun avec un conseil précis, sans lien.

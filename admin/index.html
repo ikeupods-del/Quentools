@@ -893,14 +893,26 @@ function rulesText() {
 function qtClient(d) { return request.auth != null && request.auth.token.email_verified == true && d.emailLower == request.auth.token.email.lower(); }
 match /qt_admin/{doc} { allow read: if true; allow write: if qtAdmin(); }
 match /qt_notes/{id} { allow read, write: if qtAdmin(); }
+match /qt_seals/{id} {
+  allow get: if true;
+  allow list: if qtAdmin();
+  allow create: if request.auth != null
+    && request.resource.data.keys().hasOnly(['uid','hash','edl','at'])
+    && request.resource.data.uid == request.auth.uid
+    && request.resource.data.hash.matches('^[a-f0-9]{64}$')
+    && request.resource.data.edl is string && request.resource.data.edl.size() <= 40
+    && request.resource.data.at == request.time;
+  allow update, delete: if false;
+}
 match /qt_usage/{day} {
   allow read, delete: if qtAdmin();
   allow create, update: if day.matches('^20[0-9]{2}-[0-9]{2}-[0-9]{2}$')
-    && request.resource.data.keys().hasOnly(['v','f','t','o','l'])
+    && request.resource.data.keys().hasOnly(['v','f','t','o','l','k'])
     && (!('f' in request.resource.data) || request.resource.data.f.size() <= 60)
     && (!('t' in request.resource.data) || request.resource.data.t.size() <= 30)
     && (!('o' in request.resource.data) || request.resource.data.o.size() <= 40)
-    && (!('l' in request.resource.data) || request.resource.data.l.size() <= 40);
+    && (!('l' in request.resource.data) || request.resource.data.l.size() <= 40)
+    && (!('k' in request.resource.data) || request.resource.data.k.size() <= 80);
 }
 match /qt_agenda/{id} { allow read, write: if qtAdmin(); }
 match /qt_leads/{id} {
@@ -1088,6 +1100,8 @@ const PD_TOOLS = [
   ['Modèles de lettres', 'outil_lettres', ['lettre_modele'], 'lettres préparées'],
   ['Abonnements', 'outil_abos', ['abo_new'], 'abonnements ajoutés'],
   ['Calcul de TVA', 'outil_tva', ['tva'], 'calculs faits'],
+  ['État des lieux', 'outil_edl', ['edl_new'], 'états des lieux créés'],
+  ['Fiche de paie', 'outil_paie', ['paie'], 'fiches analysées'],
   ['Dossier PDF', null, ['dossier'], 'dossiers créés'],
   ['Rappels dans l’agenda', null, ['rappels_agenda', 'rappels_notif'], 'rappels activés'],
   ['Partage de résumé', null, ['partage_wa', 'partage_sms', 'partage_mail', 'partage_copy', 'partage_native'], 'résumés partagés']
@@ -1100,7 +1114,7 @@ async function loadUsage() {
   usageErr = '';
   if (DEMO) {
     const r = n => Math.round(Math.random() * n);
-    usageDocs = Array.from({ length: 45 }, (_, i) => { const v = 6 + r(30), dc = Math.round(v * .7); return { id: addDays(today(), -i), v, f: { nouveau: Math.round(v * .6), decode: dc, photo: Math.round(dc * .55), pdf: Math.round(dc * .15), tab_decode: v, tab_money: r(6), tab_warranty: r(5), tab_vault: r(4), tab_list: r(6), tab_tools: r(8), claim_new: r(3), warranty_new: r(3), coffre_add: r(3), save_courrier: r(6), lettre_modele: r(3), outil_lettres: r(4), outil_tva: r(5), tva: r(5), outil_abos: r(3), abo_new: r(2), dossier: r(2), rappels_agenda: r(2), partage_wa: r(3), lettre_copy: r(5), lettre_dl: r(2), lettre_print: r(2), login: r(2) }, t: { facture: r(6), amende: r(4), relance: r(4), pieces: r(3), demeure: r(2), impot: r(2), info: r(4) }, o: { caf: r(5), impots: r(4), energie: r(4), telecom: r(3), antai: r(3) }, l: { delai: r(3), contester: r(3), explications: r(2), resiliation: r(2), echeancier: r(1) } }; });
+    usageDocs = Array.from({ length: 45 }, (_, i) => { const v = 6 + r(30), dc = Math.round(v * .7); return { id: addDays(today(), -i), v, f: { nouveau: Math.round(v * .6), decode: dc, photo: Math.round(dc * .55), pdf: Math.round(dc * .15), tab_decode: v, tab_money: r(6), tab_warranty: r(5), tab_vault: r(4), tab_list: r(6), tab_tools: r(8), claim_new: r(3), warranty_new: r(3), coffre_add: r(3), save_courrier: r(6), lettre_modele: r(3), outil_lettres: r(4), outil_tva: r(5), tva: r(5), outil_abos: r(3), abo_new: r(2), dossier: r(2), rappels_agenda: r(2), partage_wa: r(3), lettre_copy: r(5), lettre_dl: r(2), lettre_print: r(2), login: r(2), avis_ok: r(20), avis_ko: r(5) }, k: { org_aucun_to_caf: r(4), type_info_to_facture: r(3), montant: r(3), ht_ttc: r(2), avis_ko_relance: r(2) }, t: { facture: r(6), amende: r(4), relance: r(4), pieces: r(3), demeure: r(2), impot: r(2), info: r(4) }, o: { caf: r(5), impots: r(4), energie: r(4), telecom: r(3), antai: r(3) }, l: { delai: r(3), contester: r(3), explications: r(2), resiliation: r(2), echeancier: r(1) } }; });
     return;
   }
   try {
@@ -1113,7 +1127,7 @@ function usageAgg(range) {
   const from = addDays(today(), -(range - 1)), docs = usageDocs.filter(d => d.id >= from);
   const sum = (g, k) => docs.reduce((s, d) => s + (+((g ? d[g] : d) || {})[k] || 0), 0);
   const map = g => { const m = {}; docs.forEach(d => Object.entries(d[g] || {}).forEach(([k, v]) => { m[k] = (m[k] || 0) + (+v || 0); })); return m; };
-  return { docs, from, v: docs.reduce((s, d) => s + (+d.v || 0), 0), f: k => sum('f', k), fm: map('f'), t: map('t'), o: map('o'), l: map('l') };
+  return { docs, from, v: docs.reduce((s, d) => s + (+d.v || 0), 0), f: k => sum('f', k), fm: map('f'), t: map('t'), o: map('o'), l: map('l'), k: map('k') };
 }
 const pct = (a, b) => b ? Math.round(100 * a / b) + ' %' : '—';
 const bars = (rows, max, emptyMsg) => rows.length ? rows.map(([l, n, sub]) => `<div class="fun pd-fun"><span>${esc(l)}${sub ? `<br><span class="muted" style="font-size:var(--t-xs)">${esc(sub)}</span>` : ''}</span><div><i style="width:${Math.max(2, Math.round(100 * n / Math.max(1, max)))}%"></i></div><b>${n}</b></div>`).join('') : `<p class="muted">${emptyMsg || 'Pas encore de données.'}</p>`;
@@ -1141,12 +1155,20 @@ function viewUsage() {
   const letRows = Object.entries(A.l).filter(e => e[1]).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k, n]) => [PD_LETTERS[k] || k, n]);
   const actRows = Object.entries(PD_LETTER_ACTS).map(([k, l]) => [l, A.f(k)]).filter(r => r[1]).sort((a, b) => b[1] - a[1]);
   const srcRows = [['Photo', photo], ['PDF', pdf], ['Texte collé ou exemple', txt]].filter(r => r[1]);
+  const fixLabel = k => { let m;
+    if ((m = k.match(/^org_(.+)_to_(.+)$/))) return `Expéditeur : ${PD_ORGS[m[1]] || (m[1] === 'aucun' ? 'non reconnu' : m[1])} → ${PD_ORGS[m[2]] || (m[2] === 'aucun' ? 'non reconnu' : m[2])}`;
+    if ((m = k.match(/^type_(.+)_to_(.+)$/))) return `Type : ${PD_TYPES[m[1]] || m[1]} → ${PD_TYPES[m[2]] || m[2]}`;
+    if ((m = k.match(/^avis_ko_(.+)$/))) return `Lecture jugée fausse : ${PD_TYPES[m[1]] || m[1]}`;
+    return { montant: 'Montant corrigé', date: 'Date limite corrigée', ht_ttc: 'HT / TTC corrigé' }[k] || k; };
+  const fixRows = Object.entries(A.k).filter(e => e[1]).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => [fixLabel(k), n]);
+  const ok = A.f('avis_ok'), ko = A.f('avis_ko');
   const card = (t, body, note) => `<section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><h2 style="margin:0 0 var(--s-3);font-size:var(--t-lg)">${t}</h2>${body}${note ? `<p class="muted" style="margin:var(--s-3) 0 0;font-size:var(--t-sm)">${note}</p>` : ''}</section>`;
   return head + kpis
     + (top ? `<section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><p class="muted" style="margin:0;font-size:var(--t-sm)">Outil le plus utilisé sur ${usageRange} jours</p><h2 style="margin:4px 0 0;font-size:var(--t-xl)">${esc(top.label)}</h2><p class="muted" style="margin:4px 0 0">${top.n} ${esc(top.unit)}${top.opens ? ' · ' + top.opens + ' ouvertures' : ''}</p></section>` : '')
     + card('Visites par jour', svg, 'Une visite = une ouverture de Paperdecrypt dans un nouvel onglet ou après une longue absence. Les visiteurs qui refusent les statistiques ne sont pas comptés.')
     + card('Classement des outils', bars(toolRows, maxT), 'Barres : nombre d’actions réelles (pas simplement l’ouverture d’un onglet).')
     + `<div class="pd-two">${card('Courriers décodés par type', bars(typeRows, Math.max(1, ...typeRows.map(r => r[1]))))}${card('Expéditeurs les plus fréquents', bars(orgRows, Math.max(1, ...orgRows.map(r => r[1]))))}</div>`
+    + card('Où la lecture se trompe', `<p style="margin:0 0 var(--s-3)"><b>${ok + ko ? pct(ok, ok + ko) : '—'}</b> des lectures jugées justes (${ok} oui, ${ko} non).</p>` + bars(fixRows, Math.max(1, ...fixRows.map(r => r[1])), 'Aucune correction pour l’instant.'), 'Chaque correction faite par un visiteur apparaît ici, de façon anonyme. Les plus fréquentes servent à améliorer les règles de lecture à la prochaine version.')
     + `<div class="pd-two">${card('Comment les courriers arrivent', bars(srcRows, Math.max(1, ...srcRows.map(r => r[1]))), `Photo ou PDF : ${pct(photo + pdf, decoded)} des courriers.`)}${card('Lettres', bars(letRows, Math.max(1, ...letRows.map(r => r[1]))) + (actRows.length ? `<h3 style="margin:var(--s-4) 0 0;font-size:var(--t-md)">Ce qu’ils en font</h3>` + bars(actRows, Math.max(1, ...actRows.map(r => r[1]))) : ''))}</div>`
     + `<p class="muted" style="font-size:var(--t-xs)">Données anonymes : compteurs par jour, sans texte de courrier, sans identité, sans cookie. Collection <code>qt_usage</code>.</p>`;
 }

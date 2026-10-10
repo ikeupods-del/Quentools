@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Paperdecrypt : publicité</title>
+<style>
+@font-face{font-family:B;src:url("../../assets/fonts/bricolage.woff2");font-weight:200 800}
+@font-face{font-family:I;src:url("../../assets/fonts/inter.woff2");font-weight:100 900}
+*{box-sizing:border-box}
+:root{--c1:#ffe14d;--c2:#7aa5ff;--ink:#f6f1e8;--bg:#0b0a10;--red:#ff5a6e;--green:#4cc08a}
+body{margin:0;background:#000}
+body.port{--W:1080px;--H:1920px;--ph:1190px;--h1:116px;--h2:66px;--gap:46px}
+body.land{--W:1920px;--H:1080px;--ph:800px;--h1:100px;--h2:50px;--gap:40px}
+.stage{position:relative;width:var(--W);height:var(--H);overflow:hidden;font-family:I,system-ui,sans-serif;color:var(--ink);
+  background:radial-gradient(1100px 800px at 82% 36%,#7aa5ff30,transparent 70%),radial-gradient(800px 700px at 0% 100%,#ffe14d1c,transparent 70%),var(--bg)}
+.scene{position:absolute;inset:0;display:flex;opacity:0}
+.port .scene{flex-direction:column;padding:140px 84px 110px;gap:30px}
+.land .scene{flex-direction:row;align-items:center;padding:96px 132px;gap:70px}
+.txt{flex:none}.land .txt{width:44%}.land .vis{align-self:stretch}
+.vis{position:relative;flex:1;display:grid;place-items:center;min-height:0}
+.kick{display:inline-block;border:3px solid var(--c1);color:var(--c1);border-radius:999px;padding:10px 26px;font:700 28px I;margin-bottom:26px;letter-spacing:.01em}
+h1{font:800 var(--h1)/1.02 B;letter-spacing:-.03em;margin:0}
+h2{font:700 var(--h2)/1.12 B;letter-spacing:-.02em;margin:22px 0 0;color:rgba(246,241,232,.86)}
+.w{display:inline-block;white-space:pre}
+.g{background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.y{color:var(--c1)}
+svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.12em}
+/* téléphone */
+.phone{position:relative;height:var(--ph);width:calc(var(--ph)*.4621 + 24px);border:12px solid #1c1b24;border-radius:78px;background:#000;overflow:hidden;box-shadow:0 50px 110px -20px #000,0 0 0 2px #35333f}
+.phone .scr{position:absolute;inset:0;overflow:hidden}
+.phone img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:top}
+/* courriers */
+.paper{position:absolute;width:330px;height:440px;background:#fbf8f1;border-radius:10px;box-shadow:0 30px 60px -20px #000a;color:#222;padding:30px 28px;overflow:hidden}
+.paper i{display:block;height:9px;border-radius:5px;background:#cfc9bb;margin:0 0 15px}
+.paper b{display:block;font:800 22px B;margin:0 0 20px;color:#333}
+.stamp{position:absolute;border:7px double var(--red);color:var(--red);font:800 44px B;padding:6px 18px;border-radius:12px;letter-spacing:.04em;background:#fbf8f1d9}
+.q{position:absolute;font:800 150px B;color:var(--c1)}
+/* cartes d'info */
+.cards{display:grid;gap:22px;width:100%;max-width:880px}
+.card{display:flex;align-items:center;gap:26px;background:#ffffff12;border:2px solid #ffffff22;border-radius:26px;padding:26px 32px;backdrop-filter:none}
+.card .ic{flex:none;width:84px;height:84px;border-radius:22px;background:var(--c1);color:#111;display:grid;place-items:center;font-size:46px}
+.card small{display:block;font:600 26px I;color:#f6f1e8a8;margin-bottom:4px}
+.card b{display:block;font:800 40px/1.12 B}
+.chip{display:inline-block;border-radius:14px;padding:6px 18px;font:800 40px B}
+.chip.ht{background:#ffffff1a;color:#f6f1e8a0;text-decoration:line-through}
+.chip.ttc{background:var(--c1);color:#111}
+/* fiche de paie */
+.slip{width:100%;max-width:900px;background:#fbf8f1;color:#222;border-radius:20px;padding:34px 38px;box-shadow:0 40px 90px -30px #000}
+.slip h4{margin:0 0 18px;font:800 30px B;display:flex;justify-content:space-between}
+.slip .r{display:flex;justify-content:space-between;gap:12px;padding:15px 10px;border-bottom:2px solid #e4ded0;font:600 32px I;position:relative}
+.slip .r.hs{background:#ffe14d55;border-radius:8px;border-bottom-color:transparent}
+.slip .r span:last-child{font-variant-numeric:tabular-nums;font-weight:800}
+.bubble{position:absolute;background:var(--c2);color:#10131c;border-radius:30px 30px 6px 30px;padding:18px 28px;font:800 36px B}
+.alert{position:absolute;background:var(--red);color:#fff;border-radius:26px;padding:24px 34px;font:800 44px/1.1 B;box-shadow:0 25px 60px -20px #000}
+/* état des lieux */
+.photo{position:relative;width:100%;max-width:820px;aspect-ratio:4/3;border-radius:26px;overflow:hidden;border:6px solid #ffffff30;background:#2b2f3a}
+.photo svg.room{position:absolute;inset:0;width:100%;height:100%}
+.vf{position:absolute;inset:26px;border:0}.vf i{position:absolute;width:56px;height:56px;border:6px solid #fff;opacity:.9}
+.vf i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}.vf i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+.vf i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}.vf i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+.tstamp{position:absolute;right:20px;bottom:20px;background:#000b;color:var(--c1);font:800 30px/1.35 Arial,sans-serif;padding:12px 20px;border-radius:12px;min-width:370px;font-variant-numeric:tabular-nums;white-space:pre}
+.badge{position:absolute;display:flex;align-items:center;gap:14px;background:var(--green);color:#06210f;border-radius:999px;padding:16px 30px;font:800 34px B;box-shadow:0 25px 50px -20px #000}
+.map{position:absolute;width:330px;height:240px;border-radius:22px;border:5px solid #ffffff30;background:#e9e4d8;overflow:hidden;box-shadow:0 30px 60px -20px #000}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.ping{position:absolute;left:50%;top:48%;width:34px;height:34px;margin:-17px;border-radius:50%;background:var(--red);border:5px solid #fff}
+.ring{position:absolute;left:50%;top:48%;width:34px;height:34px;margin:-17px;border-radius:50%;border:5px solid var(--red)}
+.cmp{position:absolute;display:flex;align-items:center;gap:18px;background:#ffffff14;border:2px solid #ffffff2a;border-radius:24px;padding:20px 28px;font:700 32px I}
+.cmp b{font:800 34px B}
+.cmp .a{color:var(--green)}.cmp .z{color:var(--red)}
+/* tuiles */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;width:100%;max-width:930px}
+.tile{border-radius:30px;background:#ffffff12;border:2px solid #ffffff24;padding:34px 20px;text-align:center;font:800 33px/1.15 B}
+.tile .t{display:grid;place-items:center;width:110px;height:110px;margin:0 auto 20px;border-radius:30px;background:var(--c1);color:#111;font-size:60px}
+.land .tiles{max-width:1000px}
+.land .photo{max-width:640px}
+#s8 .txt{margin:auto;text-align:center;width:auto}
+#s8 .endlogo{justify-content:center}
+/* final */
+.endlogo{display:flex;align-items:center;gap:28px;margin-bottom:34px}
+.url{display:inline-block;margin-top:36px;background:var(--c1);color:#111;border-radius:999px;padding:20px 54px;font:800 54px B}
+.legal{position:absolute;left:0;right:0;bottom:46px;text-align:center;font:500 27px I;color:#f6f1e888;padding:0 90px}
+.port .kick{font-size:34px;padding:12px 30px}
+.port .cards{max-width:940px;gap:28px}.port .card{padding:36px 40px;gap:34px;border-radius:32px}.port .card .ic{width:118px;height:118px;font-size:64px;border-radius:30px}.port .card small{font-size:34px}.port .card b{font-size:52px}.port .chip{font-size:52px}
+.port .slip{max-width:960px;padding:44px 48px}.port .slip h4{font-size:38px}.port .slip .r{font-size:38px;padding:22px 12px}
+.port .bubble{font-size:46px;padding:24px 36px}.port .alert{font-size:58px;padding:30px 42px}.port .badge{font-size:42px;padding:20px 40px}
+.port .photo{max-width:900px;top:-150px}.port .tstamp{font-size:36px;min-width:440px}.port .map{width:340px;height:230px}.port .cmp{font-size:26px;padding:20px 22px;gap:9px}.port .cmp b{font-size:30px}
+.port .tiles{grid-template-columns:repeat(2,1fr);max-width:940px;gap:32px}.port .tile{font-size:46px;padding:44px 24px;border-radius:38px}.port .tile .t{width:150px;height:150px;font-size:82px;border-radius:40px;margin-bottom:26px}
+.port .paper{width:400px;height:530px;padding:36px 34px}.port .paper i{height:11px;margin-bottom:19px}.port .paper b{font-size:27px}.port .stamp{font-size:42px}
+.port #lock{transform-origin:center}
+.land .legal{font-size:28px}
+.land .vis{zoom:1.2}
+.land .txt{width:44%}
+.land #h5{font-size:86px}
+.land .photo{max-width:560px;top:50px}
+.bar{position:absolute;left:0;bottom:0;height:8px;background:var(--c1);width:0}
+.wipe{position:absolute;top:0;bottom:0;left:0;width:60%;background:linear-gradient(90deg,transparent,var(--c1) 40%,var(--c2));opacity:0;transform:translateX(-120%) skewX(-12deg)}
+.shine{position:absolute;inset:0;background:#fff;opacity:0}
+</style></head>
+<body>
+<div class="stage" id="stage">
+  <!-- S0 accroche -->
+  <section class="scene" id="s0">
+    <div class="txt"><h1 id="h0"></h1></div>
+    <div class="vis" id="v0"></div>
+  </section>
+  <!-- S1 photo -->
+  <section class="scene" id="s1">
+    <div class="txt"><span class="kick" id="k1">Étape 1</span><h1 id="h1"></h1><h2 id="h1b"></h2></div>
+    <div class="vis"><div class="phone" id="ph1"><div class="scr" id="cam"></div><div class="scr" id="res1"><img src="../../assets/social/shots/pd-decode.jpg" alt=""></div><div class="shine" id="flash"></div></div></div>
+  </section>
+  <!-- S2 explication -->
+  <section class="scene" id="s2">
+    <div class="txt"><span class="kick">Étape 2</span><h1 id="h2t"></h1><h2 id="h2b"></h2></div>
+    <div class="vis"><div class="cards" id="cards"></div></div>
+  </section>
+  <!-- S3 rappels -->
+  <section class="scene" id="s3">
+    <div class="txt"><span class="kick">Étape 3</span><h1 id="h3"></h1><h2 id="h3b"></h2></div>
+    <div class="vis" id="v3"><div class="phone" id="ph3"><div class="scr"><img src="../../assets/social/shots/pd-rappels.jpg" alt=""></div></div></div>
+  </section>
+  <!-- S4 fiche de paie -->
+  <section class="scene" id="s4">
+    <div class="txt"><span class="kick">Fiche de paie</span><h1 id="h4"></h1></div>
+    <div class="vis" id="v4"></div>
+  </section>
+  <!-- S5 état des lieux -->
+  <section class="scene" id="s5">
+    <div class="txt"><span class="kick">Location</span><h1 id="h5"></h1><h2 id="h5b"></h2></div>
+    <div class="vis" id="v5"></div>
+  </section>
+  <!-- S6 tuiles -->
+  <section class="scene" id="s6">
+    <div class="txt"><h1 id="h6"></h1></div>
+    <div class="vis"><div class="tiles" id="tiles"></div></div>
+  </section>
+  <!-- S7 confidentialité -->
+  <section class="scene" id="s7">
+    <div class="txt"><span class="kick">Confidentialité</span><h1 id="h7"></h1><h2 id="h7b"></h2></div>
+    <div class="vis" id="v7"></div>
+  </section>
+  <!-- S8 final -->
+  <section class="scene" id="s8">
+    <div class="txt">
+      <div class="endlogo" id="lg"></div>
+      <h1 id="h8"></h1><h2 id="h8b"></h2>
+      <div class="url" id="url">quentools.fr</div>
+    </div>
+    <div class="legal" id="legal">Paperdecrypt aide à comprendre et à organiser vos papiers. Il peut se tromper et ne remplace pas l’avis d’un professionnel. Seul un état des lieux signé par les deux parties fait foi.</div>
+  </section>
+  <div class="wipe" id="wipe"></div>
+  <div class="bar" id="bar"></div>
+</div>
+<script>
+const FMT = new URLSearchParams(location.search).get('fmt') === 'land' ? 'land' : 'port';
+document.body.className = FMT;
+const $ = s => document.querySelector(s);
+const DUR = 30, ANIMS = [], TYPERS = [], CUES = [];
+const EASE = 'cubic-bezier(.2,.8,.2,1)', BACK = 'cubic-bezier(.34,1.56,.64,1)', LIN = 'linear';
+function an(el, kf, t0, d, ease = EASE, fill = 'both') { const a = el.animate(kf, { duration: d * 1000, delay: t0 * 1000, easing: ease, fill }); a.pause(); ANIMS.push(a); return a; }
+const cue = (t, k) => CUES.push({ t, k });
+const NB = ' ';
+// Mots animés : chaque mot jaillit à son temps
+function words(el, text, t0, step = 0.14, cls = {}) {
+  el.innerHTML = '';
+  text.split(' ').forEach((w, i) => { const s = document.createElement('span'); s.className = 'w' + (cls[i] ? ' ' + cls[i] : ''); s.textContent = w.replace(/_/g, NB) + ' '; el.appendChild(s);
+    an(s, [{ opacity: 0, transform: 'translateY(46px) scale(.9)' }, { opacity: 1, transform: 'none' }], t0 + i * step, .34, BACK); });
+}
+// Scène : apparition/disparition
+function scene(id, t0, t1) { const el = $('#' + id); an(el, [{ opacity: 0, offset: 0 }, { opacity: 1, offset: .07 }, { opacity: 1, offset: .93 }, { opacity: 0, offset: 1 }], t0, t1 - t0, LIN); an(el, [{ transform: 'scale(1.035)' }, { transform: 'scale(1)' }], t0, t1 - t0, LIN); return el; }
+const pop = (el, t, d = .4, from = .6) => an(el, [{ opacity: 0, transform: `scale(${from})` }, { opacity: 1, transform: 'none' }], t, d, BACK);
+const slide = (el, t, dx = 0, dy = 60, d = .45) => an(el, [{ opacity: 0, transform: `translate(${dx}px,${dy}px)` }, { opacity: 1, transform: 'none' }], t, d);
+const ICON = { cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>', bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>', lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', pin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>', check: '<polyline points="20 6 9 17 4 12"/>', camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>', folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>', repeat: '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>', pct: '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>', file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>', shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>', mail: '<path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><polyline points="22,6 12,13 2,6"/>', bld: '<rect x="4" y="2" width="16" height="20" rx="2"/><line x1="9" y1="22" x2="9" y2="18"/><line x1="15" y1="22" x2="15" y2="18"/><line x1="8" y1="6" x2="8" y2="6"/><line x1="12" y1="6" x2="12" y2="6"/><line x1="16" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/>', list: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3" y2="6"/><line x1="3" y1="12" x2="3" y2="12"/><line x1="3" y1="18" x2="3" y2="18"/>', euro: '<path d="M18 7a7 7 0 1 0 0 10"/><line x1="4" y1="10" x2="14" y2="10"/><line x1="4" y1="14" x2="14" y2="14"/>' };
+const ic = k => `<svg class="i" viewBox="0 0 24 24">${ICON[k]}</svg>`;
+const LOGO = '<svg width="120" height="120" viewBox="0 0 64 64"><rect x="1" y="1" width="62" height="62" rx="17" fill="#5b3df5" stroke="rgba(255,255,255,.5)" stroke-width="2"/><circle cx="30" cy="30" r="14" fill="none" stroke="#fff" stroke-width="7"/><path d="M37 37l12 12" stroke="#d7f24a" stroke-width="8" stroke-linecap="round"/></svg>';
+
+/* ---------------- S0 : accroche (0 – 3 s) ---------------- */
+{
+  scene('s0', 0, 3.05);
+  words($('#h0'), `Un_courrier que_vous ne comprenez pas_?`, .15, .2, { 0: '', 4: 'g', 5: 'g' });
+  const v = $('#v0'); v.style.position = 'relative';
+  const L = [[-230, -120, -9, 'MISE EN DEMEURE'], [170, 20, 7, 'DERNIER RAPPEL'], [-80, 250, -3, 'URGENT'], [250, -190, 12, 'AMENDE']];
+  L.forEach(([x, y, r, tx], i) => {
+    const p = document.createElement('div'); p.className = 'paper'; p.style.cssText = `left:calc(50% - 165px + ${x}px);top:calc(50% - 220px + ${y}px);z-index:${i}`;
+    p.innerHTML = `<b>${i % 2 ? 'Avis' : 'Courrier'} n° ${4821 + i * 37}</b><i style="width:90%"></i><i></i><i style="width:75%"></i><i></i><i style="width:60%"></i><i></i><i style="width:85%"></i><i style="width:50%"></i>`;
+    v.appendChild(p);
+    an(p, [{ opacity: 0, transform: `translateY(-300px) rotate(${r + 25}deg) scale(1.5)` }, { opacity: 1, transform: `rotate(${r}deg)` }], i * .5, .32, BACK); cue(i * .5 + .12, 'thump');
+    const s = document.createElement('div'); s.className = 'stamp'; s.textContent = tx; s.style.cssText = `left:50%;top:50%;z-index:${10 + i};margin:${-30}px 0 0 ${-130}px;transform:rotate(${-r * 1.5}deg)`;
+    p.appendChild(s); s.style.left = '20px'; s.style.top = '170px'; s.style.margin = '0'; s.style.font = '800 34px B';
+    an(s, [{ opacity: 0, transform: `scale(2.2) rotate(${-r * 1.5}deg)` }, { opacity: 1, transform: `scale(1) rotate(${-r * 1.5}deg)` }], i * .5 + .3, .22, BACK);
+  });
+  ['?', '?', '?'].forEach((c, i) => { const q = document.createElement('div'); q.className = 'q'; q.textContent = c; q.style.cssText = `left:${[8, 78, 52][i]}%;top:${[8, 22, 80][i]}%;font-size:${[170, 130, 150][i]}px;z-index:30`; v.appendChild(q); pop(q, 1.7 + i * .2, .4, .2); an(q, [{ transform: 'translateY(0)' }, { transform: 'translateY(-26px)' }], 2.0, 1, 'ease-in-out'); });
+  cue(2.9, 'whoosh');
+}
+/* ---------------- S1 : photo (3 – 6 s) ---------------- */
+{
+  scene('s1', 3, 6.05);
+  words($('#h1'), `Prenez-le_en photo.`, 3.15, .16, { 2: 'g' });
+  const h = $('#h1b'); h.textContent = 'Ou importez un PDF.'; slide(h, 3.7, 0, 30);
+  pop($('#ph1'), 3.05, .5, .85); an($('#ph1'), [{ transform: 'rotate(-4deg)' }, { transform: 'rotate(0)' }], 3.05, 1.8);
+  const cam = $('#cam'); cam.style.background = 'linear-gradient(#262a35,#14161d)';
+  cam.innerHTML = `<div class="paper" style="left:50%;top:50%;margin:-250px 0 0 -190px;width:380px;height:500px;transform:rotate(-3deg)"><b>CAF · Avis de paiement</b><i></i><i style="width:80%"></i><i></i><i style="width:65%"></i><i></i><i style="width:90%"></i><i style="width:55%"></i><i></i><i style="width:70%"></i></div>
+    <div class="vf"><i></i><i></i><i></i><i></i></div><div id="scan" style="position:absolute;left:8%;right:8%;height:8px;background:var(--c1);box-shadow:0 0 40px 12px #ffe14d99;border-radius:4px;top:18%"></div>`;
+  an($('#scan'), [{ top: '18%', opacity: 0 }, { top: '20%', opacity: 1, offset: .08 }, { top: '78%', opacity: 1, offset: .92 }, { top: '80%', opacity: 0 }], 3.8, 1.05, 'ease-in-out'); cue(3.8, 'scan');
+  an($('#flash'), [{ opacity: 0 }, { opacity: .95, offset: .3 }, { opacity: 0 }], 4.9, .28, LIN); cue(4.9, 'shutter');
+  an($('#res1'), [{ opacity: 0, transform: 'scale(1.12)' }, { opacity: 1, transform: 'none' }], 5.05, .45); cue(5.2, 'ding');
+  an($('#cam'), [{ opacity: 1 }, { opacity: 0 }], 5.05, .45, LIN, 'forwards');
+  cue(3.1, 'pop'); cue(5.9, 'whoosh');
+}
+/* ---------------- S2 : explication (6 – 10 s) ---------------- */
+{
+  scene('s2', 6, 10.05);
+  words($('#h2t'), `On_vous explique.`, 6.15, .16, { 1: 'g' });
+  const h = $('#h2b'); h.textContent = 'Sans jargon, en une page.'; slide(h, 6.6, 0, 30);
+  const C = [['bld', 'Qui vous écrit', 'La CAF', 6.55], ['list', 'Ce qu’on vous demande', 'Vos 3 derniers bulletins de salaire', 7.3], ['cal', 'Avant quand', 'Le 20 octobre : dans 10 jours', 8.05]];
+  const cards = $('#cards');
+  C.forEach(([i, a, b, t]) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = `<div class="ic">${ic(i)}</div><div><small>${a}</small><b>${b}</b></div>`; cards.appendChild(d); slide(d, t, 90, 0, .42); cue(t + .05, 'tick'); });
+  const d = document.createElement('div'); d.className = 'card'; d.style.borderColor = '#ffe14d99'; d.innerHTML = `<div class="ic">${ic('euro')}</div><div><small>Combien : HT ou TTC ?</small><b><span class="chip ht" id="cht">HT 540,83 €</span> <span class="chip ttc" id="cttc">TTC 649,00 €</span></b></div>`;
+  cards.appendChild(d); slide(d, 8.8, 90, 0, .42); cue(8.85, 'tick');
+  an($('#cttc'), [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }], 9.15, .5, BACK); cue(9.15, 'ding');
+  an($('#cht'), [{ opacity: 1 }, { opacity: .45 }], 9.1, .3, LIN);
+  cue(9.9, 'whoosh');
+}
+/* ---------------- S3 : rappels et lettre (10 – 13 s) ---------------- */
+{
+  scene('s3', 10, 13.05);
+  words($('#h3'), `On_vous rappelle.`, 10.15, .16, { 1: 'g' });
+  const h = $('#h3b'); h.textContent = 'Et la réponse est déjà écrite.'; slide(h, 10.6, 0, 30);
+  pop($('#ph3'), 10.1, .5, .85); an($('#ph3'), [{ transform: 'translateY(30px)' }, { transform: 'none' }], 10.1, 2.9, 'ease-out');
+  const v = $('#v3'); v.style.position = 'relative';
+  const bell = document.createElement('div'); bell.style.cssText = 'position:absolute;right:6%;top:6%;width:150px;height:150px;border-radius:50%;background:var(--c1);color:#111;display:grid;place-items:center;font-size:84px;z-index:5'; bell.innerHTML = ic('bell'); v.appendChild(bell);
+  pop(bell, 10.55, .45, .3); an(bell, [{ rotate: '0deg' }, { rotate: '-18deg' }, { rotate: '16deg' }, { rotate: '-12deg' }, { rotate: '8deg' }, { rotate: '0deg' }], 10.9, .9, 'ease-in-out'); cue(10.6, 'bell');
+  const l = document.createElement('div'); l.className = 'paper'; l.style.cssText = 'left:2%;bottom:4%;width:300px;height:380px;z-index:5;transform:rotate(-6deg)'; l.innerHTML = '<b>Lettre prête ✓</b><i></i><i style="width:80%"></i><i></i><i style="width:60%"></i><i></i><i style="width:75%"></i>'; v.appendChild(l);
+  an(l, [{ opacity: 0, transform: 'translate(-120px,60px) rotate(-18deg)' }, { opacity: 1, transform: 'rotate(-6deg)' }], 11.4, .5, BACK); cue(11.45, 'pop');
+  cue(12.9, 'whoosh');
+}
+/* ---------------- S4 : fiche de paie (13 – 17 s) ---------------- */
+{
+  scene('s4', 13, 17.05);
+  words($('#h4'), `Vos_heures supp sont-elles comptées_?`, 13.15, .13, { 1: 'g', 2: 'g' });
+  const v = $('#v4'); v.style.position = 'relative';
+  v.innerHTML = `<div class="slip" id="slip"><h4><span>BULLETIN DE PAIE</span><span>Septembre 2026</span></h4>
+    <div class="r"><span>Salaire de base · 151,67 h</span><span>1 820,04 €</span></div>
+    <div class="r hs" id="hs1"><span>Heures supp. 25 % · 8 h</span><span>120,00 €</span></div>
+    <div class="r hs" id="hs2"><span>Heures supp. 50 % · 2 h</span><span>36,00 €</span></div>
+    <div class="r"><span>Net versé</span><span>1 520,08 €</span></div></div>
+    <div class="badge" id="paid" style="background:var(--c1);color:#111;left:0;top:0">Payées : 10 h</div>
+    <div class="bubble" id="bub">J’en ai fait 14 h</div>
+    <div class="alert" id="alr">${ic('bell').replace('bell','')}⚠${NB}Il en manque 4${NB}h</div>
+    <div class="badge" id="lt" style="background:var(--c2);color:#10131c;right:0;bottom:2%">${ic('mail')}Lettre prête</div>`;
+  pop($('#slip'), 13.2, .5, .9); cue(13.25, 'pop');
+  an($('#hs1'), [{ backgroundColor: '#ffe14d00' }, { backgroundColor: '#ffe14daa' }, { backgroundColor: '#ffe14d55' }], 13.9, .5, LIN); cue(14.0, 'tick');
+  an($('#hs2'), [{ backgroundColor: '#ffe14d00' }, { backgroundColor: '#ffe14daa' }, { backgroundColor: '#ffe14d55' }], 14.4, .5, LIN); cue(14.5, 'tick');
+  pop($('#paid'), 14.9, .4, .5); cue(14.95, 'ding');
+  const bub = $('#bub'), alr = $('#alr'), lt = $('#lt');
+  bub.style.cssText += (FMT === 'port' ? 'right:0;top:70%' : 'right:0;top:2%'); alr.style.cssText += (FMT === 'port' ? 'left:0;bottom:11%' : 'left:0;bottom:6%');
+  slide(bub, 15.25, 60, 0, .35); cue(15.3, 'pop');
+  an(alr, [{ opacity: 0, transform: 'scale(.4) rotate(-8deg)' }, { opacity: 1, transform: 'scale(1) rotate(-3deg)' }], 15.8, .4, BACK); cue(15.85, 'alert');
+  an(alr, [{ rotate: '0deg' }, { rotate: '-2deg' }, { rotate: '2deg' }, { rotate: '0deg' }], 16.3, .4, 'ease-in-out');
+  slide(lt, 16.3, 0, 40, .4); cue(16.35, 'pop'); cue(16.9, 'whoosh');
+}
+/* ---------------- S5 : état des lieux (17 – 21 s) ---------------- */
+{
+  scene('s5', 17, 21.05);
+  words($('#h5'), `État_des lieux : la preuve_dans la poche.`, 17.15, .12, { 5: 'g', 6: 'g', 7: 'g', 8: 'g' });
+  const h = $('#h5b'); h.textContent = 'Photos datées, géolocalisées, certifiées.'; slide(h, 18.1, 0, 30);
+  const v = $('#v5'); v.style.position = 'relative';
+  v.innerHTML = `<div class="photo" id="photo"><svg class="room" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice"><rect width="800" height="600" fill="#cdbfa9"/><rect y="400" width="800" height="200" fill="#a9825a"/><g stroke="#8d6a45" stroke-width="3"><line x1="0" y1="440" x2="800" y2="440"/><line x1="0" y1="490" x2="800" y2="490"/><line x1="0" y1="550" x2="800" y2="550"/><line x1="160" y1="400" x2="60" y2="600"/><line x1="400" y1="400" x2="380" y2="600"/><line x1="640" y1="400" x2="740" y2="600"/></g><rect x="70" y="70" width="300" height="270" rx="8" fill="#fff" stroke="#e8e1d2" stroke-width="14"/><rect x="85" y="85" width="270" height="240" fill="#8fc2f0"/><line x1="220" y1="85" x2="220" y2="325" stroke="#fff" stroke-width="10"/><line x1="85" y1="205" x2="355" y2="205" stroke="#fff" stroke-width="10"/><rect x="520" y="250" width="190" height="130" rx="8" fill="#f1ede3" stroke="#d6cfbf" stroke-width="5"/><g stroke="#d6cfbf" stroke-width="6"><line x1="545" y1="270" x2="545" y2="365"/><line x1="580" y1="270" x2="580" y2="365"/><line x1="615" y1="270" x2="615" y2="365"/><line x1="650" y1="270" x2="650" y2="365"/><line x1="685" y1="270" x2="685" y2="365"/></g><path d="M455 120 q40 -25 85 5" stroke="#b9a98c" stroke-width="7" fill="none"/></svg>
+    <div class="vf"><i></i><i></i><i></i><i></i></div><div class="tstamp" id="ts"></div></div>
+    <div class="badge" id="cert" style="right:-10px;top:-4%">${ic('check')}Date certifiée par un serveur</div>
+    <div class="map" id="map"><svg viewBox="0 0 330 240"><rect width="330" height="240" fill="#e9e4d8"/><g stroke="#fff" stroke-width="14"><line x1="0" y1="80" x2="330" y2="60"/><line x1="120" y1="0" x2="150" y2="240"/><line x1="0" y1="190" x2="330" y2="200"/></g><g stroke="#d6cfbf" stroke-width="4"><line x1="230" y1="0" x2="250" y2="240"/><line x1="0" y1="135" x2="330" y2="130"/></g><rect x="170" y="90" width="50" height="38" fill="#cfc7b4"/><rect x="40" y="100" width="60" height="70" fill="#cfc7b4"/></svg><div class="ring" id="ring"></div><div class="ping"></div></div>
+    <div class="cmp" id="cmp"><span>Entrée</span><b class="a">Bon état</b><span>→</span><span>Sortie</span><b class="z">Dégradé ⚠</b></div>`;
+  const ph = $('#photo'), map = $('#map'), cm = $('#cmp'), cert = $('#cert');
+  map.style.cssText += FMT === 'port' ? 'left:0;bottom:2%' : 'left:0;top:0;width:300px;height:200px'; cm.style.cssText += FMT === 'port' ? 'right:0;bottom:6%' : 'left:0;right:0;bottom:0;justify-content:center;font-size:26px'; cert.style.cssText += FMT === 'port' ? 'right:0;top:0' : 'right:0;top:10px'; if (FMT === 'land') cert.innerHTML = ic('check') + 'Date certifiée';
+  pop(ph, 17.2, .5, .9); an(ph, [{ transform: 'scale(1)' }, { transform: 'scale(1.04)' }], 17.2, 3.8, LIN); cue(17.25, 'pop');
+  an($('#flash') && ph.querySelector('.vf'), [{ opacity: 0 }, { opacity: 1 }], 17.4, .3, LIN);
+  TYPERS.push({ el: $('#ts'), text: '10/10/2026 14:32:05\n45,76405 · 4,83572 (±12 m)', t0: 18.2, cps: 26 }); [18.25, 18.5, 18.75, 19.0, 19.25, 19.5].forEach(t => cue(t, 'type'));
+  cue(17.9, 'shutter'); an(ph, [{ filter: 'brightness(1)' }, { filter: 'brightness(1.6)' }, { filter: 'brightness(1)' }], 17.9, .3, LIN);
+  pop(map, 19.1, .45, .6); cue(19.15, 'pop'); an($('#ring'), [{ transform: 'scale(1)', opacity: .9 }, { transform: 'scale(4.5)', opacity: 0 }], 19.5, 1.0, 'ease-out'); an($('#ring'), [{ opacity: 0 }, { opacity: 0 }], 17, 2.4, LIN);
+  pop(cert, 19.7, .45, .6); cue(19.75, 'ding');
+  slide(cm, 20.15, 0, 40, .4); cue(20.2, 'alert'); cue(20.9, 'whoosh');
+}
+/* ---------------- S6 : tuiles (21 – 24,5 s) ---------------- */
+{
+  scene('s6', 21, 24.55);
+  words($('#h6'), `Et_aussi…`, 21.15, .2, { 1: 'g' }); $('#h6').style.fontSize = FMT === 'port' ? '150px' : '130px';
+  const T = [['shield', 'Garanties et tickets'], ['folder', 'Coffre de documents'], ['repeat', 'Abonnements'], ['pct', 'Calcul HT / TTC'], ['mail', 'Lettres types'], ['file', 'Dossier en PDF']];
+  const g = $('#tiles');
+  T.forEach(([i, t], k) => { const d = document.createElement('div'); d.className = 'tile'; d.innerHTML = `<div class="t">${ic(i)}</div>${t}`; g.appendChild(d); pop(d, 21.25 + k * .5, .4, .5); cue(21.3 + k * .5, 'pop'); });
+  cue(24.4, 'whoosh');
+}
+/* ---------------- S7 : confidentialité (24,5 – 27 s) ---------------- */
+{
+  scene('s7', 24.5, 27.05);
+  words($('#h7'), `Tout_reste sur votre téléphone.`, 24.65, .14, { 1: 'g', 2: 'g', 3: 'g' });
+  const h = $('#h7b'); h.textContent = 'Vos courriers ne partent nulle part.'; slide(h, 25.3, 0, 30);
+  const v = $('#v7');
+  v.innerHTML = `<div id="lock" style="width:400px;height:400px;border-radius:50%;background:var(--c1);color:#111;display:grid;place-items:center;font-size:230px;box-shadow:0 0 0 24px #ffe14d22,0 0 0 56px #ffe14d12">${ic('lock')}</div>`;
+  pop($('#lock'), 24.7, .5, .3); an($('#lock'), [{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], 25.4, .5, BACK); cue(24.75, 'pop'); cue(25.4, 'click'); cue(26.9, 'whoosh');
+}
+/* ---------------- S8 : final (27 – 30 s) ---------------- */
+{
+  scene('s8', 27, 30);
+  $('#lg').innerHTML = LOGO + '<span style="font:800 54px B">QuenTools</span>'; pop($('#lg'), 27.1, .5, .5);
+  words($('#h8'), `Paperdecrypt`, 27.3, .2, { 0: 'g' });
+  const h = $('#h8b'); h.innerHTML = 'Le décodeur de papiers,<br>gratuit.'; slide(h, 27.9, 0, 30);
+  pop($('#url'), 28.4, .5, .6); cue(27.35, 'chime'); cue(28.45, 'pop');
+  slide($('#legal'), 28.6, 0, 20, .6);
+  if (FMT === 'land') { $('#s8').style.cssText += ';justify-content:center'; }
+  else { $('#s8').style.cssText += ';justify-content:center'; }
+}
+// Scènes : ordre de superposition = ordre du document ; barre de progression et balayage de transition
+an($('#bar'), [{ width: '0%' }, { width: '100%' }], 0, DUR, LIN);
+[3, 6, 10, 13, 17, 21, 24.5, 27].forEach(t => an($('#wipe'), [{ opacity: 1, transform: 'translateX(-120%) skewX(-12deg)' }, { opacity: 1, transform: 'translateX(190%) skewX(-12deg)' }], t - .12, .42, 'ease-in', 'none'));
+/* ---------------- Pilotage ---------------- */
+function setT(t) {
+  ANIMS.forEach(a => { a.currentTime = t * 1000; });
+  TYPERS.forEach(o => { const n = Math.max(0, Math.min(o.text.length, Math.floor((t - o.t0) * o.cps))); o.el.textContent = o.text.slice(0, n); o.el.style.visibility = n ? 'visible' : 'hidden'; });
+}
+window.setT = setT; window.CUES = CUES; window.DUR = DUR; window.ready = document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.decode ? i.decode().catch(() => {}) : 0)));
+setT(0);
+</script></body></html>
