@@ -10,7 +10,7 @@ const FAKE = {
 };
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
-  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, permissions: ['camera'] });
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, permissions: ['camera', 'geolocation'], geolocation: { latitude: 45.76405, longitude: 4.83572, accuracy: 12 } });
   await ctx.route('https://quentools.fr/**', r => { let f = path.join(ROOT, new URL(r.request().url()).pathname); if (f.endsWith('/')) f += 'index.html'; try { r.fulfill({ body: fs.readFileSync(f), contentType: f.endsWith('.html') ? 'text/html; charset=utf-8' : 'application/octet-stream' }); } catch (e) { r.fulfill({ status: 404, body: '' }); } });
   await ctx.route(/gstatic\.com\/firebasejs/, r => { const n = r.request().url().split('/').pop(); r.fulfill({ body: FAKE[n] || '', contentType: 'text/javascript' }); });
   await ctx.route(/googlesyndication|jsdelivr/, r => r.abort());
