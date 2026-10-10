@@ -64,30 +64,36 @@ function layout(opts = {}) {
   const el = [], S = 8; let y;
   const put = (text, x, yy, page, size = S) => el.push({ text, x, y: yy, size, page });
   const right = (text, xr, yy, page) => put(text, xr - width(text, S), yy, page);
+  const entete = (page, y0) => {
+    if (opts.deuxLignes) {
+      const mid = (k) => X[k] - 20;
+      put('Désignation', LAB, y0 + 10, page);
+      Object.keys(HEAD).forEach(k => { const [a, b] = k === 'tauxSal' ? ['Taux', 'salarial'] : k === 'partEmp' ? ['Part', 'employeur'] : [HEAD[k], null]; put(a, mid(k) - width(a, S) / 2, y0, page); if (b) put(b, mid(k) - width(b, S) / 2, y0 + 10, page); });
+      return y0 + 26;
+    }
+    put('Désignation', LAB, y0, page);
+    Object.keys(HEAD).forEach(k => put(HEAD[k], X[k] - 20 - width(HEAD[k], S) / 2, y0, page));
+    return y0 + 16;
+  };
+  const ligne = (r, yy, page) => { put(r.label || r.total, LAB, yy, page); ['nombre', 'base', 'tauxSal', 'gain', 'retenue', 'partEmp'].forEach(k => { if (r[k] !== undefined && r[k] !== null) right(f2(r[k]), X[k], yy, page); }); };
   put('BULLETIN DE PAIE', 40, 50, 1, 12); put('Période : du 01/01/2025 au 31/01/2025', 40, 70, 1); put('Janvier 2025', 400, 50, 1, 12);
-  y = 120;
-  if (opts.deuxLignes) {
-    const mid = (k) => X[k] - 20;
-    put('Désignation', LAB, y + 10, 1);
-    Object.keys(HEAD).forEach(k => { const [a, b] = k === 'tauxSal' ? ['Taux', 'salarial'] : k === 'partEmp' ? ['Part', 'employeur'] : [HEAD[k], null]; put(a, mid(k) - width(a, S) / 2, y, 1); if (b) put(b, mid(k) - width(b, S) / 2, y + 10, 1); });
-    y += 26;
-  } else {
-    put('Désignation', LAB, y, 1);
-    Object.keys(HEAD).forEach(k => put(HEAD[k], X[k] - 20 - width(HEAD[k], S) / 2, y, 1));
-    y += 16;
-  }
-  const rowsOut = [];
-  P1.forEach(r => {
-    put(r.label || r.total, LAB, y, 1);
-    ['nombre', 'base', 'tauxSal', 'gain', 'retenue', 'partEmp'].forEach(k => { if (r[k] !== undefined && r[k] !== null) right(f2(r[k]), X[k], y, 1); });
-    y += 13;
-  });
-  y = 90;
+  y = entete(1, 120);
+  // suite : les deux dernières lignes (total des cotisations, titre de transport) passent sur la page 2, qui reprend l'en-tête ; doublon : photo qui recouvre le bas de la page 1
+  const rows1 = opts.sansBrut ? P1.filter(r => r.total !== 'Total brut') : P1;
+  const coupe = opts.suite ? rows1.findIndex(r => r.total && /cotisations/.test(r.total)) : rows1.length;
+  rows1.slice(0, coupe).forEach(r => { ligne(r, y, 1); y += 13; });
+  y = 90; if (coupe < rows1.length) { y = entete(2, 90) + 4; if (opts.doublon) rows1.slice(coupe - 5, coupe).forEach(r => { ligne(r, y, 2); y += 13; }); rows1.slice(coupe).forEach(r => { ligne(r, y, 2); y += 13; }); y += 20; }
   P2.forEach(r => {
     if (r.pas) { put('Impôt prélevé à la source', LAB, y, 2); right(f2(1861.16), X.base, y, 2); right('0,00', X.tauxSal - 12, y, 2); put('%', X.tauxSal - 8, y, 2); right('0,00', X.retenue, y, 2); }
     else { put(r.solo, LAB, y, 2); right(f2(r.v), X[r.col], y, 2); }
     y += 16;
   });
+  if (opts.cumul) { // tableau « Cumuls » : en-tête puis lignes Période / Année
+    y += 12; const H = [['Cumuls', 40], ['Salaire brut', 120], ['Ch. salariales', 190], ['Ch. patronales', 255], ['Av. en nature', 320], ['Hres travaillées', 385], ['Hres suppl.', 455], ['Net Social', 520]];
+    H.forEach(([t, x]) => put(t, x - width(t, S) / 2, y, 2)); y += 14;
+    [['Période', 'Année']].flat().forEach(lab => { put(lab, 40, y, 2); [2330.93, 473.77, 375.95, 0, 162.52, 17.85, 1857.16].forEach((v, i) => right(f2(v), [140, 208, 273, 338, 403, 473, 538][i], y, 2)); y += 12; });
+  }
+  if (opts.inverse) el.forEach(e => { e.page = 3 - e.page; });
   return el;
 }
 // A. éléments → mots (comme le ferait pdf.js)
@@ -156,6 +162,29 @@ if (require.main !== module) return;   // utilisé comme bibliothèque par essai
 const variantes = { 'A (une ligne d\'en-tête)': {}, 'A (en-tête sur deux lignes)': { deuxLignes: true } };
 Object.entries(variantes).forEach(([nom, o]) => verifier(nom, run('readPayslipWords(__v)', wordsA(layout(o)))));
 
+// ---- 2 bis. Fiche sur plusieurs images : la suite est reconnue comme telle ----
+const TOT = r => ({ brut: r.totals.brut, cotSal: r.totals.cotSal, cotPat: r.totals.cotPat, netAvant: r.totals.netAvant, netImposable: r.totals.netImposable, netPayer: r.totals.netPayer, netSocial: r.totals.netSocial });
+const ATT = { brut: 2330.93, cotSal: 473.77, cotPat: 375.95, netAvant: 1861.16, netImposable: 1672.06, netPayer: 1861.16, netSocial: 1857.16 };
+const CAS = {
+  'suite sur la page 2 (en-tête repris)': { suite: true },
+  'suite, images données à l\'envers': { suite: true, inverse: true },
+  'photos qui se recouvrent': { suite: true, doublon: true },
+  'recouvrement et ordre inversé': { suite: true, doublon: true, inverse: true },
+  'total brut illisible, repris du tableau Cumuls': { suite: true, cumul: true, sansBrut: true },
+  'deux lignes d\'en-tête + suite': { suite: true, deuxLignes: true }
+};
+Object.entries(CAS).forEach(([nom, o]) => {
+  const r = run('readPayslipWords(__v)', wordsA(layout(o)));
+  eq(nom + ' : totaux', TOT(r), Object.assign({}, ATT));
+  eq(nom + ' : lecture fiable', r.fiable, true);
+  eq(nom + ' : une seule fiche, page 1 = début, page 2 = suite', r.pages.map(p => p.role), ['debut', 'suite']);
+  if (o.inverse) eq(nom + ' : ordre corrigé', r.ordreCorrige, true);
+  if (o.doublon) { c.__lec = r; const g = vm.runInContext('payslipFromLecture(__lec)', c); eq(nom + ' : lignes vues deux fois comptées une fois', g.colonnes.employeur.filter(x => x.label === 'Retraite complémentaire T1').length, 1); }
+});
+{ // le tableau Cumuls contredit le total lu : on le signale au lieu de choisir
+  const r = run('readPayslipWords(__v)', wordsA(layout({ suite: true, cumul: true }).map(e => (e.text === '473,77' && e.page === 2 && e.y > 200 ? Object.assign({}, e, { text: '478,77' }) : e))));
+  eq('Cumuls contradictoire : signalé', r.warn.some(w => /Cumuls/.test(w)), true);
+}
 const pdfjs = findPdfjs();
 (async () => {
   if (!pdfjs) console.log('· PDF réel : ignoré (pdfjs-dist introuvable ; npm install --no-save pdfjs-dist@3.11.174)');

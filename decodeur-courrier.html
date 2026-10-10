@@ -3759,6 +3759,21 @@ function readTotals(rows) {
       if (c && c.v > 0) { t.netSocial = c.v; at.netSocial = { page: c.r.page, y: c.r.y }; }
     }
   }
+  // Tableau « Cumuls » (ligne « Période ») : brut, cotisations salariales et patronales, … net social. Sert de seconde source, utile quand le total est mal lu.
+  {
+    const pi = rows.findIndex(r => !r.header && /^periode\b/.test(r.n) && r.nums.length >= 3), cu = {};
+    if (pi >= 0) {
+      const r = rows[pi], hdr = rows.slice(Math.max(0, pi - 3), pi).filter(x => x.page === r.page), HW = [['brut', /^brut$/], ['cotSal', /^salariales?$/], ['cotPat', /^patronales?$/], ['netSocial', /^social$/]], pos = {};
+      hdr.forEach(x => x.words.forEach(w => HW.forEach(([k, re]) => { if (re.test(norm(w.t).replace(/[^a-z]/g, ''))) pos[k] = (w.x0 + w.x1) / 2; })));
+      if (Object.keys(pos).length >= 2) Object.keys(pos).forEach(k => { const b = r.nums.map(n => ({ v: n.v, d: Math.abs((n.x0 + n.x1) / 2 - pos[k]) })).sort((x, y) => x.d - y.d)[0]; if (b && b.d <= 6 * r.h) cu[k] = b.v; });
+      else if (r.nums.length === 7) { cu.brut = r.nums[0].v; cu.cotSal = r.nums[1].v; cu.cotPat = r.nums[2].v; cu.netSocial = r.nums[6].v; }   // ordre fixe des colonnes Sage
+      Object.keys(cu).forEach(k => {
+        if (!(cu[k] > 0)) return;
+        if (t[k] === null) { t[k] = cu[k]; at[k] = { page: r.page, y: r.y, cumul: true }; }
+        else if (t[k] !== cu[k]) { warn.push(k + " : le tableau « Cumuls » indique " + cu[k] + ' et le total ' + t[k]); }
+      });
+    }
+  }
   // Prélèvement à la source : base, taux (%) et montant, lus sur la même ligne
   const prs = body.filter(r => /impot (preleve )?(a la source|sur le revenu)|prelevement a la source|\bpas\b/.test(r.n) && !/avant|hors|net|imposable|csg|crds|deductible|cotisation|cumul/.test(r.n) && numsOf(r).length);
   const pr = prs.find(r => /preleve|source/.test(r.n)) || prs[0];
@@ -3779,7 +3794,7 @@ function checkPayslip(rows, tot) {
   const body = rows.filter(r => !r.header), fmt = v => v.toFixed(2).replace('.', ',');
   const bi = body.findIndex(r => r.n && /^(total |salaire )?brut\b|^total brut/.test(r.n) && !/net|cumul|annuel|imposable|base|abattu/.test(r.n));
   const ci = body.findIndex(r => r.n && /^total (des )?(cotisations|retenues)/.test(r.n));
-  const val = r => (r.cells.gain || 0) - (r.cells.retenue || 0);
+  const val = r => (r.cells.gain !== undefined || r.cells.retenue !== undefined) ? (r.cells.gain || 0) - (r.cells.retenue || 0) : (r.nums && r.nums.length === 1 ? r.nums[0].v : 0);   // page de suite sans colonnes : le seul montant de la ligne (signe essayé dans les deux sens)
   // 1. brut − cotisations salariales = net avant impôt (± titre de transport, avantages…)
   if (t.brut !== null && t.cotSal !== null && t.netAvant !== null) {
     const delta = Math.round((t.netAvant - (t.brut - t.cotSal)) * 100) / 100;
@@ -3871,12 +3886,36 @@ function payslipFromLecture(lec) {
     const v = r.cells[k]; if (typeof v !== 'number') return;
     const id = w + '|' + r.n + '|' + v; if (seen[id]) return; seen[id] = 1; col[w].push({ label: r.label, v });
   }));
-  return { text: lines.join('\n'), valeurs: { brut: t.brut, cotSal: t.cotSal, netAvant: t.netAvant, netImposable: t.netImposable, netPayer: t.netPayer }, colonnes: col, fiable: lec.fiable, checks: lec.checks, manquants: lec.manquants };
+  return { pages: lec.pages || [], ordreCorrige: !!lec.ordreCorrige, text: lines.join('\n'), valeurs: { brut: t.brut, cotSal: t.cotSal, netAvant: t.netAvant, netImposable: t.netImposable, netPayer: t.netPayer }, colonnes: col, fiable: lec.fiable, checks: lec.checks, manquants: lec.manquants };
 }
 // Mots (PDF ou photo) → lignes, totaux et contrôles
+// Pages d'une même fiche données dans le désordre : le corps (salaire de base, total brut) vient avant les pages de suite (totaux, net à payer, cumuls).
+// Retourne les mots avec des numéros de page remis dans l'ordre, et si l'ordre a été corrigé.
+function orderPages(words) {
+  const by = {}; words.forEach(w => (by[w.page] = by[w.page] || []).push(w));
+  // début = la page qui porte le corps du tableau : ses libellés (même un peu abîmés) ou, à défaut, beaucoup de montants
+  const dec = ws => ws.filter(w => /[,.]\d/.test(w.t) && parseFR(w.t) !== null).length;
+  const info = Object.keys(by).map(Number).sort((a, b) => a - b).map(pg => { const t = norm(by[pg].map(w => w.t).join(' ')); return { pg, debut: /salaire de ba|total brut|heures normales|securite sociale/.test(t) || dec(by[pg]) >= 25 ? 0 : 1 }; });
+  const sorted = info.slice().sort((a, b) => a.debut - b.debut || a.pg - b.pg), map = {};
+  sorted.forEach((x, i) => { map[x.pg] = i + 1; });
+  return { words: words.map(w => Object.assign({}, w, { page: map[w.page] })), corrige: sorted.some((x, i) => x.pg !== info[i].pg), roles: sorted.map((x, i) => ({ page: i + 1, role: x.debut === 0 ? 'debut' : 'suite' })) };
+}
+// Deux photos qui se recouvrent (le bas de la première est le haut de la seconde) : une ligne vue deux fois n'est comptée qu'une fois
+function dedupeRows(rows) {
+  const seen = {}, out = [];
+  rows.forEach(r => {
+    if (r.header || !r.nums || !r.nums.length) { out.push(r); return; }
+    const k1 = r.nums.length >= 2 ? r.nums.map(n => n.v).join(',') : null, k2 = r.n + '|' + r.nums.map(n => n.v).join(',');
+    const dup = (k1 && seen[k1] !== undefined && seen[k1] !== r.page) || (r.n && seen[k2] !== undefined && seen[k2] !== r.page);
+    if (dup) return;
+    if (k1 && seen[k1] === undefined) seen[k1] = r.page; if (r.n && seen[k2] === undefined) seen[k2] = r.page;
+    out.push(r);
+  });
+  return out;
+}
 function readPayslipWords(words) {
-  const rows = buildRows(deskewWords(words)), tot = readTotals(rows), chk = checkPayslip(rows, tot);
-  return { rows, totals: tot.totals, at: tot.at, warn: tot.warn, checks: chk.checks, manquants: chk.manquants, fiable: chk.fiable };
+  const ord = orderPages(words), rows = dedupeRows(buildRows(deskewWords(ord.words))), tot = readTotals(rows), chk = checkPayslip(rows, tot);
+  return { rows, totals: tot.totals, at: tot.at, warn: tot.warn, checks: chk.checks, manquants: chk.manquants, fiable: chk.fiable, pages: ord.roles, ordreCorrige: ord.corrige };
 }
 /*TABLE-FIN*/
 
@@ -4192,6 +4231,8 @@ function paieValidationHTML(g) {
   const list = a => a.length ? `<table class="paie-t"><tbody>${a.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table>` : '<p class="note">Rien de lu.</p>';
   return `<div class="sheet verdict" id="paie-valid"><h2>Vérifie ce qu'on a lu</h2>
     ${doubt ? `<div class="scam"><strong style="color:var(--ink)">Lecture incertaine.</strong> Les chiffres ne se recoupent pas tous${ko.length ? ' (' + ko.map(c => esc(c.label.toLowerCase())).join(' ; ') + ')' : ''}${g.manquants.length ? ' ou il en manque' : ''}. Compare avec ta fiche et corrige les cases en pointillés avant de continuer.${ko.some(c => c.detail) ? '<br><small>' + ko.filter(c => c.detail).map(c => esc(c.detail)).join(' · ') + '</small>' : ''}</div>` : '<p class="note">✓ Lecture recoupée : les totaux correspondent aux lignes de ta fiche. Vérifie quand même d\'un coup d\'œil.</p>'}
+    ${g.manquants.length ? `<p class="note"><b>Il manque :</b> ${g.manquants.map(k => ({ brut: 'le salaire brut', cotSal: 'les cotisations salariales', netAvant: 'le net avant impôt', netImposable: 'le net imposable', netPayer: 'le net à payer' })[k]).join(', ')}. Astuce : prends en photo, de près et bien à plat, la partie de la fiche qui les contient (le bas : totaux, net à payer, cumuls) puis ajoute-la plus haut avec « Ajouter une page en photo » : elle sera rattachée à la fiche, même si elle n'en montre qu'un morceau.</p>` : ''}
+    ${g.pages && g.pages.length > 1 ? `<p class="note">✓ ${g.pages.length} pages reconnues comme une seule fiche : ${g.pages.map(p => 'page ' + p.page + ' = ' + (p.role === 'debut' ? 'début de la fiche' : 'suite de la fiche')).join(', ')}${g.ordreCorrige ? ' (ordre corrigé)' : ''}.</p>` : ''}
     <div class="form-grid">${F.map(([k, l]) => `<label class="field${V[k] === null || doubt ? ' douteux' : ''}"><span>${l} (€)</span><input data-val="${k}" inputmode="decimal" value="${V[k] === null ? '' : esc(fmtFR(V[k]))}" placeholder="non lu : à saisir"></label>`).join('')}</div>
     <div class="two-col"><div><h3>Ce que tu paies</h3>${list(g.colonnes.salarie)}</div><div><h3>Ce que paie ton employeur</h3>${list(g.colonnes.employeur)}</div></div>
     <div class="actions"><button class="btn" id="paie-valid-go" type="button">Valider et analyser</button></div>
@@ -4206,7 +4247,7 @@ function renderPaie(box) {
     <p class="lead">Scanne ta fiche de paie : on la résume, on t'explique chaque ligne en mots simples et on repère les heures supplémentaires. Rien ne quitte ton appareil.</p>
     <div class="actions"><label class="btn" for="paie-cam">${s.pages.length ? 'Ajouter une page en photo' : 'Prendre en photo'}</label><input class="sr" type="file" id="paie-cam" accept="image/*" capture="environment">
       <label class="btn ghost" for="paie-file">${s.pages.length ? 'Ajouter des pages ou un PDF' : 'Importer photos ou PDF'}</label><input class="sr" type="file" id="paie-file" accept="image/*,application/pdf" multiple></div>
-    <p class="note">Ta fiche a plusieurs pages ? Ajoute-les une par une, ou choisis-les toutes d'un coup : elles seront lues ensemble, dans l'ordre.</p>
+    <p class="note">Ta fiche a plusieurs pages ? Ajoute-les une par une, ou choisis-les toutes d'un coup : elles sont lues ensemble comme une seule fiche. Une photo qui ne montre qu'une petite partie (la suite, le bas de page) est rattachée à la fiche, même donnée dans le désordre ou en recouvrement.</p>
     <div class="progress" id="paie-prog"><div class="bar"><i id="paie-bar"></i></div><p id="paie-ptext"></p></div>
     ${s.pages.length ? `<ul class="pages" aria-label="Pages ajoutées">${s.pages.map((pg, i) => `<li><span><b>Page ${i + 1}</b> · ${esc(pg.name)} <small>(${pg.text.replace(/\s/g, '').length} caractères lus)</small></span><span><button class="link" type="button" data-pg-up="${i}"${i === 0 ? ' hidden' : ''} aria-label="Monter la page ${i + 1}">↑</button><button class="link" type="button" data-pg-del="${i}" aria-label="Retirer la page ${i + 1}">Retirer</button></span></li>`).join('')}</ul>` : ''}
     <label class="field" for="paie-text"><span>Texte lu (tu peux le corriger ou le coller)</span></label>
@@ -4245,10 +4286,10 @@ function renderPaie(box) {
         const f = fl[i], isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
         setOcr(i / fl.length, fl.length > 1 ? `Lecture de la page ${i + 1} sur ${fl.length}…` : 'Lecture de la page…');
         let text, words = null, np = 1;
-        if (isPdf) { text = await readPdf(f, 12); try { const r = await readPdfWords(f, 12); if (r.words.length > 20) { words = r.words; np = r.np; } } catch (e) { words = null; } }
+        if (isPdf) { text = await readPdf(f, 12); try { const r = await readPdfWords(f, 12); if (r.words.length > 3) { words = r.words; np = r.np; } } catch (e) { words = null; } }
         else {
           onlyPdf = false;
-          try { const r = await readPhotoWords([f]); text = r.text; words = r.words.length > 20 ? r.words : null; }
+          try { const r = await readPhotoWords([f]); text = r.text; words = r.words.length > 3 ? r.words : null; }
           catch (e) { words = null; const w = await getOcr(); text = await ocrImage(w, f, { table: true }); }
         }
         paie$.pages.push({ name: f.name && !/^image\.(jpe?g|png)$/i.test(f.name) ? f.name : (isPdf ? 'PDF' : 'Photo'), text: text.trim(), words, np }); added++;

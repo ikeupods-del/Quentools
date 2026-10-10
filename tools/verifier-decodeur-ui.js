@@ -162,6 +162,14 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
       const rs = await pg.innerText('#paie-res');
       ok(/2\s?330,93/.test(rs) && /473,77/.test(rs) && /1\s?861,16/.test(rs) && /1\s?672,06/.test(rs) && !/ancienneté/i.test(await pg.locator('#paie-res .paie-lines').innerText()), 'PDF réel : analyse sur les chiffres validés, sans ligne inventée');
       ok(/Qui paie quoi/.test(rs) && /Sécurité sociale maladie/.test(rs) && /163,17/.test(rs), 'PDF réel : « qui paie quoi » affiche la part employeur à sa place');
+      // deux fichiers donnés à l'envers, le second ne montrant que la suite (totaux) : rattachés à la même fiche, ordre corrigé
+      { const el = lib.layout({ suite: true }), p1 = el.filter(e => e.page === 1), p2 = el.filter(e => e.page === 2).map(e => ({ ...e, page: 1 }));
+        await pg.goto('http://localhost:8766/decodeur-courrier.html#fiche-de-paie'); await pg.reload(); await pg.waitForSelector('#paie-sample');
+        await pg.setInputFiles('#paie-file', [{ name: 'suite.pdf', mimeType: 'application/pdf', buffer: lib.writePdf(p2) }, { name: 'debut.pdf', mimeType: 'application/pdf', buffer: lib.writePdf(p1) }]);
+        await pg.waitForSelector('#paie-go'); await pg.click('#paie-go'); await pg.waitForSelector('#paie-valid', { timeout: 20000 });
+        const v = await pg.innerText('#paie-valid');
+        ok(/2 pages reconnues comme une seule fiche/.test(v) && /ordre corrigé/.test(v) && /Lecture recoupée/.test(v), 'PDF en deux fichiers à l\'envers : suite rattachée à la fiche, ordre corrigé, lecture recoupée');
+        ok((await pg.inputValue('[data-val=brut]')) === '2 330,93' && (await pg.inputValue('[data-val=netPayer]')) === '1 861,16', 'PDF en deux fichiers : totaux de la page de suite repris'); }
       // brut faux sur la fiche : lecture incertaine, cases en pointillés, correction puis validation
       const mauvais = lib.layout().map(e => (e.page === 1 && e.text === '2 330,93' && e.x > 330 ? { ...e, text: '2 130,93' } : e));
       await envoyer(lib.writePdf(mauvais));
