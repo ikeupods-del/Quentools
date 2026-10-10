@@ -1503,6 +1503,18 @@ async function readPdf(file) {
   }
   return txt;
 }
+// Première page d'un PDF (facture, ticket) en image, pour l'enregistrer et la faire lire comme une photo.
+async function pdfFirstPageFile(file) {
+  await loadScript(PDFJS_URL);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  const page = await pdf.getPage(1), vp = page.getViewport({ scale: 2 });
+  const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+  await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+  const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.9));
+  if (!blob) throw new Error('pdf');
+  return new File([blob], 'ticket.jpg', { type: 'image/jpeg' });
+}
 async function handleFiles(files) {
   files = [...files]; if (!files.length) return;
   let all = '';
@@ -2301,8 +2313,8 @@ function renderWForm(box) {
     <button class="link back" id="wf-back" type="button">Retour</button>
     <h2>${w.id ? 'Modifier un achat' : 'Ajouter un achat'}</h2>
     <div class="actions" style="margin:6px 0 4px">
-      <label class="btn ghost" for="wf-photo">${w.img ? 'Changer la photo du ticket' : 'Photo du ticket ou de la facture'}</label>
-      <input class="sr" type="file" id="wf-photo" accept="image/*" capture="environment">
+      <label class="btn ghost" for="wf-photo">${w.img ? 'Changer la photo ou le PDF du ticket' : 'Photo ou PDF du ticket ou de la facture'}</label>
+      <input class="sr" type="file" id="wf-photo" accept="image/*,application/pdf">
       <span class="note" id="wf-photo-state">${w.img ? 'Photo enregistrée.' : 'On essaie de lire la date et le prix tout seuls.'}</span>
     </div>
     <div class="progress" id="wf-progress"><div class="bar"><i id="wf-bar"></i></div><p id="wf-ptext"></p></div>
@@ -2320,7 +2332,11 @@ function renderWForm(box) {
   let pendingImg = null;
   $('#wf-back').addEventListener('click', () => { w$ = { mode: 'home' }; renderWarranty(); });
   $('#wf-photo').addEventListener('change', async e => {
-    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    let f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
+      $('#wf-photo-state').textContent = 'Lecture du PDF…';
+      try { f = await pdfFirstPageFile(f); } catch (err) { $('#wf-photo-state').textContent = 'Impossible de lire ce PDF. Essaie une photo.'; return; }
+    }
     try { pendingImg = await compressImage(f); $('#wf-photo-state').textContent = 'Photo prête. Lecture du ticket…'; } catch (err) { toast('Impossible de lire cette photo'); return; }
     try {
       const pr = $('#wf-progress'); pr.classList.add('on');
