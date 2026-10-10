@@ -90,5 +90,6 @@ ko+=ko3;
   if(!ko4) console.log('✓ Paperdecrypt : lecture des tickets et factures d\'achat correcte (13 contrôles)');
   ko+=ko4;
 }
+{ const r=require('child_process').spawnSync(process.execPath,[require('path').join(__dirname,'essai-paie.js')],{encoding:'utf8'}); process.stdout.write(r.stdout); if(r.status) ko++; }
 console.log(ko ? `✗ ${ko} cas en erreur sur ${CAS.length}` : `✓ Paperdecrypt : ${CAS.length} lectures de montants correctes`);
 process.exit(ko ? 1 : 0);
