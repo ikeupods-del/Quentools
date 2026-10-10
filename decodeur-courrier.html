@@ -294,6 +294,7 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .sugg{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
 .filters{display:grid;gap:8px;margin:0 0 14px}
 .filters input[type=search]{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--sheet);min-height:46px}
+.pro{display:inline-block;font:800 .68rem I;letter-spacing:.04em;text-transform:uppercase;background:var(--mark);color:var(--mark-ink);border-radius:99px;padding:2px 8px;vertical-align:2px}
 .tips{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:14px 0;background:var(--sheet)}
 .tips summary{cursor:pointer;font-weight:700}
 .tips h3{margin:12px 0 4px;font-size:1rem}
@@ -474,19 +475,24 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 
 <dialog id="premium" aria-labelledby="premium-title">
   <div class="dlg">
-    <h2 id="premium-title">QuenTools Premium</h2>
+    <h2 id="premium-title">Paperdecrypt Premium</h2>
     <p class="note" id="premium-reason" hidden></p>
     <ul class="perks">
-      <li><b>Garanties illimitées.</b> Enregistre tous tes achats et leurs tickets.</li>
-            <li><b>Sans publicité</b>, partout dans l'appli.</li>
-      <li><b>Un paiement unique</b>, sans abonnement. Le reste du décodeur reste gratuit pour toujours.</li>
+      <li><b>Garanties, coffre et abonnements illimités.</b> Range tous tes papiers.</li>
+      <li><b>État des lieux de sortie</b> avec comparaison à l'entrée, et autant de logements que tu veux.</li>
+      <li><b>Photos certifiées par un serveur :</b> la date et l'heure de chaque photo ne dépendent plus de ton téléphone.</li>
+      <li><b>Fiche de paie complète :</b> vérification de tes heures supplémentaires, lettre à l'employeur et suivi mois par mois.</li>
+      <li><b>Tous les modèles de lettres</b> (CAF, impôts, remboursement, heures supplémentaires).</li>
+      <li><b>Dossier complet en PDF</b> et <b>aucune publicité</b>.</li>
+      <li><b>Un paiement unique de <span id="premium-price"></span></b>, sans abonnement. Le décodeur de courriers, les rappels, le calcul de TVA et les lettres de base restent gratuits.</li>
     </ul>
     <div class="actions"><button class="btn" id="premium-buy" type="button">Débloquer Premium</button><p class="note" id="premium-soon" hidden>L'achat de Premium ouvre très bientôt.</p></div>
-    <section>
-      <h3>Tu as déjà un code ?</h3>
-      <div class="chat-input"><label class="sr" for="premium-code">Code Premium</label><input id="premium-code" placeholder="QT-XXXXXXXX-XXXX" autocomplete="off" autocapitalize="characters"><button class="btn small" id="premium-validate" type="button">Activer</button></div>
-      <p class="note" id="premium-state" role="status"></p>
+    <section id="premium-have">
+      <h3>Tu as déjà acheté Premium ?</h3>
+      <p class="note">Connecte-toi avec la même adresse Google que pour l'achat : Premium se retrouve tout seul sur tous tes appareils.</p>
+      <div class="actions"><button class="btn small ghost" id="premium-check" type="button">Retrouver mon Premium</button></div>
     </section>
+    <p class="note" id="premium-state" role="status"></p>
     <div class="dlg-foot"><button class="btn ghost" id="premium-close" type="button">Fermer</button></div>
   </div>
 </dialog>
@@ -589,7 +595,9 @@ const CONFIG = {
   // Lien de paiement (ex. Stripe Payment Link). Vide = bouton d'achat masqué.
   PREMIUM_URL: '',
   PREMIUM_PRIX: '9,99 €',
-  FREE_GARANTIES: 3,
+  // Version gratuite : limites (Premium = illimité). Les fonctions « Premium » sont listées dans la fenêtre Premium.
+  FREE_GARANTIES: 3, FREE_COFFRE: 10, FREE_ABOS: 3, FREE_EDL: 1,
+  FREE_LETTRES: ['amende', 'resiliation', 'echeancier'],
   // Google AdSense : ton identifiant éditeur (ex. 'ca-pub-1234567890123456') et l'id d'un bloc d'annonce (ex. '1234567890').
   // Vide = encart QuenTools à la place. Pense aussi au fichier ads.txt à la racine de quentools.fr.
   ADSENSE_CLIENT: 'ca-pub-9406894983294380',
@@ -622,7 +630,7 @@ async function fillAds(root) {
   } catch (e) { slots.forEach(s => s.closest('.ad') && s.closest('.ad').remove()); }
 }
 const tipHTML = () => CONFIG.TIP_URL ? `<a class="link tip" href="${esc(CONFIG.TIP_URL)}" target="_blank" rel="noopener">Ça t'a aidé ? Soutiens QuenTools</a>` : '';
-Object.assign(KEYS, { claims: 'qt-paperasse:reclamations', garanties: 'qt-paperasse:garanties', premium: 'qt-paperasse:premium', sync: 'qt-paperasse:sync', deleted: 'qt-paperasse:supprimes',
+Object.assign(KEYS, { claims: 'qt-paperasse:reclamations', garanties: 'qt-paperasse:garanties', premium: 'qt-paperasse:premium', premiumAcct: 'qt-paperasse:premium-compte', sync: 'qt-paperasse:sync', deleted: 'qt-paperasse:supprimes',
   abos: 'qt-paperasse:abonnements', coffre: 'qt-paperasse:coffre', edl: 'qt-paperasse:etats-des-lieux', paies: 'qt-paperasse:fiches-de-paie', lecons: 'qt-paperasse:lecons', coffreRead: 'qt-paperasse:coffre-lecture', nostats: 'qt-paperasse:sans-stats', seen: 'qt-paperasse:vu', notif: 'qt-paperasse:notif', notifDay: 'qt-paperasse:notif-jour' });
 const SYNC_KEYS = [KEYS.list, KEYS.claims, KEYS.garanties, KEYS.me, KEYS.abos, KEYS.coffre, KEYS.edl];
 let markDirty = () => {};
@@ -661,22 +669,46 @@ function compressImage(file, max = 1400, q = 0.72) {
   });
 }
 
-/* ---------- Premium (paiement unique) ---------- */
-const PREMIUM_SALT = 'qt-paperasse-2026';
-const B32 = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-function fnv(s) { let h = 0x811c9dc5; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h; }
-function codeChecksum(body) { let h = fnv(PREMIUM_SALT + body), out = ''; for (let i = 0; i < 4; i++) { out += B32[h % 32]; h = Math.floor(h / 32); } return out; }
-function validCode(code) { const m = String(code).toUpperCase().replace(/\s/g, '').match(/^QT-([A-Z2-9]{8})-([A-Z2-9]{4})$/); return !!m && codeChecksum(m[1]) === m[2]; }
-const isPremium = () => !!store.get(KEYS.premium, {}).code;
+/* ---------- Premium (paiement unique, lié au compte Google) ----------
+   L'achat se fait par un lien de paiement ; le propriétaire active ensuite l'adresse e-mail dans l'administration (collection qt_premium,
+   lisible seulement par le titulaire du compte). L'application relit ce droit à chaque connexion et le garde 45 jours hors connexion. */
+const isPremium = () => {
+  const a = store.get(KEYS.premiumAcct, null);
+  if (!a || !a.email) return false;
+  if (a.until && a.until < isoDay(new Date())) return false;
+  return Date.now() - (a.checked || 0) < 45 * 864e5;
+};
 function openPremium(reason) {
-  const d = $('#premium');
+  const d = $('#premium'), p = isPremium();
   $('#premium-reason').textContent = reason || '';
   $('#premium-reason').hidden = !reason;
-  $('#premium-buy').hidden = !CONFIG.PREMIUM_URL;
-  $('#premium-soon').hidden = !!CONFIG.PREMIUM_URL;
-  $('#premium-state').textContent = isPremium() ? 'Premium est activé sur cet appareil. Merci pour ton soutien !' : '';
+  $('#premium-buy').hidden = p || !CONFIG.PREMIUM_URL;
+  $('#premium-soon').hidden = p || !!CONFIG.PREMIUM_URL;
+  $('#premium-price').textContent = CONFIG.PREMIUM_PRIX;
+  $('#premium-have').hidden = p || !gAvailable();
+  $('#premium-state').textContent = p ? 'Premium est activé sur ton compte. Merci pour ton soutien !' : (FBU ? `Connecté avec ${FBU.email}. Si tu as déjà acheté avec cette adresse, appuie sur « Retrouver mon Premium ».` : '');
+  track('premium_vu');
   if (d.showModal) d.showModal(); else d.setAttribute('open', '');
 }
+// Droit Premium du compte connecté (document qt_premium/<e-mail>)
+async function checkPremium(manual) {
+  const u = FBU; if (!u || !u.email) { if (manual) toast('Connecte-toi d\'abord avec Google'); return; }
+  if (!navigator.onLine) return;
+  const was = isPremium();
+  try {
+    const F = await fb(), id = u.email.toLowerCase(), snap = await F.Fs.getDoc(F.Fs.doc(F.db, 'qt_premium', id));
+    if (snap.exists()) { const d = snap.data(); _set(KEYS.premiumAcct, { email: id, until: d.until || '', plan: d.plan || '', checked: Date.now() }); }
+    else _set(KEYS.premiumAcct, {});
+  } catch (e) { if (manual) toast('Vérification impossible pour le moment'); return; }
+  const now = isPremium();
+  refreshPremiumUI(); renderWarrantyIfOpen(); renderMoneyIfOpen();
+  if (!$('#view-vault').hidden) renderVault(); if (!$('#view-tools').hidden) renderTools();
+  if (now) $$('.ad').forEach(a => a.remove());
+  if (now && !was) { track('premium_actif'); toast('Premium activé sur ton compte'); }
+  if (manual) { $('#premium-state').textContent = now ? 'Premium est activé sur ton compte. Merci !' : `Aucun Premium trouvé pour ${u.email}. Le paiement peut prendre un peu de temps à être confirmé.`; if (now && $('#premium').open) $('#premium').close(); }
+}
+// Bloque une fonction Premium : retourne true (et ouvre la fenêtre) si l'utilisateur n'y a pas droit
+function needPremium(reason) { if (isPremium()) return false; openPremium(reason); return true; }
 
 /* ---------- Petits outils partagés ---------- */
 const addMonths = (d, n) => { const x = new Date(d); const day = x.getDate(); x.setMonth(x.getMonth() + n); if (x.getDate() < day) x.setDate(0); return x; };
@@ -2750,8 +2782,8 @@ async function gRestore() {
   if (!gAvailable()) return;
   try {
     const F = await fb(); await F.auth.authStateReady();
-    FBU = F.auth.currentUser; setSyncStatus(); if (FBU) { syncNow(); sealPending(); }
-    F.Au.onAuthStateChanged(F.auth, u => { const was = FBU; FBU = u; setSyncStatus(); if (u && (!was || was.uid !== u.uid)) { syncNow(); sealPending(); } });
+    FBU = F.auth.currentUser; setSyncStatus(); if (FBU) { syncNow(); checkPremium().then(sealPending); }
+    F.Au.onAuthStateChanged(F.auth, u => { const was = FBU; FBU = u; setSyncStatus(); if (u && (!was || was.uid !== u.uid)) { syncNow(); checkPremium().then(sealPending); } });
   } catch (e) { setSyncStatus('Connexion indisponible : ' + e.message); }
 }
 async function gLogin() {
@@ -3097,9 +3129,9 @@ const SUBHASH = { abos: '#abonnements', tva: '#tva', lettres: '#lettres', edl: '
 function renderLettres(box) {
   box.innerHTML = `<div class="sheet"><button class="link back" id="tool-back" type="button">Retour</button>
     <h2>Modèles de lettres</h2><p class="lead">Choisis la situation, réponds à quelques questions : la lettre est prête, avec tes coordonnées. Aucun texte n'est envoyé nulle part.</p></div>
-    <div class="cases" style="margin-top:14px">${LETTRES.map(l => `<button class="case" type="button" data-lettre="${l.id}"><b>${esc(l.title)}</b><span>${esc(l.teaser)}</span></button>`).join('')}</div>`;
+    <div class="cases" style="margin-top:14px">${LETTRES.map(l => `<button class="case" type="button" data-lettre="${l.id}"><b>${esc(l.title)}${CONFIG.FREE_LETTRES.includes(l.id) ? '' : ' <span class="pro">Premium</span>'}</b><span>${esc(l.teaser)}</span></button>`).join('')}</div>`;
   toolBack(box);
-  $$('[data-lettre]', box).forEach(b => b.addEventListener('click', () => { tools$ = { view: 'lettre', id: b.dataset.lettre, values: tools$.prefill && tools$.prefillId === b.dataset.lettre ? tools$.prefill : {}, result: false }; renderTools(); box.scrollIntoView({ block: 'start' }); }));
+  $$('[data-lettre]', box).forEach(b => b.addEventListener('click', () => { if (!CONFIG.FREE_LETTRES.includes(b.dataset.lettre) && needPremium('Ce modèle de lettre fait partie de Premium. Les modèles amende, résiliation et échéancier restent gratuits.')) return; tools$ = { view: 'lettre', id: b.dataset.lettre, values: tools$.prefill && tools$.prefillId === b.dataset.lettre ? tools$.prefill : {}, result: false }; renderTools(); box.scrollIntoView({ block: 'start' }); }));
 }
 function renderLettre(box) {
   const l = lettreById(tools$.id), v = tools$.values || {};
@@ -3162,8 +3194,9 @@ function renderAbos(box) {
         <div class="row"><button class="btn small ghost" data-abo-renew type="button">Payé, suivant</button><button class="btn small ghost" data-abo-stop type="button">Résilier</button><button class="link" data-abo-edit type="button">Modifier</button><button class="link" data-abo-del type="button">Supprimer</button></div></article>`;
     }).join('') : '<p class="note">Aucun abonnement noté. Commence par ceux qui te coûtent le plus : internet, mobile, assurances, streaming, salle de sport.</p>'}</div>`;
   toolBack(box);
-  $('#abo-add').addEventListener('click', () => { tools$ = { view: 'abos', edit: { period: 'mois', notice: 0 } }; renderTools(); box.scrollIntoView({ block: 'start' }); });
-  $$('[data-sugg]', box).forEach(b => b.addEventListener('click', () => { const s = sug[+b.dataset.sugg]; tools$ = { view: 'abos', edit: { name: s.name, amount: s.amount, period: 'mois', notice: 0 } }; renderTools(); }));
+  const aboFull = () => !isPremium() && getAbos().filter(a => a.active !== false).length >= CONFIG.FREE_ABOS && (openPremium(`La version gratuite suit ${CONFIG.FREE_ABOS} abonnements. Passe à Premium pour tous les suivre.`), true);
+  $('#abo-add').addEventListener('click', () => { if (aboFull()) return; tools$ = { view: 'abos', edit: { period: 'mois', notice: 0 } }; renderTools(); box.scrollIntoView({ block: 'start' }); });
+  $$('[data-sugg]', box).forEach(b => b.addEventListener('click', () => { if (aboFull()) return; const s = sug[+b.dataset.sugg]; tools$ = { view: 'abos', edit: { name: s.name, amount: s.amount, period: 'mois', notice: 0 } }; renderTools(); }));
   $$('[data-abo]', box).forEach(el => {
     const id = el.dataset.abo, get = () => getAbos().find(x => x.id === id);
     $('[data-abo-edit]', el).addEventListener('click', () => { tools$ = { view: 'abos', edit: { ...get() } }; renderTools(); box.scrollIntoView({ block: 'start' }); });
@@ -3438,13 +3471,16 @@ function renderPaie(box) {
   $$('[data-pq]', box).forEach(b => b.addEventListener('click', () => { const log = $('#paie-chat', box); const m = document.createElement('div'); m.className = 'msg me'; m.textContent = b.textContent; log.appendChild(m); const a = document.createElement('div'); a.className = 'msg bot'; a.textContent = paieAnswer(b.dataset.pq, paie$.p); log.appendChild(a); a.scrollIntoView({ block: 'nearest' }); track('paie_question'); }));
   const pq = $('#paie-q'), pask = () => { const q = pq.value.trim(); if (!q) return; pq.value = ''; paieAsk(box, q); };
   if (pq) { $('#paie-ask').addEventListener('click', pask); pq.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pask(); } }); }
+  const pp = $('#paie-premium'); if (pp) pp.addEventListener('click', () => openPremium('La vérification de tes heures supplémentaires fait partie de Premium.'));
   const sv = $('#paie-save'); if (sv) sv.addEventListener('click', () => {
+    if (needPremium('Le suivi mois par mois de tes fiches de paie fait partie de Premium.')) return;
     const l = getPaies(), q = paie$.p, id = q.ym ? 'p' + q.ym : newId('p');
     const rec = { id, ym: q.ym, periode: q.periode, brut: q.brut, netAvant: q.netAvant, netFinal: q.netFinal, hsQty: q.hsQty, hsAmount: q.hsAmount, updatedAt: new Date().toISOString() };
     const i = l.findIndex(x => x.id === id); if (i >= 0) l[i] = rec; else l.unshift(rec);
     store.set(KEYS.paies, l); track('paie_save'); toast('Fiche enregistrée pour comparer les mois'); renderPaie(box);
   });
   const lt = $('#paie-lettre'); if (lt) lt.addEventListener('click', () => {
+    if (needPremium('La lettre à ton employeur fait partie de Premium.')) return;
     const q = paie$.p, d = parseFloat(String(paie$.declared).replace(',', '.'));
     tools$ = { view: 'lettre', id: 'heures_supp', values: { mois: q.periode || '', declarees: isFinite(d) ? String(d) : '', payees: q.hsQty ? String(q.hsQty) : '0' }, result: false }; track('paie_lettre'); renderTools(); box.scrollIntoView({ block: 'start' });
   });
@@ -3464,7 +3500,7 @@ function paieResultHTML(p, ins, hist) {
     <div class="block"><h3>Les chiffres clés</h3><table class="paie-t"><tbody>${row('Salaire brut', p.brut)}${row('Cotisations salariales', p.cotSal)}${row('Net avant impôt', p.netAvant)}${p.pas ? row('Impôt prélevé' + (p.pas.taux !== null ? ' (' + String(p.pas.taux).replace('.', ',') + ' %)' : ''), p.pas.amount) : ''}${row('Net versé', p.netFinal, true)}${row('Net imposable (pour ta déclaration)', p.netImposable)}${row('Cotisations de ton employeur', p.cotPat)}</tbody></table>${cmp}</div>
     <div class="block"><h3>Tes heures supplémentaires</h3>
       ${p.hs.length ? `<ul>${p.hs.map(h => `<li>${esc(h.line)}${h.impl !== null ? ` <span class="note">(majoration d'environ ${h.impl} %)</span>` : ''}</li>`).join('')}</ul>` : '<p>Aucune ligne repérée.</p>'}
-      <label class="field"><span>Combien d'heures supplémentaires as-tu faites ce mois-ci ?</span><input id="paie-declared" inputmode="decimal" value="${esc(paie$.declared)}" placeholder="Ex. 10"></label>
+      ${isPremium() ? `<label class="field"><span>Combien d'heures supplémentaires as-tu faites ce mois-ci ?</span><input id="paie-declared" inputmode="decimal" value="${esc(paie$.declared)}" placeholder="Ex. 10"></label>` : `<div class="sugg"><b>Vérifie tes heures :</b> indique combien d'heures supplémentaires tu as faites et on te dit s'il en manque. <span class="pro">Premium</span> <button class="btn small ghost" type="button" id="paie-premium">Débloquer</button></div>`}
       <div id="paie-ins">${insightsHTML(ins.filter(i => PAIE_HS_RE.test(i.text)))}</div></div>
     <div class="block"><h3>Ce qu'on a repéré d'autre</h3>${insightsHTML(ins.filter(i => !PAIE_HS_RE.test(i.text)))}
       ${p.primes.length ? `<p><b>Primes et indemnités :</b></p><ul>${p.primes.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
@@ -3477,7 +3513,7 @@ function paieResultHTML(p, ins, hist) {
       <div class="chat-log" id="paie-chat" aria-live="polite"></div>
       <div class="chat-input"><label class="sr" for="paie-q">Ta question</label><input id="paie-q" placeholder="Ex. : pourquoi mon net a baissé ce mois-ci ?" autocomplete="off"><button class="btn small" id="paie-ask" type="button">Demander</button></div></div>
     ${terms.length ? `<div class="block"><h3>Les mots compliqués de ta fiche</h3><dl class="glossary">${terms.map(g => `<div><dt>${esc(g[1])}</dt><dd>${esc(g[2])}</dd></div>`).join('')}</dl></div>` : ''}
-    <div class="save-row"><button class="btn" id="paie-save" type="button">Enregistrer pour comparer les mois</button><button class="btn ghost" id="paie-lettre" type="button">Écrire à mon employeur (heures supplémentaires)</button></div>
+    <div class="save-row"><button class="btn" id="paie-save" type="button">Enregistrer pour comparer les mois${isPremium() ? '' : ' (Premium)'}</button><button class="btn ghost" id="paie-lettre" type="button">Écrire à mon employeur (heures supplémentaires)${isPremium() ? '' : ' (Premium)'}</button></div>
     <p class="note">Cette analyse t'aide à comprendre ta fiche. Elle peut se tromper, surtout sur une photo : vérifie les chiffres sur l'original. Ce n'est pas un avis juridique ; en cas de doute, rapproche-toi de ton service RH, d'un syndicat ou de l'inspection du travail.</p></div>`;
 }
 const PAIE_QUICK = [['brut', 'Pourquoi mon net est plus bas que mon brut ?'], ['hs', 'Mes heures supp sont-elles bien comptées ?'], ['cot', "C'est quoi les cotisations ?"], ['impot', "Pourquoi un impôt sur ma fiche ?"], ['conges', 'Congés et RTT : comment ça marche ?'], ['erreur', 'Je pense qu\'il y a une erreur : que faire ?']];
@@ -3592,7 +3628,11 @@ function renderEdl(box) {
       <div class="row"><button class="btn small" data-edl-open type="button">Continuer</button><button class="btn small ghost" data-edl-sum type="button">Résumé et PDF</button><button class="link" data-edl-del type="button">Supprimer</button></div></article>`; }).join('')}</div>` : '<p class="note">Aucun état des lieux pour l\'instant.</p>'}`;
   toolBack(box);
   $('#edl-verify').addEventListener('click', () => { $('#vf-out').textContent = ''; const d = $('#verify-dialog'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
-  $$('[data-edl-new]', box).forEach(b => b.addEventListener('click', () => { edl$ = { view: 'new', type: b.dataset.edlNew }; renderTools(); box.scrollIntoView({ block: 'start' }); }));
+  $$('[data-edl-new]', box).forEach(b => b.addEventListener('click', () => {
+    const t = b.dataset.edlNew;
+    if (t === 'sortie' && needPremium("L'état des lieux de sortie, avec la comparaison à l'entrée, fait partie de Premium.")) return;
+    if (t === 'entree' && getEdl().filter(x => x.type === 'entree').length >= CONFIG.FREE_EDL && needPremium(`La version gratuite garde ${CONFIG.FREE_EDL} état des lieux d'entrée. Passe à Premium pour en faire autant que tu veux.`)) return;
+    edl$ = { view: 'new', type: t }; renderTools(); box.scrollIntoView({ block: 'start' }); }));
   $$('[data-edl]', box).forEach(el => {
     const id = el.dataset.edl;
     $('[data-edl-open]', el).addEventListener('click', () => { edl$ = { view: 'room', id, room: 0 }; renderTools(); box.scrollIntoView({ block: 'start' }); });
@@ -3688,7 +3728,7 @@ function renderEdlRoom(box) {
       try {
         const key = `e:${e.id}:${ri}:${el.dataset.ii}:${Date.now().toString(36)}`; await idb.set(key, shot.data);
         it.photos = [...(it.photos || []), key]; it.photoAt = [...(it.photoAt || []), shot.at]; it.photoGeo = [...(it.photoGeo || []), shot.geo || null]; if (shot.geo && !e.geo) e.geo = { ...shot.geo, from: 'photo' }; it.seals = [...(it.seals || []), { key, hash: await sha256Hex(dataUrlBytes(shot.data)), id: null, at: null }];
-        edlSave(e); track('edl_photo'); toast(FBU ? 'Photo ajoutée, date et heure certifiées par un serveur…' : 'Photo ajoutée. Connecte-toi avec Google pour faire certifier sa date.'); renderTools(); sealPending();
+        edlSave(e); track('edl_photo'); toast(!isPremium() ? 'Photo ajoutée. La certification de sa date est une fonction Premium.' : FBU ? 'Photo ajoutée, date et heure certifiées par un serveur…' : 'Photo ajoutée. Connecte-toi avec Google pour faire certifier sa date.'); renderTools(); sealPending();
       } catch (err) { toast("La photo n'a pas pu être enregistrée"); }
     });
     $$('.th', el).forEach(th => {
@@ -3706,7 +3746,7 @@ async function sha256Hex(bytes) { const d = await crypto.subtle.digest('SHA-256'
 let sealing = false, sealAgain = false;
 async function sealPending() {
   if (sealing) { sealAgain = true; return; }
-  if (!FBU || !navigator.onLine) return;
+  if (!FBU || !navigator.onLine || !isPremium()) return;
   sealing = true; let n = 0;
   try {
     const F = await fb();
@@ -3796,7 +3836,7 @@ function renderEdlSummary(box) {
     <h2>${e.type === 'entree' ? "Résumé de l'état des lieux d'entrée" : "Résumé de l'état des lieux de sortie"}</h2>
     <p>${esc(e.adresse)}${e.date ? ' | ' + esc(fmtDate(parseDay(e.date))) : ''} | ${p.done} / ${p.total} points remplis</p>
     ${e.type === 'sortie' ? (e.ref ? (d.length ? `<div class="alert">${d.length} point${d.length > 1 ? 's' : ''} en moins bon état qu'à l'entrée. Vérifie s'il s'agit d'usure normale avant d'accepter une retenue.</div><ul>${d.map(x => `<li><b>${esc(x.room)} : ${esc(x.item)}</b> : ${esc(edlLabel(x.from))} à l'entrée, ${esc(edlLabel(x.to))} à la sortie${x.note ? ' (' + esc(x.note) + ')' : ''}</li>`).join('')}</ul><p class="note">Pour chaque point, demande un devis ou une facture : une retenue doit être justifiée, et la vétusté (usure normale) se déduit.</p>` : '<p><b>Aucune dégradation par rapport à l\'entrée.</b> Le dépôt de garantie doit en principe t\'être rendu en entier.</p>') : '<p class="note">Aucun état des lieux d\'entrée n\'est lié : la comparaison est impossible.</p>') : (bad.length ? `<p><b>Points à signaler dès l'entrée :</b></p><ul>${bad.map(x => `<li>${esc(x.room)} : ${esc(x.name)} (${esc(edlLabel(x.state))})${x.note ? ' : ' + esc(x.note) : ''}</li>`).join('')}</ul><p class="note">Fais-les écrire dans l'état des lieux officiel signé : c'est ce qui te protège à la sortie.</p>` : '<p class="note">Aucun défaut signalé.</p>')}
-    ${(() => { const st = sealStats(e); return st.total ? `<div class="sugg"><b>Photos : ${st.done} sur ${st.total} certifiées par un serveur.</b> ${st.done === st.total ? 'Leur date ne dépend plus de l\'horloge de ton téléphone et elles ne peuvent plus être modifiées sans que ça se voie.' : (FBU ? '<button class="btn small ghost" type="button" id="edl-seal">Certifier maintenant</button>' : 'Connecte-toi avec Google (bouton en haut) pour certifier leur date.')}</div>` : ''; })()}
+    ${(() => { const st = sealStats(e); return st.total && !isPremium() ? `<div class="sugg"><b>Certification de la date des photos : Premium.</b> Un serveur fixe la date et l'heure de chaque photo, qui ne peuvent plus être contestées. <button class="btn small ghost" type="button" id="edl-premium">Découvrir Premium</button></div>` : st.total ? `<div class="sugg"><b>Photos : ${st.done} sur ${st.total} certifiées par un serveur.</b> ${st.done === st.total ? 'Leur date ne dépend plus de l\'horloge de ton téléphone et elles ne peuvent plus être modifiées sans que ça se voie.' : (FBU ? '<button class="btn small ghost" type="button" id="edl-seal">Certifier maintenant</button>' : 'Connecte-toi avec Google (bouton en haut) pour certifier leur date.')}</div>` : ''; })()}
     ${(() => { const g = geoStats(e); if (!g.total) return ''; const lines = []; lines.push(`<b>Position GPS : ${g.withGeo} photo${g.withGeo > 1 ? 's' : ''} sur ${g.total} localisée${g.withGeo > 1 ? 's' : ''}${g.withGeo ? `, dont ${g.near} sur place` : ''}.</b>`); if (g.far) lines.push(`⚠ ${g.far} photo${g.far > 1 ? 's' : ''} à plus de ${GEO_NEAR} m du logement de référence.`); if (g.same !== null) lines.push(g.same <= GEO_NEAR ? `Les deux états des lieux ont été faits au même endroit (écart de ${g.same} m) : cela confirme qu'il s'agit du même logement.` : `⚠ Les deux états des lieux n'ont pas été faits au même endroit (${g.same} m d'écart).`); return `<div class="sugg">${lines.join('<br>')}<br><span class="note">La position vient du GPS de l'appareil : en intérieur, la précision est de quelques dizaines de mètres.</span></div>`; })()}
     <div class="actions"><button class="btn" id="edl-pdf" type="button">Créer le PDF à signer</button><button class="btn ghost" id="edl-mail" type="button">Envoyer par e-mail</button><button class="btn ghost" id="edl-edit" type="button">Modifier</button>${e.type === 'sortie' ? '<button class="btn ghost" id="edl-caution" type="button">Caution pas rendue ?</button>' : ''}</div>
     <details class="tips" open><summary>Nos conseils</summary><ul>${EDL_TIPS[e.type].map(t => `<li>${esc(t)}</li>`).join('')}</ul></details>
@@ -3804,6 +3844,7 @@ function renderEdlSummary(box) {
   $('#edl-back').addEventListener('click', () => { edl$ = { view: 'list' }; renderTools(); });
   $('#edl-edit').addEventListener('click', () => { edl$ = { view: 'room', id: e.id, room: 0 }; renderTools(); });
   $('#edl-pdf').addEventListener('click', async () => { try { const html = await buildEdlHTML(e); track('edl_pdf'); printHTML(html); toast('Choisis « Enregistrer en PDF » dans la fenêtre d\'impression'); } catch (err) { console.error(err); toast("Le PDF n'a pas pu être créé"); } });
+  const ep = $('#edl-premium'); if (ep) ep.addEventListener('click', () => openPremium());
   const sl = $('#edl-seal'); if (sl) sl.addEventListener('click', async () => { await sealPending(); renderTools(); });
   $('#edl-mail').addEventListener('click', () => {
     const st = sealStats(e), c = e.compteurs || {};
@@ -3920,6 +3961,10 @@ function vaultProgress(p, msg) { const pr = $('#vault-prog'); if (!pr) return; p
 async function addToVault(files) {
   files = files.filter(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name) || f.type.startsWith('image/'));
   if (!files.length) { toast('Ajoute une photo ou un PDF'); return; }
+  if (!isPremium()) {
+    const room = CONFIG.FREE_COFFRE - getVault().length;
+    if (room <= 0 || files.length > room) { openPremium(`La version gratuite garde ${CONFIG.FREE_COFFRE} documents dans le coffre. Passe à Premium pour en ranger autant que tu veux.`); if (room <= 0) return; files = files.slice(0, room); }
+  }
   const read = store.get(KEYS.coffreRead, true);
   let done = 0;
   for (let i = 0; i < files.length; i++) {
@@ -4015,6 +4060,7 @@ function printHTML(html) {
 }
 function openDossier() {
   const d = $('#dossier'); if (!d) return;
+  if (needPremium('Le dossier complet en PDF fait partie de Premium.')) return;
   if (d.showModal) d.showModal(); else d.setAttribute('open', '');
 }
 async function createDossier() {
@@ -4150,13 +4196,8 @@ $('#tablist').addEventListener('keydown', e => {
 });
 // Paramètres : premium et Google
 $('#premium-btn').addEventListener('click', () => openPremium());
-$('#premium-buy').addEventListener('click', () => window.open(CONFIG.PREMIUM_URL, '_blank', 'noopener'));
-$('#premium-validate').addEventListener('click', () => {
-  const c = $('#premium-code').value.trim();
-  if (!validCode(c)) { $('#premium-state').textContent = "Ce code n'est pas valide. Vérifie-le dans l'e-mail reçu après ton achat."; return; }
-  store.set(KEYS.premium, { code: c.toUpperCase(), at: new Date().toISOString() });
-  $('#premium-state').textContent = 'Premium est activé. Merci pour ton soutien !'; refreshPremiumUI(); renderWarrantyIfOpen(); renderMoneyIfOpen(); $$('.ad').forEach(a => a.remove()); toast('Premium activé');
-});
+$('#premium-buy').addEventListener('click', () => { track('premium_achat'); let u = CONFIG.PREMIUM_URL; try { if (FBU && FBU.email) { const x = new URL(u); x.searchParams.set('prefilled_email', FBU.email); u = x.toString(); } } catch (e) { /* lien libre */ } window.open(u, '_blank', 'noopener'); });
+$('#premium-check').addEventListener('click', async () => { if (!FBU) { await gLogin(); } await checkPremium(true); });
 $('#premium-close').addEventListener('click', () => $('#premium').close());
 $('#img-close').addEventListener('click', () => $('#img-dialog').close());
 $('#sync-btn').addEventListener('click', () => { FBU ? syncNow() : gLogin(); });
@@ -4164,7 +4205,7 @@ $('#sync-off').addEventListener('click', () => gLogout());
 $('#login-btn').addEventListener('click', () => { FBU ? openSettings() : gLogin(); });
 function refreshPremiumUI() {
   const p = isPremium();
-  $('#premium-status').textContent = p ? 'Premium est activé sur cet appareil.' : `Sans publicité, achats illimités dans le coffre. Paiement unique de ${CONFIG.PREMIUM_PRIX}, sans abonnement.`;
+  $('#premium-status').textContent = p ? 'Premium est activé sur ton compte.' : `Sans publicité, tout illimité, état des lieux de sortie, photos certifiées, fiche de paie complète. Paiement unique de ${CONFIG.PREMIUM_PRIX}, sans abonnement.`;
   $('#premium-btn').textContent = p ? 'Voir mon Premium' : 'Découvrir Premium';
   $('#sync-section').hidden = !gAvailable();
   setSyncStatus();

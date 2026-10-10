@@ -1,6 +1,6 @@
 # Communication : Paperdecrypt
 
-Paperdecrypt est l'outil gratuit de QuenTools qui lit un courrier (photo ou PDF), explique ce qu'on demande, avant quand, quel montant payer (HT ou TTC), et prépare une réponse. Il suit aussi les garanties et les demandes de remboursement. Adresse : `quentools.fr/decodeur-courrier.html`.
+Paperdecrypt est l'outil de QuenTools (gratuit pour commencer, avec des fonctions Premium) qui lit un courrier (photo ou PDF), explique ce qu'on demande, avant quand, quel montant payer (HT ou TTC), et prépare une réponse. Il suit aussi les garanties et les demandes de remboursement. Adresse : `quentools.fr/decodeur-courrier.html`.
 
 Règles : pas de prix, pas de promesse de résultat, pas de faux avis ni de chiffre inventé, aucune mention d'intelligence artificielle. Dire que l'outil « aide à comprendre » et ne remplace pas un professionnel. Ne pas écrire « sans publicité » : la version gratuite affiche des annonces.
 
@@ -16,7 +16,7 @@ CAF, impôts, facture, relance, assurance… Dites-le en commentaire, je vous r�
 **Astuce HT / TTC**
 HT ou TTC : quelle somme devez-vous vraiment payer ? 🧾
 Le HT, c'est le prix avant taxes. Le TTC, c'est le prix avec la TVA : c'est celui que paie un particulier. Sur une facture, repérez la ligne « Total TTC » ou « Net à payer ».
-Paperdecrypt, l'outil gratuit de QuenTools, fait cette distinction à votre place quand vous prenez votre courrier en photo (lien en bio).
+Paperdecrypt, l'outil de QuenTools (gratuit pour commencer), fait cette distinction à votre place quand vous prenez votre courrier en photo (lien en bio).
 
 **Astuce date limite**
 Une date limite noyée dans trois paragraphes, ça arrive à tout le monde ⏰
@@ -42,7 +42,7 @@ Utiliser un courrier d'exemple (bouton « Voir un exemple »), jamais un vrai co
 ## 4. Groupes Facebook (voir `PROSPECTION.md`)
 Bonjour à tous 👋
 Petite question : quand vous recevez un courrier officiel (CAF, impôts, relance), vous le comprenez du premier coup ou vous le laissez de côté ? 😅
-Je demande parce que j'ai fait un petit outil gratuit pour s'y retrouver. Dites-moi en commentaire quel courrier vous embête le plus, je vous réponds.
+Je demande parce que j'ai fait un petit outil, gratuit pour commencer, pour s'y retrouver. Dites-moi en commentaire quel courrier vous embête le plus, je vous réponds.
 (Pas de lien dans la publication : le donner en message privé à ceux qui le demandent.)
 
 ## 5. Réponses types aux commentaires
@@ -86,7 +86,7 @@ Visuel : `assets/social/linkedin-paperdecrypt-bientot.jpg` (1080×1350, `node to
 >
 > Pourquoi ? Parce que l'administratif ne devrait coûter ni argent ni sommeil à celles et ceux qui n'ont pas le temps de le décoder.
 >
-> Gratuit. Pensé pour les salariés, les indépendants et les locataires.
+> À essayer gratuitement, avec des fonctions Premium pour aller plus loin. Pensé pour les salariés, les indépendants et les locataires.
 >
 > Quel papier vous donne le plus de fil à retordre ? Dites-le en commentaire : cela nous aidera à choisir la suite.
 >
@@ -97,3 +97,8 @@ Visuel : `assets/social/linkedin-paperdecrypt-bientot.jpg` (1080×1350, `node to
 **Premier commentaire** (le lien ne va pas dans le texte) : « Pour être prévenu(e) dès l'ouverture : suivez la page QuenTools. »
 
 Conseils : publier un mardi ou un jeudi vers 8 h 30 ou 12 h ; répondre à chaque commentaire dans l'heure avec un conseil précis ; ne pas citer de prix ; ne jamais parler d'intelligence artificielle.
+
+## Modèle économique (à garder en tête dans toute la communication)
+**Gratuit** : décodage de courriers (HT/TTC, hameçonnage, lettres de réponse), rappels, calcul de TVA, 3 garanties, 10 documents au coffre, 3 abonnements, 1 état des lieux d'entrée, analyse de fiche de paie (chiffres, explications, heures supp repérées), lettres amende, résiliation et échéancier. Avec publicité.
+**Premium** (paiement unique, lié au compte Google) : tout illimité, état des lieux de sortie avec comparaison, photos certifiées par un serveur, vérification des heures supplémentaires et lettre à l'employeur, suivi des fiches de paie, tous les modèles de lettres, dossier PDF, sans publicité.
+Dans les publications : ne jamais annoncer de prix ; dire « gratuit pour commencer » ou « à essayer gratuitement », jamais « entièrement gratuit ». Le prix et le lien d'achat ne figurent que dans l'outil et sur les pages du site.

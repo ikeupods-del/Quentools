@@ -25,7 +25,7 @@ Chaque plan reste affiché au moins 2 secondes après l'apparition de son dernie
 | 25,5 – 32 s | État des lieux : photo avec date, heure et GPS, carte, certification, comparaison entrée/sortie | « La preuve dans la poche. » |
 | 32 – 37 s | Garanties, coffre, abonnements, HT/TTC, lettres types, dossier PDF | « Et aussi… » |
 | 37 – 40,5 s | Cadenas | « Tout reste sur votre téléphone. » |
-| 40,5 – 45 s | Logo, nom, adresse, mention légale | « Paperdecrypt, le décodeur de papiers, gratuit. quentools.fr » |
+| 40,5 – 45 s | Logo, nom, adresse, mention légale | « Paperdecrypt, le décodeur de papiers. Gratuit pour commencer, Premium pour aller plus loin. quentools.fr » |
 
 Le sens passe sans le son (la plupart des vidéos sociales sont vues sans son). Avec le son : musique rythmée et bruitages calés sur chaque apparition (frappes de tampons, balayage de lecture, déclic d'appareil photo, « ding » de validation, cloche, machine à écrire du GPS, alerte, cadenas, petits « pop » et « swish » à chaque élément). La bande son seule est fournie en MP3 pour le montage.
 
@@ -37,12 +37,12 @@ Le sens passe sans le son (la plupart des vidéos sociales sont vues sans son). 
 > Votre état des lieux : des photos datées, géolocalisées, certifiées.
 > Garanties, abonnements, coffre de documents, calcul de TVA, lettres types… tout y est.
 > Et tout reste sur votre téléphone.
-> Paperdecrypt, le décodeur de papiers gratuit de QuenTools. Sur quentools.fr. »
+> Paperdecrypt, le décodeur de papiers de QuenTools : gratuit pour commencer, Premium pour aller plus loin. Sur quentools.fr. »
 
 Poser la voix à environ −18 LUFS sur la musique, qui peut descendre de 6 dB pendant la voix.
 
 ## Règles à respecter
-- Ne jamais présenter l'outil comme une intelligence artificielle ; ne pas annoncer de prix.
+- Ne jamais présenter l'outil comme une intelligence artificielle ; ne pas annoncer de prix ; ne pas dire « entièrement gratuit » (modèle gratuit + Premium).
 - La mention légale de fin de film (« ne remplace pas l'avis d'un professionnel », « seul un état des lieux signé par les deux parties fait foi ») reste obligatoire à l'écran.
 - Les écrans montrés sont de l'interface réelle ou fidèle, avec des données fictives (adresse, noms, montants d'exemple).
 - Pour une diffusion télévisée, le diffuseur impose en général un contrôle technique (loudness, formats, mentions) et un numéro d'identification de la publicité : à demander à la régie.

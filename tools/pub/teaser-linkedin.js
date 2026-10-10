@@ -16,7 +16,7 @@ ul{list-style:none;padding:0;margin:52px 0 0;display:grid;gap:22px}li{display:fl
 </style><div class="pill">Bientôt</div><h1><span class="g">Paper</span><br>decrypt</h1>
 <p>Vos courriers, fiches de paie et états des lieux, enfin compréhensibles.</p>
 <ul>${chips.map(c => `<li><b>✓</b>${c}</li>`).join('')}</ul>
-<div class="foot"><span>${mark}QuenTools</span><small>Un outil gratuit</small></div>`;
+<div class="foot"><span>${mark}QuenTools</span><small>Gratuit pour commencer</small></div>`;
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
   const pg = await b.newPage({ viewport: { width: 1080, height: 1350 } });

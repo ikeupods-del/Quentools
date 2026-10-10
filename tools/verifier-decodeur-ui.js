@@ -6,6 +6,7 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true, permissions: ['camera', 'geolocation'], geolocation: { latitude: 45.76405, longitude: 4.83572, accuracy: 12 } });
+  await ctx.addInitScript(() => { try { localStorage.setItem('qt-paperasse:premium-compte', JSON.stringify({ email: 'test@example.com', until: '', plan: 'vie', checked: Date.now() })); } catch (e) { /* ignoré */ } });
   const pg = await ctx.newPage();
   const errs = []; pg.on('pageerror', e => errs.push('PAGEERR ' + e.message)); pg.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errs.push('CONSOLE ' + m.text()); });
   await pg.route(/googlesyndication|gstatic|jsdelivr/, r => r.abort());
@@ -137,6 +138,26 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   await pg.click('#tab-decode'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-decode.png' });
   await pg.click('#tab-tools'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-tools.png' });
   await pg.click('#tab-vault'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-vault.png' });
+  // 7 version gratuite : limites et fonctions Premium
+  const free = await (await b.newContext({ viewport: { width: 390, height: 844 }, permissions: ['camera'] })).newPage();
+  free.on('pageerror', e => errs.push('FREE ' + e.message)); await free.route(/googlesyndication|gstatic|jsdelivr/, r => r.abort());
+  const dlgOpen = async () => { try { await free.waitForSelector('#premium[open]', { timeout: 2500 }); return true; } catch (e) { return false; } };
+  await free.goto('http://localhost:8766/decodeur-courrier.html#etat-des-lieux'); await free.reload(); await free.waitForSelector('[data-edl-new=sortie]');
+  await free.click('[data-edl-new=sortie]'); ok(await dlgOpen(), 'gratuit : l\'état des lieux de sortie demande Premium'); await free.click('#premium-close');
+  await free.click('[data-edl-new=entree]'); await free.fill('#en-adr', '1 rue A'); await free.click('#en-go'); await free.click('#edl-back');
+  await free.click('[data-edl-new=entree]'); ok(await dlgOpen(), 'gratuit : un seul état des lieux d\'entrée'); await free.click('#premium-close');
+  await free.goto('http://localhost:8766/decodeur-courrier.html#fiche-de-paie'); await free.reload(); await free.waitForSelector('#paie-sample'); await free.click('#paie-sample'); await free.waitForSelector('.paie-t');
+  ok((await free.locator('#paie-declared').count()) === 0 && (await free.locator('#paie-premium').count()) === 1, 'gratuit : vérification des heures supp réservée à Premium');
+  ok(/majoration d'environ 25 %/.test(await free.innerText('#paie-res')), 'gratuit : les heures supp restent repérées et expliquées');
+  await free.click('#paie-lettre'); ok(await dlgOpen(), 'gratuit : la lettre à l\'employeur demande Premium'); await free.click('#premium-close');
+  await free.goto('http://localhost:8766/decodeur-courrier.html#lettres'); await free.reload(); await free.waitForSelector('[data-lettre]');
+  await free.click('[data-lettre=caf]'); ok(await dlgOpen(), 'gratuit : modèle CAF réservé à Premium'); await free.click('#premium-close');
+  await free.click('[data-lettre=amende]'); ok(await free.locator('#cf-avis').count() === 1, 'gratuit : modèle amende accessible');
+  await free.goto('http://localhost:8766/decodeur-courrier.html#abonnements'); await free.reload(); await free.waitForSelector('#abo-add');
+  for (let i = 0; i < 3; i++) { await free.click('#abo-add'); await free.fill('#ab-name', 'Abo ' + i); await free.fill('#ab-amount', '10'); await free.click('#ab-save'); }
+  await free.click('#abo-add'); ok(await dlgOpen(), 'gratuit : 3 abonnements maximum'); await free.click('#premium-close');
+  await free.goto('http://localhost:8766/decodeur-courrier.html#outils'); await free.reload(); await free.click('[data-tool=dossier]'); ok(await dlgOpen(), 'gratuit : dossier PDF réservé à Premium');
+  ok(/Paperdecrypt Premium/.test(await free.innerText('#premium')) && /paiement unique/i.test(await free.innerText('#premium')), 'fenêtre Premium : fonctions et paiement unique');
   console.log(errs.length ? errs.join('\n') : '✓ aucune erreur JavaScript');
   await b.close(); srv.close();
 })().catch(e => { console.error('ECHEC', e); process.exit(1); });

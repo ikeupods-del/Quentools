@@ -855,7 +855,7 @@ function viewGifts() {
 /* ---------- Écrans ---------- */
 const toast = (m, warn) => { const n = document.getElementById('toast'); if (!n) return; n.innerHTML = `<div class="notice${warn ? ' warn' : ''}">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => n.innerHTML = '', 3500); };
 const NAV = [
-  ['Activité', [['demandes', 'Demandes', 'M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z'], ['agenda', 'Agenda', 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4'], ['estimer', 'Devis', 'M7 3h8l4 4v14H7zM14 3v5h5M10 13h6M10 17h6'], ['usage', 'Paperdecrypt', 'M4 19h16M7 16V9M12 16V5M17 16v-4']]],
+  ['Activité', [['demandes', 'Demandes', 'M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z'], ['agenda', 'Agenda', 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4'], ['estimer', 'Devis', 'M7 3h8l4 4v14H7zM14 3v5h5M10 13h6M10 17h6'], ['usage', 'Paperdecrypt', 'M4 19h16M7 16V9M12 16V5M17 16v-4'], ['premium', 'Premium', 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z']]],
   ['Gestion', [['clients', 'Sites clients', 'M5 11h14v10H5zM8 11V8a4 4 0 0 1 8 0v3'], ['cadeaux', 'Cartes cadeaux', 'M3 9h18v4H3zM5 13v8h14v-8M12 9v12M12 9c-2-4-6-3-5 0 1 2 5 0 5 0zM12 9c2-4 6-3 5 0-1 2-5 0-5 0z'], ['contacts', 'Contacts', 'M4 20c0-4 3.500-6 8-6s8 2 8 6M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'], ['stats', 'Chiffres', 'M5 20V10M12 20V4M19 20v-7']]],
   ['Site', [['site', 'Réglages du site', 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18'], ['liens', 'Raccourcis', 'M14 4h6v6M20 4l-9 9M10 6H5v13h13v-5'], ['regles', 'Règles de sécurité', 'M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z']]]];
 const TITLES = {
@@ -865,6 +865,7 @@ const TITLES = {
   clients: ['Sites clients', 'Suivez les paiements, verrouillez un site tant que le solde n’est pas réglé, relancez en un clic.'],
   cadeaux: ['Cartes cadeaux', 'Commandes à valider et cartes émises.'],
   contacts: ['Contacts', 'Les adresses laissées sur le site.'],
+  premium: ['Premium', 'Les acheteurs de Paperdecrypt Premium : activez un paiement, retirez un accès.'],
   usage: ['Paperdecrypt', 'Qui utilise l’outil, ce qui sert le plus, et ce qui marche. Données anonymes.'],
   stats: ['Chiffres', 'Ce que rapportent les demandes et les devis.'],
   site: ['Réglages du site', 'Bandeau d’annonce, disponibilité, coordonnées et informations sur les devis.'],
@@ -883,7 +884,7 @@ function shell(body) {
     <div id="toast" role="status" aria-live="polite"></div>${body}</div></div>`;
 }
 function render() {
-  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'usage' ? viewUsage() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'cadeaux' ? viewGifts() : tab === 'clients' ? viewClients() : viewLinks());
+  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'usage' ? viewUsage() : tab === 'premium' ? viewPremium() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'cadeaux' ? viewGifts() : tab === 'clients' ? viewClients() : viewLinks());
   if (tab === 'estimer') estimate();
 }
 
@@ -903,6 +904,10 @@ match /qt_seals/{id} {
     && request.resource.data.edl is string && request.resource.data.edl.size() <= 40
     && request.resource.data.at == request.time;
   allow update, delete: if false;
+}
+match /qt_premium/{email} {
+  allow get: if request.auth != null && request.auth.token.email_verified == true && request.auth.token.email.lower() == email;
+  allow list, create, update, delete: if qtAdmin();
 }
 match /qt_usage/{day} {
   allow read, delete: if qtAdmin();
@@ -1114,7 +1119,7 @@ async function loadUsage() {
   usageErr = '';
   if (DEMO) {
     const r = n => Math.round(Math.random() * n);
-    usageDocs = Array.from({ length: 45 }, (_, i) => { const v = 6 + r(30), dc = Math.round(v * .7); return { id: addDays(today(), -i), v, f: { nouveau: Math.round(v * .6), decode: dc, photo: Math.round(dc * .55), pdf: Math.round(dc * .15), tab_decode: v, tab_money: r(6), tab_warranty: r(5), tab_vault: r(4), tab_list: r(6), tab_tools: r(8), claim_new: r(3), warranty_new: r(3), coffre_add: r(3), save_courrier: r(6), lettre_modele: r(3), outil_lettres: r(4), outil_tva: r(5), tva: r(5), outil_abos: r(3), abo_new: r(2), dossier: r(2), rappels_agenda: r(2), partage_wa: r(3), lettre_copy: r(5), lettre_dl: r(2), lettre_print: r(2), login: r(2), avis_ok: r(20), avis_ko: r(5) }, k: { org_aucun_to_caf: r(4), type_info_to_facture: r(3), montant: r(3), ht_ttc: r(2), avis_ko_relance: r(2) }, t: { facture: r(6), amende: r(4), relance: r(4), pieces: r(3), demeure: r(2), impot: r(2), info: r(4) }, o: { caf: r(5), impots: r(4), energie: r(4), telecom: r(3), antai: r(3) }, l: { delai: r(3), contester: r(3), explications: r(2), resiliation: r(2), echeancier: r(1) } }; });
+    usageDocs = Array.from({ length: 45 }, (_, i) => { const v = 6 + r(30), dc = Math.round(v * .7); return { id: addDays(today(), -i), v, f: { nouveau: Math.round(v * .6), decode: dc, photo: Math.round(dc * .55), pdf: Math.round(dc * .15), tab_decode: v, tab_money: r(6), tab_warranty: r(5), tab_vault: r(4), tab_list: r(6), tab_tools: r(8), claim_new: r(3), warranty_new: r(3), coffre_add: r(3), save_courrier: r(6), lettre_modele: r(3), outil_lettres: r(4), outil_tva: r(5), tva: r(5), outil_abos: r(3), abo_new: r(2), dossier: r(2), rappels_agenda: r(2), partage_wa: r(3), lettre_copy: r(5), lettre_dl: r(2), lettre_print: r(2), login: r(2), avis_ok: r(20), avis_ko: r(5), premium_vu: r(12), premium_achat: r(4), premium_actif: r(2) }, k: { org_aucun_to_caf: r(4), type_info_to_facture: r(3), montant: r(3), ht_ttc: r(2), avis_ko_relance: r(2) }, t: { facture: r(6), amende: r(4), relance: r(4), pieces: r(3), demeure: r(2), impot: r(2), info: r(4) }, o: { caf: r(5), impots: r(4), energie: r(4), telecom: r(3), antai: r(3) }, l: { delai: r(3), contester: r(3), explications: r(2), resiliation: r(2), echeancier: r(1) } }; });
     return;
   }
   try {
@@ -1162,6 +1167,7 @@ function viewUsage() {
     return { montant: 'Montant corrigé', date: 'Date limite corrigée', ht_ttc: 'HT / TTC corrigé' }[k] || k; };
   const fixRows = Object.entries(A.k).filter(e => e[1]).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => [fixLabel(k), n]);
   const ok = A.f('avis_ok'), ko = A.f('avis_ko');
+  const prem = [['Fenêtre Premium vue', A.f('premium_vu')], ['Clic sur « Débloquer »', A.f('premium_achat')], ['Premium activé (connexion)', A.f('premium_actif')]];
   const card = (t, body, note) => `<section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><h2 style="margin:0 0 var(--s-3);font-size:var(--t-lg)">${t}</h2>${body}${note ? `<p class="muted" style="margin:var(--s-3) 0 0;font-size:var(--t-sm)">${note}</p>` : ''}</section>`;
   return head + kpis
     + (top ? `<section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><p class="muted" style="margin:0;font-size:var(--t-sm)">Outil le plus utilisé sur ${usageRange} jours</p><h2 style="margin:4px 0 0;font-size:var(--t-xl)">${esc(top.label)}</h2><p class="muted" style="margin:4px 0 0">${top.n} ${esc(top.unit)}${top.opens ? ' · ' + top.opens + ' ouvertures' : ''}</p></section>` : '')
@@ -1169,6 +1175,7 @@ function viewUsage() {
     + card('Classement des outils', bars(toolRows, maxT), 'Barres : nombre d’actions réelles (pas simplement l’ouverture d’un onglet).')
     + `<div class="pd-two">${card('Courriers décodés par type', bars(typeRows, Math.max(1, ...typeRows.map(r => r[1]))))}${card('Expéditeurs les plus fréquents', bars(orgRows, Math.max(1, ...orgRows.map(r => r[1]))))}</div>`
     + card('Où la lecture se trompe', `<p style="margin:0 0 var(--s-3)"><b>${ok + ko ? pct(ok, ok + ko) : '—'}</b> des lectures jugées justes (${ok} oui, ${ko} non).</p>` + bars(fixRows, Math.max(1, ...fixRows.map(r => r[1])), 'Aucune correction pour l’instant.'), 'Chaque correction faite par un visiteur apparaît ici, de façon anonyme. Les plus fréquentes servent à améliorer les règles de lecture à la prochaine version.')
+    + card('Entonnoir Premium', bars(prem, Math.max(1, ...prem.map(r => r[1])), 'Aucun passage pour l’instant.'), 'Vues de la fenêtre Premium, clics sur le bouton d’achat et activations constatées à la connexion.')
     + `<div class="pd-two">${card('Comment les courriers arrivent', bars(srcRows, Math.max(1, ...srcRows.map(r => r[1]))), `Photo ou PDF : ${pct(photo + pdf, decoded)} des courriers.`)}${card('Lettres', bars(letRows, Math.max(1, ...letRows.map(r => r[1]))) + (actRows.length ? `<h3 style="margin:var(--s-4) 0 0;font-size:var(--t-md)">Ce qu’ils en font</h3>` + bars(actRows, Math.max(1, ...actRows.map(r => r[1]))) : ''))}</div>`
     + `<p class="muted" style="font-size:var(--t-xs)">Données anonymes : compteurs par jour, sans texte de courrier, sans identité, sans cookie. Collection <code>qt_usage</code>.</p>`;
 }
@@ -1177,6 +1184,28 @@ function usageCSV() {
   usageDocs.forEach(d => ['f', 't', 'o', 'l'].forEach(g => Object.keys(d[g] || {}).forEach(k => keys[g].add(k))));
   const cols = [['visites', d => d.v], ...['f', 't', 'o', 'l'].flatMap(g => [...keys[g]].sort().map(k => [g + '.' + k, d => (d[g] || {})[k]]))];
   return '﻿jour;' + cols.map(c => c[0]).join(';') + '\n' + [...usageDocs].sort((a, b) => a.id.localeCompare(b.id)).map(d => d.id + ';' + cols.map(c => +c[1](d) || 0).join(';')).join('\n');
+}
+
+/* ---------- Premium Paperdecrypt : membres (collection qt_premium, un document par adresse e-mail) ---------- */
+let pmList = [], pmErr = '';
+async function loadPremium() {
+  pmErr = '';
+  if (DEMO) { pmList = [{ id: 'julie@example.com', email: 'julie@example.com', plan: 'vie', until: '', note: 'Paiement reçu le 3 oct.', at: new Date(Date.now() - 6 * 864e5) }, { id: 'karim@example.com', email: 'karim@example.com', plan: 'annuel', until: addDays(today(), 200), note: '', at: new Date(Date.now() - 2 * 864e5) }]; return; }
+  try { const { Fs, db } = await fb(); const r = await Fs.getDocs(Fs.collection(db, 'qt_premium')); pmList = r.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => ms(b.at) - ms(a.at)); }
+  catch (e) { pmList = []; pmErr = /permission/i.test(e.code || e.message) ? 'rules' : 'other'; }
+}
+const pmActive = m => !m.until || m.until >= today();
+function pmMessage(email) { return `Bonjour,\n\nMerci pour votre achat ! Paperdecrypt Premium est activé pour l’adresse ${email}.\n\nPour en profiter : ouvrez https://quentools.fr/decodeur-courrier.html, appuyez sur « Se connecter » (avec cette même adresse Google), puis sur « Retrouver mon Premium » dans la fenêtre Premium.\n\nUne question ? Répondez simplement à ce message.\n\nQuenTools`; }
+function viewPremium() {
+  if (pmErr === 'rules') return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Une étape à faire une seule fois</h2><p>Les membres Premium sont rangés dans la collection <code>qt_premium</code>. Pour la gérer ici, ajoutez ses règles : onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-tab="regles">Voir les règles</button><button class="btn btn-ghost" data-do="reload">J’ai publié les règles</button></div></section>`;
+  if (pmErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Lecture impossible</h2><button class="btn btn-ghost" data-do="reload">Réessayer</button></section>`;
+  const act = pmList.filter(pmActive), exp = pmList.length - act.length;
+  return `<div class="kpis"><div><b>${act.length}</b><span>membres Premium actifs</span></div><div><b>${pmList.filter(m => m.plan === 'vie').length}</b><span>achats à vie</span></div><div><b>${pmList.filter(m => m.plan === 'annuel').length}</b><span>annuels</span></div><div><b>${exp}</b><span>expirés</span></div></div>
+    <section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><h2 style="margin:0 0 var(--s-2);font-size:var(--t-lg)">Activer un acheteur</h2>
+      <p class="muted" style="margin:0 0 var(--s-3)">Quand un paiement arrive (Stripe ou PayPal), saisissez l’adresse e-mail Google de l’acheteur. Premium s’active dès sa prochaine connexion, sur tous ses appareils.</p>
+      <div class="row" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><input id="pm-email" type="email" placeholder="adresse@gmail.com" style="flex:1;min-width:220px" aria-label="E-mail de l’acheteur"><select id="pm-plan" aria-label="Formule"><option value="vie">Achat à vie</option><option value="annuel">Annuel</option></select><input id="pm-until" type="date" aria-label="Valable jusqu’au (annuel)" title="Valable jusqu’au (annuel)"><input id="pm-note" placeholder="Note (paiement, remarque)" style="flex:1;min-width:160px" aria-label="Note"><button class="btn btn-accent" data-do="pm-add">Activer</button></div></section>
+    <section class="card" style="padding:var(--s-5)"><h2 style="margin:0 0 var(--s-3);font-size:var(--t-lg)">Membres</h2>${pmList.length ? pmList.map(m => `<div class="fun" style="grid-template-columns:1fr auto;gap:12px;border-bottom:1px solid var(--line);padding:8px 0" data-pm="${esc(m.id)}"><span><b>${esc(m.email || m.id)}</b><br><span class="muted">${m.plan === 'annuel' ? 'Annuel' : 'À vie'}${m.until ? ' · jusqu’au ' + esc(new Date(m.until + 'T12:00').toLocaleDateString('fr-FR')) : ''}${pmActive(m) ? '' : ' · <b>expiré</b>'}${m.note ? ' · ' + esc(m.note) : ''}</span></span><span style="display:flex;gap:6px"><button class="btn btn-sm btn-ghost" data-do="pm-copy">Message</button><button class="btn btn-sm btn-ghost" data-do="pm-del">Retirer</button></span></div>`).join('') : '<p class="muted">Aucun membre pour l’instant.</p>'}</section>
+    <p class="muted" style="font-size:var(--t-xs)">Le lien de paiement (Stripe, PayPal) se renseigne dans <code>decodeur-courrier.html</code> : <code>CONFIG.PREMIUM_URL</code> et <code>CONFIG.PREMIUM_PRIX</code>. Les règles de la collection <code>qt_premium</code> ne permettent à un client de lire que sa propre fiche.</p>`;
 }
 
 function viewSite() {
@@ -1250,13 +1279,22 @@ app.addEventListener('click', async e => {
     return;
   }
   const b = e.target.closest('[data-tab],[data-filter],[data-do],[data-agday]'); if (!b) return;
-  if (b.dataset.tab) { tab = b.dataset.tab; if (tab === 'estimer' && !dv) dvInit(); if (tab === 'contacts') { await loadLeads(); } if (tab === 'usage') { render(); await loadUsage(); } return render(); }
+  if (b.dataset.tab) { tab = b.dataset.tab; if (tab === 'estimer' && !dv) dvInit(); if (tab === 'contacts') { await loadLeads(); } if (tab === 'usage') { render(); await loadUsage(); } if (tab === 'premium') { render(); await loadPremium(); } return render(); }
   if (b.dataset.filter) { filter = b.dataset.filter; return render(); }
   if (b.dataset.agday !== undefined) { agDay = b.dataset.agday; return render(); }
   const card = b.closest('.req'), x = card && items.find(i => i.id === card.dataset.id), d = b.dataset.do;
   try {
     if (d === 'logout') { const { Au, auth } = await fb(); await Au.signOut(auth); }
-    else if (d === 'reload') { await load(); if (tab === 'usage') await loadUsage(); render(); }
+    else if (d === 'reload') { await load(); if (tab === 'usage') await loadUsage(); if (tab === 'premium') await loadPremium(); render(); }
+    else if (d === 'pm-add') {
+      const email = document.getElementById('pm-email').value.trim().toLowerCase(), plan = document.getElementById('pm-plan').value, until = document.getElementById('pm-until').value, note = document.getElementById('pm-note').value.trim().slice(0, 120);
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast('Adresse e-mail invalide', true);
+      if (plan === 'annuel' && !until) return toast('Indiquez la date de fin pour un accès annuel', true);
+      if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_premium', email), { email, plan, until: plan === 'annuel' ? until : '', note, at: Fs.serverTimestamp() }); }
+      pmList = [{ id: email, email, plan, until: plan === 'annuel' ? until : '', note, at: new Date() }, ...pmList.filter(m => m.id !== email)]; render(); toast('Premium activé pour ' + email + ' ✓'); copy(pmMessage(email));
+    }
+    else if (d === 'pm-del') { const id = b.closest('[data-pm]').dataset.pm; if (!confirm('Retirer Premium à ' + id + ' ?')) return; if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_premium', id)); } pmList = pmList.filter(m => m.id !== id); render(); toast('Accès retiré'); }
+    else if (d === 'pm-copy') copy(pmMessage(b.closest('[data-pm]').dataset.pm));
     else if (d === 'pd-range') { usageRange = +b.dataset.n || 30; render(); }
     else if (d === 'pd-csv') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([usageCSV()], { type: 'text/csv;charset=utf-8' })); a.download = 'paperdecrypt-usage.csv'; a.click(); }
     else if (d === 'gf-filter') { gFilter = b.dataset.k; gOpen = null; render(); }
