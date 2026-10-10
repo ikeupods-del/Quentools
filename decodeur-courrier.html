@@ -311,6 +311,16 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 #cam-video{width:100%;max-height:60vh;background:#000;border-radius:10px;display:block}
 .edl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .edl-row input[data-note]{flex:1;min-width:160px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--paper);min-height:38px}
+.paie-t{width:100%;border-collapse:collapse;margin:6px 0}
+.paie-t th,.paie-t td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:.98rem}
+.paie-t td{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.paie-t td.strong{font-weight:800}
+.paie-ins{list-style:none;margin:8px 0;padding:0;display:grid;gap:8px}
+.paie-ins li{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:9px;padding:9px 12px}
+.paie-ins li>span{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.8rem;background:var(--paper)}
+.paie-ins li.ok>span{background:var(--calm);color:#fff}
+.paie-ins li.warn{border-color:var(--warn)}
+.paie-ins li.warn>span{background:var(--warn);color:#fff}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -609,7 +619,7 @@ async function fillAds(root) {
 }
 const tipHTML = () => CONFIG.TIP_URL ? `<a class="link tip" href="${esc(CONFIG.TIP_URL)}" target="_blank" rel="noopener">Ça t'a aidé ? Soutiens QuenTools</a>` : '';
 Object.assign(KEYS, { claims: 'qt-paperasse:reclamations', garanties: 'qt-paperasse:garanties', premium: 'qt-paperasse:premium', sync: 'qt-paperasse:sync', deleted: 'qt-paperasse:supprimes',
-  abos: 'qt-paperasse:abonnements', coffre: 'qt-paperasse:coffre', edl: 'qt-paperasse:etats-des-lieux', coffreRead: 'qt-paperasse:coffre-lecture', nostats: 'qt-paperasse:sans-stats', seen: 'qt-paperasse:vu', notif: 'qt-paperasse:notif', notifDay: 'qt-paperasse:notif-jour' });
+  abos: 'qt-paperasse:abonnements', coffre: 'qt-paperasse:coffre', edl: 'qt-paperasse:etats-des-lieux', paies: 'qt-paperasse:fiches-de-paie', coffreRead: 'qt-paperasse:coffre-lecture', nostats: 'qt-paperasse:sans-stats', seen: 'qt-paperasse:vu', notif: 'qt-paperasse:notif', notifDay: 'qt-paperasse:notif-jour' });
 const SYNC_KEYS = [KEYS.list, KEYS.claims, KEYS.garanties, KEYS.me, KEYS.abos, KEYS.coffre, KEYS.edl];
 let markDirty = () => {};
 const _set = store.set;
@@ -1411,6 +1421,7 @@ function renderResult(a, savedId, opts = {}) {
       ${a.phish && a.phish.length ? `<div class="scam"><strong>Méfie-toi : ce message a des signes d'hameçonnage.</strong><ul>${a.phish.map(x => `<li>${esc(x)}</li>`).join('')}</ul>Ne clique sur aucun lien et ne donne aucune information. Va directement sur le site officiel, en tapant toi-même l'adresse, ou appelle l'organisme.</div>` : ''}
       ${a.scam.length ? `<div class="scam"><strong>Attention, ça ressemble à une arnaque.</strong> Ce courrier parle de paiement par ${esc(a.scam.join(', '))}. Une administration ou une entreprise sérieuse ne demande jamais ça. Ne paye pas, et vérifie en contactant l'organisme par son site officiel.</div>` : ''}
 
+      ${looksLikePayslip(a.raw) ? '<div class="scam" style="border-color:var(--focus)"><strong style="color:var(--ink)">Ça ressemble à une fiche de paie.</strong> L\'analyse dédiée repère les heures supplémentaires et explique chaque ligne. <button class="btn small" type="button" id="to-paie">Analyser ma fiche de paie</button></div>' : ''}
       <div class="brief">
         <div class="brief-head"><h3>En bref</h3><button class="link" id="speak-btn" type="button" aria-pressed="false">Écouter</button></div>
         <p id="brief-text">${esc(brief(a))}</p>
@@ -1514,6 +1525,7 @@ function bindResult() {
   $('#undo-draft').addEventListener('click', () => { if (draftBackup != null) { setDraft(draftBackup); draftBackup = null; $('#undo-draft').hidden = true; } });
   $('#save-btn').addEventListener('click', saveCurrent);
   bindShare(current);
+  const tp = $('#to-paie'); if (tp) tp.addEventListener('click', () => { paie$ = { text: current.raw, declared: '', p: parsePayslip(current.raw) }; tools$ = { view: 'paie' }; track('paie'); showTab('tools'); });
   $('#more-letters').addEventListener('click', () => { tools$ = { view: 'lettres' }; showTab('tools'); });
   $('#new-btn').addEventListener('click', resetInput);
   $('#ai-improve').addEventListener('click', () => enqueueAI(() => aiImprove(seq)));
@@ -1625,9 +1637,10 @@ let ocrWorker = null, readPages = 0;
 function setOcr(p, msg) {
   const box = $('#ocr-progress'); box.classList.add('on');
   $('#ocr-bar').style.width = Math.round(p * 100) + '%'; $('#ocr-text').textContent = msg;
+  const pb = $('#paie-bar'); if (pb && $('#paie-prog')) { $('#paie-prog').classList.add('on'); pb.style.width = Math.round(p * 100) + '%'; $('#paie-ptext').textContent = msg; }
   const vb = $('#vault-bar'); if (vb && $('#vault-prog')) { $('#vault-prog').classList.add('on'); vb.style.width = Math.round(p * 100) + '%'; $('#vault-ptext').textContent = msg; }
 }
-function hideOcr() { $('#ocr-progress').classList.remove('on'); }
+function hideOcr() { $('#ocr-progress').classList.remove('on'); const pp = $('#paie-prog'); if (pp) pp.classList.remove('on'); }
 
 async function getOcr() {
   if (ocrWorker) return ocrWorker;
@@ -2915,6 +2928,16 @@ const LETTRES = [
     build: v => letterFrame({ dest: bracket(v, 'org', 'société'), lrar: true, objet: 'Demande de remboursement de ' + (v.montant ? fmtMoney(+v.montant) : '[montant]'), refs: v.ref ? 'Référence : ' + v.ref : '',
       corps: `Le ${fdate(v.date, 'date du paiement')}, j'ai payé la somme de ${v.montant ? fmtMoney(+v.montant) : '[montant]'}${v.ref ? ' (référence ' + v.ref + ')' : ''}.\n\n${bracket(v, 'raison', 'explique la situation')}\n\nJe vous demande donc de me rembourser cette somme dans un délai de 15 jours, par virement sur mon compte. À défaut, je me réserverai le droit de saisir le médiateur compétent.\n\nVous trouverez ci-joint la preuve de mon paiement.` }) }
 ];
+LETTRES.push({ id: 'heures_supp', title: 'Heures supplémentaires manquantes', teaser: 'Demander le décompte et la régularisation à ton employeur', lrar: false,
+  note: "Garde tes relevés d'horaires (agenda, messages, planning) : ils servent de preuve. Sans réponse, relance par lettre recommandée. En règle générale, tu peux réclamer des salaires non payés jusqu'à 3 ans en arrière. En cas de blocage, rapproche-toi d'un syndicat ou de l'inspection du travail.",
+  fields: [
+    { id: 'employeur', label: 'Ton employeur', type: 'text', ph: 'Nom de la société' },
+    { id: 'mois', label: 'Mois concerné', type: 'text', req: true, ph: 'Ex. septembre 2026' },
+    { id: 'declarees', label: "Heures supplémentaires que tu as faites", type: 'number', req: true },
+    { id: 'payees', label: 'Heures supplémentaires payées sur la fiche', type: 'number', req: true },
+    { id: 'detail', label: 'Jours et horaires concernés', type: 'textarea', ph: 'Ex. le 3 et le 10 : fin à 20 h au lieu de 18 h' }],
+  build: v => letterFrame({ dest: bracket(v, 'employeur', 'employeur'), objet: 'Demande de précisions sur mes heures supplémentaires de ' + bracket(v, 'mois', 'mois'),
+    corps: `En examinant ma fiche de paie de ${bracket(v, 'mois', 'mois')}, je constate que ${v.payees || '[x]'} heure(s) supplémentaire(s) y sont payée(s), alors que j'en ai effectué ${v.declarees || '[y]'}.${v.detail ? '\n\nLes heures concernées sont les suivantes : ' + v.detail : '\n\nLes heures concernées sont les suivantes : [jours et horaires].'}\n\nJe vous demande de bien vouloir me communiquer le décompte détaillé de mes heures du mois et, si l'écart est confirmé, de procéder à la régularisation sur ma prochaine fiche de paie.\n\nJe reste à votre disposition pour en discuter.` }) });
 const lettreById = id => LETTRES.find(l => l.id === id);
 
 /* ---------- Calcul de TVA ---------- */
@@ -2941,11 +2964,13 @@ function renderTools() {
   if (v === 'lettres') return renderLettres(box);
   if (v === 'lettre') return renderLettre(box);
   if (v === 'edl') return renderEdl(box);
+  if (v === 'paie') return renderPaie(box);
   box.innerHTML = `<div class="sheet money-hero">
       <h2>Tes outils du quotidien</h2>
       <p class="lead">Les petits calculs et les lettres qui reviennent tout le temps. Tout reste sur ton appareil.</p>
     </div>
     <div class="cases" style="margin-top:14px">
+      <button class="case" type="button" data-tool="paie"><b>Analyser ma fiche de paie</b><span>Résumée et expliquée, avec repérage des heures supplémentaires</span></button>
       <button class="case" type="button" data-tool="lettres"><b>Modèles de lettres</b><span>Amende, résiliation, échéancier, CAF, impôts, remboursement</span></button>
       <button class="case" type="button" data-tool="abos"><b>Mes abonnements</b><span>Ce que tu paies chaque mois, et quand résilier</span></button>
       <button class="case" type="button" data-tool="tva"><b>Calcul HT, TVA, TTC</b><span>Pour tes devis et factures, avec remise et acompte</span></button>
@@ -2957,12 +2982,13 @@ function renderTools() {
   $$('[data-tool]', box).forEach(b => b.addEventListener('click', () => {
     if (b.dataset.tool === 'dossier') return openDossier();
     if (b.dataset.tool === 'edl') edl$ = { view: 'list' };
+    if (b.dataset.tool === 'paie') paie$ = { text: '', declared: '', p: null };
     tools$ = { view: b.dataset.tool }; track('outil_' + b.dataset.tool); renderTools(); setHash('tools', b.dataset.tool); box.scrollIntoView({ block: 'start' });
   }));
 }
 function toolBack(box) { $('#tool-back', box).addEventListener('click', () => { edl$ = { view: 'list' }; tools$ = { view: tools$.view === 'lettre' ? 'lettres' : 'home' }; renderTools(); setHash('tools'); }); }
 function setHash(which, sub) { try { history.replaceState(null, '', location.pathname + location.search + ((sub && SUBHASH[sub]) || TAB_HASH[which] || '')); } catch (e) {} }
-const SUBHASH = { abos: '#abonnements', tva: '#tva', lettres: '#lettres', edl: '#etat-des-lieux' };
+const SUBHASH = { abos: '#abonnements', tva: '#tva', lettres: '#lettres', edl: '#etat-des-lieux', paie: '#fiche-de-paie' };
 
 /* Lettres types */
 function renderLettres(box) {
@@ -3116,6 +3142,205 @@ function renderTVA(box) {
   });
   upd();
 }
+
+/* ---------- Fiche de paie ---------- */
+/*PAIE-DEB*/
+const PN = x => String(x).replace(/ | /g, ' ');
+// Nombres d'une ligne (dates et pourcentages retirés). « 1 895,88 » → 1895.88
+function lineNums(line) {
+  const t = PN(line).replace(/\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}/g, ' ').replace(/\d+(?:[.,]\d+)?\s*%/g, ' ');
+  const out = []; const re = /(-?\d+(?: \d{3})*(?:[.,]\d{1,4})?)/g; let m;
+  while ((m = re.exec(t))) { const v = parseFloat(m[1].replace(/ /g, '').replace(',', '.')); if (isFinite(v)) out.push(v); }
+  return out;
+}
+const linePct = line => { const m = PN(line).match(/(\d+(?:[.,]\d+)?)\s*%/); return m ? parseFloat(m[1].replace(',', '.')) : null; };
+const PMONTHS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
+function looksLikePayslip(text) {
+  const n = norm(text);
+  return ['bulletin de paie', 'bulletin de salaire', 'net a payer', 'cotisations', 'salaire de base', 'net imposable', 'conges payes', 'prelevement a la source', 'total brut', 'salaire brut'].filter(k => n.includes(k)).length >= 3;
+}
+function parsePayslip(raw) {
+  const lines = String(raw).split(/\n+/).map(l => l.trim()).filter(Boolean), nl = lines.map(norm);
+  const find = (re, not) => { const i = nl.findIndex(l => re.test(l) && !(not && not.test(l))); return i; };
+  const findAll = (re, not) => nl.map((l, i) => (re.test(l) && !(not && not.test(l)) ? i : -1)).filter(i => i >= 0);
+  const amountAt = (i, last = true) => { if (i < 0) return null; let n = lineNums(lines[i]); if (!n.length && lines[i + 1]) n = lineNums(lines[i + 1]); return n.length ? (last ? n[n.length - 1] : n[0]) : null; };
+  const p = { periode: null, ym: null, brut: null, netAvant: null, netFinal: null, netImposable: null, pas: null, cotSal: null, cotPat: null, base: null, hs: [], primes: [], absences: [], conges: [], found: 0 };
+  // Période
+  const pm = norm(raw).match(/periode[^0-9a-z]{0,12}(?:du\s*)?(\d{2})[\/.-](\d{2})[\/.-](\d{4})/);
+  if (pm) { p.ym = pm[3] + '-' + pm[2]; p.periode = PMONTHS[+pm[2] - 1] + ' ' + pm[3]; }
+  else { const mm = norm(raw).match(new RegExp('(?:mois de|paie de|periode de|bulletin de)?\\s*(' + PMONTHS.join('|') + ')\\s+(20\\d{2})')); if (mm) { p.periode = mm[1] + ' ' + mm[2]; p.ym = mm[2] + '-' + String(PMONTHS.indexOf(mm[1]) + 1).padStart(2, '0'); } }
+  // Brut, nets, impôt
+  let i = find(/(salaire brut|total brut|brut total)/, /(abattu|abattement|plafond|imposable)/); if (i < 0) i = find(/\bbrut\b/, /(abattu|abattement|plafond|imposable|cotisation)/);
+  p.brut = amountAt(i);
+  p.netAvant = amountAt(find(/net (a payer )?(avant|hors) (impot|prelevement)/));
+  const nf = findAll(/(net a payer|net paye)/, /(avant|hors) (impot|prelevement)|imposable/); p.netFinal = nf.length ? amountAt(nf[nf.length - 1]) : null;
+  p.netImposable = amountAt(find(/net imposable/));
+  const pi = find(/(prelevement a la source|impot sur le revenu|\bpas\b)/, /(avant|hors) (impot|prelevement)|net a payer|net imposable|montant net social/);
+  if (pi >= 0) { const taux = linePct(lines[pi]) ?? (lines[pi + 1] ? linePct(lines[pi + 1]) : null), amt = amountAt(pi); if (amt !== null || taux !== null) p.pas = { amount: amt, taux }; }
+  // Cotisations
+  const ci = find(/total (des )?cotisations/);
+  if (ci >= 0) { const n = lineNums(lines[ci]); if (n.length >= 2) { p.cotSal = n[n.length - 2]; p.cotPat = n[n.length - 1]; } else if (n.length === 1) p.cotSal = n[0]; }
+  // Salaire de base
+  const bi = find(/(salaire de base|salaire mensuel|heures normales|horaire normal)/);
+  if (bi >= 0) { const n = lineNums(lines[bi]); if (n.length >= 2) p.base = { qty: n[0] <= 250 ? n[0] : null, rate: n.length >= 3 ? n[1] : null, amount: n[n.length - 1] }; }
+  const baseRate = p.base && p.base.rate && p.base.rate > 3 && p.base.rate < 200 ? p.base.rate : (p.base && p.base.qty && p.base.amount ? p.base.amount / p.base.qty : null);
+  // Heures supplémentaires
+  findAll(/(heures? (supp|suppl)|h\.? ?sup|\bhs ?(\d|maj)|heures majorees|majoration)/, /(exonere|reduction|allegement|defiscal|cotisations? salariale|contingent)/).forEach(k => {
+    const n = lineNums(lines[k]); if (!n.length) return;
+    const maj = linePct(lines[k]), qty = n.length >= 2 && n[0] <= 200 ? n[0] : null, amount = n[n.length - 1], rate = n.length >= 3 ? n[1] : null;
+    const h = { line: lines[k], qty, amount, rate, maj: maj && maj >= 100 ? maj - 100 : maj, impl: null };
+    if (qty && amount && baseRate) h.impl = Math.round((amount / (qty * baseRate) - 1) * 100);
+    p.hs.push(h);
+  });
+  p.hsQty = p.hs.reduce((s, h) => s + (h.qty || 0), 0); p.hsAmount = p.hs.reduce((s, h) => s + (h.amount || 0), 0);
+  p.baseRate = baseRate;
+  p.hsRelief = find(/(reduction|exoneration|allegement|defiscalis).*(heures|\bhs\b)|(heures|\bhs\b).*(exonere|reduction)/) >= 0;
+  // Primes, absences, congés
+  findAll(/(prime|indemnite|gratification|13e mois|treizieme|panier|titres? restaurant|remboursement transport|avantage en nature)/, /(cotisation|plafond|net a payer|licenciement|conges payes)/).slice(0, 8).forEach(k => { const a = amountAt(k); if (a) p.primes.push({ line: lines[k], amount: a }); });
+  findAll(/(absence|maladie|conges? sans solde|retenue|carence)/, /(cotisation|prevoyance|retenue a la source)/).slice(0, 5).forEach(k => p.absences.push({ line: lines[k], amount: amountAt(k) }));
+  findAll(/(conges payes|\bcp\b|\brtt\b|repos compensateur)/, /(indemnite|cotisation)/).slice(0, 5).forEach(k => p.conges.push(lines[k]));
+  p.found = [p.brut, p.netAvant, p.netFinal, p.netImposable, p.cotSal, p.base].filter(x => x !== null).length + (p.pas ? 1 : 0);
+  return p;
+}
+const PE = v => (v === null || v === undefined || !isFinite(v) ? '?' : v.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }));
+const PH = v => (Math.round(v * 100) / 100).toString().replace('.', ',') + ' h';
+// Constats lisibles : { level: 'ok' | 'warn' | 'info', text }
+function payslipInsights(p, declared) {
+  const out = [];
+  if (p.found < 3) out.push({ level: 'warn', text: "La lecture n'a retrouvé que peu de lignes. Vérifie le texte lu (corrige-le si besoin) ou reprends la photo à plat, bien éclairée." });
+  if (p.brut !== null && p.netAvant !== null && p.brut > 0) {
+    const cut = p.brut - p.netAvant;
+    out.push({ level: 'info', text: `Sur ${PE(p.brut)} de salaire brut, ${PE(cut)} (${Math.round(100 * cut / p.brut)} %) partent en cotisations salariales : il te reste ${PE(p.netAvant)} avant impôt.` });
+  }
+  if (p.netAvant !== null && p.netFinal !== null && p.pas && p.pas.amount !== null) {
+    const diff = Math.abs(p.netAvant - p.pas.amount - p.netFinal);
+    if (diff > 1.5) out.push({ level: 'warn', text: `Le calcul « net avant impôt − prélèvement à la source » donne ${PE(p.netAvant - p.pas.amount)}, pas ${PE(p.netFinal)}. Il peut y avoir une ligne en plus (acompte, avance, remboursement de frais) : regarde le détail.` });
+    else out.push({ level: 'ok', text: `Le calcul tombe juste : ${PE(p.netAvant)} − ${PE(p.pas.amount)} d'impôt = ${PE(p.netFinal)} versés.` });
+  }
+  if (p.pas && p.pas.taux !== null) out.push({ level: 'info', text: `L'impôt est prélevé au taux de ${String(p.pas.taux).replace('.', ',')} %. Si ta situation a changé (mariage, naissance, baisse de revenus), tu peux demander à ajuster ce taux sur impots.gouv.fr.` });
+  // Heures supplémentaires
+  if (!p.hs.length) out.push({ level: 'info', text: "Aucune ligne d'heures supplémentaires repérée sur cette fiche." });
+  p.hs.forEach(h => {
+    if (h.impl === null) return;
+    if (h.impl < 10) out.push({ level: 'warn', text: `Ligne « ${h.line} » : ces heures semblent payées au tarif normal (environ +${Math.max(0, h.impl)} %). La majoration légale est en principe de 25 % (puis 50 %), sauf accord de branche ou d'entreprise qui peut aller jusqu'à 10 % minimum.` });
+    else if (Math.abs(h.impl - 25) <= 4) out.push({ level: 'ok', text: `Ligne « ${h.line} » : majoration d'environ 25 %, ce qui correspond au taux légal pour les 8 premières heures supplémentaires de la semaine.` });
+    else if (Math.abs(h.impl - 50) <= 4) out.push({ level: 'ok', text: `Ligne « ${h.line} » : majoration d'environ 50 %, ce qui correspond au taux légal au-delà de la 8e heure supplémentaire de la semaine.` });
+    else out.push({ level: 'info', text: `Ligne « ${h.line} » : majoration d'environ ${h.impl} %. Compare avec ton contrat et ta convention collective.` });
+  });
+  if (p.hsRelief) out.push({ level: 'info', text: "Une ligne d'allègement sur les heures supplémentaires apparaît : c'est normal, une partie des cotisations salariales est supprimée sur ces heures (donc ton net augmente)." });
+  if (declared !== null && declared !== undefined && isFinite(declared)) {
+    const paid = p.hsQty || 0, gap = Math.round((declared - paid) * 100) / 100;
+    if (gap > 0.49) out.push({ level: 'warn', text: `Tu indiques ${PH(declared)} supplémentaires, la fiche en paie ${PH(paid)} : il en manque peut-être ${PH(gap)}. Demande à ton employeur le décompte détaillé de tes heures et, si besoin, la régularisation (un modèle de lettre est prêt ci-dessous).` });
+    else if (gap < -0.49) out.push({ level: 'info', text: `La fiche paie ${PH(paid)}, plus que les ${PH(declared)} que tu indiques : des heures peuvent venir d'un autre mois (régularisation) ou d'un repos compensateur.` });
+    else out.push({ level: 'ok', text: `Les heures supplémentaires payées (${PH(paid)}) correspondent à ce que tu indiques.` });
+  }
+  if (p.conges.length) out.push({ level: 'info', text: 'Compteurs de congés ou de repos repérés : vérifie que les jours acquis augmentent bien chaque mois (en général 2,5 jours ouvrables de congés payés par mois travaillé).' });
+  return out;
+}
+const PAIE_GLOSSAIRE = [
+  [/brut/, 'Salaire brut', "Ce que ton employeur déclare avant de retirer les cotisations. Ce n'est pas ce que tu reçois."],
+  [/cotisations? salariales?|total des cotisations|cotisations et contributions/, 'Cotisations salariales', "Ta part de retraite, chômage, maladie, etc., retirée du brut. L'employeur paie en plus ses propres cotisations (part patronale)."],
+  [/\bcsg\b|\bcrds\b/, 'CSG et CRDS', 'Deux contributions sociales prélevées sur ton salaire, en partie déductibles de ton impôt.'],
+  [/net imposable/, 'Net imposable', "La somme sur laquelle l'impôt sur le revenu est calculé. Elle sert à remplir ta déclaration."],
+  [/(avant|hors) (impot|prelevement)/, 'Net avant impôt', "Ton salaire une fois les cotisations retirées, avant le prélèvement de l'impôt."],
+  [/prelevement a la source|\bpas\b|impot sur le revenu/, 'Prélèvement à la source', "L'impôt sur le revenu retiré chaque mois directement par l'employeur, selon un taux transmis par l'administration fiscale."],
+  [/net a payer|net paye/, 'Net à payer', "Ce qui est réellement viré sur ton compte."],
+  [/heures? (supp|suppl)|\bhs\b|majoration/, 'Heures supplémentaires', 'Les heures au-delà de 35 h par semaine. Elles sont en principe majorées de 25 % (jusqu\'à la 8e heure en plus) puis de 50 %, sauf accord prévoyant mieux.'],
+  [/\brtt\b|repos compensateur/, 'RTT et repos compensateur', "Jours de repos acquis en contrepartie d'heures travaillées en plus. Ils s'ajoutent aux congés payés."],
+  [/mutuelle|complementaire sante/, 'Mutuelle', "Ta complémentaire santé d'entreprise, financée en partie par ton employeur."],
+  [/prevoyance/, 'Prévoyance', "Une assurance qui te protège en cas d'arrêt maladie long, d'invalidité ou de décès."],
+  [/conges payes|\bcp\b/, 'Congés payés', "Les jours de vacances acquis au fil des mois travaillés. Le solde doit apparaître sur ta fiche."],
+  [/titres? restaurant|panier/, 'Titres-restaurant, paniers', "Avantages liés aux repas, financés en partie par l'employeur."]
+];
+/*PAIE-FIN*/
+const getPaies = () => store.get(KEYS.paies, []);
+let paie$ = { text: '', declared: '', p: null };
+function renderPaie(box) {
+  const s = paie$;
+  const p = s.p, ins = p ? payslipInsights(p, s.declared === '' ? null : parseFloat(String(s.declared).replace(',', '.'))) : [];
+  const hist = getPaies().sort((a, b) => (b.ym || '').localeCompare(a.ym || ''));
+  box.innerHTML = `<div class="sheet"><button class="link back" id="tool-back" type="button">Retour</button>
+    <h2>Analyser ma fiche de paie</h2>
+    <p class="lead">Scanne ta fiche de paie : on la résume, on t'explique chaque ligne en mots simples et on repère les heures supplémentaires. Rien ne quitte ton appareil.</p>
+    <div class="actions"><label class="btn" for="paie-cam">Prendre en photo</label><input class="sr" type="file" id="paie-cam" accept="image/*" capture="environment">
+      <label class="btn ghost" for="paie-file">Importer photo ou PDF</label><input class="sr" type="file" id="paie-file" accept="image/*,application/pdf" multiple></div>
+    <div class="progress" id="paie-prog"><div class="bar"><i id="paie-bar"></i></div><p id="paie-ptext"></p></div>
+    <label class="field" for="paie-text"><span>Texte lu (tu peux le corriger ou le coller)</span></label>
+    <textarea id="paie-text" placeholder="Le texte de ta fiche de paie apparaît ici après la lecture. Tu peux aussi le coller.">${esc(s.text)}</textarea>
+    <div class="actions"><button class="btn" id="paie-go" type="button">Analyser</button><button class="link" id="paie-sample" type="button">Voir un exemple</button></div>
+    <p class="note">Une fiche de paie est un document très personnel : elle n'est ni envoyée ni enregistrée tant que tu ne le demandes pas.</p></div>
+    <div id="paie-res">${p ? paieResultHTML(p, ins, hist) : ''}</div>
+    ${hist.length ? `<h3 class="sec-title">Mes fiches enregistrées</h3><div class="items">${hist.map(h => `<article class="item l1" data-ph="${h.id}"><div><h3>${esc(h.periode || 'Fiche de paie')}</h3><p>Brut ${esc(PE(h.brut))} | Net versé ${esc(PE(h.netFinal ?? h.netAvant))}${h.hsQty ? ' | ' + esc(PH(h.hsQty)) + ' supplémentaires' : ''}</p></div><div class="row"><button class="link" data-ph-del type="button">Supprimer</button></div></article>`).join('')}</div>` : ''}`;
+  toolBack(box);
+  const ta = $('#paie-text');
+  const run = () => { const t = ta.value.trim(); if (t.length < 40) { toast('Ajoute une photo ou colle le texte de ta fiche'); return; } paie$ = { ...paie$, text: t, p: parsePayslip(t) }; track('paie'); renderPaie(box); $('#paie-res').scrollIntoView({ block: 'start' }); };
+  $('#paie-go').addEventListener('click', run);
+  $('#paie-sample').addEventListener('click', () => { ta.value = PAIE_SAMPLE; run(); });
+  const onFiles = async fl => {
+    fl = [...fl]; if (!fl.length) return; let all = '';
+    try {
+      for (let i = 0; i < fl.length; i++) {
+        const f = fl[i];
+        if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) all += await readPdf(f) + '\n';
+        else { const w = await getOcr(); setOcr(0, 'Lecture de la fiche…'); all += await ocrImage(w, f) + '\n'; }
+      }
+    } catch (e) { console.error(e); hideOcr(); toast(navigator.onLine ? 'La lecture a échoué. Reprends la photo bien à plat.' : 'Il faut internet la première fois pour préparer la lecture.'); return; }
+    hideOcr(); ta.value = ((ta.value.trim() ? ta.value.trim() + '\n' : '') + all.trim()); run();
+  };
+  $('#paie-cam').addEventListener('change', e => { onFiles(e.target.files); e.target.value = ''; });
+  $('#paie-file').addEventListener('change', e => { onFiles(e.target.files); e.target.value = ''; });
+  const dec = $('#paie-declared'); if (dec) dec.addEventListener('input', () => { paie$.declared = dec.value; const i2 = payslipInsights(paie$.p, dec.value === '' ? null : parseFloat(dec.value.replace(',', '.'))); $('#paie-ins').innerHTML = insightsHTML(i2); });
+  const sv = $('#paie-save'); if (sv) sv.addEventListener('click', () => {
+    const l = getPaies(), q = paie$.p, id = q.ym ? 'p' + q.ym : newId('p');
+    const rec = { id, ym: q.ym, periode: q.periode, brut: q.brut, netAvant: q.netAvant, netFinal: q.netFinal, hsQty: q.hsQty, hsAmount: q.hsAmount, updatedAt: new Date().toISOString() };
+    const i = l.findIndex(x => x.id === id); if (i >= 0) l[i] = rec; else l.unshift(rec);
+    store.set(KEYS.paies, l); track('paie_save'); toast('Fiche enregistrée pour comparer les mois'); renderPaie(box);
+  });
+  const lt = $('#paie-lettre'); if (lt) lt.addEventListener('click', () => {
+    const q = paie$.p, d = parseFloat(String(paie$.declared).replace(',', '.'));
+    tools$ = { view: 'lettre', id: 'heures_supp', values: { mois: q.periode || '', declarees: isFinite(d) ? String(d) : '', payees: q.hsQty ? String(q.hsQty) : '0' }, result: false }; track('paie_lettre'); renderTools(); box.scrollIntoView({ block: 'start' });
+  });
+  $$('[data-ph]', box).forEach(el => $('[data-ph-del]', el).addEventListener('click', () => { if (!confirm('Supprimer cette fiche enregistrée ?')) return; store.set(KEYS.paies, getPaies().filter(x => x.id !== el.dataset.ph)); renderPaie(box); }));
+}
+const insightsHTML = ins => ins.length ? `<ul class="paie-ins">${ins.map(i => `<li class="${i.level}"><span aria-hidden="true">${i.level === 'ok' ? '✓' : i.level === 'warn' ? '!' : 'i'}</span><div>${esc(i.text)}</div></li>`).join('')}</ul>` : '<p class="note">Rien de particulier à signaler.</p>';
+function paieResultHTML(p, ins, hist) {
+  const row = (l, v, strong) => v === null || v === undefined ? '' : `<tr><th scope="row">${l}</th><td${strong ? ' class="strong"' : ''}>${esc(PE(v))}</td></tr>`;
+  const prev = hist.find(h => h.ym && p.ym && h.ym < p.ym);
+  let cmp = '';
+  if (prev && p.netFinal !== null && prev.netFinal !== null && prev.netFinal !== undefined) { const d = Math.round((p.netFinal - prev.netFinal) * 100) / 100; cmp = `<p class="note">Par rapport à ${esc(prev.periode)} : net versé ${d >= 0 ? '+' : ''}${esc(PE(d))}${prev.hsQty !== undefined ? `, heures supplémentaires ${esc(PH(p.hsQty))} contre ${esc(PH(prev.hsQty || 0))}` : ''}.</p>`; }
+  const summary = [p.periode ? `Fiche de paie de ${p.periode}.` : 'Fiche de paie.', p.brut !== null ? `Salaire brut : ${PE(p.brut)}.` : '', p.netAvant !== null ? `Net avant impôt : ${PE(p.netAvant)}.` : '', p.pas && p.pas.amount !== null ? `Impôt prélevé : ${PE(p.pas.amount)}.` : '', p.netFinal !== null ? `Net versé sur ton compte : ${PE(p.netFinal)}.` : '', p.hs.length ? `Heures supplémentaires payées : ${PH(p.hsQty)} (${PE(p.hsAmount)}).` : 'Pas d\'heures supplémentaires repérées.'].filter(Boolean).join(' ');
+  const n = norm(paie$.text), terms = PAIE_GLOSSAIRE.filter(g => g[0].test(n));
+  return `<div class="sheet verdict"><h2>${esc(p.periode ? 'Ta fiche de ' + p.periode : 'Ta fiche de paie')}</h2>
+    <div class="brief"><h3>En bref</h3><p>${esc(summary)}</p></div>
+    <div class="block"><h3>Les chiffres clés</h3><table class="paie-t"><tbody>${row('Salaire brut', p.brut)}${row('Cotisations salariales', p.cotSal)}${row('Net avant impôt', p.netAvant)}${p.pas ? row('Impôt prélevé' + (p.pas.taux !== null ? ' (' + String(p.pas.taux).replace('.', ',') + ' %)' : ''), p.pas.amount) : ''}${row('Net versé', p.netFinal, true)}${row('Net imposable (pour ta déclaration)', p.netImposable)}${row('Cotisations de ton employeur', p.cotPat)}</tbody></table>${cmp}</div>
+    <div class="block"><h3>Tes heures supplémentaires</h3>
+      ${p.hs.length ? `<ul>${p.hs.map(h => `<li>${esc(h.line)}${h.impl !== null ? ` <span class="note">(majoration d'environ ${h.impl} %)</span>` : ''}</li>`).join('')}</ul>` : '<p>Aucune ligne repérée.</p>'}
+      <label class="field"><span>Combien d'heures supplémentaires as-tu faites ce mois-ci ?</span><input id="paie-declared" inputmode="decimal" value="${esc(paie$.declared)}" placeholder="Ex. 10"></label>
+      <div id="paie-ins">${insightsHTML(ins.filter(i => /heures|Ligne|majoration|supplémentaires|allègement/.test(i.text)))}</div></div>
+    <div class="block"><h3>Ce qu'on a repéré d'autre</h3>${insightsHTML(ins.filter(i => !/heures|Ligne|majoration|supplémentaires|allègement/.test(i.text)))}
+      ${p.primes.length ? `<p><b>Primes et indemnités :</b></p><ul>${p.primes.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
+      ${p.absences.length ? `<p><b>Absences ou retenues :</b></p><ul>${p.absences.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
+      ${p.conges.length ? `<p><b>Congés et repos :</b></p><ul>${p.conges.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>
+    <div class="block"><h3>À vérifier avec ton contrat</h3><ul><li>Le taux horaire est au moins égal au SMIC et au minimum de ta convention collective.</li><li>Les primes prévues dans ton contrat (ancienneté, 13e mois…) apparaissent bien.</li><li>Les jours de congés et de RTT augmentent bien chaque mois.</li><li>Tes heures supplémentaires correspondent à tes relevés d'horaires.</li></ul></div>
+    ${terms.length ? `<div class="block"><h3>Les mots compliqués de ta fiche</h3><dl class="glossary">${terms.map(g => `<div><dt>${esc(g[1])}</dt><dd>${esc(g[2])}</dd></div>`).join('')}</dl></div>` : ''}
+    <div class="save-row"><button class="btn" id="paie-save" type="button">Enregistrer pour comparer les mois</button><button class="btn ghost" id="paie-lettre" type="button">Écrire à mon employeur (heures supplémentaires)</button></div>
+    <p class="note">Cette analyse t'aide à comprendre ta fiche. Elle peut se tromper, surtout sur une photo : vérifie les chiffres sur l'original. Ce n'est pas un avis juridique ; en cas de doute, rapproche-toi de ton service RH, d'un syndicat ou de l'inspection du travail.</p></div>`;
+}
+const PAIE_SAMPLE = `BULLETIN DE PAIE
+Période du 01/09/2026 au 30/09/2026
+Employeur : SARL Boulangerie Martin
+Salaire de base 151,67 12,0000 1 820,04
+Heures supplémentaires 25% 8,00 12,0000 120,00
+Heures supplémentaires 50% 2,00 12,0000 36,00
+Prime d'ancienneté 45,00
+TOTAL BRUT 2 021,04
+Total des cotisations et contributions 441,07 612,30
+Réduction de cotisations salariales heures supplémentaires -26,10
+NET À PAYER AVANT IMPÔT SUR LE REVENU 1 580,12
+Prélèvement à la source Taux personnalisé 3,80 % 1 580,12 60,04
+NET À PAYER 1 520,08
+Net imposable 1 700,50
+Congés payés acquis 2,5 pris 0 solde 22,5`;
 
 /* ---------- État des lieux (location) ---------- */
 const getEdl = () => store.get(KEYS.edl, []);
@@ -3581,7 +3806,7 @@ async function createDossier() {
 /* ---------- Onglets ---------- */
 const TABS = ['decode', 'money', 'warranty', 'vault', 'list', 'tools'];
 const TAB_HASH = { decode: '', money: '#argent', warranty: '#garanties', vault: '#coffre', list: '#courriers', tools: '#outils' };
-const START_HASH = { '#argent': ['money'], '#garanties': ['warranty'], '#coffre': ['vault'], '#courriers': ['list'], '#outils': ['tools', 'home'], '#abonnements': ['tools', 'abos'], '#tva': ['tools', 'tva'], '#lettres': ['tools', 'lettres'], '#etat-des-lieux': ['tools', 'edl'] };
+const START_HASH = { '#argent': ['money'], '#garanties': ['warranty'], '#coffre': ['vault'], '#courriers': ['list'], '#outils': ['tools', 'home'], '#abonnements': ['tools', 'abos'], '#tva': ['tools', 'tva'], '#lettres': ['tools', 'lettres'], '#etat-des-lieux': ['tools', 'edl'], '#fiche-de-paie': ['tools', 'paie'] };
 function showTab(which) {
   TABS.forEach(t => { $('#tab-' + t).setAttribute('aria-selected', t === which); $('#view-' + t).hidden = t !== which; });
   track('tab_' + which);
@@ -3730,7 +3955,7 @@ renderList(); renderReminders(); notifyUrgent();
 updatePill(); gpuReady.then(updatePill);
 
 // Exposé pour les tests
-window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, textScore, fileToCanvas, buildEdlHTML };
+window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, textScore, fileToCanvas, buildEdlHTML, parsePayslip, payslipInsights, looksLikePayslip, PAIE_SAMPLE };
 })();
 </script>
 </body>

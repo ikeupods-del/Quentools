@@ -35,5 +35,27 @@ let ko2=0;
 for(const [inp,exp] of TV){const r=vm.runInContext('calcTVA('+JSON.stringify(inp)+')',c2);for(const k in exp)if(Math.abs(r[k]-exp[k])>0.001){ko2++;console.log('✗ TVA '+JSON.stringify(inp)+' '+k+' = '+r[k]+' (attendu '+exp[k]+')');}}
 if(!ko2)console.log('✓ Paperdecrypt : '+TV.length+' calculs de TVA corrects');
 ko+=ko2;
+
+// Analyse de fiche de paie
+const pa=src.indexOf('/*PAIE-DEB*/'), pb=src.indexOf('/*PAIE-FIN*/');
+const c3={ norm }; vm.createContext(c3);
+vm.runInContext(src.slice(pa,pb).replace(/^const /gm,'var '),c3);
+const SAMPLE = vm.runInContext('1',c3) && src.match(/const PAIE_SAMPLE = `([\s\S]*?)`;/)[1];
+const run=(t,d)=>vm.runInContext('(function(){var p=parsePayslip('+JSON.stringify(t)+');return {p:p,ins:payslipInsights(p,'+(d===undefined?'null':d)+')};})()',c3);
+let ko3=0; const chk=(nom,c)=>{ if(!c){ko3++;console.log('✗ paie : '+nom);} };
+{ const {p,ins}=run(SAMPLE);
+  chk('brut', p.brut===2021.04); chk('net avant impôt', p.netAvant===1580.12); chk('net versé', p.netFinal===1520.08); chk('impôt', p.pas&&p.pas.amount===60.04&&p.pas.taux===3.8);
+  chk('net imposable', p.netImposable===1700.5); chk('cotisations', p.cotSal===441.07&&p.cotPat===612.3); chk('période', p.periode==='septembre 2026'&&p.ym==='2026-09');
+  chk('2 lignes HS', p.hs.length===2&&p.hsQty===10&&p.hsAmount===156); chk('majorations 25 et 50', p.hs[0].impl===25&&p.hs[1].impl===50);
+  chk('calcul net cohérent', ins.some(i=>/tombe juste/.test(i.text))); chk('allègement HS repéré', p.hsRelief===true);
+  const d=run(SAMPLE,14).ins; chk('4 heures manquantes signalées', d.some(i=>i.level==='warn'&&/4 h/.test(i.text)));
+  const e=run(SAMPLE,10).ins; chk('heures cohérentes', e.some(i=>i.level==='ok'&&/correspondent/.test(i.text)));
+}
+{ const {p,ins}=run("Salaire de base 151,67 12,00 1 820,04\nHeures supp 10,00 12,00 120,00\nTotal brut 1 940,04\nNet a payer avant impot 1 500,00\nNet a payer 1 450,00"); chk('HS au tarif normal signalées', p.hs.length===1&&ins.some(i=>i.level==='warn'&&/tarif normal/.test(i.text))); chk('net sans accents', p.netAvant===1500&&p.netFinal===1450); }
+{ const {p,ins}=run("Salaire de base 151,67 11,65 1 766,81\nTotal brut\n1 766,81\nNET A PAYER AVANT IMPOT SUR LE REVENU\n1 391,00\nNET PAYE 1 391,00"); chk('libellés au-dessus des chiffres', p.brut===1766.81&&p.netAvant===1391&&p.netFinal===1391); chk('aucune HS', p.hs.length===0&&ins.some(i=>/Aucune ligne d'heures/.test(i.text))); }
+chk('détection fiche de paie', vm.runInContext('looksLikePayslip('+JSON.stringify(SAMPLE)+')',c3)===true);
+chk('pas de fausse détection sur un courrier', vm.runInContext('looksLikePayslip("Caisse d\'allocations familiales. Merci de nous transmettre vos documents avant le 20 octobre 2026.")',c3)===false);
+if(!ko3) console.log('✓ Paperdecrypt : analyse de fiche de paie correcte (13 contrôles)');
+ko+=ko3;
 console.log(ko ? `✗ ${ko} cas en erreur sur ${CAS.length}` : `✓ Paperdecrypt : ${CAS.length} lectures de montants correctes`);
 process.exit(ko ? 1 : 0);

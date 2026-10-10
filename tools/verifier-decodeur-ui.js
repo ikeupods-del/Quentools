@@ -22,7 +22,7 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   const [dl] = await Promise.all([pg.waitForEvent('download'), pg.click('#r-ics')]);
   const ics = fs.readFileSync(await dl.path(), 'utf8'); ok(/BEGIN:VEVENT/.test(ics) && /TRIGGER:-P3D/.test(ics), 'agenda .ics avec alertes');
   // 2 outils
-  await pg.click('#tab-tools'); ok(await pg.locator('[data-tool]').count() === 5, '5 outils');
+  await pg.click('#tab-tools'); ok(await pg.locator('[data-tool]').count() === 6, '6 outils');
   await pg.click('[data-tool=tva]');
   await pg.fill('#tv-montant', '1200'); await pg.selectOption('#tv-mode', 'ht'); await pg.fill('#tv-acompte', '30');
   const txt = await pg.innerText('#tv-out'); ok(/1\s?200,00/.test(txt) && /240,00/.test(txt) && /1\s?440,00/.test(txt) && /432,00/.test(txt), 'TVA 1200 HT → 240 / 1440 / acompte 432 : ' + txt.replace(/\s+/g, ' '));
@@ -30,7 +30,7 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   ok(/100,00/.test(await pg.innerText('#tv-out')), 'TVA inverse 120 TTC → 100 HT');
   ok(location => true, '');
   await pg.click('#tool-back'); await pg.click('[data-tool=lettres]');
-  const nL = await pg.locator('[data-lettre]').count(); ok(nL === 6, nL + ' modèles de lettres');
+  const nL = await pg.locator('[data-lettre]').count(); ok(nL === 7, nL + ' modèles de lettres');
   await pg.click('[data-lettre=resiliation]');
   await pg.fill('#cf-societe', 'Opérateur Test'); await pg.fill('#cf-contrat', 'C-123'); await pg.fill('#cf-fin', '2026-12-31');
   await pg.click('#lt-go'); const draft = await pg.innerText('#lt-draft'); ok(/Résiliation du contrat n° C-123/.test(draft) && /Opérateur Test/.test(draft) && /31 décembre 2026/.test(draft), 'lettre de résiliation générée');
@@ -106,6 +106,20 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   ok(/dégradation/.test(await pg.innerText('.edl-item.worse').catch(() => '')), 'dégradation repérée par rapport à l\'entrée');
   await pg.click('[data-step="' + (await pg.locator('[data-step]').count() - 1) + '"]'); await pg.click('#edl-end');
   ok(/1 point en moins bon état/.test(await pg.innerText('#tools')), 'sortie : 1 point en moins bon état');
+  // 5d fiche de paie
+  await pg.goto('http://localhost:8766/decodeur-courrier.html#fiche-de-paie'); await pg.reload(); await pg.waitForSelector('#paie-sample');
+  await pg.click('#paie-sample'); await pg.waitForSelector('.paie-t');
+  const pt = await pg.innerText('#paie-res'); ok(/2\s?021,04/.test(pt) && /1\s?520,08/.test(pt) && /60,04/.test(pt) && /Réduction|allègement/i.test(pt), 'fiche de paie : chiffres clés, impôt et allègement');
+  ok(/majoration d'environ 25 %/.test(pt) && /50 %/.test(pt), 'heures supp : majorations 25 % et 50 % reconnues');
+  await pg.fill('#paie-declared', '14'); ok(/manque peut-être 4 h/.test(await pg.innerText('#paie-ins')), 'heures manquantes détectées (14 déclarées, 10 payées)');
+  await pg.screenshot({ path: require('os').tmpdir() + '/pd-paie.png', fullPage: false });
+  await pg.click('#paie-save'); ok(/Mes fiches enregistrées/.test(await pg.innerText('#tools')), 'fiche enregistrée pour comparer les mois');
+  await pg.fill('#paie-declared', '14'); await pg.click('#paie-lettre'); await pg.waitForSelector('#cf-mois');
+  ok((await pg.inputValue('#cf-mois')) === 'septembre 2026' && (await pg.inputValue('#cf-declarees')) === '14' && (await pg.inputValue('#cf-payees')) === '10', 'lettre heures supp préremplie');
+  await pg.click('#lt-go'); ok(/décompte détaillé/.test(await pg.innerText('#lt-draft')), 'lettre heures supplémentaires générée');
+  await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
+  await pg.fill('#letter-input', await pg.evaluate(() => window.__decodeur.PAIE_SAMPLE)); await pg.click('#decode-btn');
+  ok(await pg.isVisible('#to-paie'), 'le décodeur propose l\'analyse de fiche de paie'); await pg.click('#to-paie'); await pg.waitForSelector('.paie-t'); ok(true, 'passage direct à l\'analyse');
   // 6 mobile : onglets
   await pg.click('#tab-decode'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-decode.png' });
   await pg.click('#tab-tools'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-tools.png' });
