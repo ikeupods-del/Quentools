@@ -306,6 +306,7 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .edl-thumbs .th{position:relative;display:inline-flex;flex-direction:column;align-items:center;font-size:.7rem;color:var(--muted)}
 .edl-thumbs .th img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;background:var(--paper)}
 .edl-thumbs .th>button:first-child{border:0;background:none;padding:0;cursor:pointer}
+.edl-thumbs .ok{position:absolute;top:-6px;left:-6px;width:20px;height:20px;border-radius:50%;background:var(--calm);color:#fff;font-size:.75rem;display:grid;place-items:center}
 .edl-thumbs .x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--sheet);cursor:pointer;line-height:1;padding:0}
 #cam-video{width:100%;max-height:60vh;background:#000;border-radius:10px;display:block}
 .edl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -498,6 +499,17 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
     <video id="cam-video" playsinline muted autoplay></video>
     <p class="note" id="cam-msg" role="status"></p>
     <div class="dlg-foot"><button class="btn" id="cam-snap" type="button">Prendre la photo</button> <button class="btn ghost" id="cam-cancel" type="button">Annuler</button></div>
+  </div>
+</dialog>
+
+<dialog id="verify-dialog" aria-labelledby="verify-title">
+  <div class="dlg">
+    <h2 id="verify-title">Vérifier une photo</h2>
+    <p class="note">Saisis le code de contrôle imprimé sous la photo et choisis le fichier de la photo : on le compare à l'empreinte enregistrée par le serveur le jour de la prise de vue.</p>
+    <label class="field"><span>Code de contrôle</span><input id="vf-code" autocomplete="off" maxlength="20" placeholder="20 caractères"></label>
+    <label class="field"><span>Fichier de la photo</span><input id="vf-file" type="file" accept="image/*"></label>
+    <p id="vf-out" role="status"></p>
+    <div class="dlg-foot"><button class="btn" id="vf-go" type="button">Vérifier</button> <button class="btn ghost" id="vf-close" type="button">Fermer</button></div>
   </div>
 </dialog>
 
@@ -2623,8 +2635,8 @@ async function gRestore() {
   if (!gAvailable()) return;
   try {
     const F = await fb(); await F.auth.authStateReady();
-    FBU = F.auth.currentUser; setSyncStatus(); if (FBU) syncNow();
-    F.Au.onAuthStateChanged(F.auth, u => { const was = FBU; FBU = u; setSyncStatus(); if (u && (!was || was.uid !== u.uid)) syncNow(); });
+    FBU = F.auth.currentUser; setSyncStatus(); if (FBU) { syncNow(); sealPending(); }
+    F.Au.onAuthStateChanged(F.auth, u => { const was = FBU; FBU = u; setSyncStatus(); if (u && (!was || was.uid !== u.uid)) { syncNow(); sealPending(); } });
   } catch (e) { setSyncStatus('Connexion indisponible : ' + e.message); }
 }
 async function gLogin() {
@@ -3131,7 +3143,7 @@ function edlNew(type, f) {
   const ref = f.ref ? getEdl().find(x => x.id === f.ref) : null;
   const rooms = ref ? ref.rooms.map(r => ({ name: r.name, items: r.items.map(i => ({ name: i.name, state: '', note: '', photos: [] })) }))
     : f.rooms.map(r => ({ name: r.name, items: (EDL_ROOMS[r.base] || EDL_COMMON).map(n => ({ name: n, state: '', note: '', photos: [] })) }));
-  return { id: newId('e'), type, ref: ref ? ref.id : '', adresse: f.adresse, date: f.date, locataire: f.locataire, bailleur: f.bailleur, rooms, compteurs: { elec: '', eau: '', gaz: '' }, cles: '', remarques: '', createdAt: new Date().toISOString() };
+  return { id: newId('e'), type, ref: ref ? ref.id : '', adresse: f.adresse, date: f.date, locataire: f.locataire, bailleur: f.bailleur, bailleurEmail: f.bailleurEmail || '', rooms, compteurs: { elec: '', eau: '', gaz: '' }, cles: '', remarques: '', createdAt: new Date().toISOString() };
 }
 function edlProgress(e) { const all = e.rooms.flatMap(r => r.items), done = all.filter(i => i.state).length; return { done, total: all.length }; }
 function edlDiffs(e) {
@@ -3151,10 +3163,12 @@ function renderEdl(box) {
     <p class="lead">Fais l'état des lieux de ton logement pièce par pièce, avec photos. À la sortie, on le compare à celui d'entrée pour te montrer ce que le propriétaire pourrait te reprocher, ou non.</p>
     <div class="actions"><button class="btn" data-edl-new="entree" type="button">Je rentre dans un logement</button><button class="btn ghost" data-edl-new="sortie" type="button">Je quitte un logement</button></div></div>
     <details class="tips"><summary>Nos conseils avant de commencer</summary><h3>À l'entrée</h3><ul>${EDL_TIPS.entree.map(t => `<li>${esc(t)}</li>`).join('')}</ul><h3>À la sortie</h3><ul>${EDL_TIPS.sortie.map(t => `<li>${esc(t)}</li>`).join('')}</ul><p class="note">Conseils généraux et indicatifs : vérifie ton bail et, en cas de litige, rapproche-toi d'une association de locataires (ADIL) ou d'un point-justice.</p></details>
+    <p class="note"><button class="link" type="button" id="edl-verify">Vérifier une photo avec son code de contrôle</button></p>
     <h3 class="sec-title">Mes états des lieux</h3>
     ${list.length ? `<div class="items">${list.map(e => { const p = edlProgress(e); return `<article class="item l${p.done === p.total ? 1 : 2}" data-edl="${e.id}"><div><h3>${e.type === 'entree' ? 'Entrée' : 'Sortie'} : ${esc(e.adresse || 'Logement')}</h3><p>${e.date ? esc(fmtDate(parseDay(e.date))) : ''} | ${p.done} / ${p.total} points remplis${e.type === 'sortie' && edlDiffs(e).length ? ' | <b>' + edlDiffs(e).length + ' différence' + (edlDiffs(e).length > 1 ? 's' : '') + '</b>' : ''}</p></div>
       <div class="row"><button class="btn small" data-edl-open type="button">Continuer</button><button class="btn small ghost" data-edl-sum type="button">Résumé et PDF</button><button class="link" data-edl-del type="button">Supprimer</button></div></article>`; }).join('')}</div>` : '<p class="note">Aucun état des lieux pour l\'instant.</p>'}`;
   toolBack(box);
+  $('#edl-verify').addEventListener('click', () => { $('#vf-out').textContent = ''; const d = $('#verify-dialog'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
   $$('[data-edl-new]', box).forEach(b => b.addEventListener('click', () => { edl$ = { view: 'new', type: b.dataset.edlNew }; renderTools(); box.scrollIntoView({ block: 'start' }); }));
   $$('[data-edl]', box).forEach(el => {
     const id = el.dataset.edl;
@@ -3172,6 +3186,7 @@ function renderEdlNew(box) {
       <label class="field"><span>Date</span><input id="en-date" type="date" value="${isoDay(new Date())}"></label>
       <label class="field"><span>Locataire (toi)</span><input id="en-loc" value="${esc((store.get(KEYS.me, {}).nom) || '')}"></label>
       <label class="field"><span>Propriétaire ou agence</span><input id="en-bail"></label>
+      <label class="field"><span>Son e-mail (facultatif)</span><input id="en-mail" type="email" autocomplete="off" placeholder="Pour lui envoyer l'état des lieux"></label>
       ${t === 'sortie' && entrees.length ? `<label class="field" style="grid-column:1/-1"><span>Comparer avec l'état des lieux d'entrée</span><select id="en-ref"><option value="">Aucun, je repars de zéro</option>${entrees.map(e => `<option value="${e.id}">${esc(e.adresse || 'Logement')} (${e.date ? esc(fmtDate(parseDay(e.date))) : ''})</option>`).join('')}</select></label>` : ''}
     </div>
     <div id="en-rooms">
@@ -3199,7 +3214,7 @@ function renderEdlNew(box) {
     ['Balcon ou terrasse', 'Cave ou garage'].filter(r => picked.includes(r)).forEach(r => rooms.push({ name: r, base: r }));
     const ref = refSel ? refSel.value : '';
     if (!ref && !rooms.length) { $('#en-err').textContent = 'Choisis au moins une pièce.'; return; }
-    const e = edlNew(t, { adresse, date: $('#en-date').value, locataire: $('#en-loc').value.trim(), bailleur: $('#en-bail').value.trim(), ref, rooms });
+    const e = edlNew(t, { adresse, date: $('#en-date').value, locataire: $('#en-loc').value.trim(), bailleur: $('#en-bail').value.trim(), bailleurEmail: $('#en-mail').value.trim(), ref, rooms });
     edlSave(e); track('edl_new'); edl$ = { view: 'room', id: e.id, room: 0 }; renderTools(); box.scrollIntoView({ block: 'start' });
   });
 }
@@ -3223,7 +3238,7 @@ function renderEdlRoom(box) {
     body = `<h3>${esc(r.name)}</h3>${r.items.map((it, ii) => { const old = rr && (rr.items.find(x => x.name === it.name) || {}).state, worse = old && it.state && EDL_RANK[it.state] > EDL_RANK[old];
       return `<div class="edl-item${worse ? ' worse' : ''}" data-ii="${ii}"><b>${esc(it.name)}</b>${old ? `<span class="note"> À l'entrée : ${esc(edlLabel(old))}${worse ? ' (dégradation)' : ''}</span>` : ''}
         <div class="chips" role="group" aria-label="État : ${esc(it.name)}">${EDL_STATES.map(([k, l]) => `<button class="chip" type="button" data-st="${k}" aria-pressed="${it.state === k}">${l}</button>`).join('')}</div>
-        <div class="edl-row"><input data-note placeholder="Précision (rayure, tache, fissure…)" value="${esc(it.note || '')}" aria-label="Précision : ${esc(it.name)}"><button class="btn small ghost" type="button" data-cam>Prendre une photo${(it.photos || []).length ? ' (' + it.photos.length + ')' : ''}</button></div>${(it.photos || []).length ? `<div class="edl-thumbs">${it.photos.map((k, pi) => `<span class="th" data-pk="${esc(k)}"><button type="button" data-pview aria-label="Voir la photo ${pi + 1}"><img alt="" data-src="${esc(k)}"></button><button type="button" class="x" data-pdel aria-label="Supprimer la photo ${pi + 1}">×</button><small>${it.photoAt && it.photoAt[pi] ? esc(new Date(it.photoAt[pi]).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })) : ''}</small></span>`).join('')}</div>` : ''}</div>`; }).join('')}`;
+        <div class="edl-row"><input data-note placeholder="Précision (rayure, tache, fissure…)" value="${esc(it.note || '')}" aria-label="Précision : ${esc(it.name)}"><button class="btn small ghost" type="button" data-cam>Prendre une photo${(it.photos || []).length ? ' (' + it.photos.length + ')' : ''}</button></div>${(it.photos || []).length ? `<div class="edl-thumbs">${it.photos.map((k, pi) => `<span class="th" data-pk="${esc(k)}"><button type="button" data-pview aria-label="Voir la photo ${pi + 1}"><img alt="" data-src="${esc(k)}"></button><button type="button" class="x" data-pdel aria-label="Supprimer la photo ${pi + 1}">×</button>${(it.seals || []).find(x => x.key === k && x.id) ? '<span class="ok" title="Date certifiée par un serveur">✓</span>' : ''}<small>${it.photoAt && it.photoAt[pi] ? esc(new Date(it.photoAt[pi]).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })) : ''}</small></span>`).join('')}</div>` : ''}</div>`; }).join('')}`;
   }
   box.innerHTML = `<div class="sheet"><button class="link back" id="edl-back" type="button">Mes états des lieux</button>
     <h2>${e.type === 'entree' ? 'Entrée' : 'Sortie'} : ${esc(e.adresse)}</h2>
@@ -3243,15 +3258,61 @@ function renderEdlRoom(box) {
     $('[data-note]', el).addEventListener('change', ev => { it.note = ev.target.value.trim(); edlSave(e); });
     $('[data-cam]', el).addEventListener('click', async () => {
       const shot = await takeStampedPhoto(`${e.rooms[ri].name} : ${it.name}`); if (!shot) return;
-      try { const key = `e:${e.id}:${ri}:${el.dataset.ii}:${Date.now().toString(36)}`; await idb.set(key, shot.data); it.photos = [...(it.photos || []), key]; it.photoAt = [...(it.photoAt || []), shot.at]; edlSave(e); track('edl_photo'); toast('Photo ajoutée, avec la date et l\'heure'); renderTools(); } catch (err) { toast("La photo n'a pas pu être enregistrée"); }
+      try {
+        const key = `e:${e.id}:${ri}:${el.dataset.ii}:${Date.now().toString(36)}`; await idb.set(key, shot.data);
+        it.photos = [...(it.photos || []), key]; it.photoAt = [...(it.photoAt || []), shot.at]; it.seals = [...(it.seals || []), { key, hash: await sha256Hex(dataUrlBytes(shot.data)), id: null, at: null }];
+        edlSave(e); track('edl_photo'); toast(FBU ? 'Photo ajoutée, date et heure certifiées par un serveur…' : 'Photo ajoutée. Connecte-toi avec Google pour faire certifier sa date.'); renderTools(); sealPending();
+      } catch (err) { toast("La photo n'a pas pu être enregistrée"); }
     });
     $$('.th', el).forEach(th => {
       const key = th.dataset.pk;
       idb.get(key).then(src => { const im = $('img', th); if (src && im) im.src = src; }).catch(() => {});
       $('[data-pview]', th).addEventListener('click', async () => { const src = await idb.get(key).catch(() => null); if (!src) return; $('#img-view').src = src; const d = $('#img-dialog'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
-      $('[data-pdel]', th).addEventListener('click', () => { if (!confirm('Supprimer cette photo ?')) return; const i = it.photos.indexOf(key); it.photos.splice(i, 1); if (it.photoAt) it.photoAt.splice(i, 1); edlSave(e); idb.del(key).catch(() => {}); renderTools(); });
+      $('[data-pdel]', th).addEventListener('click', () => { if (!confirm('Supprimer cette photo ?')) return; const i = it.photos.indexOf(key); it.photos.splice(i, 1); if (it.photoAt) it.photoAt.splice(i, 1); if (it.seals) it.seals = it.seals.filter(x => x.key !== key); edlSave(e); idb.del(key).catch(() => {}); renderTools(); });
     });
   });
+}
+/* Sceau d'une photo : empreinte SHA-256 de l'image + heure du serveur Firebase (collection qt_seals, impossible à modifier après coup).
+   Prouve que la photo existait à cette heure et qu'elle n'a pas été retouchée depuis. Nécessite la connexion Google. */
+function dataUrlBytes(url) { const bin = atob(url.split(',')[1]), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
+async function sha256Hex(bytes) { const d = await crypto.subtle.digest('SHA-256', bytes); return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join(''); }
+let sealing = false, sealAgain = false;
+async function sealPending() {
+  if (sealing) { sealAgain = true; return; }
+  if (!FBU || !navigator.onLine) return;
+  sealing = true; let n = 0;
+  try {
+    const F = await fb();
+    do {
+      sealAgain = false;
+      for (const e of getEdl()) {
+        let touched = false;
+        for (const r of e.rooms) for (const it of r.items) for (const sl of it.seals || []) {
+          if (sl.id) continue;
+          const ref = await F.Fs.addDoc(F.Fs.collection(F.db, 'qt_seals'), { uid: FBU.uid, hash: sl.hash, edl: e.id, at: F.Fs.serverTimestamp() });
+          const snap = await F.Fs.getDoc(ref); sl.id = ref.id; sl.at = snap.data().at.toDate().toISOString(); touched = true; n++;
+        }
+        if (touched) { const fresh = getEdl().find(x => x.id === e.id) || e; fresh.rooms.forEach((r, ri) => r.items.forEach((it, ii) => (it.seals || []).forEach(sl => { const m = e.rooms[ri].items[ii].seals.find(x => x.key === sl.key); if (m && m.id) { sl.id = m.id; sl.at = m.at; } }))); edlSave(fresh); }
+      }
+    } while (sealAgain);
+    if (n) { toast(n > 1 ? `${n} photos certifiées` : 'Photo certifiée'); if (tools$.view === 'edl') renderTools(); }
+  } catch (err) { console.error(err); if (/permission/i.test(err.code || err.message)) toast("La certification n'est pas encore activée sur ce site."); }
+  finally { sealing = false; }
+}
+const sealStats = e => { const all = e.rooms.flatMap(r => r.items.flatMap(i => i.seals || [])); return { total: all.length, done: all.filter(x => x.id).length, list: all }; };
+async function verifyPhoto() {
+  const code = $('#vf-code').value.trim(), f = $('#vf-file').files[0], out = $('#vf-out');
+  if (!/^[A-Za-z0-9]{20}$/.test(code)) { out.textContent = 'Le code de contrôle a 20 caractères (lettres et chiffres).'; return; }
+  if (!f) { out.textContent = "Choisis le fichier de la photo à vérifier."; return; }
+  out.textContent = 'Vérification…';
+  try {
+    const hash = await sha256Hex(new Uint8Array(await f.arrayBuffer()));
+    const r = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CFG.projectId}/databases/(default)/documents/qt_seals/${code}?key=${FIREBASE_CFG.apiKey}`);
+    if (r.status === 404 || r.status === 403) { out.textContent = "Ce code de contrôle n'existe pas."; return; }
+    if (!r.ok) throw new Error('réseau');
+    const j = await r.json(), at = j.fields && j.fields.at && j.fields.at.timestampValue, h = j.fields && j.fields.hash && j.fields.hash.stringValue;
+    out.textContent = h === hash ? `Photo authentique : ce fichier est identique à celui enregistré par le serveur le ${new Date(at).toLocaleString('fr-FR')}.` : "Attention : ce fichier ne correspond pas à la photo enregistrée sous ce code. Il a été modifié, ou ce n'est pas le bon fichier.";
+  } catch (err) { out.textContent = 'Vérification impossible pour le moment (connexion internet ?).'; }
 }
 // Photo prise sur le vif avec la caméra (pas d'import de fichier) et datée dans l'image : date et heure de l'appareil, incrustées en bas à droite.
 function stampCanvas(c, d) {
@@ -3290,12 +3351,23 @@ function renderEdlSummary(box) {
     <h2>${e.type === 'entree' ? "Résumé de l'état des lieux d'entrée" : "Résumé de l'état des lieux de sortie"}</h2>
     <p>${esc(e.adresse)}${e.date ? ' | ' + esc(fmtDate(parseDay(e.date))) : ''} | ${p.done} / ${p.total} points remplis</p>
     ${e.type === 'sortie' ? (e.ref ? (d.length ? `<div class="alert">${d.length} point${d.length > 1 ? 's' : ''} en moins bon état qu'à l'entrée. Vérifie s'il s'agit d'usure normale avant d'accepter une retenue.</div><ul>${d.map(x => `<li><b>${esc(x.room)} : ${esc(x.item)}</b> : ${esc(edlLabel(x.from))} à l'entrée, ${esc(edlLabel(x.to))} à la sortie${x.note ? ' (' + esc(x.note) + ')' : ''}</li>`).join('')}</ul><p class="note">Pour chaque point, demande un devis ou une facture : une retenue doit être justifiée, et la vétusté (usure normale) se déduit.</p>` : '<p><b>Aucune dégradation par rapport à l\'entrée.</b> Le dépôt de garantie doit en principe t\'être rendu en entier.</p>') : '<p class="note">Aucun état des lieux d\'entrée n\'est lié : la comparaison est impossible.</p>') : (bad.length ? `<p><b>Points à signaler dès l'entrée :</b></p><ul>${bad.map(x => `<li>${esc(x.room)} : ${esc(x.name)} (${esc(edlLabel(x.state))})${x.note ? ' : ' + esc(x.note) : ''}</li>`).join('')}</ul><p class="note">Fais-les écrire dans l'état des lieux officiel signé : c'est ce qui te protège à la sortie.</p>` : '<p class="note">Aucun défaut signalé.</p>')}
-    <div class="actions"><button class="btn" id="edl-pdf" type="button">Créer le PDF à signer</button><button class="btn ghost" id="edl-edit" type="button">Modifier</button>${e.type === 'sortie' ? '<button class="btn ghost" id="edl-caution" type="button">Caution pas rendue ?</button>' : ''}</div>
+    ${(() => { const st = sealStats(e); return st.total ? `<div class="sugg"><b>Photos : ${st.done} sur ${st.total} certifiées par un serveur.</b> ${st.done === st.total ? 'Leur date ne dépend plus de l\'horloge de ton téléphone et elles ne peuvent plus être modifiées sans que ça se voie.' : (FBU ? '<button class="btn small ghost" type="button" id="edl-seal">Certifier maintenant</button>' : 'Connecte-toi avec Google (bouton en haut) pour certifier leur date.')}</div>` : ''; })()}
+    <div class="actions"><button class="btn" id="edl-pdf" type="button">Créer le PDF à signer</button><button class="btn ghost" id="edl-mail" type="button">Envoyer par e-mail</button><button class="btn ghost" id="edl-edit" type="button">Modifier</button>${e.type === 'sortie' ? '<button class="btn ghost" id="edl-caution" type="button">Caution pas rendue ?</button>' : ''}</div>
     <details class="tips" open><summary>Nos conseils</summary><ul>${EDL_TIPS[e.type].map(t => `<li>${esc(t)}</li>`).join('')}</ul></details>
     <p class="note">Cet outil t'aide à préparer le document. Le seul état des lieux qui compte est celui signé par les deux parties : fais signer ce PDF, ou reporte-le sur le formulaire du propriétaire.</p></div>`;
   $('#edl-back').addEventListener('click', () => { edl$ = { view: 'list' }; renderTools(); });
   $('#edl-edit').addEventListener('click', () => { edl$ = { view: 'room', id: e.id, room: 0 }; renderTools(); });
   $('#edl-pdf').addEventListener('click', async () => { try { const html = await buildEdlHTML(e); track('edl_pdf'); printHTML(html); toast('Choisis « Enregistrer en PDF » dans la fenêtre d\'impression'); } catch (err) { console.error(err); toast("Le PDF n'a pas pu être créé"); } });
+  const sl = $('#edl-seal'); if (sl) sl.addEventListener('click', async () => { await sealPending(); renderTools(); });
+  $('#edl-mail').addEventListener('click', () => {
+    const st = sealStats(e), c = e.compteurs || {};
+    const lines = [`État des lieux ${e.type === 'entree' ? "d'entrée" : 'de sortie'} : ${e.adresse}`, `Date : ${e.date ? fmtDate(parseDay(e.date)) : ''}`, `Locataire : ${e.locataire || ''}`, '', `Compteurs : électricité ${c.elec || '…'}, eau ${c.eau || '…'}, gaz ${c.gaz || '…'}. Clés remises : ${e.cles || '…'}.`, `Points remplis : ${p.done} sur ${p.total}.`];
+    if (d.length) lines.push('', 'Dégradations constatées par rapport à l\'entrée :', ...d.map(x => `- ${x.room}, ${x.item} : ${edlLabel(x.from)} puis ${edlLabel(x.to)}`));
+    if (st.done) lines.push('', `Photos : ${st.total}, dont ${st.done} avec date certifiée par un serveur. Codes de contrôle (vérifiables dans Paperdecrypt, Outils, État des lieux) :`, ...st.list.filter(x => x.id).map(x => `- ${x.id} (${new Date(x.at).toLocaleString('fr-FR')})`));
+    lines.push('', 'Le PDF détaillé est joint à ce message (à ajouter avant l\'envoi). Je vous invite à me confirmer sa bonne réception.');
+    track('edl_mail');
+    location.href = 'mailto:' + encodeURIComponent(e.bailleurEmail || '') + '?' + (FBU && FBU.email ? 'cc=' + encodeURIComponent(FBU.email) + '&' : '') + 'subject=' + encodeURIComponent(`État des lieux ${e.type === 'entree' ? "d'entrée" : 'de sortie'} : ${e.adresse}`) + '&body=' + encodeURIComponent(lines.join('\n'));
+  });
   const c = $('#edl-caution'); if (c) c.addEventListener('click', () => { money$ = { mode: 'form', caseId: 'caution', values: { bailleur: e.bailleur || '' } }; showTab('money'); });
 }
 async function buildEdlHTML(e) {
@@ -3306,7 +3378,10 @@ async function buildEdlHTML(e) {
     for (const it of r.items) {
       const old = rr && (rr.items.find(x => x.name === it.name) || {}).state;
       rows += `<tr${old && it.state && EDL_RANK[it.state] > EDL_RANK[old] ? ' class="w"' : ''}><td>${esc(it.name)}</td>${ref ? `<td>${old ? esc(edlLabel(old)) : '–'}</td>` : ''}<td>${it.state ? esc(edlLabel(it.state)) : '–'}</td><td>${esc(it.note || '')}</td></tr>`;
-      for (const [pi, k] of (it.photos || []).entries()) { const src = await idb.get(k).catch(() => null); const at = it.photoAt && it.photoAt[pi]; if (src) photos += `<figure><img src="${src}" alt=""><figcaption>${esc(it.name)}${at ? ' | pris le ' + esc(new Date(at).toLocaleString('fr-FR')) : ''}</figcaption></figure>`; }
+      for (const [pi, k] of (it.photos || []).entries()) {
+        const src = await idb.get(k).catch(() => null), at = it.photoAt && it.photoAt[pi], sl = (it.seals || []).find(x => x.key === k);
+        if (src) photos += `<figure><img src="${src}" alt=""><figcaption>${esc(it.name)}${at ? ' | pris le ' + esc(new Date(at).toLocaleString('fr-FR')) : ''}${sl && sl.id ? `<br>Date certifiée par serveur : ${esc(new Date(sl.at).toLocaleString('fr-FR'))}<br>Code de contrôle : ${esc(sl.id)}` : '<br>Date de l\'appareil, non certifiée'}</figcaption></figure>`;
+      }
     }
     rooms += `<section><h2>${esc(r.name)}</h2><table><thead><tr><th>Élément</th>${ref ? "<th>À l'entrée</th>" : ''}<th>${e.type === 'entree' ? 'État' : 'À la sortie'}</th><th>Précisions</th></tr></thead><tbody>${rows}</tbody></table>${photos ? `<div class="ph">${photos}</div>` : ''}</section>`;
   }
@@ -3325,7 +3400,7 @@ async function buildEdlHTML(e) {
   ${rooms}
   ${e.remarques ? `<h2>Remarques</h2><p>${esc(e.remarques)}</p>` : ''}
   <div class="sig"><div>Signature du locataire</div><div>Signature du propriétaire ou de l'agence</div></div>
-  <footer>Document préparé avec Paperdecrypt (QuenTools). Il n'a de valeur que signé par les deux parties. Dates et états à vérifier sur place.</footer></body></html>`;
+  <footer>Document préparé avec Paperdecrypt (QuenTools). Il n'a de valeur que signé par les deux parties. Les photos portant un code de contrôle peuvent être vérifiées dans Paperdecrypt (Outils, État des lieux). Dates et états à vérifier sur place.</footer></body></html>`;
 }
 
 /* ---------- Coffre de documents ---------- */
@@ -3616,6 +3691,8 @@ $('#dossier-btn').addEventListener('click', () => { $('#settings').close(); open
 $('#list-dossier').addEventListener('click', openDossier);
 $('#do-go').addEventListener('click', createDossier);
 $('#do-close').addEventListener('click', () => $('#dossier').close());
+$('#vf-go').addEventListener('click', verifyPhoto);
+$('#vf-close').addEventListener('click', () => $('#verify-dialog').close());
 $('#stats-off').addEventListener('change', e => { if (e.target.checked) usage.flush(); store.set(KEYS.nostats, e.target.checked); toast(e.target.checked ? 'Tes visites ne sont plus comptées' : 'Merci de participer aux statistiques anonymes'); });
 $('#tablist').addEventListener('keydown', e => {
   if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;

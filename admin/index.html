@@ -893,6 +893,17 @@ function rulesText() {
 function qtClient(d) { return request.auth != null && request.auth.token.email_verified == true && d.emailLower == request.auth.token.email.lower(); }
 match /qt_admin/{doc} { allow read: if true; allow write: if qtAdmin(); }
 match /qt_notes/{id} { allow read, write: if qtAdmin(); }
+match /qt_seals/{id} {
+  allow get: if true;
+  allow list: if qtAdmin();
+  allow create: if request.auth != null
+    && request.resource.data.keys().hasOnly(['uid','hash','edl','at'])
+    && request.resource.data.uid == request.auth.uid
+    && request.resource.data.hash.matches('^[a-f0-9]{64}$')
+    && request.resource.data.edl is string && request.resource.data.edl.size() <= 40
+    && request.resource.data.at == request.time;
+  allow update, delete: if false;
+}
 match /qt_usage/{day} {
   allow read, delete: if qtAdmin();
   allow create, update: if day.matches('^20[0-9]{2}-[0-9]{2}-[0-9]{2}$')
