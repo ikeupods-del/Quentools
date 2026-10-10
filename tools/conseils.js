@@ -25,6 +25,7 @@ const html = `<!doctype html>
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="preload" href="../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../assets/qt.css?v=20261001h">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9406894983294380" crossorigin="anonymous"></script>
 </head>
 <body>
 <a class="skip" href="#contenu">Aller au contenu</a>
