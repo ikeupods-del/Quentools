@@ -4121,7 +4121,7 @@ function rcSolve(words, hint = {}) {
   const adjs = uniq([0, ...lab.transport.map(o => o.v).filter(v => v > 0 && v <= 300)]), small = uniq(am.filter(a => !a.base && a.v >= 0.5 && a.v <= 60).map(a => a.v));   // small : remboursement dont le libellé est illisible
   // 2. cotisations salariales : le montant du libellé « total des cotisations », ou celui qui, retiré du brut, donne un net présent sur la fiche
   if (res.cotSal === null && res.brut !== null) {
-    const B = res.brut, cands = uniq(am.filter(a => !a.base && a.v > 0.1 * B && a.v < 0.5 * B).map(a => a.v));
+    const B = res.brut, cands = uniq(am.filter(a => !a.base && a.v > 0.1 * B && a.v < 0.4 * B).map(a => a.v));   // au-delà de 40 % du brut, c'est le total salarié + employeur (ligne « total des cotisations » de certaines fiches), pas la part du salarié
     const eq = c => adjs.some(j => has(R(B - c + j)) && R(B - c + j) !== c) || has(R(B - c));
     const b = best(cands, c => lw('cot', c) * 1.5 + (eq(c) ? 4 : 0) + Math.min(count(c), 5) * 0.4, 4.4);
     if (b) { res.cotSal = b.v; how.cotSal = lw('cot', b.v) ? 'libellé « total des cotisations »' : 'calcul brut − cotisations'; }
@@ -4129,7 +4129,7 @@ function rcSolve(words, hint = {}) {
   // 3. net avant impôt : brut − cotisations (+ remboursement de transport…) ; le libellé départage, puis le net qui inclut le remboursement
   if (res.netAvant === null && res.brut !== null && res.cotSal !== null) {
     // Le « net social » (brut − cotisations, sans remboursements) figure aussi sur la fiche : à égalité, on ne le prend pas pour le net avant impôt
-    const c0 = R(res.brut - res.cotSal), cands = uniq([...adjs, ...small].map(j => R(c0 + j)).filter(has)), soc = v => lw('social', v) > 0;
+    const c0 = R(res.brut - res.cotSal), soc = v => lw('social', v) > 0, cands = uniq([...adjs, ...small].map(j => R(c0 + j)).filter(has)).filter(v => !(soc(v) && !lw('avant', v) && !lw('payer', v)));   // un montant qui n'est lu que comme « net social » n'est pas pris pour le net avant impôt
     const b = best(cands, v => lw('avant', v) * 2 + (v !== c0 ? 1 : 0) + (adjs.some(j => j && near(R(c0 + j), v)) ? 1 : 0) + Math.min(count(v), 4) * 0.3 - (soc(v) ? 1.2 : 0), -Infinity);
     if (b) { res.netAvant = b.v; how.netAvant = b.v === c0 ? 'calcul brut − cotisations' : 'calcul brut − cotisations + remboursement'; }
   }
