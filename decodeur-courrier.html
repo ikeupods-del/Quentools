@@ -330,6 +330,8 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .paie-t th,.paie-t td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:.98rem}
 .paie-t td{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .paie-t td.strong{font-weight:800}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}.two-col h3{font-size:1rem;margin:8px 0 4px}@media(max-width:640px){.two-col{grid-template-columns:1fr}}
+.field.douteux input{border:2px dashed var(--warn,#b7791f)}
 .pages{list-style:none;margin:10px 0;padding:0;display:grid;gap:6px}
 .pages li{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:.95rem}
 .pages small{color:var(--muted)}
@@ -1974,9 +1976,9 @@ function paperBox(c) {
   const fx = Math.max(0, c0 / w - 0.015), fy = Math.max(0, r0 / h - 0.015);
   return { fx, fy, fw: Math.min(1, (c1 + 1) / w + 0.015) - fx, fh: Math.min(1, (r1 + 1) / h + 0.015) - fy };
 }
-async function fileToCanvas(file, rot = 0, max = 2200) {
+async function fileToCanvas(file, rot = 0, max = 2200, grow = false) {
   const bmp = await loadBitmap(file);
-  const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const k = Math.min(grow ? 2 : 1, max / Math.max(bmp.width, bmp.height));   // grow : on agrandit une petite photo (chiffres de 12 px illisibles sinon)
   let w = Math.round(bmp.width * k), h = Math.round(bmp.height * k);
   let c = document.createElement('canvas'); c.width = w; c.height = h;
   c.getContext('2d').drawImage(bmp, 0, 0, w, h);
@@ -2031,6 +2033,48 @@ async function readPdf(file, maxPages = 6) {
     const { data } = await w.recognize(c, { rotateAuto: true }); txt += data.text + '\n\n';
   }
   return txt;
+}
+// PDF avec texte (pas un scan) → mots positionnés. words vide = PDF scanné : on retombe sur la lecture d'image.
+async function readPdfWords(file, maxPages = 12) {
+  await loadScript(PDFJS_URL);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  return { words: await pdfToWords(pdf, maxPages), np: Math.min(pdf.numPages, maxPages) };
+}
+// Noir et blanc d'une photo, sans quadrillage (voir binarizeTable)
+function tableCanvas(c) {
+  const w = c.width, h = c.height, ctx = c.getContext('2d'), d = ctx.getImageData(0, 0, w, h).data, g = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) g[i] = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) >> 8;
+  const o = binarizeTable(g, w, h), out = document.createElement('canvas'); out.width = w; out.height = h;
+  const octx = out.getContext('2d'), img = octx.createImageData(w, h);
+  for (let i = 0; i < w * h; i++) { const v = o[i]; img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v; img.data[i * 4 + 3] = 255; }
+  octx.putImageData(img, 0, 0); return out;
+}
+// Photos d'une fiche de paie (une par page) → mots positionnés. Deux lectures de chaque page, fusionnées : l'image simplement redressée
+// (texte suivi) et la même en noir et blanc sans quadrillage (mode « texte épars », meilleur sur les tableaux) : chacune retrouve des chiffres que l'autre rate.
+async function readPhotoWords(files) {
+  const w = await getOcr(); let words = [];
+  try {
+    for (let i = 0; i < files.length; i++) {
+      let best = null;
+      setOcr(i / files.length, `Lecture de la page ${i + 1} sur ${files.length}…`);
+      try { await w.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' }); } catch (e) { /* option indisponible */ }
+      for (const rot of [0, 90, 270]) {
+        const c = await fileToCanvas(files[i], rot, 3600, true), d = (await w.recognize(c, { rotateAuto: true }, { blocks: true })).data, sc = textScore(d.text || '');
+        if (!best || sc > best.sc) best = { c, d, sc };
+        if (sc >= 0.35) break;
+      }
+      let pw = ocrWords(best.d, i + 1);
+      if (typeof best.d.confidence === 'number') ocrConf = ocrConf === null ? best.d.confidence : Math.min(ocrConf, best.d.confidence);
+      setOcr((i + 0.6) / files.length, `Seconde lecture de la page ${i + 1}…`);
+      try {
+        await w.setParameters({ tessedit_pageseg_mode: '11', preserve_interword_spaces: '1' });
+        const d2 = (await w.recognize(tableCanvas(best.c), {}, { blocks: true })).data; pw = mergeWords(pw, ocrWords(d2, i + 1));
+      } catch (e) { /* une seule lecture : on s'en contente */ }
+      words = words.concat(pw);
+    }
+  } finally { try { await w.setParameters({ tessedit_pageseg_mode: '3', preserve_interword_spaces: '0' }); } catch (e) { /* ignoré */ } }
+  return { words, text: wordsToText(words) };
 }
 // Première page d'un PDF (facture, ticket) en image, pour l'enregistrer et la faire lire comme une photo.
 async function pdfFirstPageFile(file) {
@@ -3297,7 +3341,7 @@ function renderTools() {
   $$('[data-tool]', box).forEach(b => b.addEventListener('click', () => {
     if (b.dataset.tool === 'dossier') return openDossier();
     if (b.dataset.tool === 'edl') edl$ = { view: 'list' };
-    if (b.dataset.tool === 'paie') paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages: [] };
+    if (b.dataset.tool === 'paie') paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages: [], gen: null };
     tools$ = { view: b.dataset.tool }; track('outil_' + b.dataset.tool); renderTools(); setHash('tools', b.dataset.tool); box.scrollIntoView({ block: 'start' });
   }));
 }
@@ -3459,6 +3503,422 @@ function renderTVA(box) {
   upd();
 }
 
+/* ---------- Lecture d'une fiche de paie par positions ---------- */
+/*TABLE-DEB*/
+// Lecture d'une fiche de paie par positions : chaque mot garde ses coordonnées, les colonnes viennent de l'en-tête du tableau,
+// et un nombre n'est jamais attribué à une colonne qu'on ne peut pas établir. Fonctions pures (testées en vm).
+
+// Nombre au format français, ou null. « 1 835,61 », « 1.835,61 », « -480,40 », « 480,40- », « (480,40) », espaces insécables.
+// Strict : tout ce qui n'est pas un nombre sans ambiguïté (« 1.835 », « 12/2024 », « 9 6 73 ») renvoie null.
+function parseFR(s) {
+  if (s === null || s === undefined) return null;
+  let t = String(s).replace(/[    ]/g, ' ').replace(/[−–—]/g, '-').trim(), signs = 0, neg = false;
+  if (/^\(.*\)$/.test(t)) { t = t.slice(1, -1).trim(); signs++; neg = true; }
+  if (/-$/.test(t)) { t = t.slice(0, -1).trim(); signs++; neg = true; }
+  if (/^[-+]/.test(t)) { if (t[0] === '-') neg = true; signs++; t = t.slice(1).trim(); }
+  if (signs > 1) return null;
+  let v;
+  if (/^\d{1,3}(?: \d{3})+(?:,\d{1,4})?$/.test(t)) v = t.replace(/ /g, '').replace(',', '.');
+  else if (/^\d{1,3}(?:\.\d{3})+,\d{1,4}$/.test(t)) v = t.replace(/\./g, '').replace(',', '.');
+  else if (/^\d+(?:,\d{1,4})?$/.test(t)) v = t.replace(',', '.');
+  else if (/^\d+\.(?:\d{1,2}|\d{4})$/.test(t)) v = t;
+  else if (/^\d{1,3}(?: \d{3})+\.\d{1,2}$/.test(t)) v = t.replace(/ /g, '');
+  else return null;
+  const n = parseFloat(v); return neg ? 0 - n : n;
+}
+const TBL_NUM = /-?\d{1,3}(?: \d{3})+(?:,\d{1,4})?-?|\S+/g;
+// Éléments de texte d'un PDF (pdf.js) → mots {t, x0, x1, y, h, page}. conv(x, y) passe des coordonnées PDF à celles de la page affichée (y vers le bas).
+function pdfWords(items, page, conv) {
+  const out = [];
+  for (const it of items) {
+    const s = String(it.str || '').replace(/[   ]/g, ' ');
+    if (!s.trim()) continue;
+    const tr = it.transform || [1, 0, 0, 1, 0, 0], h = it.height || Math.abs(tr[3]) || 8, w = it.width || s.length * h * 0.5;
+    let m; const re = new RegExp(TBL_NUM.source, 'g');
+    while ((m = re.exec(s))) {
+      const a = conv(tr[4] + w * m.index / s.length, tr[5]), b = conv(tr[4] + w * (m.index + m[0].length) / s.length, tr[5]);
+      out.push({ t: m[0], x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), y: a[1], h, page });
+    }
+  }
+  return out;
+}
+// Document pdf.js déjà ouvert → tous les mots de toutes les pages (jusqu'à maxPages)
+async function pdfToWords(pdf, maxPages = 12) {
+  const words = [], n = Math.min(pdf.numPages, maxPages);
+  for (let i = 1; i <= n; i++) {
+    const page = await pdf.getPage(i), vp = page.getViewport({ scale: 1 }), tc = await page.getTextContent();
+    for (const w of pdfWords(tc.items, i, (x, y) => vp.convertToViewportPoint(x, y))) words.push(w);
+  }
+  return words;
+}
+// Page photographiée de travers : cherche l'angle (±8°) pour lequel les mots s'alignent le mieux en lignes, et redresse leurs positions.
+function deskewWords(words) {
+  const pages = {}; words.forEach(w => (pages[w.page] = pages[w.page] || []).push(w));
+  const out = [];
+  Object.values(pages).forEach(ws => {
+    if (ws.length < 30) { ws.forEach(w => out.push(w)); return; }
+    const hs = ws.map(w => w.h).sort((a, b) => a - b), bin = Math.max(2, hs[hs.length >> 1] * 0.5);
+    const score = a => { const co = Math.cos(a), si = Math.sin(a), m = {}; let s = 0; ws.forEach(w => { const k = Math.round(((w.x0 + w.x1) / 2 * si + w.y * co) / bin); m[k] = (m[k] || 0) + 1; }); for (const k in m) s += m[k] * m[k]; return s; };
+    const s0 = score(0); let best = 0, bs = s0;
+    for (let d = -8; d <= 8; d += 0.25) { const sc = score(d * Math.PI / 180); if (sc > bs) { bs = sc; best = d * Math.PI / 180; } }
+    if (!best || bs < s0 * 1.1) { ws.forEach(w => out.push(w)); return; }
+    const co = Math.cos(best), si = Math.sin(best);
+    ws.forEach(w => { const cx = (w.x0 + w.x1) / 2, hw = (w.x1 - w.x0) / 2, nx = cx * co - w.y * si; out.push(Object.assign({}, w, { x0: nx - hw, x1: nx + hw, y: cx * si + w.y * co })); });
+  });
+  return out;
+}
+// Mots → lignes (même hauteur), triés de haut en bas puis de gauche à droite ; « 1 » + « 835,61 » collés se rejoignent.
+function groupRows(words) {
+  const ws = words.slice().sort((a, b) => a.page - b.page || a.y - b.y || a.x0 - b.x0), rows = [];
+  for (const w of ws) {
+    const r = rows[rows.length - 1];
+    if (r && r.page === w.page && Math.abs(w.y - r.y) <= Math.max(2, 0.5 * Math.min(w.h, r.h))) { r.words.push(w); r.h = Math.max(r.h, w.h); }
+    else rows.push({ page: w.page, y: w.y, h: w.h, words: [w] });
+  }
+  rows.forEach(r => {
+    r.words.sort((a, b) => a.x0 - b.x0);
+    const m = [];
+    for (const w of r.words) { const p = m[m.length - 1]; if (p && /^-?\d{1,3}$/.test(p.t) && /^\d{3}(?:,\d{1,4})?$/.test(w.t) && w.x0 - p.x1 <= 0.7 * Math.min(w.h, p.h)) { p.t += ' ' + w.t; p.x1 = w.x1; } else m.push(Object.assign({}, w)); }
+    r.words = m;
+  });
+  return rows;
+}
+const TBL_QUAL = n => /^(salarial|salariale|salarie|salaries|ouvrier|ouvriere)$/.test(n) ? 'sal' : /^(patronal|patronale|patronales|employeur|patron)$/.test(n) ? 'pat' : null;
+// Colonnes du tableau depuis les mots de l'en-tête (une ou deux lignes) : [{key, x0, x1, c, l, r}] ou null si ce n'est pas un en-tête.
+function detectColumns(pool) {
+  if (pool.some(w => parseFR(w.t) !== null)) return null;
+  const ws = pool.map(w => ({ w, n: norm(w.t).replace(/[^a-z]/g, '') })).filter(o => o.n);
+  const kws = [];
+  ws.forEach(o => {
+    let k = null;
+    if (/^(nombre|nb|qte|quantite)$/.test(o.n)) k = 'nombre'; else if (o.n === 'base') k = 'base'; else if (/^(gains?|payer)$/.test(o.n)) k = 'gain';
+    else if (/^(retenues?|deduire)$/.test(o.n)) k = 'retenue'; else if (o.n === 'taux') k = 'taux'; else if (o.n === 'part') k = 'part';
+    if (k) kws.push({ k, x0: o.w.x0, x1: o.w.x1, h: o.w.h });
+  });
+  const used = new Set();
+  ws.filter(o => TBL_QUAL(o.n)).forEach(q => {
+    let best = null, bd = Infinity; const qc = (q.w.x0 + q.w.x1) / 2;
+    kws.forEach(kw => { if (kw.k !== 'taux' && kw.k !== 'part') return; const d = Math.abs((kw.x0 + kw.x1) / 2 - qc); if (d < bd) { bd = d; best = kw; } });
+    if (best && bd <= 6 * q.w.h && !best.q) { best.q = TBL_QUAL(q.n); best.x0 = Math.min(best.x0, q.w.x0); best.x1 = Math.max(best.x1, q.w.x1); used.add(q); }
+  });
+  const cols = [];
+  const lone = kws.filter(k => k.k === 'taux' && !k.q).sort((a, b) => a.x0 - b.x0);
+  kws.forEach(kw => {
+    let key = kw.k;
+    if (key === 'taux') key = kw.q === 'pat' ? 'tauxPat' : kw.q === 'sal' ? 'tauxSal' : (lone[0] === kw ? 'tauxSal' : 'tauxPat');
+    else if (key === 'part') key = kw.q === 'sal' ? (kws.some(k => k.k === 'retenue') ? null : 'retenue') : kw.q === 'pat' ? 'partEmp' : null;   // « Part salarié » au-dessus de Gain / Retenue n'est qu'un intitulé de groupe
+    if (key) cols.push({ key, x0: kw.x0, x1: kw.x1 });
+  });
+  ws.filter(o => TBL_QUAL(o.n) === 'pat' && !used.has(o)).forEach(o => cols.push({ key: 'partEmp', x0: o.w.x0, x1: o.w.x1 }));
+  if (new Set(cols.map(c => c.key)).size !== cols.length || cols.length < 3) return null;
+  cols.forEach(c => { c.c = (c.x0 + c.x1) / 2; });
+  return setZones(cols);
+}
+// Zone de chaque colonne : de part et d'autre, la moitié de l'écart avec la voisine
+function setZones(cols) {
+  cols.sort((a, b) => a.c - b.c);
+  cols.forEach((c, i) => {
+    const gl = i ? c.c - cols[i - 1].c : cols[1].c - c.c, gr = i < cols.length - 1 ? cols[i + 1].c - c.c : c.c - cols[i - 1].c;
+    c.l = c.c - gl / 2; c.r = c.c + gr / 2;
+  });
+  return cols;
+}
+// En-tête illisible (fond gris, photo) : les six colonnes d'un tableau Sage se retrouvent à la position des nombres eux-mêmes,
+// alignés en colonnes. Exactement six groupes de nombres, sinon on ne devine pas.
+function inferColumns(rows) {
+  const xs = [];
+  for (const r of rows) {
+    if (r.n && /^(net a payer|impot sur le revenu|cumuls?|compteurs?)/.test(r.n)) break;
+    r.words.forEach(w => { if (/[,.]\d/.test(w.t) && parseFR(w.t) !== null) xs.push((w.x0 + w.x1) / 2); });
+  }
+  if (xs.length < 18) return null;
+  xs.sort((a, b) => a - b);
+  const gap = Math.max(40, 0.03 * xs[xs.length - 1]), cl = [[xs[0]]];
+  for (let i = 1; i < xs.length; i++) { if (xs[i] - xs[i - 1] > gap) cl.push([]); cl[cl.length - 1].push(xs[i]); }
+  const g = cl.filter(c => c.length >= 2);
+  if (g.length !== 6) return null;
+  const keys = ['nombre', 'base', 'tauxSal', 'gain', 'retenue', 'partEmp'];
+  return setZones(g.map((c, i) => ({ key: keys[i], x0: c[0], x1: c[c.length - 1], c: c.reduce((a, b) => a + b, 0) / c.length })));
+}
+// Une ligne : libellé (texte), code éventuel, nombres, et cases du tableau (cells) ; une case douteuse reste vide et la ligne est notée dans amb.
+function decorateRow(r, cols) {
+  const ws = r.words, text = [], numeric = [];
+  ws.forEach((w, i) => {
+    const att = /%$/.test(w.t), v = parseFR(att ? w.t.slice(0, -1) : w.t), nx = ws[i + 1];
+    if (v !== null) numeric.push({ w, v, pct: att || !!(nx && nx.t === '%' && nx.x0 - w.x1 < 3 * w.h) });
+    else if (!/^(%|€|eur|euros?|h|hrs?|j|jrs?|jours?)$/i.test(w.t) && /[A-Za-zÀ-ÿ]/.test(w.t)) text.push(w);
+  });
+  const ft = text.length ? text[0].x0 : -Infinity;
+  r.label = text.map(w => w.t).join(' '); r.n = norm(r.label);
+  r.labelFull = ws.filter(w => !(r.code && w.t === r.code && w.x1 <= ft + 0.5) && (!cols || (w.x0 + w.x1) / 2 < cols[0].l)).map(w => w.t).join(' ');   // libellé tel qu'imprimé (avec « 125 % »)
+  r.code = numeric.filter(o => o.w.x1 <= ft + 0.5).map(o => o.w.t)[0] || null;
+  const data = numeric.filter(o => !(o.w.x1 <= ft + 0.5));
+  const cut = text.find(w => /^(cumul|annuel|annuelle|depuis)/.test(norm(w.t)));
+  r.cumul = !!cut;
+  r.nums = data.filter(o => !o.pct && /[,.]\d/.test(o.w.t) && !(cut && o.w.x0 > cut.x0)).map(o => ({ v: o.v, x0: o.w.x0, x1: o.w.x1 }));   // un montant a toujours ses décimales : « 233093 » est une virgule perdue, pas un montant
+  r.pcts = data.filter(o => o.pct).map(o => o.v);
+  r.cells = {}; r.amb = [];
+  if (cols) data.forEach(o => {
+    const c = (o.w.x0 + o.w.x1) / 2, wd = Math.max(1, o.w.x1 - o.w.x0);
+    if (c < cols[0].l) return;
+    const z = cols.find(k => c >= k.l && c < k.r);
+    if (!z) { r.amb.push(o.w.t); return; }
+    const ov = Math.min(o.w.x1, z.r) - Math.max(o.w.x0, z.l);
+    if (ov < 0.65 * wd) { r.amb.push(o.w.t); return; }
+    if (/^(gain|retenue|partEmp)$/.test(z.key) && !/[,.]\d/.test(o.w.t)) { r.amb.push(o.w.t); return; }   // montant sans décimales = virgule perdue
+    if (z.key in r.cells) { r.amb.push(o.w.t); r.cells[z.key] = null; return; }
+    r.cells[z.key] = o.v;
+  });
+  return r;
+}
+// Confusions classiques de la lecture optique à l'intérieur d'un nombre (O pour 0, l ou I pour 1) : corrigées seulement si le mot ne contient
+// que des chiffres et ces lettres, et si le résultat est un nombre valide. Tout autre mot est laissé tel quel.
+function fixOcrNumber(t) {
+  if (parseFR(t) !== null || !/\d/.test(t) || !/^[\dOolI|.,\-\u2212()\s]+$/.test(t)) return t;
+  const f = t.replace(/[Oo]/g, '0').replace(/[lI|]/g, '1');
+  return parseFR(f) !== null ? f : t;
+}
+// Résultat de Tesseract (data.words, ou blocs → lignes → mots) → mots positionnés, comme pdfWords. y = milieu du mot, h = hauteur de la boîte.
+function ocrWords(data, page) {
+  const raw = (data.words || (data.blocks || []).flatMap(b => (b.paragraphs || []).flatMap(p => (p.lines || []).flatMap(l => l.words || []))))
+    .filter(w => w.bbox && w.bbox.x1 > w.bbox.x0 && w.bbox.y1 > w.bbox.y0 && /[A-Za-zÀ-ÿ0-9]/.test(String(w.text || '')));   // traits du quadrillage lus comme « | » ou « — » écartés
+  const hs = raw.map(w => w.bbox.y1 - w.bbox.y0).sort((a, b) => a - b), med = hs.length ? hs[hs.length >> 1] : 10, out = [];
+  for (const w of raw) {
+    const t = String(w.text).trim(), b = w.bbox, fx = fixOcrNumber(t);
+    // y = bas de la boîte (stable d'un mot à l'autre sur une ligne), hauteur plafonnée (une boîte qui avale un trait de tableau n'élargit pas la ligne)
+    out.push({ t: fx, x0: b.x0, x1: b.x1, y: b.y1, h: Math.min(b.y1 - b.y0, 1.5 * med), page, conf: typeof w.confidence === 'number' ? w.confidence : null, lu: fx !== t ? t : undefined });
+  }
+  return out;
+}
+// Lignes de toutes les pages avec leurs cases ; l'en-tête trouvé s'applique jusqu'au suivant (y compris page suivante).
+function buildRows(words) {
+  const rows = groupRows(words); let cols = null;
+  const VOC = /^(designation|libelle|nombre|nb|base|taux|gains?|retenues?|part|salarial|salariale|salarie|employeur|patronal|patronale|payer|deduire|rubrique)$/;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    let det = null, last = i;
+    for (let k = Math.min(2, rows.length - 1 - i); k >= 0 && !det; k--) {   // en-tête sur 1 à 3 lignes voisines, sans aucun nombre
+      const win = rows.slice(i, i + k + 1);
+      if (win.some((x, j) => x.page !== r.page || (j && x.y - win[j - 1].y > 3 * r.h))) continue;
+      det = detectColumns(win.flatMap(x => x.words)); if (det) last = i + k;
+    }
+    if (det) { cols = det; for (let j = i; j <= last; j++) { const x = rows[j]; if (x.words.some(w => VOC.test(norm(w.t).replace(/[^a-z]/g, '')))) { x.header = true; x.cols = det; } else decorateRow(x, cols); } i = last; continue; }
+    decorateRow(r, cols); r.hasCols = !!cols;
+  }
+  // Pages sans en-tête lisible : colonnes déduites de la position des nombres (jamais héritées d'une autre page : la photo n'a pas le même angle)
+  new Set(rows.map(r => r.page)).forEach(pg => {
+    const pr = rows.filter(r => r.page === pg && !r.header);
+    if (!pr.length || pr.some(r => r.hasCols)) return;
+    const cs = inferColumns(pr); if (!cs) return;
+    pr.forEach(r => { decorateRow(r, cs); r.hasCols = true; r.inferred = true; });
+  });
+  rows.forEach(r => { if (r.header) { r.label = ''; r.n = ''; r.nums = []; r.pcts = []; r.cells = {}; r.amb = []; } });
+  return rows;
+}
+// Totaux repérés par leur libellé (jamais par leur rang). Valeur ambiguë ou contradictoire → null et avertissement.
+function readTotals(rows) {
+  const t = { brut: null, cotSal: null, cotPat: null, netAvant: null, netImposable: null, netSocial: null, netPayer: null, pas: null }, warn = [], at = {};
+  const body = rows.filter(r => !r.header && r.n);
+  const numsOf = r => {
+    if (r.nums.length) return r.nums;
+    const nx = rows[rows.indexOf(r) + 1];
+    return nx && !nx.header && nx.page === r.page && !nx.n && nx.y - r.y <= 2.4 * r.h && nx.nums.length ? nx.nums : [];
+  };
+  const pick = (key, re, not, how) => {
+    const found = body.filter(r => re.test(r.n) && !(not && not.test(r.n))).map(r => ({ r, v: how(r) })).filter(o => o.v !== undefined);
+    if (!found.length) return;
+    const vals = found.filter(o => o.v !== null);
+    if (!vals.length) { warn.push(key + ' : valeur illisible ou ambiguë'); return; }
+    const first = JSON.stringify(vals[0].v);
+    if (vals.some(o => JSON.stringify(o.v) !== first)) { warn.push(key + ' : plusieurs valeurs différentes'); return; }
+    if (key !== 'cotSal' && typeof vals[0].v === 'number' && vals[0].v <= 0) { warn.push(key + ' : valeur nulle ou négative, probablement mal lue'); return; }
+    t[key] = vals[0].v; at[key] = { page: vals[0].r.page, y: vals[0].r.y };
+  };
+  const one = r => { const n = numsOf(r); return n.length && n.every(x => x.v === n[0].v) ? n[0].v : (n.length ? null : undefined); };   // plusieurs fois le même montant (colonnes « Montant » et « Cumul ») = une seule valeur
+  const NOTBRUT = /abattu|abattement|plafond|imposable|cumul|annuel|apres|avant|net|cotisation|hors|fiscal|soumis|base|heures/;
+  pick('brut', /^(total |salaire )?brut\b|^total brut|^salaire brut/, NOTBRUT, r => r.cells.gain !== undefined && r.cells.gain !== null ? r.cells.gain : one(r));
+  const cot = /^total (des )?(cotisations|retenues)/;
+  const cn = r => numsOf(r);
+  pick('cotSal', cot, /patronal|employeur/, r => { if (r.cells.retenue !== undefined && r.cells.retenue !== null) return r.cells.retenue; const n = cn(r); return n.length >= 1 && n.length <= 2 ? n[0].v : (n.length ? null : undefined); });
+  pick('cotPat', cot, null, r => { if (r.cells.partEmp !== undefined && r.cells.partEmp !== null) return r.cells.partEmp; const n = cn(r); return n.length === 2 ? n[1].v : undefined; });
+  pick('netAvant', /net (a payer )?(avant|hors) (impot|prelevement)|net avant impot/, null, one);
+  pick('netImposable', /net imposable/, /cumul|annuel/, one);
+  pick('netSocial', /net social/, /cumul|annuel/, one);
+  pick('netPayer', /^net (a payer|paye|a verser)|net a payer au salarie/, /avant|hors|imposable|social|cumul/, one);
+  // Net social : souvent dans un tableau de cumuls (en-tête « … Net Social », valeurs en dessous) : on prend la valeur placée sous le mot « Social »
+  if (t.netSocial === null) {
+    const hi = rows.findIndex(r => !r.header && /net social/.test(r.n) && !r.nums.length), hw = hi >= 0 ? rows[hi].words.find(w => norm(w.t) === 'social') : null;
+    if (hw) {
+      const xc = (hw.x0 + hw.x1) / 2, cand = [];
+      for (let j = hi + 1; j < Math.min(rows.length, hi + 4); j++) {
+        const r = rows[j]; if (r.page !== rows[hi].page || r.y - rows[j - 1].y > 4 * rows[hi].h) break;
+        const best = r.nums.map(n => ({ v: n.v, d: Math.abs((n.x0 + n.x1) / 2 - xc) })).sort((a, b) => a.d - b.d)[0];
+        if (best && best.d <= 8 * rows[hi].h) cand.push({ v: best.v, r });
+      }
+      const c = cand.find(x => /^periode/.test(x.r.n)) || cand[0];
+      if (c && c.v > 0) { t.netSocial = c.v; at.netSocial = { page: c.r.page, y: c.r.y }; }
+    }
+  }
+  // Tableau « Cumuls » (ligne « Période ») : brut, cotisations salariales et patronales, … net social. Sert de seconde source, utile quand le total est mal lu.
+  {
+    const pi = rows.findIndex(r => !r.header && /^periode\b/.test(r.n) && r.nums.length >= 3), cu = {};
+    if (pi >= 0) {
+      const r = rows[pi], hdr = rows.slice(Math.max(0, pi - 3), pi).filter(x => x.page === r.page), HW = [['brut', /^brut$/], ['cotSal', /^salariales?$/], ['cotPat', /^patronales?$/], ['netSocial', /^social$/]], pos = {};
+      hdr.forEach(x => x.words.forEach(w => HW.forEach(([k, re]) => { if (re.test(norm(w.t).replace(/[^a-z]/g, ''))) pos[k] = (w.x0 + w.x1) / 2; })));
+      if (Object.keys(pos).length >= 2) Object.keys(pos).forEach(k => { const b = r.nums.map(n => ({ v: n.v, d: Math.abs((n.x0 + n.x1) / 2 - pos[k]) })).sort((x, y) => x.d - y.d)[0]; if (b && b.d <= 6 * r.h) cu[k] = b.v; });
+      else if (r.nums.length === 7) { cu.brut = r.nums[0].v; cu.cotSal = r.nums[1].v; cu.cotPat = r.nums[2].v; cu.netSocial = r.nums[6].v; }   // ordre fixe des colonnes Sage
+      Object.keys(cu).forEach(k => {
+        if (!(cu[k] > 0)) return;
+        if (t[k] === null) { t[k] = cu[k]; at[k] = { page: r.page, y: r.y, cumul: true }; }
+        else if (t[k] !== cu[k]) { warn.push(k + " : le tableau « Cumuls » indique " + cu[k] + ' et le total ' + t[k]); }
+      });
+    }
+  }
+  // Prélèvement à la source : base, taux (%) et montant, lus sur la même ligne
+  const prs = body.filter(r => /impot (preleve )?(a la source|sur le revenu)|prelevement a la source|\bpas\b/.test(r.n) && !/avant|hors|net|imposable|csg|crds|deductible|cotisation|cumul/.test(r.n) && numsOf(r).length);
+  const pr = prs.find(r => /preleve|source/.test(r.n)) || prs[0];
+  if (pr) {
+    const n = numsOf(pr).map(o => o.v), taux = pr.pcts.length ? Math.abs(pr.pcts[0]) : null;
+    let amount = null, base = null, tx = taux;
+    if (taux !== null) { if (n.length) { amount = n[n.length - 1]; if (n.length >= 2) base = n[0]; } }
+    else if (n.length >= 3) { base = n[0]; tx = n[1]; amount = n[2]; }
+    else if (n.length === 1) amount = n[0];
+    if (amount !== null) { t.pas = { amount: Math.abs(amount), taux: tx, base }; at.pas = { page: pr.page, y: pr.y }; } else warn.push('pas : montant illisible');
+  }
+  return { totals: t, at, warn };
+}
+// Contrôles de cohérence. status : ok | ko | na (non vérifiable). Un seul « ko » = lecture incertaine.
+function checkPayslip(rows, tot) {
+  const t = tot.totals, checks = [], near = (a, b) => Math.abs(a - b) <= 0.02 + 1e-9;
+  const add = (id, label, status, detail) => checks.push({ id, label, status, detail: detail || '' });
+  const body = rows.filter(r => !r.header), fmt = v => v.toFixed(2).replace('.', ',');
+  const bi = body.findIndex(r => r.n && /^(total |salaire )?brut\b|^total brut/.test(r.n) && !/net|cumul|annuel|imposable|base|abattu/.test(r.n));
+  const ci = body.findIndex(r => r.n && /^total (des )?(cotisations|retenues)/.test(r.n));
+  const val = r => (r.cells.gain !== undefined || r.cells.retenue !== undefined) ? (r.cells.gain || 0) - (r.cells.retenue || 0) : (r.nums && r.nums.length === 1 ? r.nums[0].v : 0);   // page de suite sans colonnes : le seul montant de la ligne (signe essayé dans les deux sens)
+  // 1. brut − cotisations salariales = net avant impôt (± titre de transport, avantages…)
+  if (t.brut !== null && t.cotSal !== null && t.netAvant !== null) {
+    const delta = Math.round((t.netAvant - (t.brut - t.cotSal)) * 100) / 100;
+    if (near(delta, 0)) add('net', 'Brut − cotisations = net avant impôt', 'ok');
+    else {
+      const adj = body.slice(bi + 1).filter(r => /transport|navigo|titre|remboursement|avantage|restaurant|ticket|mutuelle|frais/.test(r.n) && val(r) !== 0).slice(0, 8).map(r => ({ label: r.label, v: val(r) }));
+      let hit = null;
+      const walk = (k, s, pick) => { if (hit) return; if (k === adj.length) { if (pick.length && near(s, delta)) hit = pick; return; } for (const m of [0, 1, -1]) walk(k + 1, s + m * adj[k].v, m ? pick.concat(adj[k].label) : pick); };
+      walk(0, 0, []);
+      if (hit) add('net', 'Brut − cotisations = net avant impôt', 'ok', 'écart de ' + fmt(delta) + ' expliqué par : ' + hit.join(', '));
+      else add('net', 'Brut − cotisations = net avant impôt', 'ko', 'écart de ' + fmt(delta) + ' sans explication sur la fiche');
+    }
+  } else add('net', 'Brut − cotisations = net avant impôt', 'na', 'total manquant');
+  // 2. somme des gains − retenues (lignes au-dessus du total brut) = brut
+  if (bi > 0 && t.brut !== null && body[bi].hasCols) {
+    const s = Math.round(body.slice(0, bi).filter(r => r.hasCols).reduce((a, r) => a + val(r), 0) * 100) / 100;
+    add('gains', 'Somme des gains − retenues = brut', near(s, t.brut) ? 'ok' : 'ko', near(s, t.brut) ? '' : 'les lignes donnent ' + fmt(s) + ', la fiche indique ' + fmt(t.brut));
+  } else add('gains', 'Somme des gains − retenues = brut', 'na', 'tableau ou total brut introuvable');
+  // 3. net avant impôt − prélèvement à la source = net à payer
+  if (t.netAvant !== null && t.netPayer !== null) {
+    const pas = t.pas ? t.pas.amount : 0, ok = near(t.netAvant - pas, t.netPayer);
+    add('pas', 'Net avant impôt − prélèvement = net à payer', ok ? 'ok' : 'ko', ok ? '' : fmt(t.netAvant) + ' − ' + fmt(pas) + ' ≠ ' + fmt(t.netPayer));
+  } else add('pas', 'Net avant impôt − prélèvement = net à payer', 'na', 'total manquant');
+  // 4 et 5. les colonnes « Retenue » et « Part employeur » des lignes de cotisations donnent bien les totaux
+  if (bi >= 0 && ci > bi) {
+    const seg = body.slice(bi + 1, ci).filter(r => r.hasCols);
+    const sum = k => Math.round(seg.reduce((a, r) => a + (r.cells[k] || 0) - (k === 'retenue' ? (r.cells.gain || 0) : 0), 0) * 100) / 100;   // une réduction de cotisations est imprimée en « Gain »
+    if (t.cotSal !== null) { const s = sum('retenue'); add('colSal', 'Lignes de cotisations (salarié) = total', near(s, t.cotSal) ? 'ok' : 'ko', near(s, t.cotSal) ? '' : 'les lignes donnent ' + fmt(s) + ', le total indique ' + fmt(t.cotSal)); }
+    if (t.cotPat !== null) { const s = sum('partEmp'); add('colPat', 'Lignes de cotisations (employeur) = total', near(s, t.cotPat) ? 'ok' : 'ko', near(s, t.cotPat) ? '' : 'les lignes donnent ' + fmt(s) + ', le total indique ' + fmt(t.cotPat)); }
+  }
+  // 6. aucune case ambiguë dans le tableau
+  const amb = body.filter(r => r.amb && r.amb.length);
+  add('cases', 'Chaque nombre a une colonne certaine', amb.length ? 'ko' : 'ok', amb.length ? amb.length + ' ligne(s) avec un nombre entre deux colonnes : ' + amb.slice(0, 3).map(r => r.label || r.amb[0]).join(' ; ') : '');
+  const need = ['brut', 'cotSal', 'netAvant', 'netImposable', 'netPayer'], manquants = need.filter(k => t[k] === null);
+  return { checks, manquants, fiable: !checks.some(c => c.status === 'ko') && !manquants.length };
+}
+// Photo d'un tableau (fond gris, quadrillage) → noir et blanc pour la lecture optique : g = niveaux de gris (0-255), w × h.
+// 1) seuil local (un pixel est de l'encre s'il est nettement plus sombre que son voisinage : les bandes grises et l'ombre disparaissent) ;
+// 2) les longs traits droits (quadrillage) sont effacés, les chiffres, eux, n'ont jamais de trait aussi long. Retourne 0 (encre) / 255 (fond).
+function binarizeTable(g, w, h, off = 15) {
+  const win = Math.max(7, Math.round(w * 0.0155) | 1), r = win >> 1, W = w + 1, S = new (w * h > 16e6 ? Float64Array : Uint32Array)(W * (h + 1));   // somme de niveaux de gris : tient dans 32 bits jusqu'à 16 millions de pixels
+  for (let y = 0; y < h; y++) { let row = 0; for (let x = 0; x < w; x++) { row += g[y * w + x]; S[(y + 1) * W + x + 1] = S[y * W + x + 1] + row; } }
+  const ink = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
+    for (let x = 0; x < w; x++) {
+      const x0 = Math.max(0, x - r), x1 = Math.min(w, x + r + 1), mean = (S[y1 * W + x1] - S[y0 * W + x1] - S[y1 * W + x0] + S[y0 * W + x0]) / ((x1 - x0) * (y1 - y0));
+      ink[y * w + x] = g[y * w + x] < mean - off ? 1 : 0;
+    }
+  }
+  const Lv = Math.max(20, Math.round(w * 0.0155)), Lh = Math.max(25, Math.round(w * 0.0206)), kill = new Uint8Array(w * h);
+  for (let x = 0; x < w; x++) { let y = 0; while (y < h) { if (!ink[y * w + x]) { y++; continue; } let e = y; while (e < h && ink[e * w + x]) e++; if (e - y >= Lv) for (let k = y; k < e; k++) kill[k * w + x] = 1; y = e; } }
+  for (let y = 0; y < h; y++) { let x = 0; while (x < w) { if (!ink[y * w + x]) { x++; continue; } let e = x; while (e < w && ink[y * w + e]) e++; if (e - x >= Lh) for (let k = x; k < e; k++) kill[y * w + k] = 1; x = e; } }
+  const out = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) out[i] = ink[i] && !kill[i] ? 0 : 255;
+  return out;
+}
+// Deux lectures de la même page (images préparées différemment) : chacune rate des chiffres que l'autre trouve. On garde les mots de a, on ajoute
+// ceux de b qui n'ont pas d'équivalent à la même place ; si les deux ont lu la même place, on garde le nombre valide, ou celui de meilleure confiance.
+function mergeWords(a, b) {
+  const out = a.slice(), sc = w => (parseFR(w.t) !== null ? 100 : 0) + (w.conf || 0);
+  for (const w of b) {
+    const k = out.findIndex(x => x.page === w.page && Math.min(x.x1, w.x1) - Math.max(x.x0, w.x0) > 0.3 * Math.min(x.x1 - x.x0, w.x1 - w.x0) && Math.abs(x.y - w.y) < 0.6 * Math.max(x.h, w.h));
+    if (k < 0) out.push(w); else if (out[k].t !== w.t && sc(w) > sc(out[k]) + 5) out[k] = w;
+  }
+  return out;
+}
+// Mots positionnés → texte, une ligne par ligne imprimée
+function wordsToText(words) { return groupRows(deskewWords(words)).map(r => r.words.map(w => w.t).join(' ')).join('\n'); }
+// Nombre → texte français (milliers séparés par une espace, virgule, au moins 2 décimales)
+function fmtFR(v) {
+  let t = (Math.round(Math.abs(v) * 10000) / 10000).toString(); if (!/\./.test(t)) t += '.00'; else if (/\.\d$/.test(t)) t += '0';
+  const [a, b] = t.split('.');
+  return (v < 0 ? '-' : '') + a.replace(/\B(?=(\d{3})+$)/g, ' ') + ',' + b;
+}
+// Lecture par positions → ce dont l'analyse a besoin :
+//  - text : la fiche remise au propre, une ligne par ligne imprimée, avec les seuls chiffres de la part salariale (jamais ceux de l'employeur) ;
+//  - valeurs : les 5 totaux clés à faire valider ; colonnes : « ce que tu paies » / « ce que paie ton employeur », libellés tels qu'imprimés, sans doublon.
+function payslipFromLecture(lec) {
+  const body = lec.rows.filter(r => !r.header), lines = [];
+  body.forEach(r => {
+    if (!r.hasCols) { const l = r.words.map(w => w.t).join(' '); if (l.trim()) lines.push(l); return; }
+    const parts = [r.labelFull];
+    ['nombre', 'base', 'tauxSal', 'gain', 'retenue'].forEach(k => { if (typeof r.cells[k] === 'number') parts.push(fmtFR(r.cells[k]) + (k === 'tauxSal' ? ' %' : '')); });
+    const l = parts.join(' ').trim(); if (/[A-Za-zÀ-ÿ0-9]/.test(l)) lines.push(l);
+  });
+  const t = lec.totals, bi = body.findIndex(r => r.n && /^(total |salaire )?brut\b|^total brut/.test(r.n) && !/net|cumul|annuel|imposable|base|abattu/.test(r.n)), ci = body.findIndex(r => r.n && /^total (des )?(cotisations|retenues)/.test(r.n));
+  const seg = body.slice(bi + 1, ci > bi ? ci : body.length).filter(r => r.hasCols && r.label && !r.cumul), seen = {}, col = { salarie: [], employeur: [] };
+  seg.forEach(r => [['salarie', 'retenue'], ['employeur', 'partEmp']].forEach(([w, k]) => {
+    const v = r.cells[k]; if (typeof v !== 'number') return;
+    const id = w + '|' + r.n + '|' + v; if (seen[id]) return; seen[id] = 1; col[w].push({ label: r.label, v });
+  }));
+  return { pages: lec.pages || [], ordreCorrige: !!lec.ordreCorrige, text: lines.join('\n'), valeurs: { brut: t.brut, cotSal: t.cotSal, netAvant: t.netAvant, netImposable: t.netImposable, netPayer: t.netPayer }, colonnes: col, fiable: lec.fiable, checks: lec.checks, manquants: lec.manquants };
+}
+// Mots (PDF ou photo) → lignes, totaux et contrôles
+// Pages d'une même fiche données dans le désordre : le corps (salaire de base, total brut) vient avant les pages de suite (totaux, net à payer, cumuls).
+// Retourne les mots avec des numéros de page remis dans l'ordre, et si l'ordre a été corrigé.
+function orderPages(words) {
+  const by = {}; words.forEach(w => (by[w.page] = by[w.page] || []).push(w));
+  // début = la page qui porte le corps du tableau : ses libellés (même un peu abîmés) ou, à défaut, beaucoup de montants
+  const dec = ws => ws.filter(w => /[,.]\d/.test(w.t) && parseFR(w.t) !== null).length;
+  const info = Object.keys(by).map(Number).sort((a, b) => a - b).map(pg => { const t = norm(by[pg].map(w => w.t).join(' ')); return { pg, debut: /salaire de ba|total brut|heures normales|securite sociale/.test(t) || dec(by[pg]) >= 25 ? 0 : 1 }; });
+  const sorted = info.slice().sort((a, b) => a.debut - b.debut || a.pg - b.pg), map = {};
+  sorted.forEach((x, i) => { map[x.pg] = i + 1; });
+  return { words: words.map(w => Object.assign({}, w, { page: map[w.page] })), corrige: sorted.some((x, i) => x.pg !== info[i].pg), roles: sorted.map((x, i) => ({ page: i + 1, role: x.debut === 0 ? 'debut' : 'suite' })) };
+}
+// Deux photos qui se recouvrent (le bas de la première est le haut de la seconde) : une ligne vue deux fois n'est comptée qu'une fois
+function dedupeRows(rows) {
+  const seen = {}, out = [];
+  rows.forEach(r => {
+    if (r.header || !r.nums || !r.nums.length) { out.push(r); return; }
+    const k1 = r.nums.length >= 2 ? r.nums.map(n => n.v).join(',') : null, k2 = r.n + '|' + r.nums.map(n => n.v).join(',');
+    const dup = (k1 && seen[k1] !== undefined && seen[k1] !== r.page) || (r.n && seen[k2] !== undefined && seen[k2] !== r.page);
+    if (dup) return;
+    if (k1 && seen[k1] === undefined) seen[k1] = r.page; if (r.n && seen[k2] === undefined) seen[k2] = r.page;
+    out.push(r);
+  });
+  return out;
+}
+function readPayslipWords(words) {
+  const ord = orderPages(words), rows = dedupeRows(buildRows(deskewWords(ord.words))), tot = readTotals(rows), chk = checkPayslip(rows, tot);
+  return { rows, totals: tot.totals, at: tot.at, warn: tot.warn, checks: chk.checks, manquants: chk.manquants, fiable: chk.fiable, pages: ord.roles, ordreCorrige: ord.corrige };
+}
+/*TABLE-FIN*/
+
 /* ---------- Fiche de paie ---------- */
 /*PAIE-DEB*/
 // Espaces insécables et fines → espace ; confusions courantes de la lecture optique (O pour 0, l pour 1) à l'intérieur d'un nombre
@@ -3557,7 +4017,7 @@ function parsePayslip(raw) {
   const baseRate = p.base && p.base.rate && p.base.rate > 3 && p.base.rate < 200 ? p.base.rate : (p.base && p.base.qty && p.base.amount ? p.base.amount / p.base.qty : null);
   // Heures supplémentaires : une ligne d'heures et, parfois, une ligne de majoration à part (à rapprocher)
   const items = [];
-  findAll(/(heures? (supp|suppl)|h\.? ?sup|hres? sup|\bhs ?(\d|maj)|heures majorees|majoration|heures? compl)/, /(reduction|allegement|defiscal|exoneration|cotisations? salariale|contingent|nuit|dimanche|ferie|^(?!heures? (supp|suppl)).*exonere)/).forEach(k => {
+  findAll(/(heures? (supp|suppl)|h\.? ?sup|hres? sup|\bhs ?(\d|maj)|heures majorees|majoration|heures? compl)/, /(reduction|allegement|defiscal|exoneration|cotisations? salariale|csg|crds|contingent|nuit|dimanche|ferie|^(?!heures? (supp|suppl)).*exonere)/).forEach(k => {
     const n = lineNums(lines[k], true); if (!n.length) return;
     const maj = linePct(lines[k]), isMaj = /majoration|\bmaj\b/.test(nl[k]) && maj !== null;
     const qty = n.length >= 2 && n[0] <= 200 ? n[0] : null, amount = n[n.length - 1], rate = n.length >= 3 ? n[1] : null;
@@ -3756,6 +4216,28 @@ function guidedCamera() {
 }
 const getPaies = () => store.get(KEYS.paies, []);
 let paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages: [] };
+const paieSig = pgs => pgs.map(x => x.name + ':' + x.text.length).join('|');
+// Totaux validés par l'utilisateur (ou lus et recoupés) appliqués à l'analyse : ce qu'il a laissé vide reste vide, jamais remplacé par une autre lecture.
+function applyValidated(p0, vals, lec) {
+  const p = JSON.parse(JSON.stringify(p0)); p.hs = p.hs.map(h => ({ ...h }));
+  p.brut = vals.brut; p.cotSal = vals.cotSal; p.netAvant = vals.netAvant; p.netImposable = vals.netImposable; p.netFinal = vals.netPayer;
+  if (lec && lec.totals) { if (lec.totals.cotPat !== null) p.cotPat = lec.totals.cotPat; if (lec.totals.netSocial !== null) p.netSocial = lec.totals.netSocial; }
+  p.found = [p.brut, p.netAvant, p.netFinal, p.netImposable, p.cotSal, p.base].filter(x => x !== null).length + (p.pas ? 1 : 0); p.valide = true;
+  return p;
+}
+function paieValidationHTML(g) {
+  const F = [['brut', 'Salaire brut'], ['cotSal', 'Cotisations salariales'], ['netAvant', 'Net avant impôt'], ['netImposable', 'Net imposable'], ['netPayer', 'Net à payer']];
+  const ko = g.checks.filter(c => c.status === 'ko'), V = g.valeurs, doubt = !g.fiable;
+  const list = a => a.length ? `<table class="paie-t"><tbody>${a.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table>` : '<p class="note">Rien de lu.</p>';
+  return `<div class="sheet verdict" id="paie-valid"><h2>Vérifie ce qu'on a lu</h2>
+    ${doubt ? `<div class="scam"><strong style="color:var(--ink)">Lecture incertaine.</strong> Les chiffres ne se recoupent pas tous${ko.length ? ' (' + ko.map(c => esc(c.label.toLowerCase())).join(' ; ') + ')' : ''}${g.manquants.length ? ' ou il en manque' : ''}. Compare avec ta fiche et corrige les cases en pointillés avant de continuer.${ko.some(c => c.detail) ? '<br><small>' + ko.filter(c => c.detail).map(c => esc(c.detail)).join(' · ') + '</small>' : ''}</div>` : '<p class="note">✓ Lecture recoupée : les totaux correspondent aux lignes de ta fiche. Vérifie quand même d\'un coup d\'œil.</p>'}
+    ${g.manquants.length ? `<p class="note"><b>Il manque :</b> ${g.manquants.map(k => ({ brut: 'le salaire brut', cotSal: 'les cotisations salariales', netAvant: 'le net avant impôt', netImposable: 'le net imposable', netPayer: 'le net à payer' })[k]).join(', ')}. Astuce : prends en photo, de près et bien à plat, la partie de la fiche qui les contient (le bas : totaux, net à payer, cumuls) puis ajoute-la plus haut avec « Ajouter une page en photo » : elle sera rattachée à la fiche, même si elle n'en montre qu'un morceau.</p>` : ''}
+    ${g.pages && g.pages.length > 1 ? `<p class="note">✓ ${g.pages.length} pages reconnues comme une seule fiche : ${g.pages.map(p => 'page ' + p.page + ' = ' + (p.role === 'debut' ? 'début de la fiche' : 'suite de la fiche')).join(', ')}${g.ordreCorrige ? ' (ordre corrigé)' : ''}.</p>` : ''}
+    <div class="form-grid">${F.map(([k, l]) => `<label class="field${V[k] === null || doubt ? ' douteux' : ''}"><span>${l} (€)</span><input data-val="${k}" inputmode="decimal" value="${V[k] === null ? '' : esc(fmtFR(V[k]))}" placeholder="non lu : à saisir"></label>`).join('')}</div>
+    <div class="two-col"><div><h3>Ce que tu paies</h3>${list(g.colonnes.salarie)}</div><div><h3>Ce que paie ton employeur</h3>${list(g.colonnes.employeur)}</div></div>
+    <div class="actions"><button class="btn" id="paie-valid-go" type="button">Valider et analyser</button></div>
+    <p class="note">Rien n'est envoyé : la lecture reste sur ton appareil.</p></div>`;
+}
 function renderPaie(box) {
   const s = paie$;
   const p = s.p, ins = p ? payslipInsights(p, s.declared === '' ? null : parseFloat(String(s.declared).replace(',', '.'))) : [];
@@ -3765,20 +4247,30 @@ function renderPaie(box) {
     <p class="lead">Scanne ta fiche de paie : on la résume, on t'explique chaque ligne en mots simples et on repère les heures supplémentaires. Rien ne quitte ton appareil.</p>
     <div class="actions"><label class="btn" for="paie-cam">${s.pages.length ? 'Ajouter une page en photo' : 'Prendre en photo'}</label><input class="sr" type="file" id="paie-cam" accept="image/*" capture="environment">
       <label class="btn ghost" for="paie-file">${s.pages.length ? 'Ajouter des pages ou un PDF' : 'Importer photos ou PDF'}</label><input class="sr" type="file" id="paie-file" accept="image/*,application/pdf" multiple></div>
-    <p class="note">Ta fiche a plusieurs pages ? Ajoute-les une par une, ou choisis-les toutes d'un coup : elles seront lues ensemble, dans l'ordre.</p>
+    <p class="note">Ta fiche a plusieurs pages ? Ajoute-les une par une, ou choisis-les toutes d'un coup : elles sont lues ensemble comme une seule fiche. Une photo qui ne montre qu'une petite partie (la suite, le bas de page) est rattachée à la fiche, même donnée dans le désordre ou en recouvrement.</p>
     <div class="progress" id="paie-prog"><div class="bar"><i id="paie-bar"></i></div><p id="paie-ptext"></p></div>
     ${s.pages.length ? `<ul class="pages" aria-label="Pages ajoutées">${s.pages.map((pg, i) => `<li><span><b>Page ${i + 1}</b> · ${esc(pg.name)} <small>(${pg.text.replace(/\s/g, '').length} caractères lus)</small></span><span><button class="link" type="button" data-pg-up="${i}"${i === 0 ? ' hidden' : ''} aria-label="Monter la page ${i + 1}">↑</button><button class="link" type="button" data-pg-del="${i}" aria-label="Retirer la page ${i + 1}">Retirer</button></span></li>`).join('')}</ul>` : ''}
     <label class="field" for="paie-text"><span>Texte lu (tu peux le corriger ou le coller)</span></label>
     <textarea id="paie-text" placeholder="Le texte de ta fiche de paie apparaît ici après la lecture. Tu peux aussi le coller.">${esc(s.pages.map(x => x.text).join('\n\n') || s.text)}</textarea>
     <div class="actions"><button class="btn" id="paie-go" type="button">${s.pages.length > 1 ? `Analyser mes ${s.pages.length} pages` : 'Analyser'}</button><button class="link" id="paie-sample" type="button">Voir un exemple</button></div>
     <p class="note">Une fiche de paie est un document très personnel : elle n'est ni envoyée ni enregistrée tant que tu ne le demandes pas.</p></div>
-    <div id="paie-res">${p ? paieResultHTML(p, ins, hist) : ''}</div>
+    ${s.gen && s.genSig === paieSig(s.pages) && !s.valide ? paieValidationHTML(s.gen) : ''}
+    <div id="paie-res">${p && !(s.gen && s.genSig === paieSig(s.pages) && !s.valide) ? paieResultHTML(p, ins, hist) : ''}</div>
     ${hist.length ? `<h3 class="sec-title">Mes fiches enregistrées</h3><div class="items">${hist.map(h => `<article class="item l1" data-ph="${h.id}"><div><h3>${esc(h.periode || 'Fiche de paie')}</h3><p>Brut ${esc(PE(h.brut))} | Net versé ${esc(PE(h.netFinal ?? h.netAvant))}${h.hsQty ? ' | ' + esc(PH(h.hsQty)) + ' supplémentaires' : ''}</p></div><div class="row"><button class="link" data-ph-del type="button">Supprimer</button></div></article>`).join('')}</div>` : ''}`;
   toolBack(box);
   const ta = $('#paie-text');
   const run = () => {
     const t = ta.value.trim(); if (t.length < 40) { toast('Ajoute une photo ou colle le texte de ta fiche'); return; }
-    const p0 = parsePayslip(t); paie$ = { ...paie$, text: t, p0, p: p0, fix: {}, pages: paie$.pages.length ? paie$.pages : [{ name: 'Texte saisi', text: t }] };
+    // Pages lues par positions et texte non retouché : on fait d'abord valider les totaux (l'analyse suit la validation)
+    const pgs = paie$.pages, intact = pgs.length && pgs.every(pg => pg.words && pg.words.length) && pgs.map(x => x.text).join('\n\n').trim() === t;
+    if (intact) {
+      let off = 0; const all = [];
+      pgs.forEach(pg => { pg.words.forEach(w => all.push({ ...w, page: w.page + off })); off += pg.np || 1; });
+      const lec = readPayslipWords(all), gen = payslipFromLecture(lec);
+      paie$ = { ...paie$, text: gen.text, lec, gen, genSig: paieSig(pgs), valide: false, p0: parsePayslip(gen.text), p: null, fix: {} };
+      track('paie'); track(lec.fiable ? 'paie_lecture_sure' : 'paie_lecture_incertaine'); if (pgs.length > 1) track('paie_multipage'); renderPaie(box); $('#paie-valid').scrollIntoView({ block: 'start' }); return;
+    }
+    const p0 = parsePayslip(t); paie$ = { ...paie$, text: t, p0, p: p0, gen: null, fix: {}, pages: paie$.pages.length ? paie$.pages : [{ name: 'Texte saisi', text: t }] };
     track('paie'); if (paie$.pages.length > 1) track('paie_multipage'); renderPaie(box); $('#paie-res').scrollIntoView({ block: 'start' });
   };
   $('#paie-go').addEventListener('click', run);
@@ -3793,10 +4285,14 @@ function renderPaie(box) {
       for (let i = 0; i < fl.length; i++) {
         const f = fl[i], isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
         setOcr(i / fl.length, fl.length > 1 ? `Lecture de la page ${i + 1} sur ${fl.length}…` : 'Lecture de la page…');
-        let text;
-        if (isPdf) text = await readPdf(f, 12);
-        else { onlyPdf = false; const w = await getOcr(); text = await ocrImage(w, f, { table: true }); }
-        paie$.pages.push({ name: f.name && !/^image\.(jpe?g|png)$/i.test(f.name) ? f.name : (isPdf ? 'PDF' : 'Photo'), text: text.trim() }); added++;
+        let text, words = null, np = 1;
+        if (isPdf) { text = await readPdf(f, 12); try { const r = await readPdfWords(f, 12); if (r.words.length > 3) { words = r.words; np = r.np; } } catch (e) { words = null; } }
+        else {
+          onlyPdf = false;
+          try { const r = await readPhotoWords([f]); text = r.text; words = r.words.length > 3 ? r.words : null; }
+          catch (e) { words = null; const w = await getOcr(); text = await ocrImage(w, f, { table: true }); }
+        }
+        paie$.pages.push({ name: f.name && !/^image\.(jpe?g|png)$/i.test(f.name) ? f.name : (isPdf ? 'PDF' : 'Photo'), text: text.trim(), words, np }); added++;
       }
     } catch (e) { console.error(e); hideOcr(); if (added) { paie$.p = null; paie$.p0 = null; renderPaie(box); } toast(navigator.onLine ? 'La lecture a échoué sur une page. Reprends-la bien à plat, avec de la lumière.' : 'Il faut internet la première fois pour préparer la lecture.'); return; }
     hideOcr(); paie$.p = null; paie$.p0 = null; track('paie_page');
@@ -3822,6 +4318,13 @@ function renderPaie(box) {
     paie$.fix = fix; paie$.p = applyPaieFix(paie$.p0, fix);
     Object.keys(fix).forEach(k => trackFix('paie_' + k.toLowerCase())); track('paie_fix');
     renderPaie(box); const fb = $('#paie-fixbox'); if (fb) fb.open = true; toast('Corrections appliquées');
+  });
+  const vg = $('#paie-valid-go'); if (vg) vg.addEventListener('click', () => {
+    const vals = {}; let bad = null;
+    $$('[data-val]', box).forEach(i => { const t = i.value.trim().replace(/\s*€$/, ''); if (!t) { vals[i.dataset.val] = null; return; } const v = parseFR(t); if (v === null) bad = bad || i; else vals[i.dataset.val] = v; });
+    if (bad) { bad.focus(); toast('Un montant n\'est pas lisible : écris-le comme 1 861,16'); return; }
+    const q = applyValidated(paie$.p0, vals, paie$.lec); paie$ = { ...paie$, p0: q, p: q, valide: true, fix: {} };
+    track('paie_valide'); renderPaie(box); $('#paie-res').scrollIntoView({ block: 'start' });
   });
   const pp = $('#paie-premium'); if (pp) pp.addEventListener('click', () => openPremium('La vérification de tes heures supplémentaires fait partie de Premium.'));
   const sv = $('#paie-save'); if (sv) sv.addEventListener('click', () => {
@@ -3851,6 +4354,7 @@ function paieResultHTML(p, ins, hist) {
   return `<div class="sheet verdict"><h2>${esc(p.periode ? 'Ta fiche de ' + p.periode : 'Ta fiche de paie')}</h2>
     <div class="brief"><h3>En bref</h3><p>${esc(summary)}</p></div>
     <div class="block"><h3>Les chiffres clés</h3><table class="paie-t"><tbody>${row('Salaire brut', p.brut)}${row('Cotisations salariales', p.cotSal)}${row('Net avant impôt', p.netAvant)}${p.pas ? row('Impôt prélevé' + (p.pas.taux !== null ? ' (' + String(p.pas.taux).replace('.', ',') + ' %)' : ''), p.pas.amount) : ''}${row('Net versé', p.netFinal, true)}${row('Net imposable (pour ta déclaration)', p.netImposable)}${row('Cotisations de ton employeur', p.cotPat)}</tbody></table>${cmp}</div>
+    ${paie$.gen && paie$.valide && paie$.genSig === paieSig(paie$.pages) && (paie$.gen.colonnes.salarie.length || paie$.gen.colonnes.employeur.length) ? `<div class="block"><h3>Qui paie quoi</h3><div class="two-col"><div><h3>Ce que tu paies</h3><table class="paie-t"><tbody>${paie$.gen.colonnes.salarie.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table></div><div><h3>Ce que paie ton employeur</h3><table class="paie-t"><tbody>${paie$.gen.colonnes.employeur.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table></div></div></div>` : ''}
     <details class="tips" id="paie-fixbox"><summary>Un chiffre est faux ? Corrige-le</summary>
       <p class="note">La lecture d'une photo n'est pas toujours parfaite. Corrige ce qui est faux : tout est recalculé et on retient ta correction pour s'améliorer.</p>
       <div class="form-grid">${[['brut', 'Salaire brut (€)'], ['netAvant', 'Net avant impôt (€)'], ['impot', 'Impôt prélevé (€)'], ['netFinal', 'Net versé (€)'], ['baseRate', 'Taux horaire normal (€)'], ['hsQty', 'Heures supp payées (h)'], ['hsAmount', 'Montant des heures supp (€)']].map(([k, l]) => `<label class="field"><span>${l}</span><input data-fix="${k}" inputmode="decimal" value="${esc((paie$.fix || {})[k] ?? '')}" placeholder="${esc(fixPlaceholder(p, k))}"></label>`).join('')}</div>

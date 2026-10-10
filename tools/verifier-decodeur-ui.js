@@ -145,6 +145,39 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   ok(/majoration d'environ 25 %/.test(mp) && !/tarif normal/.test(mp), 'fiche de paie : majoration sur ligne séparée bien reconnue');
   await pg.click('#paie-fixbox summary'); await pg.fill('[data-fix=brut]', '2000,00'); await pg.click('#paie-fix-go'); await pg.waitForSelector('.paie-t');
   ok(/2\s?000,00/.test(await pg.innerText('#paie-res .paie-t')), 'fiche de paie : correction manuelle du brut appliquée');
+  // 5d'' lecture par positions d'un vrai PDF : validation des totaux, puis analyse (nécessite pdfjs-dist, sinon ignoré)
+  {
+    const lib = require('./essai-lecture-paie.js'), pj = [process.env.PDFJS_DIR, path.join(ROOT, 'node_modules', 'pdfjs-dist'), '/tmp/claude-0/pdfjs/node_modules/pdfjs-dist'].find(d => d && fs.existsSync(path.join(d, 'build', 'pdf.min.js')));
+    if (!pj) console.log('· lecture PDF par positions : ignorée (pdfjs-dist introuvable)');
+    else {
+      await pg.route(/pdfjs-dist@3\.11\.174\/build\/pdf(\.worker)?\.min\.js/, r => r.fulfill({ contentType: 'application/javascript', body: fs.readFileSync(path.join(pj, 'build', /worker/.test(r.request().url()) ? 'pdf.worker.min.js' : 'pdf.min.js')) }));
+      const envoyer = async buf => { await pg.goto('http://localhost:8766/decodeur-courrier.html#fiche-de-paie'); await pg.reload(); await pg.waitForSelector('#paie-sample'); await pg.setInputFiles('#paie-file', { name: 'fiche.pdf', mimeType: 'application/pdf', buffer: buf }); await pg.waitForSelector('#paie-go'); await pg.click('#paie-go'); await pg.waitForSelector('#paie-valid', { timeout: 20000 }); };
+      await envoyer(lib.writePdf(lib.layout()));
+      const val = k => pg.inputValue('[data-val=' + k + ']');
+      ok((await val('brut')) === '2 330,93' && (await val('cotSal')) === '473,77' && (await val('netAvant')) === '1 861,16' && (await val('netImposable')) === '1 672,06' && (await val('netPayer')) === '1 861,16', 'PDF réel : les 5 totaux sont préremplis avec les bonnes valeurs');
+      ok(/Lecture recoupée/.test(await pg.innerText('#paie-valid')) && (await pg.locator('#paie-res .paie-t').count()) === 0, 'PDF réel : lecture recoupée, analyse masquée avant validation');
+      const cols = await pg.innerText('#paie-valid .two-col');
+      ok(/Ce que tu paies/.test(cols) && /Ce que paie ton employeur/.test(cols), 'PDF réel : deux colonnes salarié / employeur');
+      await pg.click('#paie-valid-go'); await pg.waitForSelector('#paie-res .paie-t');
+      const rs = await pg.innerText('#paie-res');
+      ok(/2\s?330,93/.test(rs) && /473,77/.test(rs) && /1\s?861,16/.test(rs) && /1\s?672,06/.test(rs) && !/ancienneté/i.test(await pg.locator('#paie-res .paie-lines').innerText()), 'PDF réel : analyse sur les chiffres validés, sans ligne inventée');
+      ok(/Qui paie quoi/.test(rs) && /Sécurité sociale maladie/.test(rs) && /163,17/.test(rs), 'PDF réel : « qui paie quoi » affiche la part employeur à sa place');
+      // deux fichiers donnés à l'envers, le second ne montrant que la suite (totaux) : rattachés à la même fiche, ordre corrigé
+      { const el = lib.layout({ suite: true }), p1 = el.filter(e => e.page === 1), p2 = el.filter(e => e.page === 2).map(e => ({ ...e, page: 1 }));
+        await pg.goto('http://localhost:8766/decodeur-courrier.html#fiche-de-paie'); await pg.reload(); await pg.waitForSelector('#paie-sample');
+        await pg.setInputFiles('#paie-file', [{ name: 'suite.pdf', mimeType: 'application/pdf', buffer: lib.writePdf(p2) }, { name: 'debut.pdf', mimeType: 'application/pdf', buffer: lib.writePdf(p1) }]);
+        await pg.waitForSelector('#paie-go'); await pg.click('#paie-go'); await pg.waitForSelector('#paie-valid', { timeout: 20000 });
+        const v = await pg.innerText('#paie-valid');
+        ok(/2 pages reconnues comme une seule fiche/.test(v) && /ordre corrigé/.test(v) && /Lecture recoupée/.test(v), 'PDF en deux fichiers à l\'envers : suite rattachée à la fiche, ordre corrigé, lecture recoupée');
+        ok((await pg.inputValue('[data-val=brut]')) === '2 330,93' && (await pg.inputValue('[data-val=netPayer]')) === '1 861,16', 'PDF en deux fichiers : totaux de la page de suite repris'); }
+      // brut faux sur la fiche : lecture incertaine, cases en pointillés, correction puis validation
+      const mauvais = lib.layout().map(e => (e.page === 1 && e.text === '2 330,93' && e.x > 330 ? { ...e, text: '2 130,93' } : e));
+      await envoyer(lib.writePdf(mauvais));
+      ok(/Lecture incertaine/.test(await pg.innerText('#paie-valid')) && (await pg.locator('#paie-valid .field.douteux').count()) === 5, 'PDF douteux : badge « lecture incertaine » et cases à vérifier');
+      await pg.fill('[data-val=brut]', '2330,93'); await pg.click('#paie-valid-go'); await pg.waitForSelector('#paie-res .paie-t');
+      ok(/2\s?330,93/.test(await pg.innerText('#paie-res .paie-t')), 'PDF douteux : la valeur corrigée est celle analysée');
+    }
+  }
   // 5e mémoire des corrections
   await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
   await pg.click('#sample-btn'); await pg.click('[data-fb=ko]'); await pg.waitForSelector('#fix-panel:not([hidden])');

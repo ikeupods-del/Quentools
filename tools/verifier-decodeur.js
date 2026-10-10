@@ -97,5 +97,6 @@ ko+=ko3;
   const cas=[['page nette et éclairée',Q(P).level==='good'],['page sombre signalée',Q(P.map(v=>v*.3)).tips.some(t=>/sombre/.test(t))],['reflet signalé',Q(P.map(v=>v>100?255:v)).level==='bad'],['ombre signalée',Q(P.map((v,i)=>(i%W)<W/2?v:v*.55)).tips.some(t=>/Ombre/.test(t))],['flou signalé',Q(blur(P,3)).tips.some(t=>/flou/.test(t))]];
   cas.forEach(([n,okk])=>{if(!okk){ko++;console.log('✗ cadre guide : '+n);}}); if(cas.every(x=>x[1]))console.log('✓ cadre guide : '+cas.length+' contrôles de qualité d\'image'); }
 { const r=require('child_process').spawnSync(process.execPath,[require('path').join(__dirname,'essai-paie.js')],{encoding:'utf8'}); process.stdout.write(r.stdout); if(r.status) ko++; }
+{ const r=require('child_process').spawnSync(process.execPath,[require('path').join(__dirname,'essai-lecture-paie.js')],{encoding:'utf8'}); process.stdout.write(r.stdout); if(r.status) ko++; }
 console.log(ko ? `✗ ${ko} cas en erreur sur ${CAS.length}` : `✓ Paperdecrypt : ${CAS.length} lectures de montants correctes`);
 process.exit(ko ? 1 : 0);
