@@ -375,6 +375,7 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
       <p>Courriers, remboursements et garanties, par QuenTools</p>
     </div>
     <div class="top-actions">
+    <button class="btn small ghost" id="update-btn" type="button" title="Charger la dernière version de l'application (tes données sont conservées)">Mise à jour</button>
     <button class="btn small" id="login-btn" type="button" hidden>Se connecter</button>
     <button class="ai-pill" id="ai-pill" type="button" hidden>Assistant IA</button>
     <button class="icon-btn" id="open-settings" aria-label="Réglages">
@@ -2591,6 +2592,15 @@ $('#ia-off').addEventListener('click', async () => {
 gpuReady.then(() => {
   if (!gpu.ok || iaDead() || !navigator.onLine) return;
   setTimeout(() => { if (aiState !== 'ready' && aiState !== 'loading') enqueueAI(() => ensureEngine()).catch(() => {}); }, 1500);
+});
+// Mise à jour : copies locales de l'application vidées, page rechargée depuis le serveur. Les documents et réglages ne sont pas touchés.
+$('#update-btn').addEventListener('click', async () => {
+  const b = $('#update-btn'); b.disabled = true; b.textContent = 'Mise à jour…';
+  try {
+    if ('serviceWorker' in navigator) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.update().then(() => r.unregister()).catch(() => {}))); }
+    if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.filter(k => k.startsWith('paperdecrypt-')).map(k => caches.delete(k))); }
+  } catch (e) { /* on recharge quand même */ }
+  const u = new URL(location.href); u.searchParams.set('maj', Date.now().toString(36)); location.replace(u.toString());
 });
 $('#open-settings').addEventListener('click', openSettings);
 $('#ai-pill').addEventListener('click', openSettings);
