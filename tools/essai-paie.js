@@ -34,5 +34,12 @@ const { generer } = require('./fixtures/generateur-paie.js');
   tous.forEach(f => { let ins; try { const p = vm.runInContext('parsePayslip(' + JSON.stringify(f.texte) + ')', c); vm.runInContext('globalThis.__p=' + JSON.stringify(p), c); ins = vm.runInContext('payslipInsights(__p,null)', c); } catch (e) { w++; console.log('✗ analyse en erreur', f.nom, e.message); return; }
     ins.filter(i => i.level === 'warn').forEach(i => { if (/peu de lignes/.test(i.text) && /Rubriques génériques/.test(f.nom)) return; w++; console.log('✗ fausse alerte ' + f.nom + ' : ' + i.text.slice(0, 140)); }); });
   console.log(w ? `✗ analyse : ${w} fausses alertes` : `✓ analyse : aucune fausse alerte sur ${tous.length} fiches cohérentes`); ko += w; }
+// Photo dont le détail n'est pas fiable : aucune ligne d'heures supplémentaires présentée, seule la saisie de la personne compte
+{ const f = FICHES[0]; let m = 0; const bad = x => { m++; console.log('✗ ' + x); };
+  const run = (flag, fix, decl) => { const p = vm.runInContext('parsePayslip(' + JSON.stringify(f.texte) + ')', c); p.detailDouteux = flag; if (fix) p.fixed = ['hsQty'], p.hsQty = fix; vm.runInContext('globalThis.__p=' + JSON.stringify(p), c); return vm.runInContext('payslipInsights(__p,' + decl + ')', c).map(i => i.text).join(' | '); };
+  const t1 = run(true, 0, 'null'); if (!/pas pu être lu avec certitude/.test(t1) || /Ligne «/.test(t1)) bad('détail douteux : message attendu, aucune ligne affichée');
+  const t2 = run(true, 5, '8'); if (!/ta saisie/.test(t2) || !/il en manque peut-être 3 h/.test(t2)) bad('détail douteux + saisie : comparaison avec les heures déclarées : ' + t2.slice(0, 200));
+  const t3 = run(false, 0, 'null'); if (/pas pu être lu avec certitude/.test(t3)) bad('fiche fiable : pas de message de doute');
+  console.log(m ? '✗ détail douteux : ' + m + ' écarts' : '✓ détail douteux : rien d\'inventé, saisie de la personne prise en compte'); ko += m; }
 console.log(ko?`✗ ${ko} écarts sur ${tot} (hors lectures de chiffres confondus)`:`✓ ${tot} contrôles de fiches de paie`);
 process.exit(ko?1:0);

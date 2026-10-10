@@ -4284,6 +4284,17 @@ function payslipInsights(p, declared) {
   if (p.tauxNeutre) out.push({ level: 'info', text: "Ta fiche mentionne un taux neutre (ou non personnalisé) : il est souvent appliqué en début de contrat. Il peut être trop élevé ou trop faible pour toi. Tu peux demander un taux personnalisé sur impots.gouv.fr." });
   if (p.netSocial !== null) out.push({ level: 'info', text: `Le « montant net social » (${PE(p.netSocial)}) sert à calculer certaines aides (prime d'activité, RSA…) : c'est lui qu'il faut déclarer à la CAF, pas le net versé.` });
   if (p.pas && p.pas.taux !== null) out.push({ level: 'info', text: `L'impôt est prélevé au taux de ${String(p.pas.taux).replace('.', ',')} %. Si ta situation a changé (mariage, naissance, baisse de revenus), tu peux demander à ajuster ce taux sur impots.gouv.fr.` });
+  // Photo dont les lignes du tableau n'ont pas été lues avec certitude : aucune ligne détaillée n'est présentée comme un fait, seules les heures saisies par la personne comptent
+  if (p.detailDouteux) {
+    const saisi = (p.fixed || []).includes('hsQty');
+    if (!saisi) { out.push({ level: 'info', text: "Le détail des lignes (heures supplémentaires, primes, congés) n'a pas pu être lu avec certitude sur cette photo, donc il n'est pas affiché. Pour vérifier tes heures supplémentaires, indique celles qui sont payées sur ta fiche dans « Un chiffre est faux ? Corrige-le », ou reprends une photo de face, bien à plat." }); return out; }
+    out.push({ level: 'info', text: `Heures supplémentaires payées retenues : ${PH(p.hsQty)} (ta saisie).` });
+    if (declared !== null && declared !== undefined && isFinite(declared)) {
+      const gap = Math.round((declared - (p.hsQty || 0)) * 100) / 100;
+      out.unshift(gap > 0.49 ? { level: 'warn', text: `Tu indiques ${PH(declared)} supplémentaires, la fiche en paie ${PH(p.hsQty || 0)} : il en manque peut-être ${PH(gap)}. Demande à ton employeur le décompte détaillé de tes heures.` } : gap < -0.49 ? { level: 'info', text: `La fiche paie ${PH(p.hsQty || 0)}, plus que les ${PH(declared)} que tu indiques : des heures peuvent venir d'un autre mois (régularisation) ou d'un repos compensateur.` } : { level: 'ok', text: `Les heures supplémentaires payées (${PH(p.hsQty || 0)}) correspondent à ce que tu indiques.` });
+    }
+    return out;
+  }
   // Heures supplémentaires
   if (!p.hs.length) out.push({ level: 'info', text: "Aucune ligne d'heures supplémentaires repérée sur cette fiche." });
   p.hs.forEach(h => {
@@ -4396,6 +4407,7 @@ function applyValidated(p0, vals, lec) {
   p.brut = vals.brut; p.cotSal = vals.cotSal; p.netAvant = vals.netAvant; p.netImposable = vals.netImposable; p.netFinal = vals.netPayer;
   if (lec && lec.totals) { if (lec.totals.cotPat !== null) p.cotPat = lec.totals.cotPat; if (lec.totals.netSocial !== null) p.netSocial = lec.totals.netSocial; }
   p.found = [p.brut, p.netAvant, p.netFinal, p.netImposable, p.cotSal, p.base].filter(x => x !== null).length + (p.pas ? 1 : 0); p.valide = true;
+  p.detailDouteux = !!(lec && !lec.fiable);   // lignes du tableau non recoupées (photo penchée, tableau abîmé) : on ne présente pas le détail comme un fait
   return p;
 }
 const PAIE_NEED = ['brut', 'cotSal', 'netAvant', 'netImposable', 'netPayer'];
@@ -4604,27 +4616,27 @@ function paieResultHTML(p, ins, hist) {
   const prev = hist.find(h => h.ym && p.ym && h.ym < p.ym);
   let cmp = '';
   if (prev && p.netFinal !== null && prev.netFinal !== null && prev.netFinal !== undefined) { const d = Math.round((p.netFinal - prev.netFinal) * 100) / 100; cmp = `<p class="note">Par rapport à ${esc(prev.periode)} : net versé ${d >= 0 ? '+' : ''}${esc(PE(d))}${prev.hsQty !== undefined ? `, heures supplémentaires ${esc(PH(p.hsQty))} contre ${esc(PH(prev.hsQty || 0))}` : ''}.</p>`; }
-  const summary = [p.periode ? `Fiche de paie de ${p.periode}.` : 'Fiche de paie.', p.brut !== null ? `Salaire brut : ${PE(p.brut)}.` : '', p.netAvant !== null ? `Net avant impôt : ${PE(p.netAvant)}.` : '', p.pas && p.pas.amount !== null ? `Impôt prélevé : ${PE(p.pas.amount)}.` : '', p.netFinal !== null ? `Net versé sur ton compte : ${PE(p.netFinal)}.` : '', p.hs.length ? `Heures supplémentaires payées : ${PH(p.hsQty)} (${PE(p.hsAmount)}).` : 'Pas d\'heures supplémentaires repérées.'].filter(Boolean).join(' ');
+  const summary = [p.periode ? `Fiche de paie de ${p.periode}.` : 'Fiche de paie.', p.brut !== null ? `Salaire brut : ${PE(p.brut)}.` : '', p.netAvant !== null ? `Net avant impôt : ${PE(p.netAvant)}.` : '', p.pas && p.pas.amount !== null ? `Impôt prélevé : ${PE(p.pas.amount)}.` : '', p.netFinal !== null ? `Net versé sur ton compte : ${PE(p.netFinal)}.` : '', p.detailDouteux && !(p.fixed || []).includes('hsQty') ? 'Heures supplémentaires : à vérifier, le détail des lignes n\'a pas pu être lu avec certitude.' : p.detailDouteux ? `Heures supplémentaires payées : ${PH(p.hsQty)} (ta saisie).` : p.hs.length ? `Heures supplémentaires payées : ${PH(p.hsQty)} (${PE(p.hsAmount)}).` : 'Pas d\'heures supplémentaires repérées.'].filter(Boolean).join(' ');
   const n = norm(paie$.text), terms = PAIE_GLOSSAIRE.filter(g => g[0].test(n));
   return `<div class="sheet verdict"><h2>${esc(p.periode ? 'Ta fiche de ' + p.periode : 'Ta fiche de paie')}</h2>
     <div class="brief"><h3>En bref</h3><p>${esc(summary)}</p></div>
     <div class="block"><h3>L'analyse de l'assistant IA</h3><div class="ai-box on" id="paie-ia-box" aria-live="polite"></div></div>
     <div class="block"><h3>Les chiffres clés</h3><table class="paie-t"><tbody>${row('Salaire brut', p.brut)}${row('Cotisations salariales', p.cotSal)}${row('Net avant impôt', p.netAvant)}${p.pas ? row('Impôt prélevé' + (p.pas.taux !== null ? ' (' + String(p.pas.taux).replace('.', ',') + ' %)' : ''), p.pas.amount) : ''}${row('Net versé', p.netFinal, true)}${row('Net imposable (pour ta déclaration)', p.netImposable)}${row('Cotisations de ton employeur', p.cotPat)}</tbody></table>${cmp}</div>
-    ${paie$.gen && paie$.valide && paie$.genSig === paieSig(paie$.pages) && (paie$.gen.colonnes.salarie.length || paie$.gen.colonnes.employeur.length) ? `<div class="block"><h3>Qui paie quoi</h3><div class="two-col"><div><h3>Ce que tu paies</h3><table class="paie-t"><tbody>${paie$.gen.colonnes.salarie.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table></div><div><h3>Ce que paie ton employeur</h3><table class="paie-t"><tbody>${paie$.gen.colonnes.employeur.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table></div></div></div>` : ''}
-    <details class="tips" id="paie-fixbox"><summary>Un chiffre est faux ? Corrige-le</summary>
+    ${!p.detailDouteux && paie$.gen && paie$.valide && paie$.genSig === paieSig(paie$.pages) && (paie$.gen.colonnes.salarie.length || paie$.gen.colonnes.employeur.length) ? `<div class="block"><h3>Qui paie quoi</h3><div class="two-col"><div><h3>Ce que tu paies</h3><table class="paie-t"><tbody>${paie$.gen.colonnes.salarie.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table></div><div><h3>Ce que paie ton employeur</h3><table class="paie-t"><tbody>${paie$.gen.colonnes.employeur.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table></div></div></div>` : ''}
+    <details class="tips" id="paie-fixbox"${p.detailDouteux ? ' open' : ''}><summary>Un chiffre est faux ? Corrige-le</summary>
       <p class="note">La lecture d'une photo n'est pas toujours parfaite. Corrige ce qui est faux : tout est recalculé et on retient ta correction pour s'améliorer.</p>
       <div class="form-grid">${[['brut', 'Salaire brut (€)'], ['netAvant', 'Net avant impôt (€)'], ['impot', 'Impôt prélevé (€)'], ['netFinal', 'Net versé (€)'], ['baseRate', 'Taux horaire normal (€)'], ['hsQty', 'Heures supp payées (h)'], ['hsAmount', 'Montant des heures supp (€)']].map(([k, l]) => `<label class="field"><span>${l}</span><input data-fix="${k}" inputmode="decimal" value="${esc((paie$.fix || {})[k] ?? '')}" placeholder="${esc(fixPlaceholder(p, k))}"></label>`).join('')}</div>
       <div class="actions"><button class="btn small" id="paie-fix-go" type="button">Appliquer mes corrections</button></div></details>
     <div class="block"><h3>Tes heures supplémentaires</h3>
-      ${p.hs.length ? `<ul>${p.hs.map(h => `<li>${esc(h.line)}${h.impl !== null ? ` <span class="note">(majoration d'environ ${h.impl} %)</span>` : ''}</li>`).join('')}</ul>` : '<p>Aucune ligne repérée.</p>'}
+      ${p.detailDouteux ? '<p>Les lignes détaillées de cette photo ne sont pas assez nettes pour compter tes heures sans risque d\'erreur. Saisis les heures supplémentaires payées de ta fiche dans « Un chiffre est faux ? Corrige-le » (ci-dessus), ou reprends une photo de face, bien à plat.</p>' : p.hs.length ? `<ul>${p.hs.map(h => `<li>${esc(h.line)}${h.impl !== null ? ` <span class="note">(majoration d'environ ${h.impl} %)</span>` : ''}</li>`).join('')}</ul>` : '<p>Aucune ligne repérée.</p>'}
       ${isPremium() ? `<label class="field"><span>Combien d'heures supplémentaires as-tu faites ce mois-ci ?</span><input id="paie-declared" inputmode="decimal" value="${esc(paie$.declared)}" placeholder="Ex. 10"></label>` : `<div class="sugg"><b>Vérifie tes heures :</b> indique combien d'heures supplémentaires tu as faites et on te dit s'il en manque. <span class="pro">Premium</span> <button class="btn small ghost" type="button" id="paie-premium">Débloquer</button></div>`}
       <div id="paie-ins">${insightsHTML(ins.filter(i => PAIE_HS_RE.test(i.text)))}</div></div>
     <div class="block"><h3>Ce qu'on a repéré d'autre</h3>${insightsHTML(ins.filter(i => !PAIE_HS_RE.test(i.text)))}
-      ${p.primes.length ? `<p><b>Primes et indemnités :</b></p><ul>${p.primes.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
-      ${p.absences.length ? `<p><b>Absences ou retenues :</b></p><ul>${p.absences.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
-      ${p.conges.length ? `<p><b>Congés et repos :</b></p><ul>${p.conges.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>
+      ${p.detailDouteux ? '' : p.primes.length ? `<p><b>Primes et indemnités :</b></p><ul>${p.primes.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
+      ${p.detailDouteux ? '' : p.absences.length ? `<p><b>Absences ou retenues :</b></p><ul>${p.absences.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
+      ${p.detailDouteux ? '' : p.conges.length ? `<p><b>Congés et repos :</b></p><ul>${p.conges.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>
     <div class="block"><h3>À vérifier avec ton contrat</h3><ul><li>Le taux horaire est au moins égal au SMIC et au minimum de ta convention collective.</li><li>Les primes prévues dans ton contrat (ancienneté, 13e mois…) apparaissent bien.</li><li>Les jours de congés et de RTT augmentent bien chaque mois.</li><li>Tes heures supplémentaires correspondent à tes relevés d'horaires.</li></ul></div>
-    ${p.lignes && p.lignes.length ? `<div class="block"><h3>Ligne par ligne, en mots simples</h3><div class="paie-lines">${p.lignes.slice(0, 30).map(l => `<details><summary><span>${esc(l.label)}</span>${l.amount !== null ? `<b>${esc(PE(l.amount))}</b>` : ''}</summary><p class="note">${esc(l.line)}</p>${l.sal !== undefined ? `<p><b>Ta part :</b> ${esc(PE(l.sal))} · <b>Part de ton employeur :</b> ${esc(PE(l.pat))}</p>` : ''}<p>${esc(l.expl)}</p></details>`).join('')}</div></div>` : ''}
+    ${!p.detailDouteux && p.lignes && p.lignes.length ? `<div class="block"><h3>Ligne par ligne, en mots simples</h3><div class="paie-lines">${p.lignes.slice(0, 30).map(l => `<details><summary><span>${esc(l.label)}</span>${l.amount !== null ? `<b>${esc(PE(l.amount))}</b>` : ''}</summary><p class="note">${esc(l.line)}</p>${l.sal !== undefined ? `<p><b>Ta part :</b> ${esc(PE(l.sal))} · <b>Part de ton employeur :</b> ${esc(PE(l.pat))}</p>` : ''}<p>${esc(l.expl)}</p></details>`).join('')}</div></div>` : ''}
     <div class="block"><h3>Pose ta question sur ta fiche</h3>
       <div class="chips" role="group" aria-label="Questions rapides">${PAIE_QUICK.map(([k, q]) => `<button class="chip" type="button" data-pq="${k}">${esc(q)}</button>`).join('')}</div>
       <div class="chat-log" id="paie-chat" aria-live="polite"></div>
@@ -4655,7 +4667,8 @@ function routePaieQuestion(q) {
   return null;
 }
 function paieSummaryForAI(p) {
-  const l = [p.periode && 'Période : ' + p.periode, p.brut !== null && 'Salaire brut : ' + PE(p.brut), p.cotSal !== null && 'Cotisations salariales : ' + PE(p.cotSal), p.netAvant !== null && 'Net avant impôt : ' + PE(p.netAvant), p.pas && p.pas.amount !== null && 'Impôt prélevé : ' + PE(p.pas.amount) + (p.pas.taux !== null ? ' (taux ' + p.pas.taux + ' %)' : ''), p.netFinal !== null && 'Net versé : ' + PE(p.netFinal), p.netImposable !== null && 'Net imposable : ' + PE(p.netImposable), p.base && 'Salaire de base : ' + (p.base.qty ? p.base.qty + ' h, ' : '') + PE(p.base.amount)].filter(Boolean);
+  const l = [p.periode && 'Période : ' + p.periode, p.brut !== null && 'Salaire brut : ' + PE(p.brut), p.cotSal !== null && 'Cotisations salariales : ' + PE(p.cotSal), p.netAvant !== null && 'Net avant impôt : ' + PE(p.netAvant), p.pas && p.pas.amount !== null && 'Impôt prélevé : ' + PE(p.pas.amount) + (p.pas.taux !== null ? ' (taux ' + p.pas.taux + ' %)' : ''), p.netFinal !== null && 'Net versé : ' + PE(p.netFinal), p.netImposable !== null && 'Net imposable : ' + PE(p.netImposable), !p.detailDouteux && p.base && 'Salaire de base : ' + (p.base.qty ? p.base.qty + ' h, ' : '') + PE(p.base.amount)].filter(Boolean);
+  if (p.detailDouteux) return l.join('\n');
   p.hs.forEach(h => l.push('Heures supplémentaires : ' + h.line + (h.impl !== null ? ' (majoration effective environ ' + h.impl + ' %)' : '')));
   p.lignes.slice(0, 18).forEach(g => l.push(g.label + (g.amount !== null ? ' : ' + PE(g.amount) : '')));
   return l.join('\n');
