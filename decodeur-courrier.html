@@ -169,7 +169,8 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .radio input{margin-top:5px}
 .radio small{display:block;color:var(--muted)}
 .ia-status{font-weight:700}
-.dlg-foot{display:flex;justify-content:flex-end;padding-top:12px}
+.dlg-foot{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;padding-top:12px}
+.src{display:block;margin-top:3px;color:var(--muted);font-size:.8rem;font-weight:400}
 
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--btn);color:var(--btn-ink);padding:10px 16px;border-radius:10px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10;max-width:calc(100vw - 32px)}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -311,8 +312,18 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .edl-thumbs .geo{position:absolute;bottom:14px;left:2px;min-width:18px;height:18px;border-radius:9px;background:rgba(0,0,0,.65);color:#ffe14d;font-size:.72rem;display:grid;place-items:center;padding:0 3px}
 .edl-thumbs .x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--sheet);cursor:pointer;line-height:1;padding:0}
 #cam-video{width:100%;max-height:60vh;background:#000;border-radius:10px;display:block}
-.gc-stage{position:relative;border-radius:10px;overflow:hidden;background:#000}
-#gc-video{width:100%;height:min(66vh,560px);object-fit:cover;display:block}
+.gc-stage{position:relative;border-radius:10px;overflow:hidden;background:#000;flex:1 1 auto;min-height:180px}
+#gc-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+/* Caméra : tout tient à l'écran, le bouton de prise de vue est toujours visible (aucun défilement) */
+#gc-dialog{width:min(560px,100vw);max-width:100vw;height:min(100dvh,880px);max-height:100dvh;border-radius:0}
+#gc-dialog[open]{display:flex}
+#gc-dialog .dlg{display:flex;flex-direction:column;gap:8px;width:100%;min-height:0;overflow:hidden;padding:12px 14px calc(14px + env(safe-area-inset-bottom,0px))}
+#gc-dialog h2{margin:0}
+#gc-dialog .note{margin:0;font-size:.84rem}
+#gc-dialog .dlg-foot{gap:10px;padding-top:4px;flex:0 0 auto}
+#gc-dialog .dlg-foot .btn{flex:1;justify-content:center;min-height:52px}
+#gc-dialog #gc-snap{flex:2}
+@media (max-height:720px){#gc-dialog .note{display:none}}
 .gc-frame{position:absolute;inset:6% 9%;border:2px dashed rgba(255,255,255,.75);border-radius:6px;pointer-events:none;transition:border-color .2s,box-shadow .2s;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
 .gc-frame i{position:absolute;width:22px;height:22px;border:4px solid #fff;transition:border-color .2s}
 .gc-frame i:nth-child(1){top:-3px;left:-3px;border-right:0;border-bottom:0}.gc-frame i:nth-child(2){top:-3px;right:-3px;border-left:0;border-bottom:0}
@@ -537,6 +548,15 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
     <video id="cam-video" playsinline muted autoplay></video>
     <p class="note" id="cam-msg" role="status"></p>
     <div class="dlg-foot"><button class="btn" id="cam-snap" type="button">Prendre la photo</button> <button class="btn ghost" id="cam-cancel" type="button">Annuler</button></div>
+  </div>
+</dialog>
+
+<dialog id="ia-gate" aria-labelledby="gate-title">
+  <div class="dlg">
+    <h2 id="gate-title">Installer l'assistant IA</h2>
+    <p id="gate-msg">Pour lire ta fiche de paie et tes documents correctement, Paperdecrypt s'appuie sur un assistant IA qui tourne sur ton appareil. Il se télécharge une seule fois (<span id="gate-size">environ 1 Go</span>, de préférence en wifi), puis il sert à chaque analyse. Rien n'est envoyé sur internet.</p>
+    <div class="progress" id="gate-prog"><div class="bar"><i id="gate-bar"></i></div><p id="gate-text"></p></div>
+    <div class="dlg-foot"><button class="btn ghost" id="gate-cancel" type="button">Annuler</button><button class="btn ghost" id="gate-skip" type="button" hidden>Continuer sans l'IA</button><button class="btn" id="gate-go" type="button">Installer et continuer</button></div>
   </div>
 </dialog>
 
@@ -2111,6 +2131,7 @@ async function ocrImageRun(w, f, mx) {
 }
 async function handleFiles(files) {
   files = [...files]; if (!files.length) return;
+  if (await requireAI() === 'annule') { toast("L'assistant IA est nécessaire pour lire un document."); return; }
   let all = '', pages = 0; ocrConf = null;
   try {
     for (let i = 0; i < files.length; i++) {
@@ -2259,8 +2280,8 @@ function progressLabel(p) {
 }
 function engineProgress(p) {
   lastProgress = p;
-  ['#ai-bar', '#ia-bar'].forEach(s => { const el = $(s); if (el) el.style.width = Math.round((p.progress || 0) * 100) + '%'; });
-  ['#ai-ptext', '#ia-text'].forEach(s => { const el = $(s); if (el) el.textContent = progressLabel(p); });
+  ['#ai-bar', '#ia-bar', '#gate-bar'].forEach(s => { const el = $(s); if (el) el.style.width = Math.round((p.progress || 0) * 100) + '%'; });
+  ['#ai-ptext', '#ia-text', '#gate-text'].forEach(s => { const el = $(s); if (el) el.textContent = progressLabel(p); });
   updatePill();
 }
 function setAIState(s, msg) { aiState = s; aiErrorMsg = msg || ''; updatePill(); renderAIZone(); refreshIaStatus(); }
@@ -2285,6 +2306,34 @@ async function ensureEngine() {
   try { return await p; }
   catch (err) { engine = null; engineModel = null; setAIState('error', iaError(err)); throw err; }
   finally { engineLoading = null; }
+}
+
+/* ---------- Assistant IA obligatoire ---------- */
+// La lecture des fiches de paie et des documents s'appuie sur l'assistant IA : on l'installe d'abord (une seule fois), puis il sert à chaque analyse.
+// Renvoie 'ok' (prêt), 'nogpu' (l'appareil ne peut pas le faire tourner, ou l'installation a échoué et la personne continue : lecture classique) ou 'annule' (action abandonnée).
+let gateP = null, gateNoted = false;
+function requireAI() {
+  if (aiState === 'ready' && engine) return Promise.resolve('ok');
+  if (gateP) return gateP;
+  gateP = (async () => {
+    await gpuReady;
+    if (!gpu.ok) { if (!gateNoted) { gateNoted = true; toast("Cet appareil ne peut pas faire tourner l'assistant IA : lecture classique, un peu moins précise. Pour la meilleure lecture, utilise Chrome ou Safari récent."); } return 'nogpu'; }
+    const d = $('#ia-gate'), go = $('#gate-go'), skip = $('#gate-skip'), cancel = $('#gate-cancel'), msg = $('#gate-msg'), prog = $('#gate-prog'), msg0 = msg.innerHTML;
+    $('#gate-size').textContent = MODELS[prefSize()].size;
+    return new Promise(resolve => {
+      const finish = v => { d.onclose = null; if (d.open) d.close(); resolve(v); };
+      const start = () => {
+        go.hidden = true; skip.hidden = true; prog.classList.add('on'); msg.textContent = iaPrefs().ready ? "Démarrage de l'assistant IA…" : "Téléchargement de l'assistant IA : garde cette page ouverte, c'est unique.";
+        enqueueAI(async () => { try { await ensureEngine(); track('ia_installee'); finish('ok'); } catch (e) { prog.classList.remove('on'); msg.textContent = aiErrorMsg || iaError(e); go.textContent = 'Réessayer'; go.hidden = false; skip.hidden = false; } });
+      };
+      go.onclick = start; skip.onclick = () => finish('nogpu'); cancel.onclick = () => finish('annule');
+      d.oncancel = ev => { ev.preventDefault(); finish('annule'); };
+      go.textContent = 'Installer et continuer'; go.hidden = false; skip.hidden = true; prog.classList.remove('on'); msg.innerHTML = msg0;
+      if (d.showModal) d.showModal(); else d.setAttribute('open', '');
+      if (iaPrefs().ready) start();
+    });
+  })().finally(() => { gateP = null; });
+  return gateP;
 }
 
 async function streamTo(messages, el, opts = {}) {
@@ -2939,6 +2988,7 @@ function renderWForm(box) {
   $('#wf-back').addEventListener('click', () => { w$ = { mode: 'home' }; renderWarranty(); });
   $('#wf-photo').addEventListener('change', async e => {
     let f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    if (await requireAI() === 'annule') { toast("L'assistant IA est nécessaire pour lire un document."); return; }
     let pdfFile = null;
     if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
       $('#wf-photo-state').textContent = 'Lecture du PDF…'; pdfFile = f;
@@ -3917,6 +3967,117 @@ function readPayslipWords(words) {
   const ord = orderPages(words), rows = dedupeRows(buildRows(deskewWords(ord.words))), tot = readTotals(rows), chk = checkPayslip(rows, tot);
   return { rows, totals: tot.totals, at: tot.at, warn: tot.warn, checks: chk.checks, manquants: chk.manquants, fiable: chk.fiable, pages: ord.roles, ordreCorrige: ord.corrige };
 }
+// ---- Lecture par recoupement ----
+// Quand la lecture par colonnes ne retrouve pas un total (photo penchée, tableau gris abîmé), on le cherche parmi les montants réellement lus,
+// on le choisit par le libellé voisin, puis on vérifie les calculs de la fiche (brut − cotisations (+ remboursements) = net avant impôt ;
+// net avant impôt − prélèvement = net à payer). Rien n'est inventé : un total n'est retenu que s'il figure dans le texte lu.
+// Montants de la fiche : « 1 861,16 », « 1861.16 », « 186116 » (virgule perdue) ; les bases à trois décimales (2330,930) sont à part.
+function rcAmounts(words) {
+  const rows = groupRows(deskewWords(words)), am = [];
+  rows.forEach((r, ri) => r.words.forEach(w => {
+    const t = String(w.t).replace(/[€\s]+$/, '').trim(); let v = null, rep = false, base = false;
+    if (/^-?\d{1,3}(?: \d{3})+,\d{2}$|^-?\d+[,.]\d{2}$/.test(t)) v = parseFR(t);
+    else if (/^\d+,\d{2}0$|^\d{1,3}(?: \d{3})+,\d{2}0$/.test(t)) { const x = parseFR(t); if (x !== null) { v = Math.round(x * 100) / 100; base = true; } }
+    else if (/^\d{5,7}$/.test(t)) { v = parseInt(t, 10) / 100; rep = true; }
+    if (v !== null && Math.abs(v) < 100000) am.push({ v: Math.round(v * 100) / 100, ri, page: r.page, x: (w.x0 + w.x1) / 2, rep, base });
+  }));
+  return { rows, am };
+}
+const RC_LABELS = {
+  brut: /total brut|salaire brut|\bbrut\b/, cot: /total (des )?cotisations|cotisations et contributions|total retenues/, avant: /avant impot|payer avant/,
+  imposable: /net imposa|montant net imp/, payer: /payer au salarie|au salarie|net a payer(?!.*avant)|net a verser|net paye/, pas: /preleve a la source|impot sur le revenu preleve|prelevement a la source|\bpas\b|preleve/, social: /net social|\bsocial\b/,
+  transport: /transport|navigo|titre|remboursement|avantage|restaurant|ticket|panier|frais/
+};
+// Lecture des totaux par recoupement. hint : valeurs déjà lues par colonnes (elles comptent comme preuve forte, jamais écrasées).
+function rcSolve(words, hint = {}) {
+  const { rows, am } = rcAmounts(words), R = x => Math.round(x * 100) / 100, near = (a, b) => Math.abs(a - b) <= 0.021;
+  const count = v => am.filter(a => near(a.v, v)).length, has = v => am.some(a => near(a.v, v));
+  // Montants proches d'un libellé : sur la même ligne (poids 3), puis jusqu'à huit lignes plus bas de la même page, le poids baissant avec la distance
+  // (une photo penchée décale les libellés de leurs chiffres)
+  const around = key => {
+    const out = [];
+    rows.forEach((r, ri) => { if (!RC_LABELS[key].test(norm(r.words.map(w => w.t).join(' ')))) return; for (let k = 0; k <= 8; k++) am.filter(a => a.ri === ri + k && a.page === r.page && !a.base).forEach(a => out.push({ v: a.v, w: k === 0 ? 3 : k === 1 ? 2 : k <= 4 ? 1 : 0.7 })); });
+    return out;
+  };
+  const lab = {}; Object.keys(RC_LABELS).forEach(k => { lab[k] = around(k); });
+  const lw = (k, v) => lab[k].filter(o => near(o.v, v)).reduce((a, o) => a + o.w, 0);
+  const res = { brut: hint.brut ?? null, cotSal: hint.cotSal ?? null, netAvant: hint.netAvant ?? null, netImposable: hint.netImposable ?? null, netPayer: hint.netPayer ?? null }, how = {}, pasVals = lab.pas.map(o => o.v).filter(v => v >= 0);
+  const uniq = a => a.filter((v, i) => a.findIndex(x => near(x, v)) === i);
+  const best = (cands, score, min) => { let b = null, bs = -1; cands.forEach(v => { const s = score(v); if (s > bs || (s === bs && b !== null && v > b)) { bs = s; b = v; } }); return bs >= min ? { v: b, s: bs } : null; };
+  // 1. brut : la base des cotisations (même montant sur chaque ligne) ou le montant du libellé « total brut »
+  if (res.brut === null) {
+    const bc = {}; am.filter(a => a.base && a.v >= 100).forEach(a => { bc[a.v] = (bc[a.v] || 0) + 1; });
+    const cands = uniq([...Object.keys(bc).map(Number), ...lab.brut.map(o => o.v)].filter(v => v >= 100));
+    const b = best(cands, v => (bc[v] >= 3 ? 6 : bc[v] ? 2 : 0) + lw('brut', v) * 1.5 + Math.min(count(v), 6) * 0.5, 5);
+    if (b) { res.brut = b.v; how.brut = bc[b.v] >= 3 ? 'base des cotisations' : 'libellé « total brut »'; }
+  }
+  const adjs = uniq([0, ...lab.transport.map(o => o.v).filter(v => v > 0 && v <= 300)]), small = uniq(am.filter(a => !a.base && a.v >= 0.5 && a.v <= 60).map(a => a.v));   // small : remboursement dont le libellé est illisible
+  // 2. cotisations salariales : le montant du libellé « total des cotisations », ou celui qui, retiré du brut, donne un net présent sur la fiche
+  if (res.cotSal === null && res.brut !== null) {
+    const B = res.brut, cands = uniq(am.filter(a => !a.base && a.v > 0.1 * B && a.v < 0.5 * B).map(a => a.v));
+    const eq = c => adjs.some(j => has(R(B - c + j)) && R(B - c + j) !== c) || has(R(B - c));
+    const b = best(cands, c => lw('cot', c) * 1.5 + (eq(c) ? 4 : 0) + Math.min(count(c), 5) * 0.4, 4.4);
+    if (b) { res.cotSal = b.v; how.cotSal = lw('cot', b.v) ? 'libellé « total des cotisations »' : 'calcul brut − cotisations'; }
+  }
+  // 3. net avant impôt : brut − cotisations (+ remboursement de transport…) ; le libellé départage, puis le net qui inclut le remboursement
+  if (res.netAvant === null && res.brut !== null && res.cotSal !== null) {
+    // Le « net social » (brut − cotisations, sans remboursements) figure aussi sur la fiche : à égalité, on ne le prend pas pour le net avant impôt
+    const c0 = R(res.brut - res.cotSal), cands = uniq([...adjs, ...small].map(j => R(c0 + j)).filter(has)), soc = v => lw('social', v) > 0;
+    const b = best(cands, v => lw('avant', v) * 2 + (v !== c0 ? 1 : 0) + (adjs.some(j => j && near(R(c0 + j), v)) ? 1 : 0) + Math.min(count(v), 4) * 0.3 - (soc(v) ? 1.2 : 0), -Infinity);
+    if (b) { res.netAvant = b.v; how.netAvant = b.v === c0 ? 'calcul brut − cotisations' : 'calcul brut − cotisations + remboursement'; }
+  }
+  // 4. net à payer : net avant impôt − prélèvement ; il faut qu'il figure sur la fiche (au moins deux fois pour un net sans impôt)
+  if (res.netPayer === null && res.netAvant !== null) {
+    const N = res.netAvant, cands = uniq([N, ...pasVals.filter(p => p > 0 && p < 0.4 * N).map(p => R(N - p))].filter(has)), noPas = lab.pas.some(o => o.v === 0);   // prélèvement à 0,00 : le net à payer est le net avant impôt
+    const b = best(cands, v => lw('payer', v) * 2 + Math.min(count(v), 4) + (v === N ? (noPas ? 1.5 : 0) : 1), 1.5);
+    if (b) { res.netPayer = b.v; how.netPayer = b.v === N ? 'net avant impôt, sans prélèvement' : 'net avant impôt − prélèvement'; }
+  }
+  // 5. net imposable : le montant du libellé « net imposable » (souvent répété dans la colonne des cumuls), plausible par rapport au brut
+  if (res.netImposable === null && res.brut !== null) {
+    // Le net avant impôt et le net à payer se répètent souvent près de ce libellé : on ne les prend que si rien d'autre n'est plausible
+    const B = res.brut, pl = lab.imposable.map(o => o.v).filter(v => v > 0.35 * B && v <= 1.3 * B && !near(v, B)), autres = pl.filter(v => !(res.netAvant !== null && near(v, res.netAvant)) && !(res.netPayer !== null && near(v, res.netPayer))), cands = uniq(autres.length ? autres : pl.filter(v => lw('imposable', v) >= 3));
+    const b = best(cands, v => lw('imposable', v) + Math.min(count(v), 4) * 0.7, 3);
+    if (b) { res.netImposable = b.v; how.netImposable = 'libellé « net imposable »'; }
+  }
+  // Contrôles des calculs
+  const adjOk = res.brut !== null && res.cotSal !== null && res.netAvant !== null && [...adjs, ...small].some(j => near(R(res.brut - res.cotSal + j), res.netAvant));
+  const pasOk = res.netAvant !== null && res.netPayer !== null && (near(res.netAvant, res.netPayer) || pasVals.some(p => near(R(res.netAvant - p), res.netPayer)));
+  return { valeurs: res, how, calculs: { brut_cot_net: adjOk, net_pas_payer: pasOk }, sur: adjOk && pasOk && Object.values(res).every(v => v !== null), montants: uniq(am.map(a => a.v)) };
+}
+// Relecture par l'assistant IA : on lui donne le texte lu et la liste des montants trouvés, il désigne les cinq totaux. Sa réponse n'est retenue que si
+// chaque montant figure vraiment parmi ceux lus sur la fiche (jamais un chiffre inventé) et si les calculs de la fiche tiennent.
+function rcPromptText(words, montants) {
+  const lignes = wordsToText(words).split('\n').map(l => l.trim()).filter(l => l.length > 3 && (/\d/.test(l) || /brut|net|cotisation|impot|payer|social/.test(norm(l))) && (l.replace(/[^A-Za-zÀ-ÿ0-9,.€%\s]/g, '').length / l.length) > 0.8);
+  const fr = v => fmtFR(v);
+  return {
+    system: "Tu lis une fiche de paie française à partir d'un texte issu d'une photo : il contient des erreurs de lecture. Tu réponds uniquement par un objet JSON, sans commentaire.",
+    user: `Texte lu sur la fiche (une ligne par ligne imprimée) :\n"""\n${lignes.join('\n').slice(0, 3200)}\n"""\n\nMontants lus sur la fiche : ${montants.slice().sort((a, b) => b - a).slice(0, 80).map(fr).join(' ; ')}\n\nChoisis uniquement parmi ces montants les cinq valeurs suivantes de CE bulletin (pas les cumuls annuels, pas les parts de l'employeur) :\n- brut : salaire brut (total brut du mois)\n- cotisations_salariales : total des cotisations et contributions à la charge du salarié\n- net_avant_impot : net à payer avant impôt sur le revenu (en général brut − cotisations salariales, plus les remboursements comme le titre de transport)\n- net_imposable : montant net imposable du mois\n- net_a_payer : net à payer au salarié (net avant impôt − prélèvement à la source)\nSi tu n'es pas sûr d'une valeur, mets null. Réponds seulement par du JSON, par exemple : {"brut": 2000.00, "cotisations_salariales": 440.00, "net_avant_impot": 1560.00, "net_imposable": 1650.00, "net_a_payer": 1520.00}`
+  };
+}
+function rcParseAI(text, montants) {
+  const m = String(text || '').match(/\{[\s\S]*\}/); if (!m) return {};
+  let o; try { o = JSON.parse(m[0]); } catch (e) { return {}; }
+  if (!o || typeof o !== 'object') return {};
+  const K = { brut: 'brut', cotSal: 'cotisationssalariales', netAvant: 'netavantimpot', netImposable: 'netimposable', netPayer: 'netapayer' }, out = {};
+  Object.keys(K).forEach(k => {
+    const key = Object.keys(o).find(x => norm(x).replace(/[^a-z]/g, '') === K[k]); if (key === undefined) return;
+    const raw = o[key], v = typeof raw === 'number' ? raw : parseFR(String(raw).replace(/\s*€$/, '').trim());
+    if (typeof v !== 'number' || !isFinite(v) || v <= 0) return;
+    const r = Math.round(v * 100) / 100; if (montants.some(x => Math.abs(x - r) <= 0.021)) out[k] = r;
+  });
+  return out;
+}
+// Fusion lecture + IA : l'IA complète ce qui manque (si les calculs tiennent) et confirme ou contredit le reste. Ne remplace jamais une valeur déjà recoupée.
+function rcMerge(words, vals, ai) {
+  const agree = {}, fill = {};
+  Object.keys(ai).forEach(k => { if (vals[k] === null || vals[k] === undefined) fill[k] = ai[k]; else agree[k] = Math.abs(vals[k] - ai[k]) <= 0.021; });
+  // Un montant proposé par l'IA n'est retenu que si les calculs de la fiche le confirment (brut − cotisations = net avant impôt ; net avant impôt − prélèvement = net à payer)
+  const verdict = r0 => { const v = r0.valeurs, B = v.brut; return k => k === 'netImposable' ? (B !== null && v[k] > 0.35 * B && v[k] <= 1.3 * B && v[k] !== B) : k === 'netPayer' ? r0.calculs.net_pas_payer : r0.calculs.brut_cot_net; };
+  let r = rcSolve(words, Object.assign({}, vals, fill)), rejete = {};
+  const okFn = verdict(r), mauvais = Object.keys(fill).filter(k => !okFn(k));
+  if (mauvais.length) { mauvais.forEach(k => { rejete[k] = fill[k]; delete fill[k]; }); r = rcSolve(words, Object.assign({}, vals, fill)); }
+  return { r, agree, fill, rejete };
+}
 /*TABLE-FIN*/
 
 /* ---------- Fiche de paie ---------- */
@@ -4225,15 +4386,72 @@ function applyValidated(p0, vals, lec) {
   p.found = [p.brut, p.netAvant, p.netFinal, p.netImposable, p.cotSal, p.base].filter(x => x !== null).length + (p.pas ? 1 : 0); p.valide = true;
   return p;
 }
+const PAIE_NEED = ['brut', 'cotSal', 'netAvant', 'netImposable', 'netPayer'];
+// Lecture par colonnes d'abord ; ce qu'elle n'a pas retrouvé est cherché par recoupement (montants lus + calculs de la fiche).
+function applyRecoupe(gen, words, lec) {
+  const t = lec.totals, rc = rcSolve(words, { brut: t.brut, cotSal: t.cotSal, netAvant: t.netAvant, netImposable: t.netImposable, netPayer: t.netPayer });
+  gen.allWords = words; gen.montants = rc.montants; gen.src = {};
+  PAIE_NEED.forEach(k => { if (gen.valeurs[k] !== null) gen.src[k] = 'lu dans le tableau'; else if (rc.valeurs[k] !== null) { gen.valeurs[k] = rc.valeurs[k]; gen.src[k] = 'retrouvé : ' + rc.how[k]; } });
+  gen.manquants = PAIE_NEED.filter(k => gen.valeurs[k] === null);
+  gen.recoupe = rc; gen.fiable = !!(gen.fiable || (rc.sur && !gen.manquants.length));
+}
+const paieSrc = (g, k) => {
+  const v = g.valeurs[k], ia = g.ia;
+  if (v === null) return ia && ia.rejete && ia.rejete[k] !== undefined ? `L'IA proposait ${PE(ia.rejete[k])} : écarté, ça ne tient pas au calcul de la fiche.` : '';
+  const a = [g.src && g.src[k] ? g.src[k] : 'lu sur la fiche'];
+  if (ia) { if (ia.fill && ia.fill[k] !== undefined) a.push("proposé par l'IA, confirmé par le calcul"); else if (ia.agree && ia.agree[k] === true) a.push("confirmé par l'IA"); else if (ia.agree && ia.agree[k] === false) a.push(`l'IA lit ${PE(ia.vals[k])} : vérifie`); }
+  return a.join(' · ');
+};
+// L'assistant IA relit la fiche indépendamment : il confirme ou contredit chaque montant et complète ce qui manque (si les calculs de la fiche le confirment).
+async function paieAIRead(box) {
+  const g = paie$.gen; if (!g || !g.allWords || g.ia || g.iaEnCours) return;
+  if (!(engine && aiState === 'ready')) return;
+  g.iaEnCours = true; const st = $('#paie-ia-status', box); if (st) st.textContent = "L'assistant IA relit la fiche…";
+  try {
+    const pr = rcPromptText(g.allWords, g.montants);
+    const out = await enqueueAI(async () => { const r = await engine.chat.completions.create({ messages: [{ role: 'system', content: pr.system }, { role: 'user', content: pr.user }], temperature: 0.1, max_tokens: 220 }); return (r.choices[0] && r.choices[0].message && r.choices[0].message.content) || ''; });
+    const vals = rcParseAI(out, g.montants), m = rcMerge(g.allWords, g.valeurs, vals);
+    PAIE_NEED.forEach(k => { if (g.valeurs[k] === null && m.r.valeurs[k] !== null) { g.valeurs[k] = m.r.valeurs[k]; if (!(k in m.fill)) g.src[k] = 'retrouvé : ' + m.r.how[k]; } });
+    g.ia = { vals, agree: m.agree, fill: m.fill, rejete: m.rejete }; g.manquants = PAIE_NEED.filter(k => g.valeurs[k] === null);
+    g.fiable = !!(g.fiable || (m.r.sur && !g.manquants.length)); track(Object.values(m.agree).every(Boolean) && Object.keys(m.agree).length ? 'paie_ia_accord' : 'paie_ia_lecture');
+  } catch (e) { console.error(e); g.ia = { vals: {}, agree: {}, fill: {}, rejete: {} }; }
+  g.iaEnCours = false;
+  if (paie$.gen !== g || paie$.valide) return;
+  PAIE_NEED.forEach(k => {   // mise à jour sur place : ce que la personne a déjà tapé n'est jamais écrasé
+    const i = $(`[data-val="${k}"]`, box); if (!i) return;
+    if (!i.value.trim() && g.valeurs[k] !== null) i.value = fmtFR(g.valeurs[k]);
+    const lb = i.closest('label'); if (lb) lb.classList.toggle('douteux', g.valeurs[k] === null || !g.fiable);
+    const sm = $(`[data-src="${k}"]`, box); if (sm) sm.textContent = paieSrc(g, k);
+  });
+  const st2 = $('#paie-ia-status', box); if (st2) { const n = Object.values(g.ia.agree).filter(Boolean).length, c = Object.values(g.ia.agree).filter(x => x === false).length; st2.textContent = !Object.keys(g.ia.vals).length ? "L'assistant IA n'a pas pu relire cette fiche : vérifie les montants à la main." : c ? `L'assistant IA a relu la fiche : ${n} montant(s) confirmé(s), ${c} différent(s) : vérifie-les.` : `✓ L'assistant IA a relu la fiche${n ? ' et confirme ' + n + ' montant(s)' : ''}.`; }
+}
+// Explication rédigée par l'assistant IA, à partir des chiffres validés (aucun chiffre inventé : ils lui sont donnés)
+function paieAIExplain(box) {
+  const el = $('#paie-ia-box', box), p = paie$.p; if (!el || !p) return;
+  const key = [p.brut, p.cotSal, p.netAvant, p.netFinal, p.netImposable].join('|');
+  if (paie$.iaText && paie$.iaKey === key) { el.textContent = paie$.iaText; return; }
+  if (!(engine && aiState === 'ready')) { el.closest('.block').hidden = true; return; }
+  if (paie$.iaBusy === key) return;
+  paie$.iaBusy = key; el.textContent = '…';
+  enqueueAI(async () => {
+    try {
+      const out = await streamTo([{ role: 'system', content: SYS }, { role: 'user', content: `Fiche de paie de la personne, déjà lue et vérifiée :\n${paieSummaryForAI(p)}\n\nExplique-lui sa fiche en 5 à 7 phrases : ce qu'elle gagne en brut et en net, ce qui est prélevé et pourquoi, si des heures supplémentaires apparaissent, et un point à vérifier. Appuie-toi uniquement sur ces informations, n'invente aucun chiffre. Pas de titre, pas de liste.` }], el, { max: 420 });
+      if (out) { paie$.iaText = out; paie$.iaKey = key; const cur = $('#paie-ia-box', box); if (cur) cur.textContent = out; }
+    } catch (e) { const el2 = $('#paie-ia-box', box); if (el2) el2.textContent = iaError(e); }
+    finally { paie$.iaBusy = null; }
+  });
+}
 function paieValidationHTML(g) {
   const F = [['brut', 'Salaire brut'], ['cotSal', 'Cotisations salariales'], ['netAvant', 'Net avant impôt'], ['netImposable', 'Net imposable'], ['netPayer', 'Net à payer']];
   const ko = g.checks.filter(c => c.status === 'ko'), V = g.valeurs, doubt = !g.fiable;
   const list = a => a.length ? `<table class="paie-t"><tbody>${a.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table>` : '<p class="note">Rien de lu.</p>';
+  const recoupe = g.recoupe && Object.keys(g.recoupe.how).length;
   return `<div class="sheet verdict" id="paie-valid"><h2>Vérifie ce qu'on a lu</h2>
-    ${doubt ? `<div class="scam"><strong style="color:var(--ink)">Lecture incertaine.</strong> Les chiffres ne se recoupent pas tous${ko.length ? ' (' + ko.map(c => esc(c.label.toLowerCase())).join(' ; ') + ')' : ''}${g.manquants.length ? ' ou il en manque' : ''}. Compare avec ta fiche et corrige les cases en pointillés avant de continuer.${ko.some(c => c.detail) ? '<br><small>' + ko.filter(c => c.detail).map(c => esc(c.detail)).join(' · ') + '</small>' : ''}</div>` : '<p class="note">✓ Lecture recoupée : les totaux correspondent aux lignes de ta fiche. Vérifie quand même d\'un coup d\'œil.</p>'}
+    <p class="note" id="paie-ia-status" role="status">${g.ia ? '' : esc(engine && aiState === 'ready' ? "L'assistant IA relit la fiche…" : '')}</p>
+    ${doubt ? `<div class="scam"><strong style="color:var(--ink)">Lecture incertaine.</strong> Les chiffres ne se recoupent pas tous${ko.length ? ' (' + ko.map(c => esc(c.label.toLowerCase())).join(' ; ') + ')' : ''}${g.manquants.length ? ' ou il en manque' : ''}. Compare avec ta fiche et corrige les cases en pointillés avant de continuer.${ko.some(c => c.detail) ? '<br><small>' + ko.filter(c => c.detail).map(c => esc(c.detail)).join(' · ') + '</small>' : ''}</div>` : (recoupe ? '<p class="note">✓ Montants retrouvés et recoupés avec les calculs de ta fiche (brut − cotisations = net avant impôt, puis − prélèvement = net à payer). Vérifie quand même d\'un coup d\'œil, chaque case dit d\'où vient le chiffre.</p>' : '<p class="note">✓ Lecture recoupée : les totaux correspondent aux lignes de ta fiche. Vérifie quand même d\'un coup d\'œil.</p>')}
     ${g.manquants.length ? `<p class="note"><b>Il manque :</b> ${g.manquants.map(k => ({ brut: 'le salaire brut', cotSal: 'les cotisations salariales', netAvant: 'le net avant impôt', netImposable: 'le net imposable', netPayer: 'le net à payer' })[k]).join(', ')}. Astuce : prends en photo, de près et bien à plat, la partie de la fiche qui les contient (le bas : totaux, net à payer, cumuls) puis ajoute-la plus haut avec « Ajouter une page en photo » : elle sera rattachée à la fiche, même si elle n'en montre qu'un morceau.</p>` : ''}
     ${g.pages && g.pages.length > 1 ? `<p class="note">✓ ${g.pages.length} pages reconnues comme une seule fiche : ${g.pages.map(p => 'page ' + p.page + ' = ' + (p.role === 'debut' ? 'début de la fiche' : 'suite de la fiche')).join(', ')}${g.ordreCorrige ? ' (ordre corrigé)' : ''}.</p>` : ''}
-    <div class="form-grid">${F.map(([k, l]) => `<label class="field${V[k] === null || doubt ? ' douteux' : ''}"><span>${l} (€)</span><input data-val="${k}" inputmode="decimal" value="${V[k] === null ? '' : esc(fmtFR(V[k]))}" placeholder="non lu : à saisir"></label>`).join('')}</div>
+    <div class="form-grid">${F.map(([k, l]) => `<label class="field${V[k] === null || doubt ? ' douteux' : ''}"><span>${l} (€)</span><input data-val="${k}" inputmode="decimal" value="${V[k] === null ? '' : esc(fmtFR(V[k]))}" placeholder="non lu : à saisir"><small class="src" data-src="${k}">${esc(paieSrc(g, k))}</small></label>`).join('')}</div>
     <div class="two-col"><div><h3>Ce que tu paies</h3>${list(g.colonnes.salarie)}</div><div><h3>Ce que paie ton employeur</h3>${list(g.colonnes.employeur)}</div></div>
     <div class="actions"><button class="btn" id="paie-valid-go" type="button">Valider et analyser</button></div>
     <p class="note">Rien n'est envoyé : la lecture reste sur ton appareil.</p></div>`;
@@ -4267,8 +4485,9 @@ function renderPaie(box) {
       let off = 0; const all = [];
       pgs.forEach(pg => { pg.words.forEach(w => all.push({ ...w, page: w.page + off })); off += pg.np || 1; });
       const lec = readPayslipWords(all), gen = payslipFromLecture(lec);
-      paie$ = { ...paie$, text: gen.text, lec, gen, genSig: paieSig(pgs), valide: false, p0: parsePayslip(gen.text), p: null, fix: {} };
-      track('paie'); track(lec.fiable ? 'paie_lecture_sure' : 'paie_lecture_incertaine'); if (pgs.length > 1) track('paie_multipage'); renderPaie(box); $('#paie-valid').scrollIntoView({ block: 'start' }); return;
+      applyRecoupe(gen, all, lec);
+      paie$ = { ...paie$, text: gen.text, lec, gen, genSig: paieSig(pgs), valide: false, p0: parsePayslip(gen.text), p: null, fix: {}, iaText: '' };
+      track('paie'); track(gen.fiable ? 'paie_lecture_sure' : 'paie_lecture_incertaine'); if (pgs.length > 1) track('paie_multipage'); renderPaie(box); $('#paie-valid').scrollIntoView({ block: 'start' }); paieAIRead(box); return;
     }
     const p0 = parsePayslip(t); paie$ = { ...paie$, text: t, p0, p: p0, gen: null, fix: {}, pages: paie$.pages.length ? paie$.pages : [{ name: 'Texte saisi', text: t }] };
     track('paie'); if (paie$.pages.length > 1) track('paie_multipage'); renderPaie(box); $('#paie-res').scrollIntoView({ block: 'start' });
@@ -4280,6 +4499,7 @@ function renderPaie(box) {
   $$('[data-pg-up]', box).forEach(b => b.addEventListener('click', () => { const i = +b.dataset.pgUp; [paie$.pages[i - 1], paie$.pages[i]] = [paie$.pages[i], paie$.pages[i - 1]]; paie$.p = null; paie$.p0 = null; renderPaie(box); }));
   const onFiles = async fl => {
     fl = [...fl].filter(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name) || f.type.startsWith('image/')); if (!fl.length) return;
+    if (await requireAI() === 'annule') { toast("L'assistant IA est nécessaire pour lire une fiche de paie."); return; }
     let added = 0, onlyPdf = true; ocrConf = null;
     try {
       for (let i = 0; i < fl.length; i++) {
@@ -4303,7 +4523,9 @@ function renderPaie(box) {
   };
   $('#paie-cam').addEventListener('click', async e => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-    e.preventDefault(); const f = await guidedCamera();
+    e.preventDefault();
+    if (await requireAI() === 'annule') { toast("L'assistant IA est nécessaire pour lire une fiche de paie."); return; }
+    const f = await guidedCamera();
     if (f === 'indispo') { toast("Caméra indisponible : utilise « Importer photos ou PDF »"); return; }
     if (f) { track('cadre_guide'); onFiles([f]); }
   });
@@ -4339,6 +4561,7 @@ function renderPaie(box) {
     const q = paie$.p, d = parseFloat(String(paie$.declared).replace(',', '.'));
     tools$ = { view: 'lettre', id: 'heures_supp', values: { mois: q.periode || '', declarees: isFinite(d) ? String(d) : '', payees: q.hsQty ? String(q.hsQty) : '0' }, result: false }; track('paie_lettre'); renderTools(); box.scrollIntoView({ block: 'start' });
   });
+  paieAIExplain(box);
   $$('[data-ph]', box).forEach(el => $('[data-ph-del]', el).addEventListener('click', () => { if (!confirm('Supprimer cette fiche enregistrée ?')) return; store.set(KEYS.paies, getPaies().filter(x => x.id !== el.dataset.ph)); renderPaie(box); }));
 }
 const fixPlaceholder = (p, k) => { const v = { brut: p.brut, netAvant: p.netAvant, impot: p.pas && p.pas.amount, netFinal: p.netFinal, baseRate: p.baseRate, hsQty: p.hsQty, hsAmount: p.hsAmount }[k]; return v === null || v === undefined ? 'non lu' : String(Math.round(v * 100) / 100).replace('.', ','); };
@@ -4353,6 +4576,7 @@ function paieResultHTML(p, ins, hist) {
   const n = norm(paie$.text), terms = PAIE_GLOSSAIRE.filter(g => g[0].test(n));
   return `<div class="sheet verdict"><h2>${esc(p.periode ? 'Ta fiche de ' + p.periode : 'Ta fiche de paie')}</h2>
     <div class="brief"><h3>En bref</h3><p>${esc(summary)}</p></div>
+    <div class="block"><h3>L'analyse de l'assistant IA</h3><div class="ai-box on" id="paie-ia-box" aria-live="polite"></div></div>
     <div class="block"><h3>Les chiffres clés</h3><table class="paie-t"><tbody>${row('Salaire brut', p.brut)}${row('Cotisations salariales', p.cotSal)}${row('Net avant impôt', p.netAvant)}${p.pas ? row('Impôt prélevé' + (p.pas.taux !== null ? ' (' + String(p.pas.taux).replace('.', ',') + ' %)' : ''), p.pas.amount) : ''}${row('Net versé', p.netFinal, true)}${row('Net imposable (pour ta déclaration)', p.netImposable)}${row('Cotisations de ton employeur', p.cotPat)}</tbody></table>${cmp}</div>
     ${paie$.gen && paie$.valide && paie$.genSig === paieSig(paie$.pages) && (paie$.gen.colonnes.salarie.length || paie$.gen.colonnes.employeur.length) ? `<div class="block"><h3>Qui paie quoi</h3><div class="two-col"><div><h3>Ce que tu paies</h3><table class="paie-t"><tbody>${paie$.gen.colonnes.salarie.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table></div><div><h3>Ce que paie ton employeur</h3><table class="paie-t"><tbody>${paie$.gen.colonnes.employeur.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table></div></div></div>` : ''}
     <details class="tips" id="paie-fixbox"><summary>Un chiffre est faux ? Corrige-le</summary>

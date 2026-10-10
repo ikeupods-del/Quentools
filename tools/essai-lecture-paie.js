@@ -219,6 +219,44 @@ const pdfjs = findPdfjs();
     const w = [{ t: '1', x0: 100, x1: 105, y: 10, h: 8, page: 1 }, { t: '835,61', x0: 108, x1: 138, y: 10, h: 8, page: 1 }, { t: '17,85', x0: 200, x1: 225, y: 10, h: 8, page: 1 }, { t: '270,05', x0: 230, x1: 260, y: 10, h: 8, page: 1 }];
     eq('milliers séparés', run('groupRows(__v)[0].words.map(x => x.t)', w), ['1 835,61', '17,85', '270,05']);
   }
+  // ---- Lecture par recoupement (photo penchée : libellés et colonnes illisibles) ----
+  { // fiche propre : le recoupement retrouve les mêmes cinq totaux que la lecture par colonnes
+    const r = run('rcSolve(__v)', wordsA(base)).valeurs;
+    eq('recoupement fiche propre', [r.brut, r.cotSal, r.netAvant, r.netImposable, r.netPayer], [2330.93, 473.77, 1861.16, 1672.06, 1861.16]);
+  }
+  { // vraie photo de la fiche (deux pages, prise de travers) : mots tels que lus par la lecture optique, noms et adresses retirés
+    const pg = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'fiche-photo-janvier-2025.json'), 'utf8')); let off = 0; const all = [];
+    pg.forEach(p => { p.words.forEach(w => all.push(Object.assign({}, w, { page: w.page + off }))); off += p.np || 1; });
+    const r = run('rcSolve(__v)', all);
+    eq('photo réelle : cinq totaux retrouvés', r.valeurs, { brut: 2330.93, cotSal: 473.77, netAvant: 1861.16, netImposable: 1672.06, netPayer: 1861.16 });
+    eq('photo réelle : calculs vérifiés', [r.calculs.brut_cot_net, r.calculs.net_pas_payer, r.sur], [true, true, true]);
+    const sans = all.filter(w => !/^1672[,.]06$/.test(w.t));
+    eq('net imposable introuvable → vide, jamais inventé', run('rcSolve(__v)', sans).valeurs.netImposable, null);
+    const faux = run('rcSolve(__v)', all.map(w => (/^186116$/.test(w.t) ? Object.assign({}, w, { t: '186199' }) : w)));
+    eq('net avant impôt illisible → le calcul brut − cotisations, présent sur la fiche, jamais un montant absent', faux.valeurs.netAvant, 1857.16);
+  }
+  { // les montants déjà lus par colonnes ne sont jamais écrasés
+    const r = run('rcSolve(__v[0], __v[1])', [wordsA(base), { brut: 2330.93 }]).valeurs;
+    eq('valeur lue conservée', r.brut, 2330.93);
+  }
+  // ---- Relecture par l'IA : réponse validée avant d'être retenue ----
+  { const M = [2330.93, 473.77, 1861.16, 1857.16, 1672.06, 38.72];
+    const ok = run('rcParseAI(__v[0], __v[1])', ['Voici : {"brut": 2330.93, "cotisations_salariales": "473,77", "net_avant_impot": 1861.16, "net_imposable": 1700, "net_a_payer": null}', M]);
+    eq('réponse IA : montants présents retenus, montant absent écarté, null ignoré', ok, { brut: 2330.93, cotSal: 473.77, netAvant: 1861.16 });
+    eq('réponse IA illisible', run('rcParseAI(__v[0], __v[1])', ['je ne sais pas', M]), {});
+    eq('réponse IA : JSON cassé', run('rcParseAI(__v[0], __v[1])', ['{"brut": 2330.93,', M]), {});
+    const pg = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'fiche-photo-janvier-2025.json'), 'utf8')); let off = 0; const all = [];
+    pg.forEach(p => { p.words.forEach(w => all.push(Object.assign({}, w, { page: w.page + off }))); off += p.np || 1; });
+    const sans = all.filter(w => !/^1672[,.]06$/.test(w.t));
+    const m = run('rcMerge(__v[0], __v[1], __v[2])', [sans, { brut: 2330.93, cotSal: 473.77, netAvant: 1861.16, netImposable: null, netPayer: 1861.16 }, { brut: 2330.93 }]);
+    eq('l\'IA confirme un montant lu', m.agree.brut, true);
+    eq('un montant proposé par l\'IA mais absent de la fiche n\'est pas accepté', run('rcParseAI(__v[0], rcSolve(__v[1]).montants)', ['{"net_imposable": 1672.06}', sans]), {});
+    eq('… et présent sur la fiche, il l\'est', run('rcParseAI(__v[0], rcSolve(__v[1]).montants)', ['{"net_imposable": 1672.06}', all]), { netImposable: 1672.06 });
+    const m2 = run('rcMerge(__v[0], __v[1], __v[2])', [all, { brut: 2330.93, cotSal: null, netAvant: null, netImposable: null, netPayer: null }, { cotSal: 375.95, netImposable: 1672.06 }]);
+    eq('l\'IA propose des cotisations qui ne tiennent pas au calcul → rejetées, le recoupement garde les bonnes', [m2.rejete.cotSal, m2.r.valeurs.cotSal], [375.95, 473.77]);
+    eq('l\'IA contredit un montant lu → signalé', run('rcMerge(__v[0], __v[1], __v[2])', [all, { brut: 2330.93, cotSal: 473.77, netAvant: 1861.16, netImposable: 1672.06, netPayer: 1861.16 }, { netAvant: 1857.16 }]).agree.netAvant, false);
+    eq('prompt : montants et consignes', /Montants lus sur la fiche/.test(run('rcPromptText(__v[0], __v[1]).user', [all, M])) && /null/.test(run('rcPromptText(__v[0], __v[1]).user', [all, M])), true);
+  }
   console.log(ko ? '✗ ' + ko + ' écarts sur ' + nb + ' contrôles' : '✓ ' + nb + ' contrôles de lecture de fiche de paie');
   process.exit(ko ? 1 : 0);
 })();

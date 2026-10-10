@@ -122,6 +122,12 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   await pg.waitForFunction(() => document.querySelectorAll('#gc-meters span').length === 3, null, { timeout: 8000 });
   ok(await pg.isVisible('.gc-frame') && /Lumière/.test(await pg.innerText('#gc-meters')) && /Netteté/.test(await pg.innerText('#gc-meters')), 'cadre guide : cadre et mesures (lumière, netteté, ombres) en direct');
   ok(['good', 'warn', 'bad'].includes(await pg.getAttribute('#gc-stage', 'data-lv')) && (await pg.innerText('#gc-chip')).length > 5, 'cadre guide : verdict affiché');
+  { // écran de téléphone avec barres du navigateur : le bouton « Prendre la photo » est visible sans défiler
+    await pg.setViewportSize({ width: 390, height: 664 }); await pg.waitForTimeout(300);
+    const m = await pg.evaluate(() => { const r = document.querySelector('#gc-snap').getBoundingClientRect(), d = document.querySelector('#gc-dialog .dlg'); return { bas: r.bottom, haut: innerHeight, defile: d.scrollHeight > d.clientHeight + 1 }; });
+    ok(m.bas <= m.haut && !m.defile, 'cadre guide : « Prendre la photo » visible sans défiler (écran 390×664)');
+    await pg.setViewportSize({ width: 390, height: 844 });
+  }
   await pg.click('#gc-cancel'); ok(!(await pg.locator('#gc-dialog[open]').count()), 'cadre guide : fermeture');
   await pg.click('[data-pq=brut]'); ok(/cotisations salariales/.test(await pg.innerText('#paie-chat')), 'question rapide : pourquoi le net est plus bas que le brut');
   await pg.fill('#paie-q', 'mes heures sup sont payées ?'); await pg.press('#paie-q', 'Enter'); ok((await pg.locator('#paie-chat .msg.bot').count()) === 2, 'question libre routée sans assistant');
@@ -257,6 +263,22 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   await free.click('#abo-add'); ok(await dlgOpen(), 'gratuit : 3 abonnements maximum'); await free.click('#premium-close');
   await free.goto('http://localhost:8766/decodeur-courrier.html#outils'); await free.reload(); await free.click('[data-tool=dossier]'); ok(await dlgOpen(), 'gratuit : dossier PDF réservé à Premium');
   ok(/Paperdecrypt Premium/.test(await free.innerText('#premium')) && /paiement unique/i.test(await free.innerText('#premium')), 'fenêtre Premium : fonctions et paiement unique');
+  { // assistant IA obligatoire : importer une photo ouvre l'installation, l'action reprend une fois l'assistant prêt (assistant simulé)
+    const c2 = await b.newContext({ viewport: { width: 390, height: 844 } });
+    await c2.addInitScript(() => { Object.defineProperty(navigator, 'gpu', { configurable: true, value: { requestAdapter: async () => ({ features: new Set() }) } }); });
+    const g = await c2.newPage(); const e2 = []; g.on('pageerror', e => e2.push('PAGEERR ' + e.message));
+    await g.route(/googlesyndication|gstatic|tesseract|pdfjs/, r => r.abort());
+    await g.route(/web-llm/, r => r.fulfill({ contentType: 'application/javascript', headers: { 'access-control-allow-origin': '*' }, body: "export async function CreateMLCEngine(m, o) { o.initProgressCallback({ progress: 1, text: 'x' }); return { interruptGenerate() {}, unload: async () => {}, chat: { completions: { create: async () => ({ choices: [{ message: { content: '{}' } }] }) } } }; }" }));
+    await g.goto('http://localhost:8766/decodeur-courrier.html#outils'); await g.click('#tab-tools'); await g.click('[data-tool=paie]');
+    await g.setInputFiles('#paie-file', { name: 'p.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64') });
+    await g.waitForSelector('#ia-gate[open]'); ok(/Installer l'assistant IA/.test(await g.innerText('#ia-gate')), 'assistant IA obligatoire : la lecture d\'une photo demande d\'installer l\'assistant');
+    await g.click('#gate-cancel'); ok(!(await g.locator('#ia-gate[open]').count()), 'assistant IA : « Annuler » abandonne la lecture');
+    ok(!(await g.locator('.pages li').count()), 'assistant IA : aucune page ajoutée sans assistant');
+    await g.setInputFiles('#paie-file', { name: 'p.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64') });
+    await g.waitForSelector('#ia-gate[open]'); await g.click('#gate-go'); await g.waitForSelector('#ia-gate:not([open])', { state: 'attached' });
+    ok(!e2.length, 'assistant IA : aucune erreur JavaScript' + (e2.length ? ' ' + e2.join(' ') : ''));
+    await c2.close();
+  }
   console.log(errs.length ? errs.join('\n') : '✓ aucune erreur JavaScript');
   await b.close(); srv.close();
 })().catch(e => { console.error('ECHEC', e); process.exit(1); });
