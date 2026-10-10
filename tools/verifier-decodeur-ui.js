@@ -115,6 +115,9 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   const pt = await pg.innerText('#paie-res'); ok(/2\s?021,04/.test(pt) && /1\s?520,08/.test(pt) && /60,04/.test(pt) && /Réduction|allègement/i.test(pt), 'fiche de paie : chiffres clés, impôt et allègement');
   ok(/majoration d'environ 25 %/.test(pt) && /50 %/.test(pt), 'heures supp : majorations 25 % et 50 % reconnues');
   await pg.fill('#paie-declared', '14'); ok(/manque peut-être 4 h/.test(await pg.innerText('#paie-ins')), 'heures manquantes détectées (14 déclarées, 10 payées)');
+  ok(await pg.locator('.paie-lines details').count() >= 6, 'fiche de paie : lignes expliquées une par une');
+  await pg.click('[data-pq=brut]'); ok(/cotisations salariales/.test(await pg.innerText('#paie-chat')), 'question rapide : pourquoi le net est plus bas que le brut');
+  await pg.fill('#paie-q', 'mes heures sup sont payées ?'); await pg.press('#paie-q', 'Enter'); ok((await pg.locator('#paie-chat .msg.bot').count()) === 2, 'question libre routée sans assistant');
   await pg.screenshot({ path: require('os').tmpdir() + '/pd-paie.png', fullPage: false });
   await pg.click('#paie-save'); ok(/Mes fiches enregistrées/.test(await pg.innerText('#tools')), 'fiche enregistrée pour comparer les mois');
   await pg.fill('#paie-declared', '14'); await pg.click('#paie-lettre'); await pg.waitForSelector('#cf-mois');

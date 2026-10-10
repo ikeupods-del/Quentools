@@ -316,6 +316,9 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .paie-t th,.paie-t td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:.98rem}
 .paie-t td{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .paie-t td.strong{font-weight:800}
+.paie-lines details{border:1px solid var(--line);border-radius:9px;padding:8px 12px;margin:0 0 6px}
+.paie-lines summary{cursor:pointer;display:flex;justify-content:space-between;gap:10px;font-weight:700}
+.paie-lines p{margin:6px 0 0}
 .paie-ins{list-style:none;margin:8px 0;padding:0;display:grid;gap:8px}
 .paie-ins li{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:9px;padding:9px 12px}
 .paie-ins li>span{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.8rem;background:var(--paper)}
@@ -3149,13 +3152,48 @@ function renderTVA(box) {
 const PN = x => String(x).replace(/ | /g, ' ');
 // Nombres d'une ligne (dates et pourcentages retirés). « 1 895,88 » → 1895.88
 function lineNums(line) {
-  const t = PN(line).replace(/\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}/g, ' ').replace(/\d+(?:[.,]\d+)?\s*%/g, ' ');
+  const t = PN(line).replace(/\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}/g, ' ').replace(/(\d{1,3})((?:\.\d{3})+)(?=,\d)/g, (m, a, b) => a + b.replace(/\./g, '')).replace(/\d+(?:[.,]\d+)?\s*%/g, ' ');
   const out = []; const re = /(-?\d+(?: \d{3})*(?:[.,]\d{1,4})?)/g; let m;
   while ((m = re.exec(t))) { const v = parseFloat(m[1].replace(/ /g, '').replace(',', '.')); if (isFinite(v)) out.push(v); }
   return out;
 }
 const linePct = line => { const m = PN(line).match(/(\d+(?:[.,]\d+)?)\s*%/); return m ? parseFloat(m[1].replace(',', '.')) : null; };
 const PMONTHS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
+// Explication de chaque ligne type d'une fiche de paie (texte normalisé sans accents, en minuscules).
+const PAIE_LIGNES = [
+  [/(reduction|allegement|exoneration).*(heures|\bhs\b)|heures.*(exonere|defiscalis)/, 'Allègement sur heures supplémentaires', "Une partie de tes cotisations est supprimée sur les heures supplémentaires : ton net est plus élevé."],
+  [/(salaire brut|total brut)/, 'Salaire brut', "Ce que ton employeur déclare avant de retirer les cotisations. Ce n'est pas ce que tu reçois."],
+  [/net (a payer )?(avant|hors) (impot|prelevement)/, 'Net avant impôt', "Ton salaire après tes cotisations, avant le prélèvement de l'impôt sur le revenu."],
+  [/(net a payer|net paye)/, 'Net à payer', "Ce qui est réellement viré sur ton compte, impôt déduit."],
+  [/total (des )?cotisations/, 'Total des cotisations', "La somme de toutes les cotisations. Première colonne : ta part ; deuxième colonne : celle de ton employeur."],
+  [/(conges payes|\brtt\b|repos compensateur|\bcp\b)/, 'Congés et repos', "Tes compteurs de congés payés ou de repos : jours acquis, pris et solde."],
+  [/salaire de base|salaire mensuel/, 'Salaire de base', "Ton salaire pour le temps de travail normal prévu au contrat (151,67 h par mois pour 35 h par semaine)."],
+  [/heures? compl/, 'Heures complémentaires', "Heures faites en plus de ta durée de travail prévue au contrat à temps partiel. Elles sont majorées."],
+  [/(heures? (supp|suppl)|hres? sup|\bhs ?\d)/, 'Heures supplémentaires', "Heures faites au-delà de 35 h par semaine, majorées en principe de 25 % (puis 50 %)."],
+  [/prime d.?anciennete|anciennete/, 'Prime d\'ancienneté', "Un complément de salaire qui augmente avec tes années dans l'entreprise, selon ta convention collective."],
+  [/(prime|gratification|13e mois|treizieme)/, 'Prime', "Un complément de salaire (objectifs, vacances, 13e mois…) prévu par ton contrat, ta convention ou ton employeur."],
+  [/indemnite compensatrice de conges|ind\.? comp.* cp/, 'Indemnité de congés', "Somme versée pour des congés payés non pris, en général à la fin du contrat."],
+  [/(titres? restaurant|ticket restaurant)/, 'Titres-restaurant', "Ta part des titres-restaurant, retirée du net. L'employeur en paie une autre part."],
+  [/(panier|indemnite (de )?(repas|transport|kilometrique)|frais professionnels|remboursement)/, 'Indemnité ou remboursement', "Une somme qui rembourse des frais (repas, transport, déplacement). Elle n'est en général pas soumise à cotisations."],
+  [/(absence|maladie|conges? sans solde|carence)/, 'Absence', "Une retenue sur le salaire pour des heures ou jours non travaillés (ou la somme versée à la place par la Sécurité sociale)."],
+  [/(avantage en nature)/, 'Avantage en nature', "La valeur d'un avantage fourni par l'employeur (véhicule, logement, repas). Elle est ajoutée au salaire pour le calcul des cotisations, puis retirée du net."],
+  [/(acompte|avance)/, 'Acompte ou avance', "Une somme que tu as déjà reçue dans le mois : elle est retirée du net à payer."],
+  [/(securite sociale|maladie|maternite|invalidite|deces)/, 'Sécurité sociale (maladie, maternité…)', "Ta participation à l'assurance maladie, maternité, invalidité et décès."],
+  [/vieillesse/, 'Retraite de base', "Ta cotisation à la retraite de base de la Sécurité sociale. Elle compte pour tes trimestres de retraite."],
+  [/(retraite complementaire|agirc|arrco|\bt1\b|tranche 1|tranche 2|\bt2\b)/, 'Retraite complémentaire', "Ta cotisation à la retraite complémentaire (Agirc-Arrco). Elle te donne des points qui s'ajoutent à ta retraite de base."],
+  [/(chomage|assurance chom|france travail|pole emploi)/, 'Assurance chômage', "Cette cotisation ouvre droit aux allocations si tu perds ton emploi. Aujourd'hui, seul l'employeur la paie, en général."],
+  [/csg.*(non deduct|crds)|crds/, 'CSG non déductible et CRDS', "Contributions sociales prélevées sur ton salaire. Cette part n'est pas déduite de ton revenu imposable."],
+  [/csg/, 'CSG déductible', "Contribution sociale généralisée qui finance la Sécurité sociale. Cette part est déduite de ton revenu imposable."],
+  [/(mutuelle|complementaire sante|frais de sante)/, 'Mutuelle', "Ta complémentaire santé d'entreprise. L'employeur doit en payer au moins la moitié."],
+  [/prevoyance/, 'Prévoyance', "Une assurance en cas d'arrêt de travail long, d'invalidité ou de décès."],
+  [/(accident du travail|at ?\/ ?mp)/, 'Accident du travail', "Cotisation payée par l'employeur pour couvrir les accidents du travail et maladies professionnelles."],
+  [/(allocations? familiales|fnal|versement (mobilite|transport)|formation professionnelle|apprentissage|dialogue social)/, 'Cotisation patronale', "Une contribution payée par l'employeur en plus de ton salaire (famille, logement, transport, formation). Elle ne diminue pas ton net."],
+  [/(reduction generale|allegement general|reduction fillon)/, 'Réduction générale', "Un allègement des cotisations patronales sur les bas salaires. Il ne change pas ton net."],
+  [/(ceg|cet\b|contribution d.?equilibre)/, "Contribution d'équilibre (retraite)", "Une contribution qui équilibre le régime de retraite complémentaire."],
+  [/montant net social/, 'Montant net social', "Le montant à déclarer à la CAF et à certains organismes pour calculer tes aides."],
+  [/net imposable/, 'Net imposable', "La base de calcul de ton impôt sur le revenu."],
+  [/(prelevement a la source|impot sur le revenu)/, 'Prélèvement à la source', "L'impôt sur le revenu retiré chaque mois par ton employeur, au taux fixé par l'administration fiscale."]
+];
 function looksLikePayslip(text) {
   const n = norm(text);
   return ['bulletin de paie', 'bulletin de salaire', 'net a payer', 'cotisations', 'salaire de base', 'net imposable', 'conges payes', 'prelevement a la source', 'total brut', 'salaire brut'].filter(k => n.includes(k)).length >= 3;
@@ -3176,6 +3214,8 @@ function parsePayslip(raw) {
   p.netAvant = amountAt(find(/net (a payer )?(avant|hors) (impot|prelevement)/));
   const nf = findAll(/(net a payer|net paye)/, /(avant|hors) (impot|prelevement)|imposable/); p.netFinal = nf.length ? amountAt(nf[nf.length - 1]) : null;
   p.netImposable = amountAt(find(/net imposable/));
+  p.netSocial = amountAt(find(/montant net social/));
+  p.tauxNeutre = /(taux neutre|taux non personnalise|taux par defaut)/.test(norm(raw));
   const pi = find(/(prelevement a la source|impot sur le revenu|\bpas\b)/, /(avant|hors) (impot|prelevement)|net a payer|net imposable|montant net social/);
   if (pi >= 0) { const taux = linePct(lines[pi]) ?? (lines[pi + 1] ? linePct(lines[pi + 1]) : null), amt = amountAt(pi); if (amt !== null || taux !== null) p.pas = { amount: amt, taux }; }
   // Cotisations
@@ -3186,10 +3226,10 @@ function parsePayslip(raw) {
   if (bi >= 0) { const n = lineNums(lines[bi]); if (n.length >= 2) p.base = { qty: n[0] <= 250 ? n[0] : null, rate: n.length >= 3 ? n[1] : null, amount: n[n.length - 1] }; }
   const baseRate = p.base && p.base.rate && p.base.rate > 3 && p.base.rate < 200 ? p.base.rate : (p.base && p.base.qty && p.base.amount ? p.base.amount / p.base.qty : null);
   // Heures supplémentaires
-  findAll(/(heures? (supp|suppl)|h\.? ?sup|\bhs ?(\d|maj)|heures majorees|majoration)/, /(exonere|reduction|allegement|defiscal|cotisations? salariale|contingent)/).forEach(k => {
+  findAll(/(heures? (supp|suppl)|h\.? ?sup|hres? sup|\bhs ?(\d|maj)|heures majorees|majoration|heures? compl)/, /(exonere|reduction|allegement|defiscal|cotisations? salariale|contingent)/).forEach(k => {
     const n = lineNums(lines[k]); if (!n.length) return;
     const maj = linePct(lines[k]), qty = n.length >= 2 && n[0] <= 200 ? n[0] : null, amount = n[n.length - 1], rate = n.length >= 3 ? n[1] : null;
-    const h = { line: lines[k], qty, amount, rate, maj: maj && maj >= 100 ? maj - 100 : maj, impl: null };
+    const h = { line: lines[k], qty, amount, rate, maj: maj && maj >= 100 ? maj - 100 : maj, impl: null, compl: /heures? compl/.test(nl[k]) };
     if (qty && amount && baseRate) h.impl = Math.round((amount / (qty * baseRate) - 1) * 100);
     p.hs.push(h);
   });
@@ -3200,6 +3240,8 @@ function parsePayslip(raw) {
   findAll(/(prime|indemnite|gratification|13e mois|treizieme|panier|titres? restaurant|remboursement transport|avantage en nature)/, /(cotisation|plafond|net a payer|licenciement|conges payes)/).slice(0, 8).forEach(k => { const a = amountAt(k); if (a) p.primes.push({ line: lines[k], amount: a }); });
   findAll(/(absence|maladie|conges? sans solde|retenue|carence)/, /(cotisation|prevoyance|retenue a la source)/).slice(0, 5).forEach(k => p.absences.push({ line: lines[k], amount: amountAt(k) }));
   findAll(/(conges payes|\bcp\b|\brtt\b|repos compensateur)/, /(indemnite|cotisation)/).slice(0, 5).forEach(k => p.conges.push(lines[k]));
+  p.lignes = [];
+  lines.forEach((l, k) => { const g = PAIE_LIGNES.find(x => x[0].test(nl[k])); if (g) { const n = lineNums(l); p.lignes.push({ line: l, label: g[1], expl: g[2], amount: n.length ? n[n.length - 1] : null }); } });
   p.found = [p.brut, p.netAvant, p.netFinal, p.netImposable, p.cotSal, p.base].filter(x => x !== null).length + (p.pas ? 1 : 0);
   return p;
 }
@@ -3218,11 +3260,14 @@ function payslipInsights(p, declared) {
     if (diff > 1.5) out.push({ level: 'warn', text: `Le calcul « net avant impôt − prélèvement à la source » donne ${PE(p.netAvant - p.pas.amount)}, pas ${PE(p.netFinal)}. Il peut y avoir une ligne en plus (acompte, avance, remboursement de frais) : regarde le détail.` });
     else out.push({ level: 'ok', text: `Le calcul tombe juste : ${PE(p.netAvant)} − ${PE(p.pas.amount)} d'impôt = ${PE(p.netFinal)} versés.` });
   }
+  if (p.tauxNeutre) out.push({ level: 'info', text: "Ta fiche mentionne un taux neutre (ou non personnalisé) : il est souvent appliqué en début de contrat. Il peut être trop élevé ou trop faible pour toi. Tu peux demander un taux personnalisé sur impots.gouv.fr." });
+  if (p.netSocial !== null) out.push({ level: 'info', text: `Le « montant net social » (${PE(p.netSocial)}) sert à calculer certaines aides (prime d'activité, RSA…) : c'est lui qu'il faut déclarer à la CAF, pas le net versé.` });
   if (p.pas && p.pas.taux !== null) out.push({ level: 'info', text: `L'impôt est prélevé au taux de ${String(p.pas.taux).replace('.', ',')} %. Si ta situation a changé (mariage, naissance, baisse de revenus), tu peux demander à ajuster ce taux sur impots.gouv.fr.` });
   // Heures supplémentaires
   if (!p.hs.length) out.push({ level: 'info', text: "Aucune ligne d'heures supplémentaires repérée sur cette fiche." });
   p.hs.forEach(h => {
     if (h.impl === null) return;
+    if (h.compl) { if (h.impl >= 8 && h.impl <= 12) out.push({ level: 'ok', text: `Ligne « ${h.line} » : majoration d'environ 10 %, ce qui correspond au taux légal pour les heures complémentaires (temps partiel) jusqu'à 1/10 de la durée prévue au contrat.` }); else if (h.impl >= 22 && h.impl <= 28) out.push({ level: 'ok', text: `Ligne « ${h.line} » : majoration d'environ 25 %, ce qui correspond au taux légal des heures complémentaires au-delà de 1/10 de la durée prévue au contrat.` }); else if (h.impl < 8) out.push({ level: 'warn', text: `Ligne « ${h.line} » : ces heures complémentaires semblent payées sans la majoration légale (10 % jusqu'à 1/10 de ton temps de travail, 25 % au-delà). Vérifie avec ton contrat.` }); else out.push({ level: 'info', text: `Ligne « ${h.line} » : majoration d'environ ${h.impl} %. Compare avec ton contrat.` }); return; }
     if (h.impl < 10) out.push({ level: 'warn', text: `Ligne « ${h.line} » : ces heures semblent payées au tarif normal (environ +${Math.max(0, h.impl)} %). La majoration légale est en principe de 25 % (puis 50 %), sauf accord de branche ou d'entreprise qui peut aller jusqu'à 10 % minimum.` });
     else if (Math.abs(h.impl - 25) <= 4) out.push({ level: 'ok', text: `Ligne « ${h.line} » : majoration d'environ 25 %, ce qui correspond au taux légal pour les 8 premières heures supplémentaires de la semaine.` });
     else if (Math.abs(h.impl - 50) <= 4) out.push({ level: 'ok', text: `Ligne « ${h.line} » : majoration d'environ 50 %, ce qui correspond au taux légal au-delà de la 8e heure supplémentaire de la semaine.` });
@@ -3291,6 +3336,9 @@ function renderPaie(box) {
   $('#paie-cam').addEventListener('change', e => { onFiles(e.target.files); e.target.value = ''; });
   $('#paie-file').addEventListener('change', e => { onFiles(e.target.files); e.target.value = ''; });
   const dec = $('#paie-declared'); if (dec) dec.addEventListener('input', () => { paie$.declared = dec.value; const i2 = payslipInsights(paie$.p, dec.value === '' ? null : parseFloat(dec.value.replace(',', '.'))); $('#paie-ins').innerHTML = insightsHTML(i2); });
+  $$('[data-pq]', box).forEach(b => b.addEventListener('click', () => { const log = $('#paie-chat', box); const m = document.createElement('div'); m.className = 'msg me'; m.textContent = b.textContent; log.appendChild(m); const a = document.createElement('div'); a.className = 'msg bot'; a.textContent = paieAnswer(b.dataset.pq, paie$.p); log.appendChild(a); a.scrollIntoView({ block: 'nearest' }); track('paie_question'); }));
+  const pq = $('#paie-q'), pask = () => { const q = pq.value.trim(); if (!q) return; pq.value = ''; paieAsk(box, q); };
+  if (pq) { $('#paie-ask').addEventListener('click', pask); pq.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pask(); } }); }
   const sv = $('#paie-save'); if (sv) sv.addEventListener('click', () => {
     const l = getPaies(), q = paie$.p, id = q.ym ? 'p' + q.ym : newId('p');
     const rec = { id, ym: q.ym, periode: q.periode, brut: q.brut, netAvant: q.netAvant, netFinal: q.netFinal, hsQty: q.hsQty, hsAmount: q.hsAmount, updatedAt: new Date().toISOString() };
@@ -3323,9 +3371,58 @@ function paieResultHTML(p, ins, hist) {
       ${p.absences.length ? `<p><b>Absences ou retenues :</b></p><ul>${p.absences.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
       ${p.conges.length ? `<p><b>Congés et repos :</b></p><ul>${p.conges.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>
     <div class="block"><h3>À vérifier avec ton contrat</h3><ul><li>Le taux horaire est au moins égal au SMIC et au minimum de ta convention collective.</li><li>Les primes prévues dans ton contrat (ancienneté, 13e mois…) apparaissent bien.</li><li>Les jours de congés et de RTT augmentent bien chaque mois.</li><li>Tes heures supplémentaires correspondent à tes relevés d'horaires.</li></ul></div>
+    ${p.lignes && p.lignes.length ? `<div class="block"><h3>Ligne par ligne, en mots simples</h3><div class="paie-lines">${p.lignes.slice(0, 30).map(l => `<details><summary><span>${esc(l.label)}</span>${l.amount !== null ? `<b>${esc(PE(l.amount))}</b>` : ''}</summary><p class="note">${esc(l.line)}</p><p>${esc(l.expl)}</p></details>`).join('')}</div></div>` : ''}
+    <div class="block"><h3>Pose ta question sur ta fiche</h3>
+      <div class="chips" role="group" aria-label="Questions rapides">${PAIE_QUICK.map(([k, q]) => `<button class="chip" type="button" data-pq="${k}">${esc(q)}</button>`).join('')}</div>
+      <div class="chat-log" id="paie-chat" aria-live="polite"></div>
+      <div class="chat-input"><label class="sr" for="paie-q">Ta question</label><input id="paie-q" placeholder="Ex. : pourquoi mon net a baissé ce mois-ci ?" autocomplete="off"><button class="btn small" id="paie-ask" type="button">Demander</button></div></div>
     ${terms.length ? `<div class="block"><h3>Les mots compliqués de ta fiche</h3><dl class="glossary">${terms.map(g => `<div><dt>${esc(g[1])}</dt><dd>${esc(g[2])}</dd></div>`).join('')}</dl></div>` : ''}
     <div class="save-row"><button class="btn" id="paie-save" type="button">Enregistrer pour comparer les mois</button><button class="btn ghost" id="paie-lettre" type="button">Écrire à mon employeur (heures supplémentaires)</button></div>
     <p class="note">Cette analyse t'aide à comprendre ta fiche. Elle peut se tromper, surtout sur une photo : vérifie les chiffres sur l'original. Ce n'est pas un avis juridique ; en cas de doute, rapproche-toi de ton service RH, d'un syndicat ou de l'inspection du travail.</p></div>`;
+}
+const PAIE_QUICK = [['brut', 'Pourquoi mon net est plus bas que mon brut ?'], ['hs', 'Mes heures supp sont-elles bien comptées ?'], ['cot', "C'est quoi les cotisations ?"], ['impot', "Pourquoi un impôt sur ma fiche ?"], ['conges', 'Congés et RTT : comment ça marche ?'], ['erreur', 'Je pense qu\'il y a une erreur : que faire ?']];
+function paieAnswer(k, p) {
+  const ins = payslipInsights(p, paie$.declared === '' ? null : parseFloat(String(paie$.declared).replace(',', '.')));
+  if (k === 'brut') return `Ton salaire brut${p.brut !== null ? ' (' + PE(p.brut) + ')' : ''} est le montant avant prélèvements. On en retire tes cotisations salariales${p.cotSal !== null ? ' (' + PE(p.cotSal) + ')' : ''} : retraite, assurance maladie, chômage, CSG et CRDS${p.netAvant !== null ? ', ce qui laisse ' + PE(p.netAvant) + ' avant impôt' : ''}. Ensuite l'impôt sur le revenu est prélevé directement${p.pas && p.pas.amount !== null ? ' (' + PE(p.pas.amount) + ')' : ''}${p.netFinal !== null ? ' : tu reçois ' + PE(p.netFinal) : ''}. Ces cotisations ne sont pas perdues : elles financent ta retraite, tes soins et ton éventuel chômage.`;
+  if (k === 'hs') { const t = ins.filter(i => /heures|Ligne|majoration|supplémentaires|complémentaires/.test(i.text)).map(i => i.text); return (t.length ? t.join('\n\n') : "Je ne trouve aucune ligne d'heures supplémentaires sur cette fiche.") + '\n\nPour être sûr, compare avec tes relevés d\'horaires : indique plus haut le nombre d\'heures que tu as faites, et on te dit s\'il en manque.'; }
+  if (k === 'cot') return "Les cotisations sont des prélèvements sur ton salaire, partagés entre toi (part salariale) et ton employeur (part patronale). Elles financent la Sécurité sociale (maladie, maternité), la retraite, le chômage et la famille. Ta part est retirée de ton brut ; celle de l'employeur s'ajoute à son coût mais ne baisse pas ton net.";
+  if (k === 'impot') return `Depuis 2019, l'impôt sur le revenu est prélevé chaque mois sur ta fiche (prélèvement à la source)${p.pas && p.pas.taux !== null ? ', ici au taux de ' + String(p.pas.taux).replace('.', ',') + ' %' : ''}. C'est un acompte : en fin d'année, ta déclaration ajuste le total. Si ta situation change, tu peux modifier ton taux sur impots.gouv.fr.`;
+  if (k === 'conges') return "Chaque mois travaillé te fait acquérir des jours de congés payés (2,5 jours ouvrables en général, soit 30 par an). Les RTT et repos compensateurs viennent d'heures faites en plus ou d'un accord dans ton entreprise. Le solde doit apparaître sur ta fiche : vérifie qu'il augmente bien chaque mois.";
+  if (k === 'erreur') return "1) Repère la ligne qui te semble fausse et compare avec ton contrat, tes relevés d'horaires et ta convention collective.\n2) Écris à ton service paie ou ton employeur (un e-mail suffit pour commencer) en demandant le détail du calcul.\n3) Sans réponse, relance par lettre recommandée. Tu peux te faire aider par un syndicat, les représentants du personnel ou l'inspection du travail.\n4) En général, un salaire non payé peut être réclamé jusqu'à 3 ans en arrière. Garde toutes tes fiches de paie.";
+  return null;
+}
+function routePaieQuestion(q) {
+  const n = norm(q);
+  if (/(heure|supp|majore|hs\b)/.test(n)) return 'hs';
+  if (/(impot|prelev|taux|pas\b)/.test(n)) return 'impot';
+  if (/(cotis|csg|crds|retraite|charges)/.test(n)) return 'cot';
+  if (/(conge|rtt|repos)/.test(n)) return 'conges';
+  if (/(erreur|faux|manque|pas bon|anormal|reclam)/.test(n)) return 'erreur';
+  if (/(brut|net|baiss|moins|diminu|plus bas|combien)/.test(n)) return 'brut';
+  return null;
+}
+function paieSummaryForAI(p) {
+  const l = [p.periode && 'Période : ' + p.periode, p.brut !== null && 'Salaire brut : ' + PE(p.brut), p.cotSal !== null && 'Cotisations salariales : ' + PE(p.cotSal), p.netAvant !== null && 'Net avant impôt : ' + PE(p.netAvant), p.pas && p.pas.amount !== null && 'Impôt prélevé : ' + PE(p.pas.amount) + (p.pas.taux !== null ? ' (taux ' + p.pas.taux + ' %)' : ''), p.netFinal !== null && 'Net versé : ' + PE(p.netFinal), p.netImposable !== null && 'Net imposable : ' + PE(p.netImposable), p.base && 'Salaire de base : ' + (p.base.qty ? p.base.qty + ' h, ' : '') + PE(p.base.amount)].filter(Boolean);
+  p.hs.forEach(h => l.push('Heures supplémentaires : ' + h.line + (h.impl !== null ? ' (majoration effective environ ' + h.impl + ' %)' : '')));
+  p.lignes.slice(0, 18).forEach(g => l.push(g.label + (g.amount !== null ? ' : ' + PE(g.amount) : '')));
+  return l.join('\n');
+}
+async function paieAsk(box, q) {
+  const log = $('#paie-chat', box); if (!log) return;
+  const add = (who, t) => { const el = document.createElement('div'); el.className = 'msg ' + who; el.textContent = t; log.appendChild(el); el.scrollIntoView({ block: 'nearest' }); return el; };
+  add('me', q); track('paie_question');
+  if (aiState === 'ready' || (iaPrefs().ready && gpu.ok)) {
+    const el = add('bot', '…');
+    enqueueAI(async () => {
+      try {
+        await ensureEngine();
+        await streamTo([{ role: 'system', content: SYS + `\n\nVoici la fiche de paie de la personne, déjà analysée.\n${paieSummaryForAI(paie$.p)}\n\nRéponds en 2 à 5 phrases, uniquement à partir de ces informations. Si une information manque, dis que tu ne la trouves pas sur la fiche. Pour un désaccord avec l'employeur, conseille de demander le détail par écrit puis de se rapprocher du service RH, d'un syndicat ou de l'inspection du travail.` }, { role: 'user', content: q }], el, { max: 350 });
+      } catch (e) { const k = routePaieQuestion(q); el.textContent = k ? paieAnswer(k, paie$.p) : iaError(e); }
+    });
+    return;
+  }
+  const k = routePaieQuestion(q);
+  add('bot', k ? paieAnswer(k, paie$.p) : "Je sais répondre aux questions de la liste ci-dessus. Pour poser n'importe quelle question sur ta fiche, active l'assistant dans les réglages (il tourne sur ton appareil).");
 }
 const PAIE_SAMPLE = `BULLETIN DE PAIE
 Période du 01/09/2026 au 30/09/2026
@@ -3981,7 +4078,7 @@ renderList(); renderReminders(); notifyUrgent();
 updatePill(); gpuReady.then(updatePill);
 
 // Exposé pour les tests
-window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, textScore, fileToCanvas, buildEdlHTML, geoDist, parsePayslip, payslipInsights, looksLikePayslip, PAIE_SAMPLE };
+window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, paieAnswer, textScore, fileToCanvas, buildEdlHTML, geoDist, parsePayslip, payslipInsights, looksLikePayslip, PAIE_SAMPLE };
 })();
 </script>
 </body>
