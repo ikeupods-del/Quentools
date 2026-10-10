@@ -117,6 +117,12 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   ok(/majoration d'environ 25 %/.test(pt) && /50 %/.test(pt), 'heures supp : majorations 25 % et 50 % reconnues');
   await pg.fill('#paie-declared', '14'); ok(/manque peut-être 4 h/.test(await pg.innerText('#paie-ins')), 'heures manquantes détectées (14 déclarées, 10 payées)');
   ok(await pg.locator('.paie-lines details').count() >= 6, 'fiche de paie : lignes expliquées une par une');
+  // 5e cadre guide de la caméra (caméra simulée par Chromium)
+  await pg.click('label[for=paie-cam]'); await pg.waitForSelector('#gc-dialog[open]');
+  await pg.waitForFunction(() => document.querySelectorAll('#gc-meters span').length === 3, null, { timeout: 8000 });
+  ok(await pg.isVisible('.gc-frame') && /Lumière/.test(await pg.innerText('#gc-meters')) && /Netteté/.test(await pg.innerText('#gc-meters')), 'cadre guide : cadre et mesures (lumière, netteté, ombres) en direct');
+  ok(['good', 'warn', 'bad'].includes(await pg.getAttribute('#gc-stage', 'data-lv')) && (await pg.innerText('#gc-chip')).length > 5, 'cadre guide : verdict affiché');
+  await pg.click('#gc-cancel'); ok(!(await pg.locator('#gc-dialog[open]').count()), 'cadre guide : fermeture');
   await pg.click('[data-pq=brut]'); ok(/cotisations salariales/.test(await pg.innerText('#paie-chat')), 'question rapide : pourquoi le net est plus bas que le brut');
   await pg.fill('#paie-q', 'mes heures sup sont payées ?'); await pg.press('#paie-q', 'Enter'); ok((await pg.locator('#paie-chat .msg.bot').count()) === 2, 'question libre routée sans assistant');
   await pg.screenshot({ path: require('os').tmpdir() + '/pd-paie.png', fullPage: false });

@@ -90,6 +90,12 @@ ko+=ko3;
   if(!ko4) console.log('✓ Paperdecrypt : lecture des tickets et factures d\'achat correcte (13 contrôles)');
   ko+=ko4;
 }
+{ const c2={};vm.createContext(c2);vm.runInContext(src.slice(src.indexOf('/*CADRE-DEB*/'),src.indexOf('/*CADRE-FIN*/')),c2);
+  const W=320,H=240,page=()=>{const g=new Float32Array(W*H).fill(235);let s=5;const r=()=>((s=(s*1664525+1013904223)>>>0)/4294967296);for(let y=20;y<H-20;y+=9){let x=20;while(x<W-30){const wd=3+Math.floor(r()*14);if(r()<.8)for(let yy=y;yy<y+4;yy++)for(let xx=x;xx<x+wd&&xx<W-20;xx++)g[yy*W+xx]=25;x+=wd+3+Math.floor(r()*4);}}return g;};
+  const blur=(g,k)=>{let a=g;for(let it=0;it<k;it++){const b=new Float32Array(g.length);for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){let t=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)t+=a[(y+dy)*W+x+dx];b[y*W+x]=t/9;}a=b;}return a;};
+  const Q=g=>c2.frameQuality(Uint8Array.from(g,v=>Math.max(0,Math.min(255,Math.round(v)))),W,H),P=page();
+  const cas=[['page nette et éclairée',Q(P).level==='good'],['page sombre signalée',Q(P.map(v=>v*.3)).tips.some(t=>/sombre/.test(t))],['reflet signalé',Q(P.map(v=>v>100?255:v)).level==='bad'],['ombre signalée',Q(P.map((v,i)=>(i%W)<W/2?v:v*.55)).tips.some(t=>/Ombre/.test(t))],['flou signalé',Q(blur(P,3)).tips.some(t=>/flou/.test(t))]];
+  cas.forEach(([n,okk])=>{if(!okk){ko++;console.log('✗ cadre guide : '+n);}}); if(cas.every(x=>x[1]))console.log('✓ cadre guide : '+cas.length+' contrôles de qualité d\'image'); }
 { const r=require('child_process').spawnSync(process.execPath,[require('path').join(__dirname,'essai-paie.js')],{encoding:'utf8'}); process.stdout.write(r.stdout); if(r.status) ko++; }
 console.log(ko ? `✗ ${ko} cas en erreur sur ${CAS.length}` : `✓ Paperdecrypt : ${CAS.length} lectures de montants correctes`);
 process.exit(ko ? 1 : 0);

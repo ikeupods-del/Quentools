@@ -311,6 +311,19 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .edl-thumbs .geo{position:absolute;bottom:14px;left:2px;min-width:18px;height:18px;border-radius:9px;background:rgba(0,0,0,.65);color:#ffe14d;font-size:.72rem;display:grid;place-items:center;padding:0 3px}
 .edl-thumbs .x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--sheet);cursor:pointer;line-height:1;padding:0}
 #cam-video{width:100%;max-height:60vh;background:#000;border-radius:10px;display:block}
+.gc-stage{position:relative;border-radius:10px;overflow:hidden;background:#000}
+#gc-video{width:100%;height:min(66vh,560px);object-fit:cover;display:block}
+.gc-frame{position:absolute;inset:6% 9%;border:2px dashed rgba(255,255,255,.75);border-radius:6px;pointer-events:none;transition:border-color .2s,box-shadow .2s;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.gc-frame i{position:absolute;width:22px;height:22px;border:4px solid #fff;transition:border-color .2s}
+.gc-frame i:nth-child(1){top:-3px;left:-3px;border-right:0;border-bottom:0}.gc-frame i:nth-child(2){top:-3px;right:-3px;border-left:0;border-bottom:0}
+.gc-frame i:nth-child(3){bottom:-3px;left:-3px;border-right:0;border-top:0}.gc-frame i:nth-child(4){bottom:-3px;right:-3px;border-left:0;border-top:0}
+.gc-stage[data-lv=good] .gc-frame{border-color:#3ecf6e}.gc-stage[data-lv=good] .gc-frame i{border-color:#3ecf6e}
+.gc-stage[data-lv=warn] .gc-frame{border-color:#ffb020}.gc-stage[data-lv=warn] .gc-frame i{border-color:#ffb020}
+.gc-stage[data-lv=bad] .gc-frame{border-color:#ff5a4d}.gc-stage[data-lv=bad] .gc-frame i{border-color:#ff5a4d}
+.gc-chip{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);max-width:92%;padding:7px 12px;border-radius:99px;background:rgba(0,0,0,.72);color:#fff;font-size:.9rem;text-align:center}
+.gc-meters{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 0}
+.gc-meters span{font-size:.82rem;padding:3px 9px;border-radius:99px;border:1px solid var(--line)}
+.gc-meters span[data-s=good]::before{content:"✓ ";color:#2e9d57}.gc-meters span[data-s=bad]::before{content:"✗ ";color:#d6402f}.gc-meters span[data-s=warn]::before{content:"! ";color:#c98a00}
 .edl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .edl-row input[data-note]{flex:1;min-width:160px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--paper);min-height:38px}
 .paie-t{width:100%;border-collapse:collapse;margin:6px 0}
@@ -522,6 +535,16 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
     <video id="cam-video" playsinline muted autoplay></video>
     <p class="note" id="cam-msg" role="status"></p>
     <div class="dlg-foot"><button class="btn" id="cam-snap" type="button">Prendre la photo</button> <button class="btn ghost" id="cam-cancel" type="button">Annuler</button></div>
+  </div>
+</dialog>
+
+<dialog id="gc-dialog" aria-labelledby="gc-label">
+  <div class="dlg">
+    <h2 id="gc-label" style="font-size:1.1rem">Photographie ta page</h2>
+    <div class="gc-stage" id="gc-stage" data-lv="warn"><video id="gc-video" playsinline muted autoplay></video><div class="gc-frame"><i></i><i></i><i></i><i></i></div><div class="gc-chip" id="gc-chip" role="status">Ouverture de la caméra…</div></div>
+    <div class="gc-meters" id="gc-meters" aria-hidden="true"></div>
+    <p class="note">Place la page entière dans le cadre, bien à plat, sur un fond uni, face à une fenêtre ou une lampe. Évite ton ombre et le flash.</p>
+    <div class="dlg-foot"><button class="btn" id="gc-snap" type="button" disabled>Prendre la photo</button> <button class="btn ghost" id="gc-cancel" type="button">Annuler</button></div>
   </div>
 </dialog>
 
@@ -3503,7 +3526,7 @@ function parsePayslip(raw) {
   const amountAt = (i, last = true) => { if (i < 0) return null; let n = lineNums(lines[i]); if (!n.length && lines[i + 1]) n = lineNums(lines[i + 1]); return n.length ? (last ? n[n.length - 1] : n[0]) : null; };
   const p = { periode: null, ym: null, brut: null, netAvant: null, netFinal: null, netImposable: null, pas: null, cotSal: null, cotPat: null, base: null, hs: [], primes: [], absences: [], conges: [], found: 0 };
   // Période
-  const pm = norm(PN(raw)).match(/(?:periode|mois)[^0-9a-z]{0,12}(?:du\s*)?(\d{1,2})[\/.-](\d{2})[\/.-](\d{4}|\d{2})(?!\d)/);
+  const pm = norm(PN(raw)).match(/(?:periode|mois)(?:\s+de\s+paie)?[^0-9a-z]{0,12}(?:du)?[^0-9a-z]{0,6}(\d{1,2})[\/.-](\d{2})[\/.-](\d{4}|\d{2})(?!\d)/);
   if (pm && +pm[2] >= 1 && +pm[2] <= 12) { const yy = pm[3].length === 2 ? '20' + pm[3] : pm[3]; p.ym = yy + '-' + pm[2]; p.periode = PMAFF[+pm[2] - 1] + ' ' + yy; }
   if (!p.periode) { const mm = norm(raw).match(new RegExp('(?:mois de|paie de|periode de|bulletin de)?\\s*(' + PMONTHS.join('|') + ')\\s+(20\\d{2})')); if (mm) { p.periode = PMAFF[PMONTHS.indexOf(mm[1])] + ' ' + mm[2]; p.ym = mm[2] + '-' + String(PMONTHS.indexOf(mm[1]) + 1).padStart(2, '0'); } }
   // Brut, nets, impôt
@@ -3511,7 +3534,7 @@ function parsePayslip(raw) {
   p.brut = amountAt(i);
   p.netAvant = amountAt(find(/net (a payer )?(avant|hors) (impot|prelevement)/));
   const nf = findAll(/(net a payer|net paye)/, /(avant|hors) (impot|prelevement)|imposable/); p.netFinal = nf.length ? amountAt(nf[nf.length - 1]) : null;
-  p.netImposable = amountAt(find(/net imposable/));
+  { const ni = find(/net imposable/); if (ni >= 0) { const a = nl[ni].indexOf('net imposable'), t = lineNums(lines[ni].slice(a + 13)); p.netImposable = t.length ? t[0] : amountAt(ni); } }
   p.netSocial = amountAt(find(/montant net social/));
   p.tauxNeutre = /(taux neutre|taux non personnalise|taux par defaut)/.test(norm(raw));
   const pi = find(/(prelevement a la source|impot sur le revenu|\bpas\b)/, /(avant|hors) (impot|prelevement)|net a payer|net imposable|montant net social/);
@@ -3525,7 +3548,7 @@ function parsePayslip(raw) {
   const baseRate = p.base && p.base.rate && p.base.rate > 3 && p.base.rate < 200 ? p.base.rate : (p.base && p.base.qty && p.base.amount ? p.base.amount / p.base.qty : null);
   // Heures supplémentaires : une ligne d'heures et, parfois, une ligne de majoration à part (à rapprocher)
   const items = [];
-  findAll(/(heures? (supp|suppl)|h\.? ?sup|hres? sup|\bhs ?(\d|maj)|heures majorees|majoration|heures? compl)/, /(exonere|reduction|allegement|defiscal|cotisations? salariale|contingent)/).forEach(k => {
+  findAll(/(heures? (supp|suppl)|h\.? ?sup|hres? sup|\bhs ?(\d|maj)|heures majorees|majoration|heures? compl)/, /(reduction|allegement|defiscal|exoneration|cotisations? salariale|contingent|nuit|dimanche|ferie|^(?!heures? (supp|suppl)).*exonere)/).forEach(k => {
     const n = lineNums(lines[k], true); if (!n.length) return;
     const maj = linePct(lines[k]), isMaj = /majoration|\bmaj\b/.test(nl[k]) && maj !== null;
     const qty = n.length >= 2 && n[0] <= 200 ? n[0] : null, amount = n[n.length - 1], rate = n.length >= 3 ? n[1] : null;
@@ -3540,6 +3563,8 @@ function parsePayslip(raw) {
     if (h.majOnly) h.impl = h.maj;
     else {
       if (h.qty && h.amount && baseRate) h.impl = Math.round((h.amount / (h.qty * baseRate) - 1) * 100);
+      // Le taux horaire d'une ligne peut inclure des primes : si la ligne annonce 10, 25 ou 50 % et que le calcul ne montre pas un sous-paiement, on garde le taux annoncé
+      if (h.maj !== null && [10, 25, 50].includes(h.maj) && (h.impl === null || h.impl >= h.maj - 5)) h.impl = h.maj;
       if (h.impl === null && h.maj !== null) h.impl = h.maj;
     }
     p.hs.push(h);
@@ -3563,9 +3588,13 @@ function parsePayslip(raw) {
     }
     if (p.cumul) { if (p.cumul.netSocial !== undefined) p.netSocial = p.cumul.netSocial; if (p.cumul.hSup !== undefined) p.hsTable = p.cumul.hSup; if (p.cumul.hTrav !== undefined) p.hTrav = p.cumul.hTrav; if (p.brut === null && p.cumul.brut) p.brut = p.cumul.brut; }
     // Compteurs de congés : « Congés 1,0000 0,0000 16,0000 » sous un en-tête Pris / Restant / Acquis
+    // Tableau « Congés payés / RC » : en-tête Acquis · Pris · Solde, lignes « CP acquis 25.00 15.00 10.00 »
+    { const th = find(/^conges? payes?( \/ rc)?\s+acquis.*pris.*solde|^acquis.*pris.*solde/); if (th >= 0) {
+      const col = nl.slice(th, th + 1)[0], ord = ['acquis', 'pris', 'solde'].map(w => [w, col.indexOf(w)]).sort((a, b) => a[1] - b[1]).map(x => x[0]);
+      for (let k = th + 1; k < Math.min(th + 9, lines.length); k++) if (/^cp (acquis|en cours|reliquat)\b/.test(nl[k])) { let n = lineNums(lines[k]); if (!n.length && lines[k + 1]) n = lineNums(lines[k + 1]); if (n.length >= 3) { p.congesCpt = {}; ord.forEach((w, j) => { p.congesCpt[w === 'solde' ? 'restant' : w] = n[n.length - 3 + j]; }); break; } } } }
     const ki = find(/^conges? ?(payes?)? \d/);
     if (ki >= 0) { const n = lineNums(lines[ki]); const hd = nl.slice(Math.max(0, ki - 2), ki).join(' '), ord = ['pris', 'restant', 'acquis'].map(w => [w, hd.indexOf(w)]).filter(x => x[1] >= 0).sort((a, b) => a[1] - b[1]).map(x => x[0]); const names = ord.length === 3 ? ord : ['pris', 'restant', 'acquis'];
-      if (n.length >= 3) { p.congesCpt = {}; names.forEach((w, j) => { p.congesCpt[w] = n[j]; }); } }
+      if (!p.congesCpt && n.length >= 3) { p.congesCpt = {}; names.forEach((w, j) => { p.congesCpt[w] = n[j]; }); } }
   }
   p.lignes = [];
   lines.forEach((l, k) => { const g = PAIE_LIGNES.find(x => x[0].test(nl[k])); if (g) { const n = lineNums(l, true), pc = (PN(l).match(/\d+(?:[.,]\d+)?\s*%/g) || []).length, e = { line: l, label: g[1], expl: g[2], amount: n.length ? n[n.length - 1] : null }; if (pc >= 2 && n.length >= 3) { e.sal = n[n.length - 2]; e.pat = n[n.length - 1]; } p.lignes.push(e); } });
@@ -3646,6 +3675,66 @@ const PAIE_GLOSSAIRE = [
   [/titres? restaurant|panier/, 'Titres-restaurant, paniers', "Avantages liés aux repas, financés en partie par l'employeur."]
 ];
 /*PAIE-FIN*/
+/*CADRE-DEB*/
+// Qualité d'une image avant la prise de vue : g = niveaux de gris (0-255), w × h. Retourne un niveau (good / warn / bad), des mesures et des conseils.
+function frameQuality(g, w, h) {
+  const n = w * h, sorted = Uint8Array.from(g).sort(), q = f => sorted[Math.min(n - 1, Math.floor(n * f))];
+  const p5 = q(0.05), p50 = q(0.5), p90 = q(0.9), p95 = q(0.95);
+  let sat = 0; for (let i = 0; i < n; i++) if (g[i] >= 250) sat++;
+  // Netteté : énergie du laplacien (les bords flous l'écrasent), rapportée au contraste de la page
+  let grad = 0, cnt = 0; for (let y = 1; y < h - 1; y += 1) for (let x = 1; x < w - 1; x += 1) { const i = y * w + x; grad += Math.abs(4 * g[i] - g[i - 1] - g[i + 1] - g[i - w] - g[i + w]); cnt++; }
+  const contrast = Math.max(1, p95 - p5), sharp = grad / cnt / contrast;
+  // Éclairage inégal : papier clair par zones (grille 4 × 4)
+  const G = 4, cells = [];
+  for (let gy = 0; gy < G; gy++) for (let gx = 0; gx < G; gx++) { const c = []; for (let y = Math.floor(gy * h / G); y < Math.floor((gy + 1) * h / G); y++) for (let x = Math.floor(gx * w / G); x < Math.floor((gx + 1) * w / G); x++) c.push(g[y * w + x]); c.sort((a, b) => a - b); cells.push(c[Math.floor(c.length * 0.85)]); }
+  const mx = Math.max(...cells), paper = cells.filter(v => v > mx * 0.4), uneven = paper.length >= 6 && (Math.max(...paper) - Math.min(...paper)) / Math.max(1, mx) > 0.3;
+  const m = { light: p90, contrast, sharp: Math.round(sharp * 1000) / 1000, glare: sat / n, uneven };
+  const dark = p90 < 105, veryDark = p90 < 75, glare = sat / n > 0.3, flat = contrast < 55, blur = sharp < 0.12, veryBlur = sharp < 0.06;
+  const tips = [];
+  if (veryDark) tips.push('Beaucoup trop sombre : allume la lumière ou approche-toi d\'une fenêtre.'); else if (dark) tips.push('Un peu sombre : ajoute de la lumière (fenêtre, lampe).');
+  if (glare) tips.push('Trop de lumière ou un reflet : éloigne le flash, incline légèrement la page.');
+  if (uneven && !dark) tips.push('Ombre sur la page : écarte-toi pour que ton ombre ne tombe pas dessus.');
+  if (veryBlur) tips.push('Image floue : tiens le téléphone bien immobile et attends la mise au point.'); else if (blur) tips.push('Légèrement flou : stabilise le téléphone, ou recule un peu.');
+  if (flat && !dark && !glare && !blur) tips.push('Contraste faible : pose la page sur un fond uni et plus foncé.');
+  const bad = veryDark || veryBlur || (glare && sat / n > 0.45), warn = tips.length > 0;
+  return { level: bad ? 'bad' : warn ? 'warn' : 'good', metrics: m, tips, checks: { light: veryDark || dark || glare ? (veryDark || sat / n > 0.45 ? 'bad' : 'warn') : 'good', sharp: veryBlur ? 'bad' : blur ? 'warn' : 'good', even: uneven ? 'warn' : 'good' } };
+}
+/*CADRE-FIN*/
+// Caméra guidée : cadre, mesure en direct de la lumière, de la netteté et des ombres ; renvoie un fichier image ou null (annulé), 'indispo' si la caméra n'est pas utilisable.
+function guidedCamera() {
+  return new Promise(resolve => {
+    const dlg = $('#gc-dialog'), vid = $('#gc-video'), chip = $('#gc-chip'), stage = $('#gc-stage'), snap = $('#gc-snap'), meters = $('#gc-meters');
+    if (!dlg || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return resolve('indispo');
+    let stream = null, done = false, timer = null, last = null; const cv = document.createElement('canvas');
+    const finish = v => { if (done) return; done = true; clearInterval(timer); if (stream) stream.getTracks().forEach(t => t.stop()); vid.srcObject = null; if (dlg.open) dlg.close(); resolve(v); };
+    const LBL = { good: 'bon', warn: 'à améliorer', bad: 'insuffisant' };
+    const tick = () => {
+      if (!vid.videoWidth) return;
+      const w = 480, h = Math.round(480 * vid.videoHeight / vid.videoWidth); cv.width = w; cv.height = h;
+      const x = cv.getContext('2d', { willReadFrequently: true }); x.drawImage(vid, 0, 0, w, h);
+      const d = x.getImageData(Math.round(w * 0.09), Math.round(h * 0.06), Math.round(w * 0.82), Math.round(h * 0.88)), n = d.width * d.height, g = new Uint8Array(n);
+      for (let i = 0; i < n; i++) g[i] = (d.data[i * 4] * 77 + d.data[i * 4 + 1] * 150 + d.data[i * 4 + 2] * 29) >> 8;
+      last = frameQuality(g, d.width, d.height); stage.dataset.lv = last.level;
+      chip.textContent = last.level === 'good' ? 'Parfait : ne bouge plus et prends la photo' : last.tips[0];
+      meters.innerHTML = [['Lumière', last.checks.light], ['Netteté', last.checks.sharp], ['Ombres', last.checks.even]].map(([k, v]) => `<span data-s="${v}">${k} : ${LBL[v]}</span>`).join('');
+      snap.textContent = last.level === 'bad' ? 'Prendre quand même' : 'Prendre la photo';
+    };
+    dlg.onclose = () => finish(null); $('#gc-cancel').onclick = () => finish(null);
+    chip.textContent = 'Ouverture de la caméra…'; stage.dataset.lv = 'warn'; meters.innerHTML = ''; snap.disabled = true;
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 2560 }, height: { ideal: 1920 } }, audio: false }).then(st => {
+      if (done) { st.getTracks().forEach(t => t.stop()); return; }
+      stream = st; vid.srcObject = st; vid.play().catch(() => {});
+      vid.onloadeddata = () => { snap.disabled = false; tick(); timer = setInterval(tick, 450); };
+    }).catch(() => { if (!done) { done = true; if (dlg.open) dlg.close(); resolve('indispo'); } });
+    snap.onclick = () => {
+      if (!vid.videoWidth) return;
+      const k = Math.min(1, 2400 / Math.max(vid.videoWidth, vid.videoHeight)), c = document.createElement('canvas'); c.width = Math.round(vid.videoWidth * k); c.height = Math.round(vid.videoHeight * k);
+      c.getContext('2d').drawImage(vid, 0, 0, c.width, c.height);
+      c.toBlob(b => finish(b ? new File([b], 'photo.jpg', { type: 'image/jpeg' }) : null), 'image/jpeg', 0.92);
+    };
+  });
+}
 const getPaies = () => store.get(KEYS.paies, []);
 let paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages: [] };
 function renderPaie(box) {
@@ -3697,6 +3786,12 @@ function renderPaie(box) {
     renderPaie(box); toast(paie$.pages.length > 1 ? `${paie$.pages.length} pages ajoutées : ajoute la suite ou lance l'analyse` : 'Page ajoutée : ajoute la suite si besoin, puis lance l\'analyse');
     const g = $('#paie-go'); if (g) g.scrollIntoView({ block: 'center' });
   };
+  $('#paie-cam').addEventListener('click', async e => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    e.preventDefault(); const f = await guidedCamera();
+    if (f === 'indispo') { toast("Caméra indisponible : utilise « Importer photos ou PDF »"); return; }
+    if (f) { track('cadre_guide'); onFiles([f]); }
+  });
   $('#paie-cam').addEventListener('change', e => { onFiles(e.target.files); e.target.value = ''; });
   $('#paie-file').addEventListener('change', e => { onFiles(e.target.files); e.target.value = ''; });
   const dec = $('#paie-declared'); if (dec) dec.addEventListener('input', () => { paie$.declared = dec.value; const i2 = payslipInsights(paie$.p, dec.value === '' ? null : parseFloat(dec.value.replace(',', '.'))); $('#paie-ins').innerHTML = insightsHTML(i2.filter(i => PAIE_HS_RE.test(i.text))); });
@@ -4409,6 +4504,12 @@ $('#sample-btn').addEventListener('click', () => {
 $('#decode-btn').addEventListener('click', runDecode);
 $('#clear-btn').addEventListener('click', resetInput);
 $('#letter-input').addEventListener('input', e => { $('#clear-btn').hidden = !e.target.value; });
+$('#cam-input').addEventListener('click', async e => {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  e.preventDefault(); const f = await guidedCamera();
+  if (f === 'indispo') { toast("Caméra indisponible : utilise « Importer photo ou PDF »"); return; }
+  if (f) { track('cadre_guide'); handleFiles([f]); }
+});
 $('#cam-input').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
 $('#file-input').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
 // Glisser-déposer : une photo ou un PDF déposé sur la page est lu comme s'il avait été importé.
