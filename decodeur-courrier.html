@@ -6,6 +6,13 @@
 <title>Paperdecrypt : courriers, remboursements, garanties | QuenTools</title>
 <meta name="google-adsense-account" content="ca-pub-9406894983294380">
 <meta name="description" content="Prends ton courrier administratif en photo : on t'explique ce qu'on te demande, avant quand, et on t'aide à répondre. Tout reste sur ton appareil, sauf si tu te connectes avec Google pour le retrouver partout.">
+<link rel="manifest" href="decodeur.webmanifest">
+<link rel="apple-touch-icon" href="assets/paperdecrypt/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Paperdecrypt">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#18233A">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✉️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -341,6 +348,7 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .paie-t th,.paie-t td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:.98rem}
 .paie-t td{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .paie-t td.strong{font-weight:800}
+.install{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--sheet);border:1px solid var(--line);border-left:4px solid var(--focus);border-radius:10px;padding:10px 14px;margin:8px 0}.install p{margin:0;flex:1 1 220px}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}.two-col h3{font-size:1rem;margin:8px 0 4px}@media(max-width:640px){.two-col{grid-template-columns:1fr}}
 .field.douteux input{border:2px dashed var(--warn,#b7791f)}
 .pages{list-style:none;margin:10px 0;padding:0;display:grid;gap:6px}
@@ -360,6 +368,7 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 </head>
 <body>
 <div class="wrap">
+  <div class="install" id="install" hidden role="region" aria-label="Installer Paperdecrypt"><p id="install-text"></p><div class="actions"><button class="btn small" id="install-go" type="button" hidden>Installer</button><button class="link" id="install-close" type="button">Plus tard</button></div></div>
   <header class="top">
     <div class="brand">
       <h1>Paperdecrypt</h1>
@@ -5400,6 +5409,23 @@ renderList(); renderReminders(); notifyUrgent();
 updatePill(); gpuReady.then(updatePill);
 
 // Exposé pour les tests
+// Application installable (iPhone : Partager → Sur l'écran d'accueil ; Android et ordinateur : bouton Installer) et mode hors connexion
+(function () {
+  try { if ('serviceWorker' in navigator && /^(https:|http:\/\/localhost)/.test(location.href)) navigator.serviceWorker.register('decodeur-sw.js', { scope: new URL('decodeur-courrier.html', location.href).pathname }).catch(() => {}); } catch (e) { /* hors connexion ou navigateur sans prise en charge */ }
+  const box = document.getElementById('install'); if (!box) return;
+  const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  let closed = false; try { closed = localStorage.getItem('qt-paperasse:install-ferme') === '1'; } catch (e) { /* stockage indisponible */ }
+  if (standalone || closed) return;
+  const txt = document.getElementById('install-text'), go = document.getElementById('install-go');
+  const show = m => { txt.textContent = m; box.hidden = false; };
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (ios) show("Installe Paperdecrypt sur ton iPhone : appuie sur le bouton Partager (le carré avec une flèche), puis sur « Sur l'écran d'accueil ». Il s'ouvrira comme une application.");
+  let deferred = null;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; show("Installe Paperdecrypt sur cet appareil : il s'ouvrira comme une application, même sans connexion."); go.hidden = false; });
+  go.addEventListener('click', async () => { if (!deferred) return; deferred.prompt(); try { await deferred.userChoice; } catch (e) { /* ignoré */ } deferred = null; box.hidden = true; });
+  document.getElementById('install-close').addEventListener('click', () => { box.hidden = true; try { localStorage.setItem('qt-paperasse:install-ferme', '1'); } catch (e) { /* ignoré */ } });
+  window.addEventListener('appinstalled', () => { box.hidden = true; });
+})();
 window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, cleanOCR, estimateSkew, rotateCanvas, lightingUneven, adaptiveBinarize, findDates, paieAnswer, paieSetPages: pages => { paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages }; tools$ = { view: 'paie' }; showTab('tools'); }, applyPaieFix, textScore, fileToCanvas, buildEdlHTML, geoDist, readReceipt, parsePayslip, payslipInsights, looksLikePayslip, PAIE_SAMPLE };
 })();
 </script>

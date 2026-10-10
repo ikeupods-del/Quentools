@@ -104,6 +104,18 @@ ko+=ko3;
   const Q=g=>c2.frameQuality(Uint8Array.from(g,v=>Math.max(0,Math.min(255,Math.round(v)))),W,H),P=page();
   const cas=[['page nette et éclairée',Q(P).level==='good'],['page sombre signalée',Q(P.map(v=>v*.3)).tips.some(t=>/sombre/.test(t))],['reflet signalé',Q(P.map(v=>v>100?255:v)).level==='bad'],['ombre signalée',Q(P.map((v,i)=>(i%W)<W/2?v:v*.55)).tips.some(t=>/Ombre/.test(t))],['flou signalé',Q(blur(P,3)).tips.some(t=>/flou/.test(t))]];
   cas.forEach(([n,okk])=>{if(!okk){ko++;console.log('✗ cadre guide : '+n);}}); if(cas.every(x=>x[1]))console.log('✓ cadre guide : '+cas.length+' contrôles de qualité d\'image'); }
+// Application installable (iPhone, Android, ordinateur) : manifeste, icônes, mode hors connexion
+{ const fs2=require('fs'), path2=require('path'), root=path2.join(__dirname,'..'); let ko4=0; const chk4=(n,c)=>{ if(!c){ko4++;console.log('✗ application installable : '+n);} };
+  let man=null; try{ man=JSON.parse(fs2.readFileSync(path2.join(root,'decodeur.webmanifest'),'utf8')); }catch(e){ chk4('manifeste lisible',false); }
+  if(man){ chk4('nom, mode plein écran, couleurs', man.name==='Paperdecrypt'&&man.display==='standalone'&&/^#[0-9A-Fa-f]{6}$/.test(man.theme_color)&&/^#[0-9A-Fa-f]{6}$/.test(man.background_color));
+    chk4('page de départ existante dans le périmètre', fs2.existsSync(path2.join(root,man.start_url.split('?')[0]))&&man.start_url.startsWith(man.scope));
+    chk4('icônes 192, 512 et masquable présentes', ['192x192','512x512'].every(z=>man.icons.some(i=>i.sizes===z&&i.purpose==='any'))&&man.icons.some(i=>i.purpose==='maskable')&&man.icons.every(i=>fs2.existsSync(path2.join(root,i.src)))); }
+  chk4('icône iPhone 180 présente', fs2.existsSync(path2.join(root,'assets/paperdecrypt/icon-180.png')));
+  chk4('page : manifeste, icône iPhone, mode application', /rel="manifest" href="decodeur.webmanifest"/.test(src)&&/rel="apple-touch-icon" href="assets\/paperdecrypt\/icon-180.png"/.test(src)&&/apple-mobile-web-app-capable/.test(src)&&/theme-color/.test(src));
+  const sw=fs2.readFileSync(path2.join(root,'decodeur-sw.js'),'utf8');
+  chk4('mode hors connexion : jamais les services externes ni les données', /origin !== self\.location\.origin\) return/.test(sw)&&!/indexedDB|localStorage/.test(sw));
+  chk4('publication : manifeste et mode hors connexion copiés', /decodeur\.webmanifest decodeur-sw\.js/.test(fs2.readFileSync(path2.join(root,'.github/workflows/pages.yml'),'utf8')));
+  if(!ko4) console.log('✓ application installable : manifeste, icônes et mode hors connexion en place'); ko+=ko4; }
 { const r=require('child_process').spawnSync(process.execPath,[require('path').join(__dirname,'essai-paie.js')],{encoding:'utf8'}); process.stdout.write(r.stdout); if(r.status) ko++; }
 { const r=require('child_process').spawnSync(process.execPath,[require('path').join(__dirname,'essai-lecture-paie.js')],{encoding:'utf8'}); process.stdout.write(r.stdout); if(r.status) ko++; }
 console.log(ko ? `✗ ${ko} cas en erreur sur ${CAS.length}` : `✓ Paperdecrypt : ${CAS.length} lectures de montants correctes`);

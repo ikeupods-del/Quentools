@@ -2,7 +2,8 @@
 const { chromium } = require(process.env.PW || '/opt/node-tools/node_modules/playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
-const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); } else { r.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : 'application/octet-stream' }); r.end(d); } }); }).listen(8766);
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.css': 'text/css' };
+const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); } else { r.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream' }); r.end(d); } }); }).listen(8766);
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true, permissions: ['camera', 'geolocation'], geolocation: { latitude: 45.76405, longitude: 4.83572, accuracy: 12 } });
@@ -183,6 +184,20 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
       await pg.fill('[data-val=brut]', '2330,93'); await pg.click('#paie-valid-go'); await pg.waitForSelector('#paie-res .paie-t');
       ok(/2\s?330,93/.test(await pg.innerText('#paie-res .paie-t')), 'PDF douteux : la valeur corrigée est celle analysée');
     }
+  }
+  // 5d3 application installable : fichier d'installation, mode hors connexion, invitation sur iPhone
+  {
+    const ic = await b.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'allow', userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' });
+    const ip = await ic.newPage(); await ip.route(/googlesyndication|gstatic|jsdelivr|googleapis/, r => r.abort());
+    await ip.goto('http://localhost:8766/decodeur-courrier.html'); await ip.waitForSelector('#install:not([hidden])');
+    ok(/Sur l'écran d'accueil/.test(await ip.innerText('#install')), "iPhone : invitation à installer (Partager → Sur l'écran d'accueil)");
+    const mres = await ip.evaluate(async () => { const href = document.querySelector('link[rel=manifest]').href, r = await fetch(href), j = await r.json(); const ics = await Promise.all(j.icons.map(i => fetch(new URL(i.src, href)).then(x => x.status))); return { st: r.status, name: j.name, ics }; });
+    ok(mres.st === 200 && mres.name === 'Paperdecrypt' && mres.ics.every(x => x === 200), 'application : manifeste et icônes servis');
+    await ip.evaluate(() => navigator.serviceWorker.ready); await ip.reload(); await ip.waitForFunction(() => navigator.serviceWorker.controller);
+    await ic.setOffline(true); await ip.reload(); await ip.waitForSelector('h1');
+    ok(/Paperdecrypt/.test(await ip.innerText('h1')), "application : la page s'ouvre sans connexion");
+    await ic.setOffline(false); await ip.click('#install-close'); await ip.reload(); await ip.waitForSelector('h1');
+    ok(await ip.isHidden('#install'), 'invitation : « Plus tard » est retenu'); await ic.close();
   }
   // 5e mémoire des corrections
   await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
