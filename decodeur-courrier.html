@@ -2305,7 +2305,9 @@ const MODELS = {
 const gpu = { ok: false, f16: false, checked: false };
 const gpuReady = (async () => {
   try {
-    if (navigator.gpu) {
+    // iPhone et iPad : l'assistant ne tient pas dans la mémoire d'une page web, on reste sur la lecture classique
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (navigator.gpu && !ios) {
       const ad = await navigator.gpu.requestAdapter();
       if (ad) { gpu.ok = true; gpu.f16 = ad.features && ad.features.has('shader-f16'); }
     }
