@@ -52,6 +52,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 .count{display:inline-block;min-width:1.4em;padding:0 .35em;margin-left:6px;border-radius:999px;background:var(--mark);color:var(--mark-ink);font-size:.8rem}
 
 /* Feuilles */
+.sheet.drop-on{outline:3px dashed var(--focus);outline-offset:-6px}
 .sheet{background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:22px}
 .input-sheet h2{margin:0 0 6px;font-size:1.45rem;line-height:1.2}
 .lead{margin:0 0 18px;color:var(--muted);max-width:60ch}
@@ -313,7 +314,7 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
           <input class="sr" type="file" id="cam-input" accept="image/*" capture="environment">
           <label class="btn ghost" for="file-input">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Importer photo ou PDF
+            Importer photo ou PDF<span class="t-long"> (ou glisse-le ici)</span>
           </label>
           <input class="sr" type="file" id="file-input" accept="image/*,application/pdf" multiple>
           <button class="link" id="sample-btn" type="button">Voir un exemple</button>
@@ -578,6 +579,51 @@ function openPremium(reason) {
 const addMonths = (d, n) => { const x = new Date(d); const day = x.getDate(); x.setMonth(x.getMonth() + n); if (x.getDate() < day) x.setDate(0); return x; };
 const parseDay = s => s ? new Date(s + 'T00:00:00') : null;
 const isoDay = d => { const x = new Date(d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+/* ---------- Lecture des montants : HT, TVA et TTC ---------- */
+// Un particulier paie toujours le TTC. Chaque montant est étiqueté d'après les mots voisins sur la même ligne
+// (« Total HT », « TVA 20 % », « 120,00 € TTC »…), puis on retient la somme réellement due.
+const AM_RE = /(\d{1,3}(?:[ \u00a0\u202f.]\d{3})+|\d+)(?:[,.](\d{1,2}))?\s?(?:€|euros?\b|eur\b)/gi;
+const TAG_RE = /(^|[^a-z0-9])(?:(t\.?\s?t\.?\s?c\.?|toutes? taxes? comprises?|taxes? comprises?)|(t\.?\s?v\.?\s?a\.?|taxe sur la valeur ajoutee)|(h\.?\s?t\.?|hors[ -]?taxes?|net de taxes?))(?![a-z0-9])/g;
+const lastTag = seg => { let r = null, m; TAG_RE.lastIndex = 0; while ((m = TAG_RE.exec(seg))) { r = m[2] ? 'ttc' : m[3] ? 'tva' : 'ht'; TAG_RE.lastIndex = m.index + Math.max(1, m[0].length - 1); } return r; };
+const adjTag = after => { TAG_RE.lastIndex = 0; const m = TAG_RE.exec(' ' + after.replace(/^\s*(?:[\/(-]\s*)?/, '').slice(0, 24)); return m && m.index === 0 ? (m[2] ? 'ttc' : m[3] ? 'tva' : 'ht') : null; };
+function scanAmounts(flat) {
+  const list = []; let m, prevEnd = 0;
+  AM_RE.lastIndex = 0;
+  while ((m = AM_RE.exec(flat))) {
+    const v = parseFloat(m[1].replace(/[ \u00a0\u202f.]/g, '') + '.' + (m[2] || '0'));
+    const end = m.index + m[0].length;
+    if (!isFinite(v) || v <= 0) { prevEnd = end; continue; }
+    const ls = flat.lastIndexOf('\n', m.index - 1) + 1;
+    const le0 = flat.indexOf('\n', end), le = le0 < 0 ? flat.length : le0;
+    const before = norm(flat.slice(Math.max(ls, prevEnd, m.index - 70), m.index));
+    const after = norm(flat.slice(end, Math.min(le, end + 28)));
+    let kind = lastTag(before.slice(-45));
+    if (!kind || /[\/|;]\s*$/.test(before)) kind = adjTag(after) || kind;
+    if (!kind && !before.trim() && ls > 0) { const prev = flat.lastIndexOf('\n', ls - 2) + 1; kind = lastTag(norm(flat.slice(prev, ls))); }
+    let score = 0;
+    if (/(montant|somme|total|a payer|a regler|reste|solde|indu|dette|trop[- ]percu|rembourser|amende|reclame|due?\b|impaye)/.test(before)) score += 2;
+    if (/(net a payer|total a payer|reste a payer|a regler|montant du|montant a payer|solde a payer)/.test(before)) score += 3;
+    if (/(sous-total|sous total|acompte|remise|frais de)/.test(before)) score -= 2;
+    if (kind === 'ttc') score += 3; else if (kind === 'ht') score -= 3; else if (kind === 'tva') score -= 6;
+    list.push({ value: v, str: m[0], score, kind });
+    prevEnd = end;
+  }
+  const byScore = (x, y) => y.score - x.score || y.value - x.value;
+  list.sort(byScore);
+  const of = k => list.filter(x => x.kind === k).sort((x, y) => y.value - x.value)[0] || null;
+  const ht = of('ht'), ttc = of('ttc'), tva = list.filter(x => x.kind === 'tva').sort((x, y) => y.value - x.value)[0] || null;
+  const rm = /t\.?v\.?a\.?[^\d%\n]{0,14}(\d{1,2}(?:[,.]\d{1,2})?)\s?%/i.exec(norm(flat));
+  const rate = rm ? parseFloat(rm[1].replace(',', '.')) : null;
+  let est = null, estimated = false;
+  if (!ttc && ht && tva && tva.value < ht.value) est = Math.round((ht.value + tva.value) * 100) / 100;
+  else if (!ttc && ht && rate && rate < 30) { est = Math.round(ht.value * (1 + rate / 100) * 100) / 100; estimated = true; }
+  let best = list[0] || null;
+  // Si le meilleur candidat est un montant hors taxes alors que le TTC se déduit, on propose le TTC.
+  if (best && best.kind === 'ht' && est) best = { value: est, str: '', kind: 'ttc', derived: true, estimated };
+  if (best && best.kind === 'tva' && ttc) best = ttc;
+  return { list, best, ht: ht && ht.value, tva: tva && tva.value, ttc: (ttc && ttc.value) || est, rate, estimated };
+}
+const kindLabel = k => k === 'ttc' ? ' TTC' : k === 'ht' ? ' HT' : '';
 const money = v => (v || v === 0) && isFinite(v) ? fmtMoney(Math.round(v * 100) / 100) : '[montant]';
 function makeICS({ date, summary, desc, alarms }) {
   const p = n => String(n).padStart(2, '0'), ymd = x => x.getFullYear() + p(x.getMonth() + 1) + p(x.getDate());
@@ -747,6 +793,12 @@ const TYPES = [
     actions: ['Vérifie si tu as déjà payé (relevés bancaires). Si oui, envoie la preuve.', 'Sinon, paye avant la date indiquée ou demande un échéancier.', 'Si la somme te paraît fausse, demande le détail par écrit.'],
     risque: 'Des frais ou pénalités de retard, puis une mise en demeure.',
     intents: ['deja_paye', 'delai', 'contester', 'explications'] },
+  { id: 'facture', label: 'Facture à payer', level: 1,
+    kw: ['facture n', 'facture no', 'numero de facture', 'net a payer', 'total ttc', 'montant ttc', 'total a payer', "date d'echeance", 'echeance de paiement', 'a regler avant', 'reglement a reception', 'conditions de paiement'],
+    resume: "C'est une facture : elle indique ce que tu dois payer, à qui, et avant quelle date.",
+    actions: ["Regarde le montant TTC : c'est la somme que tu paies vraiment (le HT est avant taxes).", "Vérifie que la facture correspond bien à ce que tu as commandé ou reçu.", "Paye avant la date d'échéance, et garde la facture : elle sert de preuve et de justificatif de garantie."],
+    risque: "Des pénalités de retard, puis une relance et une mise en demeure.",
+    intents: ['deja_paye', 'delai', 'contester', 'explications'] },
   { id: 'pieces', label: 'Documents à envoyer', level: 2,
     kw: ['pieces justificatives', 'piece justificative', 'justificatif', 'justificatifs', 'merci de nous transmettre', 'merci de nous faire parvenir', 'nous faire parvenir', 'documents manquants', 'dossier incomplet', 'completer votre dossier', 'nous retourner', 'renvoyer le formulaire', 'questionnaire', 'declaration de ressources', 'declaration trimestrielle', 'documents suivants'],
     resume: 'On te demande d\'envoyer des documents ou de compléter un dossier.',
@@ -896,19 +948,9 @@ function analyze(raw) {
   deadline = pickEarliest(abs.filter(x => !x.recours)) || pickEarliest(rel.filter(x => !x.recours));
   const recoursDl = pickEarliest(abs.filter(x => x.recours)) || pickEarliest(rel.filter(x => x.recours));
 
-  // Montants
-  const amounts = [];
-  const amRe = /(\d{1,3}(?:[ \u00a0\u202f.]\d{3})+|\d+)(?:,(\d{1,2}))?\s?(?:€|euros?\b|eur\b)/gi;
-  while ((m = amRe.exec(flat))) {
-    const v = parseFloat(m[1].replace(/[ \u00a0\u202f.]/g, '') + '.' + (m[2] || '0'));
-    if (!isFinite(v) || v <= 0) continue;
-    const before = norm(flat.slice(Math.max(0, m.index - 70), m.index));
-    let score = 0;
-    if (/(montant|somme|total|a payer|a regler|reste|solde|indu|dette|trop[- ]percu|rembourser|amende|reclame|due?\b|impaye)/.test(before)) score += 2;
-    amounts.push({ value: v, str: m[0], score });
-  }
-  amounts.sort((a, b) => b.score - a.score || b.value - a.value);
-  const amount = amounts[0] || null;
+  // Montants (hors taxes, TVA ou toutes taxes comprises)
+  const taxes = scanAmounts(flat);
+  const amount = taxes.best;
 
   // Références
   const refs = [];
@@ -946,7 +988,7 @@ function analyze(raw) {
 
   const docs = extractDocs(flat, sentences);
   const terms = GLOSSARY.filter(g => g.re.test(n)).slice(0, 8);
-  const a = { raw: text, flat, org, type, letterDate, deadline, recoursDl, amount, refs, emails, sites, phones, requests, recours, scam, docs, docsDone: [], docsFromAI: false, terms };
+  const a = { raw: text, flat, org, type, letterDate, deadline, recoursDl, amount, taxes, refs, emails, sites, phones, requests, recours, scam, docs, docsDone: [], docsFromAI: false, terms };
   a.level = computeLevel(a);
   return a;
 }
@@ -1055,7 +1097,11 @@ function brief(a) {
     else if (dd === 1) s.push(`Tu as jusqu'à demain${todo ? ' pour ' + todo : ''}${est}.`);
     else s.push(`Tu as jusqu'au ${fmtDate(a.deadline.date)}${todo ? ' pour ' + todo : ''}, soit encore ${dd} jours${est}.`);
   } else if (todo) s.push('Ce que tu dois faire : ' + todo + '.');
-  if (a.amount) s.push('Le montant en jeu est de ' + fmtMoney(a.amount.value) + '.');
+  if (a.amount) {
+    const k = a.amount.kind;
+    if (k === 'ht') s.push('Le montant repéré est de ' + fmtMoney(a.amount.value) + ' HT, donc avant taxes : la somme à payer est plus élevée (TVA en plus). Cherche le total TTC sur le courrier.');
+    else s.push('Le montant en jeu est de ' + fmtMoney(a.amount.value) + (k === 'ttc' ? ' TTC' : '') + (a.amount.estimated ? ' (estimé d\'après le montant HT et la TVA)' : '') + '.');
+  }
   if (a.docs.length) s.push(a.docs.length === 1 ? 'Il y a un document à fournir.' : `Il y a ${a.docs.length} documents à fournir.`);
   s.push('Si tu ne fais rien : ' + lowerFirst(a.type.risque));
   return s.join(' ');
@@ -1070,9 +1116,18 @@ const QUICK = [
   { k: 'contester', q: 'Comment contester ?' },
   { k: 'contact', q: 'Qui contacter ?' }
 ];
+function amountAnswer(a) {
+  const t = a.taxes || {}, k = a.amount.kind, f = fmtMoney;
+  let r = `Le montant repéré est de ${f(a.amount.value)}${kindLabel(k)}.`;
+  if (k === 'ttc') r += ' C\'est le montant toutes taxes comprises, celui que tu dois payer.' + (t.ht ? ` Il comprend ${f(t.ht)} hors taxes${t.tva ? ' et ' + f(t.tva) + ' de TVA' : ''}.` : '');
+  else if (k === 'ht') r += ' C\'est un montant hors taxes : la TVA s\'ajoute, donc tu paieras plus. Cherche la ligne « total TTC » ou « net à payer » sur le courrier.';
+  else r += ' Le courrier ne précise pas s\'il s\'agit du HT ou du TTC : vérifie sur le document, en général la somme à payer est celle qui suit « total TTC », « net à payer » ou « montant dû ».';
+  if (a.amount.estimated) r += ' Le TTC est calculé d\'après le HT et le taux de TVA lus : vérifie-le.';
+  return r;
+}
 function quickAnswer(k, a) {
   switch (k) {
-    case 'montant': return a.amount ? `Le montant repéré est de ${fmtMoney(a.amount.value)}. Vérifie-le sur le courrier : s'il y a plusieurs sommes, c'est en général celle qui suit « montant », « total » ou « à payer ».` : "Je n'ai pas trouvé de montant à payer dans ce courrier. Il ne te demande peut-être pas d'argent.";
+    case 'montant': return a.amount ? amountAnswer(a) : "Je n'ai pas trouvé de montant à payer dans ce courrier. Il ne te demande peut-être pas d'argent.";
     case 'date': {
       if (!a.deadline) return "Je n'ai pas trouvé de date limite. Ça ne veut pas dire qu'il n'y en a pas : relis les passages surlignés, et en cas de doute, réponds dans les 15 jours.";
       const dd = daysUntil(a.deadline.date);
@@ -1106,7 +1161,7 @@ function buildLetter(intent, a) {
   const ville = me.ville || '[Ta ville]';
   const dest = a.org ? a.org.nom.replace(/^(La|Le|Les|L'|Un|Une|Ton|Ta|Tes) /, '') : "[Nom de l'organisme]";
   const dCourrier = a.letterDate ? 'du ' + fmtDate(a.letterDate.date) : 'du [date du courrier]';
-  const montant = a.amount ? fmtMoney(a.amount.value) : '[montant]';
+  const montant = a.amount ? fmtMoney(a.amount.value) + kindLabel(a.amount.kind) : '[montant]';
   const refLines = a.refs.map(r => r.label + ' : ' + r.value).join('\n');
   let objet = '', corps = '', lrar = false;
 
@@ -1181,7 +1236,7 @@ function applyOverrides(a, ov) {
   if (ov.org !== undefined) a.org = ORGS.find(o => o.id === ov.org) || null;
   if (ov.type) a.type = TYPES.find(t => t.id === ov.type) || TYPE_INFO;
   if (ov.deadline !== undefined) a.deadline = ov.deadline ? { date: new Date(ov.deadline), str: fmtDate(new Date(ov.deadline)), approx: false, manual: true } : null;
-  if (ov.amount !== undefined) a.amount = ov.amount ? { value: ov.amount, str: '' } : null;
+  if (ov.amount !== undefined) a.amount = ov.amount ? { value: ov.amount, str: '', kind: ov.kind || null } : null;
   a.ov = ov;
   a.level = computeLevel(a);
   return a;
@@ -1196,7 +1251,13 @@ const docsHTML = a => a.docs.length ? `
 function factsHTML(a) {
   const facts = [];
   if (a.deadline) facts.push(['Date limite', fmtDate(a.deadline.date) + (a.deadline.approx ? ' (estimée)' : '')]);
-  if (a.amount) facts.push(['Montant', fmtMoney(a.amount.value)]);
+  if (a.amount) {
+    const k = a.amount.kind, t = a.taxes || {};
+    facts.push([k === 'ttc' ? 'Montant TTC (à payer)' : k === 'ht' ? 'Montant HT (avant taxes)' : 'Montant', fmtMoney(a.amount.value) + (a.amount.estimated ? ' (estimé)' : '')]);
+    if (k === 'ttc' && t.ht) facts.push(['Dont montant HT', fmtMoney(t.ht)]);
+    if (k === 'ttc' && t.tva) facts.push(['Dont TVA', fmtMoney(t.tva)]);
+    if (k === 'ht' && t.tva) facts.push(['TVA', fmtMoney(t.tva)]);
+  }
   if (a.letterDate) facts.push(['Courrier du', fmtDate(a.letterDate.date)]);
   a.refs.forEach(x => facts.push([x.label, x.value]));
   let note = '';
@@ -1214,6 +1275,7 @@ function factsHTML(a) {
       <label class="field"><span>Type de courrier</span><select id="fix-type">${[...TYPES, TYPE_INFO].map(t => `<option value="${t.id}" ${a.type.id === t.id ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</select></label>
       <label class="field"><span>Date limite</span><input type="date" id="fix-date" value="${iso}"></label>
       <label class="field"><span>Montant en euros</span><input type="number" id="fix-amount" min="0" step="0.01" inputmode="decimal" value="${a.amount ? a.amount.value : ''}"></label>
+      <label class="field"><span>Ce montant est…</span><select id="fix-kind"><option value="">Non précisé</option><option value="ttc" ${a.amount && a.amount.kind === 'ttc' ? 'selected' : ''}>TTC (toutes taxes comprises, ce que je paie)</option><option value="ht" ${a.amount && a.amount.kind === 'ht' ? 'selected' : ''}>HT (hors taxes)</option></select></label>
       <div class="actions"><button class="btn small" id="fix-apply" type="button">Appliquer</button><button class="link" id="fix-cancel" type="button">Annuler</button></div>
     </div>`;
 }
@@ -1376,7 +1438,7 @@ function bindFacts() {
   $('#fix-cancel').addEventListener('click', () => { panel.hidden = true; fb.setAttribute('aria-expanded', 'false'); });
   $('#fix-apply').addEventListener('click', () => {
     const d = $('#fix-date').value, amt = parseFloat($('#fix-amount').value);
-    const ov = { org: $('#fix-org').value, type: $('#fix-type').value, deadline: d ? new Date(d + 'T00:00:00').toISOString() : null, amount: isFinite(amt) && amt > 0 ? amt : null };
+    const ov = { org: $('#fix-org').value, type: $('#fix-type').value, deadline: d ? new Date(d + 'T00:00:00').toISOString() : null, amount: isFinite(amt) && amt > 0 ? amt : null, kind: $('#fix-kind').value || null };
     const a = applyOverrides(analyze(current.raw), ov);
     a.docs = current.docs; a.docsFromAI = current.docsFromAI; a.docsDone = current.docsDone;
     const id = currentId;
@@ -1554,7 +1616,7 @@ function saveCurrent(silent) {
     org: current.org ? current.org.court : 'Expéditeur inconnu',
     type: current.type.label, level: current.level,
     deadline: current.deadline ? current.deadline.date.toISOString() : null,
-    amount: current.amount ? current.amount.value : null,
+    amount: current.amount ? current.amount.value : null, amountKind: current.amount ? current.amount.kind || null : null,
     text: current.raw, ov: current.ov || null,
     docs: current.docsFromAI ? current.docs : null, docsDone: current.docsDone || [],
     done: prev ? prev.done : false
@@ -1593,7 +1655,7 @@ function renderList() {
       const when = x.done ? 'Traité' : x.deadline ? `Avant le ${fmtShort(new Date(x.deadline))}, ${relDays(dd)}` : 'Pas de date limite';
       const docs = x.docsDone && x.docsDone.length ? ` | ${x.docsDone.length} document${x.docsDone.length > 1 ? 's' : ''} prêt${x.docsDone.length > 1 ? 's' : ''}` : '';
       return `<article class="item l${Math.min(x.level, 3)}${x.done ? ' done' : ''}">
-        <div><h3>${esc(x.org)} : ${esc(x.type)}</h3><p><span class="when">${esc(when)}</span>${x.amount ? ' | ' + esc(fmtMoney(x.amount)) : ''}${esc(docs)}</p></div>
+        <div><h3>${esc(x.org)} : ${esc(x.type)}</h3><p><span class="when">${esc(when)}</span>${x.amount ? ' | ' + esc(fmtMoney(x.amount) + kindLabel(x.amountKind)) : ''}${esc(docs)}</p></div>
         <div class="row">
           <button class="btn small ghost" data-open="${x.id}" type="button">Ouvrir</button>
           <button class="btn small ghost" data-done="${x.id}" type="button">${x.done ? 'À traiter' : 'Traité'}</button>
@@ -1702,7 +1764,7 @@ function summaryForAI(a) {
   if (a.org) parts.push('Expéditeur probable : ' + a.org.court);
   parts.push('Type probable : ' + a.type.label);
   if (a.deadline) parts.push('Date limite : ' + fmtDate(a.deadline.date) + (a.deadline.approx ? ' (estimée)' : ''));
-  if (a.amount) parts.push('Montant : ' + fmtMoney(a.amount.value));
+  if (a.amount) parts.push('Montant : ' + fmtMoney(a.amount.value) + kindLabel(a.amount.kind));
   if (a.docs.length) parts.push('Documents demandés : ' + a.docs.join(' ; '));
   parts.push("Date d'aujourd'hui : " + fmtDate(new Date()));
   return parts.join('\n');
@@ -2349,10 +2411,9 @@ function renderWForm(box) {
       const t = data.text || '';
       const dates = findDates(t).filter(d => d.date <= new Date());
       if (dates.length && !$('#wf-date').value) $('#wf-date').value = isoDay(dates[0].date);
-      const tot = /(?:total|montant|a payer|à payer|ttc)[^\d\n]{0,20}(\d{1,5}(?:[ .]\d{3})*[,.]\d{2})/i.exec(t);
-      let price = tot ? tot[1] : null;
-      if (!price) { const all = [...t.matchAll(/(\d{1,5}[,.]\d{2})\s?(?:€|eur)/gi)].map(m => m[1]); price = all.sort((a, b) => parseFloat(b.replace(',', '.')) - parseFloat(a.replace(',', '.')))[0]; }
-      if (price && !$('#wf-prix').value) $('#wf-prix').value = parseFloat(price.replace(/[ .](?=\d{3})/g, '').replace(',', '.'));
+      const tx = scanAmounts(t), pick = tx.ttc || (tx.best && tx.best.kind !== 'ht' ? tx.best.value : null) || (tx.best && tx.best.value);
+      const price = pick ? String(pick) : null;
+      if (price && !$('#wf-prix').value) $('#wf-prix').value = parseFloat(price);
       const first = t.split('\n').map(l => l.trim()).find(l => /[A-Za-z]{3,}/.test(l));
       if (first && !$('#wf-store').value) $('#wf-store').value = first.slice(0, 40);
       $('#wf-photo-state').textContent = 'Photo prête. Vérifie les infos lues sur le ticket.';
@@ -2546,6 +2607,19 @@ $('#clear-btn').addEventListener('click', resetInput);
 $('#letter-input').addEventListener('input', e => { $('#clear-btn').hidden = !e.target.value; });
 $('#cam-input').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
 $('#file-input').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
+// Glisser-déposer : une photo ou un PDF déposé sur la page est lu comme s'il avait été importé.
+(() => {
+  const zone = $('#view-decode .sheet'); if (!zone) return;
+  const isFiles = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files');
+  ['dragenter', 'dragover'].forEach(t => document.addEventListener(t, e => { if (!isFiles(e)) return; e.preventDefault(); zone.classList.add('drop-on'); }));
+  document.addEventListener('dragleave', e => { if (!e.relatedTarget) zone.classList.remove('drop-on'); });
+  document.addEventListener('drop', e => {
+    if (!isFiles(e)) return; e.preventDefault(); zone.classList.remove('drop-on');
+    const fs = [...e.dataTransfer.files].filter(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name) || f.type.startsWith('image/'));
+    if (!fs.length) { toast('Dépose une photo ou un PDF.'); return; }
+    showTab('decode'); handleFiles(fs);
+  });
+})();
 TABS.forEach(t => $('#tab-' + t).addEventListener('click', () => showTab(t)));
 $('#tablist').addEventListener('keydown', e => {
   if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
