@@ -3462,7 +3462,7 @@ function renderTVA(box) {
 /* ---------- Fiche de paie ---------- */
 /*PAIE-DEB*/
 // Espaces insécables et fines → espace ; confusions courantes de la lecture optique (O pour 0, l pour 1) à l'intérieur d'un nombre
-const PN = x => String(x).replace(/[\u00a0\u202f\u2009]/g, ' ').replace(/(?<=\d)[Oo](?=\d|[,.]\d)/g, '0').replace(/(?<=[,.])[Oo](?=\d)/g, '0').replace(/(?<=\d)l(?=\d)/g, '1').replace(/(?<=[,.])l(?=\d)/g, '1').replace(/(?<![A-Za-zÀ-ÿ])[lI](?=\d)/g, '1').replace(/(?<![A-Za-zÀ-ÿ])O(?=\d|,\d)/g, '0');
+const PN = x => String(x).replace(/[\u00a0\u202f\u2009]/g, ' ').replace(/(?<=\d)[Oo](?=\d|[,.]\d|[\/-]\d|\s?%)/g, '0').replace(/(?<=[\/-])[Oo](?=\d)/g, '0').replace(/(?<=\d)l(?=[\/-]\d)/g, '1').replace(/(?<=[\/-])l(?=\d)/g, '1').replace(/(?<![A-Za-zÀ-ÿ\d])[lI](?= \d{3}[,.]\d)/g, '1').replace(/(?<=[,.])[Oo](?=\d)/g, '0').replace(/(?<=\d)l(?=\d)/g, '1').replace(/(?<=[,.])l(?=\d)/g, '1').replace(/(?<![A-Za-zÀ-ÿ])[lI](?=\d)/g, '1').replace(/(?<![A-Za-zÀ-ÿ])O(?=\d|,\d)/g, '0');
 // Nombres d'une ligne (dates et pourcentages retirés). « 1 895,88 » → 1895.88
 function lineNums(line, hm) {
   let t0 = PN(line);
@@ -3542,6 +3542,7 @@ function parsePayslip(raw) {
   // Cotisations
   const ci = find(/total (des )?cotisations/);
   if (ci >= 0) { let n = lineNums(lines[ci]); if (!n.length && lines[ci + 1]) n = lineNums(lines[ci + 1]); if (n.length >= 2) { p.cotSal = n[n.length - 2]; p.cotPat = n[n.length - 1]; } else if (n.length === 1) p.cotSal = n[0]; }
+  if (p.cotSal === null) { const ri = find(/^total des retenues\s*:?\s*([-\d]|$)/); if (ri >= 0) { let n = lineNums(lines[ri]); if (!n.length && lines[ri + 1]) n = lineNums(lines[ri + 1]); if (n.length) p.cotSal = n[n.length - 1]; } }
   // Salaire de base
   const bi = find(/(salaire de base|salaire mensuel|heures normales|horaire normal)/);
   if (bi >= 0) { const n = lineNums(lines[bi]); if (n.length >= 2) p.base = { qty: n[0] <= 250 ? n[0] : null, rate: n.length >= 3 ? n[1] : null, amount: n[n.length - 1] }; }

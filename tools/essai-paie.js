@@ -18,5 +18,16 @@ for(const f of FICHES)for(const m of MODES){
     else if(!ok&&verbose)console.log('~ '+f.nom+' [chiffres] '+k+' = '+JSON.stringify(v));
   }
 }
+// Fiches générées (centaines de variantes : montants, mois, heures supplémentaires, primes) dans toutes les mises en page
+const { generer } = require('./fixtures/generateur-paie.js');
+{ const N = +(process.env.NB_FICHES || 700), G = generer(N, 2024); let gt = 0, gko = 0, gchiffres = 0, gct = 0; const par = {};
+  G.forEach((f, idx) => MODES.forEach(m => {
+    const t = m ? degrade(f.texte, m, 3 + (idx % 5)) : f.texte; let p; try { p = vm.runInContext('parsePayslip(' + JSON.stringify(t) + ')', c); } catch (e) { gko++; console.log('✗ ERREUR', f.nom, m, e.message); return; }
+    for (const k in f.attendu) { let v; try { v = get[k](p); } catch (e) { v = undefined; } const a = f.attendu[k], ok = JSON.stringify(v) === JSON.stringify(a);
+      if (m === 'chiffres') { gct++; if (!ok) gchiffres++; continue; }
+      gt++; if (!ok) { gko++; const mod = f.nom.split(' ')[0]; par[mod] = (par[mod] || 0) + 1; if (gko <= 25 || verbose) console.log('✗ ' + f.nom + ' [' + (m || 'propre') + '] ' + k + ' = ' + JSON.stringify(v) + ' (attendu ' + JSON.stringify(a) + ')'); } }
+  }));
+  console.log(gko ? `✗ fiches générées : ${gko} écarts sur ${gt} (${JSON.stringify(par)})` : `✓ ${N} fiches générées (${gt} contrôles) ; lectures de chiffres confondus : ${Math.round(100 - 100 * gchiffres / gct)} % exactes`);
+  ko += gko; }
 console.log(ko?`✗ ${ko} écarts sur ${tot} (hors lectures de chiffres confondus)`:`✓ ${tot} contrôles de fiches de paie`);
 process.exit(ko?1:0);
