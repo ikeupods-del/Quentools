@@ -52,7 +52,8 @@ fx('negatif', 'Négatif', 'Stylisés', [], () => 'negate');
 fx('contour', 'Dessin au trait', 'Stylisés', [], () => 'edgedetect=low=0.08:high=0.25:mode=colormix', { needs: ['edgedetect'] });
 fx('affiche', 'Affiche (bande dessinée)', 'Stylisés', [p('n', 'Niveaux', 16, 96, 8, 48)], q =>
   `lutyuv=y='trunc(val/${q.n})*${q.n}',eq=saturation=1.6:contrast=1.1`, { needs: ['lutyuv'] });
-fx('thermique', 'Vision thermique', 'Stylisés', [], () => 'pseudocolor=preset=heat', { needs: ['pseudocolor'] });
+fx('thermique', 'Vision thermique', 'Stylisés', [], () =>
+  "hue=s=0,curves=r='0/0 0.4/0.2 0.7/1 1/1':g='0/0 0.4/0 0.6/0.3 0.85/1 1/1':b='0/0.35 0.25/0.7 0.45/0.1 1/0'", { needs: ['hue', 'curves'] });
 fx('lignes', 'Lignes de balayage', 'Stylisés', [p('a', 'Opacité', 10, 90, 1, 35, ' %')], q =>
   `drawgrid=w=iw:h=4:t=1:c=black@${q.a / 100}`, { needs: ['drawgrid'] });
 fx('bandes', 'Bandes cinéma', 'Stylisés', [p('h', 'Hauteur', 5, 25, 1, 12, ' %')], q =>
