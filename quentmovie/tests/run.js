@@ -29,7 +29,7 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   ff('-f', 'lavfi', '-i', 'sine=f=220:d=12', path.join(gen, 'musique.mp3'));
   for (const n of ['demo.mp4', 'vert.mp4', 'photo.png', 'musique.mp3']) {
     const r = await fetch(U('/api/import?name=' + n), { method: 'POST', body: fs.readFileSync(path.join(gen, n)) });
-    check('import ' + n, r.ok, await r.clone().text());
+    const txt = await r.text(); check('import ' + n, r.ok, txt);
   }
   const cat = await (await fetch(U('/api/catalogue'))).json();
   check('catalogue', cat.video.length >= 30 && cat.audio.length >= 8 && cat.transitions.length >= 15);
@@ -38,7 +38,14 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   const clip = (extra = {}) => ({ file: 'demo.mp4', kind: 'video', in: 0, out: 4, speed: 1, vol: 100, hasAudio: true, fit: 'fill', fx: [], key: {}, ...extra });
   const project = (clips, extra = {}) => ({ format: 'vertical', fps: 30, res: 480, clips, ...extra });
   const preview = async (c, t = 1) => fetch(U('/api/preview'), { method: 'POST', body: JSON.stringify({ project: project([c]), clip: c, t }) });
-  const isJpeg = async r => { const b = Buffer.from(await r.arrayBuffer()); return r.ok && b[0] === 0xff && b[1] === 0xd8 && b.length > 2000; };
+  // Lit la réponse une seule fois ; en cas d'échec, garde le message d'erreur du serveur.
+  const lastErr = { v: '' };
+  const isJpeg = async r => {
+    const b = Buffer.from(await r.arrayBuffer());
+    const bon = r.ok && b[0] === 0xff && b[1] === 0xd8 && b.length > 2000;
+    lastErr.v = bon ? '' : b.toString('utf8').slice(0, 400);
+    return bon;
+  };
 
   // 1) Chaque effet image, en aperçu et avec ses valeurs extrêmes
   for (const d of cat.video) {
@@ -46,7 +53,7 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     for (const mode of ['défaut', 'min', 'max']) {
       const p = {}; if (mode !== 'défaut') d.params.forEach(q => { p[q.k] = mode === 'min' ? q.min : q.max; });
       const r = await preview(clip({ fx: [{ id: d.id, p }] }));
-      check(`effet ${d.id} (${mode})`, await isJpeg(r), r.ok ? '' : (await r.text()).slice(0, 300));
+      check(`effet ${d.id} (${mode})`, await isJpeg(r), lastErr.v);
     }
   }
   // Effet sur une photo, et vignettes
@@ -56,7 +63,7 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   // 2) Texte : styles et animations
   for (const style of ['simple', 'bandeau', 'contour', 'ombre']) for (const anim of ['aucune', 'apparition', 'glisse']) {
     const r = await preview(clip({ text: 'Bonjour : le monde, "test" (1/2)', textStyle: style, textAnim: anim, textPos: 'milieu', textStart: 0.5, textDur: 2 }));
-    check(`texte ${style}/${anim}`, await isJpeg(r), r.ok ? '' : (await r.text()).slice(0, 300));
+    check(`texte ${style}/${anim}`, await isJpeg(r), lastErr.v);
   }
   // 3) Incrustation, fond vert, cadrage flou
   check('incrustation', await isJpeg(await preview(clip({ pip: { on: true, file: 'photo.png', kind: 'image', pos: 'tr', scale: 30, opacity: 80 } }))));
