@@ -4137,7 +4137,7 @@ function rcAmounts(words) {
 }
 const RC_LABELS = {
   brut: /total brut|salaire brut|\bbrut\b/, cot: /total (des )?cotisations|cotisations et contributions|total retenues/, avant: /avant impot|payer avant/,
-  imposable: /net imposa|montant net imp/, payer: /payer au salarie|au salarie|net a payer(?!.*avant)|net a verser|net paye/, pas: /preleve a la source|impot sur le revenu preleve|prelevement a la source|\bpas\b|preleve/, social: /net social|\bsocial\b/,
+  imposable: /net imposa|montant net imp/, payer: /payer au salarie|au salarie|net a payer(?!.*avant)|net a verser|net paye(?!.*avant)/, pas: /preleve a la source|impot sur le revenu preleve|prelevement a la source|\bpas\b|preleve/, social: /net social|\bsocial\b/,
   transport: /transport|navigo|titre|remboursement|avantage|restaurant|ticket|panier|frais/
 };
 // Lecture des totaux par recoupement. hint : valeurs déjà lues par colonnes (elles comptent comme preuve forte, jamais écrasées).
@@ -4152,15 +4152,15 @@ function rcSolve(words, hint = {}) {
     return out;
   };
   const lab = {}; Object.keys(RC_LABELS).forEach(k => { lab[k] = around(k); });
-  const lw = (k, v) => lab[k].filter(o => near(o.v, v)).reduce((a, o) => a + o.w, 0);
-  const res = { brut: hint.brut ?? null, cotSal: hint.cotSal ?? null, netAvant: hint.netAvant ?? null, netImposable: hint.netImposable ?? null, netPayer: hint.netPayer ?? null }, how = {}, pasVals = lab.pas.map(o => o.v).filter(v => v >= 0);
+  const lw = (k, v) => lab[k].filter(o => near(o.v, v)).reduce((a, o) => a + o.w, 0), lwMax = (k, v) => lab[k].filter(o => near(o.v, v)).reduce((a, o) => Math.max(a, o.w), 0);
+  const res = { brut: hint.brut ?? null, cotSal: hint.cotSal ?? null, netAvant: hint.netAvant ?? null, netImposable: hint.netImposable ?? null, netPayer: hint.netPayer ?? null }, how = {}, pasVals = lab.pas.map(o => Math.abs(o.v));   // un prélèvement s'imprime parfois avec son signe (-108,59) : c'est une retenue
   const uniq = a => a.filter((v, i) => a.findIndex(x => near(x, v)) === i);
   const best = (cands, score, min) => { let b = null, bs = -1; cands.forEach(v => { const s = score(v); if (s > bs || (s === bs && b !== null && v > b)) { bs = s; b = v; } }); return bs >= min ? { v: b, s: bs } : null; };
   // 1. brut : la base des cotisations (même montant sur chaque ligne) ou le montant du libellé « total brut »
   if (res.brut === null) {
     const bc = {}; am.filter(a => a.base && a.v >= 100).forEach(a => { bc[a.v] = (bc[a.v] || 0) + 1; });
     const cands = uniq([...Object.keys(bc).map(Number), ...lab.brut.map(o => o.v)].filter(v => v >= 100));
-    const b = best(cands, v => (bc[v] >= 3 ? 6 : bc[v] ? 2 : 0) + lw('brut', v) * 1.5 + Math.min(count(v), 6) * 0.5, 5);
+    const b = best(cands, v => (bc[v] >= 3 ? 6 : bc[v] ? 2 : 0) + lwMax('brut', v) * 3 + Math.min(count(v), 6) * 0.5, 5);   // le montant lu sur la ligne même du libellé « salaire brut » l'emporte sur une base de cotisations répétée (abattement, brut majoré) : on prend le meilleur voisinage, pas la somme
     if (b) { res.brut = b.v; how.brut = bc[b.v] >= 3 ? 'base des cotisations' : 'libellé « total brut »'; }
   }
   const adjs = uniq([0, ...lab.transport.map(o => o.v).filter(v => v > 0 && v <= 300)]), small = uniq(am.filter(a => !a.base && a.v >= 0.5 && a.v <= 60).map(a => a.v));   // small : remboursement dont le libellé est illisible
