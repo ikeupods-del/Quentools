@@ -71,7 +71,13 @@ const FICHES = [
     attendu: { brut: 1819.81, netAvant: 1425.71, netFinal: 1395.77, netImposable: 1538.4, cotSal: 394.1, cotPat: 520.34, hsQty: 0, periode: 'juin 2026' } },
   { nom: 'Temps partiel avec heures complémentaires',
     texte: ['BULLETIN DE PAIE', 'Période du 01/04/2026 au 30/04/2026', 'Salaire de base 86,67 12,0000 1 040,04', 'Heures complémentaires 10 % 4,00 12,0000 48,00', 'Majoration heures complémentaires 10 % 4,00 12,0000 4,80', 'TOTAL BRUT 1 092,84', 'Total des cotisations et contributions 195,10 262,40', 'NET A PAYER AVANT IMPOT SUR LE REVENU 897,74', 'Impôt sur le revenu prélevé à la source 0,00 % 0,00', 'NET A PAYER 897,74'].join('\n'),
-    attendu: { brut: 1092.84, netAvant: 897.74, hsQty: 4, hsMaj: [10], periode: 'avril 2026' } }
+    attendu: { brut: 1092.84, netAvant: 897.74, hsQty: 4, hsMaj: [10], periode: 'avril 2026' } },
+  { nom: 'Mise en page Désignation / Base / Taux / Montant (cotisations en négatif)',
+    texte: ['ENTREPRISE ALPHA','BULLETIN DE PAIE','Période: Septembre 2026','Désignation Base Taux Montant','Salaire de base 151.67 15.00 2275.05','Prime exceptionnelle 1 200.00 200.00','SALAIRE BRUT 2475.05','Santé - Maladie Maternité 2475.05 0.00% 0.00','Mutuelle d\'entreprise 1 45.00 -45.00','Retraite Sécu. Plafonnée 2475.05 6.90% -170.78','CSG déductible 2431.74 6.80% -165.36','NET A PAYER AVANT IMPOT 1935.53 €'].join('\n'),
+    attendu: { brut: 2475.05, netAvant: 1935.53, hsQty: 0, periode: 'septembre 2026' } },
+  { nom: 'Rubriques génériques, net payé seul',
+    texte: ['TECH SOLUTIONS SAS','BULLETIN DE SALAIRE','Ligne de rubrique comptable #100 Base: 3100.00 -0.00','Ligne de rubrique comptable #101 Base: 3100.00 -15.40','Ligne de rubrique comptable #102 Base: 3100.00 -30.80','NET PAYÉ: 2405,12 €'].join('\n'),
+    attendu: { netFinal: 2405.12, hsQty: 0 } }
 ];
 
 // Mauvaises lectures simulées (déterministes) : même contenu, mise en forme dégradée
