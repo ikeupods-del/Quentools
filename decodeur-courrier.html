@@ -2032,6 +2032,24 @@ async function readPdf(file, maxPages = 6) {
   }
   return txt;
 }
+// Photos d'une fiche de paie (une par page) → mots positionnés : mêmes redressement et contraste que la lecture de texte, puis les boîtes de chaque mot.
+async function readPhotoWords(files) {
+  const w = await getOcr(), words = [];
+  try { await w.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' }); } catch (e) { /* option indisponible */ }
+  try {
+    for (let i = 0; i < files.length; i++) {
+      setOcr(i / files.length, `Lecture de la page ${i + 1} sur ${files.length}…`);
+      let best = null;
+      for (const rot of [0, 90, 270]) {
+        const d = (await w.recognize(await fileToCanvas(files[i], rot, 3000), { rotateAuto: true }, { blocks: true })).data, sc = textScore(d.text || '');
+        if (!best || sc > best.sc) best = { d, sc };
+        if (sc >= 0.35) break;
+      }
+      for (const x of ocrWords(best.d, i + 1)) words.push(x);
+    }
+  } finally { try { await w.setParameters({ tessedit_pageseg_mode: '3', preserve_interword_spaces: '0' }); } catch (e) { /* ignoré */ } }
+  return words;
+}
 // Première page d'un PDF (facture, ticket) en image, pour l'enregistrer et la faire lire comme une photo.
 async function pdfFirstPageFile(file) {
   await loadScript(PDFJS_URL);
@@ -3507,6 +3525,22 @@ async function pdfToWords(pdf, maxPages = 12) {
   }
   return words;
 }
+// Page photographiée de travers : cherche l'angle (±8°) pour lequel les mots s'alignent le mieux en lignes, et redresse leurs positions.
+function deskewWords(words) {
+  const pages = {}; words.forEach(w => (pages[w.page] = pages[w.page] || []).push(w));
+  const out = [];
+  Object.values(pages).forEach(ws => {
+    if (ws.length < 30) { ws.forEach(w => out.push(w)); return; }
+    const hs = ws.map(w => w.h).sort((a, b) => a - b), bin = Math.max(2, hs[hs.length >> 1] * 0.5);
+    const score = a => { const co = Math.cos(a), si = Math.sin(a), m = {}; let s = 0; ws.forEach(w => { const k = Math.round(((w.x0 + w.x1) / 2 * si + w.y * co) / bin); m[k] = (m[k] || 0) + 1; }); for (const k in m) s += m[k] * m[k]; return s; };
+    const s0 = score(0); let best = 0, bs = s0;
+    for (let d = -8; d <= 8; d += 0.25) { const sc = score(d * Math.PI / 180); if (sc > bs) { bs = sc; best = d * Math.PI / 180; } }
+    if (!best || bs < s0 * 1.1) { ws.forEach(w => out.push(w)); return; }
+    const co = Math.cos(best), si = Math.sin(best);
+    ws.forEach(w => { const cx = (w.x0 + w.x1) / 2, hw = (w.x1 - w.x0) / 2, nx = cx * co - w.y * si; out.push(Object.assign({}, w, { x0: nx - hw, x1: nx + hw, y: cx * si + w.y * co })); });
+  });
+  return out;
+}
 // Mots → lignes (même hauteur), triés de haut en bas puis de gauche à droite ; « 1 » + « 835,61 » collés se rejoignent.
 function groupRows(words) {
   const ws = words.slice().sort((a, b) => a.page - b.page || a.y - b.y || a.x0 - b.x0), rows = [];
@@ -3573,7 +3607,7 @@ function decorateRow(r, cols) {
   const data = numeric.filter(o => !(o.w.x1 <= ft + 0.5));
   const cut = text.find(w => /^(cumul|annuel|annuelle|depuis)/.test(norm(w.t)));
   r.cumul = !!cut;
-  r.nums = data.filter(o => !o.pct && !(cut && o.w.x0 > cut.x0)).map(o => ({ v: o.v, x0: o.w.x0, x1: o.w.x1 }));
+  r.nums = data.filter(o => !o.pct && /[,.]\d/.test(o.w.t) && !(cut && o.w.x0 > cut.x0)).map(o => ({ v: o.v, x0: o.w.x0, x1: o.w.x1 }));   // un montant a toujours ses décimales : « 233093 » est une virgule perdue, pas un montant
   r.pcts = data.filter(o => o.pct).map(o => o.v);
   r.cells = {}; r.amb = [];
   if (cols) data.forEach(o => {
@@ -3583,10 +3617,30 @@ function decorateRow(r, cols) {
     if (!z) { r.amb.push(o.w.t); return; }
     const ov = Math.min(o.w.x1, z.r) - Math.max(o.w.x0, z.l);
     if (ov < 0.65 * wd) { r.amb.push(o.w.t); return; }
+    if (/^(gain|retenue|partEmp)$/.test(z.key) && !/[,.]\d/.test(o.w.t)) { r.amb.push(o.w.t); return; }   // montant sans décimales = virgule perdue
     if (z.key in r.cells) { r.amb.push(o.w.t); r.cells[z.key] = null; return; }
     r.cells[z.key] = o.v;
   });
   return r;
+}
+// Confusions classiques de la lecture optique à l'intérieur d'un nombre (O pour 0, l ou I pour 1) : corrigées seulement si le mot ne contient
+// que des chiffres et ces lettres, et si le résultat est un nombre valide. Tout autre mot est laissé tel quel.
+function fixOcrNumber(t) {
+  if (parseFR(t) !== null || !/\d/.test(t) || !/^[\dOolI|.,\-\u2212()\s]+$/.test(t)) return t;
+  const f = t.replace(/[Oo]/g, '0').replace(/[lI|]/g, '1');
+  return parseFR(f) !== null ? f : t;
+}
+// Résultat de Tesseract (data.words, ou blocs → lignes → mots) → mots positionnés, comme pdfWords. y = milieu du mot, h = hauteur de la boîte.
+function ocrWords(data, page) {
+  const raw = data.words || (data.blocks || []).flatMap(b => (b.paragraphs || []).flatMap(p => (p.lines || []).flatMap(l => l.words || [])));
+  const out = [];
+  for (const w of raw) {
+    const t = String(w.text || '').trim(), b = w.bbox;
+    if (!t || !b || !(b.x1 > b.x0) || !(b.y1 > b.y0)) continue;
+    const fx = fixOcrNumber(t);
+    out.push({ t: fx, x0: b.x0, x1: b.x1, y: (b.y0 + b.y1) / 2, h: b.y1 - b.y0, page, conf: typeof w.confidence === 'number' ? w.confidence : null, lu: fx !== t ? t : undefined });
+  }
+  return out;
 }
 // Lignes de toutes les pages avec leurs cases ; l'en-tête trouvé s'applique jusqu'au suivant (y compris page suivante).
 function buildRows(words) {
@@ -3617,6 +3671,7 @@ function readTotals(rows) {
     if (!vals.length) { warn.push(key + ' : valeur illisible ou ambiguë'); return; }
     const first = JSON.stringify(vals[0].v);
     if (vals.some(o => JSON.stringify(o.v) !== first)) { warn.push(key + ' : plusieurs valeurs différentes'); return; }
+    if (key !== 'cotSal' && typeof vals[0].v === 'number' && vals[0].v <= 0) { warn.push(key + ' : valeur nulle ou négative, probablement mal lue'); return; }
     t[key] = vals[0].v; at[key] = { page: vals[0].r.page, y: vals[0].r.y };
   };
   const one = r => { const n = numsOf(r); return n.length === 1 ? n[0].v : (n.length ? null : undefined); };
@@ -3688,7 +3743,7 @@ function checkPayslip(rows, tot) {
 }
 // Mots (PDF ou photo) → lignes, totaux et contrôles
 function readPayslipWords(words) {
-  const rows = buildRows(words), tot = readTotals(rows), chk = checkPayslip(rows, tot);
+  const rows = buildRows(deskewWords(words)), tot = readTotals(rows), chk = checkPayslip(rows, tot);
   return { rows, totals: tot.totals, at: tot.at, warn: tot.warn, checks: chk.checks, manquants: chk.manquants, fiable: chk.fiable };
 }
 /*TABLE-FIN*/

@@ -138,6 +138,8 @@ function verifier(nom, res) {
   eq(nom + ' lignes du tableau', res.rows.filter(r => r.hasCols && r.label).length, P1.length + P2.length);
   eq(nom + ' aucune valeur ronde inventée', res.rows.some(r => [2, 5, 23, 700].some(v => Object.values(r.cells).includes(v))), false);
 }
+module.exports = { layout, writePdf, T, run, c };
+if (require.main !== module) return;   // utilisé comme bibliothèque par essai-lecture-photo.js
 const variantes = { 'A (une ligne d\'en-tête)': {}, 'A (en-tête sur deux lignes)': { deuxLignes: true } };
 Object.entries(variantes).forEach(([nom, o]) => verifier(nom, run('readPayslipWords(__v)', wordsA(layout(o)))));
 
