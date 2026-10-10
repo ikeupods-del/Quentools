@@ -70,7 +70,7 @@ function tete(p, h) {
 const lienMetiers = pre => 'Sites par métier : ' + metiers.map(m => `<a href="${pre}${m.slug}/">${m.nom}</a>`).join(' · ') + ` · <a href="${pre}creation-site/">Tous les métiers</a>`;
 function pied(p, h) {
   const pre = prefixe(p) || '';
-  const liens = `<a href="${pre || './'}">Accueil</a> · <a href="${pre}creation-site/">Site internet artisan</a> · <a href="${pre}templates/">Site clé en main</a> · <a href="${pre}devis/">Devis</a> · <a href="${pre}realisations/">Réalisations</a> · <a href="${pre}conseils/">Conseils</a> · <a href="${pre}mentions-legales/">Mentions légales</a> · <a href="mailto:${mail}">Contact</a>`;
+  const liens = `<a href="${pre || './'}">Accueil</a> · <a href="${pre}creation-site/">Site internet artisan</a> · <a href="${pre}templates/">Site clé en main</a> · <a href="${pre}devis/">Devis</a> · <a href="${pre}realisations/">Réalisations</a> · <a href="${pre}conseils/">Conseils</a> · <a href="${pre}mentions-legales/">Mentions légales</a> · <a href="${pre}politique-confidentialite.html">Confidentialité</a> · <a href="mailto:${mail}">Contact</a>`;
   const metiersP = `<p data-seo="pied-metiers" class="muted" style="margin:var(--s-4) 0 0;font-size:var(--t-sm)">${lienMetiers(pre)}</p>`;
   h = h.replace(/\s*<p data-seo="pied-metiers"[^>]*>.*?<\/p>/s, '').replace(/(<a href="[^"]*mentions-legales\/")\s+rel="nofollow"/g, '$1');
   if (/<div class="footer-bottom"/.test(h) && !/footer-grid/.test(h)) {
@@ -78,7 +78,7 @@ function pied(p, h) {
     h = h.replace(/(<span data-seo="pied">.*?<\/span>)/s, `<span data-seo="pied">${liens}</span>`);
   } else if (/footer-grid/.test(h)) {
     h = h.replace(/(<\/div>\s*<div class="footer-bottom">)/, `${metiersP}\n    $1`);
-    h = h.replace(/<li><a href="mentions-legales\/">Mentions légales et confidentialité<\/a><\/li>(?!<li><a href="mailto)/, `<li><a href="mentions-legales/">Mentions légales et confidentialité</a></li><li><a href="mailto:${mail}">Contact</a></li>`);
+    h = h.replace(/<li><a href="mentions-legales\/">Mentions légales et confidentialité<\/a><\/li>(?!<li><a href="mailto)/, `<li><a href="mentions-legales/">Mentions légales et confidentialité</a></li><li><a href="politique-confidentialite.html">Confidentialité</a></li><li><a href="mailto:${mail}">Contact</a></li>`);
   } else if (/<footer class="foot"><div class="wrap">/.test(h) && !/mentions-legales/.test(h)) {
     h = h.replace(/(<footer class="foot"><div class="wrap">.*?)(<\/div><\/footer>)/s, `$1 · <a href="${base}mentions-legales/">Mentions légales</a>$2`);
   }
