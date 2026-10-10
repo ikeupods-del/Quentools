@@ -1,0 +1,41 @@
+name: QuentMovie — application Mac
+
+# Construit l'application Mac (.dmg) sur un vrai Mac de GitHub et la publie dans « Releases ».
+# Déclenchement : bouton « Run workflow » de l'onglet Actions, ou création d'une étiquette quentmovie-v*.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['quentmovie-v*']
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: quentmovie
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Installer les dépendances
+        run: npm ci
+      - name: Contrôler le moteur (effets, transitions, export)
+        run: npm test
+      - name: Construire l'application
+        run: npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QuentMovie-mac
+          path: quentmovie/dist/*.dmg
+      - name: Publier la version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "quentmovie-${{ github.run_number }}" dist/*.dmg \
+            --title "QuentMovie ${{ github.run_number }}" \
+            --notes "Application Mac (puce Apple). Ouvrir le .dmg, glisser QuentMovie dans Applications, puis clic droit → Ouvrir au premier lancement." \
+            --target "${{ github.sha }}"
