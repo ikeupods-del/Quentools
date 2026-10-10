@@ -294,6 +294,16 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .sugg{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
 .filters{display:grid;gap:8px;margin:0 0 14px}
 .filters input[type=search]{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--sheet);min-height:46px}
+.tips{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:14px 0;background:var(--sheet)}
+.tips summary{cursor:pointer;font-weight:700}
+.tips h3{margin:12px 0 4px;font-size:1rem}
+.tips li{margin:0 0 5px;max-width:64ch}
+.edl-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 10px}
+.edl-item.worse{border-color:var(--stamp)}
+.edl-item .chips{margin:6px 0}
+.edl-item .chip{padding:5px 10px;font-size:.85rem}
+.edl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.edl-row input[data-note]{flex:1;min-width:160px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--paper);min-height:38px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -572,8 +582,8 @@ async function fillAds(root) {
 }
 const tipHTML = () => CONFIG.TIP_URL ? `<a class="link tip" href="${esc(CONFIG.TIP_URL)}" target="_blank" rel="noopener">Ça t'a aidé ? Soutiens QuenTools</a>` : '';
 Object.assign(KEYS, { claims: 'qt-paperasse:reclamations', garanties: 'qt-paperasse:garanties', premium: 'qt-paperasse:premium', sync: 'qt-paperasse:sync', deleted: 'qt-paperasse:supprimes',
-  abos: 'qt-paperasse:abonnements', coffre: 'qt-paperasse:coffre', coffreRead: 'qt-paperasse:coffre-lecture', nostats: 'qt-paperasse:sans-stats', seen: 'qt-paperasse:vu', notif: 'qt-paperasse:notif', notifDay: 'qt-paperasse:notif-jour' });
-const SYNC_KEYS = [KEYS.list, KEYS.claims, KEYS.garanties, KEYS.me, KEYS.abos, KEYS.coffre];
+  abos: 'qt-paperasse:abonnements', coffre: 'qt-paperasse:coffre', edl: 'qt-paperasse:etats-des-lieux', coffreRead: 'qt-paperasse:coffre-lecture', nostats: 'qt-paperasse:sans-stats', seen: 'qt-paperasse:vu', notif: 'qt-paperasse:notif', notifDay: 'qt-paperasse:notif-jour' });
+const SYNC_KEYS = [KEYS.list, KEYS.claims, KEYS.garanties, KEYS.me, KEYS.abos, KEYS.coffre, KEYS.edl];
 let markDirty = () => {};
 const _set = store.set;
 store.set = (k, v) => { const ok = _set(k, v); if (ok && SYNC_KEYS.includes(k)) markDirty(); return ok; };
@@ -931,6 +941,20 @@ const DL_BEFORE = /(avant le|au plus tard le|au plus tard|date limite[a-z' ]*|d'
 const REQ_RE = /(merci de|nous vous (demandons|prions|invitons|remercions de)|veuillez|vous devez|il vous appartient|vous etes (invite|invitee|prie|priee|tenu|tenue)|nous (transmettre|faire parvenir|retourner|adresser)|devez nous|a regler|a payer|est a payer|de bien vouloir|n'oubliez pas|vous mettons en demeure|vous est demande|doivent nous parvenir|doit nous parvenir|a defaut|sans reponse|faute de)/;
 const RECOURS_RE = /(recours|contester (cette|la) decision|contestation|commission de recours|mediateur|reclamation)/;
 
+// Signes d'hameçonnage (faux SMS, faux courriels de l'administration) : on liste des raisons précises plutôt qu'un verdict.
+const OFFICIAL = { impots: /gouv\.fr$/, tresor: /gouv\.fr$/, antai: /gouv\.fr$/, ants: /gouv\.fr$/, caf: /(^|\.)caf\.fr$|gouv\.fr$/, cpam: /(^|\.)ameli\.fr$|gouv\.fr$/, urssaf: /(^|\.)urssaf\.fr$|gouv\.fr$/, francetravail: /(^|\.)(francetravail|pole-emploi)\.fr$|gouv\.fr$/ };
+function phishSignals(n, sites, org) {
+  const out = [], link = /(cliquez|clique|lien ci-dessous|lien suivant|via le lien|ouvrez le lien|scannez)/.test(n);
+  if (/(^|[^a-z0-9])(bit\.ly|tinyurl\.com|cutt\.ly|is\.gd|rb\.gy|t\.co|ow\.ly|shorturl\.at)\//.test(n)) out.push("un lien raccourci qui cache l'adresse réelle du site");
+  if (/(numero de (votre )?carte|code de securite|cryptogramme|mot de passe|code confidentiel|identifiants? de connexion)/.test(n) && /(saisi|renseign|communiqu|fournir|transmet|envoy|confirm|entre)/.test(n)) out.push('une demande de données secrètes (carte bancaire, mot de passe, code)');
+  if (link && /(sous 24 ?h|sous 48 ?h|dans les 24 heures|dans les 48 heures|immediatement|dernier avertissement|derniere chance|urgent)/.test(n)) out.push('un lien à ouvrir en urgence');
+  if (link && /(votre compte (sera|a ete|est) (suspendu|bloque|desactive|ferme|limite)|compte (suspendu|bloque|desactive))/.test(n)) out.push('une menace de blocage de ton compte avec un lien à cliquer');
+  if (link && /(informations? bancaires?|coordonnees bancaires|moyen de paiement|carte bancaire)/.test(n) && /(mettre a jour|actualis|verifi|valid|confirm)/.test(n)) out.push('une demande de « mettre à jour » tes informations bancaires par un lien');
+  if (/(colis|livraison)/.test(n) && /(frais|taxe|redevance|droits de douane)/.test(n) && /(\d+[,.]?\d* ?(€|euros?))/.test(n) && link) out.push('de petits « frais de livraison » à payer par un lien');
+  if (org && /^(impots|cpam|caf|tresor)$/.test(org.id) && link && /(remboursement|rembours|virement|prime|aide)/.test(n) && /(carte|rib|iban|coordonnees)/.test(n)) out.push('un « remboursement » à recevoir en donnant ta carte ou ton IBAN');
+  if (org && OFFICIAL[org.id] && sites.length && !sites.some(x => OFFICIAL[org.id].test(x.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]))) out.push(`un site (${sites[0]}) qui ne ressemble pas au site officiel de ${org.court}`);
+  return out.slice(0, 4);
+}
 function analyze(raw) {
   const text = raw.replace(/\r/g, '');
   const lines = text.replace(/-\n(?=[a-zà-ÿ])/g, '').replace(/[ \t\u00a0\u202f]+/g, ' ').split('\n').map(l => l.trim());
@@ -1037,10 +1061,11 @@ function analyze(raw) {
   // Arnaque
   const scam = [];
   SCAM_KW.forEach((r, i) => { if (r.test(n)) scam.push(SCAM_LABELS[i]); });
+  const phish = phishSignals(n, sites, org);
 
   const docs = extractDocs(flat, sentences);
   const terms = GLOSSARY.filter(g => g.re.test(n)).slice(0, 8);
-  const a = { raw: text, flat, org, type, letterDate, deadline, recoursDl, amount, taxes, refs, emails, sites, phones, requests, recours, scam, docs, docsDone: [], docsFromAI: false, terms };
+  const a = { raw: text, flat, org, type, letterDate, deadline, recoursDl, amount, taxes, refs, emails, sites, phones, requests, recours, scam, phish, docs, docsDone: [], docsFromAI: false, terms };
   a.level = computeLevel(a);
   return a;
 }
@@ -1126,6 +1151,7 @@ function computeLevel(a) {
     else if (dd <= 21) level = Math.max(level, 2);
   }
   if (a.scam && a.scam.length) level = Math.max(level, 3);
+  if (a.phish && a.phish.length >= 2) level = Math.max(level, 3);
   return level;
 }
 
@@ -1140,6 +1166,7 @@ function whoSentence(a) {
 }
 function brief(a) {
   const s = [whoSentence(a), a.type.resume];
+  if (a.phish && a.phish.length) s.push('Méfie-toi : ce message a des signes d\'hameçonnage (' + a.phish[0] + '). Ne clique sur aucun lien et vérifie directement sur le site officiel.');
   if (a.scam.length) s.push("Attention, ça ressemble à une arnaque : ne paye rien avant d'avoir vérifié auprès de l'organisme.");
   const todo = TODO[a.type.id];
   if (a.deadline) {
@@ -1354,6 +1381,7 @@ function renderResult(a, savedId, opts = {}) {
         <span class="kind">${esc(a.type.label)}</span>
       </div>
       <p class="who-desc">${esc(org ? org.desc : "Son nom est en général en haut à gauche du courrier.")}</p>
+      ${a.phish && a.phish.length ? `<div class="scam"><strong>Méfie-toi : ce message a des signes d'hameçonnage.</strong><ul>${a.phish.map(x => `<li>${esc(x)}</li>`).join('')}</ul>Ne clique sur aucun lien et ne donne aucune information. Va directement sur le site officiel, en tapant toi-même l'adresse, ou appelle l'organisme.</div>` : ''}
       ${a.scam.length ? `<div class="scam"><strong>Attention, ça ressemble à une arnaque.</strong> Ce courrier parle de paiement par ${esc(a.scam.join(', '))}. Une administration ou une entreprise sérieuse ne demande jamais ça. Ne paye pas, et vérifie en contactant l'organisme par son site officiel.</div>` : ''}
 
       <div class="brief">
@@ -1724,6 +1752,7 @@ async function handleFiles(files) {
 
 /* ---------- Mes courriers ---------- */
 const getList = () => store.get(KEYS.list, []);
+let listQ = '';
 function saveCurrent(silent) {
   if (!current) return;
   const list = getList();
@@ -1767,8 +1796,10 @@ function renderList() {
     $('#go-decode').addEventListener('click', () => showTab('decode'));
     return;
   }
-  const sorted = [...list].sort((a, b) => (a.done - b.done) || ((a.deadline ? new Date(a.deadline) : Infinity) - (b.deadline ? new Date(b.deadline) : Infinity)) || (new Date(b.savedAt) - new Date(a.savedAt)));
+  const qn = norm(listQ).split(/\s+/).filter(Boolean);
+  const sorted = [...list].filter(x => qn.every(t => norm([x.org, x.type, x.text].join(' ')).includes(t))).sort((a, b) => (a.done - b.done) || ((a.deadline ? new Date(a.deadline) : Infinity) - (b.deadline ? new Date(b.deadline) : Infinity)) || (new Date(b.savedAt) - new Date(a.savedAt)));
   box.innerHTML = `
+    ${list.length > 4 || listQ ? `<div class="filters"><label class="sr" for="list-q">Rechercher</label><input type="search" id="list-q" placeholder="Rechercher un expéditeur, un mot du courrier…" value="${esc(listQ)}"></div>` : ''}
     ${late ? `<p class="alert">${late === 1 ? 'Un courrier arrive' : late + ' courriers arrivent'} à échéance dans moins de 3 jours.</p>` : ''}
     <div class="items">${sorted.map(x => {
       const dd = x.deadline ? daysUntil(x.deadline) : null;
@@ -1781,7 +1812,8 @@ function renderList() {
           <button class="btn small ghost" data-done="${x.id}" type="button">${x.done ? 'À traiter' : 'Traité'}</button>
           <button class="link" data-del="${x.id}" type="button" aria-label="Supprimer ce courrier">Supprimer</button>
         </div></article>`;
-    }).join('')}</div>`;
+    }).join('')}</div>${sorted.length ? '' : '<p class="note">Aucun courrier ne correspond.</p>'}`;
+  const lq = $('#list-q'); if (lq) lq.addEventListener('input', () => { listQ = lq.value; const pos = lq.selectionStart; renderList(); const n = $('#list-q'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} });
   $$('[data-open]', box).forEach(b => b.addEventListener('click', () => { const it = getList().find(x => x.id === b.dataset.open); if (it) openItem(it); }));
   $$('[data-done]', box).forEach(b => b.addEventListener('click', () => {
     const l = getList(); const it = l.find(x => x.id === b.dataset.done); if (!it) return;
@@ -2072,7 +2104,7 @@ $('#wipe-btn').addEventListener('click', () => {
   store.set(KEYS.list, []); currentId = null; renderList(); toast('Courriers effacés');
 });
 $('#export-btn').addEventListener('click', () => {
-  const data = { app: 'decodeur-courrier', version: 3, exportedAt: new Date().toISOString(), courriers: getList(), reclamations: getClaims(), garanties: getW(), abonnements: getAbos(), coffre: getVault().map(({ text, ...r }) => r), moi: store.get(KEYS.me, {}) };
+  const data = { app: 'decodeur-courrier', version: 3, exportedAt: new Date().toISOString(), courriers: getList(), reclamations: getClaims(), garanties: getW(), abonnements: getAbos(), edl: getEdl(), coffre: getVault().map(({ text, ...r }) => r), moi: store.get(KEYS.me, {}) };
   downloadFile('sauvegarde-courriers-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(data, null, 1), 'application/json');
 });
 $('#import-input').addEventListener('change', async e => {
@@ -2084,7 +2116,7 @@ $('#import-input').addEventListener('change', async e => {
     for (const it of data.courriers) { if (it && it.id && it.text && !list.some(x => x.id === it.id)) { list.push(it); added++; } }
     store.set(KEYS.list, list);
     const add = (key, arr, get) => { if (!Array.isArray(arr)) return; const cur = get(); let n = 0; arr.forEach(it => { if (it && it.id && !cur.some(x => x.id === it.id)) { cur.push(it); n++; } }); if (n) store.set(key, cur); added += n; };
-    add(KEYS.claims, data.reclamations, getClaims); add(KEYS.garanties, data.garanties, getW); add(KEYS.abos, data.abonnements, getAbos); add(KEYS.coffre, data.coffre, getVault);
+    add(KEYS.claims, data.reclamations, getClaims); add(KEYS.garanties, data.garanties, getW); add(KEYS.abos, data.abonnements, getAbos); add(KEYS.edl, data.edl, getEdl); add(KEYS.coffre, data.coffre, getVault);
     if (data.moi && !store.get(KEYS.me, null)) store.set(KEYS.me, data.moi);
     renderList(); toast(added ? `${added} courrier${added > 1 ? 's' : ''} restauré${added > 1 ? 's' : ''}` : 'Rien de nouveau dans cette sauvegarde');
   } catch (err) { toast("Ce fichier n'est pas une sauvegarde du décodeur"); }
@@ -2589,7 +2621,7 @@ async function gLogin() {
 }
 async function gLogout() { try { const F = await fb(); await F.Au.signOut(F.auth); toast('Compte Google déconnecté'); } catch (e) {} }
 async function buildPayload() {
-  return { app: 'quentools-paperasse', v: 1, courriers: getList(), reclamations: getClaims(), garanties: getW(), abonnements: getAbos(), coffre: getVault().map(({ text, ...r }) => r), moi: store.get(KEYS.me, {}), deleted: store.get(KEYS.deleted, []) };
+  return { app: 'quentools-paperasse', v: 1, courriers: getList(), reclamations: getClaims(), garanties: getW(), abonnements: getAbos(), edl: getEdl(), coffre: getVault().map(({ text, ...r }) => r), moi: store.get(KEYS.me, {}), deleted: store.get(KEYS.deleted, []) };
 }
 // Le coffre synchronisé ne contient pas le texte lu : on garde celui de cet appareil quand il existe.
 function mergeVault(local, merged) {
@@ -2618,11 +2650,12 @@ async function syncNow() {
       reclamations: mergeLists(local.reclamations, remote.reclamations, deleted),
       garanties: mergeLists(local.garanties, remote.garanties, deleted),
       abonnements: mergeLists(local.abonnements, remote.abonnements, deleted),
+      edl: mergeLists(local.edl, remote.edl, deleted),
       coffre: mergeLists(local.coffre, remote.coffre, deleted),
       moi: Object.keys(local.moi || {}).length ? local.moi : (remote.moi || {}),
       deleted: [...deleted].slice(-500)
     };
-    _set(KEYS.list, merged.courriers); _set(KEYS.claims, merged.reclamations); _set(KEYS.garanties, merged.garanties); _set(KEYS.abos, merged.abonnements); _set(KEYS.coffre, mergeVault(getVault(), merged.coffre)); _set(KEYS.me, merged.moi); _set(KEYS.deleted, merged.deleted);
+    _set(KEYS.list, merged.courriers); _set(KEYS.claims, merged.reclamations); _set(KEYS.garanties, merged.garanties); _set(KEYS.abos, merged.abonnements); _set(KEYS.edl, merged.edl); _set(KEYS.coffre, mergeVault(getVault(), merged.coffre)); _set(KEYS.me, merged.moi); _set(KEYS.deleted, merged.deleted);
     // Passage par JSON : Firestore refuse les valeurs « undefined ».
     await F.Fs.setDoc(ref, JSON.parse(JSON.stringify(merged)));
     store.set(KEYS.sync, { last: new Date().toISOString() });
@@ -2880,6 +2913,7 @@ function renderTools() {
   if (v === 'tva') return renderTVA(box);
   if (v === 'lettres') return renderLettres(box);
   if (v === 'lettre') return renderLettre(box);
+  if (v === 'edl') return renderEdl(box);
   box.innerHTML = `<div class="sheet money-hero">
       <h2>Tes outils du quotidien</h2>
       <p class="lead">Les petits calculs et les lettres qui reviennent tout le temps. Tout reste sur ton appareil.</p>
@@ -2888,18 +2922,20 @@ function renderTools() {
       <button class="case" type="button" data-tool="lettres"><b>Modèles de lettres</b><span>Amende, résiliation, échéancier, CAF, impôts, remboursement</span></button>
       <button class="case" type="button" data-tool="abos"><b>Mes abonnements</b><span>Ce que tu paies chaque mois, et quand résilier</span></button>
       <button class="case" type="button" data-tool="tva"><b>Calcul HT, TVA, TTC</b><span>Pour tes devis et factures, avec remise et acompte</span></button>
+      <button class="case" type="button" data-tool="edl"><b>État des lieux</b><span>Entrée et sortie d'un logement, avec photos, comparaison et conseils</span></button>
       <button class="case" type="button" data-tool="dossier"><b>Mon dossier en PDF</b><span>Courriers, garanties, réclamations : tout au même endroit, à imprimer</span></button>
     </div>
     ${adHTML()}`;
   fillAds(box);
   $$('[data-tool]', box).forEach(b => b.addEventListener('click', () => {
     if (b.dataset.tool === 'dossier') return openDossier();
+    if (b.dataset.tool === 'edl') edl$ = { view: 'list' };
     tools$ = { view: b.dataset.tool }; track('outil_' + b.dataset.tool); renderTools(); setHash('tools', b.dataset.tool); box.scrollIntoView({ block: 'start' });
   }));
 }
-function toolBack(box) { $('#tool-back', box).addEventListener('click', () => { tools$ = { view: tools$.view === 'lettre' ? 'lettres' : 'home' }; renderTools(); setHash('tools'); }); }
+function toolBack(box) { $('#tool-back', box).addEventListener('click', () => { edl$ = { view: 'list' }; tools$ = { view: tools$.view === 'lettre' ? 'lettres' : 'home' }; renderTools(); setHash('tools'); }); }
 function setHash(which, sub) { try { history.replaceState(null, '', location.pathname + location.search + ((sub && SUBHASH[sub]) || TAB_HASH[which] || '')); } catch (e) {} }
-const SUBHASH = { abos: '#abonnements', tva: '#tva', lettres: '#lettres' };
+const SUBHASH = { abos: '#abonnements', tva: '#tva', lettres: '#lettres', edl: '#etat-des-lieux' };
 
 /* Lettres types */
 function renderLettres(box) {
@@ -3052,6 +3088,193 @@ function renderTVA(box) {
     toast((await copyText(t)) ? 'Calcul copié' : 'Copie impossible');
   });
   upd();
+}
+
+/* ---------- État des lieux (location) ---------- */
+const getEdl = () => store.get(KEYS.edl, []);
+const EDL_STATES = [['neuf', 'Neuf ou très bon'], ['bon', 'Bon état'], ['use', 'Usagé'], ['mauvais', 'Mauvais état'], ['absent', 'Absent ou hors service']];
+const EDL_RANK = { neuf: 0, bon: 1, use: 2, mauvais: 3, absent: 4 };
+const edlLabel = k => (EDL_STATES.find(s => s[0] === k) || [0, 'Non renseigné'])[1];
+const EDL_COMMON = ['Murs', 'Sol', 'Plafond', 'Fenêtres et volets', 'Porte', 'Prises et interrupteurs', 'Éclairage'];
+const EDL_ROOMS = {
+  'Entrée': [...EDL_COMMON, 'Interphone ou sonnette'],
+  'Séjour': [...EDL_COMMON, 'Radiateur ou chauffage'],
+  'Cuisine': ['Murs', 'Sol', 'Plafond', 'Fenêtre', 'Évier et robinetterie', 'Plaques de cuisson', 'Four', 'Hotte', 'Placards', 'Prises et interrupteurs'],
+  'Chambre': [...EDL_COMMON, 'Placards', 'Radiateur ou chauffage'],
+  'Salle de bain': ['Murs', 'Sol', 'Plafond', 'Lavabo', 'Douche ou baignoire', 'Joints', 'Robinetterie', 'Aération (VMC)', 'Prises et interrupteurs'],
+  'WC': ['Murs', 'Sol', "Cuvette et chasse d'eau", 'Aération', 'Éclairage'],
+  'Balcon ou terrasse': ['Sol', 'Garde-corps', 'Étanchéité'],
+  'Cave ou garage': ['Porte et serrure', 'Sol', 'Murs']
+};
+const EDL_TIPS = {
+  entree: ['Fais-le avec le bailleur ou l\'agence, de jour, pièce par pièce, avant d\'emménager.', 'Sois précis : « Sol : trois rayures près de la fenêtre » vaut mieux que « usé ».', 'Prends tout en photo, y compris les défauts. Garde les originaux : ils prouvent la date.', 'Teste vraiment : robinets, chasse d\'eau, volets, plaques, chauffage, prises, fenêtres, serrures.', 'Relève les compteurs (électricité, eau, gaz) et compte les clés.', 'Pas d\'accord sur un point ? Écris tes réserves avant de signer. Ne signe pas un document que tu n\'as pas relu.', 'En règle générale, tu peux demander à compléter l\'état des lieux d\'entrée dans les 10 jours qui suivent (et pendant le premier mois de chauffe pour le chauffage). Fais-le par écrit, de préférence en recommandé. Vérifie ton bail.', 'Chacun garde un exemplaire signé.'],
+  sortie: ['Reprends l\'état des lieux d\'entrée : seules les dégradations qui se sont ajoutées comptent.', 'L\'usure normale liée à la durée de l\'occupation (vétusté) ne peut pas être mise à ta charge.', 'Avant le jour J : vide, nettoie, répare les petits dommages et garde les factures.', 'Relève les compteurs, rends toutes les clés et demande un reçu.', 'Prends des photos le jour de la sortie, pièce par pièce.', 'Donne ta nouvelle adresse par écrit pour recevoir ton dépôt de garantie.', 'En règle générale, le dépôt de garantie doit être rendu sous 1 mois si les deux états des lieux sont identiques, 2 mois sinon. Toute retenue doit être justifiée (devis ou factures).', 'Un retard de restitution peut donner droit à une majoration. Dans ce cas, utilise l\'outil « Caution pas rendue » de l\'onglet Mon argent.']
+};
+let edl$ = { view: 'list' };
+function edlSave(e) { e.updatedAt = new Date().toISOString(); const l = getEdl(), i = l.findIndex(x => x.id === e.id); if (i >= 0) l[i] = e; else l.unshift(e); store.set(KEYS.edl, l); }
+function edlNew(type, f) {
+  const ref = f.ref ? getEdl().find(x => x.id === f.ref) : null;
+  const rooms = ref ? ref.rooms.map(r => ({ name: r.name, items: r.items.map(i => ({ name: i.name, state: '', note: '', photos: [] })) }))
+    : f.rooms.map(r => ({ name: r.name, items: (EDL_ROOMS[r.base] || EDL_COMMON).map(n => ({ name: n, state: '', note: '', photos: [] })) }));
+  return { id: newId('e'), type, ref: ref ? ref.id : '', adresse: f.adresse, date: f.date, locataire: f.locataire, bailleur: f.bailleur, rooms, compteurs: { elec: '', eau: '', gaz: '' }, cles: '', remarques: '', createdAt: new Date().toISOString() };
+}
+function edlProgress(e) { const all = e.rooms.flatMap(r => r.items), done = all.filter(i => i.state).length; return { done, total: all.length }; }
+function edlDiffs(e) {
+  const ref = e.ref && getEdl().find(x => x.id === e.ref); if (!ref) return [];
+  const out = [];
+  e.rooms.forEach(r => { const rr = ref.rooms.find(x => x.name === r.name); if (!rr) return; r.items.forEach(i => { const ri = rr.items.find(x => x.name === i.name); if (ri && ri.state && i.state && EDL_RANK[i.state] > EDL_RANK[ri.state]) out.push({ room: r.name, item: i.name, from: ri.state, to: i.state, note: i.note }); }); });
+  return out;
+}
+function renderEdl(box) {
+  const s = edl$;
+  if (s.view === 'new') return renderEdlNew(box);
+  if (s.view === 'room') return renderEdlRoom(box);
+  if (s.view === 'sum') return renderEdlSummary(box);
+  const list = getEdl().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  box.innerHTML = `<div class="sheet money-hero"><button class="link back" id="tool-back" type="button">Retour</button>
+    <h2>État des lieux</h2>
+    <p class="lead">Fais l'état des lieux de ton logement pièce par pièce, avec photos. À la sortie, on le compare à celui d'entrée pour te montrer ce que le propriétaire pourrait te reprocher, ou non.</p>
+    <div class="actions"><button class="btn" data-edl-new="entree" type="button">Je rentre dans un logement</button><button class="btn ghost" data-edl-new="sortie" type="button">Je quitte un logement</button></div></div>
+    <details class="tips"><summary>Nos conseils avant de commencer</summary><h3>À l'entrée</h3><ul>${EDL_TIPS.entree.map(t => `<li>${esc(t)}</li>`).join('')}</ul><h3>À la sortie</h3><ul>${EDL_TIPS.sortie.map(t => `<li>${esc(t)}</li>`).join('')}</ul><p class="note">Conseils généraux et indicatifs : vérifie ton bail et, en cas de litige, rapproche-toi d'une association de locataires (ADIL) ou d'un point-justice.</p></details>
+    <h3 class="sec-title">Mes états des lieux</h3>
+    ${list.length ? `<div class="items">${list.map(e => { const p = edlProgress(e); return `<article class="item l${p.done === p.total ? 1 : 2}" data-edl="${e.id}"><div><h3>${e.type === 'entree' ? 'Entrée' : 'Sortie'} : ${esc(e.adresse || 'Logement')}</h3><p>${e.date ? esc(fmtDate(parseDay(e.date))) : ''} | ${p.done} / ${p.total} points remplis${e.type === 'sortie' && edlDiffs(e).length ? ' | <b>' + edlDiffs(e).length + ' différence' + (edlDiffs(e).length > 1 ? 's' : '') + '</b>' : ''}</p></div>
+      <div class="row"><button class="btn small" data-edl-open type="button">Continuer</button><button class="btn small ghost" data-edl-sum type="button">Résumé et PDF</button><button class="link" data-edl-del type="button">Supprimer</button></div></article>`; }).join('')}</div>` : '<p class="note">Aucun état des lieux pour l\'instant.</p>'}`;
+  toolBack(box);
+  $$('[data-edl-new]', box).forEach(b => b.addEventListener('click', () => { edl$ = { view: 'new', type: b.dataset.edlNew }; renderTools(); box.scrollIntoView({ block: 'start' }); }));
+  $$('[data-edl]', box).forEach(el => {
+    const id = el.dataset.edl;
+    $('[data-edl-open]', el).addEventListener('click', () => { edl$ = { view: 'room', id, room: 0 }; renderTools(); box.scrollIntoView({ block: 'start' }); });
+    $('[data-edl-sum]', el).addEventListener('click', () => { edl$ = { view: 'sum', id }; renderTools(); box.scrollIntoView({ block: 'start' }); });
+    $('[data-edl-del]', el).addEventListener('click', () => { if (!confirm('Supprimer cet état des lieux et ses photos ?')) return; const e = getEdl().find(x => x.id === id); (e ? e.rooms : []).forEach(r => r.items.forEach(i => (i.photos || []).forEach(k => idb.del(k).catch(() => {})))); store.set(KEYS.edl, getEdl().filter(x => x.id !== id)); rememberDeleted(id); renderTools(); });
+  });
+}
+function renderEdlNew(box) {
+  const t = edl$.type, entrees = getEdl().filter(x => x.type === 'entree');
+  box.innerHTML = `<div class="sheet"><button class="link back" id="edl-back" type="button">Retour</button>
+    <h2>${t === 'entree' ? "État des lieux d'entrée" : 'État des lieux de sortie'}</h2>
+    <div class="form-grid">
+      <label class="field"><span>Adresse du logement</span><input id="en-adr" placeholder="Ex. 12 rue des Lilas, Lyon 3e"></label>
+      <label class="field"><span>Date</span><input id="en-date" type="date" value="${isoDay(new Date())}"></label>
+      <label class="field"><span>Locataire (toi)</span><input id="en-loc" value="${esc((store.get(KEYS.me, {}).nom) || '')}"></label>
+      <label class="field"><span>Propriétaire ou agence</span><input id="en-bail"></label>
+      ${t === 'sortie' && entrees.length ? `<label class="field" style="grid-column:1/-1"><span>Comparer avec l'état des lieux d'entrée</span><select id="en-ref"><option value="">Aucun, je repars de zéro</option>${entrees.map(e => `<option value="${e.id}">${esc(e.adresse || 'Logement')} (${e.date ? esc(fmtDate(parseDay(e.date))) : ''})</option>`).join('')}</select></label>` : ''}
+    </div>
+    <div id="en-rooms">
+      <p class="note"><b>Les pièces du logement</b></p>
+      <div class="form-grid">
+        <label class="field"><span>Chambres</span><select id="en-ch">${[0, 1, 2, 3, 4, 5].map(n => `<option ${n === 1 ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+        <label class="field"><span>Salles de bain</span><select id="en-sdb">${[0, 1, 2].map(n => `<option ${n === 1 ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+        <label class="field"><span>WC séparés</span><select id="en-wc">${[0, 1, 2].map(n => `<option>${n}</option>`).join('')}</select></label>
+      </div>
+      <div class="chips" role="group" aria-label="Autres pièces">${['Entrée', 'Séjour', 'Cuisine', 'Balcon ou terrasse', 'Cave ou garage'].map(r => `<button class="chip" type="button" data-room="${r}" aria-pressed="${['Entrée', 'Séjour', 'Cuisine'].includes(r)}">${r}</button>`).join('')}</div>
+    </div>
+    <p class="note" id="en-err" role="alert"></p>
+    <div class="actions"><button class="btn" id="en-go" type="button">Commencer</button></div></div>`;
+  $('#edl-back').addEventListener('click', () => { edl$ = { view: 'list' }; renderTools(); });
+  const refSel = $('#en-ref'); if (refSel) refSel.addEventListener('change', () => { $('#en-rooms').hidden = !!refSel.value; });
+  $$('[data-room]', box).forEach(b => b.addEventListener('click', () => b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true')));
+  $('#en-go').addEventListener('click', () => {
+    const adresse = $('#en-adr').value.trim(); if (!adresse) { $('#en-err').textContent = "Indique l'adresse du logement."; return; }
+    const rooms = [];
+    const picked = $$('[data-room]', box).filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.room);
+    ['Entrée', 'Séjour', 'Cuisine'].filter(r => picked.includes(r)).forEach(r => rooms.push({ name: r, base: r }));
+    for (let i = 1; i <= +$('#en-ch').value; i++) rooms.push({ name: 'Chambre ' + i, base: 'Chambre' });
+    for (let i = 1; i <= +$('#en-sdb').value; i++) rooms.push({ name: 'Salle de bain' + (+$('#en-sdb').value > 1 ? ' ' + i : ''), base: 'Salle de bain' });
+    for (let i = 1; i <= +$('#en-wc').value; i++) rooms.push({ name: 'WC' + (+$('#en-wc').value > 1 ? ' ' + i : ''), base: 'WC' });
+    ['Balcon ou terrasse', 'Cave ou garage'].filter(r => picked.includes(r)).forEach(r => rooms.push({ name: r, base: r }));
+    const ref = refSel ? refSel.value : '';
+    if (!ref && !rooms.length) { $('#en-err').textContent = 'Choisis au moins une pièce.'; return; }
+    const e = edlNew(t, { adresse, date: $('#en-date').value, locataire: $('#en-loc').value.trim(), bailleur: $('#en-bail').value.trim(), ref, rooms });
+    edlSave(e); track('edl_new'); edl$ = { view: 'room', id: e.id, room: 0 }; renderTools(); box.scrollIntoView({ block: 'start' });
+  });
+}
+function renderEdlRoom(box) {
+  const e = getEdl().find(x => x.id === edl$.id); if (!e) { edl$ = { view: 'list' }; return renderTools(); }
+  const last = e.rooms.length, ri = Math.min(edl$.room, last), meters = ri === last;
+  const ref = e.ref && getEdl().find(x => x.id === e.ref), p = edlProgress(e);
+  const steps = e.rooms.map((r, i) => `<button class="chip" type="button" data-step="${i}" aria-pressed="${i === ri}">${esc(r.name)}</button>`).join('') + `<button class="chip" type="button" data-step="${last}" aria-pressed="${meters}">Compteurs et clés</button>`;
+  let body;
+  if (meters) {
+    const c = e.compteurs || {};
+    body = `<h3>Compteurs et clés</h3><div class="form-grid">
+      <label class="field"><span>Électricité (index)</span><input data-m="elec" value="${esc(c.elec || '')}" inputmode="decimal"></label>
+      <label class="field"><span>Eau (index)</span><input data-m="eau" value="${esc(c.eau || '')}" inputmode="decimal"></label>
+      <label class="field"><span>Gaz (index)</span><input data-m="gaz" value="${esc(c.gaz || '')}" inputmode="decimal"></label>
+      <label class="field"><span>Nombre de clés remises</span><input data-m="cles" value="${esc(e.cles || '')}" inputmode="numeric"></label>
+      <label class="field" style="grid-column:1/-1"><span>Remarques générales</span><textarea data-m="remarques" style="min-height:80px;font-family:var(--ui)">${esc(e.remarques || '')}</textarea></label></div>
+      <p class="note">Prends une photo de chaque compteur : elle fait foi.</p>`;
+  } else {
+    const r = e.rooms[ri], rr = ref && ref.rooms.find(x => x.name === r.name);
+    body = `<h3>${esc(r.name)}</h3>${r.items.map((it, ii) => { const old = rr && (rr.items.find(x => x.name === it.name) || {}).state, worse = old && it.state && EDL_RANK[it.state] > EDL_RANK[old];
+      return `<div class="edl-item${worse ? ' worse' : ''}" data-ii="${ii}"><b>${esc(it.name)}</b>${old ? `<span class="note"> À l'entrée : ${esc(edlLabel(old))}${worse ? ' (dégradation)' : ''}</span>` : ''}
+        <div class="chips" role="group" aria-label="État : ${esc(it.name)}">${EDL_STATES.map(([k, l]) => `<button class="chip" type="button" data-st="${k}" aria-pressed="${it.state === k}">${l}</button>`).join('')}</div>
+        <div class="edl-row"><input data-note placeholder="Précision (rayure, tache, fissure…)" value="${esc(it.note || '')}" aria-label="Précision : ${esc(it.name)}"><label class="btn small ghost" for="ph-${ri}-${ii}">Photo${(it.photos || []).length ? ' (' + it.photos.length + ')' : ''}</label><input class="sr" type="file" id="ph-${ri}-${ii}" accept="image/*" capture="environment" data-photo></div></div>`; }).join('')}`;
+  }
+  box.innerHTML = `<div class="sheet"><button class="link back" id="edl-back" type="button">Mes états des lieux</button>
+    <h2>${e.type === 'entree' ? 'Entrée' : 'Sortie'} : ${esc(e.adresse)}</h2>
+    <div class="wbar" aria-hidden="true" style="max-width:none"><i style="width:${p.total ? Math.round(100 * p.done / p.total) : 0}%"></i></div><p class="note">${p.done} point${p.done > 1 ? 's' : ''} sur ${p.total} remplis. Tout s'enregistre tout seul.</p>
+    <div class="chips" role="group" aria-label="Pièces">${steps}</div>${body}
+    <div class="actions" style="margin-top:14px">${ri > 0 ? '<button class="btn ghost" id="edl-prev" type="button">Pièce précédente</button>' : ''}${!meters ? '<button class="btn" id="edl-next" type="button">Pièce suivante</button>' : '<button class="btn" id="edl-end" type="button">Voir le résumé</button>'}</div></div>`;
+  $('#edl-back').addEventListener('click', () => { edl$ = { view: 'list' }; renderTools(); });
+  $$('[data-step]', box).forEach(b => b.addEventListener('click', () => { edl$.room = +b.dataset.step; renderTools(); box.scrollIntoView({ block: 'start' }); }));
+  const go = n => { edl$.room = n; renderTools(); box.scrollIntoView({ block: 'start' }); };
+  const nx = $('#edl-next'); if (nx) nx.addEventListener('click', () => go(ri + 1));
+  const pv = $('#edl-prev'); if (pv) pv.addEventListener('click', () => go(ri - 1));
+  const en = $('#edl-end'); if (en) en.addEventListener('click', () => { edl$ = { view: 'sum', id: e.id }; renderTools(); box.scrollIntoView({ block: 'start' }); });
+  if (meters) $$('[data-m]', box).forEach(i => i.addEventListener('change', () => { const k = i.dataset.m; if (k === 'cles' || k === 'remarques') e[k] = i.value.trim(); else e.compteurs = { ...e.compteurs, [k]: i.value.trim() }; edlSave(e); }));
+  else $$('[data-ii]', box).forEach(el => {
+    const it = e.rooms[ri].items[+el.dataset.ii];
+    $$('[data-st]', el).forEach(b => b.addEventListener('click', () => { it.state = it.state === b.dataset.st ? '' : b.dataset.st; edlSave(e); renderTools(); }));
+    $('[data-note]', el).addEventListener('change', ev => { it.note = ev.target.value.trim(); edlSave(e); });
+    $('[data-photo]', el).addEventListener('change', async ev => {
+      const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
+      try { const key = `e:${e.id}:${ri}:${el.dataset.ii}:${Date.now().toString(36)}`; await idb.set(key, await compressImage(f, 1100, 0.7)); it.photos = [...(it.photos || []), key]; edlSave(e); toast('Photo ajoutée'); renderTools(); } catch (err) { toast("La photo n'a pas pu être enregistrée"); }
+    });
+  });
+}
+function renderEdlSummary(box) {
+  const e = getEdl().find(x => x.id === edl$.id); if (!e) { edl$ = { view: 'list' }; return renderTools(); }
+  const d = edlDiffs(e), p = edlProgress(e), bad = e.rooms.flatMap(r => r.items.filter(i => i.state === 'mauvais' || i.state === 'absent').map(i => ({ room: r.name, ...i })));
+  box.innerHTML = `<div class="sheet"><button class="link back" id="edl-back" type="button">Mes états des lieux</button>
+    <h2>${e.type === 'entree' ? "Résumé de l'état des lieux d'entrée" : "Résumé de l'état des lieux de sortie"}</h2>
+    <p>${esc(e.adresse)}${e.date ? ' | ' + esc(fmtDate(parseDay(e.date))) : ''} | ${p.done} / ${p.total} points remplis</p>
+    ${e.type === 'sortie' ? (e.ref ? (d.length ? `<div class="alert">${d.length} point${d.length > 1 ? 's' : ''} en moins bon état qu'à l'entrée. Vérifie s'il s'agit d'usure normale avant d'accepter une retenue.</div><ul>${d.map(x => `<li><b>${esc(x.room)} : ${esc(x.item)}</b> : ${esc(edlLabel(x.from))} à l'entrée, ${esc(edlLabel(x.to))} à la sortie${x.note ? ' (' + esc(x.note) + ')' : ''}</li>`).join('')}</ul><p class="note">Pour chaque point, demande un devis ou une facture : une retenue doit être justifiée, et la vétusté (usure normale) se déduit.</p>` : '<p><b>Aucune dégradation par rapport à l\'entrée.</b> Le dépôt de garantie doit en principe t\'être rendu en entier.</p>') : '<p class="note">Aucun état des lieux d\'entrée n\'est lié : la comparaison est impossible.</p>') : (bad.length ? `<p><b>Points à signaler dès l'entrée :</b></p><ul>${bad.map(x => `<li>${esc(x.room)} : ${esc(x.name)} (${esc(edlLabel(x.state))})${x.note ? ' : ' + esc(x.note) : ''}</li>`).join('')}</ul><p class="note">Fais-les écrire dans l'état des lieux officiel signé : c'est ce qui te protège à la sortie.</p>` : '<p class="note">Aucun défaut signalé.</p>')}
+    <div class="actions"><button class="btn" id="edl-pdf" type="button">Créer le PDF à signer</button><button class="btn ghost" id="edl-edit" type="button">Modifier</button>${e.type === 'sortie' ? '<button class="btn ghost" id="edl-caution" type="button">Caution pas rendue ?</button>' : ''}</div>
+    <details class="tips" open><summary>Nos conseils</summary><ul>${EDL_TIPS[e.type].map(t => `<li>${esc(t)}</li>`).join('')}</ul></details>
+    <p class="note">Cet outil t'aide à préparer le document. Le seul état des lieux qui compte est celui signé par les deux parties : fais signer ce PDF, ou reporte-le sur le formulaire du propriétaire.</p></div>`;
+  $('#edl-back').addEventListener('click', () => { edl$ = { view: 'list' }; renderTools(); });
+  $('#edl-edit').addEventListener('click', () => { edl$ = { view: 'room', id: e.id, room: 0 }; renderTools(); });
+  $('#edl-pdf').addEventListener('click', async () => { try { const html = await buildEdlHTML(e); track('edl_pdf'); printHTML(html); toast('Choisis « Enregistrer en PDF » dans la fenêtre d\'impression'); } catch (err) { console.error(err); toast("Le PDF n'a pas pu être créé"); } });
+  const c = $('#edl-caution'); if (c) c.addEventListener('click', () => { money$ = { mode: 'form', caseId: 'caution', values: { bailleur: e.bailleur || '' } }; showTab('money'); });
+}
+async function buildEdlHTML(e) {
+  const ref = e.ref && getEdl().find(x => x.id === e.ref);
+  let rooms = '';
+  for (const r of e.rooms) {
+    const rr = ref && ref.rooms.find(x => x.name === r.name); let rows = '', photos = '';
+    for (const it of r.items) {
+      const old = rr && (rr.items.find(x => x.name === it.name) || {}).state;
+      rows += `<tr${old && it.state && EDL_RANK[it.state] > EDL_RANK[old] ? ' class="w"' : ''}><td>${esc(it.name)}</td>${ref ? `<td>${old ? esc(edlLabel(old)) : '–'}</td>` : ''}<td>${it.state ? esc(edlLabel(it.state)) : '–'}</td><td>${esc(it.note || '')}</td></tr>`;
+      for (const k of it.photos || []) { const src = await idb.get(k).catch(() => null); if (src) photos += `<figure><img src="${src}" alt=""><figcaption>${esc(it.name)}</figcaption></figure>`; }
+    }
+    rooms += `<section><h2>${esc(r.name)}</h2><table><thead><tr><th>Élément</th>${ref ? "<th>À l'entrée</th>" : ''}<th>${e.type === 'entree' ? 'État' : 'À la sortie'}</th><th>Précisions</th></tr></thead><tbody>${rows}</tbody></table>${photos ? `<div class="ph">${photos}</div>` : ''}</section>`;
+  }
+  const c = e.compteurs || {};
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>État des lieux</title><style>
+    @page{size:A4;margin:14mm}body{font:10.5pt/1.4 Georgia,serif;color:#111;margin:0}
+    h1{font:700 19pt Arial,sans-serif;margin:0 0 4px}h2{font:700 12.5pt Arial,sans-serif;margin:16px 0 6px;padding-bottom:3px;border-bottom:2px solid #111}
+    table{width:100%;border-collapse:collapse;font-size:9.5pt;break-inside:auto}th,td{border:1px solid #bbb;padding:4px 6px;text-align:left;vertical-align:top}th{background:#eee;font-family:Arial,sans-serif;font-size:8.5pt}
+    tr.w td{background:#fde8e8}.ph{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}figure{margin:0;width:31%;break-inside:avoid}figure img{width:100%;border:1px solid #bbb}figcaption{font-size:8pt;color:#555}
+    .sig{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px;break-inside:avoid}.sig div{border:1px solid #888;height:80px;padding:6px;font:9pt Arial,sans-serif}
+    footer{margin-top:18px;font-size:8.5pt;color:#555;border-top:1px solid #bbb;padding-top:5px}
+  </style></head><body>
+  <h1>État des lieux ${e.type === 'entree' ? "d'entrée" : 'de sortie'}</h1>
+  <p>Logement : <b>${esc(e.adresse)}</b><br>Date : ${e.date ? esc(fmtDate(parseDay(e.date))) : '…'}<br>Locataire : ${esc(e.locataire || '…')}<br>Propriétaire ou agence : ${esc(e.bailleur || '…')}</p>
+  <h2>Compteurs et clés</h2><table><tbody><tr><td>Électricité</td><td>${esc(c.elec || '')}</td><td>Eau</td><td>${esc(c.eau || '')}</td><td>Gaz</td><td>${esc(c.gaz || '')}</td><td>Clés remises</td><td>${esc(e.cles || '')}</td></tr></tbody></table>
+  ${rooms}
+  ${e.remarques ? `<h2>Remarques</h2><p>${esc(e.remarques)}</p>` : ''}
+  <div class="sig"><div>Signature du locataire</div><div>Signature du propriétaire ou de l'agence</div></div>
+  <footer>Document préparé avec Paperdecrypt (QuenTools). Il n'a de valeur que signé par les deux parties. Dates et états à vérifier sur place.</footer></body></html>`;
 }
 
 /* ---------- Coffre de documents ---------- */
@@ -3232,7 +3455,7 @@ async function createDossier() {
 /* ---------- Onglets ---------- */
 const TABS = ['decode', 'money', 'warranty', 'vault', 'list', 'tools'];
 const TAB_HASH = { decode: '', money: '#argent', warranty: '#garanties', vault: '#coffre', list: '#courriers', tools: '#outils' };
-const START_HASH = { '#argent': ['money'], '#garanties': ['warranty'], '#coffre': ['vault'], '#courriers': ['list'], '#outils': ['tools', 'home'], '#abonnements': ['tools', 'abos'], '#tva': ['tools', 'tva'], '#lettres': ['tools', 'lettres'] };
+const START_HASH = { '#argent': ['money'], '#garanties': ['warranty'], '#coffre': ['vault'], '#courriers': ['list'], '#outils': ['tools', 'home'], '#abonnements': ['tools', 'abos'], '#tva': ['tools', 'tva'], '#lettres': ['tools', 'lettres'], '#etat-des-lieux': ['tools', 'edl'] };
 function showTab(which) {
   TABS.forEach(t => { $('#tab-' + t).setAttribute('aria-selected', t === which); $('#view-' + t).hidden = t !== which; });
   track('tab_' + which);
@@ -3379,7 +3602,7 @@ renderList(); renderReminders(); notifyUrgent();
 updatePill(); gpuReady.then(updatePill);
 
 // Exposé pour les tests
-window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, textScore, fileToCanvas };
+window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, textScore, fileToCanvas, buildEdlHTML };
 })();
 </script>
 </body>

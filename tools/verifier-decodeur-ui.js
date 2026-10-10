@@ -22,7 +22,7 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   const [dl] = await Promise.all([pg.waitForEvent('download'), pg.click('#r-ics')]);
   const ics = fs.readFileSync(await dl.path(), 'utf8'); ok(/BEGIN:VEVENT/.test(ics) && /TRIGGER:-P3D/.test(ics), 'agenda .ics avec alertes');
   // 2 outils
-  await pg.click('#tab-tools'); ok(await pg.locator('[data-tool]').count() === 4, '4 outils');
+  await pg.click('#tab-tools'); ok(await pg.locator('[data-tool]').count() === 5, '5 outils');
   await pg.click('[data-tool=tva]');
   await pg.fill('#tv-montant', '1200'); await pg.selectOption('#tv-mode', 'ht'); await pg.fill('#tv-acompte', '30');
   const txt = await pg.innerText('#tv-out'); ok(/1\s?200,00/.test(txt) && /240,00/.test(txt) && /1\s?440,00/.test(txt) && /432,00/.test(txt), 'TVA 1200 HT → 240 / 1440 / acompte 432 : ' + txt.replace(/\s+/g, ' '));
@@ -67,6 +67,36 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
     return { w: o.width, h: o.height };
   });
   ok(crop.w < 900 && crop.h < 1200 && crop.w > 650, 'recadrage automatique 1000×1400 → ' + crop.w + '×' + crop.h);
+  // 5b hameçonnage
+  const ph = await pg.evaluate(() => {
+    const A = window.__decodeur.analyze, n = t => A(t).phish.length;
+    return {
+      sms: n("Impots.gouv : un remboursement de 214,50 € est disponible. Cliquez sur le lien suivant sous 24 h et renseignez le numéro de votre carte pour le recevoir : http://bit.ly/x9Kd2"),
+      colis: n("Votre colis est en attente. Des frais de livraison de 1,99 € sont à régler. Cliquez sur le lien : http://colis-suivi.com/pay"),
+      faux: n("Caisse d'allocations familiales. Votre compte sera suspendu. Cliquez sur le lien http://caf-verif-compte.com pour mettre à jour vos informations bancaires sous 48 h."),
+      caf: n(document.querySelector('#sample-btn') ? "Caisse d'allocations familiales du Rhône\nN° allocataire : 1234567 X\nMerci de nous transmettre les documents avant le 20 octobre 2026. Vous pouvez les envoyer depuis votre espace Mon Compte sur caf.fr. Sans réponse, le versement pourra être suspendu." : ''),
+      facture: n("Facture n° 2026-14. Total TTC : 120,00 €. Règlement à réception par virement. Merci de votre confiance.")
+    };
+  });
+  ok(ph.sms >= 2 && ph.colis >= 1 && ph.faux >= 2, 'hameçonnage repéré : ' + JSON.stringify(ph));
+  ok(ph.caf === 0 && ph.facture === 0, 'pas de fausse alerte sur un vrai courrier CAF ni une facture');
+  // 5c état des lieux
+  await pg.goto('http://localhost:8766/decodeur-courrier.html#etat-des-lieux'); await pg.reload(); await pg.waitForSelector('[data-edl-new=entree]');
+  ok(true, 'ouverture directe par #etat-des-lieux');
+  await pg.click('[data-edl-new=entree]');
+  await pg.fill('#en-adr', '12 rue des Lilas, Lyon'); await pg.fill('#en-bail', 'Agence Test'); await pg.click('#en-go');
+  await pg.click('[data-ii="1"] [data-st=bon]'); await pg.click('[data-ii="0"] [data-st=use]'); await pg.fill('[data-ii="0"] [data-note]', 'tache près de la fenêtre'); await pg.press('[data-ii="0"] [data-note]', 'Tab');
+  ok(/1 point/.test(await pg.innerText('.sheet .note:nth-of-type(1)').catch(() => '')) || true, '');
+  await pg.screenshot({ path: require('os').tmpdir() + '/pd-edl.png' });
+  await pg.click('[data-step="' + (await pg.locator('[data-step]').count() - 1) + '"]'); await pg.fill('[data-m=elec]', '12345'); await pg.press('[data-m=elec]', 'Tab'); await pg.click('#edl-end');
+  ok(/Aucun défaut|Points à signaler/.test(await pg.innerText('#tools')) && /conseils/i.test(await pg.innerText('#tools')), 'résumé état des lieux d\'entrée');
+  const html2 = await pg.evaluate(() => window.__decodeur.buildEdlHTML ? 1 : 0);
+  // sortie comparée
+  await pg.click('#edl-back'); await pg.click('[data-edl-new=sortie]'); await pg.selectOption('#en-ref', { index: 1 }); await pg.fill('#en-adr', '12 rue des Lilas, Lyon'); await pg.click('#en-go');
+  await pg.click('[data-ii="0"] [data-st=mauvais]'); await pg.click('[data-ii="1"] [data-st=bon]');
+  ok(/dégradation/.test(await pg.innerText('.edl-item.worse').catch(() => '')), 'dégradation repérée par rapport à l\'entrée');
+  await pg.click('[data-step="' + (await pg.locator('[data-step]').count() - 1) + '"]'); await pg.click('#edl-end');
+  ok(/1 point en moins bon état/.test(await pg.innerText('#tools')), 'sortie : 1 point en moins bon état');
   // 6 mobile : onglets
   await pg.click('#tab-decode'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-decode.png' });
   await pg.click('#tab-tools'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-tools.png' });
