@@ -182,7 +182,10 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--btn);color:var(--btn-ink);padding:10px 16px;border-radius:10px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10;max-width:calc(100vw - 32px)}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
-.top-actions{display:flex;align-items:center;gap:8px}
+.top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.upd{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.upd svg{width:16px;height:16px}
+@media (max-width:520px){.input-sheet .actions{flex-direction:column;align-items:stretch}.input-sheet .actions .btn{justify-content:center}.sheet{padding:18px}}
+@media (max-width:620px){.top{flex-direction:column;align-items:stretch;gap:12px}.top-actions{justify-content:flex-start;flex-wrap:nowrap}.top-actions .btn,.top-actions .ai-pill{white-space:nowrap;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}.top-actions .icon-btn{margin-left:auto}.upd span{display:none}.upd{padding:0;width:44px;height:44px;justify-content:center;border-radius:999px}}
 .ai-pill{border:1px solid var(--line);background:var(--sheet);border-radius:999px;padding:8px 14px;font-weight:700;font-size:.85rem;cursor:pointer;min-height:44px;color:var(--muted)}
 .ai-pill[data-state="ready"]{color:var(--calm);border-color:var(--calm)}
 .ai-pill[data-state="loading"]{color:var(--ink)}
@@ -375,7 +378,7 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
       <p>Courriers, remboursements et garanties, par QuenTools</p>
     </div>
     <div class="top-actions">
-    <button class="btn small ghost" id="update-btn" type="button" title="Charger la dernière version de l'application (tes données sont conservées)">Mise à jour</button>
+    <button class="btn small ghost upd" id="update-btn" type="button" aria-label="Mise à jour" title="Charger la dernière version de l'application (tes données sont conservées)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg><span>Mise à jour</span></button>
     <button class="btn small" id="login-btn" type="button" hidden>Se connecter</button>
     <button class="ai-pill" id="ai-pill" type="button" hidden>Assistant IA</button>
     <button class="icon-btn" id="open-settings" aria-label="Réglages">
@@ -2595,7 +2598,7 @@ gpuReady.then(() => {
 });
 // Mise à jour : copies locales de l'application vidées, page rechargée depuis le serveur. Les documents et réglages ne sont pas touchés.
 $('#update-btn').addEventListener('click', async () => {
-  const b = $('#update-btn'); b.disabled = true; b.textContent = 'Mise à jour…';
+  const b = $('#update-btn'); b.disabled = true; b.querySelector('span').textContent = 'Mise à jour…';
   try {
     if ('serviceWorker' in navigator) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.update().then(() => r.unregister()).catch(() => {}))); }
     if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.filter(k => k.startsWith('paperdecrypt-')).map(k => caches.delete(k))); }
