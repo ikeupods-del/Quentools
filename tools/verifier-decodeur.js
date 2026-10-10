@@ -63,5 +63,25 @@ chk('pas de fausse détection sur un courrier', vm.runInContext('looksLikePaysli
 if(!ko3) console.log('✓ Paperdecrypt : variantes de fiches de paie (temps partiel, formats, cotisations) lues correctement');
 if(!ko3) console.log('✓ Paperdecrypt : analyse de fiche de paie correcte (13 contrôles)');
 ko+=ko3;
+
+// Lecture d'un ticket ou d'une facture d'achat (garanties)
+{
+  const ta=src.indexOf('/*TICKET-DEB*/'), tb=src.indexOf('/*TICKET-FIN*/'); const c4={ norm }; vm.createContext(c4);
+  vm.runInContext(src.slice(ta,tb).replace(/^const /gm,'var ').replace(/^function /gm,'var _f_=0;function '),c4);
+  const rd=t=>vm.runInContext('readReceipt('+JSON.stringify(t)+')',c4);
+  const HEAD=["Facture FF05A017897-26-002 du 29.08.2026 16:54 Page 1/1","Boulanger Arles","10 Avenue des Arches, 13200 Arles","SIRET 94056844700012","Commerçant indépendant -","Membre du réseau BOULANGER","M STORACE QUENTIN","N° client: 55274636"];
+  const TAIL=["Extension de garantie non retenue","Garantie réparation jusqu'au 29.08.2028","Disponibilité des pièces détachées (donnée fournisseur):","Pendant 7 ans"];
+  const FOOT=["Merci de votre visite","Garantie légale de conformité : 2 ans","ELECTRO 1","au capital Social de 50 000 EUR","RCS Tarascon 940 568 447","TVA I.C. FR88940568447","APE 4754Z"];
+  const A=[...HEAD,"REFERENCE DE L'ACHAT CODE Qté P.U.TTC T.TVA TOTAL TTC","TV LG 50QNED86B 2026 0001239790 1 637.89 20.00 637.89","ECO-PART DEEE 11.11",...TAIL,"TOTAL HT (Euros) 540.83","TOTAL TTC (Euros) 649.00","Dont TVA (20.00 %) 108.17","Dont éco-part. DEEE (TTC) 11.11","REGLEMENTS Règlement perçu 649.00",...FOOT].join('\n');
+  const B=[...HEAD,"REFERENCE DE L'ACHAT","TV LG 50QNED86B 2026","0001239790 1 637.89 20.00 637.89","ECO-PART DEEE","11.11",...TAIL,"TOTAL HT (Euros)","TOTAL TTC (Euros)","Dont TVA (20.00 %)","Dont éco-part. DEEE (TTC)","540.83","649.00","108.17","11.11","REGLEMENTS","Règlement perçu","649.00",...FOOT].join('\n');
+  let ko4=0; const ck=(n,c)=>{ if(!c){ko4++;console.log('✗ ticket : '+n);} };
+  for (const [nom,t] of [['facture Boulanger (lignes)',A],['facture Boulanger (colonnes séparées)',B]]) { const r=rd(t); ck(nom+' : prix 649',r.price===649); ck(nom+' : magasin',r.store==='Boulanger'); ck(nom+' : produit « '+r.product+' »',r.product==='TV LG 50QNED86B 2026'); ck(nom+' : fin de garantie',r.warrantyEnd==='2028-08-29'); ck(nom+' : extension refusée',r.extension===false); }
+  { const r=rd("CARREFOUR MARKET\n12 RUE DES LILAS\nLave-linge BOSCH WAN28 1 399,00\nSOUS-TOTAL 399,00\nTOTAL A PAYER 399,00 EUR\nCB 399,00\nTicket n° 4521 12/05/2026"); ck('ticket de caisse', r.price===399&&r.store==='Carrefour'&&r.product==='Lave-linge BOSCH WAN28'); }
+  { const r=rd("SARL TECHNO au capital de 50 000 EUR\nCasque audio XY200 59,90\nTotal TTC : 59,90 €"); ck('capital ignoré', r.price===59.9); }
+  { const r=rd("Garantie 5 ans pièces et main d'oeuvre\nAspirateur DYSON V15 599,00\nTOTAL 599,00"); ck('garantie annoncée en années', r.warrantyYears===5&&r.price===599&&r.store==='Dyson'); }
+  { vm.runInContext('1',ctx); const r=vm.runInContext('scanAmounts('+JSON.stringify("SARL au capital de 50 000 euros. Montant à payer : 120,00 €")+')',ctx); ck('scanAmounts ignore le capital social', r.best&&r.best.value===120); }
+  if(!ko4) console.log('✓ Paperdecrypt : lecture des tickets et factures d\'achat correcte (13 contrôles)');
+  ko+=ko4;
+}
 console.log(ko ? `✗ ${ko} cas en erreur sur ${CAS.length}` : `✓ Paperdecrypt : ${CAS.length} lectures de montants correctes`);
 process.exit(ko ? 1 : 0);

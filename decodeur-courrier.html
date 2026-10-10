@@ -700,6 +700,7 @@ function scanAmounts(flat) {
     const le0 = flat.indexOf('\n', end), le = le0 < 0 ? flat.length : le0;
     const before = norm(flat.slice(Math.max(ls, prevEnd, m.index - 70), m.index));
     const after = norm(flat.slice(end, Math.min(le, end + 28)));
+    if (/(capital( social)?( de)?|siret|siren|rcs)\s*[:\w]{0,12}\s*$/.test(before)) { prevEnd = end; continue; }
     let kind = lastTag(before.slice(-45));
     if (!kind || /[\/|;]\s*$/.test(before)) kind = adjTag(after) || kind;
     if (!kind && !before.trim() && ls > 0) { const prev = flat.lastIndexOf('\n', ls - 2) + 1; kind = lastTag(norm(flat.slice(prev, ls))); }
@@ -726,6 +727,57 @@ function scanAmounts(flat) {
   if (best && best.kind === 'tva' && ttc) best = ttc;
   return { list, best, ht: ht && ht.value, tva: tva && tva.value, ttc: (ttc && ttc.value) || est, rate, estimated };
 }
+/*TICKET-DEB*/
+/* Lecture d'un ticket de caisse ou d'une facture d'achat (garanties) : magasin, produit, prix TTC, fin de garantie.
+   Les montants des tickets n'ont souvent ni « € » ni « TTC » collé : on lit les libellés (TOTAL TTC, À PAYER, RÈGLEMENT…) et les nombres à deux décimales. */
+const RETAILERS = ['boulanger', 'darty', 'fnac', 'leroy merlin', 'castorama', 'carrefour', 'auchan', 'e\\.?leclerc', 'leclerc', 'amazon', 'cdiscount', 'ikea', 'decathlon', 'apple', 'samsung', 'electro depot', 'electro 1', 'but', 'conforama', 'brico depot', 'bricomarche', 'lidl', 'intermarche', 'super u', 'orange', 'sfr', 'bouygues', 'free mobile', 'action', 'micromania', 'cultura', 'maisons du monde', 'ldlc', 'materiel\\.net', 'rue du commerce', 'back market', 'backmarket', 'zara', 'h&m', 'kiabi', 'gifi', 'norauto', 'feu vert', 'midas', 'truffaut', 'jardiland', 'monoprix', 'casino', 'cora', 'mediamarkt', 'media markt', 'xiaomi', 'dyson', 'miele', 'bosch', 'delonghi', 'rakuten', 'vinted', 'ebay'];
+const RETAILER_RE = new RegExp('(^|[^a-z0-9])(' + RETAILERS.join('|') + ')(?![a-z0-9])');
+const TK_STOP = /(total|tva|ttc|\bht\b|reglement|facture|ticket|client|siret|siren|merci|garantie|eco-?part|capital|\brcs\b|carte|especes|rendu|montant|page|\bdate\b|\btel\b|www|avenue|\brue\b|boulevard|\bcode\b|\bqte\b|\bqty\b|designation|reference de|sous-total|remise|livraison|fidelite|\bcb\b|extension|disponibilite|pendant|commercant|membre du reseau|ape |net a payer|a payer|a regler|offert|avoir|duplicata|caisse|vendeur|n°)/;
+function tkDecimals(line) {
+  const t = String(line).replace(/\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}/g, ' ').replace(/\d+(?:[.,]\d+)?\s*%/g, ' ').replace(/ | /g, ' ');
+  const out = []; const re = /(?:^|[^\d.,])(\d{1,3}(?: \d{3})+|\d+)[.,](\d{2})(?!\d)/g; let m;
+  while ((m = re.exec(t))) out.push(parseFloat(m[1].replace(/ /g, '') + '.' + m[2]));
+  return out;
+}
+function readReceipt(raw) {
+  const lines = String(raw).split(/\n+/).map(l => l.trim()).filter(Boolean), nl = lines.map(norm), res = { store: null, product: null, known: false, price: null, priceFrom: null, warrantyEnd: null, warrantyYears: null, extension: null };
+  // Magasin : enseigne connue, sinon première ligne parlante
+  const rm = norm(raw).match(RETAILER_RE);
+  res.known = !!rm;
+  if (rm) res.store = rm[2].replace(/\\\./g, '.').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  else { const f = lines.find((l, i) => /[a-zA-ZÀ-ÿ]{3,}/.test(l) && l.length <= 42 && !TK_STOP.test(nl[i]) && !/\d{4,}/.test(l)); if (f) res.store = f; }
+  // Prix : libellés de total, valeur sur la ligne ou, sinon, dans la colonne de chiffres qui suit
+  const PRIO = [[/total ttc|montant ttc|total t\.?t\.?c|ttc \(?(euros?|eur)/, 6], [/(net|total|montant) a payer|a regler|reste a payer/, 6], [/reglement (percu|recu)|montant regle|total regle|carte bancaire|especes|paiement/, 4], [/^total\b|total general|total eur|montant total|\btotal\b/, 3]];
+  const BAD = /(capital|siret|siren|\brcs\b|tva i\.?c|\bape\b|telephone|www|n° ?client|total ht|montant ht|hors taxe|dont tva|eco-?part|sous-total|acompte|remise|rendu|monnaie)/;
+  const cand = [];
+  const score = i => { if (BAD.test(nl[i])) return null; for (const [re, s] of PRIO) if (re.test(nl[i])) return s; return null; };
+  for (let i = 0; i < lines.length; i++) { const s = score(i); if (s === null) continue; const d = tkDecimals(lines[i]); if (d.length) cand.push({ v: d[d.length - 1], s: s + 1, i }); }
+  // Libellés empilés puis colonne de montants
+  for (let i = 0; i < lines.length; i++) {
+    let j = i; while (j < lines.length && !tkDecimals(lines[j]).length && /(total|dont|tva|ttc|\bht\b|net|reglement|montant)/.test(nl[j])) j++;
+    const run = j - i; if (run < 2) continue;
+    let k = j; const vals = []; while (k < lines.length && /^[\d\s.,€]+$/.test(lines[k]) && tkDecimals(lines[k]).length) { vals.push(tkDecimals(lines[k])[0]); k++; }
+    if (vals.length >= run) for (let x = 0; x < run; x++) { const s = score(i + x); if (s !== null) cand.push({ v: vals[x], s, i: i + x }); }
+    i = j;
+  }
+  if (cand.length) { cand.sort((a, b) => b.s - a.s || a.i - b.i); res.price = cand[0].v; res.priceFrom = lines[cand[0].i]; }
+  // Produit : ligne qui suit l'en-tête du tableau, sinon première ligne d'article avec prix
+  const clean = l => l.replace(/\s+(\d{6,}|\d+[.,]\d{2})\b.*$/, '').replace(/\s+\d{1,2}\s*$/, '').trim();
+  const okName = (l, i) => /[a-zA-ZÀ-ÿ]{3,}/.test(l) && !TK_STOP.test(nl[i]) && clean(l).length >= 5;
+  const hi = nl.findIndex(l => /(reference de l.?achat|designation|libelle|article|description)/.test(l));
+  if (hi >= 0) for (let i = hi + 1; i < Math.min(lines.length, hi + 4); i++) if (okName(lines[i], i)) { res.product = clean(lines[i]); break; }
+  if (!res.product) for (let i = 0; i < lines.length; i++) if (tkDecimals(lines[i]).length && okName(lines[i], i)) { res.product = clean(lines[i]); break; }
+  // Garantie commerciale annoncée
+  const n = norm(raw);
+  const gm = n.match(/garantie[^\n]{0,60}?jusqu'?\s*au[^\d]{0,6}(\d{2})[.\/-](\d{2})[.\/-](\d{4})/);
+  if (gm) res.warrantyEnd = `${gm[3]}-${gm[2]}-${gm[1]}`;
+  const ym = n.match(/garantie(?! legale)[^\n]{0,25}?(\d{1,2}) ans/);
+  if (ym) res.warrantyYears = +ym[1];
+  if (/extension de garantie non retenue|sans extension de garantie/.test(n)) res.extension = false;
+  else if (/extension de garantie/.test(n)) res.extension = true;
+  return res;
+}
+/*TICKET-FIN*/
 const kindLabel = k => k === 'ttc' ? ' TTC' : k === 'ht' ? ' HT' : '';
 const money = v => (v || v === 0) && isFinite(v) ? fmtMoney(Math.round(v * 100) / 100) : '[montant]';
 function makeICS({ date, summary, desc, alarms }) {
@@ -2631,28 +2683,37 @@ function renderWForm(box) {
   $('#wf-back').addEventListener('click', () => { w$ = { mode: 'home' }; renderWarranty(); });
   $('#wf-photo').addEventListener('change', async e => {
     let f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    let pdfFile = null;
     if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
-      $('#wf-photo-state').textContent = 'Lecture du PDF…';
+      $('#wf-photo-state').textContent = 'Lecture du PDF…'; pdfFile = f;
       try { f = await pdfFirstPageFile(f); } catch (err) { $('#wf-photo-state').textContent = 'Impossible de lire ce PDF. Essaie une photo.'; return; }
     }
     try { pendingImg = await compressImage(f); $('#wf-photo-state').textContent = 'Photo prête. Lecture du ticket…'; } catch (err) { toast('Impossible de lire cette photo'); return; }
     try {
       const pr = $('#wf-progress'); pr.classList.add('on');
-      await loadScript(TESSERACT_URL);
-      const wk = await getOcr();
-      const c = await fileToCanvas(f);
-      $('#wf-ptext').textContent = 'Lecture du ticket…';
-      const { data } = await wk.recognize(c, { rotateAuto: true });
+      let t = '';
+      // PDF avec du texte : on le lit directement, c'est bien plus fiable qu'une lecture d'image.
+      if (pdfFile) { try { t = await readPdf(pdfFile); } catch (err) { t = ''; } }
+      if (t.replace(/\s/g, '').length < 60) {
+        await loadScript(TESSERACT_URL);
+        const wk = await getOcr(), c = await fileToCanvas(f);
+        $('#wf-ptext').textContent = 'Lecture du ticket…';
+        t = (await wk.recognize(c, { rotateAuto: true })).data.text || '';
+      }
       pr.classList.remove('on'); hideOcr();
-      const t = data.text || '';
+      const rc = readReceipt(t), got = [];
       const dates = findDates(t).filter(d => d.date <= new Date());
-      if (dates.length && !$('#wf-date').value) $('#wf-date').value = isoDay(dates[0].date);
-      const tx = scanAmounts(t), pick = tx.ttc || (tx.best && tx.best.kind !== 'ht' ? tx.best.value : null) || (tx.best && tx.best.value);
-      const price = pick ? String(pick) : null;
-      if (price && !$('#wf-prix').value) $('#wf-prix').value = parseFloat(price);
-      const first = t.split('\n').map(l => l.trim()).find(l => /[A-Za-z]{3,}/.test(l));
-      if (first && !$('#wf-store').value) $('#wf-store').value = first.slice(0, 40);
-      $('#wf-photo-state').textContent = 'Photo prête. Vérifie les infos lues sur le ticket.';
+      if (dates.length && !$('#wf-date').value) { $('#wf-date').value = isoDay(dates[0].date); got.push('la date'); }
+      let price = rc.price;
+      if (price === null) { const tx = scanAmounts(t), pick = tx.ttc || (tx.best && tx.best.kind !== 'ht' ? tx.best.value : null); if (pick && pick < 50000) price = pick; }
+      if (price && !$('#wf-prix').value) { $('#wf-prix').value = price; got.push('le prix TTC'); }
+      if (rc.store && !$('#wf-store').value) { $('#wf-store').value = rc.store.slice(0, 40); got.push('le magasin'); }
+      if (rc.product && !$('#wf-name').value) { $('#wf-name').value = rc.product.slice(0, 60); got.push('le produit'); }
+      const bought = $('#wf-date').value ? parseDay($('#wf-date').value) : null, legal = $('#wf-etat').value === 'occasion' ? 1 : 2;
+      let years = rc.warrantyYears;
+      if (rc.warrantyEnd && bought) years = Math.round((parseDay(rc.warrantyEnd) - bought) / (365.25 * 864e5) * 2) / 2;
+      if (years && years > legal && !$('#wf-extra').value) { $('#wf-extra').value = years; got.push('la garantie commerciale'); }
+      $('#wf-photo-state').textContent = got.length ? `Lu sur le document : ${got.join(', ')}. Vérifie avant d'enregistrer.` : 'Photo prête. Je n\'ai rien pu lire : remplis les infos à la main.';
     } catch (err) { $('#wf-progress').classList.remove('on'); $('#wf-photo-state').textContent = 'Photo prête. Remplis les infos à la main.'; }
   });
   $('#wf-save').addEventListener('click', async () => {
@@ -3884,6 +3945,7 @@ async function addToVault(files) {
         if (a.amount) amount = a.amount.value;
         if (a.org) name = `${a.org.court} : ${a.type.label.toLowerCase()}`;
       } catch (e) { /* analyse impossible : on garde le nom du fichier */ }
+      try { const rc = readReceipt(text); if (rc.known) { name = rc.store + (rc.product ? ' : ' + rc.product : ' : facture'); if (rc.price) amount = rc.price; if (cat === 'autre') cat = 'facture'; } } catch (e) { /* lecture de ticket impossible */ }
     }
     const l = getVault(); l.unshift({ id, name, cat, kind: isPdf ? 'pdf' : 'img', date, amount, note: '', text: text.slice(0, 3000), size: f.size, createdAt: now, updatedAt: now });
     if (!store.set(KEYS.coffre, l)) { toast("L'espace de stockage est plein : supprime des documents"); idb.del('d:' + id).catch(() => {}); break; }
@@ -4117,7 +4179,7 @@ renderList(); renderReminders(); notifyUrgent();
 updatePill(); gpuReady.then(updatePill);
 
 // Exposé pour les tests
-window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, paieAnswer, textScore, fileToCanvas, buildEdlHTML, geoDist, parsePayslip, payslipInsights, looksLikePayslip, PAIE_SAMPLE };
+window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, paieAnswer, textScore, fileToCanvas, buildEdlHTML, geoDist, readReceipt, parsePayslip, payslipInsights, looksLikePayslip, PAIE_SAMPLE };
 })();
 </script>
 </body>
