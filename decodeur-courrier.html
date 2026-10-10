@@ -3187,7 +3187,7 @@ async function syncFiles(F, u, remoteIdx, deleted) {
   const ref = k => F.Fs.doc(F.db, 'users', u.uid, 'apps', APP_ID, 'files', k);
   const have = new Set(await idb.keys()), idx = new Set();
   for (const k of remoteIdx || []) { if (fileLive(k, deleted)) idx.add(k); else await F.Fs.deleteDoc(ref(k)).catch(() => {}); }
-  let skipped = 0, got = 0;
+  let skipped = 0, got = 0, sent = 0, err = '';
   for (const k of have) {
     if (!fileLive(k, deleted) || idx.has(k)) continue;
     try {
@@ -3195,8 +3195,8 @@ async function syncFiles(F, u, remoteIdx, deleted) {
       if (typeof v === 'string' && v.length > FILE_MAX) v = await shrinkData(v).catch(() => v);
       const enc = await encodeFile(v);
       if (!enc || enc.data.length > FILE_MAX) { skipped++; continue; }
-      await F.Fs.setDoc(ref(k), enc); idx.add(k);
-    } catch (e) { console.error(e); skipped++; }
+      await F.Fs.setDoc(ref(k), enc); idx.add(k); sent++;
+    } catch (e) { console.error(e); skipped++; err = err || (e && (e.code || e.message)) || 'erreur'; }
   }
   for (const k of [...idx]) {
     if (have.has(k)) continue;
@@ -3204,9 +3204,9 @@ async function syncFiles(F, u, remoteIdx, deleted) {
       const sn = await F.Fs.getDoc(ref(k));
       if (!sn.exists()) { idx.delete(k); continue; }
       await idb.set(k, await decodeFile(sn.data())); got++;
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); err = err || (e && (e.code || e.message)) || 'erreur'; }
   }
-  return { fichiers: [...idx], skipped, got };
+  return { fichiers: [...idx], skipped, got, sent, err };
 }
 async function syncNow() {
   const u = FBU; if (!u) { setSyncStatus('Connecte-toi d\'abord avec Google.'); return; }
@@ -3230,13 +3230,13 @@ async function syncNow() {
       deleted: [...deleted].slice(-500)
     };
     _set(KEYS.list, merged.courriers); _set(KEYS.claims, merged.reclamations); _set(KEYS.garanties, merged.garanties); _set(KEYS.abos, merged.abonnements); _set(KEYS.edl, merged.edl); _set(KEYS.coffre, mergeVault(getVault(), merged.coffre)); _set(KEYS.me, merged.moi); _set(KEYS.deleted, merged.deleted);
-    let fsync = { fichiers: remote.fichiers || [], skipped: 0, got: 0 };
-    try { fsync = await syncFiles(F, u, remote.fichiers, deleted); } catch (e) { console.error(e); }
+    let fsync = { fichiers: remote.fichiers || [], skipped: 0, got: 0, sent: 0, err: '' };
+    try { fsync = await syncFiles(F, u, remote.fichiers, deleted); } catch (e) { console.error(e); fsync.err = (e && (e.code || e.message)) || 'erreur'; }
     merged.fichiers = fsync.fichiers;
     // Passage par JSON : Firestore refuse les valeurs « undefined ».
     await F.Fs.setDoc(ref, JSON.parse(JSON.stringify(merged)));
     store.set(KEYS.sync, { last: new Date().toISOString() });
-    setSyncStatus(fsync.skipped ? fsync.skipped + ' fichier(s) trop lourd(s) restent sur cet appareil (limite de la synchronisation : environ 650 Ko).' : ''); renderList(); renderMoneyIfOpen(); renderWarrantyIfOpen(); if (!$('#view-vault').hidden) renderVault(); if (!$('#view-tools').hidden) renderTools(); renderReminders();
+    setSyncStatus(fsync.err ? 'Photos non synchronisées (' + fsync.err + '). Dis-le à QuenTools.' : fsync.skipped ? fsync.skipped + ' fichier(s) trop lourd(s) restent sur cet appareil.' : (fsync.sent || fsync.got) ? 'Photos : ' + fsync.sent + ' envoyée(s), ' + fsync.got + ' reçue(s).' : ''); renderList(); renderMoneyIfOpen(); renderWarrantyIfOpen(); if (!$('#view-vault').hidden) renderVault(); if (!$('#view-tools').hidden) renderTools(); renderReminders();
   } catch (e) {
     console.error(e);
     setSyncStatus(!navigator.onLine ? 'Pas de connexion : la synchronisation se fera plus tard.' : 'La synchronisation a échoué. Réessaie dans un instant.');
