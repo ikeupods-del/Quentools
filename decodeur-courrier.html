@@ -2369,7 +2369,10 @@ async function ensureEngine() {
     try { localStorage.setItem(IA_FLAG, prefSize()); } catch (e) { /* ignoré */ }   // si la page redémarre pendant le chargement, on s'en souvient
     if (!webllm) webllm = await import(WEBLLM_URL);
     if (engine) { try { await engine.unload(); } catch (e) {} engine = null; }
-    const e = await webllm.CreateMLCEngine(model, { initProgressCallback: engineProgress });
+    // iOS : le cache habituel du navigateur bloque souvent les gros téléchargements ; on utilise la base de données du navigateur à la place.
+    const cfg = { initProgressCallback: engineProgress };
+    if (isIOS && webllm.prebuiltAppConfig) cfg.appConfig = { ...webllm.prebuiltAppConfig, useIndexedDBCache: true };
+    const e = await webllm.CreateMLCEngine(model, cfg);
     engine = e; engineModel = model;
     try { localStorage.removeItem(IA_FLAG); } catch (e2) { /* ignoré */ }
     store.set(KEYS.ia, { ...iaPrefs(), size: prefSize(), ready: true, model, crash: 0, fail: false });
