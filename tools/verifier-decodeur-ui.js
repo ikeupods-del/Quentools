@@ -160,7 +160,7 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
       ok(/Ce que tu paies/.test(cols) && /Ce que paie ton employeur/.test(cols), 'PDF réel : deux colonnes salarié / employeur');
       await pg.click('#paie-valid-go'); await pg.waitForSelector('#paie-res .paie-t');
       const rs = await pg.innerText('#paie-res');
-      ok(/2\s?330,93/.test(rs) && /473,77/.test(rs) && /1\s?861,16/.test(rs) && /1\s?672,06/.test(rs) && !/ancienneté/i.test(rs), 'PDF réel : analyse sur les chiffres validés, sans ligne inventée');
+      ok(/2\s?330,93/.test(rs) && /473,77/.test(rs) && /1\s?861,16/.test(rs) && /1\s?672,06/.test(rs) && !/ancienneté/i.test(await pg.locator('#paie-res .paie-lines').innerText()), 'PDF réel : analyse sur les chiffres validés, sans ligne inventée');
       ok(/Qui paie quoi/.test(rs) && /Sécurité sociale maladie/.test(rs) && /163,17/.test(rs), 'PDF réel : « qui paie quoi » affiche la part employeur à sa place');
       // brut faux sur la fiche : lecture incertaine, cases en pointillés, correction puis validation
       const mauvais = lib.layout().map(e => (e.page === 1 && e.text === '2 330,93' && e.x > 330 ? { ...e, text: '2 130,93' } : e));
