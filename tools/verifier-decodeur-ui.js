@@ -126,6 +126,13 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
   await pg.fill('#letter-input', await pg.evaluate(() => window.__decodeur.PAIE_SAMPLE)); await pg.click('#decode-btn');
   ok(await pg.isVisible('#to-paie'), 'le décodeur propose l\'analyse de fiche de paie'); await pg.click('#to-paie'); await pg.waitForSelector('.paie-t'); ok(true, 'passage direct à l\'analyse');
+  // 5e mémoire des corrections
+  await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
+  await pg.click('#sample-btn'); await pg.click('[data-fb=ko]'); await pg.waitForSelector('#fix-panel:not([hidden])');
+  await pg.selectOption('#fix-org', 'impots'); await pg.click('#fix-apply');
+  ok(/Impôts/.test(await pg.innerText('.who h2')) || /impôts/i.test(await pg.innerText('.who h2')), 'correction appliquée (expéditeur = impôts)');
+  await pg.click('#new-btn'); await pg.reload(); await pg.click('#sample-btn');
+  ok(/ajustée d'après tes corrections/.test(await pg.innerText('#result')) && /impôts/i.test(await pg.innerText('.who h2')), 'la correction est retenue pour le courrier suivant du même expéditeur');
   // 6 mobile : onglets
   await pg.click('#tab-decode'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-decode.png' });
   await pg.click('#tab-tools'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-tools.png' });

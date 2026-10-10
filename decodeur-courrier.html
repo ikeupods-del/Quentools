@@ -623,7 +623,7 @@ async function fillAds(root) {
 }
 const tipHTML = () => CONFIG.TIP_URL ? `<a class="link tip" href="${esc(CONFIG.TIP_URL)}" target="_blank" rel="noopener">Ça t'a aidé ? Soutiens QuenTools</a>` : '';
 Object.assign(KEYS, { claims: 'qt-paperasse:reclamations', garanties: 'qt-paperasse:garanties', premium: 'qt-paperasse:premium', sync: 'qt-paperasse:sync', deleted: 'qt-paperasse:supprimes',
-  abos: 'qt-paperasse:abonnements', coffre: 'qt-paperasse:coffre', edl: 'qt-paperasse:etats-des-lieux', paies: 'qt-paperasse:fiches-de-paie', coffreRead: 'qt-paperasse:coffre-lecture', nostats: 'qt-paperasse:sans-stats', seen: 'qt-paperasse:vu', notif: 'qt-paperasse:notif', notifDay: 'qt-paperasse:notif-jour' });
+  abos: 'qt-paperasse:abonnements', coffre: 'qt-paperasse:coffre', edl: 'qt-paperasse:etats-des-lieux', paies: 'qt-paperasse:fiches-de-paie', lecons: 'qt-paperasse:lecons', coffreRead: 'qt-paperasse:coffre-lecture', nostats: 'qt-paperasse:sans-stats', seen: 'qt-paperasse:vu', notif: 'qt-paperasse:notif', notifDay: 'qt-paperasse:notif-jour' });
 const SYNC_KEYS = [KEYS.list, KEYS.claims, KEYS.garanties, KEYS.me, KEYS.abos, KEYS.coffre, KEYS.edl];
 let markDirty = () => {};
 const _set = store.set;
@@ -1351,6 +1351,25 @@ function stampHTML(a) {
   return `<div class="${cls}"><b>${esc(LEVELS[a.level])}</b><span>Pas de date limite repérée</span></div>`;
 }
 
+/* ---------- Mémoire des corrections ----------
+   Quand tu corrige une lecture (expéditeur, type), Paperdecrypt retient l'en-tête du courrier sur cet appareil et applique ta correction
+   la prochaine fois qu'un courrier du même expéditeur arrive. Les modèles de lecture eux-mêmes ne changent pas : c'est une mémoire personnelle. */
+const lessonSig = raw => norm(raw).split('\n').map(l => l.trim()).filter(l => l.length > 3).slice(0, 3).join(' ').replace(/[0-9]+/g, '').replace(/[^a-z' ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 90);
+const getLessons = () => store.get(KEYS.lecons, []);
+function learnFix(raw, base, ov) {
+  const sig = lessonSig(raw); if (sig.length < 12) return;
+  const e = { sig, at: new Date().toISOString() };
+  if ((base.org ? base.org.id : '') !== (ov.org || '')) e.org = ov.org || '';
+  if (base.type.id !== ov.type) e.type = ov.type;
+  if (e.org === undefined && e.type === undefined) return;
+  store.set(KEYS.lecons, [e, ...getLessons().filter(x => x.sig !== sig)].slice(0, 60));
+}
+function applyLessons(a) {
+  const sig = lessonSig(a.raw), l = getLessons().find(x => x.sig === sig); if (!l) return a;
+  const ov = {}; if (l.org !== undefined) ov.org = l.org; if (l.type) ov.type = l.type;
+  if (!Object.keys(ov).length) return a;
+  const b = applyOverrides(a, ov); b.learned = true; return b;
+}
 function applyOverrides(a, ov) {
   if (!ov) return a;
   if (ov.org !== undefined) a.org = ORGS.find(o => o.id === ov.org) || null;
@@ -1422,6 +1441,7 @@ function renderResult(a, savedId, opts = {}) {
         <span class="kind">${esc(a.type.label)}</span>
       </div>
       <p class="who-desc">${esc(org ? org.desc : "Son nom est en général en haut à gauche du courrier.")}</p>
+      ${a.learned ? '<p class="note">Lecture ajustée d\'après tes corrections précédentes.</p>' : ''}
       ${a.phish && a.phish.length ? `<div class="scam"><strong>Méfie-toi : ce message a des signes d'hameçonnage.</strong><ul>${a.phish.map(x => `<li>${esc(x)}</li>`).join('')}</ul>Ne clique sur aucun lien et ne donne aucune information. Va directement sur le site officiel, en tapant toi-même l'adresse, ou appelle l'organisme.</div>` : ''}
       ${a.scam.length ? `<div class="scam"><strong>Attention, ça ressemble à une arnaque.</strong> Ce courrier parle de paiement par ${esc(a.scam.join(', '))}. Une administration ou une entreprise sérieuse ne demande jamais ça. Ne paye pas, et vérifie en contactant l'organisme par son site officiel.</div>` : ''}
 
@@ -1439,6 +1459,7 @@ function renderResult(a, savedId, opts = {}) {
       </div>
 
       <div class="block" id="facts-zone"><h3>Les infos clés</h3>${factsHTML(a)}</div>
+      <p class="note" id="fb-row">Cette lecture est-elle juste ? <button class="link" type="button" data-fb="ok">Oui</button> <button class="link" type="button" data-fb="ko">Non, je corrige</button></p>
 
       <div class="block">
         <h3>Ce que tu dois faire</h3>
@@ -1535,6 +1556,12 @@ function bindResult() {
   $('#ai-improve').addEventListener('click', () => enqueueAI(() => aiImprove(seq)));
   $('#speak-btn').addEventListener('click', toggleSpeak);
   bindFacts(); bindDocs();
+  $$('[data-fb]', R).forEach(b => b.addEventListener('click', () => {
+    const row = $('#fb-row');
+    if (b.dataset.fb === 'ok') { track('avis_ok'); row.textContent = 'Merci !'; return; }
+    track('avis_ko'); trackFix('avis_ko_' + current.type.id); row.textContent = 'Merci. Corrige ce qui est faux juste au-dessus : Paperdecrypt s\'en souviendra.';
+    const fb = $('#fix-btn'), pn = $('#fix-panel'); if (pn && pn.hidden) fb.click(); if (pn) pn.scrollIntoView({ block: 'center' });
+  }));
 
   // Questions
   $$('[data-q]', R).forEach(b => b.addEventListener('click', () => {
@@ -1567,7 +1594,17 @@ function bindFacts() {
   $('#fix-apply').addEventListener('click', () => {
     const d = $('#fix-date').value, amt = parseFloat($('#fix-amount').value);
     const ov = { org: $('#fix-org').value, type: $('#fix-type').value, deadline: d ? new Date(d + 'T00:00:00').toISOString() : null, amount: isFinite(amt) && amt > 0 ? amt : null, kind: $('#fix-kind').value || null };
-    const a = applyOverrides(analyze(current.raw), ov);
+    const base = analyze(current.raw);
+    { // Ce qui a été corrigé alimente la mémoire locale et, de façon anonyme, les statistiques d'amélioration.
+      const bo = base.org ? base.org.id : 'aucun', no = ov.org || 'aucun';
+      if (bo !== no) trackFix(`org_${bo}_to_${no}`);
+      if (base.type.id !== ov.type) trackFix(`type_${base.type.id}_to_${ov.type}`);
+      if ((base.amount ? base.amount.value : null) !== ov.amount) trackFix('montant');
+      if ((base.deadline ? isoDay(base.deadline.date) : '') !== (ov.deadline ? isoDay(ov.deadline) : '')) trackFix('date');
+      if ((base.amount && base.amount.kind || '') !== (ov.kind || '') && ov.amount) trackFix('ht_ttc');
+      learnFix(current.raw, base, ov);
+    }
+    const a = applyOverrides(base, ov);
     a.docs = current.docs; a.docsFromAI = current.docsFromAI; a.docsDone = current.docsDone;
     const id = currentId;
     renderResult(a, id, { keepIntent: true });
@@ -1630,7 +1667,7 @@ function runDecode() {
   const txt = $('#letter-input').value.trim();
   if (txt.length < 30) { toast('Ajoute le texte du courrier ou une photo'); $('#letter-input').focus(); return; }
   interruptAI();
-  const a = analyze(txt);
+  const a = applyLessons(analyze(txt));
   track('decode'); trackType(a.type.id); if (a.org) trackOrg(a.org.id);
   renderResult(a, null);
   $('#result').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
@@ -2750,7 +2787,7 @@ const usage = (() => {
     q = {};
     try { fetch(endpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true }).catch(() => {}); } catch (e) { /* hors ligne : tant pis */ }
   }
-  function hit(path) { if (!on() || !/^[vftol](\.[a-z0-9_]+)?$/.test(path)) return; q[path] = (q[path] || 0) + 1; clearTimeout(timer); timer = setTimeout(flush, 5000); }
+  function hit(path) { if (!on() || !/^[vftolk](\.[a-z0-9_]+)?$/.test(path)) return; q[path] = (q[path] || 0) + 1; clearTimeout(timer); timer = setTimeout(flush, 5000); }
   addEventListener('pagehide', flush);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
   return { hit, flush, on };
@@ -2759,6 +2796,7 @@ const track = name => usage.hit('f.' + name);
 const trackType = id => usage.hit('t.' + id);
 const trackOrg = id => usage.hit('o.' + id);
 const trackLetter = id => usage.hit('l.' + id);
+const trackFix = key => usage.hit('k.' + key);
 function startSession() {
   let fresh = true;
   try { fresh = !sessionStorage.getItem('qt-pd-session'); sessionStorage.setItem('qt-pd-session', '1'); } catch (e) { /* stockage indisponible */ }
