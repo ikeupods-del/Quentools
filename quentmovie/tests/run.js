@@ -31,6 +31,27 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     const r = await fetch(U('/api/import?name=' + n), { method: 'POST', body: fs.readFileSync(path.join(gen, n)) });
     const txt = await r.text(); check('import ' + n, r.ok, txt);
   }
+  // Formats variés : .mov, .mkv, .avi, .webm, audio .wav / .m4a / .flac / .ogg, photo .tiff
+  const encs = execFileSync(bins.ffmpeg, ['-hide_banner', '-encoders']).toString();
+  const variantes = [['mov-h264.mov', ['-c:v', 'libx264', '-c:a', 'aac']], ['clip.mkv', ['-c:v', 'libx264', '-c:a', 'aac']], ['clip.avi', ['-c:v', 'mpeg4', '-c:a', 'mp3']], ['clip.webm', encs.includes('libvpx ') ? ['-c:v', 'libvpx', '-c:a', 'libvorbis'] : null],
+    ['prores.mov', encs.includes('prores_ks') ? ['-c:v', 'prores_ks', '-c:a', 'pcm_s16le'] : null], ['hevc.mov', encs.includes('libx265') ? ['-c:v', 'libx265', '-tag:v', 'hvc1', '-c:a', 'aac'] : null]];
+  for (const [nom, codecs] of variantes) {
+    if (!codecs) { skip++; continue; }
+    ff('-f', 'lavfi', '-i', 'testsrc2=s=640x360:r=30:d=2', '-f', 'lavfi', '-i', 'sine=f=300:d=2', '-shortest', '-pix_fmt', 'yuv420p', ...codecs, path.join(gen, nom));
+    const r = await fetch(U('/api/import?name=' + nom), { method: 'POST', body: fs.readFileSync(path.join(gen, nom)) });
+    const j = await r.json();
+    check('import ' + nom + ' reconnu comme vidéo', r.ok && j.kind === 'video' && j.duration > 1.5, JSON.stringify(j));
+  }
+  for (const [nom, args] of [['son.wav', []], ['son.m4a', ['-c:a', 'aac']], ['son.flac', ['-c:a', 'flac']], ['son.ogg', ['-c:a', 'libvorbis']]]) {
+    ff('-f', 'lavfi', '-i', 'sine=f=300:d=2', ...args, path.join(gen, nom));
+    const r = await fetch(U('/api/import?name=' + nom), { method: 'POST', body: fs.readFileSync(path.join(gen, nom)) }); const j = await r.json();
+    check('import audio ' + nom, r.ok && j.kind === 'audio', JSON.stringify(j));
+  }
+  ff('-f', 'lavfi', '-i', 'testsrc2=s=400x300', '-frames:v', 1, path.join(gen, 'photo.tiff'));
+  { const r = await fetch(U('/api/import?name=photo.tiff'), { method: 'POST', body: fs.readFileSync(path.join(gen, 'photo.tiff')) }); const j = await r.json(); check('import photo .tiff', r.ok && j.kind === 'image', JSON.stringify(j)); }
+  { const r = await fetch(U('/api/import?name=faux.mov'), { method: 'POST', body: Buffer.from('ce nest pas une video') }); check('fichier invalide refusé proprement', r.status === 500); }
+  { const j = await (await fetch(U('/api/proxy?file=mov-h264.mov'))).json(); const v = await fetch(U(j.url)); check('copie de lecture d’un .mov', v.ok && (await v.arrayBuffer()).byteLength > 3000); }
+  { const w = await fetch(U('/api/wave?file=musique.mp3&w=600&h=60')); check('forme d’onde', w.ok && (await w.arrayBuffer()).byteLength > 100); }
   const cat = await (await fetch(U('/api/catalogue'))).json();
   check('catalogue', cat.video.length >= 30 && cat.audio.length >= 8 && cat.transitions.length >= 15);
   console.log(`Banque : ${cat.video.length} effets image, ${cat.audio.length} effets son, ${cat.transitions.length} transitions`);
@@ -65,6 +86,28 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     const r = await preview(clip({ text: 'Bonjour : le monde, "test" (1/2)', textStyle: style, textAnim: anim, textPos: 'milieu', textStart: 0.5, textDur: 2 }));
     check(`texte ${style}/${anim}`, await isJpeg(r), lastErr.v);
   }
+  // 2b) Titres de reportage (début, milieu et fin de leur animation) et générateurs
+  for (const r of cat.reportage) for (const [t, dur] of [[0.2, 0], [1.5, 3], [2.8, 3]]) {
+    const rr = await preview(clip({ titre: { preset: r.id, l1: r.l1, l2: r.l2, color: r.color, start: 0, dur } }), t);
+    check(`titre reportage ${r.id} (t=${t})`, await isJpeg(rr), lastErr.v);
+  }
+  check('générateur fond uni + titre', await isJpeg(await preview({ kind: 'solid', color: '#0b1d3a', dur: 4, fx: [], key: {}, titre: { preset: 'chapitre', l1: 'CHAPITRE 1', l2: 'Début', color: '#ffffff', start: 0, dur: 0 } })), lastErr.v);
+  // 2c) Calques animés, sous-titres, polices
+  for (const anim of ['none', 'pop', 'fade', 'glisse', 'monte', 'rebond']) for (const rot of [0, 15]) {
+    const rr = await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: project([clip({ out: 2, overlays: [{ file: 'lib:stickers/coeur.png', kind: 'image', x: 70, y: 30, scale: 25, rot, opacity: 90, start: 0.3, dur: 1.2, anim }] })]) }) });
+    const { id } = await rr.json(); let j; for (let i = 0; i < 200; i++) { await new Promise(r => setTimeout(r, 250)); j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.done || j.error) break; }
+    check(`calque animé ${anim} rot ${rot}`, j && j.done, j && j.error);
+  }
+  check('calque en aperçu', await isJpeg(await preview(clip({ overlays: [{ file: 'lib:stickers/etoile.png', kind: 'image', x: 50, y: 50, scale: 30, start: 0, dur: 0, anim: 'pop' }] }), 1)), lastErr.v);
+  check('sous-titres', await isJpeg(await preview(clip({ subs: [{ s: 0, e: 3, t: 'Bonjour à tous, bienvenue : c’est parti !' }], subStyle: 'bandeau' }))), lastErr.v);
+  for (const f of (cat.polices || []).slice(0, 6)) check('police ' + f.id, await isJpeg(await preview(clip({ text: 'Essai', textFont: f.id, titre: { preset: 'tiers', l1: 'Nom', l2: 'Fonction', font: f.id, start: 0, dur: 0, color: '#c8102e' } }))), lastErr.v);
+  // 2d) Podcast : clip audio avec fond et visualiseur
+  for (const type of ['ligne', 'ondes', 'points', 'barres', 'none']) {
+    check('podcast visualiseur ' + type, await isJpeg(await preview({ file: 'musique.mp3', kind: 'audio', in: 0, out: 6, speed: 1, vol: 100, hasAudio: true, fx: [], key: {}, bgColor: '#102040', viz: { type, color: '#ffd400', pos: 'centre', h: 30 }, titre: { preset: 'souligne', l1: 'Épisode 1', l2: 'Mon podcast', color: '#ffb400', start: 0, dur: 0 } }, 1)), lastErr.v);
+  }
+  check('podcast avec pochette', await isJpeg(await preview({ file: 'musique.mp3', kind: 'audio', in: 0, out: 6, speed: 1, hasAudio: true, fx: [], key: {}, bgFile: 'photo.png', viz: { type: 'ligne', color: '#ffffff', pos: 'bas', h: 20 } })), lastErr.v);
+  // 2e) Silences
+  { const sj = await (await fetch(U('/api/silences?file=musique.mp3&in=0&out=10&db=-40&min=0.3'))).json(); check('détection des silences', Array.isArray(sj.silences)); }
   // 3) Incrustation, fond vert, cadrage flou
   check('incrustation', await isJpeg(await preview(clip({ pip: { on: true, file: 'photo.png', kind: 'image', pos: 'tr', scale: 30, opacity: 80 } }))));
   check('incrustation vidéo', await isJpeg(await preview(clip({ pip: { on: true, file: 'vert.mp4', kind: 'video', pos: 'mc', scale: 40, opacity: 100 } }))));
@@ -103,6 +146,22 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     const rr = await job('/api/export', project([clip({ out: 1.5, transition: { type: t.id, dur: 0.5 } }), clip({ file: 'vert.mp4', out: 1.5 })]));
     check('transition ' + t.id, !rr.error && rr.out, rr.error);
   }
+  // Générateur + titre + bruitage de la bibliothèque dans un export
+  const lib = cat.bibliotheque || { sons: [], musiques: [] };
+  r = await job('/api/export', project([
+    { kind: 'solid', color: '#000000', dur: 3, fx: [], key: {}, titre: { preset: 'compte', l1: '3', start: 0, dur: 0 } },
+    clip({ out: 2, titre: { preset: 'tiers', l1: 'Jeanne Martin', l2: 'Reporter', color: '#c8102e', start: 0.2, dur: 1.5 } })
+  ], { audio: lib.sons.length ? [{ file: 'lib:' + lib.sons[0].file, vol: 100, start: 0.5 }, ...(lib.musiques.length ? [{ file: 'lib:' + lib.musiques[0].file, vol: 40, start: 0, fade: true, loop: true }] : [])] : [] }));
+  check('export générateur + titre + bibliothèque', !r.error && r.out, r.error);
+  // Formats d'export, normalisation, baisse automatique de la musique sous la voix
+  for (const sortie of cat.sorties) {
+    const rr = await job('/api/export', project([clip({ out: 1.5, file: 'demo.mp4' })], { sortie, normaliser: sortie === 'mp3', audio: [{ file: 'lib:' + lib.musiques[0].file, vol: 60, start: 0, duck: true, loop: true, fade: true }] }));
+    check('export ' + sortie, !rr.error && rr.out && rr.out.endsWith('.' + sortie), rr.error);
+    if (rr.out) { const sz = fs.statSync(path.join(base, 'exports', rr.out)).size; check('fichier ' + sortie + ' non vide', sz > 2000, sz); }
+  }
+  r = await job('/api/export', project([{ file: 'musique.mp3', kind: 'audio', in: 0, out: 4, speed: 1, vol: 100, hasAudio: true, fx: [], key: {}, bgColor: '#102040', viz: { type: 'barres', color: '#ffffff', pos: 'centre', h: 30 }, afx: [{ id: 'podcast', p: {} }, { id: 'gate', p: {} }, { id: 'deesser', p: {} }],
+    titre: { preset: 'machine', l1: 'Épisode 1 : le début', start: 0, dur: 0, speed: 12 } }]));
+  check('export podcast (visualiseur + voix pro + machine à écrire)', !r.error && r.out, r.error);
   // Aperçu animé
   r = await job('/api/apercu', project([clip({ out: 2, fx: [{ id: 'glitch' }] }), clip({ out: 2 })]));
   check('aperçu animé', !r.error && r.url, r.error);

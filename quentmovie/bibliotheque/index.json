@@ -1,0 +1,584 @@
+{
+ "sons": [
+  {
+   "id": "clavier-frappe",
+   "nom": "Touche de clavier",
+   "cat": "Bureau et clavier",
+   "file": "sons/clavier-frappe.mp3",
+   "duree": 0.25
+  },
+  {
+   "id": "clavier-frappe-douce",
+   "nom": "Touche de clavier douce",
+   "cat": "Bureau et clavier",
+   "file": "sons/clavier-frappe-douce.mp3",
+   "duree": 0.25
+  },
+  {
+   "id": "clavier-rafale",
+   "nom": "Frappe rapide au clavier (4 s)",
+   "cat": "Bureau et clavier",
+   "file": "sons/clavier-rafale.mp3",
+   "duree": 4.2
+  },
+  {
+   "id": "clavier-lent",
+   "nom": "Frappe lente au clavier (4 s)",
+   "cat": "Bureau et clavier",
+   "file": "sons/clavier-lent.mp3",
+   "duree": 4.2
+  },
+  {
+   "id": "clavier-long",
+   "nom": "Frappe au clavier (8 s)",
+   "cat": "Bureau et clavier",
+   "file": "sons/clavier-long.mp3",
+   "duree": 8.2
+  },
+  {
+   "id": "machine-a-ecrire",
+   "nom": "Machine à écrire et sonnette",
+   "cat": "Bureau et clavier",
+   "file": "sons/machine-a-ecrire.mp3",
+   "duree": 4.5
+  },
+  {
+   "id": "souris-clic",
+   "nom": "Clic de souris",
+   "cat": "Bureau et clavier",
+   "file": "sons/souris-clic.mp3",
+   "duree": 0.15
+  },
+  {
+   "id": "appareil-photo",
+   "nom": "Appareil photo (déclic)",
+   "cat": "Bureau et clavier",
+   "file": "sons/appareil-photo.mp3",
+   "duree": 0.35
+  },
+  {
+   "id": "horloge-tictac",
+   "nom": "Horloge (tic-tac, 4 s)",
+   "cat": "Bureau et clavier",
+   "file": "sons/horloge-tictac.mp3",
+   "duree": 4
+  },
+  {
+   "id": "telephone-sonnerie",
+   "nom": "Sonnerie de téléphone",
+   "cat": "Bureau et clavier",
+   "file": "sons/telephone-sonnerie.mp3",
+   "duree": 3.4
+  },
+  {
+   "id": "whoosh-court",
+   "nom": "Whoosh court",
+   "cat": "Transitions et mouvements",
+   "file": "sons/whoosh-court.mp3",
+   "duree": 0.5
+  },
+  {
+   "id": "whoosh-long",
+   "nom": "Whoosh long",
+   "cat": "Transitions et mouvements",
+   "file": "sons/whoosh-long.mp3",
+   "duree": 1.4
+  },
+  {
+   "id": "swish-rapide",
+   "nom": "Swish rapide",
+   "cat": "Transitions et mouvements",
+   "file": "sons/swish-rapide.mp3",
+   "duree": 0.35
+  },
+  {
+   "id": "montee-tension",
+   "nom": "Montée de tension (4 s)",
+   "cat": "Transitions et mouvements",
+   "file": "sons/montee-tension.mp3",
+   "duree": 4
+  },
+  {
+   "id": "montee-courte",
+   "nom": "Montée courte (2 s)",
+   "cat": "Transitions et mouvements",
+   "file": "sons/montee-courte.mp3",
+   "duree": 2
+  },
+  {
+   "id": "descente",
+   "nom": "Descente (2,5 s)",
+   "cat": "Transitions et mouvements",
+   "file": "sons/descente.mp3",
+   "duree": 2.5
+  },
+  {
+   "id": "glitch",
+   "nom": "Glitch numérique",
+   "cat": "Transitions et mouvements",
+   "file": "sons/glitch.mp3",
+   "duree": 0.9
+  },
+  {
+   "id": "impact-leger",
+   "nom": "Impact léger",
+   "cat": "Impacts",
+   "file": "sons/impact-leger.mp3",
+   "duree": 1.2
+  },
+  {
+   "id": "impact-cinema",
+   "nom": "Impact cinéma",
+   "cat": "Impacts",
+   "file": "sons/impact-cinema.mp3",
+   "duree": 2.8
+  },
+  {
+   "id": "sub-drop",
+   "nom": "Chute de graves (sub drop)",
+   "cat": "Impacts",
+   "file": "sons/sub-drop.mp3",
+   "duree": 2
+  },
+  {
+   "id": "gong",
+   "nom": "Gong",
+   "cat": "Impacts",
+   "file": "sons/gong.mp3",
+   "duree": 4
+  },
+  {
+   "id": "battement-coeur",
+   "nom": "Battements de cœur (4 s)",
+   "cat": "Impacts",
+   "file": "sons/battement-coeur.mp3",
+   "duree": 4.2
+  },
+  {
+   "id": "notification",
+   "nom": "Notification",
+   "cat": "Alertes et interface",
+   "file": "sons/notification.mp3",
+   "duree": 0.8
+  },
+  {
+   "id": "message",
+   "nom": "Message reçu (pop-pop)",
+   "cat": "Alertes et interface",
+   "file": "sons/message.mp3",
+   "duree": 0.5
+  },
+  {
+   "id": "succes",
+   "nom": "Succès",
+   "cat": "Alertes et interface",
+   "file": "sons/succes.mp3",
+   "duree": 0.8
+  },
+  {
+   "id": "erreur",
+   "nom": "Erreur",
+   "cat": "Alertes et interface",
+   "file": "sons/erreur.mp3",
+   "duree": 0.6
+  },
+  {
+   "id": "pop",
+   "nom": "Pop (bulle)",
+   "cat": "Alertes et interface",
+   "file": "sons/pop.mp3",
+   "duree": 0.12
+  },
+  {
+   "id": "ding-cloche",
+   "nom": "Cloche (ding)",
+   "cat": "Alertes et interface",
+   "file": "sons/ding-cloche.mp3",
+   "duree": 2.5
+  },
+  {
+   "id": "bip-censure",
+   "nom": "Bip de censure (1 s)",
+   "cat": "Alertes et interface",
+   "file": "sons/bip-censure.mp3",
+   "duree": 1
+  },
+  {
+   "id": "boing",
+   "nom": "Boing",
+   "cat": "Humour",
+   "file": "sons/boing.mp3",
+   "duree": 0.8
+  },
+  {
+   "id": "ressort-porte",
+   "nom": "Porte qui grince",
+   "cat": "Humour",
+   "file": "sons/ressort-porte.mp3",
+   "duree": 0.5
+  },
+  {
+   "id": "applaudissements",
+   "nom": "Applaudissements (5 s)",
+   "cat": "Ambiances",
+   "file": "sons/applaudissements.mp3",
+   "duree": 5
+  },
+  {
+   "id": "applaudissements-courts",
+   "nom": "Applaudissements courts (2 s)",
+   "cat": "Ambiances",
+   "file": "sons/applaudissements-courts.mp3",
+   "duree": 2
+  },
+  {
+   "id": "pluie",
+   "nom": "Pluie (6 s)",
+   "cat": "Ambiances",
+   "file": "sons/pluie.mp3",
+   "duree": 6
+  },
+  {
+   "id": "vent",
+   "nom": "Vent (7 s)",
+   "cat": "Ambiances",
+   "file": "sons/vent.mp3",
+   "duree": 7
+  },
+  {
+   "id": "mer",
+   "nom": "Vagues (8 s)",
+   "cat": "Ambiances",
+   "file": "sons/mer.mp3",
+   "duree": 8
+  },
+  {
+   "id": "oiseaux",
+   "nom": "Oiseaux (6 s)",
+   "cat": "Ambiances",
+   "file": "sons/oiseaux.mp3",
+   "duree": 6
+  },
+  {
+   "id": "feu",
+   "nom": "Feu de cheminée (5 s)",
+   "cat": "Ambiances",
+   "file": "sons/feu.mp3",
+   "duree": 5
+  },
+  {
+   "id": "parasites-tv",
+   "nom": "Parasites de télévision (2 s)",
+   "cat": "Ambiances",
+   "file": "sons/parasites-tv.mp3",
+   "duree": 2
+  }
+ ],
+ "musiques": [
+  {
+   "id": "pulsation-electro",
+   "nom": "Pulsation électro (124 bpm)",
+   "cat": "Dynamique",
+   "file": "musiques/pulsation-electro.mp3",
+   "duree": 52
+  },
+  {
+   "id": "reportage-info",
+   "nom": "Reportage info (100 bpm)",
+   "cat": "Dynamique",
+   "file": "musiques/reportage-info.mp3",
+   "duree": 48
+  },
+  {
+   "id": "joyeux-vlog",
+   "nom": "Joyeux, pour vlog (112 bpm)",
+   "cat": "Dynamique",
+   "file": "musiques/joyeux-vlog.mp3",
+   "duree": 48
+  },
+  {
+   "id": "hip-hop-boom-bap",
+   "nom": "Hip-hop boom bap (90 bpm)",
+   "cat": "Dynamique",
+   "file": "musiques/hip-hop-boom-bap.mp3",
+   "duree": 48
+  },
+  {
+   "id": "lofi-tranquille",
+   "nom": "Lo-fi tranquille (78 bpm)",
+   "cat": "Calme",
+   "file": "musiques/lofi-tranquille.mp3",
+   "duree": 56
+  },
+  {
+   "id": "ambiance-douce",
+   "nom": "Ambiance douce",
+   "cat": "Calme",
+   "file": "musiques/ambiance-douce.mp3",
+   "duree": 60
+  },
+  {
+   "id": "piano-chill",
+   "nom": "Piano chill (70 bpm)",
+   "cat": "Calme",
+   "file": "musiques/piano-chill.mp3",
+   "duree": 52
+  },
+  {
+   "id": "tension-suspense",
+   "nom": "Tension et suspense",
+   "cat": "Dramatique",
+   "file": "musiques/tension-suspense.mp3",
+   "duree": 54
+  },
+  {
+   "id": "cinema-epique",
+   "nom": "Cinéma épique (84 bpm)",
+   "cat": "Dramatique",
+   "file": "musiques/cinema-epique.mp3",
+   "duree": 56
+  }
+ ],
+ "stickers": [
+  {
+   "id": "fleche-droite",
+   "nom": "Flèche droite",
+   "cat": "Flèches et repères",
+   "file": "stickers/fleche-droite.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "fleche-bas",
+   "nom": "Flèche vers le bas",
+   "cat": "Flèches et repères",
+   "file": "stickers/fleche-bas.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "fleche-haut",
+   "nom": "Flèche vers le haut",
+   "cat": "Flèches et repères",
+   "file": "stickers/fleche-haut.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "fleche-gauche",
+   "nom": "Flèche gauche",
+   "cat": "Flèches et repères",
+   "file": "stickers/fleche-gauche.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "fleche-courbe",
+   "nom": "Flèche courbe",
+   "cat": "Flèches et repères",
+   "file": "stickers/fleche-courbe.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "cercle-rouge",
+   "nom": "Cercle de surbrillance",
+   "cat": "Flèches et repères",
+   "file": "stickers/cercle-rouge.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "croix-rouge",
+   "nom": "Croix rouge",
+   "cat": "Flèches et repères",
+   "file": "stickers/croix-rouge.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "coche-verte",
+   "nom": "Coche verte",
+   "cat": "Flèches et repères",
+   "file": "stickers/coche-verte.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "exclamation",
+   "nom": "Point d’exclamation",
+   "cat": "Flèches et repères",
+   "file": "stickers/exclamation.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "interrogation",
+   "nom": "Point d’interrogation",
+   "cat": "Flèches et repères",
+   "file": "stickers/interrogation.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "bulle-parole",
+   "nom": "Bulle de parole",
+   "cat": "Bulles et émotions",
+   "file": "stickers/bulle-parole.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "bulle-pensee",
+   "nom": "Bulle de pensée",
+   "cat": "Bulles et émotions",
+   "file": "stickers/bulle-pensee.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "smiley",
+   "nom": "Smiley",
+   "cat": "Bulles et émotions",
+   "file": "stickers/smiley.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "smiley-lunettes",
+   "nom": "Smiley lunettes",
+   "cat": "Bulles et émotions",
+   "file": "stickers/smiley-lunettes.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "coeur",
+   "nom": "Cœur",
+   "cat": "Bulles et émotions",
+   "file": "stickers/coeur.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "etoile",
+   "nom": "Étoile",
+   "cat": "Bulles et émotions",
+   "file": "stickers/etoile.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "eclair",
+   "nom": "Éclair",
+   "cat": "Bulles et émotions",
+   "file": "stickers/eclair.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "soleil",
+   "nom": "Soleil",
+   "cat": "Bulles et émotions",
+   "file": "stickers/soleil.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "note-etoiles",
+   "nom": "Note 5 étoiles",
+   "cat": "Bulles et émotions",
+   "file": "stickers/note-etoiles.png",
+   "w": 512,
+   "h": 150
+  },
+  {
+   "id": "tag-live",
+   "nom": "Étiquette LIVE",
+   "cat": "Étiquettes et boutons",
+   "file": "stickers/tag-live.png",
+   "w": 512,
+   "h": 220
+  },
+  {
+   "id": "tag-new",
+   "nom": "Étiquette NEW",
+   "cat": "Étiquettes et boutons",
+   "file": "stickers/tag-new.png",
+   "w": 512,
+   "h": 220
+  },
+  {
+   "id": "tag-top",
+   "nom": "Étiquette TOP",
+   "cat": "Étiquettes et boutons",
+   "file": "stickers/tag-top.png",
+   "w": 512,
+   "h": 220
+  },
+  {
+   "id": "tag-wow",
+   "nom": "Étiquette WOW",
+   "cat": "Étiquettes et boutons",
+   "file": "stickers/tag-wow.png",
+   "w": 512,
+   "h": 220
+  },
+  {
+   "id": "tag-promo",
+   "nom": "Étiquette PROMO",
+   "cat": "Étiquettes et boutons",
+   "file": "stickers/tag-promo.png",
+   "w": 512,
+   "h": 220
+  },
+  {
+   "id": "tag-gratuit",
+   "nom": "Étiquette GRATUIT",
+   "cat": "Étiquettes et boutons",
+   "file": "stickers/tag-gratuit.png",
+   "w": 512,
+   "h": 220
+  },
+  {
+   "id": "bouton-abonne",
+   "nom": "Bouton S’ABONNER",
+   "cat": "Étiquettes et boutons",
+   "file": "stickers/bouton-abonne.png",
+   "w": 512,
+   "h": 180
+  },
+  {
+   "id": "bouton-jaime",
+   "nom": "Bouton J’AIME",
+   "cat": "Étiquettes et boutons",
+   "file": "stickers/bouton-jaime.png",
+   "w": 512,
+   "h": 180
+  },
+  {
+   "id": "bouton-partage",
+   "nom": "Bouton PARTAGER",
+   "cat": "Étiquettes et boutons",
+   "file": "stickers/bouton-partage.png",
+   "w": 512,
+   "h": 180
+  },
+  {
+   "id": "cadre-visee",
+   "nom": "Cadre caméra REC",
+   "cat": "Cadres",
+   "file": "stickers/cadre-visee.png",
+   "w": 512,
+   "h": 512
+  },
+  {
+   "id": "cadre-blanc",
+   "nom": "Cadre blanc",
+   "cat": "Cadres",
+   "file": "stickers/cadre-blanc.png",
+   "w": 512,
+   "h": 512
+  }
+ ]
+}

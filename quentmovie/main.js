@@ -1,6 +1,6 @@
 // QuentMovie : fenêtre de l'application Mac (Electron) autour du moteur de montage local.
 'use strict';
-const { app, BrowserWindow, Menu, shell, dialog } = require('electron');
+const { app, BrowserWindow, Menu, shell, dialog, session } = require('electron');
 const path = require('path');
 const { create } = require('./server');
 const { resolveFfmpeg } = require('./ffmpeg-path');
@@ -15,6 +15,11 @@ async function demarrer() {
   let port;
   try { moteur = create({ port: 41730, base, ...bins }); port = await moteur.start(); }
   catch (e) { moteur = create({ port: 0, base, ...bins }); port = await moteur.start(); }
+
+  // Micro (voix off) : autorisé uniquement pour la fenêtre de QuentMovie
+  const local = u => /^http:\/\/127\.0\.0\.1:\d+\//.test(u || '');
+  session.defaultSession.setPermissionRequestHandler((wc, perm, ok) => ok(perm === 'media' && local(wc.getURL())));
+  session.defaultSession.setPermissionCheckHandler((wc, perm, origin) => perm === 'media' && local((origin || '') + '/'));
 
   win = new BrowserWindow({
     width: 1480, height: 920, minWidth: 1100, minHeight: 700, backgroundColor: '#141518', title: 'QuentMovie',

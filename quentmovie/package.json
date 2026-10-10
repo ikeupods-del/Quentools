@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -22,11 +22,34 @@
   "build": {
     "appId": "fr.quentools.quentmovie",
     "productName": "QuentMovie",
-    "files": ["main.js", "server.js", "effects.js", "ffmpeg-path.js", "index.html", "package.json"],
-    "asarUnpack": ["node_modules/ffmpeg-static/**", "node_modules/ffprobe-static/**"],
+    "files": [
+      "main.js",
+      "server.js",
+      "effects.js",
+      "ffmpeg-path.js",
+      "index.html",
+      "package.json",
+      "bibliotheque/**"
+    ],
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**",
+      "node_modules/ffprobe-static/**",
+      "bibliotheque/**"
+    ],
     "afterPack": "scripts/adhoc-sign.js",
-    "mac": { "category": "public.app-category.video", "identity": null, "icon": "build/icon.png" },
-    "dmg": { "title": "QuentMovie" },
-    "directories": { "output": "dist" }
+    "mac": {
+      "category": "public.app-category.video",
+      "identity": null,
+      "icon": "build/icon.png",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "QuentMovie utilise le micro pour enregistrer des voix off."
+      }
+    },
+    "dmg": {
+      "title": "QuentMovie"
+    },
+    "directories": {
+      "output": "dist"
+    }
   }
 }
