@@ -294,6 +294,7 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .sugg{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
 .filters{display:grid;gap:8px;margin:0 0 14px}
 .filters input[type=search]{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--sheet);min-height:46px}
+.pro{display:inline-block;font:800 .68rem I;letter-spacing:.04em;text-transform:uppercase;background:var(--mark);color:var(--mark-ink);border-radius:99px;padding:2px 8px;vertical-align:2px}
 .tips{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:14px 0;background:var(--sheet)}
 .tips summary{cursor:pointer;font-weight:700}
 .tips h3{margin:12px 0 4px;font-size:1rem}
@@ -310,12 +311,28 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .edl-thumbs .geo{position:absolute;bottom:14px;left:2px;min-width:18px;height:18px;border-radius:9px;background:rgba(0,0,0,.65);color:#ffe14d;font-size:.72rem;display:grid;place-items:center;padding:0 3px}
 .edl-thumbs .x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--sheet);cursor:pointer;line-height:1;padding:0}
 #cam-video{width:100%;max-height:60vh;background:#000;border-radius:10px;display:block}
+.gc-stage{position:relative;border-radius:10px;overflow:hidden;background:#000}
+#gc-video{width:100%;height:min(66vh,560px);object-fit:cover;display:block}
+.gc-frame{position:absolute;inset:6% 9%;border:2px dashed rgba(255,255,255,.75);border-radius:6px;pointer-events:none;transition:border-color .2s,box-shadow .2s;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.gc-frame i{position:absolute;width:22px;height:22px;border:4px solid #fff;transition:border-color .2s}
+.gc-frame i:nth-child(1){top:-3px;left:-3px;border-right:0;border-bottom:0}.gc-frame i:nth-child(2){top:-3px;right:-3px;border-left:0;border-bottom:0}
+.gc-frame i:nth-child(3){bottom:-3px;left:-3px;border-right:0;border-top:0}.gc-frame i:nth-child(4){bottom:-3px;right:-3px;border-left:0;border-top:0}
+.gc-stage[data-lv=good] .gc-frame{border-color:#3ecf6e}.gc-stage[data-lv=good] .gc-frame i{border-color:#3ecf6e}
+.gc-stage[data-lv=warn] .gc-frame{border-color:#ffb020}.gc-stage[data-lv=warn] .gc-frame i{border-color:#ffb020}
+.gc-stage[data-lv=bad] .gc-frame{border-color:#ff5a4d}.gc-stage[data-lv=bad] .gc-frame i{border-color:#ff5a4d}
+.gc-chip{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);max-width:92%;padding:7px 12px;border-radius:99px;background:rgba(0,0,0,.72);color:#fff;font-size:.9rem;text-align:center}
+.gc-meters{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 0}
+.gc-meters span{font-size:.82rem;padding:3px 9px;border-radius:99px;border:1px solid var(--line)}
+.gc-meters span[data-s=good]::before{content:"✓ ";color:#2e9d57}.gc-meters span[data-s=bad]::before{content:"✗ ";color:#d6402f}.gc-meters span[data-s=warn]::before{content:"! ";color:#c98a00}
 .edl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .edl-row input[data-note]{flex:1;min-width:160px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--paper);min-height:38px}
 .paie-t{width:100%;border-collapse:collapse;margin:6px 0}
 .paie-t th,.paie-t td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:.98rem}
 .paie-t td{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .paie-t td.strong{font-weight:800}
+.pages{list-style:none;margin:10px 0;padding:0;display:grid;gap:6px}
+.pages li{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:.95rem}
+.pages small{color:var(--muted)}
 .paie-lines details{border:1px solid var(--line);border-radius:9px;padding:8px 12px;margin:0 0 6px}
 .paie-lines summary{cursor:pointer;display:flex;justify-content:space-between;gap:10px;font-weight:700}
 .paie-lines p{margin:6px 0 0}
@@ -474,19 +491,24 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 
 <dialog id="premium" aria-labelledby="premium-title">
   <div class="dlg">
-    <h2 id="premium-title">QuenTools Premium</h2>
+    <h2 id="premium-title">Paperdecrypt Premium</h2>
     <p class="note" id="premium-reason" hidden></p>
     <ul class="perks">
-      <li><b>Garanties illimitées.</b> Enregistre tous tes achats et leurs tickets.</li>
-            <li><b>Sans publicité</b>, partout dans l'appli.</li>
-      <li><b>Un paiement unique</b>, sans abonnement. Le reste du décodeur reste gratuit pour toujours.</li>
+      <li><b>Garanties, coffre et abonnements illimités.</b> Range tous tes papiers.</li>
+      <li><b>État des lieux de sortie</b> avec comparaison à l'entrée, et autant de logements que tu veux.</li>
+      <li><b>Photos certifiées par un serveur :</b> la date et l'heure de chaque photo ne dépendent plus de ton téléphone.</li>
+      <li><b>Fiche de paie complète :</b> vérification de tes heures supplémentaires, lettre à l'employeur et suivi mois par mois.</li>
+      <li><b>Tous les modèles de lettres</b> (CAF, impôts, remboursement, heures supplémentaires).</li>
+      <li><b>Dossier complet en PDF</b> et <b>aucune publicité</b>.</li>
+      <li><b>Un paiement unique de <span id="premium-price"></span></b>, sans abonnement. Le décodeur de courriers, les rappels, le calcul de TVA et les lettres de base restent gratuits.</li>
     </ul>
     <div class="actions"><button class="btn" id="premium-buy" type="button">Débloquer Premium</button><p class="note" id="premium-soon" hidden>L'achat de Premium ouvre très bientôt.</p></div>
-    <section>
-      <h3>Tu as déjà un code ?</h3>
-      <div class="chat-input"><label class="sr" for="premium-code">Code Premium</label><input id="premium-code" placeholder="QT-XXXXXXXX-XXXX" autocomplete="off" autocapitalize="characters"><button class="btn small" id="premium-validate" type="button">Activer</button></div>
-      <p class="note" id="premium-state" role="status"></p>
+    <section id="premium-have">
+      <h3>Tu as déjà acheté Premium ?</h3>
+      <p class="note">Connecte-toi avec la même adresse Google que pour l'achat : Premium se retrouve tout seul sur tous tes appareils.</p>
+      <div class="actions"><button class="btn small ghost" id="premium-check" type="button">Retrouver mon Premium</button></div>
     </section>
+    <p class="note" id="premium-state" role="status"></p>
     <div class="dlg-foot"><button class="btn ghost" id="premium-close" type="button">Fermer</button></div>
   </div>
 </dialog>
@@ -513,6 +535,16 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
     <video id="cam-video" playsinline muted autoplay></video>
     <p class="note" id="cam-msg" role="status"></p>
     <div class="dlg-foot"><button class="btn" id="cam-snap" type="button">Prendre la photo</button> <button class="btn ghost" id="cam-cancel" type="button">Annuler</button></div>
+  </div>
+</dialog>
+
+<dialog id="gc-dialog" aria-labelledby="gc-label">
+  <div class="dlg">
+    <h2 id="gc-label" style="font-size:1.1rem">Photographie ta page</h2>
+    <div class="gc-stage" id="gc-stage" data-lv="warn"><video id="gc-video" playsinline muted autoplay></video><div class="gc-frame"><i></i><i></i><i></i><i></i></div><div class="gc-chip" id="gc-chip" role="status">Ouverture de la caméra…</div></div>
+    <div class="gc-meters" id="gc-meters" aria-hidden="true"></div>
+    <p class="note">Place la page entière dans le cadre, bien à plat, sur un fond uni, face à une fenêtre ou une lampe. Évite ton ombre et le flash.</p>
+    <div class="dlg-foot"><button class="btn" id="gc-snap" type="button" disabled>Prendre la photo</button> <button class="btn ghost" id="gc-cancel" type="button">Annuler</button></div>
   </div>
 </dialog>
 
@@ -589,7 +621,9 @@ const CONFIG = {
   // Lien de paiement (ex. Stripe Payment Link). Vide = bouton d'achat masqué.
   PREMIUM_URL: '',
   PREMIUM_PRIX: '9,99 €',
-  FREE_GARANTIES: 3,
+  // Version gratuite : limites (Premium = illimité). Les fonctions « Premium » sont listées dans la fenêtre Premium.
+  FREE_GARANTIES: 3, FREE_COFFRE: 10, FREE_ABOS: 3, FREE_EDL: 1,
+  FREE_LETTRES: ['amende', 'resiliation', 'echeancier'],
   // Google AdSense : ton identifiant éditeur (ex. 'ca-pub-1234567890123456') et l'id d'un bloc d'annonce (ex. '1234567890').
   // Vide = encart QuenTools à la place. Pense aussi au fichier ads.txt à la racine de quentools.fr.
   ADSENSE_CLIENT: 'ca-pub-9406894983294380',
@@ -622,7 +656,7 @@ async function fillAds(root) {
   } catch (e) { slots.forEach(s => s.closest('.ad') && s.closest('.ad').remove()); }
 }
 const tipHTML = () => CONFIG.TIP_URL ? `<a class="link tip" href="${esc(CONFIG.TIP_URL)}" target="_blank" rel="noopener">Ça t'a aidé ? Soutiens QuenTools</a>` : '';
-Object.assign(KEYS, { claims: 'qt-paperasse:reclamations', garanties: 'qt-paperasse:garanties', premium: 'qt-paperasse:premium', sync: 'qt-paperasse:sync', deleted: 'qt-paperasse:supprimes',
+Object.assign(KEYS, { claims: 'qt-paperasse:reclamations', garanties: 'qt-paperasse:garanties', premium: 'qt-paperasse:premium', premiumAcct: 'qt-paperasse:premium-compte', sync: 'qt-paperasse:sync', deleted: 'qt-paperasse:supprimes',
   abos: 'qt-paperasse:abonnements', coffre: 'qt-paperasse:coffre', edl: 'qt-paperasse:etats-des-lieux', paies: 'qt-paperasse:fiches-de-paie', lecons: 'qt-paperasse:lecons', coffreRead: 'qt-paperasse:coffre-lecture', nostats: 'qt-paperasse:sans-stats', seen: 'qt-paperasse:vu', notif: 'qt-paperasse:notif', notifDay: 'qt-paperasse:notif-jour' });
 const SYNC_KEYS = [KEYS.list, KEYS.claims, KEYS.garanties, KEYS.me, KEYS.abos, KEYS.coffre, KEYS.edl];
 let markDirty = () => {};
@@ -661,22 +695,46 @@ function compressImage(file, max = 1400, q = 0.72) {
   });
 }
 
-/* ---------- Premium (paiement unique) ---------- */
-const PREMIUM_SALT = 'qt-paperasse-2026';
-const B32 = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-function fnv(s) { let h = 0x811c9dc5; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h; }
-function codeChecksum(body) { let h = fnv(PREMIUM_SALT + body), out = ''; for (let i = 0; i < 4; i++) { out += B32[h % 32]; h = Math.floor(h / 32); } return out; }
-function validCode(code) { const m = String(code).toUpperCase().replace(/\s/g, '').match(/^QT-([A-Z2-9]{8})-([A-Z2-9]{4})$/); return !!m && codeChecksum(m[1]) === m[2]; }
-const isPremium = () => !!store.get(KEYS.premium, {}).code;
+/* ---------- Premium (paiement unique, lié au compte Google) ----------
+   L'achat se fait par un lien de paiement ; le propriétaire active ensuite l'adresse e-mail dans l'administration (collection qt_premium,
+   lisible seulement par le titulaire du compte). L'application relit ce droit à chaque connexion et le garde 45 jours hors connexion. */
+const isPremium = () => {
+  const a = store.get(KEYS.premiumAcct, null);
+  if (!a || !a.email) return false;
+  if (a.until && a.until < isoDay(new Date())) return false;
+  return Date.now() - (a.checked || 0) < 45 * 864e5;
+};
 function openPremium(reason) {
-  const d = $('#premium');
+  const d = $('#premium'), p = isPremium();
   $('#premium-reason').textContent = reason || '';
   $('#premium-reason').hidden = !reason;
-  $('#premium-buy').hidden = !CONFIG.PREMIUM_URL;
-  $('#premium-soon').hidden = !!CONFIG.PREMIUM_URL;
-  $('#premium-state').textContent = isPremium() ? 'Premium est activé sur cet appareil. Merci pour ton soutien !' : '';
+  $('#premium-buy').hidden = p || !CONFIG.PREMIUM_URL;
+  $('#premium-soon').hidden = p || !!CONFIG.PREMIUM_URL;
+  $('#premium-price').textContent = CONFIG.PREMIUM_PRIX;
+  $('#premium-have').hidden = p || !gAvailable();
+  $('#premium-state').textContent = p ? 'Premium est activé sur ton compte. Merci pour ton soutien !' : (FBU ? `Connecté avec ${FBU.email}. Si tu as déjà acheté avec cette adresse, appuie sur « Retrouver mon Premium ».` : '');
+  track('premium_vu');
   if (d.showModal) d.showModal(); else d.setAttribute('open', '');
 }
+// Droit Premium du compte connecté (document qt_premium/<e-mail>)
+async function checkPremium(manual) {
+  const u = FBU; if (!u || !u.email) { if (manual) toast('Connecte-toi d\'abord avec Google'); return; }
+  if (!navigator.onLine) return;
+  const was = isPremium();
+  try {
+    const F = await fb(), id = u.email.toLowerCase(), snap = await F.Fs.getDoc(F.Fs.doc(F.db, 'qt_premium', id));
+    if (snap.exists()) { const d = snap.data(); _set(KEYS.premiumAcct, { email: id, until: d.until || '', plan: d.plan || '', checked: Date.now() }); }
+    else _set(KEYS.premiumAcct, {});
+  } catch (e) { if (manual) toast('Vérification impossible pour le moment'); return; }
+  const now = isPremium();
+  refreshPremiumUI(); renderWarrantyIfOpen(); renderMoneyIfOpen();
+  if (!$('#view-vault').hidden) renderVault(); if (!$('#view-tools').hidden) renderTools();
+  if (now) $$('.ad').forEach(a => a.remove());
+  if (now && !was) { track('premium_actif'); toast('Premium activé sur ton compte'); }
+  if (manual) { $('#premium-state').textContent = now ? 'Premium est activé sur ton compte. Merci !' : `Aucun Premium trouvé pour ${u.email}. Le paiement peut prendre un peu de temps à être confirmé.`; if (now && $('#premium').open) $('#premium').close(); }
+}
+// Bloque une fonction Premium : retourne true (et ouvre la fenêtre) si l'utilisateur n'y a pas droit
+function needPremium(reason) { if (isPremium()) return false; openPremium(reason); return true; }
 
 /* ---------- Petits outils partagés ---------- */
 const addMonths = (d, n) => { const x = new Date(d); const day = x.getDate(); x.setMonth(x.getMonth() + n); if (x.getDate() < day) x.setDate(0); return x; };
@@ -711,6 +769,14 @@ function scanAmounts(flat) {
     if (kind === 'ttc') score += 3; else if (kind === 'ht') score -= 3; else if (kind === 'tva') score -= 6;
     list.push({ value: v, str: m[0], score, kind });
     prevEnd = end;
+  }
+  // Aucun montant avec « € » : on lit les nombres à deux décimales des lignes qui parlent d'argent (« Montant à payer : 186,40 »)
+  if (!list.length) {
+    String(flat).split('\n').forEach(l => {
+      const nl = norm(l); if (!/(montant|somme|total|solde|reste a payer|a regler|a payer|net a payer|due\b)/.test(nl) || /(capital|siret|rcs|tva i)/.test(nl)) return;
+      const d = tkDecimals(l); if (!d.length) return;
+      list.push({ value: d[d.length - 1], str: String(d[d.length - 1]), score: 2 + (/(net a payer|total a payer|reste a payer|a regler)/.test(nl) ? 3 : 0), kind: lastTag(nl) });
+    });
   }
   const byScore = (x, y) => y.score - x.score || y.value - x.value;
   list.sort(byScore);
@@ -907,7 +973,27 @@ const ORGS = [
   { id: 'mairie', court: 'Mairie', nom: 'Ta mairie',
     kw: ['mairie', 'hotel de ville', 'le maire', 'commune de', 'conseil municipal'],
     desc: 'Ta commune : état civil, cantine, urbanisme, taxes locales.',
-    contact: "L'accueil de la mairie ou son site internet." }
+    contact: "L'accueil de la mairie ou son site internet." },
+  { id: 'sncf', court: 'SNCF', nom: 'La SNCF',
+    kw: ['sncf', 'ouigo', 'tgv', 'sncf connect', 'billet de train', 'carte avantage'],
+    desc: "Elle gère les trains et les billets. Un courrier peut concerner une réclamation, un remboursement ou un abonnement.",
+    contact: "Ton compte sur sncf-connect.com ; le service client figure sur le courrier." },
+  { id: 'laposte', court: 'La Poste', nom: 'La Poste',
+    kw: ['la poste', 'colissimo', 'chronopost', 'avis de passage', 'bureau de poste', 'lettre recommandee'],
+    desc: "Elle distribue le courrier et les colis. Un avis de passage ou une facture de réexpédition peut en venir.",
+    contact: "Le suivi sur laposte.fr avec le numéro du colis, ou le 3631." },
+  { id: 'sante', court: 'Santé', nom: 'Un établissement de santé',
+    kw: ['hopital', 'clinique', 'centre hospitalier', 'laboratoire', 'analyses medicales', 'cabinet medical', 'radiologie', 'chu'],
+    desc: "Un hôpital, une clinique ou un laboratoire. Le courrier peut concerner une facture, un rendez-vous ou des résultats.",
+    contact: "Le service de facturation ou d'accueil indiqué sur le courrier ; ta caisse d'assurance maladie pour les remboursements." },
+  { id: 'ecole', court: 'École ou université', nom: 'Un établissement scolaire ou universitaire',
+    kw: ['universite', 'crous', 'rectorat', 'scolarite', 'etablissement scolaire', 'inscription scolaire', 'lycee', 'college'],
+    desc: "Une école, un lycée, une université ou le Crous : inscription, bourse, frais de scolarité.",
+    contact: "Le secrétariat ou le service de la scolarité indiqué sur le courrier ; le Crous pour les bourses et logements étudiants." },
+  { id: 'syndic', court: 'Syndic de copropriété', nom: 'Ton syndic de copropriété',
+    kw: ['syndic', 'copropriete', 'coproprietaire', 'assemblee generale', 'charges de copropriete', 'appel de fonds'],
+    desc: "Il gère l'immeuble et appelle les charges. Le courrier peut être un appel de fonds ou la convocation à l'assemblée générale.",
+    contact: "Les coordonnées figurent sur l'appel de charges ; le conseil syndical peut aussi t'aider." }
 ].map(o => ({ ...o, re: kwRe(o.kw) }));
 
 /* ---------- Connaissances : types de courrier ---------- */
@@ -977,7 +1063,25 @@ const TYPES = [
     resume: "C'est une décision sur tes droits : un accord, un refus, ou un changement de montant.",
     actions: ['Vérifie le montant et la date de début.', "Si c'est un refus ou si tu n'es pas d'accord, un recours est possible : le délai est en général écrit en bas du courrier."],
     risque: 'Une fois le délai de recours passé, contester devient beaucoup plus difficile.',
-    intents: ['contester', 'explications'] }
+    intents: ['contester', 'explications'] },
+  { id: 'devis', label: 'Devis à signer', level: 2,
+    kw: ['devis n', 'devis no', 'bon pour accord', 'bon pour acceptation', 'validite du devis', 'devis valable', 'proposition commerciale', 'offre valable jusqu'],
+    resume: "C'est une proposition de prix, pas une facture. Tu ne dois rien tant que tu ne l'as pas signée.",
+    actions: ['Vérifie que le devis détaille le prix, la durée des travaux ou du service et les conditions d\'annulation.', 'Compare avec au moins un autre devis.', "Ne signe « bon pour accord » que si tout est clair : une fois signé, c'est un contrat.", 'Regarde la date de validité du devis.'],
+    risque: "Si tu signes, tu t'engages à payer (souvent avec un acompte). Sans signature, tu n'as rien à payer.",
+    intents: ['explications', 'contester'] },
+  { id: 'releve', label: 'Relevé de compte ou de situation', level: 1,
+    kw: ['releve de compte', 'releve bancaire', 'releve de situation', 'solde precedent', 'nouveau solde', 'releve des operations'],
+    resume: "C'est un récapitulatif de tes mouvements ou de ta situation, pas une demande.",
+    actions: ['Vérifie les opérations que tu ne reconnais pas.', 'Garde-le : il sert de justificatif (logement, prêt, dossier).', 'Un prélèvement inconnu ? Préviens ta banque rapidement : le délai pour contester est court.'],
+    risque: "Aucun en soi, mais une opération inconnue non signalée à temps peut ne plus être remboursée.",
+    intents: ['explications', 'contester'] },
+  { id: 'contrat', label: 'Contrat ou conditions générales', level: 2,
+    kw: ['conditions generales', 'contrat n', 'contrat no', "notice d'information", 'avenant', 'tacite reconduction', 'reconduction tacite', "duree d'engagement", "periode d'engagement", 'modification de votre contrat'],
+    resume: "Ce courrier concerne un contrat : un changement de conditions, un renouvellement ou un rappel de tes engagements.",
+    actions: ['Cherche ce qui change : prix, durée, conditions de résiliation.', 'Note la date limite pour refuser ou résilier (souvent dans un paragraphe « modification »).', 'Si tu refuses, écris avant la date indiquée, par lettre ou par e-mail, en gardant une preuve.'],
+    risque: "Sans réponse, la modification ou la reconduction est souvent considérée comme acceptée.",
+    intents: ['explications', 'contester'] }
 ].map(t => ({ ...t, re: kwRe(t.kw) }));
 const TYPE_INFO = { id: 'info', label: 'Courrier d\'information', level: 1,
   resume: "Ce courrier semble surtout t'informer. Rien d'urgent n'a été repéré, mais lis les passages surlignés.",
@@ -1003,19 +1107,49 @@ const SCAM_LABELS = ['carte cadeau', 'cartes cadeaux', 'coupon', 'Transcash', 'c
 const MONTHS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
 const NUMW = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6, sept: 7, huit: 8, dix: 10, quinze: 15, vingt: 20, trente: 30, 'quarante-cinq': 45, 'quarante cinq': 45, soixante: 60 };
 
+/* Nettoyage du texte lu sur une photo : corrige les erreurs de lecture courantes avant l'analyse (lettres prises pour des chiffres,
+   espaces dans les montants et les dates, « € » mal lu, césures, lignes de bruit). Sans effet sur un texte propre. */
+function cleanOCR(raw) {
+  let t = String(raw).replace(/\r/g, '').replace(/[\u00a0\u202f\u2009\u200b]/g, ' ').replace(/ﬁ/g, 'fi').replace(/ﬂ/g, 'fl').replace(/[“”«»]/g, '"').replace(/[‘’´`]/g, "'");
+  t = t.replace(/([a-zà-ÿ])-\n([a-zà-ÿ])/g, '$1$2');
+  const fx = x => x.replace(/[Oo]/g, '0').replace(/[Il|]/g, '1');
+  // dates : « 1O / O3 / 2O26 » → « 10/03/2026 »
+  t = t.replace(/(?<![\w])([0-9OoIl|]{1,2})\s?[\/.\-]\s?([0-9OoIl|]{1,2})\s?[\/.\-]\s?([0-9OoIl|]{2,4})(?![\w])/g, (m, a, b, c) => /\d/.test(m) && /^\d+$/.test(fx(a) + fx(b) + fx(c)) ? fx(a) + '/' + fx(b) + '/' + fx(c) : m);
+  // nombres : une lettre coincée entre chiffres est un chiffre mal lu (« 1 82O,04 » → « 1 820,04 »)
+  t = t.replace(/(?<![A-Za-zÀ-ÿ])\d[\dOoIl, .]{0,14}\d(?![A-Za-zÀ-ÿ])/g, m => /[Oo]|[Il]/.test(m) && /\d[Oo]|[Oo]\d|\d[Il]|[Il]\d/.test(m) ? m.replace(/(?<=[\d, .])[Oo](?=[\d, .])/g, '0').replace(/(?<=\d)[Il](?=[\d, .])|(?<=[\d, .])[Il](?=\d)/g, '1') : m);
+  // montants : « 1 500 , 00 » → « 1 500,00 »
+  t = t.replace(/(\d)\s+([,.])\s*(\d{2})(?!\d)/g, '$1$2$3').replace(/(\d[,.])\s+(\d{2})(?!\d)/g, '$1$2');
+  const lines = t.split('\n').map(l => {
+    // « € » lu « E » ou « C » après un montant, sur une ligne qui parle d'argent
+    if (/(total|montant|somme|payer|solde|reste|net|ttc|regler|due)/i.test(l)) l = l.replace(/(\d[,.]\d{2})\s?[EC](?=\s|$|[.;)])/g, '$1 €');
+    return l.replace(/[ \t]+/g, ' ').trim();
+  }).filter(l => !/^[^A-Za-zÀ-ÿ0-9]{2,}$/.test(l));
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
 function mkDate(y, mo, d) {
   if (y < 1990 || y > 2100 || mo < 0 || mo > 11 || d < 1 || d > 31) return null;
   const x = new Date(y, mo, d);
   return x.getMonth() === mo ? x : null;
 }
+const MONTH_RE = 'janvier|janv\\.?|f[ée]vrier|f[ée]vr\\.?|mars|avril|avr\\.?|mai|juin|juillet|juil\\.?|ao[uû]t|septembre|sept\\.?|octobre|oct\\.?|novembre|nov\\.?|d[ée]cembre|d[ée]c\\.?';
+const monthIdx = w => { const x = norm(w).replace('.', ''); return MONTHS.findIndex(m => m.startsWith(x) || (x.length >= 3 && x.startsWith(m))); };
 function findDates(t) {
   const out = []; let m;
   const r1 = /\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4}|\d{2})\b/g;
   while ((m = r1.exec(t))) { let y = +m[3]; if (y < 100) y += 2000; const d = mkDate(y, +m[2] - 1, +m[1]); if (d) out.push({ date: d, index: m.index, str: m[0] }); }
-  const r2 = /\b(1er|\d{1,2})\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre)\s+(\d{4})\b/gi;
+  const r2 = new RegExp('\\b(1er|\\d{1,2})\\s+(' + MONTH_RE + ')\\s+(\\d{4})\\b', 'gi');
   while ((m = r2.exec(t))) {
-    const mi = MONTHS.indexOf(norm(m[2])); const day = /^1er$/i.test(m[1]) ? 1 : +m[1];
-    const d = mkDate(+m[3], mi, day); if (d) out.push({ date: d, index: m.index, str: m[0] });
+    const mi = monthIdx(m[2]); const day = /^1er$/i.test(m[1]) ? 1 : +m[1];
+    const d = mi >= 0 ? mkDate(+m[3], mi, day) : null; if (d) out.push({ date: d, index: m.index, str: m[0] });
+  }
+  const r3 = /\b(20\d{2})-(\d{2})-(\d{2})\b/g;
+  while ((m = r3.exec(t))) { const d = mkDate(+m[1], +m[2] - 1, +m[3]); if (d) out.push({ date: d, index: m.index, str: m[0] }); }
+  // « avant le 20 octobre » : année absente, on prend la prochaine occurrence (repère « inferred », jamais une date de lettre)
+  const r4 = new RegExp('(?<=(?:avant le|au plus tard le|jusqu\'au|d\'ici le|pour le|le)\\s)(1er|\\d{1,2})\\s+(' + MONTH_RE + ')(?!\\.?\\s*\\d{2,4}\\b)', 'gi');
+  while ((m = r4.exec(t))) {
+    const mi = monthIdx(m[2]); if (mi < 0) continue; const day = /^1er$/i.test(m[1]) ? 1 : +m[1], now = today0();
+    let d = mkDate(now.getFullYear(), mi, day); if (d && d < new Date(now.getTime() - 45 * 864e5)) d = mkDate(now.getFullYear() + 1, mi, day);
+    if (d) out.push({ date: d, index: m.index, str: m[0], inferred: true });
   }
   return out.sort((a, b) => a.index - b.index);
 }
@@ -1048,8 +1182,12 @@ function phishSignals(n, sites, org) {
   if (org && OFFICIAL[org.id] && sites.length && !sites.some(x => OFFICIAL[org.id].test(x.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]))) out.push(`un site (${sites[0]}) qui ne ressemble pas au site officiel de ${org.court}`);
   return out.slice(0, 4);
 }
+/* Lecture tolérante aux erreurs de photo : on « plie » les lettres qu'une photo confond (i/l/1, o/0, rn/m, cl/d, vv/w, s/5) dans le texte
+   ET dans les mots-clés, puis on recherche à nouveau. Utilisé seulement quand la recherche exacte ne trouve rien. */
+const foldOCR = x => x.replace(/rn/g, 'm').replace(/cl/g, 'd').replace(/vv/g, 'w').replace(/[|1!i]/g, 'l').replace(/0/g, 'o').replace(/5/g, 's');
+const foldedRe = o => o.reF || (o.reF = kwRe(o.kw.map(k => foldOCR(norm(k)))));
 function analyze(raw) {
-  const text = raw.replace(/\r/g, '');
+  const text = cleanOCR(raw);
   const lines = text.replace(/-\n(?=[a-zà-ÿ])/g, '').replace(/[ \t\u00a0\u202f]+/g, ' ').split('\n').map(l => l.trim());
   let flat = '';
   for (let i = 0; i < lines.length; i++) {
@@ -1063,7 +1201,7 @@ function analyze(raw) {
   const n = norm(flat);
 
   // Organisme
-  let org = null, best = 0;
+  let org = null, best = 0, fuzzy = false;
   for (const o of ORGS) { const h = countHits(n, o.re); if (h > best) { best = h; org = o; } }
 
   // Type
@@ -1073,6 +1211,14 @@ function analyze(raw) {
     const score = h * 10 + t.level;
     if (score > tbest) { tbest = score; type = t; }
   }
+  // Rien reconnu : deuxième chance avec la lecture tolérante (photo floue, lettres confondues)
+  if (!org || type === TYPE_INFO) {
+    const nf = foldOCR(n);
+    if (!org) { let b2 = 0; for (const o of ORGS) { const h = countHits(nf, foldedRe(o)); if (h >= 2 && h > b2) { b2 = h; org = o; fuzzy = true; } } }
+    if (type === TYPE_INFO) { let t2 = 0; for (const t of TYPES) { const h = countHits(nf, foldedRe(t)); if (h < 1) continue; const sc = h * 10 + t.level; if (sc > t2) { t2 = sc; type = t; fuzzy = true; } } }
+  }
+  const why = o => o ? o.kw.filter((k, i) => o.re[i].test(n) || (fuzzy && foldedRe(o)[i].test(foldOCR(n)))).slice(0, 4) : [];
+  const whyOrg = why(org), whyType = type === TYPE_INFO ? [] : why(type);
 
   // Dates
   const dates = findDates(flat);
@@ -1080,7 +1226,7 @@ function analyze(raw) {
   const firstPart = flat.length * 0.4;
   let letterDate = null;
   for (const d of dates) {
-    if (d.index < firstPart && d.date <= new Date(now.getTime() + 2 * 86400000)) {
+    if (!d.inferred && d.index < firstPart && d.date <= new Date(now.getTime() + 2 * 86400000)) {
       const before = norm(flat.slice(Math.max(0, d.index - 25), d.index));
       if (/(, le|^le| le)\s*$/.test(before) || !letterDate) { letterDate = d; if (/(, le)\s*$/.test(before)) break; }
     }
@@ -1158,7 +1304,7 @@ function analyze(raw) {
 
   const docs = extractDocs(flat, sentences);
   const terms = GLOSSARY.filter(g => g.re.test(n)).slice(0, 8);
-  const a = { raw: text, flat, org, type, letterDate, deadline, recoursDl, amount, taxes, refs, emails, sites, phones, requests, recours, scam, phish, docs, docsDone: [], docsFromAI: false, terms };
+  const a = { raw: text, flat, org, type, letterDate, deadline, recoursDl, amount, taxes, refs, emails, sites, phones, requests, recours, scam, phish, whyOrg, whyType, fuzzy, docs, docsDone: [], docsFromAI: false, terms };
   a.level = computeLevel(a);
   return a;
 }
@@ -1494,6 +1640,7 @@ function renderResult(a, savedId, opts = {}) {
       </div>
       <p class="who-desc">${esc(org ? org.desc : "Son nom est en général en haut à gauche du courrier.")}</p>
       ${a.learned ? '<p class="note">Lecture ajustée d\'après tes corrections précédentes.</p>' : ''}
+      ${a.whyType.length || a.whyOrg.length ? `<p class="note">Reconnu grâce à : ${[...a.whyType, ...a.whyOrg.filter(x => !a.whyType.includes(x))].slice(0, 5).map(x => '« ' + esc(x) + ' »').join(', ')}.${a.fuzzy ? ' Lecture approximative : vérifie que c\'est bien le bon type de courrier.' : ''}</p>` : ''}
       ${a.phish && a.phish.length ? `<div class="scam"><strong>Méfie-toi : ce message a des signes d'hameçonnage.</strong><ul>${a.phish.map(x => `<li>${esc(x)}</li>`).join('')}</ul>Ne clique sur aucun lien et ne donne aucune information. Va directement sur le site officiel, en tapant toi-même l'adresse, ou appelle l'organisme.</div>` : ''}
       ${a.scam.length ? `<div class="scam"><strong>Attention, ça ressemble à une arnaque.</strong> Ce courrier parle de paiement par ${esc(a.scam.join(', '))}. Une administration ou une entreprise sérieuse ne demande jamais ça. Ne paye pas, et vérifie en contactant l'organisme par son site officiel.</div>` : ''}
 
@@ -1602,7 +1749,7 @@ function bindResult() {
   $('#undo-draft').addEventListener('click', () => { if (draftBackup != null) { setDraft(draftBackup); draftBackup = null; $('#undo-draft').hidden = true; } });
   $('#save-btn').addEventListener('click', saveCurrent);
   bindShare(current);
-  const tp = $('#to-paie'); if (tp) tp.addEventListener('click', () => { paie$ = { text: current.raw, declared: '', p: parsePayslip(current.raw) }; tools$ = { view: 'paie' }; track('paie'); showTab('tools'); });
+  const tp = $('#to-paie'); if (tp) tp.addEventListener('click', () => { { const p0 = parsePayslip(current.raw); paie$ = { text: current.raw, declared: '', p: p0, p0, fix: {}, pages: [{ name: 'Courrier décodé', text: current.raw }] }; } tools$ = { view: 'paie' }; track('paie'); showTab('tools'); });
   $('#more-letters').addEventListener('click', () => { tools$ = { view: 'lettres' }; showTab('tools'); });
   $('#new-btn').addEventListener('click', resetInput);
   $('#ai-improve').addEventListener('click', () => enqueueAI(() => aiImprove(seq)));
@@ -1744,7 +1891,57 @@ async function getOcr() {
   });
   return ocrWorker;
 }
-// Image redressée pour la lecture : orientation EXIF respectée, marges de la table rognées, contraste étiré.
+/* Redressement de l'image avant lecture */
+// Inclinaison du texte, en degrés (de −7 à +7) : le bon angle donne des profils de lignes très contrastés (lignes de texte bien séparées).
+function estimateSkew(c) {
+  const k = Math.min(1, 520 / Math.max(c.width, c.height)), w = Math.max(8, Math.round(c.width * k)), h = Math.max(8, Math.round(c.height * k));
+  const t = document.createElement('canvas'); t.width = w; t.height = h; const x = t.getContext('2d'); x.drawImage(c, 0, 0, w, h);
+  const d = x.getImageData(0, 0, w, h).data, g = new Float32Array(w * h); let sum = 0, sq = 0;
+  for (let i = 0; i < w * h; i++) { const v = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) / 256; g[i] = v; sum += v; sq += v * v; }
+  const mean = sum / (w * h), sd = Math.sqrt(Math.max(1, sq / (w * h) - mean * mean)), thr = mean - 0.6 * sd, px = [], py = [];
+  for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) if (g[yy * w + xx] < thr) { px.push(xx); py.push(yy); }
+  if (px.length < 200) return 0;
+  const step = Math.max(1, Math.floor(px.length / 30000));
+  const score = a => {
+    const r = a * Math.PI / 180, s = Math.sin(r), co = Math.cos(r), off = w * Math.abs(s) + 2, bins = new Int32Array(Math.ceil(h * co + w * Math.abs(s)) + 6);
+    for (let i = 0; i < px.length; i += step) bins[Math.round(py[i] * co - px[i] * s + off)]++;
+    let sc = 0; for (let i = 0; i < bins.length; i++) sc += bins[i] * bins[i]; return sc;
+  };
+  let best = 0, bs = score(0);
+  for (let a = -7; a <= 7.01; a += 0.5) { const v = score(a); if (v > bs) { bs = v; best = a; } }
+  let fine = best, fs = bs;
+  for (let a = best - 0.5; a <= best + 0.51; a += 0.1) { const v = score(a); if (v > fs) { fs = v; fine = a; } }
+  return fs / score(0) > 1.04 ? Math.round(fine * 10) / 10 : 0;
+}
+function rotateCanvas(c, deg) {
+  const r = document.createElement('canvas'); r.width = c.width; r.height = c.height; const x = r.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, r.width, r.height); x.translate(r.width / 2, r.height / 2); x.rotate(deg * Math.PI / 180); x.drawImage(c, -c.width / 2, -c.height / 2);
+  return r;
+}
+// Éclairage inégal (ombre, flash, coin sombre) : écart de luminosité du papier entre les zones de la photo.
+function lightingUneven(c) {
+  const w = 96, h = Math.max(8, Math.round(96 * c.height / c.width)), t = document.createElement('canvas'); t.width = w; t.height = h; const x = t.getContext('2d'); x.drawImage(c, 0, 0, w, h);
+  const d = x.getImageData(0, 0, w, h).data, G = 6, vals = [];
+  for (let gy = 0; gy < G; gy++) for (let gx = 0; gx < G; gx++) {
+    const cell = []; for (let yy = Math.floor(gy * h / G); yy < Math.floor((gy + 1) * h / G); yy++) for (let xx = Math.floor(gx * w / G); xx < Math.floor((gx + 1) * w / G); xx++) { const i = (yy * w + xx) * 4; cell.push((d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8); }
+    cell.sort((a, b) => a - b); vals.push(cell[Math.floor(cell.length * 0.85)]);
+  }
+  const mx = Math.max(...vals), paper = vals.filter(v => v > mx * 0.55);
+  return paper.length >= 8 && (Math.max(...paper) - Math.min(...paper)) / mx > 0.2;
+}
+// Seuillage adaptatif (Bradley) : le texte devient noir et le fond blanc quelle que soit la lumière locale.
+function adaptiveBinarize(c) {
+  const w = c.width, h = c.height, ctx = c.getContext('2d'), img = ctx.getImageData(0, 0, w, h), d = img.data, g = new Uint8Array(w * h), I = new Float64Array((w + 1) * (h + 1));
+  for (let y = 0; y < h; y++) { let row = 0; for (let x = 0; x < w; x++) { const i = y * w + x, v = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) >> 8; g[i] = v; row += v; I[(y + 1) * (w + 1) + x + 1] = I[y * (w + 1) + x + 1] + row; } }
+  const r = Math.max(8, Math.round(Math.min(w, h) / 36));
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const x0 = Math.max(0, x - r), x1 = Math.min(w, x + r + 1), y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
+    const m = (I[y1 * (w + 1) + x1] - I[y0 * (w + 1) + x1] - I[y1 * (w + 1) + x0] + I[y0 * (w + 1) + x0]) / ((x1 - x0) * (y1 - y0));
+    const o = g[y * w + x] < m * 0.88 ? 0 : 255, i = (y * w + x) * 4; d[i] = d[i + 1] = d[i + 2] = o; d[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0); return c;
+}
+// Image redressée pour la lecture : orientation EXIF respectée, marges de la table rognées, texte remis droit, lumière égalisée, contraste étiré.
 function loadBitmap(file) {
   if (window.createImageBitmap) return createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => loadBitmapFallback(file));
   return loadBitmapFallback(file);
@@ -1777,8 +1974,8 @@ function paperBox(c) {
   const fx = Math.max(0, c0 / w - 0.015), fy = Math.max(0, r0 / h - 0.015);
   return { fx, fy, fw: Math.min(1, (c1 + 1) / w + 0.015) - fx, fh: Math.min(1, (r1 + 1) / h + 0.015) - fy };
 }
-async function fileToCanvas(file, rot = 0) {
-  const bmp = await loadBitmap(file), max = 2200;
+async function fileToCanvas(file, rot = 0, max = 2200) {
+  const bmp = await loadBitmap(file);
   const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
   let w = Math.round(bmp.width * k), h = Math.round(bmp.height * k);
   let c = document.createElement('canvas'); c.width = w; c.height = h;
@@ -1791,6 +1988,10 @@ async function fileToCanvas(file, rot = 0) {
   try {
     const b = paperBox(c);
     if (b) { const sx = Math.round(b.fx * w), sy = Math.round(b.fy * h), sw = Math.round(b.fw * w), sh = Math.round(b.fh * h); const n = document.createElement('canvas'); n.width = sw; n.height = sh; n.getContext('2d').drawImage(c, sx, sy, sw, sh, 0, 0, sw, sh); c = n; w = sw; h = sh; }
+    // Texte penché : on remet les lignes à l'horizontale
+    const sk = estimateSkew(c); if (Math.abs(sk) >= 0.4) { c = rotateCanvas(c, -sk); w = c.width; h = c.height; }
+    // Ombre ou lumière inégale : seuillage adaptatif ; sinon simple étirement du contraste
+    if (lightingUneven(c)) return adaptiveBinarize(c);
     // Contraste : on étire entre les 2e et 98e percentiles de gris.
     const ctx = c.getContext('2d'), img = ctx.getImageData(0, 0, w, h), d = img.data, hist = new Array(256).fill(0);
     for (let i = 0; i < d.length; i += 4) { const v = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8; d[i] = d[i + 1] = d[i + 2] = v; hist[v]++; }
@@ -1802,11 +2003,11 @@ async function fileToCanvas(file, rot = 0) {
   } catch (e) { /* retraitement impossible : on lit l'image telle quelle */ }
   return c;
 }
-async function readPdf(file) {
+async function readPdf(file, maxPages = 6) {
   await loadScript(PDFJS_URL);
   pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
   const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
-  const pages = Math.min(pdf.numPages, 6);
+  const pages = Math.min(pdf.numPages, maxPages);
   let out = '';
   for (let i = 1; i <= pages; i++) {
     setOcr(i / (pages + 1), `Lecture du PDF, page ${i} sur ${pages}…`);
@@ -1845,19 +2046,28 @@ async function pdfFirstPageFile(file) {
 }
 // Qualité d'un texte lu : part de vrais mots (sert à repérer une photo couchée ou à l'envers).
 const textScore = t => { const w = String(t).split(/\s+/).filter(Boolean); if (w.length < 6) return 0; return w.filter(x => /^[a-zA-ZÀ-ÿ'’-]{3,}[.,;:!?)]*$/.test(x)).length / w.length * Math.min(1, w.length / 40); };
-async function ocrImage(w, f) {
-  let best = (await w.recognize(await fileToCanvas(f), { rotateAuto: true })).data.text || '', sc = textScore(best);
+async function ocrImage(w, f, opts = {}) {
+  // Tableaux (fiche de paie) : lignes conservées, colonnes espacées, image plus grande
+  if (opts.table) { try { await w.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' }); } catch (e) { /* option indisponible */ } }
+  const mx = opts.table ? 3000 : 2200;
+  try { return await ocrImageRun(w, f, mx); } finally { if (opts.table) { try { await w.setParameters({ tessedit_pageseg_mode: '3', preserve_interword_spaces: '0' }); } catch (e) { /* ignoré */ } } }
+}
+let ocrConf = null;   // confiance de la dernière lecture (0 à 100)
+async function ocrImageRun(w, f, mx) {
+  const r0 = (await w.recognize(await fileToCanvas(f, 0, mx), { rotateAuto: true })).data;
+  let best = r0.text || '', sc = textScore(best), conf = r0.confidence;
   // Photo prise de travers : on essaie les deux autres quarts de tour.
   for (const rot of sc < 0.35 ? [90, 270] : []) {
     setOcr(0.5, 'Redressement de la photo…');
-    const t = (await w.recognize(await fileToCanvas(f, rot), { rotateAuto: true })).data.text || '', s2 = textScore(t);
-    if (s2 > sc) { best = t; sc = s2; }
+    const rr = (await w.recognize(await fileToCanvas(f, rot, mx), { rotateAuto: true })).data, t = rr.text || '', s2 = textScore(t);
+    if (s2 > sc) { best = t; sc = s2; conf = rr.confidence; }
   }
+  if (typeof conf === 'number') ocrConf = ocrConf === null ? conf : Math.min(ocrConf, conf);
   return best;
 }
 async function handleFiles(files) {
   files = [...files]; if (!files.length) return;
-  let all = '', pages = 0;
+  let all = '', pages = 0; ocrConf = null;
   try {
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
@@ -1875,10 +2085,12 @@ async function handleFiles(files) {
   }
   hideOcr();
   const prev = $('#letter-input').value.trim();
+  all = cleanOCR(all);
   $('#letter-input').value = (prev && files.length ? prev + '\n\n' : '') + all.trim();
   $('#clear-btn').hidden = false;
   readPages += pages; $('#add-page').hidden = false; $('#pages-note').hidden = false;
   $('#pages-note').textContent = readPages > 1 ? `${readPages} pages lues. Ajoute la page suivante si le courrier continue.` : 'Le courrier a plusieurs pages ? Ajoute la page suivante, elle sera lue à la suite.';
+  if (ocrConf !== null && ocrConf < 62 && all.replace(/\s/g, '').length >= 40) { $('#pages-note').textContent += ` Lecture peu sûre (${Math.round(ocrConf)} %) : vérifie les chiffres et les dates, ou reprends la photo de face, à plat et bien éclairée.`; toast('Lecture peu sûre : vérifie les chiffres'); track('ocr_faible'); }
   if (all.replace(/\s/g, '').length < 40) { toast("Je n'arrive pas à lire le texte. Reprends la photo bien à plat, avec de la lumière."); return; }
   runDecode();
 }
@@ -2750,8 +2962,8 @@ async function gRestore() {
   if (!gAvailable()) return;
   try {
     const F = await fb(); await F.auth.authStateReady();
-    FBU = F.auth.currentUser; setSyncStatus(); if (FBU) { syncNow(); sealPending(); }
-    F.Au.onAuthStateChanged(F.auth, u => { const was = FBU; FBU = u; setSyncStatus(); if (u && (!was || was.uid !== u.uid)) { syncNow(); sealPending(); } });
+    FBU = F.auth.currentUser; setSyncStatus(); if (FBU) { syncNow(); checkPremium().then(sealPending); }
+    F.Au.onAuthStateChanged(F.auth, u => { const was = FBU; FBU = u; setSyncStatus(); if (u && (!was || was.uid !== u.uid)) { syncNow(); checkPremium().then(sealPending); } });
   } catch (e) { setSyncStatus('Connexion indisponible : ' + e.message); }
 }
 async function gLogin() {
@@ -3085,7 +3297,7 @@ function renderTools() {
   $$('[data-tool]', box).forEach(b => b.addEventListener('click', () => {
     if (b.dataset.tool === 'dossier') return openDossier();
     if (b.dataset.tool === 'edl') edl$ = { view: 'list' };
-    if (b.dataset.tool === 'paie') paie$ = { text: '', declared: '', p: null };
+    if (b.dataset.tool === 'paie') paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages: [] };
     tools$ = { view: b.dataset.tool }; track('outil_' + b.dataset.tool); renderTools(); setHash('tools', b.dataset.tool); box.scrollIntoView({ block: 'start' });
   }));
 }
@@ -3097,9 +3309,9 @@ const SUBHASH = { abos: '#abonnements', tva: '#tva', lettres: '#lettres', edl: '
 function renderLettres(box) {
   box.innerHTML = `<div class="sheet"><button class="link back" id="tool-back" type="button">Retour</button>
     <h2>Modèles de lettres</h2><p class="lead">Choisis la situation, réponds à quelques questions : la lettre est prête, avec tes coordonnées. Aucun texte n'est envoyé nulle part.</p></div>
-    <div class="cases" style="margin-top:14px">${LETTRES.map(l => `<button class="case" type="button" data-lettre="${l.id}"><b>${esc(l.title)}</b><span>${esc(l.teaser)}</span></button>`).join('')}</div>`;
+    <div class="cases" style="margin-top:14px">${LETTRES.map(l => `<button class="case" type="button" data-lettre="${l.id}"><b>${esc(l.title)}${CONFIG.FREE_LETTRES.includes(l.id) ? '' : ' <span class="pro">Premium</span>'}</b><span>${esc(l.teaser)}</span></button>`).join('')}</div>`;
   toolBack(box);
-  $$('[data-lettre]', box).forEach(b => b.addEventListener('click', () => { tools$ = { view: 'lettre', id: b.dataset.lettre, values: tools$.prefill && tools$.prefillId === b.dataset.lettre ? tools$.prefill : {}, result: false }; renderTools(); box.scrollIntoView({ block: 'start' }); }));
+  $$('[data-lettre]', box).forEach(b => b.addEventListener('click', () => { if (!CONFIG.FREE_LETTRES.includes(b.dataset.lettre) && needPremium('Ce modèle de lettre fait partie de Premium. Les modèles amende, résiliation et échéancier restent gratuits.')) return; tools$ = { view: 'lettre', id: b.dataset.lettre, values: tools$.prefill && tools$.prefillId === b.dataset.lettre ? tools$.prefill : {}, result: false }; renderTools(); box.scrollIntoView({ block: 'start' }); }));
 }
 function renderLettre(box) {
   const l = lettreById(tools$.id), v = tools$.values || {};
@@ -3162,8 +3374,9 @@ function renderAbos(box) {
         <div class="row"><button class="btn small ghost" data-abo-renew type="button">Payé, suivant</button><button class="btn small ghost" data-abo-stop type="button">Résilier</button><button class="link" data-abo-edit type="button">Modifier</button><button class="link" data-abo-del type="button">Supprimer</button></div></article>`;
     }).join('') : '<p class="note">Aucun abonnement noté. Commence par ceux qui te coûtent le plus : internet, mobile, assurances, streaming, salle de sport.</p>'}</div>`;
   toolBack(box);
-  $('#abo-add').addEventListener('click', () => { tools$ = { view: 'abos', edit: { period: 'mois', notice: 0 } }; renderTools(); box.scrollIntoView({ block: 'start' }); });
-  $$('[data-sugg]', box).forEach(b => b.addEventListener('click', () => { const s = sug[+b.dataset.sugg]; tools$ = { view: 'abos', edit: { name: s.name, amount: s.amount, period: 'mois', notice: 0 } }; renderTools(); }));
+  const aboFull = () => !isPremium() && getAbos().filter(a => a.active !== false).length >= CONFIG.FREE_ABOS && (openPremium(`La version gratuite suit ${CONFIG.FREE_ABOS} abonnements. Passe à Premium pour tous les suivre.`), true);
+  $('#abo-add').addEventListener('click', () => { if (aboFull()) return; tools$ = { view: 'abos', edit: { period: 'mois', notice: 0 } }; renderTools(); box.scrollIntoView({ block: 'start' }); });
+  $$('[data-sugg]', box).forEach(b => b.addEventListener('click', () => { if (aboFull()) return; const s = sug[+b.dataset.sugg]; tools$ = { view: 'abos', edit: { name: s.name, amount: s.amount, period: 'mois', notice: 0 } }; renderTools(); }));
   $$('[data-abo]', box).forEach(el => {
     const id = el.dataset.abo, get = () => getAbos().find(x => x.id === id);
     $('[data-abo-edit]', el).addEventListener('click', () => { tools$ = { view: 'abos', edit: { ...get() } }; renderTools(); box.scrollIntoView({ block: 'start' }); });
@@ -3248,15 +3461,20 @@ function renderTVA(box) {
 
 /* ---------- Fiche de paie ---------- */
 /*PAIE-DEB*/
-const PN = x => String(x).replace(/ | /g, ' ');
+// Espaces insécables et fines → espace ; confusions courantes de la lecture optique (O pour 0, l pour 1) à l'intérieur d'un nombre
+const PN = x => String(x).replace(/[\u00a0\u202f\u2009]/g, ' ').replace(/(?<=\d)[Oo](?=\d|[,.]\d|[\/-]\d|\s?%)/g, '0').replace(/(?<=[\/-])[Oo](?=\d)/g, '0').replace(/(?<=\d)l(?=[\/-]\d)/g, '1').replace(/(?<=[\/-])l(?=\d)/g, '1').replace(/(?<![A-Za-zÀ-ÿ\d])[lI](?= \d{3}[,.]\d)/g, '1').replace(/(?<=[,.])[Oo](?=\d)/g, '0').replace(/(?<=\d)l(?=\d)/g, '1').replace(/(?<=[,.])l(?=\d)/g, '1').replace(/(?<![A-Za-zÀ-ÿ])[lI](?=\d)/g, '1').replace(/(?<![A-Za-zÀ-ÿ])O(?=\d|,\d)/g, '0');
 // Nombres d'une ligne (dates et pourcentages retirés). « 1 895,88 » → 1895.88
-function lineNums(line) {
-  const t = PN(line).replace(/\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}/g, ' ').replace(/(\d{1,3})((?:\.\d{3})+)(?=,\d)/g, (m, a, b) => a + b.replace(/\./g, '')).replace(/\d+(?:[.,]\d+)?\s*%/g, ' ');
+function lineNums(line, hm) {
+  let t0 = PN(line);
+  // Durées « 8h30 » ou « 08:00 » → heures décimales (lignes d'heures seulement)
+  if (hm) t0 = t0.replace(/(\d{1,2})\s?[h:]\s?(\d{2})(?!\d)/gi, (m, h, mi) => (+h + +mi / 60).toFixed(2).replace('.', ','));
+  const t = t0.replace(/\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}/g, ' ').replace(/(\d{1,3})((?:\.\d{3})+)(?=,\d)/g, (m, a, b) => a + b.replace(/\./g, '')).replace(/\d+(?:[.,]\d+)?\s*%/g, ' ');
   const out = []; const re = /(-?\d+(?: \d{3})*(?:[.,]\d{1,4})?)/g; let m;
   while ((m = re.exec(t))) { const v = parseFloat(m[1].replace(/ /g, '').replace(',', '.')); if (isFinite(v)) out.push(v); }
   return out;
 }
 const linePct = line => { const m = PN(line).match(/(\d+(?:[.,]\d+)?)\s*%/); return m ? parseFloat(m[1].replace(',', '.')) : null; };
+const PMAFF = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 const PMONTHS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
 // Explication de chaque ligne type d'une fiche de paie (texte normalisé sans accents, en minuscules).
 const PAIE_LIGNES = [
@@ -3274,7 +3492,7 @@ const PAIE_LIGNES = [
   [/indemnite compensatrice de conges|ind\.? comp.* cp/, 'Indemnité de congés', "Somme versée pour des congés payés non pris, en général à la fin du contrat."],
   [/(titres? restaurant|ticket restaurant)/, 'Titres-restaurant', "Ta part des titres-restaurant, retirée du net. L'employeur en paie une autre part."],
   [/(panier|indemnite (de )?(repas|transport|kilometrique)|frais professionnels|remboursement)/, 'Indemnité ou remboursement', "Une somme qui rembourse des frais (repas, transport, déplacement). Elle n'est en général pas soumise à cotisations."],
-  [/(absence|maladie|conges? sans solde|carence)/, 'Absence', "Une retenue sur le salaire pour des heures ou jours non travaillés (ou la somme versée à la place par la Sécurité sociale)."],
+  [/(absence|arret (de travail|maladie)|conges? sans solde|carence|indemnites? journalieres?)/, 'Absence', "Une retenue sur le salaire pour des heures ou jours non travaillés (ou la somme versée à la place par la Sécurité sociale)."],
   [/(avantage en nature)/, 'Avantage en nature', "La valeur d'un avantage fourni par l'employeur (véhicule, logement, repas). Elle est ajoutée au salaire pour le calcul des cotisations, puis retirée du net."],
   [/(acompte|avance)/, 'Acompte ou avance', "Une somme que tu as déjà reçue dans le mois : elle est retirée du net à payer."],
   [/(securite sociale|maladie|maternite|invalidite|deces)/, 'Sécurité sociale (maladie, maternité…)', "Ta participation à l'assurance maladie, maternité, invalidité et décès."],
@@ -3286,6 +3504,7 @@ const PAIE_LIGNES = [
   [/(mutuelle|complementaire sante|frais de sante)/, 'Mutuelle', "Ta complémentaire santé d'entreprise. L'employeur doit en payer au moins la moitié."],
   [/prevoyance/, 'Prévoyance', "Une assurance en cas d'arrêt de travail long, d'invalidité ou de décès."],
   [/(accident du travail|at ?\/ ?mp)/, 'Accident du travail', "Cotisation payée par l'employeur pour couvrir les accidents du travail et maladies professionnelles."],
+  [/heures? de nuit|majoration.*nuit|prime de nuit/, 'Heures de nuit', "Heures travaillées la nuit, payées avec une majoration (souvent 25 %). Ce ne sont pas des heures supplémentaires."],
   [/(allocations? familiales|fnal|versement (mobilite|transport)|formation professionnelle|apprentissage|dialogue social)/, 'Cotisation patronale', "Une contribution payée par l'employeur en plus de ton salaire (famille, logement, transport, formation). Elle ne diminue pas ton net."],
   [/(reduction generale|allegement general|reduction fillon)/, 'Réduction générale', "Un allègement des cotisations patronales sur les bas salaires. Il ne change pas ton net."],
   [/(ceg|cet\b|contribution d.?equilibre)/, "Contribution d'équilibre (retraite)", "Une contribution qui équilibre le régime de retraite complémentaire."],
@@ -3298,50 +3517,102 @@ function looksLikePayslip(text) {
   return ['bulletin de paie', 'bulletin de salaire', 'net a payer', 'cotisations', 'salaire de base', 'net imposable', 'conges payes', 'prelevement a la source', 'total brut', 'salaire brut'].filter(k => n.includes(k)).length >= 3;
 }
 function parsePayslip(raw) {
-  const lines = String(raw).split(/\n+/).map(l => l.trim()).filter(Boolean), nl = lines.map(norm);
+  const lines = String(raw).split(/\n+/).map(l => l.replace(/\s+/g, ' ').trim()).filter(l => l && /[0-9A-Za-zÀ-ÿ]/.test(l));
+  // Libellé court seul sur sa ligne (cellules d'un tableau lues sur deux lignes) → rejoint ses chiffres
+  for (let k = 0; k < lines.length - 1; k++) if (/^(p[ée]riode|ann[ée]e|cong[ée]s?( pay[ée]s?)?)$/i.test(lines[k]) && /^[-\d\s.,]+$/.test(lines[k + 1]) && (lines[k + 1].match(/\d/g) || []).length >= 3) { lines[k] += ' ' + lines[k + 1]; lines.splice(k + 1, 1); }
+  const nl = lines.map(norm);
   const find = (re, not) => { const i = nl.findIndex(l => re.test(l) && !(not && not.test(l))); return i; };
   const findAll = (re, not) => nl.map((l, i) => (re.test(l) && !(not && not.test(l)) ? i : -1)).filter(i => i >= 0);
   const amountAt = (i, last = true) => { if (i < 0) return null; let n = lineNums(lines[i]); if (!n.length && lines[i + 1]) n = lineNums(lines[i + 1]); return n.length ? (last ? n[n.length - 1] : n[0]) : null; };
   const p = { periode: null, ym: null, brut: null, netAvant: null, netFinal: null, netImposable: null, pas: null, cotSal: null, cotPat: null, base: null, hs: [], primes: [], absences: [], conges: [], found: 0 };
   // Période
-  const pm = norm(raw).match(/periode[^0-9a-z]{0,12}(?:du\s*)?(\d{2})[\/.-](\d{2})[\/.-](\d{4})/);
-  if (pm) { p.ym = pm[3] + '-' + pm[2]; p.periode = PMONTHS[+pm[2] - 1] + ' ' + pm[3]; }
-  else { const mm = norm(raw).match(new RegExp('(?:mois de|paie de|periode de|bulletin de)?\\s*(' + PMONTHS.join('|') + ')\\s+(20\\d{2})')); if (mm) { p.periode = mm[1] + ' ' + mm[2]; p.ym = mm[2] + '-' + String(PMONTHS.indexOf(mm[1]) + 1).padStart(2, '0'); } }
+  const pm = norm(PN(raw)).match(/(?:periode|mois)(?:\s+de\s+paie)?[^0-9a-z]{0,12}(?:du)?[^0-9a-z]{0,6}(\d{1,2})[\/.-](\d{2})[\/.-](\d{4}|\d{2})(?!\d)/);
+  if (pm && +pm[2] >= 1 && +pm[2] <= 12) { const yy = pm[3].length === 2 ? '20' + pm[3] : pm[3]; p.ym = yy + '-' + pm[2]; p.periode = PMAFF[+pm[2] - 1] + ' ' + yy; }
+  if (!p.periode) { const mm = norm(raw).match(new RegExp('(?:mois de|paie de|periode de|bulletin de)?\\s*(' + PMONTHS.join('|') + ')\\s+(20\\d{2})')); if (mm) { p.periode = PMAFF[PMONTHS.indexOf(mm[1])] + ' ' + mm[2]; p.ym = mm[2] + '-' + String(PMONTHS.indexOf(mm[1]) + 1).padStart(2, '0'); } }
   // Brut, nets, impôt
   let i = find(/(salaire brut|total brut|brut total)/, /(abattu|abattement|plafond|imposable)/); if (i < 0) i = find(/\bbrut\b/, /(abattu|abattement|plafond|imposable|cotisation)/);
   p.brut = amountAt(i);
   p.netAvant = amountAt(find(/net (a payer )?(avant|hors) (impot|prelevement)/));
   const nf = findAll(/(net a payer|net paye)/, /(avant|hors) (impot|prelevement)|imposable/); p.netFinal = nf.length ? amountAt(nf[nf.length - 1]) : null;
-  p.netImposable = amountAt(find(/net imposable/));
+  { const ni = find(/net imposable/); if (ni >= 0) { const a = nl[ni].indexOf('net imposable'), t = lineNums(lines[ni].slice(a + 13)); p.netImposable = t.length ? t[0] : amountAt(ni); } }
   p.netSocial = amountAt(find(/montant net social/));
   p.tauxNeutre = /(taux neutre|taux non personnalise|taux par defaut)/.test(norm(raw));
   const pi = find(/(prelevement a la source|impot sur le revenu|\bpas\b)/, /(avant|hors) (impot|prelevement)|net a payer|net imposable|montant net social/);
   if (pi >= 0) { const taux = linePct(lines[pi]) ?? (lines[pi + 1] ? linePct(lines[pi + 1]) : null), amt = amountAt(pi); if (amt !== null || taux !== null) p.pas = { amount: amt, taux }; }
   // Cotisations
   const ci = find(/total (des )?cotisations/);
-  if (ci >= 0) { const n = lineNums(lines[ci]); if (n.length >= 2) { p.cotSal = n[n.length - 2]; p.cotPat = n[n.length - 1]; } else if (n.length === 1) p.cotSal = n[0]; }
+  if (ci >= 0) { let n = lineNums(lines[ci]); if (!n.length && lines[ci + 1]) n = lineNums(lines[ci + 1]); if (n.length >= 2) { p.cotSal = n[n.length - 2]; p.cotPat = n[n.length - 1]; } else if (n.length === 1) p.cotSal = n[0]; }
+  if (p.cotSal === null) { const ri = find(/^total des retenues\s*:?\s*([-\d]|$)/); if (ri >= 0) { let n = lineNums(lines[ri]); if (!n.length && lines[ri + 1]) n = lineNums(lines[ri + 1]); if (n.length) p.cotSal = n[n.length - 1]; } }
   // Salaire de base
   const bi = find(/(salaire de base|salaire mensuel|heures normales|horaire normal)/);
   if (bi >= 0) { const n = lineNums(lines[bi]); if (n.length >= 2) p.base = { qty: n[0] <= 250 ? n[0] : null, rate: n.length >= 3 ? n[1] : null, amount: n[n.length - 1] }; }
   const baseRate = p.base && p.base.rate && p.base.rate > 3 && p.base.rate < 200 ? p.base.rate : (p.base && p.base.qty && p.base.amount ? p.base.amount / p.base.qty : null);
-  // Heures supplémentaires
-  findAll(/(heures? (supp|suppl)|h\.? ?sup|hres? sup|\bhs ?(\d|maj)|heures majorees|majoration|heures? compl)/, /(exonere|reduction|allegement|defiscal|cotisations? salariale|contingent)/).forEach(k => {
-    const n = lineNums(lines[k]); if (!n.length) return;
-    const maj = linePct(lines[k]), qty = n.length >= 2 && n[0] <= 200 ? n[0] : null, amount = n[n.length - 1], rate = n.length >= 3 ? n[1] : null;
-    const h = { line: lines[k], qty, amount, rate, maj: maj && maj >= 100 ? maj - 100 : maj, impl: null, compl: /heures? compl/.test(nl[k]) };
-    if (qty && amount && baseRate) h.impl = Math.round((amount / (qty * baseRate) - 1) * 100);
+  // Heures supplémentaires : une ligne d'heures et, parfois, une ligne de majoration à part (à rapprocher)
+  const items = [];
+  findAll(/(heures? (supp|suppl)|h\.? ?sup|hres? sup|\bhs ?(\d|maj)|heures majorees|majoration|heures? compl)/, /(reduction|allegement|defiscal|exoneration|cotisations? salariale|contingent|nuit|dimanche|ferie|^(?!heures? (supp|suppl)).*exonere)/).forEach(k => {
+    const n = lineNums(lines[k], true); if (!n.length) return;
+    const maj = linePct(lines[k]), isMaj = /majoration|\bmaj\b/.test(nl[k]) && maj !== null;
+    const qty = n.length >= 2 && n[0] <= 200 ? n[0] : null, amount = n[n.length - 1], rate = n.length >= 3 ? n[1] : null;
+    items.push({ line: lines[k], qty, amount, rate, maj: maj && maj >= 100 ? maj - 100 : maj, impl: null, compl: /heures? compl/.test(nl[k]), isMaj });
+  });
+  items.filter(it => it.isMaj).forEach(m => {
+    const base = items.find(b => !b.isMaj && !b.merged && (b.maj === null || b.maj === m.maj) && b.qty && m.qty && Math.abs(b.qty - m.qty) < 0.011);
+    if (base) { base.amount = Math.round((base.amount + m.amount) * 100) / 100; base.maj = m.maj; base.majLine = m.line; m.merged = true; }
+    else m.majOnly = true;
+  });
+  items.filter(it => !it.merged).forEach(h => {
+    if (h.majOnly) h.impl = h.maj;
+    else {
+      if (h.qty && h.amount && baseRate) h.impl = Math.round((h.amount / (h.qty * baseRate) - 1) * 100);
+      // Le taux horaire d'une ligne peut inclure des primes : si la ligne annonce 10, 25 ou 50 % et que le calcul ne montre pas un sous-paiement, on garde le taux annoncé
+      if (h.maj !== null && [10, 25, 50].includes(h.maj) && (h.impl === null || h.impl >= h.maj - 5)) h.impl = h.maj;
+      if (h.impl === null && h.maj !== null) h.impl = h.maj;
+    }
     p.hs.push(h);
   });
-  p.hsQty = p.hs.reduce((s, h) => s + (h.qty || 0), 0); p.hsAmount = p.hs.reduce((s, h) => s + (h.amount || 0), 0);
+  { const main = p.hs.filter(h => !h.majOnly), src = main.length ? main : p.hs; p.hsQty = Math.round(src.reduce((s, h) => s + (h.qty || 0), 0) * 100) / 100; p.hsAmount = Math.round(p.hs.reduce((s, h) => s + (h.amount || 0), 0) * 100) / 100; }
   p.baseRate = baseRate;
   p.hsRelief = find(/(reduction|exoneration|allegement|defiscalis).*(heures|\bhs\b)|(heures|\bhs\b).*(exonere|reduction)/) >= 0;
+  { const ri = find(/(reduction|allegement|exoneration).*(heures|\bhs\b)/, /(employeur|patronal)/); if (ri >= 0) { const n = lineNums(lines[ri]); if (n.length) p.hsReliefBase = n[0]; } }
   // Primes, absences, congés
   findAll(/(prime|indemnite|gratification|13e mois|treizieme|panier|titres? restaurant|remboursement transport|avantage en nature)/, /(cotisation|plafond|net a payer|licenciement|conges payes)/).slice(0, 8).forEach(k => { const a = amountAt(k); if (a) p.primes.push({ line: lines[k], amount: a }); });
-  findAll(/(absence|maladie|conges? sans solde|retenue|carence)/, /(cotisation|prevoyance|retenue a la source)/).slice(0, 5).forEach(k => p.absences.push({ line: lines[k], amount: amountAt(k) }));
+  findAll(/(absence|arret (de travail|maladie)|conges? sans solde|retenue|carence)/, /(cotisation|prevoyance|retenue a la source|assurance|securite sociale)/).slice(0, 5).forEach(k => p.absences.push({ line: lines[k], amount: amountAt(k) }));
   findAll(/(conges payes|\bcp\b|\brtt\b|repos compensateur)/, /(indemnite|cotisation)/).slice(0, 5).forEach(k => p.conges.push(lines[k]));
+  // Tableau des cumuls (Sage et proches) : « Période » = ce mois-ci ; colonnes lues dans l'ordre de l'en-tête
+  { const hi = find(/cumuls?/, /(imposable|annuel)/), CUM = [['brut', /salaire brut/], ['cotSal', /(ch\.? ?salariales?|charges salariales)/], ['cotPat', /(ch\.? ?patronales?|charges patronales)/], ['avNature', /(av\.? en nature|avantages? en nature)/], ['hTrav', /(h(res|eures)\.? travaill)/], ['hSup', /(h(res|eures)\.? supp)/], ['netSocial', /net social/]];
+    if (hi >= 0) {
+      const head = nl.slice(hi, hi + 3).join(' '), cols = CUM.map(([k, re]) => [k, head.search(re)]).filter(x => x[1] >= 0).sort((a, b) => a[1] - b[1]).map(x => x[0]);
+      for (let k = hi + 1; k < Math.min(hi + 5, lines.length); k++) if (/^periode\b/.test(nl[k])) {
+        const n = lineNums(lines[k]); if (cols.length >= 4 && n.length >= cols.length - 1 && n.length <= cols.length) { p.cumul = {}; cols.forEach((c, j) => { if (n[j] !== undefined) p.cumul[c] = n[j]; }); }
+        break;
+      }
+    }
+    if (p.cumul) { if (p.cumul.netSocial !== undefined) p.netSocial = p.cumul.netSocial; if (p.cumul.hSup !== undefined) p.hsTable = p.cumul.hSup; if (p.cumul.hTrav !== undefined) p.hTrav = p.cumul.hTrav; if (p.brut === null && p.cumul.brut) p.brut = p.cumul.brut; }
+    // Compteurs de congés : « Congés 1,0000 0,0000 16,0000 » sous un en-tête Pris / Restant / Acquis
+    // Tableau « Congés payés / RC » : en-tête Acquis · Pris · Solde, lignes « CP acquis 25.00 15.00 10.00 »
+    { const th = find(/^conges? payes?( \/ rc)?\s+acquis.*pris.*solde|^acquis.*pris.*solde/); if (th >= 0) {
+      const col = nl.slice(th, th + 1)[0], ord = ['acquis', 'pris', 'solde'].map(w => [w, col.indexOf(w)]).sort((a, b) => a[1] - b[1]).map(x => x[0]);
+      for (let k = th + 1; k < Math.min(th + 9, lines.length); k++) if (/^cp (acquis|en cours|reliquat)\b/.test(nl[k])) { let n = lineNums(lines[k]); if (!n.length && lines[k + 1]) n = lineNums(lines[k + 1]); if (n.length >= 3) { p.congesCpt = {}; ord.forEach((w, j) => { p.congesCpt[w === 'solde' ? 'restant' : w] = n[n.length - 3 + j]; }); break; } } } }
+    const ki = find(/^conges? ?(payes?)? \d/);
+    if (ki >= 0) { const n = lineNums(lines[ki]); const hd = nl.slice(Math.max(0, ki - 2), ki).join(' '), ord = ['pris', 'restant', 'acquis'].map(w => [w, hd.indexOf(w)]).filter(x => x[1] >= 0).sort((a, b) => a[1] - b[1]).map(x => x[0]); const names = ord.length === 3 ? ord : ['pris', 'restant', 'acquis'];
+      if (!p.congesCpt && n.length >= 3) { p.congesCpt = {}; names.forEach((w, j) => { p.congesCpt[w] = n[j]; }); } }
+  }
   p.lignes = [];
-  lines.forEach((l, k) => { const g = PAIE_LIGNES.find(x => x[0].test(nl[k])); if (g) { const n = lineNums(l); p.lignes.push({ line: l, label: g[1], expl: g[2], amount: n.length ? n[n.length - 1] : null }); } });
+  lines.forEach((l, k) => { const g = PAIE_LIGNES.find(x => x[0].test(nl[k])); if (g) { const n = lineNums(l, true), pc = (PN(l).match(/\d+(?:[.,]\d+)?\s*%/g) || []).length, e = { line: l, label: g[1], expl: g[2], amount: n.length ? n[n.length - 1] : null }; if (pc >= 2 && n.length >= 3) { e.sal = n[n.length - 2]; e.pat = n[n.length - 1]; } p.lignes.push(e); } });
   p.found = [p.brut, p.netAvant, p.netFinal, p.netImposable, p.cotSal, p.base].filter(x => x !== null).length + (p.pas ? 1 : 0);
+  return p;
+}
+// Chiffres corrigés à la main par l'utilisateur (lecture de photo imparfaite) : on les applique sur la lecture d'origine.
+function applyPaieFix(p0, fix) {
+  const p = JSON.parse(JSON.stringify(p0)); p.hs = p.hs.map(h => ({ ...h }));
+  const num = k => { const v = fix && fix[k]; if (v === undefined || v === null || v === '') return null; const x = parseFloat(String(v).replace(',', '.')); return isFinite(x) ? x : null; };
+  const set = (k, f) => { const x = num(k); if (x !== null) f(x); };
+  set('brut', x => { p.brut = x; }); set('netAvant', x => { p.netAvant = x; }); set('netFinal', x => { p.netFinal = x; });
+  set('impot', x => { p.pas = { amount: x, taux: p.pas ? p.pas.taux : null }; });
+  set('baseRate', x => { p.baseRate = x; p.hs.forEach(h => { if (h.qty && h.amount) h.impl = Math.round((h.amount / (h.qty * x) - 1) * 100); }); });
+  set('hsQty', x => { p.hsQty = x; });
+  set('hsAmount', x => { p.hsAmount = x; });
+  p.fixed = Object.keys(fix || {}).filter(k => num(k) !== null);
   return p;
 }
 const PE = v => (v === null || v === undefined || !isFinite(v) ? '?' : v.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }));
@@ -3372,6 +3643,12 @@ function payslipInsights(p, declared) {
     else if (Math.abs(h.impl - 50) <= 4) out.push({ level: 'ok', text: `Ligne « ${h.line} » : majoration d'environ 50 %, ce qui correspond au taux légal au-delà de la 8e heure supplémentaire de la semaine.` });
     else out.push({ level: 'info', text: `Ligne « ${h.line} » : majoration d'environ ${h.impl} %. Compare avec ton contrat et ta convention collective.` });
   });
+  if (p.hsTable !== undefined && p.hsTable !== null && p.hs.length) {
+    const d = Math.round((p.hsQty - p.hsTable) * 100) / 100;
+    out.push(Math.abs(d) < 0.02 ? { level: 'ok', text: `Le tableau des cumuls de la fiche compte lui aussi ${PH(p.hsTable)} supplémentaires ce mois-ci : les deux chiffres concordent.` } : { level: 'info', text: `Le tableau des cumuls indique ${PH(p.hsTable)} supplémentaires, alors que les lignes en détaillent ${PH(p.hsQty)}. L'écart (${PH(Math.abs(d))}) peut venir d'une régularisation ou d'une lecture imparfaite : compare avec la fiche papier.` });
+  }
+  if (p.hsReliefBase && p.hs.length && p.hsAmount && Math.abs(p.hsReliefBase - p.hsAmount) > 0.1 * p.hsAmount + 0.5) out.push({ level: 'warn', text: `L'allègement porte sur ${PE(p.hsReliefBase)} d'heures supplémentaires, alors que les lignes en paient ${PE(p.hsAmount)} : une partie des heures n'est peut-être pas allégée (ou une ligne a été mal lue). Demande le détail à ton employeur.` });
+  if (p.hs.length && p.lignes.some(l => l.label === 'Heures de nuit')) out.push({ level: 'info', text: "Des heures de nuit sont aussi payées sur cette fiche : leur majoration est distincte de celle des heures supplémentaires, ne les additionne pas." });
   if (p.hsRelief) out.push({ level: 'info', text: "Une ligne d'allègement sur les heures supplémentaires apparaît : c'est normal, une partie des cotisations salariales est supprimée sur ces heures (donc ton net augmente)." });
   if (declared !== null && declared !== undefined && isFinite(declared)) {
     const paid = p.hsQty || 0, gap = Math.round((declared - paid) * 100) / 100;
@@ -3379,7 +3656,8 @@ function payslipInsights(p, declared) {
     else if (gap < -0.49) out.unshift({ level: 'info', text: `La fiche paie ${PH(paid)}, plus que les ${PH(declared)} que tu indiques : des heures peuvent venir d'un autre mois (régularisation) ou d'un repos compensateur.` });
     else out.unshift({ level: 'ok', text: `Les heures supplémentaires payées (${PH(paid)}) correspondent à ce que tu indiques.` });
   }
-  if (p.conges.length) out.push({ level: 'info', text: 'Compteurs de congés ou de repos repérés : vérifie que les jours acquis augmentent bien chaque mois (en général 2,5 jours ouvrables de congés payés par mois travaillé).' });
+  if (p.congesCpt) out.push({ level: 'info', text: `Compteur de congés : ${p.congesCpt.pris} pris, ${p.congesCpt.restant} restant, ${p.congesCpt.acquis} acquis. Vérifie que le total acquis augmente bien chaque mois travaillé (en général 2,5 jours ouvrables).` });
+  else if (p.conges.length) out.push({ level: 'info', text: 'Compteurs de congés ou de repos repérés : vérifie que les jours acquis augmentent bien chaque mois (en général 2,5 jours ouvrables de congés payés par mois travaillé).' });
   return out;
 }
 const PAIE_GLOSSAIRE = [
@@ -3398,8 +3676,68 @@ const PAIE_GLOSSAIRE = [
   [/titres? restaurant|panier/, 'Titres-restaurant, paniers', "Avantages liés aux repas, financés en partie par l'employeur."]
 ];
 /*PAIE-FIN*/
+/*CADRE-DEB*/
+// Qualité d'une image avant la prise de vue : g = niveaux de gris (0-255), w × h. Retourne un niveau (good / warn / bad), des mesures et des conseils.
+function frameQuality(g, w, h) {
+  const n = w * h, sorted = Uint8Array.from(g).sort(), q = f => sorted[Math.min(n - 1, Math.floor(n * f))];
+  const p5 = q(0.05), p50 = q(0.5), p90 = q(0.9), p95 = q(0.95);
+  let sat = 0; for (let i = 0; i < n; i++) if (g[i] >= 250) sat++;
+  // Netteté : énergie du laplacien (les bords flous l'écrasent), rapportée au contraste de la page
+  let grad = 0, cnt = 0; for (let y = 1; y < h - 1; y += 1) for (let x = 1; x < w - 1; x += 1) { const i = y * w + x; grad += Math.abs(4 * g[i] - g[i - 1] - g[i + 1] - g[i - w] - g[i + w]); cnt++; }
+  const contrast = Math.max(1, p95 - p5), sharp = grad / cnt / contrast;
+  // Éclairage inégal : papier clair par zones (grille 4 × 4)
+  const G = 4, cells = [];
+  for (let gy = 0; gy < G; gy++) for (let gx = 0; gx < G; gx++) { const c = []; for (let y = Math.floor(gy * h / G); y < Math.floor((gy + 1) * h / G); y++) for (let x = Math.floor(gx * w / G); x < Math.floor((gx + 1) * w / G); x++) c.push(g[y * w + x]); c.sort((a, b) => a - b); cells.push(c[Math.floor(c.length * 0.85)]); }
+  const mx = Math.max(...cells), paper = cells.filter(v => v > mx * 0.4), uneven = paper.length >= 6 && (Math.max(...paper) - Math.min(...paper)) / Math.max(1, mx) > 0.3;
+  const m = { light: p90, contrast, sharp: Math.round(sharp * 1000) / 1000, glare: sat / n, uneven };
+  const dark = p90 < 105, veryDark = p90 < 75, glare = sat / n > 0.3, flat = contrast < 55, blur = sharp < 0.12, veryBlur = sharp < 0.06;
+  const tips = [];
+  if (veryDark) tips.push('Beaucoup trop sombre : allume la lumière ou approche-toi d\'une fenêtre.'); else if (dark) tips.push('Un peu sombre : ajoute de la lumière (fenêtre, lampe).');
+  if (glare) tips.push('Trop de lumière ou un reflet : éloigne le flash, incline légèrement la page.');
+  if (uneven && !dark) tips.push('Ombre sur la page : écarte-toi pour que ton ombre ne tombe pas dessus.');
+  if (veryBlur) tips.push('Image floue : tiens le téléphone bien immobile et attends la mise au point.'); else if (blur) tips.push('Légèrement flou : stabilise le téléphone, ou recule un peu.');
+  if (flat && !dark && !glare && !blur) tips.push('Contraste faible : pose la page sur un fond uni et plus foncé.');
+  const bad = veryDark || veryBlur || (glare && sat / n > 0.45), warn = tips.length > 0;
+  return { level: bad ? 'bad' : warn ? 'warn' : 'good', metrics: m, tips, checks: { light: veryDark || dark || glare ? (veryDark || sat / n > 0.45 ? 'bad' : 'warn') : 'good', sharp: veryBlur ? 'bad' : blur ? 'warn' : 'good', even: uneven ? 'warn' : 'good' } };
+}
+/*CADRE-FIN*/
+// Caméra guidée : cadre, mesure en direct de la lumière, de la netteté et des ombres ; renvoie un fichier image ou null (annulé), 'indispo' si la caméra n'est pas utilisable.
+function guidedCamera() {
+  return new Promise(resolve => {
+    const dlg = $('#gc-dialog'), vid = $('#gc-video'), chip = $('#gc-chip'), stage = $('#gc-stage'), snap = $('#gc-snap'), meters = $('#gc-meters');
+    if (!dlg || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return resolve('indispo');
+    let stream = null, done = false, timer = null, last = null; const cv = document.createElement('canvas');
+    const finish = v => { if (done) return; done = true; clearInterval(timer); if (stream) stream.getTracks().forEach(t => t.stop()); vid.srcObject = null; if (dlg.open) dlg.close(); resolve(v); };
+    const LBL = { good: 'bon', warn: 'à améliorer', bad: 'insuffisant' };
+    const tick = () => {
+      if (!vid.videoWidth) return;
+      const w = 480, h = Math.round(480 * vid.videoHeight / vid.videoWidth); cv.width = w; cv.height = h;
+      const x = cv.getContext('2d', { willReadFrequently: true }); x.drawImage(vid, 0, 0, w, h);
+      const d = x.getImageData(Math.round(w * 0.09), Math.round(h * 0.06), Math.round(w * 0.82), Math.round(h * 0.88)), n = d.width * d.height, g = new Uint8Array(n);
+      for (let i = 0; i < n; i++) g[i] = (d.data[i * 4] * 77 + d.data[i * 4 + 1] * 150 + d.data[i * 4 + 2] * 29) >> 8;
+      last = frameQuality(g, d.width, d.height); stage.dataset.lv = last.level;
+      chip.textContent = last.level === 'good' ? 'Parfait : ne bouge plus et prends la photo' : last.tips[0];
+      meters.innerHTML = [['Lumière', last.checks.light], ['Netteté', last.checks.sharp], ['Ombres', last.checks.even]].map(([k, v]) => `<span data-s="${v}">${k} : ${LBL[v]}</span>`).join('');
+      snap.textContent = last.level === 'bad' ? 'Prendre quand même' : 'Prendre la photo';
+    };
+    dlg.onclose = () => finish(null); $('#gc-cancel').onclick = () => finish(null);
+    chip.textContent = 'Ouverture de la caméra…'; stage.dataset.lv = 'warn'; meters.innerHTML = ''; snap.disabled = true;
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 2560 }, height: { ideal: 1920 } }, audio: false }).then(st => {
+      if (done) { st.getTracks().forEach(t => t.stop()); return; }
+      stream = st; vid.srcObject = st; vid.play().catch(() => {});
+      vid.onloadeddata = () => { snap.disabled = false; tick(); timer = setInterval(tick, 450); };
+    }).catch(() => { if (!done) { done = true; if (dlg.open) dlg.close(); resolve('indispo'); } });
+    snap.onclick = () => {
+      if (!vid.videoWidth) return;
+      const k = Math.min(1, 2400 / Math.max(vid.videoWidth, vid.videoHeight)), c = document.createElement('canvas'); c.width = Math.round(vid.videoWidth * k); c.height = Math.round(vid.videoHeight * k);
+      c.getContext('2d').drawImage(vid, 0, 0, c.width, c.height);
+      c.toBlob(b => finish(b ? new File([b], 'photo.jpg', { type: 'image/jpeg' }) : null), 'image/jpeg', 0.92);
+    };
+  });
+}
 const getPaies = () => store.get(KEYS.paies, []);
-let paie$ = { text: '', declared: '', p: null };
+let paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages: [] };
 function renderPaie(box) {
   const s = paie$;
   const p = s.p, ins = p ? payslipInsights(p, s.declared === '' ? null : parseFloat(String(s.declared).replace(',', '.'))) : [];
@@ -3407,49 +3745,82 @@ function renderPaie(box) {
   box.innerHTML = `<div class="sheet"><button class="link back" id="tool-back" type="button">Retour</button>
     <h2>Analyser ma fiche de paie</h2>
     <p class="lead">Scanne ta fiche de paie : on la résume, on t'explique chaque ligne en mots simples et on repère les heures supplémentaires. Rien ne quitte ton appareil.</p>
-    <div class="actions"><label class="btn" for="paie-cam">Prendre en photo</label><input class="sr" type="file" id="paie-cam" accept="image/*" capture="environment">
-      <label class="btn ghost" for="paie-file">Importer photo ou PDF</label><input class="sr" type="file" id="paie-file" accept="image/*,application/pdf" multiple></div>
+    <div class="actions"><label class="btn" for="paie-cam">${s.pages.length ? 'Ajouter une page en photo' : 'Prendre en photo'}</label><input class="sr" type="file" id="paie-cam" accept="image/*" capture="environment">
+      <label class="btn ghost" for="paie-file">${s.pages.length ? 'Ajouter des pages ou un PDF' : 'Importer photos ou PDF'}</label><input class="sr" type="file" id="paie-file" accept="image/*,application/pdf" multiple></div>
+    <p class="note">Ta fiche a plusieurs pages ? Ajoute-les une par une, ou choisis-les toutes d'un coup : elles seront lues ensemble, dans l'ordre.</p>
     <div class="progress" id="paie-prog"><div class="bar"><i id="paie-bar"></i></div><p id="paie-ptext"></p></div>
+    ${s.pages.length ? `<ul class="pages" aria-label="Pages ajoutées">${s.pages.map((pg, i) => `<li><span><b>Page ${i + 1}</b> · ${esc(pg.name)} <small>(${pg.text.replace(/\s/g, '').length} caractères lus)</small></span><span><button class="link" type="button" data-pg-up="${i}"${i === 0 ? ' hidden' : ''} aria-label="Monter la page ${i + 1}">↑</button><button class="link" type="button" data-pg-del="${i}" aria-label="Retirer la page ${i + 1}">Retirer</button></span></li>`).join('')}</ul>` : ''}
     <label class="field" for="paie-text"><span>Texte lu (tu peux le corriger ou le coller)</span></label>
-    <textarea id="paie-text" placeholder="Le texte de ta fiche de paie apparaît ici après la lecture. Tu peux aussi le coller.">${esc(s.text)}</textarea>
-    <div class="actions"><button class="btn" id="paie-go" type="button">Analyser</button><button class="link" id="paie-sample" type="button">Voir un exemple</button></div>
+    <textarea id="paie-text" placeholder="Le texte de ta fiche de paie apparaît ici après la lecture. Tu peux aussi le coller.">${esc(s.pages.map(x => x.text).join('\n\n') || s.text)}</textarea>
+    <div class="actions"><button class="btn" id="paie-go" type="button">${s.pages.length > 1 ? `Analyser mes ${s.pages.length} pages` : 'Analyser'}</button><button class="link" id="paie-sample" type="button">Voir un exemple</button></div>
     <p class="note">Une fiche de paie est un document très personnel : elle n'est ni envoyée ni enregistrée tant que tu ne le demandes pas.</p></div>
     <div id="paie-res">${p ? paieResultHTML(p, ins, hist) : ''}</div>
     ${hist.length ? `<h3 class="sec-title">Mes fiches enregistrées</h3><div class="items">${hist.map(h => `<article class="item l1" data-ph="${h.id}"><div><h3>${esc(h.periode || 'Fiche de paie')}</h3><p>Brut ${esc(PE(h.brut))} | Net versé ${esc(PE(h.netFinal ?? h.netAvant))}${h.hsQty ? ' | ' + esc(PH(h.hsQty)) + ' supplémentaires' : ''}</p></div><div class="row"><button class="link" data-ph-del type="button">Supprimer</button></div></article>`).join('')}</div>` : ''}`;
   toolBack(box);
   const ta = $('#paie-text');
-  const run = () => { const t = ta.value.trim(); if (t.length < 40) { toast('Ajoute une photo ou colle le texte de ta fiche'); return; } paie$ = { ...paie$, text: t, p: parsePayslip(t) }; track('paie'); renderPaie(box); $('#paie-res').scrollIntoView({ block: 'start' }); };
+  const run = () => {
+    const t = ta.value.trim(); if (t.length < 40) { toast('Ajoute une photo ou colle le texte de ta fiche'); return; }
+    const p0 = parsePayslip(t); paie$ = { ...paie$, text: t, p0, p: p0, fix: {}, pages: paie$.pages.length ? paie$.pages : [{ name: 'Texte saisi', text: t }] };
+    track('paie'); if (paie$.pages.length > 1) track('paie_multipage'); renderPaie(box); $('#paie-res').scrollIntoView({ block: 'start' });
+  };
   $('#paie-go').addEventListener('click', run);
-  $('#paie-sample').addEventListener('click', () => { ta.value = PAIE_SAMPLE; run(); });
+  $('#paie-sample').addEventListener('click', () => { paie$.pages = [{ name: 'Exemple', text: PAIE_SAMPLE }]; ta.value = PAIE_SAMPLE; run(); });
+  ta.addEventListener('change', () => { paie$.pages = ta.value.trim() ? [{ name: 'Texte saisi ou corrigé', text: ta.value.trim() }] : []; });
+  $$('[data-pg-del]', box).forEach(b => b.addEventListener('click', () => { paie$.pages.splice(+b.dataset.pgDel, 1); paie$.p = null; paie$.p0 = null; renderPaie(box); }));
+  $$('[data-pg-up]', box).forEach(b => b.addEventListener('click', () => { const i = +b.dataset.pgUp; [paie$.pages[i - 1], paie$.pages[i]] = [paie$.pages[i], paie$.pages[i - 1]]; paie$.p = null; paie$.p0 = null; renderPaie(box); }));
   const onFiles = async fl => {
-    fl = [...fl]; if (!fl.length) return; let all = '';
+    fl = [...fl].filter(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name) || f.type.startsWith('image/')); if (!fl.length) return;
+    let added = 0, onlyPdf = true; ocrConf = null;
     try {
       for (let i = 0; i < fl.length; i++) {
-        const f = fl[i];
-        if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) all += await readPdf(f) + '\n';
-        else { const w = await getOcr(); setOcr(0, 'Lecture de la fiche…'); all += await ocrImage(w, f) + '\n'; }
+        const f = fl[i], isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+        setOcr(i / fl.length, fl.length > 1 ? `Lecture de la page ${i + 1} sur ${fl.length}…` : 'Lecture de la page…');
+        let text;
+        if (isPdf) text = await readPdf(f, 12);
+        else { onlyPdf = false; const w = await getOcr(); text = await ocrImage(w, f, { table: true }); }
+        paie$.pages.push({ name: f.name && !/^image\.(jpe?g|png)$/i.test(f.name) ? f.name : (isPdf ? 'PDF' : 'Photo'), text: text.trim() }); added++;
       }
-    } catch (e) { console.error(e); hideOcr(); toast(navigator.onLine ? 'La lecture a échoué. Reprends la photo bien à plat.' : 'Il faut internet la première fois pour préparer la lecture.'); return; }
-    hideOcr(); ta.value = ((ta.value.trim() ? ta.value.trim() + '\n' : '') + all.trim()); run();
+    } catch (e) { console.error(e); hideOcr(); if (added) { paie$.p = null; paie$.p0 = null; renderPaie(box); } toast(navigator.onLine ? 'La lecture a échoué sur une page. Reprends-la bien à plat, avec de la lumière.' : 'Il faut internet la première fois pour préparer la lecture.'); return; }
+    hideOcr(); paie$.p = null; paie$.p0 = null; track('paie_page');
+    if (ocrConf !== null && ocrConf < 62) toast('Lecture peu sûre : vérifie les chiffres, ou reprends la page de face, à plat et bien éclairée');
+    if (onlyPdf) { ta.value = paie$.pages.map(x => x.text).join('\n\n'); run(); return; }
+    renderPaie(box); toast(paie$.pages.length > 1 ? `${paie$.pages.length} pages ajoutées : ajoute la suite ou lance l'analyse` : 'Page ajoutée : ajoute la suite si besoin, puis lance l\'analyse');
+    const g = $('#paie-go'); if (g) g.scrollIntoView({ block: 'center' });
   };
+  $('#paie-cam').addEventListener('click', async e => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    e.preventDefault(); const f = await guidedCamera();
+    if (f === 'indispo') { toast("Caméra indisponible : utilise « Importer photos ou PDF »"); return; }
+    if (f) { track('cadre_guide'); onFiles([f]); }
+  });
   $('#paie-cam').addEventListener('change', e => { onFiles(e.target.files); e.target.value = ''; });
   $('#paie-file').addEventListener('change', e => { onFiles(e.target.files); e.target.value = ''; });
   const dec = $('#paie-declared'); if (dec) dec.addEventListener('input', () => { paie$.declared = dec.value; const i2 = payslipInsights(paie$.p, dec.value === '' ? null : parseFloat(dec.value.replace(',', '.'))); $('#paie-ins').innerHTML = insightsHTML(i2.filter(i => PAIE_HS_RE.test(i.text))); });
   $$('[data-pq]', box).forEach(b => b.addEventListener('click', () => { const log = $('#paie-chat', box); const m = document.createElement('div'); m.className = 'msg me'; m.textContent = b.textContent; log.appendChild(m); const a = document.createElement('div'); a.className = 'msg bot'; a.textContent = paieAnswer(b.dataset.pq, paie$.p); log.appendChild(a); a.scrollIntoView({ block: 'nearest' }); track('paie_question'); }));
   const pq = $('#paie-q'), pask = () => { const q = pq.value.trim(); if (!q) return; pq.value = ''; paieAsk(box, q); };
   if (pq) { $('#paie-ask').addEventListener('click', pask); pq.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pask(); } }); }
+  const fg = $('#paie-fix-go'); if (fg) fg.addEventListener('click', () => {
+    const fix = {}; $$('[data-fix]', box).forEach(i => { if (i.value.trim()) fix[i.dataset.fix] = i.value.trim(); });
+    paie$.fix = fix; paie$.p = applyPaieFix(paie$.p0, fix);
+    Object.keys(fix).forEach(k => trackFix('paie_' + k.toLowerCase())); track('paie_fix');
+    renderPaie(box); const fb = $('#paie-fixbox'); if (fb) fb.open = true; toast('Corrections appliquées');
+  });
+  const pp = $('#paie-premium'); if (pp) pp.addEventListener('click', () => openPremium('La vérification de tes heures supplémentaires fait partie de Premium.'));
   const sv = $('#paie-save'); if (sv) sv.addEventListener('click', () => {
+    if (needPremium('Le suivi mois par mois de tes fiches de paie fait partie de Premium.')) return;
     const l = getPaies(), q = paie$.p, id = q.ym ? 'p' + q.ym : newId('p');
     const rec = { id, ym: q.ym, periode: q.periode, brut: q.brut, netAvant: q.netAvant, netFinal: q.netFinal, hsQty: q.hsQty, hsAmount: q.hsAmount, updatedAt: new Date().toISOString() };
     const i = l.findIndex(x => x.id === id); if (i >= 0) l[i] = rec; else l.unshift(rec);
     store.set(KEYS.paies, l); track('paie_save'); toast('Fiche enregistrée pour comparer les mois'); renderPaie(box);
   });
   const lt = $('#paie-lettre'); if (lt) lt.addEventListener('click', () => {
+    if (needPremium('La lettre à ton employeur fait partie de Premium.')) return;
     const q = paie$.p, d = parseFloat(String(paie$.declared).replace(',', '.'));
     tools$ = { view: 'lettre', id: 'heures_supp', values: { mois: q.periode || '', declarees: isFinite(d) ? String(d) : '', payees: q.hsQty ? String(q.hsQty) : '0' }, result: false }; track('paie_lettre'); renderTools(); box.scrollIntoView({ block: 'start' });
   });
   $$('[data-ph]', box).forEach(el => $('[data-ph-del]', el).addEventListener('click', () => { if (!confirm('Supprimer cette fiche enregistrée ?')) return; store.set(KEYS.paies, getPaies().filter(x => x.id !== el.dataset.ph)); renderPaie(box); }));
 }
+const fixPlaceholder = (p, k) => { const v = { brut: p.brut, netAvant: p.netAvant, impot: p.pas && p.pas.amount, netFinal: p.netFinal, baseRate: p.baseRate, hsQty: p.hsQty, hsAmount: p.hsAmount }[k]; return v === null || v === undefined ? 'non lu' : String(Math.round(v * 100) / 100).replace('.', ','); };
 const PAIE_HS_RE = /heures|Ligne|majoration|supplémentaires|complémentaires|allègement/;
 const insightsHTML = ins => ins.length ? `<ul class="paie-ins">${ins.map(i => `<li class="${i.level}"><span aria-hidden="true">${i.level === 'ok' ? '✓' : i.level === 'warn' ? '!' : 'i'}</span><div>${esc(i.text)}</div></li>`).join('')}</ul>` : '<p class="note">Rien de particulier à signaler.</p>';
 function paieResultHTML(p, ins, hist) {
@@ -3462,22 +3833,26 @@ function paieResultHTML(p, ins, hist) {
   return `<div class="sheet verdict"><h2>${esc(p.periode ? 'Ta fiche de ' + p.periode : 'Ta fiche de paie')}</h2>
     <div class="brief"><h3>En bref</h3><p>${esc(summary)}</p></div>
     <div class="block"><h3>Les chiffres clés</h3><table class="paie-t"><tbody>${row('Salaire brut', p.brut)}${row('Cotisations salariales', p.cotSal)}${row('Net avant impôt', p.netAvant)}${p.pas ? row('Impôt prélevé' + (p.pas.taux !== null ? ' (' + String(p.pas.taux).replace('.', ',') + ' %)' : ''), p.pas.amount) : ''}${row('Net versé', p.netFinal, true)}${row('Net imposable (pour ta déclaration)', p.netImposable)}${row('Cotisations de ton employeur', p.cotPat)}</tbody></table>${cmp}</div>
+    <details class="tips" id="paie-fixbox"><summary>Un chiffre est faux ? Corrige-le</summary>
+      <p class="note">La lecture d'une photo n'est pas toujours parfaite. Corrige ce qui est faux : tout est recalculé et on retient ta correction pour s'améliorer.</p>
+      <div class="form-grid">${[['brut', 'Salaire brut (€)'], ['netAvant', 'Net avant impôt (€)'], ['impot', 'Impôt prélevé (€)'], ['netFinal', 'Net versé (€)'], ['baseRate', 'Taux horaire normal (€)'], ['hsQty', 'Heures supp payées (h)'], ['hsAmount', 'Montant des heures supp (€)']].map(([k, l]) => `<label class="field"><span>${l}</span><input data-fix="${k}" inputmode="decimal" value="${esc((paie$.fix || {})[k] ?? '')}" placeholder="${esc(fixPlaceholder(p, k))}"></label>`).join('')}</div>
+      <div class="actions"><button class="btn small" id="paie-fix-go" type="button">Appliquer mes corrections</button></div></details>
     <div class="block"><h3>Tes heures supplémentaires</h3>
       ${p.hs.length ? `<ul>${p.hs.map(h => `<li>${esc(h.line)}${h.impl !== null ? ` <span class="note">(majoration d'environ ${h.impl} %)</span>` : ''}</li>`).join('')}</ul>` : '<p>Aucune ligne repérée.</p>'}
-      <label class="field"><span>Combien d'heures supplémentaires as-tu faites ce mois-ci ?</span><input id="paie-declared" inputmode="decimal" value="${esc(paie$.declared)}" placeholder="Ex. 10"></label>
+      ${isPremium() ? `<label class="field"><span>Combien d'heures supplémentaires as-tu faites ce mois-ci ?</span><input id="paie-declared" inputmode="decimal" value="${esc(paie$.declared)}" placeholder="Ex. 10"></label>` : `<div class="sugg"><b>Vérifie tes heures :</b> indique combien d'heures supplémentaires tu as faites et on te dit s'il en manque. <span class="pro">Premium</span> <button class="btn small ghost" type="button" id="paie-premium">Débloquer</button></div>`}
       <div id="paie-ins">${insightsHTML(ins.filter(i => PAIE_HS_RE.test(i.text)))}</div></div>
     <div class="block"><h3>Ce qu'on a repéré d'autre</h3>${insightsHTML(ins.filter(i => !PAIE_HS_RE.test(i.text)))}
       ${p.primes.length ? `<p><b>Primes et indemnités :</b></p><ul>${p.primes.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
       ${p.absences.length ? `<p><b>Absences ou retenues :</b></p><ul>${p.absences.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
       ${p.conges.length ? `<p><b>Congés et repos :</b></p><ul>${p.conges.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>
     <div class="block"><h3>À vérifier avec ton contrat</h3><ul><li>Le taux horaire est au moins égal au SMIC et au minimum de ta convention collective.</li><li>Les primes prévues dans ton contrat (ancienneté, 13e mois…) apparaissent bien.</li><li>Les jours de congés et de RTT augmentent bien chaque mois.</li><li>Tes heures supplémentaires correspondent à tes relevés d'horaires.</li></ul></div>
-    ${p.lignes && p.lignes.length ? `<div class="block"><h3>Ligne par ligne, en mots simples</h3><div class="paie-lines">${p.lignes.slice(0, 30).map(l => `<details><summary><span>${esc(l.label)}</span>${l.amount !== null ? `<b>${esc(PE(l.amount))}</b>` : ''}</summary><p class="note">${esc(l.line)}</p><p>${esc(l.expl)}</p></details>`).join('')}</div></div>` : ''}
+    ${p.lignes && p.lignes.length ? `<div class="block"><h3>Ligne par ligne, en mots simples</h3><div class="paie-lines">${p.lignes.slice(0, 30).map(l => `<details><summary><span>${esc(l.label)}</span>${l.amount !== null ? `<b>${esc(PE(l.amount))}</b>` : ''}</summary><p class="note">${esc(l.line)}</p>${l.sal !== undefined ? `<p><b>Ta part :</b> ${esc(PE(l.sal))} · <b>Part de ton employeur :</b> ${esc(PE(l.pat))}</p>` : ''}<p>${esc(l.expl)}</p></details>`).join('')}</div></div>` : ''}
     <div class="block"><h3>Pose ta question sur ta fiche</h3>
       <div class="chips" role="group" aria-label="Questions rapides">${PAIE_QUICK.map(([k, q]) => `<button class="chip" type="button" data-pq="${k}">${esc(q)}</button>`).join('')}</div>
       <div class="chat-log" id="paie-chat" aria-live="polite"></div>
       <div class="chat-input"><label class="sr" for="paie-q">Ta question</label><input id="paie-q" placeholder="Ex. : pourquoi mon net a baissé ce mois-ci ?" autocomplete="off"><button class="btn small" id="paie-ask" type="button">Demander</button></div></div>
     ${terms.length ? `<div class="block"><h3>Les mots compliqués de ta fiche</h3><dl class="glossary">${terms.map(g => `<div><dt>${esc(g[1])}</dt><dd>${esc(g[2])}</dd></div>`).join('')}</dl></div>` : ''}
-    <div class="save-row"><button class="btn" id="paie-save" type="button">Enregistrer pour comparer les mois</button><button class="btn ghost" id="paie-lettre" type="button">Écrire à mon employeur (heures supplémentaires)</button></div>
+    <div class="save-row"><button class="btn" id="paie-save" type="button">Enregistrer pour comparer les mois${isPremium() ? '' : ' (Premium)'}</button><button class="btn ghost" id="paie-lettre" type="button">Écrire à mon employeur (heures supplémentaires)${isPremium() ? '' : ' (Premium)'}</button></div>
     <p class="note">Cette analyse t'aide à comprendre ta fiche. Elle peut se tromper, surtout sur une photo : vérifie les chiffres sur l'original. Ce n'est pas un avis juridique ; en cas de doute, rapproche-toi de ton service RH, d'un syndicat ou de l'inspection du travail.</p></div>`;
 }
 const PAIE_QUICK = [['brut', 'Pourquoi mon net est plus bas que mon brut ?'], ['hs', 'Mes heures supp sont-elles bien comptées ?'], ['cot', "C'est quoi les cotisations ?"], ['impot', "Pourquoi un impôt sur ma fiche ?"], ['conges', 'Congés et RTT : comment ça marche ?'], ['erreur', 'Je pense qu\'il y a une erreur : que faire ?']];
@@ -3592,7 +3967,11 @@ function renderEdl(box) {
       <div class="row"><button class="btn small" data-edl-open type="button">Continuer</button><button class="btn small ghost" data-edl-sum type="button">Résumé et PDF</button><button class="link" data-edl-del type="button">Supprimer</button></div></article>`; }).join('')}</div>` : '<p class="note">Aucun état des lieux pour l\'instant.</p>'}`;
   toolBack(box);
   $('#edl-verify').addEventListener('click', () => { $('#vf-out').textContent = ''; const d = $('#verify-dialog'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
-  $$('[data-edl-new]', box).forEach(b => b.addEventListener('click', () => { edl$ = { view: 'new', type: b.dataset.edlNew }; renderTools(); box.scrollIntoView({ block: 'start' }); }));
+  $$('[data-edl-new]', box).forEach(b => b.addEventListener('click', () => {
+    const t = b.dataset.edlNew;
+    if (t === 'sortie' && needPremium("L'état des lieux de sortie, avec la comparaison à l'entrée, fait partie de Premium.")) return;
+    if (t === 'entree' && getEdl().filter(x => x.type === 'entree').length >= CONFIG.FREE_EDL && needPremium(`La version gratuite garde ${CONFIG.FREE_EDL} état des lieux d'entrée. Passe à Premium pour en faire autant que tu veux.`)) return;
+    edl$ = { view: 'new', type: t }; renderTools(); box.scrollIntoView({ block: 'start' }); }));
   $$('[data-edl]', box).forEach(el => {
     const id = el.dataset.edl;
     $('[data-edl-open]', el).addEventListener('click', () => { edl$ = { view: 'room', id, room: 0 }; renderTools(); box.scrollIntoView({ block: 'start' }); });
@@ -3688,7 +4067,7 @@ function renderEdlRoom(box) {
       try {
         const key = `e:${e.id}:${ri}:${el.dataset.ii}:${Date.now().toString(36)}`; await idb.set(key, shot.data);
         it.photos = [...(it.photos || []), key]; it.photoAt = [...(it.photoAt || []), shot.at]; it.photoGeo = [...(it.photoGeo || []), shot.geo || null]; if (shot.geo && !e.geo) e.geo = { ...shot.geo, from: 'photo' }; it.seals = [...(it.seals || []), { key, hash: await sha256Hex(dataUrlBytes(shot.data)), id: null, at: null }];
-        edlSave(e); track('edl_photo'); toast(FBU ? 'Photo ajoutée, date et heure certifiées par un serveur…' : 'Photo ajoutée. Connecte-toi avec Google pour faire certifier sa date.'); renderTools(); sealPending();
+        edlSave(e); track('edl_photo'); toast(!isPremium() ? 'Photo ajoutée. La certification de sa date est une fonction Premium.' : FBU ? 'Photo ajoutée, date et heure certifiées par un serveur…' : 'Photo ajoutée. Connecte-toi avec Google pour faire certifier sa date.'); renderTools(); sealPending();
       } catch (err) { toast("La photo n'a pas pu être enregistrée"); }
     });
     $$('.th', el).forEach(th => {
@@ -3706,7 +4085,7 @@ async function sha256Hex(bytes) { const d = await crypto.subtle.digest('SHA-256'
 let sealing = false, sealAgain = false;
 async function sealPending() {
   if (sealing) { sealAgain = true; return; }
-  if (!FBU || !navigator.onLine) return;
+  if (!FBU || !navigator.onLine || !isPremium()) return;
   sealing = true; let n = 0;
   try {
     const F = await fb();
@@ -3796,7 +4175,7 @@ function renderEdlSummary(box) {
     <h2>${e.type === 'entree' ? "Résumé de l'état des lieux d'entrée" : "Résumé de l'état des lieux de sortie"}</h2>
     <p>${esc(e.adresse)}${e.date ? ' | ' + esc(fmtDate(parseDay(e.date))) : ''} | ${p.done} / ${p.total} points remplis</p>
     ${e.type === 'sortie' ? (e.ref ? (d.length ? `<div class="alert">${d.length} point${d.length > 1 ? 's' : ''} en moins bon état qu'à l'entrée. Vérifie s'il s'agit d'usure normale avant d'accepter une retenue.</div><ul>${d.map(x => `<li><b>${esc(x.room)} : ${esc(x.item)}</b> : ${esc(edlLabel(x.from))} à l'entrée, ${esc(edlLabel(x.to))} à la sortie${x.note ? ' (' + esc(x.note) + ')' : ''}</li>`).join('')}</ul><p class="note">Pour chaque point, demande un devis ou une facture : une retenue doit être justifiée, et la vétusté (usure normale) se déduit.</p>` : '<p><b>Aucune dégradation par rapport à l\'entrée.</b> Le dépôt de garantie doit en principe t\'être rendu en entier.</p>') : '<p class="note">Aucun état des lieux d\'entrée n\'est lié : la comparaison est impossible.</p>') : (bad.length ? `<p><b>Points à signaler dès l'entrée :</b></p><ul>${bad.map(x => `<li>${esc(x.room)} : ${esc(x.name)} (${esc(edlLabel(x.state))})${x.note ? ' : ' + esc(x.note) : ''}</li>`).join('')}</ul><p class="note">Fais-les écrire dans l'état des lieux officiel signé : c'est ce qui te protège à la sortie.</p>` : '<p class="note">Aucun défaut signalé.</p>')}
-    ${(() => { const st = sealStats(e); return st.total ? `<div class="sugg"><b>Photos : ${st.done} sur ${st.total} certifiées par un serveur.</b> ${st.done === st.total ? 'Leur date ne dépend plus de l\'horloge de ton téléphone et elles ne peuvent plus être modifiées sans que ça se voie.' : (FBU ? '<button class="btn small ghost" type="button" id="edl-seal">Certifier maintenant</button>' : 'Connecte-toi avec Google (bouton en haut) pour certifier leur date.')}</div>` : ''; })()}
+    ${(() => { const st = sealStats(e); return st.total && !isPremium() ? `<div class="sugg"><b>Certification de la date des photos : Premium.</b> Un serveur fixe la date et l'heure de chaque photo, qui ne peuvent plus être contestées. <button class="btn small ghost" type="button" id="edl-premium">Découvrir Premium</button></div>` : st.total ? `<div class="sugg"><b>Photos : ${st.done} sur ${st.total} certifiées par un serveur.</b> ${st.done === st.total ? 'Leur date ne dépend plus de l\'horloge de ton téléphone et elles ne peuvent plus être modifiées sans que ça se voie.' : (FBU ? '<button class="btn small ghost" type="button" id="edl-seal">Certifier maintenant</button>' : 'Connecte-toi avec Google (bouton en haut) pour certifier leur date.')}</div>` : ''; })()}
     ${(() => { const g = geoStats(e); if (!g.total) return ''; const lines = []; lines.push(`<b>Position GPS : ${g.withGeo} photo${g.withGeo > 1 ? 's' : ''} sur ${g.total} localisée${g.withGeo > 1 ? 's' : ''}${g.withGeo ? `, dont ${g.near} sur place` : ''}.</b>`); if (g.far) lines.push(`⚠ ${g.far} photo${g.far > 1 ? 's' : ''} à plus de ${GEO_NEAR} m du logement de référence.`); if (g.same !== null) lines.push(g.same <= GEO_NEAR ? `Les deux états des lieux ont été faits au même endroit (écart de ${g.same} m) : cela confirme qu'il s'agit du même logement.` : `⚠ Les deux états des lieux n'ont pas été faits au même endroit (${g.same} m d'écart).`); return `<div class="sugg">${lines.join('<br>')}<br><span class="note">La position vient du GPS de l'appareil : en intérieur, la précision est de quelques dizaines de mètres.</span></div>`; })()}
     <div class="actions"><button class="btn" id="edl-pdf" type="button">Créer le PDF à signer</button><button class="btn ghost" id="edl-mail" type="button">Envoyer par e-mail</button><button class="btn ghost" id="edl-edit" type="button">Modifier</button>${e.type === 'sortie' ? '<button class="btn ghost" id="edl-caution" type="button">Caution pas rendue ?</button>' : ''}</div>
     <details class="tips" open><summary>Nos conseils</summary><ul>${EDL_TIPS[e.type].map(t => `<li>${esc(t)}</li>`).join('')}</ul></details>
@@ -3804,6 +4183,7 @@ function renderEdlSummary(box) {
   $('#edl-back').addEventListener('click', () => { edl$ = { view: 'list' }; renderTools(); });
   $('#edl-edit').addEventListener('click', () => { edl$ = { view: 'room', id: e.id, room: 0 }; renderTools(); });
   $('#edl-pdf').addEventListener('click', async () => { try { const html = await buildEdlHTML(e); track('edl_pdf'); printHTML(html); toast('Choisis « Enregistrer en PDF » dans la fenêtre d\'impression'); } catch (err) { console.error(err); toast("Le PDF n'a pas pu être créé"); } });
+  const ep = $('#edl-premium'); if (ep) ep.addEventListener('click', () => openPremium());
   const sl = $('#edl-seal'); if (sl) sl.addEventListener('click', async () => { await sealPending(); renderTools(); });
   $('#edl-mail').addEventListener('click', () => {
     const st = sealStats(e), c = e.compteurs || {};
@@ -3920,6 +4300,10 @@ function vaultProgress(p, msg) { const pr = $('#vault-prog'); if (!pr) return; p
 async function addToVault(files) {
   files = files.filter(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name) || f.type.startsWith('image/'));
   if (!files.length) { toast('Ajoute une photo ou un PDF'); return; }
+  if (!isPremium()) {
+    const room = CONFIG.FREE_COFFRE - getVault().length;
+    if (room <= 0 || files.length > room) { openPremium(`La version gratuite garde ${CONFIG.FREE_COFFRE} documents dans le coffre. Passe à Premium pour en ranger autant que tu veux.`); if (room <= 0) return; files = files.slice(0, room); }
+  }
   const read = store.get(KEYS.coffreRead, true);
   let done = 0;
   for (let i = 0; i < files.length; i++) {
@@ -4015,6 +4399,7 @@ function printHTML(html) {
 }
 function openDossier() {
   const d = $('#dossier'); if (!d) return;
+  if (needPremium('Le dossier complet en PDF fait partie de Premium.')) return;
   if (d.showModal) d.showModal(); else d.setAttribute('open', '');
 }
 async function createDossier() {
@@ -4120,6 +4505,12 @@ $('#sample-btn').addEventListener('click', () => {
 $('#decode-btn').addEventListener('click', runDecode);
 $('#clear-btn').addEventListener('click', resetInput);
 $('#letter-input').addEventListener('input', e => { $('#clear-btn').hidden = !e.target.value; });
+$('#cam-input').addEventListener('click', async e => {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  e.preventDefault(); const f = await guidedCamera();
+  if (f === 'indispo') { toast("Caméra indisponible : utilise « Importer photo ou PDF »"); return; }
+  if (f) { track('cadre_guide'); handleFiles([f]); }
+});
 $('#cam-input').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
 $('#file-input').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
 // Glisser-déposer : une photo ou un PDF déposé sur la page est lu comme s'il avait été importé.
@@ -4150,13 +4541,8 @@ $('#tablist').addEventListener('keydown', e => {
 });
 // Paramètres : premium et Google
 $('#premium-btn').addEventListener('click', () => openPremium());
-$('#premium-buy').addEventListener('click', () => window.open(CONFIG.PREMIUM_URL, '_blank', 'noopener'));
-$('#premium-validate').addEventListener('click', () => {
-  const c = $('#premium-code').value.trim();
-  if (!validCode(c)) { $('#premium-state').textContent = "Ce code n'est pas valide. Vérifie-le dans l'e-mail reçu après ton achat."; return; }
-  store.set(KEYS.premium, { code: c.toUpperCase(), at: new Date().toISOString() });
-  $('#premium-state').textContent = 'Premium est activé. Merci pour ton soutien !'; refreshPremiumUI(); renderWarrantyIfOpen(); renderMoneyIfOpen(); $$('.ad').forEach(a => a.remove()); toast('Premium activé');
-});
+$('#premium-buy').addEventListener('click', () => { track('premium_achat'); let u = CONFIG.PREMIUM_URL; try { if (FBU && FBU.email) { const x = new URL(u); x.searchParams.set('prefilled_email', FBU.email); u = x.toString(); } } catch (e) { /* lien libre */ } window.open(u, '_blank', 'noopener'); });
+$('#premium-check').addEventListener('click', async () => { if (!FBU) { await gLogin(); } await checkPremium(true); });
 $('#premium-close').addEventListener('click', () => $('#premium').close());
 $('#img-close').addEventListener('click', () => $('#img-dialog').close());
 $('#sync-btn').addEventListener('click', () => { FBU ? syncNow() : gLogin(); });
@@ -4164,7 +4550,7 @@ $('#sync-off').addEventListener('click', () => gLogout());
 $('#login-btn').addEventListener('click', () => { FBU ? openSettings() : gLogin(); });
 function refreshPremiumUI() {
   const p = isPremium();
-  $('#premium-status').textContent = p ? 'Premium est activé sur cet appareil.' : `Sans publicité, achats illimités dans le coffre. Paiement unique de ${CONFIG.PREMIUM_PRIX}, sans abonnement.`;
+  $('#premium-status').textContent = p ? 'Premium est activé sur ton compte.' : `Sans publicité, tout illimité, état des lieux de sortie, photos certifiées, fiche de paie complète. Paiement unique de ${CONFIG.PREMIUM_PRIX}, sans abonnement.`;
   $('#premium-btn').textContent = p ? 'Voir mon Premium' : 'Découvrir Premium';
   $('#sync-section').hidden = !gAvailable();
   setSyncStatus();
@@ -4179,7 +4565,7 @@ renderList(); renderReminders(); notifyUrgent();
 updatePill(); gpuReady.then(updatePill);
 
 // Exposé pour les tests
-window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, paieAnswer, textScore, fileToCanvas, buildEdlHTML, geoDist, readReceipt, parsePayslip, payslipInsights, looksLikePayslip, PAIE_SAMPLE };
+window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, cleanOCR, estimateSkew, rotateCanvas, lightingUneven, adaptiveBinarize, findDates, paieAnswer, paieSetPages: pages => { paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages }; tools$ = { view: 'paie' }; showTab('tools'); }, applyPaieFix, textScore, fileToCanvas, buildEdlHTML, geoDist, readReceipt, parsePayslip, payslipInsights, looksLikePayslip, PAIE_SAMPLE };
 })();
 </script>
 </body>

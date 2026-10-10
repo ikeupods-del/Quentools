@@ -10,6 +10,7 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await ctx.route(/googlesyndication|gstatic|jsdelivr/, r => r.abort());
+  await ctx.addInitScript(() => { try { localStorage.setItem('qt-paperasse:premium-compte', JSON.stringify({ email: 'demo@example.com', until: '', plan: 'vie', checked: Date.now() })); } catch (e) { /* ignoré */ } });
   const pg = await ctx.newPage(), shot = n => pg.screenshot({ path: path.join(OUT, n + '.jpg'), type: 'jpeg', quality: 88 });
   await pg.goto('http://localhost:8768/decodeur-courrier.html');
   await pg.addStyleTag({ content: '.ad,.disclaimer{display:none!important}' });

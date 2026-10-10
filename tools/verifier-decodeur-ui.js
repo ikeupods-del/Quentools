@@ -6,6 +6,7 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true, permissions: ['camera', 'geolocation'], geolocation: { latitude: 45.76405, longitude: 4.83572, accuracy: 12 } });
+  await ctx.addInitScript(() => { try { localStorage.setItem('qt-paperasse:premium-compte', JSON.stringify({ email: 'test@example.com', until: '', plan: 'vie', checked: Date.now() })); } catch (e) { /* ignoré */ } });
   const pg = await ctx.newPage();
   const errs = []; pg.on('pageerror', e => errs.push('PAGEERR ' + e.message)); pg.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errs.push('CONSOLE ' + m.text()); });
   await pg.route(/googlesyndication|gstatic|jsdelivr/, r => r.abort());
@@ -116,6 +117,12 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   ok(/majoration d'environ 25 %/.test(pt) && /50 %/.test(pt), 'heures supp : majorations 25 % et 50 % reconnues');
   await pg.fill('#paie-declared', '14'); ok(/manque peut-être 4 h/.test(await pg.innerText('#paie-ins')), 'heures manquantes détectées (14 déclarées, 10 payées)');
   ok(await pg.locator('.paie-lines details').count() >= 6, 'fiche de paie : lignes expliquées une par une');
+  // 5e cadre guide de la caméra (caméra simulée par Chromium)
+  await pg.click('label[for=paie-cam]'); await pg.waitForSelector('#gc-dialog[open]');
+  await pg.waitForFunction(() => document.querySelectorAll('#gc-meters span').length === 3, null, { timeout: 8000 });
+  ok(await pg.isVisible('.gc-frame') && /Lumière/.test(await pg.innerText('#gc-meters')) && /Netteté/.test(await pg.innerText('#gc-meters')), 'cadre guide : cadre et mesures (lumière, netteté, ombres) en direct');
+  ok(['good', 'warn', 'bad'].includes(await pg.getAttribute('#gc-stage', 'data-lv')) && (await pg.innerText('#gc-chip')).length > 5, 'cadre guide : verdict affiché');
+  await pg.click('#gc-cancel'); ok(!(await pg.locator('#gc-dialog[open]').count()), 'cadre guide : fermeture');
   await pg.click('[data-pq=brut]'); ok(/cotisations salariales/.test(await pg.innerText('#paie-chat')), 'question rapide : pourquoi le net est plus bas que le brut');
   await pg.fill('#paie-q', 'mes heures sup sont payées ?'); await pg.press('#paie-q', 'Enter'); ok((await pg.locator('#paie-chat .msg.bot').count()) === 2, 'question libre routée sans assistant');
   await pg.screenshot({ path: require('os').tmpdir() + '/pd-paie.png', fullPage: false });
@@ -126,6 +133,18 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
   await pg.fill('#letter-input', await pg.evaluate(() => window.__decodeur.PAIE_SAMPLE)); await pg.click('#decode-btn');
   ok(await pg.isVisible('#to-paie'), 'le décodeur propose l\'analyse de fiche de paie'); await pg.click('#to-paie'); await pg.waitForSelector('.paie-t'); ok(true, 'passage direct à l\'analyse');
+  // 5d' fiche de paie sur plusieurs pages
+  await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
+  await pg.evaluate(() => window.__decodeur.paieSetPages([
+    { name: 'page-2.jpg', text: "Total des cotisations 420,10 580,00\nNET A PAYER AVANT IMPOT SUR LE REVENU 1 519,94\nPrélèvement à la source 3,80 % 1 519,94 57,76\nNET A PAYER 1 462,18" },
+    { name: 'page-1.jpg', text: "BULLETIN DE PAIE\nPériode du 01/09/2026 au 30/09/2026\nSalaire de base 151,67 12,00 1 820,04\nHeures supplémentaires 8,00 12,00 96,00\nMajoration heures supplémentaires 25 % 8,00 12,00 24,00\nTOTAL BRUT 1 940,04" }]));
+  await pg.waitForSelector('.pages li'); ok((await pg.locator('.pages li').count()) === 2 && /Analyser mes 2 pages/.test(await pg.innerText('#paie-go')), 'fiche de paie : 2 pages en attente, bouton « Analyser mes 2 pages »');
+  await pg.click('[data-pg-up="1"]'); ok(/page-1\.jpg/.test(await pg.locator('.pages li').first().innerText()), 'fiche de paie : pages réordonnables');
+  await pg.click('#paie-go'); await pg.waitForSelector('.paie-t');
+  const mp = await pg.innerText('#paie-res'); ok(/1\s?940,04/.test(mp) && /1\s?462,18/.test(mp) && /57,76/.test(mp) && /septembre 2026/.test(mp), 'fiche de paie : les 2 pages sont lues ensemble (brut, net, impôt, période)');
+  ok(/majoration d'environ 25 %/.test(mp) && !/tarif normal/.test(mp), 'fiche de paie : majoration sur ligne séparée bien reconnue');
+  await pg.click('#paie-fixbox summary'); await pg.fill('[data-fix=brut]', '2000,00'); await pg.click('#paie-fix-go'); await pg.waitForSelector('.paie-t');
+  ok(/2\s?000,00/.test(await pg.innerText('#paie-res .paie-t')), 'fiche de paie : correction manuelle du brut appliquée');
   // 5e mémoire des corrections
   await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
   await pg.click('#sample-btn'); await pg.click('[data-fb=ko]'); await pg.waitForSelector('#fix-panel:not([hidden])');
@@ -133,10 +152,78 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   ok(/Impôts/.test(await pg.innerText('.who h2')) || /impôts/i.test(await pg.innerText('.who h2')), 'correction appliquée (expéditeur = impôts)');
   await pg.click('#new-btn'); await pg.reload(); await pg.click('#sample-btn');
   ok(/ajustée d'après tes corrections/.test(await pg.innerText('#result')) && /impôts/i.test(await pg.innerText('.who h2')), 'la correction est retenue pour le courrier suivant du même expéditeur');
+  // 5f lecture : nettoyage du texte lu, dates, lecture tolérante, nouveaux types, redressement d'image
+  await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
+  const rd = await pg.evaluate(() => {
+    const D = window.__decodeur, c = D.cleanOCR, y = new Date().getFullYear();
+    const dt = t => D.findDates(t).map(x => x.date.toISOString().slice(0, 10) + (x.inferred ? '*' : ''));
+    const an = t => D.analyze(t);
+    const demeure = an("M1SE EN DEMEURE\nSociete Volta\nSans reponse sous 15 jours, notre serv1ce content1eux engagera la procedure.\nMontant : 186,40 €");
+    const caf = an("Ca1sse d'a11ocat1ons fami1iales\nN° a11ocata1re : 1234567\nMerci de nous transmettre vos justificatifs avant le 20 octobre 2026.");
+    const sans = an("Madame, Monsieur,\nMerci de nous répondre avant le 20 décembre.\nCordialement");
+    return {
+      c1: c("Montant à payer : 1 82O,04 E"), c2: c("Merci de payer avant le 1O/O3/2O26"), c3: c("Total : 1 500 , 00 €"), c4: c("Le rembour-\nsement sera fait\n|||\n-----\nok"),
+      keep: c("Montant à payer : 186,40 € avant le 20 octobre 2026."),
+      d1: dt("avant le 20 oct. 2026"), d2: dt("jusqu'au 5 janv. 2027"), d3: dt("echeance 2026-11-05"), d4: dt("le 3 sept. 2026 et le 1er févr. 2027"), d5: dt("avant le 20 décembre").map(x => x.endsWith('*')),
+      demeure: [demeure.type.id, demeure.fuzzy], caf: [caf.org && caf.org.id, caf.fuzzy], sans: sans.deadline ? sans.deadline.date.getMonth() : null,
+      devis: an("Devis n° 2026-14\nProposition commerciale pour la pose de votre cuisine.\nValidité du devis : 30 jours. Bon pour accord, date et signature.").type.id,
+      releve: an("Relevé de compte au 30/09/2026\nSolde précédent : 1 204,10 €\nNouveau solde : 987,22 €").type.id,
+      contrat: an("Modification de votre contrat n° 884512 : conditions générales mises à jour. Votre contrat est reconduit par tacite reconduction.").type.id,
+      sncf: an("SNCF Connect : remboursement de votre billet de train Paris-Lyon.").org && an("SNCF Connect : remboursement de votre billet de train Paris-Lyon.").org.id,
+      syndic: an("Le syndic de copropriété vous convoque à l'assemblée générale. Appel de fonds du trimestre.").org.id,
+      why: an("MISE EN DEMEURE de payer. Service contentieux. Procédure judiciaire.").whyType
+    };
+  });
+  ok(/1\s?820,04 €/.test(rd.c1) && rd.c2.includes('10/03/2026') && rd.c3.includes('1 500,00') && /remboursement/.test(rd.c4) && !/\|\|\||-----/.test(rd.c4), 'nettoyage du texte lu : chiffres, dates, montants, césures, bruit');
+  ok(rd.keep === 'Montant à payer : 186,40 € avant le 20 octobre 2026.', 'un texte propre n\'est pas modifié');
+  ok(rd.d1[0] === '2026-10-20' && rd.d2[0] === '2027-01-05' && rd.d3[0] === '2026-11-05' && rd.d4.length === 2, 'dates : abréviations (oct., sept., janv.) et format 2026-11-05');
+  ok(rd.d5.length === 1 && rd.d5[0] === true && rd.sans === 11, 'date sans année : « avant le 20 décembre » devient une date limite');
+  ok(rd.demeure[0] === 'demeure' && rd.demeure[1] === true && rd.caf[0] === 'caf' && rd.caf[1] === true, 'lecture tolérante : mise en demeure et CAF reconnues malgré des 1 à la place des l');
+  ok(rd.devis === 'devis' && rd.releve === 'releve' && rd.contrat === 'contrat', 'nouveaux types : devis, relevé de compte, contrat');
+  ok(rd.sncf === 'sncf' && rd.syndic === 'syndic', 'nouveaux expéditeurs : SNCF, syndic');
+  ok(rd.why.includes('mise en demeure'), 'transparence : « reconnu grâce à » liste les mots trouvés');
+  const img = await pg.evaluate(() => {
+    const D = window.__decodeur;
+    const page = (angle, shadow) => {
+      const c = document.createElement('canvas'); c.width = 900; c.height = 1200; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 900, 1200);
+      x.fillStyle = '#222'; for (let i = 0; i < 40; i++) { let px = 90; while (px < 800) { const w = 30 + ((i * 37 + px * 13) % 70); x.fillRect(px, 100 + i * 24, w, 9); px += w + 12; } }
+      if (shadow) { const g = x.createLinearGradient(0, 0, 900, 0); g.addColorStop(0, 'rgba(0,0,0,.55)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 900, 1200); }
+      if (!angle) return c; const r = document.createElement('canvas'); r.width = 900; r.height = 1200; const y = r.getContext('2d'); y.fillStyle = '#fff'; y.fillRect(0, 0, 900, 1200); y.translate(450, 600); y.rotate(angle * Math.PI / 180); y.drawImage(c, -450, -600); return r;
+    };
+    const tilted = page(3.5, false), flat = page(0, false), shaded = page(0, true);
+    const a = D.estimateSkew(tilted), b = D.estimateSkew(D.rotateCanvas(tilted, -a)), f = D.estimateSkew(flat), a2 = D.estimateSkew(page(-2.5, false));
+    const u1 = D.lightingUneven(shaded), u2 = D.lightingUneven(flat);
+    const bin = D.adaptiveBinarize(shaded), ctx = bin.getContext('2d'); const px = (x, y) => ctx.getImageData(x, y, 1, 1).data[0];
+    return { a, b, f, a2, u1, u2, barL: px(100, 104), bgL: px(100, 140), barR: px(700, 104), bgR: px(700, 140) };
+  });
+  ok(Math.abs(img.a - 3.5) <= 0.7 && Math.abs(img.a2 + 2.5) <= 0.7 && Math.abs(img.f) < 0.4, `redressement : inclinaison détectée ${img.a}° (3,5°) et ${img.a2}° (−2,5°), page droite ${img.f}°`);
+  ok(Math.abs(img.b) <= 0.5, 'redressement : page remise droite (' + img.b + '° restants)');
+  ok(img.u1 === true && img.u2 === false, 'éclairage inégal détecté (ombre) et page uniforme laissée telle quelle');
+  ok(img.barL < 60 && img.bgL > 200 && img.barR < 60 && img.bgR > 200, 'seuillage adaptatif : texte noir et fond blanc des deux côtés de l\'ombre');
   // 6 mobile : onglets
   await pg.click('#tab-decode'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-decode.png' });
   await pg.click('#tab-tools'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-tools.png' });
   await pg.click('#tab-vault'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-vault.png' });
+  // 7 version gratuite : limites et fonctions Premium
+  const free = await (await b.newContext({ viewport: { width: 390, height: 844 }, permissions: ['camera'] })).newPage();
+  free.on('pageerror', e => errs.push('FREE ' + e.message)); await free.route(/googlesyndication|gstatic|jsdelivr/, r => r.abort());
+  const dlgOpen = async () => { try { await free.waitForSelector('#premium[open]', { timeout: 2500 }); return true; } catch (e) { return false; } };
+  await free.goto('http://localhost:8766/decodeur-courrier.html#etat-des-lieux'); await free.reload(); await free.waitForSelector('[data-edl-new=sortie]');
+  await free.click('[data-edl-new=sortie]'); ok(await dlgOpen(), 'gratuit : l\'état des lieux de sortie demande Premium'); await free.click('#premium-close');
+  await free.click('[data-edl-new=entree]'); await free.fill('#en-adr', '1 rue A'); await free.click('#en-go'); await free.click('#edl-back');
+  await free.click('[data-edl-new=entree]'); ok(await dlgOpen(), 'gratuit : un seul état des lieux d\'entrée'); await free.click('#premium-close');
+  await free.goto('http://localhost:8766/decodeur-courrier.html#fiche-de-paie'); await free.reload(); await free.waitForSelector('#paie-sample'); await free.click('#paie-sample'); await free.waitForSelector('.paie-t');
+  ok((await free.locator('#paie-declared').count()) === 0 && (await free.locator('#paie-premium').count()) === 1, 'gratuit : vérification des heures supp réservée à Premium');
+  ok(/majoration d'environ 25 %/.test(await free.innerText('#paie-res')), 'gratuit : les heures supp restent repérées et expliquées');
+  await free.click('#paie-lettre'); ok(await dlgOpen(), 'gratuit : la lettre à l\'employeur demande Premium'); await free.click('#premium-close');
+  await free.goto('http://localhost:8766/decodeur-courrier.html#lettres'); await free.reload(); await free.waitForSelector('[data-lettre]');
+  await free.click('[data-lettre=caf]'); ok(await dlgOpen(), 'gratuit : modèle CAF réservé à Premium'); await free.click('#premium-close');
+  await free.click('[data-lettre=amende]'); ok(await free.locator('#cf-avis').count() === 1, 'gratuit : modèle amende accessible');
+  await free.goto('http://localhost:8766/decodeur-courrier.html#abonnements'); await free.reload(); await free.waitForSelector('#abo-add');
+  for (let i = 0; i < 3; i++) { await free.click('#abo-add'); await free.fill('#ab-name', 'Abo ' + i); await free.fill('#ab-amount', '10'); await free.click('#ab-save'); }
+  await free.click('#abo-add'); ok(await dlgOpen(), 'gratuit : 3 abonnements maximum'); await free.click('#premium-close');
+  await free.goto('http://localhost:8766/decodeur-courrier.html#outils'); await free.reload(); await free.click('[data-tool=dossier]'); ok(await dlgOpen(), 'gratuit : dossier PDF réservé à Premium');
+  ok(/Paperdecrypt Premium/.test(await free.innerText('#premium')) && /paiement unique/i.test(await free.innerText('#premium')), 'fenêtre Premium : fonctions et paiement unique');
   console.log(errs.length ? errs.join('\n') : '✓ aucune erreur JavaScript');
   await b.close(); srv.close();
 })().catch(e => { console.error('ECHEC', e); process.exit(1); });
