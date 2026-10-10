@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuenTools Monteur</title>
+<style>
+:root{--bg:#14161a;--pan:#1c1f25;--pan2:#242830;--ligne:#323843;--txt:#e8eaee;--mut:#9aa3b2;--ac:#4f8cff;--ok:#35c27a;--ko:#ef5b5b}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--txt);font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;grid-template-rows:48px minmax(0,1fr) 190px;grid-template-columns:230px minmax(0,1fr) 290px;grid-template-areas:"top top top" "med prev insp" "tl tl tl";overflow:hidden}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--pan2);border:1px solid var(--ligne);border-radius:8px;padding:6px 10px;cursor:pointer}
+button:hover{border-color:var(--ac)}
+button.pri{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+button.mini{padding:2px 7px;font-size:12px}
+button:disabled{opacity:.4;cursor:default}
+header{grid-area:top;display:flex;align-items:center;gap:12px;padding:0 14px;background:var(--pan);border-bottom:1px solid var(--ligne)}
+header h1{font-size:15px;margin:0;margin-right:auto}
+select,input[type=text],textarea{background:var(--bg);border:1px solid var(--ligne);border-radius:6px;padding:5px 8px;width:100%}
+aside,main,section{overflow:auto}
+#med{grid-area:med;background:var(--pan);border-right:1px solid var(--ligne);padding:10px}
+#prev{grid-area:prev;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;gap:8px;min-width:0;min-height:0}
+#insp{grid-area:insp;background:var(--pan);border-left:1px solid var(--ligne);padding:10px}
+#tl{grid-area:tl;background:var(--pan);border-top:1px solid var(--ligne);padding:8px 12px;display:flex;flex-direction:column;gap:8px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:14px 0 6px}
+h2:first-child{margin-top:0}
+.media{display:flex;gap:8px;align-items:center;background:var(--pan2);border-radius:8px;padding:6px;margin-bottom:6px}
+.media img{width:44px;height:44px;object-fit:cover;border-radius:5px;background:#000;flex:none}
+.media .ico{width:44px;height:44px;border-radius:5px;background:#000;display:grid;place-items:center;flex:none;font-size:20px}
+.media .nom{flex:1;min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.media .nom small{display:block;color:var(--mut)}
+.stage{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.stage img,.stage video{max-width:100%;max-height:100%;border-radius:8px;background:#000;box-shadow:0 4px 24px #0008}
+.stage .vide{color:var(--mut);text-align:center;max-width:320px}
+.barre{display:flex;gap:8px;align-items:center;width:100%;max-width:640px}
+.barre input[type=range]{flex:1}
+label.l{display:block;font-size:12px;color:var(--mut);margin:8px 0 2px}
+label.l span{float:right;color:var(--txt)}
+input[type=range]{width:100%;accent-color:var(--ac)}
+.ligne{display:flex;gap:6px;align-items:center}
+.ligne>*{flex:1}
+.sw{display:flex;align-items:center;gap:8px;margin:6px 0}
+.sw input{width:auto}
+.bloc{border:1px solid var(--ligne);border-radius:8px;padding:8px;margin-top:6px;background:#0002}
+.pistes{flex:1;display:flex;gap:4px;align-items:stretch;overflow-x:auto;padding-bottom:4px}
+.clip{flex:none;min-width:70px;border-radius:8px;background:var(--pan2);border:2px solid var(--ligne);padding:4px 6px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative}
+.clip.sel{border-color:var(--ac);background:#27324a}
+.clip b{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clip small{color:var(--mut);font-size:11px}
+.clip .tag{position:absolute;right:4px;top:3px;font-size:11px}
+.outils{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.outils .musique{margin-left:auto;display:flex;gap:8px;align-items:center;color:var(--mut);font-size:12px}
+.outils .musique input[type=range]{width:90px}
+#modal{position:fixed;inset:0;background:#000b;display:none;place-items:center;z-index:10}
+#modal.on{display:grid}
+#modal .boite{background:var(--pan);border:1px solid var(--ligne);border-radius:12px;padding:14px;max-width:min(92vw,720px);max-height:92vh;overflow:auto}
+#modal canvas{max-width:100%;max-height:68vh;cursor:crosshair;border-radius:8px;display:block}
+#expo{height:8px;background:var(--bg);border-radius:6px;overflow:hidden;margin:10px 0}
+#expo i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+.mut{color:var(--mut);font-size:12px}
+.err{color:var(--ko)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎬 QuenTools Monteur</h1>
+  <span class="mut" id="etat"></span>
+  <select id="format" style="width:auto">
+    <option value="vertical">Vertical 9:16 (TikTok)</option>
+    <option value="horizontal">Horizontal 16:9</option>
+    <option value="carre">Carré 1:1</option>
+  </select>
+  <button class="pri" id="btnExport">Exporter la vidéo</button>
+</header>
+
+<aside id="med">
+  <h2>Médias</h2>
+  <button id="btnImport" style="width:100%">+ Ajouter des fichiers</button>
+  <input type="file" id="fichiers" multiple accept="video/*,image/*,audio/*" hidden>
+  <p class="mut">Vidéos, photos et musiques. Glisse-les ici ou clique sur le bouton.</p>
+  <div id="liste"></div>
+</aside>
+
+<main id="prev">
+  <div class="stage" id="stage"><div class="vide">Ajoute un média puis clique sur « + Timeline » pour commencer.</div></div>
+  <div class="barre">
+    <button id="btnPlay" disabled>▶ Lire l’original</button>
+    <input type="range" id="pos" min="0" max="1" step="0.01" value="0" disabled>
+    <span class="mut" id="posTxt">0,0 s</span>
+  </div>
+</main>
+
+<aside id="insp"><div class="mut">Sélectionne un clip dans la timeline pour régler ses effets.</div></aside>
+
+<section id="tl">
+  <div class="outils">
+    <button id="btnCouper" disabled>✂ Couper ici</button>
+    <button id="btnGauche" disabled>◀</button>
+    <button id="btnDroite" disabled>▶</button>
+    <button id="btnSuppr" disabled>🗑 Supprimer</button>
+    <span class="mut" id="duree"></span>
+    <div class="musique"><span id="musNom">Aucune musique</span>
+      <input type="range" id="musVol" min="0" max="100" value="30" title="Volume de la musique">
+      <button class="mini" id="musOff" hidden>Retirer</button></div>
+  </div>
+  <div class="pistes" id="pistes"></div>
+</section>
+
+<div id="modal"><div class="boite" id="boite"></div></div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = s => (Math.round(s * 10) / 10).toString().replace('.', ',') + ' s';
+const api = async (url, opt) => {
+  const r = await fetch(url, opt);
+  if (!r.ok) { let m = 'Erreur'; try { m = (await r.json()).error; } catch (e) {} throw new Error(m); }
+  return r;
+};
+
+let medias = [];
+let proj = { format: 'vertical', fps: 30, clips: [], music: null };
+let sel = -1, pos = 0;
+try { const s = JSON.parse(localStorage.getItem('qm:projet') || 'null'); if (s && Array.isArray(s.clips)) proj = s; } catch (e) {}
+const save = () => { try { localStorage.setItem('qm:projet', JSON.stringify(proj)); } catch (e) {} };
+
+// ---------- Utilitaires de clip ----------
+const effDur = c => c.kind === 'image' ? (c.dur || 3) : (c.out - c.in) / (c.speed || 1);
+const total = () => proj.clips.reduce((a, c) => a + effDur(c), 0);
+const mediaOf = f => medias.find(m => m.file === f);
+const defKey = () => ({ on: false, color: '#00ff00', sim: 0.15, blend: 0.08, despill: false, bgType: 'color', bgColor: '#101820', bgFile: '', bgKind: 'image' });
+function newClip(m) {
+  return { file: m.file, kind: m.kind, in: 0, out: m.duration, dur: 3, speed: 1, vol: 100, fade: false, fit: 'fill', hasAudio: m.hasAudio,
+    bw: false, bright: 0, contrast: 100, sat: 100, text: '', textPos: 'bas', textSize: 6, textColor: '#ffffff', key: defKey() };
+}
+
+// ---------- Médiathèque ----------
+async function chargerMedias() {
+  const r = await (await api('/api/medias')).json();
+  medias = r.items;
+  $('#etat').textContent = r.font ? '' : 'Texte indisponible (police introuvable)';
+  dessinerMedias();
+}
+function dessinerMedias() {
+  $('#liste').innerHTML = medias.map((m, i) => {
+    const vignette = m.kind === 'audio' ? '<div class="ico">🎵</div>'
+      : `<img loading="lazy" src="${m.kind === 'image' ? '/media/' + encodeURIComponent(m.file) : '/api/frame?file=' + encodeURIComponent(m.file) + '&t=0.5'}" alt="">`;
+    const bouton = m.kind === 'audio' ? `<button class="mini" data-musique="${i}">Musique</button>` : `<button class="mini" data-ajout="${i}">+ Timeline</button>`;
+    return `<div class="media">${vignette}<div class="nom">${esc(m.file)}<small>${m.kind === 'image' ? 'Photo' : fmt(m.duration)}</small></div>${bouton}</div>`;
+  }).join('');
+}
+async function importer(files) {
+  for (const f of files) {
+    $('#etat').textContent = 'Import de ' + f.name + '…';
+    try { await api('/api/import?name=' + encodeURIComponent(f.name), { method: 'POST', body: f }); }
+    catch (e) { alert(f.name + ' : ' + e.message); }
+  }
+  $('#etat').textContent = '';
+  await chargerMedias();
+}
+$('#btnImport').onclick = () => $('#fichiers').click();
+$('#fichiers').onchange = e => { importer([...e.target.files]); e.target.value = ''; };
+document.body.addEventListener('dragover', e => e.preventDefault());
+document.body.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer.files.length) importer([...e.dataTransfer.files]); });
+$('#liste').onclick = e => {
+  const a = e.target.dataset.ajout, m = e.target.dataset.musique;
+  if (a !== undefined) { proj.clips.push(newClip(medias[a])); choisir(proj.clips.length - 1); }
+  if (m !== undefined) { proj.music = { file: medias[m].file, vol: +$('#musVol').value }; save(); dessinerTimeline(); }
+};
+
+// ---------- Timeline ----------
+function dessinerTimeline() {
+  $('#pistes').innerHTML = proj.clips.map((c, i) => {
+    const w = Math.max(70, Math.min(360, effDur(c) * 28));
+    const tags = (c.key.on ? '🟩' : '') + (c.text ? 'T' : '') + (c.speed !== 1 ? '⏩' : '');
+    return `<div class="clip ${i === sel ? 'sel' : ''}" data-i="${i}" style="width:${w}px"><span class="tag">${tags}</span><b>${esc(c.file)}</b><small>${fmt(effDur(c))}</small></div>`;
+  }).join('') || '<span class="mut">La timeline est vide.</span>';
+  $('#duree').textContent = proj.clips.length ? 'Durée totale : ' + fmt(total()) : '';
+  $('#musNom').textContent = proj.music ? '🎵 ' + proj.music.file : 'Aucune musique';
+  $('#musOff').hidden = !proj.music;
+  if (proj.music) $('#musVol').value = proj.music.vol;
+  const has = sel >= 0;
+  ['#btnCouper', '#btnSuppr', '#btnPlay', '#pos'].forEach(s => $(s).disabled = !has);
+  $('#btnGauche').disabled = !has || sel === 0;
+  $('#btnDroite').disabled = !has || sel === proj.clips.length - 1;
+}
+$('#pistes').onclick = e => { const el = e.target.closest('.clip'); if (el) choisir(+el.dataset.i); };
+$('#musVol').oninput = e => { if (proj.music) { proj.music.vol = +e.target.value; save(); } };
+$('#musOff').onclick = () => { proj.music = null; save(); dessinerTimeline(); };
+$('#btnSuppr').onclick = () => { proj.clips.splice(sel, 1); choisir(Math.min(sel, proj.clips.length - 1)); };
+$('#btnGauche').onclick = () => { const [c] = proj.clips.splice(sel, 1); proj.clips.splice(--sel, 0, c); save(); dessinerTimeline(); };
+$('#btnDroite').onclick = () => { const [c] = proj.clips.splice(sel, 1); proj.clips.splice(++sel, 0, c); save(); dessinerTimeline(); };
+$('#btnCouper').onclick = () => {
+  const c = proj.clips[sel];
+  if (c.kind === 'image') { if (pos < 0.3 || pos > c.dur - 0.3) return; const b = JSON.parse(JSON.stringify(c)); b.dur = c.dur - pos; c.dur = pos; proj.clips.splice(sel + 1, 0, b); }
+  else {
+    const at = c.in + pos * c.speed;
+    if (at < c.in + 0.2 || at > c.out - 0.2) return alert('Place le curseur à l’endroit de la coupe, loin du début ou de la fin du clip.');
+    const b = JSON.parse(JSON.stringify(c)); b.in = at; c.out = at; proj.clips.splice(sel + 1, 0, b);
+  }
+  pos = 0; choisir(sel);
+};
+$('#format').onchange = e => { proj.format = e.target.value; save(); apercu(); };
+
+// ---------- Aperçu ----------
+let vid = null, minuteur = null, jeton = 0;
+function choisir(i) {
+  sel = i; pos = 0; save(); dessinerTimeline(); inspecteur(); reglerPos(); apercu();
+}
+function reglerPos() {
+  const c = proj.clips[sel];
+  if (!c) { $('#stage').innerHTML = '<div class="vide">Ajoute un média puis clique sur « + Timeline » pour commencer.</div>'; return; }
+  $('#pos').max = Math.max(0.1, effDur(c) - 0.05); $('#pos').value = pos; $('#posTxt').textContent = fmt(pos);
+}
+$('#pos').oninput = e => { pos = +e.target.value; $('#posTxt').textContent = fmt(pos); apercuRetarde(); };
+function apercuRetarde() { clearTimeout(minuteur); minuteur = setTimeout(apercu, 180); }
+async function apercu() {
+  stopLecture();
+  const c = proj.clips[sel]; if (!c) { reglerPos(); return; }
+  const mon = ++jeton;
+  try {
+    const r = await api('/api/preview', { method: 'POST', body: JSON.stringify({ project: { format: proj.format, fps: proj.fps }, clip: c, t: pos }) });
+    const url = URL.createObjectURL(await r.blob());
+    if (mon !== jeton) return;
+    $('#stage').innerHTML = `<img src="${url}" alt="Aperçu">`;
+  } catch (e) { if (mon === jeton) $('#stage').innerHTML = `<div class="vide err">${esc(e.message)}</div>`; }
+}
+function stopLecture() { if (vid) { vid.pause(); vid = null; $('#btnPlay').textContent = '▶ Lire l’original'; } }
+$('#btnPlay').onclick = () => {
+  if (vid) { stopLecture(); apercu(); return; }
+  const c = proj.clips[sel]; if (!c || c.kind === 'image') return alert('La lecture sert pour les vidéos. Pour une photo, l’aperçu montre déjà le résultat.');
+  const v = document.createElement('video');
+  v.src = '/media/' + encodeURIComponent(c.file); v.controls = false; v.muted = false; v.playbackRate = c.speed;
+  v.currentTime = c.in + pos * c.speed; vid = v;
+  $('#stage').innerHTML = ''; $('#stage').appendChild(v);
+  v.play().catch(() => {}); $('#btnPlay').textContent = '⏸ Pause';
+  v.ontimeupdate = () => { if (v.currentTime >= c.out) { stopLecture(); apercu(); return; } pos = (v.currentTime - c.in) / c.speed; $('#pos').value = pos; $('#posTxt').textContent = fmt(pos); };
+};
+
+// ---------- Réglages du clip ----------
+function curseur(label, cle, min, max, step, unite, obj) {
+  const c = obj || proj.clips[sel];
+  return `<label class="l">${label}<span id="v_${cle}">${c[cle]}${unite}</span></label><input type="range" data-c="${cle}" data-u="${unite}" ${obj ? 'data-obj="key"' : ''} min="${min}" max="${max}" step="${step}" value="${c[cle]}">`;
+}
+function inspecteur() {
+  const c = proj.clips[sel], el = $('#insp');
+  if (!c) { el.innerHTML = '<div class="mut">Sélectionne un clip dans la timeline pour régler ses effets.</div>'; return; }
+  const k = c.key, vid = c.kind === 'video';
+  const options = medias.filter(m => m.kind !== 'audio').map(m => `<option value="${esc(m.file)}" data-kind="${m.kind}" ${k.bgFile === m.file ? 'selected' : ''}>${esc(m.file)}</option>`).join('');
+  el.innerHTML = `
+  <h2>Découpe et vitesse</h2>
+  ${vid ? curseur('Début', 'in', 0, Math.max(0, c.out - 0.2).toFixed(1), 0.1, ' s') + curseur('Fin', 'out', (c.in + 0.2).toFixed(1), mediaOf(c.file) ? mediaOf(c.file).duration.toFixed(1) : c.out, 0.1, ' s') + curseur('Vitesse', 'speed', 0.25, 4, 0.05, '×') + curseur('Volume', 'vol', 0, 300, 5, ' %')
+        : curseur('Durée', 'dur', 0.5, 20, 0.5, ' s')}
+  <div class="sw"><input type="checkbox" id="fade" data-b="fade" ${c.fade ? 'checked' : ''}><label for="fade">Fondu au début et à la fin</label></div>
+  <label class="l">Cadrage</label>
+  <select data-s="fit"><option value="fill" ${c.fit === 'fill' ? 'selected' : ''}>Remplir l’écran (recadre)</option><option value="fit" ${c.fit === 'fit' ? 'selected' : ''}>Tout afficher (bandes noires)</option></select>
+
+  <h2>Couleurs</h2>
+  ${curseur('Luminosité', 'bright', -50, 50, 1, '')}${curseur('Contraste', 'contrast', 0, 200, 1, ' %')}${curseur('Saturation', 'sat', 0, 300, 1, ' %')}
+  <div class="sw"><input type="checkbox" id="bw" data-b="bw" ${c.bw ? 'checked' : ''}><label for="bw">Noir et blanc</label></div>
+
+  <h2>Texte</h2>
+  <textarea rows="2" data-t="text" placeholder="Écris ton titre ici">${esc(c.text)}</textarea>
+  <div class="ligne"><select data-s="textPos"><option value="haut" ${c.textPos === 'haut' ? 'selected' : ''}>En haut</option><option value="milieu" ${c.textPos === 'milieu' ? 'selected' : ''}>Au milieu</option><option value="bas" ${c.textPos === 'bas' ? 'selected' : ''}>En bas</option></select>
+  <input type="color" data-t="textColor" value="${c.textColor}" style="height:30px;padding:0"></div>
+  ${curseur('Taille', 'textSize', 2, 15, 0.5, ' %')}
+
+  <h2>Fond vert</h2>
+  <div class="sw"><input type="checkbox" id="kon" data-kb="on" ${k.on ? 'checked' : ''}><label for="kon">Remplacer le fond de ce clip</label></div>
+  <div class="bloc" ${k.on ? '' : 'hidden'}>
+    <div class="ligne"><button id="btnPipette">🎯 Choisir la couleur</button><input type="color" data-k="color" value="${k.color}" style="height:34px;padding:0;flex:none;width:44px"></div>
+    <p class="mut" style="margin:4px 0">Clique sur le fond à enlever (vert, mais toute couleur unie marche).</p>
+    ${curseur('Sensibilité', 'sim', 0.01, 0.6, 0.01, '', k)}${curseur('Douceur des bords', 'blend', 0, 0.4, 0.01, '', k)}
+    <div class="sw"><input type="checkbox" id="desp" data-kb="despill" ${k.despill ? 'checked' : ''}><label for="desp">Retirer le reflet vert sur les bords</label></div>
+    <label class="l">Nouveau fond</label>
+    <select data-k="bgType"><option value="color" ${k.bgType === 'color' ? 'selected' : ''}>Couleur unie</option><option value="file" ${k.bgType === 'file' ? 'selected' : ''}>Photo ou vidéo de mes médias</option></select>
+    ${k.bgType === 'color' ? `<input type="color" data-k="bgColor" value="${k.bgColor}" style="height:34px;padding:0;margin-top:6px;width:100%">`
+      : `<select data-bg="1" style="margin-top:6px"><option value="">— choisir —</option>${options}</select>`}
+  </div>`;
+}
+$('#insp').addEventListener('input', e => {
+  const c = proj.clips[sel], d = e.target.dataset; if (!c) return;
+  if (d.c) { const t = d.obj ? c.key : c; t[d.c] = +e.target.value; $('#v_' + d.c).textContent = e.target.value + d.u;
+    if (!d.obj && (d.c === 'in' || d.c === 'out')) { if (c.out - c.in < 0.2) { if (d.c === 'in') c.in = c.out - 0.2; else c.out = c.in + 0.2; } pos = 0; reglerPos(); dessinerTimeline(); }
+    if (d.c === 'speed' || d.c === 'dur') { reglerPos(); dessinerTimeline(); } }
+  else if (d.t) c[d.t] = e.target.value;
+  else if (d.k && e.target.type === 'color') c.key[d.k] = e.target.value;
+  else return;
+  save(); apercuRetarde();
+});
+$('#insp').addEventListener('change', e => {
+  const c = proj.clips[sel], d = e.target.dataset; if (!c) return;
+  if (d.b) c[d.b] = e.target.checked;
+  else if (d.kb) { c.key[d.kb] = e.target.checked; if (d.kb === 'on') inspecteur(); }
+  else if (d.s) c[d.s] = e.target.value;
+  else if (d.k === 'bgType') { c.key.bgType = e.target.value; inspecteur(); }
+  else if (d.bg) { const o = e.target.selectedOptions[0]; c.key.bgFile = e.target.value; c.key.bgKind = o ? o.dataset.kind || 'image' : 'image'; }
+  else return;
+  save(); dessinerTimeline(); apercu();
+});
+$('#insp').addEventListener('click', e => { if (e.target.id === 'btnPipette') pipette(); });
+
+// ---------- Pipette : choisir la couleur du fond à enlever ----------
+function pipette() {
+  const c = proj.clips[sel]; if (!c) return;
+  const t = c.kind === 'image' ? 0 : c.in + pos * c.speed;
+  $('#boite').innerHTML = `<h2>Clique sur la couleur à enlever</h2><canvas id="cv"></canvas><div class="ligne" style="margin-top:8px"><span class="mut" id="pip">Clique sur le fond (par exemple le mur vert).</span><button id="pipOk" class="pri" style="flex:none">Fermer</button></div>`;
+  $('#modal').classList.add('on');
+  const img = new Image(); img.crossOrigin = 'anonymous';
+  img.onload = () => { const cv = $('#cv'); cv.width = img.width; cv.height = img.height; cv.getContext('2d').drawImage(img, 0, 0); };
+  img.src = (c.kind === 'image' ? '/media/' + encodeURIComponent(c.file) : '/api/frame?file=' + encodeURIComponent(c.file) + '&t=' + t);
+  $('#cv').onclick = e => {
+    const cv = $('#cv'), r = cv.getBoundingClientRect();
+    const x = Math.floor((e.clientX - r.left) * cv.width / r.width), y = Math.floor((e.clientY - r.top) * cv.height / r.height);
+    const d = cv.getContext('2d').getImageData(Math.max(0, x - 2), Math.max(0, y - 2), 5, 5).data; // moyenne de 25 pixels
+    let R = 0, G = 0, B = 0; for (let i = 0; i < d.length; i += 4) { R += d[i]; G += d[i + 1]; B += d[i + 2]; }
+    const n = d.length / 4, h = v => Math.round(v / n).toString(16).padStart(2, '0');
+    c.key.color = '#' + h(R) + h(G) + h(B); save();
+    $('#pip').innerHTML = `Couleur choisie : <b style="color:${c.key.color}">${c.key.color}</b>`;
+    inspecteur(); apercuRetarde();
+  };
+  $('#pipOk').onclick = () => $('#modal').classList.remove('on');
+}
+
+// ---------- Export ----------
+$('#btnExport').onclick = async () => {
+  if (!proj.clips.length) return alert('La timeline est vide.');
+  $('#boite').innerHTML = `<h2>Exportation</h2><div id="expoTxt">Préparation…</div><div id="expo"><i></i></div><div class="ligne"><button id="expoOk" disabled>Fermer</button></div>`;
+  $('#modal').classList.add('on'); $('#expoOk').onclick = () => $('#modal').classList.remove('on');
+  try {
+    const { id } = await (await api('/api/export', { method: 'POST', body: JSON.stringify({ project: proj }) })).json();
+    for (;;) {
+      await new Promise(r => setTimeout(r, 700));
+      const j = await (await api('/api/job?id=' + id)).json();
+      $('#expo i').style.width = Math.round(j.progress * 100) + '%';
+      $('#expoTxt').textContent = j.error ? '' : `${j.step} — ${Math.round(j.progress * 100)} %`;
+      if (j.error) { $('#expoTxt').innerHTML = `<span class="err">${esc(j.error)}</span>`; break; }
+      if (j.out) { $('#expoTxt').innerHTML = `✅ Terminé ! <a style="color:var(--ac)" href="/exports/${encodeURIComponent(j.out)}">Télécharger ${esc(j.out)}</a><p class="mut">Le fichier est aussi dans le dossier Films → QuenMonteur → exports.</p>`; break; }
+    }
+  } catch (e) { $('#expoTxt').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+  $('#expoOk').disabled = false;
+};
+
+// ---------- Démarrage ----------
+(async function () {
+  $('#format').value = proj.format;
+  await chargerMedias();
+  proj.clips = proj.clips.filter(c => mediaOf(c.file));
+  if (proj.music && !mediaOf(proj.music.file)) proj.music = null;
+  sel = proj.clips.length ? 0 : -1;
+  dessinerTimeline(); inspecteur(); reglerPos(); if (sel >= 0) apercu();
+})();
+</script>
+</body>
+</html>
