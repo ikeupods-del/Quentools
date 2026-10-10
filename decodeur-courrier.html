@@ -3459,6 +3459,240 @@ function renderTVA(box) {
   upd();
 }
 
+/* ---------- Lecture d'une fiche de paie par positions ---------- */
+/*TABLE-DEB*/
+// Lecture d'une fiche de paie par positions : chaque mot garde ses coordonnées, les colonnes viennent de l'en-tête du tableau,
+// et un nombre n'est jamais attribué à une colonne qu'on ne peut pas établir. Fonctions pures (testées en vm).
+
+// Nombre au format français, ou null. « 1 835,61 », « 1.835,61 », « -480,40 », « 480,40- », « (480,40) », espaces insécables.
+// Strict : tout ce qui n'est pas un nombre sans ambiguïté (« 1.835 », « 12/2024 », « 9 6 73 ») renvoie null.
+function parseFR(s) {
+  if (s === null || s === undefined) return null;
+  let t = String(s).replace(/[    ]/g, ' ').replace(/[−–—]/g, '-').trim(), signs = 0, neg = false;
+  if (/^\(.*\)$/.test(t)) { t = t.slice(1, -1).trim(); signs++; neg = true; }
+  if (/-$/.test(t)) { t = t.slice(0, -1).trim(); signs++; neg = true; }
+  if (/^[-+]/.test(t)) { if (t[0] === '-') neg = true; signs++; t = t.slice(1).trim(); }
+  if (signs > 1) return null;
+  let v;
+  if (/^\d{1,3}(?: \d{3})+(?:,\d{1,4})?$/.test(t)) v = t.replace(/ /g, '').replace(',', '.');
+  else if (/^\d{1,3}(?:\.\d{3})+,\d{1,4}$/.test(t)) v = t.replace(/\./g, '').replace(',', '.');
+  else if (/^\d+(?:,\d{1,4})?$/.test(t)) v = t.replace(',', '.');
+  else if (/^\d+\.(?:\d{1,2}|\d{4})$/.test(t)) v = t;
+  else if (/^\d{1,3}(?: \d{3})+\.\d{1,2}$/.test(t)) v = t.replace(/ /g, '');
+  else return null;
+  const n = parseFloat(v); return neg ? 0 - n : n;
+}
+const TBL_NUM = /-?\d{1,3}(?: \d{3})+(?:,\d{1,4})?-?|\S+/g;
+// Éléments de texte d'un PDF (pdf.js) → mots {t, x0, x1, y, h, page}. conv(x, y) passe des coordonnées PDF à celles de la page affichée (y vers le bas).
+function pdfWords(items, page, conv) {
+  const out = [];
+  for (const it of items) {
+    const s = String(it.str || '').replace(/[   ]/g, ' ');
+    if (!s.trim()) continue;
+    const tr = it.transform || [1, 0, 0, 1, 0, 0], h = it.height || Math.abs(tr[3]) || 8, w = it.width || s.length * h * 0.5;
+    let m; const re = new RegExp(TBL_NUM.source, 'g');
+    while ((m = re.exec(s))) {
+      const a = conv(tr[4] + w * m.index / s.length, tr[5]), b = conv(tr[4] + w * (m.index + m[0].length) / s.length, tr[5]);
+      out.push({ t: m[0], x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), y: a[1], h, page });
+    }
+  }
+  return out;
+}
+// Document pdf.js déjà ouvert → tous les mots de toutes les pages (jusqu'à maxPages)
+async function pdfToWords(pdf, maxPages = 12) {
+  const words = [], n = Math.min(pdf.numPages, maxPages);
+  for (let i = 1; i <= n; i++) {
+    const page = await pdf.getPage(i), vp = page.getViewport({ scale: 1 }), tc = await page.getTextContent();
+    for (const w of pdfWords(tc.items, i, (x, y) => vp.convertToViewportPoint(x, y))) words.push(w);
+  }
+  return words;
+}
+// Mots → lignes (même hauteur), triés de haut en bas puis de gauche à droite ; « 1 » + « 835,61 » collés se rejoignent.
+function groupRows(words) {
+  const ws = words.slice().sort((a, b) => a.page - b.page || a.y - b.y || a.x0 - b.x0), rows = [];
+  for (const w of ws) {
+    const r = rows[rows.length - 1];
+    if (r && r.page === w.page && Math.abs(w.y - r.y) <= Math.max(2, 0.5 * Math.min(w.h, r.h))) { r.words.push(w); r.h = Math.max(r.h, w.h); }
+    else rows.push({ page: w.page, y: w.y, h: w.h, words: [w] });
+  }
+  rows.forEach(r => {
+    r.words.sort((a, b) => a.x0 - b.x0);
+    const m = [];
+    for (const w of r.words) { const p = m[m.length - 1]; if (p && /^-?\d{1,3}$/.test(p.t) && /^\d{3}(?:,\d{1,4})?$/.test(w.t) && w.x0 - p.x1 <= 0.7 * Math.min(w.h, p.h)) { p.t += ' ' + w.t; p.x1 = w.x1; } else m.push(Object.assign({}, w)); }
+    r.words = m;
+  });
+  return rows;
+}
+const TBL_QUAL = n => /^(salarial|salariale|salarie|salaries|ouvrier|ouvriere)$/.test(n) ? 'sal' : /^(patronal|patronale|patronales|employeur|patron)$/.test(n) ? 'pat' : null;
+// Colonnes du tableau depuis les mots de l'en-tête (une ou deux lignes) : [{key, x0, x1, c, l, r}] ou null si ce n'est pas un en-tête.
+function detectColumns(pool) {
+  if (pool.some(w => parseFR(w.t) !== null)) return null;
+  const ws = pool.map(w => ({ w, n: norm(w.t).replace(/[^a-z]/g, '') })).filter(o => o.n);
+  const kws = [];
+  ws.forEach(o => {
+    let k = null;
+    if (/^(nombre|nb|qte|quantite)$/.test(o.n)) k = 'nombre'; else if (o.n === 'base') k = 'base'; else if (/^(gains?|payer)$/.test(o.n)) k = 'gain';
+    else if (/^(retenues?|deduire)$/.test(o.n)) k = 'retenue'; else if (o.n === 'taux') k = 'taux'; else if (o.n === 'part') k = 'part';
+    if (k) kws.push({ k, x0: o.w.x0, x1: o.w.x1, h: o.w.h });
+  });
+  const used = new Set();
+  ws.filter(o => TBL_QUAL(o.n)).forEach(q => {
+    let best = null, bd = Infinity; const qc = (q.w.x0 + q.w.x1) / 2;
+    kws.forEach(kw => { if (kw.k !== 'taux' && kw.k !== 'part') return; const d = Math.abs((kw.x0 + kw.x1) / 2 - qc); if (d < bd) { bd = d; best = kw; } });
+    if (best && bd <= 6 * q.w.h && !best.q) { best.q = TBL_QUAL(q.n); best.x0 = Math.min(best.x0, q.w.x0); best.x1 = Math.max(best.x1, q.w.x1); used.add(q); }
+  });
+  const cols = [];
+  const lone = kws.filter(k => k.k === 'taux' && !k.q).sort((a, b) => a.x0 - b.x0);
+  kws.forEach(kw => {
+    let key = kw.k;
+    if (key === 'taux') key = kw.q === 'pat' ? 'tauxPat' : kw.q === 'sal' ? 'tauxSal' : (lone[0] === kw ? 'tauxSal' : 'tauxPat');
+    else if (key === 'part') key = kw.q === 'sal' ? 'retenue' : kw.q === 'pat' ? 'partEmp' : null;
+    if (key) cols.push({ key, x0: kw.x0, x1: kw.x1 });
+  });
+  ws.filter(o => TBL_QUAL(o.n) === 'pat' && !used.has(o)).forEach(o => cols.push({ key: 'partEmp', x0: o.w.x0, x1: o.w.x1 }));
+  if (new Set(cols.map(c => c.key)).size !== cols.length || cols.length < 3) return null;
+  cols.forEach(c => { c.c = (c.x0 + c.x1) / 2; });
+  cols.sort((a, b) => a.c - b.c);
+  cols.forEach((c, i) => {
+    const gl = i ? c.c - cols[i - 1].c : cols[1].c - c.c, gr = i < cols.length - 1 ? cols[i + 1].c - c.c : c.c - cols[i - 1].c;
+    c.l = c.c - gl / 2; c.r = c.c + gr / 2;
+  });
+  return cols;
+}
+// Une ligne : libellé (texte), code éventuel, nombres, et cases du tableau (cells) ; une case douteuse reste vide et la ligne est notée dans amb.
+function decorateRow(r, cols) {
+  const ws = r.words, text = [], numeric = [];
+  ws.forEach((w, i) => {
+    const att = /%$/.test(w.t), v = parseFR(att ? w.t.slice(0, -1) : w.t), nx = ws[i + 1];
+    if (v !== null) numeric.push({ w, v, pct: att || !!(nx && nx.t === '%' && nx.x0 - w.x1 < 3 * w.h) });
+    else if (!/^(%|€|eur|euros?|h|hrs?|j|jrs?|jours?)$/i.test(w.t) && /[A-Za-zÀ-ÿ]/.test(w.t)) text.push(w);
+  });
+  const ft = text.length ? text[0].x0 : -Infinity;
+  r.label = text.map(w => w.t).join(' '); r.n = norm(r.label);
+  r.code = numeric.filter(o => o.w.x1 <= ft + 0.5).map(o => o.w.t)[0] || null;
+  const data = numeric.filter(o => !(o.w.x1 <= ft + 0.5));
+  const cut = text.find(w => /^(cumul|annuel|annuelle|depuis)/.test(norm(w.t)));
+  r.cumul = !!cut;
+  r.nums = data.filter(o => !o.pct && !(cut && o.w.x0 > cut.x0)).map(o => ({ v: o.v, x0: o.w.x0, x1: o.w.x1 }));
+  r.pcts = data.filter(o => o.pct).map(o => o.v);
+  r.cells = {}; r.amb = [];
+  if (cols) data.forEach(o => {
+    const c = (o.w.x0 + o.w.x1) / 2, wd = Math.max(1, o.w.x1 - o.w.x0);
+    if (c < cols[0].l) return;
+    const z = cols.find(k => c >= k.l && c < k.r);
+    if (!z) { r.amb.push(o.w.t); return; }
+    const ov = Math.min(o.w.x1, z.r) - Math.max(o.w.x0, z.l);
+    if (ov < 0.65 * wd) { r.amb.push(o.w.t); return; }
+    if (z.key in r.cells) { r.amb.push(o.w.t); r.cells[z.key] = null; return; }
+    r.cells[z.key] = o.v;
+  });
+  return r;
+}
+// Lignes de toutes les pages avec leurs cases ; l'en-tête trouvé s'applique jusqu'au suivant (y compris page suivante).
+function buildRows(words) {
+  const rows = groupRows(words); let cols = null;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i], nx = rows[i + 1];
+    const two = nx && nx.page === r.page && nx.y - r.y <= 2.4 * r.h && nx.words.length <= 4 && nx.words.every(w => parseFR(w.t) === null) && nx.words.some(w => TBL_QUAL(norm(w.t).replace(/[^a-z]/g, '')));
+    const det = (two && detectColumns(r.words.concat(nx.words))) || detectColumns(r.words);
+    if (det) { cols = det; r.header = true; r.cols = det; if (two && detectColumns(r.words.concat(nx.words))) { nx.header = true; i++; } continue; }
+    decorateRow(r, cols); r.hasCols = !!cols;
+  }
+  rows.forEach(r => { if (r.header) { r.label = ''; r.n = ''; r.nums = []; r.pcts = []; r.cells = {}; r.amb = []; } });
+  return rows;
+}
+// Totaux repérés par leur libellé (jamais par leur rang). Valeur ambiguë ou contradictoire → null et avertissement.
+function readTotals(rows) {
+  const t = { brut: null, cotSal: null, cotPat: null, netAvant: null, netImposable: null, netSocial: null, netPayer: null, pas: null }, warn = [], at = {};
+  const body = rows.filter(r => !r.header && r.n);
+  const numsOf = r => {
+    if (r.nums.length) return r.nums;
+    const nx = rows[rows.indexOf(r) + 1];
+    return nx && !nx.header && nx.page === r.page && !nx.n && nx.y - r.y <= 2.4 * r.h && nx.nums.length ? nx.nums : [];
+  };
+  const pick = (key, re, not, how) => {
+    const found = body.filter(r => re.test(r.n) && !(not && not.test(r.n))).map(r => ({ r, v: how(r) })).filter(o => o.v !== undefined);
+    if (!found.length) return;
+    const vals = found.filter(o => o.v !== null);
+    if (!vals.length) { warn.push(key + ' : valeur illisible ou ambiguë'); return; }
+    const first = JSON.stringify(vals[0].v);
+    if (vals.some(o => JSON.stringify(o.v) !== first)) { warn.push(key + ' : plusieurs valeurs différentes'); return; }
+    t[key] = vals[0].v; at[key] = { page: vals[0].r.page, y: vals[0].r.y };
+  };
+  const one = r => { const n = numsOf(r); return n.length === 1 ? n[0].v : (n.length ? null : undefined); };
+  const NOTBRUT = /abattu|abattement|plafond|imposable|cumul|annuel|apres|avant|net|cotisation|hors|fiscal|soumis|base|heures/;
+  pick('brut', /^(total |salaire )?brut\b|^total brut|^salaire brut/, NOTBRUT, r => r.cells.gain !== undefined && r.cells.gain !== null ? r.cells.gain : one(r));
+  const cot = /^total (des )?(cotisations|retenues)/;
+  const cn = r => numsOf(r);
+  pick('cotSal', cot, /patronal|employeur/, r => { if (r.cells.retenue !== undefined && r.cells.retenue !== null) return r.cells.retenue; const n = cn(r); return n.length >= 1 && n.length <= 2 ? n[0].v : (n.length ? null : undefined); });
+  pick('cotPat', cot, null, r => { if (r.cells.partEmp !== undefined && r.cells.partEmp !== null) return r.cells.partEmp; const n = cn(r); return n.length === 2 ? n[1].v : undefined; });
+  pick('netAvant', /net (a payer )?(avant|hors) (impot|prelevement)|net avant impot/, null, one);
+  pick('netImposable', /net imposable/, /cumul|annuel/, one);
+  pick('netSocial', /net social/, /cumul|annuel/, one);
+  pick('netPayer', /^net (a payer|paye|a verser)|net a payer au salarie/, /avant|hors|imposable|social|cumul/, one);
+  // Prélèvement à la source : base, taux (%) et montant, lus sur la même ligne
+  const pr = body.find(r => /impot (preleve )?(a la source|sur le revenu)|prelevement a la source|\bpas\b/.test(r.n) && !/avant|hors|net|imposable|csg|crds|deductible|cotisation|cumul/.test(r.n));
+  if (pr) {
+    const n = numsOf(pr).map(o => o.v), taux = pr.pcts.length ? Math.abs(pr.pcts[0]) : null;
+    let amount = null, base = null, tx = taux;
+    if (taux !== null) { if (n.length) { amount = n[n.length - 1]; if (n.length >= 2) base = n[0]; } }
+    else if (n.length >= 3) { base = n[0]; tx = n[1]; amount = n[2]; }
+    else if (n.length === 1) amount = n[0];
+    if (amount !== null) { t.pas = { amount: Math.abs(amount), taux: tx, base }; at.pas = { page: pr.page, y: pr.y }; } else warn.push('pas : montant illisible');
+  }
+  return { totals: t, at, warn };
+}
+// Contrôles de cohérence. status : ok | ko | na (non vérifiable). Un seul « ko » = lecture incertaine.
+function checkPayslip(rows, tot) {
+  const t = tot.totals, checks = [], near = (a, b) => Math.abs(a - b) <= 0.02 + 1e-9;
+  const add = (id, label, status, detail) => checks.push({ id, label, status, detail: detail || '' });
+  const body = rows.filter(r => !r.header), fmt = v => v.toFixed(2).replace('.', ',');
+  const bi = body.findIndex(r => r.n && /^(total |salaire )?brut\b|^total brut/.test(r.n) && !/net|cumul|annuel|imposable|base|abattu/.test(r.n));
+  const ci = body.findIndex(r => r.n && /^total (des )?(cotisations|retenues)/.test(r.n));
+  const val = r => (r.cells.gain || 0) - (r.cells.retenue || 0);
+  // 1. brut − cotisations salariales = net avant impôt (± titre de transport, avantages…)
+  if (t.brut !== null && t.cotSal !== null && t.netAvant !== null) {
+    const delta = Math.round((t.netAvant - (t.brut - t.cotSal)) * 100) / 100;
+    if (near(delta, 0)) add('net', 'Brut − cotisations = net avant impôt', 'ok');
+    else {
+      const adj = body.slice(bi + 1).filter(r => /transport|navigo|titre|remboursement|avantage|restaurant|ticket|mutuelle|frais/.test(r.n) && val(r) !== 0).slice(0, 8).map(r => ({ label: r.label, v: val(r) }));
+      let hit = null;
+      const walk = (k, s, pick) => { if (hit) return; if (k === adj.length) { if (pick.length && near(s, delta)) hit = pick; return; } for (const m of [0, 1, -1]) walk(k + 1, s + m * adj[k].v, m ? pick.concat(adj[k].label) : pick); };
+      walk(0, 0, []);
+      if (hit) add('net', 'Brut − cotisations = net avant impôt', 'ok', 'écart de ' + fmt(delta) + ' expliqué par : ' + hit.join(', '));
+      else add('net', 'Brut − cotisations = net avant impôt', 'ko', 'écart de ' + fmt(delta) + ' sans explication sur la fiche');
+    }
+  } else add('net', 'Brut − cotisations = net avant impôt', 'na', 'total manquant');
+  // 2. somme des gains − retenues (lignes au-dessus du total brut) = brut
+  if (bi > 0 && t.brut !== null && body[bi].hasCols) {
+    const s = Math.round(body.slice(0, bi).filter(r => r.hasCols).reduce((a, r) => a + val(r), 0) * 100) / 100;
+    add('gains', 'Somme des gains − retenues = brut', near(s, t.brut) ? 'ok' : 'ko', near(s, t.brut) ? '' : 'les lignes donnent ' + fmt(s) + ', la fiche indique ' + fmt(t.brut));
+  } else add('gains', 'Somme des gains − retenues = brut', 'na', 'tableau ou total brut introuvable');
+  // 3. net avant impôt − prélèvement à la source = net à payer
+  if (t.netAvant !== null && t.netPayer !== null) {
+    const pas = t.pas ? t.pas.amount : 0, ok = near(t.netAvant - pas, t.netPayer);
+    add('pas', 'Net avant impôt − prélèvement = net à payer', ok ? 'ok' : 'ko', ok ? '' : fmt(t.netAvant) + ' − ' + fmt(pas) + ' ≠ ' + fmt(t.netPayer));
+  } else add('pas', 'Net avant impôt − prélèvement = net à payer', 'na', 'total manquant');
+  // 4 et 5. les colonnes « Retenue » et « Part employeur » des lignes de cotisations donnent bien les totaux
+  if (bi >= 0 && ci > bi) {
+    const seg = body.slice(bi + 1, ci).filter(r => r.hasCols);
+    const sum = k => Math.round(seg.reduce((a, r) => a + (r.cells[k] || 0), 0) * 100) / 100;
+    if (t.cotSal !== null) { const s = sum('retenue'); add('colSal', 'Lignes de cotisations (salarié) = total', near(s, t.cotSal) ? 'ok' : 'ko', near(s, t.cotSal) ? '' : 'les lignes donnent ' + fmt(s) + ', le total indique ' + fmt(t.cotSal)); }
+    if (t.cotPat !== null) { const s = sum('partEmp'); add('colPat', 'Lignes de cotisations (employeur) = total', near(s, t.cotPat) ? 'ok' : 'ko', near(s, t.cotPat) ? '' : 'les lignes donnent ' + fmt(s) + ', le total indique ' + fmt(t.cotPat)); }
+  }
+  // 6. aucune case ambiguë dans le tableau
+  const amb = body.filter(r => r.amb && r.amb.length);
+  add('cases', 'Chaque nombre a une colonne certaine', amb.length ? 'ko' : 'ok', amb.length ? amb.length + ' ligne(s) avec un nombre entre deux colonnes : ' + amb.slice(0, 3).map(r => r.label || r.amb[0]).join(' ; ') : '');
+  const need = ['brut', 'cotSal', 'netAvant', 'netImposable', 'netPayer'], manquants = need.filter(k => t[k] === null);
+  return { checks, manquants, fiable: !checks.some(c => c.status === 'ko') && !manquants.length };
+}
+// Mots (PDF ou photo) → lignes, totaux et contrôles
+function readPayslipWords(words) {
+  const rows = buildRows(words), tot = readTotals(rows), chk = checkPayslip(rows, tot);
+  return { rows, totals: tot.totals, at: tot.at, warn: tot.warn, checks: chk.checks, manquants: chk.manquants, fiable: chk.fiable };
+}
+/*TABLE-FIN*/
+
 /* ---------- Fiche de paie ---------- */
 /*PAIE-DEB*/
 // Espaces insécables et fines → espace ; confusions courantes de la lecture optique (O pour 0, l pour 1) à l'intérieur d'un nombre
