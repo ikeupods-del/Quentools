@@ -3590,7 +3590,7 @@ function detectColumns(pool) {
   kws.forEach(kw => {
     let key = kw.k;
     if (key === 'taux') key = kw.q === 'pat' ? 'tauxPat' : kw.q === 'sal' ? 'tauxSal' : (lone[0] === kw ? 'tauxSal' : 'tauxPat');
-    else if (key === 'part') key = kw.q === 'sal' ? 'retenue' : kw.q === 'pat' ? 'partEmp' : null;
+    else if (key === 'part') key = kw.q === 'sal' ? (kws.some(k => k.k === 'retenue') ? null : 'retenue') : kw.q === 'pat' ? 'partEmp' : null;   // « Part salarié » au-dessus de Gain / Retenue n'est qu'un intitulé de groupe
     if (key) cols.push({ key, x0: kw.x0, x1: kw.x1 });
   });
   ws.filter(o => TBL_QUAL(o.n) === 'pat' && !used.has(o)).forEach(o => cols.push({ key: 'partEmp', x0: o.w.x0, x1: o.w.x1 }));
@@ -3656,11 +3656,16 @@ function ocrWords(data, page) {
 // Lignes de toutes les pages avec leurs cases ; l'en-tête trouvé s'applique jusqu'au suivant (y compris page suivante).
 function buildRows(words) {
   const rows = groupRows(words); let cols = null;
+  const VOC = /^(designation|libelle|nombre|nb|base|taux|gains?|retenues?|part|salarial|salariale|salarie|employeur|patronal|patronale|payer|deduire|rubrique)$/;
   for (let i = 0; i < rows.length; i++) {
-    const r = rows[i], nx = rows[i + 1];
-    const two = nx && nx.page === r.page && nx.y - r.y <= 2.4 * r.h && nx.words.length <= 4 && nx.words.every(w => parseFR(w.t) === null) && nx.words.some(w => TBL_QUAL(norm(w.t).replace(/[^a-z]/g, '')));
-    const det = (two && detectColumns(r.words.concat(nx.words))) || detectColumns(r.words);
-    if (det) { cols = det; r.header = true; r.cols = det; if (two && detectColumns(r.words.concat(nx.words))) { nx.header = true; i++; } continue; }
+    const r = rows[i];
+    let det = null, last = i;
+    for (let k = Math.min(2, rows.length - 1 - i); k >= 0 && !det; k--) {   // en-tête sur 1 à 3 lignes voisines, sans aucun nombre
+      const win = rows.slice(i, i + k + 1);
+      if (win.some((x, j) => x.page !== r.page || (j && x.y - win[j - 1].y > 3 * r.h))) continue;
+      det = detectColumns(win.flatMap(x => x.words)); if (det) last = i + k;
+    }
+    if (det) { cols = det; for (let j = i; j <= last; j++) { const x = rows[j]; if (x.words.some(w => VOC.test(norm(w.t).replace(/[^a-z]/g, '')))) { x.header = true; x.cols = det; } else decorateRow(x, cols); } i = last; continue; }
     decorateRow(r, cols); r.hasCols = !!cols;
   }
   rows.forEach(r => { if (r.header) { r.label = ''; r.n = ''; r.nums = []; r.pcts = []; r.cells = {}; r.amb = []; } });
@@ -3685,7 +3690,7 @@ function readTotals(rows) {
     if (key !== 'cotSal' && typeof vals[0].v === 'number' && vals[0].v <= 0) { warn.push(key + ' : valeur nulle ou négative, probablement mal lue'); return; }
     t[key] = vals[0].v; at[key] = { page: vals[0].r.page, y: vals[0].r.y };
   };
-  const one = r => { const n = numsOf(r); return n.length === 1 ? n[0].v : (n.length ? null : undefined); };
+  const one = r => { const n = numsOf(r); return n.length && n.every(x => x.v === n[0].v) ? n[0].v : (n.length ? null : undefined); };   // plusieurs fois le même montant (colonnes « Montant » et « Cumul ») = une seule valeur
   const NOTBRUT = /abattu|abattement|plafond|imposable|cumul|annuel|apres|avant|net|cotisation|hors|fiscal|soumis|base|heures/;
   pick('brut', /^(total |salaire )?brut\b|^total brut|^salaire brut/, NOTBRUT, r => r.cells.gain !== undefined && r.cells.gain !== null ? r.cells.gain : one(r));
   const cot = /^total (des )?(cotisations|retenues)/;
@@ -3696,8 +3701,23 @@ function readTotals(rows) {
   pick('netImposable', /net imposable/, /cumul|annuel/, one);
   pick('netSocial', /net social/, /cumul|annuel/, one);
   pick('netPayer', /^net (a payer|paye|a verser)|net a payer au salarie/, /avant|hors|imposable|social|cumul/, one);
+  // Net social : souvent dans un tableau de cumuls (en-tête « … Net Social », valeurs en dessous) : on prend la valeur placée sous le mot « Social »
+  if (t.netSocial === null) {
+    const hi = rows.findIndex(r => !r.header && /net social/.test(r.n) && !r.nums.length), hw = hi >= 0 ? rows[hi].words.find(w => norm(w.t) === 'social') : null;
+    if (hw) {
+      const xc = (hw.x0 + hw.x1) / 2, cand = [];
+      for (let j = hi + 1; j < Math.min(rows.length, hi + 4); j++) {
+        const r = rows[j]; if (r.page !== rows[hi].page || r.y - rows[j - 1].y > 4 * rows[hi].h) break;
+        const best = r.nums.map(n => ({ v: n.v, d: Math.abs((n.x0 + n.x1) / 2 - xc) })).sort((a, b) => a.d - b.d)[0];
+        if (best && best.d <= 8 * rows[hi].h) cand.push({ v: best.v, r });
+      }
+      const c = cand.find(x => /^periode/.test(x.r.n)) || cand[0];
+      if (c && c.v > 0) { t.netSocial = c.v; at.netSocial = { page: c.r.page, y: c.r.y }; }
+    }
+  }
   // Prélèvement à la source : base, taux (%) et montant, lus sur la même ligne
-  const pr = body.find(r => /impot (preleve )?(a la source|sur le revenu)|prelevement a la source|\bpas\b/.test(r.n) && !/avant|hors|net|imposable|csg|crds|deductible|cotisation|cumul/.test(r.n));
+  const prs = body.filter(r => /impot (preleve )?(a la source|sur le revenu)|prelevement a la source|\bpas\b/.test(r.n) && !/avant|hors|net|imposable|csg|crds|deductible|cotisation|cumul/.test(r.n) && numsOf(r).length);
+  const pr = prs.find(r => /preleve|source/.test(r.n)) || prs[0];
   if (pr) {
     const n = numsOf(pr).map(o => o.v), taux = pr.pcts.length ? Math.abs(pr.pcts[0]) : null;
     let amount = null, base = null, tx = taux;
@@ -3742,7 +3762,7 @@ function checkPayslip(rows, tot) {
   // 4 et 5. les colonnes « Retenue » et « Part employeur » des lignes de cotisations donnent bien les totaux
   if (bi >= 0 && ci > bi) {
     const seg = body.slice(bi + 1, ci).filter(r => r.hasCols);
-    const sum = k => Math.round(seg.reduce((a, r) => a + (r.cells[k] || 0), 0) * 100) / 100;
+    const sum = k => Math.round(seg.reduce((a, r) => a + (r.cells[k] || 0) - (k === 'retenue' ? (r.cells.gain || 0) : 0), 0) * 100) / 100;   // une réduction de cotisations est imprimée en « Gain »
     if (t.cotSal !== null) { const s = sum('retenue'); add('colSal', 'Lignes de cotisations (salarié) = total', near(s, t.cotSal) ? 'ok' : 'ko', near(s, t.cotSal) ? '' : 'les lignes donnent ' + fmt(s) + ', le total indique ' + fmt(t.cotSal)); }
     if (t.cotPat !== null) { const s = sum('partEmp'); add('colPat', 'Lignes de cotisations (employeur) = total', near(s, t.cotPat) ? 'ok' : 'ko', near(s, t.cotPat) ? '' : 'les lignes donnent ' + fmt(s) + ', le total indique ' + fmt(t.cotPat)); }
   }
