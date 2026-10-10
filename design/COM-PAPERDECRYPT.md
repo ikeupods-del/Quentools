@@ -65,3 +65,35 @@ Deux carrousels de 5 visuels (1080×1350) sont prêts dans `assets/social/` : ca
 Règles à garder : jamais de prix ni de lien dans une publication de groupe (« lien en bio » seulement sur ton profil) ; ne jamais présenter l'outil comme une intelligence artificielle ; ne pas promettre une preuve « infalsifiable » : dire « date certifiée par un serveur » et rappeler que seul l'état des lieux signé par les deux parties fait foi.
 
 Rythme conseillé : état des lieux en premier (sujet saisonnier, fort partage chez les locataires), puis le carrousel « tous les outils » une semaine plus tard. Question finale de chaque carrousel = réponse en commentaire ; répondre à chacun avec un conseil précis, sans lien.
+
+## LinkedIn : annonce « bientôt »
+Visuel : `assets/social/linkedin-paperdecrypt-bientot.jpg` (1080×1350, `node tools/pub/teaser-linkedin.js`).
+
+**Publication**
+
+> Une mise en demeure, une fiche de paie, un état des lieux… et ce petit doute : « Est-ce que j'ai bien tout compris ? »
+>
+> Chez QuenTools, nous avons construit un outil pour ça. Il arrive bientôt : Paperdecrypt.
+>
+> Prenez un courrier ou un document en photo (ou en PDF) et, en quelques secondes :
+> → qui vous écrit, ce qu'on vous demande et avant quand
+> → le vrai montant à payer, en distinguant le HT du TTC
+> → vos heures supplémentaires repérées sur la fiche de paie, avec une lettre prête si des heures semblent manquer
+> → un état des lieux avec photos datées et géolocalisées, comparé entre l'entrée et la sortie
+> → des rappels avant chaque échéance, un coffre de documents, un suivi des abonnements
+>
+> Et tout reste sur votre téléphone.
+>
+> Pourquoi ? Parce que l'administratif ne devrait coûter ni argent ni sommeil à celles et ceux qui n'ont pas le temps de le décoder.
+>
+> Gratuit. Pensé pour les salariés, les indépendants et les locataires.
+>
+> Quel papier vous donne le plus de fil à retordre ? Dites-le en commentaire : cela nous aidera à choisir la suite.
+>
+> (L'outil aide à comprendre et à organiser ; il ne remplace pas l'avis d'un professionnel.)
+>
+> #Paperdecrypt #QuenTools #Administratif #FicheDePaie #Location #Indépendants
+
+**Premier commentaire** (le lien ne va pas dans le texte) : « Pour être prévenu(e) dès l'ouverture : suivez la page QuenTools. »
+
+Conseils : publier un mardi ou un jeudi vers 8 h 30 ou 12 h ; répondre à chaque commentaire dans l'heure avec un conseil précis ; ne pas citer de prix ; ne jamais parler d'intelligence artificielle.
