@@ -473,7 +473,7 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
       <p class="note">Il t'explique chaque courrier avec ses mots, repère les documents à fournir, répond à tes questions et améliore tes lettres. Il tourne entièrement sur ton appareil : il se télécharge une seule fois, puis fonctionne même sans internet. Ton courrier n'est jamais envoyé.</p>
       <div id="ia-unsupported" class="scam" hidden><strong>Ton navigateur ne peut pas faire tourner l'assistant IA.</strong> Le décodeur, le résumé « En bref » et les questions rapides fonctionnent quand même. Pour l'assistant, utilise Chrome ou Edge récent, sur ordinateur ou sur Android.</div>
       <div id="ia-options">
-        <p class="note" id="ia-reco">Version légère (environ 1 Go), installée automatiquement en arrière-plan dès l'ouverture de l'application.</p>
+        <p class="note" id="ia-reco">Version légère (environ 1 Go), installée automatiquement en arrière-plan (version mini, environ 300 Mo, sur iPhone et iPad).</p>
         <p class="ia-status" id="ia-status">Pas encore activé.</p>
         <div class="progress" id="ia-progress"><div class="bar"><i id="ia-bar"></i></div><p id="ia-text"></p></div>
         <div class="actions"><button class="btn small" id="ia-load" type="button">Télécharger et activer</button><button class="link" id="ia-off" type="button" hidden>Désactiver</button></div>
@@ -2299,7 +2299,8 @@ function renderList() {
 
 /* ---------- Assistant IA local (WebLLM, tourne sur l'appareil) ---------- */
 const MODELS = {
-  light: { base: 'Qwen2.5-1.5B-Instruct', size: 'environ 1 Go', label: 'Légère' }
+  light: { base: 'Qwen2.5-1.5B-Instruct', size: 'environ 1 Go', label: 'Légère' },
+  tiny: { base: 'Qwen2.5-0.5B-Instruct', size: 'environ 300 Mo', label: 'Mini' }   // iPhone et iPad : la version légère dépasse la mémoire d'une page web
 };
 const gpu = { ok: false, f16: false, checked: false };
 const gpuReady = (async () => {
@@ -2315,9 +2316,12 @@ const isSmallDevice = () => (navigator.deviceMemory && navigator.deviceMemory <=
 const iaPrefs = () => store.get(KEYS.ia, {});
 // Taille de l'assistant : très légère sur téléphone. Une taille qui a fait redémarrer la page (mémoire insuffisante) est écartée, on passe à la plus petite.
 const IA_FLAG = 'qt-decodeur:ia-demarrage';
+const IA_FAIL_MSG = "L'assistant IA ne peut pas démarrer sur cet appareil (mémoire limitée). Ce n'est pas grave : tout fonctionne sans lui, avec la lecture classique.";
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const iaFailed = () => !!iaPrefs().fail && iaPrefs().failModel === prefSize();   // un échec ne vaut que pour le modèle essayé
 const badSizes = () => iaPrefs().bad || [];
-const prefSize = () => 'light';   // une seule version de l'assistant : la légère (environ 1 Go)
-const iaDead = () => badSizes().includes('light');
+const prefSize = () => isIOS ? 'tiny' : 'light';   // la légère (environ 1 Go), ou la mini sur iPhone et iPad
+const iaDead = () => badSizes().includes(prefSize());
 try { const f = localStorage.getItem(IA_FLAG); if (f) { localStorage.removeItem(IA_FLAG); const n = (iaPrefs().crash || 0) + 1; store.set(KEYS.ia, { ...iaPrefs(), crash: n, ...(n >= 2 ? { bad: [...new Set([...badSizes(), f])] } : {}), ready: false }); } } catch (e) { /* stockage indisponible */ }
 const modelId = size => MODELS[size].base + (gpu.f16 ? '-q4f16_1-MLC' : '-q4f32_1-MLC');
 
@@ -2335,7 +2339,7 @@ function iaError(e) {
   if (e && e.message === 'nogpu') return "Ton appareil ne permet pas de faire tourner l'assistant IA.";
   if (!navigator.onLine && !iaPrefs().ready) return "Il faut internet pour télécharger l'assistant la première fois.";
   if (e && /quota|storage/i.test(String(e.message))) return "Pas assez d'espace de stockage sur l'appareil pour l'assistant IA.";
-  return "L'assistant n'a pas pu démarrer (mémoire insuffisante ou navigateur incompatible). Essaie sur un ordinateur ou un appareil plus récent.";
+  return IA_FAIL_MSG;
 }
 function progressLabel(p) {
   const pct = Math.round((p.progress || 0) * 100);
@@ -2363,13 +2367,17 @@ async function ensureEngine() {
     const e = await webllm.CreateMLCEngine(model, { initProgressCallback: engineProgress });
     engine = e; engineModel = model;
     try { localStorage.removeItem(IA_FLAG); } catch (e2) { /* ignoré */ }
-    store.set(KEYS.ia, { ...iaPrefs(), size: prefSize(), ready: true, model, crash: 0 });
+    store.set(KEYS.ia, { ...iaPrefs(), size: prefSize(), ready: true, model, crash: 0, fail: false });
     setAIState('ready');
     return e;
   })();
   engineLoading = { model, p };
   try { return await p; }
-  catch (err) { engine = null; engineModel = null; try { localStorage.removeItem(IA_FLAG); } catch (e2) { /* ignoré */ } setAIState('error', iaError(err)); throw err; }
+  catch (err) {
+    engine = null; engineModel = null; try { localStorage.removeItem(IA_FLAG); } catch (e2) { /* ignoré */ }
+    if (navigator.onLine && !(err && /quota|storage/i.test(String(err.message)))) store.set(KEYS.ia, { ...iaPrefs(), fail: true, failModel: prefSize(), ready: false });   // échec sur cet appareil : on ne relance plus tout seul
+    setAIState('error', iaError(err)); throw err;
+  }
   finally { engineLoading = null; }
 }
 
@@ -2384,7 +2392,7 @@ function requireAI() {
   if (gateP) return gateP;
   gateP = (async () => {
     await gpuReady;
-    if (!gpu.ok || iaDead()) { if (!gateNoted) { gateNoted = true; toast(gpu.ok ? "L'assistant IA ne peut pas démarrer sur cet appareil (mémoire) : la fiche est lue par recoupement, sans la relecture de l'IA." : "Cet appareil ne peut pas faire tourner l'assistant IA : lecture classique, un peu moins précise. Pour la meilleure lecture, utilise Chrome ou Safari récent."); } return 'nogpu'; }
+    if (!gpu.ok || iaDead() || iaFailed()) { if (!gateNoted) { gateNoted = true; toast(gpu.ok ? "L'assistant IA ne peut pas démarrer sur cet appareil (mémoire) : la fiche est lue par recoupement, sans la relecture de l'IA." : "Cet appareil ne peut pas faire tourner l'assistant IA : lecture classique, un peu moins précise. Pour la meilleure lecture, utilise Chrome ou Safari récent."); } return 'nogpu'; }
     const d = $('#ia-gate'), go = $('#gate-go'), skip = $('#gate-skip'), cancel = $('#gate-cancel'), msg = $('#gate-msg'), prog = $('#gate-prog'), msg0 = msg.innerHTML;
     return new Promise(resolve => {
       const finish = v => { d.onclose = null; if (d.open) d.close(); resolve(v); };
@@ -2543,7 +2551,7 @@ async function renderAIZone() {
 
 function updatePill() {
   const p = $('#ai-pill'); if (!p) return;
-  if (!gpu.checked || !gpu.ok) { p.hidden = true; return; }
+  if (!gpu.checked || !gpu.ok || ((iaFailed()) && !iaPrefs().ready && aiState !== 'loading' && aiState !== 'ready')) { p.hidden = true; return; }
   p.hidden = false;
   const pre = window.innerWidth < 520 ? 'IA' : 'Assistant IA';
   const map = { off: pre + (iaPrefs().ready ? ' : en veille' : ' : désactivé'), loading: pre + ' : ' + Math.round((lastProgress.progress || 0) * 100) + ' %', ready: pre + ' : prêt', error: pre + ' : erreur' };
@@ -2569,7 +2577,7 @@ function refreshIaStatus() {
   st.textContent = aiState === 'loading' ? progressLabel(lastProgress)
     : engine && engineModel === modelId(sel) ? 'Activé et prêt.'
     : same ? 'Téléchargé sur cet appareil. Il démarre tout seul au prochain courrier.'
-    : aiState === 'error' ? aiErrorMsg : 'Pas encore activé.';
+    : aiState === 'error' ? aiErrorMsg : iaFailed() ? IA_FAIL_MSG : 'Pas encore activé.';
   $('#ia-load').textContent = same ? 'Démarrer maintenant' : 'Télécharger et activer';
   $('#ia-progress').classList.toggle('on', aiState === 'loading');
   $('#ia-off').hidden = !ia.ready;
@@ -2593,7 +2601,7 @@ $('#ia-off').addEventListener('click', async () => {
 });
 // Installation automatique de l'assistant en arrière-plan, dès l'ouverture (une seule fois : ensuite il démarre depuis le cache de l'appareil)
 gpuReady.then(() => {
-  if (!gpu.ok || iaDead() || !navigator.onLine) return;
+  if (!gpu.ok || iaDead() || iaFailed() || !navigator.onLine) return;
   setTimeout(() => { if (aiState !== 'ready' && aiState !== 'loading') enqueueAI(() => ensureEngine()).catch(() => {}); }, 1500);
 });
 // Mise à jour : copies locales de l'application vidées, page rechargée depuis le serveur. Les documents et réglages ne sont pas touchés.
@@ -3187,7 +3195,7 @@ async function syncFiles(F, u, remoteIdx, deleted) {
   const ref = k => F.Fs.doc(F.db, 'users', u.uid, 'apps', APP_ID, 'files', k);
   const have = new Set(await idb.keys()), idx = new Set();
   for (const k of remoteIdx || []) { if (fileLive(k, deleted)) idx.add(k); else await F.Fs.deleteDoc(ref(k)).catch(() => {}); }
-  let skipped = 0, got = 0;
+  let skipped = 0, got = 0, sent = 0, err = '';
   for (const k of have) {
     if (!fileLive(k, deleted) || idx.has(k)) continue;
     try {
@@ -3195,8 +3203,8 @@ async function syncFiles(F, u, remoteIdx, deleted) {
       if (typeof v === 'string' && v.length > FILE_MAX) v = await shrinkData(v).catch(() => v);
       const enc = await encodeFile(v);
       if (!enc || enc.data.length > FILE_MAX) { skipped++; continue; }
-      await F.Fs.setDoc(ref(k), enc); idx.add(k);
-    } catch (e) { console.error(e); skipped++; }
+      await F.Fs.setDoc(ref(k), enc); idx.add(k); sent++;
+    } catch (e) { console.error(e); skipped++; err = err || (e && (e.code || e.message)) || 'erreur'; }
   }
   for (const k of [...idx]) {
     if (have.has(k)) continue;
@@ -3204,9 +3212,9 @@ async function syncFiles(F, u, remoteIdx, deleted) {
       const sn = await F.Fs.getDoc(ref(k));
       if (!sn.exists()) { idx.delete(k); continue; }
       await idb.set(k, await decodeFile(sn.data())); got++;
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); err = err || (e && (e.code || e.message)) || 'erreur'; }
   }
-  return { fichiers: [...idx], skipped, got };
+  return { fichiers: [...idx], skipped, got, sent, err };
 }
 async function syncNow() {
   const u = FBU; if (!u) { setSyncStatus('Connecte-toi d\'abord avec Google.'); return; }
@@ -3230,13 +3238,13 @@ async function syncNow() {
       deleted: [...deleted].slice(-500)
     };
     _set(KEYS.list, merged.courriers); _set(KEYS.claims, merged.reclamations); _set(KEYS.garanties, merged.garanties); _set(KEYS.abos, merged.abonnements); _set(KEYS.edl, merged.edl); _set(KEYS.coffre, mergeVault(getVault(), merged.coffre)); _set(KEYS.me, merged.moi); _set(KEYS.deleted, merged.deleted);
-    let fsync = { fichiers: remote.fichiers || [], skipped: 0, got: 0 };
-    try { fsync = await syncFiles(F, u, remote.fichiers, deleted); } catch (e) { console.error(e); }
+    let fsync = { fichiers: remote.fichiers || [], skipped: 0, got: 0, sent: 0, err: '' };
+    try { fsync = await syncFiles(F, u, remote.fichiers, deleted); } catch (e) { console.error(e); fsync.err = (e && (e.code || e.message)) || 'erreur'; }
     merged.fichiers = fsync.fichiers;
     // Passage par JSON : Firestore refuse les valeurs « undefined ».
     await F.Fs.setDoc(ref, JSON.parse(JSON.stringify(merged)));
     store.set(KEYS.sync, { last: new Date().toISOString() });
-    setSyncStatus(fsync.skipped ? fsync.skipped + ' fichier(s) trop lourd(s) restent sur cet appareil (limite de la synchronisation : environ 650 Ko).' : ''); renderList(); renderMoneyIfOpen(); renderWarrantyIfOpen(); if (!$('#view-vault').hidden) renderVault(); if (!$('#view-tools').hidden) renderTools(); renderReminders();
+    setSyncStatus(fsync.err ? 'Photos non synchronisées (' + fsync.err + '). Dis-le à QuenTools.' : fsync.skipped ? fsync.skipped + ' fichier(s) trop lourd(s) restent sur cet appareil.' : (fsync.sent || fsync.got) ? 'Photos : ' + fsync.sent + ' envoyée(s), ' + fsync.got + ' reçue(s).' : ''); renderList(); renderMoneyIfOpen(); renderWarrantyIfOpen(); if (!$('#view-vault').hidden) renderVault(); if (!$('#view-tools').hidden) renderTools(); renderReminders();
   } catch (e) {
     console.error(e);
     setSyncStatus(!navigator.onLine ? 'Pas de connexion : la synchronisation se fera plus tard.' : 'La synchronisation a échoué. Réessaie dans un instant.');
