@@ -1164,6 +1164,7 @@ function viewUsage() {
     if ((m = k.match(/^org_(.+)_to_(.+)$/))) return `Expéditeur : ${PD_ORGS[m[1]] || (m[1] === 'aucun' ? 'non reconnu' : m[1])} → ${PD_ORGS[m[2]] || (m[2] === 'aucun' ? 'non reconnu' : m[2])}`;
     if ((m = k.match(/^type_(.+)_to_(.+)$/))) return `Type : ${PD_TYPES[m[1]] || m[1]} → ${PD_TYPES[m[2]] || m[2]}`;
     if ((m = k.match(/^avis_ko_(.+)$/))) return `Lecture jugée fausse : ${PD_TYPES[m[1]] || m[1]}`;
+    if ((m = k.match(/^paie_(.+)$/))) return 'Fiche de paie, corrigé : ' + ({ brut: 'salaire brut', netavant: 'net avant impôt', impot: 'impôt prélevé', netfinal: 'net versé', baserate: 'taux horaire', hsqty: 'heures supp', hsamount: 'montant des heures supp' }[m[1]] || m[1]);
     return { montant: 'Montant corrigé', date: 'Date limite corrigée', ht_ttc: 'HT / TTC corrigé' }[k] || k; };
   const fixRows = Object.entries(A.k).filter(e => e[1]).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => [fixLabel(k), n]);
   const ok = A.f('avis_ok'), ko = A.f('avis_ko');

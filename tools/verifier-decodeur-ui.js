@@ -127,6 +127,18 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
   await pg.fill('#letter-input', await pg.evaluate(() => window.__decodeur.PAIE_SAMPLE)); await pg.click('#decode-btn');
   ok(await pg.isVisible('#to-paie'), 'le décodeur propose l\'analyse de fiche de paie'); await pg.click('#to-paie'); await pg.waitForSelector('.paie-t'); ok(true, 'passage direct à l\'analyse');
+  // 5d' fiche de paie sur plusieurs pages
+  await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
+  await pg.evaluate(() => window.__decodeur.paieSetPages([
+    { name: 'page-2.jpg', text: "Total des cotisations 420,10 580,00\nNET A PAYER AVANT IMPOT SUR LE REVENU 1 519,94\nPrélèvement à la source 3,80 % 1 519,94 57,76\nNET A PAYER 1 462,18" },
+    { name: 'page-1.jpg', text: "BULLETIN DE PAIE\nPériode du 01/09/2026 au 30/09/2026\nSalaire de base 151,67 12,00 1 820,04\nHeures supplémentaires 8,00 12,00 96,00\nMajoration heures supplémentaires 25 % 8,00 12,00 24,00\nTOTAL BRUT 1 940,04" }]));
+  await pg.waitForSelector('.pages li'); ok((await pg.locator('.pages li').count()) === 2 && /Analyser mes 2 pages/.test(await pg.innerText('#paie-go')), 'fiche de paie : 2 pages en attente, bouton « Analyser mes 2 pages »');
+  await pg.click('[data-pg-up="1"]'); ok(/page-1\.jpg/.test(await pg.locator('.pages li').first().innerText()), 'fiche de paie : pages réordonnables');
+  await pg.click('#paie-go'); await pg.waitForSelector('.paie-t');
+  const mp = await pg.innerText('#paie-res'); ok(/1\s?940,04/.test(mp) && /1\s?462,18/.test(mp) && /57,76/.test(mp) && /septembre 2026/.test(mp), 'fiche de paie : les 2 pages sont lues ensemble (brut, net, impôt, période)');
+  ok(/majoration d'environ 25 %/.test(mp) && !/tarif normal/.test(mp), 'fiche de paie : majoration sur ligne séparée bien reconnue');
+  await pg.click('#paie-fixbox summary'); await pg.fill('[data-fix=brut]', '2000,00'); await pg.click('#paie-fix-go'); await pg.waitForSelector('.paie-t');
+  ok(/2\s?000,00/.test(await pg.innerText('#paie-res .paie-t')), 'fiche de paie : correction manuelle du brut appliquée');
   // 5e mémoire des corrections
   await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
   await pg.click('#sample-btn'); await pg.click('[data-fb=ko]'); await pg.waitForSelector('#fix-panel:not([hidden])');
