@@ -36,3 +36,9 @@ L'activation est manuelle (comme pour Wouf). Pour l'automatiser, il faudrait un 
 
 ## Suivi
 Administration → Paperdecrypt : carte « Entonnoir Premium » (fenêtre Premium vue, clics sur « Débloquer », activations). Administration → Premium : liste des membres.
+
+## Assistant IA obligatoire et lecture des fiches de paie
+- **Assistant IA obligatoire** : lire une photo ou un PDF (courrier, fiche de paie, ticket) ouvre d'abord l'installation de l'assistant (téléchargement unique, environ 1 Go, sur l'appareil, rien n'est envoyé). Sans assistant, l'action est abandonnée. Si l'appareil ne sait pas le faire tourner (navigateur sans WebGPU) ou si l'installation échoue et que la personne choisit de continuer, la lecture classique prend le relais.
+- **Fiche de paie** : lecture par colonnes, puis **recoupement** (`rcSolve`, `decodeur-courrier.html`) : chaque total est cherché parmi les montants réellement lus, choisi par son libellé voisin, et vérifié par les calculs de la fiche (brut − cotisations (+ remboursement) = net avant impôt ; net avant impôt − prélèvement = net à payer). Ensuite **l'assistant relit** la fiche : il confirme ou contredit chaque montant, et ne complète que ce que les calculs confirment. Chaque case de l'écran de validation dit d'où vient le chiffre. Un montant n'est jamais inventé : il doit figurer dans le texte lu.
+- Contrôle : `node tools/essai-lecture-paie.js` (dont une vraie photo de fiche, noms et adresses retirés : `tools/fixtures/fiche-photo-janvier-2025.json`).
+
