@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Décodeur de courrier : courriers, remboursements, garanties | QuenTools</title>
+<title>Paperdecrypt : courriers, remboursements, garanties | QuenTools</title>
 <meta name="google-adsense-account" content="ca-pub-9406894983294380">
-<meta name="description" content="Prends ton courrier administratif en photo : on t'explique ce qu'on te demande, avant quand, et on t'aide à répondre. Tout reste sur ton appareil.">
+<meta name="description" content="Prends ton courrier administratif en photo : on t'explique ce qu'on te demande, avant quand, et on t'aide à répondre. Tout reste sur ton appareil, sauf si tu te connectes avec Google pour le retrouver partout.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✉️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -281,10 +281,11 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <h1>Décodeur de courrier</h1>
+      <h1>Paperdecrypt</h1>
       <p>Courriers, remboursements et garanties, par QuenTools</p>
     </div>
     <div class="top-actions">
+    <button class="btn small" id="login-btn" type="button" hidden>Se connecter</button>
     <button class="ai-pill" id="ai-pill" type="button" hidden>Assistant IA</button>
     <button class="icon-btn" id="open-settings" aria-label="Réglages">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
@@ -378,8 +379,8 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
       <button class="btn small" id="premium-btn" type="button">Découvrir Premium</button>
     </section>
     <section id="sync-section" hidden>
-      <h3>Sauvegarde Google Drive</h3>
-      <p class="note">Tes courriers, réclamations et garanties sont copiés dans un dossier caché de ton Google Drive, réservé à cette appli. Si tu changes de téléphone, reconnecte-toi et tout revient. L'appli n'a accès à aucun autre fichier de ton Drive.</p>
+      <h3>Compte Google</h3>
+      <p class="note">Connecte-toi avec Google pour retrouver tes courriers, réclamations et garanties sur tous tes appareils. Seul ton nom et ton adresse e-mail Google sont utilisés pour t'identifier ; tes données sont rangées dans un espace privé lié à ton compte. Les photos de tickets restent sur l'appareil.</p>
       <p class="ia-status" id="sync-status"></p>
       <div class="actions"><button class="btn small" id="sync-btn" type="button">Se connecter avec Google</button><button class="link" id="sync-off" type="button" hidden>Se déconnecter</button></div>
     </section>
@@ -410,8 +411,7 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
     <p class="note" id="premium-reason" hidden></p>
     <ul class="perks">
       <li><b>Garanties illimitées.</b> Enregistre tous tes achats et leurs tickets.</li>
-      <li><b>Sauvegarde automatique</b> sur ton Google Drive : rien n'est perdu si tu perds ton téléphone.</li>
-      <li><b>Sans publicité</b>, partout dans l'appli.</li>
+            <li><b>Sans publicité</b>, partout dans l'appli.</li>
       <li><b>Un paiement unique</b>, sans abonnement. Le reste du décodeur reste gratuit pour toujours.</li>
     </ul>
     <div class="actions"><button class="btn" id="premium-buy" type="button">Débloquer Premium</button><p class="note" id="premium-soon" hidden>L'achat de Premium ouvre très bientôt.</p></div>
@@ -480,8 +480,6 @@ function loadScript(src) {
 
 /* ---------- Réglages QuenTools (à remplir avant la mise en ligne) ---------- */
 const CONFIG = {
-  // Identifiant OAuth Google (Google Cloud Console > Identifiants). Vide = sauvegarde Google masquée.
-  GOOGLE_CLIENT_ID: '',
   // Ton lien d'affiliation pour l'envoi en recommandé (ex. Lettre24). Vide = page officielle de La Poste.
   RECOMMANDE_URL: '',
   RECOMMANDE_FALLBACK: 'https://www.laposte.fr/envoyer/envoi-courrier-lettre-recommandee',
@@ -1403,7 +1401,7 @@ function downloadICS(a) {
   const who = a.org ? a.org.court : 'Courrier';
   const todo = TODO[a.type.id] || 'traiter le courrier';
   const desc = brief(a) + (a.refs.length ? '\nRéférence : ' + a.refs.map(r => r.value).join(', ') : '');
-  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//QuenTools//Decodeur de courrier//FR', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//QuenTools//Paperdecrypt//FR', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',
     'UID:' + Date.now() + '@quentools.fr', 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, ''),
     'DTSTART;VALUE=DATE:' + ymd(d), 'DTEND;VALUE=DATE:' + ymd(next),
     'SUMMARY:' + icsEsc(who + ' : ' + todo + ' (dernier jour)'), 'DESCRIPTION:' + icsEsc(desc),
@@ -1686,7 +1684,7 @@ async function streamTo(messages, el, opts = {}) {
   return out.trim();
 }
 
-const SYS = "Tu es l'assistant du Décodeur de courrier. Tu aides des personnes qui ne sont pas à l'aise avec les courriers administratifs français. Tu tutoies. Tu écris en français simple, avec des phrases courtes et sans jargon. Tu n'inventes rien : si une information n'est pas dans le courrier, tu dis que tu ne la trouves pas. Tu ne donnes pas de conseil juridique ; pour un cas grave, tu conseilles un point-justice ou une association.";
+const SYS = "Tu es l'assistant de Paperdecrypt. Tu aides des personnes qui ne sont pas à l'aise avec les courriers administratifs français. Tu tutoies. Tu écris en français simple, avec des phrases courtes et sans jargon. Tu n'inventes rien : si une information n'est pas dans le courrier, tu dis que tu ne la trouves pas. Tu ne donnes pas de conseil juridique ; pour un cas grave, tu conseilles un point-justice ou une association.";
 function summaryForAI(a) {
   const parts = [];
   if (a.org) parts.push('Expéditeur probable : ' + a.org.court);
@@ -2102,7 +2100,7 @@ function renderMoney() {
     ${adHTML()}`;
   fillAds(box);
   $$('[data-case]', box).forEach(b => b.addEventListener('click', () => { money$ = { mode: 'form', caseId: b.dataset.case, values: {} }; renderMoney(); box.scrollIntoView({ block: 'start' }); }));
-  const sg = $('#share-gains', box); if (sg) sg.addEventListener('click', () => navigator.share({ title: 'Mes remboursements', text: `J'ai récupéré ${fmtMoney(won)} grâce au Décodeur QuenTools.` }).catch(() => {}));
+  const sg = $('#share-gains', box); if (sg) sg.addEventListener('click', () => navigator.share({ title: 'Mes remboursements', text: `J'ai récupéré ${fmtMoney(won)} grâce à Paperdecrypt.` }).catch(() => {}));
   bindClaimItems(box);
 }
 
@@ -2357,31 +2355,40 @@ function renderWForm(box) {
   });
 }
 
-/* ---------- Sauvegarde Google Drive (Premium) ---------- */
-const SYNC_FILE = 'quentools-paperasse.json';
-let gToken = null, gTokenExp = 0, syncTimer = null, syncing = false;
-function gConnect() {
-  return new Promise(async (res, rej) => {
-    if (!CONFIG.GOOGLE_CLIENT_ID) return rej(new Error('noclient'));
-    try { await loadScript('https://accounts.google.com/gsi/client'); } catch (e) { return rej(e); }
-    const tc = google.accounts.oauth2.initTokenClient({
-      client_id: CONFIG.GOOGLE_CLIENT_ID, scope: 'https://www.googleapis.com/auth/drive.appdata',
-      callback: r => { if (r.error) return rej(new Error(r.error)); gToken = r.access_token; gTokenExp = Date.now() + (r.expires_in - 60) * 1000; store.set(KEYS.sync, { ...store.get(KEYS.sync, {}), connected: true }); res(gToken); },
-      error_callback: e => rej(new Error(e && e.type || 'popup'))
-    });
-    tc.requestAccessToken({ prompt: store.get(KEYS.sync, {}).connected ? '' : 'consent' });
-  });
+/* ---------- Connexion Google (Firebase, compte commun QuenTools) et synchronisation ---------- */
+// Firebase est chargé à la demande. La connexion n'est proposée que sur les domaines autorisés dans Firebase ;
+// ailleurs (fichier local, aperçu), Paperdecrypt reste utilisable sans compte.
+const FBV = '10.14.1', APP_ID = 'paperdecrypt';
+const FIREBASE_CFG = { apiKey: 'AIzaSyA-JS7hnSQXeNXnAPqbF3MV8rkPQ5_JVY8', authDomain: 'quentools-adca1.firebaseapp.com', projectId: 'quentools-adca1', storageBucket: 'quentools-adca1.firebasestorage.app', messagingSenderId: '55024741286', appId: '1:55024741286:web:957475540e24ed223b7d67' };
+let FBP = null, FBU = null, syncTimer = null, syncing = false;
+const gAvailable = () => location.protocol === 'https:' && /^(www\.)?quentools\.fr$|^ikeupods-del\.github\.io$/.test(location.hostname);
+function fb() {
+  if (!FBP) FBP = (async () => {
+    const B = `https://www.gstatic.com/firebasejs/${FBV}/`;
+    const [A, Au, Fs] = await Promise.all([import(B + 'firebase-app.js'), import(B + 'firebase-auth.js'), import(B + 'firebase-firestore.js')]);
+    const app = A.initializeApp(FIREBASE_CFG);
+    return { Au, Fs, auth: Au.getAuth(app), db: Fs.getFirestore(app) };
+  })().catch(() => { FBP = null; throw new Error('impossible de joindre Google (connexion internet ?)'); });
+  return FBP;
 }
-async function gFetch(url, opts = {}) {
-  const r = await fetch(url, { ...opts, headers: { ...(opts.headers || {}), Authorization: 'Bearer ' + gToken } });
-  if (r.status === 401) { gToken = null; throw new Error('auth'); }
-  if (!r.ok) throw new Error('http ' + r.status);
-  return r;
+async function gRestore() {
+  if (!gAvailable()) return;
+  try {
+    const F = await fb(); await F.auth.authStateReady();
+    FBU = F.auth.currentUser; setSyncStatus(); if (FBU) syncNow();
+    F.Au.onAuthStateChanged(F.auth, u => { const was = FBU; FBU = u; setSyncStatus(); if (u && (!was || was.uid !== u.uid)) syncNow(); });
+  } catch (e) { setSyncStatus('Connexion indisponible : ' + e.message); }
 }
+async function gLogin() {
+  try { const F = await fb(); await F.Au.signInWithPopup(F.auth, new F.Au.GoogleAuthProvider()); toast('Connecté avec Google'); }
+  catch (e) {
+    const m = { 'auth/popup-closed-by-user': 'Connexion annulée', 'auth/cancelled-popup-request': 'Connexion annulée', 'auth/popup-blocked': 'Autorise les fenêtres pop-up pour ce site, puis réessaie', 'auth/unauthorized-domain': 'Ce site n\'est pas encore autorisé pour la connexion Google', 'auth/operation-not-allowed': 'La connexion Google n\'est pas activée' };
+    setSyncStatus(m[e && e.code] || e.message || 'Connexion Google impossible');
+  }
+}
+async function gLogout() { try { const F = await fb(); await F.Au.signOut(F.auth); toast('Compte Google déconnecté'); } catch (e) {} }
 async function buildPayload() {
-  const images = {};
-  try { for (const k of await idb.keys()) images[k] = await idb.get(k); } catch (e) {}
-  return { app: 'quentools-paperasse', v: 1, courriers: getList(), reclamations: getClaims(), garanties: getW(), moi: store.get(KEYS.me, {}), deleted: store.get(KEYS.deleted, []), images };
+  return { app: 'quentools-paperasse', v: 1, courriers: getList(), reclamations: getClaims(), garanties: getW(), moi: store.get(KEYS.me, {}), deleted: store.get(KEYS.deleted, []) };
 }
 function mergeLists(a = [], b = [], deleted) {
   const t = x => new Date(x.updatedAt || x.savedAt || x.createdAt || 0).getTime();
@@ -2390,13 +2397,13 @@ function mergeLists(a = [], b = [], deleted) {
   return [...m.values()];
 }
 async function syncNow() {
-  if (syncing) return; syncing = true; setSyncStatus('Synchronisation…');
+  const u = FBU; if (!u) { setSyncStatus('Connecte-toi d\'abord avec Google.'); return; }
+  if (syncing) return;
+  if (!navigator.onLine) { setSyncStatus('Pas de connexion : la synchronisation se fera plus tard.'); return; }
+  syncing = true; setSyncStatus('Synchronisation…');
   try {
-    if (!gToken || Date.now() > gTokenExp) await gConnect();
-    const q = encodeURIComponent(`name='${SYNC_FILE}'`);
-    const found = await (await gFetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id,modifiedTime)`)).json();
-    const f = found.files && found.files[0];
-    const remote = f ? await (await gFetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`)).json() : {};
+    const F = await fb(), ref = F.Fs.doc(F.db, 'users', u.uid, 'apps', APP_ID, 'main', 'data');
+    const snap = await F.Fs.getDoc(ref), remote = snap.exists() ? snap.data() : {};
     const local = await buildPayload();
     const deleted = new Set([...(local.deleted || []), ...(remote.deleted || [])]);
     const merged = {
@@ -2405,35 +2412,30 @@ async function syncNow() {
       reclamations: mergeLists(local.reclamations, remote.reclamations, deleted),
       garanties: mergeLists(local.garanties, remote.garanties, deleted),
       moi: Object.keys(local.moi || {}).length ? local.moi : (remote.moi || {}),
-      deleted: [...deleted].slice(-500), images: { ...(remote.images || {}), ...(local.images || {}) }
+      deleted: [...deleted].slice(-500)
     };
-    [...deleted].forEach(id => delete merged.images['w:' + id]);
     _set(KEYS.list, merged.courriers); _set(KEYS.claims, merged.reclamations); _set(KEYS.garanties, merged.garanties); _set(KEYS.me, merged.moi); _set(KEYS.deleted, merged.deleted);
-    for (const [k, v] of Object.entries(merged.images)) { if (!(local.images || {})[k]) await idb.set(k, v).catch(() => {}); }
-    const body = JSON.stringify(merged);
-    if (f) await gFetch(`https://www.googleapis.com/upload/drive/v3/files/${f.id}?uploadType=media`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body });
-    else {
-      const bd = 'qt' + Date.now();
-      const multipart = `--${bd}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: SYNC_FILE, parents: ['appDataFolder'] })}\r\n--${bd}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${bd}--`;
-      await gFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + bd }, body: multipart });
-    }
-    store.set(KEYS.sync, { ...store.get(KEYS.sync, {}), connected: true, last: new Date().toISOString() });
+    // Passage par JSON : Firestore refuse les valeurs « undefined ».
+    await F.Fs.setDoc(ref, JSON.parse(JSON.stringify(merged)));
+    store.set(KEYS.sync, { last: new Date().toISOString() });
     setSyncStatus(''); renderList(); renderMoneyIfOpen(); renderWarrantyIfOpen();
   } catch (e) {
     console.error(e);
-    setSyncStatus(e.message === 'noclient' ? '' : e.message === 'auth' ? 'Reconnecte-toi à Google pour synchroniser.' : !navigator.onLine ? 'Pas de connexion : la synchronisation se fera plus tard.' : 'La synchronisation a échoué. Réessaie dans un moment.');
+    setSyncStatus(!navigator.onLine ? 'Pas de connexion : la synchronisation se fera plus tard.' : 'La synchronisation a échoué. Réessaie dans un instant.');
   } finally { syncing = false; }
 }
 markDirty = () => {
-  if (!isPremium() || !gToken || Date.now() > gTokenExp) return;
+  if (!FBU) return;
   clearTimeout(syncTimer); syncTimer = setTimeout(() => syncNow(), 3000);
 };
 function setSyncStatus(msg) {
+  const avail = gAvailable();
+  const lb = $('#login-btn'); if (lb) { lb.hidden = !avail; lb.textContent = FBU ? (FBU.displayName || FBU.email || 'Mon compte').split(' ')[0] : 'Se connecter'; lb.title = FBU ? 'Ouvrir les réglages du compte' : 'Se connecter avec Google'; }
   const el = $('#sync-status'); if (!el) return;
   const s = store.get(KEYS.sync, {});
-  el.textContent = msg || (s.last ? 'Dernière synchronisation : ' + new Date(s.last).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }) : s.connected ? 'Connecté.' : 'Pas encore connecté.');
-  $('#sync-btn').textContent = s.connected ? 'Synchroniser maintenant' : 'Se connecter avec Google';
-  $('#sync-off').hidden = !s.connected;
+  el.textContent = msg || (FBU ? 'Connecté en tant que ' + (FBU.email || FBU.displayName) + (s.last ? '. Dernière synchronisation : ' + new Date(s.last).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }) : '.') : 'Pas encore connecté.');
+  $('#sync-btn').textContent = FBU ? 'Synchroniser maintenant' : 'Se connecter avec Google';
+  $('#sync-off').hidden = !FBU;
 }
 const renderMoneyIfOpen = () => { if (!$('#view-money').hidden) renderMoney(); };
 const renderWarrantyIfOpen = () => { if (!$('#view-warranty').hidden) renderWarranty(); };
@@ -2545,19 +2547,18 @@ $('#premium-validate').addEventListener('click', () => {
 });
 $('#premium-close').addEventListener('click', () => $('#premium').close());
 $('#img-close').addEventListener('click', () => $('#img-dialog').close());
-$('#sync-btn').addEventListener('click', () => { if (!isPremium()) { openPremium('La sauvegarde automatique sur ton Google Drive fait partie de Premium.'); return; } syncNow(); });
-$('#sync-off').addEventListener('click', () => {
-  try { if (gToken && window.google) google.accounts.oauth2.revoke(gToken, () => {}); } catch (e) {}
-  gToken = null; store.set(KEYS.sync, {}); setSyncStatus(); toast('Compte Google déconnecté');
-});
+$('#sync-btn').addEventListener('click', () => { FBU ? syncNow() : gLogin(); });
+$('#sync-off').addEventListener('click', () => gLogout());
+$('#login-btn').addEventListener('click', () => { FBU ? openSettings() : gLogin(); });
 function refreshPremiumUI() {
   const p = isPremium();
-  $('#premium-status').textContent = p ? 'Premium est activé sur cet appareil.' : `Sans publicité, achats illimités dans le coffre, sauvegarde automatique sur Google Drive. Paiement unique de ${CONFIG.PREMIUM_PRIX}, sans abonnement.`;
+  $('#premium-status').textContent = p ? 'Premium est activé sur cet appareil.' : `Sans publicité, achats illimités dans le coffre. Paiement unique de ${CONFIG.PREMIUM_PRIX}, sans abonnement.`;
   $('#premium-btn').textContent = p ? 'Voir mon Premium' : 'Découvrir Premium';
-  $('#sync-section').hidden = !CONFIG.GOOGLE_CLIENT_ID;
+  $('#sync-section').hidden = !gAvailable();
   setSyncStatus();
 }
 refreshPremiumUI();
+gRestore();
 // Ouverture directe d'un onglet (liens TikTok : #argent, #garanties, #courriers)
 const startTab = Object.keys(TAB_HASH).find(k => TAB_HASH[k] && TAB_HASH[k] === location.hash);
 if (startTab) showTab(startTab);

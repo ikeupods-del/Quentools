@@ -30,7 +30,7 @@ const html = `<!doctype html>
 <a class="skip" href="#contenu">Aller au contenu</a>
 <header class="nav"><div class="wrap">
   <a class="brand" href="../" aria-label="QuenTools, accueil"><img class="brand-mark" src="../assets/logo.svg" alt="" width="32" height="32">QuenTools</a>
-  <ul class="nav-links"><li><a href="../#sur-mesure">Offres et tarifs</a></li><li><a href="../templates/">Templates</a></li><li><a href="../audit/">Audit</a></li></ul>
+  <ul class="nav-links"><li><a href="../#sur-mesure">Offres et tarifs</a></li><li><a href="../templates/">Templates</a></li><li><a href="../audit/">Audit</a></li><li><a href="../decodeur-courrier.html">Paperdecrypt</a></li></ul>
   <span class="nav-actions"><a class="btn btn-sm btn-accent" href="../devis/">Demander un devis</a></span>
 </div></header>
 
