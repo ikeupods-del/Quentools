@@ -29,5 +29,10 @@ const { generer } = require('./fixtures/generateur-paie.js');
   }));
   console.log(gko ? `✗ fiches générées : ${gko} écarts sur ${gt} (${JSON.stringify(par)})` : `✓ ${N} fiches générées (${gt} contrôles) ; lectures de chiffres confondus : ${Math.round(100 - 100 * gchiffres / gct)} % exactes`);
   ko += gko; }
+// Analyse : aucune fausse alerte (« warn ») sur des fiches propres et cohérentes
+{ const tous = FICHES.concat(generer(300, 77)); let w = 0;
+  tous.forEach(f => { let ins; try { const p = vm.runInContext('parsePayslip(' + JSON.stringify(f.texte) + ')', c); vm.runInContext('globalThis.__p=' + JSON.stringify(p), c); ins = vm.runInContext('payslipInsights(__p,null)', c); } catch (e) { w++; console.log('✗ analyse en erreur', f.nom, e.message); return; }
+    ins.filter(i => i.level === 'warn').forEach(i => { if (/peu de lignes/.test(i.text) && /Rubriques génériques/.test(f.nom)) return; w++; console.log('✗ fausse alerte ' + f.nom + ' : ' + i.text.slice(0, 140)); }); });
+  console.log(w ? `✗ analyse : ${w} fausses alertes` : `✓ analyse : aucune fausse alerte sur ${tous.length} fiches cohérentes`); ko += w; }
 console.log(ko?`✗ ${ko} écarts sur ${tot} (hors lectures de chiffres confondus)`:`✓ ${tot} contrôles de fiches de paie`);
 process.exit(ko?1:0);

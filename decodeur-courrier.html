@@ -3537,8 +3537,16 @@ function parsePayslip(raw) {
   { const ni = find(/net imposable/); if (ni >= 0) { const a = nl[ni].indexOf('net imposable'), t = lineNums(lines[ni].slice(a + 13)); p.netImposable = t.length ? t[0] : amountAt(ni); } }
   p.netSocial = amountAt(find(/montant net social/));
   p.tauxNeutre = /(taux neutre|taux non personnalise|taux par defaut)/.test(norm(raw));
-  const pi = find(/(prelevement a la source|impot sur le revenu|\bpas\b)/, /(avant|hors) (impot|prelevement)|net a payer|net imposable|montant net social/);
-  if (pi >= 0) { const taux = linePct(lines[pi]) ?? (lines[pi + 1] ? linePct(lines[pi + 1]) : null), amt = amountAt(pi); if (amt !== null || taux !== null) p.pas = { amount: amt, taux }; }
+  const pi = find(/(prelevement a la source|impot sur le revenu|\bpas\b)/, /(avant|hors) (impot|prelevement)|net a payer|net imposable|montant net social|csg|crds|deductible|cotisation|cumul|\bpas ou ras/);
+  if (pi >= 0) {
+    const taux = linePct(lines[pi]) ?? (lines[pi + 1] ? linePct(lines[pi + 1]) : null), amt = amountAt(pi), nn = lineNums(lines[pi]).length ? lineNums(lines[pi]) : lineNums(lines[pi + 1] || '');
+    if (amt !== null || taux !== null) {
+      p.pas = { amount: amt === null ? null : Math.abs(amt), taux: taux === null ? null : Math.abs(taux) };
+      // L'impôt n'est retenu que s'il est cohérent avec sa base et son taux (sinon la ligne a été mal lue : on ne s'en sert pas pour contrôler)
+      const base = nn.length >= 3 ? nn[0] : null;
+      p.pas.sur = base !== null && p.pas.taux !== null && p.pas.amount !== null ? Math.abs(p.pas.amount - base * p.pas.taux / 100) <= 0.6 + 0.02 * p.pas.amount : (p.pas.taux === 0 && p.pas.amount === 0 ? true : null);
+    }
+  }
   // Cotisations
   const ci = find(/total (des )?cotisations/);
   if (ci >= 0) { let n = lineNums(lines[ci]); if (!n.length && lines[ci + 1]) n = lineNums(lines[ci + 1]); if (n.length >= 2) { p.cotSal = n[n.length - 2]; p.cotPat = n[n.length - 1]; } else if (n.length === 1) p.cotSal = n[0]; }
@@ -3572,7 +3580,7 @@ function parsePayslip(raw) {
   });
   { const main = p.hs.filter(h => !h.majOnly), src = main.length ? main : p.hs; p.hsQty = Math.round(src.reduce((s, h) => s + (h.qty || 0), 0) * 100) / 100; p.hsAmount = Math.round(p.hs.reduce((s, h) => s + (h.amount || 0), 0) * 100) / 100; }
   p.baseRate = baseRate;
-  p.hsRelief = find(/(reduction|exoneration|allegement|defiscalis).*(heures|\bhs\b)|(heures|\bhs\b).*(exonere|reduction)/) >= 0;
+  p.hsRelief = find(/(reduction|exoneration|allegement|defiscalis).*(heures|\bhs\b)|(heures|\bhs\b).*(exonere|reduction)/, /cumul|annuel/) >= 0;
   { const ri = find(/(reduction|allegement|exoneration).*(heures|\bhs\b)/, /(employeur|patronal)/); if (ri >= 0) { const n = lineNums(lines[ri]); if (n.length) p.hsReliefBase = n[0]; } }
   // Primes, absences, congés
   findAll(/(prime|indemnite|gratification|13e mois|treizieme|panier|titres? restaurant|remboursement transport|avantage en nature)/, /(cotisation|plafond|net a payer|licenciement|conges payes)/).slice(0, 8).forEach(k => { const a = amountAt(k); if (a) p.primes.push({ line: lines[k], amount: a }); });
@@ -3621,13 +3629,23 @@ const PH = v => (Math.round(v * 100) / 100).toString().replace('.', ',') + ' h';
 function payslipInsights(p, declared) {
   const out = [];
   if (p.found < 3) out.push({ level: 'warn', text: "La lecture n'a retrouvé que peu de lignes. Vérifie le texte lu (corrige-le si besoin) ou reprends la photo à plat, bien éclairée." });
-  if (p.brut !== null && p.netAvant !== null && p.brut > 0) {
-    const cut = p.brut - p.netAvant;
-    out.push({ level: 'info', text: `Sur ${PE(p.brut)} de salaire brut, ${PE(cut)} (${Math.round(100 * cut / p.brut)} %) partent en cotisations salariales : il te reste ${PE(p.netAvant)} avant impôt.` });
-  }
-  if (p.netAvant !== null && p.netFinal !== null && p.pas && p.pas.amount !== null) {
+  // Bilan : du brut au net versé, avec ce qui a été lu
+  { const cs = p.cotSal !== null ? p.cotSal : (p.brut !== null && p.netAvant !== null && p.brut > p.netAvant && (p.brut - p.netAvant) / p.brut >= 0.08 && (p.brut - p.netAvant) / p.brut <= 0.35 ? p.brut - p.netAvant : null);
+    const nA = p.netAvant !== null ? p.netAvant : (p.netSocial !== null && cs !== null && Math.abs(p.brut - cs - p.netSocial) <= 2 ? p.netSocial : null);
+    if (p.brut !== null && p.brut > 0 && cs !== null && nA !== null) {
+      out.push({ level: 'info', text: `En résumé : ${PE(p.brut)} de salaire brut, moins ${PE(cs)} de cotisations salariales (${Math.round(100 * cs / p.brut)} %), ce qui donne ${PE(nA)} ${p.netAvant !== null ? 'avant impôt' : '(le « net social »)'}${p.pas && p.pas.amount ? `, puis ${PE(p.pas.amount)} d'impôt prélevé à la source` : ''}${p.netFinal !== null ? ` : ${PE(p.netFinal)} versés sur ton compte` : ''}.` });
+      const gap = Math.round((p.brut - cs - nA) * 100) / 100;
+      if (Math.abs(gap) <= 2) out.push({ level: 'ok', text: 'Le passage du brut au net est cohérent : brut − cotisations = net avant impôt.' });
+      else if (gap < 0) out.push({ level: 'info', text: `Ton net avant impôt est ${PE(-gap)} plus haut que « brut − cotisations » : c'est normal quand la fiche ajoute des éléments non soumis aux cotisations (remboursement de transport ou de frais, indemnités, heures exonérées).` });
+      else out.push({ level: 'info', text: `Il manque ${PE(gap)} entre « brut − cotisations » et le net avant impôt : des retenues supplémentaires existent peut-être (mutuelle, avance, saisie, acompte). Regarde les lignes sous le total des cotisations.` });
+      const tx = cs / p.brut; if (tx < 0.12 || tx > 0.3) out.push({ level: 'info', text: `Le taux de cotisations salariales (${Math.round(100 * tx)} %) sort de la fourchette habituelle (18 à 25 % environ). C'est possible (temps partiel, exonérations, cadre), mais une ligne a pu être mal lue : vérifie le total.` });
+    } else if (p.brut !== null && p.netFinal !== null) out.push({ level: 'info', text: `En résumé : ${PE(p.brut)} de salaire brut pour ${PE(p.netFinal)} versés sur ton compte.` });
+    else if (p.brut !== null && p.cotSal !== null) out.push({ level: 'info', text: `En résumé : ${PE(p.brut)} de salaire brut et ${PE(p.cotSal)} de cotisations salariales (${Math.round(100 * p.cotSal / p.brut)} %).` });
+    if (p.netFinal === null && p.netAvant === null && p.brut !== null) out.push({ level: 'info', text: "Le « net à payer » n'a pas été retrouvé. Il se trouve en bas de la fiche, parfois sur la 2e page : ajoute-la, ou corrige le texte lu." }); }
+  if (p.netAvant === null && p.netSocial !== null && p.netFinal !== null && p.netSocial - p.netFinal > 0.05 * p.netSocial + 5) out.push({ level: 'info', text: `Le net versé (${PE(p.netFinal)}) est ${PE(p.netSocial - p.netFinal)} plus bas que le net social (${PE(p.netSocial)}) : une retenue vient en plus (acompte déjà versé, avance, saisie, impôt). Cherche-la sous « net fiscal » ou « net à payer ».` });
+  if (p.netAvant !== null && p.netFinal !== null && p.pas && p.pas.amount !== null && p.pas.sur !== false) {
     const diff = Math.abs(p.netAvant - p.pas.amount - p.netFinal);
-    if (diff > 1.5) out.push({ level: 'warn', text: `Le calcul « net avant impôt − prélèvement à la source » donne ${PE(p.netAvant - p.pas.amount)}, pas ${PE(p.netFinal)}. Il peut y avoir une ligne en plus (acompte, avance, remboursement de frais) : regarde le détail.` });
+    if (diff > 1.5) out.push({ level: 'info', text: `Net avant impôt (${PE(p.netAvant)}) − impôt (${PE(p.pas.amount)}) = ${PE(p.netAvant - p.pas.amount)}, alors que la fiche indique ${PE(p.netFinal)} : l'écart peut venir d'une ligne en plus (acompte, avance, remboursement de frais). Regarde le détail.` });
     else out.push({ level: 'ok', text: `Le calcul tombe juste : ${PE(p.netAvant)} − ${PE(p.pas.amount)} d'impôt = ${PE(p.netFinal)} versés.` });
   }
   if (p.tauxNeutre) out.push({ level: 'info', text: "Ta fiche mentionne un taux neutre (ou non personnalisé) : il est souvent appliqué en début de contrat. Il peut être trop élevé ou trop faible pour toi. Tu peux demander un taux personnalisé sur impots.gouv.fr." });
@@ -3649,7 +3667,7 @@ function payslipInsights(p, declared) {
   }
   if (p.hsReliefBase && p.hs.length && p.hsAmount && Math.abs(p.hsReliefBase - p.hsAmount) > 0.1 * p.hsAmount + 0.5) out.push({ level: 'warn', text: `L'allègement porte sur ${PE(p.hsReliefBase)} d'heures supplémentaires, alors que les lignes en paient ${PE(p.hsAmount)} : une partie des heures n'est peut-être pas allégée (ou une ligne a été mal lue). Demande le détail à ton employeur.` });
   if (p.hs.length && p.lignes.some(l => l.label === 'Heures de nuit')) out.push({ level: 'info', text: "Des heures de nuit sont aussi payées sur cette fiche : leur majoration est distincte de celle des heures supplémentaires, ne les additionne pas." });
-  if (p.hsRelief) out.push({ level: 'info', text: "Une ligne d'allègement sur les heures supplémentaires apparaît : c'est normal, une partie des cotisations salariales est supprimée sur ces heures (donc ton net augmente)." });
+  if (p.hsRelief && p.hs.length) out.push({ level: 'info', text: "Une ligne d'allègement sur les heures supplémentaires apparaît : c'est normal, une partie des cotisations salariales est supprimée sur ces heures (donc ton net augmente)." });
   if (declared !== null && declared !== undefined && isFinite(declared)) {
     const paid = p.hsQty || 0, gap = Math.round((declared - paid) * 100) / 100;
     if (gap > 0.49) out.unshift({ level: 'warn', text: `Tu indiques ${PH(declared)} supplémentaires, la fiche en paie ${PH(paid)} : il en manque peut-être ${PH(gap)}. Demande à ton employeur le décompte détaillé de tes heures et, si besoin, la régularisation (un modèle de lettre est prêt ci-dessous).` });
