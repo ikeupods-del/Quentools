@@ -3333,7 +3333,7 @@ function takeStampedPhoto(label) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { msg.textContent = "Ton navigateur ne permet pas d'ouvrir la caméra ici. Ouvre Paperdecrypt dans Chrome ou Safari."; return; }
     navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1600 } }, audio: false }).then(st => {
       if (done) { st.getTracks().forEach(t => t.stop()); return; }
-      stream = st; vid.srcObject = st; vid.play().catch(() => {}); msg.textContent = 'La date et l\'heure seront inscrites sur la photo.'; $('#cam-snap').disabled = false;
+      stream = st; vid.onloadeddata = () => { if (vid.videoWidth) { msg.textContent = 'La date et l\'heure seront inscrites sur la photo.'; $('#cam-snap').disabled = false; } }; vid.srcObject = st; vid.play().catch(() => {}); msg.textContent = 'Démarrage de la caméra…';
     }).catch(() => { msg.textContent = "La caméra n'est pas autorisée. Autorise-la dans les réglages du navigateur pour ce site, puis réessaie."; });
     $('#cam-snap').onclick = () => {
       if (!vid.videoWidth) return;

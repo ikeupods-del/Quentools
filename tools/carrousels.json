@@ -757,5 +757,75 @@
   "tags": "#courrier #administratif #CAF #impots #facture #outilgratuit #vieadministrative",
   "c1": "#ffe14d",
   "c2": "#7aa5ff"
+ },
+ {
+  "id": "etat-des-lieux",
+  "shots": [
+   "assets/social/shots/pd-edl-piece.jpg",
+   "assets/social/shots/pd-edl-resume.jpg",
+   "assets/social/shots/pd-edl-comparaison.jpg"
+  ],
+  "pill": "Outil gratuit",
+  "hook": [
+   "État des lieux :",
+   "ne perdez plus votre caution"
+  ],
+  "accent": "Photos datées, pièce par pièce.",
+  "prob": "Le jour du départ, on vous reproche…",
+  "pb": [
+   "Une rayure que vous n’avez pas faite",
+   "Un défaut déjà là à l’entrée",
+   "Un état des lieux sans aucune preuve"
+  ],
+  "sol": "Paperdecrypt garde la preuve pour vous",
+  "sb": [
+   "Photos prises sur le vif, avec date et heure",
+   "Comparaison entrée / sortie automatique",
+   "Un PDF prêt à faire signer"
+  ],
+  "ctaPill": "Et vous ?",
+  "ctaTitle": "Vous déménagez *bientôt* ?",
+  "ctaText": "Dites-le en commentaire : on vous explique par où commencer.",
+  "note": "",
+  "cap": "Un état des lieux fait à la va-vite, et c’est la caution qui trinque 😬\n\nPaperdecrypt, l’outil gratuit de QuenTools, vous guide pièce par pièce : l’état de chaque élément (murs, sol, plafond, fenêtres…), des photos prises directement avec l’appareil et datées, les compteurs et les clés.\n\nÀ la sortie, il compare avec l’état d’entrée et vous montre ce qui a réellement changé. Avec la connexion Google, la date de chaque photo peut même être certifiée par un serveur. Vous obtenez un PDF à faire signer par les deux parties.\n\nIl y a aussi des conseils pour l’entrée et pour la sortie. Retrouvez l’outil dans les outils de QuenTools (lien en bio).\n\nVous déménagez bientôt ? Dites-le en commentaire 👇\n\n(Seul l’état des lieux signé par les deux parties fait foi. L’outil aide à le préparer.)",
+  "tt": "État des lieux : ne perdez plus votre caution",
+  "tags": "#etatdeslieux #location #caution #locataire #appartement #demenagement #outilgratuit",
+  "c1": "#ffe14d",
+  "c2": "#7aa5ff"
+ },
+ {
+  "id": "paperdecrypt-outils",
+  "shots": [
+   "assets/social/shots/pd-rappels.jpg",
+   "assets/social/shots/pd-outils.jpg",
+   "assets/social/shots/pd-tva.jpg"
+  ],
+  "pill": "Outil gratuit",
+  "hook": [
+   "Courriers, garanties,",
+   "abonnements, caution…"
+  ],
+  "accent": "Tout au même endroit, et on vous prévient.",
+  "prob": "Les papiers, c’est toujours…",
+  "pb": [
+   "Éparpillé dans cinq tiroirs",
+   "Retrouvé trop tard",
+   "Oublié jusqu’à la relance"
+  ],
+  "sol": "Paperdecrypt range et vous rappelle",
+  "sb": [
+   "Rappel avant chaque date limite",
+   "Coffre de documents avec recherche",
+   "Abonnements, garanties, lettres types"
+  ],
+  "ctaPill": "Et vous ?",
+  "ctaTitle": "Quel papier vous fait perdre le plus de *temps* ?",
+  "ctaText": "Dites-le en commentaire.",
+  "note": "",
+  "cap": "On perd un temps fou avec les papiers… et on se fait surprendre par une date limite 😅\n\nPaperdecrypt, l’outil gratuit de QuenTools, ne fait pas que lire vos courriers : il vous rappelle les échéances (courriers, fins de garantie, renouvellements d’abonnements), range vos factures et contrats dans un coffre où l’on retrouve tout en tapant un mot, prépare des lettres types (amende, résiliation, échéancier…), calcule le HT, la TVA et le TTC, et vérifie l’état des lieux de votre logement.\n\nTout reste sur votre téléphone. Retrouvez-le dans les outils de QuenTools (lien en bio).\n\nQuel papier vous fait perdre le plus de temps ? Dites-le en commentaire 👇\n\n(L’outil aide à comprendre et à organiser : il ne remplace pas l’avis d’un professionnel.)",
+  "tt": "Vos papiers, enfin rangés",
+  "tags": "#administratif #papiers #organisation #astuce #vieadministrative #outilgratuit #budget",
+  "c1": "#ffe14d",
+  "c2": "#7aa5ff"
  }
 ]
