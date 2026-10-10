@@ -1167,6 +1167,7 @@ function viewUsage() {
     if ((m = k.match(/^paie_(.+)$/))) return 'Fiche de paie, corrigé : ' + ({ brut: 'salaire brut', netavant: 'net avant impôt', impot: 'impôt prélevé', netfinal: 'net versé', baserate: 'taux horaire', hsqty: 'heures supp', hsamount: 'montant des heures supp' }[m[1]] || m[1]);
     return { montant: 'Montant corrigé', date: 'Date limite corrigée', ht_ttc: 'HT / TTC corrigé' }[k] || k; };
   const fixRows = Object.entries(A.k).filter(e => e[1]).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => [fixLabel(k), n]);
+  if (A.f('ocr_faible')) fixRows.unshift(['Lectures peu sûres (photo floue ou penchée)', A.f('ocr_faible')]);
   const ok = A.f('avis_ok'), ko = A.f('avis_ko');
   const prem = [['Fenêtre Premium vue', A.f('premium_vu')], ['Clic sur « Débloquer »', A.f('premium_achat')], ['Premium activé (connexion)', A.f('premium_actif')]];
   const card = (t, body, note) => `<section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><h2 style="margin:0 0 var(--s-3);font-size:var(--t-lg)">${t}</h2>${body}${note ? `<p class="muted" style="margin:var(--s-3) 0 0;font-size:var(--t-sm)">${note}</p>` : ''}</section>`;

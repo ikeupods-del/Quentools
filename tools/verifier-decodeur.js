@@ -19,7 +19,9 @@ const CAS = [
   ['Libellés au-dessus des chiffres', 'Total HT\n100,00 €\nTotal TTC\n120,00 €', 'ttc', 120],
   ['TTC puis HT séparés par une barre', '120,00 € TTC / 100,00 € HT', 'ttc', 120],
   ['Séparateurs de milliers', 'Total TTC : 12 450,50 €', 'ttc', 12450.5],
-  ['Écriture T.T.C.', 'Total : 48,00 € T.T.C.', 'ttc', 48]
+  ['Écriture T.T.C.', 'Total : 48,00 € T.T.C.', 'ttc', 48],
+  ['Montant sans symbole € sur une ligne qui parle d\'argent', 'Objet : relance\nMontant à payer : 186,40\nMerci.', '', 186.4],
+  ['Net à payer sans symbole', 'Facture\nTotal HT 100,00\nNet à payer TTC 120,00', 'ttc', 120]
 ];
 let ko = 0;
 for (const [nom, texte, kind, val] of CAS) {

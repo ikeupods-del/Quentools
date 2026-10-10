@@ -146,6 +146,54 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   ok(/Impôts/.test(await pg.innerText('.who h2')) || /impôts/i.test(await pg.innerText('.who h2')), 'correction appliquée (expéditeur = impôts)');
   await pg.click('#new-btn'); await pg.reload(); await pg.click('#sample-btn');
   ok(/ajustée d'après tes corrections/.test(await pg.innerText('#result')) && /impôts/i.test(await pg.innerText('.who h2')), 'la correction est retenue pour le courrier suivant du même expéditeur');
+  // 5f lecture : nettoyage du texte lu, dates, lecture tolérante, nouveaux types, redressement d'image
+  await pg.goto('http://localhost:8766/decodeur-courrier.html'); await pg.reload();
+  const rd = await pg.evaluate(() => {
+    const D = window.__decodeur, c = D.cleanOCR, y = new Date().getFullYear();
+    const dt = t => D.findDates(t).map(x => x.date.toISOString().slice(0, 10) + (x.inferred ? '*' : ''));
+    const an = t => D.analyze(t);
+    const demeure = an("M1SE EN DEMEURE\nSociete Volta\nSans reponse sous 15 jours, notre serv1ce content1eux engagera la procedure.\nMontant : 186,40 €");
+    const caf = an("Ca1sse d'a11ocat1ons fami1iales\nN° a11ocata1re : 1234567\nMerci de nous transmettre vos justificatifs avant le 20 octobre 2026.");
+    const sans = an("Madame, Monsieur,\nMerci de nous répondre avant le 20 décembre.\nCordialement");
+    return {
+      c1: c("Montant à payer : 1 82O,04 E"), c2: c("Merci de payer avant le 1O/O3/2O26"), c3: c("Total : 1 500 , 00 €"), c4: c("Le rembour-\nsement sera fait\n|||\n-----\nok"),
+      keep: c("Montant à payer : 186,40 € avant le 20 octobre 2026."),
+      d1: dt("avant le 20 oct. 2026"), d2: dt("jusqu'au 5 janv. 2027"), d3: dt("echeance 2026-11-05"), d4: dt("le 3 sept. 2026 et le 1er févr. 2027"), d5: dt("avant le 20 décembre").map(x => x.endsWith('*')),
+      demeure: [demeure.type.id, demeure.fuzzy], caf: [caf.org && caf.org.id, caf.fuzzy], sans: sans.deadline ? sans.deadline.date.getMonth() : null,
+      devis: an("Devis n° 2026-14\nProposition commerciale pour la pose de votre cuisine.\nValidité du devis : 30 jours. Bon pour accord, date et signature.").type.id,
+      releve: an("Relevé de compte au 30/09/2026\nSolde précédent : 1 204,10 €\nNouveau solde : 987,22 €").type.id,
+      contrat: an("Modification de votre contrat n° 884512 : conditions générales mises à jour. Votre contrat est reconduit par tacite reconduction.").type.id,
+      sncf: an("SNCF Connect : remboursement de votre billet de train Paris-Lyon.").org && an("SNCF Connect : remboursement de votre billet de train Paris-Lyon.").org.id,
+      syndic: an("Le syndic de copropriété vous convoque à l'assemblée générale. Appel de fonds du trimestre.").org.id,
+      why: an("MISE EN DEMEURE de payer. Service contentieux. Procédure judiciaire.").whyType
+    };
+  });
+  ok(/1\s?820,04 €/.test(rd.c1) && rd.c2.includes('10/03/2026') && rd.c3.includes('1 500,00') && /remboursement/.test(rd.c4) && !/\|\|\||-----/.test(rd.c4), 'nettoyage du texte lu : chiffres, dates, montants, césures, bruit');
+  ok(rd.keep === 'Montant à payer : 186,40 € avant le 20 octobre 2026.', 'un texte propre n\'est pas modifié');
+  ok(rd.d1[0] === '2026-10-20' && rd.d2[0] === '2027-01-05' && rd.d3[0] === '2026-11-05' && rd.d4.length === 2, 'dates : abréviations (oct., sept., janv.) et format 2026-11-05');
+  ok(rd.d5.length === 1 && rd.d5[0] === true && rd.sans === 11, 'date sans année : « avant le 20 décembre » devient une date limite');
+  ok(rd.demeure[0] === 'demeure' && rd.demeure[1] === true && rd.caf[0] === 'caf' && rd.caf[1] === true, 'lecture tolérante : mise en demeure et CAF reconnues malgré des 1 à la place des l');
+  ok(rd.devis === 'devis' && rd.releve === 'releve' && rd.contrat === 'contrat', 'nouveaux types : devis, relevé de compte, contrat');
+  ok(rd.sncf === 'sncf' && rd.syndic === 'syndic', 'nouveaux expéditeurs : SNCF, syndic');
+  ok(rd.why.includes('mise en demeure'), 'transparence : « reconnu grâce à » liste les mots trouvés');
+  const img = await pg.evaluate(() => {
+    const D = window.__decodeur;
+    const page = (angle, shadow) => {
+      const c = document.createElement('canvas'); c.width = 900; c.height = 1200; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 900, 1200);
+      x.fillStyle = '#222'; for (let i = 0; i < 40; i++) { let px = 90; while (px < 800) { const w = 30 + ((i * 37 + px * 13) % 70); x.fillRect(px, 100 + i * 24, w, 9); px += w + 12; } }
+      if (shadow) { const g = x.createLinearGradient(0, 0, 900, 0); g.addColorStop(0, 'rgba(0,0,0,.55)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 900, 1200); }
+      if (!angle) return c; const r = document.createElement('canvas'); r.width = 900; r.height = 1200; const y = r.getContext('2d'); y.fillStyle = '#fff'; y.fillRect(0, 0, 900, 1200); y.translate(450, 600); y.rotate(angle * Math.PI / 180); y.drawImage(c, -450, -600); return r;
+    };
+    const tilted = page(3.5, false), flat = page(0, false), shaded = page(0, true);
+    const a = D.estimateSkew(tilted), b = D.estimateSkew(D.rotateCanvas(tilted, -a)), f = D.estimateSkew(flat), a2 = D.estimateSkew(page(-2.5, false));
+    const u1 = D.lightingUneven(shaded), u2 = D.lightingUneven(flat);
+    const bin = D.adaptiveBinarize(shaded), ctx = bin.getContext('2d'); const px = (x, y) => ctx.getImageData(x, y, 1, 1).data[0];
+    return { a, b, f, a2, u1, u2, barL: px(100, 104), bgL: px(100, 140), barR: px(700, 104), bgR: px(700, 140) };
+  });
+  ok(Math.abs(img.a - 3.5) <= 0.7 && Math.abs(img.a2 + 2.5) <= 0.7 && Math.abs(img.f) < 0.4, `redressement : inclinaison détectée ${img.a}° (3,5°) et ${img.a2}° (−2,5°), page droite ${img.f}°`);
+  ok(Math.abs(img.b) <= 0.5, 'redressement : page remise droite (' + img.b + '° restants)');
+  ok(img.u1 === true && img.u2 === false, 'éclairage inégal détecté (ombre) et page uniforme laissée telle quelle');
+  ok(img.barL < 60 && img.bgL > 200 && img.barR < 60 && img.bgR > 200, 'seuillage adaptatif : texte noir et fond blanc des deux côtés de l\'ombre');
   // 6 mobile : onglets
   await pg.click('#tab-decode'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-decode.png' });
   await pg.click('#tab-tools'); await pg.screenshot({ path: require('os').tmpdir() + '/pd-tools.png' });

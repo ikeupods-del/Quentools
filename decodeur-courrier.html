@@ -747,6 +747,14 @@ function scanAmounts(flat) {
     list.push({ value: v, str: m[0], score, kind });
     prevEnd = end;
   }
+  // Aucun montant avec « € » : on lit les nombres à deux décimales des lignes qui parlent d'argent (« Montant à payer : 186,40 »)
+  if (!list.length) {
+    String(flat).split('\n').forEach(l => {
+      const nl = norm(l); if (!/(montant|somme|total|solde|reste a payer|a regler|a payer|net a payer|due\b)/.test(nl) || /(capital|siret|rcs|tva i)/.test(nl)) return;
+      const d = tkDecimals(l); if (!d.length) return;
+      list.push({ value: d[d.length - 1], str: String(d[d.length - 1]), score: 2 + (/(net a payer|total a payer|reste a payer|a regler)/.test(nl) ? 3 : 0), kind: lastTag(nl) });
+    });
+  }
   const byScore = (x, y) => y.score - x.score || y.value - x.value;
   list.sort(byScore);
   const of = k => list.filter(x => x.kind === k).sort((x, y) => y.value - x.value)[0] || null;
@@ -942,7 +950,27 @@ const ORGS = [
   { id: 'mairie', court: 'Mairie', nom: 'Ta mairie',
     kw: ['mairie', 'hotel de ville', 'le maire', 'commune de', 'conseil municipal'],
     desc: 'Ta commune : état civil, cantine, urbanisme, taxes locales.',
-    contact: "L'accueil de la mairie ou son site internet." }
+    contact: "L'accueil de la mairie ou son site internet." },
+  { id: 'sncf', court: 'SNCF', nom: 'La SNCF',
+    kw: ['sncf', 'ouigo', 'tgv', 'sncf connect', 'billet de train', 'carte avantage'],
+    desc: "Elle gère les trains et les billets. Un courrier peut concerner une réclamation, un remboursement ou un abonnement.",
+    contact: "Ton compte sur sncf-connect.com ; le service client figure sur le courrier." },
+  { id: 'laposte', court: 'La Poste', nom: 'La Poste',
+    kw: ['la poste', 'colissimo', 'chronopost', 'avis de passage', 'bureau de poste', 'lettre recommandee'],
+    desc: "Elle distribue le courrier et les colis. Un avis de passage ou une facture de réexpédition peut en venir.",
+    contact: "Le suivi sur laposte.fr avec le numéro du colis, ou le 3631." },
+  { id: 'sante', court: 'Santé', nom: 'Un établissement de santé',
+    kw: ['hopital', 'clinique', 'centre hospitalier', 'laboratoire', 'analyses medicales', 'cabinet medical', 'radiologie', 'chu'],
+    desc: "Un hôpital, une clinique ou un laboratoire. Le courrier peut concerner une facture, un rendez-vous ou des résultats.",
+    contact: "Le service de facturation ou d'accueil indiqué sur le courrier ; ta caisse d'assurance maladie pour les remboursements." },
+  { id: 'ecole', court: 'École ou université', nom: 'Un établissement scolaire ou universitaire',
+    kw: ['universite', 'crous', 'rectorat', 'scolarite', 'etablissement scolaire', 'inscription scolaire', 'lycee', 'college'],
+    desc: "Une école, un lycée, une université ou le Crous : inscription, bourse, frais de scolarité.",
+    contact: "Le secrétariat ou le service de la scolarité indiqué sur le courrier ; le Crous pour les bourses et logements étudiants." },
+  { id: 'syndic', court: 'Syndic de copropriété', nom: 'Ton syndic de copropriété',
+    kw: ['syndic', 'copropriete', 'coproprietaire', 'assemblee generale', 'charges de copropriete', 'appel de fonds'],
+    desc: "Il gère l'immeuble et appelle les charges. Le courrier peut être un appel de fonds ou la convocation à l'assemblée générale.",
+    contact: "Les coordonnées figurent sur l'appel de charges ; le conseil syndical peut aussi t'aider." }
 ].map(o => ({ ...o, re: kwRe(o.kw) }));
 
 /* ---------- Connaissances : types de courrier ---------- */
@@ -1012,7 +1040,25 @@ const TYPES = [
     resume: "C'est une décision sur tes droits : un accord, un refus, ou un changement de montant.",
     actions: ['Vérifie le montant et la date de début.', "Si c'est un refus ou si tu n'es pas d'accord, un recours est possible : le délai est en général écrit en bas du courrier."],
     risque: 'Une fois le délai de recours passé, contester devient beaucoup plus difficile.',
-    intents: ['contester', 'explications'] }
+    intents: ['contester', 'explications'] },
+  { id: 'devis', label: 'Devis à signer', level: 2,
+    kw: ['devis n', 'devis no', 'bon pour accord', 'bon pour acceptation', 'validite du devis', 'devis valable', 'proposition commerciale', 'offre valable jusqu'],
+    resume: "C'est une proposition de prix, pas une facture. Tu ne dois rien tant que tu ne l'as pas signée.",
+    actions: ['Vérifie que le devis détaille le prix, la durée des travaux ou du service et les conditions d\'annulation.', 'Compare avec au moins un autre devis.', "Ne signe « bon pour accord » que si tout est clair : une fois signé, c'est un contrat.", 'Regarde la date de validité du devis.'],
+    risque: "Si tu signes, tu t'engages à payer (souvent avec un acompte). Sans signature, tu n'as rien à payer.",
+    intents: ['explications', 'contester'] },
+  { id: 'releve', label: 'Relevé de compte ou de situation', level: 1,
+    kw: ['releve de compte', 'releve bancaire', 'releve de situation', 'solde precedent', 'nouveau solde', 'releve des operations'],
+    resume: "C'est un récapitulatif de tes mouvements ou de ta situation, pas une demande.",
+    actions: ['Vérifie les opérations que tu ne reconnais pas.', 'Garde-le : il sert de justificatif (logement, prêt, dossier).', 'Un prélèvement inconnu ? Préviens ta banque rapidement : le délai pour contester est court.'],
+    risque: "Aucun en soi, mais une opération inconnue non signalée à temps peut ne plus être remboursée.",
+    intents: ['explications', 'contester'] },
+  { id: 'contrat', label: 'Contrat ou conditions générales', level: 2,
+    kw: ['conditions generales', 'contrat n', 'contrat no', "notice d'information", 'avenant', 'tacite reconduction', 'reconduction tacite', "duree d'engagement", "periode d'engagement", 'modification de votre contrat'],
+    resume: "Ce courrier concerne un contrat : un changement de conditions, un renouvellement ou un rappel de tes engagements.",
+    actions: ['Cherche ce qui change : prix, durée, conditions de résiliation.', 'Note la date limite pour refuser ou résilier (souvent dans un paragraphe « modification »).', 'Si tu refuses, écris avant la date indiquée, par lettre ou par e-mail, en gardant une preuve.'],
+    risque: "Sans réponse, la modification ou la reconduction est souvent considérée comme acceptée.",
+    intents: ['explications', 'contester'] }
 ].map(t => ({ ...t, re: kwRe(t.kw) }));
 const TYPE_INFO = { id: 'info', label: 'Courrier d\'information', level: 1,
   resume: "Ce courrier semble surtout t'informer. Rien d'urgent n'a été repéré, mais lis les passages surlignés.",
@@ -1038,19 +1084,49 @@ const SCAM_LABELS = ['carte cadeau', 'cartes cadeaux', 'coupon', 'Transcash', 'c
 const MONTHS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
 const NUMW = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6, sept: 7, huit: 8, dix: 10, quinze: 15, vingt: 20, trente: 30, 'quarante-cinq': 45, 'quarante cinq': 45, soixante: 60 };
 
+/* Nettoyage du texte lu sur une photo : corrige les erreurs de lecture courantes avant l'analyse (lettres prises pour des chiffres,
+   espaces dans les montants et les dates, « € » mal lu, césures, lignes de bruit). Sans effet sur un texte propre. */
+function cleanOCR(raw) {
+  let t = String(raw).replace(/\r/g, '').replace(/[\u00a0\u202f\u2009\u200b]/g, ' ').replace(/ﬁ/g, 'fi').replace(/ﬂ/g, 'fl').replace(/[“”«»]/g, '"').replace(/[‘’´`]/g, "'");
+  t = t.replace(/([a-zà-ÿ])-\n([a-zà-ÿ])/g, '$1$2');
+  const fx = x => x.replace(/[Oo]/g, '0').replace(/[Il|]/g, '1');
+  // dates : « 1O / O3 / 2O26 » → « 10/03/2026 »
+  t = t.replace(/(?<![\w])([0-9OoIl|]{1,2})\s?[\/.\-]\s?([0-9OoIl|]{1,2})\s?[\/.\-]\s?([0-9OoIl|]{2,4})(?![\w])/g, (m, a, b, c) => /\d/.test(m) && /^\d+$/.test(fx(a) + fx(b) + fx(c)) ? fx(a) + '/' + fx(b) + '/' + fx(c) : m);
+  // nombres : une lettre coincée entre chiffres est un chiffre mal lu (« 1 82O,04 » → « 1 820,04 »)
+  t = t.replace(/(?<![A-Za-zÀ-ÿ])\d[\dOoIl, .]{0,14}\d(?![A-Za-zÀ-ÿ])/g, m => /[Oo]|[Il]/.test(m) && /\d[Oo]|[Oo]\d|\d[Il]|[Il]\d/.test(m) ? m.replace(/(?<=[\d, .])[Oo](?=[\d, .])/g, '0').replace(/(?<=\d)[Il](?=[\d, .])|(?<=[\d, .])[Il](?=\d)/g, '1') : m);
+  // montants : « 1 500 , 00 » → « 1 500,00 »
+  t = t.replace(/(\d)\s+([,.])\s*(\d{2})(?!\d)/g, '$1$2$3').replace(/(\d[,.])\s+(\d{2})(?!\d)/g, '$1$2');
+  const lines = t.split('\n').map(l => {
+    // « € » lu « E » ou « C » après un montant, sur une ligne qui parle d'argent
+    if (/(total|montant|somme|payer|solde|reste|net|ttc|regler|due)/i.test(l)) l = l.replace(/(\d[,.]\d{2})\s?[EC](?=\s|$|[.;)])/g, '$1 €');
+    return l.replace(/[ \t]+/g, ' ').trim();
+  }).filter(l => !/^[^A-Za-zÀ-ÿ0-9]{2,}$/.test(l));
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
 function mkDate(y, mo, d) {
   if (y < 1990 || y > 2100 || mo < 0 || mo > 11 || d < 1 || d > 31) return null;
   const x = new Date(y, mo, d);
   return x.getMonth() === mo ? x : null;
 }
+const MONTH_RE = 'janvier|janv\\.?|f[ée]vrier|f[ée]vr\\.?|mars|avril|avr\\.?|mai|juin|juillet|juil\\.?|ao[uû]t|septembre|sept\\.?|octobre|oct\\.?|novembre|nov\\.?|d[ée]cembre|d[ée]c\\.?';
+const monthIdx = w => { const x = norm(w).replace('.', ''); return MONTHS.findIndex(m => m.startsWith(x) || (x.length >= 3 && x.startsWith(m))); };
 function findDates(t) {
   const out = []; let m;
   const r1 = /\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4}|\d{2})\b/g;
   while ((m = r1.exec(t))) { let y = +m[3]; if (y < 100) y += 2000; const d = mkDate(y, +m[2] - 1, +m[1]); if (d) out.push({ date: d, index: m.index, str: m[0] }); }
-  const r2 = /\b(1er|\d{1,2})\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre)\s+(\d{4})\b/gi;
+  const r2 = new RegExp('\\b(1er|\\d{1,2})\\s+(' + MONTH_RE + ')\\s+(\\d{4})\\b', 'gi');
   while ((m = r2.exec(t))) {
-    const mi = MONTHS.indexOf(norm(m[2])); const day = /^1er$/i.test(m[1]) ? 1 : +m[1];
-    const d = mkDate(+m[3], mi, day); if (d) out.push({ date: d, index: m.index, str: m[0] });
+    const mi = monthIdx(m[2]); const day = /^1er$/i.test(m[1]) ? 1 : +m[1];
+    const d = mi >= 0 ? mkDate(+m[3], mi, day) : null; if (d) out.push({ date: d, index: m.index, str: m[0] });
+  }
+  const r3 = /\b(20\d{2})-(\d{2})-(\d{2})\b/g;
+  while ((m = r3.exec(t))) { const d = mkDate(+m[1], +m[2] - 1, +m[3]); if (d) out.push({ date: d, index: m.index, str: m[0] }); }
+  // « avant le 20 octobre » : année absente, on prend la prochaine occurrence (repère « inferred », jamais une date de lettre)
+  const r4 = new RegExp('(?<=(?:avant le|au plus tard le|jusqu\'au|d\'ici le|pour le|le)\\s)(1er|\\d{1,2})\\s+(' + MONTH_RE + ')(?!\\.?\\s*\\d{2,4}\\b)', 'gi');
+  while ((m = r4.exec(t))) {
+    const mi = monthIdx(m[2]); if (mi < 0) continue; const day = /^1er$/i.test(m[1]) ? 1 : +m[1], now = today0();
+    let d = mkDate(now.getFullYear(), mi, day); if (d && d < new Date(now.getTime() - 45 * 864e5)) d = mkDate(now.getFullYear() + 1, mi, day);
+    if (d) out.push({ date: d, index: m.index, str: m[0], inferred: true });
   }
   return out.sort((a, b) => a.index - b.index);
 }
@@ -1083,8 +1159,12 @@ function phishSignals(n, sites, org) {
   if (org && OFFICIAL[org.id] && sites.length && !sites.some(x => OFFICIAL[org.id].test(x.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]))) out.push(`un site (${sites[0]}) qui ne ressemble pas au site officiel de ${org.court}`);
   return out.slice(0, 4);
 }
+/* Lecture tolérante aux erreurs de photo : on « plie » les lettres qu'une photo confond (i/l/1, o/0, rn/m, cl/d, vv/w, s/5) dans le texte
+   ET dans les mots-clés, puis on recherche à nouveau. Utilisé seulement quand la recherche exacte ne trouve rien. */
+const foldOCR = x => x.replace(/rn/g, 'm').replace(/cl/g, 'd').replace(/vv/g, 'w').replace(/[|1!i]/g, 'l').replace(/0/g, 'o').replace(/5/g, 's');
+const foldedRe = o => o.reF || (o.reF = kwRe(o.kw.map(k => foldOCR(norm(k)))));
 function analyze(raw) {
-  const text = raw.replace(/\r/g, '');
+  const text = cleanOCR(raw);
   const lines = text.replace(/-\n(?=[a-zà-ÿ])/g, '').replace(/[ \t\u00a0\u202f]+/g, ' ').split('\n').map(l => l.trim());
   let flat = '';
   for (let i = 0; i < lines.length; i++) {
@@ -1098,7 +1178,7 @@ function analyze(raw) {
   const n = norm(flat);
 
   // Organisme
-  let org = null, best = 0;
+  let org = null, best = 0, fuzzy = false;
   for (const o of ORGS) { const h = countHits(n, o.re); if (h > best) { best = h; org = o; } }
 
   // Type
@@ -1108,6 +1188,14 @@ function analyze(raw) {
     const score = h * 10 + t.level;
     if (score > tbest) { tbest = score; type = t; }
   }
+  // Rien reconnu : deuxième chance avec la lecture tolérante (photo floue, lettres confondues)
+  if (!org || type === TYPE_INFO) {
+    const nf = foldOCR(n);
+    if (!org) { let b2 = 0; for (const o of ORGS) { const h = countHits(nf, foldedRe(o)); if (h >= 2 && h > b2) { b2 = h; org = o; fuzzy = true; } } }
+    if (type === TYPE_INFO) { let t2 = 0; for (const t of TYPES) { const h = countHits(nf, foldedRe(t)); if (h < 1) continue; const sc = h * 10 + t.level; if (sc > t2) { t2 = sc; type = t; fuzzy = true; } } }
+  }
+  const why = o => o ? o.kw.filter((k, i) => o.re[i].test(n) || (fuzzy && foldedRe(o)[i].test(foldOCR(n)))).slice(0, 4) : [];
+  const whyOrg = why(org), whyType = type === TYPE_INFO ? [] : why(type);
 
   // Dates
   const dates = findDates(flat);
@@ -1115,7 +1203,7 @@ function analyze(raw) {
   const firstPart = flat.length * 0.4;
   let letterDate = null;
   for (const d of dates) {
-    if (d.index < firstPart && d.date <= new Date(now.getTime() + 2 * 86400000)) {
+    if (!d.inferred && d.index < firstPart && d.date <= new Date(now.getTime() + 2 * 86400000)) {
       const before = norm(flat.slice(Math.max(0, d.index - 25), d.index));
       if (/(, le|^le| le)\s*$/.test(before) || !letterDate) { letterDate = d; if (/(, le)\s*$/.test(before)) break; }
     }
@@ -1193,7 +1281,7 @@ function analyze(raw) {
 
   const docs = extractDocs(flat, sentences);
   const terms = GLOSSARY.filter(g => g.re.test(n)).slice(0, 8);
-  const a = { raw: text, flat, org, type, letterDate, deadline, recoursDl, amount, taxes, refs, emails, sites, phones, requests, recours, scam, phish, docs, docsDone: [], docsFromAI: false, terms };
+  const a = { raw: text, flat, org, type, letterDate, deadline, recoursDl, amount, taxes, refs, emails, sites, phones, requests, recours, scam, phish, whyOrg, whyType, fuzzy, docs, docsDone: [], docsFromAI: false, terms };
   a.level = computeLevel(a);
   return a;
 }
@@ -1529,6 +1617,7 @@ function renderResult(a, savedId, opts = {}) {
       </div>
       <p class="who-desc">${esc(org ? org.desc : "Son nom est en général en haut à gauche du courrier.")}</p>
       ${a.learned ? '<p class="note">Lecture ajustée d\'après tes corrections précédentes.</p>' : ''}
+      ${a.whyType.length || a.whyOrg.length ? `<p class="note">Reconnu grâce à : ${[...a.whyType, ...a.whyOrg.filter(x => !a.whyType.includes(x))].slice(0, 5).map(x => '« ' + esc(x) + ' »').join(', ')}.${a.fuzzy ? ' Lecture approximative : vérifie que c\'est bien le bon type de courrier.' : ''}</p>` : ''}
       ${a.phish && a.phish.length ? `<div class="scam"><strong>Méfie-toi : ce message a des signes d'hameçonnage.</strong><ul>${a.phish.map(x => `<li>${esc(x)}</li>`).join('')}</ul>Ne clique sur aucun lien et ne donne aucune information. Va directement sur le site officiel, en tapant toi-même l'adresse, ou appelle l'organisme.</div>` : ''}
       ${a.scam.length ? `<div class="scam"><strong>Attention, ça ressemble à une arnaque.</strong> Ce courrier parle de paiement par ${esc(a.scam.join(', '))}. Une administration ou une entreprise sérieuse ne demande jamais ça. Ne paye pas, et vérifie en contactant l'organisme par son site officiel.</div>` : ''}
 
@@ -1779,7 +1868,57 @@ async function getOcr() {
   });
   return ocrWorker;
 }
-// Image redressée pour la lecture : orientation EXIF respectée, marges de la table rognées, contraste étiré.
+/* Redressement de l'image avant lecture */
+// Inclinaison du texte, en degrés (de −7 à +7) : le bon angle donne des profils de lignes très contrastés (lignes de texte bien séparées).
+function estimateSkew(c) {
+  const k = Math.min(1, 520 / Math.max(c.width, c.height)), w = Math.max(8, Math.round(c.width * k)), h = Math.max(8, Math.round(c.height * k));
+  const t = document.createElement('canvas'); t.width = w; t.height = h; const x = t.getContext('2d'); x.drawImage(c, 0, 0, w, h);
+  const d = x.getImageData(0, 0, w, h).data, g = new Float32Array(w * h); let sum = 0, sq = 0;
+  for (let i = 0; i < w * h; i++) { const v = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) / 256; g[i] = v; sum += v; sq += v * v; }
+  const mean = sum / (w * h), sd = Math.sqrt(Math.max(1, sq / (w * h) - mean * mean)), thr = mean - 0.6 * sd, px = [], py = [];
+  for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) if (g[yy * w + xx] < thr) { px.push(xx); py.push(yy); }
+  if (px.length < 200) return 0;
+  const step = Math.max(1, Math.floor(px.length / 30000));
+  const score = a => {
+    const r = a * Math.PI / 180, s = Math.sin(r), co = Math.cos(r), off = w * Math.abs(s) + 2, bins = new Int32Array(Math.ceil(h * co + w * Math.abs(s)) + 6);
+    for (let i = 0; i < px.length; i += step) bins[Math.round(py[i] * co - px[i] * s + off)]++;
+    let sc = 0; for (let i = 0; i < bins.length; i++) sc += bins[i] * bins[i]; return sc;
+  };
+  let best = 0, bs = score(0);
+  for (let a = -7; a <= 7.01; a += 0.5) { const v = score(a); if (v > bs) { bs = v; best = a; } }
+  let fine = best, fs = bs;
+  for (let a = best - 0.5; a <= best + 0.51; a += 0.1) { const v = score(a); if (v > fs) { fs = v; fine = a; } }
+  return fs / score(0) > 1.04 ? Math.round(fine * 10) / 10 : 0;
+}
+function rotateCanvas(c, deg) {
+  const r = document.createElement('canvas'); r.width = c.width; r.height = c.height; const x = r.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, r.width, r.height); x.translate(r.width / 2, r.height / 2); x.rotate(deg * Math.PI / 180); x.drawImage(c, -c.width / 2, -c.height / 2);
+  return r;
+}
+// Éclairage inégal (ombre, flash, coin sombre) : écart de luminosité du papier entre les zones de la photo.
+function lightingUneven(c) {
+  const w = 96, h = Math.max(8, Math.round(96 * c.height / c.width)), t = document.createElement('canvas'); t.width = w; t.height = h; const x = t.getContext('2d'); x.drawImage(c, 0, 0, w, h);
+  const d = x.getImageData(0, 0, w, h).data, G = 6, vals = [];
+  for (let gy = 0; gy < G; gy++) for (let gx = 0; gx < G; gx++) {
+    const cell = []; for (let yy = Math.floor(gy * h / G); yy < Math.floor((gy + 1) * h / G); yy++) for (let xx = Math.floor(gx * w / G); xx < Math.floor((gx + 1) * w / G); xx++) { const i = (yy * w + xx) * 4; cell.push((d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8); }
+    cell.sort((a, b) => a - b); vals.push(cell[Math.floor(cell.length * 0.85)]);
+  }
+  const mx = Math.max(...vals), paper = vals.filter(v => v > mx * 0.55);
+  return paper.length >= 8 && (Math.max(...paper) - Math.min(...paper)) / mx > 0.2;
+}
+// Seuillage adaptatif (Bradley) : le texte devient noir et le fond blanc quelle que soit la lumière locale.
+function adaptiveBinarize(c) {
+  const w = c.width, h = c.height, ctx = c.getContext('2d'), img = ctx.getImageData(0, 0, w, h), d = img.data, g = new Uint8Array(w * h), I = new Float64Array((w + 1) * (h + 1));
+  for (let y = 0; y < h; y++) { let row = 0; for (let x = 0; x < w; x++) { const i = y * w + x, v = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) >> 8; g[i] = v; row += v; I[(y + 1) * (w + 1) + x + 1] = I[y * (w + 1) + x + 1] + row; } }
+  const r = Math.max(8, Math.round(Math.min(w, h) / 36));
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const x0 = Math.max(0, x - r), x1 = Math.min(w, x + r + 1), y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
+    const m = (I[y1 * (w + 1) + x1] - I[y0 * (w + 1) + x1] - I[y1 * (w + 1) + x0] + I[y0 * (w + 1) + x0]) / ((x1 - x0) * (y1 - y0));
+    const o = g[y * w + x] < m * 0.88 ? 0 : 255, i = (y * w + x) * 4; d[i] = d[i + 1] = d[i + 2] = o; d[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0); return c;
+}
+// Image redressée pour la lecture : orientation EXIF respectée, marges de la table rognées, texte remis droit, lumière égalisée, contraste étiré.
 function loadBitmap(file) {
   if (window.createImageBitmap) return createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => loadBitmapFallback(file));
   return loadBitmapFallback(file);
@@ -1826,6 +1965,10 @@ async function fileToCanvas(file, rot = 0, max = 2200) {
   try {
     const b = paperBox(c);
     if (b) { const sx = Math.round(b.fx * w), sy = Math.round(b.fy * h), sw = Math.round(b.fw * w), sh = Math.round(b.fh * h); const n = document.createElement('canvas'); n.width = sw; n.height = sh; n.getContext('2d').drawImage(c, sx, sy, sw, sh, 0, 0, sw, sh); c = n; w = sw; h = sh; }
+    // Texte penché : on remet les lignes à l'horizontale
+    const sk = estimateSkew(c); if (Math.abs(sk) >= 0.4) { c = rotateCanvas(c, -sk); w = c.width; h = c.height; }
+    // Ombre ou lumière inégale : seuillage adaptatif ; sinon simple étirement du contraste
+    if (lightingUneven(c)) return adaptiveBinarize(c);
     // Contraste : on étire entre les 2e et 98e percentiles de gris.
     const ctx = c.getContext('2d'), img = ctx.getImageData(0, 0, w, h), d = img.data, hist = new Array(256).fill(0);
     for (let i = 0; i < d.length; i += 4) { const v = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8; d[i] = d[i + 1] = d[i + 2] = v; hist[v]++; }
@@ -1886,19 +2029,22 @@ async function ocrImage(w, f, opts = {}) {
   const mx = opts.table ? 3000 : 2200;
   try { return await ocrImageRun(w, f, mx); } finally { if (opts.table) { try { await w.setParameters({ tessedit_pageseg_mode: '3', preserve_interword_spaces: '0' }); } catch (e) { /* ignoré */ } } }
 }
+let ocrConf = null;   // confiance de la dernière lecture (0 à 100)
 async function ocrImageRun(w, f, mx) {
-  let best = (await w.recognize(await fileToCanvas(f, 0, mx), { rotateAuto: true })).data.text || '', sc = textScore(best);
+  const r0 = (await w.recognize(await fileToCanvas(f, 0, mx), { rotateAuto: true })).data;
+  let best = r0.text || '', sc = textScore(best), conf = r0.confidence;
   // Photo prise de travers : on essaie les deux autres quarts de tour.
   for (const rot of sc < 0.35 ? [90, 270] : []) {
     setOcr(0.5, 'Redressement de la photo…');
-    const t = (await w.recognize(await fileToCanvas(f, rot, mx), { rotateAuto: true })).data.text || '', s2 = textScore(t);
-    if (s2 > sc) { best = t; sc = s2; }
+    const rr = (await w.recognize(await fileToCanvas(f, rot, mx), { rotateAuto: true })).data, t = rr.text || '', s2 = textScore(t);
+    if (s2 > sc) { best = t; sc = s2; conf = rr.confidence; }
   }
+  if (typeof conf === 'number') ocrConf = ocrConf === null ? conf : Math.min(ocrConf, conf);
   return best;
 }
 async function handleFiles(files) {
   files = [...files]; if (!files.length) return;
-  let all = '', pages = 0;
+  let all = '', pages = 0; ocrConf = null;
   try {
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
@@ -1916,10 +2062,12 @@ async function handleFiles(files) {
   }
   hideOcr();
   const prev = $('#letter-input').value.trim();
+  all = cleanOCR(all);
   $('#letter-input').value = (prev && files.length ? prev + '\n\n' : '') + all.trim();
   $('#clear-btn').hidden = false;
   readPages += pages; $('#add-page').hidden = false; $('#pages-note').hidden = false;
   $('#pages-note').textContent = readPages > 1 ? `${readPages} pages lues. Ajoute la page suivante si le courrier continue.` : 'Le courrier a plusieurs pages ? Ajoute la page suivante, elle sera lue à la suite.';
+  if (ocrConf !== null && ocrConf < 62 && all.replace(/\s/g, '').length >= 40) { $('#pages-note').textContent += ` Lecture peu sûre (${Math.round(ocrConf)} %) : vérifie les chiffres et les dates, ou reprends la photo de face, à plat et bien éclairée.`; toast('Lecture peu sûre : vérifie les chiffres'); track('ocr_faible'); }
   if (all.replace(/\s/g, '').length < 40) { toast("Je n'arrive pas à lire le texte. Reprends la photo bien à plat, avec de la lumière."); return; }
   runDecode();
 }
@@ -3503,7 +3651,7 @@ function renderPaie(box) {
   $$('[data-pg-up]', box).forEach(b => b.addEventListener('click', () => { const i = +b.dataset.pgUp; [paie$.pages[i - 1], paie$.pages[i]] = [paie$.pages[i], paie$.pages[i - 1]]; paie$.p = null; paie$.p0 = null; renderPaie(box); }));
   const onFiles = async fl => {
     fl = [...fl].filter(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name) || f.type.startsWith('image/')); if (!fl.length) return;
-    let added = 0, onlyPdf = true;
+    let added = 0, onlyPdf = true; ocrConf = null;
     try {
       for (let i = 0; i < fl.length; i++) {
         const f = fl[i], isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
@@ -3515,6 +3663,7 @@ function renderPaie(box) {
       }
     } catch (e) { console.error(e); hideOcr(); if (added) { paie$.p = null; paie$.p0 = null; renderPaie(box); } toast(navigator.onLine ? 'La lecture a échoué sur une page. Reprends-la bien à plat, avec de la lumière.' : 'Il faut internet la première fois pour préparer la lecture.'); return; }
     hideOcr(); paie$.p = null; paie$.p0 = null; track('paie_page');
+    if (ocrConf !== null && ocrConf < 62) toast('Lecture peu sûre : vérifie les chiffres, ou reprends la page de face, à plat et bien éclairée');
     if (onlyPdf) { ta.value = paie$.pages.map(x => x.text).join('\n\n'); run(); return; }
     renderPaie(box); toast(paie$.pages.length > 1 ? `${paie$.pages.length} pages ajoutées : ajoute la suite ou lance l'analyse` : 'Page ajoutée : ajoute la suite si besoin, puis lance l\'analyse');
     const g = $('#paie-go'); if (g) g.scrollIntoView({ block: 'center' });
@@ -4285,7 +4434,7 @@ renderList(); renderReminders(); notifyUrgent();
 updatePill(); gpuReady.then(updatePill);
 
 // Exposé pour les tests
-window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, paieAnswer, paieSetPages: pages => { paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages }; tools$ = { view: 'paie' }; showTab('tools'); }, applyPaieFix, textScore, fileToCanvas, buildEdlHTML, geoDist, readReceipt, parsePayslip, payslipInsights, looksLikePayslip, PAIE_SAMPLE };
+window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, cleanOCR, estimateSkew, rotateCanvas, lightingUneven, adaptiveBinarize, findDates, paieAnswer, paieSetPages: pages => { paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages }; tools$ = { view: 'paie' }; showTab('tools'); }, applyPaieFix, textScore, fileToCanvas, buildEdlHTML, geoDist, readReceipt, parsePayslip, payslipInsights, looksLikePayslip, PAIE_SAMPLE };
 })();
 </script>
 </body>
