@@ -4,10 +4,12 @@ import sys, json, wave
 import numpy as np
 
 SR = 48000
-DUR = 30.0
+data = json.load(open(sys.argv[1]))
+DUR = float(data['dur']); cues = data['cues']
 N = int(SR * DUR)
 T = np.arange(N) / SR
-cues = json.load(open(sys.argv[1]))
+KS, ARP, CLAP, HAT, END = 3.5, 8.0, 8.0, 14.5, DUR - 4.5   # début du rythme, de l'arpège, des claps, des charleys ; fin du rythme (avant le logo)
+CHIME = next((c['t'] for c in cues if c['k'] == 'chime'), DUR - 2.7)
 rng = np.random.default_rng(7)
 
 def place(buf, sig, t0, gain=1.0, pan=0.0):
@@ -72,7 +74,7 @@ music = np.zeros((2, N)); sfx = np.zeros((2, N))
 BEAT = 0.5
 CH = [([220.0, 261.63, 329.63], 55.0), ([174.61, 220.0, 261.63], 43.65), ([261.63, 329.63, 392.0], 65.41), ([196.0, 246.94, 293.66], 49.0)]
 side = np.ones(N)   # compression par le kick (effet pompe)
-kicks = [3.0 + k * BEAT for k in range(int((26.6 - 3.0) / BEAT) + 1)]
+kicks = [KS + k * BEAT for k in range(int((END - KS) / BEAT) + 1)]
 for kt in kicks:
     i = int(kt * SR)
     if i < N: side[i:] *= 1.0; 
@@ -81,7 +83,7 @@ for kt in kicks:
     side[i:m] *= 1 - 0.55 * np.exp(-np.arange(m - i) / SR / 0.09)
 
 pad = np.zeros((2, N)); 
-for bar in range(15):
+for bar in range(int(DUR / 2) + 1):
     t0 = bar * 2.0
     notes, root = CH[bar % 4]
     n = int(2.15 * SR); e = np.minimum(1, np.arange(n) / SR / 0.35) * np.exp(-np.maximum(0, np.arange(n) / SR - 1.7) / 0.18)
@@ -90,17 +92,17 @@ for bar in range(15):
             sig = (sine(f * (1 + det / 100), n) + 0.4 * sine(f * 2 * (1 + det / 100), n)) * e * 0.10
             place(pad, sig, t0, 1.0, pan)
     # basse : croches sur la fondamentale, dès 3 s
-    if t0 >= 3.0 or t0 + 1.99 > 3.0:
+    if t0 + 1.99 > KS:
         for k in range(4):
             tb = t0 + k * BEAT
-            if tb < 3.0 or tb > 27.0: continue
+            if tb < KS or tb > END: continue
             n = int(0.42 * SR); bsig = (sine(root, n) * 0.9 + 0.35 * saw(root * 2, n, 5)) * env(n, 0.004, 0.22)
             place(music, bsig, tb + (0.25 if k % 2 else 0.0), 0.62)
     # arpège : doubles croches dès 6 s
-    if 6.0 <= t0 < 26.0:
+    if ARP - 2 <= t0 < END:
         for k in range(16):
             ta = t0 + k * BEAT / 2
-            if ta < 6.0: continue
+            if ta < ARP or ta > END: continue
             f = notes[[0, 1, 2, 1][k % 4]] * 2
             place(music, pluck(f, 0.22, 5), ta, 0.075, -0.3 if k % 2 else 0.3)
 music += pad * (side[None, :] * 0.5 + 0.5)
@@ -108,18 +110,17 @@ music += pad * (side[None, :] * 0.5 + 0.5)
 for kt in kicks:
     place(music, kick(), kt, 0.95)
 for kt in kicks[1::2]:
-    if kt >= 6.0: place(music, noise_burst(int(0.16 * SR), 0.06, 1500), kt, 0.28); place(music, sine(190, int(0.16 * SR)) * np.exp(-np.arange(int(0.16 * SR)) / SR / 0.04), kt, 0.22)
-for k in range(int((26.5 - 9.0) / (BEAT / 2))):
-    th = 9.0 + k * BEAT / 2 + BEAT / 2 * (k % 2 == 1) * 0
-    if k % 2 == 1: place(music, noise_burst(int(0.05 * SR), 0.018, 6500), 9.0 + k * BEAT / 2, 0.30)
+    if kt >= CLAP: place(music, noise_burst(int(0.16 * SR), 0.06, 1500), kt, 0.28); place(music, sine(190, int(0.16 * SR)) * np.exp(-np.arange(int(0.16 * SR)) / SR / 0.04), kt, 0.22)
+for k in range(int((END - HAT) / (BEAT / 2))):
+    if k % 2 == 1: place(music, noise_burst(int(0.05 * SR), 0.018, 6500), HAT + k * BEAT / 2, 0.30)
 # montée avant le plan 3 s : bruit filtré qui monte
-n = int(2.6 * SR); t = np.arange(n) / SR; x = rng.standard_normal(n) * (t / 2.6) ** 2.2
+n = int((KS - 0.6) * SR); t = np.arange(n) / SR; x = rng.standard_normal(n) * (t / (KS - 0.6)) ** 2.2
 rise = hp(x, 900) * 0.16
 place(music, rise, 0.4, 1.0)
 place(music, np.concatenate([sine(55, int(3 * SR)) * 0.0 + (sine(110, int(3 * SR)) * 0.22) * np.minimum(1, np.arange(int(3 * SR)) / SR / 1.2)]), 0.0, 1.0)
 # final : accord de Do et fondu
 for f, d in ((261.63, 0), (329.63, 0.04), (392.0, 0.08), (523.25, 0.12)):
-    place(music, bell(f, 3.0) * 0.20, 27.3 + d, 1.0, (f % 3 - 1) * 0.3)
+    place(music, bell(f, 3.4) * 0.20, CHIME + d, 1.0, (f % 3 - 1) * 0.3)
 # ---------- bruitages ----------
 for c in cues:
     t, k = c['t'], c['k']
@@ -139,10 +140,15 @@ for c in cues:
     elif k == 'alert':
         for j in range(2): place(sfx, (sine(660, int(0.12 * SR)) + 0.4 * sine(1320, int(0.12 * SR))) * env(int(0.12 * SR), 0.003, 0.09), t + j * 0.16, 0.5)
     elif k == 'click': place(sfx, noise_burst(int(0.03 * SR), 0.008, 1500), t, 0.56); place(sfx, sine(1100, int(0.05 * SR)) * env(int(0.05 * SR), 0.001, 0.02), t, 0.7)
+    elif k == 'swish':
+        n = int(0.24 * SR); tt = np.arange(n) / SR; x = rng.standard_normal(n); fc = 600 + 3800 * (tt / 0.24); y = np.empty(n); acc = 0.0
+        for q in range(n):
+            a = 1 - np.exp(-2 * np.pi * fc[q] / SR); acc += a * (x[q] - acc); y[q] = acc
+        place(sfx, y * np.sin(np.pi * tt / 0.24) * 1.5, t, 0.5, 0.2)
     elif k == 'chime': pass
-mix = music * 0.62 + sfx * 0.95
+mix = music * 0.7 + sfx * 1.0
 # fondu d'entrée et de sortie, limiteur doux
-fade = np.ones(N); fi = int(0.03 * SR); fade[:fi] = np.linspace(0, 1, fi); fo = int(1.0 * SR); fade[-fo:] = np.linspace(1, 0, fo) ** 1.5
+fade = np.ones(N); fi = int(0.03 * SR); fade[:fi] = np.linspace(0, 1, fi); fo = int(1.6 * SR); fade[-fo:] = np.linspace(1, 0, fo) ** 1.5
 mix *= fade[None, :]
 mix = np.tanh(mix * 1.15) / np.tanh(1.15)
 mix *= 0.89 / max(1e-6, np.abs(mix).max())

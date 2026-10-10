@@ -151,28 +151,36 @@ svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-l
 const FMT = new URLSearchParams(location.search).get('fmt') === 'land' ? 'land' : 'port';
 document.body.className = FMT;
 const $ = s => document.querySelector(s);
-const DUR = 30, ANIMS = [], TYPERS = [], CUES = [];
+const DUR = 45, ANIMS = [], TYPERS = [], CUES = [];
+/* Temps d'écriture (secondes d'origine) → temps du film. Chaque scène garde ses animations mais dure plus longtemps :
+   [début d'origine, fin d'origine, début du film, fin du film, étirement des apparitions]. Coupes sur les temps de la musique (120 BPM). */
+const SC = { s0: [0, 3, 0, 3.5, 1.1], s1: [3, 6, 3.5, 8, 1.35], s2: [6, 10, 8, 14.5, 1.4], s3: [10, 13, 14.5, 19, 1.3], s4: [13, 17, 19, 25.5, 1.3], s5: [17, 21, 25.5, 32, 1.3], s6: [21, 24.5, 32, 37, 1.05], s7: [24.5, 27, 37, 40.5, 1], s8: [27, 30, 40.5, 45, 1.1] };
+function M(t) {
+  for (const [os, oe, ns, ne, f] of Object.values(SC)) if (t >= os && t < oe + (oe === 30 ? 1 : 0)) { if (t > oe - 0.25 && oe !== 30) return ne - (oe - t); return Math.min(ne, ns + (t - os) * f); }
+  return t;
+}
 const EASE = 'cubic-bezier(.2,.8,.2,1)', BACK = 'cubic-bezier(.34,1.56,.64,1)', LIN = 'linear';
-function an(el, kf, t0, d, ease = EASE, fill = 'both') { const a = el.animate(kf, { duration: d * 1000, delay: t0 * 1000, easing: ease, fill }); a.pause(); ANIMS.push(a); return a; }
-const cue = (t, k) => CUES.push({ t, k });
+function an0(el, kf, t0, d, ease = EASE, fill = 'both') { const a = el.animate(kf, { duration: d * 1000, delay: t0 * 1000, easing: ease, fill }); a.pause(); ANIMS.push(a); return a; }
+const an = (el, kf, t0, d, ease, fill) => an0(el, kf, M(t0), d, ease, fill);
+const cue = (t, k) => CUES.push({ t: M(t), k });
 const NB = ' ';
 // Mots animés : chaque mot jaillit à son temps
 function words(el, text, t0, step = 0.14, cls = {}) {
-  el.innerHTML = '';
+  el.innerHTML = ''; cue(t0 + .02, 'swish');
   text.split(' ').forEach((w, i) => { const s = document.createElement('span'); s.className = 'w' + (cls[i] ? ' ' + cls[i] : ''); s.textContent = w.replace(/_/g, NB) + ' '; el.appendChild(s);
     an(s, [{ opacity: 0, transform: 'translateY(46px) scale(.9)' }, { opacity: 1, transform: 'none' }], t0 + i * step, .34, BACK); });
 }
 // Scène : apparition/disparition
-function scene(id, t0, t1) { const el = $('#' + id); an(el, [{ opacity: 0, offset: 0 }, { opacity: 1, offset: .07 }, { opacity: 1, offset: .93 }, { opacity: 0, offset: 1 }], t0, t1 - t0, LIN); an(el, [{ transform: 'scale(1.035)' }, { transform: 'scale(1)' }], t0, t1 - t0, LIN); return el; }
-const pop = (el, t, d = .4, from = .6) => an(el, [{ opacity: 0, transform: `scale(${from})` }, { opacity: 1, transform: 'none' }], t, d, BACK);
-const slide = (el, t, dx = 0, dy = 60, d = .45) => an(el, [{ opacity: 0, transform: `translate(${dx}px,${dy}px)` }, { opacity: 1, transform: 'none' }], t, d);
+function scene(id) { const el = $('#' + id), [, , ns, ne] = SC[id]; const d = ne - ns + (id === 's8' ? 0 : 0.05); an0(el, [{ opacity: 0, offset: 0 }, { opacity: 1, offset: .05 }, { opacity: 1, offset: .95 }, { opacity: 0, offset: 1 }], ns, d, LIN); an0(el, [{ transform: 'scale(1.035)' }, { transform: 'scale(1)' }], ns, d, LIN); return el; }
+const pop = (el, t, d = .4, from = .6) => { cue(t + .02, 'pop'); return an(el, [{ opacity: 0, transform: `scale(${from})` }, { opacity: 1, transform: 'none' }], t, d, BACK); };
+const slide = (el, t, dx = 0, dy = 60, d = .45) => { cue(t + .02, 'swish'); return an(el, [{ opacity: 0, transform: `translate(${dx}px,${dy}px)` }, { opacity: 1, transform: 'none' }], t, d); };
 const ICON = { cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>', bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>', lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', pin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>', check: '<polyline points="20 6 9 17 4 12"/>', camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>', folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>', repeat: '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>', pct: '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>', file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>', shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>', mail: '<path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><polyline points="22,6 12,13 2,6"/>', bld: '<rect x="4" y="2" width="16" height="20" rx="2"/><line x1="9" y1="22" x2="9" y2="18"/><line x1="15" y1="22" x2="15" y2="18"/><line x1="8" y1="6" x2="8" y2="6"/><line x1="12" y1="6" x2="12" y2="6"/><line x1="16" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/>', list: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3" y2="6"/><line x1="3" y1="12" x2="3" y2="12"/><line x1="3" y1="18" x2="3" y2="18"/>', euro: '<path d="M18 7a7 7 0 1 0 0 10"/><line x1="4" y1="10" x2="14" y2="10"/><line x1="4" y1="14" x2="14" y2="14"/>' };
 const ic = k => `<svg class="i" viewBox="0 0 24 24">${ICON[k]}</svg>`;
 const LOGO = '<svg width="120" height="120" viewBox="0 0 64 64"><rect x="1" y="1" width="62" height="62" rx="17" fill="#5b3df5" stroke="rgba(255,255,255,.5)" stroke-width="2"/><circle cx="30" cy="30" r="14" fill="none" stroke="#fff" stroke-width="7"/><path d="M37 37l12 12" stroke="#d7f24a" stroke-width="8" stroke-linecap="round"/></svg>';
 
 /* ---------------- S0 : accroche (0 – 3 s) ---------------- */
 {
-  scene('s0', 0, 3.05);
+  scene('s0');
   words($('#h0'), `Un_courrier que_vous ne comprenez pas_?`, .15, .2, { 0: '', 4: 'g', 5: 'g' });
   const v = $('#v0'); v.style.position = 'relative';
   const L = [[-230, -120, -9, 'MISE EN DEMEURE'], [170, 20, 7, 'DERNIER RAPPEL'], [-80, 250, -3, 'URGENT'], [250, -190, 12, 'AMENDE']];
@@ -190,7 +198,7 @@ const LOGO = '<svg width="120" height="120" viewBox="0 0 64 64"><rect x="1" y="1
 }
 /* ---------------- S1 : photo (3 – 6 s) ---------------- */
 {
-  scene('s1', 3, 6.05);
+  scene('s1');
   words($('#h1'), `Prenez-le_en photo.`, 3.15, .16, { 2: 'g' });
   const h = $('#h1b'); h.textContent = 'Ou importez un PDF.'; slide(h, 3.7, 0, 30);
   pop($('#ph1'), 3.05, .5, .85); an($('#ph1'), [{ transform: 'rotate(-4deg)' }, { transform: 'rotate(0)' }], 3.05, 1.8);
@@ -200,26 +208,25 @@ const LOGO = '<svg width="120" height="120" viewBox="0 0 64 64"><rect x="1" y="1
   an($('#scan'), [{ top: '18%', opacity: 0 }, { top: '20%', opacity: 1, offset: .08 }, { top: '78%', opacity: 1, offset: .92 }, { top: '80%', opacity: 0 }], 3.8, 1.05, 'ease-in-out'); cue(3.8, 'scan');
   an($('#flash'), [{ opacity: 0 }, { opacity: .95, offset: .3 }, { opacity: 0 }], 4.9, .28, LIN); cue(4.9, 'shutter');
   an($('#res1'), [{ opacity: 0, transform: 'scale(1.12)' }, { opacity: 1, transform: 'none' }], 5.05, .45); cue(5.2, 'ding');
-  an($('#cam'), [{ opacity: 1 }, { opacity: 0 }], 5.05, .45, LIN, 'forwards');
-  cue(3.1, 'pop'); cue(5.9, 'whoosh');
+  an($('#cam'), [{ opacity: 1 }, { opacity: 0 }], 5.05, .45, LIN, 'forwards'); cue(5.9, 'whoosh');
 }
 /* ---------------- S2 : explication (6 – 10 s) ---------------- */
 {
-  scene('s2', 6, 10.05);
+  scene('s2');
   words($('#h2t'), `On_vous explique.`, 6.15, .16, { 1: 'g' });
   const h = $('#h2b'); h.textContent = 'Sans jargon, en une page.'; slide(h, 6.6, 0, 30);
   const C = [['bld', 'Qui vous écrit', 'La CAF', 6.55], ['list', 'Ce qu’on vous demande', 'Vos 3 derniers bulletins de salaire', 7.3], ['cal', 'Avant quand', 'Le 20 octobre : dans 10 jours', 8.05]];
   const cards = $('#cards');
-  C.forEach(([i, a, b, t]) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = `<div class="ic">${ic(i)}</div><div><small>${a}</small><b>${b}</b></div>`; cards.appendChild(d); slide(d, t, 90, 0, .42); cue(t + .05, 'tick'); });
+  C.forEach(([i, a, b, t]) => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = `<div class="ic">${ic(i)}</div><div><small>${a}</small><b>${b}</b></div>`; cards.appendChild(d); slide(d, t, 90, 0, .42); });
   const d = document.createElement('div'); d.className = 'card'; d.style.borderColor = '#ffe14d99'; d.innerHTML = `<div class="ic">${ic('euro')}</div><div><small>Combien : HT ou TTC ?</small><b><span class="chip ht" id="cht">HT 540,83 €</span> <span class="chip ttc" id="cttc">TTC 649,00 €</span></b></div>`;
-  cards.appendChild(d); slide(d, 8.8, 90, 0, .42); cue(8.85, 'tick');
+  cards.appendChild(d); slide(d, 8.8, 90, 0, .42);
   an($('#cttc'), [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }], 9.15, .5, BACK); cue(9.15, 'ding');
   an($('#cht'), [{ opacity: 1 }, { opacity: .45 }], 9.1, .3, LIN);
   cue(9.9, 'whoosh');
 }
 /* ---------------- S3 : rappels et lettre (10 – 13 s) ---------------- */
 {
-  scene('s3', 10, 13.05);
+  scene('s3');
   words($('#h3'), `On_vous rappelle.`, 10.15, .16, { 1: 'g' });
   const h = $('#h3b'); h.textContent = 'Et la réponse est déjà écrite.'; slide(h, 10.6, 0, 30);
   pop($('#ph3'), 10.1, .5, .85); an($('#ph3'), [{ transform: 'translateY(30px)' }, { transform: 'none' }], 10.1, 2.9, 'ease-out');
@@ -227,12 +234,12 @@ const LOGO = '<svg width="120" height="120" viewBox="0 0 64 64"><rect x="1" y="1
   const bell = document.createElement('div'); bell.style.cssText = 'position:absolute;right:6%;top:6%;width:150px;height:150px;border-radius:50%;background:var(--c1);color:#111;display:grid;place-items:center;font-size:84px;z-index:5'; bell.innerHTML = ic('bell'); v.appendChild(bell);
   pop(bell, 10.55, .45, .3); an(bell, [{ rotate: '0deg' }, { rotate: '-18deg' }, { rotate: '16deg' }, { rotate: '-12deg' }, { rotate: '8deg' }, { rotate: '0deg' }], 10.9, .9, 'ease-in-out'); cue(10.6, 'bell');
   const l = document.createElement('div'); l.className = 'paper'; l.style.cssText = 'left:2%;bottom:4%;width:300px;height:380px;z-index:5;transform:rotate(-6deg)'; l.innerHTML = '<b>Lettre prête ✓</b><i></i><i style="width:80%"></i><i></i><i style="width:60%"></i><i></i><i style="width:75%"></i>'; v.appendChild(l);
-  an(l, [{ opacity: 0, transform: 'translate(-120px,60px) rotate(-18deg)' }, { opacity: 1, transform: 'rotate(-6deg)' }], 11.4, .5, BACK); cue(11.45, 'pop');
+  an(l, [{ opacity: 0, transform: 'translate(-120px,60px) rotate(-18deg)' }, { opacity: 1, transform: 'rotate(-6deg)' }], 11.4, .5, BACK);
   cue(12.9, 'whoosh');
 }
 /* ---------------- S4 : fiche de paie (13 – 17 s) ---------------- */
 {
-  scene('s4', 13, 17.05);
+  scene('s4');
   words($('#h4'), `Vos_heures supp sont-elles comptées_?`, 13.15, .13, { 1: 'g', 2: 'g' });
   const v = $('#v4'); v.style.position = 'relative';
   v.innerHTML = `<div class="slip" id="slip"><h4><span>BULLETIN DE PAIE</span><span>Septembre 2026</span></h4>
@@ -244,20 +251,20 @@ const LOGO = '<svg width="120" height="120" viewBox="0 0 64 64"><rect x="1" y="1
     <div class="bubble" id="bub">J’en ai fait 14 h</div>
     <div class="alert" id="alr">${ic('bell').replace('bell','')}⚠${NB}Il en manque 4${NB}h</div>
     <div class="badge" id="lt" style="background:var(--c2);color:#10131c;right:0;bottom:2%">${ic('mail')}Lettre prête</div>`;
-  pop($('#slip'), 13.2, .5, .9); cue(13.25, 'pop');
-  an($('#hs1'), [{ backgroundColor: '#ffe14d00' }, { backgroundColor: '#ffe14daa' }, { backgroundColor: '#ffe14d55' }], 13.9, .5, LIN); cue(14.0, 'tick');
-  an($('#hs2'), [{ backgroundColor: '#ffe14d00' }, { backgroundColor: '#ffe14daa' }, { backgroundColor: '#ffe14d55' }], 14.4, .5, LIN); cue(14.5, 'tick');
+  pop($('#slip'), 13.2, .5, .9);
+  an($('#hs1'), [{ backgroundColor: '#ffe14d00' }, { backgroundColor: '#ffe14daa' }, { backgroundColor: '#ffe14d55' }], 13.9, .5, LIN);
+  an($('#hs2'), [{ backgroundColor: '#ffe14d00' }, { backgroundColor: '#ffe14daa' }, { backgroundColor: '#ffe14d55' }], 14.4, .5, LIN);
   pop($('#paid'), 14.9, .4, .5); cue(14.95, 'ding');
   const bub = $('#bub'), alr = $('#alr'), lt = $('#lt');
   bub.style.cssText += (FMT === 'port' ? 'right:0;top:70%' : 'right:0;top:2%'); alr.style.cssText += (FMT === 'port' ? 'left:0;bottom:11%' : 'left:0;bottom:6%');
-  slide(bub, 15.25, 60, 0, .35); cue(15.3, 'pop');
+  slide(bub, 15.25, 60, 0, .35);
   an(alr, [{ opacity: 0, transform: 'scale(.4) rotate(-8deg)' }, { opacity: 1, transform: 'scale(1) rotate(-3deg)' }], 15.8, .4, BACK); cue(15.85, 'alert');
   an(alr, [{ rotate: '0deg' }, { rotate: '-2deg' }, { rotate: '2deg' }, { rotate: '0deg' }], 16.3, .4, 'ease-in-out');
-  slide(lt, 16.3, 0, 40, .4); cue(16.35, 'pop'); cue(16.9, 'whoosh');
+  slide(lt, 16.3, 0, 40, .4); cue(16.9, 'whoosh');
 }
 /* ---------------- S5 : état des lieux (17 – 21 s) ---------------- */
 {
-  scene('s5', 17, 21.05);
+  scene('s5');
   words($('#h5'), `État_des lieux : la preuve_dans la poche.`, 17.15, .12, { 5: 'g', 6: 'g', 7: 'g', 8: 'g' });
   const h = $('#h5b'); h.textContent = 'Photos datées, géolocalisées, certifiées.'; slide(h, 18.1, 0, 30);
   const v = $('#v5'); v.style.position = 'relative';
@@ -268,46 +275,46 @@ const LOGO = '<svg width="120" height="120" viewBox="0 0 64 64"><rect x="1" y="1
     <div class="cmp" id="cmp"><span>Entrée</span><b class="a">Bon état</b><span>→</span><span>Sortie</span><b class="z">Dégradé ⚠</b></div>`;
   const ph = $('#photo'), map = $('#map'), cm = $('#cmp'), cert = $('#cert');
   map.style.cssText += FMT === 'port' ? 'left:0;bottom:2%' : 'left:0;top:0;width:300px;height:200px'; cm.style.cssText += FMT === 'port' ? 'right:0;bottom:6%' : 'left:0;right:0;bottom:0;justify-content:center;font-size:26px'; cert.style.cssText += FMT === 'port' ? 'right:0;top:0' : 'right:0;top:10px'; if (FMT === 'land') cert.innerHTML = ic('check') + 'Date certifiée';
-  pop(ph, 17.2, .5, .9); an(ph, [{ transform: 'scale(1)' }, { transform: 'scale(1.04)' }], 17.2, 3.8, LIN); cue(17.25, 'pop');
+  pop(ph, 17.2, .5, .9); an(ph, [{ transform: 'scale(1)' }, { transform: 'scale(1.04)' }], 17.2, 3.8, LIN);
   an($('#flash') && ph.querySelector('.vf'), [{ opacity: 0 }, { opacity: 1 }], 17.4, .3, LIN);
-  TYPERS.push({ el: $('#ts'), text: '10/10/2026 14:32:05\n45,76405 · 4,83572 (±12 m)', t0: 18.2, cps: 26 }); [18.25, 18.5, 18.75, 19.0, 19.25, 19.5].forEach(t => cue(t, 'type'));
+  TYPERS.push({ el: $('#ts'), text: '10/10/2026 14:32:05\n45,76405 · 4,83572 (±12 m)', t0: M(18.2), cps: 22 }); for (let k = 0; k < 14; k++) cue(18.25 + k * 0.1, 'type');
   cue(17.9, 'shutter'); an(ph, [{ filter: 'brightness(1)' }, { filter: 'brightness(1.6)' }, { filter: 'brightness(1)' }], 17.9, .3, LIN);
-  pop(map, 19.1, .45, .6); cue(19.15, 'pop'); an($('#ring'), [{ transform: 'scale(1)', opacity: .9 }, { transform: 'scale(4.5)', opacity: 0 }], 19.5, 1.0, 'ease-out'); an($('#ring'), [{ opacity: 0 }, { opacity: 0 }], 17, 2.4, LIN);
+  pop(map, 19.1, .45, .6); an($('#ring'), [{ transform: 'scale(1)', opacity: .9 }, { transform: 'scale(4.5)', opacity: 0 }], 19.5, 1.0, 'ease-out'); an($('#ring'), [{ opacity: 0 }, { opacity: 0 }], 17, 2.4, LIN);
   pop(cert, 19.7, .45, .6); cue(19.75, 'ding');
   slide(cm, 20.15, 0, 40, .4); cue(20.2, 'alert'); cue(20.9, 'whoosh');
 }
 /* ---------------- S6 : tuiles (21 – 24,5 s) ---------------- */
 {
-  scene('s6', 21, 24.55);
+  scene('s6');
   words($('#h6'), `Et_aussi…`, 21.15, .2, { 1: 'g' }); $('#h6').style.fontSize = FMT === 'port' ? '150px' : '130px';
   const T = [['shield', 'Garanties et tickets'], ['folder', 'Coffre de documents'], ['repeat', 'Abonnements'], ['pct', 'Calcul HT / TTC'], ['mail', 'Lettres types'], ['file', 'Dossier en PDF']];
   const g = $('#tiles');
-  T.forEach(([i, t], k) => { const d = document.createElement('div'); d.className = 'tile'; d.innerHTML = `<div class="t">${ic(i)}</div>${t}`; g.appendChild(d); pop(d, 21.25 + k * .5, .4, .5); cue(21.3 + k * .5, 'pop'); });
+  T.forEach(([i, t], k) => { const d = document.createElement('div'); d.className = 'tile'; d.innerHTML = `<div class="t">${ic(i)}</div>${t}`; g.appendChild(d); pop(d, 21.25 + k * .5, .4, .5); });
   cue(24.4, 'whoosh');
 }
 /* ---------------- S7 : confidentialité (24,5 – 27 s) ---------------- */
 {
-  scene('s7', 24.5, 27.05);
+  scene('s7');
   words($('#h7'), `Tout_reste sur votre téléphone.`, 24.65, .14, { 1: 'g', 2: 'g', 3: 'g' });
   const h = $('#h7b'); h.textContent = 'Vos courriers ne partent nulle part.'; slide(h, 25.3, 0, 30);
   const v = $('#v7');
   v.innerHTML = `<div id="lock" style="width:400px;height:400px;border-radius:50%;background:var(--c1);color:#111;display:grid;place-items:center;font-size:230px;box-shadow:0 0 0 24px #ffe14d22,0 0 0 56px #ffe14d12">${ic('lock')}</div>`;
-  pop($('#lock'), 24.7, .5, .3); an($('#lock'), [{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], 25.4, .5, BACK); cue(24.75, 'pop'); cue(25.4, 'click'); cue(26.9, 'whoosh');
+  pop($('#lock'), 24.7, .5, .3); an($('#lock'), [{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], 25.4, .5, BACK); cue(25.4, 'click'); cue(26.9, 'whoosh');
 }
 /* ---------------- S8 : final (27 – 30 s) ---------------- */
 {
-  scene('s8', 27, 30);
+  scene('s8');
   $('#lg').innerHTML = LOGO + '<span style="font:800 54px B">QuenTools</span>'; pop($('#lg'), 27.1, .5, .5);
   words($('#h8'), `Paperdecrypt`, 27.3, .2, { 0: 'g' });
   const h = $('#h8b'); h.innerHTML = 'Le décodeur de papiers,<br>gratuit.'; slide(h, 27.9, 0, 30);
-  pop($('#url'), 28.4, .5, .6); cue(27.35, 'chime'); cue(28.45, 'pop');
+  pop($('#url'), 28.4, .5, .6); cue(27.35, 'chime');
   slide($('#legal'), 28.6, 0, 20, .6);
   if (FMT === 'land') { $('#s8').style.cssText += ';justify-content:center'; }
   else { $('#s8').style.cssText += ';justify-content:center'; }
 }
 // Scènes : ordre de superposition = ordre du document ; barre de progression et balayage de transition
-an($('#bar'), [{ width: '0%' }, { width: '100%' }], 0, DUR, LIN);
-[3, 6, 10, 13, 17, 21, 24.5, 27].forEach(t => an($('#wipe'), [{ opacity: 1, transform: 'translateX(-120%) skewX(-12deg)' }, { opacity: 1, transform: 'translateX(190%) skewX(-12deg)' }], t - .12, .42, 'ease-in', 'none'));
+an0($('#bar'), [{ width: '0%' }, { width: '100%' }], 0, DUR, LIN);
+[3.5, 8, 14.5, 19, 25.5, 32, 37, 40.5].forEach(t => an0($('#wipe'), [{ opacity: 1, transform: 'translateX(-120%) skewX(-12deg)' }, { opacity: 1, transform: 'translateX(190%) skewX(-12deg)' }], t - .12, .42, 'ease-in', 'none'));
 /* ---------------- Pilotage ---------------- */
 function setT(t) {
   ANIMS.forEach(a => { a.currentTime = t * 1000; });

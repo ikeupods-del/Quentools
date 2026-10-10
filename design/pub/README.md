@@ -1,37 +1,42 @@
-# Publicité Paperdecrypt (30 s)
+# Publicité Paperdecrypt (45 s)
 
 Film d'animation (motion design) généré par le code : `tools/pub/pub.html` (animation pilotée à la seconde près), `tools/pub/audio.py` (musique et bruitages synthétisés, aucun morceau tiers), `tools/pub/render.js` (rendu image par image puis assemblage ffmpeg).
 
 | Fichier | Usage | Format | Son |
 |---|---|---|---|
-| `paperdecrypt-pub-30s-reseaux-9x16.mp4` | TikTok, Reels, Stories, Shorts | 1080×1920, 30 i/s, H.264 | AAC 48 kHz stéréo, −14 LUFS |
-| `paperdecrypt-pub-30s-tele-16x9.mp4` | Télévision, YouTube, site, écran | 1920×1080, 25 i/s, H.264 | AAC 48 kHz stéréo, −23 LUFS (norme EBU R128) |
+| `paperdecrypt-pub-45s-reseaux-9x16.mp4` | TikTok, Reels, Stories, Shorts | 1080×1920, 30 i/s, H.264 | AAC 48 kHz stéréo, −14 LUFS |
+| `paperdecrypt-pub-45s-tele-16x9.mp4` | Télévision, YouTube, site, écran | 1920×1080, 25 i/s, H.264 | AAC 48 kHz stéréo, −23 LUFS (norme EBU R128) |
+
+Bandes son seules : `paperdecrypt-pub-bande-son-reseaux.mp3` et `…-tele.mp3` (même volume que les vidéos).
 
 Copie de travail pour un diffuseur ou un monteur (ProRes 422 HQ, son PCM) : `PRORES=1 node tools/pub/render.js land 25`.
 Refaire un rendu (après avoir changé un texte ou une image) : `node tools/pub/render.js port 30` et `node tools/pub/render.js land 25` (environ une minute chacun). Aperçu en images fixes : `node tools/pub/apercu.js port`.
 
-## Déroulé (30 s, coupes sur les temps de la musique à 120 battements par minute)
+## Déroulé (45 s, coupes sur les temps de la musique à 120 battements par minute)
+Chaque plan reste affiché au moins 2 secondes après l'apparition de son dernier élément, pour laisser le temps de lire.
+
 | Temps | Plan | Message |
 |---|---|---|
-| 0 – 3 s | Courriers qui tombent, tampons « Mise en demeure », « Urgent » | « Un courrier que vous ne comprenez pas ? » |
-| 3 – 6 s | Photo du courrier sur téléphone, balayage de lecture, flash | « Prenez-le en photo. Ou importez un PDF. » |
-| 6 – 10 s | Cartes : qui écrit, ce qu'on demande, avant quand, combien (HT barré, TTC en évidence) | « On vous explique. » |
-| 10 – 13 s | Rappels dans l'agenda, lettre de réponse prête | « On vous rappelle. Et la réponse est déjà écrite. » |
-| 13 – 17 s | Fiche de paie : heures supplémentaires repérées, 14 h faites contre 10 h payées | « Vos heures supp sont-elles comptées ? » |
-| 17 – 21 s | État des lieux : photo avec date, heure et GPS, carte, certification, comparaison entrée/sortie | « La preuve dans la poche. » |
-| 21 – 24,5 s | Garanties, coffre, abonnements, HT/TTC, lettres types, dossier PDF | « Et aussi… » |
-| 24,5 – 27 s | Cadenas | « Tout reste sur votre téléphone. » |
-| 27 – 30 s | Logo, nom, adresse, mention légale | « Paperdecrypt, le décodeur de papiers, gratuit. quentools.fr » |
+| 0 – 3,5 s | Courriers qui tombent, tampons « Mise en demeure », « Urgent » | « Un courrier que vous ne comprenez pas ? » |
+| 3,5 – 8 s | Photo du courrier sur téléphone, balayage de lecture, flash, résultat | « Prenez-le en photo. Ou importez un PDF. » |
+| 8 – 14,5 s | Cartes : qui écrit, ce qu'on demande, avant quand, combien (HT barré, TTC en évidence) | « On vous explique. » |
+| 14,5 – 19 s | Rappels dans l'agenda, lettre de réponse prête | « On vous rappelle. Et la réponse est déjà écrite. » |
+| 19 – 25,5 s | Fiche de paie : heures supplémentaires repérées, 14 h faites contre 10 h payées | « Vos heures supp sont-elles comptées ? » |
+| 25,5 – 32 s | État des lieux : photo avec date, heure et GPS, carte, certification, comparaison entrée/sortie | « La preuve dans la poche. » |
+| 32 – 37 s | Garanties, coffre, abonnements, HT/TTC, lettres types, dossier PDF | « Et aussi… » |
+| 37 – 40,5 s | Cadenas | « Tout reste sur votre téléphone. » |
+| 40,5 – 45 s | Logo, nom, adresse, mention légale | « Paperdecrypt, le décodeur de papiers, gratuit. quentools.fr » |
 
-Le sens passe sans le son (la plupart des vidéos sociales sont vues sans son) ; la musique et les bruitages sont calés sur chaque apparition (frappes, balayage, déclic d'appareil photo, « ding » de validation, alerte, cadenas).
+Le sens passe sans le son (la plupart des vidéos sociales sont vues sans son). Avec le son : musique rythmée et bruitages calés sur chaque apparition (frappes de tampons, balayage de lecture, déclic d'appareil photo, « ding » de validation, cloche, machine à écrire du GPS, alerte, cadenas, petits « pop » et « swish » à chaque élément). La bande son seule est fournie en MP3 pour le montage.
 
-## Voix off proposée (pour une version télévision, 30 s, à faire enregistrer par un comédien)
+## Voix off proposée (pour une version télévision, 45 s, à faire enregistrer par un comédien)
 > « Un courrier que vous ne comprenez pas ? Prenez-le en photo.
 > Paperdecrypt vous explique : qui vous écrit, ce qu'on vous demande, avant quand, et combien : hors taxes ou toutes taxes comprises.
-> Il vous rappelle les dates et prépare la réponse.
-> Votre fiche de paie : vos heures supplémentaires sont-elles comptées ?
+> Il vous rappelle les dates et prépare déjà la réponse.
+> Votre fiche de paie : vos heures supplémentaires sont-elles toutes comptées ?
 > Votre état des lieux : des photos datées, géolocalisées, certifiées.
-> Garanties, abonnements, coffre de documents… tout y est, et tout reste sur votre téléphone.
+> Garanties, abonnements, coffre de documents, calcul de TVA, lettres types… tout y est.
+> Et tout reste sur votre téléphone.
 > Paperdecrypt, le décodeur de papiers gratuit de QuenTools. Sur quentools.fr. »
 
 Poser la voix à environ −18 LUFS sur la musique, qui peut descendre de 6 dB pendant la voix.
