@@ -22,3 +22,6 @@ clients/
 
 # Fiches de paie réelles lues pour l entraînement (montants de personnes : jamais versionnés)
 tools/fixtures/fiches-reelles*.json
+
+# Application QuentMovie : fichiers générés
+quentmovie/dist/

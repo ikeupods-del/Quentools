@@ -1,5 +1,5 @@
 #!/bin/bash
-# Double-clique sur ce fichier pour ouvrir QuenTools Monteur.
+# Double-clique sur ce fichier pour ouvrir QuentMovie.
 cd "$(dirname "$0")" || exit 1
 
 # Homebrew (Mac Apple Silicon et Intel)
@@ -17,5 +17,5 @@ if [ -n "$manque" ]; then
 fi
 
 (sleep 1; open "http://localhost:4173") &
-echo "QuenTools Monteur est ouvert. Ferme cette fenêtre pour l'arrêter."
+echo "QuentMovie est ouvert. Ferme cette fenêtre pour l'arrêter."
 node server.js

@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuentMovie</title>
+<style>
+:root{--bg:#141518;--pan:#1c1e23;--pan2:#262930;--pan3:#30343d;--ligne:#363a44;--txt:#eceef2;--mut:#98a1b0;--ac:#4f8cff;--ac2:#2f5fc4;--ok:#35c27a;--ko:#ef5b5b;--clip:#3a5f9e;--audio:#2f7d5b}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--txt);font:13px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;display:grid;grid-template-rows:46px minmax(0,1fr) 270px;grid-template-columns:310px minmax(0,1fr) 320px;grid-template-areas:"top top top" "nav view insp" "tl tl tl";overflow:hidden;-webkit-user-select:none;user-select:none}
+input,textarea{-webkit-user-select:text;user-select:text}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--pan2);border:1px solid var(--ligne);border-radius:7px;padding:5px 10px;cursor:pointer}
+button:hover{border-color:var(--ac)}
+button.pri{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+button.mini{padding:1px 7px;font-size:12px}
+button:disabled{opacity:.35;cursor:default;border-color:var(--ligne)}
+select,input[type=text],input[type=number],textarea{background:var(--bg);border:1px solid var(--ligne);border-radius:6px;padding:4px 7px;width:100%}
+header{grid-area:top;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--pan);border-bottom:1px solid var(--ligne)}
+header h1{font-size:14px;margin:0 8px 0 0;letter-spacing:.02em}
+header .sp{flex:1}
+header select{width:auto}
+.mut{color:var(--mut);font-size:12px}
+.err{color:var(--ko)}
+/* navigateur gauche */
+#nav{grid-area:nav;background:var(--pan);border-right:1px solid var(--ligne);display:flex;flex-direction:column;min-height:0}
+#tabs{display:flex;border-bottom:1px solid var(--ligne)}
+#tabs button{flex:1;border:0;border-radius:0;background:none;padding:9px 2px;font-size:12px;color:var(--mut);border-bottom:2px solid transparent}
+#tabs button.on{color:var(--txt);border-bottom-color:var(--ac)}
+#navbody{flex:1;overflow:auto;padding:10px;min-height:0}
+.media{display:flex;gap:8px;align-items:center;background:var(--pan2);border-radius:8px;padding:5px;margin-bottom:6px;cursor:grab}
+.media img,.media .ico{width:48px;height:48px;object-fit:cover;border-radius:5px;background:#000;flex:none;display:grid;place-items:center;font-size:20px}
+.media .nom{flex:1;min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.media .nom small{display:block;color:var(--mut)}
+.grille{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.carte{background:var(--pan2);border:1px solid transparent;border-radius:8px;overflow:hidden;cursor:pointer;text-align:center;font-size:12px}
+.carte:hover{border-color:var(--ac)}
+.carte img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#000}
+.carte span{display:block;padding:5px 4px;line-height:1.2}
+.carte.off{opacity:.35;pointer-events:none}
+.carte.txt{padding:10px 6px}
+h3{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:14px 0 6px}
+h3:first-child{margin-top:0}
+/* visionneuse */
+#view{grid-area:view;display:flex;flex-direction:column;align-items:center;padding:10px;gap:8px;min-width:0;min-height:0;overflow:hidden}
+#stage{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+#stage img,#stage video{max-width:100%;max-height:100%;border-radius:6px;background:#000;box-shadow:0 4px 28px #000a}
+#stage .vide{color:var(--mut);text-align:center;max-width:340px}
+.barre{display:flex;gap:8px;align-items:center;width:100%;max-width:720px}
+.barre input[type=range]{flex:1}
+.badge{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:#000c;border-radius:20px;padding:3px 12px;font-size:12px}
+/* inspecteur */
+#insp{grid-area:insp;background:var(--pan);border-left:1px solid var(--ligne);overflow:auto;padding:8px 10px}
+details{border-bottom:1px solid var(--ligne);padding:6px 0}
+summary{cursor:pointer;font-weight:600;padding:3px 0;list-style:none}
+summary::before{content:"▸ ";color:var(--mut)}
+details[open]>summary::before{content:"▾ "}
+label.l{display:block;font-size:12px;color:var(--mut);margin:7px 0 2px}
+label.l span{float:right;color:var(--txt)}
+input[type=range]{width:100%;accent-color:var(--ac);margin:0}
+.sw{display:flex;align-items:center;gap:8px;margin:6px 0}
+.sw input{width:auto}
+.ligne{display:flex;gap:6px;align-items:center}
+.ligne>*{flex:1}
+.fxrow{background:var(--pan2);border-radius:8px;padding:6px 8px;margin:6px 0}
+.fxrow .tete{display:flex;align-items:center;gap:4px;font-weight:600;font-size:12px}
+.fxrow .tete b{flex:1}
+input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-radius:6px;background:none;width:100%}
+.bloc{border:1px solid var(--ligne);border-radius:8px;padding:8px;margin-top:6px;background:#0002}
+/* timeline */
+#tl{grid-area:tl;background:var(--pan);border-top:1px solid var(--ligne);display:flex;flex-direction:column;min-height:0}
+#tlbar{display:flex;gap:6px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--ligne);flex-wrap:wrap}
+#tlbar .sp{flex:1}
+#scroll{flex:1;overflow:auto;position:relative;min-height:0}
+#lane{position:relative;min-height:100%}
+#regle{height:22px;position:sticky;top:0;background:var(--pan2);border-bottom:1px solid var(--ligne);cursor:pointer;z-index:3}
+#regle i{position:absolute;top:0;bottom:0;border-left:1px solid var(--ligne);padding-left:3px;font-size:10px;color:var(--mut);font-style:normal;pointer-events:none}
+.piste{position:relative;height:74px;margin:6px 0;border-radius:6px;background:#0003}
+.piste.a{height:42px}
+.etiq{position:absolute;left:4px;top:-1px;font-size:10px;color:var(--mut);z-index:2;pointer-events:none}
+.clip{position:absolute;top:0;bottom:0;border-radius:6px;border:2px solid #0006;background:var(--clip) left/auto 100% repeat-x;overflow:hidden;cursor:pointer;box-shadow:inset 0 0 0 100px #0a122355}
+.clip.sel{border-color:#fff;box-shadow:inset 0 0 0 100px #0a122322}
+.clip b{position:absolute;left:5px;top:3px;right:5px;font-size:11px;text-shadow:0 1px 3px #000;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.clip small{position:absolute;left:5px;bottom:3px;font-size:10px;text-shadow:0 1px 3px #000}
+.clip .tags{position:absolute;right:4px;bottom:2px;font-size:11px;text-shadow:0 1px 3px #000}
+.clip.drop{outline:2px dashed var(--ac)}
+.cut{position:absolute;top:50%;transform:translate(-50%,-50%);z-index:4;width:20px;height:20px;border-radius:50%;background:var(--pan3);border:1px solid var(--mut);font-size:11px;display:grid;place-items:center;cursor:pointer;padding:0}
+.cut.on{background:var(--ac);border-color:#fff}
+.cut.sel{box-shadow:0 0 0 2px #fff}
+.aud{position:absolute;top:3px;bottom:3px;border-radius:6px;background:var(--audio);border:2px solid #0006;cursor:grab;overflow:hidden;font-size:11px;padding:3px 6px;white-space:nowrap}
+.aud.sel{border-color:#fff}
+#tete{position:absolute;top:0;bottom:0;width:0;border-left:2px solid #ff4d4d;z-index:5;pointer-events:none}
+#tete::before{content:"";position:absolute;top:0;left:-7px;border:6px solid transparent;border-top:9px solid #ff4d4d}
+/* fenêtres */
+#modal{position:fixed;inset:0;background:#000b;display:none;place-items:center;z-index:20}
+#modal.on{display:grid}
+#boite{background:var(--pan);border:1px solid var(--ligne);border-radius:12px;padding:16px;width:min(92vw,520px);max-height:92vh;overflow:auto;-webkit-user-select:text;user-select:text}
+#boite h2{margin:0 0 10px;font-size:16px}
+#barreExp{height:8px;background:var(--bg);border-radius:6px;overflow:hidden;margin:12px 0}
+#barreExp i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display:block}
+.liste button{display:block;width:100%;text-align:left;margin:4px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎬 QuentMovie</h1>
+  <button id="bNouveau">Nouveau</button><button id="bOuvrir">Ouvrir…</button><button id="bSauver">Enregistrer…</button>
+  <button id="bUndo" title="Annuler (⌘Z)">↶</button><button id="bRedo" title="Rétablir (⇧⌘Z)">↷</button>
+  <span class="sp"></span>
+  <span class="mut" id="etat"></span>
+  <select id="format"><option value="vertical">Vertical 9:16</option><option value="horizontal">Horizontal 16:9</option><option value="carre">Carré 1:1</option></select>
+  <button id="bApercu">🎞 Aperçu avec effets</button>
+  <button class="pri" id="bExport">Exporter…</button>
+</header>
+
+<aside id="nav">
+  <div id="tabs">
+    <button data-tab="medias" class="on">Médias</button><button data-tab="effets">Effets</button><button data-tab="transitions">Transitions</button><button data-tab="titres">Titres</button><button data-tab="sons">Sons</button>
+  </div>
+  <div id="navbody"></div>
+</aside>
+
+<main id="view">
+  <div id="stage"><div class="vide">Ajoute des médias, puis fais-les glisser dans la timeline (ou clique sur « + »).</div></div>
+  <div class="barre">
+    <button id="bPlay" disabled>▶ Lire l’original</button>
+    <input type="range" id="pos" min="0" max="1" step="0.01" value="0" disabled>
+    <span class="mut" id="posTxt">0,0 s</span>
+  </div>
+</main>
+
+<aside id="insp"></aside>
+
+<section id="tl">
+  <div id="tlbar">
+    <button id="bCouper" title="Couper à la tête de lecture (S)">✂ Couper</button>
+    <button id="bGauche">◀</button><button id="bDroite">▶</button>
+    <button id="bDup">⧉ Dupliquer</button>
+    <button id="bSuppr" title="Supprimer (Suppr)">🗑 Supprimer</button>
+    <span class="sp"></span>
+    <span class="mut" id="duree"></span>
+    <span class="mut">Zoom</span><input type="range" id="zoom" min="10" max="120" value="40" style="width:110px">
+  </div>
+  <div id="scroll"><div id="lane">
+    <div id="regle"></div>
+    <div class="piste" id="pV"><span class="etiq">VIDÉO</span></div>
+    <div class="piste a" id="pA"><span class="etiq">AUDIO</span></div>
+    <div id="tete"></div>
+  </div></div>
+</section>
+
+<div id="modal"><div id="boite"></div></div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = s => (Math.round(s * 10) / 10).toString().replace('.', ',') + ' s';
+const enc = encodeURIComponent;
+const api = async (url, opt) => {
+  const r = await fetch(url, opt);
+  if (!r.ok) { let m = 'Erreur'; try { m = (await r.json()).error; } catch (e) {} throw new Error(m); }
+  return r;
+};
+
+let CAT = { video: [], audio: [], transitions: [], titres: [], positions: [] };
+let medias = [];
+let proj = { format: 'vertical', fps: 30, res: 1080, quality: 'haute', clips: [], audio: [] };
+let sel = -1, selA = -1, selCut = -1, gt = 0, zoom = 40, tab = 'medias', rendu = null;
+const mediaOf = f => medias.find(m => m.file === f);
+
+// ---------- Données d'un clip ----------
+const effDur = c => c.kind === 'image' ? (c.dur || 3) : (c.out - c.in) / (c.speed || 1);
+const starts = () => { let s = 0; return proj.clips.map(c => { const o = s; s += effDur(c); return o; }); };
+const total = () => proj.clips.reduce((a, c) => a + effDur(c), 0);
+const defKey = () => ({ on: false, color: '#00ff00', sim: 0.15, blend: 0.08, despill: false, bgType: 'color', bgColor: '#101820', bgFile: '', bgKind: 'image' });
+const defPip = () => ({ on: false, file: '', kind: 'image', pos: 'br', scale: 30, opacity: 100 });
+function newClip(m) {
+  return { file: m.file, kind: m.kind, in: 0, out: m.duration, dur: 3, speed: 1, vol: 100, fade: false, fit: 'fill', hasAudio: m.hasAudio,
+    bw: false, bright: 0, contrast: 100, sat: 100, fx: [], afx: [], text: '', textPos: 'bas', textSize: 6, textColor: '#ffffff', textStyle: 'bandeau', textAnim: 'aucune',
+    textStart: 0, textDur: 0, pip: defPip(), key: defKey(), transition: null };
+}
+const curClip = () => proj.clips[sel];
+const fxDef = (list, id) => list.find(d => d.id === id);
+
+// ---------- Historique et sauvegarde automatique ----------
+let hist = [], hi = -1, histTimer = null, saveTimer = null;
+const snap = () => JSON.stringify(proj);
+function commit() {
+  clearTimeout(histTimer);
+  histTimer = setTimeout(() => {
+    const s = snap();
+    if (hist[hi] === s) return;
+    hist = hist.slice(0, hi + 1); hist.push(s); if (hist.length > 80) hist.shift(); hi = hist.length - 1;
+    majBoutons();
+  }, 400);
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => fetch('/api/projet', { method: 'PUT', body: snap() }).catch(() => {}), 900);
+  if (rendu) rendu.perime = true;
+  badge();
+}
+function undo(d) {
+  clearTimeout(histTimer); const s = snap(); if (hist[hi] !== s) { hist = hist.slice(0, hi + 1); hist.push(s); hi = hist.length - 1; }
+  const n = hi + d; if (n < 0 || n >= hist.length) return;
+  hi = n; proj = JSON.parse(hist[hi]); sel = Math.min(sel, proj.clips.length - 1); selA = -1; selCut = -1; tout();
+}
+function majBoutons() { $('#bUndo').disabled = hi <= 0; $('#bRedo').disabled = hi >= hist.length - 1; }
+
+// ---------- Médiathèque ----------
+async function chargerMedias() { medias = (await (await api('/api/medias')).json()).items; }
+const vignette = m => m.kind === 'audio' ? '<div class="ico">🎵</div>'
+  : `<img loading="lazy" draggable="false" src="${m.kind === 'image' ? '/media/' + enc(m.file) : '/api/frame?file=' + enc(m.file) + '&t=0.5'}" alt="">`;
+async function importer(files) {
+  for (const f of files) {
+    $('#etat').textContent = 'Import de ' + f.name + '…';
+    try { await api('/api/import?name=' + enc(f.name), { method: 'POST', body: f }); } catch (e) { alert(f.name + ' : ' + e.message); }
+  }
+  $('#etat').textContent = ''; await chargerMedias(); navigateur();
+}
+function ajouterClip(m, index) {
+  const c = newClip(m);
+  if (index === undefined || index > proj.clips.length) index = proj.clips.length;
+  proj.clips.splice(index, 0, c); choisir(index); commit();
+}
+function ajouterAudio(m, start) {
+  proj.audio.push({ file: m.file, vol: 60, start: start === undefined ? 0 : +start.toFixed(1), fade: true, loop: false });
+  selA = proj.audio.length - 1; sel = -1; selCut = -1; commit(); tout();
+}
+document.body.addEventListener('dragover', e => e.preventDefault());
+document.body.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer.files.length) importer([...e.dataTransfer.files]); });
+
+// ---------- Navigateur de gauche ----------
+function navigateur() {
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  const el = $('#navbody');
+  if (tab === 'medias') {
+    el.innerHTML = `<button id="bImport" style="width:100%">+ Ajouter des fichiers</button><input type="file" id="fichiers" multiple accept="video/*,image/*,audio/*" hidden>
+      <p class="mut">Vidéos, photos, musiques. Glisse-les dans la timeline, ou dans cette fenêtre pour les importer.</p>` +
+      medias.map((m, i) => `<div class="media" draggable="true" data-drag="media:${i}">${vignette(m)}<div class="nom">${esc(m.file)}<small>${m.kind === 'image' ? 'Photo' : fmt(m.duration)}</small></div>
+        <button class="mini" data-add="${i}" title="${m.kind === 'audio' ? 'Ajouter en piste audio' : 'Ajouter à la timeline'}">+</button><button class="mini" data-del="${i}" title="Supprimer ce média">🗑</button></div>`).join('');
+    $('#bImport').onclick = () => $('#fichiers').click();
+    $('#fichiers').onchange = e => { importer([...e.target.files]); e.target.value = ''; };
+  } else if (tab === 'effets') {
+    const src = sourceVignette();
+    const cats = [...new Set(CAT.video.map(d => d.cat))];
+    el.innerHTML = `<input type="text" id="cherche" placeholder="Chercher un effet…" style="margin-bottom:6px"><p class="mut">${sel >= 0 ? 'Clique sur un effet pour l’ajouter au clip sélectionné (ou glisse-le sur un clip).' : 'Sélectionne un clip dans la timeline.'}</p>` +
+      cats.map(cat => `<h3>${esc(cat)}</h3><div class="grille">` + CAT.video.filter(d => d.cat === cat).map(d =>
+        `<div class="carte ${d.dispo ? '' : 'off'}" draggable="true" data-drag="fx:${d.id}" data-fx="${d.id}" data-n="${esc(d.nom.toLowerCase())}" title="${d.dispo ? '' : 'Indisponible avec cette version de FFmpeg'}">
+          ${src ? `<img loading="lazy" draggable="false" src="/api/fxthumb?file=${enc(src.file)}&kind=${src.kind}&t=${src.t}&fx=${d.id}" alt="">` : ''}<span>${esc(d.nom)}</span></div>`).join('') + '</div>').join('');
+    $('#cherche').oninput = e => { const q = e.target.value.toLowerCase(); el.querySelectorAll('.carte').forEach(c => { c.style.display = c.dataset.n.includes(q) ? '' : 'none'; }); };
+  } else if (tab === 'transitions') {
+    const cut = selCut >= 0 ? selCut : sel;
+    const tr = cut >= 0 && proj.clips[cut] ? proj.clips[cut].transition : null;
+    el.innerHTML = `<p class="mut">${cut >= 0 && cut < proj.clips.length - 1 ? `Transition entre le clip ${cut + 1} et le clip ${cut + 2}. Clique sur une transition pour l’appliquer.` : 'Clique sur le rond entre deux clips de la timeline, puis choisis une transition.'}</p>
+      <label class="l">Durée<span id="trDur">${fmt(tr ? tr.dur : 0.6)}</span></label><input type="range" id="trDurR" min="0.2" max="2" step="0.1" value="${tr ? tr.dur : 0.6}">
+      <div class="grille" style="margin-top:8px"><div class="carte txt" data-tr="none">Aucune (coupe franche)</div>` +
+      CAT.transitions.map(t => `<div class="carte txt" data-tr="${t.id}" ${tr && tr.type === t.id ? 'style="border-color:var(--ac)"' : ''}>${esc(t.nom)}</div>`).join('') + '</div>';
+  } else if (tab === 'titres') {
+    el.innerHTML = `<p class="mut">${sel >= 0 ? 'Clique sur un style pour l’appliquer au clip sélectionné.' : 'Sélectionne un clip dans la timeline.'}</p><div class="grille">` +
+      CAT.titres.map(t => `<div class="carte txt" data-titre="${t.id}">${esc(t.nom)}</div>`).join('') + '</div>';
+  } else if (tab === 'sons') {
+    el.innerHTML = `<p class="mut">${sel >= 0 ? 'Clique sur un effet sonore pour l’ajouter au clip sélectionné.' : 'Sélectionne un clip dans la timeline.'}</p><div class="grille">` +
+      CAT.audio.map(d => `<div class="carte txt ${d.dispo ? '' : 'off'}" data-afx="${d.id}">${esc(d.nom)}</div>`).join('') + '</div>';
+  }
+}
+function sourceVignette() {
+  const c = curClip();
+  if (c) return { file: c.file, kind: c.kind, t: c.kind === 'image' ? 0 : (c.in + 0.5).toFixed(1) };
+  const m = medias.find(x => x.kind !== 'audio');
+  return m ? { file: m.file, kind: m.kind, t: m.kind === 'image' ? 0 : 0.5 } : null;
+}
+$('#tabs').onclick = e => { if (e.target.dataset.tab) { tab = e.target.dataset.tab; navigateur(); } };
+$('#navbody').addEventListener('click', e => {
+  const t = e.target.closest('[data-add],[data-del],[data-fx],[data-tr],[data-titre],[data-afx]'); if (!t) return;
+  const d = t.dataset;
+  if (d.add !== undefined) { const m = medias[d.add]; m.kind === 'audio' ? ajouterAudio(m, gt) : ajouterClip(m, sel >= 0 ? sel + 1 : undefined); }
+  else if (d.del !== undefined) supprimerMedia(medias[d.del]);
+  else if (d.fx) ajouterFx(sel, d.fx);
+  else if (d.afx) ajouterAfx(sel, d.afx);
+  else if (d.tr) appliquerTransition(d.tr);
+  else if (d.titre) appliquerTitre(d.titre);
+});
+$('#navbody').addEventListener('input', e => { if (e.target.id === 'trDurR') { const cut = selCut >= 0 ? selCut : sel, c = proj.clips[cut]; $('#trDur').textContent = fmt(+e.target.value); if (c && c.transition) { c.transition.dur = +e.target.value; commit(); tlDessin(); } } });
+async function supprimerMedia(m) {
+  if (!confirm(`Supprimer « ${m.file} » ? Les clips qui l’utilisent seront retirés de la timeline.`)) return;
+  await api('/api/medias/' + enc(m.file), { method: 'DELETE' });
+  proj.clips = proj.clips.filter(c => c.file !== m.file); proj.audio = proj.audio.filter(a => a.file !== m.file);
+  sel = Math.min(sel, proj.clips.length - 1); await chargerMedias(); commit(); tout();
+}
+// Glisser-déposer
+document.addEventListener('dragstart', e => { const d = e.target.closest && e.target.closest('[data-drag]'); if (d) e.dataTransfer.setData('text/plain', d.dataset.drag); });
+function dropSur(e, idxClip) {
+  const v = e.dataTransfer.getData('text/plain'); if (!v) return false;
+  const [k, id] = v.split(':');
+  if (k === 'fx' && idxClip >= 0) { ajouterFx(idxClip, id); return true; }
+  if (k === 'media') {
+    const m = medias[+id]; if (!m) return false;
+    if (m.kind === 'audio') { const r = $('#lane').getBoundingClientRect(); ajouterAudio(m, Math.max(0, (e.clientX - r.left) / zoom)); }
+    else ajouterClip(m, idxClip >= 0 ? idxClip + 1 : undefined);
+    return true;
+  }
+  return false;
+}
+
+// ---------- Effets : ajout / retrait ----------
+function ajouterFx(i, id) {
+  const c = proj.clips[i]; if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
+  const d = fxDef(CAT.video, id); const p = {}; d.params.forEach(q => { p[q.k] = q.def; });
+  c.fx.push({ id, p }); sel = i; commit(); tout();
+}
+function ajouterAfx(i, id) {
+  const c = proj.clips[i]; if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
+  const d = fxDef(CAT.audio, id); const p = {}; d.params.forEach(q => { p[q.k] = q.def; });
+  c.afx.push({ id, p }); commit(); inspecteur();
+}
+function appliquerTransition(type) {
+  const cut = selCut >= 0 ? selCut : sel;
+  if (cut < 0 || cut >= proj.clips.length - 1) return alert('Choisis d’abord le rond entre deux clips dans la timeline.');
+  proj.clips[cut].transition = type === 'none' ? null : { type, dur: +($('#trDurR') ? $('#trDurR').value : 0.6) };
+  commit(); tlDessin(); navigateur();
+}
+function appliquerTitre(id) {
+  const c = curClip(); if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
+  const t = CAT.titres.find(x => x.id === id);
+  c.textStyle = t.style; c.textAnim = t.anim; if (t.color) c.textColor = t.color; if (t.pos) c.textPos = t.pos; if (t.size) c.textSize = t.size;
+  if (!c.text) c.text = 'Ton texte ici';
+  commit(); inspecteur(); apercu();
+}
+
+// ---------- Timeline ----------
+function tlDessin() {
+  const st = starts(), W = Math.max(total(), ...proj.audio.map(a => (a.start || 0) + ((mediaOf(a.file) || {}).duration || 5)), 10) + 6;
+  $('#lane').style.width = (W * zoom + 40) + 'px';
+  let r = ''; const pas = zoom >= 60 ? 1 : zoom >= 28 ? 2 : 5;
+  for (let s = 0; s < W; s += pas) r += `<i style="left:${s * zoom}px">${s}s</i>`;
+  $('#regle').innerHTML = r;
+  $('#pV').innerHTML = '<span class="etiq">VIDÉO</span>' + proj.clips.map((c, i) => {
+    const m = mediaOf(c.file), bgi = c.kind === 'image' ? '/media/' + enc(c.file) : '/api/frame?file=' + enc(c.file) + '&t=' + c.in.toFixed(1);
+    const tags = (c.fx.length ? '✨' + c.fx.length : '') + (c.key.on ? ' 🟩' : '') + (c.text ? ' T' : '') + (c.pip.on ? ' ▣' : '') + (c.afx.length ? ' 🔊' : '') + (c.speed !== 1 ? ' ⏩' : '');
+    return `<div class="clip ${i === sel ? 'sel' : ''}" data-i="${i}" style="left:${st[i] * zoom}px;width:${Math.max(24, effDur(c) * zoom - 2)}px;background-image:url('${bgi}')"><b>${esc(c.file)}</b><small>${fmt(effDur(c))}</small><span class="tags">${tags}</span></div>`;
+  }).join('') + proj.clips.slice(0, -1).map((c, i) => `<button class="cut ${c.transition ? 'on' : ''} ${i === selCut ? 'sel' : ''}" data-cut="${i}" style="left:${(st[i] + effDur(c)) * zoom}px" title="${c.transition ? esc((CAT.transitions.find(t => t.id === c.transition.type) || {}).nom || '') : 'Ajouter une transition'}">⋈</button>`).join('');
+  $('#pA').innerHTML = '<span class="etiq">AUDIO</span>' + proj.audio.map((a, i) => {
+    const d = (mediaOf(a.file) || {}).duration || 5;
+    return `<div class="aud ${i === selA ? 'sel' : ''}" data-a="${i}" style="left:${(a.start || 0) * zoom}px;width:${Math.max(30, d * zoom)}px">🎵 ${esc(a.file)}</div>`;
+  }).join('');
+  $('#duree').textContent = proj.clips.length ? 'Durée : ' + fmt(total()) : '';
+  tete();
+  const has = sel >= 0;
+  ['#bCouper', '#bDup', '#bSuppr', '#bPlay', '#pos'].forEach(s => { $(s).disabled = !has && !(s === '#bSuppr' && selA >= 0); });
+  $('#bGauche').disabled = !has || sel === 0; $('#bDroite').disabled = !has || sel === proj.clips.length - 1;
+}
+function tete() { $('#tete').style.left = (gt * zoom) + 'px'; }
+$('#zoom').oninput = e => { zoom = +e.target.value; tlDessin(); };
+$('#regle').onpointerdown = e => { const r = $('#lane').getBoundingClientRect(); const mv = ev => placerTete(Math.max(0, (ev.clientX - r.left) / zoom)); mv(e); document.onpointermove = mv; document.onpointerup = () => { document.onpointermove = null; }; };
+function placerTete(t) {
+  gt = Math.min(t, Math.max(0, total() - 0.05)); const st = starts();
+  let i = proj.clips.length - 1; for (let k = 0; k < st.length; k++) if (gt < st[k] + effDur(proj.clips[k])) { i = k; break; }
+  if (i !== sel) { sel = i; selA = -1; selCut = -1; inspecteur(); tlDessin(); if (tab === 'effets') navigateur(); } else tete();
+  if (i >= 0) { pos = clamp(gt - st[i], 0, Math.max(0, effDur(proj.clips[i]) - 0.05)); reglerPos(); apercuRetarde(); }
+}
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+$('#pV').addEventListener('click', e => {
+  const cut = e.target.closest('.cut'); if (cut) { selCut = +cut.dataset.cut; selA = -1; tab = 'transitions'; navigateur(); tlDessin(); return; }
+  const c = e.target.closest('.clip');
+  if (c) { const r = $('#lane').getBoundingClientRect(); choisir(+c.dataset.i, Math.max(0, (e.clientX - r.left) / zoom)); }
+});
+$('#pA').addEventListener('pointerdown', e => {
+  const el = e.target.closest('.aud'); if (!el) return;
+  selA = +el.dataset.a; sel = -1; selCut = -1; inspecteur(); tlDessin();
+  const a = proj.audio[selA], x0 = e.clientX, s0 = a.start || 0;
+  document.onpointermove = ev => { a.start = Math.max(0, +(s0 + (ev.clientX - x0) / zoom).toFixed(1)); tlDessin(); };
+  document.onpointerup = () => { document.onpointermove = null; commit(); };
+});
+['dragover', 'drop'].forEach(ev => $('#scroll').addEventListener(ev, e => {
+  e.preventDefault(); const c = e.target.closest('.clip');
+  document.querySelectorAll('.clip.drop').forEach(x => x.classList.remove('drop'));
+  if (ev === 'dragover') { if (c) c.classList.add('drop'); return; }
+  e.stopPropagation(); dropSur(e, c ? +c.dataset.i : -1);
+}));
+$('#bSuppr').onclick = supprimer;
+function supprimer() {
+  if (selA >= 0) { proj.audio.splice(selA, 1); selA = -1; }
+  else if (sel >= 0) { proj.clips.splice(sel, 1); sel = Math.min(sel, proj.clips.length - 1); }
+  commit(); tout();
+}
+$('#bGauche').onclick = () => { const [c] = proj.clips.splice(sel, 1); proj.clips.splice(--sel, 0, c); commit(); tout(); };
+$('#bDroite').onclick = () => { const [c] = proj.clips.splice(sel, 1); proj.clips.splice(++sel, 0, c); commit(); tout(); };
+$('#bDup').onclick = () => { proj.clips.splice(sel + 1, 0, JSON.parse(JSON.stringify(curClip()))); sel++; commit(); tout(); };
+$('#bCouper').onclick = couper;
+function couper() {
+  const c = curClip(); if (!c) return;
+  const st = starts()[sel], loc = gt - st;
+  if (c.kind === 'image') { if (loc < 0.3 || loc > c.dur - 0.3) return; const b = JSON.parse(JSON.stringify(c)); b.dur = c.dur - loc; c.dur = loc; c.transition = null; proj.clips.splice(sel + 1, 0, b); }
+  else {
+    const at = c.in + loc * c.speed;
+    if (at < c.in + 0.2 || at > c.out - 0.2) return alert('Place la tête de lecture (barre rouge) à l’endroit de la coupe, loin du début et de la fin du clip.');
+    const b = JSON.parse(JSON.stringify(c)); b.in = at; c.out = at; c.transition = null; proj.clips.splice(sel + 1, 0, b);
+  }
+  commit(); sel++; tout();
+}
+$('#format').onchange = e => { proj.format = e.target.value; commit(); apercu(); };
+
+// ---------- Visionneuse ----------
+let pos = 0, vid = null, minuteur = null, jeton = 0;
+function choisir(i, t) {
+  sel = i; selA = -1; selCut = -1;
+  const st = starts(); gt = t !== undefined ? t : (st[i] || 0); pos = clamp(gt - (st[i] || 0), 0, Math.max(0, i >= 0 ? effDur(proj.clips[i]) - 0.05 : 0));
+  tout(); apercu();
+}
+function reglerPos() {
+  const c = curClip(); if (!c) return;
+  $('#pos').max = Math.max(0.1, effDur(c) - 0.05); $('#pos').value = pos; $('#posTxt').textContent = fmt(pos); tete();
+}
+$('#pos').oninput = e => { pos = +e.target.value; gt = starts()[sel] + pos; $('#posTxt').textContent = fmt(pos); tete(); apercuRetarde(); };
+function apercuRetarde() { clearTimeout(minuteur); minuteur = setTimeout(apercu, 200); }
+async function apercu() {
+  stopLecture();
+  const c = curClip();
+  if (!c) { $('#stage').innerHTML = '<div class="vide">Ajoute des médias, puis fais-les glisser dans la timeline (ou clique sur « + »).</div>'; return; }
+  const mon = ++jeton;
+  try {
+    const r = await api('/api/preview', { method: 'POST', body: JSON.stringify({ project: { format: proj.format, fps: proj.fps }, clip: c, t: pos }) });
+    const url = URL.createObjectURL(await r.blob()); if (mon !== jeton) return;
+    $('#stage').innerHTML = `<img src="${url}" alt="Aperçu">`; badge();
+  } catch (e) { if (mon === jeton) $('#stage').innerHTML = `<div class="vide err">${esc(e.message)}</div>`; }
+}
+function badge() { const b = document.querySelector('#stage .badge'); if (b) b.remove(); }
+function stopLecture() { if (vid) { vid.pause(); vid = null; $('#bPlay').textContent = '▶ Lire l’original'; } }
+function lireOriginal() {
+  if (vid) { stopLecture(); apercu(); return; }
+  const c = curClip(); if (!c || c.kind === 'image') return alert('La lecture sert pour les vidéos. Pour une photo, l’aperçu montre déjà le résultat.');
+  const v = document.createElement('video'); v.src = '/media/' + enc(c.file); v.playbackRate = c.speed; v.currentTime = c.in + pos * c.speed; vid = v;
+  $('#stage').innerHTML = ''; $('#stage').appendChild(v); v.play().catch(() => {}); $('#bPlay').textContent = '⏸ Pause';
+  v.ontimeupdate = () => { if (v.currentTime >= c.out) { stopLecture(); apercu(); return; } pos = (v.currentTime - c.in) / c.speed; gt = starts()[sel] + pos; $('#pos').value = pos; $('#posTxt').textContent = fmt(pos); tete(); };
+}
+$('#bPlay').onclick = lireOriginal;
+
+// Aperçu animé : rendu rapide de toute la timeline avec les effets, puis lecture
+$('#bApercu').onclick = async () => {
+  if (!proj.clips.length) return alert('La timeline est vide.');
+  stopLecture(); const b = $('#bApercu'); b.disabled = true;
+  try {
+    const url = await lancerJob('/api/apercu', { project: proj }, (p, s) => { b.textContent = `Rendu ${Math.round(p * 100)} %`; $('#etat').textContent = s; });
+    rendu = { url, perime: false };
+    const v = document.createElement('video'); v.src = url; v.controls = true; v.autoplay = true; vid = v;
+    $('#stage').innerHTML = ''; $('#stage').appendChild(v);
+    v.ontimeupdate = () => { gt = v.currentTime; tete(); };
+  } catch (e) { alert(e.message); }
+  b.disabled = false; b.textContent = '🎞 Aperçu avec effets'; $('#etat').textContent = '';
+};
+async function lancerJob(url, body, onProg) {
+  const { id } = await (await api(url, { method: 'POST', body: JSON.stringify(body) })).json();
+  for (;;) {
+    await new Promise(r => setTimeout(r, 500));
+    const j = await (await api('/api/job?id=' + id)).json();
+    if (j.error) throw new Error(j.error);
+    onProg(j.progress, j.step);
+    if (j.done) return j.out ? j : j.url;
+  }
+}
+
+// ---------- Inspecteur ----------
+const getP = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
+function setP(o, p, v) { const ks = p.split('.'); const last = ks.pop(); const t = ks.reduce((a, k) => a[k], o); t[last] = v; }
+const idOf = p => 'v_' + p.replace(/\./g, '_');
+function sl(label, path, min, max, step, unit, root) {
+  const v = getP(root, path);
+  return `<label class="l">${label}<span id="${idOf(path)}">${v}${unit}</span></label><input type="range" data-p="${path}" data-u="${unit}" min="${min}" max="${max}" step="${step}" value="${v}">`;
+}
+const chk = (label, path, root) => `<div class="sw"><input type="checkbox" id="c_${idOf(path)}" data-p="${path}" ${getP(root, path) ? 'checked' : ''}><label for="c_${idOf(path)}">${label}</label></div>`;
+const opts = (list, cur) => list.map(([v, t]) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(t)}</option>`).join('');
+function fxRows(list, defs, key) {
+  return list.map((e, i) => { const d = fxDef(defs, e.id); if (!d) return '';
+    return `<div class="fxrow"><div class="tete"><b>${esc(d.nom)}</b><button class="mini" data-mv="${key}:${i}:-1">▲</button><button class="mini" data-mv="${key}:${i}:1">▼</button><button class="mini" data-rm="${key}:${i}">✕</button></div>` +
+      d.params.map(q => sl(q.label, `${key}.${i}.p.${q.k}`, q.min, q.max, q.step, q.u || '', curClip())).join('') + '</div>'; }).join('');
+}
+function inspecteur() {
+  const el = $('#insp'), keep = el.scrollTop;
+  if (selA >= 0 && proj.audio[selA]) {
+    const a = proj.audio[selA];
+    el.innerHTML = `<h3>Piste audio</h3><div class="mut">${esc(a.file)}</div>${sl('Volume', 'vol', 0, 200, 5, ' %', a)}${sl('Début (dans la vidéo)', 'start', 0, Math.max(10, Math.ceil(total())), 0.1, ' s', a)}
+      ${chk('Fondu d’entrée et de sortie', 'fade', a)}${chk('Répéter en boucle', 'loop', a)}<button id="bRmA" style="margin-top:10px">Retirer cette piste</button>`;
+    el.dataset.root = 'a'; el.scrollTop = keep; return;
+  }
+  const c = curClip();
+  if (!c) { el.innerHTML = `<h3>Projet</h3>
+    <label class="l">Résolution</label><select data-proj="res">${opts([['720', '720p (rapide)'], ['1080', 'Full HD 1080p'], ['2160', '4K']], String(proj.res))}</select>
+    <label class="l">Images par seconde</label><select data-proj="fps">${opts([['24', '24 (cinéma)'], ['30', '30'], ['60', '60 (fluide)']], String(proj.fps))}</select>
+    <label class="l">Encodage</label><select data-proj="quality">${opts([['haute', 'Haute qualité'], ['rapide', 'Rapide (puce Apple)']], proj.quality)}</select>
+    <p class="mut">Sélectionne un clip pour régler ses effets.</p>`; el.dataset.root = 'p'; return; }
+  el.dataset.root = 'c';
+  const m = mediaOf(c.file), md = m ? m.duration : c.out, vid = c.kind === 'video';
+  const options = medias.filter(x => x.kind !== 'audio').map(x => `<option value="${esc(x.file)}" data-kind="${x.kind}">${esc(x.file)}</option>`).join('');
+  el.innerHTML = `
+  <details open><summary>Découpe et vitesse</summary>
+    ${vid ? sl('Début', 'in', 0, Math.max(0, +(c.out - 0.2).toFixed(1)), 0.1, ' s', c) + sl('Fin', 'out', +(c.in + 0.2).toFixed(1), +md.toFixed(1), 0.1, ' s', c) + sl('Vitesse', 'speed', 0.25, 4, 0.05, '×', c) + sl('Volume', 'vol', 0, 300, 5, ' %', c) : sl('Durée', 'dur', 0.5, 20, 0.5, ' s', c)}
+    ${chk('Fondu au début et à la fin', 'fade', c)}
+    <label class="l">Cadrage</label><select data-p="fit">${opts([['fill', 'Remplir l’écran (recadre)'], ['fit', 'Tout afficher (bandes noires)'], ['flou', 'Tout afficher (fond flou)']], c.fit)}</select>
+  </details>
+  <details open><summary>Effets image (${c.fx.length})</summary>${fxRows(c.fx, CAT.video, 'fx') || '<p class="mut">Aucun. Ouvre l’onglet « Effets » à gauche.</p>'}</details>
+  <details><summary>Couleurs</summary>${sl('Luminosité', 'bright', -50, 50, 1, '', c)}${sl('Contraste', 'contrast', 0, 200, 1, ' %', c)}${sl('Saturation', 'sat', 0, 300, 1, ' %', c)}${chk('Noir et blanc', 'bw', c)}</details>
+  <details><summary>Effets sonores (${c.afx.length})</summary>${fxRows(c.afx, CAT.audio, 'afx') || '<p class="mut">Aucun. Ouvre l’onglet « Sons » à gauche.</p>'}</details>
+  <details ${c.text ? 'open' : ''}><summary>Titre</summary>
+    <textarea rows="2" data-p="text" placeholder="Écris ton texte ici">${esc(c.text)}</textarea>
+    <div class="ligne"><select data-p="textPos">${opts([['haut', 'En haut'], ['milieu', 'Au milieu'], ['bas', 'En bas']], c.textPos)}</select><input type="color" data-p="textColor" value="${c.textColor}"></div>
+    <label class="l">Style</label><select data-p="textStyle">${opts([['simple', 'Simple'], ['bandeau', 'Bandeau sombre'], ['contour', 'Contour noir'], ['ombre', 'Ombre portée']], c.textStyle)}</select>
+    <label class="l">Animation</label><select data-p="textAnim">${opts([['aucune', 'Aucune'], ['apparition', 'Apparition en fondu'], ['glisse', 'Glissé vers le haut']], c.textAnim)}</select>
+    ${sl('Taille', 'textSize', 2, 15, 0.5, ' %', c)}${sl('Apparaît à', 'textStart', 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}${sl('Durée (0 = jusqu’à la fin)', 'textDur', 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}
+  </details>
+  <details ${c.pip.on ? 'open' : ''}><summary>Incrustation (image dans l’image)</summary>
+    ${chk('Activer', 'pip.on', c)}
+    <div ${c.pip.on ? '' : 'hidden'}><label class="l">Média à incruster</label><select data-pipfile="1"><option value="">— choisir —</option>${options.replace(`value="${esc(c.pip.file)}"`, `value="${esc(c.pip.file)}" selected`)}</select>
+    <label class="l">Position</label><select data-p="pip.pos">${opts([['tl', 'Haut gauche'], ['tc', 'Haut centre'], ['tr', 'Haut droite'], ['ml', 'Milieu gauche'], ['mc', 'Centre'], ['mr', 'Milieu droite'], ['bl', 'Bas gauche'], ['bc', 'Bas centre'], ['br', 'Bas droite']], c.pip.pos)}</select>
+    ${sl('Taille', 'pip.scale', 5, 100, 1, ' %', c)}${sl('Opacité', 'pip.opacity', 5, 100, 1, ' %', c)}</div>
+  </details>
+  <details ${c.key.on ? 'open' : ''}><summary>Fond vert</summary>
+    ${chk('Remplacer le fond de ce clip', 'key.on', c)}
+    <div class="bloc" ${c.key.on ? '' : 'hidden'}>
+      <div class="ligne"><button id="bPipette">🎯 Choisir la couleur</button><input type="color" data-p="key.color" value="${c.key.color}" style="flex:none;width:44px"></div>
+      <p class="mut" style="margin:4px 0">Clique sur le fond à enlever (mur vert, bleu…).</p>
+      ${sl('Sensibilité', 'key.sim', 0.01, 0.6, 0.01, '', c)}${sl('Douceur des bords', 'key.blend', 0, 0.4, 0.01, '', c)}${chk('Retirer le reflet vert sur les bords', 'key.despill', c)}
+      <label class="l">Nouveau fond</label><select data-p="key.bgType">${opts([['color', 'Couleur unie'], ['file', 'Photo ou vidéo de mes médias']], c.key.bgType)}</select>
+      ${c.key.bgType === 'color' ? `<input type="color" data-p="key.bgColor" value="${c.key.bgColor}" style="margin-top:6px">`
+        : `<select data-bgfile="1" style="margin-top:6px"><option value="">— choisir —</option>${options.replace(`value="${esc(c.key.bgFile)}"`, `value="${esc(c.key.bgFile)}" selected`)}</select>`}
+    </div>
+  </details>`;
+  el.scrollTop = keep;
+}
+// Modification générique par chemin
+$('#insp').addEventListener('input', e => {
+  const t = e.target; if (!t.dataset.p) return;
+  const root = $('#insp').dataset.root === 'a' ? proj.audio[selA] : curClip(); if (!root) return;
+  const v = t.type === 'checkbox' ? t.checked : (t.type === 'range' || t.type === 'number') ? +t.value : t.value;
+  setP(root, t.dataset.p, v);
+  const lab = document.getElementById(idOf(t.dataset.p)); if (lab) lab.textContent = v + (t.dataset.u || '');
+  if (t.type === 'checkbox' || t.tagName === 'SELECT') return; // traité à 'change'
+  suite(t.dataset.p);
+});
+$('#insp').addEventListener('change', e => {
+  const t = e.target, d = t.dataset;
+  if (d.proj) { proj[d.proj] = isNaN(+t.value) ? t.value : +t.value; commit(); return; }
+  const c = curClip();
+  if (d.pipfile !== undefined && c) { c.pip.file = t.value; const o = t.selectedOptions[0]; c.pip.kind = o && o.dataset.kind || 'image'; commit(); apercu(); return; }
+  if (d.bgfile !== undefined && c) { c.key.bgFile = t.value; const o = t.selectedOptions[0]; c.key.bgKind = o && o.dataset.kind || 'image'; commit(); apercu(); return; }
+  if (!d.p) return;
+  const root = $('#insp').dataset.root === 'a' ? proj.audio[selA] : c; if (!root) return;
+  const v = t.type === 'checkbox' ? t.checked : t.value; setP(root, d.p, v);
+  if (['key.on', 'pip.on', 'key.bgType'].includes(d.p)) inspecteur();
+  suite(d.p);
+});
+function suite(path) {
+  commit();
+  if (['in', 'out', 'speed', 'dur', 'start'].includes(path)) { if (['in', 'out'].includes(path)) { const c = curClip(); if (c.out - c.in < 0.2) { path === 'in' ? c.in = c.out - 0.2 : c.out = c.in + 0.2; } pos = 0; } reglerPos(); tlDessin(); }
+  else if (/^(fx|afx)\./.test(path)) { /* seuls les réglages bougent */ }
+  else tlDessin();
+  if ($('#insp').dataset.root !== 'a') apercuRetarde();
+}
+$('#insp').addEventListener('click', e => {
+  const t = e.target, c = curClip();
+  if (t.id === 'bPipette') return pipette();
+  if (t.id === 'bRmA') return supprimer();
+  if (t.dataset.rm) { const [k, i] = t.dataset.rm.split(':'); c[k].splice(+i, 1); commit(); inspecteur(); tlDessin(); apercu(); }
+  if (t.dataset.mv) { const [k, i, d] = t.dataset.mv.split(':'); const j = +i + +d; if (j < 0 || j >= c[k].length) return; [c[k][i], c[k][j]] = [c[k][j], c[k][i]]; commit(); inspecteur(); apercu(); }
+});
+
+// ---------- Pipette (fond vert) ----------
+function pipette() {
+  const c = curClip(); if (!c) return;
+  const t = c.kind === 'image' ? 0 : c.in + pos * c.speed;
+  ouvrir(`<h2>Clique sur la couleur à enlever</h2><canvas id="cv"></canvas><div class="ligne" style="margin-top:8px"><span class="mut" id="pip">Clique sur le fond (par exemple le mur vert).</span><button class="pri" id="pipOk" style="flex:none">Fermer</button></div>`);
+  const img = new Image();
+  img.onload = () => { const cv = $('#cv'); cv.width = img.width; cv.height = img.height; cv.getContext('2d').drawImage(img, 0, 0); };
+  img.src = c.kind === 'image' ? '/media/' + enc(c.file) : '/api/frame?file=' + enc(c.file) + '&t=' + t;
+  $('#cv').onclick = e => {
+    const cv = $('#cv'), r = cv.getBoundingClientRect();
+    const x = Math.floor((e.clientX - r.left) * cv.width / r.width), y = Math.floor((e.clientY - r.top) * cv.height / r.height);
+    const d = cv.getContext('2d').getImageData(Math.max(0, x - 2), Math.max(0, y - 2), 5, 5).data;
+    let R = 0, G = 0, B = 0; for (let i = 0; i < d.length; i += 4) { R += d[i]; G += d[i + 1]; B += d[i + 2]; }
+    const n = d.length / 4, h = v => Math.round(v / n).toString(16).padStart(2, '0');
+    c.key.color = '#' + h(R) + h(G) + h(B); commit();
+    $('#pip').innerHTML = `Couleur choisie : <b style="color:${c.key.color}">${c.key.color}</b>`; inspecteur(); apercuRetarde();
+  };
+  $('#pipOk').onclick = fermer;
+}
+
+// ---------- Fenêtres ----------
+function ouvrir(html) { $('#boite').innerHTML = html; $('#modal').classList.add('on'); }
+function fermer() { $('#modal').classList.remove('on'); }
+function demander(titre, defaut) {
+  return new Promise(ok => {
+    ouvrir(`<h2>${esc(titre)}</h2><input type="text" id="saisie" value="${esc(defaut || '')}"><div class="ligne" style="margin-top:10px"><button id="sAnn">Annuler</button><button class="pri" id="sOk">OK</button></div>`);
+    const i = $('#saisie'); i.focus(); i.select();
+    const fin = v => { fermer(); ok(v); };
+    $('#sOk').onclick = () => fin(i.value.trim()); $('#sAnn').onclick = () => fin(null);
+    i.onkeydown = e => { if (e.key === 'Enter') fin(i.value.trim()); if (e.key === 'Escape') fin(null); };
+  });
+}
+$('#bNouveau').onclick = () => { if (proj.clips.length && !confirm('Commencer un nouveau projet ? Le projet actuel doit être enregistré avant.')) return; proj = { ...proj, clips: [], audio: [] }; sel = selA = selCut = -1; gt = 0; commit(); tout(); };
+$('#bSauver').onclick = async () => { const n = await demander('Nom du projet', 'Mon montage'); if (!n) return; await api('/api/projets/' + enc(n), { method: 'PUT', body: snap() }); $('#etat').textContent = 'Projet enregistré'; setTimeout(() => { $('#etat').textContent = ''; }, 2500); };
+$('#bOuvrir').onclick = async () => {
+  const { items } = await (await api('/api/projets')).json();
+  ouvrir(`<h2>Ouvrir un projet</h2><div class="liste">${items.map(n => `<button data-pr="${esc(n)}">${esc(n)}</button>`).join('') || '<p class="mut">Aucun projet enregistré.</p>'}</div><button id="fOk" style="margin-top:8px">Fermer</button>`);
+  $('#fOk').onclick = fermer;
+  $('#boite').onclick = async e => { const n = e.target.dataset.pr; if (!n) return; proj = await (await api('/api/projets/' + enc(n))).json(); sel = proj.clips.length ? 0 : -1; selA = selCut = -1; fermer(); commit(); tout(); apercu(); $('#boite').onclick = null; };
+};
+$('#bUndo').onclick = () => undo(-1); $('#bRedo').onclick = () => undo(1);
+$('#modal').onclick = e => { if (e.target.id === 'modal' && !$('#barreExp')) fermer(); };
+
+// ---------- Export ----------
+$('#bExport').onclick = () => {
+  if (!proj.clips.length) return alert('La timeline est vide.');
+  ouvrir(`<h2>Exporter la vidéo</h2>
+    <label class="l">Résolution</label><select id="xRes">${opts([['720', '720p'], ['1080', 'Full HD 1080p'], ['2160', '4K']], String(proj.res))}</select>
+    <label class="l">Images par seconde</label><select id="xFps">${opts([['24', '24'], ['30', '30'], ['60', '60']], String(proj.fps))}</select>
+    <label class="l">Encodage</label><select id="xQ">${opts([['haute', 'Haute qualité (plus lent)'], ['rapide', 'Rapide (puce Apple, si disponible)']], proj.quality)}</select>
+    <p class="mut">Durée : ${fmt(total())} — format ${esc({ vertical: 'vertical 9:16', horizontal: 'horizontal 16:9', carre: 'carré' }[proj.format])}</p>
+    <div id="expo"><div class="ligne"><button id="xAnn">Annuler</button><button class="pri" id="xGo">Lancer l’export</button></div></div>`);
+  $('#xAnn').onclick = fermer;
+  $('#xGo').onclick = async () => {
+    proj.res = +$('#xRes').value; proj.fps = +$('#xFps').value; proj.quality = $('#xQ').value; commit();
+    $('#expo').innerHTML = '<div id="xTxt">Préparation…</div><div id="barreExp"><i></i></div>';
+    try {
+      const j = await lancerJob('/api/export', { project: proj }, (p, s) => { $('#barreExp i').style.width = Math.round(p * 100) + '%'; $('#xTxt').textContent = `${s} — ${Math.round(p * 100)} %`; });
+      $('#expo').innerHTML = `<p>✅ Terminé : <b>${esc(j.out)}</b></p><div class="ligne"><button id="xFind">Afficher dans le Finder</button><a href="/exports/${enc(j.out)}"><button style="width:100%">Télécharger</button></a><button class="pri" id="xFin">Fermer</button></div><p class="mut">Dossier : Films → QuentMovie → exports</p>`;
+      $('#xFin').onclick = fermer; $('#xFind').onclick = () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) });
+    } catch (e) { $('#expo').innerHTML = `<p class="err">${esc(e.message)}</p><button id="xFin">Fermer</button>`; $('#xFin').onclick = fermer; }
+  };
+};
+
+// ---------- Raccourcis ----------
+document.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase(); if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  const cmd = e.metaKey || e.ctrlKey;
+  if (cmd && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(e.shiftKey ? 1 : -1); }
+  else if (e.key === 's' && !cmd) couper();
+  else if (e.key === 'Delete' || e.key === 'Backspace') { if (sel >= 0 || selA >= 0) { e.preventDefault(); supprimer(); } }
+  else if (e.key === ' ') { e.preventDefault(); if (vid && $('#stage video') === vid && vid.controls) { vid.paused ? vid.play() : vid.pause(); } else lireOriginal(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); placerTete(gt + (e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 1 : 0.1)); }
+});
+
+function tout() { tlDessin(); inspecteur(); navigateur(); reglerPos(); majBoutons(); }
+
+// ---------- Démarrage ----------
+(async function () {
+  CAT = await (await api('/api/catalogue')).json();
+  $('#etat').textContent = CAT.font ? '' : 'Titres indisponibles (police ou filtre manquant)';
+  await chargerMedias();
+  try { const s = await (await api('/api/projet')).json(); if (s && Array.isArray(s.clips)) proj = { ...proj, ...s, audio: s.audio || [] }; } catch (e) {}
+  proj.clips = proj.clips.filter(c => mediaOf(c.file));
+  proj.clips.forEach(c => { c.fx = c.fx || []; c.afx = c.afx || []; c.key = { ...defKey(), ...(c.key || {}) }; c.pip = { ...defPip(), ...(c.pip || {}) }; c.textStyle = c.textStyle || 'bandeau'; c.textAnim = c.textAnim || 'aucune'; c.textStart = c.textStart || 0; c.textDur = c.textDur || 0; });
+  proj.audio = proj.audio.filter(a => mediaOf(a.file));
+  $('#format').value = proj.format;
+  sel = proj.clips.length ? 0 : -1;
+  hist = [snap()]; hi = 0; tout(); if (sel >= 0) apercu();
+})();
+</script>
+</body>
+</html>
