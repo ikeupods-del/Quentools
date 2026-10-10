@@ -473,7 +473,7 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
       <p class="note">Il t'explique chaque courrier avec ses mots, repère les documents à fournir, répond à tes questions et améliore tes lettres. Il tourne entièrement sur ton appareil : il se télécharge une seule fois, puis fonctionne même sans internet. Ton courrier n'est jamais envoyé.</p>
       <div id="ia-unsupported" class="scam" hidden><strong>Ton navigateur ne peut pas faire tourner l'assistant IA.</strong> Le décodeur, le résumé « En bref » et les questions rapides fonctionnent quand même. Pour l'assistant, utilise Chrome ou Edge récent, sur ordinateur ou sur Android.</div>
       <div id="ia-options">
-        <p class="note" id="ia-reco">Version légère (environ 1 Go), installée automatiquement en arrière-plan dès l'ouverture de l'application.</p>
+        <p class="note" id="ia-reco">Version légère (environ 1 Go), installée automatiquement en arrière-plan sur ordinateur et Android. Sur iPhone et iPad, la lecture classique est utilisée.</p>
         <p class="ia-status" id="ia-status">Pas encore activé.</p>
         <div class="progress" id="ia-progress"><div class="bar"><i id="ia-bar"></i></div><p id="ia-text"></p></div>
         <div class="actions"><button class="btn small" id="ia-load" type="button">Télécharger et activer</button><button class="link" id="ia-off" type="button" hidden>Désactiver</button></div>
@@ -2316,6 +2316,9 @@ const iaPrefs = () => store.get(KEYS.ia, {});
 // Taille de l'assistant : très légère sur téléphone. Une taille qui a fait redémarrer la page (mémoire insuffisante) est écartée, on passe à la plus petite.
 const IA_FLAG = 'qt-decodeur:ia-demarrage';
 const IA_FAIL_MSG = "L'assistant IA ne peut pas démarrer sur cet appareil (mémoire limitée). Ce n'est pas grave : tout fonctionne sans lui, avec la lecture classique.";
+// iPhone et iPad : un modèle de 1 Go dépasse la mémoire accordée à une page web ; on n'y installe rien tout seul (lecture classique, chiffres recoupés par calcul). L'activation manuelle reste possible.
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const iaSkip = () => isIOS && !iaPrefs().ready;
 const badSizes = () => iaPrefs().bad || [];
 const prefSize = () => 'light';   // une seule version de l'assistant : la légère (environ 1 Go)
 const iaDead = () => badSizes().includes('light');
@@ -2389,7 +2392,7 @@ function requireAI() {
   if (gateP) return gateP;
   gateP = (async () => {
     await gpuReady;
-    if (!gpu.ok || iaDead() || iaPrefs().fail) { if (!gateNoted) { gateNoted = true; toast(gpu.ok ? "L'assistant IA ne peut pas démarrer sur cet appareil (mémoire) : la fiche est lue par recoupement, sans la relecture de l'IA." : "Cet appareil ne peut pas faire tourner l'assistant IA : lecture classique, un peu moins précise. Pour la meilleure lecture, utilise Chrome ou Safari récent."); } return 'nogpu'; }
+    if (!gpu.ok || iaDead() || iaPrefs().fail || iaSkip()) { if (!gateNoted) { gateNoted = true; toast(gpu.ok ? "L'assistant IA ne peut pas démarrer sur cet appareil (mémoire) : la fiche est lue par recoupement, sans la relecture de l'IA." : "Cet appareil ne peut pas faire tourner l'assistant IA : lecture classique, un peu moins précise. Pour la meilleure lecture, utilise Chrome ou Safari récent."); } return 'nogpu'; }
     const d = $('#ia-gate'), go = $('#gate-go'), skip = $('#gate-skip'), cancel = $('#gate-cancel'), msg = $('#gate-msg'), prog = $('#gate-prog'), msg0 = msg.innerHTML;
     return new Promise(resolve => {
       const finish = v => { d.onclose = null; if (d.open) d.close(); resolve(v); };
@@ -2548,7 +2551,7 @@ async function renderAIZone() {
 
 function updatePill() {
   const p = $('#ai-pill'); if (!p) return;
-  if (!gpu.checked || !gpu.ok || (iaPrefs().fail && !iaPrefs().ready && aiState !== 'loading' && aiState !== 'ready')) { p.hidden = true; return; }
+  if (!gpu.checked || !gpu.ok || ((iaPrefs().fail || iaSkip()) && !iaPrefs().ready && aiState !== 'loading' && aiState !== 'ready')) { p.hidden = true; return; }
   p.hidden = false;
   const pre = window.innerWidth < 520 ? 'IA' : 'Assistant IA';
   const map = { off: pre + (iaPrefs().ready ? ' : en veille' : ' : désactivé'), loading: pre + ' : ' + Math.round((lastProgress.progress || 0) * 100) + ' %', ready: pre + ' : prêt', error: pre + ' : erreur' };
@@ -2574,7 +2577,7 @@ function refreshIaStatus() {
   st.textContent = aiState === 'loading' ? progressLabel(lastProgress)
     : engine && engineModel === modelId(sel) ? 'Activé et prêt.'
     : same ? 'Téléchargé sur cet appareil. Il démarre tout seul au prochain courrier.'
-    : aiState === 'error' ? aiErrorMsg : ia.fail ? IA_FAIL_MSG : 'Pas encore activé.';
+    : aiState === 'error' ? aiErrorMsg : ia.fail ? IA_FAIL_MSG : iaSkip() ? "Non installé sur iPhone et iPad (mémoire limitée) : la lecture classique est utilisée, et les chiffres sont recoupés par calcul. Tu peux tout de même essayer ci-dessous." : 'Pas encore activé.';
   $('#ia-load').textContent = same ? 'Démarrer maintenant' : 'Télécharger et activer';
   $('#ia-progress').classList.toggle('on', aiState === 'loading');
   $('#ia-off').hidden = !ia.ready;
@@ -2598,7 +2601,7 @@ $('#ia-off').addEventListener('click', async () => {
 });
 // Installation automatique de l'assistant en arrière-plan, dès l'ouverture (une seule fois : ensuite il démarre depuis le cache de l'appareil)
 gpuReady.then(() => {
-  if (!gpu.ok || iaDead() || iaPrefs().fail || !navigator.onLine) return;
+  if (!gpu.ok || iaDead() || iaPrefs().fail || iaSkip() || !navigator.onLine) return;
   setTimeout(() => { if (aiState !== 'ready' && aiState !== 'loading') enqueueAI(() => ensureEngine()).catch(() => {}); }, 1500);
 });
 // Mise à jour : copies locales de l'application vidées, page rechargée depuis le serveur. Les documents et réglages ne sont pas touchés.
