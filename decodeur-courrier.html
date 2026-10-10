@@ -302,6 +302,12 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .edl-item.worse{border-color:var(--stamp)}
 .edl-item .chips{margin:6px 0}
 .edl-item .chip{padding:5px 10px;font-size:.85rem}
+.edl-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.edl-thumbs .th{position:relative;display:inline-flex;flex-direction:column;align-items:center;font-size:.7rem;color:var(--muted)}
+.edl-thumbs .th img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;background:var(--paper)}
+.edl-thumbs .th>button:first-child{border:0;background:none;padding:0;cursor:pointer}
+.edl-thumbs .x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--sheet);cursor:pointer;line-height:1;padding:0}
+#cam-video{width:100%;max-height:60vh;background:#000;border-radius:10px;display:block}
 .edl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .edl-row input[data-note]{flex:1;min-width:160px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--paper);min-height:38px}
 [hidden]{display:none!important}
@@ -483,6 +489,15 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
     <label class="radio"><input type="checkbox" id="do-vi"><span><b>Avec les photos du coffre</b><small>Les PDF ne sont pas inclus</small></span></label>
     <p class="note" id="do-state" role="status"></p>
     <div class="dlg-foot"><button class="btn" id="do-go" type="button">Créer le dossier</button> <button class="btn ghost" id="do-close" type="button">Fermer</button></div>
+  </div>
+</dialog>
+
+<dialog id="cam-dialog" aria-labelledby="cam-label">
+  <div class="dlg">
+    <h2 id="cam-label" style="font-size:1.1rem"></h2>
+    <video id="cam-video" playsinline muted autoplay></video>
+    <p class="note" id="cam-msg" role="status"></p>
+    <div class="dlg-foot"><button class="btn" id="cam-snap" type="button">Prendre la photo</button> <button class="btn ghost" id="cam-cancel" type="button">Annuler</button></div>
   </div>
 </dialog>
 
@@ -3208,7 +3223,7 @@ function renderEdlRoom(box) {
     body = `<h3>${esc(r.name)}</h3>${r.items.map((it, ii) => { const old = rr && (rr.items.find(x => x.name === it.name) || {}).state, worse = old && it.state && EDL_RANK[it.state] > EDL_RANK[old];
       return `<div class="edl-item${worse ? ' worse' : ''}" data-ii="${ii}"><b>${esc(it.name)}</b>${old ? `<span class="note"> À l'entrée : ${esc(edlLabel(old))}${worse ? ' (dégradation)' : ''}</span>` : ''}
         <div class="chips" role="group" aria-label="État : ${esc(it.name)}">${EDL_STATES.map(([k, l]) => `<button class="chip" type="button" data-st="${k}" aria-pressed="${it.state === k}">${l}</button>`).join('')}</div>
-        <div class="edl-row"><input data-note placeholder="Précision (rayure, tache, fissure…)" value="${esc(it.note || '')}" aria-label="Précision : ${esc(it.name)}"><label class="btn small ghost" for="ph-${ri}-${ii}">Photo${(it.photos || []).length ? ' (' + it.photos.length + ')' : ''}</label><input class="sr" type="file" id="ph-${ri}-${ii}" accept="image/*" capture="environment" data-photo></div></div>`; }).join('')}`;
+        <div class="edl-row"><input data-note placeholder="Précision (rayure, tache, fissure…)" value="${esc(it.note || '')}" aria-label="Précision : ${esc(it.name)}"><button class="btn small ghost" type="button" data-cam>Prendre une photo${(it.photos || []).length ? ' (' + it.photos.length + ')' : ''}</button></div>${(it.photos || []).length ? `<div class="edl-thumbs">${it.photos.map((k, pi) => `<span class="th" data-pk="${esc(k)}"><button type="button" data-pview aria-label="Voir la photo ${pi + 1}"><img alt="" data-src="${esc(k)}"></button><button type="button" class="x" data-pdel aria-label="Supprimer la photo ${pi + 1}">×</button><small>${it.photoAt && it.photoAt[pi] ? esc(new Date(it.photoAt[pi]).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })) : ''}</small></span>`).join('')}</div>` : ''}</div>`; }).join('')}`;
   }
   box.innerHTML = `<div class="sheet"><button class="link back" id="edl-back" type="button">Mes états des lieux</button>
     <h2>${e.type === 'entree' ? 'Entrée' : 'Sortie'} : ${esc(e.adresse)}</h2>
@@ -3226,10 +3241,46 @@ function renderEdlRoom(box) {
     const it = e.rooms[ri].items[+el.dataset.ii];
     $$('[data-st]', el).forEach(b => b.addEventListener('click', () => { it.state = it.state === b.dataset.st ? '' : b.dataset.st; edlSave(e); renderTools(); }));
     $('[data-note]', el).addEventListener('change', ev => { it.note = ev.target.value.trim(); edlSave(e); });
-    $('[data-photo]', el).addEventListener('change', async ev => {
-      const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
-      try { const key = `e:${e.id}:${ri}:${el.dataset.ii}:${Date.now().toString(36)}`; await idb.set(key, await compressImage(f, 1100, 0.7)); it.photos = [...(it.photos || []), key]; edlSave(e); toast('Photo ajoutée'); renderTools(); } catch (err) { toast("La photo n'a pas pu être enregistrée"); }
+    $('[data-cam]', el).addEventListener('click', async () => {
+      const shot = await takeStampedPhoto(`${e.rooms[ri].name} : ${it.name}`); if (!shot) return;
+      try { const key = `e:${e.id}:${ri}:${el.dataset.ii}:${Date.now().toString(36)}`; await idb.set(key, shot.data); it.photos = [...(it.photos || []), key]; it.photoAt = [...(it.photoAt || []), shot.at]; edlSave(e); track('edl_photo'); toast('Photo ajoutée, avec la date et l\'heure'); renderTools(); } catch (err) { toast("La photo n'a pas pu être enregistrée"); }
     });
+    $$('.th', el).forEach(th => {
+      const key = th.dataset.pk;
+      idb.get(key).then(src => { const im = $('img', th); if (src && im) im.src = src; }).catch(() => {});
+      $('[data-pview]', th).addEventListener('click', async () => { const src = await idb.get(key).catch(() => null); if (!src) return; $('#img-view').src = src; const d = $('#img-dialog'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
+      $('[data-pdel]', th).addEventListener('click', () => { if (!confirm('Supprimer cette photo ?')) return; const i = it.photos.indexOf(key); it.photos.splice(i, 1); if (it.photoAt) it.photoAt.splice(i, 1); edlSave(e); idb.del(key).catch(() => {}); renderTools(); });
+    });
+  });
+}
+// Photo prise sur le vif avec la caméra (pas d'import de fichier) et datée dans l'image : date et heure de l'appareil, incrustées en bas à droite.
+function stampCanvas(c, d) {
+  const ctx = c.getContext('2d'), txt = d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR');
+  const fs = Math.max(18, Math.round(c.width / 30)), pad = Math.round(fs * 0.45);
+  ctx.font = `700 ${fs}px Arial, sans-serif`; ctx.textBaseline = 'middle';
+  const w = Math.ceil(ctx.measureText(txt).width) + pad * 2, h = Math.round(fs * 1.7);
+  ctx.fillStyle = 'rgba(0,0,0,.68)'; ctx.fillRect(c.width - w - pad, c.height - h - pad, w, h);
+  ctx.fillStyle = '#ffe14d'; ctx.fillText(txt, c.width - w, c.height - pad - h / 2);
+}
+function takeStampedPhoto(label) {
+  return new Promise(resolve => {
+    const dlg = $('#cam-dialog'), vid = $('#cam-video'), msg = $('#cam-msg'); let stream = null, done = false;
+    const finish = v => { if (done) return; done = true; if (stream) stream.getTracks().forEach(t => t.stop()); vid.srcObject = null; if (dlg.open) dlg.close(); resolve(v); };
+    $('#cam-label').textContent = label; msg.textContent = 'Ouverture de la caméra…'; $('#cam-snap').disabled = true;
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+    dlg.onclose = () => finish(null); $('#cam-cancel').onclick = () => finish(null);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { msg.textContent = "Ton navigateur ne permet pas d'ouvrir la caméra ici. Ouvre Paperdecrypt dans Chrome ou Safari."; return; }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1600 } }, audio: false }).then(st => {
+      if (done) { st.getTracks().forEach(t => t.stop()); return; }
+      stream = st; vid.srcObject = st; vid.play().catch(() => {}); msg.textContent = 'La date et l\'heure seront inscrites sur la photo.'; $('#cam-snap').disabled = false;
+    }).catch(() => { msg.textContent = "La caméra n'est pas autorisée. Autorise-la dans les réglages du navigateur pour ce site, puis réessaie."; });
+    $('#cam-snap').onclick = () => {
+      if (!vid.videoWidth) return;
+      const now = new Date(), k = Math.min(1, 1400 / Math.max(vid.videoWidth, vid.videoHeight)), c = document.createElement('canvas');
+      c.width = Math.round(vid.videoWidth * k); c.height = Math.round(vid.videoHeight * k);
+      c.getContext('2d').drawImage(vid, 0, 0, c.width, c.height); stampCanvas(c, now);
+      finish({ data: c.toDataURL('image/jpeg', 0.75), at: now.toISOString() });
+    };
   });
 }
 function renderEdlSummary(box) {
@@ -3255,7 +3306,7 @@ async function buildEdlHTML(e) {
     for (const it of r.items) {
       const old = rr && (rr.items.find(x => x.name === it.name) || {}).state;
       rows += `<tr${old && it.state && EDL_RANK[it.state] > EDL_RANK[old] ? ' class="w"' : ''}><td>${esc(it.name)}</td>${ref ? `<td>${old ? esc(edlLabel(old)) : '–'}</td>` : ''}<td>${it.state ? esc(edlLabel(it.state)) : '–'}</td><td>${esc(it.note || '')}</td></tr>`;
-      for (const k of it.photos || []) { const src = await idb.get(k).catch(() => null); if (src) photos += `<figure><img src="${src}" alt=""><figcaption>${esc(it.name)}</figcaption></figure>`; }
+      for (const [pi, k] of (it.photos || []).entries()) { const src = await idb.get(k).catch(() => null); const at = it.photoAt && it.photoAt[pi]; if (src) photos += `<figure><img src="${src}" alt=""><figcaption>${esc(it.name)}${at ? ' | pris le ' + esc(new Date(at).toLocaleString('fr-FR')) : ''}</figcaption></figure>`; }
     }
     rooms += `<section><h2>${esc(r.name)}</h2><table><thead><tr><th>Élément</th>${ref ? "<th>À l'entrée</th>" : ''}<th>${e.type === 'entree' ? 'État' : 'À la sortie'}</th><th>Précisions</th></tr></thead><tbody>${rows}</tbody></table>${photos ? `<div class="ph">${photos}</div>` : ''}</section>`;
   }

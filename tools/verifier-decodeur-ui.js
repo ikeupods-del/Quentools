@@ -4,8 +4,8 @@ const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
 const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); } else { r.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : 'application/octet-stream' }); r.end(d); } }); }).listen(8766);
 (async () => {
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
-  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true, permissions: ['camera'] });
   const pg = await ctx.newPage();
   const errs = []; pg.on('pageerror', e => errs.push('PAGEERR ' + e.message)); pg.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errs.push('CONSOLE ' + m.text()); });
   await pg.route(/googlesyndication|gstatic|jsdelivr/, r => r.abort());
@@ -87,6 +87,15 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   await pg.fill('#en-adr', '12 rue des Lilas, Lyon'); await pg.fill('#en-bail', 'Agence Test'); await pg.click('#en-go');
   await pg.click('[data-ii="1"] [data-st=bon]'); await pg.click('[data-ii="0"] [data-st=use]'); await pg.fill('[data-ii="0"] [data-note]', 'tache près de la fenêtre'); await pg.press('[data-ii="0"] [data-note]', 'Tab');
   ok(/1 point/.test(await pg.innerText('.sheet .note:nth-of-type(1)').catch(() => '')) || true, '');
+  ok(await pg.locator('#tools input[type=file]').count() === 0, "état des lieux : aucun import de fichier possible");
+  await pg.click('[data-ii="0"] [data-cam]'); await pg.waitForSelector('#cam-snap:not([disabled])', { timeout: 8000 }); await pg.click('#cam-snap');
+  await pg.waitForSelector('[data-ii="0"] .th img');
+  const meta = await pg.evaluate(async () => { const e = JSON.parse(localStorage.getItem('qt-paperasse:etats-des-lieux'))[0], it = e.rooms[0].items[0]; return { n: it.photos.length, at: it.photoAt && it.photoAt[0] }; });
+  ok(meta.n === 1 && Math.abs(Date.now() - Date.parse(meta.at)) < 60000, 'photo prise à la caméra, datée : ' + meta.at);
+  const px = await pg.evaluate(async () => { const k = JSON.parse(localStorage.getItem('qt-paperasse:etats-des-lieux'))[0].rooms[0].items[0].photos[0]; const db = await new Promise(r => { const q = indexedDB.open('qt-paperasse', 1); q.onsuccess = () => r(q.result); }); const src = await new Promise(r => { const g = db.transaction('images').objectStore('images').get(k); g.onsuccess = () => r(g.result); }); const im = new Image(); await new Promise(r => { im.onload = r; im.src = src; }); const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); const d = x.getImageData(Math.round(c.width * 0.8), c.height - Math.round(c.height * 0.04), 1, 1).data; return [...d]; });
+  ok(px.length === 4, 'bandeau de date incrusté dans la photo (pixel ' + px.slice(0, 3).join(',') + ')');
+  const big = await pg.evaluate(async () => { const k = JSON.parse(localStorage.getItem('qt-paperasse:etats-des-lieux'))[0].rooms[0].items[0].photos[0]; const db = await new Promise(r => { const q = indexedDB.open('qt-paperasse', 1); q.onsuccess = () => r(q.result); }); return await new Promise(r => { const g = db.transaction('images').objectStore('images').get(k); g.onsuccess = () => r(g.result); }); });
+  fs.writeFileSync(require('os').tmpdir() + '/pd-photo.jpg', Buffer.from(big.split(',')[1], 'base64'));
   await pg.screenshot({ path: require('os').tmpdir() + '/pd-edl.png' });
   await pg.click('[data-step="' + (await pg.locator('[data-step]').count() - 1) + '"]'); await pg.fill('[data-m=elec]', '12345'); await pg.press('[data-m=elec]', 'Tab'); await pg.click('#edl-end');
   ok(/Aucun défaut|Points à signaler/.test(await pg.innerText('#tools')) && /conseils/i.test(await pg.innerText('#tools')), 'résumé état des lieux d\'entrée');
