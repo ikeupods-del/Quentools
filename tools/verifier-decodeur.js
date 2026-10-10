@@ -87,6 +87,14 @@ ko+=ko3;
   { const r=rd("SARL TECHNO au capital de 50 000 EUR\nCasque audio XY200 59,90\nTotal TTC : 59,90 €"); ck('capital ignoré', r.price===59.9); }
   { const r=rd("Garantie 5 ans pièces et main d'oeuvre\nAspirateur DYSON V15 599,00\nTOTAL 599,00"); ck('garantie annoncée en années', r.warrantyYears===5&&r.price===599&&r.store==='Dyson'); }
   { vm.runInContext('1',ctx); const r=vm.runInContext('scanAmounts('+JSON.stringify("SARL au capital de 50 000 euros. Montant à payer : 120,00 €")+')',ctx); ck('scanAmounts ignore le capital social', r.best&&r.best.value===120); }
+  { // ticket thermique photographié : article sur une ligne, « 1 x prix » sur la suivante ; jetons parasites autour du nom
+    const r=rd("DARTY NIMES\nDate : 12/09/2026 15:42\nï LAVE-LINGE FAGOR LV8 î\n1 x 349,00 EUR\nTOTAL TTC 349,00 EUR\ndont TVA 20% 58,17\nCB 349,00 EUR\nGarantie 2 ans pièces et main d'oeuvre"); ck('ticket thermique : article', r.product==='LAVE-LINGE FAGOR LV8'); ck('ticket thermique : prix', r.price===349&&r.store==='Darty'); }
+  { // un chiffre mal lu qui ne se répète pas : le montant confirmé par une autre ligne l'emporte
+    const r=rd("DARTY\nLAVE-LINGE FAGOR\n1 x 349,00 EUR\nTOTAL TTC 349,60 EUR\nCB 349,00 EUR"); ck('total mal lu corrigé par les autres lignes', r.price===349); }
+  { // zéros lus comme des six partout : seule la TVA imprimée permet de corriger, et seulement si la correction est unique
+    const r=rd("DARTY\nLAVE-LINGE FAGOR\n1 x 349,60 EUR\nTOTAL TTC 349,60 EUR\ndont TVA 20% 58,17\nCB 349,60 EUR"); ck('contrôle par la TVA : 349,60 → 349,00', r.price===349);
+    const q=rd("DARTY\nLAVE-LINGE FAGOR\nTOTAL TTC 349,00 EUR\ndont TVA 20% 58,17"); ck('total cohérent avec la TVA : inchangé', q.price===349);
+    const z=rd("DARTY\nLAVE-LINGE FAGOR\nTOTAL TTC 120,00 EUR\ndont TVA 20% 99,99"); ck('TVA incohérente et aucune correction unique : total conservé', z.price===120); }
   if(!ko4) console.log('✓ Paperdecrypt : lecture des tickets et factures d\'achat correcte (13 contrôles)');
   ko+=ko4;
 }
