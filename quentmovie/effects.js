@@ -163,14 +163,27 @@ afx('limiteur', 'Limiteur (évite la saturation)', [], () => 'alimiter=limit=0.9
 afx('fm', 'Voix radio FM', [], () => 'highpass=f=100,equalizer=f=2500:t=q:w=1:g=5,acompressor=threshold=0.08:ratio=5,alimiter=limit=0.93', ['equalizer', 'acompressor']);
 
 // ---------- Transitions (filtre xfade) ----------
+// Certaines sont décrites par une formule (xfade « custom ») : elles marchent avec toutes les versions de FFmpeg.
+// P va de 1 (début, image A) à 0 (fin, image B) ; a0…a3 / b0…b3 lisent un pixel de chaque image, plan par plan.
+const px = (src, x, y) => `if(eq(PLANE,0),${src}0(${x},${y}),if(eq(PLANE,1),${src}1(${x},${y}),if(eq(PLANE,2),${src}2(${x},${y}),${src}3(${x},${y}))))`;
+const EXPR = {
+  coverleft: `if(gte(X,W*P),${px('b', 'X-W*P', 'Y')},A)`,
+  coverright: `if(lt(X,W*(1-P)),${px('b', 'X+W*P', 'Y')},A)`,
+  revealleft: `if(lt(X,W*P),${px('a', 'X+W*(1-P)', 'Y')},B)`,
+  revealright: `if(gte(X,W*(1-P)),${px('a', 'X-W*(1-P)', 'Y')},B)`,
+  stores: 'if(lt(mod(Y,H/10)/(H/10),1-P),B,A)',
+  damier: 'if(gt(1-P,0.25+0.5*mod(floor(X*8/W)+floor(Y*8/H),2)),B,A)',
+  rideau: 'if(lt(abs(X-W/2),W/2*(1-P)),B,A)'
+};
 const TRANSITIONS = [
   ['fade', 'Fondu enchaîné'], ['fadeblack', 'Fondu au noir'], ['fadewhite', 'Fondu au blanc'], ['dissolve', 'Dissolution'],
   ['slideleft', 'Glissé vers la gauche'], ['slideright', 'Glissé vers la droite'], ['slideup', 'Glissé vers le haut'], ['slidedown', 'Glissé vers le bas'],
   ['wipeleft', 'Balayage gauche'], ['wiperight', 'Balayage droite'], ['smoothleft', 'Glissement doux'],
   ['hblur', 'Flou en mouvement'], ['squeezeh', 'Écrasement horizontal'], ['squeezev', 'Écrasement vertical'], ['coverleft', 'Recouvrement gauche'], ['coverright', 'Recouvrement droite'], ['revealleft', 'Dévoilement gauche'], ['revealright', 'Dévoilement droite'], ['diagtl', 'Diagonale'], ['vuslice', 'Tranches verticales'], ['hlslice', 'Tranches horizontales'], ['fadegrays', 'Fondu par le gris'],
   ['circleopen', 'Cercle qui s’ouvre'], ['circleclose', 'Cercle qui se ferme'], ['radial', 'Radial'],
-  ['zoomin', 'Zoom'], ['pixelize', 'Pixels'], ['horzopen', 'Ouverture horizontale'], ['vertopen', 'Ouverture verticale']
-].map(([id, nom]) => ({ id, nom }));
+  ['zoomin', 'Zoom'], ['pixelize', 'Pixels'], ['horzopen', 'Ouverture horizontale'], ['vertopen', 'Ouverture verticale'],
+  ['stores', 'Stores'], ['damier', 'Damier'], ['rideau', 'Rideau qui s’ouvre']
+].map(([id, nom]) => (EXPR[id] ? { id, nom, expr: EXPR[id] } : { id, nom }));
 
 // ---------- Styles de titres ----------
 const TITLES = [
@@ -212,7 +225,7 @@ function defaults(def) { const o = {}; def.params.forEach(q => { o[q.k] = q.def;
 function catalogue(filters) {
   const ok = d => d.needs.every(n => filters.has(n));
   const map = d => ({ id: d.id, nom: d.nom, cat: d.cat, params: d.params, dispo: ok(d), blend: !!d.blend });
-  return { video: VIDEO.map(map), audio: AUDIO.map(map), transitions: TRANSITIONS, titres: TITLES, reportage: REPORTAGE, generateurs: GENERATEURS, positions: POSITIONS };
+  return { video: VIDEO.map(map), audio: AUDIO.map(map), transitions: TRANSITIONS.map(t => ({ id: t.id, nom: t.nom })), titres: TITLES, reportage: REPORTAGE, generateurs: GENERATEURS, positions: POSITIONS };
 }
 
 module.exports = { VIDEO, AUDIO, TRANSITIONS, TITLES, REPORTAGE, GENERATEURS, POSITIONS, catalogue, defaults };

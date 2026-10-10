@@ -8,6 +8,8 @@ const { spawn } = require('child_process');
 const FX = require('./effects');
 
 const FORMATS = { vertical: [9, 16], horizontal: [16, 9], carre: [1, 1] };
+// modes de mélange des calques (nom affiché → filtre blend)
+const MODES = { ecran: 'screen', addition: 'addition', eclaircir: 'lighten', produit: 'multiply', incrustation: 'overlay', lumiere: 'softlight' };
 const IMG_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.tif', '.tiff', '.avif', '.jfif'];
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.mp4': 'video/mp4', '.mov': 'video/quicktime', '.m4v': 'video/mp4', '.webm': 'video/webm',
@@ -47,12 +49,60 @@ function create(opts = {}) {
   let FFMPEG = opts.ffmpeg || 'ffmpeg', FFPROBE = opts.ffprobe || 'ffprobe';
   let filters = new Set(), encoders = new Set(), version = '';
   const LIB = (opts.lib || path.join(__dirname, 'bibliotheque')).replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep);
-  const libIndex = () => { try { return JSON.parse(fs.readFileSync(path.join(LIB, 'index.json'), 'utf8')); } catch (e) { return { sons: [], musiques: [], stickers: [] }; } };
-  // « lib:sons/clavier.mp3 » = fichier de la bibliothèque ; sinon fichier importé par l'utilisateur
+  const LIB_LISTES = ['sons', 'musiques', 'stickers', 'marque', 'luts', 'calques', 'cadres', 'fonds', 'fondvert'];
+  const libIndex = () => { let j = {}; try { j = JSON.parse(fs.readFileSync(path.join(LIB, 'index.json'), 'utf8')); } catch (e) { /* bibliothèque absente */ } LIB_LISTES.forEach(k => { j[k] = j[k] || []; }); return j; };
+  // Packs ajoutés par l'utilisateur (LUT, sons, images, vidéos) : dossier « Mes packs »
+  const PACKS = path.join(BASE, 'packs'); fs.mkdirSync(PACKS, { recursive: true });
+  // « lib:sons/clavier.mp3 » = bibliothèque ; « pack:Dossier/fichier.wav » = Mes packs ; sinon fichier importé
   const mediaPath = n => {
-    const m = /^lib:(sons|musiques|stickers)\/([\w.\-]+)$/.exec(String(n || ''));
-    return m ? path.join(LIB, m[1], m[2]) : path.join(MEDIAS, safeName(n));
+    const s = String(n || '');
+    const m = /^lib:(sons|musiques|stickers|luts|calques|cadres|fonds|fondvert)\/([\w.\-]+)$/.exec(s);
+    if (m) return path.join(LIB, m[1], m[2]);
+    if (s.startsWith('pack:')) {
+      const f = path.resolve(PACKS, s.slice(5));
+      if (!f.startsWith(PACKS + path.sep)) throw new Error('Chemin refusé');
+      return f;
+    }
+    return path.join(MEDIAS, safeName(n));
   };
+  // Cadres et décors existent en horizontal (-h) et vertical (-v) : on prend celui du format du projet
+  const orient = (n, W, H) => /^lib:(cadres|fonds)\/[\w\-]+-[hv]\.(png|jpg)$/.test(String(n || '')) ? String(n).replace(/-[hv]\.(png|jpg)$/, (x, e) => (W >= H ? '-h.' : '-v.') + e) : n;
+  // Chemin utilisable dans un filtre FFmpeg (sinon copie sous un nom simple)
+  const cheminFiltre = f => {
+    if (/^[\w\-./ ]+$/.test(f)) return f;
+    const dest = path.join(TMP, 'lut-' + require('crypto').createHash('md5').update(f).digest('hex') + path.extname(f));
+    if (!fs.existsSync(dest)) fs.copyFileSync(f, dest);
+    return dest;
+  };
+  const PACK_TYPES = { '.cube': 'luts', '.mp3': 'sons', '.wav': 'sons', '.m4a': 'sons', '.aif': 'sons', '.aiff': 'sons', '.flac': 'sons', '.ogg': 'sons', '.caf': 'sons',
+    '.png': 'images', '.webp': 'images', '.jpg': 'images', '.jpeg': 'images', '.mp4': 'videos', '.mov': 'videos', '.m4v': 'videos', '.webm': 'videos' };
+  const packCache = new Map();
+  async function scanPacks() {
+    const files = [];
+    const walk = (dir, depth) => {
+      let l = []; try { l = fs.readdirSync(dir, { withFileTypes: true }); } catch (e) { return; }
+      for (const e of l) {
+        if (e.name.startsWith('.') || files.length > 3000) continue;
+        const f = path.join(dir, e.name);
+        if (e.isDirectory()) { if (depth < 5) walk(f, depth + 1); } else if (PACK_TYPES[path.extname(e.name).toLowerCase()]) files.push(f);
+      }
+    };
+    walk(PACKS, 0);
+    const out = { luts: [], sons: [], images: [], videos: [] };
+    const todo = files.map(f => async () => {
+      const rel = path.relative(PACKS, f).split(path.sep).join('/'), type = PACK_TYPES[path.extname(f).toLowerCase()];
+      const it = { file: 'pack:' + rel, nom: path.basename(f, path.extname(f)).replace(/[_-]+/g, ' '), cat: rel.includes('/') ? rel.split('/')[0] : 'Mes packs' };
+      if (type === 'sons' || type === 'videos') {
+        const st = fs.statSync(f), k = f + ':' + st.size + ':' + st.mtimeMs;
+        if (!packCache.has(k)) { try { const i = await probe(f); packCache.set(k, { duree: +i.duration.toFixed(2), son: i.hasAudio }); } catch (e) { packCache.set(k, null); } }
+        const i = packCache.get(k); if (!i) return; it.duree = i.duree; it.son = i.son;
+      }
+      out[type].push(it);
+    });
+    for (let i = 0; i < todo.length; i += 8) await Promise.all(todo.slice(i, i + 8).map(f => f()));
+    for (const k of Object.keys(out)) out[k].sort((a, b) => a.file.localeCompare(b.file, 'fr'));
+    return out;
+  }
 
   // ---------- FFmpeg ----------
   function run(cmd, args, { cwd, onOut, binary, wantErr } = {}) {
@@ -116,11 +166,12 @@ function create(opts = {}) {
       args.push('-ss', num(c.in, 0) + (o.preview ? t * speed : 0), '-t', o.preview ? 1.5 : srcDur, '-i', mediaPath(c.file));
       if (c.bgFile) { args.push('-loop', '1', '-framerate', fps, '-i', mediaPath(c.bgFile)); covIdx = n++; }
     } else if (isGen) args.push('-f', 'lavfi', '-t', o.preview ? 1 : eff, '-i', `color=c=${hex(c.color || '#000000')}:s=${W}x${H}:r=${fps}`);
-    else if (isImg) args.push('-loop', '1', '-framerate', fps, '-t', o.preview ? 1 : eff, '-i', mediaPath(c.file));
-    else args.push('-ss', num(c.in, 0) + (o.preview ? t * speed : 0), '-t', o.preview ? 1.5 : srcDur, '-i', mediaPath(c.file));
+    else if (isImg) args.push('-loop', '1', '-framerate', fps, '-t', o.preview ? 1 : eff, '-i', mediaPath(orient(c.file, W, H)));
+    else args.push('-ss', num(c.in, 0) + (o.preview ? t * speed : 0), '-t', o.preview ? 1.5 : srcDur, '-i', mediaPath(orient(c.file, W, H)));
     if (key && c.key.bgType === 'file' && c.key.bgFile) {
-      if (c.key.bgKind === 'video') args.push('-stream_loop', '-1', '-i', mediaPath(c.key.bgFile));
-      else args.push('-loop', '1', '-framerate', fps, '-i', mediaPath(c.key.bgFile));
+      const bgf = mediaPath(orient(c.key.bgFile, W, H));
+      if (c.key.bgKind === 'video') args.push('-stream_loop', '-1', '-i', bgf);
+      else args.push('-loop', '1', '-framerate', fps, '-i', bgf);
       bg = n++;
     }
     const hasPip = c.pip && c.pip.on && c.pip.file;
@@ -181,6 +232,20 @@ function create(opts = {}) {
     const bright = clamp(num(c.bright, 0), -50, 50) / 100, contrast = clamp(num(c.contrast, 100), 0, 200) / 100;
     const sat = c.bw ? 0 : clamp(num(c.sat, 100), 0, 300) / 100;
     if (bright !== 0 || contrast !== 1 || sat !== 1) lin(`eq=brightness=${bright}:contrast=${contrast}:saturation=${sat}`);
+    // mélange d'un filtre avec l'image d'origine (intensité en %)
+    const dose = (frag, pct) => {
+      if (pct >= 99) return lin(frag);
+      if (pct <= 0) return;
+      const a = lab(), b = lab(), m = lab(), out = lab();
+      f.push(`[${cur}]format=yuv420p,split[${a}][${b}]`, `[${b}]${frag},format=yuv420p[${m}]`, `[${a}][${m}]blend=all_mode=normal:all_opacity=${(pct / 100).toFixed(2)}[${out}]`);
+      cur = out;
+    };
+
+    // Look d'étalonnage (fichier LUT .cube de la bibliothèque ou d'un pack)
+    if (c.lut && c.lut.file && filters.has('lut3d')) {
+      let lp = null; try { lp = mediaPath(c.lut.file); } catch (e) { /* chemin refusé */ }
+      if (lp && /\.cube$/i.test(lp) && fs.existsSync(lp)) dose(`lut3d=file='${cheminFiltre(lp)}':interp=tetrahedral`, clamp(num(c.lut.amount, 100), 0, 100));
+    }
 
     // Pile d'effets
     for (const e of stack) {
@@ -190,12 +255,8 @@ function create(opts = {}) {
       for (const pr of d.params) if (e.p && e.p[pr.k] !== undefined) q[pr.k] = clamp(num(e.p[pr.k], pr.def), pr.min, pr.max);
       const frag = d.make(q, ctx);
       if (typeof frag !== 'string') { const out = lab(); f.push(frag.graph(cur, out)); cur = out; }
-      else if (d.blend && q.amount < 99) {
-        const a = lab(), b = lab(), m = lab(), out = lab();
-        f.push(`[${cur}]format=yuv420p,split[${a}][${b}]`, `[${b}]${frag},format=yuv420p[${m}]`,
-          `[${a}][${m}]blend=all_mode=normal:all_opacity=${(q.amount / 100).toFixed(2)}[${out}]`);
-        cur = out;
-      } else lin(frag);
+      else if (d.blend) dose(frag, q.amount);
+      else lin(frag);
     }
 
     // Incrustation (image dans l'image, logo)
@@ -212,18 +273,35 @@ function create(opts = {}) {
       if (!ov || !ov.file || ov.on === false) continue;
       const S0 = clamp(num(ov.start, 0), 0, 3600), Dd = num(ov.dur, 0), E0 = Dd > 0 ? S0 + Dd : eff + 10;
       if (o.preview && !(t >= S0 && t < E0)) continue; // l'aperçu d'une image n'affiche que ce qui est visible à cet instant
-      const isVid = ov.kind === 'video';
-      if (isVid) args.push('-stream_loop', '-1', '-i', mediaPath(ov.file)); else args.push('-loop', '1', '-framerate', fps, '-i', mediaPath(ov.file));
+      const isVid = ov.kind === 'video', ovf = mediaPath(orient(ov.file, W, H));
+      if (isVid) args.push(...(o.preview && t > S0 ? ['-ss', Math.min(t - S0, 1.8).toFixed(2)] : []), '-stream_loop', '-1', '-i', ovf); else args.push('-loop', '1', '-framerate', fps, '-i', ovf);
       const idx = n++, id = lab(), sc = clamp(num(ov.scale, 30), 2, 150) / 100;
+      const op = clamp(num(ov.opacity, 100), 5, 100) / 100, en = o.preview ? '' : `:enable='between(t,${S0},${E0})'`;
+      // fond vert de l'élément (animations « fond vert ») : la couleur verte devient transparente
+      const cle = ov.key ? `,colorkey=0x00ff00:${clamp(num(ov.keySim, 0.3), 0.05, 0.7)}:0.12` : '';
+      const mode = MODES[ov.mode] && filters.has('blend') ? MODES[ov.mode] : null;
+      if (mode) { // calque plein écran mélangé à l'image (fuites de lumière, poussière, grain…)
+        f.push(`[${idx}:v]fps=${fps},${ov.plein === 'cadre' ? `scale=${W}:${H},setsar=1` : scFill},format=gbrp[${id}]`);
+        const a = lab(), out = lab();
+        f.push(`[${cur}]format=gbrp[${a}]`, `[${a}][${id}]blend=all_mode=${mode}:all_opacity=${op}:shortest=1${en},format=yuv420p[${out}]`);
+        cur = out; continue;
+      }
+      if (ov.plein) { // cadre ou décor plein écran
+        let ch = `[${idx}:v]fps=${fps},setpts=PTS-STARTPTS+${S0}/TB,${ov.plein === 'cadre' ? `scale=${W}:${H},setsar=1` : scFill},format=rgba${cle}`;
+        if (op < 1) ch += `,colorchannelmixer=aa=${op}`;
+        if (!o.preview && ov.anim === 'fade') ch += `,fade=t=in:st=${S0}:d=0.4:alpha=1` + (Dd > 0 ? `,fade=t=out:st=${Math.max(S0, E0 - 0.4)}:d=0.4:alpha=1` : '');
+        f.push(`${ch}[${id}]`);
+        const out = lab(); f.push(`[${cur}][${id}]overlay=0:0:shortest=1:format=auto${en}[${out}]`); cur = out; continue;
+      }
       const anim = o.preview ? 'none' : (ov.anim || 'none'), Tt = 't';
       const ease = (a, d) => `(1-pow(1-min(1,max(0,(${Tt}-(${a}))/${d})),3))`;
       const px = clamp(num(ov.x, 50), -20, 120) / 100, py = clamp(num(ov.y, 50), -20, 120) / 100;
       const baseW = W * sc;
       const w = anim === 'pop' ? `trunc(${baseW}*max(0.02,min(1.15,1-exp(-7*(${Tt}-${S0}))*cos(18*(${Tt}-${S0}))))/2)*2` : `${even(baseW)}`;
-      let chain = `[${idx}:v]fps=${fps},setpts=PTS-STARTPTS+${S0}/TB,format=rgba`;
+      let chain = `[${idx}:v]fps=${fps},setpts=PTS-STARTPTS+${S0}/TB,format=rgba${cle}`;
       chain += anim === 'pop' ? `,scale=w='${w}':h=-2:eval=frame` : `,scale=${w}:-2`;
       if (num(ov.rot, 0)) chain += `,rotate=${(num(ov.rot, 0) * Math.PI / 180).toFixed(4)}:ow='hypot(iw,ih)':oh='hypot(iw,ih)':c=none`;
-      const op = clamp(num(ov.opacity, 100), 5, 100) / 100; if (op < 1) chain += `,colorchannelmixer=aa=${op}`;
+      if (op < 1) chain += `,colorchannelmixer=aa=${op}`;
       if (anim === 'fade' || anim === 'pop') chain += `,fade=t=in:st=${S0}:d=0.3:alpha=1`;
       if ((anim === 'fade') && Dd > 0) chain += `,fade=t=out:st=${Math.max(S0, E0 - 0.3)}:d=0.3:alpha=1`;
       f.push(`${chain}[${id}]`);
@@ -232,7 +310,7 @@ function create(opts = {}) {
       if (anim === 'monte') ye = `${ye}+(1-${ease(S0, 0.5)})*H*0.4`;
       if (anim === 'rebond') ye = `${ye}-abs(sin((${Tt}-${S0})*9))*H*0.04*exp(-(${Tt}-${S0})*1.5)`;
       const out = lab();
-      f.push(`[${cur}][${id}]overlay=x='${xe}':y='${ye}':shortest=1:format=auto${o.preview ? '' : `:enable='between(t,${S0},${E0})'`}[${out}]`); cur = out;
+      f.push(`[${cur}][${id}]overlay=x='${xe}':y='${ye}':shortest=1:format=auto${en}[${out}]`); cur = out;
     }
 
     // Sous-titres (une ligne par repère, en bas)
@@ -453,7 +531,8 @@ function create(opts = {}) {
           const tr = trans[i - 1], nv = `v${i}x`, na = `a${i}x`;
           if (tr) {
             const d = clamp(num(tr.dur, 0.6), 0.2, Math.max(0.2, Math.min(len, lens[i]) * 0.9));
-            g.push(`[${cv}][vi${i}]xfade=transition=${tr.type}:duration=${d.toFixed(2)}:offset=${(len - d).toFixed(3)},${norm}[${nv}]`,
+            const def = FX.TRANSITIONS.find(t => t.id === tr.type), ty = def.expr ? `custom:expr='${def.expr}'` : tr.type;
+            g.push(`[${cv}][vi${i}]xfade=transition=${ty}:duration=${d.toFixed(2)}:offset=${(len - d).toFixed(3)},${norm}[${nv}]`,
               `[${ca}][ai${i}]acrossfade=d=${d.toFixed(2)}[${na}]`);
             len += lens[i] - d;
           } else {
@@ -578,12 +657,25 @@ function create(opts = {}) {
       if (req.method === 'GET' && p.startsWith('/apercu/')) return serveFile(req, res, path.join(APERCUS, safeName(decodeURIComponent(p.slice(8)))));
 
       if (req.method === 'GET' && p === '/api/catalogue') return send(res, 200, { ...FX.catalogue(filters), font: !!FONT && filters.has('drawtext'), version, folder: BASE, bibliotheque: libIndex(), polices: FONTS_OK.map(x => ({ id: x.id, nom: x.nom })), sorties: sortiesDispo(), duck: filters.has('sidechaincompress'), hwenc: process.platform === 'darwin' && encoders.has('h264_videotoolbox') });
+      if (req.method === 'GET' && p === '/api/packs') return send(res, 200, { ...(await scanPacks()), dossier: PACKS });
+      if (req.method === 'POST' && p === '/api/packs/ouvrir') { // ouvrir le dossier « Mes packs » dans le Finder
+        if (process.platform === 'darwin') spawn('open', [PACKS]);
+        return send(res, 200, { ok: true, dossier: PACKS });
+      }
       if (req.method === 'GET' && p === '/api/medias') {
         const items = [];
         for (const n of fs.readdirSync(MEDIAS).filter(x => !x.startsWith('.'))) {
           try { items.push({ file: n, ...(await probe(path.join(MEDIAS, n))) }); } catch (e) { /* fichier ignoré */ }
         }
         return send(res, 200, { items });
+      }
+      if (req.method === 'POST' && p === '/api/import' && /\.cube$/i.test(url.searchParams.get('name') || '')) { // look LUT : rangé dans Mes packs
+        const dir = path.join(PACKS, 'LUT importés'); fs.mkdirSync(dir, { recursive: true });
+        const name = safeName(url.searchParams.get('name')), dest = path.join(dir, name);
+        const txt = await new Promise((ok, ko) => { let b = ''; req.on('data', d => { b += d; if (b.length > 6e7) req.destroy(); }); req.on('end', () => ok(b)); req.on('error', ko); });
+        if (!/LUT_3D_SIZE\s+\d+/.test(txt)) throw new Error('Ce fichier .cube n’est pas un LUT 3D.');
+        fs.writeFileSync(dest, txt);
+        return send(res, 200, { file: 'pack:LUT importés/' + name, kind: 'lut' });
       }
       if (req.method === 'POST' && p === '/api/import') {
         let name = safeName(url.searchParams.get('name')), dest = path.join(MEDIAS, name), i = 2;
@@ -602,12 +694,18 @@ function create(opts = {}) {
             await run(FFMPEG, ['-y', '-v', 'error', '-i', dest, '-vn', '-c:a', 'aac', '-b:a', '192k', m4a]); if (m4a !== dest) fs.unlinkSync(dest);
             dest = m4a; info = await probe(dest);
           }
+          if (info.kind === 'video' && (/^camera-/.test(path.basename(dest)) || !(info.duration > 0))) { // prise de la caméra : fichier propre (durée, images régulières)
+            const mp4 = dest.replace(/\.[^.]+$/, '') + '-prise.mp4';
+            await run(FFMPEG, ['-y', '-v', 'error', '-i', dest, '-map', '0:v:0', '-map', '0:a:0?', '-r', 30, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', 18, '-pix_fmt', 'yuv420p',
+              '-c:a', 'aac', '-b:a', '192k', '-ar', 48000, '-movflags', '+faststart', mp4]);
+            fs.unlinkSync(dest); dest = mp4; info = await probe(dest);
+          }
           return send(res, 200, { file: path.basename(dest), ...info });
         }
         catch (e) { fs.unlinkSync(dest); throw new Error('Ce fichier n’est pas un média lisible.'); }
       }
       if (req.method === 'DELETE' && p.startsWith('/api/medias/')) {
-        const f = mediaPath(decodeURIComponent(p.slice(12)));
+        const f = path.join(MEDIAS, safeName(decodeURIComponent(p.slice(12)))); // jamais la bibliothèque ni les packs
         if (fs.existsSync(f)) fs.unlinkSync(f);
         return send(res, 200, { ok: true });
       }
@@ -660,7 +758,7 @@ function create(opts = {}) {
         const q = url.searchParams, id = q.get('fx'), kind = q.get('kind') === 'image' ? 'image' : 'video';
         const isA = FX.AUDIO.some(a => a.id === id);
         if (isA) return send(res, 404, { error: 'Pas de vignette' });
-        const clip = { file: q.get('file'), kind, in: num(q.get('t'), 0), out: num(q.get('t'), 0) + 2, dur: 3, speed: 1, fit: 'fill', fx: [{ id }], key: {} };
+        const clip = { file: q.get('file'), kind, in: num(q.get('t'), 0), out: num(q.get('t'), 0) + 2, dur: 3, speed: 1, fit: 'fill', fx: id ? [{ id }] : [], key: {}, lut: q.get('lut') ? { file: q.get('lut'), amount: 100 } : null };
         const dir = fs.mkdtempSync(path.join(TMP, 'th-'));
         try {
           const args = buildClip(clip, sizeOf({ format: 'carre' }, 'thumb'), { preview: true, t: 0.8, tdir: { dir, idx: 0 } });

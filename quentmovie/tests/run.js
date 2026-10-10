@@ -114,6 +114,58 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   check('fond vert + image', await isJpeg(await preview(clip({ file: 'vert.mp4', key: { on: true, color: '#00b140', sim: 0.15, blend: 0.08, despill: true, bgType: 'file', bgFile: 'photo.png', bgKind: 'image' } }))));
   check('cadrage flou', await isJpeg(await preview(clip({ fit: 'flou' }))));
 
+  // 3b) Bibliothèque : looks (LUT), effets animés, cadres, décors, animations sur fond vert, Mes packs
+  const L = cat.bibliotheque;
+  check('bibliothèque complète', L.luts.length >= 30 && L.calques.length >= 15 && L.cadres.length >= 10 && L.fonds.length >= 15 && L.fondvert.length >= 9 && L.sons.length >= 60,
+    JSON.stringify(Object.fromEntries(Object.entries(L).map(([k, v]) => [k, v.length]))));
+  for (const k of ['sons', 'musiques', 'stickers', 'luts', 'calques', 'cadres', 'fonds', 'fondvert']) {
+    const manquants = L[k].filter(x => !fs.existsSync(app.mediaPath('lib:' + x.file)) || (/-h\.(png|jpg)$/.test(x.file) && !fs.existsSync(app.mediaPath('lib:' + x.file.replace('-h.', '-v.')))));
+    check('fichiers de la bibliothèque : ' + k, !manquants.length, manquants.map(x => x.file).join(', '));
+  }
+  for (const x of L.luts) check('look ' + x.id, await isJpeg(await preview(clip({ lut: { file: 'lib:' + x.file, amount: 100 } }))), lastErr.v);
+  check('look à 40 %', await isJpeg(await preview(clip({ lut: { file: 'lib:' + L.luts[0].file, amount: 40 } }))), lastErr.v);
+  check('vignette de look', await isJpeg(await fetch(U('/api/fxthumb?file=demo.mp4&kind=video&t=1&lut=' + encodeURIComponent('lib:' + L.luts[1].file)))), lastErr.v);
+  for (const x of L.calques) check('effet animé ' + x.id, await isJpeg(await preview(clip({ overlays: [{ file: 'lib:' + x.file, kind: 'video', mode: 'ecran', plein: 'remplir', opacity: 90, start: 0, dur: 0 }] }))), lastErr.v);
+  for (const m of ['ecran', 'addition', 'eclaircir', 'produit', 'incrustation', 'lumiere']) check('mélange ' + m, await isJpeg(await preview(clip({ overlays: [{ file: 'lib:' + L.calques[0].file, kind: 'video', mode: m, opacity: 70 }] }))), lastErr.v);
+  for (const x of L.cadres) for (const format of ['vertical', 'horizontal', 'carre']) {
+    const c = clip({ overlays: [{ file: 'lib:' + x.file, kind: 'image', plein: 'cadre', anim: 'none', opacity: 100 }] });
+    const rr = await fetch(U('/api/preview'), { method: 'POST', body: JSON.stringify({ project: project([c], { format }), clip: c, t: 1 }) });
+    check(`cadre ${x.id} (${format})`, await isJpeg(rr), lastErr.v);
+  }
+  for (const x of L.fonds) {
+    check('décor derrière le fond vert ' + x.id, await isJpeg(await preview(clip({ file: 'vert.mp4', key: { on: true, color: '#00b140', sim: 0.15, blend: 0.08, bgType: 'file', bgFile: 'lib:' + x.file, bgKind: x.kind || 'image' } }))), lastErr.v);
+  }
+  check('décor seul dans la timeline', await isJpeg(await preview({ file: 'lib:' + L.fonds[0].file, kind: 'image', dur: 3, fit: 'fill', fx: [], key: {} })), lastErr.v);
+  for (const x of L.fondvert) check('animation fond vert ' + x.id, await isJpeg(await preview(clip({ overlays: [{ file: 'lib:' + x.file, kind: 'video', key: true, keySim: 0.3, x: 50, y: 50, scale: 60, anim: 'none', start: 0, dur: 0 }] }))), lastErr.v);
+  { // export : look + effet animé + cadre + animation fond vert sur le même clip
+    const rr = await (async () => { const { id } = await (await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: project([clip({ out: 2, lut: { file: 'lib:' + L.luts[0].file, amount: 80 },
+      overlays: [{ file: 'lib:' + L.calques[0].file, kind: 'video', mode: 'ecran', opacity: 80, start: 0.5, dur: 1 }, { file: 'lib:' + L.cadres[0].file, kind: 'image', plein: 'cadre', anim: 'fade', start: 0, dur: 0 },
+        { file: 'lib:' + L.fondvert[0].file, kind: 'video', key: true, x: 50, y: 70, scale: 50, anim: 'pop', start: 0.2, dur: 1.5 }] })]) }) })).json();
+      let j; for (let i = 0; i < 300; i++) { await new Promise(r => setTimeout(r, 250)); j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.done || j.error) break; } return j; })();
+    check('export look + effet animé + cadre + fond vert', rr && rr.done, rr && rr.error);
+  }
+  // Mes packs : un dossier rangé par l'utilisateur est reconnu
+  const packs = path.join(base, 'packs', 'Pack test', 'Sons'); fs.mkdirSync(packs, { recursive: true });
+  ff('-f', 'lavfi', '-i', 'sine=f=500:d=1.5', path.join(packs, 'bip_test.wav'));
+  ff('-f', 'lavfi', '-i', 'color=c=0x00ff00:s=320x320:r=30:d=2', '-f', 'lavfi', '-i', 'color=c=red:s=80x80:r=30:d=2', '-filter_complex', '[0][1]overlay=120:120', '-pix_fmt', 'yuv420p', path.join(base, 'packs', 'Pack test', 'cercle vert.mp4'));
+  fs.copyFileSync(app.mediaPath('lib:' + L.luts[2].file), path.join(base, 'packs', 'Pack test', 'mon look.cube'));
+  fs.copyFileSync(app.mediaPath('lib:stickers/coeur.png'), path.join(base, 'packs', 'Pack test', 'coeur.png'));
+  const pk = await (await fetch(U('/api/packs'))).json();
+  check('Mes packs : sons, vidéos, images, looks', pk.sons.length === 1 && pk.videos.length === 1 && pk.images.length === 1 && pk.luts.length === 1 && pk.sons[0].cat === 'Pack test' && pk.sons[0].duree > 1, JSON.stringify(pk));
+  check('Mes packs : look appliqué', await isJpeg(await preview(clip({ lut: { file: pk.luts[0].file, amount: 100 } }))), lastErr.v);
+  check('Mes packs : vidéo fond vert en calque', await isJpeg(await preview(clip({ overlays: [{ file: pk.videos[0].file, kind: 'video', key: true, x: 50, y: 50, scale: 40, start: 0, dur: 0 }] }))), lastErr.v);
+  check('Mes packs : son lisible', (await fetch(U('/media/' + encodeURIComponent(pk.sons[0].file)))).ok);
+  check('Mes packs : sortie du dossier refusée', (await fetch(U('/media/' + encodeURIComponent('pack:../projet-auto.json')))).status >= 400);
+  { const rr = await fetch(U('/api/import?name=import.cube'), { method: 'POST', body: fs.readFileSync(app.mediaPath('lib:' + L.luts[3].file)) }); const j = await rr.json(); check('import d’un look .cube', rr.ok && j.kind === 'lut' && j.file.startsWith('pack:'), JSON.stringify(j)); }
+  { const rr = await fetch(U('/api/import?name=faux.cube'), { method: 'POST', body: 'pas un lut' }); check('faux .cube refusé', rr.status === 500); }
+  { // prise du studio (fichier WebM du navigateur) : convertie en MP4 propre
+    const webm = encs.includes('libvpx ') && encs.includes('libopus'), nom = webm ? 'camera-essai.webm' : 'camera-essai.mkv';
+    ff('-f', 'lavfi', '-i', 'testsrc2=s=640x360:r=30:d=2', '-f', 'lavfi', '-i', 'sine=f=300:d=2', '-shortest', ...(webm ? ['-c:v', 'libvpx', '-c:a', 'libopus'] : ['-c:v', 'mpeg4', '-c:a', 'aac']), path.join(gen, nom));
+    const rr = await fetch(U('/api/import?name=' + nom), { method: 'POST', body: fs.readFileSync(path.join(gen, nom)) }); const j = await rr.json();
+    check('prise du studio convertie en MP4', rr.ok && j.kind === 'video' && j.file.endsWith('-prise.mp4') && j.duration > 1.5 && j.hasAudio, JSON.stringify(j));
+  }
+  { await fetch(U('/api/medias/' + encodeURIComponent('lib:' + L.sons[0].file)), { method: 'DELETE' }); check('la bibliothèque ne peut pas être supprimée', fs.existsSync(app.mediaPath('lib:' + L.sons[0].file))); }
+
   // 4) Export complet : transitions, effets son, musique, vitesse, inverse
   const job = async (url, proj) => {
     const { id } = await (await fetch(U(url), { method: 'POST', body: JSON.stringify({ project: proj }) })).json();

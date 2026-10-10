@@ -1,6 +1,6 @@
 // QuentMovie : fenêtre de l'application Mac (Electron) autour du moteur de montage local.
 'use strict';
-const { app, BrowserWindow, Menu, shell, dialog, session } = require('electron');
+const { app, BrowserWindow, Menu, shell, dialog, session, systemPreferences } = require('electron');
 const path = require('path');
 const { create } = require('./server');
 const { resolveFfmpeg } = require('./ffmpeg-path');
@@ -16,9 +16,19 @@ async function demarrer() {
   try { moteur = create({ port: 41730, base, ...bins }); port = await moteur.start(); }
   catch (e) { moteur = create({ port: 0, base, ...bins }); port = await moteur.start(); }
 
-  // Micro (voix off) : autorisé uniquement pour la fenêtre de QuentMovie
+  // Caméra et micro (studio, voix off) : autorisés uniquement pour la fenêtre de QuentMovie
   const local = u => /^http:\/\/127\.0\.0\.1:\d+\//.test(u || '');
-  session.defaultSession.setPermissionRequestHandler((wc, perm, ok) => ok(perm === 'media' && local(wc.getURL())));
+  session.defaultSession.setPermissionRequestHandler(async (wc, perm, ok, details) => {
+    if (perm !== 'media' || !local(wc.getURL())) return ok(false);
+    if (process.platform === 'darwin') { // autorisation de macOS (demandée une seule fois)
+      const types = (details && details.mediaTypes) || [];
+      try {
+        if (types.includes('video') && !(await systemPreferences.askForMediaAccess('camera'))) return ok(false);
+        if (types.includes('audio') && !(await systemPreferences.askForMediaAccess('microphone'))) return ok(false);
+      } catch (e) { /* macOS ancien : la demande passe par Chromium */ }
+    }
+    ok(true);
+  });
   session.defaultSession.setPermissionCheckHandler((wc, perm, origin) => perm === 'media' && local((origin || '') + '/'));
 
   win = new BrowserWindow({

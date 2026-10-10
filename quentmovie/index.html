@@ -115,6 +115,28 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 #tete::before{content:"";position:absolute;top:0;left:-7px;border:6px solid transparent;border-top:9px solid #ff4d4d}
 /* fenêtres */
 #modal{position:fixed;inset:0;background:#000b;display:none;place-items:center;z-index:20}
+/* Studio : caméra, micro et prompteur */
+#studio{position:fixed;inset:0;background:#050506;z-index:30;display:none;color:#fff}
+#studio.on{display:grid;grid-template-columns:1fr 320px}
+#stScene{position:relative;overflow:hidden;display:grid;place-items:center}
+#stScene video{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;background:#000}
+#stScene video.miroir{transform:scaleX(-1)}
+#stPrompt{position:absolute;left:50%;top:0;transform:translateX(-50%);width:var(--pw,70%);height:42%;overflow:hidden;background:rgba(0,0,0,var(--po,.55));border-radius:0 0 14px 14px;cursor:pointer;
+  -webkit-mask-image:linear-gradient(#0000,#000 14%,#000 80%,#0000)}
+#stPrompt.miroirtxt #stTexte{transform-origin:center;scale:-1 1}
+#stTexte{padding:40% 6% 120%;font:700 var(--ps,44px)/1.35 -apple-system,system-ui,sans-serif;text-align:center;white-space:pre-wrap;will-change:transform}
+#stLigne{position:absolute;left:0;right:0;top:34%;border-top:2px solid #ffd40088;pointer-events:none}
+#stCompte{position:absolute;inset:0;display:none;place-items:center;font:800 180px/1 system-ui;text-shadow:0 4px 30px #000}
+#stCompte.on{display:grid}
+#stBarre{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;align-items:center;justify-content:center;padding:12px;background:linear-gradient(#0000,#000c)}
+#stBarre button{min-width:44px}
+#stRec{background:#e0102a!important;color:#fff!important;font-weight:700}
+#stRec.enreg{animation:clign 1s infinite}
+@keyframes clign{50%{opacity:.6}}
+#stTemps{font:600 15px ui-monospace,Menlo,monospace;min-width:70px;text-align:center}
+#stVu{width:90px;height:8px;background:#222;border-radius:4px;overflow:hidden}#stVu i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3c3,#fd0 70%,#f33)}
+#stPanneau{background:var(--pan);padding:14px;overflow:auto;border-left:1px solid #0006}
+#stPanneau textarea{width:100%;min-height:200px;font-size:13px}
 #modal.on{display:grid}
 #boite{background:var(--pan);border:1px solid var(--ligne);border-radius:12px;padding:16px;width:min(94vw,560px);max-height:92vh;overflow:auto;-webkit-user-select:text;user-select:text}
 #boite.large{width:min(94vw,760px)}
@@ -139,6 +161,7 @@ canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display
   <span class="mut" id="etat"></span>
   <select id="format" title="Format de l’image"><option value="vertical">Vertical 9:16</option><option value="horizontal">Horizontal 16:9</option><option value="carre">Carré 1:1</option></select>
   <button id="bAide" title="Raccourcis clavier (?)">⌨ Raccourcis</button>
+  <button id="bStudio" title="Me filmer avec la caméra, le micro et le prompteur (⇧⌘R)">🎥 Me filmer</button>
   <button id="bApercu" title="Aperçu avec effets (⌘R)">🎞 Aperçu avec effets</button>
   <button class="pri" id="bExport" title="Exporter (⌘E)">Exporter…</button>
 </header>
@@ -147,7 +170,7 @@ canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display
   <div id="tabs">
     <button data-tab="medias" title="1">Médias</button><button data-tab="effets" title="2">Effets</button><button data-tab="transitions" title="3">Transitions</button>
     <button data-tab="titres" title="4">Titres</button><button data-tab="voix" title="5">Voix</button><button data-tab="sons" title="6">Sons</button>
-    <button data-tab="musiques" title="7">Musique</button><button data-tab="stickers" title="8">Stickers</button><button data-tab="outils" title="9">Outils</button>
+    <button data-tab="musiques" title="7">Musique</button><button data-tab="stickers" title="8">Calques</button><button data-tab="outils" title="9">Outils</button>
   </div>
   <div id="navbody"></div>
   <input type="file" id="fichiers" multiple hidden>
@@ -186,6 +209,15 @@ canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display
 </section>
 <div id="bar"></div>
 <div id="modal"><div id="boite"></div></div>
+<div id="studio" aria-label="Studio : caméra et prompteur">
+  <div id="stScene"><video id="stVideo" autoplay muted playsinline class="miroir"></video>
+    <div id="stPrompt" title="Clic : lancer / arrêter le défilement · molette : avancer ou reculer"><div id="stTexte"></div><div id="stLigne"></div></div>
+    <div id="stCompte"></div>
+    <div id="stBarre"><button id="stDebut" title="Revenir au début du texte (Début)">⏮</button><button id="stDefil" title="Lancer / arrêter le défilement (Espace)">▶ Défiler</button>
+      <button id="stRec" title="Enregistrer / arrêter (R)">● Enregistrer</button><span id="stTemps">00:00</span><span id="stVu" title="Niveau du micro"><i></i></span>
+      <button id="stFermer" title="Fermer le studio (Échap)">✕ Fermer</button></div></div>
+  <div id="stPanneau"></div>
+</div>
 
 <script>
 'use strict';
@@ -202,15 +234,31 @@ const api = async (url, opt) => {
 };
 function tc(t, fps) { t = Math.max(0, t); const f = Math.floor((t % 1) * fps), s = Math.floor(t) % 60, m = Math.floor(t / 60) % 60, h = Math.floor(t / 3600); return [h, m, s, f].map(x => String(x).padStart(2, '0')).join(':'); }
 
-let CAT = { video: [], audio: [], transitions: [], titres: [], reportage: [], generateurs: [], polices: [], sorties: ['mp4'], bibliotheque: { sons: [], musiques: [], stickers: [] } };
+let CAT = { video: [], audio: [], transitions: [], titres: [], reportage: [], generateurs: [], polices: [], sorties: ['mp4'], bibliotheque: { sons: [], musiques: [], stickers: [], marque: [], luts: [], calques: [], cadres: [], fonds: [], fondvert: [] } };
+let PACKS = { luts: [], sons: [], images: [], videos: [], dossier: '' };
 let medias = [];
 let proj = { format: 'vertical', fps: 30, res: 1080, quality: 'haute', sortie: 'mp4', normaliser: false, clips: [], audio: [], markers: [] };
 let sel = -1, selA = -1, selCut = -1, gt = 0, zoom = 40, tab = 'medias', rendu = null, presse = null;
 const LIB = () => CAT.bibliotheque;
-const libItem = f => [...LIB().sons, ...LIB().musiques, ...LIB().stickers].find(x => 'lib:' + x.file === f);
-const mediaOf = f => medias.find(m => m.file === f) || (libItem(f) ? { file: f, kind: /stickers/.test(f) ? 'image' : 'audio', duration: libItem(f).duree || 3, hasAudio: true } : null);
+// Bibliothèque intégrée (« lib:… ») et packs de l'utilisateur (« pack:… »)
+const LIB_KIND = { sons: 'audio', musiques: 'audio', stickers: 'image', luts: 'lut', calques: 'video', cadres: 'image', fonds: 'image', fondvert: 'video' };
+const libItem = f => {
+  if (!/^lib:/.test(f || '')) return null;
+  for (const l of Object.values(LIB())) { const x = (l || []).find(y => 'lib:' + y.file === f || 'lib:' + y.file.replace(/-h\.(png|jpg)$/, '-v.$1') === f); if (x) return x; }
+  return null;
+};
+const kindLib = f => { const it = libItem(f); return (it && it.kind) || LIB_KIND[/^lib:(\w+)/.exec(f)[1]] || 'image'; };
+const PACK_KIND = { sons: 'audio', images: 'image', videos: 'video', luts: 'lut' };
+const packItem = f => { for (const k of Object.keys(PACK_KIND)) { const x = (PACKS[k] || []).find(y => y.file === f); if (x) return { ...x, kind: PACK_KIND[k] }; } return null; };
+const mediaOf = f => {
+  const m = medias.find(x => x.file === f); if (m) return m;
+  const l = libItem(f); if (l) { const k = kindLib(f); return { file: f, kind: k, duration: l.duree || 3, hasAudio: k === 'audio' }; }
+  const p = packItem(f); if (p) return { file: f, kind: p.kind, duration: p.duree || 3, hasAudio: p.kind === 'audio' || !!p.son };
+  return null;
+};
 const durOf = f => (mediaOf(f) || {}).duration || 5;
-const nomOf = f => (libItem(f) || {}).nom || f;
+const nomOf = f => (libItem(f) || packItem(f) || {}).nom || f;
+async function chargerPacks() { try { PACKS = await (await api('/api/packs')).json(); } catch (e) { /* dossier illisible */ } }
 
 // ---------- Clips ----------
 const effDur = c => (c.kind === 'image' || c.kind === 'solid') ? (c.dur || 3) : (c.out - c.in) / (c.speed || 1);
@@ -220,7 +268,7 @@ const defKey = () => ({ on: false, color: '#00ff00', sim: 0.15, blend: 0.08, des
 function base(extra) {
   return { file: '', kind: 'video', in: 0, out: 3, dur: 3, speed: 1, vol: 100, fade: false, fit: 'fill', hasAudio: true, bw: false, bright: 0, contrast: 100, sat: 100,
     fx: [], afx: [], text: '', textPos: 'bas', textSize: 6, textColor: '#ffffff', textStyle: 'bandeau', textAnim: 'aucune', textStart: 0, textDur: 0, textFont: 'arial',
-    titre: null, overlays: [], subs: [], subStyle: 'contour', subSize: 4.4, key: defKey(), transition: null, ...extra };
+    titre: null, overlays: [], subs: [], subStyle: 'contour', subSize: 4.4, key: defKey(), transition: null, lut: null, ...extra };
 }
 function newClip(m) {
   if (m.kind === 'audio') return base({ file: m.file, kind: 'audio', out: m.duration, hasAudio: true, bgColor: '#102040', bgFile: '', viz: { type: 'ligne', color: '#ffffff', pos: 'centre', h: 30 } });
@@ -274,7 +322,7 @@ async function importer(files) {
     $('#etat').textContent = 'Import de ' + f.name + '…';
     try { await api('/api/import?name=' + enc(f.name), { method: 'POST', body: f }); } catch (e) { manques.push(`${f.name} : ${e.message}`); }
   }
-  $('#etat').textContent = ''; await chargerMedias(); if (tab === 'medias' || tab === 'outils') navigateur();
+  $('#etat').textContent = ''; await chargerMedias(); await chargerPacks(); if (['medias', 'outils', 'effets'].includes(tab)) navigateur();
   if (manques.length) alert('Certains fichiers n’ont pas pu être importés :\n\n' + manques.join('\n'));
 }
 function ajouterClip(m, index) {
@@ -293,7 +341,7 @@ document.body.addEventListener('drop', e => { if (e.defaultPrevented && e.dataTr
 // ---------- Navigateur de gauche ----------
 const TABS = ['medias', 'effets', 'transitions', 'titres', 'voix', 'sons', 'musiques', 'stickers', 'outils'];
 let ap = null;
-function jouerLib(file) { if (ap) { ap.pause(); const meme = ap._f === file; ap = null; if (meme) return navigateur(); } ap = new Audio('/lib/' + file); ap._f = file; ap.play().catch(() => {}); ap.onended = () => { ap = null; navigateur(); }; navigateur(); }
+function jouerLib(file) { if (ap) { ap.pause(); const meme = ap._f === file; ap = null; if (meme) return navigateur(); } ap = new Audio(file.startsWith('pack:') ? '/media/' + enc(file) : '/lib/' + file); ap._f = file; ap.play().catch(() => {}); ap.onended = () => { ap = null; navigateur(); }; navigateur(); }
 function sourceVignette() {
   const c = curClip();
   if (c && (c.kind === 'video' || c.kind === 'image')) return { file: c.file, kind: c.kind, t: c.kind === 'image' ? 0 : (c.in + 0.5).toFixed(1) };
@@ -313,7 +361,11 @@ function navigateur() {
         <button class="mini" data-del="${i}" title="Supprimer ce média">🗑</button></div>`).join('') || '<p class="mut">Aucun média pour l’instant.</p>');
   } else if (tab === 'effets') {
     const src = sourceVignette(), cats = [...new Set(CAT.video.map(d => d.cat))];
-    h = `<input type="text" id="cherche" placeholder="Chercher un effet…" style="margin-bottom:6px"><p class="mut">${sel >= 0 ? 'Clique (ou glisse sur un clip) pour ajouter l’effet.' : 'Sélectionne un clip dans la timeline.'}</p>` +
+    const looks = [...LIB().luts.map(x => ({ ...x, file: 'lib:' + x.file, cat: 'Looks pro · ' + x.cat })), ...PACKS.luts.map(x => ({ ...x, cat: 'Mes looks · ' + x.cat }))];
+    const carteLook = x => `<div class="carte" data-lut="${esc(x.file)}" data-n="${esc(x.nom.toLowerCase())}">${src ? `<img loading="lazy" draggable="false" src="/api/fxthumb?file=${enc(src.file)}&kind=${src.kind}&t=${src.t}&lut=${enc(x.file)}" alt="">` : ''}<span>${esc(x.nom)}</span></div>`;
+    h = `<input type="text" id="cherche" placeholder="Chercher un effet ou un look…" style="margin-bottom:6px"><p class="mut">${sel >= 0 ? 'Clique (ou glisse sur un clip) pour ajouter l’effet.' : 'Sélectionne un clip dans la timeline.'}</p>` +
+      `<p class="mut">Les <b>looks pro</b> sont des étalonnages complets (fichiers LUT) ; l’intensité se règle dans l’inspecteur. <a href="#" data-outil="lut-import">Importer un look .cube</a></p>` +
+      [...new Set(looks.map(x => x.cat))].map(cat => `<h3>${esc(cat)}</h3><div class="grille">` + looks.filter(x => x.cat === cat).map(carteLook).join('') + '</div>').join('') +
       cats.map(cat => `<h3>${esc(cat)}</h3><div class="grille">` + CAT.video.filter(d => d.cat === cat).map(d =>
         `<div class="carte ${d.dispo ? '' : 'off'}" draggable="true" data-drag="fx:${d.id}" data-fx="${d.id}" data-n="${esc(d.nom.toLowerCase())}">${src ? `<img loading="lazy" draggable="false" src="/api/fxthumb?file=${enc(src.file)}&kind=${src.kind}&t=${src.t}&fx=${d.id}" alt="">` : ''}<span>${esc(d.nom)}</span></div>`).join('') + '</div>').join('');
   } else if (tab === 'transitions') {
@@ -336,10 +388,23 @@ function navigateur() {
     const liste = tab === 'sons' ? LIB().sons : LIB().musiques, cats = [...new Set(liste.map(x => x.cat))];
     h = `<p class="mut">${tab === 'sons' ? 'Bruitages créés pour QuentMovie, libres de droits.' : 'Musiques créées pour QuentMovie, libres de droits. Elles se mettent en boucle et baissent quand tu parles.'} ▶ pour écouter, ＋ pour ajouter à la tête de lecture.</p>` +
       cats.map(cat => `<h3>${esc(cat)}</h3>` + liste.filter(x => x.cat === cat).map(x => `<div class="son"><button class="mini" data-play="${x.file}">${ap && ap._f === x.file ? '⏸' : '▶'}</button><div class="nom" title="${esc(x.nom)}">${esc(x.nom)}</div><span class="mut">${fmt(x.duree)}</span><button class="mini" data-ajout-son="${x.file}" title="Ajouter à la timeline">＋</button></div>`).join('')).join('');
+    const mes = PACKS.sons.filter(x => tab === 'sons' ? x.duree <= 20 : x.duree > 20), mcats = [...new Set(mes.map(x => x.cat))];
+    h += mcats.map(cat => `<h3>Mes packs · ${esc(cat)}</h3>` + mes.filter(x => x.cat === cat).map(x => `<div class="son"><button class="mini" data-play="${esc(x.file)}">${ap && ap._f === x.file ? '⏸' : '▶'}</button><div class="nom" title="${esc(x.nom)}">${esc(x.nom)}</div><span class="mut">${fmt(x.duree)}</span><button class="mini" data-ajout-pack="${esc(x.file)}" title="Ajouter à la timeline">＋</button></div>`).join('')).join('') + packsLien();
   } else if (tab === 'stickers') {
-    const cats = [...new Set(LIB().stickers.map(x => x.cat))];
-    h = `<p class="mut">${sel >= 0 ? 'Clique sur un sticker pour le poser sur le clip sélectionné. Tu peux ensuite le déplacer, le tourner, l’animer.' : 'Sélectionne un clip dans la timeline.'}</p>` +
-      cats.map(cat => `<h3>${esc(cat)}</h3><div class="grille g3">` + LIB().stickers.filter(x => x.cat === cat).map(x => `<div class="carte" data-sticker="${x.file}" title="${esc(x.nom)}"><img class="st" loading="lazy" draggable="false" src="/lib/${x.file}" alt=""><span>${esc(x.nom)}</span></div>`).join('') + '</div>').join('');
+    const cats = [...new Set(LIB().stickers.map(x => x.cat))], L = LIB();
+    const carte = (x, typ, src, cls = '') => `<div class="carte" data-pose="${typ}" data-f="${esc(x.file.startsWith('pack:') ? x.file : 'lib:' + x.file)}" title="${esc(x.nom)}"><img ${cls} loading="lazy" draggable="false" src="${src}" alt=""><span>${esc(x.nom)}</span></div>`;
+    const frame = (f, t) => `/api/frame?file=${enc(f)}&t=${t}`;
+    const groupe = (titre, liste, typ, src, cls, g3 = true) => liste.length ? `<h3>${titre}</h3><div class="grille ${g3 ? 'g3' : ''}">` + liste.map(x => carte(x, typ, src(x), cls)).join('') + '</div>' : '';
+    h = `<p class="mut">${sel >= 0 ? 'Clique pour poser l’élément sur le clip sélectionné, puis règle-le dans l’inspecteur (calques).' : 'Sélectionne d’abord un clip dans la timeline.'}</p>` +
+      groupe('QuenTools', L.marque || [], 'image', x => '/lib/' + x.file, 'class="st"', false) +
+      groupe('Animations sur fond vert', L.fondvert, 'vert', x => frame('lib:' + x.file, Math.min(1.2, x.duree / 2))) +
+      [...new Set(L.calques.map(x => x.cat))].map(cat => groupe('Effets animés · ' + esc(cat), L.calques.filter(x => x.cat === cat), 'lumiere', x => frame('lib:' + x.file, 1.5))).join('') +
+      groupe('Cadres', L.cadres, 'cadre', x => '/lib/' + x.file, 'class="st"') +
+      `<h3>Décors pour le fond vert</h3><p class="mut">Filme-toi devant un fond vert, sélectionne le clip puis clique sur un décor : il remplace le fond. Sans clip sélectionné, le décor est ajouté à la timeline.</p>` +
+      [...new Set(L.fonds.map(x => x.cat))].map(cat => `<h3 class="mut">${esc(cat)}</h3><div class="grille">` + L.fonds.filter(x => x.cat === cat).map(x => `<div class="carte" data-decor="lib:${esc(x.file)}" data-kind="${x.kind || 'image'}" title="${esc(x.nom)}"><img loading="lazy" draggable="false" src="${x.kind === 'video' ? frame('lib:' + x.file, 1) : '/lib/' + x.file}" alt="" style="aspect-ratio:16/9"><span>${esc(x.nom)}</span></div>`).join('') + '</div>').join('') +
+      cats.map(cat => `<h3>${esc(cat)}</h3><div class="grille g3">` + LIB().stickers.filter(x => x.cat === cat).map(x => `<div class="carte" data-sticker="${x.file}" title="${esc(x.nom)}"><img class="st" loading="lazy" draggable="false" src="/lib/${x.file}" alt=""><span>${esc(x.nom)}</span></div>`).join('') + '</div>').join('') +
+      groupe('Mes packs · images', PACKS.images, 'image', x => '/media/' + enc(x.file), 'class="st"') +
+      groupe('Mes packs · vidéos', PACKS.videos, 'video', x => frame(x.file, Math.min(1, (x.duree || 2) / 2))) + packsLien();
   } else if (tab === 'outils') h = outilsHtml();
   el.innerHTML = h; el.scrollTop = keep;
   const b = $('#bImp2'); if (b) b.onclick = () => $('#fichiers').click();
@@ -348,7 +413,8 @@ function navigateur() {
 function allerOnglet(t) { tab = t; navigateur(); }
 $('#tabs').onclick = e => { if (e.target.dataset.tab) allerOnglet(e.target.dataset.tab); };
 $('#navbody').addEventListener('click', e => {
-  const t = e.target.closest('[data-add],[data-del],[data-calque],[data-fx],[data-tr],[data-titre],[data-rep],[data-afx],[data-play],[data-ajout-son],[data-sticker],[data-ecran],[data-fond],#bTrTous,[data-outil]'); if (!t) return;
+  const t = e.target.closest('[data-add],[data-del],[data-calque],[data-fx],[data-tr],[data-titre],[data-rep],[data-afx],[data-play],[data-ajout-son],[data-ajout-pack],[data-sticker],[data-pose],[data-decor],[data-lut],[data-ecran],[data-fond],#bTrTous,[data-outil]'); if (!t) return;
+  if (t.tagName === 'A') e.preventDefault();
   const d = t.dataset;
   if (d.add !== undefined) { const m = medias[d.add]; if (m.kind === 'audio') (e.shiftKey ? ajouterClip(m, sel >= 0 ? sel + 1 : undefined) : ajouterSon(m.file, { vol: 100 })); else ajouterClip(m, sel >= 0 ? sel + 1 : undefined); }
   else if (d.calque !== undefined) { const m = medias[d.calque]; ajouterCalque(m.file, m.kind); }
@@ -361,7 +427,11 @@ $('#navbody').addEventListener('click', e => {
   else if (d.rep) appliquerReportage(d.rep);
   else if (d.play) jouerLib(d.play);
   else if (d.ajoutSon) { const mus = LIB().musiques.some(x => x.file === d.ajoutSon); ajouterSon('lib:' + d.ajoutSon, mus ? { vol: 40, fade: true, loop: true, duck: true, start: 0 } : { vol: 100 }); }
+  else if (d.ajoutPack) { const x = packItem(d.ajoutPack); ajouterSon(d.ajoutPack, x && x.duree > 20 ? { vol: 40, fade: true, loop: true, duck: true, start: 0 } : { vol: 100 }); }
   else if (d.sticker) ajouterCalque('lib:' + d.sticker, 'image');
+  else if (d.pose) ajouterCalque(d.f, d.pose === 'cadre' || d.pose === 'image' ? 'image' : 'video', POSES[d.pose]);
+  else if (d.decor) appliquerDecor(d.decor, d.kind);
+  else if (d.lut) ajouterLut(d.lut);
   else if (d.ecran) ecranPret(d.ecran);
   else if (d.fond) { const g = CAT.generateurs.find(x => x.id === d.fond); insererClip(newSolid(g.color, 3)); }
   else if (d.outil) outil(d.outil);
@@ -396,11 +466,49 @@ function ajouterAfx(i, id) {
   const c = proj.clips[i]; if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
   const d = fxDef(CAT.audio, id), p = {}; d.params.forEach(q => { p[q.k] = q.def; }); c.afx.push({ id, p }); commit(); inspecteur();
 }
-function ajouterCalque(file, kind) {
+// Réglages de départ selon le type d'élément posé sur un clip
+const POSES = {
+  vert: { key: true, scale: 70, anim: 'none' },                                 // animation sur fond vert : le vert est retiré
+  lumiere: { mode: 'ecran', plein: 'remplir', anim: 'none', opacity: 90 },      // fuite de lumière, neige… : se mélange à l'image
+  cadre: { plein: 'cadre', anim: 'none' },
+  image: {}, video: {}
+};
+function ajouterCalque(file, kind, extra = {}) {
   const c = curClip(); if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
-  c.overlays.push({ file, kind: kind === 'video' ? 'video' : 'image', x: 50, y: 50, scale: /lib:stickers/.test(file) ? 25 : 40, rot: 0, opacity: 100, start: 0, dur: 0, anim: 'pop' });
+  c.overlays.push({ file, kind: kind === 'video' ? 'video' : 'image', x: 50, y: 50, scale: /lib:stickers/.test(file) ? 25 : 40, rot: 0, opacity: 100, start: 0, dur: 0, anim: 'pop', mode: '', plein: '', key: false, keySim: 0.3, ...extra });
   commit(); inspecteur(); apercu();
 }
+function ajouterLut(file) {
+  const c = curClip(); if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
+  if (c.kind === 'audio') return alert('Les looks s’appliquent aux vidéos et aux photos.');
+  c.lut = { file, amount: c.lut ? c.lut.amount : 100 }; commit(); inspecteur(); apercu(); aide(`Look « ${esc(nomOf(file))} » appliqué. Règle son intensité dans l’inspecteur.`);
+}
+// Couleur du fond vert devinée dans les coins de l'image (le mur derrière la personne)
+function couleurDuFond(c) {
+  return new Promise(ok => {
+    const img = new Image();
+    img.onload = () => {
+      const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height; const g = cv.getContext('2d'); g.drawImage(img, 0, 0);
+      const w = Math.max(4, Math.round(img.width * 0.08)), h = Math.max(4, Math.round(img.height * 0.08)); let R = 0, G = 0, B = 0, n = 0;
+      for (const [x, y] of [[0, 0], [img.width - w, 0], [0, img.height - h], [img.width - w, img.height - h]]) {
+        const d = g.getImageData(x, y, w, h).data; for (let i = 0; i < d.length; i += 4) { R += d[i]; G += d[i + 1]; B += d[i + 2]; n++; }
+      }
+      R /= n; G /= n; B /= n; const hx = v => Math.round(v).toString(16).padStart(2, '0');
+      ok((G > R * 1.25 && G > B * 1.25) || (B > R * 1.25 && B > G * 1.1) ? '#' + hx(R) + hx(G) + hx(B) : null); // seulement un fond vert ou bleu
+    };
+    img.onerror = () => ok(null);
+    img.src = c.kind === 'image' ? '/media/' + enc(c.file) : '/api/frame?file=' + enc(c.file) + '&t=' + (c.in + 0.5).toFixed(1);
+  });
+}
+async function appliquerDecor(file, kind) {
+  const c = curClip();
+  if (c && (c.kind === 'video' || c.kind === 'image')) {
+    if (!c.key.on) { const col = await couleurDuFond(c); if (col) { c.key.color = col; c.key.sim = Math.max(c.key.sim, 0.18); c.key.despill = true; } }
+    c.key = { ...c.key, on: true, bgType: 'file', bgFile: file, bgKind: kind === 'video' ? 'video' : 'image' };
+    commit(); inspecteur(); apercu(); aide('Décor placé derrière le clip. Si le fond n’est pas vert pur, clique sur 🎯 « Choisir la couleur » dans la section Fond vert.');
+  } else { const it = libItem(file); insererClip(base({ file, kind: kind === 'video' ? 'video' : 'image', dur: 5, out: (it && it.duree) || 5, hasAudio: false })); }
+}
+const packsLien = () => `<p class="mut" style="margin-top:12px">📦 Tu as téléchargé des packs gratuits ? <a href="#" data-outil="packs">Ajoute-les dans « Mes packs »</a>.</p>`;
 function appliquerTransition(type) {
   const cut = selCut >= 0 ? selCut : sel;
   if (cut < 0 || cut >= proj.clips.length - 1) return alert('Choisis d’abord le rond ⋈ entre deux clips dans la timeline.');
@@ -654,8 +762,11 @@ const chk = (label, path, root) => `<div class="sw2"><input type="checkbox" id="
 const opts = (list, cur) => list.map(([v, t]) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(t)}</option>`).join('');
 const optsMedia = (cur, audio) => {
   const l = medias.filter(x => audio ? x.kind === 'audio' : x.kind !== 'audio').map(x => `<option value="${esc(x.file)}" data-kind="${x.kind}" ${x.file === cur ? 'selected' : ''}>${esc(x.file)}</option>`).join('');
-  const st = audio ? '' : `<optgroup label="Stickers">${LIB().stickers.map(x => `<option value="lib:${esc(x.file)}" data-kind="image" ${'lib:' + x.file === cur ? 'selected' : ''}>${esc(x.nom)}</option>`).join('')}</optgroup>`;
-  return `<option value="">— choisir —</option>${l}${st}`;
+  if (audio) return `<option value="">— choisir —</option>${l}`;
+  const grp = (titre, liste, kind) => liste.length ? `<optgroup label="${titre}">${liste.map(x => { const v = x.file.startsWith('pack:') ? x.file : 'lib:' + x.file; return `<option value="${esc(v)}" data-kind="${x.kind || kind}" ${v === cur || (libItem(cur) === x) ? 'selected' : ''}>${esc(x.nom)}</option>`; }).join('')}</optgroup>` : '';
+  const L = LIB();
+  return `<option value="">— choisir —</option>${l}` + grp('QuenTools', L.marque || [], 'image') + grp('Stickers', L.stickers, 'image') + grp('Animations sur fond vert', L.fondvert, 'video') + grp('Effets animés', L.calques, 'video') +
+    grp('Cadres', L.cadres, 'image') + grp('Décors', L.fonds, 'image') + grp('Mes packs · images', PACKS.images, 'image') + grp('Mes packs · vidéos', PACKS.videos, 'video');
 };
 const optsPolice = cur => CAT.polices.map(f => `<option value="${f.id}" ${f.id === cur ? 'selected' : ''}>${esc(f.nom)}</option>`).join('');
 function fxRows(list, defs, key) {
@@ -664,13 +775,27 @@ function fxRows(list, defs, key) {
       d.params.map(q => sl(q.label, `${key}.${i}.p.${q.k}`, q.min, q.max, q.step, q.u || '', curClip())).join('') + '</div>'; }).join('');
 }
 const ANIMS = [['none', 'Aucune'], ['pop', 'Apparition rebondissante'], ['fade', 'Fondu'], ['glisse', 'Glissé depuis la gauche'], ['monte', 'Monte depuis le bas'], ['rebond', 'Rebonds']];
+const MODES_UI = [['', 'Normal'], ['ecran', 'Écran (fait disparaître le noir)'], ['addition', 'Addition (très lumineux)'], ['eclaircir', 'Éclaircir'], ['produit', 'Produit (fait disparaître le blanc)'], ['incrustation', 'Incrustation'], ['lumiere', 'Lumière douce']];
 function overlayRows(c) {
-  return c.overlays.map((o, i) => `<div class="fxrow"><div class="tete"><b>Calque ${i + 1}</b><button class="mini" data-rmov="${i}">✕</button></div>
+  return c.overlays.map((o, i) => { const plein = o.plein || o.mode; return `<div class="fxrow"><div class="tete"><b>Calque ${i + 1}</b><button class="mini" data-rmov="${i}">✕</button></div>
     <select data-ovfile="${i}">${optsMedia(o.file, false)}</select>
-    ${sl('Position horizontale', `overlays.${i}.x`, -10, 110, 1, ' %', c)}${sl('Position verticale', `overlays.${i}.y`, -10, 110, 1, ' %', c)}
-    ${sl('Taille', `overlays.${i}.scale`, 2, 150, 1, ' %', c)}${sl('Rotation', `overlays.${i}.rot`, -180, 180, 1, '°', c)}${sl('Opacité', `overlays.${i}.opacity`, 5, 100, 1, ' %', c)}
-    <label class="l">Animation</label><select data-p="overlays.${i}.anim">${opts(ANIMS, o.anim)}</select>
-    ${sl('Apparaît à', `overlays.${i}.start`, 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}${sl('Durée (0 = jusqu’à la fin)', `overlays.${i}.dur`, 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}</div>`).join('');
+    <label class="l">Mélange avec l’image</label><select data-p="overlays.${i}.mode">${opts(MODES_UI, o.mode || '')}</select>
+    ${o.mode ? '<p class="mut">Ce mode couvre tout l’écran.</p>' : `<label class="l">Taille</label><select data-p="overlays.${i}.plein">${opts([['', 'Libre (position et taille)'], ['remplir', 'Plein écran'], ['cadre', 'Plein écran sans recadrer (cadre)']], o.plein || '')}</select>`}
+    ${o.mode ? '' : chk('Retirer le fond vert de ce calque', `overlays.${i}.key`, c)}${o.key && !o.mode ? sl('Sensibilité du vert', `overlays.${i}.keySim`, 0.05, 0.7, 0.01, '', c) : ''}
+    ${plein ? '' : sl('Position horizontale', `overlays.${i}.x`, -10, 110, 1, ' %', c) + sl('Position verticale', `overlays.${i}.y`, -10, 110, 1, ' %', c) + sl('Taille', `overlays.${i}.scale`, 2, 150, 1, ' %', c) + sl('Rotation', `overlays.${i}.rot`, -180, 180, 1, '°', c)}
+    ${sl('Opacité', `overlays.${i}.opacity`, 5, 100, 1, ' %', c)}
+    ${o.mode ? '' : `<label class="l">Animation</label><select data-p="overlays.${i}.anim">${opts(plein ? [['none', 'Aucune'], ['fade', 'Fondu']] : ANIMS, o.anim)}</select>`}
+    ${sl('Apparaît à', `overlays.${i}.start`, 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}${sl('Durée (0 = jusqu’à la fin)', `overlays.${i}.dur`, 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}</div>`; }).join('');
+}
+function optsLook(cur) {
+  const L = [...LIB().luts.map(x => ({ ...x, file: 'lib:' + x.file })), ...PACKS.luts.map(x => ({ ...x, cat: 'Mes looks · ' + x.cat }))];
+  return `<option value="">— aucun —</option>` + [...new Set(L.map(x => x.cat))].map(cat => `<optgroup label="${esc(cat)}">${L.filter(x => x.cat === cat).map(x => `<option value="${esc(x.file)}" ${x.file === cur ? 'selected' : ''}>${esc(x.nom)}</option>`).join('')}</optgroup>`).join('');
+}
+function optsFond(cur) {
+  const l = medias.filter(x => x.kind === 'image' || x.kind === 'video').map(x => `<option value="${esc(x.file)}" data-kind="${x.kind}" ${x.file === cur ? 'selected' : ''}>${esc(x.file)}</option>`).join('');
+  const d = LIB().fonds.map(x => `<option value="lib:${esc(x.file)}" data-kind="${x.kind || 'image'}" ${'lib:' + x.file === cur || libItem(cur) === x ? 'selected' : ''}>${esc(x.nom)}</option>`).join('');
+  const p = [...PACKS.images.map(x => ({ ...x, kind: 'image' })), ...PACKS.videos.map(x => ({ ...x, kind: 'video' }))].map(x => `<option value="${esc(x.file)}" data-kind="${x.kind}" ${x.file === cur ? 'selected' : ''}>${esc(x.nom)}</option>`).join('');
+  return `<option value="">— choisir —</option>${l ? `<optgroup label="Mes médias">${l}</optgroup>` : ''}${d ? `<optgroup label="Décors QuentMovie">${d}</optgroup>` : ''}${p ? `<optgroup label="Mes packs">${p}</optgroup>` : ''}`;
 }
 function inspecteur() {
   const el = $('#insp'), keep = el.scrollTop;
@@ -702,6 +827,8 @@ function inspecteur() {
     ${sl('Hauteur du visualiseur', 'viz.h', 5, 100, 1, ' %', c)}
     <label class="l">Image de couverture (pochette)</label><select data-p="bgFile">${optsMedia(c.bgFile, false).replace(/<optgroup[\s\S]*<\/optgroup>/, '')}</select>
     <label class="l">Couleur de fond (sans pochette)</label><input type="color" data-p="bgColor" value="${c.bgColor}"></details>` : ''}
+  ${k !== 'audio' ? `<details ${c.lut ? 'open' : ''}><summary>Look pro (étalonnage) ${c.lut ? '· ' + esc(nomOf(c.lut.file)) : ''}</summary>
+    <select data-lutsel="1">${optsLook(c.lut ? c.lut.file : '')}</select>${c.lut ? sl('Intensité', 'lut.amount', 0, 100, 1, ' %', c) : '<p class="mut">Ou clique sur un look dans l’onglet « Effets » (touche <kbd>2</kbd>).</p>'}</details>` : ''}
   <details open><summary>Effets image (${c.fx.length})</summary>${fxRows(c.fx, CAT.video, 'fx') || '<p class="mut">Aucun. Ouvre l’onglet « Effets » (touche <kbd>2</kbd>).</p>'}</details>
   <details><summary>Couleurs</summary>${sl('Luminosité', 'bright', -50, 50, 1, '', c)}${sl('Contraste', 'contrast', 0, 200, 1, ' %', c)}${sl('Saturation', 'sat', 0, 300, 1, ' %', c)}${chk('Noir et blanc', 'bw', c)}</details>
   <details><summary>Effets sonores et voix (${c.afx.length})</summary>${fxRows(c.afx, CAT.audio, 'afx') || '<p class="mut">Aucun. Ouvre l’onglet « Voix » (touche <kbd>5</kbd>).</p>'}</details>
@@ -721,7 +848,7 @@ function inspecteur() {
     ${sl('Taille', 'textSize', 2, 15, 0.5, ' %', c)}${sl('Apparaît à', 'textStart', 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}${sl('Durée (0 = jusqu’à la fin)', 'textDur', 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}
   </details>
   <details ${c.overlays.length ? 'open' : ''}><summary>Calques : images, stickers, vidéos (${c.overlays.length})</summary>${overlayRows(c)}
-    <button id="bAddOv" style="margin-top:6px;width:100%">＋ Ajouter un calque</button><p class="mut">Onglet « Stickers » (touche <kbd>8</kbd>) pour des étiquettes, flèches, bulles…</p></details>
+    <button id="bAddOv" style="margin-top:6px;width:100%">＋ Ajouter un calque</button><p class="mut">Onglet « Calques » (touche <kbd>8</kbd>) : animations sur fond vert, fuites de lumière, neige, cadres, stickers…</p></details>
   <details ${c.subs.length ? 'open' : ''}><summary>Sous-titres (${c.subs.length})</summary>
     ${c.subs.map((s, i) => `<div class="subrow"><input type="number" step="0.1" min="0" data-sub="${i}:s" value="${s.s}" title="Début (s)"><input type="number" step="0.1" min="0" data-sub="${i}:e" value="${s.e}" title="Fin (s)"><input type="text" data-sub="${i}:t" value="${esc(s.t)}"><button class="mini" data-rmsub="${i}">✕</button></div>`).join('')}
     <div class="ligne" style="margin-top:6px"><button id="bAddSub">＋ Ligne ici</button><button id="bSrt">Importer .srt</button></div><input type="file" id="fSrt" accept=".srt,text/plain" hidden>
@@ -733,8 +860,8 @@ function inspecteur() {
       <div class="ligne"><button id="bPipette">🎯 Choisir la couleur</button><input type="color" data-p="key.color" value="${c.key.color}" style="flex:none;width:44px"></div>
       <p class="mut" style="margin:4px 0">Clique sur le fond à enlever (mur vert, bleu…).</p>
       ${sl('Sensibilité', 'key.sim', 0.01, 0.6, 0.01, '', c)}${sl('Douceur des bords', 'key.blend', 0, 0.4, 0.01, '', c)}${chk('Retirer le reflet vert sur les bords', 'key.despill', c)}
-      <label class="l">Nouveau fond</label><select data-p="key.bgType">${opts([['color', 'Couleur unie'], ['file', 'Photo ou vidéo de mes médias']], c.key.bgType)}</select>
-      ${c.key.bgType === 'color' ? `<input type="color" data-p="key.bgColor" value="${c.key.bgColor}" style="margin-top:6px">` : `<select data-bgfile="1" style="margin-top:6px">${optsMedia(c.key.bgFile, false).replace(/<optgroup[\s\S]*<\/optgroup>/, '')}</select>`}
+      <label class="l">Nouveau fond</label><select data-p="key.bgType">${opts([['color', 'Couleur unie'], ['file', 'Décor, photo ou vidéo']], c.key.bgType)}</select>
+      ${c.key.bgType === 'color' ? `<input type="color" data-p="key.bgColor" value="${c.key.bgColor}" style="margin-top:6px">` : `<select data-bgfile="1" style="margin-top:6px">${optsFond(c.key.bgFile)}</select><p class="mut">Les décors sont aussi dans l’onglet « Calques » (touche <kbd>8</kbd>).</p>`}
     </div></details>` : ''}`;
   el.scrollTop = keep;
 }
@@ -753,10 +880,11 @@ $('#insp').addEventListener('change', e => {
   const c = curClip();
   if (d.titrepreset !== undefined && c) { if (!t.value) c.titre = null; else appliquerReportage(t.value); inspecteur(); return; }
   if (d.ovfile !== undefined && c) { const o = c.overlays[+d.ovfile]; o.file = t.value; o.kind = (t.selectedOptions[0] && t.selectedOptions[0].dataset.kind) || 'image'; commit(); apercu(); return; }
+  if (d.lutsel !== undefined && c) { c.lut = t.value ? { file: t.value, amount: c.lut ? c.lut.amount : 100 } : null; commit(); inspecteur(); apercu(); return; }
   if (d.bgfile !== undefined && c) { c.key.bgFile = t.value; c.key.bgKind = (t.selectedOptions[0] && t.selectedOptions[0].dataset.kind) || 'image'; commit(); apercu(); return; }
   if (!d.p) return; const root = $('#insp').dataset.root === 'a' ? proj.audio[selA] : c; if (!root) return;
   const v = t.type === 'checkbox' ? t.checked : t.value; setP(root, d.p, v);
-  if (['key.on', 'key.bgType', 'viz.type'].includes(d.p)) inspecteur();
+  if (['key.on', 'key.bgType', 'viz.type'].includes(d.p) || /^overlays\.\d+\.(mode|plein|key)$/.test(d.p)) inspecteur();
   suite(d.p);
 });
 function suite(path, glisse) {
@@ -812,6 +940,8 @@ function outilsHtml() {
       <label class="l">Silence minimal<span id="oMinV">0,5 s</span></label><input type="range" id="oMin" min="0.2" max="2" step="0.1" value="0.5">
       <label class="l">Marge conservée<span id="oMarV">0,10 s</span></label><input type="range" id="oMar" min="0" max="0.4" step="0.02" value="0.1">
       <button class="pri" data-outil="silences" style="width:100%;margin-top:8px">Couper les silences du clip</button><div class="mut" id="oSilRes" style="margin-top:4px"></div></div>
+    <div class="encart"><h4>🎥 Me filmer avec le prompteur</h4><p class="mut">Caméra et micro du Mac, ton texte qui défile sous la caméra, compte à rebours. Chaque prise arrive dans la timeline.</p>
+      <button class="pri" data-outil="studio" style="width:100%">Ouvrir le studio (⇧${M}R)</button></div>
     <div class="encart"><h4>🎙 Enregistrer une voix off</h4><p class="mut">Enregistre avec le micro du Mac ; le son arrive dans la piste audio à la tête de lecture.</p>
       <button data-outil="micro" id="bMicro" style="width:100%">● Démarrer l’enregistrement</button><div class="mut" id="oMicroRes" style="margin-top:4px"></div></div>
     <div class="encart"><h4>🎧 Nouvel épisode de podcast</h4><p class="mut">Un son, une pochette et un visualiseur animé : une vidéo prête pour YouTube ou les réseaux.</p>
@@ -825,6 +955,13 @@ function outilsHtml() {
       <label class="l">Musique</label><select id="oMus"><option value="">Sans musique</option>${LIB().musiques.map(m => `<option value="${m.file}">${esc(m.nom)}</option>`).join('')}</select>
       <div class="sw2"><input type="checkbox" id="oZoom" checked><label for="oZoom">Zoom lent sur les photos</label></div>
       <button class="pri" data-outil="diapo" style="width:100%">Créer le diaporama</button></div>
+    <div class="encart" id="encartPacks"><h4>📦 Mes packs (effets, sons, looks gratuits)</h4>
+      <p class="mut">Tu as trouvé des packs gratuits sur internet ? Range leurs fichiers dans le dossier « Mes packs » (un sous-dossier par pack) : QuentMovie les classe tout seul.</p>
+      <p class="mut">Sons (.mp3, .wav…) → onglets Sons et Musique · images (.png) et vidéos (.mp4, .mov) → onglet Calques · looks (.cube) → onglet Effets.</p>
+      <div class="ligne"><button data-outil="packs-ouvrir">Ouvrir le dossier</button><button data-outil="packs-maj">Actualiser</button></div>
+      <p class="mut" style="margin-top:6px">${PACKS.sons.length} sons · ${PACKS.images.length} images · ${PACKS.videos.length} vidéos · ${PACKS.luts.length} looks${PACKS.dossier ? `<br><small>${esc(PACKS.dossier)}</small>` : ''}</p>
+      <p class="mut"><b>Où trouver des packs gratuits :</b> Pixabay et Mixkit (musiques, bruitages, vidéos « light leak », « green screen »), Freesound (bruitages, choisis la licence CC0), la bibliothèque audio de YouTube Studio (musiques), FreshLUTs (looks .cube). Lis toujours la licence : certaines demandent de citer l’auteur.</p>
+      <p class="mut">Vidéo sur fond vert : pose-la en calque puis coche « Retirer le fond vert ». Vidéo sur fond noir (lumières, particules) : choisis le mélange « Écran ».</p></div>
     <div class="encart"><h4>⌨ Raccourcis clavier</h4><button data-outil="aide" style="width:100%">Afficher tous les raccourcis (?)</button></div>`;
 }
 $('#navbody').addEventListener('input', e => {
@@ -834,6 +971,11 @@ $('#navbody').addEventListener('input', e => {
 let micro = null;
 async function outil(nom) {
   if (nom === 'aide') return afficherAide();
+  if (nom === 'studio') return ouvrirStudio();
+  if (nom === 'packs') { allerOnglet('outils'); const e = $('#encartPacks'); if (e) e.scrollIntoView({ block: 'start' }); return; }
+  if (nom === 'packs-ouvrir') { const r = await (await api('/api/packs/ouvrir', { method: 'POST' })).json(); aide('Dossier « Mes packs » : ' + esc(r.dossier) + ' — ajoute tes fichiers puis clique sur « Actualiser ».'); return; }
+  if (nom === 'packs-maj') { await chargerPacks(); navigateur(); aide(`Mes packs : ${PACKS.sons.length} sons, ${PACKS.images.length} images, ${PACKS.videos.length} vidéos, ${PACKS.luts.length} looks.`); return; }
+  if (nom === 'lut-import') { $('#fichiers').click(); return; }
   if (nom === 'silences') {
     const c = curClip(); if (!c || !['video', 'audio'].includes(c.kind)) return alert('Sélectionne un clip vidéo ou audio dans la timeline.');
     $('#oSilRes').textContent = 'Analyse du son en cours…';
@@ -927,10 +1069,146 @@ $('#bExport').onclick = exporter;
 
 // ---------- Raccourcis clavier ----------
 const M = MAC ? '⌘' : 'Ctrl';
+// ---------- Studio : se filmer avec la caméra et le micro du Mac, avec un prompteur ----------
+const ST_DEF = { vitesse: 45, taille: 44, largeur: 70, opacite: 55, miroirTxt: false, miroirImg: true, compte: true, defilAuto: true, qualite: '1080', bruit: true, camera: '', micro: '' };
+let studio = null;
+const stLire = () => { try { return { ...ST_DEF, ...JSON.parse(localStorage.getItem('qm:studio') || '{}') }; } catch (e) { return { ...ST_DEF }; } };
+const stGarder = o => { try { localStorage.setItem('qm:studio', JSON.stringify(o)); } catch (e) { /* stockage indisponible */ } };
+function stPanneau() {
+  const o = studio.o, cams = studio.appareils.filter(d => d.kind === 'videoinput'), mics = studio.appareils.filter(d => d.kind === 'audioinput');
+  const rg = (id, lab, min, max, step, v, u) => `<label class="l">${lab}<span id="${id}V">${v}${u}</span></label><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${v}">`;
+  const ck = (id, lab, v) => `<div class="sw2"><input type="checkbox" id="${id}" ${v ? 'checked' : ''}><label for="${id}">${lab}</label></div>`;
+  $('#stPanneau').innerHTML = `<h3 style="margin-top:0">🎥 Studio</h3>
+    <label class="l">Ton texte (prompteur)</label><textarea id="stScript" placeholder="Écris ou colle ici ce que tu vas dire. Le texte défile en haut de l’écran, juste sous la caméra : tu lis en regardant l’objectif.">${esc(proj.prompteur || '')}</textarea>
+    ${rg('stVit', 'Vitesse de défilement', 10, 150, 1, o.vitesse, '')}${rg('stTaille', 'Taille du texte', 24, 90, 1, o.taille, ' px')}${rg('stLarg', 'Largeur du prompteur', 40, 100, 1, o.largeur, ' %')}${rg('stOpa', 'Fond du prompteur', 0, 90, 1, o.opacite, ' %')}
+    ${ck('stMirTxt', 'Texte en miroir (vitre de prompteur)', o.miroirTxt)}${ck('stMirImg', 'Image en miroir (comme un miroir)', o.miroirImg)}
+    ${ck('stCpt', 'Compte à rebours 3, 2, 1 avant d’enregistrer', o.compte)}${ck('stAuto', 'Le texte défile dès le début de l’enregistrement', o.defilAuto)}
+    <label class="l">Caméra</label><select id="stCam">${cams.map((d, i) => `<option value="${esc(d.deviceId)}" ${d.deviceId === o.camera ? 'selected' : ''}>${esc(d.label || 'Caméra ' + (i + 1))}</option>`).join('') || '<option value="">Caméra du Mac</option>'}</select>
+    <label class="l">Micro</label><select id="stMic">${mics.map((d, i) => `<option value="${esc(d.deviceId)}" ${d.deviceId === o.micro ? 'selected' : ''}>${esc(d.label || 'Micro ' + (i + 1))}</option>`).join('') || '<option value="">Micro du Mac</option>'}</select>
+    <label class="l">Qualité</label><select id="stQual">${opts([['720', '720p (fichier léger)'], ['1080', '1080p Full HD']], o.qualite)}</select>
+    ${ck('stBruit', 'Réduire le bruit de fond du micro', o.bruit)}
+    <p class="mut" style="margin-top:10px">Chaque prise est ajoutée à la fin de la timeline. Ensuite, le fond vert et les décors (onglet Calques) fonctionnent comme d’habitude.</p>
+    <p class="mut">Raccourcis : <kbd>R</kbd> enregistrer · <kbd>Espace</kbd> défiler · <kbd>↑</kbd><kbd>↓</kbd> vitesse · <kbd>Début</kbd> revenir au texte · <kbd>Échap</kbd> fermer</p>
+    <div id="stMsg" class="mut"></div>`;
+  stStyle();
+}
+function stStyle() {
+  const o = studio.o, p = $('#stPrompt');
+  p.style.setProperty('--ps', o.taille + 'px'); p.style.setProperty('--pw', o.largeur + '%'); p.style.setProperty('--po', (o.opacite / 100).toFixed(2));
+  p.classList.toggle('miroirtxt', o.miroirTxt); $('#stVideo').classList.toggle('miroir', o.miroirImg);
+  p.style.display = (proj.prompteur || '').trim() ? '' : 'none';
+  $('#stTexte').textContent = proj.prompteur || '';
+}
+async function stFlux() {
+  const o = studio.o;
+  if (studio.flux) studio.flux.getTracks().forEach(t => t.stop());
+  const hd = o.qualite === '1080';
+  studio.flux = await navigator.mediaDevices.getUserMedia({
+    video: { deviceId: o.camera ? { exact: o.camera } : undefined, width: { ideal: hd ? 1920 : 1280 }, height: { ideal: hd ? 1080 : 720 }, frameRate: { ideal: 30 } },
+    audio: { deviceId: o.micro ? { exact: o.micro } : undefined, echoCancellation: false, noiseSuppression: o.bruit, autoGainControl: false, channelCount: 1 }
+  });
+  $('#stVideo').srcObject = studio.flux;
+  // vu-mètre du micro
+  if (studio.ctx) studio.ctx.close().catch(() => {});
+  studio.ctx = new AudioContext(); const an = studio.ctx.createAnalyser(); an.fftSize = 512;
+  studio.ctx.createMediaStreamSource(studio.flux).connect(an); const buf = new Float32Array(an.fftSize);
+  studio.vu = () => { an.getFloatTimeDomainData(buf); let m = 0; for (const v of buf) m = Math.max(m, Math.abs(v)); return m; };
+}
+async function ouvrirStudio() {
+  if (studio) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) return alert('La caméra n’est pas disponible dans cette fenêtre.');
+  stopLecture();
+  studio = { o: stLire(), appareils: [], flux: null, rec: null, defil: false, pos: 0, t0: 0, raf: 0 };
+  $('#studio').classList.add('on');
+  try { await stFlux(); }
+  catch (e) {
+    fermerStudio(); return alert('Caméra ou micro indisponible : ' + e.message + '\n\nAutorise QuentMovie dans Réglages Système → Confidentialité et sécurité → Caméra (et Micro), puis réessaie.');
+  }
+  studio.appareils = await navigator.mediaDevices.enumerateDevices().catch(() => []);
+  stPanneau(); studio.pos = 0; stPlacer();
+  let avant = performance.now();
+  const boucle = now => { // défilement du texte et chronomètre
+    if (!studio) return;
+    const dt = (now - avant) / 1000; avant = now;
+    if (studio.defil) { studio.pos += studio.o.vitesse * dt; stPlacer(); }
+    if (studio.rec) $('#stTemps').textContent = fmtChrono((Date.now() - studio.t0) / 1000);
+    if (studio.vu) $('#stVu i').style.width = Math.min(100, studio.vu() * 140) + '%';
+    studio.raf = requestAnimationFrame(boucle);
+  };
+  studio.raf = requestAnimationFrame(boucle);
+}
+const fmtChrono = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+function stPlacer() { const t = $('#stTexte'); const max = Math.max(0, t.scrollHeight - $('#stPrompt').clientHeight * 0.6); studio.pos = clamp(studio.pos, 0, max); t.style.transform = `translateY(${-studio.pos}px)`; if (studio.pos >= max && studio.defil) stDefiler(false); }
+function stDefiler(on) { studio.defil = on === undefined ? !studio.defil : on; $('#stDefil').textContent = studio.defil ? '⏸ Pause' : '▶ Défiler'; }
+function fermerStudio() {
+  if (!studio) return;
+  if (studio.rec) { if (!confirm('Un enregistrement est en cours. Arrêter et l’ajouter à la timeline ?')) return; studio.fermerApres = true; studio.rec.stop(); return; }
+  cancelAnimationFrame(studio.raf); if (studio.flux) studio.flux.getTracks().forEach(t => t.stop()); if (studio.ctx) studio.ctx.close().catch(() => {});
+  $('#stVideo').srcObject = null; $('#studio').classList.remove('on'); studio = null;
+}
+async function stCompte() {
+  const c = $('#stCompte'); c.classList.add('on');
+  for (const n of [3, 2, 1]) { if (!studio) return false; c.textContent = n; await new Promise(r => setTimeout(r, 800)); }
+  c.classList.remove('on'); return !!studio;
+}
+async function stEnregistrer() {
+  if (!studio) return;
+  if (studio.rec) { studio.rec.stop(); return; }
+  if (studio.envoi) return;
+  if (studio.o.compte && !(await stCompte())) return;
+  const types = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  const mime = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+  const rec = new MediaRecorder(studio.flux, { mimeType: mime, videoBitsPerSecond: studio.o.qualite === '1080' ? 10e6 : 5e6, audioBitsPerSecond: 192000 });
+  const morceaux = []; rec.ondataavailable = e => { if (e.data.size) morceaux.push(e.data); };
+  rec.onstop = () => stEnvoyer(morceaux, mime);
+  studio.rec = rec; studio.t0 = Date.now(); rec.start(1000);
+  $('#stRec').textContent = '■ Arrêter'; $('#stRec').classList.add('enreg');
+  if (studio.o.defilAuto && (proj.prompteur || '').trim()) { studio.pos = 0; stPlacer(); stDefiler(true); }
+}
+async function stEnvoyer(morceaux, mime) {
+  const st = studio; st.rec = null; st.envoi = true; stDefiler(false);
+  $('#stRec').textContent = '● Enregistrer'; $('#stRec').classList.remove('enreg');
+  const msg = t => { const m = $('#stMsg'); if (m) m.innerHTML = t; aide(t); };
+  msg('Préparation de la prise…');
+  const ext = /mp4/.test(mime) ? 'mp4' : 'webm', nom = 'camera-' + new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14) + '.' + ext;
+  try {
+    const j = await (await api('/api/import?name=' + enc(nom), { method: 'POST', body: new Blob(morceaux, { type: mime || 'video/webm' }) })).json();
+    await chargerMedias();
+    const m = medias.find(x => x.file === j.file);
+    if (m) { proj.clips.push(newClip(m)); sel = proj.clips.length - 1; selA = -1; commit(); tout(); placerTete(starts()[sel]); }
+    msg(`✅ Prise ajoutée à la fin de la timeline (${fmt(m ? m.duration : 0)}).`);
+  } catch (e) { msg(`<span class="err">La prise n’a pas pu être enregistrée : ${esc(e.message)}</span>`); }
+  st.envoi = false;
+  if (st.fermerApres) { studio = st; studio.rec = null; fermerStudio(); }
+}
+$('#bStudio').onclick = ouvrirStudio;
+$('#stFermer').onclick = fermerStudio; $('#stRec').onclick = stEnregistrer; $('#stDefil').onclick = () => stDefiler();
+$('#stDebut').onclick = () => { studio.pos = 0; stPlacer(); };
+$('#stPrompt').onclick = () => stDefiler();
+$('#stPrompt').addEventListener('wheel', e => { e.preventDefault(); studio.pos += e.deltaY; stPlacer(); }, { passive: false });
+$('#stPanneau').addEventListener('input', e => {
+  const o = studio.o, t = e.target, v = t.type === 'checkbox' ? t.checked : t.type === 'range' ? +t.value : t.value;
+  const champ = { stVit: 'vitesse', stTaille: 'taille', stLarg: 'largeur', stOpa: 'opacite', stMirTxt: 'miroirTxt', stMirImg: 'miroirImg', stCpt: 'compte', stAuto: 'defilAuto', stQual: 'qualite', stBruit: 'bruit', stCam: 'camera', stMic: 'micro' }[t.id];
+  if (t.id === 'stScript') { proj.prompteur = t.value; commit(true); stStyle(); return; }
+  if (!champ) return; o[champ] = v; stGarder(o);
+  const lab = $('#' + t.id + 'V'); if (lab) lab.textContent = v + (t.id === 'stTaille' ? ' px' : ['stLarg', 'stOpa'].includes(t.id) ? ' %' : '');
+  if (['stCam', 'stMic', 'stQual', 'stBruit'].includes(t.id)) { if (studio.rec) return alert('Arrête d’abord l’enregistrement.'); stFlux().catch(er => alert('Appareil indisponible : ' + er.message)); }
+  stStyle();
+});
+function toucheStudio(e) {
+  const tag = (e.target.tagName || '').toLowerCase(); if (tag === 'textarea' || (tag === 'input' && e.target.type === 'text') || tag === 'select') { if (e.key === 'Escape') e.target.blur(); return; }
+  const k = e.key, kl = k.length === 1 ? k.toLowerCase() : k, f = fn => { e.preventDefault(); fn(); };
+  if (k === 'Escape') return f(fermerStudio);
+  if (kl === 'r') return f(stEnregistrer);
+  if (k === ' ') return f(() => stDefiler());
+  if (k === 'Home') return f(() => { studio.pos = 0; stPlacer(); });
+  if (k === 'ArrowUp' || k === 'ArrowDown') return f(() => { studio.o.vitesse = clamp(studio.o.vitesse + (k === 'ArrowUp' ? 5 : -5), 10, 150); stGarder(studio.o); const r = $('#stVit'); if (r) { r.value = studio.o.vitesse; $('#stVitV').textContent = studio.o.vitesse; } });
+}
+
 const RACCOURCIS = [
-  ['Lecture', [['Espace', 'Lire / pause (avec les effets)'], ['⌥ Espace', 'Lire le clip sans effets'], ['J / L', 'Reculer / avancer d’1 seconde'], ['K', 'Pause'], ['← / →', 'Image précédente / suivante'], ['⇧ ← / →', '1 seconde'], ['↑ / ↓', 'Clip précédent / suivant'], ['Début / Fin', 'Début / fin de la timeline'], ['F', 'Plein écran de la visionneuse'], [M + ' R', 'Aperçu avec effets']]],
+  ['Lecture', [['Espace', 'Lire / pause (avec les effets)'], ['⌥ Espace', 'Lire le clip sans effets'], ['J / L', 'Reculer / avancer d’1 seconde'], ['K', 'Pause'], ['← / →', 'Image précédente / suivante'], ['⇧ ← / →', '1 seconde'], ['↑ / ↓', 'Clip précédent / suivant'], ['Début / Fin', 'Début / fin de la timeline'], ['F', 'Plein écran de la visionneuse'], [M + ' R', 'Aperçu avec effets'], ['⇧' + M + ' R', 'Me filmer (caméra, micro, prompteur)']]],
   ['Montage', [['S ou ' + M + ' B', 'Couper à la tête de lecture'], ['I / O', 'Début / fin du clip à la tête de lecture'], ['Suppr', 'Supprimer le clip ou la piste'], [M + ' D', 'Dupliquer'], [M + ' [ / ]', 'Déplacer à gauche / droite'], [M + ' C / V', 'Copier / coller un clip'], ['⌥' + M + ' V', 'Coller seulement les effets'], ['M', 'Ajouter un repère'], ['[ / ]', 'Repère précédent / suivant']]],
-  ['Fichier et affichage', [[M + ' N / O / S', 'Nouveau / ouvrir / enregistrer'], [M + ' I', 'Importer des médias'], [M + ' E', 'Exporter'], [M + ' Z / ⇧' + M + ' Z', 'Annuler / rétablir'], ['+ / −', 'Zoom de la timeline'], ['⇧ Z', 'Tout afficher'], [M + ' + molette', 'Zoom à la souris'], ['1 … 9', 'Onglets Médias, Effets, Transitions, Titres, Voix, Sons, Musique, Stickers, Outils'], ['T', 'Titres'], ['?', 'Cette aide']]],
+  ['Fichier et affichage', [[M + ' N / O / S', 'Nouveau / ouvrir / enregistrer'], [M + ' I', 'Importer des médias'], [M + ' E', 'Exporter'], [M + ' Z / ⇧' + M + ' Z', 'Annuler / rétablir'], ['+ / −', 'Zoom de la timeline'], ['⇧ Z', 'Tout afficher'], [M + ' + molette', 'Zoom à la souris'], ['1 … 9', 'Onglets Médias, Effets, Transitions, Titres, Voix, Sons, Musique, Calques, Outils'], ['T', 'Titres'], ['?', 'Cette aide']]],
   ['À la souris', [['Glisser un clip', 'Changer son ordre'], ['Bords d’un clip', 'Raccourcir ou rallonger'], ['Clic sur la règle', 'Placer la tête de lecture'], ['Glisser un effet', 'Le poser sur un clip'], ['⇧ clic sur un repère', 'Le supprimer']]]
 ];
 function afficherAide() {
@@ -938,6 +1216,7 @@ function afficherAide() {
   $('#aOk').onclick = fermer;
 }
 document.addEventListener('keydown', e => {
+  if (studio) return toucheStudio(e);
   const tag = (e.target.tagName || '').toLowerCase(), saisie = tag === 'input' && !['range', 'checkbox', 'color'].includes(e.target.type) || tag === 'textarea' || tag === 'select';
   const cmd = e.metaKey || e.ctrlKey, k = e.key, kl = k.length === 1 ? k.toLowerCase() : k;
   if (k === 'Escape') { if ($('#modal').classList.contains('on') && !$('#barreExp')) fermer(); return; }
@@ -946,6 +1225,7 @@ document.addEventListener('keydown', e => {
     if (kl === 'z') return faire(() => undo(e.shiftKey ? 1 : -1));
     if (kl === 'b') return faire(couper); if (kl === 'd') return faire(dupliquer); if (kl === 'n') return faire(nouveau); if (kl === 'o') return faire(ouvrirProjet);
     if (kl === 's') return faire(sauver); if (kl === 'i') return faire(() => $('#fichiers').click()); if (kl === 'e') return faire(exporter);
+    if (kl === 'r' && e.shiftKey) return faire(ouvrirStudio);
     if (kl === 'r') return faire(() => $('#bApercu').click()); if (kl === 'c') return faire(copier); if (kl === 'v') return faire(() => coller(e.altKey));
     if (k === '[') return faire(() => deplacer(-1)); if (k === ']') return faire(() => deplacer(1));
     return;
@@ -976,7 +1256,7 @@ function tout() { tlDessin(); inspecteur(); navigateur(); reglerScrub(); majBout
   CAT = await (await api('/api/catalogue')).json();
   CAT.polices = CAT.polices && CAT.polices.length ? CAT.polices : [{ id: 'arial', nom: 'Police par défaut' }];
   $('#etat').textContent = CAT.font ? '' : 'Titres indisponibles (police ou filtre manquant)';
-  await chargerMedias();
+  await chargerMedias(); await chargerPacks();
   try { const s = await (await api('/api/projet')).json(); if (s && Array.isArray(s.clips)) proj = { ...proj, ...s }; } catch (e) {}
   proj.audio = (proj.audio || []).filter(a => mediaOf(a.file)); proj.markers = proj.markers || [];
   proj.clips = proj.clips.filter(c => c.kind === 'solid' || mediaOf(c.file)).map(normaliser);

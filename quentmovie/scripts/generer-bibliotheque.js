@@ -170,6 +170,42 @@ function mer() { R = rng(9); const n = noise(8, 0), b = buf(8); let y = 0; for (
 function oiseaux() { R = rng(14); const b = buf(6); for (let k = 0; k < 14; k++) { const t0 = rnd() * 5, f0 = 2400 + rnd() * 1800, n = 2 + Math.floor(rnd() * 4); for (let j = 0; j < n; j++) mix(b, tone(t => f0 + 700 * Math.sin(t * 60) + 400 * Math.exp(-t * 20), 0.08, 0.03, 'sine', 0.004), t0 + j * 0.1, 0.35); } return fade(b, 0.1, 0.3); }
 function feu() { R = rng(17); const b = lp(noise(5, 0), 1800); for (let i = 0; i < b.length; i++) b[i] *= 0.25; for (let k = 0; k < 90; k++) mix(b, hp(noise(0.01, 0.003), 1500), rnd() * 5, 0.5 * rnd()); return fade(b, 0.4, 0.6); }
 
+
+// ---------- Pack 2 : jeu vidéo, télé, magie, transitions ----------
+function sq(f, sec, tau) { return fade(tone(f, sec, tau, 'square', 0.002), 0.002, 0.01); }
+function seq(notes, d, wave = 'square', g = 0.5) { const b = buf(notes.length * d + 0.3); notes.forEach((f, i) => mix(b, fade(tone(f, d * 1.1, d * 0.8, wave, 0.002), 0.002, 0.01), i * d, g)); return b; }
+function pieceJeu() { const b = buf(0.6); mix(b, sq(988, 0.08, 0), 0, 0.5); mix(b, sq(1319, 0.45, 0.15), 0.08, 0.5); return b; }
+function saut() { return fade(tone(t => 300 + 900 * t / 0.25, 0.25, 0, 'square', 0.002), 0.002, 0.03); }
+function laser() { return fade(tone(t => 2200 * Math.exp(-t * 9) + 200, 0.35, 0.15, 'saw', 0.001), 0.001, 0.02); }
+function teleport() { const b = buf(1.2); for (let k = 0; k < 5; k++) mix(b, tone(t => 400 + 1600 * t + 300 * Math.sin(t * 90 + k), 1, 0.3, 'sine', 0.01), k * 0.04, 0.25); return fade(b, 0.01, 0.2); }
+function caisse() { const b = buf(1.4); mix(b, hp(noise(0.05, 0.01), 2000), 0, 0.6); mix(b, cloche(2637, 1.2, 0.6), 0.06, 0.8); for (let k = 0; k < 5; k++) mix(b, tone(4200 + k * 330, 0.12, 0.04), 0.1 + k * 0.05, 0.25); return b; }
+function pieces() { R = rng(41); const b = buf(1.2); for (let k = 0; k < 9; k++) mix(b, tone(3000 + rnd() * 2500, 0.2, 0.05 + rnd() * 0.05), rnd() * 0.8, 0.3); return b; }
+function roulement(sec) {
+  const b = buf(sec + 2.2);
+  for (let t = 0; t < sec; t += 0.035) mix(b, hp(noise(0.06, 0.02), 900), t, 0.25 + 0.6 * t / sec);
+  mix(b, hp(noise(2, 0.6), 3500), sec, 0.9); mix(b, tone(190, 0.15, 0.05), sec, 0.5);
+  return b;
+}
+function cymbale() { return hp(noise(2.5, 0.7), 4000); }
+function rimshot() { const b = buf(1.6); mix(b, mix0(tone(t => 160 * (1 + Math.exp(-t * 30)), 0.3, 0.1), lp(noise(0.08, 0.02), 900), 0.4), 0, 0.8); mix(b, mix0(tone(t => 110 * (1 + Math.exp(-t * 30)), 0.35, 0.12), lp(noise(0.08, 0.02), 700), 0.4), 0.18, 0.8); mix(b, hp(noise(1.2, 0.35), 5000), 0.42, 0.8); return b; }
+function tonnerre() { R = rng(19); const b = lp(noise(6, 1.6), 300); mix(b, hp(noise(0.3, 0.08), 1200), 0, 0.8); for (let k = 0; k < 6; k++) mix(b, lp(noise(0.8, 0.3), 150), 0.3 + rnd() * 3, 0.8); return fade(reverb(b, 0.4, 2), 0.005, 1); }
+function cymbaleInverse() { const b = cymbale(); b.reverse(); return fade(b, 0.3, 0.01); }
+function flashCharge() { const b = buf(1.4); mix(b, fade(tone(t => 1800 + 4000 * t, 1, 0, 'sine', 0.01), 0.05, 0.05), 0, 0.25); mix(b, hp(noise(0.02, 0.004), 1800), 1.05, 0.9); mix(b, lp(noise(0.05, 0.01), 3000), 1.07, 0.6); return b; }
+function texteTick(n) { const b = buf(n * 0.07 + 0.2); for (let k = 0; k < n; k++) mix(b, hp(noise(0.006, 0.0015), 3000), k * 0.07, 0.8); return b; }
+function compteBips() { const b = buf(3.8); for (let k = 0; k < 3; k++) mix(b, bip(880, 0.12), k, 0.7); mix(b, bip(1760, 0.8), 3, 0.7); return b; }
+function buzzer() { const b = fade(tone(110, 0.9, 0, 'saw', 0.005), 0.01, 0.05); mix(b, tone(116, 0.9, 0, 'square', 0.005), 0, 0.4); return lp(b, 2000); }
+function bonneReponse() { const b = buf(1.2); mix(b, cloche(1319, 1, 0.5), 0, 0.7); mix(b, cloche(1760, 1, 0.5), 0.15, 0.7); return b; }
+function magie() { R = rng(51); const b = buf(2); for (let k = 0; k < 40; k++) { const t = k * 0.035 + rnd() * 0.02; mix(b, tone(2000 + rnd() * 3500 + k * 40, 0.4, 0.12), t, 0.18); } return reverb(b, 0.4, 1.4); }
+function bulleEau() { return fade(tone(t => 300 + 1400 * t / 0.12, 0.14, 0.05, 'sine', 0.002), 0.002, 0.02); }
+function sonar() { return reverb(tone(1450, 1.8, 0.45, 'sine', 0.003), 0.5, 2); }
+function grillons(sec) { R = rng(61); const b = buf(sec); for (let t = 0.1; t < sec - 0.3; t += 0.45 + rnd() * 0.4) for (let k = 0; k < 3; k++) mix(b, tone(4400, 0.03, 0.012, 'sine', 0.002), t + k * 0.05, 0.25); mix(b, lp(noise(sec, 0), 600), 0, 0.03); return fade(b, 0.3, 0.5); }
+function rewind() { R = rng(71); const b = buf(1.6); let t = 0; while (t < 1.4) { mix(b, tone(f => 600 + 2500 * (t / 1.4) + 300 * Math.sin(f * 50), 0.05, 0.02, 'saw', 0.002), t, 0.18); t += 0.018; } mix(b, hp(noise(1.5, 0), 3000), 0, 0.12); return fade(b, 0.02, 0.05); }
+function scratch() { R = rng(81); const b = buf(0.9); const n = noise(0.9, 0); let y = 0; for (let i = 0; i < b.length; i++) { const t = i / SR, fc = 400 + 2600 * Math.abs(Math.sin(t * 14)), a = 1 - Math.exp(-PI2 * fc / SR); y += a * (n[i] - y); b[i] = y * 3 * Math.abs(Math.sin(t * 14)); } return fade(b, 0.005, 0.05); }
+function arretDisque() { return fade(tone(t => 520 * Math.max(0.05, 1 - t / 0.9), 1, 0, 'saw', 0.002), 0.002, 0.1); }
+function boomTransition() { const b = impact(2.2, 90, 32, 1.2); mix(b, whoosh(0.4, 300, 3000, 0.6), 0, 0.5); return b; }
+function swipeUi() { return whoosh(0.22, 1200, 8000, 1); }
+function bloup() { return fade(tone(t => 700 - 500 * t / 0.18, 0.18, 0.08, 'sine', 0.002), 0.002, 0.02); }
+
 const SONS = [
   ['clavier-frappe', 'Touche de clavier', 'Bureau et clavier', () => { const b = buf(0.25); frappe(b, 0.02); return b; }],
   ['clavier-frappe-douce', 'Touche de clavier douce', 'Bureau et clavier', () => { const b = buf(0.25); frappe(b, 0.02, 0.5, -1); return lp(b, 4500); }],
@@ -209,7 +245,35 @@ const SONS = [
   ['mer', 'Vagues (8 s)', 'Ambiances', mer],
   ['oiseaux', 'Oiseaux (6 s)', 'Ambiances', oiseaux],
   ['feu', 'Feu de cheminée (5 s)', 'Ambiances', feu],
-  ['parasites-tv', 'Parasites de télévision (2 s)', 'Ambiances', () => parasites(2)]
+  ['parasites-tv', 'Parasites de télévision (2 s)', 'Ambiances', () => parasites(2)],
+  ['grillons', 'Grillons, nuit d’été (6 s)', 'Ambiances', () => grillons(6)],
+  ['tonnerre', 'Tonnerre', 'Ambiances', tonnerre],
+  ['boom-transition', 'Boom de transition', 'Transitions et mouvements', boomTransition],
+  ['cymbale-inverse', 'Cymbale inversée (montée)', 'Transitions et mouvements', cymbaleInverse],
+  ['swipe', 'Glissement d’écran (swipe)', 'Transitions et mouvements', swipeUi],
+  ['rembobinage', 'Rembobinage de cassette', 'Transitions et mouvements', rewind],
+  ['scratch', 'Scratch de vinyle', 'Transitions et mouvements', scratch],
+  ['arret-disque', 'Disque qui s’arrête', 'Transitions et mouvements', arretDisque],
+  ['texte-tick', 'Texte qui s’affiche (ticks)', 'Alertes et interface', () => texteTick(12)],
+  ['compte-a-rebours', 'Compte à rebours (3 bips + top)', 'Alertes et interface', compteBips],
+  ['flash-photo', 'Flash photo (charge et déclic)', 'Alertes et interface', flashCharge],
+  ['sonar', 'Sonar (ping)', 'Alertes et interface', sonar],
+  ['bulle-eau', 'Bulle (bloup)', 'Alertes et interface', bulleEau],
+  ['bloup', 'Bloup descendant', 'Alertes et interface', bloup],
+  ['roulement-tambour', 'Roulement de tambour et cymbale', 'Télé et spectacle', () => roulement(2.5)],
+  ['ba-dum-tss', 'Ba-dum-tss (blague)', 'Télé et spectacle', rimshot],
+  ['cymbale', 'Cymbale', 'Télé et spectacle', cymbale],
+  ['bonne-reponse', 'Bonne réponse', 'Télé et spectacle', bonneReponse],
+  ['mauvaise-reponse', 'Mauvaise réponse (buzzer)', 'Télé et spectacle', buzzer],
+  ['caisse', 'Caisse enregistreuse (argent)', 'Télé et spectacle', caisse],
+  ['pieces', 'Pièces de monnaie', 'Télé et spectacle', pieces],
+  ['magie', 'Magie (scintillement)', 'Télé et spectacle', magie],
+  ['piece-jeu', 'Pièce de jeu vidéo', 'Jeu vidéo', pieceJeu],
+  ['saut-jeu', 'Saut de jeu vidéo', 'Jeu vidéo', saut],
+  ['niveau-suivant', 'Niveau suivant', 'Jeu vidéo', () => seq([523, 659, 784, 1047, 1319], 0.08)],
+  ['game-over', 'Partie perdue', 'Jeu vidéo', () => seq([392, 370, 349, 330], 0.22, 'square', 0.45)],
+  ['laser', 'Laser', 'Jeu vidéo', laser],
+  ['teleportation', 'Téléportation', 'Jeu vidéo', teleport]
 ];
 
 // ---------- Musiques ----------
@@ -340,6 +404,46 @@ function musPiano() {
   for (const ch of [S.L, S.R]) reverb(ch, 0.2, 1.4);
   return finish(S, 0.8);
 }
+
+function musTrap() {
+  R = rng(110); const S = Song(48, 140), st = S.step, nb = Math.floor(S.sec / (16 * st));
+  const roots = [29, 29, 32, 27], mel = [[65, 68, 72], [65, 68, 72], [68, 72, 75], [63, 67, 70]];
+  for (let b = 0; b < nb; b++) {
+    const t0 = b * 16 * st;
+    for (const k of [0, 7, 10]) put(S, fade(tone(t => mtof(roots[b % 4]) * (1 + 0.6 * Math.exp(-t * 30)), 1.2, 0.5, 'sine', 0.002), 0.002, 0.1), t0 + k * st, 0.9);
+    put(S, clap(), t0 + 8 * st, 0.6); put(S, snare(), t0 + 8 * st, 0.3);
+    for (let k = 0; k < 16; k++) { put(S, hat(), t0 + k * st, 0.16, 0.3); if (b % 2 && k > 11) put(S, hat(), t0 + (k + 0.5) * st, 0.12, 0.3); }
+    if (b >= 1) mel[b % 4].forEach((m, i) => put(S, cloche(mtof(m), 1.2, 0.3), t0 + i * 4 * st, 0.3, i % 2 ? 0.4 : -0.4));
+    put(S, pad(mel[b % 4].map(m => m - 12), 16 * st, 900), t0, 0.35);
+  }
+  return finish(S, 0.85);
+}
+function musHouse() {
+  R = rng(111); const S = Song(52, 122), st = S.step, nb = Math.floor(S.sec / (16 * st));
+  const prog = [[57, 60, 64, 67], [55, 59, 62, 65], [53, 57, 60, 64], [52, 55, 59, 62]];
+  for (let b = 0; b < nb; b++) {
+    const t0 = b * 16 * st, ch = prog[b % 4];
+    for (let k = 0; k < 16; k += 4) put(S, kick(), t0 + k * st, 0.85);
+    for (let k = 2; k < 16; k += 4) put(S, hat(true), t0 + k * st, 0.2, 0.3);
+    for (let k = 4; k < 16; k += 8) put(S, clap(), t0 + k * st, 0.45);
+    for (let k = 2; k < 16; k += 4) put(S, bassNote(ch[0] - 24, st * 1.6), t0 + k * st, 0.55);
+    for (const k of [0, 3, 6, 10, 13]) put(S, stab(ch.map(m => m + 12), 0.18), t0 + k * st, 0.3, 0.25);
+  }
+  return finish(S, 0.85);
+}
+function musSynthwave() {
+  R = rng(112); const S = Song(52, 100), st = S.step, nb = Math.floor(S.sec / (16 * st));
+  const prog = [[57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 55, 59]];
+  for (let b = 0; b < nb; b++) {
+    const t0 = b * 16 * st, ch = prog[b % 4];
+    for (let k = 0; k < 16; k += 4) put(S, kick(), t0 + k * st, 0.75);
+    for (let k = 4; k < 16; k += 8) put(S, reverb(snare(), 0.5, 1.8), t0 + k * st, 0.55);
+    for (let k = 0; k < 16; k += 2) put(S, bassNote(ch[0] - 24, st * 1.8), t0 + k * st, 0.5);
+    for (let k = 0; k < 16; k++) put(S, lp(tone(mtof(ch[k % 3] + 12 + (k % 6 > 2 ? 12 : 0)), st, 0.12, 'saw', 0.002), 2600), t0 + k * st, 0.12, k % 2 ? -0.5 : 0.5);
+    put(S, pad(ch.map(m => m + 12), 16 * st, 1600), t0, 0.6);
+  }
+  return finish(S, 0.85);
+}
 const MUSIQUES = [
   ['pulsation-electro', 'Pulsation électro (124 bpm)', 'Dynamique', musElectro],
   ['reportage-info', 'Reportage info (100 bpm)', 'Dynamique', musReportage],
@@ -349,7 +453,10 @@ const MUSIQUES = [
   ['ambiance-douce', 'Ambiance douce', 'Calme', musAmbiance],
   ['piano-chill', 'Piano chill (70 bpm)', 'Calme', musPiano],
   ['tension-suspense', 'Tension et suspense', 'Dramatique', musTension],
-  ['cinema-epique', 'Cinéma épique (84 bpm)', 'Dramatique', musEpique]
+  ['cinema-epique', 'Cinéma épique (84 bpm)', 'Dramatique', musEpique],
+  ['trap-moderne', 'Trap moderne (140 bpm)', 'Dynamique', musTrap],
+  ['house-groove', 'House groove (122 bpm)', 'Dynamique', musHouse],
+  ['synthwave-80', 'Synthwave années 80 (100 bpm)', 'Dynamique', musSynthwave]
 ];
 
 // ---------- Écriture ----------
@@ -366,12 +473,12 @@ function encode(L, R, dest, kbps) {
   execFileSync(FFMPEG, ['-y', '-v', 'error', '-i', tmp, '-codec:a', 'libmp3lame', '-b:a', kbps + 'k', dest]); fs.unlinkSync(tmp);
 }
 function main() {
-  // les stickers (générés par generer-stickers.py) sont conservés
-  let anciens = [];
-  try { anciens = JSON.parse(fs.readFileSync(path.join(OUT, 'index.json'), 'utf8')).stickers || []; } catch (e) { /* première génération */ }
+  // les autres listes (stickers, looks, calques, cadres : scripts Python) sont conservées
+  let anciens = {};
+  try { anciens = JSON.parse(fs.readFileSync(path.join(OUT, 'index.json'), 'utf8')); } catch (e) { /* première génération */ }
   for (const d of ['sons', 'musiques']) fs.rmSync(path.join(OUT, d), { recursive: true, force: true });
   fs.mkdirSync(path.join(OUT, 'sons'), { recursive: true }); fs.mkdirSync(path.join(OUT, 'musiques'), { recursive: true });
-  const index = { sons: [], musiques: [], stickers: anciens };
+  const index = { stickers: [], ...anciens, sons: [], musiques: [] };
   for (const [id, nom, cat, make] of SONS) {
     R = rng(id.length * 977); const b = make(), g = 0.9 / (peak(b) || 1);
     for (let i = 0; i < b.length; i++) b[i] *= g;
