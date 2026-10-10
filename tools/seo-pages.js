@@ -70,7 +70,7 @@ function tete(p, h) {
 const lienMetiers = pre => 'Sites par métier : ' + metiers.map(m => `<a href="${pre}${m.slug}/">${m.nom}</a>`).join(' · ') + ` · <a href="${pre}creation-site/">Tous les métiers</a>`;
 function pied(p, h) {
   const pre = prefixe(p) || '';
-  const liens = `<a href="${pre || './'}">Accueil</a> · <a href="${pre}creation-site/">Site internet artisan</a> · <a href="${pre}templates/">Site clé en main</a> · <a href="${pre}devis/">Devis</a> · <a href="${pre}realisations/">Réalisations</a> · <a href="${pre}conseils/">Conseils</a> · <a href="${pre}mentions-legales/">Mentions légales</a> · <a href="mailto:${mail}">Contact</a>`;
+  const liens = `<a href="${pre || './'}">Accueil</a> · <a href="${pre}creation-site/">Site internet artisan</a> · <a href="${pre}templates/">Site clé en main</a> · <a href="${pre}devis/">Devis</a> · <a href="${pre}realisations/">Réalisations</a> · <a href="${pre}conseils/">Conseils</a> · <a href="${pre}mentions-legales/">Mentions légales</a> · <a href="${pre}politique-confidentialite.html">Confidentialité</a> · <a href="mailto:${mail}">Contact</a>`;
   const metiersP = `<p data-seo="pied-metiers" class="muted" style="margin:var(--s-4) 0 0;font-size:var(--t-sm)">${lienMetiers(pre)}</p>`;
   h = h.replace(/\s*<p data-seo="pied-metiers"[^>]*>.*?<\/p>/s, '').replace(/(<a href="[^"]*mentions-legales\/")\s+rel="nofollow"/g, '$1');
   if (/<div class="footer-bottom"/.test(h) && !/footer-grid/.test(h)) {
@@ -78,7 +78,7 @@ function pied(p, h) {
     h = h.replace(/(<span data-seo="pied">.*?<\/span>)/s, `<span data-seo="pied">${liens}</span>`);
   } else if (/footer-grid/.test(h)) {
     h = h.replace(/(<\/div>\s*<div class="footer-bottom">)/, `${metiersP}\n    $1`);
-    h = h.replace(/<li><a href="mentions-legales\/">Mentions légales et confidentialité<\/a><\/li>(?!<li><a href="mailto)/, `<li><a href="mentions-legales/">Mentions légales et confidentialité</a></li><li><a href="mailto:${mail}">Contact</a></li>`);
+    h = h.replace(/<li><a href="mentions-legales\/">Mentions légales et confidentialité<\/a><\/li>(?!<li><a href="mailto)/, `<li><a href="mentions-legales/">Mentions légales et confidentialité</a></li><li><a href="politique-confidentialite.html">Confidentialité</a></li><li><a href="mailto:${mail}">Contact</a></li>`);
   } else if (/<footer class="foot"><div class="wrap">/.test(h) && !/mentions-legales/.test(h)) {
     h = h.replace(/(<footer class="foot"><div class="wrap">.*?)(<\/div><\/footer>)/s, `$1 · <a href="${base}mentions-legales/">Mentions légales</a>$2`);
   }
@@ -193,12 +193,13 @@ function pageMetier(m) {
 <link rel="preload" href="../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../assets/qt.css?v=20261001h">
 <link rel="preload" href="../assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9406894983294380" crossorigin="anonymous"></script>
 </head>
 <body>
 <a class="skip" href="#contenu">Aller au contenu</a>
 <header class="nav"><div class="wrap">
   <a class="brand" href="../" aria-label="QuenTools, accueil"><img class="brand-mark" src="../assets/logo.svg" alt="" width="32" height="32">QuenTools</a>
-  <ul class="nav-links"><li><a href="../creation-site/">Sites par métier</a></li><li><a href="../#tarifs">Offres et tarifs</a></li><li><a href="../realisations/">Réalisations</a></li><li><a href="../exemples/">Exemples</a></li></ul>
+  <ul class="nav-links"><li><a href="../creation-site/">Sites par métier</a></li><li><a href="../#tarifs">Offres et tarifs</a></li><li><a href="../realisations/">Réalisations</a></li><li><a href="../exemples/">Exemples</a></li><li><a href="../decodeur-courrier.html">Paperdecrypt</a></li></ul>
   <span class="nav-actions"><a class="nav-espace" href="../espace/" aria-label="Espace client"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>Espace client</span></a><a class="btn btn-sm btn-accent" href="../devis/"><span class="lg">Demander un </span><span class="w">devis</span></a></span>
 </div></header>
 

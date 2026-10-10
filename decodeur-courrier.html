@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paperdecrypt : courriers, remboursements, garanties | QuenTools</title>
+<meta name="google-adsense-account" content="ca-pub-9406894983294380">
+<meta name="description" content="Prends ton courrier administratif en photo : on t'explique ce qu'on te demande, avant quand, et on t'aide à répondre. Tout reste sur ton appareil, sauf si tu te connectes avec Google pour le retrouver partout.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✉️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Literata:opsz,wght@7..72,400;7..72,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF2F5; --sheet:#FFFFFF; --ink:#18233A; --muted:#566275; --line:#CBD3DD;
+  --mark:#FFE14D; --mark-ink:#18233A; --stamp:#C4122F; --warn:#A85A00; --calm:#1F6E4A;
+  --focus:#2F6FEB; --btn:#18233A; --btn-ink:#FFFFFF;
+  --ui:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --letter:"Literata", Georgia, "Times New Roman", serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#11161E; --sheet:#1A212C; --ink:#E7ECF3; --muted:#9BA7B9; --line:#2E3949;
+    --stamp:#FF5A6E; --warn:#F2A33A; --calm:#4CC08A; --focus:#7AA5FF; --btn:#E7ECF3; --btn-ink:#11161E;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#11161E; --sheet:#1A212C; --ink:#E7ECF3; --muted:#9BA7B9; --line:#2E3949;
+  --stamp:#FF5A6E; --warn:#F2A33A; --calm:#4CC08A; --focus:#7AA5FF; --btn:#E7ECF3; --btn-ink:#11161E;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:17px;line-height:1.5;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 48px}
+
+/* En-tête */
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
+.brand{min-width:0}
+.brand h1{margin:0;font-size:clamp(1.4rem,5.5vw,2.3rem);line-height:1.05;letter-spacing:-.01em}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:.95rem}
+.icon-btn{border:1px solid var(--line);background:var(--sheet);border-radius:999px;width:44px;height:44px;display:grid;place-items:center;cursor:pointer;flex:none}
+.icon-btn svg{width:22px;height:22px}
+
+.tabs{display:flex;gap:4px;background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:20px;width:max-content;max-width:100%}
+.tabs button{border:0;background:transparent;padding:8px 16px;border-radius:9px;cursor:pointer;font-weight:700;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--btn);color:var(--btn-ink)}
+.count{display:inline-block;min-width:1.4em;padding:0 .35em;margin-left:6px;border-radius:999px;background:var(--mark);color:var(--mark-ink);font-size:.8rem}
+
+/* Feuilles */
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:22px}
+.input-sheet h2{margin:0 0 6px;font-size:1.45rem;line-height:1.2}
+.lead{margin:0 0 18px;color:var(--muted);max-width:60ch}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--btn);background:var(--btn);color:var(--btn-ink);padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer;text-decoration:none;min-height:46px}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.small{padding:7px 12px;min-height:38px;font-size:.92rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.link{border:0;background:none;padding:6px 4px;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-weight:700}
+.btn svg{width:20px;height:20px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.paste{margin-top:22px}
+.paste label{display:block;font-weight:700;margin-bottom:6px}
+textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--paper);resize:vertical;font-family:var(--letter);font-size:.95rem;line-height:1.55}
+.paste .actions{margin-top:10px}
+.progress{margin-top:14px;display:none}
+.progress.on{display:block}
+.bar{height:8px;background:var(--paper);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;width:0;background:var(--ink);transition:width .2s}
+.progress p{margin:6px 0 0;font-size:.92rem;color:var(--muted)}
+.privacy{display:flex;gap:10px;align-items:flex-start;margin:16px 2px 0;color:var(--muted);font-size:.92rem;max-width:62ch}
+.privacy svg{flex:none;width:20px;height:20px;margin-top:2px}
+
+/* Résultat */
+.result{display:none;margin-top:22px}
+.result.on{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.result.on{grid-template-columns:1fr}}
+
+.verdict{position:relative}
+.stamp{display:inline-block;border:3px double var(--stamp);color:var(--stamp);padding:8px 14px 9px;border-radius:6px;transform:rotate(-2.5deg);margin:2px 0 18px 2px;max-width:100%}
+.stamp b{display:block;font-size:1.25rem;letter-spacing:.04em;text-transform:uppercase;line-height:1.15}
+.stamp span{display:block;font-size:.95rem;font-weight:700;margin-top:2px}
+.stamp.l2{border-color:var(--warn);color:var(--warn)}
+.stamp.l1{border-color:var(--calm);color:var(--calm)}
+@media (prefers-reduced-motion:no-preference){
+  .result.on .stamp{animation:thump .45s cubic-bezier(.2,1.4,.4,1) both}
+  @keyframes thump{from{transform:rotate(-2.5deg) scale(1.6);opacity:0}to{transform:rotate(-2.5deg) scale(1);opacity:1}}
+}
+
+.who{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;margin-bottom:4px}
+.who h2{margin:0;font-size:1.5rem;line-height:1.2}
+.kind{font-weight:700;color:var(--muted)}
+.who-desc{margin:0 0 18px;color:var(--muted);max-width:60ch}
+
+.scam{border:2px solid var(--stamp);border-radius:10px;padding:12px 14px;margin:0 0 18px;color:var(--ink)}
+.scam strong{color:var(--stamp)}
+
+.block{padding:16px 0;border-top:1px solid var(--line)}
+.block h3{margin:0 0 8px;font-size:1.05rem}
+.block p{margin:0 0 8px;max-width:62ch}
+.quote{font-family:var(--letter);background:var(--paper);border-left:4px solid var(--mark);padding:8px 12px;margin:8px 0;border-radius:0 8px 8px 0;font-size:.95rem}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px 18px;margin:0}
+.facts dt{font-size:.85rem;color:var(--muted)}
+.facts dd{margin:0;font-weight:700;font-size:1.08rem;overflow-wrap:anywhere}
+ol.steps{margin:0;padding-left:1.4em}
+ol.steps li{margin:0 0 6px;padding-left:4px;max-width:62ch}
+.risk{color:var(--ink)}
+.contact a{color:inherit}
+
+.ai-box{font-family:var(--letter);white-space:pre-wrap;background:var(--paper);border-radius:10px;padding:12px 14px;margin-top:10px;display:none}
+.ai-box.on{display:block}
+.note{font-size:.9rem;color:var(--muted)}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+.chip{border:1.5px solid var(--line);background:var(--sheet);padding:7px 12px;border-radius:999px;cursor:pointer;font-weight:700;font-size:.93rem}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.draft{font-family:var(--letter);white-space:pre-wrap;border:1px solid var(--line);border-radius:10px;padding:16px;background:var(--sheet);min-height:120px;font-size:.95rem;line-height:1.6}
+.draft .ph{background:var(--mark);color:var(--mark-ink);border-radius:3px;padding:0 2px}
+.draft-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+/* Le courrier surligné */
+.letter{position:sticky;top:12px}
+@media (max-width:860px){.letter{position:static}}
+.letter .sheet{padding:26px 24px;box-shadow:0 1px 0 var(--line),0 12px 28px -18px rgba(24,35,58,.35)}
+.letter h3{margin:0 0 4px;font-size:1rem}
+.letter .note{margin:0 0 14px}
+.letter-text{font-family:var(--letter);font-size:.93rem;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;max-height:70vh;overflow:auto}
+mark{background:linear-gradient(transparent 12%,var(--mark) 12%,var(--mark) 88%,transparent 88%);color:var(--mark-ink);padding:0 1px}
+mark.strong{font-weight:600;box-shadow:inset 0 -2px 0 var(--stamp)}
+
+.save-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-top:16px;border-top:1px solid var(--line)}
+.disclaimer a{color:inherit}
+.disclaimer{margin:28px 0 0;color:var(--muted);font-size:.88rem;max-width:70ch}
+
+/* Mes courriers */
+.list-empty{text-align:left}
+.list-empty h2{margin:0 0 6px}
+.items{display:flex;flex-direction:column;gap:10px}
+.item{background:var(--sheet);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:center}
+.item.l4,.item.l3{border-left-color:var(--stamp)}
+.item.l2{border-left-color:var(--warn)}
+.item.l1{border-left-color:var(--calm)}
+.item.done{opacity:.6;border-left-color:var(--line)}
+.item h3{margin:0;font-size:1.05rem}
+.item p{margin:0;color:var(--muted);font-size:.93rem}
+.item .when{font-weight:700;color:var(--ink)}
+.item .row{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:560px){.item{grid-template-columns:1fr}.item .row{justify-content:flex-start}}
+
+/* Réglages */
+dialog{border:1px solid var(--line);border-radius:16px;padding:0;background:var(--sheet);color:var(--ink);width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px)}
+dialog::backdrop{background:rgba(10,15,25,.5)}
+.dlg{padding:22px;overflow:auto}
+.dlg h2{margin:0 0 4px;font-size:1.35rem}
+.dlg section{padding:16px 0;border-top:1px solid var(--line)}
+.dlg section:first-of-type{border-top:0}
+.dlg h3{margin:0 0 6px;font-size:1.05rem}
+.field{display:block;margin:10px 0}
+.field span{display:block;font-weight:700;font-size:.92rem;margin-bottom:4px}
+.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--paper)}
+.field textarea{min-height:80px;font-family:var(--ui)}
+.radio{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin:8px 0;cursor:pointer}
+.radio input{margin-top:5px}
+.radio small{display:block;color:var(--muted)}
+.ia-status{font-weight:700}
+.dlg-foot{display:flex;justify-content:flex-end;padding-top:12px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--btn);color:var(--btn-ink);padding:10px 16px;border-radius:10px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10;max-width:calc(100vw - 32px)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.top-actions{display:flex;align-items:center;gap:8px}
+.ai-pill{border:1px solid var(--line);background:var(--sheet);border-radius:999px;padding:8px 14px;font-weight:700;font-size:.85rem;cursor:pointer;min-height:44px;color:var(--muted)}
+.ai-pill[data-state="ready"]{color:var(--calm);border-color:var(--calm)}
+.ai-pill[data-state="loading"]{color:var(--ink)}
+.ai-pill[data-state="error"]{color:var(--stamp);border-color:var(--stamp)}
+@media (max-width:520px){.ai-pill{padding:8px 11px;white-space:nowrap}}
+.count.hot{background:var(--stamp);color:#fff}
+
+.brief{background:var(--paper);border-radius:12px;padding:16px 18px;margin:0 0 6px}
+.brief-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.brief h3{margin:0 0 6px;font-size:1.05rem}
+.brief p{margin:0;max-width:64ch;font-size:1.05rem;line-height:1.6}
+.ai-zone:empty{display:none}
+.ai-zone{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+.ai-card p{margin:0 0 10px;max-width:62ch}
+.ai-card .actions .note{font-size:.88rem}
+.ai-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ai-badge{font-weight:700;font-size:.85rem;color:var(--calm)}
+.ai-box{font-family:var(--letter);white-space:pre-wrap;background:transparent;padding:6px 0 0;margin:0;display:none;font-size:1rem;line-height:1.65}
+.ai-box.on{display:block}
+
+.docs{margin-top:12px}
+.docs-title{font-weight:700;margin:0 0 6px}
+.checklist{list-style:none;margin:0;padding:0}
+.checklist li{margin:0 0 4px}
+.checklist label{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:9px;cursor:pointer}
+.checklist input{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--calm)}
+.checklist input:checked+span{text-decoration:line-through;color:var(--muted)}
+
+.inline-tools{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:12px}
+.fix{margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0 14px}
+.fix .actions{grid-column:1/-1}
+
+.glossary{margin:0;display:grid;gap:10px}
+.glossary dt{font-weight:700}
+.glossary dd{margin:2px 0 0;color:var(--muted);max-width:62ch}
+
+.chat-log{display:flex;flex-direction:column;gap:8px;margin:4px 0 10px}
+.chat-log:empty{display:none}
+.msg{max-width:88%;padding:10px 13px;border-radius:14px;white-space:pre-wrap;line-height:1.5}
+.msg.me{align-self:flex-end;background:var(--btn);color:var(--btn-ink);border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--paper);border-bottom-left-radius:4px;font-family:var(--letter);font-size:.97rem}
+.chat-input{display:flex;gap:8px}
+.chat-input input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--paper);min-height:44px}
+.alert{border:2px solid var(--stamp);border-radius:10px;padding:10px 14px;margin:0 0 12px;font-weight:700}
+
+@media print{
+  body.printing *{visibility:hidden}
+  body.printing .print-me, body.printing .print-me *{visibility:visible}
+  body.printing .print-me{position:absolute;left:0;top:0;width:100%;border:0;padding:0;font-size:12pt;color:#000;background:#fff}
+  body.printing .print-me .ph{background:none;color:#000}
+}
+.tabs{width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{white-space:nowrap;flex:none}
+.draft-tools .rec{background:var(--calm);border-color:var(--calm);color:#fff}
+.ai-tools:has(#ai-improve[hidden]):has(#undo-draft[hidden]){display:none}
+.money-hero h2{margin:0 0 6px;font-size:1.45rem;line-height:1.2}
+.gains{display:flex;flex-wrap:wrap;gap:12px 32px;margin:4px 0 12px}
+.gains b{display:block;font-size:clamp(1.8rem,7vw,2.6rem);line-height:1.05;letter-spacing:-.02em}
+.gains span{color:var(--muted);font-size:.95rem}
+.gains div:first-child b{color:var(--calm)}
+.sec-title{margin:26px 0 10px;font-size:1.1rem}
+.cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.case{text-align:left;border:1.5px solid var(--line);background:var(--sheet);border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-height:76px}
+.case b{font-size:1.05rem}
+.case span{color:var(--muted);font-size:.93rem}
+.case:hover{border-color:var(--ink)}
+.back{display:inline-block;margin:-4px 0 6px -4px}
+.sheet > h2{margin:0 0 6px;font-size:1.4rem;line-height:1.2}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 16px}
+.form-grid .field textarea{min-height:90px}
+.verdict-money{border-left:6px solid var(--line);padding:6px 0 6px 14px;margin:6px 0 14px}
+.verdict-money b{font-size:clamp(1.5rem,5.5vw,2.1rem);line-height:1.15;display:block}
+.verdict-money.yes{border-color:var(--calm)} .verdict-money.yes b{color:var(--calm)}
+.verdict-money.maybe{border-color:var(--warn)}
+.verdict-money.no{border-color:var(--line)}
+.sheet > p{max-width:64ch}
+.claim-edit{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px}
+.field.inline{margin:4px 0}
+.field.inline span{font-size:.8rem;font-weight:700;color:var(--muted)}
+.field.inline select,.field.inline input{padding:6px 8px;min-height:38px;width:auto}
+.hot-note{color:var(--stamp)!important;font-weight:700}
+.item.w p{margin:2px 0 0}
+.item.won{border-left-color:var(--calm)}
+.ad{margin-top:22px;border:1px dashed var(--line);border-radius:12px;padding:12px 14px 14px;background:var(--sheet)}
+.ad-label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:6px}
+.ad.promo p{margin:0 0 10px;max-width:62ch}
+.verdict .ad{background:var(--paper)}
+.tip{font-weight:700}
+.delegate{margin-top:14px;padding:14px;border-radius:10px;background:var(--paper)}
+.delegate p{margin:0 0 8px;max-width:62ch}
+.delegate .note{margin:8px 0 0}
+.t-short{display:none}
+@media (max-width:520px){.t-long{display:none}.t-short{display:inline}}
+.wbar{height:6px;border-radius:99px;background:var(--paper);border:1px solid var(--line);overflow:hidden;margin-top:8px;max-width:360px}
+.wbar i{display:block;height:100%;background:var(--muted)}
+.item.l3 .wbar i{background:var(--stamp)}
+.perks{margin:6px 0 16px;padding-left:1.2em}
+.perks li{margin:0 0 8px;max-width:58ch}
+#img-dialog img{display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:8px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Paperdecrypt</h1>
+      <p>Courriers, remboursements et garanties, par QuenTools</p>
+    </div>
+    <div class="top-actions">
+    <button class="btn small" id="login-btn" type="button" hidden>Se connecter</button>
+    <button class="ai-pill" id="ai-pill" type="button" hidden>Assistant IA</button>
+    <button class="icon-btn" id="open-settings" aria-label="Réglages">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections" id="tablist">
+    <button role="tab" id="tab-decode" aria-selected="true" aria-controls="view-decode">Décoder</button>
+    <button role="tab" id="tab-money" aria-selected="false" aria-controls="view-money"><span class="t-long">Récupérer mon argent</span><span class="t-short">Mon argent</span></button>
+    <button role="tab" id="tab-warranty" aria-selected="false" aria-controls="view-warranty">Garanties<span class="count" id="w-count" hidden>0</span></button>
+    <button role="tab" id="tab-list" aria-selected="false" aria-controls="view-list">Courriers<span class="count" id="list-count" hidden>0</span></button>
+  </nav>
+
+  <main>
+    <section id="view-decode" role="tabpanel" aria-labelledby="tab-decode">
+      <div class="sheet input-sheet" id="input-panel">
+        <h2>Prends ton courrier en photo</h2>
+        <p class="lead">On te dit qui t'écrit, ce qu'on te demande, avant quand, et on t'aide à répondre. Ça marche avec la CAF, les impôts, une amende, une relance de facture…</p>
+        <div class="actions">
+          <label class="btn" for="cam-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Prendre une photo
+          </label>
+          <input class="sr" type="file" id="cam-input" accept="image/*" capture="environment">
+          <label class="btn ghost" for="file-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Importer photo ou PDF
+          </label>
+          <input class="sr" type="file" id="file-input" accept="image/*,application/pdf" multiple>
+          <button class="link" id="sample-btn" type="button">Voir un exemple</button>
+        </div>
+
+        <div class="progress" id="ocr-progress" aria-live="polite">
+          <div class="bar"><i id="ocr-bar"></i></div>
+          <p id="ocr-text">Lecture du courrier…</p>
+        </div>
+
+        <div class="paste">
+          <label for="letter-input">Texte du courrier</label>
+          <textarea id="letter-input" placeholder="Le texte lu sur ta photo s'affiche ici. Tu peux aussi le coller directement, ou corriger une erreur de lecture."></textarea>
+          <div class="actions">
+            <button class="btn" id="decode-btn" type="button">Décoder ce courrier</button>
+            <button class="link" id="clear-btn" type="button" hidden>Effacer</button>
+          </div>
+        </div>
+      </div>
+      <p class="privacy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Ton courrier ne quitte jamais ton appareil : la lecture de la photo et l'analyse se font directement dans ton navigateur.
+      </p>
+
+      <div class="result" id="result" aria-live="polite"></div>
+    </section>
+
+    <section id="view-money" role="tabpanel" aria-labelledby="tab-money" hidden>
+      <div id="money"></div>
+    </section>
+
+    <section id="view-warranty" role="tabpanel" aria-labelledby="tab-warranty" hidden>
+      <div id="warranty"></div>
+    </section>
+
+    <section id="view-list" role="tabpanel" aria-labelledby="tab-list" hidden>
+      <div id="list"></div>
+    </section>
+
+    <p class="disclaimer">Cet outil t'aide à comprendre un courrier, à connaître tes droits et à rédiger une réponse. Il peut se tromper et ne remplace pas l'avis d'un professionnel du droit. Vérifie toujours les dates et montants sur le courrier original. Certains liens sont des liens partenaires : ils peuvent rapporter une commission à QuenTools, sans frais en plus pour toi. <a href="politique-confidentialite.html">Confidentialité et cookies</a></p>
+  </main>
+</div>
+
+<dialog id="settings" aria-labelledby="settings-title">
+  <div class="dlg">
+    <h2 id="settings-title">Réglages</h2>
+    <section>
+      <h3>L'assistant IA</h3>
+      <p class="note">Il t'explique chaque courrier avec ses mots, repère les documents à fournir, répond à tes questions et améliore tes lettres. Il tourne entièrement sur ton appareil : il se télécharge une seule fois, puis fonctionne même sans internet. Ton courrier n'est jamais envoyé.</p>
+      <div id="ia-unsupported" class="scam" hidden><strong>Ton navigateur ne peut pas faire tourner l'assistant IA.</strong> Le décodeur, le résumé « En bref » et les questions rapides fonctionnent quand même. Pour l'assistant, utilise Chrome ou Edge récent, sur ordinateur ou sur Android.</div>
+      <div id="ia-options">
+        <p class="note" id="ia-reco"></p>
+        <label class="radio"><input type="radio" name="ia-model" value="light"><span><b>Légère</b><small>Environ 1 Go à télécharger. Plus rapide, conseillée sur téléphone.</small></span></label>
+        <label class="radio"><input type="radio" name="ia-model" value="precise"><span><b>Précise</b><small>Environ 2 Go à télécharger. Meilleures explications, pour ordinateur ou téléphone récent.</small></span></label>
+        <p class="ia-status" id="ia-status">Pas encore activé.</p>
+        <div class="progress" id="ia-progress"><div class="bar"><i id="ia-bar"></i></div><p id="ia-text"></p></div>
+        <div class="actions"><button class="btn small" id="ia-load" type="button">Télécharger et activer</button><button class="link" id="ia-off" type="button" hidden>Désactiver</button></div>
+      </div>
+    </section>
+    <section>
+      <h3>QuenTools Premium</h3>
+      <p class="note" id="premium-status"></p>
+      <button class="btn small" id="premium-btn" type="button">Découvrir Premium</button>
+    </section>
+    <section id="sync-section" hidden>
+      <h3>Compte Google</h3>
+      <p class="note">Connecte-toi avec Google pour retrouver tes courriers, réclamations et garanties sur tous tes appareils. Seul ton nom et ton adresse e-mail Google sont utilisés pour t'identifier ; tes données sont rangées dans un espace privé lié à ton compte. Les photos de tickets restent sur l'appareil.</p>
+      <p class="ia-status" id="sync-status"></p>
+      <div class="actions"><button class="btn small" id="sync-btn" type="button">Se connecter avec Google</button><button class="link" id="sync-off" type="button" hidden>Se déconnecter</button></div>
+    </section>
+    <section>
+      <h3>Mes infos pour les lettres</h3>
+      <p class="note">Elles sont ajoutées automatiquement dans tes brouillons de réponse. Elles restent sur cet appareil.</p>
+      <label class="field"><span>Prénom et nom</span><input id="me-nom" autocomplete="name"></label>
+      <label class="field"><span>Adresse</span><textarea id="me-adresse" autocomplete="street-address"></textarea></label>
+      <label class="field"><span>Ville (pour « Fait à… »)</span><input id="me-ville" autocomplete="address-level2"></label>
+    </section>
+    <section>
+      <h3>Mes données</h3>
+      <p class="note">Tes courriers, réclamations et garanties sont stockés sur cet appareil. Fais une sauvegarde de temps en temps, ou active la sauvegarde Google.</p>
+      <div class="actions">
+        <button class="btn small ghost" id="export-btn" type="button">Sauvegarder dans un fichier</button>
+        <label class="btn small ghost" for="import-input">Restaurer une sauvegarde</label>
+        <input class="sr" type="file" id="import-input" accept="application/json,.json">
+      </div>
+      <p><button class="link" id="wipe-btn" type="button">Effacer tous mes courriers</button></p>
+    </section>
+    <div class="dlg-foot"><button class="btn" id="close-settings" type="button">Fermer</button></div>
+  </div>
+</dialog>
+
+<dialog id="premium" aria-labelledby="premium-title">
+  <div class="dlg">
+    <h2 id="premium-title">QuenTools Premium</h2>
+    <p class="note" id="premium-reason" hidden></p>
+    <ul class="perks">
+      <li><b>Garanties illimitées.</b> Enregistre tous tes achats et leurs tickets.</li>
+            <li><b>Sans publicité</b>, partout dans l'appli.</li>
+      <li><b>Un paiement unique</b>, sans abonnement. Le reste du décodeur reste gratuit pour toujours.</li>
+    </ul>
+    <div class="actions"><button class="btn" id="premium-buy" type="button">Débloquer Premium</button><p class="note" id="premium-soon" hidden>L'achat de Premium ouvre très bientôt.</p></div>
+    <section>
+      <h3>Tu as déjà un code ?</h3>
+      <div class="chat-input"><label class="sr" for="premium-code">Code Premium</label><input id="premium-code" placeholder="QT-XXXXXXXX-XXXX" autocomplete="off" autocapitalize="characters"><button class="btn small" id="premium-validate" type="button">Activer</button></div>
+      <p class="note" id="premium-state" role="status"></p>
+    </section>
+    <div class="dlg-foot"><button class="btn ghost" id="premium-close" type="button">Fermer</button></div>
+  </div>
+</dialog>
+
+<dialog id="img-dialog" aria-label="Photo du ticket">
+  <div class="dlg"><img id="img-view" alt="Photo du ticket"><div class="dlg-foot"><button class="btn" id="img-close" type="button">Fermer</button></div></div>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+<script>
+(() => {
+'use strict';
+
+/* ---------- Outils ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s).toLowerCase().replace(/[’`´]/g, "'").normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const kwRe = list => list.map(k => new RegExp('(^|[^a-z0-9])' + reEsc(k) + '($|[^a-z0-9])'));
+const countHits = (n, res) => res.reduce((a, r) => a + (r.test(n) ? 1 : 0), 0);
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+};
+const KEYS = { list: 'qt-decodeur:courriers', me: 'qt-decodeur:moi', ia: 'qt-decodeur:ia' };
+
+const TESSERACT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js';
+const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+const PDFJS_WORKER = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+const WEBLLM_URL = 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.84/+esm';
+
+const fmtDate = d => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+const fmtShort = d => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+const fmtMoney = v => v.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+const today0 = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const daysUntil = d => Math.round((new Date(d).setHours(0, 0, 0, 0) - today0()) / 86400000);
+function relDays(n) {
+  if (n === 0) return "c'est aujourd'hui";
+  if (n === 1) return 'demain';
+  if (n > 1) return 'dans ' + n + ' jours';
+  if (n === -1) return 'dépassé depuis hier';
+  return 'dépassé depuis ' + (-n) + ' jours';
+}
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 2600);
+}
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    if ([...document.scripts].some(s => s.src === src)) return res();
+    const s = document.createElement('script'); s.src = src; s.onload = res;
+    s.onerror = () => rej(new Error('Impossible de charger ' + src)); document.head.appendChild(s);
+  });
+}
+
+/* ---------- Réglages QuenTools (à remplir avant la mise en ligne) ---------- */
+const CONFIG = {
+  // Ton lien d'affiliation pour l'envoi en recommandé (ex. Lettre24). Vide = page officielle de La Poste.
+  RECOMMANDE_URL: '',
+  RECOMMANDE_FALLBACK: 'https://www.laposte.fr/envoyer/envoi-courrier-lettre-recommandee',
+  // Lien de paiement (ex. Stripe Payment Link). Vide = bouton d'achat masqué.
+  PREMIUM_URL: '',
+  PREMIUM_PRIX: '9,99 €',
+  FREE_GARANTIES: 3,
+  // Google AdSense : ton identifiant éditeur (ex. 'ca-pub-1234567890123456') et l'id d'un bloc d'annonce (ex. '1234567890').
+  // Vide = encart QuenTools à la place. Pense aussi au fichier ads.txt à la racine de quentools.fr.
+  ADSENSE_CLIENT: 'ca-pub-9406894983294380',
+  ADSENSE_SLOT: '',
+  // Ton lien partenaire AirHelp (airhelp.fr/affiliate). Vide = bouton masqué.
+  AIRHELP_URL: '',
+  // Lien de soutien (Stripe, Ko-fi, Tipeee…). Vide = bouton masqué.
+  TIP_URL: '',
+  // Encart affiché quand il n'y a pas de pub Google : tes propres offres QuenTools.
+  AUTOPROMO: { titre: 'Besoin d\'un site pour ton activité ?', texte: 'QuenTools crée ton site clé en main dès 299 €, paiement unique, sans abonnement.', lien: 'https://quentools.fr', bouton: 'Voir les offres' }
+};
+
+/* ---------- Publicité ---------- */
+let adsLoaded = false;
+function adHTML() {
+  if (isPremium()) return '';
+  if (CONFIG.ADSENSE_CLIENT && CONFIG.ADSENSE_SLOT) return `<aside class="ad" aria-label="Publicité"><span class="ad-label">Publicité</span><ins class="adsbygoogle" style="display:block" data-ad-client="${esc(CONFIG.ADSENSE_CLIENT)}" data-ad-slot="${esc(CONFIG.ADSENSE_SLOT)}" data-ad-format="auto" data-full-width-responsive="true"></ins></aside>`;
+  const a = CONFIG.AUTOPROMO; if (!a || !a.lien) return '';
+  return `<aside class="ad promo" aria-label="Annonce QuenTools"><span class="ad-label">QuenTools</span><p><b>${esc(a.titre)}</b> ${esc(a.texte)}</p><a class="btn small ghost" href="${esc(a.lien)}" target="_blank" rel="noopener">${esc(a.bouton)}</a></aside>`;
+}
+async function fillAds(root) {
+  if (isPremium() || !CONFIG.ADSENSE_CLIENT) return;
+  const slots = $$('ins.adsbygoogle:not([data-adsbygoogle-status])', root || document); if (!slots.length) return;
+  try {
+    if (!adsLoaded) {
+      await new Promise((res, rej) => { const sc = document.createElement('script'); sc.async = true; sc.crossOrigin = 'anonymous'; sc.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(CONFIG.ADSENSE_CLIENT); sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
+      adsLoaded = true;
+    }
+    slots.forEach(() => (window.adsbygoogle = window.adsbygoogle || []).push({}));
+  } catch (e) { slots.forEach(s => s.closest('.ad') && s.closest('.ad').remove()); }
+}
+const tipHTML = () => CONFIG.TIP_URL ? `<a class="link tip" href="${esc(CONFIG.TIP_URL)}" target="_blank" rel="noopener">Ça t'a aidé ? Soutiens QuenTools</a>` : '';
+Object.assign(KEYS, { claims: 'qt-paperasse:reclamations', garanties: 'qt-paperasse:garanties', premium: 'qt-paperasse:premium', sync: 'qt-paperasse:sync', deleted: 'qt-paperasse:supprimes' });
+const SYNC_KEYS = [KEYS.list, KEYS.claims, KEYS.garanties, KEYS.me];
+let markDirty = () => {};
+const _set = store.set;
+store.set = (k, v) => { const ok = _set(k, v); if (ok && SYNC_KEYS.includes(k)) markDirty(); return ok; };
+function rememberDeleted(id) { const d = store.get(KEYS.deleted, []); if (!d.includes(id)) { d.push(id); store.set(KEYS.deleted, d.slice(-500)); } markDirty(); }
+
+/* ---------- Photos des tickets (IndexedDB) ---------- */
+const idb = (() => {
+  let dbp;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('qt-paperasse', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('images');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const tx = async (mode, fn) => {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction('images', mode); const req = fn(t.objectStore('images'));
+      t.oncomplete = () => res(req ? req.result : undefined); t.onerror = () => rej(t.error);
+    });
+  };
+  return { get: k => tx('readonly', s => s.get(k)), set: (k, v) => tx('readwrite', s => s.put(v, k)), del: k => tx('readwrite', s => s.delete(k)), keys: () => tx('readonly', s => s.getAllKeys()) };
+})();
+function compressImage(file, max = 1400, q = 0.72) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg', q));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); };
+    img.src = url;
+  });
+}
+
+/* ---------- Premium (paiement unique) ---------- */
+const PREMIUM_SALT = 'qt-paperasse-2026';
+const B32 = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function fnv(s) { let h = 0x811c9dc5; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h; }
+function codeChecksum(body) { let h = fnv(PREMIUM_SALT + body), out = ''; for (let i = 0; i < 4; i++) { out += B32[h % 32]; h = Math.floor(h / 32); } return out; }
+function validCode(code) { const m = String(code).toUpperCase().replace(/\s/g, '').match(/^QT-([A-Z2-9]{8})-([A-Z2-9]{4})$/); return !!m && codeChecksum(m[1]) === m[2]; }
+const isPremium = () => !!store.get(KEYS.premium, {}).code;
+function openPremium(reason) {
+  const d = $('#premium');
+  $('#premium-reason').textContent = reason || '';
+  $('#premium-reason').hidden = !reason;
+  $('#premium-buy').hidden = !CONFIG.PREMIUM_URL;
+  $('#premium-soon').hidden = !!CONFIG.PREMIUM_URL;
+  $('#premium-state').textContent = isPremium() ? 'Premium est activé sur cet appareil. Merci pour ton soutien !' : '';
+  if (d.showModal) d.showModal(); else d.setAttribute('open', '');
+}
+
+/* ---------- Petits outils partagés ---------- */
+const addMonths = (d, n) => { const x = new Date(d); const day = x.getDate(); x.setMonth(x.getMonth() + n); if (x.getDate() < day) x.setDate(0); return x; };
+const parseDay = s => s ? new Date(s + 'T00:00:00') : null;
+const isoDay = d => { const x = new Date(d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+const money = v => (v || v === 0) && isFinite(v) ? fmtMoney(Math.round(v * 100) / 100) : '[montant]';
+function makeICS({ date, summary, desc, alarms }) {
+  const p = n => String(n).padStart(2, '0'), ymd = x => x.getFullYear() + p(x.getMonth() + 1) + p(x.getDate());
+  const next = new Date(date); next.setDate(next.getDate() + 1);
+  const e = s => String(s).replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1');
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//QuenTools//Paperasse//FR', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',
+    'UID:' + Date.now() + Math.random().toString(36).slice(2, 6) + '@quentools.fr', 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, ''),
+    'DTSTART;VALUE=DATE:' + ymd(date), 'DTEND;VALUE=DATE:' + ymd(next), 'SUMMARY:' + e(summary), 'DESCRIPTION:' + e(desc || '')];
+  (alarms || ['-P3D']).forEach(t => L.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + e(summary), 'TRIGGER:' + t, 'END:VALARM'));
+  L.push('END:VEVENT', 'END:VCALENDAR');
+  return L.join('\r\n');
+}
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (_) {} ta.remove(); return ok; }
+}
+async function sendRecommande(text) {
+  const ok = await copyText(text);
+  window.open(CONFIG.RECOMMANDE_URL || CONFIG.RECOMMANDE_FALLBACK, '_blank', 'noopener');
+  toast(ok ? "Lettre copiée : colle-la sur le site d'envoi en recommandé" : "Copie la lettre, puis colle-la sur le site d'envoi");
+}
+function letterFrame({ dest, objet, lrar, corps, refs }) {
+  const me = store.get(KEYS.me, {});
+  const nom = me.nom || '[Ton prénom et nom]';
+  return `${nom}\n${me.adresse || '[Ton adresse]'}${refs ? '\n\n' + refs : ''}\n\n${dest || '[Destinataire]'}\n[Adresse du destinataire]\n\n${me.ville || '[Ta ville]'}, le ${fmtDate(new Date())}\n\nObjet : ${objet}${lrar ? '\nLettre recommandée avec accusé de réception' : ''}\n\nMadame, Monsieur,\n\n${corps}\n\nJe vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.\n\n${nom}`;
+}
+/* Barre d'outils de lettre réutilisable */
+function letterToolsHTML(prefix) {
+  return `<div class="draft-tools">
+    <button class="btn small" data-lt="copy" type="button">Copier</button>
+    <button class="btn small rec" data-lt="rec" type="button" ${CONFIG.RECOMMANDE_URL ? 'title="Lien partenaire"' : ''}>Envoyer en recommandé</button>
+    <button class="btn small ghost" data-lt="dl" type="button">Télécharger</button>
+    <button class="btn small ghost" data-lt="print" type="button">Imprimer ou PDF</button>
+    <button class="btn small ghost" data-lt="mail" type="button">E-mail</button>
+    ${navigator.share ? '<button class="btn small ghost" data-lt="share" type="button">Partager</button>' : ''}
+  </div>`;
+}
+function bindLetterTools(root, draftEl, email) {
+  const txt = () => draftEl.innerText;
+  const obj = () => { const m = txt().match(/Objet\s*:\s*(.+)/); return m ? m[1].trim() : 'Courrier'; };
+  $$('[data-lt]', root).forEach(b => b.addEventListener('click', async () => {
+    const k = b.dataset.lt;
+    if (k === 'copy') toast((await copyText(txt())) ? 'Lettre copiée' : 'Copie impossible, sélectionne le texte à la main');
+    if (k === 'rec') sendRecommande(txt());
+    if (k === 'dl') downloadFile('lettre-' + slug(obj()) + '.txt', txt(), 'text/plain;charset=utf-8');
+    if (k === 'print') { draftEl.classList.add('print-me'); document.body.classList.add('printing'); window.print(); setTimeout(() => { document.body.classList.remove('printing'); draftEl.classList.remove('print-me'); }, 500); }
+    if (k === 'mail') location.href = 'mailto:' + encodeURIComponent(email || '') + '?subject=' + encodeURIComponent(obj()) + '&body=' + encodeURIComponent(txt());
+    if (k === 'share') navigator.share({ title: obj(), text: txt() }).catch(() => {});
+  }));
+}
+
+/* ---------- Connaissances : organismes ---------- */
+const ORGS = [
+  { id: 'caf', court: 'CAF', nom: "La CAF (Caisse d'allocations familiales)",
+    kw: ['caf', "caisse d'allocations familiales", 'allocataire', "prime d'activite", 'apl', 'rsa', 'caf.fr', 'allocations familiales'],
+    desc: "Elle verse les aides comme l'APL, le RSA, la prime d'activité ou les allocations familiales.",
+    contact: "Le plus simple : ton espace « Mon Compte » sur caf.fr ou l'appli Caf. Par téléphone : 3230." },
+  { id: 'cpam', court: 'Assurance Maladie', nom: "L'Assurance Maladie (CPAM)",
+    kw: ['assurance maladie', 'cpam', 'ameli', 'indemnites journalieres', 'carte vitale', 'complementaire sante solidaire'],
+    desc: 'Elle rembourse tes soins et verse les indemnités en cas d\'arrêt de travail.',
+    contact: 'Ta messagerie sur ameli.fr, ou le 3646.' },
+  { id: 'impots', court: 'Impôts', nom: 'Les impôts (Finances publiques)',
+    kw: ['finances publiques', 'dgfip', 'impots.gouv.fr', "avis d'impot", "avis d'imposition", 'impot sur le revenu', 'taxe fonciere', "taxe d'habitation", 'service des impots', 'prelevement a la source', 'numero fiscal'],
+    desc: "L'administration fiscale : impôt sur le revenu, taxe foncière, prélèvement à la source.",
+    contact: 'La messagerie sécurisée de ton espace particulier sur impots.gouv.fr, ou le 0 809 401 401.' },
+  { id: 'tresor', court: 'Trésor public', nom: 'Le Trésor public (comptable public)',
+    kw: ['service de gestion comptable', 'tresor public', 'comptable public', 'amende majoree', 'opposition administrative', 'saisie administrative', 'titre executoire'],
+    desc: "Il récupère les sommes dues à l'État ou aux collectivités : amendes majorées, factures publiques, trop-perçus transmis.",
+    contact: 'Les coordonnées du service sont indiquées sur le courrier. Beaucoup de paiements se font sur payfip.gouv.fr.' },
+  { id: 'antai', court: 'ANTAI', nom: "L'ANTAI (amendes)",
+    kw: ['antai', 'avis de contravention', 'amende forfaitaire', 'agence nationale de traitement automatise', 'designation du conducteur', 'controle automatise'],
+    desc: "C'est l'agence qui envoie les amendes, par exemple après un radar ou un stationnement.",
+    contact: "Uniquement sur le site officiel antai.gouv.fr. Méfie-toi des SMS et des faux sites qui imitent l'ANTAI." },
+  { id: 'urssaf', court: 'Urssaf', nom: "L'Urssaf",
+    kw: ['urssaf', 'cotisations sociales', 'micro-entrepreneur', 'auto-entrepreneur', 'travailleur independant', 'declaration de chiffre d\'affaires'],
+    desc: 'Elle collecte les cotisations sociales, notamment des indépendants et des micro-entrepreneurs.',
+    contact: 'La messagerie de ton espace en ligne sur urssaf.fr (ou autoentrepreneur.urssaf.fr).' },
+  { id: 'francetravail', court: 'France Travail', nom: 'France Travail (ex-Pôle emploi)',
+    kw: ['france travail', 'pole emploi', "demandeur d'emploi", 'allocation chomage', "allocation d'aide au retour a l'emploi", 'actualisation'],
+    desc: "Il accompagne les demandeurs d'emploi et verse les allocations chômage.",
+    contact: 'Ton espace personnel sur francetravail.fr, ou le 3949.' },
+  { id: 'justice', court: 'Commissaire de justice', nom: 'Un commissaire de justice (ex-huissier)',
+    kw: ['commissaire de justice', 'huissier', 'commandement de payer', 'signification', 'acte de commissaire', 'proces-verbal'],
+    desc: "C'est un officier public chargé de faire exécuter des décisions ou de recouvrer des dettes. Ses actes sont officiels.",
+    contact: "Appelle l'étude dont les coordonnées figurent sur l'acte. Pour un conseil gratuit : un point-justice près de chez toi." },
+  { id: 'tribunal', court: 'Tribunal', nom: 'Un tribunal',
+    kw: ['tribunal', 'greffe', 'audience', 'jugement', 'juge des contentieux', 'injonction de payer'],
+    desc: "C'est la justice. Les délais sont stricts et doivent être respectés.",
+    contact: "Le greffe indiqué sur le courrier. Pour un conseil gratuit : un point-justice ou une maison de justice et du droit." },
+  { id: 'recouvrement', court: 'Société de recouvrement', nom: 'Une société de recouvrement',
+    kw: ['societe de recouvrement', 'cabinet de recouvrement', 'recouvrement amiable', 'intrum', 'iqera', 'agence de recouvrement', 'mandatee par'],
+    desc: "Une entreprise payée par un créancier pour récupérer une dette. Sans décision de justice, elle ne peut pas saisir tes biens.",
+    contact: "Demande-lui par écrit le détail et les justificatifs de la dette avant de payer quoi que ce soit." },
+  { id: 'energie', court: "Fournisseur d'énergie", nom: "Ton fournisseur d'énergie",
+    kw: ['edf', 'engie', 'totalenergies', 'electricite', 'gaz naturel', 'compteur', 'linky', 'kwh', "fournisseur d'energie", 'cheque energie'],
+    desc: "Il te facture l'électricité ou le gaz.",
+    contact: 'Ton espace client, ou le service client indiqué sur la facture.' },
+  { id: 'telecom', court: 'Opérateur télécom', nom: 'Ton opérateur (téléphone ou internet)',
+    kw: ['orange', 'sfr', 'bouygues telecom', 'free mobile', 'freebox', 'livebox', 'forfait mobile', 'box internet', 'ligne mobile'],
+    desc: 'Il te facture ton forfait mobile ou ta box internet.',
+    contact: 'Ton espace client ou le service client. En cas de litige non réglé : le médiateur des communications électroniques.' },
+  { id: 'banque', court: 'Banque', nom: 'Ta banque',
+    kw: ['banque', 'compte courant', 'decouvert', 'credit agricole', 'bnp paribas', 'societe generale', "caisse d'epargne", 'la banque postale', 'lcl', 'cic', 'banque populaire', 'prelevement rejete', 'commission d\'intervention', 'interdit bancaire'],
+    desc: 'Ta banque te prévient d\'un événement sur ton compte : découvert, rejet, frais, crédit.',
+    contact: 'Ton conseiller, ou la messagerie de ton appli bancaire.' },
+  { id: 'assurance', court: 'Assurance', nom: 'Ton assurance ou ta mutuelle',
+    kw: ['assureur', 'sinistre', "contrat d'assurance", 'mutuelle', 'cotisation d\'assurance', 'police d\'assurance', 'echeance annuelle'],
+    desc: 'Elle t\'assure (logement, voiture, santé) et te parle de ton contrat, d\'une cotisation ou d\'un sinistre.',
+    contact: 'Ton espace client ou ton conseiller.' },
+  { id: 'bailleur', court: 'Bailleur', nom: 'Ton propriétaire ou ton agence',
+    kw: ['bailleur', 'loyer', 'locataire', 'agence immobiliere', 'quittance', 'charges locatives', 'bail', 'depot de garantie', 'etat des lieux', 'office public de l\'habitat'],
+    desc: 'Il te parle de ton logement : loyer, charges, bail, travaux.',
+    contact: "Par écrit de préférence, pour garder une trace. L'ADIL de ton département conseille gratuitement les locataires." },
+  { id: 'retraite', court: 'Caisse de retraite', nom: 'Ta caisse de retraite',
+    kw: ['carsat', 'assurance retraite', 'agirc-arrco', 'agirc', 'arrco', 'pension de retraite', 'cnav'],
+    desc: 'Elle gère ta retraite ou celle de tes proches.',
+    contact: 'Ton espace sur info-retraite.fr ou lassuranceretraite.fr.' },
+  { id: 'msa', court: 'MSA', nom: 'La MSA (Mutualité sociale agricole)',
+    kw: ['msa', 'mutualite sociale agricole'],
+    desc: 'La sécurité sociale du monde agricole.',
+    contact: 'Ton espace privé sur msa.fr.' },
+  { id: 'ants', court: 'ANTS', nom: "L'ANTS (titres et permis)",
+    kw: ['ants', 'permis de conduire', 'solde de points', 'retrait de points', 'certificat d\'immatriculation', 'carte grise'],
+    desc: 'Elle gère les permis de conduire, cartes grises et titres officiels.',
+    contact: 'Uniquement sur ants.gouv.fr (attention aux faux sites payants).' },
+  { id: 'mairie', court: 'Mairie', nom: 'Ta mairie',
+    kw: ['mairie', 'hotel de ville', 'le maire', 'commune de', 'conseil municipal'],
+    desc: 'Ta commune : état civil, cantine, urbanisme, taxes locales.',
+    contact: "L'accueil de la mairie ou son site internet." }
+].map(o => ({ ...o, re: kwRe(o.kw) }));
+
+/* ---------- Connaissances : types de courrier ---------- */
+const TYPES = [
+  { id: 'justice', label: 'Procédure de justice', level: 4,
+    kw: ['commandement de payer', 'injonction de payer', 'assignation', 'signification', 'saisie sur salaire', 'saisie-attribution', 'saisie attribution', 'proces-verbal de saisie', 'vous etes cite', 'convocation devant le tribunal', 'ordonnance'],
+    resume: "C'est un acte officiel de justice ou de recouvrement forcé. Ce n'est plus une simple relance.",
+    actions: ["Ne l'ignore pas : ce type d'acte a des délais courts et précis.", 'Vérifie si tu reconnais la dette et si le montant est juste.', 'Si tu dois la somme, contacte vite l\'expéditeur pour proposer un échéancier, par écrit.', "Fais-toi conseiller gratuitement : un point-justice ou une association de consommateurs peut t'aider, et tu as peut-être droit à l'aide juridictionnelle."],
+    risque: 'Des frais qui s\'ajoutent, puis une saisie possible sur ton compte ou ton salaire.',
+    intents: ['delai', 'contester', 'explications'] },
+  { id: 'demeure', label: 'Mise en demeure', level: 3,
+    kw: ['mise en demeure', 'mettons en demeure', 'met en demeure', 'dernier avis avant poursuites', 'avant poursuites', 'service contentieux', 'procedure judiciaire', 'dernier rappel'],
+    resume: "C'est la dernière étape avant une procédure : on te demande officiellement de payer ou d'agir.",
+    actions: ['Vérifie que la somme réclamée est juste (factures, relevés bancaires).', 'Si tu la dois : paye ou demande un échéancier avant la date limite, par écrit.', 'Si tu la contestes : réponds par lettre recommandée avec accusé de réception en expliquant pourquoi.', 'Garde une copie de tout ce que tu envoies.'],
+    risque: 'Le dossier peut passer à un commissaire de justice ou au tribunal, avec des frais en plus.',
+    intents: ['delai', 'contester', 'deja_paye', 'explications'] },
+  { id: 'indu', label: 'Trop-perçu à rembourser', level: 3,
+    kw: ['indu', 'trop-percu', 'trop percu', 'percu a tort', 'montant a rembourser', 'notification de dette', 'remboursement de la somme'],
+    resume: "On estime que tu as reçu trop d'argent et on te demande de le rembourser.",
+    actions: ['Vérifie la période et le calcul indiqués dans le courrier.', "Si tu n'es pas d'accord : fais un recours amiable par écrit (le délai est en général indiqué en bas du courrier).", "Si tu es d'accord mais ne peux pas tout payer : demande un échéancier, ou une remise de dette si ta situation est difficile.", 'Sans réponse, la somme peut être retenue sur tes prochains versements.'],
+    risque: 'La somme peut être retenue sur tes futures aides, ou réclamée par le Trésor public.',
+    intents: ['contester', 'remise', 'delai', 'explications'] },
+  { id: 'suspension', label: 'Coupure ou suspension', level: 3,
+    kw: ['suspension de vos droits', 'suspendu', 'suspendre le versement', 'suspension du versement', 'coupure', 'reduction de puissance', 'resiliation de votre contrat', 'interruption de service', 'radiation'],
+    resume: "Un versement ou un service va être arrêté si rien n'est fait.",
+    actions: ['Repère précisément ce qui manque ou ce qui est reproché.', 'Agis avant la date indiquée : envoie ce qui est demandé ou règle la somme.', "Si tu ne peux pas, contacte l'expéditeur pour trouver une solution avant la coupure."],
+    risque: 'Arrêt de tes aides ou coupure du service, parfois avec des frais de remise en service.',
+    intents: ['documents', 'delai', 'contester', 'explications'] },
+  { id: 'amende', label: 'Amende', level: 3,
+    kw: ['avis de contravention', 'amende forfaitaire', 'contravention', 'exces de vitesse', 'stationnement', 'infraction', 'designation du conducteur'],
+    resume: 'C\'est une amende. Tu peux la payer ou la contester, mais dans un délai limité.',
+    actions: ["Vérifie le véhicule, la date, le lieu et l'infraction.", "Paye ou conteste uniquement via le site officiel indiqué sur l'avis (souvent antai.gouv.fr), jamais via un lien reçu par SMS.", "Si tu n'étais pas au volant, il faut désigner le conducteur dans le délai.", "Passé le délai inscrit sur l'avis, l'amende est majorée."],
+    risque: "L'amende augmente (amende majorée) et peut être prélevée directement sur ton compte.",
+    intents: ['contester', 'explications'] },
+  { id: 'relance', label: 'Relance de paiement', level: 2,
+    kw: ['relance', 'rappel', 'impaye', 'impayee', 'facture impayee', 'solde debiteur', 'reste a payer', 'retard de paiement', "n'avons pas recu votre paiement", 'regularisation', 'sauf erreur de notre part', 'reste due', 'restant du'],
+    resume: 'On te rappelle qu\'un paiement est en attente.',
+    actions: ['Vérifie si tu as déjà payé (relevés bancaires). Si oui, envoie la preuve.', 'Sinon, paye avant la date indiquée ou demande un échéancier.', 'Si la somme te paraît fausse, demande le détail par écrit.'],
+    risque: 'Des frais ou pénalités de retard, puis une mise en demeure.',
+    intents: ['deja_paye', 'delai', 'contester', 'explications'] },
+  { id: 'pieces', label: 'Documents à envoyer', level: 2,
+    kw: ['pieces justificatives', 'piece justificative', 'justificatif', 'justificatifs', 'merci de nous transmettre', 'merci de nous faire parvenir', 'nous faire parvenir', 'documents manquants', 'dossier incomplet', 'completer votre dossier', 'nous retourner', 'renvoyer le formulaire', 'questionnaire', 'declaration de ressources', 'declaration trimestrielle', 'documents suivants'],
+    resume: 'On te demande d\'envoyer des documents ou de compléter un dossier.',
+    actions: ['Fais la liste exacte des documents demandés (ils sont surlignés dans le courrier).', "Envoie-les de préférence par ton espace en ligne : c'est plus rapide et tu gardes une preuve.", 'Sinon par courrier, en notant ta référence sur chaque page.', 'Garde une copie de tout.'],
+    risque: 'Ton dossier peut être bloqué, et tes droits suspendus ou refusés.',
+    intents: ['documents', 'delai', 'explications'] },
+  { id: 'convocation', label: 'Rendez-vous ou contrôle', level: 2,
+    kw: ['convocation', 'vous etes convoque', 'vous etes convoquee', 'vous presenter', 'rendez-vous', 'controle de votre situation', 'verification de votre situation', 'entretien', 'controle'],
+    resume: 'On te donne rendez-vous, ou on vérifie ta situation.',
+    actions: ["Note la date, l'heure et le lieu dans ton agenda.", 'Prépare les documents demandés.', 'Si tu ne peux pas venir, préviens avant et demande un autre rendez-vous.'],
+    risque: 'Une absence sans prévenir peut entraîner une suspension ou une sanction.',
+    intents: ['report', 'documents', 'explications'] },
+  { id: 'impot', label: "Avis d'impôt", level: 1,
+    kw: ["avis d'impot", "avis d'imposition", 'taxe fonciere', 'impot sur le revenu', 'date limite de paiement', 'montant a payer', 'restitution', 'remboursement d\'impot'],
+    resume: "C'est un avis d'impôt : il indique ce que tu dois payer, ou ce qu'on va te rembourser.",
+    actions: ['Vérifie tes revenus et ta situation de famille indiqués sur l\'avis.', "Regarde s'il reste quelque chose à payer, et avant quelle date.", "En cas d'erreur, fais une réclamation depuis la messagerie de ton espace sur impots.gouv.fr."],
+    risque: 'En cas de paiement en retard, une majoration de 10 % peut s\'appliquer.',
+    intents: ['contester', 'delai', 'explications'] },
+  { id: 'decision', label: 'Décision sur tes droits', level: 1,
+    kw: ['decision', 'notification', 'nous avons le plaisir', 'vos droits', 'accord', 'refus', 'suite favorable', 'rejet', 'nouveau montant', 'montant de votre aide'],
+    resume: "C'est une décision sur tes droits : un accord, un refus, ou un changement de montant.",
+    actions: ['Vérifie le montant et la date de début.', "Si c'est un refus ou si tu n'es pas d'accord, un recours est possible : le délai est en général écrit en bas du courrier."],
+    risque: 'Une fois le délai de recours passé, contester devient beaucoup plus difficile.',
+    intents: ['contester', 'explications'] }
+].map(t => ({ ...t, re: kwRe(t.kw) }));
+const TYPE_INFO = { id: 'info', label: 'Courrier d\'information', level: 1,
+  resume: "Ce courrier semble surtout t'informer. Rien d'urgent n'a été repéré, mais lis les passages surlignés.",
+  actions: ['Lis les passages surlignés pour vérifier qu\'aucune action n\'est attendue.', 'Range-le avec tes papiers importants.'],
+  risque: 'A priori rien, si aucune action ne t\'est demandée.', intents: ['explications'] };
+
+const LEVELS = { 4: 'Très urgent', 3: 'Urgent', 2: 'À traiter', 1: 'Pour info' };
+
+const INTENTS = {
+  documents: 'Envoyer les documents',
+  delai: 'Demander un délai',
+  contester: 'Contester',
+  deja_paye: "J'ai déjà payé",
+  remise: 'Demander une remise de dette',
+  report: 'Changer le rendez-vous',
+  explications: 'Demander des explications'
+};
+
+const SCAM_KW = kwRe(['carte cadeau', 'cartes cadeaux', 'coupon', 'transcash', 'pcs mastercard', 'neosurf', 'bitcoin', 'cryptomonnaie', 'western union', 'mandat cash', 'paysafecard']);
+const SCAM_LABELS = ['carte cadeau', 'cartes cadeaux', 'coupon', 'Transcash', 'carte PCS', 'Neosurf', 'bitcoin', 'cryptomonnaie', 'Western Union', 'mandat cash', 'Paysafecard'];
+
+/* ---------- Analyse ---------- */
+const MONTHS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
+const NUMW = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6, sept: 7, huit: 8, dix: 10, quinze: 15, vingt: 20, trente: 30, 'quarante-cinq': 45, 'quarante cinq': 45, soixante: 60 };
+
+function mkDate(y, mo, d) {
+  if (y < 1990 || y > 2100 || mo < 0 || mo > 11 || d < 1 || d > 31) return null;
+  const x = new Date(y, mo, d);
+  return x.getMonth() === mo ? x : null;
+}
+function findDates(t) {
+  const out = []; let m;
+  const r1 = /\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4}|\d{2})\b/g;
+  while ((m = r1.exec(t))) { let y = +m[3]; if (y < 100) y += 2000; const d = mkDate(y, +m[2] - 1, +m[1]); if (d) out.push({ date: d, index: m.index, str: m[0] }); }
+  const r2 = /\b(1er|\d{1,2})\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre)\s+(\d{4})\b/gi;
+  while ((m = r2.exec(t))) {
+    const mi = MONTHS.indexOf(norm(m[2])); const day = /^1er$/i.test(m[1]) ? 1 : +m[1];
+    const d = mkDate(+m[3], mi, day); if (d) out.push({ date: d, index: m.index, str: m[0] });
+  }
+  return out.sort((a, b) => a.index - b.index);
+}
+function addDelay(base, n, unit) {
+  const d = new Date(base);
+  if (/^mois/.test(unit)) d.setMonth(d.getMonth() + n);
+  else if (/^semaine/.test(unit)) d.setDate(d.getDate() + n * 7);
+  else d.setDate(d.getDate() + n);
+  return d;
+}
+function splitSentences(flat) {
+  return flat.split(/(?<=[.!?;])\s+(?=[A-ZÀ-ÖØ-Ý0-9«"(\-–•])|\n+/).map(s => s.trim()).filter(s => s.length > 12);
+}
+
+const DL_BEFORE = /(avant le|au plus tard le|au plus tard|date limite[a-z' ]*|d'ici le|jusqu'au|echeance|parvenir avant le|parvenir le|regler avant le|payer avant le|a regler le|a payer le|limite de paiement|avant la date du)\s*:?\s*$/;
+const REQ_RE = /(merci de|nous vous (demandons|prions|invitons|remercions de)|veuillez|vous devez|il vous appartient|vous etes (invite|invitee|prie|priee|tenu|tenue)|nous (transmettre|faire parvenir|retourner|adresser)|devez nous|a regler|a payer|est a payer|de bien vouloir|n'oubliez pas|vous mettons en demeure|vous est demande|doivent nous parvenir|doit nous parvenir|a defaut|sans reponse|faute de)/;
+const RECOURS_RE = /(recours|contester (cette|la) decision|contestation|commission de recours|mediateur|reclamation)/;
+
+function analyze(raw) {
+  const text = raw.replace(/\r/g, '');
+  const lines = text.replace(/-\n(?=[a-zà-ÿ])/g, '').replace(/[ \t\u00a0\u202f]+/g, ' ').split('\n').map(l => l.trim());
+  let flat = '';
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i], prev = i ? lines[i - 1] : '';
+    if (!i) { flat = l; continue; }
+    // On recolle les lignes coupées d'un même paragraphe, mais on garde les lignes courtes (en-têtes, adresses, références)
+    if (l && prev && prev.length >= 45 && !/[.:;!?]$/.test(prev) && !/^([\-–•·*]|\d+[.)]\s)/.test(l)) flat += ' ' + l;
+    else flat += '\n' + l;
+  }
+  flat = flat.replace(/\n{3,}/g, '\n\n').trim();
+  const n = norm(flat);
+
+  // Organisme
+  let org = null, best = 0;
+  for (const o of ORGS) { const h = countHits(n, o.re); if (h > best) { best = h; org = o; } }
+
+  // Type
+  let type = TYPE_INFO, tbest = 0;
+  for (const t of TYPES) {
+    const h = countHits(n, t.re); if (!h) continue;
+    const score = h * 10 + t.level;
+    if (score > tbest) { tbest = score; type = t; }
+  }
+
+  // Dates
+  const dates = findDates(flat);
+  const now = today0();
+  const firstPart = flat.length * 0.4;
+  let letterDate = null;
+  for (const d of dates) {
+    if (d.index < firstPart && d.date <= new Date(now.getTime() + 2 * 86400000)) {
+      const before = norm(flat.slice(Math.max(0, d.index - 25), d.index));
+      if (/(, le|^le| le)\s*$/.test(before) || !letterDate) { letterDate = d; if (/(, le)\s*$/.test(before)) break; }
+    }
+  }
+
+  const sentences = splitSentences(flat);
+  const sentenceOf = idx => { let pos = 0; for (const s of sentences) { const i = flat.indexOf(s, pos); if (i <= idx && idx < i + s.length) return s; if (i >= 0) pos = i; } return ''; };
+
+  let deadline = null;
+  const abs = [];
+  for (const d of dates) {
+    if (letterDate && d === letterDate) continue;
+    const before = norm(flat.slice(Math.max(0, d.index - 70), d.index));
+    const after = norm(flat.slice(d.index + d.str.length, d.index + d.str.length + 22));
+    if (DL_BEFORE.test(before) || /^\s*(au plus tard|dernier delai)/.test(after)) {
+      const recours = RECOURS_RE.test(norm(sentenceOf(d.index)));
+      abs.push({ date: d.date, str: d.str, approx: false, recours });
+    }
+  }
+  const rel = [];
+  const relRe = /(?:dans un delai de|dans un delai d'|dans les|sous un delai de|sous|d'ici)\s*(\d+|une|un|deux|trois|quatre|cinq|six|sept|huit|dix|quinze|vingt|trente|quarante[- ]cinq|soixante)\s+(jours?|semaines?|mois)/g;
+  let m;
+  while ((m = relRe.exec(n))) {
+    const num = /^\d+$/.test(m[1]) ? +m[1] : NUMW[m[1]];
+    if (!num) continue;
+    const base = letterDate ? letterDate.date : now;
+    const recours = RECOURS_RE.test(norm(sentenceOf(m.index)));
+    rel.push({ date: addDelay(base, num, m[2]), str: flat.substr(m.index, m[0].length), approx: true, fromLetter: !!letterDate, recours, n: num, unit: m[2] });
+  }
+  const hw = /sous (huitaine|quinzaine)/.exec(n);
+  if (hw) { const num = hw[1] === 'huitaine' ? 8 : 15; rel.push({ date: addDelay(letterDate ? letterDate.date : now, num, 'jours'), str: flat.substr(hw.index, hw[0].length), approx: true, fromLetter: !!letterDate, recours: false, n: num, unit: 'jours' }); }
+
+  const pickEarliest = arr => arr.sort((a, b) => a.date - b.date).find(x => x.date >= now) || arr[arr.length - 1] || null;
+  deadline = pickEarliest(abs.filter(x => !x.recours)) || pickEarliest(rel.filter(x => !x.recours));
+  const recoursDl = pickEarliest(abs.filter(x => x.recours)) || pickEarliest(rel.filter(x => x.recours));
+
+  // Montants
+  const amounts = [];
+  const amRe = /(\d{1,3}(?:[ \u00a0\u202f.]\d{3})+|\d+)(?:,(\d{1,2}))?\s?(?:€|euros?\b|eur\b)/gi;
+  while ((m = amRe.exec(flat))) {
+    const v = parseFloat(m[1].replace(/[ \u00a0\u202f.]/g, '') + '.' + (m[2] || '0'));
+    if (!isFinite(v) || v <= 0) continue;
+    const before = norm(flat.slice(Math.max(0, m.index - 70), m.index));
+    let score = 0;
+    if (/(montant|somme|total|a payer|a regler|reste|solde|indu|dette|trop[- ]percu|rembourser|amende|reclame|due?\b|impaye)/.test(before)) score += 2;
+    amounts.push({ value: v, str: m[0], score });
+  }
+  amounts.sort((a, b) => b.score - a.score || b.value - a.value);
+  const amount = amounts[0] || null;
+
+  // Références
+  const refs = [];
+  const refRe = /(N°\s*allocataire|Num[ée]ro\s+allocataire|R[ée]f[ée]rence(?:\s+(?:dossier|client|de l['’]avis|du dossier))?|R[ée]f\.|Dossier\s*n°|N°\s*(?:de\s+)?dossier|N°\s*client|Num[ée]ro\s+(?:de\s+)?client|Num[ée]ro\s+(?:de\s+)?dossier|N°\s*(?:de\s+l['’])?avis|Identifiant|N°\s*de\s*s[ée]curit[ée]\s*sociale)\s*:?\s*([A-Z0-9][A-Z0-9\-\/ ]{1,28})/gi;
+  while ((m = refRe.exec(flat))) {
+    const vm = m[2].match(/^[A-Z0-9][A-Z0-9\-\/]*(?: (?:[0-9][0-9\-\/]*|[A-Z](?![a-zà-ÿ])))*/i);
+    let v = vm ? vm[0].trim() : '';
+    v = v.replace(/\s+[A-Za-zÀ-ÿ]{3,}.*$/, '');
+    if (!/\d/.test(v) || v.length < 3) continue;
+    const label = m[1].replace(/\s+/g, ' ').replace(/:$/, '').trim();
+    if (!refs.some(r => r.value === v)) refs.push({ label, value: v });
+    if (refs.length >= 3) break;
+  }
+
+  // Contacts
+  const emails = [...new Set(flat.match(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g) || [])].slice(0, 2);
+  const noMail = flat.replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, ' ');
+  const sites = [...new Set((noMail.match(/\b(?:https?:\/\/)?(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:gouv\.fr|fr|com|org|net)\b/gi) || []).map(s => s.toLowerCase()))].slice(0, 3);
+  const phones = [...new Set(flat.match(/\b0[1-9](?:[ .]?\d{2}){4}\b/g) || [])].slice(0, 2);
+
+  // Phrases importantes
+  const requests = [], recours = [];
+  for (const s of sentences) {
+    const ns = norm(s);
+    if (RECOURS_RE.test(ns) && recours.length < 2) recours.push(s);
+    else if (REQ_RE.test(ns) && !/(agreer|salutations|l'expression de)/.test(ns) && requests.length < 4) requests.push(s);
+  }
+  if (deadline && !requests.some(s => s.includes(deadline.str))) {
+    const s = sentences.find(x => x.includes(deadline.str)); if (s && !recours.includes(s)) requests.push(s);
+  }
+
+  // Arnaque
+  const scam = [];
+  SCAM_KW.forEach((r, i) => { if (r.test(n)) scam.push(SCAM_LABELS[i]); });
+
+  const docs = extractDocs(flat, sentences);
+  const terms = GLOSSARY.filter(g => g.re.test(n)).slice(0, 8);
+  const a = { raw: text, flat, org, type, letterDate, deadline, recoursDl, amount, refs, emails, sites, phones, requests, recours, scam, docs, docsDone: [], docsFromAI: false, terms };
+  a.level = computeLevel(a);
+  return a;
+}
+
+/* ---------- Ce qu'il faut faire, en quelques mots ---------- */
+const TODO = {
+  justice: 'réagir', demeure: 'payer ou répondre', indu: 'rembourser ou contester', suspension: 'régulariser ta situation',
+  amende: 'payer ou contester', relance: 'payer ou répondre', pieces: 'envoyer les documents demandés',
+  convocation: 'te présenter ou prévenir', impot: 'payer ce qui reste dû', decision: "contester si tu n'es pas d'accord", info: ''
+};
+
+/* ---------- Les mots compliqués ---------- */
+const GLOSSARY = [
+  { t: 'Indu ou trop-perçu', kw: ['indu', 'trop-percu', 'trop percu'], def: "De l'argent que tu as reçu alors que tu n'y avais pas droit, et qu'on te demande de rendre." },
+  { t: 'Mise en demeure', kw: ['mise en demeure', 'mettons en demeure', 'met en demeure'], def: "Une demande officielle de payer ou d'agir dans un délai précis. C'est la dernière étape avant une procédure." },
+  { t: 'Recouvrement', kw: ['recouvrement'], def: 'Toutes les démarches pour récupérer une somme due.' },
+  { t: 'Majoration', kw: ['majoration', 'majoree', 'majore'], def: "Une somme ajoutée en pénalité quand on paye ou répond en retard." },
+  { t: 'Échéancier', kw: ['echeancier', 'plan de remboursement', 'paiement echelonne'], def: 'Un étalement de la somme à payer en plusieurs fois.' },
+  { t: 'Remise de dette', kw: ['remise de dette', 'remise gracieuse', 'remise de la dette'], def: "L'annulation de tout ou partie d'une dette, accordée si ta situation est difficile." },
+  { t: 'Recours amiable', kw: ['recours amiable', 'commission de recours amiable', 'recours administratif prealable'], def: "Une demande écrite pour que l'organisme réexamine lui-même sa décision, avant d'aller en justice." },
+  { t: 'Titre exécutoire', kw: ['titre executoire'], def: 'Un document qui permet de récupérer une somme de force, par exemple par une saisie.' },
+  { t: 'Signification', kw: ['signification', 'signifie'], def: "La remise officielle d'un acte par un commissaire de justice. Elle fait démarrer des délais." },
+  { t: 'Commandement de payer', kw: ['commandement de payer'], def: "Un acte de commissaire de justice qui t'ordonne de payer, souvent avant une saisie." },
+  { t: 'Saisie', kw: ['saisie-attribution', 'saisie attribution', 'saisie sur salaire', 'saisie administrative', 'opposition administrative'], def: "Un prélèvement forcé d'argent sur ton compte ou ton salaire pour payer une dette." },
+  { t: 'Injonction de payer', kw: ['injonction de payer'], def: "Une décision d'un juge qui ordonne de payer. On peut s'y opposer dans un délai d'un mois après qu'elle a été signifiée." },
+  { t: 'Prescription', kw: ['prescription', 'prescrite'], def: 'Le délai au-delà duquel une dette ne peut plus être réclamée.' },
+  { t: 'Forclusion', kw: ['forclusion', 'forclos'], def: "La perte d'un droit parce qu'un délai n'a pas été respecté." },
+  { t: 'Lettre recommandée avec accusé de réception', kw: ['lettre recommandee', 'accuse de reception', 'lrar'], def: 'Un envoi de La Poste qui prouve que ton courrier a été envoyé et reçu.' },
+  { t: 'Revenu fiscal de référence', kw: ['revenu fiscal de reference'], def: "Le montant de revenus qui sert à calculer tes impôts et beaucoup d'aides. Il est écrit sur ton avis d'impôt." },
+  { t: 'Quotient familial', kw: ['quotient familial'], def: 'Tes revenus divisés selon la taille de ta famille. Il sert à calculer certaines aides et tarifs.' },
+  { t: 'Prélèvement à la source', kw: ['prelevement a la source'], def: "L'impôt retenu directement chaque mois sur ton salaire ou tes revenus." },
+  { t: 'Procédure contradictoire', kw: ['contradictoire'], def: 'Tu as le droit de donner ta version avant qu\'une décision définitive soit prise.' },
+  { t: 'Créancier', kw: ['creancier', 'creance'], def: "La personne ou l'entreprise à qui tu dois de l'argent." },
+  { t: 'Débiteur', kw: ['debiteur', 'debitrice'], def: "La personne qui doit de l'argent. Un « solde débiteur », c'est un compte dans le négatif." },
+  { t: 'Pièces justificatives', kw: ['pieces justificatives', 'piece justificative', 'justificatifs'], def: 'Les documents qui prouvent ce que tu déclares : fiche de paie, quittance de loyer, avis d\'impôt…' },
+  { t: 'Prestations', kw: ['prestations', 'prestation'], def: 'Les aides ou allocations qui te sont versées.' },
+  { t: 'Régularisation', kw: ['regularisation', 'regulariser'], def: 'Une correction de ton dossier ou de ton compte, qui peut entraîner un paiement ou un remboursement.' },
+  { t: 'Aide juridictionnelle', kw: ['aide juridictionnelle'], def: "La prise en charge par l'État de tout ou partie des frais d'avocat, selon tes revenus." },
+  { t: 'Huitaine ou quinzaine', kw: ['huitaine', 'quinzaine'], def: 'Un délai de 8 jours ou de 15 jours.' }
+].map(g => ({ ...g, re: new RegExp(kwRe(g.kw).map(r => r.source).join('|')) }));
+
+/* ---------- Documents demandés ---------- */
+function extractDocs(flat, sentences) {
+  const out = [];
+  const push = s => {
+    s = s.replace(/^[\s\-–•·*]+/, '').replace(/^\d+[.)]\s*/, '').replace(/[.;,:]+$/, '').trim();
+    if (s.length > 3 && s.length < 150 && !out.some(x => norm(x) === norm(s))) out.push(s.charAt(0).toUpperCase() + s.slice(1));
+  };
+  const lines = flat.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const nl = norm(lines[i]).trim();
+    if (/(documents?|pieces?|justificatifs?|elements?)[^:]{0,40}:$/.test(nl) || /(transmettre|fournir|parvenir|joindre|retourner|envoyer)[^:]{0,30}:$/.test(nl)) {
+      for (let j = i + 1; j < lines.length && j < i + 14; j++) {
+        const l = lines[j].trim();
+        if (/^([\-–•·*]|\d+[.)]\s)/.test(l)) push(l);
+        else if (!l) { if (out.length) break; }
+        else break;
+      }
+      if (out.length) break;
+    }
+  }
+  if (!out.length) {
+    for (const s of sentences) {
+      const ns = norm(s);
+      if (!/(merci|transmettre|fournir|parvenir|joindre|envoyer|retourner|adresser|besoin|demandons)/.test(ns)) continue;
+      const m = ns.match(/(documents?|pieces?|justificatifs?|elements?)[^:]{0,40}:\s*/);
+      if (!m) continue;
+      s.slice(m.index + m[0].length)
+        .split(/\s*(?:;|,|\set\s(?=(?:une?|vos?|votre|le|la|les|l'|d'|des|du|copie|justificatif|attestation)\b))\s*/i)
+        .forEach(push);
+      if (out.length) break;
+    }
+  }
+  return out.slice(0, 12);
+}
+
+function computeLevel(a) {
+  let level = a.type.level;
+  if (a.deadline) {
+    const dd = daysUntil(a.deadline.date);
+    if (dd < 0) level = 4;
+    else if (dd <= 7) level = Math.max(level, 3);
+    else if (dd <= 21) level = Math.max(level, 2);
+  }
+  if (a.scam && a.scam.length) level = Math.max(level, 3);
+  return level;
+}
+
+/* ---------- Le résumé en clair (sans IA, marche partout) ---------- */
+const lowerFirst = s => s.charAt(0).toLowerCase() + s.slice(1);
+function whoSentence(a) {
+  if (!a.org) return "Je n'ai pas reconnu qui t'écrit : regarde le nom en haut du courrier.";
+  const nom = a.org.nom;
+  if (/^Les /.test(nom)) return 'Ce sont ' + lowerFirst(nom) + ' qui t\'écrivent.';
+  if (/^(La|Le|L'|Un|Une|Ton|Ta) /.test(nom) || /^L'/.test(nom)) return "C'est " + lowerFirst(nom) + " qui t'écrit.";
+  return "C'est " + nom + " qui t'écrit.";
+}
+function brief(a) {
+  const s = [whoSentence(a), a.type.resume];
+  if (a.scam.length) s.push("Attention, ça ressemble à une arnaque : ne paye rien avant d'avoir vérifié auprès de l'organisme.");
+  const todo = TODO[a.type.id];
+  if (a.deadline) {
+    const dd = daysUntil(a.deadline.date), est = a.deadline.approx ? ' (date estimée)' : '';
+    if (dd < 0) s.push(`Le délai${todo ? ' pour ' + todo : ''} est dépassé depuis ${-dd} jour${dd < -1 ? 's' : ''}${est} : agis dès aujourd'hui.`);
+    else if (dd === 0) s.push(`C'est aujourd'hui le dernier jour${todo ? ' pour ' + todo : ''}${est}.`);
+    else if (dd === 1) s.push(`Tu as jusqu'à demain${todo ? ' pour ' + todo : ''}${est}.`);
+    else s.push(`Tu as jusqu'au ${fmtDate(a.deadline.date)}${todo ? ' pour ' + todo : ''}, soit encore ${dd} jours${est}.`);
+  } else if (todo) s.push('Ce que tu dois faire : ' + todo + '.');
+  if (a.amount) s.push('Le montant en jeu est de ' + fmtMoney(a.amount.value) + '.');
+  if (a.docs.length) s.push(a.docs.length === 1 ? 'Il y a un document à fournir.' : `Il y a ${a.docs.length} documents à fournir.`);
+  s.push('Si tu ne fais rien : ' + lowerFirst(a.type.risque));
+  return s.join(' ');
+}
+
+/* ---------- Réponses rapides (sans IA) ---------- */
+const QUICK = [
+  { k: 'montant', q: 'Je dois payer combien ?' },
+  { k: 'date', q: 'Avant quand ?' },
+  { k: 'docs', q: 'Quels documents envoyer ?' },
+  { k: 'pas_payer', q: 'Et si je ne peux pas payer ?' },
+  { k: 'contester', q: 'Comment contester ?' },
+  { k: 'contact', q: 'Qui contacter ?' }
+];
+function quickAnswer(k, a) {
+  switch (k) {
+    case 'montant': return a.amount ? `Le montant repéré est de ${fmtMoney(a.amount.value)}. Vérifie-le sur le courrier : s'il y a plusieurs sommes, c'est en général celle qui suit « montant », « total » ou « à payer ».` : "Je n'ai pas trouvé de montant à payer dans ce courrier. Il ne te demande peut-être pas d'argent.";
+    case 'date': {
+      if (!a.deadline) return "Je n'ai pas trouvé de date limite. Ça ne veut pas dire qu'il n'y en a pas : relis les passages surlignés, et en cas de doute, réponds dans les 15 jours.";
+      const dd = daysUntil(a.deadline.date);
+      return `Avant le ${fmtDate(a.deadline.date)}, ${relDays(dd)}.` + (a.deadline.approx ? ` C'est une estimation à partir de « ${a.deadline.str} ». Si le délai court à partir de la réception, compte depuis le jour où tu as reçu le courrier.` : '');
+    }
+    case 'docs': return a.docs.length ? 'Les documents demandés :\n' + a.docs.map(d => '• ' + d).join('\n') : "Je n'ai pas trouvé de liste de documents. Si le courrier en demande, ils sont en général dans les phrases surlignées en jaune.";
+    case 'pas_payer': return a.type.id === 'indu'
+      ? "Tu peux demander un échéancier (payer en plusieurs fois) ou une remise de dette si ta situation est difficile. Choisis « Demander un délai » ou « Demander une remise de dette » dans « Ta réponse », la lettre se prépare toute seule."
+      : "Ne laisse pas sans réponse : écris pour demander un échéancier (payer en plusieurs fois) en expliquant ta situation. Choisis « Demander un délai » dans « Ta réponse ». Une assistante sociale de ta mairie ou du département peut aussi t'aider.";
+    case 'contester': return (a.recours.length ? "Le courrier parle d'un recours : « " + (a.recours[0].length > 200 ? a.recours[0].slice(0, 197) + '…' : a.recours[0]) + " »\n\n" : '') + "Pour contester : écris en expliquant précisément pourquoi tu n'es pas d'accord, avec des preuves, de préférence en lettre recommandée avec accusé de réception, et avant la date limite. Choisis « Contester » dans « Ta réponse ».";
+    case 'contact': return a.org ? a.org.contact + (a.phones.length || a.sites.length ? '\n\nTrouvé dans le courrier : ' + [...a.sites, ...a.phones, ...a.emails].join(', ') : '') : "L'expéditeur n'a pas été reconnu. Ses coordonnées sont en général en haut ou en bas du courrier.";
+  }
+  return '';
+}
+function routeQuestion(q) {
+  const n = norm(q);
+  if (/(combien|montant|somme|prix|cout)/.test(n)) return 'montant';
+  if (/(quand|date|delai|jusqu|avant)/.test(n)) return 'date';
+  if (/(document|piece|justificatif|envoyer quoi|fournir)/.test(n)) return 'docs';
+  if (/(pas payer|peux pas|plusieurs fois|echeancier|etaler|pas les moyens)/.test(n)) return 'pas_payer';
+  if (/(contest|pas d'accord|erreur|recours)/.test(n)) return 'contester';
+  if (/(contact|appeler|telephone|joindre|adresse|ecrire a)/.test(n)) return 'contact';
+  return null;
+}
+
+/* ---------- Brouillons de réponse ---------- */
+function buildLetter(intent, a) {
+  const me = store.get(KEYS.me, {});
+  const nom = me.nom || '[Ton prénom et nom]';
+  const adr = me.adresse || '[Ton adresse]';
+  const ville = me.ville || '[Ta ville]';
+  const dest = a.org ? a.org.nom.replace(/^(La|Le|Les|L'|Un|Une|Ton|Ta|Tes) /, '') : "[Nom de l'organisme]";
+  const dCourrier = a.letterDate ? 'du ' + fmtDate(a.letterDate.date) : 'du [date du courrier]';
+  const montant = a.amount ? fmtMoney(a.amount.value) : '[montant]';
+  const refLines = a.refs.map(r => r.label + ' : ' + r.value).join('\n');
+  let objet = '', corps = '', lrar = false;
+
+  switch (intent) {
+    case 'documents':
+      objet = 'Envoi des pièces demandées';
+      corps = `Suite à votre courrier ${dCourrier}, vous trouverez ci-joint les documents demandés :\n- [document 1]\n- [document 2]\n- [document 3]\n\nJe reste à votre disposition pour toute information complémentaire.`;
+      break;
+    case 'delai':
+      objet = 'Demande de délai de paiement';
+      corps = `J'ai bien reçu votre courrier ${dCourrier} concernant la somme de ${montant}.\n\nMa situation financière ne me permet pas de régler cette somme en une seule fois, en raison de [explique brièvement ta situation]. Je vous propose de la rembourser en [nombre] mensualités de [montant] €, à partir du [date du premier paiement].\n\nJe vous remercie par avance de l'attention que vous porterez à ma demande et reste disponible pour en discuter.`;
+      break;
+    case 'contester':
+      lrar = true;
+      objet = 'Contestation : ' + a.type.label.toLowerCase();
+      corps = `Par courrier ${dCourrier}, vous m'informez de [ce qui t'est reproché ou réclamé]${a.amount ? ' pour un montant de ' + montant : ''}.\n\nJe conteste cette décision pour les raisons suivantes :\n[Explique pourquoi tu n'es pas d'accord, avec des faits précis et des dates]\n\nJe joins à ce courrier les justificatifs suivants : [liste des pièces].\n\nJe vous demande donc de bien vouloir réexaminer mon dossier et de [annuler la somme réclamée / corriger ma situation].`;
+      break;
+    case 'deja_paye':
+      objet = 'Paiement déjà effectué';
+      corps = `Par courrier ${dCourrier}, vous me réclamez la somme de ${montant}.\n\nOr j'ai déjà réglé cette somme le [date du paiement] par [mode de paiement : virement, prélèvement, chèque…]. Vous trouverez ci-joint la preuve de ce paiement.\n\nJe vous remercie de bien vouloir mettre à jour mon dossier et de ne pas donner suite à cette relance.`;
+      break;
+    case 'remise':
+      objet = 'Demande de remise de dette';
+      corps = `J'ai bien reçu votre courrier ${dCourrier} m'informant d'un trop-perçu de ${montant}.\n\nMa situation actuelle ne me permet pas de rembourser cette somme : [explique ta situation : revenus, charges, changement récent comme une perte d'emploi ou une séparation].\n\nJe sollicite donc une remise totale ou partielle de cette dette. Vous trouverez ci-joint les justificatifs de ma situation : [liste des pièces].\n\nJe vous remercie par avance de l'examen de ma demande.`;
+      break;
+    case 'report':
+      objet = 'Demande de report de rendez-vous';
+      corps = `Par courrier ${dCourrier}, vous me proposez un rendez-vous le [date et heure du rendez-vous].\n\nJe ne pourrai malheureusement pas être présent(e) à cette date en raison de [motif]. Je vous prie de bien vouloir me proposer un nouveau rendez-vous. Je suis disponible [tes disponibilités].\n\nJe vous remercie de votre compréhension.`;
+      break;
+    default:
+      objet = "Demande d'explications";
+      corps = `J'ai bien reçu votre courrier ${dCourrier}. Je n'en comprends pas bien le contenu, en particulier [précise le point qui pose question].\n\nPourriez-vous m'indiquer [le détail du calcul / ce que je dois faire exactement / les documents attendus] ? Ces précisions me permettront de régulariser ma situation si nécessaire.\n\nJe vous remercie par avance de votre réponse.`;
+  }
+
+  return `${nom}\n${adr}${refLines ? '\n\n' + refLines : ''}\n\n${dest}\n[Adresse indiquée sur le courrier]\n\n${ville}, le ${fmtDate(new Date())}\n\nObjet : ${objet}${lrar ? '\nLettre recommandée avec accusé de réception' : ''}\n\nMadame, Monsieur,\n\n${corps}\n\nJe vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.\n\n${nom}`;
+}
+const draftHTML = s => esc(s).replace(/\[([^\]]+)\]/g, '<span class="ph">[$1]</span>');
+
+/* ---------- Affichage du résultat ---------- */
+let current = null;      // analyse en cours
+let currentId = null;    // id si enregistré
+let currentIntent = null;
+let draftBackup = null;
+let seq = 0;             // change à chaque nouveau courrier (pour stopper l'IA en cours)
+let chatHist = [];
+let speaking = false;
+
+function highlight(a) {
+  let html = esc(a.flat);
+  const soft = [...a.requests, ...a.recours];
+  for (const s of soft) { const e = esc(s); html = html.split(e).join('<mark>' + e + '</mark>'); }
+  const strong = [];
+  if (a.deadline && !a.deadline.approx && !a.deadline.manual) strong.push(a.deadline.str);
+  if (a.amount && a.amount.str) strong.push(a.amount.str);
+  a.refs.forEach(r => strong.push(r.value));
+  for (const s of [...new Set(strong)]) { const e = esc(s); if (e.length > 2) html = html.split(e).join('<mark class="strong">' + e + '</mark>'); }
+  return html;
+}
+
+function stampHTML(a) {
+  const cls = 'stamp l' + Math.min(a.level, 3);
+  if (a.deadline) {
+    const dd = daysUntil(a.deadline.date);
+    const head = dd < 0 ? 'Délai dépassé' : 'À faire avant le ' + fmtShort(a.deadline.date);
+    return `<div class="${cls}"><b>${esc(head)}</b><span>${esc(relDays(dd))}${a.deadline.approx ? ' (date estimée)' : ''}</span></div>`;
+  }
+  return `<div class="${cls}"><b>${esc(LEVELS[a.level])}</b><span>Pas de date limite repérée</span></div>`;
+}
+
+function applyOverrides(a, ov) {
+  if (!ov) return a;
+  if (ov.org !== undefined) a.org = ORGS.find(o => o.id === ov.org) || null;
+  if (ov.type) a.type = TYPES.find(t => t.id === ov.type) || TYPE_INFO;
+  if (ov.deadline !== undefined) a.deadline = ov.deadline ? { date: new Date(ov.deadline), str: fmtDate(new Date(ov.deadline)), approx: false, manual: true } : null;
+  if (ov.amount !== undefined) a.amount = ov.amount ? { value: ov.amount, str: '' } : null;
+  a.ov = ov;
+  a.level = computeLevel(a);
+  return a;
+}
+
+const docsHTML = a => a.docs.length ? `
+  <div class="docs">
+    <p class="docs-title">${a.docsFromAI ? "Documents repérés par l'assistant IA (vérifie-les) :" : 'Documents demandés :'}</p>
+    <ul class="checklist">${a.docs.map((d, i) => `<li><label><input type="checkbox" data-doc="${i}" ${a.docsDone.includes(i) ? 'checked' : ''}><span>${esc(d)}</span></label></li>`).join('')}</ul>
+  </div>` : '';
+
+function factsHTML(a) {
+  const facts = [];
+  if (a.deadline) facts.push(['Date limite', fmtDate(a.deadline.date) + (a.deadline.approx ? ' (estimée)' : '')]);
+  if (a.amount) facts.push(['Montant', fmtMoney(a.amount.value)]);
+  if (a.letterDate) facts.push(['Courrier du', fmtDate(a.letterDate.date)]);
+  a.refs.forEach(x => facts.push([x.label, x.value]));
+  let note = '';
+  if (a.deadline && a.deadline.approx) note = `<p class="note">Le courrier parle d'un délai (« ${esc(a.deadline.str)} »). La date est calculée à partir ${a.deadline.fromLetter ? 'de la date du courrier' : "d'aujourd'hui, faute de date sur le courrier"}. Si le délai court « à compter de la réception », compte depuis le jour où tu l'as reçu.</p>`;
+  const iso = a.deadline ? new Date(a.deadline.date.getTime() - a.deadline.date.getTimezoneOffset() * 60000).toISOString().slice(0, 10) : '';
+  return `
+    ${facts.length ? `<dl class="facts">${facts.map(f => `<div><dt>${esc(f[0])}</dt><dd>${esc(f[1])}</dd></div>`).join('')}</dl>` : '<p>Aucune date limite ni montant repéré.</p>'}
+    ${note}
+    <div class="inline-tools">
+      ${a.deadline ? '<button class="btn small" id="ics-btn" type="button">Ajouter un rappel à mon agenda</button>' : ''}
+      <button class="link" id="fix-btn" type="button" aria-expanded="false" aria-controls="fix-panel">Une info est fausse ? Corriger</button>
+    </div>
+    <div class="fix" id="fix-panel" hidden>
+      <label class="field"><span>Qui t'écrit</span><select id="fix-org"><option value="">Expéditeur non reconnu</option>${ORGS.map(o => `<option value="${o.id}" ${a.org && a.org.id === o.id ? 'selected' : ''}>${esc(o.court)}</option>`).join('')}</select></label>
+      <label class="field"><span>Type de courrier</span><select id="fix-type">${[...TYPES, TYPE_INFO].map(t => `<option value="${t.id}" ${a.type.id === t.id ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</select></label>
+      <label class="field"><span>Date limite</span><input type="date" id="fix-date" value="${iso}"></label>
+      <label class="field"><span>Montant en euros</span><input type="number" id="fix-amount" min="0" step="0.01" inputmode="decimal" value="${a.amount ? a.amount.value : ''}"></label>
+      <div class="actions"><button class="btn small" id="fix-apply" type="button">Appliquer</button><button class="link" id="fix-cancel" type="button">Annuler</button></div>
+    </div>`;
+}
+
+function renderResult(a, savedId, opts = {}) {
+  seq++;
+  current = a; currentId = savedId || null; draftBackup = null; chatHist = [];
+  if (!a.docsDone) a.docsDone = [];
+  if (!opts.keepIntent || !currentIntent || !INTENTS[currentIntent]) currentIntent = a.type.intents[0];
+  stopSpeaking();
+  const r = $('#result');
+  const org = a.org;
+  const contact = [];
+  if (org) contact.push(`<p>${esc(org.contact)}</p>`);
+  const found = [...a.sites, ...a.phones, ...a.emails].map(esc);
+  if (found.length) contact.push(`<p class="note">Trouvé dans le courrier : ${found.join(', ')}</p>`);
+  const intents = [...new Set([...a.type.intents, 'explications'])];
+
+  r.innerHTML = `
+    <div class="sheet verdict">
+      ${stampHTML(a)}
+      <div class="who">
+        <h2>${esc(org ? org.nom : 'Expéditeur non reconnu')}</h2>
+        <span class="kind">${esc(a.type.label)}</span>
+      </div>
+      <p class="who-desc">${esc(org ? org.desc : "Son nom est en général en haut à gauche du courrier.")}</p>
+      ${a.scam.length ? `<div class="scam"><strong>Attention, ça ressemble à une arnaque.</strong> Ce courrier parle de paiement par ${esc(a.scam.join(', '))}. Une administration ou une entreprise sérieuse ne demande jamais ça. Ne paye pas, et vérifie en contactant l'organisme par son site officiel.</div>` : ''}
+
+      <div class="brief">
+        <div class="brief-head"><h3>En bref</h3><button class="link" id="speak-btn" type="button" aria-pressed="false">Écouter</button></div>
+        <p id="brief-text">${esc(brief(a))}</p>
+        <div class="ai-zone" id="ai-zone"></div>
+      </div>
+
+      <div class="block">
+        <h3>Ce qu'on te demande</h3>
+        ${a.requests.slice(0, 3).map(s => `<div class="quote">${esc(s.length > 280 ? s.slice(0, 277) + '…' : s)}</div>`).join('') || '<p class="note">Aucune phrase de demande claire n\'a été repérée.</p>'}
+        <div id="docs-zone">${docsHTML(a)}</div>
+      </div>
+
+      <div class="block" id="facts-zone"><h3>Les infos clés</h3>${factsHTML(a)}</div>
+
+      <div class="block">
+        <h3>Ce que tu dois faire</h3>
+        <ol class="steps">${a.type.actions.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+      </div>
+
+      <div class="block">
+        <h3>Si tu ne fais rien</h3>
+        <p>${esc(a.type.risque)}</p>
+        ${a.recours.length ? `<p class="note">Bon à savoir, le courrier parle d'un recours${a.recoursDl ? ' (délai : ' + esc(a.recoursDl.str) + ')' : ''} :</p><div class="quote">${esc(a.recours[0].length > 280 ? a.recours[0].slice(0, 277) + '…' : a.recours[0])}</div>` : ''}
+      </div>
+
+      ${contact.length ? `<div class="block contact"><h3>Qui contacter</h3>${contact.join('')}</div>` : ''}
+
+      ${a.terms.length ? `<div class="block"><h3>Les mots compliqués du courrier</h3><dl class="glossary">${a.terms.map(g => `<div><dt>${esc(g.t)}</dt><dd>${esc(g.def)}</dd></div>`).join('')}</dl></div>` : ''}
+
+      <div class="block">
+        <h3>Pose ta question</h3>
+        <div class="chips" role="group" aria-label="Questions rapides">${QUICK.map(x => `<button class="chip" type="button" data-q="${x.k}">${esc(x.q)}</button>`).join('')}</div>
+        <div class="chat-log" id="chat-log" aria-live="polite"></div>
+        <div class="chat-input">
+          <label class="sr" for="chat-input">Ta question</label>
+          <input id="chat-input" placeholder="Ex. : est-ce que je peux payer en plusieurs fois ?" autocomplete="off">
+          <button class="btn small" id="chat-send" type="button">Demander</button>
+        </div>
+        <p class="note" id="chat-hint"></p>
+      </div>
+
+      <div class="block">
+        <h3>Ta réponse</h3>
+        <p class="note">Choisis ce que tu veux faire, la lettre se prépare. Complète les passages surlignés, puis envoie-la.</p>
+        <div class="chips" role="group" aria-label="Type de réponse">
+          ${intents.map(k => `<button class="chip" type="button" data-intent="${k}" aria-pressed="${k === currentIntent}">${esc(INTENTS[k])}</button>`).join('')}
+        </div>
+        <div class="draft" id="draft" contenteditable="true" spellcheck="true" aria-label="Brouillon de réponse"></div>
+        ${letterToolsHTML()}
+        <div class="draft-tools ai-tools">
+          <button class="btn small ghost" id="ai-improve" type="button" hidden>Améliorer avec l'IA</button>
+          <button class="link" id="undo-draft" type="button" hidden>Revenir à la version d'avant</button>
+        </div>
+      </div>
+
+      <div class="save-row">
+        <button class="btn" id="save-btn" type="button">${currentId ? 'Mettre à jour dans mes courriers' : 'Enregistrer dans mes courriers'}</button>
+        <button class="link" id="new-btn" type="button">Décoder un autre courrier</button>
+        ${tipHTML()}
+      </div>
+      ${adHTML()}
+    </div>
+
+    <aside class="letter">
+      <div class="sheet">
+        <h3>Ton courrier, surligné</h3>
+        <p class="note">En jaune, les phrases qui te demandent quelque chose. Soulignés, les dates, montants et références.</p>
+        <div class="letter-text">${highlight(a)}</div>
+      </div>
+    </aside>`;
+  r.classList.add('on');
+  setDraft(buildLetter(currentIntent, a));
+  bindResult();
+  renderAIZone();
+  autoAI(a, seq);
+  fillAds(r);
+}
+
+function setDraft(text) { const d = $('#draft'); if (d) d.innerHTML = draftHTML(text); }
+function draftObject() { const m = ($('#draft').innerText || '').match(/Objet\s*:\s*(.+)/); return m ? m[1].trim() : 'Réponse à votre courrier'; }
+
+function addMsg(who, text) {
+  const log = $('#chat-log'); if (!log) return null;
+  const el = document.createElement('div'); el.className = 'msg ' + who; el.textContent = text;
+  log.appendChild(el); el.scrollIntoView({ block: 'nearest' });
+  return el;
+}
+
+function bindResult() {
+  const R = $('#result');
+  $$('[data-intent]', R).forEach(b => b.addEventListener('click', () => {
+    currentIntent = b.dataset.intent;
+    $$('[data-intent]', R).forEach(x => x.setAttribute('aria-pressed', x === b));
+    draftBackup = null; $('#undo-draft').hidden = true;
+    setDraft(buildLetter(currentIntent, current));
+  }));
+  bindLetterTools(R, $('#draft'), current.emails[0] || '');
+  $('#undo-draft').addEventListener('click', () => { if (draftBackup != null) { setDraft(draftBackup); draftBackup = null; $('#undo-draft').hidden = true; } });
+  $('#save-btn').addEventListener('click', saveCurrent);
+  $('#new-btn').addEventListener('click', resetInput);
+  $('#ai-improve').addEventListener('click', () => enqueueAI(() => aiImprove(seq)));
+  $('#speak-btn').addEventListener('click', toggleSpeak);
+  bindFacts(); bindDocs();
+
+  // Questions
+  $$('[data-q]', R).forEach(b => b.addEventListener('click', () => {
+    addMsg('me', b.textContent); addMsg('bot', quickAnswer(b.dataset.q, current));
+  }));
+  const ask = () => {
+    const inp = $('#chat-input'); const q = inp.value.trim(); if (!q) return; inp.value = '';
+    addMsg('me', q);
+    if (aiState === 'ready' || (iaPrefs().ready && gpu.ok)) { enqueueAI(() => aiAnswer(q, seq)); return; }
+    const k = routeQuestion(q);
+    if (k) addMsg('bot', quickAnswer(k, current));
+    else addMsg('bot', gpu.ok ? "Pour répondre à n'importe quelle question, active l'assistant IA plus haut. En attendant, essaie une des questions rapides." : "Je ne sais répondre qu'aux questions rapides ci-dessus sur cet appareil : l'assistant IA n'y est pas disponible.");
+  };
+  $('#chat-send').addEventListener('click', ask);
+  $('#chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ask(); } });
+}
+
+function bindDocs() {
+  $$('[data-doc]', $('#docs-zone')).forEach(cb => cb.addEventListener('change', () => {
+    const i = +cb.dataset.doc;
+    current.docsDone = cb.checked ? [...new Set([...current.docsDone, i])] : current.docsDone.filter(x => x !== i);
+    if (currentId) { const l = getList(); const it = l.find(x => x.id === currentId); if (it) { it.docsDone = current.docsDone; store.set(KEYS.list, l); } }
+  }));
+}
+function bindFacts() {
+  const ics = $('#ics-btn'); if (ics) ics.addEventListener('click', () => downloadICS(current));
+  const panel = $('#fix-panel'), fb = $('#fix-btn');
+  fb.addEventListener('click', () => { panel.hidden = !panel.hidden; fb.setAttribute('aria-expanded', !panel.hidden); });
+  $('#fix-cancel').addEventListener('click', () => { panel.hidden = true; fb.setAttribute('aria-expanded', 'false'); });
+  $('#fix-apply').addEventListener('click', () => {
+    const d = $('#fix-date').value, amt = parseFloat($('#fix-amount').value);
+    const ov = { org: $('#fix-org').value, type: $('#fix-type').value, deadline: d ? new Date(d + 'T00:00:00').toISOString() : null, amount: isFinite(amt) && amt > 0 ? amt : null };
+    const a = applyOverrides(analyze(current.raw), ov);
+    a.docs = current.docs; a.docsFromAI = current.docsFromAI; a.docsDone = current.docsDone;
+    const id = currentId;
+    renderResult(a, id, { keepIntent: true });
+    if (id) saveCurrent(true);
+    toast('Corrections appliquées');
+  });
+}
+
+function slug(s) { return norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'lettre'; }
+function downloadFile(name, content, type) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function downloadICS(a) {
+  if (!a.deadline) return;
+  const d = a.deadline.date, p = n => String(n).padStart(2, '0');
+  const ymd = x => x.getFullYear() + p(x.getMonth() + 1) + p(x.getDate());
+  const next = new Date(d); next.setDate(next.getDate() + 1);
+  const icsEsc = s => String(s).replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1');
+  const who = a.org ? a.org.court : 'Courrier';
+  const todo = TODO[a.type.id] || 'traiter le courrier';
+  const desc = brief(a) + (a.refs.length ? '\nRéférence : ' + a.refs.map(r => r.value).join(', ') : '');
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//QuenTools//Paperdecrypt//FR', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',
+    'UID:' + Date.now() + '@quentools.fr', 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, ''),
+    'DTSTART;VALUE=DATE:' + ymd(d), 'DTEND;VALUE=DATE:' + ymd(next),
+    'SUMMARY:' + icsEsc(who + ' : ' + todo + ' (dernier jour)'), 'DESCRIPTION:' + icsEsc(desc),
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(who + ' : ' + todo), 'TRIGGER:-P3D', 'END:VALARM',
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(who + ' : ' + todo), 'TRIGGER:-PT12H', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  downloadFile('rappel-' + slug(who) + '.ics', ics, 'text/calendar;charset=utf-8');
+  toast("Ouvre le fichier pour l'ajouter à ton agenda");
+}
+
+/* Lecture à voix haute */
+function stopSpeaking() { try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} speaking = false; const b = $('#speak-btn'); if (b) { b.textContent = 'Écouter'; b.setAttribute('aria-pressed', 'false'); } }
+function toggleSpeak() {
+  if (!('speechSynthesis' in window)) { toast("La lecture à voix haute n'est pas disponible ici"); return; }
+  if (speaking) { stopSpeaking(); return; }
+  const aiText = ($('#ai-box') && $('#ai-box').classList.contains('on')) ? $('#ai-box').textContent : '';
+  const u = new SpeechSynthesisUtterance(aiText.length > 40 ? aiText : $('#brief-text').textContent);
+  u.lang = 'fr-FR'; u.rate = 0.95;
+  const v = speechSynthesis.getVoices().find(v => /^fr/i.test(v.lang)); if (v) u.voice = v;
+  u.onend = stopSpeaking; u.onerror = stopSpeaking;
+  speechSynthesis.speak(u); speaking = true;
+  const b = $('#speak-btn'); b.textContent = 'Arrêter'; b.setAttribute('aria-pressed', 'true');
+}
+
+function resetInput() {
+  seq++; stopSpeaking(); interruptAI();
+  $('#result').classList.remove('on'); $('#result').innerHTML = '';
+  $('#letter-input').value = ''; $('#clear-btn').hidden = true; current = null; currentId = null;
+  window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  $('#letter-input').focus();
+}
+
+function runDecode() {
+  const txt = $('#letter-input').value.trim();
+  if (txt.length < 30) { toast('Ajoute le texte du courrier ou une photo'); $('#letter-input').focus(); return; }
+  interruptAI();
+  const a = analyze(txt);
+  renderResult(a, null);
+  $('#result').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+}
+
+/* ---------- Lecture photo / PDF ---------- */
+let ocrWorker = null;
+function setOcr(p, msg) {
+  const box = $('#ocr-progress'); box.classList.add('on');
+  $('#ocr-bar').style.width = Math.round(p * 100) + '%'; $('#ocr-text').textContent = msg;
+}
+function hideOcr() { $('#ocr-progress').classList.remove('on'); }
+
+async function getOcr() {
+  if (ocrWorker) return ocrWorker;
+  setOcr(0.02, "Préparation de la lecture (la première fois, ça peut prendre quelques secondes)…");
+  await loadScript(TESSERACT_URL);
+  ocrWorker = await Tesseract.createWorker('fra', 1, {
+    logger: m => { if (m.status === 'recognizing text') setOcr(m.progress, 'Lecture du texte… ' + Math.round(m.progress * 100) + ' %'); }
+  });
+  return ocrWorker;
+}
+function fileToCanvas(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => {
+      const max = 2200; let { width: w, height: h } = img;
+      const k = Math.min(1, max / Math.max(w, h)); w = Math.round(w * k); h = Math.round(h * k);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const ctx = c.getContext('2d'); ctx.filter = 'grayscale(1) contrast(1.15)'; ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url); res(c);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); };
+    img.src = url;
+  });
+}
+async function readPdf(file) {
+  await loadScript(PDFJS_URL);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  const pages = Math.min(pdf.numPages, 6);
+  let out = '';
+  for (let i = 1; i <= pages; i++) {
+    setOcr(i / (pages + 1), `Lecture du PDF, page ${i} sur ${pages}…`);
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    let line = '', lastY = null;
+    for (const it of tc.items) {
+      const y = it.transform ? it.transform[5] : null;
+      if (lastY !== null && y !== null && Math.abs(y - lastY) > 2) { out += line.trim() + '\n'; line = ''; }
+      line += it.str + (it.hasEOL ? '\n' : ' '); lastY = y;
+    }
+    out += line.trim() + '\n\n';
+  }
+  if (out.replace(/\s/g, '').length > 60) return out;
+  // PDF scanné : on passe par la lecture d'image
+  const w = await getOcr(); let txt = '';
+  for (let i = 1; i <= pages; i++) {
+    const page = await pdf.getPage(i); const vp = page.getViewport({ scale: 2 });
+    const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+    await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    const { data } = await w.recognize(c, { rotateAuto: true }); txt += data.text + '\n\n';
+  }
+  return txt;
+}
+async function handleFiles(files) {
+  files = [...files]; if (!files.length) return;
+  let all = '';
+  try {
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) all += await readPdf(f) + '\n\n';
+      else if (f.type.startsWith('image/')) {
+        const w = await getOcr(); const c = await fileToCanvas(f);
+        setOcr(0, files.length > 1 ? `Lecture de la photo ${i + 1} sur ${files.length}…` : 'Lecture du texte…');
+        const { data } = await w.recognize(c, { rotateAuto: true }); all += data.text + '\n\n';
+      }
+    }
+  } catch (e) {
+    console.error(e); hideOcr();
+    toast(navigator.onLine ? 'La lecture a échoué. Essaie une photo plus nette, bien à plat.' : 'Il faut internet la première fois pour préparer la lecture des photos.');
+    return;
+  }
+  hideOcr();
+  const prev = $('#letter-input').value.trim();
+  $('#letter-input').value = (prev && files.length ? prev + '\n\n' : '') + all.trim();
+  $('#clear-btn').hidden = false;
+  if (all.replace(/\s/g, '').length < 40) { toast("Je n'arrive pas à lire le texte. Reprends la photo bien à plat, avec de la lumière."); return; }
+  runDecode();
+}
+
+/* ---------- Mes courriers ---------- */
+const getList = () => store.get(KEYS.list, []);
+function saveCurrent(silent) {
+  if (!current) return;
+  const list = getList();
+  const prev = list.find(x => x.id === currentId);
+  const item = {
+    id: currentId || ('c' + Date.now().toString(36)),
+    savedAt: prev ? prev.savedAt : new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    org: current.org ? current.org.court : 'Expéditeur inconnu',
+    type: current.type.label, level: current.level,
+    deadline: current.deadline ? current.deadline.date.toISOString() : null,
+    amount: current.amount ? current.amount.value : null,
+    text: current.raw, ov: current.ov || null,
+    docs: current.docsFromAI ? current.docs : null, docsDone: current.docsDone || [],
+    done: prev ? prev.done : false
+  };
+  const i = list.findIndex(x => x.id === item.id);
+  if (i >= 0) list[i] = item; else list.unshift(item);
+  if (!store.set(KEYS.list, list)) { toast("Impossible d'enregistrer sur cet appareil"); return; }
+  currentId = item.id; const sb = $('#save-btn'); if (sb) sb.textContent = 'Mettre à jour dans mes courriers';
+  if (!silent) toast('Enregistré dans mes courriers');
+  renderList();
+}
+function openItem(it) {
+  const a = applyOverrides(analyze(it.text), it.ov);
+  if (it.docs && it.docs.length) { a.docs = it.docs; a.docsFromAI = true; }
+  a.docsDone = it.docsDone || [];
+  showTab('decode'); $('#letter-input').value = it.text; $('#clear-btn').hidden = false;
+  renderResult(a, it.id);
+  $('#result').scrollIntoView({ block: 'start' });
+}
+function renderList() {
+  const list = getList();
+  const open = list.filter(x => !x.done).length;
+  const late = list.filter(x => !x.done && x.deadline && daysUntil(x.deadline) <= 3).length;
+  const c = $('#list-count'); c.textContent = open; c.hidden = !open; c.classList.toggle('hot', late > 0);
+  const box = $('#list');
+  if (!list.length) {
+    box.innerHTML = `<div class="sheet list-empty"><h2>Aucun courrier enregistré</h2><p class="lead">Quand tu décodes un courrier, enregistre-le pour garder ses dates limites sous les yeux.</p><button class="btn" type="button" id="go-decode">Décoder un courrier</button></div>`;
+    $('#go-decode').addEventListener('click', () => showTab('decode'));
+    return;
+  }
+  const sorted = [...list].sort((a, b) => (a.done - b.done) || ((a.deadline ? new Date(a.deadline) : Infinity) - (b.deadline ? new Date(b.deadline) : Infinity)) || (new Date(b.savedAt) - new Date(a.savedAt)));
+  box.innerHTML = `
+    ${late ? `<p class="alert">${late === 1 ? 'Un courrier arrive' : late + ' courriers arrivent'} à échéance dans moins de 3 jours.</p>` : ''}
+    <div class="items">${sorted.map(x => {
+      const dd = x.deadline ? daysUntil(x.deadline) : null;
+      const when = x.done ? 'Traité' : x.deadline ? `Avant le ${fmtShort(new Date(x.deadline))}, ${relDays(dd)}` : 'Pas de date limite';
+      const docs = x.docsDone && x.docsDone.length ? ` | ${x.docsDone.length} document${x.docsDone.length > 1 ? 's' : ''} prêt${x.docsDone.length > 1 ? 's' : ''}` : '';
+      return `<article class="item l${Math.min(x.level, 3)}${x.done ? ' done' : ''}">
+        <div><h3>${esc(x.org)} : ${esc(x.type)}</h3><p><span class="when">${esc(when)}</span>${x.amount ? ' | ' + esc(fmtMoney(x.amount)) : ''}${esc(docs)}</p></div>
+        <div class="row">
+          <button class="btn small ghost" data-open="${x.id}" type="button">Ouvrir</button>
+          <button class="btn small ghost" data-done="${x.id}" type="button">${x.done ? 'À traiter' : 'Traité'}</button>
+          <button class="link" data-del="${x.id}" type="button" aria-label="Supprimer ce courrier">Supprimer</button>
+        </div></article>`;
+    }).join('')}</div>`;
+  $$('[data-open]', box).forEach(b => b.addEventListener('click', () => { const it = getList().find(x => x.id === b.dataset.open); if (it) openItem(it); }));
+  $$('[data-done]', box).forEach(b => b.addEventListener('click', () => {
+    const l = getList(); const it = l.find(x => x.id === b.dataset.done); if (!it) return;
+    it.done = !it.done; it.updatedAt = new Date().toISOString(); store.set(KEYS.list, l); renderList();
+  }));
+  $$('[data-del]', box).forEach(b => b.addEventListener('click', () => {
+    if (!confirm('Supprimer ce courrier de cet appareil ?')) return;
+    store.set(KEYS.list, getList().filter(x => x.id !== b.dataset.del)); rememberDeleted(b.dataset.del);
+    if (currentId === b.dataset.del) currentId = null;
+    renderList();
+  }));
+}
+
+
+/* ---------- Assistant IA local (WebLLM, tourne sur l'appareil) ---------- */
+const MODELS = {
+  light: { base: 'Qwen2.5-1.5B-Instruct', size: 'environ 1 Go', label: 'Légère' },
+  precise: { base: 'Qwen2.5-3B-Instruct', size: 'environ 2 Go', label: 'Précise' }
+};
+const gpu = { ok: false, f16: false, checked: false };
+const gpuReady = (async () => {
+  try {
+    if (navigator.gpu) {
+      const ad = await navigator.gpu.requestAdapter();
+      if (ad) { gpu.ok = true; gpu.f16 = ad.features && ad.features.has('shader-f16'); }
+    }
+  } catch (e) { gpu.ok = false; }
+  gpu.checked = true;
+})();
+const isSmallDevice = () => (navigator.deviceMemory && navigator.deviceMemory <= 4) || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+const iaPrefs = () => store.get(KEYS.ia, {});
+const prefSize = () => iaPrefs().size || (isSmallDevice() ? 'light' : 'precise');
+const modelId = size => MODELS[size].base + (gpu.f16 ? '-q4f16_1-MLC' : '-q4f32_1-MLC');
+
+let engine = null, engineModel = null, webllm = null, engineLoading = null;
+let aiState = 'off';   // off | loading | ready | error
+let aiErrorMsg = '';
+let aiQueue = Promise.resolve();
+let lastProgress = { progress: 0, text: '' };
+
+function enqueueAI(fn) { const p = aiQueue.then(() => fn()); aiQueue = p.catch(() => {}); return p; }
+function interruptAI() { try { if (engine) engine.interruptGenerate(); } catch (e) {} }
+
+function iaError(e) {
+  console.error(e);
+  if (e && e.message === 'nogpu') return "Ton appareil ne permet pas de faire tourner l'assistant IA.";
+  if (!navigator.onLine && !iaPrefs().ready) return "Il faut internet pour télécharger l'assistant la première fois.";
+  if (e && /quota|storage/i.test(String(e.message))) return "Pas assez d'espace de stockage sur l'appareil pour l'assistant IA.";
+  return "L'assistant n'a pas pu démarrer (mémoire insuffisante ou navigateur incompatible). Essaie la version légère dans les réglages, ou un ordinateur.";
+}
+function progressLabel(p) {
+  const pct = Math.round((p.progress || 0) * 100);
+  return (iaPrefs().ready ? "Démarrage de l'assistant… " : "Téléchargement de l'assistant (une seule fois)… ") + pct + ' %';
+}
+function engineProgress(p) {
+  lastProgress = p;
+  ['#ai-bar', '#ia-bar'].forEach(s => { const el = $(s); if (el) el.style.width = Math.round((p.progress || 0) * 100) + '%'; });
+  ['#ai-ptext', '#ia-text'].forEach(s => { const el = $(s); if (el) el.textContent = progressLabel(p); });
+  updatePill();
+}
+function setAIState(s, msg) { aiState = s; aiErrorMsg = msg || ''; updatePill(); renderAIZone(); refreshIaStatus(); }
+
+async function ensureEngine() {
+  await gpuReady;
+  if (!gpu.ok) throw new Error('nogpu');
+  const model = modelId(prefSize());
+  if (engine && engineModel === model) return engine;
+  if (engineLoading && engineLoading.model === model) return engineLoading.p;
+  const p = (async () => {
+    setAIState('loading');
+    if (!webllm) webllm = await import(WEBLLM_URL);
+    if (engine) { try { await engine.unload(); } catch (e) {} engine = null; }
+    const e = await webllm.CreateMLCEngine(model, { initProgressCallback: engineProgress });
+    engine = e; engineModel = model;
+    store.set(KEYS.ia, { ...iaPrefs(), size: prefSize(), ready: true, model });
+    setAIState('ready');
+    return e;
+  })();
+  engineLoading = { model, p };
+  try { return await p; }
+  catch (err) { engine = null; engineModel = null; setAIState('error', iaError(err)); throw err; }
+  finally { engineLoading = null; }
+}
+
+async function streamTo(messages, el, opts = {}) {
+  const mySeq = opts.seq;
+  const chunks = await engine.chat.completions.create({ messages, temperature: opts.temp ?? 0.3, max_tokens: opts.max || 450, stream: true });
+  let out = '';
+  for await (const c of chunks) {
+    if (mySeq !== undefined && mySeq !== seq) { interruptAI(); return null; }
+    out += (c.choices[0] && c.choices[0].delta && c.choices[0].delta.content) || '';
+    if (el) { opts.html ? (el.innerHTML = draftHTML(out)) : (el.textContent = out); }
+  }
+  return out.trim();
+}
+
+const SYS = "Tu es l'assistant de Paperdecrypt. Tu aides des personnes qui ne sont pas à l'aise avec les courriers administratifs français. Tu tutoies. Tu écris en français simple, avec des phrases courtes et sans jargon. Tu n'inventes rien : si une information n'est pas dans le courrier, tu dis que tu ne la trouves pas. Tu ne donnes pas de conseil juridique ; pour un cas grave, tu conseilles un point-justice ou une association.";
+function summaryForAI(a) {
+  const parts = [];
+  if (a.org) parts.push('Expéditeur probable : ' + a.org.court);
+  parts.push('Type probable : ' + a.type.label);
+  if (a.deadline) parts.push('Date limite : ' + fmtDate(a.deadline.date) + (a.deadline.approx ? ' (estimée)' : ''));
+  if (a.amount) parts.push('Montant : ' + fmtMoney(a.amount.value));
+  if (a.docs.length) parts.push('Documents demandés : ' + a.docs.join(' ; '));
+  parts.push("Date d'aujourd'hui : " + fmtDate(new Date()));
+  return parts.join('\n');
+}
+const letterBlock = (a, max) => `Courrier reçu :\n"""\n${a.flat.slice(0, max)}\n"""`;
+
+/* Ce que l'assistant fait tout seul après chaque décodage */
+function autoAI(a, mySeq) {
+  if (!iaPrefs().ready) return;
+  gpuReady.then(() => {
+    if (!gpu.ok || mySeq !== seq) return;
+    enqueueAI(async () => {
+      if (mySeq !== seq) return;
+      try { await ensureEngine(); } catch (e) { return; }
+      if (mySeq !== seq) return;
+      await aiExplain(mySeq);
+      if (mySeq === seq && !a.docs.length && ['pieces', 'suspension', 'convocation'].includes(a.type.id)) await aiDocs(a, mySeq);
+    });
+  });
+}
+
+async function aiExplain(mySeq) {
+  const box = $('#ai-box'); if (!box) return;
+  box.classList.add('on'); box.textContent = '…';
+  const re = $('#ai-redo'); if (re) re.hidden = true;
+  try {
+    await streamTo([
+      { role: 'system', content: SYS },
+      { role: 'user', content: `Analyse automatique (peut contenir des erreurs) :\n${summaryForAI(current)}\n\n${letterBlock(current, 4200)}\n\nExplique-moi ce courrier en 4 à 6 phrases : qui m'écrit, ce qu'on me demande exactement, avant quand, et la première chose à faire maintenant. Pas de titre, pas de liste.` }
+    ], box, { seq: mySeq });
+  } catch (e) { if (mySeq === seq) box.textContent = iaError(e); }
+  if (re && mySeq === seq) re.hidden = false;
+}
+
+async function aiDocs(a, mySeq) {
+  try {
+    const out = await streamTo([
+      { role: 'system', content: SYS },
+      { role: 'user', content: `${letterBlock(a, 3500)}\n\nListe uniquement les documents ou justificatifs que ce courrier me demande d'envoyer, un par ligne, chaque ligne commençant par "- ". Recopie-les tels qu'ils sont écrits dans le courrier. S'il n'y en a aucun, réponds seulement : AUCUN` }
+    ], null, { seq: mySeq, max: 250, temp: 0.1 });
+    if (!out || mySeq !== seq || /^aucun/i.test(out)) return;
+    const docs = out.split('\n').map(l => l.trim()).filter(l => /^[-•*]\s*\S/.test(l)).map(l => l.replace(/^[-•*]\s*/, '').replace(/[.;]$/, '')).filter(l => l.length > 3 && l.length < 150).slice(0, 10);
+    if (!docs.length || current !== a || a.docs.length) return;
+    a.docs = docs; a.docsFromAI = true; a.docsDone = [];
+    $('#docs-zone').innerHTML = docsHTML(a); bindDocs();
+    $('#brief-text').textContent = brief(a);
+  } catch (e) { console.error(e); }
+}
+
+async function aiAnswer(q, mySeq) {
+  const el = addMsg('bot', '…'); if (!el) return;
+  try {
+    await ensureEngine();
+    if (mySeq !== seq) return;
+    chatHist.push({ role: 'user', content: q });
+    const out = await streamTo([
+      { role: 'system', content: SYS + `\n\nVoici le courrier dont la personne parle.\n${summaryForAI(current)}\n\n${letterBlock(current, 3000)}\n\nRéponds à ses questions en 2 à 5 phrases, en t'appuyant sur ce courrier.` },
+      ...chatHist.slice(-6)
+    ], el, { seq: mySeq, max: 350 });
+    if (out) chatHist.push({ role: 'assistant', content: out });
+  } catch (e) {
+    const k = routeQuestion(q);
+    el.textContent = k ? quickAnswer(k, current) : iaError(e);
+  }
+}
+
+async function aiImprove(mySeq) {
+  const btn = $('#ai-improve'), draft = $('#draft'); if (!btn || !draft) return;
+  const before = draft.innerText;
+  btn.disabled = true; btn.textContent = "L'IA réécrit…";
+  try {
+    await ensureEngine();
+    if (mySeq !== seq) return;
+    const out = await streamTo([
+      { role: 'system', content: SYS + ' Quand on te demande une lettre, tu réponds uniquement avec la lettre, sans commentaire avant ou après.' },
+      { role: 'user', content: `${letterBlock(current, 2200)}\n\nVoici mon brouillon de réponse :\n"""\n${before}\n"""\n\nRéécris ce brouillon pour qu'il soit clair, poli et adapté au courrier reçu, en vouvoyant le destinataire. Garde exactement les passages entre crochets [ ] pour que je les complète. N'ajoute aucune information inventée : pas de date, de montant, de nom ou de motif qui ne sont pas déjà dans le brouillon ou le courrier. Réponds uniquement avec la lettre.` }
+    ], draft, { seq: mySeq, html: true, max: 750 });
+    if (mySeq !== seq) return;
+    if (!out || out.length < 80) { setDraft(before); toast("L'IA n'a pas réussi, ton brouillon est conservé"); }
+    else { setDraft(out.replace(/^"""\s*|\s*"""$/g, '')); draftBackup = before; $('#undo-draft').hidden = false; }
+  } catch (e) { if (mySeq === seq) { setDraft(before); toast(iaError(e)); } }
+  finally { if (btn.isConnected) { btn.disabled = false; btn.textContent = "Améliorer avec l'IA"; } }
+}
+
+/* Zone de l'assistant dans le résultat */
+async function renderAIZone() {
+  const z = $('#ai-zone'); if (!z) return;
+  await gpuReady;
+  const imp = $('#ai-improve'); if (imp) imp.hidden = !gpu.ok;
+  const hint = $('#chat-hint');
+  if (!gpu.ok) {
+    z.innerHTML = '';
+    if (hint) hint.textContent = "Sur cet appareil, l'assistant répond aux questions rapides. Pour poser n'importe quelle question, ouvre le décodeur dans Chrome ou Edge récent.";
+    return;
+  }
+  if (hint) hint.textContent = iaPrefs().ready || aiState === 'ready' ? "L'assistant IA répond à n'importe quelle question sur ce courrier." : "Active l'assistant IA pour poser n'importe quelle question.";
+  const prog = `<div class="progress${aiState === 'loading' ? ' on' : ''}" id="ai-progress"><div class="bar"><i id="ai-bar" style="width:${Math.round((lastProgress.progress || 0) * 100)}%"></i></div><p id="ai-ptext">${esc(progressLabel(lastProgress))}</p></div>`;
+  const box = '<div class="ai-box" id="ai-box"></div>';
+  if (aiState === 'error') {
+    z.innerHTML = `<div class="ai-card"><p>${esc(aiErrorMsg)}</p><div class="actions"><button class="btn small ghost" id="ai-retry" type="button">Réessayer</button></div></div>`;
+    $('#ai-retry').addEventListener('click', () => { setAIState('off'); enqueueAI(async () => { try { await ensureEngine(); await aiExplain(seq); } catch (e) {} }); });
+    return;
+  }
+  if (!iaPrefs().ready && aiState !== 'loading') {
+    const s = prefSize();
+    z.innerHTML = `<div class="ai-card">
+      <p><b>Va plus loin avec l'assistant IA.</b> Il t'explique ce courrier avec ses mots, répond à tes questions et améliore ta lettre. Il fonctionne sur ton appareil : rien n'est envoyé sur internet.</p>
+      <div class="actions"><button class="btn small" id="ai-enable" type="button">Activer l'assistant IA</button><span class="note">Téléchargement unique, ${esc(MODELS[s].size)}${isSmallDevice() ? ', de préférence en wifi' : ''}.</span></div>
+    </div>${prog}${box}`;
+    $('#ai-enable').addEventListener('click', () => {
+      store.set(KEYS.ia, { ...iaPrefs(), size: s });
+      const my = seq;
+      enqueueAI(async () => { try { await ensureEngine(); } catch (e) { return; } if (my === seq) { await aiExplain(my); if (my === seq && !current.docs.length && ['pieces', 'suspension', 'convocation'].includes(current.type.id)) await aiDocs(current, my); } });
+    });
+    return;
+  }
+  z.innerHTML = `<div class="ai-head"><span class="ai-badge">Assistant IA</span><button class="link" id="ai-redo" type="button" hidden>Réexpliquer</button></div>${prog}${box}`;
+  $('#ai-redo').addEventListener('click', () => { const my = seq; enqueueAI(() => aiExplain(my)); });
+}
+
+function updatePill() {
+  const p = $('#ai-pill'); if (!p) return;
+  if (!gpu.checked || !gpu.ok) { p.hidden = true; return; }
+  p.hidden = false;
+  const pre = window.innerWidth < 520 ? 'IA' : 'Assistant IA';
+  const map = { off: pre + (iaPrefs().ready ? ' : en veille' : ' : désactivé'), loading: pre + ' : ' + Math.round((lastProgress.progress || 0) * 100) + ' %', ready: pre + ' : prêt', error: pre + ' : erreur' };
+  p.textContent = map[aiState] || map.off;
+  p.dataset.state = aiState === 'off' && iaPrefs().ready ? 'idle' : aiState;
+}
+
+/* ---------- Réglages ---------- */
+async function openSettings() {
+  refreshPremiumUI();
+  const me = store.get(KEYS.me, {});
+  $('#me-nom').value = me.nom || ''; $('#me-adresse').value = me.adresse || ''; $('#me-ville').value = me.ville || '';
+  const d = $('#settings'); if (d.showModal) d.showModal(); else d.setAttribute('open', '');
+  await gpuReady;
+  $$('input[name="ia-model"]').forEach(r => r.checked = r.value === prefSize());
+  $('#ia-unsupported').hidden = gpu.ok; $('#ia-options').hidden = !gpu.ok;
+  $('#ia-reco').textContent = isSmallDevice() ? 'Conseillé pour ton appareil : la version légère.' : 'Conseillé pour ton appareil : la version précise.';
+  refreshIaStatus();
+}
+function refreshIaStatus() {
+  const st = $('#ia-status'); if (!st) return;
+  const ia = iaPrefs(); const sel = ($$('input[name="ia-model"]').find(r => r.checked) || {}).value || prefSize();
+  const same = ia.ready && ia.size === sel;
+  st.textContent = aiState === 'loading' ? progressLabel(lastProgress)
+    : engine && engineModel === modelId(sel) ? 'Activé et prêt.'
+    : same ? 'Téléchargé sur cet appareil. Il démarre tout seul au prochain courrier.'
+    : aiState === 'error' ? aiErrorMsg : 'Pas encore activé.';
+  $('#ia-load').textContent = same ? 'Démarrer maintenant' : 'Télécharger et activer';
+  $('#ia-progress').classList.toggle('on', aiState === 'loading');
+  $('#ia-off').hidden = !ia.ready;
+}
+function saveMe() {
+  store.set(KEYS.me, { nom: $('#me-nom').value.trim(), adresse: $('#me-adresse').value.trim(), ville: $('#me-ville').value.trim() });
+  if (current && $('#draft') && draftBackup == null) setDraft(buildLetter(currentIntent, current));
+}
+['#me-nom', '#me-adresse', '#me-ville'].forEach(s => $(s).addEventListener('change', saveMe));
+$$('input[name="ia-model"]').forEach(r => r.addEventListener('change', () => {
+  const ia = iaPrefs(); if (ia.size !== r.value) store.set(KEYS.ia, { size: r.value, ready: false });
+  refreshIaStatus();
+}));
+$('#ia-load').addEventListener('click', () => {
+  const sel = ($$('input[name="ia-model"]').find(r => r.checked) || {}).value || prefSize();
+  if (iaPrefs().size !== sel) store.set(KEYS.ia, { size: sel, ready: false });
+  enqueueAI(async () => {
+    try { await ensureEngine(); toast("L'assistant IA est prêt"); if (current) await aiExplain(seq); }
+    catch (e) { toast(iaError(e)); }
+  });
+});
+$('#ia-off').addEventListener('click', async () => {
+  interruptAI();
+  if (engine) { try { await engine.unload(); } catch (e) {} engine = null; engineModel = null; }
+  store.set(KEYS.ia, { size: prefSize(), ready: false });
+  setAIState('off'); toast("Assistant IA désactivé");
+});
+$('#open-settings').addEventListener('click', openSettings);
+$('#ai-pill').addEventListener('click', openSettings);
+$('#close-settings').addEventListener('click', () => { saveMe(); $('#settings').close(); });
+$('#settings').addEventListener('close', saveMe);
+$('#wipe-btn').addEventListener('click', () => {
+  if (!confirm('Effacer tous tes courriers enregistrés sur cet appareil ? Cette action est définitive.')) return;
+  store.set(KEYS.list, []); currentId = null; renderList(); toast('Courriers effacés');
+});
+$('#export-btn').addEventListener('click', () => {
+  const data = { app: 'decodeur-courrier', version: 2, exportedAt: new Date().toISOString(), courriers: getList(), moi: store.get(KEYS.me, {}) };
+  downloadFile('sauvegarde-courriers-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(data, null, 1), 'application/json');
+});
+$('#import-input').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    if (!data || !Array.isArray(data.courriers)) throw new Error('format');
+    const list = getList(); let added = 0;
+    for (const it of data.courriers) { if (it && it.id && it.text && !list.some(x => x.id === it.id)) { list.push(it); added++; } }
+    store.set(KEYS.list, list);
+    if (data.moi && !store.get(KEYS.me, null)) store.set(KEYS.me, data.moi);
+    renderList(); toast(added ? `${added} courrier${added > 1 ? 's' : ''} restauré${added > 1 ? 's' : ''}` : 'Rien de nouveau dans cette sauvegarde');
+  } catch (err) { toast("Ce fichier n'est pas une sauvegarde du décodeur"); }
+});
+
+/* ---------- Récupérer mon argent ---------- */
+const fd = s => s ? fmtDate(parseDay(s)) : '[date]';
+const CASES = [
+  { id: 'train', title: 'Train en retard', teaser: "Jusqu'à 50 % du prix du billet", relance: 30,
+    fields: [
+      { id: 'compagnie', label: 'Compagnie', type: 'text', ph: 'SNCF (TGV INOUI, Intercités, TER), Ouigo, Trenitalia…', req: true },
+      { id: 'trajet', label: 'Trajet', type: 'text', ph: 'Paris → Lyon', req: true },
+      { id: 'date', label: 'Date du voyage', type: 'date', req: true },
+      { id: 'numero', label: 'Numéro du train', type: 'text', ph: 'Ex. 6611' },
+      { id: 'ref', label: 'Référence du billet ou de la réservation', type: 'text' },
+      { id: 'prix', label: 'Prix du billet (€)', type: 'number', req: true },
+      { id: 'retard', label: "Retard à l'arrivée (en minutes)", type: 'number', req: true }],
+    compute(v) {
+      const r = +v.retard || 0, prix = +v.prix || 0;
+      const fast = "Le plus rapide est souvent le formulaire en ligne de la compagnie : ta lettre te sert de modèle, ou de preuve si tu dois insister.";
+      if (r >= 60) {
+        const pct = r >= 120 ? 50 : 25, amount = Math.round(prix * pct) / 100;
+        const lines = [`Avec ${r} minutes de retard, la règle européenne te donne droit à ${pct} % du prix du billet.`, fast];
+        if (amount < 4) lines.push('Attention : les indemnités de moins de 4 € peuvent ne pas être versées.');
+        return { eligible: true, amount, pct, lines, legal: 'Règlement (UE) 2021/782, article 19' };
+      }
+      if (r >= 30) return { eligible: false, maybe: true, amount: null, lines: ["Sous 60 minutes, la règle européenne ne prévoit pas d'indemnité.", "Mais certaines compagnies vont plus loin : la SNCF, par exemple, indemnise aussi à partir de 30 minutes sur TGV INOUI et Intercités, selon ses propres conditions. Fais la demande, ça ne coûte rien.", fast] };
+      return { eligible: false, amount: null, lines: ["Sous 30 minutes de retard, il n'y a en général pas d'indemnité prévue."] };
+    },
+    letter(v, res) {
+      const ask = res.amount ? `je vous demande de m'indemniser à hauteur de ${res.pct} % du prix de mon billet, soit ${money(res.amount)}` : "je vous demande de bien vouloir m'indemniser selon vos conditions de compensation des retards";
+      return letterFrame({ dest: 'Service client ' + (v.compagnie || ''), objet: 'Demande d\'indemnisation pour retard', refs: v.ref ? 'Référence de réservation : ' + v.ref : '',
+        corps: `Le ${fd(v.date)}, j'ai voyagé sur le trajet ${v.trajet || '[trajet]'}${v.numero ? ' (train n° ' + v.numero + ')' : ''}. Ce train est arrivé à destination avec ${v.retard || '[X]'} minutes de retard.\n\nConformément au règlement (UE) 2021/782 sur les droits des voyageurs ferroviaires et à vos conditions d'indemnisation, ${ask}.\n\nVous trouverez ci-joint mon billet. Je vous remercie de procéder au versement par virement sur le RIB joint.` });
+    },
+    demande: (v, res) => res.amount ? `de me verser l'indemnité de ${money(res.amount)} due pour le retard de mon train du ${fd(v.date)}` : `de m'indemniser pour le retard de mon train du ${fd(v.date)}`,
+    escalade: 'le Médiateur Tourisme et Voyage (mtv.travel), un service gratuit',
+    name: v => 'Train ' + (v.trajet || '') + (v.date ? ' du ' + fmtShort(parseDay(v.date)) : '') },
+
+  { id: 'avion', title: 'Vol retardé ou annulé', teaser: "De 250 € à 600 € par passager", relance: 30,
+    fields: [
+      { id: 'compagnie', label: 'Compagnie aérienne', type: 'text', ph: 'Air France, easyJet, Ryanair…', req: true },
+      { id: 'vol', label: 'Numéro du vol', type: 'text', ph: 'Ex. AF1234', req: true },
+      { id: 'trajet', label: 'Trajet', type: 'text', ph: 'Paris → Rome', req: true },
+      { id: 'date', label: 'Date du vol', type: 'date', req: true },
+      { id: 'ref', label: 'Référence de réservation', type: 'text' },
+      { id: 'probleme', label: 'Ce qui s\'est passé', type: 'select', req: true, options: [['retard', 'Vol arrivé en retard'], ['annulation', 'Vol annulé'], ['refus', "Embarquement refusé (surbooking)"]] },
+      { id: 'retard', label: "Retard à l'arrivée (en heures)", type: 'number', show: v => v.probleme === 'retard' },
+      { id: 'preavis', label: "Quand as-tu été prévenu de l'annulation ?", type: 'select', show: v => v.probleme === 'annulation', options: [['moins', 'Moins de 14 jours avant le départ'], ['plus', 'Plus de 14 jours avant le départ']] },
+      { id: 'distance', label: 'Distance du vol', type: 'select', req: true, options: [['court', "Moins de 1 500 km (ex. Paris-Rome)"], ['moyen', 'De 1 500 à 3 500 km, ou plus de 1 500 km dans l\'Union européenne'], ['long', 'Plus de 3 500 km hors Union européenne (ex. Paris-New York)']] }],
+    compute(v) {
+      const amount = { court: 250, moyen: 400, long: 600 }[v.distance] || null;
+      const common = ["Ça s'applique aux vols au départ de l'Union européenne, et aux vols vers l'Union européenne avec une compagnie européenne.", "La compagnie peut refuser si le problème vient de circonstances extraordinaires (météo dangereuse, grève du contrôle aérien…). Une panne technique ou une grève de son propre personnel n'en fait en général pas partie.", "Tu peux réclamer toi-même gratuitement avec la lettre ci-dessous. Si tu préfères qu'un service spécialisé s'en occupe à ta place, c'est possible aussi, en échange d'une commission sur l'indemnité."];
+      if (v.probleme === 'retard') {
+        const h = +v.retard || 0;
+        if (h >= 3) return { eligible: true, amount, lines: [`Ton vol est arrivé avec ${h} h de retard : au-delà de 3 heures, tu as droit à une indemnité forfaitaire de ${money(amount)}.`, ...common], legal: 'Règlement (CE) n° 261/2004, articles 6 et 7' };
+        return { eligible: false, amount: null, lines: ["Il faut au moins 3 heures de retard à l'arrivée pour avoir droit à l'indemnité forfaitaire. Tu peux quand même demander le remboursement de frais (repas…) si la compagnie ne les a pas pris en charge."] };
+      }
+      if (v.probleme === 'annulation') {
+        if (v.preavis === 'plus') return { eligible: false, amount: null, lines: ["Prévenu plus de 14 jours avant, tu as droit au remboursement du billet ou à un autre vol, mais pas à l'indemnité forfaitaire."] };
+        return { eligible: true, amount, lines: [`Ton vol a été annulé moins de 14 jours avant le départ : tu as droit à ${money(amount)}, en plus du remboursement ou d'un autre vol. L'indemnité peut être réduite de moitié si on t'a proposé un vol de remplacement arrivant peu après l'horaire prévu.`, ...common], legal: 'Règlement (CE) n° 261/2004, articles 5 et 7' };
+      }
+      return { eligible: true, amount, lines: [`Un refus d'embarquement contre ta volonté te donne droit à ${money(amount)}, en plus d'un remboursement ou d'un autre vol.`, ...common.slice(0, 1), common[2]], legal: 'Règlement (CE) n° 261/2004, articles 4 et 7' };
+    },
+    letter(v, res) {
+      const what = v.probleme === 'annulation' ? "Ce vol a été annulé, et je n'en ai été informé(e) que moins de 14 jours avant le départ."
+        : v.probleme === 'refus' ? "L'embarquement m'a été refusé alors que je disposais d'une réservation confirmée et que je me suis présenté(e) à l'heure."
+        : `Ce vol est arrivé à destination avec ${v.retard || '[X]'} heures de retard.`;
+      return letterFrame({ dest: 'Service client ' + (v.compagnie || ''), objet: "Demande d'indemnisation, vol " + (v.vol || ''), lrar: true, refs: v.ref ? 'Référence de réservation : ' + v.ref : '',
+        corps: `J'étais passager du vol ${v.vol || '[numéro]'} du ${fd(v.date)}, sur le trajet ${v.trajet || '[trajet]'}. ${what}\n\nEn application du règlement (CE) n° 261/2004, je vous demande de me verser l'indemnisation forfaitaire de ${money(res.amount)} à laquelle j'ai droit.\n\nVous trouverez ci-joint ma réservation et ma carte d'embarquement. Je vous remercie de procéder au paiement par virement sur le RIB joint, dans un délai de 30 jours.` });
+    },
+    demande: (v, res) => `de me verser l'indemnisation de ${money(res.amount)} due pour le vol ${v.vol || ''} du ${fd(v.date)}`,
+    escalade: 'le Médiateur Tourisme et Voyage (mtv.travel), un service gratuit',
+    name: v => 'Vol ' + (v.vol || v.trajet || '') + (v.date ? ' du ' + fmtShort(parseDay(v.date)) : '') },
+
+  { id: 'colis', title: 'Colis perdu, en retard ou abîmé', teaser: 'Remboursement complet', relance: 15,
+    fields: [
+      { id: 'vendeur', label: 'Site ou vendeur', type: 'text', ph: 'Le site où tu as commandé', req: true },
+      { id: 'commande', label: 'Numéro de commande', type: 'text' },
+      { id: 'dateCmd', label: 'Date de la commande', type: 'date', req: true },
+      { id: 'montant', label: 'Montant payé (€)', type: 'number', req: true },
+      { id: 'probleme', label: 'Le problème', type: 'select', req: true, options: [['jamais', 'Je ne l\'ai jamais reçu'], ['retard', 'Il est très en retard'], ['abime', 'Il est arrivé abîmé'], ['conforme', 'Ce n\'est pas ce que j\'ai commandé']] },
+      { id: 'datePrevue', label: 'Date de livraison prévue', type: 'date', show: v => v.probleme === 'retard' }],
+    compute(v) {
+      const lines = ["Bonne nouvelle : c'est le vendeur qui est responsable du colis jusqu'à ce que tu l'aies entre les mains. Ce n'est pas à toi de te débrouiller avec le transporteur, même si le vendeur te renvoie vers lui."];
+      if (v.probleme === 'jamais') lines.push('Si le suivi indique « livré » mais que tu n\'as rien reçu, signale-le vite au vendeur, par écrit.');
+      if (v.probleme === 'retard') lines.push("Commence par demander la livraison dans un nouveau délai. Sans livraison dans ce délai, tu peux annuler la commande et être remboursé.");
+      if (v.probleme === 'abime' || v.probleme === 'conforme') lines.push("Prends des photos du colis et du produit tout de suite. Le vendeur doit échanger ou rembourser.");
+      return { eligible: true, amount: +v.montant || null, lines, legal: 'Code de la consommation (obligation de livraison et garantie de conformité)' };
+    },
+    letter(v, res) {
+      const base = `J'ai passé commande sur votre site le ${fd(v.dateCmd)}${v.commande ? ' (commande n° ' + v.commande + ')' : ''}, pour un montant de ${money(res.amount)}.`;
+      let corps;
+      if (v.probleme === 'retard') corps = `${base} Cette commande devait m'être livrée au plus tard le ${fd(v.datePrevue)}. À ce jour, je ne l'ai toujours pas reçue.\n\nJe vous demande de me livrer dans un délai de 8 jours à compter de la réception de ce courrier. À défaut, je considérerai la vente comme résolue, comme le prévoit le code de la consommation, et vous demanderai le remboursement intégral de ${money(res.amount)}.`;
+      else if (v.probleme === 'abime' || v.probleme === 'conforme') corps = `${base} J'ai reçu ma commande le [date de réception], mais ${v.probleme === 'abime' ? 'le produit est arrivé abîmé' : 'le produit ne correspond pas à ma commande'} : [décris le problème].\n\nAu titre de la garantie légale de conformité, je vous demande de procéder sans frais à son remplacement, ou à défaut à son remboursement intégral. Je joins des photos.`;
+      else corps = `${base} Je n'ai jamais reçu ce colis.\n\nLe vendeur restant responsable de la marchandise jusqu'à sa remise au consommateur, je vous demande de m'expédier à nouveau ma commande sous 8 jours, ou à défaut de me rembourser intégralement la somme de ${money(res.amount)}.`;
+      return letterFrame({ dest: 'Service client ' + (v.vendeur || ''), objet: v.probleme === 'retard' ? 'Commande non livrée dans les délais' : v.probleme === 'jamais' ? 'Commande jamais reçue' : 'Produit non conforme', lrar: true, refs: v.commande ? 'Commande n° ' + v.commande : '', corps });
+    },
+    demande: (v, res) => `de me livrer ma commande${v.commande ? ' n° ' + v.commande : ''} ou de me rembourser la somme de ${money(res.amount)}`,
+    escalade: 'le médiateur de la consommation dont vous relevez, puis le tribunal si nécessaire',
+    name: v => 'Colis ' + (v.vendeur || '') },
+
+  { id: 'caution', title: 'Caution pas rendue', teaser: 'Plus 10 % du loyer par mois de retard', relance: 15,
+    fields: [
+      { id: 'bailleur', label: 'Propriétaire ou agence', type: 'text', req: true },
+      { id: 'adresse', label: 'Adresse du logement', type: 'text', req: true },
+      { id: 'dateCles', label: 'Date de remise des clés', type: 'date', req: true },
+      { id: 'conforme', label: "L'état des lieux de sortie", type: 'select', req: true, options: [['oui', 'Pareil que celui d\'entrée'], ['non', 'Avec des différences ou des réserves']] },
+      { id: 'depot', label: 'Montant du dépôt de garantie (€)', type: 'number', req: true },
+      { id: 'loyer', label: 'Loyer mensuel hors charges (€)', type: 'number', req: true }],
+    compute(v) {
+      const keys = parseDay(v.dateCles); if (!keys) return { eligible: false, lines: ['Indique la date de remise des clés.'] };
+      const months = v.conforme === 'oui' ? 1 : 2, due = addMonths(keys, months), depot = +v.depot || 0, loyer = +v.loyer || 0;
+      const now = today0();
+      const lines = [`Ton propriétaire a ${months} mois après la remise des clés pour te rendre ta caution, soit jusqu'au ${fmtDate(due)}.`];
+      if (v.conforme === 'non') lines.push("Comme l'état des lieux montre des différences, il peut retenir des sommes, mais seulement si elles sont justifiées (devis, factures).");
+      if (now <= due) { lines.push(`Ce délai n'est pas encore dépassé. Si tu n'as rien reçu le ${fmtDate(due)}, reviens ici : la lettre sera prête.`); return { eligible: false, maybe: true, amount: depot, due, lines, legal: 'Loi du 6 juillet 1989, article 22' }; }
+      let late = 0; while (addMonths(due, late) < now) late++;
+      const penalty = Math.round(late * 0.1 * loyer * 100) / 100;
+      lines.push(`Le délai est dépassé. La loi ajoute 10 % du loyer hors charges par mois de retard commencé : ${late} mois, soit ${money(penalty)} en plus.`);
+      return { eligible: true, amount: depot + penalty, depot, penalty, late, months, due, lines, legal: 'Loi n° 89-462 du 6 juillet 1989, article 22' };
+    },
+    letter(v, res) {
+      const due = res.due ? fmtDate(res.due) : '[date]';
+      const pen = res.penalty ? `\n\nCe délai étant dépassé, et conformément au même article, le montant dû est majoré d'une somme égale à 10 % du loyer mensuel hors charges pour chaque mois de retard commencé, soit ${money(res.penalty)} à ce jour.` : '';
+      return letterFrame({ dest: v.bailleur, objet: 'Restitution du dépôt de garantie', lrar: true,
+        corps: `J'ai quitté le logement situé ${v.adresse || '[adresse]'} et vous en ai remis les clés le ${fd(v.dateCles)}. L'état des lieux de sortie était ${v.conforme === 'oui' ? "conforme à l'état des lieux d'entrée" : 'accompagné de réserves'}.\n\nConformément à l'article 22 de la loi n° 89-462 du 6 juillet 1989, vous disposiez d'un délai de ${v.conforme === 'oui' ? 'un mois' : 'deux mois'} pour me restituer mon dépôt de garantie de ${money(+v.depot)}${v.conforme === 'non' ? ', déduction faite des sommes dûment justifiées' : ''}, soit jusqu'au ${due}.${pen}\n\nJe vous demande donc de me verser la somme de ${money(res.amount)} sous 8 jours, par virement sur le RIB joint.` });
+    },
+    demande: (v, res) => `de me restituer mon dépôt de garantie, soit ${money(res.amount)}`,
+    escalade: "la commission départementale de conciliation (gratuite), puis le tribunal si nécessaire",
+    name: v => 'Caution ' + (v.adresse || v.bailleur || '') },
+
+  { id: 'panne', title: 'Produit en panne', teaser: 'Réparation ou remplacement gratuit', relance: 30,
+    fields: [
+      { id: 'vendeur', label: 'Magasin ou site', type: 'text', req: true },
+      { id: 'produit', label: 'Produit', type: 'text', ph: 'Ex. aspirateur Dyson V8', req: true },
+      { id: 'date', label: "Date d'achat ou de livraison", type: 'date', req: true },
+      { id: 'prix', label: 'Prix payé (€)', type: 'number' },
+      { id: 'etat', label: 'Acheté', type: 'select', req: true, options: [['neuf', 'Neuf'], ['occasion', "D'occasion, chez un professionnel"]] },
+      { id: 'probleme', label: 'Le problème', type: 'textarea', ph: "Ex. il ne s'allume plus depuis le 2 octobre", req: true }],
+    compute(v) {
+      const d = parseDay(v.date); if (!d) return { eligible: false, lines: ["Indique la date d'achat."] };
+      const months = v.etat === 'occasion' ? 12 : 24, end = addMonths(d, months);
+      if (today0() <= end) return { eligible: true, amount: +v.prix || null, end, months, lines: [`Ton produit est encore sous garantie légale jusqu'au ${fmtDate(end)}.`, "Le vendeur doit le réparer ou le remplacer gratuitement, dans un délai de 30 jours. Il ne peut pas te renvoyer vers le fabricant.", `Pendant ces ${months} mois, c'est au vendeur de prouver que la panne vient de toi, pas l'inverse.`], legal: 'Code de la consommation, articles L217-3 et suivants' };
+      return { eligible: false, maybe: true, amount: null, end, lines: [`La garantie légale s'est terminée le ${fmtDate(end)}.`, "Vérifie s'il te reste une garantie commerciale (constructeur ou extension).", "Si le défaut existait dès l'achat sans être visible, la garantie des vices cachés peut encore s'appliquer pendant 2 ans après la découverte du défaut."] };
+    },
+    letter(v, res) {
+      return letterFrame({ dest: v.vendeur, objet: 'Mise en œuvre de la garantie légale de conformité', lrar: true,
+        corps: `Le ${fd(v.date)}, j'ai acheté auprès de vous le produit suivant : ${v.produit || '[produit]'}${v.prix ? ', pour ' + money(+v.prix) : ''}. Ce produit présente le défaut suivant : ${v.probleme || '[décris le problème]'}.\n\nEn application des articles L217-3 et suivants du code de la consommation, je vous demande de procéder à sa réparation ou à son remplacement, sans aucun frais pour moi, dans un délai de 30 jours. Je vous rappelle que le défaut apparu dans les ${v.etat === 'occasion' ? '12' : '24'} mois suivant la délivrance est présumé exister au moment de celle-ci.\n\nJe joins une copie de ma preuve d'achat.` });
+    },
+    demande: v => `de réparer ou de remplacer gratuitement le produit ${v.produit || ''}`,
+    escalade: 'le médiateur de la consommation dont vous relevez, puis le tribunal si nécessaire',
+    name: v => (v.produit || 'Produit') + ' en panne' },
+
+  { id: 'retractation', title: 'Remboursement pas reçu', teaser: 'Après un retour de commande en ligne', relance: 15,
+    fields: [
+      { id: 'vendeur', label: 'Site ou vendeur', type: 'text', req: true },
+      { id: 'commande', label: 'Numéro de commande', type: 'text' },
+      { id: 'dateRetr', label: 'Date où tu as annulé ou demandé le retour', type: 'date', req: true },
+      { id: 'montant', label: 'Montant à rembourser (€)', type: 'number', req: true }],
+    compute(v) {
+      const d = parseDay(v.dateRetr); if (!d) return { eligible: false, lines: ['Indique la date de ta demande.'] };
+      const due = new Date(d); due.setDate(due.getDate() + 14);
+      const lines = [`Après une rétractation, le vendeur doit te rembourser au plus tard 14 jours après avoir été prévenu, soit le ${fmtDate(due)}.`, "Il peut attendre d'avoir récupéré le produit, ou que tu lui envoies la preuve que tu l'as renvoyé."];
+      if (today0() > due) { lines.push('Ce délai est dépassé : la loi prévoit même des majorations quand le vendeur rembourse en retard.'); return { eligible: true, amount: +v.montant || null, due, lines, legal: 'Code de la consommation, article L221-24' }; }
+      lines.push(`Ce délai n'est pas encore dépassé. Sans remboursement le ${fmtDate(due)}, reviens ici.`);
+      return { eligible: false, maybe: true, amount: +v.montant || null, due, lines };
+    },
+    letter(v, res) {
+      return letterFrame({ dest: 'Service client ' + (v.vendeur || ''), objet: 'Remboursement suite à rétractation', lrar: true, refs: v.commande ? 'Commande n° ' + v.commande : '',
+        corps: `Le ${fd(v.dateRetr)}, je vous ai informé de ma décision d'exercer mon droit de rétractation concernant ma commande${v.commande ? ' n° ' + v.commande : ''}, d'un montant de ${money(res.amount)}. [J'ai renvoyé le produit le (date de renvoi).]\n\nEn application de l'article L221-24 du code de la consommation, vous deviez me rembourser au plus tard 14 jours après avoir été informé de ma décision. Ce délai est dépassé.\n\nJe vous demande de procéder au remboursement intégral de ${money(res.amount)} sous 8 jours.` });
+    },
+    demande: (v, res) => `de me rembourser la somme de ${money(res.amount)}`,
+    escalade: 'le médiateur de la consommation dont vous relevez, puis le tribunal si nécessaire',
+    name: v => 'Remboursement ' + (v.vendeur || '') }
+];
+const caseById = id => CASES.find(c => c.id === id);
+const STATUS = { draft: 'À envoyer', sent: 'Envoyée', reminded: 'Relancée', won: 'Argent récupéré', lost: 'Refusée' };
+
+let money$ = { mode: 'home' };   // état de l'écran
+const getClaims = () => store.get(KEYS.claims, []);
+function saveClaims(l) { store.set(KEYS.claims, l); }
+
+const destOf = (c, v) => ({ train: 'Service client ' + (v.compagnie || ''), avion: 'Service client ' + (v.compagnie || ''), colis: 'Service client ' + (v.vendeur || ''), retractation: 'Service client ' + (v.vendeur || ''), caution: v.bailleur || '', panne: v.vendeur || '' })[c.id];
+function claimLetterEscalation(c, claim, res) {
+  return letterFrame({ dest: destOf(c, claim.values), objet: 'Mise en demeure', lrar: true,
+    corps: `Par courrier du ${claim.sentAt ? fmtDate(parseDay(claim.sentAt)) : '[date de ton premier courrier]'}, je vous ai demandé ${c.demande(claim.values, res)}. À ce jour, je n'ai reçu aucune réponse satisfaisante.\n\nPar la présente, je vous mets en demeure ${c.demande(claim.values, res)} dans un délai de 8 jours à compter de la réception de ce courrier.\n\nÀ défaut, je saisirai ${c.escalade}.` });
+}
+
+function renderMoney() {
+  const box = $('#money');
+  if (money$.mode === 'form') return renderClaimForm(box);
+  if (money$.mode === 'result') return renderClaimResult(box);
+  const claims = getClaims();
+  const won = claims.filter(c => c.status === 'won').reduce((s, c) => s + (+c.recovered || +c.amount || 0), 0);
+  const pending = claims.filter(c => ['draft', 'sent', 'reminded'].includes(c.status)).reduce((s, c) => s + (+c.amount || 0), 0);
+  box.innerHTML = `
+    <div class="sheet money-hero">
+      <h2>Récupère l'argent qu'on te doit</h2>
+      <p class="lead">Train en retard, vol annulé, colis jamais arrivé, caution pas rendue… Réponds à quelques questions : on calcule ce que tu peux réclamer et on écrit la lettre.</p>
+      <div class="gains">
+        <div><b>${esc(fmtMoney(won))}</b><span>récupérés</span></div>
+        <div><b>${esc(fmtMoney(pending))}</b><span>en cours de réclamation</span></div>
+      </div>
+      <div class="actions">${won > 0 && navigator.share ? '<button class="link" id="share-gains" type="button">Partager mes gains</button>' : ''}${tipHTML()}</div>
+    </div>
+    <h3 class="sec-title">Que veux-tu réclamer ?</h3>
+    <div class="cases">${CASES.map(c => `<button class="case" type="button" data-case="${c.id}"><b>${esc(c.title)}</b><span>${esc(c.teaser)}</span></button>`).join('')}</div>
+    <h3 class="sec-title">Mes réclamations</h3>
+    ${claims.length ? `<div class="items">${claims.map(claimItemHTML).join('')}</div>` : '<p class="note">Aucune réclamation pour l\'instant. Choisis un cas ci-dessus pour commencer.</p>'}
+    ${adHTML()}`;
+  fillAds(box);
+  $$('[data-case]', box).forEach(b => b.addEventListener('click', () => { money$ = { mode: 'form', caseId: b.dataset.case, values: {} }; renderMoney(); box.scrollIntoView({ block: 'start' }); }));
+  const sg = $('#share-gains', box); if (sg) sg.addEventListener('click', () => navigator.share({ title: 'Mes remboursements', text: `J'ai récupéré ${fmtMoney(won)} grâce à Paperdecrypt.` }).catch(() => {}));
+  bindClaimItems(box);
+}
+
+function claimItemHTML(cl) {
+  const c = caseById(cl.case); if (!c) return '';
+  const days = cl.sentAt ? -daysUntil(parseDay(cl.sentAt)) : 0;
+  const needRelance = (cl.status === 'sent' || cl.status === 'reminded') && days >= c.relance;
+  const lvl = cl.status === 'won' ? 1 : needRelance ? 3 : 2;
+  return `<article class="item l${lvl}${cl.status === 'lost' ? ' done' : ''}${cl.status === 'won' ? ' won' : ''}" data-claim="${cl.id}">
+    <div>
+      <h3>${esc(c.name(cl.values))}</h3>
+      <p><span class="when">${esc(STATUS[cl.status])}</span>${cl.amount ? ' | ' + esc(fmtMoney(cl.amount)) : ''}${cl.status === 'won' && cl.recovered ? ' (reçu : ' + esc(fmtMoney(+cl.recovered)) + ')' : ''}${cl.sentAt && cl.status !== 'won' ? ' | envoyée il y a ' + days + ' jour' + (days > 1 ? 's' : '') : ''}</p>
+      ${needRelance ? `<p class="hot-note">Pas de réponse depuis ${days} jours : c'est le moment de relancer.</p>` : ''}
+      <div class="claim-edit">
+        <label class="field inline"><span>Statut</span><select data-status>${Object.entries(STATUS).map(([k, l]) => `<option value="${k}" ${k === cl.status ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
+        ${cl.status !== 'draft' ? `<label class="field inline"><span>Envoyée le</span><input type="date" data-sent value="${cl.sentAt || ''}"></label>` : ''}
+        ${cl.status === 'won' ? `<label class="field inline"><span>Somme reçue (€)</span><input type="number" min="0" step="0.01" data-recovered value="${cl.recovered || cl.amount || ''}"></label>` : ''}
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn small ghost" data-open-claim type="button">Voir la lettre</button>
+      ${needRelance ? '<button class="btn small" data-relance type="button">Relancer</button>' : ''}
+      <button class="link" data-del-claim type="button">Supprimer</button>
+    </div>
+  </article>`;
+}
+function bindClaimItems(box) {
+  $$('[data-claim]', box).forEach(el => {
+    const id = el.dataset.claim;
+    const upd = fn => { const l = getClaims(); const c = l.find(x => x.id === id); if (!c) return; fn(c); c.updatedAt = new Date().toISOString(); saveClaims(l); renderMoney(); };
+    $('[data-status]', el).addEventListener('change', e => upd(c => { c.status = e.target.value; if (c.status !== 'draft' && !c.sentAt) c.sentAt = isoDay(new Date()); if (c.status === 'won' && !c.recovered) c.recovered = c.amount; }));
+    const s = $('[data-sent]', el); if (s) s.addEventListener('change', e => upd(c => { c.sentAt = e.target.value; }));
+    const r = $('[data-recovered]', el); if (r) r.addEventListener('change', e => upd(c => { c.recovered = parseFloat(e.target.value) || 0; }));
+    $('[data-open-claim]', el).addEventListener('click', () => { const c = getClaims().find(x => x.id === id); if (!c) return; money$ = { mode: 'result', caseId: c.case, values: c.values, claimId: c.id }; renderMoney(); $('#money').scrollIntoView({ block: 'start' }); });
+    const rl = $('[data-relance]', el); if (rl) rl.addEventListener('click', () => { const c = getClaims().find(x => x.id === id); if (!c) return; money$ = { mode: 'result', caseId: c.case, values: c.values, claimId: c.id, escalate: true }; renderMoney(); $('#money').scrollIntoView({ block: 'start' }); });
+    $('[data-del-claim]', el).addEventListener('click', () => { if (!confirm('Supprimer cette réclamation ?')) return; saveClaims(getClaims().filter(x => x.id !== id)); rememberDeleted(id); renderMoney(); });
+  });
+}
+
+function fieldHTML(f, v) {
+  const val = v[f.id] ?? '';
+  const req = f.req ? ' required' : '';
+  let input;
+  if (f.type === 'select') input = `<select id="cf-${f.id}" data-f="${f.id}"${req}><option value="">Choisis…</option>${f.options.map(([k, l]) => `<option value="${k}" ${k === val ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+  else if (f.type === 'textarea') input = `<textarea id="cf-${f.id}" data-f="${f.id}" placeholder="${esc(f.ph || '')}"${req}>${esc(val)}</textarea>`;
+  else input = `<input id="cf-${f.id}" data-f="${f.id}" type="${f.type}" ${f.type === 'number' ? 'min="0" step="any" inputmode="decimal"' : ''} placeholder="${esc(f.ph || '')}" value="${esc(val)}"${req}>`;
+  return `<label class="field" for="cf-${f.id}" ${f.show && !f.show(v) ? 'hidden' : ''} data-wrap="${f.id}"><span>${esc(f.label)}${f.req ? '' : ' (facultatif)'}</span>${input}</label>`;
+}
+function renderClaimForm(box) {
+  const c = caseById(money$.caseId), v = money$.values || {};
+  box.innerHTML = `<div class="sheet">
+    <button class="link back" id="cf-back" type="button">Retour</button>
+    <h2>${esc(c.title)}</h2>
+    <p class="lead">Réponds à ces questions. Tout reste sur ton appareil.</p>
+    <div class="form-grid">${c.fields.map(f => fieldHTML(f, v)).join('')}</div>
+    <p class="note" id="cf-err" role="alert"></p>
+    <div class="actions"><button class="btn" id="cf-go" type="button">Voir ce que je peux réclamer</button></div>
+  </div>`;
+  const read = () => { const o = {}; $$('[data-f]', box).forEach(i => { o[i.dataset.f] = i.value.trim(); }); return o; };
+  $$('[data-f]', box).forEach(i => i.addEventListener('change', () => { const o = read(); c.fields.forEach(f => { if (f.show) $(`[data-wrap="${f.id}"]`, box).hidden = !f.show(o); }); }));
+  $('#cf-back').addEventListener('click', () => { money$ = { mode: 'home' }; renderMoney(); });
+  $('#cf-go').addEventListener('click', () => {
+    const o = read();
+    const missing = c.fields.filter(f => f.req && (!f.show || f.show(o)) && !o[f.id]);
+    if (missing.length) { $('#cf-err').textContent = 'Il manque : ' + missing.map(f => f.label.toLowerCase()).join(', ') + '.'; $(`#cf-${missing[0].id}`).focus(); return; }
+    money$ = { ...money$, mode: 'result', values: o }; renderMoney(); box.scrollIntoView({ block: 'start' });
+  });
+}
+function renderClaimResult(box) {
+  const c = caseById(money$.caseId), v = money$.values, res = c.compute(v);
+  const existing = money$.claimId ? getClaims().find(x => x.id === money$.claimId) : null;
+  const letter = money$.escalate && existing ? claimLetterEscalation(c, existing, res) : c.letter(v, res);
+  const verdict = res.eligible ? (c.id === 'panne' ? 'Réparation ou remplacement gratuit' : res.amount ? `Tu peux réclamer ${fmtMoney(res.amount)}` : 'Tu peux réclamer') : res.maybe ? 'Ça vaut le coup de demander' : 'A priori, pas d\'indemnité';
+  box.innerHTML = `<div class="sheet">
+    <button class="link back" id="cr-back" type="button">Retour</button>
+    <div class="verdict-money ${res.eligible ? 'yes' : res.maybe ? 'maybe' : 'no'}"><b>${esc(verdict)}</b></div>
+    ${res.lines.map(l => `<p>${esc(l)}</p>`).join('')}
+    ${res.legal ? `<p class="note">Base légale : ${esc(res.legal)}.</p>` : ''}
+    ${(res.eligible || res.maybe) ? `
+    <div class="block">
+      <h3>${money$.escalate ? 'Ta lettre de relance (mise en demeure)' : 'Ta lettre, prête à envoyer'}</h3>
+      <p class="note">Complète les passages surlignés. Pour une réclamation, le recommandé est le plus sûr : il prouve que tu as écrit et quand.</p>
+      <div class="draft" id="claim-draft" contenteditable="true" spellcheck="true" aria-label="Lettre de réclamation">${draftHTML(letter)}</div>
+      ${letterToolsHTML()}
+      ${c.id === 'avion' && res.eligible && CONFIG.AIRHELP_URL ? `<div class="delegate"><p><b>Pas le temps de t'en occuper ?</b> AirHelp gère toute la réclamation pour toi et se rémunère seulement si tu es indemnisé.</p><a class="btn small ghost" href="${esc(CONFIG.AIRHELP_URL)}" target="_blank" rel="noopener sponsored">Confier ma réclamation à AirHelp</a><p class="note">Lien partenaire : QuenTools peut toucher une commission, sans frais en plus pour toi.</p></div>` : ''}
+      ${res.due && !res.eligible ? '<div class="actions" style="margin-top:10px"><button class="btn small ghost" id="cr-ics" type="button">Me le rappeler dans mon agenda</button></div>' : ''}
+    </div>
+    <div class="save-row">
+      <button class="btn" id="cr-save" type="button">${existing ? 'Mettre à jour la réclamation' : 'Suivre cette réclamation'}</button>
+      <button class="link" id="cr-edit" type="button">Modifier mes réponses</button>
+    </div>` : `<div class="save-row"><button class="link" id="cr-edit" type="button">Modifier mes réponses</button></div>`}
+  </div>`;
+  $('#cr-back').addEventListener('click', () => { money$ = { mode: 'home' }; renderMoney(); });
+  $('#cr-edit').addEventListener('click', () => { money$ = { ...money$, mode: 'form', escalate: false }; renderMoney(); });
+  const dr = $('#claim-draft'); if (dr) bindLetterTools(box, dr, '');
+  const ics = $('#cr-ics'); if (ics) ics.addEventListener('click', () => { const d = new Date(res.due); d.setDate(d.getDate() + 1); downloadFile('rappel-' + c.id + '.ics', makeICS({ date: d, summary: 'Réclamer : ' + c.name(v), desc: res.lines.join('\n'), alarms: ['-PT12H'] }), 'text/calendar;charset=utf-8'); toast("Ouvre le fichier pour l'ajouter à ton agenda"); });
+  const sv = $('#cr-save'); if (sv) sv.addEventListener('click', () => {
+    const l = getClaims(); const now = new Date().toISOString();
+    if (existing) {
+      const it = l.find(x => x.id === existing.id); it.values = v; it.amount = res.amount || it.amount; it.updatedAt = now;
+      if (money$.escalate) { it.status = 'reminded'; it.sentAt = isoDay(new Date()); }
+    } else l.unshift({ id: 'r' + Date.now().toString(36), case: c.id, values: v, amount: res.amount || null, status: 'draft', createdAt: now, updatedAt: now });
+    saveClaims(l); toast(existing ? 'Réclamation mise à jour' : 'Réclamation ajoutée à ton suivi');
+    money$ = { mode: 'home' }; renderMoney();
+  });
+}
+
+/* ---------- Coffre garanties ---------- */
+const getW = () => store.get(KEYS.garanties, []);
+let w$ = { mode: 'home' };
+function wEnds(w) {
+  const d = parseDay(w.date); if (!d) return {};
+  const legal = addMonths(d, w.etat === 'occasion' ? 12 : 24);
+  const com = w.extra ? addMonths(d, Math.round(+w.extra * 12)) : null;
+  const end = com && com > legal ? com : legal;
+  return { legal, com, end };
+}
+function renderWarranty() {
+  const box = $('#warranty');
+  if (w$.mode === 'form') return renderWForm(box);
+  const list = getW().map(w => ({ ...w, ...wEnds(w) })).sort((a, b) => ((a.end < today0()) - (b.end < today0())) || ((a.end || 0) - (b.end || 0)));
+  const active = list.filter(w => w.end && w.end >= today0());
+  const soon = active.filter(w => daysUntil(w.end) <= 60);
+  const cnt = $('#w-count'); cnt.textContent = soon.length; cnt.hidden = !soon.length; cnt.classList.add('hot');
+  const total = active.reduce((s, w) => s + (+w.prix || 0), 0);
+  box.innerHTML = `
+    <div class="sheet money-hero">
+      <h2>Tes garanties, au même endroit</h2>
+      <p class="lead">Prends ton ticket en photo au moment de l'achat. On te prévient avant la fin de la garantie, et si ça tombe en panne, la réclamation est prête.</p>
+      <div class="gains">
+        <div><b>${active.length}</b><span>achat${active.length > 1 ? 's' : ''} sous garantie</span></div>
+        <div><b>${esc(fmtMoney(total))}</b><span>protégés</span></div>
+      </div>
+      <div class="actions"><button class="btn" id="w-add" type="button">Ajouter un achat</button>${!isPremium() ? `<span class="note">Gratuit jusqu'à ${CONFIG.FREE_GARANTIES} achats.</span>` : ''}</div>
+    </div>
+    ${soon.length ? `<p class="alert">${soon.length === 1 ? 'Une garantie se termine' : soon.length + ' garanties se terminent'} dans moins de 2 mois. Vérifie que tout fonctionne bien.</p>` : ''}
+    ${list.length ? `<div class="items">${list.map(wItemHTML).join('')}</div>` : '<p class="note">Aucun achat enregistré. Commence par ton dernier achat important : téléphone, électroménager, ordinateur…</p>'}
+    ${adHTML()}`;
+  fillAds(box);
+  $('#w-add').addEventListener('click', () => {
+    if (!isPremium() && getW().length >= CONFIG.FREE_GARANTIES) { openPremium(`La version gratuite garde ${CONFIG.FREE_GARANTIES} achats. Passe à Premium pour en enregistrer autant que tu veux.`); return; }
+    w$ = { mode: 'form', item: { etat: 'neuf' } }; renderWarranty();
+  });
+  bindWItems(box);
+}
+function wItemHTML(w) {
+  const dd = w.end ? daysUntil(w.end) : null;
+  const expired = dd !== null && dd < 0;
+  const total = w.end ? Math.max(1, (w.end - parseDay(w.date)) / 86400000) : 1;
+  const used = w.end ? Math.min(1, Math.max(0, (today0() - parseDay(w.date)) / 86400000 / total)) : 1;
+  const lvl = expired ? 1 : dd <= 60 ? 3 : 2;
+  return `<article class="item w l${lvl}${expired ? ' done' : ''}" data-w="${w.id}">
+    <div>
+      <h3>${esc(w.name)}</h3>
+      <p>${esc(w.store || '')}${w.prix ? ' | ' + esc(fmtMoney(+w.prix)) : ''}${w.date ? ' | acheté le ' + esc(fmtShort(parseDay(w.date))) + ' ' + parseDay(w.date).getFullYear() : ''}</p>
+      <p class="when">${expired ? 'Garantie terminée' : w.end ? `Garanti jusqu'au ${esc(fmtDate(w.end))} (${esc(relDays(dd).replace('dans ', 'encore '))})` : ''}</p>
+      ${w.com ? `<p class="note">Dont garantie légale jusqu'au ${esc(fmtDate(w.legal))}, puis garantie commerciale.</p>` : ''}
+      <div class="wbar" aria-hidden="true"><i style="width:${Math.round(used * 100)}%"></i></div>
+    </div>
+    <div class="row">
+      ${!expired ? '<button class="btn small" data-w-panne type="button">En panne ? Réclamer</button>' : ''}
+      ${w.img ? '<button class="btn small ghost" data-w-img type="button">Voir le ticket</button>' : ''}
+      ${!expired ? '<button class="btn small ghost" data-w-ics type="button">Rappel</button>' : ''}
+      <button class="link" data-w-edit type="button">Modifier</button>
+      <button class="link" data-w-del type="button">Supprimer</button>
+    </div>
+  </article>`;
+}
+function bindWItems(box) {
+  $$('[data-w]', box).forEach(el => {
+    const id = el.dataset.w; const get = () => getW().find(x => x.id === id);
+    const p = $('[data-w-panne]', el); if (p) p.addEventListener('click', () => {
+      const w = get(); money$ = { mode: 'form', caseId: 'panne', values: { vendeur: w.store || '', produit: w.name, date: w.date, prix: w.prix || '', etat: w.etat === 'occasion' ? 'occasion' : 'neuf' } };
+      showTab('money');
+    });
+    const im = $('[data-w-img]', el); if (im) im.addEventListener('click', async () => {
+      const src = await idb.get('w:' + id).catch(() => null);
+      if (!src) { toast('Photo introuvable sur cet appareil'); return; }
+      $('#img-view').src = src; const d = $('#img-dialog'); if (d.showModal) d.showModal(); else d.setAttribute('open', '');
+    });
+    const ic = $('[data-w-ics]', el); if (ic) ic.addEventListener('click', () => {
+      const w = { ...get() }; Object.assign(w, wEnds(w));
+      const d = addMonths(w.end, -1);
+      const when = d < today0() ? new Date(today0().getTime() + 86400000) : d;
+      downloadFile('garantie-' + slug(w.name) + '.ics', makeICS({ date: when, summary: 'Fin de garantie bientôt : ' + w.name, desc: `La garantie de ${w.name} (${w.store || ''}) se termine le ${fmtDate(w.end)}. Vérifie qu'il fonctionne bien. En cas de panne, ouvre le Décodeur QuenTools.`, alarms: ['-PT9H'] }), 'text/calendar;charset=utf-8');
+      toast("Ouvre le fichier pour l'ajouter à ton agenda");
+    });
+    $('[data-w-edit]', el).addEventListener('click', () => { w$ = { mode: 'form', item: { ...get() } }; renderWarranty(); $('#warranty').scrollIntoView({ block: 'start' }); });
+    $('[data-w-del]', el).addEventListener('click', () => {
+      if (!confirm('Supprimer cet achat et sa photo ?')) return;
+      store.set(KEYS.garanties, getW().filter(x => x.id !== id)); idb.del('w:' + id).catch(() => {}); rememberDeleted(id); renderWarranty();
+    });
+  });
+}
+function renderWForm(box) {
+  const w = w$.item;
+  box.innerHTML = `<div class="sheet">
+    <button class="link back" id="wf-back" type="button">Retour</button>
+    <h2>${w.id ? 'Modifier un achat' : 'Ajouter un achat'}</h2>
+    <div class="actions" style="margin:6px 0 4px">
+      <label class="btn ghost" for="wf-photo">${w.img ? 'Changer la photo du ticket' : 'Photo du ticket ou de la facture'}</label>
+      <input class="sr" type="file" id="wf-photo" accept="image/*" capture="environment">
+      <span class="note" id="wf-photo-state">${w.img ? 'Photo enregistrée.' : 'On essaie de lire la date et le prix tout seuls.'}</span>
+    </div>
+    <div class="progress" id="wf-progress"><div class="bar"><i id="wf-bar"></i></div><p id="wf-ptext"></p></div>
+    <div class="form-grid">
+      <label class="field"><span>Produit</span><input id="wf-name" value="${esc(w.name || '')}" placeholder="Ex. lave-linge Bosch"></label>
+      <label class="field"><span>Magasin ou site</span><input id="wf-store" value="${esc(w.store || '')}"></label>
+      <label class="field"><span>Date d'achat</span><input id="wf-date" type="date" value="${esc(w.date || '')}"></label>
+      <label class="field"><span>Prix (€)</span><input id="wf-prix" type="number" min="0" step="0.01" inputmode="decimal" value="${esc(w.prix || '')}"></label>
+      <label class="field"><span>Acheté</span><select id="wf-etat"><option value="neuf" ${w.etat !== 'occasion' ? 'selected' : ''}>Neuf (garantie légale de 2 ans)</option><option value="occasion" ${w.etat === 'occasion' ? 'selected' : ''}>D'occasion chez un pro (1 an)</option></select></label>
+      <label class="field"><span>Garantie commerciale totale, en années (facultatif)</span><input id="wf-extra" type="number" min="0" max="15" step="0.5" value="${esc(w.extra || '')}" placeholder="Ex. 5 si « garantie 5 ans »"></label>
+    </div>
+    <p class="note" id="wf-err" role="alert"></p>
+    <div class="actions"><button class="btn" id="wf-save" type="button">Enregistrer</button></div>
+  </div>`;
+  let pendingImg = null;
+  $('#wf-back').addEventListener('click', () => { w$ = { mode: 'home' }; renderWarranty(); });
+  $('#wf-photo').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try { pendingImg = await compressImage(f); $('#wf-photo-state').textContent = 'Photo prête. Lecture du ticket…'; } catch (err) { toast('Impossible de lire cette photo'); return; }
+    try {
+      const pr = $('#wf-progress'); pr.classList.add('on');
+      await loadScript(TESSERACT_URL);
+      const wk = await getOcr();
+      const c = await fileToCanvas(f);
+      $('#wf-ptext').textContent = 'Lecture du ticket…';
+      const { data } = await wk.recognize(c, { rotateAuto: true });
+      pr.classList.remove('on'); hideOcr();
+      const t = data.text || '';
+      const dates = findDates(t).filter(d => d.date <= new Date());
+      if (dates.length && !$('#wf-date').value) $('#wf-date').value = isoDay(dates[0].date);
+      const tot = /(?:total|montant|a payer|à payer|ttc)[^\d\n]{0,20}(\d{1,5}(?:[ .]\d{3})*[,.]\d{2})/i.exec(t);
+      let price = tot ? tot[1] : null;
+      if (!price) { const all = [...t.matchAll(/(\d{1,5}[,.]\d{2})\s?(?:€|eur)/gi)].map(m => m[1]); price = all.sort((a, b) => parseFloat(b.replace(',', '.')) - parseFloat(a.replace(',', '.')))[0]; }
+      if (price && !$('#wf-prix').value) $('#wf-prix').value = parseFloat(price.replace(/[ .](?=\d{3})/g, '').replace(',', '.'));
+      const first = t.split('\n').map(l => l.trim()).find(l => /[A-Za-z]{3,}/.test(l));
+      if (first && !$('#wf-store').value) $('#wf-store').value = first.slice(0, 40);
+      $('#wf-photo-state').textContent = 'Photo prête. Vérifie les infos lues sur le ticket.';
+    } catch (err) { $('#wf-progress').classList.remove('on'); $('#wf-photo-state').textContent = 'Photo prête. Remplis les infos à la main.'; }
+  });
+  $('#wf-save').addEventListener('click', async () => {
+    const it = { ...w, name: $('#wf-name').value.trim(), store: $('#wf-store').value.trim(), date: $('#wf-date').value, prix: $('#wf-prix').value, etat: $('#wf-etat').value, extra: $('#wf-extra').value };
+    if (!it.name || !it.date) { $('#wf-err').textContent = !it.name ? 'Indique le nom du produit.' : "Indique la date d'achat : c'est elle qui fixe la fin de la garantie."; return; }
+    const now = new Date().toISOString();
+    if (!it.id) { it.id = 'w' + Date.now().toString(36); it.createdAt = now; }
+    it.updatedAt = now;
+    if (pendingImg) { try { await idb.set('w:' + it.id, pendingImg); it.img = true; } catch (e) { toast("La photo n'a pas pu être enregistrée"); } }
+    const l = getW(); const i = l.findIndex(x => x.id === it.id); if (i >= 0) l[i] = it; else l.unshift(it);
+    if (!store.set(KEYS.garanties, l)) { toast("Impossible d'enregistrer sur cet appareil"); return; }
+    toast('Achat enregistré'); w$ = { mode: 'home' }; renderWarranty();
+  });
+}
+
+/* ---------- Connexion Google (Firebase, compte commun QuenTools) et synchronisation ---------- */
+// Firebase est chargé à la demande. La connexion n'est proposée que sur les domaines autorisés dans Firebase ;
+// ailleurs (fichier local, aperçu), Paperdecrypt reste utilisable sans compte.
+const FBV = '10.14.1', APP_ID = 'paperdecrypt';
+const FIREBASE_CFG = { apiKey: 'AIzaSyA-JS7hnSQXeNXnAPqbF3MV8rkPQ5_JVY8', authDomain: 'quentools-adca1.firebaseapp.com', projectId: 'quentools-adca1', storageBucket: 'quentools-adca1.firebasestorage.app', messagingSenderId: '55024741286', appId: '1:55024741286:web:957475540e24ed223b7d67' };
+let FBP = null, FBU = null, syncTimer = null, syncing = false;
+const gAvailable = () => location.protocol === 'https:' && /^(www\.)?quentools\.fr$|^ikeupods-del\.github\.io$/.test(location.hostname);
+function fb() {
+  if (!FBP) FBP = (async () => {
+    const B = `https://www.gstatic.com/firebasejs/${FBV}/`;
+    const [A, Au, Fs] = await Promise.all([import(B + 'firebase-app.js'), import(B + 'firebase-auth.js'), import(B + 'firebase-firestore.js')]);
+    const app = A.initializeApp(FIREBASE_CFG);
+    return { Au, Fs, auth: Au.getAuth(app), db: Fs.getFirestore(app) };
+  })().catch(() => { FBP = null; throw new Error('impossible de joindre Google (connexion internet ?)'); });
+  return FBP;
+}
+async function gRestore() {
+  if (!gAvailable()) return;
+  try {
+    const F = await fb(); await F.auth.authStateReady();
+    FBU = F.auth.currentUser; setSyncStatus(); if (FBU) syncNow();
+    F.Au.onAuthStateChanged(F.auth, u => { const was = FBU; FBU = u; setSyncStatus(); if (u && (!was || was.uid !== u.uid)) syncNow(); });
+  } catch (e) { setSyncStatus('Connexion indisponible : ' + e.message); }
+}
+async function gLogin() {
+  try { const F = await fb(); await F.Au.signInWithPopup(F.auth, new F.Au.GoogleAuthProvider()); toast('Connecté avec Google'); }
+  catch (e) {
+    const m = { 'auth/popup-closed-by-user': 'Connexion annulée', 'auth/cancelled-popup-request': 'Connexion annulée', 'auth/popup-blocked': 'Autorise les fenêtres pop-up pour ce site, puis réessaie', 'auth/unauthorized-domain': 'Ce site n\'est pas encore autorisé pour la connexion Google', 'auth/operation-not-allowed': 'La connexion Google n\'est pas activée' };
+    setSyncStatus(m[e && e.code] || e.message || 'Connexion Google impossible');
+  }
+}
+async function gLogout() { try { const F = await fb(); await F.Au.signOut(F.auth); toast('Compte Google déconnecté'); } catch (e) {} }
+async function buildPayload() {
+  return { app: 'quentools-paperasse', v: 1, courriers: getList(), reclamations: getClaims(), garanties: getW(), moi: store.get(KEYS.me, {}), deleted: store.get(KEYS.deleted, []) };
+}
+function mergeLists(a = [], b = [], deleted) {
+  const t = x => new Date(x.updatedAt || x.savedAt || x.createdAt || 0).getTime();
+  const m = new Map();
+  [...a, ...b].forEach(x => { if (!x || !x.id || deleted.has(x.id)) return; const y = m.get(x.id); if (!y || t(x) > t(y)) m.set(x.id, x); });
+  return [...m.values()];
+}
+async function syncNow() {
+  const u = FBU; if (!u) { setSyncStatus('Connecte-toi d\'abord avec Google.'); return; }
+  if (syncing) return;
+  if (!navigator.onLine) { setSyncStatus('Pas de connexion : la synchronisation se fera plus tard.'); return; }
+  syncing = true; setSyncStatus('Synchronisation…');
+  try {
+    const F = await fb(), ref = F.Fs.doc(F.db, 'users', u.uid, 'apps', APP_ID, 'main', 'data');
+    const snap = await F.Fs.getDoc(ref), remote = snap.exists() ? snap.data() : {};
+    const local = await buildPayload();
+    const deleted = new Set([...(local.deleted || []), ...(remote.deleted || [])]);
+    const merged = {
+      app: 'quentools-paperasse', v: 1, syncedAt: new Date().toISOString(),
+      courriers: mergeLists(local.courriers, remote.courriers, deleted),
+      reclamations: mergeLists(local.reclamations, remote.reclamations, deleted),
+      garanties: mergeLists(local.garanties, remote.garanties, deleted),
+      moi: Object.keys(local.moi || {}).length ? local.moi : (remote.moi || {}),
+      deleted: [...deleted].slice(-500)
+    };
+    _set(KEYS.list, merged.courriers); _set(KEYS.claims, merged.reclamations); _set(KEYS.garanties, merged.garanties); _set(KEYS.me, merged.moi); _set(KEYS.deleted, merged.deleted);
+    // Passage par JSON : Firestore refuse les valeurs « undefined ».
+    await F.Fs.setDoc(ref, JSON.parse(JSON.stringify(merged)));
+    store.set(KEYS.sync, { last: new Date().toISOString() });
+    setSyncStatus(''); renderList(); renderMoneyIfOpen(); renderWarrantyIfOpen();
+  } catch (e) {
+    console.error(e);
+    setSyncStatus(!navigator.onLine ? 'Pas de connexion : la synchronisation se fera plus tard.' : 'La synchronisation a échoué. Réessaie dans un instant.');
+  } finally { syncing = false; }
+}
+markDirty = () => {
+  if (!FBU) return;
+  clearTimeout(syncTimer); syncTimer = setTimeout(() => syncNow(), 3000);
+};
+function setSyncStatus(msg) {
+  const avail = gAvailable();
+  const lb = $('#login-btn'); if (lb) { lb.hidden = !avail; lb.textContent = FBU ? (FBU.displayName || FBU.email || 'Mon compte').split(' ')[0] : 'Se connecter'; lb.title = FBU ? 'Ouvrir les réglages du compte' : 'Se connecter avec Google'; }
+  const el = $('#sync-status'); if (!el) return;
+  const s = store.get(KEYS.sync, {});
+  el.textContent = msg || (FBU ? 'Connecté en tant que ' + (FBU.email || FBU.displayName) + (s.last ? '. Dernière synchronisation : ' + new Date(s.last).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }) : '.') : 'Pas encore connecté.');
+  $('#sync-btn').textContent = FBU ? 'Synchroniser maintenant' : 'Se connecter avec Google';
+  $('#sync-off').hidden = !FBU;
+}
+const renderMoneyIfOpen = () => { if (!$('#view-money').hidden) renderMoney(); };
+const renderWarrantyIfOpen = () => { if (!$('#view-warranty').hidden) renderWarranty(); };
+
+/* ---------- Onglets ---------- */
+const TABS = ['decode', 'money', 'warranty', 'list'];
+const TAB_HASH = { decode: '', money: '#argent', warranty: '#garanties', list: '#courriers' };
+function showTab(which) {
+  TABS.forEach(t => { $('#tab-' + t).setAttribute('aria-selected', t === which); $('#view-' + t).hidden = t !== which; });
+  if (which === 'list') renderList();
+  if (which === 'money') renderMoney();
+  if (which === 'warranty') renderWarranty();
+  try { history.replaceState(null, '', location.pathname + location.search + TAB_HASH[which]); } catch (e) {}
+  $('#tab-' + which).scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
+/* ---------- Exemples ---------- */
+const SAMPLES = [
+`Caisse d'allocations familiales du Rhône
+67 boulevard Vivier Merle
+69003 Lyon
+
+Lyon, le 2 octobre 2026
+
+N° allocataire : 1234567 X
+Objet : demande de pièces justificatives
+
+Madame, Monsieur,
+
+Dans le cadre de l'étude de vos droits à la prime d'activité et à l'aide personnalisée au logement (APL), nous avons besoin d'informations complémentaires.
+
+Merci de nous transmettre les documents suivants : vos trois derniers bulletins de salaire, votre dernier avis d'imposition et une attestation de loyer complétée par votre bailleur.
+
+Ces documents doivent nous parvenir avant le 20 octobre 2026. Vous pouvez les envoyer depuis votre espace Mon Compte sur caf.fr.
+
+Sans réponse de votre part dans ce délai, le versement de vos prestations pourra être suspendu.
+
+Nous vous prions d'agréer, Madame, Monsieur, nos salutations distinguées.
+
+Votre conseiller Caf`,
+`Volta Énergie
+Service recouvrement
+12 rue de la République, 69002 Lyon
+
+Lyon, le 25 septembre 2026
+
+Référence client : VE-48213
+Objet : mise en demeure de payer
+
+Madame, Monsieur,
+
+Sauf erreur de notre part, votre facture d'électricité du 15 août 2026 d'un montant de 186,40 € reste impayée malgré nos précédentes relances.
+
+Par la présente, nous vous mettons en demeure de régler la somme de 186,40 € dans un délai de 15 jours à compter de la réception de ce courrier.
+
+À défaut, nous nous verrons contraints de transmettre votre dossier à notre service contentieux, et une réduction de puissance de votre compteur pourra être appliquée.
+
+Vous pouvez régler en ligne sur votre espace client ou nous contacter au 04 72 00 00 00.
+
+Veuillez agréer, Madame, Monsieur, nos salutations distinguées.
+
+Le service clients`,
+`Caisse d'allocations familiales de la Gironde
+Bordeaux, le 18 septembre 2026
+
+N° allocataire : 7654321
+Objet : notification de dette
+
+Madame, Monsieur,
+
+Suite au réexamen de votre dossier, il apparaît que vous avez perçu à tort l'aide personnalisée au logement de mars à juin 2026. Le montant de l'indu s'élève à 642,00 €.
+
+Cette somme sera récupérée par retenue sur vos prochaines prestations. Si vous souhaitez rembourser autrement, merci de nous contacter avant le 15 octobre 2026.
+
+Si vous contestez cette décision, vous pouvez saisir la commission de recours amiable dans un délai de deux mois à compter de la réception de ce courrier. Vous pouvez également demander une remise de dette si votre situation financière est difficile, en joignant les pièces suivantes :
+- vos trois derniers relevés de compte bancaire
+- un justificatif de vos ressources actuelles
+- le détail de vos charges mensuelles
+
+Nous vous prions d'agréer, Madame, Monsieur, nos salutations distinguées.`
+];
+let sampleIdx = 0;
+$('#sample-btn').addEventListener('click', () => {
+  $('#letter-input').value = SAMPLES[sampleIdx % SAMPLES.length]; sampleIdx++;
+  $('#sample-btn').textContent = 'Voir un autre exemple'; $('#clear-btn').hidden = false; currentId = null;
+  runDecode();
+});
+
+/* ---------- Branchements ---------- */
+$('#decode-btn').addEventListener('click', runDecode);
+$('#clear-btn').addEventListener('click', resetInput);
+$('#letter-input').addEventListener('input', e => { $('#clear-btn').hidden = !e.target.value; });
+$('#cam-input').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
+$('#file-input').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
+TABS.forEach(t => $('#tab-' + t).addEventListener('click', () => showTab(t)));
+$('#tablist').addEventListener('keydown', e => {
+  if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+  const i = TABS.findIndex(t => $('#tab-' + t).getAttribute('aria-selected') === 'true');
+  const n = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length]; showTab(n); $('#tab-' + n).focus();
+});
+// Paramètres : premium et Google
+$('#premium-btn').addEventListener('click', () => openPremium());
+$('#premium-buy').addEventListener('click', () => window.open(CONFIG.PREMIUM_URL, '_blank', 'noopener'));
+$('#premium-validate').addEventListener('click', () => {
+  const c = $('#premium-code').value.trim();
+  if (!validCode(c)) { $('#premium-state').textContent = "Ce code n'est pas valide. Vérifie-le dans l'e-mail reçu après ton achat."; return; }
+  store.set(KEYS.premium, { code: c.toUpperCase(), at: new Date().toISOString() });
+  $('#premium-state').textContent = 'Premium est activé. Merci pour ton soutien !'; refreshPremiumUI(); renderWarrantyIfOpen(); renderMoneyIfOpen(); $$('.ad').forEach(a => a.remove()); toast('Premium activé');
+});
+$('#premium-close').addEventListener('click', () => $('#premium').close());
+$('#img-close').addEventListener('click', () => $('#img-dialog').close());
+$('#sync-btn').addEventListener('click', () => { FBU ? syncNow() : gLogin(); });
+$('#sync-off').addEventListener('click', () => gLogout());
+$('#login-btn').addEventListener('click', () => { FBU ? openSettings() : gLogin(); });
+function refreshPremiumUI() {
+  const p = isPremium();
+  $('#premium-status').textContent = p ? 'Premium est activé sur cet appareil.' : `Sans publicité, achats illimités dans le coffre. Paiement unique de ${CONFIG.PREMIUM_PRIX}, sans abonnement.`;
+  $('#premium-btn').textContent = p ? 'Voir mon Premium' : 'Découvrir Premium';
+  $('#sync-section').hidden = !gAvailable();
+  setSyncStatus();
+}
+refreshPremiumUI();
+gRestore();
+// Ouverture directe d'un onglet (liens TikTok : #argent, #garanties, #courriers)
+const startTab = Object.keys(TAB_HASH).find(k => TAB_HASH[k] && TAB_HASH[k] === location.hash);
+if (startTab) showTab(startTab);
+renderList();
+updatePill(); gpuReady.then(updatePill);
+
+// Exposé pour les tests
+window.__decodeur = { analyze, buildLetter, brief, quickAnswer };
+})();
+</script>
+</body>
+</html>
