@@ -2131,7 +2131,6 @@ async function ocrImageRun(w, f, mx) {
 }
 async function handleFiles(files) {
   files = [...files]; if (!files.length) return;
-  if (await requireAI() === 'annule') { toast("L'assistant IA est nécessaire pour lire un document."); return; }
   let all = '', pages = 0; ocrConf = null;
   try {
     for (let i = 0; i < files.length; i++) {
@@ -2157,8 +2156,13 @@ async function handleFiles(files) {
   $('#pages-note').textContent = readPages > 1 ? `${readPages} pages lues. Ajoute la page suivante si le courrier continue.` : 'Le courrier a plusieurs pages ? Ajoute la page suivante, elle sera lue à la suite.';
   if (ocrConf !== null && ocrConf < 62 && all.replace(/\s/g, '').length >= 40) { $('#pages-note').textContent += ` Lecture peu sûre (${Math.round(ocrConf)} %) : vérifie les chiffres et les dates, ou reprends la photo de face, à plat et bien éclairée.`; toast('Lecture peu sûre : vérifie les chiffres'); track('ocr_faible'); }
   if (all.replace(/\s/g, '').length < 40) { toast("Je n'arrive pas à lire le texte. Reprends la photo bien à plat, avec de la lumière."); return; }
+  try { sessionStorage.setItem(REPRISE_KEY, $('#letter-input').value); } catch (e) { /* ignoré */ }   // gardé si la page redémarre pendant l'installation de l'assistant
+  if (await requireAI() === 'annule') { toast("L'assistant IA est nécessaire pour analyser ce document."); return; }
+  try { sessionStorage.removeItem(REPRISE_KEY); } catch (e) { /* ignoré */ }
   runDecode();
 }
+const REPRISE_KEY = 'qt-decodeur:reprise';
+try { const r = sessionStorage.getItem(REPRISE_KEY); if (r && !$('#letter-input').value) { $('#letter-input').value = r; $('#clear-btn').hidden = false; sessionStorage.removeItem(REPRISE_KEY); setTimeout(() => toast('Ton texte a été repris après un redémarrage de la page : appuie sur Décoder'), 600); } } catch (e) { /* ignoré */ }
 
 /* ---------- Mes courriers ---------- */
 const getList = () => store.get(KEYS.list, []);
@@ -2240,6 +2244,7 @@ function renderList() {
 
 /* ---------- Assistant IA local (WebLLM, tourne sur l'appareil) ---------- */
 const MODELS = {
+  tiny: { base: 'Qwen2.5-0.5B-Instruct', size: 'environ 0,4 Go', label: 'Très légère' },
   light: { base: 'Qwen2.5-1.5B-Instruct', size: 'environ 1 Go', label: 'Légère' },
   precise: { base: 'Qwen2.5-3B-Instruct', size: 'environ 2 Go', label: 'Précise' }
 };
@@ -2255,7 +2260,12 @@ const gpuReady = (async () => {
 })();
 const isSmallDevice = () => (navigator.deviceMemory && navigator.deviceMemory <= 4) || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
 const iaPrefs = () => store.get(KEYS.ia, {});
-const prefSize = () => iaPrefs().size || (isSmallDevice() ? 'light' : 'precise');
+// Taille de l'assistant : très légère sur téléphone. Une taille qui a fait redémarrer la page (mémoire insuffisante) est écartée, on passe à la plus petite.
+const SIZE_ORDER = ['precise', 'light', 'tiny'], IA_FLAG = 'qt-decodeur:ia-demarrage';
+const badSizes = () => iaPrefs().bad || [];
+const prefSize = () => { const want = iaPrefs().size || (isSmallDevice() ? 'tiny' : 'precise'); return SIZE_ORDER.slice(Math.max(0, SIZE_ORDER.indexOf(want))).find(z => !badSizes().includes(z)) || 'tiny'; };
+const iaDead = () => badSizes().includes('tiny');
+try { const f = localStorage.getItem(IA_FLAG); if (f) { localStorage.removeItem(IA_FLAG); store.set(KEYS.ia, { ...iaPrefs(), bad: [...new Set([...badSizes(), f])], ready: false }); } } catch (e) { /* stockage indisponible */ }
 const modelId = size => MODELS[size].base + (gpu.f16 ? '-q4f16_1-MLC' : '-q4f32_1-MLC');
 
 let engine = null, engineModel = null, webllm = null, engineLoading = null;
@@ -2294,17 +2304,19 @@ async function ensureEngine() {
   if (engineLoading && engineLoading.model === model) return engineLoading.p;
   const p = (async () => {
     setAIState('loading');
+    try { localStorage.setItem(IA_FLAG, prefSize()); } catch (e) { /* ignoré */ }   // si la page redémarre pendant le chargement, on s'en souvient
     if (!webllm) webllm = await import(WEBLLM_URL);
     if (engine) { try { await engine.unload(); } catch (e) {} engine = null; }
     const e = await webllm.CreateMLCEngine(model, { initProgressCallback: engineProgress });
     engine = e; engineModel = model;
+    try { localStorage.removeItem(IA_FLAG); } catch (e2) { /* ignoré */ }
     store.set(KEYS.ia, { ...iaPrefs(), size: prefSize(), ready: true, model });
     setAIState('ready');
     return e;
   })();
   engineLoading = { model, p };
   try { return await p; }
-  catch (err) { engine = null; engineModel = null; setAIState('error', iaError(err)); throw err; }
+  catch (err) { engine = null; engineModel = null; try { localStorage.removeItem(IA_FLAG); } catch (e2) { /* ignoré */ } setAIState('error', iaError(err)); throw err; }
   finally { engineLoading = null; }
 }
 
@@ -2312,23 +2324,24 @@ async function ensureEngine() {
 // La lecture des fiches de paie et des documents s'appuie sur l'assistant IA : on l'installe d'abord (une seule fois), puis il sert à chaque analyse.
 // Renvoie 'ok' (prêt), 'nogpu' (l'appareil ne peut pas le faire tourner, ou l'installation a échoué et la personne continue : lecture classique) ou 'annule' (action abandonnée).
 let gateP = null, gateNoted = false;
+// La lecture des photos et le modèle IA ne doivent pas occuper la mémoire en même temps (un téléphone redémarre la page sinon)
+async function freeOcr() { if (ocrWorker) { try { await ocrWorker.terminate(); } catch (e) { /* déjà arrêté */ } ocrWorker = null; } }
 function requireAI() {
   if (aiState === 'ready' && engine) return Promise.resolve('ok');
   if (gateP) return gateP;
   gateP = (async () => {
     await gpuReady;
-    if (!gpu.ok) { if (!gateNoted) { gateNoted = true; toast("Cet appareil ne peut pas faire tourner l'assistant IA : lecture classique, un peu moins précise. Pour la meilleure lecture, utilise Chrome ou Safari récent."); } return 'nogpu'; }
+    if (!gpu.ok || iaDead()) { if (!gateNoted) { gateNoted = true; toast(gpu.ok ? "L'assistant IA ne peut pas démarrer sur cet appareil (mémoire) : la fiche est lue par recoupement, sans la relecture de l'IA." : "Cet appareil ne peut pas faire tourner l'assistant IA : lecture classique, un peu moins précise. Pour la meilleure lecture, utilise Chrome ou Safari récent."); } return 'nogpu'; }
     const d = $('#ia-gate'), go = $('#gate-go'), skip = $('#gate-skip'), cancel = $('#gate-cancel'), msg = $('#gate-msg'), prog = $('#gate-prog'), msg0 = msg.innerHTML;
-    $('#gate-size').textContent = MODELS[prefSize()].size;
     return new Promise(resolve => {
       const finish = v => { d.onclose = null; if (d.open) d.close(); resolve(v); };
       const start = () => {
         go.hidden = true; skip.hidden = true; prog.classList.add('on'); msg.textContent = iaPrefs().ready ? "Démarrage de l'assistant IA…" : "Téléchargement de l'assistant IA : garde cette page ouverte, c'est unique.";
-        enqueueAI(async () => { try { await ensureEngine(); track('ia_installee'); finish('ok'); } catch (e) { prog.classList.remove('on'); msg.textContent = aiErrorMsg || iaError(e); go.textContent = 'Réessayer'; go.hidden = false; skip.hidden = false; } });
+        enqueueAI(async () => { try { await freeOcr(); await ensureEngine(); track('ia_installee'); finish('ok'); } catch (e) { prog.classList.remove('on'); msg.textContent = aiErrorMsg || iaError(e); go.textContent = 'Réessayer'; go.hidden = false; skip.hidden = false; } });
       };
       go.onclick = start; skip.onclick = () => finish('nogpu'); cancel.onclick = () => finish('annule');
       d.oncancel = ev => { ev.preventDefault(); finish('annule'); };
-      go.textContent = 'Installer et continuer'; go.hidden = false; skip.hidden = true; prog.classList.remove('on'); msg.innerHTML = msg0;
+      go.textContent = 'Installer et continuer'; go.hidden = false; skip.hidden = true; prog.classList.remove('on'); msg.innerHTML = msg0; $('#gate-size').textContent = MODELS[prefSize()].size;
       if (d.showModal) d.showModal(); else d.setAttribute('open', '');
       if (iaPrefs().ready) start();
     });
@@ -2988,7 +3001,6 @@ function renderWForm(box) {
   $('#wf-back').addEventListener('click', () => { w$ = { mode: 'home' }; renderWarranty(); });
   $('#wf-photo').addEventListener('change', async e => {
     let f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    if (await requireAI() === 'annule') { toast("L'assistant IA est nécessaire pour lire un document."); return; }
     let pdfFile = null;
     if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
       $('#wf-photo-state').textContent = 'Lecture du PDF…'; pdfFile = f;
@@ -4403,11 +4415,14 @@ const paieSrc = (g, k) => {
   return a.join(' · ');
 };
 // L'assistant IA relit la fiche indépendamment : il confirme ou contredit chaque montant et complète ce qui manque (si les calculs de la fiche le confirment).
+// La lecture recoupée est déjà à l'écran : sans assistant (appareil trop juste, installation refusée), la personne vérifie à la main.
 async function paieAIRead(box) {
   const g = paie$.gen; if (!g || !g.allWords || g.ia || g.iaEnCours) return;
-  if (!(engine && aiState === 'ready')) return;
-  g.iaEnCours = true; const st = $('#paie-ia-status', box); if (st) st.textContent = "L'assistant IA relit la fiche…";
+  g.iaEnCours = true;
+  const st = () => $('#paie-ia-status', box), say = t => { const e = st(); if (e) e.textContent = t; };
   try {
+    if (await requireAI() !== 'ok') { say("Montants retrouvés par recoupement, sans relecture de l'IA : vérifie-les avec ta fiche."); g.iaEnCours = false; return; }
+    say("L'assistant IA relit la fiche…");
     const pr = rcPromptText(g.allWords, g.montants);
     const out = await enqueueAI(async () => { const r = await engine.chat.completions.create({ messages: [{ role: 'system', content: pr.system }, { role: 'user', content: pr.user }], temperature: 0.1, max_tokens: 220 }); return (r.choices[0] && r.choices[0].message && r.choices[0].message.content) || ''; });
     const vals = rcParseAI(out, g.montants), m = rcMerge(g.allWords, g.valeurs, vals);
@@ -4423,22 +4438,31 @@ async function paieAIRead(box) {
     const lb = i.closest('label'); if (lb) lb.classList.toggle('douteux', g.valeurs[k] === null || !g.fiable);
     const sm = $(`[data-src="${k}"]`, box); if (sm) sm.textContent = paieSrc(g, k);
   });
-  const st2 = $('#paie-ia-status', box); if (st2) { const n = Object.values(g.ia.agree).filter(Boolean).length, c = Object.values(g.ia.agree).filter(x => x === false).length; st2.textContent = !Object.keys(g.ia.vals).length ? "L'assistant IA n'a pas pu relire cette fiche : vérifie les montants à la main." : c ? `L'assistant IA a relu la fiche : ${n} montant(s) confirmé(s), ${c} différent(s) : vérifie-les.` : `✓ L'assistant IA a relu la fiche${n ? ' et confirme ' + n + ' montant(s)' : ''}.`; }
+  const n = Object.values(g.ia.agree).filter(Boolean).length, c = Object.values(g.ia.agree).filter(x => x === false).length;
+  say(!Object.keys(g.ia.vals).length ? "L'assistant IA n'a pas pu relire cette fiche : vérifie les montants à la main." : c ? `L'assistant IA a relu la fiche : ${n} montant(s) confirmé(s), ${c} différent(s) : vérifie-les.` : `✓ L'assistant IA a relu la fiche${n ? ' et confirme ' + n + ' montant(s)' : ''}.`);
 }
-// Explication rédigée par l'assistant IA, à partir des chiffres validés (aucun chiffre inventé : ils lui sont donnés)
+// Chiffres d'un texte (montants, années), pour vérifier qu'une explication n'en invente aucun
+const textNums = t => (String(t).match(/\d[\d   .,]*\d|\d/g) || []).map(x => x.replace(/[\s  .]/g, '').replace(',', '.')).filter(x => x.replace('.', '').length >= 3 || x.includes('.'));
+// Explication rédigée par l'assistant IA à partir des chiffres validés. Si elle cite un chiffre absent de la fiche, elle est écartée.
 function paieAIExplain(box) {
   const el = $('#paie-ia-box', box), p = paie$.p; if (!el || !p) return;
-  const key = [p.brut, p.cotSal, p.netAvant, p.netFinal, p.netImposable].join('|');
+  const key = [p.brut, p.cotSal, p.netAvant, p.netFinal, p.netImposable].join('|'), hide = () => { el.closest('.block').hidden = true; };
   if (paie$.iaText && paie$.iaKey === key) { el.textContent = paie$.iaText; return; }
-  if (!(engine && aiState === 'ready')) { el.closest('.block').hidden = true; return; }
-  if (paie$.iaBusy === key) return;
-  paie$.iaBusy = key; el.textContent = '…';
+  if (paie$.iaKey === key && paie$.iaText === '') { hide(); return; }
+  if (!(engine && aiState === 'ready')) { hide(); return; }
+  if (paie$.iaBusy === key) { el.textContent = "L'assistant rédige…"; return; }
+  paie$.iaBusy = key; el.textContent = "L'assistant rédige…";
+  const resume = paieSummaryForAI(p);
   enqueueAI(async () => {
+    let out = '';
     try {
-      const out = await streamTo([{ role: 'system', content: SYS }, { role: 'user', content: `Fiche de paie de la personne, déjà lue et vérifiée :\n${paieSummaryForAI(p)}\n\nExplique-lui sa fiche en 5 à 7 phrases : ce qu'elle gagne en brut et en net, ce qui est prélevé et pourquoi, si des heures supplémentaires apparaissent, et un point à vérifier. Appuie-toi uniquement sur ces informations, n'invente aucun chiffre. Pas de titre, pas de liste.` }], el, { max: 420 });
-      if (out) { paie$.iaText = out; paie$.iaKey = key; const cur = $('#paie-ia-box', box); if (cur) cur.textContent = out; }
-    } catch (e) { const el2 = $('#paie-ia-box', box); if (el2) el2.textContent = iaError(e); }
-    finally { paie$.iaBusy = null; }
+      const r = await engine.chat.completions.create({ messages: [{ role: 'system', content: SYS }, { role: 'user', content: `Fiche de paie de la personne, déjà lue et vérifiée :\n${resume}\n\nExplique-lui sa fiche en 4 à 6 phrases : ce qu'elle gagne en brut et en net, ce qui est prélevé et pourquoi, si des heures supplémentaires apparaissent, et un point à vérifier. Appuie-toi uniquement sur ces informations, n'écris aucun chiffre qui n'y figure pas. Pas de titre, pas de liste.` }], temperature: 0.3, max_tokens: 380 });
+      out = ((r.choices[0] && r.choices[0].message && r.choices[0].message.content) || '').trim();
+    } catch (e) { console.error(e); }
+    const ok = textNums(resume).reduce((a, x) => { a.add(x); if (/^\d+(\.\d+)?$/.test(x)) a.add(String(Math.round(parseFloat(x)))); return a; }, new Set()), faux = textNums(out).filter(x => !ok.has(x));
+    paie$.iaBusy = null; paie$.iaKey = key; paie$.iaText = out.length > 40 && !faux.length ? out : '';
+    const cur = $('#paie-ia-box', box); if (cur) { if (paie$.iaText) cur.textContent = paie$.iaText; else cur.closest('.block').hidden = true; }
+    if (out && faux.length) track('paie_ia_chiffre_ecarte');
   });
 }
 function paieValidationHTML(g) {
@@ -4456,7 +4480,17 @@ function paieValidationHTML(g) {
     <div class="actions"><button class="btn" id="paie-valid-go" type="button">Valider et analyser</button></div>
     <p class="note">Rien n'est envoyé : la lecture reste sur ton appareil.</p></div>`;
 }
+const PAIE_REPRISE = 'qt-decodeur:paie-reprise';
+// Pages lues gardées le temps de l'onglet : si la page redémarre (mémoire du téléphone), elles sont reprises, jamais à relire
+function paieSave() { try { const pg = paie$.pages.filter(x => x.name !== 'Exemple'); if (pg.length) sessionStorage.setItem(PAIE_REPRISE, JSON.stringify(pg)); else sessionStorage.removeItem(PAIE_REPRISE); } catch (e) { /* stockage plein ou indisponible */ } }
+function paieRestore() {
+  if (paie$.pages.length || paie$.restored) return false; paie$.restored = true;
+  try { const pg = JSON.parse(sessionStorage.getItem(PAIE_REPRISE) || 'null'); if (Array.isArray(pg) && pg.length && pg.every(x => x && typeof x.text === 'string')) { paie$.pages = pg; return true; } } catch (e) { /* ignoré */ }
+  return false;
+}
 function renderPaie(box) {
+  if (paieRestore()) setTimeout(() => toast('Tes pages ont été reprises : appuie sur Analyser'), 400);
+  paieSave();
   const s = paie$;
   const p = s.p, ins = p ? payslipInsights(p, s.declared === '' ? null : parseFloat(String(s.declared).replace(',', '.'))) : [];
   const hist = getPaies().sort((a, b) => (b.ym || '').localeCompare(a.ym || ''));
@@ -4499,7 +4533,6 @@ function renderPaie(box) {
   $$('[data-pg-up]', box).forEach(b => b.addEventListener('click', () => { const i = +b.dataset.pgUp; [paie$.pages[i - 1], paie$.pages[i]] = [paie$.pages[i], paie$.pages[i - 1]]; paie$.p = null; paie$.p0 = null; renderPaie(box); }));
   const onFiles = async fl => {
     fl = [...fl].filter(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name) || f.type.startsWith('image/')); if (!fl.length) return;
-    if (await requireAI() === 'annule') { toast("L'assistant IA est nécessaire pour lire une fiche de paie."); return; }
     let added = 0, onlyPdf = true; ocrConf = null;
     try {
       for (let i = 0; i < fl.length; i++) {
@@ -4523,9 +4556,7 @@ function renderPaie(box) {
   };
   $('#paie-cam').addEventListener('click', async e => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-    e.preventDefault();
-    if (await requireAI() === 'annule') { toast("L'assistant IA est nécessaire pour lire une fiche de paie."); return; }
-    const f = await guidedCamera();
+    e.preventDefault(); const f = await guidedCamera();
     if (f === 'indispo') { toast("Caméra indisponible : utilise « Importer photos ou PDF »"); return; }
     if (f) { track('cadre_guide'); onFiles([f]); }
   });
@@ -4541,7 +4572,8 @@ function renderPaie(box) {
     Object.keys(fix).forEach(k => trackFix('paie_' + k.toLowerCase())); track('paie_fix');
     renderPaie(box); const fb = $('#paie-fixbox'); if (fb) fb.open = true; toast('Corrections appliquées');
   });
-  const vg = $('#paie-valid-go'); if (vg) vg.addEventListener('click', () => {
+  const vg = $('#paie-valid-go'); if (vg) vg.addEventListener('click', async () => {
+    if (await requireAI() === 'annule') { toast("L'assistant IA est nécessaire pour analyser une fiche de paie."); return; }
     const vals = {}; let bad = null;
     $$('[data-val]', box).forEach(i => { const t = i.value.trim().replace(/\s*€$/, ''); if (!t) { vals[i.dataset.val] = null; return; } const v = parseFR(t); if (v === null) bad = bad || i; else vals[i.dataset.val] = v; });
     if (bad) { bad.focus(); toast('Un montant n\'est pas lisible : écris-le comme 1 861,16'); return; }

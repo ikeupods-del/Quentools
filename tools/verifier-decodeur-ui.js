@@ -263,20 +263,19 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   await free.click('#abo-add'); ok(await dlgOpen(), 'gratuit : 3 abonnements maximum'); await free.click('#premium-close');
   await free.goto('http://localhost:8766/decodeur-courrier.html#outils'); await free.reload(); await free.click('[data-tool=dossier]'); ok(await dlgOpen(), 'gratuit : dossier PDF réservé à Premium');
   ok(/Paperdecrypt Premium/.test(await free.innerText('#premium')) && /paiement unique/i.test(await free.innerText('#premium')), 'fenêtre Premium : fonctions et paiement unique');
-  { // assistant IA obligatoire : importer une photo ouvre l'installation, l'action reprend une fois l'assistant prêt (assistant simulé)
+  { // la page redémarre (mémoire du téléphone) : les pages déjà lues sont reprises, rien à rescanner
     const c2 = await b.newContext({ viewport: { width: 390, height: 844 } });
-    await c2.addInitScript(() => { Object.defineProperty(navigator, 'gpu', { configurable: true, value: { requestAdapter: async () => ({ features: new Set() }) } }); });
+    await c2.addInitScript(() => { try { if (!sessionStorage.getItem('qt-decodeur:vu') && !sessionStorage.getItem('qt-decodeur:paie-reprise')) sessionStorage.setItem('qt-decodeur:paie-reprise', JSON.stringify([{ name: 'Photo', text: 'BULLETIN DE PAIE\nTOTAL BRUT 2 021,04\nNET A PAYER 1 520,08\nSalaire de base 151,67 12,0000 1 820,04', words: null, np: 1 }, { name: 'Photo', text: 'Net imposable 1 700,50', words: null, np: 1 }])); } catch (e) { /* ignoré */ } });
     const g = await c2.newPage(); const e2 = []; g.on('pageerror', e => e2.push('PAGEERR ' + e.message));
-    await g.route(/googlesyndication|gstatic|tesseract|pdfjs/, r => r.abort());
-    await g.route(/web-llm/, r => r.fulfill({ contentType: 'application/javascript', headers: { 'access-control-allow-origin': '*' }, body: "export async function CreateMLCEngine(m, o) { o.initProgressCallback({ progress: 1, text: 'x' }); return { interruptGenerate() {}, unload: async () => {}, chat: { completions: { create: async () => ({ choices: [{ message: { content: '{}' } }] }) } } }; }" }));
-    await g.goto('http://localhost:8766/decodeur-courrier.html#outils'); await g.click('#tab-tools'); await g.click('[data-tool=paie]');
-    await g.setInputFiles('#paie-file', { name: 'p.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64') });
-    await g.waitForSelector('#ia-gate[open]'); ok(/Installer l'assistant IA/.test(await g.innerText('#ia-gate')), 'assistant IA obligatoire : la lecture d\'une photo demande d\'installer l\'assistant');
-    await g.click('#gate-cancel'); ok(!(await g.locator('#ia-gate[open]').count()), 'assistant IA : « Annuler » abandonne la lecture');
-    ok(!(await g.locator('.pages li').count()), 'assistant IA : aucune page ajoutée sans assistant');
-    await g.setInputFiles('#paie-file', { name: 'p.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64') });
-    await g.waitForSelector('#ia-gate[open]'); await g.click('#gate-go'); await g.waitForSelector('#ia-gate:not([open])', { state: 'attached' });
-    ok(!e2.length, 'assistant IA : aucune erreur JavaScript' + (e2.length ? ' ' + e2.join(' ') : ''));
+    await g.route(/googlesyndication|gstatic|tesseract|pdfjs|web-llm/, r => r.abort());
+    await g.goto('http://localhost:8766/decodeur-courrier.html'); await g.click('#tab-tools'); await g.click('[data-tool=paie]');
+    ok(await g.locator('.pages li').count() === 2, 'redémarrage : les 2 pages lues sont reprises');
+    await g.click('#paie-go'); await g.waitForSelector('#paie-res .verdict', { timeout: 10000 });
+    ok(/2\s?021,04/.test(await g.innerText('#paie-res')), 'redémarrage : l\'analyse reprend sans rescanner');
+    await g.evaluate(() => { document.querySelector('[data-pg-del="1"]').click(); document.querySelector('[data-pg-del="0"]').click(); });
+    await c2.addInitScript(() => { try { if (!sessionStorage.getItem('qt-decodeur:vu')) { sessionStorage.setItem('qt-decodeur:vu', '1'); } } catch (e) { /* ignoré */ } }); await g.evaluate(() => sessionStorage.setItem('qt-decodeur:vu', '1')); await g.reload(); await g.click('#tab-tools'); if (await g.locator('[data-tool=paie]').count()) await g.click('[data-tool=paie]'); await g.waitForSelector('#paie-go');
+    ok(await g.locator('.pages li').count() === 0, 'pages retirées : rien n\'est repris');
+    ok(!e2.length, 'reprise : aucune erreur JavaScript' + (e2.length ? ' ' + e2.join(' ') : ''));
     await c2.close();
   }
   console.log(errs.length ? errs.join('\n') : '✓ aucune erreur JavaScript');
