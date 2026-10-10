@@ -2334,19 +2334,23 @@ let lastProgress = { progress: 0, text: '' };
 function enqueueAI(fn) { const p = aiQueue.then(() => fn()); aiQueue = p.catch(() => {}); return p; }
 function interruptAI() { try { if (engine) engine.interruptGenerate(); } catch (e) {} }
 
+let iaDetail = '', iaDog = null;
 function iaError(e) {
   console.error(e);
+  iaDetail = e ? String(e.message || e).slice(0, 140) : '';
   if (e && e.message === 'nogpu') return "Ton appareil ne permet pas de faire tourner l'assistant IA.";
   if (!navigator.onLine && !iaPrefs().ready) return "Il faut internet pour télécharger l'assistant la première fois.";
   if (e && /quota|storage/i.test(String(e.message))) return "Pas assez d'espace de stockage sur l'appareil pour l'assistant IA.";
-  return IA_FAIL_MSG;
+  return IA_FAIL_MSG + (iaDetail ? ' (détail : ' + iaDetail + ')' : '');
 }
+let iaStep = '';
 function progressLabel(p) {
   const pct = Math.round((p.progress || 0) * 100);
-  return (iaPrefs().ready ? "Démarrage de l'assistant… " : "Téléchargement de l'assistant (une seule fois)… ") + pct + ' %';
+  return (iaPrefs().ready ? "Démarrage de l'assistant… " : "Téléchargement de l'assistant (une seule fois)… ") + pct + ' %' + (iaStep && pct < 100 ? ' · ' + iaStep : '');
 }
+let lastTick = 0;
 function engineProgress(p) {
-  lastProgress = p;
+  lastProgress = p; lastTick = Date.now(); iaStep = String(p.text || '').slice(0, 90);
   ['#ai-bar', '#ia-bar', '#gate-bar'].forEach(s => { const el = $(s); if (el) el.style.width = Math.round((p.progress || 0) * 100) + '%'; });
   ['#ai-ptext', '#ia-text', '#gate-text'].forEach(s => { const el = $(s); if (el) el.textContent = progressLabel(p); });
   updatePill();
@@ -2360,7 +2364,8 @@ async function ensureEngine() {
   if (engine && engineModel === model) return engine;
   if (engineLoading && engineLoading.model === model) return engineLoading.p;
   const p = (async () => {
-    setAIState('loading');
+    setAIState('loading'); lastTick = Date.now(); iaStep = '';
+    clearInterval(iaDog); iaDog = setInterval(() => { if (Date.now() - lastTick > 150000 && aiState === 'loading') { clearInterval(iaDog); store.set(KEYS.ia, { ...iaPrefs(), fail: true, failModel: prefSize(), ready: false }); iaDetail = 'aucun progrès depuis 2 min 30 (étape : ' + (iaStep || 'démarrage') + ')'; setAIState('error', IA_FAIL_MSG + ' (détail : ' + iaDetail + ')'); } }, 10000);
     try { localStorage.setItem(IA_FLAG, prefSize()); } catch (e) { /* ignoré */ }   // si la page redémarre pendant le chargement, on s'en souvient
     if (!webllm) webllm = await import(WEBLLM_URL);
     if (engine) { try { await engine.unload(); } catch (e) {} engine = null; }
@@ -2378,7 +2383,7 @@ async function ensureEngine() {
     if (navigator.onLine && !(err && /quota|storage/i.test(String(err.message)))) store.set(KEYS.ia, { ...iaPrefs(), fail: true, failModel: prefSize(), ready: false });   // échec sur cet appareil : on ne relance plus tout seul
     setAIState('error', iaError(err)); throw err;
   }
-  finally { engineLoading = null; }
+  finally { engineLoading = null; clearInterval(iaDog); }
 }
 
 /* ---------- Assistant IA obligatoire ---------- */
