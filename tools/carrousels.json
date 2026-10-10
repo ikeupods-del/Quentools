@@ -827,5 +827,40 @@
   "tags": "#administratif #papiers #organisation #astuce #vieadministrative #outilgratuit #budget",
   "c1": "#ffe14d",
   "c2": "#7aa5ff"
+ },
+ {
+  "id": "fiche-de-paie",
+  "shots": [
+   "assets/social/shots/pd-paie-resume.jpg",
+   "assets/social/shots/pd-paie-heures.jpg",
+   "assets/social/shots/pd-paie-lignes.jpg"
+  ],
+  "pill": "Outil gratuit",
+  "hook": [
+   "Fiche de paie :",
+   "vos heures supp sont-elles comptées ?"
+  ],
+  "accent": "Scannez, on vous explique chaque ligne.",
+  "prob": "Une fiche de paie, c’est souvent…",
+  "pb": [
+   "Des lignes qu’on ne comprend pas",
+   "Un net plus bas que prévu",
+   "Des heures supp dont on doute"
+  ],
+  "sol": "Paperdecrypt traduit votre fiche",
+  "sb": [
+   "Brut, net, impôt : résumés en une phrase",
+   "Heures supp repérées et comparées aux vôtres",
+   "Chaque ligne expliquée simplement"
+  ],
+  "ctaPill": "Et vous ?",
+  "ctaTitle": "Quelle ligne de votre fiche vous *intrigue* le plus ?",
+  "ctaText": "Dites-le en commentaire.",
+  "note": "",
+  "cap": "Brut, net imposable, cotisations, heures supp… et on a toujours un doute en ouvrant sa fiche de paie 🤔\n\nPaperdecrypt, l’outil gratuit de QuenTools, lit votre fiche à partir d’une photo ou d’un PDF : il résume le brut, le net, l’impôt prélevé, repère les heures supplémentaires et le taux de majoration appliqué, et explique chaque ligne en mots simples.\n\nVous indiquez combien d’heures supp vous avez faites : il vous dit s’il en manque et prépare une lettre pour demander le décompte à votre employeur.\n\nL’analyse se fait sur votre téléphone : votre fiche n’est ni envoyée ni enregistrée. Retrouvez l’outil dans les outils de QuenTools (lien en bio).\n\nQuelle ligne vous intrigue le plus ? Dites-le en commentaire 👇\n\n(L’outil aide à comprendre : il peut se tromper et ne remplace pas l’avis de votre service RH, d’un syndicat ou de l’inspection du travail.)",
+  "tt": "Vos heures supp sont-elles comptées ?",
+  "tags": "#fichedepaie #heuressupplementaires #salaire #droitdutravail #salarie #outilgratuit #vieadministrative",
+  "c1": "#ffe14d",
+  "c2": "#7aa5ff"
  }
 ]

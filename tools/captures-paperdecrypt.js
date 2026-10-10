@@ -37,5 +37,12 @@ const srv = http.createServer((q, r) => { let f = path.join(ROOT, decodeURICompo
   await pg.evaluate(() => { const l = JSON.parse(localStorage.getItem('qt-paperasse:etats-des-lieux')); const s = l.find(x => x.type === 'sortie'); s.rooms.forEach(r => r.items.forEach(i => { if (!i.state) i.state = 'bon'; })); localStorage.setItem('qt-paperasse:etats-des-lieux', JSON.stringify(l)); });
   await pg.reload(); await pg.click('[data-edl-sum]:last-of-type').catch(async () => { await pg.locator('[data-edl-sum]').first().click(); });
   await pg.evaluate(() => window.scrollTo(0, 0)); await shot('pd-edl-resume');
+  // Fiche de paie (exemple fictif)
+  await pg.goto('http://localhost:8768/decodeur-courrier.html#fiche-de-paie'); await pg.reload(); await pg.addStyleTag({ content: '.ad,.disclaimer{display:none!important}' });
+  await pg.click('#paie-sample'); await pg.waitForSelector('.paie-t');
+  await pg.evaluate(() => document.querySelector('#paie-res .verdict').scrollIntoView({ block: 'start' })); await shot('pd-paie-resume');
+  await pg.fill('#paie-declared', '14');
+  await pg.evaluate(() => { document.activeElement.blur(); const h = [...document.querySelectorAll('#paie-res h3')].find(x => /heures supp/i.test(x.textContent)); document.querySelector('#paie-declared').scrollIntoView({ block: 'start' }); window.scrollBy(0, -90); }); await shot('pd-paie-heures');
+  await pg.evaluate(() => { const h = [...document.querySelectorAll('#paie-res h3')].find(x => /Ligne par ligne/i.test(x.textContent)); h.scrollIntoView({ block: 'start' }); document.querySelectorAll('.paie-lines details')[1].open = true; window.scrollBy(0, -10); }); await shot('pd-paie-lignes');
   console.log('captures ok'); await b.close(); srv.close();
 })().catch(e => { console.error(e); process.exit(1); });

@@ -3276,9 +3276,9 @@ function payslipInsights(p, declared) {
   if (p.hsRelief) out.push({ level: 'info', text: "Une ligne d'allègement sur les heures supplémentaires apparaît : c'est normal, une partie des cotisations salariales est supprimée sur ces heures (donc ton net augmente)." });
   if (declared !== null && declared !== undefined && isFinite(declared)) {
     const paid = p.hsQty || 0, gap = Math.round((declared - paid) * 100) / 100;
-    if (gap > 0.49) out.push({ level: 'warn', text: `Tu indiques ${PH(declared)} supplémentaires, la fiche en paie ${PH(paid)} : il en manque peut-être ${PH(gap)}. Demande à ton employeur le décompte détaillé de tes heures et, si besoin, la régularisation (un modèle de lettre est prêt ci-dessous).` });
-    else if (gap < -0.49) out.push({ level: 'info', text: `La fiche paie ${PH(paid)}, plus que les ${PH(declared)} que tu indiques : des heures peuvent venir d'un autre mois (régularisation) ou d'un repos compensateur.` });
-    else out.push({ level: 'ok', text: `Les heures supplémentaires payées (${PH(paid)}) correspondent à ce que tu indiques.` });
+    if (gap > 0.49) out.unshift({ level: 'warn', text: `Tu indiques ${PH(declared)} supplémentaires, la fiche en paie ${PH(paid)} : il en manque peut-être ${PH(gap)}. Demande à ton employeur le décompte détaillé de tes heures et, si besoin, la régularisation (un modèle de lettre est prêt ci-dessous).` });
+    else if (gap < -0.49) out.unshift({ level: 'info', text: `La fiche paie ${PH(paid)}, plus que les ${PH(declared)} que tu indiques : des heures peuvent venir d'un autre mois (régularisation) ou d'un repos compensateur.` });
+    else out.unshift({ level: 'ok', text: `Les heures supplémentaires payées (${PH(paid)}) correspondent à ce que tu indiques.` });
   }
   if (p.conges.length) out.push({ level: 'info', text: 'Compteurs de congés ou de repos repérés : vérifie que les jours acquis augmentent bien chaque mois (en général 2,5 jours ouvrables de congés payés par mois travaillé).' });
   return out;
@@ -3335,7 +3335,7 @@ function renderPaie(box) {
   };
   $('#paie-cam').addEventListener('change', e => { onFiles(e.target.files); e.target.value = ''; });
   $('#paie-file').addEventListener('change', e => { onFiles(e.target.files); e.target.value = ''; });
-  const dec = $('#paie-declared'); if (dec) dec.addEventListener('input', () => { paie$.declared = dec.value; const i2 = payslipInsights(paie$.p, dec.value === '' ? null : parseFloat(dec.value.replace(',', '.'))); $('#paie-ins').innerHTML = insightsHTML(i2); });
+  const dec = $('#paie-declared'); if (dec) dec.addEventListener('input', () => { paie$.declared = dec.value; const i2 = payslipInsights(paie$.p, dec.value === '' ? null : parseFloat(dec.value.replace(',', '.'))); $('#paie-ins').innerHTML = insightsHTML(i2.filter(i => PAIE_HS_RE.test(i.text))); });
   $$('[data-pq]', box).forEach(b => b.addEventListener('click', () => { const log = $('#paie-chat', box); const m = document.createElement('div'); m.className = 'msg me'; m.textContent = b.textContent; log.appendChild(m); const a = document.createElement('div'); a.className = 'msg bot'; a.textContent = paieAnswer(b.dataset.pq, paie$.p); log.appendChild(a); a.scrollIntoView({ block: 'nearest' }); track('paie_question'); }));
   const pq = $('#paie-q'), pask = () => { const q = pq.value.trim(); if (!q) return; pq.value = ''; paieAsk(box, q); };
   if (pq) { $('#paie-ask').addEventListener('click', pask); pq.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pask(); } }); }
@@ -3351,6 +3351,7 @@ function renderPaie(box) {
   });
   $$('[data-ph]', box).forEach(el => $('[data-ph-del]', el).addEventListener('click', () => { if (!confirm('Supprimer cette fiche enregistrée ?')) return; store.set(KEYS.paies, getPaies().filter(x => x.id !== el.dataset.ph)); renderPaie(box); }));
 }
+const PAIE_HS_RE = /heures|Ligne|majoration|supplémentaires|complémentaires|allègement/;
 const insightsHTML = ins => ins.length ? `<ul class="paie-ins">${ins.map(i => `<li class="${i.level}"><span aria-hidden="true">${i.level === 'ok' ? '✓' : i.level === 'warn' ? '!' : 'i'}</span><div>${esc(i.text)}</div></li>`).join('')}</ul>` : '<p class="note">Rien de particulier à signaler.</p>';
 function paieResultHTML(p, ins, hist) {
   const row = (l, v, strong) => v === null || v === undefined ? '' : `<tr><th scope="row">${l}</th><td${strong ? ' class="strong"' : ''}>${esc(PE(v))}</td></tr>`;
@@ -3365,8 +3366,8 @@ function paieResultHTML(p, ins, hist) {
     <div class="block"><h3>Tes heures supplémentaires</h3>
       ${p.hs.length ? `<ul>${p.hs.map(h => `<li>${esc(h.line)}${h.impl !== null ? ` <span class="note">(majoration d'environ ${h.impl} %)</span>` : ''}</li>`).join('')}</ul>` : '<p>Aucune ligne repérée.</p>'}
       <label class="field"><span>Combien d'heures supplémentaires as-tu faites ce mois-ci ?</span><input id="paie-declared" inputmode="decimal" value="${esc(paie$.declared)}" placeholder="Ex. 10"></label>
-      <div id="paie-ins">${insightsHTML(ins.filter(i => /heures|Ligne|majoration|supplémentaires|allègement/.test(i.text)))}</div></div>
-    <div class="block"><h3>Ce qu'on a repéré d'autre</h3>${insightsHTML(ins.filter(i => !/heures|Ligne|majoration|supplémentaires|allègement/.test(i.text)))}
+      <div id="paie-ins">${insightsHTML(ins.filter(i => PAIE_HS_RE.test(i.text)))}</div></div>
+    <div class="block"><h3>Ce qu'on a repéré d'autre</h3>${insightsHTML(ins.filter(i => !PAIE_HS_RE.test(i.text)))}
       ${p.primes.length ? `<p><b>Primes et indemnités :</b></p><ul>${p.primes.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
       ${p.absences.length ? `<p><b>Absences ou retenues :</b></p><ul>${p.absences.map(x => `<li>${esc(x.line)}</li>`).join('')}</ul>` : ''}
       ${p.conges.length ? `<p><b>Congés et repos :</b></p><ul>${p.conges.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>
