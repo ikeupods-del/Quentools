@@ -4128,7 +4128,7 @@ function rcAmounts(words) {
   const rows = groupRows(deskewWords(words)), am = [];
   rows.forEach((r, ri) => r.words.forEach(w => {
     const t = String(w.t).replace(/[€\s]+$/, '').trim(); let v = null, rep = false, base = false;
-    if (/^-?\d{1,3}(?: \d{3})+,\d{2}$|^-?\d+[,.]\d{2}$/.test(t)) v = parseFR(t);
+    if (/^-?\d{1,3}(?: \d{3})+[,.]\d{2}$|^-?\d+[,.]\d{2}$/.test(t)) v = parseFR(t);
     else if (/^\d+,\d{2}0$|^\d{1,3}(?: \d{3})+,\d{2}0$/.test(t)) { const x = parseFR(t); if (x !== null) { v = Math.round(x * 100) / 100; base = true; } }
     else if (/^\d{5,7}$/.test(t)) { v = parseInt(t, 10) / 100; rep = true; }
     if (v !== null && Math.abs(v) < 100000) am.push({ v: Math.round(v * 100) / 100, ri, page: r.page, x: (w.x0 + w.x1) / 2, rep, base });

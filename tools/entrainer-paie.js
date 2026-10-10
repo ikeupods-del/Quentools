@@ -27,6 +27,7 @@ function motsDuTexte(texte) {
   return mots;
 }
 const fabriquees = (n, graine) => generer(n, graine).map(f => ({ words: abimer(motsDuTexte(f.texte), rnd() * 0.5), truth: { brut: f.attendu.brut, cotSal: f.attendu.cotSal, netAvant: f.attendu.netAvant, netPayer: f.attendu.netFinal, netImposable: f.attendu.netImposable } }));
+const vraies = fs.existsSync(path.join(__dirname, 'fixtures', 'fiches-reelles.json')) ? JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'fiches-reelles.json'), 'utf8')).map(f => ({ nom: f.fichier, words: f.words, truth: f.attendu })) : [];
 const synth = [], reel = [];
 const T0 = { ...TRUTH };
 OPTS.forEach(o => { const w = wordsA(layout(o)); for (let i = 0; i < 25; i++) synth.push({ words: abimer(w, i === 0 ? 0 : 0.1 + rnd() * 0.5), truth: T0 }); });
@@ -49,9 +50,9 @@ function exemples(sets) {   // une liste d'exemples par total : [{ features de c
     const pk = {};
     FIELDS.forEach(f => {
       const cands = exec(`__x.cands.filter(c => '${f}' === 'brut' ? c.v >= 100 : !c.base && c.v > 0).map(c => c.v)`);
-      const bon = cands.findIndex(v => Math.abs(v - truth[f]) <= 0.021);
+      const bon = truth[f] === undefined ? -1 : cands.findIndex(v => Math.abs(v - truth[f]) <= 0.021);
       if (bon >= 0) { out[f].push({ X: cands.map(v => exec(`rcMiniFeat(__x, '${f}', __v, ${JSON.stringify(pk)})`, v)), bon }); }
-      pk[f] = truth[f];
+      if (truth[f] !== undefined) pk[f] = truth[f];
     });
   });
   return out;
@@ -74,16 +75,25 @@ function entrainer(ex) {
 function evaluer(W, sets, nom) {
   exec('RC_MINI = ' + JSON.stringify(W) + ';');
   const ok = Object.fromEntries(FIELDS.map(f => [f, 0])), vide = Object.fromEntries(FIELDS.map(f => [f, 0])), faux = Object.fromEntries(FIELDS.map(f => [f, 0]));
-  sets.forEach(({ words, truth }) => { const r = exec('rcMini(__v)', words); FIELDS.forEach(f => { if (r[f] === undefined) vide[f]++; else if (Math.abs(r[f] - truth[f]) <= 0.021) ok[f]++; else faux[f]++; }); });
+  sets.forEach(({ words, truth }) => { const r = exec('rcMini(__v)', words); FIELDS.forEach(f => { if (truth[f] === undefined) return; if (r[f] === undefined) vide[f]++; else if (Math.abs(r[f] - truth[f]) <= 0.021) ok[f]++; else faux[f]++; }); });
   console.log(nom + ' (' + sets.length + ' fiches) : ' + FIELDS.map(f => f + ' ' + ok[f] + ' juste, ' + faux[f] + ' faux, ' + vide[f] + ' vide').join(' | '));
   return { ok, faux, vide };
 }
-// Contrôle honnête : entraînement sur des fiches fabriquées, essai sur d'autres fiches fabriquées (autre tirage) et sur la vraie photo jamais vue ; puis entraînement sur tout
+// Contrôle honnête : entraînement sur les mises en page fabriquées et la photo de référence, essai sur de vraies fiches jamais vues
+// (validation croisée : chaque vraie fiche est lue par un modèle qui ne l'a jamais vue), puis entraînement sur tout
+const POIDS = +process.env.POIDS || 12, base = [...gen, ...synth.filter((_, i) => i % 4 === 0), ...reel.filter((_, i) => i % 4 === 0)], lourd = l => [].concat(...Array(POIDS).fill(l));   // les vraies fiches pèsent plus : elles sont rares et ce sont elles qu'on veut lire
 exec('RC_MINI = {};');
-const W1 = entrainer(exemples([...gen, ...synth]));
-if (avecGen) evaluer(W1, genEssai, 'essai sur 350 fiches fabriquées jamais vues'); evaluer(W1, reel, 'essai sur la vraie photo jamais vue');
-const W = entrainer(exemples([...gen, ...synth, ...reel]));
-if (avecGen) evaluer(W, genEssai, 'final, fiches fabriquées'); evaluer(W, synth, 'final, mises en page'); evaluer(W, reel, 'final, vraie photo');
+if (vraies.length) {
+  const tot = { ok: 0, faux: 0, vide: 0 }, parFiche = [];
+  vraies.forEach((v, i) => {
+    const Wi = entrainer(exemples([...base, ...lourd(vraies.filter((_, j) => j !== i))]));
+    const r = evaluer(Wi, [v], 'vraie fiche ' + v.nom + ' (jamais vue)');
+    FIELDS.forEach(f => { tot.ok += r.ok[f]; tot.faux += r.faux[f]; tot.vide += r.vide[f]; });
+  });
+  console.log('TOTAL validation croisée sur ' + vraies.length + ' vraies fiches : ' + tot.ok + ' justes, ' + tot.faux + ' faux, ' + tot.vide + ' vides');
+}
+const W = entrainer(exemples([...base, ...lourd(vraies)]));
+if (avecGen) evaluer(W, genEssai, 'final, fiches fabriquées'); evaluer(W, reel, 'final, vraie photo de référence'); if (vraies.length) evaluer(W, vraies, 'final, vraies fiches');
 if (process.argv.includes('--ecrire')) {
   const s = fs.readFileSync(page, 'utf8'), n = s.replace(/^const RC_MINI = .*;$/m, 'const RC_MINI = ' + JSON.stringify(W) + ';');
   if (n === s) { console.log('rien à écrire'); } else { fs.writeFileSync(page, n); console.log('✓ poids écrits dans la page'); }

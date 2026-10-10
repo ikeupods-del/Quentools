@@ -257,6 +257,10 @@ const pdfjs = findPdfjs();
     eq('l\'IA contredit un montant lu → signalé', run('rcMerge(__v[0], __v[1], __v[2])', [all, { brut: 2330.93, cotSal: 473.77, netAvant: 1861.16, netImposable: 1672.06, netPayer: 1861.16 }, { netAvant: 1857.16 }]).agree.netAvant, false);
     eq('prompt : montants et consignes', /Montants lus sur la fiche/.test(run('rcPromptText(__v[0], __v[1]).user', [all, M])) && /null/.test(run('rcPromptText(__v[0], __v[1]).user', [all, M])), true);
   }
+  { // montants à point décimal avec espace des milliers (« 1 850.30 »), fréquents sur les fiches d'un logiciel de paie courant
+    const w = (t, i) => ({ t, x0: 100 + i * 60, x1: 140 + i * 60, y: 10, h: 8, page: 1 });
+    eq('montant « 1 850.30 » lu', run('rcAmounts(__v).am.map(a => a.v)', [w('1 850.30', 0), w('439.50', 1), w('12.0195', 2)]), [1850.3, 439.5]);
+  }
   { // petit modèle local : propose des totaux parmi les montants lus ; sans libellé ni contexte il ne propose rien d'inventé
     const pg = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'fiche-photo-janvier-2025.json'), 'utf8')); let off = 0; const all = [];
     pg.forEach(p => { p.words.forEach(w => all.push(Object.assign({}, w, { page: w.page + off }))); off += p.np || 1; });

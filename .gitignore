@@ -19,3 +19,6 @@ contrats/
 
 # Sites clients en préparation (outil tools/nouveau-client.js) : jamais versionnés
 clients/
+
+# Fiches de paie réelles lues pour l entraînement (montants de personnes : jamais versionnés)
+tools/fixtures/fiches-reelles*.json
