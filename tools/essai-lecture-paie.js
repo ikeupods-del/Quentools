@@ -8,6 +8,7 @@ const src = fs.readFileSync(path.join(__dirname, '..', 'decodeur-courrier.html')
 const norm = s => String(s).toLowerCase().replace(/[’`´]/g, "'").normalize('NFD').replace(/[̀-ͯ]/g, '');
 const c = { norm }; vm.createContext(c);
 vm.runInContext(src.slice(src.indexOf('/*TABLE-DEB*/'), src.indexOf('/*TABLE-FIN*/')).replace(/^const /gm, 'var '), c);
+vm.runInContext(src.slice(src.indexOf('/*PAIE-DEB*/'), src.indexOf('/*PAIE-FIN*/')).replace(/^const /gm, 'var '), c);
 const run = (code, v) => { c.__v = v; return vm.runInContext(code, c); };
 let ko = 0, nb = 0;
 const eq = (nom, a, b) => { nb++; if (JSON.stringify(a) !== JSON.stringify(b)) { ko++; console.log('✗ ' + nom + ' = ' + JSON.stringify(a) + ' (attendu ' + JSON.stringify(b) + ')'); } };
@@ -134,6 +135,18 @@ function verifier(nom, res) {
   cells(/^retraite complementaire t1/, { retenue: 93.47, partEmp: 140.09 });
   cells(/^csg deductible/, { retenue: 138.84 }); cells(/^csg non deductible/, { retenue: 59.21 }); cells(/^csg\/crds sur heures/, { retenue: 25.74 });
   cells(/^reduction cotisations salariales/, { retenue: -30.54 }); cells(/^remboursement titre/, { gain: 4 });
+  { // de la lecture par positions à l'analyse : le texte remis au propre alimente l'analyse existante, sans mélanger les colonnes
+    c.__lec = res; const g = vm.runInContext('payslipFromLecture(__lec)', c); c.__t = g.text; const p = vm.runInContext('parsePayslip(__t)', c);
+    eq(nom + ' analyse : brut', p.brut, 2330.93); eq(nom + ' analyse : cotisations salariales', p.cotSal, 473.77); eq(nom + ' analyse : net avant impôt', p.netAvant, 1861.16);
+    eq(nom + ' analyse : net imposable', p.netImposable, 1672.06); eq(nom + ' analyse : net à payer', p.netFinal, 1861.16);
+    eq(nom + ' analyse : heures supp', [p.hsQty, p.hsAmount], [17.85, 270.05]);
+    eq(nom + ' analyse : aucune ligne inventée', p.lignes.some(l => /anciennete/.test(norm(l.label + ' ' + l.line))), false);
+    const sal = g.colonnes.salarie.map(x => x.label + '=' + x.v), emp = g.colonnes.employeur.map(x => x.label + '=' + x.v);
+    eq(nom + ' colonnes : Sécu maladie côté salarié', sal.includes('Sécurité sociale maladie=0'), true); eq(nom + ' colonnes : Sécu maladie côté employeur', emp.includes('Sécurité sociale maladie=163.17'), true);
+    eq(nom + ' colonnes : 163,17 absent du salarié', sal.some(x => /163.17/.test(x)), false); eq(nom + ' colonnes : retraite salarié/employeur', [sal.includes('Retraite complémentaire T1=93.47'), emp.includes('Retraite complémentaire T1=140.09')], [true, true]);
+    eq(nom + ' colonnes : sans doublon', [new Set(sal).size === sal.length, new Set(emp).size === emp.length], [true, true]);
+    eq(nom + ' valeurs à valider', g.valeurs, { brut: 2330.93, cotSal: 473.77, netAvant: 1861.16, netImposable: 1672.06, netPayer: 1861.16 });
+  }
   eq(nom + ' aucune prime d\'ancienneté inventée', res.rows.some(r => /anciennete/.test(r.n)), false);
   eq(nom + ' lignes du tableau', res.rows.filter(r => r.hasCols && r.label).length, P1.length + P2.length);
   eq(nom + ' aucune valeur ronde inventée', res.rows.some(r => [2, 5, 23, 700].some(v => Object.values(r.cells).includes(v))), false);

@@ -330,6 +330,8 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .paie-t th,.paie-t td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:.98rem}
 .paie-t td{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .paie-t td.strong{font-weight:800}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}.two-col h3{font-size:1rem;margin:8px 0 4px}@media(max-width:640px){.two-col{grid-template-columns:1fr}}
+.field.douteux input{border:2px dashed var(--warn,#b7791f)}
 .pages{list-style:none;margin:10px 0;padding:0;display:grid;gap:6px}
 .pages li{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:.95rem}
 .pages small{color:var(--muted)}
@@ -2032,9 +2034,16 @@ async function readPdf(file, maxPages = 6) {
   }
   return txt;
 }
+// PDF avec texte (pas un scan) → mots positionnés. words vide = PDF scanné : on retombe sur la lecture d'image.
+async function readPdfWords(file, maxPages = 12) {
+  await loadScript(PDFJS_URL);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  return { words: await pdfToWords(pdf, maxPages), np: Math.min(pdf.numPages, maxPages) };
+}
 // Photos d'une fiche de paie (une par page) → mots positionnés : mêmes redressement et contraste que la lecture de texte, puis les boîtes de chaque mot.
 async function readPhotoWords(files) {
-  const w = await getOcr(), words = [];
+  const w = await getOcr(), words = []; let text = '';
   try { await w.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' }); } catch (e) { /* option indisponible */ }
   try {
     for (let i = 0; i < files.length; i++) {
@@ -2046,9 +2055,10 @@ async function readPhotoWords(files) {
         if (sc >= 0.35) break;
       }
       for (const x of ocrWords(best.d, i + 1)) words.push(x);
+      text += (best.d.text || '') + '\n\n'; if (typeof best.d.confidence === 'number') ocrConf = ocrConf === null ? best.d.confidence : Math.min(ocrConf, best.d.confidence);
     }
   } finally { try { await w.setParameters({ tessedit_pageseg_mode: '3', preserve_interword_spaces: '0' }); } catch (e) { /* ignoré */ } }
-  return words;
+  return { words, text };
 }
 // Première page d'un PDF (facture, ticket) en image, pour l'enregistrer et la faire lire comme une photo.
 async function pdfFirstPageFile(file) {
@@ -3315,7 +3325,7 @@ function renderTools() {
   $$('[data-tool]', box).forEach(b => b.addEventListener('click', () => {
     if (b.dataset.tool === 'dossier') return openDossier();
     if (b.dataset.tool === 'edl') edl$ = { view: 'list' };
-    if (b.dataset.tool === 'paie') paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages: [] };
+    if (b.dataset.tool === 'paie') paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages: [], gen: null };
     tools$ = { view: b.dataset.tool }; track('outil_' + b.dataset.tool); renderTools(); setHash('tools', b.dataset.tool); box.scrollIntoView({ block: 'start' });
   }));
 }
@@ -3603,6 +3613,7 @@ function decorateRow(r, cols) {
   });
   const ft = text.length ? text[0].x0 : -Infinity;
   r.label = text.map(w => w.t).join(' '); r.n = norm(r.label);
+  r.labelFull = ws.filter(w => !(r.code && w.t === r.code && w.x1 <= ft + 0.5) && (!cols || (w.x0 + w.x1) / 2 < cols[0].l)).map(w => w.t).join(' ');   // libellé tel qu'imprimé (avec « 125 % »)
   r.code = numeric.filter(o => o.w.x1 <= ft + 0.5).map(o => o.w.t)[0] || null;
   const data = numeric.filter(o => !(o.w.x1 <= ft + 0.5));
   const cut = text.find(w => /^(cumul|annuel|annuelle|depuis)/.test(norm(w.t)));
@@ -3741,6 +3752,31 @@ function checkPayslip(rows, tot) {
   const need = ['brut', 'cotSal', 'netAvant', 'netImposable', 'netPayer'], manquants = need.filter(k => t[k] === null);
   return { checks, manquants, fiable: !checks.some(c => c.status === 'ko') && !manquants.length };
 }
+// Nombre → texte français (milliers séparés par une espace, virgule, au moins 2 décimales)
+function fmtFR(v) {
+  let t = (Math.round(Math.abs(v) * 10000) / 10000).toString(); if (!/\./.test(t)) t += '.00'; else if (/\.\d$/.test(t)) t += '0';
+  const [a, b] = t.split('.');
+  return (v < 0 ? '-' : '') + a.replace(/\B(?=(\d{3})+$)/g, ' ') + ',' + b;
+}
+// Lecture par positions → ce dont l'analyse a besoin :
+//  - text : la fiche remise au propre, une ligne par ligne imprimée, avec les seuls chiffres de la part salariale (jamais ceux de l'employeur) ;
+//  - valeurs : les 5 totaux clés à faire valider ; colonnes : « ce que tu paies » / « ce que paie ton employeur », libellés tels qu'imprimés, sans doublon.
+function payslipFromLecture(lec) {
+  const body = lec.rows.filter(r => !r.header), lines = [];
+  body.forEach(r => {
+    if (!r.hasCols) { const l = r.words.map(w => w.t).join(' '); if (l.trim()) lines.push(l); return; }
+    const parts = [r.labelFull];
+    ['nombre', 'base', 'tauxSal', 'gain', 'retenue'].forEach(k => { if (typeof r.cells[k] === 'number') parts.push(fmtFR(r.cells[k]) + (k === 'tauxSal' ? ' %' : '')); });
+    const l = parts.join(' ').trim(); if (/[A-Za-zÀ-ÿ0-9]/.test(l)) lines.push(l);
+  });
+  const t = lec.totals, bi = body.findIndex(r => r.n && /^(total |salaire )?brut\b|^total brut/.test(r.n) && !/net|cumul|annuel|imposable|base|abattu/.test(r.n)), ci = body.findIndex(r => r.n && /^total (des )?(cotisations|retenues)/.test(r.n));
+  const seg = body.slice(bi + 1, ci > bi ? ci : body.length).filter(r => r.hasCols && r.label && !r.cumul), seen = {}, col = { salarie: [], employeur: [] };
+  seg.forEach(r => [['salarie', 'retenue'], ['employeur', 'partEmp']].forEach(([w, k]) => {
+    const v = r.cells[k]; if (typeof v !== 'number') return;
+    const id = w + '|' + r.n + '|' + v; if (seen[id]) return; seen[id] = 1; col[w].push({ label: r.label, v });
+  }));
+  return { text: lines.join('\n'), valeurs: { brut: t.brut, cotSal: t.cotSal, netAvant: t.netAvant, netImposable: t.netImposable, netPayer: t.netPayer }, colonnes: col, fiable: lec.fiable, checks: lec.checks, manquants: lec.manquants };
+}
 // Mots (PDF ou photo) → lignes, totaux et contrôles
 function readPayslipWords(words) {
   const rows = buildRows(deskewWords(words)), tot = readTotals(rows), chk = checkPayslip(rows, tot);
@@ -3846,7 +3882,7 @@ function parsePayslip(raw) {
   const baseRate = p.base && p.base.rate && p.base.rate > 3 && p.base.rate < 200 ? p.base.rate : (p.base && p.base.qty && p.base.amount ? p.base.amount / p.base.qty : null);
   // Heures supplémentaires : une ligne d'heures et, parfois, une ligne de majoration à part (à rapprocher)
   const items = [];
-  findAll(/(heures? (supp|suppl)|h\.? ?sup|hres? sup|\bhs ?(\d|maj)|heures majorees|majoration|heures? compl)/, /(reduction|allegement|defiscal|exoneration|cotisations? salariale|contingent|nuit|dimanche|ferie|^(?!heures? (supp|suppl)).*exonere)/).forEach(k => {
+  findAll(/(heures? (supp|suppl)|h\.? ?sup|hres? sup|\bhs ?(\d|maj)|heures majorees|majoration|heures? compl)/, /(reduction|allegement|defiscal|exoneration|cotisations? salariale|csg|crds|contingent|nuit|dimanche|ferie|^(?!heures? (supp|suppl)).*exonere)/).forEach(k => {
     const n = lineNums(lines[k], true); if (!n.length) return;
     const maj = linePct(lines[k]), isMaj = /majoration|\bmaj\b/.test(nl[k]) && maj !== null;
     const qty = n.length >= 2 && n[0] <= 200 ? n[0] : null, amount = n[n.length - 1], rate = n.length >= 3 ? n[1] : null;
@@ -4045,6 +4081,26 @@ function guidedCamera() {
 }
 const getPaies = () => store.get(KEYS.paies, []);
 let paie$ = { text: '', declared: '', p: null, p0: null, fix: {}, pages: [] };
+const paieSig = pgs => pgs.map(x => x.name + ':' + x.text.length).join('|');
+// Totaux validés par l'utilisateur (ou lus et recoupés) appliqués à l'analyse : ce qu'il a laissé vide reste vide, jamais remplacé par une autre lecture.
+function applyValidated(p0, vals, lec) {
+  const p = JSON.parse(JSON.stringify(p0)); p.hs = p.hs.map(h => ({ ...h }));
+  p.brut = vals.brut; p.cotSal = vals.cotSal; p.netAvant = vals.netAvant; p.netImposable = vals.netImposable; p.netFinal = vals.netPayer;
+  if (lec && lec.totals) { if (lec.totals.cotPat !== null) p.cotPat = lec.totals.cotPat; if (lec.totals.netSocial !== null) p.netSocial = lec.totals.netSocial; }
+  p.found = [p.brut, p.netAvant, p.netFinal, p.netImposable, p.cotSal, p.base].filter(x => x !== null).length + (p.pas ? 1 : 0); p.valide = true;
+  return p;
+}
+function paieValidationHTML(g) {
+  const F = [['brut', 'Salaire brut'], ['cotSal', 'Cotisations salariales'], ['netAvant', 'Net avant impôt'], ['netImposable', 'Net imposable'], ['netPayer', 'Net à payer']];
+  const ko = g.checks.filter(c => c.status === 'ko'), V = g.valeurs, doubt = !g.fiable;
+  const list = a => a.length ? `<table class="paie-t"><tbody>${a.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table>` : '<p class="note">Rien de lu.</p>';
+  return `<div class="sheet verdict" id="paie-valid"><h2>Vérifie ce qu'on a lu</h2>
+    ${doubt ? `<div class="scam"><strong style="color:var(--ink)">Lecture incertaine.</strong> Les chiffres ne se recoupent pas tous${ko.length ? ' (' + ko.map(c => esc(c.label.toLowerCase())).join(' ; ') + ')' : ''}${g.manquants.length ? ' ou il en manque' : ''}. Compare avec ta fiche et corrige les cases en pointillés avant de continuer.${ko.some(c => c.detail) ? '<br><small>' + ko.filter(c => c.detail).map(c => esc(c.detail)).join(' · ') + '</small>' : ''}</div>` : '<p class="note">✓ Lecture recoupée : les totaux correspondent aux lignes de ta fiche. Vérifie quand même d\'un coup d\'œil.</p>'}
+    <div class="form-grid">${F.map(([k, l]) => `<label class="field${V[k] === null || doubt ? ' douteux' : ''}"><span>${l} (€)</span><input data-val="${k}" inputmode="decimal" value="${V[k] === null ? '' : esc(fmtFR(V[k]))}" placeholder="non lu : à saisir"></label>`).join('')}</div>
+    <div class="two-col"><div><h3>Ce que tu paies</h3>${list(g.colonnes.salarie)}</div><div><h3>Ce que paie ton employeur</h3>${list(g.colonnes.employeur)}</div></div>
+    <div class="actions"><button class="btn" id="paie-valid-go" type="button">Valider et analyser</button></div>
+    <p class="note">Rien n'est envoyé : la lecture reste sur ton appareil.</p></div>`;
+}
 function renderPaie(box) {
   const s = paie$;
   const p = s.p, ins = p ? payslipInsights(p, s.declared === '' ? null : parseFloat(String(s.declared).replace(',', '.'))) : [];
@@ -4061,13 +4117,23 @@ function renderPaie(box) {
     <textarea id="paie-text" placeholder="Le texte de ta fiche de paie apparaît ici après la lecture. Tu peux aussi le coller.">${esc(s.pages.map(x => x.text).join('\n\n') || s.text)}</textarea>
     <div class="actions"><button class="btn" id="paie-go" type="button">${s.pages.length > 1 ? `Analyser mes ${s.pages.length} pages` : 'Analyser'}</button><button class="link" id="paie-sample" type="button">Voir un exemple</button></div>
     <p class="note">Une fiche de paie est un document très personnel : elle n'est ni envoyée ni enregistrée tant que tu ne le demandes pas.</p></div>
-    <div id="paie-res">${p ? paieResultHTML(p, ins, hist) : ''}</div>
+    ${s.gen && s.genSig === paieSig(s.pages) && !s.valide ? paieValidationHTML(s.gen) : ''}
+    <div id="paie-res">${p && !(s.gen && s.genSig === paieSig(s.pages) && !s.valide) ? paieResultHTML(p, ins, hist) : ''}</div>
     ${hist.length ? `<h3 class="sec-title">Mes fiches enregistrées</h3><div class="items">${hist.map(h => `<article class="item l1" data-ph="${h.id}"><div><h3>${esc(h.periode || 'Fiche de paie')}</h3><p>Brut ${esc(PE(h.brut))} | Net versé ${esc(PE(h.netFinal ?? h.netAvant))}${h.hsQty ? ' | ' + esc(PH(h.hsQty)) + ' supplémentaires' : ''}</p></div><div class="row"><button class="link" data-ph-del type="button">Supprimer</button></div></article>`).join('')}</div>` : ''}`;
   toolBack(box);
   const ta = $('#paie-text');
   const run = () => {
     const t = ta.value.trim(); if (t.length < 40) { toast('Ajoute une photo ou colle le texte de ta fiche'); return; }
-    const p0 = parsePayslip(t); paie$ = { ...paie$, text: t, p0, p: p0, fix: {}, pages: paie$.pages.length ? paie$.pages : [{ name: 'Texte saisi', text: t }] };
+    // Pages lues par positions et texte non retouché : on fait d'abord valider les totaux (l'analyse suit la validation)
+    const pgs = paie$.pages, intact = pgs.length && pgs.every(pg => pg.words && pg.words.length) && pgs.map(x => x.text).join('\n\n').trim() === t;
+    if (intact) {
+      let off = 0; const all = [];
+      pgs.forEach(pg => { pg.words.forEach(w => all.push({ ...w, page: w.page + off })); off += pg.np || 1; });
+      const lec = readPayslipWords(all), gen = payslipFromLecture(lec);
+      paie$ = { ...paie$, text: gen.text, lec, gen, genSig: paieSig(pgs), valide: false, p0: parsePayslip(gen.text), p: null, fix: {} };
+      track('paie'); track(lec.fiable ? 'paie_lecture_sure' : 'paie_lecture_incertaine'); if (pgs.length > 1) track('paie_multipage'); renderPaie(box); $('#paie-valid').scrollIntoView({ block: 'start' }); return;
+    }
+    const p0 = parsePayslip(t); paie$ = { ...paie$, text: t, p0, p: p0, gen: null, fix: {}, pages: paie$.pages.length ? paie$.pages : [{ name: 'Texte saisi', text: t }] };
     track('paie'); if (paie$.pages.length > 1) track('paie_multipage'); renderPaie(box); $('#paie-res').scrollIntoView({ block: 'start' });
   };
   $('#paie-go').addEventListener('click', run);
@@ -4082,10 +4148,14 @@ function renderPaie(box) {
       for (let i = 0; i < fl.length; i++) {
         const f = fl[i], isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
         setOcr(i / fl.length, fl.length > 1 ? `Lecture de la page ${i + 1} sur ${fl.length}…` : 'Lecture de la page…');
-        let text;
-        if (isPdf) text = await readPdf(f, 12);
-        else { onlyPdf = false; const w = await getOcr(); text = await ocrImage(w, f, { table: true }); }
-        paie$.pages.push({ name: f.name && !/^image\.(jpe?g|png)$/i.test(f.name) ? f.name : (isPdf ? 'PDF' : 'Photo'), text: text.trim() }); added++;
+        let text, words = null, np = 1;
+        if (isPdf) { text = await readPdf(f, 12); try { const r = await readPdfWords(f, 12); if (r.words.length > 20) { words = r.words; np = r.np; } } catch (e) { words = null; } }
+        else {
+          onlyPdf = false;
+          try { const r = await readPhotoWords([f]); text = r.text; words = r.words.length > 20 ? r.words : null; }
+          catch (e) { words = null; const w = await getOcr(); text = await ocrImage(w, f, { table: true }); }
+        }
+        paie$.pages.push({ name: f.name && !/^image\.(jpe?g|png)$/i.test(f.name) ? f.name : (isPdf ? 'PDF' : 'Photo'), text: text.trim(), words, np }); added++;
       }
     } catch (e) { console.error(e); hideOcr(); if (added) { paie$.p = null; paie$.p0 = null; renderPaie(box); } toast(navigator.onLine ? 'La lecture a échoué sur une page. Reprends-la bien à plat, avec de la lumière.' : 'Il faut internet la première fois pour préparer la lecture.'); return; }
     hideOcr(); paie$.p = null; paie$.p0 = null; track('paie_page');
@@ -4111,6 +4181,13 @@ function renderPaie(box) {
     paie$.fix = fix; paie$.p = applyPaieFix(paie$.p0, fix);
     Object.keys(fix).forEach(k => trackFix('paie_' + k.toLowerCase())); track('paie_fix');
     renderPaie(box); const fb = $('#paie-fixbox'); if (fb) fb.open = true; toast('Corrections appliquées');
+  });
+  const vg = $('#paie-valid-go'); if (vg) vg.addEventListener('click', () => {
+    const vals = {}; let bad = null;
+    $$('[data-val]', box).forEach(i => { const t = i.value.trim().replace(/\s*€$/, ''); if (!t) { vals[i.dataset.val] = null; return; } const v = parseFR(t); if (v === null) bad = bad || i; else vals[i.dataset.val] = v; });
+    if (bad) { bad.focus(); toast('Un montant n\'est pas lisible : écris-le comme 1 861,16'); return; }
+    const q = applyValidated(paie$.p0, vals, paie$.lec); paie$ = { ...paie$, p0: q, p: q, valide: true, fix: {} };
+    track('paie_valide'); renderPaie(box); $('#paie-res').scrollIntoView({ block: 'start' });
   });
   const pp = $('#paie-premium'); if (pp) pp.addEventListener('click', () => openPremium('La vérification de tes heures supplémentaires fait partie de Premium.'));
   const sv = $('#paie-save'); if (sv) sv.addEventListener('click', () => {
@@ -4140,6 +4217,7 @@ function paieResultHTML(p, ins, hist) {
   return `<div class="sheet verdict"><h2>${esc(p.periode ? 'Ta fiche de ' + p.periode : 'Ta fiche de paie')}</h2>
     <div class="brief"><h3>En bref</h3><p>${esc(summary)}</p></div>
     <div class="block"><h3>Les chiffres clés</h3><table class="paie-t"><tbody>${row('Salaire brut', p.brut)}${row('Cotisations salariales', p.cotSal)}${row('Net avant impôt', p.netAvant)}${p.pas ? row('Impôt prélevé' + (p.pas.taux !== null ? ' (' + String(p.pas.taux).replace('.', ',') + ' %)' : ''), p.pas.amount) : ''}${row('Net versé', p.netFinal, true)}${row('Net imposable (pour ta déclaration)', p.netImposable)}${row('Cotisations de ton employeur', p.cotPat)}</tbody></table>${cmp}</div>
+    ${paie$.gen && paie$.valide && paie$.genSig === paieSig(paie$.pages) && (paie$.gen.colonnes.salarie.length || paie$.gen.colonnes.employeur.length) ? `<div class="block"><h3>Qui paie quoi</h3><div class="two-col"><div><h3>Ce que tu paies</h3><table class="paie-t"><tbody>${paie$.gen.colonnes.salarie.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table></div><div><h3>Ce que paie ton employeur</h3><table class="paie-t"><tbody>${paie$.gen.colonnes.employeur.map(x => `<tr><th scope="row">${esc(x.label)}</th><td>${esc(PE(x.v))}</td></tr>`).join('')}</tbody></table></div></div></div>` : ''}
     <details class="tips" id="paie-fixbox"><summary>Un chiffre est faux ? Corrige-le</summary>
       <p class="note">La lecture d'une photo n'est pas toujours parfaite. Corrige ce qui est faux : tout est recalculé et on retient ta correction pour s'améliorer.</p>
       <div class="form-grid">${[['brut', 'Salaire brut (€)'], ['netAvant', 'Net avant impôt (€)'], ['impot', 'Impôt prélevé (€)'], ['netFinal', 'Net versé (€)'], ['baseRate', 'Taux horaire normal (€)'], ['hsQty', 'Heures supp payées (h)'], ['hsAmount', 'Montant des heures supp (€)']].map(([k, l]) => `<label class="field"><span>${l}</span><input data-fix="${k}" inputmode="decimal" value="${esc((paie$.fix || {})[k] ?? '')}" placeholder="${esc(fixPlaceholder(p, k))}"></label>`).join('')}</div>
