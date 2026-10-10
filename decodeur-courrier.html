@@ -827,6 +827,8 @@ function tkDecimals(line) {
   while ((m = re.exec(t))) out.push(parseFloat(m[1].replace(/ /g, '') + '.' + m[2]));
   return out;
 }
+// Nom d'article : on retire les signes et jetons parasites des bords (« ï LAVE-LINGE FAGOR LV8 î »)
+const tkTrim = l => { const t = l.replace(/^[^A-Za-zÀ-ÿ0-9]+|[^A-Za-zÀ-ÿ0-9.)]+$/g, '').split(/\s+/), junk = w => w.length <= 2 && !/[A-Z0-9]/.test(w); while (t.length > 1 && junk(t[0])) t.shift(); while (t.length > 1 && junk(t[t.length - 1])) t.pop(); return t.join(' '); };
 function readReceipt(raw) {
   const lines = String(raw).split(/\n+/).map(l => l.trim()).filter(Boolean), nl = lines.map(norm), res = { store: null, product: null, known: false, price: null, priceFrom: null, warrantyEnd: null, warrantyYears: null, extension: null };
   // Magasin : enseigne connue, sinon première ligne parlante
@@ -835,7 +837,7 @@ function readReceipt(raw) {
   if (rm) res.store = rm[2].replace(/\\\./g, '.').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   else { const f = lines.find((l, i) => /[a-zA-ZÀ-ÿ]{3,}/.test(l) && l.length <= 42 && !TK_STOP.test(nl[i]) && !/\d{4,}/.test(l)); if (f) res.store = f; }
   // Prix : libellés de total, valeur sur la ligne ou, sinon, dans la colonne de chiffres qui suit
-  const PRIO = [[/total ttc|montant ttc|total t\.?t\.?c|ttc \(?(euros?|eur)/, 6], [/(net|total|montant) a payer|a regler|reste a payer/, 6], [/reglement (percu|recu)|montant regle|total regle|carte bancaire|especes|paiement/, 4], [/^total\b|total general|total eur|montant total|\btotal\b/, 3]];
+  const PRIO = [[/total ttc|montant ttc|total t\.?t\.?c|ttc \(?(euros?|eur)/, 6], [/(net|total|montant) a payer|a regler|reste a payer/, 6], [/reglement (percu|recu)|montant regle|total regle|carte bancaire|especes|paiement|(^|\s)cb\b/, 4], [/^total\b|total general|total eur|montant total|\btotal\b/, 3]];
   const BAD = /(capital|siret|siren|\brcs\b|tva i\.?c|\bape\b|telephone|www|n° ?client|total ht|montant ht|hors taxe|dont tva|eco-?part|sous-total|acompte|remise|rendu|monnaie)/;
   const cand = [];
   const score = i => { if (BAD.test(nl[i])) return null; for (const [re, s] of PRIO) if (re.test(nl[i])) return s; return null; };
@@ -848,13 +850,31 @@ function readReceipt(raw) {
     if (vals.length >= run) for (let x = 0; x < run; x++) { const s = score(i + x); if (s !== null) cand.push({ v: vals[x], s, i: i + x }); }
     i = j;
   }
-  if (cand.length) { cand.sort((a, b) => b.s - a.s || a.i - b.i); res.price = cand[0].v; res.priceFrom = lines[cand[0].i]; }
+  if (cand.length) {
+    cand.sort((a, b) => b.s - a.s || a.i - b.i);
+    // Un chiffre mal lu (349,60 pour 349,00) ne se répète pas à l'identique ailleurs : si le meilleur total n'apparaît qu'une fois alors qu'un autre candidat est confirmé par une autre ligne (article, paiement), on retient ce dernier
+    const seen = {}; lines.forEach((l, i) => { if (!/(tva|%)/.test(nl[i])) tkDecimals(l).forEach(v => { seen[v] = (seen[v] || 0) + 1; }); });
+    const top = cand[0], f2 = v => v.toFixed(2), oneDigit = (a, b) => a.length === b.length && [...a].filter((ch, k) => ch !== b[k]).length === 1;
+    const alt = Object.keys(seen).map(Number).filter(v => v !== top.v && seen[v] >= 2 && oneDigit(f2(v), f2(top.v))).sort((a, b) => seen[b] - seen[a])[0];
+    res.price = seen[top.v] < 2 && alt !== undefined ? alt : top.v; res.priceFrom = lines[top.i];
+    // Contrôle par la TVA : le montant de TVA imprimé doit correspondre au total (5,5 %, 10 % ou 20 %). Un zéro lu comme un six (349,60 pour 349,00) ne passe pas ce contrôle : on ne retient une correction que si elle est la seule à le passer.
+    const tvas = []; lines.forEach((l, i) => { if (/\btva\b/.test(nl[i])) tkDecimals(l).forEach(v => tvas.push(v)); });
+    const vat = p => [5.5, 10, 20].map(r => Math.round(p * r / (100 + r) * 100) / 100), okVat = p => tvas.some(t => vat(p).some(x => Math.abs(x - t) <= 0.02));
+    if (tvas.length && res.price > 0 && !okVat(res.price)) {
+      const CONF = { 6: '058', 0: '68', 8: '036', 1: '7', 7: '1', 5: '63', 3: '85', 9: '4', 2: '7', 4: '9' }, digits = res.price.toFixed(2).split(''), pos = digits.map((d, k) => (d !== '.' && CONF[d] ? k : -1)).filter(k => k >= 0), found = new Set();
+      const sub = (arr, k, n) => { if (n === 0) { const v = parseFloat(arr.join('')); if (v > 0 && v !== res.price && okVat(v)) found.add(v); return; } for (let q = k; q < pos.length; q++) for (const c of CONF[arr[pos[q]]]) { const nx = arr.slice(); nx[pos[q]] = c; sub(nx, q + 1, n - 1); } };
+      sub(digits, 0, 1); if (!found.size) sub(digits, 0, 2);
+      if (found.size === 1) { res.price = [...found][0]; res.priceFixedByTva = true; }
+    }
+  }
   // Produit : ligne qui suit l'en-tête du tableau, sinon première ligne d'article avec prix
   const clean = l => l.replace(/\s+(\d{6,}|\d+[.,]\d{2})\b.*$/, '').replace(/\s+\d{1,2}\s*$/, '').trim();
   const okName = (l, i) => /[a-zA-ZÀ-ÿ]{3,}/.test(l) && !TK_STOP.test(nl[i]) && clean(l).length >= 5;
   const hi = nl.findIndex(l => /(reference de l.?achat|designation|libelle|article|description)/.test(l));
   if (hi >= 0) for (let i = hi + 1; i < Math.min(lines.length, hi + 4); i++) if (okName(lines[i], i)) { res.product = clean(lines[i]); break; }
-  if (!res.product) for (let i = 0; i < lines.length; i++) if (tkDecimals(lines[i]).length && okName(lines[i], i)) { res.product = clean(lines[i]); break; }
+  // Ticket « nom de l'article » puis « 1 x 349,00 » sur la ligne suivante (format courant des tickets thermiques)
+  if (!res.product) for (let i = 0; i < lines.length - 1; i++) if (!tkDecimals(lines[i]).length && /^\W{0,3}\d{1,3}\s*[x×*]\s*\d/i.test(lines[i + 1]) && okName(lines[i], i) && !/^[\W\d]*$/.test(lines[i])) { res.product = tkTrim(lines[i]); break; }
+  if (!res.product) for (let i = 0; i < lines.length; i++) if (tkDecimals(lines[i]).length && okName(lines[i], i) && /[A-Za-zÀ-ÿ]{3,}/.test(clean(lines[i]))) { res.product = clean(lines[i]); break; }
   // Garantie commerciale annoncée
   const n = norm(raw);
   const gm = n.match(/garantie[^\n]{0,60}?jusqu'?\s*au[^\d]{0,6}(\d{2})[.\/-](\d{2})[.\/-](\d{4})/);
@@ -1918,26 +1938,33 @@ async function getOcr() {
 function estimateSkew(c) {
   const k = Math.min(1, 520 / Math.max(c.width, c.height)), w = Math.max(8, Math.round(c.width * k)), h = Math.max(8, Math.round(c.height * k));
   const t = document.createElement('canvas'); t.width = w; t.height = h; const x = t.getContext('2d'); x.drawImage(c, 0, 0, w, h);
-  const d = x.getImageData(0, 0, w, h).data, g = new Float32Array(w * h); let sum = 0, sq = 0;
-  for (let i = 0; i < w * h; i++) { const v = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) / 256; g[i] = v; sum += v; sq += v * v; }
-  const mean = sum / (w * h), sd = Math.sqrt(Math.max(1, sq / (w * h) - mean * mean)), thr = mean - 0.6 * sd, px = [], py = [];
-  for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) if (g[yy * w + xx] < thr) { px.push(xx); py.push(yy); }
+  const d = x.getImageData(0, 0, w, h).data, g = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) g[i] = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) / 256;
+  // Encre = pixel nettement plus sombre que son voisinage : le fond (table, ombre douce) n'en produit pas, seul le texte compte
+  const W = w + 1, S = new Float64Array(W * (h + 1)); for (let y = 0; y < h; y++) { let row = 0; for (let xx = 0; xx < w; xx++) { row += g[y * w + xx]; S[(y + 1) * W + xx + 1] = S[y * W + xx + 1] + row; } }
+  const r = Math.max(4, Math.round(w / 45)), px = [], py = [];
+  for (let y = 0; y < h; y++) { const y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1); for (let xx = 0; xx < w; xx++) { const x0 = Math.max(0, xx - r), x1 = Math.min(w, xx + r + 1), m = (S[y1 * W + x1] - S[y0 * W + x1] - S[y1 * W + x0] + S[y0 * W + x0]) / ((x1 - x0) * (y1 - y0)); if (g[y * w + xx] < m - 22) { px.push(xx); py.push(y); } } }
   if (px.length < 200) return 0;
   const step = Math.max(1, Math.floor(px.length / 30000));
   const score = a => {
-    const r = a * Math.PI / 180, s = Math.sin(r), co = Math.cos(r), off = w * Math.abs(s) + 2, bins = new Int32Array(Math.ceil(h * co + w * Math.abs(s)) + 6);
+    const rr = a * Math.PI / 180, s = Math.sin(rr), co = Math.cos(rr), off = w * Math.abs(s) + 2, bins = new Int32Array(Math.ceil(h * co + w * Math.abs(s)) + 6);
     for (let i = 0; i < px.length; i += step) bins[Math.round(py[i] * co - px[i] * s + off)]++;
     let sc = 0; for (let i = 0; i < bins.length; i++) sc += bins[i] * bins[i]; return sc;
   };
+  // Recherche large (±25°) puis affinée : une feuille posée de travers dépasse largement les 7° d'une photo bien cadrée
   let best = 0, bs = score(0);
-  for (let a = -7; a <= 7.01; a += 0.5) { const v = score(a); if (v > bs) { bs = v; best = a; } }
-  let fine = best, fs = bs;
-  for (let a = best - 0.5; a <= best + 0.51; a += 0.1) { const v = score(a); if (v > fs) { fs = v; fine = a; } }
+  for (let a = -25; a <= 25.01; a += 1) { const v = score(a); if (v > bs) { bs = v; best = a; } }
+  let mid = best, ms = bs;
+  for (let a = best - 1; a <= best + 1.01; a += 0.25) { const v = score(a); if (v > ms) { ms = v; mid = a; } }
+  let fine = mid, fs = ms;
+  for (let a = mid - 0.25; a <= mid + 0.26; a += 0.05) { const v = score(a); if (v > fs) { fs = v; fine = a; } }
   return fs / score(0) > 1.04 ? Math.round(fine * 10) / 10 : 0;
 }
+// Rotation sans perdre les coins : la toile s'agrandit pour contenir toute la page redressée
 function rotateCanvas(c, deg) {
-  const r = document.createElement('canvas'); r.width = c.width; r.height = c.height; const x = r.getContext('2d');
-  x.fillStyle = '#fff'; x.fillRect(0, 0, r.width, r.height); x.translate(r.width / 2, r.height / 2); x.rotate(deg * Math.PI / 180); x.drawImage(c, -c.width / 2, -c.height / 2);
+  const rad = Math.abs(deg) * Math.PI / 180, co = Math.cos(rad), si = Math.sin(rad), nw = Math.ceil(c.width * co + c.height * si), nh = Math.ceil(c.width * si + c.height * co);
+  const r = document.createElement('canvas'); r.width = nw; r.height = nh; const x = r.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, nw, nh); x.translate(nw / 2, nh / 2); x.rotate(deg * Math.PI / 180); x.drawImage(c, -c.width / 2, -c.height / 2);
   return r;
 }
 // Éclairage inégal (ombre, flash, coin sombre) : écart de luminosité du papier entre les zones de la photo.
@@ -1996,7 +2023,22 @@ function paperBox(c) {
   const fx = Math.max(0, c0 / w - 0.015), fy = Math.max(0, r0 / h - 0.015);
   return { fx, fy, fw: Math.min(1, (c1 + 1) / w + 0.015) - fx, fh: Math.min(1, (r1 + 1) / h + 0.015) - fy };
 }
-async function fileToCanvas(file, rot = 0, max = 2200, grow = false) {
+// Renforcement des contours (masque flou) en niveaux de gris : une photo légèrement floue se lit bien mieux, surtout les chiffres.
+function sharpenCanvas(c, amount = 1.1, r = 2) {
+  try {
+    const w = c.width, h = c.height, ctx = c.getContext('2d'), img = ctx.getImageData(0, 0, w, h), d = img.data, g = new Float32Array(w * h), tmp = new Float32Array(w * h);
+    for (let i = 0; i < w * h; i++) g[i] = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) / 256;
+    const n = 2 * r + 1;
+    for (let y = 0; y < h; y++) { let acc = 0; for (let x = -r; x <= r; x++) acc += g[y * w + Math.min(w - 1, Math.max(0, x))]; for (let x = 0; x < w; x++) { tmp[y * w + x] = acc / n; acc += g[y * w + Math.min(w - 1, x + r + 1)] - g[y * w + Math.max(0, x - r)]; } }
+    const bl = new Float32Array(w * h);
+    for (let x = 0; x < w; x++) { let acc = 0; for (let y = -r; y <= r; y++) acc += tmp[Math.min(h - 1, Math.max(0, y)) * w + x]; for (let y = 0; y < h; y++) { bl[y * w + x] = acc / n; acc += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]; } }
+    for (let i = 0; i < w * h; i++) { const v = Math.max(0, Math.min(255, g[i] + amount * (g[i] - bl[i]))); d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = v; }
+    ctx.putImageData(img, 0, 0);
+  } catch (e) { /* mémoire insuffisante : la photo est lue telle quelle */ }
+  return c;
+}
+// opts.skew === false : pas de redressement de l'image (la lecture par positions redresse les mots elle-même) ; opts.sharp === false : pas de renforcement
+async function fileToCanvas(file, rot = 0, max = 2200, grow = false, opts = {}) {
   const bmp = await loadBitmap(file);
   const k = Math.min(grow ? 2 : 1, max / Math.max(bmp.width, bmp.height));   // grow : on agrandit une petite photo (chiffres de 12 px illisibles sinon)
   let w = Math.round(bmp.width * k), h = Math.round(bmp.height * k);
@@ -2011,7 +2053,8 @@ async function fileToCanvas(file, rot = 0, max = 2200, grow = false) {
     const b = paperBox(c);
     if (b) { const sx = Math.round(b.fx * w), sy = Math.round(b.fy * h), sw = Math.round(b.fw * w), sh = Math.round(b.fh * h); const n = document.createElement('canvas'); n.width = sw; n.height = sh; n.getContext('2d').drawImage(c, sx, sy, sw, sh, 0, 0, sw, sh); c = n; w = sw; h = sh; }
     // Texte penché : on remet les lignes à l'horizontale
-    const sk = estimateSkew(c); if (Math.abs(sk) >= 0.4) { c = rotateCanvas(c, -sk); w = c.width; h = c.height; }
+    const sk = opts.skew === false ? 0 : estimateSkew(c); if (Math.abs(sk) >= 0.4) { c = rotateCanvas(c, -sk); w = c.width; h = c.height; }
+    if (opts.sharp !== false) { c = sharpenCanvas(c); w = c.width; h = c.height; }   // photo un peu floue : on renforce les contours avant la lecture (chiffres 3/8, 5/6)
     // Ombre ou lumière inégale : seuillage adaptatif ; sinon simple étirement du contraste
     if (lightingUneven(c)) return adaptiveBinarize(c);
     // Contraste : on étire entre les 2e et 98e percentiles de gris.
@@ -2072,6 +2115,7 @@ function tableCanvas(c) {
 }
 // Photos d'une fiche de paie (une par page) → mots positionnés. Deux lectures de chaque page, fusionnées : l'image simplement redressée
 // (texte suivi) et la même en noir et blanc sans quadrillage (mode « texte épars », meilleur sur les tableaux) : chacune retrouve des chiffres que l'autre rate.
+const PAIE_IMG = { skew: false, sharp: false };   // fiche de paie : réglages éprouvés sur de vraies photos (le redressement d'image et le renforcement abîment les tableaux)
 async function readPhotoWords(files) {
   const w = await getOcr(); let words = [];
   try {
@@ -2080,7 +2124,7 @@ async function readPhotoWords(files) {
       setOcr(i / files.length, `Lecture de la page ${i + 1} sur ${files.length}…`);
       try { await w.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' }); } catch (e) { /* option indisponible */ }
       for (const rot of [0, 90, 270]) {
-        const c = await fileToCanvas(files[i], rot, 3600, true), d = (await w.recognize(c, { rotateAuto: true }, { blocks: true })).data, sc = textScore(d.text || '');
+        const c = await fileToCanvas(files[i], rot, 3600, true, PAIE_IMG), d = (await w.recognize(c, { rotateAuto: true }, { blocks: true })).data, sc = textScore(d.text || '');
         if (!best || sc > best.sc) best = { c, d, sc };
         if (sc >= 0.35) break;
       }
