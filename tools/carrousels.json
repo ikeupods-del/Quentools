@@ -726,5 +726,36 @@
   "tags": "#etudiant #revisions #examens #outilgratuit #pomodoro",
   "c1": "#d7f24a",
   "c2": "#8f7bff"
+ },
+ {
+  "id": "paperdecrypt",
+  "site": "decodeur-courrier.html",
+  "pill": "Outil gratuit",
+  "hook": [
+   "Un courrier",
+   "que vous ne comprenez pas ?"
+  ],
+  "accent": "Prenez-le en photo, on vous l’explique.",
+  "prob": "Un courrier officiel, c’est souvent…",
+  "pb": [
+   "Un vocabulaire qu’on ne comprend pas",
+   "Une date limite noyée dans le texte",
+   "Un montant : HT ? TTC ? À payer ?"
+  ],
+  "sol": "Paperdecrypt traduit votre courrier",
+  "sb": [
+   "Ce qu’on vous demande, et avant quand",
+   "Le montant réellement à payer, TTC ou HT",
+   "Une réponse prête à envoyer"
+  ],
+  "ctaPill": "Et vous ?",
+  "ctaTitle": "Quel courrier vous donne le plus de *mal* ?",
+  "ctaText": "Dites-le en commentaire.",
+  "note": "",
+  "cap": "Un courrier de la CAF, des impôts, une facture ou une relance… et on ne sait pas par où commencer 😅\n\nPaperdecrypt, l’outil gratuit de QuenTools, lit votre courrier à partir d’une photo ou d’un PDF : il vous dit qui vous écrit, ce qu’on vous demande, avant quelle date, quel montant payer (en distinguant le HT du TTC) et prépare un brouillon de réponse.\n\nLa lecture se fait directement sur votre téléphone. Vous pouvez aussi suivre vos garanties et vos demandes de remboursement. Retrouvez-le dans les outils de QuenTools (lien en bio).\n\nQuel type de courrier vous donne le plus de fil à retordre ? Dites-le en commentaire 👇\n\n(L’outil aide à comprendre un courrier : il ne remplace pas l’avis d’un professionnel.)",
+  "tt": "Un courrier que vous ne comprenez pas ?",
+  "tags": "#courrier #administratif #CAF #impots #facture #outilgratuit #vieadministrative",
+  "c1": "#ffe14d",
+  "c2": "#7aa5ff"
  }
 ]
