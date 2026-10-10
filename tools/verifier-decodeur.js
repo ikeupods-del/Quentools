@@ -27,5 +27,13 @@ for (const [nom, texte, kind, val] of CAS) {
   const ok = (r.best ? r.best.kind || '' : '') === kind && (r.best ? r.best.value : null) === val;
   if (!ok) { ko++; console.log('✗ ' + nom + ' → ' + JSON.stringify(r.best)); }
 }
+// Calcul de TVA et modèles de lettres
+const c2={}; vm.createContext(c2);
+vm.runInContext('var round2=x=>Math.round((x+Number.EPSILON)*100)/100;'+src.slice(src.indexOf('function calcTVA'),src.indexOf('const TVA_RATES')),c2);
+const TV=[[{montant:'1200',mode:'ht',rate:'20',acompte:'30'},{ht:1200,tva:240,ttc:1440,acompte:432,reste:1008}],[{montant:'120',mode:'ttc',rate:'20'},{ht:100,tva:20,ttc:120}],[{montant:'100',mode:'ht',rate:'5.5',remise:'10'},{ht:90,tva:4.95,ttc:94.95}],[{montant:'59,90',mode:'ttc',rate:'10'},{ht:54.45,tva:5.45,ttc:59.9}]];
+let ko2=0;
+for(const [inp,exp] of TV){const r=vm.runInContext('calcTVA('+JSON.stringify(inp)+')',c2);for(const k in exp)if(Math.abs(r[k]-exp[k])>0.001){ko2++;console.log('✗ TVA '+JSON.stringify(inp)+' '+k+' = '+r[k]+' (attendu '+exp[k]+')');}}
+if(!ko2)console.log('✓ Paperdecrypt : '+TV.length+' calculs de TVA corrects');
+ko+=ko2;
 console.log(ko ? `✗ ${ko} cas en erreur sur ${CAS.length}` : `✓ Paperdecrypt : ${CAS.length} lectures de montants correctes`);
 process.exit(ko ? 1 : 0);

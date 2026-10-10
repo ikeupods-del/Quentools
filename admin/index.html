@@ -32,6 +32,8 @@
     .side button{width:auto;flex:0 0 auto;white-space:nowrap;padding:10px 14px;border-radius:999px}
     .side svg{display:none}
   }
+  .pd-fun{grid-template-columns:190px 1fr 40px}@media (max-width:700px){.pd-fun{grid-template-columns:120px 1fr 36px}}
+  .pd-two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-4)}@media (max-width:800px){.pd-two{grid-template-columns:1fr}}
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s-3);margin-bottom:var(--s-5)}
   @media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
   .kpis div{padding:16px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line)}
@@ -853,7 +855,7 @@ function viewGifts() {
 /* ---------- Écrans ---------- */
 const toast = (m, warn) => { const n = document.getElementById('toast'); if (!n) return; n.innerHTML = `<div class="notice${warn ? ' warn' : ''}">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => n.innerHTML = '', 3500); };
 const NAV = [
-  ['Activité', [['demandes', 'Demandes', 'M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z'], ['agenda', 'Agenda', 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4'], ['estimer', 'Devis', 'M7 3h8l4 4v14H7zM14 3v5h5M10 13h6M10 17h6']]],
+  ['Activité', [['demandes', 'Demandes', 'M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z'], ['agenda', 'Agenda', 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4'], ['estimer', 'Devis', 'M7 3h8l4 4v14H7zM14 3v5h5M10 13h6M10 17h6'], ['usage', 'Paperdecrypt', 'M4 19h16M7 16V9M12 16V5M17 16v-4']]],
   ['Gestion', [['clients', 'Sites clients', 'M5 11h14v10H5zM8 11V8a4 4 0 0 1 8 0v3'], ['cadeaux', 'Cartes cadeaux', 'M3 9h18v4H3zM5 13v8h14v-8M12 9v12M12 9c-2-4-6-3-5 0 1 2 5 0 5 0zM12 9c2-4 6-3 5 0-1 2-5 0-5 0z'], ['contacts', 'Contacts', 'M4 20c0-4 3.500-6 8-6s8 2 8 6M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'], ['stats', 'Chiffres', 'M5 20V10M12 20V4M19 20v-7']]],
   ['Site', [['site', 'Réglages du site', 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18'], ['liens', 'Raccourcis', 'M14 4h6v6M20 4l-9 9M10 6H5v13h13v-5'], ['regles', 'Règles de sécurité', 'M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z']]]];
 const TITLES = {
@@ -863,6 +865,7 @@ const TITLES = {
   clients: ['Sites clients', 'Suivez les paiements, verrouillez un site tant que le solde n’est pas réglé, relancez en un clic.'],
   cadeaux: ['Cartes cadeaux', 'Commandes à valider et cartes émises.'],
   contacts: ['Contacts', 'Les adresses laissées sur le site.'],
+  usage: ['Paperdecrypt', 'Qui utilise l’outil, ce qui sert le plus, et ce qui marche. Données anonymes.'],
   stats: ['Chiffres', 'Ce que rapportent les demandes et les devis.'],
   site: ['Réglages du site', 'Bandeau d’annonce, disponibilité, coordonnées et informations sur les devis.'],
   liens: ['Raccourcis', 'Les services que vous utilisez, en un clic.'],
@@ -880,7 +883,7 @@ function shell(body) {
     <div id="toast" role="status" aria-live="polite"></div>${body}</div></div>`;
 }
 function render() {
-  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'cadeaux' ? viewGifts() : tab === 'clients' ? viewClients() : viewLinks());
+  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'usage' ? viewUsage() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'cadeaux' ? viewGifts() : tab === 'clients' ? viewClients() : viewLinks());
   if (tab === 'estimer') estimate();
 }
 
@@ -890,6 +893,15 @@ function rulesText() {
 function qtClient(d) { return request.auth != null && request.auth.token.email_verified == true && d.emailLower == request.auth.token.email.lower(); }
 match /qt_admin/{doc} { allow read: if true; allow write: if qtAdmin(); }
 match /qt_notes/{id} { allow read, write: if qtAdmin(); }
+match /qt_usage/{day} {
+  allow read, delete: if qtAdmin();
+  allow create, update: if day.matches('^20[0-9]{2}-[0-9]{2}-[0-9]{2}$')
+    && request.resource.data.keys().hasOnly(['v','f','t','o','l'])
+    && (!('f' in request.resource.data) || request.resource.data.f.size() <= 60)
+    && (!('t' in request.resource.data) || request.resource.data.t.size() <= 30)
+    && (!('o' in request.resource.data) || request.resource.data.o.size() <= 40)
+    && (!('l' in request.resource.data) || request.resource.data.l.size() <= 40);
+}
 match /qt_agenda/{id} { allow read, write: if qtAdmin(); }
 match /qt_leads/{id} {
   allow create, update: if request.auth != null && request.auth.token.email_verified == true && id == request.auth.token.email.lower()
@@ -1065,6 +1077,86 @@ function viewStats() {
       <p class="muted" style="margin:var(--s-3) 0 0;font-size:var(--t-sm)">Remises accordées sur les devis acceptés : <b>${eur(remises)}</b></p></section>`;
 }
 
+/* ---------- Paperdecrypt : usage anonyme (collection qt_usage, un document par jour : compteurs v, f, t, o, l) ---------- */
+let usageDocs = [], usageErr = '', usageRange = 30;
+const PD_TOOLS = [
+  ['Décoder un courrier', 'tab_decode', ['decode'], 'courriers décodés'],
+  ['Récupérer mon argent', 'tab_money', ['claim_new'], 'réclamations créées'],
+  ['Garanties', 'tab_warranty', ['warranty_new'], 'achats ajoutés'],
+  ['Coffre de documents', 'tab_vault', ['coffre_add'], 'documents ajoutés'],
+  ['Mes courriers (suivi)', 'tab_list', ['save_courrier'], 'courriers enregistrés'],
+  ['Modèles de lettres', 'outil_lettres', ['lettre_modele'], 'lettres préparées'],
+  ['Abonnements', 'outil_abos', ['abo_new'], 'abonnements ajoutés'],
+  ['Calcul de TVA', 'outil_tva', ['tva'], 'calculs faits'],
+  ['Dossier PDF', null, ['dossier'], 'dossiers créés'],
+  ['Rappels dans l’agenda', null, ['rappels_agenda', 'rappels_notif'], 'rappels activés'],
+  ['Partage de résumé', null, ['partage_wa', 'partage_sms', 'partage_mail', 'partage_copy', 'partage_native'], 'résumés partagés']
+];
+const PD_TYPES = { justice: 'Procédure de justice', demeure: 'Mise en demeure', indu: 'Trop-perçu à rembourser', suspension: 'Coupure ou suspension', amende: 'Amende', relance: 'Relance de paiement', facture: 'Facture à payer', pieces: 'Documents à envoyer', convocation: 'Rendez-vous ou contrôle', impot: 'Avis d’impôt', decision: 'Décision sur les droits', info: 'Courrier d’information' };
+const PD_ORGS = { caf: 'CAF', cpam: 'Assurance Maladie', impots: 'Impôts', tresor: 'Trésor public', antai: 'ANTAI (amendes)', urssaf: 'Urssaf', francetravail: 'France Travail', justice: 'Commissaire de justice', tribunal: 'Tribunal', recouvrement: 'Société de recouvrement', energie: 'Énergie', telecom: 'Télécom', banque: 'Banque', assurance: 'Assurance', bailleur: 'Bailleur', retraite: 'Retraite', msa: 'MSA', ants: 'ANTS', mairie: 'Mairie' };
+const PD_LETTERS = { documents: 'Envoyer les documents', delai: 'Demander un délai', contester: 'Contester', deja_paye: 'J’ai déjà payé', remise: 'Remise de dette', report: 'Changer le rendez-vous', explications: 'Demander des explications', amende: 'Modèle : amende', resiliation: 'Modèle : résiliation', echeancier: 'Modèle : échéancier', caf: 'Modèle : CAF', impots: 'Modèle : impôts', remboursement: 'Modèle : remboursement', claim_train: 'Réclamation : train', claim_avion: 'Réclamation : avion', claim_colis: 'Réclamation : colis', claim_caution: 'Réclamation : caution', claim_panne: 'Réclamation : panne', claim_retractation: 'Réclamation : rétractation' };
+const PD_LETTER_ACTS = { lettre_copy: 'Copiée', lettre_dl: 'Téléchargée', lettre_print: 'Imprimée / PDF', lettre_mail: 'Envoyée par e-mail', lettre_rec: 'Envoyée en recommandé', lettre_share: 'Partagée' };
+async function loadUsage() {
+  usageErr = '';
+  if (DEMO) {
+    const r = n => Math.round(Math.random() * n);
+    usageDocs = Array.from({ length: 45 }, (_, i) => { const v = 6 + r(30), dc = Math.round(v * .7); return { id: addDays(today(), -i), v, f: { nouveau: Math.round(v * .6), decode: dc, photo: Math.round(dc * .55), pdf: Math.round(dc * .15), tab_decode: v, tab_money: r(6), tab_warranty: r(5), tab_vault: r(4), tab_list: r(6), tab_tools: r(8), claim_new: r(3), warranty_new: r(3), coffre_add: r(3), save_courrier: r(6), lettre_modele: r(3), outil_lettres: r(4), outil_tva: r(5), tva: r(5), outil_abos: r(3), abo_new: r(2), dossier: r(2), rappels_agenda: r(2), partage_wa: r(3), lettre_copy: r(5), lettre_dl: r(2), lettre_print: r(2), login: r(2) }, t: { facture: r(6), amende: r(4), relance: r(4), pieces: r(3), demeure: r(2), impot: r(2), info: r(4) }, o: { caf: r(5), impots: r(4), energie: r(4), telecom: r(3), antai: r(3) }, l: { delai: r(3), contester: r(3), explications: r(2), resiliation: r(2), echeancier: r(1) } }; });
+    return;
+  }
+  try {
+    const { Fs, db } = await fb();
+    const s = await Fs.getDocs(Fs.query(Fs.collection(db, 'qt_usage'), Fs.orderBy(Fs.documentId(), 'desc'), Fs.limit(190)));
+    usageDocs = s.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { usageDocs = []; usageErr = /permission/i.test(e.code || e.message) ? 'rules' : 'other'; }
+}
+function usageAgg(range) {
+  const from = addDays(today(), -(range - 1)), docs = usageDocs.filter(d => d.id >= from);
+  const sum = (g, k) => docs.reduce((s, d) => s + (+((g ? d[g] : d) || {})[k] || 0), 0);
+  const map = g => { const m = {}; docs.forEach(d => Object.entries(d[g] || {}).forEach(([k, v]) => { m[k] = (m[k] || 0) + (+v || 0); })); return m; };
+  return { docs, from, v: docs.reduce((s, d) => s + (+d.v || 0), 0), f: k => sum('f', k), fm: map('f'), t: map('t'), o: map('o'), l: map('l') };
+}
+const pct = (a, b) => b ? Math.round(100 * a / b) + ' %' : '—';
+const bars = (rows, max, emptyMsg) => rows.length ? rows.map(([l, n, sub]) => `<div class="fun pd-fun"><span>${esc(l)}${sub ? `<br><span class="muted" style="font-size:var(--t-xs)">${esc(sub)}</span>` : ''}</span><div><i style="width:${Math.max(2, Math.round(100 * n / Math.max(1, max)))}%"></i></div><b>${n}</b></div>`).join('') : `<p class="muted">${emptyMsg || 'Pas encore de données.'}</p>`;
+function viewUsage() {
+  const head = `<div class="filters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--s-4)">${[7, 30, 90].map(n => `<button data-do="pd-range" data-n="${n}" aria-pressed="${usageRange === n}">${n} jours</button>`).join('')}<button class="btn btn-sm btn-ghost" data-do="reload">Actualiser</button><button class="btn btn-sm btn-ghost" data-do="pd-csv">Exporter (CSV)</button></div>`;
+  if (usageErr === 'rules') return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Une étape à faire une seule fois</h2><p>Paperdecrypt compte, de façon anonyme, ses usages dans la collection <code>qt_usage</code>. Pour la lire ici, ajoutez-lui ses règles : ouvrez l’onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-tab="regles">Voir les règles</button><button class="btn btn-ghost" data-do="reload">J’ai publié les règles</button></div></section>`;
+  if (usageErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Lecture impossible</h2><p class="muted">Vérifiez la connexion, puis réessayez.</p><button class="btn btn-ghost" data-do="reload">Réessayer</button></section>`;
+  if (!usageDocs.length) return head + `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Pas encore de données</h2><p>Les compteurs apparaissent dès que quelqu’un utilise Paperdecrypt sur <b>quentools.fr</b> (une fois les règles publiées). Rien n’est compté en local ni pour les visiteurs qui ont coché « Ne pas compter mes visites ».</p></section>`;
+  const A = usageAgg(usageRange), prev = (() => { const p = usageAgg(usageRange * 2); return { v: p.v - A.v }; })();
+  const decoded = A.f('decode'), photo = A.f('photo'), pdf = A.f('pdf'), txt = Math.max(0, decoded - photo - pdf);
+  const tools = PD_TOOLS.map(([label, open, acts, unit]) => ({ label, opens: open ? A.f(open) : 0, n: acts.reduce((s, k) => s + A.f(k), 0), unit })).sort((a, b) => (b.n - a.n) || (b.opens - a.opens));
+  const top = tools[0] && (tools[0].n || tools[0].opens) ? tools[0] : null;
+  const trend = prev.v ? Math.round(100 * (A.v - prev.v) / prev.v) : null;
+  const days = Array.from({ length: usageRange }, (_, i) => addDays(today(), -(usageRange - 1 - i))), by = Object.fromEntries(usageDocs.map(d => [d.id, d]));
+  const mx = Math.max(1, ...days.map(d => +((by[d] || {}).v) || 0)), bw = 600 / days.length;
+  const svg = `<svg viewBox="0 0 600 190" role="img" aria-label="Visites par jour" style="width:100%;height:auto;display:block">${days.map((d, i) => { const n = +((by[d] || {}).v) || 0, h = Math.round(140 * n / mx); return `<rect x="${(i * bw + bw * .12).toFixed(1)}" y="${160 - h}" width="${(bw * .76).toFixed(1)}" height="${h || 1.5}" rx="${Math.min(4, bw / 4)}" style="fill:${n ? 'var(--accent)' : 'var(--line-2)'}"><title>${esc(new Date(d + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }))} : ${n} visite${n > 1 ? 's' : ''}</title></rect>`; }).join('')}<text x="0" y="182" font-size="14" style="fill:var(--muted)">${esc(new Date(days[0] + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }))}</text><text x="600" y="182" text-anchor="end" font-size="14" style="fill:var(--muted)">aujourd’hui</text></svg>`;
+  const kpis = `<div class="kpis"><div><b>${A.v}</b><span>visites${trend !== null ? ` (${trend >= 0 ? '+' : ''}${trend} % sur la période d’avant)` : ''}</span></div>
+    <div><b>${A.f('nouveau')}</b><span>nouveaux visiteurs · ${pct(A.f('nouveau'), A.v)} des visites</span></div>
+    <div><b>${decoded}</b><span>courriers décodés · ${A.v ? (decoded / A.v).toFixed(1).replace('.', ',') : '0'} par visite</span></div>
+    <div><b>${A.f('login')}</b><span>connexions Google</span></div></div>`;
+  const maxT = Math.max(1, ...tools.map(t => t.n || t.opens));
+  const toolRows = tools.map(t => [t.label, t.n || 0, (t.opens ? t.opens + ' ouvertures · ' : '') + t.unit]);
+  const typeRows = Object.entries(A.t).filter(e => e[1]).sort((a, b) => b[1] - a[1]).map(([k, n]) => [PD_TYPES[k] || k, n]);
+  const orgRows = Object.entries(A.o).filter(e => e[1]).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, n]) => [PD_ORGS[k] || k, n]);
+  const letRows = Object.entries(A.l).filter(e => e[1]).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k, n]) => [PD_LETTERS[k] || k, n]);
+  const actRows = Object.entries(PD_LETTER_ACTS).map(([k, l]) => [l, A.f(k)]).filter(r => r[1]).sort((a, b) => b[1] - a[1]);
+  const srcRows = [['Photo', photo], ['PDF', pdf], ['Texte collé ou exemple', txt]].filter(r => r[1]);
+  const card = (t, body, note) => `<section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><h2 style="margin:0 0 var(--s-3);font-size:var(--t-lg)">${t}</h2>${body}${note ? `<p class="muted" style="margin:var(--s-3) 0 0;font-size:var(--t-sm)">${note}</p>` : ''}</section>`;
+  return head + kpis
+    + (top ? `<section class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)"><p class="muted" style="margin:0;font-size:var(--t-sm)">Outil le plus utilisé sur ${usageRange} jours</p><h2 style="margin:4px 0 0;font-size:var(--t-xl)">${esc(top.label)}</h2><p class="muted" style="margin:4px 0 0">${top.n} ${esc(top.unit)}${top.opens ? ' · ' + top.opens + ' ouvertures' : ''}</p></section>` : '')
+    + card('Visites par jour', svg, 'Une visite = une ouverture de Paperdecrypt dans un nouvel onglet ou après une longue absence. Les visiteurs qui refusent les statistiques ne sont pas comptés.')
+    + card('Classement des outils', bars(toolRows, maxT), 'Barres : nombre d’actions réelles (pas simplement l’ouverture d’un onglet).')
+    + `<div class="pd-two">${card('Courriers décodés par type', bars(typeRows, Math.max(1, ...typeRows.map(r => r[1]))))}${card('Expéditeurs les plus fréquents', bars(orgRows, Math.max(1, ...orgRows.map(r => r[1]))))}</div>`
+    + `<div class="pd-two">${card('Comment les courriers arrivent', bars(srcRows, Math.max(1, ...srcRows.map(r => r[1]))), `Photo ou PDF : ${pct(photo + pdf, decoded)} des courriers.`)}${card('Lettres', bars(letRows, Math.max(1, ...letRows.map(r => r[1]))) + (actRows.length ? `<h3 style="margin:var(--s-4) 0 0;font-size:var(--t-md)">Ce qu’ils en font</h3>` + bars(actRows, Math.max(1, ...actRows.map(r => r[1]))) : ''))}</div>`
+    + `<p class="muted" style="font-size:var(--t-xs)">Données anonymes : compteurs par jour, sans texte de courrier, sans identité, sans cookie. Collection <code>qt_usage</code>.</p>`;
+}
+function usageCSV() {
+  const keys = { v: new Set(), f: new Set(), t: new Set(), o: new Set(), l: new Set() };
+  usageDocs.forEach(d => ['f', 't', 'o', 'l'].forEach(g => Object.keys(d[g] || {}).forEach(k => keys[g].add(k))));
+  const cols = [['visites', d => d.v], ...['f', 't', 'o', 'l'].flatMap(g => [...keys[g]].sort().map(k => [g + '.' + k, d => (d[g] || {})[k]]))];
+  return '﻿jour;' + cols.map(c => c[0]).join(';') + '\n' + [...usageDocs].sort((a, b) => a.id.localeCompare(b.id)).map(d => d.id + ';' + cols.map(c => +c[1](d) || 0).join(';')).join('\n');
+}
+
 function viewSite() {
   const s = site || {}, v = k => esc(s[k] ?? '');
   return `<form class="form card" id="site-form" style="padding:clamp(20px,4vw,36px)" onsubmit="return false">
@@ -1136,13 +1228,15 @@ app.addEventListener('click', async e => {
     return;
   }
   const b = e.target.closest('[data-tab],[data-filter],[data-do],[data-agday]'); if (!b) return;
-  if (b.dataset.tab) { tab = b.dataset.tab; if (tab === 'estimer' && !dv) dvInit(); if (tab === 'contacts') { await loadLeads(); } return render(); }
+  if (b.dataset.tab) { tab = b.dataset.tab; if (tab === 'estimer' && !dv) dvInit(); if (tab === 'contacts') { await loadLeads(); } if (tab === 'usage') { render(); await loadUsage(); } return render(); }
   if (b.dataset.filter) { filter = b.dataset.filter; return render(); }
   if (b.dataset.agday !== undefined) { agDay = b.dataset.agday; return render(); }
   const card = b.closest('.req'), x = card && items.find(i => i.id === card.dataset.id), d = b.dataset.do;
   try {
     if (d === 'logout') { const { Au, auth } = await fb(); await Au.signOut(auth); }
-    else if (d === 'reload') { await load(); render(); }
+    else if (d === 'reload') { await load(); if (tab === 'usage') await loadUsage(); render(); }
+    else if (d === 'pd-range') { usageRange = +b.dataset.n || 30; render(); }
+    else if (d === 'pd-csv') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([usageCSV()], { type: 'text/csv;charset=utf-8' })); a.download = 'paperdecrypt-usage.csv'; a.click(); }
     else if (d === 'gf-filter') { gFilter = b.dataset.k; gOpen = null; render(); }
     else if (d.startsWith('gf-')) {
       const id = b.closest('[data-gid]').dataset.gid, g = gifts.find(z => z.id === id);

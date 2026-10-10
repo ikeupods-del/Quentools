@@ -275,6 +275,25 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
 .perks{margin:6px 0 16px;padding-left:1.2em}
 .perks li{margin:0 0 8px;max-width:58ch}
 #img-dialog img{display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:8px}
+#reminders:empty{display:none}
+.remind{margin-bottom:16px}
+.remind h2{margin:0 0 8px;font-size:1.2rem}
+.remind ul{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}
+.remind li{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:9px;padding:8px 12px}
+.remind li.hot{border-left-color:var(--stamp)}
+.remind li.calm{border-left-color:var(--calm)}
+.remind li b{display:block;font-size:.98rem}
+.remind li span{color:var(--muted);font-size:.88rem}
+.share-box{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding:12px;border-radius:10px;background:var(--paper)}
+.tva-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.tva-grid div{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--paper)}
+.tva-grid b{display:block;font-size:1.35rem}
+.tva-grid span{color:var(--muted);font-size:.85rem}
+.tva-grid .main{border-color:var(--ink)}
+.cat{display:inline-block;font-size:.78rem;font-weight:700;border:1px solid var(--line);border-radius:99px;padding:1px 9px;color:var(--muted)}
+.sugg{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
+.filters{display:grid;gap:8px;margin:0 0 14px}
+.filters input[type=search]{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--sheet);min-height:46px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -298,11 +317,14 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
     <button role="tab" id="tab-decode" aria-selected="true" aria-controls="view-decode">Décoder</button>
     <button role="tab" id="tab-money" aria-selected="false" aria-controls="view-money"><span class="t-long">Récupérer mon argent</span><span class="t-short">Mon argent</span></button>
     <button role="tab" id="tab-warranty" aria-selected="false" aria-controls="view-warranty">Garanties<span class="count" id="w-count" hidden>0</span></button>
+    <button role="tab" id="tab-vault" aria-selected="false" aria-controls="view-vault">Coffre<span class="count" id="vault-count" hidden>0</span></button>
     <button role="tab" id="tab-list" aria-selected="false" aria-controls="view-list">Courriers<span class="count" id="list-count" hidden>0</span></button>
+    <button role="tab" id="tab-tools" aria-selected="false" aria-controls="view-tools">Outils</button>
   </nav>
 
   <main>
     <section id="view-decode" role="tabpanel" aria-labelledby="tab-decode">
+      <div id="reminders"></div>
       <div class="sheet input-sheet" id="input-panel">
         <h2>Prends ton courrier en photo</h2>
         <p class="lead">On te dit qui t'écrit, ce qu'on te demande, avant quand, et on t'aide à répondre. Ça marche avec la CAF, les impôts, une amende, une relance de facture…</p>
@@ -330,8 +352,10 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
           <textarea id="letter-input" placeholder="Le texte lu sur ta photo s'affiche ici. Tu peux aussi le coller directement, ou corriger une erreur de lecture."></textarea>
           <div class="actions">
             <button class="btn" id="decode-btn" type="button">Décoder ce courrier</button>
+            <label class="btn ghost small" for="cam-input" id="add-page" hidden>Ajouter une page</label>
             <button class="link" id="clear-btn" type="button" hidden>Effacer</button>
           </div>
+          <p class="note" id="pages-note" hidden></p>
         </div>
       </div>
       <p class="privacy">
@@ -350,8 +374,17 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
       <div id="warranty"></div>
     </section>
 
+    <section id="view-vault" role="tabpanel" aria-labelledby="tab-vault" hidden>
+      <div id="vault"></div>
+    </section>
+
     <section id="view-list" role="tabpanel" aria-labelledby="tab-list" hidden>
+      <div class="actions" style="margin:0 0 12px"><button class="btn small ghost" type="button" id="list-dossier">Mon dossier en PDF</button></div>
       <div id="list"></div>
+    </section>
+
+    <section id="view-tools" role="tabpanel" aria-labelledby="tab-tools" hidden>
+      <div id="tools"></div>
     </section>
 
     <p class="disclaimer">Cet outil t'aide à comprendre un courrier, à connaître tes droits et à rédiger une réponse. Il peut se tromper et ne remplace pas l'avis d'un professionnel du droit. Vérifie toujours les dates et montants sur le courrier original. Certains liens sont des liens partenaires : ils peuvent rapporter une commission à QuenTools, sans frais en plus pour toi. <a href="politique-confidentialite.html">Confidentialité et cookies</a></p>
@@ -400,6 +433,8 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
         <label class="btn small ghost" for="import-input">Restaurer une sauvegarde</label>
         <input class="sr" type="file" id="import-input" accept="application/json,.json">
       </div>
+      <div class="actions"><button class="btn small ghost" id="dossier-btn" type="button">Mon dossier en PDF</button></div>
+      <label class="radio" style="margin-top:14px"><input type="checkbox" id="stats-off"><span><b>Ne pas compter mes visites</b><small>Paperdecrypt compte, de façon anonyme, quels outils servent le plus (par exemple « un courrier a été décodé »). Aucun texte, nom ou identifiant n'est envoyé. Coche ici pour ne pas y participer.</small></span></label>
       <p><button class="link" id="wipe-btn" type="button">Effacer tous mes courriers</button></p>
     </section>
     <div class="dlg-foot"><button class="btn" id="close-settings" type="button">Fermer</button></div>
@@ -422,6 +457,22 @@ dialog::backdrop{background:rgba(10,15,25,.5)}
       <p class="note" id="premium-state" role="status"></p>
     </section>
     <div class="dlg-foot"><button class="btn ghost" id="premium-close" type="button">Fermer</button></div>
+  </div>
+</dialog>
+
+<dialog id="dossier" aria-labelledby="dossier-title">
+  <div class="dlg">
+    <h2 id="dossier-title">Mon dossier en PDF</h2>
+    <p class="note">Un seul document à imprimer ou à enregistrer en PDF, avec ce que tu choisis. Utile pour un litige, un dossier de logement ou un rendez-vous.</p>
+    <label class="radio"><input type="checkbox" id="do-c" checked><span><b>Courriers</b><small>Expéditeur, objet, date limite, montant</small></span></label>
+    <label class="radio"><input type="checkbox" id="do-r" checked><span><b>Réclamations</b><small>Montants et état d'avancement</small></span></label>
+    <label class="radio"><input type="checkbox" id="do-g" checked><span><b>Garanties</b><small>Produits et fins de garantie</small></span></label>
+    <label class="radio"><input type="checkbox" id="do-gt"><span><b>Avec les photos des tickets</b><small>Plus long à imprimer</small></span></label>
+    <label class="radio"><input type="checkbox" id="do-a" checked><span><b>Abonnements</b><small>Total par mois et par an</small></span></label>
+    <label class="radio"><input type="checkbox" id="do-v"><span><b>Liste du coffre</b><small>Noms, catégories et dates des documents</small></span></label>
+    <label class="radio"><input type="checkbox" id="do-vi"><span><b>Avec les photos du coffre</b><small>Les PDF ne sont pas inclus</small></span></label>
+    <p class="note" id="do-state" role="status"></p>
+    <div class="dlg-foot"><button class="btn" id="do-go" type="button">Créer le dossier</button> <button class="btn ghost" id="do-close" type="button">Fermer</button></div>
   </div>
 </dialog>
 
@@ -520,8 +571,9 @@ async function fillAds(root) {
   } catch (e) { slots.forEach(s => s.closest('.ad') && s.closest('.ad').remove()); }
 }
 const tipHTML = () => CONFIG.TIP_URL ? `<a class="link tip" href="${esc(CONFIG.TIP_URL)}" target="_blank" rel="noopener">Ça t'a aidé ? Soutiens QuenTools</a>` : '';
-Object.assign(KEYS, { claims: 'qt-paperasse:reclamations', garanties: 'qt-paperasse:garanties', premium: 'qt-paperasse:premium', sync: 'qt-paperasse:sync', deleted: 'qt-paperasse:supprimes' });
-const SYNC_KEYS = [KEYS.list, KEYS.claims, KEYS.garanties, KEYS.me];
+Object.assign(KEYS, { claims: 'qt-paperasse:reclamations', garanties: 'qt-paperasse:garanties', premium: 'qt-paperasse:premium', sync: 'qt-paperasse:sync', deleted: 'qt-paperasse:supprimes',
+  abos: 'qt-paperasse:abonnements', coffre: 'qt-paperasse:coffre', coffreRead: 'qt-paperasse:coffre-lecture', nostats: 'qt-paperasse:sans-stats', seen: 'qt-paperasse:vu', notif: 'qt-paperasse:notif', notifDay: 'qt-paperasse:notif-jour' });
+const SYNC_KEYS = [KEYS.list, KEYS.claims, KEYS.garanties, KEYS.me, KEYS.abos, KEYS.coffre];
 let markDirty = () => {};
 const _set = store.set;
 store.set = (k, v) => { const ok = _set(k, v); if (ok && SYNC_KEYS.includes(k)) markDirty(); return ok; };
@@ -665,7 +717,7 @@ function bindLetterTools(root, draftEl, email) {
   const txt = () => draftEl.innerText;
   const obj = () => { const m = txt().match(/Objet\s*:\s*(.+)/); return m ? m[1].trim() : 'Courrier'; };
   $$('[data-lt]', root).forEach(b => b.addEventListener('click', async () => {
-    const k = b.dataset.lt;
+    const k = b.dataset.lt; track('lettre_' + k);
     if (k === 'copy') toast((await copyText(txt())) ? 'Lettre copiée' : 'Copie impossible, sélectionne le texte à la main');
     if (k === 'rec') sendRecommande(txt());
     if (k === 'dl') downloadFile('lettre-' + slug(obj()) + '.txt', txt(), 'text/plain;charset=utf-8');
@@ -1353,6 +1405,7 @@ function renderResult(a, savedId, opts = {}) {
         </div>
         <div class="draft" id="draft" contenteditable="true" spellcheck="true" aria-label="Brouillon de réponse"></div>
         ${letterToolsHTML()}
+        <p class="note"><button class="link" type="button" id="more-letters">Voir tous les modèles de lettres</button> (amende, résiliation, échéancier, CAF, impôts…)</p>
         <div class="draft-tools ai-tools">
           <button class="btn small ghost" id="ai-improve" type="button" hidden>Améliorer avec l'IA</button>
           <button class="link" id="undo-draft" type="button" hidden>Revenir à la version d'avant</button>
@@ -1361,9 +1414,11 @@ function renderResult(a, savedId, opts = {}) {
 
       <div class="save-row">
         <button class="btn" id="save-btn" type="button">${currentId ? 'Mettre à jour dans mes courriers' : 'Enregistrer dans mes courriers'}</button>
+        <button class="btn ghost" id="share-btn" type="button" aria-expanded="false">Partager le résumé</button>
         <button class="link" id="new-btn" type="button">Décoder un autre courrier</button>
         ${tipHTML()}
       </div>
+      ${shareBoxHTML()}
       ${adHTML()}
     </div>
 
@@ -1395,7 +1450,7 @@ function addMsg(who, text) {
 function bindResult() {
   const R = $('#result');
   $$('[data-intent]', R).forEach(b => b.addEventListener('click', () => {
-    currentIntent = b.dataset.intent;
+    currentIntent = b.dataset.intent; trackLetter(currentIntent);
     $$('[data-intent]', R).forEach(x => x.setAttribute('aria-pressed', x === b));
     draftBackup = null; $('#undo-draft').hidden = true;
     setDraft(buildLetter(currentIntent, current));
@@ -1403,6 +1458,8 @@ function bindResult() {
   bindLetterTools(R, $('#draft'), current.emails[0] || '');
   $('#undo-draft').addEventListener('click', () => { if (draftBackup != null) { setDraft(draftBackup); draftBackup = null; $('#undo-draft').hidden = true; } });
   $('#save-btn').addEventListener('click', saveCurrent);
+  bindShare(current);
+  $('#more-letters').addEventListener('click', () => { tools$ = { view: 'lettres' }; showTab('tools'); });
   $('#new-btn').addEventListener('click', resetInput);
   $('#ai-improve').addEventListener('click', () => enqueueAI(() => aiImprove(seq)));
   $('#speak-btn').addEventListener('click', toggleSpeak);
@@ -1410,7 +1467,7 @@ function bindResult() {
 
   // Questions
   $$('[data-q]', R).forEach(b => b.addEventListener('click', () => {
-    addMsg('me', b.textContent); addMsg('bot', quickAnswer(b.dataset.q, current));
+    addMsg('me', b.textContent); addMsg('bot', quickAnswer(b.dataset.q, current)); track('question');
   }));
   const ask = () => {
     const inp = $('#chat-input'); const q = inp.value.trim(); if (!q) return; inp.value = '';
@@ -1456,6 +1513,7 @@ function downloadFile(name, content, type) {
 }
 function downloadICS(a) {
   if (!a.deadline) return;
+  track('ics');
   const d = a.deadline.date, p = n => String(n).padStart(2, '0');
   const ymd = x => x.getFullYear() + p(x.getMonth() + 1) + p(x.getDate());
   const next = new Date(d); next.setDate(next.getDate() + 1);
@@ -1492,6 +1550,7 @@ function resetInput() {
   seq++; stopSpeaking(); interruptAI();
   $('#result').classList.remove('on'); $('#result').innerHTML = '';
   $('#letter-input').value = ''; $('#clear-btn').hidden = true; current = null; currentId = null;
+  readPages = 0; $('#add-page').hidden = true; $('#pages-note').hidden = true;
   window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   $('#letter-input').focus();
 }
@@ -1501,15 +1560,17 @@ function runDecode() {
   if (txt.length < 30) { toast('Ajoute le texte du courrier ou une photo'); $('#letter-input').focus(); return; }
   interruptAI();
   const a = analyze(txt);
+  track('decode'); trackType(a.type.id); if (a.org) trackOrg(a.org.id);
   renderResult(a, null);
   $('#result').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
 }
 
 /* ---------- Lecture photo / PDF ---------- */
-let ocrWorker = null;
+let ocrWorker = null, readPages = 0;
 function setOcr(p, msg) {
   const box = $('#ocr-progress'); box.classList.add('on');
   $('#ocr-bar').style.width = Math.round(p * 100) + '%'; $('#ocr-text').textContent = msg;
+  const vb = $('#vault-bar'); if (vb && $('#vault-prog')) { $('#vault-prog').classList.add('on'); vb.style.width = Math.round(p * 100) + '%'; $('#vault-ptext').textContent = msg; }
 }
 function hideOcr() { $('#ocr-progress').classList.remove('on'); }
 
@@ -1522,19 +1583,63 @@ async function getOcr() {
   });
   return ocrWorker;
 }
-function fileToCanvas(file) {
+// Image redressée pour la lecture : orientation EXIF respectée, marges de la table rognées, contraste étiré.
+function loadBitmap(file) {
+  if (window.createImageBitmap) return createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => loadBitmapFallback(file));
+  return loadBitmapFallback(file);
+}
+function loadBitmapFallback(file) {
   return new Promise((res, rej) => {
-    const url = URL.createObjectURL(file); const img = new Image();
-    img.onload = () => {
-      const max = 2200; let { width: w, height: h } = img;
-      const k = Math.min(1, max / Math.max(w, h)); w = Math.round(w * k); h = Math.round(h * k);
-      const c = document.createElement('canvas'); c.width = w; c.height = h;
-      const ctx = c.getContext('2d'); ctx.filter = 'grayscale(1) contrast(1.15)'; ctx.drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url); res(c);
-    };
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); res(img); };
     img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); };
     img.src = url;
   });
+}
+// Rectangle de la feuille (zone claire dominante) ou null si la photo est déjà cadrée.
+function paperBox(c) {
+  const k = Math.min(1, 320 / Math.max(c.width, c.height)), w = Math.max(1, Math.round(c.width * k)), h = Math.max(1, Math.round(c.height * k));
+  const t = document.createElement('canvas'); t.width = w; t.height = h; const x = t.getContext('2d'); x.drawImage(c, 0, 0, w, h);
+  const d = x.getImageData(0, 0, w, h).data, g = new Uint8Array(w * h), hist = new Array(256).fill(0);
+  for (let i = 0; i < w * h; i++) { const v = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) >> 8; g[i] = v; hist[v]++; }
+  // Seuil d'Otsu
+  let sum = 0; for (let i = 0; i < 256; i++) sum += i * hist[i];
+  let wB = 0, sB = 0, best = 0, th = 128;
+  for (let i = 0; i < 256; i++) { wB += hist[i]; if (!wB) continue; const wF = w * h - wB; if (!wF) break; sB += i * hist[i]; const mB = sB / wB, mF = (sum - sB) / wF, v = wB * wF * (mB - mF) * (mB - mF); if (v > best) { best = v; th = i; } }
+  const rows = new Array(h).fill(0), cols = new Array(w).fill(0); let bright = 0;
+  for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) if (g[yy * w + xx] > th) { rows[yy]++; cols[xx]++; bright++; }
+  const frac = bright / (w * h); if (frac < 0.3 || frac > 0.93) return null;
+  const r0 = rows.findIndex(n => n > w * 0.25), r1 = h - 1 - [...rows].reverse().findIndex(n => n > w * 0.25);
+  const c0 = cols.findIndex(n => n > h * 0.25), c1 = w - 1 - [...cols].reverse().findIndex(n => n > h * 0.25);
+  if (r0 < 0 || c0 < 0 || r1 <= r0 || c1 <= c0) return null;
+  const bw = (c1 - c0 + 1) / w, bh = (r1 - r0 + 1) / h; if (bw * bh < 0.4 || (bw > 0.97 && bh > 0.97)) return null;
+  const fx = Math.max(0, c0 / w - 0.015), fy = Math.max(0, r0 / h - 0.015);
+  return { fx, fy, fw: Math.min(1, (c1 + 1) / w + 0.015) - fx, fh: Math.min(1, (r1 + 1) / h + 0.015) - fy };
+}
+async function fileToCanvas(file, rot = 0) {
+  const bmp = await loadBitmap(file), max = 2200;
+  const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  let w = Math.round(bmp.width * k), h = Math.round(bmp.height * k);
+  let c = document.createElement('canvas'); c.width = w; c.height = h;
+  c.getContext('2d').drawImage(bmp, 0, 0, w, h);
+  if (bmp.close) bmp.close();
+  if (rot) {
+    const r = document.createElement('canvas'); r.width = h; r.height = w; const x = r.getContext('2d');
+    x.translate(h / 2, w / 2); x.rotate(rot * Math.PI / 180); x.drawImage(c, -w / 2, -h / 2); c = r; [w, h] = [h, w];
+  }
+  try {
+    const b = paperBox(c);
+    if (b) { const sx = Math.round(b.fx * w), sy = Math.round(b.fy * h), sw = Math.round(b.fw * w), sh = Math.round(b.fh * h); const n = document.createElement('canvas'); n.width = sw; n.height = sh; n.getContext('2d').drawImage(c, sx, sy, sw, sh, 0, 0, sw, sh); c = n; w = sw; h = sh; }
+    // Contraste : on étire entre les 2e et 98e percentiles de gris.
+    const ctx = c.getContext('2d'), img = ctx.getImageData(0, 0, w, h), d = img.data, hist = new Array(256).fill(0);
+    for (let i = 0; i < d.length; i += 4) { const v = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8; d[i] = d[i + 1] = d[i + 2] = v; hist[v]++; }
+    const total = w * h; let acc = 0, lo = 0, hi = 255;
+    for (let i = 0; i < 256; i++) { acc += hist[i]; if (acc >= total * 0.02) { lo = i; break; } }
+    acc = 0; for (let i = 255; i >= 0; i--) { acc += hist[i]; if (acc >= total * 0.02) { hi = i; break; } }
+    if (hi - lo > 40) { const kk = 255 / (hi - lo); for (let i = 0; i < d.length; i += 4) { const v = Math.max(0, Math.min(255, (d[i] - lo) * kk)); d[i] = d[i + 1] = d[i + 2] = v; } }
+    ctx.putImageData(img, 0, 0);
+  } catch (e) { /* retraitement impossible : on lit l'image telle quelle */ }
+  return c;
 }
 async function readPdf(file) {
   await loadScript(PDFJS_URL);
@@ -1577,17 +1682,29 @@ async function pdfFirstPageFile(file) {
   if (!blob) throw new Error('pdf');
   return new File([blob], 'ticket.jpg', { type: 'image/jpeg' });
 }
+// Qualité d'un texte lu : part de vrais mots (sert à repérer une photo couchée ou à l'envers).
+const textScore = t => { const w = String(t).split(/\s+/).filter(Boolean); if (w.length < 6) return 0; return w.filter(x => /^[a-zA-ZÀ-ÿ'’-]{3,}[.,;:!?)]*$/.test(x)).length / w.length * Math.min(1, w.length / 40); };
+async function ocrImage(w, f) {
+  let best = (await w.recognize(await fileToCanvas(f), { rotateAuto: true })).data.text || '', sc = textScore(best);
+  // Photo prise de travers : on essaie les deux autres quarts de tour.
+  for (const rot of sc < 0.35 ? [90, 270] : []) {
+    setOcr(0.5, 'Redressement de la photo…');
+    const t = (await w.recognize(await fileToCanvas(f, rot), { rotateAuto: true })).data.text || '', s2 = textScore(t);
+    if (s2 > sc) { best = t; sc = s2; }
+  }
+  return best;
+}
 async function handleFiles(files) {
   files = [...files]; if (!files.length) return;
-  let all = '';
+  let all = '', pages = 0;
   try {
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
-      if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) all += await readPdf(f) + '\n\n';
+      if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) { all += await readPdf(f) + '\n\n'; track('pdf'); pages++; }
       else if (f.type.startsWith('image/')) {
-        const w = await getOcr(); const c = await fileToCanvas(f);
+        const w = await getOcr();
         setOcr(0, files.length > 1 ? `Lecture de la photo ${i + 1} sur ${files.length}…` : 'Lecture du texte…');
-        const { data } = await w.recognize(c, { rotateAuto: true }); all += data.text + '\n\n';
+        all += await ocrImage(w, f) + '\n\n'; track('photo'); pages++;
       }
     }
   } catch (e) {
@@ -1599,6 +1716,8 @@ async function handleFiles(files) {
   const prev = $('#letter-input').value.trim();
   $('#letter-input').value = (prev && files.length ? prev + '\n\n' : '') + all.trim();
   $('#clear-btn').hidden = false;
+  readPages += pages; $('#add-page').hidden = false; $('#pages-note').hidden = false;
+  $('#pages-note').textContent = readPages > 1 ? `${readPages} pages lues. Ajoute la page suivante si le courrier continue.` : 'Le courrier a plusieurs pages ? Ajoute la page suivante, elle sera lue à la suite.';
   if (all.replace(/\s/g, '').length < 40) { toast("Je n'arrive pas à lire le texte. Reprends la photo bien à plat, avec de la lumière."); return; }
   runDecode();
 }
@@ -1625,7 +1744,7 @@ function saveCurrent(silent) {
   if (i >= 0) list[i] = item; else list.unshift(item);
   if (!store.set(KEYS.list, list)) { toast("Impossible d'enregistrer sur cet appareil"); return; }
   currentId = item.id; const sb = $('#save-btn'); if (sb) sb.textContent = 'Mettre à jour dans mes courriers';
-  if (!silent) toast('Enregistré dans mes courriers');
+  if (!silent) { toast('Enregistré dans mes courriers'); if (!prev) track('save_courrier'); }
   renderList();
 }
 function openItem(it) {
@@ -1641,6 +1760,7 @@ function renderList() {
   const open = list.filter(x => !x.done).length;
   const late = list.filter(x => !x.done && x.deadline && daysUntil(x.deadline) <= 3).length;
   const c = $('#list-count'); c.textContent = open; c.hidden = !open; c.classList.toggle('hot', late > 0);
+  renderReminders();
   const box = $('#list');
   if (!list.length) {
     box.innerHTML = `<div class="sheet list-empty"><h2>Aucun courrier enregistré</h2><p class="lead">Quand tu décodes un courrier, enregistre-le pour garder ses dates limites sous les yeux.</p><button class="btn" type="button" id="go-decode">Décoder un courrier</button></div>`;
@@ -1899,6 +2019,7 @@ function updatePill() {
 async function openSettings() {
   refreshPremiumUI();
   const me = store.get(KEYS.me, {});
+  $('#stats-off').checked = !!store.get(KEYS.nostats, false);
   $('#me-nom').value = me.nom || ''; $('#me-adresse').value = me.adresse || ''; $('#me-ville').value = me.ville || '';
   const d = $('#settings'); if (d.showModal) d.showModal(); else d.setAttribute('open', '');
   await gpuReady;
@@ -1951,7 +2072,7 @@ $('#wipe-btn').addEventListener('click', () => {
   store.set(KEYS.list, []); currentId = null; renderList(); toast('Courriers effacés');
 });
 $('#export-btn').addEventListener('click', () => {
-  const data = { app: 'decodeur-courrier', version: 2, exportedAt: new Date().toISOString(), courriers: getList(), moi: store.get(KEYS.me, {}) };
+  const data = { app: 'decodeur-courrier', version: 3, exportedAt: new Date().toISOString(), courriers: getList(), reclamations: getClaims(), garanties: getW(), abonnements: getAbos(), coffre: getVault().map(({ text, ...r }) => r), moi: store.get(KEYS.me, {}) };
   downloadFile('sauvegarde-courriers-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(data, null, 1), 'application/json');
 });
 $('#import-input').addEventListener('change', async e => {
@@ -1962,6 +2083,8 @@ $('#import-input').addEventListener('change', async e => {
     const list = getList(); let added = 0;
     for (const it of data.courriers) { if (it && it.id && it.text && !list.some(x => x.id === it.id)) { list.push(it); added++; } }
     store.set(KEYS.list, list);
+    const add = (key, arr, get) => { if (!Array.isArray(arr)) return; const cur = get(); let n = 0; arr.forEach(it => { if (it && it.id && !cur.some(x => x.id === it.id)) { cur.push(it); n++; } }); if (n) store.set(key, cur); added += n; };
+    add(KEYS.claims, data.reclamations, getClaims); add(KEYS.garanties, data.garanties, getW); add(KEYS.abos, data.abonnements, getAbos); add(KEYS.coffre, data.coffre, getVault);
     if (data.moi && !store.get(KEYS.me, null)) store.set(KEYS.me, data.moi);
     renderList(); toast(added ? `${added} courrier${added > 1 ? 's' : ''} restauré${added > 1 ? 's' : ''}` : 'Rien de nouveau dans cette sauvegarde');
   } catch (err) { toast("Ce fichier n'est pas une sauvegarde du décodeur"); }
@@ -2276,7 +2399,7 @@ function renderClaimResult(box) {
     if (existing) {
       const it = l.find(x => x.id === existing.id); it.values = v; it.amount = res.amount || it.amount; it.updatedAt = now;
       if (money$.escalate) { it.status = 'reminded'; it.sentAt = isoDay(new Date()); }
-    } else l.unshift({ id: 'r' + Date.now().toString(36), case: c.id, values: v, amount: res.amount || null, status: 'draft', createdAt: now, updatedAt: now });
+    } else { l.unshift({ id: 'r' + Date.now().toString(36), case: c.id, values: v, amount: res.amount || null, status: 'draft', createdAt: now, updatedAt: now }); track('claim_new'); usage.hit('l.claim_' + c.id); }
     saveClaims(l); toast(existing ? 'Réclamation mise à jour' : 'Réclamation ajoutée à ton suivi');
     money$ = { mode: 'home' }; renderMoney();
   });
@@ -2428,6 +2551,7 @@ function renderWForm(box) {
     if (pendingImg) { try { await idb.set('w:' + it.id, pendingImg); it.img = true; } catch (e) { toast("La photo n'a pas pu être enregistrée"); } }
     const l = getW(); const i = l.findIndex(x => x.id === it.id); if (i >= 0) l[i] = it; else l.unshift(it);
     if (!store.set(KEYS.garanties, l)) { toast("Impossible d'enregistrer sur cet appareil"); return; }
+    if (i < 0) track('warranty_new');
     toast('Achat enregistré'); w$ = { mode: 'home' }; renderWarranty();
   });
 }
@@ -2457,7 +2581,7 @@ async function gRestore() {
   } catch (e) { setSyncStatus('Connexion indisponible : ' + e.message); }
 }
 async function gLogin() {
-  try { const F = await fb(); await F.Au.signInWithPopup(F.auth, new F.Au.GoogleAuthProvider()); toast('Connecté avec Google'); }
+  try { const F = await fb(); await F.Au.signInWithPopup(F.auth, new F.Au.GoogleAuthProvider()); track('login'); toast('Connecté avec Google'); }
   catch (e) {
     const m = { 'auth/popup-closed-by-user': 'Connexion annulée', 'auth/cancelled-popup-request': 'Connexion annulée', 'auth/popup-blocked': 'Autorise les fenêtres pop-up pour ce site, puis réessaie', 'auth/unauthorized-domain': 'Ce site n\'est pas encore autorisé pour la connexion Google', 'auth/operation-not-allowed': 'La connexion Google n\'est pas activée' };
     setSyncStatus(m[e && e.code] || e.message || 'Connexion Google impossible');
@@ -2465,7 +2589,12 @@ async function gLogin() {
 }
 async function gLogout() { try { const F = await fb(); await F.Au.signOut(F.auth); toast('Compte Google déconnecté'); } catch (e) {} }
 async function buildPayload() {
-  return { app: 'quentools-paperasse', v: 1, courriers: getList(), reclamations: getClaims(), garanties: getW(), moi: store.get(KEYS.me, {}), deleted: store.get(KEYS.deleted, []) };
+  return { app: 'quentools-paperasse', v: 1, courriers: getList(), reclamations: getClaims(), garanties: getW(), abonnements: getAbos(), coffre: getVault().map(({ text, ...r }) => r), moi: store.get(KEYS.me, {}), deleted: store.get(KEYS.deleted, []) };
+}
+// Le coffre synchronisé ne contient pas le texte lu : on garde celui de cet appareil quand il existe.
+function mergeVault(local, merged) {
+  const t = new Map(local.map(x => [x.id, x.text]));
+  return merged.map(x => (t.get(x.id) && !x.text) ? { ...x, text: t.get(x.id) } : x);
 }
 function mergeLists(a = [], b = [], deleted) {
   const t = x => new Date(x.updatedAt || x.savedAt || x.createdAt || 0).getTime();
@@ -2488,14 +2617,16 @@ async function syncNow() {
       courriers: mergeLists(local.courriers, remote.courriers, deleted),
       reclamations: mergeLists(local.reclamations, remote.reclamations, deleted),
       garanties: mergeLists(local.garanties, remote.garanties, deleted),
+      abonnements: mergeLists(local.abonnements, remote.abonnements, deleted),
+      coffre: mergeLists(local.coffre, remote.coffre, deleted),
       moi: Object.keys(local.moi || {}).length ? local.moi : (remote.moi || {}),
       deleted: [...deleted].slice(-500)
     };
-    _set(KEYS.list, merged.courriers); _set(KEYS.claims, merged.reclamations); _set(KEYS.garanties, merged.garanties); _set(KEYS.me, merged.moi); _set(KEYS.deleted, merged.deleted);
+    _set(KEYS.list, merged.courriers); _set(KEYS.claims, merged.reclamations); _set(KEYS.garanties, merged.garanties); _set(KEYS.abos, merged.abonnements); _set(KEYS.coffre, mergeVault(getVault(), merged.coffre)); _set(KEYS.me, merged.moi); _set(KEYS.deleted, merged.deleted);
     // Passage par JSON : Firestore refuse les valeurs « undefined ».
     await F.Fs.setDoc(ref, JSON.parse(JSON.stringify(merged)));
     store.set(KEYS.sync, { last: new Date().toISOString() });
-    setSyncStatus(''); renderList(); renderMoneyIfOpen(); renderWarrantyIfOpen();
+    setSyncStatus(''); renderList(); renderMoneyIfOpen(); renderWarrantyIfOpen(); if (!$('#view-vault').hidden) renderVault(); if (!$('#view-tools').hidden) renderTools(); renderReminders();
   } catch (e) {
     console.error(e);
     setSyncStatus(!navigator.onLine ? 'Pas de connexion : la synchronisation se fera plus tard.' : 'La synchronisation a échoué. Réessaie dans un instant.');
@@ -2517,15 +2648,601 @@ function setSyncStatus(msg) {
 const renderMoneyIfOpen = () => { if (!$('#view-money').hidden) renderMoney(); };
 const renderWarrantyIfOpen = () => { if (!$('#view-warranty').hidden) renderWarranty(); };
 
+/* ======================================================================
+   Statistiques anonymes, rappels, lettres types, abonnements, calcul de TVA,
+   coffre de documents, partage et dossier PDF
+   ====================================================================== */
+const addDaysD = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const round2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+const getAbos = () => store.get(KEYS.abos, []);
+const getVault = () => store.get(KEYS.coffre, []);
+const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+
+/* ---------- Statistiques anonymes d'usage ----------
+   Seuls des compteurs par jour sont envoyés (« un courrier a été décodé », « un type de courrier »…).
+   Aucun texte, aucun nom, aucun identifiant, aucun cookie. Désactivable dans les réglages. */
+const usage = (() => {
+  let q = {}, timer = null;
+  const on = () => gAvailable() && !store.get(KEYS.nostats, false);
+  const endpoint = () => `https://firestore.googleapis.com/v1/projects/${FIREBASE_CFG.projectId}/databases/(default)/documents:commit?key=${FIREBASE_CFG.apiKey}`;
+  function flush() {
+    clearTimeout(timer);
+    const keys = Object.keys(q); if (!keys.length) return;
+    const doc = `projects/${FIREBASE_CFG.projectId}/databases/(default)/documents/qt_usage/${isoDay(new Date())}`;
+    const body = { writes: [{ transform: { document: doc, fieldTransforms: keys.map(k => ({ fieldPath: k, increment: { integerValue: String(q[k]) } })) } }] };
+    q = {};
+    try { fetch(endpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true }).catch(() => {}); } catch (e) { /* hors ligne : tant pis */ }
+  }
+  function hit(path) { if (!on() || !/^[vftol](\.[a-z0-9_]+)?$/.test(path)) return; q[path] = (q[path] || 0) + 1; clearTimeout(timer); timer = setTimeout(flush, 5000); }
+  addEventListener('pagehide', flush);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+  return { hit, flush, on };
+})();
+const track = name => usage.hit('f.' + name);
+const trackType = id => usage.hit('t.' + id);
+const trackOrg = id => usage.hit('o.' + id);
+const trackLetter = id => usage.hit('l.' + id);
+function startSession() {
+  let fresh = true;
+  try { fresh = !sessionStorage.getItem('qt-pd-session'); sessionStorage.setItem('qt-pd-session', '1'); } catch (e) { /* stockage indisponible */ }
+  if (!fresh) return;
+  usage.hit('v');
+  if (!store.get(KEYS.seen, false)) { store.set(KEYS.seen, true); track('nouveau'); }
+}
+
+/* ---------- Rappels ---------- */
+function collectReminders() {
+  const out = [];
+  getList().forEach(x => { if (!x.done && x.deadline) out.push({ date: new Date(x.deadline), title: `${x.org} : ${x.type}`, detail: x.amount ? 'À régler : ' + fmtMoney(x.amount) + kindLabel(x.amountKind) : 'Date limite du courrier', kind: 'Courrier', tab: 'list', lead: 30 }); });
+  getW().forEach(w => { const e = wEnds(w).end; if (e && e >= today0()) out.push({ date: e, title: 'Fin de garantie : ' + w.name, detail: 'Vérifie que tout fonctionne avant la fin', kind: 'Garantie', tab: 'warranty', lead: 60 }); });
+  getClaims().forEach(cl => { const c = caseById(cl.case); if (!c || !cl.sentAt || !['sent', 'reminded'].includes(cl.status)) return; out.push({ date: addDaysD(parseDay(cl.sentAt), c.relance), title: 'Relancer : ' + c.name(cl.values || {}), detail: 'Sans réponse, c\'est le moment de relancer', kind: 'Réclamation', tab: 'money', lead: 3 }); });
+  getAbos().forEach(a => {
+    if (a.active === false || !a.next) return;
+    const d = parseDay(a.next), cost = a.amount ? fmtMoney(+a.amount) : '';
+    if (+a.notice) out.push({ date: addDaysD(d, -a.notice), title: 'Dernier jour pour résilier : ' + a.name, detail: 'Avant le renouvellement' + (cost ? ' (' + cost + ')' : ''), kind: 'Abonnement', tab: 'tools', lead: 14 });
+    out.push({ date: d, title: 'Renouvellement : ' + a.name, detail: cost, kind: 'Abonnement', tab: 'tools', lead: 7 });
+  });
+  return out.map(r => ({ ...r, days: daysUntil(r.date) })).filter(r => r.days <= r.lead && r.days >= -45).sort((a, b) => a.days - b.days);
+}
+function makeICSMany(evts) {
+  const p = n => String(n).padStart(2, '0'), ymd = x => x.getFullYear() + p(x.getMonth() + 1) + p(x.getDate());
+  const e = s => String(s).replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1');
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//QuenTools//Paperdecrypt//FR', 'CALSCALE:GREGORIAN'];
+  evts.forEach((ev, i) => {
+    L.push('BEGIN:VEVENT', 'UID:' + Date.now() + '-' + i + '@quentools.fr', 'DTSTAMP:' + stamp, 'DTSTART;VALUE=DATE:' + ymd(ev.date), 'DTEND;VALUE=DATE:' + ymd(addDaysD(ev.date, 1)),
+      'SUMMARY:' + e(ev.title), 'DESCRIPTION:' + e(ev.detail || ''));
+    ['-P3D', '-P1D'].forEach(t => L.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + e(ev.title), 'TRIGGER:' + t, 'END:VALARM'));
+    L.push('END:VEVENT');
+  });
+  L.push('END:VCALENDAR');
+  return L.join('\r\n');
+}
+const notifOn = () => !!store.get(KEYS.notif, false) && 'Notification' in window && Notification.permission === 'granted';
+function renderReminders() {
+  const box = $('#reminders'); if (!box) return;
+  const list = collectReminders();
+  if (!list.length) { box.innerHTML = ''; return; }
+  const shown = list.slice(0, 6);
+  const canNotif = 'Notification' in window && Notification.permission !== 'denied';
+  box.innerHTML = `<div class="sheet remind">
+    <h2>À ne pas oublier</h2>
+    <ul>${shown.map((r, i) => `<li class="${r.days <= 3 ? 'hot' : r.days > 14 ? 'calm' : ''}"><div><b>${esc(r.title)}</b><span>${esc(r.kind)} | ${esc(r.days < 0 ? 'dépassé depuis ' + (-r.days) + ' j' : r.days === 0 ? "aujourd'hui" : r.days === 1 ? 'demain' : 'dans ' + r.days + ' jours')}${r.detail ? ' | ' + esc(r.detail) : ''}</span></div><button class="btn small ghost" type="button" data-r-go="${i}">Voir</button></li>`).join('')}</ul>
+    ${list.length > shown.length ? `<p class="note">Et ${list.length - shown.length} autre${list.length - shown.length > 1 ? 's' : ''} rappel${list.length - shown.length > 1 ? 's' : ''} un peu plus tard.</p>` : ''}
+    <div class="actions"><button class="btn small" type="button" id="r-ics">Tout ajouter à mon agenda</button>${canNotif ? `<button class="btn small ghost" type="button" id="r-notif">${notifOn() ? 'Notifications activées (couper)' : 'Me prévenir à l\'ouverture'}</button>` : ''}</div>
+    <p class="note">Dans ton agenda, les alertes sonnent 3 jours et 1 jour avant, même si Paperdecrypt est fermé.</p>
+  </div>`;
+  $$('[data-r-go]', box).forEach(b => b.addEventListener('click', () => { const r = shown[+b.dataset.rGo]; showTab(r.tab); }));
+  $('#r-ics').addEventListener('click', () => {
+    downloadFile('rappels-paperdecrypt.ics', makeICSMany(list.map(r => ({ date: r.days < 0 ? today0() : r.date, title: r.title, detail: r.detail }))), 'text/calendar;charset=utf-8');
+    track('rappels_agenda'); toast("Ouvre le fichier pour l'ajouter à ton agenda");
+  });
+  const nb = $('#r-notif'); if (nb) nb.addEventListener('click', async () => {
+    if (notifOn()) { store.set(KEYS.notif, false); toast('Notifications coupées'); renderReminders(); return; }
+    try { const p = await Notification.requestPermission(); if (p === 'granted') { store.set(KEYS.notif, true); track('rappels_notif'); toast('Tu seras prévenu à chaque ouverture'); notifyUrgent(true); } else toast('Notifications refusées par le navigateur'); } catch (e) { toast('Notifications indisponibles ici'); }
+    renderReminders();
+  });
+}
+function notifyUrgent(force) {
+  if (!notifOn()) return;
+  const urgent = collectReminders().filter(r => r.days <= 3);
+  if (!urgent.length) return;
+  const day = isoDay(new Date()), last = store.get(KEYS.notifDay, '');
+  if (!force && last === day) return;
+  store.set(KEYS.notifDay, day);
+  try { new Notification('Paperdecrypt : ' + urgent.length + ' chose' + (urgent.length > 1 ? 's' : '') + ' à ne pas oublier', { body: urgent.slice(0, 3).map(r => r.title).join('\n'), tag: 'paperdecrypt' }); } catch (e) { /* ignoré */ }
+}
+
+/* ---------- Partage d'un résumé ---------- */
+function shareText(a) {
+  const l = [`${a.org ? a.org.court : 'Courrier'} : ${a.type.label.toLowerCase()}.`, brief(a)];
+  l.push('', 'Décodé avec Paperdecrypt (QuenTools) : https://quentools.fr/decodeur-courrier.html');
+  return l.join('\n');
+}
+function bindShare(a) {
+  const btn = $('#share-btn'), box = $('#share-box'); if (!btn) return;
+  btn.addEventListener('click', () => { box.hidden = !box.hidden; btn.setAttribute('aria-expanded', !box.hidden); });
+  $$('[data-share]', box).forEach(b => b.addEventListener('click', async () => {
+    const t = shareText(a), k = b.dataset.share; track('partage_' + k);
+    if (k === 'wa') window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank', 'noopener');
+    else if (k === 'mail') location.href = 'mailto:?subject=' + encodeURIComponent('Un courrier à voir ensemble') + '&body=' + encodeURIComponent(t);
+    else if (k === 'sms') location.href = 'sms:?&body=' + encodeURIComponent(t);
+    else if (k === 'copy') toast((await copyText(t)) ? 'Résumé copié' : 'Copie impossible');
+    else if (k === 'native') navigator.share({ title: 'Mon courrier décodé', text: t }).catch(() => {});
+  }));
+}
+const shareBoxHTML = () => `<div class="share-box" id="share-box" hidden>
+  <p class="note" style="flex-basis:100%;margin:0">Seul le résumé est partagé : ni le texte du courrier, ni tes coordonnées, ni tes références.</p>
+  <button class="btn small ghost" type="button" data-share="wa">WhatsApp</button>
+  <button class="btn small ghost" type="button" data-share="sms">SMS</button>
+  <button class="btn small ghost" type="button" data-share="mail">E-mail</button>
+  <button class="btn small ghost" type="button" data-share="copy">Copier</button>
+  ${navigator.share ? '<button class="btn small ghost" type="button" data-share="native">Autres…</button>' : ''}
+</div>`;
+
+/* ---------- Modèles de lettres ---------- */
+const bracket = (v, k, d) => (v[k] || '').toString().trim() || '[' + d + ']';
+const fdate = (s, d) => s ? fmtDate(parseDay(s)) : '[' + d + ']';
+const LETTRES = [
+  { id: 'amende', title: 'Contester une amende', teaser: 'La lettre à joindre à ton avis de contravention', lrar: true,
+    note: "À envoyer en recommandé à l'adresse indiquée sur l'avis, dans le délai écrit dessus (souvent 45 jours). Joins une copie de l'avis et tes preuves. Vérifie bien le délai : passé ce délai, l'amende devient définitive.",
+    fields: [
+      { id: 'avis', label: "Numéro de l'avis", type: 'text', req: true, ph: 'Ex. 1234567890' },
+      { id: 'date', label: "Date de l'infraction", type: 'date', req: true },
+      { id: 'lieu', label: "Lieu de l'infraction", type: 'text', ph: 'Ex. avenue de la République, Lyon' },
+      { id: 'plaque', label: "Plaque d'immatriculation", type: 'text', ph: 'AB-123-CD' },
+      { id: 'motif', label: 'Pourquoi contestes-tu ?', type: 'select', req: true, options: [['conducteur', "Je n'étais pas le conducteur"], ['vente', "J'avais vendu le véhicule"], ['vol', 'Le véhicule ou la plaque a été volé(e)'], ['erreur', "L'avis contient une erreur"], ['autre', 'Autre raison']] },
+      { id: 'explic', label: 'Explique avec tes mots', type: 'textarea', ph: 'Les faits, les dates, ce qui prouve ce que tu dis' }],
+    build: v => {
+      const m = { conducteur: "Je n'étais pas au volant du véhicule au moment des faits. Les informations sur le conducteur sont les suivantes : [identité et adresse du conducteur, si tu les connais].", vente: "J'avais déjà vendu ce véhicule à la date des faits, le [date de la vente]. Vous trouverez ci-joint le certificat de cession.", vol: "Le véhicule (ou sa plaque) m'a été volé(e). Vous trouverez ci-joint le récépissé de dépôt de plainte.", erreur: "L'avis comporte une erreur : [précise laquelle : date, lieu, plaque, nature de l'infraction].", autre: '' }[v.motif] || '';
+      return letterFrame({ dest: "Officier du ministère public", lrar: true, objet: "Contestation de l'avis de contravention n° " + bracket(v, 'avis', 'numéro'),
+        refs: "Avis n° " + bracket(v, 'avis', 'numéro') + (v.plaque ? '\nVéhicule : ' + v.plaque : ''),
+        corps: `Je vous écris au sujet de l'avis de contravention n° ${bracket(v, 'avis', 'numéro')} concernant les faits du ${fdate(v.date, "date de l'infraction")}${v.lieu ? ' à ' + v.lieu : ''}.\n\nJe conteste cette amende.${m ? '\n\n' + m : ''}${v.explic ? '\n\n' + v.explic : ''}\n\nJe vous demande donc de bien vouloir classer cette infraction. Je joins à ce courrier : une copie de l'avis et les pièces justificatives suivantes : [liste des pièces].` });
+    } },
+  { id: 'resiliation', title: 'Résilier un abonnement', teaser: 'Box, mobile, salle de sport, assurance, streaming…', lrar: true,
+    note: "Regarde dans ton contrat la durée d'engagement et le préavis. Pour une assurance auto, habitation ou santé, après un an de contrat tu peux en général résilier à tout moment. En cas de doute, envoie en recommandé : la date d'envoi fait foi.",
+    fields: [
+      { id: 'societe', label: 'Nom de la société', type: 'text', req: true, ph: 'Ex. nom de ton opérateur' },
+      { id: 'contrat', label: 'Numéro de contrat ou de client', type: 'text', req: true },
+      { id: 'type', label: 'Type d\'abonnement', type: 'select', options: [['internet', 'Internet / box'], ['mobile', 'Forfait mobile'], ['assurance', 'Assurance'], ['sport', 'Salle de sport'], ['streaming', 'Streaming ou presse'], ['energie', 'Électricité / gaz'], ['autre', 'Autre']] },
+      { id: 'fin', label: 'Date de fin souhaitée', type: 'date', req: true },
+      { id: 'motif', label: 'Motif (facultatif)', type: 'text', ph: 'Ex. déménagement, offre trop chère' }],
+    build: v => letterFrame({ dest: bracket(v, 'societe', 'société'), lrar: true, objet: 'Résiliation du contrat n° ' + bracket(v, 'contrat', 'numéro'), refs: 'Contrat n° ' + bracket(v, 'contrat', 'numéro'),
+      corps: `Par la présente, je vous informe de ma décision de résilier mon contrat n° ${bracket(v, 'contrat', 'numéro')}${v.type ? ' (' + ({ internet: 'internet', mobile: 'forfait mobile', assurance: 'assurance', sport: 'abonnement sportif', streaming: 'abonnement en ligne', energie: "contrat d'énergie", autre: 'abonnement' }[v.type] || 'abonnement') + ')' : ''}, avec effet au ${fdate(v.fin, 'date de fin')}.${v.motif ? '\n\nMotif : ' + v.motif + '.' : ''}\n\nMerci de me confirmer par écrit la prise en compte de cette résiliation et la date de fin du contrat, de stopper tout prélèvement à partir de cette date et de m'indiquer le montant éventuel de mon solde de tout compte.` }) },
+  { id: 'echeancier', title: 'Demander un échéancier', teaser: 'Payer une dette en plusieurs fois', lrar: false,
+    note: "Propose un montant réaliste : mieux vaut une mensualité modeste tenue chaque mois qu'une promesse trop grosse. Joins si possible tes justificatifs de revenus et de charges.",
+    fields: [
+      { id: 'org', label: 'Organisme ou société', type: 'text', req: true },
+      { id: 'ref', label: 'Référence du dossier ou de la facture', type: 'text' },
+      { id: 'total', label: 'Somme due (€)', type: 'number', req: true },
+      { id: 'mens', label: 'Mensualité que tu peux payer (€)', type: 'number', req: true },
+      { id: 'debut', label: 'Premier paiement le', type: 'date', req: true },
+      { id: 'situation', label: 'Ta situation en deux phrases', type: 'textarea', ph: 'Ex. perte d\'emploi, baisse de revenus, charges imprévues' }],
+    build: v => {
+      const n = (+v.total && +v.mens) ? Math.ceil(+v.total / +v.mens) : null;
+      return letterFrame({ dest: bracket(v, 'org', 'organisme'), objet: "Demande d'échéancier de paiement", refs: v.ref ? 'Référence : ' + v.ref : '',
+        corps: `Je vous écris au sujet de la somme de ${v.total ? fmtMoney(+v.total) : '[montant dû]'} que je vous dois${v.ref ? ' (référence ' + v.ref + ')' : ''}.\n\n${v.situation || 'Ma situation financière actuelle ne me permet pas de régler cette somme en une seule fois : [explique ta situation].'}\n\nJe vous propose de la rembourser par mensualités de ${v.mens ? fmtMoney(+v.mens) : '[montant]'}${n ? ' pendant ' + n + ' mois' : ''}, à partir du ${fdate(v.debut, 'date du premier paiement')}. Je m'engage à respecter ce calendrier.\n\nMerci de me confirmer votre accord par écrit. Je reste à votre disposition pour en discuter.` });
+    } },
+  { id: 'caf', title: 'Réclamation à la CAF', teaser: 'Contester une décision ou un calcul d\'aide', lrar: true,
+    note: "Cette lettre est un recours amiable : il s'adresse à la commission de recours amiable de ta CAF, en général dans les deux mois suivant la décision (le délai est écrit sur la notification). Garde une preuve d'envoi.",
+    fields: [
+      { id: 'alloc', label: "Numéro d'allocataire", type: 'text', req: true },
+      { id: 'caf', label: 'Ta CAF (ville ou département)', type: 'text', ph: 'Ex. CAF du Rhône' },
+      { id: 'decision', label: 'Date de la décision contestée', type: 'date' },
+      { id: 'objet', label: 'Quelle aide ?', type: 'select', options: [['apl', 'APL / aide au logement'], ['prime', "Prime d'activité"], ['rsa', 'RSA'], ['af', 'Allocations familiales'], ['indu', 'Un indu (trop-perçu) réclamé'], ['autre', 'Autre']] },
+      { id: 'motif', label: 'Pourquoi tu n\'es pas d\'accord', type: 'textarea', req: true, ph: 'Les faits, les dates et les montants' }],
+    build: v => letterFrame({ dest: (v.caf || "Caisse d'allocations familiales") + ' : commission de recours amiable', lrar: true, objet: 'Recours amiable : ' + ({ apl: 'aide au logement', prime: "prime d'activité", rsa: 'RSA', af: 'allocations familiales', indu: 'indu réclamé', autre: 'décision' }[v.objet] || 'décision'), refs: "N° allocataire : " + bracket(v, 'alloc', 'numéro'),
+      corps: `Par courrier${v.decision ? ' du ' + fdate(v.decision) : ''}, vous m'avez notifié une décision que je conteste.\n\n${bracket(v, 'motif', "explique ici tes raisons")}\n\nJe vous demande de réexaminer mon dossier${v.objet === 'indu' ? " et, à défaut d'annulation de l'indu, de m'accorder une remise de dette ou un échéancier" : ''}. Je joins les pièces justificatives : [liste des pièces].\n\nJe vous remercie de me répondre par écrit.` }) },
+  { id: 'impots', title: 'Réclamation aux impôts', teaser: 'Contester un impôt ou demander un dégrèvement', lrar: false,
+    note: "Tu peux aussi le faire en ligne dans ta messagerie sécurisée sur impots.gouv.fr. Indique ton numéro fiscal et joins les justificatifs. Le délai de réclamation dépend de l'impôt : vérifie-le sur ton avis.",
+    fields: [
+      { id: 'fiscal', label: 'Numéro fiscal', type: 'text', req: true },
+      { id: 'impot', label: 'Quel impôt ?', type: 'select', req: true, options: [['revenu', 'Impôt sur le revenu'], ['foncier', 'Taxe foncière'], ['habitation', "Taxe d'habitation"], ['autre', 'Autre']] },
+      { id: 'annee', label: "Année de l'imposition", type: 'text', req: true, ph: 'Ex. 2025' },
+      { id: 'montant', label: 'Montant contesté (€)', type: 'number' },
+      { id: 'motif', label: 'Pourquoi tu contestes', type: 'textarea', req: true, ph: 'Ex. une charge oubliée, une erreur de situation de famille' },
+      { id: 'service', label: 'Service des impôts (si tu le connais)', type: 'text', ph: 'Ex. SIP de Lyon 3' }],
+    build: v => letterFrame({ dest: v.service || 'Service des impôts des particuliers', objet: "Réclamation : " + ({ revenu: 'impôt sur le revenu', foncier: 'taxe foncière', habitation: "taxe d'habitation", autre: 'imposition' }[v.impot] || 'imposition') + ' ' + bracket(v, 'annee', 'année'), refs: 'Numéro fiscal : ' + bracket(v, 'fiscal', 'numéro'),
+      corps: `Je me permets de contester l'imposition mise à ma charge au titre de ${({ revenu: "l'impôt sur le revenu", foncier: 'la taxe foncière', habitation: "la taxe d'habitation", autre: "l'impôt" }[v.impot] || "l'impôt")} ${bracket(v, 'annee', 'année')}${v.montant ? ', pour un montant de ' + fmtMoney(+v.montant) : ''}.\n\n${bracket(v, 'motif', 'explique tes raisons')}\n\nJe vous demande de bien vouloir corriger mon imposition et, le cas échéant, de m'accorder un dégrèvement. Vous trouverez ci-joint les justificatifs : [liste des pièces].\n\nJe vous remercie de votre réponse.` }) },
+  { id: 'remboursement', title: 'Demander un remboursement', teaser: 'Trop-perçu, double prélèvement, article non reçu', lrar: true,
+    note: "Garde la preuve du paiement (relevé, ticket) et envoie en recommandé si la somme est importante.",
+    fields: [
+      { id: 'org', label: 'Société ou organisme', type: 'text', req: true },
+      { id: 'ref', label: 'Numéro de commande, de facture ou de contrat', type: 'text' },
+      { id: 'montant', label: 'Somme à rembourser (€)', type: 'number', req: true },
+      { id: 'date', label: 'Date du paiement', type: 'date' },
+      { id: 'raison', label: 'Pourquoi on te doit cet argent', type: 'textarea', req: true, ph: 'Ex. prélevé deux fois, produit jamais livré' }],
+    build: v => letterFrame({ dest: bracket(v, 'org', 'société'), lrar: true, objet: 'Demande de remboursement de ' + (v.montant ? fmtMoney(+v.montant) : '[montant]'), refs: v.ref ? 'Référence : ' + v.ref : '',
+      corps: `Le ${fdate(v.date, 'date du paiement')}, j'ai payé la somme de ${v.montant ? fmtMoney(+v.montant) : '[montant]'}${v.ref ? ' (référence ' + v.ref + ')' : ''}.\n\n${bracket(v, 'raison', 'explique la situation')}\n\nJe vous demande donc de me rembourser cette somme dans un délai de 15 jours, par virement sur mon compte. À défaut, je me réserverai le droit de saisir le médiateur compétent.\n\nVous trouverez ci-joint la preuve de mon paiement.` }) }
+];
+const lettreById = id => LETTRES.find(l => l.id === id);
+
+/* ---------- Calcul de TVA ---------- */
+// calcTVA : montant saisi en HT ou en TTC, taux en %, remise et acompte facultatifs. Arrondi au centime.
+function calcTVA({ montant, mode, rate, remise, acompte }) {
+  const m = parseFloat(String(montant).replace(',', '.')), r = parseFloat(rate) / 100;
+  if (!isFinite(m) || m < 0 || !isFinite(r) || r < 0) return null;
+  const rem = Math.min(100, Math.max(0, parseFloat(remise) || 0)) / 100, ac = Math.min(100, Math.max(0, parseFloat(acompte) || 0)) / 100;
+  let ht, tva, ttc;
+  if (mode === 'ttc') { ttc = round2(m * (1 - rem)); ht = round2(ttc / (1 + r)); tva = round2(ttc - ht); }
+  else { ht = round2(m * (1 - rem)); tva = round2(ht * r); ttc = round2(ht + tva); }
+  const acpt = round2(ttc * ac);
+  return { ht, tva, ttc, acompte: acpt, reste: round2(ttc - acpt) };
+}
+const TVA_RATES = [['20', '20 % (taux normal)'], ['10', '10 % (restauration, travaux de rénovation)'], ['5.5', '5,5 % (alimentation, travaux d\'énergie)'], ['2.1', '2,1 % (presse, médicaments remboursés)'], ['0', '0 % (franchise en base, export)']];
+
+/* ---------- Écran Outils ---------- */
+let tools$ = { view: 'home' };
+function renderTools() {
+  const box = $('#tools'); if (!box) return;
+  const v = tools$.view;
+  if (v === 'abos') return renderAbos(box);
+  if (v === 'tva') return renderTVA(box);
+  if (v === 'lettres') return renderLettres(box);
+  if (v === 'lettre') return renderLettre(box);
+  box.innerHTML = `<div class="sheet money-hero">
+      <h2>Tes outils du quotidien</h2>
+      <p class="lead">Les petits calculs et les lettres qui reviennent tout le temps. Tout reste sur ton appareil.</p>
+    </div>
+    <div class="cases" style="margin-top:14px">
+      <button class="case" type="button" data-tool="lettres"><b>Modèles de lettres</b><span>Amende, résiliation, échéancier, CAF, impôts, remboursement</span></button>
+      <button class="case" type="button" data-tool="abos"><b>Mes abonnements</b><span>Ce que tu paies chaque mois, et quand résilier</span></button>
+      <button class="case" type="button" data-tool="tva"><b>Calcul HT, TVA, TTC</b><span>Pour tes devis et factures, avec remise et acompte</span></button>
+      <button class="case" type="button" data-tool="dossier"><b>Mon dossier en PDF</b><span>Courriers, garanties, réclamations : tout au même endroit, à imprimer</span></button>
+    </div>
+    ${adHTML()}`;
+  fillAds(box);
+  $$('[data-tool]', box).forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.tool === 'dossier') return openDossier();
+    tools$ = { view: b.dataset.tool }; track('outil_' + b.dataset.tool); renderTools(); setHash('tools', b.dataset.tool); box.scrollIntoView({ block: 'start' });
+  }));
+}
+function toolBack(box) { $('#tool-back', box).addEventListener('click', () => { tools$ = { view: tools$.view === 'lettre' ? 'lettres' : 'home' }; renderTools(); setHash('tools'); }); }
+function setHash(which, sub) { try { history.replaceState(null, '', location.pathname + location.search + ((sub && SUBHASH[sub]) || TAB_HASH[which] || '')); } catch (e) {} }
+const SUBHASH = { abos: '#abonnements', tva: '#tva', lettres: '#lettres' };
+
+/* Lettres types */
+function renderLettres(box) {
+  box.innerHTML = `<div class="sheet"><button class="link back" id="tool-back" type="button">Retour</button>
+    <h2>Modèles de lettres</h2><p class="lead">Choisis la situation, réponds à quelques questions : la lettre est prête, avec tes coordonnées. Aucun texte n'est envoyé nulle part.</p></div>
+    <div class="cases" style="margin-top:14px">${LETTRES.map(l => `<button class="case" type="button" data-lettre="${l.id}"><b>${esc(l.title)}</b><span>${esc(l.teaser)}</span></button>`).join('')}</div>`;
+  toolBack(box);
+  $$('[data-lettre]', box).forEach(b => b.addEventListener('click', () => { tools$ = { view: 'lettre', id: b.dataset.lettre, values: tools$.prefill && tools$.prefillId === b.dataset.lettre ? tools$.prefill : {}, result: false }; renderTools(); box.scrollIntoView({ block: 'start' }); }));
+}
+function renderLettre(box) {
+  const l = lettreById(tools$.id), v = tools$.values || {};
+  if (!tools$.result) {
+    box.innerHTML = `<div class="sheet"><button class="link back" id="tool-back" type="button">Retour</button>
+      <h2>${esc(l.title)}</h2><p class="lead">${esc(l.teaser)}.</p>
+      <div class="form-grid">${l.fields.map(f => fieldHTML(f, v)).join('')}</div>
+      <p class="note" id="cf-err" role="alert"></p>
+      <div class="actions"><button class="btn" id="lt-go" type="button">Préparer ma lettre</button></div></div>`;
+    toolBack(box);
+    const read = () => { const o = {}; $$('[data-f]', box).forEach(i => { o[i.dataset.f] = i.value.trim(); }); return o; };
+    $('#lt-go').addEventListener('click', () => {
+      const o = read(), miss = l.fields.filter(f => f.req && !o[f.id]);
+      if (miss.length) { $('#cf-err').textContent = 'Il manque : ' + miss.map(f => f.label.toLowerCase()).join(', ') + '.'; $('#cf-' + miss[0].id).focus(); return; }
+      tools$ = { ...tools$, values: o, result: true }; trackLetter(l.id); track('lettre_modele'); renderTools(); box.scrollIntoView({ block: 'start' });
+    });
+    return;
+  }
+  box.innerHTML = `<div class="sheet"><button class="link back" id="tool-back" type="button">Retour</button>
+    <h2>${esc(l.title)}</h2>
+    <p class="note">${esc(l.note)}</p>
+    <p class="note">Complète les passages surlignés, puis envoie-la.</p>
+    <div class="draft" id="lt-draft" contenteditable="true" spellcheck="true" aria-label="Lettre">${draftHTML(l.build(v))}</div>
+    ${letterToolsHTML()}
+    <div class="save-row"><button class="link" id="lt-edit" type="button">Modifier mes réponses</button></div></div>`;
+  $('#tool-back', box).addEventListener('click', () => { tools$ = { view: 'lettres' }; renderTools(); });
+  $('#lt-edit').addEventListener('click', () => { tools$ = { ...tools$, result: false }; renderTools(); });
+  bindLetterTools(box, $('#lt-draft'), '');
+}
+
+/* Abonnements */
+const PERIODS = { mois: [1, 'par mois'], trim: [3, 'par trimestre'], an: [12, 'par an'] };
+const monthly = a => (+a.amount || 0) / (PERIODS[a.period || 'mois'][0]);
+function aboSuggestions() {
+  const have = getAbos().map(a => norm(a.name)), seen = new Set(), out = [];
+  getList().forEach(x => {
+    if (!x.amount || !x.org || x.org === 'Expéditeur inconnu') return;
+    const t = norm(x.text || '');
+    if (!/(abonnement|forfait|mensuel|par mois|mensualite|prelevement)/.test(t)) return;
+    const k = norm(x.org); if (seen.has(k) || have.some(h => h.includes(k) || k.includes(h))) return; seen.add(k);
+    out.push({ name: x.org, amount: x.amount });
+  });
+  return out.slice(0, 3);
+}
+function renderAbos(box) {
+  if (tools$.edit) return renderAboForm(box);
+  const list = getAbos().filter(a => a.active !== false).sort((a, b) => (a.next || '9999').localeCompare(b.next || '9999'));
+  const m = list.reduce((s, a) => s + monthly(a), 0), sug = aboSuggestions();
+  box.innerHTML = `<div class="sheet money-hero"><button class="link back" id="tool-back" type="button">Retour</button>
+    <h2>Mes abonnements</h2>
+    <p class="lead">Note ce que tu paies régulièrement : tu vois le total par mois et par an, et on te prévient avant le renouvellement.</p>
+    <div class="gains"><div><b>${esc(fmtMoney(round2(m)))}</b><span>par mois</span></div><div><b>${esc(fmtMoney(round2(m * 12)))}</b><span>par an</span></div></div>
+    <div class="actions"><button class="btn" id="abo-add" type="button">Ajouter un abonnement</button></div></div>
+    ${sug.map((s, i) => `<div class="sugg"><b>${esc(s.name)}</b> semble revenir chaque mois (${esc(fmtMoney(s.amount))}, d'après un courrier enregistré). <button class="btn small ghost" type="button" data-sugg="${i}">Le suivre</button></div>`).join('')}
+    <div class="items" style="margin-top:14px">${list.length ? list.map(a => {
+      const d = a.next ? daysUntil(a.next) : null, lvl = d !== null && d <= 7 ? 3 : d !== null && d <= 30 ? 2 : 1;
+      return `<article class="item l${lvl}" data-abo="${a.id}"><div><h3>${esc(a.name)}</h3>
+        <p><span class="when">${esc(fmtMoney(+a.amount || 0))} ${esc(PERIODS[a.period || 'mois'][1])}</span>${a.period !== 'mois' ? ' | ' + esc(fmtMoney(round2(monthly(a)))) + ' par mois' : ''}</p>
+        <p>${a.next ? 'Prochain paiement le ' + esc(fmtShort(parseDay(a.next))) + ' (' + esc(relDays(d).replace('dans ', 'dans ')) + ')' : 'Date de renouvellement non renseignée'}${+a.notice ? ' | préavis : ' + esc(a.notice) + ' jours' : ''}</p></div>
+        <div class="row"><button class="btn small ghost" data-abo-renew type="button">Payé, suivant</button><button class="btn small ghost" data-abo-stop type="button">Résilier</button><button class="link" data-abo-edit type="button">Modifier</button><button class="link" data-abo-del type="button">Supprimer</button></div></article>`;
+    }).join('') : '<p class="note">Aucun abonnement noté. Commence par ceux qui te coûtent le plus : internet, mobile, assurances, streaming, salle de sport.</p>'}</div>`;
+  toolBack(box);
+  $('#abo-add').addEventListener('click', () => { tools$ = { view: 'abos', edit: { period: 'mois', notice: 0 } }; renderTools(); box.scrollIntoView({ block: 'start' }); });
+  $$('[data-sugg]', box).forEach(b => b.addEventListener('click', () => { const s = sug[+b.dataset.sugg]; tools$ = { view: 'abos', edit: { name: s.name, amount: s.amount, period: 'mois', notice: 0 } }; renderTools(); }));
+  $$('[data-abo]', box).forEach(el => {
+    const id = el.dataset.abo, get = () => getAbos().find(x => x.id === id);
+    $('[data-abo-edit]', el).addEventListener('click', () => { tools$ = { view: 'abos', edit: { ...get() } }; renderTools(); box.scrollIntoView({ block: 'start' }); });
+    $('[data-abo-del]', el).addEventListener('click', () => { if (!confirm('Supprimer cet abonnement du suivi ?')) return; store.set(KEYS.abos, getAbos().filter(x => x.id !== id)); rememberDeleted(id); renderTools(); renderReminders(); });
+    $('[data-abo-renew]', el).addEventListener('click', () => {
+      const l = getAbos(), a = l.find(x => x.id === id); if (!a || !a.next) { toast('Indique d\'abord la date du prochain paiement (Modifier)'); return; }
+      a.next = isoDay(addMonths(parseDay(a.next), PERIODS[a.period || 'mois'][0])); a.updatedAt = new Date().toISOString(); store.set(KEYS.abos, l); renderTools(); renderReminders();
+    });
+    $('[data-abo-stop]', el).addEventListener('click', () => {
+      const a = get(); tools$ = { view: 'lettre', id: 'resiliation', values: { societe: a.name, contrat: a.contrat || '', fin: a.next || '', type: 'autre' }, result: false }; renderTools(); box.scrollIntoView({ block: 'start' });
+    });
+  });
+  fillAds(box);
+}
+function renderAboForm(box) {
+  const a = tools$.edit;
+  const presets = ['Internet / box', 'Forfait mobile', 'Électricité', 'Assurance auto', 'Assurance habitation', 'Mutuelle', 'Streaming vidéo', 'Musique', 'Salle de sport'];
+  box.innerHTML = `<div class="sheet"><button class="link back" id="abo-back" type="button">Retour</button>
+    <h2>${a.id ? "Modifier l'abonnement" : 'Ajouter un abonnement'}</h2>
+    ${a.id ? '' : `<div class="chips" role="group" aria-label="Exemples">${presets.map(p => `<button class="chip" type="button" data-preset="${esc(p)}">${esc(p)}</button>`).join('')}</div>`}
+    <div class="form-grid">
+      <label class="field"><span>Nom</span><input id="ab-name" value="${esc(a.name || '')}" placeholder="Ex. Mon opérateur"></label>
+      <label class="field"><span>Montant (€)</span><input id="ab-amount" type="number" min="0" step="0.01" inputmode="decimal" value="${esc(a.amount || '')}"></label>
+      <label class="field"><span>Tu paies</span><select id="ab-period">${Object.entries(PERIODS).map(([k, [, l]]) => `<option value="${k}" ${k === (a.period || 'mois') ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="field"><span>Prochain paiement</span><input id="ab-next" type="date" value="${esc(a.next || '')}"></label>
+      <label class="field"><span>Préavis pour résilier</span><select id="ab-notice">${[[0, 'Aucun ou inconnu'], [15, '15 jours'], [30, '1 mois'], [60, '2 mois'], [90, '3 mois']].map(([k, l]) => `<option value="${k}" ${+a.notice === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="field"><span>Numéro de contrat (facultatif)</span><input id="ab-contrat" value="${esc(a.contrat || '')}"></label>
+    </div>
+    <p class="note" id="ab-err" role="alert"></p>
+    <div class="actions"><button class="btn" id="ab-save" type="button">Enregistrer</button></div></div>`;
+  $('#abo-back').addEventListener('click', () => { tools$ = { view: 'abos' }; renderTools(); });
+  $$('[data-preset]', box).forEach(b => b.addEventListener('click', () => { $('#ab-name').value = b.dataset.preset; }));
+  $('#ab-save').addEventListener('click', () => {
+    const name = $('#ab-name').value.trim(), amount = parseFloat($('#ab-amount').value);
+    if (!name) { $('#ab-err').textContent = 'Indique le nom de l\'abonnement.'; return; }
+    if (!isFinite(amount) || amount < 0) { $('#ab-err').textContent = 'Indique le montant payé.'; return; }
+    const it = { ...a, name, amount, period: $('#ab-period').value, next: $('#ab-next').value, notice: +$('#ab-notice').value, contrat: $('#ab-contrat').value.trim(), updatedAt: new Date().toISOString() };
+    const isNew = !it.id; if (isNew) { it.id = newId('a'); it.createdAt = it.updatedAt; }
+    const l = getAbos(), i = l.findIndex(x => x.id === it.id); if (i >= 0) l[i] = it; else l.unshift(it);
+    if (!store.set(KEYS.abos, l)) { toast("Impossible d'enregistrer sur cet appareil"); return; }
+    if (isNew) track('abo_new');
+    toast('Abonnement enregistré'); tools$ = { view: 'abos' }; renderTools(); renderReminders();
+  });
+}
+
+/* Calcul HT / TVA / TTC */
+function renderTVA(box) {
+  const s = tools$.tva || { montant: '', mode: 'ht', rate: '20', remise: '', acompte: '' };
+  box.innerHTML = `<div class="sheet"><button class="link back" id="tool-back" type="button">Retour</button>
+    <h2>Calcul HT, TVA, TTC</h2>
+    <p class="lead">Tape un montant : tu obtiens tout de suite le hors taxes, la TVA et le toutes taxes comprises.</p>
+    <div class="form-grid">
+      <label class="field"><span>Montant (€)</span><input id="tv-montant" type="number" min="0" step="0.01" inputmode="decimal" value="${esc(s.montant)}" placeholder="Ex. 1200"></label>
+      <label class="field"><span>Ce montant est</span><select id="tv-mode"><option value="ht" ${s.mode === 'ht' ? 'selected' : ''}>Hors taxes (HT)</option><option value="ttc" ${s.mode === 'ttc' ? 'selected' : ''}>Toutes taxes comprises (TTC)</option></select></label>
+      <label class="field"><span>Taux de TVA</span><select id="tv-rate">${TVA_RATES.map(([k, l]) => `<option value="${k}" ${k === s.rate ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="field"><span>Remise (%, facultatif)</span><input id="tv-remise" type="number" min="0" max="100" step="0.5" inputmode="decimal" value="${esc(s.remise)}"></label>
+      <label class="field"><span>Acompte (%, facultatif)</span><input id="tv-acompte" type="number" min="0" max="100" step="1" inputmode="decimal" value="${esc(s.acompte)}" placeholder="Ex. 30"></label>
+    </div>
+    <div class="tva-grid" id="tv-out" aria-live="polite"></div>
+    <div class="actions"><button class="btn small ghost" id="tv-copy" type="button">Copier le calcul</button></div>
+    <p class="note">Taux donnés à titre indicatif : vérifie celui qui s'applique à ta prestation. En micro-entreprise sous le seuil de franchise en base, tes factures sont sans TVA et portent la mention « TVA non applicable, art. 293 B du CGI ».</p>
+    <div class="delegate"><p><b>Tu es artisan ou indépendant ?</b> QuenTools crée des sites sur mesure pour les professionnels : devis gratuit et sans engagement.</p><a class="btn small ghost" href="https://quentools.fr/devis/" target="_blank" rel="noopener">Demander un devis</a></div>
+    ${adHTML()}</div>`;
+  toolBack(box); fillAds(box);
+  let used = false, last = null;
+  const read = () => ({ montant: $('#tv-montant').value, mode: $('#tv-mode').value, rate: $('#tv-rate').value, remise: $('#tv-remise').value, acompte: $('#tv-acompte').value });
+  const upd = () => {
+    tools$.tva = read(); const r = last = calcTVA(tools$.tva), out = $('#tv-out');
+    if (!used && r && tools$.tva.montant) { used = true; track('tva'); }
+    if (!r || !tools$.tva.montant) { out.innerHTML = '<p class="note">Entre un montant pour voir le résultat.</p>'; return; }
+    const cell = (b, l, main) => `<div${main ? ' class="main"' : ''}><b>${esc(fmtMoney(b))}</b><span>${l}</span></div>`;
+    out.innerHTML = cell(r.ht, 'Hors taxes (HT)') + cell(r.tva, 'TVA') + cell(r.ttc, 'Toutes taxes comprises (TTC)', true) + (r.acompte ? cell(r.acompte, 'Acompte à demander') + cell(r.reste, 'Reste à payer') : '');
+  };
+  $$('input,select', $('#tv-out').parentNode).forEach(i => i.addEventListener('input', upd));
+  $('#tv-copy').addEventListener('click', async () => {
+    if (!last) return toast('Entre d\'abord un montant');
+    const t = `HT : ${fmtMoney(last.ht)}\nTVA (${tools$.tva.rate.replace('.', ',')} %) : ${fmtMoney(last.tva)}\nTTC : ${fmtMoney(last.ttc)}` + (last.acompte ? `\nAcompte : ${fmtMoney(last.acompte)}\nReste à payer : ${fmtMoney(last.reste)}` : '');
+    toast((await copyText(t)) ? 'Calcul copié' : 'Copie impossible');
+  });
+  upd();
+}
+
+/* ---------- Coffre de documents ---------- */
+const VCATS = [['facture', 'Factures'], ['contrat', 'Contrats'], ['impots', 'Impôts'], ['sante', 'Santé'], ['logement', 'Logement'], ['travail', 'Travail'], ['banque', 'Banque'], ['identite', 'Identité'], ['autre', 'Autres']];
+const vcat = k => (VCATS.find(c => c[0] === k) || VCATS[VCATS.length - 1])[1];
+const ORG2CAT = { impots: 'impots', tresor: 'impots', cpam: 'sante', banque: 'banque', bailleur: 'logement', assurance: 'contrat', telecom: 'contrat', energie: 'facture', francetravail: 'travail', urssaf: 'travail', retraite: 'travail', ants: 'identite', mairie: 'identite' };
+const TYPE2CAT = { facture: 'facture', relance: 'facture', demeure: 'facture', impot: 'impots', pieces: 'autre' };
+function guessCat(text) { try { const a = analyze(text); return ORG2CAT[a.org && a.org.id] || TYPE2CAT[a.type.id] || 'autre'; } catch (e) { return 'autre'; } }
+let vault$ = { q: '', cat: 'all', edit: null };
+const MAX_DOC = 12 * 1024 * 1024;
+function fmtSize(n) { return n > 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' Mo' : Math.max(1, Math.round(n / 1024)) + ' Ko'; }
+function renderVault() {
+  const box = $('#vault'); if (!box) return;
+  if (vault$.edit) return renderVaultEdit(box);
+  const all = getVault(), qn = norm(vault$.q).split(/\s+/).filter(Boolean);
+  const list = all.filter(d => (vault$.cat === 'all' || d.cat === vault$.cat) && qn.every(t => norm([d.name, vcat(d.cat), d.note, d.text].join(' ')).includes(t))).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const counts = {}; all.forEach(d => { counts[d.cat] = (counts[d.cat] || 0) + 1; });
+  const c = $('#vault-count'); if (c) { c.textContent = all.length; c.hidden = !all.length; }
+  const read = store.get(KEYS.coffreRead, true);
+  box.innerHTML = `<div class="sheet money-hero">
+      <h2>Ton coffre de documents</h2>
+      <p class="lead">Range tes factures, contrats et avis d'impôt. Retrouve-les en tapant un mot : le contenu des documents est lu pour que la recherche marche aussi dedans.</p>
+      <div class="actions"><label class="btn" for="vault-input">Ajouter des documents</label><input class="sr" type="file" id="vault-input" accept="image/*,application/pdf" multiple>
+        <label class="note"><input type="checkbox" id="vault-read" ${read ? 'checked' : ''}> Lire le contenu pour la recherche</label></div>
+      <div class="progress" id="vault-prog"><div class="bar"><i id="vault-bar"></i></div><p id="vault-ptext"></p></div>
+      <p class="note">Les fichiers restent sur cet appareil. Avec la connexion Google, seuls leurs noms et catégories sont synchronisés.</p>
+    </div>
+    ${all.length ? `<div class="filters"><label class="sr" for="vault-q">Rechercher</label><input type="search" id="vault-q" placeholder="Rechercher : facture, nom, mot du document…" value="${esc(vault$.q)}">
+      <div class="chips" role="group" aria-label="Catégories"><button class="chip" type="button" data-vcat="all" aria-pressed="${vault$.cat === 'all'}">Tous (${all.length})</button>${VCATS.filter(([k]) => counts[k]).map(([k, l]) => `<button class="chip" type="button" data-vcat="${k}" aria-pressed="${vault$.cat === k}">${l} (${counts[k]})</button>`).join('')}</div></div>` : ''}
+    ${list.length ? `<div class="items">${list.map(d => `<article class="item l1" data-vd="${d.id}"><div><h3>${esc(d.name)}</h3><p><span class="cat">${esc(vcat(d.cat))}</span> ${d.date ? esc(fmtShort(parseDay(d.date))) + ' ' + parseDay(d.date).getFullYear() : ''} | ${d.kind === 'pdf' ? 'PDF' : 'Photo'}${d.size ? ' | ' + esc(fmtSize(d.size)) : ''}${d.amount ? ' | ' + esc(fmtMoney(d.amount)) : ''}</p>${d.note ? `<p>${esc(d.note)}</p>` : ''}</div>
+      <div class="row"><button class="btn small" data-vd-open type="button">Ouvrir</button><button class="link" data-vd-edit type="button">Modifier</button><button class="link" data-vd-del type="button">Supprimer</button></div></article>`).join('')}</div>`
+      : all.length ? '<p class="note">Aucun document ne correspond à cette recherche.</p>' : '<p class="note">Ton coffre est vide. Ajoute une première facture ou ton dernier avis d\'impôt.</p>'}
+    ${adHTML()}`;
+  fillAds(box);
+  $('#vault-read').addEventListener('change', e => store.set(KEYS.coffreRead, e.target.checked));
+  $('#vault-input').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; addToVault(fs); });
+  const q = $('#vault-q'); if (q) q.addEventListener('input', () => { vault$.q = q.value; const pos = q.selectionStart; renderVault(); const n = $('#vault-q'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} });
+  $$('[data-vcat]', box).forEach(b => b.addEventListener('click', () => { vault$.cat = b.dataset.vcat; renderVault(); }));
+  $$('[data-vd]', box).forEach(el => {
+    const id = el.dataset.vd, get = () => getVault().find(x => x.id === id);
+    $('[data-vd-open]', el).addEventListener('click', async () => {
+      const d = get(), data = await idb.get('d:' + id).catch(() => null);
+      if (!data) { toast('Ce fichier est sur un autre appareil'); return; }
+      if (d.kind === 'pdf') { const url = URL.createObjectURL(data); window.open(url, '_blank', 'noopener'); setTimeout(() => URL.revokeObjectURL(url), 60000); }
+      else { $('#img-view').src = data; const dl = $('#img-dialog'); if (dl.showModal) dl.showModal(); else dl.setAttribute('open', ''); }
+    });
+    $('[data-vd-edit]', el).addEventListener('click', () => { vault$.edit = { ...get() }; renderVault(); box.scrollIntoView({ block: 'start' }); });
+    $('[data-vd-del]', el).addEventListener('click', () => { if (!confirm('Supprimer ce document de cet appareil ?')) return; store.set(KEYS.coffre, getVault().filter(x => x.id !== id)); idb.del('d:' + id).catch(() => {}); rememberDeleted(id); renderVault(); });
+  });
+}
+function renderVaultEdit(box) {
+  const d = vault$.edit;
+  box.innerHTML = `<div class="sheet"><button class="link back" id="vd-back" type="button">Retour</button><h2>Modifier le document</h2>
+    <div class="form-grid">
+      <label class="field"><span>Nom</span><input id="vd-name" value="${esc(d.name || '')}"></label>
+      <label class="field"><span>Catégorie</span><select id="vd-cat">${VCATS.map(([k, l]) => `<option value="${k}" ${k === d.cat ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="field"><span>Date du document</span><input id="vd-date" type="date" value="${esc(d.date || '')}"></label>
+      <label class="field"><span>Montant (€, facultatif)</span><input id="vd-amount" type="number" min="0" step="0.01" inputmode="decimal" value="${esc(d.amount || '')}"></label>
+      <label class="field" style="grid-column:1/-1"><span>Note (facultatif)</span><textarea id="vd-note" style="min-height:70px;font-family:var(--ui)">${esc(d.note || '')}</textarea></label>
+    </div><div class="actions"><button class="btn" id="vd-save" type="button">Enregistrer</button></div></div>`;
+  $('#vd-back').addEventListener('click', () => { vault$.edit = null; renderVault(); });
+  $('#vd-save').addEventListener('click', () => {
+    const l = getVault(), it = l.find(x => x.id === d.id); if (!it) { vault$.edit = null; return renderVault(); }
+    Object.assign(it, { name: $('#vd-name').value.trim() || it.name, cat: $('#vd-cat').value, date: $('#vd-date').value, amount: parseFloat($('#vd-amount').value) || null, note: $('#vd-note').value.trim(), updatedAt: new Date().toISOString() });
+    store.set(KEYS.coffre, l); vault$.edit = null; toast('Document mis à jour'); renderVault();
+  });
+}
+function vaultProgress(p, msg) { const pr = $('#vault-prog'); if (!pr) return; pr.classList.add('on'); $('#vault-bar').style.width = Math.round(p * 100) + '%'; $('#vault-ptext').textContent = msg; }
+async function addToVault(files) {
+  files = files.filter(f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name) || f.type.startsWith('image/'));
+  if (!files.length) { toast('Ajoute une photo ou un PDF'); return; }
+  const read = store.get(KEYS.coffreRead, true);
+  let done = 0;
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i], isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+    if (f.size > MAX_DOC) { toast(`« ${f.name} » dépasse 12 Mo, il n'a pas été ajouté`); continue; }
+    vaultProgress(i / files.length, `Document ${i + 1} sur ${files.length}…`);
+    const id = newId('d'), now = new Date().toISOString();
+    let text = '', stored;
+    try {
+      if (isPdf) { stored = f; if (read) { try { text = await readPdf(f); } catch (e) { text = ''; } } }
+      else {
+        stored = await compressImage(f, 1800, 0.8);
+        if (read) { try { const w = await getOcr(); const c = await fileToCanvas(f); const { data } = await w.recognize(c, { rotateAuto: true }); text = data.text || ''; } catch (e) { text = ''; } }
+      }
+      await idb.set('d:' + id, stored);
+    } catch (e) { toast(`« ${f.name} » n'a pas pu être enregistré`); continue; }
+    text = text.replace(/\s+/g, ' ').trim();
+    let date = isoDay(new Date()), amount = null, cat = 'autre', name = f.name.replace(/\.[a-z0-9]+$/i, '');
+    if (text.length > 40) {
+      try {
+        const a = analyze(text); cat = guessCat(text);
+        const dts = findDates(text).filter(d => d.date <= new Date()); if (dts.length) date = isoDay(dts[0].date);
+        if (a.amount) amount = a.amount.value;
+        if (a.org) name = `${a.org.court} : ${a.type.label.toLowerCase()}`;
+      } catch (e) { /* analyse impossible : on garde le nom du fichier */ }
+    }
+    const l = getVault(); l.unshift({ id, name, cat, kind: isPdf ? 'pdf' : 'img', date, amount, note: '', text: text.slice(0, 3000), size: f.size, createdAt: now, updatedAt: now });
+    if (!store.set(KEYS.coffre, l)) { toast("L'espace de stockage est plein : supprime des documents"); idb.del('d:' + id).catch(() => {}); break; }
+    done++; track('coffre_add');
+  }
+  hideOcr(); const pr = $('#vault-prog'); if (pr) pr.classList.remove('on');
+  if (done) toast(done > 1 ? `${done} documents ajoutés` : 'Document ajouté au coffre');
+  renderVault();
+}
+
+/* ---------- Dossier PDF ---------- */
+async function buildDossier(opts) {
+  const parts = [], sec = (t, body) => parts.push(`<section><h2>${esc(t)}</h2>${body}</section>`);
+  const row = cells => `<tr>${cells.map(c => `<td>${c}</td>`).join('')}</tr>`;
+  if (opts.courriers) {
+    const l = getList().sort((a, b) => (a.done - b.done) || ((a.deadline ? new Date(a.deadline) : Infinity) - (b.deadline ? new Date(b.deadline) : Infinity)));
+    sec('Courriers', l.length ? `<table><thead><tr><th>Expéditeur</th><th>Objet</th><th>Date limite</th><th>Montant</th><th>État</th></tr></thead><tbody>${l.map(x => row([esc(x.org), esc(x.type), x.deadline ? esc(fmtDate(new Date(x.deadline))) : '–', x.amount ? esc(fmtMoney(x.amount) + kindLabel(x.amountKind)) : '–', x.done ? 'Traité' : 'À traiter'])).join('')}</tbody></table>` : '<p class="n">Aucun courrier enregistré.</p>');
+  }
+  if (opts.reclamations) {
+    const l = getClaims();
+    sec('Réclamations', l.length ? `<table><thead><tr><th>Réclamation</th><th>Montant</th><th>État</th><th>Envoyée le</th></tr></thead><tbody>${l.map(c => { const k = caseById(c.case); return row([esc(k ? k.name(c.values || {}) : c.case), c.amount ? esc(fmtMoney(c.amount)) : '–', esc(STATUS[c.status] || ''), c.sentAt ? esc(fmtDate(parseDay(c.sentAt))) : '–']); }).join('')}</tbody></table>` : '<p class="n">Aucune réclamation.</p>');
+  }
+  if (opts.garanties) {
+    const l = getW().map(w => ({ ...w, ...wEnds(w) }));
+    let body = l.length ? `<table><thead><tr><th>Produit</th><th>Magasin</th><th>Achat</th><th>Prix</th><th>Garanti jusqu'au</th></tr></thead><tbody>${l.map(w => row([esc(w.name), esc(w.store || ''), w.date ? esc(fmtDate(parseDay(w.date))) : '–', w.prix ? esc(fmtMoney(+w.prix)) : '–', w.end ? esc(fmtDate(w.end)) : '–'])).join('')}</tbody></table>` : '<p class="n">Aucune garantie enregistrée.</p>';
+    if (opts.tickets) for (const w of l.filter(x => x.img)) { const src = await idb.get('w:' + w.id).catch(() => null); if (src) body += `<figure><img src="${src}" alt=""><figcaption>Ticket : ${esc(w.name)}</figcaption></figure>`; }
+    sec('Garanties', body);
+  }
+  if (opts.abos) {
+    const l = getAbos().filter(a => a.active !== false), m = l.reduce((s, a) => s + monthly(a), 0);
+    sec('Abonnements', l.length ? `<table><thead><tr><th>Abonnement</th><th>Montant</th><th>Prochain paiement</th><th>Par mois</th></tr></thead><tbody>${l.map(a => row([esc(a.name), esc(fmtMoney(+a.amount || 0) + ' ' + PERIODS[a.period || 'mois'][1]), a.next ? esc(fmtDate(parseDay(a.next))) : '–', esc(fmtMoney(round2(monthly(a))))])).join('')}</tbody></table><p><b>Total : ${esc(fmtMoney(round2(m)))} par mois, ${esc(fmtMoney(round2(m * 12)))} par an.</b></p>` : '<p class="n">Aucun abonnement noté.</p>');
+  }
+  if (opts.coffre) {
+    const l = getVault().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    let body = l.length ? `<table><thead><tr><th>Document</th><th>Catégorie</th><th>Date</th><th>Montant</th></tr></thead><tbody>${l.map(d => row([esc(d.name), esc(vcat(d.cat)), d.date ? esc(fmtDate(parseDay(d.date))) : '–', d.amount ? esc(fmtMoney(d.amount)) : '–'])).join('')}</tbody></table>` : '<p class="n">Le coffre est vide.</p>';
+    if (opts.coffreImages) for (const d of l.filter(x => x.kind === 'img')) { const src = await idb.get('d:' + d.id).catch(() => null); if (src) body += `<figure><img src="${src}" alt=""><figcaption>${esc(d.name)}</figcaption></figure>`; }
+    sec('Coffre de documents', body);
+  }
+  const me = store.get(KEYS.me, {});
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Mon dossier Paperdecrypt</title><style>
+    @page{size:A4;margin:16mm}
+    body{font:11pt/1.45 Georgia,serif;color:#111;margin:0}
+    h1{font:700 20pt Arial,sans-serif;margin:0 0 4px}
+    h2{font:700 13pt Arial,sans-serif;margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid #111}
+    .m{color:#444;margin:0 0 6px;font-size:10pt}
+    table{width:100%;border-collapse:collapse;font-size:10pt}
+    th,td{border:1px solid #bbb;padding:5px 7px;text-align:left;vertical-align:top}
+    th{background:#eee;font-family:Arial,sans-serif;font-size:9pt}
+    .n{color:#666}
+    figure{margin:12px 0 0;break-inside:avoid}
+    figure img{max-width:100%;max-height:150mm;border:1px solid #bbb}
+    figcaption{font-size:9pt;color:#555}
+    footer{margin-top:26px;font-size:9pt;color:#555;border-top:1px solid #bbb;padding-top:6px}
+    section{break-inside:auto}
+  </style></head><body>
+  <h1>Mon dossier</h1>
+  <p class="m">${me.nom ? esc(me.nom) + ' | ' : ''}Établi le ${esc(fmtDate(new Date()))}</p>
+  ${parts.join('\n')}
+  <footer>Dossier généré avec Paperdecrypt (QuenTools). Informations données à titre indicatif : vérifie toujours les dates et montants sur les documents originaux.</footer>
+  </body></html>`;
+}
+function printHTML(html) {
+  const f = document.createElement('iframe'); f.setAttribute('aria-hidden', 'true'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(f);
+  f.onload = () => setTimeout(() => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { const u = URL.createObjectURL(new Blob([html], { type: 'text/html' })); window.open(u, '_blank'); } setTimeout(() => f.remove(), 90000); }, 400);
+  f.srcdoc = html;
+}
+function openDossier() {
+  const d = $('#dossier'); if (!d) return;
+  if (d.showModal) d.showModal(); else d.setAttribute('open', '');
+}
+async function createDossier() {
+  const g = id => $('#' + id).checked;
+  const opts = { courriers: g('do-c'), reclamations: g('do-r'), garanties: g('do-g'), tickets: g('do-gt'), abos: g('do-a'), coffre: g('do-v'), coffreImages: g('do-vi') };
+  if (!Object.values(opts).some(Boolean)) { toast('Coche au moins une partie'); return; }
+  $('#do-go').disabled = true; $('#do-state').textContent = 'Préparation du dossier…';
+  try { const html = await buildDossier(opts); track('dossier'); $('#dossier').close(); printHTML(html); toast('Choisis « Enregistrer en PDF » dans la fenêtre d\'impression'); }
+  catch (e) { console.error(e); toast('Le dossier n\'a pas pu être créé'); }
+  finally { $('#do-go').disabled = false; $('#do-state').textContent = ''; }
+}
+
 /* ---------- Onglets ---------- */
-const TABS = ['decode', 'money', 'warranty', 'list'];
-const TAB_HASH = { decode: '', money: '#argent', warranty: '#garanties', list: '#courriers' };
+const TABS = ['decode', 'money', 'warranty', 'vault', 'list', 'tools'];
+const TAB_HASH = { decode: '', money: '#argent', warranty: '#garanties', vault: '#coffre', list: '#courriers', tools: '#outils' };
+const START_HASH = { '#argent': ['money'], '#garanties': ['warranty'], '#coffre': ['vault'], '#courriers': ['list'], '#outils': ['tools', 'home'], '#abonnements': ['tools', 'abos'], '#tva': ['tools', 'tva'], '#lettres': ['tools', 'lettres'] };
 function showTab(which) {
   TABS.forEach(t => { $('#tab-' + t).setAttribute('aria-selected', t === which); $('#view-' + t).hidden = t !== which; });
+  track('tab_' + which);
+  if (which === 'decode') renderReminders();
   if (which === 'list') renderList();
   if (which === 'money') renderMoney();
   if (which === 'warranty') renderWarranty();
-  try { history.replaceState(null, '', location.pathname + location.search + TAB_HASH[which]); } catch (e) {}
+  if (which === 'vault') renderVault();
+  if (which === 'tools') renderTools();
+  try { history.replaceState(null, '', location.pathname + location.search + (which === 'tools' && SUBHASH[tools$.view] ? SUBHASH[tools$.view] : TAB_HASH[which])); } catch (e) {}
   $('#tab-' + which).scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
@@ -2621,6 +3338,11 @@ $('#file-input').addEventListener('change', e => { handleFiles(e.target.files); 
   });
 })();
 TABS.forEach(t => $('#tab-' + t).addEventListener('click', () => showTab(t)));
+$('#dossier-btn').addEventListener('click', () => { $('#settings').close(); openDossier(); });
+$('#list-dossier').addEventListener('click', openDossier);
+$('#do-go').addEventListener('click', createDossier);
+$('#do-close').addEventListener('click', () => $('#dossier').close());
+$('#stats-off').addEventListener('change', e => { if (e.target.checked) usage.flush(); store.set(KEYS.nostats, e.target.checked); toast(e.target.checked ? 'Tes visites ne sont plus comptées' : 'Merci de participer aux statistiques anonymes'); });
 $('#tablist').addEventListener('keydown', e => {
   if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
   const i = TABS.findIndex(t => $('#tab-' + t).getAttribute('aria-selected') === 'true');
@@ -2650,13 +3372,14 @@ function refreshPremiumUI() {
 refreshPremiumUI();
 gRestore();
 // Ouverture directe d'un onglet (liens TikTok : #argent, #garanties, #courriers)
-const startTab = Object.keys(TAB_HASH).find(k => TAB_HASH[k] && TAB_HASH[k] === location.hash);
-if (startTab) showTab(startTab);
-renderList();
+const startAt = START_HASH[location.hash];
+if (startAt) { if (startAt[1]) tools$ = { view: startAt[1] }; showTab(startAt[0]); }
+startSession();
+renderList(); renderReminders(); notifyUrgent();
 updatePill(); gpuReady.then(updatePill);
 
 // Exposé pour les tests
-window.__decodeur = { analyze, buildLetter, brief, quickAnswer };
+window.__decodeur = { analyze, buildLetter, brief, quickAnswer, calcTVA, LETTRES, collectReminders, makeICSMany, buildDossier, textScore, fileToCanvas };
 })();
 </script>
 </body>
