@@ -205,7 +205,12 @@ function create(opts = {}) {
 
   // ---------- Construction d'un clip ----------
   // c : clip ; P : {w, h, fps} ; o : {preview, t, tdir, proxy}
-  function buildClip(c, P, o = {}) {
+  // durées des fondus d'un clip : réglées (fadeIn, fadeOut) ou 0,4 s si la case « fondu » est cochée ; jamais plus de la moitié du clip
+function fonduxDe(c, eff) {
+  const auto = c.fade ? 0.4 : 0, e = num(c.fadeIn, 0) > 0 ? num(c.fadeIn, 0) : auto, s = num(c.fadeOut, 0) > 0 ? num(c.fadeOut, 0) : auto, m = Math.max(0.05, eff / 2);
+  return { e: Math.min(clamp(e, 0, 10), m), s: Math.min(clamp(s, 0, 10), m) };
+}
+function buildClip(c, P, o = {}) {
     const W = P.w, H = P.h, fps = P.fps;
     const isGen = c.kind === 'solid';
     const isAud = c.kind === 'audio'; // podcast : une piste sonore avec fond et visualiseur
@@ -250,6 +255,10 @@ function create(opts = {}) {
     if (rev) pre += 'reverse,';
     if (!isImg && speed !== 1) pre += `setpts=(PTS-STARTPTS)/${speed},`;
     pre += `fps=${fps},`;
+    { // zoom et cadrage manuels (100 % = image entière ; position de -100 à 100)
+      const zm = clamp(num(c.zoom, 100), 100, 400) / 100;
+      if (zm > 1.001 && !isAud) pre += `crop=iw/${zm}:ih/${zm}:(iw-iw/${zm})*${(0.5 + clamp(num(c.zx, 0), -100, 100) / 200).toFixed(4)}:(ih-ih/${zm})*${(0.5 + clamp(num(c.zy, 0), -100, 100) / 200).toFixed(4)},`;
+    }
     const scFill = `scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1`;
     // recadrage qui suit la personne (points { t, x } : x de 0 = bord gauche à 1 = bord droit de la zone recadrable)
     const pts = Array.isArray(c.cadrage) ? c.cadrage.filter(p => p && Number.isFinite(+p.t) && Number.isFinite(+p.x)).slice(0, 240).map(p => ({ t: +p.t, x: clamp(+p.x, 0, 1) })).sort((a, b) => a.t - b.t) : [];
@@ -418,7 +427,8 @@ function create(opts = {}) {
       lin(`drawtext=fontfile='${fontFile(c.textFont)}':textfile=${file}:expansion=none:fontsize=${size}:fontcolor=${hex(c.textColor || '#ffffff')}:x=(w-text_w)/2:y='${yexp}'${style}${alpha}${en}`);
     }
     if (c.titre && c.titre.preset && fontFile(c.titre.font) && filters.has('drawtext')) cur = reportage(c, ctx, f, cur, lab, o);
-    if (c.fade && !o.preview) lin(`fade=t=in:st=0:d=0.4,fade=t=out:st=${Math.max(0, eff - 0.4).toFixed(3)}:d=0.4`);
+    const fondus = fonduxDe(c, eff);
+    if (!o.preview && (fondus.e || fondus.s)) lin([fondus.e ? `fade=t=in:st=0:d=${fondus.e.toFixed(2)}` : '', fondus.s ? `fade=t=out:st=${Math.max(0, eff - fondus.s).toFixed(3)}:d=${fondus.s.toFixed(2)}` : ''].filter(Boolean).join(','));
     f.push(`[${cur}]format=yuv420p[v]`);
 
     if (o.preview) {
@@ -442,7 +452,8 @@ function create(opts = {}) {
       for (const pr of d.params) if (e.p && e.p[pr.k] !== undefined) q[pr.k] = clamp(num(e.p[pr.k], pr.def), pr.min, pr.max);
       af.push(d.make(q));
     }
-    if (c.fade) af.push(`afade=t=in:d=0.4,afade=t=out:st=${Math.max(0, eff - 0.4).toFixed(3)}:d=0.4`);
+    if (fondus.e) af.push(`afade=t=in:d=${fondus.e.toFixed(2)}`);
+    if (fondus.s) af.push(`afade=t=out:st=${Math.max(0, eff - fondus.s).toFixed(3)}:d=${fondus.s.toFixed(2)}`);
     af.push('aresample=48000', 'aformat=sample_fmts=fltp:channel_layouts=stereo');
     f.push(`[${src}]${af.join(',')}[a]`);
 
@@ -653,13 +664,14 @@ function create(opts = {}) {
           await ff([...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(a.file), ...wav], `brut${i}.wav`);
           const st = clamp(num(a.start, 0), 0, 3600), ms = Math.round(st * 1000);
           const fd = a.fade ? `,afade=t=in:d=1.2,afade=t=out:st=${Math.max(0, dur - st - 1.5).toFixed(2)}:d=1.5` : '';
+          let vit = clamp(num(a.vit, 1), 0.25, 4); const tempo = []; while (vit > 2.001) { tempo.push('atempo=2'); vit /= 2; } while (vit < 0.499) { tempo.push('atempo=0.5'); vit *= 2; } if (Math.abs(vit - 1) > 0.001) tempo.push(`atempo=${vit.toFixed(4)}`);
           // boucle : le même fichier répété par une liste (la boucle automatique de FFmpeg se figeait parfois)
           let entree = ['-i', `brut${i}.wav`];
           if (a.loop && !du) {
             const l = +((await infos(path.join(dir, `brut${i}.wav`))).format.duration) || 0, n = l > 0 ? Math.min(400, Math.ceil(dur / l) + 1) : 1;
             if (n > 1) { fs.writeFileSync(path.join(dir, `boucle${i}.txt`), Array.from({ length: n }, () => `file 'brut${i}.wav'`).join('\n')); entree = ['-f', 'concat', '-safe', 0, '-i', `boucle${i}.txt`]; }
           }
-          await ff([...entree, '-af', `volume=${clamp(num(a.vol, 50), 0, 200) / 100}${fd},adelay=${ms}|${ms},apad`, '-t', D, ...wav], `son${i + 1}.wav`);
+          await ff([...entree, '-af', `${tempo.length ? tempo.join(',') + ',' : ''}volume=${clamp(num(a.vol, 50), 0, 200) / 100}${fd},adelay=${ms}|${ms},apad`, '-t', D, ...wav], `son${i + 1}.wav`);
         }
         // « baisser quand on parle » : la musique est compressée, pilotée par le son du montage (lu à part)
         const mixer = avecBaisse => {
