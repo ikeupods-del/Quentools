@@ -35,6 +35,7 @@
       "compositeur.js",
       "detoureur.js",
       "parole.js",
+      "voix-texte.js",
       "parole-worker.js",
       "ia.js",
       "ia-worker.js",
