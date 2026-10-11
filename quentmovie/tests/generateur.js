@@ -44,6 +44,17 @@ Référence un. Référence deux qui ne doit jamais être lue dans la vidéo.`;
   check('scènes : titre de partie pour les titres de chapitre', sc2.some(x => x.section === 'Le Bibendum') && sc2[0].section === '', JSON.stringify(sc2.map(x => x.section)));
   const ch2 = G.choisirImages([{ texte: 'En 1898, le dessinateur crée le Bibendum.' }, { texte: 'Les usines de Clermont-Ferrand.' }], [{ nom: 'Usine Clermont-Ferrand.jpg' }, { nom: 'Bibendum 1898.jpg' }]);
   check('images : celle qui correspond au texte', ch2[0] === 1 && ch2[1] === 0, JSON.stringify(ch2));
+  // notation des images : pertinence, cadrage, documents écartés, séries, seuil
+  const IM = require('../images');
+  const im = (nom, l, h, extra = {}) => ({ nom, largeur: l, hauteur: h, description: '', ...extra });
+  const pool = [im('Bicycle white helmet from ABUS.jpg', 3000, 4000, { description: 'helmet' }), im('Bicycle white helmet from ABUS 2.jpg', 4000, 3000, { description: 'helmet' }), im('Cyclist on a Quebec City street.jpg', 3000, 2000, { description: 'A cyclist on a street' }),
+    im('Plan du métro de Paris carte.jpg', 3000, 2000), im('Petite vue.jpg', 640, 480), im('Mountain lake.jpg', 3000, 2000)];
+  const at = IM.attribuer([{ mots: IM.termes('bicycle helmet') }, { mots: IM.termes('cyclist street') }, { mots: IM.termes('subway map paris') }, { mots: IM.termes('volcano eruption') }], pool);
+  check('images : casque horizontal choisi (pas la photo verticale)', at.choix[0] === 1, JSON.stringify(at.choix));
+  check('images : cycliste dans la rue', at.choix[1] === 2, JSON.stringify(at.choix));
+  check('images : carte écartée, scène sans photo plutôt qu’une photo hors sujet', at.choix[2] === -1 && at.choix[3] === -1, JSON.stringify(at.choix));
+  check('images : jamais deux fois la même série', new Set(at.choix.filter(k => k >= 0).map(k => IM.serieDe(pool[k].nom))).size === at.choix.filter(k => k >= 0).length);
+  check('images : mots utiles de la scène', IM.termes('Les usines de Clermont-Ferrand et le Bibendum').includes('usine') && !IM.termes('Les usines de').includes('les'), JSON.stringify(IM.termes('Les usines de Clermont-Ferrand')));
   const court = G.construireScript(EXTRAIT, 20).join(' ');
   check('script : durée respectée', court.split(/\s+/).length <= 20 * 2.6 * 1.1 + 48, court.split(/\s+/).length);
 
@@ -92,7 +103,7 @@ Référence un. Référence deux qui ne doit jamais être lue dans la vidéo.`;
   check('création terminée', j && j.done && j.resultat, j && j.error);
   const r = j.resultat || { scenes: [], credits: [] };
   check('une voix off par scène', r.scenes.length === prep.scenes.length && r.scenes.every(x => x.duree > 1.5 && fs.existsSync(path.join(base, 'medias', x.voix))), JSON.stringify(r.scenes));
-  check('images téléchargées', r.scenes.every(x => x.image && fs.existsSync(path.join(base, 'medias', x.image))));
+  check('images téléchargées (une scène sans bonne photo n’en a pas)', r.scenes.some(x => x.image) && r.scenes.every(x => !x.image || fs.existsSync(path.join(base, 'medias', x.image))));
   check('crédits des images', r.credits.length >= 1 && /Agence Rol — Public domain/.test(r.credits[0]), JSON.stringify(r.credits));
   if (process.platform === 'darwin') check('voix de synthèse du Mac utilisée', r.synthese === true);
   const clips = [{ kind: 'solid', color: '#0b1d3a', dur: 2, fx: [], key: {}, titre: { preset: 'chapitre', l1: 'L’HISTOIRE DE MICHELIN', l2: '', start: 0.2, dur: 0 }, transition: { type: 'fade', dur: 0.6 } },

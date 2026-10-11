@@ -8,6 +8,8 @@ const os = require('os');
 const path = require('path');
 const { execFile } = require('child_process');
 const { requete } = require('./maj');
+const IM = require('./images');
+const FILTRE_META = 'Artist|LicenseShortName|ImageDescription|ObjectName|Categories';
 
 const UA = 'QuentMovie/1.7 (logiciel de montage personnel ; https://github.com/ikeupods-del/Quentools)';
 const MOTS_PAR_SECONDE = 2.6; // débit moyen d'une voix française de macOS à vitesse normale
@@ -72,22 +74,11 @@ function construireScenes(extrait, dureeSec) {
   return scenes;
 }
 const construireScript = (extrait, dureeSec) => construireScenes(extrait, dureeSec).map(x => x.texte);
-// Images choisies pour chaque scène : celle dont le nom partage le plus de mots (ou une année) avec le texte, sans répétition tant que possible
-const motsCles = t => new Set(String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(m => m.length > 3 || /^\d{4}$/.test(m)));
-function choisirImages(scenes, images) {
+// Images choisies pour chaque scène (images déjà connues, ex. celles de l'article) : meilleure note de pertinence, sans répétition
+function choisirImages(scenes, images, { seuil = 1, titre = '' } = {}) {
   if (!images.length) return scenes.map(() => -1);
-  const cles = images.map(im => motsCles(im.nom.replace(/\.\w+$/, '')));
-  const vues = new Map(), out = [];
-  scenes.forEach((s, i) => {
-    const m = motsCles(s.texte); let best = 0, score = -Infinity;
-    images.forEach((im, k) => {
-      let sc = 0; for (const x of cles[k]) if (m.has(x)) sc += /^\d{4}$/.test(x) ? 3 : 2;
-      sc -= (vues.get(k) || 0) * 4; if (k === (i % images.length)) sc += 0.5; // à égalité : l'ordre de l'article
-      if (sc > score) { score = sc; best = k; }
-    });
-    vues.set(best, (vues.get(best) || 0) + 1); out.push(best);
-  });
-  return out;
+  const ancre = IM.termes(titre), reqs = scenes.map(s => ({ mots: IM.termes((s.texte || '') + ' ' + (s.section || '')).slice(0, 14), ancre }));
+  return IM.attribuer(reqs, images, { seuil }).choix;
 }
 // Scènes : une ou deux phrases (une image par scène)
 function grouper(liste) {
@@ -107,14 +98,16 @@ function texteSimple(html) { return String(html || '').replace(/<[^>]+>/g, '').r
 function imageDe(page) {
   const ii = page && page.imageinfo && page.imageinfo[0]; if (!ii) return null;
   const m = ii.extmetadata || {}, nom = page.title.replace(/^[^:]+:/, '');
+  const description = texteSimple(m.ImageDescription && m.ImageDescription.value).slice(0, 240), cats = String(m.Categories && m.Categories.value || '').replace(/\|/g, ' ');
+  const texte = IM.normalise(`${nom} ${description} ${texteSimple(m.ObjectName && m.ObjectName.value)} ${cats}`).slice(0, 900), qualite = /Quality images|Featured pictures|Valued images/i.test(cats);
   const video = /^video\/(webm|ogg)$/.test(ii.mime || '') || /^application\/ogg$/.test(ii.mime || '');
-  if ((!video && !/^image\/(jpeg|png|webp)$/.test(ii.mime || '')) || ii.width < 640 || ii.height < 360 || IMAGE_REFUSEE.test(nom.replace(/\.(webm|ogv)$/i, ''))) return null;
+  if ((!video && !/^image\/(jpeg|png|webp)$/.test(ii.mime || '')) || ii.width < 800 || ii.height < 450 || IMAGE_REFUSEE.test(nom.replace(/\.(webm|ogv)$/i, ''))) return null;
   if (video && (!(ii.size < 8e7) || !(ii.duration > 2))) return null;
   const url = String(ii.thumburl || ii.url).replace('://thumb.wikimedia.org/', '://upload.wikimedia.org/'); // même fichier, adresse principale
   if (video) return { nom, url: ii.url, apercu: ii.thumburl || '', video: true, duree: ii.duration, largeur: ii.width, hauteur: ii.height, auteur: texteSimple(m.Artist && m.Artist.value).slice(0, 80) || 'auteur inconnu',
-    licence: texteSimple(m.LicenseShortName && m.LicenseShortName.value) || 'licence libre', page: ii.descriptionurl || '' };
+    licence: texteSimple(m.LicenseShortName && m.LicenseShortName.value) || 'licence libre', page: ii.descriptionurl || '', description, texte, qualite };
   return { nom, url, largeur: ii.width, hauteur: ii.height, auteur: texteSimple(m.Artist && m.Artist.value).slice(0, 80) || 'auteur inconnu',
-    licence: texteSimple(m.LicenseShortName && m.LicenseShortName.value) || 'licence libre', page: ii.descriptionurl || '' };
+    licence: texteSimple(m.LicenseShortName && m.LicenseShortName.value) || 'licence libre', page: ii.descriptionurl || '', description, texte, qualite };
 }
 
 function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', commons = 'https://commons.wikimedia.org', parole = null }) {
@@ -138,7 +131,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
   async function imagesCommons(titres) {
     const out = [];
     for (let i = 0; i < titres.length; i += 40) {
-      const j = await api(commons, { action: 'query', titles: titres.slice(i, i + 40).join('|'), prop: 'imageinfo', iiprop: 'url|size|mime|extmetadata', iiurlwidth: '1920', iiextmetadatafilter: 'Artist|LicenseShortName' });
+      const j = await api(commons, { action: 'query', titles: titres.slice(i, i + 40).join('|'), prop: 'imageinfo', iiprop: 'url|size|mime|extmetadata', iiurlwidth: '1920', iiextmetadatafilter: FILTRE_META });
       const pages = (j.query && j.query.pages) || [];
       const rang = new Map(titres.map((t, k) => [t.replace(/_/g, ' '), k]));
       out.push(...pages.map(p => ({ p, k: rang.has(p.title) ? rang.get(p.title) : 1e6 })).sort((a, b) => a.k - b.k).map(x => imageDe(x.p)).filter(Boolean));
@@ -146,8 +139,15 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     return out;
   }
 
+  // Recherche dans Wikimedia Commons : photos (ou vidéos), avec description et catégories pour juger la pertinence
+  async function rechercher(q, { video = false, limit = 20 } = {}) {
+    const r = await api(commons, { action: 'query', generator: 'search', gsrsearch: `${q} filetype:${video ? 'video' : 'bitmap'}`, gsrnamespace: '6', gsrlimit: String(limit),
+      prop: 'imageinfo', iiprop: 'url|size|mime|extmetadata', iiurlwidth: video ? '1280' : '1920', iiextmetadatafilter: FILTRE_META });
+    return ((r.query && r.query.pages) || []).sort((a, b) => (a.index || 0) - (b.index || 0)).map(imageDe).filter(Boolean);
+  }
+
   // Texte en scènes + images proposées ; rien n'est téléchargé à ce stade
-  async function preparer({ article, duree, titre }) {
+  async function preparer({ article, duree, titre, videos = false, vertical = false }) {
     const d = Math.min(600, Math.max(20, +duree || 60));
     const j = await api(wiki, { action: 'query', prop: 'extracts|images|info', explaintext: '1', exsectionformat: 'wiki', titles: article, imlimit: '80', inprop: 'url', redirects: '1' });
     const page = j.query && j.query.pages && j.query.pages[0];
@@ -155,26 +155,30 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     const scenes = construireScenes(page.extract, d);
     if (!scenes.length) throw new Error('Cet article est trop court pour faire une vidéo.');
     // images de l'article (dans l'ordre de l'article), puis recherche dans Wikimedia Commons si elles ne suffisent pas
+    const sujet = page.title.replace(/\s*\(.*\)$/, '');
     const fichiers = (page.images || []).map(x => 'File:' + x.title.replace(/^[^:]+:/, '')).filter(t => !IMAGE_REFUSEE.test(t));
     let images = fichiers.length ? await imagesCommons(fichiers) : [];
-    if (images.length < Math.ceil(scenes.length * 0.7)) {
-      const r = await api(commons, { action: 'query', generator: 'search', gsrsearch: `${page.title.replace(/\s*\(.*\)$/, '')} filetype:bitmap`, gsrnamespace: '6', gsrlimit: '30',
-        prop: 'imageinfo', iiprop: 'url|size|mime|extmetadata', iiurlwidth: '1920', iiextmetadatafilter: 'Artist|LicenseShortName' });
-      const vus = new Set(images.map(x => x.nom));
-      const autres = ((r.query && r.query.pages) || []).sort((a, b) => (a.index || 0) - (b.index || 0)).map(imageDe).filter(x => x && !vus.has(x.nom));
-      images = images.concat(autres);
+    const ajouter = liste => { const vus = new Set(images.map(x => x.nom)); for (const x of liste) if (x && !vus.has(x.nom)) { vus.add(x.nom); images.push(x); } };
+    if (images.length < Math.ceil(scenes.length * 0.7)) ajouter(await rechercher(sujet).catch(() => []));
+    if (videos) { // vidéos libres de Commons sur le sujet (qualité variable : à la demande seulement)
+      const v = await rechercher(sujet, { video: true, limit: 12 }).catch(() => []);
+      v.filter(x => x.video && x.hauteur >= 720).slice(0, 4).forEach((x, k) => images.splice(Math.min(images.length, 1 + k * 3), 0, x));
     }
-    // quelques vidéos libres de Commons sur le sujet (plans animés entre les images)
-    try {
-      const v = await api(commons, { action: 'query', generator: 'search', gsrsearch: `${page.title.replace(/\s*\(.*\)$/, '')} filetype:video`, gsrnamespace: '6', gsrlimit: '12',
-        prop: 'imageinfo', iiprop: 'url|size|mime|extmetadata', iiurlwidth: '1280', iiextmetadatafilter: 'Artist|LicenseShortName' });
-      const vus = new Set(images.map(x => x.nom)), vids = ((v.query && v.query.pages) || []).sort((a, b) => (a.index || 0) - (b.index || 0)).map(imageDe).filter(x => x && x.video && !vus.has(x.nom)).slice(0, 6);
-      vids.forEach((x, k) => images.splice(Math.min(images.length, 1 + k * 3), 0, x));
-    } catch (e) { /* pas de vidéo : les images suffisent */ }
-    images = images.slice(0, 40);
-    const choix = choisirImages(scenes, images);
+    // chaque scène reçoit la photo la plus pertinente ; les scènes restées sans bonne photo sont cherchées avec leurs propres mots
+    const ancre = IM.termes(sujet), reqs = scenes.map(sc => ({ mots: IM.termes(sc.texte + ' ' + (sc.section || '')).slice(0, 14), ancre }));
+    let sel = IM.attribuer(reqs, images, { vertical });
+    let essais = 0;
+    for (let i = 0; i < scenes.length && essais < 6; i++) {
+      if (sel.choix[i] >= 0) continue;
+      essais++;
+      ajouter(await rechercher(`${IM.requeteDeScene(scenes[i].texte).join(' ')} ${sujet}`.trim(), { limit: 15 }).catch(() => []));
+      await new Promise(r => setTimeout(r, 150));
+    }
+    if (essais) sel = IM.attribuer(reqs, images, { vertical });
+    images = images.slice(0, 60);
+    const choix = sel.choix.map(k => (k < images.length ? k : -1));
     return { titre: titre || page.title, article: page.title, source: page.fullurl || `${wiki}/wiki/${encodeURIComponent(page.title)}`,
-      scenes: scenes.map((x, i) => ({ texte: x.texte, section: x.section, image: choix[i] })), images };
+      scenes: scenes.map((x, i) => ({ texte: x.texte, section: x.section, image: choix[i], propositions: sel.listes[i].filter(k => k < images.length) })), images };
   }
 
   // Voix françaises de macOS (« say -v ? ») ; ailleurs, aucune
@@ -241,26 +245,40 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     return { scenes: sortie, credits, synthese };
   }
 
-  // Un média par scène, cherché dans Wikimedia Commons avec les mots-clés de la scène (vidéos d'abord, sinon images)
-  async function mediasPour(recherches) {
-    const images = [], choix = [];
-    for (const q0 of recherches) {
-      let trouve = [];
-      const mots = String(q0 || '').replace(/[^\p{L}\p{N}\s-]/gu, ' ').split(/\s+/).filter(Boolean).slice(0, 3);
-      for (const q of [mots.join(' '), mots.slice(0, 2).join(' '), mots[0] || ''].filter((x, i, l) => x && l.indexOf(x) === i)) {
-        if (trouve.length >= 2) break;
-        for (const type of ['video', 'bitmap']) {
+  // Une photo par scène, cherchée dans Wikimedia Commons avec les mots de la scène (français et anglais) puis notée :
+  // requetes[i] = { fr, en, texte } (ou un simple texte) ; ancre = sujet général de la vidéo. -1 = aucune photo assez bonne.
+  async function mediasPour(requetes, { ancre = '', vertical = false, videos = false } = {}) {
+    const pool = [], vus = new Set(), reqs = [];
+    const ajouter = liste => { for (const x of liste) if (x && !vus.has(x.nom)) { vus.add(x.nom); pool.push(x); } };
+    const ancreT = IM.termes(ancre);
+    for (const r0 of requetes) {
+      const r = typeof r0 === 'string' ? { fr: '', en: r0, texte: '' } : (r0 || {});
+      const mots = IM.termes([r.fr, r.en].join(' ') || r.texte).slice(0, 8), degage = IM.termes(r.texte).filter(m => m.length > 4).slice(0, 4);
+      reqs.push({ mots: [...new Set([...mots, ...degage.slice(0, 2)])], ancre: ancreT });
+      const requetesCommons = [[r.fr, ancre].filter(Boolean).join(' '), r.en, r.fr, IM.requeteDeScene(r.texte).join(' ')].map(x => String(x || '').replace(/[^\p{L}\p{N}\s-]/gu, ' ').split(/\s+/).filter(Boolean).slice(0, 5).join(' '))
+        .filter((x, i, l) => x && l.indexOf(x) === i);
+      let bons = 0;
+      for (const q of requetesCommons) {
+        if (bons >= 4) break;
         try {
-          const r = await api(commons, { action: 'query', generator: 'search', gsrsearch: `${q} filetype:${type}`, gsrnamespace: '6', gsrlimit: '8', prop: 'imageinfo', iiprop: 'url|size|mime|extmetadata', iiurlwidth: '1920', iiextmetadatafilter: 'Artist|LicenseShortName' });
-          trouve = trouve.concat(((r.query && r.query.pages) || []).sort((a, b) => (a.index || 0) - (b.index || 0)).map(imageDe).filter(x => x && !images.some(y => y.nom === x.nom)));
+          const avant = pool.length; ajouter(await rechercher(q));
+          if (videos) ajouter((await rechercher(q, { video: true, limit: 8 })).filter(x => x.video && x.hauteur >= 720));
+          bons += pool.slice(avant).filter(x => IM.noterImage(x, { ...reqs[reqs.length - 1], vertical }).note >= IM.SEUIL).length;
         } catch (e) { /* recherche suivante */ }
-          if (trouve.length >= 3) break;
-        }
+        await new Promise(r => setTimeout(r, 120)); // reste poli avec le serveur d'images
       }
-      // première proposition pour la scène, les autres restent au choix (◀ ▶)
-      choix.push(trouve.length ? images.length : -1); images.push(...trouve.slice(0, 4));
     }
-    return { images, choix };
+    const sel = IM.attribuer(reqs, pool, { vertical });
+    return { images: pool, choix: sel.choix, propositions: sel.listes };
+  }
+  // Photos proposées pour une recherche libre (bouton « autre photo » d'une scène) : les mieux notées d'abord, une par série
+  async function proposer(q, { vertical = false, videos = false } = {}) {
+    const mots = IM.termes(q); if (!mots.length) return [];
+    const liste = await rechercher(q, { limit: 30 });
+    if (videos) liste.push(...(await rechercher(q, { video: true, limit: 10 }).catch(() => [])).filter(x => x.video && x.hauteur >= 720));
+    const vus = new Set();
+    return liste.map(im => ({ im, ...IM.noterImage(im, { mots, vertical }) })).filter(x => x.note > -1).sort((a, b) => b.note - a.note)
+      .filter(x => { const k = IM.serieDe(x.im.nom); if (vus.has(k)) return false; vus.add(k); return true; }).slice(0, 18).map(x => x.im);
   }
   // Paragraphes de l'article à la durée voulue ({ texte, section }), reformulés un par un par l'IA locale
   async function faits(article, duree) {
@@ -270,7 +288,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     return construireScenes(page.extract, Math.min(600, Math.max(20, duree)));
   }
   const lireMac = async (texte, fichier, v) => { const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-essai-')); try { return await lire(texte, fichier, { voix: v }, dir); } finally { fs.rmSync(dir, { recursive: true, force: true }); } };
-  return { chercher, preparer, voix, fabriquer, lireMac, faits, mediasPour };
+  return { chercher, preparer, voix, fabriquer, lireMac, faits, mediasPour, proposer };
 }
 
 module.exports = { creer, sujetDe, phrases, nettoyerPhrase, construireScript, construireScenes, choisirImages, imageDe };
