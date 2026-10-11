@@ -226,7 +226,7 @@ function create(opts = {}) {
     let covIdx = -1;
     if (isAud) {
       args.push('-ss', num(c.in, 0) + (o.preview ? t * speed : 0), '-t', o.preview ? 1.5 : srcDur, '-i', mediaPath(c.file));
-      if (c.bgFile) { args.push(...(c.bgKind === 'video' ? ['-stream_loop', '-1'] : ['-loop', '1', '-framerate', fps]), '-i', mediaPath(c.bgFile)); covIdx = n++; }
+      if (c.bgFile) { args.push(...(c.bgKind === 'video' || /\.(webm|ogv|mp4|mov|m4v|mkv)$/i.test(c.bgFile) ? ['-stream_loop', '-1'] : ['-loop', '1', '-framerate', fps]), '-i', mediaPath(c.bgFile)); covIdx = n++; }
     } else if (isGen) args.push('-f', 'lavfi', '-t', o.preview ? 1 : eff, '-i', `color=c=${hex(c.color || '#000000')}:s=${W}x${H}:r=${fps}`);
     else if (isImg) args.push('-loop', '1', '-framerate', fps, '-t', o.preview ? 1 : eff, '-i', mediaPath(orient(c.file, W, H)));
     else args.push('-ss', num(c.in, 0) + (o.preview ? t * speed : 0), '-t', o.preview ? 1.5 : srcDur, '-i', mediaPath(orient(c.file, W, H)));
