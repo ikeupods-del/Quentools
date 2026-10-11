@@ -640,7 +640,13 @@ function create(opts = {}) {
         // Mixage en étapes simples (un seul fichier par commande, sons convertis en WAV) : un graphe unique
         // mêlant vidéo, boucles et décalages pouvait se figer au hasard dans FFmpeg.
         const D = dur.toFixed(3), wav = ['-vn', '-ac', 2, '-ar', 48000, '-c:a', 'pcm_s16le'], suivi = ['-progress', 'pipe:1', '-nostats'];
-        const ff = (args, out) => run(FFMPEG, ['-y', '-loglevel', 'error', ...args, ...suivi, out], { cwd: dir, silence: 60000 });
+        // chaque étape dure quelques secondes : si FFmpeg se fige au hasard, on la relance (jusqu'à 3 essais)
+        const ff = async (args, out) => {
+          for (let essai = 1; ; essai++) {
+            try { return await run(FFMPEG, ['-y', '-loglevel', 'error', ...args, ...suivi, out], { cwd: dir, silence: 20000 }); }
+            catch (e) { if (!/figé/.test(e.message)) throw e; if (essai >= 3) throw new Error(`${e.message} (${out})`); }
+          }
+        };
         await ff(['-i', joined, '-af', 'aresample=48000,apad', '-t', D, ...wav], 'son0.wav');
         for (const [i, a] of audios.entries()) {
           const de = clamp(num(a.in, 0), 0, 36000), du = clamp(num(a.dur, 0), 0, 36000); // partie du fichier (son détaché d'une vidéo)
@@ -864,15 +870,15 @@ function create(opts = {}) {
           job.step = 'Lecture de l’article…';
           const duree = clamp(num(b.duree, 60), 20, 600);
           const f = b.article ? await GEN().faits(String(b.article), duree).catch(() => []) : []; // sans article : sujet libre
-          const r = await IA().ecrireScript({ titre: String(b.titre || b.article || ''), paragraphes: f, duree, style: String(b.style || ''), consigne: String(b.consigne || '') }, job);
+          const r = await IA().ecrireScript({ titre: String(b.titre || b.article || ''), paragraphes: f, duree, style: String(b.style || ''), consigne: String(b.consigne || ''), recherche: !!b.medias }, job);
           if (!r.scenes.length) throw new Error('L’IA n’a pas pu écrire de script : réessaie.');
           if (b.medias) { // mode express : un média cherché pour chaque scène
             job.step = 'Recherche d’images et de vidéos pour chaque scène…';
             const m = await GEN().mediasPour(r.scenes.map(x => x.recherche || x.section));
-            return { titre: r.titre, gpu: r.gpu, libre: !f.length, images: m.images, scenes: r.scenes.map((x, i) => ({ ...x, image: m.choix[i] })) };
+            return { titre: r.titre, gpu: r.gpu, regles: r.regles, libre: !f.length, images: m.images, scenes: r.scenes.map((x, i) => ({ ...x, image: m.choix[i] })) };
           }
           const choix = require('./generateur').choisirImages(r.scenes, Array.isArray(b.images) ? b.images.slice(0, 60) : []);
-          return { titre: r.titre, gpu: r.gpu, libre: !f.length, scenes: r.scenes.map((x, i) => ({ ...x, image: choix[i] })) };
+          return { titre: r.titre, gpu: r.gpu, regles: r.regles, libre: !f.length, scenes: r.scenes.map((x, i) => ({ ...x, image: choix[i] })) };
         }));
       }
       if (req.method === 'POST' && p === '/api/telecharger') { const b = await readJson(req); return send(res, 200, travail(job => IA().telecharger(String(b.lien || ''), MEDIAS, job))); }

@@ -143,6 +143,7 @@ function creer({ run, FFMPEG, BASE }) {
 
   // Texte → fichier audio m4a (petite respiration à la fin), avec une voix Piper
   async function parler(texte, voixId, sortie, { vitesse = 1 } = {}) {
+    texte = require('./voix-texte').pourLaVoix(texte); // « 9h » → « 9 heures », « 5 € » → « 5 euros »…
     const v = VOIX.find(x => x.id === voixId); if (!v) throw new Error('Voix inconnue');
     if (!installe(v.archive)) await installer('voix:' + v.id);
     const wav = path.join(os.tmpdir(), `qm-voix-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.wav`);

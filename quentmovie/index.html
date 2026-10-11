@@ -1728,6 +1728,7 @@ function genEtape2() {
       <div style="flex:1">${s.section && s.section !== ((p.scenes[i - 1] || {}).section) ? `<div class="mut" style="font-size:11px;margin-bottom:2px">§ ${esc(s.section)} (titre affiché)</div>` : ''}<textarea rows="3" data-gtexte="${i}" style="width:100%">${esc(s.texte)}</textarea></div><button class="mini" data-gsuppr="${i}" title="Retirer cette scène">✕</button></div>`;
   const mots = p.scenes.reduce((a, s) => a + s.texte.split(/\s+/).length, 0);
   $('#gZone').innerHTML = `<div class="encart" style="margin:0 0 8px"><b>🤖 IA locale</b> <span class="mut">réécrit le texte en vrai script (accroche, transitions, conclusion) à partir des faits de l’article, sans rien inventer. Tourne sur ton Mac, sans internet${gen.ia && !gen.ia.installee ? ` (≈ ${(gen.ia.mo / 1000).toFixed(1)} Go téléchargés au premier usage)` : ''}.</span>
+      <textarea id="gConsigne" rows="2" placeholder="Tes consignes pour l’IA, suivies à la lettre (ex. : pas d’intro, tutoie-moi, ton humoristique…)" style="width:100%;margin-top:6px">${esc(gen.consigne || '')}</textarea>
       <div class="ligne" style="margin-top:6px"><select id="gStyle" style="flex:1">${opts([['documentaire', 'Documentaire'], ['dynamique', 'Dynamique (TikTok, Reels)'], ['histoire', 'Récit captivant'], ['enfants', 'Pour enfants']], gen.style || 'documentaire')}</select><button class="pri" id="gIA" style="flex:none">Réécrire avec l’IA</button></div><div id="gIAProg" class="mut"></div></div>
     <label class="l">Titre de la vidéo</label><input type="text" id="gTitre" value="${esc(p.titre)}">
     <p class="mut" style="margin:6px 0">${p.scenes.length} scènes · environ ${fmt(mots / 2.6)} de voix · ${im.length} image${im.length > 1 ? 's' : ''} libre${im.length > 1 ? 's' : ''} · source : ${p.article ? `Wikipédia, « ${esc(p.article)} »` : 'écrit par l’IA locale (à relire)'}. Corrige le texte comme tu veux : chaque bloc est lu sur une image.</p>
@@ -1762,19 +1763,25 @@ async function genExpress() {
     if ($('#xWiki').checked) { pr('Recherche sur Wikipédia…'); try { const r = await (await api('/api/generer/chercher?q=' + enc(idee))).json(); titre = r.titre || idee; const mot = String(r.recherche || '').split(/\s+/).sort((a, b) => b.length - a.length)[0] || ''; if (r.resultats && r.resultats[0] && mot.length > 2 && r.resultats[0].titre.toLowerCase().includes(mot.toLowerCase())) article = r.resultats[0].titre; } catch (e) { /* sujet libre */ } }
     const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article, titre, duree, style, consigne: idee, medias: true }) })).json();
     const r = await suivreTravail(id, j => pr(`<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`));
-    gen.prep = { titre: r.titre || titre, article, libre: r.libre, images: r.images || [], scenes: r.scenes };
+    gen.prep = { titre: r.titre || titre, article, libre: r.libre, images: r.images || [], scenes: r.scenes }; gen.consigne = idee;
     gen.express = { format, tiktok: format === 'vertical' }; gen.ia = { ...(gen.ia || {}), installee: true };
-    genEtape2(); if ($('#gDuree')) $('#gDuree').value = String(duree);
+    genEtape2(); genRegles(r.regles); if ($('#gDuree')) $('#gDuree').value = String(duree);
     await genCreer();
   } catch (e) { pr(`<span class="err">${esc(e.message)}</span>`); $('#xGo').disabled = false; }
 }
+// Ce que l'utilisateur a interdit dans ses consignes (« pas d'intro », « sans musique »…) décoche les options correspondantes
+function genRegles(r) {
+  if (!r) return;
+  const coche = (id, v) => { const e = $(id); if (e && v === false) e.checked = false; };
+  coche('#gOuv', r.ouverture); coche('#gSous', r.sousTitres); if (r.musique === false && $('#gMus')) $('#gMus').value = '';
+}
 // Script réécrit par l'IA locale à partir des faits de l'article (scènes, titres de partie, titre accrocheur)
 async function genIA() {
-  const p = gen.prep, b = $('#gIA'); gen.style = $('#gStyle').value; b.disabled = true;
+  const p = gen.prep, b = $('#gIA'); gen.style = $('#gStyle').value; gen.consigne = $('#gConsigne').value.trim(); b.disabled = true;
   try {
-    const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article: p.article, titre: p.titre, duree: +$('#gDuree').value || 60, style: gen.style, images: p.images.map(x => ({ nom: x.nom })) }) })).json();
+    const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article: p.article, titre: p.titre, duree: +$('#gDuree').value || 60, style: gen.style, consigne: gen.consigne, images: p.images.map(x => ({ nom: x.nom })) }) })).json();
     const r = await suivreTravail(id, j => { $('#gIAProg').innerHTML = `<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`; });
-    p.scenes = r.scenes; p.titre = r.titre || p.titre; gen.ia = { ...(gen.ia || {}), installee: true }; genEtape2();
+    p.scenes = r.scenes; p.titre = r.titre || p.titre; gen.ia = { ...(gen.ia || {}), installee: true }; gen.regles = r.regles; genEtape2(); genRegles(r.regles);
     $('#gIAProg').textContent = `✅ Script écrit par l’IA locale (${r.scenes.length} scènes). Relis-le : tu peux tout modifier.`;
   } catch (e) { $('#gIAProg').innerHTML = `<span class="err">${esc(e.message)}</span>`; b.disabled = false; }
 }

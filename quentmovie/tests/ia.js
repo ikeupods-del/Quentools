@@ -8,6 +8,7 @@ const path = require('path');
 const { create } = require('../server');
 const { resolveFfmpeg } = require('../ffmpeg-path');
 
+const nbMots = t => String(t).split(/\s+/).filter(Boolean).length;
 let ok = 0, ko = 0;
 const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.log('  ÉCHEC :', nom, info); } };
 
@@ -22,6 +23,12 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   const mauvais = await attendre((await (await fetch(U('/api/telecharger'), { method: 'POST', body: JSON.stringify({ lien: 'pas un lien' }) })).json()).id);
   check('lien invalide refusé', /https/.test(mauvais.error || ''), mauvais.error);
 
+  const { lireConsignes: lire } = require('../ia');
+  const c1 = lire('Pas d’intro, pas de conclusion, tutoie-moi, sans musique'), c2 = lire('Fais une vidéo avec une intro percutante');
+  check('consignes : pas d’intro ni de conclusion lus', !c1.accroche && !c1.ouverture && !c1.conclusion && !c1.musique && c1.sousTitres && c1.adresse === 'tu', JSON.stringify(c1));
+  check('consignes : une intro demandée reste permise', c2.accroche && c2.ouverture && c2.libre, JSON.stringify(c2));
+  check('consignes : sans sous-titres, vouvoiement', !lire('sans sous-titres').sousTitres && lire('vouvoie le spectateur').adresse === 'vous');
+
   if (process.env.QM_RESEAU) {
     const IA = require('../ia').creer({ BASE: base, FFMPEG: bins.ffmpeg });
     const faits = 'Michelin est une entreprise française de pneumatiques fondée en 1889 à Clermont-Ferrand par les frères André et Édouard Michelin.\n[Les débuts] En 1891, ils déposent le brevet du pneu démontable pour bicyclette.\n[Le Bibendum] En 1898, le dessinateur O\'Galop crée le Bibendum.\n[Le guide] En 1900 paraît le premier guide Michelin.\n[Le pneu radial] En 1946, Michelin invente le pneu à carcasse radiale.';
@@ -35,6 +42,9 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     const annees = [...texte.matchAll(/\b(1[0-9]{3}|20[0-9]{2})\b/g)].map(m => m[1]).filter(a => !faits.includes(a));
     check('aucune année inventée', !annees.length, annees.join(', '));
     check('IA sur la puce graphique', process.platform !== 'darwin' || r.gpu === 'metal', r.gpu);
+    // consignes de l'utilisateur : « pas d'intro, pas de conclusion » = ni accroche ni phrase de fin ajoutées
+    const r2 = await IA.ecrireScript({ titre: 'L’histoire de Michelin', paragraphes, duree: 45, style: 'dynamique', consigne: 'Pas d’intro, pas de conclusion', recherche: false }, {});
+    check('consignes suivies : ni accroche ni conclusion', !r2.regles.accroche && !r2.regles.conclusion && nbMots(r2.scenes[0].texte) <= nbMots(paragraphes[0].texte) * 1.3 && nbMots(r2.scenes[4].texte) <= nbMots(paragraphes[4].texte) * 1.3, `${nbMots(r2.scenes[0].texte)} / ${nbMots(paragraphes[0].texte)}`);
     IA.arreter();
     // mode express : sujet libre, un média cherché pour chaque scène
     const x = await attendre((await (await fetch(U('/api/generer/ia'), { method: 'POST', body: JSON.stringify({ article: '', titre: 'Faire du vélo en ville', consigne: '3 conseils pour faire du vélo en ville en sécurité', duree: 30, style: 'dynamique', medias: true }) })).json()).id);

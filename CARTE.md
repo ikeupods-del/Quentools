@@ -261,4 +261,5 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - instagram.yml
 - pages.yml
 - photos-libres.yml
+- quentmovie.yml
 - wouf-ci.yml
