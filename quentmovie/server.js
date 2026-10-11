@@ -80,7 +80,8 @@ function create(opts = {}) {
     '.png': 'images', '.webp': 'images', '.jpg': 'images', '.jpeg': 'images', '.mp4': 'videos', '.mov': 'videos', '.m4v': 'videos', '.webm': 'videos' };
   const packCache = new Map();
   let gen = null;
-  let parole = null;
+  let parole = null, ia = null;
+  const IA = () => ia || (ia = require('./ia').creer({ BASE, FFMPEG }));
   const PAROLE = () => parole || (parole = require('./parole').creer({ run, FFMPEG, BASE }));
   const GEN = () => gen || (gen = require('./generateur').creer({ run, FFMPEG, probe, MEDIAS, wiki: opts.wiki, commons: opts.commons, parole: PAROLE() }));
   async function scanPacks() {
@@ -225,7 +226,7 @@ function create(opts = {}) {
     let covIdx = -1;
     if (isAud) {
       args.push('-ss', num(c.in, 0) + (o.preview ? t * speed : 0), '-t', o.preview ? 1.5 : srcDur, '-i', mediaPath(c.file));
-      if (c.bgFile) { args.push('-loop', '1', '-framerate', fps, '-i', mediaPath(c.bgFile)); covIdx = n++; }
+      if (c.bgFile) { args.push(...(c.bgKind === 'video' || /\.(webm|ogv|mp4|mov|m4v|mkv)$/i.test(c.bgFile) ? ['-stream_loop', '-1'] : ['-loop', '1', '-framerate', fps]), '-i', mediaPath(c.bgFile)); covIdx = n++; }
     } else if (isGen) args.push('-f', 'lavfi', '-t', o.preview ? 1 : eff, '-i', `color=c=${hex(c.color || '#000000')}:s=${W}x${H}:r=${fps}`);
     else if (isImg) args.push('-loop', '1', '-framerate', fps, '-t', o.preview ? 1 : eff, '-i', mediaPath(orient(c.file, W, H)));
     else args.push('-ss', num(c.in, 0) + (o.preview ? t * speed : 0), '-t', o.preview ? 1.5 : srcDur, '-i', mediaPath(orient(c.file, W, H)));
@@ -447,7 +448,7 @@ function create(opts = {}) {
 
     const proxy = !!o.proxy;
     args.push('-filter_complex', f.join(';'), '-map', '[v]', '-map', '[a]', '-t', eff.toFixed(3), '-r', fps,
-      ...(o.vt && !proxy ? ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(W, H) >= 1500 ? '45M' : '20M', '-allow_sw', 1] : ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16]), '-pix_fmt', 'yuv420p',
+      ...(o.vt ? ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(W, H) >= 1500 ? '45M' : '20M', '-allow_sw', 1] : ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16]), '-pix_fmt', 'yuv420p',
       '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-ar', 48000, '-ac', 2, '-movflags', '+faststart', '-progress', 'pipe:1', '-nostats');
     return { args, eff };
   }
@@ -556,9 +557,9 @@ function create(opts = {}) {
 
   function sizeOf(project, mode) {
     const [a, b] = FORMATS[project.format] || FORMATS.vertical;
-    const short = mode === 'proxy' ? 360 : mode === 'thumb' ? 200 : clamp(num(project.res, 1080), 480, 2160);
+    const short = mode === 'proxy' ? clamp(num(project.apercuRes, 360), 360, 2160) : mode === 'thumb' ? 200 : clamp(num(project.res, 1080), 480, 2160);
     const k = short / Math.min(a, b);
-    return { w: even(a * k), h: even(b * k), fps: mode === 'proxy' ? 24 : clamp(num(project.fps, 30), 24, 60) };
+    return { w: even(a * k), h: even(b * k), fps: mode === 'proxy' ? (short >= 720 ? clamp(num(project.fps, 30), 24, 60) : 24) : clamp(num(project.fps, 30), 24, 60) };
   }
 
   // ---------- Exportation ----------
@@ -576,7 +577,8 @@ function create(opts = {}) {
     job.dir = dir;
     try {
       // puce vidéo du Mac (VideoToolbox) pour l'encodage quand « rapide » est choisi (réglage par défaut sur Mac)
-      const vt = !proxy && process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality !== 'haute';
+      // aperçu de 720p et plus : puce vidéo aussi (rapide jusqu'en 4K)
+      const vt = process.platform === 'darwin' && encoders.has('h264_videotoolbox') && (proxy ? P.h >= 720 && P.w >= 720 : project.quality !== 'haute');
       const built = clips.map((c, i) => buildClip(c, P, { tdir: { dir, idx: i }, proxy, vt }));
       const total = built.reduce((a, b) => a + b.eff, 0) * 1.1;
       let done = 0;
@@ -642,8 +644,9 @@ function create(opts = {}) {
           const ducks = audios.filter(a => a.duck && canDuck).length, S = audios.length + 1;
           let mix = '[0:a]', dk = 0;
           audios.forEach((a, i) => {
-            if (a.loop) ins.push('-stream_loop', '-1', '-t', (dur + 1).toFixed(2));
-            ins.push('-i', mediaPath(a.file));
+            const de = clamp(num(a.in, 0), 0, 36000), du = clamp(num(a.dur, 0), 0, 36000); // partie du fichier (son détaché d'une vidéo)
+            if (a.loop && !du) ins.push('-stream_loop', '-1', '-t', (dur + 1).toFixed(2));
+            ins.push(...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(a.file));
             const st = clamp(num(a.start, 0), 0, 3600), ms = Math.round(st * 1000);
             const fd = a.fade ? `,afade=t=in:d=1.2,afade=t=out:st=${Math.max(0, dur - st - 1.5).toFixed(2)}:d=1.5` : '';
             g.push(`[${i + 1}:a]aresample=48000,aformat=channel_layouts=stereo,volume=${clamp(num(a.vol, 50), 0, 200) / 100}${fd},adelay=${ms}|${ms}[m${i}]`);
@@ -847,6 +850,21 @@ function create(opts = {}) {
       // Voix naturelles et reconnaissance de la parole (parole.js)
       const travail = fn => { const id = String(Date.now()) + Math.floor(Math.random() * 1000), job = { progress: 0, step: 'Préparation', error: null, done: false, resultat: null }; jobs.set(id, job);
         Promise.resolve().then(() => fn(job)).then(r => { job.resultat = r || null; job.progress = 1; job.done = true; }).catch(e => { job.error = e.message; }); return { id }; };
+      // IA locale du générateur et téléchargement depuis un lien (ia.js)
+      if (req.method === 'GET' && p === '/api/ia') return send(res, 200, IA().etat());
+      if (req.method === 'POST' && p === '/api/ia/installer') return send(res, 200, travail(job => IA().installer(job)));
+      if (req.method === 'POST' && p === '/api/generer/ia') {
+        const b = await readJson(req);
+        return send(res, 200, travail(async job => {
+          job.step = 'Lecture de l’article…';
+          const f = await GEN().faits(String(b.article || ''), clamp(num(b.duree, 60), 20, 600));
+          const r = await IA().ecrireScript({ titre: String(b.titre || b.article || ''), faits: f, duree: clamp(num(b.duree, 60), 20, 600), style: String(b.style || '') }, job);
+          if (!r.scenes.length) throw new Error('L’IA n’a pas pu écrire de script : réessaie.');
+          const choix = require('./generateur').choisirImages(r.scenes, Array.isArray(b.images) ? b.images.slice(0, 60) : []);
+          return { titre: r.titre, gpu: r.gpu, scenes: r.scenes.map((x, i) => ({ ...x, image: choix[i] })) };
+        }));
+      }
+      if (req.method === 'POST' && p === '/api/telecharger') { const b = await readJson(req); return send(res, 200, travail(job => IA().telecharger(String(b.lien || ''), MEDIAS, job))); }
       if (req.method === 'GET' && p === '/api/parole') {
         const mac = await GEN().voix();
         return send(res, 200, { ...PAROLE().etat(), mac, reglagesMac: process.platform === 'darwin' });
@@ -951,7 +969,8 @@ function create(opts = {}) {
       }
       if (req.method === 'GET' && p === '/api/wave') { // forme d'onde d'un son
         const w = clamp(Math.round(num(url.searchParams.get('w'), 800)), 50, 4000), h = clamp(Math.round(num(url.searchParams.get('h'), 80)), 20, 400);
-        const img = await run(FFMPEG, ['-v', 'error', '-i', mediaPath(url.searchParams.get('file')), '-filter_complex', `aformat=channel_layouts=mono,showwavespic=s=${w}x${h}:colors=white`,
+        const de = num(url.searchParams.get('in'), 0), du = num(url.searchParams.get('dur'), 0);
+        const img = await run(FFMPEG, ['-v', 'error', ...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(url.searchParams.get('file')), '-vn', '-filter_complex', `aformat=channel_layouts=mono,showwavespic=s=${w}x${h}:colors=white`,
           '-frames:v', 1, '-f', 'image2pipe', '-vcodec', 'png', 'pipe:1'], { binary: true });
         return send(res, 200, img, 'image/png', 'max-age=86400');
       }
@@ -1040,7 +1059,7 @@ function create(opts = {}) {
       await new Promise((ok, ko) => { server.once('error', ko); server.listen(PORT, '127.0.0.1', ok); });
       return server.address().port;
     },
-    stop() { server.close(); if (parole) parole.arreter(); }
+    stop() { server.close(); if (parole) parole.arreter(); if (ia) ia.arreter(); }
   };
 }
 

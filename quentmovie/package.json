@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -8,12 +8,13 @@
   "scripts": {
     "start": "electron .",
     "serveur": "node server.js",
-    "test": "node tests/run.js && node tests/maj.js && node tests/compositeur.js && node tests/generateur.js && node tests/parole.js && node tests/pistes.js && node tests/cadrage.js",
+    "test": "node tests/run.js && node tests/maj.js && node tests/compositeur.js && node tests/generateur.js && node tests/parole.js && node tests/pistes.js && node tests/cadrage.js && node tests/ia.js",
     "dist": "electron-builder --mac dmg --arm64 --publish never"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "1.1.0",
     "ffmpeg-static": "^5.2.0",
+    "node-llama-cpp": "3.21.1",
     "sherpa-onnx-node": "1.13.8"
   },
   "devDependencies": {
@@ -35,6 +36,8 @@
       "detoureur.js",
       "parole.js",
       "parole-worker.js",
+      "ia.js",
+      "ia-worker.js",
       "modeles/**",
       "!node_modules/@mediapipe/tasks-vision/*.map",
       "!node_modules/@mediapipe/tasks-vision/vision_bundle.cjs",
@@ -46,6 +49,8 @@
     "asarUnpack": [
       "node_modules/ffmpeg-static/**",
       "node_modules/sherpa-onnx-*/**",
+      "node_modules/node-llama-cpp/**",
+      "node_modules/@node-llama-cpp/**",
       "bibliotheque/**"
     ],
     "afterPack": "scripts/adhoc-sign.js",

@@ -47,6 +47,7 @@ fx('jourclair', 'Lumière du jour', 'Vlog', [AMOUNT], () => 'eq=brightness=0.05:
 
 // ---------- Flou et netteté ----------
 fx('flou', 'Flou', 'Flou et netteté', [p('s', 'Force', 1, 40, 1, 8)], q => `gblur=sigma=${q.s}`, { needs: ['gblur'] });
+fx('qualite', 'Améliorer la qualité (débruitage, netteté, couleurs)', 'Flou et netteté', [p('f', 'Force', 1, 10, 1, 5)], q => `hqdn3d=${(q.f * 0.5).toFixed(1)}:${(q.f * 0.4).toFixed(1)}:${(q.f * 0.8).toFixed(1)}:${(q.f * 0.8).toFixed(1)},unsharp=5:5:${(0.3 + q.f * 0.08).toFixed(2)}:5:5:0,eq=contrast=1.04:saturation=1.08`, { needs: ['hqdn3d', 'unsharp', 'eq'] });
 fx('nettete', 'Netteté', 'Flou et netteté', [p('a', 'Force', 0.5, 5, 0.1, 1.5)], q => `unsharp=7:7:${q.a}:7:7:0`, { needs: ['unsharp'] });
 fx('trainee', 'Traînée de mouvement', 'Flou et netteté', [p('n', 'Longueur', 2, 10, 1, 4)], q => `tmix=frames=${q.n}`, { needs: ['tmix'] });
 fx('lueur', 'Lueur', 'Flou et netteté', [p('a', 'Intensité', 5, 100, 1, 50, ' %')], q => ({
@@ -156,6 +157,7 @@ afx('large', 'Son large (stéréo)', [], () => 'extrastereo=m=2.2', ['extrastere
 afx('geant', 'Voix de géant', [], () => 'asetrate=48000*0.65,aresample=48000,atempo=1.5385');
 
 afx('podcast', 'Voix podcast pro', [], () => 'highpass=f=80,equalizer=f=200:t=q:w=1:g=2,equalizer=f=4500:t=q:w=1.2:g=3,acompressor=threshold=0.1:ratio=3:attack=15:release=250,alimiter=limit=0.95', ['equalizer', 'acompressor']);
+afx('qualite', 'Améliorer le son (souffle retiré, voix claire, volume régulier)', [], () => 'highpass=f=70,afftdn=nf=-25,equalizer=f=250:t=q:w=1:g=-2,equalizer=f=3500:t=q:w=1.2:g=3,acompressor=threshold=0.12:ratio=3:attack=10:release=200,dynaudnorm=f=250:g=15,alimiter=limit=0.95', ['afftdn', 'equalizer', 'acompressor', 'dynaudnorm']);
 afx('gate', 'Porte de bruit (coupe le souffle)', [p('t', 'Seuil', 0.005, 0.1, 0.005, 0.02)], q => `agate=threshold=${q.t}:ratio=4:attack=10:release=200`, ['agate']);
 afx('deesser', 'Adoucir les « s » (de-esser)', [p('i', 'Force', 0.1, 0.9, 0.05, 0.4)], q => `deesser=i=${q.i}`, ['deesser']);
 afx('chaude', 'Voix chaude (graves renforcés)', [], () => 'equalizer=f=150:t=q:w=1:g=4,equalizer=f=3000:t=q:w=2:g=-1', ['equalizer']);
