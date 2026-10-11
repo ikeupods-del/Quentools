@@ -472,7 +472,8 @@ function mediasUtilises() {
 async function supprimerMedias(tous) {
   const u = mediasUtilises(), liste = tous ? medias.slice() : medias.filter(m => !u.has(m.file));
   if (!liste.length) return alert('Tous les médias servent dans le montage en cours : rien à supprimer.');
-  const go = await confirmer(tous ? `Supprimer les ${liste.length} médias ? Le montage en cours sera vidé. Les exports (vidéos finies) sont gardés.` : `Supprimer les ${liste.length} médias qui ne servent pas dans le montage en cours ? Les exports sont gardés.`);
+  const quoi = liste.length > 1 ? `les ${liste.length} médias` : 'ce média';
+  const go = await confirmer(tous ? `Supprimer ${quoi} ? Le montage en cours sera vidé. Les exports (vidéos finies) sont gardés.` : `Supprimer ${quoi} qui ne ${liste.length > 1 ? 'servent' : 'sert'} pas dans le montage en cours ? Les exports sont gardés.`);
   if (!go) return;
   let n = 0; aide('Suppression…');
   for (const m of liste) { try { await api('/api/medias/' + enc(m.file), { method: 'DELETE' }); n++; } catch (e) { /* fichier déjà retiré */ } }

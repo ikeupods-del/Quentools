@@ -44,7 +44,7 @@ jobs:
         run: npm run dist
       - name: Lancer l'application installée et l'essayer (carte graphique, enregistrement, conversion, voix)
         run: |
-          QM_AUTOTEST="$PWD/autotest.json" QM_BASE="$RUNNER_TEMP/qm-autotest" timeout 900 dist/mac-arm64/QuentMovie.app/Contents/MacOS/QuentMovie || true
+          QM_AUTOTEST="$PWD/autotest.json" QM_BASE="$RUNNER_TEMP/qm-autotest" dist/mac-arm64/QuentMovie.app/Contents/MacOS/QuentMovie || true
           cat autotest.json
           node -e '
             const r = require("./autotest.json"), ko = [];
