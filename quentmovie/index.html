@@ -111,6 +111,11 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 .cut.sel{box-shadow:0 0 0 2px #fff}
 .aud{position:absolute;top:3px;bottom:3px;border-radius:6px;background:var(--audio) center/100% 100% no-repeat;border:2px solid #0006;cursor:grab;overflow:hidden;font-size:11px;padding:3px 6px;white-space:nowrap;box-shadow:inset 0 0 0 100px #0a122340;touch-action:none}
 .aud.sel{border-color:#fff}
+.piste.v2{height:52px;min-height:52px}
+.pv{position:absolute;top:3px;height:40px;border-radius:6px;background:#3b2f6b center/cover no-repeat;border:2px solid #0006;cursor:grab;overflow:hidden;font-size:11px;padding:3px 6px;white-space:nowrap;box-shadow:inset 0 0 0 100px #1a103c66;touch-action:none;color:#fff}
+.pv.sel{border-color:#fff}.pv i.hl,.pv i.hr{position:absolute;top:0;bottom:0;width:7px;cursor:ew-resize;background:#fff3}.pv i.hl{left:0}.pv i.hr{right:0}
+#stage .pv2{position:absolute;pointer-events:none;overflow:hidden;border-radius:6px}
+#stage .pv2 img{position:absolute;box-shadow:none;background:none;max-width:none;max-height:none}
 #tete{position:absolute;top:0;bottom:0;width:0;border-left:2px solid #ff4d4d;z-index:7;pointer-events:none}
 #tete::before{content:"";position:absolute;top:0;left:-7px;border:6px solid transparent;border-top:9px solid #ff4d4d}
 /* fenêtres */
@@ -216,6 +221,7 @@ canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display
   </div>
   <div id="scroll"><div id="lane">
     <div id="regle"></div>
+    <div class="piste v2" id="pV2"><span class="etiq">VIDÉO 2 (image dans l’image, plans de coupe)</span></div>
     <div class="piste" id="pV"><span class="etiq">VIDÉO</span></div>
     <div class="piste a" id="pA"><span class="etiq">AUDIO (musique, voix, bruitages)</span></div>
     <div id="tete"></div>
@@ -254,8 +260,8 @@ function tc(t, fps) { t = Math.max(0, t); const f = Math.floor((t % 1) * fps), s
 let CAT = { video: [], audio: [], transitions: [], titres: [], reportage: [], generateurs: [], polices: [], sorties: ['mp4'], bibliotheque: { sons: [], musiques: [], stickers: [], marque: [], luts: [], calques: [], cadres: [], fonds: [], fondvert: [] } };
 let PACKS = { luts: [], sons: [], images: [], videos: [], dossier: '' };
 let medias = [];
-let proj = { format: 'vertical', fps: 30, res: 1080, quality: 'haute', sortie: 'mp4', normaliser: false, clips: [], audio: [], markers: [] };
-let sel = -1, selA = -1, selCut = -1, gt = 0, zoom = 40, tab = 'medias', rendu = null, presse = null;
+let proj = { format: 'vertical', fps: 30, res: 1080, quality: 'haute', sortie: 'mp4', normaliser: false, clips: [], audio: [], pistes: [], markers: [] };
+let sel = -1, selA = -1, selP = -1, selCut = -1, gt = 0, zoom = 40, tab = 'medias', rendu = null, presse = null;
 const LIB = () => CAT.bibliotheque;
 // Bibliothèque intégrée (« lib:… ») et packs de l'utilisateur (« pack:… »)
 const LIB_KIND = { sons: 'audio', musiques: 'audio', stickers: 'image', luts: 'lut', calques: 'video', cadres: 'image', fonds: 'image', fondvert: 'video' };
@@ -324,7 +330,7 @@ function commit(glisse) {
 function undo(d) {
   const s = snap(); if (hist[hi] !== s) { hist = hist.slice(0, hi + 1); hist.push(s); hi = hist.length - 1; }
   dernierGlisse = 0; const n = hi + d; if (n < 0 || n >= hist.length) return;
-  hi = n; proj = JSON.parse(hist[hi]); sel = Math.min(sel, proj.clips.length - 1); selA = -1; selCut = -1; tout(); apercu();
+  hi = n; proj = JSON.parse(hist[hi]); sel = Math.min(sel, proj.clips.length - 1); selA = -1; selP = -1; selCut = -1; tout(); apercu();
 }
 function majBoutons() { $('#bUndo').disabled = hi <= 0; $('#bRedo').disabled = hi >= hist.length - 1; }
 function aide(t) { $('#bar').innerHTML = t; }
@@ -344,11 +350,11 @@ async function importer(files) {
 }
 function ajouterClip(m, index) {
   const c = newClip(m); if (index === undefined || index > proj.clips.length) index = proj.clips.length;
-  proj.clips.splice(index, 0, c); commit(); sel = index; selA = -1; selCut = -1; tout(); placerTete(starts()[index] || 0);
+  proj.clips.splice(index, 0, c); commit(); sel = index; selA = -1; selP = -1; selCut = -1; tout(); placerTete(starts()[index] || 0);
 }
 function ajouterSon(file, opts = {}) { // bruitage, musique ou fichier audio dans la piste audio, à la tête de lecture
   proj.audio.push({ file, vol: opts.vol || 100, start: opts.start === undefined ? +gt.toFixed(1) : opts.start, fade: !!opts.fade, loop: !!opts.loop, duck: !!opts.duck });
-  selA = proj.audio.length - 1; sel = -1; selCut = -1; commit(); tout();
+  selA = proj.audio.length - 1; selP = -1; sel = -1; selCut = -1; commit(); tout();
 }
 $('#fichiers').onchange = e => { importer([...e.target.files]); e.target.value = ''; };
 $('#bImporter').onclick = () => $('#fichiers').click();
@@ -374,7 +380,7 @@ function navigateur() {
       <p class="mut">Tous les formats : vidéos (.mov, .mp4, .mkv, .avi…), photos (JPG, PNG, HEIC, TIFF…), sons (MP3, WAV, M4A, FLAC…). Glisse-les ici ou dans la timeline.</p>` +
       (medias.map((m, i) => `<div class="media" draggable="true" data-drag="media:${i}">${vignette(m)}<div class="nom">${esc(m.file)}<small>${m.kind === 'image' ? 'Photo' : m.kind === 'audio' ? 'Son · ' + fmt(m.duration) : fmt(m.duration) + (m.native ? '' : ' · ' + esc(m.codec))}</small></div>
         <button class="mini" data-add="${i}" title="${m.kind === 'audio' ? 'Ajouter en piste audio (⇧ : en clip podcast)' : 'Ajouter à la timeline'}">＋</button>
-        ${m.kind === 'image' || m.kind === 'video' ? `<button class="mini" data-calque="${i}" title="Ajouter comme calque sur le clip sélectionné">▣</button>` : ''}
+        ${m.kind === 'image' || m.kind === 'video' ? `<button class="mini" data-calque="${i}" title="Ajouter comme calque sur le clip sélectionné">▣</button><button class="mini" data-piste="${i}" title="Ajouter dans la piste vidéo 2 à la tête de lecture (image dans l’image, plan de coupe)">⧉</button>` : ''}
         <button class="mini" data-del="${i}" title="Supprimer ce média">🗑</button></div>`).join('') || '<p class="mut">Aucun média pour l’instant.</p>');
   } else if (tab === 'effets') {
     const src = sourceVignette(), cats = [...new Set(CAT.video.map(d => d.cat))];
@@ -430,11 +436,12 @@ function navigateur() {
 function allerOnglet(t) { tab = t; navigateur(); }
 $('#tabs').onclick = e => { if (e.target.dataset.tab) allerOnglet(e.target.dataset.tab); };
 $('#navbody').addEventListener('click', e => {
-  const t = e.target.closest('[data-add],[data-del],[data-calque],[data-fx],[data-tr],[data-titre],[data-rep],[data-afx],[data-play],[data-ajout-son],[data-ajout-pack],[data-sticker],[data-pose],[data-decor],[data-lut],[data-ecran],[data-fond],#bTrTous,[data-outil]'); if (!t) return;
+  const t = e.target.closest('[data-add],[data-del],[data-calque],[data-piste],[data-fx],[data-tr],[data-titre],[data-rep],[data-afx],[data-play],[data-ajout-son],[data-ajout-pack],[data-sticker],[data-pose],[data-decor],[data-lut],[data-ecran],[data-fond],#bTrTous,[data-outil]'); if (!t) return;
   if (t.tagName === 'A') e.preventDefault();
   const d = t.dataset;
   if (d.add !== undefined) { const m = medias[d.add]; if (m.kind === 'audio') (e.shiftKey ? ajouterClip(m, sel >= 0 ? sel + 1 : undefined) : ajouterSon(m.file, { vol: 100 })); else ajouterClip(m, sel >= 0 ? sel + 1 : undefined); }
   else if (d.calque !== undefined) { const m = medias[d.calque]; ajouterCalque(m.file, m.kind); }
+  else if (d.piste !== undefined) { ajouterPiste(medias[d.piste]); }
   else if (d.del !== undefined) supprimerMedia(medias[d.del]);
   else if (d.fx) ajouterFx(sel, d.fx);
   else if (d.afx) ajouterAfx(sel, d.afx);
@@ -457,7 +464,7 @@ $('#navbody').addEventListener('input', e => { if (e.target.id === 'trDurR') { c
 async function supprimerMedia(m) {
   if (!confirm(`Supprimer « ${m.file} » ? Les clips qui l’utilisent seront retirés de la timeline.`)) return;
   await api('/api/medias/' + enc(m.file), { method: 'DELETE' });
-  proj.clips = proj.clips.filter(c => c.file !== m.file); proj.audio = proj.audio.filter(a => a.file !== m.file);
+  proj.clips = proj.clips.filter(c => c.file !== m.file); proj.audio = proj.audio.filter(a => a.file !== m.file); proj.pistes = (proj.pistes || []).filter(a => a.file !== m.file);
   sel = Math.min(sel, proj.clips.length - 1); await chargerMedias(); commit(); tout(); apercu();
 }
 document.addEventListener('dragstart', e => { const d = e.target.closest && e.target.closest('[data-drag]'); if (d) e.dataTransfer.setData('text/plain', d.dataset.drag); });
@@ -466,6 +473,7 @@ function dropSur(e, idxClip) {
   if (k === 'fx' && idxClip >= 0) { ajouterFx(idxClip, id); return true; }
   if (k === 'media') {
     const m = medias[+id]; if (!m) return false;
+    if (e.target.closest && e.target.closest('#pV2') && m.kind !== 'audio') { const r = $('#lane').getBoundingClientRect(); ajouterPiste(m, +Math.max(0, (e.clientX - r.left) / zoom).toFixed(1)); return true; }
     if (m.kind === 'audio') { const r = $('#lane').getBoundingClientRect(); ajouterSon(m.file, { start: +Math.max(0, (e.clientX - r.left) / zoom).toFixed(1) }); }
     else ajouterClip(m, idxClip >= 0 ? idxClip + 1 : undefined);
     return true;
@@ -473,8 +481,34 @@ function dropSur(e, idxClip) {
   return false;
 }
 
+// ---------- Piste vidéo 2 : image dans l'image, plans de coupe ----------
+const dureePiste = p => p.kind === 'image' ? Math.max(0.3, p.dur || 4) : Math.max(0.3, p.out - p.in);
+function ajouterPiste(m, start) {
+  const p = { file: m.file, kind: m.kind === 'image' ? 'image' : 'video', start: start === undefined ? +gt.toFixed(1) : start, in: 0, out: m.kind === 'video' ? +Math.min(m.duration || 5, 12).toFixed(1) : 0, dur: 4,
+    plein: false, x: 76, y: 26, scale: 34, forme: 'arrondi', bord: '#ffffff', opacity: 100, vol: 0, hasAudio: !!m.hasAudio, anim: 'fondu' };
+  proj.pistes = proj.pistes || []; proj.pistes.push(p); selP = proj.pistes.length - 1; sel = -1; selA = -1; selCut = -1; commit(); tout(); apercuRetarde();
+  aide('Ajouté dans la piste vidéo 2 : règle sa place et sa taille dans l’inspecteur, ou choisis « Plein écran » pour un plan de coupe.');
+}
+const POS_PISTE = { hg: [24, 22], hd: [76, 22], bg: [24, 74], bd: [76, 74], c: [50, 50] };
+function inspecteurPiste(el) {
+  const p = proj.pistes[selP], md = durOf(p.file);
+  el.innerHTML = `<h3>Piste vidéo 2</h3><div class="mut">${esc(nomOf(p.file))}</div>
+    <label class="l">Affichage</label><select data-p="plein">${opts([['', 'Image dans l’image'], ['plein', 'Plein écran (plan de coupe)']], p.plein ? 'plein' : '')}</select>
+    ${p.plein ? '' : `<label class="l">Place</label><div class="ligne">${[['hg', '↖'], ['hd', '↗'], ['c', '●'], ['bg', '↙'], ['bd', '↘']].map(([k, t]) => `<button class="mini" data-pospiste="${k}" title="Placer">${t}</button>`).join('')}</div>
+      ${sl('Taille', 'scale', 10, 100, 1, ' %', p)}${sl('Position gauche ↔ droite', 'x', 0, 100, 1, ' %', p)}${sl('Position haut ↕ bas', 'y', 0, 100, 1, ' %', p)}
+      <label class="l">Forme</label><select data-p="forme">${opts([['rect', 'Rectangle'], ['arrondi', 'Coins arrondis'], ['rond', 'Rond (tête de la personne)']], p.forme)}</select>
+      <label class="l">Bordure</label><select data-p="bord">${opts([['', 'Aucune'], ['#ffffff', 'Blanche'], ['#000000', 'Noire'], ['#7c5cff', 'Violette'], ['#ffe600', 'Jaune']], p.bord)}</select>`}
+    ${sl('Opacité', 'opacity', 10, 100, 1, ' %', p)}
+    <label class="l">Apparition</label><select data-p="anim">${opts([['', 'Directe'], ['fondu', 'Fondu']], p.anim || '')}</select>
+    ${sl('Début (dans la vidéo)', 'start', 0, Math.max(10, Math.ceil(total())), 0.1, ' s', p)}
+    ${p.kind === 'image' ? sl('Durée', 'dur', 0.3, 60, 0.1, ' s', p) : sl('Début dans le fichier', 'in', 0, Math.max(0.3, md - 0.3), 0.1, ' s', p) + sl('Fin dans le fichier', 'out', 0.3, Math.max(0.3, md), 0.1, ' s', p)}
+    ${p.kind === 'video' && p.hasAudio ? sl('Son de cette vidéo (0 = muet)', 'vol', 0, 200, 5, ' %', p) : ''}
+    <button id="bRmA" style="margin-top:10px">Retirer de la piste</button>`;
+  el.dataset.root = 'v';
+}
+
 // ---------- Actions d'ajout ----------
-function insererClip(c) { const i = sel >= 0 ? sel + 1 : proj.clips.length; proj.clips.splice(i, 0, c); commit(); sel = i; selA = -1; tout(); placerTete(starts()[i]); }
+function insererClip(c) { const i = sel >= 0 ? sel + 1 : proj.clips.length; proj.clips.splice(i, 0, c); commit(); sel = i; selA = -1; selP = -1; tout(); placerTete(starts()[i]); }
 function ajouterFx(i, id) {
   const c = proj.clips[i]; if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
   const d = fxDef(CAT.video, id), p = {}; d.params.forEach(q => { p[q.k] = q.def; }); c.fx.push({ id, p }); sel = i; commit(); tout(); apercu();
@@ -554,7 +588,7 @@ function ecranPret(id) {
 // ---------- Timeline ----------
 const kindIcon = c => ({ video: '', image: '', audio: '🎙 ', solid: '▭ ' }[c.kind] || '');
 function tlDessin() {
-  const st = starts(), T = total(), W = Math.max(T, ...proj.audio.map(a => (a.start || 0) + durOf(a.file)), 10) + 6;
+  const st = starts(), T = total(), W = Math.max(T, ...proj.audio.map(a => (a.start || 0) + durOf(a.file)), ...(proj.pistes || []).map(p => p.start + dureePiste(p)), 10) + 6;
   $('#lane').style.width = (W * zoom + 60) + 'px';
   let r = ''; const pas = zoom >= 80 ? 1 : zoom >= 36 ? 2 : zoom >= 18 ? 5 : 10;
   for (let s = 0; s < W; s += pas) r += `<i style="left:${s * zoom}px">${s >= 60 ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : s + 's'}</i>`;
@@ -579,11 +613,21 @@ function tlDessin() {
     const d = durOf(a.file);
     return `<div class="aud ${i === selA ? 'sel' : ''}" data-a="${i}" style="top:${8 + ligne[i] * 44}px;height:40px;bottom:auto;left:${(a.start || 0) * zoom}px;width:${Math.max(30, d * zoom)}px;background-image:url('/api/wave?file=${enc(a.file)}&w=1200&h=60')">🎵 ${esc(nomOf(a.file))}${a.duck ? ' ⤵' : ''}</div>`;
   }).join('');
+  // pistes vidéo au-dessus : rangées automatiques, la plus haute passe devant
+  const fv = [], lv = [];
+  (proj.pistes || []).map((p, i) => i).sort((x, y) => proj.pistes[x].start - proj.pistes[y].start).forEach(i => {
+    const p = proj.pistes[i]; let r = fv.findIndex(e => e <= p.start + 0.01); if (r < 0) { r = fv.length; fv.push(0); } fv[r] = p.start + dureePiste(p); lv[i] = r; p.ligne = r;
+  });
+  $('#pV2').style.height = (Math.max(1, fv.length) * 44 + 8) + 'px';
+  $('#pV2').innerHTML = '<span class="etiq">VIDÉO 2 (image dans l’image, plans de coupe) — glisse un média ici</span>' + (proj.pistes || []).map((p, i) => {
+    const bg = p.kind === 'image' ? `/media/${enc(p.file)}` : `/api/frame?file=${enc(p.file)}&t=${(p.in + 0.3).toFixed(1)}`;
+    return `<div class="pv ${i === selP ? 'sel' : ''}" data-p="${i}" style="top:${4 + (fv.length - 1 - lv[i]) * 44}px;left:${p.start * zoom}px;width:${Math.max(26, dureePiste(p) * zoom)}px;background-image:url('${bg}')"><i class="hl"></i><i class="hr"></i>${p.plein ? '⛶' : '⧉'} ${esc(nomOf(p.file))}</div>`;
+  }).join('');
   $('#duree').textContent = proj.clips.length ? 'Durée : ' + fmt(T) : '';
   tete();
   const has = sel >= 0;
   ['#bCouper', '#bDup'].forEach(s => { $(s).disabled = !has; });
-  $('#bSuppr').disabled = !has && selA < 0;
+  $('#bSuppr').disabled = !has && selA < 0 && selP < 0;
   $('#bGauche').disabled = !has || sel === 0; $('#bDroite').disabled = !has || sel === proj.clips.length - 1;
   $('#scrub').max = Math.max(0.1, T); $('#scrub').value = gt;
 }
@@ -607,19 +651,19 @@ function locate(t) { const st = starts(); let i = proj.clips.length - 1; for (le
 let pos = 0;
 function placerTete(t, opts = {}) {
   gt = clamp(t, 0, Math.max(0, total() - 0.001)); const { i, pos: p } = locate(gt); pos = p;
-  if (i !== sel && !opts.sansSelection) { sel = i; selA = -1; selCut = -1; inspecteur(); tlDessin(); if (tab === 'effets' || tab === 'outils') navigateur(); } else tete();
+  if (i !== sel && !opts.sansSelection) { sel = i; selA = -1; selP = -1; selCut = -1; inspecteur(); tlDessin(); if (tab === 'effets' || tab === 'outils') navigateur(); } else tete();
   if (!opts.sansApercu) apercuRetarde();
 }
 $('#pV').addEventListener('click', e => {
   if (presse && presse.bouge) return;
-  const cut = e.target.closest('.cut'); if (cut) { selCut = +cut.dataset.cut; selA = -1; tab = 'transitions'; navigateur(); tlDessin(); return; }
+  const cut = e.target.closest('.cut'); if (cut) { selCut = +cut.dataset.cut; selA = -1; selP = -1; tab = 'transitions'; navigateur(); tlDessin(); return; }
 });
 // Clic, glisser pour réordonner, poignées pour raccourcir
 $('#pV').addEventListener('pointerdown', e => {
   const el = e.target.closest('.clip'); if (!el) return;
   const i = +el.dataset.i, c = proj.clips[i], x0 = e.clientX, mode = e.target.classList.contains('hl') ? 'gauche' : e.target.classList.contains('hr') ? 'droite' : 'deplace';
   const r = $('#lane').getBoundingClientRect(), st0 = starts()[i];
-  presse = { bouge: false }; if (sel !== i) { sel = i; selA = -1; selCut = -1; inspecteur(); tlDessin(); navigateur(); }
+  presse = { bouge: false }; if (sel !== i) { sel = i; selA = -1; selP = -1; selCut = -1; inspecteur(); tlDessin(); navigateur(); }
   const copie = clone(c), el2 = () => document.querySelector(`.clip[data-i="${i}"]`);
   const mv = ev => {
     const dx = ev.clientX - x0; if (Math.abs(dx) > 5) presse.bouge = true; if (!presse.bouge) return;
@@ -644,9 +688,24 @@ $('#pV').addEventListener('pointerdown', e => {
   };
   document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
 });
+// Piste vidéo 2 : déplacer, raccourcir par les bords
+$('#pV2').addEventListener('pointerdown', e => {
+  const el = e.target.closest('.pv'); if (!el) return;
+  selP = +el.dataset.p; sel = -1; selA = -1; selCut = -1; inspecteur(); tlDessin(); navigateur();
+  const p = proj.pistes[selP], x0 = e.clientX, c0 = { ...p }, mode = e.target.classList.contains('hl') ? 'g' : e.target.classList.contains('hr') ? 'd' : 'm'; let bouge = false;
+  const mv = ev => {
+    const ds = (ev.clientX - x0) / zoom; if (Math.abs(ev.clientX - x0) > 3) bouge = true; if (!bouge) return;
+    if (mode === 'm') p.start = Math.max(0, +(c0.start + ds).toFixed(1));
+    else if (mode === 'd') { if (p.kind === 'image') p.dur = Math.max(0.3, +(c0.dur + ds).toFixed(1)); else p.out = clamp(+(c0.out + ds).toFixed(1), p.in + 0.3, durOf(p.file) || c0.out + 600); }
+    else { const d = clamp(ds, -c0.start, (p.kind === 'image' ? c0.dur : c0.out - c0.in) - 0.3); p.start = +(c0.start + d).toFixed(1); if (p.kind === 'image') p.dur = +(c0.dur - d).toFixed(1); else p.in = clamp(+(c0.in + d).toFixed(1), 0, p.out - 0.3); }
+    tlDessin();
+  };
+  const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); if (bouge) { commit(); inspecteur(); apercuRetarde(); } };
+  document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
+});
 $('#pA').addEventListener('pointerdown', e => {
   const el = e.target.closest('.aud'); if (!el) return;
-  selA = +el.dataset.a; sel = -1; selCut = -1; inspecteur(); tlDessin(); navigateur();
+  selA = +el.dataset.a; selP = -1; sel = -1; selCut = -1; inspecteur(); tlDessin(); navigateur();
   const a = proj.audio[selA], x0 = e.clientX, s0 = a.start || 0; let bouge = false;
   const mv = ev => { bouge = true; a.start = Math.max(0, +(s0 + (ev.clientX - x0) / zoom).toFixed(1)); tlDessin(); };
   const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); if (bouge) commit(); };
@@ -661,7 +720,8 @@ $('#pA').addEventListener('pointerdown', e => {
 
 // ---------- Édition ----------
 function supprimer() {
-  if (selA >= 0) { proj.audio.splice(selA, 1); selA = -1; }
+  if (selP >= 0) { proj.pistes.splice(selP, 1); selP = -1; }
+  else if (selA >= 0) { proj.audio.splice(selA, 1); selA = -1; selP = -1; }
   else if (sel >= 0) { proj.clips.splice(sel, 1); sel = Math.min(sel, proj.clips.length - 1); if (proj.clips.length) placerTete(Math.min(gt, total()), { sansApercu: true }); }
   else return;
   commit(); tout(); apercu();
@@ -698,7 +758,7 @@ $('#format').onchange = e => { proj.format = e.target.value; commit(); apercu();
 
 // ---------- Visionneuse et lecture ----------
 let minuteur = null, jeton = 0, lecture = null;
-function choisir(i) { sel = i; selA = -1; selCut = -1; tout(); placerTete(starts()[i] || 0); }
+function choisir(i) { sel = i; selA = -1; selP = -1; selCut = -1; tout(); placerTete(starts()[i] || 0); }
 function reglerScrub() { $('#scrub').max = Math.max(0.1, total()); tete(); }
 $('#scrub').oninput = e => { stopLecture(); placerTete(+e.target.value); };
 function apercuRetarde() { clearTimeout(minuteur); minuteur = setTimeout(apercu, 180); }
@@ -712,13 +772,38 @@ $('#stage').addEventListener('click', e => {
 });
 async function apercu() {
   if (lecture) return;
-  const c = curClip(); if (!c) { vide(); return; }
-  const mon = ++jeton;
+  const ici = locate(gt), c = curClip() || proj.clips[ici.i]; if (!c) { vide(); return; }
+  const mon = ++jeton, t = curClip() ? pos : ici.pos;
   try {
-    const r = await api('/api/preview', { method: 'POST', body: JSON.stringify({ project: { format: proj.format, fps: proj.fps }, clip: c, t: pos }) });
+    const r = await api('/api/preview', { method: 'POST', body: JSON.stringify({ project: { format: proj.format, fps: proj.fps }, clip: c, t }) });
     const url = URL.createObjectURL(await r.blob()); if (mon !== jeton || lecture) return;
-    $('#stage').innerHTML = `<img src="${url}" alt="Aperçu">`;
+    $('#stage').innerHTML = `<img src="${url}" alt="Aperçu">`; pistesApercu();
   } catch (e) { if (mon === jeton && !lecture) $('#stage').innerHTML = `<div class="vide err">${esc(e.message)}</div>`; }
+}
+// Piste vidéo 2 dans l'aperçu (image fixe) : éléments visibles à la tête de lecture, posés par-dessus
+function pistesApercu() {
+  const st = $('#stage'), img = st.querySelector('img'); if (!img) return;
+  const actifs = (proj.pistes || []).map((p, i) => ({ p, i })).filter(({ p }) => gt >= p.start && gt < p.start + dureePiste(p)).sort((a, b) => (a.p.ligne || 0) - (b.p.ligne || 0));
+  if (!actifs.length) return;
+  const poser = () => {
+    const r = img.getBoundingClientRect(), r0 = st.getBoundingClientRect(), box = document.createElement('div'); box.className = 'pv2';
+    Object.assign(box.style, { left: (r.left - r0.left) + 'px', top: (r.top - r0.top) + 'px', width: r.width + 'px', height: r.height + 'px' });
+    for (const { p } of actifs) {
+      const im = document.createElement('img'); im.alt = '';
+      im.src = p.kind === 'image' ? '/media/' + enc(p.file) : `/api/frame?file=${enc(p.file)}&t=${(p.in + gt - p.start).toFixed(2)}`;
+      im.style.opacity = (p.opacity || 100) / 100;
+      if (p.plein) Object.assign(im.style, { left: 0, top: 0, width: '100%', height: '100%', objectFit: 'cover' });
+      else {
+        const w = r.width * p.scale / 100;
+        Object.assign(im.style, { width: w + 'px', left: (r.width * p.x / 100) + 'px', top: (r.height * p.y / 100) + 'px', transform: 'translate(-50%,-50%)', objectFit: 'cover',
+          borderRadius: p.forme === 'rond' ? '50%' : p.forme === 'arrondi' ? (w * 0.08) + 'px' : '0', border: p.bord ? `${Math.max(2, Math.round(w * 0.02))}px solid ${p.bord}` : 'none' });
+        if (p.forme === 'rond') im.style.height = w + 'px';
+      }
+      box.appendChild(im);
+    }
+    st.appendChild(box);
+  };
+  if (img.complete && img.naturalWidth) poser(); else img.addEventListener('load', poser, { once: true });
 }
 function stopLecture() { if (lecture) { lecture.video.pause(); lecture = null; $('#bPlay').textContent = '▶ Lire'; apercu(); } }
 function majApercuEtat() { if (rendu && rendu.sig !== snap()) { rendu.perime = true; } }
@@ -816,6 +901,7 @@ function optsFond(cur) {
 }
 function inspecteur() {
   const el = $('#insp'), keep = el.scrollTop;
+  if (selP >= 0 && proj.pistes && proj.pistes[selP]) { inspecteurPiste(el); el.scrollTop = keep; return; }
   if (selA >= 0 && proj.audio[selA]) {
     const a = proj.audio[selA];
     el.innerHTML = `<h3>Piste audio</h3><div class="mut">${esc(nomOf(a.file))}</div>${sl('Volume', 'vol', 0, 200, 5, ' %', a)}${sl('Début (dans la vidéo)', 'start', 0, Math.max(10, Math.ceil(total())), 0.1, ' s', a)}
@@ -868,8 +954,9 @@ function inspecteur() {
     <button id="bAddOv" style="margin-top:6px;width:100%">＋ Ajouter un calque</button><p class="mut">Onglet « Calques » (touche <kbd>8</kbd>) : animations sur fond vert, fuites de lumière, neige, cadres, stickers…</p></details>
   <details ${c.subs.length ? 'open' : ''}><summary>Sous-titres (${c.subs.length})</summary>
     ${c.subs.map((s, i) => `<div class="subrow"><input type="number" step="0.1" min="0" data-sub="${i}:s" value="${s.s}" title="Début (s)"><input type="number" step="0.1" min="0" data-sub="${i}:e" value="${s.e}" title="Fin (s)"><input type="text" data-sub="${i}:t" value="${esc(s.t)}"><button class="mini" data-rmsub="${i}">✕</button></div>`).join('')}
+    ${k === 'video' || k === 'audio' ? `<button id="bSubAuto" class="pri" style="width:100%;margin-top:6px">✨ Sous-titres automatiques (écoute ta voix)</button>` : ''}
     <div class="ligne" style="margin-top:6px"><button id="bAddSub">＋ Ligne ici</button><button id="bSrt">Importer .srt</button></div><input type="file" id="fSrt" accept=".srt,text/plain" hidden>
-    <label class="l">Style</label><select data-p="subStyle">${opts([['contour', 'Contour noir'], ['jaune', 'Jaune'], ['bandeau', 'Bandeau sombre']], c.subStyle)}</select>${sl('Taille', 'subSize', 2, 10, 0.2, '', c)}
+    <label class="l">Style</label><select data-p="subStyle">${opts([['contour', 'Contour noir'], ['jaune', 'Jaune'], ['bandeau', 'Bandeau sombre'], ['tiktok', 'Mot à mot (TikTok)']], c.subStyle)}</select>${sl('Taille', 'subSize', 2, 10, 0.2, '', c)}
   </details>
   ${k === 'video' || k === 'image' ? `<details ${c.key.on ? 'open' : ''}><summary>Fond vert</summary>
     ${chk('Remplacer le fond de ce clip', 'key.on', c)}
@@ -885,7 +972,7 @@ function inspecteur() {
 $('#insp').addEventListener('input', e => {
   const t = e.target, d = t.dataset;
   if (d.sub) { const [i, f] = d.sub.split(':'); const c = curClip(); c.subs[+i][f] = f === 't' ? t.value : +t.value; commit(true); apercuRetarde(); return; }
-  if (!d.p) return; const root = $('#insp').dataset.root === 'a' ? proj.audio[selA] : curClip(); if (!root) return;
+  if (!d.p) return; const root = racineInsp(); if (!root) return;
   const v = t.type === 'checkbox' ? t.checked : (t.type === 'range' || t.type === 'number') ? +t.value : t.value;
   setP(root, d.p, v); const lab = document.getElementById(idOf(d.p)); if (lab) lab.textContent = (typeof v === 'number' ? +v.toFixed(2) : v) + (d.u || '');
   if (t.type === 'checkbox' || t.tagName === 'SELECT') return;
@@ -899,13 +986,16 @@ $('#insp').addEventListener('change', e => {
   if (d.ovfile !== undefined && c) { const o = c.overlays[+d.ovfile]; o.file = t.value; o.kind = (t.selectedOptions[0] && t.selectedOptions[0].dataset.kind) || 'image'; commit(); apercu(); return; }
   if (d.lutsel !== undefined && c) { c.lut = t.value ? { file: t.value, amount: c.lut ? c.lut.amount : 100 } : null; commit(); inspecteur(); apercu(); return; }
   if (d.bgfile !== undefined && c) { c.key.bgFile = t.value; c.key.bgKind = (t.selectedOptions[0] && t.selectedOptions[0].dataset.kind) || 'image'; commit(); apercu(); return; }
-  if (!d.p) return; const root = $('#insp').dataset.root === 'a' ? proj.audio[selA] : c; if (!root) return;
-  const v = t.type === 'checkbox' ? t.checked : t.value; setP(root, d.p, v);
+  if (!d.p) return; const root = racineInsp(); if (!root) return;
+  let v = t.type === 'checkbox' ? t.checked : t.value; if ($('#insp').dataset.root === 'v' && d.p === 'plein') v = v === 'plein'; setP(root, d.p, v);
+  if ($('#insp').dataset.root === 'v') { commit(); inspecteur(); tlDessin(); apercuRetarde(); return; }
   if (['key.on', 'key.bgType', 'viz.type'].includes(d.p) || /^overlays\.\d+\.(mode|plein|key)$/.test(d.p)) inspecteur();
   suite(d.p);
 });
+const racineInsp = () => ({ a: proj.audio[selA], v: (proj.pistes || [])[selP] })[$('#insp').dataset.root] || curClip();
 function suite(path, glisse) {
   commit(glisse);
+  if ($('#insp').dataset.root === 'v') { tlDessin(); apercuRetarde(); return; }
   if (['in', 'out', 'speed', 'dur', 'start'].includes(path)) { const c = curClip(); if (c && ['in', 'out'].includes(path) && c.out - c.in < 0.2) { path === 'in' ? c.in = c.out - 0.2 : c.out = c.in + 0.2; } reglerScrub(); tlDessin(); }
   else if (!/^(fx|afx|overlays|titre|viz)\./.test(path)) tlDessin();
   if ($('#insp').dataset.root !== 'a') apercuRetarde();
@@ -914,7 +1004,9 @@ $('#insp').addEventListener('click', e => {
   const t = e.target, c = curClip(), d = t.dataset;
   if (t.id === 'bPipette') return pipette();
   if (t.id === 'bRmA') return supprimer();
+  if (d.pospiste) { const p = proj.pistes[selP]; [p.x, p.y] = POS_PISTE[d.pospiste]; commit(); inspecteur(); return apercuRetarde(); }
   if (t.id === 'bAddOv') { const m = medias.find(x => x.kind === 'image') || medias.find(x => x.kind === 'video'); return ajouterCalque(m ? m.file : 'lib:' + (LIB().stickers[0] || {}).file, m ? m.kind : 'image'); }
+  if (t.id === 'bSubAuto') { const st = c.subStyle && c.subStyle !== 'contour' ? c.subStyle : paroleOpts().style; t.disabled = true; outilParole('clip', { sous: true, couper: false, style: st }, null).finally(() => { t.disabled = false; inspecteur(); }); return; }
   if (t.id === 'bAddSub') { const loc = clamp(pos, 0, effDur(c)); c.subs.push({ s: +loc.toFixed(1), e: +Math.min(effDur(c), loc + 2.5).toFixed(1), t: 'Ton sous-titre' }); commit(); inspecteur(); return apercu(); }
   if (t.id === 'bSrt') return $('#fSrt').click();
   if (t.id === 'bClavier') { const f = LIB().sons.find(x => x.id === 'clavier-rafale'); if (f) ajouterSon('lib:' + f.file, { start: +(starts()[sel] + (c.titre.start || 0)).toFixed(1), vol: 80 }); sel = starts().length ? sel : sel; return; }
@@ -949,10 +1041,87 @@ function pipette() {
   $('#pipOk').onclick = fermer;
 }
 
+// ---------- Parole : sous-titres automatiques, coupe des blancs et des « euh » (reconnaissance locale, parole.js) ----------
+const PAROLE_DEF = { style: 'bandeau', priseSous: false, priseCoupe: false };
+const paroleOpts = () => { try { return { ...PAROLE_DEF, ...JSON.parse(localStorage.getItem('qm:parole') || '{}') }; } catch (e) { return { ...PAROLE_DEF }; } };
+const paroleGarder = o => { try { localStorage.setItem('qm:parole', JSON.stringify(o)); } catch (e) { /* stockage indisponible */ } };
+const STYLES_SOUS = [['bandeau', 'Phrases sur bandeau sombre'], ['contour', 'Phrases, contour noir'], ['jaune', 'Phrases en jaune'], ['tiktok', 'Mot à mot, gros et centré (TikTok, Reels)']];
+// La reconnaissance est installée une seule fois (téléchargement proposé au premier usage)
+async function assurerEcoute(surEtat) {
+  const e = await (await api('/api/parole')).json();
+  if (!e.dispo) throw new Error('La reconnaissance de la voix n’est pas disponible sur cet ordinateur.');
+  if (e.ecoute.installee) return;
+  if (!confirm(`Première utilisation : QuentMovie va télécharger la reconnaissance de la voix (${e.ecoute.mo} Mo, une seule fois). Elle fonctionne ensuite sans internet. Continuer ?`)) throw new Error('Installation annulée.');
+  await installerParole('ecoute', j => surEtat(`⬇ ${j.step || 'Téléchargement'} ${Math.round((j.progress || 0) * 100)} %`));
+}
+const ecoutes = new Map(); // résultats gardés pour la session (même clip = pas de nouvelle écoute)
+async function ecouterClip(c, surEtat) {
+  const cle = `${c.file}|${c.in}|${c.out}`; if (ecoutes.has(cle)) return ecoutes.get(cle);
+  const { id } = await (await api('/api/parole/ecouter', { method: 'POST', body: JSON.stringify({ file: c.file, in: c.in, out: c.out }) })).json();
+  const r = await suivreTravail(id, () => surEtat('🎧 Écoute de la voix…'));
+  ecoutes.set(cle, r); return r;
+}
+// Sous-titres d'une liste de passages (heures relatives au début du média), pour la partie [a, b] du clip
+function sousTitresPour(r, style, a, b, speed) {
+  return (style === 'tiktok' ? r.st.mots : r.st.phrase).filter(x => x.s >= a - 0.05 && x.s < b).map(x => ({ s: +((Math.max(x.s, a) - a) / speed).toFixed(2), e: +((Math.min(x.e, b) - a) / speed).toFixed(2), t: x.t }));
+}
+// i : index du clip ; renvoie le nombre de secondes retirées (coupe) ou de sous-titres créés
+function paroleAppliquer(i, r, { sous, couper, style }) {
+  const c = proj.clips[i], sp = c.speed || 1, dur = c.out - c.in;
+  if (!couper) {
+    if (sous) { c.subs = sousTitresPour(r, style, 0, dur + 1, sp); c.subStyle = style; if (style === 'tiktok') c.subSize = Math.max(c.subSize || 0, 6.5); }
+    return { pieces: 1, gagne: 0, n: sous ? c.subs.length : 0 };
+  }
+  const segs = r.garder.filter(([x, y]) => y > x + 0.15 && x < dur);
+  if (!segs.length) return { pieces: 1, gagne: 0, n: 0 };
+  const nouveaux = segs.map(([x, y], k) => {
+    const n = clone(c); n.in = +(c.in + x).toFixed(2); n.out = +(c.in + Math.min(y, dur)).toFixed(2); n.transition = k === segs.length - 1 ? c.transition : null;
+    // calques et titre animés : gardés dans le morceau où ils apparaissent, à la même place dans la parole
+    n.overlays = (c.overlays || []).filter(o => o.start * sp >= x && o.start * sp < y).map(o => ({ ...o, start: +((o.start * sp - x) / sp).toFixed(2) }));
+    n.titre = c.titre && c.titre.start * sp >= x && c.titre.start * sp < y ? { ...c.titre, start: +((c.titre.start * sp - x) / sp).toFixed(2) } : (k === 0 && c.titre && c.titre.start * sp < x ? { ...c.titre, start: 0 } : null);
+    n.subs = sous ? sousTitresPour(r, style, x, y, sp) : [];
+    if (sous) { n.subStyle = style; if (style === 'tiktok') n.subSize = Math.max(n.subSize || 0, 6.5); }
+    return n;
+  });
+  const garde = segs.reduce((a, [x, y]) => a + Math.min(y, dur) - x, 0);
+  proj.clips.splice(i, 1, ...nouveaux);
+  return { pieces: nouveaux.length, gagne: (dur - garde) / sp, n: nouveaux.reduce((a, n) => a + n.subs.length, 0) };
+}
+// Sous-titrer et/ou couper une liste de clips (indices) ; surEtat(texte) pour suivre
+async function parolePourClips(indices, o, surEtat = t => aide(t)) {
+  await assurerEcoute(surEtat);
+  const liste = indices.filter(i => proj.clips[i] && ['video', 'audio'].includes(proj.clips[i].kind) && proj.clips[i].hasAudio !== false).sort((a, b) => b - a); // de la fin vers le début : les indices restent justes
+  if (!liste.length) throw new Error('Aucun clip avec du son à écouter.');
+  let gagne = 0, n = 0, k = 0;
+  for (const i of liste) {
+    k++; const r = await ecouterClip(proj.clips[i], t => surEtat(`${t} (clip ${k} sur ${liste.length})`));
+    const x = paroleAppliquer(i, r, o); gagne += x.gagne; n += x.n;
+  }
+  commit(); sel = Math.min(Math.max(0, sel), proj.clips.length - 1); tout(); apercu();
+  return { gagne, n, clips: liste.length };
+}
+async function outilParole(portee, o, res) {
+  const e = t => { if (res) res.innerHTML = t; aide(t); };
+  const indices = portee === 'tout' ? proj.clips.map((c, i) => i) : sel >= 0 ? [sel] : [];
+  if (!indices.length) return alert('Sélectionne un clip vidéo ou audio dans la timeline.');
+  try {
+    const r = await parolePourClips(indices, o, e);
+    e(`✅ ${o.sous ? `${r.n} sous-titres créés` : ''}${o.sous && o.couper ? ' · ' : ''}${o.couper ? `${fmt(r.gagne)} de blancs et d’hésitations coupés` : ''} (${r.clips} clip${r.clips > 1 ? 's' : ''}). Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} si besoin.`);
+  } catch (er) { e(`<span class="err">${esc(er.message)}</span>`); }
+}
 // ---------- Outils : silences, diaporama, podcast, voix off ----------
 function outilsHtml() {
   const audios = medias.filter(m => m.kind === 'audio'), imgs = medias.filter(m => m.kind === 'image');
-  return `<div class="encart"><h4>✂ Couper les silences (vlog, podcast)</h4><p class="mut">Supprime automatiquement les blancs du clip sélectionné pour un montage dynamique.</p>
+  const po = paroleOpts();
+  return `<div class="encart"><h4>💬 Sous-titres automatiques</h4><p class="mut">QuentMovie écoute ta voix et écrit les sous-titres au bon moment (sans internet, sur ton Mac). Les « euh » ne sont pas écrits.</p>
+      <label class="l">Style</label><select id="oSousStyle">${opts(STYLES_SOUS, po.style)}</select>
+      <div class="ligne" style="margin-top:8px"><button class="pri" data-outil="sous-clip">Clip sélectionné</button><button class="pri" data-outil="sous-tout">Toute la vidéo</button></div>
+      <div class="sw2"><input type="checkbox" id="oPriseSous" ${po.priseSous ? 'checked' : ''}><label for="oPriseSous">Sous-titrer automatiquement mes prises du studio</label></div><div class="mut" id="oSousRes" style="margin-top:4px"></div></div>
+    <div class="encart"><h4>✂ Couper les blancs et les « euh »</h4><p class="mut">Garde seulement les moments où tu parles : les blancs, les hésitations et les « euh » sont retirés. Les sous-titres sont recalés.</p>
+      <div class="ligne"><button class="pri" data-outil="coupe-clip">Clip sélectionné</button><button class="pri" data-outil="coupe-tout">Toute la vidéo</button></div>
+      <div class="sw2"><input type="checkbox" id="oPriseCoupe" ${po.priseCoupe ? 'checked' : ''}><label for="oPriseCoupe">Couper automatiquement mes prises du studio</label></div><div class="mut" id="oCoupeRes" style="margin-top:4px"></div></div>
+    <div class="encart"><h4>🗣 Voix</h4><p class="mut">Voix naturelles pour le générateur et les voix off, reconnaissance de la voix, voix Premium du Mac.</p><button data-outil="voix" style="width:100%">Gérer les voix</button><div id="oVoixZone"></div></div>
+    <div class="encart"><h4>✂ Couper les silences, méthode simple (vlog, podcast)</h4><p class="mut">Sans reconnaissance de la voix : coupe tout ce qui est sous un volume choisi.</p>
       <label class="l">Seuil de silence<span id="oDbV">−35 dB</span></label><input type="range" id="oDb" min="-60" max="-20" value="-35">
       <label class="l">Silence minimal<span id="oMinV">0,5 s</span></label><input type="range" id="oMin" min="0.2" max="2" step="0.1" value="0.5">
       <label class="l">Marge conservée<span id="oMarV">0,10 s</span></label><input type="range" id="oMar" min="0" max="0.4" step="0.02" value="0.1">
@@ -985,6 +1154,10 @@ function outilsHtml() {
       <button data-outil="maj" style="width:100%">Rechercher une mise à jour</button></div>
     <div class="encart"><h4>⌨ Raccourcis clavier</h4><button data-outil="aide" style="width:100%">Afficher tous les raccourcis (?)</button></div>`;
 }
+$('#navbody').addEventListener('change', e => {
+  const k = { oSousStyle: 'style', oPriseSous: 'priseSous', oPriseCoupe: 'priseCoupe' }[e.target.id]; if (!k) return;
+  const o = paroleOpts(); o[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; paroleGarder(o);
+});
 $('#navbody').addEventListener('input', e => {
   const m = { oDb: ['oDbV', v => `−${Math.abs(v)} dB`], oMin: ['oMinV', v => fmt(+v)], oMar: ['oMarV', v => (+v).toFixed(2).replace('.', ',') + ' s'], oDur: ['oDurV', v => fmt(+v)] }[e.target.id];
   if (m) $('#' + m[0]).textContent = m[1](e.target.value);
@@ -994,6 +1167,10 @@ async function outil(nom) {
   if (nom === 'aide') return afficherAide();
   if (nom === 'studio') return ouvrirStudio();
   if (nom === 'generer') return ouvrirGenerateur();
+  if (nom === 'voix') return gererVoix($('#oVoixZone'));
+  if (/^(sous|coupe)-(clip|tout)$/.test(nom)) { const [q, p] = nom.split('-'), st = $('#oSousStyle') ? $('#oSousStyle').value : paroleOpts().style;
+    const o = { sous: q === 'sous' || (q === 'coupe' && proj.clips.some(c => c.subs && c.subs.length)), couper: q === 'coupe', style: st };
+    return outilParole(p, o, $(q === 'sous' ? '#oSousRes' : '#oCoupeRes')); }
   if (nom === 'maj') return verifierMaj(true);
   if (nom === 'packs') { allerOnglet('outils'); const e = $('#encartPacks'); if (e) e.scrollIntoView({ block: 'start' }); return; }
   if (nom === 'packs-ouvrir') { const r = await (await api('/api/packs/ouvrir', { method: 'POST' })).json(); aide('Dossier « Mes packs » : ' + esc(r.dossier) + ' — ajoute tes fichiers puis clique sur « Actualiser ».'); return; }
@@ -1040,8 +1217,8 @@ async function outil(nom) {
     if (proj.clips.length && !confirm('Remplacer la timeline actuelle par le diaporama ? (Tu peux annuler avec ' + (MAC ? '⌘Z' : 'Ctrl+Z') + ')')) return;
     const d = +$('#oDur').value, tr = $('#oTr').value, clips = items.map(m => { const c = newClip(m); if (m.kind === 'image') { c.dur = d; if ($('#oZoom').checked) c.fx.push({ id: 'zoomavant', p: { a: 18 } }); } else c.out = Math.min(m.duration, 8); return c; });
     clips.slice(0, -1).forEach(c => { c.transition = { type: tr, dur: 0.6 }; });
-    proj.clips = clips; proj.audio = $('#oMus').value ? [{ file: 'lib:' + $('#oMus').value, vol: 45, start: 0, fade: true, loop: true, duck: true }] : [];
-    commit(); sel = 0; selA = -1; tout(); placerTete(0); fitZoom();
+    proj.clips = clips; proj.pistes = []; proj.audio = $('#oMus').value ? [{ file: 'lib:' + $('#oMus').value, vol: 45, start: 0, fade: true, loop: true, duck: true }] : [];
+    commit(); sel = 0; selA = -1; selP = -1; tout(); placerTete(0); fitZoom();
   }
 }
 
@@ -1055,13 +1232,13 @@ function demander(titre, defaut) {
     $('#sOk').onclick = () => fin(i.value.trim()); $('#sAnn').onclick = () => fin(null); i.onkeydown = e => { if (e.key === 'Enter') fin(i.value.trim()); if (e.key === 'Escape') fin(null); };
   });
 }
-async function nouveau() { if (proj.clips.length && !confirm('Commencer un nouveau projet ? Pense à enregistrer le projet actuel.')) return; proj = { ...proj, clips: [], audio: [], markers: [] }; sel = selA = selCut = -1; gt = 0; rendu = null; commit(); tout(); apercu(); }
+async function nouveau() { if (proj.clips.length && !confirm('Commencer un nouveau projet ? Pense à enregistrer le projet actuel.')) return; proj = { ...proj, clips: [], audio: [], pistes: [], markers: [] }; sel = selA = selCut = selP = -1; gt = 0; rendu = null; commit(); tout(); apercu(); }
 async function sauver() { const n = await demander('Nom du projet', 'Mon montage'); if (!n) return; await api('/api/projets/' + enc(n), { method: 'PUT', body: snap() }); aide('Projet « ' + esc(n) + ' » enregistré.'); }
 async function ouvrirProjet() {
   const { items } = await (await api('/api/projets')).json();
   ouvrir(`<h2>Ouvrir un projet</h2><div class="liste">${items.map(n => `<button data-pr="${esc(n)}">${esc(n)}</button>`).join('') || '<p class="mut">Aucun projet enregistré.</p>'}</div><button id="fOk" style="margin-top:8px">Fermer</button>`);
   $('#fOk').onclick = fermer;
-  $('#boite').onclick = async e => { const n = e.target.dataset.pr; if (!n) return; proj = await (await api('/api/projets/' + enc(n))).json(); proj.markers = proj.markers || []; proj.audio = proj.audio || []; proj.clips.forEach(normaliser); sel = proj.clips.length ? 0 : -1; selA = selCut = -1; rendu = null; fermer(); commit(); tout(); apercu(); $('#boite').onclick = null; };
+  $('#boite').onclick = async e => { const n = e.target.dataset.pr; if (!n) return; proj = await (await api('/api/projets/' + enc(n))).json(); proj.markers = proj.markers || []; proj.audio = proj.audio || []; proj.pistes = proj.pistes || []; proj.clips.forEach(normaliser); sel = proj.clips.length ? 0 : -1; selA = selCut = selP = -1; rendu = null; fermer(); commit(); tout(); apercu(); $('#boite').onclick = null; };
 }
 $('#bNouveau').onclick = nouveau; $('#bSauver').onclick = sauver; $('#bOuvrir').onclick = ouvrirProjet;
 $('#bUndo').onclick = () => undo(-1); $('#bRedo').onclick = () => undo(1); $('#bAide').onclick = afficherAide;
@@ -1095,6 +1272,57 @@ const M = MAC ? '⌘' : 'Ctrl';
 // ---------- Générateur de vidéos : sujet → texte (Wikipédia), images libres, voix off du Mac, montage ----------
 let gen = null;
 const petiteImage = u => String(u || '').replace(/\/(\d+)px-/, '/400px-');
+// Liste des voix : naturelles intégrées (téléchargées au premier usage), puis voix du Mac (★ = qualité Premium d'Apple)
+function optsVoix(nat, mac, cur) {
+  const o = (v, t) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(t)}</option>`;
+  return (nat.length ? `<optgroup label="Voix naturelles QuentMovie">${nat.map(v => o('piper:' + v.id, v.nom + (v.installee ? '' : ` (téléchargée au 1er usage, ${v.mo} Mo)`))).join('')}</optgroup>` : '') +
+    (mac.length ? `<optgroup label="Voix du Mac">${mac.slice().sort((a, b) => b.premium - a.premium).map(v => o(v.nom, (v.premium ? '★ ' : '') + v.nom + ' (' + v.langue + ')')).join('')}</optgroup>` : '') ||
+    '<option value="">Aucune voix disponible</option>';
+}
+// Installation des voix naturelles et de la reconnaissance de la voix ; voix Premium du Mac
+async function suivreTravail(id, surProgres) {
+  for (;;) { await new Promise(r => setTimeout(r, 500)); const j = await (await api('/api/job?id=' + id)).json(); if (j.error) throw new Error(j.error); surProgres(j); if (j.done) return j.resultat; }
+}
+async function installerParole(quoi, surProgres) {
+  const { id } = await (await api('/api/parole/installer', { method: 'POST', body: JSON.stringify({ quoi }) })).json();
+  return suivreTravail(id, surProgres);
+}
+async function gererVoix(cible, apres) {
+  const e = await (await api('/api/parole')).json();
+  const ligne = (id, nom, info, ok, essai) => `<div class="son" style="gap:6px"><div class="nom" title="${esc(nom)}">${esc(nom)}<small class="mut" style="display:block">${info}</small></div>
+    ${essai ? `<button class="mini" data-vessai="${esc(essai)}" title="Écouter">▶</button>` : ''}${ok ? '<span title="Installée">✅</span>' : `<button class="mini" data-vinst="${esc(id)}">⬇ Installer</button>`}</div>`;
+  cible.innerHTML = `<div class="encart" style="margin-top:8px">
+    ${e.dispo ? `<h4>Voix naturelles QuentMovie</h4><p class="mut">Voix de synthèse libres (Piper), qui tournent sur ton Mac, sans internet une fois installées.</p>` +
+      e.voix.map(v => ligne('voix:' + v.id, v.nom, v.installee ? 'Installée' : `${v.mo} Mo à télécharger une fois`, v.installee, 'piper:' + v.id)).join('') +
+      `<h4 style="margin-top:10px">Reconnaissance de la voix</h4><p class="mut">Pour les sous-titres automatiques et la coupe des blancs et des « euh ». Fonctionne sans internet une fois installée.</p>` +
+      ligne('ecoute', 'Reconnaissance de la parole (français)', e.ecoute.installee ? 'Installée' : `${e.ecoute.mo} Mo à télécharger une fois`, e.ecoute.installee, '')
+      : '<p class="mut">Les voix naturelles ne sont pas disponibles sur cet ordinateur.</p>'}
+    <h4 style="margin-top:10px">Voix du Mac</h4>${e.mac.length ? `<p class="mut">${e.mac.map(v => (v.premium ? '★ ' : '') + esc(v.nom)).join(' · ')}</p>` : '<p class="mut">Aucune voix française du Mac.</p>'}
+    ${e.reglagesMac ? `<p class="mut">Les voix ★ « Premium » d’Apple sont excellentes mais se téléchargent dans les réglages du Mac : clique ci-dessous, puis sur ⓘ à côté de « Voix du système » → Français → choisis une voix « Premium » ou « Améliorée ». Elle apparaît ensuite ici avec une ★.</p>
+      <button id="vReglages" style="width:100%">Ouvrir les réglages des voix du Mac</button>` : ''}
+    <div id="vProg" class="mut" style="margin-top:6px"></div></div>`;
+  cible.onclick = async ev => {
+    const d = ev.target.dataset;
+    if (ev.target.id === 'vReglages') return api('/api/parole/reglages-mac', { method: 'POST' });
+    if (d.vessai) return essaiVoix(d.vessai, 'Bonjour ! Voici la voix que tu peux utiliser pour tes vidéos.', 1, ev.target);
+    if (d.vinst) {
+      cible.querySelectorAll('[data-vinst]').forEach(b => { b.disabled = true; });
+      try { await installerParole(d.vinst, j => { $('#vProg').innerHTML = `<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`; }); }
+      catch (er) { $('#vProg').innerHTML = `<span class="err">${esc(er.message)}</span>`; return; }
+      await gererVoix(cible, apres); if (apres) apres();
+    }
+  };
+}
+// Écoute d'une phrase avec la vraie voix (fichier créé par le moteur)
+async function essaiVoix(voix, texte, vitesse, bouton) {
+  if (window.voixAp) voixAp.pause();
+  const lab = bouton ? bouton.textContent : ''; if (bouton) { bouton.disabled = true; bouton.textContent = voix.startsWith('piper:') ? '⏳ Voix…' : '⏳'; }
+  try {
+    const r = await (await api('/api/parole/essai', { method: 'POST', body: JSON.stringify({ voix: voix.startsWith('piper:') ? voix.slice(6) : 'mac:' + voix, texte, vitesse }) })).json();
+    window.voixAp = new Audio('/media/' + enc(r.file) + '?t=' + Date.now()); voixAp.play().catch(() => {});
+  } catch (e) { alert('Écoute impossible : ' + e.message); }
+  finally { if (bouton) { bouton.disabled = false; bouton.textContent = lab; } }
+}
 async function ouvrirGenerateur() {
   stopLecture();
   gen = { voix: [], defaut: '', prep: null };
@@ -1106,7 +1334,7 @@ async function ouvrirGenerateur() {
   $('#gFermer').onclick = fermer; $('#gChercher').onclick = genChercher;
   $('#gSujet').onkeydown = e => { if (e.key === 'Enter') genChercher(); };
   $('#gSujet').focus();
-  api('/api/generer/voix').then(r => r.json()).then(r => { if (gen) { gen.voix = r.voix; gen.defaut = r.defaut; } }).catch(() => {});
+  api('/api/generer/voix').then(r => r.json()).then(r => { if (gen) { gen.voix = r.voix; gen.naturelles = r.naturelles || []; gen.defaut = r.defaut; } }).catch(() => {});
 }
 async function genChercher() {
   const q = $('#gSujet').value.trim(); if (!q) return;
@@ -1136,13 +1364,14 @@ function genEtape2() {
   $('#gZone').innerHTML = `<label class="l">Titre de la vidéo</label><input type="text" id="gTitre" value="${esc(p.titre)}">
     <p class="mut" style="margin:6px 0">${p.scenes.length} scènes · environ ${fmt(mots / 2.6)} de voix · ${im.length} image${im.length > 1 ? 's' : ''} libre${im.length > 1 ? 's' : ''} · source : Wikipédia, « ${esc(p.article)} ». Corrige le texte comme tu veux : chaque bloc est lu sur une image.</p>
     <div id="gScenes" style="max-height:38vh;overflow:auto">${p.scenes.map(ligneScene).join('')}</div>
-    <div class="ligne" style="margin-top:8px"><label class="l" style="flex:none;margin:0">Voix</label><select id="gVoix">${gen.voix.length ? gen.voix.map(v => `<option value="${esc(v.nom)}" ${v.nom === gen.defaut ? 'selected' : ''}>${esc(v.nom)} (${esc(v.langue)})</option>`).join('') : '<option value="">Voix du Mac (disponibles dans l’application Mac)</option>'}</select><button id="gEcouter" style="flex:none">▶ Écouter</button></div>
+    <div class="ligne" style="margin-top:8px"><label class="l" style="flex:none;margin:0">Voix</label><select id="gVoix">${optsVoix(gen.naturelles || [], gen.voix, gen.defaut)}</select><button id="gEcouter" style="flex:none">▶ Écouter</button></div>
+    <p class="mut" style="margin:2px 0 0"><a href="#" id="gVoixGerer">Gérer les voix…</a> · les voix naturelles se téléchargent une seule fois, au premier usage.</p><div id="gVoixZone"></div>
     <label class="l">Vitesse de la voix<span id="gVitV">175</span></label><input type="range" id="gVit" min="140" max="230" step="5" value="175">
     <label class="l">Musique de fond</label><select id="gMus"><option value="">Sans musique</option>${mus.map(m => `<option value="${esc(m.file)}" ${/piano|ambiance/.test(m.id) ? 'selected' : ''}>${esc(m.nom)}</option>`).join('')}</select>
     <div class="sw2"><input type="checkbox" id="gSous" checked><label for="gSous">Sous-titres</label></div>
     <div class="sw2"><input type="checkbox" id="gOuv" checked><label for="gOuv">Écran titre au début</label></div>
     <div class="sw2"><input type="checkbox" id="gGen" checked><label for="gGen">Générique avec les sources et les auteurs des images (obligatoire si tu publies)</label></div>
-    <p class="mut">La vidéo remplace le projet en cours (${MAC ? '⌘Z' : 'Ctrl+Z'} pour revenir). Astuce : de nouvelles voix françaises de meilleure qualité s’installent dans Réglages Système → Accessibilité → Contenu énoncé → Voix du système.</p>
+    <p class="mut">La vidéo remplace le projet en cours (${MAC ? '⌘Z' : 'Ctrl+Z'} pour revenir).</p>
     <button class="pri" id="gCreer" style="width:100%">🎬 Créer la vidéo</button><div id="gProg" class="mut" style="margin-top:6px"></div>`;
   const z = $('#gZone');
   z.oninput = e => { const t = e.target; if (t.dataset.gtexte !== undefined) p.scenes[+t.dataset.gtexte].texte = t.value; if (t.id === 'gVit') $('#gVitV').textContent = t.value; };
@@ -1150,10 +1379,8 @@ function genEtape2() {
     const t = e.target, d = t.dataset;
     if (d.gimg) { const [i, s] = d.gimg.split(':').map(Number); p.scenes[i].image = (p.scenes[i].image + s + im.length) % im.length; return genEtape2(); }
     if (d.gsuppr !== undefined) { p.scenes.splice(+d.gsuppr, 1); return genEtape2(); }
-    if (t.id === 'gEcouter') { // aperçu de la voix (synthèse vocale du système)
-      const u = new SpeechSynthesisUtterance((p.scenes[0] || {}).texte || p.titre); u.lang = 'fr-FR'; u.rate = +$('#gVit').value / 175;
-      const v = speechSynthesis.getVoices().find(x => x.name.startsWith($('#gVoix').value)); if (v) u.voice = v; speechSynthesis.cancel(); speechSynthesis.speak(u);
-    }
+    if (t.id === 'gEcouter') essaiVoix($('#gVoix').value, ((p.scenes[0] || {}).texte || p.titre).slice(0, 220), +$('#gVit').value / 175, t);
+    if (t.id === 'gVoixGerer') { e.preventDefault(); gererVoix($('#gVoixZone'), () => api('/api/generer/voix').then(r => r.json()).then(r => { gen.voix = r.voix; gen.naturelles = r.naturelles || []; const sel = $('#gVoix'); if (sel) sel.innerHTML = optsVoix(gen.naturelles, gen.voix, sel.value || r.defaut); })); }
     if (t.id === 'gCreer') genCreer();
   };
 }
@@ -1161,7 +1388,7 @@ async function genCreer() {
   const p = gen.prep; p.titre = $('#gTitre').value.trim() || p.titre;
   const o = { voix: $('#gVoix').value, vitesse: +$('#gVit').value, musique: $('#gMus').value, sous: $('#gSous').checked, ouv: $('#gOuv').checked, generique: $('#gGen').checked };
   p.scenes = p.scenes.filter(s => s.texte.trim()); if (!p.scenes.length) return;
-  $('#gCreer').disabled = true; speechSynthesis.cancel();
+  $('#gCreer').disabled = true; if (window.voixAp) voixAp.pause();
   try {
     const { id } = await (await api('/api/generer/creer', { method: 'POST', body: JSON.stringify({ titre: p.titre, scenes: p.scenes, images: p.images, voix: o.voix, vitesse: o.vitesse }) })).json();
     let j;
@@ -1199,8 +1426,8 @@ function monterGeneree(r, p, o) {
     clips.push(c);
   }
   if (clips.length) clips[clips.length - 1].transition = null;
-  proj.clips = clips; proj.audio = o.musique ? [{ file: 'lib:' + o.musique, vol: 22, start: 0, fade: true, loop: true, duck: true }] : []; proj.markers = [];
-  sel = 0; selA = -1; selCut = -1; commit(); tout(); fitZoom(); placerTete(0);
+  proj.clips = clips; proj.pistes = []; proj.audio = o.musique ? [{ file: 'lib:' + o.musique, vol: 22, start: 0, fade: true, loop: true, duck: true }] : []; proj.markers = [];
+  sel = 0; selA = -1; selP = -1; selCut = -1; commit(); tout(); fitZoom(); placerTete(0);
 }
 
 // ---------- Mises à jour automatiques (application Mac) ----------
@@ -1547,8 +1774,14 @@ async function stEnvoyer(morceaux, mime) {
     const j = await (await api('/api/import?name=' + enc(nom), { method: 'POST', body: blob })).json();
     await chargerMedias();
     const m = medias.find(x => x.file === j.file);
-    if (m) { const c = newClip(m); stAppliquerAnimations(c, evts); proj.clips.push(c); sel = proj.clips.length - 1; selA = -1; commit(); tout(); placerTete(starts()[sel]); }
+    if (m) { const c = newClip(m); stAppliquerAnimations(c, evts); proj.clips.push(c); sel = proj.clips.length - 1; selA = -1; selP = -1; commit(); tout(); placerTete(starts()[sel]); }
     stMsg(`✅ Prise ajoutée à la fin de la timeline (${fmt(m ? m.duration : 0)})${evts.length ? `, avec ${evts.length} animation${evts.length > 1 ? 's' : ''}` : ''}.`);
+    const po = paroleOpts();
+    if (m && (po.priseSous || po.priseCoupe)) { // sous-titres et coupe automatiques de la prise (pendant qu'on continue)
+      parolePourClips([proj.clips.length - 1], { sous: po.priseSous, couper: po.priseCoupe, style: po.style }, t => { if (studio) stMsg(t); else aide(t); })
+        .then(r => { const t = `✅ Prise prête${po.priseSous ? ` · ${r.n} sous-titres` : ''}${po.priseCoupe ? ` · ${fmt(r.gagne)} de blancs coupés` : ''}.`; if (studio) stMsg(t); else aide(t); })
+        .catch(er => { const t = `<span class="err">Sous-titres / coupe : ${esc(er.message)}</span>`; if (studio) stMsg(t); else aide(t); });
+    }
   } catch (e) { stMsg(`<span class="err">La prise n’a pas pu être enregistrée : ${esc(e.message)}</span>`); }
   st.envoi = false;
   if (st.fermerApres) { studio = st; studio.rec = null; fermerStudio(); }
@@ -1624,7 +1857,7 @@ document.addEventListener('keydown', e => {
   if (kl === 'f') return f(() => { const s = $('#stage'); if (document.fullscreenElement) document.exitFullscreen(); else s.requestFullscreen && s.requestFullscreen(); });
   if (kl === 't') return f(() => allerOnglet('titres'));
   if (kl === 'z' && e.shiftKey) return f(fitZoom);
-  if (k === 'Delete' || k === 'Backspace') { if (sel >= 0 || selA >= 0) f(supprimer); return; }
+  if (k === 'Delete' || k === 'Backspace') { if (sel >= 0 || selA >= 0 || selP >= 0) f(supprimer); return; }
   if (k === 'ArrowLeft' || k === 'ArrowRight') return f(() => { stopLecture(); placerTete(gt + (k === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 1 : 1 / proj.fps)); });
   if (k === 'ArrowUp' || k === 'ArrowDown') return f(() => { const n = clamp((sel < 0 ? 0 : sel) + (k === 'ArrowUp' ? -1 : 1), 0, proj.clips.length - 1); if (proj.clips.length) { stopLecture(); choisir(n); } });
   if (k === 'Home') return f(() => placerTete(0)); if (k === 'End') return f(() => placerTete(total() - 0.05));
@@ -1643,7 +1876,7 @@ function tout() { tlDessin(); inspecteur(); navigateur(); reglerScrub(); majBout
   $('#etat').textContent = CAT.font ? '' : 'Titres indisponibles (police ou filtre manquant)';
   await chargerMedias(); await chargerPacks();
   try { const s = await (await api('/api/projet')).json(); if (s && Array.isArray(s.clips)) proj = { ...proj, ...s }; } catch (e) {}
-  proj.audio = (proj.audio || []).filter(a => mediaOf(a.file)); proj.markers = proj.markers || [];
+  proj.audio = (proj.audio || []).filter(a => mediaOf(a.file)); proj.pistes = (proj.pistes || []).filter(p => mediaOf(p.file)); proj.markers = proj.markers || [];
   proj.clips = proj.clips.filter(c => c.kind === 'solid' || mediaOf(c.file)).map(normaliser);
   $('#format').value = proj.format; $('#zoom').value = zoom;
   sel = proj.clips.length ? 0 : -1; hist = [snap()]; hi = 0; tout();

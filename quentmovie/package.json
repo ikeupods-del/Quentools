@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -8,12 +8,13 @@
   "scripts": {
     "start": "electron .",
     "serveur": "node server.js",
-    "test": "node tests/run.js && node tests/maj.js && node tests/compositeur.js && node tests/generateur.js",
+    "test": "node tests/run.js && node tests/maj.js && node tests/compositeur.js && node tests/generateur.js && node tests/parole.js && node tests/pistes.js",
     "dist": "electron-builder --mac dmg --arm64 --publish never"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "1.1.0",
-    "ffmpeg-static": "^5.2.0"
+    "ffmpeg-static": "^5.2.0",
+    "sherpa-onnx-node": "1.13.8"
   },
   "devDependencies": {
     "electron": "^33.0.0",
@@ -32,6 +33,8 @@
       "generateur.js",
       "compositeur.js",
       "detoureur.js",
+      "parole.js",
+      "parole-worker.js",
       "modeles/**",
       "!node_modules/@mediapipe/tasks-vision/*.map",
       "!node_modules/@mediapipe/tasks-vision/vision_bundle.cjs",
@@ -42,6 +45,7 @@
     ],
     "asarUnpack": [
       "node_modules/ffmpeg-static/**",
+      "node_modules/sherpa-onnx-*/**",
       "bibliotheque/**"
     ],
     "afterPack": "scripts/adhoc-sign.js",

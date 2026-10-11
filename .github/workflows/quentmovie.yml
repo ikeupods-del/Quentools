@@ -35,9 +35,11 @@ jobs:
       - name: Contrôler le moteur (effets, transitions, export)
         run: npm test
       - name: Contrôler le moteur sans ffprobe (comme sur un Mac à puce Apple sans Rosetta)
-        run: QM_SANS_FFPROBE=1 node tests/run.js | tail -5 && QM_SANS_FFPROBE=1 node tests/generateur.js
+        run: QM_SANS_FFPROBE=1 node tests/run.js | tail -5 && QM_SANS_FFPROBE=1 node tests/generateur.js && QM_SANS_FFPROBE=1 node tests/pistes.js
       - name: Essai réel du générateur (Wikipédia, images, voix du Mac, montage)
         run: QM_RESEAU=1 QM_SANS_FFPROBE=1 node tests/generateur-reel.js
+      - name: Essai réel des voix naturelles et de la reconnaissance de la voix (téléchargement des modèles)
+        run: QM_RESEAU=1 node tests/parole.js
       - name: Construire l'application
         run: npm run dist
       - name: Contrôler que chaque programme livré tourne sur puce Apple

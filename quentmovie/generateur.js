@@ -9,7 +9,7 @@ const path = require('path');
 const { execFile } = require('child_process');
 const { requete } = require('./maj');
 
-const UA = 'QuentMovie/1.6 (logiciel de montage personnel ; https://github.com/ikeupods-del/Quentools)';
+const UA = 'QuentMovie/1.7 (logiciel de montage personnel ; https://github.com/ikeupods-del/Quentools)';
 const MOTS_PAR_SECONDE = 2.6; // débit moyen d'une voix française de macOS à vitesse normale
 
 // « génère moi une vidéo sur l'histoire de Michelin » → titre « L'histoire de Michelin », recherche « Michelin »
@@ -53,9 +53,13 @@ function construireScript(extrait, dureeSec) {
   const budget = Math.max(25, dureeSec * MOTS_PAR_SECONDE), choisies = [];
   let mots = 0;
   for (const b of ordre) {
+    // l'introduction présente le sujet en une ou deux phrases, puis on raconte l'histoire (si l'article en a une)
+    let dansBloc = 0; const maxBloc = b === utiles[0] && histoire.length ? Math.max(18, budget * 0.22) : Infinity;
     for (const p of phrases(b.texte).map(nettoyerPhrase)) {
       const n = nbMots(p);
       if (n < 5 || n > 48) continue;
+      if (dansBloc && dansBloc + n > maxBloc) break;
+      dansBloc += n;
       if (mots + n > budget * 1.1) return grouper(choisies);
       choisies.push(p); mots += n;
     }
@@ -86,7 +90,7 @@ function imageDe(page) {
     licence: texteSimple(m.LicenseShortName && m.LicenseShortName.value) || 'licence libre', page: ii.descriptionurl || '' };
 }
 
-function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', commons = 'https://commons.wikimedia.org' }) {
+function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', commons = 'https://commons.wikimedia.org', parole = null }) {
   const api = async (base, params) => {
     const q = new URLSearchParams({ format: 'json', formatversion: '2', ...params }).toString();
     for (let essai = 0; ; essai++) {
@@ -143,11 +147,17 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     return new Promise(ok => execFile('say', ['-v', '?'], (e, out) => {
       if (e) return ok([]);
       const l = String(out).split('\n').map(x => /^(.+?)\s+([a-z]{2}[_-][A-Z0-9]{2,})\s+#/.exec(x)).filter(Boolean).map(m => ({ nom: m[1].trim(), langue: m[2] }));
-      ok(l.filter(v => /^fr/i.test(v.langue)));
+      ok(l.filter(v => /^fr/i.test(v.langue)).map(v => ({ ...v, premium: /\((Premium|Enhanced|Améliorée|Amélioré)\)/i.test(v.nom) })));
     }));
   }
   // Une phrase lue → fichier audio (m4a) avec une petite respiration à la fin
   async function lire(texte, fichier, { voix: v, vitesse = 175 } = {}, dir) {
+    if (String(v || '').startsWith('piper:')) { // voix naturelle intégrée (parole.js)
+      if (!parole) throw new Error('Voix naturelles indisponibles');
+      await parole.parler(texte, v.slice(6), fichier, { vitesse: vitesse / 175 });
+      return { synthese: true };
+    }
+    if (String(v || '').startsWith('mac:')) v = v.slice(4);
     const txt = path.join(dir, 'texte-' + path.basename(fichier) + '.txt'), aiff = path.join(dir, path.basename(fichier) + '.aiff');
     fs.writeFileSync(txt, texte);
     let ok = false;
@@ -178,6 +188,10 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
         catch (e) { if (e.code === 429) { await new Promise(r => setTimeout(r, 2500)); try { await requete(im.url, { dest: path.join(MEDIAS, f), ua: UA, accept: 'image/*', quoi: 'd’images' }); fichiersImages.set(utiles[k], f); } catch (e2) { /* image ignorée */ } } }
         await new Promise(r => setTimeout(r, 150)); // reste poli avec le serveur d'images
       }
+      if (String(v || '').startsWith('piper:') && parole) { // voix naturelle pas encore installée : téléchargée une fois
+        const e = parole.etat().voix.find(x => 'piper:' + x.id === v);
+        if (e && !e.installee) await parole.installer('voix:' + e.id, { set step(t) { job.step = t; }, get step() { return job.step; }, set progress(p) { job.progress = 40 + Math.round(p * 10); }, get progress() { return job.progress; } });
+      }
       for (let i = 0; i < scenes.length; i++) {
         job.step = `Voix off ${i + 1} sur ${scenes.length}`; job.progress = 40 + Math.round(i / scenes.length * 58);
         const f = `gen-${id}-voix-${String(i + 1).padStart(2, '0')}.m4a`;
@@ -190,7 +204,8 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     return { scenes: sortie, credits, synthese };
   }
 
-  return { chercher, preparer, voix, fabriquer };
+  const lireMac = async (texte, fichier, v) => { const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-essai-')); try { return await lire(texte, fichier, { voix: v }, dir); } finally { fs.rmSync(dir, { recursive: true, force: true }); } };
+  return { chercher, preparer, voix, fabriquer, lireMac };
 }
 
 module.exports = { creer, sujetDe, phrases, nettoyerPhrase, construireScript, imageDe };
