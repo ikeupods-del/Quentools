@@ -166,7 +166,28 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 #modal.on{display:grid}
 #boite{background:var(--pan);border:1px solid var(--ligne);border-radius:12px;padding:16px;width:min(94vw,560px);max-height:92vh;overflow:auto;-webkit-user-select:text;user-select:text}
 #boite.large{width:min(94vw,760px)}
+#boite.xl{width:min(96vw,1060px)}
+.onglets{display:flex;gap:6px;margin:0 0 10px}.onglets button{flex:1;padding:8px;border-radius:8px}.onglets button.on{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+.encart.ok-b{border:1px solid var(--ok);background:#35c27a14}
+.puces{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.puces span{background:var(--pan3);border-radius:99px;padding:2px 10px;font-size:12px}.puces span.warn{background:#c9892a33;color:#ffd08a}
+.scenes{max-height:52vh;overflow:auto;padding-right:2px}
+.sc{display:flex;gap:12px;background:var(--pan2);border-radius:10px;padding:10px;margin:8px 0}
+.sc-img{flex:none;width:200px}.sc-photo{position:relative;width:200px;height:112px;border-radius:8px;overflow:hidden;background:#0008}.sc-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.sc-photo.sc-carte{display:grid;place-items:center;background:linear-gradient(135deg,#5b3df5,#2b1d86);text-align:center;padding:8px}.sc-photo.sc-carte span{font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.5px}
+.sc-tag{position:absolute;left:5px;bottom:5px;background:#000b;border-radius:4px;padding:0 5px;font-size:10px}
+.sc-cred{font-size:10px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:3px 0}
+.sc-props{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
+.vig{width:30px;height:30px;padding:0;border-radius:6px;overflow:hidden;display:grid;place-items:center;font-size:12px;color:var(--mut)}.vig img{width:100%;height:100%;object-fit:cover}.vig.on{outline:2px solid var(--ac);outline-offset:1px}
+.vig.gr{width:86px;height:56px}
+.grille{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;max-height:150px;overflow:auto}
+.sc-txt{flex:1;min-width:0}.sc-tete{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.sc-tete .num{flex:none;width:22px;height:22px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
+.sc-tete .sec{flex:1;min-width:0;background:transparent;border:1px dashed var(--ligne);padding:2px 6px}
+.sc-btns{display:flex;gap:3px;flex:none}.sc-txt textarea{width:100%}.sc-extra{margin-top:6px}
+@media (max-width:760px){.sc{flex-direction:column}.sc-img{width:100%}.sc-photo{width:100%;height:160px}}
+
 #boite h2{margin:0 0 10px;font-size:16px}
+#boite a{color:#8db4ff}
 #barreExp{height:8px;background:var(--bg);border-radius:6px;overflow:hidden;margin:12px 0}
 #barreExp i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
 canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display:block}
@@ -1563,7 +1584,7 @@ async function outil(nom) {
 }
 
 // ---------- Fenêtres : projets, export, aide ----------
-function ouvrir(html, large) { $('#boite').className = large ? 'large' : ''; $('#boite').innerHTML = html; $('#modal').classList.add('on'); }
+function ouvrir(html, large) { $('#boite').className = large === 'xl' ? 'xl' : large ? 'large' : ''; $('#boite').innerHTML = html; $('#modal').classList.add('on'); }
 function fermer() { $('#modal').classList.remove('on'); }
 function demander(titre, defaut) {
   return new Promise(ok => {
@@ -1682,22 +1703,25 @@ async function ouvrirGenerateur() {
   stopLecture();
   gen = { voix: [], defaut: '', prep: null };
   ouvrir(`<h2>✨ Générer une vidéo</h2>
-    <p class="mut">Donne un sujet : QuentMovie écrit le texte à partir de Wikipédia (des faits, rien d’inventé), trouve des images libres de droits, enregistre la voix off et monte la vidéo. Tu relis et tu modifies tout avant la création.</p>
-    <div class="encart" style="margin:0 0 10px"><h4 style="margin-top:0">🚀 Express : décris ta vidéo, QuentMovie fait tout</h4>
-      <textarea id="xIdee" rows="2" placeholder="Ex. : « 5 astuces pour qu’un site internet attire des clients », « l’histoire de Michelin en 1 minute pour TikTok »"></textarea>
+    <div class="onglets" role="tablist"><button class="on" id="tabX">🚀 Express : une idée</button><button id="tabG">📖 À partir d’un article Wikipédia</button></div>
+    <div id="panX"><p class="mut">Décris ta vidéo et tes consignes : QuentMovie écrit le script, cherche une photo pour chaque scène, enregistre la voix et monte tout. <b>Tu relis et valides le script avant la création.</b></p>
+      <textarea id="xIdee" rows="3" placeholder="Ex. : « 5 astuces pour qu’un site internet attire des clients, ton direct, pas d’intro », « l’histoire de Michelin en 1 minute pour TikTok »"></textarea>
       <div class="ligne" style="margin-top:6px"><select id="xFormat">${opts([['vertical', '📱 Vertical (TikTok, Reels, Shorts)'], ['horizontal', '▶ Horizontal (YouTube)'], ['carre', '◻ Carré']], proj.format || 'vertical')}</select>
         <select id="xDuree" style="flex:none;width:auto">${opts([['30', '30 s'], ['45', '45 s'], ['60', '1 min'], ['90', '1 min 30'], ['180', '3 min']], '45')}</select>
         <select id="xStyle" style="flex:none;width:auto">${opts([['dynamique', 'Dynamique'], ['documentaire', 'Documentaire'], ['histoire', 'Récit'], ['enfants', 'Enfants']], 'dynamique')}</select></div>
       <div class="sw2"><input type="checkbox" id="xWiki" checked><label for="xWiki">S’appuyer sur Wikipédia quand le sujet y existe (faits vérifiés)</label></div>
-      <button class="pri" id="xGo" style="width:100%;margin-top:6px">🚀 Générer la vidéo</button><div id="xProg" class="mut" style="margin-top:6px"></div>
-      <p class="mut" style="margin:6px 0 0">Script écrit par l’IA locale, une image ou une vidéo libre par scène, voix naturelle, sous-titres, musique : la vidéo arrive montée dans la timeline, tout reste modifiable.</p></div>
-    <p class="mut" style="margin:0 0 4px">Ou mode guidé, à partir d’un article :</p>
-    <div class="ligne"><input type="text" id="gSujet" placeholder="Ex. : L’histoire de Michelin" style="flex:1"><select id="gDuree" style="flex:none;width:auto">${opts([['30', '30 s'], ['60', '1 min'], ['120', '2 min'], ['180', '3 min'], ['300', '5 min']], '60')}</select><button class="pri" id="gChercher" style="flex:none">Chercher</button></div>
+      <div class="sw2"><input type="checkbox" id="xRelire" checked><label for="xRelire">Relire et valider le script avant de créer la vidéo (recommandé)</label></div>
+      <div class="sw2"><input type="checkbox" id="xVideos"><label for="xVideos">Ajouter des vidéos libres de Wikimedia (qualité très variable)</label></div>
+      <button class="pri" id="xGo" style="width:100%;margin-top:6px">🚀 Écrire le script</button><div id="xProg" class="mut" style="margin-top:6px"></div></div>
+    <div id="panG" style="display:none"><p class="mut">Le texte vient d’un article Wikipédia (des faits, rien d’inventé). Choisis l’article, la durée, puis relis tout avant la création.</p>
+      <div class="ligne"><input type="text" id="gSujet" placeholder="Ex. : L’histoire de Michelin" style="flex:1"><select id="gDuree" style="flex:none;width:auto">${opts([['30', '30 s'], ['60', '1 min'], ['120', '2 min'], ['180', '3 min'], ['300', '5 min']], '60')}</select><button class="pri" id="gChercher" style="flex:none">Chercher</button></div></div>
     <div id="gZone" style="margin-top:10px"></div>
-    <div class="ligne" style="margin-top:12px"><button id="gFermer">Fermer</button></div>`, true);
+    <div class="ligne" style="margin-top:12px"><button id="gFermer">Fermer</button></div>`, 'xl');
+  const onglet = x => { $('#tabX').classList.toggle('on', x); $('#tabG').classList.toggle('on', !x); $('#panX').style.display = x ? '' : 'none'; $('#panG').style.display = x ? 'none' : ''; (x ? $('#xIdee') : $('#gSujet')).focus(); };
+  $('#tabX').onclick = () => onglet(true); $('#tabG').onclick = () => onglet(false);
   $('#gFermer').onclick = fermer; $('#gChercher').onclick = genChercher; $('#xGo').onclick = genExpress;
   $('#gSujet').onkeydown = e => { if (e.key === 'Enter') genChercher(); };
-  $('#gSujet').focus();
+  $('#xIdee').focus();
   api('/api/generer/voix').then(r => r.json()).then(r => { if (gen) { gen.voix = r.voix; gen.naturelles = r.naturelles || []; gen.defaut = r.defaut; } }).catch(() => {});
   api('/api/ia').then(r => r.json()).then(r => { if (gen) gen.ia = r; }).catch(() => {});
 }
@@ -1716,38 +1740,79 @@ async function genPreparer() {
   const z = $('#gZone'); z.innerHTML = '<p class="mut">Lecture de l’article et recherche des images libres…</p>';
   try {
     gen.express = null;
-    gen.prep = await (await api('/api/generer/preparer', { method: 'POST', body: JSON.stringify({ article: art, duree: +$('#gDuree').value, titre: gen.sujet.titre }) })).json();
+    gen.prep = await (await api('/api/generer/preparer', { method: 'POST', body: JSON.stringify({ article: art, duree: +$('#gDuree').value, titre: gen.sujet.titre, vertical: proj.format === 'vertical' }) })).json();
     genEtape2();
   } catch (e) { z.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
 }
+// Relecture du script : une carte par scène (photo au choix, texte modifiable, réécriture par l'IA, ordre), puis options de la vidéo
+const dureeScene = s => Math.max(1, s.texte.split(/\s+/).filter(Boolean).length / 2.6);
+const imgGen = im => (im ? (im.video ? im.apercu : petiteImage(im.url)) : '');
+function genCarte(s, i, n, im) {
+  const cur = s.image >= 0 && im[s.image] ? im[s.image] : null, props = (s.propositions || []).filter(k => im[k]).slice(0, 6);
+  const mots = s.texte.split(/\s+/).filter(Boolean).length;
+  return `<div class="sc" data-scene="${i}">
+    <div class="sc-img">
+      ${cur ? `<div class="sc-photo"><img src="${esc(imgGen(cur))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">${cur.video ? '<span class="sc-tag">▶ vidéo</span>' : ''}</div><div class="sc-cred" title="${esc(cur.nom)}">${esc(cur.nom.replace(/\.\w+$/, ''))}</div>`
+        : `<div class="sc-photo sc-carte"><span>${esc((s.sujet || s.section || 'Carte de titre').slice(0, 40))}</span></div><div class="sc-cred">Pas de photo : carte de titre</div>`}
+      <div class="sc-props">${props.map(k => `<button class="vig ${k === s.image ? 'on' : ''}" data-gpick="${i}:${k}" title="${esc(im[k].nom)}"><img src="${esc(imgGen(im[k]))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"></button>`).join('')}<button class="vig ${s.image < 0 ? 'on' : ''}" data-gpick="${i}:-1" title="Aucune photo : carte de titre">∅</button></div>
+      <button class="mini" data-gautre="${i}">🔎 Autre photo…</button>
+    </div>
+    <div class="sc-txt">
+      <div class="sc-tete"><span class="num">${i + 1}</span><input type="text" class="sec" data-gsection="${i}" value="${esc(s.section || '')}" placeholder="Titre de partie (facultatif)"><span class="mut">${mots} mots · ≈ ${fmt(dureeScene(s))}</span>
+        <span class="sc-btns"><button class="mini" data-gmove="${i}:-1" ${i ? '' : 'disabled'} title="Monter">↑</button><button class="mini" data-gmove="${i}:1" ${i < n - 1 ? '' : 'disabled'} title="Descendre">↓</button><button class="mini" data-gia="${i}" title="Faire réécrire cette scène par l’IA">✨ Réécrire</button><button class="mini" data-gsuppr="${i}" title="Retirer cette scène">✕</button></span></div>
+      <textarea rows="3" data-gtexte="${i}">${esc(s.texte)}</textarea>
+      <div class="sc-extra" id="gx${i}"></div>
+    </div></div>`;
+}
 function genEtape2() {
   const p = gen.prep, im = p.images, mus = LIB().musiques;
-  const ligneScene = (s, i) => `<div class="fxrow" data-scene="${i}" style="display:flex;gap:8px;align-items:flex-start">
-      <div style="flex:none;width:120px;text-align:center">${s.image >= 0 && im[s.image] ? `<div style="position:relative"><img src="${esc(im[s.image].video ? im[s.image].apercu : petiteImage(im[s.image].url))}" alt="" style="width:120px;height:68px;object-fit:cover;border-radius:6px;display:block">${im[s.image].video ? '<span style="position:absolute;left:4px;bottom:4px;background:#000b;border-radius:4px;padding:0 4px;font-size:10px">▶ vidéo</span>' : ''}</div>` : '<div class="mut" style="height:68px;display:grid;place-items:center;background:#0003;border-radius:6px">sans image</div>'}
-        ${im.length > 1 ? `<button class="mini" data-gimg="${i}:-1" title="Image précédente">◀</button><button class="mini" data-gimg="${i}:1" title="Image suivante">▶</button>` : ''}</div>
-      <div style="flex:1">${s.section && s.section !== ((p.scenes[i - 1] || {}).section) ? `<div class="mut" style="font-size:11px;margin-bottom:2px">§ ${esc(s.section)} (titre affiché)</div>` : ''}<textarea rows="3" data-gtexte="${i}" style="width:100%">${esc(s.texte)}</textarea></div><button class="mini" data-gsuppr="${i}" title="Retirer cette scène">✕</button></div>`;
-  const mots = p.scenes.reduce((a, s) => a + s.texte.split(/\s+/).length, 0);
-  $('#gZone').innerHTML = `<div class="encart" style="margin:0 0 8px"><b>🤖 IA locale</b> <span class="mut">réécrit le texte en vrai script (accroche, transitions, conclusion) à partir des faits de l’article, sans rien inventer. Tourne sur ton Mac, sans internet${gen.ia && !gen.ia.installee ? ` (≈ ${(gen.ia.mo / 1000).toFixed(1)} Go téléchargés au premier usage)` : ''}.</span>
-      <textarea id="gConsigne" rows="2" placeholder="Tes consignes pour l’IA, suivies à la lettre (ex. : pas d’intro, tutoie-moi, ton humoristique…)" style="width:100%;margin-top:6px">${esc(gen.consigne || '')}</textarea>
-      <div class="ligne" style="margin-top:6px"><select id="gStyle" style="flex:1">${opts([['documentaire', 'Documentaire'], ['dynamique', 'Dynamique (TikTok, Reels)'], ['histoire', 'Récit captivant'], ['enfants', 'Pour enfants']], gen.style || 'documentaire')}</select><button class="pri" id="gIA" style="flex:none">Réécrire avec l’IA</button></div><div id="gIAProg" class="mut"></div></div>
+  const mots = p.scenes.reduce((a, s) => a + s.texte.split(/\s+/).filter(Boolean).length, 0), avec = p.scenes.filter(s => s.image >= 0 && im[s.image]).length;
+  const vertical = (gen.express ? gen.express.format : proj.format) === 'vertical';
+  $('#gZone').innerHTML = `${gen.express ? '<div class="encart ok-b"><b>✅ Script prêt : relis-le.</b> Corrige les textes, change les photos, réécris une scène, puis clique « Créer la vidéo ». Rien n’est monté avant ta validation.</div>' : ''}
+    <div class="encart"><b>🤖 IA locale</b> <span class="mut">${p.article ? 'Réécrit tout le script à partir des faits de l’article, sans rien inventer.' : 'Réécrit tout le script selon tes consignes.'} Tourne sur ton Mac${gen.ia && !gen.ia.installee ? ` (≈ ${(gen.ia.mo / 1000).toFixed(1)} Go téléchargés au premier usage)` : ''}.</span>
+      <textarea id="gConsigne" rows="2" placeholder="Tes consignes, suivies à la lettre (ex. : pas d’intro, tutoie-moi, ton humoristique, termine par une question…)" style="width:100%;margin-top:6px">${esc(gen.consigne || '')}</textarea>
+      <div class="ligne" style="margin-top:6px"><select id="gStyle" style="flex:1">${opts([['documentaire', 'Documentaire'], ['dynamique', 'Dynamique (TikTok, Reels)'], ['histoire', 'Récit captivant'], ['enfants', 'Pour enfants']], gen.style || 'documentaire')}</select><button class="pri" id="gIA" style="flex:none">Réécrire tout le script</button></div><div id="gIAProg" class="mut"></div></div>
     <label class="l">Titre de la vidéo</label><input type="text" id="gTitre" value="${esc(p.titre)}">
-    <p class="mut" style="margin:6px 0">${p.scenes.length} scènes · environ ${fmt(mots / 2.6)} de voix · ${im.length} image${im.length > 1 ? 's' : ''} libre${im.length > 1 ? 's' : ''} · source : ${p.article ? `Wikipédia, « ${esc(p.article)} »` : 'écrit par l’IA locale (à relire)'}. Corrige le texte comme tu veux : chaque bloc est lu sur une image.</p>
-    <div id="gScenes" style="max-height:38vh;overflow:auto">${p.scenes.map(ligneScene).join('')}</div>
-    <div class="ligne" style="margin-top:8px"><label class="l" style="flex:none;margin:0">Voix</label><select id="gVoix">${optsVoix(gen.naturelles || [], gen.voix, gen.defaut)}</select><button id="gEcouter" style="flex:none">▶ Écouter</button></div>
+    <div class="puces"><span>🎞 ${p.scenes.length} scènes</span><span>⏱ ≈ ${fmt(mots / 2.6)} de voix</span><span class="${avec < p.scenes.length ? 'warn' : ''}">📷 ${avec} photo${avec > 1 ? 's' : ''} sur ${p.scenes.length}</span><span>${p.article ? `📖 Wikipédia : « ${esc(p.article)} »` : '✍️ écrit par l’IA locale (à relire)'}</span></div>
+    ${avec < p.scenes.length ? '<p class="mut" style="margin:2px 0 6px">Sans photo assez pertinente, la scène affiche une carte de titre plutôt qu’une image hors sujet. Tu peux chercher une photo avec « Autre photo… ».</p>' : ''}
+    <div id="gScenes" class="scenes">${p.scenes.map((s, i) => genCarte(s, i, p.scenes.length, im)).join('')}</div>
+    <div class="ligne" style="margin-top:8px"><label class="l" style="flex:none;margin:0">Voix</label><select id="gVoix">${optsVoix(gen.naturelles || [], gen.voix, gen.voixChoisie || gen.defaut)}</select><button id="gEcouter" style="flex:none">▶ Écouter</button></div>
     <p class="mut" style="margin:2px 0 0"><a href="#" id="gVoixGerer">Gérer les voix…</a> · les voix naturelles se téléchargent une seule fois, au premier usage.</p><div id="gVoixZone"></div>
-    <label class="l">Vitesse de la voix<span id="gVitV">175</span></label><input type="range" id="gVit" min="140" max="230" step="5" value="175">
+    <label class="l">Vitesse de la voix<span id="gVitV">${gen.vitesse || 175}</span></label><input type="range" id="gVit" min="140" max="230" step="5" value="${gen.vitesse || 175}">
     <label class="l">Musique de fond</label><select id="gMus"><option value="">Sans musique</option>${mus.map(m => `<option value="${esc(m.file)}" ${/piano|ambiance/.test(m.id) ? 'selected' : ''}>${esc(m.nom)}</option>`).join('')}</select>
-    <div class="sw2"><input type="checkbox" id="gSous" checked><label for="gSous">Sous-titres</label></div>
+    <div class="sw2"><input type="checkbox" id="gSous" checked><label for="gSous">Sous-titres${vertical ? ' (grands, façon TikTok)' : ''}</label></div>
     <div class="sw2"><input type="checkbox" id="gOuv" checked><label for="gOuv">Écran titre au début</label></div>
-    <div class="sw2"><input type="checkbox" id="gGen" checked><label for="gGen">Générique avec les sources et les auteurs des images (obligatoire si tu publies)</label></div>
+    <div class="sw2"><input type="checkbox" id="gGen" checked><label for="gGen">Générique avec les sources et les auteurs des photos (obligatoire si tu publies)</label></div>
     <p class="mut">La vidéo remplace le projet en cours (${MAC ? '⌘Z' : 'Ctrl+Z'} pour revenir).</p>
     <button class="pri" id="gCreer" style="width:100%">🎬 Créer la vidéo</button><div id="gProg" class="mut" style="margin-top:6px"></div>`;
-  const z = $('#gZone');
-  z.oninput = e => { const t = e.target; if (t.dataset.gtexte !== undefined) p.scenes[+t.dataset.gtexte].texte = t.value; if (t.id === 'gVit') $('#gVitV').textContent = t.value; };
-  z.onclick = e => {
-    const t = e.target, d = t.dataset;
-    if (d.gimg) { const [i, s] = d.gimg.split(':').map(Number); p.scenes[i].image = (p.scenes[i].image + s + im.length) % im.length; return genEtape2(); }
-    if (d.gsuppr !== undefined) { p.scenes.splice(+d.gsuppr, 1); return genEtape2(); }
+  const z = $('#gZone'), rendre = () => { const y = $('#gScenes') ? $('#gScenes').scrollTop : 0, h = ($('#gScenes') || {}).dataset; const garde = { vit: $('#gVit').value, voix: $('#gVoix').value, mus: $('#gMus').value, sous: $('#gSous').checked, ouv: $('#gOuv').checked, gen: $('#gGen').checked, titre: $('#gTitre').value, consigne: $('#gConsigne').value, style: $('#gStyle').value };
+    gen.consigne = garde.consigne; gen.style = garde.style; gen.vitesse = +garde.vit; gen.voixChoisie = garde.voix; p.titre = garde.titre; genEtape2(); $('#gMus').value = garde.mus; $('#gSous').checked = garde.sous; $('#gOuv').checked = garde.ouv; $('#gGen').checked = garde.gen; $('#gScenes').scrollTop = y; };
+  const carte = i => { const c = z.querySelector(`.sc[data-scene="${i}"]`); return c; };
+  z.oninput = e => { const t = e.target, d = t.dataset;
+    if (d.gtexte !== undefined) { p.scenes[+d.gtexte].texte = t.value; const c = carte(+d.gtexte), m = c.querySelector('.sc-tete .mut'); m.textContent = `${t.value.split(/\s+/).filter(Boolean).length} mots · ≈ ${fmt(dureeScene(p.scenes[+d.gtexte]))}`; }
+    if (d.gsection !== undefined) p.scenes[+d.gsection].section = t.value;
+    if (t.id === 'gVit') $('#gVitV').textContent = t.value; };
+  z.onclick = async e => {
+    const t = e.target.closest('button, a') || e.target, d = t.dataset;
+    if (d.gpick) { const [i, k] = d.gpick.split(':').map(Number); p.scenes[i].image = k; return rendre(); }
+    if (d.gmove) { const [i, s] = d.gmove.split(':').map(Number), j = i + s; if (j >= 0 && j < p.scenes.length) { [p.scenes[i], p.scenes[j]] = [p.scenes[j], p.scenes[i]]; rendre(); } return; }
+    if (d.gsuppr !== undefined) { if (p.scenes.length > 1) { p.scenes.splice(+d.gsuppr, 1); rendre(); } return; }
+    if (d.gautre !== undefined) { const i = +d.gautre, x = $('#gx' + i);
+      x.innerHTML = `<div class="ligne"><input type="text" data-gq="${i}" value="${esc(p.scenes[i].sujet || p.scenes[i].section || '')}" placeholder="Ce que la photo doit montrer (ex. : casque de vélo)"><button class="pri" data-gcherche="${i}" style="flex:none">Chercher</button></div><div class="grille" id="gg${i}"></div>`; x.querySelector('input').focus(); return; }
+    if (d.gcherche !== undefined) { const i = +d.gcherche, q = z.querySelector(`[data-gq="${i}"]`).value.trim(), g = $('#gg' + i); if (!q) return;
+      g.innerHTML = '<span class="mut">Recherche dans Wikimedia Commons…</span>';
+      try { const r = await (await api('/api/generer/images', { method: 'POST', body: JSON.stringify({ q, format: vertical ? 'vertical' : 'horizontal' }) })).json();
+        if (!r.images.length) { g.innerHTML = '<span class="mut">Aucune photo trouvée : essaie d’autres mots (en français ou en anglais).</span>'; return; }
+        g.innerHTML = r.images.map((x, k) => `<button class="vig gr" data-gnew="${i}:${k}" title="${esc(x.nom)}"><img src="${esc(imgGen(x))}" alt="" loading="lazy"></button>`).join(''); g.dataset.liste = '1'; gen.trouvees = r.images; }
+      catch (er) { g.innerHTML = `<span class="err">${esc(er.message)}</span>`; } return; }
+    if (d.gnew) { const [i, k] = d.gnew.split(':').map(Number), x = gen.trouvees[k]; let idx = im.findIndex(y => y.nom === x.nom); if (idx < 0) { im.push(x); idx = im.length - 1; }
+      p.scenes[i].image = idx; p.scenes[i].propositions = [idx, ...(p.scenes[i].propositions || []).filter(y => y !== idx)].slice(0, 6); return rendre(); }
+    if (d.gia !== undefined) { const i = +d.gia, x = $('#gx' + i);
+      x.innerHTML = `<div class="ligne"><input type="text" data-gins="${i}" placeholder="Consigne : plus court, plus drôle, plus simple, sans chiffres… (vide = améliorer)"><button class="pri" data-greecrit="${i}" style="flex:none">Réécrire</button></div><div class="mut" id="gp${i}"></div>`; x.querySelector('input').focus(); return; }
+    if (d.greecrit !== undefined) { const i = +d.greecrit, ins = z.querySelector(`[data-gins="${i}"]`).value.trim(), pr = $('#gp' + i); t.disabled = true;
+      try { const { id } = await (await api('/api/generer/scene', { method: 'POST', body: JSON.stringify({ texte: p.scenes[i].texte, instruction: ins, titre: p.titre, style: gen.style || $('#gStyle').value }) })).json();
+        const r = await suivreTravail(id, j => { pr.textContent = j.step || 'L’IA réfléchit…'; }); p.scenes[i].texte = r.texte; rendre(); }
+      catch (er) { pr.innerHTML = `<span class="err">${esc(er.message)}</span>`; t.disabled = false; } return; }
     if (t.id === 'gEcouter') essaiVoix($('#gVoix').value, ((p.scenes[0] || {}).texte || p.titre).slice(0, 220), +$('#gVit').value / 175, t);
     if (t.id === 'gVoixGerer') { e.preventDefault(); gererVoix($('#gVoixZone'), () => api('/api/generer/voix').then(r => r.json()).then(r => { gen.voix = r.voix; gen.naturelles = r.naturelles || []; const sel = $('#gVoix'); if (sel) sel.innerHTML = optsVoix(gen.naturelles, gen.voix, sel.value || r.defaut); })); }
     if (t.id === 'gCreer') genCreer();
@@ -1757,16 +1822,17 @@ function genEtape2() {
 // Express : idée → (article Wikipédia si trouvé) → script de l'IA avec mots-clés → un média par scène → vidéo montée
 async function genExpress() {
   const idee = $('#xIdee').value.trim(), pr = t => { $('#xProg').innerHTML = t; }; if (!idee) return pr('Décris d’abord ta vidéo.');
-  const format = $('#xFormat').value, duree = +$('#xDuree').value, style = $('#xStyle').value; $('#xGo').disabled = true;
+  const format = $('#xFormat').value, duree = +$('#xDuree').value, style = $('#xStyle').value, relire = $('#xRelire').checked, videos = $('#xVideos').checked; $('#xGo').disabled = true;
   try {
     let article = '', titre = idee;
     if ($('#xWiki').checked) { pr('Recherche sur Wikipédia…'); try { const r = await (await api('/api/generer/chercher?q=' + enc(idee))).json(); titre = r.titre || idee; const mot = String(r.recherche || '').split(/\s+/).sort((a, b) => b.length - a.length)[0] || ''; if (r.resultats && r.resultats[0] && mot.length > 2 && r.resultats[0].titre.toLowerCase().includes(mot.toLowerCase())) article = r.resultats[0].titre; } catch (e) { /* sujet libre */ } }
-    const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article, titre, duree, style, consigne: idee, medias: true }) })).json();
+    const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article, titre, duree, style, consigne: idee, medias: true, format, videos }) })).json();
     const r = await suivreTravail(id, j => pr(`<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`));
-    gen.prep = { titre: r.titre || titre, article, libre: r.libre, images: r.images || [], scenes: r.scenes }; gen.consigne = idee;
+    gen.prep = { titre: r.titre || titre, article, libre: r.libre, images: r.images || [], scenes: r.scenes }; gen.consigne = idee; gen.style = style;
     gen.express = { format, tiktok: format === 'vertical' }; gen.ia = { ...(gen.ia || {}), installee: true };
+    $('#panX').style.display = 'none'; $('#tabX').style.display = 'none'; $('#tabG').style.display = 'none';
     genEtape2(); genRegles(r.regles); if ($('#gDuree')) $('#gDuree').value = String(duree);
-    await genCreer();
+    if (!relire) await genCreer();
   } catch (e) { pr(`<span class="err">${esc(e.message)}</span>`); $('#xGo').disabled = false; }
 }
 // Ce que l'utilisateur a interdit dans ses consignes (« pas d'intro », « sans musique »…) décoche les options correspondantes
@@ -1779,7 +1845,7 @@ function genRegles(r) {
 async function genIA() {
   const p = gen.prep, b = $('#gIA'); gen.style = $('#gStyle').value; gen.consigne = $('#gConsigne').value.trim(); b.disabled = true;
   try {
-    const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article: p.article, titre: p.titre, duree: +$('#gDuree').value || 60, style: gen.style, consigne: gen.consigne, images: p.images.map(x => ({ nom: x.nom })) }) })).json();
+    const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article: p.article, titre: p.titre, duree: +$('#gDuree').value || 60, style: gen.style, consigne: gen.consigne, images: p.images, format: gen.express ? gen.express.format : proj.format }) })).json();
     const r = await suivreTravail(id, j => { $('#gIAProg').innerHTML = `<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`; });
     p.scenes = r.scenes; p.titre = r.titre || p.titre; gen.ia = { ...(gen.ia || {}), installee: true }; gen.regles = r.regles; genEtape2(); genRegles(r.regles);
     $('#gIAProg').textContent = `✅ Script écrit par l’IA locale (${r.scenes.length} scènes). Relis-le : tu peux tout modifier.`;
@@ -1816,13 +1882,16 @@ function monterGeneree(r, p, o) {
   const clips = [], mouvements = ['zoomavant', 'panoD', 'zoomarriere', 'panoG']; let precedente = '';
   if (o.ouv) { const c = newSolid('#0b1d3a', 3.5); c.titre = { preset: 'chapitre', l1: p.titre.toUpperCase(), l2: '', color: '#ffffff', font: 'arial', start: 0.3, dur: 0, speed: 14 }; c.transition = { type: 'fade', dur: 0.6 }; clips.push(c); }
   r.scenes.forEach((s, i) => {
-    const c = base({ file: s.voix, kind: 'audio', in: 0, out: s.duree, hasAudio: true, bgFile: s.image, bgKind: s.video ? 'video' : 'image', bgColor: '#101820', viz: { type: 'none', color: '#ffffff', pos: 'centre', h: 30 },
+    const CARTES = ['#2b1d86', '#101820', '#0b3b4a', '#4a1d5e', '#1d3a2b'];
+    const c = base({ file: s.voix, kind: 'audio', in: 0, out: s.duree, hasAudio: true, bgFile: s.image, bgKind: s.video ? 'video' : 'image', bgColor: s.image ? '#101820' : CARTES[i % CARTES.length], viz: { type: 'none', color: '#ffffff', pos: 'centre', h: 30 },
       fx: [{ id: mouvements[i % mouvements.length], p: {} }], transition: { type: 'fade', dur: 0.6 } });
     if (o.sous) { const tk = gen && gen.express && gen.express.tiktok; c.subs = sousTitresDe(s.texte, s.duree, tk ? 3 : 7).map(x => tk ? { ...x, t: x.t.toUpperCase() } : x); c.subStyle = tk ? 'tiktok' : 'bandeau'; c.subSize = tk ? 6.5 : 4; }
     // documentaire : titre de la nouvelle partie de l'article, sinon la date dont parle la scène
     const an = /^(?:(?:En|Dès|Vers|Depuis|Au début de|À partir de|Le \d{1,2}(?:er)? \S+)\s+)?((?:1[0-9]|20)\d{2})\b/.exec(s.texte);
     if (s.section && s.section !== precedente) c.titre = { preset: 'lieu', l1: s.section, l2: an ? an[1] : '', color: '#c8102e', font: 'arial', start: 0.3, dur: Math.min(4, Math.max(2, s.duree - 1)), speed: 14 };
     else if (an) c.titre = { preset: 'lieu', l1: an[1], l2: '', color: '#c8102e', font: 'arial', start: 0.3, dur: Math.min(3, Math.max(1.5, s.duree - 1)), speed: 14 };
+    // scène sans photo assez pertinente : carte de titre (le sujet en grand) plutôt qu'une image hors sujet
+    if (!s.image) c.titre = { preset: 'chapitre', l1: String(s.sujet || s.section || p.titre).toUpperCase().slice(0, 60), l2: '', color: '#ffffff', font: 'arial', start: 0.2, dur: Math.max(1, s.duree - 0.4), speed: 14 };
     precedente = s.section;
     clips.push(c);
   });

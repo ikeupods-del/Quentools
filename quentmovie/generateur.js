@@ -238,7 +238,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
         const f = `gen-${id}-voix-${String(i + 1).padStart(2, '0')}.m4a`;
         const r = await lire(scenes[i].texte, path.join(MEDIAS, f), { voix: v, vitesse }, dir); synthese = synthese && r.synthese;
         const info = await probe(path.join(MEDIAS, f));
-        sortie.push({ texte: scenes[i].texte, section: scenes[i].section || '', video: !!(images[scenes[i].image] || {}).video, voix: f, duree: +info.duration.toFixed(2), image: fichiersImages.get(scenes[i].image) || '' });
+        sortie.push({ texte: scenes[i].texte, section: scenes[i].section || '', sujet: scenes[i].sujet || '', video: !!(images[scenes[i].image] || {}).video, voix: f, duree: +info.duration.toFixed(2), image: fichiersImages.get(scenes[i].image) || '' });
       }
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
     const credits = [...new Set(scenes.map(s => s.image))].filter(i => fichiersImages.has(i)).map(i => images[i]).map(im => `${im.auteur} — ${im.licence}`);
