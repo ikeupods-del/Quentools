@@ -93,7 +93,10 @@ function creer({ BASE, FFMPEG }) {
       const res = r.resultat || {}, sortie = res.scenes || [];
       // garde-fou : une scène qui invente une date ou perd trop de texte reprend le paragraphe d'origine
       const scenes = paragraphes.map((p, i) => {
-        const x = sortie[i] || {}, t = String(x.texte || '').trim(), ok = t && nbMots(t) >= nbMots(p.texte) * 0.5 && [...annees(t)].every(a => annees(p.texte).has(a));
+        const x = sortie[i] || {}, t = String(x.texte || '').trim(), n0 = nbMots(p.texte);
+        // une scène ne peut ni rallonger beaucoup (phrases d'intro ou de fin inventées, surtout si elles sont interdites) ni perdre trop de texte
+        const plafond = (i === 0 && !regles.accroche) || (i === paragraphes.length - 1 && !regles.conclusion) ? 1.2 : 1.6;
+        const ok = t && nbMots(t) >= n0 * 0.5 && nbMots(t) <= n0 * plafond + 2 && [...annees(t)].every(a => annees(p.texte).has(a));
         return { section: String(x.section || p.section || '').slice(0, 40), texte: ok ? t : p.texte, recherche: String(x.recherche || '').slice(0, 80), repris: !ok };
       });
       const propre = v => { const t = String(v || '').trim(); return t && !annees(t).size && nbMots(t) <= 30 ? t : ''; };
