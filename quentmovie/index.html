@@ -205,42 +205,124 @@ canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display
 .raccourcis div{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid #ffffff10}
 .raccourcis h3{grid-column:1/-1}
 .rec{color:#ff4d4d;font-weight:700}
+/* ===== Thème pro (façon Final Cut Pro / Premiere) : couche finale, elle prime sur les règles ci-dessus ===== */
+:root{--bg:#121214;--pan:#1d1d20;--pan2:#27272b;--pan3:#323237;--ligne:#36363c;--txt:#e8e8eb;--mut:#8f8f98;--ac:#3d8bff;--sel:#f5c22b;--clip:#2d5596;--audio:#277548;--podcast:#6243a8}
+body{font-size:12.5px;grid-template-rows:44px minmax(0,1fr) var(--hTl,300px) 22px;grid-template-columns:380px minmax(0,1fr) 320px}
+.ic{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:middle;pointer-events:none}
+button{border-radius:6px;background:var(--pan2);border:1px solid #ffffff12;transition:background .12s,border-color .12s,color .12s}
+button:hover{background:var(--pan3);border-color:#ffffff26}
+button.pri{background:var(--ac);border-color:#5d9dff;color:#fff}button.pri:hover{background:#5a9cff}
+button.ib{width:30px;height:28px;padding:0;display:inline-grid;place-items:center;background:transparent;border-color:transparent;color:#c8c8ce;font-size:12px}
+button.ib:hover{background:#ffffff14;color:#fff}
+button.ib.on{background:#3d8bff2e;color:#8fbdff;border-color:#3d8bff55}
+button.tb{display:inline-flex;align-items:center;gap:6px;padding:0 10px;height:28px;white-space:nowrap}
+select,input[type=text],input[type=number],textarea{background:#151517;border-color:#ffffff14}
+header{background:linear-gradient(#2b2b2f,#222226);border-bottom:1px solid #000;gap:8px;padding:0 10px}
+header .marque{display:flex;align-items:center;gap:8px;margin-right:4px}
+header .logo{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#5b3df5,#3d8bff);display:grid;place-items:center;font-size:10px;color:#fff;box-shadow:0 2px 8px #3d8bff55}
+header h1{font-size:13px;font-weight:600;margin:0}
+.groupe{display:flex;gap:2px;padding:2px;border-radius:8px;background:#0000003d;border:1px solid #ffffff0a;align-items:center}
+header select#format{height:28px;width:auto;background:var(--pan2)}
+#bar{background:#18181b;border-top:1px solid #000;font-size:11px}
+/* rail d'outils à gauche */
+#nav{display:grid;grid-template-columns:64px minmax(0,1fr);grid-template-rows:minmax(0,1fr);background:var(--pan);border-right:1px solid #000}
+#tabs{grid-row:1;grid-column:1;display:flex;flex-direction:column;gap:2px;padding:6px 5px;border:0;border-right:1px solid #000;background:#18181b;overflow:auto}
+#tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 6px;border:0;border-radius:8px;color:#9b9ba3;font-size:10px;background:none}
+#tabs button .ic{width:20px;height:20px}
+#tabs button:hover{background:#ffffff0f;color:#e5e5e8}
+#tabs button.on{background:#3d8bff26;color:#93c0ff}
+#navbody{grid-row:1;grid-column:2;padding:10px}
+.media{background:#232327;border:1px solid #ffffff0a}.media:hover{border-color:#3d8bff66}
+.carte{background:#232327;border-color:#ffffff0a}
+.encart{background:#232327;border:1px solid #ffffff0a}
+/* visionneuse */
+#view{background:#0b0b0d;padding:0;gap:0}
+#vbar{width:100%;display:flex;align-items:center;gap:2px;padding:3px 8px;background:var(--pan);border-bottom:1px solid #000;min-height:34px}
+#vbar .sp{flex:1}
+#stage{background:#0b0b0d;padding:12px}
+#stage img,#stage video{border-radius:2px;box-shadow:0 0 0 1px #ffffff10,0 6px 30px #000}
+.transport{max-width:none;width:100%;padding:6px 12px;background:var(--pan);border-top:1px solid #000;gap:4px;justify-content:center}
+#bPlay.jouer{width:40px;height:30px;padding:0;display:inline-grid;place-items:center;border-radius:15px}
+#bPlay.jouer .ic{fill:#fff;stroke:none;width:16px;height:16px}
+#tc{font:600 16px ui-monospace,"SF Mono",Menlo,monospace;background:#000;color:#f0f0f2;border:1px solid #2c2c31;border-radius:6px;padding:3px 10px;letter-spacing:.5px}
+#vu{display:flex;gap:2px;height:26px;padding:2px;background:#000;border:1px solid #2c2c31;border-radius:4px}
+#vu i{width:5px;height:100%;background:#1c1c1f;position:relative;overflow:hidden;border-radius:1px}
+#vu i::after{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--n,0%);background:linear-gradient(#ff453a,#ffd60a 22%,#30d158 45%);transition:height 60ms linear}
+.surcouche{position:absolute;pointer-events:none;z-index:3}
+.surcouche.tiers{background:linear-gradient(90deg,transparent calc(33.33% - .5px),#ffffff70 calc(33.33% - .5px),#ffffff70 calc(33.33% + .5px),transparent calc(33.33% + .5px),transparent calc(66.66% - .5px),#ffffff70 calc(66.66% - .5px),#ffffff70 calc(66.66% + .5px),transparent calc(66.66% + .5px)),linear-gradient(transparent calc(33.33% - .5px),#ffffff70 calc(33.33% - .5px),#ffffff70 calc(33.33% + .5px),transparent calc(33.33% + .5px),transparent calc(66.66% - .5px),#ffffff70 calc(66.66% - .5px),#ffffff70 calc(66.66% + .5px),transparent calc(66.66% + .5px))}
+.surcouche.zones::before,.surcouche.zones::after{content:"";position:absolute;border:1px dashed #ffd60aa0}
+.surcouche.zones::before{inset:5%}.surcouche.zones::after{inset:10%;border-color:#30d158a0}
+.surcouche.zones.vertical::after{inset:12% 8% 22% 8%}
+/* inspecteur */
+#insp{background:var(--pan);border-left:1px solid #000;padding:6px 12px}
+#insp details{border-bottom:1px solid #00000099}
+#insp summary{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#b9b9c0;padding:8px 0}
+#insp .itete{display:flex;gap:10px;align-items:center;padding:6px 0 10px;border-bottom:1px solid #00000099;position:sticky;top:-6px;background:var(--pan);z-index:2}#insp .itete .ic{width:26px;height:26px;padding:4px;border-radius:7px;background:#3d8bff26;color:#8fbdff}#insp .itete b{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px}#insp .itete small{color:var(--mut);font-size:11px}
+#insp h3{color:#fff;text-transform:none;letter-spacing:0;font-size:13px}
+input[type=range]{accent-color:var(--ac);height:16px}
+/* timeline */
+#tl{background:#161618;border-top:1px solid #000}
+#tlbar{background:var(--pan);border-bottom:1px solid #000;padding:4px 8px;gap:8px}
+#tlbar .groupe{background:#00000030}
+#entetes{width:122px;background:#1c1c1f;border-right:1px solid #000}
+#entetes .ent{flex-direction:column;align-items:flex-start;justify-content:center;padding:0 8px;position:relative;border-radius:0;background:#222226;border-bottom:1px solid #000}
+#entetes .ent b{font-size:12px;letter-spacing:.03em}#entetes .ent small{font-size:10px;color:var(--mut)}
+#entetes #eR{background:#1c1c1f}
+.pbt{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;gap:1px}
+.pbt button{width:22px;height:22px;padding:0;display:grid;place-items:center;background:transparent;border:0;color:#7d7d86;border-radius:5px}
+.pbt button .ic{width:14px;height:14px}.pbt button:hover{background:#ffffff14;color:#fff}
+.pbt button.on{color:#ff6b61;background:#ff453a1f}
+#regle{background:#1d1d20;height:24px;border-bottom:1px solid #000}
+#regle i{border-left-color:#3a3a40;font:10px ui-monospace,Menlo,monospace;color:#8a8a93;padding-top:2px}
+.piste{background:#1b1b1e;border-radius:0;margin:0;border-bottom:1px solid #000}
+.piste.cachee .pv{opacity:.3}.piste.muette .aud,.piste.muette .clip .wv{filter:grayscale(1);opacity:.45}
+.piste.verrou{background-image:repeating-linear-gradient(-45deg,#ffffff07 0 8px,transparent 8px 16px)}.piste.verrou .clip,.piste.verrou .aud,.piste.verrou .pv{cursor:not-allowed}
+.clip{border-radius:5px;border:1px solid #000000aa;box-shadow:inset 0 0 0 100px #0a122340}
+.clip b{left:0;right:0;top:0;padding:2px 8px;background:linear-gradient(#000000b0,#0000);font-weight:600}
+.mkn{position:absolute;top:1px;font-size:10px;color:#ffcf40;transform:translateX(7px);pointer-events:none;white-space:nowrap;z-index:5}
+.clip.sel,.aud.sel,.pv.sel{border:2px solid var(--sel);box-shadow:0 0 0 1px #000,inset 0 0 0 100px #0000}
+.clip .hl,.clip .hr{background:#ffffff18}
+.aud{border-radius:5px;border:1px solid #000000aa}
+#tete{border-left:2px solid #ff3b30}#tete::before{border-top-color:#ff3b30}
+body.lame #pV .clip,body.lame #pA .aud{cursor:crosshair}
+.cut{background:#2a2a2e;border-color:#6b6b74}.cut.on{background:var(--ac)}
+#boite{background:#222225;border-color:#000;box-shadow:0 20px 60px #000c}
+#menuCtx{background:#26262a;border-color:#000}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-nouveau" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z M14 3v4h4 M12 11v6 M9 14h6"/></symbol><symbol id="i-ouvrir" viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v11H3z"/></symbol><symbol id="i-enregistrer" viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5z M8 3v5h8V3 M8 21v-7h8v7"/></symbol><symbol id="i-importer" viewBox="0 0 24 24"><path d="M12 3v12 M7 10l5 5 5-5 M4 17v4h16v-4"/></symbol><symbol id="i-annuler" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5 M4 9h11a5 5 0 010 10h-3"/></symbol><symbol id="i-retablir" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5 M20 9H9a5 5 0 000 10h3"/></symbol><symbol id="i-fleche" viewBox="0 0 24 24"><path d="M6 3l13 9-6 1.5L10 20z"/></symbol><symbol id="i-lame" viewBox="0 0 24 24"><path d="M4 20L15 9 M13 5l6 6 M15 3l6 6-4 4-6-6z"/></symbol><symbol id="i-aimant" viewBox="0 0 24 24"><path d="M6 3v8a6 6 0 0012 0V3 M6 7h4 M14 7h4"/></symbol><symbol id="i-generer" viewBox="0 0 24 24"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z M19 15l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></symbol><symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 7h12v10H3z M15 10l6-3v10l-6-3z"/></symbol><symbol id="i-exporter" viewBox="0 0 24 24"><path d="M12 15V3 M7 8l5-5 5 5 M5 12v8h14v-8"/></symbol><symbol id="i-clavier" viewBox="0 0 24 24"><path d="M3 6h18v12H3z M7 10h1 M11 10h1 M15 10h1 M7 14h10"/></symbol><symbol id="i-film" viewBox="0 0 24 24"><path d="M4 4h16v16H4z M8 4v16 M16 4v16 M4 9h4 M4 15h4 M16 9h4 M16 15h4"/></symbol><symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol><symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 4h4v16H7z M13 4h4v16h-4z"/></symbol><symbol id="i-debut" viewBox="0 0 24 24"><path d="M6 4v16 M20 4L9 12l11 8z"/></symbol><symbol id="i-fin" viewBox="0 0 24 24"><path d="M18 4v16 M4 4l11 8-11 8z"/></symbol><symbol id="i-recul" viewBox="0 0 24 24"><path d="M11 6l-7 6 7 6z M20 6l-7 6 7 6z"/></symbol><symbol id="i-avance" viewBox="0 0 24 24"><path d="M13 6l7 6-7 6z M4 6l7 6-7 6z"/></symbol><symbol id="i-couper" viewBox="0 0 24 24"><path d="M6 9a3 3 0 100-6 3 3 0 000 6z M6 21a3 3 0 100-6 3 3 0 000 6z M8.5 7.5L20 19 M8.5 16.5L20 5"/></symbol><symbol id="i-dupliquer" viewBox="0 0 24 24"><path d="M8 8h12v12H8z M4 16V4h12"/></symbol><symbol id="i-detacher" viewBox="0 0 24 24"><path d="M3 9h4l5-4v14l-5-4H3z M16 8l5 8 M21 8l-5 8"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><path d="M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6"/></symbol><symbol id="i-capture" viewBox="0 0 24 24"><path d="M4 7h4l2-3h4l2 3h4v12H4z M12 17a4 4 0 100-8 4 4 0 000 8z"/></symbol><symbol id="i-poubelle" viewBox="0 0 24 24"><path d="M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13"/></symbol><symbol id="i-repere" viewBox="0 0 24 24"><path d="M5 21V4 M5 4h11l-2 4 2 4H5"/></symbol><symbol id="i-zmoins" viewBox="0 0 24 24"><path d="M11 18a7 7 0 100-14 7 7 0 000 14z M21 21l-5-5 M8 11h6"/></symbol><symbol id="i-zplus" viewBox="0 0 24 24"><path d="M11 18a7 7 0 100-14 7 7 0 000 14z M21 21l-5-5 M8 11h6 M11 8v6"/></symbol><symbol id="i-ajuster" viewBox="0 0 24 24"><path d="M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5"/></symbol><symbol id="i-oeil" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 15a3 3 0 100-6 3 3 0 000 6z"/></symbol><symbol id="i-cadenas" viewBox="0 0 24 24"><path d="M6 11h12v10H6z M8 11V7a4 4 0 018 0v4"/></symbol><symbol id="i-son" viewBox="0 0 24 24"><path d="M3 9h4l5-4v14l-5-4H3z M16 9a4 4 0 010 6 M19 6a8 8 0 010 12"/></symbol><symbol id="i-muet" viewBox="0 0 24 24"><path d="M3 9h4l5-4v14l-5-4H3z M16 9l5 6 M21 9l-5 6"/></symbol><symbol id="i-grille" viewBox="0 0 24 24"><path d="M3 3h18v18H3z M9 3v18 M15 3v18 M3 9h18 M3 15h18"/></symbol><symbol id="i-zones" viewBox="0 0 24 24"><path d="M3 3h18v18H3z M6.5 6.5h11v11h-11z"/></symbol><symbol id="i-medias" viewBox="0 0 24 24"><path d="M3 6h18v12H3z M10 9l5 3-5 3z"/></symbol><symbol id="i-effets" viewBox="0 0 24 24"><path d="M4 20L16 8 M14 6l4 4 M18 2v3 M20 4h-3 M7 3v2 M8 4H6"/></symbol><symbol id="i-transitions" viewBox="0 0 24 24"><path d="M3 6h8v12H3z M13 6h8v12h-8z M9 12h6"/></symbol><symbol id="i-titres" viewBox="0 0 24 24"><path d="M5 5h14 M12 5v14 M9 19h6"/></symbol><symbol id="i-voix" viewBox="0 0 24 24"><path d="M12 3a3 3 0 00-3 3v6a3 3 0 006 0V6a3 3 0 00-3-3z M5 11a7 7 0 0014 0 M12 18v3"/></symbol><symbol id="i-sons" viewBox="0 0 24 24"><path d="M3 12h2 M7 8v8 M11 5v14 M15 9v6 M19 11v2"/></symbol><symbol id="i-musique" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13 M9 18a3 3 0 11-6 0 3 3 0 016 0z M21 16a3 3 0 11-6 0 3 3 0 016 0z"/></symbol><symbol id="i-calques" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z M3 13l9 5 9-5"/></symbol><symbol id="i-outils" viewBox="0 0 24 24"><path d="M14 6a4 4 0 00-5 5L3 17l4 4 6-6a4 4 0 005-5l-3 3-3-3z"/></symbol><symbol id="i-assistant" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z M12 7.5l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></symbol></svg>
 <header>
-  <h1>🎬 QuentMovie</h1>
-  <button id="bNouveau" title="Nouveau projet (⌘N)">Nouveau</button><button id="bOuvrir" title="Ouvrir un projet (⌘O)">Ouvrir…</button><button id="bSauver" title="Enregistrer le projet (⌘S)">Enregistrer…</button>
-  <button id="bUndo" title="Annuler (⌘Z)">↶</button><button id="bRedo" title="Rétablir (⇧⌘Z)">↷</button>
-  <button id="bImporter" title="Importer des médias (⌘I)">＋ Importer</button>
+  <div class="marque"><span class="logo">▶</span><h1>QuentMovie</h1></div>
+  <div class="groupe"><button class="ib" id="bNouveau" title="Nouveau projet (⌘N)"><svg class="ic"><use href="#i-nouveau"/></svg></button><button class="ib" id="bOuvrir" title="Ouvrir un projet (⌘O)"><svg class="ic"><use href="#i-ouvrir"/></svg></button><button class="ib" id="bSauver" title="Enregistrer le projet (⌘S)"><svg class="ic"><use href="#i-enregistrer"/></svg></button><button class="ib" id="bImporter" title="Importer des médias (⌘I)"><svg class="ic"><use href="#i-importer"/></svg></button></div>
+  <div class="groupe"><button class="ib" id="bUndo" title="Annuler (⌘Z)"><svg class="ic"><use href="#i-annuler"/></svg></button><button class="ib" id="bRedo" title="Rétablir (⇧⌘Z)"><svg class="ic"><use href="#i-retablir"/></svg></button></div>
+  <div class="groupe outils" role="group" aria-label="Outils de la timeline"><button class="ib on" id="oSel" title="Outil Sélection (A)"><svg class="ic"><use href="#i-fleche"/></svg></button><button class="ib" id="oLame" title="Outil Lame : un clic coupe le clip à cet endroit (B)"><svg class="ic"><use href="#i-lame"/></svg></button><button class="ib on" id="oAimant" title="Magnétisme : les sons se collent aux clips, repères et tête de lecture (N)"><svg class="ic"><use href="#i-aimant"/></svg></button></div>
   <span class="sp"></span>
   <span class="mut" id="etat"></span>
   <select id="format" title="Format de l’image"><option value="vertical">Vertical 9:16</option><option value="horizontal">Horizontal 16:9</option><option value="carre">Carré 1:1</option></select>
-  <button id="bAide" title="Raccourcis clavier (?)">⌨ Raccourcis</button>
-  <button id="bGenerer" title="Générer une vidéo à partir d’un sujet : texte, images, voix off (⇧⌘G)">✨ Générer</button>
-  <button id="bStudio" title="Me filmer avec la caméra, le micro et le prompteur (⇧⌘R)">🎥 Me filmer</button>
-  <button id="bApercu" title="Aperçu avec effets (⌘R)">🎞 Aperçu avec effets</button>
-  <button class="pri" id="bExport" title="Exporter (⌘E)">Exporter…</button>
+  <button class="tb" id="bAssistant" title="Assistant de montage : dis ce que tu veux faire (⌘K)"><svg class="ic"><use href="#i-assistant"/></svg><span>Assistant</span></button>
+  <button class="tb" id="bGenerer" title="Générer une vidéo à partir d’un sujet : texte, images, voix off (⇧⌘G)"><svg class="ic"><use href="#i-generer"/></svg><span>Générer</span></button>
+  <button class="tb" id="bStudio" title="Me filmer avec la caméra, le micro et le prompteur (⇧⌘R)"><svg class="ic"><use href="#i-camera"/></svg><span>Me filmer</span></button>
+  <button class="tb" id="bApercu" title="Aperçu avec effets (⌘R)"><svg class="ic"><use href="#i-film"/></svg><span>Aperçu</span></button>
+  <button class="ib" id="bAide" title="Raccourcis clavier (?)"><svg class="ic"><use href="#i-clavier"/></svg></button>
+  <button class="pri tb" id="bExport" title="Exporter (⌘E)"><svg class="ic"><use href="#i-exporter"/></svg><span>Exporter</span></button>
 </header>
 
 <aside id="nav">
-  <div id="tabs">
-    <button data-tab="medias" title="1">Médias</button><button data-tab="effets" title="2">Effets</button><button data-tab="transitions" title="3">Transitions</button>
-    <button data-tab="titres" title="4">Titres</button><button data-tab="voix" title="5">Voix</button><button data-tab="sons" title="6">Sons</button>
-    <button data-tab="musiques" title="7">Musique</button><button data-tab="stickers" title="8">Calques</button><button data-tab="outils" title="9">Outils</button>
-  </div>
+  <div id="tabs" role="tablist"><button data-tab="medias" title="Médias (1)"><svg class="ic"><use href="#i-medias"/></svg><span>Médias</span></button><button data-tab="effets" title="Effets (2)"><svg class="ic"><use href="#i-effets"/></svg><span>Effets</span></button><button data-tab="transitions" title="Transitions (3)"><svg class="ic"><use href="#i-transitions"/></svg><span>Transitions</span></button><button data-tab="titres" title="Titres (4)"><svg class="ic"><use href="#i-titres"/></svg><span>Titres</span></button><button data-tab="voix" title="Voix (5)"><svg class="ic"><use href="#i-voix"/></svg><span>Voix</span></button><button data-tab="sons" title="Sons (6)"><svg class="ic"><use href="#i-sons"/></svg><span>Sons</span></button><button data-tab="musiques" title="Musique (7)"><svg class="ic"><use href="#i-musique"/></svg><span>Musique</span></button><button data-tab="stickers" title="Calques (8)"><svg class="ic"><use href="#i-calques"/></svg><span>Calques</span></button><button data-tab="outils" title="Outils (9)"><svg class="ic"><use href="#i-outils"/></svg><span>Outils</span></button></div>
   <div id="navbody"></div>
   <input type="file" id="fichiers" multiple hidden>
 </aside>
 
 <main id="view">
+  <div id="vbar"><span id="vTitre" class="mut">Visionneuse</span><span class="sp"></span><button class="ib" id="vGrille" title="Grille des tiers (G)"><svg class="ic"><use href="#i-grille"/></svg></button><button class="ib" id="vZones" title="Zones de sécurité (titres, réseaux sociaux)"><svg class="ic"><use href="#i-zones"/></svg></button></div>
   <div id="stage"></div>
   <div class="transport">
-    <button id="bDebut" title="Début (Début)">⏮</button><button id="bRecul" title="Reculer d’1 s (J)">⏪</button>
-    <button id="bPlay" class="pri" title="Lire / pause (Espace)" style="min-width:74px">▶ Lire</button>
-    <button id="bAvance" title="Avancer d’1 s (L)">⏩</button><button id="bFin" title="Fin (Fin)">⏭</button>
+    <button class="ib" id="bDebut" title="Début (Début)"><svg class="ic"><use href="#i-debut"/></svg></button><button class="ib" id="bRecul" title="Reculer d’1 s (J)"><svg class="ic"><use href="#i-recul"/></svg></button>
+    <button id="bPlay" class="pri jouer" title="Lire / pause (Espace)"><svg class="ic"><use href="#i-play"/></svg></button>
+    <button class="ib" id="bAvance" title="Avancer d’1 s (L)"><svg class="ic"><use href="#i-avance"/></svg></button><button class="ib" id="bFin" title="Fin (Fin)"><svg class="ic"><use href="#i-fin"/></svg></button>
     <input type="range" id="scrub" min="0" max="1" step="0.01" value="0">
-    <span id="tc">00:00:00:00</span><select id="qApercu" title="Qualité de l’aperçu avec effets (calculé par la puce vidéo dès 720p)" style="width:auto;flex:none"><option value="360">Aperçu 360p</option><option value="720">Aperçu 720p</option><option value="1080">Aperçu 1080p</option><option value="2160">Aperçu 4K</option></select><span id="pret" class="mut" title="Aperçu avec effets préparé en arrière-plan pendant que tu travailles"></span>
+    <span id="tc">00:00:00:00</span><div id="vu" title="Niveau du son pendant la lecture"><i></i><i></i></div><select id="qApercu" title="Qualité de l’aperçu avec effets (calculé par la puce vidéo dès 720p)" style="width:auto;flex:none"><option value="360">Aperçu 360p</option><option value="720">Aperçu 720p</option><option value="1080">Aperçu 1080p</option><option value="2160">Aperçu 4K</option></select><span id="pret" class="mut" title="Aperçu avec effets préparé en arrière-plan pendant que tu travailles"></span>
   </div>
 </main>
 
@@ -248,21 +330,17 @@ canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display
 
 <section id="tl"><div id="poignee" title="Tirer pour agrandir ou réduire la timeline (double-clic : taille normale)"></div>
   <div id="tlbar">
-    <button id="bCouper" title="Couper à la tête de lecture (S ou ⌘B)">✂ Couper</button>
-    <button id="bGauche" title="Déplacer à gauche (⌘[)">◀</button><button id="bDroite" title="Déplacer à droite (⌘])">▶</button>
-    <button id="bDup" title="Dupliquer (⌘D)">⧉ Dupliquer</button>
-    <button id="bDetTl" title="Détacher le son du clip sélectionné pour le travailler à part (D)">🔊 Détacher le son</button><button id="bFixe" title="Image fixe de 3 secondes à la tête de lecture">🖼 Image fixe</button><button id="bCapt" title="Enregistrer l’image affichée">📷 Capturer</button>
-    <button id="bSuppr" title="Supprimer (Suppr)">🗑 Supprimer</button>
-    <button id="bMarq" title="Ajouter un repère (M)">⚑ Repère</button>
+    <div class="groupe"><button class="tb" id="bCouper" title="Couper à la tête de lecture (S ou ⌘B)"><svg class="ic"><use href="#i-couper"/></svg><span>Couper</span></button><button class="ib" id="bGauche" title="Déplacer à gauche (⌘[)">◀</button><button class="ib" id="bDroite" title="Déplacer à droite (⌘])">▶</button><button class="ib" id="bDup" title="Dupliquer (⌘D)"><svg class="ic"><use href="#i-dupliquer"/></svg></button><button class="ib" id="bSuppr" title="Supprimer (Suppr)"><svg class="ic"><use href="#i-poubelle"/></svg></button></div>
+    <div class="groupe"><button class="tb" id="bDetTl" title="Détacher le son du clip sélectionné pour le travailler à part (D)"><svg class="ic"><use href="#i-detacher"/></svg><span>Détacher le son</span></button><button class="ib" id="bFixe" title="Image fixe de 3 secondes à la tête de lecture"><svg class="ic"><use href="#i-image"/></svg></button><button class="ib" id="bCapt" title="Enregistrer l’image affichée"><svg class="ic"><use href="#i-capture"/></svg></button><button class="ib" id="bMarq" title="Ajouter un repère (M) ; double-clic sur un repère pour le nommer"><svg class="ic"><use href="#i-repere"/></svg></button></div>
     <span class="sp"></span>
     <span class="mut" id="duree"></span>
-    <button class="mini" id="zMoins" title="Zoom arrière (-)">−</button><input type="range" id="zoom" min="6" max="200" value="40" style="width:110px"><button class="mini" id="zPlus" title="Zoom avant (+)">＋</button><button class="mini" id="zFit" title="Tout afficher (⇧Z)">Ajuster</button>
+    <button class="ib" id="zMoins" title="Zoom arrière (-)"><svg class="ic"><use href="#i-zmoins"/></svg></button><input type="range" id="zoom" min="6" max="200" value="40" style="width:110px"><button class="ib" id="zPlus" title="Zoom avant (+)"><svg class="ic"><use href="#i-zplus"/></svg></button><button class="ib" id="zFit" title="Tout afficher (⇧Z)"><svg class="ic"><use href="#i-ajuster"/></svg></button>
   </div>
   <div id="tlcorps">
     <div id="entetes" aria-hidden="true"><div class="ent" id="eR"></div>
-      <div class="ent" id="eV2" title="Vidéo 2 : image dans l’image, plans de coupe (au-dessus du montage)"><b>V2</b><small>incrust.</small></div>
-      <div class="ent" id="eV" title="Vidéo principale : les clips se suivent"><b>V1</b><small>vidéo</small></div>
-      <div class="ent" id="eA" title="Audio : musique, voix off, bruitages"><b>A</b><small>son</small></div></div>
+      <div class="ent" id="eV2" title="Vidéo 2 : image dans l’image, plans de coupe (au-dessus du montage)"><b>V2</b><small>Incrustations</small><span class="pbt"><button data-piste="V2:cache" title="Masquer cette piste"><svg class="ic"><use href="#i-oeil"/></svg></button><button data-piste="V2:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div>
+      <div class="ent" id="eV" title="Vidéo principale : les clips se suivent"><b>V1</b><small>Vidéo</small><span class="pbt"><button data-piste="V1:muet" title="Couper le son des vidéos"><svg class="ic"><use href="#i-son"/></svg></button><button data-piste="V1:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div>
+      <div class="ent" id="eA" title="Audio : musique, voix off, bruitages"><b>A1</b><small>Audio</small><span class="pbt"><button data-piste="A:muet" title="Couper la piste audio"><svg class="ic"><use href="#i-son"/></svg></button><button data-piste="A:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div></div>
     <div id="scroll"><div id="lane">
       <div id="regle"></div>
       <div class="piste v2" id="pV2"></div>
@@ -482,7 +560,7 @@ function navigateur() {
   const ch = $('#cherche'); if (ch) ch.oninput = e => { const q = e.target.value.toLowerCase(); el.querySelectorAll('.carte').forEach(c => { c.style.display = c.dataset.n.includes(q) ? '' : 'none'; }); };
 }
 function allerOnglet(t) { tab = t; navigateur(); }
-$('#tabs').onclick = e => { if (e.target.dataset.tab) allerOnglet(e.target.dataset.tab); };
+$('#tabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) allerOnglet(b.dataset.tab); };
 $('#navbody').addEventListener('click', e => {
   const t = e.target.closest('[data-add],[data-del],[data-calque],[data-piste],[data-fx],[data-tr],[data-titre],[data-rep],[data-afx],[data-play],[data-ajout-son],[data-ajout-pack],[data-sticker],[data-pose],[data-decor],[data-lut],[data-ecran],[data-fond],#bTrTous,[data-outil]'); if (!t) return;
   if (t.tagName === 'A') e.preventDefault();
@@ -660,7 +738,7 @@ function tlDessin() {
   $('#lane').style.width = (W * zoom + 60) + 'px';
   let r = ''; const pas = zoom >= 80 ? 1 : zoom >= 36 ? 2 : zoom >= 18 ? 5 : 10;
   for (let s = 0; s < W; s += pas) r += `<i style="left:${s * zoom}px">${s >= 60 ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : s + 's'}</i>`;
-  r += (proj.markers || []).map((t, i) => `<b data-mk="${i}" style="left:${t * zoom}px" title="Repère à ${fmt(t)} (clic : y aller · ⇧clic : supprimer)"></b>`).join('');
+  r += (proj.markers || []).map((t, i) => `<b data-mk="${i}" style="left:${t * zoom}px" title="${esc(nomRepere(t) || 'Repère')} à ${fmt(t)} (clic : y aller · double-clic : nommer · ⇧clic : supprimer)"></b>${nomRepere(t) ? `<span class="mkn" style="left:${t * zoom}px">${esc(nomRepere(t))}</span>` : ''}`).join('');
   $('#regle').innerHTML = r;
   $('#pV').innerHTML = (proj.clips.length ? '' : '<span class="vide2">Glisse ici tes vidéos et photos</span>') + proj.clips.map((c, i) => {
     let bg = '';
@@ -745,6 +823,8 @@ $('#pV').addEventListener('click', e => {
 // Clic, glisser pour réordonner, poignées pour raccourcir
 $('#pV').addEventListener('pointerdown', e => {
   const el = e.target.closest('.clip'); if (!el || e.button === 2) return;
+  if (verrouillee('V1')) return;
+  if (outilTl === 'lame') { e.preventDefault(); const r0 = $('#lane').getBoundingClientRect(); sel = +el.dataset.i; selA = -1; selP = -1; selObjs.clear(); placerTete(Math.max(0, (e.clientX - r0.left) / zoom), { sansSelection: true, sansApercu: true }); couper(); return; }
   if (e.shiftKey || e.metaKey || e.ctrlKey) { e.preventDefault(); basculerMulti(+el.dataset.i, e.shiftKey); return; }
   const i = +el.dataset.i, c = proj.clips[i], x0 = e.clientX, mode = e.target.classList.contains('hl') ? 'gauche' : e.target.classList.contains('hr') ? 'droite' : 'deplace';
   const r = $('#lane').getBoundingClientRect(), st0 = starts()[i];
@@ -775,7 +855,7 @@ $('#pV').addEventListener('pointerdown', e => {
 });
 // Piste vidéo 2 : déplacer, raccourcir par les bords
 $('#pV2').addEventListener('pointerdown', e => {
-  const el = e.target.closest('.pv'); if (!el) return;
+  const el = e.target.closest('.pv'); if (!el || e.button === 2) return; if (verrouillee('V2')) return;
   selP = +el.dataset.p; sel = -1; selA = -1; selCut = -1; inspecteur(); tlDessin(); navigateur();
   const p = proj.pistes[selP], x0 = e.clientX, c0 = { ...p }, mode = e.target.classList.contains('hl') ? 'g' : e.target.classList.contains('hr') ? 'd' : 'm'; let bouge = false;
   const mv = ev => {
@@ -794,13 +874,15 @@ function pointsAimant(exclureAudio) {
   return [gt, 0, ...proj.clips.flatMap((c, i) => [st[i], st[i] + effDur(c)]), ...(proj.markers || []), ...proj.audio.flatMap((a, i) => (i === exclureAudio ? [] : [a.start || 0, (a.start || 0) + dureeAudio(a)]))];
 }
 function aimanter(t, pts, libre) {
-  if (libre) return { t, sur: null }; let best = t, d = 9 / zoom, sur = null;
+  if (libre || !aimant) return { t, sur: null }; let best = t, d = 9 / zoom, sur = null;
   for (const p of pts) if (Math.abs(p - t) < d) { d = Math.abs(p - t); best = p; sur = p; }
   return { t: best, sur };
 }
 function guide(t) { let g = document.getElementById('guide'); if (t == null) { if (g) g.remove(); return; } if (!g) { g = document.createElement('div'); g.id = 'guide'; $('#lane').appendChild(g); } g.style.left = (t * zoom) + 'px'; }
 $('#pA').addEventListener('pointerdown', e => {
   const el = e.target.closest('.aud'); if (!el || e.button === 2) return;
+  if (verrouillee('A')) return;
+  if (outilTl === 'lame') { e.preventDefault(); const r0 = $('#lane').getBoundingClientRect(); selA = +el.dataset.a; sel = -1; selP = -1; placerTete(Math.max(0, (e.clientX - r0.left) / zoom), { sansSelection: true, sansApercu: true }); couperAudio(); return; }
   selA = +el.dataset.a; selP = -1; sel = -1; selCut = -1; selObjs.clear(); inspecteur(); tlDessin(); navigateur();
   const a = proj.audio[selA], x0 = e.clientX, copie = clone(a), s0 = a.start || 0, V = a.vit || 1, D0 = a.dur || durOf(a.file), I0 = a.in || 0, i0 = selA;
   const mode = e.target.classList.contains('hl') ? 'gauche' : e.target.classList.contains('hr') ? 'droite' : 'deplace', pts = pointsAimant(i0); let bouge = false;
@@ -876,6 +958,82 @@ function repere(d) { const m = proj.markers.filter(t => d > 0 ? t > gt + 0.05 : 
 $('#bDetTl').onclick = detacherSelection; $('#bFixe').onclick = imageFixe; $('#bCapt').onclick = capturer; $('#bSuppr').onclick = supprimer; $('#bGauche').onclick = () => deplacer(-1); $('#bDroite').onclick = () => deplacer(1); $('#bDup').onclick = dupliquer; $('#bCouper').onclick = couper; $('#bMarq').onclick = marqueur;
 $('#format').onchange = e => { proj.format = e.target.value; commit(); apercu(); };
 
+// ---------- Outils pro : icônes, outil Lame, magnétisme, états des pistes, grille et zones sûres, vumètre, repères nommés, chapitres ----------
+const icone = n => `<svg class="ic"><use href="#i-${n}"/></svg>`;
+function majPlay(enCours) { const b = $('#bPlay'); b.innerHTML = icone(enCours ? 'pause' : 'play'); b.title = (enCours ? 'Pause' : 'Lire') + ' (Espace)'; if (!enCours) vuStop(); }
+let outilTl = 'selection', aimant = true;
+function choisirOutil(o) { outilTl = o; document.body.classList.toggle('lame', o === 'lame'); $('#oSel').classList.toggle('on', o === 'selection'); $('#oLame').classList.toggle('on', o === 'lame'); aide(o === 'lame' ? '✂ Outil Lame : clique sur un clip ou un son à l’endroit où couper (A pour revenir à la sélection).' : 'Outil Sélection.'); }
+function basculerAimant() { aimant = !aimant; $('#oAimant').classList.toggle('on', aimant); try { localStorage.setItem('qm:aimant', aimant ? '1' : '0'); } catch (e) { /* stockage indisponible */ } aide(aimant ? '🧲 Magnétisme activé.' : 'Magnétisme désactivé.'); }
+$('#oSel').onclick = () => choisirOutil('selection'); $('#oLame').onclick = () => choisirOutil('lame'); $('#oAimant').onclick = basculerAimant;
+try { if (localStorage.getItem('qm:aimant') === '0') { aimant = false; $('#oAimant').classList.remove('on'); } } catch (e) { /* stockage indisponible */ }
+// États des pistes : V2 masquée, sons de V1 ou piste audio coupés, pistes verrouillées (rien ne bouge)
+const etatPiste = k => ((proj.etatPistes || {})[k] || {});
+function basculerPiste(k, quoi) { proj.etatPistes = proj.etatPistes || {}; const e = proj.etatPistes[k] = { ...(proj.etatPistes[k] || {}) }; e[quoi] = !e[quoi]; commit(); majPistes(); apercu();
+  aide({ cache: e.cache ? 'Piste V2 masquée (ni dans l’aperçu ni à l’export).' : 'Piste V2 visible.', muet: e.muet ? `Son de la piste ${k} coupé.` : `Son de la piste ${k} remis.`, verrou: e.verrou ? `Piste ${k} verrouillée : rien ne peut y bouger.` : `Piste ${k} déverrouillée.` }[quoi]); }
+function majPistes() {
+  const m = { V2: '#pV2', V1: '#pV', A: '#pA' };
+  for (const [k, sel2] of Object.entries(m)) { const e = etatPiste(k), el = $(sel2); el.classList.toggle('cachee', !!e.cache); el.classList.toggle('muette', !!e.muet); el.classList.toggle('verrou', !!e.verrou); }
+  document.querySelectorAll('[data-piste]').forEach(b => { const [k, q] = b.dataset.piste.split(':'); const on = !!etatPiste(k)[q]; b.classList.toggle('on', on); if (q === 'muet') b.innerHTML = icone(on ? 'muet' : 'son'); });
+  const c = curClip(); $('#vTitre').textContent = c ? (c.file ? nomOf(c.file) : 'Fond uni') + ' · ' + fmt(effDur(c)) : (proj.clips.length ? 'Projet · ' + fmt(total()) : 'Visionneuse');
+}
+document.getElementById('entetes').addEventListener('click', e => { const b = e.target.closest('[data-piste]'); if (!b) return; const [k, q] = b.dataset.piste.split(':'); basculerPiste(k, q); });
+const verrouillee = k => { if (!etatPiste(k).verrou) return false; aide(`🔒 Piste ${k === 'A' ? 'audio' : k} verrouillée : clique sur son cadenas pour la libérer.`); return true; };
+// projet envoyé au moteur : pistes masquées ou coupées appliquées
+function pourRendu(p) {
+  const e = k => ((p.etatPistes || {})[k] || {}); if (!e('V2').cache && !e('V1').muet && !e('A').muet) return p;
+  const q = JSON.parse(JSON.stringify(p)); if (e('V2').cache) q.pistes = []; if (e('A').muet) q.audio = []; if (e('V1').muet) q.clips.forEach(c => { c.vol = 0; }); return q;
+}
+// Grille des tiers et zones de sécurité par-dessus l'image
+const vues = { grille: false, zones: false }; try { Object.assign(vues, JSON.parse(localStorage.getItem('qm:vues') || '{}')); } catch (e) { /* réglages indisponibles */ }
+function surcouches() {
+  const st = $('#stage'); st.querySelectorAll('.surcouche').forEach(x => x.remove());
+  const m = st.querySelector('video, img'); if (!m || (!vues.grille && !vues.zones)) return;
+  const place = () => { st.querySelectorAll('.surcouche').forEach(x => x.remove()); const r = m.getBoundingClientRect(), R = st.getBoundingClientRect(); if (!r.width) return;
+    for (const k of ['grille', 'zones']) if (vues[k]) { const d = document.createElement('div'); d.className = 'surcouche ' + (k === 'grille' ? 'tiers' : 'zones' + (proj.format === 'vertical' ? ' vertical' : '')); Object.assign(d.style, { left: r.left - R.left + 'px', top: r.top - R.top + 'px', width: r.width + 'px', height: r.height + 'px' }); st.appendChild(d); } };
+  if (m.tagName === 'VIDEO' ? !m.videoWidth : !m.complete) m.addEventListener(m.tagName === 'VIDEO' ? 'loadedmetadata' : 'load', place, { once: true });
+  place();
+}
+new MutationObserver(l => { if (l.every(x => [...x.addedNodes, ...x.removedNodes].every(n => n.classList && n.classList.contains('surcouche')))) return; clearTimeout(surcouches.t); surcouches.t = setTimeout(surcouches, 30); }).observe($('#stage'), { childList: true });
+addEventListener('resize', () => surcouches());
+function basculerVue(k) { vues[k] = !vues[k]; $(k === 'grille' ? '#vGrille' : '#vZones').classList.toggle('on', vues[k]); try { localStorage.setItem('qm:vues', JSON.stringify(vues)); } catch (e) { /* stockage indisponible */ } surcouches(); }
+$('#vGrille').onclick = () => basculerVue('grille'); $('#vZones').onclick = () => basculerVue('zones');
+$('#vGrille').classList.toggle('on', vues.grille); $('#vZones').classList.toggle('on', vues.zones);
+// Vumètre pendant la lecture
+let vuCtx = null, vuAnim = 0;
+function brancherVu(v) {
+  try {
+    vuCtx = vuCtx || new AudioContext(); if (vuCtx.state === 'suspended') vuCtx.resume();
+    if (!v._vu) { const src = vuCtx.createMediaElementSource(v), sp = vuCtx.createChannelSplitter(2), a = [vuCtx.createAnalyser(), vuCtx.createAnalyser()]; src.connect(sp); a.forEach((x, k) => { x.fftSize = 512; sp.connect(x, k); }); src.connect(vuCtx.destination); v._vu = a; }
+    const tampon = new Float32Array(512), barres = document.querySelectorAll('#vu i');
+    cancelAnimationFrame(vuAnim);
+    const boucle = () => { if (v.paused || !v.isConnected) return vuStop();
+      v._vu.forEach((x, k) => { x.getFloatTimeDomainData(tampon); let m = 0; for (const y of tampon) m = Math.max(m, Math.abs(y)); const db = 20 * Math.log10(m || 1e-5); barres[k].style.setProperty('--n', clamp((db + 60) / 60 * 100, 0, 100) + '%'); });
+      vuAnim = requestAnimationFrame(boucle); };
+    boucle();
+  } catch (e) { /* vumètre indisponible : la lecture continue */ }
+}
+function vuStop() { cancelAnimationFrame(vuAnim); document.querySelectorAll('#vu i').forEach(b => b.style.setProperty('--n', '0%')); }
+// Repères nommés (double-clic) et chapitres YouTube
+const nomRepere = t => ((proj.nomsReperes || {})[(+t).toFixed(2)] || '');
+$('#regle').addEventListener('dblclick', async e => {
+  const mk = e.target.closest('b[data-mk]'); if (!mk) return; const t = proj.markers[+mk.dataset.mk];
+  const nom = await demander('Nom du repère (titre du chapitre)', nomRepere(t)); if (nom === null) return;
+  proj.nomsReperes = { ...(proj.nomsReperes || {}) }; if (nom) proj.nomsReperes[t.toFixed(2)] = nom.slice(0, 60); else delete proj.nomsReperes[t.toFixed(2)]; commit(); tlDessin();
+});
+function chapitres() {
+  const fin = total(), hms = t => { t = Math.floor(t); const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s2 = String(t % 60).padStart(2, '0'); return h ? `${h}:${String(m).padStart(2, '0')}:${s2}` : `${m}:${s2}`; };
+  const pts = [0, ...(proj.markers || []).filter(t => t > 0.5 && t < fin - 1)].sort((a, b) => a - b), garde = [];
+  for (const t of pts) if (!garde.length || t - garde[garde.length - 1] >= 10) garde.push(t); // YouTube : 10 s minimum par chapitre
+  return garde.map((t, k) => `${hms(t)} ${nomRepere(t) || (k ? `Partie ${k + 1}` : 'Introduction')}`);
+}
+function ouvrirChapitres() {
+  const l = chapitres(), ok2 = l.length >= 3;
+  ouvrir(`<h2>📑 Chapitres YouTube</h2><p class="mut">${ok2 ? 'À coller dans la description de ta vidéo YouTube : les chapitres apparaissent sur la barre de lecture.' : 'YouTube demande au moins 3 chapitres de 10 secondes : pose des repères (touche M) aux débuts de parties, puis double-clique dessus pour les nommer.'}</p>
+    <textarea id="chTxt" rows="${Math.max(4, l.length + 1)}" style="width:100%;font-family:ui-monospace,Menlo,monospace">${esc(l.join('\n'))}</textarea>
+    <div class="ligne" style="margin-top:10px"><button id="chFermer">Fermer</button><button class="pri" id="chCopier" ${ok2 ? '' : 'disabled'}>Copier</button></div>`);
+  $('#chFermer').onclick = fermer; $('#chCopier').onclick = async () => { try { await navigator.clipboard.writeText($('#chTxt').value); aide('📋 Chapitres copiés.'); } catch (e) { $('#chTxt').select(); document.execCommand('copy'); } fermer(); };
+}
+
 // ---------- Visionneuse et lecture ----------
 let minuteur = null, jeton = 0, lecture = null;
 function choisir(i) { sel = i; selA = -1; selP = -1; selCut = -1; tout(); placerTete(starts()[i] || 0); }
@@ -925,7 +1083,7 @@ function pistesApercu() {
   };
   if (img.complete && img.naturalWidth) poser(); else img.addEventListener('load', poser, { once: true });
 }
-function stopLecture() { if (lecture) { lecture.video.pause(); if (lecture.arreter) lecture.arreter(); lecture = null; $('#bPlay').textContent = '▶ Lire'; apercu(); } }
+function stopLecture() { if (lecture) { lecture.video.pause(); if (lecture.arreter) lecture.arreter(); lecture = null; majPlay(false); apercu(); } }
 function majApercuEtat() { if (rendu && rendu.sig !== snap()) { rendu.perime = true; } preparerEnFond(); }
 // Aperçu préparé en arrière-plan 1,5 s après chaque modification : la lecture démarre tout de suite
 const fond = { cours: null, promesse: null, minuteur: 0 };
@@ -950,6 +1108,7 @@ function preparerEnFond(delai = 1500) {
   }, delai);
 }
 async function lancerJob(url, body, onProg) {
+  if (body && body.project) body = { ...body, project: pourRendu(body.project) };
   const { id } = await (await api(url, { method: 'POST', body: JSON.stringify(body) })).json();
   for (;;) {
     await new Promise(r => setTimeout(r, 450));
@@ -960,25 +1119,25 @@ async function lancerJob(url, body, onProg) {
   }
 }
 async function rendreApercu() {
-  const b = $('#bApercu'); b.disabled = true; $('#bPlay').disabled = true;
+  const b = $('#bApercu'), bl = b.querySelector('span') || b; b.disabled = true; $('#bPlay').disabled = true;
   try {
-    const url = await lancerJob('/api/apercu', { project: proj }, (p, s) => { b.textContent = `Rendu ${Math.round(p * 100)} %`; $('#etat').textContent = s; });
+    const url = await lancerJob('/api/apercu', { project: proj }, (p, s) => { bl.textContent = `Rendu ${Math.round(p * 100)} %`; $('#etat').textContent = s; });
     rendu = { url, sig: snap(), perime: false }; pastille();
-  } finally { b.disabled = false; $('#bPlay').disabled = false; b.textContent = '🎞 Aperçu avec effets'; $('#etat').textContent = ''; }
+  } finally { b.disabled = false; $('#bPlay').disabled = false; bl.textContent = 'Aperçu'; $('#etat').textContent = ''; }
 }
 async function lire() { // lecture de toute la timeline avec les effets (rendu rapide si le projet a changé)
   if (!proj.clips.length) return aide('La timeline est vide : ajoute d’abord un média.');
   if (lecture && lecture.direct) return stopLecture();
-  if (lecture) { lecture.video.paused ? lecture.video.play() : lecture.video.pause(); $('#bPlay').textContent = lecture.video.paused ? '▶ Lire' : '⏸ Pause'; return; }
+  if (lecture) { lecture.video.paused ? lecture.video.play() : lecture.video.pause(); majPlay(!lecture.video.paused); return; }
   // aperçu avec effets pas encore prêt : lecture immédiate des fichiers d'origine, l'aperçu continue en arrière-plan
   if (!rendu || rendu.sig !== snap()) { preparerEnFond(0); return lectureDirecte(); }
   const v = document.createElement('video'); v.src = rendu.url; v.controls = true; v.autoplay = false; lecture = { video: v };
   $('#stage').innerHTML = ''; $('#stage').appendChild(v);
   const T = total(); v.onloadedmetadata = () => { v.currentTime = clamp(gt * (v.duration / Math.max(0.1, T)), 0, v.duration - 0.05); v.play().catch(() => {}); };
   v.ontimeupdate = () => { gt = v.currentTime * (T / Math.max(0.1, v.duration)); tete(); };
-  v.onpause = () => { $('#bPlay').textContent = '▶ Lire'; }; v.onplay = () => { $('#bPlay').textContent = '⏸ Pause'; };
+  v.onpause = () => majPlay(false); v.onplay = () => { majPlay(true); brancherVu(v); };
   v.onended = () => { stopLecture(); };
-  $('#bPlay').textContent = '⏸ Pause';
+  majPlay(true);
 }
 // Lecture immédiate de la timeline à partir des fichiers d'origine (sans effets ni musique), clip après clip
 async function lectureDirecte() {
@@ -988,7 +1147,7 @@ async function lectureDirecte() {
   const badge = document.createElement('div'); badge.className = 'mut'; badge.style.cssText = 'position:absolute;top:8px;left:8px;background:#000a;padding:3px 8px;border-radius:6px;font-size:11px';
   badge.textContent = '▶ Lecture directe (sans effets) — l’aperçu complet se prépare'; $('#stage').append(badge);
   const lec = lecture = { video: v, direct: true }; let { i, pos: p } = locate(gt), minuteur = 0;
-  $('#bPlay').textContent = '⏸ Pause';
+  majPlay(true);
   const suivant = () => { clearInterval(minuteur); i++; p = 0; if (lecture === lec) jouer(); };
   const jouer = async () => {
     const c = proj.clips[i]; if (!c || lecture !== lec) return stopLecture();
@@ -996,9 +1155,9 @@ async function lectureDirecte() {
       const m = mediaOf(c.file); let src = '/media/' + enc(c.file);
       if (!m || !m.native) { badge.textContent = '⏳ Préparation de la lecture…'; try { src = (await (await api('/api/proxy?file=' + enc(c.file))).json()).url; } catch (e) { return suivant(); } badge.textContent = '▶ Lecture directe (sans effets)'; }
       if (lecture !== lec) return;
-      im.style.display = 'none'; v.style.display = ''; v.muted = !c.vol;
+      im.style.display = 'none'; v.style.display = ''; v.muted = !c.vol || !!etatPiste('V1').muet;
       if (v.getAttribute('src') !== src) { v.src = src; await new Promise(r => { v.onloadedmetadata = r; v.onerror = r; }); }
-      v.playbackRate = c.speed || 1; v.currentTime = c.in + p * (c.speed || 1); v.play().catch(() => {});
+      v.playbackRate = c.speed || 1; v.currentTime = c.in + p * (c.speed || 1); v.play().catch(() => {}); brancherVu(v);
       v.ontimeupdate = () => { if (lecture !== lec) return; gt = st[i] + (v.currentTime - c.in) / (c.speed || 1); tete(); if (v.currentTime >= c.out - 0.04) { v.ontimeupdate = null; suivant(); } };
     } else { // photo ou fond uni : affiché pendant sa durée
       v.pause(); v.style.display = 'none'; im.style.display = '';
@@ -1019,7 +1178,7 @@ async function lireOriginal() { // lecture rapide du clip sélectionné, sans ef
   $('#stage').innerHTML = ''; $('#stage').appendChild(v); const st = starts()[sel];
   v.onloadedmetadata = () => { v.currentTime = c.in + pos * c.speed; v.play().catch(() => {}); };
   v.ontimeupdate = () => { if (v.currentTime >= c.out) return stopLecture(); pos = (v.currentTime - c.in) / c.speed; gt = st + pos; tete(); };
-  $('#bPlay').textContent = '⏸ Pause';
+  majPlay(true);
 }
 $('#bPlay').onclick = lire; $('#bApercu').onclick = async () => { stopLecture(); try { await rendreApercu(); } catch (e) { return alert(e.message); } lire(); };
 $('#bDebut').onclick = () => { stopLecture(); placerTete(0); }; $('#bFin').onclick = () => { stopLecture(); placerTete(total() - 0.05); };
@@ -1092,7 +1251,8 @@ function inspecteur() {
   el.dataset.root = 'c';
   const m = mediaOf(c.file), md = m ? m.duration : c.out, k = c.kind, ti = c.titre;
   const sourceVideo = k === 'video' || k === 'audio';
-  el.innerHTML = `
+  const nomK = { video: 'Vidéo', image: 'Photo', audio: 'Son (podcast)', solid: 'Fond uni' }[k] || k, icK = { video: 'medias', image: 'image', audio: 'musique', solid: 'calques' }[k] || 'medias';
+  el.innerHTML = `<div class="itete">${icone(icK)}<div><b>${esc(c.file ? nomOf(c.file) : 'Fond uni')}</b><small>${nomK} · ${fmt(effDur(c))}${c.speed && c.speed !== 1 ? ' · ' + String(c.speed).replace('.', ',') + '×' : ''}${c.sonDetache ? ' · son détaché' : ''}</small></div></div>
   <details open><summary>${k === 'audio' ? 'Découpe, vitesse et volume' : k === 'solid' ? 'Fond uni' : 'Découpe et vitesse'}</summary>
     ${k === 'solid' ? `<input type="color" data-p="color" value="${c.color}">` : ''}
     ${sourceVideo ? sl('Début', 'in', 0, Math.max(0, +(c.out - 0.2).toFixed(1)), 0.1, ' s', c) + sl('Fin', 'out', +(c.in + 0.2).toFixed(1), +md.toFixed(1), 0.1, ' s', c) + sl('Vitesse', 'speed', 0.25, 4, 0.05, '×', c) + sl('Volume', 'vol', 0, 300, 5, ' %', c) : sl('Durée', 'dur', 0.5, 30, 0.5, ' s', c)}
@@ -1707,6 +1867,8 @@ function outilsHtml() {
       <button class="pri" data-outil="egaliser" style="width:100%">Égaliser tous les clips</button><div class="mut" id="oEgalRes" style="margin:4px 0 10px"></div>
       <p class="mut"><b>Dynamiser une vidéo parlée</b> : un plan sur deux est légèrement zoomé (effet « jump cut »), pratique après avoir coupé les blancs.</p>
       <div class="ligne"><select id="oZoomNiv">${opts([['110', 'Zoom léger (110 %)'], ['120', 'Zoom moyen (120 %)'], ['135', 'Zoom fort (135 %)']], '120')}</select><button class="pri" data-outil="zoom-alterne" style="flex:none">Appliquer</button><button data-outil="zoom-retirer" style="flex:none">Retirer</button></div><div class="mut" id="oZoomRes" style="margin:4px 0 10px"></div>
+      <p class="mut"><b>Chapitres YouTube</b> : pose des repères (M) au début de chaque partie, double-clique dessus pour les nommer, puis copie les chapitres pour la description.</p>
+      <button data-outil="chapitres" style="width:100%">📑 Chapitres YouTube depuis les repères</button><div style="height:10px"></div>
       <p class="mut"><b>Transition sur toutes les coupures</b></p>
       <div class="ligne"><select id="oTrAll"><option value="">Aucune (retirer)</option>${CAT.transitions.filter(t => t.id !== 'none').map(t => `<option value="${t.id}" ${t.id === 'fade' ? 'selected' : ''}>${esc(t.nom)}</option>`).join('')}</select><button class="pri" data-outil="transition-tout" style="flex:none">Appliquer partout</button></div><div class="mut" id="oTrAllRes" style="margin-top:4px"></div></div>
     <div class="encart"><h4>💬 Sous-titres automatiques</h4><p class="mut">QuentMovie écoute ta voix et écrit les sous-titres au bon moment (sans internet, sur ton Mac). Les « euh » ne sont pas écrits.</p>
@@ -1776,6 +1938,7 @@ async function outil(nom) {
   if (nom === 'plans-clip' || nom === 'plans-tout') return detecterPlans(nom === 'plans-tout');
   if (nom === 'rythme-reperes') return rythmeMusique('reperes'); if (nom === 'rythme-caler') return rythmeMusique('caler');
   if (nom === 'zoom-alterne') return dynamiserZooms(false); if (nom === 'zoom-retirer') return dynamiserZooms(true);
+  if (nom === 'chapitres') return ouvrirChapitres();
   if (nom === 'egaliser') return egaliserVolumes(); if (nom === 'transition-tout') return transitionPartout();
   if (nom === 'lien') { // vidéo d'un réseau social ou de YouTube → médias
     const lien = $('#lienVideo').value.trim(), r = t => { const e = $('#lienRes'); if (e) e.innerHTML = t; };
@@ -2638,6 +2801,7 @@ document.addEventListener('keydown', e => {
   if (saisie) return;
   const f = fn => { e.preventDefault(); fn(); };
   if (k === ' ') return f(() => (e.altKey ? lireOriginal() : lire()));
+  if (kl === 'a' && !e.shiftKey) return f(() => choisirOutil('selection')); if (kl === 'b') return f(() => choisirOutil('lame')); if (kl === 'n') return f(basculerAimant); if (kl === 'g') return f(() => basculerVue('grille'));
   if (kl === 's') return f(couper); if (kl === 'd') return f(detacherSelection); if (kl === 'm') return f(marqueur); if (kl === 'i') return f(() => rogner(true)); if (kl === 'o') return f(() => rogner(false));
   if (kl === 'k') return f(stopLecture); if (kl === 'j') return f(() => saut(-1)); if (kl === 'l') return f(() => saut(1));
   if (kl === 'f') return f(() => { const s = $('#stage'); if (document.fullscreenElement) document.exitFullscreen(); else s.requestFullscreen && s.requestFullscreen(); });
@@ -2653,7 +2817,7 @@ document.addEventListener('keydown', e => {
   if (/^[1-9]$/.test(k)) return f(() => allerOnglet(TABS[+k - 1]));
 });
 
-function tout() { tlDessin(); inspecteur(); navigateur(); reglerScrub(); majBoutons(); }
+function tout() { tlDessin(); inspecteur(); navigateur(); reglerScrub(); majBoutons(); majPistes(); }
 
 // ---------- Démarrage ----------
 (async function () {
