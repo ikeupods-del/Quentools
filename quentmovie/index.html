@@ -1330,7 +1330,8 @@ $('#tlcorps').addEventListener('contextmenu', e => {
       !mu && c.sonDetache ? { id: 'rat', t: '🔗 Rattacher le son au clip', f: () => rattacherSon(i) } : null,
       cible.some(x => x.kind === 'video' || x.kind === 'audio') ? { id: 'mut', t: muet ? '🔈 Remettre le son' : '🔇 Couper le son', f: basculerMuet } : null,
       vid && !mu ? { id: 'fix', t: '🖼 Image fixe (3 s) ici', f: imageFixe } : null,
-      !mu ? { id: 'cap', t: '📷 Capturer cette image', f: capturer } : null, '-',
+      !mu ? { id: 'cap', t: '📷 Capturer cette image', f: capturer } : null,
+      vid || mu ? { id: 'pln', t: '🎬 Découper aux changements de plan', f: () => detecterPlans(false) } : null, '-',
       { id: 'v05', t: '🐢 Ralentir (0,5×)', f: () => vitesseSelection(0.5), off: !cible.some(x => x.kind === 'video' || x.kind === 'audio') },
       { id: 'v1', t: 'Vitesse normale (1×)', f: () => vitesseSelection(1), off: !cible.some(x => x.kind === 'video' || x.kind === 'audio') },
       { id: 'v2', t: '🐇 Accélérer (2×)', f: () => vitesseSelection(2), off: !cible.some(x => x.kind === 'video' || x.kind === 'audio') }, '-',
@@ -1354,6 +1355,56 @@ $('#tlcorps').addEventListener('contextmenu', e => {
     menuCtx(e.clientX, e.clientY, [{ id: 'psp', t: '🗑 Supprimer', k: 'Suppr', f: supprimer }]);
   }
 });
+// ---------- Aide au montage : plans, rythme de la musique, volumes, transitions ----------
+async function detecterPlans(toutes) {
+  const cibles = proj.clips.map((c, i) => i).filter(i => proj.clips[i].kind === 'video' && (toutes || i === sel || selObjs.has(proj.clips[i])));
+  const res = t => { const e = $('#oPlansRes'); if (e) e.innerHTML = t; aide(t); };
+  if (!cibles.length) return res('Sélectionne une vidéo dans la timeline (ou choisis « Toute la vidéo »).');
+  res('Recherche des changements de plan…'); let total = 0;
+  try {
+    for (const i of cibles.slice().reverse()) {
+      const c = proj.clips[i], r = await (await api(`/api/plans?file=${enc(c.file)}&in=${c.in.toFixed(2)}&out=${c.out.toFixed(2)}`)).json();
+      const coupes = (r.plans || []).filter(t => t > c.in + 0.4 && t < c.out - 0.4); if (!coupes.length) continue;
+      const bornes = [c.in, ...coupes, c.out], parts = bornes.slice(0, -1).map((d, k) => { const p = clone(c); p.in = +d.toFixed(2); p.out = +bornes[k + 1].toFixed(2); if (k) { p.titre = null; p.text = ''; p.overlays = []; p.subs = []; } if (k < bornes.length - 2) p.transition = null; return p; });
+      proj.clips.splice(i, 1, ...parts); total += parts.length - 1;
+    }
+    if (!total) return res('Aucun changement de plan net trouvé : la vidéo est un plan continu.');
+    selObjs.clear(); sel = Math.min(sel, proj.clips.length - 1); commit(); tout(); apercu();
+    res(`🎬 ${total} changement${total > 1 ? 's' : ''} de plan trouvé${total > 1 ? 's' : ''} : la vidéo est découpée, chaque plan se règle, se déplace ou se supprime à part.`);
+  } catch (e) { res(`<span class="err">${esc(e.message)}</span>`); }
+}
+async function rythmeMusique(mode) {
+  const a = proj.audio[selA >= 0 ? selA : proj.audio.findIndex(x => !x.detache)] || proj.audio[0], res = t => { const e = $('#oRythmeRes'); if (e) e.innerHTML = t; aide(t); };
+  if (!a) return res('Ajoute d’abord une musique dans la piste audio (onglet Musique), puis reviens ici.');
+  res('Écoute de la musique…');
+  try {
+    const de = a.in || 0, r = await (await api(`/api/rythme?file=${enc(a.file)}&in=${de}&dur=${Math.min(180, Math.round(a.dur || durOf(a.file)))}`)).json(); if (r.error) throw new Error(r.error);
+    const V = a.vit || 1, fin = (a.start || 0) + dureeAudio(a), temps = r.temps.map(t => (a.start || 0) + (t - de) / V).filter(t => t >= (a.start || 0) - 0.01 && t <= fin + 0.01);
+    if (temps.length < 4) throw new Error('Rythme trop incertain sur ce morceau.');
+    if (mode === 'reperes') {
+      const nv = temps.slice(0, 300).filter(t => !proj.markers.some(m => Math.abs(m - t) < 0.05)).map(t => +t.toFixed(2)); proj.markers = [...proj.markers, ...nv].sort((x, y) => x - y); commit(); tlDessin();
+      return res(`🎵 Tempo : ${Math.round(r.bpm)} pulsations par minute. ${nv.length} repères posés sur les temps (touches [ et ] pour les parcourir).`);
+    }
+    const N = +($('#oTemps') ? $('#oTemps').value : 4) || 4, grille = temps.filter((_, k) => k % N === 0); let t = 0, n = 0;
+    if (!grille.length) throw new Error('Pas assez de temps forts pour caler les images.');
+    for (const c of proj.clips) {
+      if (c.kind === 'image' || c.kind === 'solid') { const fin2 = grille.find(g => g >= t + Math.max(1, grille.length > 1 ? (grille[1] - grille[0]) * 0.6 : 1)); if (fin2) { c.dur = +(fin2 - t).toFixed(2); n++; } }
+      t += effDur(c);
+    }
+    commit(); tout(); apercu();
+    res(n ? `🎵 Tempo : ${Math.round(r.bpm)} pulsations par minute. ${n} photo${n > 1 ? 's' : ''} calée${n > 1 ? 's' : ''} : les changements tombent sur le temps fort tous les ${N} temps.` : 'Aucune photo ou fond uni à caler dans la timeline.');
+  } catch (e) { res(`<span class="err">${esc(e.message)}</span>`); }
+}
+function egaliserVolumes() {
+  let n = 0; proj.clips.forEach(c => { if ((c.kind === 'video' || c.kind === 'audio') && c.hasAudio !== false && !c.sonDetache && !c.afx.some(e => e.id === 'normaliser')) { c.afx.push({ id: 'normaliser', p: {} }); n++; } });
+  commit(); tout(); apercu(); const e = $('#oEgalRes'); const t = n ? `🔊 Volume égalisé sur ${n} clip${n > 1 ? 's' : ''} : toutes les voix auront le même niveau à l’export.` : 'Tous les clips sont déjà égalisés.'; if (e) e.textContent = t; aide(t);
+}
+function transitionPartout() {
+  const t = $('#oTrAll').value; let n = 0;
+  proj.clips.forEach((c, i) => { if (i < proj.clips.length - 1) { c.transition = t ? { type: t, dur: 0.6 } : null; n++; } });
+  commit(); tout(); apercu(); const m = n ? (t ? `✨ Transition posée sur ${n} coupure${n > 1 ? 's' : ''}.` : `Transitions retirées (${n} coupures).`) : 'Il faut au moins deux clips.'; const e = $('#oTrAllRes'); if (e) e.textContent = m; aide(m);
+}
+
 // ---------- Recadrage auto : la fenêtre suit la personne (vidéo horizontale montée en vertical ou en carré) ----------
 const RATIO = { vertical: 9 / 16, horizontal: 16 / 9, carre: 1 };
 // part de la largeur de l'image source visible une fois l'écran rempli
@@ -1613,7 +1664,17 @@ async function outilParole(portee, o, res) {
 function outilsHtml() {
   const audios = medias.filter(m => m.kind === 'audio'), imgs = medias.filter(m => m.kind === 'image');
   const po = paroleOpts();
-  return `<div class="encart"><h4>💬 Sous-titres automatiques</h4><p class="mut">QuentMovie écoute ta voix et écrit les sous-titres au bon moment (sans internet, sur ton Mac). Les « euh » ne sont pas écrits.</p>
+  return `<div class="encart"><h4>🧠 Aide au montage</h4>
+      <p class="mut"><b>Découper aux changements de plan</b> : une longue vidéo (plusieurs plans filmés d’affilée) est coupée toute seule à chaque changement de plan.</p>
+      <div class="ligne"><button class="pri" data-outil="plans-clip">Clip sélectionné</button><button class="pri" data-outil="plans-tout">Toute la vidéo</button></div><div class="mut" id="oPlansRes" style="margin:4px 0 10px"></div>
+      <p class="mut"><b>Caler sur le rythme de la musique</b> : QuentMovie trouve le tempo de la musique (sélectionne-la dans la piste audio, sinon la première).</p>
+      <div class="ligne"><button class="pri" data-outil="rythme-reperes">Poser des repères sur les temps</button></div>
+      <div class="ligne" style="margin-top:6px"><select id="oTemps">${opts([['1', 'Chaque temps'], ['2', 'Tous les 2 temps'], ['4', 'Tous les 4 temps (une mesure)'], ['8', 'Tous les 8 temps']], '4')}</select><button class="pri" data-outil="rythme-caler" style="flex:none">Caler les photos</button></div><div class="mut" id="oRythmeRes" style="margin:4px 0 10px"></div>
+      <p class="mut"><b>Égaliser le volume</b> : toutes les voix au même niveau, sans trop fort ni trop faible d’un clip à l’autre.</p>
+      <button class="pri" data-outil="egaliser" style="width:100%">Égaliser tous les clips</button><div class="mut" id="oEgalRes" style="margin:4px 0 10px"></div>
+      <p class="mut"><b>Transition sur toutes les coupures</b></p>
+      <div class="ligne"><select id="oTrAll"><option value="">Aucune (retirer)</option>${CAT.transitions.filter(t => t.id !== 'none').map(t => `<option value="${t.id}" ${t.id === 'fade' ? 'selected' : ''}>${esc(t.nom)}</option>`).join('')}</select><button class="pri" data-outil="transition-tout" style="flex:none">Appliquer partout</button></div><div class="mut" id="oTrAllRes" style="margin-top:4px"></div></div>
+    <div class="encart"><h4>💬 Sous-titres automatiques</h4><p class="mut">QuentMovie écoute ta voix et écrit les sous-titres au bon moment (sans internet, sur ton Mac). Les « euh » ne sont pas écrits.</p>
       <label class="l">Style</label><select id="oSousStyle">${opts(STYLES_SOUS, po.style)}</select>
       <div class="ligne" style="margin-top:8px"><button class="pri" data-outil="sous-clip">Clip sélectionné</button><button class="pri" data-outil="sous-tout">Toute la vidéo</button></div>
       <div class="sw2"><input type="checkbox" id="oPriseSous" ${po.priseSous ? 'checked' : ''}><label for="oPriseSous">Sous-titrer automatiquement mes prises du studio</label></div>
@@ -1677,6 +1738,9 @@ async function outil(nom) {
   if (nom === 'voix') return gererVoix($('#oVoixZone'));
   if (nom === 'miniature') return ouvrirMiniature();
   if (nom === 'qualite') return ameliorerClips(proj.clips.map((c, i) => i));
+  if (nom === 'plans-clip' || nom === 'plans-tout') return detecterPlans(nom === 'plans-tout');
+  if (nom === 'rythme-reperes') return rythmeMusique('reperes'); if (nom === 'rythme-caler') return rythmeMusique('caler');
+  if (nom === 'egaliser') return egaliserVolumes(); if (nom === 'transition-tout') return transitionPartout();
   if (nom === 'lien') { // vidéo d'un réseau social ou de YouTube → médias
     const lien = $('#lienVideo').value.trim(), r = t => { const e = $('#lienRes'); if (e) e.innerHTML = t; };
     if (!lien) return r('Colle d’abord le lien de la vidéo.');

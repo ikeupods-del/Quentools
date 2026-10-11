@@ -146,6 +146,36 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     return ((r.query && r.query.pages) || []).sort((a, b) => (a.index || 0) - (b.index || 0)).map(imageDe).filter(Boolean);
   }
 
+  // Images de l'article (dans l'ordre de l'article, marquées « deArticle »), puis recherche dans Wikimedia Commons si elles ne suffisent pas
+  async function constituerImages(page, sujet, nbScenes, videos) {
+    const fichiers = (page.images || []).map(x => 'File:' + x.title.replace(/^[^:]+:/, '')).filter(t => !IMAGE_REFUSEE.test(t));
+    const images = fichiers.length ? await imagesCommons(fichiers) : [];
+    images.forEach(x => { x.deArticle = true; });
+    const ajouter = liste => { const vus = new Set(images.map(x => x.nom)); for (const x of liste) if (x && !vus.has(x.nom)) { vus.add(x.nom); images.push(x); } };
+    if (images.length < Math.ceil(nbScenes * 0.7)) ajouter(await rechercher(sujet).catch(() => []));
+    if (videos) { // vidéos libres de Commons sur le sujet (qualité variable : à la demande seulement)
+      const v = await rechercher(sujet, { video: true, limit: 12 }).catch(() => []);
+      v.filter(x => x.video && x.hauteur >= 720).slice(0, 4).forEach((x, k) => images.splice(Math.min(images.length, 1 + k * 3), 0, x));
+    }
+    return images;
+  }
+  // Photos pour des scènes déjà écrites (mode express avec article) : celles de l'article d'abord, puis des recherches avec les mots de chaque scène
+  async function imagesDeScenes({ article, scenes, vertical = false, videos = false }) {
+    const j = await api(wiki, { action: 'query', prop: 'images|info', titles: article, imlimit: '80', redirects: '1' });
+    const page = j.query && j.query.pages && j.query.pages[0]; if (!page || page.missing) throw new Error('Article introuvable sur Wikipédia.');
+    const sujet = page.title.replace(/\s*\(.*\)$/, ''), images = await constituerImages(page, sujet, scenes.length, videos);
+    const ancre = IM.termes(sujet), reqs = scenes.map(sc => ({ mots: IM.termes(`${sc.texte} ${sc.section || ''} ${sc.sujet || ''} ${sc.recherche || ''}`).slice(0, 14), ancre }));
+    let sel = IM.attribuer(reqs, images, { vertical, obligatoire: true }), essais = 0;
+    const vus = new Set(images.map(x => x.nom));
+    for (let i = 0; i < scenes.length && essais < 8; i++) {
+      if (sel.choix[i] >= 0) continue; essais++;
+      const q = `${(scenes[i].sujet || IM.requeteDeScene(scenes[i].texte).join(' '))} ${sujet}`.trim();
+      for (const x of await rechercher(q, { limit: 15 }).catch(() => [])) if (!vus.has(x.nom)) { vus.add(x.nom); images.push(x); }
+      await new Promise(r => setTimeout(r, 150));
+    }
+    if (essais) sel = IM.attribuer(reqs, images, { vertical, obligatoire: true });
+    return { images, choix: sel.choix, propositions: sel.listes };
+  }
   // Texte en scènes + images proposées ; rien n'est téléchargé à ce stade
   async function preparer({ article, duree, titre, videos = false, vertical = false }) {
     const d = Math.min(600, Math.max(20, +duree || 60));
@@ -154,19 +184,12 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     if (!page || page.missing || !page.extract) throw new Error('Article introuvable sur Wikipédia.');
     const scenes = construireScenes(page.extract, d);
     if (!scenes.length) throw new Error('Cet article est trop court pour faire une vidéo.');
-    // images de l'article (dans l'ordre de l'article), puis recherche dans Wikimedia Commons si elles ne suffisent pas
     const sujet = page.title.replace(/\s*\(.*\)$/, '');
-    const fichiers = (page.images || []).map(x => 'File:' + x.title.replace(/^[^:]+:/, '')).filter(t => !IMAGE_REFUSEE.test(t));
-    let images = fichiers.length ? await imagesCommons(fichiers) : [];
+    let images = await constituerImages(page, sujet, scenes.length, videos);
     const ajouter = liste => { const vus = new Set(images.map(x => x.nom)); for (const x of liste) if (x && !vus.has(x.nom)) { vus.add(x.nom); images.push(x); } };
-    if (images.length < Math.ceil(scenes.length * 0.7)) ajouter(await rechercher(sujet).catch(() => []));
-    if (videos) { // vidéos libres de Commons sur le sujet (qualité variable : à la demande seulement)
-      const v = await rechercher(sujet, { video: true, limit: 12 }).catch(() => []);
-      v.filter(x => x.video && x.hauteur >= 720).slice(0, 4).forEach((x, k) => images.splice(Math.min(images.length, 1 + k * 3), 0, x));
-    }
     // chaque scène reçoit la photo la plus pertinente ; les scènes restées sans bonne photo sont cherchées avec leurs propres mots
     const ancre = IM.termes(sujet), reqs = scenes.map(sc => ({ mots: IM.termes(sc.texte + ' ' + (sc.section || '')).slice(0, 14), ancre }));
-    let sel = IM.attribuer(reqs, images, { vertical });
+    let sel = IM.attribuer(reqs, images, { vertical, obligatoire: true });
     let essais = 0;
     for (let i = 0; i < scenes.length && essais < 6; i++) {
       if (sel.choix[i] >= 0) continue;
@@ -174,7 +197,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
       ajouter(await rechercher(`${IM.requeteDeScene(scenes[i].texte).join(' ')} ${sujet}`.trim(), { limit: 15 }).catch(() => []));
       await new Promise(r => setTimeout(r, 150));
     }
-    if (essais) sel = IM.attribuer(reqs, images, { vertical });
+    if (essais) sel = IM.attribuer(reqs, images, { vertical, obligatoire: true });
     images = images.slice(0, 60);
     const choix = sel.choix.map(k => (k < images.length ? k : -1));
     return { titre: titre || page.title, article: page.title, source: page.fullurl || `${wiki}/wiki/${encodeURIComponent(page.title)}`,
@@ -247,7 +270,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
 
   // Une photo par scène, cherchée dans Wikimedia Commons avec les mots de la scène (français et anglais) puis notée :
   // requetes[i] = { fr, en, texte } (ou un simple texte) ; ancre = sujet général de la vidéo. -1 = aucune photo assez bonne.
-  async function mediasPour(requetes, { ancre = '', vertical = false, videos = false } = {}) {
+  async function mediasPour(requetes, { ancre = '', ancreRequete = ancre, vertical = false, videos = false } = {}) {
     const pool = [], vus = new Set(), reqs = [];
     const ajouter = liste => { for (const x of liste) if (x && !vus.has(x.nom)) { vus.add(x.nom); pool.push(x); } };
     const ancreT = IM.termes(ancre);
@@ -255,7 +278,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
       const r = typeof r0 === 'string' ? { fr: '', en: r0, texte: '' } : (r0 || {});
       const mots = IM.termes([r.fr, r.en].join(' ') || r.texte).slice(0, 8), degage = IM.termes(r.texte).filter(m => m.length > 4).slice(0, 4);
       reqs.push({ mots: [...new Set([...mots, ...degage.slice(0, 2)])], ancre: ancreT });
-      const requetesCommons = [[r.fr, ancre].filter(Boolean).join(' '), r.en, r.fr, IM.requeteDeScene(r.texte).join(' ')].map(x => String(x || '').replace(/[^\p{L}\p{N}\s-]/gu, ' ').split(/\s+/).filter(Boolean).slice(0, 5).join(' '))
+      const requetesCommons = [[r.fr, ancreRequete].filter(Boolean).join(' '), r.en, r.fr, IM.requeteDeScene(r.texte).join(' ')].map(x => String(x || '').replace(/[^\p{L}\p{N}\s-]/gu, ' ').split(/\s+/).filter(Boolean).slice(0, 5).join(' '))
         .filter((x, i, l) => x && l.indexOf(x) === i);
       let bons = 0;
       for (const q of requetesCommons) {
@@ -288,7 +311,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     return construireScenes(page.extract, Math.min(600, Math.max(20, duree)));
   }
   const lireMac = async (texte, fichier, v) => { const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-essai-')); try { return await lire(texte, fichier, { voix: v }, dir); } finally { fs.rmSync(dir, { recursive: true, force: true }); } };
-  return { chercher, preparer, voix, fabriquer, lireMac, faits, mediasPour, proposer };
+  return { chercher, preparer, voix, fabriquer, lireMac, faits, mediasPour, imagesDeScenes, proposer };
 }
 
 module.exports = { creer, sujetDe, phrases, nettoyerPhrase, construireScript, construireScenes, choisirImages, imageDe };

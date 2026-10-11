@@ -50,7 +50,7 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     const faits = 'Michelin est une entreprise française de pneumatiques fondée en 1889 à Clermont-Ferrand par les frères André et Édouard Michelin.\n[Les débuts] En 1891, ils déposent le brevet du pneu démontable pour bicyclette.\n[Le Bibendum] En 1898, le dessinateur O\'Galop crée le Bibendum.\n[Le guide] En 1900 paraît le premier guide Michelin.\n[Le pneu radial] En 1946, Michelin invente le pneu à carcasse radiale.';
     const t0 = Date.now(), job = {};
     const paragraphes = faits.split('\n').map(l => { const m = /^\[(.+?)\] (.*)$/.exec(l); return m ? { section: m[1], texte: m[2] } : { section: '', texte: l }; });
-    const r = await IA.ecrireScript({ titre: 'L’histoire de Michelin', paragraphes, duree: 45, style: 'dynamique' }, job);
+    const r = await IA.ecrireScript({ titre: 'L’histoire de Michelin', paragraphes, duree: 45, style: 'dynamique', consigne: 'Pas d’intro, pas de conclusion', recherche: false }, job);
     console.log('Paragraphes repris tels quels (garde-fou) :', r.repris);
     const texte = r.scenes.map(x => x.texte).join(' ');
     console.log(`IA (${r.gpu || 'processeur'}) en ${Math.round((Date.now() - t0) / 1000)} s — « ${r.titre} »`); r.scenes.forEach((x, i) => console.log(`  ${i + 1}. [${x.section}] ${x.texte}`));
@@ -59,15 +59,14 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     check('aucune année inventée', !annees.length, annees.join(', '));
     check('IA sur la puce graphique', process.platform !== 'darwin' || r.gpu === 'metal', r.gpu);
     // consignes de l'utilisateur : « pas d'intro, pas de conclusion » = ni accroche ni phrase de fin ajoutées
-    const r2 = await IA.ecrireScript({ titre: 'L’histoire de Michelin', paragraphes, duree: 45, style: 'dynamique', consigne: 'Pas d’intro, pas de conclusion', recherche: false }, {});
-    check('consignes suivies : ni accroche ni conclusion', !r2.regles.accroche && !r2.regles.conclusion && nbMots(r2.scenes[0].texte) <= nbMots(paragraphes[0].texte) * 1.3 && nbMots(r2.scenes[4].texte) <= nbMots(paragraphes[4].texte) * 1.3, `${nbMots(r2.scenes[0].texte)} / ${nbMots(paragraphes[0].texte)}`);
+    check('consignes suivies : ni accroche ni conclusion', !r.regles.accroche && !r.regles.conclusion && nbMots(r.scenes[0].texte) <= nbMots(paragraphes[0].texte) * 1.3 && nbMots(r.scenes[4].texte) <= nbMots(paragraphes[4].texte) * 1.3, `${nbMots(r.scenes[0].texte)} / ${nbMots(paragraphes[0].texte)}`);
     IA.arreter();
     // mode express : sujet libre, un média cherché pour chaque scène
     const x = await attendre((await (await fetch(U('/api/generer/ia'), { method: 'POST', body: JSON.stringify({ article: '', titre: 'Faire du vélo en ville', consigne: '3 conseils pour faire du vélo en ville en sécurité', duree: 30, style: 'dynamique', medias: true }) })).json()).id);
     const xs = (x.resultat && x.resultat.scenes) || [];
     console.log('Express :', x.error || `« ${x.resultat.titre} » — ${xs.map(s => `${s.sujet} / ${s.recherche}` + (s.image >= 0 ? ' ✓' : ' ✗')).join(' | ')}`);
     xs.forEach((s, i) => console.log(`  ${i + 1}. [${s.section}] ${s.texte}`));
-    check('express : script et mots-clés', xs.length >= 2 && xs.every(s => s.sujet && s.texte), x.error);
+    check('express : « 3 conseils » = 3 scènes, avec mots-clés', xs.length === 3 && xs.every(s => s.sujet && s.texte), x.error + ' ' + xs.length);
     check('express : photos trouvées pour la moitié des scènes au moins', xs.filter(s => s.image >= 0).length >= Math.ceil(xs.length / 2), JSON.stringify(xs.map(s => s.image)));
     console.log('  photos :', xs.map(s => s.image >= 0 ? x.resultat.images[s.image].nom : '—').join(' | '));
     // vidéo depuis un lien (fichier libre de Wikimedia Commons ; l'outil sait aussi YouTube, TikTok, Instagram…)

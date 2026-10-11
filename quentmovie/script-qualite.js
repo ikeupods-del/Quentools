@@ -18,7 +18,8 @@ function nettoyerTexte(t) {
 }
 const nombresDe = t => new Set((String(t || '').match(/\d+(?:[.,]\d+)?/g) || []).map(x => x.replace(',', '.')));
 const mots = t => new Set(normalise(t).split(/[^a-z0-9]+/).filter(Boolean));
-const nomsPropres = t => [...String(t || '').matchAll(/(?<=[a-zà-ÿ0-9,;:)]\s)([A-ZÀ-ÖØ-Þ][\p{L}'’-]{2,})/gu)].map(m => normalise(m[1]));
+// noms propres du texte (hors début de phrase), découpés aux traits d'union et apostrophes : « Barbier-Daubrée » → barbier, daubree
+const nomsPropres = t => [...String(t || '').matchAll(/(?<=[a-zà-ÿ0-9,;:)]\s)([A-ZÀ-ÖØ-Þ][\p{L}'’-]{2,})/gu)].flatMap(m => normalise(m[1]).split(/[-'\s]+/).filter(x => x.length > 2));
 const francais = t => { const l = normalise(t).split(/[^a-z0-9]+/).filter(Boolean); return l.length ? l.filter(m => MOTS_FR.has(m)).length / l.length : 0; };
 const OUVERTURE = /^\s*(bonjour|salut|bienvenue|coucou|hello|hey|aujourd'hui|dans cette vid[ée]o|dans cet|voici|imaginez|vous (?:savez|connaissez|vous êtes)|savez-vous|et si)/i;
 const FIN = /(n'oubliez pas|abonn|merci d'avoir|[àa] bient[oô]t|[àa] la prochaine|en conclusion|pour conclure|en r[ée]sum[ée]|[ée]crivez-nous|dites-nous|commentaires|partagez|like)/i;

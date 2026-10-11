@@ -35,7 +35,7 @@ function regroupe(consigne, opt = {}) {
   if (opt.adresse === 'tu' || opt.adresse === 'vous') rg.adresse = opt.adresse;
   rg.eviter = liste(opt.eviter); rg.inclure = liste(opt.inclure); rg.cta = String(opt.cta || '').replace(/\s+/g, ' ').trim().slice(0, 160);
   rg.type = TYPES[opt.type] !== undefined ? opt.type : 'libre'; rg.public = PUBLICS[opt.public] ? opt.public : ''; rg.ton = TONS[opt.ton] ? opt.ton : 'neutre'; rg.rythme = RYTHMES[opt.rythme] !== undefined ? opt.rythme : 'normal';
-  rg.nbScenes = Math.max(0, Math.min(14, Math.round(+opt.scenes || 0)));
+  rg.nbScenes = Math.max(0, Math.min(14, Math.round(+opt.scenes || 0))) || (rg.nombre >= 3 ? rg.nombre : 0);
   rg.libre = rg.libre && !rg.eviter.length && !rg.inclure.length && !rg.cta && rg.type === 'libre' && !rg.public && rg.ton === 'neutre' && rg.rythme === 'normal' && !rg.nbScenes;
   return rg;
 }
@@ -54,6 +54,9 @@ function lireConsignes(consigne) {
   const r = { accroche: !sans('intro|introduction|accroche|ouverture|prologue|hook'), conclusion: !sans('conclusion|outro|appel|call to action|cta|epilogue'),
     ouverture: !sans('intro|introduction|ouverture|prologue|titre|ecran titre|generique de debut'), musique: !sans('musique|son de fond'), sousTitres: !sans('sous-?\\s?titres?'),
     adresse: /\b(tutoie|tutoyer|tutoiement|en tutoyant)/.test(t) ? 'tu' : /\b(vouvoie|vouvoyer|vouvoiement|en vouvoyant)/.test(t) ? 'vous' : '' };
+  const NOMBRES = { un: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6, sept: 7, huit: 8, neuf: 9, dix: 10, onze: 11, douze: 12 };
+  const nb = /\b(\d{1,2}|un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze)\s+(?:premieres?\s+)?(astuces?|conseils?|etapes?|points?|raisons?|idees?|erreurs?|secrets?|choses?|regles?|trucs?|facons?|manieres?|exemples?|faits?|methodes?|outils?|habitudes?|techniques?|questions?)\b/.exec(t);
+  r.nombre = nb ? Math.max(0, Math.min(12, NOMBRES[nb[1]] || +nb[1])) : 0;
   r.libre = r.accroche && r.conclusion && r.ouverture && r.musique && r.sousTitres && !r.adresse;
   return r;
 }
@@ -153,9 +156,9 @@ function creer({ BASE, FFMPEG }) {
         if (!r.texte) repris++;
         scenes.push({ section: String(p.section || '').slice(0, 40), texte: r.texte || p.texte, repris: !r.texte });
       }
-      const phrase = async (demande, max, verif) => { const r = await texteControle({ systeme: 'Scénariste de vidéos en français. ' + REGLES + adresse, demande, maxTokens: max * 3, verif: { min: 5, max, source: titre + ' ' + consigne, interdits: rg.eviter, ...verif } }); return r.texte || ''; };
-      if (rg.accroche) { etape('L’IA locale écrit l’accroche…'); const t = await phrase(`${ordres}Écris UNE seule phrase d’accroche (12 à 18 mots) qui donne envie de regarder une vidéo sur « ${titre} », sans fait précis, sans chiffre ni date. Réponds uniquement par la phrase.`, 26, {}); if (t) scenes[0].texte = t + ' ' + scenes[0].texte; }
-      if (rg.conclusion) { etape('L’IA locale écrit la conclusion…'); const t = await phrase(`${ordres}Écris UNE seule phrase de conclusion (12 à 20 mots) pour clore une vidéo sur « ${titre} », sans fait nouveau, sans chiffre ni date, sans appel à s’abonner. Réponds uniquement par la phrase.`, 28, {}); if (t) scenes[scenes.length - 1].texte += ' ' + t; }
+      const phrase = async (demande, max, source) => { const r = await texteControle({ systeme: 'Scénariste de vidéos en français. ' + REGLES + adresse, demande, maxTokens: max * 3, verif: { min: 5, max, source: `${titre} ${consigne} ${source}`, interdits: rg.eviter } }); return r.texte || ''; };
+      if (rg.accroche) { etape('L’IA locale écrit l’accroche…'); const t = await phrase(`${ordres}Début du texte de la vidéo sur « ${titre} » :\n« ${scenes[0].texte} »\nÉcris UNE seule phrase d’accroche (une question ou une affirmation intrigante, 12 à 20 mots) qui donne envie de regarder la suite, fondée uniquement sur ce texte. Réponds uniquement par la phrase.`, 28, scenes[0].texte); if (t) scenes[0].texte = t + ' ' + scenes[0].texte; }
+      if (rg.conclusion) { etape('L’IA locale écrit la conclusion…'); const fin = scenes[scenes.length - 1].texte, t = await phrase(`${ordres}Fin du texte de la vidéo sur « ${titre} » :\n« ${fin} »\nÉcris UNE seule phrase de conclusion (12 à 20 mots) qui reprend l’idée finale, sans fait nouveau, sans appel à s’abonner. Réponds uniquement par la phrase.`, 30, fin); if (t) scenes[scenes.length - 1].texte += ' ' + t; }
       if (recherche) { etape('L’IA locale choisit les images…'); completerMots(scenes, await motsCles(titre, scenes)); } else completerMots(scenes, []);
       if (rg.cta) scenes[scenes.length - 1].texte += ' ' + rg.cta.replace(/([^.!?…])$/, '$1.');
       return { titre: String(titre).slice(0, 80), gpu, scenes, repris, regles: rg };
@@ -163,21 +166,23 @@ function creer({ BASE, FFMPEG }) {
     // sujet libre : 1) plan de la vidéo, 2) chaque scène écrite à son tour avec le plan et la scène précédente sous les yeux
     const n = rg.nbScenes || Math.max(3, Math.min(14, Math.round(duree / 8)));
     etape('L’IA locale prépare le plan de la vidéo…');
-    const structure = rg.accroche && rg.conclusion ? ' La première scène est l’ouverture (accroche) et la dernière la conclusion.' : rg.accroche ? ' La première scène est l’ouverture (accroche) ; pas de conclusion.' : rg.conclusion ? ' Pas d’introduction : la première scène entre directement dans le sujet ; la dernière est la conclusion.' : ' Ni introduction ni conclusion : chaque scène apporte un point précis.';
+    const structure = rg.nombre && rg.nombre === n ? ` Chaque scène est UN des ${n} points demandés, dans l’ordre${rg.accroche ? ' ; la première scène commence par une phrase d’accroche' : ''}${rg.conclusion ? ' ; la dernière se termine par une phrase de conclusion' : ''}.`
+      : rg.accroche && rg.conclusion ? ' La première scène est l’ouverture (accroche) et la dernière la conclusion.' : rg.accroche ? ' La première scène est l’ouverture (accroche) ; pas de conclusion.' : rg.conclusion ? ' Pas d’introduction : la première scène entre directement dans le sujet ; la dernière est la conclusion.' : ' Ni introduction ni conclusion : chaque scène apporte un point précis.';
     const sysPlan = 'Scénariste de vidéos courtes en français. Tu construis des plans concrets et précis, sans généralités. Tu n’inventes aucun nom de personne, d’entreprise ou de lieu, ni aucun chiffre ou date.' + adresse;
-    const demPlan = `${ordres}Sujet de la vidéo : ${titre}\nTon : ${ton}.\nÉcris le plan de ${n} scènes qui se suivent logiquement.${structure}\nPour chaque scène : « section » (titre de partie, 2 à 4 mots), « idee » (UNE phrase : ce que la scène explique, concrète), « sujet » (l’objet à montrer à l’image, 1 à 3 mots en français, ex. « casque de vélo »), « recherche » (le même objet en 2 ou 3 mots anglais pour une banque de photos). « titre » : titre accrocheur de 6 mots maximum, sans chiffre.`;
+    const demPlan = `${ordres}Sujet de la vidéo : ${titre}\nTon : ${ton}.\nÉcris le plan de ${n} scènes qui se suivent logiquement.${structure}\nPour chaque scène : « section » (titre de partie, 2 à 4 mots), « idee » (UNE phrase : ce que la scène explique, concrète), « sujet » (ce qu’on PHOTOGRAPHIERAIT : un objet ou une scène concrète, 1 à 3 mots en français, ex. « casque de vélo », « piste cyclable » ; jamais une idée abstraite), « recherche » (le même sujet en 2 ou 3 mots anglais pour une banque de photos). « titre » : titre accrocheur de 8 mots maximum.\nExemple de bonne scène pour « 3 astuces pour économiser l’eau » : section « Douche courte », idee « Une douche de cinq minutes consomme bien moins d’eau qu’un bain. », sujet « pommeau de douche », recherche « shower head ». Les conseils doivent être concrets, courants et vérifiables ; n’invente aucune règle ni aucune loi.`;
     const rp = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme: sysPlan, demande: demPlan, schema: SCHEMA_PLAN(n), ctx: contexteDe(sysPlan, demPlan), temperature: 0.45 }, n * 70 + 80);
     gpu = rp.gpu || gpu;
     const plan = ((rp.resultat && rp.resultat.scenes) || []).filter(x => String(x.idee || '').trim().length > 8);
     if (!plan.length) throw new Error('L’IA n’a pas réussi à préparer un plan : réessaie ou précise ton sujet.');
-    const titreVideo = String((rp.resultat && rp.resultat.titre) || titre).replace(/\d+/g, '').trim().slice(0, 80) || titre;
+    const garde = /\d/.test(titre + ' ' + consigne);
+    const titreVideo = String((rp.resultat && rp.resultat.titre) || titre).replace(garde ? /$^/ : /\d+/g, '').replace(/\s{2,}/g, ' ').replace(/\s+([?!:;,.])/g, '$1').trim().slice(0, 80) || titre;
     const sourcePlan = [titre, consigne, ...plan.map(x => `${x.section} ${x.idee} ${x.sujet}`)].join(' ');
     const systeme = 'Scénariste de vidéos en français. ' + REGLES + ' Tu n’inventes aucun chiffre, date, prix, citation ni nom propre absent du plan ; jamais de promesse ni d’avis médical, juridique ou financier.' + adresse;
     const ecrites = [], par = Math.round(mots / plan.length);
     for (let i = 0; i < plan.length; i++) {
       etape(`L’IA locale écrit la scène ${i + 1} sur ${plan.length}…`); if (job) job.progress = (i + 1) / (plan.length + 2);
       const demande = `${ordres}Vidéo : « ${titreVideo} ». Ton : ${ton}.\nPlan : ${plan.map((x, k) => `${k + 1}. ${x.idee}`).join(' ')}\n${ecrites.length ? `Texte déjà écrit : ${ecrites.slice(-2).join(' ')}\n` : ''}` +
-        `Écris maintenant la scène ${i + 1} sur ${plan.length} : « ${plan[i].idee} ». ${roleScene(i, plan.length, rg)}2 ou 3 phrases complètes, environ ${par} mots, qui continuent ce qui précède sans le répéter. Réponds uniquement par le texte à dire à voix haute.`;
+        `Écris maintenant la scène ${i + 1} sur ${plan.length} : « ${plan[i].idee} ». ${roleScene(i, plan.length, rg)}2 ou 3 phrases complètes, environ ${par} mots, qui continuent ce qui précède sans le répéter. Donne un conseil concret, courant et vérifiable ; si tu n’es pas certain d’un point, reste général et prudent. Réponds uniquement par le texte à dire à voix haute.`;
       const r = await texteControle({ systeme, demande, maxTokens: Math.ceil(par * 3 + 80), verif: { min: Math.max(8, Math.round(par * 0.5)), max: Math.round(par * 1.8) + 6, source: sourcePlan,
         interdireOuverture: i === 0 ? !rg.accroche : true, interdireFin: i === plan.length - 1 ? !rg.conclusion : true, interdits: rg.eviter } });
       ecrites.push(r.texte || (/[.!?…]$/.test(plan[i].idee.trim()) ? plan[i].idee.trim() : plan[i].idee.trim() + '.'));

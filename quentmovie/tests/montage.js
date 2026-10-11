@@ -52,6 +52,21 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   check('export avec son détaché accéléré', rapide.done && rapide.out, rapide.error);
   if (rapide.out) { const f = path.join(base, 'exports', rapide.out); check('son détaché à 2× : présent pendant 2 s puis silence', vol(f, '1.2', '1.4') > -30 && vol(f, '3.6', '1.5') < -50, `${vol(f, '1.2', '1.4')} / ${vol(f, '3.6', '1.5')}`); }
 
+  // 4) détection des changements de plan : trois plans de 2 s → coupes vers 2 s et 4 s
+  ff('-f', 'lavfi', '-i', 'color=c=red:s=320x180:r=25:d=2', '-f', 'lavfi', '-i', 'color=c=blue:s=320x180:r=25:d=2', '-f', 'lavfi', '-i', 'color=c=green:s=320x180:r=25:d=2', '-filter_complex', '[0:v][1:v][2:v]concat=n=3:v=1:a=0', '-pix_fmt', 'yuv420p', path.join(gen, 'plans.mp4'));
+  await fetch(U('/api/import?name=plans.mp4'), { method: 'POST', body: fs.readFileSync(path.join(gen, 'plans.mp4')) });
+  const pl = await (await fetch(U('/api/plans?file=plans.mp4&in=0&out=6'))).json();
+  check('plans : deux changements trouvés aux bons endroits', pl.plans && pl.plans.length === 2 && Math.abs(pl.plans[0] - 2) < 0.2 && Math.abs(pl.plans[1] - 4) < 0.2, JSON.stringify(pl));
+  // 5) rythme : une pulsation toutes les 0,5 s (120 par minute), la première à 0,2 s
+  const sr = 11025, n = sr * 20, pcm = Buffer.alloc(n * 2);
+  for (let k = 0; k < 40; k++) { const d0 = Math.round((0.2 + k * 0.5) * sr); for (let i = 0; i < 400 && d0 + i < n; i++) pcm.writeInt16LE(Math.round(20000 * Math.sin(i * 0.5) * (1 - i / 400)), (d0 + i) * 2); }
+  const wavHead = Buffer.alloc(44); wavHead.write('RIFF', 0); wavHead.writeUInt32LE(36 + pcm.length, 4); wavHead.write('WAVEfmt ', 8); wavHead.writeUInt32LE(16, 16); wavHead.writeUInt16LE(1, 20); wavHead.writeUInt16LE(1, 22); wavHead.writeUInt32LE(sr, 24); wavHead.writeUInt32LE(sr * 2, 28); wavHead.writeUInt16LE(2, 32); wavHead.writeUInt16LE(16, 34); wavHead.write('data', 36); wavHead.writeUInt32LE(pcm.length, 40);
+  fs.writeFileSync(path.join(gen, 'pulsations.wav'), Buffer.concat([wavHead, pcm]));
+  await fetch(U('/api/import?name=pulsations.wav'), { method: 'POST', body: fs.readFileSync(path.join(gen, 'pulsations.wav')) });
+  const ry = await (await fetch(U('/api/rythme?file=pulsations.wav&in=0&dur=20'))).json();
+  check('rythme : 120 pulsations par minute', ry.bpm > 117 && ry.bpm < 123, JSON.stringify({ ...ry, temps: ry.temps && ry.temps.length }));
+  check('rythme : temps calés sur les pulsations', ry.temps && ry.temps.length > 30 && Math.abs(((ry.premier - 0.2) % 0.5 + 0.5) % 0.5) < 0.06 || Math.abs(((ry.premier - 0.2) % 0.5 + 0.5) % 0.5 - 0.5) < 0.06, `${ry.premier}`);
+
   app.stop(); fs.rmSync(base, { recursive: true, force: true });
   console.log(`Montage : ${ok} contrôles réussis, ${ko} échecs`);
   process.exit(ko ? 1 : 0);

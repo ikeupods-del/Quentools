@@ -893,7 +893,8 @@ function buildClip(c, P, o = {}) {
           const vertical = b.format === 'vertical';
           if (b.medias) { // mode express : une photo cherchée et notée pour chaque scène
             job.step = 'Recherche des photos pour chaque scène…'; job.progress = 0.85;
-            const m = await GEN().mediasPour(r.scenes.map(x => ({ fr: x.sujet, en: x.recherche, texte: x.texte })), { ancre: r.titre, vertical, videos: !!b.videos });
+            const m = f.length ? await GEN().imagesDeScenes({ article: String(b.article), scenes: r.scenes, vertical, videos: !!b.videos })
+              : await GEN().mediasPour(r.scenes.map(x => ({ fr: x.sujet, en: x.recherche, texte: x.texte })), { ancre: r.titre, ancreRequete: '', vertical, videos: !!b.videos });
             return { titre: r.titre, gpu: r.gpu, regles: r.regles, libre: !f.length, images: m.images, scenes: r.scenes.map((x, i) => ({ ...x, image: m.choix[i], propositions: m.propositions[i] })) };
           }
           const IMG = require('./images'), imgs = Array.isArray(b.images) ? b.images.slice(0, 60) : [], ancre = IMG.termes(String(b.titre || b.article || ''));
@@ -1013,6 +1014,21 @@ function buildClip(c, P, o = {}) {
         const img = await run(FFMPEG, ['-v', 'error', ...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(url.searchParams.get('file')), '-vn', '-filter_complex', `aformat=channel_layouts=mono,showwavespic=s=${w}x${h}:colors=white`,
           '-frames:v', 1, '-f', 'image2pipe', '-vcodec', 'png', 'pipe:1'], { binary: true });
         return send(res, 200, img, 'image/png', 'max-age=86400');
+      }
+      if (req.method === 'GET' && p === '/api/plans') { // changements de plan d'un extrait vidéo (pour le découper automatiquement)
+        const q = url.searchParams, from = Math.max(0, num(q.get('in'), 0)), to = num(q.get('out'), 0), seuil = clamp(num(q.get('seuil'), 0.3), 0.1, 0.8), dur = to > from ? to - from : 0;
+        const log = await run(FFMPEG, ['-hide_banner', '-nostats', '-ss', from, ...(dur ? ['-t', dur] : []), '-i', mediaPath(q.get('file')), '-an', '-vf', `scale=320:-2,select='gt(scene,${seuil})',showinfo`, '-f', 'null', '-'], { wantErr: true });
+        const t = [...log.matchAll(/pts_time:([\d.]+)/g)].map(m => +m[1]).filter(x => x > 0.4 && (!dur || x < dur - 0.4)).sort((x, y) => x - y);
+        const plans = []; for (const x of t) if (!plans.length || x - plans[plans.length - 1] >= 0.5) plans.push(+x.toFixed(2));
+        return send(res, 200, { plans: plans.map(x => +(from + x).toFixed(2)) });
+      }
+      if (req.method === 'GET' && p === '/api/rythme') { // tempo et temps forts d'une musique
+        const q = url.searchParams, de = Math.max(0, num(q.get('in'), 0)), du = clamp(num(q.get('dur'), 120), 5, 240);
+        const buf = await run(FFMPEG, ['-v', 'error', '-ss', de, '-t', du, '-i', mediaPath(q.get('file')), '-vn', '-ac', 1, '-ar', 11025, '-f', 's16le', 'pipe:1'], { binary: true });
+        const pcm = new Int16Array(buf.length >> 1); for (let i = 0; i < pcm.length; i++) pcm[i] = buf.readInt16LE(i * 2);
+        const r = require('./rythme').analyser(pcm, 11025);
+        if (!r) throw new Error('Son trop court pour trouver le rythme.');
+        return send(res, 200, { ...r, temps: r.temps.slice(0, 1500).map(x => +(de + x).toFixed(3)), premier: +(de + r.premier).toFixed(3) });
       }
       if (req.method === 'GET' && p === '/api/silences') { // trouve les silences d'un extrait pour les couper
         const q = url.searchParams, from = Math.max(0, num(q.get('in'), 0)), to = num(q.get('out'), 0), db = clamp(num(q.get('db'), -35), -70, -10), min = clamp(num(q.get('min'), 0.5), 0.15, 5);
