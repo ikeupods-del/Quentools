@@ -9,6 +9,11 @@ Logiciel de montage vidéo pour Mac, local (aucune donnée envoyée sur internet
 
 Construite pour les Mac à puce Apple (M1 et suivants). Pour un Mac Intel : version « sans installation » ci-dessous.
 
+## Mises à jour automatiques (à partir de la 1.3)
+QuentMovie vérifie au démarrage (puis toutes les 6 heures) s'il existe une nouvelle version. Si oui, il la télécharge en arrière-plan, vérifie qu'elle est intacte (empreinte SHA-256), puis propose « Redémarrer et installer » ; sinon elle s'installe toute seule à la fermeture. Plus besoin de retélécharger le `.dmg`. Vérification à la main : menu QuentMovie → « Rechercher les mises à jour… » ou onglet Outils. L'application doit se trouver dans le dossier Applications.
+
+Publier une nouvelle version : changer `version` dans `package.json`, ajouter ses nouveautés dans `NOUVEAUTES.md`, puis fusionner sur la branche par défaut : le workflow construit et publie l'application, et les Mac la reçoivent tout seuls.
+
 ## Version sans installation (Terminal)
 `brew install node ffmpeg`, puis double-clic sur **Lancer QuentMovie (sans installation).command** (la première fois : clic droit → Ouvrir). La page s'ouvre sur http://localhost:4173.
 
@@ -46,7 +51,7 @@ Touche **?** dans l'application pour la liste complète. Principaux : ⇧⌘R st
 `~/Movies/QuentMovie` : `medias`, `exports`, `projets`.
 
 ## Pour les développeurs
-- `server.js` (moteur HTTP + FFmpeg, sans dépendance), `effects.js` (effets, transitions, titres), `ffmpeg-path.js`, `index.html` (interface), `main.js` (fenêtre Electron).
+- `server.js` (moteur HTTP + FFmpeg, sans dépendance), `effects.js` (effets, transitions, titres), `ffmpeg-path.js`, `index.html` (interface), `main.js` (fenêtre Electron), `maj.js` (mises à jour automatiques depuis les Releases GitHub, testées par `tests/maj.js`).
 - `bibliotheque/` : générée par `node scripts/generer-bibliotheque.js` (sons et musiques, synthèse), `python3 scripts/generer-stickers.py` (stickers), `python3 scripts/generer-pack.py` (looks LUT, effets animés, cadres) et `python3 scripts/generer-fonds.py` (décors, animations sur fond vert, enseignes QuenTools ; police de `assets/fonts/`). Chaque script ne remplace que ses propres listes de `index.json` ; un argument limite la génération (ex. `python3 scripts/generer-fonds.py fonds`). Fichiers versionnés ; régénérer seulement pour les modifier. Numpy, Pillow et FFmpeg requis.
 - `npm test` : contrôle chaque effet (valeurs par défaut, minimales, maximales), transition, titre, calque, format d'import et d'export, le podcast et l'aperçu animé.
 - Nouvel effet : une ligne `fx(...)` dans `effects.js`, le test le contrôle automatiquement.

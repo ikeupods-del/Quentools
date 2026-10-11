@@ -10,6 +10,7 @@ const FX = require('./effects');
 const FORMATS = { vertical: [9, 16], horizontal: [16, 9], carre: [1, 1] };
 // modes de mélange des calques (nom affiché → filtre blend)
 const MODES = { ecran: 'screen', addition: 'addition', eclaircir: 'lighten', produit: 'multiply', incrustation: 'overlay', lumiere: 'softlight' };
+const VERSION_APP = require('./package.json').version;
 const IMG_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.tif', '.tiff', '.avif', '.jfif'];
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.mp4': 'video/mp4', '.mov': 'video/quicktime', '.m4v': 'video/mp4', '.webm': 'video/webm',
@@ -656,7 +657,11 @@ function create(opts = {}) {
       if (req.method === 'GET' && p.startsWith('/exports/')) return serveFile(req, res, path.join(EXPORTS, safeName(decodeURIComponent(p.slice(9)))), true);
       if (req.method === 'GET' && p.startsWith('/apercu/')) return serveFile(req, res, path.join(APERCUS, safeName(decodeURIComponent(p.slice(8)))));
 
-      if (req.method === 'GET' && p === '/api/catalogue') return send(res, 200, { ...FX.catalogue(filters), font: !!FONT && filters.has('drawtext'), version, folder: BASE, bibliotheque: libIndex(), polices: FONTS_OK.map(x => ({ id: x.id, nom: x.nom })), sorties: sortiesDispo(), duck: filters.has('sidechaincompress'), hwenc: process.platform === 'darwin' && encoders.has('h264_videotoolbox') });
+      if (req.method === 'GET' && p === '/api/catalogue') return send(res, 200, { ...FX.catalogue(filters), version_app: VERSION_APP, font: !!FONT && filters.has('drawtext'), version, folder: BASE, bibliotheque: libIndex(), polices: FONTS_OK.map(x => ({ id: x.id, nom: x.nom })), sorties: sortiesDispo(), duck: filters.has('sidechaincompress'), hwenc: process.platform === 'darwin' && encoders.has('h264_videotoolbox') });
+      // Mises à jour (application Mac uniquement)
+      if (p === '/api/maj') return send(res, 200, opts.maj ? opts.maj.etat() : { etat: 'inactif', version: VERSION_APP });
+      if (req.method === 'POST' && p === '/api/maj/verifier') return send(res, 200, opts.maj ? opts.maj.verifier() : { etat: 'inactif', version: VERSION_APP });
+      if (req.method === 'POST' && p === '/api/maj/installer') return send(res, 200, opts.maj ? opts.maj.installer() : { etat: 'inactif' });
       if (req.method === 'GET' && p === '/api/packs') return send(res, 200, { ...(await scanPacks()), dossier: PACKS });
       if (req.method === 'POST' && p === '/api/packs/ouvrir') { // ouvrir le dossier « Mes packs » dans le Finder
         if (process.platform === 'darwin') spawn('open', [PACKS]);

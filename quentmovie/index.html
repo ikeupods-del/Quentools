@@ -115,6 +115,9 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 #tete::before{content:"";position:absolute;top:0;left:-7px;border:6px solid transparent;border-top:9px solid #ff4d4d}
 /* fenêtres */
 #modal{position:fixed;inset:0;background:#000b;display:none;place-items:center;z-index:20}
+#majBox{position:fixed;right:16px;bottom:16px;z-index:25;width:340px;max-width:calc(100vw - 32px);background:var(--pan);border:1px solid var(--ac);border-radius:12px;padding:12px 14px;box-shadow:0 12px 40px #000a;display:none}
+#majBox.on{display:block}#majBox h4{margin:0 0 6px;font-size:14px}#majBox .notes{max-height:120px;overflow:auto;font-size:12px;white-space:pre-wrap;margin:6px 0}
+#majBox progress{width:100%}
 /* Studio : caméra, micro et prompteur */
 #studio{position:fixed;inset:0;background:#050506;z-index:30;display:none;color:#fff}
 #studio.on{display:grid;grid-template-columns:1fr 320px}
@@ -209,6 +212,7 @@ canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display
 </section>
 <div id="bar"></div>
 <div id="modal"><div id="boite"></div></div>
+<div id="majBox" role="status" aria-live="polite"></div>
 <div id="studio" aria-label="Studio : caméra et prompteur">
   <div id="stScene"><video id="stVideo" autoplay muted playsinline class="miroir"></video>
     <div id="stPrompt" title="Clic : lancer / arrêter le défilement · molette : avancer ou reculer"><div id="stTexte"></div><div id="stLigne"></div></div>
@@ -962,6 +966,8 @@ function outilsHtml() {
       <p class="mut" style="margin-top:6px">${PACKS.sons.length} sons · ${PACKS.images.length} images · ${PACKS.videos.length} vidéos · ${PACKS.luts.length} looks${PACKS.dossier ? `<br><small>${esc(PACKS.dossier)}</small>` : ''}</p>
       <p class="mut"><b>Où trouver des packs gratuits :</b> Pixabay et Mixkit (musiques, bruitages, vidéos « light leak », « green screen »), Freesound (bruitages, choisis la licence CC0), la bibliothèque audio de YouTube Studio (musiques), FreshLUTs (looks .cube). Lis toujours la licence : certaines demandent de citer l’auteur.</p>
       <p class="mut">Vidéo sur fond vert : pose-la en calque puis coche « Retirer le fond vert ». Vidéo sur fond noir (lumières, particules) : choisis le mélange « Écran ».</p></div>
+    <div class="encart"><h4>🔄 Mises à jour</h4><p class="mut">QuentMovie ${esc(CAT.version_app || '')} se met à jour tout seul : la nouvelle version se télécharge en arrière-plan, puis s’installe au redémarrage.</p>
+      <button data-outil="maj" style="width:100%">Rechercher une mise à jour</button></div>
     <div class="encart"><h4>⌨ Raccourcis clavier</h4><button data-outil="aide" style="width:100%">Afficher tous les raccourcis (?)</button></div>`;
 }
 $('#navbody').addEventListener('input', e => {
@@ -972,6 +978,7 @@ let micro = null;
 async function outil(nom) {
   if (nom === 'aide') return afficherAide();
   if (nom === 'studio') return ouvrirStudio();
+  if (nom === 'maj') return verifierMaj(true);
   if (nom === 'packs') { allerOnglet('outils'); const e = $('#encartPacks'); if (e) e.scrollIntoView({ block: 'start' }); return; }
   if (nom === 'packs-ouvrir') { const r = await (await api('/api/packs/ouvrir', { method: 'POST' })).json(); aide('Dossier « Mes packs » : ' + esc(r.dossier) + ' — ajoute tes fichiers puis clique sur « Actualiser ».'); return; }
   if (nom === 'packs-maj') { await chargerPacks(); navigateur(); aide(`Mes packs : ${PACKS.sons.length} sons, ${PACKS.images.length} images, ${PACKS.videos.length} vidéos, ${PACKS.luts.length} looks.`); return; }
@@ -1069,6 +1076,41 @@ $('#bExport').onclick = exporter;
 
 // ---------- Raccourcis clavier ----------
 const M = MAC ? '⌘' : 'Ctrl';
+// ---------- Mises à jour automatiques (application Mac) ----------
+function boiteMaj(html) { const b = $('#majBox'); b.innerHTML = html; b.classList.toggle('on', !!html); }
+const notesMaj = n => n ? `<div class="notes mut">${esc(n.replace(/^#+.*$/gm, '').replace(/\n*Installation :[\s\S]*$/, '').trim())}</div>` : '';
+async function majPrete() {
+  const e = await (await api('/api/maj')).json(); if (e.etat !== 'pret') return;
+  boiteMaj(`<h4>✨ QuentMovie ${esc(e.nouvelle)} est prête</h4><div class="mut">Tu as la version ${esc(e.version)}.</div>${notesMaj(e.notes)}
+    <div class="ligne"><button class="pri" id="majOk">Redémarrer et installer</button><button id="majPlusTard">À la fermeture</button></div>
+    <p class="mut" style="margin:6px 0 0">Ton projet est enregistré avant le redémarrage.</p>`);
+  $('#majOk').onclick = async () => {
+    boiteMaj('<h4>Installation…</h4><p class="mut">QuentMovie va se fermer puis se rouvrir tout seul.</p>');
+    try { await fetch('/api/projet', { method: 'PUT', body: snap() }); } catch (er) { /* sauvegarde automatique déjà faite */ }
+    await api('/api/maj/installer', { method: 'POST' });
+  };
+  $('#majPlusTard').onclick = () => { boiteMaj(''); aide('La nouvelle version s’installera quand tu fermeras QuentMovie.'); };
+}
+let suiviMaj = null;
+async function verifierMaj(manuel) {
+  let e = await (await api('/api/maj/verifier', { method: 'POST' })).json();
+  if (e.etat === 'inactif') { if (manuel) alert('Les mises à jour automatiques fonctionnent dans l’application Mac installée.'); return; }
+  clearInterval(suiviMaj);
+  suiviMaj = setInterval(async () => {
+    e = await (await api('/api/maj')).json();
+    if (e.etat === 'telechargement' || e.etat === 'installation') {
+      if (manuel) boiteMaj(`<h4>Téléchargement de QuentMovie ${esc(e.nouvelle)}</h4><progress max="100" value="${e.etat === 'installation' ? 100 : e.progres}"></progress><p class="mut" style="margin:4px 0 0">${e.etat === 'installation' ? 'Préparation…' : e.progres + ' %'} · tu peux continuer à travailler.</p>`);
+      return;
+    }
+    if (e.etat === 'recherche') return;
+    clearInterval(suiviMaj);
+    if (e.etat === 'pret') majPrete();
+    else if (manuel && e.etat === 'a-jour') { boiteMaj(`<h4>✅ QuentMovie est à jour</h4><p class="mut">Version ${esc(e.version)}.</p>`); setTimeout(() => boiteMaj(''), 4000); }
+    else if (manuel && e.etat === 'erreur') { boiteMaj(`<h4>Mise à jour impossible</h4><p class="err">${esc(e.erreur)}</p><button id="majFerme">Fermer</button>`); $('#majFerme').onclick = () => boiteMaj(''); }
+    if (tab === 'outils') navigateur();
+  }, 1000);
+}
+
 // ---------- Studio : se filmer avec la caméra et le micro du Mac, avec un prompteur ----------
 const ST_DEF = { vitesse: 45, taille: 44, largeur: 70, opacite: 55, miroirTxt: false, miroirImg: true, compte: true, defilAuto: true, qualite: '1080', bruit: true, camera: '', micro: '' };
 let studio = null;
