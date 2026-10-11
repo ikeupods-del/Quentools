@@ -210,7 +210,7 @@ canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display
     <button id="bPlay" class="pri" title="Lire / pause (Espace)" style="min-width:74px">▶ Lire</button>
     <button id="bAvance" title="Avancer d’1 s (L)">⏩</button><button id="bFin" title="Fin (Fin)">⏭</button>
     <input type="range" id="scrub" min="0" max="1" step="0.01" value="0">
-    <span id="tc">00:00:00:00</span><span id="pret" class="mut" title="Aperçu avec effets préparé en arrière-plan pendant que tu travailles"></span>
+    <span id="tc">00:00:00:00</span><select id="qApercu" title="Qualité de l’aperçu avec effets (calculé par la puce vidéo dès 720p)" style="width:auto;flex:none"><option value="360">Aperçu 360p</option><option value="720">Aperçu 720p</option><option value="1080">Aperçu 1080p</option><option value="2160">Aperçu 4K</option></select><span id="pret" class="mut" title="Aperçu avec effets préparé en arrière-plan pendant que tu travailles"></span>
   </div>
 </main>
 
@@ -274,7 +274,7 @@ function tc(t, fps) { t = Math.max(0, t); const f = Math.floor((t % 1) * fps), s
 let CAT = { video: [], audio: [], transitions: [], titres: [], reportage: [], generateurs: [], polices: [], sorties: ['mp4'], bibliotheque: { sons: [], musiques: [], stickers: [], marque: [], luts: [], calques: [], cadres: [], fonds: [], fondvert: [] } };
 let PACKS = { luts: [], sons: [], images: [], videos: [], dossier: '' };
 let medias = [];
-let proj = { format: 'vertical', fps: 30, res: 1080, quality: 'rapide', sortie: 'mp4', normaliser: false, clips: [], audio: [], pistes: [], markers: [] };
+let proj = { format: 'vertical', fps: 30, res: 1080, apercuRes: 720, quality: 'rapide', sortie: 'mp4', normaliser: false, clips: [], audio: [], pistes: [], markers: [] };
 let sel = -1, selA = -1, selP = -1, selCut = -1, gt = 0, zoom = 40, tab = 'medias', rendu = null, presse = null;
 const LIB = () => CAT.bibliotheque;
 // Bibliothèque intégrée (« lib:… ») et packs de l'utilisateur (« pack:… »)
@@ -294,6 +294,7 @@ const mediaOf = f => {
   return null;
 };
 const durOf = f => (mediaOf(f) || {}).duration || 5;
+const dureeAudio = a => a.dur || durOf(a.file);
 const nomOf = f => (libItem(f) || packItem(f) || {}).nom || f;
 async function chargerPacks() { try { PACKS = await (await api('/api/packs')).json(); } catch (e) { /* dossier illisible */ } }
 
@@ -392,6 +393,7 @@ function navigateur() {
   if (tab === 'medias') {
     h = `<button id="bImp2" class="pri" style="width:100%">＋ Importer des fichiers</button>
       <p class="mut">Tous les formats : vidéos (.mov, .mp4, .mkv, .avi…), photos (JPG, PNG, HEIC, TIFF…), sons (MP3, WAV, M4A, FLAC…). Glisse-les ici ou dans la timeline.</p>
+      <div class="ligne" style="margin-bottom:8px"><input type="text" id="lienVideo" placeholder="🔗 Colle un lien YouTube, TikTok, Instagram, Facebook, X…" style="flex:1"><button class="pri" data-outil="lien" style="flex:none">Télécharger</button></div><div id="lienRes" class="mut"></div>
       ${medias.length ? `<div class="ligne" style="margin-bottom:8px"><button data-outil="medias-inutiles" title="Supprime les médias qui ne servent pas dans le montage en cours">🧹 Supprimer les inutilisés</button><button data-outil="medias-tous" title="Supprime tous les médias (le montage est vidé)">🗑 Tout supprimer</button></div>` : ''}` +
       (medias.map((m, i) => `<div class="media" draggable="true" data-drag="media:${i}">${vignette(m)}<div class="nom">${esc(m.file)}<small>${m.kind === 'image' ? 'Photo' : m.kind === 'audio' ? 'Son · ' + fmt(m.duration) : fmt(m.duration) + (m.native ? '' : ' · ' + esc(m.codec))}</small></div>
         <button class="mini" data-add="${i}" title="${m.kind === 'audio' ? 'Ajouter en piste audio (⇧ : en clip podcast)' : 'Ajouter à la timeline'}">＋</button>
@@ -622,7 +624,7 @@ function ecranPret(id) {
 // ---------- Timeline ----------
 const kindIcon = c => ({ video: '', image: '', audio: '🎙 ', solid: '▭ ' }[c.kind] || '');
 function tlDessin() {
-  const st = starts(), T = total(), W = Math.max(T, ...proj.audio.map(a => (a.start || 0) + durOf(a.file)), ...(proj.pistes || []).map(p => p.start + dureePiste(p)), 10) + 6;
+  const st = starts(), T = total(), W = Math.max(T, ...proj.audio.map(a => (a.start || 0) + dureeAudio(a)), ...(proj.pistes || []).map(p => p.start + dureePiste(p)), 10) + 6;
   $('#lane').style.width = (W * zoom + 60) + 'px';
   let r = ''; const pas = zoom >= 80 ? 1 : zoom >= 36 ? 2 : zoom >= 18 ? 5 : 10;
   for (let s = 0; s < W; s += pas) r += `<i style="left:${s * zoom}px">${s >= 60 ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : s + 's'}</i>`;
@@ -640,12 +642,12 @@ function tlDessin() {
   const fins = [], ligne = [];
   proj.audio.map((a, i) => i).sort((x, y) => (proj.audio[x].start || 0) - (proj.audio[y].start || 0)).forEach(i => {
     const a = proj.audio[i], s = a.start || 0; let r = fins.findIndex(e => e <= s + 0.01);
-    if (r < 0) { r = fins.length; fins.push(0); } fins[r] = s + durOf(a.file); ligne[i] = r;
+    if (r < 0) { r = fins.length; fins.push(0); } fins[r] = s + dureeAudio(a); ligne[i] = r;
   });
   $('#pA').style.height = (Math.max(1, fins.length) * 44 + 12) + 'px';
   $('#pA').innerHTML = (proj.audio.length ? '' : '<span class="vide2">Musique, voix off, bruitages : onglets Sons et Musique, ou glisse un son ici</span>') + proj.audio.map((a, i) => {
-    const d = durOf(a.file);
-    return `<div class="aud ${i === selA ? 'sel' : ''}" data-a="${i}" style="top:${8 + ligne[i] * 44}px;height:40px;bottom:auto;left:${(a.start || 0) * zoom}px;width:${Math.max(30, d * zoom)}px;background-image:url('/api/wave?file=${enc(a.file)}&w=1200&h=60')">🎵 ${esc(nomOf(a.file))}${a.duck ? ' ⤵' : ''}</div>`;
+    const d = dureeAudio(a);
+    return `<div class="aud ${i === selA ? 'sel' : ''}" data-a="${i}" style="top:${8 + ligne[i] * 44}px;height:40px;bottom:auto;left:${(a.start || 0) * zoom}px;width:${Math.max(30, d * zoom)}px;background-image:url('/api/wave?file=${enc(a.file)}&w=1200&h=60${a.dur ? `&in=${a.in || 0}&dur=${a.dur}` : ''}')">${a.detache ? '🔊' : '🎵'} ${esc(nomOf(a.file))}${a.duck ? ' ⤵' : ''}</div>`;
   }).join('');
   // pistes vidéo au-dessus : rangées automatiques, la plus haute passe devant
   const fv = [], lv = [];
@@ -854,11 +856,13 @@ function pistesApercu() {
   };
   if (img.complete && img.naturalWidth) poser(); else img.addEventListener('load', poser, { once: true });
 }
-function stopLecture() { if (lecture) { lecture.video.pause(); lecture = null; $('#bPlay').textContent = '▶ Lire'; apercu(); } }
+function stopLecture() { if (lecture) { lecture.video.pause(); if (lecture.arreter) lecture.arreter(); lecture = null; $('#bPlay').textContent = '▶ Lire'; apercu(); } }
 function majApercuEtat() { if (rendu && rendu.sig !== snap()) { rendu.perime = true; } preparerEnFond(); }
 // Aperçu préparé en arrière-plan 1,5 s après chaque modification : la lecture démarre tout de suite
 const fond = { cours: null, promesse: null, minuteur: 0 };
+$('#qApercu').onchange = e => { proj.apercuRes = +e.target.value; commit(); };
 function pastille() {
+  if ($('#qApercu') && document.activeElement !== $('#qApercu')) $('#qApercu').value = String(proj.apercuRes || 720);
   const p = $('#pret'); if (!p) return;
   p.textContent = !proj.clips.length ? '' : fond.cours ? '⏳ aperçu…' : rendu && rendu.sig === snap() ? '⚡ prêt' : '';
 }
@@ -866,7 +870,7 @@ function preparerEnFond(delai = 1500) {
   clearTimeout(fond.minuteur); pastille();
   if (!proj.clips.length || localStorage.getItem('qm:fond') === 'non') return;
   fond.minuteur = setTimeout(() => {
-    if (studio || lecture) return preparerEnFond(3000);
+    if (studio || (lecture && !lecture.direct)) return preparerEnFond(3000);
     const sig = snap(); if ((rendu && rendu.sig === sig) || fond.cours === sig) return pastille();
     if (fond.cours) return preparerEnFond(1500); // un rendu est déjà en cours : on attend sa fin
     fond.cours = sig; pastille();
@@ -895,11 +899,10 @@ async function rendreApercu() {
 }
 async function lire() { // lecture de toute la timeline avec les effets (rendu rapide si le projet a changé)
   if (!proj.clips.length) return aide('La timeline est vide : ajoute d’abord un média.');
+  if (lecture && lecture.direct) return stopLecture();
   if (lecture) { lecture.video.paused ? lecture.video.play() : lecture.video.pause(); $('#bPlay').textContent = lecture.video.paused ? '▶ Lire' : '⏸ Pause'; return; }
-  try {
-    if (fond.cours && fond.cours === snap()) { $('#bPlay').textContent = '⏳'; await fond.promesse; } // l'aperçu se termine : on l'attend
-    if (!rendu || rendu.sig !== snap()) await rendreApercu();
-  } catch (e) { return alert(e.message); }
+  // aperçu avec effets pas encore prêt : lecture immédiate des fichiers d'origine, l'aperçu continue en arrière-plan
+  if (!rendu || rendu.sig !== snap()) { preparerEnFond(0); return lectureDirecte(); }
   const v = document.createElement('video'); v.src = rendu.url; v.controls = true; v.autoplay = false; lecture = { video: v };
   $('#stage').innerHTML = ''; $('#stage').appendChild(v);
   const T = total(); v.onloadedmetadata = () => { v.currentTime = clamp(gt * (v.duration / Math.max(0.1, T)), 0, v.duration - 0.05); v.play().catch(() => {}); };
@@ -907,6 +910,36 @@ async function lire() { // lecture de toute la timeline avec les effets (rendu r
   v.onpause = () => { $('#bPlay').textContent = '▶ Lire'; }; v.onplay = () => { $('#bPlay').textContent = '⏸ Pause'; };
   v.onended = () => { stopLecture(); };
   $('#bPlay').textContent = '⏸ Pause';
+}
+// Lecture immédiate de la timeline à partir des fichiers d'origine (sans effets ni musique), clip après clip
+async function lectureDirecte() {
+  const st = starts(), v = document.createElement('video'), im = document.createElement('div');
+  v.playsInline = true; im.style.cssText = 'position:absolute;inset:0;background:#000 center/contain no-repeat;display:none';
+  $('#stage').innerHTML = ''; $('#stage').append(v, im);
+  const badge = document.createElement('div'); badge.className = 'mut'; badge.style.cssText = 'position:absolute;top:8px;left:8px;background:#000a;padding:3px 8px;border-radius:6px;font-size:11px';
+  badge.textContent = '▶ Lecture directe (sans effets) — l’aperçu complet se prépare'; $('#stage').append(badge);
+  const lec = lecture = { video: v, direct: true }; let { i, pos: p } = locate(gt), minuteur = 0;
+  $('#bPlay').textContent = '⏸ Pause';
+  const suivant = () => { clearInterval(minuteur); i++; p = 0; if (lecture === lec) jouer(); };
+  const jouer = async () => {
+    const c = proj.clips[i]; if (!c || lecture !== lec) return stopLecture();
+    if (c.kind === 'video' || c.kind === 'audio') {
+      const m = mediaOf(c.file); let src = '/media/' + enc(c.file);
+      if (!m || !m.native) { badge.textContent = '⏳ Préparation de la lecture…'; try { src = (await (await api('/api/proxy?file=' + enc(c.file))).json()).url; } catch (e) { return suivant(); } badge.textContent = '▶ Lecture directe (sans effets)'; }
+      if (lecture !== lec) return;
+      im.style.display = 'none'; v.style.display = ''; v.muted = !c.vol;
+      if (v.getAttribute('src') !== src) { v.src = src; await new Promise(r => { v.onloadedmetadata = r; v.onerror = r; }); }
+      v.playbackRate = c.speed || 1; v.currentTime = c.in + p * (c.speed || 1); v.play().catch(() => {});
+      v.ontimeupdate = () => { if (lecture !== lec) return; gt = st[i] + (v.currentTime - c.in) / (c.speed || 1); tete(); if (v.currentTime >= c.out - 0.04) { v.ontimeupdate = null; suivant(); } };
+    } else { // photo ou fond uni : affiché pendant sa durée
+      v.pause(); v.style.display = 'none'; im.style.display = '';
+      im.style.background = c.kind === 'solid' ? c.color : `#000 url('/media/${enc(c.file)}') center/contain no-repeat`;
+      const t0 = performance.now() - p * 1000;
+      minuteur = setInterval(() => { if (lecture !== lec) return clearInterval(minuteur); const e = (performance.now() - t0) / 1000; gt = st[i] + e; tete(); if (e >= effDur(c)) suivant(); }, 40);
+    }
+  };
+  lec.arreter = () => clearInterval(minuteur);
+  jouer();
 }
 async function lireOriginal() { // lecture rapide du clip sélectionné, sans effets (n'importe quel format)
   const c = curClip(); if (!c || !['video', 'audio'].includes(c.kind)) return aide('La lecture sans effets sert pour les vidéos et les sons.');
@@ -976,7 +1009,7 @@ function inspecteur() {
   if (selP >= 0 && proj.pistes && proj.pistes[selP]) { inspecteurPiste(el); el.scrollTop = keep; return; }
   if (selA >= 0 && proj.audio[selA]) {
     const a = proj.audio[selA];
-    el.innerHTML = `<h3>Piste audio</h3><div class="mut">${esc(nomOf(a.file))}</div>${sl('Volume', 'vol', 0, 200, 5, ' %', a)}${sl('Début (dans la vidéo)', 'start', 0, Math.max(10, Math.ceil(total())), 0.1, ' s', a)}
+    el.innerHTML = `<h3>Piste audio</h3><div class="mut">${esc(nomOf(a.file))}</div>${sl('Volume', 'vol', 0, 200, 5, ' %', a)}${sl('Début (dans la vidéo)', 'start', 0, Math.max(10, Math.ceil(total())), 0.1, ' s', a)}${a.dur ? sl('Début dans le fichier', 'in', 0, Math.max(0.2, durOf(a.file) - 0.2), 0.1, ' s', a) + sl('Durée', 'dur', 0.2, Math.max(0.2, durOf(a.file)), 0.1, ' s', a) : ''}
       ${chk('Fondu d’entrée et de sortie', 'fade', a)}${chk('Répéter en boucle', 'loop', a)}${CAT.duck ? chk('Baisser automatiquement quand la voix parle', 'duck', a) : ''}
       <button id="bRmA" style="margin-top:10px">Retirer cette piste</button>`;
     el.dataset.root = 'a'; el.scrollTop = keep; return;
@@ -995,6 +1028,7 @@ function inspecteur() {
     ${sourceVideo ? sl('Début', 'in', 0, Math.max(0, +(c.out - 0.2).toFixed(1)), 0.1, ' s', c) + sl('Fin', 'out', +(c.in + 0.2).toFixed(1), +md.toFixed(1), 0.1, ' s', c) + sl('Vitesse', 'speed', 0.25, 4, 0.05, '×', c) + sl('Volume', 'vol', 0, 300, 5, ' %', c) : sl('Durée', 'dur', 0.5, 30, 0.5, ' s', c)}
     ${chk('Fondu au début et à la fin', 'fade', c)}
     ${k === 'video' || k === 'image' ? `<label class="l">Cadrage</label><select data-p="fit">${opts([['fill', 'Remplir l’écran (recadre)'], ['fit', 'Tout afficher (bandes noires)'], ['flou', 'Tout afficher (fond flou)']], c.fit)}</select>` : ''}
+    ${k === 'video' || k === 'audio' ? `<div class="ligne" style="margin-top:6px"><button id="bQualite" title="Débruitage, netteté, couleurs et son nettoyé">✨ Améliorer la qualité</button>${k === 'video' && c.hasAudio !== false && !c.sonDetache ? '<button id="bDetacher" title="Le son de la vidéo devient un élément à part dans la piste audio">🔊 Détacher le son</button>' : ''}</div>` : ''}
     ${k === 'video' && c.fit !== 'fit' && c.fit !== 'flou' && partVisible(c) < 0.95 ? `<button id="bSuivre" style="width:100%;margin-top:6px">🎯 ${c.cadrage ? 'Refaire le suivi de la personne' : 'Suivre la personne (recadrage auto)'}</button>${c.cadrage ? `<div class="ligne" style="margin-top:4px"><span class="mut" style="flex:1">Recadrage auto actif</span><button class="mini" id="bSuivreSuppr" title="Revenir au recadrage au centre" style="flex:none">✕</button></div>` : ''}<div class="mut" id="suiviRes"></div>` : ''}
   </details>
   ${k === 'audio' ? `<details open><summary>Podcast : fond et visualiseur</summary>
@@ -1079,6 +1113,8 @@ $('#insp').addEventListener('click', e => {
   if (t.id === 'bRmA') return supprimer();
   if (d.pospiste) { const p = proj.pistes[selP]; [p.x, p.y] = POS_PISTE[d.pospiste]; commit(); inspecteur(); return apercuRetarde(); }
   if (t.id === 'bAddOv') { const m = medias.find(x => x.kind === 'image') || medias.find(x => x.kind === 'video'); return ajouterCalque(m ? m.file : 'lib:' + (LIB().stickers[0] || {}).file, m ? m.kind : 'image'); }
+  if (t.id === 'bQualite') { ameliorerClips([sel]); return; }
+  if (t.id === 'bDetacher') { detacherSon(sel); return; }
   if (t.id === 'bSuivre') { t.disabled = true; recadrerClips([sel], '#suiviRes').finally(() => inspecteur()); return; }
   if (t.id === 'bSuivreSuppr') { delete c.cadrage; commit(); inspecteur(); return apercu(); }
   if (t.id === 'bSubAuto') { const st = c.subStyle && c.subStyle !== 'contour' ? c.subStyle : paroleOpts().style; t.disabled = true; outilParole('clip', { sous: true, couper: false, style: st }, null).finally(() => { t.disabled = false; inspecteur(); }); return; }
@@ -1116,6 +1152,27 @@ function pipette() {
   $('#pipOk').onclick = fermer;
 }
 
+// ---------- Qualité en un clic et son détaché ----------
+function ameliorerClips(indices) {
+  let n = 0;
+  for (const i of indices) {
+    const c = proj.clips[i]; if (!c || !['video', 'audio', 'image'].includes(c.kind)) continue;
+    if (c.kind !== 'audio' && !c.fx.some(e => e.id === 'qualite')) c.fx.unshift({ id: 'qualite', p: { f: 5 } });
+    if ((c.kind === 'audio' || c.hasAudio) && !c.afx.some(e => e.id === 'qualite')) c.afx.unshift({ id: 'qualite', p: {} });
+    n++;
+  }
+  commit(); tout(); apercu();
+  aide(n ? `✨ Qualité améliorée sur ${n} clip${n > 1 ? 's' : ''} : image débruitée et plus nette, son sans souffle et régulier. Réglable dans « Effets image » et « Effets sonores ».` : 'Aucun clip à améliorer.');
+}
+// Le son d'une vidéo devient un élément de la piste audio (même moment), la vidéo devient muette
+function detacherSon(i) {
+  const c = proj.clips[i]; if (!c || c.kind !== 'video') return;
+  if ((c.speed || 1) !== 1) return alert('Remets la vitesse du clip à 1× avant de détacher son son.');
+  proj.audio.push({ file: c.file, start: +starts()[i].toFixed(2), in: +c.in.toFixed(2), dur: +(c.out - c.in).toFixed(2), vol: c.vol || 100, fade: false, loop: false, duck: false, detache: true });
+  c.vol = 0; c.sonDetache = true; selA = proj.audio.length - 1; sel = -1; selP = -1;
+  commit(); tout();
+  aide('🔊 Son détaché : il est dans la piste audio, tu peux le déplacer, le régler ou le supprimer sans toucher à l’image.');
+}
 // ---------- Recadrage auto : la fenêtre suit la personne (vidéo horizontale montée en vertical ou en carré) ----------
 const RATIO = { vertical: 9 / 16, horizontal: 16 / 9, carre: 1 };
 // part de la largeur de l'image source visible une fois l'écran rempli
@@ -1384,6 +1441,8 @@ function outilsHtml() {
     <div class="encart"><h4>✂ Couper les blancs et les « euh »</h4><p class="mut">Garde seulement les moments où tu parles : les blancs, les hésitations et les « euh » sont retirés. Les sous-titres sont recalés.</p>
       <div class="ligne"><button class="pri" data-outil="coupe-clip">Clip sélectionné</button><button class="pri" data-outil="coupe-tout">Toute la vidéo</button></div>
       <div class="sw2"><input type="checkbox" id="oPriseCoupe" ${po.priseCoupe ? 'checked' : ''}><label for="oPriseCoupe">Couper automatiquement mes prises du studio</label></div><div class="mut" id="oCoupeRes" style="margin-top:4px"></div></div>
+    <div class="encart"><h4>✨ Améliorer la qualité</h4><p class="mut">Image débruitée et plus nette, couleurs ravivées ; son sans souffle, voix claire et volume régulier. Sur tous les clips en un clic.</p>
+      <button class="pri" data-outil="qualite" style="width:100%">Améliorer toute la vidéo</button></div>
     <div class="encart"><h4>📱 Passer en vertical (TikTok, Reels, Shorts)</h4><p class="mut">Le montage passe en 9:16 et chaque vidéo filmée à l’horizontale suit automatiquement la personne, au lieu de couper au centre.</p>
       <button class="pri" data-outil="vertical" style="width:100%">Passer en vertical et suivre la personne</button><div class="mut" id="oVertRes" style="margin-top:4px"></div></div>
     <div class="encart"><h4>🖼 Miniature</h4><p class="mut">Une image de ta vidéo, un gros titre et toi détouré avec un contour : la vignette qui donne envie de cliquer.</p><button class="pri" data-outil="miniature" style="width:100%">Créer la miniature</button></div>
@@ -1436,6 +1495,17 @@ async function outil(nom) {
   if (nom === 'generer') return ouvrirGenerateur();
   if (nom === 'voix') return gererVoix($('#oVoixZone'));
   if (nom === 'miniature') return ouvrirMiniature();
+  if (nom === 'qualite') return ameliorerClips(proj.clips.map((c, i) => i));
+  if (nom === 'lien') { // vidéo d'un réseau social ou de YouTube → médias
+    const lien = $('#lienVideo').value.trim(), r = t => { const e = $('#lienRes'); if (e) e.innerHTML = t; };
+    if (!lien) return r('Colle d’abord le lien de la vidéo.');
+    try {
+      const { id } = await (await api('/api/telecharger', { method: 'POST', body: JSON.stringify({ lien }) })).json();
+      const j = await suivreTravail(id, x => r(`<progress max="100" value="${Math.round((x.progress || 0) * 100)}" style="width:100%"></progress> ${esc(x.step || '')}`));
+      await chargerMedias(); navigateur(); aide(`✅ Vidéo téléchargée : ${esc(j.file)} (dans tes médias). Utilise seulement des vidéos que tu as le droit de reprendre.`);
+    } catch (e) { r(`<span class="err">${esc(e.message)}</span>`); }
+    return;
+  }
   if (nom === 'vertical') { proj.format = 'vertical'; $('#format').value = 'vertical'; commit(); tout(); return recadrerClips(proj.clips.map((c, i) => i), '#oVertRes'); }
   if (nom === 'medias-inutiles' || nom === 'medias-tous') return supprimerMedias(nom === 'medias-tous');
   if (/^(sous|coupe)-(clip|tout)$/.test(nom)) { const [q, p] = nom.split('-'), st = $('#oSousStyle') ? $('#oSousStyle').value : paroleOpts().style;
@@ -1620,6 +1690,7 @@ async function ouvrirGenerateur() {
   $('#gSujet').onkeydown = e => { if (e.key === 'Enter') genChercher(); };
   $('#gSujet').focus();
   api('/api/generer/voix').then(r => r.json()).then(r => { if (gen) { gen.voix = r.voix; gen.naturelles = r.naturelles || []; gen.defaut = r.defaut; } }).catch(() => {});
+  api('/api/ia').then(r => r.json()).then(r => { if (gen) gen.ia = r; }).catch(() => {});
 }
 async function genChercher() {
   const q = $('#gSujet').value.trim(); if (!q) return;
@@ -1642,11 +1713,13 @@ async function genPreparer() {
 function genEtape2() {
   const p = gen.prep, im = p.images, mus = LIB().musiques;
   const ligneScene = (s, i) => `<div class="fxrow" data-scene="${i}" style="display:flex;gap:8px;align-items:flex-start">
-      <div style="flex:none;width:120px;text-align:center">${s.image >= 0 && im[s.image] ? `<img src="${esc(petiteImage(im[s.image].url))}" alt="" style="width:120px;height:68px;object-fit:cover;border-radius:6px;display:block">` : '<div class="mut" style="height:68px;display:grid;place-items:center;background:#0003;border-radius:6px">sans image</div>'}
+      <div style="flex:none;width:120px;text-align:center">${s.image >= 0 && im[s.image] ? `<div style="position:relative"><img src="${esc(im[s.image].video ? im[s.image].apercu : petiteImage(im[s.image].url))}" alt="" style="width:120px;height:68px;object-fit:cover;border-radius:6px;display:block">${im[s.image].video ? '<span style="position:absolute;left:4px;bottom:4px;background:#000b;border-radius:4px;padding:0 4px;font-size:10px">▶ vidéo</span>' : ''}</div>` : '<div class="mut" style="height:68px;display:grid;place-items:center;background:#0003;border-radius:6px">sans image</div>'}
         ${im.length > 1 ? `<button class="mini" data-gimg="${i}:-1" title="Image précédente">◀</button><button class="mini" data-gimg="${i}:1" title="Image suivante">▶</button>` : ''}</div>
       <div style="flex:1">${s.section && s.section !== ((p.scenes[i - 1] || {}).section) ? `<div class="mut" style="font-size:11px;margin-bottom:2px">§ ${esc(s.section)} (titre affiché)</div>` : ''}<textarea rows="3" data-gtexte="${i}" style="width:100%">${esc(s.texte)}</textarea></div><button class="mini" data-gsuppr="${i}" title="Retirer cette scène">✕</button></div>`;
   const mots = p.scenes.reduce((a, s) => a + s.texte.split(/\s+/).length, 0);
-  $('#gZone').innerHTML = `<label class="l">Titre de la vidéo</label><input type="text" id="gTitre" value="${esc(p.titre)}">
+  $('#gZone').innerHTML = `<div class="encart" style="margin:0 0 8px"><b>🤖 IA locale</b> <span class="mut">réécrit le texte en vrai script (accroche, transitions, conclusion) à partir des faits de l’article, sans rien inventer. Tourne sur ton Mac, sans internet${gen.ia && !gen.ia.installee ? ` (≈ ${(gen.ia.mo / 1000).toFixed(1)} Go téléchargés au premier usage)` : ''}.</span>
+      <div class="ligne" style="margin-top:6px"><select id="gStyle" style="flex:1">${opts([['documentaire', 'Documentaire'], ['dynamique', 'Dynamique (TikTok, Reels)'], ['histoire', 'Récit captivant'], ['enfants', 'Pour enfants']], gen.style || 'documentaire')}</select><button class="pri" id="gIA" style="flex:none">Réécrire avec l’IA</button></div><div id="gIAProg" class="mut"></div></div>
+    <label class="l">Titre de la vidéo</label><input type="text" id="gTitre" value="${esc(p.titre)}">
     <p class="mut" style="margin:6px 0">${p.scenes.length} scènes · environ ${fmt(mots / 2.6)} de voix · ${im.length} image${im.length > 1 ? 's' : ''} libre${im.length > 1 ? 's' : ''} · source : Wikipédia, « ${esc(p.article)} ». Corrige le texte comme tu veux : chaque bloc est lu sur une image.</p>
     <div id="gScenes" style="max-height:38vh;overflow:auto">${p.scenes.map(ligneScene).join('')}</div>
     <div class="ligne" style="margin-top:8px"><label class="l" style="flex:none;margin:0">Voix</label><select id="gVoix">${optsVoix(gen.naturelles || [], gen.voix, gen.defaut)}</select><button id="gEcouter" style="flex:none">▶ Écouter</button></div>
@@ -1667,7 +1740,18 @@ function genEtape2() {
     if (t.id === 'gEcouter') essaiVoix($('#gVoix').value, ((p.scenes[0] || {}).texte || p.titre).slice(0, 220), +$('#gVit').value / 175, t);
     if (t.id === 'gVoixGerer') { e.preventDefault(); gererVoix($('#gVoixZone'), () => api('/api/generer/voix').then(r => r.json()).then(r => { gen.voix = r.voix; gen.naturelles = r.naturelles || []; const sel = $('#gVoix'); if (sel) sel.innerHTML = optsVoix(gen.naturelles, gen.voix, sel.value || r.defaut); })); }
     if (t.id === 'gCreer') genCreer();
+    if (t.id === 'gIA') genIA();
   };
+}
+// Script réécrit par l'IA locale à partir des faits de l'article (scènes, titres de partie, titre accrocheur)
+async function genIA() {
+  const p = gen.prep, b = $('#gIA'); gen.style = $('#gStyle').value; b.disabled = true;
+  try {
+    const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article: p.article, titre: p.titre, duree: +$('#gDuree').value || 60, style: gen.style, images: p.images.map(x => ({ nom: x.nom })) }) })).json();
+    const r = await suivreTravail(id, j => { $('#gIAProg').innerHTML = `<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`; });
+    p.scenes = r.scenes; p.titre = r.titre || p.titre; gen.ia = { ...(gen.ia || {}), installee: true }; genEtape2();
+    $('#gIAProg').textContent = `✅ Script écrit par l’IA locale (${r.scenes.length} scènes). Relis-le : tu peux tout modifier.`;
+  } catch (e) { $('#gIAProg').innerHTML = `<span class="err">${esc(e.message)}</span>`; b.disabled = false; }
 }
 async function genCreer() {
   const p = gen.prep; p.titre = $('#gTitre').value.trim() || p.titre;
@@ -1700,7 +1784,7 @@ function monterGeneree(r, p, o) {
   const clips = [], mouvements = ['zoomavant', 'panoD', 'zoomarriere', 'panoG']; let precedente = '';
   if (o.ouv) { const c = newSolid('#0b1d3a', 3.5); c.titre = { preset: 'chapitre', l1: p.titre.toUpperCase(), l2: '', color: '#ffffff', font: 'arial', start: 0.3, dur: 0, speed: 14 }; c.transition = { type: 'fade', dur: 0.6 }; clips.push(c); }
   r.scenes.forEach((s, i) => {
-    const c = base({ file: s.voix, kind: 'audio', in: 0, out: s.duree, hasAudio: true, bgFile: s.image, bgColor: '#101820', viz: { type: 'none', color: '#ffffff', pos: 'centre', h: 30 },
+    const c = base({ file: s.voix, kind: 'audio', in: 0, out: s.duree, hasAudio: true, bgFile: s.image, bgKind: s.video ? 'video' : 'image', bgColor: '#101820', viz: { type: 'none', color: '#ffffff', pos: 'centre', h: 30 },
       fx: [{ id: mouvements[i % mouvements.length], p: {} }], transition: { type: 'fade', dur: 0.6 } });
     if (o.sous) { c.subs = sousTitresDe(s.texte, s.duree); c.subStyle = 'bandeau'; c.subSize = 4; }
     // documentaire : titre de la nouvelle partie de l'article, sinon la date dont parle la scène

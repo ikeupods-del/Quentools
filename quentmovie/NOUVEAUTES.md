@@ -3,6 +3,15 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.8.0
+- IA locale dans le générateur : « Réécrire avec l'IA » transforme les faits de Wikipédia en vrai script (accroche, titres de parties, conclusion) dans le style choisi (documentaire, TikTok, récit, enfants), sans rien inventer. Elle tourne sur ton Mac, sans internet (téléchargée une fois, environ 2,5 Go).
+- Générateur : de vraies vidéos libres (Wikimedia Commons) s'ajoutent aux images quand il y en a sur le sujet.
+- Télécharger une vidéo depuis un lien : colle un lien YouTube, TikTok, Instagram, Facebook ou X dans l'onglet Médias (seulement pour des vidéos que tu as le droit de reprendre).
+- Lecture immédiate : le bouton Lire démarre tout de suite avec tes fichiers d'origine pendant que l'aperçu avec effets se prépare.
+- Qualité de l'aperçu au choix : 360p, 720p, 1080p ou 4K (calculé par la puce vidéo du Mac).
+- « 🔊 Détacher le son » d'une vidéo : le son devient un élément à part dans la piste audio (déplacer, couper, régler le volume).
+- « ✨ Améliorer la qualité » en un clic (clip ou toute la vidéo) : image débruitée et plus nette, couleurs ravivées, son sans souffle et voix claire.
+
 ## 1.7.0
 - Correction : l'export pouvait rester bloqué à « Mixage du son » quand une musique baisse automatiquement sous la voix (vidéos du générateur notamment). Le mixage est refait autrement et ne peut plus se figer.
 - Voix naturelles intégrées (Siwis, Tom, Jessica, Pierre) pour le générateur : elles se téléchargent toutes seules au premier usage puis marchent sans internet. Les voix « Premium » du Mac sont aussi reconnues (★), avec un bouton qui ouvre directement les réglages pour les installer. Bouton « Écouter » avec la vraie voix.

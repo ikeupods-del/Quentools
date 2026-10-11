@@ -31,6 +31,8 @@ jobs:
         with:
           node-version: 22
       - name: Installer les dépendances
+        env:
+          NODE_LLAMA_CPP_SKIP_DOWNLOAD: 'true'
         run: npm ci
       - name: Contrôler le moteur (effets, transitions, export)
         run: npm test
@@ -40,6 +42,8 @@ jobs:
         run: QM_RESEAU=1 QM_SANS_FFPROBE=1 node tests/generateur-reel.js
       - name: Essai réel des voix naturelles et de la reconnaissance de la voix (téléchargement des modèles)
         run: QM_RESEAU=1 node tests/parole.js
+      - name: Essai réel de l'IA locale et du téléchargement depuis un lien
+        run: QM_RESEAU=1 QM_BASE="$RUNNER_TEMP/qm-autotest" node tests/ia.js
       - name: Construire l'application
         run: npm run dist
       - name: Lancer l'application installée et l'essayer (carte graphique, enregistrement, conversion, voix)
@@ -52,6 +56,8 @@ jobs:
             if (!r.page || r.page.version !== require("./package.json").version) ko.push("page non chargée");
             if (!r.detourage || !r.detourage.webgl2 || r.detourage.erreur || !(r.detourage.msMedian > 0)) ko.push("détourage");
             if (!r.prise || !r.prise.import || !(r.prise.duree > 2)) ko.push("prise du studio");
+            if (!r.ia || r.ia.erreur || !(r.ia.scenes >= 2)) ko.push("IA locale");
+            if (!r.lecture || !r.lecture.direct || !(r.lecture.avance > 1)) ko.push("lecture immédiate");
             if (!r.parole || !r.parole.dispo || !/\.m4a$/.test(r.parole.essai || "")) ko.push("voix naturelle");
             if (!r.parole || !/voix naturelle/i.test(r.parole.ecoute || "")) ko.push("reconnaissance de la voix");
             if (ko.length) { console.log("Échecs :", ko.join(", ")); process.exit(1); } else console.log("Application : tout fonctionne");'

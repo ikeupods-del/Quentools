@@ -107,8 +107,12 @@ function texteSimple(html) { return String(html || '').replace(/<[^>]+>/g, '').r
 function imageDe(page) {
   const ii = page && page.imageinfo && page.imageinfo[0]; if (!ii) return null;
   const m = ii.extmetadata || {}, nom = page.title.replace(/^[^:]+:/, '');
-  if (!/^image\/(jpeg|png|webp)$/.test(ii.mime || '') || ii.width < 640 || ii.height < 400 || IMAGE_REFUSEE.test(nom)) return null;
+  const video = /^video\/(webm|ogg)$/.test(ii.mime || '') || /^application\/ogg$/.test(ii.mime || '');
+  if ((!video && !/^image\/(jpeg|png|webp)$/.test(ii.mime || '')) || ii.width < 640 || ii.height < 360 || IMAGE_REFUSEE.test(nom.replace(/\.(webm|ogv)$/i, ''))) return null;
+  if (video && (!(ii.size < 8e7) || !(ii.duration > 2))) return null;
   const url = String(ii.thumburl || ii.url).replace('://thumb.wikimedia.org/', '://upload.wikimedia.org/'); // même fichier, adresse principale
+  if (video) return { nom, url: ii.url, apercu: ii.thumburl || '', video: true, duree: ii.duration, largeur: ii.width, hauteur: ii.height, auteur: texteSimple(m.Artist && m.Artist.value).slice(0, 80) || 'auteur inconnu',
+    licence: texteSimple(m.LicenseShortName && m.LicenseShortName.value) || 'licence libre', page: ii.descriptionurl || '' };
   return { nom, url, largeur: ii.width, hauteur: ii.height, auteur: texteSimple(m.Artist && m.Artist.value).slice(0, 80) || 'auteur inconnu',
     licence: texteSimple(m.LicenseShortName && m.LicenseShortName.value) || 'licence libre', page: ii.descriptionurl || '' };
 }
@@ -160,6 +164,13 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
       const autres = ((r.query && r.query.pages) || []).sort((a, b) => (a.index || 0) - (b.index || 0)).map(imageDe).filter(x => x && !vus.has(x.nom));
       images = images.concat(autres);
     }
+    // quelques vidéos libres de Commons sur le sujet (plans animés entre les images)
+    try {
+      const v = await api(commons, { action: 'query', generator: 'search', gsrsearch: `${page.title.replace(/\s*\(.*\)$/, '')} filetype:video`, gsrnamespace: '6', gsrlimit: '12',
+        prop: 'imageinfo', iiprop: 'url|size|mime|extmetadata', iiurlwidth: '1280', iiextmetadatafilter: 'Artist|LicenseShortName' });
+      const vus = new Set(images.map(x => x.nom)), vids = ((v.query && v.query.pages) || []).sort((a, b) => (a.index || 0) - (b.index || 0)).map(imageDe).filter(x => x && x.video && !vus.has(x.nom)).slice(0, 6);
+      vids.forEach((x, k) => images.splice(Math.min(images.length, 1 + k * 3), 0, x));
+    } catch (e) { /* pas de vidéo : les images suffisent */ }
     images = images.slice(0, 40);
     const choix = choisirImages(scenes, images);
     return { titre: titre || page.title, article: page.title, source: page.fullurl || `${wiki}/wiki/${encodeURIComponent(page.title)}`,
@@ -208,7 +219,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
       const utiles = [...new Set(scenes.map(s => s.image).filter(i => i >= 0 && images[i]))];
       for (let k = 0; k < utiles.length; k++) {
         job.step = `Images ${k + 1} sur ${utiles.length}`; job.progress = Math.round(k / utiles.length * 40);
-        const im = images[utiles[k]], ext = /\.png($|\?)/i.test(im.url) ? '.png' : '.jpg', f = `gen-${id}-image-${String(k + 1).padStart(2, '0')}${ext}`;
+        const im = images[utiles[k]], ext = im.video ? (/\.ogv($|\?)/i.test(im.url) ? '.ogv' : '.webm') : /\.png($|\?)/i.test(im.url) ? '.png' : '.jpg', f = `gen-${id}-image-${String(k + 1).padStart(2, '0')}${ext}`;
         try { await requete(im.url, { dest: path.join(MEDIAS, f), ua: UA, accept: 'image/*', quoi: 'd’images' }); fichiersImages.set(utiles[k], f); }
         catch (e) { if (e.code === 429) { await new Promise(r => setTimeout(r, 2500)); try { await requete(im.url, { dest: path.join(MEDIAS, f), ua: UA, accept: 'image/*', quoi: 'd’images' }); fichiersImages.set(utiles[k], f); } catch (e2) { /* image ignorée */ } } }
         await new Promise(r => setTimeout(r, 150)); // reste poli avec le serveur d'images
@@ -222,15 +233,22 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
         const f = `gen-${id}-voix-${String(i + 1).padStart(2, '0')}.m4a`;
         const r = await lire(scenes[i].texte, path.join(MEDIAS, f), { voix: v, vitesse }, dir); synthese = synthese && r.synthese;
         const info = await probe(path.join(MEDIAS, f));
-        sortie.push({ texte: scenes[i].texte, section: scenes[i].section || '', voix: f, duree: +info.duration.toFixed(2), image: fichiersImages.get(scenes[i].image) || '' });
+        sortie.push({ texte: scenes[i].texte, section: scenes[i].section || '', video: !!(images[scenes[i].image] || {}).video, voix: f, duree: +info.duration.toFixed(2), image: fichiersImages.get(scenes[i].image) || '' });
       }
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
     const credits = [...new Set(scenes.map(s => s.image))].filter(i => fichiersImages.has(i)).map(i => images[i]).map(im => `${im.auteur} — ${im.licence}`);
     return { scenes: sortie, credits, synthese };
   }
 
+  // Faits de l'article (plus qu'il n'en faut pour la durée), pour l'IA locale
+  async function faits(article, duree) {
+    const j = await api(wiki, { action: 'query', prop: 'extracts', explaintext: '1', exsectionformat: 'wiki', titles: article, redirects: '1' });
+    const page = j.query && j.query.pages && j.query.pages[0];
+    if (!page || !page.extract) throw new Error('Article introuvable sur Wikipédia.');
+    return construireScenes(page.extract, Math.min(900, Math.max(60, duree) * 2.5)).map(x => (x.section ? `[${x.section}] ` : '') + x.texte).join('\n');
+  }
   const lireMac = async (texte, fichier, v) => { const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-essai-')); try { return await lire(texte, fichier, { voix: v }, dir); } finally { fs.rmSync(dir, { recursive: true, force: true }); } };
-  return { chercher, preparer, voix, fabriquer, lireMac };
+  return { chercher, preparer, voix, fabriquer, lireMac, faits };
 }
 
 module.exports = { creer, sujetDe, phrases, nettoyerPhrase, construireScript, construireScenes, choisirImages, imageDe };

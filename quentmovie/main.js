@@ -86,6 +86,17 @@ async function autotest(port) {
       const r = await fetch('/api/import?name=' + nom, { method: 'POST', body: b }), j = await r.json();
       return { mime, octets: b.size, import: r.ok, fichier: j.file, duree: j.duration, conversionMs: Math.round(performance.now() - t0), erreur: j.error };
     })()`);
+    // lecture immédiate de la prise dans la timeline (sans attendre l'aperçu avec effets)
+    res.lecture = await ex(`(async () => {
+      localStorage.setItem('qm:fond', 'non'); await chargerMedias(); const m = medias.find(x => /autotest/.test(x.file)); if (!m) return { erreur: 'prise absente' };
+      proj.clips = []; ajouterClip(m); rendu = null; placerTete(0); const t0 = performance.now(); await lire();
+      await new Promise(r => setTimeout(r, 2500)); const r = { direct: !!(lecture && lecture.direct), avance: +gt.toFixed(2), ms: Math.round(performance.now() - t0) }; stopLecture(); localStorage.removeItem('qm:fond'); return r;
+    })()`);
+    // IA locale dans l'application (modèle déjà téléchargé par l'essai précédent, même dossier)
+    res.ia = await ex(`(async () => {
+      const t0 = performance.now(), { id } = await (await fetch('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article: 'Michelin', titre: 'L’histoire de Michelin', duree: 30, style: 'dynamique', images: [] }) })).json();
+      for (;;) { await new Promise(x => setTimeout(x, 1000)); const k = await (await fetch('/api/job?id=' + id)).json(); if (k.error) return { erreur: k.error }; if (k.done) return { scenes: k.resultat.scenes.length, titre: k.resultat.titre, gpu: k.resultat.gpu, ms: Math.round(performance.now() - t0) }; }
+    })()`);
     // voix naturelle (téléchargée une fois) et reconnaissance dans l'application installée
     res.parole = await ex(`(async () => {
       const e = await (await fetch('/api/parole')).json(); const t0 = performance.now();

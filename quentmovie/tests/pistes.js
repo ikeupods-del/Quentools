@@ -56,6 +56,14 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   const ap = await (await fetch(U('/api/apercu'), { method: 'POST', body: JSON.stringify({ project: { format: 'horizontal', fps: 30, clips: [clip], pistes } }) })).json();
   const a = await attendre(ap.id);
   check('aperçu avec piste vidéo 2', a.done && a.url, a.error);
+  // son détaché d'une vidéo : une partie du fichier (in, dur) placée dans la piste audio
+  const d2 = await (await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: { format: 'horizontal', fps: 30, res: 480, clips: [{ ...clip, vol: 0 }], audio: [{ file: 'tete.mp4', start: 1, in: 2, dur: 2, vol: 100, detache: true }] } }) })).json();
+  const e2 = await attendre(d2.id);
+  check('export avec son détaché', e2.done && e2.out, e2.error);
+  if (e2.out) {
+    const f2 = path.join(base, 'exports', e2.out), vol = (ss, t) => +((/max_volume: (-?[\d.]+) dB/.exec(require('child_process').spawnSync(bins.ffmpeg, ['-hide_banner', '-ss', ss, '-t', t, '-i', f2, '-vn', '-af', 'volumedetect', '-f', 'null', '-'], { encoding: 'utf8' }).stderr) || [])[1] || -99);
+    check('son détaché au bon moment, silence ailleurs', vol('1.2', '1.5') > -30 && vol('4', '1.5') < -50, `${vol('1.2', '1.5')} / ${vol('4', '1.5')}`);
+  }
   app.stop(); fs.rmSync(base, { recursive: true, force: true });
   console.log(`Pistes vidéo : ${ok} contrôles réussis, ${ko} échecs`);
   process.exit(ko ? 1 : 0);
