@@ -640,7 +640,13 @@ function create(opts = {}) {
         // Mixage en étapes simples (un seul fichier par commande, sons convertis en WAV) : un graphe unique
         // mêlant vidéo, boucles et décalages pouvait se figer au hasard dans FFmpeg.
         const D = dur.toFixed(3), wav = ['-vn', '-ac', 2, '-ar', 48000, '-c:a', 'pcm_s16le'], suivi = ['-progress', 'pipe:1', '-nostats'];
-        const ff = (args, out) => run(FFMPEG, ['-y', '-loglevel', 'error', ...args, ...suivi, out], { cwd: dir, silence: 60000 });
+        // chaque étape dure quelques secondes : si FFmpeg se fige au hasard, on la relance (jusqu'à 3 essais)
+        const ff = async (args, out) => {
+          for (let essai = 1; ; essai++) {
+            try { return await run(FFMPEG, ['-y', '-loglevel', 'error', ...args, ...suivi, out], { cwd: dir, silence: 20000 }); }
+            catch (e) { if (!/figé/.test(e.message)) throw e; if (essai >= 3) throw new Error(`${e.message} (${out})`); }
+          }
+        };
         await ff(['-i', joined, '-af', 'aresample=48000,apad', '-t', D, ...wav], 'son0.wav');
         for (const [i, a] of audios.entries()) {
           const de = clamp(num(a.in, 0), 0, 36000), du = clamp(num(a.dur, 0), 0, 36000); // partie du fichier (son détaché d'une vidéo)
