@@ -13,7 +13,7 @@ const STYLES = {
   enfants: 'une vidéo pour enfants de 8 à 12 ans : mots simples, ton chaleureux',
   histoire: 'un récit captivant qui raconte l’histoire dans l’ordre, avec du suspense'
 };
-const SCHEMA = { type: 'object', properties: { titre: { type: 'string' }, scenes: { type: 'array', items: { type: 'object', properties: { section: { type: 'string' }, texte: { type: 'string' } }, required: ['section', 'texte'] } } }, required: ['titre', 'scenes'] };
+const SCHEMA = { type: 'object', properties: { titre: { type: 'string' }, scenes: { type: 'array', items: { type: 'object', properties: { section: { type: 'string' }, texte: { type: 'string' }, recherche: { type: 'string' } }, required: ['section', 'texte', 'recherche'] } } }, required: ['titre', 'scenes'] };
 
 function creer({ BASE, FFMPEG }) {
   const MODELES = path.join(BASE, 'modeles'), OUTILS = path.join(BASE, 'outils');
@@ -47,19 +47,24 @@ function creer({ BASE, FFMPEG }) {
   }
 
   // Faits (phrases de Wikipédia) → script de vidéo : scènes { section, texte }, sans fait ajouté
-  async function ecrireScript({ titre, faits, duree, style }, job) {
+  // faits vides = sujet libre (idée, conseil, présentation) : écrit d'après les connaissances générales, sans chiffre précis
+  async function ecrireScript({ titre, faits, duree, style, consigne = '' }, job) {
     if (!installe()) await installer(job);
     if (job) job.step = 'L’IA locale écrit le script…';
     const mots = Math.round(Math.max(20, duree) * 2.6), n = Math.max(3, Math.round(duree / 9));
-    const systeme = 'Tu es scénariste de vidéos en français. Règle absolue : tu n’utilises QUE les faits fournis, sans rien ajouter, sans chiffre, date, nom ni anecdote qui n’y figure pas. ' +
+    const libre = !String(faits || '').trim();
+    const systeme = (libre ? 'Tu es scénariste de vidéos en français. Tu écris à partir de connaissances générales sûres : aucun chiffre, date, prix, citation ni nom propre dont tu n’es pas certain ; jamais de promesse ni d’avis médical, juridique ou financier. '
+      : 'Tu es scénariste de vidéos en français. Règle absolue : tu n’utilises QUE les faits fournis, sans rien ajouter, sans chiffre, date, nom ni anecdote qui n’y figure pas. ') +
       'Tu écris pour être lu à voix haute : phrases naturelles, pas de listes, pas d’émojis, pas de parenthèses, nombres écrits comme on les dit.';
     const demande = `Sujet : ${titre}\nStyle : ${STYLES[style] || STYLES.documentaire}.\nLongueur : environ ${mots} mots en tout, répartis en ${n} scènes (une idée et une image par scène).\n` +
       `Chaque scène contient 2 ou 3 phrases complètes (sujet et verbe), environ ${Math.round(mots / n)} mots : jamais de style télégraphique du genre « 1889 : deux frères… ».\n` +
       `Commence par une accroche qui donne envie de regarder et termine par une phrase de conclusion. Pour chaque scène, donne un titre de partie très court (2 à 4 mots) dans « section ».\n` +
-      `Propose aussi un titre de vidéo accrocheur de 6 mots maximum, sans chiffre ni durée, dans « titre ».\n\nFAITS (seule source autorisée) :\n${String(faits).slice(0, 9000)}`;
+      `Pour chaque scène, donne dans « recherche » 2 à 4 mots-clés EN ANGLAIS décrivant une image à montrer (objets, lieux, actions concrets, ex. « vintage bicycle tire »).\n` +
+      `Propose aussi un titre de vidéo accrocheur de 6 mots maximum, sans chiffre ni durée, dans « titre ».` + (consigne ? `\nDemande de l’utilisateur : ${String(consigne).slice(0, 600)}` : '') +
+      (libre ? '' : `\n\nFAITS (seule source autorisée) :\n${String(faits).slice(0, 9000)}`);
     const r = await demander({ type: 'ecrire', modele: cheminModele, systeme, demande, schema: SCHEMA, maxTokens: Math.min(4000, mots * 3 + 400) });
     const res = r.resultat || {};
-    return { titre: String(res.titre || titre).slice(0, 80), gpu: r.gpu, scenes: (res.scenes || []).map(s => ({ section: String(s.section || '').slice(0, 40), texte: String(s.texte || '').trim() })).filter(s => s.texte.length > 10) };
+    return { titre: String(res.titre || titre).slice(0, 80), gpu: r.gpu, scenes: (res.scenes || []).map(s => ({ section: String(s.section || '').slice(0, 40), texte: String(s.texte || '').trim(), recherche: String(s.recherche || '').slice(0, 80) })).filter(s => s.texte.length > 10) };
   }
 
   // ---------- Téléchargement depuis un lien (YouTube, TikTok, Instagram, Facebook, X…) ----------

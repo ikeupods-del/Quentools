@@ -1683,10 +1683,19 @@ async function ouvrirGenerateur() {
   gen = { voix: [], defaut: '', prep: null };
   ouvrir(`<h2>✨ Générer une vidéo</h2>
     <p class="mut">Donne un sujet : QuentMovie écrit le texte à partir de Wikipédia (des faits, rien d’inventé), trouve des images libres de droits, enregistre la voix off et monte la vidéo. Tu relis et tu modifies tout avant la création.</p>
+    <div class="encart" style="margin:0 0 10px"><h4 style="margin-top:0">🚀 Express : décris ta vidéo, QuentMovie fait tout</h4>
+      <textarea id="xIdee" rows="2" placeholder="Ex. : « 5 astuces pour qu’un site internet attire des clients », « l’histoire de Michelin en 1 minute pour TikTok »"></textarea>
+      <div class="ligne" style="margin-top:6px"><select id="xFormat">${opts([['vertical', '📱 Vertical (TikTok, Reels, Shorts)'], ['horizontal', '▶ Horizontal (YouTube)'], ['carre', '◻ Carré']], proj.format || 'vertical')}</select>
+        <select id="xDuree" style="flex:none;width:auto">${opts([['30', '30 s'], ['45', '45 s'], ['60', '1 min'], ['90', '1 min 30'], ['180', '3 min']], '45')}</select>
+        <select id="xStyle" style="flex:none;width:auto">${opts([['dynamique', 'Dynamique'], ['documentaire', 'Documentaire'], ['histoire', 'Récit'], ['enfants', 'Enfants']], 'dynamique')}</select></div>
+      <div class="sw2"><input type="checkbox" id="xWiki" checked><label for="xWiki">S’appuyer sur Wikipédia quand le sujet y existe (faits vérifiés)</label></div>
+      <button class="pri" id="xGo" style="width:100%;margin-top:6px">🚀 Générer la vidéo</button><div id="xProg" class="mut" style="margin-top:6px"></div>
+      <p class="mut" style="margin:6px 0 0">Script écrit par l’IA locale, une image ou une vidéo libre par scène, voix naturelle, sous-titres, musique : la vidéo arrive montée dans la timeline, tout reste modifiable.</p></div>
+    <p class="mut" style="margin:0 0 4px">Ou mode guidé, à partir d’un article :</p>
     <div class="ligne"><input type="text" id="gSujet" placeholder="Ex. : L’histoire de Michelin" style="flex:1"><select id="gDuree" style="flex:none;width:auto">${opts([['30', '30 s'], ['60', '1 min'], ['120', '2 min'], ['180', '3 min'], ['300', '5 min']], '60')}</select><button class="pri" id="gChercher" style="flex:none">Chercher</button></div>
     <div id="gZone" style="margin-top:10px"></div>
     <div class="ligne" style="margin-top:12px"><button id="gFermer">Fermer</button></div>`, true);
-  $('#gFermer').onclick = fermer; $('#gChercher').onclick = genChercher;
+  $('#gFermer').onclick = fermer; $('#gChercher').onclick = genChercher; $('#xGo').onclick = genExpress;
   $('#gSujet').onkeydown = e => { if (e.key === 'Enter') genChercher(); };
   $('#gSujet').focus();
   api('/api/generer/voix').then(r => r.json()).then(r => { if (gen) { gen.voix = r.voix; gen.naturelles = r.naturelles || []; gen.defaut = r.defaut; } }).catch(() => {});
@@ -1706,6 +1715,7 @@ async function genPreparer() {
   const art = (document.querySelector('input[name="gArt"]:checked') || {}).value; if (!art) return;
   const z = $('#gZone'); z.innerHTML = '<p class="mut">Lecture de l’article et recherche des images libres…</p>';
   try {
+    gen.express = null;
     gen.prep = await (await api('/api/generer/preparer', { method: 'POST', body: JSON.stringify({ article: art, duree: +$('#gDuree').value, titre: gen.sujet.titre }) })).json();
     genEtape2();
   } catch (e) { z.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
@@ -1720,7 +1730,7 @@ function genEtape2() {
   $('#gZone').innerHTML = `<div class="encart" style="margin:0 0 8px"><b>🤖 IA locale</b> <span class="mut">réécrit le texte en vrai script (accroche, transitions, conclusion) à partir des faits de l’article, sans rien inventer. Tourne sur ton Mac, sans internet${gen.ia && !gen.ia.installee ? ` (≈ ${(gen.ia.mo / 1000).toFixed(1)} Go téléchargés au premier usage)` : ''}.</span>
       <div class="ligne" style="margin-top:6px"><select id="gStyle" style="flex:1">${opts([['documentaire', 'Documentaire'], ['dynamique', 'Dynamique (TikTok, Reels)'], ['histoire', 'Récit captivant'], ['enfants', 'Pour enfants']], gen.style || 'documentaire')}</select><button class="pri" id="gIA" style="flex:none">Réécrire avec l’IA</button></div><div id="gIAProg" class="mut"></div></div>
     <label class="l">Titre de la vidéo</label><input type="text" id="gTitre" value="${esc(p.titre)}">
-    <p class="mut" style="margin:6px 0">${p.scenes.length} scènes · environ ${fmt(mots / 2.6)} de voix · ${im.length} image${im.length > 1 ? 's' : ''} libre${im.length > 1 ? 's' : ''} · source : Wikipédia, « ${esc(p.article)} ». Corrige le texte comme tu veux : chaque bloc est lu sur une image.</p>
+    <p class="mut" style="margin:6px 0">${p.scenes.length} scènes · environ ${fmt(mots / 2.6)} de voix · ${im.length} image${im.length > 1 ? 's' : ''} libre${im.length > 1 ? 's' : ''} · source : ${p.article ? `Wikipédia, « ${esc(p.article)} »` : 'écrit par l’IA locale (à relire)'}. Corrige le texte comme tu veux : chaque bloc est lu sur une image.</p>
     <div id="gScenes" style="max-height:38vh;overflow:auto">${p.scenes.map(ligneScene).join('')}</div>
     <div class="ligne" style="margin-top:8px"><label class="l" style="flex:none;margin:0">Voix</label><select id="gVoix">${optsVoix(gen.naturelles || [], gen.voix, gen.defaut)}</select><button id="gEcouter" style="flex:none">▶ Écouter</button></div>
     <p class="mut" style="margin:2px 0 0"><a href="#" id="gVoixGerer">Gérer les voix…</a> · les voix naturelles se téléchargent une seule fois, au premier usage.</p><div id="gVoixZone"></div>
@@ -1742,6 +1752,21 @@ function genEtape2() {
     if (t.id === 'gCreer') genCreer();
     if (t.id === 'gIA') genIA();
   };
+}
+// Express : idée → (article Wikipédia si trouvé) → script de l'IA avec mots-clés → un média par scène → vidéo montée
+async function genExpress() {
+  const idee = $('#xIdee').value.trim(), pr = t => { $('#xProg').innerHTML = t; }; if (!idee) return pr('Décris d’abord ta vidéo.');
+  const format = $('#xFormat').value, duree = +$('#xDuree').value, style = $('#xStyle').value; $('#xGo').disabled = true;
+  try {
+    let article = '', titre = idee;
+    if ($('#xWiki').checked) { pr('Recherche sur Wikipédia…'); try { const r = await (await api('/api/generer/chercher?q=' + enc(idee))).json(); titre = r.titre || idee; const mot = String(r.recherche || '').split(/\s+/).sort((a, b) => b.length - a.length)[0] || ''; if (r.resultats && r.resultats[0] && mot.length > 2 && r.resultats[0].titre.toLowerCase().includes(mot.toLowerCase())) article = r.resultats[0].titre; } catch (e) { /* sujet libre */ } }
+    const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article, titre, duree, style, consigne: idee, medias: true }) })).json();
+    const r = await suivreTravail(id, j => pr(`<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`));
+    gen.prep = { titre: r.titre || titre, article, libre: r.libre, images: r.images || [], scenes: r.scenes };
+    gen.express = { format, tiktok: format === 'vertical' }; gen.ia = { ...(gen.ia || {}), installee: true };
+    genEtape2(); if ($('#gDuree')) $('#gDuree').value = String(duree);
+    await genCreer();
+  } catch (e) { pr(`<span class="err">${esc(e.message)}</span>`); $('#xGo').disabled = false; }
 }
 // Script réécrit par l'IA locale à partir des faits de l'article (scènes, titres de partie, titre accrocheur)
 async function genIA() {
@@ -1773,9 +1798,9 @@ async function genCreer() {
   } catch (e) { $('#gProg').innerHTML = `<span class="err">${esc(e.message)}</span>`; $('#gCreer').disabled = false; }
 }
 // Sous-titres : la phrase est découpée en morceaux courts, affichés au rythme de la voix
-function sousTitresDe(texte, duree) {
+function sousTitresDe(texte, duree, max = 7) {
   const mots = texte.split(/\s+/).filter(Boolean), parts = []; let cur = [];
-  for (const m of mots) { cur.push(m); if (cur.length >= 7 || (cur.length >= 4 && /[,.;:!?]$/.test(m))) { parts.push(cur.join(' ')); cur = []; } }
+  for (const m of mots) { cur.push(m); if (cur.length >= max || (cur.length >= Math.min(4, max) && /[,.;:!?]$/.test(m))) { parts.push(cur.join(' ')); cur = []; } }
   if (cur.length) parts.push(cur.join(' '));
   const utile = Math.max(0.5, duree - 0.6), total = mots.length; let t = 0;
   return parts.map(x => { const d = utile * x.split(' ').length / total, s = { s: +t.toFixed(2), e: +(t + d).toFixed(2), t: x }; t += d; return s; });
@@ -1786,7 +1811,7 @@ function monterGeneree(r, p, o) {
   r.scenes.forEach((s, i) => {
     const c = base({ file: s.voix, kind: 'audio', in: 0, out: s.duree, hasAudio: true, bgFile: s.image, bgKind: s.video ? 'video' : 'image', bgColor: '#101820', viz: { type: 'none', color: '#ffffff', pos: 'centre', h: 30 },
       fx: [{ id: mouvements[i % mouvements.length], p: {} }], transition: { type: 'fade', dur: 0.6 } });
-    if (o.sous) { c.subs = sousTitresDe(s.texte, s.duree); c.subStyle = 'bandeau'; c.subSize = 4; }
+    if (o.sous) { const tk = gen && gen.express && gen.express.tiktok; c.subs = sousTitresDe(s.texte, s.duree, tk ? 3 : 7).map(x => tk ? { ...x, t: x.t.toUpperCase() } : x); c.subStyle = tk ? 'tiktok' : 'bandeau'; c.subSize = tk ? 6.5 : 4; }
     // documentaire : titre de la nouvelle partie de l'article, sinon la date dont parle la scène
     const an = /^(?:(?:En|Dès|Vers|Depuis|Au début de|À partir de|Le \d{1,2}(?:er)? \S+)\s+)?((?:1[0-9]|20)\d{2})\b/.exec(s.texte);
     if (s.section && s.section !== precedente) c.titre = { preset: 'lieu', l1: s.section, l2: an ? an[1] : '', color: '#c8102e', font: 'arial', start: 0.3, dur: Math.min(4, Math.max(2, s.duree - 1)), speed: 14 };
@@ -1796,10 +1821,11 @@ function monterGeneree(r, p, o) {
   });
   if (o.generique) {
     const c = newSolid('#000000', 10);
-    c.titre = { preset: 'generique', l1: ['SOURCES', `Texte : Wikipédia, « ${p.article} »`, 'licence CC BY-SA 4.0', '', 'IMAGES (Wikimedia Commons)', ...r.credits.slice(0, 14), '', 'VOIX OFF', 'Synthèse vocale', '', 'MONTAGE', 'QuentMovie'].join('\n'), l2: '', color: '#ffffff', font: 'arial', start: 0, dur: 0, speed: 14 };
+    c.titre = { preset: 'generique', l1: ['SOURCES', ...(p.article ? [`Texte : Wikipédia, « ${p.article} »`, 'licence CC BY-SA 4.0'] : ['Texte écrit avec l’IA locale de QuentMovie']), '', 'IMAGES (Wikimedia Commons)', ...r.credits.slice(0, 14), '', 'VOIX OFF', 'Synthèse vocale', '', 'MONTAGE', 'QuentMovie'].join('\n'), l2: '', color: '#ffffff', font: 'arial', start: 0, dur: 0, speed: 14 };
     clips.push(c);
   }
   if (clips.length) clips[clips.length - 1].transition = null;
+  if (gen && gen.express) { proj.format = gen.express.format; $('#format').value = proj.format; }
   proj.clips = clips; proj.pistes = []; proj.audio = o.musique ? [{ file: 'lib:' + o.musique, vol: 22, start: 0, fade: true, loop: true, duck: true }] : []; proj.markers = [];
   sel = 0; selA = -1; selP = -1; selCut = -1; commit(); tout(); fitZoom(); placerTete(0);
 }
