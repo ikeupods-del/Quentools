@@ -3,6 +3,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 const { create } = require('../server');
 const FX = require('../effects');
@@ -145,10 +146,10 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     check('export look + effet animé + cadre + fond vert', rr && rr.done, rr && rr.error);
   }
   // Studio : module de détourage (fond virtuel) servi en local
-  for (const f of ['selfie_segmentation.js', 'selfie_segmentation_solution_simd_wasm_bin.wasm', 'selfie_segmentation_landscape.tflite', 'selfie_segmentation.binarypb']) {
-    const rr = await fetch(U('/vendor/selfie/' + f)); check('fond virtuel : ' + f, rr.ok && (await rr.arrayBuffer()).byteLength > 100);
+  for (const f of ['/vendor/vision/vision_bundle.mjs', '/vendor/vision/wasm/vision_wasm_internal.wasm', '/vendor/vision/wasm/vision_wasm_internal.js', '/modeles/selfie_multiclass_256x256.tflite', '/modeles/selfie_segmenter.tflite', '/compositeur.js']) {
+    const rr = await fetch(U(f)); check('fond virtuel : ' + f, rr.ok && (await rr.arrayBuffer()).byteLength > 100);
   }
-  check('fond virtuel : seuls ses fichiers sont servis', (await fetch(U('/vendor/selfie/' + encodeURIComponent('../../../package.json')))).status === 404);
+  check('fond virtuel : seuls ses fichiers sont servis', (await fetch(U('/vendor/vision/' + encodeURIComponent('../../../package.json')))).status === 404);
   // Mes packs : un dossier rangé par l'utilisateur est reconnu
   const packs = path.join(base, 'packs', 'Pack test', 'Sons'); fs.mkdirSync(packs, { recursive: true });
   ff('-f', 'lavfi', '-i', 'sine=f=500:d=1.5', path.join(packs, 'bip_test.wav'));
@@ -168,6 +169,18 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     ff('-f', 'lavfi', '-i', 'testsrc2=s=640x360:r=30:d=2', '-f', 'lavfi', '-i', 'sine=f=300:d=2', '-shortest', ...(webm ? ['-c:v', 'libvpx', '-c:a', 'libopus'] : ['-c:v', 'mpeg4', '-c:a', 'aac']), path.join(gen, nom));
     const rr = await fetch(U('/api/import?name=' + nom), { method: 'POST', body: fs.readFileSync(path.join(gen, nom)) }); const j = await rr.json();
     check('prise du studio convertie en MP4', rr.ok && j.kind === 'video' && j.file.endsWith('-prise.mp4') && j.duration > 1.5 && j.hasAudio, JSON.stringify(j));
+  }
+  { // prise du studio en H.264 dans un conteneur WebM (Mac), images irrégulières : convertie aussi
+    ff('-f', 'lavfi', '-i', 'testsrc2=s=640x360:r=30:d=3', '-f', 'lavfi', '-i', 'sine=f=300:d=3', '-shortest', '-vf', "setpts='PTS+if(gt(N,40),0.2/TB,0)'", '-c:v', 'libx264', '-c:a', encs.includes('libopus') ? 'libopus' : 'aac', '-f', 'matroska', path.join(gen, 'camera-h264.webm'));
+    const rr = await fetch(U('/api/import?name=camera-h264.webm'), { method: 'POST', body: fs.readFileSync(path.join(gen, 'camera-h264.webm')) }); const j = await rr.json();
+    check('prise H.264 (WebM) à images irrégulières convertie', rr.ok && j.kind === 'video' && j.duration > 2, JSON.stringify(j));
+  }
+  { // prise illisible : message clair et fichier d'origine gardé, jamais perdu
+    const rr = await fetch(U('/api/import?name=camera-abimee.webm'), { method: 'POST', body: crypto.randomBytes(20000) }); const j = await rr.json();
+    check('prise illisible : message clair', rr.status === 500 && /gardé/.test(j.error), JSON.stringify(j));
+    check('prise illisible : fichier gardé', fs.existsSync(path.join(base, 'prises-a-verifier', 'camera-abimee.webm')));
+    const vide = await (await fetch(U('/api/import?name=camera-vide.webm'), { method: 'POST', body: Buffer.alloc(100) })).json();
+    check('prise vide signalée', /vide/.test(vide.error), JSON.stringify(vide));
   }
   { await fetch(U('/api/medias/' + encodeURIComponent('lib:' + L.sons[0].file)), { method: 'DELETE' }); check('la bibliothèque ne peut pas être supprimée', fs.existsSync(app.mediaPath('lib:' + L.sons[0].file))); }
 

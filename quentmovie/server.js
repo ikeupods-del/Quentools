@@ -16,7 +16,7 @@ const MIME = {
   '.html': 'text/html; charset=utf-8', '.mp4': 'video/mp4', '.mov': 'video/quicktime', '.m4v': 'video/mp4', '.webm': 'video/webm',
   '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif',
   '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.wav': 'audio/wav', '.aac': 'audio/aac', '.gif': 'image/gif', '.mkv': 'video/x-matroska', '.json': 'application/json',
-  '.js': 'text/javascript; charset=utf-8', '.wasm': 'application/wasm'
+  '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.wasm': 'application/wasm'
 };
 const S = '/System/Library/Fonts/Supplemental/';
 const FONT_CANDS = [
@@ -640,6 +640,30 @@ function create(opts = {}) {
       fs.createReadStream(file, { start: a, end: b }).pipe(res);
     } else { res.writeHead(200, { ...h, 'Content-Length': st.size }); fs.createReadStream(file).pipe(res); }
   }
+  // Prise du studio (fichier du navigateur : WebM ou MP4 fragmenté, images irrégulières) → MP4 propre.
+  // Plusieurs méthodes sont essayées ; en dernier recours la prise brute est gardée, jamais perdue.
+  async function importerPrise(brut) {
+    const mp4 = brut.replace(/\.[^.]+$/, '') + '-prise.mp4';
+    const sortie = ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', 18, '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-ar', 48000, '-movflags', '+faststart', mp4];
+    const essais = [
+      ['-fflags', '+genpts', '-i', brut, '-map', '0:v:0', '-map', '0:a:0?', '-fps_mode', 'cfr', '-r', 30],
+      ['-fflags', '+genpts+discardcorrupt', '-err_detect', 'ignore_err', '-i', brut, '-map', '0:v:0', '-map', '0:a:0?', '-fps_mode', 'vfr'],
+      ['-err_detect', 'ignore_err', '-i', brut, '-map', '0:v:0', '-fps_mode', 'vfr'] // image seule si le son est illisible
+    ];
+    let erreur = fs.statSync(brut).size < 2000 ? 'enregistrement vide' : '';
+    if (!erreur) for (const e of essais) {
+      try {
+        await run(FFMPEG, ['-y', '-v', 'error', ...e, ...sortie]);
+        const info = await probe(mp4);
+        if (info.kind === 'video' && info.duration > 0.3) { fs.unlinkSync(brut); return { file: path.basename(mp4), ...info }; }
+        erreur = 'image absente de la prise';
+      } catch (er) { erreur = String(er.message || '').split('\n').pop().slice(0, 160); }
+    }
+    try { fs.unlinkSync(mp4); } catch (e) { /* rien à retirer */ }
+    const dossier = path.join(BASE, 'prises-a-verifier'); fs.mkdirSync(dossier, { recursive: true });
+    fs.renameSync(brut, path.join(dossier, path.basename(brut)));
+    throw new Error(`La prise n’a pas pu être convertie (${erreur}). Le fichier d’origine est gardé dans ${dossier}.`);
+  }
   const projFile = n => path.join(PROJETS, safeName(n).replace(/\.qmovie$/, '') + '.qmovie');
 
   const server = http.createServer(async (req, res) => {
@@ -654,11 +678,14 @@ function create(opts = {}) {
       if (req.method === 'GET' && (p === '/' || p === '/index.html')) return serveFile(req, res, path.join(__dirname, 'index.html'));
       if (req.method === 'GET' && p.startsWith('/media/')) return serveFile(req, res, mediaPath(decodeURIComponent(p.slice(7))));
       if (req.method === 'GET' && p.startsWith('/lib/')) return serveFile(req, res, mediaPath('lib:' + decodeURIComponent(p.slice(5))));
-      if (req.method === 'GET' && p.startsWith('/vendor/selfie/')) { // détourage de la personne (fond virtuel du studio), sans internet
+      // Studio : détourage de la personne (MediaPipe, en local) et moteur de mélange du fond virtuel
+      if (req.method === 'GET' && p === '/compositeur.js') return serveFile(req, res, path.join(__dirname, 'compositeur.js'));
+      if (req.method === 'GET' && p.startsWith('/vendor/vision/')) {
         const n = decodeURIComponent(p.slice(15));
-        if (!/^selfie_segmentation[\w.]*$/.test(n)) return send(res, 404, { error: 'Introuvable' });
-        return serveFile(req, res, path.join(path.dirname(require.resolve('@mediapipe/selfie_segmentation/package.json')), n));
+        if (!/^(vision_bundle\.mjs|wasm\/vision_wasm(_nosimd)?_internal\.(js|wasm))$/.test(n)) return send(res, 404, { error: 'Introuvable' });
+        return serveFile(req, res, path.join(__dirname, 'node_modules', '@mediapipe', 'tasks-vision', n));
       }
+      if (req.method === 'GET' && /^\/modeles\/[\w.]+\.tflite$/.test(p)) return serveFile(req, res, path.join(__dirname, p));
       if (req.method === 'GET' && p.startsWith('/proxy/')) return serveFile(req, res, path.join(PROXIES, safeName(decodeURIComponent(p.slice(7)))));
       if (req.method === 'GET' && p.startsWith('/exports/')) return serveFile(req, res, path.join(EXPORTS, safeName(decodeURIComponent(p.slice(9)))), true);
       if (req.method === 'GET' && p.startsWith('/apercu/')) return serveFile(req, res, path.join(APERCUS, safeName(decodeURIComponent(p.slice(8)))));
@@ -698,6 +725,7 @@ function create(opts = {}) {
           try { await run('sips', ['-s', 'format', 'jpeg', dest, '--out', jpg]); fs.unlinkSync(dest); dest = jpg; }
           catch (e) { try { fs.unlinkSync(dest); } catch (e2) { /* ignoré */ } throw new Error('Impossible de convertir cette photo HEIC.'); }
         }
+        if (/^camera-/.test(path.basename(dest))) return send(res, 200, await importerPrise(dest)); // prise du studio
         try {
           let info = await probe(dest);
           if (info.kind === 'audio' && !(info.duration > 0)) { // enregistrement du micro : durée absente, on convertit
@@ -705,7 +733,7 @@ function create(opts = {}) {
             await run(FFMPEG, ['-y', '-v', 'error', '-i', dest, '-vn', '-c:a', 'aac', '-b:a', '192k', m4a]); if (m4a !== dest) fs.unlinkSync(dest);
             dest = m4a; info = await probe(dest);
           }
-          if (info.kind === 'video' && (/^camera-/.test(path.basename(dest)) || !(info.duration > 0))) { // prise de la caméra : fichier propre (durée, images régulières)
+          if (info.kind === 'video' && !(info.duration > 0)) { // vidéo sans durée connue : fichier propre
             const mp4 = dest.replace(/\.[^.]+$/, '') + '-prise.mp4';
             await run(FFMPEG, ['-y', '-v', 'error', '-i', dest, '-map', '0:v:0', '-map', '0:a:0?', '-vf', 'fps=30', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', 18, '-pix_fmt', 'yuv420p',
               '-c:a', 'aac', '-b:a', '192k', '-ar', 48000, '-movflags', '+faststart', mp4]);

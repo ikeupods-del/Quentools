@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -8,11 +8,11 @@
   "scripts": {
     "start": "electron .",
     "serveur": "node server.js",
-    "test": "node tests/run.js && node tests/maj.js",
+    "test": "node tests/run.js && node tests/maj.js && node tests/compositeur.js",
     "dist": "electron-builder --mac dmg --arm64 --publish never"
   },
   "dependencies": {
-    "@mediapipe/selfie_segmentation": "0.1.1675465747",
+    "@mediapipe/tasks-vision": "1.1.0",
     "ffmpeg-static": "^5.2.0",
     "ffprobe-static": "^3.1.0"
   },
@@ -29,6 +29,11 @@
       "effects.js",
       "ffmpeg-path.js",
       "maj.js",
+      "compositeur.js",
+      "modeles/**",
+      "!node_modules/@mediapipe/tasks-vision/*.map",
+      "!node_modules/@mediapipe/tasks-vision/vision_bundle.cjs",
+      "!node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_module_internal.*",
       "index.html",
       "package.json",
       "bibliotheque/**"
