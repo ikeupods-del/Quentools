@@ -80,6 +80,20 @@ function create(opts = {}) {
     '.png': 'images', '.webp': 'images', '.jpg': 'images', '.jpeg': 'images', '.mp4': 'videos', '.mov': 'videos', '.m4v': 'videos', '.webm': 'videos' };
   const packCache = new Map();
   let gen = null;
+  // téléchargement des vignettes : 4 à la fois, nouvel essai si Wikimedia répond « trop de demandes »
+  const vigAttente = []; let vigActifs = 0;
+  const vignetteFile = (u, f) => new Promise((ok, ko) => { vigAttente.push({ u, f, ok, ko }); vigPompe(); });
+  function vigPompe() {
+    while (vigActifs < 4 && vigAttente.length) {
+      const t = vigAttente.shift(); vigActifs++;
+      (async () => {
+        for (let essai = 0; ; essai++) {
+          try { await require('./maj').requete(t.u, { dest: t.f + '.part', ua: 'QuentMovie/1.7 (logiciel de montage personnel; https://github.com/ikeupods-del/Quentools)', accept: 'image/*', quoi: 'd’images' }); fs.renameSync(t.f + '.part', t.f); return; }
+          catch (e) { if (e.code === 429 && essai < 3) { await new Promise(r => setTimeout(r, 1500 * (essai + 1))); continue; } throw e; }
+        }
+      })().then(t.ok, t.ko).finally(() => { vigActifs--; vigPompe(); });
+    }
+  }
   let parole = null, ia = opts.ia || null; // opts.ia : IA de remplacement pour les essais
   const IA = () => ia || (ia = require('./ia').creer({ BASE, FFMPEG }));
   const PAROLE = () => parole || (parole = require('./parole').creer({ run, FFMPEG, BASE }));
@@ -1014,6 +1028,21 @@ function buildClip(c, P, o = {}) {
         const img = await run(FFMPEG, ['-v', 'error', ...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(url.searchParams.get('file')), '-vn', '-filter_complex', `aformat=channel_layouts=mono,showwavespic=s=${w}x${h}:colors=white`,
           '-frames:v', 1, '-f', 'image2pipe', '-vcodec', 'png', 'pipe:1'], { binary: true });
         return send(res, 200, img, 'image/png', 'max-age=86400');
+      }
+      // Vignettes des photos du générateur : téléchargées ici (taille standard de Wikimedia, identification polie, 4 à la fois, gardées en cache)
+      if (req.method === 'GET' && p === '/api/vignette') {
+        const u0 = String(url.searchParams.get('u') || ''); let ux = null;
+        try { ux = new URL(u0); } catch (e) { /* adresse invalide */ }
+        const permis = ux && ((ux.protocol === 'https:' && ux.hostname === 'upload.wikimedia.org') || (opts.commons && ux.origin === new URL(opts.commons).origin));
+        if (!permis) return send(res, 403, { error: 'Adresse refusée' });
+        const PAS = [20, 40, 60, 120, 250, 330, 500, 960, 1280, 1920, 3840], w = clamp(Math.round(num(url.searchParams.get('w'), 330)), 20, 3840), std = PAS.find(x => x >= w) || 3840;
+        // un fichier d'origine (photo plus petite que la miniature demandée) est réduit lui aussi plutôt que téléchargé en entier
+        const m = /^(https:\/\/upload\.wikimedia\.org\/wikipedia\/commons)\/([0-9a-f]\/[0-9a-f]{2})\/([^/?]+\.(?:jpe?g|png))(?:\?.*)?$/i.exec(u0);
+        const u = (m ? `${m[1]}/thumb/${m[2]}/${m[3]}/${std}px-${m[3]}` : u0).replace(/\/(\d+)px-/, `/${std}px-`), fich = path.join(BASE, 'cache-vignettes', require('crypto').createHash('sha1').update(u).digest('hex') + '.img');
+        if (!fs.existsSync(fich)) { fs.mkdirSync(path.dirname(fich), { recursive: true }); await vignetteFile(u, fich); }
+        const tete = Buffer.alloc(4); const fd = fs.openSync(fich, 'r'); fs.readSync(fd, tete, 0, 4, 0); fs.closeSync(fd);
+        res.writeHead(200, { 'Content-Type': tete[0] === 0x89 ? 'image/png' : tete[0] === 0x52 ? 'image/webp' : 'image/jpeg', 'Cache-Control': 'max-age=86400' });
+        return fs.createReadStream(fich).pipe(res);
       }
       if (req.method === 'GET' && p === '/api/plans') { // changements de plan d'un extrait vidéo (pour le découper automatiquement)
         const q = url.searchParams, from = Math.max(0, num(q.get('in'), 0)), to = num(q.get('out'), 0), seuil = clamp(num(q.get('seuil'), 0.3), 0.1, 0.8), dur = to > from ? to - from : 0;

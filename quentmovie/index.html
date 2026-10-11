@@ -1907,7 +1907,8 @@ $('#bExport').onclick = exporter;
 const M = MAC ? '⌘' : 'Ctrl';
 // ---------- Générateur de vidéos : sujet → texte (Wikipédia), images libres, voix off du Mac, montage ----------
 let gen = null;
-const petiteImage = u => String(u || '').replace(/\/(\d+)px-/, '/400px-');
+// vignettes : téléchargées par QuentMovie (taille standard de Wikimedia, mises en cache), jamais directement par la fenêtre
+const petiteImage = u => (u ? `/api/vignette?w=330&u=${enc(u)}` : '');
 // Liste des voix : naturelles intégrées (téléchargées au premier usage), puis voix du Mac (★ = qualité Premium d'Apple)
 function optsVoix(nat, mac, cur) {
   const o = (v, t) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(t)}</option>`;
