@@ -165,6 +165,41 @@ function chromium() {
   check('aucune erreur dans la page du générateur', !errs2.length, errs2.slice(0, 3).join(' | '));
   commons.close(); app2.stop();
 
+  // 6) bibliothèque → timeline : titres sans clip, double-clic, glisser-déposer de chaque type d'élément
+  await ev(() => { proj.clips = []; proj.audio = []; proj.pistes = []; sel = -1; selA = -1; selP = -1; gt = 0; tout(); });
+  const glisse = async (src, x, y) => { const el = await pg.$(src); await el.scrollIntoViewIfNeeded(); const sb = await el.boundingBox(); await pg.mouse.move(sb.x + sb.width / 2, sb.y + sb.height / 2); await pg.mouse.down(); await pg.mouse.move(x - 30, y, { steps: 8 }); await pg.mouse.move(x, y, { steps: 4 }); await pg.mouse.up(); await pg.waitForTimeout(500); };
+  const boite = async i => (await pg.$(`.clip[data-i="${i}"]`)).boundingBox();
+  await pg.click('#tabs button[data-tab="titres"]');
+  check('titres : listes entières (pas coupées)', await ev(() => [...document.querySelectorAll('#navbody .grille')].every(g => getComputedStyle(g).maxHeight === 'none')));
+  await pg.click('[data-titre] >> nth=0'); await pg.waitForTimeout(300);
+  check('titre sur timeline vide : écran titre créé, texte prêt à écrire', await ev(() => proj.clips.length === 1 && proj.clips[0].kind === 'solid' && !!proj.clips[0].text && document.activeElement && document.activeElement.dataset.p === 'text'));
+  await pg.click('#tabs button[data-tab="medias"]');
+  check('changer d’onglet : liste affichée depuis le haut', await ev(() => $('#navbody').scrollTop === 0));
+  const iVid = await ev(() => medias.findIndex(m => m.file === 'a.mp4'));
+  await pg.dblclick(`.media[data-drag="media:${iVid}"] .nom`); await pg.waitForTimeout(300);
+  check('double-clic sur un média : ajouté à la timeline', await ev(() => proj.clips.length === 2 && proj.clips[1].kind === 'video'));
+  const b0 = await boite(0); await glisse(`.media[data-drag="media:${await ev(() => medias.findIndex(m => m.file === 'photo.png'))}"]`, b0.x + 4, b0.y + b0.height / 2);
+  check('glisser une photo sur la moitié gauche d’un clip : placée avant', await ev(() => proj.clips.map(c => c.kind).join() === 'image,solid,video'));
+  await pg.click('#tabs button[data-tab="titres"]'); const bv = await boite(2);
+  await glisse('[data-rep] >> nth=0', bv.x + bv.width / 2, bv.y + bv.height / 2);
+  check('glisser un titre de reportage sur un clip', await ev(() => !!proj.clips[2].titre));
+  await ev(() => { sel = -1; gt = starts()[0] + 0.5; }); await pg.click('[data-titre] >> nth=1'); await pg.waitForTimeout(200);
+  check('titre sans clip sélectionné : posé sur le clip sous la tête de lecture', await ev(() => !!proj.clips[0].text && sel === 0));
+  await pg.click('#tabs button[data-tab="transitions"]'); const b1 = await boite(1);
+  await glisse('[data-tr]:not([data-tr="none"]) >> nth=0', b1.x + b1.width - 6, b1.y + b1.height / 2);
+  check('glisser une transition sur la droite d’un clip', await ev(() => !!proj.clips[1].transition));
+  await pg.click('#tabs button[data-tab="musiques"]');
+  await glisse('#navbody .son >> nth=0', b1.x + 30, b1.y + b1.height + 30);
+  check('glisser une musique dans la timeline : à l’endroit du dépôt, en boucle', await ev(() => proj.audio.length === 1 && proj.audio[0].loop && proj.audio[0].start > 0));
+  await pg.click('#tabs button[data-tab="stickers"]'); const bv2 = await boite(2);
+  await glisse('[data-sticker] >> nth=0', bv2.x + bv2.width / 2, bv2.y + bv2.height / 2);
+  check('glisser un autocollant sur un clip', await ev(() => proj.clips[2].overlays.length === 1));
+  await pg.click('#tabs button[data-tab="effets"]');
+  await glisse('[data-fx] >> nth=0', bv2.x + bv2.width / 2, bv2.y + bv2.height / 2);
+  check('glisser un effet sur un clip', await ev(() => proj.clips[2].fx.length >= 1));
+  await ev(() => { proj.clips = []; sel = -1; tout(); }); await pg.click('[data-fx] >> nth=0');
+  check('effet sans aucun clip : message clair, pas de fenêtre bloquante', await ev(() => /Ajoute d’abord/.test($('#signal').textContent)));
+
   // 5) studio : pause pendant la prise (caméra et micro de test de Chromium)
   const nAvant = await pg.evaluate(() => proj.clips.length);
   await pg.evaluate(() => ouvrirStudio()); await pg.waitForFunction(() => studio && studio.flux, null, { timeout: 15000 });
@@ -179,6 +214,26 @@ function chromium() {
   await pg.waitForFunction(n => proj.clips.length > n, nAvant, { timeout: 60000 }).catch(() => {});
   check('studio : arrêt pendant une pause, prise ajoutée à la timeline', await pg.evaluate(n => proj.clips.length === n + 1 && $('#stPause').hidden, nAvant));
   await pg.evaluate(() => fermerStudio());
+
+  // 7) studio : afficher en direct (image, textes, logo, écran partagé simulé) → calques et piste vidéo 2 de la prise
+  const nAv2 = await ev(() => proj.clips.length), nPistes = await ev(() => (proj.pistes || []).length);
+  await ev(() => ouvrirStudio()); await pg.waitForFunction(() => studio && studio.flux, null, { timeout: 15000 });
+  await ev(() => {
+    Object.assign(studio.o, { compte: false, fond: '', directMedia: 'photo.png', directPos: 'haut-droite', textes: 'Astuce numéro 1\nLien en bio', logo: 'lib:stickers/quentools-neon.png', ecranPos: 'coin' });
+    navigator.mediaDevices.getDisplayMedia = async () => { const c = document.createElement('canvas'); c.width = 640; c.height = 360; const g = c.getContext('2d'); setInterval(() => { g.fillStyle = '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0'); g.fillRect(0, 0, 640, 360); }, 50); return c.captureStream(30); };
+    stPanneau();
+  });
+  await pg.keyboard.press('o'); // logo affiché avant la prise : présent dès le début
+  await pg.click('#stRec'); await pg.waitForTimeout(700);
+  await pg.keyboard.press('m'); await pg.keyboard.press('t'); await pg.keyboard.press('e'); await pg.waitForTimeout(1500);
+  check('studio en direct : image, texte, logo et écran visibles', await ev(() => !!(studio.direct.media && studio.direct.texte && studio.direct.logo && studio.direct.ecran) && document.querySelectorAll('#stAnim .stDirect').length === 3 && !!$('#stAnim .stTexte')));
+  await pg.keyboard.press('t'); await pg.keyboard.press('m'); await pg.waitForTimeout(500);
+  await pg.click('#stRec');
+  await pg.waitForFunction(n => proj.clips.length > n && !studio.envoi, nAv2, { timeout: 90000 }).catch(() => {});
+  const calq = await ev(() => { const c = proj.clips[proj.clips.length - 1]; return c && c.overlays.map(o => ({ f: o.file, s: o.start, d: o.dur })); });
+  check('prise : image, texte et logo devenus des calques au bon moment', !!calq && calq.length === 3 && calq.some(o => o.f === "photo.png" && o.s > 0.3 && o.d > 1) && calq.some(o => /^texte-direct-/.test(o.f) && o.d > 1) && calq.some(o => /quentools-neon/.test(o.f) && o.s === 0), JSON.stringify(calq));
+  check('prise : écran partagé posé dans la piste vidéo 2', await ev(n => (proj.pistes || []).length === n + 1 && /^camera-ecran-/.test(proj.pistes[proj.pistes.length - 1].file) && proj.pistes[proj.pistes.length - 1].start > starts()[proj.clips.length - 1], nPistes));
+  await ev(() => fermerStudio());
 
   check('aucune erreur dans la page', !errs.length, errs.slice(0, 3).join(' | '));
   await b.close(); app.stop(); fs.rmSync(base, { recursive: true, force: true });

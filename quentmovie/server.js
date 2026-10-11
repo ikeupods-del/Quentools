@@ -49,7 +49,7 @@ function create(opts = {}) {
   [MEDIAS, EXPORTS, TMP, PROJETS].forEach(d => fs.mkdirSync(d, { recursive: true }));
   const APERCUS = path.join(TMP, 'apercus'), PROXIES = path.join(TMP, 'proxies'); fs.mkdirSync(APERCUS, { recursive: true }); fs.mkdirSync(PROXIES, { recursive: true });
   let FFMPEG = opts.ffmpeg || 'ffmpeg', FFPROBE = opts.ffprobe === null ? null : opts.ffprobe || 'ffprobe';
-  let filters = new Set(), encoders = new Set(), version = '';
+  let filters = new Set(), encoders = new Set(), hwaccels = new Set(), version = '';
   const LIB = (opts.lib || path.join(__dirname, 'bibliotheque')).replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep);
   const LIB_LISTES = ['sons', 'musiques', 'stickers', 'marque', 'luts', 'calques', 'cadres', 'fonds', 'fondvert'];
   const libIndex = () => { let j = {}; try { j = JSON.parse(fs.readFileSync(path.join(LIB, 'index.json'), 'utf8')); } catch (e) { /* bibliothèque absente */ } LIB_LISTES.forEach(k => { j[k] = j[k] || []; }); return j; };
@@ -156,7 +156,9 @@ function create(opts = {}) {
   }
   // Encodage par la puce vidéo (VideoToolbox) si demandé, surveillé ; en cas d'échec ou de blocage, par le processeur
   const VT_SURVEILLANCE = 45000;
-  const encVt = P => ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(P.w, P.h) >= 1500 ? '45M' : '20M', '-allow_sw', 1];
+  // Débit de la puce vidéo : « qualité max » double le débit (image plus fine, à peine plus lent : c'est la puce qui travaille)
+  const debitVt = (W, H, max) => (Math.min(W, H) >= 1500 ? (max ? '80M' : '45M') : (max ? '36M' : '20M'));
+  const encVt = (P, max) => ['-c:v', 'h264_videotoolbox', '-b:v', debitVt(P.w, P.h, max), '-allow_sw', 1];
   async function encoder(avant, encVt, encCpu, apres, opts = {}) {
     if (encVt) {
       try { return await run(FFMPEG, [...avant, ...encVt, ...apres.slice(0, -1), '-progress', 'pipe:1', '-nostats', apres[apres.length - 1]], { ...opts, silence: VT_SURVEILLANCE }); }
@@ -169,6 +171,7 @@ function create(opts = {}) {
     filters = new Set(f.split('\n').map(l => l.trim().split(/\s+/)[1]).filter(Boolean));
     const e = (await run(FFMPEG, ['-hide_banner', '-encoders'], { binary: true })).toString();
     encoders = new Set(e.split('\n').map(l => l.trim().split(/\s+/)[1]).filter(Boolean));
+    try { hwaccels = new Set((await run(FFMPEG, ['-hide_banner', '-hwaccels'], { binary: true })).toString().split('\n').slice(1).map(l => l.trim()).filter(Boolean)); } catch (er) { hwaccels = new Set(); }
     version = (await run(FFMPEG, ['-version'], { binary: true })).toString().split('\n')[0];
   }
   // Description d'un fichier comme ffprobe, lue dans le résumé affiché par FFmpeg lui-même.
@@ -257,7 +260,7 @@ function buildClip(c, P, o = {}) {
       if (c.bgFile) { args.push(...(c.bgKind === 'video' || /\.(webm|ogv|mp4|mov|m4v|mkv)$/i.test(c.bgFile) ? ['-stream_loop', '-1'] : ['-loop', '1', '-framerate', fps]), '-i', mediaPath(c.bgFile)); covIdx = n++; }
     } else if (isGen) args.push('-f', 'lavfi', '-t', o.preview ? 1 : eff, '-i', `color=c=${hex(c.color || '#000000')}:s=${W}x${H}:r=${fps}`);
     else if (isImg) args.push('-loop', '1', '-framerate', fps, '-t', o.preview ? 1 : eff, '-i', mediaPath(orient(c.file, W, H)));
-    else args.push('-ss', num(c.in, 0) + (o.preview ? t * speed : 0), '-t', o.preview ? 1.5 : srcDur, '-i', mediaPath(orient(c.file, W, H)));
+    else args.push(...(o.hw && !o.preview ? ['-hwaccel', 'videotoolbox'] : []), '-ss', num(c.in, 0) + (o.preview ? t * speed : 0), '-t', o.preview ? 1.5 : srcDur, '-i', mediaPath(orient(c.file, W, H))); // décodage par la puce vidéo du Mac (vidéos d'iPhone en HEVC 4K)
     if (key && c.key.bgType === 'file' && c.key.bgFile) {
       const bgf = mediaPath(orient(c.key.bgFile, W, H));
       if (c.key.bgKind === 'video') args.push('-stream_loop', '-1', '-i', bgf);
@@ -482,7 +485,7 @@ function buildClip(c, P, o = {}) {
 
     const proxy = !!o.proxy;
     args.push('-filter_complex', f.join(';'), '-map', '[v]', '-map', '[a]', '-t', eff.toFixed(3), '-r', fps,
-      ...(o.vt ? ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(W, H) >= 1500 ? '45M' : '20M', '-allow_sw', 1] : ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16]), '-pix_fmt', 'yuv420p',
+      ...(o.vt ? ['-c:v', 'h264_videotoolbox', '-b:v', debitVt(W, H, o.vtMax), '-allow_sw', 1] : ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16]), '-pix_fmt', 'yuv420p',
       '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-ar', 48000, '-ac', 2, '-movflags', '+faststart', '-progress', 'pipe:1', '-nostats');
     return { args, eff };
   }
@@ -603,7 +606,26 @@ function buildClip(c, P, o = {}) {
     if (m) job.progress = clamp((done() + (+m[m.length - 1].split('=')[1]) / 1e6) / total, 0, 0.96);
   };
 
+  // Cache des clips déjà encodés : empreinte = commande FFmpeg (dossier de travail neutralisé), fichiers écrits pour ce clip,
+  // taille et date des médias utilisés, version de FFmpeg. Un clip inchangé n'est plus réencodé à l'export suivant.
+  const CACHE_RENDU = path.join(BASE, '.cache-rendu');
+  function empreinteClip(args, dir, ecrits) {
+    try {
+      const h = require('crypto').createHash('sha1').update('v1|' + version + '|' + JSON.stringify(args).split(dir).join('@'));
+      for (const f of ecrits.sort()) h.update('|' + f + '|').update(fs.readFileSync(path.join(dir, f)));
+      for (const a of args) if (typeof a === 'string' && path.isAbsolute(a) && !a.startsWith(dir)) { const st = fs.statSync(a); h.update(`|${a}|${st.size}|${st.mtimeMs}`); }
+      return h.digest('hex');
+    } catch (e) { return null; } // fichier introuvable : pas de cache pour ce clip
+  }
+  // garde au plus 4 Go de clips, les plus récemment utilisés
+  function nettoyerCache(max = 4e9) {
+    try {
+      const l = fs.readdirSync(CACHE_RENDU).filter(f => f.endsWith('.mp4')).map(f => { const st = fs.statSync(path.join(CACHE_RENDU, f)); return { f, t: st.mtimeMs, n: st.size }; }).sort((a, b) => b.t - a.t);
+      let cumul = 0; for (const x of l) { cumul += x.n; if (cumul > max) fs.rmSync(path.join(CACHE_RENDU, x.f), { force: true }); }
+    } catch (e) { /* pas encore de cache */ }
+  }
   async function exportProject(job, project, { proxy } = {}) {
+    job.debut = Date.now();
     const clips = (project.clips || []).filter(c => c && (c.file || c.kind === 'solid'));
     if (!clips.length) throw new Error('La timeline est vide.');
     const P = sizeOf(project, proxy ? 'proxy' : 'full');
@@ -612,20 +634,43 @@ function buildClip(c, P, o = {}) {
     try {
       // puce vidéo du Mac (VideoToolbox) pour l'encodage quand « rapide » est choisi (réglage par défaut sur Mac)
       // aperçu de 720p et plus : puce vidéo aussi (rapide jusqu'en 4K)
-      const vt = process.platform === 'darwin' && encoders.has('h264_videotoolbox') && (proxy ? P.h >= 720 && P.w >= 720 : project.quality !== 'haute');
-      const built = clips.map((c, i) => buildClip(c, P, { tdir: { dir, idx: i }, proxy, vt }));
-      const total = built.reduce((a, b) => a + b.eff, 0) * 1.1;
-      let done = 0;
-      const segs = [];
-      for (let i = 0; i < built.length; i++) {
-        job.step = `Clip ${i + 1} sur ${built.length}`;
-        try { await run(FFMPEG, [...built[i].args, `seg${i}.mp4`], { cwd: dir, onOut: progressOf(job, () => done, total), silence: vt ? VT_SURVEILLANCE : 0 }); }
-        catch (e) { // la puce vidéo refuse ce clip : encodage par le processeur
-          if (!vt) throw e;
-          await run(FFMPEG, [...buildClip(clips[i], P, { tdir: { dir, idx: i }, proxy, vt: false }).args, `seg${i}.mp4`], { cwd: dir, onOut: progressOf(job, () => done, total) });
-        }
-        done += built[i].eff; segs.push(`seg${i}.mp4`);
+      const mac = process.platform === 'darwin';
+      const vt = mac && encoders.has('h264_videotoolbox') && (proxy ? P.h >= 720 && P.w >= 720 : project.quality !== 'haute');
+      const opts = (i, avecPuce) => ({ tdir: { dir, idx: i }, proxy, vt: avecPuce && vt, vtMax: project.quality === 'max', hw: avecPuce && mac && hwaccels.has('videotoolbox') });
+      // chaque clip est construit seul, pour savoir quels fichiers (textes des titres…) il a écrits : ils entrent dans son empreinte
+      const built = [], cles = [];
+      for (let i = 0; i < clips.length; i++) {
+        const avant = new Set(fs.readdirSync(dir));
+        built.push(buildClip(clips[i], P, opts(i, true)));
+        cles.push(empreinteClip(built[i].args, dir, fs.readdirSync(dir).filter(x => !avant.has(x))));
       }
+      const total = built.reduce((a, b) => a + b.eff, 0) * 1.1;
+      // Clips encodés en parallèle (la puce vidéo des Mac Apple gère plusieurs flux à la fois) ; clips inchangés repris du cache
+      const avance = built.map(() => 0), suivi = () => { job.progress = clamp(avance.reduce((a, b) => a + b, 0) / total, 0, 0.96); };
+      const segs = built.map((b, i) => `seg${i}.mp4`);
+      let repris = 0, faits = 0;
+      const encoderClip = async i => {
+        const cache = cles[i] && path.join(CACHE_RENDU, cles[i] + '.mp4');
+        if (cache && fs.existsSync(cache)) {
+          try { fs.copyFileSync(cache, path.join(dir, segs[i]), fs.constants.COPYFILE_FICLONE); fs.utimesSync(cache, new Date(), new Date()); avance[i] = built[i].eff; repris++; faits++; suivi(); return; }
+          catch (e) { /* cache illisible : on encode */ }
+        }
+        const prog = d => { const m = d.match(/out_time_us=(\d+)/g); if (m) { avance[i] = Math.min(built[i].eff, +m[m.length - 1].split('=')[1] / 1e6); suivi(); } };
+        try { await run(FFMPEG, [...built[i].args, segs[i]], { cwd: dir, onOut: prog, silence: vt ? VT_SURVEILLANCE : 0 }); }
+        catch (e) { // la puce vidéo refuse ce clip : décodage et encodage par le processeur
+          if (!vt && !opts(i, true).hw) throw e;
+          await run(FFMPEG, [...buildClip(clips[i], P, opts(i, false)).args, segs[i]], { cwd: dir, onOut: prog });
+        }
+        avance[i] = built[i].eff; faits++; suivi();
+        job.step = `Clips : ${faits} sur ${built.length}${repris ? ` (${repris} déjà prêt${repris > 1 ? 's' : ''})` : ''}`;
+        if (cache) { try { fs.mkdirSync(CACHE_RENDU, { recursive: true }); fs.copyFileSync(path.join(dir, segs[i]), cache + '.part', fs.constants.COPYFILE_FICLONE); fs.renameSync(cache + '.part', cache); } catch (e) { /* cache plein ou indisponible */ } }
+      };
+      const enParallele = Math.max(1, Math.min(built.length, vt ? Math.min(4, Math.max(2, Math.floor(os.cpus().length / 3))) : 2));
+      job.step = `Clips : 0 sur ${built.length}`; job.paralleles = enParallele;
+      let suivant = 0;
+      await Promise.all(Array.from({ length: enParallele }, async () => { while (suivant < built.length) await encoderClip(suivant++); }));
+      job.repris = repris;
+      nettoyerCache();
 
       // Assemblage (avec transitions si besoin)
       job.step = 'Assemblage';
@@ -656,7 +701,7 @@ function buildClip(c, P, o = {}) {
           }
           cv = nv; ca = na;
         }
-        await encoder(['-y', '-loglevel', 'error', ...inArgs, '-filter_complex', g.join(';'), '-map', `[${cv}]`, '-map', `[${ca}]`], vt ? encVt(P) : null,
+        await encoder(['-y', '-loglevel', 'error', ...inArgs, '-filter_complex', g.join(';'), '-map', `[${cv}]`, '-map', `[${ca}]`], vt ? encVt(P, project.quality === 'max') : null,
           proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17],
           ['-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
         joined = 'all.mp4';
@@ -729,7 +774,9 @@ function buildClip(c, P, o = {}) {
           gif: ['-an', '-t', '60', '-vf', "fps=15,scale='min(540,iw)':-2:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse"],
           mp3: ['-vn', ...norm, '-c:a', 'libmp3lame', '-b:a', '192k'], m4a: ['-vn', ...norm, '-c:a', 'aac', '-b:a', '192k'], wav: ['-vn', ...norm, '-c:a', 'pcm_s16le']
         }[sortie];
-        await run(FFMPEG, ['-y', '-loglevel', 'error', '-i', joined, ...o2, final], { cwd: dir });
+        // ProRes : moteur ProRes des puces Apple s'il est disponible, sinon le processeur
+        if (sortie === 'mov' && process.platform === 'darwin' && encoders.has('prores_videotoolbox')) await encoder(['-y', '-loglevel', 'error', '-i', joined], ['-c:v', 'prores_videotoolbox', '-profile:v', 'hq'], o2.slice(0, 6), [...o2.slice(6), final], { cwd: dir });
+        else await run(FFMPEG, ['-y', '-loglevel', 'error', '-i', joined, ...o2, final], { cwd: dir });
       }
 
       if (proxy) {
@@ -741,10 +788,10 @@ function buildClip(c, P, o = {}) {
         job.url = '/apercu/' + name;
       } else {
         const name = `montage-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}.${sortie}`;
-        fs.copyFileSync(path.join(dir, final), path.join(EXPORTS, name));
+        fs.copyFileSync(path.join(dir, final), path.join(EXPORTS, name), fs.constants.COPYFILE_FICLONE); // copie instantanée sur le disque du Mac (APFS)
         job.out = name;
       }
-      job.progress = 1; job.done = true;
+      job.fin = Date.now(); job.progress = 1; job.done = true;
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
   }
 
@@ -1141,7 +1188,7 @@ function buildClip(c, P, o = {}) {
       }
       if (req.method === 'GET' && p === '/api/job') {
         const job = jobs.get(url.searchParams.get('id'));
-        return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done, resultat: job.resultat || null }) : send(res, 404, { error: 'Export inconnu' });
+        return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done, resultat: job.resultat || null, duree: job.fin && job.debut ? +((job.fin - job.debut) / 1000).toFixed(1) : null, repris: job.repris || 0, paralleles: job.paralleles || 0 }) : send(res, 404, { error: 'Export inconnu' });
       }
       // Projets
       if (p === '/api/projet') { // enregistrement automatique
