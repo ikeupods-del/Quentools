@@ -4,6 +4,7 @@ Chaque section devient le texte affiché dans l'application quand la mise à jou
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
 ## 1.7.0
+- Correction : l'export pouvait rester bloqué à « Mixage du son » quand une musique baisse automatiquement sous la voix (vidéos du générateur notamment). Le mixage est refait autrement et ne peut plus se figer.
 - Voix naturelles intégrées (Siwis, Tom, Jessica, Pierre) pour le générateur : elles se téléchargent toutes seules au premier usage puis marchent sans internet. Les voix « Premium » du Mac sont aussi reconnues (★), avec un bouton qui ouvre directement les réglages pour les installer. Bouton « Écouter » avec la vraie voix.
 - Sous-titres automatiques : QuentMovie écoute ta voix et écrit les sous-titres au bon moment, en phrases ou mot à mot façon TikTok (gros, au centre). Sur un clip, sur toute la vidéo, ou automatiquement après chaque prise du studio.
 - Les noms comme QuenTools ou QuentMovie sont corrigés tout seuls dans les sous-titres, et tu peux ajouter tes propres corrections (« mot entendu = bon mot »).

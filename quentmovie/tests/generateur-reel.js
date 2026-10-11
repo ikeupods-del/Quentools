@@ -53,6 +53,13 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   check('vidéo exportée', e.done && e.out, e.error || `bloqué à : ${e.step} (${Math.round((e.progress || 0) * 100)} %)`);
   if (e.out) console.log('Vidéo :', path.join(base, 'exports', e.out), Math.round(fs.statSync(path.join(base, 'exports', e.out)).size / 1e6) + ' Mo');
 
+  // le mixage avec musique en boucle et baisse automatique bloquait parfois FFmpeg : cinq exports d'affilée
+  const court = { format: 'horizontal', fps: 30, res: 480, clips: clips.slice(0, 3), audio: [{ file: 'lib:musiques/piano-chill.mp3', vol: 22, start: 0, fade: true, loop: true, duck: true }, { file: 'lib:musiques/piano-chill.mp3', vol: 10, start: 1, fade: false, loop: true, duck: true }] };
+  let bons = 0; const t0 = Date.now();
+  for (let k = 0; k < 5; k++) { const x = await attendre((await json(await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: court }) }))).id); if (x.done) bons++; else console.log('  export', k + 1, ':', x.error); }
+  console.log(`Exports avec musique et baisse automatique : ${bons}/5 en ${Math.round((Date.now() - t0) / 1000)} s`);
+  check('mixage avec baisse automatique fiable', bons === 5, bons);
+
   app.stop(); if (!process.env.QM_GARDER) fs.rmSync(base, { recursive: true, force: true });
   console.log(`Générateur (réseau) : ${ok} contrôles réussis, ${ko} échecs`);
   process.exit(ko ? 1 : 0);
