@@ -144,6 +144,11 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
       let j; for (let i = 0; i < 300; i++) { await new Promise(r => setTimeout(r, 250)); j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.done || j.error) break; } return j; })();
     check('export look + effet animé + cadre + fond vert', rr && rr.done, rr && rr.error);
   }
+  // Studio : module de détourage (fond virtuel) servi en local
+  for (const f of ['selfie_segmentation.js', 'selfie_segmentation_solution_simd_wasm_bin.wasm', 'selfie_segmentation_landscape.tflite', 'selfie_segmentation.binarypb']) {
+    const rr = await fetch(U('/vendor/selfie/' + f)); check('fond virtuel : ' + f, rr.ok && (await rr.arrayBuffer()).byteLength > 100);
+  }
+  check('fond virtuel : seuls ses fichiers sont servis', (await fetch(U('/vendor/selfie/' + encodeURIComponent('../../../package.json')))).status === 404);
   // Mes packs : un dossier rangé par l'utilisateur est reconnu
   const packs = path.join(base, 'packs', 'Pack test', 'Sons'); fs.mkdirSync(packs, { recursive: true });
   ff('-f', 'lavfi', '-i', 'sine=f=500:d=1.5', path.join(packs, 'bip_test.wav'));

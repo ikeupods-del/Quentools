@@ -122,8 +122,9 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 #studio{position:fixed;inset:0;background:#050506;z-index:30;display:none;color:#fff}
 #studio.on{display:grid;grid-template-columns:1fr 320px}
 #stScene{position:relative;overflow:hidden;display:grid;place-items:center}
-#stScene video{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;background:#000}
-#stScene video.miroir{transform:scaleX(-1)}
+#stScene video,#stScene canvas{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;background:#000}
+#stScene .miroir{transform:scaleX(-1)}
+#stScene canvas{position:absolute;inset:0;display:none}#stScene.fond canvas{display:block}#stScene.fond video{visibility:hidden}
 #stPrompt{position:absolute;left:50%;top:0;transform:translateX(-50%);width:var(--pw,70%);height:42%;overflow:hidden;background:rgba(0,0,0,var(--po,.55));border-radius:0 0 14px 14px;cursor:pointer;
   -webkit-mask-image:linear-gradient(#0000,#000 14%,#000 80%,#0000)}
 #stPrompt.miroirtxt #stTexte{transform-origin:center;scale:-1 1}
@@ -214,7 +215,7 @@ canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display
 <div id="modal"><div id="boite"></div></div>
 <div id="majBox" role="status" aria-live="polite"></div>
 <div id="studio" aria-label="Studio : caméra et prompteur">
-  <div id="stScene"><video id="stVideo" autoplay muted playsinline class="miroir"></video>
+  <div id="stScene"><video id="stVideo" autoplay muted playsinline class="miroir"></video><canvas id="stCanvas"></canvas>
     <div id="stPrompt" title="Clic : lancer / arrêter le défilement · molette : avancer ou reculer"><div id="stTexte"></div><div id="stLigne"></div></div>
     <div id="stCompte"></div>
     <div id="stBarre"><button id="stDebut" title="Revenir au début du texte (Début)">⏮</button><button id="stDefil" title="Lancer / arrêter le défilement (Espace)">▶ Défiler</button>
@@ -1112,7 +1113,7 @@ async function verifierMaj(manuel) {
 }
 
 // ---------- Studio : se filmer avec la caméra et le micro du Mac, avec un prompteur ----------
-const ST_DEF = { vitesse: 45, taille: 44, largeur: 70, opacite: 55, miroirTxt: false, miroirImg: true, compte: true, defilAuto: true, qualite: '1080', bruit: true, camera: '', micro: '' };
+const ST_DEF = { fond: 'lib:fonds/quentools-led-h.jpg', contour: 4, vitesse: 45, taille: 44, largeur: 70, opacite: 55, miroirTxt: false, miroirImg: true, compte: true, defilAuto: true, qualite: '1080', bruit: true, camera: '', micro: '' };
 let studio = null;
 const stLire = () => { try { return { ...ST_DEF, ...JSON.parse(localStorage.getItem('qm:studio') || '{}') }; } catch (e) { return { ...ST_DEF }; } };
 const stGarder = o => { try { localStorage.setItem('qm:studio', JSON.stringify(o)); } catch (e) { /* stockage indisponible */ } };
@@ -1120,7 +1121,14 @@ function stPanneau() {
   const o = studio.o, cams = studio.appareils.filter(d => d.kind === 'videoinput'), mics = studio.appareils.filter(d => d.kind === 'audioinput');
   const rg = (id, lab, min, max, step, v, u) => `<label class="l">${lab}<span id="${id}V">${v}${u}</span></label><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${v}">`;
   const ck = (id, lab, v) => `<div class="sw2"><input type="checkbox" id="${id}" ${v ? 'checked' : ''}><label for="${id}">${lab}</label></div>`;
+  const decors = LIB().fonds, photos = medias.filter(m => m.kind === 'image');
+  const optFond = `<option value="">Ma vraie pièce (pas de changement)</option><option value="flou" ${o.fond === 'flou' ? 'selected' : ''}>Arrière-plan flou</option>` +
+    [...new Set(decors.map(x => x.cat))].map(cat => `<optgroup label="${esc(cat)}">${decors.filter(x => x.cat === cat).map(x => `<option value="lib:${esc(x.file)}" ${o.fond === 'lib:' + x.file ? 'selected' : ''}>${esc(x.nom)}</option>`).join('')}</optgroup>`).join('') +
+    (photos.length ? `<optgroup label="Mes photos">${photos.map(m => `<option value="${esc(m.file)}" ${o.fond === m.file ? 'selected' : ''}>${esc(m.file)}</option>`).join('')}</optgroup>` : '');
   $('#stPanneau').innerHTML = `<h3 style="margin-top:0">🎥 Studio</h3>
+    <label class="l">Fond derrière moi (en direct, sans fond vert)</label><select id="stFond">${optFond}</select>
+    ${o.fond ? rg('stContour', 'Douceur des contours', 0, 12, 1, o.contour, '') : ''}
+    <p class="mut" style="margin:4px 0 10px">Le logiciel détoure ta silhouette en direct, comme dans les visios. Le résultat est meilleur avec une pièce bien éclairée et un mur uni derrière toi.</p>
     <label class="l">Ton texte (prompteur)</label><textarea id="stScript" placeholder="Écris ou colle ici ce que tu vas dire. Le texte défile en haut de l’écran, juste sous la caméra : tu lis en regardant l’objectif.">${esc(proj.prompteur || '')}</textarea>
     ${rg('stVit', 'Vitesse de défilement', 10, 150, 1, o.vitesse, '')}${rg('stTaille', 'Taille du texte', 24, 90, 1, o.taille, ' px')}${rg('stLarg', 'Largeur du prompteur', 40, 100, 1, o.largeur, ' %')}${rg('stOpa', 'Fond du prompteur', 0, 90, 1, o.opacite, ' %')}
     ${ck('stMirTxt', 'Texte en miroir (vitre de prompteur)', o.miroirTxt)}${ck('stMirImg', 'Image en miroir (comme un miroir)', o.miroirImg)}
@@ -1129,7 +1137,7 @@ function stPanneau() {
     <label class="l">Micro</label><select id="stMic">${mics.map((d, i) => `<option value="${esc(d.deviceId)}" ${d.deviceId === o.micro ? 'selected' : ''}>${esc(d.label || 'Micro ' + (i + 1))}</option>`).join('') || '<option value="">Micro du Mac</option>'}</select>
     <label class="l">Qualité</label><select id="stQual">${opts([['720', '720p (fichier léger)'], ['1080', '1080p Full HD']], o.qualite)}</select>
     ${ck('stBruit', 'Réduire le bruit de fond du micro', o.bruit)}
-    <p class="mut" style="margin-top:10px">Chaque prise est ajoutée à la fin de la timeline. Ensuite, le fond vert et les décors (onglet Calques) fonctionnent comme d’habitude.</p>
+    <p class="mut" style="margin-top:10px">Chaque prise est ajoutée à la fin de la timeline, avec le fond choisi.</p>
     <p class="mut">Raccourcis : <kbd>R</kbd> enregistrer · <kbd>Espace</kbd> défiler · <kbd>↑</kbd><kbd>↓</kbd> vitesse · <kbd>Début</kbd> revenir au texte · <kbd>Échap</kbd> fermer</p>
     <div id="stMsg" class="mut"></div>`;
   stStyle();
@@ -1137,7 +1145,7 @@ function stPanneau() {
 function stStyle() {
   const o = studio.o, p = $('#stPrompt');
   p.style.setProperty('--ps', o.taille + 'px'); p.style.setProperty('--pw', o.largeur + '%'); p.style.setProperty('--po', (o.opacite / 100).toFixed(2));
-  p.classList.toggle('miroirtxt', o.miroirTxt); $('#stVideo').classList.toggle('miroir', o.miroirImg);
+  p.classList.toggle('miroirtxt', o.miroirTxt); $('#stVideo').classList.toggle('miroir', o.miroirImg); // avec un fond, l'image n'est pas inversée : le logo du décor reste lisible
   p.style.display = (proj.prompteur || '').trim() ? '' : 'none';
   $('#stTexte').textContent = proj.prompteur || '';
 }
@@ -1156,6 +1164,54 @@ async function stFlux() {
   studio.ctx.createMediaStreamSource(studio.flux).connect(an); const buf = new Float32Array(an.fftSize);
   studio.vu = () => { an.getFloatTimeDomainData(buf); let m = 0; for (const v of buf) m = Math.max(m, Math.abs(v)); return m; };
 }
+// Fond virtuel : la personne est détourée en direct (module local, sans internet) et posée sur le décor choisi
+function chargerScript(src) { return new Promise((ok, ko) => { if (document.querySelector(`script[src="${src}"]`)) return ok(); const sc = document.createElement('script'); sc.src = src; sc.onload = ok; sc.onerror = () => ko(new Error('module de détourage introuvable')); document.head.appendChild(sc); }); }
+async function stFond() {
+  const o = studio.o; $('#stScene').classList.toggle('fond', !!o.fond);
+  if (studio.decor && studio.decor.pause) studio.decor.pause();
+  studio.decor = null; studio.masque = null;
+  if (!o.fond) return;
+  if (o.fond !== 'flou') { // décor : photo ou vidéo en boucle
+    const it = libItem(o.fond), url = o.fond.startsWith('lib:') ? '/lib/' + o.fond.slice(4) : '/media/' + enc(o.fond);
+    if (it && it.kind === 'video') { const v = document.createElement('video'); v.src = url; v.muted = true; v.loop = true; v.playsInline = true; v.play().catch(() => {}); studio.decor = v; }
+    else { const im = new Image(); im.src = url; studio.decor = im; }
+  }
+  if (!studio.seg) {
+    try {
+      await chargerScript('/vendor/selfie/selfie_segmentation.js');
+      const seg = new SelfieSegmentation({ locateFile: f => '/vendor/selfie/' + f });
+      seg.setOptions({ modelSelection: 1, selfieMode: false });
+      seg.onResults(stMasque);
+      await seg.initialize();
+      studio.seg = seg;
+    } catch (e) { studio.o.fond = ''; $('#stScene').classList.remove('fond'); alert('Le fond virtuel n’a pas pu démarrer : ' + e.message); stPanneau(); }
+  }
+}
+function couvrir(g, src, w, h) { // dessine en remplissant tout le cadre (recadre si besoin)
+  const sw = src.videoWidth || src.naturalWidth || src.width, sh = src.videoHeight || src.naturalHeight || src.height; if (!sw || !sh) return;
+  const k = Math.max(w / sw, h / sh), dw = sw * k, dh = sh * k; g.drawImage(src, (w - dw) / 2, (h - dh) / 2, dw, dh);
+}
+// Le détourage garde le dernier masque ; l'image est composée à chaque image de la caméra (vidéo fluide même si le détourage prend du retard)
+function stMasque(r) {
+  if (!studio) return;
+  const m = studio.masque || (studio.masque = document.createElement('canvas')), src = r.segmentationMask;
+  if (m.width !== src.width || m.height !== src.height) { m.width = src.width; m.height = src.height; }
+  const g = m.getContext('2d'); g.clearRect(0, 0, m.width, m.height); g.drawImage(src, 0, 0);
+}
+function stComposer(v) {
+  const c = $('#stCanvas'), w = v.videoWidth, h = v.videoHeight; if (!w || !h || !studio.masque) return false;
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  const g = c.getContext('2d'); g.save(); g.clearRect(0, 0, w, h);
+  g.filter = studio.o.contour ? `blur(${studio.o.contour}px)` : 'none'; g.drawImage(studio.masque, 0, 0, w, h); g.filter = 'none';
+  g.globalCompositeOperation = 'source-in'; g.drawImage(v, 0, 0, w, h);
+  g.globalCompositeOperation = 'destination-over';
+  if (studio.o.fond === 'flou') { g.filter = 'blur(18px)'; g.drawImage(v, 0, 0, w, h); g.filter = 'none'; }
+  else if (studio.decor) couvrir(g, studio.decor, w, h);
+  g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
+  g.restore();
+  return true;
+}
+
 async function ouvrirStudio() {
   if (studio) return;
   if (!navigator.mediaDevices || !window.MediaRecorder) return alert('La caméra n’est pas disponible dans cette fenêtre.');
@@ -1167,7 +1223,7 @@ async function ouvrirStudio() {
     fermerStudio(); return alert('Caméra ou micro indisponible : ' + e.message + '\n\nAutorise QuentMovie dans Réglages Système → Confidentialité et sécurité → Caméra (et Micro), puis réessaie.');
   }
   studio.appareils = await navigator.mediaDevices.enumerateDevices().catch(() => []);
-  stPanneau(); studio.pos = 0; stPlacer();
+  stPanneau(); studio.pos = 0; stPlacer(); stFond();
   let avant = performance.now();
   const boucle = now => { // défilement du texte et chronomètre
     if (!studio) return;
@@ -1175,6 +1231,13 @@ async function ouvrirStudio() {
     if (studio.defil) { studio.pos += studio.o.vitesse * dt; stPlacer(); }
     if (studio.rec) $('#stTemps').textContent = fmtChrono((Date.now() - studio.t0) / 1000);
     if (studio.vu) $('#stVu i').style.width = Math.min(100, studio.vu() * 140) + '%';
+    const v = $('#stVideo');
+    if (studio.o.fond && studio.seg && v.readyState >= 2) {
+      if (!studio.calcul && now - (studio.dernierCalcul || 0) > 45) { // détourage : au plus ~20 fois par seconde, pour laisser le Mac respirer
+        studio.calcul = true; studio.dernierCalcul = now; studio.seg.send({ image: v }).catch(() => {}).finally(() => { if (studio) studio.calcul = false; });
+      }
+      if (v.currentTime !== studio.derniere) { studio.derniere = v.currentTime; stComposer(v); } // une image composée par image de la caméra
+    }
     studio.raf = requestAnimationFrame(boucle);
   };
   studio.raf = requestAnimationFrame(boucle);
@@ -1186,7 +1249,9 @@ function fermerStudio() {
   if (!studio) return;
   if (studio.rec) { if (!confirm('Un enregistrement est en cours. Arrêter et l’ajouter à la timeline ?')) return; studio.fermerApres = true; studio.rec.stop(); return; }
   cancelAnimationFrame(studio.raf); if (studio.flux) studio.flux.getTracks().forEach(t => t.stop()); if (studio.ctx) studio.ctx.close().catch(() => {});
-  $('#stVideo').srcObject = null; $('#studio').classList.remove('on'); studio = null;
+  if (studio.decor && studio.decor.pause) studio.decor.pause();
+  if (studio.seg) studio.seg.close().catch(() => {});
+  $('#stVideo').srcObject = null; $('#stScene').classList.remove('fond'); $('#studio').classList.remove('on'); studio = null;
 }
 async function stCompte() {
   const c = $('#stCompte'); c.classList.add('on');
@@ -1198,9 +1263,14 @@ async function stEnregistrer() {
   if (studio.rec) { studio.rec.stop(); return; }
   if (studio.envoi) return;
   if (studio.o.compte && !(await stCompte())) return;
-  const types = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  const mp4 = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a', 'video/mp4'], webm = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  // image composée (fond virtuel) : WebM, le plus fiable pour une image dessinée ; H.264 en premier (encodé par la puce du Mac, léger)
+  const types = studio.o.fond ? ['video/webm;codecs=h264,opus', 'video/webm;codecs=vp8,opus', ...webm, ...mp4] : [...mp4, ...webm];
   const mime = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
-  const rec = new MediaRecorder(studio.flux, { mimeType: mime, videoBitsPerSecond: studio.o.qualite === '1080' ? 10e6 : 5e6, audioBitsPerSecond: 192000 });
+  // avec un fond virtuel, on enregistre l'image composée (personne + décor) et le son du micro
+  if (studio.o.fond) studio.piste = $('#stCanvas').captureStream(30).getVideoTracks()[0]; // image composée : personne + décor
+  const source = studio.o.fond ? new MediaStream([studio.piste, ...studio.flux.getAudioTracks()]) : studio.flux;
+  const rec = new MediaRecorder(source, { mimeType: mime, videoBitsPerSecond: studio.o.qualite === '1080' ? 10e6 : 5e6, audioBitsPerSecond: 192000 });
   const morceaux = []; rec.ondataavailable = e => { if (e.data.size) morceaux.push(e.data); };
   rec.onstop = () => stEnvoyer(morceaux, mime);
   studio.rec = rec; studio.t0 = Date.now(); rec.start(1000);
@@ -1208,7 +1278,7 @@ async function stEnregistrer() {
   if (studio.o.defilAuto && (proj.prompteur || '').trim()) { studio.pos = 0; stPlacer(); stDefiler(true); }
 }
 async function stEnvoyer(morceaux, mime) {
-  const st = studio; st.rec = null; st.envoi = true; stDefiler(false);
+  const st = studio; st.rec = null; if (st.piste) { st.piste.stop(); st.piste = null; } st.envoi = true; stDefiler(false);
   $('#stRec').textContent = '● Enregistrer'; $('#stRec').classList.remove('enreg');
   const msg = t => { const m = $('#stMsg'); if (m) m.innerHTML = t; aide(t); };
   msg('Préparation de la prise…');
@@ -1216,6 +1286,7 @@ async function stEnvoyer(morceaux, mime) {
   try {
     const j = await (await api('/api/import?name=' + enc(nom), { method: 'POST', body: new Blob(morceaux, { type: mime || 'video/webm' }) })).json();
     await chargerMedias();
+    if (j.kind !== 'video') throw new Error('l’image de la caméra n’a pas été enregistrée (seulement le son). Réessaie, ou choisis « Ma vraie pièce ».');
     const m = medias.find(x => x.file === j.file);
     if (m) { proj.clips.push(newClip(m)); sel = proj.clips.length - 1; selA = -1; commit(); tout(); placerTete(starts()[sel]); }
     msg(`✅ Prise ajoutée à la fin de la timeline (${fmt(m ? m.duration : 0)}).`);
@@ -1230,7 +1301,8 @@ $('#stPrompt').onclick = () => stDefiler();
 $('#stPrompt').addEventListener('wheel', e => { e.preventDefault(); studio.pos += e.deltaY; stPlacer(); }, { passive: false });
 $('#stPanneau').addEventListener('input', e => {
   const o = studio.o, t = e.target, v = t.type === 'checkbox' ? t.checked : t.type === 'range' ? +t.value : t.value;
-  const champ = { stVit: 'vitesse', stTaille: 'taille', stLarg: 'largeur', stOpa: 'opacite', stMirTxt: 'miroirTxt', stMirImg: 'miroirImg', stCpt: 'compte', stAuto: 'defilAuto', stQual: 'qualite', stBruit: 'bruit', stCam: 'camera', stMic: 'micro' }[t.id];
+  if (t.id === 'stFond') { if (studio.rec) { t.value = o.fond; return alert('Arrête d’abord l’enregistrement pour changer de fond.'); } o.fond = v; stGarder(o); stPanneau(); stFond(); return; }
+  const champ = { stContour: 'contour', stVit: 'vitesse', stTaille: 'taille', stLarg: 'largeur', stOpa: 'opacite', stMirTxt: 'miroirTxt', stMirImg: 'miroirImg', stCpt: 'compte', stAuto: 'defilAuto', stQual: 'qualite', stBruit: 'bruit', stCam: 'camera', stMic: 'micro' }[t.id];
   if (t.id === 'stScript') { proj.prompteur = t.value; commit(true); stStyle(); return; }
   if (!champ) return; o[champ] = v; stGarder(o);
   const lab = $('#' + t.id + 'V'); if (lab) lab.textContent = v + (t.id === 'stTaille' ? ' px' : ['stLarg', 'stOpa'].includes(t.id) ? ' %' : '');

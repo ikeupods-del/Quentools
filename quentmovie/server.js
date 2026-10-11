@@ -15,7 +15,8 @@ const IMG_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.tif', '.tiff', '.av
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.mp4': 'video/mp4', '.mov': 'video/quicktime', '.m4v': 'video/mp4', '.webm': 'video/webm',
   '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif',
-  '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.wav': 'audio/wav', '.aac': 'audio/aac', '.gif': 'image/gif', '.mkv': 'video/x-matroska', '.json': 'application/json'
+  '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.wav': 'audio/wav', '.aac': 'audio/aac', '.gif': 'image/gif', '.mkv': 'video/x-matroska', '.json': 'application/json',
+  '.js': 'text/javascript; charset=utf-8', '.wasm': 'application/wasm'
 };
 const S = '/System/Library/Fonts/Supplemental/';
 const FONT_CANDS = [
@@ -653,6 +654,11 @@ function create(opts = {}) {
       if (req.method === 'GET' && (p === '/' || p === '/index.html')) return serveFile(req, res, path.join(__dirname, 'index.html'));
       if (req.method === 'GET' && p.startsWith('/media/')) return serveFile(req, res, mediaPath(decodeURIComponent(p.slice(7))));
       if (req.method === 'GET' && p.startsWith('/lib/')) return serveFile(req, res, mediaPath('lib:' + decodeURIComponent(p.slice(5))));
+      if (req.method === 'GET' && p.startsWith('/vendor/selfie/')) { // détourage de la personne (fond virtuel du studio), sans internet
+        const n = decodeURIComponent(p.slice(15));
+        if (!/^selfie_segmentation[\w.]*$/.test(n)) return send(res, 404, { error: 'Introuvable' });
+        return serveFile(req, res, path.join(path.dirname(require.resolve('@mediapipe/selfie_segmentation/package.json')), n));
+      }
       if (req.method === 'GET' && p.startsWith('/proxy/')) return serveFile(req, res, path.join(PROXIES, safeName(decodeURIComponent(p.slice(7)))));
       if (req.method === 'GET' && p.startsWith('/exports/')) return serveFile(req, res, path.join(EXPORTS, safeName(decodeURIComponent(p.slice(9)))), true);
       if (req.method === 'GET' && p.startsWith('/apercu/')) return serveFile(req, res, path.join(APERCUS, safeName(decodeURIComponent(p.slice(8)))));
@@ -701,7 +707,7 @@ function create(opts = {}) {
           }
           if (info.kind === 'video' && (/^camera-/.test(path.basename(dest)) || !(info.duration > 0))) { // prise de la caméra : fichier propre (durée, images régulières)
             const mp4 = dest.replace(/\.[^.]+$/, '') + '-prise.mp4';
-            await run(FFMPEG, ['-y', '-v', 'error', '-i', dest, '-map', '0:v:0', '-map', '0:a:0?', '-r', 30, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', 18, '-pix_fmt', 'yuv420p',
+            await run(FFMPEG, ['-y', '-v', 'error', '-i', dest, '-map', '0:v:0', '-map', '0:a:0?', '-vf', 'fps=30', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', 18, '-pix_fmt', 'yuv420p',
               '-c:a', 'aac', '-b:a', '192k', '-ar', 48000, '-movflags', '+faststart', mp4]);
             fs.unlinkSync(dest); dest = mp4; info = await probe(dest);
           }
