@@ -77,6 +77,41 @@ function chromium() {
   await ev(() => { allerOnglet('outils'); }); await pg.waitForTimeout(200); await ev(() => { $('#oTrAll').value = $('#oTrAll').options[1].value; transitionPartout(); });
   check('transition sur toutes les coupures', await ev(() => proj.clips.filter(c => c.transition).length === 2));
 
+  // 4) générateur de bout en bout : faux Commons, fausse IA ; Express → relecture → réécriture d'une scène → autre photo → création
+  const http = require('http'), photo = path.join(base, 'p.jpg'); ff('-f', 'lavfi', '-i', 'testsrc2=s=1800x1200', '-frames:v', '1', photo);
+  const commons = http.createServer((req, res) => {
+    const u = new URL(req.url, 'http://x'), q = Object.fromEntries(u.searchParams), pt = commons.address().port;
+    if (u.pathname.startsWith('/images/')) { res.writeHead(200, { 'Content-Type': 'image/jpeg' }); return res.end(fs.readFileSync(photo)); }
+    res.setHeader('Content-Type', 'application/json');
+    const mot = String(q.gsrsearch || '').replace(/ filetype:\w+/, '').split(/\s+/)[0] || 'image';
+    const info = (t, k) => ({ index: k, title: 'File:' + t, imageinfo: [{ mime: 'image/jpeg', width: 1800, height: 1200, url: `http://127.0.0.1:${pt}/images/${encodeURIComponent(t)}`, thumburl: `http://127.0.0.1:${pt}/images/1920px-${encodeURIComponent(t)}`, descriptionurl: 'https://commons.wikimedia.org/wiki/' + t, extmetadata: { Artist: { value: 'Photographe' }, LicenseShortName: { value: 'CC BY-SA 4.0' }, ImageDescription: { value: 'Photo de ' + mot + ' vélo en ville' }, Categories: { value: mot } } }] });
+    if (q.generator === 'search') return res.end(JSON.stringify({ query: { pages: [1, 2, 3].map(k => info(`${mot} exemple ${['alpha', 'bravo', 'charlie'][k - 1]}.jpg`, k)) } }));
+    res.end('{}');
+  });
+  await new Promise(r => commons.listen(0, '127.0.0.1', r));
+  const { regroupe } = require('../ia'); let dernierAppel = null;
+  const iaFausse = { etat: () => ({ installee: true, mo: 1, styles: ['dynamique'] }), installer: async () => {}, arreter: () => {},
+    ecrireScript: async a => { dernierAppel = a; const rg = regroupe(a.consigne, a.options); return { titre: 'Vélo en ville', gpu: '', regles: rg, scenes: [['Casque', 'Un casque bien ajusté protège la tête en cas de chute.', 'casque', 'helmet'], ['Feux', 'Des feux clairs te rendent visible à la nuit tombée.', 'feux', 'lights'], ['Piste', 'Roule sur les pistes cyclables quand elles existent.', 'piste', 'lane']].map(([section, texte, sujet, recherche]) => ({ section, texte, sujet, recherche })) }; },
+    reecrireScene: async a => ({ texte: 'Texte réécrit : ' + a.instruction }) };
+  const app2 = create({ port: 0, base: path.join(base, 'b2'), ...bins, ia: iaFausse, commons: `http://127.0.0.1:${commons.address().port}`, wiki: `http://127.0.0.1:${commons.address().port}` }), port2 = await app2.start();
+  const pg2 = await b.newPage({ viewport: { width: 1440, height: 900 } }), errs2 = []; pg2.on('pageerror', e => errs2.push(e.message));
+  await pg2.goto(`http://127.0.0.1:${port2}/`); await pg2.waitForTimeout(800); await pg2.evaluate(() => ouvrirGenerateur());
+  await pg2.fill('#xIdee', '3 astuces pour faire du vélo en ville, pas d’intro'); await pg2.uncheck('#xWiki'); await pg2.click('#xOpts summary'); await pg2.fill('#oCta', 'Abonne-toi pour la suite'); await pg2.fill('#oEviter', 'gratuit'); await pg2.selectOption('#oType', 'astuces'); await pg2.click('#xGo');
+  await pg2.waitForSelector('#gScenes .sc', { timeout: 30000 });
+  check('générateur : script affiché pour relecture (rien n’est créé)', await pg2.evaluate(() => document.querySelectorAll('#gScenes .sc').length === 3 && proj.clips.length === 0));
+  check('générateur : options transmises à l’IA', !!dernierAppel && dernierAppel.options.type === 'astuces' && dernierAppel.options.cta === 'Abonne-toi pour la suite' && dernierAppel.options.eviter === 'gratuit' && dernierAppel.consigne.includes('pas d’intro'), JSON.stringify(dernierAppel && dernierAppel.options));
+  check('générateur : photos trouvées et notées', await pg2.evaluate(() => gen.prep.scenes.filter(s => s.image >= 0).length >= 2 && gen.prep.scenes[0].propositions.length >= 1), await pg2.evaluate(() => JSON.stringify(gen.prep.scenes.map(s => s.image))));
+  check('générateur : « pas d’intro » décoche l’écran titre', await pg2.evaluate(() => !$('#gOuv').checked));
+  await pg2.click('[data-gia="0"]'); await pg2.fill('[data-gins="0"]', 'plus court'); await pg2.click('[data-greecrit="0"]'); await pg2.waitForFunction(() => gen.prep.scenes[0].texte.startsWith('Texte réécrit'), null, { timeout: 15000 });
+  check('générateur : réécriture d’une scène', await pg2.evaluate(() => gen.prep.scenes[0].texte === 'Texte réécrit : plus court'));
+  await pg2.click('[data-gautre="1"]'); await pg2.fill('[data-gq="1"]', 'phare'); await pg2.click('[data-gcherche="1"]'); await pg2.waitForSelector('#gg1 [data-gnew]', { timeout: 15000 }); await pg2.click('#gg1 [data-gnew]');
+  check('générateur : autre photo choisie pour une scène', await pg2.evaluate(() => /phare/.test(gen.prep.images[gen.prep.scenes[1].image].nom)));
+  await pg2.click('[data-gmove="0:1"]'); check('générateur : scène descendue', await pg2.evaluate(() => /Texte réécrit/.test(gen.prep.scenes[1].texte)));
+  await pg2.click('#gCreer'); await pg2.waitForFunction(() => proj.clips.length >= 3, null, { timeout: 90000 });
+  check('générateur : vidéo montée dans la timeline', await pg2.evaluate(() => proj.clips.length >= 3 && proj.clips.some(c => c.kind === 'audio' && c.bgFile)), await pg2.evaluate(() => proj.clips.length));
+  check('aucune erreur dans la page du générateur', !errs2.length, errs2.slice(0, 3).join(' | '));
+  commons.close(); app2.stop();
+
   check('aucune erreur dans la page', !errs.length, errs.slice(0, 3).join(' | '));
   await b.close(); app.stop(); fs.rmSync(base, { recursive: true, force: true });
   console.log(`Interface : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);

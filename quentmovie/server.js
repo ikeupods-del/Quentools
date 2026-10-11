@@ -80,7 +80,7 @@ function create(opts = {}) {
     '.png': 'images', '.webp': 'images', '.jpg': 'images', '.jpeg': 'images', '.mp4': 'videos', '.mov': 'videos', '.m4v': 'videos', '.webm': 'videos' };
   const packCache = new Map();
   let gen = null;
-  let parole = null, ia = null;
+  let parole = null, ia = opts.ia || null; // opts.ia : IA de remplacement pour les essais
   const IA = () => ia || (ia = require('./ia').creer({ BASE, FFMPEG }));
   const PAROLE = () => parole || (parole = require('./parole').creer({ run, FFMPEG, BASE }));
   const GEN = () => gen || (gen = require('./generateur').creer({ run, FFMPEG, probe, MEDIAS, wiki: opts.wiki, commons: opts.commons, parole: PAROLE() }));
