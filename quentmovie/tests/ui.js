@@ -30,7 +30,7 @@ function chromium() {
   fs.writeFileSync(path.join(base, 'tempo.wav'), Buffer.concat([h, pcm]));
   ff('-f', 'lavfi', '-i', 'color=c=orange:s=320x180:d=1', '-frames:v', '1', path.join(base, 'photo.png'));
   for (const f of ['plans.mp4', 'a.mp4', 'son.wav', 'tempo.wav', 'photo.png']) await dep(f, fs.readFileSync(path.join(base, f)));
-  const b = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] }), pg = await b.newPage({ viewport: { width: 1440, height: 900 } }), errs = [];
+  const b = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] }), pg = await b.newPage({ viewport: { width: 1440, height: 900 } }), errs = [];
   pg.on('pageerror', e => errs.push(e.message)); await pg.goto(U('/')); await pg.waitForTimeout(1000);
   const ev = (f, ...a) => pg.evaluate(f, ...a);
 
@@ -164,6 +164,21 @@ function chromium() {
   check('générateur : vidéo montée dans la timeline', await pg2.evaluate(() => proj.clips.length >= 3 && proj.clips.some(c => c.kind === 'audio' && c.bgFile)), await pg2.evaluate(() => proj.clips.length));
   check('aucune erreur dans la page du générateur', !errs2.length, errs2.slice(0, 3).join(' | '));
   commons.close(); app2.stop();
+
+  // 5) studio : pause pendant la prise (caméra et micro de test de Chromium)
+  const nAvant = await pg.evaluate(() => proj.clips.length);
+  await pg.evaluate(() => ouvrirStudio()); await pg.waitForFunction(() => studio && studio.flux, null, { timeout: 15000 });
+  await pg.evaluate(() => { studio.o.compte = false; studio.o.fond = ''; });
+  await pg.click('#stRec'); await pg.waitForTimeout(1500);
+  check('studio : bouton pause visible pendant la prise', await pg.evaluate(() => !$('#stPause').hidden));
+  await pg.click('#stPause'); await pg.waitForTimeout(1600);
+  check('studio : prise en pause, le chrono s’arrête', await pg.evaluate(() => studio.rec.state === 'paused' && /Reprendre/.test($('#stPause').textContent) && stDuree() < 2.2), await pg.evaluate(() => studio.rec.state + ' ' + stDuree()));
+  await pg.keyboard.press('p'); await pg.waitForTimeout(1200);
+  check('studio : reprise (touche P), la pause n’est pas comptée', await pg.evaluate(() => studio.rec.state === 'recording' && stDuree() > 2.2 && stDuree() < 3.6), await pg.evaluate(() => studio.rec.state + ' ' + stDuree()));
+  await pg.click('#stPause'); await pg.click('#stRec');
+  await pg.waitForFunction(n => proj.clips.length > n, nAvant, { timeout: 60000 }).catch(() => {});
+  check('studio : arrêt pendant une pause, prise ajoutée à la timeline', await pg.evaluate(n => proj.clips.length === n + 1 && $('#stPause').hidden, nAvant));
+  await pg.evaluate(() => fermerStudio());
 
   check('aucune erreur dans la page', !errs.length, errs.slice(0, 3).join(' | '));
   await b.close(); app.stop(); fs.rmSync(base, { recursive: true, force: true });
