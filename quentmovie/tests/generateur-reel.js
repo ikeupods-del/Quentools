@@ -19,7 +19,8 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   const app = create({ port: 0, base, ...bins, ...(process.env.QM_SANS_FFPROBE ? { ffprobe: null } : {}) });
   const port = await app.start(), U = p => `http://127.0.0.1:${port}${p}`;
   const json = async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); return j; };
-  const attendre = async id => { for (let i = 0; i < 1500; i++) { await new Promise(r => setTimeout(r, 400)); const j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.done || j.error) return j; } return { error: 'trop long' }; };
+  // suivi affiché toutes les 20 s (étape et avancement), pour savoir où un travail s'attarde
+  const attendre = async id => { let j = {}; for (let i = 0; i < 1500; i++) { await new Promise(r => setTimeout(r, 400)); j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.done || j.error) return j; if (i % 50 === 49) console.log(`  … ${Math.round((i + 1) * 0.4)} s : ${j.step || ''} ${Math.round((j.progress || 0) * 100)} %`); } try { console.log(require('child_process').execSync('ps -ax -o etime,%cpu,command | grep -i "[f]fmpeg" | cut -c1-1500').toString()); } catch (e) { /* aucun FFmpeg en cours */ } return { error: `trop long (bloqué à : ${j.step} ${Math.round((j.progress || 0) * 100)} %)` }; };
 
   const ch = await json(await fetch(U('/api/generer/chercher?q=' + encodeURIComponent('génère moi une vidéo sur l’histoire de Michelin'))));
   console.log('Articles :', ch.resultats.map(r => r.titre).join(' | '));
