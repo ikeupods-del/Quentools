@@ -1,11 +1,20 @@
 name: QuentMovie — application Mac
 
 # Construit l'application Mac (.dmg) sur un vrai Mac de GitHub et la publie dans « Releases ».
-# Déclenchement : bouton « Run workflow » de l'onglet Actions, ou création d'une étiquette quentmovie-v*.
+# Les applications installées y trouvent leurs mises à jour automatiques (maj.js) : publier une nouvelle
+# version = changer « version » dans quentmovie/package.json et ajouter ses nouveautés dans NOUVEAUTES.md.
+# Déclenchement : chaque modification de quentmovie/ sur la branche par défaut, ou le bouton « Run workflow ».
+# Une version déjà publiée n'est pas republiée.
 on:
   workflow_dispatch:
   push:
+    branches: ['claude/infirmiere-ordonnances-upload-26nl16']
+    paths: ['quentmovie/**', '.github/workflows/quentmovie.yml']
     tags: ['quentmovie-v*']
+
+concurrency:
+  group: quentmovie-mac
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -35,7 +44,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "quentmovie-${{ github.run_number }}" dist/*.dmg \
-            --title "QuentMovie ${{ github.run_number }}" \
-            --notes "Application Mac (puce Apple). Ouvrir le .dmg, glisser QuentMovie dans Applications, puis clic droit → Ouvrir au premier lancement." \
-            --target "${{ github.sha }}"
+          VERSION=$(node -p "require('./package.json').version")
+          if gh release list --limit 100 --json tagName --jq '.[].tagName' | grep -qx "quentmovie-v$VERSION"; then
+            echo "La version $VERSION est déjà publiée : rien à faire (changer la version dans package.json pour publier)."
+            exit 0
+          fi
+          node scripts/notes-version.js "$VERSION" > notes.md
+          gh release create "quentmovie-v$VERSION" dist/QuentMovie-$VERSION-arm64.dmg \
+            --title "QuentMovie $VERSION" --notes-file notes.md --target "${{ github.sha }}"
