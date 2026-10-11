@@ -3,6 +3,14 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.13.2
+- Ajouter un titre marche tout le temps : clique sur un titre et il va sur le clip sélectionné, ou sur celui sous la tête de lecture ; timeline vide, un écran titre est créé. Le champ de texte s'ouvre à droite, prêt à écrire.
+- Tout se glisse dans la timeline : titres, titres de reportage, écrans prêts, transitions (côté gauche ou droit d'un clip), musiques et bruitages (à l'endroit où tu les lâches), autocollants, calques, décors, looks et effets. Une vidéo lâchée sur la moitié gauche d'un clip se place avant lui.
+- Double-clic sur un média pour l'ajouter à la timeline.
+- Les listes des onglets Titres, Effets, Calques… ne sont plus coupées, et chaque onglet s'ouvre en haut de sa liste.
+- La timeline prend toute la largeur de la fenêtre.
+- Plus de fenêtre bloquante « Sélectionne d'abord un clip » : un message clair s'affiche au-dessus de la timeline.
+
 ## 1.13.1
 - Bouton Pause pendant que tu te filmes (studio « Me filmer ») : « ⏸ Pause » arrête l'enregistrement sans finir la prise, « ▶ Reprendre » repart au même endroit ; rien n'est enregistré pendant la pause, le chrono s'arrête et le prompteur aussi. Touche P. Une seule vidéo à la fin, sans le temps de pause.
 - Même bouton Pause pour l'enregistrement de voix off (onglet Outils).

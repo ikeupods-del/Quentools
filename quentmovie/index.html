@@ -38,6 +38,8 @@ kbd{background:var(--pan3);border:1px solid var(--ligne);border-bottom-width:2px
 .media .nom small{display:block;color:var(--mut)}
 .grille{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .grille.g3{grid-template-columns:repeat(3,1fr)}
+#signal{position:fixed;left:50%;bottom:64px;transform:translateX(-50%) translateY(10px);background:#2a2a30;color:#fff;border:1px solid #ffffff22;border-radius:10px;padding:10px 16px;font-size:13px;box-shadow:0 10px 30px #0008;opacity:0;pointer-events:none;transition:.2s;z-index:60;max-width:70vw;text-align:center}#signal.vu{opacity:1;transform:translateX(-50%)}
+[draggable=true]{cursor:grab}.son[draggable=true] .nom{cursor:grab}
 .carte{background:var(--pan2);border:1px solid transparent;border-radius:8px;overflow:hidden;cursor:pointer;text-align:center;font-size:11.5px;position:relative}
 .carte:hover{border-color:var(--ac)}
 .carte img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#000}
@@ -95,7 +97,7 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 #entetes #eV2 b{color:#b9a6ff}#entetes #eA b{color:#7fd4a6}
 .piste .vide2{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--mut);opacity:.7;pointer-events:none;white-space:nowrap}
 #scroll{flex:1;overflow:auto;position:relative;min-height:0}
-#lane{position:relative;min-height:100%}
+#lane{position:relative;min-height:100%;min-width:100%}
 #regle{height:22px;position:sticky;top:0;background:var(--pan2);border-bottom:1px solid var(--ligne);cursor:pointer;z-index:6}
 #regle i{position:absolute;top:0;bottom:0;border-left:1px solid var(--ligne);padding-left:3px;font-size:10px;color:var(--mut);font-style:normal;pointer-events:none}
 #regle b{position:absolute;top:10px;width:0;height:0;border:5px solid transparent;border-top-color:#ffb400;transform:translateX(-5px);cursor:pointer}
@@ -191,7 +193,7 @@ details.opts{background:var(--pan2);border-radius:8px;padding:8px 10px;margin:8p
 .sc-props{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
 .vig{width:30px;height:30px;padding:0;border-radius:6px;overflow:hidden;display:grid;place-items:center;font-size:12px;color:var(--mut)}.vig img{width:100%;height:100%;object-fit:cover}.vig.on{outline:2px solid var(--ac);outline-offset:1px}
 .vig.gr{width:86px;height:56px}
-.grille{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;max-height:150px;overflow:auto}
+.sc .grille{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;max-height:150px;overflow:auto}
 .sc-txt{flex:1;min-width:0}.sc-tete{display:flex;align-items:center;gap:6px;margin-bottom:4px}
 .sc-tete .num{flex:none;width:22px;height:22px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
 .sc-tete .sec{flex:1;min-width:0;background:transparent;border:1px dashed var(--ligne);padding:2px 6px}
@@ -429,6 +431,17 @@ function newClip(m) {
 }
 const newSolid = (color, dur = 3) => base({ kind: 'solid', color, dur, hasAudio: false });
 const curClip = () => proj.clips[sel];
+// Clip visé par une action de la bibliothèque : le clip sélectionné, sinon celui sous la tête de lecture (sélectionné au passage)
+function clipCible() {
+  if (proj.clips[sel]) return proj.clips[sel];
+  if (!proj.clips.length) return null;
+  const st = starts(); let i = st.findIndex((d, k) => gt >= d && gt < d + effDur(proj.clips[k]));
+  if (i < 0) i = gt >= total() ? proj.clips.length - 1 : 0;
+  sel = i; selA = -1; selP = -1; selCut = -1; return proj.clips[i];
+}
+// Message bref au-dessus de la timeline (remplace les fenêtres d'alerte bloquantes)
+function signal(t) { let el = $('#signal'); if (!el) { el = document.createElement('div'); el.id = 'signal'; document.body.appendChild(el); } el.textContent = t; el.classList.add('vu'); clearTimeout(signal.t); signal.t = setTimeout(() => el.classList.remove('vu'), 3200); aide(esc(t)); }
+const sansClipMsg = 'Ajoute d’abord une vidéo ou une photo dans la timeline (glisse-la depuis Médias ou clique sur ＋).';
 const fxDef = (list, id) => list.find(d => d.id === id);
 const clone = o => JSON.parse(JSON.stringify(o));
 function normaliser(c) { // anciens projets : ajoute les champs manquants
@@ -504,10 +517,10 @@ function sourceVignette() {
 function navigateur() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   const el = $('#navbody'), keep = el.scrollTop; let h = '';
-  const sansClip = '<p class="mut">Sélectionne d’abord un clip dans la timeline.</p>';
+  const sansClip = '<p class="mut">Clique sur un titre (il va sur le clip sélectionné ou sous la tête de lecture) ou glisse-le sur un clip de la timeline. Timeline vide : un écran titre est créé.</p>';
   if (tab === 'medias') {
     h = `<button id="bImp2" class="pri" style="width:100%">＋ Importer des fichiers</button>
-      <p class="mut">Tous les formats : vidéos (.mov, .mp4, .mkv, .avi…), photos (JPG, PNG, HEIC, TIFF…), sons (MP3, WAV, M4A, FLAC…). Glisse-les ici ou dans la timeline.</p>
+      <p class="mut">Tous les formats : vidéos (.mov, .mp4, .mkv, .avi…), photos (JPG, PNG, HEIC, TIFF…), sons (MP3, WAV, M4A, FLAC…). Glisse-les ici ou dans la timeline. Pour mettre un média dans le montage : glisse-le sur la timeline, double-clique dessus ou clique sur ＋.</p>
       <div class="ligne" style="margin-bottom:8px"><input type="text" id="lienVideo" placeholder="🔗 Colle un lien YouTube, TikTok, Instagram, Facebook, X…" style="flex:1"><button class="pri" data-outil="lien" style="flex:none">Télécharger</button></div><div id="lienRes" class="mut"></div>
       ${medias.length ? `<div class="ligne" style="margin-bottom:8px"><button data-outil="medias-inutiles" title="Supprime les médias qui ne servent pas dans le montage en cours">🧹 Supprimer les inutilisés</button><button data-outil="medias-tous" title="Supprime tous les médias (le montage est vidé)">🗑 Tout supprimer</button></div>` : ''}` +
       (medias.map((m, i) => `<div class="media" draggable="true" data-drag="media:${i}">${vignette(m)}<div class="nom">${esc(m.file)}<small>${m.kind === 'image' ? 'Photo' : m.kind === 'audio' ? 'Son · ' + fmt(m.duration) : fmt(m.duration) + (m.native ? '' : ' · ' + esc(m.codec))}</small></div>
@@ -517,47 +530,47 @@ function navigateur() {
   } else if (tab === 'effets') {
     const src = sourceVignette(), cats = [...new Set(CAT.video.map(d => d.cat))];
     const looks = [...LIB().luts.map(x => ({ ...x, file: 'lib:' + x.file, cat: 'Looks pro · ' + x.cat })), ...PACKS.luts.map(x => ({ ...x, cat: 'Mes looks · ' + x.cat }))];
-    const carteLook = x => `<div class="carte" data-lut="${esc(x.file)}" data-n="${esc(x.nom.toLowerCase())}">${src ? `<img loading="lazy" draggable="false" src="/api/fxthumb?file=${enc(src.file)}&kind=${src.kind}&t=${src.t}&lut=${enc(x.file)}" alt="">` : ''}<span>${esc(x.nom)}</span></div>`;
-    h = `<input type="text" id="cherche" placeholder="Chercher un effet ou un look…" style="margin-bottom:6px"><p class="mut">${sel >= 0 ? 'Clique (ou glisse sur un clip) pour ajouter l’effet.' : 'Sélectionne un clip dans la timeline.'}</p>` +
+    const carteLook = x => `<div class="carte" draggable="true" data-drag="lut:${esc(x.file)}" data-lut="${esc(x.file)}" data-n="${esc(x.nom.toLowerCase())}">${src ? `<img loading="lazy" draggable="false" src="/api/fxthumb?file=${enc(src.file)}&kind=${src.kind}&t=${src.t}&lut=${enc(x.file)}" alt="">` : ''}<span>${esc(x.nom)}</span></div>`;
+    h = `<input type="text" id="cherche" placeholder="Chercher un effet ou un look…" style="margin-bottom:6px"><p class="mut">Clique pour ajouter l’effet au clip ${sel >= 0 ? 'sélectionné' : 'sous la tête de lecture'}, ou glisse-le sur un clip de la timeline.</p>` +
       `<p class="mut">Les <b>looks pro</b> sont des étalonnages complets (fichiers LUT) ; l’intensité se règle dans l’inspecteur. <a href="#" data-outil="lut-import">Importer un look .cube</a></p>` +
       [...new Set(looks.map(x => x.cat))].map(cat => `<h3>${esc(cat)}</h3><div class="grille">` + looks.filter(x => x.cat === cat).map(carteLook).join('') + '</div>').join('') +
       cats.map(cat => `<h3>${esc(cat)}</h3><div class="grille">` + CAT.video.filter(d => d.cat === cat).map(d =>
         `<div class="carte ${d.dispo ? '' : 'off'}" draggable="true" data-drag="fx:${d.id}" data-fx="${d.id}" data-n="${esc(d.nom.toLowerCase())}">${src ? `<img loading="lazy" draggable="false" src="/api/fxthumb?file=${enc(src.file)}&kind=${src.kind}&t=${src.t}&fx=${d.id}" alt="">` : ''}<span>${esc(d.nom)}</span></div>`).join('') + '</div>').join('');
   } else if (tab === 'transitions') {
     const cut = selCut >= 0 ? selCut : sel, tr = cut >= 0 && proj.clips[cut] ? proj.clips[cut].transition : null;
-    h = `<p class="mut">${cut >= 0 && cut < proj.clips.length - 1 ? `Transition entre le clip ${cut + 1} et le clip ${cut + 2}.` : 'Clique sur le rond ⋈ entre deux clips, puis choisis une transition.'}</p>
+    h = `<p class="mut">${cut >= 0 && cut < proj.clips.length - 1 ? `Transition entre le clip ${cut + 1} et le clip ${cut + 2}.` : 'Clique sur le rond ⋈ entre deux clips puis choisis une transition, ou glisse une transition sur un clip (côté gauche ou droit).'}</p>
       <label class="l">Durée<span id="trDur">${fmt(tr ? tr.dur : 0.6)}</span></label><input type="range" id="trDurR" min="0.2" max="2" step="0.1" value="${tr ? tr.dur : 0.6}">
       <div class="grille" style="margin-top:8px"><div class="carte txt" data-tr="none">Aucune (coupe franche)</div>` +
-      CAT.transitions.map(t => `<div class="carte txt" data-tr="${t.id}" ${tr && tr.type === t.id ? 'style="border-color:var(--ac)"' : ''}>${esc(t.nom)}</div>`).join('') + '</div>' +
+      CAT.transitions.map(t => `<div class="carte txt" draggable="true" data-drag="tr:${t.id}" data-tr="${t.id}" ${tr && tr.type === t.id ? 'style="border-color:var(--ac)"' : ''}>${esc(t.nom)}</div>`).join('') + '</div>' +
       `<p style="margin-top:10px"><button id="bTrTous" style="width:100%">Appliquer à toutes les coupes</button></p>`;
   } else if (tab === 'titres') {
-    h = `<h3>Titres de reportage (animés)</h3>${sel < 0 ? sansClip : ''}<div class="grille">` + CAT.reportage.map(r => `<div class="carte txt" data-rep="${r.id}">${esc(r.nom)}</div>`).join('') + '</div>' +
-      `<h3>Titres simples</h3><div class="grille">` + CAT.titres.map(t => `<div class="carte txt" data-titre="${t.id}">${esc(t.nom)}</div>`).join('') + '</div>' +
+    h = `${sansClip}<h3>Titres de reportage (animés)</h3><div class="grille">` + CAT.reportage.map(r => `<div class="carte txt" draggable="true" data-drag="rep:${r.id}" data-rep="${r.id}">${esc(r.nom)}</div>`).join('') + '</div>' +
+      `<h3>Titres simples</h3><div class="grille">` + CAT.titres.map(t => `<div class="carte txt" draggable="true" data-drag="titre:${t.id}" data-titre="${t.id}">${esc(t.nom)}</div>`).join('') + '</div>' +
       `<h3>Fonds et écrans prêts</h3><div class="grille">
-        <div class="carte txt" data-ecran="titre">Écran titre</div><div class="carte txt" data-ecran="generique">Générique de fin</div>
-        <div class="carte txt" data-ecran="compte">Compte à rebours</div><div class="carte txt" data-ecran="flash">Flash info</div></div>
-       <div class="grille g3" style="margin-top:8px">` + CAT.generateurs.map(g => `<div class="carte" data-fond="${g.id}"><i class="sw" style="background:${g.color}"></i><span>${esc(g.nom)}</span></div>`).join('') + '</div>';
+        <div class="carte txt" draggable="true" data-drag="ecran:titre" data-ecran="titre">Écran titre</div><div class="carte txt" draggable="true" data-drag="ecran:generique" data-ecran="generique">Générique de fin</div>
+        <div class="carte txt" draggable="true" data-drag="ecran:compte" data-ecran="compte">Compte à rebours</div><div class="carte txt" draggable="true" data-drag="ecran:flash" data-ecran="flash">Flash info</div></div>
+       <div class="grille g3" style="margin-top:8px">` + CAT.generateurs.map(g => `<div class="carte" draggable="true" data-drag="fond:${g.id}" data-fond="${g.id}"><i class="sw" style="background:${g.color}"></i><span>${esc(g.nom)}</span></div>`).join('') + '</div>';
   } else if (tab === 'voix') {
-    h = `<p class="mut">${sel >= 0 ? 'Effets de voix et de son pour le clip sélectionné.' : 'Sélectionne un clip dans la timeline.'}</p><div class="grille">` + CAT.audio.map(d => `<div class="carte txt ${d.dispo ? '' : 'off'}" data-afx="${d.id}">${esc(d.nom)}</div>`).join('') + '</div>';
+    h = `<p class="mut">${sel >= 0 ? 'Effets de voix et de son pour le clip sélectionné (clique, ou glisse sur un clip).' : 'Clique (clip sous la tête de lecture) ou glisse l’effet sur un clip de la timeline.'}</p><div class="grille">` + CAT.audio.map(d => `<div class="carte txt ${d.dispo ? '' : 'off'}" draggable="true" data-drag="afx:${d.id}" data-afx="${d.id}">${esc(d.nom)}</div>`).join('') + '</div>';
   } else if (tab === 'sons' || tab === 'musiques') {
     const liste = tab === 'sons' ? LIB().sons : LIB().musiques, cats = [...new Set(liste.map(x => x.cat))];
-    h = `<p class="mut">${tab === 'sons' ? 'Bruitages créés pour QuentMovie, libres de droits.' : 'Musiques créées pour QuentMovie, libres de droits. Elles se mettent en boucle et baissent quand tu parles.'} ▶ pour écouter, ＋ pour ajouter à la tête de lecture.</p>` +
-      cats.map(cat => `<h3>${esc(cat)}</h3>` + liste.filter(x => x.cat === cat).map(x => `<div class="son"><button class="mini" data-play="${x.file}">${ap && ap._f === x.file ? '⏸' : '▶'}</button><div class="nom" title="${esc(x.nom)}">${esc(x.nom)}</div><span class="mut">${fmt(x.duree)}</span><button class="mini" data-ajout-son="${x.file}" title="Ajouter à la timeline">＋</button></div>`).join('')).join('');
+    h = `<p class="mut">${tab === 'sons' ? 'Bruitages créés pour QuentMovie, libres de droits.' : 'Musiques créées pour QuentMovie, libres de droits. Elles se mettent en boucle et baissent quand tu parles.'} ▶ pour écouter, ＋ pour ajouter à la tête de lecture, ou glisse-le dans la timeline à l’endroit voulu.</p>` +
+      cats.map(cat => `<h3>${esc(cat)}</h3>` + liste.filter(x => x.cat === cat).map(x => `<div class="son" draggable="true" data-drag="son:${x.file}"><button class="mini" data-play="${x.file}">${ap && ap._f === x.file ? '⏸' : '▶'}</button><div class="nom" title="${esc(x.nom)}">${esc(x.nom)}</div><span class="mut">${fmt(x.duree)}</span><button class="mini" data-ajout-son="${x.file}" title="Ajouter à la timeline">＋</button></div>`).join('')).join('');
     const mes = PACKS.sons.filter(x => tab === 'sons' ? x.duree <= 20 : x.duree > 20), mcats = [...new Set(mes.map(x => x.cat))];
-    h += mcats.map(cat => `<h3>Mes packs · ${esc(cat)}</h3>` + mes.filter(x => x.cat === cat).map(x => `<div class="son"><button class="mini" data-play="${esc(x.file)}">${ap && ap._f === x.file ? '⏸' : '▶'}</button><div class="nom" title="${esc(x.nom)}">${esc(x.nom)}</div><span class="mut">${fmt(x.duree)}</span><button class="mini" data-ajout-pack="${esc(x.file)}" title="Ajouter à la timeline">＋</button></div>`).join('')).join('') + packsLien();
+    h += mcats.map(cat => `<h3>Mes packs · ${esc(cat)}</h3>` + mes.filter(x => x.cat === cat).map(x => `<div class="son" draggable="true" data-drag="pack:${esc(x.file)}"><button class="mini" data-play="${esc(x.file)}">${ap && ap._f === x.file ? '⏸' : '▶'}</button><div class="nom" title="${esc(x.nom)}">${esc(x.nom)}</div><span class="mut">${fmt(x.duree)}</span><button class="mini" data-ajout-pack="${esc(x.file)}" title="Ajouter à la timeline">＋</button></div>`).join('')).join('') + packsLien();
   } else if (tab === 'stickers') {
     const cats = [...new Set(LIB().stickers.map(x => x.cat))], L = LIB();
-    const carte = (x, typ, src, cls = '') => `<div class="carte" data-pose="${typ}" data-f="${esc(x.file.startsWith('pack:') ? x.file : 'lib:' + x.file)}" title="${esc(x.nom)}"><img ${cls} loading="lazy" draggable="false" src="${src}" alt=""><span>${esc(x.nom)}</span></div>`;
+    const carte = (x, typ, src, cls = '') => `<div class="carte" draggable="true" data-drag="pose:${typ}|${esc(x.file.startsWith('pack:') ? x.file : 'lib:' + x.file)}" data-pose="${typ}" data-f="${esc(x.file.startsWith('pack:') ? x.file : 'lib:' + x.file)}" title="${esc(x.nom)}"><img ${cls} loading="lazy" draggable="false" src="${src}" alt=""><span>${esc(x.nom)}</span></div>`;
     const frame = (f, t) => `/api/frame?file=${enc(f)}&t=${t}`;
     const groupe = (titre, liste, typ, src, cls, g3 = true) => liste.length ? `<h3>${titre}</h3><div class="grille ${g3 ? 'g3' : ''}">` + liste.map(x => carte(x, typ, src(x), cls)).join('') + '</div>' : '';
-    h = `<p class="mut">${sel >= 0 ? 'Clique pour poser l’élément sur le clip sélectionné, puis règle-le dans l’inspecteur (calques).' : 'Sélectionne d’abord un clip dans la timeline.'}</p>` +
+    h = `<p class="mut">${sel >= 0 ? 'Clique pour poser l’élément sur le clip sélectionné, ou glisse-le sur un clip de la timeline, puis règle-le dans l’inspecteur (calques).' : 'Clique (il va sur le clip sous la tête de lecture) ou glisse l’élément sur un clip de la timeline.'}</p>` +
       groupe('QuenTools', L.marque || [], 'image', x => '/lib/' + x.file, 'class="st"', false) +
       groupe('Animations sur fond vert', L.fondvert, 'vert', x => frame('lib:' + x.file, Math.min(1.2, x.duree / 2))) +
       [...new Set(L.calques.map(x => x.cat))].map(cat => groupe('Effets animés · ' + esc(cat), L.calques.filter(x => x.cat === cat), 'lumiere', x => frame('lib:' + x.file, 1.5))).join('') +
       groupe('Cadres', L.cadres, 'cadre', x => '/lib/' + x.file, 'class="st"') +
       `<h3>Décors pour le fond vert</h3><p class="mut">Filme-toi devant un fond vert, sélectionne le clip puis clique sur un décor : il remplace le fond. Sans clip sélectionné, le décor est ajouté à la timeline.</p>` +
-      [...new Set(L.fonds.map(x => x.cat))].map(cat => `<h3 class="mut">${esc(cat)}</h3><div class="grille">` + L.fonds.filter(x => x.cat === cat).map(x => `<div class="carte" data-decor="lib:${esc(x.file)}" data-kind="${x.kind || 'image'}" title="${esc(x.nom)}"><img loading="lazy" draggable="false" src="${x.kind === 'video' ? frame('lib:' + x.file, 1) : '/lib/' + x.file}" alt="" style="aspect-ratio:16/9"><span>${esc(x.nom)}</span></div>`).join('') + '</div>').join('') +
-      cats.map(cat => `<h3>${esc(cat)}</h3><div class="grille g3">` + LIB().stickers.filter(x => x.cat === cat).map(x => `<div class="carte" data-sticker="${x.file}" title="${esc(x.nom)}"><img class="st" loading="lazy" draggable="false" src="/lib/${x.file}" alt=""><span>${esc(x.nom)}</span></div>`).join('') + '</div>').join('') +
+      [...new Set(L.fonds.map(x => x.cat))].map(cat => `<h3 class="mut">${esc(cat)}</h3><div class="grille">` + L.fonds.filter(x => x.cat === cat).map(x => `<div class="carte" draggable="true" data-drag="decor:${x.kind || 'image'}|lib:${esc(x.file)}" data-decor="lib:${esc(x.file)}" data-kind="${x.kind || 'image'}" title="${esc(x.nom)}"><img loading="lazy" draggable="false" src="${x.kind === 'video' ? frame('lib:' + x.file, 1) : '/lib/' + x.file}" alt="" style="aspect-ratio:16/9"><span>${esc(x.nom)}</span></div>`).join('') + '</div>').join('') +
+      cats.map(cat => `<h3>${esc(cat)}</h3><div class="grille g3">` + LIB().stickers.filter(x => x.cat === cat).map(x => `<div class="carte" draggable="true" data-drag="sticker:${x.file}" data-sticker="${x.file}" title="${esc(x.nom)}"><img class="st" loading="lazy" draggable="false" src="/lib/${x.file}" alt=""><span>${esc(x.nom)}</span></div>`).join('') + '</div>').join('') +
       groupe('Mes packs · images', PACKS.images, 'image', x => '/media/' + enc(x.file), 'class="st"') +
       groupe('Mes packs · vidéos', PACKS.videos, 'video', x => frame(x.file, Math.min(1, (x.duree || 2) / 2))) + packsLien();
   } else if (tab === 'outils') h = outilsHtml();
@@ -565,7 +578,7 @@ function navigateur() {
   const b = $('#bImp2'); if (b) b.onclick = () => $('#fichiers').click();
   const ch = $('#cherche'); if (ch) ch.oninput = e => { const q = e.target.value.toLowerCase(); el.querySelectorAll('.carte').forEach(c => { c.style.display = c.dataset.n.includes(q) ? '' : 'none'; }); };
 }
-function allerOnglet(t) { tab = t; navigateur(); }
+function allerOnglet(t) { if (t !== tab) $('#navbody').scrollTop = 0; tab = t; navigateur(); } // nouvel onglet : liste affichée depuis le haut
 $('#tabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) allerOnglet(b.dataset.tab); };
 $('#navbody').addEventListener('click', e => {
   const t = e.target.closest('[data-add],[data-del],[data-calque],[data-piste],[data-fx],[data-tr],[data-titre],[data-rep],[data-afx],[data-play],[data-ajout-son],[data-ajout-pack],[data-sticker],[data-pose],[data-decor],[data-lut],[data-ecran],[data-fond],#bTrTous,[data-outil]'); if (!t) return;
@@ -592,6 +605,7 @@ $('#navbody').addEventListener('click', e => {
   else if (d.fond) { const g = CAT.generateurs.find(x => x.id === d.fond); insererClip(newSolid(g.color, 3)); }
   else if (d.outil) outil(d.outil);
 });
+$('#navbody').addEventListener('dblclick', e => { const m = e.target.closest('.media'); if (!m || e.target.closest('button')) return; const i = +m.dataset.drag.split(':')[1]; const md = medias[i]; if (!md) return; if (md.kind === 'audio') ajouterSon(md.file, { vol: 100 }); else ajouterClip(md, sel >= 0 ? sel + 1 : undefined); signal(`« ${md.file} » ajouté à la timeline.`); });
 $('#navbody').addEventListener('input', e => { if (e.target.id === 'trDurR') { const cut = selCut >= 0 ? selCut : sel, c = proj.clips[cut]; $('#trDur').textContent = fmt(+e.target.value); if (c && c.transition) { c.transition.dur = +e.target.value; commit(); tlDessin(); } } });
 // Fichiers utilisés par le montage en cours (clips, images de fond, calques, décors, pistes)
 function mediasUtilises() {
@@ -619,14 +633,40 @@ async function supprimerMedia(m) {
   sel = Math.min(sel, proj.clips.length - 1); await chargerMedias(); commit(); tout(); apercu();
 }
 document.addEventListener('dragstart', e => { const d = e.target.closest && e.target.closest('[data-drag]'); if (d) e.dataTransfer.setData('text/plain', d.dataset.drag); });
+// Dépôt d'un élément de la bibliothèque sur la timeline (sur un clip, entre deux clips ou dans le vide)
 function dropSur(e, idxClip) {
-  const v = e.dataTransfer.getData('text/plain'); if (!v) return false; const [k, id] = v.split(':');
-  if (k === 'fx' && idxClip >= 0) { ajouterFx(idxClip, id); return true; }
+  const v = e.dataTransfer.getData('text/plain'); if (!v) return false;
+  const p = v.indexOf(':'), k = v.slice(0, p), id = v.slice(p + 1);
+  const r = $('#lane').getBoundingClientRect(), x = +Math.max(0, (e.clientX - r.left) / zoom).toFixed(1), st = starts();
+  const avant = idxClip >= 0 && x < st[idxClip] + effDur(proj.clips[idxClip]) / 2; // moitié gauche du clip visé
+  const surClip = () => { if (idxClip >= 0) { sel = idxClip; selA = -1; selP = -1; selCut = -1; } };
+  const aLaFin = () => { sel = idxClip >= 0 ? (avant ? idxClip - 1 : idxClip) : proj.clips.length - 1; }; // insererClip ajoute après « sel »
+  if (k === 'fx') { surClip(); ajouterFx(idxClip, id); return true; }
+  if (k === 'afx') { surClip(); ajouterAfx(idxClip, id); return true; }
+  if (k === 'titre' || k === 'rep') {
+    if (idxClip < 0) { aLaFin(); insererClip(newSolid('#0b1d3a', k === 'rep' ? 5 : 4)); idxClip = sel; }
+    (k === 'titre' ? appliquerTitre : appliquerReportage)(id, idxClip); return true;
+  }
+  if (k === 'ecran') { aLaFin(); ecranPret(id); return true; }
+  if (k === 'fond') { aLaFin(); const g = CAT.generateurs.find(y => y.id === id); if (g) insererClip(newSolid(g.color, 3)); return true; }
+  if (k === 'tr') {
+    if (proj.clips.length < 2) { signal('Il faut au moins deux clips dans la timeline pour une transition.'); return true; }
+    let cut = idxClip < 0 ? proj.clips.length - 2 : avant ? idxClip - 1 : idxClip; cut = clamp(cut, 0, proj.clips.length - 2);
+    selCut = cut; sel = -1; appliquerTransition(id); signal(`Transition entre le clip ${cut + 1} et le clip ${cut + 2}.`); return true;
+  }
+  if (k === 'son' || k === 'pack') {
+    const file = k === 'son' ? 'lib:' + id : id, it = k === 'son' ? LIB().musiques.some(y => y.file === id) : (packItem(id) || {}).duree > 20;
+    ajouterSon(file, it ? { vol: 40, fade: true, loop: true, duck: true, start: x } : { vol: 100, start: x }); return true;
+  }
+  if (k === 'sticker') { surClip(); ajouterCalque('lib:' + id, 'image'); return true; }
+  if (k === 'pose') { surClip(); const [typ, f] = [id.slice(0, id.indexOf('|')), id.slice(id.indexOf('|') + 1)]; ajouterCalque(f, typ === 'cadre' || typ === 'image' ? 'image' : 'video', POSES[typ]); return true; }
+  if (k === 'decor') { surClip(); if (idxClip < 0) sel = -1; const [kind, f] = [id.slice(0, id.indexOf('|')), id.slice(id.indexOf('|') + 1)]; appliquerDecor(f, kind); return true; }
+  if (k === 'lut') { surClip(); ajouterLut(id); return true; }
   if (k === 'media') {
     const m = medias[+id]; if (!m) return false;
-    if (e.target.closest && e.target.closest('#pV2') && m.kind !== 'audio') { const r = $('#lane').getBoundingClientRect(); ajouterPiste(m, +Math.max(0, (e.clientX - r.left) / zoom).toFixed(1)); return true; }
-    if (m.kind === 'audio') { const r = $('#lane').getBoundingClientRect(); ajouterSon(m.file, { start: +Math.max(0, (e.clientX - r.left) / zoom).toFixed(1) }); }
-    else ajouterClip(m, idxClip >= 0 ? idxClip + 1 : undefined);
+    if (e.target.closest && e.target.closest('#pV2') && m.kind !== 'audio') { ajouterPiste(m, x); return true; }
+    if (m.kind === 'audio') ajouterSon(m.file, { start: x });
+    else ajouterClip(m, idxClip >= 0 ? (avant ? idxClip : idxClip + 1) : undefined);
     return true;
   }
   return false;
@@ -661,11 +701,11 @@ function inspecteurPiste(el) {
 // ---------- Actions d'ajout ----------
 function insererClip(c) { const i = sel >= 0 ? sel + 1 : proj.clips.length; proj.clips.splice(i, 0, c); commit(); sel = i; selA = -1; selP = -1; tout(); placerTete(starts()[i]); }
 function ajouterFx(i, id) {
-  const c = proj.clips[i]; if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
+  let c = proj.clips[i]; if (!c) { c = clipCible(); i = sel; } if (!c) return signal(sansClipMsg);
   const d = fxDef(CAT.video, id), p = {}; d.params.forEach(q => { p[q.k] = q.def; }); c.fx.push({ id, p }); sel = i; commit(); tout(); apercu();
 }
 function ajouterAfx(i, id) {
-  const c = proj.clips[i]; if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
+  let c = proj.clips[i]; if (!c) { c = clipCible(); i = sel; } if (!c) return signal(sansClipMsg);
   const d = fxDef(CAT.audio, id), p = {}; d.params.forEach(q => { p[q.k] = q.def; }); c.afx.push({ id, p }); commit(); inspecteur();
 }
 // Réglages de départ selon le type d'élément posé sur un clip
@@ -676,14 +716,14 @@ const POSES = {
   image: {}, video: {}
 };
 function ajouterCalque(file, kind, extra = {}) {
-  const c = curClip(); if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
+  const c = clipCible(); if (!c) return signal(sansClipMsg);
   c.overlays.push({ file, kind: kind === 'video' ? 'video' : 'image', x: 50, y: 50, scale: /lib:stickers/.test(file) ? 25 : 40, rot: 0, opacity: 100, start: 0, dur: 0, anim: 'pop', mode: '', plein: '', key: false, keySim: 0.3, ...extra });
-  commit(); inspecteur(); apercu();
+  commit(); tout(); apercu(); signal('Élément posé sur le clip ' + (sel + 1) + ' : règle-le dans l’inspecteur à droite.');
 }
 function ajouterLut(file) {
-  const c = curClip(); if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
+  const c = clipCible(); if (!c) return signal(sansClipMsg);
   if (c.kind === 'audio') return alert('Les looks s’appliquent aux vidéos et aux photos.');
-  c.lut = { file, amount: c.lut ? c.lut.amount : 100 }; commit(); inspecteur(); apercu(); aide(`Look « ${esc(nomOf(file))} » appliqué. Règle son intensité dans l’inspecteur.`);
+  c.lut = { file, amount: c.lut ? c.lut.amount : 100 }; commit(); tout(); apercu(); aide(`Look « ${esc(nomOf(file))} » appliqué. Règle son intensité dans l’inspecteur.`);
 }
 // Couleur du fond vert devinée dans les coins de l'image (le mur derrière la personne)
 function couleurDuFond(c) {
@@ -713,21 +753,28 @@ async function appliquerDecor(file, kind) {
 const packsLien = () => `<p class="mut" style="margin-top:12px">📦 Tu as téléchargé des packs gratuits ? <a href="#" data-outil="packs">Ajoute-les dans « Mes packs »</a>.</p>`;
 function appliquerTransition(type) {
   const cut = selCut >= 0 ? selCut : sel;
-  if (cut < 0 || cut >= proj.clips.length - 1) return alert('Choisis d’abord le rond ⋈ entre deux clips dans la timeline.');
+  if (cut < 0 || cut >= proj.clips.length - 1) return signal(proj.clips.length < 2 ? 'Il faut au moins deux clips dans la timeline pour une transition.' : 'Clique sur le rond ⋈ entre deux clips (ou glisse la transition sur un clip).');
   proj.clips[cut].transition = type === 'none' ? null : { type, dur: +($('#trDurR') ? $('#trDurR').value : 0.6) };
   commit(); tlDessin(); navigateur();
 }
-function appliquerTitre(id) {
-  const c = curClip(); if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
+function appliquerTitre(id, idx) {
+  if (idx >= 0) { sel = idx; selA = -1; selP = -1; }
+  let c = idx >= 0 ? proj.clips[idx] : clipCible();
+  if (!c) { c = newSolid('#0b1d3a', 4); insererClip(c); } // timeline vide : écran titre sur fond uni
   const t = CAT.titres.find(x => x.id === id);
   c.textStyle = t.style; c.textAnim = t.anim; if (t.color) c.textColor = t.color; if (t.pos) c.textPos = t.pos; if (t.size) c.textSize = t.size;
-  if (!c.text) c.text = 'Ton texte ici'; commit(); inspecteur(); apercu();
+  if (!c.text) c.text = 'Ton texte ici'; commit(); tout(); apercu(); focusTexte();
+  signal(`Titre « ${t.nom} » ajouté au clip ${sel + 1} : écris ton texte dans l’inspecteur à droite.`);
 }
-function appliquerReportage(id) {
-  const c = curClip(); if (!c) return alert('Sélectionne d’abord un clip dans la timeline.');
+// Après l'ajout d'un titre : l'inspecteur montre le champ de texte, prêt à être modifié
+function focusTexte(champ = 'text') { setTimeout(() => { const f = document.querySelector(`#insp [data-p="${champ}"]`); if (!f) return; const d = f.closest('details'); if (d) d.open = true; const I = $('#insp'); I.scrollTop += f.getBoundingClientRect().top - I.getBoundingClientRect().top - 90; f.focus({ preventScroll: true }); if (f.select) f.select(); }, 80); }
+function appliquerReportage(id, idx) {
+  if (idx >= 0) { sel = idx; selA = -1; selP = -1; }
+  let c = idx >= 0 ? proj.clips[idx] : clipCible();
+  if (!c) { c = newSolid('#0b1d3a', 5); insererClip(c); }
   const r = CAT.reportage.find(x => x.id === id);
   c.titre = { preset: id, l1: r.l1, l2: r.l2, color: r.color, font: 'arial', start: 0.3, dur: id === 'generique' || id === 'compte' || id === 'progression' ? 0 : Math.min(5, Math.max(2, effDur(c) - 0.5)), speed: 14 };
-  commit(); inspecteur(); apercu();
+  commit(); tout(); apercu(); focusTexte('titre.l1'); signal(`« ${r.nom} » ajouté au clip ${sel + 1} : change le texte dans l’inspecteur à droite.`);
 }
 function ecranPret(id) {
   const reps = { titre: ['chapitre', '#0b1d3a', 4, { l1: 'MON TITRE', l2: 'Un sous-titre' }], generique: ['generique', '#000000', 10, {}], compte: ['compte', '#000000', 5, { l1: '5' }], flash: ['flash', '#0b1d3a', 6, {}] }[id];
@@ -1852,8 +1899,8 @@ async function parolePourClips(indices, o, surEtat = t => aide(t)) {
 }
 async function outilParole(portee, o, res) {
   const e = t => { const el = res && $(res); if (el) el.innerHTML = t; aide(t); };
-  const indices = portee === 'tout' ? proj.clips.map((c, i) => i) : sel >= 0 ? [sel] : [];
-  if (!indices.length) return alert('Sélectionne un clip vidéo ou audio dans la timeline.');
+  const indices = portee === 'tout' ? proj.clips.map((c, i) => i) : clipCible() ? [sel] : [];
+  if (!indices.length) return signal(sansClipMsg);
   try {
     const r = await parolePourClips(indices, o, e);
     e(`✅ ${o.sous ? `${r.n} sous-titres créés` : ''}${o.sous && o.couper ? ' · ' : ''}${o.couper ? `${fmt(r.gagne)} de blancs et d’hésitations coupés` : ''} (${r.clips} clip${r.clips > 1 ? 's' : ''}). Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} si besoin.`);
@@ -1967,7 +2014,7 @@ async function outil(nom) {
   if (nom === 'packs-maj') { await chargerPacks(); navigateur(); aide(`Mes packs : ${PACKS.sons.length} sons, ${PACKS.images.length} images, ${PACKS.videos.length} vidéos, ${PACKS.luts.length} looks.`); return; }
   if (nom === 'lut-import') { $('#fichiers').click(); return; }
   if (nom === 'silences') {
-    const c = curClip(); if (!c || !['video', 'audio'].includes(c.kind)) return alert('Sélectionne un clip vidéo ou audio dans la timeline.');
+    const c = clipCible(); if (!c || !['video', 'audio'].includes(c.kind)) return signal('Choisis un clip vidéo ou audio dans la timeline (clique dessus), puis recommence.');
     $('#oSilRes').textContent = 'Analyse du son en cours…';
     try {
       const { silences } = await (await api(`/api/silences?file=${enc(c.file)}&in=${c.in}&out=${c.out}&db=${$('#oDb').value}&min=${$('#oMin').value}`)).json();

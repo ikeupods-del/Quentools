@@ -165,6 +165,41 @@ function chromium() {
   check('aucune erreur dans la page du générateur', !errs2.length, errs2.slice(0, 3).join(' | '));
   commons.close(); app2.stop();
 
+  // 6) bibliothèque → timeline : titres sans clip, double-clic, glisser-déposer de chaque type d'élément
+  await ev(() => { proj.clips = []; proj.audio = []; proj.pistes = []; sel = -1; selA = -1; selP = -1; gt = 0; tout(); });
+  const glisse = async (src, x, y) => { const el = await pg.$(src); await el.scrollIntoViewIfNeeded(); const sb = await el.boundingBox(); await pg.mouse.move(sb.x + sb.width / 2, sb.y + sb.height / 2); await pg.mouse.down(); await pg.mouse.move(x - 30, y, { steps: 8 }); await pg.mouse.move(x, y, { steps: 4 }); await pg.mouse.up(); await pg.waitForTimeout(500); };
+  const boite = async i => (await pg.$(`.clip[data-i="${i}"]`)).boundingBox();
+  await pg.click('#tabs button[data-tab="titres"]');
+  check('titres : listes entières (pas coupées)', await ev(() => [...document.querySelectorAll('#navbody .grille')].every(g => getComputedStyle(g).maxHeight === 'none')));
+  await pg.click('[data-titre] >> nth=0'); await pg.waitForTimeout(300);
+  check('titre sur timeline vide : écran titre créé, texte prêt à écrire', await ev(() => proj.clips.length === 1 && proj.clips[0].kind === 'solid' && !!proj.clips[0].text && document.activeElement && document.activeElement.dataset.p === 'text'));
+  await pg.click('#tabs button[data-tab="medias"]');
+  check('changer d’onglet : liste affichée depuis le haut', await ev(() => $('#navbody').scrollTop === 0));
+  const iVid = await ev(() => medias.findIndex(m => m.file === 'a.mp4'));
+  await pg.dblclick(`.media[data-drag="media:${iVid}"] .nom`); await pg.waitForTimeout(300);
+  check('double-clic sur un média : ajouté à la timeline', await ev(() => proj.clips.length === 2 && proj.clips[1].kind === 'video'));
+  const b0 = await boite(0); await glisse(`.media[data-drag="media:${await ev(() => medias.findIndex(m => m.file === 'photo.png'))}"]`, b0.x + 4, b0.y + b0.height / 2);
+  check('glisser une photo sur la moitié gauche d’un clip : placée avant', await ev(() => proj.clips.map(c => c.kind).join() === 'image,solid,video'));
+  await pg.click('#tabs button[data-tab="titres"]'); const bv = await boite(2);
+  await glisse('[data-rep] >> nth=0', bv.x + bv.width / 2, bv.y + bv.height / 2);
+  check('glisser un titre de reportage sur un clip', await ev(() => !!proj.clips[2].titre));
+  await ev(() => { sel = -1; gt = starts()[0] + 0.5; }); await pg.click('[data-titre] >> nth=1'); await pg.waitForTimeout(200);
+  check('titre sans clip sélectionné : posé sur le clip sous la tête de lecture', await ev(() => !!proj.clips[0].text && sel === 0));
+  await pg.click('#tabs button[data-tab="transitions"]'); const b1 = await boite(1);
+  await glisse('[data-tr]:not([data-tr="none"]) >> nth=0', b1.x + b1.width - 6, b1.y + b1.height / 2);
+  check('glisser une transition sur la droite d’un clip', await ev(() => !!proj.clips[1].transition));
+  await pg.click('#tabs button[data-tab="musiques"]');
+  await glisse('#navbody .son >> nth=0', b1.x + 30, b1.y + b1.height + 30);
+  check('glisser une musique dans la timeline : à l’endroit du dépôt, en boucle', await ev(() => proj.audio.length === 1 && proj.audio[0].loop && proj.audio[0].start > 0));
+  await pg.click('#tabs button[data-tab="stickers"]'); const bv2 = await boite(2);
+  await glisse('[data-sticker] >> nth=0', bv2.x + bv2.width / 2, bv2.y + bv2.height / 2);
+  check('glisser un autocollant sur un clip', await ev(() => proj.clips[2].overlays.length === 1));
+  await pg.click('#tabs button[data-tab="effets"]');
+  await glisse('[data-fx] >> nth=0', bv2.x + bv2.width / 2, bv2.y + bv2.height / 2);
+  check('glisser un effet sur un clip', await ev(() => proj.clips[2].fx.length >= 1));
+  await ev(() => { proj.clips = []; sel = -1; tout(); }); await pg.click('[data-fx] >> nth=0');
+  check('effet sans aucun clip : message clair, pas de fenêtre bloquante', await ev(() => /Ajoute d’abord/.test($('#signal').textContent)));
+
   // 5) studio : pause pendant la prise (caméra et micro de test de Chromium)
   const nAvant = await pg.evaluate(() => proj.clips.length);
   await pg.evaluate(() => ouvrirStudio()); await pg.waitForFunction(() => studio && studio.flux, null, { timeout: 15000 });
