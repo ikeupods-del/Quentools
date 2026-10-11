@@ -34,13 +34,28 @@ jobs:
         run: npm ci
       - name: Contrôler le moteur (effets, transitions, export)
         run: npm test
+      - name: Contrôler le moteur sans ffprobe (comme sur un Mac à puce Apple sans Rosetta)
+        run: QM_SANS_FFPROBE=1 node tests/run.js | tail -5 && QM_SANS_FFPROBE=1 node tests/generateur.js
+      - name: Essai réel du générateur (Wikipédia, images, voix du Mac, montage)
+        run: QM_RESEAU=1 QM_SANS_FFPROBE=1 node tests/generateur-reel.js
       - name: Construire l'application
         run: npm run dist
+      - name: Contrôler que chaque programme livré tourne sur puce Apple
+        run: |
+          fautifs=0
+          while IFS= read -r -d '' f; do
+            if file -b "$f" | grep -q '^Mach-O'; then
+              a=$(lipo -archs "$f" 2>/dev/null || echo '?')
+              case " $a " in *" arm64 "*|*" arm64e "*) ;; *) echo "Pas compatible puce Apple : $f ($a)"; fautifs=1;; esac
+            fi
+          done < <(find dist/mac-arm64/QuentMovie.app -type f \( -perm -u+x -o -name '*.dylib' -o -name '*.node' -o -name '*.so' \) -print0)
+          exit $fautifs
       - uses: actions/upload-artifact@v4
         with:
           name: QuentMovie-mac
           path: quentmovie/dist/*.dmg
       - name: Publier la version
+        if: github.ref == 'refs/heads/claude/infirmiere-ordonnances-upload-26nl16'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

@@ -29,6 +29,12 @@ async function resolveFfmpeg() {
     if (score === 6) break;
   }
   if (!best) throw new Error('FFmpeg est introuvable (installe-le avec « brew install ffmpeg »).');
-  return best;
+  // ffprobe doit pouvoir tourner sur ce Mac (celui de ffprobe-static pour puce Apple est un programme Intel) ;
+  // sinon le moteur lit les fichiers avec FFmpeg seul (ffprobe = null)
+  const marche = bin => new Promise(res => execFile(bin, ['-version'], e => res(!e)));
+  const probes = [best.ffprobe, '/opt/homebrew/bin/ffprobe', '/usr/local/bin/ffprobe', 'ffprobe'];
+  let ffprobe = null;
+  for (const p of probes) if (p && (p === 'ffprobe' || fs.existsSync(p)) && await marche(p)) { ffprobe = p; break; }
+  return { ffmpeg: best.ffmpeg, ffprobe };
 }
 module.exports = { resolveFfmpeg };

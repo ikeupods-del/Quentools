@@ -48,7 +48,7 @@ function create(opts = {}) {
   const MEDIAS = path.join(BASE, 'medias'), EXPORTS = path.join(BASE, 'exports'), TMP = path.join(BASE, '.tmp'), PROJETS = path.join(BASE, 'projets');
   [MEDIAS, EXPORTS, TMP, PROJETS].forEach(d => fs.mkdirSync(d, { recursive: true }));
   const APERCUS = path.join(TMP, 'apercus'), PROXIES = path.join(TMP, 'proxies'); fs.mkdirSync(APERCUS, { recursive: true }); fs.mkdirSync(PROXIES, { recursive: true });
-  let FFMPEG = opts.ffmpeg || 'ffmpeg', FFPROBE = opts.ffprobe || 'ffprobe';
+  let FFMPEG = opts.ffmpeg || 'ffmpeg', FFPROBE = opts.ffprobe === null ? null : opts.ffprobe || 'ffprobe';
   let filters = new Set(), encoders = new Set(), version = '';
   const LIB = (opts.lib || path.join(__dirname, 'bibliotheque')).replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep);
   const LIB_LISTES = ['sons', 'musiques', 'stickers', 'marque', 'luts', 'calques', 'cadres', 'fonds', 'fondvert'];
@@ -126,10 +126,46 @@ function create(opts = {}) {
     encoders = new Set(e.split('\n').map(l => l.trim().split(/\s+/)[1]).filter(Boolean));
     version = (await run(FFMPEG, ['-version'], { binary: true })).toString().split('\n')[0];
   }
+  // Description d'un fichier comme ffprobe, lue dans le résumé affiché par FFmpeg lui-même.
+  // Sert quand ffprobe est absent ou inutilisable (le ffprobe livré pour les Mac à puce Apple est en réalité un programme Intel).
+  function sonde(file) {
+    return new Promise((ok, ko) => {
+      const p = spawn(FFMPEG, ['-hide_banner', '-i', file]); let err = '';
+      p.stderr.on('data', d => { err += d; });
+      p.on('error', e => ko(new Error(e.code === 'ENOENT' ? 'FFmpeg est introuvable.' : e.message)));
+      p.on('close', () => {
+        const m = /Input #0, (.+?), from /.exec(err);
+        if (!m) return ko(new Error((err.trim().split('\n').pop() || 'Fichier non reconnu').replace(/^.*?: /, '')));
+        const d = /Duration: (\d+):(\d+):([\d.]+)/.exec(err);
+        const streams = [];
+        for (const l of err.split('\n')) {
+          const s2 = /Stream #0:\d+.*?: (Video|Audio): (\w+)(.*)$/.exec(l); if (!s2) continue;
+          const st = { codec_type: s2[1].toLowerCase(), codec_name: s2[2], disposition: { attached_pic: /\(attached pic\)/.test(s2[3]) ? 1 : 0 } };
+          const wh = /, (\d{1,5})x(\d{1,5})[ ,]/.exec(s2[3] + ' '); if (wh) { st.width = +wh[1]; st.height = +wh[2]; }
+          streams.push(st);
+        }
+        ok({ format: { format_name: m[1], duration: d ? String(+d[1] * 3600 + +d[2] * 60 + +d[3]) : undefined }, streams });
+      });
+    });
+  }
+  // Durée en lisant tout le fichier (prises de la caméra dont l'en-tête ne donne pas la durée)
+  async function dureeLue(file) {
+    const err = await run(FFMPEG, ['-hide_banner', '-nostats', '-i', file, '-map', '0:v:0?', '-map', '0:a:0?', '-c', 'copy', '-f', 'null', '-'], { wantErr: true }).catch(() => '');
+    const t = [...String(err).matchAll(/time=(\d+):(\d+):([\d.]+)/g)].pop();
+    return t ? +t[1] * 3600 + +t[2] * 60 + +t[3] : 0;
+  }
+  async function infos(file) {
+    if (FFPROBE) {
+      try { return JSON.parse((await run(FFPROBE, ['-v', 'error', '-print_format', 'json', '-show_format', '-show_streams', file], { binary: true })).toString()); }
+      catch (e) { if (!/spawn|ENOENT|EBADARCH|introuvable|-86/i.test(e.message)) throw e; FFPROBE = null; } // ffprobe inutilisable : FFmpeg seul
+    }
+    const j = await sonde(file);
+    if (!j.format.duration && j.streams.some(x => x.codec_type === 'audio' || (x.codec_type === 'video' && !IMG_EXT.includes(path.extname(file).toLowerCase())))) j.format.duration = String(await dureeLue(file));
+    return j;
+  }
   async function probe(file) {
     const ext = path.extname(file).toLowerCase();
-    const raw = await run(FFPROBE, ['-v', 'error', '-print_format', 'json', '-show_format', '-show_streams', file], { binary: true });
-    const j = JSON.parse(raw.toString());
+    const j = await infos(file);
     const streams = j.streams || [];
     const v = streams.find(x => x.codec_type === 'video' && !(x.disposition && x.disposition.attached_pic)); // une pochette d'album n'est pas une vidéo
     const a = streams.find(x => x.codec_type === 'audio');
@@ -557,7 +593,7 @@ function create(opts = {}) {
       const audios = (project.audio || []).filter(a => a && a.file && fs.existsSync(mediaPath(a.file)));
       if (audios.length) {
         job.step = 'Mixage du son';
-        const dur = parseFloat((await run(FFPROBE, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path.join(dir, joined)], { binary: true })).toString()) || 1;
+        const dur = +((await infos(path.join(dir, joined))).format.duration) || 1;
         const ins = ['-i', joined], g = [];
         const canDuck = filters.has('sidechaincompress'), ducks = audios.filter(a => a.duck && canDuck).length;
         let prog = '[0:a]';
@@ -681,10 +717,10 @@ function create(opts = {}) {
       if (req.method === 'GET' && p.startsWith('/media/')) return serveFile(req, res, mediaPath(decodeURIComponent(p.slice(7))));
       if (req.method === 'GET' && p.startsWith('/lib/')) return serveFile(req, res, mediaPath('lib:' + decodeURIComponent(p.slice(5))));
       // Studio : détourage de la personne (MediaPipe, en local) et moteur de mélange du fond virtuel
-      if (req.method === 'GET' && p === '/compositeur.js') return serveFile(req, res, path.join(__dirname, 'compositeur.js'));
+      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
       if (req.method === 'GET' && p.startsWith('/vendor/vision/')) {
         const n = decodeURIComponent(p.slice(15));
-        if (!/^(vision_bundle\.mjs|wasm\/vision_wasm(_nosimd)?_internal\.(js|wasm))$/.test(n)) return send(res, 404, { error: 'Introuvable' });
+        if (!/^(vision_bundle\.m?js|wasm\/vision_wasm(_nosimd)?_internal\.(js|wasm))$/.test(n)) return send(res, 404, { error: 'Introuvable' });
         return serveFile(req, res, path.join(__dirname, 'node_modules', '@mediapipe', 'tasks-vision', n));
       }
       if (req.method === 'GET' && /^\/modeles\/[\w.]+\.tflite$/.test(p)) return serveFile(req, res, path.join(__dirname, p));

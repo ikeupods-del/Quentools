@@ -15,17 +15,27 @@ uniform sampler2D cam, masque, fond;
 uniform int mode;          // 0 : décor, 1 : fond flou
 uniform int vert;          // 1 : incrustation par couleur (fond vert)
 uniform vec3 cle;          // couleur du fond vert
-uniform vec2 pasMasque;    // taille d'un point du masque
+uniform vec2 pasMasque;    // taille d'un point du masque (dans l'image de la caméra)
+uniform vec4 roi;          // zone de l'image couverte par le masque : coin (xy), taille (zw)
+uniform float niveau;      // niveau de détail de l'image comparable à un point du masque
 uniform vec4 cadreFond;    // recadrage du décor : échelle (xy), décalage (zw)
 uniform float seuil, douceur, halo, lumiere, chaleur;
+float mq(vec2 u) { // masque à cet endroit de l'image ; hors de la zone détourée = décor
+  vec2 q = (u - roi.xy) / roi.zw;
+  return (q.x < 0. || q.y < 0. || q.x > 1. || q.y > 1.) ? 0. : texture(masque, q).r;
+}
 float masqueAffine(vec3 c) {
+  // loin du contour (tout personne ou tout décor) : rien à affiner, gros gain de calcul
+  float m0 = mq(uv), m1 = mq(uv + pasMasque * vec2(1.5, 0.)), m2 = mq(uv - pasMasque * vec2(1.5, 0.)), m3 = mq(uv + pasMasque * vec2(0., 1.5)), m4 = mq(uv - pasMasque * vec2(0., 1.5));
+  float lo = min(min(min(m0, m1), min(m2, m3)), m4), hi = max(max(max(m0, m1), max(m2, m3)), m4);
+  if (hi < .03 || lo > .97) return m0;
   // suréchantillonnage guidé : voisins du masque pondérés par leur ressemblance de couleur avec ce point
   float s = 0., w = 0.;
   for (int y = -2; y <= 2; y++) for (int x = -2; x <= 2; x++) {
     vec2 d = vec2(float(x), float(y)) * pasMasque;
-    vec3 cc = textureLod(cam, uv + d, 2.).rgb;
+    vec3 cc = textureLod(cam, uv + d, niveau).rgb;
     float k = exp(-dot(cc - c, cc - c) * 30.) * exp(-float(x * x + y * y) * .25);
-    s += texture(masque, uv + d).r * k; w += k;
+    s += mq(uv + d) * k; w += k;
   }
   return s / max(w, 1e-4);
 }
@@ -95,9 +105,10 @@ void main() {
     }
   }
 
-  // canvas : toile de sortie (enregistrée telle quelle) ; renvoie null si WebGL 2 est indisponible
-  function creer(canvas) {
-    const gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true, antialias: false });
+  // canvas : toile de sortie (enregistrée telle quelle) ; garder = image relisible après dessin (tests) ;
+  // renvoie null si WebGL 2 est indisponible
+  function creer(canvas, garder) {
+    const gl = canvas.getContext('webgl2', { preserveDrawingBuffer: !!garder, antialias: false, powerPreference: 'high-performance' });
     if (!gl) return null;
     const prog = gl.createProgram();
     gl.attachShader(prog, shader(gl, gl.VERTEX_SHADER, VS)); gl.attachShader(prog, shader(gl, gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog);
@@ -108,13 +119,20 @@ void main() {
     const U = n => gl.getUniformLocation(prog, n);
     const tCam = texture(gl, gl.LINEAR_MIPMAP_LINEAR), tMasque = texture(gl, gl.LINEAR), tFond = texture(gl, gl.LINEAR_MIPMAP_LINEAR);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    let lisse = null, octets = null, mw = 0, mh = 0, fw = 0, fh = 0;
+    let lisse = null, octets = null, mw = 0, mh = 0, fw = 0, fh = 0, zone = [0, 0, 1, 1];
     const reglages = { nettoyage: true, seul: true, seuil: .5, douceur: .12, halo: .5, lumiere: 1, chaleur: 0, lissage: .5, vert: false, cle: [0, .7, .25] };
 
     return {
       reglages,
-      // masque : probabilités (0 à 1) de présence de la personne, w × h
-      masque(proba, w, h) {
+      // masque : présence de la personne, w × h ; octets 0 à 255 (déjà nettoyés et lissés par detoureur.js) ou probabilités 0 à 1
+      // roi : partie de l'image couverte par le masque, { x, y, w, h } de 0 à 1 (toute l'image par défaut)
+      masque(proba, w, h, roi) {
+        zone = roi ? [roi.x, roi.y, roi.w, roi.h] : [0, 0, 1, 1];
+        if (proba instanceof Uint8Array) {
+          mw = w; mh = h; lisse = lisse || new Float32Array(1);
+          gl.bindTexture(gl.TEXTURE_2D, tMasque); gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, w, h, 0, gl.RED, gl.UNSIGNED_BYTE, proba);
+          return;
+        }
         if (reglages.nettoyage) { proba = Float32Array.from(proba); nettoyer(proba, w, h, reglages.seul); }
         if (w !== mw || h !== mh || !lisse) { mw = w; mh = h; lisse = Float32Array.from(proba); octets = new Uint8Array(w * h); }
         const a0 = 1 - reglages.lissage * .8;
@@ -145,7 +163,9 @@ void main() {
         if (this.src && this.src.videoWidth) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.src); gl.generateMipmap(gl.TEXTURE_2D); } // décor animé
         gl.uniform1i(U('cam'), 0); gl.uniform1i(U('masque'), 1); gl.uniform1i(U('fond'), 2);
         gl.uniform1i(U('mode'), this.src ? 0 : 1); gl.uniform1i(U('vert'), reglages.vert ? 1 : 0); gl.uniform3fv(U('cle'), reglages.cle);
-        gl.uniform2f(U('pasMasque'), 1 / Math.max(1, mw), 1 / Math.max(1, mh));
+        const px = zone[2] / Math.max(1, mw), py = zone[3] / Math.max(1, mh);
+        gl.uniform2f(U('pasMasque'), px, py); gl.uniform4f(U('roi'), zone[0], zone[1], zone[2], zone[3]);
+        gl.uniform1f(U('niveau'), Math.max(0, Math.log2(Math.max(1, px * w)) - 1));
         // recadrage du décor pour remplir l'image sans le déformer
         let sx = 1, sy = 1; if (fw && fh) { const k = (w / h) / (fw / fh); if (k > 1) sy = 1 / k; else sx = k; }
         gl.uniform4f(U('cadreFond'), sx, sy, (1 - sx) / 2, (1 - sy) / 2);
@@ -154,7 +174,7 @@ void main() {
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         return true;
       },
-      oublier() { lisse = null; }
+      oublier() { lisse = null; zone = [0, 0, 1, 1]; }
     };
   }
   window.Compositeur = { creer, nettoyer };

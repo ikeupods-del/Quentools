@@ -15,7 +15,7 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
 (async () => {
   const bins = await resolveFfmpeg();
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-test-'));
-  const app = create({ port: 0, base, ...bins });
+  const app = create({ port: 0, base, ...bins, ...(process.env.QM_SANS_FFPROBE ? { ffprobe: null } : {}) }); // QM_SANS_FFPROBE : comme sur un Mac sans ffprobe utilisable
   const port = await app.start();
   const U = p => `http://127.0.0.1:${port}${p}`;
   console.log('Serveur de test sur', port, '—', bins.ffmpeg);

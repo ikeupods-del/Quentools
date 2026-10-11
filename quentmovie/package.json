@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -13,12 +13,12 @@
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "1.1.0",
-    "ffmpeg-static": "^5.2.0",
-    "ffprobe-static": "^3.1.0"
+    "ffmpeg-static": "^5.2.0"
   },
   "devDependencies": {
     "electron": "^33.0.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "ffprobe-static": "^3.1.0"
   },
   "build": {
     "appId": "fr.quentools.quentmovie",
@@ -31,6 +31,7 @@
       "maj.js",
       "generateur.js",
       "compositeur.js",
+      "detoureur.js",
       "modeles/**",
       "!node_modules/@mediapipe/tasks-vision/*.map",
       "!node_modules/@mediapipe/tasks-vision/vision_bundle.cjs",
@@ -41,7 +42,6 @@
     ],
     "asarUnpack": [
       "node_modules/ffmpeg-static/**",
-      "node_modules/ffprobe-static/**",
       "bibliotheque/**"
     ],
     "afterPack": "scripts/adhoc-sign.js",
