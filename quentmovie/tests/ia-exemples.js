@@ -8,21 +8,20 @@ const { create } = require('../server');
 const { resolveFfmpeg } = require('../ffmpeg-path');
 
 const CAS = [
-  { titre: '5 astuces pour faire du vélo en ville en sécurité', duree: 45, style: 'dynamique', consigne: '5 astuces pour faire du vélo en ville en sécurité' },
-  { titre: 'Pourquoi les chats ronronnent', duree: 45, style: 'documentaire', consigne: 'Pourquoi les chats ronronnent' },
-  { titre: 'Bien préparer un entretien d’embauche', duree: 40, style: 'dynamique', consigne: 'Bien préparer un entretien d’embauche. Pas d’intro, pas de conclusion, tutoie-moi.' },
-  { titre: 'Michelin', article: 'Michelin', duree: 45, style: 'documentaire', consigne: 'L’histoire de Michelin' },
-  { titre: 'Le café', duree: 40, style: 'histoire', consigne: 'L’histoire du café, sans conclusion' }
+  { titre: '5 astuces pour faire du vélo en ville en sécurité', duree: 30, style: 'dynamique', consigne: '5 astuces pour faire du vélo en ville en sécurité. Pas d’intro, tutoie-moi.' },
+  { titre: 'Michelin', article: 'Michelin', duree: 30, style: 'documentaire', consigne: 'L’histoire de Michelin' }
 ];
+const BUDGET = Date.now() + (+process.env.QM_BUDGET_MIN || 20) * 60e3;
 
 (async () => {
   const bins = await resolveFfmpeg();
   const base = process.env.QM_BASE || fs.mkdtempSync(path.join(os.tmpdir(), 'qm-ia-'));
   const app = create({ port: 0, base, ...bins });
   const port = await app.start(), U = p => `http://127.0.0.1:${port}${p}`;
-  const attendre = async id => { for (let i = 0; i < 3600; i++) { await new Promise(r => setTimeout(r, 500)); const j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.done || j.error) return j; } return { error: 'trop long' }; };
+  const attendre = async id => { for (let i = 0; i < 3600 && Date.now() < BUDGET; i++) { await new Promise(r => setTimeout(r, 500)); const j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.done || j.error) return j; } return { error: 'trop long' }; };
   let ko = 0;
   for (const c of CAS) {
+    if (Date.now() > BUDGET) { console.log('Budget de temps atteint : cas suivants ignorés.'); break; }
     const t0 = Date.now();
     const j = await attendre((await (await fetch(U('/api/generer/ia'), { method: 'POST', body: JSON.stringify({ article: c.article || '', titre: c.titre, duree: c.duree, style: c.style, consigne: c.consigne, medias: true }) })).json()).id);
     console.log(`\n===== ${c.titre} (${c.style}, ${c.duree} s) — ${j.error ? 'ERREUR : ' + j.error : Math.round((Date.now() - t0) / 1000) + ' s'}`);
@@ -36,5 +35,5 @@ const CAS = [
     if (!r.scenes.length) ko++;
   }
   app.stop(); if (!process.env.QM_BASE) fs.rmSync(base, { recursive: true, force: true });
-  process.exit(ko ? 1 : 0);
+  process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

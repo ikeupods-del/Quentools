@@ -69,6 +69,7 @@ function creer({ BASE, FFMPEG }) {
   const jetons = t => Math.ceil(String(t).length / 2.8);
   const contexteDe = (...textes) => (sortie => Math.min(8192, Math.max(1536, Math.ceil((textes.reduce((a, t) => a + jetons(t), 0) + sortie + 200) / 256) * 256)));
   let gpu = '';
+  const debug = process.env.QM_IA_DEBUG ? (...a) => console.log('[IA]', ...a) : () => {};
   // Réponse coupée par la limite de longueur (JSON incomplet) : un second essai avec une marge double
   async function demanderAvecMarge({ ctx, ...msg }, sortie) {
     try { return await demander({ ...msg, maxTokens: sortie, contexte: ctx(sortie) }); }
@@ -80,9 +81,10 @@ function creer({ BASE, FFMPEG }) {
     let raison = '', dernier = '';
     for (const temperature of [0.55, 0.35, 0.2]) {
       const dem = raison ? `${demande}\n(Ta version précédente a été refusée : ${raison}. Corrige ce défaut.)` : demande;
-      const r = await demander({ type: 'ecrire', modele: cheminModele, systeme, demande: dem, maxTokens, contexte: contexteDe(systeme, dem)(maxTokens), temperature });
+      const t0 = Date.now(), r = await demander({ type: 'ecrire', modele: cheminModele, systeme, demande: dem, maxTokens, contexte: contexteDe(systeme, dem)(maxTokens), temperature });
       gpu = r.gpu || gpu;
       dernier = SQ.nettoyerTexte(r.resultat); raison = SQ.verifier(dernier, verif);
+      debug(`essai T=${temperature} ${Math.round((Date.now() - t0) / 1000)} s ${raison ? 'REFUSÉ (' + raison + ')' : 'ok'} : ${dernier}`);
       if (!raison) return { texte: dernier, raison: '' };
     }
     return { texte: null, essai: dernier, raison };

@@ -28,6 +28,7 @@ jobs:
   exemples:
     if: ${{ inputs.exemples }}
     runs-on: macos-latest
+    timeout-minutes: 35
     defaults:
       run:
         working-directory: quentmovie
@@ -41,7 +42,7 @@ jobs:
           NODE_LLAMA_CPP_SKIP_DOWNLOAD: 'true'
         run: npm ci
       - name: Écrire des scripts d'exemple (textes et photos choisies)
-        run: QM_RESEAU=1 QM_BASE="$RUNNER_TEMP/qm-ia" node tests/ia-exemples.js
+        run: QM_IA_DEBUG=1 QM_RESEAU=1 QM_BASE="$RUNNER_TEMP/qm-ia" node tests/ia-exemples.js
   mac:
     if: ${{ !inputs.exemples }}
     runs-on: macos-latest
