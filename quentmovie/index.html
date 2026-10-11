@@ -1239,7 +1239,7 @@ async function verifierMaj(manuel) {
 }
 
 // ---------- Studio : se filmer avec la caméra et le micro du Mac, avec un prompteur ----------
-const ST_DEF = { fond: 'lib:fonds/quentools-led-h.jpg', detourage: 'precis', vertMode: false, seuil: 50, contour: 12, halo: 40, seul: true, lumiere: 100, chaleur: 0,
+const ST_DEF = { fond: 'lib:fonds/quentools-led-h.jpg', detourage: 'precis', synchro: 'auto', vertMode: false, seuil: 50, contour: 12, halo: 40, seul: true, lumiere: 100, chaleur: 0,
   led: false, ledForce: 80, ledTeinte: 'neutre', ledLargeur: 70, nom: '', role: '',
   vitesse: 45, taille: 44, largeur: 70, opacite: 55, miroirTxt: false, miroirImg: true, compte: true, defilAuto: true, qualite: '1080', bruit: true, camera: '', micro: '' };
 // Animations à faire apparaître pendant qu'on parle (touches 1 à 9) ; position et taille en % de l'image
@@ -1267,7 +1267,9 @@ function stPanneau() {
     <details open><summary>Fond derrière moi</summary>
       <select id="stFond">${optFond}</select>
       ${o.fond ? `${ck('stVert', 'J’ai un vrai fond vert derrière moi (plus précis)', o.vertMode)}
-        ${o.vertMode ? '<button id="stCle" style="width:100%;margin-top:4px">🎯 Reprendre la couleur du fond vert</button>' : `<label class="l">Détourage</label><select id="stDet">${opts([['precis', 'Précis (cheveux, bras) — recommandé'], ['rapide', 'Rapide (Mac plus ancien)']], o.detourage)}</select>${ck('stSeul', 'Ne garder que moi (efface les autres personnes)', o.seul)}`}
+        ${o.vertMode ? '<button id="stCle" style="width:100%;margin-top:4px">🎯 Reprendre la couleur du fond vert</button>' : `<label class="l">Détourage</label><select id="stDet">${opts([['precis', 'Précis (cheveux, bras) — recommandé'], ['rapide', 'Rapide (Mac plus ancien)']], o.detourage)}</select>${ck('stSeul', 'Ne garder que moi (efface les autres personnes)', o.seul)}
+          <label class="l">Image et découpe</label><select id="stSync">${opts([['auto', 'Automatique (recommandé)'], ['precis', 'Toujours alignées (aucun décalage)'], ['fluide', 'Toujours fluide (Mac lent)']], o.synchro)}</select>`}
+        <p class="mut" id="stPerf" style="margin:4px 0 0"></p>
         ${rg('stSeuil', 'Garder plus ↔ moins autour de moi', 20, 80, 1, o.seuil, '')}${rg('stContour', 'Contours nets ↔ doux', 2, 30, 1, o.contour, '')}
         ${rg('stHalo', 'Lumière du décor sur mes bords', 0, 100, 1, o.halo, ' %')}${rg('stLum', 'Lumière sur moi', 60, 160, 1, o.lumiere, ' %')}${rg('stChaleur', 'Teinte froide ↔ chaude', -10, 10, 1, o.chaleur, '')}
         <p class="mut" style="margin:4px 0 0">Meilleur résultat : pièce bien éclairée (allume la lumière LED ci-dessous), mur uni derrière toi.</p>` : ''}
@@ -1330,7 +1332,7 @@ async function stFond() {
   const o = studio.o; $('#stScene').classList.toggle('fond', !!o.fond);
   if (studio.decor && studio.decor.pause) studio.decor.pause();
   studio.decor = null;
-  if (!o.fond) return;
+  if (!o.fond) { stArreterDetoureur(); return; }
   try {
     await chargerScript('/compositeur.js');
     if (!studio.comp) { studio.comp = Compositeur.creer($('#stCanvas')); if (!studio.comp) throw new Error('la carte graphique n’est pas disponible'); }
@@ -1344,19 +1346,79 @@ async function stFond() {
     if (o.vertMode) stCleAuto(); else await stDetoureur();
   } catch (e) { o.fond = ''; $('#stScene').classList.remove('fond'); stPanneau(); alert('Le fond virtuel n’a pas pu démarrer : ' + e.message); }
 }
-async function stDetoureur(processeur) {
+// Détourage dans un fil séparé (detoureur.js) : l'image et le prompteur restent fluides pendant le calcul.
+// Mode « précis » : chaque image est affichée avec SA découpe (aucun décalage quand on bouge).
+// Si le Mac ne suit pas, l'image suit la caméra et la découpe la rejoint (mode « fluide »).
+// L'image envoyée est recadrée autour de la personne : plus de détails pour les cheveux et les mains.
+function stArreterDetoureur() {
+  const det = studio && studio.det; if (!det) return;
+  det.w.terminate(); for (const a of det.attente.values()) a.image.close(); det.attente.clear(); studio.det = null;
+}
+async function stDetoureur() {
   const modele = studio.o.detourage === 'rapide' ? 'selfie_segmenter' : 'selfie_multiclass_256x256';
-  if (studio.seg && studio.segModele === modele && !processeur) return;
-  if (studio.seg) { studio.seg.close(); studio.seg = null; }
+  if (studio.det && studio.det.modele === modele) return;
+  stArreterDetoureur();
   stMsg('Préparation du détourage…');
-  const { FilesetResolver, ImageSegmenter } = await import('/vendor/vision/vision_bundle.mjs');
-  const fichiers = await FilesetResolver.forVisionTasks('/vendor/vision/wasm');
-  const options = d => ({ baseOptions: { modelAssetPath: `/modeles/${modele}.tflite`, delegate: d }, runningMode: 'VIDEO', outputConfidenceMasks: true, outputCategoryMask: false });
-  let seg, delegue = processeur ? 'CPU' : 'GPU'; // carte graphique d'abord, processeur si elle n'est pas utilisable
-  try { seg = await ImageSegmenter.createFromOptions(fichiers, options(delegue)); } catch (e) { delegue = 'CPU'; seg = await ImageSegmenter.createFromOptions(fichiers, options('CPU')); }
-  if (!studio) { seg.close(); return; }
-  studio.seg = seg; studio.segModele = modele; studio.delegue = delegue; studio.mesures = 0; studio.multi = modele.includes('multiclass'); studio.dureeSeg = 0; studio.comp.oublier();
-  stMsg('');
+  const det = { w: new Worker('/detoureur.js'), modele, pret: false, enCours: 0, attente: new Map(), id: 0, roi: null, lat: 0, seg: 0, images: [], delegue: '' };
+  studio.det = det; studio.comp.oublier();
+  await new Promise((ok, ko) => {
+    det.w.onmessage = e => { const d = e.data; if (d.type === 'pret') { det.pret = true; det.delegue = d.delegue; ok(); } else if (d.type === 'erreur' && !det.pret) ko(new Error(d.message)); else stMasque(det, d); };
+    det.w.onerror = e => { e.preventDefault(); if (!det.pret) ko(new Error(e.message || 'détoureur introuvable')); };
+    det.w.postMessage({ type: 'preparer', modele, gpu: studio.o.gpu !== false });
+  });
+  if (studio && studio.det === det) stMsg('');
+}
+const stSynchro = det => { const s = studio.o.synchro; return s === 'precis' || s === 'fluide' ? s : (det.lat > 150 || (det.images.length >= 10 && stCadence(det) < 20) ? 'fluide' : 'precis'); };
+const stCadence = det => { const l = det.images, n = l.length; return n < 2 ? 0 : (n - 1) * 1000 / Math.max(1, l[n - 1] - l[0]); };
+// Nouvelle image de la caméra
+function stSurImage() {
+  if (!studio) return;
+  const v = $('#stVideo'); studio.rvfc = v.requestVideoFrameCallback(stSurImage);
+  const o = studio.o, comp = studio.comp, det = studio.det;
+  if (!o.fond || !comp || v.readyState < 2) return;
+  if (o.vertMode || !det || !det.pret) { comp.dessiner(v); studio.dessin = performance.now(); return; }
+  // l'image ne reste jamais figée plus de 0,12 s, même si le détourage prend du retard
+  if (stSynchro(det) === 'fluide' || performance.now() - (studio.dessin || 0) > 120) { comp.dessiner(v); studio.dessin = performance.now(); }
+  if (det.enCours < 2) stEnvoyerImage(det, v); // sinon le détoureur est occupé : on passe à l'image suivante
+}
+async function stEnvoyerImage(det, v) {
+  det.enCours++;
+  const W = v.videoWidth, H = v.videoHeight, r = det.roi || { x: 0, y: 0, w: 1, h: 1 }, t = performance.now(), id = ++det.id;
+  try {
+    const image = await createImageBitmap(v);
+    const decoupe = await createImageBitmap(image, Math.round(r.x * W), Math.round(r.y * H), Math.max(16, Math.round(r.w * W)), Math.max(16, Math.round(r.h * H)), { resizeWidth: 256, resizeHeight: 256, resizeQuality: 'medium' });
+    if (!studio || studio.det !== det) { image.close(); decoupe.close(); return; }
+    det.attente.set(id, { image, roi: r, t });
+    det.w.postMessage({ type: 'image', id, image: decoupe, t, roiCle: [r.x, r.y, r.w, r.h].map(x => x.toFixed(3)).join(), seul: studio.o.seul, nettoyage: true, lissage: 0.35 }, [decoupe]);
+  } catch (e) { det.enCours--; }
+}
+function stMasque(det, d) {
+  det.enCours = Math.max(0, det.enCours - 1);
+  const a = det.attente.get(d.id); det.attente.delete(d.id);
+  for (const [k, x] of det.attente) if (k < d.id) { x.image.close(); det.attente.delete(k); det.enCours = Math.max(0, det.enCours - 1); } // réponses perdues
+  if (!a) return;
+  if (!studio || studio.det !== det || d.type !== 'masque' || d.vide) { a.image.close(); return; }
+  const now = performance.now();
+  det.lat = det.lat ? det.lat * 0.9 + (now - a.t) * 0.1 : now - a.t; det.seg = det.seg ? det.seg * 0.9 + d.duree * 0.1 : d.duree;
+  det.images.push(now); while (det.images.length > 30) det.images.shift();
+  studio.comp.masque(d.octets, d.w, d.h, a.roi);
+  if (stSynchro(det) === 'precis') { studio.comp.dessiner(a.image); studio.dessin = now; }
+  a.image.close();
+  stCadrer(det, d.cadre, a.roi, $('#stVideo').videoWidth, $('#stVideo').videoHeight);
+  if (det.delegue === 'CPU' && det.seg > 70 && studio.o.detourage === 'precis' && !studio.conseil) { studio.conseil = true; stMsg('Le détourage précis est lent sur ce Mac : choisis « Rapide » dans « Fond derrière moi ».'); }
+}
+// Cadrage de l'image suivante autour de la personne (avec de la marge), mis à jour seulement quand elle bouge vraiment
+function stCadrer(det, c, r, W, H) {
+  if (!c || !W || !H) { det.roi = null; return; }
+  let x0 = (r.x + c.x0 * r.w) * W, x1 = (r.x + c.x1 * r.w) * W, y0 = (r.y + c.y0 * r.h) * H, y1 = (r.y + c.y1 * r.h) * H;
+  const bw = x1 - x0, bh = y1 - y0, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  let w = Math.max(bw * 1.4, bh * 0.8, H * 0.35), h = Math.max(bh * 1.3, w * 0.75, H * 0.35);
+  w = Math.min(W, Math.max(w, h * 0.75)); h = Math.min(H, h);
+  const x = clamp(cx - w / 2, 0, W - w), y = clamp(cy - h / 2 - h * 0.04, 0, H - h);
+  const n = { x: x / W, y: y / H, w: w / W, h: h / H }, p = det.roi || { x: 0, y: 0, w: 1, h: 1 };
+  const bord = (c.x0 < 0.02 && r.x > 0.001) || (c.y0 < 0.02 && r.y > 0.001) || (c.x1 > 0.98 && r.x + r.w < 0.999) || (c.y1 > 0.98 && r.y + r.h < 0.999);
+  const ecart = Math.max(Math.abs(n.x - p.x), Math.abs(n.y - p.y), Math.abs(n.x + n.w - p.x - p.w), Math.abs(n.y + n.h - p.y - p.h));
+  if (bord || ecart > 0.07) det.roi = n.w > 0.97 && n.h > 0.97 ? null : n;
 }
 // Fond vert : couleur reprise dans les coins de l'image de la caméra
 function stCleAuto() {
@@ -1366,25 +1428,6 @@ function stCleAuto() {
   for (const [x, y] of [[0, 0], [56, 0], [0, 28], [56, 28]]) { const d = g.getImageData(x, y, 8, 8).data; for (let i = 0; i < d.length; i += 4) { R += d[i]; G += d[i + 1]; B += d[i + 2]; n++; } }
   studio.comp.reglages.cle = [R / n / 255, G / n / 255, B / n / 255];
   stMsg(`Couleur du fond vert reprise : rgb(${Math.round(R / n)}, ${Math.round(G / n)}, ${Math.round(B / n)}).`);
-}
-function stImage(now) {
-  const v = $('#stVideo');
-  if (!studio.o.fond || !studio.comp || v.readyState < 2 || v.currentTime === studio.derniere) return;
-  studio.derniere = v.currentTime;
-  if (!studio.o.vertMode && studio.seg && now - (studio.dernierCalcul || 0) >= Math.max(30, studio.dureeSeg * 1.5)) {
-    studio.dernierCalcul = now; const t0 = performance.now();
-    try {
-      studio.seg.segmentForVideo(v, now, r => {
-        const m = r.confidenceMasks[0], a = m.getAsFloat32Array();
-        let p = a; if (studio.multi) { p = new Float32Array(a.length); for (let i = 0; i < a.length; i++) p[i] = 1 - a[i]; } // modèle précis : 1 − « fond »
-        studio.comp.masque(p, m.width, m.height);
-      });
-    } catch (e) { /* image ignorée */ }
-    const d = performance.now() - t0; studio.dureeSeg = studio.dureeSeg ? studio.dureeSeg * .9 + d * .1 : d; studio.mesures++;
-    if (studio.delegue === 'GPU' && studio.mesures > 10 && studio.dureeSeg > 150 && !studio.essaiCpu) { studio.essaiCpu = true; stDetoureur(true).catch(() => {}); return; }
-    if (studio.dureeSeg > 90 && studio.o.detourage === 'precis' && !studio.conseil) { studio.conseil = true; stMsg('Le détourage précis est lent sur ce Mac : choisis « Rapide » dans « Fond derrière moi » si l’image saccade.'); }
-  }
-  studio.comp.dessiner(v);
 }
 // Animations en direct : aperçu immédiat, et noté pour être ajouté à la prise
 function stAnimer(id) {
@@ -1441,6 +1484,7 @@ async function ouvrirStudio() {
   }
   studio.appareils = await navigator.mediaDevices.enumerateDevices().catch(() => []);
   stPanneau(); studio.pos = 0; stPlacer(); stFond();
+  studio.rvfc = $('#stVideo').requestVideoFrameCallback(stSurImage); // une composition par image de la caméra
   let avant = performance.now();
   const boucle = now => { // défilement du texte, chronomètre, vu-mètre, image composée
     if (!studio) return;
@@ -1448,7 +1492,8 @@ async function ouvrirStudio() {
     if (studio.defil) { studio.pos += studio.o.vitesse * dt; stPlacer(); }
     if (studio.rec) $('#stTemps').textContent = fmtChrono((Date.now() - studio.t0) / 1000);
     if (studio.vu) $('#stVu i').style.width = Math.min(100, studio.vu() * 140) + '%';
-    stImage(now);
+    if (studio.det && now - (studio.perfT || 0) > 1000) { studio.perfT = now; const p = $('#stPerf'), d = studio.det;
+      if (p) p.textContent = d.pret ? `Détourage : ${d.delegue === 'GPU' ? 'carte graphique' : 'processeur'} · ${Math.round(stCadence(d))} images/s · délai ${Math.round(d.lat)} ms · ${stSynchro(d) === 'precis' ? 'image et découpe alignées' : 'mode fluide'}` : 'Détourage en préparation…'; }
     studio.raf = requestAnimationFrame(boucle);
   };
   studio.raf = requestAnimationFrame(boucle);
@@ -1461,7 +1506,7 @@ function fermerStudio() {
   if (studio.rec) { if (!confirm('Un enregistrement est en cours. Arrêter et l’ajouter à la timeline ?')) return; studio.fermerApres = true; studio.rec.stop(); return; }
   cancelAnimationFrame(studio.raf); if (studio.flux) studio.flux.getTracks().forEach(t => t.stop()); if (studio.ctx) studio.ctx.close().catch(() => {});
   if (studio.decor && studio.decor.pause) studio.decor.pause();
-  if (studio.seg) studio.seg.close();
+  if (studio.rvfc) $('#stVideo').cancelVideoFrameCallback(studio.rvfc); stArreterDetoureur();
   $('#stAnim').innerHTML = ''; $('#stLumiere').classList.remove('on');
   $('#stVideo').srcObject = null; $('#stScene').classList.remove('fond'); $('#studio').classList.remove('on'); studio = null;
 }
@@ -1480,7 +1525,7 @@ async function stEnregistrer() {
   // image composée (fond virtuel) : WebM VP8, le format le plus éprouvé pour une image dessinée ; caméra seule : MP4 H.264 (puce du Mac)
   const types = fond ? ['video/webm;codecs=vp8,opus', 'video/webm;codecs=h264,opus', ...webm, ...mp4] : [...mp4, ...webm];
   const mime = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
-  if (fond) { stImage(performance.now()); studio.piste = $('#stCanvas').captureStream(30).getVideoTracks()[0]; } // l'image a déjà sa taille définitive
+  if (fond) { if ($('#stCanvas').width < 16) studio.comp.dessiner($('#stVideo')); studio.piste = $('#stCanvas').captureStream(30).getVideoTracks()[0]; } // l'image a déjà sa taille définitive
   const source = fond ? new MediaStream([studio.piste, ...studio.flux.getAudioTracks()]) : studio.flux;
   const rec = new MediaRecorder(source, { mimeType: mime, videoBitsPerSecond: studio.o.qualite === '1080' ? 10e6 : 5e6, audioBitsPerSecond: 192000 });
   const morceaux = []; rec.ondataavailable = e => { if (e.data.size) morceaux.push(e.data); };
@@ -1521,7 +1566,7 @@ $('#stPanneau').addEventListener('input', e => {
   const o = studio.o, t = e.target, v = t.type === 'checkbox' ? t.checked : t.type === 'range' ? +t.value : t.value;
   if (t.id === 'stFond') { if (studio.rec) { t.value = o.fond; return alert('Arrête d’abord l’enregistrement pour changer de fond.'); } o.fond = v; stGarder(o); stPanneau(); stFond(); return; }
   if (t.id === 'stScript') { proj.prompteur = t.value; commit(true); stStyle(); return; }
-  const champ = { stVert: 'vertMode', stDet: 'detourage', stSeul: 'seul', stSeuil: 'seuil', stContour: 'contour', stHalo: 'halo', stLum: 'lumiere', stChaleur: 'chaleur',
+  const champ = { stVert: 'vertMode', stDet: 'detourage', stSync: 'synchro', stSeul: 'seul', stSeuil: 'seuil', stContour: 'contour', stHalo: 'halo', stLum: 'lumiere', stChaleur: 'chaleur',
     stLed: 'led', stLedForce: 'ledForce', stLedLarg: 'ledLargeur', stLedTeinte: 'ledTeinte', stNom: 'nom', stRole: 'role',
     stVit: 'vitesse', stTaille: 'taille', stLarg: 'largeur', stOpa: 'opacite', stMirTxt: 'miroirTxt', stMirImg: 'miroirImg', stCpt: 'compte', stAuto: 'defilAuto', stQual: 'qualite', stBruit: 'bruit', stCam: 'camera', stMic: 'micro' }[t.id];
   if (!champ) return; o[champ] = v; stGarder(o);

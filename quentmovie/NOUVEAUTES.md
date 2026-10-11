@@ -3,6 +3,13 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.6.1
+- Correction : le générateur de vidéos s'arrêtait avec « spawn Unknown system error -86 » (un outil livré n'était pas fait pour les Mac à puce Apple). Il fonctionne maintenant, tout comme l'import et l'export qui utilisaient ce même outil.
+- Studio beaucoup plus fluide : le détourage tourne à part, l'image et le prompteur ne se figent plus.
+- Plus de décalage entre toi et le fond : chaque image est affichée avec sa propre découpe.
+- Détourage plus fin : l'image est recadrée autour de toi avant le calcul (cheveux, mains, bords plus nets), et les bords sont affinés seulement là où c'est utile.
+- Indicateur de vitesse dans « Fond derrière moi » (images par seconde, délai) et choix « Image et découpe » : alignées ou fluide.
+
 ## 1.6.0
 - Nouveau : « ✨ Générer » (⇧⌘G). Donne un sujet, par exemple « L'histoire de Michelin » : QuentMovie écrit le texte à partir de Wikipédia, trouve des images libres de droits, enregistre la voix off avec les voix françaises du Mac et monte la vidéo (zooms lents, sous-titres, écran titre, musique, générique avec les sources). Tu relis et modifies le texte et les images avant la création.
 

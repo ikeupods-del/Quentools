@@ -65,7 +65,7 @@ Référence un. Référence deux qui ne doit jamais être lue dans la vidéo.`;
   });
   await new Promise(r => srv.listen(0, '127.0.0.1', r));
   const mock = `http://127.0.0.1:${srv.address().port}`;
-  const app = create({ port: 0, base, ...bins, wiki: mock, commons: mock });
+  const app = create({ port: 0, base, ...bins, wiki: mock, commons: mock, ...(process.env.QM_SANS_FFPROBE ? { ffprobe: null } : {}) });
   const port = await app.start(), U = p => `http://127.0.0.1:${port}${p}`;
 
   const ch = await (await fetch(U('/api/generer/chercher?q=' + encodeURIComponent('génère moi une vidéo sur l’histoire de Michelin')))).json();
