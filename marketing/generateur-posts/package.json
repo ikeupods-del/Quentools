@@ -1,0 +1,41 @@
+{
+  "name": "studio-posts",
+  "productName": "Studio Posts",
+  "version": "1.0.0",
+  "description": "Publications Instagram et TikTok aux couleurs du Parvis et de QuenTools",
+  "main": "main.js",
+  "private": true,
+  "author": "QuenTools",
+  "scripts": {
+    "start": "electron .",
+    "donnees": "node ../../tools/generateur-posts.js",
+    "dist": "node ../../tools/generateur-posts.js && electron-builder --mac dmg --arm64 --publish never"
+  },
+  "build": {
+    "appId": "fr.quentools.studioposts",
+    "productName": "Studio Posts",
+    "files": [
+      "main.js",
+      "index.html",
+      "donnees.js",
+      "package.json"
+    ],
+    "afterPack": "scripts/adhoc-sign.js",
+    "mac": {
+      "category": "public.app-category.graphics-design",
+      "identity": null,
+      "icon": "build/icon.png",
+      "artifactName": "Studio-Posts-${version}-arm64.${ext}"
+    },
+    "dmg": {
+      "title": "Studio Posts"
+    },
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "devDependencies": {
+    "electron": "43.7.5",
+    "electron-builder": "^25.1.8"
+  }
+}

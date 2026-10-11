@@ -904,6 +904,8 @@ function brancher() {
     else if (e.key.toLowerCase() === 'b') ouvrirModal('biblio');
   });
 }
+// appelé par le menu Édition de l'application Mac (le menu intercepte ⌘Z avant la page)
+window.studioAnnuler = retour => { if (/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName)) document.execCommand(retour ? 'redo' : 'undo'); else annuler(retour); };
 function aller(d) { const n = Math.max(0, Math.min(projet.slides.length - 1, sel + d)); if (n === sel) return; sel = n; afficherListe(); rendreTout(); afficherInspecteur(); }
 
 (async () => {

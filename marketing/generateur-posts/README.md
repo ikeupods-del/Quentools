@@ -3,7 +3,8 @@
 Outil privé (jamais publié sur le site) pour créer des carrousels et des images aux couleurs du **Parvis** et de **QuenTools**.
 
 ## Ouvrir
-- Double-cliquer sur `index.html` (Chrome ou Safari). Aucun serveur, aucune connexion, aucune ressource externe.
+- **Application Mac** : le `.dmg` de la dernière version « Studio Posts » dans les Releases du dépôt (ouvrir, glisser dans Applications ; au premier lancement, clic droit → Ouvrir). Construite et essayée sur un vrai Mac par le workflow « Studio Posts — application Mac » (`.github/workflows/studio-posts.yml`) à chaque modification de ce dossier ; nouvelle version publiée = changer `version` dans `package.json`. Fenêtre Electron : `main.js` (menus en français, ⌘Z de la publication via `studioAnnuler`).
+- Ou double-cliquer sur `index.html` (Chrome ou Safari). Aucun serveur, aucune connexion, aucune ressource externe.
 - Version en un seul fichier, à copier où l'on veut : `node tools/generateur-posts.js --fichier-unique ~/Desktop/Studio-Posts.html`.
 
 ## Utiliser
