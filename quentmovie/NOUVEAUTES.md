@@ -3,6 +3,10 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.13.1
+- Bouton Pause pendant que tu te filmes (studio « Me filmer ») : « ⏸ Pause » arrête l'enregistrement sans finir la prise, « ▶ Reprendre » repart au même endroit ; rien n'est enregistré pendant la pause, le chrono s'arrête et le prompteur aussi. Touche P. Une seule vidéo à la fin, sans le temps de pause.
+- Même bouton Pause pour l'enregistrement de voix off (onglet Outils).
+
 ## 1.13.0
 - Nouvelle interface façon logiciel de montage pro (Final Cut, Premiere) : barre d'outils à icônes, rail d'onglets vertical à gauche, visionneuse avec barre de contrôle, timeline sombre avec en-têtes de pistes, sélection en jaune, inspecteur avec l'aperçu du clip choisi.
 - Outils de montage pro : outil Lame (B) qui coupe là où tu cliques, outil Sélection (A), magnétisme activable (N) ; chaque piste se coupe (muet), se masque ou se verrouille depuis son en-tête ; grille des tiers (G) et zones de sécurité TikTok/YouTube sur la visionneuse ; vumètre du son pendant la lecture.

@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Studio Posts</title>
+<!-- Studio Posts : création de publications Instagram et TikTok (images) aux couleurs du Parvis et de QuenTools.
+     Outil privé, ouvert directement depuis le disque (aucun serveur, aucune ressource externe).
+     Un seul moteur de rendu (canvas) sert à l'aperçu et à l'export : ce qu'on voit est exactement ce qu'on exporte.
+     Données (polices, bibliothèque) : donnees.js, généré par tools/generateur-posts.js. -->
+<style>
+:root{
+  --bg:#0f0f13;--panneau:#17171d;--panneau-2:#1e1e26;--ligne:#2a2a34;--ligne-2:#363642;--texte:#ececf1;--doux:#a3a3b2;--pale:#6f6f7e;
+  --accent:#7b66ff;--accent-2:#5b3df5;--ok:#3ecf8e;--alerte:#ffb547;--erreur:#ff6b6b;--r:10px;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--texte);font-size:14px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--ligne-2);background:var(--panneau-2);border-radius:8px;padding:7px 12px;white-space:nowrap}
+button:hover{border-color:#4a4a58;background:#24242e}
+button.primaire{background:var(--accent-2);border-color:var(--accent-2);color:#fff;font-weight:600}
+button.primaire:hover{background:#6a4ff7}
+button.mini{padding:4px 8px;font-size:12px}
+button:disabled{opacity:.4;cursor:default}
+input[type=text],input[type=number],select,textarea{width:100%;background:#101015;border:1px solid var(--ligne-2);border-radius:8px;padding:8px 10px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px;line-height:1.45}
+label.champ{display:block;margin:0 0 14px}
+label.champ>span{display:block;font-size:12px;color:var(--doux);margin-bottom:6px}
+label.champ small{display:block;color:var(--pale);font-size:11px;margin-top:5px;line-height:1.4}
+
+.app{display:grid;grid-template-rows:56px 1fr;height:100vh}
+header{display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--ligne);background:var(--panneau);min-width:0}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:-.01em;margin-right:6px;white-space:nowrap}
+.logo i{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#5b3df5,#c9a45c);display:block}
+#nomProjet{flex:0 1 220px;min-width:110px;background:transparent;border-color:transparent;font-weight:600}
+#nomProjet:hover{border-color:var(--ligne-2)}
+.segment{display:flex;background:#101015;border:1px solid var(--ligne-2);border-radius:9px;padding:3px;gap:2px}
+.segment button{border:0;background:transparent;padding:5px 12px;border-radius:6px;color:var(--doux)}
+.segment button.on{background:var(--panneau-2);color:var(--texte);box-shadow:0 0 0 1px var(--ligne-2)}
+.segment button[data-marque=parvis].on{color:#e3c785}
+.segment button[data-marque=quentools].on{color:#d7f24a}
+header select{width:auto;max-width:190px}
+header button{flex:none}
+.espace{flex:1}
+
+.corps{display:grid;grid-template-columns:200px 1fr 330px;min-height:0}
+aside{background:var(--panneau);min-height:0;overflow:auto}
+#liste{border-right:1px solid var(--ligne);padding:12px;display:flex;flex-direction:column;gap:10px}
+.vignette{position:relative;border-radius:8px;border:2px solid transparent;cursor:pointer;background:#000;line-height:0}
+.vignette canvas{width:100%;border-radius:6px;display:block}
+.vignette.on{border-color:var(--accent)}
+.vignette b{position:absolute;left:6px;top:6px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;line-height:1;padding:4px 6px;border-radius:5px}
+.vignette.trop::after{content:"!";position:absolute;right:6px;top:6px;width:18px;height:18px;border-radius:50%;background:var(--alerte);color:#000;font:700 12px/18px sans-serif;text-align:center}
+.vignette.glisse{opacity:.4}
+.vignette.cible{border-color:var(--ok)}
+#ajout{margin-top:4px}
+
+.scene{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
+.barre{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--ligne);color:var(--doux);flex-wrap:wrap}
+.barre .pos{min-width:58px;text-align:center;color:var(--texte)}
+.barre label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.toile{flex:1 1 0;display:flex;align-items:center;justify-content:center;padding:16px;min-height:0}
+#apercu{max-width:100%;max-height:100%;width:auto;height:auto;border-radius:6px;box-shadow:0 20px 60px -20px #000,0 0 0 1px var(--ligne)}
+#alertes{margin:0 16px;display:flex;flex-direction:column;gap:6px}
+#alertes div{background:rgba(255,181,71,.1);border:1px solid rgba(255,181,71,.35);color:#ffd28a;border-radius:8px;padding:8px 12px;font-size:13px}
+#alertes div.ok{background:rgba(62,207,142,.08);border-color:rgba(62,207,142,.3);color:#8fe8be}
+.legende{margin:10px 16px 14px;flex:none;background:var(--panneau);border:1px solid var(--ligne);border-radius:var(--r);padding:14px;display:grid;grid-template-columns:1fr;gap:10px}
+.legende h3{margin:0;font-size:13px;color:var(--doux);font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.legende .boutons{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.legende .compte{color:var(--pale);font-size:12px;margin-left:auto}
+
+#inspecteur{border-left:1px solid var(--ligne);padding:16px}
+#inspecteur h2{font-size:15px;margin:0 0 4px}
+#inspecteur .sous-titre{color:var(--pale);font-size:12px;margin:0 0 16px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px;padding-bottom:16px;border-bottom:1px solid var(--ligne)}
+.themes{display:flex;gap:8px}
+.themes button{width:38px;height:38px;border-radius:9px;padding:0;border:2px solid transparent;position:relative}
+.themes button.on{border-color:#fff}
+.themes button i{position:absolute;right:5px;bottom:5px;width:10px;height:10px;border-radius:50%}
+.image-zone{display:flex;gap:8px;align-items:center}
+.image-zone img{width:52px;height:80px;object-fit:cover;object-position:top;border-radius:6px;border:1px solid var(--ligne-2)}
+.aide{color:var(--pale);font-size:12px;line-height:1.5;margin-top:22px;padding-top:14px;border-top:1px solid var(--ligne)}
+.aide b{color:var(--doux)}
+
+.modal{position:fixed;inset:0;background:rgba(5,5,8,.72);display:none;align-items:center;justify-content:center;z-index:10;padding:24px}
+.modal.ouvert{display:flex}
+.boite{background:var(--panneau);border:1px solid var(--ligne-2);border-radius:14px;width:min(1080px,100%);max-height:100%;display:flex;flex-direction:column;overflow:hidden}
+.boite header{height:auto;padding:14px 18px;gap:12px}
+.boite header h2{margin:0;font-size:16px}
+.onglets{display:flex;gap:4px;flex-wrap:wrap}
+.onglets button{border:0;background:transparent;color:var(--doux)}
+.onglets button.on{background:var(--panneau-2);color:var(--texte)}
+.grille{padding:18px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px}
+.carte{background:#101015;border:1px solid var(--ligne);border-radius:10px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;position:relative}
+.carte:hover{border-color:var(--accent)}
+.carte canvas{width:100%;display:block;background:#000}
+.carte div{padding:9px 10px;font-size:12.5px;line-height:1.35}
+.carte small{display:block;color:var(--pale);margin-top:3px}
+.carte .suppr{position:absolute;top:6px;right:6px;padding:2px 7px;background:rgba(0,0,0,.7);border-color:transparent}
+.vide{color:var(--pale);padding:30px;grid-column:1/-1;text-align:center}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#26262f;border:1px solid var(--ligne-2);padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;z-index:20}
+.toast.vu{opacity:1;transform:translateX(-50%)}
+#chargement{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--doux);z-index:30}
+@media (max-width:1380px){.logo span{display:none}}
+@media (max-width:1100px){.corps{grid-template-columns:150px 1fr 290px}}
+@media (max-height:760px){.legende textarea{min-height:48px}.legende{gap:6px;padding:10px}}
+</style>
+</head>
+<body>
+<div id="chargement">Chargement des polices…</div>
+<div class="app">
+  <header>
+    <div class="logo"><i></i><span>Studio Posts</span></div>
+    <input type="text" id="nomProjet" aria-label="Nom de la publication">
+    <div class="segment" id="marques" role="group" aria-label="Marque">
+      <button data-marque="parvis">Le Parvis</button>
+      <button data-marque="quentools">QuenTools</button>
+    </div>
+    <select id="format" aria-label="Format">
+      <option value="45">4:5 · Instagram</option>
+      <option value="11">1:1 · Carré</option>
+      <option value="916">9:16 · Story, Reels, TikTok</option>
+    </select>
+    <div class="espace"></div>
+    <button id="bNouveau" title="Partir d'un modèle (N)">Nouveau</button>
+    <button id="bBiblio" title="Mes publications et publications prêtes (B)">Bibliothèque</button>
+    <button id="bJson" title="Enregistrer le projet dans un fichier">Enregistrer</button>
+    <button id="bOuvrir" title="Ouvrir un projet enregistré">Ouvrir</button>
+    <button id="bJpg" title="Exporter l'image affichée en JPG (⌘E)">Image JPG</button>
+    <button id="bZip" class="primaire" title="Exporter toutes les images et la légende en .zip (⇧⌘E)">Tout exporter</button>
+    <input type="file" id="fJson" accept=".json,application/json" hidden>
+  </header>
+  <div class="corps">
+    <aside id="liste" aria-label="Diapositives"></aside>
+    <section class="scene">
+      <div class="barre">
+        <button class="mini" id="bPrec" title="Image précédente (←)">◀</button>
+        <span class="pos" id="pos">1 / 1</span>
+        <button class="mini" id="bSuiv" title="Image suivante (→)">▶</button>
+        <label id="lZones"><input type="checkbox" id="zones"> Zones masquées par TikTok</label>
+        <label><input type="checkbox" id="points"> Points de progression</label>
+        <span class="espace"></span>
+        <span id="taille"></span>
+      </div>
+      <div class="toile"><canvas id="apercu" width="1080" height="1350" aria-label="Aperçu de l'image"></canvas></div>
+      <div id="alertes" aria-live="polite"></div>
+      <div class="legende">
+        <h3>Texte de la publication <span class="compte" id="compte"></span></h3>
+        <input type="text" id="lgTitre" placeholder="Titre (TikTok) ou première ligne">
+        <textarea id="lgTexte" rows="3" placeholder="Légende, appel à commenter, hashtags…"></textarea>
+        <div class="boutons">
+          <button class="mini" id="cpTitre">Copier le titre</button>
+          <button class="mini" id="cpTexte">Copier la légende</button>
+          <button class="mini" id="cpHash">Ajouter les hashtags de la marque</button>
+        </div>
+      </div>
+    </section>
+    <aside id="inspecteur" aria-label="Réglages de l'image"></aside>
+  </div>
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitre">
+  <div class="boite">
+    <header><h2 id="mTitre">Nouveau</h2><div class="onglets" id="mOnglets"></div><div class="espace"></div><button id="mFermer">Fermer</button></header>
+    <div class="grille" id="mGrille"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="donnees.js"></script>
+<script>
+'use strict';
+/* ═══════════════════ 1. Outils ═══════════════════ */
+const $ = s => document.querySelector(s);
+const W = 1080, FORMATS = { 45: 1350, 11: 1080, 916: 1920 };
+const uid = () => Math.random().toString(36).slice(2, 9);
+const clone = o => JSON.parse(JSON.stringify(o));
+const echap = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// typographie française : apostrophe courbe, espace insécable avant : ; ? ! » et après «
+const fr = s => String(s ?? '').replace(/'/g, '’').replace(/ ([:;?!»])/g, ' $1').replace(/« /g, '« ');
+const EMOJI = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji"';
+const police = (fam, poids, taille, italique) => `${italique ? 'italic ' : ''}${poids} ${taille}px ${fam}, ${EMOJI}, sans-serif`;
+const LS_OK = 'letterSpacing' in CanvasRenderingContext2D.prototype;
+const espacement = (ctx, px) => { if (LS_OK) ctx.letterSpacing = (px || 0) + 'px'; };
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('vu'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('vu'), 2200); }
+function telecharger(blob, nom) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nom; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+const slug = s => (String(s || 'publication').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50)) || 'publication';
+
+async function chargerPolices() {
+  for (const p of window.POLICES || []) {
+    const f = new FontFace(p.famille, `url(data:font/woff2;base64,${p.data})`, { style: p.style, weight: p.poids });
+    await f.load(); document.fonts.add(f);
+  }
+}
+
+/* ═══════════════════ 2. Texte : mots, retour à la ligne, ajustement ═══════════════════ */
+// « *mot* » = mot en couleur d'accent ; retours à la ligne conservés
+function mots(texte) {
+  const out = []; let cur = null, acc = false; const s = fr(texte);
+  for (const ch of s) {
+    if (ch === '*') { acc = !acc; continue; }
+    if (ch === '\n') { if (cur) out.push(cur); cur = null; out.push({ br: true }); continue; }
+    if (ch === ' ') { if (cur) out.push(cur); cur = null; continue; }
+    if (!cur) cur = { pieces: [] };
+    const der = cur.pieces[cur.pieces.length - 1];
+    if (der && der.acc === acc) der.t += ch; else cur.pieces.push({ t: ch, acc });
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+function couper(ctx, liste, maxW) {
+  const sp = ctx.measureText(' ').width, lignes = []; let l = { mots: [], w: 0 };
+  for (const m of liste) {
+    if (m.br) { lignes.push(l); l = { mots: [], w: 0 }; continue; }
+    m.w = m.pieces.reduce((a, p) => a + ctx.measureText(p.t).width, 0);
+    if (l.mots.length && l.w + sp + m.w > maxW) { lignes.push(l); l = { mots: [m], w: m.w }; }
+    else { l.w += (l.mots.length ? sp : 0) + m.w; l.mots.push(m); }
+  }
+  if (l.mots.length || !lignes.length) lignes.push(l);
+  return lignes;
+}
+// largeur la plus étroite qui garde le même nombre de lignes (titres équilibrés)
+function equilibrer(ctx, liste, maxW) {
+  let lignes = couper(ctx, liste, maxW); const n = lignes.length;
+  if (n < 2 || liste.some(m => m.br)) return lignes;
+  let bas = maxW * 0.45, haut = maxW;
+  for (let i = 0; i < 12; i++) { const mid = (bas + haut) / 2; if (couper(ctx, liste, mid).length > n) bas = mid; else haut = mid; }
+  return couper(ctx, liste, haut);
+}
+const fontBloc = (b, taille) => police(b.fam, b.poids, taille, b.italique);
+
+/* Blocs : { texte, fam, poids, taille, interligne, couleur, accent, align, avant, apres, ls (em), equilibre, largeur, puce, retrait }
+   ou { regle: true, w, h, couleur, avant, apres } ou { dessin: (ctx, x, y, k, w) => …, h, avant, apres }.
+   La taille diminue (jusqu'à 45 %) tant que l'ensemble dépasse son cadre. */
+function mesurer(ctx, blocs, boite, k) {
+  const items = []; let h = 0, large = false;
+  for (const b of blocs) {
+    if (b == null) continue;
+    const avant = (b.avant || 0) * k, apres = (b.apres || 0) * k;
+    if (b.regle) { items.push({ b, h: b.h, avant, apres }); h += avant + b.h + apres; continue; }
+    if (b.dessin) { const hh = b.h * k; items.push({ b, h: hh, avant, apres }); h += avant + hh + apres; continue; }
+    if (!String(b.texte ?? '').trim()) continue;
+    const taille = b.taille * k; ctx.font = fontBloc(b, taille); espacement(ctx, (b.ls || 0) * taille);
+    const retrait = (b.retrait || 0) * k, maxW = Math.min(b.largeur || boite.w, boite.w) - retrait;
+    const liste = mots(b.texte), lignes = b.equilibre ? equilibrer(ctx, liste, maxW) : couper(ctx, liste, maxW);
+    if (lignes.some(l => l.w > maxW + 1)) large = true;
+    const lh = taille * (b.interligne || 1.2), hh = lignes.length * lh;
+    items.push({ b, lignes, taille, lh, h: hh, avant, apres, retrait, maxW });
+    h += avant + hh + apres;
+  }
+  espacement(ctx, 0);
+  return { items, h, large };
+}
+function ligneDeBase(ctx, taille, lh) {
+  const m = ctx.measureText('Hg'), asc = m.fontBoundingBoxAscent ?? taille * 0.92, desc = m.fontBoundingBoxDescent ?? taille * 0.24;
+  return (lh - (asc + desc)) / 2 + asc;
+}
+function dessinerItem(ctx, it, boite, y) {
+  const b = it.b;
+  if (b.regle) { ctx.fillStyle = b.couleur; const x = b.align === 'left' ? boite.x : boite.x + (boite.w - b.w) / 2; arrondi(ctx, x, y, b.w, b.h, b.h / 2); ctx.fill(); return; }
+  if (b.dessin) { b.dessin(ctx, boite.x, y, it.h / b.h, boite.w); return; }
+  ctx.font = fontBloc(b, it.taille); espacement(ctx, (b.ls || 0) * it.taille); ctx.textBaseline = 'alphabetic';
+  const base = ligneDeBase(ctx, it.taille, it.lh), sp = ctx.measureText(' ').width;
+  if (b.puce) {
+    ctx.save(); ctx.font = police(b.puceFam || b.fam, b.pucePoids || 800, it.taille); ctx.fillStyle = b.accent; ctx.textAlign = 'left';
+    ctx.fillText(b.puce, boite.x, y + base); ctx.restore(); ctx.font = fontBloc(b, it.taille);
+  }
+  it.lignes.forEach((l, i) => {
+    let x = boite.x + it.retrait;
+    if (b.align === 'center') x = boite.x + it.retrait + (it.maxW - l.w) / 2;
+    else if (b.align === 'right') x = boite.x + it.retrait + it.maxW - l.w;
+    const yy = y + i * it.lh + base;
+    l.mots.forEach((m, j) => {
+      if (j) x += sp;
+      for (const p of m.pieces) { ctx.fillStyle = p.acc ? b.accent : b.couleur; ctx.fillText(p.t, x, yy); x += ctx.measureText(p.t).width; }
+    });
+  });
+  espacement(ctx, 0);
+}
+function composer(ctx, blocs, boite, opt = {}) {
+  const kmin = opt.kmin ?? 0.45; let k = 1, plan;
+  for (;;) { plan = mesurer(ctx, blocs, boite, k); if (plan.h <= boite.h + 0.5 || k <= kmin) break; k = Math.max(kmin, k - 0.03); }
+  const valign = opt.valign || 'center';
+  let y = valign === 'center' ? boite.y + (boite.h - plan.h) / 2 : valign === 'bottom' ? boite.y + boite.h - plan.h : boite.y;
+  for (const it of plan.items) { y += it.avant; dessinerItem(ctx, it, boite, y); y += it.h + it.apres; }
+  return { trop: plan.h > boite.h + 1 || plan.large, k, fin: y };
+}
+// texte court sur une ligne, espacement manuel (logos, étiquettes) ; renvoie la largeur
+function texteEspace(ctx, t, x, y, ls, mesureSeule) {
+  let w = 0; const cars = [...t];
+  cars.forEach((c, i) => { const cw = ctx.measureText(c).width; if (!mesureSeule) ctx.fillText(c, x + w, y); w += cw + (i < cars.length - 1 ? ls : 0); });
+  return w;
+}
+function arrondi(ctx, x, y, w, h, r) {
+  const rr = Array.isArray(r) ? r : [r, r, r, r];
+  ctx.beginPath(); ctx.moveTo(x + rr[0], y); ctx.lineTo(x + w - rr[1], y); ctx.arcTo(x + w, y, x + w, y + rr[1], rr[1]);
+  ctx.lineTo(x + w, y + h - rr[2]); ctx.arcTo(x + w, y + h, x + w - rr[2], y + h, rr[2]); ctx.lineTo(x + rr[3], y + h);
+  ctx.arcTo(x, y + h, x, y + h - rr[3], rr[3]); ctx.lineTo(x, y + rr[0]); ctx.arcTo(x, y, x + rr[0], y, rr[0]); ctx.closePath();
+}
+
+/* ═══════════════════ 3. Images importées (captures d'écran) ═══════════════════ */
+const IMAGES = new Map();
+function image(src) {
+  if (!src) return null;
+  let e = IMAGES.get(src);
+  if (!e) { e = { img: new Image(), pret: false }; e.img.onload = () => { e.pret = true; rendreTout(); }; e.img.src = src; IMAGES.set(src, e); }
+  return e.pret ? e.img : null;
+}
+function reduireImage(fichier) {
+  return new Promise((ok, ko) => {
+    const r = new FileReader();
+    r.onerror = ko;
+    r.onload = () => {
+      const img = new Image();
+      img.onerror = () => ko(new Error('image illisible'));
+      img.onload = () => {
+        const s = Math.min(1, 1000 / img.width), c = document.createElement('canvas');
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); ok(c.toDataURL('image/jpeg', 0.86));
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(fichier);
+  });
+}
+
+/* ═══════════════════ 4. Le Parvis ═══════════════════ */
+const PV = { nuit: '#161f38', nuit2: '#1d2848', or: '#c9a45c', orClair: '#e3c785', creme: '#f8f4ec', cremeInk: '#f4efe3', navy: '#1e2d5a', orFonce: '#8b6f35' };
+const ARCHE = [new Path2D('M12 142V62C12 30 34 8 60 8s48 22 48 54v80'), new Path2D('M2 142h116')], CROIX = new Path2D('M60 40v66M38 62h44');
+const margesPV = f => ({ 45: { haut: 100, bas: 70, cote: 96 }, 11: { haut: 64, bas: 50, cote: 90 }, 916: { haut: 230, bas: 300, cote: 130 } }[f]);
+
+function arche(ctx, x, y, w, col, fine) {
+  const s = w / 120; ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.strokeStyle = col; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.lineWidth = fine ? 3 : 5; ARCHE.forEach(p => ctx.stroke(p)); ctx.lineWidth = fine ? 8 : 12; ctx.stroke(CROIX); ctx.restore();
+}
+function logoLigne(ctx, x, yc, col, taille, centre) {
+  ctx.font = police('QPlay', 600, taille); const ls = taille * 0.2, tw = texteEspace(ctx, 'LE PARVIS', 0, 0, ls, true), total = 46 + 18 + tw;
+  const x0 = centre ? (W - total) / 2 : x;
+  arche(ctx, x0, yc - 29, 46, col, true);
+  ctx.fillStyle = col; ctx.textBaseline = 'middle'; texteEspace(ctx, 'LE PARVIS', x0 + 64, yc + 3, ls); ctx.textBaseline = 'alphabetic';
+}
+function marqueCentre(ctx, y, col) {
+  arche(ctx, (W - 110) / 2, y, 110, PV.or);
+  ctx.font = police('QInter', 700, 34); const ls = 34 * 0.14, tw = texteEspace(ctx, 'LE PARVIS', 0, 0, ls, true);
+  ctx.fillStyle = col; ctx.textBaseline = 'alphabetic'; texteEspace(ctx, 'LE PARVIS', (W - tw) / 2, y + 137 + 26 + 30, ls);
+}
+function fondNuit(ctx, H) {
+  ctx.save(); const rx = 1.2 * W, ry = 0.8 * H; ctx.translate(W / 2, 0); ctx.scale(rx / ry, 1);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, ry); g.addColorStop(0, PV.nuit2); g.addColorStop(0.7, PV.nuit); g.addColorStop(1, PV.nuit);
+  ctx.fillStyle = g; ctx.fillRect(-2 * W, 0, 4 * W, H); ctx.restore();
+}
+const blocSous = (texte, taille = 44) => ({ texte, fam: 'QInter', poids: 400, taille, interligne: 1.35, couleur: 'rgba(244,239,227,.78)', accent: PV.orClair, align: 'center' });
+const filetOr = (w, h, avant, apres) => ({ regle: true, w, h, couleur: PV.or, avant, apres });
+
+function rendreParvis(ctx, s, H, f, i, total) {
+  const m = margesPV(f), sq = f === '11';
+  if (s.type === 'verset') {
+    ctx.fillStyle = PV.creme; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(201,164,92,.55)'; ctx.lineWidth = 2; arrondi(ctx, 41, 41, W - 82, H - 82, 44); ctx.stroke();
+    const top = { 45: 150, 11: 96, 916: 300 }[f], bas = H - m.bas - 140, g = 150, d = W - 150;
+    const archeVide = (gx, dx, ty, r) => { ctx.beginPath(); ctx.moveTo(gx, bas); ctx.lineTo(gx, ty + r); ctx.arc(gx + r, ty + r, r, Math.PI, Math.PI * 1.5); ctx.lineTo(dx - r, ty); ctx.arc(dx - r, ty + r, r, Math.PI * 1.5, 0); ctx.lineTo(dx, bas); ctx.stroke(); };
+    ctx.strokeStyle = PV.or; ctx.lineWidth = 4; archeVide(g + 2, d - 2, top + 2, 378);
+    ctx.strokeStyle = 'rgba(201,164,92,.5)'; ctx.lineWidth = 2; archeVide(g + 25, d - 25, top + 25, 357);
+    const cw = sq ? 52 : 64, cy = top + (sq ? 50 : 65);
+    ctx.save(); ctx.translate((W - cw) / 2, cy); ctx.scale(cw / 60, cw / 60); ctx.strokeStyle = PV.navy; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.stroke(new Path2D('M30 6v88M8 34h44')); ctx.restore();
+    const boite = { x: 210, w: W - 420, y: top + (sq ? 190 : 235) }; boite.h = bas - (sq ? 110 : 155) - boite.y;
+    const r = composer(ctx, [
+      { texte: s.label, fam: 'QInter', poids: 500, taille: 42, couleur: PV.orFonce, accent: PV.navy, align: 'center', apres: 34 },
+      { texte: s.texte, fam: 'QPlay', poids: 500, italique: true, taille: 64, interligne: 1.28, couleur: PV.navy, accent: PV.orFonce, align: 'center' },
+      s.ref ? filetOr(110, 3, 44, 34) : null,
+      { texte: s.ref, fam: 'QInter', poids: 500, taille: 40, couleur: PV.orFonce, accent: PV.navy, align: 'center' }
+    ], boite);
+    logoLigne(ctx, 0, H - m.bas - 22 - 29, PV.navy, 32, true);
+    return r;
+  }
+  fondNuit(ctx, H);
+  if (s.type === 'point') {
+    logoLigne(ctx, m.cote, m.haut + 21, PV.or, 30);
+    const boite = { x: m.cote, w: W - 2 * m.cote, y: m.haut + 130 }; boite.h = H - m.bas - 150 - boite.y;
+    const r = composer(ctx, [
+      s.n ? { texte: String(s.n).padStart(2, '0'), fam: 'QPlay', poids: 800, taille: 150, interligne: 1, couleur: PV.or, accent: PV.or, apres: 10 } : null,
+      { texte: s.titre, fam: 'QPlay', poids: 800, taille: s.n ? 78 : 84, interligne: 1.14, couleur: PV.cremeInk, accent: PV.or, apres: 40 },
+      { texte: s.texte, fam: 'QInter', poids: 400, taille: 50, interligne: 1.4, couleur: 'rgba(244,239,227,.86)', accent: PV.orClair },
+      { texte: s.ref, fam: 'QPlay', poids: 600, italique: true, taille: 46, interligne: 1.2, couleur: PV.or, accent: PV.orClair, avant: 36 }
+    ], boite);
+    if (total > 1) { ctx.font = police('QInter', 400, 30); ctx.fillStyle = 'rgba(244,239,227,.5)'; ctx.textAlign = 'center'; espacement(ctx, 1.8); ctx.fillText(`${i + 1} / ${total}`, W / 2, H - m.bas - 6); espacement(ctx, 0); ctx.textAlign = 'left'; }
+    return r;
+  }
+  if (s.type === 'abonnement') {
+    marqueCentre(ctx, m.haut + 10, PV.cremeInk);
+    const boite = { x: m.cote, w: W - 2 * m.cote, y: m.haut + 260 }; boite.h = H - m.bas - 120 - boite.y;
+    const bouton = s.bouton ?? 'Abonne-toi', bouton2 = s.bouton2 ?? 'pour ne rien rater';
+    return composer(ctx, [
+      { texte: s.titre, fam: 'QPlay', poids: 800, taille: 84, interligne: 1.16, couleur: PV.cremeInk, accent: PV.or, align: 'center' },
+      filetOr(130, 5, 36, 36),
+      blocSous(s.sous, 42),
+      bouton ? { h: 236, avant: 64, dessin: (c, x, y, k) => {
+        const bw = Math.min(820, W - 2 * m.cote) * Math.max(k, 0.8), bh = 236 * k, bx = (W - bw) / 2, g = c.createLinearGradient(0, y, 0, y + bh);
+        g.addColorStop(0, PV.orClair); g.addColorStop(1, PV.or); c.fillStyle = g; arrondi(c, bx, y, bw, bh, bh / 2); c.fill();
+        c.fillStyle = PV.nuit; c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+        c.font = police('QPlay', 800, 92 * k); c.fillText(fr(bouton), W / 2, y + bh * (bouton2 ? 0.52 : 0.66));
+        if (bouton2) { c.font = police('QInter', 700, 40 * k); c.fillText(fr(bouton2), W / 2, y + bh * 0.8); }
+        c.textAlign = 'left';
+      } } : null,
+      { texte: s.petit ?? 'Le Parvis · communauté chrétienne', fam: 'QInter', poids: 400, taille: 34, couleur: 'rgba(244,239,227,.55)', accent: PV.or, align: 'center', avant: 46 }
+    ], boite);
+  }
+  // couverture
+  marqueCentre(ctx, m.haut, PV.cremeInk);
+  const boite = { x: m.cote, w: W - 2 * m.cote, y: m.haut + 230 }; boite.h = H - m.bas - 190 - boite.y;
+  return composer(ctx, [
+    { texte: s.titre, fam: 'QPlay', poids: 800, taille: 104, interligne: 1.14, couleur: PV.cremeInk, accent: PV.or, align: 'center', equilibre: true },
+    s.sous ? filetOr(130, 5, 44, 44) : null,
+    blocSous(s.sous)
+  ], boite);
+}
+
+/* ═══════════════════ 5. QuenTools ═══════════════════ */
+const QT_THEMES = {
+  violet: { nom: 'Violet', bg: '#5b3df5', ink: '#ffffff', hi: '#d7f24a', soft: 'rgba(255,255,255,.78)', chip: 'rgba(255,255,255,.16)' },
+  nuit: { nom: 'Nuit', bg: '#121019', ink: '#f4f2fb', hi: '#d7f24a', soft: 'rgba(244,242,251,.72)', chip: 'rgba(255,255,255,.10)' },
+  creme: { nom: 'Crème', bg: '#f6f4ee', ink: '#121019', hi: '#5b3df5', soft: '#4a4658', chip: 'rgba(91,61,245,.10)' },
+  lime: { nom: 'Lime', bg: '#d7f24a', ink: '#121019', hi: '#5b3df5', soft: '#2c2a36', chip: 'rgba(18,16,25,.10)' }
+};
+const margesQT = f => ({ 45: { haut: 96, bas: 80, g: 88, d: 88 }, 11: { haut: 72, bas: 60, g: 80, d: 80 }, 916: { haut: 230, bas: 300, g: 88, d: 140 } }[f]);
+const PUCES = { numero: null, point: '•', coche: '✓', croix: '✕' };
+
+function logoQT(ctx, x, y, t) {
+  ctx.save(); ctx.translate(x, y);
+  arrondi(ctx, 1, 1, 62, 62, 17); ctx.fillStyle = '#5b3df5'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.beginPath(); ctx.arc(30, 30, 14, 0, Math.PI * 2); ctx.strokeStyle = '#fff'; ctx.lineWidth = 7; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(37, 37); ctx.lineTo(49, 49); ctx.strokeStyle = '#d7f24a'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.stroke();
+  ctx.restore();
+  ctx.font = police('QBric', 700, 40); ctx.fillStyle = t.ink; ctx.textBaseline = 'middle'; ctx.fillText('QuenTools', x + 84, y + 33); ctx.textBaseline = 'alphabetic';
+}
+function telephone(ctx, x, y, w, h, src, angle) {
+  ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.rotate((angle || 0) * Math.PI / 180); ctx.translate(-w / 2, -h / 2);
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 90; ctx.shadowOffsetY = 40;
+  arrondi(ctx, 0, 0, w, h, 70); ctx.fillStyle = '#1c1b24'; ctx.fill(); ctx.restore();
+  ctx.strokeStyle = '#35333f'; ctx.lineWidth = 2; arrondi(ctx, -1, -1, w + 2, h + 2, 71); ctx.stroke();
+  arrondi(ctx, 12, 12, w - 24, h - 24, 58); ctx.save(); ctx.clip();
+  const img = image(src);
+  if (img) { const iw = w - 24, s = iw / img.width; ctx.drawImage(img, 12, 12, iw, img.height * s); if (img.height * s < h - 24) { ctx.fillStyle = '#fff'; } }
+  else { ctx.fillStyle = '#f6f4ee'; ctx.fillRect(12, 12, w - 24, h - 24); ctx.fillStyle = '#8a8698'; ctx.font = police('QInter', 600, 30); ctx.textAlign = 'center'; ctx.fillText('Ajoute une capture', w / 2, h / 2 - 10); ctx.fillText('d’écran à droite', w / 2, h / 2 + 30); ctx.textAlign = 'left'; }
+  ctx.restore(); ctx.restore();
+}
+
+function rendreQT(ctx, s, H, f, i, total, opt) {
+  const t = QT_THEMES[s.theme] || QT_THEMES.violet, m = margesQT(f);
+  ctx.fillStyle = t.bg; ctx.fillRect(0, 0, W, H);
+  const g = ctx.createRadialGradient(920, 160, 0, 920, 160, 380); g.addColorStop(0, t.hi + '33'); g.addColorStop(0.65, t.hi + '00'); g.addColorStop(1, t.hi + '00');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // étiquette
+  let hautContenu = m.haut;
+  if (s.etiquette) {
+    ctx.font = police('QInter', 700, 30); const txt = fr(s.etiquette).toUpperCase(), tw = texteEspace(ctx, txt, 0, 0, 1.8, true);
+    arrondi(ctx, m.g, m.haut, tw + 56, 64, 32); ctx.fillStyle = t.chip; ctx.fill();
+    ctx.fillStyle = t.ink; ctx.textBaseline = 'middle'; texteEspace(ctx, txt, m.g + 28, m.haut + 33, 1.8); ctx.textBaseline = 'alphabetic';
+    hautContenu = m.haut + 64 + 40;
+  }
+  // pied : logo et points de progression
+  const yPied = H - m.bas - 64;
+  logoQT(ctx, m.g, yPied, t);
+  if (opt.points && total > 1) {
+    const n = Math.min(total, 10), pw = n * 18 + (n - 1) * 14 + 40, px = W - m.d - pw;
+    arrondi(ctx, px, yPied + 9, pw, 46, 23); ctx.fillStyle = t.chip; ctx.fill();
+    for (let k = 0; k < n; k++) { ctx.beginPath(); ctx.arc(px + 20 + 9 + k * 32, yPied + 32, 9, 0, Math.PI * 2); ctx.fillStyle = k === Math.min(i, n - 1) ? t.ink : (t.ink === '#ffffff' || t.ink === '#f4f2fb' ? 'rgba(255,255,255,.28)' : 'rgba(18,16,25,.22)'); ctx.fill(); }
+  }
+  const boite = { x: m.g, w: W - m.g - m.d, y: hautContenu }; boite.h = yPied - 40 - boite.y;
+  const titre = (taille, extra = {}) => ({ texte: s.titre, fam: 'QBric', poids: 800, taille, interligne: 1.0, ls: -0.03, couleur: t.ink, accent: t.hi, equilibre: true, ...extra });
+  const texte = (txt, taille, avant) => ({ texte: txt, fam: 'QInter', poids: 500, taille, interligne: 1.35, couleur: t.soft, accent: t.hi, avant });
+
+  if (s.type === 'liste') {
+    const puce = s.puce || 'numero', items = String(s.items || '').split('\n').map(x => x.trim()).filter(Boolean);
+    return composer(ctx, [titre(96, { apres: 56 }), ...items.map((x, k) => ({ texte: x, fam: 'QInter', poids: 500, taille: 44, interligne: 1.25, couleur: t.ink, accent: t.hi, puce: PUCES[puce] || String(k + 1), puceFam: 'QBric', retrait: 72, apres: k < items.length - 1 ? 26 : 0 }))], boite);
+  }
+  if (s.type === 'point') {
+    return composer(ctx, [
+      s.n ? { texte: String(s.n).padStart(2, '0'), fam: 'QBric', poids: 800, taille: 150, interligne: 1, couleur: t.hi, accent: t.hi, apres: 16 } : null,
+      titre(84), texte(s.texte, 46, 40)
+    ], boite);
+  }
+  if (s.type === 'telephone') {
+    const droite = s.position === 'droite';
+    if (droite) {
+      const sq = f === '11', tw = sq ? 520 : 560;
+      const r = composer(ctx, [titre(sq ? 68 : 76, { largeur: tw }), texte(s.sous, sq ? 36 : 40, 30)], { x: m.g, w: tw, y: boite.y, h: sq ? boite.h : H * 0.42 - boite.y + 120 }, { valign: sq ? 'center' : 'top' });
+      const ty = sq ? m.haut + 40 : Math.max(H * 0.36, r.fin + 50);
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, yPied - 20); ctx.clip(); telephone(ctx, sq ? 640 : 620, ty, sq ? 400 : 500, sq ? 820 : 1000, s.image, -4); ctx.restore();
+      return r;
+    }
+    const r = composer(ctx, [titre(70, { align: 'center' }), texte(s.sous ? s.sous : '', 38, 26)].map(b => b && ({ ...b, align: 'center' })), { ...boite, h: Math.min(boite.h * 0.32, 420) }, { valign: 'top' });
+    const dispo = yPied - 40 - (r.fin + 40), ph = Math.min(dispo, 980), pw = ph * 0.52;
+    if (ph > 200) telephone(ctx, (W - pw) / 2 + (f === '916' ? -(m.d - m.g) / 2 : 0), r.fin + 40, pw, ph, s.image, 0);
+    return r;
+  }
+  if (s.type === 'question') {
+    return composer(ctx, [titre(104), texte(s.texte, 50, 56)], boite);
+  }
+  // accroche
+  let b = boite;
+  if (s.appel) {
+    ctx.font = police('QInter', 700, 34); ctx.fillStyle = t.hi; ctx.fillText(fr(s.appel), m.g, yPied - 52);
+    b = { ...boite, h: boite.h - 90 };
+  }
+  return composer(ctx, [titre(112), texte(s.sous, 44, 48)], b);
+}
+
+/* ═══════════════════ 6. Rendu d'une image ═══════════════════ */
+function rendre(ctx, projet, i, opt = {}) {
+  const s = projet.slides[i], H = FORMATS[projet.format] || 1350, total = projet.slides.length;
+  ctx.save(); ctx.clearRect(0, 0, W, H); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  let r;
+  try { r = projet.marque === 'parvis' ? rendreParvis(ctx, s, H, projet.format, i, total) : rendreQT(ctx, s, H, projet.format, i, total, { points: projet.points !== false }); }
+  finally { ctx.restore(); espacement(ctx, 0); }
+  if (opt.zones && projet.format === '916') {
+    ctx.save(); ctx.fillStyle = 'rgba(255,60,60,.22)'; ctx.fillRect(0, 0, W, 150); ctx.fillRect(0, H - 250, W, 250); ctx.fillRect(W - 120, 150, 120, H - 400);
+    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.font = police('QInter', 600, 26); ctx.fillText('Masqué par TikTok (titre, boutons, légende)', 30, H - 210); ctx.restore();
+  }
+  return r || { trop: false };
+}
+
+/* ═══════════════════ 7. Modèles ═══════════════════ */
+const HASHTAGS = { parvis: '#chretien #pourtoi #foi #jesus #bible', quentools: '#siteweb #entrepreneur #artisan #creationdesite #communicationdigitale' };
+const CTA_PARVIS = (titre, sous) => ({ type: 'abonnement', titre, sous, bouton: 'Abonne-toi', bouton2: 'pour ne rien rater', petit: 'Le Parvis · communauté chrétienne' });
+const MODELES = {
+  parvis: [
+    { nom: 'Verset du jour', desc: 'Verset, méditation, abonnement', legende: { titre: 'Verset du jour : Psaume 23:1', texte: 'Verset du jour 🙏\n\n« L’Éternel est mon berger : je ne manquerai de rien. »\nPsaume 23:1\n\nTa méditation ici.\n\nÉcris « Amen » si cette parole te parle.\n\n' + HASHTAGS.parvis + ' #versetdujour' },
+      slides: [{ type: 'verset', label: 'Verset du jour', texte: 'L’Éternel est mon berger : je ne manquerai de rien.', ref: 'Psaume 23:1' }, { type: 'point', titre: 'Pour méditer', texte: 'Écris ici ta méditation : une ou deux phrases simples, qui parlent à la vie de tous les jours.' }, CTA_PARVIS('Cette parole est pour toi ?', 'Reçois un verset chaque jour avec Le Parvis.')] },
+    { nom: 'Liste', desc: 'Couverture, 5 points, abonnement', legende: { titre: '5 choses que…', texte: 'Ton titre ici 🙌\n\nTu t’es reconnu dans combien ? Dis-le en commentaire 👇\n\n' + HASHTAGS.parvis },
+      slides: [{ type: 'couverture', titre: '5 choses que seuls les *chrétiens* comprennent', sous: 'Swipe.' }, ...[1, 2, 3, 4, 5].map(n => ({ type: 'point', n, titre: 'Titre du point ' + n, texte: 'Une phrase courte qui explique ce point.' })), CTA_PARVIS('Tu t’es reconnu dans combien ?', 'Dis-le en commentaire, puis abonne-toi.')] },
+    { nom: 'Encouragement', desc: 'Couverture, 3 versets commentés', legende: { titre: 'Si tu es fatigué(e), lis ça', texte: 'Ton message ici 🤍\n\nÉcris « Amen » si tu en avais besoin.\n\n' + HASHTAGS.parvis + ' #encouragement' },
+      slides: [{ type: 'couverture', titre: 'Si tu es *fatigué(e)*, lis ça', sous: 'Ce message est pour toi.' }, { type: 'point', titre: 'Tu n’as pas à tout porter seul(e)', texte: 'Déchargez-vous sur lui de tous vos soucis, car lui-même prend soin de vous.', ref: '1 Pierre 5:7' }, { type: 'point', titre: 'Deuxième encouragement', texte: 'Texte ou verset (Louis Segond 1910).', ref: '' }, { type: 'point', titre: 'Troisième encouragement', texte: 'Texte ou verset (Louis Segond 1910).', ref: '' }, CTA_PARVIS('Quelqu’un a besoin de lire ça.', 'Partage-lui et abonne-toi pour d’autres encouragements.')] },
+    { nom: 'Histoire biblique', desc: 'Couverture, étapes du récit, abonnement', legende: { titre: 'L’histoire de…', texte: 'Ton résumé ici 📖\n\nQuelle histoire veux-tu la prochaine fois ? Dis-le en commentaire 👇\n\n' + HASHTAGS.parvis + ' #histoirebiblique' },
+      slides: [{ type: 'couverture', titre: 'L’histoire de *David et Goliath*', sous: 'En 5 images.' }, ...[1, 2, 3].map(n => ({ type: 'point', n, titre: 'Étape ' + n, texte: 'Ce qui se passe, en deux phrases.', ref: '1 Samuel 17' })), { type: 'point', titre: 'Ce que ça nous apprend', texte: 'La leçon pour aujourd’hui.' }, CTA_PARVIS('Quelle histoire veux-tu la prochaine fois ?', 'Dis-le en commentaire et abonne-toi.')] },
+    { nom: 'Prière', desc: 'Couverture, prière, abonnement', legende: { titre: 'Une prière pour ce soir', texte: 'Prions ensemble 🙏\n\nÉcris « Amen » si tu t’associes à cette prière.\n\n' + HASHTAGS.parvis + ' #priere' },
+      slides: [{ type: 'couverture', titre: 'Une *prière* pour ce soir', sous: 'Lis-la à voix basse.' }, { type: 'point', titre: 'Seigneur,', texte: 'Écris ici la prière, avec des phrases simples et vraies.' }, { type: 'point', titre: 'Amen.', texte: 'Merci pour ta présence et ta paix, au nom de Jésus.' }, CTA_PARVIS('Tu as prié avec nous ?', 'Écris « Amen » en commentaire et abonne-toi.')] },
+    { nom: 'Verset seul', desc: 'Une image', legende: { titre: 'Verset du jour', texte: '« … »\n\n' + HASHTAGS.parvis + ' #versetdujour' },
+      slides: [{ type: 'verset', label: 'Verset du jour', texte: 'Ta parole est une lampe à mes pieds, et une lumière sur mon sentier.', ref: 'Psaume 119:105' }] }
+  ],
+  quentools: [
+    { nom: 'Carrousel 5 images', desc: 'Situation, constat, solution, téléphone, question', format: '45', legende: { titre: 'Une fuite un dimanche : qui appelle-t-on ?', texte: 'Ton accroche ici 💧\n\nCe que fait un bon site, en deux phrases.\n\nVotre métier a-t-il un site aussi simple ? Dites-le en commentaire 👇\n\n' + HASHTAGS.quentools },
+      slides: [
+        { type: 'accroche', theme: 'nuit', etiquette: 'Modèle de démonstration', titre: 'Une fuite, un dimanche. *Qui appelle-t-on ?*', sous: 'Celui qu’on trouve en 5 secondes.', appel: 'Glissez pour voir comment →' },
+        { type: 'liste', theme: 'nuit', etiquette: 'Le constat', titre: 'Dans l’urgence, on appelle le *premier qu’on trouve*', items: 'Un numéro difficile à trouver\nAucun moyen de décrire la panne\nNi zone d’intervention, ni idée du prix', puce: 'croix' },
+        { type: 'liste', theme: 'nuit', etiquette: 'La solution', titre: 'Un site qui *rassure* avant l’appel', items: 'Numéro et bouton « Appeler » visibles tout de suite\nUn devis demandé en 2 minutes\nVotre zone et des repères clairs', puce: 'coche' },
+        { type: 'telephone', theme: 'nuit', etiquette: 'Sur téléphone', titre: 'Tout est à portée de *pouce*', sous: '', position: 'centre', image: '' },
+        { type: 'question', theme: 'violet', etiquette: 'Et vous ?', titre: 'Et votre *métier*, c’est quoi ?', texte: 'Dites-le en commentaire : je vous réponds avec une idée pour votre site.' }
+      ] },
+    { nom: 'Conseil', desc: 'Une image, titre et texte', legende: { titre: 'Un conseil pour votre site', texte: 'Ton conseil ici 💡\n\nVous le faites déjà ? Dites-le en commentaire 👇\n\n' + HASHTAGS.quentools },
+      slides: [{ type: 'accroche', theme: 'creme', etiquette: 'Conseil', titre: 'Votre numéro doit se voir *en 3 secondes*', sous: 'Sur téléphone, un client pressé ne cherche pas : il appelle le suivant.' }] },
+    { nom: 'Liste', desc: 'Une image, titre et 3 à 5 points', legende: { titre: '3 signes qu’il faut refaire votre site', texte: 'Ton texte ici 👇\n\n' + HASHTAGS.quentools },
+      slides: [{ type: 'liste', theme: 'violet', etiquette: 'Checklist', titre: '3 signes qu’il faut *refaire* votre site', items: 'Il est illisible sur téléphone\nVos horaires ne sont plus à jour\nOn ne trouve pas comment vous contacter', puce: 'numero' }] },
+    { nom: 'Astuces en carrousel', desc: 'Accroche, 3 points, question', legende: { titre: '3 astuces pour…', texte: 'Ton texte ici 👇\n\n' + HASHTAGS.quentools },
+      slides: [{ type: 'accroche', theme: 'violet', etiquette: 'Astuces', titre: '3 astuces pour être *trouvé sur Google*', sous: 'Sans rien payer.', appel: 'Glissez →' }, ...[1, 2, 3].map(n => ({ type: 'point', theme: 'nuit', etiquette: 'Astuce ' + n, n, titre: 'Titre de l’astuce ' + n, texte: 'Une ou deux phrases concrètes, faciles à appliquer.' })), { type: 'question', theme: 'lime', etiquette: 'Et vous ?', titre: 'Laquelle allez-vous *essayer* ?', texte: 'Dites-le en commentaire 👇' }] },
+    { nom: 'Avant / après', desc: 'Accroche et capture sur téléphone', legende: { titre: 'Avant / après', texte: 'Ton texte ici 👇\n\n' + HASHTAGS.quentools },
+      slides: [{ type: 'telephone', theme: 'nuit', etiquette: 'Réalisation', titre: 'Un site *clair*, pensé pour le téléphone', sous: 'Ajoutez une capture d’écran du site.', position: 'droite', image: '' }] }
+  ]
+};
+const TYPES = {
+  parvis: { couverture: 'Couverture', point: 'Point ou texte', verset: 'Verset', abonnement: 'Abonnement (fin)' },
+  quentools: { accroche: 'Accroche', liste: 'Liste', point: 'Point ou astuce', telephone: 'Capture sur téléphone', question: 'Question (fin)' }
+};
+const NOUVEAU = {
+  couverture: () => ({ titre: 'Ton titre avec un *mot en or*', sous: 'Swipe.' }),
+  point: m => m === 'parvis' ? { titre: 'Titre', texte: 'Ton texte ici.' } : { theme: 'nuit', etiquette: 'Astuce', titre: 'Titre', texte: 'Ton texte ici.' },
+  verset: () => ({ label: 'Verset du jour', texte: 'Texte du verset (Louis Segond 1910).', ref: 'Livre 1:1' }),
+  abonnement: () => CTA_PARVIS('Cette parole est pour toi ?', 'Abonne-toi pour ne rien rater.'),
+  accroche: () => ({ theme: 'violet', etiquette: 'Étiquette', titre: 'Ton titre avec un *mot en couleur*', sous: '' }),
+  liste: () => ({ theme: 'violet', etiquette: 'Liste', titre: 'Ton titre', items: 'Premier point\nDeuxième point\nTroisième point', puce: 'numero' }),
+  telephone: () => ({ theme: 'nuit', etiquette: 'Sur téléphone', titre: 'Ton titre', sous: '', position: 'centre', image: '' }),
+  question: () => ({ theme: 'violet', etiquette: 'Et vous ?', titre: 'Ta *question* ?', texte: 'Dites-le en commentaire 👇' })
+};
+// passage d'une marque à l'autre : on garde les textes
+const CONVERSION = {
+  quentools: { couverture: 'accroche', point: 'point', verset: 'point', abonnement: 'question' },
+  parvis: { accroche: 'couverture', liste: 'point', point: 'point', telephone: 'point', question: 'abonnement' }
+};
+function convertir(s, vers) {
+  const type = CONVERSION[vers][s.type] || s.type, d = { ...s, type };
+  if (vers === 'quentools') { d.theme = d.theme || 'nuit'; if (s.type === 'verset') { d.titre = s.label || ''; d.texte = `« ${s.texte} » ${s.ref || ''}`.trim(); } if (s.type === 'abonnement') d.texte = s.sous; }
+  else { if (s.type === 'liste') d.texte = String(s.items || '').split('\n').filter(Boolean).map(x => '• ' + x).join('\n'); if (s.type === 'question') d.sous = s.texte; if (s.type === 'accroche') d.sous = s.sous; }
+  return d;
+}
+
+/* ═══════════════════ 8. État, enregistrement, historique ═══════════════════ */
+const CLE = 'studioPosts:v1';
+let etat = { courant: null, projets: [] }, projet = null, sel = 0, histo = [], refait = [];
+function nouveauProjet(base, marque) {
+  return { id: uid(), nom: base.nom || 'Nouvelle publication', marque: base.marque || marque, format: base.format || '45', points: true, maj: Date.now(),
+    legende: clone(base.legende || { titre: '', texte: '' }), slides: clone(base.slides).map(s => ({ ...s, uid: uid() })) };
+}
+function charger() {
+  try { const d = JSON.parse(localStorage.getItem(CLE) || 'null'); if (d && Array.isArray(d.projets)) etat = d; } catch (e) { /* stockage indisponible : on travaille sans */ }
+  projet = etat.projets.find(p => p.id === etat.courant) || null;
+  if (!projet) { projet = nouveauProjet(MODELES.parvis[0], 'parvis'); etat.projets.unshift(projet); etat.courant = projet.id; }
+}
+let tEnr;
+function enregistrer() {
+  clearTimeout(tEnr);
+  tEnr = setTimeout(() => {
+    projet.maj = Date.now();
+    try { localStorage.setItem(CLE, JSON.stringify(etat)); }
+    catch (e) { toast('Mémoire du navigateur pleine : enregistre ce projet dans un fichier (Enregistrer)'); }
+  }, 300);
+}
+// toute modification passe par ici : annulable (⌘Z), enregistrée, réaffichée
+function modifier(fn, { inspecteur = true, pile = true } = {}) {
+  if (pile) { histo.push(JSON.stringify(projet)); if (histo.length > 80) histo.shift(); refait = []; }
+  fn(); enregistrer(); rendreTout(); if (inspecteur) afficherInspecteur();
+}
+function annuler(retour) {
+  const de = retour ? refait : histo, vers = retour ? histo : refait;
+  if (!de.length) return;
+  vers.push(JSON.stringify(projet));
+  const p = JSON.parse(de.pop()), k = etat.projets.findIndex(x => x.id === projet.id);
+  projet = p; if (k >= 0) etat.projets[k] = p;
+  sel = Math.min(sel, projet.slides.length - 1); enregistrer(); toutAfficher();
+}
+function ouvrirProjet(p) { projet = p; etat.courant = p.id; sel = 0; histo = []; refait = []; enregistrer(); toutAfficher(); }
+
+/* ═══════════════════ 9. Affichage ═══════════════════ */
+const apercu = $('#apercu'), ctxA = apercu.getContext('2d');
+const hors = document.createElement('canvas'), ctxH = hors.getContext('2d');
+let resultats = [];
+function rendreTout() {
+  const H = FORMATS[projet.format];
+  if (apercu.height !== H) apercu.height = H;
+  if (hors.height !== H) { hors.width = W; hors.height = H; }
+  const r = rendre(ctxA, projet, sel, { zones: $('#zones').checked });
+  resultats[sel] = r;
+  clearTimeout(rendreTout.t); rendreTout.t = setTimeout(rendreVignettes, 120);
+  $('#pos').textContent = `${sel + 1} / ${projet.slides.length}`;
+  $('#taille').textContent = `${W} × ${H} px`;
+  afficherAlertes();
+}
+function rendreVignettes() {
+  const H0 = FORMATS[projet.format]; if (hors.width !== W || hors.height !== H0) { hors.width = W; hors.height = H0; }
+  const vs = [...document.querySelectorAll('#liste .vignette')];
+  projet.slides.forEach((s, i) => {
+    resultats[i] = rendre(ctxH, projet, i);
+    const v = vs[i]; if (!v) return;
+    const c = v.querySelector('canvas'), H = FORMATS[projet.format];
+    c.width = 180; c.height = Math.round(180 * H / W);
+    const cx = c.getContext('2d'); cx.imageSmoothingQuality = 'high'; cx.drawImage(hors, 0, 0, c.width, c.height);
+    v.classList.toggle('trop', !!resultats[i]?.trop);
+  });
+  afficherAlertes();
+}
+function afficherListe() {
+  const L = $('#liste'); L.innerHTML = '';
+  projet.slides.forEach((s, i) => {
+    const v = document.createElement('div'); v.className = 'vignette' + (i === sel ? ' on' : ''); v.draggable = true; v.dataset.i = i;
+    v.innerHTML = `<canvas width="180" height="225"></canvas><b>${i + 1}</b>`;
+    v.title = TYPES[projet.marque][s.type] || s.type;
+    v.onclick = () => { sel = i; afficherListe(); rendreTout(); afficherInspecteur(); };
+    v.ondragstart = e => { e.dataTransfer.setData('text/plain', String(i)); v.classList.add('glisse'); };
+    v.ondragend = () => v.classList.remove('glisse');
+    v.ondragover = e => { e.preventDefault(); v.classList.add('cible'); };
+    v.ondragleave = () => v.classList.remove('cible');
+    v.ondrop = e => { e.preventDefault(); const de = +e.dataTransfer.getData('text/plain'); deplacer(de, i); };
+    L.append(v);
+  });
+  const sel2 = document.createElement('select'); sel2.id = 'ajout'; sel2.setAttribute('aria-label', 'Ajouter une image');
+  sel2.innerHTML = '<option value="">+ Ajouter une image…</option>' + Object.entries(TYPES[projet.marque]).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+  sel2.onchange = () => { const t = sel2.value; if (!t) return; modifier(() => { projet.slides.splice(sel + 1, 0, { type: t, uid: uid(), ...NOUVEAU[t](projet.marque) }); sel++; }); afficherListe(); };
+  L.append(sel2);
+  rendreVignettes();
+}
+function deplacer(de, vers) {
+  if (de === vers || isNaN(de)) return;
+  modifier(() => { const [s] = projet.slides.splice(de, 1); projet.slides.splice(vers, 0, s); sel = vers; });
+  afficherListe();
+}
+function afficherEntete() {
+  $('#nomProjet').value = projet.nom;
+  document.querySelectorAll('#marques button').forEach(b => b.classList.toggle('on', b.dataset.marque === projet.marque));
+  $('#format').value = projet.format;
+  $('#lZones').style.display = projet.format === '916' ? '' : 'none';
+  $('#points').checked = projet.points !== false;
+  $('#points').parentElement.style.display = projet.marque === 'quentools' ? '' : 'none';
+  $('#lgTitre').value = projet.legende.titre || ''; $('#lgTexte').value = projet.legende.texte || ''; compter();
+}
+function toutAfficher() { afficherEntete(); afficherListe(); rendreTout(); afficherInspecteur(); }
+
+// Champs de chaque type d'image
+const CHAMPS = {
+  couverture: [['titre', 'Titre', 'zone', 'Entoure un mot d’astérisques pour le mettre en or : *mot*'], ['sous', 'Sous-titre', 'texte']],
+  point: { parvis: [['n', 'Numéro (vide = aucun)', 'nombre'], ['titre', 'Titre', 'zone'], ['texte', 'Texte', 'zone'], ['ref', 'Référence biblique', 'texte', 'Exemple : Jean 3:16. Texte biblique : Louis Segond 1910 uniquement.']],
+    quentools: [['theme', 'Fond', 'theme'], ['etiquette', 'Étiquette', 'texte'], ['n', 'Numéro (vide = aucun)', 'nombre'], ['titre', 'Titre', 'zone'], ['texte', 'Texte', 'zone']] },
+  verset: [['label', 'Libellé', 'texte'], ['texte', 'Verset', 'zone', 'Louis Segond 1910 uniquement, recopié mot pour mot. Ne jamais inventer un verset.'], ['ref', 'Référence', 'texte']],
+  abonnement: [['titre', 'Titre', 'zone'], ['sous', 'Sous-titre', 'zone'], ['bouton', 'Bouton', 'texte'], ['bouton2', 'Sous le bouton', 'texte'], ['petit', 'Ligne du bas', 'texte']],
+  accroche: [['theme', 'Fond', 'theme'], ['etiquette', 'Étiquette', 'texte'], ['titre', 'Titre', 'zone', 'Entoure un mot d’astérisques pour le mettre en couleur : *mot*'], ['sous', 'Sous-titre', 'zone'], ['appel', 'Appel en bas (ex. « Glissez pour voir → »)', 'texte']],
+  liste: [['theme', 'Fond', 'theme'], ['etiquette', 'Étiquette', 'texte'], ['titre', 'Titre', 'zone'], ['items', 'Points (un par ligne)', 'zone'], ['puce', 'Puces', 'choix', { numero: '1, 2, 3', point: '•', coche: '✓ (solution)', croix: '✕ (problème)' }]],
+  telephone: [['theme', 'Fond', 'theme'], ['etiquette', 'Étiquette', 'texte'], ['titre', 'Titre', 'zone'], ['sous', 'Sous-titre', 'zone'], ['image', 'Capture d’écran', 'image'], ['position', 'Téléphone', 'choix', { centre: 'Centré, sous le titre', droite: 'À droite, incliné' }]],
+  question: [['theme', 'Fond', 'theme'], ['etiquette', 'Étiquette', 'texte'], ['titre', 'Question', 'zone'], ['texte', 'Texte', 'zone']]
+};
+function afficherInspecteur() {
+  const I = $('#inspecteur'), s = projet.slides[sel]; if (!s) { I.innerHTML = ''; return; }
+  const champs = Array.isArray(CHAMPS[s.type]) ? CHAMPS[s.type] : CHAMPS[s.type][projet.marque];
+  I.innerHTML = `<h2>Image ${sel + 1}</h2><p class="sous-titre">${echap(TYPES[projet.marque][s.type] || s.type)}</p>
+    <div class="actions">
+      <select id="iType" aria-label="Type d'image" style="flex:1 1 100%">${Object.entries(TYPES[projet.marque]).map(([k, v]) => `<option value="${k}"${k === s.type ? ' selected' : ''}>${v}</option>`).join('')}</select>
+      <button class="mini" id="iMonter" ${sel ? '' : 'disabled'} title="Avancer">↑</button><button class="mini" id="iDescendre" ${sel < projet.slides.length - 1 ? '' : 'disabled'} title="Reculer">↓</button>
+      <button class="mini" id="iDupliquer" title="Dupliquer (⌘D)">Dupliquer</button><button class="mini" id="iSuppr" ${projet.slides.length > 1 ? '' : 'disabled'} title="Supprimer">Supprimer</button>
+    </div>
+    <div id="iChamps"></div>
+    <div class="aide"><b>Astuces</b> : *mot* met un mot en couleur · Entrée dans un champ = retour à la ligne · le texte trop long rétrécit tout seul · ← → pour changer d'image · ⌘Z annuler · glisse les vignettes pour changer l'ordre.</div>`;
+  const C = $('#iChamps');
+  for (const [cle, nom, genre, extra] of champs) {
+    const l = document.createElement('label'); l.className = 'champ';
+    const aide = typeof extra === 'string' ? `<small>${echap(extra)}</small>` : '';
+    if (genre === 'theme') {
+      l.innerHTML = `<span>${nom}</span><div class="themes">${Object.entries(QT_THEMES).map(([k, t]) => `<button type="button" data-theme="${k}" title="${t.nom}" style="background:${t.bg}" class="${(s.theme || 'violet') === k ? 'on' : ''}"><i style="background:${t.hi}"></i></button>`).join('')}</div>
+        <small><a href="#" id="themeTous" style="color:var(--doux)">Appliquer ce fond à toutes les images</a></small>`;
+      l.querySelectorAll('[data-theme]').forEach(b => b.onclick = e => { e.preventDefault(); modifier(() => { s.theme = b.dataset.theme; }); });
+      l.querySelector('#themeTous').onclick = e => { e.preventDefault(); modifier(() => projet.slides.forEach(x => { x.theme = s.theme || 'violet'; })); };
+    } else if (genre === 'choix') {
+      l.innerHTML = `<span>${nom}</span><select>${Object.entries(extra).map(([k, v]) => `<option value="${k}"${(s[cle] || Object.keys(extra)[0]) === k ? ' selected' : ''}>${v}</option>`).join('')}</select>`;
+      l.querySelector('select').onchange = e => modifier(() => { s[cle] = e.target.value; });
+    } else if (genre === 'image') {
+      l.innerHTML = `<span>${nom}</span><div class="image-zone">${s.image ? `<img src="${s.image}" alt="">` : ''}<button type="button" class="mini" id="iImg">${s.image ? 'Remplacer…' : 'Choisir une image…'}</button>${s.image ? '<button type="button" class="mini" id="iImgSuppr">Retirer</button>' : ''}<input type="file" accept="image/*" hidden></div><small>Capture d'écran d'un site (téléphone). Elle reste dans ce projet.</small>`;
+      const f = l.querySelector('input[type=file]');
+      l.querySelector('#iImg').onclick = e => { e.preventDefault(); f.click(); };
+      f.onchange = async () => { const fi = f.files[0]; if (!fi) return; try { const d = await reduireImage(fi); modifier(() => { s.image = d; }); } catch (err) { toast('Image illisible'); } };
+      const sup = l.querySelector('#iImgSuppr'); if (sup) sup.onclick = e => { e.preventDefault(); modifier(() => { s.image = ''; }); };
+    } else {
+      const zone = genre === 'zone';
+      l.innerHTML = `<span>${nom}</span>${zone ? `<textarea rows="${cle === 'texte' || cle === 'items' ? 4 : 3}"></textarea>` : `<input type="${genre === 'nombre' ? 'number' : 'text'}" ${genre === 'nombre' ? 'min="0" max="99"' : ''}>`}${aide}`;
+      const e = l.querySelector('textarea,input'); e.value = s[cle] ?? ''; e.dataset.cle = cle;
+      let pile = true;
+      e.onfocus = () => { pile = true; };
+      e.oninput = () => { modifier(() => { s[cle] = genre === 'nombre' ? (e.value === '' ? '' : Math.max(0, Math.min(99, parseInt(e.value, 10) || 0))) : e.value; }, { inspecteur: false, pile }); pile = false; };
+    }
+    C.append(l);
+  }
+  $('#iType').onchange = e => modifier(() => { const t = e.target.value, n = NOUVEAU[t](projet.marque); projet.slides[sel] = { ...n, ...Object.fromEntries(Object.entries(s).filter(([k, v]) => v !== '' && v != null)), type: t, uid: s.uid }; });
+  $('#iMonter').onclick = () => { deplacer(sel, sel - 1); afficherInspecteur(); };
+  $('#iDescendre').onclick = () => { deplacer(sel, sel + 1); afficherInspecteur(); };
+  $('#iDupliquer').onclick = dupliquer;
+  $('#iSuppr').onclick = () => { if (projet.slides.length < 2) return; modifier(() => { projet.slides.splice(sel, 1); sel = Math.max(0, sel - 1); }); afficherListe(); };
+}
+function dupliquer() { modifier(() => { projet.slides.splice(sel + 1, 0, { ...clone(projet.slides[sel]), uid: uid() }); sel++; }); afficherListe(); }
+
+// Alertes : texte trop long, règles de contenu de chaque marque
+function alertesContenu() {
+  const a = [], tout = projet.slides.map(s => Object.entries(s).filter(([k]) => !['uid', 'image', 'type', 'theme', 'puce', 'position'].includes(k)).map(([, v]) => v).join(' ')).join(' ') + ' ' + projet.legende.titre + ' ' + projet.legende.texte;
+  if (projet.marque === 'quentools') {
+    if (/€|\beuros?\b/i.test(tout)) a.push('QuenTools : pas de prix dans une publication.');
+    if (/https?:\/\/|www\.|\.(fr|com)\b/i.test(tout)) a.push('QuenTools : pas de lien dans une publication.');
+    if (/\bIA\b|intelligence artificielle|\bchatgpt\b/i.test(tout)) a.push('QuenTools : ne pas présenter l’IA comme moyen de création.');
+    projet.slides.forEach((s, i) => { if (s.type === 'telephone' && !s.image) a.push(`Image ${i + 1} : ajoute une capture d’écran dans le téléphone.`); });
+  } else {
+    projet.slides.forEach((s, i) => { if (s.type === 'verset' && !String(s.ref || '').trim()) a.push(`Image ${i + 1} : référence du verset manquante.`); });
+  }
+  return a;
+}
+function afficherAlertes() {
+  const A = $('#alertes'), l = [];
+  resultats.slice(0, projet.slides.length).forEach((r, i) => { if (r?.trop) l.push(`Image ${i + 1} : texte trop long, raccourcis-le pour qu’il tienne dans l’image.`); });
+  l.push(...alertesContenu());
+  A.innerHTML = l.map(x => `<div>${echap(x)}</div>`).join('');
+}
+function compter() {
+  const t = $('#lgTexte').value, tags = (t.match(/#[\p{L}\d_]+/gu) || []).length;
+  $('#compte').textContent = `${t.length} / 2200 caractères · ${tags} hashtag${tags > 1 ? 's' : ''}${tags > 5 && projet.marque === 'quentools' ? ' (5 suffisent)' : ''}`;
+}
+
+/* ═══════════════════ 10. Export : JPG et ZIP ═══════════════════ */
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+// archive ZIP sans compression (les JPG sont déjà compressés)
+function zip(fichiers) {
+  const enc = new TextEncoder(), parts = [], central = []; let offset = 0, tailleCentrale = 0;
+  const d = new Date(), heure = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  for (const f of fichiers) {
+    const nom = enc.encode(f.nom), crc = crc32(f.data), n = f.data.length;
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true); h.setUint16(10, heure, true); h.setUint16(12, date, true);
+    h.setUint32(14, crc, true); h.setUint32(18, n, true); h.setUint32(22, n, true); h.setUint16(26, nom.length, true); h.setUint16(28, 0, true);
+    parts.push(h.buffer, nom, f.data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true); c.setUint16(12, heure, true); c.setUint16(14, date, true);
+    c.setUint32(16, crc, true); c.setUint32(20, n, true); c.setUint32(24, n, true); c.setUint16(28, nom.length, true); c.setUint32(42, offset, true);
+    central.push(c.buffer, nom); tailleCentrale += 46 + nom.length; offset += 30 + nom.length + n;
+  }
+  const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, fichiers.length, true); e.setUint16(10, fichiers.length, true); e.setUint32(12, tailleCentrale, true); e.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, e.buffer], { type: 'application/zip' });
+}
+const versBlob = c => new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.92));
+async function imageJpg(i) {
+  const c = document.createElement('canvas'); c.width = W; c.height = FORMATS[projet.format];
+  rendre(c.getContext('2d'), projet, i); return versBlob(c);
+}
+const nomFichier = () => `${slug(projet.nom)}-${{ 45: '4x5', 11: '1x1', 916: '9x16' }[projet.format]}`;
+async function exporterImage() {
+  telecharger(await imageJpg(sel), `${nomFichier()}-${String(sel + 1).padStart(2, '0')}.jpg`); toast('Image exportée');
+}
+async function exporterCarrousel() {
+  const fichiers = [];
+  for (let i = 0; i < projet.slides.length; i++) fichiers.push({ nom: String(i + 1).padStart(2, '0') + '.jpg', data: new Uint8Array(await (await imageJpg(i)).arrayBuffer()) });
+  const lg = [projet.legende.titre, '', projet.legende.texte].join('\n').trim();
+  if (lg) fichiers.push({ nom: 'legende.txt', data: new TextEncoder().encode(lg + '\n') });
+  telecharger(zip(fichiers), nomFichier() + '.zip');
+  const trop = resultats.slice(0, projet.slides.length).filter(r => r?.trop).length;
+  toast(`${projet.slides.length} image${projet.slides.length > 1 ? 's' : ''} exportée${projet.slides.length > 1 ? 's' : ''}${trop ? ` (${trop} avec un texte trop long)` : ''}`);
+}
+
+/* ═══════════════════ 11. Fenêtre « Nouveau » et « Bibliothèque » ═══════════════════ */
+let modalOnglet = null;
+function ouvrirModal(mode, onglet) {
+  const ong = mode === 'nouveau'
+    ? [['parvis', 'Modèles Le Parvis'], ['quentools', 'Modèles QuenTools']]
+    : [['mes', 'Mes publications'], ['parvis', `Le Parvis (${(window.BIBLIOTHEQUE?.parvis || []).length})`], ['quentools', `QuenTools (${(window.BIBLIOTHEQUE?.quentools || []).length})`]];
+  modalOnglet = onglet || (mode === 'nouveau' ? projet.marque : 'mes');
+  $('#mTitre').textContent = mode === 'nouveau' ? 'Partir d’un modèle' : 'Bibliothèque';
+  $('#mOnglets').innerHTML = ong.map(([k, v]) => `<button data-o="${k}" class="${k === modalOnglet ? 'on' : ''}">${v}</button>`).join('');
+  $('#mOnglets').querySelectorAll('button').forEach(b => b.onclick = () => ouvrirModal(mode, b.dataset.o));
+  const G = $('#mGrille'); G.innerHTML = '';
+  let items;
+  if (mode === 'nouveau') items = MODELES[modalOnglet].map(m => ({ ...m, marque: modalOnglet, sous: `${m.slides.length} image${m.slides.length > 1 ? 's' : ''} · ${m.desc}` }));
+  else if (modalOnglet === 'mes') items = [...etat.projets].sort((a, b) => b.maj - a.maj).map(p => ({ ...p, existant: true, sous: `${p.marque === 'parvis' ? 'Le Parvis' : 'QuenTools'} · ${p.slides.length} image${p.slides.length > 1 ? 's' : ''} · ${new Date(p.maj).toLocaleDateString('fr-FR')}` }));
+  else items = (window.BIBLIOTHEQUE?.[modalOnglet] || []).map(p => ({ ...p, sous: `${p.categorie} · ${p.slides.length} image${p.slides.length > 1 ? 's' : ''}` }));
+  if (!items.length) { G.innerHTML = '<div class="vide">Rien pour l’instant.</div>'; }
+  items.forEach(it => {
+    const c = document.createElement('div'); c.className = 'carte'; c.tabIndex = 0;
+    const p = it.existant ? it : { format: it.format || '45', marque: it.marque, slides: it.slides, points: true };
+    c.innerHTML = `<canvas width="200" height="${Math.round(200 * FORMATS[p.format] / W)}"></canvas><div>${echap(it.nom)}<small>${echap(it.sous)}</small></div>${it.existant && it.id !== projet.id ? '<button class="mini suppr" title="Supprimer">✕</button>' : ''}`;
+    // miniature : rendu réel de la première image
+    hors.width = W; hors.height = FORMATS[p.format]; rendre(ctxH, p, 0);
+    c.querySelector('canvas').getContext('2d').drawImage(hors, 0, 0, 200, Math.round(200 * FORMATS[p.format] / W));
+    const choisir = () => {
+      fermerModal();
+      if (it.existant) { ouvrirProjet(etat.projets.find(x => x.id === it.id)); return; }
+      const n = nouveauProjet(it, it.marque); if (projet && projet.marque === it.marque && !it.format) n.format = projet.format;
+      etat.projets.unshift(n); ouvrirProjet(n); toast('Nouvelle publication créée');
+    };
+    c.onclick = e => { if (e.target.closest('.suppr')) return; choisir(); };
+    c.onkeydown = e => { if (e.key === 'Enter') choisir(); };
+    const sup = c.querySelector('.suppr');
+    if (sup) sup.onclick = () => { if (!confirm(`Supprimer « ${it.nom} » ?`)) return; etat.projets = etat.projets.filter(x => x.id !== it.id); enregistrer(); ouvrirModal(mode, 'mes'); };
+    G.append(c);
+  });
+  hors.height = FORMATS[projet.format];
+  $('#modal').classList.add('ouvert');
+}
+function fermerModal() { $('#modal').classList.remove('ouvert'); }
+
+/* ═══════════════════ 12. Événements ═══════════════════ */
+function brancher() {
+  $('#nomProjet').oninput = e => modifier(() => { projet.nom = e.target.value; }, { inspecteur: false, pile: false });
+  document.querySelectorAll('#marques button').forEach(b => b.onclick = () => {
+    const m = b.dataset.marque; if (m === projet.marque) return;
+    modifier(() => { projet.slides = projet.slides.map(s => convertir(s, m)); projet.marque = m; });
+    toutAfficher(); toast(m === 'parvis' ? 'Style Le Parvis' : 'Style QuenTools');
+  });
+  $('#format').onchange = e => { modifier(() => { projet.format = e.target.value; }); toutAfficher(); };
+  $('#zones').onchange = rendreTout;
+  $('#points').onchange = e => modifier(() => { projet.points = e.target.checked; }, { inspecteur: false });
+  $('#bPrec').onclick = () => aller(-1); $('#bSuiv').onclick = () => aller(1);
+  $('#bNouveau').onclick = () => ouvrirModal('nouveau');
+  $('#bBiblio').onclick = () => ouvrirModal('biblio');
+  $('#mFermer').onclick = fermerModal;
+  $('#modal').onclick = e => { if (e.target.id === 'modal') fermerModal(); };
+  $('#bJpg').onclick = exporterImage; $('#bZip').onclick = exporterCarrousel;
+  $('#bJson').onclick = () => telecharger(new Blob([JSON.stringify(projet, null, 1)], { type: 'application/json' }), slug(projet.nom) + '.studio.json');
+  $('#bOuvrir').onclick = () => $('#fJson').click();
+  $('#fJson').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try {
+      const p = JSON.parse(await f.text());
+      if (!Array.isArray(p.slides) || !p.slides.length || !TYPES[p.marque]) throw new Error('format');
+      const n = nouveauProjet(p, p.marque); n.points = p.points !== false; etat.projets.unshift(n); ouvrirProjet(n); toast('Projet ouvert');
+    } catch (err) { toast('Ce fichier n’est pas un projet Studio Posts'); }
+  };
+  $('#lgTitre').oninput = e => modifier(() => { projet.legende.titre = e.target.value; }, { inspecteur: false, pile: false });
+  $('#lgTexte').oninput = e => { modifier(() => { projet.legende.texte = e.target.value; }, { inspecteur: false, pile: false }); compter(); };
+  const copier = async (t, msg) => { try { await navigator.clipboard.writeText(t); toast(msg); } catch (e) { const z = document.createElement('textarea'); z.value = t; document.body.append(z); z.select(); document.execCommand('copy'); z.remove(); toast(msg); } };
+  $('#cpTitre').onclick = () => copier(projet.legende.titre, 'Titre copié');
+  $('#cpTexte').onclick = () => copier(projet.legende.texte, 'Légende copiée');
+  $('#cpHash').onclick = () => {
+    const tags = HASHTAGS[projet.marque].split(' ').filter(h => !projet.legende.texte.includes(h));
+    if (!tags.length) { toast('Hashtags déjà présents'); return; }
+    modifier(() => { projet.legende.texte = (projet.legende.texte.trimEnd() + '\n\n' + tags.join(' ')).trim(); }, { inspecteur: false });
+    $('#lgTexte').value = projet.legende.texte; compter();
+  };
+  document.addEventListener('keydown', e => {
+    const champ = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName);
+    const cmd = e.metaKey || e.ctrlKey;
+    if (e.key === 'Escape') { fermerModal(); return; }
+    if (cmd && e.key.toLowerCase() === 'e') { e.preventDefault(); e.shiftKey ? exporterCarrousel() : exporterImage(); return; }
+    if (cmd && e.key.toLowerCase() === 's') { e.preventDefault(); enregistrer(); toast('Enregistré dans ce navigateur'); return; }
+    if (champ) return;
+    if (cmd && e.key.toLowerCase() === 'z') { e.preventDefault(); annuler(e.shiftKey); return; }
+    if (cmd && e.key.toLowerCase() === 'd') { e.preventDefault(); dupliquer(); return; }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); aller(-1); }
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); aller(1); }
+    else if (e.key.toLowerCase() === 'n') ouvrirModal('nouveau');
+    else if (e.key.toLowerCase() === 'b') ouvrirModal('biblio');
+  });
+}
+// appelé par le menu Édition de l'application Mac (le menu intercepte ⌘Z avant la page)
+window.studioAnnuler = retour => { if (/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName)) document.execCommand(retour ? 'redo' : 'undo'); else annuler(retour); };
+function aller(d) { const n = Math.max(0, Math.min(projet.slides.length - 1, sel + d)); if (n === sel) return; sel = n; afficherListe(); rendreTout(); afficherInspecteur(); }
+
+(async () => {
+  try { await chargerPolices(); }
+  catch (e) { $('#chargement').textContent = 'Polices introuvables : relancer « node tools/generateur-posts.js ».'; return; }
+  charger(); brancher(); toutAfficher();
+  $('#chargement').remove();
+  // accès pour les contrôles automatiques (tools/verifier-generateur-posts.js)
+  window.studio = { MODELES, FORMATS, get projet() { return projet; }, ouvrir: p => { const n = nouveauProjet(p, p.marque); etat.projets.unshift(n); ouvrirProjet(n); return n; }, rendre: (p, i) => { const c = document.createElement('canvas'); c.width = W; c.height = FORMATS[p.format]; return rendre(c.getContext('2d'), p, i); },
+    planche: (p, e = 0.25) => { const H = FORMATS[p.format], n = p.slides.length, c = document.createElement('canvas'), x = c.getContext('2d'); c.width = Math.round(n * W * e + (n - 1) * 12); c.height = Math.round(H * e); x.fillStyle = '#888'; x.fillRect(0, 0, c.width, c.height); hors.width = W; hors.height = H; p.slides.forEach((s, i) => { rendre(ctxH, p, i); x.drawImage(hors, 0, 0, W, H, Math.round(i * (W * e + 12)), 0, Math.round(W * e), Math.round(H * e)); }); hors.height = FORMATS[projet.format]; return c.toDataURL('image/png'); },
+    alertes: alertesContenu };
+})();
+</script>
+</body>
+</html>

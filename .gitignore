@@ -26,3 +26,6 @@ tools/fixtures/fiches-reelles*.json
 # Application QuentMovie : fichiers générés
 quentmovie/dist/
 quentmovie/scripts/__pycache__/
+
+# Application Studio Posts : fichiers générés
+marketing/generateur-posts/dist/
