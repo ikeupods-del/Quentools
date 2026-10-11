@@ -1934,7 +1934,7 @@ function genCarte(s, i, n, im) {
     </div>
     <div class="sc-txt">
       <div class="sc-tete"><span class="num">${i + 1}</span><input type="text" class="sec" data-gsection="${i}" value="${esc(s.section || '')}" placeholder="Titre de partie (facultatif)"><span class="mut">${mots} mots · ≈ ${fmt(dureeScene(s))}</span>
-        <span class="sc-btns"><button class="mini" data-gmove="${i}:-1" ${i ? '' : 'disabled'} title="Monter">↑</button><button class="mini" data-gmove="${i}:1" ${i < n - 1 ? '' : 'disabled'} title="Descendre">↓</button><button class="mini" data-gia="${i}" title="Faire réécrire cette scène par l’IA">✨ Réécrire</button><button class="mini" data-gsuppr="${i}" title="Retirer cette scène">✕</button></span></div>
+        <span class="sc-btns"><button class="mini" data-gmove="${i}:-1" ${i ? '' : 'disabled'} title="Monter">↑</button><button class="mini" data-gmove="${i}:1" ${i < n - 1 ? '' : 'disabled'} title="Descendre">↓</button><button class="mini" data-gecoute="${i}" title="Écouter cette scène avec la voix choisie">▶ Écouter</button><button class="mini" data-gia="${i}" title="Faire réécrire cette scène par l’IA">✨ Réécrire</button><button class="mini" data-gsuppr="${i}" title="Retirer cette scène">✕</button></span></div>
       <textarea rows="3" data-gtexte="${i}">${esc(s.texte)}</textarea>
       <div class="sc-extra" id="gx${i}"></div>
     </div></div>`;
@@ -1971,6 +1971,7 @@ function genEtape2() {
     const t = e.target.closest('button, a') || e.target, d = t.dataset;
     if (d.gpick) { const [i, k] = d.gpick.split(':').map(Number); p.scenes[i].image = k; return rendre(); }
     if (d.gmove) { const [i, s] = d.gmove.split(':').map(Number), j = i + s; if (j >= 0 && j < p.scenes.length) { [p.scenes[i], p.scenes[j]] = [p.scenes[j], p.scenes[i]]; rendre(); } return; }
+    if (d.gecoute !== undefined) return essaiVoix($('#gVoix').value, p.scenes[+d.gecoute].texte.slice(0, 400), +$('#gVit').value / 175, t);
     if (d.gsuppr !== undefined) { if (p.scenes.length > 1) { p.scenes.splice(+d.gsuppr, 1); rendre(); } return; }
     if (d.gautre !== undefined) { const i = +d.gautre, x = $('#gx' + i);
       x.innerHTML = `<div class="ligne"><input type="text" data-gq="${i}" value="${esc(p.scenes[i].sujet || p.scenes[i].section || '')}" placeholder="Ce que la photo doit montrer (ex. : casque de vélo)"><button class="pri" data-gcherche="${i}" style="flex:none">Chercher</button></div><div class="grille" id="gg${i}"></div>`; x.querySelector('input').focus(); return; }
