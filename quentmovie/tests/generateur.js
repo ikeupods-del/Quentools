@@ -93,6 +93,12 @@ Référence un. Référence deux qui ne doit jamais être lue dans la vidéo.`;
   check('images : celles de l’article d’abord', noms[0] === 'Usine Michelin 1900.jpg' && noms[1] === 'Bibendum.jpg', noms.join(', '));
   check('images : complétées par une recherche', noms.includes('Michelin pneu.jpg'), noms.join(', '));
   check('images : auteur et licence lisibles', prep.images[0].auteur === 'Agence Rol' && prep.images[0].licence === 'Public domain', JSON.stringify(prep.images[0]));
+  // vignettes : relais local (taille standard, cache, adresses étrangères refusées)
+  const vu = prep.images[0].url, avant = appels.length, v1 = await fetch(U('/api/vignette?w=400&u=' + encodeURIComponent(vu))), tailleV = (await v1.arrayBuffer()).byteLength;
+  const v2 = await fetch(U('/api/vignette?w=400&u=' + encodeURIComponent(vu))); await v2.arrayBuffer();
+  check('vignette : image servie par QuentMovie', v1.status === 200 && /image/.test(v1.headers.get('content-type')) && tailleV > 1000, `${v1.status} ${tailleV}`);
+  check('vignette : mise en cache (une seule demande à Wikimedia)', appels.length - avant === 1, appels.length - avant);
+  check('vignette : adresse étrangère refusée', (await fetch(U('/api/vignette?u=' + encodeURIComponent('https://exemple.org/a.jpg')))).status === 403 && (await fetch(U('/api/vignette?u=file:///etc/passwd'))).status === 403);
   const v = await (await fetch(U('/api/generer/voix'))).json();
   check('liste des voix françaises', Array.isArray(v.voix) && (process.platform !== 'darwin' || v.voix.length > 0), JSON.stringify(v).slice(0, 200));
 

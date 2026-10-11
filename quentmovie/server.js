@@ -80,10 +80,33 @@ function create(opts = {}) {
     '.png': 'images', '.webp': 'images', '.jpg': 'images', '.jpeg': 'images', '.mp4': 'videos', '.mov': 'videos', '.m4v': 'videos', '.webm': 'videos' };
   const packCache = new Map();
   let gen = null;
+  // téléchargement des vignettes : 4 à la fois, nouvel essai si Wikimedia répond « trop de demandes »
+  const vigAttente = []; let vigActifs = 0;
+  const vignetteFile = (u, f) => new Promise((ok, ko) => { vigAttente.push({ u, f, ok, ko }); vigPompe(); });
+  function vigPompe() {
+    while (vigActifs < 4 && vigAttente.length) {
+      const t = vigAttente.shift(); vigActifs++;
+      (async () => {
+        for (let essai = 0; ; essai++) {
+          try { await require('./maj').requete(t.u, { dest: t.f + '.part', ua: 'QuentMovie/1.7 (logiciel de montage personnel; https://github.com/ikeupods-del/Quentools)', accept: 'image/*', quoi: 'd’images' }); fs.renameSync(t.f + '.part', t.f); return; }
+          catch (e) { if (e.code === 429 && essai < 3) { await new Promise(r => setTimeout(r, 1500 * (essai + 1))); continue; } throw e; }
+        }
+      })().then(t.ok, t.ko).finally(() => { vigActifs--; vigPompe(); });
+    }
+  }
   let parole = null, ia = opts.ia || null; // opts.ia : IA de remplacement pour les essais
   const IA = () => ia || (ia = require('./ia').creer({ BASE, FFMPEG }));
   const PAROLE = () => parole || (parole = require('./parole').creer({ run, FFMPEG, BASE }));
-  const GEN = () => gen || (gen = require('./generateur').creer({ run, FFMPEG, probe, MEDIAS, wiki: opts.wiki, commons: opts.commons, parole: PAROLE() }));
+  // Réglages locaux (clés gratuites des banques de photos : gardées dans le dossier QuentMovie de l'utilisateur, jamais dans le dépôt)
+  const REGL = path.join(BASE, 'reglages.json');
+  const lireRegl = () => { try { return JSON.parse(fs.readFileSync(REGL, 'utf8')); } catch (e) { return {}; } };
+  const ecrireRegl = r => { fs.mkdirSync(BASE, { recursive: true }); fs.writeFileSync(REGL, JSON.stringify(r, null, 2), { mode: 0o600 }); };
+  const BANQ = () => {
+    const B = require('./banques'), r = lireRegl(), cles = r.cles || {}, actif = id => (r.actives && r.actives[id] !== undefined ? r.actives[id] : B.BANQUES.find(x => x.id === id).defaut);
+    const b = B.creer({ bases: opts.banques, cles });
+    return { chercher: (q, o) => b.chercher(q, { ...o, actives: B.BANQUES.map(x => x.id).filter(id => id !== 'commons' && actif(id)) }), signaler: b.signaler, commonsActif: actif('commons') };
+  };
+  const GEN = () => gen || (gen = require('./generateur').creer({ run, FFMPEG, probe, MEDIAS, wiki: opts.wiki, commons: opts.commons, parole: PAROLE(), banques: BANQ }));
   async function scanPacks() {
     const files = [];
     const walk = (dir, depth) => {
@@ -1014,6 +1037,35 @@ function buildClip(c, P, o = {}) {
         const img = await run(FFMPEG, ['-v', 'error', ...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(url.searchParams.get('file')), '-vn', '-filter_complex', `aformat=channel_layouts=mono,showwavespic=s=${w}x${h}:colors=white`,
           '-frames:v', 1, '-f', 'image2pipe', '-vcodec', 'png', 'pipe:1'], { binary: true });
         return send(res, 200, img, 'image/png', 'max-age=86400');
+      }
+      // Banques de photos : liste, activation, clé gratuite (les clés ne sont jamais renvoyées)
+      if (req.method === 'GET' && p === '/api/banques') {
+        const B = require('./banques'), r = lireRegl(), cles = r.cles || {};
+        return send(res, 200, { banques: B.BANQUES.map(x => ({ id: x.id, nom: x.nom, necessiteCle: x.cle, cle: !!cles[x.id], cleFin: cles[x.id] ? '…' + String(cles[x.id]).slice(-4) : '', active: r.actives && r.actives[x.id] !== undefined ? r.actives[x.id] : x.defaut, licence: x.licence, lien: x.lien })) });
+      }
+      if (req.method === 'POST' && p === '/api/banques') {
+        const b = await readJson(req), B = require('./banques'), def = B.BANQUES.find(x => x.id === String(b.id || '')); if (!def) throw new Error('Banque inconnue');
+        const r = lireRegl(); r.cles = r.cles || {}; r.actives = r.actives || {};
+        if (typeof b.active === 'boolean') r.actives[def.id] = b.active;
+        if (def.cle && typeof b.cle === 'string') { const k = b.cle.trim(); if (k && !/^[\w.\-]{8,120}$/.test(k)) throw new Error('Cette clé ne ressemble pas à une clé valide (lettres, chiffres, tirets).'); if (k) r.cles[def.id] = k; else delete r.cles[def.id]; }
+        ecrireRegl(r); return send(res, 200, { ok: true });
+      }
+      // Vignettes des photos du générateur : téléchargées ici (taille standard de Wikimedia, identification polie, 4 à la fois, gardées en cache)
+      if (req.method === 'GET' && p === '/api/vignette') {
+        const u0 = String(url.searchParams.get('u') || ''); let ux = null;
+        try { ux = new URL(u0); } catch (e) { /* adresse invalide */ }
+        const HOTES = ['upload.wikimedia.org', 'images.pexels.com', 'cdn.pixabay.com', 'pixabay.com', 'images.unsplash.com', 'plus.unsplash.com', 'api.openverse.org', 'images-assets.nasa.gov'];
+        const origines = [opts.commons, ...Object.values(opts.banques || {})].filter(Boolean).map(x => { try { return new URL(x).origin; } catch (e) { return ''; } });
+        const permis = ux && ((ux.protocol === 'https:' && HOTES.includes(ux.hostname)) || origines.includes(ux.origin));
+        if (!permis) return send(res, 403, { error: 'Adresse refusée' });
+        const PAS = [20, 40, 60, 120, 250, 330, 500, 960, 1280, 1920, 3840], w = clamp(Math.round(num(url.searchParams.get('w'), 330)), 20, 3840), std = PAS.find(x => x >= w) || 3840;
+        // un fichier d'origine (photo plus petite que la miniature demandée) est réduit lui aussi plutôt que téléchargé en entier
+        const m = /^(https:\/\/upload\.wikimedia\.org\/wikipedia\/commons)\/([0-9a-f]\/[0-9a-f]{2})\/([^/?]+\.(?:jpe?g|png))(?:\?.*)?$/i.exec(u0);
+        const u = ux.hostname === 'upload.wikimedia.org' ? (m ? `${m[1]}/thumb/${m[2]}/${m[3]}/${std}px-${m[3]}` : u0).replace(/\/(\d+)px-/, `/${std}px-`) : u0, fich = path.join(BASE, 'cache-vignettes', require('crypto').createHash('sha1').update(u).digest('hex') + '.img');
+        if (!fs.existsSync(fich)) { fs.mkdirSync(path.dirname(fich), { recursive: true }); await vignetteFile(u, fich); }
+        const tete = Buffer.alloc(4); const fd = fs.openSync(fich, 'r'); fs.readSync(fd, tete, 0, 4, 0); fs.closeSync(fd);
+        res.writeHead(200, { 'Content-Type': tete[0] === 0x89 ? 'image/png' : tete[0] === 0x52 ? 'image/webp' : 'image/jpeg', 'Cache-Control': 'max-age=86400' });
+        return fs.createReadStream(fich).pipe(res);
       }
       if (req.method === 'GET' && p === '/api/plans') { // changements de plan d'un extrait vidéo (pour le découper automatiquement)
         const q = url.searchParams, from = Math.max(0, num(q.get('in'), 0)), to = num(q.get('out'), 0), seuil = clamp(num(q.get('seuil'), 0.3), 0.1, 0.8), dur = to > from ? to - from : 0;

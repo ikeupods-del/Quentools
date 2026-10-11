@@ -3,6 +3,10 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.12.0
+- Générateur de vidéos, photos : six banques de photos gratuites au lieu d'une. Sans rien faire : Wikimedia Commons, Openverse (Flickr, musées…) et la NASA (domaine public). Avec une clé gratuite que tu colles dans l'application (« Banques de photos gratuites », dans les options du générateur ; la clé reste sur ton Mac) : Pexels, Pixabay et Unsplash, très belles photos pour les sujets de tous les jours. Chaque banque se coche ou se décoche ; une banque en panne est simplement ignorée. Les auteurs et licences de chaque photo sont repris au générique, avec le nom de la banque.
+- Générateur de vidéos : les vignettes des photos s'affichent de nouveau (Wikimedia refusait la taille de miniature utilisée). Elles passent maintenant par QuentMovie : taille standard, quatre à la fois, gardées en mémoire pour ne pas être retéléchargées.
+
 ## 1.11.0
 - Générateur de vidéos, textes : l'IA écrit désormais scène par scène (plan de la vidéo, puis chaque scène avec le plan et la scène précédente sous les yeux), au lieu d'un seul gros bloc. Chaque texte est contrôlé par QuentMovie (phrase complète, vrai français, aucune répétition, aucun chiffre ni nom inventé) et réécrit plus sagement s'il est refusé ; en dernier recours, le texte source de Wikipédia est repris tel quel.
 - Générateur de vidéos, photos : chaque photo est notée (mots de la scène retrouvés dans son titre, sa description et ses catégories, qualité, définition, cadrage horizontal) ; les cartes, schémas, documents scannés, séries de photos quasi identiques et photos trop petites sont écartés. Sans photo assez pertinente, la scène affiche une carte de titre plutôt qu'une image hors sujet. Les vidéos libres sont facultatives.

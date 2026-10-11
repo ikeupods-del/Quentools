@@ -96,10 +96,15 @@ function chromium() {
   const iaFausse = { etat: () => ({ installee: true, mo: 1, styles: ['dynamique'] }), installer: async () => {}, arreter: () => {},
     ecrireScript: async a => { dernierAppel = a; const rg = regroupe(a.consigne, a.options); return { titre: 'Vélo en ville', gpu: '', regles: rg, scenes: [['Casque', 'Un casque bien ajusté protège la tête en cas de chute.', 'casque', 'helmet'], ['Feux', 'Des feux clairs te rendent visible à la nuit tombée.', 'feux', 'lights'], ['Piste', 'Roule sur les pistes cyclables quand elles existent.', 'piste', 'lane']].map(([section, texte, sujet, recherche]) => ({ section, texte, sujet, recherche })) }; },
     reecrireScene: async a => ({ texte: 'Texte réécrit : ' + a.instruction }) };
-  const app2 = create({ port: 0, base: path.join(base, 'b2'), ...bins, ia: iaFausse, commons: `http://127.0.0.1:${commons.address().port}`, wiki: `http://127.0.0.1:${commons.address().port}` }), port2 = await app2.start();
+  const O2 = `http://127.0.0.1:${commons.address().port}`, app2 = create({ port: 0, base: path.join(base, 'b2'), ...bins, ia: iaFausse, commons: O2, wiki: O2, banques: { openverse: O2, nasa: O2, pexels: O2, pixabay: O2, unsplash: O2 } }), port2 = await app2.start();
   const pg2 = await b.newPage({ viewport: { width: 1440, height: 900 } }), errs2 = []; pg2.on('pageerror', e => errs2.push(e.message));
   await pg2.goto(`http://127.0.0.1:${port2}/`); await pg2.waitForTimeout(800); await pg2.evaluate(() => ouvrirGenerateur());
-  await pg2.fill('#xIdee', '3 astuces pour faire du vélo en ville, pas d’intro'); await pg2.uncheck('#xWiki'); await pg2.click('#xOpts summary'); await pg2.fill('#oCta', 'Abonne-toi pour la suite'); await pg2.fill('#oEviter', 'gratuit'); await pg2.selectOption('#oType', 'astuces'); await pg2.click('#xGo');
+  await pg2.click('#xOpts summary'); await pg2.click('#xBanques summary'); await pg2.waitForSelector('#xBanquesListe .banque', { timeout: 10000 });
+  check('banques de photos : six banques listées', await pg2.evaluate(() => document.querySelectorAll('#xBanquesListe .banque').length === 6 && document.querySelector('#bq_pexels').disabled));
+  await pg2.fill('[data-bqcle="pexels"]', 'CLEPEXELSDETEST123'); await pg2.click('[data-bqsave="pexels"]'); await pg2.waitForFunction(() => !document.querySelector('#bq_pexels').disabled, null, { timeout: 10000 });
+  check('banques de photos : clé enregistrée, banque activée', await pg2.evaluate(() => document.querySelector('#bq_pexels').checked && /…T123/.test(document.querySelector('[data-bqcle="pexels"]').placeholder)));
+  await pg2.click('#xBanques summary');
+  await pg2.fill('#xIdee', '3 astuces pour faire du vélo en ville, pas d’intro'); await pg2.uncheck('#xWiki'); await pg2.fill('#oCta', 'Abonne-toi pour la suite'); await pg2.fill('#oEviter', 'gratuit'); await pg2.selectOption('#oType', 'astuces'); await pg2.click('#xGo');
   await pg2.waitForSelector('#gScenes .sc', { timeout: 30000 });
   check('générateur : script affiché pour relecture (rien n’est créé)', await pg2.evaluate(() => document.querySelectorAll('#gScenes .sc').length === 3 && proj.clips.length === 0));
   check('générateur : options transmises à l’IA', !!dernierAppel && dernierAppel.options.type === 'astuces' && dernierAppel.options.cta === 'Abonne-toi pour la suite' && dernierAppel.options.eviter === 'gratuit' && dernierAppel.consigne.includes('pas d’intro'), JSON.stringify(dernierAppel && dernierAppel.options));

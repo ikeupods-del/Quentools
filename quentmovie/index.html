@@ -1907,7 +1907,8 @@ $('#bExport').onclick = exporter;
 const M = MAC ? '⌘' : 'Ctrl';
 // ---------- Générateur de vidéos : sujet → texte (Wikipédia), images libres, voix off du Mac, montage ----------
 let gen = null;
-const petiteImage = u => String(u || '').replace(/\/(\d+)px-/, '/400px-');
+// vignettes : téléchargées par QuentMovie (taille standard de Wikimedia, mises en cache), jamais directement par la fenêtre
+const petiteImage = u => (u ? `/api/vignette?w=330&u=${enc(u)}` : '');
 // Liste des voix : naturelles intégrées (téléchargées au premier usage), puis voix du Mac (★ = qualité Premium d'Apple)
 function optsVoix(nat, mac, cur) {
   const o = (v, t) => `<option value="${esc(v)}" ${v === cur ? 'selected' : ''}>${esc(t)}</option>`;
@@ -1988,6 +1989,9 @@ async function ouvrirGenerateur() {
         <label class="l">Mots ou expressions à utiliser (séparés par des virgules)</label><input type="text" id="oInclure" placeholder="Ex. : sécurité, casque">
         <label class="l">Mots ou expressions à ne jamais employer</label><input type="text" id="oEviter" placeholder="Ex. : gratuit, incroyable">
         <p class="mut" style="margin:6px 0 0">Ces réglages sont appliqués par QuentMovie lui-même, pas seulement demandés à l’IA : un mot interdit est refusé, l’appel à l’action est ajouté mot pour mot. Ils sont gardés pour la prochaine fois.</p></details>
+      <details class="opts" id="xBanques"><summary>🖼 Banques de photos gratuites (Wikimedia, Openverse, NASA, Pexels, Pixabay, Unsplash)</summary>
+        <p class="mut" style="margin:6px 0">Plus il y a de banques, plus les photos sont variées et pertinentes. Wikimedia, Openverse et la NASA marchent sans rien faire. Pexels, Pixabay et Unsplash donnent de très belles photos : crée un compte gratuit, copie ta clé ici (elle reste sur ton Mac, nulle part ailleurs).</p>
+        <div id="xBanquesListe"><span class="mut">Chargement…</span></div></details>
       <button class="pri" id="xGo" style="width:100%;margin-top:6px">🚀 Écrire le script</button><div id="xProg" class="mut" style="margin-top:6px"></div></div>
     <div id="panG" style="display:none"><p class="mut">Le texte vient d’un article Wikipédia (des faits, rien d’inventé). Choisis l’article, la durée, puis relis tout avant la création.</p>
       <div class="ligne"><input type="text" id="gSujet" placeholder="Ex. : L’histoire de Michelin" style="flex:1"><select id="gDuree" style="flex:none;width:auto">${opts([['30', '30 s'], ['60', '1 min'], ['120', '2 min'], ['180', '3 min'], ['300', '5 min']], '60')}</select><button class="pri" id="gChercher" style="flex:none">Chercher</button></div></div>
@@ -1998,6 +2002,13 @@ async function ouvrirGenerateur() {
   $('#gFermer').onclick = fermer; $('#gChercher').onclick = genChercher; $('#xGo').onclick = genExpress;
   $('#gSujet').onkeydown = e => { if (e.key === 'Enter') genChercher(); };
   restaurerOptionsGen(); $('#xIdee').focus();
+  $('#xBanques').addEventListener('toggle', e => { if (e.target.open) chargerBanques(); });
+  $('#xBanques').addEventListener('change', async e => { const id = e.target.dataset.bq; if (id) { try { await sauverBanque({ id, active: e.target.checked }); } catch (er) { aide(esc(er.message)); } } });
+  $('#xBanques').addEventListener('click', async e => { const t = e.target, d = t.dataset;
+    try {
+      if (d.bqsave) { const v = $(`[data-bqcle="${d.bqsave}"]`).value.trim(); if (!v) return; await sauverBanque({ id: d.bqsave, cle: v, active: true }); await chargerBanques(); aide('✅ Clé enregistrée sur ton Mac.'); }
+      if (d.bqdel) { await sauverBanque({ id: d.bqdel, cle: '' }); await chargerBanques(); }
+    } catch (er) { aide(`<span class="err">${esc(er.message)}</span>`); } });
   api('/api/generer/voix').then(r => r.json()).then(r => { if (gen) { gen.voix = r.voix; gen.naturelles = r.naturelles || []; gen.defaut = r.defaut; } }).catch(() => {});
   api('/api/ia').then(r => r.json()).then(r => { if (gen) gen.ia = r; }).catch(() => {});
 }
@@ -2097,6 +2108,15 @@ function genEtape2() {
   };
 }
 // Express : idée → (article Wikipédia si trouvé) → script de l'IA avec mots-clés → un média par scène → vidéo montée
+async function chargerBanques() {
+  const z = $('#xBanquesListe'); if (!z) return;
+  try {
+    const l = (await (await api('/api/banques')).json()).banques;
+    z.innerHTML = l.map(b => `<div class="banque"><div class="sw2" style="margin:2px 0"><input type="checkbox" data-bq="${b.id}" id="bq_${b.id}" ${b.active && (!b.necessiteCle || b.cle) ? 'checked' : ''} ${b.necessiteCle && !b.cle ? 'disabled' : ''}><label for="bq_${b.id}"><b>${esc(b.nom)}</b> <span class="mut">· ${esc(b.licence)}</span></label></div>
+      ${b.necessiteCle ? `<div class="ligne" style="margin:0 0 6px 24px"><input type="text" data-bqcle="${b.id}" placeholder="${b.cle ? 'Clé enregistrée (' + esc(b.cleFin) + ') : colle-en une autre pour la changer' : 'Colle ta clé gratuite ici'}" autocomplete="off" spellcheck="false"><button data-bqsave="${b.id}" style="flex:none">Enregistrer</button><a href="${esc(b.lien)}" target="_blank" rel="noopener" style="flex:none;align-self:center">Obtenir une clé ↗</a>${b.cle ? `<button data-bqdel="${b.id}" style="flex:none" title="Retirer la clé">✕</button>` : ''}</div>` : ''}</div>`).join('');
+  } catch (e) { z.innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+}
+async function sauverBanque(corps) { const r = await api('/api/banques', { method: 'POST', body: JSON.stringify(corps) }); if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'Réglage refusé'); } }
 const OPT_IDS = ['oType', 'oPublic', 'oTon', 'oRythme', 'oAdresse', 'oScenes', 'oQualite', 'oCta', 'oInclure', 'oEviter'];
 function optionsGen() {
   return { type: $('#oType').value, public: $('#oPublic').value, ton: $('#oTon').value, rythme: $('#oRythme').value, qualite: $('#oQualite').value, adresse: $('#oAdresse').value, scenes: +$('#oScenes').value || 0,

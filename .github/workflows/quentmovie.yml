@@ -45,6 +45,8 @@ jobs:
         env:
           NODE_LLAMA_CPP_SKIP_DOWNLOAD: 'true'
         run: npm ci
+      - name: Essai réel des banques de photos (Wikimedia, Openverse, NASA)
+        run: QM_RESEAU=1 node tests/banques-reel.js
       - name: Écrire des scripts d'exemple (textes et photos choisies)
         run: QM_BUDGET_MIN=32 QM_IA_DEBUG=1 QM_MODELE="${{ inputs.modele }}" QM_RESEAU=1 QM_BASE="$RUNNER_TEMP/qm-ia" node tests/ia-exemples.js
   mac:
@@ -70,6 +72,8 @@ jobs:
         run: QM_RESEAU=1 QM_SANS_FFPROBE=1 node tests/generateur-reel.js
       - name: Essai réel des voix naturelles et de la reconnaissance de la voix (téléchargement des modèles)
         run: QM_RESEAU=1 node tests/parole.js
+      - name: Essai réel des banques de photos (Wikimedia, Openverse, NASA)
+        run: QM_RESEAU=1 node tests/banques-reel.js
       - name: Essai réel de l'IA locale et du téléchargement depuis un lien
         run: QM_RESEAU=1 QM_BASE="$RUNNER_TEMP/qm-autotest" node tests/ia.js
       - name: Construire l'application
