@@ -29,7 +29,7 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     const r = await IA.ecrireScript({ titre: 'L’histoire de Michelin', faits, duree: 45, style: 'dynamique' }, job);
     const texte = r.scenes.map(x => x.texte).join(' ');
     console.log(`IA (${r.gpu || 'processeur'}) en ${Math.round((Date.now() - t0) / 1000)} s — « ${r.titre} »`); r.scenes.forEach((x, i) => console.log(`  ${i + 1}. [${x.section}] ${x.texte}`));
-    check('script écrit par l’IA', r.scenes.length >= 3 && texte.split(/\s+/).length > 50, r.scenes.length);
+    check('script écrit par l’IA', r.scenes.length >= 3 && texte.split(/\s+/).length > 60, r.scenes.length);
     const annees = [...texte.matchAll(/\b(1[0-9]{3}|20[0-9]{2})\b/g)].map(m => m[1]).filter(a => !faits.includes(a));
     check('aucune année inventée', !annees.length, annees.join(', '));
     check('IA sur la puce graphique', process.platform !== 'darwin' || r.gpu === 'metal', r.gpu);

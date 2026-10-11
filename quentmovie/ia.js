@@ -54,8 +54,9 @@ function creer({ BASE, FFMPEG }) {
     const systeme = 'Tu es scénariste de vidéos en français. Règle absolue : tu n’utilises QUE les faits fournis, sans rien ajouter, sans chiffre, date, nom ni anecdote qui n’y figure pas. ' +
       'Tu écris pour être lu à voix haute : phrases naturelles, pas de listes, pas d’émojis, pas de parenthèses, nombres écrits comme on les dit.';
     const demande = `Sujet : ${titre}\nStyle : ${STYLES[style] || STYLES.documentaire}.\nLongueur : environ ${mots} mots en tout, répartis en ${n} scènes (une idée et une image par scène).\n` +
+      `Chaque scène contient 2 ou 3 phrases complètes (sujet et verbe), environ ${Math.round(mots / n)} mots : jamais de style télégraphique du genre « 1889 : deux frères… ».\n` +
       `Commence par une accroche qui donne envie de regarder et termine par une phrase de conclusion. Pour chaque scène, donne un titre de partie très court (2 à 4 mots) dans « section ».\n` +
-      `Propose aussi un titre de vidéo accrocheur (6 mots maximum) dans « titre ».\n\nFAITS (seule source autorisée) :\n${String(faits).slice(0, 9000)}`;
+      `Propose aussi un titre de vidéo accrocheur de 6 mots maximum, sans chiffre ni durée, dans « titre ».\n\nFAITS (seule source autorisée) :\n${String(faits).slice(0, 9000)}`;
     const r = await demander({ type: 'ecrire', modele: cheminModele, systeme, demande, schema: SCHEMA, maxTokens: Math.min(4000, mots * 3 + 400) });
     const res = r.resultat || {};
     return { titre: String(res.titre || titre).slice(0, 80), gpu: r.gpu, scenes: (res.scenes || []).map(s => ({ section: String(s.section || '').slice(0, 40), texte: String(s.texte || '').trim() })).filter(s => s.texte.length > 10) };

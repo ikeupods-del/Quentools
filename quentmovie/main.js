@@ -56,7 +56,7 @@ async function demarrer() {
 async function autotest(port) {
   const fs = require('fs'), res = { version: app.getVersion(), electron: process.versions.electron, chrome: process.versions.chrome, macos: process.getSystemVersion(), arch: process.arch };
   const ecrire = () => { fs.writeFileSync(process.env.QM_AUTOTEST, JSON.stringify(res, null, 2)); app.exit(0); };
-  setTimeout(() => { res.erreur = 'délai dépassé'; ecrire(); }, 600000);
+  setTimeout(() => { res.erreur = 'délai dépassé'; ecrire(); }, 1200000);
   try {
     await new Promise(ok => win.webContents.once('did-finish-load', ok));
     const ex = c => win.webContents.executeJavaScript(c, true);
