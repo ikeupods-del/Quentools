@@ -40,6 +40,10 @@ Référence un. Référence deux qui ne doit jamais être lue dans la vidéo.`;
   check('script : commence par l’introduction', /^Michelin est une entreprise/.test(tout));
   check('script : sections historiques dans l’ordre', tout.indexOf('1891') < tout.indexOf('1898') && tout.indexOf('1898') < tout.indexOf('1946'));
   check('script : jamais les références', !/Référence/.test(tout));
+  const sc2 = G.construireScenes(EXTRAIT, 60);
+  check('scènes : titre de partie pour les titres de chapitre', sc2.some(x => x.section === 'Le Bibendum') && sc2[0].section === '', JSON.stringify(sc2.map(x => x.section)));
+  const ch2 = G.choisirImages([{ texte: 'En 1898, le dessinateur crée le Bibendum.' }, { texte: 'Les usines de Clermont-Ferrand.' }], [{ nom: 'Usine Clermont-Ferrand.jpg' }, { nom: 'Bibendum 1898.jpg' }]);
+  check('images : celle qui correspond au texte', ch2[0] === 1 && ch2[1] === 0, JSON.stringify(ch2));
   const court = G.construireScript(EXTRAIT, 20).join(' ');
   check('script : durée respectée', court.split(/\s+/).length <= 20 * 2.6 * 1.1 + 48, court.split(/\s+/).length);
 

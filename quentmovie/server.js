@@ -418,7 +418,7 @@ function create(opts = {}) {
 
     const proxy = !!o.proxy;
     args.push('-filter_complex', f.join(';'), '-map', '[v]', '-map', '[a]', '-t', eff.toFixed(3), '-r', fps,
-      '-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16, '-pix_fmt', 'yuv420p',
+      ...(o.vt && !proxy ? ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(W, H) >= 1500 ? '45M' : '20M', '-allow_sw', 1] : ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16]), '-pix_fmt', 'yuv420p',
       '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-ar', 48000, '-ac', 2, '-movflags', '+faststart', '-progress', 'pipe:1', '-nostats');
     return { args, eff };
   }
@@ -546,13 +546,19 @@ function create(opts = {}) {
     const dir = fs.mkdtempSync(path.join(TMP, 'job-'));
     job.dir = dir;
     try {
-      const built = clips.map((c, i) => buildClip(c, P, { tdir: { dir, idx: i }, proxy }));
+      // puce vidéo du Mac (VideoToolbox) pour l'encodage quand « rapide » est choisi (réglage par défaut sur Mac)
+      const vt = !proxy && process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality !== 'haute';
+      const built = clips.map((c, i) => buildClip(c, P, { tdir: { dir, idx: i }, proxy, vt }));
       const total = built.reduce((a, b) => a + b.eff, 0) * 1.1;
       let done = 0;
       const segs = [];
       for (let i = 0; i < built.length; i++) {
         job.step = `Clip ${i + 1} sur ${built.length}`;
-        await run(FFMPEG, [...built[i].args, `seg${i}.mp4`], { cwd: dir, onOut: progressOf(job, () => done, total) });
+        try { await run(FFMPEG, [...built[i].args, `seg${i}.mp4`], { cwd: dir, onOut: progressOf(job, () => done, total) }); }
+        catch (e) { // la puce vidéo refuse ce clip : encodage par le processeur
+          if (!vt) throw e;
+          await run(FFMPEG, [...buildClip(clips[i], P, { tdir: { dir, idx: i }, proxy, vt: false }).args, `seg${i}.mp4`], { cwd: dir, onOut: progressOf(job, () => done, total) });
+        }
         done += built[i].eff; segs.push(`seg${i}.mp4`);
       }
 
@@ -586,8 +592,8 @@ function create(opts = {}) {
           cv = nv; ca = na;
         }
         const enc = proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30]
-          : (process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality === 'rapide')
-            ? ['-c:v', 'h264_videotoolbox', '-b:v', P.h >= 1500 ? '30M' : '14M'] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17];
+          : (process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality !== 'haute')
+            ? ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(P.w, P.h) >= 1500 ? '45M' : '20M'] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17];
         await run(FFMPEG, ['-y', '-loglevel', 'error', ...inArgs, '-filter_complex', g.join(';'), '-map', `[${cv}]`, '-map', `[${ca}]`, ...enc,
           '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
         joined = 'all.mp4';
@@ -696,7 +702,7 @@ function create(opts = {}) {
       mapA = ['-map', '[aout]', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k'];
     }
     const enc = proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30]
-      : (process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality === 'rapide') ? ['-c:v', 'h264_videotoolbox', '-b:v', P.h >= 1500 ? '30M' : '14M'] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17];
+      : (process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality !== 'haute') ? ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(P.w, P.h) >= 1500 ? '45M' : '20M'] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17];
     await run(FFMPEG, ['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '[vout]', ...mapA, ...enc, '-pix_fmt', 'yuv420p', '-movflags', '+faststart', 'pistes.mp4'], { cwd: dir });
     return 'pistes.mp4';
   }
@@ -739,14 +745,18 @@ function create(opts = {}) {
   // Plusieurs méthodes sont essayées ; en dernier recours la prise brute est gardée, jamais perdue.
   async function importerPrise(brut) {
     const mp4 = brut.replace(/\.[^.]+$/, '') + '-prise.mp4';
-    const sortie = ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', 18, '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-ar', 48000, '-movflags', '+faststart', mp4];
+    // puce vidéo du Mac d'abord (conversion quasi instantanée), sinon le processeur
+    const vt = process.platform === 'darwin' && encoders.has('h264_videotoolbox');
+    const audio = ['-c:a', 'aac', '-b:a', '192k', '-ar', 48000, '-movflags', '+faststart', mp4];
+    const x264 = ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', 18, '-pix_fmt', 'yuv420p', ...audio];
+    const sorties = vt ? [['-c:v', 'h264_videotoolbox', '-b:v', '14M', '-maxrate', '20M', '-pix_fmt', 'yuv420p', ...audio], x264] : [x264];
     const essais = [
       ['-fflags', '+genpts', '-i', brut, '-map', '0:v:0', '-map', '0:a:0?', '-fps_mode', 'cfr', '-r', 30],
       ['-fflags', '+genpts+discardcorrupt', '-err_detect', 'ignore_err', '-i', brut, '-map', '0:v:0', '-map', '0:a:0?', '-fps_mode', 'vfr'],
       ['-err_detect', 'ignore_err', '-i', brut, '-map', '0:v:0', '-fps_mode', 'vfr'] // image seule si le son est illisible
     ];
     let erreur = fs.statSync(brut).size < 2000 ? 'enregistrement vide' : '';
-    if (!erreur) for (const e of essais) {
+    if (!erreur) for (const e of essais) for (const sortie of sorties) {
       try {
         await run(FFMPEG, ['-y', '-v', 'error', ...e, ...sortie]);
         const info = await probe(mp4);
@@ -832,7 +842,7 @@ function create(opts = {}) {
         const id = String(Date.now()) + Math.floor(Math.random() * 1000);
         const job = { progress: 0, step: 'Préparation', out: null, url: null, error: null, done: false, resultat: null };
         jobs.set(id, job);
-        GEN().fabriquer(job, { titre: String(body.titre || ''), scenes: body.scenes.map(x => ({ texte: String(x.texte || '').slice(0, 1200), image: Number.isInteger(x.image) ? x.image : -1 })),
+        GEN().fabriquer(job, { titre: String(body.titre || ''), scenes: body.scenes.map(x => ({ texte: String(x.texte || '').slice(0, 1200), section: String(x.section || '').slice(0, 80), image: Number.isInteger(x.image) ? x.image : -1 })),
           images: (body.images || []).slice(0, 60), voix: String(body.voix || '').slice(0, 60), vitesse: clamp(num(body.vitesse, 175), 120, 260) })
           .then(r => { job.resultat = r; job.progress = 100; job.done = true; }).catch(e => { job.error = e.message; });
         return send(res, 200, { id });

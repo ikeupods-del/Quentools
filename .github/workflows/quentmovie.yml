@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Installer les dépendances
         run: npm ci
       - name: Contrôler le moteur (effets, transitions, export)
@@ -42,6 +42,18 @@ jobs:
         run: QM_RESEAU=1 node tests/parole.js
       - name: Construire l'application
         run: npm run dist
+      - name: Lancer l'application installée et l'essayer (carte graphique, enregistrement, conversion, voix)
+        run: |
+          QM_AUTOTEST="$PWD/autotest.json" QM_BASE="$RUNNER_TEMP/qm-autotest" timeout 900 dist/mac-arm64/QuentMovie.app/Contents/MacOS/QuentMovie || true
+          cat autotest.json
+          node -e '
+            const r = require("./autotest.json"), ko = [];
+            if (r.erreur) ko.push("erreur : " + r.erreur);
+            if (!r.page || r.page.version !== require("./package.json").version) ko.push("page non chargée");
+            if (!r.detourage || !r.detourage.webgl2 || r.detourage.erreur || !(r.detourage.msMedian > 0)) ko.push("détourage");
+            if (!r.prise || !r.prise.import || !(r.prise.duree > 2)) ko.push("prise du studio");
+            if (!r.parole || !r.parole.dispo || !/\.m4a$/.test(r.parole.essai || "")) ko.push("voix naturelle");
+            if (ko.length) { console.log("Échecs :", ko.join(", ")); process.exit(1); } else console.log("Application : tout fonctionne");'
       - name: Contrôler que chaque programme livré tourne sur puce Apple
         run: |
           fautifs=0

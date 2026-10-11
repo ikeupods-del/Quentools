@@ -11,6 +11,7 @@ const { requete } = require('./maj');
 
 const UA = 'QuentMovie/1.7 (logiciel de montage personnel ; https://github.com/ikeupods-del/Quentools)';
 const MOTS_PAR_SECONDE = 2.6; // débit moyen d'une voix française de macOS à vitesse normale
+const VOIX_GADGET = /^(Eddy|Flo|Grandma|Grandpa|Reed|Rocko|Sandy|Shelley|Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox)\b/i;
 
 // « génère moi une vidéo sur l'histoire de Michelin » → titre « L'histoire de Michelin », recherche « Michelin »
 function sujetDe(phrase) {
@@ -38,8 +39,9 @@ const nbMots = s => s.split(/\s+/).filter(Boolean).length;
 const SECTIONS_HISTOIRE = /histoire|historique|biographie|chronologie|origine|cr[ée]ation|fondation|d[ée]buts|carri[èe]re|[ée]volution|d[ée]veloppement|parcours|jeunesse|formation|essor|expansion/i;
 const SECTIONS_EXCLUES = /voir aussi|notes|r[ée]f[ée]rences|bibliographie|liens externes|articles connexes|annexes|galerie|filmographie|discographie|palmar[èe]s|sources|distinctions|hommages/i;
 
-// Texte de la vidéo : introduction de l'article puis sections historiques, dans l'ordre, jusqu'à la durée voulue
-function construireScript(extrait, dureeSec) {
+// Texte de la vidéo : courte introduction de l'article puis sections historiques, dans l'ordre, jusqu'à la durée voulue.
+// Renvoie des scènes { texte, section } (section = titre de la partie de l'article, pour les titres de chapitre)
+function construireScenes(extrait, dureeSec) {
   const blocs = []; let titre = 'intro', parent = 'intro', courant = [];
   for (const ligne of String(extrait).split('\n')) {
     const m = /^(=+)\s*(.+?)\s*\1\s*$/.exec(ligne.trim());
@@ -50,21 +52,42 @@ function construireScript(extrait, dureeSec) {
   const utiles = blocs.filter(b => !SECTIONS_EXCLUES.test(b.titre) && !SECTIONS_EXCLUES.test(b.parent));
   const histoire = utiles.filter(b => b.titre !== 'intro' && (SECTIONS_HISTOIRE.test(b.titre) || SECTIONS_HISTOIRE.test(b.parent)));
   const ordre = [utiles[0], ...(histoire.length ? histoire : utiles.slice(1))].filter(Boolean);
-  const budget = Math.max(25, dureeSec * MOTS_PAR_SECONDE), choisies = [];
+  const budget = Math.max(25, dureeSec * MOTS_PAR_SECONDE), scenes = [];
   let mots = 0;
   for (const b of ordre) {
     // l'introduction présente le sujet en une ou deux phrases, puis on raconte l'histoire (si l'article en a une)
-    let dansBloc = 0; const maxBloc = b === utiles[0] && histoire.length ? Math.max(18, budget * 0.22) : Infinity;
+    let dansBloc = 0; const maxBloc = b === utiles[0] && histoire.length ? Math.max(18, budget * 0.22) : Infinity, choisies = [];
+    let fini = false;
     for (const p of phrases(b.texte).map(nettoyerPhrase)) {
       const n = nbMots(p);
       if (n < 5 || n > 48) continue;
       if (dansBloc && dansBloc + n > maxBloc) break;
-      dansBloc += n;
-      if (mots + n > budget * 1.1) return grouper(choisies);
-      choisies.push(p); mots += n;
+      if (mots + n > budget * 1.1) { fini = true; break; }
+      dansBloc += n; choisies.push(p); mots += n;
     }
+    const section = b.titre === 'intro' || SECTIONS_HISTOIRE.test(b.titre) && /^(histoire|historique)$/i.test(b.titre) ? '' : b.titre;
+    scenes.push(...grouper(choisies).map(texte => ({ texte, section })));
+    if (fini) break;
   }
-  return grouper(choisies);
+  return scenes;
+}
+const construireScript = (extrait, dureeSec) => construireScenes(extrait, dureeSec).map(x => x.texte);
+// Images choisies pour chaque scène : celle dont le nom partage le plus de mots (ou une année) avec le texte, sans répétition tant que possible
+const motsCles = t => new Set(String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(m => m.length > 3 || /^\d{4}$/.test(m)));
+function choisirImages(scenes, images) {
+  if (!images.length) return scenes.map(() => -1);
+  const cles = images.map(im => motsCles(im.nom.replace(/\.\w+$/, '')));
+  const vues = new Map(), out = [];
+  scenes.forEach((s, i) => {
+    const m = motsCles(s.texte); let best = 0, score = -Infinity;
+    images.forEach((im, k) => {
+      let sc = 0; for (const x of cles[k]) if (m.has(x)) sc += /^\d{4}$/.test(x) ? 3 : 2;
+      sc -= (vues.get(k) || 0) * 4; if (k === (i % images.length)) sc += 0.5; // à égalité : l'ordre de l'article
+      if (sc > score) { score = sc; best = k; }
+    });
+    vues.set(best, (vues.get(best) || 0) + 1); out.push(best);
+  });
+  return out;
 }
 // Scènes : une ou deux phrases (une image par scène)
 function grouper(liste) {
@@ -125,7 +148,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     const j = await api(wiki, { action: 'query', prop: 'extracts|images|info', explaintext: '1', exsectionformat: 'wiki', titles: article, imlimit: '80', inprop: 'url', redirects: '1' });
     const page = j.query && j.query.pages && j.query.pages[0];
     if (!page || page.missing || !page.extract) throw new Error('Article introuvable sur Wikipédia.');
-    const scenes = construireScript(page.extract, d);
+    const scenes = construireScenes(page.extract, d);
     if (!scenes.length) throw new Error('Cet article est trop court pour faire une vidéo.');
     // images de l'article (dans l'ordre de l'article), puis recherche dans Wikimedia Commons si elles ne suffisent pas
     const fichiers = (page.images || []).map(x => 'File:' + x.title.replace(/^[^:]+:/, '')).filter(t => !IMAGE_REFUSEE.test(t));
@@ -138,8 +161,9 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
       images = images.concat(autres);
     }
     images = images.slice(0, 40);
+    const choix = choisirImages(scenes, images);
     return { titre: titre || page.title, article: page.title, source: page.fullurl || `${wiki}/wiki/${encodeURIComponent(page.title)}`,
-      scenes: scenes.map((texte, i) => ({ texte, image: images.length ? i % images.length : -1 })), images };
+      scenes: scenes.map((x, i) => ({ texte: x.texte, section: x.section, image: choix[i] })), images };
   }
 
   // Voix françaises de macOS (« say -v ? ») ; ailleurs, aucune
@@ -147,7 +171,8 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     return new Promise(ok => execFile('say', ['-v', '?'], (e, out) => {
       if (e) return ok([]);
       const l = String(out).split('\n').map(x => /^(.+?)\s+([a-z]{2}[_-][A-Z0-9]{2,})\s+#/.exec(x)).filter(Boolean).map(m => ({ nom: m[1].trim(), langue: m[2] }));
-      ok(l.filter(v => /^fr/i.test(v.langue)).map(v => ({ ...v, premium: /\((Premium|Enhanced|Améliorée|Amélioré)\)/i.test(v.nom) })));
+      // voix « gadget » d'Apple (Eddy, Flo, Grandma, Rocko…) écartées : robotiques et presque identiques
+      ok(l.filter(v => /^fr/i.test(v.langue) && !VOIX_GADGET.test(v.nom)).map(v => ({ ...v, premium: /\((Premium|Enhanced|Améliorée|Amélioré)\)/i.test(v.nom) })));
     }));
   }
   // Une phrase lue → fichier audio (m4a) avec une petite respiration à la fin
@@ -197,7 +222,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
         const f = `gen-${id}-voix-${String(i + 1).padStart(2, '0')}.m4a`;
         const r = await lire(scenes[i].texte, path.join(MEDIAS, f), { voix: v, vitesse }, dir); synthese = synthese && r.synthese;
         const info = await probe(path.join(MEDIAS, f));
-        sortie.push({ texte: scenes[i].texte, voix: f, duree: +info.duration.toFixed(2), image: fichiersImages.get(scenes[i].image) || '' });
+        sortie.push({ texte: scenes[i].texte, section: scenes[i].section || '', voix: f, duree: +info.duration.toFixed(2), image: fichiersImages.get(scenes[i].image) || '' });
       }
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
     const credits = [...new Set(scenes.map(s => s.image))].filter(i => fichiersImages.has(i)).map(i => images[i]).map(im => `${im.auteur} — ${im.licence}`);
@@ -208,4 +233,4 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
   return { chercher, preparer, voix, fabriquer, lireMac };
 }
 
-module.exports = { creer, sujetDe, phrases, nettoyerPhrase, construireScript, imageDe };
+module.exports = { creer, sujetDe, phrases, nettoyerPhrase, construireScript, construireScenes, choisirImages, imageDe };
