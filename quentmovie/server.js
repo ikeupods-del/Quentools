@@ -111,15 +111,28 @@ function create(opts = {}) {
   }
 
   // ---------- FFmpeg ----------
-  function run(cmd, args, { cwd, onOut, binary, wantErr } = {}) {
+  // silence : délai (ms) sans aucune sortie de FFmpeg au-delà duquel il est arrêté (encodeur figé)
+  function run(cmd, args, { cwd, onOut, binary, wantErr, silence } = {}) {
     return new Promise((resolve, reject) => {
       const p = spawn(cmd, args, { cwd });
-      const out = []; let err = '';
-      p.stdout.on('data', d => { if (binary) out.push(d); if (onOut) onOut(d.toString()); });
-      p.stderr.on('data', d => { err += d; if (!wantErr && err.length > 8000) err = err.slice(-8000); });
-      p.on('error', e => reject(new Error(e.code === 'ENOENT' ? 'FFmpeg est introuvable.' : e.message)));
-      p.on('close', code => (code === 0 ? resolve(wantErr ? err : binary ? Buffer.concat(out) : '') : reject(new Error(err.trim().split('\n').slice(-4).join('\n') || 'Erreur FFmpeg'))));
+      const out = []; let err = '', fige = false, garde = null;
+      const veille = () => { if (!silence) return; clearTimeout(garde); garde = setTimeout(() => { fige = true; p.kill('SIGKILL'); }, silence); };
+      veille();
+      p.stdout.on('data', d => { veille(); if (binary) out.push(d); if (onOut) onOut(d.toString()); });
+      p.stderr.on('data', d => { veille(); err += d; if (!wantErr && err.length > 8000) err = err.slice(-8000); });
+      p.on('error', e => { clearTimeout(garde); reject(new Error(e.code === 'ENOENT' ? 'FFmpeg est introuvable.' : e.message)); });
+      p.on('close', code => { clearTimeout(garde); if (fige) return reject(new Error('Encodage figé, arrêté')); code === 0 ? resolve(wantErr ? err : binary ? Buffer.concat(out) : '') : reject(new Error(err.trim().split('\n').slice(-4).join('\n') || 'Erreur FFmpeg')); });
     });
+  }
+  // Encodage par la puce vidéo (VideoToolbox) si demandé, surveillé ; en cas d'échec ou de blocage, par le processeur
+  const VT_SURVEILLANCE = 45000;
+  const encVt = P => ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(P.w, P.h) >= 1500 ? '45M' : '20M', '-allow_sw', 1];
+  async function encoder(avant, encVt, encCpu, apres, opts = {}) {
+    if (encVt) {
+      try { return await run(FFMPEG, [...avant, ...encVt, ...apres.slice(0, -1), '-progress', 'pipe:1', '-nostats', apres[apres.length - 1]], { ...opts, silence: VT_SURVEILLANCE }); }
+      catch (e) { /* puce vidéo indisponible ou figée : on recommence au processeur */ }
+    }
+    return run(FFMPEG, [...avant, ...encCpu, ...apres], opts);
   }
   async function detect() {
     const f = (await run(FFMPEG, ['-hide_banner', '-filters'], { binary: true })).toString();
@@ -554,7 +567,7 @@ function create(opts = {}) {
       const segs = [];
       for (let i = 0; i < built.length; i++) {
         job.step = `Clip ${i + 1} sur ${built.length}`;
-        try { await run(FFMPEG, [...built[i].args, `seg${i}.mp4`], { cwd: dir, onOut: progressOf(job, () => done, total) }); }
+        try { await run(FFMPEG, [...built[i].args, `seg${i}.mp4`], { cwd: dir, onOut: progressOf(job, () => done, total), silence: vt ? VT_SURVEILLANCE : 0 }); }
         catch (e) { // la puce vidéo refuse ce clip : encodage par le processeur
           if (!vt) throw e;
           await run(FFMPEG, [...buildClip(clips[i], P, { tdir: { dir, idx: i }, proxy, vt: false }).args, `seg${i}.mp4`], { cwd: dir, onOut: progressOf(job, () => done, total) });
@@ -591,11 +604,9 @@ function create(opts = {}) {
           }
           cv = nv; ca = na;
         }
-        const enc = proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30]
-          : (process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality !== 'haute')
-            ? ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(P.w, P.h) >= 1500 ? '45M' : '20M'] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17];
-        await run(FFMPEG, ['-y', '-loglevel', 'error', ...inArgs, '-filter_complex', g.join(';'), '-map', `[${cv}]`, '-map', `[${ca}]`, ...enc,
-          '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
+        await encoder(['-y', '-loglevel', 'error', ...inArgs, '-filter_complex', g.join(';'), '-map', `[${cv}]`, '-map', `[${ca}]`], vt ? encVt(P) : null,
+          proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17],
+          ['-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
         joined = 'all.mp4';
       }
 
@@ -701,9 +712,9 @@ function create(opts = {}) {
       g.push(`[0:a]${sons.map(x => `[${x}]`).join('')}amix=inputs=${sons.length + 1}:duration=first:dropout_transition=0,volume=${sons.length + 1},alimiter=limit=0.95[aout]`);
       mapA = ['-map', '[aout]', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k'];
     }
-    const enc = proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30]
-      : (process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality !== 'haute') ? ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(P.w, P.h) >= 1500 ? '45M' : '20M'] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17];
-    await run(FFMPEG, ['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '[vout]', ...mapA, ...enc, '-pix_fmt', 'yuv420p', '-movflags', '+faststart', 'pistes.mp4'], { cwd: dir });
+    const vt = !proxy && process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality !== 'haute';
+    await encoder(['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '[vout]', ...mapA], vt ? encVt(P) : null,
+      proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17], ['-pix_fmt', 'yuv420p', '-movflags', '+faststart', 'pistes.mp4'], { cwd: dir });
     return 'pistes.mp4';
   }
 
@@ -758,7 +769,7 @@ function create(opts = {}) {
     let erreur = fs.statSync(brut).size < 2000 ? 'enregistrement vide' : '';
     if (!erreur) for (const e of essais) for (const sortie of sorties) {
       try {
-        await run(FFMPEG, ['-y', '-v', 'error', ...e, ...sortie]);
+        await run(FFMPEG, ['-y', '-v', 'error', ...e, ...sortie.slice(0, -1), '-progress', 'pipe:1', '-nostats', sortie[sortie.length - 1]], { silence: VT_SURVEILLANCE });
         const info = await probe(mp4);
         if (info.kind === 'video' && info.duration > 0.3) { fs.unlinkSync(brut); return { file: path.basename(mp4), ...info }; }
         erreur = 'image absente de la prise';

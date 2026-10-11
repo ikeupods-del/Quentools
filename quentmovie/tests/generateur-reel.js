@@ -49,7 +49,7 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     { kind: 'solid', color: '#000000', dur: 8, fx: [], key: {}, titre: { preset: 'generique', l1: 'Sources\n' + r.credits.join('\n'), l2: '', start: 0.2, dur: 0 } }];
   const ex = await json(await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: { format: 'horizontal', fps: 30, res: 720, clips, audio: [{ file: 'lib:musiques/piano-chill.mp3', vol: 22, start: 0, fade: true, loop: true, duck: true }] } }) }));
   const e = await attendre(ex.id);
-  check('vidéo exportée', e.done && e.out, e.error);
+  check('vidéo exportée', e.done && e.out, e.error || `bloqué à : ${e.step} (${Math.round((e.progress || 0) * 100)} %)`);
   if (e.out) console.log('Vidéo :', path.join(base, 'exports', e.out), Math.round(fs.statSync(path.join(base, 'exports', e.out)).size / 1e6) + ' Mo');
 
   app.stop(); if (!process.env.QM_GARDER) fs.rmSync(base, { recursive: true, force: true });
