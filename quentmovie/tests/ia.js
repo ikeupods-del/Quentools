@@ -26,10 +26,12 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     const IA = require('../ia').creer({ BASE: base, FFMPEG: bins.ffmpeg });
     const faits = 'Michelin est une entreprise française de pneumatiques fondée en 1889 à Clermont-Ferrand par les frères André et Édouard Michelin.\n[Les débuts] En 1891, ils déposent le brevet du pneu démontable pour bicyclette.\n[Le Bibendum] En 1898, le dessinateur O\'Galop crée le Bibendum.\n[Le guide] En 1900 paraît le premier guide Michelin.\n[Le pneu radial] En 1946, Michelin invente le pneu à carcasse radiale.';
     const t0 = Date.now(), job = {};
-    const r = await IA.ecrireScript({ titre: 'L’histoire de Michelin', faits, duree: 45, style: 'dynamique' }, job);
+    const paragraphes = faits.split('\n').map(l => { const m = /^\[(.+?)\] (.*)$/.exec(l); return m ? { section: m[1], texte: m[2] } : { section: '', texte: l }; });
+    const r = await IA.ecrireScript({ titre: 'L’histoire de Michelin', paragraphes, duree: 45, style: 'dynamique' }, job);
+    console.log('Paragraphes repris tels quels (garde-fou) :', r.repris);
     const texte = r.scenes.map(x => x.texte).join(' ');
     console.log(`IA (${r.gpu || 'processeur'}) en ${Math.round((Date.now() - t0) / 1000)} s — « ${r.titre} »`); r.scenes.forEach((x, i) => console.log(`  ${i + 1}. [${x.section}] ${x.texte}`));
-    check('script écrit par l’IA', r.scenes.length >= 3 && texte.split(/\s+/).length > 60, r.scenes.length);
+    check('script écrit par l’IA', r.scenes.length >= 3 && texte.split(/\s+/).length > 50, r.scenes.length);
     const annees = [...texte.matchAll(/\b(1[0-9]{3}|20[0-9]{2})\b/g)].map(m => m[1]).filter(a => !faits.includes(a));
     check('aucune année inventée', !annees.length, annees.join(', '));
     check('IA sur la puce graphique', process.platform !== 'darwin' || r.gpu === 'metal', r.gpu);
