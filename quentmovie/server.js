@@ -635,22 +635,28 @@ function create(opts = {}) {
       if (audios.length) {
         job.step = 'Mixage du son';
         const dur = +((await infos(path.join(dir, joined))).format.duration) || 1;
-        const ins = ['-i', joined], g = [];
-        const canDuck = filters.has('sidechaincompress'), ducks = audios.filter(a => a.duck && canDuck).length;
-        let prog = '[0:a]';
-        if (ducks) { g.push(`[0:a]asplit=${ducks + 1}[prog]${Array.from({ length: ducks }, (_, k) => `[side${k}]`).join('')}`); prog = '[prog]'; }
-        let mix = prog, dk = 0;
-        audios.forEach((a, i) => {
-          if (a.loop) ins.push('-stream_loop', '-1');
-          ins.push('-i', mediaPath(a.file));
-          const st = clamp(num(a.start, 0), 0, 3600), ms = Math.round(st * 1000);
-          const fd = a.fade ? `,afade=t=in:d=1.2,afade=t=out:st=${Math.max(0, dur - st - 1.5).toFixed(2)}:d=1.5` : '';
-          g.push(`[${i + 1}:a]aresample=48000,aformat=channel_layouts=stereo,volume=${clamp(num(a.vol, 50), 0, 200) / 100}${fd},adelay=${ms}|${ms}[m${i}]`);
-          if (a.duck && canDuck) { g.push(`[m${i}][side${dk++}]sidechaincompress=threshold=0.03:ratio=10:attack=30:release=600:makeup=1[m${i}d]`); mix += `[m${i}d]`; }
-          else mix += `[m${i}]`;
-        });
-        g.push(`${mix}amix=inputs=${audios.length + 1}:duration=first:dropout_transition=0,volume=${audios.length + 1},alimiter=limit=0.95[a]`);
-        await run(FFMPEG, ['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-t', dur.toFixed(3), 'final.mp4'], { cwd: dir });
+        // La voix qui pilote la baisse de la musique est lue une seconde fois à part (et non partagée avec asplit) :
+        // un même son utilisé à deux endroits pouvait bloquer FFmpeg au hasard. Musique en boucle limitée à la durée.
+        const mixer = avecBaisse => {
+          const ins = ['-i', joined], g = [], canDuck = avecBaisse && filters.has('sidechaincompress');
+          const ducks = audios.filter(a => a.duck && canDuck).length, S = audios.length + 1;
+          let mix = '[0:a]', dk = 0;
+          audios.forEach((a, i) => {
+            if (a.loop) ins.push('-stream_loop', '-1', '-t', (dur + 1).toFixed(2));
+            ins.push('-i', mediaPath(a.file));
+            const st = clamp(num(a.start, 0), 0, 3600), ms = Math.round(st * 1000);
+            const fd = a.fade ? `,afade=t=in:d=1.2,afade=t=out:st=${Math.max(0, dur - st - 1.5).toFixed(2)}:d=1.5` : '';
+            g.push(`[${i + 1}:a]aresample=48000,aformat=channel_layouts=stereo,volume=${clamp(num(a.vol, 50), 0, 200) / 100}${fd},adelay=${ms}|${ms}[m${i}]`);
+            if (a.duck && canDuck) { g.push(`[m${i}][side${dk++}]sidechaincompress=threshold=0.03:ratio=10:attack=30:release=600:makeup=1[m${i}d]`); mix += `[m${i}d]`; }
+            else mix += `[m${i}]`;
+          });
+          if (ducks) { ins.push('-i', joined); g.push(`[${S}:a]aresample=48000,${ducks > 1 ? `asplit=${ducks}` : 'anull'}${Array.from({ length: ducks }, (_, k) => `[side${k}]`).join('')}`); }
+          g.push(`${mix}amix=inputs=${audios.length + 1}:duration=first:dropout_transition=0,volume=${audios.length + 1},alimiter=limit=0.95[a]`);
+          return run(FFMPEG, ['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-t', dur.toFixed(3),
+            '-progress', 'pipe:1', '-nostats', 'final.mp4'], { cwd: dir, silence: 60000 });
+        };
+        try { await mixer(true); }
+        catch (e) { if (!/figé/.test(e.message)) throw e; job.step = 'Mixage du son (sans baisse automatique)'; await mixer(false); }
         joined = 'final.mp4';
       }
 
