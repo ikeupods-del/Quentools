@@ -70,6 +70,11 @@ function creer({ BASE, FFMPEG }) {
   // jetons : ~1 pour 3 caractères en français ; contexte et réponse sont dimensionnés au plus juste
   const jetons = t => Math.ceil(String(t).length / 2.8);
   const contexteDe = (...textes) => (sortie => Math.min(8192, Math.max(1536, Math.ceil((textes.reduce((a, t) => a + jetons(t), 0) + sortie + 200) / 256) * 256)));
+  // Réponse coupée par la limite de longueur (JSON incomplet) : un second essai avec une marge double
+  async function demanderAvecMarge({ ctx, ...msg }, sortie) {
+    try { return await demander({ ...msg, maxTokens: sortie, contexte: ctx(sortie) }); }
+    catch (e) { if (!/JSON|Unterminated|Unexpected/i.test(e.message)) throw e; const large = Math.min(4000, sortie * 2); return demander({ ...msg, maxTokens: large, contexte: ctx(large) }); }
+  }
   // Avec un article : chaque paragraphe (faits de Wikipédia) est reformulé un par un, sans rien ajouter ; sinon sujet libre.
   async function ecrireScript({ titre, paragraphes = [], duree, style, consigne = '', recherche = true }, job) {
     if (!installe()) await installer(job);
@@ -83,8 +88,8 @@ function creer({ BASE, FFMPEG }) {
         `Champs : « titre » (6 mots max, sans chiffre), ${regles.accroche ? '« accroche » (une phrase qui donne envie, sans fait nouveau), ' : ''}${regles.conclusion ? '« conclusion » (une phrase de fin), ' : ''}et par scène « section » (titre de partie de 2 à 4 mots)${recherche ? '. ' + RECHERCHE : '.'}` +
         `${!regles.accroche ? '\nPas d’introduction ni d’accroche : la première scène entre directement dans les faits.' : ''}${!regles.conclusion ? '\nPas de conclusion : la dernière scène s’arrête sur ses faits.' : ''}\n\n` +
         paragraphes.map((p, i) => `PARAGRAPHE ${i + 1} : ${p.texte}`).join('\n');
-      const mots = paragraphes.reduce((a, p) => a + nbMots(p.texte), 0), sortieMax = Math.ceil(mots * 2.4 + paragraphes.length * 22 + 120);
-      const r = await demander({ type: 'ecrire', modele: cheminModele, systeme, demande, schema: schemaReformuler(sc), maxTokens: sortieMax, contexte: contexteDe(systeme, demande)(sortieMax), temperature: 0.35 });
+      const mots = paragraphes.reduce((a, p) => a + nbMots(p.texte), 0), sortieMax = Math.min(4000, Math.ceil(mots * 3.2 + paragraphes.length * 45 + 250));
+      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema: schemaReformuler(sc), ctx: contexteDe(systeme, demande), temperature: 0.35 }, sortieMax);
       const res = r.resultat || {}, sortie = res.scenes || [];
       // garde-fou : une scène qui invente une date ou perd trop de texte reprend le paragraphe d'origine
       const scenes = paragraphes.map((p, i) => {
@@ -102,9 +107,9 @@ function creer({ BASE, FFMPEG }) {
     const demande = `${ordres}Sujet : ${titre}\nTon : ${ton}.\nÉcris ${n} scènes d’environ ${Math.round(mots / n)} mots (2 ou 3 phrases complètes), ${structure}. ` +
       `Par scène : « section » (titre de partie de 2 à 4 mots)${recherche ? '. ' + RECHERCHE : ''} « titre » : titre de la vidéo, 6 mots maximum.`;
     let res = {}, gpu = '';
-    const sortieMax = Math.min(4000, Math.ceil(mots * 2.4 + n * 22 + 120));
+    const sortieMax = Math.min(4000, Math.ceil(mots * 3.2 + n * 45 + 250));
     for (let essai = 0; essai < 2; essai++) { // un second essai, plus sage, si le texte est trop haché
-      const r = await demander({ type: 'ecrire', modele: cheminModele, systeme, demande, schema: schemaLibre(recherche), maxTokens: sortieMax, contexte: contexteDe(systeme, demande)(sortieMax), temperature: essai ? 0.25 : 0.5 });
+      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema: schemaLibre(recherche), ctx: contexteDe(systeme, demande), temperature: essai ? 0.25 : 0.5 }, sortieMax);
       res = r.resultat || {}; gpu = r.gpu;
       const sc = (res.scenes || []).filter(x => String(x.texte || '').trim());
       if (sc.length && sc.reduce((a, x) => a + nbMots(x.texte), 0) / sc.length >= Math.min(14, mots / n * 0.5)) break;
