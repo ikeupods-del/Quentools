@@ -64,6 +64,16 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     const f2 = path.join(base, 'exports', e2.out), vol = (ss, t) => +((/max_volume: (-?[\d.]+) dB/.exec(require('child_process').spawnSync(bins.ffmpeg, ['-hide_banner', '-ss', ss, '-t', t, '-i', f2, '-vn', '-af', 'volumedetect', '-f', 'null', '-'], { encoding: 'utf8' }).stderr) || [])[1] || -99);
     check('son détaché au bon moment, silence ailleurs', vol('1.2', '1.5') > -30 && vol('4', '1.5') < -50, `${vol('1.2', '1.5')} / ${vol('4', '1.5')}`);
   }
+  // musique plus courte que la vidéo : elle reprend au début (boucle) jusqu'à la fin
+  ff('-f', 'lavfi', '-i', 'sine=f=500:d=2', path.join(gen, 'courte.wav'));
+  { const r = await fetch(U('/api/import?name=courte.wav'), { method: 'POST', body: fs.readFileSync(path.join(gen, 'courte.wav')) }); check('import courte.wav', r.ok); }
+  const d3 = await (await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: { format: 'horizontal', fps: 30, res: 480, clips: [{ ...clip, vol: 0 }], audio: [{ file: 'courte.wav', start: 0, vol: 100, loop: true }] } }) })).json();
+  const e3 = await attendre(d3.id);
+  check('export avec musique en boucle', e3.done && e3.out, e3.error);
+  if (e3.out) {
+    const f3 = path.join(base, 'exports', e3.out), vol3 = (ss, t) => +((/max_volume: (-?[\d.]+) dB/.exec(require('child_process').spawnSync(bins.ffmpeg, ['-hide_banner', '-ss', ss, '-t', t, '-i', f3, '-vn', '-af', 'volumedetect', '-f', 'null', '-'], { encoding: 'utf8' }).stderr) || [])[1] || -99);
+    check('musique en boucle jusqu’à la fin', vol3('0.5', '1') > -30 && vol3('4.5', '1') > -30, `${vol3('0.5', '1')} / ${vol3('4.5', '1')}`);
+  }
   app.stop(); fs.rmSync(base, { recursive: true, force: true });
   console.log(`Pistes vidéo : ${ok} contrôles réussis, ${ko} échecs`);
   process.exit(ko ? 1 : 0);

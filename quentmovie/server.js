@@ -653,7 +653,13 @@ function create(opts = {}) {
           await ff([...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(a.file), ...wav], `brut${i}.wav`);
           const st = clamp(num(a.start, 0), 0, 3600), ms = Math.round(st * 1000);
           const fd = a.fade ? `,afade=t=in:d=1.2,afade=t=out:st=${Math.max(0, dur - st - 1.5).toFixed(2)}:d=1.5` : '';
-          await ff([...(a.loop && !du ? ['-stream_loop', '-1'] : []), '-i', `brut${i}.wav`, '-af', `volume=${clamp(num(a.vol, 50), 0, 200) / 100}${fd},adelay=${ms}|${ms},apad`, '-t', D, ...wav], `son${i + 1}.wav`);
+          // boucle : le même fichier répété par une liste (la boucle automatique de FFmpeg se figeait parfois)
+          let entree = ['-i', `brut${i}.wav`];
+          if (a.loop && !du) {
+            const l = +((await infos(path.join(dir, `brut${i}.wav`))).format.duration) || 0, n = l > 0 ? Math.min(400, Math.ceil(dur / l) + 1) : 1;
+            if (n > 1) { fs.writeFileSync(path.join(dir, `boucle${i}.txt`), Array.from({ length: n }, () => `file 'brut${i}.wav'`).join('\n')); entree = ['-f', 'concat', '-safe', 0, '-i', `boucle${i}.txt`]; }
+          }
+          await ff([...entree, '-af', `volume=${clamp(num(a.vol, 50), 0, 200) / 100}${fd},adelay=${ms}|${ms},apad`, '-t', D, ...wav], `son${i + 1}.wav`);
         }
         // « baisser quand on parle » : la musique est compressée, pilotée par le son du montage (lu à part)
         const mixer = avecBaisse => {
