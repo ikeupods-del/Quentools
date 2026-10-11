@@ -924,14 +924,15 @@ function create(opts = {}) {
       }
       if (req.method === 'GET' && p === '/api/frame') {
         const img = await run(FFMPEG, ['-v', 'error', '-ss', num(url.searchParams.get('t'), 0), '-i', mediaPath(url.searchParams.get('file')), '-frames:v', 1,
-          '-vf', 'scale=480:-2', '-f', 'mjpeg', '-q:v', 5, 'pipe:1'], { binary: true });
+          '-vf', `scale=${clamp(Math.round(num(url.searchParams.get('w'), 480) / 2) * 2, 64, 3840)}:-2`, '-f', 'mjpeg', '-q:v', url.searchParams.get('w') ? 2 : 5, 'pipe:1'], { binary: true });
         return send(res, 200, img, 'image/jpeg', 'max-age=3600');
       }
       if (req.method === 'POST' && p === '/api/preview') {
         const body = await readJson(req);
         const dir = fs.mkdtempSync(path.join(TMP, 'pv-'));
         try {
-          const args = buildClip(body.clip, sizeOf(body.project || {}, 'thumb' === body.mode ? 'thumb' : 'proxy'), { preview: true, t: body.t, tdir: { dir, idx: 0 } });
+          const taille = body.mode === 'hd' ? sizeOf({ ...(body.project || {}), res: 1080 }, 'full') : sizeOf(body.project || {}, 'thumb' === body.mode ? 'thumb' : 'proxy');
+          const args = buildClip(body.clip, taille, { preview: true, t: body.t, tdir: { dir, idx: 0 } });
           return send(res, 200, await run(FFMPEG, args, { cwd: dir, binary: true }), 'image/jpeg');
         } finally { fs.rmSync(dir, { recursive: true, force: true }); }
       }
@@ -963,6 +964,13 @@ function create(opts = {}) {
         const f = path.join(BASE, 'projet-auto.json');
         if (req.method === 'PUT') { fs.writeFileSync(f, JSON.stringify(await readJson(req))); return send(res, 200, { ok: true }); }
         return send(res, 200, fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : 'null');
+      }
+      if (req.method === 'POST' && p === '/api/miniature') { // miniature (JPEG dessiné par la fenêtre) rangée avec les exports
+        const buf = await new Promise((ok, ko) => { const l = []; let n = 0; req.on('data', d => { n += d.length; if (n > 2e7) req.destroy(); else l.push(d); }); req.on('end', () => ok(Buffer.concat(l))); req.on('error', ko); });
+        if (buf.length < 1000 || buf[0] !== 0xff || buf[1] !== 0xd8) throw new Error('Image de miniature invalide');
+        const name = `miniature-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}.jpg`;
+        fs.writeFileSync(path.join(EXPORTS, name), buf);
+        return send(res, 200, { out: name });
       }
       if (req.method === 'POST' && p === '/api/reveal') { // afficher un export dans le Finder
         const f = path.join(EXPORTS, safeName((await readJson(req)).file));

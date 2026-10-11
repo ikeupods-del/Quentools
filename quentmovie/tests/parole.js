@@ -43,6 +43,11 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     }
     const t1 = Date.now(), je = await attendre((await (await fetch(U('/api/parole/installer'), { method: 'POST', body: JSON.stringify({ quoi: 'ecoute' }) })).json()).id);
     check('reconnaissance installée', je.done, je.error); console.log(`Reconnaissance : ${je.done ? 'installée' : je.error} (${Math.round((Date.now() - t1) / 1000)} s)`);
+    // licences indiquées dans les modèles téléchargés (pour la documentation)
+    const M = path.join(base, 'modeles');
+    for (const d of fs.readdirSync(M)) for (const n of (fs.statSync(path.join(M, d)).isDirectory() ? fs.readdirSync(path.join(M, d)) : []).filter(x => /model_card|readme|licen[cs]e|\.json$/i.test(x))) {
+      const t = fs.readFileSync(path.join(M, d, n), 'utf8'); console.log(`--- ${d}/${n} ---\n` + (/\.json$/.test(n) ? (t.match(/"(dataset|license|licence|quality|speaker_id_map)"[^\n]{0,160}/g) || []).join('\n') : t.slice(0, 900)));
+    }
     const phrase = 'Bonjour à tous. Aujourd’hui, je vous présente QuenTools, une agence qui crée des sites internet pour les artisans.';
     const r = await (await fetch(U('/api/parole/essai'), { method: 'POST', body: JSON.stringify({ voix: 'siwis', texte: phrase }) })).json();
     check('voix Siwis : fichier créé', r.file && fs.existsSync(path.join(base, 'medias', r.file)), JSON.stringify(r));

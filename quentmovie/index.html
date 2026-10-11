@@ -1041,6 +1041,136 @@ function pipette() {
   $('#pipOk').onclick = fermer;
 }
 
+// ---------- Miniature (vignette YouTube, TikTok…) : image du montage, gros titre, détourage de la personne ----------
+let mini = null;
+const MINI_DEF = { fond: 'flou', couleur: '#141a33', l1: '', l2: '', coul: '#ffe600', pos: 'gauche', detoure: true, contour: '#ffffff', badge: '', sombre: 45, zoom: 100, taille: 100 };
+async function ouvrirMiniature() {
+  stopLecture();
+  const ici = locate(gt), c = curClip() || proj.clips[ici.i];
+  const [W, H] = proj.format === 'vertical' ? [1080, 1920] : proj.format === 'carre' ? [1080, 1080] : [1280, 720];
+  mini = { ...MINI_DEF, l1: (proj.clips.find(x => x.titre && x.titre.l1) || {}).titre ? proj.clips.find(x => x.titre && x.titre.l1).titre.l1 : '', W, H, image: null, masque: null, source: 'tete' };
+  const photos = medias.filter(m => m.kind === 'image');
+  ouvrir(`<h2>🖼 Miniature</h2><p class="mut">L’image qui donne envie de cliquer : une image de ta vidéo, un gros titre, toi détouré avec un contour. ${W} × ${H} px, prête pour ${W > H ? 'YouTube' : 'TikTok, Reels, Shorts'}.</p>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <div style="flex:1 1 420px;min-width:0"><canvas id="mCanvas" width="${W}" height="${H}" style="width:auto;height:auto;max-width:100%;max-height:62vh;margin:0 auto;cursor:default;background:#000"></canvas><div id="mEtat" class="mut" style="margin-top:4px"></div></div>
+      <div style="flex:1 1 260px;min-width:0">
+        <label class="l">Image</label><select id="mSource"><option value="tete">Image à la tête de lecture${c ? '' : ' (timeline vide)'}</option>${photos.map(m => `<option value="${esc(m.file)}">Photo : ${esc(m.file)}</option>`).join('')}</select>
+        <label class="l">Titre (gros)</label><input type="text" id="mL1" value="${esc(mini.l1)}" placeholder="Ex. : J’AI TOUT TESTÉ">
+        <label class="l">Sous-titre (petit, facultatif)</label><input type="text" id="mL2" placeholder="Ex. : le résultat va te surprendre">
+        <div class="ligne"><div style="flex:1"><label class="l">Couleur du titre</label><select id="mCoul">${opts([['#ffe600', 'Jaune'], ['#ffffff', 'Blanc'], ['#ff2d55', 'Rouge'], ['#38e07b', 'Vert'], ['#7c5cff', 'Violet']], mini.coul)}</select></div>
+          <div style="flex:1"><label class="l">Place du titre</label><select id="mPos">${opts([['gauche', 'À gauche'], ['droite', 'À droite'], ['bas', 'En bas'], ['haut', 'En haut']], mini.pos)}</select></div></div>
+        <label class="l">Fond</label><select id="mFond">${opts([['flou', 'Mon image floutée et assombrie'], ['image', 'Mon image nette'], ['couleur', 'Couleur unie']], mini.fond)}</select>
+        <input type="color" id="mCouleur" value="${mini.couleur}" style="margin-top:4px;width:100%;height:30px">
+        <div class="sw2"><input type="checkbox" id="mDet" ${mini.detoure ? 'checked' : ''}><label for="mDet">Me détourer avec un contour (je ressors du fond)</label></div>
+        <label class="l">Couleur du contour</label><select id="mContour">${opts([['#ffffff', 'Blanc'], ['#ffe600', 'Jaune'], ['#000000', 'Noir'], ['#7c5cff', 'Violet'], ['', 'Sans contour']], mini.contour)}</select>
+        <label class="l">Pastille (facultatif)</label><input type="text" id="mBadge" placeholder="Ex. : NOUVEAU, 2025, GRATUIT">
+        <label class="l">Assombrir le côté du titre<span id="mSombreV">${mini.sombre} %</span></label><input type="range" id="mSombre" min="0" max="85" value="${mini.sombre}">
+        <label class="l">Zoom sur l’image<span id="mZoomV">${mini.zoom} %</span></label><input type="range" id="mZoom" min="100" max="200" value="${mini.zoom}">
+        <label class="l">Taille du titre<span id="mTailleV">${mini.taille} %</span></label><input type="range" id="mTaille" min="50" max="160" value="${mini.taille}">
+      </div></div>
+    <div class="ligne" style="margin-top:12px"><button id="mFermer">Fermer</button><button class="pri" id="mSauver">💾 Enregistrer la miniature (JPEG)</button></div><div id="mRes" class="mut" style="margin-top:6px"></div>`, true);
+  $('#mFermer').onclick = fermer;
+  const champs = { mL1: 'l1', mL2: 'l2', mCoul: 'coul', mPos: 'pos', mFond: 'fond', mCouleur: 'couleur', mDet: 'detoure', mContour: 'contour', mBadge: 'badge', mSombre: 'sombre', mZoom: 'zoom', mTaille: 'taille' };
+  $('#boite').oninput = e => { const k = champs[e.target.id]; if (!k) return; mini[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.type === 'range' ? +e.target.value : e.target.value;
+    const lab = $('#' + e.target.id + 'V'); if (lab) lab.textContent = e.target.value + ' %'; if (k === 'detoure' && mini.detoure && !mini.masque) miniMasque(); miniDessiner(); };
+  $('#mSource').onchange = e => miniCharger(e.target.value);
+  $('#mSauver').onclick = miniSauver;
+  await miniCharger('tete');
+}
+async function miniCharger(source) {
+  mini.source = source; mini.masque = null; $('#mEtat').textContent = 'Chargement de l’image…';
+  let url;
+  if (source === 'tete') {
+    const ici = locate(gt), c = curClip() || proj.clips[ici.i];
+    if (!c) { $('#mEtat').textContent = 'Ajoute d’abord une vidéo ou choisis une photo.'; return; }
+    const r = await api('/api/preview', { method: 'POST', body: JSON.stringify({ project: { format: proj.format, fps: proj.fps }, clip: c, t: curClip() ? pos : ici.pos, mode: 'hd' }) });
+    url = URL.createObjectURL(await r.blob());
+  } else url = '/media/' + enc(source);
+  mini.image = await new Promise((ok, ko) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ko(new Error('image illisible')); im.src = url; }).catch(e => { $('#mEtat').textContent = e.message; return null; });
+  $('#mEtat').textContent = '';
+  miniDessiner(); if (mini.detoure) miniMasque();
+}
+// Silhouette de la personne (MediaPipe, sur l'image entière), gardée pour cette image
+async function miniMasque() {
+  if (!mini || !mini.image) return; const im = mini.image; $('#mEtat').textContent = 'Détourage…';
+  try {
+    if (!mini.seg) {
+      const { FilesetResolver, ImageSegmenter } = await import('/vendor/vision/vision_bundle.mjs');
+      const fichiers = await FilesetResolver.forVisionTasks('/vendor/vision/wasm');
+      mini.seg = await ImageSegmenter.createFromOptions(fichiers, { baseOptions: { modelAssetPath: '/modeles/selfie_multiclass_256x256.tflite', delegate: 'CPU' }, runningMode: 'IMAGE', outputConfidenceMasks: true, outputCategoryMask: false });
+    }
+    const r = mini.seg.segment(im), m = r.confidenceMasks[0], a = m.getAsFloat32Array(), w = m.width, h = m.height;
+    const p = new Float32Array(a.length); for (let i = 0; i < a.length; i++) p[i] = 1 - a[i];
+    await chargerScript('/compositeur.js'); Compositeur.nettoyer(p, w, h, true);
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d'), d = g.createImageData(w, h);
+    for (let i = 0; i < p.length; i++) { const v = Math.min(1, Math.max(0, (p[i] - 0.35) / 0.3)); d.data[i * 4 + 3] = v * 255; }
+    g.putImageData(d, 0, 0); r.close && r.close();
+    if (mini && mini.image === im) { mini.masque = cv; $('#mEtat').textContent = ''; miniDessiner(); }
+  } catch (e) { $('#mEtat').textContent = 'Détourage impossible : ' + e.message; }
+}
+function miniDessiner() {
+  const cv = $('#mCanvas'); if (!cv || !mini) return; const g = cv.getContext('2d'), { W, H } = mini, o = mini, im = o.image;
+  g.save(); g.clearRect(0, 0, W, H);
+  // cadrage de l'image : remplir, avec zoom vers le centre
+  const cadre = () => { if (!im) return null; const k = Math.max(W / im.width, H / im.height) * o.zoom / 100, w = im.width * k, h = im.height * k; return [(W - w) / 2, (H - h) / 2, w, h]; };
+  const r = cadre();
+  if (o.fond === 'couleur' || !im) { const gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, o.couleur); gr.addColorStop(1, '#000'); g.fillStyle = gr; g.fillRect(0, 0, W, H); }
+  else { if (o.fond === 'flou') g.filter = `blur(${Math.round(W / 90)}px) brightness(0.62) saturate(1.25)`; g.drawImage(im, ...r); g.filter = 'none'; }
+  // côté du titre assombri pour la lisibilité
+  if (o.sombre > 0) {
+    const gr = o.pos === 'gauche' ? g.createLinearGradient(0, 0, W * 0.75, 0) : o.pos === 'droite' ? g.createLinearGradient(W, 0, W * 0.25, 0) : o.pos === 'haut' ? g.createLinearGradient(0, 0, 0, H * 0.6) : g.createLinearGradient(0, H, 0, H * 0.4);
+    gr.addColorStop(0, `rgba(0,0,0,${o.sombre / 100})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  }
+  // personne détourée, nette, avec contour
+  if (o.detoure && o.masque && im) {
+    const p = document.createElement('canvas'); p.width = W; p.height = H; const q = p.getContext('2d');
+    q.drawImage(im, ...r); q.globalCompositeOperation = 'destination-in'; q.imageSmoothingQuality = 'high'; q.drawImage(o.masque, ...r);
+    if (o.contour) {
+      const s = document.createElement('canvas'); s.width = W; s.height = H; const t = s.getContext('2d');
+      t.drawImage(p, 0, 0); t.globalCompositeOperation = 'source-in'; t.fillStyle = o.contour; t.fillRect(0, 0, W, H);
+      const e = Math.max(4, Math.round(W / 140));
+      g.save(); g.shadowColor = o.contour; g.shadowBlur = e * 3;
+      for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; g.drawImage(s, Math.cos(a) * e, Math.sin(a) * e); }
+      g.restore();
+    } else { g.save(); g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = W / 50; g.drawImage(p, 0, 0); g.restore(); }
+    g.drawImage(p, 0, 0);
+  }
+  // titre : gros, en capitales, contour noir épais, sur 3 lignes au plus
+  const zone = o.pos === 'bas' || o.pos === 'haut' ? W * 0.9 : W * 0.5, base = Math.min(W, H) * 0.16 * o.taille / 100;
+  const police = t => `900 ${t}px "Arial Black", "Helvetica Neue", Impact, sans-serif`;
+  const couper = (texte, t) => { g.font = police(t); const mots = texte.split(/\s+/).filter(Boolean), l = []; let c = ''; for (const m of mots) { if (c && g.measureText(c + ' ' + m).width > zone) { l.push(c); c = m; } else c = c ? c + ' ' + m : m; } if (c) l.push(c); return l; };
+  const titre = String(o.l1 || '').toUpperCase().trim();
+  let taille = base, lignes = couper(titre, taille);
+  while ((lignes.length > 3 || lignes.some(x => g.measureText(x).width > zone)) && taille > 20) { taille *= 0.92; lignes = couper(titre, taille); }
+  const hl = taille * 1.05, hTot = lignes.length * hl + (o.l2 ? taille * 0.75 : 0);
+  const x = o.pos === 'droite' ? W * 0.95 : o.pos === 'gauche' ? W * 0.05 : W / 2, align = o.pos === 'droite' ? 'right' : o.pos === 'gauche' ? 'left' : 'center';
+  let y = o.pos === 'bas' ? H * 0.93 - hTot : o.pos === 'haut' ? H * 0.07 : (H - hTot) / 2;
+  g.textAlign = align; g.textBaseline = 'top'; g.lineJoin = 'round';
+  for (const l of lignes) {
+    g.font = police(taille); g.lineWidth = taille / 6; g.strokeStyle = '#000'; g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = taille / 6; g.shadowOffsetY = taille / 14;
+    g.strokeText(l, x, y); g.shadowColor = 'transparent'; g.fillStyle = o.coul; g.fillText(l, x, y); y += hl;
+  }
+  if (o.l2) { // sous-titre sur un bandeau de la couleur du titre
+    const t2 = taille * 0.42; g.font = `800 ${t2}px "Helvetica Neue", Arial, sans-serif`; const w2 = g.measureText(o.l2).width + t2;
+    const bx = align === 'right' ? x - w2 : align === 'center' ? x - w2 / 2 : x; g.fillStyle = o.coul; g.fillRect(bx, y + t2 * 0.3, w2, t2 * 1.45);
+    g.fillStyle = ['#ffffff', '#ffe600', '#38e07b'].includes(o.coul) ? '#000' : '#fff'; g.textAlign = 'left'; g.fillText(o.l2, bx + t2 / 2, y + t2 * 0.5);
+  }
+  if (o.badge) { // pastille inclinée dans le coin opposé au titre
+    const t3 = Math.min(W, H) * 0.06; g.font = `900 ${t3}px "Arial Black", "Helvetica Neue", sans-serif`; const w3 = g.measureText(o.badge.toUpperCase()).width + t3 * 1.2;
+    g.save(); g.translate(o.pos === 'droite' ? W * 0.05 + w3 / 2 : W * 0.95 - w3 / 2, H * 0.1); g.rotate(-0.08);
+    g.fillStyle = '#ff2d55'; g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = t3 / 2; g.fillRect(-w3 / 2, -t3 * 0.85, w3, t3 * 1.7);
+    g.shadowColor = 'transparent'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(o.badge.toUpperCase(), 0, 0); g.restore();
+  }
+  g.restore();
+}
+async function miniSauver() {
+  const b = await new Promise(ok => $('#mCanvas').toBlob(ok, 'image/jpeg', 0.92));
+  try {
+    const j = await (await api('/api/miniature', { method: 'POST', body: b })).json();
+    $('#mRes').innerHTML = `✅ Enregistrée : <b>${esc(j.out)}</b> (Films → QuentMovie → exports) · <a href="#" id="mFind">Afficher dans le Finder</a> · <a href="/exports/${enc(j.out)}">Télécharger</a>`;
+    $('#mFind').onclick = ev => { ev.preventDefault(); api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) }); };
+  } catch (e) { $('#mRes').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+}
 // ---------- Parole : sous-titres automatiques, coupe des blancs et des « euh » (reconnaissance locale, parole.js) ----------
 const PAROLE_DEF = { style: 'bandeau', priseSous: false, priseCoupe: false };
 const paroleOpts = () => { try { return { ...PAROLE_DEF, ...JSON.parse(localStorage.getItem('qm:parole') || '{}') }; } catch (e) { return { ...PAROLE_DEF }; } };
@@ -1079,7 +1209,7 @@ function paroleAppliquer(i, r, { sous, couper, style }) {
     // calques et titre animés : gardés dans le morceau où ils apparaissent, à la même place dans la parole
     n.overlays = (c.overlays || []).filter(o => o.start * sp >= x && o.start * sp < y).map(o => ({ ...o, start: +((o.start * sp - x) / sp).toFixed(2) }));
     n.titre = c.titre && c.titre.start * sp >= x && c.titre.start * sp < y ? { ...c.titre, start: +((c.titre.start * sp - x) / sp).toFixed(2) } : (k === 0 && c.titre && c.titre.start * sp < x ? { ...c.titre, start: 0 } : null);
-    n.subs = sous ? sousTitresPour(r, style, x, y, sp) : [];
+    n.subs = sous ? sousTitresPour(r, style, x, Math.min(y, dur), sp) : [];
     if (sous) { n.subStyle = style; if (style === 'tiktok') n.subSize = Math.max(n.subSize || 0, 6.5); }
     return n;
   });
@@ -1101,7 +1231,7 @@ async function parolePourClips(indices, o, surEtat = t => aide(t)) {
   return { gagne, n, clips: liste.length };
 }
 async function outilParole(portee, o, res) {
-  const e = t => { if (res) res.innerHTML = t; aide(t); };
+  const e = t => { const el = res && $(res); if (el) el.innerHTML = t; aide(t); };
   const indices = portee === 'tout' ? proj.clips.map((c, i) => i) : sel >= 0 ? [sel] : [];
   if (!indices.length) return alert('Sélectionne un clip vidéo ou audio dans la timeline.');
   try {
@@ -1120,6 +1250,7 @@ function outilsHtml() {
     <div class="encart"><h4>✂ Couper les blancs et les « euh »</h4><p class="mut">Garde seulement les moments où tu parles : les blancs, les hésitations et les « euh » sont retirés. Les sous-titres sont recalés.</p>
       <div class="ligne"><button class="pri" data-outil="coupe-clip">Clip sélectionné</button><button class="pri" data-outil="coupe-tout">Toute la vidéo</button></div>
       <div class="sw2"><input type="checkbox" id="oPriseCoupe" ${po.priseCoupe ? 'checked' : ''}><label for="oPriseCoupe">Couper automatiquement mes prises du studio</label></div><div class="mut" id="oCoupeRes" style="margin-top:4px"></div></div>
+    <div class="encart"><h4>🖼 Miniature</h4><p class="mut">Une image de ta vidéo, un gros titre et toi détouré avec un contour : la vignette qui donne envie de cliquer.</p><button class="pri" data-outil="miniature" style="width:100%">Créer la miniature</button></div>
     <div class="encart"><h4>🗣 Voix</h4><p class="mut">Voix naturelles pour le générateur et les voix off, reconnaissance de la voix, voix Premium du Mac.</p><button data-outil="voix" style="width:100%">Gérer les voix</button><div id="oVoixZone"></div></div>
     <div class="encart"><h4>✂ Couper les silences, méthode simple (vlog, podcast)</h4><p class="mut">Sans reconnaissance de la voix : coupe tout ce qui est sous un volume choisi.</p>
       <label class="l">Seuil de silence<span id="oDbV">−35 dB</span></label><input type="range" id="oDb" min="-60" max="-20" value="-35">
@@ -1168,9 +1299,10 @@ async function outil(nom) {
   if (nom === 'studio') return ouvrirStudio();
   if (nom === 'generer') return ouvrirGenerateur();
   if (nom === 'voix') return gererVoix($('#oVoixZone'));
+  if (nom === 'miniature') return ouvrirMiniature();
   if (/^(sous|coupe)-(clip|tout)$/.test(nom)) { const [q, p] = nom.split('-'), st = $('#oSousStyle') ? $('#oSousStyle').value : paroleOpts().style;
     const o = { sous: q === 'sous' || (q === 'coupe' && proj.clips.some(c => c.subs && c.subs.length)), couper: q === 'coupe', style: st };
-    return outilParole(p, o, $(q === 'sous' ? '#oSousRes' : '#oCoupeRes')); }
+    return outilParole(p, o, q === 'sous' ? '#oSousRes' : '#oCoupeRes'); }
   if (nom === 'maj') return verifierMaj(true);
   if (nom === 'packs') { allerOnglet('outils'); const e = $('#encartPacks'); if (e) e.scrollIntoView({ block: 'start' }); return; }
   if (nom === 'packs-ouvrir') { const r = await (await api('/api/packs/ouvrir', { method: 'POST' })).json(); aide('Dossier « Mes packs » : ' + esc(r.dossier) + ' — ajoute tes fichiers puis clique sur « Actualiser ».'); return; }
