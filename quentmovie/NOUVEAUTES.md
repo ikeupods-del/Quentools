@@ -3,6 +3,14 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.13.0
+- Nouvelle interface façon logiciel de montage pro (Final Cut, Premiere) : barre d'outils à icônes, rail d'onglets vertical à gauche, visionneuse avec barre de contrôle, timeline sombre avec en-têtes de pistes, sélection en jaune, inspecteur avec l'aperçu du clip choisi.
+- Outils de montage pro : outil Lame (B) qui coupe là où tu cliques, outil Sélection (A), magnétisme activable (N) ; chaque piste se coupe (muet), se masque ou se verrouille depuis son en-tête ; grille des tiers (G) et zones de sécurité TikTok/YouTube sur la visionneuse ; vumètre du son pendant la lecture.
+- Repères nommés et chapitres YouTube : double-clique sur un repère pour le nommer, puis « Chapitres YouTube » (onglet Outils) prépare la liste à coller dans la description.
+- Assistant de montage (bouton « Assistant » ou ⌘K) : dis ce que tu veux en français (« coupe les blancs, ajoute des sous-titres façon TikTok et une musique calme, passe en vertical ») ; l'assistant prépare les étapes, tu les vérifies et les coches, puis il les fait pour toi. Tout s'annule avec ⌘Z. Il propose aussi des améliorations adaptées à ton montage, à appliquer en un clic.
+- Textes de publication : titre (3 propositions), description et hashtags écrits à partir du contenu de ta vidéo, pour YouTube, TikTok ou Instagram, avec un bouton « Copier » pour chacun.
+- Générateur de vidéos, sujets libres : avec « S'appuyer sur Wikipédia », l'IA reçoit les résumés des articles les plus proches de ton sujet et s'en sert comme faits vérifiés : textes plus justes et plus précis. Les articles utilisés sont cités au générique.
+
 ## 1.12.0
 - Générateur de vidéos, photos : six banques de photos gratuites au lieu d'une. Sans rien faire : Wikimedia Commons, Openverse (Flickr, musées…) et la NASA (domaine public). Avec une clé gratuite que tu colles dans l'application (« Banques de photos gratuites », dans les options du générateur ; la clé reste sur ton Mac) : Pexels, Pixabay et Unsplash, très belles photos pour les sujets de tous les jours. Chaque banque se coche ou se décoche ; une banque en panne est simplement ignorée. Les auteurs et licences de chaque photo sont repris au générique, avec le nom de la banque.
 - Générateur de vidéos : les vignettes des photos s'affichent de nouveau (Wikimedia refusait la taille de miniature utilisée). Elles passent maintenant par QuentMovie : taille standard, quatre à la fois, gardées en mémoire pour ne pas être retéléchargées.

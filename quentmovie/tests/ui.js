@@ -80,6 +80,51 @@ function chromium() {
   await ev(() => dynamiserZooms(true)); check('dynamiser : zooms retirés', await ev(() => proj.clips.every(c => c.zoom === 100)));
   check('transition sur toutes les coupures', await ev(() => proj.clips.filter(c => c.transition).length === 2));
 
+  // 3 bis) outils pro : lame, pistes (verrou, muet, masquer), repères nommés et chapitres, grille
+  await ev(() => { const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v)]; proj.audio = [{ file: 'son.wav', start: 0, in: 0, dur: 6, vol: 100 }]; proj.pistes = []; proj.markers = []; proj.etatPistes = {}; sel = 0; selA = -1; setZoom(40); commit(); tout(); choisirOutil('lame'); });
+  await pg.waitForTimeout(200);
+  let bx = await ev(() => { const e = document.querySelector('.clip[data-i="0"]').getBoundingClientRect(), r = $('#lane').getBoundingClientRect(); return { x: r.left + 2 * 40, y: e.y + e.height / 2 }; });
+  await pg.mouse.click(bx.x, bx.y); await pg.waitForTimeout(200);
+  check('outil Lame : le clip est coupé à l’endroit du clic', await ev(() => proj.clips.length === 2 && Math.abs(proj.clips[0].out - 2) < 0.15), await ev(() => JSON.stringify(proj.clips.map(c => [c.in, c.out]))));
+  bx = await ev(() => { const e = document.querySelector('.aud').getBoundingClientRect(), r = $('#lane').getBoundingClientRect(); return { x: r.left + 4 * 40, y: e.y + e.height / 2 }; });
+  await pg.mouse.click(bx.x, bx.y); await pg.waitForTimeout(200);
+  check('outil Lame : le son est coupé à l’endroit du clic', await ev(() => proj.audio.length === 2 && Math.abs(proj.audio[0].dur - 4) < 0.15));
+  await ev(() => basculerPiste('V1', 'verrou')); bx = await ev(() => { const e = document.querySelector('.clip[data-i="1"]').getBoundingClientRect(), r = $('#lane').getBoundingClientRect(); return { x: r.left + 4 * 40, y: e.y + e.height / 2 }; });
+  await pg.mouse.click(bx.x, bx.y); await pg.waitForTimeout(150);
+  check('piste verrouillée : rien n’est coupé', await ev(() => proj.clips.length === 2 && $('#pV').classList.contains('verrou') && document.querySelector('[data-piste="V1:verrou"]').classList.contains('on')));
+  await ev(() => { basculerPiste('V1', 'verrou'); choisirOutil('selection'); basculerPiste('A', 'muet'); basculerPiste('V2', 'cache'); basculerPiste('V1', 'muet'); proj.pistes = [{ file: 'photo.png', kind: 'image', start: 0, dur: 2 }]; });
+  check('pistes coupées ou masquées absentes du rendu', await ev(() => { const q = pourRendu(proj); return q.audio.length === 0 && q.pistes.length === 0 && q.clips.every(c => c.vol === 0) && proj.audio.length === 2 && proj.clips[0].vol === 100; }));
+  await ev(() => { proj.etatPistes = {}; proj.pistes = []; commit(); tout(); });
+  // repères nommés et chapitres
+  await ev(() => { proj.clips = [newClip(medias.find(m => m.file === 'a.mp4')), newClip(medias.find(m => m.file === 'a.mp4')), newClip(medias.find(m => m.file === 'a.mp4')), newClip(medias.find(m => m.file === 'a.mp4'))]; proj.markers = [0, 12]; proj.nomsReperes = {}; commit(); tout(); setZoom(40); });
+  await pg.waitForTimeout(200);
+  await pg.dblclick('#regle b[data-mk="1"]'); await pg.waitForSelector('#saisie'); await pg.fill('#saisie', 'Les conseils'); await pg.click('#sOk'); await pg.waitForTimeout(150);
+  check('repère nommé par double-clic, nom affiché sur la règle', await ev(() => nomRepere(12) === 'Les conseils' && /Les conseils/.test($('#regle').textContent)));
+  check('chapitres YouTube depuis les repères', await ev(() => JSON.stringify(chapitres())) === JSON.stringify(['0:00 Introduction', '0:12 Les conseils']), await ev(() => JSON.stringify(chapitres())));
+  await ev(() => { proj.markers = [0, 6, 12, 18]; proj.nomsReperes = { '18.00': 'Fin' }; });
+  check('chapitres : 10 s minimum entre deux chapitres', await ev(() => JSON.stringify(chapitres())) === JSON.stringify(['0:00 Introduction', '0:12 Partie 2']), await ev(() => JSON.stringify(chapitres())));
+  await ev(() => { if (!vues.grille) basculerVue('grille'); }); check('grille des tiers activée', await ev(() => vues.grille && $('#vGrille').classList.contains('on')));
+  await ev(() => basculerVue('grille'));
+
+  // 3 ter) assistant de montage (⌘K) : demande en français → étapes cochées → appliquées ; suggestions ; textes de publication sans IA
+  await ev(() => { const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v), newClip(v), newClip(v)]; proj.audio = []; proj.markers = []; proj.clips.forEach(c => { c.transition = null; c.afx = []; }); sel = 0; commit(); tout(); });
+  await pg.keyboard.press('Control+k'); await pg.waitForSelector('#asDemande');
+  check('assistant : ⌘K ouvre l’assistant', true);
+  await pg.waitForSelector('#asSugg .asSug', { timeout: 10000 }).catch(() => {});
+  check('assistant : suggestions pour le montage', await ev(() => /sous-titres/i.test($('#asSugg').textContent)), await ev(() => $('#asSugg').textContent));
+  await pg.fill('#asDemande', 'mets des transitions en fondu partout, une musique calme et égalise le son'); await pg.click('#asComprendre'); await pg.waitForSelector('#asGo', { timeout: 10000 });
+  check('assistant : trois étapes prévues', await ev(() => document.querySelectorAll('#asPlan .asEtape').length === 3), await ev(() => $('#asPlan').textContent));
+  await pg.click('#asGo'); await pg.waitForFunction(() => $('#asGo') && !$('#asGo').disabled, null, { timeout: 15000 });
+  check('assistant : étapes appliquées (transitions, musique calme, volume égalisé)', await ev(() => proj.clips.filter(c => c.transition).length === 2 && proj.audio.some(a => /^lib:musiques\/(lofi|ambiance|piano)/.test(a.file) && a.duck) && proj.clips.every(c => c.afx.some(e => e.id === 'normaliser'))), await ev(() => JSON.stringify(proj.audio)));
+  await pg.fill('#asDemande', 'ajoute un écran titre « Mon voyage »'); await pg.click('#asComprendre'); await pg.waitForSelector('#asGo'); await pg.click('#asGo'); await pg.waitForTimeout(400);
+  check('assistant : écran titre ajouté au début', await ev(() => proj.clips[0].kind === 'solid' && proj.clips[0].titre.l1 === 'MON VOYAGE'));
+  await pg.fill('#asDemande', 'blablabla'); await pg.click('#asComprendre'); await pg.waitForTimeout(400);
+  check('assistant : demande incomprise expliquée', await ev(() => /pas compris|IA locale/.test($('#asPlan').textContent)), await ev(() => $('#asPlan').textContent));
+  await ev(() => { fermer(); proj.clips[1].subs = [{ s: 0, e: 2, t: 'Les volcans d’Islande sont parmi les plus actifs' }, { s: 2, e: 4, t: 'On visite les volcans et les glaciers' }]; commit(); ouvrirPublication('YouTube'); });
+  await pg.click('#puGo'); await pg.waitForSelector('#puRes [data-copie]', { timeout: 15000 });
+  check('publication : titre, description et hashtags (sans IA)', await ev(() => /#volcans/.test($('#puRes').textContent) && document.querySelectorAll('#puRes textarea').length >= 3), await ev(() => $('#puRes').textContent));
+  await ev(() => fermer());
+
   // 4) générateur de bout en bout : faux Commons, fausse IA ; Express → relecture → réécriture d'une scène → autre photo → création
   const http = require('http'), photo = path.join(base, 'p.jpg'); ff('-f', 'lavfi', '-i', 'testsrc2=s=1800x1200', '-frames:v', '1', photo);
   const commons = http.createServer((req, res) => {

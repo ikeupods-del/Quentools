@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -41,6 +41,7 @@
       "script-qualite.js",
       "rythme.js",
       "banques.js",
+      "assistant.js",
       "parole-worker.js",
       "ia.js",
       "ia-worker.js",

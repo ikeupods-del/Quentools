@@ -143,7 +143,7 @@ function creer({ BASE, FFMPEG }) {
   const completerMots = (scenes, mots) => scenes.forEach((x, i) => { const m = mots[i] || {}; x.sujet = m.sujet || IM.requeteDeScene(x.texte, 2).join(' '); x.recherche = m.recherche || ''; });
 
   // Avec un article : chaque paragraphe (faits de Wikipédia) est reformulé un par un, sans rien ajouter ; sinon sujet libre (plan, puis scène par scène).
-  async function ecrireScript({ titre, paragraphes = [], duree, style, consigne = '', recherche = true, options = {} }, job) {
+  async function ecrireScript({ titre, paragraphes = [], duree, style, consigne = '', recherche = true, options = {}, contexte = '' }, job) {
     utiliser(options.qualite);
     if (!installe()) await installer(job);
     const ton = STYLES[style] || STYLES.documentaire, rg = regroupe(consigne, options), adresse = lienAdresse(rg);
@@ -175,19 +175,20 @@ function creer({ BASE, FFMPEG }) {
     const structure = rg.nombre && rg.nombre === n ? ` Chaque scène est UN des ${n} points demandés, dans l’ordre${rg.accroche ? ' ; la première scène commence par une phrase d’accroche' : ''}${rg.conclusion ? ' ; la dernière se termine par une phrase de conclusion' : ''}.`
       : rg.accroche && rg.conclusion ? ' La première scène est l’ouverture (accroche) et la dernière la conclusion.' : rg.accroche ? ' La première scène est l’ouverture (accroche) ; pas de conclusion.' : rg.conclusion ? ' Pas d’introduction : la première scène entre directement dans le sujet ; la dernière est la conclusion.' : ' Ni introduction ni conclusion : chaque scène apporte un point précis.';
     const sysPlan = 'Scénariste de vidéos courtes en français. Tu construis des plans concrets et précis, sans généralités. Tu n’inventes aucun nom de personne, d’entreprise ou de lieu, ni aucun chiffre ou date.' + adresse;
-    const demPlan = `${ordres}Sujet de la vidéo : ${titre}\nTon : ${ton}.\nÉcris le plan de ${n} scènes qui se suivent logiquement.${structure}\nPour chaque scène : « section » (titre de partie, 2 à 4 mots), « idee » (UNE phrase : ce que la scène explique, concrète), « sujet » (ce qu’on PHOTOGRAPHIERAIT : un objet ou une scène concrète, 1 à 3 mots en français, ex. « casque de vélo », « piste cyclable » ; jamais une idée abstraite), « recherche » (le même sujet en 2 ou 3 mots anglais pour une banque de photos). « titre » : titre accrocheur de 8 mots maximum.\nExemple de bonne scène pour « 3 astuces pour économiser l’eau » : section « Douche courte », idee « Une douche de cinq minutes consomme bien moins d’eau qu’un bain. », sujet « pommeau de douche », recherche « shower head ». Les conseils doivent être concrets, courants et vérifiables ; n’invente aucune règle ni aucune loi.`;
+    const faitsWiki = String(contexte || '').slice(0, 2800);
+    const demPlan = `${ordres}Sujet de la vidéo : ${titre}\nTon : ${ton}.\n${faitsWiki ? `Faits vérifiés (Wikipédia), à utiliser en priorité ; n’en ajoute aucun autre :\n${faitsWiki}\n` : ''}Écris le plan de ${n} scènes qui se suivent logiquement.${structure}\nPour chaque scène : « section » (titre de partie, 2 à 4 mots), « idee » (UNE phrase : ce que la scène explique, concrète), « sujet » (ce qu’on PHOTOGRAPHIERAIT : un objet ou une scène concrète, 1 à 3 mots en français, ex. « casque de vélo », « piste cyclable » ; jamais une idée abstraite), « recherche » (le même sujet en 2 ou 3 mots anglais pour une banque de photos). « titre » : titre accrocheur de 8 mots maximum.\nExemple de bonne scène pour « 3 astuces pour économiser l’eau » : section « Douche courte », idee « Une douche de cinq minutes consomme bien moins d’eau qu’un bain. », sujet « pommeau de douche », recherche « shower head ». Les conseils doivent être concrets, courants et vérifiables ; n’invente aucune règle ni aucune loi.`;
     const rp = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme: sysPlan, demande: demPlan, schema: SCHEMA_PLAN(n), ctx: contexteDe(sysPlan, demPlan), temperature: 0.45 }, n * 70 + 80);
     gpu = rp.gpu || gpu;
     const plan = ((rp.resultat && rp.resultat.scenes) || []).filter(x => String(x.idee || '').trim().length > 8);
     if (!plan.length) throw new Error('L’IA n’a pas réussi à préparer un plan : réessaie ou précise ton sujet.');
     const garde = /\d/.test(titre + ' ' + consigne);
     const titreVideo = String((rp.resultat && rp.resultat.titre) || titre).replace(garde ? /$^/ : /\d+/g, '').replace(/\s{2,}/g, ' ').replace(/\s+([?!:;,.])/g, '$1').trim().slice(0, 80) || titre;
-    const sourcePlan = [titre, consigne, ...plan.map(x => `${x.section} ${x.idee} ${x.sujet}`)].join(' ');
+    const sourcePlan = [titre, consigne, faitsWiki, ...plan.map(x => `${x.section} ${x.idee} ${x.sujet}`)].join(' ');
     const systeme = 'Scénariste de vidéos en français. ' + REGLES + ' Tu n’inventes aucun chiffre, date, prix, citation ni nom propre absent du plan ; jamais de promesse ni d’avis médical, juridique ou financier.' + adresse;
     const ecrites = [], par = Math.round(mots / plan.length);
     for (let i = 0; i < plan.length; i++) {
       etape(`L’IA locale écrit la scène ${i + 1} sur ${plan.length}…`); if (job) job.progress = (i + 1) / (plan.length + 2);
-      const demande = `${ordres}Vidéo : « ${titreVideo} ». Ton : ${ton}.\nPlan : ${plan.map((x, k) => `${k + 1}. ${x.idee}`).join(' ')}\n${ecrites.length ? `Texte déjà écrit : ${ecrites.slice(-2).join(' ')}\n` : ''}` +
+      const demande = `${ordres}Vidéo : « ${titreVideo} ». Ton : ${ton}.\n${faitsWiki ? `Faits vérifiés : ${faitsWiki.slice(0, 1400)}\n` : ''}Plan : ${plan.map((x, k) => `${k + 1}. ${x.idee}`).join(' ')}\n${ecrites.length ? `Texte déjà écrit : ${ecrites.slice(-2).join(' ')}\n` : ''}` +
         `Écris maintenant la scène ${i + 1} sur ${plan.length} : « ${plan[i].idee} ». ${roleScene(i, plan.length, rg)}2 ou 3 phrases complètes, environ ${par} mots, qui continuent ce qui précède sans le répéter. Donne un conseil concret, courant et vérifiable ; si tu n’es pas certain d’un point, reste général et prudent. Réponds uniquement par le texte à dire à voix haute.`;
       const r = await texteControle({ systeme, demande, maxTokens: Math.ceil(par * 3 + 80), verif: { min: Math.max(8, Math.round(par * 0.5)), max: Math.round(par * 1.8) + 6, source: sourcePlan,
         interdireOuverture: i === 0 ? !rg.accroche : true, interdireFin: i === plan.length - 1 ? !rg.conclusion : true, interdits: rg.eviter } });
@@ -207,6 +208,37 @@ function creer({ BASE, FFMPEG }) {
     const r = await texteControle({ systeme, demande, maxTokens: Math.ceil(n0 * 4 + 80), verif: { min: 4, max: Math.round(n0 * 2) + 12, source: `${texte} ${titre} ${instruction}` } });
     if (!r.texte) throw new Error('L’IA n’a pas réussi à réécrire cette scène : reformule ta consigne ou modifie le texte à la main.');
     return { texte: r.texte, gpu };
+  }
+
+  // Assistant de montage : une demande que les règles d'assistant.js n'ont pas comprise → actions connues (jamais d'action inventée)
+  async function comprendreDemande(texte) {
+    const AS = require('./assistant'), ids = Object.keys(AS.ACTIONS);
+    utiliser('');
+    if (!installe()) throw new Error('L’IA locale n’est pas encore installée : ouvre « Générer » une fois pour l’installer, ou écris une demande plus simple (« coupe les blancs », « ajoute une musique calme »).');
+    const systeme = 'Tu es l’assistant d’un logiciel de montage vidéo. Tu traduis la demande de l’utilisateur en actions de la liste fournie, sans jamais en inventer.';
+    const demande = `Actions possibles :\n${ids.map(id => `- ${id} : ${AS.ACTIONS[id]}`).join('\n')}\nParamètres : format = vertical, horizontal ou carre ; musique = ambiance en un mot ; vitesse = nombre (0.5, 2…) ; transitions = fade, slideleft, zoomin ou fadeblack ; dynamiser = 110 à 140 ; titre = texte du titre ; sous_titres = tiktok ou rien ; publication = YouTube, TikTok ou Instagram.\nDemande : ${String(texte).slice(0, 500)}\nDonne les actions demandées, dans l’ordre (aucune si rien ne correspond).`;
+    const schema = { type: 'object', properties: { actions: { type: 'array', maxItems: 8, items: { type: 'object', properties: { action: { enum: ids }, parametre: { type: 'string' } }, required: ['action', 'parametre'] } } }, required: ['actions'] };
+    const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.1 }, 260);
+    const vus = new Set();
+    return ((r.resultat && r.resultat.actions) || []).filter(a => ids.includes(a.action) && !vus.has(a.action) && vus.add(a.action))
+      .map(a => ({ action: a.action, parametre: String(a.parametre || '').slice(0, 60), libelle: AS.ACTIONS[a.action] + (a.parametre ? ` (${String(a.parametre).slice(0, 60)})` : '') }));
+  }
+  // Textes de publication (3 titres, description, hashtags) tirés du texte de la vidéo ; sans IA installée, repli simple (hashtags fréquents)
+  async function textesPublication({ texte = '', plateforme = '', titre = '' }) {
+    const AS = require('./assistant'), base = String(texte || titre).slice(0, 3000);
+    const repli = () => ({ titres: [titre || base.split(/[.!?]/)[0].slice(0, 70)].filter(Boolean), description: base.split(/(?<=[.!?])\s+/).slice(0, 2).join(' ').slice(0, 300), hashtags: AS.hashtagsSimples(`${titre} ${base}`, 8), ia: false });
+    utiliser('');
+    if (!installe() || !base.trim()) return repli();
+    const pf = plateforme || 'les réseaux sociaux';
+    const systeme = 'Tu rédiges les textes de publication de vidéos en français, sans rien inventer : uniquement à partir du contenu fourni. Aucun émoji superflu, aucune promesse.';
+    const demande = `Plateforme : ${pf}.\n${titre ? `Titre de travail : ${titre}\n` : ''}Contenu de la vidéo :\n${base}\n\nÉcris : « titres » (3 titres différents, 70 caractères maximum, accrocheurs mais fidèles), « description » (2 ou 3 phrases, ${/tiktok|instagram/i.test(pf) ? 'courte et directe' : 'claire, avec les mots-clés du sujet'}), « hashtags » (6 à 10 mots-clés en minuscules, sans le #).`;
+    const schema = { type: 'object', properties: { titres: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'string' } }, description: { type: 'string' }, hashtags: { type: 'array', maxItems: 10, items: { type: 'string' } } }, required: ['titres', 'description', 'hashtags'] };
+    try {
+      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.5 }, 420);
+      const o = r.resultat || {};
+      const tags = (o.hashtags || []).map(h => '#' + AS.sansAccents(h).replace(/[^a-z0-9]+/g, '')).filter(h => h.length > 2);
+      return { titres: (o.titres || []).map(x => SQ.nettoyerTexte(x).slice(0, 100)).filter(Boolean), description: SQ.nettoyerTexte(o.description || '').slice(0, 1000), hashtags: [...new Set(tags)].slice(0, 10), ia: true };
+    } catch (e) { return repli(); }
   }
 
   // ---------- Téléchargement depuis un lien (YouTube, TikTok, Instagram, Facebook, X…) ----------
@@ -242,7 +274,7 @@ function creer({ BASE, FFMPEG }) {
   }
 
   const arreter = () => { if (proc) proc.kill(); };
-  return { etat, installer, ecrireScript, reecrireScene, telecharger, arreter };
+  return { etat, installer, ecrireScript, reecrireScene, comprendreDemande, textesPublication, telecharger, arreter };
 }
 
 module.exports = { creer, STYLES, MODELE, lireConsignes, regroupe, TYPES, PUBLICS, TONS, RYTHMES };
