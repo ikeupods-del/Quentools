@@ -116,10 +116,16 @@ function create(opts = {}) {
     return new Promise((resolve, reject) => {
       const p = spawn(cmd, args, { cwd });
       const out = []; let err = '', fige = false, garde = null;
+      // avec -progress, seule une avance réelle de la vidéo (out_time) compte ; sinon toute sortie
+      let avance = -1, suiviProgres = false;
       const veille = () => { if (!silence) return; clearTimeout(garde); garde = setTimeout(() => { fige = true; p.kill('SIGKILL'); }, silence); };
       veille();
-      p.stdout.on('data', d => { veille(); if (binary) out.push(d); if (onOut) onOut(d.toString()); });
-      p.stderr.on('data', d => { veille(); err += d; if (!wantErr && err.length > 8000) err = err.slice(-8000); });
+      p.stdout.on('data', d => {
+        const txt = d.toString(), m = txt.match(/out_time_us=(\d+)/g);
+        if (m) { suiviProgres = true; const v = +m[m.length - 1].split('=')[1]; if (v > avance) { avance = v; veille(); } } else if (!suiviProgres) veille();
+        if (binary) out.push(d); if (onOut) onOut(txt);
+      });
+      p.stderr.on('data', d => { if (!suiviProgres) veille(); err += d; if (!wantErr && err.length > 8000) err = err.slice(-8000); });
       p.on('error', e => { clearTimeout(garde); reject(new Error(e.code === 'ENOENT' ? 'FFmpeg est introuvable.' : e.message)); });
       p.on('close', code => { clearTimeout(garde); if (fige) return reject(new Error('Encodage figé, arrêté')); code === 0 ? resolve(wantErr ? err : binary ? Buffer.concat(out) : '') : reject(new Error(err.trim().split('\n').slice(-4).join('\n') || 'Erreur FFmpeg')); });
     });
@@ -244,6 +250,16 @@ function create(opts = {}) {
     if (!isImg && speed !== 1) pre += `setpts=(PTS-STARTPTS)/${speed},`;
     pre += `fps=${fps},`;
     const scFill = `scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1`;
+    // recadrage qui suit la personne (points { t, x } : x de 0 = bord gauche à 1 = bord droit de la zone recadrable)
+    const pts = Array.isArray(c.cadrage) ? c.cadrage.filter(p => p && Number.isFinite(+p.t) && Number.isFinite(+p.x)).slice(0, 240).map(p => ({ t: +p.t, x: clamp(+p.x, 0, 1) })).sort((a, b) => a.t - b.t) : [];
+    const suivi = (() => {
+      if (!pts.length) return '';
+      const T = `(t+${o.preview ? t : 0})`;
+      let e = pts[pts.length - 1].x.toFixed(4);
+      for (let i = pts.length - 2; i >= 0; i--) { const a = pts[i], b = pts[i + 1], d = Math.max(0.001, b.t - a.t); e = `if(lt(${T},${b.t.toFixed(3)}),${a.x.toFixed(4)}+(${(b.x - a.x).toFixed(4)})*min(1,max(0,(${T}-${a.t.toFixed(3)})/${d.toFixed(3)})),${e})`; }
+      return `scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H}:x='(iw-ow)*(${e})':y='(ih-oh)/2',setsar=1`;
+    })();
+    const scClip = suivi || scFill;
     const scFit = `scale=${W}:${H}:force_original_aspect_ratio=decrease,setsar=1`;
     let cur = lab();
     let aSrc = '0:a';
@@ -266,7 +282,7 @@ function create(opts = {}) {
       }
     } else if (key) {
       const k = c.key;
-      let fg = pre + (c.fit === 'fit' ? scFit : scFill) + `,format=yuv420p,chromakey=color=${hex(k.color)}:similarity=${clamp(num(k.sim, 0.15), 0.01, 0.8)}:blend=${clamp(num(k.blend, 0.08), 0, 0.5)}`;
+      let fg = pre + (c.fit === 'fit' ? scFit : scClip) + `,format=yuv420p,chromakey=color=${hex(k.color)}:similarity=${clamp(num(k.sim, 0.15), 0.01, 0.8)}:blend=${clamp(num(k.blend, 0.08), 0, 0.5)}`;
       if (k.despill && filters.has('despill')) fg += ',format=gbrap,despill=type=green:mix=0.5:expand=0.1,format=yuva420p';
       f.push(`[0:v]${fg}[fg]`);
       if (bg >= 0) f.push(`[${bg}:v]fps=${fps},${scFill}[bg]`);
@@ -279,7 +295,7 @@ function create(opts = {}) {
       f.push(`[${a}]${scFit}[${a}f]`);
       f.push(`[${b}g][${a}f]overlay=(W-w)/2:(H-h)/2[${cur}]`);
     } else {
-      f.push(`[0:v]${pre}${fill ? scFill : scFit + `,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:black`}[${cur}]`);
+      f.push(`[0:v]${pre}${fill ? scClip : scFit + `,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:black`}[${cur}]`);
     }
     const lin = frag => { const out = lab(); f.push(`[${cur}]${frag}[${out}]`); cur = out; };
 
@@ -656,7 +672,9 @@ function create(opts = {}) {
       }
 
       if (proxy) {
-        for (const old of fs.readdirSync(APERCUS)) { try { fs.unlinkSync(path.join(APERCUS, old)); } catch (e) { /* ignoré */ } }
+        // on garde les 3 derniers aperçus : celui en cours de lecture ne disparaît pas pendant qu'un nouveau se prépare
+        const vieux = fs.readdirSync(APERCUS).map(n => ({ n, t: fs.statSync(path.join(APERCUS, n)).mtimeMs })).sort((a, b) => b.t - a.t).slice(2);
+        for (const old of vieux) { try { fs.unlinkSync(path.join(APERCUS, old.n)); } catch (e) { /* ignoré */ } }
         const name = `apercu-${Date.now()}.mp4`;
         fs.copyFileSync(path.join(dir, final), path.join(APERCUS, name));
         job.url = '/apercu/' + name;

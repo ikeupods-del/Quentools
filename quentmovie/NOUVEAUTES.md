@@ -16,6 +16,10 @@ Changer aussi `version` dans `package.json` : une version déjà publiée n'est 
 - Export beaucoup plus rapide avec la puce vidéo du Mac (réglage par défaut).
 - Fluidité sur macOS 26 et les Mac récents (M5) : nouvelle version du moteur de fenêtre (Electron 43), qui corrige les ralentissements de macOS 26.
 - Médias : « Supprimer les inutilisés » et « Tout supprimer » d'un coup.
+- Lecture immédiate : l'aperçu avec effets se prépare tout seul pendant que tu travailles (« ⚡ prêt » à côté de Lire).
+- Recadrage auto pour TikTok / Reels : « Passer en vertical et suivre la personne » (Outils), ou « Suivre la personne » sur un clip ; l'image suit la personne au lieu de couper au centre.
+- Export en un clic : TikTok/Reels, YouTube, YouTube 4K, Instagram carré, podcast, GIF.
+- Timeline plus claire : noms des pistes dans une colonne à gauche, hauteur réglable en tirant sa bordure.
 
 ## 1.6.1
 - Correction : le générateur de vidéos s'arrêtait avec « spawn Unknown system error -86 » (un outil livré n'était pas fait pour les Mac à puce Apple). Il fonctionne maintenant, tout comme l'import et l'export qui utilisaient ce même outil.

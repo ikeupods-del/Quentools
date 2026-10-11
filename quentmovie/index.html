@@ -9,7 +9,7 @@
 :root{--bg:#141518;--pan:#1c1e23;--pan2:#262930;--pan3:#30343d;--ligne:#363a44;--txt:#eceef2;--mut:#98a1b0;--ac:#4f8cff;--ok:#35c27a;--ko:#ef5b5b;--clip:#3a5f9e;--audio:#2f7d5b;--podcast:#7a4fb0}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--txt);font:13px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;display:grid;grid-template-rows:46px minmax(0,1fr) 280px 24px;grid-template-columns:320px minmax(0,1fr) 330px;grid-template-areas:"top top top" "nav view insp" "tl tl tl" "bar bar bar";overflow:hidden;-webkit-user-select:none;user-select:none}
+body{background:var(--bg);color:var(--txt);font:13px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;display:grid;grid-template-rows:46px minmax(0,1fr) var(--hTl,280px) 24px;grid-template-columns:320px minmax(0,1fr) 330px;grid-template-areas:"top top top" "nav view insp" "tl tl tl" "bar bar bar";overflow:hidden;-webkit-user-select:none;user-select:none}
 input,textarea{-webkit-user-select:text;user-select:text}
 button,select,input,textarea{font:inherit;color:inherit}
 button{background:var(--pan2);border:1px solid var(--ligne);border-radius:7px;padding:5px 10px;cursor:pointer}
@@ -83,9 +83,17 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 .subrow{display:grid;grid-template-columns:52px 52px 1fr 24px;gap:4px;margin:3px 0}
 .subrow input{padding:2px 4px;font-size:12px}
 /* timeline */
-#tl{grid-area:tl;background:var(--pan);border-top:1px solid var(--ligne);display:flex;flex-direction:column;min-height:0}
+#tl{grid-area:tl;background:var(--pan);border-top:1px solid var(--ligne);display:flex;flex-direction:column;min-height:0;position:relative}
+#poignee{position:absolute;left:0;right:0;top:-4px;height:8px;cursor:ns-resize;z-index:9}#poignee:hover{background:#7c5cff55}
 #tlbar{display:flex;gap:5px;align-items:center;padding:5px 10px;border-bottom:1px solid var(--ligne);flex-wrap:wrap}
 #tlbar .sp{flex:1}
+#tlcorps{flex:1;display:flex;min-height:0}
+#entetes{width:54px;flex:none;overflow:hidden;background:var(--pan2);border-right:1px solid var(--ligne)}
+#entetes .ent{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;color:var(--mut);font-size:10px;line-height:1.2}
+#entetes .ent b{font-size:12px;color:var(--txt,#e8e9ed);letter-spacing:.04em}
+#entetes #eR{border-radius:0;border-bottom:1px solid var(--ligne)}
+#entetes #eV2 b{color:#b9a6ff}#entetes #eA b{color:#7fd4a6}
+.piste .vide2{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--mut);opacity:.7;pointer-events:none;white-space:nowrap}
 #scroll{flex:1;overflow:auto;position:relative;min-height:0}
 #lane{position:relative;min-height:100%}
 #regle{height:22px;position:sticky;top:0;background:var(--pan2);border-bottom:1px solid var(--ligne);cursor:pointer;z-index:6}
@@ -202,13 +210,13 @@ canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display
     <button id="bPlay" class="pri" title="Lire / pause (Espace)" style="min-width:74px">▶ Lire</button>
     <button id="bAvance" title="Avancer d’1 s (L)">⏩</button><button id="bFin" title="Fin (Fin)">⏭</button>
     <input type="range" id="scrub" min="0" max="1" step="0.01" value="0">
-    <span id="tc">00:00:00:00</span>
+    <span id="tc">00:00:00:00</span><span id="pret" class="mut" title="Aperçu avec effets préparé en arrière-plan pendant que tu travailles"></span>
   </div>
 </main>
 
 <aside id="insp"></aside>
 
-<section id="tl">
+<section id="tl"><div id="poignee" title="Tirer pour agrandir ou réduire la timeline (double-clic : taille normale)"></div>
   <div id="tlbar">
     <button id="bCouper" title="Couper à la tête de lecture (S ou ⌘B)">✂ Couper</button>
     <button id="bGauche" title="Déplacer à gauche (⌘[)">◀</button><button id="bDroite" title="Déplacer à droite (⌘])">▶</button>
@@ -219,13 +227,19 @@ canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display
     <span class="mut" id="duree"></span>
     <button class="mini" id="zMoins" title="Zoom arrière (-)">−</button><input type="range" id="zoom" min="6" max="200" value="40" style="width:110px"><button class="mini" id="zPlus" title="Zoom avant (+)">＋</button><button class="mini" id="zFit" title="Tout afficher (⇧Z)">Ajuster</button>
   </div>
-  <div id="scroll"><div id="lane">
-    <div id="regle"></div>
-    <div class="piste v2" id="pV2"><span class="etiq">VIDÉO 2 (image dans l’image, plans de coupe)</span></div>
-    <div class="piste" id="pV"><span class="etiq">VIDÉO</span></div>
-    <div class="piste a" id="pA"><span class="etiq">AUDIO (musique, voix, bruitages)</span></div>
-    <div id="tete"></div>
-  </div></div>
+  <div id="tlcorps">
+    <div id="entetes" aria-hidden="true"><div class="ent" id="eR"></div>
+      <div class="ent" id="eV2" title="Vidéo 2 : image dans l’image, plans de coupe (au-dessus du montage)"><b>V2</b><small>incrust.</small></div>
+      <div class="ent" id="eV" title="Vidéo principale : les clips se suivent"><b>V1</b><small>vidéo</small></div>
+      <div class="ent" id="eA" title="Audio : musique, voix off, bruitages"><b>A</b><small>son</small></div></div>
+    <div id="scroll"><div id="lane">
+      <div id="regle"></div>
+      <div class="piste v2" id="pV2"></div>
+      <div class="piste" id="pV"></div>
+      <div class="piste a" id="pA"></div>
+      <div id="tete"></div>
+    </div></div>
+  </div>
 </section>
 <div id="bar"></div>
 <div id="modal"><div id="boite"></div></div>
@@ -614,7 +628,7 @@ function tlDessin() {
   for (let s = 0; s < W; s += pas) r += `<i style="left:${s * zoom}px">${s >= 60 ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : s + 's'}</i>`;
   r += (proj.markers || []).map((t, i) => `<b data-mk="${i}" style="left:${t * zoom}px" title="Repère à ${fmt(t)} (clic : y aller · ⇧clic : supprimer)"></b>`).join('');
   $('#regle').innerHTML = r;
-  $('#pV').innerHTML = '<span class="etiq">VIDÉO</span>' + proj.clips.map((c, i) => {
+  $('#pV').innerHTML = (proj.clips.length ? '' : '<span class="vide2">Glisse ici tes vidéos et photos</span>') + proj.clips.map((c, i) => {
     let bg = '';
     if (c.kind === 'video') bg = `background-image:url('/api/frame?file=${enc(c.file)}&t=${c.in.toFixed(1)}')`;
     else if (c.kind === 'image') bg = `background-image:url('/media/${enc(c.file)}')`;
@@ -629,7 +643,7 @@ function tlDessin() {
     if (r < 0) { r = fins.length; fins.push(0); } fins[r] = s + durOf(a.file); ligne[i] = r;
   });
   $('#pA').style.height = (Math.max(1, fins.length) * 44 + 12) + 'px';
-  $('#pA').innerHTML = '<span class="etiq">AUDIO (musique, voix, bruitages)</span>' + proj.audio.map((a, i) => {
+  $('#pA').innerHTML = (proj.audio.length ? '' : '<span class="vide2">Musique, voix off, bruitages : onglets Sons et Musique, ou glisse un son ici</span>') + proj.audio.map((a, i) => {
     const d = durOf(a.file);
     return `<div class="aud ${i === selA ? 'sel' : ''}" data-a="${i}" style="top:${8 + ligne[i] * 44}px;height:40px;bottom:auto;left:${(a.start || 0) * zoom}px;width:${Math.max(30, d * zoom)}px;background-image:url('/api/wave?file=${enc(a.file)}&w=1200&h=60')">🎵 ${esc(nomOf(a.file))}${a.duck ? ' ⤵' : ''}</div>`;
   }).join('');
@@ -639,18 +653,33 @@ function tlDessin() {
     const p = proj.pistes[i]; let r = fv.findIndex(e => e <= p.start + 0.01); if (r < 0) { r = fv.length; fv.push(0); } fv[r] = p.start + dureePiste(p); lv[i] = r; p.ligne = r;
   });
   $('#pV2').style.height = (Math.max(1, fv.length) * 44 + 8) + 'px';
-  $('#pV2').innerHTML = '<span class="etiq">VIDÉO 2 (image dans l’image, plans de coupe) — glisse un média ici</span>' + (proj.pistes || []).map((p, i) => {
+  $('#pV2').innerHTML = ((proj.pistes || []).length ? '' : '<span class="vide2">Glisse ici une vidéo ou une photo à incruster (image dans l’image, plan de coupe) — bouton ⧉ dans Médias</span>') + (proj.pistes || []).map((p, i) => {
     const bg = p.kind === 'image' ? `/media/${enc(p.file)}` : `/api/frame?file=${enc(p.file)}&t=${(p.in + 0.3).toFixed(1)}`;
     return `<div class="pv ${i === selP ? 'sel' : ''}" data-p="${i}" style="top:${4 + (fv.length - 1 - lv[i]) * 44}px;left:${p.start * zoom}px;width:${Math.max(26, dureePiste(p) * zoom)}px;background-image:url('${bg}')"><i class="hl"></i><i class="hr"></i>${p.plein ? '⛶' : '⧉'} ${esc(nomOf(p.file))}</div>`;
   }).join('');
   $('#duree').textContent = proj.clips.length ? 'Durée : ' + fmt(T) : '';
-  tete();
+  entetes(); tete();
   const has = sel >= 0;
   ['#bCouper', '#bDup'].forEach(s => { $(s).disabled = !has; });
   $('#bSuppr').disabled = !has && selA < 0 && selP < 0;
   $('#bGauche').disabled = !has || sel === 0; $('#bDroite').disabled = !has || sel === proj.clips.length - 1;
   $('#scrub').max = Math.max(0.1, T); $('#scrub').value = gt;
 }
+// Colonne des noms de pistes : mêmes hauteurs que les rangées, défile avec la timeline
+function entetes() {
+  const cs = el => getComputedStyle(el);
+  [['#eR', '#regle'], ['#eV2', '#pV2'], ['#eV', '#pV'], ['#eA', '#pA']].forEach(([e, p]) => { const a = $(e), b = $(p), c = cs(b); a.style.height = b.offsetHeight + 'px'; a.style.margin = `${c.marginTop} 2px ${c.marginBottom}`; });
+}
+$('#scroll').addEventListener('scroll', () => { $('#entetes').scrollTop = $('#scroll').scrollTop; });
+// Hauteur de la timeline réglable à la souris (gardée d'une fois sur l'autre)
+const hTl = h => { h = clamp(Math.round(h), 160, Math.round(innerHeight * 0.7)); document.body.style.setProperty('--hTl', h + 'px'); try { localStorage.setItem('qm:hTl', h); } catch (e) { /* stockage indisponible */ } };
+try { const h = +localStorage.getItem('qm:hTl'); if (h) document.body.style.setProperty('--hTl', h + 'px'); } catch (e) { /* stockage indisponible */ }
+$('#poignee').onpointerdown = e => {
+  e.preventDefault(); const y0 = e.clientY, h0 = $('#tl').offsetHeight;
+  const mv = ev => hTl(h0 + (y0 - ev.clientY)); const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); tlDessin(); apercuRetarde(); };
+  document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
+};
+$('#poignee').ondblclick = () => { hTl(280); tlDessin(); };
 function tete() {
   $('#tete').style.left = (gt * zoom) + 'px'; $('#tc').textContent = tc(gt, proj.fps); if (document.activeElement !== $('#scrub')) $('#scrub').value = gt;
   const sc = $('#scroll'), x = gt * zoom; if (x < sc.scrollLeft + 10 || x > sc.scrollLeft + sc.clientWidth - 30) { if (lecture) sc.scrollLeft = Math.max(0, x - 80); }
@@ -826,7 +855,27 @@ function pistesApercu() {
   if (img.complete && img.naturalWidth) poser(); else img.addEventListener('load', poser, { once: true });
 }
 function stopLecture() { if (lecture) { lecture.video.pause(); lecture = null; $('#bPlay').textContent = '▶ Lire'; apercu(); } }
-function majApercuEtat() { if (rendu && rendu.sig !== snap()) { rendu.perime = true; } }
+function majApercuEtat() { if (rendu && rendu.sig !== snap()) { rendu.perime = true; } preparerEnFond(); }
+// Aperçu préparé en arrière-plan 1,5 s après chaque modification : la lecture démarre tout de suite
+const fond = { cours: null, promesse: null, minuteur: 0 };
+function pastille() {
+  const p = $('#pret'); if (!p) return;
+  p.textContent = !proj.clips.length ? '' : fond.cours ? '⏳ aperçu…' : rendu && rendu.sig === snap() ? '⚡ prêt' : '';
+}
+function preparerEnFond(delai = 1500) {
+  clearTimeout(fond.minuteur); pastille();
+  if (!proj.clips.length || localStorage.getItem('qm:fond') === 'non') return;
+  fond.minuteur = setTimeout(() => {
+    if (studio || lecture) return preparerEnFond(3000);
+    const sig = snap(); if ((rendu && rendu.sig === sig) || fond.cours === sig) return pastille();
+    if (fond.cours) return preparerEnFond(1500); // un rendu est déjà en cours : on attend sa fin
+    fond.cours = sig; pastille();
+    fond.promesse = lancerJob('/api/apercu', { project: JSON.parse(sig) }, () => {})
+      .then(url => { if (!rendu || rendu.sig !== snap()) rendu = { url, sig, perime: sig !== snap() }; return url; })
+      .catch(() => null)
+      .finally(() => { fond.cours = null; pastille(); if (snap() !== sig) preparerEnFond(800); });
+  }, delai);
+}
 async function lancerJob(url, body, onProg) {
   const { id } = await (await api(url, { method: 'POST', body: JSON.stringify(body) })).json();
   for (;;) {
@@ -841,13 +890,16 @@ async function rendreApercu() {
   const b = $('#bApercu'); b.disabled = true; $('#bPlay').disabled = true;
   try {
     const url = await lancerJob('/api/apercu', { project: proj }, (p, s) => { b.textContent = `Rendu ${Math.round(p * 100)} %`; $('#etat').textContent = s; });
-    rendu = { url, sig: snap(), perime: false };
+    rendu = { url, sig: snap(), perime: false }; pastille();
   } finally { b.disabled = false; $('#bPlay').disabled = false; b.textContent = '🎞 Aperçu avec effets'; $('#etat').textContent = ''; }
 }
 async function lire() { // lecture de toute la timeline avec les effets (rendu rapide si le projet a changé)
   if (!proj.clips.length) return aide('La timeline est vide : ajoute d’abord un média.');
   if (lecture) { lecture.video.paused ? lecture.video.play() : lecture.video.pause(); $('#bPlay').textContent = lecture.video.paused ? '▶ Lire' : '⏸ Pause'; return; }
-  try { if (!rendu || rendu.sig !== snap()) await rendreApercu(); } catch (e) { return alert(e.message); }
+  try {
+    if (fond.cours && fond.cours === snap()) { $('#bPlay').textContent = '⏳'; await fond.promesse; } // l'aperçu se termine : on l'attend
+    if (!rendu || rendu.sig !== snap()) await rendreApercu();
+  } catch (e) { return alert(e.message); }
   const v = document.createElement('video'); v.src = rendu.url; v.controls = true; v.autoplay = false; lecture = { video: v };
   $('#stage').innerHTML = ''; $('#stage').appendChild(v);
   const T = total(); v.onloadedmetadata = () => { v.currentTime = clamp(gt * (v.duration / Math.max(0.1, T)), 0, v.duration - 0.05); v.play().catch(() => {}); };
@@ -943,6 +995,7 @@ function inspecteur() {
     ${sourceVideo ? sl('Début', 'in', 0, Math.max(0, +(c.out - 0.2).toFixed(1)), 0.1, ' s', c) + sl('Fin', 'out', +(c.in + 0.2).toFixed(1), +md.toFixed(1), 0.1, ' s', c) + sl('Vitesse', 'speed', 0.25, 4, 0.05, '×', c) + sl('Volume', 'vol', 0, 300, 5, ' %', c) : sl('Durée', 'dur', 0.5, 30, 0.5, ' s', c)}
     ${chk('Fondu au début et à la fin', 'fade', c)}
     ${k === 'video' || k === 'image' ? `<label class="l">Cadrage</label><select data-p="fit">${opts([['fill', 'Remplir l’écran (recadre)'], ['fit', 'Tout afficher (bandes noires)'], ['flou', 'Tout afficher (fond flou)']], c.fit)}</select>` : ''}
+    ${k === 'video' && c.fit !== 'fit' && c.fit !== 'flou' && partVisible(c) < 0.95 ? `<button id="bSuivre" style="width:100%;margin-top:6px">🎯 ${c.cadrage ? 'Refaire le suivi de la personne' : 'Suivre la personne (recadrage auto)'}</button>${c.cadrage ? `<div class="ligne" style="margin-top:4px"><span class="mut" style="flex:1">Recadrage auto actif</span><button class="mini" id="bSuivreSuppr" title="Revenir au recadrage au centre" style="flex:none">✕</button></div>` : ''}<div class="mut" id="suiviRes"></div>` : ''}
   </details>
   ${k === 'audio' ? `<details open><summary>Podcast : fond et visualiseur</summary>
     <label class="l">Visualiseur du son</label><select data-p="viz.type">${opts([['ligne', 'Ligne ondulante'], ['ondes', 'Ondes'], ['points', 'Points'], ['barres', 'Barres de fréquences'], ['none', 'Aucun']], c.viz.type)}</select>
@@ -1026,6 +1079,8 @@ $('#insp').addEventListener('click', e => {
   if (t.id === 'bRmA') return supprimer();
   if (d.pospiste) { const p = proj.pistes[selP]; [p.x, p.y] = POS_PISTE[d.pospiste]; commit(); inspecteur(); return apercuRetarde(); }
   if (t.id === 'bAddOv') { const m = medias.find(x => x.kind === 'image') || medias.find(x => x.kind === 'video'); return ajouterCalque(m ? m.file : 'lib:' + (LIB().stickers[0] || {}).file, m ? m.kind : 'image'); }
+  if (t.id === 'bSuivre') { t.disabled = true; recadrerClips([sel], '#suiviRes').finally(() => inspecteur()); return; }
+  if (t.id === 'bSuivreSuppr') { delete c.cadrage; commit(); inspecteur(); return apercu(); }
   if (t.id === 'bSubAuto') { const st = c.subStyle && c.subStyle !== 'contour' ? c.subStyle : paroleOpts().style; t.disabled = true; outilParole('clip', { sous: true, couper: false, style: st }, null).finally(() => { t.disabled = false; inspecteur(); }); return; }
   if (t.id === 'bAddSub') { const loc = clamp(pos, 0, effDur(c)); c.subs.push({ s: +loc.toFixed(1), e: +Math.min(effDur(c), loc + 2.5).toFixed(1), t: 'Ton sous-titre' }); commit(); inspecteur(); return apercu(); }
   if (t.id === 'bSrt') return $('#fSrt').click();
@@ -1061,6 +1116,51 @@ function pipette() {
   $('#pipOk').onclick = fermer;
 }
 
+// ---------- Recadrage auto : la fenêtre suit la personne (vidéo horizontale montée en vertical ou en carré) ----------
+const RATIO = { vertical: 9 / 16, horizontal: 16 / 9, carre: 1 };
+// part de la largeur de l'image source visible une fois l'écran rempli
+function partVisible(c) { const m = mediaOf(c.file); if (!m || !m.w || !m.h) return 1; return Math.min(1, (RATIO[proj.format] || 1) / (m.w / m.h)); }
+async function positionsPersonne(c, surEtat) {
+  const w = new Worker('/detoureur.js'), rep = () => new Promise(ok => { w.onmessage = e => ok(e.data); });
+  try {
+    w.postMessage({ type: 'preparer', modele: 'selfie_multiclass_256x256', gpu: true }); const p = await rep(); if (p.type !== 'pret') throw new Error(p.message || 'détourage indisponible');
+    const dur = Math.max(0.1, c.out - c.in), pas = Math.max(0.4, dur / 150), out = [];
+    for (let t = 0, k = 0; t <= dur + 1e-3; t += pas, k++) {
+      const b = await (await api(`/api/frame?file=${enc(c.file)}&t=${(c.in + Math.min(t, dur - 0.05)).toFixed(2)}&w=320`)).blob();
+      const im = await createImageBitmap(b, { resizeWidth: 256, resizeHeight: 256 });
+      w.postMessage({ type: 'image', id: k, image: im, t: performance.now(), roiCle: '', seul: true, nettoyage: true, lissage: 0 }, [im]);
+      const r = await rep();
+      // centre du haut du corps (le visage compte plus que les mains écartées)
+      out.push({ t, cx: r.type === 'masque' && r.cadre ? (r.cadre.x0 + r.cadre.x1) / 2 : null });
+      surEtat(`🎯 Repérage de la personne… ${Math.round(Math.min(1, t / dur) * 100)} %`);
+    }
+    return out;
+  } finally { w.terminate(); }
+}
+// positions → points de cadrage : trous comblés, mouvement calme (la caméra ne bouge que si la personne s'éloigne du centre)
+function pointsCadrage(pos, f, speed) {
+  const vus = pos.filter(p => p.cx !== null); if (!vus.length) return null;
+  let der = vus[0].cx; const cx = pos.map(p => (p.cx === null ? der : (der = p.cx)));
+  const lisse = cx.map((v, i) => { const a = cx.slice(Math.max(0, i - 2), i + 3); return a.reduce((x, y) => x + y, 0) / a.length; });
+  const cible = v => clamp((v - f / 2) / (1 - f), 0, 1);
+  let cam = cible(lisse[0]); const pts = [];
+  lisse.forEach((v, i) => { const c = cible(v); if (Math.abs(c - cam) > 0.08) cam += (c - cam) * 0.6; pts.push({ t: +(pos[i].t / speed).toFixed(2), x: +cam.toFixed(3) }); });
+  return pts.filter((p, i) => i === 0 || i === pts.length - 1 || Math.abs(p.x - pts[i - 1].x) > 0.002 || Math.abs(p.x - (pts[i + 1] || p).x) > 0.002);
+}
+async function recadrerClips(indices, res) {
+  const e = t => { const el = res && $(res); if (el) el.innerHTML = t; aide(t); };
+  const liste = indices.filter(i => proj.clips[i] && proj.clips[i].kind === 'video' && partVisible(proj.clips[i]) < 0.95);
+  if (!liste.length) return e('Aucune vidéo à recadrer dans ce format (elles remplissent déjà l’écran).');
+  let n = 0;
+  try {
+    for (const i of liste) {
+      const c = proj.clips[i], pos = await positionsPersonne(c, t => e(`${t} (clip ${n + 1} sur ${liste.length})`)), pts = pointsCadrage(pos, partVisible(c), c.speed || 1);
+      if (pts) { c.cadrage = pts; if (c.fit === 'fit' || c.fit === 'flou') c.fit = 'fill'; n++; }
+    }
+    commit(); tout(); apercu();
+    e(n ? `✅ Recadrage auto sur ${n} clip${n > 1 ? 's' : ''} : l’image suit la personne. Lis l’aperçu pour vérifier.` : 'Personne n’a été repéré dans ces vidéos.');
+  } catch (er) { e(`<span class="err">Recadrage impossible : ${esc(er.message)}</span>`); }
+}
 // ---------- Miniature (vignette YouTube, TikTok…) : image du montage, gros titre, détourage de la personne ----------
 let mini = null;
 const MINI_DEF = { fond: 'flou', couleur: '#141a33', l1: '', l2: '', coul: '#ffe600', pos: 'gauche', detoure: true, contour: '#ffffff', badge: '', sombre: 45, zoom: 100, taille: 100 };
@@ -1284,6 +1384,8 @@ function outilsHtml() {
     <div class="encart"><h4>✂ Couper les blancs et les « euh »</h4><p class="mut">Garde seulement les moments où tu parles : les blancs, les hésitations et les « euh » sont retirés. Les sous-titres sont recalés.</p>
       <div class="ligne"><button class="pri" data-outil="coupe-clip">Clip sélectionné</button><button class="pri" data-outil="coupe-tout">Toute la vidéo</button></div>
       <div class="sw2"><input type="checkbox" id="oPriseCoupe" ${po.priseCoupe ? 'checked' : ''}><label for="oPriseCoupe">Couper automatiquement mes prises du studio</label></div><div class="mut" id="oCoupeRes" style="margin-top:4px"></div></div>
+    <div class="encart"><h4>📱 Passer en vertical (TikTok, Reels, Shorts)</h4><p class="mut">Le montage passe en 9:16 et chaque vidéo filmée à l’horizontale suit automatiquement la personne, au lieu de couper au centre.</p>
+      <button class="pri" data-outil="vertical" style="width:100%">Passer en vertical et suivre la personne</button><div class="mut" id="oVertRes" style="margin-top:4px"></div></div>
     <div class="encart"><h4>🖼 Miniature</h4><p class="mut">Une image de ta vidéo, un gros titre et toi détouré avec un contour : la vignette qui donne envie de cliquer.</p><button class="pri" data-outil="miniature" style="width:100%">Créer la miniature</button></div>
     <div class="encart"><h4>🗣 Voix</h4><p class="mut">Voix naturelles pour le générateur et les voix off, reconnaissance de la voix, voix Premium du Mac.</p><button data-outil="voix" style="width:100%">Gérer les voix</button><div id="oVoixZone"></div></div>
     <div class="encart"><h4>✂ Couper les silences, méthode simple (vlog, podcast)</h4><p class="mut">Sans reconnaissance de la voix : coupe tout ce qui est sous un volume choisi.</p>
@@ -1334,6 +1436,7 @@ async function outil(nom) {
   if (nom === 'generer') return ouvrirGenerateur();
   if (nom === 'voix') return gererVoix($('#oVoixZone'));
   if (nom === 'miniature') return ouvrirMiniature();
+  if (nom === 'vertical') { proj.format = 'vertical'; $('#format').value = 'vertical'; commit(); tout(); return recadrerClips(proj.clips.map((c, i) => i), '#oVertRes'); }
   if (nom === 'medias-inutiles' || nom === 'medias-tous') return supprimerMedias(nom === 'medias-tous');
   if (/^(sous|coupe)-(clip|tout)$/.test(nom)) { const [q, p] = nom.split('-'), st = $('#oSousStyle') ? $('#oSousStyle').value : paroleOpts().style;
     const o = { sous: q === 'sous' || (q === 'coupe' && proj.clips.some(c => c.subs && c.subs.length)), couper: q === 'coupe', style: st };
@@ -1414,6 +1517,8 @@ const SORTIES = { mp4: 'Vidéo MP4 (recommandé)', mov: 'Vidéo MOV ProRes (mont
 function exporter() {
   if (!proj.clips.length) return alert('La timeline est vide.'); stopLecture();
   ouvrir(`<h2>Exporter</h2>
+    <label class="l">Pour…</label><div class="grille g3" id="xPresets">${[['tiktok', '📱 TikTok, Reels, Shorts'], ['youtube', '▶ YouTube 1080p'], ['youtube4k', '▶ YouTube 4K'], ['insta', '◻ Instagram carré'], ['podcast', '🎧 Podcast (MP3)'], ['gif', '🎞 GIF animé']].map(([k, t]) => `<button class="carte txt" data-preset="${k}">${t}</button>`).join('')}</div>
+    <p class="mut" id="xPresetInfo" style="margin:4px 0 0"></p>
     <label class="l">Format</label><select id="xSortie">${CAT.sorties.map(s => `<option value="${s}" ${proj.sortie === s ? 'selected' : ''}>${SORTIES[s] || s}</option>`).join('')}</select>
     <label class="l">Résolution</label><select id="xRes">${opts([['720', '720p'], ['1080', 'Full HD 1080p'], ['2160', '4K']], String(proj.res))}</select>
     <label class="l">Images par seconde</label><select id="xFps">${opts([['24', '24'], ['30', '30'], ['60', '60']], String(proj.fps))}</select>
@@ -1422,6 +1527,19 @@ function exporter() {
     <p class="mut">Durée : ${fmt(total())} · format ${esc({ vertical: 'vertical 9:16', horizontal: 'horizontal 16:9', carre: 'carré' }[proj.format])}</p>
     <div id="expo"><div class="ligne"><button id="xAnn">Annuler</button><button class="pri" id="xGo">Lancer l’export</button></div></div>`);
   $('#xAnn').onclick = fermer;
+  // réglages en un clic (le format de l'image change aussi si besoin)
+  $('#xPresets').onclick = e => {
+    const k = (e.target.closest('[data-preset]') || {}).dataset; if (!k || !k.preset) return;
+    const p = { tiktok: ['vertical', 'mp4', 1080, 30], youtube: ['horizontal', 'mp4', 1080, 30], youtube4k: ['horizontal', 'mp4', 2160, 30], insta: ['carre', 'mp4', 1080, 30], podcast: [null, 'mp3', null, null], gif: [null, 'gif', 720, 24] }[k.preset];
+    if (p[1] && CAT.sorties.includes(p[1])) $('#xSortie').value = p[1]; if (p[2]) $('#xRes').value = String(p[2]); if (p[3]) $('#xFps').value = String(p[3]);
+    let info = '';
+    if (p[0] && p[0] !== proj.format) {
+      proj.format = p[0]; $('#format').value = p[0]; commit(); tout(); apercu();
+      info = p[0] === 'vertical' && proj.clips.some(c => c.kind === 'video' && partVisible(c) < 0.95) ? 'Format passé en vertical. Astuce : Outils → « Passer en vertical et suivre la personne » pour que l’image suive la personne.' : `Format passé en ${{ vertical: 'vertical 9:16', horizontal: 'horizontal 16:9', carre: 'carré' }[p[0]]}.`;
+    }
+    $('#xPresetInfo').textContent = info || 'Réglages appliqués.';
+    document.querySelectorAll('#xPresets [data-preset]').forEach(b => b.style.borderColor = b.dataset.preset === k.preset ? 'var(--ac)' : '');
+  };
   $('#xGo').onclick = async () => {
     proj.sortie = $('#xSortie').value; proj.res = +$('#xRes').value; proj.fps = +$('#xFps').value; proj.quality = $('#xQ').value; proj.normaliser = $('#xNorm').checked; commit();
     $('#expo').innerHTML = '<div id="xTxt">Préparation…</div><div id="barreExp"><i></i></div>';
