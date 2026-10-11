@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -8,7 +8,7 @@
   "scripts": {
     "start": "electron .",
     "serveur": "node server.js",
-    "test": "node tests/run.js && node tests/maj.js && node tests/compositeur.js && node tests/generateur.js && node tests/parole.js && node tests/pistes.js && node tests/cadrage.js && node tests/ia.js && node tests/voix.js",
+    "test": "node tests/run.js && node tests/maj.js && node tests/compositeur.js && node tests/generateur.js && node tests/parole.js && node tests/pistes.js && node tests/cadrage.js && node tests/ia.js && node tests/voix.js && node tests/montage.js && node tests/ui.js",
     "dist": "electron-builder --mac dmg --arm64 --publish never"
   },
   "dependencies": {
@@ -20,7 +20,8 @@
   "devDependencies": {
     "electron": "43.7.5",
     "electron-builder": "^25.1.8",
-    "ffprobe-static": "^3.1.0"
+    "ffprobe-static": "^3.1.0",
+    "playwright-core": "^1.55.0"
   },
   "build": {
     "appId": "fr.quentools.quentmovie",
@@ -36,6 +37,9 @@
       "detoureur.js",
       "parole.js",
       "voix-texte.js",
+      "images.js",
+      "script-qualite.js",
+      "rythme.js",
       "parole-worker.js",
       "ia.js",
       "ia-worker.js",

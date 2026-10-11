@@ -7,6 +7,15 @@ name: QuentMovie — application Mac
 # Une version déjà publiée n'est pas republiée.
 on:
   workflow_dispatch:
+    inputs:
+      modele:
+        description: "Modèle de l'IA pour l'essai rapide : standard ou precis"
+        type: string
+        default: standard
+      exemples:
+        description: "Essai rapide de l'IA seulement : écrit des scripts d'exemple et cherche leurs photos (sans construire l'application)"
+        type: boolean
+        default: false
   push:
     branches: ['claude/infirmiere-ordonnances-upload-26nl16']
     paths: ['quentmovie/**', '.github/workflows/quentmovie.yml']
@@ -20,7 +29,26 @@ permissions:
   contents: write
 
 jobs:
+  exemples:
+    if: ${{ inputs.exemples }}
+    runs-on: macos-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: quentmovie
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installer les dépendances
+        env:
+          NODE_LLAMA_CPP_SKIP_DOWNLOAD: 'true'
+        run: npm ci
+      - name: Écrire des scripts d'exemple (textes et photos choisies)
+        run: QM_BUDGET_MIN=32 QM_IA_DEBUG=1 QM_MODELE="${{ inputs.modele }}" QM_RESEAU=1 QM_BASE="$RUNNER_TEMP/qm-ia" node tests/ia-exemples.js
   mac:
+    if: ${{ !inputs.exemples }}
     runs-on: macos-latest
     defaults:
       run:
