@@ -1192,7 +1192,19 @@ async function miniSauver() {
   } catch (e) { $('#mRes').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
 }
 // ---------- Parole : sous-titres automatiques, coupe des blancs et des « euh » (reconnaissance locale, parole.js) ----------
-const PAROLE_DEF = { style: 'bandeau', priseSous: false, priseCoupe: false };
+const PAROLE_DEF = { style: 'bandeau', priseSous: false, priseCoupe: false, dico: '' };
+// Noms propres souvent mal entendus, corrigés dans les sous-titres ; l'utilisateur ajoute les siens (« entendu = bon mot »)
+const CORRECTIONS = [[/\b(?:cantools?|kantools?|cantouls|quentouls|quentools|kenttools|quent tools)\b/gi, 'QuenTools'], [/\b(?:kumovie|quentmovie|quent movie|kent movie|cometmovie)\b/gi, 'QuentMovie']];
+function corriger(t) {
+  let r = String(t);
+  for (const [re, bon] of CORRECTIONS) r = r.replace(re, m => m === m.toUpperCase() && m.length > 3 ? bon.toUpperCase() : bon);
+  for (const l of String(paroleOpts().dico || '').split('\n')) {
+    const [a, b] = l.split('='); if (!a || b === undefined || !a.trim()) continue;
+    const re = new RegExp('\\b' + a.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+    r = r.replace(re, m => m === m.toUpperCase() && m.length > 1 ? b.trim().toUpperCase() : b.trim());
+  }
+  return r;
+}
 const paroleOpts = () => { try { return { ...PAROLE_DEF, ...JSON.parse(localStorage.getItem('qm:parole') || '{}') }; } catch (e) { return { ...PAROLE_DEF }; } };
 const paroleGarder = o => { try { localStorage.setItem('qm:parole', JSON.stringify(o)); } catch (e) { /* stockage indisponible */ } };
 const STYLES_SOUS = [['bandeau', 'Phrases sur bandeau sombre'], ['contour', 'Phrases, contour noir'], ['jaune', 'Phrases en jaune'], ['tiktok', 'Mot à mot, gros et centré (TikTok, Reels)']];
@@ -1213,7 +1225,7 @@ async function ecouterClip(c, surEtat) {
 }
 // Sous-titres d'une liste de passages (heures relatives au début du média), pour la partie [a, b] du clip
 function sousTitresPour(r, style, a, b, speed) {
-  return (style === 'tiktok' ? r.st.mots : r.st.phrase).filter(x => x.s >= a - 0.05 && x.s < b).map(x => ({ s: +((Math.max(x.s, a) - a) / speed).toFixed(2), e: +((Math.min(x.e, b) - a) / speed).toFixed(2), t: x.t }));
+  return (style === 'tiktok' ? r.st.mots : r.st.phrase).filter(x => x.s >= a - 0.05 && x.s < b).map(x => ({ s: +((Math.max(x.s, a) - a) / speed).toFixed(2), e: +((Math.min(x.e, b) - a) / speed).toFixed(2), t: corriger(x.t) }));
 }
 // i : index du clip ; renvoie le nombre de secondes retirées (coupe) ou de sous-titres créés
 function paroleAppliquer(i, r, { sous, couper, style }) {
@@ -1266,7 +1278,9 @@ function outilsHtml() {
   return `<div class="encart"><h4>💬 Sous-titres automatiques</h4><p class="mut">QuentMovie écoute ta voix et écrit les sous-titres au bon moment (sans internet, sur ton Mac). Les « euh » ne sont pas écrits.</p>
       <label class="l">Style</label><select id="oSousStyle">${opts(STYLES_SOUS, po.style)}</select>
       <div class="ligne" style="margin-top:8px"><button class="pri" data-outil="sous-clip">Clip sélectionné</button><button class="pri" data-outil="sous-tout">Toute la vidéo</button></div>
-      <div class="sw2"><input type="checkbox" id="oPriseSous" ${po.priseSous ? 'checked' : ''}><label for="oPriseSous">Sous-titrer automatiquement mes prises du studio</label></div><div class="mut" id="oSousRes" style="margin-top:4px"></div></div>
+      <div class="sw2"><input type="checkbox" id="oPriseSous" ${po.priseSous ? 'checked' : ''}><label for="oPriseSous">Sous-titrer automatiquement mes prises du studio</label></div>
+      <label class="l">Corrections des noms propres (une par ligne)</label><textarea id="oDico" rows="2" placeholder="mot entendu = bon mot&#10;ex. : Michel Lin = Michelin">${esc(po.dico)}</textarea>
+      <div class="mut" id="oSousRes" style="margin-top:4px"></div></div>
     <div class="encart"><h4>✂ Couper les blancs et les « euh »</h4><p class="mut">Garde seulement les moments où tu parles : les blancs, les hésitations et les « euh » sont retirés. Les sous-titres sont recalés.</p>
       <div class="ligne"><button class="pri" data-outil="coupe-clip">Clip sélectionné</button><button class="pri" data-outil="coupe-tout">Toute la vidéo</button></div>
       <div class="sw2"><input type="checkbox" id="oPriseCoupe" ${po.priseCoupe ? 'checked' : ''}><label for="oPriseCoupe">Couper automatiquement mes prises du studio</label></div><div class="mut" id="oCoupeRes" style="margin-top:4px"></div></div>
@@ -1306,7 +1320,7 @@ function outilsHtml() {
     <div class="encart"><h4>⌨ Raccourcis clavier</h4><button data-outil="aide" style="width:100%">Afficher tous les raccourcis (?)</button></div>`;
 }
 $('#navbody').addEventListener('change', e => {
-  const k = { oSousStyle: 'style', oPriseSous: 'priseSous', oPriseCoupe: 'priseCoupe' }[e.target.id]; if (!k) return;
+  const k = { oSousStyle: 'style', oPriseSous: 'priseSous', oPriseCoupe: 'priseCoupe', oDico: 'dico' }[e.target.id]; if (!k) return;
   const o = paroleOpts(); o[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; paroleGarder(o);
 });
 $('#navbody').addEventListener('input', e => {
