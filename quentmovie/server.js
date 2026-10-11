@@ -80,7 +80,9 @@ function create(opts = {}) {
     '.png': 'images', '.webp': 'images', '.jpg': 'images', '.jpeg': 'images', '.mp4': 'videos', '.mov': 'videos', '.m4v': 'videos', '.webm': 'videos' };
   const packCache = new Map();
   let gen = null;
-  const GEN = () => gen || (gen = require('./generateur').creer({ run, FFMPEG, probe, MEDIAS, wiki: opts.wiki, commons: opts.commons }));
+  let parole = null;
+  const PAROLE = () => parole || (parole = require('./parole').creer({ run, FFMPEG, BASE }));
+  const GEN = () => gen || (gen = require('./generateur').creer({ run, FFMPEG, probe, MEDIAS, wiki: opts.wiki, commons: opts.commons, parole: PAROLE() }));
   async function scanPacks() {
     const files = [];
     const walk = (dir, depth) => {
@@ -357,11 +359,13 @@ function create(opts = {}) {
     const subs = (c.subs || []).filter(x => x && String(x.t || '').trim()).slice(0, 300);
     if (subs.length && fontFile(c.textFont) && filters.has('drawtext')) {
       const idx = o.tdir ? o.tdir.idx : 0, dir = o.tdir ? o.tdir.dir : TMP, u = Math.min(W, H) / 100, size = Math.round(u * clamp(num(c.subSize, 4.4), 2, 10));
-      const T = `(t+${ctx.t0})`, col = c.subStyle === 'jaune' ? '0xffe600' : 'white';
-      const st = c.subStyle === 'bandeau' ? `:box=1:boxcolor=black@0.6:boxborderw=${Math.round(size / 3)}` : `:borderw=${Math.max(2, Math.round(size / 10))}:bordercolor=black`;
+      const T = `(t+${ctx.t0})`, tk = c.subStyle === 'tiktok', col = c.subStyle === 'jaune' ? '0xffe600' : 'white';
+      // « tiktok » : 1 à 3 mots, gros, au centre bas de l'image, contour épais et ombre
+      const st = c.subStyle === 'bandeau' ? `:box=1:boxcolor=black@0.6:boxborderw=${Math.round(size / 3)}` : tk ? `:borderw=${Math.max(3, Math.round(size / 7))}:bordercolor=black:shadowx=${Math.round(size / 16)}:shadowy=${Math.round(size / 12)}:shadowcolor=black@0.55` : `:borderw=${Math.max(2, Math.round(size / 10))}:bordercolor=black`;
+      const yy = tk ? 'h*0.70-text_h/2' : 'h*0.84-text_h';
       const parts = subs.map((x, k) => {
         const file = `s${idx}_${k}.txt`; fs.writeFileSync(path.join(dir, file), wrap(String(x.t).slice(0, 200), Math.floor(W * 0.9 / (size * 0.58))));
-        return `drawtext=fontfile='${fontFile(c.textFont)}':textfile=${file}:expansion=none:fontsize=${size}:fontcolor=${col}:x=(w-text_w)/2:y=h*0.84-text_h:line_spacing=${Math.round(size * 0.2)}${st}:enable='between(${T},${num(x.s, 0)},${num(x.e, 0)})'`;
+        return `drawtext=fontfile='${fontFile(tk ? 'arialblack' : c.textFont)}':textfile=${file}:expansion=none:fontsize=${size}:fontcolor=${col}:x=(w-text_w)/2:y=${yy}:line_spacing=${Math.round(size * 0.2)}${st}:enable='between(${T},${num(x.s, 0)},${num(x.e, 0)})'`;
       });
       lin(parts.join(','));
     }
@@ -414,7 +418,7 @@ function create(opts = {}) {
 
     const proxy = !!o.proxy;
     args.push('-filter_complex', f.join(';'), '-map', '[v]', '-map', '[a]', '-t', eff.toFixed(3), '-r', fps,
-      '-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16, '-pix_fmt', 'yuv420p',
+      ...(o.vt && !proxy ? ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(W, H) >= 1500 ? '45M' : '20M', '-allow_sw', 1] : ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16]), '-pix_fmt', 'yuv420p',
       '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-ar', 48000, '-ac', 2, '-movflags', '+faststart', '-progress', 'pipe:1', '-nostats');
     return { args, eff };
   }
@@ -542,13 +546,19 @@ function create(opts = {}) {
     const dir = fs.mkdtempSync(path.join(TMP, 'job-'));
     job.dir = dir;
     try {
-      const built = clips.map((c, i) => buildClip(c, P, { tdir: { dir, idx: i }, proxy }));
+      // puce vidéo du Mac (VideoToolbox) pour l'encodage quand « rapide » est choisi (réglage par défaut sur Mac)
+      const vt = !proxy && process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality !== 'haute';
+      const built = clips.map((c, i) => buildClip(c, P, { tdir: { dir, idx: i }, proxy, vt }));
       const total = built.reduce((a, b) => a + b.eff, 0) * 1.1;
       let done = 0;
       const segs = [];
       for (let i = 0; i < built.length; i++) {
         job.step = `Clip ${i + 1} sur ${built.length}`;
-        await run(FFMPEG, [...built[i].args, `seg${i}.mp4`], { cwd: dir, onOut: progressOf(job, () => done, total) });
+        try { await run(FFMPEG, [...built[i].args, `seg${i}.mp4`], { cwd: dir, onOut: progressOf(job, () => done, total) }); }
+        catch (e) { // la puce vidéo refuse ce clip : encodage par le processeur
+          if (!vt) throw e;
+          await run(FFMPEG, [...buildClip(clips[i], P, { tdir: { dir, idx: i }, proxy, vt: false }).args, `seg${i}.mp4`], { cwd: dir, onOut: progressOf(job, () => done, total) });
+        }
         done += built[i].eff; segs.push(`seg${i}.mp4`);
       }
 
@@ -582,12 +592,16 @@ function create(opts = {}) {
           cv = nv; ca = na;
         }
         const enc = proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30]
-          : (process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality === 'rapide')
-            ? ['-c:v', 'h264_videotoolbox', '-b:v', P.h >= 1500 ? '30M' : '14M'] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17];
+          : (process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality !== 'haute')
+            ? ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(P.w, P.h) >= 1500 ? '45M' : '20M'] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17];
         await run(FFMPEG, ['-y', '-loglevel', 'error', ...inArgs, '-filter_complex', g.join(';'), '-map', `[${cv}]`, '-map', `[${ca}]`, ...enc,
           '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
         joined = 'all.mp4';
       }
+
+      // Piste vidéo 2 : images dans l'image et plans de coupe posés par-dessus le montage
+      const pistes = (project.pistes || []).filter(x => x && x.file && fs.existsSync(mediaPath(x.file))).slice(0, 30);
+      if (pistes.length) { job.step = 'Piste vidéo 2'; joined = await poserPistes(dir, joined, pistes, P, proxy, project); }
 
       // Pistes audio (musique, voix off, bruitages) ; « baisser quand on parle » = compression pilotée par la voix
       const audios = (project.audio || []).filter(a => a && a.file && fs.existsSync(mediaPath(a.file)));
@@ -644,6 +658,55 @@ function create(opts = {}) {
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
   }
 
+  // Éléments de la piste vidéo 2 (ordre des rangées : la plus haute devant), avec forme, bordure, fondu et son
+  async function poserPistes(dir, joined, pistes, P, proxy, project) {
+    const W = P.w, H = P.h, fps = P.fps, ins = ['-i', joined], g = [], sons = [];
+    const ordre = pistes.slice().sort((a, b) => num(a.ligne, 0) - num(b.ligne, 0));
+    // alpha d'une forme (rayon des coins R, en points ; R = W/2 pour un rond)
+    const forme = R => `geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='alpha(X,Y)*lte(hypot(max(0,abs(X-W/2+0.5)-(W/2-${R})),max(0,abs(Y-H/2+0.5)-(H/2-${R}))),${R})'`;
+    let cur = '0:v';
+    for (let k = 0; k < ordre.length; k++) {
+      const p = ordre[k], n = k + 1, debut = clamp(num(p.start, 0), 0, 36000);
+      const duree = p.kind === 'image' ? clamp(num(p.dur, 4), 0.3, 3600) : clamp(num(p.out, 1) - num(p.in, 0), 0.3, 36000);
+      if (p.kind === 'image') ins.push('-loop', '1', '-framerate', fps, '-t', duree.toFixed(3), '-i', mediaPath(p.file));
+      else ins.push('-ss', clamp(num(p.in, 0), 0, 36000), '-t', duree.toFixed(3), '-i', mediaPath(p.file));
+      const op = clamp(num(p.opacity, 100), 5, 100) / 100, fin = debut + duree;
+      let x = '0', y = '0', src = `[${n}:v]fps=${fps},setsar=1,`;
+      if (p.plein) g.push(`${src}scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},format=rgba[f${n}]`);
+      else {
+        const st = (await infos(mediaPath(p.file)).catch(() => ({ streams: [] }))).streams.find(z => z.codec_type === 'video') || {};
+        const rond = p.forme === 'rond', w = even(W * clamp(num(p.scale, 34), 5, 100) / 100);
+        const h = rond ? w : even(w * ((st.height || 9) / (st.width || 16)));
+        const R = rond ? w / 2 : p.forme === 'arrondi' ? Math.round(w * 0.08) : 0;
+        g.push(`${src}${rond ? `crop='min(iw,ih)':'min(iw,ih)',` : ''}scale=${w}:${h},format=rgba${R ? ',' + forme(R) : ''}[f${n}]`);
+        if (/^#[0-9a-f]{6}$/i.test(p.bord || '')) { // bordure : la même forme en couleur, un peu plus grande, derrière
+          const bd = Math.max(2, Math.round(w * 0.02));
+          g.push(`color=c=${hex(p.bord)}:s=${w + 2 * bd}x${h + 2 * bd}:r=${fps}:d=${duree.toFixed(3)},format=rgba${R ? ',' + forme(R + bd) : ''}[c${n}]`);
+          g.push(`[c${n}][f${n}]overlay=${bd}:${bd}:format=auto[f${n}b]`);
+          g.push(`[f${n}b]null[f${n}x]`);
+        } else g.push(`[f${n}]null[f${n}x]`);
+        x = `W*${clamp(num(p.x, 76), 0, 100) / 100}-w/2`; y = `H*${clamp(num(p.y, 26), 0, 100) / 100}-h/2`;
+      }
+      let ch = `[f${n}${p.plein ? '' : 'x'}]format=rgba`;
+      if (op < 1) ch += `,colorchannelmixer=aa=${op}`;
+      if (p.anim === 'fondu' && !proxy) ch += `,fade=t=in:st=0:d=0.3:alpha=1,fade=t=out:st=${Math.max(0, duree - 0.3).toFixed(3)}:d=0.3:alpha=1`;
+      g.push(`${ch},setpts=PTS-STARTPTS+${debut.toFixed(3)}/TB[e${n}]`);
+      g.push(`[${cur}][e${n}]overlay=x='${x}':y='${y}':eof_action=pass:format=auto:enable='between(t,${debut.toFixed(3)},${fin.toFixed(3)})'[v${n}]`);
+      cur = `v${n}`;
+      if (p.kind === 'video' && p.hasAudio && num(p.vol, 0) > 0) { const ms = Math.round(debut * 1000); sons.push(`s${n}`); g.push(`[${n}:a]aresample=48000,aformat=channel_layouts=stereo,volume=${clamp(num(p.vol, 0), 0, 200) / 100},adelay=${ms}|${ms}[s${n}]`); }
+    }
+    g.push(`[${cur}]format=yuv420p[vout]`);
+    let mapA = ['-map', '0:a', '-c:a', 'copy'];
+    if (sons.length) {
+      g.push(`[0:a]${sons.map(x => `[${x}]`).join('')}amix=inputs=${sons.length + 1}:duration=first:dropout_transition=0,volume=${sons.length + 1},alimiter=limit=0.95[aout]`);
+      mapA = ['-map', '[aout]', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k'];
+    }
+    const enc = proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30]
+      : (process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality !== 'haute') ? ['-c:v', 'h264_videotoolbox', '-b:v', Math.min(P.w, P.h) >= 1500 ? '45M' : '20M'] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17];
+    await run(FFMPEG, ['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '[vout]', ...mapA, ...enc, '-pix_fmt', 'yuv420p', '-movflags', '+faststart', 'pistes.mp4'], { cwd: dir });
+    return 'pistes.mp4';
+  }
+
   function sortiesDispo() {
     const l = ['mp4'];
     if (encoders.has('prores_ks')) l.push('mov');
@@ -682,14 +745,18 @@ function create(opts = {}) {
   // Plusieurs méthodes sont essayées ; en dernier recours la prise brute est gardée, jamais perdue.
   async function importerPrise(brut) {
     const mp4 = brut.replace(/\.[^.]+$/, '') + '-prise.mp4';
-    const sortie = ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', 18, '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-ar', 48000, '-movflags', '+faststart', mp4];
+    // puce vidéo du Mac d'abord (conversion quasi instantanée), sinon le processeur
+    const vt = process.platform === 'darwin' && encoders.has('h264_videotoolbox');
+    const audio = ['-c:a', 'aac', '-b:a', '192k', '-ar', 48000, '-movflags', '+faststart', mp4];
+    const x264 = ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', 18, '-pix_fmt', 'yuv420p', ...audio];
+    const sorties = vt ? [['-c:v', 'h264_videotoolbox', '-b:v', '14M', '-maxrate', '20M', '-pix_fmt', 'yuv420p', ...audio], x264] : [x264];
     const essais = [
       ['-fflags', '+genpts', '-i', brut, '-map', '0:v:0', '-map', '0:a:0?', '-fps_mode', 'cfr', '-r', 30],
       ['-fflags', '+genpts+discardcorrupt', '-err_detect', 'ignore_err', '-i', brut, '-map', '0:v:0', '-map', '0:a:0?', '-fps_mode', 'vfr'],
       ['-err_detect', 'ignore_err', '-i', brut, '-map', '0:v:0', '-fps_mode', 'vfr'] // image seule si le son est illisible
     ];
     let erreur = fs.statSync(brut).size < 2000 ? 'enregistrement vide' : '';
-    if (!erreur) for (const e of essais) {
+    if (!erreur) for (const e of essais) for (const sortie of sorties) {
       try {
         await run(FFMPEG, ['-y', '-v', 'error', ...e, ...sortie]);
         const info = await probe(mp4);
@@ -734,16 +801,48 @@ function create(opts = {}) {
       if (req.method === 'POST' && p === '/api/maj/verifier') return send(res, 200, opts.maj ? opts.maj.verifier() : { etat: 'inactif', version: VERSION_APP });
       if (req.method === 'POST' && p === '/api/maj/installer') return send(res, 200, opts.maj ? opts.maj.installer() : { etat: 'inactif' });
       // Générateur de vidéos : sujet → article Wikipédia → texte en scènes, images libres, voix off du Mac
-      if (req.method === 'GET' && p === '/api/generer/voix') { const v = await GEN().voix(); return send(res, 200, { voix: v, defaut: (v.find(x => /^Thomas/.test(x.nom)) || v.find(x => /fr_FR/.test(x.langue)) || v[0] || {}).nom || '' }); }
+      if (req.method === 'GET' && p === '/api/generer/voix') { // voix naturelles intégrées (installées ou à installer) puis voix du Mac
+        const v = await GEN().voix(), e = PAROLE().etat(), nat = e.dispo ? e.voix : [];
+        const mac = v.find(x => x.premium && /fr_FR/.test(x.langue)) || v.find(x => x.premium) || v.find(x => /^Thomas/.test(x.nom)) || v.find(x => /fr_FR/.test(x.langue)) || v[0];
+        const n = nat.find(x => x.installee);
+        return send(res, 200, { voix: v, naturelles: nat, defaut: n ? 'piper:' + n.id : mac && mac.premium ? mac.nom : nat.length ? 'piper:' + nat[0].id : (mac || {}).nom || '' });
+      }
       if (req.method === 'GET' && p === '/api/generer/chercher') return send(res, 200, await GEN().chercher(url.searchParams.get('q')));
       if (req.method === 'POST' && p === '/api/generer/preparer') return send(res, 200, await GEN().preparer(await readJson(req)));
+      // Voix naturelles et reconnaissance de la parole (parole.js)
+      const travail = fn => { const id = String(Date.now()) + Math.floor(Math.random() * 1000), job = { progress: 0, step: 'Préparation', error: null, done: false, resultat: null }; jobs.set(id, job);
+        Promise.resolve().then(() => fn(job)).then(r => { job.resultat = r || null; job.progress = 1; job.done = true; }).catch(e => { job.error = e.message; }); return { id }; };
+      if (req.method === 'GET' && p === '/api/parole') {
+        const mac = await GEN().voix();
+        return send(res, 200, { ...PAROLE().etat(), mac, reglagesMac: process.platform === 'darwin' });
+      }
+      if (req.method === 'POST' && p === '/api/parole/installer') { const b = await readJson(req); return send(res, 200, travail(job => PAROLE().installer(String(b.quoi || ''), job))); }
+      if (req.method === 'POST' && p === '/api/parole/essai') { // phrase d'essai d'une voix (fichier gardé dans les médias)
+        const b = await readJson(req), v = String(b.voix || ''), f = `essai-voix-${v.replace(/[^\w-]/g, '')}.m4a`;
+        if (v.startsWith('mac:')) await GEN().lireMac(String(b.texte || '').slice(0, 400), path.join(MEDIAS, f), v.slice(4));
+        else await PAROLE().parler(String(b.texte || '').slice(0, 400), v, path.join(MEDIAS, f), { vitesse: clamp(num(b.vitesse, 1), 0.5, 2) });
+        return send(res, 200, { file: f });
+      }
+      if (req.method === 'POST' && p === '/api/parole/ecouter') {
+        const b = await readJson(req), f = mediaPath(b.file);
+        if (!fs.existsSync(f)) throw new Error('Média introuvable');
+        return send(res, 200, travail(async job => {
+          job.step = 'Écoute de la voix…';
+          const P = require('./parole'), r = await PAROLE().ecouter(f, clamp(num(b.in, 0), 0, 1e6), clamp(num(b.out, 0), 0, 1e6));
+          return { ...r, st: { phrase: P.sousTitres(r.mots, 'phrase'), mots: P.sousTitres(r.mots, 'mots') }, garder: P.aGarder(r.mots, r.duree) };
+        }));
+      }
+      if (req.method === 'POST' && p === '/api/parole/reglages-mac') { // Réglages Système → voix (pour télécharger les voix « Premium » d'Apple)
+        if (process.platform === 'darwin') spawn('open', ['x-apple.systempreferences:com.apple.preference.universalaccess?SpokenContent']);
+        return send(res, 200, { ok: true });
+      }
       if (req.method === 'POST' && p === '/api/generer/creer') {
         const body = await readJson(req);
         if (!Array.isArray(body.scenes) || !body.scenes.length || body.scenes.length > 80) throw new Error('Rien à créer.');
         const id = String(Date.now()) + Math.floor(Math.random() * 1000);
         const job = { progress: 0, step: 'Préparation', out: null, url: null, error: null, done: false, resultat: null };
         jobs.set(id, job);
-        GEN().fabriquer(job, { titre: String(body.titre || ''), scenes: body.scenes.map(x => ({ texte: String(x.texte || '').slice(0, 1200), image: Number.isInteger(x.image) ? x.image : -1 })),
+        GEN().fabriquer(job, { titre: String(body.titre || ''), scenes: body.scenes.map(x => ({ texte: String(x.texte || '').slice(0, 1200), section: String(x.section || '').slice(0, 80), image: Number.isInteger(x.image) ? x.image : -1 })),
           images: (body.images || []).slice(0, 60), voix: String(body.voix || '').slice(0, 60), vitesse: clamp(num(body.vitesse, 175), 120, 260) })
           .then(r => { job.resultat = r; job.progress = 100; job.done = true; }).catch(e => { job.error = e.message; });
         return send(res, 200, { id });
@@ -835,14 +934,15 @@ function create(opts = {}) {
       }
       if (req.method === 'GET' && p === '/api/frame') {
         const img = await run(FFMPEG, ['-v', 'error', '-ss', num(url.searchParams.get('t'), 0), '-i', mediaPath(url.searchParams.get('file')), '-frames:v', 1,
-          '-vf', 'scale=480:-2', '-f', 'mjpeg', '-q:v', 5, 'pipe:1'], { binary: true });
+          '-vf', `scale=${clamp(Math.round(num(url.searchParams.get('w'), 480) / 2) * 2, 64, 3840)}:-2`, '-f', 'mjpeg', '-q:v', url.searchParams.get('w') ? 2 : 5, 'pipe:1'], { binary: true });
         return send(res, 200, img, 'image/jpeg', 'max-age=3600');
       }
       if (req.method === 'POST' && p === '/api/preview') {
         const body = await readJson(req);
         const dir = fs.mkdtempSync(path.join(TMP, 'pv-'));
         try {
-          const args = buildClip(body.clip, sizeOf(body.project || {}, 'thumb' === body.mode ? 'thumb' : 'proxy'), { preview: true, t: body.t, tdir: { dir, idx: 0 } });
+          const taille = body.mode === 'hd' ? sizeOf({ ...(body.project || {}), res: 1080 }, 'full') : sizeOf(body.project || {}, 'thumb' === body.mode ? 'thumb' : 'proxy');
+          const args = buildClip(body.clip, taille, { preview: true, t: body.t, tdir: { dir, idx: 0 } });
           return send(res, 200, await run(FFMPEG, args, { cwd: dir, binary: true }), 'image/jpeg');
         } finally { fs.rmSync(dir, { recursive: true, force: true }); }
       }
@@ -875,6 +975,13 @@ function create(opts = {}) {
         if (req.method === 'PUT') { fs.writeFileSync(f, JSON.stringify(await readJson(req))); return send(res, 200, { ok: true }); }
         return send(res, 200, fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : 'null');
       }
+      if (req.method === 'POST' && p === '/api/miniature') { // miniature (JPEG dessiné par la fenêtre) rangée avec les exports
+        const buf = await new Promise((ok, ko) => { const l = []; let n = 0; req.on('data', d => { n += d.length; if (n > 2e7) req.destroy(); else l.push(d); }); req.on('end', () => ok(Buffer.concat(l))); req.on('error', ko); });
+        if (buf.length < 1000 || buf[0] !== 0xff || buf[1] !== 0xd8) throw new Error('Image de miniature invalide');
+        const name = `miniature-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}.jpg`;
+        fs.writeFileSync(path.join(EXPORTS, name), buf);
+        return send(res, 200, { out: name });
+      }
       if (req.method === 'POST' && p === '/api/reveal') { // afficher un export dans le Finder
         const f = path.join(EXPORTS, safeName((await readJson(req)).file));
         if (process.platform === 'darwin' && fs.existsSync(f)) spawn('open', ['-R', f]);
@@ -898,7 +1005,7 @@ function create(opts = {}) {
       await new Promise((ok, ko) => { server.once('error', ko); server.listen(PORT, '127.0.0.1', ok); });
       return server.address().port;
     },
-    stop() { server.close(); }
+    stop() { server.close(); if (parole) parole.arreter(); }
   };
 }
 
