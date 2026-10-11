@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "1.11.1",
+  "version": "1.12.0",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -8,7 +8,7 @@
   "scripts": {
     "start": "electron .",
     "serveur": "node server.js",
-    "test": "node tests/run.js && node tests/maj.js && node tests/compositeur.js && node tests/generateur.js && node tests/parole.js && node tests/pistes.js && node tests/cadrage.js && node tests/ia.js && node tests/voix.js && node tests/montage.js && node tests/ui.js",
+    "test": "node tests/run.js && node tests/maj.js && node tests/compositeur.js && node tests/generateur.js && node tests/parole.js && node tests/pistes.js && node tests/cadrage.js && node tests/ia.js && node tests/voix.js && node tests/montage.js && node tests/banques.js && node tests/ui.js",
     "dist": "electron-builder --mac dmg --arm64 --publish never"
   },
   "dependencies": {
@@ -40,6 +40,7 @@
       "images.js",
       "script-qualite.js",
       "rythme.js",
+      "banques.js",
       "parole-worker.js",
       "ia.js",
       "ia-worker.js",

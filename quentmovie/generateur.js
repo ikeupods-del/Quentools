@@ -110,7 +110,7 @@ function imageDe(page) {
     licence: texteSimple(m.LicenseShortName && m.LicenseShortName.value) || 'licence libre', page: ii.descriptionurl || '', description, texte, qualite };
 }
 
-function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', commons = 'https://commons.wikimedia.org', parole = null }) {
+function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', commons = 'https://commons.wikimedia.org', parole = null, banques = null }) {
   const api = async (base, params) => {
     const q = new URLSearchParams({ format: 'json', formatversion: '2', ...params }).toString();
     for (let essai = 0; ; essai++) {
@@ -170,7 +170,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     for (let i = 0; i < scenes.length && essais < 8; i++) {
       if (sel.choix[i] >= 0) continue; essais++;
       const q = `${(scenes[i].sujet || IM.requeteDeScene(scenes[i].texte).join(' '))} ${sujet}`.trim();
-      for (const x of await rechercher(q, { limit: 15 }).catch(() => [])) if (!vus.has(x.nom)) { vus.add(x.nom); images.push(x); }
+      for (const x of await rechercherImages(q, { vertical, limit: 15 }).catch(() => [])) if (!vus.has(x.nom)) { vus.add(x.nom); images.push(x); }
       await new Promise(r => setTimeout(r, 150));
     }
     if (essais) sel = IM.attribuer(reqs, images, { vertical, obligatoire: true });
@@ -194,7 +194,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     for (let i = 0; i < scenes.length && essais < 6; i++) {
       if (sel.choix[i] >= 0) continue;
       essais++;
-      ajouter(await rechercher(`${IM.requeteDeScene(scenes[i].texte).join(' ')} ${sujet}`.trim(), { limit: 15 }).catch(() => []));
+      ajouter(await rechercherImages(`${IM.requeteDeScene(scenes[i].texte).join(' ')} ${sujet}`.trim(), { vertical, limit: 15 }).catch(() => []));
       await new Promise(r => setTimeout(r, 150));
     }
     if (essais) sel = IM.attribuer(reqs, images, { vertical, obligatoire: true });
@@ -247,7 +247,8 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
       const utiles = [...new Set(scenes.map(s => s.image).filter(i => i >= 0 && images[i]))];
       for (let k = 0; k < utiles.length; k++) {
         job.step = `Images ${k + 1} sur ${utiles.length}`; job.progress = Math.round(k / utiles.length * 40);
-        const im = images[utiles[k]], ext = im.video ? (/\.ogv($|\?)/i.test(im.url) ? '.ogv' : '.webm') : /\.png($|\?)/i.test(im.url) ? '.png' : '.jpg', f = `gen-${id}-image-${String(k + 1).padStart(2, '0')}${ext}`;
+        const im = images[utiles[k]]; if (banques && im.suivi) { try { await banques().signaler(im); } catch (e) { /* sans importance */ } }
+        const ext = im.video ? (/\.ogv($|\?)/i.test(im.url) ? '.ogv' : '.webm') : /\.png($|\?)/i.test(im.url) ? '.png' : '.jpg', f = `gen-${id}-image-${String(k + 1).padStart(2, '0')}${ext}`;
         try { await requete(im.url, { dest: path.join(MEDIAS, f), ua: UA, accept: 'image/*', quoi: 'd’images' }); fichiersImages.set(utiles[k], f); }
         catch (e) { if (e.code === 429) { await new Promise(r => setTimeout(r, 2500)); try { await requete(im.url, { dest: path.join(MEDIAS, f), ua: UA, accept: 'image/*', quoi: 'd’images' }); fichiersImages.set(utiles[k], f); } catch (e2) { /* image ignorée */ } } }
         await new Promise(r => setTimeout(r, 150)); // reste poli avec le serveur d'images
@@ -264,7 +265,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
         sortie.push({ texte: scenes[i].texte, section: scenes[i].section || '', sujet: scenes[i].sujet || '', video: !!(images[scenes[i].image] || {}).video, voix: f, duree: +info.duration.toFixed(2), image: fichiersImages.get(scenes[i].image) || '' });
       }
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
-    const credits = [...new Set(scenes.map(s => s.image))].filter(i => fichiersImages.has(i)).map(i => images[i]).map(im => `${im.auteur} — ${im.licence}`);
+    const credits = [...new Set(scenes.map(s => s.image))].filter(i => fichiersImages.has(i)).map(i => images[i]).map(im => `${im.auteur} — ${im.licence}${im.source && im.source !== 'Wikimedia Commons' ? ' (' + im.source + ')' : ''}`);
     return { scenes: sortie, credits, synthese };
   }
 
@@ -284,7 +285,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
       for (const q of requetesCommons) {
         if (bons >= 4) break;
         try {
-          const avant = pool.length; ajouter(await rechercher(q));
+          const avant = pool.length; ajouter(await rechercherImages(q, { vertical }));
           if (videos) ajouter((await rechercher(q, { video: true, limit: 8 })).filter(x => x.video && x.hauteur >= 720));
           bons += pool.slice(avant).filter(x => IM.noterImage(x, { ...reqs[reqs.length - 1], vertical }).note >= IM.SEUIL).length;
         } catch (e) { /* recherche suivante */ }
@@ -294,10 +295,16 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     const sel = IM.attribuer(reqs, pool, { vertical });
     return { images: pool, choix: sel.choix, propositions: sel.listes };
   }
+  // Toutes les banques activées (Commons + Openverse, NASA, Pexels, Pixabay, Unsplash) ; une banque en panne est ignorée
+  async function rechercherImages(q, { vertical = false, limit = 20 } = {}) {
+    const B = banques ? banques() : null;
+    const [a, b] = await Promise.all([!B || B.commonsActif ? rechercher(q, { limit }).catch(() => []) : [], B ? B.chercher(q, { vertical, limit }).catch(() => []) : []]);
+    return [...a, ...b];
+  }
   // Photos proposées pour une recherche libre (bouton « autre photo » d'une scène) : les mieux notées d'abord, une par série
   async function proposer(q, { vertical = false, videos = false } = {}) {
     const mots = IM.termes(q); if (!mots.length) return [];
-    const liste = await rechercher(q, { limit: 30 });
+    const liste = await rechercherImages(q, { vertical, limit: 30 });
     if (videos) liste.push(...(await rechercher(q, { video: true, limit: 10 }).catch(() => [])).filter(x => x.video && x.hauteur >= 720));
     const vus = new Set();
     return liste.map(im => ({ im, ...IM.noterImage(im, { mots, vertical }) })).filter(x => x.note > -1).sort((a, b) => b.note - a.note)

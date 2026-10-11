@@ -28,6 +28,7 @@ function noterImage(im, { mots = [], ancre = [], vertical = false, obligatoire =
   }
   if (ancre.length) s += im.deArticle ? 0.5 : ancre.some(m => dessous(m, texte)) ? 1.5 : obligatoire ? -6 : -1; // les photos de l'article lui-même sont sur le sujet par construction
   if (im.qualite) s += 2;
+  if (im.source && im.rang !== undefined) s += Math.max(0, 1.5 - im.rang * 0.25); // les premiers résultats d'une banque sont les plus pertinents selon elle
   const l = im.largeur || 0, h = im.hauteur || 1, r = l / h;
   if (l) s += l >= 2400 ? 1 : l >= 1600 ? 0.7 : l >= 1280 ? 0.3 : l >= 960 ? -0.5 : -2.5;
   // le cadrage doit correspondre au format de la vidéo : une photo verticale dans une vidéo horizontale (ou l'inverse) serait coupée en bandeau
