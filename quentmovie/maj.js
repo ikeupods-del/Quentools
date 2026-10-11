@@ -19,19 +19,20 @@ function compare(a, b) { // > 0 si a est plus récente que b
 }
 
 // Requête HTTPS (HTTP accepté seulement pour une adresse locale, utilisée par les tests), redirections suivies.
-function requete(url, { dest, onProgress } = {}, sauts = 0) {
+// Partagée avec le générateur de vidéos (ua, accept, quoi = nom du service dans les messages).
+function requete(url, { dest, onProgress, ua = 'QuentMovie', accept, quoi = 'de mise à jour' } = {}, sauts = 0) {
   return new Promise((ok, ko) => {
     const u = new URL(url);
     const local = ['127.0.0.1', 'localhost'].includes(u.hostname);
-    if (u.protocol !== 'https:' && !(u.protocol === 'http:' && local)) return ko(new Error('Adresse de mise à jour refusée'));
+    if (u.protocol !== 'https:' && !(u.protocol === 'http:' && local)) return ko(new Error(`Adresse ${quoi} refusée`));
     const mod = require(u.protocol === 'https:' ? 'https' : 'http');
-    const r = mod.get(u, { headers: { 'User-Agent': 'QuentMovie', Accept: dest ? 'application/octet-stream' : 'application/vnd.github+json' }, timeout: 30000 }, res => {
+    const r = mod.get(u, { headers: { 'User-Agent': ua, Accept: accept || (dest ? 'application/octet-stream' : 'application/vnd.github+json') }, timeout: 30000 }, res => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         res.resume();
         if (sauts > 5) return ko(new Error('Trop de redirections'));
-        return ok(requete(new URL(res.headers.location, u).toString(), { dest, onProgress }, sauts + 1));
+        return ok(requete(new URL(res.headers.location, u).toString(), { dest, onProgress, ua, accept, quoi }, sauts + 1));
       }
-      if (res.statusCode !== 200) { res.resume(); return ko(new Error(`Serveur de mise à jour : erreur ${res.statusCode}`)); }
+      if (res.statusCode !== 200) { res.resume(); const er = new Error(`Serveur ${quoi} : erreur ${res.statusCode}`); er.code = res.statusCode; return ko(er); }
       if (!dest) { let s = ''; res.setEncoding('utf8'); res.on('data', d => { s += d; }); res.on('end', () => { try { ok(JSON.parse(s)); } catch (e) { ko(new Error('Réponse illisible')); } }); return; }
       const total = +res.headers['content-length'] || 0, h = crypto.createHash('sha256'), out = fs.createWriteStream(dest);
       let recu = 0;
@@ -40,7 +41,7 @@ function requete(url, { dest, onProgress } = {}, sauts = 0) {
       out.on('finish', () => ok({ taille: recu, sha256: h.digest('hex') }));
       out.on('error', ko); res.on('error', ko);
     });
-    r.on('timeout', () => r.destroy(new Error('Le serveur de mise à jour ne répond pas')));
+    r.on('timeout', () => r.destroy(new Error(`Le serveur ${quoi} ne répond pas`)));
     r.on('error', ko);
   });
 }
@@ -168,4 +169,4 @@ class Maj {
   }
 }
 
-module.exports = { Maj, compare, chercher, telecharger, extraire, scriptRemplacement, lancerRemplacement, emplacementApp, peutRemplacer };
+module.exports = { Maj, requete, compare, chercher, telecharger, extraire, scriptRemplacement, lancerRemplacement, emplacementApp, peutRemplacer };
