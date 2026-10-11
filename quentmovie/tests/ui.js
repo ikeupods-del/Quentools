@@ -75,6 +75,9 @@ function chromium() {
   await ev(() => { const v = medias.find(m => m.file === 'plans.mp4'); proj.clips = [newClip(v), newClip(v), newClip(v)]; proj.clips.forEach(c => { c.hasAudio = true; }); commit(); tout(); egaliserVolumes(); });
   check('égaliser les volumes', await ev(() => proj.clips.every(c => c.afx.some(e => e.id === 'normaliser'))));
   await ev(() => { allerOnglet('outils'); }); await pg.waitForTimeout(200); await ev(() => { $('#oTrAll').value = $('#oTrAll').options[1].value; transitionPartout(); });
+  await ev(() => { allerOnglet('outils'); $('#oZoomNiv').value = '135'; dynamiserZooms(false); });
+  check('dynamiser : un plan sur deux zoomé', await ev(() => proj.clips.map(c => c.zoom).join() === '100,135,100'), await ev(() => proj.clips.map(c => c.zoom).join()));
+  await ev(() => dynamiserZooms(true)); check('dynamiser : zooms retirés', await ev(() => proj.clips.every(c => c.zoom === 100)));
   check('transition sur toutes les coupures', await ev(() => proj.clips.filter(c => c.transition).length === 2));
 
   // 4) générateur de bout en bout : faux Commons, fausse IA ; Express → relecture → réécriture d'une scène → autre photo → création

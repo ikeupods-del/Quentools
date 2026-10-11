@@ -1422,6 +1422,12 @@ async function rythmeMusique(mode) {
     res(n ? `🎵 Tempo : ${Math.round(r.bpm)} pulsations par minute. ${n} photo${n > 1 ? 's' : ''} calée${n > 1 ? 's' : ''} : les changements tombent sur le temps fort tous les ${N} temps.` : 'Aucune photo ou fond uni à caler dans la timeline.');
   } catch (e) { res(`<span class="err">${esc(e.message)}</span>`); }
 }
+// Dynamiser : un plan sur deux est légèrement zoomé (effet « jump cut » des vidéos parlées, utile après avoir coupé les blancs)
+function dynamiserZooms(retirer) {
+  const z = +($('#oZoomNiv') ? $('#oZoomNiv').value : 120) || 120; let n = 0;
+  proj.clips.forEach((c, i) => { if (c.kind !== 'video' && c.kind !== 'image') return; if (retirer) { if (c.zoom > 100) n++; c.zoom = 100; c.zx = 0; c.zy = 0; } else if (i % 2) { c.zoom = z; c.zx = 0; c.zy = -10; n++; } });
+  commit(); tout(); apercu(); const t = n ? (retirer ? `Zooms retirés sur ${n} plan${n > 1 ? 's' : ''}.` : `⚡ ${n} plan${n > 1 ? 's' : ''} zoomé${n > 1 ? 's' : ''} (un sur deux) : la vidéo parlée a plus de rythme.`) : (retirer ? 'Aucun zoom à retirer.' : 'Il faut au moins deux plans (coupe d’abord la vidéo avec S ou « Couper les blancs »).'); const e = $('#oZoomRes'); if (e) e.textContent = t; aide(t);
+}
 function egaliserVolumes() {
   let n = 0; proj.clips.forEach(c => { if ((c.kind === 'video' || c.kind === 'audio') && c.hasAudio !== false && !c.sonDetache && !c.afx.some(e => e.id === 'normaliser')) { c.afx.push({ id: 'normaliser', p: {} }); n++; } });
   commit(); tout(); apercu(); const e = $('#oEgalRes'); const t = n ? `🔊 Volume égalisé sur ${n} clip${n > 1 ? 's' : ''} : toutes les voix auront le même niveau à l’export.` : 'Tous les clips sont déjà égalisés.'; if (e) e.textContent = t; aide(t);
@@ -1699,6 +1705,8 @@ function outilsHtml() {
       <div class="ligne" style="margin-top:6px"><select id="oTemps">${opts([['1', 'Chaque temps'], ['2', 'Tous les 2 temps'], ['4', 'Tous les 4 temps (une mesure)'], ['8', 'Tous les 8 temps']], '4')}</select><button class="pri" data-outil="rythme-caler" style="flex:none">Caler les photos</button></div><div class="mut" id="oRythmeRes" style="margin:4px 0 10px"></div>
       <p class="mut"><b>Égaliser le volume</b> : toutes les voix au même niveau, sans trop fort ni trop faible d’un clip à l’autre.</p>
       <button class="pri" data-outil="egaliser" style="width:100%">Égaliser tous les clips</button><div class="mut" id="oEgalRes" style="margin:4px 0 10px"></div>
+      <p class="mut"><b>Dynamiser une vidéo parlée</b> : un plan sur deux est légèrement zoomé (effet « jump cut »), pratique après avoir coupé les blancs.</p>
+      <div class="ligne"><select id="oZoomNiv">${opts([['110', 'Zoom léger (110 %)'], ['120', 'Zoom moyen (120 %)'], ['135', 'Zoom fort (135 %)']], '120')}</select><button class="pri" data-outil="zoom-alterne" style="flex:none">Appliquer</button><button data-outil="zoom-retirer" style="flex:none">Retirer</button></div><div class="mut" id="oZoomRes" style="margin:4px 0 10px"></div>
       <p class="mut"><b>Transition sur toutes les coupures</b></p>
       <div class="ligne"><select id="oTrAll"><option value="">Aucune (retirer)</option>${CAT.transitions.filter(t => t.id !== 'none').map(t => `<option value="${t.id}" ${t.id === 'fade' ? 'selected' : ''}>${esc(t.nom)}</option>`).join('')}</select><button class="pri" data-outil="transition-tout" style="flex:none">Appliquer partout</button></div><div class="mut" id="oTrAllRes" style="margin-top:4px"></div></div>
     <div class="encart"><h4>💬 Sous-titres automatiques</h4><p class="mut">QuentMovie écoute ta voix et écrit les sous-titres au bon moment (sans internet, sur ton Mac). Les « euh » ne sont pas écrits.</p>
@@ -1767,6 +1775,7 @@ async function outil(nom) {
   if (nom === 'qualite') return ameliorerClips(proj.clips.map((c, i) => i));
   if (nom === 'plans-clip' || nom === 'plans-tout') return detecterPlans(nom === 'plans-tout');
   if (nom === 'rythme-reperes') return rythmeMusique('reperes'); if (nom === 'rythme-caler') return rythmeMusique('caler');
+  if (nom === 'zoom-alterne') return dynamiserZooms(false); if (nom === 'zoom-retirer') return dynamiserZooms(true);
   if (nom === 'egaliser') return egaliserVolumes(); if (nom === 'transition-tout') return transitionPartout();
   if (nom === 'lien') { // vidéo d'un réseau social ou de YouTube → médias
     const lien = $('#lienVideo').value.trim(), r = t => { const e = $('#lienRes'); if (e) e.innerHTML = t; };
