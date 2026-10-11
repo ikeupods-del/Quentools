@@ -888,7 +888,7 @@ function buildClip(c, P, o = {}) {
           job.step = 'Lecture de l’article…';
           const duree = clamp(num(b.duree, 60), 20, 600);
           const f = b.article ? await GEN().faits(String(b.article), duree).catch(() => []) : []; // sans article : sujet libre
-          const r = await IA().ecrireScript({ titre: String(b.titre || b.article || ''), paragraphes: f, duree, style: String(b.style || ''), consigne: String(b.consigne || ''), recherche: !!b.medias }, job);
+          const r = await IA().ecrireScript({ titre: String(b.titre || b.article || ''), paragraphes: f, duree, style: String(b.style || ''), consigne: String(b.consigne || ''), recherche: !!b.medias, options: b.options && typeof b.options === 'object' ? b.options : {} }, job);
           if (!r.scenes.length) throw new Error('L’IA n’a pas pu écrire de script : réessaie.');
           const vertical = b.format === 'vertical';
           if (b.medias) { // mode express : une photo cherchée et notée pour chaque scène

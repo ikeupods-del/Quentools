@@ -39,6 +39,12 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   check('qualité : introduction interdite refusée', /introduction/.test(SQ.verifier('Bonjour à tous, aujourd’hui nous allons parler des casques de vélo.', { min: 5, interdireOuverture: true })));
   check('qualité : conclusion interdite refusée', /conclusion/.test(SQ.verifier('Voilà pour les casques, n’oubliez pas de vous abonner à la chaîne pour la suite.', { min: 5, interdireFin: true })));
 
+  const { regroupe } = require('../ia'), o1 = regroupe('', { type: 'astuces', ton: 'humour', adresse: 'tu', accroche: false, cta: 'Abonne-toi pour la suite', eviter: 'gratuit, incroyable', inclure: ['casque'], scenes: 6, public: 'debutants' });
+  check('options : règles appliquées par le code', !o1.accroche && !o1.ouverture && o1.conclusion && o1.adresse === 'tu' && o1.cta === 'Abonne-toi pour la suite' && o1.eviter.join() === 'gratuit,incroyable' && o1.inclure[0] === 'casque' && o1.nbScenes === 6 && o1.type === 'astuces', JSON.stringify(o1));
+  check('options : valeurs inconnues ignorées', regroupe('', { type: 'zzz', ton: 'zzz', public: 'zzz', scenes: 99 }).type === 'libre' && regroupe('', { scenes: 99 }).nbScenes === 14);
+  check('options : la consigne écrite et les options se complètent', !regroupe('pas de conclusion', { adresse: 'vous' }).conclusion && regroupe('pas de conclusion', { adresse: 'vous' }).adresse === 'vous');
+  check('qualité : mot interdit refusé', /interdit/.test(SQ.verifier('Un casque gratuit protège efficacement la tête des cyclistes en ville.', { min: 5, interdits: ['gratuit'] })) && !SQ.verifier('Un casque bien ajusté protège efficacement la tête des cyclistes.', { min: 5, interdits: ['gratuit'] }));
+
   if (process.env.QM_RESEAU) {
     const IA = require('../ia').creer({ BASE: base, FFMPEG: bins.ffmpeg });
     const faits = 'Michelin est une entreprise française de pneumatiques fondée en 1889 à Clermont-Ferrand par les frères André et Édouard Michelin.\n[Les débuts] En 1891, ils déposent le brevet du pneu démontable pour bicyclette.\n[Le Bibendum] En 1898, le dessinateur O\'Galop crée le Bibendum.\n[Le guide] En 1900 paraît le premier guide Michelin.\n[Le pneu radial] En 1946, Michelin invente le pneu à carcasse radiale.';

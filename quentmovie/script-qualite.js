@@ -25,7 +25,7 @@ const FIN = /(n'oubliez pas|abonn|merci d'avoir|[àa] bient[oô]t|[àa] la proch
 
 // opts : { min, max, source (texte dont les faits doivent venir), interdireOuverture, interdireFin }
 // → '' si le texte est bon, sinon la raison du refus
-function verifier(t, { min = 8, max = 80, source = '', interdireOuverture = false, interdireFin = false } = {}) {
+function verifier(t, { min = 8, max = 80, source = '', interdireOuverture = false, interdireFin = false, interdits = [] } = {}) {
   const n = nbMots(t);
   if (!t) return 'vide';
   if (n < min) return `trop court (${n} mots)`;
@@ -40,6 +40,8 @@ function verifier(t, { min = 8, max = 80, source = '', interdireOuverture = fals
   const permis = nombresDe(source);
   for (const x of nombresDe(t)) if (!permis.has(x)) return `chiffre inventé (${x})`;
   if (source) { const connus = mots(source); for (const p of nomsPropres(t)) if (!connus.has(p) && !connus.has(p.replace(/s$/, ''))) return `nom inventé (${p})`; }
+  const nt = ' ' + normalise(t).replace(/[^a-z0-9]+/g, ' ') + ' ';
+  for (const m of interdits) { const k = ' ' + normalise(m).replace(/[^a-z0-9]+/g, ' ').trim() + ' '; if (k.trim() && nt.includes(k)) return `mot interdit (${m})`; }
   if (interdireOuverture && OUVERTURE.test(t)) return 'formule d’introduction interdite';
   if (interdireFin && FIN.test(t)) return 'formule de conclusion interdite';
   return '';

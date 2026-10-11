@@ -14,6 +14,33 @@ const STYLES = {
   histoire: 'un récit captivant qui raconte l’histoire dans l’ordre, avec du suspense'
 };
 // schémas JSON (réponses courtes seulement : plan de la vidéo, mots-clés d'images) ; les textes sont écrits en texte libre, scène par scène
+// types de vidéo : la structure demandée au plan ; public, ton et rythme : consignes d'écriture
+const TYPES = {
+  libre: '',
+  astuces: 'Format « astuces » : chaque scène présente UNE astuce précise (« Première astuce… », « Deuxième astuce… ») et dit pourquoi elle marche.',
+  explication: 'Format explication : pose la question, explique le mécanisme pas à pas, termine par ce qu’il faut retenir.',
+  histoire: 'Format chronologique : raconte dans l’ordre, du début à aujourd’hui.',
+  tutoriel: 'Format tutoriel : des étapes numérotées dans l’ordre, chaque scène est une action concrète.',
+  promo: 'Format présentation d’un service : le problème du client, la solution proposée, les bénéfices concrets, comment passer à l’action. Aucune promesse chiffrée, aucun faux témoignage.',
+  info: 'Format info rapide : l’essentiel d’abord, puis le contexte, puis ce que cela change pour le spectateur.'
+};
+const PUBLICS = { debutants: 'des débutants : explique chaque terme technique', grandpublic: 'le grand public', experts: 'des connaisseurs : va droit au but, vocabulaire précis', enfants: 'des enfants de 8 à 12 ans : mots simples', pros: 'des professionnels indépendants (artisans, commerçants, TPE) : exemples concrets de leur quotidien' };
+const TONS = { neutre: '', humour: 'Ton humoristique : un trait d’esprit léger par scène, jamais moqueur.', serieux: 'Ton sérieux et factuel.', inspirant: 'Ton inspirant et motivant.', chaleureux: 'Ton chaleureux et rassurant.', percutant: 'Ton percutant : phrases courtes, énergiques, qui donnent envie d’agir.' };
+const RYTHMES = { court: 'Phrases courtes (12 mots maximum), rythme rapide.', normal: '', pose: 'Phrases amples et posées, rythme tranquille.' };
+// options de l'interface (menus et cases) → règles, même vocabulaire que les consignes écrites ; les consignes écrites complètent les options
+function regroupe(consigne, opt = {}) {
+  const rg = lireConsignes(consigne), liste = v => (Array.isArray(v) ? v : String(v || '').split(/[,;\n]+/)).map(x => String(x).trim()).filter(Boolean).slice(0, 20);
+  if (opt.accroche === false) { rg.accroche = false; rg.ouverture = false; }
+  if (opt.conclusion === false) rg.conclusion = false;
+  if (opt.adresse === 'tu' || opt.adresse === 'vous') rg.adresse = opt.adresse;
+  rg.eviter = liste(opt.eviter); rg.inclure = liste(opt.inclure); rg.cta = String(opt.cta || '').replace(/\s+/g, ' ').trim().slice(0, 160);
+  rg.type = TYPES[opt.type] !== undefined ? opt.type : 'libre'; rg.public = PUBLICS[opt.public] ? opt.public : ''; rg.ton = TONS[opt.ton] ? opt.ton : 'neutre'; rg.rythme = RYTHMES[opt.rythme] !== undefined ? opt.rythme : 'normal';
+  rg.nbScenes = Math.max(0, Math.min(14, Math.round(+opt.scenes || 0)));
+  rg.libre = rg.libre && !rg.eviter.length && !rg.inclure.length && !rg.cta && rg.type === 'libre' && !rg.public && rg.ton === 'neutre' && rg.rythme === 'normal' && !rg.nbScenes;
+  return rg;
+}
+const consignesDe = rg => [TYPES[rg.type], rg.public ? `Public visé : ${PUBLICS[rg.public]}.` : '', TONS[rg.ton], RYTHMES[rg.rythme], rg.inclure.length ? `Utilise naturellement ces mots ou expressions : ${rg.inclure.join(', ')}.` : '',
+  rg.eviter.length ? `N’emploie JAMAIS ces mots ou expressions : ${rg.eviter.join(', ')}.` : ''].filter(Boolean).join(' ');
 const SCHEMA_PLAN = n => ({ type: 'object', properties: { titre: { type: 'string' }, scenes: { type: 'array', minItems: n, maxItems: n, items: { type: 'object', properties: { section: { type: 'string' }, idee: { type: 'string' }, sujet: { type: 'string' }, recherche: { type: 'string' } }, required: ['section', 'idee', 'sujet', 'recherche'] } } }, required: ['titre', 'scenes'] });
 const SCHEMA_MOTS = { type: 'object', properties: { scenes: { type: 'array', items: { type: 'object', properties: { sujet: { type: 'string' }, recherche: { type: 'string' } }, required: ['sujet', 'recherche'] } } }, required: ['scenes'] };
 const nbMots = t => String(t).split(/\s+/).filter(Boolean).length;
@@ -76,7 +103,6 @@ function creer({ BASE, FFMPEG }) {
     catch (e) { if (!/JSON|Unterminated|Unexpected/i.test(e.message)) throw e; const large = Math.min(4000, sortie * 2); return demander({ ...msg, maxTokens: large, contexte: ctx(large) }); }
   }
   // Un texte libre : écrit, nettoyé et contrôlé ; en cas de refus, réécrit plus sagement (3 essais). null si aucun essai n'est bon.
-  const DURS = /^(pas du français|répétition|phrase répétée|chiffre inventé|nom inventé|formule|vide|phrase de présentation)/;
   async function texteControle({ systeme, demande, verif, maxTokens }) {
     let raison = '', dernier = '';
     for (const temperature of [0.55, 0.35, 0.2]) {
@@ -109,9 +135,10 @@ function creer({ BASE, FFMPEG }) {
   const completerMots = (scenes, mots) => scenes.forEach((x, i) => { const m = mots[i] || {}; x.sujet = m.sujet || IM.requeteDeScene(x.texte, 2).join(' '); x.recherche = m.recherche || ''; });
 
   // Avec un article : chaque paragraphe (faits de Wikipédia) est reformulé un par un, sans rien ajouter ; sinon sujet libre (plan, puis scène par scène).
-  async function ecrireScript({ titre, paragraphes = [], duree, style, consigne = '', recherche = true }, job) {
+  async function ecrireScript({ titre, paragraphes = [], duree, style, consigne = '', recherche = true, options = {} }, job) {
     if (!installe()) await installer(job);
-    const ton = STYLES[style] || STYLES.documentaire, rg = lireConsignes(consigne), ordres = ORDRES(consigne), adresse = lienAdresse(rg);
+    const ton = STYLES[style] || STYLES.documentaire, rg = regroupe(consigne, options), adresse = lienAdresse(rg);
+    const ordres = ORDRES([String(consigne || '').slice(0, 600), consignesDe(rg)].filter(Boolean).join(' '));
     const etape = t => { if (job) job.step = t; };
     const mots = Math.round(Math.max(20, duree) * 2.6);
     if (paragraphes.length) {
@@ -122,18 +149,19 @@ function creer({ BASE, FFMPEG }) {
         const p = paragraphes[i], n0 = SQ.nbMots(p.texte), strict = (i === 0 && !rg.accroche) || (i === paragraphes.length - 1 && !rg.conclusion);
         const demande = `${ordres}Sujet : ${titre}. Ton : ${ton}.\nTexte source :\n${p.texte}\n\nRéécris ce texte pour la voix off : mêmes faits, mêmes noms, mêmes dates, environ ${n0} mots, phrases complètes et fluides. N’ajoute aucune information. ${roleScene(i, paragraphes.length, rg)}Réponds uniquement par le texte à dire.`;
         const r = await texteControle({ systeme, demande, maxTokens: Math.ceil(n0 * 3 + 60), verif: { min: Math.max(6, Math.round(n0 * 0.7)), max: Math.round(n0 * (strict ? 1.2 : 1.45)) + 4, source: p.texte + ' ' + titre,
-          interdireOuverture: i === 0 && !rg.accroche, interdireFin: i === paragraphes.length - 1 && !rg.conclusion } });
+          interdireOuverture: i === 0 && !rg.accroche, interdireFin: i === paragraphes.length - 1 && !rg.conclusion, interdits: rg.eviter } });
         if (!r.texte) repris++;
         scenes.push({ section: String(p.section || '').slice(0, 40), texte: r.texte || p.texte, repris: !r.texte });
       }
-      const phrase = async (demande, max, verif) => { const r = await texteControle({ systeme: 'Scénariste de vidéos en français. ' + REGLES + adresse, demande, maxTokens: max * 3, verif: { min: 5, max, source: titre + ' ' + consigne, ...verif } }); return r.texte || ''; };
+      const phrase = async (demande, max, verif) => { const r = await texteControle({ systeme: 'Scénariste de vidéos en français. ' + REGLES + adresse, demande, maxTokens: max * 3, verif: { min: 5, max, source: titre + ' ' + consigne, interdits: rg.eviter, ...verif } }); return r.texte || ''; };
       if (rg.accroche) { etape('L’IA locale écrit l’accroche…'); const t = await phrase(`${ordres}Écris UNE seule phrase d’accroche (12 à 18 mots) qui donne envie de regarder une vidéo sur « ${titre} », sans fait précis, sans chiffre ni date. Réponds uniquement par la phrase.`, 26, {}); if (t) scenes[0].texte = t + ' ' + scenes[0].texte; }
       if (rg.conclusion) { etape('L’IA locale écrit la conclusion…'); const t = await phrase(`${ordres}Écris UNE seule phrase de conclusion (12 à 20 mots) pour clore une vidéo sur « ${titre} », sans fait nouveau, sans chiffre ni date, sans appel à s’abonner. Réponds uniquement par la phrase.`, 28, {}); if (t) scenes[scenes.length - 1].texte += ' ' + t; }
       if (recherche) { etape('L’IA locale choisit les images…'); completerMots(scenes, await motsCles(titre, scenes)); } else completerMots(scenes, []);
+      if (rg.cta) scenes[scenes.length - 1].texte += ' ' + rg.cta.replace(/([^.!?…])$/, '$1.');
       return { titre: String(titre).slice(0, 80), gpu, scenes, repris, regles: rg };
     }
     // sujet libre : 1) plan de la vidéo, 2) chaque scène écrite à son tour avec le plan et la scène précédente sous les yeux
-    const n = Math.max(3, Math.min(14, Math.round(duree / 8)));
+    const n = rg.nbScenes || Math.max(3, Math.min(14, Math.round(duree / 8)));
     etape('L’IA locale prépare le plan de la vidéo…');
     const structure = rg.accroche && rg.conclusion ? ' La première scène est l’ouverture (accroche) et la dernière la conclusion.' : rg.accroche ? ' La première scène est l’ouverture (accroche) ; pas de conclusion.' : rg.conclusion ? ' Pas d’introduction : la première scène entre directement dans le sujet ; la dernière est la conclusion.' : ' Ni introduction ni conclusion : chaque scène apporte un point précis.';
     const sysPlan = 'Scénariste de vidéos courtes en français. Tu construis des plans concrets et précis, sans généralités. Tu n’inventes aucun nom de personne, d’entreprise ou de lieu, ni aucun chiffre ou date.' + adresse;
@@ -151,10 +179,11 @@ function creer({ BASE, FFMPEG }) {
       const demande = `${ordres}Vidéo : « ${titreVideo} ». Ton : ${ton}.\nPlan : ${plan.map((x, k) => `${k + 1}. ${x.idee}`).join(' ')}\n${ecrites.length ? `Texte déjà écrit : ${ecrites.slice(-2).join(' ')}\n` : ''}` +
         `Écris maintenant la scène ${i + 1} sur ${plan.length} : « ${plan[i].idee} ». ${roleScene(i, plan.length, rg)}2 ou 3 phrases complètes, environ ${par} mots, qui continuent ce qui précède sans le répéter. Réponds uniquement par le texte à dire à voix haute.`;
       const r = await texteControle({ systeme, demande, maxTokens: Math.ceil(par * 3 + 80), verif: { min: Math.max(8, Math.round(par * 0.5)), max: Math.round(par * 1.8) + 6, source: sourcePlan,
-        interdireOuverture: i === 0 ? !rg.accroche : true, interdireFin: i === plan.length - 1 ? !rg.conclusion : true } });
+        interdireOuverture: i === 0 ? !rg.accroche : true, interdireFin: i === plan.length - 1 ? !rg.conclusion : true, interdits: rg.eviter } });
       ecrites.push(r.texte || (/[.!?…]$/.test(plan[i].idee.trim()) ? plan[i].idee.trim() : plan[i].idee.trim() + '.'));
     }
     const scenes = plan.map((x, i) => ({ section: String(x.section || '').slice(0, 40), texte: ecrites[i], sujet: String(x.sujet || '').slice(0, 60), recherche: String(x.recherche || '').slice(0, 80) }));
+    if (rg.cta) scenes[scenes.length - 1].texte += ' ' + rg.cta.replace(/([^.!?…])$/, '$1.');
     return { titre: titreVideo, gpu, scenes, regles: rg };
   }
   // Une scène réécrite selon une consigne précise (bouton « Réécrire » de l'interface)
@@ -204,4 +233,4 @@ function creer({ BASE, FFMPEG }) {
   return { etat, installer, ecrireScript, reecrireScene, telecharger, arreter };
 }
 
-module.exports = { creer, STYLES, MODELE, lireConsignes };
+module.exports = { creer, STYLES, MODELE, lireConsignes, regroupe, TYPES, PUBLICS, TONS, RYTHMES };
