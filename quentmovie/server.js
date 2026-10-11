@@ -881,7 +881,7 @@ function buildClip(c, P, o = {}) {
         Promise.resolve().then(() => fn(job)).then(r => { job.resultat = r || null; job.progress = 1; job.done = true; }).catch(e => { job.error = e.message; }); return { id }; };
       // IA locale du générateur et téléchargement depuis un lien (ia.js)
       if (req.method === 'GET' && p === '/api/ia') return send(res, 200, IA().etat());
-      if (req.method === 'POST' && p === '/api/ia/installer') return send(res, 200, travail(job => IA().installer(job)));
+      if (req.method === 'POST' && p === '/api/ia/installer') { const b = await readJson(req).catch(() => ({})); return send(res, 200, travail(job => IA().installer(job, String(b.modele || '')))); }
       if (req.method === 'POST' && p === '/api/generer/ia') {
         const b = await readJson(req);
         return send(res, 200, travail(async job => {
@@ -903,7 +903,7 @@ function buildClip(c, P, o = {}) {
         }));
       }
       // une scène réécrite selon une consigne, et d'autres photos cherchées à la main pour une scène
-      if (req.method === 'POST' && p === '/api/generer/scene') { const b = await readJson(req); return send(res, 200, travail(job => { job.step = 'L’IA locale réécrit la scène…'; return IA().reecrireScene({ texte: String(b.texte || '').slice(0, 1500), instruction: String(b.instruction || '').slice(0, 400), titre: String(b.titre || '').slice(0, 120), style: String(b.style || '') }); })); }
+      if (req.method === 'POST' && p === '/api/generer/scene') { const b = await readJson(req); return send(res, 200, travail(job => { job.step = 'L’IA locale réécrit la scène…'; return IA().reecrireScene({ texte: String(b.texte || '').slice(0, 1500), instruction: String(b.instruction || '').slice(0, 400), titre: String(b.titre || '').slice(0, 120), style: String(b.style || ''), qualite: String(b.qualite || '') }); })); }
       if (req.method === 'POST' && p === '/api/generer/images') { const b = await readJson(req); return send(res, 200, { images: await GEN().proposer(String(b.q || '').slice(0, 120), { vertical: b.format === 'vertical', videos: !!b.videos }) }); }
       if (req.method === 'POST' && p === '/api/telecharger') { const b = await readJson(req); return send(res, 200, travail(job => IA().telecharger(String(b.lien || ''), MEDIAS, job))); }
       if (req.method === 'GET' && p === '/api/parole') {

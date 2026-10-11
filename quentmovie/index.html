@@ -1970,6 +1970,7 @@ async function ouvrirGenerateur() {
           <label class="l">Ton<select id="oTon">${opts([['neutre', 'Selon le style'], ['humour', 'Humoristique'], ['serieux', 'Sérieux'], ['inspirant', 'Inspirant'], ['chaleureux', 'Chaleureux'], ['percutant', 'Percutant']], 'neutre')}</select></label>
           <label class="l">Rythme<select id="oRythme">${opts([['normal', 'Normal'], ['court', 'Phrases courtes'], ['pose', 'Posé']], 'normal')}</select></label>
           <label class="l">S’adresser au spectateur<select id="oAdresse">${opts([['', 'Au choix'], ['tu', 'Tutoiement'], ['vous', 'Vouvoiement']], '')}</select></label>
+          <label class="l">Qualité de l’IA<select id="oQualite">${opts([['standard', 'Standard (rapide, 2,5 Go)'], ['precis', 'Précise (plus lente, ≈ 5 Go)']], 'standard')}</select></label>
           <label class="l">Nombre de scènes<select id="oScenes">${opts([['0', 'Automatique'], ...[3, 4, 5, 6, 7, 8, 10, 12].map(n => [String(n), String(n)])], '0')}</select></label>
         </div>
         <div class="sw2"><input type="checkbox" id="oAccroche" checked><label for="oAccroche">Commencer par une accroche</label></div>
@@ -2077,7 +2078,7 @@ function genEtape2() {
     if (d.gia !== undefined) { const i = +d.gia, x = $('#gx' + i);
       x.innerHTML = `<div class="ligne"><input type="text" data-gins="${i}" placeholder="Consigne : plus court, plus drôle, plus simple, sans chiffres… (vide = améliorer)"><button class="pri" data-greecrit="${i}" style="flex:none">Réécrire</button></div><div class="mut" id="gp${i}"></div>`; x.querySelector('input').focus(); return; }
     if (d.greecrit !== undefined) { const i = +d.greecrit, ins = z.querySelector(`[data-gins="${i}"]`).value.trim(), pr = $('#gp' + i); t.disabled = true;
-      try { const { id } = await (await api('/api/generer/scene', { method: 'POST', body: JSON.stringify({ texte: p.scenes[i].texte, instruction: ins, titre: p.titre, style: gen.style || $('#gStyle').value }) })).json();
+      try { const { id } = await (await api('/api/generer/scene', { method: 'POST', body: JSON.stringify({ texte: p.scenes[i].texte, instruction: ins, titre: p.titre, style: gen.style || $('#gStyle').value, qualite: (gen.options || {}).qualite || '' }) })).json();
         const r = await suivreTravail(id, j => { pr.textContent = j.step || 'L’IA réfléchit…'; }); p.scenes[i].texte = r.texte; rendre(); }
       catch (er) { pr.innerHTML = `<span class="err">${esc(er.message)}</span>`; t.disabled = false; } return; }
     if (t.id === 'gEcouter') essaiVoix($('#gVoix').value, ((p.scenes[0] || {}).texte || p.titre).slice(0, 220), +$('#gVit').value / 175, t);
@@ -2087,13 +2088,13 @@ function genEtape2() {
   };
 }
 // Express : idée → (article Wikipédia si trouvé) → script de l'IA avec mots-clés → un média par scène → vidéo montée
-const OPT_IDS = ['oType', 'oPublic', 'oTon', 'oRythme', 'oAdresse', 'oScenes', 'oCta', 'oInclure', 'oEviter'];
+const OPT_IDS = ['oType', 'oPublic', 'oTon', 'oRythme', 'oAdresse', 'oScenes', 'oQualite', 'oCta', 'oInclure', 'oEviter'];
 function optionsGen() {
-  return { type: $('#oType').value, public: $('#oPublic').value, ton: $('#oTon').value, rythme: $('#oRythme').value, adresse: $('#oAdresse').value, scenes: +$('#oScenes').value || 0,
+  return { type: $('#oType').value, public: $('#oPublic').value, ton: $('#oTon').value, rythme: $('#oRythme').value, qualite: $('#oQualite').value, adresse: $('#oAdresse').value, scenes: +$('#oScenes').value || 0,
     accroche: $('#oAccroche').checked, conclusion: $('#oConclusion').checked, cta: $('#oCta').value.trim(), inclure: $('#oInclure').value.trim(), eviter: $('#oEviter').value.trim() };
 }
 function restaurerOptionsGen() {
-  try { const o = JSON.parse(localStorage.getItem('qm:gen-options') || 'null'); if (!o) return; OPT_IDS.forEach(id => { const k = { oType: 'type', oPublic: 'public', oTon: 'ton', oRythme: 'rythme', oAdresse: 'adresse', oScenes: 'scenes', oCta: 'cta', oInclure: 'inclure', oEviter: 'eviter' }[id]; if (o[k] !== undefined && $('#' + id)) $('#' + id).value = String(o[k]); });
+  try { const o = JSON.parse(localStorage.getItem('qm:gen-options') || 'null'); if (!o) return; OPT_IDS.forEach(id => { const k = { oType: 'type', oPublic: 'public', oTon: 'ton', oRythme: 'rythme', oAdresse: 'adresse', oScenes: 'scenes', oQualite: 'qualite', oCta: 'cta', oInclure: 'inclure', oEviter: 'eviter' }[id]; if (o[k] !== undefined && $('#' + id)) $('#' + id).value = String(o[k]); });
     $('#oAccroche').checked = o.accroche !== false; $('#oConclusion').checked = o.conclusion !== false; } catch (e) { /* réglages indisponibles */ }
 }
 async function genExpress() {

@@ -23,7 +23,7 @@ const BUDGET = Date.now() + (+process.env.QM_BUDGET_MIN || 20) * 60e3;
   for (const c of CAS) {
     if (Date.now() > BUDGET) { console.log('Budget de temps atteint : cas suivants ignorés.'); break; }
     const t0 = Date.now();
-    const j = await attendre((await (await fetch(U('/api/generer/ia'), { method: 'POST', body: JSON.stringify({ article: c.article || '', titre: c.titre, duree: c.duree, style: c.style, consigne: c.consigne, medias: true }) })).json()).id);
+    const j = await attendre((await (await fetch(U('/api/generer/ia'), { method: 'POST', body: JSON.stringify({ article: c.article || '', titre: c.titre, duree: c.duree, style: c.style, consigne: c.consigne, medias: true, options: { qualite: process.env.QM_MODELE || 'standard' } }) })).json()).id);
     console.log(`\n===== ${c.titre} (${c.style}, ${c.duree} s) — ${j.error ? 'ERREUR : ' + j.error : Math.round((Date.now() - t0) / 1000) + ' s'}`);
     if (j.error || !j.resultat) { ko++; continue; }
     const r = j.resultat;

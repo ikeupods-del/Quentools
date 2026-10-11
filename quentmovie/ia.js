@@ -7,6 +7,9 @@ const { fork, spawn, execFile } = require('child_process');
 const { requete } = require('./maj');
 
 const MODELE = { fichier: 'Qwen3-4B-Instruct-2507-Q4_K_M.gguf', url: 'https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF/resolve/main/Qwen3-4B-Instruct-2507-Q4_K_M.gguf', mo: 2500 };
+MODELE.nom = 'Standard (Qwen3 4B, rapide)';
+// « Précise » : modèle plus grand, textes plus justes mais plus lents (à télécharger une fois) ; la pensée longue de ce modèle est coupée (/no_think)
+const MODELES_IA = { standard: MODELE, precis: { nom: 'Précise (Qwen3 8B, plus lente)', fichier: 'Qwen3-8B-Q4_K_M.gguf', url: 'https://huggingface.co/unsloth/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf', mo: 5000, aucunePensee: true } };
 const STYLES = {
   documentaire: 'un documentaire posé et clair, comme un reportage télévisé',
   dynamique: 'une vidéo pour TikTok ou Reels : ton vivant et direct, phrases complètes et naturelles, une accroche forte au début',
@@ -63,7 +66,8 @@ function lireConsignes(consigne) {
 
 function creer({ BASE, FFMPEG }) {
   const MODELES = path.join(BASE, 'modeles'), OUTILS = path.join(BASE, 'outils');
-  const cheminModele = path.join(MODELES, MODELE.fichier);
+  let MOD = MODELE, cheminModele = path.join(MODELES, MOD.fichier);
+  const utiliser = id => { MOD = MODELES_IA[id] || MODELE; cheminModele = path.join(MODELES, MOD.fichier); };
   let proc = null, attente = new Map(), num = 0, installation = null;
 
   function processus() {
@@ -74,18 +78,19 @@ function creer({ BASE, FFMPEG }) {
     proc.on('exit', code => { for (const a of attente.values()) a.ko(new Error('L’IA locale s’est arrêtée' + (err ? ' : ' + err.trim().split('\n').pop() : ` (code ${code})`))); attente = new Map(); proc = null; });
     return proc;
   }
-  const demander = msg => new Promise((ok, ko) => { const id = ++num; attente.set(id, { ok, ko }); processus().send({ id, ...msg }); });
+  const demander = msg => new Promise((ok, ko) => { const id = ++num; attente.set(id, { ok, ko }); processus().send({ id, ...msg, ...(MOD.aucunePensee && msg.systeme ? { systeme: msg.systeme + ' /no_think' } : {}) }); });
   const installe = () => fs.existsSync(cheminModele);
-  const etat = () => ({ installee: installe(), mo: MODELE.mo, styles: Object.keys(STYLES) });
+  const etat = () => ({ installee: installe(), mo: MOD.mo, styles: Object.keys(STYLES), modeles: Object.entries(MODELES_IA).map(([id, m]) => ({ id, nom: m.nom, mo: m.mo, installe: fs.existsSync(path.join(MODELES, m.fichier)) })) });
 
-  function installer(job) {
+  function installer(job, id) {
+    if (id) utiliser(id);
     if (installe()) return Promise.resolve();
     if (installation) return installation;
     installation = (async () => {
       fs.mkdirSync(MODELES, { recursive: true });
-      if (job) job.step = `Téléchargement de l’IA locale (≈ ${(MODELE.mo / 1000).toFixed(1)} Go, une seule fois)…`;
+      if (job) job.step = `Téléchargement de l’IA locale (≈ ${(MOD.mo / 1000).toFixed(1)} Go, une seule fois)…`;
       const part = cheminModele + '.part';
-      const r = await requete(MODELE.url, { dest: part, quoi: 'de modèles', onProgress: (a, t) => { if (job && t) job.progress = a / t * 0.97; } });
+      const r = await requete(MOD.url, { dest: part, quoi: 'de modèles', onProgress: (a, t) => { if (job && t) job.progress = a / t * 0.97; } });
       if (r.taille < 5e8) { fs.rmSync(part, { force: true }); throw new Error('Téléchargement de l’IA incomplet'); }
       fs.renameSync(part, cheminModele);
     })().finally(() => { installation = null; });
@@ -139,6 +144,7 @@ function creer({ BASE, FFMPEG }) {
 
   // Avec un article : chaque paragraphe (faits de Wikipédia) est reformulé un par un, sans rien ajouter ; sinon sujet libre (plan, puis scène par scène).
   async function ecrireScript({ titre, paragraphes = [], duree, style, consigne = '', recherche = true, options = {} }, job) {
+    utiliser(options.qualite);
     if (!installe()) await installer(job);
     const ton = STYLES[style] || STYLES.documentaire, rg = regroupe(consigne, options), adresse = lienAdresse(rg);
     const ordres = ORDRES([String(consigne || '').slice(0, 600), consignesDe(rg)].filter(Boolean).join(' '));
@@ -192,7 +198,8 @@ function creer({ BASE, FFMPEG }) {
     return { titre: titreVideo, gpu, scenes, regles: rg };
   }
   // Une scène réécrite selon une consigne précise (bouton « Réécrire » de l'interface)
-  async function reecrireScene({ texte, instruction = '', titre = '', style = '' }) {
+  async function reecrireScene({ texte, instruction = '', titre = '', style = '', qualite = '' }) {
+    utiliser(qualite);
     if (!installe()) await installer(null);
     const n0 = SQ.nbMots(texte), ton = STYLES[style] || STYLES.documentaire;
     const systeme = 'Scénariste de vidéos en français. ' + REGLES + ' Tu ne rajoutes aucun chiffre, date ni nom propre absent du texte ou de la consigne.';
