@@ -13,10 +13,25 @@ const STYLES = {
   enfants: 'une vidéo pour enfants de 8 à 12 ans : mots simples, ton chaleureux',
   histoire: 'un récit captivant qui raconte l’histoire dans l’ordre, avec du suspense'
 };
-const SCHEMA_REFORMULER = { type: 'object', properties: { titre: { type: 'string' }, accroche: { type: 'string' }, conclusion: { type: 'string' }, scenes: { type: 'array', items: { type: 'object', properties: { section: { type: 'string' }, texte: { type: 'string' }, recherche: { type: 'string' } }, required: ['section', 'texte', 'recherche'] } } }, required: ['titre', 'accroche', 'conclusion', 'scenes'] };
+const scene = recherche => ({ type: 'object', properties: { section: { type: 'string' }, texte: { type: 'string' }, ...(recherche ? { recherche: { type: 'string' } } : {}) }, required: ['section', 'texte', ...(recherche ? ['recherche'] : [])] });
+// schéma de réponse : les champs inutiles (accroche et conclusion interdites, mots-clés d'images non demandés) ne sont pas générés = moins de jetons
+const schemaReformuler = ({ accroche, conclusion, recherche }) => ({ type: 'object', properties: { titre: { type: 'string' }, ...(accroche ? { accroche: { type: 'string' } } : {}), ...(conclusion ? { conclusion: { type: 'string' } } : {}), scenes: { type: 'array', items: scene(recherche) } }, required: ['titre', ...(accroche ? ['accroche'] : []), ...(conclusion ? ['conclusion'] : []), 'scenes'] });
+const schemaLibre = recherche => ({ type: 'object', properties: { titre: { type: 'string' }, scenes: { type: 'array', items: scene(recherche) } }, required: ['titre', 'scenes'] });
 const annees = t => new Set(String(t).match(/\b(1[0-9]{3}|20[0-9]{2})\b/g) || []);
 const nbMots = t => String(t).split(/\s+/).filter(Boolean).length;
-const SCHEMA = { type: 'object', properties: { titre: { type: 'string' }, scenes: { type: 'array', items: { type: 'object', properties: { section: { type: 'string' }, texte: { type: 'string' }, recherche: { type: 'string' } }, required: ['section', 'texte', 'recherche'] } } }, required: ['titre', 'scenes'] };
+const ASCII = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'");
+// Ce que l'utilisateur interdit ou impose, lu par le programme (pas par l'IA) : « pas d'intro », « sans musique », « tutoie-moi »…
+// Ces règles sont appliquées dans le code, l'IA ne peut donc pas les oublier.
+function lireConsignes(consigne) {
+  const t = ASCII(consigne);
+  const NON = String.raw`(?:sans |pas (?:de |d'|du |des )|aucune? |ni |supprime |enleve |retire |ne (?:mets|mettez|fais|fait|mette|fasse)s? pas (?:de |d')?)(?:l'|la |le |les |une? |de |du |des |d')?`;
+  const sans = mots => new RegExp(NON + '(?:' + mots + ')\\b').test(t);
+  const r = { accroche: !sans('intro|introduction|accroche|ouverture|prologue|hook'), conclusion: !sans('conclusion|outro|appel|call to action|cta|epilogue'),
+    ouverture: !sans('intro|introduction|ouverture|prologue|titre|ecran titre|generique de debut'), musique: !sans('musique|son de fond'), sousTitres: !sans('sous-?\\s?titres?'),
+    adresse: /\b(tutoie|tutoyer|tutoiement|en tutoyant)/.test(t) ? 'tu' : /\b(vouvoie|vouvoyer|vouvoiement|en vouvoyant)/.test(t) ? 'vous' : '' };
+  r.libre = r.accroche && r.conclusion && r.ouverture && r.musique && r.sousTitres && !r.adresse;
+  return r;
+}
 
 function creer({ BASE, FFMPEG }) {
   const MODELES = path.join(BASE, 'modeles'), OUTILS = path.join(BASE, 'outils');
@@ -49,19 +64,27 @@ function creer({ BASE, FFMPEG }) {
     return installation;
   }
 
-  const REGLES = 'Tu écris pour être lu à voix haute : phrases complètes et naturelles (sujet, verbe, complément), pas de style télégraphique, pas de listes, pas d’émojis, pas de parenthèses.';
-  const RECHERCHE = 'Dans « recherche », 2 ou 3 mots EN ANGLAIS pour trouver une photo de la scène (ex. « bicycle tire », « old factory »).';
+  const REGLES = 'Tu écris pour être lu à voix haute : phrases complètes (sujet, verbe, complément), pas de style télégraphique, de listes, d’émojis ni de parenthèses. Heures, sommes et unités en toutes lettres : « 9 heures », « 5 euros », « 20 pour cent ».';
+  const RECHERCHE = 'Dans « recherche » : 2 ou 3 mots EN ANGLAIS décrivant une photo de la scène (ex. « bicycle tire »).';
+  const ORDRES = c => (c ? `ORDRES DE L’UTILISATEUR (à suivre à la lettre, ils passent avant tout le reste) : ${String(c).slice(0, 600)}\n` : '');
+  // jetons : ~1 pour 3 caractères en français ; contexte et réponse sont dimensionnés au plus juste
+  const jetons = t => Math.ceil(String(t).length / 2.8);
+  const contexteDe = (...textes) => (sortie => Math.min(8192, Math.max(1536, Math.ceil((textes.reduce((a, t) => a + jetons(t), 0) + sortie + 200) / 256) * 256)));
   // Avec un article : chaque paragraphe (faits de Wikipédia) est reformulé un par un, sans rien ajouter ; sinon sujet libre.
-  async function ecrireScript({ titre, paragraphes = [], duree, style, consigne = '' }, job) {
+  async function ecrireScript({ titre, paragraphes = [], duree, style, consigne = '', recherche = true }, job) {
     if (!installe()) await installer(job);
     if (job) job.step = 'L’IA locale écrit le script…';
-    const ton = STYLES[style] || STYLES.documentaire, dem = consigne ? `\nDemande de l’utilisateur : ${String(consigne).slice(0, 600)}` : '';
+    const ton = STYLES[style] || STYLES.documentaire, regles = lireConsignes(consigne), ordres = ORDRES(consigne);
+    const adresse = regles.adresse === 'tu' ? ' Tu tutoies le spectateur.' : regles.adresse === 'vous' ? ' Tu vouvoies le spectateur.' : '';
     if (paragraphes.length) {
-      const systeme = 'Tu es scénariste de vidéos en français. Tu reformules des paragraphes pour la voix off, sans jamais ajouter de fait, de chiffre, de date ni de nom. ' + REGLES;
-      const demande = `Sujet : ${titre}\nTon : ${ton}.${dem}\nReformule chacun des ${paragraphes.length} paragraphes ci-dessous en une scène (même ordre, même nombre), en gardant TOUS ses faits et rien d’autre, avec un nombre de mots proche de l’original. ` +
-        `Donne aussi : « accroche » (une phrase qui donne envie de regarder, sans fait nouveau), « conclusion » (une phrase de fin), « titre » (6 mots maximum, sans chiffre), et pour chaque scène un titre de partie de 2 à 4 mots dans « section ». ${RECHERCHE}\n\n` +
+      const systeme = 'Scénariste de vidéos en français. Tu reformules des paragraphes pour la voix off sans ajouter aucun fait, chiffre, date ni nom. ' + REGLES + adresse;
+      const sc = { accroche: regles.accroche, conclusion: regles.conclusion, recherche };
+      const demande = `${ordres}Sujet : ${titre}\nTon : ${ton}.\nReformule chacun des ${paragraphes.length} paragraphes en une scène (même ordre, même nombre), avec TOUS ses faits et un nombre de mots proche. ` +
+        `Champs : « titre » (6 mots max, sans chiffre), ${regles.accroche ? '« accroche » (une phrase qui donne envie, sans fait nouveau), ' : ''}${regles.conclusion ? '« conclusion » (une phrase de fin), ' : ''}et par scène « section » (titre de partie de 2 à 4 mots)${recherche ? '. ' + RECHERCHE : '.'}` +
+        `${!regles.accroche ? '\nPas d’introduction ni d’accroche : la première scène entre directement dans les faits.' : ''}${!regles.conclusion ? '\nPas de conclusion : la dernière scène s’arrête sur ses faits.' : ''}\n\n` +
         paragraphes.map((p, i) => `PARAGRAPHE ${i + 1} : ${p.texte}`).join('\n');
-      const r = await demander({ type: 'ecrire', modele: cheminModele, systeme, demande, schema: SCHEMA_REFORMULER, maxTokens: 4000, temperature: 0.35 });
+      const mots = paragraphes.reduce((a, p) => a + nbMots(p.texte), 0), sortieMax = Math.ceil(mots * 2.4 + paragraphes.length * 22 + 120);
+      const r = await demander({ type: 'ecrire', modele: cheminModele, systeme, demande, schema: schemaReformuler(sc), maxTokens: sortieMax, contexte: contexteDe(systeme, demande)(sortieMax), temperature: 0.35 });
       const res = r.resultat || {}, sortie = res.scenes || [];
       // garde-fou : une scène qui invente une date ou perd trop de texte reprend le paragraphe d'origine
       const scenes = paragraphes.map((p, i) => {
@@ -69,22 +92,24 @@ function creer({ BASE, FFMPEG }) {
         return { section: String(x.section || p.section || '').slice(0, 40), texte: ok ? t : p.texte, recherche: String(x.recherche || '').slice(0, 80), repris: !ok };
       });
       const propre = v => { const t = String(v || '').trim(); return t && !annees(t).size && nbMots(t) <= 30 ? t : ''; };
-      if (propre(res.accroche)) scenes[0].texte = propre(res.accroche) + ' ' + scenes[0].texte;
-      if (propre(res.conclusion)) scenes[scenes.length - 1].texte += ' ' + propre(res.conclusion);
-      return { titre: String(res.titre || titre).replace(/\d+/g, '').trim().slice(0, 80) || titre, gpu: r.gpu, scenes, repris: scenes.filter(x => x.repris).length };
+      if (regles.accroche && propre(res.accroche)) scenes[0].texte = propre(res.accroche) + ' ' + scenes[0].texte;
+      if (regles.conclusion && propre(res.conclusion)) scenes[scenes.length - 1].texte += ' ' + propre(res.conclusion);
+      return { titre: String(res.titre || titre).replace(/\d+/g, '').trim().slice(0, 80) || titre, gpu: r.gpu, scenes, repris: scenes.filter(x => x.repris).length, regles };
     }
     const mots = Math.round(Math.max(20, duree) * 2.6), n = Math.max(3, Math.round(duree / 9));
-    const systeme = 'Tu es scénariste de vidéos en français. Tu écris à partir de connaissances générales sûres : aucun chiffre, date, prix, citation ni nom propre dont tu n’es pas certain ; jamais de promesse ni d’avis médical, juridique ou financier. ' + REGLES;
-    const demande = `Sujet : ${titre}\nTon : ${ton}.${dem}\nÉcris ${n} scènes d’environ ${Math.round(mots / n)} mots chacune (2 ou 3 phrases complètes), en commençant par une accroche et en finissant par une conclusion. ` +
-      `Pour chaque scène, un titre de partie de 2 à 4 mots dans « section ». ${RECHERCHE} Donne aussi un titre de vidéo de 6 mots maximum dans « titre ».`;
+    const systeme = 'Scénariste de vidéos en français. Tu écris à partir de connaissances générales sûres : aucun chiffre, date, prix, citation ni nom propre dont tu n’es pas certain ; jamais de promesse ni d’avis médical, juridique ou financier. ' + REGLES + adresse;
+    const structure = regles.accroche && regles.conclusion ? 'en commençant par une accroche et en finissant par une conclusion' : regles.accroche ? 'en commençant par une accroche, sans conclusion' : regles.conclusion ? 'sans introduction (tu entres directement dans le sujet), en finissant par une conclusion' : 'sans introduction ni conclusion (tu entres directement dans le sujet et tu t’arrêtes sur le dernier point)';
+    const demande = `${ordres}Sujet : ${titre}\nTon : ${ton}.\nÉcris ${n} scènes d’environ ${Math.round(mots / n)} mots (2 ou 3 phrases complètes), ${structure}. ` +
+      `Par scène : « section » (titre de partie de 2 à 4 mots)${recherche ? '. ' + RECHERCHE : ''} « titre » : titre de la vidéo, 6 mots maximum.`;
     let res = {}, gpu = '';
+    const sortieMax = Math.min(4000, Math.ceil(mots * 2.4 + n * 22 + 120));
     for (let essai = 0; essai < 2; essai++) { // un second essai, plus sage, si le texte est trop haché
-      const r = await demander({ type: 'ecrire', modele: cheminModele, systeme, demande, schema: SCHEMA, maxTokens: Math.min(4000, mots * 3 + 400), temperature: essai ? 0.25 : 0.5 });
+      const r = await demander({ type: 'ecrire', modele: cheminModele, systeme, demande, schema: schemaLibre(recherche), maxTokens: sortieMax, contexte: contexteDe(systeme, demande)(sortieMax), temperature: essai ? 0.25 : 0.5 });
       res = r.resultat || {}; gpu = r.gpu;
       const sc = (res.scenes || []).filter(x => String(x.texte || '').trim());
       if (sc.length && sc.reduce((a, x) => a + nbMots(x.texte), 0) / sc.length >= Math.min(14, mots / n * 0.5)) break;
     }
-    return { titre: String(res.titre || titre).slice(0, 80), gpu, scenes: (res.scenes || []).map(x => ({ section: String(x.section || '').slice(0, 40), texte: String(x.texte || '').trim(), recherche: String(x.recherche || '').slice(0, 80) })).filter(x => x.texte.length > 10) };
+    return { titre: String(res.titre || titre).slice(0, 80), gpu, regles, scenes: (res.scenes || []).map(x => ({ section: String(x.section || '').slice(0, 40), texte: String(x.texte || '').trim(), recherche: String(x.recherche || '').slice(0, 80) })).filter(x => x.texte.length > 10) };
   }
 
   // ---------- Téléchargement depuis un lien (YouTube, TikTok, Instagram, Facebook, X…) ----------
@@ -123,4 +148,4 @@ function creer({ BASE, FFMPEG }) {
   return { etat, installer, ecrireScript, telecharger, arreter };
 }
 
-module.exports = { creer, STYLES, MODELE };
+module.exports = { creer, STYLES, MODELE, lireConsignes };

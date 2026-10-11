@@ -13,15 +13,15 @@ async function charger(fichier) {
   chemin = fichier;
 }
 
-async function ecrire({ modele: fichier, systeme, demande, schema, maxTokens = 2500, temperature = 0.6 }) {
+async function ecrire({ modele: fichier, systeme, demande, schema, maxTokens = 2500, temperature = 0.6, contexte = 8192 }) {
   await charger(fichier);
-  const contexte = await modele.createContext({ contextSize: 8192 });
+  const ctx = await modele.createContext({ contextSize: contexte });
   try {
-    const session = new lib.LlamaChatSession({ contextSequence: contexte.getSequence(), systemPrompt: systeme });
+    const session = new lib.LlamaChatSession({ contextSequence: ctx.getSequence(), systemPrompt: systeme });
     const grammaire = schema ? await llama.createGrammarForJsonSchema(schema) : undefined;
     const t = await session.prompt(demande, { grammar: grammaire, maxTokens, temperature });
     return { resultat: grammaire ? grammaire.parse(t) : t, gpu: llama.gpu };
-  } finally { await contexte.dispose(); }
+  } finally { await ctx.dispose(); }
 }
 
 process.on('message', async m => {

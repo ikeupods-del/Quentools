@@ -1,0 +1,35 @@
+// Texte écrit → texte prononcé (heures, sommes, unités, ordinaux, abréviations).
+'use strict';
+const { pourLaVoix: v } = require('../voix-texte');
+let ok = 0, ko = 0;
+const eq = (entree, attendu) => { const r = v(entree); if (r === attendu) ok++; else { ko++; console.log('  ÉCHEC :', JSON.stringify(entree), '→', JSON.stringify(r), 'au lieu de', JSON.stringify(attendu)); } };
+eq('Rendez-vous à 9h.', 'Rendez-vous à 9 heures.');
+eq('Départ à 9h30 précises', 'Départ à 9 heures 30 précises');
+eq('Départ à 1h', 'Départ à 1 heure');
+eq('Ouvert 24h/24', 'Ouvert 24 heures sur 24');
+eq('Il roule à 90 km/h', 'Il roule à 90 kilomètres-heure');
+eq('Un prix de 5 € seulement', 'Un prix de 5 euros seulement');
+eq('Seulement 1€', 'Seulement 1 euro');
+eq('Un chiffre d’affaires de 2,5 M€', 'Un chiffre d’affaires de 2,5 millions d’euros');
+eq('Une hausse de 20 %', 'Une hausse de 20 pour cent');
+eq('Il fait 25°C dehors', 'Il fait 25 degrés Celsius dehors');
+eq('Distance : 12 km', 'Distance : 12 kilomètres');
+eq('Ajoutez 200 g de farine et 25 cl de lait', 'Ajoutez 200 grammes de farine et 25 centilitres de lait');
+eq('Un terrain de 80 m²', 'Un terrain de 80 mètres carrés');
+eq('Le 1er janvier', 'Le premier janvier');
+eq('La 2e guerre, le 3ème étage', 'La deuxième guerre, le troisième étage');
+eq('Au XIXe siècle', 'Au dix-neuvième siècle');
+eq('Au Ve siècle av. J.-C.', 'Au cinquième siècle avant Jésus-Christ');
+eq('Il y a 12 000 habitants', 'Il y a 12000 habitants');
+eq('M. Dupont et Mme Martin', 'monsieur Dupont et madame Martin');
+eq('Du pain, du lait, etc.', 'Du pain, du lait, et cetera');
+eq('Le n° 5 de la rue', 'Le numéro 5 de la rue');
+eq('Durée : 45 min', 'Durée : 45 minutes');
+eq('Tom & Jerry', 'Tom et Jerry');
+// ce qui ne doit pas changer
+eq('La vie en 2024 à Paris, la Vie est belle', 'La vie en 2024 à Paris, la Vie est belle');
+eq('Le chat a 3 ans et 2 enfants', 'Le chat a 3 ans et 2 enfants');
+eq('Une histoire en huit heures', 'Une histoire en huit heures');
+eq('Il a 5 ha de vignes', 'Il a 5 hectares de vignes');
+console.log(`Texte lu : ${ok} contrôles réussis, ${ko} échecs`);
+process.exit(ko ? 1 : 0);

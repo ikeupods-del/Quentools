@@ -188,6 +188,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
   }
   // Une phrase lue → fichier audio (m4a) avec une petite respiration à la fin
   async function lire(texte, fichier, { voix: v, vitesse = 175 } = {}, dir) {
+    texte = require('./voix-texte').pourLaVoix(texte); // « 9h » → « 9 heures », « 5 € » → « 5 euros »…
     if (String(v || '').startsWith('piper:')) { // voix naturelle intégrée (parole.js)
       if (!parole) throw new Error('Voix naturelles indisponibles');
       await parole.parler(texte, v.slice(6), fichier, { vitesse: vitesse / 175 });

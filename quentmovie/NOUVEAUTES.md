@@ -3,6 +3,11 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.10.0
+- L'IA fait exactement ce que tu lui demandes : écris tes consignes (« pas d'intro », « pas de conclusion », « tutoie-moi », « sans musique », « sans sous-titres »…) dans le générateur Express ou dans le nouveau champ « Tes consignes » du panneau IA. Elles sont lues et appliquées par QuentMovie lui-même, pas seulement suggérées à l'IA : sans intro, il n'y a ni phrase d'accroche ni écran titre.
+- La voix lit comme on parle : « 9h » devient « 9 heures », « 9h30 » « 9 heures 30 », « 5 € » « 5 euros », « 20 % » « 20 pour cent », « 90 km/h », « 1er », « XIXe siècle », « M. », « etc. »… Les sous-titres gardent ton texte tel que tu l'as écrit.
+- IA plus économe : elle ne produit plus que ce qui sert (pas d'accroche si tu n'en veux pas, pas de mots-clés d'images si elles ne sont pas cherchées) et sa mémoire de travail est dimensionnée au plus juste : génération plus rapide, moins de mémoire utilisée.
+
 ## 1.9.0
 - Générateur « Express », comme InVideo : décris ta vidéo en une phrase (« 5 astuces pour un site qui attire des clients »), choisis le format (TikTok, YouTube, carré), la durée et le style, et QuentMovie fait tout : script écrit par l'IA locale, une image ou une vidéo libre trouvée pour chaque scène, voix naturelle, sous-titres façon TikTok, musique. La vidéo arrive montée dans la timeline, tout reste modifiable.
 - Sujets libres : l'IA écrit aussi sur des idées, conseils ou présentations qui ne sont pas sur Wikipédia (à relire avant de publier).

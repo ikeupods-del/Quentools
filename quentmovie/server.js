@@ -864,15 +864,15 @@ function create(opts = {}) {
           job.step = 'Lecture de l’article…';
           const duree = clamp(num(b.duree, 60), 20, 600);
           const f = b.article ? await GEN().faits(String(b.article), duree).catch(() => []) : []; // sans article : sujet libre
-          const r = await IA().ecrireScript({ titre: String(b.titre || b.article || ''), paragraphes: f, duree, style: String(b.style || ''), consigne: String(b.consigne || '') }, job);
+          const r = await IA().ecrireScript({ titre: String(b.titre || b.article || ''), paragraphes: f, duree, style: String(b.style || ''), consigne: String(b.consigne || ''), recherche: !!b.medias }, job);
           if (!r.scenes.length) throw new Error('L’IA n’a pas pu écrire de script : réessaie.');
           if (b.medias) { // mode express : un média cherché pour chaque scène
             job.step = 'Recherche d’images et de vidéos pour chaque scène…';
             const m = await GEN().mediasPour(r.scenes.map(x => x.recherche || x.section));
-            return { titre: r.titre, gpu: r.gpu, libre: !f.length, images: m.images, scenes: r.scenes.map((x, i) => ({ ...x, image: m.choix[i] })) };
+            return { titre: r.titre, gpu: r.gpu, regles: r.regles, libre: !f.length, images: m.images, scenes: r.scenes.map((x, i) => ({ ...x, image: m.choix[i] })) };
           }
           const choix = require('./generateur').choisirImages(r.scenes, Array.isArray(b.images) ? b.images.slice(0, 60) : []);
-          return { titre: r.titre, gpu: r.gpu, libre: !f.length, scenes: r.scenes.map((x, i) => ({ ...x, image: choix[i] })) };
+          return { titre: r.titre, gpu: r.gpu, regles: r.regles, libre: !f.length, scenes: r.scenes.map((x, i) => ({ ...x, image: choix[i] })) };
         }));
       }
       if (req.method === 'POST' && p === '/api/telecharger') { const b = await readJson(req); return send(res, 200, travail(job => IA().telecharger(String(b.lien || ''), MEDIAS, job))); }
