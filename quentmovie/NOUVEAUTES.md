@@ -3,7 +3,10 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
-## 1.13.2
+## 1.14.0
+- Export beaucoup plus rapide sur ton MacBook Air : les vidéos sont lues par la puce vidéo du Mac (même les vidéos d'iPhone en 4K), plusieurs clips sont encodés en même temps, et les clips qui n'ont pas changé depuis le dernier export sont repris tels quels (seuls les clips modifiés sont recalculés). La fenêtre d'export indique le temps mis.
+- Nouveau choix d'export « Puce vidéo du Mac : qualité maximale » : image plus fine, presque aussi rapide. L'export ProRes (.mov) utilise le moteur ProRes de la puce.
+- Me filmer, « Afficher en direct » : montre une image ou une vidéo de tes médias (touche M), des textes qui défilent un par un (touche T), ton logo en permanence (touche O), ou partage l'écran de ton Mac (touche E). Tout apparaît en direct, et après la prise tout est ajouté au bon moment : calques sur ta prise, écran partagé dans la piste vidéo 2.
 - Ajouter un titre marche tout le temps : clique sur un titre et il va sur le clip sélectionné, ou sur celui sous la tête de lecture ; timeline vide, un écran titre est créé. Le champ de texte s'ouvre à droite, prêt à écrire.
 - Tout se glisse dans la timeline : titres, titres de reportage, écrans prêts, transitions (côté gauche ou droit d'un clip), musiques et bruitages (à l'endroit où tu les lâches), autocollants, calques, décors, looks et effets. Une vidéo lâchée sur la moitié gauche d'un clip se place avant lui.
 - Double-clic sur un média pour l'ajouter à la timeline.

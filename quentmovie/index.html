@@ -170,6 +170,9 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 #stAnims{grid-template-columns:1fr 1fr;gap:6px}#stAnims .carte{padding:7px 6px;font-size:12px;text-align:left}#stAnims kbd{margin-right:4px}
 #stAnim{position:absolute;pointer-events:none;overflow:hidden;z-index:1}#stAnim canvas{max-width:none;max-height:none}
 .stBandeau{position:absolute;left:5%;bottom:12%;background:#5b3df5;color:#fff;padding:10px 18px;border-left:6px solid #d7f24a;animation:bandeau .5s ease-out both;font:600 2.2vw/1.25 system-ui}
+.stDirect{position:absolute;border-radius:10px;overflow:hidden;box-shadow:0 8px 30px #0008;animation:bandeau .35s ease-out both}.stDirect img,.stDirect video{display:block;width:100%;height:auto}
+.stDirect.logo{box-shadow:none;border-radius:0}.stTexte{position:absolute;left:50%;top:8%;transform:translateX(-50%);max-width:86%;background:#5b3df5;color:#fff;padding:.5em 1em;border-left:.35em solid #d7f24a;border-radius:6px;font:700 2.4vw/1.25 system-ui;text-align:center;animation:bandeau .35s ease-out both;white-space:pre-wrap}
+#stDirectBtns{grid-template-columns:1fr 1fr;gap:6px}#stDirectBtns .carte{padding:7px 6px;font-size:12px;text-align:left}#stDirectBtns .carte.on{border-color:#d7f24a;background:#2c2a10}
 .stBandeau b{display:block;font-size:1.15em}.stBandeau span{display:block;font-weight:400;font-size:.8em;opacity:.9}
 @keyframes bandeau{from{transform:translateX(-120%)}to{transform:none}}
 /* Lumière LED : bandeau lumineux autour de l'écran pour éclairer le visage */
@@ -2224,7 +2227,8 @@ function exporter() {
     <label class="l">Format</label><select id="xSortie">${CAT.sorties.map(s => `<option value="${s}" ${proj.sortie === s ? 'selected' : ''}>${SORTIES[s] || s}</option>`).join('')}</select>
     <label class="l">Résolution</label><select id="xRes">${opts([['720', '720p'], ['1080', 'Full HD 1080p'], ['2160', '4K']], String(proj.res))}</select>
     <label class="l">Images par seconde</label><select id="xFps">${opts([['24', '24'], ['30', '30'], ['60', '60']], String(proj.fps))}</select>
-    <label class="l">Encodage</label><select id="xQ">${opts([['rapide', CAT.hwenc ? 'Puce vidéo du Mac (rapide, recommandé)' : 'Rapide'], ['haute', 'Processeur (un peu plus fin, beaucoup plus lent)']], proj.quality === 'haute' ? 'haute' : 'rapide')}</select>
+    <label class="l">Encodage</label><select id="xQ">${opts(CAT.hwenc ? [['rapide', 'Puce vidéo du Mac : le plus rapide (recommandé)'], ['max', 'Puce vidéo du Mac : qualité maximale (fichier plus lourd, presque aussi rapide)'], ['haute', 'Processeur (beaucoup plus lent)']] : [['rapide', 'Rapide'], ['haute', 'Qualité (plus lent)']], ['rapide', 'max', 'haute'].includes(proj.quality) ? proj.quality : 'rapide')}</select>
+    <p class="mut" style="margin-top:4px">${CAT.hwenc ? 'L’export utilise la puce du Mac pour lire et encoder les vidéos, encode plusieurs clips à la fois et réutilise les clips qui n’ont pas changé depuis le dernier export.' : ''}</p>
     <div class="sw2"><input type="checkbox" id="xNorm" ${proj.normaliser ? 'checked' : ''}><label for="xNorm">Égaliser le volume (recommandé pour un podcast)</label></div>
     <p class="mut">Durée : ${fmt(total())} · format ${esc({ vertical: 'vertical 9:16', horizontal: 'horizontal 16:9', carre: 'carré' }[proj.format])}</p>
     <div id="expo"><div class="ligne"><button id="xAnn">Annuler</button><button class="pri" id="xGo">Lancer l’export</button></div></div>`);
@@ -2247,7 +2251,7 @@ function exporter() {
     $('#expo').innerHTML = '<div id="xTxt">Préparation…</div><div id="barreExp"><i></i></div>';
     try {
       const j = await lancerJob('/api/export', { project: proj }, (p, s) => { $('#barreExp i').style.width = Math.round(p * 100) + '%'; $('#xTxt').textContent = `${s} — ${Math.round(p * 100)} %`; });
-      $('#expo').innerHTML = `<p>✅ Terminé : <b>${esc(j.out)}</b></p><div class="ligne"><button id="xFind">Afficher dans le Finder</button><a href="/exports/${enc(j.out)}"><button style="width:100%">Télécharger</button></a><button class="pri" id="xFin">Fermer</button></div><p class="mut">Dossier : Films → QuentMovie → exports</p>`;
+      $('#expo').innerHTML = `<p>✅ Terminé${j.duree ? ` en ${fmt(j.duree)}` : ''} : <b>${esc(j.out)}</b>${j.repris ? `<br><span class="mut">${j.repris} clip${j.repris > 1 ? 's' : ''} inchangé${j.repris > 1 ? 's' : ''} repris du dernier export.</span>` : ''}</p><div class="ligne"><button id="xFind">Afficher dans le Finder</button><a href="/exports/${enc(j.out)}"><button style="width:100%">Télécharger</button></a><button class="pri" id="xFin">Fermer</button></div><p class="mut">Dossier : Films → QuentMovie → exports</p>`;
       $('#xFin').onclick = fermer; $('#xFind').onclick = () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) });
     } catch (e) { $('#expo').innerHTML = `<p class="err">${esc(e.message)}</p><button id="xFin">Fermer</button>`; $('#xFin').onclick = fermer; }
   };
@@ -2601,7 +2605,7 @@ async function verifierMaj(manuel) {
 
 // ---------- Studio : se filmer avec la caméra et le micro du Mac, avec un prompteur ----------
 const ST_DEF = { fond: 'lib:fonds/quentools-led-h.jpg', detourage: 'precis', synchro: 'auto', enc: 'puce', vertMode: false, seuil: 50, contour: 12, halo: 40, seul: true, lumiere: 100, chaleur: 0,
-  led: false, ledForce: 80, ledTeinte: 'neutre', ledLargeur: 70, nom: '', role: '',
+  led: false, ledForce: 80, ledTeinte: 'neutre', ledLargeur: 70, nom: '', role: '', directMedia: '', directPos: 'haut-droite', textes: '', logo: '', logoPos: 'haut-gauche', ecranPos: 'grand-droite',
   vitesse: 45, taille: 44, largeur: 70, opacite: 55, miroirTxt: false, miroirImg: true, compte: true, defilAuto: true, qualite: '1080', bruit: true, camera: '', micro: '' };
 // Animations à faire apparaître pendant qu'on parle (touches 1 à 9) ; position et taille en % de l'image
 const ANIM_DIRECT = [
@@ -2646,6 +2650,21 @@ function stPanneau() {
       <div class="grille" id="stAnims">${ANIM_DIRECT.map(a => `<button class="carte txt" data-anim="${a.id}" title="Touche ${a.t}"><kbd>${a.t}</kbd> ${esc(a.nom)}</button>`).join('')}<button class="carte txt" data-anim="nom" title="Touche N"><kbd>N</kbd> Mon nom</button></div>
       <label class="l">Mon nom (bandeau, touche N)</label><input type="text" id="stNom" value="${esc(o.nom)}" placeholder="Prénom Nom">
       <input type="text" id="stRole" value="${esc(o.role)}" placeholder="Fonction, entreprise (ex. Fondateur de QuenTools)" style="margin-top:4px">
+    </details>
+    <details open><summary>📺 Afficher en direct</summary>
+      <p class="mut" style="margin:0 0 6px">Montre autre chose pendant que tu parles : tout est ajouté à ta prise, au bon moment (modifiable ensuite).</p>
+      <div class="grille" id="stDirectBtns">
+        <button class="carte txt ${studio.direct.media ? 'on' : ''}" data-direct="media" title="Touche M"><kbd>M</kbd> Image ou vidéo</button>
+        <button class="carte txt ${studio.direct.texte ? 'on' : ''}" data-direct="texte" title="Touche T"><kbd>T</kbd> Texte suivant</button>
+        <button class="carte txt ${studio.direct.logo ? 'on' : ''}" data-direct="logo" title="Touche O"><kbd>O</kbd> Mon logo</button>
+        <button class="carte txt ${studio.direct.ecran ? 'on' : ''}" data-direct="ecran" title="Touche E"><kbd>E</kbd> Partager l’écran</button></div>
+      <label class="l">Image ou vidéo à montrer (touche M)</label><select id="stDMedia"><option value="">— choisir dans mes médias —</option>${medias.filter(m => m.kind === 'image' || m.kind === 'video').map(m => `<option value="${esc(m.file)}" ${o.directMedia === m.file ? 'selected' : ''}>${esc(m.file)}</option>`).join('')}</select>
+      <select id="stDPos" style="margin-top:4px">${opts(Object.entries(ST_POS).map(([k, v]) => [k, v.nom]), o.directPos)}</select>
+      <label class="l">Textes à afficher (un par ligne ; T montre le suivant, puis le cache)</label><textarea id="stTextes" rows="3" placeholder="Astuce n°1 : …&#10;Lien en bio&#10;Code promo : …">${esc(o.textes)}</textarea>
+      <label class="l">Mon logo (touche O, reste affiché)</label><select id="stLogo"><option value="">— aucun —</option>${(LIB().marque || []).map(x => `<option value="lib:${esc(x.file)}" ${o.logo === 'lib:' + x.file ? 'selected' : ''}>${esc(x.nom)}</option>`).join('')}${medias.filter(m => m.kind === 'image').map(m => `<option value="${esc(m.file)}" ${o.logo === m.file ? 'selected' : ''}>${esc(m.file)}</option>`).join('')}</select>
+      <select id="stLogoPos" style="margin-top:4px">${opts([['haut-gauche', 'En haut à gauche'], ['haut-droite', 'En haut à droite'], ['bas-droite', 'En bas à droite'], ['bas-gauche', 'En bas à gauche']], o.logoPos)}</select>
+      <label class="l">Partage d’écran (touche E)</label><select id="stEcranPos">${opts([['grand-droite', 'Grand, à droite de moi'], ['coin', 'Dans un coin'], ['plein', 'Plein écran (je disparais)']], o.ecranPos)}</select>
+      <p class="mut" style="margin:4px 0 0">L’écran partagé est enregistré à part et posé dans la piste vidéo 2, calé sur ta prise.</p>
     </details>
     <details open><summary>Prompteur</summary>
       <textarea id="stScript" placeholder="Écris ou colle ici ce que tu vas dire. Le texte défile en haut de l’écran, juste sous la caméra : tu lis en regardant l’objectif.">${esc(proj.prompteur || '')}</textarea>
@@ -2824,12 +2843,114 @@ function stAnimer(id) {
   vid.onended = vid.onerror = () => el.remove(); calque.appendChild(el); vid.play().then(image).catch(() => el.remove());
   if (t !== null) studio.evts.push({ id, t });
 }
+// ---------- Afficher en direct : image ou vidéo, textes, logo, partage d'écran ----------
+// Positions en % de l'image (centre de l'élément) et largeur ; « plein » couvre toute l'image
+const ST_POS = {
+  'haut-droite': { nom: 'En haut à droite', x: 78, y: 26, s: 36 }, 'bas-droite': { nom: 'En bas à droite', x: 78, y: 70, s: 36 },
+  'haut-gauche': { nom: 'En haut à gauche', x: 22, y: 26, s: 36 }, 'bas-gauche': { nom: 'En bas à gauche', x: 22, y: 70, s: 36 },
+  'grand-droite': { nom: 'Grand, à droite de moi', x: 68, y: 50, s: 58 }, 'centre': { nom: 'Grand, au centre', x: 50, y: 50, s: 70 },
+  'coin': { nom: 'Dans un coin', x: 79, y: 24, s: 34 }, 'plein': { nom: 'Plein écran', x: 50, y: 50, s: 100 }
+};
+const POS_LOGO = { 'haut-gauche': { x: 12, y: 10, s: 16 }, 'haut-droite': { x: 88, y: 10, s: 16 }, 'bas-droite': { x: 88, y: 88, s: 16 }, 'bas-gauche': { x: 12, y: 88, s: 16 } };
+// zone de l'image filmée à l'écran (les éléments en direct s'y placent comme dans la vidéo finale)
+function stZone() {
+  const calque = $('#stAnim'), v = studio.o.fond ? $('#stCanvas') : $('#stVideo'), sc = $('#stScene').getBoundingClientRect();
+  const vw = v.videoWidth || v.width || 16, vh = v.videoHeight || v.height || 9, k = Math.min(sc.width / vw, sc.height / vh), W = vw * k, H = vh * k;
+  Object.assign(calque.style, { left: (sc.width - W) / 2 + 'px', top: (sc.height - H) / 2 + 'px', width: W + 'px', height: H + 'px' });
+  return { calque, W, H };
+}
+function stPlacer2(el, p) {
+  const { calque, W, H } = stZone();
+  if (p.s >= 100) Object.assign(el.style, { left: 0, top: 0, width: W + 'px', height: H + 'px', borderRadius: 0 });
+  else { Object.assign(el.style, { width: W * p.s / 100 + 'px', left: W * p.x / 100 + 'px', top: H * p.y / 100 + 'px', transform: 'translate(-50%,-50%)' }); }
+  calque.appendChild(el); return el;
+}
+const stT = () => (studio.rec ? stDuree() : null);
+// début et fin d'un élément affiché pendant la prise (ou depuis le début de la prise s'il était déjà là)
+function stOuvrir(evt) { evt.t = stT() ?? 0; if (studio.rec) studio.evts.push(evt); return evt; }
+function stFermer(evt) { if (evt && studio.rec && evt.fin == null) evt.fin = stDuree(); }
+async function stDirect(quoi) {
+  if (!studio) return;
+  const o = studio.o, D = studio.direct, maj = () => document.querySelectorAll('#stDirectBtns [data-direct]').forEach(b => b.classList.toggle('on', !!D[b.dataset.direct]));
+  if (quoi === 'media') {
+    if (D.media) { stFermer(D.media.evt); D.media.el.remove(); D.media = null; return maj(); }
+    const m = medias.find(x => x.file === o.directMedia); if (!m) { stMsg('Choisis d’abord l’image ou la vidéo à montrer, dans « Afficher en direct ».'); return; }
+    const p = ST_POS[o.directPos] || ST_POS['haut-droite'], el = document.createElement('div'); el.className = 'stDirect';
+    el.innerHTML = m.kind === 'video' ? `<video src="/media/${enc(m.file)}" autoplay muted loop playsinline></video>` : `<img src="/media/${enc(m.file)}" alt="">`;
+    D.media = { el: stPlacer2(el, p), evt: stOuvrir({ id: 'media', file: m.file, kind: m.kind, x: p.x, y: p.y, s: p.s }) };
+  } else if (quoi === 'texte') {
+    const lignes = String(o.textes || '').split('\n').map(x => x.trim()).filter(Boolean);
+    if (D.texte) { stFermer(D.texte.evt); D.texte.el.remove(); D.texte = null; return maj(); }
+    if (!lignes.length) { stMsg('Écris d’abord tes textes (un par ligne) dans « Afficher en direct ».'); return; }
+    const txt = lignes[(studio.iTexte || 0) % lignes.length]; studio.iTexte = (studio.iTexte || 0) + 1;
+    const el = document.createElement('div'); el.className = 'stTexte'; el.textContent = txt; stZone().calque.appendChild(el);
+    D.texte = { el, evt: stOuvrir({ id: 'texte', txt }) };
+  } else if (quoi === 'logo') {
+    if (D.logo) { stFermer(D.logo.evt); D.logo.el.remove(); D.logo = null; return maj(); }
+    if (!o.logo) { stMsg('Choisis d’abord ton logo dans « Afficher en direct ».'); return; }
+    const p = POS_LOGO[o.logoPos] || POS_LOGO['haut-gauche'], el = document.createElement('div'); el.className = 'stDirect logo';
+    el.innerHTML = `<img src="${o.logo.startsWith('lib:') ? '/lib/' + o.logo.slice(4) : '/media/' + enc(o.logo)}" alt="">`;
+    D.logo = { el: stPlacer2(el, p), evt: stOuvrir({ id: 'logo', file: o.logo, x: p.x, y: p.y, s: p.s }) };
+  } else if (quoi === 'ecran') {
+    if (D.ecran) { await stEcranStop(); return maj(); }
+    let flux;
+    try { flux = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false }); }
+    catch (e) { stMsg(`<span class="err">Partage d’écran refusé : ${esc(e.message)}. Autorise QuentMovie dans Réglages Système → Confidentialité et sécurité → Enregistrement de l’écran.</span>`); return; }
+    const p = ST_POS[o.ecranPos] || ST_POS['grand-droite'], el = document.createElement('div'); el.className = 'stDirect';
+    const v = document.createElement('video'); v.muted = true; v.autoplay = true; v.playsInline = true; v.srcObject = flux; el.appendChild(v);
+    D.ecran = { el: stPlacer2(el, p), flux, pos: o.ecranPos, rec: null };
+    flux.getVideoTracks()[0].addEventListener('ended', () => { if (studio && studio.direct.ecran && studio.direct.ecran.flux === flux) stEcranStop().then(() => document.querySelectorAll('#stDirectBtns [data-direct="ecran"]').forEach(b => b.classList.remove('on'))); });
+    if (studio.rec) stEcranRec();
+    stMsg('📺 Écran partagé : il est enregistré avec ta prise. Touche E pour arrêter.');
+  }
+  maj();
+}
+// L'écran partagé est enregistré à part (même rythme que la prise) puis posé dans la piste vidéo 2
+function stEcranRec() {
+  const E = studio.direct.ecran; if (!E || E.rec) return;
+  const mime = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'].find(t => MediaRecorder.isTypeSupported(t)) || '';
+  const rec = new MediaRecorder(E.flux, { mimeType: mime, videoBitsPerSecond: 8e6 }), morceaux = [], t = stDuree();
+  rec.ondataavailable = e => { if (e.data.size) morceaux.push(e.data); };
+  E.rec = rec; E.fini = new Promise(ok => { rec.onstop = () => { studio && studio.ecranSegs.push({ blob: new Blob(morceaux, { type: mime || 'video/webm' }), mime, t, fin: E.finT, pos: E.pos }); ok(); }; });
+  rec.start(1000); if (studio.pauseDebut) rec.pause();
+}
+async function stEcranRecStop() { const E = studio && studio.direct.ecran; if (!E || !E.rec) return; E.finT = stDuree(); const p = E.fini; if (E.rec.state !== 'inactive') E.rec.stop(); E.rec = null; await p; }
+async function stEcranStop() { const E = studio.direct.ecran; if (!E) return; await stEcranRecStop(); E.flux.getTracks().forEach(t => t.stop()); E.el.remove(); studio.direct.ecran = null; }
+// au début de la prise : ce qui est déjà affiché commence à 0
+function stDirectDebut() {
+  const D = studio.direct;
+  for (const k of ['media', 'texte', 'logo']) if (D[k]) { D[k].evt = { ...D[k].evt, t: 0, fin: null }; studio.evts.push(D[k].evt); }
+  if (D.ecran) stEcranRec();
+}
+// Texte en direct → image PNG (même style que l'aperçu), ajoutée aux médias pour devenir un calque
+async function stTexteImage(txt) {
+  const c = document.createElement('canvas'), g = c.getContext('2d'), taille = 64, pad = 34, bord = 22;
+  g.font = `700 ${taille}px system-ui, -apple-system, sans-serif`;
+  const lignes = []; let l = '';
+  for (const m of txt.split(/\s+/)) { const e = l ? l + ' ' + m : m; if (g.measureText(e).width > 1500 && l) { lignes.push(l); l = m; } else l = e; }
+  lignes.push(l);
+  const w = Math.ceil(Math.max(...lignes.map(x => g.measureText(x).width))) + pad * 2 + bord, h = lignes.length * taille * 1.25 + pad * 1.4;
+  c.width = w; c.height = Math.ceil(h);
+  g.fillStyle = '#5b3df5'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, c.height, 14) : g.rect(0, 0, w, c.height); g.fill();
+  g.fillStyle = '#d7f24a'; g.fillRect(0, 0, bord, c.height);
+  g.font = `700 ${taille}px system-ui, -apple-system, sans-serif`; g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  lignes.forEach((x, i) => g.fillText(x, bord / 2 + w / 2, pad * 0.7 + taille * 1.25 * (i + 0.5)));
+  const blob = await new Promise(ok => c.toBlob(ok, 'image/png'));
+  const j = await (await api('/api/import?name=' + enc('texte-direct-' + Date.now() + '.png'), { method: 'POST', body: blob })).json();
+  return { file: j.file, ratio: w / c.height };
+}
+
 // Après la prise : les animations deviennent des calques du clip, le nom un bandeau de reportage
 function stAppliquerAnimations(c, evts) {
   for (const e of evts) {
     if (e.id === 'nom') { if (!c.titre) c.titre = { preset: 'tiers', l1: studio.o.nom, l2: studio.o.role, color: '#5b3df5', font: 'arial', start: +e.t.toFixed(2), dur: 5, speed: 14 }; continue; }
+    const dur = e.fin != null ? Math.max(0.3, +(e.fin - e.t).toFixed(2)) : 0;
+    if ((e.id === 'media' || e.id === 'logo' || e.id === 'texte') && e.file && c.overlays.length < 16) {
+      c.overlays.push({ file: e.file, kind: e.kind === 'video' ? 'video' : 'image', x: e.x ?? 50, y: e.y ?? 14, scale: e.s ?? 60, rot: 0, opacity: 100, start: +e.t.toFixed(2), dur, anim: e.id === 'logo' ? 'none' : 'pop', mode: '', plein: e.s >= 100 ? 'remplir' : '', key: false, keySim: 0.3 });
+      continue;
+    }
     const a = ANIM_DIRECT.find(x => x.id === e.id), it = LIB().fondvert.find(x => x.id === e.id);
-    if (!a || c.overlays.length >= 8) continue;
+    if (!a || c.overlays.length >= 16) continue;
     c.overlays.push({ file: `lib:fondvert/${a.id}.mp4`, kind: 'video', x: a.x, y: a.y, scale: a.s, rot: 0, opacity: 100, start: +e.t.toFixed(2), dur: (it && it.duree) || 3, anim: 'none', mode: '', plein: '', key: true, keySim: 0.3 });
   }
 }
@@ -2838,7 +2959,7 @@ async function ouvrirStudio() {
   if (studio) return;
   if (!navigator.mediaDevices || !window.MediaRecorder) return alert('La caméra n’est pas disponible dans cette fenêtre.');
   stopLecture();
-  studio = { o: stLire(), appareils: [], flux: null, rec: null, defil: false, pos: 0, t0: 0, raf: 0, evts: [] };
+  studio = { o: stLire(), appareils: [], flux: null, rec: null, defil: false, pos: 0, t0: 0, raf: 0, evts: [], direct: {}, ecranSegs: [] };
   $('#studio').classList.add('on');
   try { await stFlux(); }
   catch (e) {
@@ -2869,6 +2990,7 @@ function fermerStudio() {
   if (!studio) return;
   if (studio.rec) { if (!confirm('Un enregistrement est en cours. Arrêter et l’ajouter à la timeline ?')) return; studio.fermerApres = true; if (studio.pauseDebut) stPause(); studio.rec.stop(); return; }
   cancelAnimationFrame(studio.raf); if (studio.flux) studio.flux.getTracks().forEach(t => t.stop()); if (studio.ctx) studio.ctx.close().catch(() => {});
+  if (studio.direct && studio.direct.ecran) studio.direct.ecran.flux.getTracks().forEach(t => t.stop());
   if (studio.decor && studio.decor.pause) studio.decor.pause();
   if (studio.rvfc) $('#stVideo').cancelVideoFrameCallback(studio.rvfc); stArreterDetoureur();
   $('#stAnim').innerHTML = ''; $('#stLumiere').classList.remove('on');
@@ -2896,7 +3018,7 @@ async function stEnregistrer() {
   const morceaux = []; rec.ondataavailable = e => { if (e.data.size) morceaux.push(e.data); };
   rec.onerror = e => stMsg(`<span class="err">Erreur d’enregistrement : ${esc((e.error && e.error.message) || 'inconnue')}</span>`);
   rec.onstop = () => stEnvoyer(morceaux, mime);
-  studio.rec = rec; studio.evts = []; studio.t0 = Date.now(); studio.pauseCumul = 0; studio.pauseDebut = 0; rec.start(1000);
+  studio.rec = rec; studio.evts = []; studio.ecranSegs = []; studio.t0 = Date.now(); studio.pauseCumul = 0; studio.pauseDebut = 0; rec.start(1000); stDirectDebut();
   $('#stRec').textContent = '■ Arrêter'; $('#stRec').classList.add('enreg'); $('#stPause').hidden = false;
   if (studio.o.defilAuto && (proj.prompteur || '').trim()) { studio.pos = 0; stPlacer(); stDefiler(true); }
 }
@@ -2905,19 +3027,21 @@ function stPause() {
   if (!studio || !studio.rec || studio.rec.state === 'inactive') return;
   const b = $('#stPause');
   if (studio.rec.state === 'recording') {
-    studio.rec.pause(); studio.pauseDebut = Date.now(); studio.defilAvantPause = studio.defil; stDefiler(false);
+    studio.rec.pause(); studio.pauseDebut = Date.now(); const er = studio.direct.ecran && studio.direct.ecran.rec; if (er && er.state === 'recording') er.pause(); studio.defilAvantPause = studio.defil; stDefiler(false);
     b.textContent = '▶ Reprendre'; b.classList.add('on'); $('#stRec').classList.add('pause'); $('#stTemps').classList.add('pause');
     stMsg('⏸ Enregistrement en pause : rien n’est enregistré. Reprends avec « Reprendre » (P).');
   } else {
-    studio.pauseCumul += Date.now() - studio.pauseDebut; studio.pauseDebut = 0; studio.rec.resume();
+    studio.pauseCumul += Date.now() - studio.pauseDebut; studio.pauseDebut = 0; studio.rec.resume(); const er = studio.direct.ecran && studio.direct.ecran.rec; if (er && er.state === 'paused') er.resume();
     if (studio.defilAvantPause) stDefiler(true);
     b.textContent = '⏸ Pause'; b.classList.remove('on'); $('#stRec').classList.remove('pause'); $('#stTemps').classList.remove('pause');
     stMsg('● Enregistrement repris.');
   }
 }
 async function stEnvoyer(morceaux, mime) {
+  const finPrise = stDuree(); await stEcranRecStop(); // l'écran partagé s'arrête avec la prise
   const st = studio; st.rec = null; st.pauseDebut = 0; $('#stPause').hidden = true; $('#stPause').classList.remove('on'); $('#stPause').textContent = '⏸ Pause'; $('#stTemps').classList.remove('pause'); $('#stRec').classList.remove('pause'); if (st.piste) { st.piste.stop(); st.piste = null; } st.envoi = true; stDefiler(false);
-  const evts = st.evts.slice(); st.evts = [];
+  const evts = st.evts.slice(); st.evts = []; evts.forEach(e => { if (e.fin == null && ['media', 'texte', 'logo'].includes(e.id)) e.fin = finPrise; });
+  const segsEcran = st.ecranSegs.splice(0);
   $('#stRec').textContent = '● Enregistrer'; $('#stRec').classList.remove('enreg');
   const blob = new Blob(morceaux, { type: mime || 'video/webm' });
   stMsg('Préparation de la prise…');
@@ -2927,8 +3051,26 @@ async function stEnvoyer(morceaux, mime) {
     const j = await (await api('/api/import?name=' + enc(nom), { method: 'POST', body: blob })).json();
     await chargerMedias();
     const m = medias.find(x => x.file === j.file);
-    if (m) { const c = newClip(m); stAppliquerAnimations(c, evts); proj.clips.push(c); sel = proj.clips.length - 1; selA = -1; selP = -1; commit(); tout(); placerTete(starts()[sel]); }
-    stMsg(`✅ Prise ajoutée à la fin de la timeline (${fmt(m ? m.duration : 0)})${evts.length ? `, avec ${evts.length} animation${evts.length > 1 ? 's' : ''}` : ''}.`);
+    for (const e of evts) if (e.id === 'texte') { try { const r = await stTexteImage(e.txt); e.file = r.file; e.x = 50; e.y = 12; e.s = Math.min(86, Math.max(30, r.ratio * 9)); } catch (er) { /* texte ignoré */ } }
+    await chargerMedias();
+    if (m) {
+      const c = newClip(m); stAppliquerAnimations(c, evts); proj.clips.push(c); sel = proj.clips.length - 1; selA = -1; selP = -1;
+      // écrans partagés : convertis en MP4 puis posés dans la piste vidéo 2, au même moment que dans la prise
+      const debut = starts()[sel];
+      for (const [k, sg] of segsEcran.entries()) {
+        if (sg.blob.size < 2000) continue;
+        try {
+          stMsg(`Préparation de l’écran partagé${segsEcran.length > 1 ? ` (${k + 1}/${segsEcran.length})` : ''}…`);
+          const ext2 = /mp4/.test(sg.mime) ? 'mp4' : 'webm', j2 = await (await api('/api/import?name=' + enc('camera-ecran-' + Date.now() + '.' + ext2), { method: 'POST', body: sg.blob })).json();
+          await chargerMedias(); const me = medias.find(x => x.file === j2.file); if (!me) continue;
+          const pp = ST_POS[sg.pos] || ST_POS['grand-droite'], du = Math.max(0.3, (sg.fin ?? finPrise) - sg.t);
+          proj.pistes = proj.pistes || [];
+          proj.pistes.push({ file: me.file, kind: 'video', start: +(debut + sg.t).toFixed(2), in: 0, out: +Math.min(me.duration || du, du).toFixed(2), dur: 4, plein: pp.s >= 100, x: pp.x, y: pp.y, scale: pp.s, forme: 'arrondi', bord: '#ffffff', opacity: 100, vol: 0, hasAudio: false, anim: 'fondu' });
+        } catch (er) { stMsg(`<span class="err">Écran partagé non ajouté : ${esc(er.message)}</span>`); }
+      }
+      commit(); tout(); placerTete(debut);
+    }
+    stMsg(`✅ Prise ajoutée à la fin de la timeline (${fmt(m ? m.duration : 0)})${evts.length ? `, avec ${evts.length} élément${evts.length > 1 ? 's' : ''} en direct` : ''}${segsEcran.length ? ' et l’écran partagé (piste vidéo 2)' : ''}.`);
     const po = paroleOpts();
     if (m && (po.priseSous || po.priseCoupe)) { // sous-titres et coupe automatiques de la prise (pendant qu'on continue)
       parolePourClips([proj.clips.length - 1], { sous: po.priseSous, couper: po.priseCoupe, style: po.style }, t => { if (studio) stMsg(t); else aide(t); })
@@ -2946,6 +3088,7 @@ $('#stPrompt').onclick = () => stDefiler();
 $('#stPrompt').addEventListener('wheel', e => { e.preventDefault(); studio.pos += e.deltaY; stPlacer(); }, { passive: false });
 $('#stPanneau').addEventListener('click', e => {
   const b = e.target.closest('[data-anim]'); if (b) return stAnimer(b.dataset.anim);
+  const d = e.target.closest('[data-direct]'); if (d) return stDirect(d.dataset.direct);
   if (e.target.id === 'stCle') stCleAuto();
 });
 $('#stPanneau').addEventListener('input', e => {
@@ -2954,7 +3097,7 @@ $('#stPanneau').addEventListener('input', e => {
   if (t.id === 'stScript') { proj.prompteur = t.value; commit(true); stStyle(); return; }
   const champ = { stVert: 'vertMode', stDet: 'detourage', stSync: 'synchro', stSeul: 'seul', stSeuil: 'seuil', stContour: 'contour', stHalo: 'halo', stLum: 'lumiere', stChaleur: 'chaleur',
     stLed: 'led', stLedForce: 'ledForce', stLedLarg: 'ledLargeur', stLedTeinte: 'ledTeinte', stNom: 'nom', stRole: 'role',
-    stVit: 'vitesse', stTaille: 'taille', stLarg: 'largeur', stOpa: 'opacite', stMirTxt: 'miroirTxt', stMirImg: 'miroirImg', stCpt: 'compte', stAuto: 'defilAuto', stQual: 'qualite', stEnc: 'enc', stBruit: 'bruit', stCam: 'camera', stMic: 'micro' }[t.id];
+    stVit: 'vitesse', stTaille: 'taille', stLarg: 'largeur', stOpa: 'opacite', stMirTxt: 'miroirTxt', stMirImg: 'miroirImg', stCpt: 'compte', stAuto: 'defilAuto', stQual: 'qualite', stEnc: 'enc', stBruit: 'bruit', stCam: 'camera', stMic: 'micro', stDMedia: 'directMedia', stDPos: 'directPos', stTextes: 'textes', stLogo: 'logo', stLogoPos: 'logoPos', stEcranPos: 'ecranPos' }[t.id];
   if (!champ) return; o[champ] = v; stGarder(o);
   const lab = $('#' + t.id + 'V'); if (lab) lab.textContent = v + ({ stTaille: ' px', stLedLarg: ' px', stLarg: ' %', stOpa: ' %', stHalo: ' %', stLum: ' %', stLedForce: ' %' }[t.id] || '');
   if (['stCam', 'stMic', 'stQual', 'stBruit'].includes(t.id)) { if (studio.rec) return alert('Arrête d’abord l’enregistrement.'); stFlux().catch(er => alert('Appareil indisponible : ' + er.message)); }
@@ -2968,6 +3111,10 @@ function toucheStudio(e) {
   if (k === 'Escape') return f(fermerStudio);
   if (kl === 'r') return f(stEnregistrer);
   if (kl === 'p') return f(stPause);
+  if (kl === 'm') return f(() => stDirect('media'));
+  if (kl === 't') return f(() => stDirect('texte'));
+  if (kl === 'o') return f(() => stDirect('logo'));
+  if (kl === 'e') return f(() => stDirect('ecran'));
   if (kl === 'l') return f(() => { studio.o.led = !studio.o.led; stGarder(studio.o); const b = $('#stLed'); if (b) b.checked = studio.o.led; stStyle(); });
   if (kl === 'n') return f(() => stAnimer('nom'));
   const a = ANIM_DIRECT.find(x => x.t === k); if (a) return f(() => stAnimer(a.id));
@@ -2977,7 +3124,7 @@ function toucheStudio(e) {
 }
 
 const RACCOURCIS = [
-  ['Lecture', [['Espace', 'Lire / pause (avec les effets)'], ['⌥ Espace', 'Lire le clip sans effets'], ['J / L', 'Reculer / avancer d’1 seconde'], ['K', 'Pause'], ['← / →', 'Image précédente / suivante'], ['⇧ ← / →', '1 seconde'], ['↑ / ↓', 'Clip précédent / suivant'], ['Début / Fin', 'Début / fin de la timeline'], ['F', 'Plein écran de la visionneuse'], [M + ' R', 'Aperçu avec effets'], ['⇧' + M + ' R', 'Me filmer (caméra, micro, prompteur)'], ['R / P (studio)', 'Enregistrer ou arrêter / mettre en pause et reprendre la prise'], ['⇧' + M + ' G', 'Générer une vidéo à partir d’un sujet']]],
+  ['Lecture', [['Espace', 'Lire / pause (avec les effets)'], ['⌥ Espace', 'Lire le clip sans effets'], ['J / L', 'Reculer / avancer d’1 seconde'], ['K', 'Pause'], ['← / →', 'Image précédente / suivante'], ['⇧ ← / →', '1 seconde'], ['↑ / ↓', 'Clip précédent / suivant'], ['Début / Fin', 'Début / fin de la timeline'], ['F', 'Plein écran de la visionneuse'], [M + ' R', 'Aperçu avec effets'], ['⇧' + M + ' R', 'Me filmer (caméra, micro, prompteur)'], ['R / P (studio)', 'Enregistrer ou arrêter / mettre en pause et reprendre la prise'], ['M / T / O / E (studio)', 'Afficher en direct : image ou vidéo, texte suivant, logo, partage d’écran'], ['⇧' + M + ' G', 'Générer une vidéo à partir d’un sujet']]],
   ['Assistant et outils', [[M + ' K', 'Assistant de montage : dis ce que tu veux faire en français'], ['A', 'Outil Sélection'], ['B', 'Outil Lame (coupe là où tu cliques)'], ['N', 'Magnétisme activé / désactivé'], ['G', 'Grille des tiers sur la visionneuse'], ['Double-clic sur un repère', 'Le nommer (chapitres YouTube)']]],
   ['Montage', [['S ou ' + M + ' B', 'Couper à la tête de lecture'], ['D', 'Détacher le son du clip (piste audio à part)'], ['⇧ clic / ' + M + ' clic', 'Sélectionner plusieurs clips (détacher, supprimer, vitesse… en une fois)'], [M + ' A', 'Tout sélectionner'], ['Clic droit', 'Menu du clip : détacher le son, image fixe, vitesse, copier…'], ['I / O', 'Début / fin du clip à la tête de lecture'], ['Suppr', 'Supprimer le clip ou la piste'], [M + ' D', 'Dupliquer'], [M + ' [ / ]', 'Déplacer à gauche / droite'], [M + ' C / V', 'Copier / coller un clip'], ['⌥' + M + ' V', 'Coller seulement les effets'], ['M', 'Ajouter un repère'], ['[ / ]', 'Repère précédent / suivant']]],
   ['Fichier et affichage', [[M + ' N / O / S', 'Nouveau / ouvrir / enregistrer'], [M + ' I', 'Importer des médias'], [M + ' E', 'Exporter'], [M + ' Z / ⇧' + M + ' Z', 'Annuler / rétablir'], ['+ / −', 'Zoom de la timeline'], ['⇧ Z', 'Tout afficher'], [M + ' + molette', 'Zoom à la souris'], ['1 … 9', 'Onglets Médias, Effets, Transitions, Titres, Voix, Sons, Musique, Calques, Outils'], ['T', 'Titres'], ['?', 'Cette aide']]],

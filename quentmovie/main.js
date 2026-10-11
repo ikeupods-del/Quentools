@@ -1,6 +1,6 @@
 // QuentMovie : fenêtre de l'application Mac (Electron) autour du moteur de montage local.
 'use strict';
-const { app, BrowserWindow, Menu, shell, dialog, session, systemPreferences } = require('electron');
+const { app, BrowserWindow, Menu, shell, dialog, session, systemPreferences, desktopCapturer } = require('electron');
 const path = require('path');
 const { create } = require('./server');
 const { resolveFfmpeg } = require('./ffmpeg-path');
@@ -39,6 +39,12 @@ async function demarrer() {
     ok(true);
   });
   session.defaultSession.setPermissionCheckHandler((wc, perm, origin) => perm === 'media' && local((origin || '') + '/'));
+  // Partage d'écran du studio (« Afficher en direct ») : l'écran principal du Mac, sans le son
+  // (macOS demande une fois l'autorisation « Enregistrement de l'écran »)
+  session.defaultSession.setDisplayMediaRequestHandler((req, repondre) => {
+    if (!local((req.frame && req.frame.url) || (req.securityOrigin || '') + '/')) return repondre({});
+    desktopCapturer.getSources({ types: ['screen'] }).then(src => repondre(src[0] ? { video: src[0] } : {})).catch(() => repondre({}));
+  });
 
   win = new BrowserWindow({
     width: 1480, height: 920, minWidth: 1100, minHeight: 700, backgroundColor: '#141518', title: 'QuentMovie',
