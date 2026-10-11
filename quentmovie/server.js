@@ -79,6 +79,8 @@ function create(opts = {}) {
   const PACK_TYPES = { '.cube': 'luts', '.mp3': 'sons', '.wav': 'sons', '.m4a': 'sons', '.aif': 'sons', '.aiff': 'sons', '.flac': 'sons', '.ogg': 'sons', '.caf': 'sons',
     '.png': 'images', '.webp': 'images', '.jpg': 'images', '.jpeg': 'images', '.mp4': 'videos', '.mov': 'videos', '.m4v': 'videos', '.webm': 'videos' };
   const packCache = new Map();
+  let gen = null;
+  const GEN = () => gen || (gen = require('./generateur').creer({ run, FFMPEG, probe, MEDIAS, wiki: opts.wiki, commons: opts.commons }));
   async function scanPacks() {
     const files = [];
     const walk = (dir, depth) => {
@@ -695,6 +697,21 @@ function create(opts = {}) {
       if (p === '/api/maj') return send(res, 200, opts.maj ? opts.maj.etat() : { etat: 'inactif', version: VERSION_APP });
       if (req.method === 'POST' && p === '/api/maj/verifier') return send(res, 200, opts.maj ? opts.maj.verifier() : { etat: 'inactif', version: VERSION_APP });
       if (req.method === 'POST' && p === '/api/maj/installer') return send(res, 200, opts.maj ? opts.maj.installer() : { etat: 'inactif' });
+      // Générateur de vidéos : sujet → article Wikipédia → texte en scènes, images libres, voix off du Mac
+      if (req.method === 'GET' && p === '/api/generer/voix') { const v = await GEN().voix(); return send(res, 200, { voix: v, defaut: (v.find(x => /^Thomas/.test(x.nom)) || v.find(x => /fr_FR/.test(x.langue)) || v[0] || {}).nom || '' }); }
+      if (req.method === 'GET' && p === '/api/generer/chercher') return send(res, 200, await GEN().chercher(url.searchParams.get('q')));
+      if (req.method === 'POST' && p === '/api/generer/preparer') return send(res, 200, await GEN().preparer(await readJson(req)));
+      if (req.method === 'POST' && p === '/api/generer/creer') {
+        const body = await readJson(req);
+        if (!Array.isArray(body.scenes) || !body.scenes.length || body.scenes.length > 80) throw new Error('Rien à créer.');
+        const id = String(Date.now()) + Math.floor(Math.random() * 1000);
+        const job = { progress: 0, step: 'Préparation', out: null, url: null, error: null, done: false, resultat: null };
+        jobs.set(id, job);
+        GEN().fabriquer(job, { titre: String(body.titre || ''), scenes: body.scenes.map(x => ({ texte: String(x.texte || '').slice(0, 1200), image: Number.isInteger(x.image) ? x.image : -1 })),
+          images: (body.images || []).slice(0, 60), voix: String(body.voix || '').slice(0, 60), vitesse: clamp(num(body.vitesse, 175), 120, 260) })
+          .then(r => { job.resultat = r; job.progress = 100; job.done = true; }).catch(e => { job.error = e.message; });
+        return send(res, 200, { id });
+      }
       if (req.method === 'GET' && p === '/api/packs') return send(res, 200, { ...(await scanPacks()), dossier: PACKS });
       if (req.method === 'POST' && p === '/api/packs/ouvrir') { // ouvrir le dossier « Mes packs » dans le Finder
         if (process.platform === 'darwin') spawn('open', [PACKS]);
@@ -814,7 +831,7 @@ function create(opts = {}) {
       }
       if (req.method === 'GET' && p === '/api/job') {
         const job = jobs.get(url.searchParams.get('id'));
-        return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done }) : send(res, 404, { error: 'Export inconnu' });
+        return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done, resultat: job.resultat || null }) : send(res, 404, { error: 'Export inconnu' });
       }
       // Projets
       if (p === '/api/projet') { // enregistrement automatique

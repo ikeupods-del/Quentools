@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -8,7 +8,7 @@
   "scripts": {
     "start": "electron .",
     "serveur": "node server.js",
-    "test": "node tests/run.js && node tests/maj.js && node tests/compositeur.js",
+    "test": "node tests/run.js && node tests/maj.js && node tests/compositeur.js && node tests/generateur.js",
     "dist": "electron-builder --mac dmg --arm64 --publish never"
   },
   "dependencies": {
@@ -29,6 +29,7 @@
       "effects.js",
       "ffmpeg-path.js",
       "maj.js",
+      "generateur.js",
       "compositeur.js",
       "modeles/**",
       "!node_modules/@mediapipe/tasks-vision/*.map",

@@ -174,6 +174,7 @@ canvas{max-width:100%;max-height:60vh;cursor:crosshair;border-radius:8px;display
   <span class="mut" id="etat"></span>
   <select id="format" title="Format de l’image"><option value="vertical">Vertical 9:16</option><option value="horizontal">Horizontal 16:9</option><option value="carre">Carré 1:1</option></select>
   <button id="bAide" title="Raccourcis clavier (?)">⌨ Raccourcis</button>
+  <button id="bGenerer" title="Générer une vidéo à partir d’un sujet : texte, images, voix off (⇧⌘G)">✨ Générer</button>
   <button id="bStudio" title="Me filmer avec la caméra, le micro et le prompteur (⇧⌘R)">🎥 Me filmer</button>
   <button id="bApercu" title="Aperçu avec effets (⌘R)">🎞 Aperçu avec effets</button>
   <button class="pri" id="bExport" title="Exporter (⌘E)">Exporter…</button>
@@ -956,6 +957,8 @@ function outilsHtml() {
       <label class="l">Silence minimal<span id="oMinV">0,5 s</span></label><input type="range" id="oMin" min="0.2" max="2" step="0.1" value="0.5">
       <label class="l">Marge conservée<span id="oMarV">0,10 s</span></label><input type="range" id="oMar" min="0" max="0.4" step="0.02" value="0.1">
       <button class="pri" data-outil="silences" style="width:100%;margin-top:8px">Couper les silences du clip</button><div class="mut" id="oSilRes" style="margin-top:4px"></div></div>
+    <div class="encart"><h4>✨ Générer une vidéo</h4><p class="mut">Un sujet (« L’histoire de Michelin ») : texte tiré de Wikipédia, images libres, voix off, sous-titres et musique, montés automatiquement.</p>
+      <button class="pri" data-outil="generer" style="width:100%">Générer une vidéo (⇧${M}G)</button></div>
     <div class="encart"><h4>🎥 Me filmer avec le prompteur</h4><p class="mut">Caméra et micro du Mac, ton texte qui défile sous la caméra, compte à rebours. Chaque prise arrive dans la timeline.</p>
       <button class="pri" data-outil="studio" style="width:100%">Ouvrir le studio (⇧${M}R)</button></div>
     <div class="encart"><h4>🎙 Enregistrer une voix off</h4><p class="mut">Enregistre avec le micro du Mac ; le son arrive dans la piste audio à la tête de lecture.</p>
@@ -990,6 +993,7 @@ let micro = null;
 async function outil(nom) {
   if (nom === 'aide') return afficherAide();
   if (nom === 'studio') return ouvrirStudio();
+  if (nom === 'generer') return ouvrirGenerateur();
   if (nom === 'maj') return verifierMaj(true);
   if (nom === 'packs') { allerOnglet('outils'); const e = $('#encartPacks'); if (e) e.scrollIntoView({ block: 'start' }); return; }
   if (nom === 'packs-ouvrir') { const r = await (await api('/api/packs/ouvrir', { method: 'POST' })).json(); aide('Dossier « Mes packs » : ' + esc(r.dossier) + ' — ajoute tes fichiers puis clique sur « Actualiser ».'); return; }
@@ -1088,6 +1092,117 @@ $('#bExport').onclick = exporter;
 
 // ---------- Raccourcis clavier ----------
 const M = MAC ? '⌘' : 'Ctrl';
+// ---------- Générateur de vidéos : sujet → texte (Wikipédia), images libres, voix off du Mac, montage ----------
+let gen = null;
+const petiteImage = u => String(u || '').replace(/\/(\d+)px-/, '/400px-');
+async function ouvrirGenerateur() {
+  stopLecture();
+  gen = { voix: [], defaut: '', prep: null };
+  ouvrir(`<h2>✨ Générer une vidéo</h2>
+    <p class="mut">Donne un sujet : QuentMovie écrit le texte à partir de Wikipédia (des faits, rien d’inventé), trouve des images libres de droits, enregistre la voix off et monte la vidéo. Tu relis et tu modifies tout avant la création.</p>
+    <div class="ligne"><input type="text" id="gSujet" placeholder="Ex. : L’histoire de Michelin" style="flex:1"><select id="gDuree" style="flex:none;width:auto">${opts([['30', '30 s'], ['60', '1 min'], ['120', '2 min'], ['180', '3 min'], ['300', '5 min']], '60')}</select><button class="pri" id="gChercher" style="flex:none">Chercher</button></div>
+    <div id="gZone" style="margin-top:10px"></div>
+    <div class="ligne" style="margin-top:12px"><button id="gFermer">Fermer</button></div>`, true);
+  $('#gFermer').onclick = fermer; $('#gChercher').onclick = genChercher;
+  $('#gSujet').onkeydown = e => { if (e.key === 'Enter') genChercher(); };
+  $('#gSujet').focus();
+  api('/api/generer/voix').then(r => r.json()).then(r => { if (gen) { gen.voix = r.voix; gen.defaut = r.defaut; } }).catch(() => {});
+}
+async function genChercher() {
+  const q = $('#gSujet').value.trim(); if (!q) return;
+  const z = $('#gZone'); z.innerHTML = '<p class="mut">Recherche sur Wikipédia…</p>';
+  try {
+    const r = await (await api('/api/generer/chercher?q=' + enc(q))).json(); gen.sujet = r;
+    z.innerHTML = `<label class="l">Article utilisé pour « ${esc(r.titre)} »</label>` + r.resultats.map((x, i) => `<label class="sw2" style="align-items:flex-start;margin:6px 0"><input type="radio" name="gArt" value="${esc(x.titre)}" ${i ? '' : 'checked'}><span><b>${esc(x.titre)}</b><br><small class="mut">${esc(x.extrait)}…</small></span></label>`).join('') +
+      `<button class="pri" id="gPreparer" style="width:100%;margin-top:6px">Préparer le texte et les images</button>`;
+    $('#gPreparer').onclick = genPreparer;
+  } catch (e) { z.innerHTML = `<p class="err">${esc(e.message)}</p><p class="mut">Le générateur a besoin d’internet pour lire Wikipédia et télécharger les images.</p>`; }
+}
+async function genPreparer() {
+  const art = (document.querySelector('input[name="gArt"]:checked') || {}).value; if (!art) return;
+  const z = $('#gZone'); z.innerHTML = '<p class="mut">Lecture de l’article et recherche des images libres…</p>';
+  try {
+    gen.prep = await (await api('/api/generer/preparer', { method: 'POST', body: JSON.stringify({ article: art, duree: +$('#gDuree').value, titre: gen.sujet.titre }) })).json();
+    genEtape2();
+  } catch (e) { z.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+}
+function genEtape2() {
+  const p = gen.prep, im = p.images, mus = LIB().musiques;
+  const ligneScene = (s, i) => `<div class="fxrow" data-scene="${i}" style="display:flex;gap:8px;align-items:flex-start">
+      <div style="flex:none;width:120px;text-align:center">${s.image >= 0 && im[s.image] ? `<img src="${esc(petiteImage(im[s.image].url))}" alt="" style="width:120px;height:68px;object-fit:cover;border-radius:6px;display:block">` : '<div class="mut" style="height:68px;display:grid;place-items:center;background:#0003;border-radius:6px">sans image</div>'}
+        ${im.length > 1 ? `<button class="mini" data-gimg="${i}:-1" title="Image précédente">◀</button><button class="mini" data-gimg="${i}:1" title="Image suivante">▶</button>` : ''}</div>
+      <textarea rows="3" data-gtexte="${i}" style="flex:1">${esc(s.texte)}</textarea><button class="mini" data-gsuppr="${i}" title="Retirer cette scène">✕</button></div>`;
+  const mots = p.scenes.reduce((a, s) => a + s.texte.split(/\s+/).length, 0);
+  $('#gZone').innerHTML = `<label class="l">Titre de la vidéo</label><input type="text" id="gTitre" value="${esc(p.titre)}">
+    <p class="mut" style="margin:6px 0">${p.scenes.length} scènes · environ ${fmt(mots / 2.6)} de voix · ${im.length} image${im.length > 1 ? 's' : ''} libre${im.length > 1 ? 's' : ''} · source : Wikipédia, « ${esc(p.article)} ». Corrige le texte comme tu veux : chaque bloc est lu sur une image.</p>
+    <div id="gScenes" style="max-height:38vh;overflow:auto">${p.scenes.map(ligneScene).join('')}</div>
+    <div class="ligne" style="margin-top:8px"><label class="l" style="flex:none;margin:0">Voix</label><select id="gVoix">${gen.voix.length ? gen.voix.map(v => `<option value="${esc(v.nom)}" ${v.nom === gen.defaut ? 'selected' : ''}>${esc(v.nom)} (${esc(v.langue)})</option>`).join('') : '<option value="">Voix du Mac (disponibles dans l’application Mac)</option>'}</select><button id="gEcouter" style="flex:none">▶ Écouter</button></div>
+    <label class="l">Vitesse de la voix<span id="gVitV">175</span></label><input type="range" id="gVit" min="140" max="230" step="5" value="175">
+    <label class="l">Musique de fond</label><select id="gMus"><option value="">Sans musique</option>${mus.map(m => `<option value="${esc(m.file)}" ${/piano|ambiance/.test(m.id) ? 'selected' : ''}>${esc(m.nom)}</option>`).join('')}</select>
+    <div class="sw2"><input type="checkbox" id="gSous" checked><label for="gSous">Sous-titres</label></div>
+    <div class="sw2"><input type="checkbox" id="gOuv" checked><label for="gOuv">Écran titre au début</label></div>
+    <div class="sw2"><input type="checkbox" id="gGen" checked><label for="gGen">Générique avec les sources et les auteurs des images (obligatoire si tu publies)</label></div>
+    <p class="mut">La vidéo remplace le projet en cours (${MAC ? '⌘Z' : 'Ctrl+Z'} pour revenir). Astuce : de nouvelles voix françaises de meilleure qualité s’installent dans Réglages Système → Accessibilité → Contenu énoncé → Voix du système.</p>
+    <button class="pri" id="gCreer" style="width:100%">🎬 Créer la vidéo</button><div id="gProg" class="mut" style="margin-top:6px"></div>`;
+  const z = $('#gZone');
+  z.oninput = e => { const t = e.target; if (t.dataset.gtexte !== undefined) p.scenes[+t.dataset.gtexte].texte = t.value; if (t.id === 'gVit') $('#gVitV').textContent = t.value; };
+  z.onclick = e => {
+    const t = e.target, d = t.dataset;
+    if (d.gimg) { const [i, s] = d.gimg.split(':').map(Number); p.scenes[i].image = (p.scenes[i].image + s + im.length) % im.length; return genEtape2(); }
+    if (d.gsuppr !== undefined) { p.scenes.splice(+d.gsuppr, 1); return genEtape2(); }
+    if (t.id === 'gEcouter') { // aperçu de la voix (synthèse vocale du système)
+      const u = new SpeechSynthesisUtterance((p.scenes[0] || {}).texte || p.titre); u.lang = 'fr-FR'; u.rate = +$('#gVit').value / 175;
+      const v = speechSynthesis.getVoices().find(x => x.name.startsWith($('#gVoix').value)); if (v) u.voice = v; speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }
+    if (t.id === 'gCreer') genCreer();
+  };
+}
+async function genCreer() {
+  const p = gen.prep; p.titre = $('#gTitre').value.trim() || p.titre;
+  const o = { voix: $('#gVoix').value, vitesse: +$('#gVit').value, musique: $('#gMus').value, sous: $('#gSous').checked, ouv: $('#gOuv').checked, generique: $('#gGen').checked };
+  p.scenes = p.scenes.filter(s => s.texte.trim()); if (!p.scenes.length) return;
+  $('#gCreer').disabled = true; speechSynthesis.cancel();
+  try {
+    const { id } = await (await api('/api/generer/creer', { method: 'POST', body: JSON.stringify({ titre: p.titre, scenes: p.scenes, images: p.images, voix: o.voix, vitesse: o.vitesse }) })).json();
+    let j;
+    for (;;) {
+      await new Promise(r => setTimeout(r, 600));
+      j = await (await api('/api/job?id=' + id)).json();
+      if (j.error) throw new Error(j.error);
+      $('#gProg').innerHTML = `<progress max="100" value="${j.progress}" style="width:100%"></progress> ${esc(j.step || '')}`;
+      if (j.done) break;
+    }
+    await chargerMedias(); monterGeneree(j.resultat, p, o); fermer();
+    aide(`✅ Vidéo « ${esc(p.titre)} » créée : ${j.resultat.scenes.length} scènes. Relis-la avec <kbd>Espace</kbd>, puis exporte avec ${MAC ? '⌘E' : 'Ctrl+E'}.${j.resultat.synthese ? '' : ' (Voix off muette : la synthèse vocale n’existe que sur Mac.)'}`);
+  } catch (e) { $('#gProg').innerHTML = `<span class="err">${esc(e.message)}</span>`; $('#gCreer').disabled = false; }
+}
+// Sous-titres : la phrase est découpée en morceaux courts, affichés au rythme de la voix
+function sousTitresDe(texte, duree) {
+  const mots = texte.split(/\s+/).filter(Boolean), parts = []; let cur = [];
+  for (const m of mots) { cur.push(m); if (cur.length >= 7 || (cur.length >= 4 && /[,.;:!?]$/.test(m))) { parts.push(cur.join(' ')); cur = []; } }
+  if (cur.length) parts.push(cur.join(' '));
+  const utile = Math.max(0.5, duree - 0.6), total = mots.length; let t = 0;
+  return parts.map(x => { const d = utile * x.split(' ').length / total, s = { s: +t.toFixed(2), e: +(t + d).toFixed(2), t: x }; t += d; return s; });
+}
+function monterGeneree(r, p, o) {
+  const clips = [], mouvements = ['zoomavant', 'panoD', 'zoomarriere', 'panoG'];
+  if (o.ouv) { const c = newSolid('#0b1d3a', 3.5); c.titre = { preset: 'chapitre', l1: p.titre.toUpperCase(), l2: '', color: '#ffffff', font: 'arial', start: 0.3, dur: 0, speed: 14 }; c.transition = { type: 'fade', dur: 0.6 }; clips.push(c); }
+  r.scenes.forEach((s, i) => {
+    const c = base({ file: s.voix, kind: 'audio', in: 0, out: s.duree, hasAudio: true, bgFile: s.image, bgColor: '#101820', viz: { type: 'none', color: '#ffffff', pos: 'centre', h: 30 },
+      fx: [{ id: mouvements[i % mouvements.length], p: {} }], transition: { type: 'fade', dur: 0.6 } });
+    if (o.sous) { c.subs = sousTitresDe(s.texte, s.duree); c.subStyle = 'bandeau'; c.subSize = 4; }
+    clips.push(c);
+  });
+  if (o.generique) {
+    const c = newSolid('#000000', 10);
+    c.titre = { preset: 'generique', l1: ['SOURCES', `Texte : Wikipédia, « ${p.article} »`, 'licence CC BY-SA 4.0', '', 'IMAGES (Wikimedia Commons)', ...r.credits.slice(0, 14), '', 'VOIX OFF', 'Synthèse vocale', '', 'MONTAGE', 'QuentMovie'].join('\n'), l2: '', color: '#ffffff', font: 'arial', start: 0, dur: 0, speed: 14 };
+    clips.push(c);
+  }
+  if (clips.length) clips[clips.length - 1].transition = null;
+  proj.clips = clips; proj.audio = o.musique ? [{ file: 'lib:' + o.musique, vol: 22, start: 0, fade: true, loop: true, duck: true }] : []; proj.markers = [];
+  sel = 0; selA = -1; selCut = -1; commit(); tout(); fitZoom(); placerTete(0);
+}
+
 // ---------- Mises à jour automatiques (application Mac) ----------
 function boiteMaj(html) { const b = $('#majBox'); b.innerHTML = html; b.classList.toggle('on', !!html); }
 const notesMaj = n => n ? `<div class="notes mut">${esc(n.replace(/^#+.*$/gm, '').replace(/\n*Installation :[\s\S]*$/, '').trim())}</div>` : '';
@@ -1393,7 +1508,7 @@ async function stEnvoyer(morceaux, mime) {
   st.envoi = false;
   if (st.fermerApres) { studio = st; studio.rec = null; fermerStudio(); }
 }
-$('#bStudio').onclick = ouvrirStudio;
+$('#bStudio').onclick = ouvrirStudio; $('#bGenerer').onclick = ouvrirGenerateur;
 $('#stFermer').onclick = fermerStudio; $('#stRec').onclick = stEnregistrer; $('#stDefil').onclick = () => stDefiler();
 $('#stDebut').onclick = () => { studio.pos = 0; stPlacer(); };
 $('#stPrompt').onclick = () => stDefiler();
@@ -1430,7 +1545,7 @@ function toucheStudio(e) {
 }
 
 const RACCOURCIS = [
-  ['Lecture', [['Espace', 'Lire / pause (avec les effets)'], ['⌥ Espace', 'Lire le clip sans effets'], ['J / L', 'Reculer / avancer d’1 seconde'], ['K', 'Pause'], ['← / →', 'Image précédente / suivante'], ['⇧ ← / →', '1 seconde'], ['↑ / ↓', 'Clip précédent / suivant'], ['Début / Fin', 'Début / fin de la timeline'], ['F', 'Plein écran de la visionneuse'], [M + ' R', 'Aperçu avec effets'], ['⇧' + M + ' R', 'Me filmer (caméra, micro, prompteur)']]],
+  ['Lecture', [['Espace', 'Lire / pause (avec les effets)'], ['⌥ Espace', 'Lire le clip sans effets'], ['J / L', 'Reculer / avancer d’1 seconde'], ['K', 'Pause'], ['← / →', 'Image précédente / suivante'], ['⇧ ← / →', '1 seconde'], ['↑ / ↓', 'Clip précédent / suivant'], ['Début / Fin', 'Début / fin de la timeline'], ['F', 'Plein écran de la visionneuse'], [M + ' R', 'Aperçu avec effets'], ['⇧' + M + ' R', 'Me filmer (caméra, micro, prompteur)'], ['⇧' + M + ' G', 'Générer une vidéo à partir d’un sujet']]],
   ['Montage', [['S ou ' + M + ' B', 'Couper à la tête de lecture'], ['I / O', 'Début / fin du clip à la tête de lecture'], ['Suppr', 'Supprimer le clip ou la piste'], [M + ' D', 'Dupliquer'], [M + ' [ / ]', 'Déplacer à gauche / droite'], [M + ' C / V', 'Copier / coller un clip'], ['⌥' + M + ' V', 'Coller seulement les effets'], ['M', 'Ajouter un repère'], ['[ / ]', 'Repère précédent / suivant']]],
   ['Fichier et affichage', [[M + ' N / O / S', 'Nouveau / ouvrir / enregistrer'], [M + ' I', 'Importer des médias'], [M + ' E', 'Exporter'], [M + ' Z / ⇧' + M + ' Z', 'Annuler / rétablir'], ['+ / −', 'Zoom de la timeline'], ['⇧ Z', 'Tout afficher'], [M + ' + molette', 'Zoom à la souris'], ['1 … 9', 'Onglets Médias, Effets, Transitions, Titres, Voix, Sons, Musique, Calques, Outils'], ['T', 'Titres'], ['?', 'Cette aide']]],
   ['À la souris', [['Glisser un clip', 'Changer son ordre'], ['Bords d’un clip', 'Raccourcir ou rallonger'], ['Clic sur la règle', 'Placer la tête de lecture'], ['Glisser un effet', 'Le poser sur un clip'], ['⇧ clic sur un repère', 'Le supprimer']]]
@@ -1450,6 +1565,7 @@ document.addEventListener('keydown', e => {
     if (kl === 'b') return faire(couper); if (kl === 'd') return faire(dupliquer); if (kl === 'n') return faire(nouveau); if (kl === 'o') return faire(ouvrirProjet);
     if (kl === 's') return faire(sauver); if (kl === 'i') return faire(() => $('#fichiers').click()); if (kl === 'e') return faire(exporter);
     if (kl === 'r' && e.shiftKey) return faire(ouvrirStudio);
+    if (kl === 'g' && e.shiftKey) return faire(ouvrirGenerateur);
     if (kl === 'r') return faire(() => $('#bApercu').click()); if (kl === 'c') return faire(copier); if (kl === 'v') return faire(() => coller(e.altKey));
     if (k === '[') return faire(() => deplacer(-1)); if (k === ']') return faire(() => deplacer(1));
     return;
