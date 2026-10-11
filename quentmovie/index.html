@@ -124,6 +124,8 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 .cut.sel{box-shadow:0 0 0 2px #fff}
 .aud{position:absolute;top:3px;bottom:3px;border-radius:6px;background:var(--audio) center/100% 100% no-repeat;border:2px solid #0006;cursor:grab;overflow:hidden;font-size:11px;padding:3px 6px;white-space:nowrap;box-shadow:inset 0 0 0 100px #0a122340;touch-action:none}
 .aud.sel{border-color:#fff}
+.aud .hl,.aud .hr{position:absolute;top:0;bottom:0;width:7px;cursor:ew-resize;background:#fff3}.aud .hl{left:0}.aud .hr{right:0}.aud:hover .hl,.aud:hover .hr{background:#fff7}
+#guide{position:absolute;top:0;bottom:0;width:1px;background:#ffd24a;pointer-events:none;z-index:9}
 .piste.v2{height:52px;min-height:52px}
 .pv{position:absolute;top:3px;height:40px;border-radius:6px;background:#3b2f6b center/cover no-repeat;border:2px solid #0006;cursor:grab;overflow:hidden;font-size:11px;padding:3px 6px;white-space:nowrap;box-shadow:inset 0 0 0 100px #1a103c66;touch-action:none;color:#fff}
 .pv.sel{border-color:#fff}.pv i.hl,.pv i.hr{position:absolute;top:0;bottom:0;width:7px;cursor:ew-resize;background:#fff3}.pv i.hl{left:0}.pv i.hr{right:0}
@@ -677,7 +679,7 @@ function tlDessin() {
   $('#pA').style.height = (Math.max(1, fins.length) * 44 + 12) + 'px';
   $('#pA').innerHTML = (proj.audio.length ? '' : '<span class="vide2">Musique, voix off, bruitages : onglets Sons et Musique, ou glisse un son ici</span>') + proj.audio.map((a, i) => {
     const d = dureeAudio(a);
-    return `<div class="aud ${i === selA ? 'sel' : ''}" data-a="${i}" style="top:${8 + ligne[i] * 44}px;height:40px;bottom:auto;left:${(a.start || 0) * zoom}px;width:${Math.max(30, d * zoom)}px;background-image:url('/api/wave?file=${enc(a.file)}&w=1200&h=60${a.dur ? `&in=${a.in || 0}&dur=${a.dur}` : ''}')">${a.detache ? '🔊' : '🎵'} ${esc(nomOf(a.file))}${a.duck ? ' ⤵' : ''}</div>`;
+    return `<div class="aud ${i === selA ? 'sel' : ''}" data-a="${i}" style="top:${8 + ligne[i] * 44}px;height:40px;bottom:auto;left:${(a.start || 0) * zoom}px;width:${Math.max(30, d * zoom)}px;background-image:url('/api/wave?file=${enc(a.file)}&w=1200&h=60${a.dur ? `&in=${a.in || 0}&dur=${a.dur}` : ''}')">${a.detache ? '🔊' : '🎵'} ${esc(nomOf(a.file))}${a.duck ? ' ⤵' : ''}<i class="hl"></i><i class="hr"></i></div>`;
   }).join('');
   // pistes vidéo au-dessus : rangées automatiques, la plus haute passe devant
   const fv = [], lv = [];
@@ -786,12 +788,37 @@ $('#pV2').addEventListener('pointerdown', e => {
   const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); if (bouge) { commit(); inspecteur(); apercuRetarde(); } };
   document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
 });
+// Aimantation : le début ou la fin d'un son se colle à la tête de lecture, aux bords des clips, aux repères et aux autres sons (⌥ pour l'éviter)
+function pointsAimant(exclureAudio) {
+  const st = starts();
+  return [gt, 0, ...proj.clips.flatMap((c, i) => [st[i], st[i] + effDur(c)]), ...(proj.markers || []), ...proj.audio.flatMap((a, i) => (i === exclureAudio ? [] : [a.start || 0, (a.start || 0) + dureeAudio(a)]))];
+}
+function aimanter(t, pts, libre) {
+  if (libre) return { t, sur: null }; let best = t, d = 9 / zoom, sur = null;
+  for (const p of pts) if (Math.abs(p - t) < d) { d = Math.abs(p - t); best = p; sur = p; }
+  return { t: best, sur };
+}
+function guide(t) { let g = document.getElementById('guide'); if (t == null) { if (g) g.remove(); return; } if (!g) { g = document.createElement('div'); g.id = 'guide'; $('#lane').appendChild(g); } g.style.left = (t * zoom) + 'px'; }
 $('#pA').addEventListener('pointerdown', e => {
-  const el = e.target.closest('.aud'); if (!el) return;
-  selA = +el.dataset.a; selP = -1; sel = -1; selCut = -1; inspecteur(); tlDessin(); navigateur();
-  const a = proj.audio[selA], x0 = e.clientX, s0 = a.start || 0; let bouge = false;
-  const mv = ev => { bouge = true; a.start = Math.max(0, +(s0 + (ev.clientX - x0) / zoom).toFixed(1)); tlDessin(); };
-  const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); if (bouge) commit(); };
+  const el = e.target.closest('.aud'); if (!el || e.button === 2) return;
+  selA = +el.dataset.a; selP = -1; sel = -1; selCut = -1; selObjs.clear(); inspecteur(); tlDessin(); navigateur();
+  const a = proj.audio[selA], x0 = e.clientX, copie = clone(a), s0 = a.start || 0, V = a.vit || 1, D0 = a.dur || durOf(a.file), I0 = a.in || 0, i0 = selA;
+  const mode = e.target.classList.contains('hl') ? 'gauche' : e.target.classList.contains('hr') ? 'droite' : 'deplace', pts = pointsAimant(i0); let bouge = false;
+  const mv = ev => {
+    bouge = true; const ds = (ev.clientX - x0) / zoom, libre = ev.altKey; let sur = null;
+    if (mode === 'deplace') {
+      const d = D0 / V, c1 = aimanter(s0 + ds, pts, libre), c2 = aimanter(s0 + ds + d, pts, libre), utile = c1.sur !== null && (c2.sur === null || Math.abs(c1.t - (s0 + ds)) <= Math.abs(c2.t - d - (s0 + ds))) ? c1.t : c2.sur !== null ? c2.t - d : s0 + ds;
+      a.start = Math.max(0, +utile.toFixed(2)); sur = c1.sur !== null && Math.abs(utile - c1.t) < 1e-6 ? c1.sur : c2.sur;
+    } else if (mode === 'gauche') { // raccourcit ou rallonge par le début : le son garde sa place sur la timeline
+      const m = aimanter(s0 + ds, pts, libre); let ns = Math.max(0, m.t); const delta = ns - s0, nIn = I0 + delta * V, nDur = D0 - delta * V;
+      if (nIn >= 0 && nDur >= 0.2) { a.start = +ns.toFixed(2); a.in = +nIn.toFixed(2); a.dur = +nDur.toFixed(2); sur = m.sur; }
+    } else { // par la fin
+      const m = aimanter(s0 + D0 / V + ds, pts, libre), nDur = (m.t - s0) * V, max = a.loop ? 3600 : Math.max(0.2, durOf(a.file) - I0);
+      a.dur = +clamp(nDur, 0.2, max).toFixed(2); sur = m.sur;
+    }
+    guide(sur); tlDessin();
+  };
+  const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); guide(null); if (bouge) { commit(); inspecteur(); tlDessin(); apercuRetarde(); } };
   document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
 });
 ['dragover', 'drop'].forEach(ev => $('#scroll').addEventListener(ev, e => {
@@ -2554,7 +2581,7 @@ const RACCOURCIS = [
   ['Lecture', [['Espace', 'Lire / pause (avec les effets)'], ['⌥ Espace', 'Lire le clip sans effets'], ['J / L', 'Reculer / avancer d’1 seconde'], ['K', 'Pause'], ['← / →', 'Image précédente / suivante'], ['⇧ ← / →', '1 seconde'], ['↑ / ↓', 'Clip précédent / suivant'], ['Début / Fin', 'Début / fin de la timeline'], ['F', 'Plein écran de la visionneuse'], [M + ' R', 'Aperçu avec effets'], ['⇧' + M + ' R', 'Me filmer (caméra, micro, prompteur)'], ['⇧' + M + ' G', 'Générer une vidéo à partir d’un sujet']]],
   ['Montage', [['S ou ' + M + ' B', 'Couper à la tête de lecture'], ['D', 'Détacher le son du clip (piste audio à part)'], ['⇧ clic / ' + M + ' clic', 'Sélectionner plusieurs clips (détacher, supprimer, vitesse… en une fois)'], [M + ' A', 'Tout sélectionner'], ['Clic droit', 'Menu du clip : détacher le son, image fixe, vitesse, copier…'], ['I / O', 'Début / fin du clip à la tête de lecture'], ['Suppr', 'Supprimer le clip ou la piste'], [M + ' D', 'Dupliquer'], [M + ' [ / ]', 'Déplacer à gauche / droite'], [M + ' C / V', 'Copier / coller un clip'], ['⌥' + M + ' V', 'Coller seulement les effets'], ['M', 'Ajouter un repère'], ['[ / ]', 'Repère précédent / suivant']]],
   ['Fichier et affichage', [[M + ' N / O / S', 'Nouveau / ouvrir / enregistrer'], [M + ' I', 'Importer des médias'], [M + ' E', 'Exporter'], [M + ' Z / ⇧' + M + ' Z', 'Annuler / rétablir'], ['+ / −', 'Zoom de la timeline'], ['⇧ Z', 'Tout afficher'], [M + ' + molette', 'Zoom à la souris'], ['1 … 9', 'Onglets Médias, Effets, Transitions, Titres, Voix, Sons, Musique, Calques, Outils'], ['T', 'Titres'], ['?', 'Cette aide']]],
-  ['À la souris', [['Glisser un clip', 'Changer son ordre'], ['Bords d’un clip', 'Raccourcir ou rallonger'], ['Clic sur la règle', 'Placer la tête de lecture'], ['Glisser un effet', 'Le poser sur un clip'], ['⇧ clic sur un repère', 'Le supprimer']]]
+  ['À la souris', [['Glisser un clip', 'Changer son ordre'], ['Bords d’un clip', 'Raccourcir ou rallonger'], ['Bords d’un son', 'Raccourcir ou rallonger (le son garde sa place)'], ['Glisser un son', 'Se colle à la tête de lecture, aux clips et aux repères (⌥ pour éviter)'], ['Clic sur la règle', 'Placer la tête de lecture'], ['Glisser un effet', 'Le poser sur un clip'], ['⇧ clic sur un repère', 'Le supprimer']]]
 ];
 function afficherAide() {
   ouvrir(`<h2>⌨ Raccourcis clavier</h2><div class="raccourcis">${RACCOURCIS.map(([t, l]) => `<h3>${t}</h3>${l.map(([k, d]) => `<div><span>${esc(d)}</span><span><kbd>${esc(k)}</kbd></span></div>`).join('')}`).join('')}</div><button id="aOk" class="pri" style="margin-top:12px;width:100%">Fermer</button>`, true);
