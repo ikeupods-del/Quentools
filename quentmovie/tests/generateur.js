@@ -70,6 +70,7 @@ Référence un. Référence deux qui ne doit jamais être lue dans la vidéo.`;
     if (u.pathname.startsWith('/images/')) { res.writeHead(200, { 'Content-Type': 'image/jpeg' }); return res.end(fs.readFileSync(photo)); }
     res.setHeader('Content-Type', 'application/json');
     if (q.list === 'search') return res.end(JSON.stringify({ query: { search: [{ title: 'Michelin', snippet: '<span class="searchmatch">Michelin</span> est une entreprise' }, { title: 'Guide Michelin', snippet: 'Guide' }] } }));
+    if (q.prop === 'extracts' && q.exintro) return res.end(JSON.stringify({ query: { pages: q.titles.split('|').reverse().map(t => ({ title: t, extract: `${t} est une entreprise française fondée en 1889 à Clermont-Ferrand, connue pour ses pneumatiques et son guide gastronomique.` })) } }));
     if (q.prop === 'extracts|images|info') return res.end(JSON.stringify({ query: { pages: [{ title: q.titles, fullurl: 'https://fr.wikipedia.org/wiki/Michelin', extract: EXTRAIT,
       images: [{ title: 'Fichier:Michelin logo.svg' }, { title: 'Fichier:Usine Michelin 1900.jpg' }, { title: 'Fichier:Bibendum.jpg' }, { title: 'Fichier:Petit.jpg' }] }] } }));
     const info = (t, w, h, mime) => ({ title: t, imageinfo: [{ mime, width: w, height: h, url: `http://127.0.0.1:${port}/images/${encodeURIComponent(t)}`, thumburl: `http://127.0.0.1:${port}/images/1920px-${encodeURIComponent(t)}`, descriptionurl: 'https://commons.wikimedia.org/wiki/' + t,
@@ -82,6 +83,15 @@ Référence un. Référence deux qui ne doit jamais être lue dans la vidéo.`;
   const mock = `http://127.0.0.1:${srv.address().port}`;
   const app = create({ port: 0, base, ...bins, wiki: mock, commons: mock, ...(process.env.QM_SANS_FFPROBE ? { ffprobe: null } : {}) });
   const port = await app.start(), U = p => `http://127.0.0.1:${port}${p}`;
+
+  // sujet libre avec « S'appuyer sur Wikipédia » : les résumés des articles proches sont donnés à l'IA comme faits vérifiés
+  let recu = null; const iaF = { etat: () => ({ installee: true }), arreter: () => {}, ecrireScript: async a => { recu = a; return { titre: 'Michelin', gpu: '', regles: {}, scenes: [{ section: 'A', texte: 'Michelin fabrique des pneus.', sujet: 'pneu', recherche: 'tyre' }] }; } };
+  const appIa = create({ port: 0, base: path.join(base, 'ia'), ...bins, wiki: mock, commons: mock, ia: iaF, banques: { openverse: mock, nasa: mock } }), portIa = await appIa.start();
+  const job = await (await fetch(`http://127.0.0.1:${portIa}/api/generer/ia`, { method: 'POST', body: JSON.stringify({ titre: 'l’histoire de Michelin', duree: 30, wiki: true }) })).json();
+  let fini = null; for (let k = 0; k < 100 && !(fini && (fini.done || fini.error)); k++) { await new Promise(r => setTimeout(r, 100)); fini = await (await fetch(`http://127.0.0.1:${portIa}/api/job?id=${job.id}`)).json(); }
+  check('sujet libre : faits de Wikipédia transmis à l’IA (dans l’ordre de pertinence)', recu && /^Michelin : Michelin est une entreprise française fondée en 1889/.test(recu.contexte) && /Guide Michelin :/.test(recu.contexte), recu && recu.contexte);
+  check('sujet libre : articles cités dans les sources', fini && fini.resultat && JSON.stringify(fini.resultat.regles.sources) === '["Michelin","Guide Michelin"]', JSON.stringify(fini));
+  appIa.stop();
 
   const ch = await (await fetch(U('/api/generer/chercher?q=' + encodeURIComponent('génère moi une vidéo sur l’histoire de Michelin')))).json();
   check('recherche Wikipédia', ch.resultats && ch.resultats[0].titre === 'Michelin' && !/</.test(ch.resultats[0].extrait), JSON.stringify(ch));

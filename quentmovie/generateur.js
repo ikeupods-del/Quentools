@@ -317,8 +317,20 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     if (!page || !page.extract) throw new Error('Article introuvable sur Wikipédia.');
     return construireScenes(page.extract, Math.min(600, Math.max(20, duree)));
   }
+  // Sujet libre : résumés des 3 articles Wikipédia les plus proches, donnés à l'IA comme faits vérifiés (elle n'invente plus, elle s'appuie dessus)
+  async function contexte(phrase) {
+    try {
+      const s = sujetDe(phrase); if (!s.recherche) return { texte: '', articles: [] };
+      const j = await api(wiki, { action: 'query', list: 'search', srsearch: s.recherche, srlimit: '3', srprop: '' });
+      const titres = ((j.query && j.query.search) || []).map(r => r.title);
+      if (!titres.length) return { texte: '', articles: [] };
+      const e = await api(wiki, { action: 'query', prop: 'extracts', exintro: '1', explaintext: '1', titles: titres.join('|'), redirects: '1' });
+      const pages = ((e.query && e.query.pages) || []).filter(p => p.extract && p.extract.length > 80).sort((a, b) => titres.indexOf(a.title) - titres.indexOf(b.title));
+      return { texte: pages.map(p => `${p.title} : ${p.extract.replace(/\s+/g, ' ').slice(0, 900)}`).join('\n'), articles: pages.map(p => p.title) };
+    } catch (err) { return { texte: '', articles: [] }; }
+  }
   const lireMac = async (texte, fichier, v) => { const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-essai-')); try { return await lire(texte, fichier, { voix: v }, dir); } finally { fs.rmSync(dir, { recursive: true, force: true }); } };
-  return { chercher, preparer, voix, fabriquer, lireMac, faits, mediasPour, imagesDeScenes, proposer };
+  return { chercher, contexte, preparer, voix, fabriquer, lireMac, faits, mediasPour, imagesDeScenes, proposer };
 }
 
 module.exports = { creer, sujetDe, phrases, nettoyerPhrase, construireScript, construireScenes, choisirImages, imageDe };

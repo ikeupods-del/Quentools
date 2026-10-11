@@ -288,6 +288,9 @@ body.lame #pV .clip,body.lame #pA .aud{cursor:crosshair}
 .cut{background:#2a2a2e;border-color:#6b6b74}.cut.on{background:var(--ac)}
 #boite{background:#222225;border-color:#000;box-shadow:0 20px 60px #000c}
 #menuCtx{background:#26262a;border-color:#000}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chip{font-size:11.5px;padding:4px 9px;border-radius:999px;background:#2c2c30;border:1px solid #3a3a40;color:#cfd0d6}.chip:hover{border-color:var(--sel,#f5c518);color:#fff}
+.asListe{display:flex;flex-direction:column;gap:4px}.asEtape,.asSug{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:8px;background:#1b1b1e;border:1px solid #303036}.asEtape span,.asSug span{flex:1}.asEtape em{font-style:normal;font-size:11.5px;max-width:45%}
 </style>
 </head>
 <body>
@@ -1560,7 +1563,7 @@ async function detecterPlans(toutes) {
     res(`🎬 ${total} changement${total > 1 ? 's' : ''} de plan trouvé${total > 1 ? 's' : ''} : la vidéo est découpée, chaque plan se règle, se déplace ou se supprime à part.`);
   } catch (e) { res(`<span class="err">${esc(e.message)}</span>`); }
 }
-async function rythmeMusique(mode) {
+async function rythmeMusique(mode, nTemps) {
   const a = proj.audio[selA >= 0 ? selA : proj.audio.findIndex(x => !x.detache)] || proj.audio[0], res = t => { const e = $('#oRythmeRes'); if (e) e.innerHTML = t; aide(t); };
   if (!a) return res('Ajoute d’abord une musique dans la piste audio (onglet Musique), puis reviens ici.');
   res('Écoute de la musique…');
@@ -1572,7 +1575,7 @@ async function rythmeMusique(mode) {
       const nv = temps.slice(0, 300).filter(t => !proj.markers.some(m => Math.abs(m - t) < 0.05)).map(t => +t.toFixed(2)); proj.markers = [...proj.markers, ...nv].sort((x, y) => x - y); commit(); tlDessin();
       return res(`🎵 Tempo : ${Math.round(r.bpm)} pulsations par minute. ${nv.length} repères posés sur les temps (touches [ et ] pour les parcourir).`);
     }
-    const N = +($('#oTemps') ? $('#oTemps').value : 4) || 4, grille = temps.filter((_, k) => k % N === 0); let t = 0, n = 0;
+    const N = +(nTemps || ($('#oTemps') ? $('#oTemps').value : 4)) || 4, grille = temps.filter((_, k) => k % N === 0); let t = 0, n = 0;
     if (!grille.length) throw new Error('Pas assez de temps forts pour caler les images.');
     for (const c of proj.clips) {
       if (c.kind === 'image' || c.kind === 'solid') { const fin2 = grille.find(g => g >= t + Math.max(1, grille.length > 1 ? (grille[1] - grille[0]) * 0.6 : 1)); if (fin2) { c.dur = +(fin2 - t).toFixed(2); n++; } }
@@ -1583,8 +1586,8 @@ async function rythmeMusique(mode) {
   } catch (e) { res(`<span class="err">${esc(e.message)}</span>`); }
 }
 // Dynamiser : un plan sur deux est légèrement zoomé (effet « jump cut » des vidéos parlées, utile après avoir coupé les blancs)
-function dynamiserZooms(retirer) {
-  const z = +($('#oZoomNiv') ? $('#oZoomNiv').value : 120) || 120; let n = 0;
+function dynamiserZooms(retirer, niveau) {
+  const z = +(niveau || ($('#oZoomNiv') ? $('#oZoomNiv').value : 120)) || 120; let n = 0;
   proj.clips.forEach((c, i) => { if (c.kind !== 'video' && c.kind !== 'image') return; if (retirer) { if (c.zoom > 100) n++; c.zoom = 100; c.zx = 0; c.zy = 0; } else if (i % 2) { c.zoom = z; c.zx = 0; c.zy = -10; n++; } });
   commit(); tout(); apercu(); const t = n ? (retirer ? `Zooms retirés sur ${n} plan${n > 1 ? 's' : ''}.` : `⚡ ${n} plan${n > 1 ? 's' : ''} zoomé${n > 1 ? 's' : ''} (un sur deux) : la vidéo parlée a plus de rythme.`) : (retirer ? 'Aucun zoom à retirer.' : 'Il faut au moins deux plans (coupe d’abord la vidéo avec S ou « Couper les blancs »).'); const e = $('#oZoomRes'); if (e) e.textContent = t; aide(t);
 }
@@ -1592,8 +1595,8 @@ function egaliserVolumes() {
   let n = 0; proj.clips.forEach(c => { if ((c.kind === 'video' || c.kind === 'audio') && c.hasAudio !== false && !c.sonDetache && !c.afx.some(e => e.id === 'normaliser')) { c.afx.push({ id: 'normaliser', p: {} }); n++; } });
   commit(); tout(); apercu(); const e = $('#oEgalRes'); const t = n ? `🔊 Volume égalisé sur ${n} clip${n > 1 ? 's' : ''} : toutes les voix auront le même niveau à l’export.` : 'Tous les clips sont déjà égalisés.'; if (e) e.textContent = t; aide(t);
 }
-function transitionPartout() {
-  const t = $('#oTrAll').value; let n = 0;
+function transitionPartout(type) {
+  const t = type !== undefined ? type : ($('#oTrAll') ? $('#oTrAll').value : 'fade'); let n = 0;
   proj.clips.forEach((c, i) => { if (i < proj.clips.length - 1) { c.transition = t ? { type: t, dur: 0.6 } : null; n++; } });
   commit(); tout(); apercu(); const m = n ? (t ? `✨ Transition posée sur ${n} coupure${n > 1 ? 's' : ''}.` : `Transitions retirées (${n} coupures).`) : 'Il faut au moins deux clips.'; const e = $('#oTrAllRes'); if (e) e.textContent = m; aide(m);
 }
@@ -2006,6 +2009,133 @@ async function outil(nom) {
   }
 }
 
+// ---------- Assistant de montage (⌘K) : une demande en français → actions à cocher, suggestions, textes de publication ----------
+const sansAcc = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const MUS_AMB = { calme: 'Calme', douce: 'Calme', piano: 'Calme', lofi: 'Calme', acoustique: 'Calme', dynamique: 'Dynamique', energique: 'Dynamique', 'hip-hop': 'Dynamique', joyeuse: 'Dynamique', pop: 'Dynamique', electro: 'Dynamique', epique: 'Dramatique', cinema: 'Dramatique', suspense: 'Dramatique', triste: 'Dramatique' };
+function musiquePour(amb) {
+  const l = LIB().musiques, a = sansAcc(amb);
+  return (a && l.find(m => sansAcc(m.nom + ' ' + m.id).includes(a.replace('-', '')))) || l.find(m => m.cat === (MUS_AMB[a] || 'Calme')) || l[0];
+}
+const estMusiqueLib = a => /^lib:musiques\//.test(String(a.file));
+function resumeProjet() {
+  return { format: proj.format, markers: proj.markers, audio: proj.audio.map(a => ({ detache: !!a.detache || !estMusiqueLib(a) })),
+    clips: proj.clips.map(c => { const m = mediaOf(c.file) || {}; return { kind: c.kind, hasAudio: c.hasAudio, subs: c.subs || [], afx: c.afx || [], dur: effDur(c), w: m.w, h: m.h, cadrage: c.cadrage, fit: c.fit, zoom: c.zoom, sonDetache: c.sonDetache }; }) };
+}
+// texte de la vidéo (script généré, sous-titres, titres) : ce que l'assistant sait de son contenu
+function texteVideo() {
+  const l = []; if (proj.gen && proj.gen.texte) l.push(proj.gen.texte);
+  proj.clips.forEach(c => { (c.subs || []).forEach(s => l.push(s.t)); if (c.titre && c.titre.l1 && c.titre.preset !== 'generique') l.push(c.titre.l1); if (c.text) l.push(c.text); });
+  return [...new Set(l)].join(' ').replace(/\s+/g, ' ').trim().slice(0, 3000);
+}
+const MODALES = ['chapitres', 'publication', 'exporter'];
+async function executerAction(a) {
+  const p = a.parametre || '', tous = () => { selObjs = new Set(proj.clips); };
+  switch (a.action) {
+    case 'couper_blancs': return outilParole('tout', { sous: proj.clips.some(c => c.subs && c.subs.length), couper: true, style: paroleOpts().style });
+    case 'sous_titres': return outilParole('tout', { sous: true, couper: false, style: p === 'tiktok' ? 'tiktok' : paroleOpts().style });
+    case 'musique': { const m = musiquePour(p); if (!m) return aide('Aucune musique dans la bibliothèque.');
+      proj.audio = proj.audio.filter(x => !estMusiqueLib(x)); proj.audio.push({ file: 'lib:' + m.file, vol: 22, start: 0, fade: true, loop: true, duck: true });
+      commit(); tout(); apercu(); return aide(`🎵 Musique « ${esc(m.nom)} » ajoutée sur toute la vidéo, baissée automatiquement quand on parle.`); }
+    case 'retirer_musique': { const n = proj.audio.length; proj.audio = proj.audio.filter(x => !estMusiqueLib(x)); commit(); tout(); apercu(); return aide(n > proj.audio.length ? 'Musique retirée.' : 'Aucune musique de la bibliothèque à retirer.'); }
+    case 'format': { const f = ['vertical', 'horizontal', 'carre'].includes(p) ? p : 'vertical'; if (f === 'vertical') return outil('vertical');
+      proj.format = f; $('#format').value = f; commit(); tout(); apercu(); return aide(`Format ${f === 'carre' ? 'carré' : 'horizontal 16:9'}.`); }
+    case 'egaliser': return egaliserVolumes();
+    case 'transitions': return transitionPartout(CAT.transitions.some(t => t.id === p) ? p : 'fade');
+    case 'retirer_transitions': return transitionPartout('');
+    case 'dynamiser': return dynamiserZooms(false, clamp(+p || 120, 105, 150));
+    case 'ameliorer': return ameliorerClips(proj.clips.map((c, i) => i));
+    case 'plans': return detecterPlans(true);
+    case 'rythme': return rythmeMusique('caler', 4);
+    case 'reperes_rythme': return rythmeMusique('reperes');
+    case 'titre': { const t = p || (proj.gen && proj.gen.titre) || await demander('Texte de l’écran titre', ''); if (!t) return;
+      const c = newSolid('#0b1d3a', 3); c.titre = { preset: 'chapitre', l1: String(t).toUpperCase().slice(0, 60), l2: '', color: '#ffffff', font: 'arial', start: 0.3, dur: 0, speed: 14 }; c.transition = { type: 'fade', dur: 0.6 };
+      proj.clips.unshift(c); sel = 0; commit(); tout(); apercu(); return aide('🅣 Écran titre ajouté au début (modifiable dans l’inspecteur).'); }
+    case 'detacher': tous(); return detacherSelection();
+    case 'vitesse': { const v = clamp(+p || 1, 0.25, 4); tous(); vitesseSelection(v); selObjs.clear(); tout(); return aide(`Vitesse ×${String(v).replace('.', ',')} sur tous les clips vidéo et audio.`); }
+    case 'chapitres': return ouvrirChapitres();
+    case 'publication': return ouvrirPublication(p);
+    case 'exporter': return exporter();
+  }
+}
+async function appliquerPlan(actions, surEtat) {
+  const directes = actions.filter(a => !MODALES.includes(a.action)), modale = actions.find(a => MODALES.includes(a.action)), bilan = [];
+  for (const a of directes) {
+    surEtat(a, 'en cours');
+    try { await executerAction(a); bilan.push(`✔ ${a.libelle}`); surEtat(a, 'fait', $('#bar').innerHTML); } catch (e) { bilan.push(`✖ ${a.libelle} : ${e.message}`); surEtat(a, 'erreur', esc(e.message)); }
+  }
+  if (modale) { fermer(); await executerAction(modale); } else if (directes.length) aide(bilan.map(esc).join(' · '));
+}
+let derniereDemande = '';
+async function ouvrirAssistant(demande) {
+  const EX = ['Coupe les blancs et ajoute des sous-titres façon TikTok', 'Passe en vertical, ajoute une musique calme et égalise le son', 'Mets des transitions partout et dynamise la vidéo', 'Ajoute un écran titre « Mon voyage » puis exporte', 'Écris le titre, la description et les hashtags pour YouTube'];
+  ouvrir(`<h2>${icone('assistant')} Assistant de montage</h2>
+    <p class="mut">Dis ce que tu veux en français : l’assistant prépare les étapes, tu vérifies, puis il les fait pour toi. Tout s’annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'}.</p>
+    <textarea id="asDemande" rows="2" placeholder="ex. : coupe les blancs, ajoute des sous-titres et une musique calme, passe en vertical">${esc(demande || derniereDemande)}</textarea>
+    <div class="ligne" style="margin-top:8px"><button id="asFermer">Fermer</button><button class="pri" id="asComprendre">Préparer les étapes</button></div>
+    <div class="chips" id="asEx">${EX.map(x => `<button class="chip" data-ex="${esc(x)}">${esc(x)}</button>`).join('')}</div>
+    <div id="asPlan"></div>
+    <h4 style="margin:14px 0 4px">Suggestions pour ce montage</h4><div id="asSugg" class="mut">Analyse du montage…</div>`, 'large');
+  const champ = $('#asDemande'); champ.focus();
+  $('#asFermer').onclick = fermer;
+  $('#asEx').onclick = e => { const b = e.target.closest('[data-ex]'); if (b) { champ.value = b.dataset.ex; comprendre(); } };
+  champ.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); comprendre(); } };
+  $('#asComprendre').onclick = () => comprendre();
+  const montrer = (actions, note) => {
+    if (!actions.length) { $('#asPlan').innerHTML = `<p class="mut">${note || 'Je n’ai pas compris cette demande. Essaie avec des mots simples : « coupe les blancs », « ajoute une musique calme », « passe en vertical », « exporte ».'}</p>`; return; }
+    $('#asPlan').innerHTML = `<h4 style="margin:12px 0 4px">Étapes prévues${note ? ` <small class="mut">${esc(note)}</small>` : ''}</h4><div class="asListe">${actions.map((a, i) => `<label class="asEtape" data-i="${i}"><input type="checkbox" checked data-i="${i}"><span>${esc(a.libelle)}</span><em class="mut" data-etat="${i}"></em></label>`).join('')}</div>
+      <button class="pri" id="asGo" style="width:100%;margin-top:8px">Appliquer les étapes cochées</button>`;
+    $('#asGo').onclick = async () => {
+      const choisies = actions.filter((a, i) => $(`#asPlan input[data-i="${i}"]`).checked); if (!choisies.length) return;
+      $('#asGo').disabled = true;
+      await appliquerPlan(choisies, (a, etat, msg) => { const e = $(`#asPlan [data-etat="${actions.indexOf(a)}"]`); if (e) e.innerHTML = etat === 'en cours' ? '⏳ en cours…' : etat === 'fait' ? `✔ ${msg || ''}` : `<span class="err">✖ ${msg || ''}</span>`; });
+      const b = $('#asGo'); if (b) { b.disabled = false; b.textContent = 'Terminé : refaire'; } suggestions();
+    };
+  };
+  async function comprendre() {
+    const d = champ.value.trim(); if (!d) return champ.focus(); derniereDemande = d;
+    $('#asPlan').innerHTML = '<p class="mut">L’assistant prépare les étapes…</p>';
+    try { const r = await (await api('/api/assistant/comprendre', { method: 'POST', body: JSON.stringify({ demande: d, ia: true }) })).json(); montrer(r.actions || [], r.ia ? 'compris par l’IA locale' : r.erreur || ''); }
+    catch (e) { $('#asPlan').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+  }
+  async function suggestions() {
+    try {
+      const r = await (await api('/api/assistant/suggestions', { method: 'POST', body: JSON.stringify(resumeProjet()) })).json(), z = $('#asSugg'); if (!z) return;
+      const l = (r.suggestions || []).filter(s => s.action !== 'aucune');
+      z.innerHTML = l.length ? `<div class="asListe">${l.map((s, i) => `<div class="asSug"><span>${esc(s.libelle)}</span><button class="mini" data-sug="${i}">Faire</button></div>`).join('')}</div>` : esc(((r.suggestions || [])[0] || {}).libelle || 'Rien à signaler : le montage est prêt.');
+      z.onclick = async e => { const b = e.target.closest('[data-sug]'); if (!b) return; const s = l[+b.dataset.sug]; b.disabled = true; b.textContent = '…';
+        await appliquerPlan([{ ...s, libelle: s.libelle }], (a, etat) => { b.textContent = etat === 'fait' ? '✔' : etat === 'erreur' ? '✖' : '…'; }); if ($('#asSugg')) suggestions(); };
+    } catch (e) { const z = $('#asSugg'); if (z) z.textContent = ''; }
+  }
+  suggestions();
+  if (demande) comprendre();
+}
+// Titre, description et hashtags de publication, tirés du texte de la vidéo (IA locale, ou mots-clés les plus fréquents sans IA)
+async function ouvrirPublication(plateforme) {
+  const pf = ['YouTube', 'TikTok', 'Instagram'].includes(plateforme) ? plateforme : proj.format === 'vertical' ? 'TikTok' : 'YouTube';
+  ouvrir(`<h2>✍ Textes de publication</h2>
+    <p class="mut">Titre, description et hashtags écrits à partir du contenu de ta vidéo (texte généré et sous-titres). Relis-les toujours avant de publier.</p>
+    <label class="l">Plateforme</label><select id="puPf">${opts([['YouTube', 'YouTube'], ['TikTok', 'TikTok'], ['Instagram', 'Instagram (Reels)']], pf)}</select>
+    <label class="l">De quoi parle la vidéo ? (facultatif si elle a des sous-titres)</label><input type="text" id="puSujet" value="${esc((proj.gen && proj.gen.titre) || '')}" placeholder="ex. : visite de Lisbonne en 3 jours">
+    <div class="ligne" style="margin-top:8px"><button id="puFermer">Fermer</button><button class="pri" id="puGo">Écrire les textes</button></div><div id="puRes" style="margin-top:10px"></div>`, 'large');
+  $('#puFermer').onclick = fermer;
+  $('#puGo').onclick = async () => {
+    const texte = texteVideo(), titre = $('#puSujet').value.trim(), z = $('#puRes');
+    if (!texte && !titre) { z.innerHTML = '<p class="mut">Dis en quelques mots de quoi parle la vidéo, ou ajoute d’abord les sous-titres automatiques : l’assistant n’invente rien.</p>'; return; }
+    $('#puGo').disabled = true;
+    try {
+      const { id } = await (await api('/api/assistant/publication', { method: 'POST', body: JSON.stringify({ texte, titre, plateforme: $('#puPf').value }) })).json();
+      const r = await suivreTravail(id, j => { z.innerHTML = `<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`; });
+      const bloc = (nom, val) => `<label class="l">${nom}</label><div class="ligne"><textarea rows="${val.length > 90 ? 3 : 1}" readonly>${esc(val)}</textarea><button class="mini" data-copie="${esc(val)}">Copier</button></div>`;
+      z.innerHTML = (r.titres || []).map((t, i) => bloc(`Titre ${i + 1}`, t)).join('') + (r.description ? bloc('Description', r.description) : '') + ((r.hashtags || []).length ? bloc('Hashtags', r.hashtags.join(' ')) : '')
+        + (proj.markers.length >= 2 && $('#puPf').value === 'YouTube' ? '<p class="mut">Astuce : ajoute les chapitres (Outils → Chapitres YouTube) à la description.</p>' : '')
+        + (r.ia ? '' : '<p class="mut">Textes simples (l’IA locale n’est pas installée : ouvre « Générer » une fois pour l’installer et obtenir de meilleurs textes).</p>');
+      z.onclick = e => { const b = e.target.closest('[data-copie]'); if (!b) return; navigator.clipboard.writeText(b.dataset.copie).then(() => { b.textContent = 'Copié ✔'; }, () => { b.textContent = 'Sélectionne le texte'; }); };
+    } catch (e) { z.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+    const b = $('#puGo'); if (b) b.disabled = false;
+  };
+}
+$('#bAssistant').onclick = () => ouvrirAssistant();
+
 // ---------- Fenêtres : projets, export, aide ----------
 function ouvrir(html, large) { $('#boite').className = large === 'xl' ? 'xl' : large ? 'large' : ''; $('#boite').innerHTML = html; $('#modal').classList.add('on'); }
 function fermer() { $('#modal').classList.remove('on'); }
@@ -2016,7 +2146,7 @@ function demander(titre, defaut) {
     $('#sOk').onclick = () => fin(i.value.trim()); $('#sAnn').onclick = () => fin(null); i.onkeydown = e => { if (e.key === 'Enter') fin(i.value.trim()); if (e.key === 'Escape') fin(null); };
   });
 }
-async function nouveau() { if (proj.clips.length && !confirm('Commencer un nouveau projet ? Pense à enregistrer le projet actuel.')) return; proj = { ...proj, clips: [], audio: [], pistes: [], markers: [] }; sel = selA = selCut = selP = -1; gt = 0; rendu = null; commit(); tout(); apercu(); }
+async function nouveau() { if (proj.clips.length && !confirm('Commencer un nouveau projet ? Pense à enregistrer le projet actuel.')) return; proj = { ...proj, clips: [], audio: [], pistes: [], markers: [], gen: null, nomsReperes: {} }; sel = selA = selCut = selP = -1; gt = 0; rendu = null; commit(); tout(); apercu(); }
 async function sauver() { const n = await demander('Nom du projet', 'Mon montage'); if (!n) return; await api('/api/projets/' + enc(n), { method: 'PUT', body: snap() }); aide('Projet « ' + esc(n) + ' » enregistré.'); }
 async function ouvrirProjet() {
   const { items } = await (await api('/api/projets')).json();
@@ -2295,10 +2425,10 @@ async function genExpress() {
   try {
     let article = '', titre = idee;
     if ($('#xWiki').checked) { pr('Recherche sur Wikipédia…'); try { const r = await (await api('/api/generer/chercher?q=' + enc(idee))).json(); titre = r.titre || idee; const mot = String(r.recherche || '').split(/\s+/).sort((a, b) => b.length - a.length)[0] || ''; if (r.resultats && r.resultats[0] && mot.length > 2 && r.resultats[0].titre.toLowerCase().includes(mot.toLowerCase())) article = r.resultats[0].titre; } catch (e) { /* sujet libre */ } }
-    const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article, titre, duree, style, consigne: idee, medias: true, format, videos, options: gen.options = optionsGen() }) })).json();
+    const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article, titre, duree, style, consigne: idee, medias: true, format, videos, wiki: $('#xWiki').checked, options: gen.options = optionsGen() }) })).json();
     try { localStorage.setItem('qm:gen-options', JSON.stringify(gen.options)); } catch (e) { /* stockage indisponible */ }
     const r = await suivreTravail(id, j => pr(`<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`));
-    gen.prep = { titre: r.titre || titre, article, libre: r.libre, images: r.images || [], scenes: r.scenes }; gen.consigne = idee; gen.style = style;
+    gen.prep = { titre: r.titre || titre, article, libre: r.libre, images: r.images || [], scenes: r.scenes, sources: (r.regles && r.regles.sources) || [] }; gen.consigne = idee; gen.style = style;
     gen.express = { format, tiktok: format === 'vertical' }; gen.ia = { ...(gen.ia || {}), installee: true };
     $('#panX').style.display = 'none'; $('#tabX').style.display = 'none'; $('#tabG').style.display = 'none';
     genEtape2(); genRegles(r.regles); if ($('#gDuree')) $('#gDuree').value = String(duree);
@@ -2315,9 +2445,9 @@ function genRegles(r) {
 async function genIA() {
   const p = gen.prep, b = $('#gIA'); gen.style = $('#gStyle').value; gen.consigne = $('#gConsigne').value.trim(); b.disabled = true;
   try {
-    const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article: p.article, titre: p.titre, duree: +$('#gDuree').value || 60, style: gen.style, consigne: gen.consigne, options: gen.options || {}, images: p.images, format: gen.express ? gen.express.format : proj.format }) })).json();
+    const { id } = await (await api('/api/generer/ia', { method: 'POST', body: JSON.stringify({ article: p.article, titre: p.titre, duree: +$('#gDuree').value || 60, style: gen.style, consigne: gen.consigne, wiki: !p.article, options: gen.options || {}, images: p.images, format: gen.express ? gen.express.format : proj.format }) })).json();
     const r = await suivreTravail(id, j => { $('#gIAProg').innerHTML = `<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`; });
-    p.scenes = r.scenes; p.titre = r.titre || p.titre; gen.ia = { ...(gen.ia || {}), installee: true }; gen.regles = r.regles; genEtape2(); genRegles(r.regles);
+    p.scenes = r.scenes; p.titre = r.titre || p.titre; p.sources = (r.regles && r.regles.sources) || []; gen.ia = { ...(gen.ia || {}), installee: true }; gen.regles = r.regles; genEtape2(); genRegles(r.regles);
     $('#gIAProg').textContent = `✅ Script écrit par l’IA locale (${r.scenes.length} scènes). Relis-le : tu peux tout modifier.`;
   } catch (e) { $('#gIAProg').innerHTML = `<span class="err">${esc(e.message)}</span>`; b.disabled = false; }
 }
@@ -2367,12 +2497,12 @@ function monterGeneree(r, p, o) {
   });
   if (o.generique) {
     const c = newSolid('#000000', 10);
-    c.titre = { preset: 'generique', l1: ['SOURCES', ...(p.article ? [`Texte : Wikipédia, « ${p.article} »`, 'licence CC BY-SA 4.0'] : ['Texte écrit avec l’IA locale de QuentMovie']), '', 'IMAGES (Wikimedia Commons)', ...r.credits.slice(0, 14), '', 'VOIX OFF', 'Synthèse vocale', '', 'MONTAGE', 'QuentMovie'].join('\n'), l2: '', color: '#ffffff', font: 'arial', start: 0, dur: 0, speed: 14 };
+    c.titre = { preset: 'generique', l1: ['SOURCES', ...(p.article ? [`Texte : Wikipédia, « ${p.article} »`, 'licence CC BY-SA 4.0'] : (p.sources || []).length ? ['Texte écrit avec l’IA locale de QuentMovie', `d’après Wikipédia : ${p.sources.join(', ')}`, 'licence CC BY-SA 4.0'] : ['Texte écrit avec l’IA locale de QuentMovie']), '', 'IMAGES (Wikimedia Commons)', ...r.credits.slice(0, 14), '', 'VOIX OFF', 'Synthèse vocale', '', 'MONTAGE', 'QuentMovie'].join('\n'), l2: '', color: '#ffffff', font: 'arial', start: 0, dur: 0, speed: 14 };
     clips.push(c);
   }
   if (clips.length) clips[clips.length - 1].transition = null;
   if (gen && gen.express) { proj.format = gen.express.format; $('#format').value = proj.format; }
-  proj.clips = clips; proj.pistes = []; proj.audio = o.musique ? [{ file: 'lib:' + o.musique, vol: 22, start: 0, fade: true, loop: true, duck: true }] : []; proj.markers = [];
+  proj.gen = { titre: p.titre, texte: r.scenes.map(s => s.texte).join(' ').slice(0, 3000) }; proj.clips = clips; proj.pistes = []; proj.audio = o.musique ? [{ file: 'lib:' + o.musique, vol: 22, start: 0, fade: true, loop: true, duck: true }] : []; proj.markers = [];
   sel = 0; selA = -1; selP = -1; selCut = -1; commit(); tout(); fitZoom(); placerTete(0);
 }
 
@@ -2772,6 +2902,7 @@ function toucheStudio(e) {
 
 const RACCOURCIS = [
   ['Lecture', [['Espace', 'Lire / pause (avec les effets)'], ['⌥ Espace', 'Lire le clip sans effets'], ['J / L', 'Reculer / avancer d’1 seconde'], ['K', 'Pause'], ['← / →', 'Image précédente / suivante'], ['⇧ ← / →', '1 seconde'], ['↑ / ↓', 'Clip précédent / suivant'], ['Début / Fin', 'Début / fin de la timeline'], ['F', 'Plein écran de la visionneuse'], [M + ' R', 'Aperçu avec effets'], ['⇧' + M + ' R', 'Me filmer (caméra, micro, prompteur)'], ['⇧' + M + ' G', 'Générer une vidéo à partir d’un sujet']]],
+  ['Assistant et outils', [[M + ' K', 'Assistant de montage : dis ce que tu veux faire en français'], ['A', 'Outil Sélection'], ['B', 'Outil Lame (coupe là où tu cliques)'], ['N', 'Magnétisme activé / désactivé'], ['G', 'Grille des tiers sur la visionneuse'], ['Double-clic sur un repère', 'Le nommer (chapitres YouTube)']]],
   ['Montage', [['S ou ' + M + ' B', 'Couper à la tête de lecture'], ['D', 'Détacher le son du clip (piste audio à part)'], ['⇧ clic / ' + M + ' clic', 'Sélectionner plusieurs clips (détacher, supprimer, vitesse… en une fois)'], [M + ' A', 'Tout sélectionner'], ['Clic droit', 'Menu du clip : détacher le son, image fixe, vitesse, copier…'], ['I / O', 'Début / fin du clip à la tête de lecture'], ['Suppr', 'Supprimer le clip ou la piste'], [M + ' D', 'Dupliquer'], [M + ' [ / ]', 'Déplacer à gauche / droite'], [M + ' C / V', 'Copier / coller un clip'], ['⌥' + M + ' V', 'Coller seulement les effets'], ['M', 'Ajouter un repère'], ['[ / ]', 'Repère précédent / suivant']]],
   ['Fichier et affichage', [[M + ' N / O / S', 'Nouveau / ouvrir / enregistrer'], [M + ' I', 'Importer des médias'], [M + ' E', 'Exporter'], [M + ' Z / ⇧' + M + ' Z', 'Annuler / rétablir'], ['+ / −', 'Zoom de la timeline'], ['⇧ Z', 'Tout afficher'], [M + ' + molette', 'Zoom à la souris'], ['1 … 9', 'Onglets Médias, Effets, Transitions, Titres, Voix, Sons, Musique, Calques, Outils'], ['T', 'Titres'], ['?', 'Cette aide']]],
   ['À la souris', [['Glisser un clip', 'Changer son ordre'], ['Bords d’un clip', 'Raccourcir ou rallonger'], ['Bords d’un son', 'Raccourcir ou rallonger (le son garde sa place)'], ['Glisser un son', 'Se colle à la tête de lecture, aux clips et aux repères (⌥ pour éviter)'], ['Clic sur la règle', 'Placer la tête de lecture'], ['Glisser un effet', 'Le poser sur un clip'], ['⇧ clic sur un repère', 'Le supprimer']]]
@@ -2791,6 +2922,7 @@ document.addEventListener('keydown', e => {
     if (kl === 'a') return faire(() => { selObjs = new Set(proj.clips); tout(); aide(`${proj.clips.length} clips sélectionnés : Suppr, D (détacher le son), clic droit…`); });
     if (kl === 'b') return faire(couper); if (kl === 'd') return faire(dupliquer); if (kl === 'n') return faire(nouveau); if (kl === 'o') return faire(ouvrirProjet);
     if (kl === 's') return faire(sauver); if (kl === 'i') return faire(() => $('#fichiers').click()); if (kl === 'e') return faire(exporter);
+    if (kl === 'k') return faire(() => ouvrirAssistant());
     if (kl === 'r' && e.shiftKey) return faire(ouvrirStudio);
     if (kl === 'g' && e.shiftKey) return faire(ouvrirGenerateur);
     if (kl === 'r') return faire(() => $('#bApercu').click()); if (kl === 'c') return faire(copier); if (kl === 'v') return faire(() => coller(e.altKey));

@@ -911,7 +911,10 @@ function buildClip(c, P, o = {}) {
           job.step = 'Lecture de l’article…';
           const duree = clamp(num(b.duree, 60), 20, 600);
           const f = b.article ? await GEN().faits(String(b.article), duree).catch(() => []) : []; // sans article : sujet libre
-          const r = await IA().ecrireScript({ titre: String(b.titre || b.article || ''), paragraphes: f, duree, style: String(b.style || ''), consigne: String(b.consigne || ''), recherche: !!b.medias, options: b.options && typeof b.options === 'object' ? b.options : {} }, job);
+          let ctx = { texte: '', articles: [] }; // sujet libre : faits de Wikipédia donnés à l'IA (case « S'appuyer sur Wikipédia »)
+          if (!f.length && b.wiki) { job.step = 'Recherche de faits sur Wikipédia…'; ctx = await GEN().contexte(String(b.titre || '')); }
+          const r = await IA().ecrireScript({ titre: String(b.titre || b.article || ''), paragraphes: f, duree, style: String(b.style || ''), consigne: String(b.consigne || ''), recherche: !!b.medias, options: b.options && typeof b.options === 'object' ? b.options : {}, contexte: ctx.texte }, job);
+          r.regles = { ...(r.regles || {}), sources: ctx.articles };
           if (!r.scenes.length) throw new Error('L’IA n’a pas pu écrire de script : réessaie.');
           const vertical = b.format === 'vertical';
           if (b.medias) { // mode express : une photo cherchée et notée pour chaque scène
@@ -927,6 +930,15 @@ function buildClip(c, P, o = {}) {
       }
       // une scène réécrite selon une consigne, et d'autres photos cherchées à la main pour une scène
       if (req.method === 'POST' && p === '/api/generer/scene') { const b = await readJson(req); return send(res, 200, travail(job => { job.step = 'L’IA locale réécrit la scène…'; return IA().reecrireScene({ texte: String(b.texte || '').slice(0, 1500), instruction: String(b.instruction || '').slice(0, 400), titre: String(b.titre || '').slice(0, 120), style: String(b.style || ''), qualite: String(b.qualite || '') }); })); }
+      // Assistant de montage (assistant.js ; l'IA locale seulement si les règles ne comprennent pas la demande)
+      if (req.method === 'POST' && p === '/api/assistant/comprendre') {
+        const b = await readJson(req), demande = String(b.demande || '').slice(0, 500), AS = require('./assistant');
+        const regles = AS.comprendre(demande);
+        if (regles.length || !b.ia) return send(res, 200, { actions: regles, ia: false });
+        try { return send(res, 200, { actions: await IA().comprendreDemande(demande), ia: true }); } catch (e) { return send(res, 200, { actions: [], ia: false, erreur: e.message }); }
+      }
+      if (req.method === 'POST' && p === '/api/assistant/suggestions') { const b = await readJson(req); return send(res, 200, { suggestions: require('./assistant').suggerer(b && typeof b === 'object' ? b : {}) }); }
+      if (req.method === 'POST' && p === '/api/assistant/publication') { const b = await readJson(req); return send(res, 200, travail(job => { job.step = 'Écriture du titre, de la description et des hashtags…'; return IA().textesPublication({ texte: String(b.texte || '').slice(0, 3000), plateforme: String(b.plateforme || '').slice(0, 20), titre: String(b.titre || '').slice(0, 120) }); })); }
       if (req.method === 'POST' && p === '/api/generer/images') { const b = await readJson(req); return send(res, 200, { images: await GEN().proposer(String(b.q || '').slice(0, 120), { vertical: b.format === 'vertical', videos: !!b.videos }) }); }
       if (req.method === 'POST' && p === '/api/telecharger') { const b = await readJson(req); return send(res, 200, travail(job => IA().telecharger(String(b.lien || ''), MEDIAS, job))); }
       if (req.method === 'GET' && p === '/api/parole') {

@@ -106,6 +106,25 @@ function chromium() {
   await ev(() => { if (!vues.grille) basculerVue('grille'); }); check('grille des tiers activée', await ev(() => vues.grille && $('#vGrille').classList.contains('on')));
   await ev(() => basculerVue('grille'));
 
+  // 3 ter) assistant de montage (⌘K) : demande en français → étapes cochées → appliquées ; suggestions ; textes de publication sans IA
+  await ev(() => { const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v), newClip(v), newClip(v)]; proj.audio = []; proj.markers = []; proj.clips.forEach(c => { c.transition = null; c.afx = []; }); sel = 0; commit(); tout(); });
+  await pg.keyboard.press('Control+k'); await pg.waitForSelector('#asDemande');
+  check('assistant : ⌘K ouvre l’assistant', true);
+  await pg.waitForSelector('#asSugg .asSug', { timeout: 10000 }).catch(() => {});
+  check('assistant : suggestions pour le montage', await ev(() => /sous-titres/i.test($('#asSugg').textContent)), await ev(() => $('#asSugg').textContent));
+  await pg.fill('#asDemande', 'mets des transitions en fondu partout, une musique calme et égalise le son'); await pg.click('#asComprendre'); await pg.waitForSelector('#asGo', { timeout: 10000 });
+  check('assistant : trois étapes prévues', await ev(() => document.querySelectorAll('#asPlan .asEtape').length === 3), await ev(() => $('#asPlan').textContent));
+  await pg.click('#asGo'); await pg.waitForFunction(() => $('#asGo') && !$('#asGo').disabled, null, { timeout: 15000 });
+  check('assistant : étapes appliquées (transitions, musique calme, volume égalisé)', await ev(() => proj.clips.filter(c => c.transition).length === 2 && proj.audio.some(a => /^lib:musiques\/(lofi|ambiance|piano)/.test(a.file) && a.duck) && proj.clips.every(c => c.afx.some(e => e.id === 'normaliser'))), await ev(() => JSON.stringify(proj.audio)));
+  await pg.fill('#asDemande', 'ajoute un écran titre « Mon voyage »'); await pg.click('#asComprendre'); await pg.waitForSelector('#asGo'); await pg.click('#asGo'); await pg.waitForTimeout(400);
+  check('assistant : écran titre ajouté au début', await ev(() => proj.clips[0].kind === 'solid' && proj.clips[0].titre.l1 === 'MON VOYAGE'));
+  await pg.fill('#asDemande', 'blablabla'); await pg.click('#asComprendre'); await pg.waitForTimeout(400);
+  check('assistant : demande incomprise expliquée', await ev(() => /pas compris|IA locale/.test($('#asPlan').textContent)), await ev(() => $('#asPlan').textContent));
+  await ev(() => { fermer(); proj.clips[1].subs = [{ s: 0, e: 2, t: 'Les volcans d’Islande sont parmi les plus actifs' }, { s: 2, e: 4, t: 'On visite les volcans et les glaciers' }]; commit(); ouvrirPublication('YouTube'); });
+  await pg.click('#puGo'); await pg.waitForSelector('#puRes [data-copie]', { timeout: 15000 });
+  check('publication : titre, description et hashtags (sans IA)', await ev(() => /#volcans/.test($('#puRes').textContent) && document.querySelectorAll('#puRes textarea').length >= 3), await ev(() => $('#puRes').textContent));
+  await ev(() => fermer());
+
   // 4) générateur de bout en bout : faux Commons, fausse IA ; Express → relecture → réécriture d'une scène → autre photo → création
   const http = require('http'), photo = path.join(base, 'p.jpg'); ff('-f', 'lavfi', '-i', 'testsrc2=s=1800x1200', '-frames:v', '1', photo);
   const commons = http.createServer((req, res) => {

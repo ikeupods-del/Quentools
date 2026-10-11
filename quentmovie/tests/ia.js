@@ -45,6 +45,17 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   check('options : la consigne écrite et les options se complètent', !regroupe('pas de conclusion', { adresse: 'vous' }).conclusion && regroupe('pas de conclusion', { adresse: 'vous' }).adresse === 'vous');
   check('qualité : mot interdit refusé', /interdit/.test(SQ.verifier('Un casque gratuit protège efficacement la tête des cyclistes en ville.', { min: 5, interdits: ['gratuit'] })) && !SQ.verifier('Un casque bien ajusté protège efficacement la tête des cyclistes.', { min: 5, interdits: ['gratuit'] }));
 
+  // assistant de montage : demandes en français → actions connues, dans l'ordre du montage
+  const AS = require('../assistant'), acts = d => AS.comprendre(d).map(x => x.action + (x.parametre ? ':' + x.parametre : '')).join(' ');
+  check('assistant : demande composée', acts('coupe les blancs, ajoute des sous-titres façon tiktok et une musique calme, passe en vertical') === 'format:vertical couper_blancs sous_titres:tiktok musique:calme', acts('coupe les blancs, ajoute des sous-titres façon tiktok et une musique calme, passe en vertical'));
+  check('assistant : retirer plutôt qu’ajouter', acts('enlève la musique et mets des transitions en glissé') === 'retirer_musique transitions:slideleft', acts('enlève la musique et mets des transitions en glissé'));
+  check('assistant : vitesse, titre, publication, export', acts('accélère x1,5 puis exporte') === 'vitesse:1.5 exporter' && AS.comprendre('ajoute un écran titre « Mon voyage »')[0].parametre === 'Mon voyage' && acts('écris les hashtags pour youtube') === 'publication:YouTube');
+  check('assistant : rien d’inventé pour une demande inconnue', !AS.comprendre('fais un truc sympa').length && !AS.comprendre('').length);
+  const sug = AS.suggerer({ format: 'vertical', clips: [{ kind: 'video', dur: 60, w: 1920, h: 1080 }, { kind: 'video', dur: 30 }], audio: [] }).map(x => x.action);
+  check('assistant : suggestions tirées du montage', ['sous_titres', 'couper_blancs', 'plans', 'format', 'egaliser', 'musique'].every(x => sug.includes(x)), sug.join());
+  check('assistant : montage vide → conseil de départ', AS.suggerer({ clips: [] })[0].action === 'aucune');
+  check('assistant : hashtags sans IA', AS.hashtagsSimples('Le voyage en Islande : volcans, glaciers et volcans actifs du voyage').slice(0, 2).join() === '#volcans,#voyage');
+
   if (process.env.QM_RESEAU) {
     const IA = require('../ia').creer({ BASE: base, FFMPEG: bins.ffmpeg });
     const faits = 'Michelin est une entreprise française de pneumatiques fondée en 1889 à Clermont-Ferrand par les frères André et Édouard Michelin.\n[Les débuts] En 1891, ils déposent le brevet du pneu démontable pour bicyclette.\n[Le Bibendum] En 1898, le dessinateur O\'Galop crée le Bibendum.\n[Le guide] En 1900 paraît le premier guide Michelin.\n[Le pneu radial] En 1946, Michelin invente le pneu à carcasse radiale.';
@@ -57,6 +68,12 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     check('script écrit par l’IA', r.scenes.length >= 3 && texte.split(/\s+/).length > 50, r.scenes.length);
     const annees = [...texte.matchAll(/\b(1[0-9]{3}|20[0-9]{2})\b/g)].map(m => m[1]).filter(a => !faits.includes(a));
     check('aucune année inventée', !annees.length, annees.join(', '));
+    const dem = await IA.comprendreDemande('je voudrais que les gens qui regardent sans le son comprennent, et une ambiance plus épique');
+    console.log('Assistant (IA) :', JSON.stringify(dem));
+    check('assistant IA : actions connues uniquement', dem.length >= 1 && dem.every(x => AS.ACTIONS[x.action]), JSON.stringify(dem));
+    const pub = await IA.textesPublication({ texte, plateforme: 'YouTube', titre: r.titre });
+    console.log('Publication (IA) :', JSON.stringify(pub));
+    check('publication IA : 3 titres, description, hashtags', pub.ia && pub.titres.length === 3 && pub.description.length > 20 && pub.hashtags.length >= 3 && pub.hashtags.every(h => /^#[a-z0-9]+$/.test(h)), JSON.stringify(pub));
     check('IA sur la puce graphique', process.platform !== 'darwin' || r.gpu === 'metal', r.gpu);
     // consignes de l'utilisateur : « pas d'intro, pas de conclusion » = ni accroche ni phrase de fin ajoutées
     check('consignes suivies : ni accroche ni conclusion', !r.regles.accroche && !r.regles.conclusion && nbMots(r.scenes[0].texte) <= nbMots(paragraphes[0].texte) * 1.3 && nbMots(r.scenes[4].texte) <= nbMots(paragraphes[4].texte) * 1.3, `${nbMots(r.scenes[0].texte)} / ${nbMots(paragraphes[0].texte)}`);
