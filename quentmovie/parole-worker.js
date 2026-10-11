@@ -13,7 +13,8 @@ async function moteurVoix(dossier) {
   if (voix.has(dossier)) return voix.get(dossier);
   const onnx = fs.readdirSync(dossier).find(n => n.endsWith('.onnx'));
   if (!onnx) throw new Error('Voix incomplète : réinstalle-la.');
-  const tts = await sherpa.OfflineTts.createAsync({
+  // appels directs (synchrones) : ce processus ne sert qu'à ça ; la version asynchrone échoue sous Electron 43
+  const tts = new sherpa.OfflineTts({
     model: { vits: { model: path.join(dossier, onnx), tokens: path.join(dossier, 'tokens.txt'), dataDir: path.join(dossier, 'espeak-ng-data') }, numThreads: 2, debug: false, provider: 'cpu' },
     maxNumSentences: 2
   });
@@ -24,7 +25,7 @@ async function moteurVoix(dossier) {
 // Texte → fichier WAV (mono)
 async function parler({ dossier, texte, sortie, vitesse = 1, locuteur = 0 }) {
   const tts = await moteurVoix(dossier);
-  const a = await tts.generateAsync({ text: String(texte), sid: Math.min(Math.max(0, locuteur | 0), tts.numSpeakers - 1), speed: Math.min(2, Math.max(0.5, +vitesse || 1)) });
+  const a = tts.generate({ text: String(texte), sid: Math.min(Math.max(0, locuteur | 0), tts.numSpeakers - 1), speed: Math.min(2, Math.max(0.5, +vitesse || 1)) });
   sherpa.writeWave(sortie, { samples: a.samples, sampleRate: a.sampleRate });
   return { duree: a.samples.length / a.sampleRate };
 }
