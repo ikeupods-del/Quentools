@@ -53,6 +53,7 @@ jobs:
             if (!r.detourage || !r.detourage.webgl2 || r.detourage.erreur || !(r.detourage.msMedian > 0)) ko.push("détourage");
             if (!r.prise || !r.prise.import || !(r.prise.duree > 2)) ko.push("prise du studio");
             if (!r.parole || !r.parole.dispo || !/\.m4a$/.test(r.parole.essai || "")) ko.push("voix naturelle");
+            if (!r.parole || !/voix naturelle/i.test(r.parole.ecoute || "")) ko.push("reconnaissance de la voix");
             if (ko.length) { console.log("Échecs :", ko.join(", ")); process.exit(1); } else console.log("Application : tout fonctionne");'
       - name: Contrôler que chaque programme livré tourne sur puce Apple
         run: |

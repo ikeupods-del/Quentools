@@ -90,7 +90,14 @@ async function autotest(port) {
     res.parole = await ex(`(async () => {
       const e = await (await fetch('/api/parole')).json(); const t0 = performance.now();
       const r = await fetch('/api/parole/essai', { method: 'POST', body: JSON.stringify({ voix: 'siwis', texte: 'Bonjour, ceci est un essai de la voix naturelle dans QuentMovie.' }) }), j = await r.json();
-      return { dispo: e.dispo, voixMac: e.mac.map(v => v.nom), essai: r.ok ? j.file : j.error, ms: Math.round(performance.now() - t0) };
+      const res = { dispo: e.dispo, voixMac: e.mac.map(v => v.nom), essai: r.ok ? j.file : j.error, ms: Math.round(performance.now() - t0) };
+      if (!r.ok) return res;
+      // reconnaissance de la phrase lue (sous-titres automatiques), installée une fois
+      const suivre = async id => { for (;;) { await new Promise(x => setTimeout(x, 500)); const k = await (await fetch('/api/job?id=' + id)).json(); if (k.error || k.done) return k; } };
+      const inst = await suivre((await (await fetch('/api/parole/installer', { method: 'POST', body: JSON.stringify({ quoi: 'ecoute' }) })).json()).id);
+      if (inst.error) return { ...res, ecoute: inst.error };
+      const t1 = performance.now(), ec = await suivre((await (await fetch('/api/parole/ecouter', { method: 'POST', body: JSON.stringify({ file: j.file, in: 0, out: 0 }) })).json()).id);
+      return { ...res, ecoute: ec.error || ec.resultat.mots.map(m => m.m).join(' '), sousTitres: ec.resultat ? ec.resultat.st.phrase.length : 0, ecouteMs: Math.round(performance.now() - t1) };
     })()`);
   } catch (e) { res.erreur = String(e && e.message || e); }
   ecrire();
