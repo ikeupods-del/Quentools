@@ -25,3 +25,4 @@ tools/fixtures/fiches-reelles*.json
 
 # Application QuentMovie : fichiers générés
 quentmovie/dist/
+quentmovie/scripts/__pycache__/
