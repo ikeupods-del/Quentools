@@ -240,6 +240,23 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     return { scenes: sortie, credits, synthese };
   }
 
+  // Un média par scène, cherché dans Wikimedia Commons avec les mots-clés de la scène (vidéos d'abord, sinon images)
+  async function mediasPour(recherches) {
+    const images = [], choix = [];
+    for (const q of recherches) {
+      let trouve = [];
+      if (String(q || '').trim()) for (const type of ['video', 'bitmap']) {
+        try {
+          const r = await api(commons, { action: 'query', generator: 'search', gsrsearch: `${q} filetype:${type}`, gsrnamespace: '6', gsrlimit: '8', prop: 'imageinfo', iiprop: 'url|size|mime|extmetadata', iiurlwidth: '1920', iiextmetadatafilter: 'Artist|LicenseShortName' });
+          trouve = trouve.concat(((r.query && r.query.pages) || []).sort((a, b) => (a.index || 0) - (b.index || 0)).map(imageDe).filter(x => x && !images.some(y => y.nom === x.nom)));
+        } catch (e) { /* recherche suivante */ }
+        if (trouve.length >= 3) break;
+      }
+      // première proposition pour la scène, les autres restent au choix (◀ ▶)
+      choix.push(trouve.length ? images.length : -1); images.push(...trouve.slice(0, 4));
+    }
+    return { images, choix };
+  }
   // Faits de l'article (plus qu'il n'en faut pour la durée), pour l'IA locale
   async function faits(article, duree) {
     const j = await api(wiki, { action: 'query', prop: 'extracts', explaintext: '1', exsectionformat: 'wiki', titles: article, redirects: '1' });
@@ -248,7 +265,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     return construireScenes(page.extract, Math.min(900, Math.max(60, duree) * 2.5)).map(x => (x.section ? `[${x.section}] ` : '') + x.texte).join('\n');
   }
   const lireMac = async (texte, fichier, v) => { const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-essai-')); try { return await lire(texte, fichier, { voix: v }, dir); } finally { fs.rmSync(dir, { recursive: true, force: true }); } };
-  return { chercher, preparer, voix, fabriquer, lireMac, faits };
+  return { chercher, preparer, voix, fabriquer, lireMac, faits, mediasPour };
 }
 
 module.exports = { creer, sujetDe, phrases, nettoyerPhrase, construireScript, construireScenes, choisirImages, imageDe };

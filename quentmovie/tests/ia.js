@@ -34,6 +34,12 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     check('aucune année inventée', !annees.length, annees.join(', '));
     check('IA sur la puce graphique', process.platform !== 'darwin' || r.gpu === 'metal', r.gpu);
     IA.arreter();
+    // mode express : sujet libre, un média cherché pour chaque scène
+    const x = await attendre((await (await fetch(U('/api/generer/ia'), { method: 'POST', body: JSON.stringify({ article: '', titre: 'Faire du vélo en ville', consigne: '3 conseils pour faire du vélo en ville en sécurité', duree: 30, style: 'dynamique', medias: true }) })).json()).id);
+    const xs = (x.resultat && x.resultat.scenes) || [];
+    console.log('Express :', x.error || `« ${x.resultat.titre} » — ${xs.map(s => s.recherche + (s.image >= 0 ? ' ✓' : ' ✗')).join(' | ')}`);
+    check('express : script et mots-clés', xs.length >= 2 && xs.every(s => s.recherche), x.error);
+    check('express : médias trouvés pour les scènes', xs.filter(s => s.image >= 0).length >= Math.ceil(xs.length / 2), JSON.stringify(xs.map(s => s.image)));
     // vidéo depuis un lien (fichier libre de Wikimedia Commons ; l'outil sait aussi YouTube, TikTok, Instagram…)
     const q = await (await fetch('https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&generator=search&gsrsearch=' + encodeURIComponent('bicycle filetype:video') + '&gsrnamespace=6&gsrlimit=20&prop=imageinfo&iiprop=size|url', { headers: { 'User-Agent': 'QuentMovie-tests/1.0 (https://github.com/ikeupods-del/Quentools)' } })).json();
     const petite = ((q.query && q.query.pages) || []).map(x => x.imageinfo && x.imageinfo[0]).find(x => x && x.size < 6e6);
