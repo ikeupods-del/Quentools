@@ -40,3 +40,6 @@ Bouton « AirDrop » (⇧⌘A, menu Fichier) et bouton dans le résultat de « G
 
 ## Assistant (tchat)
 Bouton « 💬 Assistant » (touche C) : on explique en français la publication voulue (« une story pour un plombier à Nantes, ton rassurant ») ou une retouche (« raccourcis le titre de l'image 2 »). L'IA locale choisit marque, thème, sujet, format et consignes (`Generation.comprendre`) ; la publication est ensuite écrite et contrôlée par les mêmes règles que « Générer » (les consignes ne permettent ni prix, ni lien, ni verset inventé). Retouches : champs de texte existants seulement, jamais un verset, mêmes règles de contenu (`Generation.verifierModifs`), annulables par ⌘Z. Sans IA installée, une analyse par mots-clés comprend les demandes de création. Un bandeau signale une nouvelle version publiée (`nouvelle-version.js`, copie de `marketing/ia-locale/`) : le bouton ouvre la page de téléchargement, rien ne s'installe tout seul.
+
+## Mémoire et mise à jour
+Bouton « 🧠 » : consignes retenues (« retiens que… » dans l'assistant) et corrections apprises à l'export, partagées avec QuentMovie et Studio Sites (`memoire.js`, fichier `~/Movies/QuentMovie/memoire-ia.json`). L'application se met à jour toute seule : téléchargement en arrière-plan, bandeau « Redémarrer pour installer » (`maj.js`, copie de `quentmovie/maj.js`).

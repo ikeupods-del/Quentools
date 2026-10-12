@@ -224,7 +224,7 @@
   }
   const ROLES = { h1: 'titre principal', h2: 'titre de section', h3: 'sous-titre', h4: 'sous-titre', p: 'paragraphe', li: 'élément de liste', button: 'bouton', a: 'lien', small: 'petite mention', span: 'mot court', b: 'mot en gras', strong: 'mot en gras', label: 'étiquette de champ', placeholder: 'texte d’aide d’un champ', summary: 'question', figcaption: 'légende', blockquote: 'citation', td: 'case de tableau', th: 'titre de colonne' };
   const rolede = s => ROLES[s.tag] || 'texte';
-  async function reecrireLot(lot, fiche, modele, ecrireIA) {
+  async function reecrireLot(lot, fiche, modele, ecrireIA, systeme = SYSTEME) {
     const liste = lot.map((s, i) => `${i + 1}. (${rolede(s)}, ${s.base.length} caractères) ${s.base}`).join('\n');
     const demande = `Fiche du professionnel :\n${resume(fiche)}\n\nVoici des textes d’un site d’exemple (${modele.nom || 'exemple'}), dans l’ordre de la page. Réécris-les pour ce professionnel :\n${liste}\n\n` +
       'Règles : même nombre de textes, même ordre, même rôle (titre, bouton, paragraphe…), longueur proche de l’original (jamais plus de 1,4 fois). Les passages entre *astérisques* sont mis en valeur : garde-en un au même endroit. ' +
@@ -232,17 +232,17 @@
       'N’écris aucun prix, chiffre, délai, garantie ni avis qui ne soit pas dans la fiche : si l’original en contient, remplace par une formule générale (« sur devis », « selon votre besoin »). ' +
       'Dans chaque « texte », écris uniquement la phrase finale : ni numéro, ni guillemets, ni accolades, ni nom de balise. Reste vraisemblable : décris des choses réelles pour ce métier, sans mot absurde.';
     const schema = { type: 'object', properties: { textes: { type: 'array', minItems: lot.length, maxItems: lot.length, items: { type: 'object', properties: { n: { type: 'integer' }, texte: { type: 'string', maxLength: 420 } }, required: ['n', 'texte'] } } }, required: ['textes'] };
-    const r = await ecrireIA({ systeme: SYSTEME, demande, schema, maxTokens: Math.min(1900, 160 + lot.reduce((a, s) => a + Math.ceil(s.base.length * 0.9), 0) + lot.length * 14), temperature: 0.45 });
+    const r = await ecrireIA({ systeme, demande, schema, maxTokens: Math.min(1900, 160 + lot.reduce((a, s) => a + Math.ceil(s.base.length * 0.9), 0) + lot.length * 14), temperature: 0.45 });
     const L = Array.isArray(r && r.textes) ? r.textes : [];
     const out = new Array(lot.length).fill(null);
     L.forEach((x, k) => { const v = x && typeof x === 'object' ? x.texte : x; const n = x && typeof x === 'object' && Number.isInteger(x.n) && x.n >= 1 && x.n <= lot.length ? x.n - 1 : k; if (out[n] == null) out[n] = deballer(v); });
     return L.length === lot.length ? out.map(x => x == null ? '' : x) : [];
   }
   // Un seul texte refusé par les contrôles : nouvelle tentative ciblée avec la raison du refus
-  async function reecrireUn(slot, fiche, modele, ecrireIA, raison) {
+  async function reecrireUn(slot, fiche, modele, ecrireIA, raison, systeme = SYSTEME) {
     const demande = `Fiche du professionnel :\n${resume(fiche)}\n\nTexte d’un site d’exemple (${rolede(slot)}, ${slot.base.length} caractères) : ${slot.base}\n\nRéécris-le pour ce professionnel, en une seule phrase simple et vraisemblable, de longueur proche (jamais plus de 1,4 fois). ` +
       `Ta version précédente a été refusée : ${raison}. Ni prix, ni chiffre, ni garantie, ni lien inventés ; ni numéro, ni guillemets, ni accolades. Si tu n’as pas assez d’informations, reste général.`;
-    const r = await ecrireIA({ systeme: SYSTEME, demande, schema: { type: 'object', properties: { texte: { type: 'string', maxLength: 420 } }, required: ['texte'] }, maxTokens: Math.min(400, 60 + slot.base.length), temperature: 0.3 });
+    const r = await ecrireIA({ systeme, demande, schema: { type: 'object', properties: { texte: { type: 'string', maxLength: 420 } }, required: ['texte'] }, maxTokens: Math.min(400, 60 + slot.base.length), temperature: 0.3 });
     return deballer(r && r.texte);
   }
 
@@ -304,6 +304,7 @@ q('form[data-mailto]:not([data-qs])').forEach(function(f){f.addEventListener('su
     if (!fiche.nom) throw new Error('Il manque le nom de l’entreprise.');
     for (const s of slots) { s.base = substituer(s.original, fiche, modele); s.final = s.base; s.etat = 'exemple'; }
     let description = '';
+    const sys = SYSTEME + (o.memoire ? '\n' + String(o.memoire).slice(0, 900) : '');
     if (o.ecrire) {
       const parties = lots(slots.filter(s => s.type !== 'attr' || s.base.length > 3));
       let faits = 0;
@@ -311,14 +312,14 @@ q('form[data-mailto]:not([data-qs])').forEach(function(f){f.addEventListener('su
         etape(`Réécriture : partie ${faits + 1} sur ${parties.length}`, faits / (parties.length + 1)); faits++;
         let textes = [], raison = '';
         for (let essai = 0; essai < 2; essai++) {
-          try { textes = await reecrireLot(lot, fiche, modele, o.ecrire); } catch (e) { textes = []; raison = e.message; }
+          try { textes = await reecrireLot(lot, fiche, modele, o.ecrire, sys); } catch (e) { textes = []; raison = e.message; }
           if (textes.length === lot.length) break;
         }
         if (textes.length !== lot.length) { lot.forEach(s => { s.etat = 'exemple'; s.raison = 'L’IA n’a pas répondu correctement : texte de l’exemple repris'; }); continue; }
         for (let i = 0; i < lot.length; i++) {
           const s = lot[i]; let refus = controleTexte(textes[i], s, fiche, modele), t = textes[i];
           for (let essai = 0; refus.length && essai < 2 && s.base.length > 3; essai++) { // nouvelle tentative ciblée, avec la raison du refus
-            try { t = await reecrireUn(s, fiche, modele, o.ecrire, refus.join(', ')); refus = controleTexte(t, s, fiche, modele); } catch (e) { break; }
+            try { t = await reecrireUn(s, fiche, modele, o.ecrire, refus.join(', '), sys); refus = controleTexte(t, s, fiche, modele); } catch (e) { break; }
           }
           if (refus.length) { s.etat = 'exemple'; s.raison = 'Texte de l’IA refusé (' + refus.join(', ') + ') : texte de l’exemple repris'; }
           else { s.final = t; s.etat = 'ia'; if (A_RELIRE.test(t)) s.relire = true; }
@@ -327,7 +328,7 @@ q('form[data-mailto]:not([data-qs])').forEach(function(f){f.addEventListener('su
       }
       try {
         etape('Description pour Google', parties.length / (parties.length + 1));
-        const r = await o.ecrire({ systeme: SYSTEME, demande: `Fiche :\n${resume(fiche)}\n\nÉcris la description du site pour les moteurs de recherche : une ou deux phrases, 150 caractères maximum, qui disent qui est ce professionnel, où et pour quoi. Aucun prix, chiffre, délai ni garantie.`, schema: { type: 'object', properties: { description: { type: 'string', maxLength: 170 } }, required: ['description'] }, maxTokens: 120, temperature: 0.3 });
+        const r = await o.ecrire({ systeme: sys, demande: `Fiche :\n${resume(fiche)}\n\nÉcris la description du site pour les moteurs de recherche : une ou deux phrases, 150 caractères maximum, qui disent qui est ce professionnel, où et pour quoi. Aucun prix, chiffre, délai ni garantie.`, schema: { type: 'object', properties: { description: { type: 'string', maxLength: 170 } }, required: ['description'] }, maxTokens: 120, temperature: 0.3 });
         if (r && r.description && !controleTexte(r.description, { original: '' , base: 'x'.repeat(120) }, fiche, modele).length) description = String(r.description).trim();
       } catch (e) { /* description simple */ }
     }

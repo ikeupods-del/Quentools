@@ -206,6 +206,92 @@ function boomTransition() { const b = impact(2.2, 90, 32, 1.2); mix(b, whoosh(0.
 function swipeUi() { return whoosh(0.22, 1200, 8000, 1); }
 function bloup() { return fade(tone(t => 700 - 500 * t / 0.18, 0.18, 0.08, 'sine', 0.002), 0.002, 0.02); }
 
+
+// ---------- Argent, humeurs, infos (liés aux animations du studio) ----------
+function cascadePieces(sec, seed, dens) {
+  R = rng(seed); const b = buf(sec);
+  for (let k = 0, n = Math.round(sec * dens); k < n; k++) {
+    const t = rnd() * sec * 0.92, env = Math.min(1, t / 0.15) * Math.min(1, (sec - t) / 0.6);
+    mix(b, tone(2800 + rnd() * 3200, 0.25, 0.05 + rnd() * 0.06), t, 0.25 * env); mix(b, hp(noise(0.01, 0.003), 3500), t, 0.15 * env);
+  }
+  return reverb(b, 0.15);
+}
+function sonHausse() { // arpège brillant qui monte, souffle montant, pluie de pièces : « ça grimpe »
+  const b = buf(2.4);
+  [659, 784, 988, 1319, 1568].forEach((f, i) => { mix(b, cloche(f, 0.9, 0.5), i * 0.11, 0.7); mix(b, tone(f / 2, 0.5, 0.2, 'tri'), i * 0.11, 0.35); });
+  mix(b, riser(0.7, true), 0, 0.35); mix(b, cloche(2093, 1.4, 0.5), 0.62, 0.6); mix(b, cascadePieces(1.0, 5, 40), 0.7, 0.5);
+  return b;
+}
+function sonBaisse() { // notes qui descendent en mineur puis grave qui s'écrase : « ça chute »
+  const b = buf(2.6);
+  [[392, 0], [349, 0.28], [311, 0.56], [247, 0.9]].forEach(([f, t]) => mix(b, lp(tone(f, 0.7, 0.35, 'saw', 0.004), 1500), t, 0.45));
+  mix(b, tone(t => 70 * Math.exp(-t * 0.8), 1.6, 0.7, 'sine', 0.01), 0.9, 0.9); mix(b, impact(1.4, 110, 35, 1), 0.95, 0.5);
+  return b;
+}
+function krach() { // alarme de marché puis effondrement
+  const b = buf(3.2);
+  for (let k = 0; k < 3; k++) mix(b, bip(1000, 0.12), k * 0.2, 0.5);
+  mix(b, lp(tone(t => 1200 * Math.exp(-t * 1.8) + 60, 1.8, 0, 'saw', 0.005), 2500), 0.7, 0.45); mix(b, impact(1.8, 100, 30, 1.2), 0.75, 0.7);
+  return b;
+}
+function sonJackpot() { // rouleaux de machine à sous qui ralentissent, trois arrêts, fanfare et pluie de pièces
+  R = rng(33); const b = buf(4.4);
+  for (let t = 0, d = 0.04; t < 1.6; t += d, d *= 1.07) { mix(b, hp(noise(0.012, 0.003), 1500), t, 0.5); mix(b, tone(220 + t * 300, 0.03, 0.01, 'square'), t, 0.15); }
+  [1.7, 2.0, 2.3].forEach((x, i) => mix(b, cloche(1047 * Math.pow(1.26, i), 0.8, 0.5), x, 0.8));
+  [523, 659, 784, 1047].forEach(f => mix(b, lp(tone(f, 1.6, 0.6, 'saw', 0.01), 2800), 2.55, 0.22));
+  mix(b, cascadePieces(1.8, 9, 70), 2.5, 0.8); mix(b, cloche(2093, 1.5, 0.5), 2.55, 0.5);
+  return b;
+}
+function sonRiche() { const b = buf(3.2); mix(b, caisse(), 0, 0.9); mix(b, cascadePieces(2.4, 12, 55), 0.35, 0.7); return b; }
+function trombone() { // « wah wah wah waaah » de l'échec
+  const b = buf(2.9);
+  [[311, 0, 0.45], [294, 0.55, 0.45], [277, 1.1, 0.45], [233, 1.65, 1.05]].forEach(([f, t, d], i) => mix(b, lp(fade(tone(x => f * (i === 3 ? 1 - 0.06 * x : 1) * (1 + 0.012 * Math.sin(x * 38)), d + 0.1, i === 3 ? 0.9 : 0.35, 'saw', 0.03), 0.03, 0.08), 1400), t, 0.5));
+  return b;
+}
+function fanfare() {
+  const b = buf(2.8);
+  [[523, 0], [659, 0.18], [784, 0.36], [1047, 0.6]].forEach(([f, t]) => { const d = t === 0.6 ? 1.8 : 0.22; mix(b, lp(tone(f, d, 0, 'saw', 0.01), 3000), t, 0.3); mix(b, tone(f * 2, d, 0, 'square', 0.01), t, 0.07); });
+  mix(b, hp(noise(1.6, 0.5), 4000), 0.6, 0.3);
+  return reverb(b, 0.2);
+}
+function tada() {
+  const b = buf(1.9);
+  [392, 523, 659].forEach(f => mix(b, lp(tone(f, 0.2, 0, 'saw', 0.005), 3200), 0, 0.3));
+  [523, 659, 784, 1047].forEach(f => mix(b, lp(tone(f, 1.4, 0.7, 'saw', 0.01), 3200), 0.22, 0.28));
+  mix(b, magie(), 0.25, 0.4);
+  return b;
+}
+function sonBreaking() { // signal d'édition spéciale : trois impulsions qui montent, impact et souffle
+  const b = buf(2.4);
+  [440, 554, 659].forEach((f, i) => mix(b, lp(tone(f, 0.16, 0, 'square', 0.003), 3500), i * 0.17, 0.4));
+  mix(b, tone(880, 0.5, 0.25, 'saw'), 0.55, 0.35); mix(b, impact(1.2, 120, 40, 1), 0.55, 0.8); mix(b, whoosh(0.5, 300, 5000, 0.7), 0.5, 0.5);
+  return b;
+}
+function sirene() { const b = fade(lp(tone(t => 900 + 300 * Math.sin(t * PI2 * 1.3), 2.6, 0, 'tri', 0.02), 2600), 0.02, 0.15); for (let i = 0; i < b.length; i++) b[i] *= 0.55 + 0.45 * Math.sin(i / SR * PI2 * 5); return b; }
+function joie() { // petit jingle joyeux
+  const b = buf(1.8);
+  [523, 587, 659, 784, 659, 784, 1047].forEach((f, i) => { mix(b, tone(f, 0.5, 0.14), i * 0.1, 0.55); mix(b, tone(f * 2, 0.3, 0.07), i * 0.1, 0.2); });
+  return b;
+}
+function tristesse() { // notes de piano qui descendent, longues et mélancoliques
+  const b = buf(3.6);
+  [330, 294, 262, 247].forEach((f, i) => { mix(b, tone(f, 1.6, 0.8), i * 0.7, 0.6); mix(b, tone(f * 2.003, 1, 0.3), i * 0.7, 0.2); });
+  return reverb(lp(b, 3500), 0.3, 1.4);
+}
+function colere() { // grondement grave haché puis coup
+  R = rng(77); const b = buf(1.8);
+  const g = lp(tone(72, 1.5, 0.9, 'saw', 0.01), 700); for (let i = 0; i < g.length; i++) g[i] *= 0.6 + 0.4 * Math.sin(i / SR * PI2 * 26);
+  mix(b, g, 0, 0.9); mix(b, lp(noise(1.4, 0.6), 900), 0, 0.5); mix(b, impact(1.2, 140, 40, 1), 0.9, 0.8);
+  return b;
+}
+function amour() { const b = buf(2.2); mix(b, cloche(1319, 1.4, 0.5), 0, 0.7); mix(b, cloche(1976, 1.6, 0.5), 0.25, 0.7); mix(b, magie(), 0.1, 0.25); return reverb(b, 0.25); }
+function choc() { // note stridente qui monte puis coup sec
+  const b = buf(1.4);
+  [740, 784, 831, 988].forEach(f => mix(b, lp(tone(t => f * (1 + 0.35 * Math.min(1, t / 0.5)), 0.7, 0.3, 'saw', 0.004), 4000), 0, 0.22));
+  mix(b, impact(0.9, 160, 45, 1), 0.45, 0.8);
+  return b;
+}
+
 const SONS = [
   ['clavier-frappe', 'Touche de clavier', 'Bureau et clavier', () => { const b = buf(0.25); frappe(b, 0.02); return b; }],
   ['clavier-frappe-douce', 'Touche de clavier douce', 'Bureau et clavier', () => { const b = buf(0.25); frappe(b, 0.02, 0.5, -1); return lp(b, 4500); }],
@@ -273,7 +359,22 @@ const SONS = [
   ['niveau-suivant', 'Niveau suivant', 'Jeu vidéo', () => seq([523, 659, 784, 1047, 1319], 0.08)],
   ['game-over', 'Partie perdue', 'Jeu vidéo', () => seq([392, 370, 349, 330], 0.22, 'square', 0.45)],
   ['laser', 'Laser', 'Jeu vidéo', laser],
-  ['teleportation', 'Téléportation', 'Jeu vidéo', teleport]
+  ['teleportation', 'Téléportation', 'Jeu vidéo', teleport],
+  ['hausse', 'Hausse (ça monte)', 'Argent et bourse', sonHausse],
+  ['baisse', 'Baisse (ça chute)', 'Argent et bourse', sonBaisse],
+  ['krach-bourse', 'Krach (alarme et effondrement)', 'Argent et bourse', krach],
+  ['jackpot', 'Jackpot (machine à sous)', 'Argent et bourse', sonJackpot],
+  ['riche', 'Riche (caisse et pluie de pièces)', 'Argent et bourse', sonRiche],
+  ['trombone-triste', 'Trombone de l’échec', 'Humeurs', trombone],
+  ['joie', 'Joie (jingle)', 'Humeurs', joie],
+  ['tristesse', 'Tristesse (piano)', 'Humeurs', tristesse],
+  ['colere', 'Colère (grondement)', 'Humeurs', colere],
+  ['amour', 'Amour (cloches douces)', 'Humeurs', amour],
+  ['choc', 'Choc (note stridente)', 'Humeurs', choc],
+  ['fanfare', 'Fanfare de victoire', 'Télé et spectacle', fanfare],
+  ['tada', 'Ta-dam !', 'Télé et spectacle', tada],
+  ['breaking-news', 'Édition spéciale (signal)', 'Télé et spectacle', sonBreaking],
+  ['sirene', 'Sirène d’alerte', 'Télé et spectacle', sirene]
 ];
 
 // ---------- Musiques ----------
@@ -472,6 +573,18 @@ function encode(L, R, dest, kbps) {
   const tmp = path.join(os.tmpdir(), 'qm-' + process.pid + '.wav'); wav(L, R, tmp);
   execFileSync(FFMPEG, ['-y', '-v', 'error', '-i', tmp, '-codec:a', 'libmp3lame', '-b:a', kbps + 'k', dest]); fs.unlinkSync(tmp);
 }
+function ajouter() { // node scripts/generer-bibliotheque.js --ajouter : génère seulement les bruitages absents et complète l'index
+  const index = JSON.parse(fs.readFileSync(path.join(OUT, 'index.json'), 'utf8')); let n = 0;
+  for (const [id, nom, cat, make] of SONS) {
+    if (index.sons.some(x => x.id === id) && fs.existsSync(path.join(OUT, 'sons', id + '.mp3'))) continue;
+    R = rng(id.length * 977); const b = make(), g = 0.9 / (peak(b) || 1);
+    for (let i = 0; i < b.length; i++) b[i] *= g;
+    fade(b, 0.002, 0.03); encode(b, b, path.join(OUT, 'sons', id + '.mp3'), 128);
+    index.sons = index.sons.filter(x => x.id !== id); index.sons.push({ id, nom, cat, file: `sons/${id}.mp3`, duree: +(b.length / SR).toFixed(2) }); n++;
+  }
+  fs.writeFileSync(path.join(OUT, 'index.json'), JSON.stringify(index, null, 1));
+  console.log(`${n} bruitages ajoutés`);
+}
 function main() {
   // les autres listes (stickers, looks, calques, cadres : scripts Python) sont conservées
   let anciens = {};
@@ -492,4 +605,4 @@ function main() {
   fs.writeFileSync(path.join(OUT, 'index.json'), JSON.stringify(index, null, 1));
   console.log(`${index.sons.length} bruitages, ${index.musiques.length} musiques`);
 }
-main();
+if (process.argv.includes('--ajouter')) ajouter(); else main();

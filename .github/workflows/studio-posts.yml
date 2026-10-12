@@ -6,7 +6,7 @@ name: Studio Posts — application Mac
 on:
   workflow_dispatch:
   push:
-    paths: ['marketing/generateur-posts/**', 'marketing/ia-locale/**', 'tools/generateur-posts.js', 'tools/synchro-ia-locale.js', 'tools/publications.json', 'tools/carrousels.json', '.github/workflows/studio-posts.yml']
+    paths: ['marketing/generateur-posts/**', 'marketing/ia-locale/**', 'tools/generateur-posts.js', 'tools/synchro-ia-locale.js', 'quentmovie/maj.js', 'tools/publications.json', 'tools/carrousels.json', '.github/workflows/studio-posts.yml']
 
 concurrency:
   group: studio-posts-mac
@@ -49,6 +49,10 @@ jobs:
             if (!r.generation || !r.generation.pont || r.generation.erreur || !(r.generation.n >= 5) || !r.generation.tel) ko.push("génération de publication : " + JSON.stringify(r.generation));
             if (!r.assistant || !r.assistant.ok || !r.assistant.maj || !r.assistant.partage) ko.push("assistant, mise à jour ou partage : " + JSON.stringify(r.assistant));
             if (ko.length) { console.log("Échecs :", ko.join(" ; ")); process.exit(1); } else console.log("Application : tout fonctionne");'
+      - name: Contrôler que tous les fichiers du programme sont dans l'application
+        run: |
+          npx --yes @electron/asar list "dist/mac-arm64/Studio Posts.app/Contents/Resources/app.asar" > contenu.txt
+          for f in maj.js memoire.js generation.js; do grep -q "/$f$" contenu.txt || { echo "Fichier absent de l'application : $f"; exit 1; }; done
       - name: Contrôler que l'application tourne sur puce Apple
         run: |
           a=$(lipo -archs "dist/mac-arm64/Studio Posts.app/Contents/MacOS/Studio Posts")

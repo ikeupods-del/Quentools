@@ -53,6 +53,7 @@ const rejette = async (p, motif) => { try { await p; return false; } catch (e) {
   const info = await M.chercher('1.3.0', api);
   check('nouvelle version trouvée (brouillons et autres fichiers ignorés)', info && info.version === '1.4.0' && info.sha256 === empreinte && /Nouveautés/.test(info.notes), JSON.stringify(info));
   check('déjà à jour', (await M.chercher('1.4.0', api)) === null);
+  check('autre logiciel : les versions de QuentMovie ne lui sont pas proposées', (await M.chercher('1.0.0', api, M.motifDe('Studio-Posts'))) === null);
   check('adresse non sécurisée refusée', await rejette(M.chercher('1.0.0', 'http://exemple.fr'), /refusée/));
 
   // Téléchargement vérifié

@@ -45,3 +45,9 @@ Onglet « Style et fonctions » (ou tchat). Tout est du code fixe écrit par le 
 
 ## Contrôles
 `node tools/verifier-studio-sites.js` (textes, coordonnées, restes de l'exemple) et `node tools/verifier-studio-sites-fonctions.js` (tchat, fonctions, panel, style).
+
+## Publier sur GitHub (`github.js`, `composition.js`)
+Bouton « 🚀 Publier » (ou « publie le site » dans le tchat) : le site est envoyé dans un dépôt GitHub (créé si besoin) puis hébergé par GitHub Pages ; l'adresse du site est affichée. Connexion : un jeton personnel (autorisation `repo`), ou la connexion « appareil » de GitHub (un code à saisir sur github.com) qui demande l'identifiant public (client ID) d'une application OAuth créée une fois (GitHub → Réglages → Developer settings → OAuth Apps, « Enable Device Flow »). Le jeton est chiffré par le trousseau de macOS (`safeStorage`) et ne passe jamais par la page. Les notes de livraison et les règles Firebase ne sont jamais publiées. Contrôle : `node tools/verifier-github.js` (faux serveur GitHub). Un dépôt privé n'a pas GitHub Pages sans abonnement : le message l'explique.
+
+## Mémoire et mise à jour
+La mémoire des IA (`memoire.js`, fichier partagé `~/Movies/QuentMovie/memoire-ia.json`) : « retiens que… » / « oublie… » dans le tchat, bouton « 🧠 Mémoire » ; les textes de l'IA corrigés à la main sont appris à l'enregistrement et à la publication. L'application se met à jour toute seule (`maj.js`, copie de `quentmovie/maj.js`).

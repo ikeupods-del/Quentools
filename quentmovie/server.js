@@ -96,7 +96,8 @@ function create(opts = {}) {
     }
   }
   let parole = null, ia = opts.ia || null; // opts.ia : IA de remplacement pour les essais
-  const IA = () => ia || (ia = require('./ia').creer({ BASE, FFMPEG }));
+  const MEM = require('./memoire'), MEMOIRE = MEM.creerStockage({ fichier: path.join(BASE, 'memoire-ia.json') }); // consignes et corrections retenues, partagées avec Studio Posts et Studio Sites
+  const IA = () => ia || (ia = require('./ia').creer({ BASE, FFMPEG, memoire: () => MEM.pourPrompt(MEMOIRE.lire(), 600) }));
   const PAROLE = () => parole || (parole = require('./parole').creer({ run, FFMPEG, BASE }));
   // Réglages locaux (clés gratuites des banques de photos : gardées dans le dossier QuentMovie de l'utilisateur, jamais dans le dépôt)
   const REGL = path.join(BASE, 'reglages.json');
@@ -1058,10 +1059,14 @@ function buildClip(c, P, o = {}) {
       // Assistant de montage (assistant.js ; l'IA locale seulement si les règles ne comprennent pas la demande)
       if (req.method === 'POST' && p === '/api/assistant/comprendre') {
         const b = await readJson(req), demande = String(b.demande || '').slice(0, 500), AS = require('./assistant');
+        const ordre = MEM.detecter(demande), repMem = ordre ? MEM.appliquer(MEMOIRE, ordre, 'QuentMovie') : null; // « retiens que… », « oublie… », « que retiens-tu ? »
+        if (repMem) return send(res, 200, { actions: [], ia: false, memoire: repMem });
         const regles = AS.comprendre(demande, b.projet && typeof b.projet === 'object' ? b.projet : undefined);
         if (regles.length || !b.ia) return send(res, 200, { actions: regles, ia: false });
         try { return send(res, 200, { actions: await IA().comprendreDemande(demande), ia: true }); } catch (e) { return send(res, 200, { actions: [], ia: false, erreur: e.message }); }
       }
+      if (req.method === 'GET' && p === '/api/memoire') return send(res, 200, MEMOIRE.lire());
+      if (req.method === 'POST' && p === '/api/memoire/corrections') { const b = await readJson(req); MEMOIRE.corrections(Array.isArray(b.paires) ? b.paires.slice(0, 12) : [], 'QuentMovie'); return send(res, 200, { ok: true }); }
       if (req.method === 'POST' && p === '/api/assistant/suggestions') { const b = await readJson(req); return send(res, 200, { suggestions: require('./assistant').suggerer(b && typeof b === 'object' ? b : {}) }); }
       // Chapitres proposés d'après le texte de la vidéo (sous-titres), puis nommés par l'IA locale si elle est installée
       if (req.method === 'POST' && p === '/api/chapitres/proposer') {

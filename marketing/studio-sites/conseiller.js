@@ -141,7 +141,7 @@
         const hist = (o.historique || []).slice(-6).map(h => `${h.role === 'moi' ? 'Personne' : 'Assistant'} : ${h.texte}`).join('\n');
         const demande = `Fiche actuelle :\n${resumeFiche(fiche)}\n\nCahier des charges actuel : ${resumeBrief(brief)}\n\n${hist ? 'Conversation récente :\n' + hist + '\n\n' : ''}Nouveau message de la personne :\n« ${message} »\n\n` +
           'Mets à jour uniquement ce que ce message change ou précise. Dans « ajouter » mets les fonctions demandées, dans « retirer » celles dont elle ne veut plus.';
-        const r = await o.ecrire({ systeme: SYSTEME, demande, schema: schema(), maxTokens: 900, temperature: 0.35 });
+        const r = await o.ecrire({ systeme: SYSTEME + (o.memoire ? '\n' + String(o.memoire).slice(0, 900) : ''), demande, schema: schema(), maxTokens: 900, temperature: 0.35 });
         if (r && typeof r === 'object') { delta = valider(r, conversation); reponse = String(r.reponse || '').replace(/\s+/g, ' ').trim(); questionsIA = (r.questions || []).map(x => String(x).trim()).filter(Boolean); source = 'ia'; }
       } catch (e) { delta = null; }
     }

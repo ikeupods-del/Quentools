@@ -64,7 +64,7 @@ function lireConsignes(consigne) {
   return r;
 }
 
-function creer({ BASE, FFMPEG }) {
+function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consignes retenues (memoire.js), ajouté à chaque demande d'écriture
   const MODELES = path.join(BASE, 'modeles'), OUTILS = path.join(BASE, 'outils');
   let MOD = MODELE, cheminModele = path.join(MODELES, MOD.fichier);
   const utiliser = id => { MOD = MODELES_IA[id] || MODELE; cheminModele = path.join(MODELES, MOD.fichier); };
@@ -78,7 +78,14 @@ function creer({ BASE, FFMPEG }) {
     proc.on('exit', code => { for (const a of attente.values()) a.ko(new Error('L’IA locale s’est arrêtée' + (err ? ' : ' + err.trim().split('\n').pop() : ` (code ${code})`))); attente = new Map(); proc = null; });
     return proc;
   }
-  const demander = msg => new Promise((ok, ko) => { const id = ++num; attente.set(id, { ok, ko }); processus().send({ id, ...msg, ...(MOD.aucunePensee && msg.systeme ? { systeme: msg.systeme + ' /no_think' } : {}) }); });
+  const demander = msg => new Promise((ok, ko) => {
+    const id = ++num; attente.set(id, { ok, ko });
+    let mem = ''; try { mem = msg.type === 'ecrire' && msg.systeme && memoire ? memoire() : ''; } catch (e) { mem = ''; }
+    const m = { ...msg };
+    if (m.systeme) m.systeme = m.systeme + (mem ? '\n' + mem : '') + (MOD.aucunePensee ? ' /no_think' : '');
+    if (mem && m.contexte) m.contexte = Math.min(8192, m.contexte + 384); // place pour la mémoire
+    processus().send({ id, ...m });
+  });
   const installe = () => fs.existsSync(cheminModele);
   const etat = () => ({ installee: installe(), mo: MOD.mo, styles: Object.keys(STYLES), modeles: Object.entries(MODELES_IA).map(([id, m]) => ({ id, nom: m.nom, mo: m.mo, installe: fs.existsSync(path.join(MODELES, m.fichier)) })) });
 

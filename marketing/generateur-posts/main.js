@@ -29,9 +29,22 @@ ipcMain.handle('partage:envoyer', (e, fichiers) => {
   new ShareMenu({ filePaths: chemins }).popup({ window: win });
   return { ok: true };
 });
-// Nouvelle version : recherche discrète dans les Releases ; la page propose d'ouvrir la page de téléchargement (rien n'est installé tout seul)
-ipcMain.handle('maj:verifier', async e => { if (!depuisNotrePage(e)) throw new Error('refusé'); try { return await require('./nouvelle-version').chercher('studio-posts-v', app.getVersion()); } catch (er) { return null; } });
-ipcMain.handle('maj:ouvrir', (e, url) => { if (!depuisNotrePage(e)) throw new Error('refusé'); if (/^https:\/\/github\.com\/ikeupods-del\/Quentools\/releases\//.test(String(url))) shell.openExternal(String(url)); });
+// Mises à jour automatiques (versions publiées dans les Releases) : téléchargement en arrière-plan, installation quand l'application se ferme ou au clic sur « Redémarrer »
+const { Maj, emplacementApp } = require('./maj');
+const maj = new Maj({ nom: 'Studio Posts', fichier: 'Studio-Posts', version: app.getVersion(), dossier: path.join(app.getPath('userData'), 'mises-a-jour'), app: emplacementApp(process.execPath), actif: app.isPackaged && process.platform === 'darwin' && !process.env.STUDIO_AUTOTEST });
+const verifierMaj = () => { maj.verifier().then(() => { if (win && !win.isDestroyed()) win.webContents.send('maj:etat', maj.etat); }); };
+ipcMain.handle('maj:etat', e => { if (!depuisNotrePage(e)) throw new Error('refusé'); return maj.etat; });
+ipcMain.handle('maj:verifier', e => { if (!depuisNotrePage(e)) throw new Error('refusé'); verifierMaj(); return maj.etat; });
+ipcMain.handle('maj:installer', e => { if (!depuisNotrePage(e)) throw new Error('refusé'); if (maj.installer(true)) setTimeout(() => app.quit(), 200); return maj.etat; });
+app.on('will-quit', () => { maj.installer(false); });
+// Mémoire des IA (fichier partagé avec QuentMovie et Studio Sites)
+const Memoire = require('./memoire');
+const MEMOIRE = Memoire.creerStockage({ fichier: path.join(require('os').homedir(), 'Movies', 'QuentMovie', 'memoire-ia.json') });
+ipcMain.handle('memoire:lire', e => { if (!depuisNotrePage(e)) throw new Error('refusé'); return MEMOIRE.lire(); });
+ipcMain.handle('memoire:ordre', (e, message) => { if (!depuisNotrePage(e)) throw new Error('refusé'); const o = Memoire.detecter(String(message || '').slice(0, 600)); const rep = o ? Memoire.appliquer(MEMOIRE, o, 'Studio Posts') : null; return rep ? { reponse: rep, memoire: MEMOIRE.lire() } : null; });
+ipcMain.handle('memoire:oublier', (e, id) => { if (!depuisNotrePage(e)) throw new Error('refusé'); return MEMOIRE.oublierId(String(id)); });
+ipcMain.handle('memoire:vider', e => { if (!depuisNotrePage(e)) throw new Error('refusé'); return MEMOIRE.vider(); });
+ipcMain.handle('memoire:corrections', (e, paires) => { if (!depuisNotrePage(e)) throw new Error('refusé'); return MEMOIRE.corrections(Array.isArray(paires) ? paires.slice(0, 12) : [], 'Studio Posts'); });
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 
@@ -111,7 +124,7 @@ function autotest() {
   });
 }
 
-app.whenReady().then(() => { menu(); ouvrir(); });
+app.whenReady().then(() => { menu(); ouvrir(); setTimeout(verifierMaj, 8000); setInterval(verifierMaj, 6 * 3600 * 1000); });
 app.on('activate', () => { if (!win) ouvrir(); });
 app.on('will-quit', () => { if (ia) ia.arreter(); });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin' || process.env.STUDIO_AUTOTEST) app.quit(); });

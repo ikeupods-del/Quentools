@@ -48,15 +48,20 @@ aside.gauche{padding:0;display:flex;flex-direction:column;overflow:hidden}
 .mod{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:start;padding:6px 0;border-bottom:1px solid var(--ligne)}.mod input{margin-top:3px}.mod b{font-size:13px;color:var(--texte)}.mod small{grid-column:2;color:var(--doux);font-size:11.5px;line-height:1.35}
 .ligne{display:flex;align-items:center;gap:8px}.ligne input[type=checkbox]{width:auto}
 #iaEtat{font-size:12.5px;color:var(--doux)}
-.maj{display:none;align-items:center;gap:10px;padding:7px 16px;background:#33290f;color:#ffd98a;font-size:13px}.maj.vu{display:flex}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}.modal.ouvert{display:flex}
+.boite{background:var(--panneau);border:1px solid var(--ligne-2);border-radius:14px;width:min(560px,100%);max-height:92vh;overflow:auto}.boite header{padding:14px 18px}.boite header h2{margin:0;font-size:16px;text-transform:none;letter-spacing:0;color:var(--texte)}
+#ghCorps{padding:6px 18px 18px;display:grid;gap:10px}#ghCorps .code{font:700 30px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.12em;text-align:center;background:var(--panneau-2);border:1px dashed var(--ligne-2);border-radius:10px;padding:14px}
+#ghCorps .ok{color:var(--ok)}#ghCorps a{color:#a99bff}.maj{display:none;align-items:center;gap:10px;padding:7px 16px;background:#33290f;color:#ffd98a;font-size:13px}.maj.vu{display:flex}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#26262f;border:1px solid var(--ligne-2);padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;z-index:20}.toast.vu{opacity:1;transform:translateX(-50%)}
 </style>
 </head>
 <body>
-<div class="maj" id="bMaj" role="status"><span id="bMajTexte"></span><button id="bMajGo">Télécharger</button></div>
+<div class="maj" id="bMaj" role="status"><span id="bMajTexte"></span><button id="bMajGo" hidden>Redémarrer pour installer</button></div>
 <header>
   <h1>Studio Sites</h1><span class="doux" id="titreSite"></span><div class="espace"></div>
   <button id="bGenerer" class="primaire" title="Écrire le site à partir de la fiche (⌘G)">✨ Générer le site</button>
+  <button id="bMemoire" title="Ce que l’IA a retenu de tes consignes et de tes corrections">🧠 Mémoire</button>
+  <button id="bPublier" disabled title="Envoyer le site sur GitHub et l’héberger gratuitement avec GitHub Pages">🚀 Publier</button>
   <button id="bEnregistrer" disabled title="Choisir un dossier : le site y est enregistré, prêt à publier (⌘S)">📁 Enregistrer le site</button>
 </header>
 <div class="corps">
@@ -113,8 +118,15 @@ aside.gauche{padding:0;display:flex;flex-direction:column;overflow:hidden}
   </section>
   <aside class="droite" id="textes"><h2>Textes du site</h2><p class="doux">Les textes apparaissent ici après la génération : corrige-les, l’aperçu se met à jour.</p></aside>
 </div>
+<div class="modal" id="modalGh" role="dialog" aria-modal="true" aria-labelledby="ghTitre"><div class="boite">
+  <header style="display:flex;align-items:center;gap:10px"><h2 id="ghTitre">🚀 Publier sur GitHub</h2><span class="espace" style="flex:1"></span><button id="ghFermer">Fermer</button></header>
+  <div id="ghCorps"></div></div></div>
+<div class="modal" id="modalMem" role="dialog" aria-modal="true" aria-labelledby="memTitre"><div class="boite">
+  <header style="display:flex;align-items:center;gap:10px"><h2 id="memTitre">🧠 Mémoire de l’IA</h2><span class="espace" style="flex:1"></span><button id="memFermer">Fermer</button></header>
+  <div id="memCorps" style="padding:6px 18px 18px;display:grid;gap:10px"></div></div></div>
 <div class="toast" id="toast"></div>
 <script src="modules.js"></script>
+<script src="memoire.js"></script>
 <script src="moteur.js"></script>
 <script src="conseiller.js"></script>
 <script>
@@ -212,10 +224,18 @@ async function envoyerChat(texte) {
   texte = String(texte || '').trim(); if (!texte || chatEnCours) return null;
   chatEnCours = true; $('#chatEnvoi').disabled = true; $('#sugg').hidden = true;
   messageChat('moi', texte); histo.push({ role: 'moi', texte });
+  if (/\b(publie|publier|mets?(?: le site)? en ligne|mise en ligne)\b/i.test(texte)) {
+    const rep = etat.resultat ? 'J’ouvre la publication sur GitHub : connecte ton compte si besoin, choisis le nom du dépôt et clique sur « Publier le site ».' : 'Génère d’abord le site (bouton « Générer le site »), puis je le publie.';
+    messageChat('assistant', rep); histo.push({ role: 'assistant', texte: rep }); sauverChat(); if (etat.resultat) ouvrirGh(); chatEnCours = false; $('#chatEnvoi').disabled = false; return { publication: !!etat.resultat };
+  }
+  try {
+    const ordre = MEM() ? await MEM().ordre(texte) : null;
+    if (ordre) { memo = ordre.memoire; messageChat('assistant', ordre.reponse); histo.push({ role: 'assistant', texte: ordre.reponse }); sauverChat(); chatEnCours = false; $('#chatEnvoi').disabled = false; return { memoire: ordre.reponse }; }
+  } catch (er) { /* mémoire indisponible : message traité normalement */ }
   const attente = messageChat('assistant', 'Je réfléchis…');
   try {
     const a = API(), ia = a ? await a.ia.etat() : { installee: false };
-    const r = await Conseiller.tour({ message: texte, historique: histo.slice(0, -1), fiche: lireFiche(), brief: lireBrief(), ecrire: ia.installee && a ? m => a.ia.ecrire(m) : (window.ECRIRE_TEST || null) });
+    const r = await Conseiller.tour({ message: texte, historique: histo.slice(0, -1), fiche: lireFiche(), brief: lireBrief(), memoire: memoireTexte(), ecrire: ia.installee && a ? m => a.ia.ecrire(m) : (window.ECRIRE_TEST || null) });
     ecrireFiche(r.fiche); ecrireBrief(r.brief); majInfoModele(); enregistrerFiche();
     attente.remove();
     let note = r.source === 'ia' ? '' : 'IA locale non installée : analyse simple de ta demande.';
@@ -237,7 +257,7 @@ function accueilChat() {
 const pourApercu = h => String(h).replace(/assets\/fonts\//g, 'modeles/polices/').replace(/assets\/(qt\.(?:css|js))/g, 'modeles/assets/$1');
 function afficher(html) {
   const f = $('#apercu'); f.hidden = false; $('#vide').hidden = true; f.srcdoc = pourApercu(html);
-  $('#bEnregistrer').disabled = false;
+  $('#bEnregistrer').disabled = false; $('#bPublier').disabled = false;
 }
 function setVue(mobile) { $('#apercu').classList.toggle('mobile', mobile); $('#vMobile').classList.toggle('on', mobile); $('#vBureau').classList.toggle('on', !mobile); }
 
@@ -276,7 +296,7 @@ async function genererSite(options = {}) {
     etatTexte('Analyse de l’exemple…', 0.05);
     const interactives = await Moteur.sectionsInteractives(data.html);
     const brief = options.brief || lireBrief();
-    const res = await Moteur.generer({ html: data.html, modele, fiche, ecrire, interactives, brief, surEtape: (t, p) => etatTexte(echap(t), 0.08 + p * 0.9) });
+    const res = await Moteur.generer({ html: data.html, modele, fiche, ecrire, interactives, brief, memoire: memoireTexte(), surEtape: (t, p) => etatTexte(echap(t), 0.08 + p * 0.9) });
     Object.assign(etat, { modele, html: data.html, legal: data.legal, resultat: res, textes: {}, interactives, fiche, brief });
     $('#titreSite').textContent = `· ${fiche.nom}`; $('#infoSite').textContent = `${modele.nom}${ecrire ? ' · textes écrits par l’IA locale' : ' · textes de l’exemple (IA non installée)'}`;
     afficher(res.html); afficherTextes(); enregistrerFiche();
@@ -287,6 +307,7 @@ async function genererSite(options = {}) {
 }
 async function enregistrerSite() {
   const r = etat.resultat; if (!r) return;
+  await apprendre();
   const fiche = lireFiche(), brief = lireBrief(), legal = Moteur.mentionsLegales(etat.legal, fiche), notes = Moteur.notesLivraison(fiche, r, legal, brief);
   try {
     const out = await API().enregistrer({ dossier: Moteur.slugDe(fiche.nom), index: r.html, legal, notes, fichiers: Modules.fichiers(fiche, brief) });
@@ -296,10 +317,118 @@ async function enregistrerSite() {
   } catch (e) { etatTexte(`<span class="err">${echap(e.message)}</span>`); }
 }
 
+function afficherMaj(e) {
+  const actif = e && ['telechargement', 'installation', 'pret'].includes(e.etat); $('#bMaj').classList.toggle('vu', !!actif); if (!actif) return;
+  $('#bMajTexte').textContent = e.etat === 'pret' ? `Studio Sites ${e.nouvelle} est prête : elle s’installe à la fermeture, ou tout de suite.` : `Mise à jour ${e.nouvelle} en cours de téléchargement (${e.progres || 0} %)…`;
+  $('#bMajGo').hidden = e.etat !== 'pret';
+}
+async function suivreMaj() {
+  const m = API() && API().maj; if (!m) return;
+  try {
+    m.surChangement(afficherMaj); $('#bMajGo').onclick = () => m.installer();
+    let e = await m.verifier(); afficherMaj(e);
+    for (let n = 0; n < 900 && e && ['recherche', 'telechargement', 'installation'].includes(e.etat); n++) { await new Promise(r => setTimeout(r, 2000)); e = await m.etat(); afficherMaj(e); }
+  } catch (er) { /* hors ligne : réessai au prochain démarrage */ }
+}
+
+
+/* ───────── Mémoire de l'IA (consignes retenues et corrections apprises, partagées avec les autres logiciels) ───────── */
+let memo = { consignes: [], corrections: [] };
+const MEM = () => (API() && API().memoire) || null;
+const memoireTexte = () => (window.Memoire ? Memoire.pourPrompt(memo) : '');
+async function chargerMemoire() { try { if (MEM()) memo = await MEM().lire(); } catch (e) { /* mémoire indisponible */ } }
+function rendreMemoire() {
+  const z = $('#memCorps'), l = memo.consignes;
+  z.innerHTML = `<p class="doux">L’IA ne se « ré-entraîne » pas : elle relit ces consignes et ces corrections à chaque demande. Elles sont partagées avec QuentMovie et Studio Posts (un seul fichier sur ce Mac). Dis dans le tchat « retiens que… » ou « oublie… » pour la modifier.</p>
+    ${l.length ? l.map((x, i) => `<div class="ligne"><span style="flex:1">${i + 1}. ${echap(x.texte)} <small class="doux">${echap(x.source || '')} ${echap(x.date || '')}</small></span><button data-oublier="${echap(x.id)}" title="Oublier">✕</button></div>`).join('') : '<p class="doux">Aucune consigne retenue pour le moment.</p>'}
+    <p class="doux">${memo.corrections.length} correction${memo.corrections.length > 1 ? 's' : ''} de textes apprise${memo.corrections.length > 1 ? 's' : ''} (apprises quand tu enregistres ou publies un site dont tu as corrigé des textes).</p>
+    <button id="memVider" ${l.length || memo.corrections.length ? '' : 'disabled'}>Tout oublier</button>`;
+}
+function ouvrirMemoire() { $('#modalMem').classList.add('ouvert'); rendreMemoire(); }
+// à l'enregistrement ou à la publication : les textes écrits par l'IA que tu as corrigés deviennent des exemples
+async function apprendre() {
+  const r = etat.resultat; if (!r || !MEM() || !window.Memoire) return;
+  const paires = r.slots.filter(s => s.etat === 'ia' && etat.textes[s.i] != null && etat.textes[s.i] !== s.texte).map(s => ({ avant: s.texte, apres: etat.textes[s.i] }));
+  if (!paires.length) return;
+  try { memo = await MEM().corrections(paires); } catch (e) { /* mémoire indisponible */ }
+}
+function brancherMemoire() {
+  $('#bMemoire').onclick = ouvrirMemoire;
+  $('#modalMem').addEventListener('click', async e => {
+    if (e.target.id === 'modalMem' || e.target.id === 'memFermer') return $('#modalMem').classList.remove('ouvert');
+    const o = e.target.closest('[data-oublier]'); if (o) { memo = await MEM().oublier(o.dataset.oublier); return rendreMemoire(); }
+    if (e.target.id === 'memVider' && confirm('Effacer toutes les consignes et corrections retenues ?')) { memo = await MEM().vider(); rendreMemoire(); }
+  });
+}
+
+/* ───────── Publication sur GitHub ───────── */
+const GH = () => (API() && API().github) || null;
+const sansPrefixe = m => String(m || '').replace(/^Error invoking remote method '[^']+': (?:Error: )?/, '');
+let gh = { etat: null, code: null, attente: false, publication: null, etape: '' };
+async function rendreGh() {
+  const z = $('#ghCorps'), g = GH();
+  if (!g) { z.innerHTML = '<p class="doux">La publication sur GitHub est disponible dans l’application Mac.</p>'; return; }
+  gh.etat = gh.etat || await g.etat();
+  const e = gh.etat;
+  if (!e.connecte) {
+    z.innerHTML = `<p class="doux">Connecte ton compte GitHub une fois : le site est ensuite envoyé dans un dépôt et hébergé gratuitement par GitHub Pages, en un clic. Le jeton est chiffré dans le trousseau du Mac et jamais montré à la page.</p>
+      ${gh.code ? `<div class="code" id="ghCode">${echap(gh.code.code)}</div><p class="doux">GitHub s’est ouvert dans ton navigateur : saisis ce code puis autorise l’application. ${gh.attente ? '<br>En attente de ta validation…' : ''}</p><button id="ghAnnuler">Annuler</button>` : `
+      <button class="primaire" id="ghConnecter">Se connecter avec GitHub</button>
+      <label>Identifiant de l’application GitHub (client ID, public)<input type="text" id="ghClient" value="${echap(e.clientId)}" placeholder="Ov23li… ou Iv1…"></label>
+      <p class="doux">À créer une fois dans GitHub → Réglages → Developer settings → OAuth Apps → New (cocher « Enable Device Flow »). Aucun secret n’est demandé.</p>
+      <label>… ou colle un jeton personnel (autorisation « repo »)<input type="password" id="ghJeton" autocomplete="off" placeholder="ghp_…"></label>
+      <div class="duo"><button id="ghJetonOk">Utiliser ce jeton</button><button id="ghJetonCreer">Créer un jeton sur GitHub</button></div>`}
+      <p class="note" id="ghErr" role="alert">${echap(gh.erreur || '')}</p>`;
+    return;
+  }
+  const p = gh.publication;
+  z.innerHTML = `<p>Connecté : <b>@${echap(e.login)}</b> <button id="ghDeco" style="margin-left:8px">Se déconnecter</button></p>
+    <label>Nom du dépôt (devient l’adresse du site)<input type="text" id="ghNom" value="${echap(gh.nom || Moteur.slugDe(lireFiche().nom))}" maxlength="80"></label>
+    <div class="duo"><label>Visibilité<select id="ghPrive"><option value="0">Public (hébergement gratuit)</option><option value="1">Privé (Pages demande un abonnement)</option></select></label>
+      <label class="ligne" style="align-self:end"><input type="checkbox" id="ghPages" checked> Activer GitHub Pages</label></div>
+    <button class="primaire" id="ghPublier" ${p && p.enCours ? 'disabled' : ''}>🚀 Publier le site</button>
+    ${p && p.enCours ? `<p class="doux"><progress></progress> ${echap(gh.etape)}</p>` : ''}
+    ${p && p.resultat ? `<p class="ok">✅ ${p.resultat.nouveau ? 'Dépôt créé et site envoyé' : 'Site mis à jour'}.</p>${p.resultat.site ? `<p>Adresse du site : <a href="#" id="ghSite">${echap(p.resultat.site)}</a><br><span class="doux">Pages : ${echap(p.resultat.pages)}. Le site apparaît en général une à deux minutes après la première publication.</span></p>` : ''}<p>Dépôt : <a href="#" id="ghDepot">${echap(p.resultat.depot)}</a></p>` : ''}
+    <p class="note" id="ghErr" role="alert">${echap(gh.erreur || '')}</p>
+    <p class="doux">Ce qui est publié : le site, les mentions légales, les polices, ${lireBrief().modules.includes('panel') ? 'le panel (admin/, non référencé), ' : ''}robots.txt. Les notes de livraison et les règles Firebase restent sur ton Mac.</p>`;
+}
+function ouvrirGh() { gh.erreur = ''; $('#modalGh').classList.add('ouvert'); rendreGh(); }
+function fermerGh() { $('#modalGh').classList.remove('ouvert'); }
+async function actionGh(e) {
+  const g = GH(), id = e.target.id; if (!g || !id) return;
+  try {
+    gh.erreur = '';
+    if (id === 'ghFermer') return fermerGh();
+    if (id === 'ghConnecter') { const c = $('#ghClient'); if (!c || !c.value.trim()) throw new Error('Renseigne d’abord l’identifiant de l’application GitHub (client ID), ou utilise un jeton.'); if (c.value.trim() !== gh.etat.clientId) gh.etat = await g.clientId(c.value.trim()); gh.code = await g.connecter(); gh.attente = true; return rendreGh(); }
+    if (id === 'ghClient') return;
+    if (id === 'ghAnnuler') { await g.annuler(); gh.code = null; gh.attente = false; return rendreGh(); }
+    if (id === 'ghJetonOk') { gh.etat = await g.jeton($('#ghJeton').value); return rendreGh(); }
+    if (id === 'ghJetonCreer') return g.ouvrir('https://github.com/settings/tokens/new?scopes=repo&description=Studio%20Sites');
+    if (id === 'ghDeco') { gh.etat = await g.deconnecter(); gh.publication = null; return rendreGh(); }
+    if (id === 'ghSite') { e.preventDefault(); return g.ouvrir(gh.publication.resultat.site); }
+    if (id === 'ghDepot') { e.preventDefault(); return g.ouvrir(gh.publication.resultat.depot); }
+    if (id === 'ghPublier') {
+      const nom = $('#ghNom').value.trim(), prive = $('#ghPrive').value === '1', pages = $('#ghPages').checked; gh.nom = nom;
+      if (!prive && !confirm(`Le site « ${nom} » sera visible par tout le monde sur internet. Continuer ?`)) return;
+      await apprendre();
+      const r = etat.resultat, fiche = lireFiche(), brief = lireBrief(), legal = Moteur.mentionsLegales(etat.legal, fiche), notes = Moteur.notesLivraison(fiche, r, legal, brief);
+      gh.publication = { enCours: true }; rendreGh();
+      gh.publication = { resultat: await g.publier({ site: { index: r.html, legal, notes, fichiers: Modules.fichiers(fiche, brief) }, nom, prive, pages }) };
+      return rendreGh();
+    }
+  } catch (er) { gh.erreur = sansPrefixe(er.message); if (gh.publication && gh.publication.enCours) gh.publication = null; rendreGh(); }
+}
+function brancherGh() {
+  $('#bPublier').onclick = ouvrirGh; $('#modalGh').addEventListener('click', e => { if (e.target.id === 'modalGh') fermerGh(); else actionGh(e); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') fermerGh(); });
+  const g = GH(); if (!g) return;
+  g.surEtape(t => { gh.etape = t; if ($('#modalGh').classList.contains('ouvert')) rendreGh(); });
+  g.surConnexion(async d => { gh.attente = false; gh.code = null; if (d && d.erreur) gh.erreur = d.erreur; else gh.etat = d; if ($('#modalGh').classList.contains('ouvert')) rendreGh(); });
+}
 (async () => {
   const a = API();
   try { modeles = a ? await a.modeles() : (window.MODELES_TEST || []); } catch (e) { modeles = []; }
-  if (a && a.maj) a.maj.verifier().then(v => { if (!v) return; $('#bMajTexte').textContent = `Une nouvelle version de Studio Sites est disponible (${v.version}).`; $('#bMajGo').onclick = () => a.maj.ouvrir(v.url); $('#bMaj').classList.add('vu'); }).catch(() => {});
+  suivreMaj(); brancherGh(); brancherMemoire(); await chargerMemoire();
   remplirModeles(); remplirStyle(); chargerFiche(); majInfoModele(); majIA(); majCahier(); accueilChat();
   document.querySelectorAll('#fiche input, #fiche select, #fiche textarea').forEach(e => e.addEventListener('input', () => { majInfoModele(); enregistrerFiche(); }));
   document.querySelectorAll('#p_style input, #p_style select, #p_style textarea').forEach(e => e.addEventListener('input', () => { majCahier(); majInfoModele(); enregistrerFiche(); clearTimeout(tImp); tImp = setTimeout(rafraichir, 500); }));
