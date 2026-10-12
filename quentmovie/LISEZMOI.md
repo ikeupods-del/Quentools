@@ -81,3 +81,6 @@ Fin d'export, clips TikTok et miniature : bouton « Envoyer par AirDrop » (`/ap
 
 ## Sons des animations et mémoire de l'IA
 Bruitages d'argent, d'humeurs et d'infos générés par `scripts/generer-bibliotheque.js --ajouter` (n'ajoute que les sons absents, sans toucher aux fichiers existants) et liés aux animations par `scripts/generer-animations.py` (dernière colonne de `ANIMS`, puis `--index`). Mémoire de l'IA : `memoire.js` (copie de `marketing/ia-locale/memoire.js`), fichier partagé `~/Movies/QuentMovie/memoire-ia.json` ; l'assistant comprend « retiens que… », « oublie… », « que retiens-tu ? » ; le texte retenu est ajouté à chaque demande d'écriture (`ia.js`, `demander`) ; les titres de chapitres corrigés sont appris (`/api/memoire/corrections`).
+
+## Assistant : demandes comprises sans IA
+`assistant.js` : couper les blancs, sous-titres, musique, format, égaliser, transitions, dynamiser, qualité, plans, titre, chapitres, clips, publication, vitesse ; **supprimer un clip** (dernier, premier, n°), **bruitage** (clavier, applaudissements, whoosh, ding, jackpot, fanfare, sirène, hausse, baisse…), **couper à un instant** (10 s, 1:30), **volume** (50 %, muet, plus fort, moins fort), **fondus** début et fin. Contrôles : `node tests/assistant.js` (règles) et `node tests/parcours.js` (tous les outils, demandes et touches du studio dans un vrai navigateur).

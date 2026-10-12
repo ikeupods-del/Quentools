@@ -3,6 +3,11 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.18.0
+- L’assistant (⌘K) comprend beaucoup plus de demandes : « supprime le dernier clip », « ajoute un bruit de clavier » (ou applaudissements, whoosh, jackpot, sirène…), « coupe à 1:30 », « mets le volume à 50 % », « coupe le son », « ajoute un fondu au début et à la fin ».
+- Correction : « supprime les blancs » est maintenant compris comme « coupe les blancs » (il était pris pour une interdiction).
+- Contrôles de robustesse : tous les outils, toutes les demandes de l’assistant et toutes les touches d’animation du studio sont parcourus automatiquement avant chaque publication.
+
 ## 1.17.0
 - 15 nouveaux bruitages pour le studio et le montage : hausse, baisse, krach de la bourse, jackpot, riche, trombone de l’échec, joie, tristesse, colère, amour, choc, fanfare, ta-dam, édition spéciale et sirène. Les animations « Me filmer » les jouent automatiquement (hausse, baisse, jackpot, riche, pauvre, humeurs, Breaking news…).
 - L’IA a une mémoire : dis à l’assistant (⌘K) « retiens que… » (ou « oublie… », « que retiens-tu ? ») et elle en tient compte à chaque demande ; les titres de chapitres que tu corriges sont appris comme exemples. La mémoire est partagée avec Studio Posts et Studio Sites.

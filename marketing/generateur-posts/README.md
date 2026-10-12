@@ -43,3 +43,6 @@ Bouton « 💬 Assistant » (touche C) : on explique en français la publication
 
 ## Mémoire et mise à jour
 Bouton « 🧠 » : consignes retenues (« retiens que… » dans l'assistant) et corrections apprises à l'export, partagées avec QuentMovie et Studio Sites (`memoire.js`, fichier `~/Movies/QuentMovie/memoire-ia.json`). L'application se met à jour toute seule : téléchargement en arrière-plan, bandeau « Redémarrer pour installer » (`maj.js`, copie de `quentmovie/maj.js`).
+
+## Plan de la semaine
+Dans l'assistant : « prépare ma semaine », « 5 publications pour QuenTools » (2 à 7). Les thèmes tournent et les sujets, métiers et angles changent (`Generation.planSemaine`) ; chaque publication passe par les mêmes contrôles que « Générer ». Le bouton « Exporter la semaine (.zip) » range, par publication, les images et la légende, plus `planning.csv` (date, heure, marque, format, titre, légende, images ; premier jour le lundi suivant, protégé contre les formules des tableurs).

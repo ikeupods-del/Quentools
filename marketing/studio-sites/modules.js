@@ -17,6 +17,7 @@
     { id: 'panel', nom: 'Espace professionnel (panel)', desc: 'Page /admin protégée par mot de passe : voir, confirmer ou refuser les demandes, modifier l’annonce du site. Demande une base Firebase gratuite.' },
     { id: 'whatsapp', nom: 'Bouton WhatsApp', desc: 'Bouton flottant qui ouvre une conversation WhatsApp avec le numéro du professionnel.' },
     { id: 'annonce', nom: 'Bandeau d’annonce', desc: 'Bandeau en haut du site (congés, promotion, info) ; modifiable depuis l’espace professionnel.' },
+    { id: 'galerie', nom: 'Galerie photos', desc: 'Photos du professionnel (réalisations, lieu, produits) en grille, agrandies au toucher ; ajoute-les dans « Style et fonctions → Photos ».' },
     { id: 'faq', nom: 'Questions fréquentes', desc: 'Section de questions et réponses construite avec la fiche (horaires, adresse, contact, services) et tes propres questions.' }
   ];
   const IDS = CATALOGUE.map(m => m.id);
@@ -118,7 +119,8 @@
       tarifs: /€|euro/i.test(fiche.tarifs || '') ? fiche.tarifs : '', couleur: couleurDepuis((brief && brief.da && brief.da.couleur) || fiche.couleur) || '',
       mode, jours: joursOuverts(fiche.horaires), creneaux: creneaux(fiche.horaires, 30, mode === 'table' ? 60 : 30), fb,
       modules: ids, annonce: String((brief && brief.annonce) || ''), faq: ((brief && brief.faq) || []).filter(x => x && x.q && x.a).slice(0, 12).map(x => ({ q: String(x.q), a: String(x.a) })),
-      wa: e164(wa).replace(/\D/g, '')
+      wa: e164(wa).replace(/\D/g, ''),
+      photos: ((brief && brief.photos) || []).filter(p => p && /^photo-\d{1,2}\.jpg$/.test(p.f || '')).slice(0, 12).map(p => ({ f: p.f, l: String(p.legende || '').slice(0, 100) }))
     };
   }
 
@@ -200,6 +202,17 @@
         }).catch(function (e) { if (e && e.message === 'sans-base') parMail(); else { parMail(); } }).then(function () { bouton.disabled = false; });
       });
     });
+    // ── galerie : visionneuse (dialogue natif), flèches, Échap
+    (function () {
+      var liens = qa('.qs-galerie a'); if (!liens.length || !d.createElement('dialog').showModal) return;
+      var dlg = d.createElement('dialog'), idx = 0; dlg.className = 'qs-zoom'; dlg.setAttribute('aria-label', 'Photo agrandie');
+      dlg.innerHTML = '<button class="x" type="button" aria-label="Fermer">×</button><button class="p" type="button" aria-label="Photo précédente">‹</button><img alt=""><button class="n" type="button" aria-label="Photo suivante">›</button>'; d.body.appendChild(dlg);
+      var img = q('img', dlg), voir = function (i) { idx = (i + liens.length) % liens.length; var m = q('img', liens[idx]); img.src = liens[idx].getAttribute('href'); img.alt = m ? m.alt : ''; };
+      liens.forEach(function (a, i) { a.addEventListener('click', function (e) { e.preventDefault(); voir(i); dlg.showModal(); }); });
+      q('.x', dlg).addEventListener('click', function () { dlg.close(); }); q('.p', dlg).addEventListener('click', function () { voir(idx - 1); }); q('.n', dlg).addEventListener('click', function () { voir(idx + 1); });
+      dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+      dlg.addEventListener('keydown', function (e) { if (e.key === 'ArrowLeft') voir(idx - 1); else if (e.key === 'ArrowRight') voir(idx + 1); });
+    })();
     // ── assistant de questions : réponses fixes tirées de la fiche (aucune invention)
     if (C.modules.indexOf('chatbot') >= 0) (function () {
       var rep = function (texte, actions) { return { texte: texte, actions: actions || [] }; };
@@ -263,6 +276,8 @@
 .qs-form button[type=submit]{font:inherit;font-weight:700;cursor:pointer;border:0;border-radius:999px;padding:13px 22px;background:var(--qs-ac,#2f5bea);color:var(--qs-on,#fff)}.qs-form button[disabled]{opacity:.6;cursor:wait}
 .qs-piege{position:absolute!important;left:-9999px!important;width:1px;height:1px;overflow:hidden}
 .qs-msg{margin:0;min-height:1.3em;font-size:14px}.qs-err{color:#c62828}.qs-ok{color:inherit;font-weight:600}.qs-sec details{border-bottom:1px solid var(--qs-line,#ddd);padding:14px 2px}.qs-sec summary{cursor:pointer;font-weight:700}.qs-sec details p{margin:10px 0 0;opacity:.85}
+.qs-large{width:min(100% - 32px,1100px)}.qs-galerie{list-style:none;margin:18px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}.qs-galerie a{display:block;border-radius:var(--qs-r,12px);overflow:hidden;aspect-ratio:4/3;background:var(--qs-card,#eee)}.qs-galerie img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s}.qs-galerie a:hover img,.qs-galerie a:focus-visible img{transform:scale(1.04)}
+.qs-zoom{border:0;padding:0;background:rgba(0,0,0,.92);max-width:100vw;max-height:100vh;width:100vw;height:100vh}.qs-zoom::backdrop{background:#000}.qs-zoom img{position:absolute;inset:0;margin:auto;max-width:94vw;max-height:88vh;object-fit:contain}.qs-zoom button{position:absolute;top:12px;z-index:2;border:0;border-radius:999px;background:#fff;color:#111;font:700 18px/1 system-ui,sans-serif;width:44px;height:44px;cursor:pointer}.qs-zoom .x{right:12px}.qs-zoom .p{left:12px;top:50%}.qs-zoom .n{right:12px;top:50%}
 .qs-annonce{position:relative;z-index:50;background:var(--qs-ac,#2f5bea);color:var(--qs-on,#fff);text-align:center;padding:9px 16px;font:600 14px/1.35 system-ui,sans-serif}.qs-annonce[hidden]{display:none}
 .qs-bulle,.qs-wa{position:fixed;right:16px;z-index:60;border:0;border-radius:999px;font:700 15px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.28)}
 .qs-bulle{bottom:16px;background:var(--qs-ac,#2f5bea);color:var(--qs-on,#fff);padding:14px 18px}.qs-wa{bottom:78px;background:#25d366;color:#08331a;padding:13px 17px;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
@@ -294,6 +309,10 @@ ${table ? '<label>Nombre de personnes<input name="couverts" type="number" min="1
 <label>Votre besoin<textarea name="message" maxlength="1200" required></textarea></label><div class="qs-piege" aria-hidden="true"><label>Ne pas remplir<input name="site" tabindex="-1" autocomplete="off"></label></div>
 <button type="submit">Envoyer ma demande</button><p class="qs-msg" role="status" aria-live="polite"></p></form></div></div></section>`;
   }
+  function sectionGalerie(C) {
+    if (!C.photos.length) return '';
+    return `<section class="qs-sec" id="qs-galerie" aria-labelledby="qs-t-gal"><div class="qs-wrap qs-large"><h2 id="qs-t-gal" class="qs-titre">En images</h2><ul class="qs-galerie">${C.photos.map((p, i) => `<li><a href="assets/img/${esc(p.f)}" data-i="${i}" aria-label="Agrandir la photo ${i + 1}"><img src="assets/img/${esc(p.f)}" alt="${esc(p.l || (C.nom + ' : photo ' + (i + 1)))}" loading="lazy" decoding="async"></a></li>`).join('')}</ul></div></section>`;
+  }
   function sectionFaq(C) {
     const l = [];
     if (C.horaires) l.push([`Quels sont vos horaires ?`, C.horaires + '.']);
@@ -312,6 +331,7 @@ ${table ? '<label>Nombre de personnes<input name="couverts" type="number" min="1
     if (!ids.length) return notes;
     const C = configPublique(fiche, { ...brief, modules: ids }), corps = doc.body, pied = doc.querySelector('footer');
     const poser = html => { const t = doc.createElement('template'); t.innerHTML = html; const n = t.content.firstElementChild; if (pied) pied.parentNode.insertBefore(n, pied); else corps.appendChild(n); return n; };
+    if (ids.includes('galerie')) { const h = sectionGalerie(C); if (h) poser(h); }
     if (ids.includes('faq')) { const h = sectionFaq(C); if (h) poser(h); }
     if (ids.includes('devis')) poser(formDevis(C));
     if (ids.includes('reservation')) poser(formReservation(C));

@@ -295,7 +295,23 @@
     return touche;
   }
 
-    /* ───────── Tchat : comprendre une demande en français, retoucher la publication ───────── */
+  
+  /* ───────── Plan de la semaine : plusieurs publications variées d'un coup ───────── */
+  // retourne n réglages { themeId, sujet, secteur, angle } différents les uns des autres (thèmes en rotation, sujets et angles variés)
+  function planSemaine(o, deps) {
+    const n = Math.min(7, Math.max(2, +o.nombre || 5)), hasard = (deps && deps.hasard) || Math.random, out = [];
+    if (o.marque === 'parvis') {
+      const themes = ['verset', 'encouragement', 'priere', 'histoire', 'liste', 'verset', 'priere'], sujets = SUJETS_VERSET.slice(), histoires = Object.keys(HISTOIRES), decal = Math.floor(hasard() * sujets.length);
+      for (let i = 0; i < n; i++) { const t = themes[i % themes.length]; out.push({ themeId: t, sujet: o.sujet && i === 0 ? o.sujet : t === 'histoire' ? histoires[(decal + i) % histoires.length] : sujets[(decal + i * 3) % sujets.length], secteur: '', angle: '' }); }
+    } else {
+      const themes = ['carrousel', 'conseil', 'liste', 'astuces', 'carrousel', 'conseil', 'liste'], secteurs = Object.keys(SECTEURS), decal = Math.floor(hasard() * secteurs.length);
+      const fixe = o.sujet ? (secteurDe(o.sujet, SECTEURS) || '') : '';
+      for (let i = 0; i < n; i++) out.push({ themeId: themes[i % themes.length], sujet: o.sujet ? o.sujet : SECTEURS[secteurs[(decal + i * 2) % secteurs.length]], secteur: fixe || secteurs[(decal + i * 2) % secteurs.length], angle: ANGLES[(Math.floor(hasard() * ANGLES.length) + i) % ANGLES.length] });
+    }
+    return out;
+  }
+
+  /* ───────── Tchat : comprendre une demande en français, retoucher la publication ───────── */
   const MOTS_PARVIS = /verset|pri[eè]re|bible|biblique|j[ée]sus|\bdieu\b|parvis|chr[ée]tien|[ée]glise|\bamen\b|psaume|\bfoi\b|b[ée]nir|gr[âa]ce|évangile|evangile/i;
   const MOTS_QT = /quentools|site (internet|web)|artisan|plombier|coiffeu|restaurant|boulang|commer[cç]ant|ind[ée]pendant|m[ée]tier|devis|r[ée]servation|client/i;
   const THEME_MOTS = {
@@ -316,20 +332,23 @@
     const sj = t.match(/\b(?:sur|autour de|à propos de|pour|concernant)\s+(?:le |la |les |l['’]|un |une |des |du |de la |d['’])?([\p{L}0-9'’ -]{3,60}?)(?=[,.;!?]| avec | en format | format | pour instagram| pour tiktok| et | qui |$)/u);
     if (sj) plan.sujet = nettoie(sj[1]);
     if (plan.marque === 'quentools') plan.secteur = secteurDe(plan.sujet || t, SECTEURS) || '';
+    const sem = /semaine|planning|calendrier|(\d)\s+publications?|plusieurs publications|une s[ée]rie/i.exec(t);
+    if (sem && !INTENTION_MODIF.test(t)) { plan.action = 'semaine'; plan.nombre = Math.min(7, Math.max(2, +(/(\d)\s+publications?/i.exec(t) || [])[1] || 5)); }
     if (INTENTION_MODIF.test(t)) { plan.action = 'repondre'; plan.reponse = 'Pour retoucher une image à ma façon, j’ai besoin de l’IA locale (bouton « Installer l’IA »). En attendant, tu peux modifier chaque texte à droite.'; }
     else plan.consignes = nettoie(t).slice(0, 300);
     return plan;
   }
   function schemaChat() {
     return { type: 'object', properties: {
-      reponse: chaine(420), action: { type: 'string', enum: ['generer', 'modifier', 'repondre'] },
+      reponse: chaine(420), action: { type: 'string', enum: ['generer', 'semaine', 'modifier', 'repondre'] }, nombre: { type: 'integer', minimum: 0, maximum: 7 },
       marque: { type: 'string', enum: ['', 'parvis', 'quentools'] }, theme: { type: 'string', enum: ['', ...IDS_THEMES] }, sujet: chaine(120), secteur: chaine(40), format: { type: 'string', enum: ['', '45', '11', '916'] }, consignes: chaine(300),
       modifications: { type: 'array', maxItems: 6, items: { type: 'object', properties: { image: { type: 'integer', minimum: 0, maximum: 10 }, champ: { type: 'string', enum: CHAMPS_MODIF }, valeur: chaine(500) }, required: ['image', 'champ', 'valeur'] } }
-    }, required: ['reponse', 'action', 'marque', 'theme', 'sujet', 'secteur', 'format', 'consignes', 'modifications'] };
+    }, required: ['reponse', 'action', 'nombre', 'marque', 'theme', 'sujet', 'secteur', 'format', 'consignes', 'modifications'] };
   }
   const SYSTEME_CHAT = 'Tu es l’assistant de Studio Posts, un outil qui crée des publications Instagram et TikTok en images. Tu discutes en français avec son utilisateur. ' +
     'Marques : « parvis » (Le Parvis : église, publications bibliques : thèmes verset, encouragement, priere, histoire, liste) et « quentools » (QuenTools : agence de création de sites internet pour artisans et commerçants : thèmes carrousel, conseil, liste, astuces). ' +
     'Action « generer » : l’utilisateur veut une nouvelle publication ; tu choisis marque, thème, sujet (court : un métier, un sentiment, une histoire biblique), format (45 = Instagram 4:5, 11 = carré, 916 = story/Reels/TikTok) et tu mets ses envies de style ou d’angle dans « consignes » (recopiées de sa demande, sans rien inventer). ' +
+    'Action « semaine » : il veut plusieurs publications d’un coup (« prépare ma semaine », « 5 publications ») : mets le nombre (entre 2 et 7) dans « nombre », la marque, le format et ses envies dans « consignes ». ' +
     'Action « modifier » : il veut retoucher la publication affichée : donne les modifications (numéro d’image à partir de 1, champ, nouveau texte) ; 0 pour la légende (legende_titre, legende_texte). ' +
     'Action « repondre » : question ou demande qui n’est ni l’un ni l’autre : réponds simplement. ' +
     'Règles : jamais de prix, de lien, de pourcentage ni de chiffre inventé ; jamais l’IA présentée comme moyen de création ; jamais de verset biblique écrit par toi (les versets viennent de la bibliothèque, tu ne les modifies pas). ' +
@@ -345,7 +364,7 @@
       if (!r || typeof r !== 'object') return simple;
       const marque = ['parvis', 'quentools'].includes(r.marque) ? r.marque : simple.marque;
       const themeOk = (THEMES[marque] || []).some(t => t.id === r.theme);
-      const plan = { action: ['generer', 'modifier', 'repondre'].includes(r.action) ? r.action : 'generer', marque, theme: themeOk ? r.theme : simple.theme, sujet: nettoie(r.sujet).slice(0, 120) || simple.sujet, secteur: secteurDe(r.secteur || r.sujet, SECTEURS) || simple.secteur,
+      const plan = { action: ['generer', 'semaine', 'modifier', 'repondre'].includes(r.action) ? r.action : 'generer', nombre: Math.min(7, Math.max(2, +r.nombre || 5)), marque, theme: themeOk ? r.theme : simple.theme, sujet: nettoie(r.sujet).slice(0, 120) || simple.sujet, secteur: secteurDe(r.secteur || r.sujet, SECTEURS) || simple.secteur,
         format: ['45', '11', '916'].includes(r.format) ? r.format : simple.format, consignes: nettoie(r.consignes).slice(0, 300), modifications: Array.isArray(r.modifications) ? r.modifications.slice(0, 6) : [], reponse: nettoie(r.reponse), source: 'ia' };
       if (plan.action === 'modifier' && !plan.modifications.length) plan.action = 'repondre';
       return plan;
@@ -369,6 +388,6 @@
     return { ok, refus };
   }
 
-  const api = { comprendre, planSimple, verifierModifs, schemaChat, THEMES, SECTEURS, HISTOIRES, SUJETS_VERSET, generer, ajuster, banqueVersets, classerVersets, problemesQuenTools, problemesParvis, colore, secteurDe, depuisBibliotheque, carrouselDepuisExemple };
+  const api = { planSemaine, comprendre, planSimple, verifierModifs, schemaChat, THEMES, SECTEURS, HISTOIRES, SUJETS_VERSET, generer, ajuster, banqueVersets, classerVersets, problemesQuenTools, problemesParvis, colore, secteurDe, depuisBibliotheque, carrouselDepuisExemple };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else racine.Generation = api;
 })(typeof window !== 'undefined' ? window : globalThis);

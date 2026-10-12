@@ -7,8 +7,8 @@
   'use strict';
   const sansAccents = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const M = () => racine.Modules || (typeof require !== 'undefined' ? require('./modules.js') : null);
-  const BRIEF_VIDE = () => ({ da: { ambiance: '', mode: '', couleur: '', police: '', arrondi: '', densite: '' }, modules: [], options: { reservation: '', firebaseApiKey: '', firebaseProjectId: '', whatsapp: '' }, faq: [], annonce: '' });
-  const normaliserBrief = b => { const v = BRIEF_VIDE(), o = b || {}; return { da: { ...v.da, ...(o.da || {}) }, modules: [...new Set((o.modules || []).filter(x => M().IDS.includes(x)))], options: { ...v.options, ...(o.options || {}) }, faq: (o.faq || []).filter(x => x && x.q && x.a).slice(0, 12), annonce: String(o.annonce || '') }; };
+  const BRIEF_VIDE = () => ({ da: { ambiance: '', mode: '', couleur: '', police: '', arrondi: '', densite: '' }, modules: [], options: { reservation: '', firebaseApiKey: '', firebaseProjectId: '', whatsapp: '' }, faq: [], annonce: '', contrastes: [], photos: [] });
+  const normaliserBrief = b => { const v = BRIEF_VIDE(), o = b || {}; return { da: { ...v.da, ...(o.da || {}) }, modules: [...new Set((o.modules || []).filter(x => M().IDS.includes(x)))], options: { ...v.options, ...(o.options || {}) }, faq: (o.faq || []).filter(x => x && x.q && x.a).slice(0, 12), annonce: String(o.annonce || ''), contrastes: (o.contrastes || []).filter(k => k && /^#[0-9a-f]{6}$/i.test(k.c || '') && k.x).slice(0, 60), photos: (o.photos || []).filter(p => p && /^photo-\d{1,2}\.jpg$/.test(p.f || '')).slice(0, 12).map(p => ({ f: p.f, legende: String(p.legende || '').slice(0, 100) })) }; };
   const CHAMPS_FICHE = ['nom', 'metier', 'ville', 'zone', 'telephone', 'email', 'adresse', 'codePostal', 'horaires', 'atouts', 'tarifs', 'ton'];
 
   /* ───────── Analyse sans IA : mots-clés ───────── */

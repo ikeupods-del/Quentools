@@ -2324,6 +2324,18 @@ async function executerAction(a) {
     case 'titre': { const t = p || (proj.gen && proj.gen.titre) || await demander('Texte de l’écran titre', ''); if (!t) return;
       const c = newSolid('#0b1d3a', 3); c.titre = { preset: 'chapitre', l1: String(t).toUpperCase().slice(0, 60), l2: '', color: '#ffffff', font: 'arial', start: 0.3, dur: 0, speed: 14 }; c.transition = { type: 'fade', dur: 0.6 };
       proj.clips.unshift(c); sel = 0; commit(); tout(); apercu(); return aide('🅣 Écran titre ajouté au début (modifiable dans l’inspecteur).'); }
+    case 'supprimer_clip': {
+      if (!proj.clips.length) return aide('Aucun clip à supprimer.');
+      const i = p === 'dernier' ? proj.clips.length - 1 : p === 'premier' || !p ? 0 : +p - 1;
+      if (!proj.clips[i]) return aide(`Il n’y a pas de clip ${esc(p)} (le montage en a ${proj.clips.length}).`);
+      const c = proj.clips[i], plages = plagesDe([c]); proj.clips.splice(i, 1); recollerApres(plages); sel = Math.min(sel, proj.clips.length - 1); commit(); tout(); apercu(); return aide(`🗑 Clip ${i + 1} supprimé (⌘Z pour annuler).`); }
+    case 'bruitage': {
+      const mots = { clavier: 'clavier-rafale', applaudissement: 'applaudissements-courts', applaudissements: 'applaudissements-courts', whoosh: 'whoosh-court', ding: 'ding-cloche', clic: 'souris-clic', sonnerie: 'telephone-sonnerie', rire: 'ba-dum-tss', explosion: 'impact-cinema', tonnerre: 'tonnerre', gong: 'gong', cymbale: 'cymbale', bip: 'bip-censure', 'appareil photo': 'appareil-photo', jackpot: 'jackpot', fanfare: 'fanfare', sirene: 'sirene', hausse: 'hausse', baisse: 'baisse', pieces: 'riche' };
+      const cle = Object.keys(mots).find(k => p.startsWith(k)) || 'whoosh', f = (LIB().sons || []).find(x => x.id === mots[cle]); if (!f) return aide('Bruitage introuvable dans la bibliothèque.');
+      ajouterSon('lib:' + f.file, { vol: 80 }); return aide(`🔊 « ${esc(f.nom)} » ajouté dans la piste audio, à la tête de lecture.`); }
+    case 'couper_a': { const t = +p; if (!(t > 0) || t >= total()) return aide(`Je ne peux pas couper à ${esc(p)} s : le montage dure ${fmt(total())}.`); couperTimelineA(t); commit(); tout(); apercu(); return aide(`✂ Montage coupé à ${fmt(t)}.`); }
+    case 'volume': { const v = clamp(+p, 0, 200); proj.clips.forEach(c => { if (c.hasAudio !== false && c.kind !== 'image' && c.kind !== 'solid') c.vol = v; }); commit(); tout(); apercu(); return aide(`🔈 Volume des clips réglé à ${v} %.`); }
+    case 'fondus': { const a = proj.clips[0], z = proj.clips[proj.clips.length - 1]; if (!a) return; a.fadeIn = Math.max(a.fadeIn || 0, 0.6); z.fadeOut = Math.max(z.fadeOut || 0, 0.8); commit(); tout(); apercu(); return aide('Fondu ajouté au début et à la fin de la vidéo.'); }
     case 'detacher': tous(); return detacherSelection();
     case 'vitesse': { const v = clamp(+p || 1, 0.25, 4); tous(); vitesseSelection(v); selObjs.clear(); tout(); return aide(`Vitesse ×${String(v).replace('.', ',')} sur tous les clips vidéo et audio.`); }
     case 'chapitres': return ouvrirChapitres();

@@ -51,7 +51,9 @@ aside.gauche{padding:0;display:flex;flex-direction:column;overflow:hidden}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}.modal.ouvert{display:flex}
 .boite{background:var(--panneau);border:1px solid var(--ligne-2);border-radius:14px;width:min(560px,100%);max-height:92vh;overflow:auto}.boite header{padding:14px 18px}.boite header h2{margin:0;font-size:16px;text-transform:none;letter-spacing:0;color:var(--texte)}
 #ghCorps{padding:6px 18px 18px;display:grid;gap:10px}#ghCorps .code{font:700 30px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.12em;text-align:center;background:var(--panneau-2);border:1px dashed var(--ligne-2);border-radius:10px;padding:14px}
-#ghCorps .ok{color:var(--ok)}#ghCorps a{color:#a99bff}.maj{display:none;align-items:center;gap:10px;padding:7px 16px;background:#33290f;color:#ffd98a;font-size:13px}.maj.vu{display:flex}
+#ghCorps .ok{color:var(--ok)}#ghCorps a{color:#a99bff}.qual{border:1px solid var(--ligne-2);border-radius:10px;padding:10px 12px;display:grid;gap:6px;background:var(--panneau-2)}.qual h3{margin:0;font-size:13px;display:flex;justify-content:space-between;gap:8px}
+.qual .note-b{color:var(--rouge)}.qual ul{margin:0;padding-left:16px;font-size:12.5px;display:grid;gap:3px}.qual li.b{color:#ffb4b4}.qual li.c{color:var(--alerte)}.qual small{color:var(--doux)}
+.maj{display:none;align-items:center;gap:10px;padding:7px 16px;background:#33290f;color:#ffd98a;font-size:13px}.maj.vu{display:flex}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#26262f;border:1px solid var(--ligne-2);padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;z-index:20}.toast.vu{opacity:1;transform:translateX(-50%)}
 </style>
 </head>
@@ -100,6 +102,10 @@ aside.gauche{padding:0;display:flex;flex-direction:column;overflow:hidden}
       <label>Numéro WhatsApp (sinon le téléphone de la fiche)<input type="tel" id="o_whatsapp"></label>
       <label>Texte du bandeau d’annonce<input type="text" id="o_annonce" maxlength="160" placeholder="Fermé du 1er au 15 août"></label>
       <label>Questions fréquentes (une par ligne : question | réponse)<textarea id="o_faq" placeholder="Acceptez-vous les chiens ? | Oui, ils sont les bienvenus."></textarea></label>
+      <h2>Photos du professionnel</h2>
+      <p class="doux">Jusqu’à 12 photos (réalisations, lieu, produits) : réduites automatiquement, affichées en galerie. Décris chaque photo : c’est utile aux personnes malvoyantes et à Google. Les photos ne sont gardées que pendant la session.</p>
+      <input type="file" id="phFichiers" accept="image/*" multiple>
+      <div id="phListe" style="display:grid;gap:8px"></div>
       <h2>Direction artistique</h2>
       <div class="duo"><label>Ambiance<select id="d_ambiance"></select></label><label>Clair / sombre<select id="d_mode"><option value="">Selon le design</option><option value="clair">Clair</option><option value="sombre">Sombre</option></select></label></div>
       <div class="duo"><label>Police des titres<select id="d_police"></select></label><label>Arrondi<select id="d_arrondi"></select></label></div>
@@ -129,6 +135,7 @@ aside.gauche{padding:0;display:flex;flex-direction:column;overflow:hidden}
 <script src="memoire.js"></script>
 <script src="moteur.js"></script>
 <script src="conseiller.js"></script>
+<script src="qualite.js"></script>
 <script>
 'use strict';
 /* Studio Sites : fenêtre. Tout le travail est dans moteur.js ; ici seulement la fiche, l'aperçu, les textes modifiables et l'enregistrement. */
@@ -136,7 +143,7 @@ const $ = s => document.querySelector(s);
 const echap = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CHAMPS = ['nom', 'metier', 'ville', 'zone', 'telephone', 'email', 'adresse', 'codePostal', 'horaires', 'services', 'atouts', 'description', 'tarifs', 'ton', 'couleur', 'domaine', 'siret', 'responsable'];
 const CLE = 'studioSites:v1';
-let modeles = [], etat = { modele: null, html: '', legal: '', resultat: null, textes: {}, interactives: [], fiche: null, brief: null }, enCours = false, tImp = null, histo = [], chatEnCours = false;
+let modeles = [], etat = { photos: [], contrastes: [], qualite: null, modele: null, html: '', legal: '', resultat: null, textes: {}, interactives: [], fiche: null, brief: null }, enCours = false, tImp = null, histo = [], chatEnCours = false;
 const CLE_CHAT = 'studioSites:chat:v1';
 const API = () => window.studioSites || null;
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('vu'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('vu'), 2400); }
@@ -183,7 +190,7 @@ function lireBrief() {
   b.da.couleur = $('#d_couleurAuto').checked ? '' : $('#d_couleur').value;
   b.options.reservation = $('#o_reservation').value; b.options.whatsapp = $('#o_whatsapp').value.trim();
   b.options.firebaseApiKey = $('#o_fbKey').value.trim(); b.options.firebaseProjectId = $('#o_fbProjet').value.trim();
-  b.annonce = $('#o_annonce').value.trim();
+  b.annonce = $('#o_annonce').value.trim(); b.contrastes = etat.contrastes || []; b.photos = (etat.photos || []).map(p => ({ f: p.f, legende: p.legende }));
   b.faq = $('#o_faq').value.split('\n').map(l => l.split('|')).filter(p => p.length >= 2 && p[0].trim() && p.slice(1).join('|').trim()).map(p => ({ q: p[0].trim(), a: p.slice(1).join('|').trim() }));
   return b;
 }
@@ -253,18 +260,65 @@ function accueilChat() {
   $('#sugg').innerHTML = idees.map(t => `<button>${echap(t)}</button>`).join(''); $('#sugg').hidden = histo.length > 0;
 }
 
+
+/* ───────── Contrôle qualité du site (accessibilité, référencement, contrastes, restes à compléter) ───────── */
+function htmlQualite() {
+  const q = etat.qualite; if (!q) return '<div class="qual"><h3>Contrôle qualité</h3><small>Lancé après la génération.</small></div>';
+  const b = q.problemes.filter(x => x.niveau === 'bloquant').length;
+  return `<div class="qual"><h3><span>Contrôle qualité : ${q.note}/100</span>${b ? `<span class="note-b">${b} à corriger</span>` : '<span style="color:var(--ok)">✓</span>'}</h3>
+    ${q.problemes.length ? `<ul>${q.problemes.map(p => `<li class="${p.niveau === 'bloquant' ? 'b' : 'c'}" title="${echap(p.exemple)}">${echap(p.message)}</li>`).join('')}</ul>` : '<small>Rien à signaler.</small>'}
+    ${q.contrastes && q.contrastes.length ? `<button id="qCorriger" class="mini">Corriger les contrastes (${q.contrastes.length})</button>` : ''}${(etat.contrastes || []).length ? '<small>Contrastes corrigés appliqués.</small>' : ''}</div>`;
+}
+let tQual = null;
+async function controler() {
+  if (!etat.resultat || !window.Qualite) return;
+  const z = $('#qualite'); if (z) z.innerHTML = '<div class="qual"><h3>Contrôle qualité</h3><small>Contrôle en cours…</small></div>';
+  try { etat.qualite = await Qualite.analyser(etat.resultat.html, { fiche: lireFiche(), rendu: pourApercu(etat.resultat.html) }); } catch (e) { etat.qualite = { problemes: [{ niveau: 'conseil', code: 'erreur', message: 'Contrôle impossible : ' + e.message, exemple: '' }], note: 0, contrastes: [] }; }
+  const z2 = $('#qualite'); if (z2) z2.innerHTML = htmlQualite();
+  return etat.qualite;
+}
+const controlerPlusTard = () => { clearTimeout(tQual); tQual = setTimeout(controler, 1500); };
+
+
+/* ───────── Photos du professionnel ───────── */
+async function reduirePhoto(fichier) {
+  const bmp = await createImageBitmap(fichier), k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(bmp, 0, 0, c.width, c.height); bmp.close && bmp.close();
+  const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.82));
+  return new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ko; r.readAsDataURL(blob); });
+}
+function rendrePhotos() {
+  $('#phListe').innerHTML = etat.photos.map((p, i) => `<div class="ligne" data-ph="${i}"><img src="${p.data}" alt="" style="width:56px;height:42px;object-fit:cover;border-radius:6px"><input type="text" data-leg="${i}" value="${echap(p.legende)}" placeholder="Décris la photo (ex. : terrasse de l’établissement)" maxlength="100" style="flex:1"><button data-suppr="${i}" title="Retirer">✕</button></div>`).join('');
+}
+async function ajouterPhotos(fichiers) {
+  for (const f of [...fichiers].slice(0, 12)) {
+    if (etat.photos.length >= 12) { toast('12 photos au maximum'); break; }
+    if (!/^image\//.test(f.type)) continue;
+    try { const data = await reduirePhoto(f); let n = 1; while (etat.photos.some(p => p.f === `photo-${n}.jpg`)) n++; etat.photos.push({ f: `photo-${n}.jpg`, nom: f.name, legende: '', data }); }
+    catch (e) { toast('Photo illisible : ' + f.name); }
+  }
+  const g = document.querySelector('[data-mod="galerie"]'); if (g && etat.photos.length) g.checked = true;
+  rendrePhotos(); majCahier(); clearTimeout(tImp); tImp = setTimeout(rafraichir, 400);
+}
+function brancherPhotos() {
+  $('#phFichiers').addEventListener('change', async e => { await ajouterPhotos(e.target.files); e.target.value = ''; });
+  $('#phListe').addEventListener('input', e => { const i = e.target.dataset && e.target.dataset.leg; if (i !== undefined && etat.photos[+i]) { etat.photos[+i].legende = e.target.value; clearTimeout(tImp); tImp = setTimeout(rafraichir, 500); } });
+  $('#phListe').addEventListener('click', e => { const i = e.target.dataset && e.target.dataset.suppr; if (i === undefined) return; etat.photos.splice(+i, 1); rendrePhotos(); majCahier(); clearTimeout(tImp); tImp = setTimeout(rafraichir, 300); });
+}
+
 /* ───────── Aperçu ───────── */
-const pourApercu = h => String(h).replace(/assets\/fonts\//g, 'modeles/polices/').replace(/assets\/(qt\.(?:css|js))/g, 'modeles/assets/$1');
+const pourApercu = h => String(h).replace(/assets\/fonts\//g, 'modeles/polices/').replace(/assets\/(qt\.(?:css|js))/g, 'modeles/assets/$1').replace(/assets\/img\/(photo-\d{1,2}\.jpg)/g, (m, f) => { const p = (etat.photos || []).find(x => x.f === f); return p ? p.data : m; });
 function afficher(html) {
   const f = $('#apercu'); f.hidden = false; $('#vide').hidden = true; f.srcdoc = pourApercu(html);
-  $('#bEnregistrer').disabled = false; $('#bPublier').disabled = false;
+  $('#bEnregistrer').disabled = false; $('#bPublier').disabled = false; controlerPlusTard();
 }
 function setVue(mobile) { $('#apercu').classList.toggle('mobile', mobile); $('#vMobile').classList.toggle('on', mobile); $('#vBureau').classList.toggle('on', !mobile); }
 
 /* ───────── Textes modifiables ───────── */
 function afficherTextes() {
   const r = etat.resultat; if (!r) return;
-  const z = $('#textes'); let sec = null, h = '<h2>Textes du site</h2>';
+  const z = $('#textes'); let sec = null, h = `<div id="qualite">${htmlQualite()}</div><h2>Textes du site</h2>`;
   const nbExemple = r.slots.filter(s => s.etat === 'exemple' && s.raison).length, nbRelire = r.slots.filter(s => s.relire).length;
   h += `<p class="doux">${r.slots.length} textes. ${nbExemple ? `<span class="note">${nbExemple} repris de l’exemple (à réécrire).</span> ` : ''}${nbRelire ? `<span class="note">${nbRelire} à valider avec le professionnel (⚠).</span>` : ''}</p>`;
   for (const n of r.notes) h += `<p class="note">${echap(n)}</p>`;
@@ -275,6 +329,7 @@ function afficherTextes() {
   }
   z.innerHTML = h;
 }
+$('#textes').addEventListener('click', e => { if (e.target.id === 'qCorriger' && etat.qualite) { etat.contrastes = etat.qualite.contrastes.slice(); rafraichir(); toast('Contrastes corrigés'); } });
 $('#textes').addEventListener('input', e => {
   const i = e.target.dataset && e.target.dataset.i; if (i === undefined) return;
   etat.textes[+i] = e.target.value; clearTimeout(tImp);
@@ -295,9 +350,10 @@ async function genererSite(options = {}) {
     const ecrire = options.ecrire !== undefined ? options.ecrire : (ia.installee && a ? m => a.ia.ecrire(m) : null);
     etatTexte('Analyse de l’exemple…', 0.05);
     const interactives = await Moteur.sectionsInteractives(data.html);
+    etat.contrastes = [];
     const brief = options.brief || lireBrief();
     const res = await Moteur.generer({ html: data.html, modele, fiche, ecrire, interactives, brief, memoire: memoireTexte(), surEtape: (t, p) => etatTexte(echap(t), 0.08 + p * 0.9) });
-    Object.assign(etat, { modele, html: data.html, legal: data.legal, resultat: res, textes: {}, interactives, fiche, brief });
+    Object.assign(etat, { modele, html: data.html, legal: data.legal, resultat: res, textes: {}, interactives, fiche, brief, contrastes: [], qualite: null });
     $('#titreSite').textContent = `· ${fiche.nom}`; $('#infoSite').textContent = `${modele.nom}${ecrire ? ' · textes écrits par l’IA locale' : ' · textes de l’exemple (IA non installée)'}`;
     afficher(res.html); afficherTextes(); enregistrerFiche();
     etatTexte(ecrire ? `✅ Site prêt : ${res.slots.filter(s => s.etat === 'ia').length} textes écrits par l’IA${res.aRevoir ? `, ${res.aRevoir} repris de l’exemple` : ''}. Relis à droite, puis enregistre.` : '✅ Site prêt avec les textes de l’exemple et les coordonnées du professionnel. Installe l’IA pour que les textes soient écrits pour ce métier.');
@@ -310,7 +366,7 @@ async function enregistrerSite() {
   await apprendre();
   const fiche = lireFiche(), brief = lireBrief(), legal = Moteur.mentionsLegales(etat.legal, fiche), notes = Moteur.notesLivraison(fiche, r, legal, brief);
   try {
-    const out = await API().enregistrer({ dossier: Moteur.slugDe(fiche.nom), index: r.html, legal, notes, fichiers: Modules.fichiers(fiche, brief) });
+    const out = await API().enregistrer({ dossier: Moteur.slugDe(fiche.nom), index: r.html, legal, notes, fichiers: Modules.fichiers(fiche, brief), domaine: fiche.domaine, images: etat.photos.map(p => ({ nom: p.f, data: p.data })) });
     if (out.annule) return;
     etatTexte(`✅ Site enregistré : ${echap(out.dossier)} <button id="bOuvrirDossier" style="margin-left:8px">Afficher dans le Finder</button> Lis LISEZMOI-LIVRAISON.txt : il liste ce qu’il reste à compléter.`);
     $('#bOuvrirDossier').onclick = () => API().ouvrir(out.dossier);
@@ -410,10 +466,12 @@ async function actionGh(e) {
     if (id === 'ghPublier') {
       const nom = $('#ghNom').value.trim(), prive = $('#ghPrive').value === '1', pages = $('#ghPages').checked; gh.nom = nom;
       if (!prive && !confirm(`Le site « ${nom} » sera visible par tout le monde sur internet. Continuer ?`)) return;
+      const nbB = etat.qualite ? etat.qualite.problemes.filter(x => x.niveau === 'bloquant').length : 0;
+      if (nbB && !confirm(`Le contrôle qualité signale ${nbB} point(s) à corriger (champs à compléter, images sans description…). Publier quand même ?`)) return;
       await apprendre();
       const r = etat.resultat, fiche = lireFiche(), brief = lireBrief(), legal = Moteur.mentionsLegales(etat.legal, fiche), notes = Moteur.notesLivraison(fiche, r, legal, brief);
       gh.publication = { enCours: true }; rendreGh();
-      gh.publication = { resultat: await g.publier({ site: { index: r.html, legal, notes, fichiers: Modules.fichiers(fiche, brief) }, nom, prive, pages }) };
+      gh.publication = { resultat: await g.publier({ site: { index: r.html, legal, notes, fichiers: Modules.fichiers(fiche, brief), domaine: fiche.domaine, images: etat.photos.map(p => ({ nom: p.f, data: p.data })) }, nom, prive, pages }) };
       return rendreGh();
     }
   } catch (er) { gh.erreur = sansPrefixe(er.message); if (gh.publication && gh.publication.enCours) gh.publication = null; rendreGh(); }
@@ -428,7 +486,7 @@ function brancherGh() {
 (async () => {
   const a = API();
   try { modeles = a ? await a.modeles() : (window.MODELES_TEST || []); } catch (e) { modeles = []; }
-  suivreMaj(); brancherGh(); brancherMemoire(); await chargerMemoire();
+  suivreMaj(); brancherGh(); brancherMemoire(); brancherPhotos(); await chargerMemoire();
   remplirModeles(); remplirStyle(); chargerFiche(); majInfoModele(); majIA(); majCahier(); accueilChat();
   document.querySelectorAll('#fiche input, #fiche select, #fiche textarea').forEach(e => e.addEventListener('input', () => { majInfoModele(); enregistrerFiche(); }));
   document.querySelectorAll('#p_style input, #p_style select, #p_style textarea').forEach(e => e.addEventListener('input', () => { majCahier(); majInfoModele(); enregistrerFiche(); clearTimeout(tImp); tImp = setTimeout(rafraichir, 500); }));
@@ -438,7 +496,7 @@ function brancherGh() {
   $('#bGenerer').onclick = () => genererSite(); $('#bEnregistrer').onclick = enregistrerSite;
   $('#vMobile').onclick = () => setVue(true); $('#vBureau').onclick = () => setVue(false);
   // accès pour les essais automatiques
-  window.sites = { genererSite, etat, modeles: () => modeles, lireFiche, ecrireFiche, lireBrief, ecrireBrief, envoyerChat, rafraichir, onglet,
+  window.sites = { ajouterPhotos, genererSite, etat, modeles: () => modeles, lireFiche, ecrireFiche, lireBrief, ecrireBrief, envoyerChat, rafraichir, onglet,
     essai: async id => { const fiche = { nom: 'Boulangerie Martin', metier: 'boulanger', ville: 'Nantes', telephone: '02 40 12 34 56', email: 'contact@martin-nantes.fr', services: ['Pain au levain', 'Viennoiseries', 'Gâteaux sur commande'] };
       const r = await genererSite({ fiche, modeleId: id, ecrire: null }); return r && !r.erreur ? { ok: true, taille: r.html.length, textes: r.slots.length } : { ok: false, erreur: r && r.erreur }; } };
 })();

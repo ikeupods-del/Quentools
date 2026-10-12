@@ -1042,6 +1042,26 @@ function brancherGenerer() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') fermerGenerer(); else if (e.key.toLowerCase() === 'g' && !e.metaKey && !e.ctrlKey && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) ouvrirGenerer(); });
 }
 
+/* ═══════════════════ 12 bis. Semaine ═══════════════════ */
+/* ───────── Plan de la semaine : export groupé (images, légendes et planning) ───────── */
+let derniereSemaine = [];
+async function imageJpgDe(p, i) { const c = document.createElement('canvas'); c.width = W; c.height = FORMATS[p.format]; rendre(c.getContext('2d'), p, i); return versBlob(c); }
+function jourDePublication(k, n, depart = new Date()) { // publications réparties du lundi suivant au dimanche
+  const d = new Date(depart); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7) + (n > 1 ? Math.round(k * 6 / (n - 1)) : 0)); return d;
+}
+async function exporterSemaine(projets) {
+  const liste = (projets || derniereSemaine).slice(), fichiers = [], lignes = ['date;heure;marque;format;titre;legende;images'], cle = x => String(x == null ? '' : x).replace(/"/g, '""').replace(/\n/g, ' ');
+  const neutre = t => /^[=+\-@\t\r]/.test(t) ? "'" + t : t; // les tableurs ne doivent pas exécuter de formule
+  for (let k = 0; k < liste.length; k++) {
+    const p = liste[k], d = jourDePublication(k, liste.length), dos = `${String(k + 1).padStart(2, '0')}-${slug(p.nom)}`, imgs = [];
+    for (let i = 0; i < p.slides.length; i++) { const nom = `${dos}/${String(i + 1).padStart(2, '0')}.jpg`; fichiers.push({ nom, data: new Uint8Array(await (await imageJpgDe(p, i)).arrayBuffer()) }); imgs.push(nom); }
+    const lg = [p.legende.titre, '', p.legende.texte].join('\n').trim(); fichiers.push({ nom: `${dos}/legende.txt`, data: new TextEncoder().encode(lg + '\n') });
+    lignes.push([d.toISOString().slice(0, 10), p.marque === 'parvis' ? '07:30' : '12:00', p.marque, { 45: '4:5', 11: '1:1', 916: '9:16' }[p.format], neutre(p.legende.titre || p.nom), neutre(p.legende.texte || ''), imgs.join(' ')].map(x => `"${cle(x)}"`).join(';'));
+  }
+  fichiers.push({ nom: 'planning.csv', data: new TextEncoder().encode('﻿' + lignes.join('\r\n') + '\r\n') });
+  telecharger(zip(fichiers), `semaine-${new Date().toISOString().slice(0, 10)}.zip`); toast(`${liste.length} publications exportées`);
+}
+
 /* ═══════════════════ 13. Assistant : on explique en français, l'IA crée ou retouche la publication ═══════════════════ */
 const CLE_CHAT = 'studioPosts:chat:v1';
 let histoChat = [], chatEnCours = false;
@@ -1049,6 +1069,7 @@ function msgChat(role, texte, extra = {}) {
   const f = $('#chatFil'), d = document.createElement('div'); d.className = 'mc ' + role; d.textContent = texte;
   for (const n of extra.alertes || []) { const w = document.createElement('small'); w.className = 'warn'; w.textContent = '⚠ ' + n; d.appendChild(w); }
   if (extra.note) { const n = document.createElement('small'); n.textContent = extra.note; d.appendChild(n); }
+  for (const b of extra.boutons || []) { const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'mini'; bt.style.marginTop = '8px'; bt.textContent = b.libelle; bt.onclick = b.action; d.appendChild(bt); }
   f.appendChild(d); f.scrollTop = f.scrollHeight; return d;
 }
 const sauverChat = () => { try { localStorage.setItem(CLE_CHAT, JSON.stringify(histoChat.slice(-30))); } catch (e) { /* stockage indisponible */ } };
@@ -1095,6 +1116,17 @@ async function envoyerChat(texte, options = {}) {
         reponse = (reponse ? reponse + '\n\n' : '') + `✅ « ${r.projet.nom} » est prête : ${r.projet.slides.length} image${r.projet.slides.length > 1 ? 's' : ''} (${r.source === 'ia' ? 'écrite par l’IA locale' : 'publication déjà écrite'}). Demande-moi de la retoucher (« raccourcis le titre de l’image 2 », « rends la légende plus chaleureuse »…) ou exporte-la.`;
         extra.alertes = [...(r.notes || []), ...(r.alertes || []), ...(r.trop ? [`${r.trop} image(s) avec un texte trop long`] : [])];
       }
+    } else if (plan.action === 'semaine') {
+      const reglages = Generation.planSemaine({ marque: plan.marque, nombre: plan.nombre, sujet: plan.sujet }, {}), faites = [];
+      for (let k = 0; k < reglages.length; k++) {
+        attente.textContent = `J’écris la publication ${k + 1} sur ${reglages.length}…`;
+        const g = reglages[k], r = await genererPublication({ marque: plan.marque, themeId: g.themeId, sujet: g.sujet, secteur: g.secteur, format: plan.format || projet.format, consignes: [plan.consignes, g.angle && 'Angle : ' + g.angle].filter(Boolean).join(' ; '), ecrire: options.ecrire, sansIA: options.sansIA, silencieux: true });
+        if (r && r.projet) faites.push(r.projet);
+      }
+      derniereSemaine = faites.slice(); // dans l'ordre prévu pour la semaine
+      resultat = { semaine: faites.length };
+      reponse = (reponse ? reponse + '\n\n' : '') + (faites.length ? `✅ ${faites.length} publications prêtes (retrouve-les dans « Bibliothèque → Mes publications ») :\n` + derniereSemaine.map((p, i) => `${i + 1}. ${p.nom}`).join('\n') + '\nLe fichier .zip contient les images, les légendes et un planning (planning.csv).' : 'Je n’ai pas pu créer les publications.');
+      if (faites.length) extra.boutons = [{ libelle: 'Exporter la semaine (.zip)', action: () => exporterSemaine() }];
     } else if (plan.action === 'modifier') {
       const v = Generation.verifierModifs(projet, plan.modifications, texte);
       if (v.ok.length) {
@@ -1176,7 +1208,7 @@ function brancherMemoire() {
   charger(); brancher(); brancherGenerer(); brancherChat(); brancherMemoire(); chargerMemoire(); toutAfficher(); verifierMaj();
   $('#chargement').remove();
   // accès pour les contrôles automatiques (tools/verifier-generateur-posts.js)
-  window.studio = { MODELES, FORMATS, get projet() { return projet; }, ouvrir: p => { const n = nouveauProjet(p, p.marque); etat.projets.unshift(n); ouvrirProjet(n); return n; }, rendre: (p, i) => { const c = document.createElement('canvas'); c.width = W; c.height = FORMATS[p.format]; return rendre(c.getContext('2d'), p, i); },
+  window.studio = { exporterSemaine, get derniereSemaine() { return derniereSemaine; }, MODELES, FORMATS, get projet() { return projet; }, ouvrir: p => { const n = nouveauProjet(p, p.marque); etat.projets.unshift(n); ouvrirProjet(n); return n; }, rendre: (p, i) => { const c = document.createElement('canvas'); c.width = W; c.height = FORMATS[p.format]; return rendre(c.getContext('2d'), p, i); },
     planche: (p, e = 0.25) => { const H = FORMATS[p.format], n = p.slides.length, c = document.createElement('canvas'), x = c.getContext('2d'); c.width = Math.round(n * W * e + (n - 1) * 12); c.height = Math.round(H * e); x.fillStyle = '#888'; x.fillRect(0, 0, c.width, c.height); hors.width = W; hors.height = H; p.slides.forEach((s, i) => { rendre(ctxH, p, i); x.drawImage(hors, 0, 0, W, H, Math.round(i * (W * e + 12)), 0, Math.round(W * e), Math.round(H * e)); }); hors.height = FORMATS[projet.format]; return c.toDataURL('image/png'); },
     alertes: alertesContenu, generer: genererPublication, chat: envoyerChat, get histoChat() { return histoChat; } };
 })();

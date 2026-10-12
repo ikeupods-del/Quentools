@@ -51,3 +51,9 @@ Bouton « 🚀 Publier » (ou « publie le site » dans le tchat) : le site est 
 
 ## Mémoire et mise à jour
 La mémoire des IA (`memoire.js`, fichier partagé `~/Movies/QuentMovie/memoire-ia.json`) : « retiens que… » / « oublie… » dans le tchat, bouton « 🧠 Mémoire » ; les textes de l'IA corrigés à la main sont appris à l'enregistrement et à la publication. L'application se met à jour toute seule (`maj.js`, copie de `quentmovie/maj.js`).
+
+## Contrôle qualité, nettoyage et galerie (`qualite.js`, `moteur.js → nettoyerFinal`)
+- **Nettoyage automatique** à chaque génération : blocs de chiffres, questions et avis dont les valeurs sont restées entre crochets retirés (jamais de faux chiffre ni de faux avis), promesses « [Assurance décennale] » non remplies retirées, liens vers des sections disparues réparés, lien vers les mentions légales ajouté, numéro de téléphone cliquable (ou barre « Appeler » sur téléphone si le design n'en a pas), `rel="noopener"`, `alt=""` manquants.
+- **Contrôle qualité** (panneau en haut des textes, relancé après chaque modification) : titre, description, langue, un seul h1, champs restés à compléter, images sans description, champs sans étiquette, liens vides ou morts, identifiants en double, débordement horizontal à 390 et 1280 px, contrastes de texte (WCAG) ; le bouton « Corriger les contrastes » propose des couleurs lisibles (`brief.contrastes`). Une publication avec des points bloquants demande confirmation.
+- **Galerie photos** : onglet « Style et fonctions → Photos » (12 photos au plus, réduites à 1600 px en JPEG, légendes = textes alternatifs, visionneuse avec flèches et Échap) ; `assets/img/photo-N.jpg` à l'enregistrement et à la publication. Les photos ne sont gardées que pendant la session.
+- **Référencement** : balises de partage (og:title, og:description, og:image avec la première photo, og:url), `sitemap.xml` et `Sitemap:` dans robots.txt quand le nom de domaine est renseigné, page `404.html`.
