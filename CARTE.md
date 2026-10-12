@@ -263,4 +263,5 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 - photos-libres.yml
 - quentmovie.yml
 - studio-posts.yml
+- studio-sites.yml
 - wouf-ci.yml

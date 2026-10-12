@@ -171,7 +171,7 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 #stAnim{position:absolute;pointer-events:none;overflow:hidden;z-index:1}#stAnim canvas{max-width:none;max-height:none}
 .stBandeau{position:absolute;left:5%;bottom:12%;background:#5b3df5;color:#fff;padding:10px 18px;border-left:6px solid #d7f24a;animation:bandeau .5s ease-out both;font:600 2.2vw/1.25 system-ui}
 .stDirect{position:absolute;border-radius:10px;overflow:hidden;box-shadow:0 8px 30px #0008;animation:bandeau .35s ease-out both}.stDirect img,.stDirect video{display:block;width:100%;height:auto}
-.stDirect.logo{box-shadow:none;border-radius:0}.stTexte{position:absolute;left:50%;top:8%;transform:translateX(-50%);max-width:86%;background:#5b3df5;color:#fff;padding:.5em 1em;border-left:.35em solid #d7f24a;border-radius:6px;font:700 2.4vw/1.25 system-ui;text-align:center;animation:bandeau .35s ease-out both;white-space:pre-wrap}
+.stDirect.logo{box-shadow:none;border-radius:0}.stDirect.ecran{pointer-events:auto;cursor:move;touch-action:none;outline:2px dashed #d7f24a88}.stPoignee{position:absolute;right:6px;bottom:6px;width:20px;height:20px;border-radius:50%;background:#d7f24a;border:2px solid #000;cursor:nwse-resize}.stTexte{position:absolute;left:50%;top:8%;transform:translateX(-50%);max-width:86%;background:#5b3df5;color:#fff;padding:.5em 1em;border-left:.35em solid #d7f24a;border-radius:6px;font:700 2.4vw/1.25 system-ui;text-align:center;animation:bandeau .35s ease-out both;white-space:pre-wrap}
 #stDirectBtns{grid-template-columns:1fr 1fr;gap:6px}#stDirectBtns .carte{padding:7px 6px;font-size:12px;text-align:left}#stDirectBtns .carte.on{border-color:#d7f24a;background:#2c2a10}
 .stBandeau b{display:block;font-size:1.15em}.stBandeau span{display:block;font-weight:400;font-size:.8em;opacity:.9}
 @keyframes bandeau{from{transform:translateX(-120%)}to{transform:none}}
@@ -2816,17 +2816,41 @@ async function verifierMaj(manuel) {
 }
 
 // ---------- Studio : se filmer avec la caméra et le micro du Mac, avec un prompteur ----------
-const ST_DEF = { fond: 'lib:fonds/quentools-led-h.jpg', detourage: 'precis', synchro: 'auto', enc: 'puce', vertMode: false, seuil: 50, contour: 12, halo: 40, seul: true, lumiere: 100, chaleur: 0,
+const ST_DEF = { bruitage: true, touches: {}, fond: 'lib:fonds/quentools-led-h.jpg', detourage: 'precis', synchro: 'auto', enc: 'puce', vertMode: false, seuil: 50, contour: 12, halo: 40, seul: true, lumiere: 100, chaleur: 0,
   led: false, ledForce: 80, ledTeinte: 'neutre', ledLargeur: 70, nom: '', role: '', directMedia: '', directPos: 'haut-droite', textes: '', logo: '', logoPos: 'haut-gauche', ecranPos: 'grand-droite',
   vitesse: 45, taille: 44, largeur: 70, opacite: 55, miroirTxt: false, miroirImg: true, compte: true, defilAuto: true, qualite: '1080', bruit: true, camera: '', micro: '' };
 // Animations à faire apparaître pendant qu'on parle (touches 1 à 9) ; position et taille en % de l'image
-const ANIM_DIRECT = [
-  { id: 'abonner', t: '1', nom: 'S’abonner', x: 50, y: 82, s: 55 }, { id: 'jaime', t: '2', nom: 'J’aime', x: 82, y: 62, s: 32 },
-  { id: 'cloche', t: '3', nom: 'Cloche', x: 86, y: 22, s: 24 }, { id: 'fleche', t: '4', nom: 'Flèche', x: 28, y: 55, s: 35 },
-  { id: 'lien-bio', t: '5', nom: 'Lien en bio', x: 50, y: 80, s: 45 }, { id: 'explosion', t: '6', nom: 'Confettis', x: 50, y: 50, s: 100 },
-  { id: 'cercle', t: '7', nom: 'Cercle', x: 50, y: 45, s: 55 }, { id: 'compte', t: '8', nom: '3, 2, 1', x: 50, y: 50, s: 45 },
-  { id: 'glisse-haut', t: '9', nom: 'Glisse vers le haut', x: 50, y: 72, s: 35 }
+// Animations « Me filmer » : les 9 premières gardent leurs touches 1 à 9 ; les autres viennent de la bibliothèque (fondvert/ : touche, position, taille, bruitage)
+const ANIM_BASE = [
+  { id: 'abonner', t: '1', nom: 'S’abonner', x: 50, y: 82, s: 55, groupe: 'Réseaux', son: 'sons/souris-clic.mp3' }, { id: 'jaime', t: '2', nom: 'J’aime', x: 82, y: 62, s: 32, groupe: 'Réseaux', son: 'sons/pop.mp3' },
+  { id: 'cloche', t: '3', nom: 'Cloche', x: 86, y: 22, s: 24, groupe: 'Réseaux', son: 'sons/ding-cloche.mp3' }, { id: 'fleche', t: '4', nom: 'Flèche', x: 28, y: 55, s: 35, groupe: 'Divers', son: 'sons/swish-rapide.mp3' },
+  { id: 'lien-bio', t: '5', nom: 'Lien en bio', x: 50, y: 80, s: 45, groupe: 'Réseaux', son: 'sons/notification.mp3' }, { id: 'explosion', t: '6', nom: 'Confettis', x: 50, y: 50, s: 100, groupe: 'Divers', son: 'sons/applaudissements-courts.mp3' },
+  { id: 'cercle', t: '7', nom: 'Cercle', x: 50, y: 45, s: 55, groupe: 'Divers', son: 'sons/swish-rapide.mp3' }, { id: 'compte', t: '8', nom: '3, 2, 1', x: 50, y: 50, s: 45, groupe: 'Divers', son: 'sons/compte-a-rebours.mp3' },
+  { id: 'glisse-haut', t: '9', nom: 'Glisse vers le haut', x: 50, y: 72, s: 35, groupe: 'Divers', son: 'sons/swipe.mp3' }
 ];
+const ST_GROUPES = ['Réseaux', 'Infos', 'Humeurs', 'Argent', 'Divers'];
+const ST_RESERVEES = new Set(['r', 'p', 'm', 't', 'o', 'e', 'l', 'n', ' ', 'ArrowUp', 'ArrowDown', 'Home', 'Escape', 'Maj+r', 'Maj+p']);
+function animsDirect() {
+  const lib = (typeof LIB === 'function' ? LIB().fondvert : []) || [], vus = new Set(ANIM_BASE.map(a => a.id)), touches = (studio && studio.o && studio.o.touches) || {};
+  const l = ANIM_BASE.map(a => ({ ...a }));
+  for (const it of lib) if (!vus.has(it.id)) l.push({ id: it.id, t: it.touche || '', nom: it.nom, x: it.x ?? 50, y: it.y ?? 50, s: it.s ?? 50, groupe: it.groupe || 'Divers', son: it.son || '' });
+  for (const a of l) { const it = lib.find(x => x.id === a.id) || {}; a.w = it.w || 1080; a.h = it.h || 1080; a.duree = it.duree || 3; if (touches[a.id] !== undefined) a.t = touches[a.id]; }
+  return l;
+}
+const stLibTouche = t => String(t || '').replace('Maj+', '⇧').toUpperCase();
+// touche pressée → texte comparable (chiffres lus par leur position, valable aussi sur un clavier AZERTY ; ⇧ devient « Maj+ »)
+function stToucheDe(e) {
+  if (e.metaKey || e.ctrlKey || e.altKey) return '';
+  const k = /^(Digit|Numpad)\d$/.test(e.code || '') ? e.code.slice(-1) : (e.key.length === 1 ? e.key.toLowerCase() : e.key);
+  return (e.shiftKey && k.length === 1 && !/^\d$/.test(k) ? 'Maj+' : '') + k;
+}
+function stAnimZone() { const z = $('#stAnimZone'); if (z) z.innerHTML = stHtmlAnims(); }
+function stHtmlAnims() {
+  const g = studio.groupe || 'Tout', l = animsDirect().filter(a => g === 'Tout' || a.groupe === g);
+  return `<div class="chips" id="stGroupes" style="margin:6px 0">${['Tout', ...ST_GROUPES].map(x => `<button class="chip ${x === g ? 'on' : ''}" data-groupe="${x}">${x}</button>`).join('')}</div>
+    <div class="grille" id="stAnims">${l.map(a => `<button class="carte txt ${studio.editTouche === a.id ? 'on' : ''}" data-anim="${a.id}" title="${esc(a.nom)}${a.t ? ' · touche ' + stLibTouche(a.t) : ''}">${a.t ? `<kbd>${esc(stLibTouche(a.t))}</kbd> ` : ''}${esc(a.nom)}</button>`).join('')}</div>
+    <div class="ligne" style="margin-top:6px"><button class="mini ${studio.modeTouches ? 'on' : ''}" id="stEditTouches">${studio.modeTouches ? (studio.editTouche ? '⌨ Appuie sur la nouvelle touche…' : '✎ Clique une animation, puis une touche') : '✎ Choisir mes touches'}</button>${studio.modeTouches ? '<button class="mini" id="stResetTouches">Touches d’origine</button>' : ''}</div>`;
+}
 const LED_TEINTES = { froid: '#e6efff', neutre: '#ffffff', chaud: '#ffdcae', rose: '#ffc2dc', violet: '#bba9ff' };
 let studio = null;
 const stLire = () => { try { return { ...ST_DEF, ...JSON.parse(localStorage.getItem('qm:studio') || '{}') }; } catch (e) { return { ...ST_DEF }; } };
@@ -2841,6 +2865,7 @@ function stPanneau() {
     [...new Set(decors.map(x => x.cat))].map(cat => `<optgroup label="${esc(cat)}">${decors.filter(x => x.cat === cat).map(x => `<option value="lib:${esc(x.file)}" ${o.fond === 'lib:' + x.file ? 'selected' : ''}>${esc(x.nom)}</option>`).join('')}</optgroup>`).join('') +
     (photos.length ? `<optgroup label="Mes photos">${photos.map(m => `<option value="${esc(m.file)}" ${o.fond === m.file ? 'selected' : ''}>${esc(m.file)}</option>`).join('')}</optgroup>` : '');
   $('#stPanneau').innerHTML = `<h3 style="margin-top:0">🎥 Studio</h3>
+    <div id="stPremontage" class="encart" hidden></div>
     <details open><summary>Fond derrière moi</summary>
       <select id="stFond">${optFond}</select>
       ${o.fond ? `${ck('stVert', 'J’ai un vrai fond vert derrière moi (plus précis)', o.vertMode)}
@@ -2857,19 +2882,20 @@ function stPanneau() {
       <label class="l">Couleur</label><select id="stLedTeinte">${opts([['neutre', 'Blanc neutre'], ['froid', 'Blanc froid (lumière du jour)'], ['chaud', 'Blanc chaud (ambiance)'], ['rose', 'Rose'], ['violet', 'Violet QuenTools']], o.ledTeinte)}</select>
       <p class="mut" style="margin:4px 0 0">Monte la luminosité de l’écran au maximum : l’écran devient une lampe douce qui éclaire ton visage.</p>
     </details>
-    <details open><summary>✨ Animations en direct</summary>
-      <p class="mut" style="margin:0 0 6px">Appuie pendant que tu parles : l’animation apparaît, et elle est ajoutée à ta prise au bon moment (modifiable ensuite dans les calques).</p>
-      <div class="grille" id="stAnims">${ANIM_DIRECT.map(a => `<button class="carte txt" data-anim="${a.id}" title="Touche ${a.t}"><kbd>${a.t}</kbd> ${esc(a.nom)}</button>`).join('')}<button class="carte txt" data-anim="nom" title="Touche N"><kbd>N</kbd> Mon nom</button></div>
-      <label class="l">Mon nom (bandeau, touche N)</label><input type="text" id="stNom" value="${esc(o.nom)}" placeholder="Prénom Nom">
-      <input type="text" id="stRole" value="${esc(o.role)}" placeholder="Fonction, entreprise (ex. Fondateur de QuenTools)" style="margin-top:4px">
-    </details>
-    <details open><summary>📺 Afficher en direct</summary>
-      <p class="mut" style="margin:0 0 6px">Montre autre chose pendant que tu parles : tout est ajouté à ta prise, au bon moment (modifiable ensuite).</p>
+    <details open><summary>✨ Direct : animations et éléments à l’écran</summary>
+      <p class="mut" style="margin:0 0 6px">Appuie sur une touche pendant que tu parles : l’élément apparaît, et il est ajouté à ta prise au bon moment, avec son petit bruitage.</p>
       <div class="grille" id="stDirectBtns">
         <button class="carte txt ${studio.direct.media ? 'on' : ''}" data-direct="media" title="Touche M"><kbd>M</kbd> Image ou vidéo</button>
         <button class="carte txt ${studio.direct.texte ? 'on' : ''}" data-direct="texte" title="Touche T"><kbd>T</kbd> Texte suivant</button>
         <button class="carte txt ${studio.direct.logo ? 'on' : ''}" data-direct="logo" title="Touche O"><kbd>O</kbd> Mon logo</button>
-        <button class="carte txt ${studio.direct.ecran ? 'on' : ''}" data-direct="ecran" title="Touche E"><kbd>E</kbd> Partager l’écran</button></div>
+        <button class="carte txt ${studio.direct.ecran ? 'on' : ''}" data-direct="ecran" title="Touche E"><kbd>E</kbd> Partager l’écran</button>
+        <button class="carte txt" data-anim="nom" title="Touche N"><kbd>N</kbd> Mon nom</button></div>
+      <div id="stAnimZone">${stHtmlAnims()}</div>
+      ${ck('stBruitage', 'Ajouter le petit bruitage de chaque animation', o.bruitage !== false)}
+      <p class="mut" style="margin:4px 0 0">Écran partagé : glisse-le pour le déplacer, tire le rond jaune pour le redimensionner (même pendant la prise).</p>
+      <details style="border:0"><summary>Réglages : nom, image, textes, logo, écran partagé</summary>
+      <label class="l">Mon nom (bandeau, touche N)</label><input type="text" id="stNom" value="${esc(o.nom)}" placeholder="Prénom Nom">
+      <input type="text" id="stRole" value="${esc(o.role)}" placeholder="Fonction, entreprise (ex. Fondateur de QuenTools)" style="margin-top:4px">
       <label class="l">Image ou vidéo à montrer (touche M)</label><select id="stDMedia"><option value="">— choisir dans mes médias —</option>${medias.filter(m => m.kind === 'image' || m.kind === 'video').map(m => `<option value="${esc(m.file)}" ${o.directMedia === m.file ? 'selected' : ''}>${esc(m.file)}</option>`).join('')}</select>
       <select id="stDPos" style="margin-top:4px">${opts(Object.entries(ST_POS).map(([k, v]) => [k, v.nom]), o.directPos)}</select>
       <label class="l">Textes à afficher (un par ligne ; T montre le suivant, puis le cache)</label><textarea id="stTextes" rows="3" placeholder="Astuce n°1 : …&#10;Lien en bio&#10;Code promo : …">${esc(o.textes)}</textarea>
@@ -2877,6 +2903,7 @@ function stPanneau() {
       <select id="stLogoPos" style="margin-top:4px">${opts([['haut-gauche', 'En haut à gauche'], ['haut-droite', 'En haut à droite'], ['bas-droite', 'En bas à droite'], ['bas-gauche', 'En bas à gauche']], o.logoPos)}</select>
       <label class="l">Partage d’écran (touche E)</label><select id="stEcranPos">${opts([['grand-droite', 'Grand, à droite de moi'], ['coin', 'Dans un coin'], ['plein', 'Plein écran (je disparais)']], o.ecranPos)}</select>
       <p class="mut" style="margin:4px 0 0">L’écran partagé est enregistré à part et posé dans la piste vidéo 2, calé sur ta prise.</p>
+      </details>
     </details>
     <details open><summary>Prompteur</summary>
       <textarea id="stScript" placeholder="Écris ou colle ici ce que tu vas dire. Le texte défile en haut de l’écran, juste sous la caméra : tu lis en regardant l’objectif.">${esc(proj.prompteur || '')}</textarea>
@@ -3035,15 +3062,16 @@ function stAnimer(id) {
     if (t !== null) studio.evts.push({ id, t });
     return;
   }
-  const a = ANIM_DIRECT.find(x => x.id === id); if (!a) return;
+  const a = animsDirect().find(x => x.id === id); if (!a) return;
   // aperçu : la vidéo sur fond vert est dessinée en retirant le vert (même rendu que dans le montage)
   const vid = document.createElement('video'); vid.src = `/lib/fondvert/${a.id}.mp4`; vid.muted = true; vid.playsInline = true;
-  const el = document.createElement('canvas'); el.width = el.height = 360; const g = el.getContext('2d', { willReadFrequently: true });
-  const taille = W * a.s / 100; Object.assign(el.style, { position: 'absolute', width: taille + 'px', height: taille + 'px', left: (W * a.x / 100 - taille / 2) + 'px', top: (H * a.y / 100 - taille / 2) + 'px' });
+  const cw = a.w > a.h ? 640 : 360, ch = Math.round(cw * a.h / a.w), el = document.createElement('canvas'); el.width = cw; el.height = ch; const g = el.getContext('2d', { willReadFrequently: true });
+  const taille = W * a.s / 100, hauteur = taille * a.h / a.w; Object.assign(el.style, { position: 'absolute', width: taille + 'px', height: hauteur + 'px', left: (W * a.x / 100 - taille / 2) + 'px', top: (H * a.y / 100 - hauteur / 2) + 'px' });
+  if (!studio.rec && a.son && studio.o.bruitage !== false) { try { const son = new Audio('/lib/' + a.son); son.volume = 0.6; son.play().catch(() => {}); } catch (er) { /* pas de bruit d'aperçu */ } } // jamais pendant la prise : le micro l'entendrait
   const image = () => {
     if (!el.isConnected) return;
     if (vid.readyState >= 2) {
-      g.drawImage(vid, 0, 0, 360, 360); const d = g.getImageData(0, 0, 360, 360), px = d.data;
+      g.drawImage(vid, 0, 0, cw, ch); const d = g.getImageData(0, 0, cw, ch), px = d.data;
       for (let i = 0; i < px.length; i += 4) {
         const r = px[i], gr = px[i + 1], bl = px[i + 2], e = gr - Math.max(r, bl);
         if (e > 70) px[i + 3] = 0; else if (e > 25) { px[i + 3] = 255 * (70 - e) / 45; px[i + 1] = Math.max(r, bl); }
@@ -3110,7 +3138,7 @@ async function stDirect(quoi) {
     catch (e) { stMsg(`<span class="err">Partage d’écran refusé : ${esc(e.message)}. Autorise QuentMovie dans Réglages Système → Confidentialité et sécurité → Enregistrement de l’écran.</span>`); return; }
     const p = ST_POS[o.ecranPos] || ST_POS['grand-droite'], el = document.createElement('div'); el.className = 'stDirect';
     const v = document.createElement('video'); v.muted = true; v.autoplay = true; v.playsInline = true; v.srcObject = flux; el.appendChild(v);
-    D.ecran = { el: stPlacer2(el, p), flux, pos: o.ecranPos, rec: null };
+    D.ecran = { el: stPlacer2(el, p), flux, pos: o.ecranPos, rec: null, geo: { x: p.x, y: p.y, s: p.s } }; stEcranManip(D.ecran);
     flux.getVideoTracks()[0].addEventListener('ended', () => { if (studio && studio.direct.ecran && studio.direct.ecran.flux === flux) stEcranStop().then(() => document.querySelectorAll('#stDirectBtns [data-direct="ecran"]').forEach(b => b.classList.remove('on'))); });
     if (studio.rec) stEcranRec();
     stMsg('📺 Écran partagé : il est enregistré avec ta prise. Touche E pour arrêter.');
@@ -3118,12 +3146,26 @@ async function stDirect(quoi) {
   maj();
 }
 // L'écran partagé est enregistré à part (même rythme que la prise) puis posé dans la piste vidéo 2
+// L'écran partagé se déplace à la souris et se redimensionne par le rond jaune ; pendant la prise, chaque nouvelle place démarre un nouveau morceau
+function stEcranManip(E) {
+  const el = E.el; el.classList.add('ecran');
+  const poi = document.createElement('i'); poi.className = 'stPoignee'; poi.title = 'Tirer pour redimensionner'; el.appendChild(poi);
+  let mode = null, dep = null;
+  el.addEventListener('pointerdown', ev => { if (ev.button) return; const { W, H } = stZone(); mode = ev.target === poi ? 'taille' : 'deplace'; dep = { x: ev.clientX, y: ev.clientY, geo: { ...E.geo }, W, H }; el.setPointerCapture(ev.pointerId); ev.preventDefault(); });
+  el.addEventListener('pointermove', ev => {
+    if (!mode) return; const dx = (ev.clientX - dep.x) / dep.W * 100, dy = (ev.clientY - dep.y) / dep.H * 100;
+    E.geo = mode === 'deplace' ? { ...dep.geo, x: clamp(dep.geo.x + dx, 0, 100), y: clamp(dep.geo.y + dy, 0, 100) } : { ...dep.geo, s: clamp(dep.geo.s + dx * 2, 15, 100) };
+    stPlacer2(el, E.geo);
+  });
+  const fin = async () => { if (!mode) return; mode = null; E.pos = 'perso'; if (studio && studio.rec && E.rec) { await stEcranRecStop(); if (studio && studio.direct.ecran === E) stEcranRec(); } };
+  el.addEventListener('pointerup', fin); el.addEventListener('pointercancel', fin);
+}
 function stEcranRec() {
   const E = studio.direct.ecran; if (!E || E.rec) return;
   const mime = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'].find(t => MediaRecorder.isTypeSupported(t)) || '';
-  const rec = new MediaRecorder(E.flux, { mimeType: mime, videoBitsPerSecond: 8e6 }), morceaux = [], t = stDuree();
+  const rec = new MediaRecorder(E.flux, { mimeType: mime, videoBitsPerSecond: 8e6 }), morceaux = [], t = stDuree(), geo = { ...E.geo }, pos = E.pos; // place de l'écran au début de ce morceau
   rec.ondataavailable = e => { if (e.data.size) morceaux.push(e.data); };
-  E.rec = rec; E.fini = new Promise(ok => { rec.onstop = () => { studio && studio.ecranSegs.push({ blob: new Blob(morceaux, { type: mime || 'video/webm' }), mime, t, fin: E.finT, pos: E.pos }); ok(); }; });
+  E.rec = rec; E.fini = new Promise(ok => { rec.onstop = () => { studio && studio.ecranSegs.push({ blob: new Blob(morceaux, { type: mime || 'video/webm' }), mime, t, fin: E.finT, pos, geo }); ok(); }; });
   rec.start(1000); if (studio.pauseDebut) rec.pause();
 }
 async function stEcranRecStop() { const E = studio && studio.direct.ecran; if (!E || !E.rec) return; E.finT = stDuree(); const p = E.fini; if (E.rec.state !== 'inactive') E.rec.stop(); E.rec = null; await p; }
@@ -3161,10 +3203,21 @@ function stAppliquerAnimations(c, evts) {
       c.overlays.push({ file: e.file, kind: e.kind === 'video' ? 'video' : 'image', x: e.x ?? 50, y: e.y ?? 14, scale: e.s ?? 60, rot: 0, opacity: 100, start: +e.t.toFixed(2), dur, anim: e.id === 'logo' ? 'none' : 'pop', mode: '', plein: e.s >= 100 ? 'remplir' : '', key: false, keySim: 0.3 });
       continue;
     }
-    const a = ANIM_DIRECT.find(x => x.id === e.id), it = LIB().fondvert.find(x => x.id === e.id);
+    const a = animsDirect().find(x => x.id === e.id), it = LIB().fondvert.find(x => x.id === e.id);
     if (!a || c.overlays.length >= 16) continue;
     c.overlays.push({ file: `lib:fondvert/${a.id}.mp4`, kind: 'video', x: a.x, y: a.y, scale: a.s, rot: 0, opacity: 100, start: +e.t.toFixed(2), dur: (it && it.duree) || 3, anim: 'none', mode: '', plein: '', key: true, keySim: 0.3 });
   }
+}
+// bruitages des animations déclenchées : posés dans la piste audio, au moment où l'animation apparaît
+function stSonsAnimations(evts, debut) {
+  if (studio && studio.o.bruitage === false) return 0;
+  const l = animsDirect(); let n = 0;
+  for (const e of evts) {
+    const son = e.id === 'nom' ? 'sons/whoosh-court.mp3' : (l.find(x => x.id === e.id) || {}).son;
+    if (!son || proj.audio.length > 120) continue;
+    proj.audio.push({ file: 'lib:' + son, vol: 60, start: +(debut + e.t).toFixed(2), fade: false, loop: false, duck: false }); n++;
+  }
+  return n;
 }
 
 async function ouvrirStudio() {
@@ -3275,23 +3328,58 @@ async function stEnvoyer(morceaux, mime) {
           stMsg(`Préparation de l’écran partagé${segsEcran.length > 1 ? ` (${k + 1}/${segsEcran.length})` : ''}…`);
           const ext2 = /mp4/.test(sg.mime) ? 'mp4' : 'webm', j2 = await (await api('/api/import?name=' + enc('camera-ecran-' + Date.now() + '.' + ext2), { method: 'POST', body: sg.blob })).json();
           await chargerMedias(); const me = medias.find(x => x.file === j2.file); if (!me) continue;
-          const pp = ST_POS[sg.pos] || ST_POS['grand-droite'], du = Math.max(0.3, (sg.fin ?? finPrise) - sg.t);
+          const pp = sg.geo || ST_POS[sg.pos] || ST_POS['grand-droite'], du = Math.max(0.3, (sg.fin ?? finPrise) - sg.t);
           proj.pistes = proj.pistes || [];
           proj.pistes.push({ file: me.file, kind: 'video', start: +(debut + sg.t).toFixed(2), in: 0, out: +Math.min(me.duration || du, du).toFixed(2), dur: 4, plein: pp.s >= 100, x: pp.x, y: pp.y, scale: pp.s, forme: 'arrondi', bord: '#ffffff', opacity: 100, vol: 0, hasAudio: false, anim: 'fondu' });
         } catch (er) { stMsg(`<span class="err">Écran partagé non ajouté : ${esc(er.message)}</span>`); }
       }
+      stSonsAnimations(evts, debut);
       commit(); tout(); placerTete(debut);
     }
     stMsg(`✅ Prise ajoutée à la fin de la timeline (${fmt(m ? m.duration : 0)})${evts.length ? `, avec ${evts.length} élément${evts.length > 1 ? 's' : ''} en direct` : ''}${segsEcran.length ? ' et l’écran partagé (piste vidéo 2)' : ''}.`);
-    const po = paroleOpts();
-    if (m && (po.priseSous || po.priseCoupe)) { // sous-titres et coupe automatiques de la prise (pendant qu'on continue)
-      parolePourClips([proj.clips.length - 1], { sous: po.priseSous, couper: po.priseCoupe, style: po.style }, t => { if (studio) stMsg(t); else aide(t); })
-        .then(r => { const t = `✅ Prise prête${po.priseSous ? ` · ${r.n} sous-titres` : ''}${po.priseCoupe ? ` · ${fmt(r.gagne)} de blancs coupés` : ''}.`; if (studio) stMsg(t); else aide(t); })
-        .catch(er => { const t = `<span class="err">Sous-titres / coupe : ${esc(er.message)}</span>`; if (studio) stMsg(t); else aide(t); });
+    const po = paroleOpts(), pm = pmLire(), idx = proj.clips.length - 1 - 0;
+    if (m) { // pré-montage : tout de suite si c'est demandé en automatique, sinon une carte propose les étapes (gain de temps avant de quitter le studio)
+      const auto = pm.auto || po.priseSous || po.priseCoupe;
+      if (auto) stPremonter(idx, pm.auto ? pm : { ...pm, couper: !!po.priseCoupe, sous: !!po.priseSous, son: false, zoom: false });
+      else stPremontage(idx);
     }
   } catch (e) { stMsg(`<span class="err">La prise n’a pas pu être enregistrée : ${esc(e.message)}</span>`); }
   st.envoi = false;
   if (st.fermerApres) { studio = st; studio.rec = null; fermerStudio(); }
+}
+// ---------- Pré-montage de la prise, dès qu'elle est finie ----------
+const PM_DEF = { auto: false, couper: true, sous: true, son: true, zoom: false };
+const pmLire = () => { try { return { ...PM_DEF, ...JSON.parse(localStorage.getItem('qm:premontage') || '{}') }; } catch (e) { return { ...PM_DEF }; } };
+const pmGarder = o => { try { localStorage.setItem('qm:premontage', JSON.stringify(o)); } catch (e) { /* stockage indisponible */ } };
+function stPremontage(i) {
+  const z = $('#stPremontage'); if (!z || !studio) return;
+  const pm = pmLire(), ck = (id, lab, v) => `<div class="sw2"><input type="checkbox" id="${id}" ${v ? 'checked' : ''}><label for="${id}">${lab}</label></div>`;
+  z.hidden = false;
+  z.innerHTML = `<h4 style="margin:0 0 4px">🎬 Pré-montage de la prise</h4><p class="mut" style="margin:0 0 6px">Gagne du temps : QuentMovie nettoie la prise tout de suite, pendant que tu continues.</p>
+    ${ck('pmCouper', '✂ Couper les blancs et les « euh »', pm.couper)}${ck('pmSous', '💬 Sous-titres automatiques', pm.sous)}${ck('pmSon', '🎙 Son plus clair (voix claire, volume régulier)', pm.son)}${ck('pmZoom', '⚡ Un plan sur deux zoomé (effet « jump cut »)', pm.zoom)}
+    <div class="ligne" style="margin-top:6px"><button class="pri" id="pmGo">Pré-monter</button><button id="pmNon">Plus tard</button></div>
+    ${ck('pmAuto', 'Le faire tout seul après chaque prise', pm.auto)}`;
+  $('#pmNon').onclick = () => { z.hidden = true; z.innerHTML = ''; };
+  $('#pmGo').onclick = () => { const o = { auto: $('#pmAuto').checked, couper: $('#pmCouper').checked, sous: $('#pmSous').checked, son: $('#pmSon').checked, zoom: $('#pmZoom').checked }; pmGarder(o); stPremonter(i, o); };
+}
+async function stPremonter(i, o) {
+  const z = $('#stPremontage'), dire = t => { if (studio) stMsg(t); else aide(t); };
+  if (z) { z.hidden = false; z.innerHTML = '<h4 style="margin:0 0 4px">🎬 Pré-montage en cours…</h4><div class="mut" id="pmEtat">Préparation…</div>'; }
+  const etat = t => { const e = $('#pmEtat'); if (e) e.innerHTML = t; dire(t); };
+  try {
+    const avant = proj.clips.length; let n = 0, gagne = 0;
+    if (o.couper || o.sous) { const r = await parolePourClips([i], { sous: !!o.sous, couper: !!o.couper, style: paroleOpts().style }, t => etat(esc(t))); n = r.n; gagne = r.gagne; }
+    const morceaux = proj.clips.length - avant + 1;
+    for (let k = i; k < i + morceaux && k < proj.clips.length; k++) {
+      const c = proj.clips[k]; if (!c) continue;
+      if (o.son && c.hasAudio !== false && !c.afx.some(e => e.id === 'qualite')) c.afx.unshift({ id: 'qualite', p: {} });
+      if (o.zoom && morceaux >= 3 && (k - i) % 2 === 1) c.zoom = 115;
+    }
+    commit(); tout(); apercu();
+    const res = `✅ Prise prête${o.sous ? ` · ${n} sous-titres` : ''}${o.couper ? ` · ${fmt(gagne)} de blancs coupés` : ''}${o.son ? ' · son clarifié' : ''}${o.zoom && morceaux >= 3 ? ' · zooms ajoutés' : ''}.`;
+    if (z) { z.innerHTML = `<h4 style="margin:0 0 4px">${res}</h4><div class="ligne" style="margin-top:6px"><button class="pri" id="pmVoir">Voir dans la timeline</button><button id="pmEncore">Filmer encore</button></div>`; $('#pmVoir').onclick = () => { fermerStudio(); }; $('#pmEncore').onclick = () => { z.hidden = true; z.innerHTML = ''; }; }
+    dire(res);
+  } catch (er) { const t = `<span class="err">Pré-montage : ${esc(er.message)}</span>`; if (z) z.innerHTML = `<h4 style="margin:0">${t}</h4>`; dire(t); }
 }
 $('#bStudio').onclick = ouvrirStudio; $('#bGenerer').onclick = ouvrirGenerateur;
 $('#stFermer').onclick = fermerStudio; $('#stRec').onclick = stEnregistrer; $('#stPause').onclick = stPause; $('#stDefil').onclick = () => stDefiler();
@@ -3299,7 +3387,10 @@ $('#stDebut').onclick = () => { studio.pos = 0; stPlacer(); };
 $('#stPrompt').onclick = () => stDefiler();
 $('#stPrompt').addEventListener('wheel', e => { e.preventDefault(); studio.pos += e.deltaY; stPlacer(); }, { passive: false });
 $('#stPanneau').addEventListener('click', e => {
-  const b = e.target.closest('[data-anim]'); if (b) return stAnimer(b.dataset.anim);
+  const gr = e.target.closest('[data-groupe]'); if (gr) { studio.groupe = gr.dataset.groupe; return stAnimZone(); }
+  if (e.target.id === 'stEditTouches') { studio.modeTouches = !studio.modeTouches; studio.editTouche = null; return stAnimZone(); }
+  if (e.target.id === 'stResetTouches') { studio.o.touches = {}; stGarder(studio.o); studio.editTouche = null; return stAnimZone(); }
+  const b = e.target.closest('[data-anim]'); if (b) { if (studio.modeTouches && b.dataset.anim !== 'nom') { studio.editTouche = b.dataset.anim; stAnimZone(); return stMsg('Appuie sur la touche à utiliser pour « ' + esc((animsDirect().find(x => x.id === b.dataset.anim) || {}).nom) + ' » (Échap pour annuler).'); } return stAnimer(b.dataset.anim); }
   const d = e.target.closest('[data-direct]'); if (d) return stDirect(d.dataset.direct);
   if (e.target.id === 'stCle') stCleAuto();
 });
@@ -3309,7 +3400,7 @@ $('#stPanneau').addEventListener('input', e => {
   if (t.id === 'stScript') { proj.prompteur = t.value; commit(true); stStyle(); return; }
   const champ = { stVert: 'vertMode', stDet: 'detourage', stSync: 'synchro', stSeul: 'seul', stSeuil: 'seuil', stContour: 'contour', stHalo: 'halo', stLum: 'lumiere', stChaleur: 'chaleur',
     stLed: 'led', stLedForce: 'ledForce', stLedLarg: 'ledLargeur', stLedTeinte: 'ledTeinte', stNom: 'nom', stRole: 'role',
-    stVit: 'vitesse', stTaille: 'taille', stLarg: 'largeur', stOpa: 'opacite', stMirTxt: 'miroirTxt', stMirImg: 'miroirImg', stCpt: 'compte', stAuto: 'defilAuto', stQual: 'qualite', stEnc: 'enc', stBruit: 'bruit', stCam: 'camera', stMic: 'micro', stDMedia: 'directMedia', stDPos: 'directPos', stTextes: 'textes', stLogo: 'logo', stLogoPos: 'logoPos', stEcranPos: 'ecranPos' }[t.id];
+    stVit: 'vitesse', stTaille: 'taille', stLarg: 'largeur', stOpa: 'opacite', stMirTxt: 'miroirTxt', stMirImg: 'miroirImg', stCpt: 'compte', stAuto: 'defilAuto', stQual: 'qualite', stEnc: 'enc', stBruit: 'bruit', stCam: 'camera', stMic: 'micro', stDMedia: 'directMedia', stDPos: 'directPos', stTextes: 'textes', stLogo: 'logo', stLogoPos: 'logoPos', stEcranPos: 'ecranPos', stBruitage: 'bruitage' }[t.id];
   if (!champ) return; o[champ] = v; stGarder(o);
   const lab = $('#' + t.id + 'V'); if (lab) lab.textContent = v + ({ stTaille: ' px', stLedLarg: ' px', stLarg: ' %', stOpa: ' %', stHalo: ' %', stLum: ' %', stLedForce: ' %' }[t.id] || '');
   if (['stCam', 'stMic', 'stQual', 'stBruit'].includes(t.id)) { if (studio.rec) return alert('Arrête d’abord l’enregistrement.'); stFlux().catch(er => alert('Appareil indisponible : ' + er.message)); }
@@ -3319,7 +3410,12 @@ $('#stPanneau').addEventListener('input', e => {
 });
 function toucheStudio(e) {
   const tag = (e.target.tagName || '').toLowerCase(); if (tag === 'textarea' || (tag === 'input' && e.target.type === 'text') || tag === 'select') { if (e.key === 'Escape') e.target.blur(); return; }
-  const k = e.key, kl = k.length === 1 ? k.toLowerCase() : k, f = fn => { e.preventDefault(); fn(); };
+  const k = e.key, kl = k.length === 1 ? k.toLowerCase() : k, f = fn => { e.preventDefault(); fn(); }, tk = stToucheDe(e);
+  if (studio.editTouche) { // choix d'une nouvelle touche pour l'animation sélectionnée
+    if (k === 'Escape') return f(() => { studio.editTouche = null; stAnimZone(); });
+    if (!tk || ST_RESERVEES.has(tk) || ST_RESERVEES.has(kl)) return f(() => stMsg('Cette touche sert déjà au studio : choisis-en une autre.'));
+    return f(() => { const o = studio.o; o.touches = { ...(o.touches || {}) }; for (const a of animsDirect()) if (a.t === tk && a.id !== studio.editTouche) o.touches[a.id] = ''; o.touches[studio.editTouche] = tk; stGarder(o); studio.editTouche = null; stAnimZone(); stMsg(`Touche ${esc(stLibTouche(tk))} choisie.`); });
+  }
   if (k === 'Escape') return f(fermerStudio);
   if (kl === 'r') return f(stEnregistrer);
   if (kl === 'p') return f(stPause);
@@ -3329,7 +3425,7 @@ function toucheStudio(e) {
   if (kl === 'e') return f(() => stDirect('ecran'));
   if (kl === 'l') return f(() => { studio.o.led = !studio.o.led; stGarder(studio.o); const b = $('#stLed'); if (b) b.checked = studio.o.led; stStyle(); });
   if (kl === 'n') return f(() => stAnimer('nom'));
-  const a = ANIM_DIRECT.find(x => x.t === k); if (a) return f(() => stAnimer(a.id));
+  const a = tk ? animsDirect().find(x => x.t && x.t === tk) : null; if (a) return f(() => stAnimer(a.id));
   if (k === ' ') return f(() => stDefiler());
   if (k === 'Home') return f(() => { studio.pos = 0; stPlacer(); });
   if (k === 'ArrowUp' || k === 'ArrowDown') return f(() => { studio.o.vitesse = clamp(studio.o.vitesse + (k === 'ArrowUp' ? 5 : -5), 10, 150); stGarder(studio.o); const r = $('#stVit'); if (r) { r.value = studio.o.vitesse; $('#stVitV').textContent = studio.o.vitesse; } });

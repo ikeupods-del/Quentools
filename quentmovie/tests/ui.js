@@ -227,6 +227,8 @@ function chromium() {
   await pg.click('#stRec'); await pg.waitForTimeout(700);
   await pg.keyboard.press('m'); await pg.keyboard.press('t'); await pg.keyboard.press('e'); await pg.waitForTimeout(1500);
   check('studio en direct : image, texte, logo et écran visibles', await ev(() => !!(studio.direct.media && studio.direct.texte && studio.direct.logo && studio.direct.ecran) && document.querySelectorAll('#stAnim .stDirect').length === 3 && !!$('#stAnim .stTexte')));
+  check('studio : panneau unique d’animations (33 nouvelles, touches sans doublon)', await ev(() => { const l = animsDirect(), t = l.filter(a => a.t).map(a => a.t); return l.length >= 40 && new Set(t).size === t.length && ['breaking', 'riche', 'pauvre', 'hausse', 'baisse', 'content', 'enerve', 'triste'].every(id => l.some(a => a.id === id)) && !t.some(k => ST_RESERVEES.has(k)); }));
+  check('studio : touches lues par position (clavier AZERTY) et préfixe Maj+', await ev(() => stToucheDe({ key: '&', code: 'Digit1' }) === '1' && stToucheDe({ key: 'B', code: 'KeyB', shiftKey: true }) === 'Maj+b' && stToucheDe({ key: 'c', code: 'KeyC', metaKey: true }) === ''));
   await pg.keyboard.press('t'); await pg.keyboard.press('m'); await pg.waitForTimeout(500);
   await pg.click('#stRec');
   await pg.waitForFunction(n => proj.clips.length > n && !studio.envoi, nAv2, { timeout: 90000 }).catch(() => {});
