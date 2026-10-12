@@ -549,7 +549,7 @@ function buildClip(c, P, o = {}) {
     const acc = hex(ti.color || '#c8102e'), id = String(ti.preset);
     const txt = (name, content) => { const file = `r${idx}${name}.txt`; fs.writeFileSync(path.join(dir, file), String(content).slice(0, 600)); return file; };
     const l1 = String(ti.l1 || ''), l2 = String(ti.l2 || '');
-    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', jour: 'futura', 'intro-vlog': 'futura', trajet: 'futura', temps: 'courier', 'now-playing': 'helvetica', question: 'futura', plateformes: 'helvetica', sommaire: 'futura', 'citation-pro': 'georgia', prix: 'helvetica', caracteristiques: 'helvetica', liste: 'futura', verset: 'georgia', promo: 'futura', 'avertissement-sante': 'helvetica', 'cours-hausse': 'helvetica', 'cours-baisse': 'helvetica', 'bourse-defile': 'helvetica', avertissement: 'helvetica', hud: 'futura', barres: 'futura', episode: 'futura', invite: 'helvetica', sponsor: 'helvetica', abonne: 'futura', etape: 'futura', astuce: 'helvetica', rubrique: 'futura', chiffre: 'futura', 'lieu-vlog': 'futura', numero: 'futura', rec: 'courier', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
+    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', jour: 'futura', courbe: 'helvetica', 'barres-h': 'helvetica', compteur: 'futura', definition: 'helvetica', risque: 'helvetica', objectif: 'helvetica', 'intro-vlog': 'futura', trajet: 'futura', temps: 'courier', 'now-playing': 'helvetica', question: 'futura', plateformes: 'helvetica', sommaire: 'futura', 'citation-pro': 'georgia', prix: 'helvetica', caracteristiques: 'helvetica', liste: 'futura', verset: 'georgia', promo: 'futura', 'avertissement-sante': 'helvetica', 'cours-hausse': 'helvetica', 'cours-baisse': 'helvetica', 'bourse-defile': 'helvetica', avertissement: 'helvetica', hud: 'futura', barres: 'futura', episode: 'futura', invite: 'helvetica', sponsor: 'helvetica', abonne: 'futura', etape: 'futura', astuce: 'helvetica', rubrique: 'futura', chiffre: 'futura', 'lieu-vlog': 'futura', numero: 'futura', rec: 'courier', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
     const font = `fontfile='${fontFile(ti.font || DEF_FONT[id])}'`;
     const dt = (file, size, color, x, y, extra = '') =>
       `drawtext=${font}:textfile=${file}:expansion=none:fontsize=${Math.round(size)}:fontcolor=${color}:x='${x}':y='${y}':${en}${extra}`;
@@ -819,6 +819,66 @@ function buildClip(c, P, o = {}) {
       text([dt(txt('q', '“'), 26 * u, acc, `${px + 3 * u}`, `${py - 3 * u}`, `:alpha='${F}'`),
         dt(txt('a', lignes), 5.4 * u, 'white', `${px + 9 * u}`, `${py + 8 * u}`, `:alpha='${F}':line_spacing=${Math.round(1.2 * u)}`),
         ...(l2 ? [dt(txt('b', '— ' + l2), 3.4 * u, acc, `${px + 9 * u}`, `${py + ph - 8 * u}`, `:alpha='${F}'`)] : [])]);
+    } else if (id === 'courbe') { // pack Finance : courbe en aire qui se dessine de gauche à droite (l1 = valeurs séparées par des virgules, l2 = légende)
+      const vals = l1.split(/[,;\s]+/).map(Number).filter(Number.isFinite).slice(0, 40);
+      if (vals.length >= 2) {
+        const cw = 54 * u, ch = 24 * u, x0 = (W - cw) / 2, yb = H * 0.64, N = 72, mn = Math.min(...vals), mx = Math.max(...vals), span = Math.max(1e-9, mx - mn);
+        const interp = k => { const p = k / (N - 1) * (vals.length - 1), i = Math.min(vals.length - 2, Math.floor(p)), fr = p - i; return vals[i] * (1 - fr) + vals[i + 1] * fr; };
+        const hauteur = k => ((interp(k) - mn) / span * 0.88 + 0.08) * ch, up = vals[vals.length - 1] >= vals[0], col = up ? '0x19d38a' : '0xff4d5e', parts = [];
+        box('0x0b0f1c@0.88', cw + 8 * u, ch + 15 * u, `${x0 - 4 * u}`, `${yb - ch - 9 * u}`);
+        for (let k = 0; k < N; k++) {
+          const h = hauteur(k), hp = k ? hauteur(k - 1) : h, x = x0 + k * cw / N, w = cw / N + 1, tk = S + 0.25 + (k / N) * 1.5, ten = `:enable='gte(${T},${tk.toFixed(3)})*between(${T},${S},${E})'`;
+          parts.push(`drawbox=x=${x.toFixed(1)}:y=${(yb - h).toFixed(1)}:w=${w.toFixed(1)}:h=${h.toFixed(1)}:color=${col}@0.26:t=fill${ten}`);
+          parts.push(`drawbox=x=${x.toFixed(1)}:y=${(yb - Math.max(h, hp)).toFixed(1)}:w=${w.toFixed(1)}:h=${(Math.abs(h - hp) + Math.max(2, 0.55 * u)).toFixed(1)}:color=${col}:t=fill${ten}`);
+        }
+        text(parts);
+        const dernier = vals[vals.length - 1], var_ = vals[0] ? ((dernier / vals[0] - 1) * 100) : 0;
+        text([...(l2 ? [dt(txt('b', l2.toUpperCase()), 2.8 * u, '0xaab2c5', `${x0}`, `${yb - ch - 6 * u}`, `:alpha='${F}'`)] : []),
+          dt(txt('v', (var_ >= 0 ? '+' : '−') + Math.abs(var_).toFixed(1).replace('.', ',') + ' %'), 4.6 * u, col, `${x0 + cw}-text_w`, `${yb - ch - 7 * u}`, `:alpha='${ease(S + 1.7, 0.4)}'`)]);
+      }
+    } else if (id === 'barres-h') { // pack Finance : classement en barres horizontales (une ligne « Nom:valeur » par barre)
+      const lignes = l1.split('\n').map(x => x.trim()).filter(Boolean).slice(0, 6).map(x => { const m = x.match(/^(.*?)[:=]\s*(-?[\d.,]+)\s*(.*)$/); return m ? { n: m[1], v: parseFloat(m[2].replace(',', '.')), u: m[3] } : null; }).filter(Boolean);
+      if (lignes.length) {
+        const mx = Math.max(...lignes.map(x => Math.abs(x.v)), 1e-9), lw = 23 * u, bwMax = 34 * u, x0 = (W - (lw + bwMax + 12 * u)) / 2, y0 = H * 0.4, pas = 8.2 * u;
+        if (l2) text([dt(txt('t', l2.toUpperCase()), 2.8 * u, acc, `${x0}`, `${y0 - 7 * u}`, `:alpha='${F}'`)]);
+        lignes.forEach((r, i) => {
+          const bw = Math.max(2, Math.round(bwMax * Math.abs(r.v) / mx)), src = lab(), out = lab(), e = ease(S + 0.12 * i, 0.8), yy = y0 + i * pas, fort = Math.abs(r.v) === mx;
+          f.push(`color=c=${fort ? acc : '0x7f93c9'}:s=${even(bw)}x${even(4.6 * u)}:r=${fps},format=rgba,scale=w='max(2,${even(bw)}*${e})':h=${even(4.6 * u)}:eval=frame[${src}]`);
+          f.push(`[${cur}][${src}]overlay=x='${Math.round(x0 + lw)}':y='${Math.round(yy)}':shortest=1:format=auto:${en}[${out}]`); cur = out;
+          text([dt(txt('n' + i, r.n), 3.6 * u, 'white', `${x0}`, `${yy + 0.2 * u}`, `:alpha='${F}':shadowx=2:shadowy=2:shadowcolor=black@0.55`),
+            dt(txt('p' + i, String(r.v).replace('.', ',') + (r.u ? ' ' + r.u : '')), 3.4 * u, 'white', `${x0 + lw + bw + 1.6 * u}`, `${yy + 0.4 * u}`, `:alpha='${ease(S + 0.12 * i + 0.5, 0.4)}'`)]);
+        });
+      }
+    } else if (id === 'compteur') { // pack Finance : gros chiffre qui défile jusqu'à sa valeur (l1 = « 12500 € »), légende en dessous
+      const m = l1.match(/^([^\d-]*)(-?[\d.]+)(.*)$/), V = m ? parseFloat(m[2]) : 0, fich = `r${idx}cpt.txt`;
+      fs.writeFileSync(path.join(dir, fich), (m ? m[1].replace(/%/g, '\\%') : '') + `%{eif:trunc(${V}*min(1,max(0,(t+${ctx.t0}-${S})/1.7))):d}` + (m ? m[3].replace(/%/g, '\\%') : ''));
+      const out = lab(); f.push(`[${cur}]drawtext=${font}:textfile=${fich}:expansion=normal:fontsize=${Math.round(20 * u)}:fontcolor=${acc}:x=(w-text_w)/2:y=${Math.round(H * 0.36)}:shadowx=${Math.round(0.4 * u)}:shadowy=${Math.round(0.4 * u)}:shadowcolor=black@0.45:${en}[${out}]`); cur = out;
+      if (l2) text([dt(txt('b', l2), 4.4 * u, 'white', '(w-text_w)/2', `${H * 0.36 + 24 * u}`, `:alpha='${ease(S + 0.4, 0.5)}':shadowx=2:shadowy=2:shadowcolor=black@0.5`)]);
+    } else if (id === 'definition') { // pack Finance : carte de définition (l1 = terme, l2 = explication)
+      const lignes = wrap(l2, Math.floor(50 * u / (3.6 * u * 0.56))), nl = lignes.split('\n').length, ph = (nl * 5.2 + 17) * u;
+      const BX = `(-${W * 0.7}+(${5 * u}+${W * 0.7})*${Fb(0)})`, BX2 = `(-${W * 0.7}+(${5 * u}+${W * 0.7})*${Fb(0.14)})`, y = H * 0.74 - ph / 2;
+      box('0x0b0f1c@0.94', 58 * u, ph, BX, y); box(acc, 1 * u, ph, BX, y);
+      text([dt(txt('t', 'DÉFINITION'), 2.2 * u, acc, `${BX2}+${3.4 * u}`, `${y + 1.8 * u}`),
+        dt(txt('a', l1), 5.6 * u, 'white', `${BX2}+${3.4 * u}`, `${y + 4.8 * u}`),
+        dt(txt('b', lignes), 3.6 * u, '0xc9ced9', `${BX2}+${3.4 * u}`, `${y + 11.6 * u}`, `:line_spacing=${Math.round(0.8 * u)}`)]);
+    } else if (id === 'risque') { // pack Finance : niveau de risque de 1 à 5 (l1 = niveau, l2 = libellé facultatif)
+      const niv = clamp(Math.round(num(l1, 3)), 1, 5), mots = ['Faible', 'Modéré', 'Moyen', 'Élevé', 'Très élevé'], coul = ['0x3d8bff', '0x19d3c5', '0xffd400', '0xff9a1f', '0xff4d5e'], bwid = 7 * u, gap = 1.4 * u, total = 5 * bwid + 4 * gap, x0 = (W - total) / 2, y = H * 0.7;
+      box('0x0b0f1c@0.9', total + 8 * u, 16 * u, `${x0 - 4 * u}`, `${y - 8 * u}`);
+      for (let i = 0; i < 5; i++) {
+        const src = lab(), out = lab(), actif = i < niv, tk = S + 0.2 + 0.16 * i;
+        f.push(`color=c=${actif ? coul[i] : '0x2a3042'}:s=${even(bwid)}x${even((2.4 + i * 0.9) * u)}:r=${fps},format=rgba[${src}]`);
+        f.push(`[${cur}][${src}]overlay=x='${Math.round(x0 + i * (bwid + gap))}':y='${Math.round(y + 3 * u - (2.4 + i * 0.9) * u)}':shortest=1:format=auto:enable='gte(${T},${tk.toFixed(2)})*between(${T},${S},${E})'[${out}]`); cur = out;
+      }
+      text([dt(txt('t', 'NIVEAU DE RISQUE'), 2.4 * u, '0xaab2c5', `${x0}`, `${y - 6.6 * u}`, `:alpha='${F}'`),
+        dt(txt('a', (l2 || mots[niv - 1]).toUpperCase()), 3.2 * u, coul[niv - 1], `${x0 + total}-text_w`, `${y + 4.2 * u}`, `:alpha='${ease(S + 1, 0.4)}'`)]);
+    } else if (id === 'objectif') { // pack Finance : barre de progression vers un objectif (l1 = intitulé, l2 = pourcentage atteint)
+      const pct = clamp(num(l2, 60), 0, 100), cw = 54 * u, x0 = (W - cw) / 2, y = H * 0.7, bh = even(3.2 * u), src = lab(), out = lab(), fich = `r${idx}obj.txt`;
+      box('0x0b0f1c@0.9', cw + 8 * u, 15 * u, `${x0 - 4 * u}`, `${y - 9 * u}`); box('0x2a3042', cw, 3.2 * u, `${x0}`, `${y}`);
+      f.push(`color=c=${acc}:s=${even(cw)}x${bh}:r=${fps},format=rgba,scale=w='max(2,${even(cw)}*${pct / 100}*${ease(S + 0.3, 1.6)})':h=${bh}:eval=frame[${src}]`);
+      f.push(`[${cur}][${src}]overlay=x='${Math.round(x0)}':y='${Math.round(y)}':shortest=1:format=auto:${en}[${out}]`); cur = out;
+      fs.writeFileSync(path.join(dir, fich), `%{eif:trunc(${pct}*min(1,max(0,(t+${ctx.t0}-${S})/1.7))):d} \\%`);
+      const o2 = lab(); f.push(`[${cur}]drawtext=${font}:textfile=${fich}:expansion=normal:fontsize=${Math.round(4.6 * u)}:fontcolor=white:x=${Math.round(x0 + cw)}-text_w:y=${Math.round(y - 7.4 * u)}:${en}[${o2}]`); cur = o2;
+      text([dt(txt('a', l1), 3.6 * u, 'white', `${x0}`, `${y - 6.8 * u}`, `:alpha='${F}'`)]);
     } else if (id === 'progression') { // barre de progression de la séquence
       const bh = even(Math.max(4, 1.1 * u)), src = lab(), out = lab();
       f.push(`color=c=${acc}:s=${even(W)}x${bh}:r=${fps},format=rgba,scale=w='max(2,${even(W)}*min(1,${T}/${Math.max(0.5, eff).toFixed(2)}))':h=${bh}:eval=frame[${src}]`);

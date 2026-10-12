@@ -3,6 +3,11 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.25.0
+- **Bourse et économie** nettement enrichies. Six nouveaux titres animés : courbe en aire qui se dessine (avec la variation en %), classement en barres horizontales, gros chiffre qui défile jusqu’à sa valeur, carte de définition (ETF, PER, inflation…), jauge de niveau de risque de 1 à 5 et barre de progression vers un objectif.
+- Nouveau pack **Finance perso et épargne** ; les packs Bourse, Économie, Crypto et Entrepreneur reçoivent les nouveaux titres, quatre sons de marché (cloche de fermeture, alerte, tracé de graphique, chiffres qui défilent) et, pour les épisodes audio, une pochette et un visualiseur aux couleurs de la bourse.
+- Deux fonds de bourse : bougies japonaises fixes (16:9 et vertical) et bougies qui défilent en boucle (animé).
+
 ## 1.24.0
 - **Vlogs et podcasts nettement enrichis.** Vlog : intro avec grand nom du lieu, trajet « départ → arrivée » qui se dessine, date et heure façon caméscope, « en ce moment » avec égaliseur animé, grain de pellicule 16 mm et rayons de fenêtre posés sur tous les clips en un clic, bips de début et de fin d’enregistrement, son d’apparition de titre. Podcast : carte de question, chapitres horodatés qui apparaissent un à un, grande citation de l’invité, bandeau « Écoute-nous sur… », jingle court et ambiance de studio.
 - Nouveau pack **Podcast audio (audiogram)** et quatre **pochettes d’épisode** (orange, violet et rose, sable, nuit étoilée) en 16:9 et en vertical, posées derrière le visualiseur sonore par les packs podcast. Deux nouveaux visualiseurs : barres en miroir et spectre coloré.
