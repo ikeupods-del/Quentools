@@ -241,6 +241,43 @@ function creer({ BASE, FFMPEG }) {
     } catch (e) { return repli(); }
   }
 
+  // Titres de chapitres : l'IA nomme chaque partie à partir de son texte ; sans IA, les titres proposés par le programme sont gardés
+  async function titrerChapitres({ chapitres = [] }) {
+    const garde = chapitres.map(c => ({ ...c }));
+    utiliser('');
+    if (!installe() || !garde.length) return { chapitres: garde, ia: false };
+    const systeme = 'Tu nommes les chapitres d’une vidéo en français, uniquement à partir du texte de chaque partie. Titres courts (2 à 5 mots), précis, sans point final, sans guillemets, sans numéro. Tu n’inventes rien.';
+    const demande = garde.map((c, i) => `Partie ${i + 1} (${c.titre}) : ${String(c.texte || '').slice(0, 600)}`).join('\n\n') + `\n\nDonne exactement ${garde.length} titres, dans l’ordre. La première partie est l’introduction si elle présente la vidéo ; la dernière est la conclusion si elle conclut.`;
+    const schema = { type: 'object', properties: { titres: { type: 'array', minItems: garde.length, maxItems: garde.length, items: { type: 'string' } } }, required: ['titres'] };
+    try {
+      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.3 }, garde.length * 24 + 60);
+      const t = ((r.resultat && r.resultat.titres) || []).map(x => SQ.nettoyerTexte(x).replace(/[.:;,!]+$/, '').slice(0, 60));
+      if (t.length === garde.length && t.every(x => x.length >= 3)) return { chapitres: garde.map((c, i) => ({ ...c, titre: t[i] })), ia: true };
+    } catch (e) { /* titres du programme gardés */ }
+    return { chapitres: garde, ia: false };
+  }
+  // Clipping : parmi des extraits candidats (calculés par le programme), l'IA choisit les plus accrocheurs pour TikTok et écrit leur titre.
+  // Elle ne choisit que des numéros de la liste et ne peut ni modifier ni inventer un extrait.
+  async function choisirExtraits({ candidats = [], nb = 5, sujet = '' }) {
+    utiliser('');
+    const garde = candidats.slice(0, 14);
+    if (!installe() || garde.length <= 1) return { extraits: candidats.slice(0, nb), ia: false };
+    const systeme = 'Tu choisis les meilleurs extraits d’une vidéo pour TikTok, en français. Un bon extrait donne envie de regarder jusqu’au bout dès la première phrase, se comprend seul, et se termine sur une idée complète.';
+    const demande = `${sujet ? `Sujet de la vidéo : ${String(sujet).slice(0, 120)}\n` : ''}Extraits possibles :\n${garde.map((c, i) => `${i + 1}. (${Math.round(c.e - c.s)} s) ${String(c.t).slice(0, 380)}`).join('\n')}\n\nChoisis les ${Math.min(nb, garde.length)} meilleurs extraits (numéros différents) et écris pour chacun un titre d’accroche de 8 mots maximum, fidèle au contenu, sans émoji.`;
+    const schema = { type: 'object', properties: { choix: { type: 'array', minItems: 1, maxItems: nb, items: { type: 'object', properties: { numero: { type: 'integer' }, titre: { type: 'string' } }, required: ['numero', 'titre'] } } }, required: ['choix'] };
+    try {
+      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.3 }, nb * 40 + 80);
+      const vus = new Set(), sortie = [];
+      for (const c of (r.resultat && r.resultat.choix) || []) {
+        const e = garde[(+c.numero || 0) - 1]; if (!e || vus.has(c.numero)) continue; vus.add(c.numero);
+        const t = SQ.nettoyerTexte(c.titre).replace(/[.]+$/, '').slice(0, 70);
+        sortie.push({ ...e, titre: t.length >= 4 ? t : e.titre });
+      }
+      if (sortie.length) return { extraits: sortie.sort((a, b) => a.s - b.s).slice(0, nb), ia: true };
+    } catch (e) { /* classement du programme gardé */ }
+    return { extraits: candidats.slice(0, nb), ia: false };
+  }
+
   // ---------- Téléchargement depuis un lien (YouTube, TikTok, Instagram, Facebook, X…) ----------
   const YTDLP = path.join(OUTILS, process.platform === 'darwin' ? 'yt-dlp_macos' : 'yt-dlp_linux');
   async function outilTelechargement(job) {
@@ -274,7 +311,7 @@ function creer({ BASE, FFMPEG }) {
   }
 
   const arreter = () => { if (proc) proc.kill(); };
-  return { etat, installer, ecrireScript, reecrireScene, comprendreDemande, textesPublication, telecharger, arreter };
+  return { etat, installer, ecrireScript, reecrireScene, comprendreDemande, textesPublication, titrerChapitres, choisirExtraits, telecharger, arreter };
 }
 
 module.exports = { creer, STYLES, MODELE, lireConsignes, regroupe, TYPES, PUBLICS, TONS, RYTHMES };

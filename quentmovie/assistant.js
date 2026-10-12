@@ -20,6 +20,8 @@ const ACTIONS = {
   reperes_rythme: 'Poser des repères sur les temps de la musique',
   titre: 'Ajouter un écran titre au début',
   chapitres: 'Préparer les chapitres YouTube',
+  chapitrer: 'Chapitrer la vidéo : titres à l’écran et bruit de clavier',
+  clipping: 'Créer des clips TikTok avec les meilleurs passages',
   detacher: 'Détacher le son des vidéos',
   vitesse: 'Changer la vitesse',
   publication: 'Écrire le titre, la description et les hashtags',
@@ -29,9 +31,11 @@ const AMBIANCES = ['calme', 'douce', 'piano', 'dynamique', 'energique', 'epique'
 const sansAccents = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'");
 
 // Demande en français → [{ action, parametre, libelle }], dans l'ordre logique du montage
-function comprendre(demande) {
+function comprendre(demande, projet) {
   const t = ' ' + sansAccents(demande).replace(/[^a-z0-9'«»"%,.\- ]+/g, ' ') + ' ', l = [];
   const ajoute = (action, parametre = '') => { if (!l.some(x => x.action === action)) l.push({ action, parametre: String(parametre), libelle: ACTIONS[action] + (parametre ? ` (${parametre})` : '') }); };
+  // « monte ma vidéo » : l'assistant enchaîne lui-même les étapes utiles à CE montage
+  if (/(montage (automatique|auto|complet)|monte[- ]?(la|le|moi|ma|mon|mes|les|cette|ces|tout)\b|fais[- ]moi (le|un|mon) montage|auto-?monte|monte (automatiquement|tout))/.test(t) && !/monte[- ]?(le )?son/.test(t)) return planAuto(projet);
   const non = mot => new RegExp(`(sans|pas de|enleve|retire|supprime|vire)( les?| la| l'| des| de)? ?${mot}`).test(t);
   if (/\b(blancs?|silences?|euh|hesitations?|temps morts?)\b/.test(t) && !non('blancs')) ajoute('couper_blancs');
   if (/sous[- ]?titr/.test(t) && !non('sous[- ]?titr')) ajoute('sous_titres', /tiktok|gros|grand|anime|karaoke|mot a mot/.test(t) ? 'tiktok' : '');
@@ -47,18 +51,38 @@ function comprendre(demande) {
   if (/(dynamis|plus de rythme|jump ?cut|zooms? altern|punch)/.test(t)) ajoute('dynamiser', /fort|beaucoup/.test(t) ? '135' : /leger|peu/.test(t) ? '110' : '120');
   const vit = /(accelere|ralenti)\w*\s*(?:x|×|fois)?\s*(\d+(?:[.,]\d+)?)?/.exec(t);
   if (vit) ajoute('vitesse', vit[2] ? vit[2].replace(',', '.') : /ralenti/.test(vit[1]) ? '0.5' : '2');
-  if (/(vertical|tiktok|reels?|shorts?|9 ?\/ ?16|story|stories)/.test(t) && /(format|passe|mets|en |pour )/.test(t)) ajoute('format', 'vertical');
+  const veutClips = /\b(clips?|clipping|extraits?|moments? forts?|meilleurs? (passages?|moments?)|shorts)\b/.test(t) && /(cree|genere|fais|sors|extrais|decoupe|trouve|propose|tiktok|reels?|shorts)/.test(t);
+  if (veutClips) ajoute('clipping');
+  else if (/(vertical|tiktok|reels?|shorts?|9 ?\/ ?16|story|stories)/.test(t) && /(format|passe|mets|en |pour )/.test(t)) ajoute('format', 'vertical');
   else if (/(horizontal|youtube|16 ?\/ ?9|paysage)/.test(t) && /(format|passe|mets|en )/.test(t)) ajoute('format', 'horizontal');
   else if (/\bcarre\b|1 ?\/ ?1/.test(t)) ajoute('format', 'carre');
   const tit = /(?:titre|ecran titre)\s*(?:«|"|:)\s*([^»"]{2,60})/.exec(demande ? sansAccents(demande) : '');
   const titOrig = /(?:titre|écran titre)\s*(?:«|"|:)\s*([^»"]{2,60})/i.exec(String(demande || ''));
   if (/(ecran titre|titre au debut|ajoute (un|le) titre|mets (un|le) titre)/.test(t) || tit) ajoute('titre', titOrig ? titOrig[1].trim() : '');
-  if (/chapitres?/.test(t)) ajoute('chapitres');
+  if (/chapitr/.test(t)) ajoute(/(liste|copi|description)/.test(t) && !/(clavier|ecran|titre)/.test(t) ? 'chapitres' : 'chapitrer');
   if (/(hashtags?|description|titre (pour|de la) (publication|video youtube|tiktok)|legende)/.test(t)) ajoute('publication', /youtube/.test(t) ? 'YouTube' : /instagram/.test(t) ? 'Instagram' : /tiktok/.test(t) ? 'TikTok' : '');
   if (/\bexport/.test(t)) ajoute('exporter');
   // ordre du montage : découpe d'abord, habillage ensuite, export à la fin
-  const ORDRE = ['format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'sous_titres', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'titre', 'chapitres', 'publication', 'exporter'];
+  const ORDRE = ['format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'sous_titres', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'titre', 'chapitres', 'chapitrer', 'clipping', 'publication', 'exporter'];
   return l.sort((a, b) => ORDRE.indexOf(a.action) - ORDRE.indexOf(b.action));
+}
+
+// Montage automatique : les étapes utiles d'après l'état du projet (forme de suggerer), sans rien refaire de déjà fait
+function planAuto(p) {
+  const l = [], ajoute = (action, parametre = '') => l.push({ action, parametre: String(parametre), libelle: ACTIONS[action] + (parametre ? ` (${parametre})` : '') });
+  if (!p || !Array.isArray(p.clips)) { ['couper_blancs', 'sous_titres', 'egaliser', 'musique', 'transitions'].forEach(a => ajoute(a, a === 'musique' ? 'calme' : a === 'transitions' ? 'fade' : '')); return l; }
+  const clips = p.clips, total = clips.reduce((a, c) => a + (c.dur || 0), 0), videos = clips.filter(c => c.kind === 'video');
+  const parlants = clips.filter(c => (c.kind === 'video' || c.kind === 'audio') && c.hasAudio !== false && !c.sonDetache);
+  if (!clips.length) return [];
+  if (videos.some(c => (c.dur || 0) > 45)) ajoute('plans');
+  if (parlants.length) ajoute('couper_blancs');
+  if (parlants.length && parlants.every(c => !(c.subs || []).length)) ajoute('sous_titres', p.format === 'vertical' ? 'tiktok' : '');
+  if (parlants.length >= 2) ajoute('egaliser');
+  if (clips.length >= 4 && videos.length >= 3 && parlants.length >= 3) ajoute('dynamiser', '115');
+  if (clips.length >= 2 && !clips.some(c => c.transition)) ajoute('transitions', 'fade');
+  if (!(p.audio || []).some(a => !a.detache) && total > 15) ajoute('musique', 'calme');
+  if (total > 150 && parlants.length) ajoute('chapitrer');
+  return l;
 }
 
 // Suggestions d'après le projet (forme simplifiée : { format, clips:[{kind, hasAudio, subs, afx, transition, dur, w, h, cadrage, fit}], audio:[{detache}], markers })
@@ -73,6 +97,8 @@ function suggerer(p) {
   if (parlants.length >= 2 && !parlants.every(c => (c.afx || []).some(e => e.id === 'normaliser'))) s.push({ action: 'egaliser', libelle: 'Égaliser le volume : même niveau d’un clip à l’autre.' });
   if (!(p.audio || []).some(a => !a.detache) && total > 15) s.push({ action: 'musique', parametre: 'calme', libelle: 'Ajouter une musique de fond discrète (baissée quand on parle).' });
   if (clips.length >= 4 && clips.filter(c => c.kind === 'video').length >= 3 && parlants.length >= 3 && !clips.some(c => (c.zoom || 100) > 100)) s.push({ action: 'dynamiser', parametre: '115', libelle: 'Dynamiser la vidéo parlée (zoom léger un plan sur deux).' });
+  if (total > 150 && parlants.length) s.push({ action: 'chapitrer', libelle: 'Chapitrer la vidéo : titres à l’écran, bruit de clavier et liste pour YouTube.' });
+  if (total > 90 && parlants.length) s.push({ action: 'clipping', libelle: 'Créer des clips TikTok avec les meilleurs passages de la vidéo.' });
   if ((p.markers || []).length >= 2 && total > 60) s.push({ action: 'chapitres', libelle: 'Préparer les chapitres YouTube à partir des repères.' });
   s.push({ action: 'publication', libelle: 'Écrire le titre, la description et les hashtags de publication.' });
   return s.map(x => ({ parametre: '', ...x }));
@@ -86,4 +112,4 @@ function hashtagsSimples(texte, n = 8) {
   return [...f.entries()].sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, n).map(([m]) => '#' + m);
 }
 
-module.exports = { ACTIONS, comprendre, suggerer, hashtagsSimples, sansAccents };
+module.exports = { ACTIONS, comprendre, planAuto, suggerer, hashtagsSimples, sansAccents };

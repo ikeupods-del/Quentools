@@ -880,7 +880,7 @@ $('#pV').addEventListener('click', e => {
 $('#pV').addEventListener('pointerdown', e => {
   const el = e.target.closest('.clip'); if (!el || e.button === 2) return;
   if (verrouillee('V1')) return;
-  if (outilTl === 'lame') { e.preventDefault(); const r0 = $('#lane').getBoundingClientRect(); sel = +el.dataset.i; selA = -1; selP = -1; selObjs.clear(); placerTete(Math.max(0, (e.clientX - r0.left) / zoom), { sansSelection: true, sansApercu: true }); couper(); return; }
+  if (outilTl === 'lame') { e.preventDefault(); const r0 = $('#lane').getBoundingClientRect(); sel = +el.dataset.i; selA = -1; selP = -1; selObjs.clear(); placerTete(Math.max(0, (e.clientX - r0.left) / zoom), { sansSelection: true, sansApercu: true }); couper(true); return; }
   if (e.shiftKey || e.metaKey || e.ctrlKey) { e.preventDefault(); basculerMulti(+el.dataset.i, e.shiftKey); return; }
   const i = +el.dataset.i, c = proj.clips[i], x0 = e.clientX, mode = e.target.classList.contains('hl') ? 'gauche' : e.target.classList.contains('hr') ? 'droite' : 'deplace';
   const r = $('#lane').getBoundingClientRect(), st0 = starts()[i];
@@ -967,33 +967,55 @@ $('#pA').addEventListener('pointerdown', e => {
 }));
 
 // ---------- Édition ----------
+// Après le retrait de passages de la timeline (intervalles [a, b[ en secondes) : les sons et incrustations qui y étaient disparaissent,
+// ceux qui suivent reculent (le son reste calé sur l'image), les repères suivent
+function recollerApres(intervalles) {
+  const long = x => (x.dur || durOf(x.file)) / (x.vit || 1);
+  for (const [a, b] of intervalles.slice().sort((p, q) => q[0] - p[0])) {
+    const d = b - a;
+    proj.audio = proj.audio.filter(x => !(sonLie(x) && (x.start || 0) >= a - 0.05 && (x.start || 0) + long(x) <= b + 0.1));
+    proj.audio.forEach(x => { if ((x.start || 0) >= b - 0.05) x.start = +Math.max(a, (x.start || 0) - d).toFixed(2); });
+    proj.pistes = proj.pistes.filter(p => !((p.start || 0) >= a - 0.05 && (p.start || 0) + (p.kind === 'image' ? (p.dur || 4) : (p.out - p.in)) <= b + 0.1));
+    proj.pistes.forEach(p => { if ((p.start || 0) >= b - 0.05) p.start = +Math.max(a, (p.start || 0) - d).toFixed(2); });
+    const noms = {}, anciens = proj.nomsReperes || {};
+    proj.markers = proj.markers.filter(m => m < a || m >= b).map(m => { const n = m >= b ? +(m - d).toFixed(2) : m; if (anciens[m.toFixed(2)]) noms[n.toFixed(2)] = anciens[m.toFixed(2)]; return n; });
+    proj.nomsReperes = noms;
+  }
+}
+const plagesDe = liste => { const st = starts(); return liste.map(c => { const k = proj.clips.indexOf(c); return [st[k], st[k] + effDur(c)]; }); };
 function supprimer() {
   if (selA < 0 && selP < 0 && supprimerSelection()) return;
   if (selP >= 0) { proj.pistes.splice(selP, 1); selP = -1; }
   else if (selA >= 0) { proj.audio.splice(selA, 1); selA = -1; selP = -1; }
-  else if (sel >= 0) { proj.clips.splice(sel, 1); sel = Math.min(sel, proj.clips.length - 1); if (proj.clips.length) placerTete(Math.min(gt, total()), { sansApercu: true }); }
+  else if (sel >= 0) { const plages = plagesDe([proj.clips[sel]]); proj.clips.splice(sel, 1); recollerApres(plages); sel = Math.min(sel, proj.clips.length - 1); if (proj.clips.length) placerTete(Math.min(gt, total()), { sansApercu: true }); }
   else return;
   commit(); tout(); apercu();
 }
 function deplacer(d) { if (sel < 0) return; const n = sel + d; if (n < 0 || n >= proj.clips.length) return; const [c] = proj.clips.splice(sel, 1); proj.clips.splice(n, 0, c); sel = n; commit(); tout(); apercu(); }
 function dupliquer() { if (sel < 0) return; if (dupliquerSelection()) return; proj.clips.splice(sel + 1, 0, clone(curClip())); sel++; commit(); tout(); }
 // Couper un élément de la piste audio (son détaché, musique, voix off) à la tête de lecture
+// Coupe un élément de la piste audio à l'instant t (secondes de la timeline) ; renvoie le second morceau, ou null si t est trop près d'un bord
+function couperSonA(a, t) {
+  const S = a.start || 0, V = a.vit || 1, D = a.dur || durOf(a.file), I = a.in || 0, loc = t - S;
+  if (loc < 0.2 || loc > D / V - 0.2) return null;
+  const b = clone(a); a.in = I; a.dur = +(loc * V).toFixed(2); a.loop = false; b.start = +t.toFixed(2); b.in = +(I + loc * V).toFixed(2); b.dur = +(D - loc * V).toFixed(2); b.loop = false;
+  return b;
+}
+const sonLie = a => !/^lib:musiques\//.test(String(a.file)); // un son de la vidéo (voix, bruitage), pas la musique de fond
 function couperAudio() {
   const a = proj.audio[selA]; if (!a) return;
-  const S = a.start || 0, V = a.vit || 1, D = a.dur || durOf(a.file), I = a.in || 0, loc = gt - S;
-  if (loc < 0.2 || loc > D / V - 0.2) return aide('Place la tête de lecture (barre rouge) sur le son à couper, loin de ses bords.');
-  const b = clone(a); a.in = I; a.dur = +(loc * V).toFixed(2); a.loop = false; b.start = +gt.toFixed(2); b.in = +(I + loc * V).toFixed(2); b.dur = +(D - loc * V).toFixed(2); b.loop = false;
+  const b = couperSonA(a, gt); if (!b) return aide('Place la tête de lecture (barre rouge) sur le son à couper, loin de ses bords.');
   proj.audio.splice(selA + 1, 0, b); selA++; commit(); tout(); apercu(); aide('✂ Son coupé en deux : chaque morceau se déplace, se règle et se supprime à part.');
 }
-function couper() {
+function couper(seul) { // seul : l'outil Lame ne coupe que le clip cliqué ; S coupe aussi ses sons détachés
   if (selA >= 0) return couperAudio();
   const c = curClip(); if (!c) return; const st = starts()[sel], loc = gt - st;
-  if (c.kind === 'image' || c.kind === 'solid') { if (loc < 0.3 || loc > c.dur - 0.3) return aide('Place la tête de lecture (barre rouge) à l’endroit de la coupe.'); const b = clone(c); b.dur = c.dur - loc; c.dur = +loc.toFixed(2); c.transition = null; proj.clips.splice(sel + 1, 0, b); }
-  else {
-    const at = c.in + loc * c.speed;
-    if (at < c.in + 0.2 || at > c.out - 0.2) return aide('Place la tête de lecture (barre rouge) à l’endroit de la coupe, loin du début et de la fin du clip.');
-    const b = clone(c); b.in = +at.toFixed(2); c.out = +at.toFixed(2); c.transition = null; proj.clips.splice(sel + 1, 0, b);
-  }
+  if (c.kind === 'image' || c.kind === 'solid') { if (loc < 0.3 || loc > c.dur - 0.3) return aide('Place la tête de lecture (barre rouge) à l’endroit de la coupe.'); }
+  else if (c.in + loc * c.speed < c.in + 0.2 || c.in + loc * c.speed > c.out - 0.2) return aide('Place la tête de lecture (barre rouge) à l’endroit de la coupe, loin du début et de la fin du clip.');
+  const [a, b] = trancherClip(c, loc); b.transition = c.transition; proj.clips.splice(sel, 1, a, b); // sous-titres, titres et calques suivent chacun leur morceau
+  // les sons de la vidéo (son détaché, voix off) sont coupés au même endroit : on peut ensuite retirer un passage image et son ensemble
+  const dClip = effDur(c), finSon = x => (x.start || 0) + (x.dur || durOf(x.file)) / (x.vit || 1);
+  if (!seul) for (const x of proj.audio.slice()) if (sonLie(x) && (x.start || 0) >= st - 0.05 && finSon(x) <= st + dClip + 0.1) { const y = couperSonA(x, gt); if (y) proj.audio.splice(proj.audio.indexOf(x) + 1, 0, y); } // seulement les sons qui appartiennent à ce clip
   commit(); sel++; tout(); placerTete(gt, { sansSelection: true });
 }
 function rogner(debut) { // I : le clip commence à la tête de lecture ; O : le clip finit à la tête de lecture
@@ -1088,6 +1110,188 @@ function ouvrirChapitres() {
     <textarea id="chTxt" rows="${Math.max(4, l.length + 1)}" style="width:100%;font-family:ui-monospace,Menlo,monospace">${esc(l.join('\n'))}</textarea>
     <div class="ligne" style="margin-top:10px"><button id="chFermer">Fermer</button><button class="pri" id="chCopier" ${ok2 ? '' : 'disabled'}>Copier</button></div>`);
   $('#chFermer').onclick = fermer; $('#chCopier').onclick = async () => { try { await navigator.clipboard.writeText($('#chTxt').value); aide('📋 Chapitres copiés.'); } catch (e) { $('#chTxt').select(); document.execCommand('copy'); } fermer(); };
+}
+
+// ---------- Chapitrage intelligent et clipping TikTok ----------
+// Texte dit dans le montage (secondes de la timeline) : sous-titres existants, sinon écoute de la voix (sans modifier les clips)
+async function segmentsDuMontage(surEtat) {
+  const st = starts(), out = [], cibles = proj.clips.map((c, k) => k).filter(k => { const c = proj.clips[k]; return ['video', 'audio'].includes(c.kind) && c.hasAudio !== false && !c.sonDetache; });
+  if (!cibles.some(k => !(proj.clips[k].subs || []).length)) { /* tout est déjà sous-titré */ } else await assurerEcoute(surEtat);
+  let n = 0;
+  for (const k of cibles) {
+    const c = proj.clips[k]; n++;
+    let l = (c.subs || []).map(x => ({ s: +x.s, e: +x.e, t: x.t }));
+    if (!l.length) { const r = await ecouterClip(c, t => surEtat(`${t} (clip ${n} sur ${cibles.length})`)); l = sousTitresPour(r, 'phrase', 0, (c.out - c.in) + 1, c.speed || 1); }
+    for (const x of l) out.push({ s: +(st[k] + x.s).toFixed(2), e: +(st[k] + Math.min(x.e, effDur(c))).toFixed(2), t: x.t });
+  }
+  return out;
+}
+const hmsCourt = t => { t = Math.max(0, Math.round(t)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+const lireTemps = v => { const m = String(v).trim().match(/^(?:(\d+):)?(\d+)(?:[:.,](\d+))?$/); if (!m) return NaN; return (+m[1] || 0) * 60 + +m[2] + (m[3] ? +('0.' + m[3]) : 0); };
+// Coupe un clip en deux à `loc` secondes (temps de montage) en gardant sous-titres, titres et calques à la bonne place
+function trancherClip(c, loc) {
+  const vit = c.speed || 1, a = clone(c), b = clone(c);
+  if (c.kind === 'image' || c.kind === 'solid') { a.dur = +loc.toFixed(2); b.dur = +(c.dur - loc).toFixed(2); }
+  else { const at = +(c.in + loc * vit).toFixed(2); a.out = at; b.in = at; }
+  a.transition = null;
+  a.subs = (c.subs || []).filter(x => x.s < loc).map(x => ({ ...x, e: +Math.min(x.e, loc).toFixed(2) }));
+  b.subs = (c.subs || []).filter(x => x.e > loc).map(x => ({ ...x, s: +Math.max(0, x.s - loc).toFixed(2), e: +(x.e - loc).toFixed(2) }));
+  if (c.cadrage && c.cadrage.length) b.cadrage = c.cadrage.map(p => ({ ...p, t: +(p.t - loc).toFixed(3) }));
+  if (c.titre && Number.isFinite(+c.titre.start)) {
+    const fin = +c.titre.dur > 0 ? c.titre.start + c.titre.dur : Infinity;
+    if (c.titre.start >= loc) { a.titre = null; b.titre = { ...c.titre, start: +(c.titre.start - loc).toFixed(2) }; }
+    else if (fin <= loc) b.titre = null;
+    else if (fin !== Infinity) { b.titre = { ...c.titre, start: 0, dur: +(fin - loc).toFixed(2) }; } else b.titre = null;
+  }
+  if (c.text) { const ts = +c.textStart || 0; if (ts >= loc) { a.text = ''; b.textStart = +(ts - loc).toFixed(2); } else if (+c.textDur > 0 && ts + c.textDur > loc) { b.textStart = 0; b.textDur = +(ts + c.textDur - loc).toFixed(2); } else b.text = ''; }
+  a.overlays = (c.overlays || []).filter(o => (o.start || 0) < loc);
+  b.overlays = (c.overlays || []).filter(o => !(+o.dur > 0 && (o.start || 0) + o.dur <= loc)).map(o => ({ ...o, start: +Math.max(0, (o.start || 0) - loc).toFixed(2), dur: +o.dur > 0 ? +Math.min(o.dur, (o.start || 0) + o.dur - loc).toFixed(2) : o.dur }));
+  a.fadeOut = 0; b.fadeIn = 0; if (c.fade) { a.fade = false; b.fade = false; a.fadeIn = a.fadeIn || 0.4; b.fadeOut = b.fadeOut || 0.4; }
+  return [a, b];
+}
+// Coupe la timeline à l'instant t (secondes) ; renvoie l'index du clip qui commence à t, ou -1 si la coupe est trop près d'un bord
+function couperTimelineA(t) {
+  const st = starts();
+  for (let k = 0; k < proj.clips.length; k++) {
+    const d = effDur(proj.clips[k]);
+    if (Math.abs(t - st[k]) < 0.15) return k;
+    if (t > st[k] + 0.15 && t < st[k] + d - 0.15) { const [a, b] = trancherClip(proj.clips[k], t - st[k]); b.transition = proj.clips[k].transition; proj.clips.splice(k, 1, a, b); return k + 1; }
+  }
+  return -1;
+}
+// Ce qui suit t glisse de d secondes (un écran inséré) : sons, incrustations V2 et repères
+function decalerApres(t, d) {
+  proj.audio.forEach(a => { if ((a.start || 0) >= t - 0.001) a.start = +((a.start || 0) + d).toFixed(2); });
+  proj.pistes.forEach(p => { if ((p.start || 0) >= t - 0.001) p.start = +((p.start || 0) + d).toFixed(2); });
+  const noms = {}, anciens = proj.nomsReperes || {};
+  proj.markers = proj.markers.map(m => { const n = m >= t - 0.001 ? +(m + d).toFixed(2) : m; if (anciens[m.toFixed(2)]) noms[n.toFixed(2)] = anciens[m.toFixed(2)]; return n; });
+  proj.nomsReperes = noms;
+}
+const sonClavier = () => { const l = LIB().sons || []; return l.find(s => /clavier-rafale/.test(s.file)) || l.find(s => /clavier/.test(s.file)); };
+const VITESSE_FRAPPE = 16; // lettres par seconde
+function titreMachine(texte, debut) { return { preset: 'machine', l1: String(texte).slice(0, 80), l2: '', color: '#ffffff', font: 'arial', start: debut, dur: 0, speed: VITESSE_FRAPPE }; }
+
+async function ouvrirChapitrage() {
+  if (!proj.clips.length) return signal(sansClipMsg);
+  stopLecture();
+  ouvrir(`<h2>📑 Chapitrer la vidéo</h2>
+    <p class="mut">QuentMovie écoute la vidéo, repère les changements de sujet et propose des chapitres. Tu relis, tu corriges, puis il les pose : repères, liste pour YouTube, et si tu veux le titre qui s’écrit à l’écran avec le bruit du clavier.</p>
+    <div id="chEtat" class="mut">Préparation…</div><div id="chListe"></div><div id="chOpts" hidden>
+      <label class="l">Titre à l’écran</label><select id="chMode">${opts([['sur', 'Écrit sur la vidéo, au début de chaque partie'], ['ecran', 'Sur un écran titre de 3 s entre les parties'], ['aucun', 'Aucun titre à l’écran (repères et liste seulement)']], 'sur')}</select>
+      <div class="sw2"><input type="checkbox" id="chClavier" checked><label for="chClavier">Bruit de clavier pendant que le titre s’écrit</label></div>
+      <div class="sw2"><input type="checkbox" id="chIA" checked><label for="chIA">Faire nommer les chapitres par l’IA locale (si elle est installée)</label></div></div>
+    <div class="ligne" style="margin-top:10px"><button id="chFermer">Fermer</button><button id="chRefaire" hidden>Chercher à nouveau</button><button class="pri" id="chAppliquer" hidden>Poser les chapitres</button></div>`, 'large');
+  $('#chFermer').onclick = fermer;
+  const etat = t => { const e = $('#chEtat'); if (e) e.innerHTML = t; };
+  let chapitres = [];
+  const rendre = () => {
+    $('#chListe').innerHTML = chapitres.length ? `<div class="asListe">${chapitres.map((c, i) => `<div class="ligne" data-i="${i}" style="margin:3px 0"><input type="text" class="chT" value="${hmsCourt(c.t)}" style="flex:none;width:64px" ${i ? '' : 'readonly'}><input type="text" class="chN" value="${esc(c.titre)}" maxlength="60"><button class="mini" data-del="${i}" title="Retirer ce chapitre" ${i ? '' : 'disabled'}>✕</button></div>`).join('')}</div>` : '';
+    $('#chOpts').hidden = !chapitres.length; $('#chAppliquer').hidden = !chapitres.length; $('#chRefaire').hidden = false;
+  };
+  $('#chListe').onclick = e => { const d = e.target.closest('[data-del]'); if (!d) return; lire(); chapitres.splice(+d.dataset.del, 1); rendre(); };
+  const lire = () => document.querySelectorAll('#chListe [data-i]').forEach(r => { const i = +r.dataset.i, t = lireTemps(r.querySelector('.chT').value); if (chapitres[i]) { if (Number.isFinite(t) && i) chapitres[i].t = Math.min(total() - 1, Math.max(1, t)); chapitres[i].titre = r.querySelector('.chN').value.trim() || chapitres[i].titre; } });
+  async function chercher() {
+    $('#chRefaire').hidden = true; $('#chAppliquer').hidden = true; $('#chOpts').hidden = true; $('#chListe').innerHTML = '';
+    try {
+      const segs = await segmentsDuMontage(etat);
+      if (!segs.length) { etat('<span class="err">Je n’ai trouvé aucune parole dans cette vidéo : il me faut de la voix pour deviner les parties. Pose des repères à la main (touche M) si la vidéo n’a pas de paroles.</span>'); $('#chRefaire').hidden = false; return; }
+      const { id } = await (await api('/api/chapitres/proposer', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), ia: true }) })).json();
+      const r = await suivreTravail(id, j => etat(`${esc(j.step || '')}`));
+      chapitres = r.chapitres || [];
+      etat(chapitres.length ? `${chapitres.length} chapitres proposés${r.ia ? ' (nommés par l’IA locale)' : ''}. Corrige les titres et les temps si besoin.` : '<span class="err">La vidéo est trop courte ou trop uniforme pour la découper en parties. Pose des repères à la main (touche M).</span>');
+      rendre();
+    } catch (er) { etat(`<span class="err">${esc(er.message)}</span>`); $('#chRefaire').hidden = false; }
+  }
+  $('#chRefaire').onclick = chercher;
+  $('#chAppliquer').onclick = () => {
+    lire(); const mode = $('#chMode').value, clavier = $('#chClavier').checked && sonClavier();
+    const liste = chapitres.slice().sort((a, b) => a.t - b.t);
+    proj.nomsReperes = { ...(proj.nomsReperes || {}) };
+    // du dernier au premier : les temps des chapitres déjà traités ne bougent pas
+    for (const c of liste.slice().reverse()) {
+      const nom = c.titre.slice(0, 60);
+      if (c.t <= 0.01) { proj.nomsReperes['0.00'] = nom; if (mode !== 'aucun') { const k0 = 0, cl = proj.clips[k0]; if (cl && !cl.titre) cl.titre = titreMachine(nom, 0.3); if (clavier) proj.audio.push({ file: 'lib:' + clavier.file, vol: 70, start: 0.3, dur: +Math.max(0.5, nom.length / VITESSE_FRAPPE).toFixed(2), fade: false, loop: false, duck: false }); } continue; }
+      const frappe = +Math.max(0.5, nom.length / VITESSE_FRAPPE).toFixed(2);
+      let debut = c.t;
+      if (mode === 'ecran') {
+        const k = couperTimelineA(c.t); if (k < 0) continue;
+        const st = starts()[k], carte = newSolid('#0b1d3a', 3); carte.titre = titreMachine(nom, 0.3); carte.transition = { type: 'fade', dur: 0.4 };
+        proj.clips.splice(k, 0, carte); decalerApres(st, 3); debut = st;
+        if (clavier) proj.audio.push({ file: 'lib:' + clavier.file, vol: 70, start: +(st + 0.3).toFixed(2), dur: frappe, fade: false, loop: false, duck: false });
+      } else {
+        const k = couperTimelineA(c.t);
+        if (k >= 0 && mode === 'sur') {
+          const st = starts()[k], cl = proj.clips[k]; debut = st;
+          if (!cl.titre) { cl.titre = { ...titreMachine(nom, 0.3), dur: +(frappe + 2.2).toFixed(2) }; }
+          if (clavier) proj.audio.push({ file: 'lib:' + clavier.file, vol: 70, start: +(st + 0.3).toFixed(2), dur: frappe, fade: false, loop: false, duck: false });
+        }
+      }
+      if (!proj.markers.some(m => Math.abs(m - debut) < 0.05)) proj.markers.push(+debut.toFixed(2));
+      proj.nomsReperes[debut.toFixed(2)] = nom;
+    }
+    // le premier chapitre : écran titre au tout début si demandé en mode « écran »
+    if (mode === 'ecran' && liste[0] && liste[0].t <= 0.01) {
+      const carte = newSolid('#0b1d3a', 3); carte.titre = titreMachine(liste[0].titre, 0.3); carte.transition = { type: 'fade', dur: 0.4 };
+      if (proj.clips[0] && !proj.clips[0].titre) { proj.clips[0].titre = null; }
+      proj.clips.unshift(carte); decalerApres(0, 3);
+      if (clavier) proj.audio.push({ file: 'lib:' + clavier.file, vol: 70, start: 0.3, dur: +Math.max(0.5, liste[0].titre.length / VITESSE_FRAPPE).toFixed(2), fade: false, loop: false, duck: false });
+      proj.nomsReperes['0.00'] = liste[0].titre;
+    }
+    proj.markers.sort((a, b) => a - b); sel = Math.min(sel, proj.clips.length - 1);
+    commit(); tout(); apercu(); fermer(); ouvrirChapitres();
+    aide(`📑 ${liste.length} chapitres posés${mode !== 'aucun' ? ' avec leur titre à l’écran' : ''}${clavier && mode !== 'aucun' ? ' et le bruit de clavier' : ''}. Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} si besoin.`);
+  };
+  chercher();
+}
+
+async function ouvrirClipping() {
+  if (!proj.clips.length) return signal(sansClipMsg);
+  stopLecture();
+  ouvrir(`<h2>📱 Clips TikTok</h2>
+    <p class="mut">QuentMovie écoute la vidéo et trouve les meilleurs passages : une accroche forte au début, une idée complète, la bonne durée. Chaque passage choisi devient une vidéo verticale avec sous-titres TikTok et titre d’accroche, rangée dans tes exports.</p>
+    <div class="ligne"><select id="clNb">${opts([['3', '3 clips'], ['5', '5 clips'], ['8', '8 clips']], '5')}</select><select id="clDuree">${opts([['15-30', 'Courts : 15 à 30 s'], ['20-60', 'Moyens : 20 à 60 s'], ['40-90', 'Longs : 40 à 90 s']], '20-60')}</select></div>
+    <div class="ligne" style="margin-top:6px"><select id="clCadrage">${opts([['remplir', 'Image qui remplit l’écran (recadrée)'], ['flou', 'Image entière sur fond flou']], 'remplir')}</select></div>
+    <div class="sw2"><input type="checkbox" id="clAccroche" checked><label for="clAccroche">Écrire le titre d’accroche en haut au début du clip</label></div>
+    <div class="sw2"><input type="checkbox" id="clNorm" checked><label for="clNorm">Égaliser le volume</label></div>
+    <div class="ligne" style="margin-top:8px"><button id="clFermer">Fermer</button><button class="pri" id="clChercher">Trouver les meilleurs passages</button></div>
+    <div id="clEtat" class="mut" style="margin-top:8px"></div><div id="clListe"></div>`, 'large');
+  $('#clFermer').onclick = fermer;
+  let extraits = [];
+  const etat = t => { const e = $('#clEtat'); if (e) e.innerHTML = t; };
+  const rendre = () => {
+    $('#clListe').innerHTML = extraits.length ? `<div class="asListe">${extraits.map((x, i) => `<div class="asSug" style="display:block" data-i="${i}"><div class="ligne"><input type="checkbox" class="clOk" checked>
+      <input type="text" class="clT" value="${esc(x.titre)}" maxlength="70"><button class="mini" data-voir="${i}" title="Voir ce passage dans le montage">▶ ${hmsCourt(x.s)}–${hmsCourt(x.e)}</button></div>
+      <div class="mut" style="margin:2px 0 0 24px">${Math.round(x.e - x.s)} s · ${esc(x.texte || '')}…</div></div>`).join('')}</div>
+      <button class="pri" id="clCreer" style="width:100%;margin-top:8px">Créer les clips cochés</button>` : '';
+    const v = $('#clListe'); v.onclick = e => { const b = e.target.closest('[data-voir]'); if (b) { placerTete(extraits[+b.dataset.voir].s); } };
+    const g = $('#clCreer'); if (g) g.onclick = creer;
+  };
+  async function creer() {
+    const choisis = [...document.querySelectorAll('#clListe [data-i]')].map(r => ({ x: extraits[+r.dataset.i], ok: r.querySelector('.clOk').checked, titre: r.querySelector('.clT').value.trim() })).filter(r => r.ok).map(r => ({ s: r.x.s, e: r.x.e, titre: r.titre || r.x.titre }));
+    if (!choisis.length) return;
+    $('#clCreer').disabled = true;
+    try {
+      const { id } = await (await api('/api/clipping/exporter', { method: 'POST', body: JSON.stringify({ project: pourRendu(proj), extraits: choisis, cadrage: $('#clCadrage').value, accroche: $('#clAccroche').checked, normaliser: $('#clNorm').checked, format: 'vertical' }) })).json();
+      const r = await suivreTravail(id, j => etat(`<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`));
+      etat(`✅ ${r.fichiers.length} clip${r.fichiers.length > 1 ? 's' : ''} créé${r.fichiers.length > 1 ? 's' : ''} : ${r.fichiers.map(f => `<b>${esc(f.fichier)}</b>`).join(', ')}.<div class="ligne" style="margin-top:6px"><button id="clTrouver">Afficher dans le Finder</button></div><span class="mut">Dossier : Films → QuentMovie → exports</span>`);
+      $('#clTrouver').onclick = () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: r.fichiers[0].fichier }) });
+    } catch (er) { etat(`<span class="err">${esc(er.message)}</span>`); }
+    const b = $('#clCreer'); if (b) b.disabled = false;
+  }
+  $('#clChercher').onclick = async () => {
+    $('#clChercher').disabled = true; $('#clListe').innerHTML = '';
+    try {
+      const segs = await segmentsDuMontage(etat);
+      if (!segs.length) { etat('<span class="err">Je n’ai trouvé aucune parole dans cette vidéo : le clipping repose sur ce qui est dit.</span>'); $('#clChercher').disabled = false; return; }
+      const [min, max] = $('#clDuree').value.split('-').map(Number);
+      const { id } = await (await api('/api/clipping/proposer', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), nb: +$('#clNb').value, min, max, sujet: (proj.gen && proj.gen.titre) || '', ia: true }) })).json();
+      const r = await suivreTravail(id, j => etat(`${esc(j.step || '')}`));
+      extraits = r.extraits || [];
+      etat(extraits.length ? `${extraits.length} passage${extraits.length > 1 ? 's' : ''} trouvé${extraits.length > 1 ? 's' : ''}${r.ia ? ' (choisis par l’IA locale)' : ''}. Décoche ceux dont tu ne veux pas, corrige les titres.` : '<span class="err">Aucun passage assez long et complet n’a été trouvé : essaie une durée plus courte.</span>');
+      rendre();
+    } catch (er) { etat(`<span class="err">${esc(er.message)}</span>`); }
+    $('#clChercher').disabled = false;
+  };
 }
 
 // ---------- Visionneuse et lecture ----------
@@ -1531,7 +1735,7 @@ async function capturer() {
 }
 function supprimerSelection() {
   const l = clipsMulti(); if (l.length < 2) return false;
-  proj.clips = proj.clips.filter(c => !selObjs.has(c)); selObjs.clear(); sel = Math.min(sel, proj.clips.length - 1);
+  const plages = plagesDe(proj.clips.filter(c => selObjs.has(c))); proj.clips = proj.clips.filter(c => !selObjs.has(c)); recollerApres(plages); selObjs.clear(); sel = Math.min(sel, proj.clips.length - 1);
   commit(); tout(); if (proj.clips.length) placerTete(Math.min(gt, total()), { sansApercu: true }); apercu(); return true;
 }
 function dupliquerSelection() {
@@ -1924,7 +2128,11 @@ function outilsHtml() {
       <p class="mut"><b>Dynamiser une vidéo parlée</b> : un plan sur deux est légèrement zoomé (effet « jump cut »), pratique après avoir coupé les blancs.</p>
       <div class="ligne"><select id="oZoomNiv">${opts([['110', 'Zoom léger (110 %)'], ['120', 'Zoom moyen (120 %)'], ['135', 'Zoom fort (135 %)']], '120')}</select><button class="pri" data-outil="zoom-alterne" style="flex:none">Appliquer</button><button data-outil="zoom-retirer" style="flex:none">Retirer</button></div><div class="mut" id="oZoomRes" style="margin:4px 0 10px"></div>
       <p class="mut"><b>Chapitres YouTube</b> : pose des repères (M) au début de chaque partie, double-clique dessus pour les nommer, puis copie les chapitres pour la description.</p>
-      <button data-outil="chapitres" style="width:100%">📑 Chapitres YouTube depuis les repères</button><div style="height:10px"></div>
+      <p class="mut"><b>Chapitrer automatiquement</b> : l’IA écoute la vidéo, propose les parties, écrit leur titre à l’écran avec le bruit du clavier.</p>
+      <button class="pri" data-outil="chapitrer" style="width:100%">📑 Chapitrer la vidéo</button>
+      <button data-outil="chapitres" style="width:100%;margin-top:4px">Liste des chapitres YouTube depuis les repères</button><div style="height:10px"></div>
+      <p class="mut"><b>Clips TikTok</b> : l’IA trouve les meilleurs passages et en fait des vidéos verticales sous-titrées.</p>
+      <button class="pri" data-outil="clipping" style="width:100%">📱 Créer des clips TikTok</button><div style="height:10px"></div>
       <p class="mut"><b>Transition sur toutes les coupures</b></p>
       <div class="ligne"><select id="oTrAll"><option value="">Aucune (retirer)</option>${CAT.transitions.filter(t => t.id !== 'none').map(t => `<option value="${t.id}" ${t.id === 'fade' ? 'selected' : ''}>${esc(t.nom)}</option>`).join('')}</select><button class="pri" data-outil="transition-tout" style="flex:none">Appliquer partout</button></div><div class="mut" id="oTrAllRes" style="margin-top:4px"></div></div>
     <div class="encart"><h4>💬 Sous-titres automatiques</h4><p class="mut">QuentMovie écoute ta voix et écrit les sous-titres au bon moment (sans internet, sur ton Mac). Les « euh » ne sont pas écrits.</p>
@@ -1995,6 +2203,8 @@ async function outil(nom) {
   if (nom === 'rythme-reperes') return rythmeMusique('reperes'); if (nom === 'rythme-caler') return rythmeMusique('caler');
   if (nom === 'zoom-alterne') return dynamiserZooms(false); if (nom === 'zoom-retirer') return dynamiserZooms(true);
   if (nom === 'chapitres') return ouvrirChapitres();
+  if (nom === 'chapitrer') return ouvrirChapitrage();
+  if (nom === 'clipping') return ouvrirClipping();
   if (nom === 'egaliser') return egaliserVolumes(); if (nom === 'transition-tout') return transitionPartout();
   if (nom === 'lien') { // vidéo d'un réseau social ou de YouTube → médias
     const lien = $('#lienVideo').value.trim(), r = t => { const e = $('#lienRes'); if (e) e.innerHTML = t; };
@@ -2088,7 +2298,7 @@ function texteVideo() {
   proj.clips.forEach(c => { (c.subs || []).forEach(s => l.push(s.t)); if (c.titre && c.titre.l1 && c.titre.preset !== 'generique') l.push(c.titre.l1); if (c.text) l.push(c.text); });
   return [...new Set(l)].join(' ').replace(/\s+/g, ' ').trim().slice(0, 3000);
 }
-const MODALES = ['chapitres', 'publication', 'exporter'];
+const MODALES = ['chapitres', 'chapitrer', 'clipping', 'publication', 'exporter'];
 async function executerAction(a) {
   const p = a.parametre || '', tous = () => { selObjs = new Set(proj.clips); };
   switch (a.action) {
@@ -2114,6 +2324,8 @@ async function executerAction(a) {
     case 'detacher': tous(); return detacherSelection();
     case 'vitesse': { const v = clamp(+p || 1, 0.25, 4); tous(); vitesseSelection(v); selObjs.clear(); tout(); return aide(`Vitesse ×${String(v).replace('.', ',')} sur tous les clips vidéo et audio.`); }
     case 'chapitres': return ouvrirChapitres();
+    case 'chapitrer': return ouvrirChapitrage();
+    case 'clipping': return ouvrirClipping();
     case 'publication': return ouvrirPublication(p);
     case 'exporter': return exporter();
   }
@@ -2128,7 +2340,7 @@ async function appliquerPlan(actions, surEtat) {
 }
 let derniereDemande = '';
 async function ouvrirAssistant(demande) {
-  const EX = ['Coupe les blancs et ajoute des sous-titres façon TikTok', 'Passe en vertical, ajoute une musique calme et égalise le son', 'Mets des transitions partout et dynamise la vidéo', 'Ajoute un écran titre « Mon voyage » puis exporte', 'Écris le titre, la description et les hashtags pour YouTube'];
+  const EX = ['Coupe les blancs et ajoute des sous-titres façon TikTok', 'Passe en vertical, ajoute une musique calme et égalise le son', 'Mets des transitions partout et dynamise la vidéo', 'Ajoute un écran titre « Mon voyage » puis exporte', 'Écris le titre, la description et les hashtags pour YouTube', 'Monte ma vidéo automatiquement', 'Chapitre ma vidéo avec le bruit de clavier', 'Crée des clips pour TikTok'];
   ouvrir(`<h2>${icone('assistant')} Assistant de montage</h2>
     <p class="mut">Dis ce que tu veux en français : l’assistant prépare les étapes, tu vérifies, puis il les fait pour toi. Tout s’annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'}.</p>
     <textarea id="asDemande" rows="2" placeholder="ex. : coupe les blancs, ajoute des sous-titres et une musique calme, passe en vertical">${esc(demande || derniereDemande)}</textarea>
@@ -2155,7 +2367,7 @@ async function ouvrirAssistant(demande) {
   async function comprendre() {
     const d = champ.value.trim(); if (!d) return champ.focus(); derniereDemande = d;
     $('#asPlan').innerHTML = '<p class="mut">L’assistant prépare les étapes…</p>';
-    try { const r = await (await api('/api/assistant/comprendre', { method: 'POST', body: JSON.stringify({ demande: d, ia: true }) })).json(); montrer(r.actions || [], r.ia ? 'compris par l’IA locale' : r.erreur || ''); }
+    try { const r = await (await api('/api/assistant/comprendre', { method: 'POST', body: JSON.stringify({ demande: d, ia: true, projet: resumeProjet() }) })).json(); montrer(r.actions || [], r.ia ? 'compris par l’IA locale' : r.erreur || ''); }
     catch (e) { $('#asPlan').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
   }
   async function suggestions() {
@@ -3125,8 +3337,8 @@ function toucheStudio(e) {
 
 const RACCOURCIS = [
   ['Lecture', [['Espace', 'Lire / pause (avec les effets)'], ['⌥ Espace', 'Lire le clip sans effets'], ['J / L', 'Reculer / avancer d’1 seconde'], ['K', 'Pause'], ['← / →', 'Image précédente / suivante'], ['⇧ ← / →', '1 seconde'], ['↑ / ↓', 'Clip précédent / suivant'], ['Début / Fin', 'Début / fin de la timeline'], ['F', 'Plein écran de la visionneuse'], [M + ' R', 'Aperçu avec effets'], ['⇧' + M + ' R', 'Me filmer (caméra, micro, prompteur)'], ['R / P (studio)', 'Enregistrer ou arrêter / mettre en pause et reprendre la prise'], ['M / T / O / E (studio)', 'Afficher en direct : image ou vidéo, texte suivant, logo, partage d’écran'], ['⇧' + M + ' G', 'Générer une vidéo à partir d’un sujet']]],
-  ['Assistant et outils', [[M + ' K', 'Assistant de montage : dis ce que tu veux faire en français'], ['A', 'Outil Sélection'], ['B', 'Outil Lame (coupe là où tu cliques)'], ['N', 'Magnétisme activé / désactivé'], ['G', 'Grille des tiers sur la visionneuse'], ['Double-clic sur un repère', 'Le nommer (chapitres YouTube)']]],
-  ['Montage', [['S ou ' + M + ' B', 'Couper à la tête de lecture'], ['D', 'Détacher le son du clip (piste audio à part)'], ['⇧ clic / ' + M + ' clic', 'Sélectionner plusieurs clips (détacher, supprimer, vitesse… en une fois)'], [M + ' A', 'Tout sélectionner'], ['Clic droit', 'Menu du clip : détacher le son, image fixe, vitesse, copier…'], ['I / O', 'Début / fin du clip à la tête de lecture'], ['Suppr', 'Supprimer le clip ou la piste'], [M + ' D', 'Dupliquer'], [M + ' [ / ]', 'Déplacer à gauche / droite'], [M + ' C / V', 'Copier / coller un clip'], ['⌥' + M + ' V', 'Coller seulement les effets'], ['M', 'Ajouter un repère'], ['[ / ]', 'Repère précédent / suivant']]],
+  ['Assistant et outils', [[M + ' K', 'Assistant de montage : « monte ma vidéo », « chapitre ma vidéo », « crée des clips TikTok »…'], ['A', 'Outil Sélection'], ['B', 'Outil Lame (coupe là où tu cliques)'], ['N', 'Magnétisme activé / désactivé'], ['G', 'Grille des tiers sur la visionneuse'], ['Double-clic sur un repère', 'Le nommer (chapitres YouTube)']]],
+  ['Montage', [['S ou ' + M + ' B', 'Couper à la tête de lecture (l’image et son son détaché)'], ['D', 'Détacher le son du clip (piste audio à part)'], ['⇧ clic / ' + M + ' clic', 'Sélectionner plusieurs clips (détacher, supprimer, vitesse… en une fois)'], [M + ' A', 'Tout sélectionner'], ['Clic droit', 'Menu du clip : détacher le son, image fixe, vitesse, copier…'], ['I / O', 'Début / fin du clip à la tête de lecture'], ['Suppr', 'Supprimer le clip : son détaché retiré avec lui, la suite se recolle'], [M + ' D', 'Dupliquer'], [M + ' [ / ]', 'Déplacer à gauche / droite'], [M + ' C / V', 'Copier / coller un clip'], ['⌥' + M + ' V', 'Coller seulement les effets'], ['M', 'Ajouter un repère'], ['[ / ]', 'Repère précédent / suivant']]],
   ['Fichier et affichage', [[M + ' N / O / S', 'Nouveau / ouvrir / enregistrer'], [M + ' I', 'Importer des médias'], [M + ' E', 'Exporter'], [M + ' Z / ⇧' + M + ' Z', 'Annuler / rétablir'], ['+ / −', 'Zoom de la timeline'], ['⇧ Z', 'Tout afficher'], [M + ' + molette', 'Zoom à la souris'], ['1 … 9', 'Onglets Médias, Effets, Transitions, Titres, Voix, Sons, Musique, Calques, Outils'], ['T', 'Titres'], ['?', 'Cette aide']]],
   ['À la souris', [['Glisser un clip', 'Changer son ordre'], ['Bords d’un clip', 'Raccourcir ou rallonger'], ['Bords d’un son', 'Raccourcir ou rallonger (le son garde sa place)'], ['Glisser un son', 'Se colle à la tête de lecture, aux clips et aux repères (⌥ pour éviter)'], ['Clic sur la règle', 'Placer la tête de lecture'], ['Glisser un effet', 'Le poser sur un clip'], ['⇧ clic sur un repère', 'Le supprimer']]]
 ];
