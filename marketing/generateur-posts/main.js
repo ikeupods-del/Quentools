@@ -1,7 +1,7 @@
 // Studio Posts : fenêtre de l'application Mac (Electron) autour de index.html.
 // Tout reste sur le Mac : aucune connexion, projets enregistrés dans le stockage de l'application.
 'use strict';
-const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, shell, ipcMain, ShareMenu } = require('electron');
 const path = require('path');
 
 let win = null, ia = null;
@@ -14,6 +14,20 @@ ipcMain.handle('ia:ecrire', (e, m) => {
   if (!depuisNotrePage(e)) throw new Error('refusé');
   const s = x => String(x || '').slice(0, 12000);
   return IA().ecrire({ systeme: s(m && m.systeme), demande: s(m && m.demande), schema: m && typeof m.schema === 'object' ? m.schema : undefined, maxTokens: Math.min(1500, Math.max(50, +(m && m.maxTokens) || 700)), temperature: Math.min(1, Math.max(0, +(m && m.temperature) || 0.5)) });
+});
+// Partage AirDrop : les images (JPG) et la légende sont posées dans un dossier temporaire, puis la feuille de partage de macOS s'ouvre dessus
+ipcMain.handle('partage:envoyer', (e, fichiers) => {
+  if (!depuisNotrePage(e)) throw new Error('refusé');
+  if (process.platform !== 'darwin') return { ok: false, message: 'Le partage AirDrop est disponible sur Mac.' };
+  const fs = require('fs'), os = require('os');
+  const liste = (Array.isArray(fichiers) ? fichiers : []).slice(0, 30).filter(f => f && typeof f.nom === 'string' && f.data && f.data.byteLength < 40e6);
+  if (!liste.length) return { ok: false, message: 'Rien à envoyer.' };
+  const racine = path.join(os.tmpdir(), 'studio-posts-partage');
+  try { fs.rmSync(racine, { recursive: true, force: true }); } catch (er) { /* ancien partage déjà supprimé */ }
+  const dossier = path.join(racine, String(Date.now())); fs.mkdirSync(dossier, { recursive: true });
+  const chemins = liste.map(f => { const c = path.join(dossier, path.basename(f.nom).replace(/[^\w.\- ]/g, '_')); fs.writeFileSync(c, Buffer.from(f.data)); return c; });
+  new ShareMenu({ filePaths: chemins }).popup({ window: win });
+  return { ok: true };
 });
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
@@ -33,6 +47,7 @@ function menu() {
       { type: 'separator' },
       { label: 'Exporter l’image', accelerator: 'CmdOrCtrl+E', click: () => page("document.querySelector('#bJpg').click()") },
       { label: 'Exporter tout le carrousel', accelerator: 'CmdOrCtrl+Shift+E', click: () => page("document.querySelector('#bZip').click()") },
+      { label: 'Envoyer par AirDrop…', accelerator: 'CmdOrCtrl+Shift+A', click: () => page("document.querySelector('#bAirdrop').click()") },
       { type: 'separator' },
       mac ? { role: 'close', label: 'Fermer la fenêtre' } : { role: 'quit', label: 'Quitter' }
     ] },

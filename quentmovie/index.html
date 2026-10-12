@@ -1273,7 +1273,8 @@ async function ouvrirClipping() {
     try {
       const { id } = await (await api('/api/clipping/exporter', { method: 'POST', body: JSON.stringify({ project: pourRendu(proj), extraits: choisis, cadrage: $('#clCadrage').value, accroche: $('#clAccroche').checked, normaliser: $('#clNorm').checked, format: 'vertical' }) })).json();
       const r = await suivreTravail(id, j => etat(`<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`));
-      etat(`✅ ${r.fichiers.length} clip${r.fichiers.length > 1 ? 's' : ''} créé${r.fichiers.length > 1 ? 's' : ''} : ${r.fichiers.map(f => `<b>${esc(f.fichier)}</b>`).join(', ')}.<div class="ligne" style="margin-top:6px"><button id="clTrouver">Afficher dans le Finder</button></div><span class="mut">Dossier : Films → QuentMovie → exports</span>`);
+      etat(`✅ ${r.fichiers.length} clip${r.fichiers.length > 1 ? 's' : ''} créé${r.fichiers.length > 1 ? 's' : ''} : ${r.fichiers.map(f => `<b>${esc(f.fichier)}</b>`).join(', ')}.<div class="ligne" style="margin-top:6px"><button id="clTrouver">Afficher dans le Finder</button><button id="clAirdrop">Envoyer par AirDrop</button></div><span class="mut">Dossier : Films → QuentMovie → exports</span>`);
+      $('#clAirdrop').onclick = () => partagerFichiers(r.fichiers.map(f => f.fichier));
       $('#clTrouver').onclick = () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: r.fichiers[0].fichier }) });
     } catch (er) { etat(`<span class="err">${esc(er.message)}</span>`); }
     const b = $('#clCreer'); if (b) b.disabled = false;
@@ -2029,7 +2030,8 @@ async function miniSauver() {
   const b = await new Promise(ok => $('#mCanvas').toBlob(ok, 'image/jpeg', 0.92));
   try {
     const j = await (await api('/api/miniature', { method: 'POST', body: b })).json();
-    $('#mRes').innerHTML = `✅ Enregistrée : <b>${esc(j.out)}</b> (Films → QuentMovie → exports) · <a href="#" id="mFind">Afficher dans le Finder</a> · <a href="/exports/${enc(j.out)}">Télécharger</a>`;
+    $('#mRes').innerHTML = `✅ Enregistrée : <b>${esc(j.out)}</b> (Films → QuentMovie → exports) · <a href="#" id="mFind">Afficher dans le Finder</a> · <a href="#" id="mAir">AirDrop</a> · <a href="/exports/${enc(j.out)}">Télécharger</a>`;
+    $('#mAir').onclick = ev => { ev.preventDefault(); partagerFichiers([j.out]); };
     $('#mFind').onclick = ev => { ev.preventDefault(); api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) }); };
   } catch (e) { $('#mRes').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
 }
@@ -2463,8 +2465,8 @@ function exporter() {
     $('#expo').innerHTML = '<div id="xTxt">Préparation…</div><div id="barreExp"><i></i></div>';
     try {
       const j = await lancerJob('/api/export', { project: proj }, (p, s) => { $('#barreExp i').style.width = Math.round(p * 100) + '%'; $('#xTxt').textContent = `${s} — ${Math.round(p * 100)} %`; });
-      $('#expo').innerHTML = `<p>✅ Terminé${j.duree ? ` en ${fmt(j.duree)}` : ''} : <b>${esc(j.out)}</b>${j.repris ? `<br><span class="mut">${j.repris} clip${j.repris > 1 ? 's' : ''} inchangé${j.repris > 1 ? 's' : ''} repris du dernier export.</span>` : ''}</p><div class="ligne"><button id="xFind">Afficher dans le Finder</button><a href="/exports/${enc(j.out)}"><button style="width:100%">Télécharger</button></a><button class="pri" id="xFin">Fermer</button></div><p class="mut">Dossier : Films → QuentMovie → exports</p>`;
-      $('#xFin').onclick = fermer; $('#xFind').onclick = () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) });
+      $('#expo').innerHTML = `<p>✅ Terminé${j.duree ? ` en ${fmt(j.duree)}` : ''} : <b>${esc(j.out)}</b>${j.repris ? `<br><span class="mut">${j.repris} clip${j.repris > 1 ? 's' : ''} inchangé${j.repris > 1 ? 's' : ''} repris du dernier export.</span>` : ''}</p><div class="ligne"><button id="xFind">Afficher dans le Finder</button><button id="xAir">Envoyer par AirDrop</button><a href="/exports/${enc(j.out)}"><button style="width:100%">Télécharger</button></a><button class="pri" id="xFin">Fermer</button></div><p class="mut">Dossier : Films → QuentMovie → exports</p>`;
+      $('#xAir').onclick = () => partagerFichiers([j.out]); $('#xFin').onclick = fermer; $('#xFind').onclick = () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) });
     } catch (e) { $('#expo').innerHTML = `<p class="err">${esc(e.message)}</p><button id="xFin">Fermer</button>`; $('#xFin').onclick = fermer; }
   };
 }
@@ -2855,6 +2857,10 @@ const LED_TEINTES = { froid: '#e6efff', neutre: '#ffffff', chaud: '#ffdcae', ros
 let studio = null;
 const stLire = () => { try { return { ...ST_DEF, ...JSON.parse(localStorage.getItem('qm:studio') || '{}') }; } catch (e) { return { ...ST_DEF }; } };
 const stGarder = o => { try { localStorage.setItem('qm:studio', JSON.stringify(o)); } catch (e) { /* stockage indisponible */ } };
+async function partagerFichiers(files) {
+  try { const j = await (await api('/api/partager', { method: 'POST', body: JSON.stringify({ files }) })).json(); if (j.ok === false) aide(esc(j.message || 'Partage impossible.')); }
+  catch (er) { aide(`<span class="err">${esc(er.message)}</span>`); }
+}
 const stMsg = t => { const m = $('#stMsg'); if (m) m.innerHTML = t; aide(t); };
 function stPanneau() {
   const o = studio.o, cams = studio.appareils.filter(d => d.kind === 'videoinput'), mics = studio.appareils.filter(d => d.kind === 'audioinput');

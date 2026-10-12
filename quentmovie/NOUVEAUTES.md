@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.16.1
+- Envoi par AirDrop : un bouton « Envoyer par AirDrop » sur la fenêtre de fin d’export, après la création des clips TikTok et pour la miniature ouvre le partage du Mac (AirDrop, Messages, Mail…).
+
 ## 1.16.0
 - « Me filmer » : un seul panneau regroupe toutes les animations à l’écran (S’abonner, J’aime, Cloche, Lien en bio…), classées par thèmes. Chacune se déclenche d’une touche du clavier, et tu peux choisir tes propres touches.
 - 33 nouvelles animations : « Breaking news » avec son mini générique, Flash info, Exclusif, humeurs (content, énervé, triste, choqué, amoureux, cool…), argent (riche, pauvre, hausse, baisse, 100 %…), applaudissements, bravo, alerte, « À suivre »… Chaque animation a son petit son.

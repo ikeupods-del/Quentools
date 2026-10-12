@@ -67,6 +67,18 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   check('rythme : 120 pulsations par minute', ry.bpm > 117 && ry.bpm < 123, JSON.stringify({ ...ry, temps: ry.temps && ry.temps.length }));
   check('rythme : temps calés sur les pulsations', ry.temps && ry.temps.length > 30 && Math.abs(((ry.premier - 0.2) % 0.5 + 0.5) % 0.5) < 0.06 || Math.abs(((ry.premier - 0.2) % 0.5 + 0.5) % 0.5 - 0.5) < 0.06, `${ry.premier}`);
 
+  // 3) partage AirDrop : seuls des fichiers des exports sont transmis à la feuille de partage de macOS
+  let recus = null;
+  const app2 = create({ port: 0, base, ...bins, ...(process.env.QM_SANS_FFPROBE ? { ffprobe: null } : {}), partager: f => { recus = f; } });
+  const p2 = await app2.start(), U2 = p => `http://127.0.0.1:${p2}${p}`, ex0 = fs.readdirSync(path.join(base, 'exports'))[0];
+  const post = body => fetch(U2('/api/partager'), { method: 'POST', body: JSON.stringify(body) });
+  check('partage : un export est transmis', ex0 && (await post({ files: [ex0] })).ok && recus && recus.length === 1 && recus[0] === path.join(base, 'exports', ex0));
+  recus = null;
+  check('partage : fichier absent ou hors exports refusé', (await post({ files: ['../projets/x', 'inconnu.mp4'] })).status === 404 && !recus);
+  const sans = await (await fetch(U('/api/partager'), { method: 'POST', body: JSON.stringify({ files: [ex0] }) })).json();
+  check('partage : hors application Mac, message clair', sans.ok === false && /application Mac/.test(sans.message));
+  app2.stop();
+
   app.stop(); fs.rmSync(base, { recursive: true, force: true });
   console.log(`Montage : ${ok} contrôles réussis, ${ko} échecs`);
   process.exit(ko ? 1 : 0);

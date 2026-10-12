@@ -1,6 +1,6 @@
 // QuentMovie : fenêtre de l'application Mac (Electron) autour du moteur de montage local.
 'use strict';
-const { app, BrowserWindow, Menu, shell, dialog, session, systemPreferences, desktopCapturer } = require('electron');
+const { app, BrowserWindow, Menu, shell, dialog, session, systemPreferences, desktopCapturer, ShareMenu } = require('electron');
 const path = require('path');
 const { create } = require('./server');
 const { resolveFfmpeg } = require('./ffmpeg-path');
@@ -15,6 +15,8 @@ const hooksMaj = {
   installer: () => { if (maj.installer(true)) setTimeout(() => app.quit(), 200); return maj.etat; }
 };
 const prevenir = e => { if (win && e && e.etat === 'pret') win.webContents.executeJavaScript('window.majPrete && majPrete()').catch(() => {}); };
+// Partage AirDrop : feuille de partage de macOS ouverte sur les fichiers exportés
+const partager = fichiers => { if (process.platform === 'darwin' && win) new ShareMenu({ filePaths: fichiers }).popup({ window: win }); };
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 
@@ -22,8 +24,8 @@ async function demarrer() {
   const bins = await resolveFfmpeg();
   const base = process.env.QM_AUTOTEST && process.env.QM_BASE ? process.env.QM_BASE : path.join(app.getPath('home'), 'Movies', 'QuentMovie');
   let port;
-  try { moteur = create({ port: 41730, base, ...bins, maj: hooksMaj }); port = await moteur.start(); }
-  catch (e) { moteur = create({ port: 0, base, ...bins, maj: hooksMaj }); port = await moteur.start(); }
+  try { moteur = create({ port: 41730, base, ...bins, maj: hooksMaj, partager }); port = await moteur.start(); }
+  catch (e) { moteur = create({ port: 0, base, ...bins, maj: hooksMaj, partager }); port = await moteur.start(); }
 
   // Caméra et micro (studio, voix off) : autorisés uniquement pour la fenêtre de QuentMovie
   const local = u => /^http:\/\/127\.0\.0\.1:\d+\//.test(u || '');

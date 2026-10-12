@@ -34,3 +34,6 @@ Raccourcis : ← → changer d'image, ⌘Z annuler, ⇧⌘Z rétablir, ⌘D dupl
 - `generation.js` : génération par l'IA (thèmes, consignes, règles de contenu, repli) ; `preload.js` + `main.js` : pont vers l'IA locale ; `ia-locale.js`, `ia-worker.js` : copies de `marketing/ia-locale/`.
 - `captures/` : captures sur téléphone des sites d'exemple.
 - Contrôle : `node tools/verifier-generateur-posts.js` (modèles dans les 3 formats, bibliothèque, export ZIP, alertes, annulation, enregistrement ; `--captures dossier` pour des planches de relecture).
+
+## Envoi par AirDrop
+Bouton « AirDrop » (⇧⌘A, menu Fichier) et bouton dans le résultat de « Générer » : les images JPG et la légende sont déposées dans un dossier temporaire puis la feuille de partage de macOS s'ouvre (`partage:envoyer` dans `main.js`, `studioPartage` dans `preload.js`). Bouton masqué hors de l'application Mac.

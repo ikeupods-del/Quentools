@@ -134,6 +134,7 @@ aside{background:var(--panneau);min-height:0;overflow:auto}
     <button id="bJson" title="Enregistrer le projet dans un fichier">Enregistrer</button>
     <button id="bOuvrir" title="Ouvrir un projet enregistré">Ouvrir</button>
     <button id="bJpg" title="Exporter l'image affichée en JPG (⌘E)">Image JPG</button>
+    <button id="bAirdrop" title="Envoyer toutes les images et la légende par AirDrop (⇧⌘A)" hidden>AirDrop</button>
     <button id="bZip" class="primaire" title="Exporter toutes les images et la légende en .zip (⇧⌘E)">Tout exporter</button>
     <input type="file" id="fJson" accept=".json,application/json" hidden>
   </header>
@@ -822,6 +823,14 @@ const nomFichier = () => `${slug(projet.nom)}-${{ 45: '4x5', 11: '1x1', 916: '9x
 async function exporterImage() {
   telecharger(await imageJpg(sel), `${nomFichier()}-${String(sel + 1).padStart(2, '0')}.jpg`); toast('Image exportée');
 }
+async function envoyerAirdrop() {
+  if (!window.studioPartage) return toast('AirDrop : disponible dans l’application Mac');
+  const fichiers = [];
+  for (let i = 0; i < projet.slides.length; i++) fichiers.push({ nom: `${nomFichier()}-${String(i + 1).padStart(2, '0')}.jpg`, data: await (await imageJpg(i)).arrayBuffer() });
+  const lg = [projet.legende.titre, '', projet.legende.texte].join('\n').trim();
+  if (lg) fichiers.push({ nom: 'legende.txt', data: new TextEncoder().encode(lg + '\n').buffer });
+  try { const r = await window.studioPartage.envoyer(fichiers); if (r && !r.ok) toast(r.message); } catch (e) { toast('Envoi impossible : ' + e.message); }
+}
 async function exporterCarrousel() {
   const fichiers = [];
   for (let i = 0; i < projet.slides.length; i++) fichiers.push({ nom: String(i + 1).padStart(2, '0') + '.jpg', data: new Uint8Array(await (await imageJpg(i)).arrayBuffer()) });
@@ -888,7 +897,7 @@ function brancher() {
   $('#bBiblio').onclick = () => ouvrirModal('biblio');
   $('#mFermer').onclick = fermerModal;
   $('#modal').onclick = e => { if (e.target.id === 'modal') fermerModal(); };
-  $('#bJpg').onclick = exporterImage; $('#bZip').onclick = exporterCarrousel;
+  $('#bAirdrop').hidden = !window.studioPartage; $('#bAirdrop').onclick = envoyerAirdrop; $('#bJpg').onclick = exporterImage; $('#bZip').onclick = exporterCarrousel;
   $('#bJson').onclick = () => telecharger(new Blob([JSON.stringify(projet, null, 1)], { type: 'application/json' }), slug(projet.nom) + '.studio.json');
   $('#bOuvrir').onclick = () => $('#fJson').click();
   $('#fJson').onchange = async e => {
@@ -986,8 +995,8 @@ async function genererPublication(options = {}) {
     const alertes = alertesContenu();
     if (res) res.innerHTML = `<div class="ok"><b>✅ Publication prête : ${echap(n.nom)}</b><br>${n.slides.length} image${n.slides.length > 1 ? 's' : ''} · ${p.source === 'ia' ? 'écrite par l’IA locale' : 'publication déjà écrite'}${reduit ? ' · textes raccourcis pour tenir dans l’image' : ''}
       ${[...(p.notes || []), ...alertes, ...(trop ? [`${trop} image(s) avec un texte trop long`] : [])].map(x => `<p class="note">⚠ ${echap(x)}</p>`).join('')}
-      <div class="gligne" style="margin-top:10px"><button class="primaire" id="gVoir">Voir la publication</button><button id="gZip">Exporter (.zip)</button><button id="gAutre">Une autre</button></div></div>`;
-    if (res) { $('#gVoir').onclick = fermerGenerer; $('#gZip').onclick = exporterCarrousel; $('#gAutre').onclick = () => { $('#gRes').innerHTML = ''; genererPublication(); }; }
+      <div class="gligne" style="margin-top:10px"><button class="primaire" id="gVoir">Voir la publication</button><button id="gZip">Exporter (.zip)</button>${window.studioPartage ? '<button id="gAir">AirDrop</button>' : ''}<button id="gAutre">Une autre</button></div></div>`;
+    if (res) { $('#gVoir').onclick = fermerGenerer; $('#gZip').onclick = exporterCarrousel; if ($('#gAir')) $('#gAir').onclick = envoyerAirdrop; $('#gAutre').onclick = () => { $('#gRes').innerHTML = ''; genererPublication(); }; }
     if ($('#gExport') && $('#gExport').checked && !options.sansExport) await exporterCarrousel();
     return { projet: n, source: p.source, notes: p.notes || [], alertes, trop, reduit };
   } catch (e) { if (res) res.innerHTML = `<div class="ok" style="color:#ff9b9b">${echap(e.message)}</div>`; return { erreur: e.message }; }
