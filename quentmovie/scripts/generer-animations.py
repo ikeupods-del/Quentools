@@ -51,8 +51,8 @@ def out(im, w=E, h=E, ombre=True):
     a = np.asarray(r).astype(np.int16); plein = (np.abs(a - np.array(VERT)).sum(-1) > 120)
     if w == h:  # icônes carrées : liseré blanc de 7 px autour de la forme
         rayon = max(3, w // 150)
-        masque = Image.fromarray((plein * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(2 * rayon + 1))
-        gros = np.asarray(masque) > 127
+        petit = Image.fromarray((plein * 255).astype(np.uint8)).resize((w // 2, h // 2), Image.BILINEAR).filter(ImageFilter.GaussianBlur(rayon * 0.31))  # dilatation arrondie, calculée à demi-taille (rapide)
+        gros = np.asarray(petit.resize((w, h), Image.BILINEAR)) > 22
         anneau = gros & ~plein
         a[anneau] = (252, 252, 255)
         plein = gros
