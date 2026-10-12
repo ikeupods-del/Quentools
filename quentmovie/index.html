@@ -3154,8 +3154,6 @@ async function stDirect(quoi) {
     D.logo = { el: stPlacer2(el, p), evt: stOuvrir({ id: 'logo', file: o.logo, x: p.x, y: p.y, s: p.s }) };
   } else if (quoi === 'ecran') {
     if (D.ecran) { await stEcranStop(); return maj(); }
-    const droit = await (await api('/api/ecran')).json().catch(() => ({}));
-    if (droit.statut === 'denied' || droit.statut === 'restricted') { stEcranAide('QuentMovie n’a pas le droit de voir ton écran.'); return; }
     let flux;
     try { flux = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false }); }
     catch (e) { stEcranAide(`Partage d’écran refusé (${esc(e.message)}).`); return; }
