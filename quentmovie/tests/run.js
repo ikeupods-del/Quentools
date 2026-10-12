@@ -93,6 +93,11 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     check(`titre reportage ${r.id} (t=${t})`, await isJpeg(rr), lastErr.v);
   }
   check('générateur fond uni + titre', await isJpeg(await preview({ kind: 'solid', color: '#0b1d3a', dur: 4, fx: [], key: {}, titre: { preset: 'chapitre', l1: 'CHAPITRE 1', l2: 'Début', color: '#ffffff', start: 0, dur: 0 } })), lastErr.v);
+  // 2b'') Styles de sous-titres (pack) : chacun se rend sans erreur, mot à mot ou par phrases
+  for (const x of cat.sousTitres) {
+    const rr = await preview(clip({ subs: [{ s: 0, e: 3, t: x.mots ? 'Ton texte' : 'Une phrase de sous-titre assez longue pour passer sur deux lignes' }], subStyle: x.id, subSize: x.taille, textFont: 'arial' }), 1);
+    check(`sous-titres style ${x.id}`, await isJpeg(rr), lastErr.v);
+  }
   // 2b') Pack de montage : effet de coupe en deux moitiés (décalage dans la vidéo du calque) exporté sans erreur
   {
     const ov = (start, dur, ss) => ({ file: 'lib:calques/tr-flash.mp4', kind: 'video', x: 50, y: 50, scale: 100, rot: 0, opacity: 90, start, dur, ss, anim: 'none', mode: 'ecran', plein: 'remplir', key: false, keySim: 0.3 });

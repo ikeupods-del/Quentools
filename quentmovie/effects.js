@@ -285,6 +285,15 @@ const REPORTAGE = [
   { id: 'compte', nom: 'Compte à rebours (5 à 1)', l1: '5', l2: '', color: '#ffffff' },
   { id: 'generique', nom: 'Générique de fin (texte qui défile)', l1: 'RÉALISATION\nTon nom\n\nMONTAGE\nTon nom\n\nMERCI D’AVOIR REGARDÉ', l2: '', color: '#ffffff' }
 ];
+// Styles de sous-titres : mots = affichés mot à mot (1 à 3 mots), sinon par phrases ; taille = taille conseillée (en % de la petite dimension)
+const SOUS_TITRES = [
+  { id: 'bandeau', nom: 'Phrases sur bandeau sombre', mots: false, taille: 4.4 }, { id: 'contour', nom: 'Phrases, contour noir', mots: false, taille: 4.4 },
+  { id: 'jaune', nom: 'Phrases en jaune', mots: false, taille: 4.4 }, { id: 'tiktok', nom: 'Mot à mot, gros et centré (TikTok)', mots: true, taille: 6.5 },
+  { id: 'hormozi', nom: 'Hormozi : capitales, jaune et blanc', mots: true, taille: 6.2, pack: true }, { id: 'neon', nom: 'Néon : halo bleu', mots: true, taille: 5.6, pack: true },
+  { id: 'boite', nom: 'Mot sur boîte blanche', mots: true, taille: 5.2, pack: true }, { id: 'rouge', nom: 'Mot sur boîte rouge', mots: true, taille: 5.2, pack: true },
+  { id: 'pop', nom: 'Feutre jaune (pop)', mots: true, taille: 6.2, pack: true }, { id: 'gaming', nom: 'Gaming : couleurs décalées', mots: true, taille: 5.6, pack: true },
+  { id: 'cinema', nom: 'Cinéma : phrases élégantes', mots: false, taille: 4, pack: true }, { id: 'minimal', nom: 'Minimal : petit, sur voile', mots: false, taille: 3.4, pack: true }
+];
 const GENERATEURS = [
   { id: 'noir', nom: 'Fond noir', color: '#000000' }, { id: 'blanc', nom: 'Fond blanc', color: '#ffffff' },
   { id: 'nuit', nom: 'Bleu nuit', color: '#0b1d3a' }, { id: 'rouge', nom: 'Rouge', color: '#b3122b' },
@@ -298,7 +307,7 @@ function defaults(def) { const o = {}; def.params.forEach(q => { o[q.k] = q.def;
 function catalogue(filters) {
   const ok = d => d.needs.every(n => filters.has(n));
   const map = d => ({ id: d.id, nom: d.nom, cat: d.cat, params: d.params, dispo: ok(d), blend: !!d.blend });
-  return { video: VIDEO.map(map), audio: AUDIO.map(map), transitions: TRANSITIONS.map(t => ({ id: t.id, nom: t.nom, pack: t.pack })), titres: TITLES, reportage: REPORTAGE, generateurs: GENERATEURS, positions: POSITIONS };
+  return { video: VIDEO.map(map), audio: AUDIO.map(map), transitions: TRANSITIONS.map(t => ({ id: t.id, nom: t.nom, pack: t.pack })), titres: TITLES, reportage: REPORTAGE, sousTitres: SOUS_TITRES, generateurs: GENERATEURS, positions: POSITIONS };
 }
 
-module.exports = { VIDEO, AUDIO, TRANSITIONS, filtreTransition, postTransition, TITLES, REPORTAGE, GENERATEURS, POSITIONS, catalogue, defaults };
+module.exports = { SOUS_TITRES, VIDEO, AUDIO, TRANSITIONS, filtreTransition, postTransition, TITLES, REPORTAGE, GENERATEURS, POSITIONS, catalogue, defaults };
