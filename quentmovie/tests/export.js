@@ -37,6 +37,7 @@ const { execFileSync } = require('child_process');
   const EPI = require('../epissage');
   const pl = EPI.planifier([90, 90, 90], [18, 0], 30);
   check('plan : toutes les images comptées', pl.ok && pl.total === 90 * 3 - 18, pl.total);
+  { const p40 = EPI.planifier(Array(40).fill(45), Array(39).fill(15), 30); check('plan : 40 photos en fondu coupées en morceaux parallèles, images toutes comptées', p40.ok && p40.total === 40 * 45 - 39 * 15 && p40.pieces.filter(x => x.type === 'enc').length >= 5 && p40.pieces.every(x => x.type !== 'enc' || x.clips.length <= 9), p40.pieces.length); }
   check('plan : fondu trop long refusé', !EPI.planifier([20, 20], [19], 30).ok);
   check('plan : zones étendues aux images clés', JSON.stringify(EPI.zonesPistes(pl, [{ fa: 40, fb: 50 }])) === JSON.stringify([{ de: 30, a: 60 }]) || EPI.zonesPistes(pl, [{ fa: 40, fb: 50 }]).length === 1);
   ff('-f', 'lavfi', '-i', 'mandelbrot=s=320x180:r=30', '-t', '3', '-pix_fmt', 'yuv420p', path.join(base, 'ov.mp4'));
@@ -64,6 +65,15 @@ const { execFileSync } = require('child_process');
     const m = /Video:.* (\d{3,4})x(\d{3,4})/.exec(sortie), dur = /Duration: (\d+):(\d+):([\d.]+)/.exec(sortie);
     check('clipping : vidéo verticale de la bonne durée', !!m && +m[2] > +m[1] && Math.abs(+dur[3] - 5) < 0.4, sortie.slice(-300));
   }
+
+  // Vidéo HDR (HLG, iPhone) : détectée et convertie en image classique quand le moteur sait le faire
+  try {
+    ff('-f', 'lavfi', '-i', 'smptebars=s=640x360:r=30:d=2', '-vf', 'format=yuv420p10le', '-c:v', 'libx265', '-x265-params', 'colorprim=bt2020:transfer=arib-std-b67:colormatrix=bt2020nc:log-level=error', '-pix_fmt', 'yuv420p10le', path.join(base, 'hlg.mp4'));
+    await fetch(U('/api/import?name=hlg.mp4'), { method: 'POST', body: fs.readFileSync(path.join(base, 'hlg.mp4')) });
+    const jh = await exporter({ format: 'horizontal', res: 360, fps: 30, quality: 'rapide', sortie: 'mp4', audio: [], pistes: [], clips: [clip('hlg.mp4', 'video', { out: 2, hasAudio: false })] });
+    check('vidéo HDR : export réussi', !!jh.out);
+    if ((app.filtres ? app.filtres() : []).includes('zscale')) check('vidéo HDR : conversion signalée', /HDR/.test(jh.avertissement || ''), jh.avertissement);
+  } catch (e) { /* encodeur HEVC absent : essai ignoré */ }
   app.stop(); fs.rmSync(base, { recursive: true, force: true });
   console.log(`Export : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
