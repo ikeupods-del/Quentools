@@ -7,6 +7,7 @@ Changer aussi `version` dans `package.json` : une version déjà publiée n'est 
 - **Partage d’écran en plein écran avec ta caméra dans une bulle.** Dans le studio, « Partage d’écran » propose maintenant « Plein écran + ma caméra en bulle » : ton écran remplit l’image et ta caméra (avec ton fond virtuel) apparaît dans un rond. Choisis le coin et la taille de la bulle, ou glisse-la et tire le rond jaune pendant la prise. Dans la timeline, l’écran et la bulle sont deux éléments de la piste vidéo 2, modifiables.
 - **Mouvements de caméra pro** : poussée douce, dérive lente, caméra à l’épaule, orbite, zoom rebond, roulis. **Effets cinéma** : bandes cinéma, halation, lueur dorée, pellicule 16 mm, contraste cinéma, flash au rythme.
 - **Sept nouvelles animations de texte** : montée avec rebond, descente, rebond, balayage, clignotant, tremblement, respiration.
+- Sept **modèles de texte animés** prêts à l’emploi dans l’onglet Titres (accroche jaune qui monte, titre qui rebondit, balayage, choc, étiquette clignotante, respiration, descente) et une **recherche** dans l’onglet Packs.
 - Chaque pack propose « titres d’ouverture et de fin » : le premier titre du pack est posé sur le premier clip, un titre de fin sur le dernier.
 - Les titres de pack utilisent maintenant leurs polices prévues (Futura, Copperplate, Didot, Impact…) quand tu les ajoutes depuis la bibliothèque.
 - Plus léger pour le MacBook Air : les aperçus du pack ne se calculent que lorsqu’ils sont visibles, les vidéos d’aperçu ne se préchargent pas, et quelques effets ont moins de filtres.

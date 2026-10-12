@@ -95,6 +95,13 @@ function chromium() {
   await pg.click('[data-sousstyle="hormozi"]');
   check('pack sous-titres : style Hormozi appliqué (mot à mot, taille du style)', await ev(() => proj.clips.every(c => c.subStyle === 'hormozi' && c.subSize === tailleSous('hormozi')) && modeMots('hormozi') && !modeMots('cinema') && CAT.sousTitres.length === 12));
   await ev(() => { proj.clips.forEach(c => { c.subs = []; c.subStyle = 'contour'; }); commit(); tout(); });
+  // modèles de texte animés et recherche de pack
+  await ev(() => { proj.clips = proj.clips.slice(0, 3); sel = 0; commit(); tout(); appliquerTitre('accroche'); });
+  check('modèle de texte : accroche jaune qui monte', await ev(() => proj.clips[0].textAnim === 'monte' && proj.clips[0].textColor === '#ffe600' && CAT.titres.length >= 15));
+  await ev(() => { allerOnglet('packs'); }); await pg.waitForSelector('#cherchePack', { timeout: 5000 });
+  await pg.fill('#cherchePack', 'podcast');
+  check('recherche de pack : seuls les packs podcast restent visibles', await ev(() => { const v = [...document.querySelectorAll('#navbody .pack')].filter(e => !e.hidden).map(e => e.dataset.pack); return v.length >= 3 && v.every(id => /podcast/.test(id) || /podcast/i.test(CAT.packs.find(p => p.id === id).nom + CAT.packs.find(p => p.id === id).desc)); }));
+  await pg.fill('#cherchePack', '');
   // pack : titres d'ouverture et de fin (premier et dernier clip)
   await ev(() => { proj.clips.forEach(c => { c.titre = null; }); commit(); tout(); allerOnglet('packs'); });
   await pg.waitForSelector('[data-pack-app="bourse"]', { timeout: 5000 });

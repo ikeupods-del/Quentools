@@ -146,7 +146,7 @@ fx('roulis', 'Roulis léger (la caméra se penche)', 'Mouvement', [p('deg', 'Ang
   `rotate=a='${(q.deg * Math.PI / 180).toFixed(4)}*sin(${T(c)}*0.9)':ow=iw:oh=ih:c=black,scale=${even(`iw*1.12`)}:${even(`ih*1.12`)},crop=${c.W}:${c.H}`, { needs: ['rotate'] });
 
 // ---------- Cinéma (bandes, halation, pellicule, contraste, lueur dorée) ----------
-fx('bandescine', 'Bandes cinéma (format large)', 'Cinéma', [p('r', 'Format (2,39 = cinéma)', 1.6, 2.8, 0.01, 2.39)], (q, c) => {
+fx('bandescine', 'Bandes cinéma (format large)', 'Cinéma', [p('r', 'Format (2,39 = cinéma)', 1.6, 2.4, 0.01, 2.39)], (q, c) => {
   const b = Math.max(0, Math.round((c.H - c.W / q.r) / 2 / 2) * 2);
   return b > 0 ? `drawbox=x=0:y=0:w=iw:h=${b}:color=black:t=fill,drawbox=x=0:y=ih-${b}:w=iw:h=${b}:color=black:t=fill` : 'null';
 }, { needs: ['drawbox'] });
@@ -278,7 +278,15 @@ const TITLES = [
   { id: 'apparition', nom: 'Apparition en fondu', style: 'contour', anim: 'apparition' },
   { id: 'glisse', nom: 'Glissé vers le haut', style: 'bandeau', anim: 'glisse' },
   { id: 'jaune', nom: 'Sous-titre jaune', style: 'contour', anim: 'aucune', color: '#ffe600', pos: 'bas' },
-  { id: 'grand', nom: 'Grand titre central', style: 'ombre', anim: 'apparition', pos: 'milieu', size: 10 }
+  { id: 'grand', nom: 'Grand titre central', style: 'ombre', anim: 'apparition', pos: 'milieu', size: 10 },
+  // Modèles de texte animés (comme les « modèles de texte » des logiciels de montage pour les réseaux)
+  { id: 'accroche', nom: 'Accroche jaune qui monte (hook)', style: 'contour', anim: 'monte', color: '#ffe600', pos: 'milieu', size: 9 },
+  { id: 'pop-blanc', nom: 'Titre blanc qui rebondit', style: 'ombre', anim: 'rebond', pos: 'milieu', size: 9 },
+  { id: 'balaye', nom: 'Titre qui balaie depuis la gauche', style: 'bandeau', anim: 'balayage', pos: 'haut', size: 7 },
+  { id: 'choc', nom: 'Choc : tremblement à l’arrivée', style: 'contour', anim: 'tremble', color: '#ff3b30', pos: 'milieu', size: 10 },
+  { id: 'live', nom: 'Étiquette clignotante (LIVE, REC)', style: 'bandeau', anim: 'clignote', color: '#ff3b30', pos: 'haut', size: 5 },
+  { id: 'respire', nom: 'Titre qui respire (calme)', style: 'ombre', anim: 'pulse', pos: 'milieu', size: 8 },
+  { id: 'descente', nom: 'Titre qui descend avec rebond', style: 'contour', anim: 'descend', pos: 'haut', size: 8 }
 ];
 
 // Titres de reportage (animés). l1 / l2 : textes par défaut ; couleur d'accent.
