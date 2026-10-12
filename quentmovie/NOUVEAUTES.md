@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.19.1
+- Partage d’écran : sur Mac récent, une fenêtre du système s’ouvre, tu choisis ton écran et tu appuies sur « Autoriser », comme pour la caméra et le micro. Plus besoin d’aller dans les réglages.
+
 ## 1.19.0
 - Partage d’écran du studio réparé : l’écran s’affiche vraiment (il restait mal placé) et, si macOS ne laisse voir qu’un écran noir, QuentMovie le dit clairement et ouvre les réglages « Enregistrement de l’écran » pour autoriser l’application.
 - BREAKING NEWS devient un vrai générique d’édition spéciale de 7 secondes (globe, titre qui entre, bandeau « EN DIRECT » qui défile) avec sa musique originale ; touche B.

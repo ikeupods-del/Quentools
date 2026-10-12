@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "1.19.0",
+  "version": "1.19.1",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -71,6 +71,7 @@
       "icon": "build/icon.png",
       "extendInfo": {
         "NSMicrophoneUsageDescription": "QuentMovie utilise le micro pour enregistrer ta voix (voix off, studio).",
+        "NSScreenCaptureUsageDescription": "QuentMovie partage et enregistre ton écran dans le studio (« Afficher en direct »).",
         "NSCameraUsageDescription": "QuentMovie utilise la caméra pour te filmer dans le studio (prompteur)."
       }
     },
