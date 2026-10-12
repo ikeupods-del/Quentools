@@ -37,7 +37,30 @@ const PACKS = [
     titres: ['impact-titre', 'numero', 'compte', 'rec'], calques: ['tr-onde', 'tr-flash', 'tr-rayons'], sons: ['tr-choc', 'tr-whoosh-long', 'vl-clic'], look: 'luts/clair-lumineux.cube', musique: 'house-groove' },
   { famille: 'Vlog', id: 'vlog-nuit', fond: 'fonds/ville-nuit-h.jpg', nom: 'Vlog Ville de nuit', couleur: '#7a5cff', desc: 'Sorties, concerts, rues allumées : reflets anamorphiques bleus, glitch léger, néons et caméscope.',
     transitions: ['glitch', 'fondufloute', 'whipg', 'irisdoux'], dur: 0.5,
-    titres: ['lieu-vlog', 'jour', 'glitch-titre', 'rec'], calques: ['tr-fuite-bleue', 'tr-anamorphique', 'tr-tracking'], sons: ['vl-souffle', 'tr-glitch', 'tr-ding'], look: 'luts/neon-nuit.cube', musique: 'synthwave-80' }
+    titres: ['lieu-vlog', 'jour', 'glitch-titre', 'rec'], calques: ['tr-fuite-bleue', 'tr-anamorphique', 'tr-tracking'], sons: ['vl-souffle', 'tr-glitch', 'tr-ding'], look: 'luts/neon-nuit.cube', musique: 'synthwave-80' },
+  // ---- Famille Podcast : cartes d'invité, rubriques, jingles originaux et visualiseur sonore pour les épisodes audio ----
+  { famille: 'Podcast', id: 'podcast-interview', fond: 'fonds/studio-podcast-h.jpg', nom: 'Podcast Interview', couleur: '#ff6a3d', desc: 'Interview à deux : épisode, carte d’invité, rubriques, partenaire, jingles d’intro et de fin, visualiseur sonore.',
+    transitions: ['fondufloute', 'dissolve', 'glissedoux', 'diagdoux'], dur: 0.5,
+    titres: ['episode', 'invite', 'rubrique', 'citation', 'abonne', 'sponsor'], calques: ['tr-fuite-doree', 'tr-anamorphique'], sons: ['pod-rubrique', 'pod-ping', 'pod-jingle-intro', 'pod-jingle-outro'], look: 'luts/moody-cafe.cube', musique: 'lofi-tranquille',
+    viz: { type: 'ligne', color: '#ff6a3d', h: 22, pos: 'bas', bg: '#12141c' } },
+  { famille: 'Podcast', id: 'podcast-recit', fond: 'fonds/bureau-flou-h.jpg', nom: 'Podcast Culture et récit', couleur: '#e8c9a0', desc: 'Récits, chroniques et débats : fondus lents, citations, chapitres, jingles feutrés et ondes sonores.',
+    transitions: ['fondufloute', 'fade', 'fadeblack', 'irisdoux'], dur: 0.8,
+    titres: ['episode', 'citation', 'chapitre', 'rubrique', 'sponsor'], calques: ['tr-fuite-rose', 'tr-fuite-bleue'], sons: ['pod-jingle-outro', 'pod-rubrique', 'tr-ding'], look: 'luts/editorial.cube', musique: 'piano-chill',
+    viz: { type: 'ondes', color: '#e8c9a0', h: 26, pos: 'milieu', bg: '#14110f' } },
+  // ---- Famille Pro : tutoriels, formations, entreprise ----
+  { famille: 'Pro', id: 'tuto', fond: 'fonds/bureau-flou-h.jpg', nom: 'Tuto et formation', couleur: '#2f80ff', desc: 'Pas à pas : étapes numérotées, astuces, chiffres clés, compte à rebours, clics et pages qui tournent.',
+    transitions: ['glissedoux', 'zoomdoux', 'fondufloute', 'whipg'], dur: 0.45,
+    titres: ['etape', 'astuce', 'chiffre', 'rubrique', 'compte'], calques: ['tr-flash-bleu', 'tr-fuite-bleue'], sons: ['vl-clic', 'tr-ding', 'vl-page'], look: 'luts/clair-lumineux.cube', musique: 'lofi-tranquille' },
+  { famille: 'Pro', id: 'entreprise', fond: 'fonds/studio-blanc-h.jpg', nom: 'Entreprise et corporate', couleur: '#1f4fff', desc: 'Présentations, interviews internes, vidéos de marque : transitions sobres, double barre, chiffres clés, partenaires.',
+    transitions: ['fondufloute', 'fade', 'diagdoux', 'smoothleft'], dur: 0.6,
+    titres: ['double', 'chiffre', 'sponsor', 'astuce', 'rubrique'], calques: ['tr-flash-bleu', 'tr-fuite-bleue'], sons: ['tr-ding', 'vl-clic', 'pod-ping'], look: 'luts/editorial.cube', musique: 'ambiance-douce' },
+  // ---- Événement et gaming ----
+  { famille: 'Événement', id: 'mariage', fond: 'fonds/pastel-h.jpg', nom: 'Mariage et événement', couleur: '#e8c9a0', desc: 'Cérémonie, soirée, anniversaire : fondus lumineux, titres encadrés, lumière dorée, cloches et cordes douces.',
+    transitions: ['fondufloute', 'fondulumiere', 'irisdoux', 'dissolve'], dur: 0.9,
+    titres: ['cadre-titre', 'cine-titre', 'citation', 'lieu-vlog'], calques: ['tr-fuite-doree', 'tr-fuite-rose', 'tr-soleil'], sons: ['vl-cloche', 'vl-pizz-doux', 'tr-ding'], look: 'luts/pastel-reveur.cube', musique: 'ambiance-douce' },
+  { famille: 'Gaming', id: 'gaming', fond: 'fonds/synthwave-h.jpg', nom: 'Gaming et stream', couleur: '#7a5cff', desc: 'Replays et lives : glitch, secousses, zoom punch, ondes de choc, pseudo, abonnement et néons.',
+    transitions: ['glitch', 'secousse', 'zoompunch', 'whipg'], dur: 0.4,
+    titres: ['glitch-titre', 'impact-titre', 'abonne', 'compte', 'pseudo'], calques: ['tr-tracking', 'tr-onde', 'tr-fuite-bleue'], sons: ['tr-glitch', 'tr-choc', 'niveau-suivant'], look: 'luts/cyberpunk.cube', musique: 'synthwave-80' }
 ];
 
 module.exports = { PACKS };

@@ -82,13 +82,20 @@ function chromium() {
   // packs de montage : un clic pose transitions, effets de coupe et sons sur toutes les coupes
   await ev(() => { proj.audio = []; proj.clips.forEach(c => { c.transition = null; c.overlays = []; }); commit(); tout(); allerOnglet('packs'); });
   await pg.waitForSelector('[data-pack-app="glitch"]', { timeout: 5000 });
-  check('onglet Packs : 11 packs proposés (montage et vlog)', await ev(() => document.querySelectorAll('#navbody [data-pack-app]').length === 11 && CAT.packs.every(p => p.transitions.every(t => CAT.transitions.some(x => x.id === t)) && p.titres.every(t => CAT.reportage.some(x => x.id === t)) && p.calques.every(c => LIB().calques.some(x => x.id === c)) && p.sons.every(c => LIB().sons.some(x => x.id === c)) && (!p.musique || LIB().musiques.some(x => x.id === p.musique)) && (!p.look || LIB().luts.some(x => 'luts/' + x.id + '.cube' === p.look)))));
+  check('onglet Packs : 17 packs proposés (montage, vlog, podcast, pro, événement, gaming)', await ev(() => document.querySelectorAll('#navbody [data-pack-app]').length === 17 && CAT.packs.every(p => p.transitions.every(t => CAT.transitions.some(x => x.id === t)) && p.titres.every(t => CAT.reportage.some(x => x.id === t)) && p.calques.every(c => LIB().calques.some(x => x.id === c)) && p.sons.every(c => LIB().sons.some(x => x.id === c)) && (!p.musique || LIB().musiques.some(x => x.id === p.musique)) && (!p.look || LIB().luts.some(x => 'luts/' + x.id + '.cube' === p.look)))));
   await pg.click('[data-pack-app="glitch"]');
   check('pack appliqué : transitions, effets de coupe et sons sur chaque coupe', await ev(() => { const n = proj.clips.length - 1; return proj.clips.slice(0, -1).every(c => c.transition && c.overlays.some(o => o.pack === 'glitch' && !o.ss)) && proj.clips.slice(1).every(c => c.overlays.some(o => o.pack === 'glitch' && o.ss > 0)) && proj.audio.length === n; }));
   await ev(() => { allerOnglet('packs'); }); await pg.waitForSelector('[data-pack-app="vlog-voyage"]', { timeout: 5000 });
   await pg.evaluate(() => { const c = document.querySelector('[data-pack="vlog-voyage"]'); c.querySelector('.pk-mus').checked = true; c.querySelector('.pk-look').checked = true; });
   await pg.click('[data-pack-app="vlog-voyage"]');
   check('pack Vlog : musique, look, transitions et effets de coupe', await ev(() => proj.audio.some(a => /musiques\/joyeux-vlog/.test(a.file) && a.loop && a.duck) && proj.clips.every(c => c.lut && /ete-dore/.test(c.lut.file)) && proj.clips.slice(0, -1).every(c => c.transition && c.overlays.some(o => o.pack === 'vlog-voyage') && !c.overlays.some(o => o.pack === 'glitch'))));
+  // pack Podcast : visualiseur sonore posé sur les clips audio seulement
+  await ev(() => { proj.clips.push({ ...JSON.parse(JSON.stringify(proj.clips[0])), kind: 'audio', transition: null, overlays: [] }); commit(); tout(); allerOnglet('packs'); });
+  await pg.waitForSelector('[data-pack-app="podcast-interview"]', { timeout: 5000 });
+  await pg.evaluate(() => { document.querySelector('[data-pack="podcast-interview"] .pk-viz').checked = true; });
+  await pg.click('[data-pack-app="podcast-interview"]');
+  check('pack Podcast : visualiseur sonore sur le clip audio uniquement', await ev(() => { const a = proj.clips.filter(c => c.kind === 'audio'), v = proj.clips.filter(c => c.kind !== 'audio'); return a.length === 1 && a[0].viz && a[0].viz.type === 'ligne' && a[0].bgColor === '#12141c' && v.every(c => !c.viz || c.viz.type === 'none' || !c.viz.type); }));
+  await ev(() => { proj.clips = proj.clips.filter(c => c.kind !== 'audio'); commit(); tout(); });
 
   // 3 bis) outils pro : lame, pistes (verrou, muet, masquer), repères nommés et chapitres, grille
   await ev(() => { const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v)]; proj.audio = [{ file: 'son.wav', start: 0, in: 0, dur: 6, vol: 100 }]; proj.pistes = []; proj.markers = []; proj.etatPistes = {}; sel = 0; selA = -1; setZoom(40); commit(); tout(); choisirOutil('lame'); });

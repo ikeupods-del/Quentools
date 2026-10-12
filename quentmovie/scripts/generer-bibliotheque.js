@@ -305,6 +305,17 @@ function vlSouffle() { const b = buf(0.9); mix(b, whoosh(0.8, 500, 3500, 0.7), 0
 function vlClic() { const b = buf(0.3); mix(b, hp(noise(0.012, 0.003), 2500), 0, 0.7); mix(b, tone(1500, 0.05, 0.015), 0.002, 0.35); mix(b, tone(2300, 0.04, 0.01), 0.07, 0.25); return b; }
 function vlCloche() { const b = buf(2); mix(b, cloche(1319, 1.8, 0.5), 0, 0.7); mix(b, cloche(1976, 1.6, 0.3), 0.01, 0.4); return reverb(b, 0.3, 1.4); }
 function vlPage() { const b = buf(0.7); mix(b, hp(lp(noise(0.5, 0.14), 6500), 900), 0, 0.5); mix(b, whoosh(0.35, 700, 2500, 0.5), 0.03, 0.4); return b; }
+// ---- Jingles de podcast (créations originales) : accord de pad, arpège de cordes pincées, cloches ----
+function podPad(freqs, sec, g) { const b = buf(sec); for (const f of freqs) mix(b, fade(lp(tone(f, sec, 0, 'saw', 0.9), 1700), 0.9, 1.3), 0, g); return b; }
+function podIntro() { const b = buf(5.6); mix(b, podPad([130.8, 196, 261.6, 329.6, 392, 493.9], 5, 0.12), 0, 1);
+  [523.3, 659.3, 784, 987.8, 1174.7, 1318.5, 1568].forEach((f, i) => mix(b, pincee(f, 1.3, 0.996), 0.5 + i * 0.16, 0.55));
+  for (const k of [0.5, 1.3, 2.1, 2.9]) mix(b, tone(t => 60 + 80 * Math.exp(-t * 25), 0.3, 0.1, 'sine', 0.002), k, 0.6);
+  mix(b, cloche(1046.5, 3, 0.5), 2.2, 0.5); mix(b, cloche(1568, 2.5, 0.35), 2.25, 0.4); mix(b, whoosh(0.7, 300, 4000, 0.7), 0, 0.5); return reverb(b, 0.3, 1.3); }
+function podOutro() { const b = buf(6.5); mix(b, podPad([130.8, 164.8, 196, 261.6, 329.6], 5.5, 0.12), 0.2, 1);
+  [1568, 1318.5, 1174.7, 987.8, 784, 659.3, 523.3].forEach((f, i) => mix(b, pincee(f, 1.3, 0.996), i * 0.2, 0.5));
+  mix(b, cloche(523.3, 4, 0.5), 1.5, 0.55); mix(b, cloche(1046.5, 3.5, 0.3), 1.52, 0.4); for (const k of [0, 0.8, 1.6]) mix(b, tone(t => 60 + 80 * Math.exp(-t * 25), 0.3, 0.1, 'sine', 0.002), k, 0.5); return reverb(b, 0.35, 1.4); }
+function podRubrique() { const b = buf(1.8); [[784, 0], [1046.5, 0.16], [1318.5, 0.32]].forEach(([f, t]) => { mix(b, tone(f, 0.5, 0.12, 'sine', 0.002), t, 0.5); mix(b, tone(f * 3, 0.2, 0.04, 'sine', 0.002), t, 0.15); }); mix(b, whoosh(0.5, 400, 3500, 0.5), 0, 0.4); return reverb(b, 0.25, 1); }
+function podPing() { const b = buf(1.4); mix(b, cloche(1760, 1.2, 0.5), 0, 0.7); mix(b, cloche(2637, 1, 0.25), 0.02, 0.4); return b; }
 function sirene() { const b = fade(lp(tone(t => 900 + 300 * Math.sin(t * PI2 * 1.3), 2.6, 0, 'tri', 0.02), 2600), 0.02, 0.15); for (let i = 0; i < b.length; i++) b[i] *= 0.55 + 0.45 * Math.sin(i / SR * PI2 * 5); return b; }
 function joie() { // petit jingle joyeux
   const b = buf(1.8);
@@ -426,6 +437,10 @@ const SONS = [
   ['vl-clic', 'Vlog : clic d’interface', 'Vlog', vlClic],
   ['vl-cloche', 'Vlog : cloche légère', 'Vlog', vlCloche],
   ['vl-page', 'Vlog : page qui tourne', 'Vlog', vlPage],
+  ['pod-jingle-intro', 'Podcast : jingle d’introduction', 'Podcast', podIntro],
+  ['pod-jingle-outro', 'Podcast : jingle de fin', 'Podcast', podOutro],
+  ['pod-rubrique', 'Podcast : changement de rubrique', 'Podcast', podRubrique],
+  ['pod-ping', 'Podcast : ping de notification', 'Podcast', podPing],
   ['generique-info', 'Générique d’édition spéciale', 'Télé et spectacle', genereriqueInfo],
   ['sirene', 'Sirène d’alerte', 'Télé et spectacle', sirene]
 ];

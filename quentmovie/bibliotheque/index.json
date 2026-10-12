@@ -920,6 +920,34 @@
    "cat": "Vlog",
    "file": "sons/vl-page.mp3",
    "duree": 0.7
+  },
+  {
+   "id": "pod-jingle-intro",
+   "nom": "Podcast : jingle d’introduction",
+   "cat": "Podcast",
+   "file": "sons/pod-jingle-intro.mp3",
+   "duree": 5.6
+  },
+  {
+   "id": "pod-jingle-outro",
+   "nom": "Podcast : jingle de fin",
+   "cat": "Podcast",
+   "file": "sons/pod-jingle-outro.mp3",
+   "duree": 6.5
+  },
+  {
+   "id": "pod-rubrique",
+   "nom": "Podcast : changement de rubrique",
+   "cat": "Podcast",
+   "file": "sons/pod-rubrique.mp3",
+   "duree": 1.8
+  },
+  {
+   "id": "pod-ping",
+   "nom": "Podcast : ping de notification",
+   "cat": "Podcast",
+   "file": "sons/pod-ping.mp3",
+   "duree": 1.4
   }
  ],
  "musiques": [
@@ -1498,7 +1526,7 @@
    "nom": "Onde de choc",
    "cat": "Transitions (sur la coupe)",
    "file": "calques/tr-onde.mp4",
-   "duree": 1.0,
+   "duree": 1,
    "mode": "ecran"
   },
   {
@@ -1506,7 +1534,7 @@
    "nom": "Rayons lumineux",
    "cat": "Transitions (sur la coupe)",
    "file": "calques/tr-rayons.mp4",
-   "duree": 1.0,
+   "duree": 1,
    "mode": "ecran"
   },
   {
@@ -1514,7 +1542,7 @@
    "nom": "Déformation VHS",
    "cat": "Transitions (sur la coupe)",
    "file": "calques/tr-tracking.mp4",
-   "duree": 1.0,
+   "duree": 1,
    "mode": "ecran"
   }
  ],
