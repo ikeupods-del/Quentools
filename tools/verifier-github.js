@@ -73,6 +73,13 @@ const verifie = (c, m, d) => c ? ok(m) : ko(m + (d ? ' : ' + d : ''));
   verifie(await gh.publier({ nom: '../x', fichiers }).then(() => false, e => /Nom de dépôt/.test(e.message)), 'nom de dépôt dangereux refusé');
   verifie(await gh.publier({ nom: 'ok', fichiers: [{ chemin: '../secret', contenu: 'x' }] }).then(() => false, e => /Chemin/.test(e.message)), 'chemin hors du dépôt refusé');
   verifie(await gh.publier({ nom: 'ok', fichiers: [] }).then(() => false, e => /Aucun fichier/.test(e.message)), 'aucun fichier : refusé');
+  // composition des fichiers : plan du site, page 404, robots.txt ; jamais les notes internes sur le dépôt
+  const { composerSite } = require('../marketing/studio-sites/composition.js'), path = require('path');
+  const comp = composerSite({ index: '<p>x</p>', legal: '', notes: 'interne', domaine: 'https://Martin-Nantes.fr/accueil', fichiers: [{ chemin: 'admin/index.html', contenu: 'a' }, { chemin: 'LISEZMOI-FIREBASE.txt', contenu: 'f' }] }, path.join(__dirname, '..', 'marketing', 'studio-sites', 'modeles'));
+  const noms = comp.map(f => f.chemin), pub = comp.filter(f => !f.local).map(f => f.chemin);
+  verifie(noms.includes('sitemap.xml') && noms.includes('404.html') && /Sitemap: https:\/\/martin-nantes\.fr\/sitemap\.xml/.test(comp.find(f => f.chemin === 'robots.txt').contenu.toString()) && /Disallow: \/admin\//.test(comp.find(f => f.chemin === 'robots.txt').contenu.toString()), 'composition : plan du site, page 404 et robots.txt (admin exclu)');
+  verifie(!pub.includes('LISEZMOI-LIVRAISON.txt') && !pub.includes('LISEZMOI-FIREBASE.txt') && pub.includes('admin/index.html'), 'composition : notes internes jamais publiées');
+  verifie(!composerSite({ index: 'x', legal: 'y' }, path.join(__dirname, '..', 'marketing', 'studio-sites', 'modeles')).some(f => f.chemin === 'sitemap.xml'), 'composition : pas de plan du site sans nom de domaine');
   srv.close();
   console.log(erreurs ? `\n${erreurs} problème(s)` : '\nPublication GitHub : tout est bon');
   process.exit(erreurs ? 1 : 0);

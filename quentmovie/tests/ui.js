@@ -269,6 +269,17 @@ function chromium() {
   const cp = await ev(() => ({ c: proj.clips.length, a: proj.audio.map(x => [x.start, x.dur]) }));
   check('couper (S) : le son détaché est coupé au même endroit', cp.c === 3 && cp.a.length === 3 && Math.abs(cp.a[1][0] - 2) < 0.06, JSON.stringify(cp));
 
+  // assistant : nouvelles actions exécutées sur le montage (supprimer un clip, bruitage, couper à un instant, volume, fondus)
+  await ev(async () => { await chargerMedias(); proj.clips = []; proj.audio = []; const m = medias.find(x => x.file === 'a.mp4'); for (let i = 0; i < 3; i++) proj.clips.push(newClip(m)); sel = 0; commit(); tout(); });
+  const act = a => ev(async a => { await executerAction(a); return { clips: proj.clips.length, audio: proj.audio.map(x => x.file), vols: proj.clips.map(c => c.vol), fi: proj.clips[0].fadeIn, fo: proj.clips[proj.clips.length - 1].fadeOut, total: total() }; }, a);
+  let r1 = await act({ action: 'supprimer_clip', parametre: 'dernier' }); check('assistant : supprimer le dernier clip', r1.clips === 2, JSON.stringify(r1));
+  r1 = await act({ action: 'supprimer_clip', parametre: '9' }); check('assistant : un numéro de clip absent ne supprime rien', r1.clips === 2);
+  r1 = await act({ action: 'bruitage', parametre: 'jackpot' }); check('assistant : bruitage ajouté dans la piste audio', r1.audio.some(f => /jackpot/.test(f)), JSON.stringify(r1));
+  r1 = await act({ action: 'volume', parametre: '40' }); check('assistant : volume des clips', r1.vols.every(v => v === 40), JSON.stringify(r1.vols));
+  r1 = await act({ action: 'fondus', parametre: '' }); check('assistant : fondus au début et à la fin', r1.fi >= 0.6 && r1.fo >= 0.8, JSON.stringify(r1));
+  const avantCoupe = r1.clips; r1 = await act({ action: 'couper_a', parametre: '3' }); check('assistant : couper à un instant', r1.clips === avantCoupe + 1, JSON.stringify(r1));
+  r1 = await act({ action: 'couper_a', parametre: '9999' }); check('assistant : coupe hors du montage refusée', r1.clips === avantCoupe + 1);
+
   check('aucune erreur dans la page', !errs.length, errs.slice(0, 3).join(' | '));
   await b.close(); app.stop(); fs.rmSync(base, { recursive: true, force: true });
   console.log(`Interface : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);

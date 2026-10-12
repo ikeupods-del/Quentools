@@ -252,7 +252,7 @@
   const mix = (a, b, t) => a.map((v, i) => v * (1 - t) + b[i] * t);
   function jetonsCouleur(couleur) {
     const A = rgb(couleur), BL = [255, 255, 255], NO = [13, 12, 18];
-    return `:root{--accent:${couleur};--accent-soft:${hexe(mix(A, BL, 0.88))};--lime:#fbbf24}\n  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:${hexe(mix(A, BL, 0.45))};--accent-soft:${hexe(mix(A, NO, 0.85))}}}\n  :root[data-theme="dark"]{--accent:${hexe(mix(A, BL, 0.45))};--accent-soft:${hexe(mix(A, NO, 0.85))}}`;
+    return `:root{--accent:${couleur};--accent-soft:${hexe(mix(A, BL, 0.88))};--lime:#b45309}\n  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:${hexe(mix(A, BL, 0.45))};--accent-soft:${hexe(mix(A, NO, 0.85))};--lime:#fbbf24}}\n  :root[data-theme="dark"]{--accent:${hexe(mix(A, BL, 0.45))};--accent-soft:${hexe(mix(A, NO, 0.85))};--lime:#fbbf24}`;
   }
   const RUNTIME = `(function(){var q=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
 q('.reveal,.rv,.rev,[data-reveal]').forEach(function(e){e.classList.add('in','is-in','visible','on','shown')});
@@ -271,6 +271,13 @@ q('form[data-mailto]:not([data-qs])').forEach(function(f){f.addEventListener('su
     fav.setAttribute('href', 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${fiche.couleur || '#1f3a68'}"/><text x="32" y="44" font-family="Arial,sans-serif" font-size="36" font-weight="700" text-anchor="middle" fill="#fff">${lettre}</text></svg>`));
     head.appendChild(fav);
     if (fiche.domaine) { const c = doc.createElement('link'); c.setAttribute('rel', 'canonical'); c.setAttribute('href', 'https://' + fiche.domaine.replace(/^https?:\/\//, '').replace(/\/$/, '') + '/'); head.appendChild(c); }
+    // partage sur les réseaux (Facebook, WhatsApp, Google) : titre, description, adresse et première photo
+    {
+      const racineSite = fiche.domaine ? 'https://' + fiche.domaine.replace(/^https?:\/\//, '').replace(/\/.*$/, '') + '/' : '';
+      const og = (k, v) => { if (!v) return; const m = doc.createElement('meta'); m.setAttribute('property', k); m.setAttribute('content', v); head.appendChild(m); };
+      og('og:type', 'website'); og('og:locale', 'fr_FR'); og('og:site_name', fiche.nom); og('og:title', titre.slice(0, 70)); og('og:description', (head.querySelector('meta[name="description"]') || {}).content || ''); og('og:url', racineSite);
+      const photo = ((brief && brief.photos) || []).find(p => /^photo-\d{1,2}\.jpg$/.test(p.f || '')); if (photo && racineSite) og('og:image', racineSite + 'assets/img/' + photo.f);
+    }
     const sec = doc.createElement('style'); sec.textContent = 'img,svg{max-width:100%}table{max-width:100%}td,th{overflow-wrap:anywhere}header .wrap,.top .wrap,.nav .wrap{flex-wrap:wrap;row-gap:8px}.logo,.brand{min-width:0;overflow-wrap:anywhere}'; head.appendChild(sec);
     // couleur de marque (modèles du design seulement : chaque exemple a sa propre palette)
     const couleurMarque = (racine.Modules ? racine.Modules.couleurDepuis((brief && brief.da && brief.da.couleur) || '') : '') || (/^#[0-9a-f]{6}$/i.test(fiche.couleur) ? fiche.couleur : '');
@@ -291,9 +298,63 @@ q('form[data-mailto]:not([data-qs])').forEach(function(f){f.addEventListener('su
     const r = doc.createElement('script'); r.textContent = RUNTIME; doc.body.appendChild(r);
     // direction artistique et fonctions choisies (modules.js)
     if (racine.Modules && brief) { notes.push(...racine.Modules.appliquerDA(doc, brief.da, modele)); notes.push(...racine.Modules.appliquerModules(doc, fiche, brief, modele)); }
+    nettoyerFinal(doc, fiche, notes, brief);
     return notes;
   }
   const versHtml = doc => '<!doctype html>\n' + doc.documentElement.outerHTML.replace(/<script>\(function\(\)\{var q=/, m => m);
+
+  /* ───────── Nettoyage final : ce qui ne doit jamais rester dans un site livré ───────── */
+  // Retire les blocs de chiffres, de questions et d'avis dont les valeurs sont restées entre crochets (jamais de faux chiffre ni de faux avis),
+  // répare les liens morts et ajoute ce que tout site professionnel doit avoir (mentions légales, lien d'appel, protections des liens externes).
+  function nettoyerFinal(doc, fiche, notes, brief) {
+    const aCrochets = el => /\[[^\]\n]{1,80}\]/.test((el.textContent || '').replace(/\[\d{1,3}\]\s?€/g, ''));
+    let retires = 0;
+    const retirer = el => { if (el && el.parentNode) { el.remove(); retires++; } };
+    doc.querySelectorAll('.stat,[class*="stat-"],[class*="kpi"],[class*="chiffre"],details').forEach(el => { if (el.isConnected && aCrochets(el)) retirer(el); });
+    doc.querySelectorAll('section,div').forEach(sec => { if (!sec.isConnected) return; const t = ((sec.querySelector('.eyebrow,h2,h3') || {}).textContent || '') + ' ' + (sec.id || ''); if (/avis|t[ée]moignage|ils m.ont fait confiance|ce que disent/i.test(t) && /^(section|div)$/i.test(sec.tagName) && sec.querySelector('h2,h3') && aCrochets(sec)) retirer(sec); });
+    // éléments dont tout le texte est resté entre crochets (« [★ 4,9 sur Google · 120 avis] · [Assurance décennale] ») : promesses non remplies, retirées
+    doc.querySelectorAll('span,p,li,small,b,strong,div').forEach(el => {
+      if (!el.isConnected || el.querySelector('p,div,ul,section,h1,h2,h3,h4,form,a,button')) return;
+      const t = (el.textContent || '').trim(); if (t.length > 160 || !t) return;
+      if (/^(?:\[[^\]]{1,80}\]\s*[·|•–—,/-]?\s*)+$/.test(t) && /★|avis|google|assurance|garantie|certifi|d[ée]cennale|devis|ouvert|disponib|délai|sous \d|label|agréé|qualif/i.test(t)) retirer(el);
+    });
+    if (retires) notes.push(`${retires} bloc(s) non rempli(s) retiré(s) (chiffres, questions ou avis à valeurs entre crochets) : rien d’inventé n’est affiché.`);
+    // liens vers une partie de la page qui n'existe pas (section retirée) : lien de menu supprimé, bouton renvoyé vers le formulaire ou le contact
+    const cible = doc.getElementById('qs-reservation') ? '#qs-reservation' : doc.getElementById('qs-devis') ? '#qs-devis' : doc.getElementById('contact') ? '#contact' : '';
+    doc.querySelectorAll('a[href^="#"]').forEach(a => {
+      const h = a.getAttribute('href'); if (h.length < 2 || doc.getElementById(h.slice(1)) || doc.getElementsByName(h.slice(1)).length) return;
+      if (a.closest('nav,header,ul,ol,footer')) { const li = a.parentElement && a.parentElement.tagName === 'LI' && a.parentElement.children.length === 1 ? a.parentElement : a; li.remove(); }
+      else a.setAttribute('href', cible || (fiche.telephone && e164(fiche.telephone) ? 'tel:' + e164(fiche.telephone) : fiche.email ? 'mailto:' + fiche.email : '#'));
+    });
+    // mentions légales
+    if (!doc.querySelector('a[href*="mentions"]')) {
+      const pied = doc.querySelector('footer'), a = doc.createElement('a'); a.setAttribute('href', 'mentions-legales.html'); a.textContent = 'Mentions légales';
+      if (pied) { const cont = pied.querySelector('.wrap,.container,div') || pied; cont.appendChild(doc.createTextNode(' · ')); cont.appendChild(a); } else { const p = doc.createElement('p'); p.style.cssText = 'text-align:center;padding:16px;font-size:14px'; p.appendChild(a); doc.body.insertBefore(p, doc.body.querySelector('script') || null); }
+    }
+    // numéro de téléphone du professionnel : touchable pour appeler (les occurrences en texte simple, hors liens)
+    if (fiche.telephone && e164(fiche.telephone)) {
+      const chiffres = fiche.telephone.replace(/\D/g, ''), motif = new RegExp(fiche.telephone.split(/\s+/).map(esc).join('[\\s.]*').replace(/\\\./g, '.'));
+      let n = 0; const marcheur = doc.createTreeWalker(doc.body, 4), noeuds = []; while (marcheur.nextNode()) noeuds.push(marcheur.currentNode);
+      for (const t of noeuds) {
+        if (n >= 3 || !t.parentElement || t.parentElement.closest('a,script,style,button,textarea,select,.qs-chat')) continue;
+        const m = motif.exec(t.nodeValue); if (!m || m[0].replace(/\D/g, '') !== chiffres) continue;
+        const a = doc.createElement('a'); a.setAttribute('href', 'tel:' + e164(fiche.telephone)); a.style.color = 'inherit'; a.textContent = m[0];
+        const apres = t.splitText(m.index); apres.nodeValue = apres.nodeValue.slice(m[0].length); t.parentNode.insertBefore(a, apres); n++;
+      }
+    }
+    // aucun lien d'appel dans le design : barre « Appeler » fixée en bas des téléphones
+    if (fiche.telephone && e164(fiche.telephone) && !doc.querySelector('a[href^="tel:"]')) {
+      const a = doc.createElement('a'); a.className = 'qs-appel'; a.setAttribute('href', 'tel:' + e164(fiche.telephone)); a.textContent = '📞 Appeler ' + fiche.telephone; doc.body.appendChild(a);
+      const st = doc.createElement('style'); st.textContent = '.qs-appel{display:none}@media(max-width:700px){.qs-appel{display:flex;position:fixed;left:12px;right:12px;bottom:12px;z-index:55;justify-content:center;padding:14px;border-radius:999px;background:var(--qs-ac,#1f3a68);color:var(--qs-on,#fff);font:700 16px/1 system-ui,sans-serif;text-decoration:none;box-shadow:0 6px 22px rgba(0,0,0,.3)}.qs-appel~.qs-bulle,.qs-appel~.qs-wa{bottom:76px}.qs-appel~.qs-chat{bottom:140px}body{padding-bottom:70px}}'; doc.head.appendChild(st);
+    }
+    // contrastes corrigés par le contrôle qualité (brief.contrastes : { t: balise, x: début du texte, c: couleur })
+    for (const k of (brief && brief.contrastes) || []) {
+      if (!k || !/^#[0-9a-f]{6}$/i.test(k.c || '') || !k.x) continue;
+      for (const el of doc.querySelectorAll(String(k.t || '*').toLowerCase())) if ((el.textContent || '').trim().startsWith(k.x)) { el.style.setProperty('color', k.c, 'important'); break; }
+    }
+    doc.querySelectorAll('img:not([alt])').forEach(i => i.setAttribute('alt', ''));
+    doc.querySelectorAll('a[target="_blank"]').forEach(a => { if (!/noopener/.test(a.getAttribute('rel') || '')) a.setAttribute('rel', ((a.getAttribute('rel') || '') + ' noopener noreferrer').trim()); });
+  }
 
   /* ───────── Génération complète ───────── */
   // o : { html, modele, fiche, ecrire (null sans IA), surEtape(texte, avancement 0-1) }

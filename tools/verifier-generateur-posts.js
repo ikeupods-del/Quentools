@@ -159,6 +159,16 @@ function tailleJpg(b) {
   });
   c4.plan === 'conseil/11' && c4.format === '11' && c4.source === 'ia' ? ok('assistant avec IA : demande comprise (thème, métier, format) et publication écrite par l’IA') : ko('assistant avec IA : ' + JSON.stringify(c4));
   await pg.keyboard.press('Escape');
+  // plan de la semaine : plusieurs publications variées d'un coup, puis export groupé avec planning
+  const sem = await pg.evaluate(async () => {
+    const r = await studio.chat('Prépare ma semaine de 3 publications pour QuenTools', { sansIA: true });
+    return { action: r.plan.action, n: r.plan.nombre, faites: studio.derniereSemaine.map(p => p.nom), marques: studio.derniereSemaine.map(p => p.marque), fil: document.querySelector('#chatFil').innerText };
+  });
+  sem.action === 'semaine' && sem.n === 3 && sem.faites.length === 3 && new Set(sem.faites).size === 3 && sem.marques.every(m => m === 'quentools') && /Exporter la semaine/.test(sem.fil) ? ok('plan de la semaine : 3 publications différentes créées d’une seule demande') : ko('plan de la semaine : ' + JSON.stringify(sem));
+  const [dlz] = await Promise.all([pg.waitForEvent('download'), pg.evaluate(() => studio.exporterSemaine())]);
+  const zipSem = lireZip(fs.readFileSync(await dlz.path())), noms = zipSem.map(f => f.nom), csv = zipSem.find(f => f.nom === 'planning.csv').data.toString('utf8');
+  noms.filter(n => /\.jpg$/.test(n)).length >= 7 && noms.filter(n => /legende\.txt$/.test(n)).length === 3 && csv.trim().split(/\r?\n/).length === 4 && /^﻿date;heure;marque/.test(csv) && /"\d{4}-\d{2}-\d{2}";"12:00";"quentools";"\d+:\d+";/.test(csv) ? ok('export de la semaine : images, légendes et planning.csv (3 lignes datées)') : ko('export de la semaine : ' + noms.join(',') + ' / ' + JSON.stringify(csv.slice(0, 700)));
+  const dates = csv.trim().split(/\r?\n/).slice(1).map(l => l.split(';')[0].replace(/"/g, '')); dates[0] < dates[2] && new Date(dates[0] + 'T12:00:00').getDay() === 1 ? ok('planning : première publication un lundi, publications étalées sur la semaine') : ko('dates du planning : ' + dates.join());
   // mise à jour automatique : bandeau de progression, puis bouton « Redémarrer pour installer »
   const pg2 = await ctx.newPage(); await pg2.addInitScript(() => { let etat = { etat: 'telechargement', nouvelle: '9.9.9', progres: 40, version: '1.0.0' }; setTimeout(() => { etat = { ...etat, etat: 'pret' }; }, 2500); window.studioMaj = { verifier: async () => etat, etat: async () => etat, installer: async () => { window.__installe = true; return etat; }, surChangement: () => {} }; });
   await pg2.goto('file://' + page); await pg2.waitForSelector('#bMaj.vu', { timeout: 8000 }).catch(() => {});

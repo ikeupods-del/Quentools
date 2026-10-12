@@ -254,6 +254,72 @@ const BRIEF = { da: { ambiance: 'luxe', mode: 'sombre', couleur: '#2e7d32', poli
     verifie(await pg.evaluate(() => (window.__corr || []).some(p => p.apres === 'Une phrase corrigée à la main' && /Texte écrit/.test(p.avant))), 'mémoire : un texte de l’IA corrigé à la main devient un exemple appris');
     await pg.click('#bMemoire'); await pg.click('[data-oublier]'); verifie(await pg.evaluate(() => window.__mem.consignes.length === 0), 'mémoire : une consigne peut être oubliée'); await pg.click('#memFermer');
   }
+  /* ── 8. Contrôle qualité : détection, nettoyage automatique, correction des contrastes ── */
+  {
+    await pg.reload(); await pg.waitForFunction(() => window.sites && window.sites.modeles().length);
+    const q1 = await pg.evaluate(async fiche => {
+      const g = await window.sites.genererSite({ fiche, modeleId: 'modele-vitrine', ecrire: null }); const h = g.html;
+      return { stat: /\[4,9\/5\]|ans d’expérience/.test(h.replace(/<script[\s\S]*?<\/script>/g, '')), avis: /★ 4,9|120 avis/.test(h), mentions: /href="mentions-legales\.html"/.test(h), tel: /href="tel:\+33478123456"/.test(h), notes: g.notes };
+    }, FICHE);
+    verifie(!q1.stat && !q1.avis, 'nettoyage : chiffres et avis restés entre crochets retirés (rien d’inventé affiché)', JSON.stringify(q1));
+    verifie(q1.mentions && q1.tel, 'nettoyage : lien vers les mentions légales et lien d’appel présents', JSON.stringify(q1));
+    await pg.waitForSelector('#qualite .qual h3', { timeout: 15000 });
+    await pg.waitForFunction(() => window.sites.etat.qualite, null, { timeout: 20000 });
+    const ui = await pg.innerText('#qualite');
+    verifie(/Contrôle qualité : \d+\/100/.test(ui) && /crochets|champs entre crochets/i.test(ui), 'contrôle qualité : note et points à corriger affichés dans le panneau', ui.slice(0, 160));
+    // contrastes : un texte volontairement illisible est détecté puis corrigé
+    const r2 = await pg.evaluate(async fiche => {
+      const g = await window.sites.genererSite({ fiche, modeleId: 'plombier', ecrire: null });
+      const faux = g.html.replace('</head>', '<style>main p, section p{color:#d9d9d9 !important}</style></head>');
+      const rendu = h => h.replace(/assets\/fonts\//g, 'modeles/polices/').replace(/assets\/(qt\.(?:css|js))/g, 'modeles/assets/$1');
+      const a = await Qualite.analyser(faux, { fiche, rendu: rendu(faux) });
+      return { codes: a.problemes.map(p => p.code), nb: a.contrastes.length, c: a.contrastes[0] };
+    }, FICHE);
+    verifie(r2.codes.includes('contraste') && r2.nb > 0 && /^#[0-9a-f]{6}$/i.test(r2.c.c), 'contrôle qualité : texte gris clair sur fond blanc détecté, couleur lisible proposée', JSON.stringify(r2));
+    const r3 = await pg.evaluate(async fiche => {
+      window.sites.etat.contrastes = [{ t: 'H1', x: 'Un', c: '#101010' }]; const brief = { ...window.sites.lireBrief() };
+      return brief.contrastes.length;
+    }, FICHE);
+    verifie(r3 === 1, 'contrôle qualité : les corrections de contraste font partie du cahier des charges');
+    // la correction est appliquée dans le HTML final
+    const h4 = await pg.evaluate(async fiche => { const g0 = await window.sites.genererSite({ fiche, modeleId: 'plombier', ecrire: null }); const x = (new DOMParser().parseFromString(g0.html, 'text/html').querySelector('h1').textContent || '').trim().slice(0, 12); const g = await window.sites.genererSite({ fiche, modeleId: 'plombier', ecrire: null, brief: { da: {}, modules: [], options: {}, faq: [], annonce: '', contrastes: [{ t: 'H1', x, c: '#102030' }] } }); return g.html; }, FICHE);
+    verifie(/<h1[^>]*style="[^"]*(#102030|rgb\(16, 32, 48\))[^"]*!important/.test(h4), 'contrôle qualité : la couleur corrigée est écrite dans le site', (h4.match(/<h1[^>]*>/) || [''])[0]);
+  }
+  /* ── 9. Galerie photos : réduction, légendes, aperçu, fichiers du site, visionneuse ── */
+  {
+    await pg.reload(); await pg.waitForFunction(() => window.sites && window.sites.modeles().length);
+    await pg.evaluate(async () => {
+      const faire = async (w, h, c) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d'); g.fillStyle = c; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; g.fillRect(w / 4, h / 4, w / 2, h / 2); const b = await new Promise(ok => cv.toBlob(ok, 'image/png')); return new File([b], 'grande-' + c.slice(1) + '.png', { type: 'image/png' }); };
+      await window.sites.ajouterPhotos([await faire(3000, 2000, '#c0392b'), await faire(800, 600, '#2980b9')]);
+      document.querySelector('#phListe [data-leg="0"]').value = 'Terrasse de l’établissement'; document.querySelector('#phListe [data-leg="0"]').dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const info = await pg.evaluate(() => ({ n: window.sites.etat.photos.length, w: window.sites.etat.photos.map(p => p.data.length), cases: document.querySelector('[data-mod="galerie"]').checked, f: window.sites.etat.photos.map(p => p.f) }));
+    verifie(info.n === 2 && info.cases && info.f.join() === 'photo-1.jpg,photo-2.jpg' && info.w.every(x => x > 500), 'photos : ajoutées, nommées et module « Galerie » coché', JSON.stringify(info));
+    const dim = await pg.evaluate(() => new Promise(ok => { const i = new Image(); i.onload = () => ok([i.naturalWidth, i.naturalHeight]); i.src = window.sites.etat.photos[0].data; }));
+    verifie(dim[0] === 1600 && dim[1] === 1067, 'photos : réduites à 1600 px de large (JPEG)', JSON.stringify(dim));
+    await pg.evaluate(async fiche => { window.sites.ecrireFiche({ ...fiche, domaine: 'kebab-erkan.fr' }); document.querySelector('#f_modele').value = 'plombier'; await window.sites.genererSite({ fiche: { ...fiche, domaine: 'kebab-erkan.fr' }, modeleId: 'plombier', ecrire: null }); }, FICHE);
+    const g1 = await pg.evaluate(() => ({ html: window.sites.etat.resultat.html, apercu: document.querySelector('#apercu').srcdoc }));
+    verifie(/class="qs-galerie"/.test(g1.html) && /src="assets\/img\/photo-1\.jpg" alt="Terrasse de l’établissement"/.test(g1.html) && /alt="[^"]*photo 2"/.test(g1.html), 'galerie : section ajoutée avec les légendes comme textes alternatifs');
+    verifie(/og:image" content="https:\/\/kebab-erkan\.fr\/assets\/img\/photo-1\.jpg"/.test(g1.html) && /og:title/.test(g1.html), 'partage : balises og (titre, description, première photo) avec le nom de domaine');
+    verifie(/src="data:image\/jpeg;base64,/.test(g1.apercu) && !/assets\/img\/photo-1/.test(g1.apercu), 'aperçu : les photos s’affichent avant l’enregistrement');
+    // fichiers du site sur disque, puis visionneuse
+    const fichiersPhotos = await pg.evaluate(() => window.sites.etat.photos.map(p => ({ nom: p.f, data: p.data })));
+    const { composerSite } = require('../marketing/studio-sites/composition.js');
+    const comp = composerSite({ index: g1.html, legal: '', notes: '', images: [...fichiersPhotos, { nom: '../evil.jpg', data: 'data:image/jpeg;base64,AAAA' }, { nom: 'photo-3.jpg', data: 'data:image/png;base64,AAAA' }] }, modelesDir);
+    verifie(comp.filter(f => /^assets\/img\//.test(f.chemin)).map(f => f.chemin).join() === 'assets/img/photo-1.jpg,assets/img/photo-2.jpg', 'composition : seules les vraies images JPEG au nom sûr sont écrites');
+    const dd = path.join(sortie, 'galerie'); for (const f of comp) { const c = path.join(dd, f.chemin); fs.mkdirSync(path.dirname(c), { recursive: true }); fs.writeFileSync(c, f.contenu); }
+    const page = await ctx.newPage(), errs = []; page.on('pageerror', e => errs.push(e.message));
+    await page.setViewportSize({ width: 1280, height: 800 }); await page.goto('file://' + path.join(dd, 'index.html')); await page.waitForTimeout(500);
+    await page.evaluate(() => document.querySelector('#qs-galerie').scrollIntoView()); await page.waitForTimeout(600);
+    verifie(await page.evaluate(() => [...document.querySelectorAll('.qs-galerie img')].every(i => i.complete && i.naturalWidth > 0)) && (await page.locator('.qs-galerie img').count()) === 2, 'site : les photos se chargent depuis assets/img/');
+    await page.click('.qs-galerie li:first-child a'); verifie(await page.evaluate(() => document.querySelector('.qs-zoom').open && /Terrasse/.test(document.querySelector('.qs-zoom img').alt)), 'visionneuse : la photo s’agrandit avec sa description');
+    await page.keyboard.press('ArrowRight'); verifie(await page.evaluate(() => /photo 2/.test(document.querySelector('.qs-zoom img').alt)), 'visionneuse : flèche droite = photo suivante');
+    await page.keyboard.press('Escape'); verifie(await page.evaluate(() => !document.querySelector('.qs-zoom').open), 'visionneuse : Échap la ferme');
+    const sw = await page.evaluate(() => document.documentElement.scrollWidth); await page.setViewportSize({ width: 390, height: 800 }); await page.waitForTimeout(300);
+    verifie((await page.evaluate(() => document.documentElement.scrollWidth)) <= 391 && !errs.length, 'site avec galerie : pas de défilement horizontal sur téléphone, aucune erreur', errs[0]); void sw;
+    await page.close();
+    await pg.evaluate(() => window.sites.onglet('style')); await pg.click('#phListe [data-suppr="1"]'); verifie(await pg.evaluate(() => window.sites.etat.photos.length === 1), 'photos : une photo peut être retirée');
+  }
   await b.close();
   console.log(erreurs ? `\n${erreurs} problème(s)` : '\nStudio Sites (fonctions) : tout est bon');
   process.exit(erreurs ? 1 : 0);

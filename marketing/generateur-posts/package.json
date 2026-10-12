@@ -1,7 +1,7 @@
 {
   "name": "studio-posts",
   "productName": "Studio Posts",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Publications Instagram et TikTok aux couleurs du Parvis et de QuenTools",
   "main": "main.js",
   "private": true,
