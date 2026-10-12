@@ -117,6 +117,15 @@ LUTS = [
     ('nb-doux', 'Noir et blanc doux', 'Noir et blanc', chaine(lambda x: mono(x), lambda x: delave(x, 0.05, 0.97), lambda x: courbe(x, 2))),
     ('nb-contraste', 'Noir et blanc contrasté', 'Noir et blanc', chaine(lambda x: mono(x), lambda x: courbe(x, 9))),
     ('nb-chaud', 'Noir et blanc chaud', 'Noir et blanc', chaine(lambda x: mono(x, (1.04, 1, 0.9)), lambda x: courbe(x, 3))),
+    # Looks des packs (réseaux, podcast, finance, voyage, sport, cérémonie)
+    ('reseaux-eclat', 'Éclat réseaux (contraste net, couleurs vives)', 'Thèmes des packs', chaine(lambda x: courbe(x, 5), lambda x: sat(x, 1.25), lambda x: split(x, (0, 0, 0.02), (0.02, 0.01, 0)))),
+    ('peau-doree', 'Peau dorée (portrait chaud)', 'Thèmes des packs', chaine(lambda x: lgg(x, (0.01, 0.005, 0), (1.04, 1.01, 0.96), (1.05, 1.01, 0.93)), lambda x: courbe(x, 2), lambda x: sat(x, 1.08))),
+    ('youtube-net', 'Net et propre (YouTube)', 'Thèmes des packs', chaine(lambda x: lgg(x, (0.015, 0.015, 0.015), (1.06, 1.06, 1.06)), lambda x: courbe(x, 3), lambda x: sat(x, 1.08))),
+    ('studio-podcast', 'Studio podcast (chaud, sombre)', 'Thèmes des packs', chaine(lambda x: split(x, (0.03, 0.01, -0.01), (0.04, 0.02, -0.03)), lambda x: courbe(x, 4), lambda x: sat(x, 0.88))),
+    ('finance-froid', 'Finance froide (bleu net)', 'Thèmes des packs', chaine(lambda x: split(x, (-0.02, 0.01, 0.06), (-0.01, 0.01, 0.03)), lambda x: courbe(x, 5), lambda x: sat(x, 0.85))),
+    ('voyage-clair', 'Voyage clair (bleus profonds)', 'Thèmes des packs', chaine(lambda x: split(x, (-0.02, 0.02, 0.05), (0.05, 0.03, -0.03)), lambda x: courbe(x, 3), lambda x: sat(x, 1.2))),
+    ('sport-punch', 'Sport punch (contraste fort)', 'Thèmes des packs', chaine(lambda x: courbe(x, 8), lambda x: sat(x, 1.3), lambda x: split(x, (0, 0, 0.03), (0.03, 0.01, -0.01)))),
+    ('ceremonie-doux', 'Cérémonie douce (lumière dorée)', 'Thèmes des packs', chaine(lambda x: delave(x, 0.05, 0.98), lambda x: lgg(x, (0.02, 0.012, 0.005), (1.05, 1.02, 0.97), (1.06, 1.02, 0.94)), lambda x: courbe(x, 2), lambda x: sat(x, 0.92))),
     ('cyanotype', 'Cyanotype (bleu)', 'Noir et blanc', chaine(lambda x: mono(x), lambda x: courbe(x, 3), lambda x: x * np.asarray([0.55, 0.78, 1.0]) + np.asarray([0.02, 0.06, 0.15]))),
 ]
 
