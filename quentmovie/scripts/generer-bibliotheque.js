@@ -322,6 +322,12 @@ function techBip() { const b = buf(0.5); mix(b, fade(tone(1760, 0.06, 0, 'square
 function techScan() { const b = buf(1.2); mix(b, fade(tone(t => 300 + 3200 * Math.pow(t / 1.0, 2), 1.0, 0, 'saw', 0.01), 0.02, 0.15), 0, 0.22); mix(b, hp(noise(1.0, 0), 5000), 0, 0.08); mix(b, tone(3600, 0.12, 0.04), 1.0, 0.3); return lp(b, 7000); }
 function finCloche() { const b = buf(3.2); for (const t of [0, 0.7, 1.4]) { mix(b, cloche(659.3, 2.2, 0.6), t, 0.7); mix(b, cloche(1318.5, 1.6, 0.3), t + 0.01, 0.4); } return reverb(b, 0.3, 1.4); }
 function finTicker() { R = rng(77); const b = buf(1.6); for (let k = 0; k < 26; k++) mix(b, hp(noise(0.012, 0.003), 3000 + rnd() * 2000), k * 0.055 + rnd() * 0.012, 0.35 + rnd() * 0.3); return b; }
+// ---- Sons de vlog et de podcast (suite) ----
+function vlRecStart() { const b = buf(0.6); mix(b, fade(tone(1568, 0.14, 0, 'sine', 0.003), 0.003, 0.03), 0, 0.5); mix(b, hp(noise(0.012, 0.003), 2500), 0.17, 0.5); mix(b, tone(120, 0.1, 0.03), 0.17, 0.3); return b; }
+function vlRecStop() { const b = buf(0.7); mix(b, fade(tone(1175, 0.1, 0, 'sine', 0.003), 0.003, 0.03), 0, 0.5); mix(b, fade(tone(880, 0.14, 0, 'sine', 0.003), 0.003, 0.04), 0.14, 0.5); mix(b, hp(noise(0.012, 0.003), 2500), 0.33, 0.4); return b; }
+function vlTitrePop() { const b = buf(0.7); mix(b, whoosh(0.35, 500, 4200, 0.5), 0, 0.5); mix(b, pop(), 0.22, 0.7); mix(b, cloche(2093, 0.4, 0.2), 0.24, 0.3); return reverb(b, 0.18, 1); }
+function podJingleCourt() { const b = buf(3.2); [523.3, 659.3, 784, 1046.5].forEach((f, i) => mix(b, pincee(f, 1.1, 0.996), i * 0.13, 0.55)); mix(b, podPad([261.6, 329.6, 392, 523.3], 2.6, 0.12), 0.1, 1); mix(b, cloche(1568, 2, 0.4), 0.55, 0.5); mix(b, tone(t => 60 + 80 * Math.exp(-t * 25), 0.3, 0.1, 'sine', 0.002), 0.5, 0.5); return reverb(b, 0.3, 1.2); }
+function podAmbiance() { R = rng(88); const b = lp(noise(8, 0), 500); for (let i = 0; i < b.length; i++) b[i] *= 0.07 * (0.8 + 0.2 * Math.sin(i / SR * PI2 * 0.25)); mix(b, tone(120, 8, 0, 'sine', 0.5), 0, 0.02); return fade(b, 1, 1); }
 function sirene() { const b = fade(lp(tone(t => 900 + 300 * Math.sin(t * PI2 * 1.3), 2.6, 0, 'tri', 0.02), 2600), 0.02, 0.15); for (let i = 0; i < b.length; i++) b[i] *= 0.55 + 0.45 * Math.sin(i / SR * PI2 * 5); return b; }
 function joie() { // petit jingle joyeux
   const b = buf(1.8);
@@ -452,6 +458,11 @@ const SONS = [
   ['tech-scan', 'Tech : balayage numérique', 'Tech et finance', techScan],
   ['fin-cloche', 'Finance : cloche d’ouverture des marchés', 'Tech et finance', finCloche],
   ['fin-ticker', 'Finance : défilement des cours', 'Tech et finance', finTicker],
+  ['vl-rec-start', 'Vlog : début d’enregistrement (REC)', 'Vlog', vlRecStart],
+  ['vl-rec-stop', 'Vlog : fin d’enregistrement', 'Vlog', vlRecStop],
+  ['vl-titre-pop', 'Vlog : apparition de titre', 'Vlog', vlTitrePop],
+  ['pod-jingle-court', 'Podcast : jingle court', 'Podcast', podJingleCourt],
+  ['pod-ambiance-studio', 'Podcast : ambiance de studio (fond léger)', 'Podcast', podAmbiance],
   ['generique-info', 'Générique d’édition spéciale', 'Télé et spectacle', genereriqueInfo],
   ['sirene', 'Sirène d’alerte', 'Télé et spectacle', sirene]
 ];

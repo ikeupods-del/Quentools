@@ -340,11 +340,14 @@ function buildClip(c, P, o = {}) {
         const y = vz.pos === 'haut' ? Math.round(H * 0.08) : vz.pos === 'bas' ? Math.round(H * 0.74) : Math.round((H - vh) / 2);
         const gen = { ligne: `showwaves=s=${W}x${vh}:mode=cline:rate=${fps}:colors=${col}:scale=sqrt`, ondes: `showwaves=s=${W}x${vh}:mode=line:rate=${fps}:colors=${col}:scale=sqrt`,
           points: `showwaves=s=${W}x${vh}:mode=point:rate=${fps}:colors=${col}:scale=sqrt`,
-          barres: `showfreqs=s=${W}x${vh}:mode=bar:fscale=log:ascale=sqrt:colors=${col}:win_size=1024` }[vz.type] || '';
+          barres: `showfreqs=s=${W}x${vh}:mode=bar:fscale=log:ascale=sqrt:colors=${col}:win_size=1024`,
+          // miroir : barres de fréquences symétriques (haut et bas) ; spectre : barres colorées par note
+          miroir: `showfreqs=s=${W}x${Math.max(2, Math.round(vh / 4) * 2)}:mode=bar:fscale=log:ascale=sqrt:colors=${col}:win_size=1024,split[vza][vzb];[vzb]vflip[vzc];[vza][vzc]vstack`,
+          spectre: `showcqt=s=${W}x${vh}:fps=${fps}:sono_h=0:axis_h=0:bar_g=2` }[vz.type] || '';
         if (gen && filters.has(gen.split('=')[0])) {
           const wv = lab();
-          if (o.preview) f.push(`[0:a]${gen},format=rgba${vz.type === 'barres' ? ',colorkey=black:0.25:0.1' : ''}[${wv}]`);
-          else { f.push(`[0:a]asplit=2[avz][aout]`); f.push(`[avz]${gen},format=rgba${vz.type === 'barres' ? ',colorkey=black:0.25:0.1' : ''}[${wv}]`); aSrc = 'aout'; }
+          if (o.preview) f.push(`[0:a]${gen},format=rgba${['barres', 'miroir', 'spectre'].includes(vz.type) ? ',colorkey=black:0.25:0.1' : ''}[${wv}]`);
+          else { f.push(`[0:a]asplit=2[avz][aout]`); f.push(`[avz]${gen},format=rgba${['barres', 'miroir', 'spectre'].includes(vz.type) ? ',colorkey=black:0.25:0.1' : ''}[${wv}]`); aSrc = 'aout'; }
           const out = lab(); f.push(`[${cur}][${wv}]overlay=x=0:y=${y}:shortest=1:format=auto[${out}]`); cur = out;
         }
       }
@@ -546,7 +549,7 @@ function buildClip(c, P, o = {}) {
     const acc = hex(ti.color || '#c8102e'), id = String(ti.preset);
     const txt = (name, content) => { const file = `r${idx}${name}.txt`; fs.writeFileSync(path.join(dir, file), String(content).slice(0, 600)); return file; };
     const l1 = String(ti.l1 || ''), l2 = String(ti.l2 || '');
-    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', jour: 'futura', prix: 'helvetica', caracteristiques: 'helvetica', liste: 'futura', verset: 'georgia', promo: 'futura', 'avertissement-sante': 'helvetica', 'cours-hausse': 'helvetica', 'cours-baisse': 'helvetica', 'bourse-defile': 'helvetica', avertissement: 'helvetica', hud: 'futura', barres: 'futura', episode: 'futura', invite: 'helvetica', sponsor: 'helvetica', abonne: 'futura', etape: 'futura', astuce: 'helvetica', rubrique: 'futura', chiffre: 'futura', 'lieu-vlog': 'futura', numero: 'futura', rec: 'courier', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
+    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', jour: 'futura', 'intro-vlog': 'futura', trajet: 'futura', temps: 'courier', 'now-playing': 'helvetica', question: 'futura', plateformes: 'helvetica', sommaire: 'futura', 'citation-pro': 'georgia', prix: 'helvetica', caracteristiques: 'helvetica', liste: 'futura', verset: 'georgia', promo: 'futura', 'avertissement-sante': 'helvetica', 'cours-hausse': 'helvetica', 'cours-baisse': 'helvetica', 'bourse-defile': 'helvetica', avertissement: 'helvetica', hud: 'futura', barres: 'futura', episode: 'futura', invite: 'helvetica', sponsor: 'helvetica', abonne: 'futura', etape: 'futura', astuce: 'helvetica', rubrique: 'futura', chiffre: 'futura', 'lieu-vlog': 'futura', numero: 'futura', rec: 'courier', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
     const font = `fontfile='${fontFile(ti.font || DEF_FONT[id])}'`;
     const dt = (file, size, color, x, y, extra = '') =>
       `drawtext=${font}:textfile=${file}:expansion=none:fontsize=${Math.round(size)}:fontcolor=${color}:x='${x}':y='${y}':${en}${extra}`;
@@ -763,6 +766,59 @@ function buildClip(c, P, o = {}) {
     } else if (id === 'promo') { // pack Mode et beauté : pastille de promotion en haut à droite
       text([dt(txt('a', l1), 11 * u, 'white', `w-text_w-8*${u}`, `${H * 0.1}-${22 * u}*(1-${Fb(0)})`, `:box=1:boxcolor=${acc}@0.97:boxborderw=${Math.round(2.4 * u)}`),
         ...(l2 ? [dt(txt('b', l2.toUpperCase()), 3 * u, 'white', `w-text_w-8*${u}`, `${H * 0.1 + 17 * u}-${22 * u}*(1-${Fb(0.1)})`, `:box=1:boxcolor=0x0b0f1c@0.92:boxborderw=${Math.round(1 * u)}`)] : [])]);
+    } else if (id === 'intro-vlog') { // pack Vlog : accroche (l2) et grand nom du lieu (l1) qui montent avec rebond, trait qui s'étire, date
+      const y = H * 0.4, X = '(w-text_w)/2';
+      const bw = even(W * 0.22), bh = even(Math.max(4, 0.7 * u)), src = lab(), out = lab();
+      f.push(`color=c=${acc}:s=${bw}x${bh}:r=${fps},format=rgba,scale=w='max(2,${bw}*${ease(S + 0.5, 0.8)})':h=${bh}:eval=frame[${src}]`);
+      f.push(`[${cur}][${src}]overlay=x='(W-w)/2':y='${Math.round(y + 19 * u)}':shortest=1:format=auto:${en}[${out}]`); cur = out;
+      text([dt(txt('t', (l2 || 'BIENVENUE À').toUpperCase().split('').join(' ')), 3.2 * u, acc, X, `${y - 4.4 * u}+${6 * u}*(1-${Fb(0)})`, `:alpha='${F}':shadowx=2:shadowy=2:shadowcolor=black@0.55`),
+        dt(txt('a', l1.toUpperCase()), 13 * u, 'white', X, `${y}+${9 * u}*(1-${Fb(0.12)})`, `:alpha='${F}':shadowx=${Math.round(0.35 * u)}:shadowy=${Math.round(0.35 * u)}:shadowcolor=black@0.5`)]);
+    } else if (id === 'trajet') { // pack Vlog : trajet « départ → arrivée » (l1 = départ, l2 = arrivée), trait qui se dessine entre deux points
+      const larg = 44 * u, x0 = (W - larg) / 2, y = H * 0.8, bh = even(Math.max(3, 0.55 * u)), src = lab(), out = lab();
+      f.push(`color=c=white@0.9:s=${even(larg)}x${bh}:r=${fps},format=rgba,scale=w='max(2,${even(larg)}*${ease(S + 0.3, 1.1)})':h=${bh}:eval=frame[${src}]`);
+      f.push(`[${cur}][${src}]overlay=x='${Math.round(x0)}':y='${Math.round(y)}':shortest=1:format=auto:${en}[${out}]`); cur = out;
+      box(acc, 2.4 * u, 2.4 * u, `${x0 - 1.2 * u}`, `${y - 1.1 * u}`);
+      box(acc, 2.4 * u, 2.4 * u, `${x0 + larg - 1.2 * u}-${larg}*(1-${ease(S + 0.3, 1.1)})*0+0`, `${y - 1.1 * u}`);
+      text([dt(txt('a', l1.toUpperCase()), 3.4 * u, 'white', `${x0 - 1.2 * u}`, `${y - 7 * u}`, `:alpha='${F}':shadowx=2:shadowy=2:shadowcolor=black@0.55`),
+        dt(txt('b', (l2 || '').toUpperCase()), 3.4 * u, 'white', `${x0 + larg + 1.2 * u}-text_w`, `${y - 7 * u}`, `:alpha='${ease(S + 1.1, 0.5)}':shadowx=2:shadowy=2:shadowcolor=black@0.55`)]);
+    } else if (id === 'temps') { // pack Vlog : date et heure façon caméscope, en bas à droite
+      text([dt(txt('a', l1.toUpperCase()), 3.4 * u, 'white', `w-text_w-6*${u}`, `${H * 0.88}`, `:alpha='${F}':shadowx=2:shadowy=2:shadowcolor=black@0.6`),
+        ...(l2 ? [dt(txt('b', l2), 3.4 * u, 'white', `w-text_w-6*${u}`, `${H * 0.88 + 4.2 * u}`, `:alpha='${F}':shadowx=2:shadowy=2:shadowcolor=black@0.6`)] : [])]);
+    } else if (id === 'now-playing') { // pack Vlog / Podcast : « en ce moment » avec égaliseur animé (l1 = titre, l2 = artiste)
+      const BX = `(-${W * 0.5}+(${5 * u}+${W * 0.5})*${Fb(0)})`, BX2 = `(-${W * 0.5}+(${5 * u}+${W * 0.5})*${Fb(0.12)})`, y = H * 0.08;
+      box('0x0b0f1c@0.92', 44 * u, 11 * u, BX, y); box(acc, 1 * u, 11 * u, BX, y);
+      for (let k = 0; k < 4; k++) {
+        const src = lab(), out = lab(), bw = even(1.5 * u), top = Math.round(y + 8.4 * u), hh = `max(2,${(5 * u).toFixed(1)}*(0.55+0.45*sin(${T}*${(7 + 2.3 * k).toFixed(1)}+${k * 1.7})))`;
+        f.push(`color=c=${acc}:s=${bw}x${even(6 * u)}:r=${fps},format=rgba,scale=w=${bw}:h='${hh}':eval=frame[${src}]`);
+        f.push(`[${cur}][${src}]overlay=x='${BX}+${(2.6 + k * 2.2) * u}':y='${top}-h':shortest=1:format=auto:${en}[${out}]`); cur = out;
+      }
+      text([dt(txt('t', 'EN CE MOMENT'), 2 * u, acc, `${BX2}+${12.5 * u}`, `${y + 1.4 * u}`),
+        dt(txt('a', l1), 3.8 * u, 'white', `${BX2}+${12.5 * u}`, `${y + 3.8 * u}`),
+        ...(l2 ? [dt(txt('b', l2), 2.7 * u, '0xc9ced9', `${BX2}+${12.5 * u}`, `${y + 8 * u}`)] : [])]);
+    } else if (id === 'question') { // pack Podcast : carte de question (étiquette + texte)
+      const BX = `(-${W * 0.7}+(${6 * u}+${W * 0.7})*${Fb(0)})`, BX2 = `(-${W * 0.7}+(${6 * u}+${W * 0.7})*${Fb(0.14)})`, lignes = wrap(l1, Math.floor(W * 0.6 / (5 * u * 0.55))), nl = lignes.split('\n').length, y = H * 0.5 - (nl * 3.2) * u;
+      box(acc, 0.9 * u, (nl * 6.6 + 7) * u, BX, y - 1 * u);
+      text([dt(txt('t', 'QUESTION'), 2.6 * u, acc, `${BX2}+${3 * u}`, `${y}`),
+        dt(txt('a', lignes), 5 * u, 'white', `${BX2}+${3 * u}`, `${y + 5 * u}`, `:line_spacing=${Math.round(1.1 * u)}:shadowx=2:shadowy=2:shadowcolor=black@0.55`)]);
+    } else if (id === 'plateformes') { // pack Podcast : bandeau « Écoute-nous sur… » (texte seulement, sans logos)
+      const bh = 9 * u, y = H - bh - 4 * u;
+      box('0x000000@0.62', W, bh, '0', `${y}+${bh}*(1-${F})`);
+      text([dt(txt('a', 'ÉCOUTE-NOUS SUR'), 2 * u, acc, '(w-text_w)/2', `${y + 1.3 * u}`, `:alpha='${F}'`),
+        dt(txt('b', l1), 3.6 * u, 'white', '(w-text_w)/2', `${y + 3.8 * u}`, `:alpha='${F}'`)]);
+    } else if (id === 'sommaire') { // pack Podcast : chapitres horodatés (une ligne « 04:12  Titre » par chapitre)
+      const items = l1.split('\n').map(x => x.trim()).filter(Boolean).slice(0, 6), parts = [];
+      parts.push(dt(txt('t', (l2 || 'AU PROGRAMME').toUpperCase()), 3 * u, acc, `${8 * u}`, `${H * 0.22}`, `:alpha='${F}'`));
+      items.forEach((it, i) => {
+        const m = it.match(/^(\d{1,2}:\d{2}(?::\d{2})?)\s+(.*)$/), t0 = m ? m[1] : '', t1 = m ? m[2] : it, X = `(-${W * 0.5}+(${8 * u}+${W * 0.5})*${Fb(0.16 * i)})`, yy = H * 0.3 + i * 9 * u;
+        parts.push(dt(txt('h' + i, t0), 4 * u, acc, X, `${yy + 0.4 * u}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.55`), dt(txt('i' + i, t1), 4.4 * u, 'white', `${X}+${15 * u}`, `${yy}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.55`));
+      });
+      text(parts);
+    } else if (id === 'citation-pro') { // pack Podcast : grande citation de l'invité sur panneau sombre (l1 = citation, l2 = auteur)
+      const lignes = wrap(l1, Math.floor(W * 0.62 / (5.4 * u * 0.55))), nl = lignes.split('\n').length, pw = W * 0.74, ph = (nl * 7.2 + 20) * u, px = (W - pw) / 2, py = H * 0.5 - ph / 2;
+      box('0x0b0f1c@0.88', pw, ph, `${px}`, `${py}+${3 * u}*(1-${F})`);
+      text([dt(txt('q', '“'), 26 * u, acc, `${px + 3 * u}`, `${py - 3 * u}`, `:alpha='${F}'`),
+        dt(txt('a', lignes), 5.4 * u, 'white', `${px + 9 * u}`, `${py + 8 * u}`, `:alpha='${F}':line_spacing=${Math.round(1.2 * u)}`),
+        ...(l2 ? [dt(txt('b', '— ' + l2), 3.4 * u, acc, `${px + 9 * u}`, `${py + ph - 8 * u}`, `:alpha='${F}'`)] : [])]);
     } else if (id === 'progression') { // barre de progression de la séquence
       const bh = even(Math.max(4, 1.1 * u)), src = lab(), out = lab();
       f.push(`color=c=${acc}:s=${even(W)}x${bh}:r=${fps},format=rgba,scale=w='max(2,${even(W)}*min(1,${T}/${Math.max(0.5, eff).toFixed(2)}))':h=${bh}:eval=frame[${src}]`);

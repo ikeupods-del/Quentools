@@ -983,6 +983,41 @@
    "cat": "Tech et finance",
    "file": "sons/fin-ticker.mp3",
    "duree": 1.6
+  },
+  {
+   "id": "vl-rec-start",
+   "nom": "Vlog : début d’enregistrement (REC)",
+   "cat": "Vlog",
+   "file": "sons/vl-rec-start.mp3",
+   "duree": 0.6
+  },
+  {
+   "id": "vl-rec-stop",
+   "nom": "Vlog : fin d’enregistrement",
+   "cat": "Vlog",
+   "file": "sons/vl-rec-stop.mp3",
+   "duree": 0.7
+  },
+  {
+   "id": "vl-titre-pop",
+   "nom": "Vlog : apparition de titre",
+   "cat": "Vlog",
+   "file": "sons/vl-titre-pop.mp3",
+   "duree": 0.7
+  },
+  {
+   "id": "pod-jingle-court",
+   "nom": "Podcast : jingle court",
+   "cat": "Podcast",
+   "file": "sons/pod-jingle-court.mp3",
+   "duree": 3.2
+  },
+  {
+   "id": "pod-ambiance-studio",
+   "nom": "Podcast : ambiance de studio (fond léger)",
+   "cat": "Podcast",
+   "file": "sons/pod-ambiance-studio.mp3",
+   "duree": 8
   }
  ],
  "musiques": [
@@ -1595,6 +1630,22 @@
    "file": "calques/tr-donnees.mp4",
    "duree": 1.2,
    "mode": "ecran"
+  },
+  {
+   "id": "grain-16mm",
+   "nom": "Grain de pellicule 16 mm",
+   "cat": "Rétro",
+   "file": "calques/grain-16mm.mp4",
+   "duree": 4,
+   "mode": "ecran"
+  },
+  {
+   "id": "rayons-fenetre",
+   "nom": "Rayons de fenêtre (lumière douce)",
+   "cat": "Lumière",
+   "file": "calques/rayons-fenetre.mp4",
+   "duree": 8,
+   "mode": "ecran"
   }
  ],
  "fonds": [
@@ -1735,6 +1786,34 @@
    "file": "fonds/anime-rayons.mp4",
    "kind": "video",
    "duree": 6
+  },
+  {
+   "id": "podcast-orange",
+   "nom": "Pochette orange (soir)",
+   "cat": "Podcast",
+   "file": "fonds/podcast-orange-h.jpg",
+   "kind": "image"
+  },
+  {
+   "id": "podcast-violet",
+   "nom": "Pochette violet et rose",
+   "cat": "Podcast",
+   "file": "fonds/podcast-violet-h.jpg",
+   "kind": "image"
+  },
+  {
+   "id": "podcast-sable",
+   "nom": "Pochette sable (papier)",
+   "cat": "Podcast",
+   "file": "fonds/podcast-sable-h.jpg",
+   "kind": "image"
+  },
+  {
+   "id": "podcast-nuit",
+   "nom": "Pochette nuit étoilée",
+   "cat": "Podcast",
+   "file": "fonds/podcast-nuit-h.jpg",
+   "kind": "image"
   }
  ],
  "fondvert": [
