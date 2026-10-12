@@ -546,7 +546,7 @@ function buildClip(c, P, o = {}) {
     const acc = hex(ti.color || '#c8102e'), id = String(ti.preset);
     const txt = (name, content) => { const file = `r${idx}${name}.txt`; fs.writeFileSync(path.join(dir, file), String(content).slice(0, 600)); return file; };
     const l1 = String(ti.l1 || ''), l2 = String(ti.l2 || '');
-    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', jour: 'futura', 'cours-hausse': 'helvetica', 'cours-baisse': 'helvetica', 'bourse-defile': 'helvetica', avertissement: 'helvetica', hud: 'futura', barres: 'futura', episode: 'futura', invite: 'helvetica', sponsor: 'helvetica', abonne: 'futura', etape: 'futura', astuce: 'helvetica', rubrique: 'futura', chiffre: 'futura', 'lieu-vlog': 'futura', numero: 'futura', rec: 'courier', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
+    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', jour: 'futura', prix: 'helvetica', caracteristiques: 'helvetica', liste: 'futura', verset: 'georgia', promo: 'futura', 'avertissement-sante': 'helvetica', 'cours-hausse': 'helvetica', 'cours-baisse': 'helvetica', 'bourse-defile': 'helvetica', avertissement: 'helvetica', hud: 'futura', barres: 'futura', episode: 'futura', invite: 'helvetica', sponsor: 'helvetica', abonne: 'futura', etape: 'futura', astuce: 'helvetica', rubrique: 'futura', chiffre: 'futura', 'lieu-vlog': 'futura', numero: 'futura', rec: 'courier', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
     const font = `fontfile='${fontFile(ti.font || DEF_FONT[id])}'`;
     const dt = (file, size, color, x, y, extra = '') =>
       `drawtext=${font}:textfile=${file}:expansion=none:fontsize=${Math.round(size)}:fontcolor=${color}:x='${x}':y='${y}':${en}${extra}`;
@@ -717,7 +717,7 @@ function buildClip(c, P, o = {}) {
       text([dt(txt('a', l1), 3.2 * u, 'white', `${W}-mod(${T}*${W * 0.11}\,${W}+text_w)`, `${y + 1.9 * u}`)]);
       box(acc, lw, bh, '0', y);
       text([dt(txt('b', l2 || 'MARCHÉS'), 3 * u, 'white', `(${lw}-text_w)/2`, `${y + 2 * u}`)]);
-    } else if (id === 'avertissement') { // Bourse / Pro : mention obligatoire, en bas, sur toute la durée
+    } else if (id === 'avertissement' || id === 'avertissement-sante') { // Bourse / Pro : mention obligatoire, en bas, sur toute la durée
       const lignes = wrap(l1, Math.floor(W * 0.9 / (2.3 * u * 0.55))), bh = 11 * u, y = H - bh;
       box('0x000000@0.66', W, bh, '0', y);
       text([dt(txt('a', lignes), 2.3 * u, 'white@0.92', '(w-text_w)/2', `${y + 2.2 * u}`, `:line_spacing=${Math.round(0.5 * u)}`)]);
@@ -738,6 +738,31 @@ function buildClip(c, P, o = {}) {
       });
       box('0xffffff@0.7', total + 4 * u, Math.max(2, 0.3 * u), `${Math.round(x0 - 2 * u)}`, `${Math.round(base)}`);
       if (l2) text([dt(txt('b', l2), 3.6 * u, 'white', '(w-text_w)/2', `${Math.round(base + 2.4 * u)}`, `:alpha='${F}':shadowx=2:shadowy=2:shadowcolor=black@0.5`)]);
+    } else if (id === 'prix') { // pack Immobilier : carte de prix (l1 = prix, l2 = étiquette)
+      const BX = `(-${W * 0.6}+(${5 * u}+${W * 0.6})*${Fb(0)})`, BX2 = `(-${W * 0.6}+(${5 * u}+${W * 0.6})*${Fb(0.14)})`, y = H * 0.7;
+      box('0x0b0f1c@0.94', 58 * u, 17 * u, BX, y); box(acc, 1.1 * u, 17 * u, BX, y);
+      text([dt(txt('t', (l2 || 'À VENDRE').toUpperCase()), 2.5 * u, acc, `${BX2}+${3.4 * u}`, `${y + 1.8 * u}`),
+        dt(txt('a', l1), 8.4 * u, 'white', `${BX2}+${3.4 * u}`, `${y + 5.4 * u}`)]);
+    } else if (id === 'caracteristiques') { // pack Immobilier : trois pastilles (l1 = « T3 | 68 m² | Balcon »)
+      const items = l1.split('|').map(x => x.trim()).filter(Boolean).slice(0, 4), n = Math.max(1, items.length);
+      text(items.map((it, i) => dt(txt('c' + i, it), 3.8 * u, 'white', `${W * (i + 0.5) / n}-text_w/2`, `${H * 0.84}+${4 * u}*(1-${Fb(0.12 * i)})`, `:alpha='${F}':box=1:boxcolor=0x0b0f1c@0.9:boxborderw=${Math.round(1.6 * u)}`)));
+    } else if (id === 'liste') { // pack Santé / École / Pro : liste à puces qui apparaissent une à une (l1 = lignes, l2 = titre)
+      const items = l1.split('\n').map(x => x.trim()).filter(Boolean).slice(0, 5), parts = [];
+      if (l2) parts.push(dt(txt('t', l2.toUpperCase()), 3 * u, acc, `${8 * u}`, `${H * 0.26}`, `:alpha='${F}'`));
+      items.forEach((it, i) => {
+        const X = `(-${W * 0.5}+(${8 * u}+${W * 0.5})*${Fb(0.2 * i)})`, yy = H * 0.34 + i * 10 * u;
+        box(acc, 2.2 * u, 2.2 * u, X, `${yy + 1.2 * u}`);
+        parts.push(dt(txt('i' + i, it), 4.6 * u, 'white', `${X}+${4.4 * u}`, `${yy}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.55`));
+      });
+      text(parts);
+    } else if (id === 'verset') { // pack Église : texte centré, filets dorés, référence
+      const lignes = wrap(l1, Math.floor(W * 0.74 / (5 * u * 0.54))), nl = lignes.split('\n').length, y0 = H * 0.5 - (nl * 3.4 + 4) * u;
+      box(acc, 14 * u, Math.max(2, 0.3 * u), '(W-w)/2', `${y0 - 3 * u}+${3 * u}*(1-${F})`);
+      text([dt(txt('a', lignes), 5 * u, 'white', '(w-text_w)/2', `${y0}`, `:alpha='${F}':line_spacing=${Math.round(1.2 * u)}:shadowx=2:shadowy=2:shadowcolor=black@0.6`),
+        ...(l2 ? [dt(txt('b', '— ' + l2), 3.2 * u, acc, '(w-text_w)/2', `${y0 + (nl * 6.6 + 3) * u}`, `:alpha='${F}'`)] : [])]);
+    } else if (id === 'promo') { // pack Mode et beauté : pastille de promotion en haut à droite
+      text([dt(txt('a', l1), 11 * u, 'white', `w-text_w-8*${u}`, `${H * 0.1}-${22 * u}*(1-${Fb(0)})`, `:box=1:boxcolor=${acc}@0.97:boxborderw=${Math.round(2.4 * u)}`),
+        ...(l2 ? [dt(txt('b', l2.toUpperCase()), 3 * u, 'white', `w-text_w-8*${u}`, `${H * 0.1 + 17 * u}-${22 * u}*(1-${Fb(0.1)})`, `:box=1:boxcolor=0x0b0f1c@0.92:boxborderw=${Math.round(1 * u)}`)] : [])]);
     } else if (id === 'progression') { // barre de progression de la séquence
       const bh = even(Math.max(4, 1.1 * u)), src = lab(), out = lab();
       f.push(`color=c=${acc}:s=${even(W)}x${bh}:r=${fps},format=rgba,scale=w='max(2,${even(W)}*min(1,${T}/${Math.max(0.5, eff).toFixed(2)}))':h=${bh}:eval=frame[${src}]`);

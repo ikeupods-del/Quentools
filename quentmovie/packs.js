@@ -76,7 +76,23 @@ const PACKS = [
     titres: ['cours-hausse', 'cours-baisse', 'hud', 'glitch-titre', 'abonne', 'avertissement'], calques: ['tr-tracking', 'tr-grille', 'tr-donnees'], sons: ['tech-boot', 'tr-glitch', 'tech-bip'], look: 'luts/cyberpunk.cube', musique: 'synthwave-80' },
   { famille: 'Tech et finance', id: 'entrepreneur', fond: 'fonds/bureau-flou-h.jpg', nom: 'Entrepreneur et business', couleur: '#ffb400', desc: 'Startup, ventes, leçons de terrain : chiffres clés, citations, cartes de cours, victoires et caisse enregistreuse.',
     transitions: ['zoomdoux', 'glissedoux', 'whipg', 'fondufloute'], dur: 0.4,
-    titres: ['chiffre', 'citation', 'double', 'etiquette', 'barres'], calques: ['tr-fuite-doree', 'tr-flash-chaud', 'tr-soleil'], sons: ['succes', 'caisse', 'tr-whoosh-long'], look: 'luts/clair-lumineux.cube', musique: 'joyeux-vlog' }
+    titres: ['chiffre', 'citation', 'double', 'etiquette', 'barres'], calques: ['tr-fuite-doree', 'tr-flash-chaud', 'tr-soleil'], sons: ['succes', 'caisse', 'tr-whoosh-long'], look: 'luts/clair-lumineux.cube', musique: 'joyeux-vlog' },
+  // ---- Famille Style de vie et communauté : mode et beauté, immobilier, santé, école, église ----
+  { famille: 'Style de vie', id: 'beaute', fond: 'fonds/pastel-h.jpg', nom: 'Mode et beauté', couleur: '#f4a6c0', desc: 'Looks, maquillage, boutiques : pastille de promotion, étiquettes, lumière rose, clics et obturateur.',
+    transitions: ['fondufloute', 'glissedoux', 'fondulumiere', 'zoomdoux'], dur: 0.45,
+    titres: ['promo', 'etiquette', 'angle', 'citation', 'cadre-titre'], calques: ['tr-fuite-rose', 'tr-soleil', 'tr-flash-chaud'], sons: ['vl-clic', 'vl-pizz-gai', 'tr-obturateur'], look: 'luts/clair-lumineux.cube', musique: 'joyeux-vlog' },
+  { famille: 'Style de vie', id: 'immobilier', fond: 'fonds/studio-blanc-h.jpg', nom: 'Immobilier et visite', couleur: '#2f80ff', desc: 'Visites de biens : carte de prix, pastilles de caractéristiques, nom du lieu, glissés doux et lumière du jour.',
+    transitions: ['glissedoux', 'diagdoux', 'zoomdoux', 'fondufloute'], dur: 0.5,
+    titres: ['prix', 'caracteristiques', 'lieu-vlog', 'double', 'chiffre'], calques: ['tr-soleil', 'tr-flash-bleu'], sons: ['vl-cloche', 'tr-ding', 'vl-souffle'], look: 'luts/clair-lumineux.cube', musique: 'ambiance-douce' },
+  { famille: 'Style de vie', id: 'sante', fond: 'fonds/pastel-h.jpg', nom: 'Santé et bien-être', couleur: '#2fd6a3', desc: 'Conseils, sport doux, nutrition, méditation : listes à puces, étapes, astuces, fondus lents et mention « pas un avis médical ».',
+    transitions: ['fondufloute', 'dissolve', 'glissedoux', 'fondulumiere'], dur: 0.7,
+    titres: ['liste', 'etape', 'astuce', 'chiffre', 'avertissement-sante'], calques: ['tr-fuite-bleue', 'tr-soleil'], sons: ['vl-cloche', 'vl-pizz-doux', 'vl-souffle'], look: 'luts/clair-lumineux.cube', musique: 'piano-chill' },
+  { famille: 'Style de vie', id: 'ecole', fond: 'fonds/tableau-h.jpg', nom: 'École et cours', couleur: '#ffb400', desc: 'Cours, révisions, soutien scolaire : étapes numérotées, listes, astuces, chiffres clés, pages qui tournent.',
+    transitions: ['glissedoux', 'zoomdoux', 'fondufloute', 'whipg'], dur: 0.45,
+    titres: ['etape', 'liste', 'astuce', 'chiffre', 'episode'], calques: ['tr-flash-bleu', 'tr-fuite-doree'], sons: ['vl-clic', 'vl-page', 'tr-ding'], look: 'luts/clair-lumineux.cube', musique: 'lofi-tranquille' },
+  { famille: 'Style de vie', id: 'eglise', fond: 'fonds/bureau-flou-h.jpg', nom: 'Église et spiritualité', couleur: '#c9a45c', desc: 'Cultes, méditations, témoignages : versets avec filets dorés, titres de film, fondus lumineux, cloches et cordes douces.',
+    transitions: ['fondufloute', 'fondulumiere', 'fadeblack', 'irisdoux'], dur: 0.9,
+    titres: ['verset', 'citation', 'cine-titre', 'cadre-titre', 'lieu-vlog'], calques: ['tr-fuite-doree', 'tr-soleil', 'tr-anamorphique'], sons: ['vl-cloche', 'vl-pizz-doux', 'pod-ping'], look: 'luts/argentique-chaud.cube', musique: 'piano-chill' }
 ];
 
 module.exports = { PACKS };
