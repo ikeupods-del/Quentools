@@ -527,7 +527,8 @@ function buildClip(c, P, o = {}) {
     const acc = hex(ti.color || '#c8102e'), id = String(ti.preset);
     const txt = (name, content) => { const file = `r${idx}${name}.txt`; fs.writeFileSync(path.join(dir, file), String(content).slice(0, 600)); return file; };
     const l1 = String(ti.l1 || ''), l2 = String(ti.l2 || '');
-    const font = `fontfile='${fontFile(ti.font)}'`;
+    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
+    const font = `fontfile='${fontFile(ti.font || DEF_FONT[id])}'`;
     const dt = (file, size, color, x, y, extra = '') =>
       `drawtext=${font}:textfile=${file}:expansion=none:fontsize=${Math.round(size)}:fontcolor=${color}:x='${x}':y='${y}':${en}${extra}`;
     const box = (color, w, h, x, y) => {
@@ -598,37 +599,37 @@ function buildClip(c, P, o = {}) {
         ...(l2 ? [dt(txt('b', l2), 3.2 * u, 'white', '(w-text_w)/2', `${Math.round(H * 0.46 + 12 * u)}`, `:alpha='${F}'`)] : [])]);
     } else if (id === 'angle') { // pack Réseaux : bloc d'accent et bloc sombre décalés
       const BX = `(-${W * 0.7}+(${4 * u}+${W * 0.7})*${F})`, y = H * 0.74;
-      box(acc, 0.9 * u, 11 * u, BX, y); box('0x0b0f1c@0.92', 52 * u, 11 * u, `${BX}+${0.9 * u}`, y);
-      text([dt(txt('a', l1), 4.4 * u, 'white', `${BX}+${3.4 * u}`, `${y + 1.2 * u}`),
-        ...(l2 ? [dt(txt('b', l2), 2.8 * u, acc, `${BX}+${3.4 * u}`, `${y + 6.6 * u}`)] : [])]);
+      box(acc, 1.1 * u, 13 * u, BX, y); box('0x0b0f1c@0.93', 56 * u, 13 * u, `${BX}+${0.9 * u}`, y);
+      text([dt(txt('a', l1), 5.4 * u, 'white', `${BX}+${3.8 * u}`, `${y + 1.3 * u}`, `:shadowx=${Math.round(0.2 * u)}:shadowy=${Math.round(0.2 * u)}:shadowcolor=black@0.5`),
+        ...(l2 ? [dt(txt('b', l2), 3.3 * u, acc, `${BX}+${3.8 * u}`, `${y + 8 * u}`)] : [])]);
     } else if (id === 'pseudo') { // pack Réseaux : @pseudo dans une pastille
       const BX = `(-${W * 0.5}+(${5 * u}+${W * 0.5})*${F})`;
-      text([dt(txt('a', l1), 4 * u, 'white', BX, `${H * 0.8}`, `:box=1:boxcolor=${acc}@0.95:boxborderw=${Math.round(1.6 * u)}`)]);
+      text([dt(txt('a', l1), 5 * u, 'white', BX, `${H * 0.8}`, `:box=1:boxcolor=${acc}@0.96:boxborderw=${Math.round(2 * u)}`)]);
     } else if (id === 'etiquette') { // pack Réseaux : étiquette qui pop au centre-haut
-      text([dt(txt('a', l1.toUpperCase()), 4.2 * u, 'white', '(w-text_w)/2', `${H * 0.12}`, `:alpha='${F}':box=1:boxcolor=${acc}@0.96:boxborderw=${Math.round(1.8 * u)}`)]);
+      text([dt(txt('a', l1.toUpperCase()), 5 * u, 'white', '(w-text_w)/2', `${H * 0.12}`, `:alpha='${F}':box=1:boxcolor=${acc}@0.97:boxborderw=${Math.round(2.2 * u)}`)]);
     } else if (id === 'double') { // pack Journal : deux barres de couleurs
       const BX = `(-${W * 0.8}+(${3 * u}+${W * 0.8})*${F})`, y = H * 0.72;
-      box(acc, 62 * u, 6 * u, BX, y); box('0xffffff@0.96', 52 * u, 5.4 * u, `${BX}`, y + 6 * u);
-      text([dt(txt('a', l1), 3.8 * u, 'white', `${BX}+${2 * u}`, `${y + 1.1 * u}`),
-        ...(l2 ? [dt(txt('b', l2), 3 * u, '0x10131f', `${BX}+${2 * u}`, `${y + 7.1 * u}`)] : [])]);
+      box(acc, 64 * u, 7.2 * u, BX, y); box('0xffffff@0.97', 54 * u, 6.6 * u, `${BX}`, y + 7.2 * u);
+      text([dt(txt('a', l1), 4.6 * u, 'white', `${BX}+${2.4 * u}`, `${y + 1.3 * u}`),
+        ...(l2 ? [dt(txt('b', l2), 3.6 * u, '0x10131f', `${BX}+${2.4 * u}`, `${y + 8.4 * u}`)] : [])]);
     } else if (id === 'cine-titre') { // pack Cinéma : bandes noires qui entrent et titre espacé
       const hb = H * 0.12;
       box('black', W, hb, '0', `-${hb}+${hb}*${F}`); box('black', W, hb, '0', `${H}-${hb}*${F}`);
-      text([dt(txt('a', l1.toUpperCase().split('').join(' ')), 5 * u, 'white', '(w-text_w)/2', `${H * 0.5 - 3 * u}`, `:alpha='${F}'`),
-        ...(l2 ? [dt(txt('b', l2), 2.6 * u, acc, '(w-text_w)/2', `${H * 0.5 + 4 * u}`, `:alpha='${F}'`)] : [])]);
+      text([dt(txt('a', l1.toUpperCase().split('').join(' ')), 6.6 * u, 'white', '(w-text_w)/2', `${H * 0.5 - 4 * u}`, `:alpha='${F}'`),
+        ...(l2 ? [dt(txt('b', l2), 3 * u, acc, '(w-text_w)/2', `${H * 0.5 + 6 * u}`, `:alpha='${F}'`)] : [])]);
     } else if (id === 'glitch-titre') { // pack Glitch : trois copies décalées qui tremblent
       const j = (k, a) => `(w-text_w)/2+${a}*${u}*sin(${T}*${k})*gt(mod(floor(${T}*9),3),0)`;
-      text([dt(txt('a', l1), 8 * u, '0xff2d55@0.85', j(41, 0.7), `${H * 0.45}+0.3*${u}`, `:alpha='${F}'`),
-        dt(txt('b', l1), 8 * u, '0x00e5ff@0.85', j(53, -0.7), `${H * 0.45}-0.3*${u}`, `:alpha='${F}'`),
-        dt(txt('c', l1), 8 * u, 'white', '(w-text_w)/2', `${H * 0.45}`, `:alpha='${F}'`)]);
+      text([dt(txt('a', l1), 11 * u, '0xff2d55@0.85', j(41, 0.7), `${H * 0.45}+0.3*${u}`, `:alpha='${F}'`),
+        dt(txt('b', l1), 11 * u, '0x00e5ff@0.85', j(53, -0.7), `${H * 0.45}-0.3*${u}`, `:alpha='${F}'`),
+        dt(txt('c', l1), 11 * u, 'white', '(w-text_w)/2', `${H * 0.45}`, `:alpha='${F}'`)]);
     } else if (id === 'impact-titre') { // pack Impact : gros titre sur boîte, léger tremblement
-      text([dt(txt('a', l1.toUpperCase()), 11 * u, 'white', `(w-text_w)/2+${0.35 * u}*sin(${T}*60)*(1-${F})`, `${H * 0.42}`, `:alpha='${F}':box=1:boxcolor=${acc}@0.97:boxborderw=${Math.round(2.4 * u)}`),
-        ...(l2 ? [dt(txt('b', l2.toUpperCase()), 3.4 * u, 'white', '(w-text_w)/2', `${H * 0.42 + 17 * u}`, `:alpha='${F}':borderw=2:bordercolor=black@0.7`)] : [])]);
+      text([dt(txt('a', l1.toUpperCase()), 14 * u, 'white', `(w-text_w)/2+${0.35 * u}*sin(${T}*60)*(1-${F})`, `${H * 0.42}`, `:alpha='${F}':box=1:boxcolor=${acc}@0.97:boxborderw=${Math.round(2.4 * u)}`),
+        ...(l2 ? [dt(txt('b', l2.toUpperCase()), 3.4 * u, 'white', '(w-text_w)/2', `${H * 0.42 + 21 * u}`, `:alpha='${F}':borderw=2:bordercolor=black@0.7`)] : [])]);
     } else if (id === 'cadre-titre') { // pack Doux : titre dans un cadre fin
       const bw = W * 0.62, bh = 22 * u, x = `(W-${bw})/2`, y = `${H * 0.5 - 11 * u}`, e = Math.max(2, 0.3 * u);
       box(acc, bw, e, x, y); box(acc, bw, e, x, `${H * 0.5 + 11 * u - e}`); box(acc, e, bh, x, y); box(acc, e, bh, `(W+${bw})/2-${e}`, y);
-      text([dt(txt('a', l1), 6 * u, 'white', '(w-text_w)/2', `${H * 0.5 - 5 * u}`, `:alpha='${F}'`),
-        ...(l2 ? [dt(txt('b', l2), 2.8 * u, acc, '(w-text_w)/2', `${H * 0.5 + 3.4 * u}`, `:alpha='${F}'`)] : [])]);
+      text([dt(txt('a', l1), 8 * u, 'white', '(w-text_w)/2', `${H * 0.5 - 6 * u}`, `:alpha='${F}'`),
+        ...(l2 ? [dt(txt('b', l2), 3.4 * u, acc, '(w-text_w)/2', `${H * 0.5 + 4.6 * u}`, `:alpha='${F}'`)] : [])]);
     } else if (id === 'progression') { // barre de progression de la séquence
       const bh = even(Math.max(4, 1.1 * u)), src = lab(), out = lab();
       f.push(`color=c=${acc}:s=${even(W)}x${bh}:r=${fps},format=rgba,scale=w='max(2,${even(W)}*min(1,${T}/${Math.max(0.5, eff).toFixed(2)}))':h=${bh}:eval=frame[${src}]`);
@@ -745,7 +746,7 @@ function buildClip(c, P, o = {}) {
           const t0 = Date.now(), epi = EPI.creer({ run, FFMPEG, encoder, FX, aFiltre: n => filters.has(n), clamp, num }), E = encodeursClip(P, proxy, project.quality === 'max', vt), fps = P.fps;
           const F = await epi.compterToutes(segs.map(sg => path.join(dir, sg)));
           const etape = t => { job.step = t; };
-          const r = await epi.assembler({ cwd: dir, segs, fps, trans, F, enc: E, paralleles: enParallele, etape });
+          const r = await epi.assembler({ cwd: dir, segs, fps, trans, F, echelle: Math.min(P.w, P.h) / 1080, enc: E, paralleles: enParallele, etape });
           let video = r.video; const raccords = r.plan.pieces.map(p => p.debut);
           if (pistes.length) {
             const intervalles = pistes.map(p => { const deb = clamp(num(p.start, 0), 0, 36000), du = p.kind === 'image' ? clamp(num(p.dur, 4), 0.3, 3600) : clamp(num(p.out, 1) - num(p.in, 0), 0.3, 36000); return { fa: Math.floor(deb * fps), fb: Math.ceil((deb + du) * fps) + 1 }; });
@@ -780,8 +781,7 @@ function buildClip(c, P, o = {}) {
           const tr = trans[i - 1], nv = `v${i}x`, na = `a${i}x`;
           if (tr) {
             const d = clamp(num(tr.dur, 0.6), 0.2, Math.max(0.2, Math.min(len, lens[i]) * 0.9));
-            const def = FX.TRANSITIONS.find(t => t.id === tr.type), ty = def.expr ? `custom:expr='${def.expr}'` : tr.type;
-            g.push(`[${cv}][vi${i}]xfade=transition=${ty}:duration=${d.toFixed(2)}:offset=${(len - d).toFixed(3)},${norm}[${nv}]`,
+            g.push(`[${cv}][vi${i}]${FX.filtreTransition(tr.type, d, len - d, Math.min(P.w, P.h) / 1080)},${norm}[${nv}]`,
               `[${ca}][ai${i}]acrossfade=d=${d.toFixed(2)}[${na}]`);
             len += lens[i] - d;
           } else {
