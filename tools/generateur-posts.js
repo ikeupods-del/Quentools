@@ -35,16 +35,24 @@ const quentools = JSON.parse(fs.readFileSync(path.join(__dirname, 'publications.
   return { nom: (p.titre || p.id).replace(/\*/g, ''), categorie: p.etiquette || 'Publication', marque: 'quentools', legende: { titre: p.tiktok || '', texte: p.legende || '' }, slides: [s] };
 });
 
+// Génération par l'IA : carrousels déjà écrits par secteur (exemples donnés à l'IA et repli sans IA) et captures de téléphone des sites d'exemple
+const EXEMPLES_QT = JSON.parse(fs.readFileSync(path.join(__dirname, 'carrousels.json'), 'utf8')).filter(c => /^exemples\/[\w-]+\/$/.test(c.site || '') && c.hook && c.pb && c.sb)
+  .map(c => ({ id: c.id, hook: c.hook, accent: c.accent, prob: c.prob, pb: c.pb, sol: c.sol, sb: c.sb, cap: c.cap, tt: c.tt, tags: c.tags }));
+const dirCaptures = path.join(dossier, 'captures'), CAPTURES = {};
+if (fs.existsSync(dirCaptures)) for (const f of fs.readdirSync(dirCaptures).filter(x => /\.jpg$/.test(x)).sort()) CAPTURES[f.replace('.jpg', '')] = 'data:image/jpeg;base64,' + fs.readFileSync(path.join(dirCaptures, f)).toString('base64');
+
 const sortie = `/* Généré par tools/generateur-posts.js : ne pas modifier à la main. */
 window.POLICES = ${JSON.stringify(POLICES)};
 window.BIBLIOTHEQUE = ${JSON.stringify({ parvis, quentools }, null, 1)};
+window.EXEMPLES_QT = ${JSON.stringify(EXEMPLES_QT)};
+window.CAPTURES = ${JSON.stringify(CAPTURES)};
 `;
 fs.writeFileSync(path.join(dossier, 'donnees.js'), sortie);
-console.log(`donnees.js : ${POLICES.length} polices, ${parvis.length} publications Le Parvis, ${quentools.length} publications QuenTools (${Math.round(sortie.length / 1024)} Ko)`);
+console.log(`donnees.js : ${POLICES.length} polices, ${parvis.length} publications Le Parvis, ${quentools.length} publications QuenTools, ${EXEMPLES_QT.length} carrousels par secteur, ${Object.keys(CAPTURES).length} captures (${Math.round(sortie.length / 1024)} Ko)`);
 
 const iU = process.argv.indexOf('--fichier-unique');
 if (iU > 0) {
-  const page = fs.readFileSync(path.join(dossier, 'index.html'), 'utf8').replace('<script src="donnees.js"></script>', () => `<script>\n${sortie}</script>`);
+  const page = fs.readFileSync(path.join(dossier, 'index.html'), 'utf8').replace('<script src="donnees.js"></script>', () => `<script>\n${sortie}</script>`).replace('<script src="generation.js"></script>', () => `<script>\n${fs.readFileSync(path.join(dossier, 'generation.js'), 'utf8')}</script>`);
   fs.writeFileSync(process.argv[iU + 1], page);
   console.log('fichier unique : ' + process.argv[iU + 1]);
 }

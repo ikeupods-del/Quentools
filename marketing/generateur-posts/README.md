@@ -7,6 +7,13 @@ Outil privé (jamais publié sur le site) pour créer des carrousels et des imag
 - Ou double-cliquer sur `index.html` (Chrome ou Safari). Aucun serveur, aucune connexion, aucune ressource externe.
 - Version en un seul fichier, à copier où l'on veut : `node tools/generateur-posts.js --fichier-unique ~/Desktop/Studio-Posts.html`.
 
+## Générer en un clic (✨ Générer, touche G)
+Choisir la marque et le thème (Le Parvis : verset du jour, encouragement, prière, histoire biblique, liste ; QuenTools : carrousel 5 images par métier, conseil, liste, astuces), éventuellement un sujet ou un métier, puis **Générer** : la publication est écrite, mise en page (le texte trop long est raccourci), légende et hashtags compris, prête à exporter (« Exporter tout de suite » = ZIP direct).
+- **IA locale** (application Mac) : modèle Qwen3 4B téléchargé une seule fois dans `~/Movies/QuentMovie/modeles` (partagé avec QuentMovie et Studio Sites), aucune connexion ensuite. Code partagé : `marketing/ia-locale/` copié dans chaque outil par `node tools/synchro-ia-locale.js` (ne jamais modifier les copies).
+- **Sans IA** (page ouverte dans un navigateur, ou IA non installée) : une publication déjà écrite est proposée, la génération marche donc toujours.
+- **Règles contrôlées par le programme** (`generation.js`), pas par l'IA : versets du Parvis pris uniquement dans la bibliothèque (Louis Segond 1910, mot pour mot, l'IA ne choisit qu'un numéro et écrit la méditation) ; références d'histoires bibliques seulement si l'histoire est connue ; QuenTools sans prix, lien, pourcentage, chiffre inventé, faux avis ni mention de l'IA. Un texte refusé est redemandé deux fois, puis la publication déjà écrite est proposée.
+- Carrousels QuenTools : la capture du téléphone est celle du site d'exemple du métier (`marketing/generateur-posts/captures/`, refaites par `node tools/captures-exemples.js`).
+
 ## Utiliser
 1. **Nouveau** : partir d'un modèle (Le Parvis : verset du jour, liste, encouragement, histoire biblique, prière, verset seul ; QuenTools : carrousel 5 images « situation → constat → solution → téléphone → question », conseil, liste, astuces, avant/après).
 2. **Bibliothèque** : mes publications (enregistrées dans le navigateur), les 31 publications du Parvis et les 15 publications QuenTools déjà écrites.
@@ -24,4 +31,6 @@ Raccourcis : ← → changer d'image, ⌘Z annuler, ⇧⌘Z rétablir, ⌘D dupl
 - `index.html` : l'application (rendu sur canvas : l'aperçu est exactement l'image exportée).
 - `donnees.js` : polices en base64 et bibliothèque, **généré** par `node tools/generateur-posts.js` (à relancer après une modification de `parvis-posts.js` ou de `tools/publications.json`).
 - `parvis-posts.js` : textes des publications du Parvis.
+- `generation.js` : génération par l'IA (thèmes, consignes, règles de contenu, repli) ; `preload.js` + `main.js` : pont vers l'IA locale ; `ia-locale.js`, `ia-worker.js` : copies de `marketing/ia-locale/`.
+- `captures/` : captures sur téléphone des sites d'exemple.
 - Contrôle : `node tools/verifier-generateur-posts.js` (modèles dans les 3 formats, bibliothèque, export ZIP, alertes, annulation, enregistrement ; `--captures dossier` pour des planches de relecture).

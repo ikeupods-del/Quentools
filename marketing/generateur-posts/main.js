@@ -1,10 +1,20 @@
 // Studio Posts : fenêtre de l'application Mac (Electron) autour de index.html.
 // Tout reste sur le Mac : aucune connexion, projets enregistrés dans le stockage de l'application.
 'use strict';
-const { app, BrowserWindow, Menu, shell } = require('electron');
+const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
 const path = require('path');
 
-let win = null;
+let win = null, ia = null;
+// IA locale (ia-locale.js : modèle téléchargé une fois dans le dossier de QuentMovie, jamais de connexion ensuite) ; seule notre page peut l'appeler
+const IA = () => ia || (ia = require('./ia-locale').creer());
+const depuisNotrePage = e => !!win && e.sender === win.webContents;
+ipcMain.handle('ia:etat', e => { if (!depuisNotrePage(e)) throw new Error('refusé'); return IA().etat(); });
+ipcMain.handle('ia:installer', async e => { if (!depuisNotrePage(e)) throw new Error('refusé'); await IA().installer(p => { if (!e.sender.isDestroyed()) e.sender.send('ia:progres', p); }); return IA().etat(); });
+ipcMain.handle('ia:ecrire', (e, m) => {
+  if (!depuisNotrePage(e)) throw new Error('refusé');
+  const s = x => String(x || '').slice(0, 12000);
+  return IA().ecrire({ systeme: s(m && m.systeme), demande: s(m && m.demande), schema: m && typeof m.schema === 'object' ? m.schema : undefined, maxTokens: Math.min(1500, Math.max(50, +(m && m.maxTokens) || 700)), temperature: Math.min(1, Math.max(0, +(m && m.temperature) || 0.5)) });
+});
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 
@@ -46,7 +56,7 @@ function menu() {
 function ouvrir() {
   win = new BrowserWindow({
     width: 1440, height: 900, minWidth: 1100, minHeight: 680, backgroundColor: '#0f0f13', title: 'Studio Posts',
-    webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false }
+    webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, preload: path.join(__dirname, 'preload.js') }
   });
   win.loadFile(path.join(__dirname, 'index.html'));
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/.test(url)) shell.openExternal(url); return { action: 'deny' }; });
@@ -67,6 +77,12 @@ function autotest() {
         const trop = [];
         for (const m of ['parvis', 'quentools']) for (const x of studio.MODELES[m]) for (const f of ['45', '11', '916']) x.slides.forEach((s, i) => { if (studio.rendre({ ...x, marque: m, format: f }, i).trop) trop.push(m + ' ' + x.nom + ' ' + f); });
         ok({ polices: document.fonts.check('800 40px QBric') && document.fonts.check('italic 500 40px QPlay'), modeles: studio.MODELES.parvis.length + studio.MODELES.quentools.length, bibliotheque: BIBLIOTHEQUE.parvis.length + BIBLIOTHEQUE.quentools.length, trop }); } }, 100); })`);
+      // génération : le pont vers l'IA locale répond, et « Générer » donne une publication complète (sans IA : publication déjà écrite)
+      res.generation = await win.webContents.executeJavaScript(`(async () => {
+        const e = window.studioIA ? await window.studioIA.etat() : null;
+        const r = await studio.generer({ marque: 'quentools', themeId: 'carrousel', sujet: 'plombier', format: '45', sansExport: true, sansIA: true });
+        return { pont: !!e, installee: e && e.installee, n: r.projet ? r.projet.slides.length : 0, source: r.source, erreur: r.erreur, tel: r.projet && r.projet.slides[3] ? !!r.projet.slides[3].image : false };
+      })()`);
     } catch (e) { res.erreur = e.message; }
     fin();
   });
@@ -74,4 +90,5 @@ function autotest() {
 
 app.whenReady().then(() => { menu(); ouvrir(); });
 app.on('activate', () => { if (!win) ouvrir(); });
+app.on('will-quit', () => { if (ia) ia.arreter(); });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin' || process.env.STUDIO_AUTOTEST) app.quit(); });
