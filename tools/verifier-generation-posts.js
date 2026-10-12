@@ -52,7 +52,7 @@ function remplir(sch, k = { n: 0, refs: 0 }) {
   await regle('quentools', 'liste', 'Voir www.exemple.fr pour *tout savoir*', 'lien');
   await regle('quentools', 'astuces', '*80 %* des clients cherchent sur Google', 'chiffre');
   await regle('quentools', 'conseil', 'Un site créé par l’*IA*', 'IA');
-  await regle('quentools', 'conseil', 'Ton site doit *rassurer*', 'vouvoie');
+  await regle('quentools', 'conseil', 'Ton site doit *rassurer* tes clients', 'vouvoie');
   await regle('parvis', 'verset', 'Comme dit Jean 3:16, Dieu t’aime', 'référence');
   await regle('parvis', 'liste', '« Je suis avec toi » dit le *Seigneur*', 'guillemets');
   // trois refus d'affilée : erreur claire, rien n'est créé

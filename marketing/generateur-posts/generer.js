@@ -39,7 +39,8 @@ const SYSTEME = {
     'quand il faut un verset, tu choisis seulement une référence dans la liste fournie, le programme recopie lui-même le texte exact. ' +
     'Aucun émoji, aucun hashtag. Dans un titre de couverture, mets UN mot ou groupe de mots important entre astérisques : *mot*.',
   quentools: 'Tu écris des publications Instagram et TikTok pour QuenTools, une agence de communication digitale qui crée des sites internet simples et efficaces ' +
-    'pour les artisans, commerçants, indépendants et petites entreprises. Tu vouvoies le lecteur. Ton clair, concret et bienveillant, sans jargon technique. ' +
+    'pour les artisans, commerçants, indépendants et petites entreprises. Le lecteur est un de ces professionnels : chaque publication parle de SON site internet ' +
+    'ou de sa présence en ligne (être trouvé, rassurer, être contacté), jamais de développement personnel. Tu vouvoies TOUJOURS le lecteur, même pour décrire la situation de ses clients. Ton clair, concret et bienveillant, sans jargon technique. ' +
     'Règles absolues : aucun prix, aucun lien ni adresse de site, aucun chiffre, pourcentage ou statistique, aucun faux avis ni témoignage, ' +
     'ne parle jamais d’intelligence artificielle ni d’IA. Aucun émoji, aucun hashtag. ' +
     'Dans chaque titre, mets UN mot ou groupe de mots important entre astérisques : *mot*.'
@@ -96,9 +97,10 @@ function formes(versetsPermis) {
         consigne: sujet => `Thème : ${sujet}.\nÉcris une prière courte, sincère et simple sur ce thème, adressée à Dieu, que le lecteur peut prier lui-même (à la première personne : « je », « mon ») :\n` +
           '- « titre » : titre de couverture, du genre « Une *prière* pour… » ;\n- « debut » : la première partie de la prière, 2 ou 3 phrases qui commencent après « Seigneur, » ;\n' +
           '- « fin » : la seconde partie, 2 ou 3 phrases de remerciement et de confiance qui commencent après « Merci, » et finissent par « au nom de Jésus. » ;\n- « accroche » : un titre TikTok.',
+        finir: r => { r.debut = r.debut.replace(/^seigneur\s*[,!.]?\s*/i, ''); r.fin = r.fin.replace(/^merci\s*[,!.]?\s*/i, ''); for (const k of ['debut', 'fin']) r[k] = r[k].charAt(0).toUpperCase() + r[k].slice(1); },
         construire: r => ({ nom: r.titre.replace(/\*/g, ''), slides: [{ type: 'couverture', titre: r.titre, sous: 'Lis-la à voix basse.' }, { type: 'point', titre: 'Seigneur,', texte: r.debut }, { type: 'point', titre: 'Merci,', texte: r.fin },
           CTA_PARVIS('Tu as prié avec nous ?', 'Écris « Amen » en commentaire et abonne-toi.')],
-        legende: { titre: r.accroche, texte: `Prions ensemble 🙏\n\nSeigneur, ${r.debut}\nMerci, ${r.fin}\n\nÉcris « Amen » si tu t’associes à cette prière.\n\n${HASHTAGS.parvis} #priere` } })
+        legende: { titre: r.accroche, texte: `Prions ensemble 🙏\n\nSeigneur, ${r.debut.charAt(0).toLowerCase() + r.debut.slice(1)}\nMerci, ${r.fin.charAt(0).toLowerCase() + r.fin.slice(1)}\n\nÉcris « Amen » si tu t’associes à cette prière.\n\n${HASHTAGS.parvis} #priere` } })
       }
     },
     quentools: {
@@ -179,7 +181,7 @@ function controler(marque, r, schema) {
     if (/https?:|www\.|\.(fr|com|net)\b|@/i.test(tout)) return 'aucun lien, aucune adresse';
     if (/\bIA\b|intelligence artificielle|chat\s?gpt|\bia\b/i.test(tout)) return 'ne parle pas d’IA';
     if (/\d\s?%|pour\s?cent|\b\d{2,}\b|statisti|étude|sondage/i.test(tout)) return 'aucun chiffre, pourcentage ou statistique';
-    if (/\b(tu|ton|ta|tes|toi|t’)\b/i.test(tout.replace(/\*/g, ''))) return 'vouvoie le lecteur (« vous »), jamais « tu »';
+    if ((tout.replace(/\*/g, '').match(/(^|[\s«“"(])(tu|ton|ta|tes|toi|t’\p{L}+)(?=[\s,.!?;:»”")]|$)/giu) || []).length >= 2) return 'vouvoie le lecteur (« vous »), jamais « tu »';
     if (/\b(avis|témoignage)s?\b.*«|«.*\b(client|cliente)\b/i.test(tout)) return 'aucun faux avis ni témoignage';
   }
   // longueurs (une grammaire peut laisser passer) et champs vides
@@ -193,6 +195,25 @@ function controler(marque, r, schema) {
   return trop.length ? 'textes trop longs ou vides : ' + trop.join(', ') + ' (raccourcis-les)' : '';
 }
 
+// La grammaire ne limite pas la longueur (elle couperait les phrases au milieu d'un mot) : les maximums sont annoncés
+// dans la demande, contrôlés par le programme, et un texte trop long est redemandé.
+function sansLongueurMax(sch) {
+  if (!sch || typeof sch !== 'object') return sch;
+  const { maxLength, ...reste } = sch;
+  if (reste.items) reste.items = sansLongueurMax(reste.items);
+  if (reste.properties) reste.properties = Object.fromEntries(Object.entries(reste.properties).map(([k, v]) => [k, sansLongueurMax(v)]));
+  return reste;
+}
+function longueurs(sch) {
+  const l = [];
+  (function parcourir(x, nom) {
+    if (!x) return;
+    if (x.type === 'string' && x.maxLength) l.push(`${nom} : ${x.maxLength} caractères maximum`);
+    else if (x.type === 'array') parcourir(x.items, nom + ' (chacun)');
+    else if (x.type === 'object') for (const [k, v] of Object.entries(x.properties)) parcourir(v, nom ? `${nom} › ${k}` : k);
+  })(sch, '');
+  return l.length ? `\n\nLongueurs à respecter (phrases complètes, jamais coupées) : ${l.join(' ; ')}.` : '';
+}
 const hasard = l => l[Math.floor(Math.random() * l.length)];
 const ASCII = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
@@ -216,13 +237,14 @@ function creer({ demander }) {
     for (const [i, temperature] of [0.75, 0.55, 0.35].entries()) {
       etape(i ? `L’IA corrige sa proposition (essai ${i + 1} sur 3)…` : `L’IA écrit : ${FORMES[marque][forme].toLowerCase()} · ${theme}`);
       const dem = raison ? `${demande}\n\nTa proposition précédente a été refusée : ${raison}. Corrige ce défaut.` : demande;
-      r = nettoyer(await demander({ systeme: SYSTEME[marque], demande: dem, schema: F.schema, maxTokens: 1400, temperature }));
+      r = nettoyer(await demander({ systeme: SYSTEME[marque], demande: dem + longueurs(F.schema), schema: sansLongueurMax(F.schema), maxTokens: 1400, temperature }));
       raison = controler(marque, r, F.schema) || (F.verifier ? F.verifier(r) : '');
       if (!raison) break;
       // au dernier essai, des textes un peu longs sont acceptés : l'image les rétrécit et le signale
       if (i === 2 && /^textes trop longs/.test(raison)) { raison = ''; break; }
     }
     if (raison) throw new Error('L’IA n’a pas respecté les règles (' + raison + '). Appuie de nouveau sur Générer.');
+    if (F.finir) F.finir(r);
     const p = F.construire(r, secteur);
     return { marque, forme, sujet: theme, ...p, nom: String(p.nom || theme).slice(0, 90) };
   }
