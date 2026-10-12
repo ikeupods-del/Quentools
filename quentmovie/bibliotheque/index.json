@@ -1018,6 +1018,34 @@
    "cat": "Podcast",
    "file": "sons/pod-ambiance-studio.mp3",
    "duree": 8
+  },
+  {
+   "id": "fin-fermeture",
+   "nom": "Finance : cloche de fermeture des marchés",
+   "cat": "Tech et finance",
+   "file": "sons/fin-fermeture.mp3",
+   "duree": 3.4
+  },
+  {
+   "id": "fin-alerte",
+   "nom": "Finance : alerte de marché",
+   "cat": "Tech et finance",
+   "file": "sons/fin-alerte.mp3",
+   "duree": 1.1
+  },
+  {
+   "id": "fin-graphique",
+   "nom": "Finance : tracé d’un graphique",
+   "cat": "Tech et finance",
+   "file": "sons/fin-graphique.mp3",
+   "duree": 1.9
+  },
+  {
+   "id": "fin-chiffres",
+   "nom": "Finance : chiffres qui défilent",
+   "cat": "Tech et finance",
+   "file": "sons/fin-chiffres.mp3",
+   "duree": 2
   }
  ],
  "musiques": [
@@ -1814,6 +1842,20 @@
    "cat": "Podcast",
    "file": "fonds/podcast-nuit-h.jpg",
    "kind": "image"
+  },
+  {
+   "id": "bourse-sombre",
+   "nom": "Bougies de bourse (fixe)",
+   "cat": "Finance",
+   "file": "fonds/bourse-sombre-h.jpg",
+   "kind": "image"
+  },
+  {
+   "id": "anime-bourse",
+   "nom": "Bougies de bourse qui défilent (animé)",
+   "cat": "Finance",
+   "file": "fonds/anime-bourse.mp4",
+   "kind": "video"
   }
  ],
  "fondvert": [
