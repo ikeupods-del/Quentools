@@ -170,6 +170,7 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 #stAnims{grid-template-columns:1fr 1fr;gap:6px}#stAnims .carte{padding:7px 6px;font-size:12px;text-align:left}#stAnims kbd{margin-right:4px}
 #stAnim{position:absolute;pointer-events:none;overflow:hidden;z-index:1}#stAnim canvas{max-width:none;max-height:none}
 .stBandeau{position:absolute;left:5%;bottom:12%;background:#5b3df5;color:#fff;padding:10px 18px;border-left:6px solid #d7f24a;animation:bandeau .5s ease-out both;font:600 2.2vw/1.25 system-ui}
+.pkcouv{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:7px;background:#0d0e11;display:block}.pkgr{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:4px 0 8px}.pkgr>div{font-size:10px;line-height:1.2;color:#aab;cursor:pointer;text-align:center}.pkgr img,.pkgr video{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:5px;display:block;background:#0d0e11;margin-bottom:2px}.pkh{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8a8f9c;margin:6px 0 2px}.pksons{display:flex;flex-wrap:wrap;gap:5px}.pksons button{font-size:11px;padding:3px 7px}
 .stDirect{position:absolute;border-radius:10px;overflow:hidden;box-shadow:0 8px 30px #0008;animation:apparait .35s ease-out both}.stDirect img,.stDirect video{display:block;width:100%;height:auto}
 .stDirect.logo{box-shadow:none;border-radius:0}.stDirect.ecran{pointer-events:auto;cursor:move;touch-action:none;outline:2px dashed #d7f24a88}.stPoignee{position:absolute;right:6px;bottom:6px;width:20px;height:20px;border-radius:50%;background:#d7f24a;border:2px solid #000;cursor:nwse-resize}.stTexte{position:absolute;left:50%;top:8%;transform:translateX(-50%);max-width:86%;background:#5b3df5;color:#fff;padding:.5em 1em;border-left:.35em solid #d7f24a;border-radius:6px;font:700 2.4vw/1.25 system-ui;text-align:center;animation:apparait .35s ease-out both;white-space:pre-wrap}
 #stDirectBtns{grid-template-columns:1fr 1fr;gap:6px}#stDirectBtns .carte{padding:7px 6px;font-size:12px;text-align:left}#stDirectBtns .carte.on{border-color:#d7f24a;background:#2c2a10}
@@ -520,7 +521,26 @@ function sourceVignette() {
   return m ? { file: m.file, kind: m.kind, t: m.kind === 'image' ? 0 : 0.5 } : null;
 }
 const carteRep = r => `<div class="carte txt" draggable="true" data-drag="rep:${r.id}" data-rep="${r.id}">${esc(r.nom)}</div>`;
-const carteTr = (t, tr) => `<div class="carte txt" draggable="true" data-drag="tr:${t.id}" data-tr="${t.id}" ${tr && tr.type === t.id ? 'style="border-color:var(--ac)"' : ''}>${esc(t.nom)}</div>`;
+const videoTr = id => `<video muted loop playsinline preload="auto" src="/lib/apercus/tr-${id}.mp4" onerror="this.remove()"></video>`;
+const carteTr = (t, tr) => `<div class="carte" draggable="true" data-drag="tr:${t.id}" data-tr="${t.id}" ${tr && tr.type === t.id ? 'style="border-color:var(--ac)"' : ''}>${videoTr(t.id)}<span>${esc(t.nom)}</span></div>`;
+// Aperçus des titres animés : image du moteur (mêmes polices et mêmes mouvements que l'export), sur le décor du pack ; mémorisés pour la session
+const APT = new Map();
+async function apercuTitre(id, fond) {
+  const k = id + '|' + fond; if (APT.has(k)) return APT.get(k);
+  const r = CAT.reportage.find(x => x.id === id); if (!r) return '';
+  const c = { file: 'lib:' + fond, kind: 'image', dur: 4, fit: 'fill', fx: [], key: {}, titre: { preset: id, l1: r.l1, l2: r.l2, color: r.color, start: 0, dur: 0 } };
+  try {
+    const rep = await api('/api/preview', { method: 'POST', body: JSON.stringify({ project: { format: 'horizontal', fps: 30, res: 360, clips: [c] }, clip: c, t: 1.4 }) });
+    if (!rep.ok) throw new Error('aperçu');
+    const url = URL.createObjectURL(await rep.blob()); APT.set(k, url); return url;
+  } catch (e) { return ''; }
+}
+async function chargerApercusTitres() {
+  const imgs = [...document.querySelectorAll('#navbody img[data-apt]')];
+  for (const im of imgs) { if (tab !== 'packs' || !im.isConnected) return; const u = await apercuTitre(im.dataset.apt, im.dataset.fond); if (u && im.isConnected) im.src = u; }
+}
+document.addEventListener('mouseover', e => { const v = e.target.closest && e.target.closest('video[src*="/lib/apercus/"]'); if (v && v.paused) v.play().catch(() => {}); });
+document.addEventListener('mouseout', e => { const v = e.target.closest && e.target.closest('video[src*="/lib/apercus/"]'); if (v && !v.paused && !v.contains(e.relatedTarget)) { v.pause(); v.currentTime = 0; } });
 function navigateur() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   const el = $('#navbody'), keep = el.scrollTop; let h = '';
@@ -554,15 +574,18 @@ function navigateur() {
   } else if (tab === 'packs') {
     const L = LIB(), nomTr = id => (CAT.transitions.find(t => t.id === id) || {}).nom || id, nomRep = id => (CAT.reportage.find(r => r.id === id) || {}).nom || id;
     const nomLib = (liste, id) => (liste.find(x => x.id === id) || {}).nom || id;
-    h = `<p class="mut">Des <b>packs de montage</b> comme sur Premiere Pro : chaque pack réunit des transitions, des titres animés, des effets de coupe (flash, glitch…), des bruitages et un look, tous créés pour QuentMovie. <b>Appliquer</b> pose tout sur ta timeline en un clic (annulable avec ⌘Z).</p>` +
-      [...new Set((CAT.packs || []).map(P => P.famille || 'Montage'))].map(fam => `<h3>Packs ${esc(fam.toLowerCase())}</h3>` + (CAT.packs || []).filter(P => (P.famille || 'Montage') === fam).map(P => `<div class="pack" data-pack="${P.id}" style="border:1px solid #2a2d35;border-left:5px solid ${P.couleur};border-radius:8px;padding:9px 10px;margin:10px 0;background:#181a1f">
-        <b style="font-size:14px">${esc(P.nom)}</b><div class="mut" style="margin:3px 0 6px">${esc(P.desc)}</div>
-        <div class="mut"><b>Transitions</b> : ${P.transitions.map(t => `<a href="#" data-tr="${t}">${esc(nomTr(t))}</a>`).join(' · ')}</div>
-        <div class="mut"><b>Titres</b> : ${P.titres.map(t => `<a href="#" data-rep="${t}">${esc(nomRep(t))}</a>`).join(' · ')}</div>
-        <div class="mut"><b>Effets de coupe</b> : ${P.calques.map(c => esc(nomLib(L.calques, c))).join(' · ')}</div>
-        <div class="mut"><b>Sons</b> : ${P.sons.map(c => esc(nomLib(L.sons, c))).join(' · ')}${P.look ? `<br><b>Look</b> : ${esc(nomLib(L.luts, P.look.replace(/^luts\//, '').replace(/\.cube$/, '')))}` : ''}${P.musique ? `<br><b>Musique</b> : ${esc(nomLib(L.musiques, P.musique))}` : ''}</div>
-        <div class="ligne" style="margin-top:6px;flex-wrap:wrap;gap:8px"><label><input type="checkbox" class="pk-tr" checked> transitions</label><label><input type="checkbox" class="pk-cal" checked> effets de coupe</label><label><input type="checkbox" class="pk-son" checked> sons</label>${P.look ? '<label><input type="checkbox" class="pk-look"> look sur tous les clips</label>' : ''}${P.musique ? '<label><input type="checkbox" class="pk-mus"> musique de fond</label>' : ''}</div>
+    h = `<p class="mut">Des <b>packs de montage</b> comme sur Premiere Pro : chaque pack réunit des transitions, des titres animés, des effets de coupe (flash, fuite de lumière…), des bruitages et un look, tous créés pour QuentMovie. Survole une transition pour la voir bouger. <b>Appliquer</b> pose tout sur ta timeline en un clic (annulable avec ⌘Z).</p>` +
+      [...new Set((CAT.packs || []).map(P => P.famille || 'Montage'))].map(fam => `<h3>Packs ${esc(fam.toLowerCase())}</h3>` + (CAT.packs || []).filter(P => (P.famille || 'Montage') === fam).map(P => `<div class="pack" data-pack="${P.id}" style="border:1px solid #2a2d35;border-top:4px solid ${P.couleur};border-radius:9px;padding:9px 10px;margin:12px 0;background:#181a1f">
+        <img class="pkcouv" data-apt="${P.titres[0]}" data-fond="${P.fond}" data-pack-couv="${P.id}" alt="">
+        <b style="font-size:15px;display:block;margin-top:7px">${esc(P.nom)}</b><div class="mut" style="margin:2px 0 4px">${esc(P.desc)}</div>
+        <div class="pkh">Transitions</div><div class="pkgr">${P.transitions.map(t => `<div data-tr="${t}">${videoTr(t)}${esc(nomTr(t))}</div>`).join('')}</div>
+        <div class="pkh">Titres animés</div><div class="pkgr">${P.titres.map(t => `<div data-rep="${t}"><img data-apt="${t}" data-fond="${P.fond}" alt="">${esc(nomRep(t))}</div>`).join('')}</div>
+        <div class="pkh">Effets de coupe</div><div class="pkgr">${P.calques.map(c => `<div><img loading="lazy" src="/api/frame?file=${enc('lib:calques/' + c + '.mp4')}&t=0.5" alt="">${esc(nomLib(L.calques, c))}</div>`).join('')}</div>
+        <div class="pkh">Sons${P.musique ? ' et musique' : ''}</div><div class="pksons">${P.sons.map(c => { const x = L.sons.find(y => y.id === c); return x ? `<button class="mini" data-play="${x.file}" title="Écouter">▶ ${esc(x.nom.replace(/^(Transition|Vlog) : /, ''))}</button>` : ''; }).join('')}${P.musique ? (() => { const m = L.musiques.find(y => y.id === P.musique); return m ? `<button class="mini" data-play="${m.file}" title="Écouter">♪ ${esc(m.nom)}</button>` : ''; })() : ''}</div>
+        ${P.look ? `<div class="pkh">Look</div><div class="mut">${esc(nomLib(L.luts, P.look.replace(/^luts\//, '').replace(/\.cube$/, '')))}</div>` : ''}
+        <div class="ligne" style="margin-top:8px;flex-wrap:wrap;gap:8px"><label><input type="checkbox" class="pk-tr" checked> transitions</label><label><input type="checkbox" class="pk-cal" checked> effets de coupe</label><label><input type="checkbox" class="pk-son" checked> sons</label>${P.look ? '<label><input type="checkbox" class="pk-look"> look</label>' : ''}${P.musique ? '<label><input type="checkbox" class="pk-mus"> musique</label>' : ''}</div>
         <button class="pri" data-pack-app="${P.id}" style="width:100%;margin-top:6px">Appliquer ${esc(P.nom)} à toutes les coupes</button></div>`).join('')).join('');
+    setTimeout(chargerApercusTitres, 30);
   } else if (tab === 'titres') {
     h = `${sansClip}<h3>Titres de reportage (animés)</h3><div class="grille">` + CAT.reportage.filter(r => !r.pack).map(carteRep).join('') + '</div>' +
       (CAT.packs || []).filter(P => CAT.reportage.some(r => r.pack === P.id)).map(P => `<h3>${esc(P.nom)} · titres</h3><div class="grille">` + CAT.reportage.filter(r => r.pack === P.id).map(carteRep).join('') + '</div>').join('') +
