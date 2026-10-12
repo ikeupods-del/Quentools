@@ -1,0 +1,52 @@
+{
+  "name": "studio-sites",
+  "productName": "Studio Sites",
+  "version": "1.0.0",
+  "description": "Génère le site d'un professionnel à partir des exemples QuenTools, avec l'IA locale du Mac",
+  "main": "main.js",
+  "private": true,
+  "author": "QuenTools",
+  "scripts": {
+    "start": "electron .",
+    "donnees": "node ../../tools/studio-sites.js",
+    "dist": "node ../../tools/synchro-ia-locale.js && node ../../tools/studio-sites.js && electron-builder --mac dmg --arm64 --publish never"
+  },
+  "build": {
+    "appId": "fr.quentools.studiosites",
+    "productName": "Studio Sites",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "moteur.js",
+      "ia-locale.js",
+      "ia-worker.js",
+      "modeles/**",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/node-llama-cpp/**",
+      "node_modules/@node-llama-cpp/**"
+    ],
+    "afterPack": "scripts/adhoc-sign.js",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "identity": null,
+      "icon": "build/icon.png",
+      "artifactName": "Studio-Sites-${version}-arm64.${ext}"
+    },
+    "dmg": {
+      "title": "Studio Sites"
+    },
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "dependencies": {
+    "node-llama-cpp": "3.21.1"
+  },
+  "devDependencies": {
+    "electron": "43.7.5",
+    "electron-builder": "^25.1.8"
+  }
+}
