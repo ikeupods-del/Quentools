@@ -298,6 +298,30 @@ function trObturateur() { const b = buf(0.8); mix(b, hp(noise(0.02, 0.005), 2500
 function trRewind() { const b = buf(1.2); mix(b, tone(t => 3200 - 2600 * t, 1.0, 0, 'saw', 0.01), 0, 0.22); mix(b, hp(noise(1.0, 0), 2500), 0, 0.2); return fade(lp(b, 6000), 0.02, 0.15); }
 function trChoc() { const b = buf(1.5); mix(b, impact(1.4, 130, 38, 2), 0, 1); mix(b, hp(noise(0.12, 0.03), 2000), 0, 0.7); mix(b, lp(noise(1.2, 0.5), 200), 0.02, 0.6); return b; }
 function trDing() { const b = buf(1.4); mix(b, whoosh(0.4, 400, 6000, 0.7), 0, 0.5); mix(b, cloche(1568, 1.1, 0.5), 0.3, 0.7); mix(b, cloche(2349, 1, 0.35), 0.34, 0.5); return b; }
+// ---- Sons de vlog : cordes pincées (Karplus-Strong), souffles doux, clics d'interface ----
+function pincee(f, sec, amort = 0.996) { const n = Math.round(SR / f), b = buf(sec), ligne = new Float32Array(n); for (let i = 0; i < n; i++) ligne[i] = sgn(); let p = 0, prev = 0; for (let i = 0; i < b.length; i++) { const x = ligne[p]; b[i] = x; const y = amort * 0.5 * (x + prev); prev = x; ligne[p] = y; p = (p + 1) % n; } return fade(b, 0.001, 0.05); }
+function vlPizz(notes, pas, g = 0.6) { const b = buf(notes.length * pas + 1.2); notes.forEach((f, i) => mix(b, pincee(f, 1.1, 0.995), i * pas, g)); return reverb(b, 0.2, 1); }
+function vlSouffle() { const b = buf(0.9); mix(b, whoosh(0.8, 500, 3500, 0.7), 0, 0.6); mix(b, hp(noise(0.5, 0.25), 6000), 0.2, 0.12); return reverb(b, 0.2, 1); }
+function vlClic() { const b = buf(0.3); mix(b, hp(noise(0.012, 0.003), 2500), 0, 0.7); mix(b, tone(1500, 0.05, 0.015), 0.002, 0.35); mix(b, tone(2300, 0.04, 0.01), 0.07, 0.25); return b; }
+function vlCloche() { const b = buf(2); mix(b, cloche(1319, 1.8, 0.5), 0, 0.7); mix(b, cloche(1976, 1.6, 0.3), 0.01, 0.4); return reverb(b, 0.3, 1.4); }
+function vlPage() { const b = buf(0.7); mix(b, hp(lp(noise(0.5, 0.14), 6500), 900), 0, 0.5); mix(b, whoosh(0.35, 700, 2500, 0.5), 0.03, 0.4); return b; }
+// ---- Jingles de podcast (créations originales) : accord de pad, arpège de cordes pincées, cloches ----
+function podPad(freqs, sec, g) { const b = buf(sec); for (const f of freqs) mix(b, fade(lp(tone(f, sec, 0, 'saw', 0.9), 1700), 0.9, 1.3), 0, g); return b; }
+function podIntro() { const b = buf(5.6); mix(b, podPad([130.8, 196, 261.6, 329.6, 392, 493.9], 5, 0.12), 0, 1);
+  [523.3, 659.3, 784, 987.8, 1174.7, 1318.5, 1568].forEach((f, i) => mix(b, pincee(f, 1.3, 0.996), 0.5 + i * 0.16, 0.55));
+  for (const k of [0.5, 1.3, 2.1, 2.9]) mix(b, tone(t => 60 + 80 * Math.exp(-t * 25), 0.3, 0.1, 'sine', 0.002), k, 0.6);
+  mix(b, cloche(1046.5, 3, 0.5), 2.2, 0.5); mix(b, cloche(1568, 2.5, 0.35), 2.25, 0.4); mix(b, whoosh(0.7, 300, 4000, 0.7), 0, 0.5); return reverb(b, 0.3, 1.3); }
+function podOutro() { const b = buf(6.5); mix(b, podPad([130.8, 164.8, 196, 261.6, 329.6], 5.5, 0.12), 0.2, 1);
+  [1568, 1318.5, 1174.7, 987.8, 784, 659.3, 523.3].forEach((f, i) => mix(b, pincee(f, 1.3, 0.996), i * 0.2, 0.5));
+  mix(b, cloche(523.3, 4, 0.5), 1.5, 0.55); mix(b, cloche(1046.5, 3.5, 0.3), 1.52, 0.4); for (const k of [0, 0.8, 1.6]) mix(b, tone(t => 60 + 80 * Math.exp(-t * 25), 0.3, 0.1, 'sine', 0.002), k, 0.5); return reverb(b, 0.35, 1.4); }
+function podRubrique() { const b = buf(1.8); [[784, 0], [1046.5, 0.16], [1318.5, 0.32]].forEach(([f, t]) => { mix(b, tone(f, 0.5, 0.12, 'sine', 0.002), t, 0.5); mix(b, tone(f * 3, 0.2, 0.04, 'sine', 0.002), t, 0.15); }); mix(b, whoosh(0.5, 400, 3500, 0.5), 0, 0.4); return reverb(b, 0.25, 1); }
+function podPing() { const b = buf(1.4); mix(b, cloche(1760, 1.2, 0.5), 0, 0.7); mix(b, cloche(2637, 1, 0.25), 0.02, 0.4); return b; }
+// ---- Sons tech et finance ----
+function techBoot() { const b = buf(1.8); [523.3, 659.3, 784, 1046.5].forEach((f, i) => { mix(b, tone(f, 0.5, 0.14, 'sine', 0.003), i * 0.09, 0.45); mix(b, tone(f * 2, 0.3, 0.07, 'tri', 0.003), i * 0.09, 0.2); }); mix(b, whoosh(0.6, 300, 5000, 0.5), 0, 0.4); return reverb(b, 0.25, 1); }
+function techBip() { const b = buf(0.5); mix(b, fade(tone(1760, 0.06, 0, 'square', 0.002), 0.002, 0.01), 0, 0.35); mix(b, fade(tone(2349, 0.09, 0, 'square', 0.002), 0.002, 0.02), 0.08, 0.3); return lp(b, 5000); }
+function techScan() { const b = buf(1.2); mix(b, fade(tone(t => 300 + 3200 * Math.pow(t / 1.0, 2), 1.0, 0, 'saw', 0.01), 0.02, 0.15), 0, 0.22); mix(b, hp(noise(1.0, 0), 5000), 0, 0.08); mix(b, tone(3600, 0.12, 0.04), 1.0, 0.3); return lp(b, 7000); }
+function finCloche() { const b = buf(3.2); for (const t of [0, 0.7, 1.4]) { mix(b, cloche(659.3, 2.2, 0.6), t, 0.7); mix(b, cloche(1318.5, 1.6, 0.3), t + 0.01, 0.4); } return reverb(b, 0.3, 1.4); }
+function finTicker() { R = rng(77); const b = buf(1.6); for (let k = 0; k < 26; k++) mix(b, hp(noise(0.012, 0.003), 3000 + rnd() * 2000), k * 0.055 + rnd() * 0.012, 0.35 + rnd() * 0.3); return b; }
 function sirene() { const b = fade(lp(tone(t => 900 + 300 * Math.sin(t * PI2 * 1.3), 2.6, 0, 'tri', 0.02), 2600), 0.02, 0.15); for (let i = 0; i < b.length; i++) b[i] *= 0.55 + 0.45 * Math.sin(i / SR * PI2 * 5); return b; }
 function joie() { // petit jingle joyeux
   const b = buf(1.8);
@@ -413,6 +437,21 @@ const SONS = [
   ['tr-rewind', 'Transition : retour en arrière', 'Transitions', trRewind],
   ['tr-choc', 'Transition : onde de choc', 'Transitions', trChoc],
   ['tr-ding', 'Transition : flash scintillant', 'Transitions', trDing],
+  ['vl-pizz-gai', 'Vlog : cordes pincées joyeuses', 'Vlog', () => vlPizz([392, 494, 587, 784], 0.09)],
+  ['vl-pizz-doux', 'Vlog : cordes pincées douces', 'Vlog', () => vlPizz([330, 392, 494], 0.14, 0.5)],
+  ['vl-souffle', 'Vlog : souffle de transition', 'Vlog', vlSouffle],
+  ['vl-clic', 'Vlog : clic d’interface', 'Vlog', vlClic],
+  ['vl-cloche', 'Vlog : cloche légère', 'Vlog', vlCloche],
+  ['vl-page', 'Vlog : page qui tourne', 'Vlog', vlPage],
+  ['pod-jingle-intro', 'Podcast : jingle d’introduction', 'Podcast', podIntro],
+  ['pod-jingle-outro', 'Podcast : jingle de fin', 'Podcast', podOutro],
+  ['pod-rubrique', 'Podcast : changement de rubrique', 'Podcast', podRubrique],
+  ['pod-ping', 'Podcast : ping de notification', 'Podcast', podPing],
+  ['tech-boot', 'Tech : démarrage d’interface', 'Tech et finance', techBoot],
+  ['tech-bip', 'Tech : bip de données', 'Tech et finance', techBip],
+  ['tech-scan', 'Tech : balayage numérique', 'Tech et finance', techScan],
+  ['fin-cloche', 'Finance : cloche d’ouverture des marchés', 'Tech et finance', finCloche],
+  ['fin-ticker', 'Finance : défilement des cours', 'Tech et finance', finTicker],
   ['generique-info', 'Générique d’édition spéciale', 'Télé et spectacle', genereriqueInfo],
   ['sirene', 'Sirène d’alerte', 'Télé et spectacle', sirene]
 ];

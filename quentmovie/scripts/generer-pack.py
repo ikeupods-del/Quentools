@@ -455,7 +455,11 @@ def t_flash_pro(couleur, halo=0.5):
     return lambda duree: (lambda t: img(t, duree))
 
 
-def t_anamorphique(duree):
+def t_ana(rampe):
+    return lambda duree: t_anamorphique(duree, rampe)
+
+
+def t_anamorphique(duree, rampe=None):
     """Reflet anamorphique : longue traînée bleue horizontale qui traverse l'image, avec un cœur blanc et quelques reflets d'objectif."""
     xx, yy = _fond16()
 
@@ -470,7 +474,7 @@ def t_anamorphique(duree):
             ox = 0.5 + (0.5 - cx) * f; oy = 0.45 + (0.5 - 0.45) * f * 0.3
             orbes = orbes + w * np.exp(-(((xx - ox) * 1.4) ** 2 + (yy - oy) ** 2) / (2 * r * r))
         i = (trace * 1.0 + halo * 0.8 + orbes) * (0.35 + 0.65 * env)
-        return _img(_rampe(np.clip(i, 0, 1.4) / 1.4, RAMPE_BLEUE), int(t * 30) + 2)
+        return _img(_rampe(np.clip(i, 0, 1.4) / 1.4, rampe or RAMPE_BLEUE), int(t * 30) + 2)
     return img
 
 
@@ -524,6 +528,48 @@ def t_tracking(duree):
     return img
 
 
+RAMPE_CYAN = [(0, (0, 0, 0)), (0.3, (0, 60, 90)), (0.55, (20, 190, 255)), (0.8, (170, 240, 255)), (1, (245, 255, 255))]
+
+
+def t_grille(duree):
+    """Grille numérique : lignes en perspective qui s'allument avec un balayage lumineux, pic au milieu."""
+    xx, yy = _fond16()
+
+    def img(t):
+        p = t / duree
+        e = _env(p, 0.25)
+        h = np.clip((yy - 0.38) / 0.62, 0.001, 1)
+        persp = (xx - 0.5) / h * 0.9
+        vert = np.exp(-((np.abs(((persp * 6) % 1) - 0.5) - 0.5) ** 2) / 0.0009) * (yy > 0.38)
+        horiz = np.exp(-((((1 / h) * 0.9 + p * 2) % 1) - 0.5) ** 2 / 0.002) * (yy > 0.38)
+        balayage = np.exp(-((yy - (0.38 + 0.62 * p)) ** 2) / 0.0006) * 0.9
+        i = np.clip((0.55 * (vert + horiz) * (0.35 + h) + balayage) * e * 1.4, 0, 1)
+        i += 0.25 * e * np.exp(-((yy - 0.38) ** 2) / 0.002)
+        return _img(_rampe(i, RAMPE_CYAN), int(t * 30) + 14)
+    return img
+
+
+def t_donnees(duree):
+    """Flux de données : colonnes de points qui tombent à des vitesses différentes, cyan et blanc."""
+    xx, yy = _fond16()
+    r = np.random.default_rng(31)
+    cols = 70
+    vit = r.uniform(0.6, 1.8, cols); dec = r.uniform(0, 1, cols); lon = r.uniform(0.08, 0.3, cols)
+
+    def img(t):
+        p = t / duree
+        e = _env(p, 0.3)
+        i = np.zeros((LH, LW), dtype=np.float32)
+        ci = np.clip((xx * cols).astype(int), 0, cols - 1)
+        tete = (dec[ci] + p * vit[ci]) % 1.2 - 0.1
+        d = tete - yy
+        i = np.where((d >= 0) & (d < lon[ci]), (1 - d / lon[ci]) ** 1.5, 0.0)
+        gap = np.abs(((xx * cols) % 1) - 0.5) < 0.3
+        i = i * gap * e * 1.2
+        return _img(_rampe(np.clip(i, 0, 1), RAMPE_CYAN), int(t * 30) + 15)
+    return img
+
+
 CALQUES = [
     # id, nom, catégorie, durée, générateur
     ('fuite-chaude', 'Fuite de lumière chaude', 'Lumière', 6, lambda d: taches([(255, 120, 30), (255, 60, 20), (255, 200, 80)], d)),
@@ -551,6 +597,10 @@ CALQUES = [
     ('tr-flash-chaud', 'Flash chaud', 'Transitions (sur la coupe)', 0.8, t_flash_pro((255, 205, 140), 0.8)),
     ('tr-flash-bleu', 'Flash bleu glacé', 'Transitions (sur la coupe)', 0.8, t_flash_pro((150, 195, 255), 0.8)),
     ('tr-anamorphique', 'Reflet anamorphique bleu', 'Transitions (sur la coupe)', 1.2, t_anamorphique),
+    ('tr-soleil', 'Reflet de soleil doré', 'Transitions (sur la coupe)', 1.2, t_ana(RAMPE_DOREE)),
+    ('tr-fuite-bleue', 'Fuite de lumière bleue (coupe)', 'Transitions (sur la coupe)', 1.4, t_fuite(RAMPE_BLEUE, 12)),
+    ('tr-grille', 'Grille numérique', 'Transitions (sur la coupe)', 1.2, t_grille),
+    ('tr-donnees', 'Flux de données', 'Transitions (sur la coupe)', 1.2, t_donnees),
     ('tr-onde', 'Onde de choc', 'Transitions (sur la coupe)', 1.0, t_onde),
     ('tr-rayons', 'Rayons lumineux', 'Transitions (sur la coupe)', 1.0, t_rayons),
     ('tr-tracking', 'Déformation VHS', 'Transitions (sur la coupe)', 1.0, t_tracking),
@@ -694,8 +744,11 @@ def main():
 
     if not seul or 'calques' in seul:
         os.makedirs(os.path.join(RACINE, 'calques'), exist_ok=True)
-        index['calques'] = []
+        seuls = [x for x in os.environ.get('CALQUES_SEUL', '').split(',') if x]  # CALQUES_SEUL=id1,id2 : ne régénère que ceux-là, garde les autres
+        index['calques'] = [x for x in index.get('calques', []) if seuls and x['id'] not in seuls] if seuls else []
         for id_, nom, cat, duree, gen in CALQUES:
+            if seuls and id_ not in seuls:
+                continue
             encoder(os.path.join(RACINE, 'calques', id_ + '.mp4'), gen(duree), duree, (LW, LH) if id_.startswith('tr-') else None)
             index['calques'].append({'id': id_, 'nom': nom, 'cat': cat, 'file': f'calques/{id_}.mp4', 'duree': duree, 'mode': 'ecran'})
             print(' ', nom)

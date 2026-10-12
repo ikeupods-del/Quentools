@@ -523,11 +523,13 @@ function buildClip(c, P, o = {}) {
     const ease = (a, d) => `(1-pow(1-min(1,max(0,(${T}-(${a}))/${d})),3))`;
     const fin = ease(S, 0.5), fout = D > 0 ? ease(E - 0.5, 0.5) : '0';
     const F = `(${fin}*(1-${fout}))`; // 0 = caché, 1 = en place
+    // entrée « rebond » : dépasse un peu sa place puis s'y pose (comme les titres animés des packs vendus) ; d = retard en secondes pour décaler les lignes
+    const Fb = d => { const m = `(min(1,max(0,(${T}-(${S + d}))/0.65))-1)`; return `((1+2.4*${m}*${m}*${m}+1.4*${m}*${m})*(1-${fout}))`; };
     const en = `enable='between(${T},${S},${E})'`;
     const acc = hex(ti.color || '#c8102e'), id = String(ti.preset);
     const txt = (name, content) => { const file = `r${idx}${name}.txt`; fs.writeFileSync(path.join(dir, file), String(content).slice(0, 600)); return file; };
     const l1 = String(ti.l1 || ''), l2 = String(ti.l2 || '');
-    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
+    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', jour: 'futura', 'cours-hausse': 'helvetica', 'cours-baisse': 'helvetica', 'bourse-defile': 'helvetica', avertissement: 'helvetica', hud: 'futura', barres: 'futura', episode: 'futura', invite: 'helvetica', sponsor: 'helvetica', abonne: 'futura', etape: 'futura', astuce: 'helvetica', rubrique: 'futura', chiffre: 'futura', 'lieu-vlog': 'futura', numero: 'futura', rec: 'courier', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
     const font = `fontfile='${fontFile(ti.font || DEF_FONT[id])}'`;
     const dt = (file, size, color, x, y, extra = '') =>
       `drawtext=${font}:textfile=${file}:expansion=none:fontsize=${Math.round(size)}:fontcolor=${color}:x='${x}':y='${y}':${en}${extra}`;
@@ -598,20 +600,20 @@ function buildClip(c, P, o = {}) {
       text([dt(txt('a', l1), 6 * u, 'white', '(w-text_w)/2', `${Math.round(H * 0.46 - 2 * u)}`, `:alpha='${F}':borderw=3:bordercolor=black@0.7`),
         ...(l2 ? [dt(txt('b', l2), 3.2 * u, 'white', '(w-text_w)/2', `${Math.round(H * 0.46 + 12 * u)}`, `:alpha='${F}'`)] : [])]);
     } else if (id === 'angle') { // pack Réseaux : bloc d'accent et bloc sombre décalés
-      const BX = `(-${W * 0.7}+(${4 * u}+${W * 0.7})*${F})`, y = H * 0.74;
+      const BX = `(-${W * 0.7}+(${4 * u}+${W * 0.7})*${Fb(0)})`, BX2 = `(-${W * 0.7}+(${4 * u}+${W * 0.7})*${Fb(0.14)})`, y = H * 0.74;
       box(acc, 1.1 * u, 13 * u, BX, y); box('0x0b0f1c@0.93', 56 * u, 13 * u, `${BX}+${0.9 * u}`, y);
-      text([dt(txt('a', l1), 5.4 * u, 'white', `${BX}+${3.8 * u}`, `${y + 1.3 * u}`, `:shadowx=${Math.round(0.2 * u)}:shadowy=${Math.round(0.2 * u)}:shadowcolor=black@0.5`),
-        ...(l2 ? [dt(txt('b', l2), 3.3 * u, acc, `${BX}+${3.8 * u}`, `${y + 8 * u}`)] : [])]);
+      text([dt(txt('a', l1), 5.4 * u, 'white', `${BX2}+${3.8 * u}`, `${y + 1.3 * u}`, `:shadowx=${Math.round(0.2 * u)}:shadowy=${Math.round(0.2 * u)}:shadowcolor=black@0.5`),
+        ...(l2 ? [dt(txt('b', l2), 3.3 * u, acc, `${BX2}+${3.8 * u}+${4 * u}*(1-${Fb(0.3)})`, `${y + 8 * u}`)] : [])]);
     } else if (id === 'pseudo') { // pack Réseaux : @pseudo dans une pastille
       const BX = `(-${W * 0.5}+(${5 * u}+${W * 0.5})*${F})`;
       text([dt(txt('a', l1), 5 * u, 'white', BX, `${H * 0.8}`, `:box=1:boxcolor=${acc}@0.96:boxborderw=${Math.round(2 * u)}`)]);
     } else if (id === 'etiquette') { // pack Réseaux : étiquette qui pop au centre-haut
       text([dt(txt('a', l1.toUpperCase()), 5 * u, 'white', '(w-text_w)/2', `${H * 0.12}`, `:alpha='${F}':box=1:boxcolor=${acc}@0.97:boxborderw=${Math.round(2.2 * u)}`)]);
     } else if (id === 'double') { // pack Journal : deux barres de couleurs
-      const BX = `(-${W * 0.8}+(${3 * u}+${W * 0.8})*${F})`, y = H * 0.72;
-      box(acc, 64 * u, 7.2 * u, BX, y); box('0xffffff@0.97', 54 * u, 6.6 * u, `${BX}`, y + 7.2 * u);
+      const BX = `(-${W * 0.8}+(${3 * u}+${W * 0.8})*${Fb(0)})`, BX2 = `(-${W * 0.8}+(${3 * u}+${W * 0.8})*${Fb(0.12)})`, y = H * 0.72;
+      box(acc, 64 * u, 7.2 * u, BX, y); box('0xffffff@0.97', 54 * u, 6.6 * u, `${BX2}`, y + 7.2 * u);
       text([dt(txt('a', l1), 4.6 * u, 'white', `${BX}+${2.4 * u}`, `${y + 1.3 * u}`),
-        ...(l2 ? [dt(txt('b', l2), 3.6 * u, '0x10131f', `${BX}+${2.4 * u}`, `${y + 8.4 * u}`)] : [])]);
+        ...(l2 ? [dt(txt('b', l2), 3.6 * u, '0x10131f', `${BX2}+${2.4 * u}`, `${y + 8.4 * u}`)] : [])]);
     } else if (id === 'cine-titre') { // pack Cinéma : bandes noires qui entrent et titre espacé
       const hb = H * 0.12;
       box('black', W, hb, '0', `-${hb}+${hb}*${F}`); box('black', W, hb, '0', `${H}-${hb}*${F}`);
@@ -630,6 +632,95 @@ function buildClip(c, P, o = {}) {
       box(acc, bw, e, x, y); box(acc, bw, e, x, `${H * 0.5 + 11 * u - e}`); box(acc, e, bh, x, y); box(acc, e, bh, `(W+${bw})/2-${e}`, y);
       text([dt(txt('a', l1), 8 * u, 'white', '(w-text_w)/2', `${H * 0.5 - 6 * u}`, `:alpha='${F}'`),
         ...(l2 ? [dt(txt('b', l2), 3.4 * u, acc, '(w-text_w)/2', `${H * 0.5 + 4.6 * u}`, `:alpha='${F}'`)] : [])]);
+    } else if (id === 'jour') { // pack Vlog : « JOUR 3 » et le lieu, à gauche
+      const BX = `(-${W * 0.6}+(${8 * u}+${W * 0.6})*${Fb(0.06)})`, BX2 = `(-${W * 0.6}+(${8 * u}+${W * 0.6})*${Fb(0.22)})`, BX0 = `(-${W * 0.6}+(${8 * u}+${W * 0.6})*${Fb(0)})`, y = H * 0.38;
+      box(acc, 11 * u, Math.max(3, 0.9 * u), BX0, y - 2.4 * u);
+      text([dt(txt('a', l1.toUpperCase()), 12 * u, 'white', BX, `${y}`, `:shadowx=${Math.round(0.25 * u)}:shadowy=${Math.round(0.25 * u)}:shadowcolor=black@0.45`),
+        ...(l2 ? [dt(txt('b', l2), 4 * u, 'white@0.92', BX2, `${y + 14.5 * u}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.5`)] : [])]);
+    } else if (id === 'lieu-vlog') { // pack Vlog : repère carré d'accent et nom du lieu, en bas à gauche
+      const BX = `(-${W * 0.6}+(${6 * u}+${W * 0.6})*${Fb(0)})`, BX2 = `(-${W * 0.6}+(${6 * u}+${W * 0.6})*${Fb(0.16)})`, y = H * 0.8;
+      box(acc, 2.6 * u, 2.6 * u, BX, y + 0.6 * u);
+      text([dt(txt('a', l1.toUpperCase().split('').join(' ')), 3.6 * u, 'white', `${BX}+${4.2 * u}`, `${y}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.55`),
+        ...(l2 ? [dt(txt('b', l2), 2.6 * u, 'white@0.85', `${BX2}+${4.2 * u}`, `${y + 4.6 * u}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.5`)] : [])]);
+    } else if (id === 'rec') { // pack Vlog : point REC qui clignote et chronomètre de la prise, en haut à gauche
+      const size = 3.6 * u, tc = `r${idx}rec.txt`; fs.writeFileSync(path.join(dir, tc), 'REC  %{pts:hms}');
+      box('0xff2d2d', 1.9 * u, 1.9 * u, `${5 * u}`, `${6.1 * u}`);
+      const out = lab(); f.push(`[${cur}]drawtext=${font}:textfile=${tc}:expansion=normal:fontsize=${Math.round(size)}:fontcolor=white:x=${Math.round(8.4 * u)}:y=${Math.round(5.4 * u)}:shadowx=2:shadowy=2:shadowcolor=black@0.55:${en}[${out}]`); cur = out;
+    } else if (id === 'numero') { // pack Vlog : numéro de chapitre, trait et titre
+      const BX = `(-${W * 0.6}+(${7 * u}+${W * 0.6})*${Fb(0)})`, BX2 = `(-${W * 0.6}+(${7 * u}+${W * 0.6})*${Fb(0.18)})`, y = H * 0.7;
+      box(acc, Math.max(3, 0.5 * u), 12 * u, `${BX2}+${18 * u}`, y);
+      text([dt(txt('a', l1), 12 * u, acc, BX, `${y - 0.8 * u}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.4`),
+        ...(l2 ? [dt(txt('b', l2.toUpperCase()), 4.4 * u, 'white', `${BX2}+${20.5 * u}`, `${y + 3.6 * u}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.55`)] : [])]);
+    } else if (id === 'episode') { // pack Podcast : étiquette d'épisode et titre sur deux lignes
+      const BX = `(-${W * 0.7}+(${8 * u}+${W * 0.7})*${Fb(0)})`, BX2 = `(-${W * 0.7}+(${8 * u}+${W * 0.7})*${Fb(0.15)})`, y = H * 0.36;
+      text([dt(txt('a', l1.toUpperCase()), 3.6 * u, 'white', BX, `${y}`, `:box=1:boxcolor=${acc}@0.96:boxborderw=${Math.round(1.5 * u)}`),
+        ...(l2 ? [dt(txt('b', wrap(l2, Math.floor(W * 0.62 / (7.2 * u * 0.56)))), 7.2 * u, 'white', BX2, `${y + 8.4 * u}`, `:line_spacing=${Math.round(1 * u)}:shadowx=${Math.round(0.2 * u)}:shadowy=${Math.round(0.2 * u)}:shadowcolor=black@0.5`)] : [])]);
+    } else if (id === 'invite') { // pack Podcast : carte d'invité (étiquette, nom, fonction)
+      const BX = `(-${W * 0.7}+(${5 * u}+${W * 0.7})*${Fb(0)})`, BX2 = `(-${W * 0.7}+(${5 * u}+${W * 0.7})*${Fb(0.14)})`, y = H * 0.7;
+      box('0x0b0f1c@0.92', 54 * u, 17 * u, BX, y); box(acc, 1.1 * u, 17 * u, BX, y);
+      text([dt(txt('t', 'INVITÉ·E'), 2.3 * u, acc, `${BX2}+${3.4 * u}`, `${y + 1.6 * u}`),
+        dt(txt('a', l1), 5.6 * u, 'white', `${BX2}+${3.4 * u}`, `${y + 4.6 * u}`),
+        ...(l2 ? [dt(txt('b', l2), 3 * u, '0xc9ced9', `${BX2}+${3.4 * u}`, `${y + 11.6 * u}`)] : [])]);
+    } else if (id === 'sponsor') { // pack Podcast / Pro : bandeau fin de partenaire
+      const bh = 9 * u, y = H - bh - 3 * u;
+      box('0x000000@0.62', W, bh, '0', `${y}+${bh}*(1-${F})`);
+      text([dt(txt('a', 'AVEC LE SOUTIEN DE'), 2 * u, acc, '(w-text_w)/2', `${y + 1.3 * u}`, `:alpha='${F}'`),
+        dt(txt('b', l1), 3.8 * u, 'white', '(w-text_w)/2', `${y + 3.6 * u}`, `:alpha='${F}'`)]);
+    } else if (id === 'abonne') { // pack Podcast / Vlog : pastille d'abonnement en bas à droite
+      const BX = `(${W}+(${-W * 0.5 - 6 * u})*${Fb(0)})`;
+      text([dt(txt('t', 'ABONNE-TOI'), 3.4 * u, 'white', `${BX}`, `${H * 0.84}`, `:box=1:boxcolor=${acc}@0.97:boxborderw=${Math.round(1.4 * u)}`),
+        ...(l1 ? [dt(txt('a', l1), 4 * u, 'white', `${BX}`, `${H * 0.84 + 7.6 * u}`, `:box=1:boxcolor=0x0b0f1c@0.9:boxborderw=${Math.round(1.2 * u)}`)] : [])]);
+    } else if (id === 'etape') { // pack Tuto : pastille numérotée et titre d'étape
+      const BX = `(-${W * 0.5}+(${6 * u}+${W * 0.5})*${Fb(0)})`, BX2 = `(-${W * 0.5}+(${6 * u}+${W * 0.5})*${Fb(0.14)})`, y = H * 0.07;
+      box(acc, 9 * u, 9 * u, BX, y);
+      text([dt(txt('a', l1), 6.4 * u, 'white', `${BX}+(${9 * u}-text_w)/2`, `${y + 1.2 * u}`),
+        dt(txt('t', 'ÉTAPE'), 2.2 * u, acc, `${BX2}+${11 * u}`, `${y - 0.2 * u}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.5`),
+        ...(l2 ? [dt(txt('b', l2), 4.4 * u, 'white', `${BX2}+${11 * u}`, `${y + 3 * u}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.55`)] : [])]);
+    } else if (id === 'astuce') { // pack Tuto / Pro : encadré d'astuce
+      const BX = `(-${W * 0.6}+(${5 * u}+${W * 0.6})*${Fb(0)})`, BX2 = `(-${W * 0.6}+(${5 * u}+${W * 0.6})*${Fb(0.14)})`, y = H * 0.66, bw = 52 * u, lignes = wrap(l1, Math.floor(bw * 0.9 / (3.4 * u * 0.56)));
+      box('0x0b0f1c@0.93', bw, 21 * u, BX, y); box(acc, bw, 0.9 * u, BX, y);
+      text([dt(txt('t', 'ASTUCE'), 2.4 * u, acc, `${BX2}+${2.4 * u}`, `${y + 2.4 * u}`),
+        dt(txt('a', lignes), 3.4 * u, 'white', `${BX2}+${2.4 * u}`, `${y + 6.4 * u}`, `:line_spacing=${Math.round(0.7 * u)}`)]);
+    } else if (id === 'rubrique') { // pack Podcast / Pro : étiquette de rubrique en haut à gauche
+      const BX = `(-${W * 0.4}+(${5 * u}+${W * 0.4})*${Fb(0)})`;
+      box(acc, 22 * u, Math.max(3, 0.45 * u), BX, `${H * 0.07 + 6.6 * u}`);
+      text([dt(txt('a', l1.toUpperCase().split('').join(' ')), 3 * u, 'white', BX, `${H * 0.07}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.55`)]);
+    } else if (id === 'chiffre') { // pack Pro : gros chiffre et légende
+      text([dt(txt('a', l1), 22 * u, acc, '(w-text_w)/2', `${H * 0.34}+${3 * u}*(1-${Fb(0)})`, `:alpha='${F}':shadowx=${Math.round(0.4 * u)}:shadowy=${Math.round(0.4 * u)}:shadowcolor=black@0.45`),
+        ...(l2 ? [dt(txt('b', l2), 4.2 * u, 'white', '(w-text_w)/2', `${H * 0.34 + 26 * u}`, `:alpha='${F}':shadowx=2:shadowy=2:shadowcolor=black@0.5`)] : [])]);
+    } else if (id === 'cours-hausse' || id === 'cours-baisse') { // pack Bourse : carte de cours (nom, valeur, variation) ; l2 = « valeur  variation »
+      const BX = `(-${W * 0.6}+(${5 * u}+${W * 0.6})*${Fb(0)})`, BX2 = `(-${W * 0.6}+(${5 * u}+${W * 0.6})*${Fb(0.14)})`, y = H * 0.72, col = id === 'cours-hausse' ? '0x19d38a' : '0xff4d5e';
+      const [val, ...rest] = l2.split(/\s{2,}|\s\|\s/); box('0x0b0f1c@0.94', 62 * u, 15 * u, BX, y); box(col, 1 * u, 15 * u, BX, y);
+      text([dt(txt('a', l1.toUpperCase()), 2.6 * u, '0xaab2c5', `${BX2}+${3.2 * u}`, `${y + 1.6 * u}`),
+        dt(txt('b', val || ''), 6.4 * u, 'white', `${BX2}+${3.2 * u}`, `${y + 4.6 * u}`),
+        dt(txt('c', rest.join('  ')), 3.8 * u, col, `${BX2}+${40 * u}`, `${y + 7.6 * u}`)]);
+    } else if (id === 'bourse-defile') { // pack Bourse : bandeau des marchés qui défile
+      const bh = 7 * u, y = H * 0.9, lw = 22 * u;
+      box('0x0a1224@0.96', W, bh, '0', y);
+      text([dt(txt('a', l1), 3.2 * u, 'white', `${W}-mod(${T}*${W * 0.11}\,${W}+text_w)`, `${y + 1.9 * u}`)]);
+      box(acc, lw, bh, '0', y);
+      text([dt(txt('b', l2 || 'MARCHÉS'), 3 * u, 'white', `(${lw}-text_w)/2`, `${y + 2 * u}`)]);
+    } else if (id === 'avertissement') { // Bourse / Pro : mention obligatoire, en bas, sur toute la durée
+      const lignes = wrap(l1, Math.floor(W * 0.9 / (2.3 * u * 0.55))), bh = 11 * u, y = H - bh;
+      box('0x000000@0.66', W, bh, '0', y);
+      text([dt(txt('a', lignes), 2.3 * u, 'white@0.92', '(w-text_w)/2', `${y + 2.2 * u}`, `:line_spacing=${Math.round(0.5 * u)}`)]);
+    } else if (id === 'hud') { // pack Tech : titre entre quatre angles lumineux (viseur)
+      const bw = W * 0.5, bh = 24 * u, x0 = `(W-${bw})/2`, y0 = `${H * 0.5 - 12 * u}`, e = Math.max(3, 0.5 * u), L = 5 * u;
+      const k = Fb(0), dx = `${(W * 0.08).toFixed(1)}*(1-${k})`;
+      for (const [cx, cy, sx, sy] of [[x0, y0, 1, 1], [`${x0}+${bw}-${L}`, y0, -1, 1], [x0, `${y0}+${bh}-${e}`, 1, -1], [`${x0}+${bw}-${L}`, `${y0}+${bh}-${e}`, -1, -1]]) { box(acc, L, e, `${cx}${sx > 0 ? '-' : '+'}${dx}`, `${cy}`); }
+      for (const [cx, cy] of [[x0, y0], [`${x0}+${bw}-${e}`, y0], [x0, `${y0}+${bh}-${L}`], [`${x0}+${bw}-${e}`, `${y0}+${bh}-${L}`]]) box(acc, e, L, `${cx}`, `${cy}`);
+      text([dt(txt('a', l1.toUpperCase()), 7 * u, 'white', '(w-text_w)/2', `${H * 0.5 - 4.4 * u}`, `:alpha='${F}':shadowx=2:shadowy=2:shadowcolor=black@0.5`),
+        ...(l2 ? [dt(txt('b', l2.toUpperCase().split('').join(' ')), 2.6 * u, acc, '(w-text_w)/2', `${H * 0.5 + 5.6 * u}`, `:alpha='${F}'`)] : [])]);
+    } else if (id === 'barres') { // pack Économie : histogramme animé (l1 = valeurs séparées par des virgules, l2 = légende)
+      const vals = l1.split(/[,;\s]+/).map(Number).filter(Number.isFinite).slice(0, 8), n = Math.max(1, vals.length), mx = Math.max(...vals, 1), bwid = 8 * u, gap = 3 * u;
+      const total = n * bwid + (n - 1) * gap, x0 = (W - total) / 2, base = H * 0.66, hmax = 32 * u;
+      vals.forEach((v, i) => {
+        const hh = Math.max(2, Math.round(hmax * v / mx)), src = lab(), out = lab(), e = ease(S + 0.12 * i, 0.7), last = i === n - 1;
+        f.push(`color=c=${last ? acc : '0x8fa3d9'}:s=${even(bwid)}x${even(hh)}:r=${fps},format=rgba,scale=w=${even(bwid)}:h='max(2,${even(hh)}*${e})':eval=frame[${src}]`);
+        f.push(`[${cur}][${src}]overlay=x='${Math.round(x0 + i * (bwid + gap))}':y='${Math.round(base)}-h':shortest=1:format=auto:${en}[${out}]`); cur = out;
+      });
+      box('0xffffff@0.7', total + 4 * u, Math.max(2, 0.3 * u), `${Math.round(x0 - 2 * u)}`, `${Math.round(base)}`);
+      if (l2) text([dt(txt('b', l2), 3.6 * u, 'white', '(w-text_w)/2', `${Math.round(base + 2.4 * u)}`, `:alpha='${F}':shadowx=2:shadowy=2:shadowcolor=black@0.5`)]);
     } else if (id === 'progression') { // barre de progression de la séquence
       const bh = even(Math.max(4, 1.1 * u)), src = lab(), out = lab();
       f.push(`color=c=${acc}:s=${even(W)}x${bh}:r=${fps},format=rgba,scale=w='max(2,${even(W)}*min(1,${T}/${Math.max(0.5, eff).toFixed(2)}))':h=${bh}:eval=frame[${src}]`);

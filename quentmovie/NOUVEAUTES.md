@@ -3,6 +3,15 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.21.0
+- Cinq **packs Vlog** dans l’onglet Packs : Voyage, Quotidien, Food, Sport et énergie, Ville de nuit. Chaque pack pose sur tes coupes des transitions douces, un effet de lumière et un son léger, avec en option le look du pack et une musique de fond qui baisse quand tu parles.
+- Six packs supplémentaires : **Podcast Interview**, **Podcast Culture et récit** (avec visualiseur sonore pour les épisodes audio), **Tuto et formation**, **Entreprise et corporate**, **Mariage et événement** et **Gaming et stream**, 
+- Cinq packs **Tech et finance** : Tech et high-tech, Économie et actualité, Bourse et investissement, Crypto et web3, Entrepreneur et business. Cartes de cours en hausse et en baisse, bandeau des marchés défilant, histogramme animé, viseur lumineux, mention « pas un conseil en investissement », balayage numérique, grille et flux de données, cloche d’ouverture des marchés. Soit 22 packs au total.
+- Chaque pack a sa vitrine : image de couverture, transitions qui s’animent au survol, titres animés rendus avec les vraies polices, sons à écouter.
+- Huit titres animés de plus : épisode, carte d’invité, partenaire, pastille d’abonnement, rubrique, étape numérotée, astuce et gros chiffre ; les titres entrent avec un léger rebond, ligne après ligne. Quatre jingles de podcast originaux (introduction, fin, rubrique, ping).
+- Quatre titres de vlog : « JOUR 3 » avec le lieu, nom du lieu en bas à gauche, point REC avec chronomètre de caméscope, et numéro de chapitre.
+- Trois nouvelles transitions douces (glissé doux, zoom doux, fondu lumineux), deux nouveaux effets de coupe (reflet de soleil doré, fuite de lumière bleue) et six sons de vlog (cordes pincées, souffle, clic, cloche, page qui tourne).
+
 ## 1.20.0
 - Nouvel onglet **Packs** (touche 0) : six packs de montage comme sur Premiere Pro — Cinéma, Réseaux sociaux, Glitch, Impact, Journal télé, Doux et lifestyle. Un clic sur « Appliquer » pose sur toutes les coupes les transitions du pack, un effet de coupe (fuite de lumière, flash, reflet, onde de choc…) et un bruitage centré sur le raccord ; le look du pack est en option. Tout s’annule avec ⌘Z.
 - Transitions refaites avec du flou de mouvement : whip pan (gauche, droite, haut), zoom punch, secousse, glitch RVB, fondu flouté, iris et volet à bords doux.

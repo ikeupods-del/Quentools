@@ -185,6 +185,10 @@ const EXPR = {
   secousse: `if(gt(P,0.5),${px('a', 'clip(X+W*0.04*sin(P*150)*(1-abs(2*P-1)),0,W-1)', 'clip(Y+H*0.03*cos(P*190)*(1-abs(2*P-1)),0,H-1)')},${px('b', 'clip(X+W*0.04*sin(P*150)*(1-abs(2*P-1)),0,W-1)', 'clip(Y+H*0.03*cos(P*190)*(1-abs(2*P-1)),0,H-1)')})`,
   irisdoux: `(1-clip(((1-P)*0.74-hypot((X-W/2)/W,(Y-H/2)/W))/0.12,0,1))*A+clip(((1-P)*0.74-hypot((X-W/2)/W,(Y-H/2)/W))/0.12,0,1)*B`,
   diagdoux: `(1-clip(((1-P)*1.3-(0.75*X/W+0.25*Y/H))/0.3,0,1))*A+clip(((1-P)*1.3-(0.75*X/W+0.25*Y/H))/0.3,0,1)*B`,
+  // Vlog : glissés et zooms plus doux, fondu lumineux
+  glissedoux: `if(lt(X,W*(1-${E3})),${px('a', `X+W*${E3}`, 'Y')},${px('b', `X-W*(1-${E3})`, 'Y')})`,
+  zoomdoux: `(1-clip((${E3}-0.4)/0.2,0,1))*(${px('a', `W/2+(X-W/2)/(1+0.35*${E3})`, `H/2+(Y-H/2)/(1+0.35*${E3})`)})+clip((${E3}-0.4)/0.2,0,1)*(${px('b', `W/2+(X-W/2)/(1.35-0.35*${E3})`, `H/2+(Y-H/2)/(1.35-0.35*${E3})`)})`,
+  scan: `if(eq(PLANE,0),min(255,(1-clip(((1-P)*1.12-X/W)/0.02,0,1))*A+clip(((1-P)*1.12-X/W)/0.02,0,1)*B+130*exp(-pow(((1-P)*1.12-X/W-0.02)*38,2))),(1-clip(((1-P)*1.12-X/W)/0.02,0,1))*A+clip(((1-P)*1.12-X/W)/0.02,0,1)*B)`,
   glitch: `if(gt(P,0.5),${px('a', 'clip(X+W*0.22*sin(floor(Y*26/H)*78.233+floor(P*14)*3.1)*(1-abs(2*P-1)),0,W-1)', 'Y')},${px('b', 'clip(X+W*0.22*sin(floor(Y*26/H)*78.233+floor(P*14)*3.1)*(1-abs(2*P-1)),0,W-1)', 'Y')})`
 };
 const TRANSITIONS = [
@@ -198,15 +202,17 @@ const TRANSITIONS = [
   // Packs de transitions : le troisième élément est le pack
   ['fondufloute', 'Fondu flouté', 'cinema'], ['diagdoux', 'Volet diagonal doux', 'cinema'], ['irisdoux', 'Iris doux', 'cinema'],
   ['whipg', 'Whip pan vers la gauche', 'reseaux'], ['whipd', 'Whip pan vers la droite', 'reseaux'], ['whiph', 'Whip pan vers le haut', 'reseaux'], ['zoompunch', 'Zoom punch', 'reseaux'],
+  ['glissedoux', 'Glissé doux', 'vlog'], ['zoomdoux', 'Zoom doux', 'vlog'], ['fondulumiere', 'Fondu lumineux', 'vlog'],
+  ['scan', 'Balayage numérique', 'tech'],
   ['glitch', 'Glitch RVB', 'glitch'], ['secousse', 'Secousse', 'impact']
 ]
-  .map(([id, nom, pack]) => (EXPR[id] ? { id, nom, pack, expr: EXPR[id] } : id === 'fondufloute' ? { id, nom, pack, builtin: 'fade' } : { id, nom, pack }));
+  .map(([id, nom, pack]) => (EXPR[id] ? { id, nom, pack, expr: EXPR[id] } : id === 'fondufloute' ? { id, nom, pack, builtin: 'fade' } : id === 'fondulumiere' ? { id, nom, pack, builtin: 'fadewhite' } : { id, nom, pack }));
 
 // Flou et décalage de couleurs ajoutés par-dessus la transition (fenêtres de temps successives : montée, pic, descente), comme le « motion blur »
 // des packs professionnels. h = flou horizontal, v = vertical, o = dans tous les sens ; rgb = décalage des couleurs en pixels (pour 1080 px).
 const POST = {
   whipg: { flou: ['h', 38] }, whipd: { flou: ['h', 38] }, whiph: { flou: ['v', 38] }, zoompunch: { flou: ['o', 16] },
-  fondufloute: { flou: ['o', 16] }, glitch: { rgb: 16 }, secousse: { flou: ['o', 9], rgb: 6 }
+  fondufloute: { flou: ['o', 16] }, glissedoux: { flou: ['h', 14] }, zoomdoux: { flou: ['o', 8] }, fondulumiere: { flou: ['o', 10] }, glitch: { rgb: 16 }, secousse: { flou: ['o', 9], rgb: 6 }
 };
 // S = début de la transition (s), D = durée (s), k = échelle de la définition (1 pour 1080 px de petit côté)
 function postTransition(id, S, D, k = 1) {
@@ -248,6 +254,24 @@ const REPORTAGE = [
   { id: 'glitch-titre', nom: 'Titre glitch (couleurs décalées)', l1: 'GLITCH', l2: '', color: '#ff2d55', pack: 'glitch' },
   { id: 'impact-titre', nom: 'Titre impact (gros, sur boîte)', l1: 'Le titre', l2: 'sous-titre', color: '#ff3b30', pack: 'impact' },
   { id: 'cadre-titre', nom: 'Titre dans un cadre fin', l1: 'Mon titre', l2: 'Un sous-titre', color: '#e8c9a0', pack: 'doux' },
+  { id: 'jour', nom: 'Jour du vlog (JOUR 3 + lieu)', l1: 'Jour 3', l2: 'Lisbonne, Portugal', color: '#ffb347', pack: 'vlog' },
+  { id: 'lieu-vlog', nom: 'Nom du lieu (en bas à gauche)', l1: 'Lisbonne', l2: 'Alfama · 18 h', color: '#ffb347', pack: 'vlog' },
+  { id: 'rec', nom: 'REC et chronomètre (caméscope)', l1: '', l2: '', color: '#ff2d2d', pack: 'vlog' },
+  { id: 'numero', nom: 'Numéro de chapitre (01, titre)', l1: '01', l2: 'Le réveil', color: '#ffb347', pack: 'vlog' },
+  { id: 'episode', nom: 'Épisode (numéro et titre)', l1: 'Épisode 12', l2: 'Pourquoi tout le monde se trompe sur le sommeil', color: '#ff6a3d', pack: 'podcast' },
+  { id: 'invite', nom: 'Carte d’invité (nom et fonction)', l1: 'Camille Martin', l2: 'Neuroscientifique, auteure', color: '#ff6a3d', pack: 'podcast' },
+  { id: 'sponsor', nom: 'Partenaire (bandeau fin)', l1: 'Nom du partenaire', l2: '', color: '#ff6a3d', pack: 'podcast' },
+  { id: 'abonne', nom: 'Pastille « Abonne-toi »', l1: '@tonpodcast', l2: '', color: '#ff2d55', pack: 'podcast' },
+  { id: 'rubrique', nom: 'Étiquette de rubrique', l1: 'Interview', l2: '', color: '#ff6a3d', pack: 'podcast' },
+  { id: 'etape', nom: 'Étape numérotée (tuto)', l1: '1', l2: 'Ouvrir les réglages', color: '#2f80ff', pack: 'pro' },
+  { id: 'astuce', nom: 'Encadré d’astuce', l1: 'Appuie sur ⌘ + Z pour annuler la dernière action.', l2: '', color: '#ffc02e', pack: 'pro' },
+  { id: 'chiffre', nom: 'Gros chiffre et légende', l1: '+ 42 %', l2: 'de temps gagné en un mois', color: '#2f80ff', pack: 'pro' },
+  { id: 'cours-hausse', nom: 'Carte de cours en hausse', l1: 'CAC 40', l2: '7 842,31  +1,24 %', color: '#19d38a', pack: 'finance' },
+  { id: 'cours-baisse', nom: 'Carte de cours en baisse', l1: 'NASDAQ', l2: '16 410,05  −0,87 %', color: '#ff4d5e', pack: 'finance' },
+  { id: 'bourse-defile', nom: 'Bandeau des marchés défilant', l1: 'CAC 40  7 842  +1,2 %   •   S&P 500  5 120  +0,4 %   •   NASDAQ  16 410  −0,9 %   •   OR  2 310 $  +0,3 %', l2: 'MARCHÉS', color: '#1f4fff', pack: 'finance' },
+  { id: 'barres', nom: 'Histogramme animé (valeurs et légende)', l1: '30, 45, 38, 62, 80, 100', l2: 'Croissance sur six mois', color: '#19d38a', pack: 'finance' },
+  { id: 'avertissement', nom: 'Mention : pas un conseil en investissement', l1: 'Contenu à visée informative : ceci n’est pas un conseil en investissement. Investir comporte des risques, dont la perte en capital.', l2: '', color: '#000000', pack: 'finance' },
+  { id: 'hud', nom: 'Titre dans un viseur lumineux', l1: 'Intelligence artificielle', l2: 'Le test complet', color: '#19d3ff', pack: 'tech' },
   { id: 'tiers', nom: 'Bandeau de journaliste (nom + fonction)', l1: 'Prénom Nom', l2: 'Fonction, lieu', color: '#c8102e' },
   { id: 'minimal', nom: 'Titre minimal (barre verticale)', l1: 'Titre de la séquence', l2: 'Sous-titre', color: '#ffb400' },
   { id: 'flash', nom: 'Flash info (bandeau défilant)', l1: 'Dernière minute : écris ici ton information qui défile en bas de l’écran', l2: 'FLASH INFO', color: '#d40000' },
