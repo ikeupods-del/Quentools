@@ -25,7 +25,7 @@ function chromium() {
   ff('-f', 'lavfi', '-i', 'color=c=orange:s=320x180:d=1', '-frames:v', '1', path.join(base, 'photo.png'));
   for (const f of ['a.mp4', 'photo.png']) await fetch(U('/api/import?name=' + f), { method: 'POST', body: fs.readFileSync(path.join(base, f)) });
   const b = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] }), pg = await b.newPage({ viewport: { width: 1440, height: 900 } }), errs = [];
-  pg.on('pageerror', e => errs.push('pageerror : ' + e.message)); pg.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|favicon/.test(m.text())) errs.push('console : ' + m.text()); }); pg.on('dialog', d => d.dismiss().catch(() => {}));
+  pg.on('pageerror', e => errs.push('pageerror : ' + e.message + ' @ ' + String(e.stack || '').split('\n').slice(1, 3).join(' | ').replace(/http:\/\/127\.0\.0\.1:\d+\//g, ''))); pg.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|favicon/.test(m.text())) errs.push('console : ' + m.text()); }); pg.on('dialog', d => d.dismiss().catch(() => {}));
   await pg.goto(U('/')); await pg.waitForTimeout(1200);
   const neuf = () => pg.evaluate(async () => { await chargerMedias(); proj.clips = []; proj.audio = []; const m = medias.find(x => x.file === 'a.mp4'); for (let i = 0; i < 3; i++) proj.clips.push(newClip(m)); sel = 0; commit(); tout(); });
   await neuf();
