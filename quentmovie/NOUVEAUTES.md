@@ -3,6 +3,10 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.23.0
+- Cinq nouveaux packs « Style de vie » : **Mode et beauté**, **Immobilier et visite**, **Santé et bien-être**, **École et cours**, **Église et spiritualité**, soit 27 packs au total.
+- Six nouveaux titres animés : carte de prix, pastilles de caractéristiques (T3, 68 m², balcon…), liste à puces qui apparaît ligne par ligne, verset ou citation avec filets dorés, pastille de promotion, et mention « pas un avis médical ».
+
 ## 1.22.0
 - **Pack sous-titres** (onglet Packs, en haut) : douze styles de sous-titres, dont huit « pro » — Hormozi (capitales, jaune et blanc), néon, mot sur boîte blanche, mot sur boîte rouge, feutre jaune, gaming, cinéma et minimal. Chaque style a son aperçu ; un clic l’applique à tous les clips qui ont des sous-titres. Pour un rendu mot à mot, choisis le style avant de lancer « ✨ Sous-titres automatiques » (il est aussi proposé dans l’inspecteur et dans l’assistant ⌘K).
 
