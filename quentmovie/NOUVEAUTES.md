@@ -3,6 +3,13 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.20.0
+- Nouvel onglet **Packs** (touche 0) : six packs de montage comme sur Premiere Pro — Cinéma, Réseaux sociaux, Glitch, Impact, Journal télé, Doux et lifestyle. Un clic sur « Appliquer » pose sur toutes les coupes les transitions du pack, un effet de coupe (fuite de lumière, flash, reflet, onde de choc…) et un bruitage centré sur le raccord ; le look du pack est en option. Tout s’annule avec ⌘Z.
+- Transitions refaites avec du flou de mouvement : whip pan (gauche, droite, haut), zoom punch, secousse, glitch RVB, fondu flouté, iris et volet à bords doux.
+- 11 effets de coupe en vraie image 16:9 (fuites de lumière chaude, rose et dorée, brûlure de pellicule, flashs, reflet anamorphique, onde de choc, rayons, déformation VHS) et 8 bruitages de transition.
+- 8 nouveaux titres animés dans les packs (tiers inférieur, @pseudo, étiquette, double barre, titre de film, glitch, impact, cadre fin), avec des polices adaptées.
+- Correction du son du générique BREAKING NEWS (notes trop aiguës).
+
 ## 1.19.1
 - Partage d’écran : sur Mac récent, une fenêtre du système s’ouvre, tu choisis ton écran et tu appuies sur « Autoriser », comme pour la caméra et le micro. Plus besoin d’aller dans les réglages.
 

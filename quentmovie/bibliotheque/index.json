@@ -1370,6 +1370,94 @@
    "file": "calques/fumee.mp4",
    "duree": 8,
    "mode": "ecran"
+  },
+  {
+   "id": "tr-fuite-chaude",
+   "nom": "Fuite de lumière chaude (coupe)",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-fuite-chaude.mp4",
+   "duree": 1.4,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-fuite-rose",
+   "nom": "Fuite de lumière rose (coupe)",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-fuite-rose.mp4",
+   "duree": 1.4,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-fuite-doree",
+   "nom": "Fuite de lumière dorée (coupe)",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-fuite-doree.mp4",
+   "duree": 1.4,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-brulure",
+   "nom": "Brûlure de pellicule (coupe)",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-brulure.mp4",
+   "duree": 1.4,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-flash",
+   "nom": "Flash blanc",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-flash.mp4",
+   "duree": 0.8,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-flash-chaud",
+   "nom": "Flash chaud",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-flash-chaud.mp4",
+   "duree": 0.8,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-flash-bleu",
+   "nom": "Flash bleu glacé",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-flash-bleu.mp4",
+   "duree": 0.8,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-anamorphique",
+   "nom": "Reflet anamorphique bleu",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-anamorphique.mp4",
+   "duree": 1.2,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-onde",
+   "nom": "Onde de choc",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-onde.mp4",
+   "duree": 1.0,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-rayons",
+   "nom": "Rayons lumineux",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-rayons.mp4",
+   "duree": 1.0,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-tracking",
+   "nom": "Déformation VHS",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-tracking.mp4",
+   "duree": 1.0,
+   "mode": "ecran"
   }
  ],
  "fonds": [
