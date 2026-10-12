@@ -3,6 +3,12 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.16.0
+- « Me filmer » : un seul panneau regroupe toutes les animations à l’écran (S’abonner, J’aime, Cloche, Lien en bio…), classées par thèmes. Chacune se déclenche d’une touche du clavier, et tu peux choisir tes propres touches.
+- 33 nouvelles animations : « Breaking news » avec son mini générique, Flash info, Exclusif, humeurs (content, énervé, triste, choqué, amoureux, cool…), argent (riche, pauvre, hausse, baisse, 100 %…), applaudissements, bravo, alerte, « À suivre »… Chaque animation a son petit son.
+- Le partage d’écran se déplace et se redimensionne à la souris pendant la prise.
+- Pré-montage dès la fin de la prise : coupe des blancs et des « euh », sous-titres et volume en un clic, pour gagner du temps avant le montage.
+
 ## 1.15.1
 - Les vidéos HDR (iPhone, appareils récents) sont reconnues et converties en image classique : plus de couleurs ternes à l’aperçu et à l’export.
 - Export de montages avec beaucoup de fondus enchaînés (diaporamas de dizaines de photos) jusqu’à dix fois plus rapide : les enchaînements longs sont coupés en morceaux encodés en même temps.
