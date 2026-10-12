@@ -1,7 +1,7 @@
 {
   "name": "studio-sites",
   "productName": "Studio Sites",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Génère le site d'un professionnel à partir des exemples QuenTools, avec l'IA locale du Mac",
   "main": "main.js",
   "private": true,

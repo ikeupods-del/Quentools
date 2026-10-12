@@ -145,7 +145,7 @@ function autotest() {
         const brief = { da: { ambiance: 'luxe', mode: 'sombre', couleur: '#2e7d32', police: 'moderne', arrondi: 'rond', densite: '' }, modules: ['reservation', 'devis', 'chatbot', 'panel', 'whatsapp', 'annonce', 'faq'], options: { reservation: '', firebaseApiKey: 'cle', firebaseProjectId: 'projet', whatsapp: '' }, faq: [], annonce: 'Annonce' };
         const f = { nom: 'Essai', metier: 'restaurateur', ville: 'Lyon', telephone: '04 78 12 34 56', email: 'a@b.fr', services: ['Kebab'], horaires: 'Du mardi au samedi, 11 h - 14 h' };
         const g = await window.sites.genererSite({ fiche: f, modeleId: 'restaurant', ecrire: null, brief }), tour = await Conseiller.tour({ message: 'Ajoute un chatbot, en bleu nuit', historique: [], fiche: f, brief: Conseiller.BRIEF_VIDE(), ecrire: null });
-        const fonctions = { modules: !!(window.Modules && Modules.CATALOGUE.length === 7), config: !!(g.html && g.html.includes('qs-config') && g.html.includes('qs-reservation')), admin: Modules.fichiers(f, brief).some(x => x.chemin === 'admin/index.html'), tchat: tour.brief.modules.includes('chatbot') && tour.brief.da.couleur === '#14284b' };
+        const fonctions = { modules: !!(window.Modules && Modules.CATALOGUE.length >= 8 && Modules.IDS.includes("galerie")), config: !!(g.html && g.html.includes('qs-config') && g.html.includes('qs-reservation')), admin: Modules.fichiers(f, brief).some(x => x.chemin === 'admin/index.html'), tchat: tour.brief.modules.includes('chatbot') && tour.brief.da.couleur === '#14284b' };
         ok({ modeles: modeles.length, pont: !!pont, sorties, fonctions }); } }, 100); })`);
     } catch (e) { res.erreur = e.message; }
     fin();
