@@ -75,3 +75,6 @@ Touche **?** dans l'application pour la liste complète. Principaux : ⌘K assis
 - `npm test` : contrôle chaque effet (valeurs par défaut, minimales, maximales), transition, titre, calque, format d'import et d'export, le podcast et l'aperçu animé.
 - Nouvel effet : une ligne `fx(...)` dans `effects.js`, le test le contrôle automatiquement.
 - Application : workflow GitHub « QuentMovie — application Mac » (macOS, `npm run dist`), publiée dans Releases.
+
+## Envoi par AirDrop
+Fin d'export, clips TikTok et miniature : bouton « Envoyer par AirDrop » (`/api/partager` → feuille de partage de macOS via `ShareMenu`, `main.js`). Seuls des fichiers du dossier `exports` sont transmis ; hors application Mac, un message l'indique.

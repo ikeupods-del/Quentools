@@ -1325,6 +1325,13 @@ function buildClip(c, P, o = {}) {
         fs.writeFileSync(path.join(EXPORTS, name), buf);
         return send(res, 200, { out: name });
       }
+      if (req.method === 'POST' && p === '/api/partager') { // feuille de partage de macOS (AirDrop, Messages, Mail…) pour des fichiers des exports
+        const noms = [].concat((await readJson(req)).files || []).slice(0, 50).map(n => path.join(EXPORTS, safeName(String(n)))).filter(f => fs.existsSync(f));
+        if (!noms.length) return send(res, 404, { error: 'Fichier introuvable dans les exports.' });
+        if (!opts.partager) return send(res, 200, { ok: false, folder: EXPORTS, message: 'Le partage AirDrop est disponible dans l’application Mac.' });
+        opts.partager(noms);
+        return send(res, 200, { ok: true });
+      }
       if (req.method === 'POST' && p === '/api/reveal') { // afficher un export dans le Finder
         const f = path.join(EXPORTS, safeName((await readJson(req)).file));
         if (process.platform === 'darwin' && fs.existsSync(f)) spawn('open', ['-R', f]);

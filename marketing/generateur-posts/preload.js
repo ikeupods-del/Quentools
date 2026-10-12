@@ -8,3 +8,6 @@ contextBridge.exposeInMainWorld('studioIA', {
   installer: cb => { surProgres = cb; return ipcRenderer.invoke('ia:installer'); },
   ecrire: msg => ipcRenderer.invoke('ia:ecrire', msg)
 });
+contextBridge.exposeInMainWorld('studioPartage', {
+  envoyer: fichiers => ipcRenderer.invoke('partage:envoyer', fichiers)
+});
