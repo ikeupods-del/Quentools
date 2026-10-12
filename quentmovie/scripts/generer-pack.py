@@ -455,7 +455,11 @@ def t_flash_pro(couleur, halo=0.5):
     return lambda duree: (lambda t: img(t, duree))
 
 
-def t_anamorphique(duree):
+def t_ana(rampe):
+    return lambda duree: t_anamorphique(duree, rampe)
+
+
+def t_anamorphique(duree, rampe=None):
     """Reflet anamorphique : longue traînée bleue horizontale qui traverse l'image, avec un cœur blanc et quelques reflets d'objectif."""
     xx, yy = _fond16()
 
@@ -470,7 +474,7 @@ def t_anamorphique(duree):
             ox = 0.5 + (0.5 - cx) * f; oy = 0.45 + (0.5 - 0.45) * f * 0.3
             orbes = orbes + w * np.exp(-(((xx - ox) * 1.4) ** 2 + (yy - oy) ** 2) / (2 * r * r))
         i = (trace * 1.0 + halo * 0.8 + orbes) * (0.35 + 0.65 * env)
-        return _img(_rampe(np.clip(i, 0, 1.4) / 1.4, RAMPE_BLEUE), int(t * 30) + 2)
+        return _img(_rampe(np.clip(i, 0, 1.4) / 1.4, rampe or RAMPE_BLEUE), int(t * 30) + 2)
     return img
 
 
@@ -551,6 +555,8 @@ CALQUES = [
     ('tr-flash-chaud', 'Flash chaud', 'Transitions (sur la coupe)', 0.8, t_flash_pro((255, 205, 140), 0.8)),
     ('tr-flash-bleu', 'Flash bleu glacé', 'Transitions (sur la coupe)', 0.8, t_flash_pro((150, 195, 255), 0.8)),
     ('tr-anamorphique', 'Reflet anamorphique bleu', 'Transitions (sur la coupe)', 1.2, t_anamorphique),
+    ('tr-soleil', 'Reflet de soleil doré', 'Transitions (sur la coupe)', 1.2, t_ana(RAMPE_DOREE)),
+    ('tr-fuite-bleue', 'Fuite de lumière bleue (coupe)', 'Transitions (sur la coupe)', 1.4, t_fuite(RAMPE_BLEUE, 12)),
     ('tr-onde', 'Onde de choc', 'Transitions (sur la coupe)', 1.0, t_onde),
     ('tr-rayons', 'Rayons lumineux', 'Transitions (sur la coupe)', 1.0, t_rayons),
     ('tr-tracking', 'Déformation VHS', 'Transitions (sur la coupe)', 1.0, t_tracking),

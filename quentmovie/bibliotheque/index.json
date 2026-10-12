@@ -878,6 +878,48 @@
    "cat": "Télé et spectacle",
    "file": "sons/generique-info.mp3",
    "duree": 7.6
+  },
+  {
+   "id": "vl-pizz-gai",
+   "nom": "Vlog : cordes pincées joyeuses",
+   "cat": "Vlog",
+   "file": "sons/vl-pizz-gai.mp3",
+   "duree": 1.56
+  },
+  {
+   "id": "vl-pizz-doux",
+   "nom": "Vlog : cordes pincées douces",
+   "cat": "Vlog",
+   "file": "sons/vl-pizz-doux.mp3",
+   "duree": 1.62
+  },
+  {
+   "id": "vl-souffle",
+   "nom": "Vlog : souffle de transition",
+   "cat": "Vlog",
+   "file": "sons/vl-souffle.mp3",
+   "duree": 0.9
+  },
+  {
+   "id": "vl-clic",
+   "nom": "Vlog : clic d’interface",
+   "cat": "Vlog",
+   "file": "sons/vl-clic.mp3",
+   "duree": 0.3
+  },
+  {
+   "id": "vl-cloche",
+   "nom": "Vlog : cloche légère",
+   "cat": "Vlog",
+   "file": "sons/vl-cloche.mp3",
+   "duree": 2
+  },
+  {
+   "id": "vl-page",
+   "nom": "Vlog : page qui tourne",
+   "cat": "Vlog",
+   "file": "sons/vl-page.mp3",
+   "duree": 0.7
   }
  ],
  "musiques": [
@@ -1440,7 +1482,7 @@
    "nom": "Onde de choc",
    "cat": "Transitions (sur la coupe)",
    "file": "calques/tr-onde.mp4",
-   "duree": 1.0,
+   "duree": 1,
    "mode": "ecran"
   },
   {
@@ -1448,7 +1490,7 @@
    "nom": "Rayons lumineux",
    "cat": "Transitions (sur la coupe)",
    "file": "calques/tr-rayons.mp4",
-   "duree": 1.0,
+   "duree": 1,
    "mode": "ecran"
   },
   {
@@ -1456,7 +1498,7 @@
    "nom": "Déformation VHS",
    "cat": "Transitions (sur la coupe)",
    "file": "calques/tr-tracking.mp4",
-   "duree": 1.0,
+   "duree": 1,
    "mode": "ecran"
   }
  ],

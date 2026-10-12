@@ -298,6 +298,13 @@ function trObturateur() { const b = buf(0.8); mix(b, hp(noise(0.02, 0.005), 2500
 function trRewind() { const b = buf(1.2); mix(b, tone(t => 3200 - 2600 * t, 1.0, 0, 'saw', 0.01), 0, 0.22); mix(b, hp(noise(1.0, 0), 2500), 0, 0.2); return fade(lp(b, 6000), 0.02, 0.15); }
 function trChoc() { const b = buf(1.5); mix(b, impact(1.4, 130, 38, 2), 0, 1); mix(b, hp(noise(0.12, 0.03), 2000), 0, 0.7); mix(b, lp(noise(1.2, 0.5), 200), 0.02, 0.6); return b; }
 function trDing() { const b = buf(1.4); mix(b, whoosh(0.4, 400, 6000, 0.7), 0, 0.5); mix(b, cloche(1568, 1.1, 0.5), 0.3, 0.7); mix(b, cloche(2349, 1, 0.35), 0.34, 0.5); return b; }
+// ---- Sons de vlog : cordes pincées (Karplus-Strong), souffles doux, clics d'interface ----
+function pincee(f, sec, amort = 0.996) { const n = Math.round(SR / f), b = buf(sec), ligne = new Float32Array(n); for (let i = 0; i < n; i++) ligne[i] = sgn(); let p = 0, prev = 0; for (let i = 0; i < b.length; i++) { const x = ligne[p]; b[i] = x; const y = amort * 0.5 * (x + prev); prev = x; ligne[p] = y; p = (p + 1) % n; } return fade(b, 0.001, 0.05); }
+function vlPizz(notes, pas, g = 0.6) { const b = buf(notes.length * pas + 1.2); notes.forEach((f, i) => mix(b, pincee(f, 1.1, 0.995), i * pas, g)); return reverb(b, 0.2, 1); }
+function vlSouffle() { const b = buf(0.9); mix(b, whoosh(0.8, 500, 3500, 0.7), 0, 0.6); mix(b, hp(noise(0.5, 0.25), 6000), 0.2, 0.12); return reverb(b, 0.2, 1); }
+function vlClic() { const b = buf(0.3); mix(b, hp(noise(0.012, 0.003), 2500), 0, 0.7); mix(b, tone(1500, 0.05, 0.015), 0.002, 0.35); mix(b, tone(2300, 0.04, 0.01), 0.07, 0.25); return b; }
+function vlCloche() { const b = buf(2); mix(b, cloche(1319, 1.8, 0.5), 0, 0.7); mix(b, cloche(1976, 1.6, 0.3), 0.01, 0.4); return reverb(b, 0.3, 1.4); }
+function vlPage() { const b = buf(0.7); mix(b, hp(lp(noise(0.5, 0.14), 6500), 900), 0, 0.5); mix(b, whoosh(0.35, 700, 2500, 0.5), 0.03, 0.4); return b; }
 function sirene() { const b = fade(lp(tone(t => 900 + 300 * Math.sin(t * PI2 * 1.3), 2.6, 0, 'tri', 0.02), 2600), 0.02, 0.15); for (let i = 0; i < b.length; i++) b[i] *= 0.55 + 0.45 * Math.sin(i / SR * PI2 * 5); return b; }
 function joie() { // petit jingle joyeux
   const b = buf(1.8);
@@ -413,6 +420,12 @@ const SONS = [
   ['tr-rewind', 'Transition : retour en arrière', 'Transitions', trRewind],
   ['tr-choc', 'Transition : onde de choc', 'Transitions', trChoc],
   ['tr-ding', 'Transition : flash scintillant', 'Transitions', trDing],
+  ['vl-pizz-gai', 'Vlog : cordes pincées joyeuses', 'Vlog', () => vlPizz([392, 494, 587, 784], 0.09)],
+  ['vl-pizz-doux', 'Vlog : cordes pincées douces', 'Vlog', () => vlPizz([330, 392, 494], 0.14, 0.5)],
+  ['vl-souffle', 'Vlog : souffle de transition', 'Vlog', vlSouffle],
+  ['vl-clic', 'Vlog : clic d’interface', 'Vlog', vlClic],
+  ['vl-cloche', 'Vlog : cloche légère', 'Vlog', vlCloche],
+  ['vl-page', 'Vlog : page qui tourne', 'Vlog', vlPage],
   ['generique-info', 'Générique d’édition spéciale', 'Télé et spectacle', genereriqueInfo],
   ['sirene', 'Sirène d’alerte', 'Télé et spectacle', sirene]
 ];

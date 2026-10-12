@@ -3,6 +3,11 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.21.0
+- Cinq **packs Vlog** dans l’onglet Packs : Voyage, Quotidien, Food, Sport et énergie, Ville de nuit. Chaque pack pose sur tes coupes des transitions douces, un effet de lumière et un son léger, avec en option le look du pack et une musique de fond qui baisse quand tu parles.
+- Quatre titres de vlog : « JOUR 3 » avec le lieu, nom du lieu en bas à gauche, point REC avec chronomètre de caméscope, et numéro de chapitre.
+- Trois nouvelles transitions douces (glissé doux, zoom doux, fondu lumineux), deux nouveaux effets de coupe (reflet de soleil doré, fuite de lumière bleue) et six sons de vlog (cordes pincées, souffle, clic, cloche, page qui tourne).
+
 ## 1.20.0
 - Nouvel onglet **Packs** (touche 0) : six packs de montage comme sur Premiere Pro — Cinéma, Réseaux sociaux, Glitch, Impact, Journal télé, Doux et lifestyle. Un clic sur « Appliquer » pose sur toutes les coupes les transitions du pack, un effet de coupe (fuite de lumière, flash, reflet, onde de choc…) et un bruitage centré sur le raccord ; le look du pack est en option. Tout s’annule avec ⌘Z.
 - Transitions refaites avec du flou de mouvement : whip pan (gauche, droite, haut), zoom punch, secousse, glitch RVB, fondu flouté, iris et volet à bords doux.

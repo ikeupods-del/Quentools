@@ -185,6 +185,9 @@ const EXPR = {
   secousse: `if(gt(P,0.5),${px('a', 'clip(X+W*0.04*sin(P*150)*(1-abs(2*P-1)),0,W-1)', 'clip(Y+H*0.03*cos(P*190)*(1-abs(2*P-1)),0,H-1)')},${px('b', 'clip(X+W*0.04*sin(P*150)*(1-abs(2*P-1)),0,W-1)', 'clip(Y+H*0.03*cos(P*190)*(1-abs(2*P-1)),0,H-1)')})`,
   irisdoux: `(1-clip(((1-P)*0.74-hypot((X-W/2)/W,(Y-H/2)/W))/0.12,0,1))*A+clip(((1-P)*0.74-hypot((X-W/2)/W,(Y-H/2)/W))/0.12,0,1)*B`,
   diagdoux: `(1-clip(((1-P)*1.3-(0.75*X/W+0.25*Y/H))/0.3,0,1))*A+clip(((1-P)*1.3-(0.75*X/W+0.25*Y/H))/0.3,0,1)*B`,
+  // Vlog : glissés et zooms plus doux, fondu lumineux
+  glissedoux: `if(lt(X,W*(1-${E3})),${px('a', `X+W*${E3}`, 'Y')},${px('b', `X-W*(1-${E3})`, 'Y')})`,
+  zoomdoux: `(1-clip((${E3}-0.4)/0.2,0,1))*(${px('a', `W/2+(X-W/2)/(1+0.35*${E3})`, `H/2+(Y-H/2)/(1+0.35*${E3})`)})+clip((${E3}-0.4)/0.2,0,1)*(${px('b', `W/2+(X-W/2)/(1.35-0.35*${E3})`, `H/2+(Y-H/2)/(1.35-0.35*${E3})`)})`,
   glitch: `if(gt(P,0.5),${px('a', 'clip(X+W*0.22*sin(floor(Y*26/H)*78.233+floor(P*14)*3.1)*(1-abs(2*P-1)),0,W-1)', 'Y')},${px('b', 'clip(X+W*0.22*sin(floor(Y*26/H)*78.233+floor(P*14)*3.1)*(1-abs(2*P-1)),0,W-1)', 'Y')})`
 };
 const TRANSITIONS = [
@@ -198,15 +201,16 @@ const TRANSITIONS = [
   // Packs de transitions : le troisième élément est le pack
   ['fondufloute', 'Fondu flouté', 'cinema'], ['diagdoux', 'Volet diagonal doux', 'cinema'], ['irisdoux', 'Iris doux', 'cinema'],
   ['whipg', 'Whip pan vers la gauche', 'reseaux'], ['whipd', 'Whip pan vers la droite', 'reseaux'], ['whiph', 'Whip pan vers le haut', 'reseaux'], ['zoompunch', 'Zoom punch', 'reseaux'],
+  ['glissedoux', 'Glissé doux', 'vlog'], ['zoomdoux', 'Zoom doux', 'vlog'], ['fondulumiere', 'Fondu lumineux', 'vlog'],
   ['glitch', 'Glitch RVB', 'glitch'], ['secousse', 'Secousse', 'impact']
 ]
-  .map(([id, nom, pack]) => (EXPR[id] ? { id, nom, pack, expr: EXPR[id] } : id === 'fondufloute' ? { id, nom, pack, builtin: 'fade' } : { id, nom, pack }));
+  .map(([id, nom, pack]) => (EXPR[id] ? { id, nom, pack, expr: EXPR[id] } : id === 'fondufloute' ? { id, nom, pack, builtin: 'fade' } : id === 'fondulumiere' ? { id, nom, pack, builtin: 'fadewhite' } : { id, nom, pack }));
 
 // Flou et décalage de couleurs ajoutés par-dessus la transition (fenêtres de temps successives : montée, pic, descente), comme le « motion blur »
 // des packs professionnels. h = flou horizontal, v = vertical, o = dans tous les sens ; rgb = décalage des couleurs en pixels (pour 1080 px).
 const POST = {
   whipg: { flou: ['h', 38] }, whipd: { flou: ['h', 38] }, whiph: { flou: ['v', 38] }, zoompunch: { flou: ['o', 16] },
-  fondufloute: { flou: ['o', 16] }, glitch: { rgb: 16 }, secousse: { flou: ['o', 9], rgb: 6 }
+  fondufloute: { flou: ['o', 16] }, glissedoux: { flou: ['h', 14] }, zoomdoux: { flou: ['o', 8] }, fondulumiere: { flou: ['o', 10] }, glitch: { rgb: 16 }, secousse: { flou: ['o', 9], rgb: 6 }
 };
 // S = début de la transition (s), D = durée (s), k = échelle de la définition (1 pour 1080 px de petit côté)
 function postTransition(id, S, D, k = 1) {
@@ -248,6 +252,10 @@ const REPORTAGE = [
   { id: 'glitch-titre', nom: 'Titre glitch (couleurs décalées)', l1: 'GLITCH', l2: '', color: '#ff2d55', pack: 'glitch' },
   { id: 'impact-titre', nom: 'Titre impact (gros, sur boîte)', l1: 'Le titre', l2: 'sous-titre', color: '#ff3b30', pack: 'impact' },
   { id: 'cadre-titre', nom: 'Titre dans un cadre fin', l1: 'Mon titre', l2: 'Un sous-titre', color: '#e8c9a0', pack: 'doux' },
+  { id: 'jour', nom: 'Jour du vlog (JOUR 3 + lieu)', l1: 'Jour 3', l2: 'Lisbonne, Portugal', color: '#ffb347', pack: 'vlog' },
+  { id: 'lieu-vlog', nom: 'Nom du lieu (en bas à gauche)', l1: 'Lisbonne', l2: 'Alfama · 18 h', color: '#ffb347', pack: 'vlog' },
+  { id: 'rec', nom: 'REC et chronomètre (caméscope)', l1: '', l2: '', color: '#ff2d2d', pack: 'vlog' },
+  { id: 'numero', nom: 'Numéro de chapitre (01, titre)', l1: '01', l2: 'Le réveil', color: '#ffb347', pack: 'vlog' },
   { id: 'tiers', nom: 'Bandeau de journaliste (nom + fonction)', l1: 'Prénom Nom', l2: 'Fonction, lieu', color: '#c8102e' },
   { id: 'minimal', nom: 'Titre minimal (barre verticale)', l1: 'Titre de la séquence', l2: 'Sous-titre', color: '#ffb400' },
   { id: 'flash', nom: 'Flash info (bandeau défilant)', l1: 'Dernière minute : écris ici ton information qui défile en bas de l’écran', l2: 'FLASH INFO', color: '#d40000' },

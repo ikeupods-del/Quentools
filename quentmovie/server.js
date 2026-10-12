@@ -527,7 +527,7 @@ function buildClip(c, P, o = {}) {
     const acc = hex(ti.color || '#c8102e'), id = String(ti.preset);
     const txt = (name, content) => { const file = `r${idx}${name}.txt`; fs.writeFileSync(path.join(dir, file), String(content).slice(0, 600)); return file; };
     const l1 = String(ti.l1 || ''), l2 = String(ti.l2 || '');
-    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
+    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', jour: 'futura', 'lieu-vlog': 'futura', numero: 'futura', rec: 'courier', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
     const font = `fontfile='${fontFile(ti.font || DEF_FONT[id])}'`;
     const dt = (file, size, color, x, y, extra = '') =>
       `drawtext=${font}:textfile=${file}:expansion=none:fontsize=${Math.round(size)}:fontcolor=${color}:x='${x}':y='${y}':${en}${extra}`;
@@ -630,6 +630,25 @@ function buildClip(c, P, o = {}) {
       box(acc, bw, e, x, y); box(acc, bw, e, x, `${H * 0.5 + 11 * u - e}`); box(acc, e, bh, x, y); box(acc, e, bh, `(W+${bw})/2-${e}`, y);
       text([dt(txt('a', l1), 8 * u, 'white', '(w-text_w)/2', `${H * 0.5 - 6 * u}`, `:alpha='${F}'`),
         ...(l2 ? [dt(txt('b', l2), 3.4 * u, acc, '(w-text_w)/2', `${H * 0.5 + 4.6 * u}`, `:alpha='${F}'`)] : [])]);
+    } else if (id === 'jour') { // pack Vlog : « JOUR 3 » et le lieu, à gauche
+      const BX = `(-${W * 0.6}+(${8 * u}+${W * 0.6})*${F})`, y = H * 0.38;
+      box(acc, 11 * u, Math.max(3, 0.9 * u), BX, y - 2.4 * u);
+      text([dt(txt('a', l1.toUpperCase()), 12 * u, 'white', BX, `${y}`, `:shadowx=${Math.round(0.25 * u)}:shadowy=${Math.round(0.25 * u)}:shadowcolor=black@0.45`),
+        ...(l2 ? [dt(txt('b', l2), 4 * u, 'white@0.92', BX, `${y + 14.5 * u}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.5`)] : [])]);
+    } else if (id === 'lieu-vlog') { // pack Vlog : repère carré d'accent et nom du lieu, en bas à gauche
+      const BX = `(-${W * 0.6}+(${6 * u}+${W * 0.6})*${F})`, y = H * 0.8;
+      box(acc, 2.6 * u, 2.6 * u, BX, y + 0.6 * u);
+      text([dt(txt('a', l1.toUpperCase().split('').join(' ')), 3.6 * u, 'white', `${BX}+${4.2 * u}`, `${y}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.55`),
+        ...(l2 ? [dt(txt('b', l2), 2.6 * u, 'white@0.85', `${BX}+${4.2 * u}`, `${y + 4.6 * u}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.5`)] : [])]);
+    } else if (id === 'rec') { // pack Vlog : point REC qui clignote et chronomètre de la prise, en haut à gauche
+      const size = 3.6 * u, tc = `r${idx}rec.txt`; fs.writeFileSync(path.join(dir, tc), 'REC  %{pts:hms}');
+      box('0xff2d2d', 1.9 * u, 1.9 * u, `${5 * u}`, `${6.1 * u}`);
+      const out = lab(); f.push(`[${cur}]drawtext=${font}:textfile=${tc}:expansion=normal:fontsize=${Math.round(size)}:fontcolor=white:x=${Math.round(8.4 * u)}:y=${Math.round(5.4 * u)}:shadowx=2:shadowy=2:shadowcolor=black@0.55:${en}[${out}]`); cur = out;
+    } else if (id === 'numero') { // pack Vlog : numéro de chapitre, trait et titre
+      const BX = `(-${W * 0.6}+(${7 * u}+${W * 0.6})*${F})`, y = H * 0.7;
+      box(acc, Math.max(3, 0.5 * u), 12 * u, `${BX}+${18 * u}`, y);
+      text([dt(txt('a', l1), 12 * u, acc, BX, `${y - 0.8 * u}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.4`),
+        ...(l2 ? [dt(txt('b', l2.toUpperCase()), 4.4 * u, 'white', `${BX}+${20.5 * u}`, `${y + 3.6 * u}`, `:shadowx=2:shadowy=2:shadowcolor=black@0.55`)] : [])]);
     } else if (id === 'progression') { // barre de progression de la séquence
       const bh = even(Math.max(4, 1.1 * u)), src = lab(), out = lab();
       f.push(`color=c=${acc}:s=${even(W)}x${bh}:r=${fps},format=rgba,scale=w='max(2,${even(W)}*min(1,${T}/${Math.max(0.5, eff).toFixed(2)}))':h=${bh}:eval=frame[${src}]`);
