@@ -93,6 +93,13 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     check(`titre reportage ${r.id} (t=${t})`, await isJpeg(rr), lastErr.v);
   }
   check('générateur fond uni + titre', await isJpeg(await preview({ kind: 'solid', color: '#0b1d3a', dur: 4, fx: [], key: {}, titre: { preset: 'chapitre', l1: 'CHAPITRE 1', l2: 'Début', color: '#ffffff', start: 0, dur: 0 } })), lastErr.v);
+  // 2b') Pack de montage : effet de coupe en deux moitiés (décalage dans la vidéo du calque) exporté sans erreur
+  {
+    const ov = (start, dur, ss) => ({ file: 'lib:calques/tr-flash.mp4', kind: 'video', x: 50, y: 50, scale: 100, rot: 0, opacity: 90, start, dur, ss, anim: 'none', mode: 'ecran', plein: 'remplir', key: false, keySim: 0.3 });
+    const rr = await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: project([clip({ out: 2, transition: { type: 'whipg', dur: 0.4 }, overlays: [ov(1.6, 0, 0)] }), clip({ out: 2, overlays: [ov(0, 0.4, 0.4)] })]) }) });
+    const { id } = await rr.json(); let j; for (let i = 0; i < 240; i++) { await new Promise(r => setTimeout(r, 250)); j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.done || j.error) break; }
+    check('pack : transition whip pan avec flou + effet de coupe en deux moitiés', j && j.done, j && j.error);
+  }
   // 2c) Calques animés, sous-titres, polices
   for (const anim of ['none', 'pop', 'fade', 'glisse', 'monte', 'rebond']) for (const rot of [0, 15]) {
     const rr = await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: project([clip({ out: 2, overlays: [{ file: 'lib:stickers/coeur.png', kind: 'image', x: 70, y: 30, scale: 25, rot, opacity: 90, start: 0.3, dur: 1.2, anim }] })]) }) });

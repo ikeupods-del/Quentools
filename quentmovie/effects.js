@@ -168,6 +168,7 @@ afx('fm', 'Voix radio FM', [], () => 'highpass=f=100,equalizer=f=2500:t=q:w=1:g=
 // Certaines sont décrites par une formule (xfade « custom ») : elles marchent avec toutes les versions de FFmpeg.
 // P va de 1 (début, image A) à 0 (fin, image B) ; a0…a3 / b0…b3 lisent un pixel de chaque image, plan par plan.
 const px = (src, x, y) => `if(eq(PLANE,0),${src}0(${x},${y}),if(eq(PLANE,1),${src}1(${x},${y}),if(eq(PLANE,2),${src}2(${x},${y}),${src}3(${x},${y}))))`;
+const E3 = 'if(lt(1-P,0.5),4*pow(1-P,3),1-pow(2-2*(1-P),3)/2)'; // progression de 0 à 1 qui démarre et finit en douceur
 const EXPR = {
   coverleft: `if(gte(X,W*P),${px('b', 'X-W*P', 'Y')},A)`,
   coverright: `if(lt(X,W*(1-P)),${px('b', 'X+W*P', 'Y')},A)`,
@@ -175,7 +176,16 @@ const EXPR = {
   revealright: `if(gte(X,W*(1-P)),${px('a', 'X-W*(1-P)', 'Y')},B)`,
   stores: 'if(lt(mod(Y,H/10)/(H/10),1-P),B,A)',
   damier: 'if(gt(1-P,0.25+0.5*mod(floor(X*8/W)+floor(Y*8/H),2)),B,A)',
-  rideau: 'if(lt(abs(X-W/2),W/2*(1-P)),B,A)'
+  rideau: 'if(lt(abs(X-W/2),W/2*(1-P)),B,A)',
+  // Transitions « pro » : mouvements adoucis (départ et arrivée en douceur), bords fondus, flou de mouvement ajouté après le mélange (voir POST)
+  whipg: `if(lt(X,W*(1-${E3})),${px('a', `X+W*${E3}`, 'Y')},${px('b', `X-W*(1-${E3})`, 'Y')})`,
+  whipd: `if(gt(X,W*${E3}),${px('a', `X-W*${E3}`, 'Y')},${px('b', `X+W*(1-${E3})`, 'Y')})`,
+  whiph: `if(lt(Y,H*(1-${E3})),${px('a', 'X', `Y+H*${E3}`)},${px('b', 'X', `Y-H*(1-${E3})`)})`,
+  zoompunch: `(1-clip((${E3}-0.4)/0.2,0,1))*(${px('a', `W/2+(X-W/2)/(1+0.8*${E3})`, `H/2+(Y-H/2)/(1+0.8*${E3})`)})+clip((${E3}-0.4)/0.2,0,1)*(${px('b', `W/2+(X-W/2)/(1.8-0.8*${E3})`, `H/2+(Y-H/2)/(1.8-0.8*${E3})`)})`,
+  secousse: `if(gt(P,0.5),${px('a', 'clip(X+W*0.04*sin(P*150)*(1-abs(2*P-1)),0,W-1)', 'clip(Y+H*0.03*cos(P*190)*(1-abs(2*P-1)),0,H-1)')},${px('b', 'clip(X+W*0.04*sin(P*150)*(1-abs(2*P-1)),0,W-1)', 'clip(Y+H*0.03*cos(P*190)*(1-abs(2*P-1)),0,H-1)')})`,
+  irisdoux: `(1-clip(((1-P)*0.74-hypot((X-W/2)/W,(Y-H/2)/W))/0.12,0,1))*A+clip(((1-P)*0.74-hypot((X-W/2)/W,(Y-H/2)/W))/0.12,0,1)*B`,
+  diagdoux: `(1-clip(((1-P)*1.3-(0.75*X/W+0.25*Y/H))/0.3,0,1))*A+clip(((1-P)*1.3-(0.75*X/W+0.25*Y/H))/0.3,0,1)*B`,
+  glitch: `if(gt(P,0.5),${px('a', 'clip(X+W*0.22*sin(floor(Y*26/H)*78.233+floor(P*14)*3.1)*(1-abs(2*P-1)),0,W-1)', 'Y')},${px('b', 'clip(X+W*0.22*sin(floor(Y*26/H)*78.233+floor(P*14)*3.1)*(1-abs(2*P-1)),0,W-1)', 'Y')})`
 };
 const TRANSITIONS = [
   ['fade', 'Fondu enchaîné'], ['fadeblack', 'Fondu au noir'], ['fadewhite', 'Fondu au blanc'], ['dissolve', 'Dissolution'],
@@ -184,8 +194,37 @@ const TRANSITIONS = [
   ['hblur', 'Flou en mouvement'], ['squeezeh', 'Écrasement horizontal'], ['squeezev', 'Écrasement vertical'], ['coverleft', 'Recouvrement gauche'], ['coverright', 'Recouvrement droite'], ['revealleft', 'Dévoilement gauche'], ['revealright', 'Dévoilement droite'], ['diagtl', 'Diagonale'], ['vuslice', 'Tranches verticales'], ['hlslice', 'Tranches horizontales'], ['fadegrays', 'Fondu par le gris'],
   ['circleopen', 'Cercle qui s’ouvre'], ['circleclose', 'Cercle qui se ferme'], ['radial', 'Radial'],
   ['zoomin', 'Zoom'], ['pixelize', 'Pixels'], ['horzopen', 'Ouverture horizontale'], ['vertopen', 'Ouverture verticale'],
-  ['stores', 'Stores'], ['damier', 'Damier'], ['rideau', 'Rideau qui s’ouvre']
-].map(([id, nom]) => (EXPR[id] ? { id, nom, expr: EXPR[id] } : { id, nom }));
+  ['stores', 'Stores'], ['damier', 'Damier'], ['rideau', 'Rideau qui s’ouvre'],
+  // Packs de transitions : le troisième élément est le pack
+  ['fondufloute', 'Fondu flouté', 'cinema'], ['diagdoux', 'Volet diagonal doux', 'cinema'], ['irisdoux', 'Iris doux', 'cinema'],
+  ['whipg', 'Whip pan vers la gauche', 'reseaux'], ['whipd', 'Whip pan vers la droite', 'reseaux'], ['whiph', 'Whip pan vers le haut', 'reseaux'], ['zoompunch', 'Zoom punch', 'reseaux'],
+  ['glitch', 'Glitch RVB', 'glitch'], ['secousse', 'Secousse', 'impact']
+]
+  .map(([id, nom, pack]) => (EXPR[id] ? { id, nom, pack, expr: EXPR[id] } : id === 'fondufloute' ? { id, nom, pack, builtin: 'fade' } : { id, nom, pack }));
+
+// Flou et décalage de couleurs ajoutés par-dessus la transition (fenêtres de temps successives : montée, pic, descente), comme le « motion blur »
+// des packs professionnels. h = flou horizontal, v = vertical, o = dans tous les sens ; rgb = décalage des couleurs en pixels (pour 1080 px).
+const POST = {
+  whipg: { flou: ['h', 38] }, whipd: { flou: ['h', 38] }, whiph: { flou: ['v', 38] }, zoompunch: { flou: ['o', 16] },
+  fondufloute: { flou: ['o', 16] }, glitch: { rgb: 16 }, secousse: { flou: ['o', 9], rgb: 6 }
+};
+// S = début de la transition (s), D = durée (s), k = échelle de la définition (1 pour 1080 px de petit côté)
+function postTransition(id, S, D, k = 1) {
+  const q = POST[id]; if (!q) return '';
+  const N = 8, out = [], f = x => x.toFixed(3);
+  for (let i = 0; i < N; i++) {
+    const a = S + D * i / N, b = S + D * (i + 1) / N, env = Math.pow(Math.sin(Math.PI * (i + 0.5) / N), 1.4), en = `enable='gte(t,${f(a)})*lt(t,${f(b)})'`;
+    if (q.flou) { const sg = q.flou[1] * k * env, d = q.flou[0]; if (sg >= 0.8) out.push(`gblur=sigma=${(d === 'v' ? 0 : sg).toFixed(2)}:sigmaV=${(d === 'h' ? 0 : sg).toFixed(2)}:${en}`); }
+    if (q.rgb) { const r = Math.round(q.rgb * k * env); if (r >= 1) out.push(`rgbashift=rh=${-r}:bh=${r}:${en}`); }
+  }
+  return out.length ? ',' + out.join(',') : '';
+}
+// morceau de graphe : le filtre xfade de la transition + son flou ; offset et durée en secondes
+function filtreTransition(tr, D, offset, k = 1) {
+  const def = TRANSITIONS.find(t => t.id === tr);
+  const ty = def.expr ? `custom:expr='${def.expr}'` : (def.builtin || tr);
+  return `xfade=transition=${ty}:duration=${D.toFixed(3)}:offset=${offset.toFixed(3)}${postTransition(tr, offset, D, k)}`;
+}
 
 // ---------- Styles de titres ----------
 const TITLES = [
@@ -201,6 +240,14 @@ const TITLES = [
 
 // Titres de reportage (animés). l1 / l2 : textes par défaut ; couleur d'accent.
 const REPORTAGE = [
+  { id: 'angle', nom: 'Tiers inférieur à bloc d’accent', l1: 'Prénom Nom', l2: 'Fonction', color: '#ff2d55', pack: 'reseaux' },
+  { id: 'pseudo', nom: '@pseudo en pastille', l1: '@tonpseudo', l2: '', color: '#5b3df5', pack: 'reseaux' },
+  { id: 'etiquette', nom: 'Étiquette de sujet (en haut)', l1: 'Le sujet', l2: '', color: '#ff2d55', pack: 'reseaux' },
+  { id: 'double', nom: 'Double barre (nom et fonction)', l1: 'Prénom Nom', l2: 'Fonction, lieu', color: '#c8102e', pack: 'journal' },
+  { id: 'cine-titre', nom: 'Titre de film (bandes noires)', l1: 'Titre du film', l2: 'Un film de toi', color: '#c9a45c', pack: 'cinema' },
+  { id: 'glitch-titre', nom: 'Titre glitch (couleurs décalées)', l1: 'GLITCH', l2: '', color: '#ff2d55', pack: 'glitch' },
+  { id: 'impact-titre', nom: 'Titre impact (gros, sur boîte)', l1: 'Le titre', l2: 'sous-titre', color: '#ff3b30', pack: 'impact' },
+  { id: 'cadre-titre', nom: 'Titre dans un cadre fin', l1: 'Mon titre', l2: 'Un sous-titre', color: '#e8c9a0', pack: 'doux' },
   { id: 'tiers', nom: 'Bandeau de journaliste (nom + fonction)', l1: 'Prénom Nom', l2: 'Fonction, lieu', color: '#c8102e' },
   { id: 'minimal', nom: 'Titre minimal (barre verticale)', l1: 'Titre de la séquence', l2: 'Sous-titre', color: '#ffb400' },
   { id: 'flash', nom: 'Flash info (bandeau défilant)', l1: 'Dernière minute : écris ici ton information qui défile en bas de l’écran', l2: 'FLASH INFO', color: '#d40000' },
@@ -227,7 +274,7 @@ function defaults(def) { const o = {}; def.params.forEach(q => { o[q.k] = q.def;
 function catalogue(filters) {
   const ok = d => d.needs.every(n => filters.has(n));
   const map = d => ({ id: d.id, nom: d.nom, cat: d.cat, params: d.params, dispo: ok(d), blend: !!d.blend });
-  return { video: VIDEO.map(map), audio: AUDIO.map(map), transitions: TRANSITIONS.map(t => ({ id: t.id, nom: t.nom })), titres: TITLES, reportage: REPORTAGE, generateurs: GENERATEURS, positions: POSITIONS };
+  return { video: VIDEO.map(map), audio: AUDIO.map(map), transitions: TRANSITIONS.map(t => ({ id: t.id, nom: t.nom, pack: t.pack })), titres: TITLES, reportage: REPORTAGE, generateurs: GENERATEURS, positions: POSITIONS };
 }
 
-module.exports = { VIDEO, AUDIO, TRANSITIONS, TITLES, REPORTAGE, GENERATEURS, POSITIONS, catalogue, defaults };
+module.exports = { VIDEO, AUDIO, TRANSITIONS, filtreTransition, postTransition, TITLES, REPORTAGE, GENERATEURS, POSITIONS, catalogue, defaults };
