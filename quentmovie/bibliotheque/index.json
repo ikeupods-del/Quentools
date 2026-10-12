@@ -1478,11 +1478,27 @@
    "mode": "ecran"
   },
   {
+   "id": "tr-soleil",
+   "nom": "Reflet de soleil doré",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-soleil.mp4",
+   "duree": 1.2,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-fuite-bleue",
+   "nom": "Fuite de lumière bleue (coupe)",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-fuite-bleue.mp4",
+   "duree": 1.4,
+   "mode": "ecran"
+  },
+  {
    "id": "tr-onde",
    "nom": "Onde de choc",
    "cat": "Transitions (sur la coupe)",
    "file": "calques/tr-onde.mp4",
-   "duree": 1,
+   "duree": 1.0,
    "mode": "ecran"
   },
   {
@@ -1490,7 +1506,7 @@
    "nom": "Rayons lumineux",
    "cat": "Transitions (sur la coupe)",
    "file": "calques/tr-rayons.mp4",
-   "duree": 1,
+   "duree": 1.0,
    "mode": "ecran"
   },
   {
@@ -1498,7 +1514,7 @@
    "nom": "Déformation VHS",
    "cat": "Transitions (sur la coupe)",
    "file": "calques/tr-tracking.mp4",
-   "duree": 1,
+   "duree": 1.0,
    "mode": "ecran"
   }
  ],
