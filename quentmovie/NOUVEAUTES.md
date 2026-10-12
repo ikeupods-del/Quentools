@@ -3,6 +3,10 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.24.0
+- **Vlogs et podcasts nettement enrichis.** Vlog : intro avec grand nom du lieu, trajet « départ → arrivée » qui se dessine, date et heure façon caméscope, « en ce moment » avec égaliseur animé, grain de pellicule 16 mm et rayons de fenêtre posés sur tous les clips en un clic, bips de début et de fin d’enregistrement, son d’apparition de titre. Podcast : carte de question, chapitres horodatés qui apparaissent un à un, grande citation de l’invité, bandeau « Écoute-nous sur… », jingle court et ambiance de studio.
+- Nouveau pack **Podcast audio (audiogram)** et quatre **pochettes d’épisode** (orange, violet et rose, sable, nuit étoilée) en 16:9 et en vertical, posées derrière le visualiseur sonore par les packs podcast. Deux nouveaux visualiseurs : barres en miroir et spectre coloré.
+
 ## 1.23.0
 - Cinq nouveaux packs « Style de vie » : **Mode et beauté**, **Immobilier et visite**, **Santé et bien-être**, **École et cours**, **Église et spiritualité**, soit 27 packs au total.
 - Six nouveaux titres animés : carte de prix, pastilles de caractéristiques (T3, 68 m², balcon…), liste à puces qui apparaît ligne par ligne, verset ou citation avec filets dorés, pastille de promotion, et mention « pas un avis médical ».

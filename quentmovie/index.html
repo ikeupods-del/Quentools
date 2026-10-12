@@ -603,7 +603,7 @@ function navigateur() {
         <div class="pkh">Effets de coupe</div><div class="pkgr">${P.calques.map(c => `<div><img loading="lazy" src="/api/frame?file=${enc('lib:calques/' + c + '.mp4')}&t=0.5" alt="">${esc(nomLib(L.calques, c))}</div>`).join('')}</div>
         <div class="pkh">Sons${P.musique ? ' et musique' : ''}</div><div class="pksons">${P.sons.map(c => { const x = L.sons.find(y => y.id === c); return x ? `<button class="mini" data-play="${x.file}" title="Écouter">▶ ${esc(x.nom.replace(/^(Transition|Vlog) : /, ''))}</button>` : ''; }).join('')}${P.musique ? (() => { const m = L.musiques.find(y => y.id === P.musique); return m ? `<button class="mini" data-play="${m.file}" title="Écouter">♪ ${esc(m.nom)}</button>` : ''; })() : ''}</div>
         ${P.look ? `<div class="pkh">Look</div><div class="mut">${esc(nomLib(L.luts, P.look.replace(/^luts\//, '').replace(/\.cube$/, '')))}</div>` : ''}
-        <div class="ligne" style="margin-top:8px;flex-wrap:wrap;gap:8px"><label><input type="checkbox" class="pk-tr" checked> transitions</label><label><input type="checkbox" class="pk-cal" checked> effets de coupe</label><label><input type="checkbox" class="pk-son" checked> sons</label>${P.look ? '<label><input type="checkbox" class="pk-look"> look</label>' : ''}${P.musique ? '<label><input type="checkbox" class="pk-mus"> musique</label>' : ''}${P.viz ? '<label title="S’applique aux clips audio (podcast sans image)"><input type="checkbox" class="pk-viz"> visualiseur sonore</label>' : ''}</div>
+        <div class="ligne" style="margin-top:8px;flex-wrap:wrap;gap:8px"><label><input type="checkbox" class="pk-tr" checked> transitions</label><label><input type="checkbox" class="pk-cal" checked> effets de coupe</label><label><input type="checkbox" class="pk-son" checked> sons</label>${P.look ? '<label><input type="checkbox" class="pk-look"> look</label>' : ''}${P.musique ? '<label><input type="checkbox" class="pk-mus"> musique</label>' : ''}${P.viz ? '<label title="S’applique aux clips audio (podcast sans image) : pochette et visualiseur"><input type="checkbox" class="pk-viz"> pochette et visualiseur</label>' : ''}${P.ambiance ? '<label title="Grain de pellicule ou lumière douce posés sur tous les clips"><input type="checkbox" class="pk-amb"> ambiance</label>' : ''}</div>
         <button class="pri" data-pack-app="${P.id}" style="width:100%;margin-top:6px">Appliquer ${esc(P.nom)} à toutes les coupes</button></div>`).join('')).join('');
     setTimeout(chargerApercusTitres, 30); setTimeout(chargerApercusSousTitres, 60);
   } else if (tab === 'titres') {
@@ -655,7 +655,7 @@ $('#navbody').addEventListener('click', e => {
   else if (d.fx) ajouterFx(sel, d.fx);
   else if (d.afx) ajouterAfx(sel, d.afx);
   else if (d.sousstyle) appliquerSousStyle(d.sousstyle);
-  else if (d.packApp) appliquerPack(d.packApp, { tr: !!t.parentNode.querySelector('.pk-tr:checked'), cal: !!t.parentNode.querySelector('.pk-cal:checked'), son: !!t.parentNode.querySelector('.pk-son:checked'), look: !!t.parentNode.querySelector('.pk-look:checked'), mus: !!t.parentNode.querySelector('.pk-mus:checked'), viz: !!t.parentNode.querySelector('.pk-viz:checked') });
+  else if (d.packApp) appliquerPack(d.packApp, { tr: !!t.parentNode.querySelector('.pk-tr:checked'), cal: !!t.parentNode.querySelector('.pk-cal:checked'), son: !!t.parentNode.querySelector('.pk-son:checked'), look: !!t.parentNode.querySelector('.pk-look:checked'), mus: !!t.parentNode.querySelector('.pk-mus:checked'), viz: !!t.parentNode.querySelector('.pk-viz:checked'), amb: !!t.parentNode.querySelector('.pk-amb:checked') });
   else if (d.tr) appliquerTransition(d.tr);
   else if (t.id === 'bTrTous') { const tt = $('#navbody .carte[style*="--ac"]'); proj.clips.slice(0, -1).forEach(c => { c.transition = { type: (tt && tt.dataset.tr) || 'fade', dur: +$('#trDurR').value }; }); commit(); tlDessin(); }
   else if (d.titre) appliquerTitre(d.titre);
@@ -838,10 +838,11 @@ function appliquerPack(id, o) {
     if (o.son && sn) { proj.audio.push({ file: 'lib:' + sn.file, vol: 80, start: +Math.max(0, cut - Math.min(sn.duree, 1.4) * 0.45).toFixed(1), fade: false, loop: false, duck: false }); nS++; }
   });
   if (o.look && P.look) proj.clips.forEach(c => { if (c.kind !== 'audio') c.lut = { file: 'lib:' + P.look, amount: 100 }; });
-  if (o.viz && P.viz) proj.clips.forEach(c => { if (c.kind === 'audio') { c.viz = { type: P.viz.type, color: P.viz.color, h: P.viz.h, pos: P.viz.pos }; c.bgColor = P.viz.bg; } });
+  if (o.viz && P.viz) proj.clips.forEach(c => { if (c.kind === 'audio') { c.viz = { type: P.viz.type, color: P.viz.color, h: P.viz.h, pos: P.viz.pos }; c.bgColor = P.viz.bg; if (P.viz.fond) { c.bgFile = 'lib:' + P.viz.fond; c.bgKind = 'image'; } } });
+  if (o.amb && P.ambiance) proj.clips.forEach(c => { c.overlays = (c.overlays || []).filter(x => x.pack !== P.id + '-amb'); if (c.kind !== 'audio') c.overlays.push({ file: 'lib:calques/' + P.ambiance + '.mp4', kind: 'video', x: 50, y: 50, scale: 100, rot: 0, opacity: P.ambiance === 'grain-16mm' ? 38 : 70, anim: 'none', mode: 'ecran', plein: 'remplir', key: false, keySim: 0.3, start: 0, dur: 0, pack: P.id + '-amb' }); });
   if (o.mus && P.musique) { const mu = L.musiques.find(x => x.id === P.musique); if (mu) proj.audio.push({ file: 'lib:' + mu.file, vol: 35, start: 0, fade: true, loop: true, duck: true }); }
   commit(); tout(); apercu();
-  signal(`${P.nom} appliqué : ${nT} transition(s), ${nC} effet(s) de coupe, ${nS} son(s)${o.look ? ', le look' : ''}${o.viz ? ', le visualiseur sonore' : ''}${o.mus ? ' et la musique' : ''}. ⌘Z pour annuler.`);
+  signal(`${P.nom} appliqué : ${nT} transition(s), ${nC} effet(s) de coupe, ${nS} son(s)${o.look ? ', le look' : ''}${o.viz ? ', la pochette et le visualiseur' : ''}${o.amb ? ', l’ambiance' : ''}${o.mus ? ' et la musique' : ''}. ⌘Z pour annuler.`);
 }
 function appliquerTransition(type) {
   const cut = selCut >= 0 ? selCut : sel;
@@ -1616,7 +1617,7 @@ function inspecteur() {
   </details>
   ${k === 'video' || k === 'image' ? `<details ${c.zoom > 100 ? 'open' : ''}><summary>Zoom et cadrage ${c.zoom > 100 ? '· ' + c.zoom + ' %' : ''}</summary>${sl('Zoom', 'zoom', 100, 400, 5, ' %', c)}${sl('Position horizontale', 'zx', -100, 100, 1, '', c)}${sl('Position verticale', 'zy', -100, 100, 1, '', c)}<button id="bZoom0" style="margin-top:6px">Remettre à zéro</button></details>` : ''}
   ${k === 'audio' ? `<details open><summary>Podcast : fond et visualiseur</summary>
-    <label class="l">Visualiseur du son</label><select data-p="viz.type">${opts([['ligne', 'Ligne ondulante'], ['ondes', 'Ondes'], ['points', 'Points'], ['barres', 'Barres de fréquences'], ['none', 'Aucun']], c.viz.type)}</select>
+    <label class="l">Visualiseur du son</label><select data-p="viz.type">${opts([['ligne', 'Ligne ondulante'], ['ondes', 'Ondes'], ['points', 'Points'], ['barres', 'Barres de fréquences'], ['miroir', 'Barres en miroir'], ['spectre', 'Spectre coloré'], ['none', 'Aucun']], c.viz.type)}</select>
     <div class="ligne"><input type="color" data-p="viz.color" value="${c.viz.color}"><select data-p="viz.pos">${opts([['haut', 'En haut'], ['centre', 'Au centre'], ['bas', 'En bas']], c.viz.pos)}</select></div>
     ${sl('Hauteur du visualiseur', 'viz.h', 5, 100, 1, ' %', c)}
     <label class="l">Image de couverture (pochette)</label><select data-p="bgFile">${optsMedia(c.bgFile, false).replace(/<optgroup[\s\S]*<\/optgroup>/, '')}</select>

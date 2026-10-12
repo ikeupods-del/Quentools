@@ -115,7 +115,7 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   check('sous-titres', await isJpeg(await preview(clip({ subs: [{ s: 0, e: 3, t: 'Bonjour à tous, bienvenue : c’est parti !' }], subStyle: 'bandeau' }))), lastErr.v);
   for (const f of (cat.polices || []).slice(0, 6)) check('police ' + f.id, await isJpeg(await preview(clip({ text: 'Essai', textFont: f.id, titre: { preset: 'tiers', l1: 'Nom', l2: 'Fonction', font: f.id, start: 0, dur: 0, color: '#c8102e' } }))), lastErr.v);
   // 2d) Podcast : clip audio avec fond et visualiseur
-  for (const type of ['ligne', 'ondes', 'points', 'barres', 'none']) {
+  for (const type of ['ligne', 'ondes', 'points', 'barres', 'miroir', 'spectre', 'none']) {
     check('podcast visualiseur ' + type, await isJpeg(await preview({ file: 'musique.mp3', kind: 'audio', in: 0, out: 6, speed: 1, vol: 100, hasAudio: true, fx: [], key: {}, bgColor: '#102040', viz: { type, color: '#ffd400', pos: 'centre', h: 30 }, titre: { preset: 'souligne', l1: 'Épisode 1', l2: 'Mon podcast', color: '#ffb400', start: 0, dur: 0 } }, 1)), lastErr.v);
   }
   check('podcast avec pochette', await isJpeg(await preview({ file: 'musique.mp3', kind: 'audio', in: 0, out: 6, speed: 1, hasAudio: true, fx: [], key: {}, bgFile: 'photo.png', viz: { type: 'ligne', color: '#ffffff', pos: 'bas', h: 20 } })), lastErr.v);

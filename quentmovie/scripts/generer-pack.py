@@ -570,6 +570,33 @@ def t_donnees(duree):
     return img
 
 
+def t_grain16(duree):
+    """Grain de pellicule 16 mm : bruit fin changeant à chaque image, léger flottement de lumière, boucle (mode écran, faible opacité)."""
+    def img(t):
+        r = np.random.default_rng(int(t * 24) % 96 * 7 + 1)
+        g = r.normal(0.0, 1.0, (LH // 2, LW // 2)).astype(np.float32)
+        g = np.asarray(Image.fromarray(np.clip(128 + g * 38, 0, 255).astype(np.uint8)).resize((LW, LH), Image.BILINEAR), dtype=np.float32)
+        lum = 0.92 + 0.08 * math.sin(t * 9) * math.sin(t * 3.1)
+        v = np.clip((g - 90) * 0.9, 0, 255) * lum
+        return Image.fromarray(np.stack([v * 1.0, v * 0.97, v * 0.9], -1).astype(np.uint8))
+    return img
+
+
+def t_fenetre(duree):
+    """Rayons de fenêtre : faisceaux chauds et doux en diagonale qui dérivent lentement, boucle parfaite."""
+    xx, yy = _fond16()
+
+    def img(t):
+        p = (t / duree) * 2 * math.pi
+        i = np.zeros((LH, LW), dtype=np.float32)
+        for k, (cx, w, ph) in enumerate(((0.25, 0.05, 0.0), (0.45, 0.035, 1.7), (0.62, 0.06, 3.1), (0.8, 0.03, 4.4))):
+            x = cx + 0.03 * math.sin(p + ph)
+            i += (0.55 + 0.45 * math.sin(p * 1 + ph * 0.7)) * np.exp(-(((xx - 0.35 * yy) - x) ** 2) / (2 * w * w))
+        i *= np.clip(1.15 - yy * 0.8, 0, 1)
+        return _img(_rampe(np.clip(i * 0.8, 0, 1), RAMPE_CHAUDE), int(t * 24) % 120 + 3)
+    return img
+
+
 CALQUES = [
     # id, nom, catégorie, durée, générateur
     ('fuite-chaude', 'Fuite de lumière chaude', 'Lumière', 6, lambda d: taches([(255, 120, 30), (255, 60, 20), (255, 200, 80)], d)),
@@ -601,6 +628,8 @@ CALQUES = [
     ('tr-fuite-bleue', 'Fuite de lumière bleue (coupe)', 'Transitions (sur la coupe)', 1.4, t_fuite(RAMPE_BLEUE, 12)),
     ('tr-grille', 'Grille numérique', 'Transitions (sur la coupe)', 1.2, t_grille),
     ('tr-donnees', 'Flux de données', 'Transitions (sur la coupe)', 1.2, t_donnees),
+    ('grain-16mm', 'Grain de pellicule 16 mm', 'Rétro', 4, t_grain16),
+    ('rayons-fenetre', 'Rayons de fenêtre (lumière douce)', 'Lumière', 8, t_fenetre),
     ('tr-onde', 'Onde de choc', 'Transitions (sur la coupe)', 1.0, t_onde),
     ('tr-rayons', 'Rayons lumineux', 'Transitions (sur la coupe)', 1.0, t_rayons),
     ('tr-tracking', 'Déformation VHS', 'Transitions (sur la coupe)', 1.0, t_tracking),
@@ -749,7 +778,7 @@ def main():
         for id_, nom, cat, duree, gen in CALQUES:
             if seuls and id_ not in seuls:
                 continue
-            encoder(os.path.join(RACINE, 'calques', id_ + '.mp4'), gen(duree), duree, (LW, LH) if id_.startswith('tr-') else None)
+            encoder(os.path.join(RACINE, 'calques', id_ + '.mp4'), gen(duree), duree, (LW, LH) if id_.startswith('tr-') or id_ in ('grain-16mm', 'rayons-fenetre') else None)
             index['calques'].append({'id': id_, 'nom': nom, 'cat': cat, 'file': f'calques/{id_}.mp4', 'duree': duree, 'mode': 'ecran'})
             print(' ', nom)
         print(len(CALQUES), 'calques animés')
