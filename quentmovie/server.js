@@ -1271,7 +1271,7 @@ function buildClip(c, P, o = {}) {
       }
       if (req.method === 'GET' && p === '/api/fxthumb') { // vignette d'un effet sur l'image du clip choisi
         const q = url.searchParams, id = q.get('fx'), kind = q.get('kind') === 'image' ? 'image' : 'video';
-        const isA = FX.AUDIO.some(a => a.id === id);
+        const isA = FX.AUDIO.some(a => a.id === id) && !FX.VIDEO.some(v => v.id === id); // « qualite » existe en image et en son
         if (isA) return send(res, 404, { error: 'Pas de vignette' });
         const clip = { file: q.get('file'), kind, in: num(q.get('t'), 0), out: num(q.get('t'), 0) + 2, dur: 3, speed: 1, fit: 'fill', fx: id ? [{ id }] : [], key: {}, lut: q.get('lut') ? { file: q.get('lut'), amount: 100 } : null };
         const dir = fs.mkdtempSync(path.join(TMP, 'th-'));

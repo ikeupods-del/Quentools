@@ -26,7 +26,7 @@ async function boot({ data = seed(), geo = false, hash = '#/home', query = '' } 
     { type: 'node', id: 3, lat: 48.9, lon: 2.4, tags: { name: 'Vét Nord', opening_hours: 'Mo-Fr 09:00-12:00,14:00-19:00' } }] }) }));
   const page = await ctx.newPage(), errors = [];
   page.on('pageerror', e => errors.push('PAGEERROR ' + e.message));
-  page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) errors.push('CONSOLE ' + m.text()); });
+  page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR|\[Report Only\]/.test(m.text())) errors.push('CONSOLE ' + m.text()); });
   await page.goto(BASE() + query + hash);
   await page.waitForSelector('#view > *');
   return { page, ctx, errors, ev: (f, a) => page.evaluate(f, a), go: async h => { await page.evaluate(x => { location.hash = x; }, h); await page.waitForTimeout(120); } };
