@@ -3,6 +3,11 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.15.1
+- Les vidéos HDR (iPhone, appareils récents) sont reconnues et converties en image classique : plus de couleurs ternes à l’aperçu et à l’export.
+- Export de montages avec beaucoup de fondus enchaînés (diaporamas de dizaines de photos) jusqu’à dix fois plus rapide : les enchaînements longs sont coupés en morceaux encodés en même temps.
+- Les vignettes de l’effet « Améliorer la qualité » s’affichent à nouveau.
+
 ## 1.15.0
 - Export plus rapide quand le montage a des fondus enchaînés ou des incrustations (piste vidéo 2) : seules ces parties sont réencodées, le reste des clips est recopié tel quel, sans perte. Le son des pistes audio est préparé en même temps. En cas de doute, QuentMovie repart sur l’ancienne méthode, toujours sûre.
 - Chapitrer la vidéo (Outils ou assistant « chapitre ma vidéo ») : l’IA écoute la vidéo, propose les parties avec leur titre, tu corriges, puis QuentMovie pose les repères, la liste pour YouTube et, si tu veux, le titre qui s’écrit à l’écran avec le bruit de clavier.

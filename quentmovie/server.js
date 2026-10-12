@@ -234,6 +234,21 @@ function create(opts = {}) {
     return { kind, duration: kind === 'image' ? 3 : dur, w: v ? v.width : 0, h: v ? v.height : 0, hasAudio: !!a, native, codec: v ? v.codec_name : (a ? a.codec_name : '') };
   }
 
+  // Vidéo HDR (HLG ou PQ : iPhone, appareils récents) : sans conversion, les couleurs paraissent ternes. Résultat gardé par fichier.
+  const hdrCache = new Map();
+  async function estHdr(file) {
+    try {
+      const st = fs.statSync(file), k = `${file}|${st.size}|${st.mtimeMs}`;
+      if (hdrCache.has(k)) return hdrCache.get(k);
+      const txt = await new Promise(ok => { const p = spawn(FFMPEG, ['-hide_banner', '-i', file]); let e = ''; p.stderr.on('data', d => { e += d; }); p.on('close', () => ok(e)); p.on('error', () => ok('')); });
+      const v = /Stream #0:\d+[^\n]*Video:[^\n]*(?:arib-std-b67|smpte2084)/.test(txt);
+      hdrCache.set(k, v); return v;
+    } catch (e) { return false; }
+  }
+  const hdrPossible = () => filters.has('zscale') && filters.has('tonemap');
+  // conversion en image classique (SDR) : lumière linéaire, compression douce des hautes lumières (Hable), retour en BT.709
+  const CHAINE_HDR = 'zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p';
+
   // ---------- Construction d'un clip ----------
   // c : clip ; P : {w, h, fps} ; o : {preview, t, tdir, proxy}
   // durées des fondus d'un clip : réglées (fadeIn, fadeOut) ou 0,4 s si la case « fondu » est cochée ; jamais plus de la moitié du clip
@@ -339,6 +354,8 @@ function buildClip(c, P, o = {}) {
       f.push(`[0:v]${pre}${fill ? scClip : scFit + `,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2:black`}[${cur}]`);
     }
     const lin = frag => { const out = lab(); f.push(`[${cur}]${frag}[${out}]`); cur = out; };
+
+    if (o.hdr && hdrPossible()) lin(CHAINE_HDR); // vidéo HDR : conversion avant tous les réglages de couleur
 
     // Réglages de base
     const bright = clamp(num(c.bright, 0), -50, 50) / 100, contrast = clamp(num(c.contrast, 100), 0, 200) / 100;
@@ -645,9 +662,11 @@ function buildClip(c, P, o = {}) {
       const opts = (i, avecPuce) => ({ tdir: { dir, idx: i }, proxy, vt: avecPuce && vt, vtMax: project.quality === 'max', hw: avecPuce && mac && hwaccels.has('videotoolbox') });
       // chaque clip est construit seul, pour savoir quels fichiers (textes des titres…) il a écrits : ils entrent dans son empreinte
       const built = [], cles = [];
+      const hdrFlags = await Promise.all(clips.map(async c => (c.file && !(c.kind === 'image' || c.kind === 'solid' || c.kind === 'audio') && hdrPossible()) ? estHdr(mediaPath(c.file)) : false));
+      if (hdrFlags.some(Boolean)) job.avertissement = 'Vidéo HDR détectée : conversion en image classique.';
       for (let i = 0; i < clips.length; i++) {
         const avant = new Set(fs.readdirSync(dir));
-        built.push(buildClip(clips[i], P, opts(i, true)));
+        built.push(buildClip(clips[i], P, { ...opts(i, true), hdr: hdrFlags[i] }));
         cles.push(empreinteClip(built[i].args, dir, fs.readdirSync(dir).filter(x => !avant.has(x))));
       }
       const total = built.reduce((a, b) => a + b.eff, 0) * 1.1;
@@ -665,7 +684,7 @@ function buildClip(c, P, o = {}) {
         try { await run(FFMPEG, [...built[i].args, segs[i]], { cwd: dir, onOut: prog, silence: vt ? VT_SURVEILLANCE : 0 }); }
         catch (e) { // la puce vidéo refuse ce clip : décodage et encodage par le processeur
           if (!vt && !opts(i, true).hw) throw e;
-          await run(FFMPEG, [...buildClip(clips[i], P, opts(i, false)).args, segs[i]], { cwd: dir, onOut: prog });
+          await run(FFMPEG, [...buildClip(clips[i], P, { ...opts(i, false), hdr: hdrFlags[i] }).args, segs[i]], { cwd: dir, onOut: prog });
         }
         avance[i] = built[i].eff; faits++; suivi();
         job.step = `Clips : ${faits} sur ${built.length}${repris ? ` (${repris} déjà prêt${repris > 1 ? 's' : ''})` : ''}`;
@@ -690,7 +709,7 @@ function buildClip(c, P, o = {}) {
       if (!process.env.QM_ASSEMBLAGE_CLASSIQUE && (trans.some(Boolean) || pistes.length) && Number.isInteger(P.fps)) {
         try {
           const t0 = Date.now(), epi = EPI.creer({ run, FFMPEG, encoder, FX, aFiltre: n => filters.has(n), clamp, num }), E = encodeursClip(P, proxy, project.quality === 'max', vt), fps = P.fps;
-          const F = await Promise.all(segs.map(sg => epi.compterImages(path.join(dir, sg))));
+          const F = await epi.compterToutes(segs.map(sg => path.join(dir, sg)));
           const etape = t => { job.step = t; };
           const r = await epi.assembler({ cwd: dir, segs, fps, trans, F, enc: E, paralleles: enParallele, etape });
           let video = r.video; const raccords = r.plan.pieces.map(p => p.debut);
@@ -1265,7 +1284,8 @@ function buildClip(c, P, o = {}) {
         const dir = fs.mkdtempSync(path.join(TMP, 'pv-'));
         try {
           const taille = body.mode === 'hd' ? sizeOf({ ...(body.project || {}), res: 1080 }, 'full') : sizeOf(body.project || {}, 'thumb' === body.mode ? 'thumb' : 'proxy');
-          const args = buildClip(body.clip, taille, { preview: true, t: body.t, tdir: { dir, idx: 0 } });
+          const c0 = body.clip || {}, hdr = c0.file && !['image', 'solid', 'audio'].includes(c0.kind) && hdrPossible() ? await estHdr(mediaPath(c0.file)) : false;
+          const args = buildClip(body.clip, taille, { preview: true, t: body.t, tdir: { dir, idx: 0 }, hdr });
           return send(res, 200, await run(FFMPEG, args, { cwd: dir, binary: true }), 'image/jpeg');
         } finally { fs.rmSync(dir, { recursive: true, force: true }); }
       }

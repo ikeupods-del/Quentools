@@ -34,8 +34,17 @@ function planifier(F, D, fps) {
         if (b < n - 1 && D[b] && h(b) >= q(b)) { clips.push({ clip: b, de: 0, a: F[b] }); continue; }
         clips.push({ clip: b, de: 0, a: h(b) }); break;
       }
-      const longueur = clips.reduce((s, c) => s + c.a - c.de, 0) - fondus.reduce((s, x) => s + x, 0);
-      poser({ type: 'enc', clips, fondus, longueur });
+      // un long enchaînement est coupé en morceaux de 8 clips au plus, encodés en parallèle : le clip de coupure est partagé
+      // (sa partie avant son fondu de sortie finit un morceau, le fondu et la suite commencent le suivant)
+      const MAX = 8; let debutM = 0, cl = clips, fo = fondus;
+      while (cl.length > MAX + 1) {
+        const k = debutM + MAX - 1, cut = cl[MAX - 1], Dk = fo[MAX - 1];
+        const fin = { ...cut, a: cut.a - Dk }, deb = { ...cut, de: cut.a - Dk };
+        const m1 = [...cl.slice(0, MAX - 1), fin], f1 = fo.slice(0, MAX - 1);
+        poser({ type: 'enc', clips: m1, fondus: f1, longueur: m1.reduce((s2, c) => s2 + c.a - c.de, 0) - f1.reduce((s2, x) => s2 + x, 0) });
+        cl = [deb, ...cl.slice(MAX)]; fo = fo.slice(MAX - 1); debutM = k;
+      }
+      poser({ type: 'enc', clips: cl, fondus: fo, longueur: cl.reduce((s2, c) => s2 + c.a - c.de, 0) - fo.reduce((s2, x) => s2 + x, 0) });
       i = b;
     } else i++;
   }
@@ -59,6 +68,8 @@ function creer({ run, FFMPEG, encoder, FX, aFiltre, clamp, num }) {
   const nom = (cwd, f) => path.join(cwd, f);
   const sur = async (liste, limite, fn) => { let k = 0; await Promise.all(Array.from({ length: Math.max(1, Math.min(limite, liste.length)) }, async () => { while (k < liste.length) { const j = k++; await fn(liste[j], j); } })); };
 
+  // résultats d'une fonction sur une liste, quelques programmes à la fois (jamais des centaines)
+  const partout = async (liste, limite, fn) => { const r = new Array(liste.length); await sur(liste, limite, async (x, i) => { r[i] = await fn(x, i); }); return r; };
   // nombre d'images vidéo d'un fichier (lecture des paquets seulement : instantané)
   async function compterImages(file) {
     const sortie = (await run(FFMPEG, ['-hide_banner', '-v', 'error', '-i', file, '-map', '0:v:0', '-c', 'copy', '-f', 'framecrc', '-'], { binary: true })).toString();
@@ -133,7 +144,7 @@ function creer({ run, FFMPEG, encoder, FX, aFiltre, clamp, num }) {
     await concatener(cwd, liste, fps, 'vid0.mp4');
     // mêmes en-têtes partout, sinon la recopie est refusée
     const ref = await entetes(nom(cwd, segs[0]));
-    const vus = await Promise.all(liste.map(x => entetes(nom(cwd, x.f))));
+    const vus = await partout(liste, 6, x => entetes(nom(cwd, x.f)));
     if (vus.some(e => e !== ref)) throw new Error('encodeurs différents entre les morceaux');
     return { video: 'vid0.mp4', plan, D };
   }
@@ -153,7 +164,7 @@ function creer({ run, FFMPEG, encoder, FX, aFiltre, clamp, num }) {
     for (const x of liste) if (x.copie) await copier(cwd, video, x.copie[0], x.copie[1], x.f, fps);
     await concatener(cwd, liste, fps, 'vid1.mp4');
     const ref = await entetes(nom(cwd, video));
-    const vus = await Promise.all(liste.map(x => entetes(nom(cwd, x.f))));
+    const vus = await partout(liste, 6, x => entetes(nom(cwd, x.f)));
     if (vus.some(e => e !== ref)) throw new Error('encodeurs différents dans les zones');
     return { video: 'vid1.mp4', zones };
   }
@@ -170,7 +181,7 @@ function creer({ run, FFMPEG, encoder, FX, aFiltre, clamp, num }) {
     });
   }
 
-  return { assembler, poserZones, verifier, sonDesClips, compterImages, entetes, copier };
+  return { assembler, poserZones, verifier, sonDesClips, compterImages, compterToutes: (fichiers, limite = 6) => partout(fichiers, limite, f => compterImages(f)), entetes, copier };
 }
 
 module.exports = { planifier, zonesPistes, expressionGop, creer };
