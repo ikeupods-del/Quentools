@@ -779,13 +779,14 @@ function appliquerPack(id, o) {
   const P = (CAT.packs || []).find(p => p.id === id); if (!P) return;
   if (proj.clips.length < 2 && !o.look) return signal('Ajoute au moins deux clips sur la timeline pour poser les transitions du pack.');
   const L = LIB(), st = starts(); let nT = 0, nC = 0, nS = 0;
+  if (o.cal) proj.clips.forEach(c => { c.overlays = (c.overlays || []).filter(x => !x.pack); }); // un pack remplace le précédent
   proj.clips.slice(0, -1).forEach((c, i) => {
     const cut = st[i + 1];
     if (o.tr) { c.transition = { type: P.transitions[i % P.transitions.length], dur: P.dur }; nT++; }
     const cal = L.calques.find(x => x.id === P.calques[i % P.calques.length]);
     if (o.cal && cal) {
       const moitie = Math.min(cal.duree || 1, 1.4) / 2, suite = proj.clips[i + 1], base = { kind: 'video', x: 50, y: 50, scale: 100, rot: 0, opacity: 90, anim: 'none', mode: 'ecran', plein: 'remplir', key: false, keySim: 0.3, file: 'lib:' + cal.file };
-      c.overlays = (c.overlays || []).filter(x => !x.pack); (suite.overlays = (suite.overlays || []).filter(x => !x.pack));
+      c.overlays = c.overlays || []; suite.overlays = suite.overlays || [];
       c.overlays.push({ ...base, start: +Math.max(0, effDur(c) - moitie).toFixed(2), dur: 0, ss: 0, pack: P.id });
       suite.overlays.push({ ...base, start: 0, dur: +moitie.toFixed(2), ss: +moitie.toFixed(2), pack: P.id }); nC++;
     }
