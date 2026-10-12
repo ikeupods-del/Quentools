@@ -1197,14 +1197,15 @@ async function ouvrirChapitrage() {
       if (!segs.length) { etat('<span class="err">Je n’ai trouvé aucune parole dans cette vidéo : il me faut de la voix pour deviner les parties. Pose des repères à la main (touche M) si la vidéo n’a pas de paroles.</span>'); $('#chRefaire').hidden = false; return; }
       const { id } = await (await api('/api/chapitres/proposer', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), ia: true }) })).json();
       const r = await suivreTravail(id, j => etat(`${esc(j.step || '')}`));
-      chapitres = r.chapitres || [];
+      chapitres = (r.chapitres || []).map(c => ({ ...c, ia: r.ia ? c.titre : '' }));
       etat(chapitres.length ? `${chapitres.length} chapitres proposés${r.ia ? ' (nommés par l’IA locale)' : ''}. Corrige les titres et les temps si besoin.` : '<span class="err">La vidéo est trop courte ou trop uniforme pour la découper en parties. Pose des repères à la main (touche M).</span>');
       rendre();
     } catch (er) { etat(`<span class="err">${esc(er.message)}</span>`); $('#chRefaire').hidden = false; }
   }
   $('#chRefaire').onclick = chercher;
   $('#chAppliquer').onclick = () => {
-    lire(); const mode = $('#chMode').value, clavier = $('#chClavier').checked && sonClavier();
+    lire(); apprendreTitres(chapitres.filter(c => c.ia && c.ia !== c.titre).map(c => ({ avant: c.ia, apres: c.titre })));
+    const mode = $('#chMode').value, clavier = $('#chClavier').checked && sonClavier();
     const liste = chapitres.slice().sort((a, b) => a.t - b.t);
     proj.nomsReperes = { ...(proj.nomsReperes || {}) };
     // du dernier au premier : les temps des chapitres déjà traités ne bougent pas
@@ -2341,6 +2342,8 @@ async function appliquerPlan(actions, surEtat) {
   if (modale) { fermer(); await executerAction(modale); } else if (directes.length) aide(bilan.map(esc).join(' · '));
 }
 let derniereDemande = '';
+// titres de chapitres corrigés à la main : la mémoire de l'IA (partagée avec les autres logiciels) les garde comme exemples
+function apprendreTitres(paires) { if (paires.length) api('/api/memoire/corrections', { method: 'POST', body: JSON.stringify({ paires }) }).catch(() => {}); }
 async function ouvrirAssistant(demande) {
   const EX = ['Coupe les blancs et ajoute des sous-titres façon TikTok', 'Passe en vertical, ajoute une musique calme et égalise le son', 'Mets des transitions partout et dynamise la vidéo', 'Ajoute un écran titre « Mon voyage » puis exporte', 'Écris le titre, la description et les hashtags pour YouTube', 'Monte ma vidéo automatiquement', 'Chapitre ma vidéo avec le bruit de clavier', 'Crée des clips pour TikTok'];
   ouvrir(`<h2>${icone('assistant')} Assistant de montage</h2>
@@ -2369,7 +2372,7 @@ async function ouvrirAssistant(demande) {
   async function comprendre() {
     const d = champ.value.trim(); if (!d) return champ.focus(); derniereDemande = d;
     $('#asPlan').innerHTML = '<p class="mut">L’assistant prépare les étapes…</p>';
-    try { const r = await (await api('/api/assistant/comprendre', { method: 'POST', body: JSON.stringify({ demande: d, ia: true, projet: resumeProjet() }) })).json(); montrer(r.actions || [], r.ia ? 'compris par l’IA locale' : r.erreur || ''); }
+    try { const r = await (await api('/api/assistant/comprendre', { method: 'POST', body: JSON.stringify({ demande: d, ia: true, projet: resumeProjet() }) })).json(); if (r.memoire) { $('#asPlan').innerHTML = `<p style="white-space:pre-wrap">🧠 ${esc(r.memoire)}</p>`; return; } montrer(r.actions || [], r.ia ? 'compris par l’IA locale' : r.erreur || ''); }
     catch (e) { $('#asPlan').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
   }
   async function suggestions() {

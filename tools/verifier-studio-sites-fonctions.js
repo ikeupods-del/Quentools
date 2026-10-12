@@ -24,10 +24,21 @@ const BRIEF = { da: { ambiance: 'luxe', mode: 'sombre', couleur: '#2e7d32', poli
       modeles: async () => modelesJson, modele: id => window.lireModele(id),
       ia: { etat: async () => ({ installee: true, mo: 2500 }), installer: async () => ({}),
         ecrire: async m => {
+          window.__sys = m.systeme;
           if (!/assistant de Studio Sites/.test(m.systeme)) return { textes: [] };
           return { reponse: 'J’ai réglé une ambiance luxe en mode sombre, ajouté la réservation et le panel.', fiche: { nom: 'Kebab Erkan', metier: 'restaurateur', ville: 'Lyon', zone: '', telephone: '01 02 03 04 05', email: '', adresse: '', codePostal: '', horaires: '', services: ['Kebab', 'Tacos'], atouts: '', tarifs: '9 € le kebab' },
             style: { ambiance: 'luxe', mode: 'sombre', couleur: 'or', police: 'elegante', arrondi: '', densite: '' }, ajouter: ['reservation', 'panel'], retirer: [], faq: [], annonce: '', questions: ['Quels sont ses horaires ?'] };
         } },
+      memoire: (() => { const mem = { consignes: [], corrections: [] }; window.__mem = mem; return {
+        lire: async () => mem, ordre: async m => { const o = window.Memoire.detecter(m); if (!o) return null; if (o.type === 'retenir') mem.consignes.push({ id: 'c' + mem.consignes.length, texte: o.texte, source: 'Studio Sites', date: '2026-10-12' }); return { reponse: o.type === 'retenir' ? 'C’est retenu : « ' + o.texte + ' ».' : 'ok', memoire: mem }; },
+        oublier: async id => { mem.consignes = mem.consignes.filter(x => x.id !== id); return mem; }, vider: async () => { mem.consignes = []; mem.corrections = []; return mem; }, corrections: async p => { window.__corr = p; mem.corrections.push(...p); return mem; } }; })(),
+      github: (() => { const g = { etat: { connecte: false, login: '', clientId: '' }, appels: [] }; window.__gh = g; return {
+        etat: async () => g.etat, jeton: async j => { g.appels.push('jeton'); if (!/^ghp_/.test(j)) throw new Error("Error invoking remote method 'gh:jeton': Error: Ce jeton ne ressemble pas à un jeton GitHub."); g.etat = { connecte: true, login: 'erkan', clientId: '' }; return g.etat; },
+        clientId: async id => { g.etat = { ...g.etat, clientId: id }; return g.etat; }, connecter: async () => { g.appels.push('connecter'); setTimeout(() => g.cb && g.cb({ connecte: true, login: 'erkan', clientId: g.etat.clientId }), 300); return { code: 'ABCD-1234', url: 'https://github.com/login/device' }; },
+        annuler: async () => true, deconnecter: async () => { g.etat = { ...g.etat, connecte: false, login: '' }; return g.etat; }, ouvrir: async u => { g.appels.push('ouvrir ' + u); },
+        publier: async o => { g.publie = o; g.cbEtape && g.cbEtape('Envoi des fichiers (1/3)…'); return { depot: 'https://github.com/erkan/' + o.nom, site: 'https://erkan.github.io/' + o.nom + '/', pages: 'activé', nouveau: true }; },
+        surConnexion: cb => { g.cb = cb; }, surEtape: cb => { g.cbEtape = cb; } }; })(),
+      maj: (() => { let e = { etat: 'telechargement', nouvelle: '9.9.9', progres: 40 }; setTimeout(() => { e = { ...e, etat: 'pret' }; }, 2500); window.__majInstall = false; return { verifier: async () => e, etat: async () => e, installer: async () => { window.__majInstall = true; return e; }, surChangement: () => {} }; })(),
       enregistrer: async s => { await window.noterSauvegarde({ dossier: s.dossier, fichiers: (s.fichiers || []).map(f => f.chemin), notes: s.notes }); return { dossier: '/tmp/site' }; }, ouvrir: async () => {}
     };
   }, modeles);
@@ -199,6 +210,49 @@ const BRIEF = { da: { ambiance: 'luxe', mode: 'sombre', couleur: '#2e7d32', poli
     verifie((await pg.evaluate(() => window.sites.etat.resultat.html)).includes('qs-wa'), 'cocher une fonction met l’aperçu à jour');
     await pg.click('#bEnregistrer'); await pg.waitForTimeout(400);
     verifie(sauvegarde && /LIVRAISON DU SITE/.test(sauvegarde.notes) && /FONCTIONS AJOUTÉES/.test(sauvegarde.notes), 'enregistrement : notes de livraison avec les fonctions');
+  }
+  /* ── 6. Publication sur GitHub (pont simulé) et mise à jour automatique ── */
+  {
+    await pg.reload(); await pg.waitForFunction(() => window.sites && window.sites.modeles().length);
+    const maj = await pg.waitForSelector('#bMajGo:not([hidden])', { timeout: 10000 }).then(() => true, () => false);
+    verifie(maj && /9\.9\.9/.test(await pg.innerText('#bMajTexte')), 'mise à jour automatique : bandeau, puis « Redémarrer pour installer »'); if (maj) { await pg.click('#bMajGo'); verifie(await pg.evaluate(() => window.__majInstall), 'mise à jour : le bouton lance l’installation'); }
+    verifie(await pg.evaluate(() => document.querySelector('#bPublier').disabled), 'publier : bouton inactif tant que le site n’est pas généré');
+    await pg.evaluate(async fiche => { window.sites.ecrireFiche(fiche); document.querySelector('#f_modele').value = 'plombier'; window.sites.ecrireBrief({ modules: ['reservation', 'panel'], options: { firebaseApiKey: 'k', firebaseProjectId: 'p' } }); await window.sites.genererSite({ fiche, modeleId: 'plombier', ecrire: null, brief: window.sites.lireBrief() }); }, FICHE);
+    verifie(await pg.evaluate(() => !document.querySelector('#bPublier').disabled), 'publier : bouton actif après la génération');
+    await pg.fill('#chatSaisie', 'publie le site'); await pg.click('#chatEnvoi'); await pg.waitForSelector('#modalGh.ouvert', { timeout: 5000 }).catch(() => {});
+    verifie(await pg.isVisible('#modalGh'), 'tchat : « publie le site » ouvre la publication GitHub');
+    await pg.fill('#ghJeton', 'mauvais'); await pg.click('#ghJetonOk'); await pg.waitForTimeout(200);
+    verifie(/ne ressemble pas/.test(await pg.innerText('#ghErr')) && !/Error invoking/.test(await pg.innerText('#ghErr')), 'jeton incorrect : message clair, sans texte technique');
+    await pg.fill('#ghJeton', 'ghp_' + 'a'.repeat(30)); await pg.click('#ghJetonOk'); await pg.waitForSelector('#ghPublier');
+    verifie(/@erkan/.test(await pg.innerText('#ghCorps')) && /kebab|erkan|boulangerie/i.test(await pg.inputValue('#ghNom')), 'connexion par jeton : compte affiché, nom du dépôt proposé');
+    pg.once('dialog', d => d.accept()); await pg.fill('#ghNom', 'plomberie-test'); await pg.click('#ghPublier'); await pg.waitForSelector('#ghSite', { timeout: 5000 }).catch(() => {});
+    const pub = await pg.evaluate(() => ({ o: window.__gh.publie && { nom: window.__gh.publie.nom, prive: window.__gh.publie.prive, pages: window.__gh.publie.pages, chemins: window.__gh.publie.site.fichiers.map(f => f.chemin), index: window.__gh.publie.site.index.length }, texte: document.querySelector('#ghCorps').innerText }));
+    verifie(pub.o && pub.o.nom === 'plomberie-test' && !pub.o.prive && pub.o.pages && pub.o.index > 5000 && pub.o.chemins.includes('admin/index.html'), 'publication : le site et les fichiers du panel sont transmis', JSON.stringify(pub.o));
+    verifie(/erkan\.github\.io\/plomberie-test/.test(pub.texte) && /github\.com\/erkan\/plomberie-test/.test(pub.texte), 'publication : adresses du site et du dépôt affichées');
+    await pg.click('#ghSite'); verifie(await pg.evaluate(() => window.__gh.appels.includes('ouvrir https://erkan.github.io/plomberie-test/')), 'publication : le lien ouvre le site');
+    await pg.click('#ghDeco'); await pg.waitForSelector('#ghConnecter');
+    await pg.fill('#ghClient', 'Iv1.testtest'); await pg.click('#ghConnecter'); await pg.waitForSelector('#ghCode');
+    verifie(/ABCD-1234/.test(await pg.innerText('#ghCode')), 'connexion « appareil » : code à saisir affiché');
+    await pg.waitForSelector('#ghPublier', { timeout: 5000 }); verifie(true, 'connexion « appareil » : connecté après validation sur GitHub');
+    await pg.click('#ghFermer');
+  }
+  /* ── 7. Mémoire de l'IA : consignes retenues, injectées dans les demandes, corrections apprises ── */
+  {
+    await pg.reload(); await pg.waitForFunction(() => window.sites && window.sites.modeles().length);
+    await pg.fill('#chatSaisie', 'Retiens que je tutoie toujours mes clients'); await pg.click('#chatEnvoi'); await pg.waitForFunction(() => /C’est retenu/.test(document.querySelector('#fil').innerText), null, { timeout: 5000 }).catch(() => {});
+    verifie(await pg.evaluate(() => window.__mem.consignes.length === 1 && /tutoie toujours/.test(window.__mem.consignes[0].texte)), 'mémoire : « retiens que… » dans le tchat enregistre la consigne');
+    await pg.click('#bMemoire'); verifie(/tutoie toujours/.test(await pg.innerText('#memCorps')), 'mémoire : la consigne est visible dans la fenêtre « Mémoire »');
+    await pg.click('#memFermer');
+    await pg.evaluate(async fiche => {
+      window.sites.ecrireFiche(fiche); document.querySelector('#f_modele').value = 'plombier';
+      const ecrire = async m => { window.__sys = m.systeme; const l = [...m.demande.matchAll(/^(\d+)\. \((.*?), (\d+) caractères\) (.*)$/gm)]; return /Texte d’un site/.test(m.demande) ? { texte: 'Texte propre' } : l.length ? { textes: l.map(x => ({ n: +x[1], texte: 'Texte écrit ' + x[1] + ' pour vous' })) } : { description: 'Description.' }; };
+      await window.sites.genererSite({ fiche, modeleId: 'plombier', ecrire });
+    }, FICHE);
+    verifie(await pg.evaluate(() => /Mémoire du propriétaire/.test(window.__sys) && /tutoie toujours/.test(window.__sys)), 'mémoire : les consignes sont ajoutées aux demandes envoyées à l’IA');
+    await pg.evaluate(() => { const s = window.sites.etat.resultat.slots.find(x => x.etat === 'ia'); window.sites.etat.textes[s.i] = 'Une phrase corrigée à la main'; });
+    await pg.click('#bEnregistrer'); await pg.waitForTimeout(500);
+    verifie(await pg.evaluate(() => (window.__corr || []).some(p => p.apres === 'Une phrase corrigée à la main' && /Texte écrit/.test(p.avant))), 'mémoire : un texte de l’IA corrigé à la main devient un exemple appris');
+    await pg.click('#bMemoire'); await pg.click('[data-oublier]'); verifie(await pg.evaluate(() => window.__mem.consignes.length === 0), 'mémoire : une consigne peut être oubliée'); await pg.click('#memFermer');
   }
   await b.close();
   console.log(erreurs ? `\n${erreurs} problème(s)` : '\nStudio Sites (fonctions) : tout est bon');

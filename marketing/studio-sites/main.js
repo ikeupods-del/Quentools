@@ -1,15 +1,20 @@
 // Studio Sites : fenêtre de l'application Mac (Electron) autour de index.html.
 // Tout reste sur le Mac : l'IA locale (modèle téléchargé une fois), les modèles et les sites créés ; aucune connexion ensuite.
 'use strict';
-const { app, BrowserWindow, Menu, shell, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, Menu, shell, ipcMain, dialog, safeStorage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
 let win = null, ia = null;
-// Nouvelle version : recherche discrète dans les Releases ; la page propose d'ouvrir la page de téléchargement (rien n'est installé tout seul)
-ipcMain.handle('maj:verifier', async e => { garde(e); try { return await require('./nouvelle-version').chercher('studio-sites-v', app.getVersion()); } catch (er) { return null; } });
-ipcMain.handle('maj:ouvrir', (e, url) => { garde(e); if (/^https:\/\/github\.com\/ikeupods-del\/Quentools\/releases\//.test(String(url))) shell.openExternal(String(url)); });
+// Mises à jour automatiques (versions publiées dans les Releases) : téléchargement en arrière-plan, installation quand l'application se ferme ou au clic sur « Redémarrer »
+const { Maj, emplacementApp } = require('./maj');
+const maj = new Maj({ nom: 'Studio Sites', fichier: 'Studio-Sites', version: app.getVersion(), dossier: path.join(app.getPath('userData'), 'mises-a-jour'), app: emplacementApp(process.execPath), actif: app.isPackaged && process.platform === 'darwin' && !process.env.STUDIO_AUTOTEST });
+const verifierMaj = () => { maj.verifier().then(() => { if (win && !win.isDestroyed()) win.webContents.send('maj:etat', maj.etat); }); };
+ipcMain.handle('maj:etat', e => { garde(e); return maj.etat; });
+ipcMain.handle('maj:verifier', e => { garde(e); verifierMaj(); return maj.etat; });
+ipcMain.handle('maj:installer', e => { garde(e); if (maj.installer(true)) setTimeout(() => app.quit(), 200); return maj.etat; });
+app.on('will-quit', () => { maj.installer(false); });
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 
@@ -35,29 +40,68 @@ ipcMain.handle('modeles:html', (e, id) => {
   return { html: fs.readFileSync(f, 'utf8'), legal: fs.readFileSync(path.join(MODELES, 'html', 'legal.html'), 'utf8') };
 });
 
-// Écrit le site dans un dossier choisi par l'utilisateur : index.html, mentions-legales.html, polices et styles utilisés, notes de livraison
+// Écrit le site dans un dossier choisi par l'utilisateur : index.html, mentions-legales.html, polices et styles utilisés, fonctions, notes de livraison
+const { composerSite, nomDossier } = require('./composition');
 ipcMain.handle('site:enregistrer', async (e, site) => {
   garde(e);
-  const nom = String(site && site.dossier || 'site').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'site';
+  const nom = nomDossier(site && site.dossier);
   const r = await dialog.showOpenDialog(win, { title: 'Où enregistrer le site ?', defaultPath: app.getPath('documents'), properties: ['openDirectory', 'createDirectory'], buttonLabel: 'Enregistrer ici' });
   if (r.canceled || !r.filePaths[0]) return { annule: true };
   const dest = path.join(r.filePaths[0], nom);
-  fs.mkdirSync(path.join(dest, 'assets', 'fonts'), { recursive: true });
-  const ecrire = (f, t) => fs.writeFileSync(path.join(dest, f), String(t || ''), 'utf8');
-  ecrire('index.html', site.index); ecrire('mentions-legales.html', site.legal); ecrire('LISEZMOI-LIVRAISON.txt', site.notes);
-  const lesPolices = new Set(); for (const h of [site.index, site.legal]) for (const m of String(h || '').matchAll(/assets\/fonts\/([\w.-]+\.woff2)/g)) lesPolices.add(m[1]);
-  for (const f of lesPolices) { const src = path.join(MODELES, 'polices', f); if (fs.existsSync(src)) fs.copyFileSync(src, path.join(dest, 'assets', 'fonts', f)); }
-  for (const f of ['qt.css', 'qt.js']) if ((String(site.index) + String(site.legal)).includes('assets/' + f)) fs.copyFileSync(path.join(MODELES, 'assets', f), path.join(dest, 'assets', f));
-  // fichiers des fonctions (panel, règles Firebase, notes) : chemins relatifs sûrs uniquement
-  const AUTORISES = new Set(['admin/index.html', 'REGLES-FIRESTORE.txt', 'LISEZMOI-FIREBASE.txt']);
-  for (const f of Array.isArray(site.fichiers) ? site.fichiers.slice(0, 6) : []) {
-    if (!f || !AUTORISES.has(f.chemin)) continue;
-    fs.mkdirSync(path.dirname(path.join(dest, f.chemin)), { recursive: true }); ecrire(f.chemin, f.contenu);
-  }
-  const disallow = Array.isArray(site.fichiers) && site.fichiers.some(f => f && f.chemin === 'admin/index.html') ? 'Disallow: /admin/\n' : '';
-  ecrire('robots.txt', 'User-agent: *\nAllow: /\n' + disallow);
+  for (const f of composerSite(site, MODELES)) { const c = path.join(dest, f.chemin); fs.mkdirSync(path.dirname(c), { recursive: true }); fs.writeFileSync(c, f.contenu); }
   return { dossier: dest };
 });
+// ───────── Mémoire des IA (fichier partagé avec QuentMovie et Studio Posts) ─────────
+const Memoire = require('./memoire');
+const MEMOIRE = Memoire.creerStockage({ fichier: path.join(os.homedir(), 'Movies', 'QuentMovie', 'memoire-ia.json') });
+ipcMain.handle('memoire:lire', e => { garde(e); return MEMOIRE.lire(); });
+ipcMain.handle('memoire:ordre', (e, message) => { garde(e); const o = Memoire.detecter(String(message || '').slice(0, 600)); const rep = o ? Memoire.appliquer(MEMOIRE, o, 'Studio Sites') : null; return rep ? { reponse: rep, memoire: MEMOIRE.lire() } : null; });
+ipcMain.handle('memoire:oublier', (e, id) => { garde(e); return MEMOIRE.oublierId(String(id)); });
+ipcMain.handle('memoire:vider', e => { garde(e); return MEMOIRE.vider(); });
+ipcMain.handle('memoire:corrections', (e, paires) => { garde(e); return MEMOIRE.corrections(Array.isArray(paires) ? paires.slice(0, 12) : [], 'Studio Sites'); });
+
+// ───────── GitHub : connexion (jeton ou code « appareil ») et publication du site ─────────
+// Le jeton est chiffré par le trousseau de macOS (safeStorage) et ne quitte jamais ce processus : la page ne reçoit que le nom du compte.
+const { GitHub } = require('./github');
+const FICHIER_GH = () => path.join(app.getPath('userData'), 'github.json');
+const lireGh = () => { try { return JSON.parse(fs.readFileSync(FICHIER_GH(), 'utf8')); } catch (er) { return {}; } };
+const ecrireGh = o => fs.writeFileSync(FICHIER_GH(), JSON.stringify(o), { mode: 0o600 });
+function jetonGh() {
+  const o = lireGh(); if (!o.jeton) return '';
+  try { return o.chiffre ? safeStorage.decryptString(Buffer.from(o.jeton, 'base64')) : o.jeton; } catch (er) { return ''; }
+}
+function garderJeton(jeton, login) {
+  const o = lireGh();
+  if (safeStorage.isEncryptionAvailable()) { o.jeton = safeStorage.encryptString(jeton).toString('base64'); o.chiffre = true; } else { o.jeton = jeton; o.chiffre = false; }
+  o.login = login; ecrireGh(o);
+}
+const etatGh = () => { const o = lireGh(); return { connecte: !!(o.jeton && o.login), login: o.login || '', clientId: o.clientId || '' }; };
+let connexionGh = null;
+const envoyerGh = (canal, d) => { if (win && !win.isDestroyed()) win.webContents.send(canal, d); };
+ipcMain.handle('gh:etat', e => { garde(e); return etatGh(); });
+ipcMain.handle('gh:jeton', async (e, jeton) => {
+  garde(e); jeton = String(jeton || '').trim();
+  if (!/^[\w-]{20,255}$/.test(jeton)) throw new Error('Ce jeton ne ressemble pas à un jeton GitHub.');
+  const { login } = await new GitHub({ jeton }).moi(); garderJeton(jeton, login); return etatGh();
+});
+ipcMain.handle('gh:clientId', (e, id) => { garde(e); id = String(id || '').trim(); if (id && !/^[A-Za-z0-9._-]{8,60}$/.test(id)) throw new Error('Identifiant d’application incorrect.'); const o = lireGh(); o.clientId = id; ecrireGh(o); return etatGh(); });
+ipcMain.handle('gh:connecter', async e => {
+  garde(e); const id = lireGh().clientId; if (!id) throw new Error('Renseigne d’abord l’identifiant de l’application GitHub (client ID), ou utilise un jeton.');
+  const gh = new GitHub(), ap = await gh.appareilDebut(id); connexionGh = { annule: false };
+  const suivi = connexionGh;
+  if (/^https:\/\/github\.com\//.test(ap.url)) shell.openExternal(ap.url);
+  gh.appareilAttente(id, ap, { annule: () => suivi.annule }).then(async jeton => { const { login } = await new GitHub({ jeton }).moi(); garderJeton(jeton, login); envoyerGh('gh:connecte', etatGh()); })
+    .catch(er => envoyerGh('gh:connecte', { erreur: er.message }));
+  return { code: ap.code, url: ap.url };
+});
+ipcMain.handle('gh:annuler', e => { garde(e); if (connexionGh) connexionGh.annule = true; return true; });
+ipcMain.handle('gh:deconnecter', e => { garde(e); const o = lireGh(); delete o.jeton; delete o.login; delete o.chiffre; ecrireGh(o); return etatGh(); });
+ipcMain.handle('gh:publier', async (e, o) => {
+  garde(e); const jeton = jetonGh(); if (!jeton) throw new Error('Connecte-toi d’abord à GitHub.');
+  const fichiers = composerSite(o && o.site, MODELES).filter(f => !f.local);
+  return new GitHub({ jeton }).publier({ nom: String(o && o.nom || ''), fichiers, prive: !!(o && o.prive), pages: !(o && o.pages === false), message: 'Site généré avec Studio Sites', surEtape: t => envoyerGh('gh:etape', t) });
+});
+ipcMain.handle('gh:ouvrir', (e, url) => { garde(e); if (/^https:\/\/([\w-]+\.github\.io|github\.com)\//.test(String(url))) shell.openExternal(String(url)); });
 ipcMain.handle('site:ouvrir', (e, dossier) => { garde(e); if (fs.existsSync(String(dossier))) shell.showItemInFolder(path.join(String(dossier), 'index.html')); });
 
 const page = js => win && win.webContents.executeJavaScript(js).catch(() => {});
@@ -108,7 +152,7 @@ function autotest() {
   });
 }
 
-app.whenReady().then(() => { menu(); ouvrir(); });
+app.whenReady().then(() => { menu(); ouvrir(); setTimeout(verifierMaj, 8000); setInterval(verifierMaj, 6 * 3600 * 1000); });
 app.on('activate', () => { if (!win) ouvrir(); });
 app.on('will-quit', () => { if (ia) ia.arreter(); });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin' || process.env.STUDIO_AUTOTEST) app.quit(); });

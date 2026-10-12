@@ -11,7 +11,15 @@ contextBridge.exposeInMainWorld('studioIA', {
 contextBridge.exposeInMainWorld('studioPartage', {
   envoyer: fichiers => ipcRenderer.invoke('partage:envoyer', fichiers)
 });
+let surMaj = null;
+ipcRenderer.on('maj:etat', (e, etat) => { if (surMaj) surMaj(etat); });
 contextBridge.exposeInMainWorld('studioMaj', {
+  etat: () => ipcRenderer.invoke('maj:etat'),
   verifier: () => ipcRenderer.invoke('maj:verifier'),
-  ouvrir: url => ipcRenderer.invoke('maj:ouvrir', url)
+  installer: () => ipcRenderer.invoke('maj:installer'),
+  surChangement: cb => { surMaj = cb; }
+});
+contextBridge.exposeInMainWorld('studioMemoire', {
+  lire: () => ipcRenderer.invoke('memoire:lire'), ordre: m => ipcRenderer.invoke('memoire:ordre', m), oublier: id => ipcRenderer.invoke('memoire:oublier', id),
+  vider: () => ipcRenderer.invoke('memoire:vider'), corrections: p => ipcRenderer.invoke('memoire:corrections', p)
 });

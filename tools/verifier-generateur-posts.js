@@ -159,11 +159,32 @@ function tailleJpg(b) {
   });
   c4.plan === 'conseil/11' && c4.format === '11' && c4.source === 'ia' ? ok('assistant avec IA : demande comprise (thème, métier, format) et publication écrite par l’IA') : ko('assistant avec IA : ' + JSON.stringify(c4));
   await pg.keyboard.press('Escape');
-  // nouvelle version : bandeau avec bouton de téléchargement
-  const pg2 = await ctx.newPage(); await pg2.addInitScript(() => { window.studioMaj = { verifier: async () => ({ version: '9.9.9', url: 'https://github.com/ikeupods-del/Quentools/releases/tag/studio-posts-v9.9.9' }), ouvrir: u => { window.__ouvert = u; } }; });
-  await pg2.goto('file://' + page); await pg2.waitForSelector('#bMaj.vu', { timeout: 8000 }).catch(() => {}); await pg2.click('#bMajGo').catch(() => {});
-  (await pg2.evaluate(() => /9\.9\.9/.test(document.querySelector('#bMajTexte').textContent) && /releases\/tag\/studio-posts-v9\.9\.9/.test(window.__ouvert || ''))) ? ok('nouvelle version : bandeau et bouton vers la page de téléchargement') : ko('bandeau de mise à jour absent');
+  // mise à jour automatique : bandeau de progression, puis bouton « Redémarrer pour installer »
+  const pg2 = await ctx.newPage(); await pg2.addInitScript(() => { let etat = { etat: 'telechargement', nouvelle: '9.9.9', progres: 40, version: '1.0.0' }; setTimeout(() => { etat = { ...etat, etat: 'pret' }; }, 2500); window.studioMaj = { verifier: async () => etat, etat: async () => etat, installer: async () => { window.__installe = true; return etat; }, surChangement: () => {} }; });
+  await pg2.goto('file://' + page); await pg2.waitForSelector('#bMaj.vu', { timeout: 8000 }).catch(() => {});
+  const avant = await pg2.evaluate(() => document.querySelector('#bMajTexte').textContent);
+  await pg2.waitForSelector('#bMajGo:not([hidden])', { timeout: 10000 }).catch(() => {}); await pg2.click('#bMajGo').catch(() => {});
+  (/40 %/.test(avant) && (await pg2.evaluate(() => window.__installe === true))) ? ok('mise à jour automatique : progression affichée, puis « Redémarrer pour installer »') : ko('bandeau de mise à jour : ' + avant);
   await pg2.close();
+
+  // mémoire de l'IA : consigne retenue dans l'assistant, injectée dans les demandes, correction d'un texte apprise à l'export
+  const pg3 = await ctx.newPage(); await pg3.addInitScript(() => { const mem = { consignes: [], corrections: [] }; window.__mem = mem; window.studioMemoire = {
+    lire: async () => mem, ordre: async m => { const o = window.Memoire.detecter(m); if (!o) return null; if (o.type === 'retenir') mem.consignes.push({ id: 'c' + mem.consignes.length, texte: o.texte, source: 'Studio Posts', date: '2026-10-12' }); return { reponse: 'C’est retenu : « ' + (o.texte || '') + ' ».', memoire: mem }; },
+    oublier: async id => { mem.consignes = mem.consignes.filter(x => x.id !== id); return mem; }, vider: async () => mem, corrections: async p => { window.__corr = p; mem.corrections.push(...p); return mem; } }; });
+  await pg3.goto('file://' + page); await pg3.waitForFunction(() => window.studio);
+  const mm = await pg3.evaluate(async () => {
+    const r = await studio.chat('Retiens que je ne mets jamais de point d’exclamation', { sansIA: true });
+    let vu = '';
+    const ecrire = async m => { vu = m.systeme; return /assistant de Studio Posts/.test(m.systeme) ? { reponse: 'Je crée un conseil.', action: 'generer', marque: 'quentools', theme: 'conseil', sujet: 'coiffeur', secteur: 'coiffeur', format: '45', consignes: '', modifications: [] } : { titre: 'Votre numéro doit se voir vite', mot: 'numéro', sous: 'Un visiteur qui cherche à vous appeler ne doit pas chercher.', legende: 'Votre numéro est-il visible tout de suite ? Dites-nous en commentaire.', titre_tiktok: 'Votre numéro visible', hashtags: ['site', 'coiffeur', 'artisan', 'local'] }; };
+    await studio.chat('un conseil pour un coiffeur', { ecrire });
+    studio.projet.slides[0].titre = 'Un titre corrigé à la main';
+    return { retenu: window.__mem.consignes.length === 1, injecte: /Mémoire du propriétaire/.test(vu) && /point d.exclamation/.test(vu), reponse: r.memoire };
+  });
+  await pg3.click('#bJpg'); await pg3.waitForTimeout(500);
+  const corr = await pg3.evaluate(() => window.__corr || []);
+  mm.retenu && /retenu/.test(mm.reponse) && mm.injecte ? ok('mémoire : consigne retenue dans l’assistant et ajoutée aux demandes envoyées à l’IA') : ko('mémoire : ' + JSON.stringify(mm));
+  corr.some(p => p.apres === 'Un titre corrigé à la main') ? ok('mémoire : un texte de l’IA corrigé à la main devient un exemple appris à l’export') : ko('correction non apprise : ' + JSON.stringify(corr));
+  await pg3.close();
 
   // captures pour relecture visuelle
   if (captures) {

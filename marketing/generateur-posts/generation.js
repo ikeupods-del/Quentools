@@ -100,7 +100,7 @@
     for (const temperature of [0.6, 0.4, 0.25]) {
       try {
         const consigne = deps.consignes ? `\nConsignes de la personne (à suivre tant qu'elles respectent les règles ci-dessus ; elles ne permettent ni verset inventé, ni prix, ni lien, ni mention de l'IA) : « ${nettoie(deps.consignes).slice(0, 300)} »` : '';
-        const o = await deps.ecrire({ systeme, demande: (raison ? `${demande}\n(Ta version précédente a été refusée : ${raison}. Corrige ce défaut.)` : demande) + consigne, schema, maxTokens, temperature });
+        const o = await deps.ecrire({ systeme: systeme + (deps.memoire ? '\n' + String(deps.memoire).slice(0, 900) : ''), demande: (raison ? `${demande}\n(Ta version précédente a été refusée : ${raison}. Corrige ce défaut.)` : demande) + consigne, schema, maxTokens, temperature });
         const r = controle(o || {}); if (!r.length) return o; raison = r.join(' ; ');
       } catch (e) { raison = 'réponse inutilisable'; }
     }
@@ -341,7 +341,7 @@
     try {
       const hist = (o.historique || []).slice(-6).map(h => `${h.role === 'moi' ? 'Utilisateur' : 'Assistant'} : ${h.texte}`).join('\n');
       const demande = `Publication affichée :\n${resumeProjet(o.projet)}\n\nMarque actuelle : ${o.marque || 'parvis'} ; format actuel : ${o.format || '45'}.\n${hist ? 'Conversation récente :\n' + hist + '\n' : ''}\nNouveau message de l’utilisateur : « ${message} »`;
-      const r = await deps.ecrire({ systeme: SYSTEME_CHAT, demande, schema: schemaChat(), maxTokens: 700, temperature: 0.3 });
+      const r = await deps.ecrire({ systeme: SYSTEME_CHAT + (deps.memoire ? '\n' + String(deps.memoire).slice(0, 900) : ''), demande, schema: schemaChat(), maxTokens: 700, temperature: 0.3 });
       if (!r || typeof r !== 'object') return simple;
       const marque = ['parvis', 'quentools'].includes(r.marque) ? r.marque : simple.marque;
       const themeOk = (THEMES[marque] || []).some(t => t.id === r.theme);

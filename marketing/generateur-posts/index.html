@@ -129,7 +129,7 @@ aside{background:var(--panneau);min-height:0;overflow:auto}
 </head>
 <body>
 <div id="chargement">Chargement des polices…</div>
-<div id="bMaj" role="status"><span id="bMajTexte"></span><button id="bMajGo" class="mini">Télécharger</button></div>
+<div id="bMaj" role="status"><span id="bMajTexte"></span><button id="bMajGo" class="mini">Redémarrer pour installer</button></div>
 <div class="app">
   <header>
     <div class="logo"><i></i><span>Studio Posts</span></div>
@@ -144,6 +144,7 @@ aside{background:var(--panneau);min-height:0;overflow:auto}
       <option value="916">9:16 · Story, Reels, TikTok</option>
     </select>
     <button id="bGenerer" class="primaire" title="Choisir un thème : la publication est écrite et mise en page pour toi (G)">✨ Générer</button>
+    <button id="bMemoire" title="Ce que l’IA a retenu de tes consignes et de tes corrections">🧠</button>
     <button id="bChat" title="Explique en français ce que tu veux : l’assistant crée ou retouche la publication (C)">💬 Assistant</button>
     <div class="espace"></div>
     <button id="bNouveau" title="Partir d'un modèle (N)">Nouveau</button>
@@ -213,9 +214,13 @@ aside{background:var(--panneau);min-height:0;overflow:auto}
   <div id="chatSugg"></div>
   <form id="chatForm"><textarea id="chatSaisie" maxlength="1200" placeholder="Ex. : « Une story pour un plombier à Nantes, ton rassurant » ou « raccourcis le titre de l’image 2 »"></textarea><button class="primaire" id="chatEnvoi" type="submit">Envoyer</button></form>
 </aside>
+<div class="modal" id="modalMem" role="dialog" aria-modal="true" aria-labelledby="memTitre">
+  <div class="boite" style="width:min(560px,100%)"><header><h2 id="memTitre">🧠 Mémoire de l’IA</h2><div class="espace"></div><button id="memFermer">Fermer</button></header><div class="gen" id="memCorps"></div></div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script src="donnees.js"></script>
+<script src="memoire.js"></script>
 <script src="generation.js"></script>
 <script>
 'use strict';
@@ -845,9 +850,11 @@ async function imageJpg(i) {
 }
 const nomFichier = () => `${slug(projet.nom)}-${{ 45: '4x5', 11: '1x1', 916: '9x16' }[projet.format]}`;
 async function exporterImage() {
+  apprendre();
   telecharger(await imageJpg(sel), `${nomFichier()}-${String(sel + 1).padStart(2, '0')}.jpg`); toast('Image exportée');
 }
 async function envoyerAirdrop() {
+  apprendre();
   if (!window.studioPartage) return toast('AirDrop : disponible dans l’application Mac');
   const fichiers = [];
   for (let i = 0; i < projet.slides.length; i++) fichiers.push({ nom: `${nomFichier()}-${String(i + 1).padStart(2, '0')}.jpg`, data: await (await imageJpg(i)).arrayBuffer() });
@@ -856,6 +863,7 @@ async function envoyerAirdrop() {
   try { const r = await window.studioPartage.envoyer(fichiers); if (r && !r.ok) toast(r.message); } catch (e) { toast('Envoi impossible : ' + e.message); }
 }
 async function exporterCarrousel() {
+  apprendre();
   const fichiers = [];
   for (let i = 0; i < projet.slides.length; i++) fichiers.push({ nom: String(i + 1).padStart(2, '0') + '.jpg', data: new Uint8Array(await (await imageJpg(i)).arrayBuffer()) });
   const lg = [projet.legende.titre, '', projet.legende.texte].join('\n').trim();
@@ -1008,10 +1016,11 @@ async function genererPublication(options = {}) {
   try {
     const e = window.studioIA ? await window.studioIA.etat() : { installee: false };
     if (res) res.innerHTML = `<progress></progress><div class="gdoux">${e.installee || options.ecrire ? 'L’IA écrit la publication…' : 'Préparation de la publication…'}</div>`;
-    const deps = { ecrire: options.ecrire || (window.studioIA ? m => window.studioIA.ecrire(m) : null), ia: !options.sansIA && !!(options.ecrire || e.installee), bibliotheque: window.BIBLIOTHEQUE, exemplesQT: window.EXEMPLES_QT || [], captures: window.CAPTURES || {},
+    const deps = { memoire: memoireTexte(), ecrire: options.ecrire || (window.studioIA ? m => window.studioIA.ecrire(m) : null), ia: !options.sansIA && !!(options.ecrire || e.installee), bibliotheque: window.BIBLIOTHEQUE, exemplesQT: window.EXEMPLES_QT || [], captures: window.CAPTURES || {},
       hashtags: HASHTAGS, ctaParvis: CTA_PARVIS };
     const p = await Generation.generer({ marque, themeId, sujet, format, secteur: options.secteur || '', consignes: options.consignes || '', deja: lireDeja() }, deps);
     const n = nouveauProjet({ nom: p.nom, marque, format, legende: p.legende, slides: p.slides }, marque); n.points = true;
+    if (p.source === 'ia') n.genere = { slides: n.slides.map(s => ({ titre: s.titre, sous: s.sous, texte: s.texte })), legende: { ...n.legende } };
     const reduit = Generation.ajuster(n, rendreHors);
     noterDeja(p.cle);
     etat.projets.unshift(n); ouvrirProjet(n); enregistrer();
@@ -1068,10 +1077,14 @@ async function envoyerChat(texte, options = {}) {
   texte = String(texte || '').trim(); if (!texte || chatEnCours) return null;
   chatEnCours = true; $('#chatEnvoi').disabled = true; $('#chatSugg').hidden = true;
   msgChat('moi', texte); histoChat.push({ role: 'moi', texte });
+  try {
+    const ordre = MEM() ? await MEM().ordre(texte) : null;
+    if (ordre) { memo = ordre.memoire; msgChat('assistant', ordre.reponse); histoChat.push({ role: 'assistant', texte: ordre.reponse }); sauverChat(); chatEnCours = false; $('#chatEnvoi').disabled = false; return { memoire: ordre.reponse }; }
+  } catch (er) { /* mémoire indisponible : message traité normalement */ }
   const attente = msgChat('assistant', 'Je réfléchis…');
   try {
     const dg = await depsGeneration(options);
-    const plan = await Generation.comprendre({ message: texte, historique: histoChat.slice(0, -1), projet, marque: projet.marque, format: projet.format }, { ecrire: dg.ecrire, ia: dg.ia });
+    const plan = await Generation.comprendre({ message: texte, historique: histoChat.slice(0, -1), projet, marque: projet.marque, format: projet.format }, { ecrire: dg.ecrire, ia: dg.ia, memoire: memoireTexte() });
     let reponse = plan.reponse || '', extra = { note: plan.source === 'ia' ? '' : (window.studioIA && !dg.installee ? 'IA locale non installée : demande comprise par mots-clés.' : '') }, resultat = null;
     if (plan.action === 'generer') {
       attente.textContent = 'J’écris la publication…';
@@ -1110,16 +1123,57 @@ function brancherChat() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') ouvrirChat(false); else if (e.key.toLowerCase() === 'c' && !e.metaKey && !e.ctrlKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) { e.preventDefault(); ouvrirChat(true); } });
   try { if (!localStorage.getItem('studioPosts:chat:vu')) { localStorage.setItem('studioPosts:chat:vu', '1'); ouvrirChat(true); } } catch (e) { /* stockage indisponible */ }
 }
-// nouvelle version publiée : bandeau avec un bouton vers la page de téléchargement
+// mise à jour automatique : téléchargée en arrière-plan, installée à la fermeture ou au clic sur « Redémarrer »
+function afficherMaj(e) {
+  const b = $('#bMaj'), actif = e && ['telechargement', 'installation', 'pret'].includes(e.etat);
+  b.classList.toggle('vu', !!actif); if (!actif) return;
+  $('#bMajTexte').textContent = e.etat === 'pret' ? `Studio Posts ${e.nouvelle} est prête : elle s’installe à la fermeture, ou tout de suite.` : `Mise à jour ${e.nouvelle} en cours de téléchargement (${e.progres || 0} %)…`;
+  $('#bMajGo').hidden = e.etat !== 'pret';
+}
 async function verifierMaj() {
-  if (!window.studioMaj) return;
-  try { const v = await window.studioMaj.verifier(); if (!v) return; $('#bMajTexte').textContent = `Une nouvelle version de Studio Posts est disponible (${v.version}).`; $('#bMajGo').onclick = () => window.studioMaj.ouvrir(v.url); $('#bMaj').classList.add('vu'); } catch (e) { /* hors ligne */ }
+  const a = window.studioMaj; if (!a) return;
+  try {
+    a.surChangement(afficherMaj); $('#bMajGo').onclick = () => a.installer();
+    let e = await a.verifier(); afficherMaj(e);
+    for (let n = 0; n < 900 && e && ['recherche', 'telechargement', 'installation'].includes(e.etat); n++) { await new Promise(r => setTimeout(r, 2000)); e = await a.etat(); afficherMaj(e); }
+  } catch (er) { /* hors ligne : réessai au prochain démarrage */ }
+}
+
+/* ═══════════════════ 14. Mémoire de l'IA : consignes retenues et corrections apprises (partagées avec QuentMovie et Studio Sites) ═══════════════════ */
+let memo = { consignes: [], corrections: [] };
+const MEM = () => window.studioMemoire || null;
+const memoireTexte = () => (window.Memoire ? Memoire.pourPrompt(memo) : '');
+async function chargerMemoire() { try { if (MEM()) memo = await MEM().lire(); } catch (e) { /* mémoire indisponible */ } }
+function rendreMemoire() {
+  const l = memo.consignes;
+  $('#memCorps').innerHTML = `<p class="gdoux">L’IA ne se « ré-entraîne » pas : elle relit ces consignes et ces corrections à chaque demande. Elles sont partagées avec QuentMovie et Studio Sites (un seul fichier sur ce Mac). Dans l’assistant, dis « retiens que… » ou « oublie… ».</p>
+    ${l.length ? l.map((x, i) => `<div class="gligne"><span style="flex:1">${i + 1}. ${echap(x.texte)} <small class="gdoux">${echap(x.source || '')} ${echap(x.date || '')}</small></span><button data-oublier="${echap(x.id)}" title="Oublier">✕</button></div>`).join('') : '<p class="gdoux">Aucune consigne retenue pour le moment.</p>'}
+    <p class="gdoux">${memo.corrections.length} correction${memo.corrections.length > 1 ? 's' : ''} de textes apprise${memo.corrections.length > 1 ? 's' : ''} (apprises quand tu exportes une publication dont tu as corrigé des textes).</p>
+    <button id="memVider" ${l.length || memo.corrections.length ? '' : 'disabled'}>Tout oublier</button>`;
+}
+// à l'export : les textes écrits par l'IA que tu as corrigés deviennent des exemples
+async function apprendre() {
+  if (!MEM() || !window.Memoire || !projet || !projet.genere) return;
+  const g = projet.genere, paires = [];
+  projet.slides.forEach((s, i) => { const o = g.slides[i]; if (!o) return; for (const k of ['titre', 'sous', 'texte']) if (typeof o[k] === 'string' && typeof s[k] === 'string' && o[k] && s[k] !== o[k]) paires.push({ avant: o[k], apres: s[k] }); });
+  if (g.legende && projet.legende && g.legende.texte && projet.legende.texte !== g.legende.texte) paires.push({ avant: g.legende.titre || g.legende.texte.slice(0, 120), apres: projet.legende.titre || projet.legende.texte.slice(0, 120) });
+  projet.genere = { slides: projet.slides.map(s => ({ titre: s.titre, sous: s.sous, texte: s.texte })), legende: { ...projet.legende } }; // ce qui vient d'être exporté sert de nouvelle référence
+  if (!paires.length) return;
+  try { memo = await MEM().corrections(paires); } catch (e) { /* mémoire indisponible */ }
+}
+function brancherMemoire() {
+  $('#bMemoire').onclick = () => { $('#modalMem').classList.add('ouvert'); rendreMemoire(); };
+  $('#modalMem').addEventListener('click', async e => {
+    if (e.target.id === 'modalMem' || e.target.id === 'memFermer') return $('#modalMem').classList.remove('ouvert');
+    const o = e.target.closest('[data-oublier]'); if (o) { memo = await MEM().oublier(o.dataset.oublier); return rendreMemoire(); }
+    if (e.target.id === 'memVider' && confirm('Effacer toutes les consignes et corrections retenues ?')) { memo = await MEM().vider(); rendreMemoire(); }
+  });
 }
 
 (async () => {
   try { await chargerPolices(); }
   catch (e) { $('#chargement').textContent = 'Polices introuvables : relancer « node tools/generateur-posts.js ».'; return; }
-  charger(); brancher(); brancherGenerer(); brancherChat(); toutAfficher(); verifierMaj();
+  charger(); brancher(); brancherGenerer(); brancherChat(); brancherMemoire(); chargerMemoire(); toutAfficher(); verifierMaj();
   $('#chargement').remove();
   // accès pour les contrôles automatiques (tools/verifier-generateur-posts.js)
   window.studio = { MODELES, FORMATS, get projet() { return projet; }, ouvrir: p => { const n = nouveauProjet(p, p.marque); etat.projets.unshift(n); ouvrirProjet(n); return n; }, rendre: (p, i) => { const c = document.createElement('canvas'); c.width = W; c.height = FORMATS[p.format]; return rendre(c.getContext('2d'), p, i); },

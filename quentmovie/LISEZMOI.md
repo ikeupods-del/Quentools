@@ -78,3 +78,6 @@ Touche **?** dans l'application pour la liste complète. Principaux : ⌘K assis
 
 ## Envoi par AirDrop
 Fin d'export, clips TikTok et miniature : bouton « Envoyer par AirDrop » (`/api/partager` → feuille de partage de macOS via `ShareMenu`, `main.js`). Seuls des fichiers du dossier `exports` sont transmis ; hors application Mac, un message l'indique.
+
+## Sons des animations et mémoire de l'IA
+Bruitages d'argent, d'humeurs et d'infos générés par `scripts/generer-bibliotheque.js --ajouter` (n'ajoute que les sons absents, sans toucher aux fichiers existants) et liés aux animations par `scripts/generer-animations.py` (dernière colonne de `ANIMS`, puis `--index`). Mémoire de l'IA : `memoire.js` (copie de `marketing/ia-locale/memoire.js`), fichier partagé `~/Movies/QuentMovie/memoire-ia.json` ; l'assistant comprend « retiens que… », « oublie… », « que retiens-tu ? » ; le texte retenu est ajouté à chaque demande d'écriture (`ia.js`, `demander`) ; les titres de chapitres corrigés sont appris (`/api/memoire/corrections`).

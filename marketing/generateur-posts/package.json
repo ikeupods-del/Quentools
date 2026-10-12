@@ -1,7 +1,7 @@
 {
   "name": "studio-posts",
   "productName": "Studio Posts",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Publications Instagram et TikTok aux couleurs du Parvis et de QuenTools",
   "main": "main.js",
   "private": true,
@@ -22,7 +22,8 @@
       "generation.js",
       "ia-locale.js",
       "ia-worker.js",
-      "nouvelle-version.js",
+      "maj.js",
+      "memoire.js",
       "package.json"
     ],
     "afterPack": "scripts/adhoc-sign.js",

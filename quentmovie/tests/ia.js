@@ -23,6 +23,20 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   const mauvais = await attendre((await (await fetch(U('/api/telecharger'), { method: 'POST', body: JSON.stringify({ lien: 'pas un lien' }) })).json()).id);
   check('lien invalide refusé', /https/.test(mauvais.error || ''), mauvais.error);
 
+  // mémoire de l'IA : consigne retenue par l'assistant, fichier partagé, corrections apprises, oubli
+  const dire = async d => (await (await fetch(U('/api/assistant/comprendre'), { method: 'POST', body: JSON.stringify({ demande: d, ia: false }) })).json());
+  const m1 = await dire('Retiens que mes vidéos sont toujours en tutoiement');
+  check('mémoire : « retiens que… » enregistré par l’assistant', /retenu/.test(m1.memoire || '') && !m1.actions.length, JSON.stringify(m1));
+  const mem = await (await fetch(U('/api/memoire'))).json();
+  check('mémoire : consigne dans le fichier partagé', mem.consignes.length === 1 && /tutoiement/.test(mem.consignes[0].texte) && fs.existsSync(path.join(base, 'memoire-ia.json')), JSON.stringify(mem));
+  check('mémoire : « que retiens-tu ? » liste la consigne', /1\. mes vidéos sont toujours en tutoiement/.test((await dire('que retiens-tu ?')).memoire));
+  await fetch(U('/api/memoire/corrections'), { method: 'POST', body: JSON.stringify({ paires: [{ avant: 'Les débuts de la marque', apres: 'Comment tout a commencé' }, { avant: 'a', apres: 'b' }] }) });
+  check('mémoire : titre corrigé à la main appris (les corrections triviales sont ignorées)', (await (await fetch(U('/api/memoire'))).json()).corrections.length === 1);
+  const MEM = require('../memoire'), txt = MEM.pourPrompt(await (await fetch(U('/api/memoire'))).json(), 600);
+  check('mémoire : texte ajouté aux demandes de l’IA', /Mémoire du propriétaire/.test(txt) && /tutoiement/.test(txt) && /Comment tout a commencé/.test(txt) && txt.length < 700, txt);
+  check('mémoire : « oublie… » retire la consigne', /oublié/.test((await dire('oublie le tutoiement')).memoire) && (await (await fetch(U('/api/memoire'))).json()).consignes.length === 0);
+  check('mémoire : une demande de montage normale n’est pas prise pour une consigne', (await dire('coupe les blancs')).actions.length > 0);
+
   const { lireConsignes: lire } = require('../ia');
   const c1 = lire('Pas d’intro, pas de conclusion, tutoie-moi, sans musique'), c2 = lire('Fais une vidéo avec une intro percutante');
   check('consignes : pas d’intro ni de conclusion lus', !c1.accroche && !c1.ouverture && !c1.conclusion && !c1.musique && c1.sousTitres && c1.adresse === 'tu', JSON.stringify(c1));
