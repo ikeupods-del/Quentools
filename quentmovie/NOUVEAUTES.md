@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.22.0
+- **Pack sous-titres** (onglet Packs, en haut) : douze styles de sous-titres, dont huit « pro » — Hormozi (capitales, jaune et blanc), néon, mot sur boîte blanche, mot sur boîte rouge, feutre jaune, gaming, cinéma et minimal. Chaque style a son aperçu ; un clic l’applique à tous les clips qui ont des sous-titres. Pour un rendu mot à mot, choisis le style avant de lancer « ✨ Sous-titres automatiques » (il est aussi proposé dans l’inspecteur et dans l’assistant ⌘K).
+
 ## 1.21.0
 - Cinq **packs Vlog** dans l’onglet Packs : Voyage, Quotidien, Food, Sport et énergie, Ville de nuit. Chaque pack pose sur tes coupes des transitions douces, un effet de lumière et un son léger, avec en option le look du pack et une musique de fond qui baisse quand tu parles.
 - Six packs supplémentaires : **Podcast Interview**, **Podcast Culture et récit** (avec visualiseur sonore pour les épisodes audio), **Tuto et formation**, **Entreprise et corporate**, **Mariage et événement** et **Gaming et stream**, 

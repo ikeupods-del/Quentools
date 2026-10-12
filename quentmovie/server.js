@@ -37,6 +37,17 @@ for (const [id, nom, paths] of FONT_CANDS) { const file = paths.find(p => fs.exi
 const FONT = (FONTS_OK[0] || {}).file || '';
 const fontFile = id => ((FONTS_OK.find(x => x.id === id) || FONTS_OK[0] || {}).file) || '';
 
+// Styles de sous-titres des packs : police, capitales, taille relative, place, et calques de texte (couleur, bord, décalage)
+const SUBDEF = {
+  hormozi: { font: 'impact', up: 1, k: 1.25, y: 'h*0.60-text_h/2', layers: (s, k) => [{ col: ['white', '0xffd400', 'white', '0x19d38a'][k % 4], ex: `:borderw=${Math.round(s / 5)}:bordercolor=black:shadowx=${Math.round(s / 12)}:shadowy=${Math.round(s / 10)}:shadowcolor=black@0.6` }] },
+  neon: { font: 'arialblack', up: 1, k: 1, y: 'h*0.64-text_h/2', layers: s => [{ col: '0x19d3ff@0.2', ex: `:borderw=${Math.round(s / 3)}:bordercolor=0x19d3ff@0.2` }, { col: '0x19d3ff@0.45', ex: `:borderw=${Math.round(s / 6)}:bordercolor=0x19d3ff@0.45` }, { col: 'white', ex: '' }] },
+  boite: { font: 'arialblack', up: 1, k: 1, y: 'h*0.68-text_h/2', layers: s => [{ col: 'black', ex: `:box=1:boxcolor=white@0.96:boxborderw=${Math.round(s / 3)}` }] },
+  rouge: { font: 'arialblack', up: 1, k: 1, y: 'h*0.74-text_h/2', layers: s => [{ col: 'white', ex: `:box=1:boxcolor=0xd4001a@0.97:boxborderw=${Math.round(s / 3)}` }] },
+  pop: { font: 'markerfelt', up: 0, k: 1.1, y: 'h*0.64-text_h/2', layers: s => [{ col: '0xffe600', ex: `:borderw=${Math.round(s / 6)}:bordercolor=black` }] },
+  gaming: { font: 'futura', up: 1, k: 1.05, y: 'h*0.64-text_h/2', layers: s => [{ col: '0xff2d95', dx: -Math.round(s / 14) }, { col: '0x19d3ff', dx: Math.round(s / 14) }, { col: 'white', ex: `:borderw=${Math.round(s / 14)}:bordercolor=black@0.5` }] },
+  cinema: { font: 'didot', up: 0, k: 0.95, y: 'h*0.86-text_h', layers: s => [{ col: 'white', ex: `:shadowx=${Math.round(s / 16)}:shadowy=${Math.round(s / 16)}:shadowcolor=black@0.7` }] },
+  minimal: { font: 'helvetica', up: 0, k: 0.9, y: 'h*0.88-text_h', layers: s => [{ col: 'white', ex: `:box=1:boxcolor=black@0.55:boxborderw=${Math.round(s / 3.5)}` }] }
+};
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const num = (v, d) => (Number.isFinite(+v) ? +v : d);
 const safeName = n => path.basename(String(n || 'media')).replace(/[^\w.\- ()]/g, '_').slice(-120) || 'media';
@@ -447,13 +458,19 @@ function buildClip(c, P, o = {}) {
     const subs = (c.subs || []).filter(x => x && String(x.t || '').trim()).slice(0, 300);
     if (subs.length && fontFile(c.textFont) && filters.has('drawtext')) {
       const idx = o.tdir ? o.tdir.idx : 0, dir = o.tdir ? o.tdir.dir : TMP, u = Math.min(W, H) / 100, size = Math.round(u * clamp(num(c.subSize, 4.4), 2, 10));
-      const T = `(t+${ctx.t0})`, tk = c.subStyle === 'tiktok', col = c.subStyle === 'jaune' ? '0xffe600' : 'white';
-      // « tiktok » : 1 à 3 mots, gros, au centre bas de l'image, contour épais et ombre
+      const T = `(t+${ctx.t0})`, tk = c.subStyle === 'tiktok', col = c.subStyle === 'jaune' ? '0xffe600' : 'white', def = SUBDEF[c.subStyle];
+      // « tiktok » : 1 à 3 mots, gros, au centre bas de l'image, contour épais et ombre ; les styles de pack (SUBDEF) ajoutent police, capitales, couleurs et calques
       const st = c.subStyle === 'bandeau' ? `:box=1:boxcolor=black@0.6:boxborderw=${Math.round(size / 3)}` : tk ? `:borderw=${Math.max(3, Math.round(size / 7))}:bordercolor=black:shadowx=${Math.round(size / 16)}:shadowy=${Math.round(size / 12)}:shadowcolor=black@0.55` : `:borderw=${Math.max(2, Math.round(size / 10))}:bordercolor=black`;
       const yy = tk ? 'h*0.70-text_h/2' : 'h*0.84-text_h';
       const parts = subs.map((x, k) => {
-        const file = `s${idx}_${k}.txt`; fs.writeFileSync(path.join(dir, file), wrap(String(x.t).slice(0, 200), Math.floor(W * 0.9 / (size * 0.58))));
-        return `drawtext=fontfile='${fontFile(tk ? 'arialblack' : c.textFont)}':textfile=${file}:expansion=none:fontsize=${size}:fontcolor=${col}:x=(w-text_w)/2:y=${yy}:line_spacing=${Math.round(size * 0.2)}${st}:enable='between(${T},${num(x.s, 0)},${num(x.e, 0)})'`;
+        const file = `s${idx}_${k}.txt`, en = `:enable='between(${T},${num(x.s, 0)},${num(x.e, 0)})'`;
+        if (def) { // style de pack : un ou plusieurs calques de texte superposés
+          const sz = Math.round(size * (def.k || 1)), brut = def.up ? String(x.t).toUpperCase() : String(x.t);
+          fs.writeFileSync(path.join(dir, file), wrap(brut.slice(0, 200), Math.floor(W * 0.9 / (sz * (def.up ? 0.68 : 0.58)))));
+          return def.layers(sz, k).map(L => `drawtext=fontfile='${fontFile(def.font)}':textfile=${file}:expansion=none:fontsize=${sz}:fontcolor=${L.col}:x=(w-text_w)/2+${L.dx || 0}:y=${def.y}:line_spacing=${Math.round(sz * 0.2)}${L.ex || ''}${en}`).join(',');
+        }
+        fs.writeFileSync(path.join(dir, file), wrap(String(x.t).slice(0, 200), Math.floor(W * 0.9 / (size * 0.58))));
+        return `drawtext=fontfile='${fontFile(tk ? 'arialblack' : c.textFont)}':textfile=${file}:expansion=none:fontsize=${size}:fontcolor=${col}:x=(w-text_w)/2:y=${yy}:line_spacing=${Math.round(size * 0.2)}${st}${en}`;
       });
       lin(parts.join(','));
     }

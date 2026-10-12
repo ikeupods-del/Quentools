@@ -523,6 +523,25 @@ function sourceVignette() {
 const carteRep = r => `<div class="carte txt" draggable="true" data-drag="rep:${r.id}" data-rep="${r.id}">${esc(r.nom)}</div>`;
 const videoTr = id => `<video muted loop playsinline preload="auto" src="/lib/apercus/tr-${id}.mp4" onerror="this.remove()"></video>`;
 const carteTr = (t, tr) => `<div class="carte" draggable="true" data-drag="tr:${t.id}" data-tr="${t.id}" ${tr && tr.type === t.id ? 'style="border-color:var(--ac)"' : ''}>${videoTr(t.id)}<span>${esc(t.nom)}</span></div>`;
+async function apercuSousTitre(id) {
+  const k = 'sous|' + id; if (APT.has(k)) return APT.get(k);
+  const c = { file: 'lib:fonds/bureau-flou-h.jpg', kind: 'image', dur: 4, fit: 'fill', fx: [], key: {}, textFont: 'arial', subs: [{ s: 0, e: 4, t: modeMots(id) ? 'Ton texte' : 'Ton texte apparaît ici, bien lisible' }], subStyle: id, subSize: tailleSous(id) };
+  try {
+    const rep = await api('/api/preview', { method: 'POST', body: JSON.stringify({ project: { format: 'horizontal', fps: 30, res: 360, clips: [c] }, clip: c, t: 1 }) });
+    if (!rep.ok) throw new Error('aperçu');
+    const url = URL.createObjectURL(await rep.blob()); APT.set(k, url); return url;
+  } catch (e) { return ''; }
+}
+async function chargerApercusSousTitres() {
+  for (const im of [...document.querySelectorAll('#navbody img[data-aps]')]) { if (tab !== 'packs' || !im.isConnected) return; const u = await apercuSousTitre(im.dataset.aps); if (u && im.isConnected) im.src = u; }
+}
+function appliquerSousStyle(id) {
+  const avec = proj.clips.filter(c => (c.subs || []).length);
+  if (!avec.length) return signal('Aucun clip n’a de sous-titres : génère-les d’abord (« ✨ Sous-titres automatiques », dans l’inspecteur ou l’assistant ⌘K).');
+  avec.forEach(c => { c.subStyle = id; c.subSize = tailleSous(id); });
+  commit(); tout(); apercu();
+  signal(`Style « ${infoSous(id).nom} » appliqué à ${avec.length} clip(s).${modeMots(id) ? ' Pour un vrai rendu mot à mot, refais les sous-titres automatiques avec ce style.' : ''}`);
+}
 // Aperçus des titres animés : image du moteur (mêmes polices et mêmes mouvements que l'export), sur le décor du pack ; mémorisés pour la session
 const APT = new Map();
 async function apercuTitre(id, fond) {
@@ -575,6 +594,7 @@ function navigateur() {
     const L = LIB(), nomTr = id => (CAT.transitions.find(t => t.id === id) || {}).nom || id, nomRep = id => (CAT.reportage.find(r => r.id === id) || {}).nom || id;
     const nomLib = (liste, id) => (liste.find(x => x.id === id) || {}).nom || id;
     h = `<p class="mut">Des <b>packs de montage</b> comme sur Premiere Pro : chaque pack réunit des transitions, des titres animés, des effets de coupe (flash, fuite de lumière…), des bruitages et un look, tous créés pour QuentMovie. Survole une transition pour la voir bouger. <b>Appliquer</b> pose tout sur ta timeline en un clic (annulable avec ⌘Z).</p>` +
+      `<h3>Pack sous-titres</h3><p class="mut">Douze styles de sous-titres, dont huit « pro » (Hormozi, néon, boîte, gaming, cinéma…). Clique sur un style pour l’appliquer à tous les clips qui ont des sous-titres ; pour un rendu mot à mot, génère-les d’abord avec « ✨ Sous-titres automatiques » en choisissant ce style.</p><div class="pkgr" style="grid-template-columns:repeat(2,1fr)">` + (CAT.sousTitres || []).map(x => `<div data-sousstyle="${x.id}" title="${esc(x.nom)}"><img data-aps="${x.id}" alt="">${esc(x.nom)}${x.mots ? ' · mot à mot' : ''}</div>`).join('') + '</div>' +
       [...new Set((CAT.packs || []).map(P => P.famille || 'Montage'))].map(fam => `<h3>Packs ${esc(fam.toLowerCase())}</h3>` + (CAT.packs || []).filter(P => (P.famille || 'Montage') === fam).map(P => `<div class="pack" data-pack="${P.id}" style="border:1px solid #2a2d35;border-top:4px solid ${P.couleur};border-radius:9px;padding:9px 10px;margin:12px 0;background:#181a1f">
         <img class="pkcouv" data-apt="${P.titres[0]}" data-fond="${P.fond}" data-pack-couv="${P.id}" alt="">
         <b style="font-size:15px;display:block;margin-top:7px">${esc(P.nom)}</b><div class="mut" style="margin:2px 0 4px">${esc(P.desc)}</div>
@@ -585,7 +605,7 @@ function navigateur() {
         ${P.look ? `<div class="pkh">Look</div><div class="mut">${esc(nomLib(L.luts, P.look.replace(/^luts\//, '').replace(/\.cube$/, '')))}</div>` : ''}
         <div class="ligne" style="margin-top:8px;flex-wrap:wrap;gap:8px"><label><input type="checkbox" class="pk-tr" checked> transitions</label><label><input type="checkbox" class="pk-cal" checked> effets de coupe</label><label><input type="checkbox" class="pk-son" checked> sons</label>${P.look ? '<label><input type="checkbox" class="pk-look"> look</label>' : ''}${P.musique ? '<label><input type="checkbox" class="pk-mus"> musique</label>' : ''}${P.viz ? '<label title="S’applique aux clips audio (podcast sans image)"><input type="checkbox" class="pk-viz"> visualiseur sonore</label>' : ''}</div>
         <button class="pri" data-pack-app="${P.id}" style="width:100%;margin-top:6px">Appliquer ${esc(P.nom)} à toutes les coupes</button></div>`).join('')).join('');
-    setTimeout(chargerApercusTitres, 30);
+    setTimeout(chargerApercusTitres, 30); setTimeout(chargerApercusSousTitres, 60);
   } else if (tab === 'titres') {
     h = `${sansClip}<h3>Titres de reportage (animés)</h3><div class="grille">` + CAT.reportage.filter(r => !r.pack).map(carteRep).join('') + '</div>' +
       (CAT.packs || []).filter(P => CAT.reportage.some(r => r.pack === P.id)).map(P => `<h3>${esc(P.nom)} · titres</h3><div class="grille">` + CAT.reportage.filter(r => r.pack === P.id).map(carteRep).join('') + '</div>').join('') +
@@ -625,7 +645,7 @@ function navigateur() {
 function allerOnglet(t) { if (t !== tab) $('#navbody').scrollTop = 0; tab = t; navigateur(); } // nouvel onglet : liste affichée depuis le haut
 $('#tabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) allerOnglet(b.dataset.tab); };
 $('#navbody').addEventListener('click', e => {
-  const t = e.target.closest('[data-add],[data-del],[data-calque],[data-piste],[data-fx],[data-tr],[data-titre],[data-rep],[data-afx],[data-play],[data-ajout-son],[data-ajout-pack],[data-sticker],[data-pose],[data-decor],[data-lut],[data-ecran],[data-fond],[data-pack-app],#bTrTous,[data-outil]'); if (!t) return;
+  const t = e.target.closest('[data-add],[data-del],[data-calque],[data-piste],[data-fx],[data-tr],[data-titre],[data-rep],[data-afx],[data-play],[data-ajout-son],[data-ajout-pack],[data-sticker],[data-pose],[data-decor],[data-lut],[data-ecran],[data-fond],[data-pack-app],[data-sousstyle],#bTrTous,[data-outil]'); if (!t) return;
   if (t.tagName === 'A') e.preventDefault();
   const d = t.dataset;
   if (d.add !== undefined) { const m = medias[d.add]; if (m.kind === 'audio') (e.shiftKey ? ajouterClip(m, sel >= 0 ? sel + 1 : undefined) : ajouterSon(m.file, { vol: 100 })); else ajouterClip(m, sel >= 0 ? sel + 1 : undefined); }
@@ -634,6 +654,7 @@ $('#navbody').addEventListener('click', e => {
   else if (d.del !== undefined) supprimerMedia(medias[d.del]);
   else if (d.fx) ajouterFx(sel, d.fx);
   else if (d.afx) ajouterAfx(sel, d.afx);
+  else if (d.sousstyle) appliquerSousStyle(d.sousstyle);
   else if (d.packApp) appliquerPack(d.packApp, { tr: !!t.parentNode.querySelector('.pk-tr:checked'), cal: !!t.parentNode.querySelector('.pk-cal:checked'), son: !!t.parentNode.querySelector('.pk-son:checked'), look: !!t.parentNode.querySelector('.pk-look:checked'), mus: !!t.parentNode.querySelector('.pk-mus:checked'), viz: !!t.parentNode.querySelector('.pk-viz:checked') });
   else if (d.tr) appliquerTransition(d.tr);
   else if (t.id === 'bTrTous') { const tt = $('#navbody .carte[style*="--ac"]'); proj.clips.slice(0, -1).forEach(c => { c.transition = { type: (tt && tt.dataset.tr) || 'fade', dur: +$('#trDurR').value }; }); commit(); tlDessin(); }
@@ -1626,7 +1647,7 @@ function inspecteur() {
     ${c.subs.map((s, i) => `<div class="subrow"><input type="number" step="0.1" min="0" data-sub="${i}:s" value="${s.s}" title="Début (s)"><input type="number" step="0.1" min="0" data-sub="${i}:e" value="${s.e}" title="Fin (s)"><input type="text" data-sub="${i}:t" value="${esc(s.t)}"><button class="mini" data-rmsub="${i}">✕</button></div>`).join('')}
     ${k === 'video' || k === 'audio' ? `<button id="bSubAuto" class="pri" style="width:100%;margin-top:6px">✨ Sous-titres automatiques (écoute ta voix)</button>` : ''}
     <div class="ligne" style="margin-top:6px"><button id="bAddSub">＋ Ligne ici</button><button id="bSrt">Importer .srt</button></div><input type="file" id="fSrt" accept=".srt,text/plain" hidden>
-    <label class="l">Style</label><select data-p="subStyle">${opts([['contour', 'Contour noir'], ['jaune', 'Jaune'], ['bandeau', 'Bandeau sombre'], ['tiktok', 'Mot à mot (TikTok)']], c.subStyle)}</select>${sl('Taille', 'subSize', 2, 10, 0.2, '', c)}
+    <label class="l">Style</label><select data-p="subStyle">${opts(stylesSous(), c.subStyle)}</select>${sl('Taille', 'subSize', 2, 10, 0.2, '', c)}
   </details>
   ${k === 'video' || k === 'image' ? `<details ${c.key.on ? 'open' : ''}><summary>Fond vert</summary>
     ${chk('Remplacer le fond de ce clip', 'key.on', c)}
@@ -2121,7 +2142,10 @@ function corriger(t) {
 }
 const paroleOpts = () => { try { return { ...PAROLE_DEF, ...JSON.parse(localStorage.getItem('qm:parole') || '{}') }; } catch (e) { return { ...PAROLE_DEF }; } };
 const paroleGarder = o => { try { localStorage.setItem('qm:parole', JSON.stringify(o)); } catch (e) { /* stockage indisponible */ } };
-const STYLES_SOUS = [['bandeau', 'Phrases sur bandeau sombre'], ['contour', 'Phrases, contour noir'], ['jaune', 'Phrases en jaune'], ['tiktok', 'Mot à mot, gros et centré (TikTok, Reels)']];
+const stylesSous = () => (CAT.sousTitres || []).map(x => [x.id, x.nom]);
+const infoSous = id => (CAT.sousTitres || []).find(x => x.id === id) || {};
+const modeMots = id => !!infoSous(id).mots; // style affiché mot à mot : la parole est découpée en mots
+const tailleSous = id => infoSous(id).taille || 4.4;
 // La reconnaissance est installée une seule fois (téléchargement proposé au premier usage)
 async function assurerEcoute(surEtat) {
   const e = await (await api('/api/parole')).json();
@@ -2139,13 +2163,13 @@ async function ecouterClip(c, surEtat) {
 }
 // Sous-titres d'une liste de passages (heures relatives au début du média), pour la partie [a, b] du clip
 function sousTitresPour(r, style, a, b, speed) {
-  return (style === 'tiktok' ? r.st.mots : r.st.phrase).filter(x => x.s >= a - 0.05 && x.s < b).map(x => ({ s: +((Math.max(x.s, a) - a) / speed).toFixed(2), e: +((Math.min(x.e, b) - a) / speed).toFixed(2), t: corriger(x.t) }));
+  return (modeMots(style) ? r.st.mots : r.st.phrase).filter(x => x.s >= a - 0.05 && x.s < b).map(x => ({ s: +((Math.max(x.s, a) - a) / speed).toFixed(2), e: +((Math.min(x.e, b) - a) / speed).toFixed(2), t: corriger(x.t) }));
 }
 // i : index du clip ; renvoie le nombre de secondes retirées (coupe) ou de sous-titres créés
 function paroleAppliquer(i, r, { sous, couper, style }) {
   const c = proj.clips[i], sp = c.speed || 1, dur = c.out - c.in;
   if (!couper) {
-    if (sous) { c.subs = sousTitresPour(r, style, 0, dur + 1, sp); c.subStyle = style; if (style === 'tiktok') c.subSize = Math.max(c.subSize || 0, 6.5); }
+    if (sous) { c.subs = sousTitresPour(r, style, 0, dur + 1, sp); c.subStyle = style; if (modeMots(style)) c.subSize = Math.max(c.subSize || 0, tailleSous(style)); }
     return { pieces: 1, gagne: 0, n: sous ? c.subs.length : 0 };
   }
   const segs = r.garder.filter(([x, y]) => y > x + 0.15 && x < dur);
@@ -2156,7 +2180,7 @@ function paroleAppliquer(i, r, { sous, couper, style }) {
     n.overlays = (c.overlays || []).filter(o => o.start * sp >= x && o.start * sp < y).map(o => ({ ...o, start: +((o.start * sp - x) / sp).toFixed(2) }));
     n.titre = c.titre && c.titre.start * sp >= x && c.titre.start * sp < y ? { ...c.titre, start: +((c.titre.start * sp - x) / sp).toFixed(2) } : (k === 0 && c.titre && c.titre.start * sp < x ? { ...c.titre, start: 0 } : null);
     n.subs = sous ? sousTitresPour(r, style, x, Math.min(y, dur), sp) : [];
-    if (sous) { n.subStyle = style; if (style === 'tiktok') n.subSize = Math.max(n.subSize || 0, 6.5); }
+    if (sous) { n.subStyle = style; if (modeMots(style)) n.subSize = Math.max(n.subSize || 0, tailleSous(style)); }
     return n;
   });
   const garde = segs.reduce((a, [x, y]) => a + Math.min(y, dur) - x, 0);
@@ -2208,7 +2232,7 @@ function outilsHtml() {
       <p class="mut"><b>Transition sur toutes les coupures</b></p>
       <div class="ligne"><select id="oTrAll"><option value="">Aucune (retirer)</option>${CAT.transitions.filter(t => t.id !== 'none').map(t => `<option value="${t.id}" ${t.id === 'fade' ? 'selected' : ''}>${esc(t.nom)}</option>`).join('')}</select><button class="pri" data-outil="transition-tout" style="flex:none">Appliquer partout</button></div><div class="mut" id="oTrAllRes" style="margin-top:4px"></div></div>
     <div class="encart"><h4>💬 Sous-titres automatiques</h4><p class="mut">QuentMovie écoute ta voix et écrit les sous-titres au bon moment (sans internet, sur ton Mac). Les « euh » ne sont pas écrits.</p>
-      <label class="l">Style</label><select id="oSousStyle">${opts(STYLES_SOUS, po.style)}</select>
+      <label class="l">Style</label><select id="oSousStyle">${opts(stylesSous(), po.style)}</select>
       <div class="ligne" style="margin-top:8px"><button class="pri" data-outil="sous-clip">Clip sélectionné</button><button class="pri" data-outil="sous-tout">Toute la vidéo</button></div>
       <div class="sw2"><input type="checkbox" id="oPriseSous" ${po.priseSous ? 'checked' : ''}><label for="oPriseSous">Sous-titrer automatiquement mes prises du studio</label></div>
       <label class="l">Corrections des noms propres (une par ligne)</label><textarea id="oDico" rows="2" placeholder="mot entendu = bon mot&#10;ex. : Michel Lin = Michelin">${esc(po.dico)}</textarea>
