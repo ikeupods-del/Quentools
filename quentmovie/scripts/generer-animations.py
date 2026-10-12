@@ -43,8 +43,17 @@ def large(w=1920, h=540):
     im = Image.new('RGB', (w * SS, h * SS), VERT); return im, ImageDraw.Draw(im)
 
 
-def out(im, w=E, h=E):
-    return im.resize((w, h), Image.LANCZOS)
+def out(im, w=E, h=E, ombre=True):
+    """Réduction (anti-crénelage) puis ombre portée franche (jamais de flou vers le vert : le détourage resterait verdâtre)."""
+    r = im.resize((w, h), Image.LANCZOS)
+    if not ombre:
+        return r
+    a = np.asarray(r).astype(np.int16); plein = (np.abs(a - np.array(VERT)).sum(-1) > 120)
+    dx, dy = max(4, w // 150), max(6, h // 100)
+    ombre_m = np.zeros_like(plein); ombre_m[dy:, dx:] = plein[:-dy, :-dx]
+    libre = np.abs(a - np.array(VERT)).sum(-1) <= 60
+    a[ombre_m & libre] = (14, 16, 34)
+    return Image.fromarray(a.astype(np.uint8), 'RGB')
 
 
 def disque(d, x, y, r, fill, outline=None, w=0):
@@ -93,72 +102,8 @@ def bouche_sourire(d, cx, cy, r, ouverte=0.0, largeur=0.5, epais=0.05):
     d.arc(box, 20, 160, fill=NOIR, width=int(r * epais * 2))
 
 
-def v_content(t):
-    im, d, c = sq(); r = 330 * SS * rebond(t / 0.45) * (1 + 0.03 * math.sin(t * 9))
-    visage(d, c, c, r)
-    for sgn in (-1, 1):  # yeux rieurs (arcs vers le haut)
-        d.arc([c + sgn * r * 0.38 - r * 0.16, c - r * 0.3, c + sgn * r * 0.38 + r * 0.16, c - r * 0.0], 200, 340, fill=NOIR, width=int(r * 0.07))
-    d.chord([c - r * 0.52, c - r * 0.05, c + r * 0.52, c + r * 0.62], 0, 180, fill=(110, 30, 30), outline=NOIR, width=int(r * 0.04))
-    d.chord([c - r * 0.38, c - r * 0.05, c + r * 0.38, c + r * 0.14], 0, 180, fill=BLANC)
-    for k in range(8):
-        tt = t - 0.2 - k * 0.08
-        if tt > 0:
-            a = k * math.pi / 4 + 0.3; dist = (360 + 140 * ease(tt / 1.0)) * SS; etoile(d, c + math.cos(a) * dist, c + math.sin(a) * dist, 26 * SS * max(0, 1 - tt / 1.6), (255, 240, 120), tt * 3)
-    return out(im)
 
 
-def v_enerve(t):
-    im, d, c = sq(); r = 330 * SS * rebond(t / 0.4); tr = (math.sin(t * 40) * 9 * SS) if t > 0.5 else 0
-    rouge = min(1, max(0, (t - 0.1) / 0.6)); fond = tuple(int(JAUNE[i] * (1 - rouge) + (240, 60, 40)[i] * rouge) for i in range(3))
-    cx = c + tr; visage(d, cx, c, r, fond, (130, 20, 10))
-    for sgn in (-1, 1):  # sourcils en colère
-        d.line([(cx + sgn * r * 0.68, c - r * 0.52), (cx + sgn * r * 0.14, c - r * 0.2)], fill=NOIR, width=int(r * 0.1))
-        disque(d, cx + sgn * r * 0.38, c - r * 0.04, r * 0.09, NOIR)
-    d.arc([cx - r * 0.42, c + r * 0.28, cx + r * 0.42, c + r * 0.78], 200, 340, fill=NOIR, width=int(r * 0.07))
-    for k in range(3):  # vapeur
-        for sgn in (-1, 1):
-            tt = (t * 1.3 + k * 0.33) % 1
-            if t > 0.5:
-                disque(d, cx + sgn * (r * 0.95 + 30 * SS * tt), c - r * 0.35 - 260 * SS * tt, (28 + 50 * tt) * SS, (235, 235, 245))
-    if 0.7 < t < 1.6 and int(t * 10) % 2 == 0:  # éclair
-        pts = [(c + 40 * SS, c - 520 * SS), (c - 70 * SS, c - 380 * SS), (c, c - 400 * SS), (c - 90 * SS, c - 250 * SS), (c + 70 * SS, c - 390 * SS), (c, c - 370 * SS)]
-        d.polygon(pts, fill=(255, 225, 40), outline=NOIR)
-    return out(im)
-
-
-def v_triste(t):
-    im, d, c = sq(); r = 300 * SS * rebond(t / 0.45); cy = c + 60 * SS
-    visage(d, c, cy, r, (140, 185, 255), (40, 70, 150))
-    for sgn in (-1, 1):
-        disque(d, c + sgn * r * 0.38, cy - r * 0.08, r * 0.09, NOIR)
-        d.line([(c + sgn * r * 0.62, cy - r * 0.34), (c + sgn * r * 0.16, cy - r * 0.26 - sgn * r * 0.1)], fill=NOIR, width=int(r * 0.06))
-    d.arc([c - r * 0.38, cy + r * 0.34, c + r * 0.38, cy + r * 0.84], 200, 340, fill=NOIR, width=int(r * 0.06))
-    for k in range(4):  # larmes
-        for sgn in (-1, 1):
-            tt = (t * 0.9 + k * 0.25 + (0.1 if sgn > 0 else 0)) % 1
-            if t > 0.5:
-                disque(d, c + sgn * r * 0.4, cy + r * 0.0 + tt * r * 0.9, 14 * SS * (1 - 0.4 * tt), (170, 215, 255))
-    if t > 0.3:  # nuage et pluie
-        nx = c; ny = cy - r - 90 * SS; s = ease((t - 0.3) / 0.4)
-        for dx, dr in ((-110, 80), (0, 105), (110, 80)):
-            disque(d, nx + dx * SS * s, ny, dr * SS * s, (120, 130, 160))
-        for k in range(7):
-            tt = (t * 1.6 + k * 0.17) % 1; d.line([(nx - 150 * SS + k * 50 * SS, ny + 90 * SS + tt * 150 * SS), (nx - 158 * SS + k * 50 * SS, ny + 120 * SS + tt * 150 * SS)], fill=(120, 170, 255), width=8 * SS)
-    return out(im)
-
-
-def v_choque(t):
-    im, d, c = sq(); r = 320 * SS * rebond(t / 0.3) * (1 + 0.04 * math.sin(t * 25) * (t > 0.3))
-    visage(d, c, c + 20 * SS, r)
-    for sgn in (-1, 1):
-        disque(d, c + sgn * r * 0.38, c - r * 0.08, r * 0.2, BLANC, NOIR, 5 * SS); disque(d, c + sgn * r * 0.38, c - r * 0.08, r * 0.08, NOIR)
-        d.line([(c + sgn * r * 0.6, c - r * 0.52), (c + sgn * r * 0.2, c - r * 0.5 - 12 * SS)], fill=NOIR, width=int(r * 0.05))
-    d.ellipse([c - r * 0.16, c + r * 0.3, c + r * 0.16, c + r * 0.72], fill=(90, 20, 30), outline=NOIR, width=int(r * 0.04))
-    for k, tx in enumerate(('!', '?', '!')):
-        tt = t - 0.3 - k * 0.12
-        if tt > 0:
-            texte(d, c + (-1 + k) * 190 * SS, c - r - 60 * SS - 20 * SS * math.sin(tt * 8), tx, 150 * SS * rebond(tt / 0.3), ROUGE, contour=NOIR)
-    return out(im)
 
 
 def coeur(d, x, y, r, fill):
@@ -166,31 +111,8 @@ def coeur(d, x, y, r, fill):
     d.polygon(pts, fill=fill)
 
 
-def v_amoureux(t):
-    im, d, c = sq(); r = 320 * SS * rebond(t / 0.45)
-    visage(d, c, c + 30 * SS, r)
-    for sgn in (-1, 1):
-        coeur(d, c + sgn * r * 0.4, c - r * 0.05 + 30 * SS, r * (0.2 + 0.03 * math.sin(t * 10)), (235, 30, 80))
-    d.arc([c - r * 0.4, c + r * 0.15, c + r * 0.4, c + r * 0.7], 20, 160, fill=NOIR, width=int(r * 0.06))
-    for k in range(9):
-        tt = (t * 0.8 + k * 0.11) % 1
-        if t > 0.4:
-            coeur(d, c + math.sin(k * 2.1 + tt * 4) * 300 * SS, c - 120 * SS - tt * 520 * SS, 30 * SS * (1 - tt * 0.5), (255, 110, 150))
-    return out(im)
 
 
-def v_mdr(t):
-    im, d, c = sq(); r = 320 * SS * rebond(t / 0.4); dx = math.sin(t * 22) * 12 * SS * (t > 0.4); dy = math.sin(t * 17) * 8 * SS * (t > 0.4)
-    visage(d, c + dx, c + dy, r)
-    for sgn in (-1, 1):
-        d.arc([c + dx + sgn * r * 0.4 - r * 0.18, c + dy - r * 0.28, c + dx + sgn * r * 0.4 + r * 0.18, c + dy + r * 0.04], 200, 340, fill=NOIR, width=int(r * 0.07))
-    d.chord([c + dx - r * 0.55, c + dy - r * 0.02, c + dx + r * 0.55, c + dy + r * 0.62], 0, 180, fill=(110, 30, 30), outline=NOIR, width=int(r * 0.04))
-    for k in range(6):
-        for sgn in (-1, 1):
-            tt = (t * 1.2 + k * 0.17) % 1
-            if t > 0.4:
-                disque(d, c + sgn * (r * 0.75 + 220 * SS * tt), c - r * 0.1 - 90 * SS * math.sin(tt * math.pi) + 120 * SS * tt, 24 * SS * (1 - tt * 0.5), (130, 190, 255))
-    return out(im)
 
 
 def v_reflechi(t):
@@ -270,63 +192,105 @@ def v_suivre(t):
     return out(im)
 
 
-def v_live(t):
-    im, d, c = sq(); s = rebond(t / 0.4)
-    if s > 0.03:
-        w, h = 520 * SS * s, 190 * SS * s
-        d.rounded_rectangle([c - w / 2, c - h / 2, c + w / 2, c + h / 2], radius=int(h * 0.3), fill=ROUGE, outline=BLANC, width=int(8 * SS))
-        if int(t * 2) % 2 == 0:
-            disque(d, c - w * 0.3, c, 28 * SS * s, BLANC)
-        texte(d, c + w * 0.08, c, 'LIVE', 120 * SS * s, BLANC)
-    return out(im)
 
 
-def v_nouvelle_video(t):
-    im, d = large(1920, 540); p = ease(t / 0.45); q = ease((t - 3.4) / 0.4)
-    x0 = -1900 * SS * (1 - p) + 1900 * SS * q
-    d.rounded_rectangle([x0 + 120 * SS, 130 * SS, x0 + 1800 * SS, 410 * SS], radius=60 * SS, fill=ROUGE, outline=BLANC, width=8 * SS)
-    d.polygon([(x0 + 200 * SS, 190 * SS), (x0 + 200 * SS, 350 * SS), (x0 + 340 * SS, 270 * SS)], fill=BLANC)
-    texte(d, x0 + 1050 * SS, 270 * SS, 'NOUVELLE VIDÉO', 150 * SS, BLANC)
-    return out(im, 1920, 540)
 
 
 # ---------- Infos ----------
-def v_breaking(t):
-    im, d = large(1920, 540); p = ease(t / 0.5); q = ease((t - 4.0) / 0.45); sh = -1950 * SS * (1 - p) + 1950 * SS * q
-    # bandeau rouge, barres claires qui balaient, pastille du monde qui tourne
-    d.rectangle([sh + 60 * SS, 110 * SS, sh + 1860 * SS, 330 * SS], fill=(200, 15, 30))
+# Générique d'édition spéciale, dans l'esprit des journaux télévisés (fond bleu profond, globe filaire, bandeau rouge, bas d'écran) :
+# création originale, sans logo, jingle ni charte d'une chaîne. 0 à 3,6 s plein écran, puis le bas d'écran reste jusqu'à 7 s.
+_FOND = {}
+
+
+def _fond_info():
+    if 'f' not in _FOND:
+        W, H = 1920 * SS, 1080 * SS
+        y = np.linspace(0, 1, H)[:, None]; x = np.linspace(0, 1, W)[None, :]
+        r = np.sqrt(((x - 0.33) * 1.6) ** 2 + (y - 0.5) ** 2)
+        g = np.clip(1 - r * 1.25, 0, 1) ** 1.6
+        base = np.stack([4 + 18 * g + 6 * y * np.ones_like(x), 12 + 62 * g + 6 * y, 44 + 150 * g + 14 * y], -1)
+        _FOND['f'] = Image.fromarray(np.clip(base, 0, 255).astype(np.uint8), 'RGB')
+    return _FOND['f'].copy()
+
+
+def _globe(d, cx, cy, r, t, a=(120, 190, 255)):
+    for k in (1.0, 1.1, 1.2):
+        d.ellipse([cx - r * k, cy - r * k, cx + r * k, cy + r * k], outline=tuple(int(c * (0.35 if k > 1 else 0.9)) for c in a) if k == 1.0 else (40, 90, 170), width=int((6 if k == 1.0 else 2) * SS))
     for k in range(6):
-        bx = sh + (60 + ((t * 700 + k * 320) % 2000) - 140) * SS
-        d.polygon([(bx, 110 * SS), (bx + 90 * SS, 110 * SS), (bx + 40 * SS, 330 * SS), (bx - 50 * SS, 330 * SS)], fill=(225, 45, 55))
-    d.rectangle([sh + 60 * SS, 110 * SS, sh + 400 * SS, 330 * SS], fill=(15, 35, 95))
-    gx, gy, gr = sh + 230 * SS, 220 * SS, 78 * SS
-    disque(d, gx, gy, gr, (40, 90, 200), BLANC, 6 * SS)
+        ph = (t * 0.9 + k * math.pi / 6) % math.pi; w = abs(math.cos(ph)) * r
+        d.ellipse([cx - w, cy - r, cx + w, cy + r], outline=a, width=3 * SS)
+    for k in range(-3, 4):
+        yy = cy + k * r / 3.6; ww = math.sqrt(max(0, r * r - (yy - cy) ** 2))
+        d.line([(cx - ww, yy), (cx + ww, yy)], fill=(70, 130, 220), width=2 * SS)
+    for k in range(8):  # points lumineux qui tournent autour
+        an = t * 1.3 + k * math.pi / 4; disque(d, cx + (r * 1.1) * math.cos(an), cy + (r * 1.1) * math.sin(an) * 0.35, 6 * SS, BLANC)
+
+
+def _faisceaux(im, t, alpha=46):
+    lay = Image.new('RGBA', im.size, (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
+    for k in range(4):
+        bx = (((t * 260 + k * 560) % 2600) - 400) * SS
+        ld.polygon([(bx, 0), (bx + 150 * SS, 0), (bx - 250 * SS, 1080 * SS), (bx - 400 * SS, 1080 * SS)], fill=(150, 200, 255, alpha))
+    im.paste(Image.alpha_composite(im.convert('RGBA'), lay).convert('RGB'))
+
+
+def _plein(t):
+    im = _fond_info(); _faisceaux(im, t); d = ImageDraw.Draw(im)
+    pa = ease(t / 0.9); _globe(d, (560 - 300 * (1 - pa)) * SS, 540 * SS, 290 * SS * (0.6 + 0.4 * pa), t)
+    # liseré supérieur et inférieur
+    e = ease(t / 0.5)
+    d.rectangle([0, 0, 1920 * SS * e, 18 * SS], fill=(235, 30, 45)); d.rectangle([1920 * SS * (1 - e), 1062 * SS, 1920 * SS, 1080 * SS], fill=(235, 30, 45))
+    # étiquette « ÉDITION SPÉCIALE » puis titre qui entre depuis la droite
+    p1 = ease((t - 0.45) / 0.45); p2 = ease((t - 0.7) / 0.5)
+    ox1, ox2 = 1500 * SS * (1 - p1), 1700 * SS * (1 - p2)
+    d.rectangle([980 * SS + ox1, 330 * SS, 1620 * SS + ox1, 400 * SS], fill=(255, 205, 45))
+    texte(d, 1010 * SS + ox1, 365 * SS, 'ÉDITION SPÉCIALE', 46 * SS, NOIR, ancre='lm')
+    d.rectangle([980 * SS + ox2, 400 * SS, 1880 * SS + ox2, 700 * SS], fill=(205, 15, 32))
+    d.rectangle([980 * SS + ox2, 400 * SS, 1000 * SS + ox2, 700 * SS], fill=BLANC)
+    texte(d, 1040 * SS + ox2, 485 * SS, 'BREAKING', 118 * SS, BLANC, ancre='lm'); texte(d, 1040 * SS + ox2, 617 * SS, 'NEWS', 118 * SS, BLANC, ancre='lm')
+    # reflet qui balaie le titre
+    sh = (t - 1.5) / 0.7
+    if 0 <= sh <= 1:
+        lay = Image.new('RGBA', im.size, (0, 0, 0, 0)); ld = ImageDraw.Draw(lay); bx = (900 + 1100 * sh) * SS
+        ld.polygon([(bx, 400 * SS), (bx + 90 * SS, 400 * SS), (bx + 20 * SS, 700 * SS), (bx - 70 * SS, 700 * SS)], fill=(255, 255, 255, 120))
+        m = Image.new('L', im.size, 0); ImageDraw.Draw(m).rectangle([980 * SS, 400 * SS, 1880 * SS, 700 * SS], fill=255)
+        lay.putalpha(Image.composite(lay.getchannel('A'), Image.new('L', im.size, 0), m)); im.paste(Image.alpha_composite(im.convert('RGBA'), lay).convert('RGB'))
+        d = ImageDraw.Draw(im)
+    p3 = ease((t - 1.9) / 0.5)
+    texte(d, 1000 * SS, 780 * SS, 'L’INFORMATION EN CONTINU', 54 * SS, (255, 255, 255) if p3 > 0.5 else (60, 100, 170), ancre='lm')
+    d.rectangle([1000 * SS, 820 * SS, (1000 + 760 * p3) * SS, 828 * SS], fill=(255, 205, 45))
+    return im
+
+
+def _bas(t, y0=780):
+    """Bas d'écran : globe, bandeau rouge, direct clignotant et texte qui défile."""
+    im, d = large(1920, 1080)
+    d.rectangle([60 * SS, y0 * SS, 1860 * SS, (y0 + 130) * SS], fill=(205, 15, 32))
+    for k in range(6):
+        bx = (60 + ((t * 700 + k * 320) % 2000) - 140) * SS
+        d.polygon([(bx, y0 * SS), (bx + 80 * SS, y0 * SS), (bx + 30 * SS, (y0 + 130) * SS), (bx - 50 * SS, (y0 + 130) * SS)], fill=(225, 45, 55))
+    d.rectangle([60 * SS, y0 * SS, 330 * SS, (y0 + 220) * SS], fill=(10, 28, 90))
+    _globe(d, 195 * SS, (y0 + 110) * SS, 70 * SS, t)
+    n = max(1, int(13 * min(1, max(0, (t - 0.3) / 0.6)))); texte(d, 370 * SS, (y0 + 65) * SS, 'BREAKING NEWS'[:n], 100 * SS, BLANC, ancre='lm')
+    bande = Image.new('RGB', (1530 * SS, 90 * SS), (10, 14, 30)); bd = ImageDraw.Draw(bande); ox = -((t * 340) % 1700) * SS
     for k in range(3):
-        a = (t * 1.6 + k * math.pi / 3) % math.pi; d.ellipse([gx - gr * abs(math.cos(a)), gy - gr, gx + gr * abs(math.cos(a)), gy + gr], outline=BLANC, width=4 * SS)
-    d.line([(gx - gr, gy), (gx + gr, gy)], fill=BLANC, width=4 * SS)
-    reveal = min(1, max(0, (t - 0.3) / 0.6)); n = int(reveal * 13)
-    texte(d, sh + 440 * SS, 220 * SS, 'BREAKING NEWS'[:max(1, n)], 150 * SS, BLANC, ancre='lm')
-    # bande du bas : « EN DIRECT » qui clignote et texte qui défile
-    d.rectangle([sh + 60 * SS, 330 * SS, sh + 1860 * SS, 420 * SS], fill=(15, 15, 25))
-    ox = -((t * 360) % 1400) * SS
-    for k in range(3):
-        texte(d, sh + (430 + k * 1400) * SS + ox, 375 * SS, 'INFO IMPORTANTE  •  À SUIVRE', 52 * SS, BLANC, ancre='lm')
-    # le texte qui défile passe sous l'étiquette « EN DIRECT » (redessinée par-dessus)
-    d.rectangle([sh + 60 * SS, 330 * SS, sh + 400 * SS, 420 * SS], fill=(255, 205, 45))
+        texte(bd, 290 * SS + k * 1700 * SS + ox, 45 * SS, 'INFORMATION IMPORTANTE  •  RESTEZ CONNECTÉS  •  À SUIVRE', 46 * SS, BLANC, ancre='lm')
+    im.paste(bande, (330 * SS, (y0 + 130) * SS))
+    d.rectangle([330 * SS, (y0 + 130) * SS, 600 * SS, (y0 + 220) * SS], fill=(255, 205, 45))
     if int(t * 2.5) % 2 == 0:
-        disque(d, sh + 110 * SS, 375 * SS, 14 * SS, ROUGE)
-    texte(d, sh + 150 * SS, 375 * SS, 'EN DIRECT', 56 * SS, NOIR, ancre='lm')
-    return out(im, 1920, 540)
+        disque(d, 375 * SS, (y0 + 175) * SS, 13 * SS, ROUGE)
+    texte(d, 410 * SS, (y0 + 175) * SS, 'EN DIRECT', 48 * SS, NOIR, ancre='lm')
+    return im
 
 
-def v_flash_info(t):
-    im, d = large(1920, 540); p = ease(t / 0.35); q = ease((t - 3.0) / 0.35); y = 540 * SS * (1 - p) + 400 * SS * q
-    clignote = (int(t * 4) % 2 == 0)
-    d.rectangle([60 * SS, 150 * SS + y, 1860 * SS, 330 * SS + y], fill=(255, 205, 45) if clignote else (255, 235, 140))
-    for k in range(18):
-        d.polygon([(60 * SS + k * 100 * SS, 150 * SS + y), (110 * SS + k * 100 * SS, 150 * SS + y), (60 * SS + k * 100 * SS, 190 * SS + y), (10 * SS + k * 100 * SS, 190 * SS + y)], fill=NOIR) if 60 + k * 100 < 1860 else None
-    texte(d, 960 * SS, 250 * SS + y, 'FLASH INFO', 150 * SS, NOIR)
-    return out(im, 1920, 540)
+def v_breaking(t):
+    if t < 3.6:
+        im = Image.new('RGB', (1920 * SS, 1080 * SS), VERT); A = _plein(t); q = ease((t - 3.0) / 0.6) if t > 3.0 else 0.0
+        box = (int(60 * q * SS), int(780 * q * SS), int((1920 - 60 * q) * SS), int((1080 - 80 * q) * SS))
+        im.paste(A.crop(box), box[:2])
+    else:
+        im = _bas(t - 3.6 + 1.0, 780 + int(330 * ease((t - 7.0) / 0.55)))
+    return out(im, 1920, 1080, ombre=False)
 
 
 def v_exclusif(t):
@@ -478,34 +442,6 @@ def v_erreur(t):
     return out(im)
 
 
-def v_bravo(t):
-    im, d, c = sq(); s = rebond(t / 0.5)
-    if s > 0.03:
-        cx, cy = c, c - 40 * SS; w = 330 * SS * s
-        d.polygon([(cx - w / 2, cy - 220 * SS * s), (cx + w / 2, cy - 220 * SS * s), (cx + w * 0.38, cy + 40 * SS * s), (cx + w * 0.15, cy + 130 * SS * s), (cx - w * 0.15, cy + 130 * SS * s), (cx - w * 0.38, cy + 40 * SS * s)], fill=OR, outline=(150, 100, 0))
-        for sgn in (-1, 1):
-            d.arc([cx + sgn * w * 0.7 - w * 0.28, cy - 200 * SS * s, cx + sgn * w * 0.7 + w * 0.28, cy - 20 * SS * s], 0 if sgn > 0 else 180, 360 if sgn > 0 else 540, fill=OR, width=int(26 * SS * s))
-        d.rectangle([cx - 40 * SS * s, cy + 130 * SS * s, cx + 40 * SS * s, cy + 230 * SS * s], fill=OR); d.rounded_rectangle([cx - 150 * SS * s, cy + 230 * SS * s, cx + 150 * SS * s, cy + 300 * SS * s], radius=int(14 * SS), fill=(190, 130, 20))
-        etoile(d, cx, cy - 60 * SS * s, 70 * SS * s, BLANC, t * 2)
-    for k in range(10):
-        tt = t - 0.3 - k * 0.07
-        if tt > 0:
-            a = k * 0.63; dist = (300 + 220 * ease(tt / 0.9)) * SS; etoile(d, c + math.cos(a) * dist, c - 40 * SS + math.sin(a) * dist, 28 * SS * max(0, 1 - tt / 1.5), (255, 240, 130), tt * 4)
-    if t > 0.8:
-        etiquette(d, c, c + 380 * SS, rebond((t - 0.8) / 0.4), 'BRAVO !', ROUGE, BLANC, 100)
-    return out(im)
-
-
-def v_idee(t):
-    im, d, c = sq(); s = rebond(t / 0.45)
-    if t > 0.4:
-        for k in range(12):
-            a = k * math.pi / 6; r1, r2 = 300 * SS, (380 + 30 * math.sin(t * 14 + k)) * SS; d.line([(c + math.cos(a) * r1, c - 60 * SS + math.sin(a) * r1), (c + math.cos(a) * r2, c - 60 * SS + math.sin(a) * r2)], fill=(255, 235, 120), width=14 * SS)
-    disque(d, c, c - 60 * SS, 230 * SS * s, (255, 235, 120) if t > 0.4 else (225, 225, 235), NOIR, 10 * SS)
-    d.rounded_rectangle([c - 110 * SS * s, c + 150 * SS * s, c + 110 * SS * s, c + 290 * SS * s], radius=int(20 * SS), fill=(150, 150, 165), outline=NOIR, width=int(8 * SS))
-    for k in range(3):
-        d.line([(c - 110 * SS * s, c + (190 + k * 35) * SS * s), (c + 110 * SS * s, c + (190 + k * 35) * SS * s)], fill=NOIR, width=int(6 * SS))
-    return out(im)
 
 
 def flamme(d, cx, base, h, larg, col, t, graine):
@@ -520,25 +456,6 @@ def flamme(d, cx, base, h, larg, col, t, graine):
     d.polygon(pts, fill=col)
 
 
-def v_feu(t):
-    im, d, c = sq(); s = rebond(t / 0.45)
-    base = c + 300 * SS
-    for k, (dx, h, larg) in enumerate(((-150, 380, 220), (150, 330, 200), (0, 520, 330))):
-        flamme(d, c + dx * SS, base, h * SS * s, larg * SS * s, (255, 80, 30), t, k)
-    for k, (dx, h, larg) in enumerate(((-120, 250, 130), (130, 220, 120), (0, 360, 210))):
-        flamme(d, c + dx * SS, base, h * SS * s, larg * SS * s, (255, 160, 30), t + 0.1, k + 3)
-    flamme(d, c, base, 200 * SS * s, 110 * SS * s, (255, 240, 130), t + 0.2, 7)
-    return out(im)
-
-
-def v_cent(t):
-    im, d, c = sq(); s = rebond(t / 0.4) * (1 + 0.03 * math.sin(t * 10))
-    texte(d, c, c - 20 * SS, '100', 520 * SS * s, ROUGE, contour=NOIR)
-    if t > 0.3:
-        p = ease((t - 0.3) / 0.4)
-        for dy in (0, 40):
-            d.line([(c - 330 * SS, c + (230 + dy) * SS), (c - 330 * SS + 660 * SS * p, c + (210 + dy) * SS)], fill=ROUGE, width=int(30 * SS))
-    return out(im)
 
 
 def v_question(t):
@@ -580,19 +497,10 @@ ANIMS = [
     ('partager', 'Partager', 'Réseaux', 2.6, v_partager, E, E, 's', 50, 55, 48, 'swish-rapide'),
     ('enregistrer', 'Enregistrer', 'Réseaux', 2.8, v_enregistrer, E, E, 'z', 50, 55, 48, 'pop'),
     ('suivre', 'Suis-moi', 'Réseaux', 3.4, v_suivre, E, E, 'v', 50, 78, 50, 'souris-clic'),
-    ('live', 'Live', 'Réseaux', 3.0, v_live, E, E, '0', 82, 20, 30, 'notification'),
-    ('nouvelle-video', 'Nouvelle vidéo', 'Réseaux', 3.8, v_nouvelle_video, 1920, 540, 'w', 50, 82, 85, 'whoosh-court'),
-    ('breaking', 'BREAKING NEWS (mini générique)', 'Infos', 4.6, v_breaking, 1920, 540, 'b', 50, 80, 96, 'breaking-news'),
-    ('flash-info', 'Flash info', 'Infos', 3.4, v_flash_info, 1920, 540, 'f', 50, 80, 90, 'breaking-news'),
+    ('breaking', 'BREAKING NEWS (générique)', 'Infos', 7.6, v_breaking, 1920, 1080, 'b', 50, 50, 100, 'generique-info'),
     ('exclusif', 'Exclusif', 'Infos', 2.8, v_exclusif, E, E, 'x', 50, 45, 48, 'tada'),
     ('a-suivre', 'À suivre…', 'Infos', 3.2, v_a_suivre, 1920, 540, 'q', 50, 80, 80, 'whoosh-court'),
     ('alerte', 'Attention', 'Infos', 3.0, v_alerte, E, E, 'a', 50, 50, 48, 'sirene'),
-    ('content', 'Content', 'Humeurs', 3.0, v_content, E, E, 'h', 50, 50, 46, 'joie'),
-    ('enerve', 'Énervé', 'Humeurs', 3.0, v_enerve, E, E, 'j', 50, 50, 46, 'colere'),
-    ('triste', 'Triste', 'Humeurs', 3.4, v_triste, E, E, 'k', 50, 50, 46, 'tristesse'),
-    ('choque', 'Choqué', 'Humeurs', 2.6, v_choque, E, E, 'u', 50, 50, 46, 'choc'),
-    ('amoureux', 'Amoureux', 'Humeurs', 3.2, v_amoureux, E, E, 'i', 50, 50, 46, 'amour'),
-    ('mdr', 'Mort de rire', 'Humeurs', 3.0, v_mdr, E, E, 'y', 50, 50, 46, 'ba-dum-tss'),
     ('reflechi', 'Réfléchi', 'Humeurs', 3.0, v_reflechi, E, E, 'g', 50, 50, 46, 'bloup'),
     ('cool', 'Cool', 'Humeurs', 2.8, v_cool, E, E, 'd', 50, 50, 46, 'swish-rapide'),
     ('riche', 'Riche', 'Argent', 3.4, v_riche, E, E, 'Maj+h', 50, 50, 70, 'riche'),
@@ -602,10 +510,6 @@ ANIMS = [
     ('jackpot', 'Jackpot', 'Argent', 3.8, v_jackpot, E, E, 'Maj+i', 50, 50, 62, 'jackpot'),
     ('valide', 'Validé ✓', 'Divers', 2.2, v_valide, E, E, 'Maj+v', 50, 50, 36, 'bonne-reponse'),
     ('erreur', 'Faux ✗', 'Divers', 2.2, v_erreur, E, E, 'Maj+x', 50, 50, 36, 'mauvaise-reponse'),
-    ('bravo', 'Bravo (trophée)', 'Divers', 3.2, v_bravo, E, E, 'Maj+b', 50, 50, 55, 'fanfare'),
-    ('idee', 'Idée', 'Divers', 2.6, v_idee, E, E, 'Maj+a', 50, 45, 40, 'ding-cloche'),
-    ('feu', 'Feu', 'Divers', 2.8, v_feu, E, E, 'Maj+q', 50, 50, 42, 'feu'),
-    ('cent', '100 %', 'Divers', 2.4, v_cent, E, E, 'Maj+c', 50, 50, 50, 'impact-leger'),
     ('question', 'Question', 'Divers', 2.6, v_question, E, E, 'Maj+z', 50, 50, 40, 'bloup'),
     ('top1', 'N°1', 'Divers', 3.0, v_top1, E, E, 'Maj+w', 50, 50, 42, 'fanfare'),
     ('applaudir', 'Applaudir', 'Divers', 3.0, v_applaudir, E, E, 'Maj+s', 50, 55, 40, 'applaudissements-courts'),

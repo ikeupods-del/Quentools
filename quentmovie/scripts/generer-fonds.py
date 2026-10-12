@@ -551,23 +551,6 @@ def fleche_forme(d, x, y, l, ep, couleur, ang=0.0):
     d.polygon([rot(*p) for p in pts], fill=couleur, outline=(0, 0, 0)); d.line([rot(*p) for p in pts + [pts[0]]], fill=(0, 0, 0), width=6 * SS)
 
 
-def v_fleche(t):
-    im, d = toile(); c = E * SS / 2
-    entree = ease(t / 0.5); osc = math.sin(t * 9) * 40 * SS * (t > 0.5)
-    fleche_forme(d, c + 300 * SS - (1 - entree) * 900 * SS + osc, c, 600 * SS, 90 * SS, (255, 215, 0))
-    return fin(im)
-
-
-def v_cercle(t):
-    im, d = toile(); c = E * SS / 2; p = ease(t / 1.0)
-    r1, r2 = 390 * SS, 300 * SS
-    pts = []
-    for k in range(int(220 * p) + 1):
-        a = -2.2 + 2 * math.pi * 1.08 * k / 220
-        pts.append((c + r1 * math.cos(a) * (1 + 0.03 * math.sin(a * 3)), c + r2 * math.sin(a) * (1 + 0.04 * math.cos(a * 2))))
-    if len(pts) > 1:
-        d.line(pts, fill=(235, 20, 30), width=26 * SS, joint='curve')
-    return fin(im)
 
 
 def v_compte(t):
@@ -594,15 +577,6 @@ def v_lien_bio(t):
     return fin(im)
 
 
-def v_glisse_haut(t):
-    im, d = toile(); c = E * SS / 2
-    for k in range(3):
-        p = ((t * 1.2 + k / 3) % 1); y = c + 250 * SS - p * 400 * SS; a = math.sin(math.pi * p)
-        if a > 0.05:
-            col = tuple(int(255 * a + VERT[i] * (1 - a)) for i in range(3))
-            d.line([(c - 160 * SS, y + 90 * SS), (c, y - 40 * SS), (c + 160 * SS, y + 90 * SS)], fill=col, width=40 * SS, joint='curve')
-    d.text((c, c + 380 * SS), 'GLISSE VERS LE HAUT', font=police(70 * SS), fill='white', anchor='mm')
-    return fin(im)
 
 
 def v_explosion(t):
@@ -623,11 +597,8 @@ FONDVERT = [
     ('abonner', 'Bouton S’abonner avec clic et cloche', 3.6, v_abonner),
     ('jaime', 'J’aime (cœur qui éclate)', 2.5, v_jaime),
     ('cloche', 'Cloche de notification', 2.5, v_cloche),
-    ('fleche', 'Flèche qui pointe', 2.5, v_fleche),
-    ('cercle', 'Cercle rouge qui entoure', 2, v_cercle),
     ('compte', 'Compte à rebours 3, 2, 1, GO', 4, v_compte),
     ('lien-bio', 'Lien en bio', 2.5, v_lien_bio),
-    ('glisse-haut', 'Glisse vers le haut', 2.5, v_glisse_haut),
     ('explosion', 'Explosion de confettis', 2, v_explosion),
 ]
 

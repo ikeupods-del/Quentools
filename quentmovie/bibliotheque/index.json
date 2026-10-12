@@ -815,6 +815,13 @@
    "cat": "Télé et spectacle",
    "file": "sons/sirene.mp3",
    "duree": 2.6
+  },
+  {
+   "id": "generique-info",
+   "nom": "Générique d’édition spéciale",
+   "cat": "Télé et spectacle",
+   "file": "sons/generique-info.mp3",
+   "duree": 7.6
   }
  ],
  "musiques": [
@@ -1472,20 +1479,6 @@
    "duree": 2.5
   },
   {
-   "id": "fleche",
-   "nom": "Flèche qui pointe",
-   "cat": "Animations sur fond vert",
-   "file": "fondvert/fleche.mp4",
-   "duree": 2.5
-  },
-  {
-   "id": "cercle",
-   "nom": "Cercle rouge qui entoure",
-   "cat": "Animations sur fond vert",
-   "file": "fondvert/cercle.mp4",
-   "duree": 2
-  },
-  {
    "id": "compte",
    "nom": "Compte à rebours 3, 2, 1, GO",
    "cat": "Animations sur fond vert",
@@ -1497,13 +1490,6 @@
    "nom": "Lien en bio",
    "cat": "Animations sur fond vert",
    "file": "fondvert/lien-bio.mp4",
-   "duree": 2.5
-  },
-  {
-   "id": "glisse-haut",
-   "nom": "Glisse vers le haut",
-   "cat": "Animations sur fond vert",
-   "file": "fondvert/glisse-haut.mp4",
    "duree": 2.5
   },
   {
@@ -1574,64 +1560,19 @@
    "son": "sons/souris-clic.mp3"
   },
   {
-   "id": "live",
-   "nom": "Live",
-   "cat": "Animations sur fond vert",
-   "groupe": "Réseaux",
-   "file": "fondvert/live.mp4",
-   "duree": 3.0,
-   "w": 1080,
-   "h": 1080,
-   "touche": "0",
-   "x": 82,
-   "y": 20,
-   "s": 30,
-   "son": "sons/notification.mp3"
-  },
-  {
-   "id": "nouvelle-video",
-   "nom": "Nouvelle vidéo",
-   "cat": "Animations sur fond vert",
-   "groupe": "Réseaux",
-   "file": "fondvert/nouvelle-video.mp4",
-   "duree": 3.8,
-   "w": 1920,
-   "h": 540,
-   "touche": "w",
-   "x": 50,
-   "y": 82,
-   "s": 85,
-   "son": "sons/whoosh-court.mp3"
-  },
-  {
    "id": "breaking",
-   "nom": "BREAKING NEWS (mini générique)",
+   "nom": "BREAKING NEWS (générique)",
    "cat": "Animations sur fond vert",
    "groupe": "Infos",
    "file": "fondvert/breaking.mp4",
-   "duree": 4.6,
+   "duree": 7.6,
    "w": 1920,
-   "h": 540,
+   "h": 1080,
    "touche": "b",
    "x": 50,
-   "y": 80,
-   "s": 96,
-   "son": "sons/breaking-news.mp3"
-  },
-  {
-   "id": "flash-info",
-   "nom": "Flash info",
-   "cat": "Animations sur fond vert",
-   "groupe": "Infos",
-   "file": "fondvert/flash-info.mp4",
-   "duree": 3.4,
-   "w": 1920,
-   "h": 540,
-   "touche": "f",
-   "x": 50,
-   "y": 80,
-   "s": 90,
-   "son": "sons/breaking-news.mp3"
+   "y": 50,
+   "s": 100,
+   "son": "sons/generique-info.mp3"
   },
   {
    "id": "exclusif",
@@ -1677,96 +1618,6 @@
    "y": 50,
    "s": 48,
    "son": "sons/sirene.mp3"
-  },
-  {
-   "id": "content",
-   "nom": "Content",
-   "cat": "Animations sur fond vert",
-   "groupe": "Humeurs",
-   "file": "fondvert/content.mp4",
-   "duree": 3.0,
-   "w": 1080,
-   "h": 1080,
-   "touche": "h",
-   "x": 50,
-   "y": 50,
-   "s": 46,
-   "son": "sons/joie.mp3"
-  },
-  {
-   "id": "enerve",
-   "nom": "Énervé",
-   "cat": "Animations sur fond vert",
-   "groupe": "Humeurs",
-   "file": "fondvert/enerve.mp4",
-   "duree": 3.0,
-   "w": 1080,
-   "h": 1080,
-   "touche": "j",
-   "x": 50,
-   "y": 50,
-   "s": 46,
-   "son": "sons/colere.mp3"
-  },
-  {
-   "id": "triste",
-   "nom": "Triste",
-   "cat": "Animations sur fond vert",
-   "groupe": "Humeurs",
-   "file": "fondvert/triste.mp4",
-   "duree": 3.4,
-   "w": 1080,
-   "h": 1080,
-   "touche": "k",
-   "x": 50,
-   "y": 50,
-   "s": 46,
-   "son": "sons/tristesse.mp3"
-  },
-  {
-   "id": "choque",
-   "nom": "Choqué",
-   "cat": "Animations sur fond vert",
-   "groupe": "Humeurs",
-   "file": "fondvert/choque.mp4",
-   "duree": 2.6,
-   "w": 1080,
-   "h": 1080,
-   "touche": "u",
-   "x": 50,
-   "y": 50,
-   "s": 46,
-   "son": "sons/choc.mp3"
-  },
-  {
-   "id": "amoureux",
-   "nom": "Amoureux",
-   "cat": "Animations sur fond vert",
-   "groupe": "Humeurs",
-   "file": "fondvert/amoureux.mp4",
-   "duree": 3.2,
-   "w": 1080,
-   "h": 1080,
-   "touche": "i",
-   "x": 50,
-   "y": 50,
-   "s": 46,
-   "son": "sons/amour.mp3"
-  },
-  {
-   "id": "mdr",
-   "nom": "Mort de rire",
-   "cat": "Animations sur fond vert",
-   "groupe": "Humeurs",
-   "file": "fondvert/mdr.mp4",
-   "duree": 3.0,
-   "w": 1080,
-   "h": 1080,
-   "touche": "y",
-   "x": 50,
-   "y": 50,
-   "s": 46,
-   "son": "sons/ba-dum-tss.mp3"
   },
   {
    "id": "reflechi",
@@ -1902,66 +1753,6 @@
    "y": 50,
    "s": 36,
    "son": "sons/mauvaise-reponse.mp3"
-  },
-  {
-   "id": "bravo",
-   "nom": "Bravo (trophée)",
-   "cat": "Animations sur fond vert",
-   "groupe": "Divers",
-   "file": "fondvert/bravo.mp4",
-   "duree": 3.2,
-   "w": 1080,
-   "h": 1080,
-   "touche": "Maj+b",
-   "x": 50,
-   "y": 50,
-   "s": 55,
-   "son": "sons/fanfare.mp3"
-  },
-  {
-   "id": "idee",
-   "nom": "Idée",
-   "cat": "Animations sur fond vert",
-   "groupe": "Divers",
-   "file": "fondvert/idee.mp4",
-   "duree": 2.6,
-   "w": 1080,
-   "h": 1080,
-   "touche": "Maj+a",
-   "x": 50,
-   "y": 45,
-   "s": 40,
-   "son": "sons/ding-cloche.mp3"
-  },
-  {
-   "id": "feu",
-   "nom": "Feu",
-   "cat": "Animations sur fond vert",
-   "groupe": "Divers",
-   "file": "fondvert/feu.mp4",
-   "duree": 2.8,
-   "w": 1080,
-   "h": 1080,
-   "touche": "Maj+q",
-   "x": 50,
-   "y": 50,
-   "s": 42,
-   "son": "sons/feu.mp3"
-  },
-  {
-   "id": "cent",
-   "nom": "100 %",
-   "cat": "Animations sur fond vert",
-   "groupe": "Divers",
-   "file": "fondvert/cent.mp4",
-   "duree": 2.4,
-   "w": 1080,
-   "h": 1080,
-   "touche": "Maj+c",
-   "x": 50,
-   "y": 50,
-   "s": 50,
-   "son": "sons/impact-leger.mp3"
   },
   {
    "id": "question",

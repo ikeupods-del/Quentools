@@ -55,7 +55,7 @@ function chromium() {
     const touches = await pg.evaluate(() => animsDirect().map(a => a.t).filter(Boolean));
     for (const t of touches) { await pg.keyboard.press(t.startsWith('Maj+') ? 'Shift+' + t.slice(4) : t).catch(() => {}); await pg.waitForTimeout(30); }
     await pg.waitForTimeout(400); await pg.evaluate(() => fermerStudio()).catch(e => errs.push('fermer : ' + e.message));
-    check('studio : ' + touches.length + ' touches d’animation sans erreur', touches.length >= 35 && errs.length === avant, errs.slice(avant).join(' | ').slice(0, 200)); }
+    check('studio : ' + touches.length + ' touches d’animation sans erreur', touches.length >= 25 && errs.length === avant, errs.slice(avant).join(' | ').slice(0, 200)); }
 
   check('aucune erreur dans la page', errs.every(x => /TensorFlow Lite/.test(x)), errs.slice(0, 3).join(' | '));
   await b.close(); app.stop(); fs.rmSync(base, { recursive: true, force: true });

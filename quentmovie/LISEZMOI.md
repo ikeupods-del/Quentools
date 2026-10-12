@@ -43,7 +43,7 @@ Publier une nouvelle version : changer `version` dans `package.json`, ajouter se
 - **Bibliothèque libre de droits**, créée pour QuentMovie (l'équivalent des packs vendus en ligne) :
   - 67 bruitages (clavier, whoosh, impacts, jeu vidéo, jeu télé, rembobinage, compte à rebours…) et 12 musiques (électro, lo-fi, trap, house, synthwave, piano, épique…) ;
   - 17 effets animés à superposer : fuites de lumière, brûlure de pellicule, reflet d'objectif, bokeh, neige, pluie, étincelles, confettis, cœurs, vieux film, VHS, fumée ;
-  - 9 animations sur fond vert (bouton S'abonner avec clic et cloche, J'aime, cloche, flèche, cercle rouge, compte à rebours, lien en bio, glisse vers le haut, confettis), le vert est retiré automatiquement ;
+  - des animations sur fond vert (S'abonner avec clic et cloche, J'aime, cloche, compte à rebours, lien en bio, confettis, générique d’édition spéciale, riche/pauvre, hausse/baisse, jackpot…), le vert est retiré automatiquement ;
   - 19 décors pour le fond vert, dont le **mur noir avec le logo QuenTools en LED** (fixe, sur le côté ou animé), plateau télé, studio podcast, ville de nuit, espace, coucher de soleil rétro… ;
   - 10 cadres (VHS, viseur REC, bandes cinéma, polaroid, pellicule, vieux téléviseur, en direct…), 30 stickers et 2 enseignes QuenTools.
 - **Mes packs** : range dans `~/Movies/QuentMovie/packs` les packs gratuits trouvés sur internet (sons, images, vidéos, looks `.cube`), un sous-dossier par pack ; QuentMovie les classe dans les bons onglets. Sources gratuites : Pixabay, Mixkit, Freesound (licence CC0), bibliothèque audio de YouTube Studio, FreshLUTs. Vérifier la licence de chaque pack.

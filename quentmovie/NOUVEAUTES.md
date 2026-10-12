@@ -3,6 +3,12 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.19.0
+- Partage d’écran du studio réparé : l’écran s’affiche vraiment (il restait mal placé) et, si macOS ne laisse voir qu’un écran noir, QuentMovie le dit clairement et ouvre les réglages « Enregistrement de l’écran » pour autoriser l’application.
+- BREAKING NEWS devient un vrai générique d’édition spéciale de 7 secondes (globe, titre qui entre, bandeau « EN DIRECT » qui défile) avec sa musique originale ; touche B.
+- Les animations restantes ont un nouveau relief (ombre portée) et de meilleurs sons.
+- Animations retirées du studio : cercle, glisse vers le haut, flèche, content, énervé, choqué, triste, amoureux, mort de rire, 100 %, bravo, feu, idée, nouvelle vidéo, flash info et live.
+
 ## 1.18.0
 - L’assistant (⌘K) comprend beaucoup plus de demandes : « supprime le dernier clip », « ajoute un bruit de clavier » (ou applaudissements, whoosh, jackpot, sirène…), « coupe à 1:30 », « mets le volume à 50 % », « coupe le son », « ajoute un fondu au début et à la fin ».
 - Correction : « supprime les blancs » est maintenant compris comme « coupe les blancs » (il était pris pour une interdiction).
