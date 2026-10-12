@@ -3,7 +3,11 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
-## 1.26.0
+## 1.27.0
+- **Animations du studio refaites** : liseré blanc façon autocollant et ombre portée, sons mieux choisis (message, clic, alerte de marché…).
+- **Pack sound design** : 23 sons (passages léger, moyen et lourd, passage inversé, montées de 1, 3 et 6 secondes, impacts sec, boom et métallique, braam de cinéma, accord de tension, battement sourd, sons d’interface, jingles positif et négatif…).
+- **26 icônes autocollants** (lieu, appareil photo, micro, lecture, idée, fusée, trophée, euro, graphiques en hausse et en baisse, bouclier, couronne, flamme, loupe, cadenas, engrenage, Wi-Fi, courrier, horloge, calendrier, drapeau, livre, diamant, maison, avion en papier, ON AIR) dans l’onglet Stickers.
+- **8 looks pour les packs** (éclat réseaux, peau dorée, net et propre, studio podcast, finance froide, voyage clair, sport punch, cérémonie douce) et **3 musiques** (corporate lumineux, documentaire doux, thème de podcast), rattachés aux packs.
 - **Partage d’écran en plein écran avec ta caméra dans une bulle.** Dans le studio, « Partage d’écran » propose maintenant « Plein écran + ma caméra en bulle » : ton écran remplit l’image et ta caméra (avec ton fond virtuel) apparaît dans un rond. Choisis le coin et la taille de la bulle, ou glisse-la et tire le rond jaune pendant la prise. Dans la timeline, l’écran et la bulle sont deux éléments de la piste vidéo 2, modifiables.
 - **Mouvements de caméra pro** : poussée douce, dérive lente, caméra à l’épaule, orbite, zoom rebond, roulis. **Effets cinéma** : bandes cinéma, halation, lueur dorée, pellicule 16 mm, contraste cinéma, flash au rythme.
 - **Sept nouvelles animations de texte** : montée avec rebond, descente, rebond, balayage, clignotant, tremblement, respiration.
