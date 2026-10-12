@@ -25,9 +25,15 @@ const FICHE = { nom: 'Boulangerie Martin', metier: 'boulanger', ville: 'Nantes',
       modeles: async () => modelesJson, modele: id => window.lireModele(id),
       ia: { etat: async () => ({ installee: true, mo: 2500 }), installer: async () => ({}),
         ecrire: async m => {
-          const lignes = [...m.demande.matchAll(/^(\d+)\. \[(\w+)\] « ([\s\S]*?) » \((\d+) caractères\)$/gm)];
+          const seul = /^Texte d’un site d’exemple \((.*?), (\d+) caractères\) : /m.exec(m.demande);
+          if (seul) return { texte: /mot absurde|code recopié/.test(m.demande) ? 'Texte propre du boulanger : pain frais' : '12 € la prestation' }; // nouvelle tentative ciblée : corrige les erreurs de forme, pas les prix
+          const lignes = [...m.demande.matchAll(/^(\d+)\. \((.*?), (\d+) caractères\) (.*)$/gm)];
           if (!lignes.length) return { description: 'Boulanger à Nantes : pain au levain, viennoiseries et gâteaux sur commande.' };
-          return { textes: lignes.map((l, i) => { const n = +l[4], k = +l[1]; if (k % 7 === 0) return '12 € la prestation'; if (k % 11 === 0) return 'Plus de 500 clients satisfaits'; if (k % 13 === 0) return 'x'.repeat(n * 2 + 60); return ('Texte ' + k + ' du boulanger : pain, viennoiseries et gâteaux frais').slice(0, Math.max(6, n)); }) };
+          return { textes: lignes.map(l => { const n = +l[3], k = +l[1], t = (() => {
+            if (k % 7 === 0) return '12 € la prestation'; if (k % 11 === 0) return 'Plus de 500 clients satisfaits'; if (k % 13 === 0) return 'x'.repeat(n * 2 + 60);
+            if (k % 5 === 0) return '{"texte": "Texte ' + k + ' du boulanger"}'; // défaut réel observé : le texte arrive enveloppé dans du JSON
+            if (k % 17 === 0) return 'Pain à la broche de rat frais';
+            return ('Texte ' + k + ' du boulanger : pain, viennoiseries et gâteaux frais').slice(0, Math.max(6, n)); })(); return { n: k, texte: t }; }) };
         } },
       enregistrer: async s => { await window.noterSauvegarde({ dossier: s.dossier, index: s.index.length, legal: s.legal.length, notes: s.notes }); return { dossier: '/tmp/site' }; }, ouvrir: async () => {}
     };
@@ -65,6 +71,7 @@ const FICHE = { nom: 'Boulangerie Martin', metier: 'boulanger', ville: 'Nantes',
     if (/exemple|fictif|démonstration/i.test(visible)) p.push('mention d’exemple : ' + (visible.match(/.{20}(exemple|fictif|démonstration).{20}/i) || [''])[0]);
     if (/€/.test(visible) && !/€/.test(FICHE.tarifs || '')) p.push('prix affiché');
     if (avecIA && /500 clients|12 € la prestation/.test(visible)) p.push('texte de l’IA fautif accepté');
+    if (avecIA && /[{}]|"texte"|broche de rat/.test(visible)) p.push('code ou mot absurde affiché : ' + (visible.match(/.{20}([{}]|"texte"|broche de rat).{20}/) || [''])[0]);
     if (avecIA && !r.slots.some(s => s.etat === 'ia')) p.push('aucun texte écrit par l’IA');
     if (avecIA && !r.slots.some(s => s.etat === 'exemple' && /refusé/.test(s.raison))) p.push('aucun texte fautif refusé');
     if (!/<title>Boulangerie Martin/.test(h) || !/application\/ld\+json/.test(h)) p.push('titre ou données structurées');
@@ -72,7 +79,7 @@ const FICHE = { nom: 'Boulangerie Martin', metier: 'boulanger', ville: 'Nantes',
     for (const [w, hh] of [[390, 844], [1280, 800]]) {
       await pagePhone.setViewportSize({ width: w, height: hh }); await pagePhone.goto('file://' + path.join(d, 'index.html')); await pagePhone.waitForTimeout(350);
       const info = await pagePhone.evaluate(() => ({ sw: document.documentElement.scrollWidth, cache: [...document.querySelectorAll('h1,h2,h3,p,li')].filter(e => getComputedStyle(e).opacity === '0' && e.textContent.trim()).length }));
-      if (info.sw > w + 1) p.push(`défilement horizontal à ${w} px (${info.sw})`);
+      if (info.sw > w + 1) p.push(`défilement horizontal à ${w} px (${info.sw}) : ` + await pagePhone.evaluate(W => [...document.querySelectorAll('body *')].filter(e => e.getBoundingClientRect().right > W + 1 && getComputedStyle(e).position !== 'fixed').slice(0, 3).map(e => e.tagName + '.' + e.className + ' « ' + e.textContent.trim().slice(0, 50) + ' »').join(' | '), w));
       if (info.cache) p.push(`${info.cache} textes invisibles à ${w} px`);
       if (captures && !avecIA) { fs.mkdirSync(captures, { recursive: true }); await pagePhone.screenshot({ path: path.join(captures, `${m.id}-${w}.png`) }); }
     }
@@ -83,6 +90,7 @@ const FICHE = { nom: 'Boulangerie Martin', metier: 'boulanger', ville: 'Nantes',
 
   // parcours réel : fiche remplie, génération, correction d'un texte, enregistrement
   await pg.reload(); await pg.waitForFunction(() => window.sites && window.sites.modeles().length);
+  await pg.evaluate(() => window.sites.onglet('fiche'));
   for (const [k, v] of Object.entries(FICHE)) { const champ = await pg.$('#f_' + k); if (!champ) continue; if (k === 'couleur') await pg.evaluate(c => { document.querySelector('#f_couleur').value = c; }, v); else if (k === 'ton') await pg.selectOption('#f_ton', v); else await champ.fill(Array.isArray(v) ? v.join('\n') : v); }
   await pg.evaluate(() => { document.querySelector('#f_modele').value = 'auto'; document.querySelector('#f_modele').dispatchEvent(new Event('input', { bubbles: true })); });
   const propose = await pg.locator('#modeleInfo').innerText();

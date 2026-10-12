@@ -44,6 +44,7 @@ jobs:
             if (r.erreur) ko.push("erreur : " + r.erreur);
             if (r.erreursConsole) ko.push("console : " + r.erreursConsole.join(" | "));
             if (!r.page || !(r.page.modeles >= 14) || !r.page.pont) ko.push("modèles ou pont vers l IA");
+            if (!r.page || !r.page.fonctions || !Object.values(r.page.fonctions).every(Boolean)) ko.push("fonctions du site (réservation, panel, tchat) : " + JSON.stringify(r.page && r.page.fonctions));
             if (r.page) for (const s of r.page.sorties) if (!s.ok || !(s.textes > 20)) ko.push("génération " + s.id + " : " + (s.erreur || "vide"));
             if (ko.length) { console.log("Échecs :", ko.join(" ; ")); process.exit(1); } else console.log("Application : tout fonctionne");'
       - name: Contrôler que l'application tourne sur puce Apple

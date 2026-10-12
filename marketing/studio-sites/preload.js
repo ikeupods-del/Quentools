@@ -12,5 +12,6 @@ contextBridge.exposeInMainWorld('studioSites', {
   modeles: () => ipcRenderer.invoke('modeles:liste'),
   modele: id => ipcRenderer.invoke('modeles:html', id),
   enregistrer: site => ipcRenderer.invoke('site:enregistrer', site),
-  ouvrir: dossier => ipcRenderer.invoke('site:ouvrir', dossier)
+  ouvrir: dossier => ipcRenderer.invoke('site:ouvrir', dossier),
+  maj: { verifier: () => ipcRenderer.invoke('maj:verifier'), ouvrir: url => ipcRenderer.invoke('maj:ouvrir', url) }
 });

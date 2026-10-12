@@ -7,6 +7,9 @@ const fs = require('fs');
 const os = require('os');
 
 let win = null, ia = null;
+// Nouvelle version : recherche discrète dans les Releases ; la page propose d'ouvrir la page de téléchargement (rien n'est installé tout seul)
+ipcMain.handle('maj:verifier', async e => { garde(e); try { return await require('./nouvelle-version').chercher('studio-sites-v', app.getVersion()); } catch (er) { return null; } });
+ipcMain.handle('maj:ouvrir', (e, url) => { garde(e); if (/^https:\/\/github\.com\/ikeupods-del\/Quentools\/releases\//.test(String(url))) shell.openExternal(String(url)); });
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 
@@ -45,7 +48,14 @@ ipcMain.handle('site:enregistrer', async (e, site) => {
   const lesPolices = new Set(); for (const h of [site.index, site.legal]) for (const m of String(h || '').matchAll(/assets\/fonts\/([\w.-]+\.woff2)/g)) lesPolices.add(m[1]);
   for (const f of lesPolices) { const src = path.join(MODELES, 'polices', f); if (fs.existsSync(src)) fs.copyFileSync(src, path.join(dest, 'assets', 'fonts', f)); }
   for (const f of ['qt.css', 'qt.js']) if ((String(site.index) + String(site.legal)).includes('assets/' + f)) fs.copyFileSync(path.join(MODELES, 'assets', f), path.join(dest, 'assets', f));
-  ecrire('robots.txt', 'User-agent: *\nAllow: /\n');
+  // fichiers des fonctions (panel, règles Firebase, notes) : chemins relatifs sûrs uniquement
+  const AUTORISES = new Set(['admin/index.html', 'REGLES-FIRESTORE.txt', 'LISEZMOI-FIREBASE.txt']);
+  for (const f of Array.isArray(site.fichiers) ? site.fichiers.slice(0, 6) : []) {
+    if (!f || !AUTORISES.has(f.chemin)) continue;
+    fs.mkdirSync(path.dirname(path.join(dest, f.chemin)), { recursive: true }); ecrire(f.chemin, f.contenu);
+  }
+  const disallow = Array.isArray(site.fichiers) && site.fichiers.some(f => f && f.chemin === 'admin/index.html') ? 'Disallow: /admin/\n' : '';
+  ecrire('robots.txt', 'User-agent: *\nAllow: /\n' + disallow);
   return { dossier: dest };
 });
 ipcMain.handle('site:ouvrir', (e, dossier) => { garde(e); if (fs.existsSync(String(dossier))) shell.showItemInFolder(path.join(String(dossier), 'index.html')); });
@@ -88,7 +98,11 @@ function autotest() {
       res.page = await win.webContents.executeJavaScript(`new Promise(ok => { const t = setInterval(async () => { if (window.sites) { clearInterval(t);
         const modeles = await window.studioSites.modeles(), pont = await window.studioSites.ia.etat(), sorties = [];
         for (const m of modeles) { const r = await window.sites.essai(m.id); sorties.push({ id: m.id, ...r }); }
-        ok({ modeles: modeles.length, pont: !!pont, sorties }); } }, 100); })`);
+        const brief = { da: { ambiance: 'luxe', mode: 'sombre', couleur: '#2e7d32', police: 'moderne', arrondi: 'rond', densite: '' }, modules: ['reservation', 'devis', 'chatbot', 'panel', 'whatsapp', 'annonce', 'faq'], options: { reservation: '', firebaseApiKey: 'cle', firebaseProjectId: 'projet', whatsapp: '' }, faq: [], annonce: 'Annonce' };
+        const f = { nom: 'Essai', metier: 'restaurateur', ville: 'Lyon', telephone: '04 78 12 34 56', email: 'a@b.fr', services: ['Kebab'], horaires: 'Du mardi au samedi, 11 h - 14 h' };
+        const g = await window.sites.genererSite({ fiche: f, modeleId: 'restaurant', ecrire: null, brief }), tour = await Conseiller.tour({ message: 'Ajoute un chatbot, en bleu nuit', historique: [], fiche: f, brief: Conseiller.BRIEF_VIDE(), ecrire: null });
+        const fonctions = { modules: !!(window.Modules && Modules.CATALOGUE.length === 7), config: !!(g.html && g.html.includes('qs-config') && g.html.includes('qs-reservation')), admin: Modules.fichiers(f, brief).some(x => x.chemin === 'admin/index.html'), tchat: tour.brief.modules.includes('chatbot') && tour.brief.da.couleur === '#14284b' };
+        ok({ modeles: modeles.length, pont: !!pont, sorties, fonctions }); } }, 100); })`);
     } catch (e) { res.erreur = e.message; }
     fin();
   });

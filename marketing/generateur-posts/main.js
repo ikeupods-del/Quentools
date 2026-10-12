@@ -29,6 +29,9 @@ ipcMain.handle('partage:envoyer', (e, fichiers) => {
   new ShareMenu({ filePaths: chemins }).popup({ window: win });
   return { ok: true };
 });
+// Nouvelle version : recherche discrète dans les Releases ; la page propose d'ouvrir la page de téléchargement (rien n'est installé tout seul)
+ipcMain.handle('maj:verifier', async e => { if (!depuisNotrePage(e)) throw new Error('refusé'); try { return await require('./nouvelle-version').chercher('studio-posts-v', app.getVersion()); } catch (er) { return null; } });
+ipcMain.handle('maj:ouvrir', (e, url) => { if (!depuisNotrePage(e)) throw new Error('refusé'); if (/^https:\/\/github\.com\/ikeupods-del\/Quentools\/releases\//.test(String(url))) shell.openExternal(String(url)); });
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 
@@ -97,6 +100,11 @@ function autotest() {
         const e = window.studioIA ? await window.studioIA.etat() : null;
         const r = await studio.generer({ marque: 'quentools', themeId: 'carrousel', sujet: 'plombier', format: '45', sansExport: true, sansIA: true });
         return { pont: !!e, installee: e && e.installee, n: r.projet ? r.projet.slides.length : 0, source: r.source, erreur: r.erreur, tel: r.projet && r.projet.slides[3] ? !!r.projet.slides[3].image : false };
+      })()`);
+      // assistant : le tchat comprend une demande simple (sans IA) et la publication est créée ; mise à jour : le pont existe
+      res.assistant = await win.webContents.executeJavaScript(`(async () => {
+        const r = await studio.chat('Une story pour un plombier à Nantes', { sansIA: true });
+        return { ok: !!(r && r.plan && r.plan.format === '916' && studio.projet.format === '916'), maj: !!window.studioMaj, partage: !!window.studioPartage };
       })()`);
     } catch (e) { res.erreur = e.message; }
     fin();

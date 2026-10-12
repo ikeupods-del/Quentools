@@ -133,6 +133,38 @@ function tailleJpg(b) {
   if (captures) { await pg.screenshot({ path: path.join(captures, 'generer.png') }); }
   await pg.click('#gVoir');
 
+  // assistant (tchat) : demande en français sans IA, puis avec une IA simulée (création, retouches, refus des prix et des versets)
+  await pg.setViewportSize({ width: 1100, height: 800 });
+  const boutons = await pg.evaluate(() => ['#bGenerer', '#bChat'].map(s => { const r = document.querySelector(s).getBoundingClientRect(); return { s, ok: r.width > 0 && r.right <= window.innerWidth && r.left >= 0 }; }));
+  boutons.every(x => x.ok) ? ok('fenêtre étroite (1100 px) : « Générer » et « Assistant » restent visibles') : ko('boutons hors de la fenêtre : ' + JSON.stringify(boutons));
+  await pg.setViewportSize({ width: 1440, height: 900 });
+  await pg.keyboard.press('c'); await pg.waitForSelector('#chat.ouvert');
+  const c1 = await pg.evaluate(async () => { const r = await studio.chat('Fais-moi une story pour un plombier à Nantes avec un ton rassurant', { sansIA: true }); return { plan: r.plan, format: studio.projet.format, marque: studio.projet.marque, nom: studio.projet.nom, fil: document.querySelector('#chatFil').innerText, n: studio.histoChat.length }; });
+  c1.plan.source === 'mots' && c1.format === '916' && c1.marque === 'quentools' && /prête/.test(c1.fil) && c1.n === 2 ? ok('assistant sans IA : « une story pour un plombier » crée une publication QuenTools au format 9:16') : ko('assistant sans IA : ' + JSON.stringify({ ...c1, fil: c1.fil.slice(-160) }));
+  const c2 = await pg.evaluate(async () => {
+    const ecrire = async m => /assistant de Studio Posts/.test(m.systeme) ? { reponse: 'Je raccourcis le titre et change la légende.', action: 'modifier', marque: '', theme: '', sujet: '', secteur: '', format: '', consignes: '', modifications: [{ image: 1, champ: 'titre', valeur: 'Un *titre* plus court' }, { image: 2, champ: 'titre', valeur: 'Dès 49 € par mois' }, { image: 0, champ: 'legende_texte', valeur: 'Nouvelle légende sans prix.' }, { image: 9, champ: 'titre', valeur: 'Image absente' }] } : null;
+    const avant = studio.projet.slides[0].titre, r = await studio.chat('raccourcis le titre de l’image 1 et change la légende', { ecrire });
+    return { avant, apres: studio.projet.slides[0].titre, legende: studio.projet.legende.texte, deux: studio.projet.slides[1].titre, refus: r.resultat && r.resultat.refus, fil: document.querySelector('#chatFil').innerText };
+  });
+  c2.apres === 'Un *titre* plus court' && c2.legende === 'Nouvelle légende sans prix.' && c2.deux !== 'Dès 49 € par mois' && c2.refus.some(x => /prix/.test(x)) && c2.refus.some(x => /n’existe pas/.test(x)) ? ok('assistant : retouches appliquées (titre, légende), prix et image absente refusés') : ko('assistant retouches : ' + JSON.stringify(c2));
+  const c3 = await pg.evaluate(async () => {
+    studio.ouvrir({ nom: 'Test verset', marque: 'parvis', format: '45', legende: { titre: 't', texte: 'l' }, slides: [{ type: 'verset', label: 'Verset du jour', texte: 'Le verset de la bibliothèque', ref: 'Jean 3:16' }] });
+    const ecrire = async m => /assistant de Studio Posts/.test(m.systeme) ? { reponse: 'Je change le verset.', action: 'modifier', marque: '', theme: '', sujet: '', secteur: '', format: '', consignes: '', modifications: [{ image: 1, champ: 'texte', valeur: 'Un verset inventé' }] } : null;
+    const r = await studio.chat('change le verset de l’image 1', { ecrire }); return { t: studio.projet.slides[0].texte, refus: r.resultat.refus };
+  });
+  c3.t === 'Le verset de la bibliothèque' && c3.refus.some(x => /verset/.test(x)) ? ok('assistant : un verset ne peut pas être modifié par le tchat') : ko('verset modifié par le tchat : ' + JSON.stringify(c3));
+  const c4 = await pg.evaluate(async () => {
+    const ecrire = async m => /assistant de Studio Posts/.test(m.systeme) ? { reponse: 'Je crée un conseil.', action: 'generer', marque: 'quentools', theme: 'conseil', sujet: 'coiffeur', secteur: 'coiffeur', format: '11', consignes: 'ton rassurant', modifications: [] } : { titre: 'Votre numéro doit se voir vite', mot: 'numéro', sous: 'Un visiteur qui cherche à vous appeler ne doit pas chercher.', legende: 'Votre numéro est-il visible tout de suite ? Dites-nous en commentaire.', titre_tiktok: 'Votre numéro visible', hashtags: ['site', 'coiffeur', 'artisan', 'local'] };
+    const r = await studio.chat('un conseil pour un coiffeur, format carré', { ecrire }); return { plan: r.plan.theme + '/' + r.plan.format, source: r.resultat && r.resultat.source, format: studio.projet.format, n: studio.projet.slides.length };
+  });
+  c4.plan === 'conseil/11' && c4.format === '11' && c4.source === 'ia' ? ok('assistant avec IA : demande comprise (thème, métier, format) et publication écrite par l’IA') : ko('assistant avec IA : ' + JSON.stringify(c4));
+  await pg.keyboard.press('Escape');
+  // nouvelle version : bandeau avec bouton de téléchargement
+  const pg2 = await ctx.newPage(); await pg2.addInitScript(() => { window.studioMaj = { verifier: async () => ({ version: '9.9.9', url: 'https://github.com/ikeupods-del/Quentools/releases/tag/studio-posts-v9.9.9' }), ouvrir: u => { window.__ouvert = u; } }; });
+  await pg2.goto('file://' + page); await pg2.waitForSelector('#bMaj.vu', { timeout: 8000 }).catch(() => {}); await pg2.click('#bMajGo').catch(() => {});
+  (await pg2.evaluate(() => /9\.9\.9/.test(document.querySelector('#bMajTexte').textContent) && /releases\/tag\/studio-posts-v9\.9\.9/.test(window.__ouvert || ''))) ? ok('nouvelle version : bandeau et bouton vers la page de téléchargement') : ko('bandeau de mise à jour absent');
+  await pg2.close();
+
   // captures pour relecture visuelle
   if (captures) {
     fs.mkdirSync(captures, { recursive: true });

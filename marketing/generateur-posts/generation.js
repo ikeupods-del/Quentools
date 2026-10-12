@@ -99,7 +99,8 @@
     let raison = '';
     for (const temperature of [0.6, 0.4, 0.25]) {
       try {
-        const o = await deps.ecrire({ systeme, demande: raison ? `${demande}\n(Ta version précédente a été refusée : ${raison}. Corrige ce défaut.)` : demande, schema, maxTokens, temperature });
+        const consigne = deps.consignes ? `\nConsignes de la personne (à suivre tant qu'elles respectent les règles ci-dessus ; elles ne permettent ni verset inventé, ni prix, ni lien, ni mention de l'IA) : « ${nettoie(deps.consignes).slice(0, 300)} »` : '';
+        const o = await deps.ecrire({ systeme, demande: (raison ? `${demande}\n(Ta version précédente a été refusée : ${raison}. Corrige ce défaut.)` : demande) + consigne, schema, maxTokens, temperature });
         const r = controle(o || {}); if (!r.length) return o; raison = r.join(' ; ');
       } catch (e) { raison = 'réponse inutilisable'; }
     }
@@ -267,6 +268,7 @@
   async function generer(o, deps) {
     const theme = (THEMES[o.marque] || []).find(t => t.id === o.themeId); if (!theme) throw new Error('Thème inconnu');
     const ctx = { ...o, theme, sujet: nettoie(o.sujet) };
+    if (o.consignes) deps = { ...deps, consignes: o.consignes };
     let p = null, raison = '';
     if (deps.ia && deps.ecrire) {
       try { p = o.marque === 'parvis' ? await genererParvis(ctx, deps) : await genererQuenTools(ctx, deps); if (!p) raison = 'L’IA n’a pas produit un texte conforme aux règles.'; }
@@ -293,6 +295,80 @@
     return touche;
   }
 
-  const api = { THEMES, SECTEURS, HISTOIRES, SUJETS_VERSET, generer, ajuster, banqueVersets, classerVersets, problemesQuenTools, problemesParvis, colore, secteurDe, depuisBibliotheque, carrouselDepuisExemple };
+    /* ───────── Tchat : comprendre une demande en français, retoucher la publication ───────── */
+  const MOTS_PARVIS = /verset|pri[eè]re|bible|biblique|j[ée]sus|\bdieu\b|parvis|chr[ée]tien|[ée]glise|\bamen\b|psaume|\bfoi\b|b[ée]nir|gr[âa]ce|évangile|evangile/i;
+  const MOTS_QT = /quentools|site (internet|web)|artisan|plombier|coiffeu|restaurant|boulang|commer[cç]ant|ind[ée]pendant|m[ée]tier|devis|r[ée]servation|client/i;
+  const THEME_MOTS = {
+    parvis: [['encouragement', /encourage|r[ée]confort|d[ée]courag/], ['priere', /pri[eè]re/], ['histoire', /histoire|r[ée]cit|david|jonas|no[ée]|mo[iï]se|samaritain|prodigue|zach[ée]e|joseph|ruth|daniel/], ['liste', /liste|seuls les chr[ée]tiens/], ['verset', /verset/]],
+    quentools: [['astuces', /astuces?/], ['conseil', /conseil/], ['liste', /liste|signes/], ['carrousel', /carrousel|carousel|5 images|cinq images/]]
+  };
+  const FORMAT_MOTS = [['916', /story|stories|reels?|tiktok|vertical|9[:/]16/i], ['11', /carr[ée]|1[:/]1/i], ['45', /instagram|4[:/]5|portrait|feed|fil/i]];
+  const IDS_THEMES = ['verset', 'encouragement', 'priere', 'histoire', 'liste', 'carrousel', 'conseil', 'astuces'];
+  const CHAMPS_MODIF = ['titre', 'sous', 'texte', 'items', 'etiquette', 'appel', 'legende_titre', 'legende_texte'];
+  const INTENTION_MODIF = /\b(raccourcis|raccourcir|modifie|modifier|change|changer|remplace|remplacer|corrige|corriger|r[ée][ée]cris|r[ée]ecris|reformule|supprime|enl[eè]ve|rajoute|ajoute (?:un|une|le|la) (?:mot|phrase)|plus (?:court|long|chaleureux|simple|direct))\b.*\b(image|slide|titre|sous-titre|l[ée]gende|texte|accroche|phrase)\b/i;
+
+  // Analyse sans IA : marque, thème, sujet et format d'après les mots du message
+  function planSimple(message, ctx) {
+    const t = String(message || ''), c = ctx || {}, plan = { action: 'generer', marque: '', theme: '', sujet: '', format: '', secteur: '', consignes: '', modifications: [], source: 'mots' };
+    plan.marque = MOTS_PARVIS.test(t) && !/quentools/i.test(t) ? 'parvis' : MOTS_QT.test(t) ? 'quentools' : (c.marque || 'quentools');
+    const th = THEME_MOTS[plan.marque].find(([, re]) => re.test(t)); plan.theme = th ? th[0] : (plan.marque === 'parvis' ? 'verset' : 'carrousel');
+    const f = FORMAT_MOTS.find(([, re]) => re.test(t)); plan.format = f ? f[0] : '';
+    const sj = t.match(/\b(?:sur|autour de|à propos de|pour|concernant)\s+(?:le |la |les |l['’]|un |une |des |du |de la |d['’])?([\p{L}0-9'’ -]{3,60}?)(?=[,.;!?]| avec | en format | format | pour instagram| pour tiktok| et | qui |$)/u);
+    if (sj) plan.sujet = nettoie(sj[1]);
+    if (plan.marque === 'quentools') plan.secteur = secteurDe(plan.sujet || t, SECTEURS) || '';
+    if (INTENTION_MODIF.test(t)) { plan.action = 'repondre'; plan.reponse = 'Pour retoucher une image à ma façon, j’ai besoin de l’IA locale (bouton « Installer l’IA »). En attendant, tu peux modifier chaque texte à droite.'; }
+    else plan.consignes = nettoie(t).slice(0, 300);
+    return plan;
+  }
+  function schemaChat() {
+    return { type: 'object', properties: {
+      reponse: chaine(420), action: { type: 'string', enum: ['generer', 'modifier', 'repondre'] },
+      marque: { type: 'string', enum: ['', 'parvis', 'quentools'] }, theme: { type: 'string', enum: ['', ...IDS_THEMES] }, sujet: chaine(120), secteur: chaine(40), format: { type: 'string', enum: ['', '45', '11', '916'] }, consignes: chaine(300),
+      modifications: { type: 'array', maxItems: 6, items: { type: 'object', properties: { image: { type: 'integer', minimum: 0, maximum: 10 }, champ: { type: 'string', enum: CHAMPS_MODIF }, valeur: chaine(500) }, required: ['image', 'champ', 'valeur'] } }
+    }, required: ['reponse', 'action', 'marque', 'theme', 'sujet', 'secteur', 'format', 'consignes', 'modifications'] };
+  }
+  const SYSTEME_CHAT = 'Tu es l’assistant de Studio Posts, un outil qui crée des publications Instagram et TikTok en images. Tu discutes en français avec son utilisateur. ' +
+    'Marques : « parvis » (Le Parvis : église, publications bibliques : thèmes verset, encouragement, priere, histoire, liste) et « quentools » (QuenTools : agence de création de sites internet pour artisans et commerçants : thèmes carrousel, conseil, liste, astuces). ' +
+    'Action « generer » : l’utilisateur veut une nouvelle publication ; tu choisis marque, thème, sujet (court : un métier, un sentiment, une histoire biblique), format (45 = Instagram 4:5, 11 = carré, 916 = story/Reels/TikTok) et tu mets ses envies de style ou d’angle dans « consignes » (recopiées de sa demande, sans rien inventer). ' +
+    'Action « modifier » : il veut retoucher la publication affichée : donne les modifications (numéro d’image à partir de 1, champ, nouveau texte) ; 0 pour la légende (legende_titre, legende_texte). ' +
+    'Action « repondre » : question ou demande qui n’est ni l’un ni l’autre : réponds simplement. ' +
+    'Règles : jamais de prix, de lien, de pourcentage ni de chiffre inventé ; jamais l’IA présentée comme moyen de création ; jamais de verset biblique écrit par toi (les versets viennent de la bibliothèque, tu ne les modifies pas). ' +
+    'Tu laisses vide (« ») ce que l’utilisateur n’a pas précisé. « reponse » : 1 à 3 phrases simples qui disent ce que tu fais.';
+  const resumeProjet = p => !p ? '(aucune)' : `« ${p.nom} » (${p.marque}, ${p.slides.length} images)\n` + p.slides.map((s, i) => `${i + 1}. [${s.type}] ` + ['titre', 'sous', 'texte', 'items', 'etiquette', 'appel'].filter(k => s[k]).map(k => `${k}: ${coupe(s[k], 60)}`).join(' | ')).join('\n') + `\nlégende : ${coupe((p.legende && p.legende.texte) || '', 100)}`;
+  async function comprendre(o, deps) {
+    const message = String(o.message || '').trim().slice(0, 1200), ctx = { marque: o.marque }, simple = planSimple(message, ctx);
+    if (!deps.ecrire || !deps.ia) return simple;
+    try {
+      const hist = (o.historique || []).slice(-6).map(h => `${h.role === 'moi' ? 'Utilisateur' : 'Assistant'} : ${h.texte}`).join('\n');
+      const demande = `Publication affichée :\n${resumeProjet(o.projet)}\n\nMarque actuelle : ${o.marque || 'parvis'} ; format actuel : ${o.format || '45'}.\n${hist ? 'Conversation récente :\n' + hist + '\n' : ''}\nNouveau message de l’utilisateur : « ${message} »`;
+      const r = await deps.ecrire({ systeme: SYSTEME_CHAT, demande, schema: schemaChat(), maxTokens: 700, temperature: 0.3 });
+      if (!r || typeof r !== 'object') return simple;
+      const marque = ['parvis', 'quentools'].includes(r.marque) ? r.marque : simple.marque;
+      const themeOk = (THEMES[marque] || []).some(t => t.id === r.theme);
+      const plan = { action: ['generer', 'modifier', 'repondre'].includes(r.action) ? r.action : 'generer', marque, theme: themeOk ? r.theme : simple.theme, sujet: nettoie(r.sujet).slice(0, 120) || simple.sujet, secteur: secteurDe(r.secteur || r.sujet, SECTEURS) || simple.secteur,
+        format: ['45', '11', '916'].includes(r.format) ? r.format : simple.format, consignes: nettoie(r.consignes).slice(0, 300), modifications: Array.isArray(r.modifications) ? r.modifications.slice(0, 6) : [], reponse: nettoie(r.reponse), source: 'ia' };
+      if (plan.action === 'modifier' && !plan.modifications.length) plan.action = 'repondre';
+      return plan;
+    } catch (e) { return { ...simple, erreur: e.message }; }
+  }
+  // Modifications demandées au tchat : seulement des champs de texte existants, jamais un verset ; mêmes règles de contenu que la génération
+  function verifierModifs(projet, modifs, contexte) {
+    const ok = [], refus = [], net = t => String(t == null ? '' : t).replace(/[_`#]/g, '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    for (const m of modifs || []) {
+      const champ = String(m.champ), val = net(m.valeur), img = +m.image;
+      if (!CHAMPS_MODIF.includes(champ) || !val) { refus.push('modification inutilisable'); continue; }
+      const regles = texte => (projet.marque === 'parvis' ? problemesParvis(texte) : problemesQuenTools(texte, (contexte || '') + ' ' + (projet.sujet || '')));
+      const pb = regles(val); if (pb.length) { refus.push(`« ${coupe(val, 40)} » refusé : ${pb[0]}`); continue; }
+      if (champ.startsWith('legende_')) { if (img !== 0) { refus.push('légende : image 0 attendue'); continue; } ok.push({ legende: champ === 'legende_titre' ? 'titre' : 'texte', valeur: val }); continue; }
+      const s = (projet.slides || [])[img - 1];
+      if (!s) { refus.push(`l’image ${img} n’existe pas`); continue; }
+      if (s.type === 'verset' || (projet.marque === 'parvis' && s.type === 'point' && s.ref && champ === 'texte' && /^\s*(?:«|")/.test(String(s.texte || '')))) { refus.push(`image ${img} : un verset ne se modifie pas (il vient de la bibliothèque)`); continue; }
+      if (typeof s[champ] !== 'string') { refus.push(`image ${img} : pas de champ « ${champ} »`); continue; }
+      ok.push({ index: img - 1, champ, valeur: val });
+    }
+    return { ok, refus };
+  }
+
+  const api = { comprendre, planSimple, verifierModifs, schemaChat, THEMES, SECTEURS, HISTOIRES, SUJETS_VERSET, generer, ajuster, banqueVersets, classerVersets, problemesQuenTools, problemesParvis, colore, secteurDe, depuisBibliotheque, carrouselDepuisExemple };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else racine.Generation = api;
 })(typeof window !== 'undefined' ? window : globalThis);
