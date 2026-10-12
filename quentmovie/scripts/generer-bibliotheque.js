@@ -267,6 +267,28 @@ function sonBreaking() { // signal d'édition spéciale : trois impulsions qui m
   mix(b, tone(880, 0.5, 0.25, 'saw'), 0.55, 0.35); mix(b, impact(1.2, 120, 40, 1), 0.55, 0.8); mix(b, whoosh(0.5, 300, 5000, 0.7), 0.5, 0.5);
   return b;
 }
+function stab(freqs, sec, g = 1) { // accord de cuivres synthétiques : dents de scie filtrées, attaque franche
+  const b = buf(sec);
+  for (const f of freqs) { mix(b, lp(tone(f, sec, sec * 0.5, 'saw', 0.004), 2600), 0, 0.3 * g); mix(b, lp(tone(f * 1.005, sec, sec * 0.5, 'saw', 0.004), 2200), 0, 0.2 * g); }
+  return b;
+}
+function genereriqueInfo() { // générique d'édition spéciale (7,6 s) : montée, frappe, motif rythmé, impact, accord final, souffle de sortie ; création originale
+  const b = buf(7.6), re = [293.7, 440, 587.3, 740], mi = [329.6, 493.9, 659.3, 830.6];
+  mix(b, riser(0.8, true), 0, 0.8); mix(b, whoosh(0.6, 300, 4500, 0.9), 0.1, 0.7);
+  mix(b, impact(1.6, 120, 40, 1.4), 0.75, 1); mix(b, stab(re, 1.2, 1.1), 0.78, 1);
+  mix(b, hp(noise(0.2, 0.06), 3000), 0.75, 0.6);
+  // motif rythmé « ta-ta-ta-TAA » sur deux accords, puis réponse plus haute
+  const motif = [[0, 0.14], [0.18, 0.14], [0.36, 0.14], [0.54, 0.5]];
+  motif.forEach(([t, d], i) => mix(b, stab(i < 3 ? [146.8, 220, 293.7] : re, d + 0.1, 0.9), 1.9 + t, 0.9));
+  motif.forEach(([t, d], i) => mix(b, stab(i < 3 ? [164.8, 247, 329.6] : mi, d + 0.1, 0.9), 2.7 + t, 0.9));
+  // pulsation grave et notes de basse qui tiennent le premier plan
+  for (let k = 0; k < 8; k++) mix(b, tone(73.4, 0.3, 0.12, 'sine', 0.003), 0.8 + k * 0.45, 0.8);
+  mix(b, whoosh(0.7, 5000, 400, 0.8), 3.0, 0.8); // le plein écran se réduit en bas d'écran
+  mix(b, impact(0.9, 150, 60, 0.7), 3.55, 0.7); mix(b, cloche(1760, 0.8, 0.4), 3.6, 0.6);
+  for (let k = 0; k < 6; k++) mix(b, hp(noise(0.006, 0.0015), 3500), 3.9 + k * 0.5, 0.35); // tic-tac du bas d'écran
+  mix(b, whoosh(0.6, 400, 5000, 0.8), 7.0, 0.7);
+  return reverb(b, 0.25, 1.2);
+}
 function sirene() { const b = fade(lp(tone(t => 900 + 300 * Math.sin(t * PI2 * 1.3), 2.6, 0, 'tri', 0.02), 2600), 0.02, 0.15); for (let i = 0; i < b.length; i++) b[i] *= 0.55 + 0.45 * Math.sin(i / SR * PI2 * 5); return b; }
 function joie() { // petit jingle joyeux
   const b = buf(1.8);
@@ -374,6 +396,7 @@ const SONS = [
   ['fanfare', 'Fanfare de victoire', 'Télé et spectacle', fanfare],
   ['tada', 'Ta-dam !', 'Télé et spectacle', tada],
   ['breaking-news', 'Édition spéciale (signal)', 'Télé et spectacle', sonBreaking],
+  ['generique-info', 'Générique d’édition spéciale', 'Télé et spectacle', genereriqueInfo],
   ['sirene', 'Sirène d’alerte', 'Télé et spectacle', sirene]
 ];
 

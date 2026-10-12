@@ -170,11 +170,13 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 #stAnims{grid-template-columns:1fr 1fr;gap:6px}#stAnims .carte{padding:7px 6px;font-size:12px;text-align:left}#stAnims kbd{margin-right:4px}
 #stAnim{position:absolute;pointer-events:none;overflow:hidden;z-index:1}#stAnim canvas{max-width:none;max-height:none}
 .stBandeau{position:absolute;left:5%;bottom:12%;background:#5b3df5;color:#fff;padding:10px 18px;border-left:6px solid #d7f24a;animation:bandeau .5s ease-out both;font:600 2.2vw/1.25 system-ui}
-.stDirect{position:absolute;border-radius:10px;overflow:hidden;box-shadow:0 8px 30px #0008;animation:bandeau .35s ease-out both}.stDirect img,.stDirect video{display:block;width:100%;height:auto}
-.stDirect.logo{box-shadow:none;border-radius:0}.stDirect.ecran{pointer-events:auto;cursor:move;touch-action:none;outline:2px dashed #d7f24a88}.stPoignee{position:absolute;right:6px;bottom:6px;width:20px;height:20px;border-radius:50%;background:#d7f24a;border:2px solid #000;cursor:nwse-resize}.stTexte{position:absolute;left:50%;top:8%;transform:translateX(-50%);max-width:86%;background:#5b3df5;color:#fff;padding:.5em 1em;border-left:.35em solid #d7f24a;border-radius:6px;font:700 2.4vw/1.25 system-ui;text-align:center;animation:bandeau .35s ease-out both;white-space:pre-wrap}
+.stDirect{position:absolute;border-radius:10px;overflow:hidden;box-shadow:0 8px 30px #0008;animation:apparait .35s ease-out both}.stDirect img,.stDirect video{display:block;width:100%;height:auto}
+.stDirect.logo{box-shadow:none;border-radius:0}.stDirect.ecran{pointer-events:auto;cursor:move;touch-action:none;outline:2px dashed #d7f24a88}.stPoignee{position:absolute;right:6px;bottom:6px;width:20px;height:20px;border-radius:50%;background:#d7f24a;border:2px solid #000;cursor:nwse-resize}.stTexte{position:absolute;left:50%;top:8%;transform:translateX(-50%);max-width:86%;background:#5b3df5;color:#fff;padding:.5em 1em;border-left:.35em solid #d7f24a;border-radius:6px;font:700 2.4vw/1.25 system-ui;text-align:center;animation:apparait .35s ease-out both;white-space:pre-wrap}
 #stDirectBtns{grid-template-columns:1fr 1fr;gap:6px}#stDirectBtns .carte{padding:7px 6px;font-size:12px;text-align:left}#stDirectBtns .carte.on{border-color:#d7f24a;background:#2c2a10}
 .stBandeau b{display:block;font-size:1.15em}.stBandeau span{display:block;font-weight:400;font-size:.8em;opacity:.9}
 @keyframes bandeau{from{transform:translateX(-120%)}to{transform:none}}
+/* entrée des éléments en direct : la propriété « translate » s'ajoute au centrage (transform) au lieu de l'écraser */
+@keyframes apparait{from{opacity:0;translate:-8% 0}to{opacity:1;translate:0 0}}
 /* Lumière LED : bandeau lumineux autour de l'écran pour éclairer le visage */
 #stLumiere{position:absolute;inset:0;pointer-events:none;display:none;z-index:2;border:var(--lw,70px) solid var(--lc,#fff);box-shadow:inset 0 0 calc(var(--lw,70px) * 1.2) var(--lc,#fff);border-radius:6px}
 #stLumiere.on{display:block}
@@ -2840,11 +2842,9 @@ const ST_DEF = { bruitage: true, touches: {}, fond: 'lib:fonds/quentools-led-h.j
 // Animations « Me filmer » : les 9 premières gardent leurs touches 1 à 9 ; les autres viennent de la bibliothèque (fondvert/ : touche, position, taille, bruitage)
 const ANIM_BASE = [
   { id: 'abonner', t: '1', nom: 'S’abonner', x: 50, y: 82, s: 55, groupe: 'Réseaux', son: 'sons/souris-clic.mp3' }, { id: 'jaime', t: '2', nom: 'J’aime', x: 82, y: 62, s: 32, groupe: 'Réseaux', son: 'sons/pop.mp3' },
-  { id: 'cloche', t: '3', nom: 'Cloche', x: 86, y: 22, s: 24, groupe: 'Réseaux', son: 'sons/ding-cloche.mp3' }, { id: 'fleche', t: '4', nom: 'Flèche', x: 28, y: 55, s: 35, groupe: 'Divers', son: 'sons/swish-rapide.mp3' },
-  { id: 'lien-bio', t: '5', nom: 'Lien en bio', x: 50, y: 80, s: 45, groupe: 'Réseaux', son: 'sons/notification.mp3' }, { id: 'explosion', t: '6', nom: 'Confettis', x: 50, y: 50, s: 100, groupe: 'Divers', son: 'sons/applaudissements-courts.mp3' },
-  { id: 'cercle', t: '7', nom: 'Cercle', x: 50, y: 45, s: 55, groupe: 'Divers', son: 'sons/swish-rapide.mp3' }, { id: 'compte', t: '8', nom: '3, 2, 1', x: 50, y: 50, s: 45, groupe: 'Divers', son: 'sons/compte-a-rebours.mp3' },
-  { id: 'glisse-haut', t: '9', nom: 'Glisse vers le haut', x: 50, y: 72, s: 35, groupe: 'Divers', son: 'sons/swipe.mp3' }
-];
+  { id: 'cloche', t: '3', nom: 'Cloche', x: 86, y: 22, s: 24, groupe: 'Réseaux', son: 'sons/ding-cloche.mp3' }, { id: 'lien-bio', t: '5', nom: 'Lien en bio', x: 50, y: 80, s: 45, groupe: 'Réseaux', son: 'sons/notification.mp3' }, { id: 'explosion', t: '6', nom: 'Confettis', x: 50, y: 50, s: 100, groupe: 'Divers', son: 'sons/applaudissements-courts.mp3' },
+  { id: 'compte', t: '8', nom: '3, 2, 1', x: 50, y: 50, s: 45, groupe: 'Divers', son: 'sons/compte-a-rebours.mp3' },
+  ];
 const ST_GROUPES = ['Réseaux', 'Infos', 'Humeurs', 'Argent', 'Divers'];
 const ST_RESERVEES = new Set(['r', 'p', 'm', 't', 'o', 'e', 'l', 'n', ' ', 'ArrowUp', 'ArrowDown', 'Home', 'Escape', 'Maj+r', 'Maj+p']);
 function animsDirect() {
@@ -3154,17 +3154,37 @@ async function stDirect(quoi) {
     D.logo = { el: stPlacer2(el, p), evt: stOuvrir({ id: 'logo', file: o.logo, x: p.x, y: p.y, s: p.s }) };
   } else if (quoi === 'ecran') {
     if (D.ecran) { await stEcranStop(); return maj(); }
+    const droit = await (await api('/api/ecran')).json().catch(() => ({}));
+    if (droit.statut === 'denied' || droit.statut === 'restricted') { stEcranAide('QuentMovie n’a pas le droit de voir ton écran.'); return; }
     let flux;
     try { flux = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false }); }
-    catch (e) { stMsg(`<span class="err">Partage d’écran refusé : ${esc(e.message)}. Autorise QuentMovie dans Réglages Système → Confidentialité et sécurité → Enregistrement de l’écran.</span>`); return; }
+    catch (e) { stEcranAide(`Partage d’écran refusé (${esc(e.message)}).`); return; }
     const p = ST_POS[o.ecranPos] || ST_POS['grand-droite'], el = document.createElement('div'); el.className = 'stDirect';
-    const v = document.createElement('video'); v.muted = true; v.autoplay = true; v.playsInline = true; v.srcObject = flux; el.appendChild(v);
+    const v = document.createElement('video'); v.muted = true; v.autoplay = true; v.playsInline = true; v.srcObject = flux; el.appendChild(v); v.play().catch(() => {});
     D.ecran = { el: stPlacer2(el, p), flux, pos: o.ecranPos, rec: null, geo: { x: p.x, y: p.y, s: p.s } }; stEcranManip(D.ecran);
     flux.getVideoTracks()[0].addEventListener('ended', () => { if (studio && studio.direct.ecran && studio.direct.ecran.flux === flux) stEcranStop().then(() => document.querySelectorAll('#stDirectBtns [data-direct="ecran"]').forEach(b => b.classList.remove('on'))); });
+    stEcranVerifier(D.ecran, v);
     if (studio.rec) stEcranRec();
-    stMsg('📺 Écran partagé : il est enregistré avec ta prise. Touche E pour arrêter.');
   }
   maj();
+}
+// Écran noir = l'autorisation « Enregistrement de l'écran » de macOS manque (ou n'est plus valable après une mise à jour) : on le dit et on ouvre les réglages
+function stEcranAide(raison) {
+  stMsg(`<span class="err">${raison} Autorise QuentMovie dans Réglages Système → Confidentialité et sécurité → Enregistrement de l’écran (et coche QuentMovie), puis ferme et rouvre l’application.</span> <button class="btn" id="stEcranReglages">Ouvrir les réglages</button>`);
+  const b = $('#stEcranReglages'); if (b) b.onclick = () => api('/api/ecran/reglages', { method: 'POST', body: '{}' });
+}
+// vérifie qu'une vraie image arrive (quelques essais) ; sinon coupe le partage et explique
+function stEcranVerifier(E, v) {
+  const c = document.createElement('canvas'); c.width = 32; c.height = 18; const g = c.getContext('2d', { willReadFrequently: true }); let essais = 0;
+  const test = () => {
+    if (!studio || studio.direct.ecran !== E) return;
+    let noir = true;
+    if (v.videoWidth) { try { g.drawImage(v, 0, 0, 32, 18); const d = g.getImageData(0, 0, 32, 18).data; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 12) { noir = false; break; } } catch (e) { noir = false; } }
+    if (!noir) { E.ok = true; stMsg('📺 Écran partagé : il est enregistré avec ta prise. Déplace-le à la souris, agrandis-le avec le rond jaune. Touche E pour arrêter.'); return; }
+    if (++essais < 6) return setTimeout(test, 500);
+    stEcranStop().then(() => { document.querySelectorAll('#stDirectBtns [data-direct="ecran"]').forEach(b => b.classList.remove('on')); stEcranAide('Je ne reçois qu’un écran noir.'); });
+  };
+  setTimeout(test, 400);
 }
 // L'écran partagé est enregistré à part (même rythme que la prise) puis posé dans la piste vidéo 2
 // L'écran partagé se déplace à la souris et se redimensionne par le rond jaune ; pendant la prise, chaque nouvelle place démarre un nouveau morceau

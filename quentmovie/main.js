@@ -16,6 +16,11 @@ const hooksMaj = {
 };
 const prevenir = e => { if (win && e && e.etat === 'pret') win.webContents.executeJavaScript('window.majPrete && majPrete()').catch(() => {}); };
 // Partage AirDrop : feuille de partage de macOS ouverte sur les fichiers exportés
+// Autorisation « Enregistrement de l'écran » de macOS : lue sans la demander ; réglages ouverts sur la bonne page
+const ecran = {
+  statut: () => (process.platform === 'darwin' ? systemPreferences.getMediaAccessStatus('screen') : 'granted'),
+  reglages: () => shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture')
+};
 const partager = fichiers => { if (process.platform === 'darwin' && win) new ShareMenu({ filePaths: fichiers }).popup({ window: win }); };
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
@@ -24,8 +29,8 @@ async function demarrer() {
   const bins = await resolveFfmpeg();
   const base = process.env.QM_AUTOTEST && process.env.QM_BASE ? process.env.QM_BASE : path.join(app.getPath('home'), 'Movies', 'QuentMovie');
   let port;
-  try { moteur = create({ port: 41730, base, ...bins, maj: hooksMaj, partager }); port = await moteur.start(); }
-  catch (e) { moteur = create({ port: 0, base, ...bins, maj: hooksMaj, partager }); port = await moteur.start(); }
+  try { moteur = create({ port: 41730, base, ...bins, maj: hooksMaj, partager, ecran }); port = await moteur.start(); }
+  catch (e) { moteur = create({ port: 0, base, ...bins, maj: hooksMaj, partager, ecran }); port = await moteur.start(); }
 
   // Caméra et micro (studio, voix off) : autorisés uniquement pour la fenêtre de QuentMovie
   const local = u => /^http:\/\/127\.0\.0\.1:\d+\//.test(u || '');
