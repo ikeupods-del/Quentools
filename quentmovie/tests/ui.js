@@ -88,7 +88,7 @@ function chromium() {
   await ev(() => { allerOnglet('packs'); }); await pg.waitForSelector('[data-pack-app="vlog-voyage"]', { timeout: 5000 });
   await pg.evaluate(() => { const c = document.querySelector('[data-pack="vlog-voyage"]'); c.querySelector('.pk-mus').checked = true; c.querySelector('.pk-look').checked = true; });
   await pg.click('[data-pack-app="vlog-voyage"]');
-  check('pack Vlog : musique, look, transitions et effets de coupe', await ev(() => proj.audio.some(a => /musiques\/joyeux-vlog/.test(a.file) && a.loop && a.duck) && proj.clips.every(c => c.lut && /ete-dore/.test(c.lut.file)) && proj.clips.slice(0, -1).every(c => c.transition && c.overlays.some(o => o.pack === 'vlog-voyage') && !c.overlays.some(o => o.pack === 'glitch'))));
+  check('pack Vlog : musique, look, transitions et effets de coupe', await ev(() => proj.audio.some(a => /musiques\/joyeux-vlog/.test(a.file) && a.loop && a.duck) && proj.clips.every(c => c.lut && /voyage-clair/.test(c.lut.file)) && proj.clips.slice(0, -1).every(c => c.transition && c.overlays.some(o => o.pack === 'vlog-voyage') && !c.overlays.some(o => o.pack === 'glitch'))));
   // pack de sous-titres : le style choisi s'applique aux clips qui ont des sous-titres, et le mode mot à mot est connu
   await ev(() => { proj.clips.forEach(c => { c.subs = [{ s: 0, e: 1, t: 'Bonjour' }]; c.subStyle = 'contour'; }); commit(); tout(); allerOnglet('packs'); });
   await pg.waitForSelector('[data-sousstyle="hormozi"]', { timeout: 5000 });
