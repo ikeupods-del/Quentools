@@ -1,7 +1,7 @@
 /* Studio Posts — prépare marketing/generateur-posts/donnees.js : node tools/generateur-posts.js [--fichier-unique chemin.html]
    Polices de marque en base64 (la page s'ouvre sans serveur, le navigateur refuse de charger une police depuis un fichier local)
    et bibliothèque de publications déjà écrites : Le Parvis (marketing/generateur-posts/parvis-posts.js)
-   et QuenTools (tools/publications.json). Relancer après toute modification de ces fichiers.
+   et QuenTools (tools/publications.json), captures sur téléphone des sites d'exemple (captures/, tools/captures-posts.js). Relancer après toute modification de ces fichiers.
    --fichier-unique : écrit en plus une copie autonome (page + données dans un seul fichier) à ouvrir d'un double clic sur le Mac. */
 const fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..'), dossier = path.join(root, 'marketing', 'generateur-posts');
@@ -35,12 +35,17 @@ const quentools = JSON.parse(fs.readFileSync(path.join(__dirname, 'publications.
   return { nom: (p.titre || p.id).replace(/\*/g, ''), categorie: p.etiquette || 'Publication', marque: 'quentools', legende: { titre: p.tiktok || '', texte: p.legende || '' }, slides: [s] };
 });
 
+// Captures sur téléphone des sites d'exemple (tools/captures-posts.js) : image « Sur téléphone » des carrousels générés
+const CAPTURES = Object.fromEntries(require(path.join(dossier, 'secteurs.js')).filter(s => fs.existsSync(path.join(dossier, 'captures', s.id + '.jpg')))
+  .map(s => [s.id, 'data:image/jpeg;base64,' + fs.readFileSync(path.join(dossier, 'captures', s.id + '.jpg')).toString('base64')]));
+
 const sortie = `/* Généré par tools/generateur-posts.js : ne pas modifier à la main. */
 window.POLICES = ${JSON.stringify(POLICES)};
 window.BIBLIOTHEQUE = ${JSON.stringify({ parvis, quentools }, null, 1)};
+window.CAPTURES = ${JSON.stringify(CAPTURES)};
 `;
 fs.writeFileSync(path.join(dossier, 'donnees.js'), sortie);
-console.log(`donnees.js : ${POLICES.length} polices, ${parvis.length} publications Le Parvis, ${quentools.length} publications QuenTools (${Math.round(sortie.length / 1024)} Ko)`);
+console.log(`donnees.js : ${POLICES.length} polices, ${parvis.length} publications Le Parvis, ${quentools.length} publications QuenTools, ${Object.keys(CAPTURES).length} captures (${Math.round(sortie.length / 1024)} Ko)`);
 
 const iU = process.argv.indexOf('--fichier-unique');
 if (iU > 0) {

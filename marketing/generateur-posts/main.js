@@ -1,8 +1,31 @@
 // Studio Posts : fenêtre de l'application Mac (Electron) autour de index.html.
-// Tout reste sur le Mac : aucune connexion, projets enregistrés dans le stockage de l'application.
+// Tout reste sur le Mac : projets enregistrés dans le stockage de l'application ; seule connexion : le téléchargement
+// unique du modèle de l'IA locale (sauf s'il est déjà là grâce à QuentMovie).
 'use strict';
-const { app, BrowserWindow, Menu, shell } = require('electron');
+const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
 const path = require('path');
+
+// Génération automatique par l'IA locale (ia.js : modèle, generer.js : textes et règles)
+let ia = null, gen = null;
+function iaPrete() {
+  if (!ia) { ia = require('./ia').creer({ dossier: app.getPath('userData') }); gen = require('./generer').creer({ demander: m => ia.demander(m) }); }
+  return ia;
+}
+const etapeVers = sender => x => { try { sender.send('ia:etape', x); } catch (e) { /* fenêtre fermée */ } };
+ipcMain.handle('ia:etat', () => iaPrete().etat());
+ipcMain.handle('ia:verifier', async () => { try { return await iaPrete().verifier(); } catch (e) { return { ok: false, erreur: e.message }; } });
+ipcMain.handle('ia:generer', async (e, options = {}) => {
+  const etape = etapeVers(e.sender);
+  try {
+    if (!iaPrete().etat().installee) {
+      etape({ texte: 'Téléchargement de l’IA locale (≈ 2,5 Go, une seule fois)…', progres: 0 });
+      await ia.installer(p => etape({ texte: `Téléchargement de l’IA locale (une seule fois) : ${Math.round(p * 100)} %`, progres: p }));
+    }
+    etape({ texte: 'Démarrage de l’IA locale…' });
+    return { ok: true, publication: await gen.generer({ ...options, etape: texte => etape({ texte }) }) };
+  } catch (err) { return { ok: false, erreur: err.message }; }
+});
+app.on('will-quit', () => { if (ia) ia.fermer(); });
 
 let win = null;
 if (!app.requestSingleInstanceLock()) app.quit();
@@ -15,6 +38,7 @@ function menu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate([
     ...(mac ? [{ role: 'appMenu', label: 'Studio Posts' }] : []),
     { label: 'Fichier', submenu: [
+      { label: 'Générer une publication', accelerator: 'CmdOrCtrl+G', click: () => page("document.querySelector('#bGenerer').click()") },
       { label: 'Nouvelle publication…', accelerator: 'CmdOrCtrl+N', click: () => page("document.querySelector('#bNouveau').click()") },
       { label: 'Bibliothèque…', accelerator: 'CmdOrCtrl+B', click: () => page("document.querySelector('#bBiblio').click()") },
       { type: 'separator' },
@@ -46,7 +70,7 @@ function menu() {
 function ouvrir() {
   win = new BrowserWindow({
     width: 1440, height: 900, minWidth: 1100, minHeight: 680, backgroundColor: '#0f0f13', title: 'Studio Posts',
-    webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false }
+    webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, preload: path.join(__dirname, 'preload.js') }
   });
   win.loadFile(path.join(__dirname, 'index.html'));
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/.test(url)) shell.openExternal(url); return { action: 'deny' }; });
@@ -66,7 +90,7 @@ function autotest() {
       res.page = await win.webContents.executeJavaScript(`new Promise(ok => { const t = setInterval(() => { if (window.studio) { clearInterval(t);
         const trop = [];
         for (const m of ['parvis', 'quentools']) for (const x of studio.MODELES[m]) for (const f of ['45', '11', '916']) x.slides.forEach((s, i) => { if (studio.rendre({ ...x, marque: m, format: f }, i).trop) trop.push(m + ' ' + x.nom + ' ' + f); });
-        ok({ polices: document.fonts.check('800 40px QBric') && document.fonts.check('italic 500 40px QPlay'), modeles: studio.MODELES.parvis.length + studio.MODELES.quentools.length, bibliotheque: BIBLIOTHEQUE.parvis.length + BIBLIOTHEQUE.quentools.length, trop }); } }, 100); })`);
+        studioIA.verifier().then(ia => ok({ ia, polices: document.fonts.check('800 40px QBric') && document.fonts.check('italic 500 40px QPlay'), modeles: studio.MODELES.parvis.length + studio.MODELES.quentools.length, bibliotheque: BIBLIOTHEQUE.parvis.length + BIBLIOTHEQUE.quentools.length, captures: Object.keys(window.CAPTURES || {}).length, bouton: !document.querySelector('#genGroupe').hidden, trop })); } }, 100); })`);
     } catch (e) { res.erreur = e.message; }
     fin();
   });

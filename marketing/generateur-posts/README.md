@@ -7,6 +7,15 @@ Outil privé (jamais publié sur le site) pour créer des carrousels et des imag
 - Ou double-cliquer sur `index.html` (Chrome ou Safari). Aucun serveur, aucune connexion, aucune ressource externe.
 - Version en un seul fichier, à copier où l'on veut : `node tools/generateur-posts.js --fichier-unique ~/Desktop/Studio-Posts.html`.
 
+## Générer automatiquement (application Mac)
+**✨ Générer** (touche G, ⌘G) : l'IA locale écrit une publication complète (images + légende + hashtags) pour la marque et le format choisis en haut, puis l'ouvre ; tout reste modifiable. Le petit **▾** à côté règle le type (au hasard ou un type précis), un sujet facultatif et le nombre (1 à 10 d'un coup, rangées dans Bibliothèque → Mes publications).
+- IA locale : Qwen3 4B Instruct (licence Apache 2.0), sur la puce du Mac, rien n'est envoyé sur internet. Téléchargée une seule fois (≈ 2,5 Go) au premier clic, **sauf si QuentMovie l'a déjà** (`~/Movies/QuentMovie/modeles`) : elle est alors reprise telle quelle. Sinon rangée dans le stockage de l'application.
+- Le Parvis : verset du jour, liste en 5 points, encouragement (3 versets), prière. L'IA n'écrit jamais de verset : elle choisit une référence dans la liste vérifiée (Louis Segond 1910, versets déjà publiés dans `parvis-posts.js`) et le programme recopie le texte exact. Toute citation entre guillemets ou référence dans ses textes est refusée.
+- QuenTools : carrousel 5 images (avec la capture sur téléphone d'un site d'exemple : `captures/`, métiers dans `secteurs.js`), conseil, liste, astuces. Refusés par le programme : prix, liens, chiffres et statistiques, mention de l'IA, tutoiement.
+- Une réponse refusée est redemandée avec la raison (3 essais) ; les publications déjà faites sont transmises pour varier les sujets et les versets.
+- Fichiers : `generer.js` (formulaires, règles, construction), `ia.js` + `ia-worker.js` (modèle, processus séparé), `preload.js` (passerelle de la page). Captures : `node tools/captures-posts.js` puis `node tools/generateur-posts.js`.
+- Contrôles : `node tools/verifier-generation-posts.js` (IA simulée, textes au maximum, bouton dans la page) ; essai avec le vrai modèle sur Mac : `tests/ia-reel.js` (workflow). Dans un navigateur, le bouton n'apparaît pas.
+
 ## Utiliser
 1. **Nouveau** : partir d'un modèle (Le Parvis : verset du jour, liste, encouragement, histoire biblique, prière, verset seul ; QuenTools : carrousel 5 images « situation → constat → solution → téléphone → question », conseil, liste, astuces, avant/après).
 2. **Bibliothèque** : mes publications (enregistrées dans le navigateur), les 31 publications du Parvis et les 15 publications QuenTools déjà écrites.
