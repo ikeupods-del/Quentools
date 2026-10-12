@@ -1,0 +1,69 @@
+name: Studio Sites — application Mac
+
+# Construit l'application Mac Studio Sites (.dmg) sur un vrai Mac de GitHub, l'essaie, puis la publie dans « Releases »
+# (étiquette studio-sites-vX.Y.Z). Nouvelle version = changer « version » dans marketing/studio-sites/package.json.
+# Une version déjà publiée n'est pas republiée.
+on:
+  workflow_dispatch:
+  push:
+    paths: ['marketing/studio-sites/**', 'marketing/ia-locale/**', 'tools/studio-sites.js', 'tools/synchro-ia-locale.js', 'exemples/**', 'design/templates/**', '.github/workflows/studio-sites.yml']
+
+concurrency:
+  group: studio-sites-mac
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: marketing/studio-sites
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installer les dépendances
+        env:
+          NODE_LLAMA_CPP_SKIP_DOWNLOAD: 'true'
+        run: npm ci
+      - name: Vérifier que les copies de l'IA locale sont à jour
+        working-directory: .
+        run: node tools/synchro-ia-locale.js --verifier
+      - name: Construire l'application
+        run: npm run dist
+      - name: Lancer l'application construite et l'essayer (génération du site de chaque modèle)
+        run: |
+          STUDIO_AUTOTEST="$PWD/autotest.json" "dist/mac-arm64/Studio Sites.app/Contents/MacOS/Studio Sites" || true
+          cat autotest.json
+          node -e '
+            const r = require("./autotest.json"), ko = [];
+            if (r.erreur) ko.push("erreur : " + r.erreur);
+            if (r.erreursConsole) ko.push("console : " + r.erreursConsole.join(" | "));
+            if (!r.page || !(r.page.modeles >= 14) || !r.page.pont) ko.push("modèles ou pont vers l IA");
+            if (r.page) for (const s of r.page.sorties) if (!s.ok || !(s.textes > 20)) ko.push("génération " + s.id + " : " + (s.erreur || "vide"));
+            if (ko.length) { console.log("Échecs :", ko.join(" ; ")); process.exit(1); } else console.log("Application : tout fonctionne");'
+      - name: Contrôler que l'application tourne sur puce Apple
+        run: |
+          a=$(lipo -archs "dist/mac-arm64/Studio Sites.app/Contents/MacOS/Studio Sites")
+          echo "Architectures : $a"; case " $a " in *" arm64 "*) ;; *) exit 1;; esac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Studio-Sites-mac
+          path: marketing/studio-sites/dist/*.dmg
+      - name: Publier la version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if gh release list --limit 100 --json tagName --jq '.[].tagName' | grep -qx "studio-sites-v$VERSION"; then
+            echo "La version $VERSION est déjà publiée : rien à faire (changer la version dans package.json pour publier)."
+            exit 0
+          fi
+          printf '%s\n\n%s\n' "Studio Sites : génère le site d'un professionnel à partir des exemples QuenTools, avec l'IA locale du Mac." \
+            "Installation : ouvrir le .dmg et glisser Studio Sites dans Applications. Au premier lancement : clic droit sur l'application → Ouvrir." > notes.md
+          gh release create "studio-sites-v$VERSION" "dist/Studio-Sites-$VERSION-arm64.dmg" \
+            --title "Studio Sites $VERSION" --notes-file notes.md --target "${{ github.sha }}"

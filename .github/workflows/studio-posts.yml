@@ -6,7 +6,7 @@ name: Studio Posts — application Mac
 on:
   workflow_dispatch:
   push:
-    paths: ['marketing/generateur-posts/**', 'tools/generateur-posts.js', 'tools/publications.json', '.github/workflows/studio-posts.yml']
+    paths: ['marketing/generateur-posts/**', 'marketing/ia-locale/**', 'tools/generateur-posts.js', 'tools/synchro-ia-locale.js', 'tools/publications.json', 'tools/carrousels.json', '.github/workflows/studio-posts.yml']
 
 concurrency:
   group: studio-posts-mac
@@ -27,7 +27,12 @@ jobs:
         with:
           node-version: 22
       - name: Installer les dépendances
+        env:
+          NODE_LLAMA_CPP_SKIP_DOWNLOAD: 'true'
         run: npm ci
+      - name: Vérifier que les copies de l'IA locale sont à jour
+        working-directory: .
+        run: node tools/synchro-ia-locale.js --verifier
       - name: Construire l'application
         run: npm run dist
       - name: Lancer l'application construite et l'essayer (polices, modèles, bibliothèque)
@@ -41,6 +46,7 @@ jobs:
             if (!r.page || !r.page.polices) ko.push("polices non chargées");
             if (!r.page || !(r.page.modeles >= 10) || !(r.page.bibliotheque >= 40)) ko.push("modèles ou bibliothèque");
             if (r.page && r.page.trop && r.page.trop.length) ko.push("texte trop long : " + r.page.trop.join(", "));
+            if (!r.generation || !r.generation.pont || r.generation.erreur || !(r.generation.n >= 5) || !r.generation.tel) ko.push("génération de publication : " + JSON.stringify(r.generation));
             if (ko.length) { console.log("Échecs :", ko.join(" ; ")); process.exit(1); } else console.log("Application : tout fonctionne");'
       - name: Contrôler que l'application tourne sur puce Apple
         run: |

@@ -235,6 +235,38 @@ function chromium() {
   check('prise : écran partagé posé dans la piste vidéo 2', await ev(n => (proj.pistes || []).length === n + 1 && /^camera-ecran-/.test(proj.pistes[proj.pistes.length - 1].file) && proj.pistes[proj.pistes.length - 1].start > starts()[proj.clips.length - 1], nPistes));
   await ev(() => fermerStudio());
 
+  // 8) coupe : sous-titres suivent chaque morceau ; chapitrage automatique (repères, titre qui s'écrit, bruit de clavier) ; clipping
+  await ev(() => { const m = medias.find(x => x.file === 'a.mp4'); const c = newClip(m); c.subs = [{ s: 1, e: 2, t: 'un' }, { s: 4, e: 5, t: 'deux' }]; proj.clips = [c]; proj.audio = []; proj.pistes = []; proj.markers = []; proj.nomsReperes = {}; sel = 0; commit(); tout(); });
+  await ev(() => { placerTete(3, { sansSelection: true }); couper(); });
+  check('coupe : les sous-titres suivent leur morceau', await ev(() => proj.clips.length === 2 && proj.clips[0].subs.length === 1 && proj.clips[0].subs[0].t === 'un' && proj.clips[1].subs.length === 1 && proj.clips[1].subs[0].t === 'deux' && proj.clips[1].subs[0].s === 1), await ev(() => JSON.stringify(proj.clips.map(c => c.subs))));
+  // montage de 6 minutes simulées (ralenti x0,02 : seule la durée compte ici) avec trois sujets bien distincts
+  const SUJ = [['Bonjour à tous et bienvenue, aujourd’hui je vais vous présenter trois astuces pour mieux dormir.', 'On va voir ensemble pourquoi le sommeil est important.'], ['Première astuce : la chambre. Gardez la chambre fraîche et sombre, les rideaux épais aident la chambre.', 'Une chambre fraîche aide le corps à produire la mélatonine.'], ['Deuxième astuce : les écrans. Les écrans du téléphone gardent le cerveau éveillé, évitez les écrans avant de dormir.', 'La lumière bleue des écrans retarde la fatigue.'], ['Pour conclure, retenez la chambre fraîche et les écrans éteints. Merci d’avoir regardé, abonnez-vous et à bientôt.']];
+  await ev(sujets => { const m = medias.find(x => x.file === 'a.mp4'), c = newClip(m); c.speed = 0.0167; c.out = 6; c.in = 0; let t = 0; c.subs = []; for (const b of sujets) for (const p of b) { c.subs.push({ s: t, e: t + 24, t: p }); t += 26; } proj.clips = [c]; proj.audio = []; proj.markers = []; proj.nomsReperes = {}; sel = 0; commit(); tout(); }, SUJ);
+  await ev(() => ouvrirChapitrage()); await pg.waitForSelector('#chAppliquer:not([hidden])', { timeout: 20000 });
+  const prop = await ev(() => [...document.querySelectorAll('#chListe .chN')].map(x => x.value));
+  check('chapitrage : des chapitres proposés, le premier est l’introduction', prop.length >= 3 && prop[0] === 'Introduction', JSON.stringify(prop));
+  await pg.selectOption('#chMode', 'sur'); await pg.click('#chAppliquer'); await pg.waitForTimeout(500);
+  const rc = await ev(() => ({ n: proj.clips.length, marks: proj.markers.length, noms: Object.keys(proj.nomsReperes).length, titres: proj.clips.filter(c => c.titre && c.titre.preset === 'machine').length, clav: proj.audio.filter(a => /clavier/.test(a.file)).length, ok: proj.clips.every(c => c.subs.every(x => x.e <= effDur(c) + 0.01)) }));
+  check('chapitrage : repères nommés, titres qui s’écrivent et bruit de clavier posés', rc.marks >= 2 && rc.noms >= 3 && rc.titres >= 3 && rc.clav >= 3 && rc.n >= 3 && rc.ok, JSON.stringify(rc));
+  check('chapitrage : la liste YouTube s’affiche', await ev(() => /0:00 Introduction/.test($('#chTxt').value)));
+  await ev(() => fermer());
+  // clipping : les meilleurs passages sont proposés (sans IA installée : classement du programme)
+  await ev(() => ouvrirClipping()); await pg.selectOption('#clNb', '3'); await pg.click('#clChercher'); await pg.waitForSelector('#clCreer', { timeout: 20000 });
+  const nbCl = await ev(() => document.querySelectorAll('#clListe [data-i]').length);
+  check('clipping : des passages proposés avec un titre', nbCl >= 1 && nbCl <= 3 && await ev(() => [...document.querySelectorAll('#clListe .clT')].every(x => x.value.length > 3)), nbCl);
+  await ev(() => fermer());
+
+  // 9) retirer un passage : le son détaché part avec l'image, ce qui suit reste calé ; la coupe (S) coupe aussi le son détaché
+  await ev(() => { const m = medias.find(x => x.file === 'a.mp4'); proj.clips = []; for (let i = 0; i < 3; i++) proj.clips.push(newClip(m)); proj.audio = []; proj.pistes = []; proj.markers = []; proj.nomsReperes = {}; sel = 0; tout(); tous = null; selObjs = new Set(proj.clips); detacherSelection(); selObjs.clear(); });
+  const av = await ev(() => ({ n: proj.audio.length, st: proj.audio.map(a => a.start) }));
+  check('détacher : un son par clip, calé sur son clip', av.n === 3 && av.st[1] === 6 && av.st[2] === 12, JSON.stringify(av));
+  await ev(() => { proj.markers = [13]; sel = 1; supprimer(); });
+  const ap = await ev(() => ({ c: proj.clips.length, n: proj.audio.length, st: proj.audio.map(a => a.start), m: proj.markers }));
+  check('supprimer un clip : son détaché retiré, suite recollée, repère décalé', ap.c === 2 && ap.n === 2 && ap.st[0] === 0 && ap.st[1] === 6 && ap.m[0] === 7, JSON.stringify(ap));
+  await ev(() => { selA = -1; placerTete(2, { sansSelection: true }); sel = 0; couper(); });
+  const cp = await ev(() => ({ c: proj.clips.length, a: proj.audio.map(x => [x.start, x.dur]) }));
+  check('couper (S) : le son détaché est coupé au même endroit', cp.c === 3 && cp.a.length === 3 && Math.abs(cp.a[1][0] - 2) < 0.06, JSON.stringify(cp));
+
   check('aucune erreur dans la page', !errs.length, errs.slice(0, 3).join(' | '));
   await b.close(); app.stop(); fs.rmSync(base, { recursive: true, force: true });
   console.log(`Interface : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);

@@ -91,6 +91,48 @@ function tailleJpg(b) {
   const apres = await pg.evaluate(() => studio.projet.marque + ' ' + studio.projet.slides.length);
   apres === 'parvis 5' ? ok('projet retrouvé après rechargement') : ko('rechargement : ' + apres);
 
+  // 7. Générer : chaque thème avec une IA simulée (le contrôle porte sur la mise en page, les règles de contenu et le repli, pas sur la qualité du texte)
+  const gen = await pg.evaluate(async () => {
+    const CANNED = { numero: 1, meditation: 'Quand tout bouge autour de toi, Dieu reste. Fais confiance pour le prochain pas aujourd’hui.', titre_tiktok: 'Verset du jour', titre: 'Si tu es fatigué, lis ça', mot: 'fatigué', sous: 'Ce message est pour toi.', priere: 'Seigneur, merci pour cette journée. Donne-moi la paix et la force de faire le bien autour de moi.', fin: 'Merci d’être là, au nom de Jésus.', legende: 'Un message pour toi, à lire doucement et à partager.',
+      lecon: 'Dieu est fidèle, même quand le défi paraît immense.', hook1: 'Un dimanche soir, le chauffe-eau lâche.', hook2: 'Qui appelle-t-on ?', accent: 'Celui qu’on trouve en cinq secondes.', prob: 'Dans l’urgence, on appelle le premier qu’on trouve', mot_prob: 'premier', sol: 'Un site qui rassure avant l’appel', mot_sol: 'rassure',
+      question_titre: 'Et votre *métier*, c’est quoi ?', question_texte: 'Dites-le en commentaire : je vous réponds avec une idée.', pb: ['Un numéro difficile à trouver', 'Aucun moyen de décrire la panne', 'Ni zone d’intervention, ni horaires'], sb: ['Numéro et bouton Appeler visibles', 'Un devis demandé en deux minutes', 'Votre zone et des repères clairs'] };
+    const fab = (sc, k) => {
+      if (!sc) return null;
+      if (sc.type === 'object') return Object.fromEntries(Object.entries(sc.properties).map(([c, p]) => [c, fab(p, c)]));
+      if (sc.type === 'array') return Array.from({ length: sc.minItems || 1 }, (_, i) => (sc.items.type === 'object' ? (o => (o.numero !== undefined ? { ...o, numero: i + 1 } : o))(fab(sc.items, k)) : (CANNED[k] && Array.isArray(CANNED[k]) ? CANNED[k][i] : (k === 'hashtags' ? ['siteweb', 'artisan', 'plombier', 'entrepreneur', 'devis'][i] : k === 'items' ? ['Il est illisible sur téléphone', 'Les horaires ne sont plus à jour', 'On ne trouve pas comment vous contacter'][i] || 'Point utile ' + i : 'Un point concret ' + (i + 1)))));
+      if (sc.type === 'integer') return CANNED[k] || 1;
+      return CANNED[k] !== undefined && !Array.isArray(CANNED[k]) ? CANNED[k] : (k === 'texte' ? 'Une phrase concrète et facile à appliquer pour le client.' : k === 'titre' ? 'Un titre clair et direct' : 'Texte de test');
+    };
+    const ecrire = async m => fab(m.schema);
+    const sortie = [];
+    for (const marque of ['parvis', 'quentools']) for (const t of Generation.THEMES[marque]) for (const format of ['45', '916']) {
+      const r = await studio.generer({ marque, themeId: t.id, sujet: marque === 'quentools' ? 'plombier' : (t.id === 'histoire' ? 'David et Goliath' : 'courage'), format, ecrire, sansExport: true });
+      sortie.push({ marque, theme: t.id, format, erreur: r.erreur, source: r.source, trop: r.trop, alertes: r.alertes, nb: r.projet && r.projet.slides.length });
+    }
+    // une IA qui désobéit (prix, lien) : refus, puis repli sur une publication déjà écrite
+    const mauvaise = await studio.generer({ marque: 'quentools', themeId: 'conseil', sujet: 'plombier', format: '45', sansExport: true, ecrire: async () => ({ titre: 'Un site à 299 € sur www.exemple.fr', mot: 'site', sous: 'Gratuit et garanti à 100 %', legende: 'Voir www.exemple.fr', titre_tiktok: 'Promo', hashtags: ['a', 'b', 'c', 'd'] }) });
+    const verset = await studio.generer({ marque: 'parvis', themeId: 'verset', sujet: 'paix', format: '45', sansExport: true, ecrire: async () => ({ numero: 999, meditation: 'x', titre_tiktok: 'x' }) });
+    const sansIA = await studio.generer({ marque: 'quentools', themeId: 'carrousel', sujet: 'fleuriste', format: '45', sansExport: true });
+    const biblio = window.BIBLIOTHEQUE.parvis.flatMap(p => p.slides).filter(s => s.ref && s.texte).map(s => s.texte);
+    const v1 = await studio.generer({ marque: 'parvis', themeId: 'verset', sujet: 'courage', format: '45', sansExport: true, ecrire });
+    return { sortie, mauvaise: { source: mauvaise.source, notes: mauvaise.notes, alertes: mauvaise.alertes }, verset: { source: verset.source }, sansIA: { source: sansIA.source, tel: sansIA.projet.slides[3].image.slice(0, 22), n: sansIA.projet.slides.length }, versetMotAMot: biblio.includes(v1.projet.slides[0].texte) };
+  });
+  const faux = gen.sortie.filter(x => x.erreur || x.trop || (x.alertes || []).length || !x.nb);
+  faux.length ? faux.forEach(x => ko(`génération ${x.marque}/${x.theme}/${x.format} : ${x.erreur || (x.trop ? 'texte trop long' : JSON.stringify(x.alertes))}`)) : ok(`génération : ${gen.sortie.length} publications (9 thèmes × 2 formats) prêtes, sans débordement ni alerte`);
+  gen.sortie.filter(x => x.source !== 'ia').length ? ko('génération : une publication n’est pas passée par l’IA simulée : ' + JSON.stringify(gen.sortie.filter(x => x.source !== 'ia').map(x => x.theme))) : ok('génération : le texte vient de l’IA quand elle répond bien');
+  gen.mauvaise.source === 'bibliotheque' && gen.mauvaise.notes.some(n => /conforme/.test(n)) ? ok('IA qui écrit un prix ou un lien : refusée, publication déjà écrite proposée') : ko('IA désobéissante : ' + JSON.stringify(gen.mauvaise));
+  gen.verset.source === 'bibliotheque' ? ok('verset inconnu choisi par l’IA : refusé') : ko('verset inconnu accepté');
+  gen.sansIA.source === 'bibliotheque' && /^data:image\/jpeg/.test(gen.sansIA.tel) && gen.sansIA.n === 5 ? ok('sans IA : carrousel de 5 images avec la capture du site d’exemple dans le téléphone') : ko('sans IA : ' + JSON.stringify(gen.sansIA));
+  gen.versetMotAMot ? ok('verset du Parvis recopié mot pour mot depuis la bibliothèque') : ko('verset modifié');
+  // parcours réel : bouton, fenêtre, publication prête
+  await pg.keyboard.press('Escape'); await pg.click('#bGenerer'); await pg.waitForSelector('#modalGen.ouvert');
+  await pg.selectOption('#gMarque', 'quentools'); await pg.selectOption('#gTheme', 'carrousel'); await pg.fill('#gSujet', 'restaurant'); await pg.click('#gGo');
+  await pg.waitForSelector('#gVoir', { timeout: 20000 });
+  const ui = await pg.evaluate(() => ({ nom: studio.projet.nom, n: studio.projet.slides.length, marque: studio.projet.marque, tel: !!studio.projet.slides[3].image, res: document.querySelector('#gRes').innerText }));
+  ui.n === 5 && ui.marque === 'quentools' && ui.tel && /Publication prête/.test(ui.res) ? ok('bouton « Générer » : publication QuenTools restaurant prête en un clic') : ko('parcours Générer : ' + JSON.stringify(ui));
+  if (captures) { await pg.screenshot({ path: path.join(captures, 'generer.png') }); }
+  await pg.click('#gVoir');
+
   // captures pour relecture visuelle
   if (captures) {
     fs.mkdirSync(captures, { recursive: true });

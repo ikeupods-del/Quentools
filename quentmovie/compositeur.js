@@ -153,7 +153,7 @@ void main() {
       },
       dessiner(cam) {
         const w = cam.videoWidth || cam.naturalWidth || cam.width, h = cam.videoHeight || cam.naturalHeight || cam.height;
-        if (!w || !h) return false;
+        if (!w || !h || (cam.readyState !== undefined && cam.readyState < 2)) return false; // image de la caméra pas encore prête : rien à dessiner
         if (!lisse && !reglages.vert) this.masque(new Float32Array([1]), 1, 1); // en attendant le premier détourage : l'image entière
         if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
         gl.viewport(0, 0, w, h);

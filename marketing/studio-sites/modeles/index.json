@@ -1,0 +1,128 @@
+[
+ {
+  "id": "plombier",
+  "type": "exemple",
+  "nom": "Plombier, chauffagiste, dépanneur",
+  "mots": "plomb chauff depann electric serrur artisan batiment macon peintre carreleur couvreur vitrier",
+  "ambiance": "bleu et jaune",
+  "marque": "Dupont Plomberie",
+  "taille": 23985
+ },
+ {
+  "id": "climatisation",
+  "type": "exemple",
+  "nom": "Climatisation, froid, pompe à chaleur",
+  "mots": "clim ventil froid pompe chaleur thermique",
+  "ambiance": "bleu clair",
+  "marque": "Alizé Clim",
+  "taille": 21756
+ },
+ {
+  "id": "bois",
+  "type": "exemple",
+  "nom": "Vendeur de bois, matériaux, négoce",
+  "mots": "bois chauffage materiau negoce menuis charpent ebenis scierie",
+  "ambiance": "brun",
+  "marque": "Les Bois Granger",
+  "taille": 38874
+ },
+ {
+  "id": "restaurant",
+  "type": "exemple",
+  "nom": "Restaurant, bar, brasserie",
+  "mots": "restaur cafe bar brasserie bistro pizz traiteur snack",
+  "ambiance": "chaud",
+  "marque": "Le Petit Comptoir",
+  "taille": 30317
+ },
+ {
+  "id": "fleuriste",
+  "type": "exemple",
+  "nom": "Fleuriste, boutique, artisan d’art",
+  "mots": "fleur bouquet boutique cadeau deco artisan art",
+  "ambiance": "rose",
+  "marque": "Fleurs de Marie",
+  "taille": 25991
+ },
+ {
+  "id": "coach",
+  "type": "exemple",
+  "nom": "Coach sportif, bien-être, activité",
+  "mots": "coach sport fitness yoga pilates danse musculation naturo bien-etre",
+  "ambiance": "énergique",
+  "marque": "Move Coaching",
+  "taille": 21101
+ },
+ {
+  "id": "osteopathe",
+  "type": "exemple",
+  "nom": "Ostéopathe, thérapeute, santé",
+  "mots": "osteo kine therap sophro dieteti infirm medec dentiste psycho sante massage",
+  "ambiance": "doux",
+  "marque": "Cabinet Bien-Être",
+  "taille": 29278
+ },
+ {
+  "id": "paysagiste",
+  "type": "exemple",
+  "nom": "Paysagiste, jardinier, espaces verts",
+  "mots": "paysag jardin elagu espaces verts piscine terrasse",
+  "ambiance": "vert",
+  "marque": "Verdure & Co",
+  "taille": 33416
+ },
+ {
+  "id": "petsitter",
+  "type": "exemple",
+  "nom": "Garde d’animaux, pension, toilettage",
+  "mots": "pet animal chien chat cheval toilettage veterin garde pension ferme",
+  "ambiance": "nature",
+  "marque": "La Ferme du Petit Pré",
+  "taille": 33982
+ },
+ {
+  "id": "photographe",
+  "type": "exemple",
+  "nom": "Photographe, vidéaste, créatif",
+  "mots": "photo video mariage film graph design studio artiste",
+  "ambiance": "sombre élégant",
+  "marque": "Atelier Lumière",
+  "taille": 28765
+ },
+ {
+  "id": "formation",
+  "type": "exemple",
+  "nom": "Formateur, page de vente d’une formation",
+  "mots": "format cours ecole enseign prof stage atelier ebook guide",
+  "ambiance": "moderne",
+  "marque": "Cuisine en 1 heure",
+  "taille": 23959
+ },
+ {
+  "id": "modele-vitrine",
+  "type": "modele",
+  "nom": "Vitrine simple (tous métiers)",
+  "mots": "vitrine",
+  "ambiance": "au choix",
+  "marque": "",
+  "taille": 10173
+ },
+ {
+  "id": "modele-rendez-vous",
+  "type": "modele",
+  "nom": "Prestations sur rendez-vous (coiffeur, thérapeute…)",
+  "mots": "coiffeur coiffure esthetique institut beaute barbier rendez-vous",
+  "ambiance": "au choix",
+  "marque": "",
+  "taille": 8308
+ },
+ {
+  "id": "modele-restaurant",
+  "type": "modele",
+  "nom": "Restaurant, boulangerie (modèle QuenTools)",
+  "mots": "boulang patiss",
+  "ambiance": "au choix",
+  "marque": "",
+  "taille": 7836
+ }
+]

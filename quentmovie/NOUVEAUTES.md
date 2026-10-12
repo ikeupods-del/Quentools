@@ -3,6 +3,14 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.15.0
+- Export plus rapide quand le montage a des fondus enchaînés ou des incrustations (piste vidéo 2) : seules ces parties sont réencodées, le reste des clips est recopié tel quel, sans perte. Le son des pistes audio est préparé en même temps. En cas de doute, QuentMovie repart sur l’ancienne méthode, toujours sûre.
+- Chapitrer la vidéo (Outils ou assistant « chapitre ma vidéo ») : l’IA écoute la vidéo, propose les parties avec leur titre, tu corriges, puis QuentMovie pose les repères, la liste pour YouTube et, si tu veux, le titre qui s’écrit à l’écran avec le bruit de clavier.
+- Clips TikTok (Outils ou assistant « crée des clips pour TikTok ») : l’IA trouve les meilleurs passages de la vidéo (accroche forte, idée complète) et en fait des vidéos verticales avec sous-titres TikTok et titre d’accroche, rangées dans tes exports.
+- L’assistant sait monter une vidéo seul : « monte ma vidéo » enchaîne les étapes utiles à ce montage (plans, blancs, sous-titres, volume, musique, transitions, chapitres).
+- Couper (S) coupe aussi le son détaché du clip ; le sous-titre, le titre et les calques suivent chacun leur morceau (avant, ils restaient décalés après une coupe).
+- Supprimer un clip retire son son détaché et recolle la suite : sons, incrustations et repères restent calés sur l’image.
+
 ## 1.14.0
 - Export beaucoup plus rapide sur ton MacBook Air : les vidéos sont lues par la puce vidéo du Mac (même les vidéos d'iPhone en 4K), plusieurs clips sont encodés en même temps, et les clips qui n'ont pas changé depuis le dernier export sont repris tels quels (seuls les clips modifiés sont recalculés). La fenêtre d'export indique le temps mis.
 - Nouveau choix d'export « Puce vidéo du Mac : qualité maximale » : image plus fine, presque aussi rapide. L'export ProRes (.mov) utilise le moteur ProRes de la puce.

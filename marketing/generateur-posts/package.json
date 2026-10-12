@@ -1,7 +1,7 @@
 {
   "name": "studio-posts",
   "productName": "Studio Posts",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Publications Instagram et TikTok aux couleurs du Parvis et de QuenTools",
   "main": "main.js",
   "private": true,
@@ -9,15 +9,19 @@
   "scripts": {
     "start": "electron .",
     "donnees": "node ../../tools/generateur-posts.js",
-    "dist": "node ../../tools/generateur-posts.js && electron-builder --mac dmg --arm64 --publish never"
+    "dist": "node ../../tools/synchro-ia-locale.js && node ../../tools/generateur-posts.js && electron-builder --mac dmg --arm64 --publish never"
   },
   "build": {
     "appId": "fr.quentools.studioposts",
     "productName": "Studio Posts",
     "files": [
       "main.js",
+      "preload.js",
       "index.html",
       "donnees.js",
+      "generation.js",
+      "ia-locale.js",
+      "ia-worker.js",
       "package.json"
     ],
     "afterPack": "scripts/adhoc-sign.js",
@@ -32,10 +36,17 @@
     },
     "directories": {
       "output": "dist"
-    }
+    },
+    "asarUnpack": [
+      "node_modules/node-llama-cpp/**",
+      "node_modules/@node-llama-cpp/**"
+    ]
   },
   "devDependencies": {
     "electron": "43.7.5",
     "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "node-llama-cpp": "3.21.1"
   }
 }

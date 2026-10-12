@@ -101,6 +101,9 @@ aside{background:var(--panneau);min-height:0;overflow:auto}
 .carte small{display:block;color:var(--pale);margin-top:3px}
 .carte .suppr{position:absolute;top:6px;right:6px;padding:2px 7px;background:rgba(0,0,0,.7);border-color:transparent}
 .vide{color:var(--pale);padding:30px;grid-column:1/-1;text-align:center}
+.gen{padding:16px 18px 20px;display:grid;gap:12px;overflow:auto}.gen label{display:grid;gap:5px;font-size:12px;color:var(--doux)}.gen select,.gen input[type=text]{background:var(--panneau-2);border:1px solid var(--ligne-2);border-radius:8px;padding:9px 10px;color:var(--texte);font-size:14px}
+.gligne{display:flex;gap:12px;align-items:end}.gligne>label{flex:1}.gen .gcase{display:flex;flex-direction:row;align-items:center;gap:8px;font-size:13px;flex:1;padding-bottom:9px}.gdoux{color:var(--doux);font-size:13px;margin:0}
+#gRes{display:grid;gap:8px}#gRes .ok{border:1px solid var(--ligne-2);background:var(--panneau-2);border-radius:10px;padding:12px;font-size:13px}#gRes .note{color:#e8c27a;font-size:12.5px;margin:4px 0 0}#gRes progress{width:100%}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#26262f;border:1px solid var(--ligne-2);padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;z-index:20}
 .toast.vu{opacity:1;transform:translateX(-50%)}
 #chargement{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--doux);z-index:30}
@@ -125,6 +128,7 @@ aside{background:var(--panneau);min-height:0;overflow:auto}
       <option value="916">9:16 · Story, Reels, TikTok</option>
     </select>
     <div class="espace"></div>
+    <button id="bGenerer" class="primaire" title="Choisir un thème : la publication est écrite et mise en page pour toi (G)">✨ Générer</button>
     <button id="bNouveau" title="Partir d'un modèle (N)">Nouveau</button>
     <button id="bBiblio" title="Mes publications et publications prêtes (B)">Bibliothèque</button>
     <button id="bJson" title="Enregistrer le projet dans un fichier">Enregistrer</button>
@@ -168,9 +172,26 @@ aside{background:var(--panneau);min-height:0;overflow:auto}
     <div class="grille" id="mGrille"></div>
   </div>
 </div>
+<div class="modal" id="modalGen" role="dialog" aria-modal="true" aria-labelledby="gTitre">
+  <div class="boite" style="width:min(680px,100%)">
+    <header><h2 id="gTitre">✨ Générer une publication</h2><div class="espace"></div><button id="gFermer">Fermer</button></header>
+    <div class="gen">
+      <p class="gdoux">Choisis la marque et le thème : la publication est écrite, mise en page et prête à exporter. Tu relis, puis tu publies.</p>
+      <div class="gligne"><label>Marque<select id="gMarque"><option value="parvis">Le Parvis</option><option value="quentools">QuenTools</option></select></label>
+        <label>Thème<select id="gTheme"></select></label></div>
+      <label id="gLSujet"><span id="gAide">Sujet</span><input type="text" id="gSujet" list="gSuggestions" autocomplete="off" placeholder="facultatif"><datalist id="gSuggestions"></datalist></label>
+      <div class="gligne"><label>Format<select id="gFormat"><option value="45">4:5 · Instagram</option><option value="11">1:1 · Carré</option><option value="916">9:16 · Story, Reels, TikTok</option></select></label>
+        <label class="gcase"><input type="checkbox" id="gExport"> Exporter tout de suite (.zip)</label></div>
+      <div id="gIA" class="gdoux"></div>
+      <div class="gligne"><button class="primaire" id="gGo" style="flex:1;padding:12px;font-size:15px">✨ Générer la publication</button></div>
+      <div id="gRes"></div>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script src="donnees.js"></script>
+<script src="generation.js"></script>
 <script>
 'use strict';
 /* ═══════════════════ 1. Outils ═══════════════════ */
@@ -908,15 +929,86 @@ function brancher() {
 window.studioAnnuler = retour => { if (/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName)) document.execCommand(retour ? 'redo' : 'undo'); else annuler(retour); };
 function aller(d) { const n = Math.max(0, Math.min(projet.slides.length - 1, sel + d)); if (n === sel) return; sel = n; afficherListe(); rendreTout(); afficherInspecteur(); }
 
+
+/* ═══════════════════ 12. Générer : la publication est écrite par l'IA locale, mise en page et prête à exporter ═══════════════════ */
+const DEJA = 'studioPosts:deja';
+const lireDeja = () => { try { return JSON.parse(localStorage.getItem(DEJA) || '[]'); } catch (e) { return []; } };
+const noterDeja = c => { if (!c) return; try { localStorage.setItem(DEJA, JSON.stringify([...new Set([...lireDeja(), c])].slice(-60))); } catch (e) { /* stockage indisponible */ } };
+const rendreHors = (p, i) => { const c = document.createElement('canvas'); c.width = W; c.height = FORMATS[p.format]; return rendre(c.getContext('2d'), p, i); };
+let genEnCours = false;
+function themesDe(m) { return (window.Generation ? Generation.THEMES[m] : []) || []; }
+function majGenTheme() {
+  const m = $('#gMarque').value, ths = themesDe(m);
+  $('#gTheme').innerHTML = ths.map(t => `<option value="${t.id}">${echap(t.nom)}</option>`).join('');
+  majGenSujet();
+}
+function majGenSujet() {
+  const t = themesDe($('#gMarque').value).find(x => x.id === $('#gTheme').value); if (!t) return;
+  $('#gAide').textContent = t.aide || 'Sujet';
+  const l = t.sujets || Object.values(t.secteurs || {});
+  $('#gSuggestions').innerHTML = l.map(x => `<option value="${echap(x)}">`).join('');
+  $('#gSujet').placeholder = l.length ? `ex. : ${l.slice(0, 3).join(', ')}` : 'facultatif';
+}
+async function etatIA() {
+  const z = $('#gIA');
+  if (!window.studioIA) { z.textContent = 'IA locale disponible dans l’application Mac : ici, une publication déjà écrite est proposée.'; return { installee: false }; }
+  const e = await window.studioIA.etat();
+  if (e.installee) z.textContent = '🧠 IA locale prête : le texte est écrit sur ton Mac, sans internet.';
+  else { z.innerHTML = `IA locale non installée (téléchargement unique d’environ ${(e.mo / 1000).toFixed(1)} Go, partagé avec QuentMovie). Sans elle, une publication déjà écrite est proposée. <button class="mini" id="gInstaller">Installer l’IA</button>`; $('#gInstaller').onclick = installerIA; }
+  return e;
+}
+async function installerIA() {
+  const z = $('#gIA'); z.innerHTML = '<progress max="100" value="0"></progress> Téléchargement de l’IA locale…';
+  try { await window.studioIA.installer(p => { const b = z.querySelector('progress'); if (b) b.value = Math.round(p * 100); }); toast('IA locale installée'); }
+  catch (e) { z.textContent = 'Installation impossible : ' + e.message; return; }
+  etatIA();
+}
+function ouvrirGenerer() {
+  if (!window.Generation) return toast('Génération indisponible');
+  $('#gMarque').value = projet.marque; $('#gFormat').value = projet.format; majGenTheme(); $('#gRes').innerHTML = ''; $('#modalGen').classList.add('ouvert'); etatIA(); $('#gSujet').focus();
+}
+function fermerGenerer() { $('#modalGen').classList.remove('ouvert'); }
+async function genererPublication(options = {}) {
+  if (genEnCours) return null; genEnCours = true;
+  const go = $('#gGo'), res = $('#gRes'); if (go) go.disabled = true;
+  const marque = options.marque || $('#gMarque').value, themeId = options.themeId || $('#gTheme').value, sujet = options.sujet ?? $('#gSujet').value, format = options.format || $('#gFormat').value;
+  try {
+    const e = window.studioIA ? await window.studioIA.etat() : { installee: false };
+    if (res) res.innerHTML = `<progress></progress><div class="gdoux">${e.installee || options.ecrire ? 'L’IA écrit la publication…' : 'Préparation de la publication…'}</div>`;
+    const deps = { ecrire: options.ecrire || (window.studioIA ? m => window.studioIA.ecrire(m) : null), ia: !options.sansIA && !!(options.ecrire || e.installee), bibliotheque: window.BIBLIOTHEQUE, exemplesQT: window.EXEMPLES_QT || [], captures: window.CAPTURES || {},
+      hashtags: HASHTAGS, ctaParvis: CTA_PARVIS };
+    const p = await Generation.generer({ marque, themeId, sujet, format, deja: lireDeja() }, deps);
+    const n = nouveauProjet({ nom: p.nom, marque, format, legende: p.legende, slides: p.slides }, marque); n.points = true;
+    const reduit = Generation.ajuster(n, rendreHors);
+    noterDeja(p.cle);
+    etat.projets.unshift(n); ouvrirProjet(n); enregistrer();
+    const trop = n.slides.map((s, i) => rendreHors(n, i).trop).filter(Boolean).length;
+    const alertes = alertesContenu();
+    if (res) res.innerHTML = `<div class="ok"><b>✅ Publication prête : ${echap(n.nom)}</b><br>${n.slides.length} image${n.slides.length > 1 ? 's' : ''} · ${p.source === 'ia' ? 'écrite par l’IA locale' : 'publication déjà écrite'}${reduit ? ' · textes raccourcis pour tenir dans l’image' : ''}
+      ${[...(p.notes || []), ...alertes, ...(trop ? [`${trop} image(s) avec un texte trop long`] : [])].map(x => `<p class="note">⚠ ${echap(x)}</p>`).join('')}
+      <div class="gligne" style="margin-top:10px"><button class="primaire" id="gVoir">Voir la publication</button><button id="gZip">Exporter (.zip)</button><button id="gAutre">Une autre</button></div></div>`;
+    if (res) { $('#gVoir').onclick = fermerGenerer; $('#gZip').onclick = exporterCarrousel; $('#gAutre').onclick = () => { $('#gRes').innerHTML = ''; genererPublication(); }; }
+    if ($('#gExport') && $('#gExport').checked && !options.sansExport) await exporterCarrousel();
+    return { projet: n, source: p.source, notes: p.notes || [], alertes, trop, reduit };
+  } catch (e) { if (res) res.innerHTML = `<div class="ok" style="color:#ff9b9b">${echap(e.message)}</div>`; return { erreur: e.message }; }
+  finally { genEnCours = false; if (go) go.disabled = false; }
+}
+function brancherGenerer() {
+  $('#bGenerer').onclick = ouvrirGenerer; $('#gFermer').onclick = fermerGenerer; $('#modalGen').onclick = e => { if (e.target.id === 'modalGen') fermerGenerer(); };
+  $('#gMarque').onchange = majGenTheme; $('#gTheme').onchange = majGenSujet; $('#gGo').onclick = () => genererPublication();
+  $('#gSujet').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); genererPublication(); } };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') fermerGenerer(); else if (e.key.toLowerCase() === 'g' && !e.metaKey && !e.ctrlKey && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) ouvrirGenerer(); });
+}
+
 (async () => {
   try { await chargerPolices(); }
   catch (e) { $('#chargement').textContent = 'Polices introuvables : relancer « node tools/generateur-posts.js ».'; return; }
-  charger(); brancher(); toutAfficher();
+  charger(); brancher(); brancherGenerer(); toutAfficher();
   $('#chargement').remove();
   // accès pour les contrôles automatiques (tools/verifier-generateur-posts.js)
   window.studio = { MODELES, FORMATS, get projet() { return projet; }, ouvrir: p => { const n = nouveauProjet(p, p.marque); etat.projets.unshift(n); ouvrirProjet(n); return n; }, rendre: (p, i) => { const c = document.createElement('canvas'); c.width = W; c.height = FORMATS[p.format]; return rendre(c.getContext('2d'), p, i); },
     planche: (p, e = 0.25) => { const H = FORMATS[p.format], n = p.slides.length, c = document.createElement('canvas'), x = c.getContext('2d'); c.width = Math.round(n * W * e + (n - 1) * 12); c.height = Math.round(H * e); x.fillStyle = '#888'; x.fillRect(0, 0, c.width, c.height); hors.width = W; hors.height = H; p.slides.forEach((s, i) => { rendre(ctxH, p, i); x.drawImage(hors, 0, 0, W, H, Math.round(i * (W * e + 12)), 0, Math.round(W * e), Math.round(H * e)); }); hors.height = FORMATS[projet.format]; return c.toDataURL('image/png'); },
-    alertes: alertesContenu };
+    alertes: alertesContenu, generer: genererPublication };
 })();
 </script>
 </body>
