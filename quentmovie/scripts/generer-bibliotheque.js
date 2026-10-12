@@ -333,6 +333,24 @@ function finFermeture() { const b = buf(3.4); for (const t of [0, 0.9]) { mix(b,
 function finAlerte() { const b = buf(1.1); [[880, 0], [1175, 0.14], [1568, 0.28]].forEach(([f, t]) => mix(b, fade(tone(f, 0.22, 0.08, 'sine', 0.003), 0.003, 0.05), t, 0.5)); mix(b, hp(noise(0.02, 0.005), 3000), 0.28, 0.3); return reverb(b, 0.15, 0.8); }
 function finGraphique() { const b = buf(1.9); for (let k = 0; k < 22; k++) mix(b, fade(tone(600 + k * 70 + (k % 3) * 40, 0.05, 0.015, 'sine', 0.001), 0.001, 0.015), 0.25 + k * 0.065, 0.28); mix(b, whoosh(0.5, 400, 3000, 0.4), 0.1, 0.3); mix(b, cloche(1760, 1, 0.3), 1.72, 0.45); return b; }
 function finChiffres() { R = rng(66); const b = buf(2); for (let k = 0; k < 28; k++) mix(b, fade(tone(1800 + rnd() * 900, 0.03, 0.01, 'square', 0.001), 0.001, 0.01), 0.1 + k * 0.058 * (1 - k * 0.012), 0.14 + 0.01 * k); mix(b, cloche(2349, 1, 0.3), 1.85, 0.5); return lp(b, 7000); }
+// ---- Pack « sound design » : passages, montées, impacts, nappes et sons d'interface, superposés pour un rendu plus plein ----
+function sdWhoosh(sec, f0, f1, air = 0.3, sub = 0) { const b = buf(sec + 0.3); mix(b, whoosh(sec, f0, f1, 1), 0, 0.85); mix(b, hp(noise(sec * 0.8, sec * 0.5), 6500), sec * 0.15, air * 0.25); if (sub) mix(b, tone(t => 70 - 30 * t / 0.5, 0.5, 0.2, 'sine', 0.01), sec * 0.7, sub); return reverb(b, 0.12, 0.8); }
+function sdInverse() { const b = sdWhoosh(1.0, 300, 4500, 0.5); b.reverse(); return fade(b, 0.05, 0.02); }
+function sdRiser(sec) { const b = buf(sec + 0.2); mix(b, riser(sec, true), 0, 0.8); mix(b, fade(tone(t => 110 * Math.pow(8, t / sec), sec, 0, 'saw', 0.1), 0.2, 0.05), 0, 0.12); mix(b, hp(noise(sec, 0), 4000), 0, 0.08); return b; }
+function sdImpactSec() { const b = buf(0.9); mix(b, lp(noise(0.25, 0.05), 900), 0, 0.9); mix(b, tone(t => 140 * Math.exp(-t * 18) + 55, 0.5, 0.1, 'sine', 0.001), 0, 0.9); mix(b, hp(noise(0.03, 0.008), 2500), 0, 0.5); return b; }
+function sdMetal() { const b = buf(2.4); [[220, 0.5], [347, 0.4], [512, 0.35], [731, 0.3], [1120, 0.25], [1670, 0.2]].forEach(([f, g]) => mix(b, tone(f, 2.2, 0.55, 'sine', 0.001), 0, g * 0.5)); mix(b, hp(noise(0.08, 0.02), 3000), 0, 0.6); return reverb(b, 0.25, 1.2); }
+function sdBraam() { const b = buf(3); const bal = f => lp(tone(f, 2.8, 0, 'saw', 0.15), 700); [55, 55.6, 82.4, 110, 164.8].forEach((f, i) => mix(b, bal(f), 0, 0.22)); mix(b, impact(1.6, 90, 30, 1.2), 0, 0.5); for (let i = 0; i < b.length; i++) b[i] *= Math.min(1, i / SR / 0.12) * Math.exp(-i / SR / 1.5); return reverb(b, 0.3, 1.5); }
+function sdTension() { const b = buf(2.2); mix(b, cuivres([220, 233.1, 329.6, 349.2], 1.8, 0.9), 0, 0.9); mix(b, impact(1.0, 100, 35, 0.8), 0, 0.5); return reverb(b, 0.35, 1.4); }
+function sdPouls() { const b = buf(5); mix(b, lp(tone(48, 5, 0, 'saw', 1.2), 180), 0, 0.3); for (let k = 0; k < 8; k++) { const t = k * 0.62; mix(b, tone(62, 0.18, 0.06, 'sine', 0.003), t, 0.8); mix(b, tone(54, 0.18, 0.06, 'sine', 0.003), t + 0.2, 0.55); } return fade(b, 0.4, 0.5); }
+function sdStutter() { R = rng(33); const b = buf(0.6); for (let k = 0; k < 9; k++) mix(b, fade(tone(300 + rnd() * 1800, 0.035, 0, 'square', 0.001), 0.001, 0.005), k * 0.05 + (k > 5 ? 0.08 : 0), 0.4); mix(b, hp(noise(0.1, 0.03), 2500), 0.45, 0.4); return b; }
+function sdConfirm() { const b = buf(0.6); mix(b, fade(tone(988, 0.12, 0.05, 'sine', 0.002), 0.002, 0.03), 0, 0.5); mix(b, fade(tone(1319, 0.3, 0.1, 'sine', 0.002), 0.002, 0.08), 0.1, 0.5); return b; }
+function sdRefus() { const b = buf(0.6); mix(b, fade(tone(330, 0.16, 0.08, 'tri', 0.002), 0.002, 0.04), 0, 0.5); mix(b, fade(tone(247, 0.3, 0.12, 'tri', 0.002), 0.002, 0.08), 0.15, 0.5); return b; }
+function sdToggle(on) { const b = buf(0.3); mix(b, fade(tone(on ? 1400 : 900, 0.05, 0.015, 'sine', 0.001), 0.001, 0.01), 0, 0.5); mix(b, fade(tone(on ? 2100 : 600, 0.07, 0.02, 'sine', 0.001), 0.001, 0.02), 0.045, 0.4); mix(b, hp(noise(0.008, 0.002), 3000), 0, 0.3); return b; }
+function sdNotif() { const b = buf(1.5); mix(b, cloche(1568, 1.3, 0.5), 0, 0.6); mix(b, cloche(2093, 1.1, 0.35), 0.12, 0.45); return reverb(b, 0.2, 1); }
+function sdFocus() { const b = buf(0.9); mix(b, lp(tone(t => 800 + 400 * Math.sin(t * 40), 0.3, 0, 'saw', 0.01), 3000), 0, 0.12); mix(b, fade(tone(1850, 0.09, 0, 'sine', 0.002), 0.002, 0.02), 0.34, 0.5); mix(b, fade(tone(1850, 0.09, 0, 'sine', 0.002), 0.002, 0.02), 0.5, 0.5); return b; }
+function sdEcranOn() { const b = buf(1.4); mix(b, fade(tone(t => 500 + 6500 * Math.min(1, t / 0.5), 0.6, 0, 'sine', 0.01), 0.02, 0.2), 0, 0.25); mix(b, tone(60, 0.35, 0.1, 'sine', 0.003), 0.45, 0.7); mix(b, lp(noise(0.6, 0.3), 1500), 0.4, 0.15); return b; }
+function sdStingerPlus() { const b = buf(1.8); [523.3, 659.3, 784, 1046.5, 1318.5].forEach((f, i) => mix(b, pincee(f, 1.2, 0.996), i * 0.08, 0.5)); mix(b, cloche(2093, 1.4, 0.35), 0.4, 0.5); return reverb(b, 0.25, 1.1); }
+function sdStingerMoins() { const b = buf(1.8); [440, 392, 349.2, 293.7].forEach((f, i) => mix(b, pincee(f, 1.2, 0.995), i * 0.14, 0.5)); mix(b, lp(tone(110, 1.3, 0.6, 'saw', 0.01), 600), 0.3, 0.3); return reverb(b, 0.3, 1.2); }
 function sirene() { const b = fade(lp(tone(t => 900 + 300 * Math.sin(t * PI2 * 1.3), 2.6, 0, 'tri', 0.02), 2600), 0.02, 0.15); for (let i = 0; i < b.length; i++) b[i] *= 0.55 + 0.45 * Math.sin(i / SR * PI2 * 5); return b; }
 function joie() { // petit jingle joyeux
   const b = buf(1.8);
@@ -472,6 +490,29 @@ const SONS = [
   ['fin-alerte', 'Finance : alerte de marché', 'Tech et finance', finAlerte],
   ['fin-graphique', 'Finance : tracé d’un graphique', 'Tech et finance', finGraphique],
   ['fin-chiffres', 'Finance : chiffres qui défilent', 'Tech et finance', finChiffres],
+  ['sd-whoosh-leger', 'Sound design : passage léger', 'Sound design', () => sdWhoosh(0.45, 700, 5200, 0.6)],
+  ['sd-whoosh-moyen', 'Sound design : passage moyen', 'Sound design', () => sdWhoosh(0.8, 400, 5500, 0.7)],
+  ['sd-whoosh-lourd', 'Sound design : passage lourd (grave)', 'Sound design', () => sdWhoosh(1.3, 180, 3500, 0.5, 0.8)],
+  ['sd-whoosh-inverse', 'Sound design : passage inversé', 'Sound design', sdInverse],
+  ['sd-riser-court', 'Sound design : montée courte (1 s)', 'Sound design', () => sdRiser(1.2)],
+  ['sd-riser-moyen', 'Sound design : montée (3 s)', 'Sound design', () => sdRiser(3)],
+  ['sd-riser-long', 'Sound design : montée longue (6 s)', 'Sound design', () => sdRiser(6)],
+  ['sd-impact-sec', 'Sound design : impact sec', 'Sound design', sdImpactSec],
+  ['sd-impact-boom', 'Sound design : impact et grave qui résonne', 'Sound design', () => reverb(impact(2.2, 110, 32, 1.6), 0.3, 1.4)],
+  ['sd-impact-metal', 'Sound design : impact métallique', 'Sound design', sdMetal],
+  ['sd-braam', 'Sound design : braam de cinéma', 'Sound design', sdBraam],
+  ['sd-accord-tension', 'Sound design : accord de tension', 'Sound design', sdTension],
+  ['sd-pouls', 'Sound design : battement sourd (5 s)', 'Sound design', sdPouls],
+  ['sd-glitch-court', 'Sound design : bégaiement numérique', 'Sound design', sdStutter],
+  ['sd-ui-confirmer', 'Interface : confirmation', 'Sound design', sdConfirm],
+  ['sd-ui-refuser', 'Interface : refus', 'Sound design', sdRefus],
+  ['sd-ui-activer', 'Interface : activer', 'Sound design', () => sdToggle(true)],
+  ['sd-ui-desactiver', 'Interface : désactiver', 'Sound design', () => sdToggle(false)],
+  ['sd-ui-notification', 'Interface : notification cristalline', 'Sound design', sdNotif],
+  ['sd-camera-focus', 'Caméra : mise au point', 'Sound design', sdFocus],
+  ['sd-ecran-allume', 'Écran qui s’allume', 'Sound design', sdEcranOn],
+  ['sd-stinger-positif', 'Jingle positif (1,8 s)', 'Sound design', sdStingerPlus],
+  ['sd-stinger-negatif', 'Jingle négatif (1,8 s)', 'Sound design', sdStingerMoins],
   ['generique-info', 'Générique d’édition spéciale', 'Télé et spectacle', genereriqueInfo],
   ['sirene', 'Sirène d’alerte', 'Télé et spectacle', sirene]
 ];
@@ -644,6 +685,49 @@ function musSynthwave() {
   }
   return finish(S, 0.85);
 }
+function musCorporate() {
+  R = rng(201); const S = Song(52, 108), st = S.step, nb = Math.floor(S.sec / (16 * st));
+  const prog = [[60, 64, 67], [55, 59, 62], [57, 60, 64], [53, 57, 60]], bas = [36, 43, 45, 41];
+  for (let b = 0; b < nb; b++) {
+    const t0 = b * 16 * st, ch = prog[b % 4];
+    for (const k of [0, 4, 8, 12]) put(S, kick(), t0 + k * st, 0.55);
+    for (const k of [4, 12]) put(S, clap(), t0 + k * st, 0.3);
+    for (let k = 0; k < 16; k += 2) put(S, hat(), t0 + k * st, 0.11, 0.3);
+    for (let k = 0; k < 16; k++) if (k % 2 === 0 || k % 4 === 3) put(S, pluck(ch[(k >> 1) % 3] + 12 + (k > 7 ? 12 : 0), 0.5, 0.18), t0 + k * st, 0.3, k % 4 ? 0.3 : -0.3);
+    put(S, bassNote(bas[b % 4], 16 * st * 0.9), t0, 0.5);
+    put(S, pad(ch.map(m => m + 0), 16 * st, 1400), t0, 0.22);
+  }
+  for (const ch of [S.L, S.R]) reverb(ch, 0.12, 1);
+  return finish(S, 0.85);
+}
+function musDocumentaire() {
+  R = rng(202); const S = Song(52, 76), st = S.step, nb = Math.floor(S.sec / (16 * st));
+  const prog = [[57, 60, 64, 67], [53, 57, 60, 64], [55, 59, 62, 67], [52, 55, 59, 64]];
+  for (let b = 0; b < nb; b++) {
+    const t0 = b * 16 * st, ch = prog[b % 4];
+    put(S, pad(ch.map(m => m - 12), 16 * st, 1100), t0, 0.5);
+    put(S, pad(ch, 16 * st, 2200), t0, 0.22);
+    for (const [k, i] of [[0, 0], [3, 2], [6, 3], [8, 1], [11, 2], [14, 0]]) put(S, epiano(ch[i] + 12, 1.6), t0 + k * st, 0.32, k % 2 ? 0.3 : -0.3);
+    if (b % 2 === 0) put(S, tone(mtof(ch[0] - 24), 2.4, 1.2, 'sine', 0.02), t0, 0.5);
+  }
+  for (const ch of [S.L, S.R]) reverb(ch, 0.3, 1.8);
+  return finish(S, 0.8);
+}
+function musPodcast() {
+  R = rng(203); const S = Song(52, 98), st = S.step, nb = Math.floor(S.sec / (16 * st));
+  const prog = [[62, 65, 69, 72], [55, 59, 62, 65], [60, 64, 67, 71], [57, 60, 64, 67]], bas = [38, 31, 36, 33];
+  for (let b = 0; b < nb; b++) {
+    const t0 = b * 16 * st, ch = prog[b % 4];
+    for (const k of [0, 6, 10]) put(S, kick(), t0 + k * st, 0.5);
+    for (const k of [4, 12]) put(S, snare(), t0 + k * st, 0.28);
+    for (let k = 0; k < 16; k += 2) put(S, hat(k === 14), t0 + (k + (k % 4 ? 0.3 : 0)) * st, 0.1, 0.3);
+    put(S, bassNote(bas[b % 4], 6 * st), t0, 0.5); put(S, bassNote(bas[b % 4], 4 * st), t0 + 8 * st, 0.4);
+    ch.forEach((m, i) => put(S, epiano(m, 2.4), t0 + i * 0.012, 0.22, i % 2 ? 0.25 : -0.25));
+    if (b % 2) for (const [k, i] of [[2, 3], [5, 2], [9, 3], [13, 1]]) put(S, pluck(ch[i] + 12, 0.6, 0.2), t0 + k * st, 0.25);
+  }
+  for (const ch of [S.L, S.R]) reverb(ch, 0.15, 1.1);
+  return finish(S, 0.85);
+}
 const MUSIQUES = [
   ['pulsation-electro', 'Pulsation électro (124 bpm)', 'Dynamique', musElectro],
   ['reportage-info', 'Reportage info (100 bpm)', 'Dynamique', musReportage],
@@ -656,7 +740,10 @@ const MUSIQUES = [
   ['cinema-epique', 'Cinéma épique (84 bpm)', 'Dramatique', musEpique],
   ['trap-moderne', 'Trap moderne (140 bpm)', 'Dynamique', musTrap],
   ['house-groove', 'House groove (122 bpm)', 'Dynamique', musHouse],
-  ['synthwave-80', 'Synthwave années 80 (100 bpm)', 'Dynamique', musSynthwave]
+  ['synthwave-80', 'Synthwave années 80 (100 bpm)', 'Dynamique', musSynthwave],
+  ['corporate-lumineux', 'Corporate lumineux (108 bpm)', 'Dynamique', musCorporate],
+  ['documentaire-doux', 'Documentaire doux (76 bpm)', 'Calme', musDocumentaire],
+  ['theme-podcast', 'Thème de podcast (98 bpm)', 'Calme', musPodcast]
 ];
 
 // ---------- Écriture ----------
@@ -681,8 +768,13 @@ function ajouter() { // node scripts/generer-bibliotheque.js --ajouter : génèr
     fade(b, 0.002, 0.03); encode(b, b, path.join(OUT, 'sons', id + '.mp3'), 128);
     index.sons = index.sons.filter(x => x.id !== id); index.sons.push({ id, nom, cat, file: `sons/${id}.mp3`, duree: +(b.length / SR).toFixed(2) }); n++;
   }
+  for (const [id, nom, cat, make] of MUSIQUES) {
+    if (index.musiques.some(x => x.id === id) && fs.existsSync(path.join(OUT, 'musiques', id + '.mp3'))) continue;
+    const s = make(); encode(s.L, s.R, path.join(OUT, 'musiques', id + '.mp3'), 160);
+    index.musiques = index.musiques.filter(x => x.id !== id); index.musiques.push({ id, nom, cat, file: `musiques/${id}.mp3`, duree: +(s.L.length / SR).toFixed(1) }); n++;
+  }
   fs.writeFileSync(path.join(OUT, 'index.json'), JSON.stringify(index, null, 1));
-  console.log(`${n} bruitages ajoutés`);
+  console.log(`${n} bruitages et musiques ajoutés`);
 }
 function main() {
   // les autres listes (stickers, looks, calques, cadres : scripts Python) sont conservées

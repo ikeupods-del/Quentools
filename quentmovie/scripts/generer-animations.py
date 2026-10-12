@@ -11,7 +11,7 @@ import os
 import sys
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 ici = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location('fonds', os.path.join(ici, 'generer-fonds.py'))
@@ -44,11 +44,18 @@ def large(w=1920, h=540):
 
 
 def out(im, w=E, h=E, ombre=True):
-    """Réduction (anti-crénelage) puis ombre portée franche (jamais de flou vers le vert : le détourage resterait verdâtre)."""
+    """Réduction (anti-crénelage), contour blanc façon autocollant puis ombre portée franche (jamais de flou vers le vert : le détourage resterait verdâtre)."""
     r = im.resize((w, h), Image.LANCZOS)
     if not ombre:
         return r
     a = np.asarray(r).astype(np.int16); plein = (np.abs(a - np.array(VERT)).sum(-1) > 120)
+    if w == h:  # icônes carrées : liseré blanc de 7 px autour de la forme
+        rayon = max(3, w // 150)
+        petit = Image.fromarray((plein * 255).astype(np.uint8)).resize((w // 2, h // 2), Image.BILINEAR).filter(ImageFilter.GaussianBlur(rayon * 0.31))  # dilatation arrondie, calculée à demi-taille (rapide)
+        gros = np.asarray(petit.resize((w, h), Image.BILINEAR)) > 22
+        anneau = gros & ~plein
+        a[anneau] = (252, 252, 255)
+        plein = gros
     dx, dy = max(4, w // 150), max(6, h // 100)
     ombre_m = np.zeros_like(plein); ombre_m[dy:, dx:] = plein[:-dy, :-dx]
     libre = np.abs(a - np.array(VERT)).sum(-1) <= 60
@@ -493,14 +500,14 @@ def v_applaudir(t):
 
 # (id, nom, catégorie, durée, générateur, largeur, hauteur, touche, position x, y, taille %, bruit, nom du bruit)
 ANIMS = [
-    ('commenter', 'Commenter', 'Réseaux', 2.8, v_commenter, E, E, 'c', 50, 55, 50, 'pop'),
-    ('partager', 'Partager', 'Réseaux', 2.6, v_partager, E, E, 's', 50, 55, 48, 'swish-rapide'),
-    ('enregistrer', 'Enregistrer', 'Réseaux', 2.8, v_enregistrer, E, E, 'z', 50, 55, 48, 'pop'),
+    ('commenter', 'Commenter', 'Réseaux', 2.8, v_commenter, E, E, 'c', 50, 55, 50, 'message'),
+    ('partager', 'Partager', 'Réseaux', 2.6, v_partager, E, E, 's', 50, 55, 48, 'tr-pop'),
+    ('enregistrer', 'Enregistrer', 'Réseaux', 2.8, v_enregistrer, E, E, 'z', 50, 55, 48, 'vl-clic'),
     ('suivre', 'Suis-moi', 'Réseaux', 3.4, v_suivre, E, E, 'v', 50, 78, 50, 'souris-clic'),
     ('breaking', 'BREAKING NEWS (générique)', 'Infos', 7.6, v_breaking, 1920, 1080, 'b', 50, 50, 100, 'generique-info'),
     ('exclusif', 'Exclusif', 'Infos', 2.8, v_exclusif, E, E, 'x', 50, 45, 48, 'tada'),
-    ('a-suivre', 'À suivre…', 'Infos', 3.2, v_a_suivre, 1920, 540, 'q', 50, 80, 80, 'whoosh-court'),
-    ('alerte', 'Attention', 'Infos', 3.0, v_alerte, E, E, 'a', 50, 50, 48, 'sirene'),
+    ('a-suivre', 'À suivre…', 'Infos', 3.2, v_a_suivre, 1920, 540, 'q', 50, 80, 80, 'tr-whoosh-long'),
+    ('alerte', 'Attention', 'Infos', 3.0, v_alerte, E, E, 'a', 50, 50, 48, 'fin-alerte'),
     ('reflechi', 'Réfléchi', 'Humeurs', 3.0, v_reflechi, E, E, 'g', 50, 50, 46, 'bloup'),
     ('cool', 'Cool', 'Humeurs', 2.8, v_cool, E, E, 'd', 50, 50, 46, 'swish-rapide'),
     ('riche', 'Riche', 'Argent', 3.4, v_riche, E, E, 'Maj+h', 50, 50, 70, 'riche'),
@@ -510,7 +517,7 @@ ANIMS = [
     ('jackpot', 'Jackpot', 'Argent', 3.8, v_jackpot, E, E, 'Maj+i', 50, 50, 62, 'jackpot'),
     ('valide', 'Validé ✓', 'Divers', 2.2, v_valide, E, E, 'Maj+v', 50, 50, 36, 'bonne-reponse'),
     ('erreur', 'Faux ✗', 'Divers', 2.2, v_erreur, E, E, 'Maj+x', 50, 50, 36, 'mauvaise-reponse'),
-    ('question', 'Question', 'Divers', 2.6, v_question, E, E, 'Maj+z', 50, 50, 40, 'bloup'),
+    ('question', 'Question', 'Divers', 2.6, v_question, E, E, 'Maj+z', 50, 50, 40, 'pod-ping'),
     ('top1', 'N°1', 'Divers', 3.0, v_top1, E, E, 'Maj+w', 50, 50, 42, 'fanfare'),
     ('applaudir', 'Applaudir', 'Divers', 3.0, v_applaudir, E, E, 'Maj+s', 50, 55, 40, 'applaudissements-courts'),
 ]

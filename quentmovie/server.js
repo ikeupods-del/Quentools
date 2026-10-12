@@ -40,7 +40,7 @@ const fontFile = id => ((FONTS_OK.find(x => x.id === id) || FONTS_OK[0] || {}).f
 // Styles de sous-titres des packs : police, capitales, taille relative, place, et calques de texte (couleur, bord, décalage)
 const SUBDEF = {
   hormozi: { font: 'impact', up: 1, k: 1.25, y: 'h*0.60-text_h/2', layers: (s, k) => [{ col: ['white', '0xffd400', 'white', '0x19d38a'][k % 4], ex: `:borderw=${Math.round(s / 5)}:bordercolor=black:shadowx=${Math.round(s / 12)}:shadowy=${Math.round(s / 10)}:shadowcolor=black@0.6` }] },
-  neon: { font: 'arialblack', up: 1, k: 1, y: 'h*0.64-text_h/2', layers: s => [{ col: '0x19d3ff@0.2', ex: `:borderw=${Math.round(s / 3)}:bordercolor=0x19d3ff@0.2` }, { col: '0x19d3ff@0.45', ex: `:borderw=${Math.round(s / 6)}:bordercolor=0x19d3ff@0.45` }, { col: 'white', ex: '' }] },
+  neon: { font: 'arialblack', up: 1, k: 1, y: 'h*0.64-text_h/2', layers: s => [{ col: '0x19d3ff@0.35', ex: `:borderw=${Math.round(s / 4)}:bordercolor=0x19d3ff@0.3` }, { col: 'white', ex: '' }] },
   boite: { font: 'arialblack', up: 1, k: 1, y: 'h*0.68-text_h/2', layers: s => [{ col: 'black', ex: `:box=1:boxcolor=white@0.96:boxborderw=${Math.round(s / 3)}` }] },
   rouge: { font: 'arialblack', up: 1, k: 1, y: 'h*0.74-text_h/2', layers: s => [{ col: 'white', ex: `:box=1:boxcolor=0xd4001a@0.97:boxborderw=${Math.round(s / 3)}` }] },
   pop: { font: 'markerfelt', up: 0, k: 1.1, y: 'h*0.64-text_h/2', layers: s => [{ col: '0xffe600', ex: `:borderw=${Math.round(s / 6)}:bordercolor=black` }] },
@@ -490,10 +490,13 @@ function buildClip(c, P, o = {}) {
       if (c.textStyle === 'bandeau') style = `:box=1:boxcolor=black@0.45:boxborderw=${Math.round(size / 3)}`;
       else if (c.textStyle === 'contour') style = `:borderw=${Math.max(2, Math.round(size / 12))}:bordercolor=black`;
       else if (c.textStyle === 'ombre') style = `:shadowx=${Math.max(2, Math.round(size / 18))}:shadowy=${Math.max(2, Math.round(size / 18))}:shadowcolor=black@0.7`;
-      const yexp = anim === 'glisse' ? `${base}+(1-${ap})*${Math.round(H * 0.05)}` : base;
-      const alpha = anim === 'aucune' ? '' : `:alpha='${ap}'`;
+      const dt0 = `(${T}-${S})`, m = `(min(1,max(0,${dt0}/0.6))-1)`, back = `(1+2.4*${m}*${m}*${m}+1.4*${m}*${m})`; // arrivée avec léger dépassement
+      const yexp = anim === 'glisse' ? `${base}+(1-${ap})*${Math.round(H * 0.05)}` : anim === 'monte' ? `${base}+(1-${back})*${Math.round(H * 0.12)}` : anim === 'descend' ? `${base}-(1-${back})*${Math.round(H * 0.12)}`
+        : anim === 'rebond' ? `${base}-abs(sin(${dt0}*9))*${Math.round(H * 0.05)}*exp(-${dt0}*2.2)*gt(${dt0},0)` : base;
+      const xexp = anim === 'balayage' ? `(w-text_w)/2-(1-${back})*${Math.round(W * 0.6)}` : anim === 'tremble' ? `(w-text_w)/2+${Math.round(W * 0.014)}*sin(${T}*62)*(1-${ap})` : '(w-text_w)/2';
+      const alpha = anim === 'aucune' ? '' : anim === 'clignote' ? `:alpha='if(lt(mod(${T}*2.5,1),0.7),${ap},0.15*${ap})'` : anim === 'pulse' ? `:alpha='${ap}*(0.75+0.25*sin(${T}*4))'` : `:alpha='${ap}'`;
       const en = (S > 0 || D > 0) ? `:enable='between(${T},${S},${D > 0 ? S + D : 100000})'` : '';
-      lin(`drawtext=fontfile='${fontFile(c.textFont)}':textfile=${file}:expansion=none:fontsize=${size}:fontcolor=${hex(c.textColor || '#ffffff')}:x=(w-text_w)/2:y='${yexp}'${style}${alpha}${en}`);
+      lin(`drawtext=fontfile='${fontFile(c.textFont)}':textfile=${file}:expansion=none:fontsize=${size}:fontcolor=${hex(c.textColor || '#ffffff')}:x='${xexp}':y='${yexp}'${style}${alpha}${en}`);
     }
     if (c.titre && c.titre.preset && fontFile(c.titre.font) && filters.has('drawtext')) cur = reportage(c, ctx, f, cur, lab, o);
     const fondus = fonduxDe(c, eff);
@@ -822,7 +825,7 @@ function buildClip(c, P, o = {}) {
     } else if (id === 'courbe') { // pack Finance : courbe en aire qui se dessine de gauche à droite (l1 = valeurs séparées par des virgules, l2 = légende)
       const vals = l1.split(/[,;\s]+/).map(Number).filter(Number.isFinite).slice(0, 40);
       if (vals.length >= 2) {
-        const cw = 54 * u, ch = 24 * u, x0 = (W - cw) / 2, yb = H * 0.64, N = 72, mn = Math.min(...vals), mx = Math.max(...vals), span = Math.max(1e-9, mx - mn);
+        const cw = 54 * u, ch = 24 * u, x0 = (W - cw) / 2, yb = H * 0.64, N = 48, mn = Math.min(...vals), mx = Math.max(...vals), span = Math.max(1e-9, mx - mn);
         const interp = k => { const p = k / (N - 1) * (vals.length - 1), i = Math.min(vals.length - 2, Math.floor(p)), fr = p - i; return vals[i] * (1 - fr) + vals[i + 1] * fr; };
         const hauteur = k => ((interp(k) - mn) / span * 0.88 + 0.08) * ch, up = vals[vals.length - 1] >= vals[0], col = up ? '0x19d38a' : '0xff4d5e', parts = [];
         box('0x0b0f1c@0.88', cw + 8 * u, ch + 15 * u, `${x0 - 4 * u}`, `${yb - ch - 9 * u}`);
