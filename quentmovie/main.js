@@ -48,10 +48,12 @@ async function demarrer() {
   session.defaultSession.setPermissionCheckHandler((wc, perm, origin) => perm === 'media' && local((origin || '') + '/'));
   // Partage d'écran du studio (« Afficher en direct ») : l'écran principal du Mac, sans le son
   // (macOS demande une fois l'autorisation « Enregistrement de l'écran »)
+  // Sur macOS 15 et plus, le sélecteur du système s'ouvre (choisir l'écran puis « Autoriser » : aucun réglage à modifier, comme pour la caméra) ;
+  // sur un macOS plus ancien, le premier écran est partagé et macOS affiche sa fenêtre d'autorisation « Enregistrement de l'écran »
   session.defaultSession.setDisplayMediaRequestHandler((req, repondre) => {
     if (!local((req.frame && req.frame.url) || (req.securityOrigin || '') + '/')) return repondre({});
     desktopCapturer.getSources({ types: ['screen'] }).then(src => repondre(src[0] ? { video: src[0] } : {})).catch(() => repondre({}));
-  });
+  }, { useSystemPicker: true });
 
   win = new BrowserWindow({
     width: 1480, height: 920, minWidth: 1100, minHeight: 700, backgroundColor: '#141518', title: 'QuentMovie',
