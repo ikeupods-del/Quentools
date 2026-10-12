@@ -817,6 +817,62 @@
    "duree": 2.6
   },
   {
+   "id": "tr-whoosh-long",
+   "nom": "Transition : grand whoosh",
+   "cat": "Transitions",
+   "file": "sons/tr-whoosh-long.mp3",
+   "duree": 1.2
+  },
+  {
+   "id": "tr-glitch",
+   "nom": "Transition : glitch numérique",
+   "cat": "Transitions",
+   "file": "sons/tr-glitch.mp3",
+   "duree": 0.9
+  },
+  {
+   "id": "tr-pop",
+   "nom": "Transition : swipe et pop",
+   "cat": "Transitions",
+   "file": "sons/tr-pop.mp3",
+   "duree": 0.5
+  },
+  {
+   "id": "tr-obturateur",
+   "nom": "Transition : obturateur photo",
+   "cat": "Transitions",
+   "file": "sons/tr-obturateur.mp3",
+   "duree": 0.8
+  },
+  {
+   "id": "tr-rewind",
+   "nom": "Transition : retour en arrière",
+   "cat": "Transitions",
+   "file": "sons/tr-rewind.mp3",
+   "duree": 1.2
+  },
+  {
+   "id": "tr-choc",
+   "nom": "Transition : onde de choc",
+   "cat": "Transitions",
+   "file": "sons/tr-choc.mp3",
+   "duree": 1.5
+  },
+  {
+   "id": "tr-ding",
+   "nom": "Transition : flash scintillant",
+   "cat": "Transitions",
+   "file": "sons/tr-ding.mp3",
+   "duree": 1.4
+  },
+  {
+   "id": "tr-cinema",
+   "nom": "Transition : montée et impact cinéma",
+   "cat": "Transitions",
+   "file": "sons/tr-cinema.mp3",
+   "duree": 2.4
+  },
+  {
    "id": "generique-info",
    "nom": "Générique d’édition spéciale",
    "cat": "Télé et spectacle",
@@ -1610,7 +1666,7 @@
    "cat": "Animations sur fond vert",
    "groupe": "Infos",
    "file": "fondvert/alerte.mp4",
-   "duree": 3.0,
+   "duree": 3,
    "w": 1080,
    "h": 1080,
    "touche": "a",
@@ -1625,7 +1681,7 @@
    "cat": "Animations sur fond vert",
    "groupe": "Humeurs",
    "file": "fondvert/reflechi.mp4",
-   "duree": 3.0,
+   "duree": 3,
    "w": 1080,
    "h": 1080,
    "touche": "g",
@@ -1685,7 +1741,7 @@
    "cat": "Animations sur fond vert",
    "groupe": "Argent",
    "file": "fondvert/hausse.mp4",
-   "duree": 3.0,
+   "duree": 3,
    "w": 1080,
    "h": 1080,
    "touche": "Maj+k",
@@ -1700,7 +1756,7 @@
    "cat": "Animations sur fond vert",
    "groupe": "Argent",
    "file": "fondvert/baisse.mp4",
-   "duree": 3.0,
+   "duree": 3,
    "w": 1080,
    "h": 1080,
    "touche": "Maj+u",
@@ -1775,7 +1831,7 @@
    "cat": "Animations sur fond vert",
    "groupe": "Divers",
    "file": "fondvert/top1.mp4",
-   "duree": 3.0,
+   "duree": 3,
    "w": 1080,
    "h": 1080,
    "touche": "Maj+w",
@@ -1790,7 +1846,7 @@
    "cat": "Animations sur fond vert",
    "groupe": "Divers",
    "file": "fondvert/applaudir.mp4",
-   "duree": 3.0,
+   "duree": 3,
    "w": 1080,
    "h": 1080,
    "touche": "Maj+s",

@@ -354,6 +354,102 @@ def fumee(duree, couleur=(235, 235, 240)):
     return img
 
 
+# ---- Calques de transition (à poser sur une coupe, mode écran : le noir disparaît, le pic cache la coupe au milieu) ----
+def _env(p, k=2.0):
+    return max(0.0, math.sin(math.pi * min(1.0, max(0.0, p)))) ** k
+
+
+def _vers(a, taille=TAILLE):
+    return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).resize((taille, taille), Image.BICUBIC)
+
+
+def t_flash(couleur, rayon=None):
+    base = 160
+    yy, xx = np.mgrid[0:base, 0:base] / base
+    d = np.sqrt((xx - 0.5) ** 2 + (yy - 0.5) ** 2)
+
+    def img(t, duree=1.0):
+        e = _env(t / duree, 2.4)
+        halo = np.clip(1.15 - d * (1.2 if rayon is None else rayon), 0, 1)
+        v = np.clip(e * (0.55 + 0.9 * halo), 0, 1)[..., None] * np.asarray(couleur)
+        return _vers(v)
+    return lambda duree: (lambda t: img(t, duree))
+
+
+def t_onde(duree):
+    base = 200
+    yy, xx = np.mgrid[0:base, 0:base] / base
+    d = np.sqrt((xx - 0.5) ** 2 + (yy - 0.5) ** 2)
+
+    def img(t):
+        p = t / duree
+        r = 0.05 + 0.85 * p
+        anneau = np.exp(-((d - r) ** 2) / (2 * (0.02 + 0.05 * p) ** 2)) * (1 - p) ** 0.6
+        flash = _env(p * 1.6, 3) * 0.55 * np.clip(1 - d * 1.4, 0, 1)
+        v = np.clip(anneau * 1.2 + flash, 0, 1)[..., None] * np.array([255, 235, 215])
+        return _vers(v)
+    return img
+
+
+def t_balayage(duree):
+    base = 200
+    yy, xx = np.mgrid[0:base, 0:base] / base
+
+    def img(t):
+        p = t / duree
+        x0 = -0.4 + 1.8 * p
+        bande = np.exp(-(((xx + yy * 0.35) - x0) ** 2) / (2 * 0.06 ** 2))
+        fond = _env(p, 2.2) * 0.45
+        v = np.clip(bande * 1.1 + fond, 0, 1)[..., None] * np.array([255, 240, 225])
+        return _vers(v)
+    return img
+
+
+def t_glitch(duree):
+    rng = np.random.default_rng(11)
+    base = 120
+    def img(t):
+        p = t / duree
+        e = _env(p, 1.2)
+        a = np.zeros((base, base, 3))
+        k = int(t * 30)
+        r = np.random.default_rng(k * 7 + 3)
+        for _ in range(int(4 + 26 * e)):
+            y0 = int(r.integers(0, base)); h = int(r.integers(1, 9)); x0 = int(r.integers(0, base // 2)); w = int(r.integers(base // 4, base))
+            col = [(255, 40, 80), (0, 230, 255), (255, 255, 255), (255, 0, 255)][int(r.integers(0, 4))]
+            a[y0:y0 + h, x0:x0 + w] = np.maximum(a[y0:y0 + h, x0:x0 + w], np.asarray(col) * (0.4 + 0.6 * r.random()))
+        a *= min(1, e * 1.6)
+        return _vers(a)
+    return img
+
+
+def t_eclats(duree):
+    base = 220
+    yy, xx = np.mgrid[0:base, 0:base] / base
+    ang = np.arctan2(yy - 0.5, xx - 0.5)
+    d = np.sqrt((xx - 0.5) ** 2 + (yy - 0.5) ** 2)
+    rayons = np.abs(np.sin(ang * 22 + 1.3)) ** 6 + 0.6 * np.abs(np.sin(ang * 57)) ** 14
+
+    def img(t):
+        p = t / duree
+        e = _env(p, 1.6)
+        v = np.clip(rayons * np.clip(d * 2.2 - 0.12, 0, 1) * e * 1.5 + e * 0.35 * np.clip(1 - d * 1.6, 0, 1), 0, 1)[..., None] * np.array([255, 250, 240])
+        return _vers(v)
+    return img
+
+
+def t_neige_tv(duree):
+    base = 160
+    def img(t):
+        p = t / duree
+        e = _env(p, 1.3)
+        r = np.random.default_rng(int(t * 30) * 13 + 5)
+        g = r.random((base, base))
+        g *= (r.random((base, 1)) > 0.12 * (1 - e))
+        return _vers((g * 255 * e)[..., None] * np.ones(3))
+    return img
+
+
 CALQUES = [
     # id, nom, catégorie, durée, générateur
     ('fuite-chaude', 'Fuite de lumière chaude', 'Lumière', 6, lambda d: taches([(255, 120, 30), (255, 60, 20), (255, 200, 80)], d)),
@@ -373,6 +469,14 @@ CALQUES = [
     ('vieux-film', 'Vieux film (poussière et rayures)', 'Rétro', 4, vieux_film),
     ('vhs', 'Parasites VHS', 'Rétro', 4, vhs),
     ('fumee', 'Fumée et brouillard', 'Rétro', 8, fumee),
+    ('tr-flash', 'Flash blanc', 'Transitions (sur la coupe)', 1, t_flash((255, 255, 255))),
+    ('tr-flash-chaud', 'Flash chaud', 'Transitions (sur la coupe)', 1, t_flash((255, 190, 110), 0.8)),
+    ('tr-flash-bleu', 'Flash bleu glacé', 'Transitions (sur la coupe)', 1, t_flash((140, 190, 255), 0.8)),
+    ('tr-onde', 'Onde de choc', 'Transitions (sur la coupe)', 1.2, t_onde),
+    ('tr-balayage', 'Balayage de lumière', 'Transitions (sur la coupe)', 1.2, t_balayage),
+    ('tr-glitch', 'Glitch RVB', 'Transitions (sur la coupe)', 1, t_glitch),
+    ('tr-eclats', 'Rayons d’impact', 'Transitions (sur la coupe)', 1, t_eclats),
+    ('tr-neige', 'Parasites télé', 'Transitions (sur la coupe)', 1, t_neige_tv),
 ]
 
 

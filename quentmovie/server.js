@@ -404,7 +404,7 @@ function buildClip(c, P, o = {}) {
       const S0 = clamp(num(ov.start, 0), 0, 3600), Dd = num(ov.dur, 0), E0 = Dd > 0 ? S0 + Dd : eff + 10;
       if (o.preview && !(t >= S0 && t < E0)) continue; // l'aperçu d'une image n'affiche que ce qui est visible à cet instant
       const isVid = ov.kind === 'video', ovf = mediaPath(orient(ov.file, W, H));
-      if (isVid) args.push(...(o.preview && t > S0 ? ['-ss', Math.min(t - S0, 1.8).toFixed(2)] : []), '-stream_loop', '-1', '-i', ovf); else args.push('-loop', '1', '-framerate', fps, '-i', ovf);
+      if (isVid) args.push(...(o.preview && t > S0 || num(ov.ss, 0) > 0 ? ['-ss', ((o.preview && t > S0 ? Math.min(t - S0, 1.8) : 0) + clamp(num(ov.ss, 0), 0, 600)).toFixed(2)] : []), '-stream_loop', '-1', '-i', ovf); else args.push('-loop', '1', '-framerate', fps, '-i', ovf);
       const idx = n++, id = lab(), sc = clamp(num(ov.scale, 30), 2, 150) / 100;
       const op = clamp(num(ov.opacity, 100), 5, 100) / 100, en = o.preview ? '' : `:enable='between(t,${S0},${E0})'`;
       // fond vert de l'élément (animations « fond vert ») : la couleur verte devient transparente
@@ -596,6 +596,39 @@ function buildClip(c, P, o = {}) {
       f.push(`[${cur}][${src}]overlay=x='(W-w)/2':y='${Math.round(H * 0.46 + 8 * u)}':shortest=1:format=auto:${en}[${out}]`); cur = out;
       text([dt(txt('a', l1), 6 * u, 'white', '(w-text_w)/2', `${Math.round(H * 0.46 - 2 * u)}`, `:alpha='${F}':borderw=3:bordercolor=black@0.7`),
         ...(l2 ? [dt(txt('b', l2), 3.2 * u, 'white', '(w-text_w)/2', `${Math.round(H * 0.46 + 12 * u)}`, `:alpha='${F}'`)] : [])]);
+    } else if (id === 'angle') { // pack Réseaux : bloc d'accent et bloc sombre décalés
+      const BX = `(-${W * 0.7}+(${4 * u}+${W * 0.7})*${F})`, y = H * 0.74;
+      box(acc, 0.9 * u, 11 * u, BX, y); box('0x0b0f1c@0.92', 52 * u, 11 * u, `${BX}+${0.9 * u}`, y);
+      text([dt(txt('a', l1), 4.4 * u, 'white', `${BX}+${3.4 * u}`, `${y + 1.2 * u}`),
+        ...(l2 ? [dt(txt('b', l2), 2.8 * u, acc, `${BX}+${3.4 * u}`, `${y + 6.6 * u}`)] : [])]);
+    } else if (id === 'pseudo') { // pack Réseaux : @pseudo dans une pastille
+      const BX = `(-${W * 0.5}+(${5 * u}+${W * 0.5})*${F})`;
+      text([dt(txt('a', l1), 4 * u, 'white', BX, `${H * 0.8}`, `:box=1:boxcolor=${acc}@0.95:boxborderw=${Math.round(1.6 * u)}`)]);
+    } else if (id === 'etiquette') { // pack Réseaux : étiquette qui pop au centre-haut
+      text([dt(txt('a', l1.toUpperCase()), 4.2 * u, 'white', '(w-text_w)/2', `${H * 0.12}`, `:alpha='${F}':box=1:boxcolor=${acc}@0.96:boxborderw=${Math.round(1.8 * u)}`)]);
+    } else if (id === 'double') { // pack Journal : deux barres de couleurs
+      const BX = `(-${W * 0.8}+(${3 * u}+${W * 0.8})*${F})`, y = H * 0.72;
+      box(acc, 62 * u, 6 * u, BX, y); box('0xffffff@0.96', 52 * u, 5.4 * u, `${BX}`, y + 6 * u);
+      text([dt(txt('a', l1), 3.8 * u, 'white', `${BX}+${2 * u}`, `${y + 1.1 * u}`),
+        ...(l2 ? [dt(txt('b', l2), 3 * u, '0x10131f', `${BX}+${2 * u}`, `${y + 7.1 * u}`)] : [])]);
+    } else if (id === 'cine-titre') { // pack Cinéma : bandes noires qui entrent et titre espacé
+      const hb = H * 0.12;
+      box('black', W, hb, '0', `-${hb}+${hb}*${F}`); box('black', W, hb, '0', `${H}-${hb}*${F}`);
+      text([dt(txt('a', l1.toUpperCase().split('').join(' ')), 5 * u, 'white', '(w-text_w)/2', `${H * 0.5 - 3 * u}`, `:alpha='${F}'`),
+        ...(l2 ? [dt(txt('b', l2), 2.6 * u, acc, '(w-text_w)/2', `${H * 0.5 + 4 * u}`, `:alpha='${F}'`)] : [])]);
+    } else if (id === 'glitch-titre') { // pack Glitch : trois copies décalées qui tremblent
+      const j = (k, a) => `(w-text_w)/2+${a}*${u}*sin(${T}*${k})*gt(mod(floor(${T}*9),3),0)`;
+      text([dt(txt('a', l1), 8 * u, '0xff2d55@0.85', j(41, 0.7), `${H * 0.45}+0.3*${u}`, `:alpha='${F}'`),
+        dt(txt('b', l1), 8 * u, '0x00e5ff@0.85', j(53, -0.7), `${H * 0.45}-0.3*${u}`, `:alpha='${F}'`),
+        dt(txt('c', l1), 8 * u, 'white', '(w-text_w)/2', `${H * 0.45}`, `:alpha='${F}'`)]);
+    } else if (id === 'impact-titre') { // pack Impact : gros titre sur boîte, léger tremblement
+      text([dt(txt('a', l1.toUpperCase()), 11 * u, 'white', `(w-text_w)/2+${0.35 * u}*sin(${T}*60)*(1-${F})`, `${H * 0.42}`, `:alpha='${F}':box=1:boxcolor=${acc}@0.97:boxborderw=${Math.round(2.4 * u)}`),
+        ...(l2 ? [dt(txt('b', l2.toUpperCase()), 3.4 * u, 'white', '(w-text_w)/2', `${H * 0.42 + 17 * u}`, `:alpha='${F}':borderw=2:bordercolor=black@0.7`)] : [])]);
+    } else if (id === 'cadre-titre') { // pack Doux : titre dans un cadre fin
+      const bw = W * 0.62, bh = 22 * u, x = `(W-${bw})/2`, y = `${H * 0.5 - 11 * u}`, e = Math.max(2, 0.3 * u);
+      box(acc, bw, e, x, y); box(acc, bw, e, x, `${H * 0.5 + 11 * u - e}`); box(acc, e, bh, x, y); box(acc, e, bh, `(W+${bw})/2-${e}`, y);
+      text([dt(txt('a', l1), 6 * u, 'white', '(w-text_w)/2', `${H * 0.5 - 5 * u}`, `:alpha='${F}'`),
+        ...(l2 ? [dt(txt('b', l2), 2.8 * u, acc, '(w-text_w)/2', `${H * 0.5 + 3.4 * u}`, `:alpha='${F}'`)] : [])]);
     } else if (id === 'progression') { // barre de progression de la séquence
       const bh = even(Math.max(4, 1.1 * u)), src = lab(), out = lab();
       f.push(`color=c=${acc}:s=${even(W)}x${bh}:r=${fps},format=rgba,scale=w='max(2,${even(W)}*min(1,${T}/${Math.max(0.5, eff).toFixed(2)}))':h=${bh}:eval=frame[${src}]`);
@@ -1011,7 +1044,7 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && p.startsWith('/exports/')) return serveFile(req, res, path.join(EXPORTS, safeName(decodeURIComponent(p.slice(9)))), true);
       if (req.method === 'GET' && p.startsWith('/apercu/')) return serveFile(req, res, path.join(APERCUS, safeName(decodeURIComponent(p.slice(8)))));
 
-      if (req.method === 'GET' && p === '/api/catalogue') return send(res, 200, { ...FX.catalogue(filters), version_app: VERSION_APP, font: !!FONT && filters.has('drawtext'), version, folder: BASE, bibliotheque: libIndex(), polices: FONTS_OK.map(x => ({ id: x.id, nom: x.nom })), sorties: sortiesDispo(), duck: filters.has('sidechaincompress'), hwenc: process.platform === 'darwin' && encoders.has('h264_videotoolbox') });
+      if (req.method === 'GET' && p === '/api/catalogue') return send(res, 200, { ...FX.catalogue(filters), packs: require('./packs').PACKS, version_app: VERSION_APP, font: !!FONT && filters.has('drawtext'), version, folder: BASE, bibliotheque: libIndex(), polices: FONTS_OK.map(x => ({ id: x.id, nom: x.nom })), sorties: sortiesDispo(), duck: filters.has('sidechaincompress'), hwenc: process.platform === 'darwin' && encoders.has('h264_videotoolbox') });
       // Mises à jour (application Mac uniquement)
       if (p === '/api/maj') return send(res, 200, opts.maj ? opts.maj.etat() : { etat: 'inactif', version: VERSION_APP });
       if (req.method === 'POST' && p === '/api/maj/verifier') return send(res, 200, opts.maj ? opts.maj.verifier() : { etat: 'inactif', version: VERSION_APP });

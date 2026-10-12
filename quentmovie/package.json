@@ -30,6 +30,7 @@
       "main.js",
       "server.js",
       "effects.js",
+      "packs.js",
       "ffmpeg-path.js",
       "maj.js",
       "memoire.js",

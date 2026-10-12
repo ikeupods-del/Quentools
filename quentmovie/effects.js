@@ -175,7 +175,15 @@ const EXPR = {
   revealright: `if(gte(X,W*(1-P)),${px('a', 'X-W*(1-P)', 'Y')},B)`,
   stores: 'if(lt(mod(Y,H/10)/(H/10),1-P),B,A)',
   damier: 'if(gt(1-P,0.25+0.5*mod(floor(X*8/W)+floor(Y*8/H),2)),B,A)',
-  rideau: 'if(lt(abs(X-W/2),W/2*(1-P)),B,A)'
+  rideau: 'if(lt(abs(X-W/2),W/2*(1-P)),B,A)',
+  voletsdiag: 'if(lt(mod(X+Y,W/5)/(W/5),1-P),B,A)',
+  barresv: 'if(lt(mod(X,W/12)/(W/12),1-P),B,A)',
+  losange: 'if(lt(abs(X-W/2)/W+abs(Y-H/2)/H,(1-P)),B,A)',
+  irisCarre: 'if(lt(max(abs(X-W/2)/W,abs(Y-H/2)/H),(1-P)*0.5),B,A)',
+  vague: 'if(lt(X/W,(1-P)*1.25-0.1+0.1*sin(Y/H*18)),B,A)',
+  pixelsHasard: 'if(gt(1-P,mod(abs(sin(floor(X*24/W)*12.9898+floor(Y*14/H)*78.233)*43758.5453),1)),B,A)',
+  glitch: `if(gt(P,0.5),${px('a', 'clip(X+W*0.3*sin(floor(Y*22/H)*78.233)*(1-abs(2*P-1)),0,W-1)', 'Y')},${px('b', 'clip(X+W*0.3*sin(floor(Y*22/H)*78.233)*(1-abs(2*P-1)),0,W-1)', 'Y')})`,
+  tremblement: `if(gt(P,0.5),${px('a', 'clip(X+W*0.05*sin(Y/H*40+P*60)*(1-abs(2*P-1)),0,W-1)', 'Y')},${px('b', 'clip(X+W*0.05*sin(Y/H*40+P*60)*(1-abs(2*P-1)),0,W-1)', 'Y')})`
 };
 const TRANSITIONS = [
   ['fade', 'Fondu enchaîné'], ['fadeblack', 'Fondu au noir'], ['fadewhite', 'Fondu au blanc'], ['dissolve', 'Dissolution'],
@@ -184,8 +192,12 @@ const TRANSITIONS = [
   ['hblur', 'Flou en mouvement'], ['squeezeh', 'Écrasement horizontal'], ['squeezev', 'Écrasement vertical'], ['coverleft', 'Recouvrement gauche'], ['coverright', 'Recouvrement droite'], ['revealleft', 'Dévoilement gauche'], ['revealright', 'Dévoilement droite'], ['diagtl', 'Diagonale'], ['vuslice', 'Tranches verticales'], ['hlslice', 'Tranches horizontales'], ['fadegrays', 'Fondu par le gris'],
   ['circleopen', 'Cercle qui s’ouvre'], ['circleclose', 'Cercle qui se ferme'], ['radial', 'Radial'],
   ['zoomin', 'Zoom'], ['pixelize', 'Pixels'], ['horzopen', 'Ouverture horizontale'], ['vertopen', 'Ouverture verticale'],
-  ['stores', 'Stores'], ['damier', 'Damier'], ['rideau', 'Rideau qui s’ouvre']
-].map(([id, nom]) => (EXPR[id] ? { id, nom, expr: EXPR[id] } : { id, nom }));
+  ['stores', 'Stores'], ['damier', 'Damier'], ['rideau', 'Rideau qui s’ouvre'],
+  // Packs de transitions : le troisième élément est le pack
+  ['glitch', 'Glitch numérique', 'glitch'], ['tremblement', 'Onde de choc', 'impact'], ['pixelsHasard', 'Pixels au hasard', 'glitch'],
+  ['voletsdiag', 'Volets en diagonale', 'cinema'], ['barresv', 'Barres verticales', 'cinema'], ['losange', 'Losange', 'cinema'],
+  ['irisCarre', 'Iris carré', 'cinema'], ['vague', 'Vague', 'reseaux']
+].map(([id, nom, pack]) => (EXPR[id] ? { id, nom, pack, expr: EXPR[id] } : { id, nom, pack }));
 
 // ---------- Styles de titres ----------
 const TITLES = [
@@ -201,6 +213,14 @@ const TITLES = [
 
 // Titres de reportage (animés). l1 / l2 : textes par défaut ; couleur d'accent.
 const REPORTAGE = [
+  { id: 'angle', nom: 'Tiers inférieur à bloc d’accent', l1: 'Prénom Nom', l2: 'Fonction', color: '#ff2d55', pack: 'reseaux' },
+  { id: 'pseudo', nom: '@pseudo en pastille', l1: '@tonpseudo', l2: '', color: '#5b3df5', pack: 'reseaux' },
+  { id: 'etiquette', nom: 'Étiquette de sujet (en haut)', l1: 'Le sujet', l2: '', color: '#ff2d55', pack: 'reseaux' },
+  { id: 'double', nom: 'Double barre (nom et fonction)', l1: 'Prénom Nom', l2: 'Fonction, lieu', color: '#c8102e', pack: 'journal' },
+  { id: 'cine-titre', nom: 'Titre de film (bandes noires)', l1: 'Titre du film', l2: 'Un film de toi', color: '#c9a45c', pack: 'cinema' },
+  { id: 'glitch-titre', nom: 'Titre glitch (couleurs décalées)', l1: 'GLITCH', l2: '', color: '#ff2d55', pack: 'glitch' },
+  { id: 'impact-titre', nom: 'Titre impact (gros, sur boîte)', l1: 'Le titre', l2: 'sous-titre', color: '#ff3b30', pack: 'impact' },
+  { id: 'cadre-titre', nom: 'Titre dans un cadre fin', l1: 'Mon titre', l2: 'Un sous-titre', color: '#e8c9a0', pack: 'doux' },
   { id: 'tiers', nom: 'Bandeau de journaliste (nom + fonction)', l1: 'Prénom Nom', l2: 'Fonction, lieu', color: '#c8102e' },
   { id: 'minimal', nom: 'Titre minimal (barre verticale)', l1: 'Titre de la séquence', l2: 'Sous-titre', color: '#ffb400' },
   { id: 'flash', nom: 'Flash info (bandeau défilant)', l1: 'Dernière minute : écris ici ton information qui défile en bas de l’écran', l2: 'FLASH INFO', color: '#d40000' },
@@ -227,7 +247,7 @@ function defaults(def) { const o = {}; def.params.forEach(q => { o[q.k] = q.def;
 function catalogue(filters) {
   const ok = d => d.needs.every(n => filters.has(n));
   const map = d => ({ id: d.id, nom: d.nom, cat: d.cat, params: d.params, dispo: ok(d), blend: !!d.blend });
-  return { video: VIDEO.map(map), audio: AUDIO.map(map), transitions: TRANSITIONS.map(t => ({ id: t.id, nom: t.nom })), titres: TITLES, reportage: REPORTAGE, generateurs: GENERATEURS, positions: POSITIONS };
+  return { video: VIDEO.map(map), audio: AUDIO.map(map), transitions: TRANSITIONS.map(t => ({ id: t.id, nom: t.nom, pack: t.pack })), titres: TITLES, reportage: REPORTAGE, generateurs: GENERATEURS, positions: POSITIONS };
 }
 
 module.exports = { VIDEO, AUDIO, TRANSITIONS, TITLES, REPORTAGE, GENERATEURS, POSITIONS, catalogue, defaults };
