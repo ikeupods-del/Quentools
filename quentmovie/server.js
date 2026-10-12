@@ -529,7 +529,7 @@ function buildClip(c, P, o = {}) {
     const acc = hex(ti.color || '#c8102e'), id = String(ti.preset);
     const txt = (name, content) => { const file = `r${idx}${name}.txt`; fs.writeFileSync(path.join(dir, file), String(content).slice(0, 600)); return file; };
     const l1 = String(ti.l1 || ''), l2 = String(ti.l2 || '');
-    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', jour: 'futura', episode: 'futura', invite: 'helvetica', sponsor: 'helvetica', abonne: 'futura', etape: 'futura', astuce: 'helvetica', rubrique: 'futura', chiffre: 'futura', 'lieu-vlog': 'futura', numero: 'futura', rec: 'courier', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
+    const DEF_FONT = { 'cine-titre': 'copperplate', 'cadre-titre': 'didot', 'impact-titre': 'impact', angle: 'futura', pseudo: 'futura', jour: 'futura', 'cours-hausse': 'helvetica', 'cours-baisse': 'helvetica', 'bourse-defile': 'helvetica', avertissement: 'helvetica', hud: 'futura', barres: 'futura', episode: 'futura', invite: 'helvetica', sponsor: 'helvetica', abonne: 'futura', etape: 'futura', astuce: 'helvetica', rubrique: 'futura', chiffre: 'futura', 'lieu-vlog': 'futura', numero: 'futura', rec: 'courier', etiquette: 'futura', 'glitch-titre': 'futura', double: 'helvetica' }; // police d'origine des titres de pack (celle de l'utilisateur prime)
     const font = `fontfile='${fontFile(ti.font || DEF_FONT[id])}'`;
     const dt = (file, size, color, x, y, extra = '') =>
       `drawtext=${font}:textfile=${file}:expansion=none:fontsize=${Math.round(size)}:fontcolor=${color}:x='${x}':y='${y}':${en}${extra}`;
@@ -688,6 +688,39 @@ function buildClip(c, P, o = {}) {
     } else if (id === 'chiffre') { // pack Pro : gros chiffre et légende
       text([dt(txt('a', l1), 22 * u, acc, '(w-text_w)/2', `${H * 0.34}+${3 * u}*(1-${Fb(0)})`, `:alpha='${F}':shadowx=${Math.round(0.4 * u)}:shadowy=${Math.round(0.4 * u)}:shadowcolor=black@0.45`),
         ...(l2 ? [dt(txt('b', l2), 4.2 * u, 'white', '(w-text_w)/2', `${H * 0.34 + 26 * u}`, `:alpha='${F}':shadowx=2:shadowy=2:shadowcolor=black@0.5`)] : [])]);
+    } else if (id === 'cours-hausse' || id === 'cours-baisse') { // pack Bourse : carte de cours (nom, valeur, variation) ; l2 = « valeur  variation »
+      const BX = `(-${W * 0.6}+(${5 * u}+${W * 0.6})*${Fb(0)})`, BX2 = `(-${W * 0.6}+(${5 * u}+${W * 0.6})*${Fb(0.14)})`, y = H * 0.72, col = id === 'cours-hausse' ? '0x19d38a' : '0xff4d5e';
+      const [val, ...rest] = l2.split(/\s{2,}|\s\|\s/); box('0x0b0f1c@0.94', 62 * u, 15 * u, BX, y); box(col, 1 * u, 15 * u, BX, y);
+      text([dt(txt('a', l1.toUpperCase()), 2.6 * u, '0xaab2c5', `${BX2}+${3.2 * u}`, `${y + 1.6 * u}`),
+        dt(txt('b', val || ''), 6.4 * u, 'white', `${BX2}+${3.2 * u}`, `${y + 4.6 * u}`),
+        dt(txt('c', rest.join('  ')), 3.8 * u, col, `${BX2}+${40 * u}`, `${y + 7.6 * u}`)]);
+    } else if (id === 'bourse-defile') { // pack Bourse : bandeau des marchés qui défile
+      const bh = 7 * u, y = H * 0.9, lw = 22 * u;
+      box('0x0a1224@0.96', W, bh, '0', y);
+      text([dt(txt('a', l1), 3.2 * u, 'white', `${W}-mod(${T}*${W * 0.11}\,${W}+text_w)`, `${y + 1.9 * u}`)]);
+      box(acc, lw, bh, '0', y);
+      text([dt(txt('b', l2 || 'MARCHÉS'), 3 * u, 'white', `(${lw}-text_w)/2`, `${y + 2 * u}`)]);
+    } else if (id === 'avertissement') { // Bourse / Pro : mention obligatoire, en bas, sur toute la durée
+      const lignes = wrap(l1, Math.floor(W * 0.9 / (2.3 * u * 0.55))), bh = 11 * u, y = H - bh;
+      box('0x000000@0.66', W, bh, '0', y);
+      text([dt(txt('a', lignes), 2.3 * u, 'white@0.92', '(w-text_w)/2', `${y + 2.2 * u}`, `:line_spacing=${Math.round(0.5 * u)}`)]);
+    } else if (id === 'hud') { // pack Tech : titre entre quatre angles lumineux (viseur)
+      const bw = W * 0.5, bh = 24 * u, x0 = `(W-${bw})/2`, y0 = `${H * 0.5 - 12 * u}`, e = Math.max(3, 0.5 * u), L = 5 * u;
+      const k = Fb(0), dx = `${(W * 0.08).toFixed(1)}*(1-${k})`;
+      for (const [cx, cy, sx, sy] of [[x0, y0, 1, 1], [`${x0}+${bw}-${L}`, y0, -1, 1], [x0, `${y0}+${bh}-${e}`, 1, -1], [`${x0}+${bw}-${L}`, `${y0}+${bh}-${e}`, -1, -1]]) { box(acc, L, e, `${cx}${sx > 0 ? '-' : '+'}${dx}`, `${cy}`); }
+      for (const [cx, cy] of [[x0, y0], [`${x0}+${bw}-${e}`, y0], [x0, `${y0}+${bh}-${L}`], [`${x0}+${bw}-${e}`, `${y0}+${bh}-${L}`]]) box(acc, e, L, `${cx}`, `${cy}`);
+      text([dt(txt('a', l1.toUpperCase()), 7 * u, 'white', '(w-text_w)/2', `${H * 0.5 - 4.4 * u}`, `:alpha='${F}':shadowx=2:shadowy=2:shadowcolor=black@0.5`),
+        ...(l2 ? [dt(txt('b', l2.toUpperCase().split('').join(' ')), 2.6 * u, acc, '(w-text_w)/2', `${H * 0.5 + 5.6 * u}`, `:alpha='${F}'`)] : [])]);
+    } else if (id === 'barres') { // pack Économie : histogramme animé (l1 = valeurs séparées par des virgules, l2 = légende)
+      const vals = l1.split(/[,;\s]+/).map(Number).filter(Number.isFinite).slice(0, 8), n = Math.max(1, vals.length), mx = Math.max(...vals, 1), bwid = 8 * u, gap = 3 * u;
+      const total = n * bwid + (n - 1) * gap, x0 = (W - total) / 2, base = H * 0.66, hmax = 32 * u;
+      vals.forEach((v, i) => {
+        const hh = Math.max(2, Math.round(hmax * v / mx)), src = lab(), out = lab(), e = ease(S + 0.12 * i, 0.7), last = i === n - 1;
+        f.push(`color=c=${last ? acc : '0x8fa3d9'}:s=${even(bwid)}x${even(hh)}:r=${fps},format=rgba,scale=w=${even(bwid)}:h='max(2,${even(hh)}*${e})':eval=frame[${src}]`);
+        f.push(`[${cur}][${src}]overlay=x='${Math.round(x0 + i * (bwid + gap))}':y='${Math.round(base)}-h':shortest=1:format=auto:${en}[${out}]`); cur = out;
+      });
+      box('0xffffff@0.7', total + 4 * u, Math.max(2, 0.3 * u), `${Math.round(x0 - 2 * u)}`, `${Math.round(base)}`);
+      if (l2) text([dt(txt('b', l2), 3.6 * u, 'white', '(w-text_w)/2', `${Math.round(base + 2.4 * u)}`, `:alpha='${F}':shadowx=2:shadowy=2:shadowcolor=black@0.5`)]);
     } else if (id === 'progression') { // barre de progression de la séquence
       const bh = even(Math.max(4, 1.1 * u)), src = lab(), out = lab();
       f.push(`color=c=${acc}:s=${even(W)}x${bh}:r=${fps},format=rgba,scale=w='max(2,${even(W)}*min(1,${T}/${Math.max(0.5, eff).toFixed(2)}))':h=${bh}:eval=frame[${src}]`);

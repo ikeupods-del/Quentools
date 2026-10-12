@@ -316,6 +316,12 @@ function podOutro() { const b = buf(6.5); mix(b, podPad([130.8, 164.8, 196, 261.
   mix(b, cloche(523.3, 4, 0.5), 1.5, 0.55); mix(b, cloche(1046.5, 3.5, 0.3), 1.52, 0.4); for (const k of [0, 0.8, 1.6]) mix(b, tone(t => 60 + 80 * Math.exp(-t * 25), 0.3, 0.1, 'sine', 0.002), k, 0.5); return reverb(b, 0.35, 1.4); }
 function podRubrique() { const b = buf(1.8); [[784, 0], [1046.5, 0.16], [1318.5, 0.32]].forEach(([f, t]) => { mix(b, tone(f, 0.5, 0.12, 'sine', 0.002), t, 0.5); mix(b, tone(f * 3, 0.2, 0.04, 'sine', 0.002), t, 0.15); }); mix(b, whoosh(0.5, 400, 3500, 0.5), 0, 0.4); return reverb(b, 0.25, 1); }
 function podPing() { const b = buf(1.4); mix(b, cloche(1760, 1.2, 0.5), 0, 0.7); mix(b, cloche(2637, 1, 0.25), 0.02, 0.4); return b; }
+// ---- Sons tech et finance ----
+function techBoot() { const b = buf(1.8); [523.3, 659.3, 784, 1046.5].forEach((f, i) => { mix(b, tone(f, 0.5, 0.14, 'sine', 0.003), i * 0.09, 0.45); mix(b, tone(f * 2, 0.3, 0.07, 'tri', 0.003), i * 0.09, 0.2); }); mix(b, whoosh(0.6, 300, 5000, 0.5), 0, 0.4); return reverb(b, 0.25, 1); }
+function techBip() { const b = buf(0.5); mix(b, fade(tone(1760, 0.06, 0, 'square', 0.002), 0.002, 0.01), 0, 0.35); mix(b, fade(tone(2349, 0.09, 0, 'square', 0.002), 0.002, 0.02), 0.08, 0.3); return lp(b, 5000); }
+function techScan() { const b = buf(1.2); mix(b, fade(tone(t => 300 + 3200 * Math.pow(t / 1.0, 2), 1.0, 0, 'saw', 0.01), 0.02, 0.15), 0, 0.22); mix(b, hp(noise(1.0, 0), 5000), 0, 0.08); mix(b, tone(3600, 0.12, 0.04), 1.0, 0.3); return lp(b, 7000); }
+function finCloche() { const b = buf(3.2); for (const t of [0, 0.7, 1.4]) { mix(b, cloche(659.3, 2.2, 0.6), t, 0.7); mix(b, cloche(1318.5, 1.6, 0.3), t + 0.01, 0.4); } return reverb(b, 0.3, 1.4); }
+function finTicker() { R = rng(77); const b = buf(1.6); for (let k = 0; k < 26; k++) mix(b, hp(noise(0.012, 0.003), 3000 + rnd() * 2000), k * 0.055 + rnd() * 0.012, 0.35 + rnd() * 0.3); return b; }
 function sirene() { const b = fade(lp(tone(t => 900 + 300 * Math.sin(t * PI2 * 1.3), 2.6, 0, 'tri', 0.02), 2600), 0.02, 0.15); for (let i = 0; i < b.length; i++) b[i] *= 0.55 + 0.45 * Math.sin(i / SR * PI2 * 5); return b; }
 function joie() { // petit jingle joyeux
   const b = buf(1.8);
@@ -441,6 +447,11 @@ const SONS = [
   ['pod-jingle-outro', 'Podcast : jingle de fin', 'Podcast', podOutro],
   ['pod-rubrique', 'Podcast : changement de rubrique', 'Podcast', podRubrique],
   ['pod-ping', 'Podcast : ping de notification', 'Podcast', podPing],
+  ['tech-boot', 'Tech : démarrage d’interface', 'Tech et finance', techBoot],
+  ['tech-bip', 'Tech : bip de données', 'Tech et finance', techBip],
+  ['tech-scan', 'Tech : balayage numérique', 'Tech et finance', techScan],
+  ['fin-cloche', 'Finance : cloche d’ouverture des marchés', 'Tech et finance', finCloche],
+  ['fin-ticker', 'Finance : défilement des cours', 'Tech et finance', finTicker],
   ['generique-info', 'Générique d’édition spéciale', 'Télé et spectacle', genereriqueInfo],
   ['sirene', 'Sirène d’alerte', 'Télé et spectacle', sirene]
 ];

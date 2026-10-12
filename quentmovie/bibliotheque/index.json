@@ -948,6 +948,41 @@
    "cat": "Podcast",
    "file": "sons/pod-ping.mp3",
    "duree": 1.4
+  },
+  {
+   "id": "tech-boot",
+   "nom": "Tech : démarrage d’interface",
+   "cat": "Tech et finance",
+   "file": "sons/tech-boot.mp3",
+   "duree": 1.8
+  },
+  {
+   "id": "tech-bip",
+   "nom": "Tech : bip de données",
+   "cat": "Tech et finance",
+   "file": "sons/tech-bip.mp3",
+   "duree": 0.5
+  },
+  {
+   "id": "tech-scan",
+   "nom": "Tech : balayage numérique",
+   "cat": "Tech et finance",
+   "file": "sons/tech-scan.mp3",
+   "duree": 1.2
+  },
+  {
+   "id": "fin-cloche",
+   "nom": "Finance : cloche d’ouverture des marchés",
+   "cat": "Tech et finance",
+   "file": "sons/fin-cloche.mp3",
+   "duree": 3.2
+  },
+  {
+   "id": "fin-ticker",
+   "nom": "Finance : défilement des cours",
+   "cat": "Tech et finance",
+   "file": "sons/fin-ticker.mp3",
+   "duree": 1.6
   }
  ],
  "musiques": [
@@ -1543,6 +1578,22 @@
    "cat": "Transitions (sur la coupe)",
    "file": "calques/tr-tracking.mp4",
    "duree": 1,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-grille",
+   "nom": "Grille numérique",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-grille.mp4",
+   "duree": 1.2,
+   "mode": "ecran"
+  },
+  {
+   "id": "tr-donnees",
+   "nom": "Flux de données",
+   "cat": "Transitions (sur la coupe)",
+   "file": "calques/tr-donnees.mp4",
+   "duree": 1.2,
    "mode": "ecran"
   }
  ],

@@ -5,7 +5,8 @@ Changer aussi `version` dans `package.json` : une version déjà publiée n'est 
 
 ## 1.21.0
 - Cinq **packs Vlog** dans l’onglet Packs : Voyage, Quotidien, Food, Sport et énergie, Ville de nuit. Chaque pack pose sur tes coupes des transitions douces, un effet de lumière et un son léger, avec en option le look du pack et une musique de fond qui baisse quand tu parles.
-- Six packs supplémentaires : **Podcast Interview**, **Podcast Culture et récit** (avec visualiseur sonore pour les épisodes audio), **Tuto et formation**, **Entreprise et corporate**, **Mariage et événement** et **Gaming et stream**, soit 17 packs au total.
+- Six packs supplémentaires : **Podcast Interview**, **Podcast Culture et récit** (avec visualiseur sonore pour les épisodes audio), **Tuto et formation**, **Entreprise et corporate**, **Mariage et événement** et **Gaming et stream**, 
+- Cinq packs **Tech et finance** : Tech et high-tech, Économie et actualité, Bourse et investissement, Crypto et web3, Entrepreneur et business. Cartes de cours en hausse et en baisse, bandeau des marchés défilant, histogramme animé, viseur lumineux, mention « pas un conseil en investissement », balayage numérique, grille et flux de données, cloche d’ouverture des marchés. Soit 22 packs au total.
 - Chaque pack a sa vitrine : image de couverture, transitions qui s’animent au survol, titres animés rendus avec les vraies polices, sons à écouter.
 - Huit titres animés de plus : épisode, carte d’invité, partenaire, pastille d’abonnement, rubrique, étape numérotée, astuce et gros chiffre ; les titres entrent avec un léger rebond, ligne après ligne. Quatre jingles de podcast originaux (introduction, fin, rubrique, ping).
 - Quatre titres de vlog : « JOUR 3 » avec le lieu, nom du lieu en bas à gauche, point REC avec chronomètre de caméscope, et numéro de chapitre.

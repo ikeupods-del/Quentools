@@ -60,7 +60,23 @@ const PACKS = [
     titres: ['cadre-titre', 'cine-titre', 'citation', 'lieu-vlog'], calques: ['tr-fuite-doree', 'tr-fuite-rose', 'tr-soleil'], sons: ['vl-cloche', 'vl-pizz-doux', 'tr-ding'], look: 'luts/pastel-reveur.cube', musique: 'ambiance-douce' },
   { famille: 'Gaming', id: 'gaming', fond: 'fonds/synthwave-h.jpg', nom: 'Gaming et stream', couleur: '#7a5cff', desc: 'Replays et lives : glitch, secousses, zoom punch, ondes de choc, pseudo, abonnement et néons.',
     transitions: ['glitch', 'secousse', 'zoompunch', 'whipg'], dur: 0.4,
-    titres: ['glitch-titre', 'impact-titre', 'abonne', 'compte', 'pseudo'], calques: ['tr-tracking', 'tr-onde', 'tr-fuite-bleue'], sons: ['tr-glitch', 'tr-choc', 'niveau-suivant'], look: 'luts/cyberpunk.cube', musique: 'synthwave-80' }
+    titres: ['glitch-titre', 'impact-titre', 'abonne', 'compte', 'pseudo'], calques: ['tr-tracking', 'tr-onde', 'tr-fuite-bleue'], sons: ['tr-glitch', 'tr-choc', 'niveau-suivant'], look: 'luts/cyberpunk.cube', musique: 'synthwave-80' },
+  // ---- Famille Tech et finance : cours de bourse, histogrammes animés, viseur lumineux, mention légale, balayages numériques ----
+  { famille: 'Tech et finance', id: 'tech', fond: 'fonds/degrade-neon-h.jpg', nom: 'Tech et high-tech', couleur: '#19d3ff', desc: 'Tests de produits, IA, logiciels : balayages numériques, viseur lumineux, grille et flux de données, bips d’interface.',
+    transitions: ['scan', 'glitch', 'pixelize', 'zoompunch', 'whipg'], dur: 0.45,
+    titres: ['hud', 'chiffre', 'etape', 'astuce', 'rubrique'], calques: ['tr-grille', 'tr-donnees', 'tr-fuite-bleue'], sons: ['tech-boot', 'tech-scan', 'tech-bip'], look: 'luts/neon-nuit.cube', musique: 'pulsation-electro' },
+  { famille: 'Tech et finance', id: 'economie', fond: 'fonds/plateau-info-h.jpg', nom: 'Économie et actualité', couleur: '#2f80ff', desc: 'Décryptages et analyses : histogrammes animés, chiffres clés, double barre, partenaire, mention légale.',
+    transitions: ['scan', 'diagdoux', 'glissedoux', 'fondufloute'], dur: 0.5,
+    titres: ['barres', 'chiffre', 'double', 'rubrique', 'sponsor', 'avertissement'], calques: ['tr-flash-bleu', 'tr-anamorphique', 'tr-grille'], sons: ['tech-bip', 'tr-ding', 'fin-ticker'], look: 'luts/editorial.cube', musique: 'reportage-info' },
+  { famille: 'Tech et finance', id: 'bourse', fond: 'fonds/ville-nuit-h.jpg', nom: 'Bourse et investissement', couleur: '#19d38a', desc: 'Marchés, actions, ETF : cartes de cours en hausse et en baisse, bandeau des marchés, cloche d’ouverture, mention « pas un conseil ».',
+    transitions: ['whipg', 'zoompunch', 'scan', 'glissedoux'], dur: 0.4,
+    titres: ['cours-hausse', 'cours-baisse', 'bourse-defile', 'barres', 'chiffre', 'avertissement'], calques: ['tr-flash', 'tr-grille', 'tr-fuite-doree'], sons: ['fin-cloche', 'fin-ticker', 'hausse', 'baisse'], look: 'luts/moody-sombre.cube', musique: 'house-groove' },
+  { famille: 'Tech et finance', id: 'crypto', fond: 'fonds/synthwave-h.jpg', nom: 'Crypto et web3', couleur: '#f7931a', desc: 'Cours, analyses et actualités : glitch, flux de données, cartes de cours, pseudo, abonnement et mention légale.',
+    transitions: ['glitch', 'scan', 'pixelize', 'whipd'], dur: 0.4,
+    titres: ['cours-hausse', 'cours-baisse', 'hud', 'glitch-titre', 'abonne', 'avertissement'], calques: ['tr-tracking', 'tr-grille', 'tr-donnees'], sons: ['tech-boot', 'tr-glitch', 'tech-bip'], look: 'luts/cyberpunk.cube', musique: 'synthwave-80' },
+  { famille: 'Tech et finance', id: 'entrepreneur', fond: 'fonds/bureau-flou-h.jpg', nom: 'Entrepreneur et business', couleur: '#ffb400', desc: 'Startup, ventes, leçons de terrain : chiffres clés, citations, cartes de cours, victoires et caisse enregistreuse.',
+    transitions: ['zoomdoux', 'glissedoux', 'whipg', 'fondufloute'], dur: 0.4,
+    titres: ['chiffre', 'citation', 'double', 'etiquette', 'barres'], calques: ['tr-fuite-doree', 'tr-flash-chaud', 'tr-soleil'], sons: ['succes', 'caisse', 'tr-whoosh-long'], look: 'luts/clair-lumineux.cube', musique: 'joyeux-vlog' }
 ];
 
 module.exports = { PACKS };
