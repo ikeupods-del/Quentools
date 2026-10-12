@@ -45,6 +45,21 @@ header{display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px
 header select{width:auto;max-width:190px}
 header button{flex:none}
 .espace{flex:1}
+header{overflow-x:auto;scrollbar-width:thin}
+#bChat{background:#2a2250;border-color:#5b3df5}
+#chat{position:fixed;top:56px;right:0;bottom:0;width:min(410px,100vw);z-index:40;background:var(--panneau);border-left:1px solid var(--ligne-2);display:none;flex-direction:column;box-shadow:-10px 0 30px rgba(0,0,0,.45)}
+#chat.ouvert{display:flex}
+#chat header{height:auto;padding:12px 14px;overflow:visible}#chat header h2{margin:0;font-size:15px}
+#chatIA{padding:8px 14px 0;font-size:12px;color:var(--doux)}
+#chatFil{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-height:0}
+.mc{max-width:92%;padding:9px 12px;border-radius:12px;font-size:13.5px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+.mc.moi{align-self:flex-end;background:var(--accent-2);color:#fff}.mc.assistant{align-self:flex-start;background:var(--panneau-2);border:1px solid var(--ligne-2)}
+.mc small{display:block;margin-top:5px;color:var(--doux);font-size:11.5px}.mc .warn{color:var(--alerte)}
+#chatSugg[hidden]{display:none}#chatSugg{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 8px}#chatSugg button{font-size:12px;white-space:normal;text-align:left;border-radius:12px;color:var(--doux);background:transparent;padding:5px 9px}
+#chatForm{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 14px 14px;border-top:1px solid var(--ligne);align-items:end}
+#chatSaisie{min-height:56px;max-height:130px;resize:vertical;background:var(--panneau-2);border:1px solid var(--ligne-2);border-radius:8px;padding:8px 10px}
+#bMaj{display:none;align-items:center;gap:10px;padding:7px 14px;background:#33290f;color:#ffd98a;font-size:13px}#bMaj.vu{display:flex}
+
 
 .corps{display:grid;grid-template-columns:200px 1fr 330px;min-height:0}
 aside{background:var(--panneau);min-height:0;overflow:auto}
@@ -114,6 +129,7 @@ aside{background:var(--panneau);min-height:0;overflow:auto}
 </head>
 <body>
 <div id="chargement">Chargement des polices…</div>
+<div id="bMaj" role="status"><span id="bMajTexte"></span><button id="bMajGo" class="mini">Télécharger</button></div>
 <div class="app">
   <header>
     <div class="logo"><i></i><span>Studio Posts</span></div>
@@ -127,8 +143,9 @@ aside{background:var(--panneau);min-height:0;overflow:auto}
       <option value="11">1:1 · Carré</option>
       <option value="916">9:16 · Story, Reels, TikTok</option>
     </select>
-    <div class="espace"></div>
     <button id="bGenerer" class="primaire" title="Choisir un thème : la publication est écrite et mise en page pour toi (G)">✨ Générer</button>
+    <button id="bChat" title="Explique en français ce que tu veux : l’assistant crée ou retouche la publication (C)">💬 Assistant</button>
+    <div class="espace"></div>
     <button id="bNouveau" title="Partir d'un modèle (N)">Nouveau</button>
     <button id="bBiblio" title="Mes publications et publications prêtes (B)">Bibliothèque</button>
     <button id="bJson" title="Enregistrer le projet dans un fichier">Enregistrer</button>
@@ -189,6 +206,13 @@ aside{background:var(--panneau);min-height:0;overflow:auto}
     </div>
   </div>
 </div>
+<aside id="chat" aria-label="Assistant" role="complementary">
+  <header><h2>💬 Assistant</h2><div class="espace"></div><button id="chatFermer">Fermer</button></header>
+  <div id="chatIA"></div>
+  <div id="chatFil" aria-live="polite"></div>
+  <div id="chatSugg"></div>
+  <form id="chatForm"><textarea id="chatSaisie" maxlength="1200" placeholder="Ex. : « Une story pour un plombier à Nantes, ton rassurant » ou « raccourcis le titre de l’image 2 »"></textarea><button class="primaire" id="chatEnvoi" type="submit">Envoyer</button></form>
+</aside>
 <div class="toast" id="toast"></div>
 
 <script src="donnees.js"></script>
@@ -958,8 +982,8 @@ function majGenSujet() {
   $('#gSuggestions').innerHTML = l.map(x => `<option value="${echap(x)}">`).join('');
   $('#gSujet').placeholder = l.length ? `ex. : ${l.slice(0, 3).join(', ')}` : 'facultatif';
 }
-async function etatIA() {
-  const z = $('#gIA');
+async function etatIA(zone) {
+  const z = $(zone || '#gIA');
   if (!window.studioIA) { z.textContent = 'IA locale disponible dans l’application Mac : ici, une publication déjà écrite est proposée.'; return { installee: false }; }
   const e = await window.studioIA.etat();
   if (e.installee) z.textContent = '🧠 IA locale prête : le texte est écrit sur ton Mac, sans internet.';
@@ -979,14 +1003,14 @@ function ouvrirGenerer() {
 function fermerGenerer() { $('#modalGen').classList.remove('ouvert'); }
 async function genererPublication(options = {}) {
   if (genEnCours) return null; genEnCours = true;
-  const go = $('#gGo'), res = $('#gRes'); if (go) go.disabled = true;
+  const go = options.silencieux ? null : $('#gGo'), res = options.silencieux ? null : $('#gRes'); if (go) go.disabled = true;
   const marque = options.marque || $('#gMarque').value, themeId = options.themeId || $('#gTheme').value, sujet = options.sujet ?? $('#gSujet').value, format = options.format || $('#gFormat').value;
   try {
     const e = window.studioIA ? await window.studioIA.etat() : { installee: false };
     if (res) res.innerHTML = `<progress></progress><div class="gdoux">${e.installee || options.ecrire ? 'L’IA écrit la publication…' : 'Préparation de la publication…'}</div>`;
     const deps = { ecrire: options.ecrire || (window.studioIA ? m => window.studioIA.ecrire(m) : null), ia: !options.sansIA && !!(options.ecrire || e.installee), bibliotheque: window.BIBLIOTHEQUE, exemplesQT: window.EXEMPLES_QT || [], captures: window.CAPTURES || {},
       hashtags: HASHTAGS, ctaParvis: CTA_PARVIS };
-    const p = await Generation.generer({ marque, themeId, sujet, format, deja: lireDeja() }, deps);
+    const p = await Generation.generer({ marque, themeId, sujet, format, secteur: options.secteur || '', consignes: options.consignes || '', deja: lireDeja() }, deps);
     const n = nouveauProjet({ nom: p.nom, marque, format, legende: p.legende, slides: p.slides }, marque); n.points = true;
     const reduit = Generation.ajuster(n, rendreHors);
     noterDeja(p.cle);
@@ -997,7 +1021,7 @@ async function genererPublication(options = {}) {
       ${[...(p.notes || []), ...alertes, ...(trop ? [`${trop} image(s) avec un texte trop long`] : [])].map(x => `<p class="note">⚠ ${echap(x)}</p>`).join('')}
       <div class="gligne" style="margin-top:10px"><button class="primaire" id="gVoir">Voir la publication</button><button id="gZip">Exporter (.zip)</button>${window.studioPartage ? '<button id="gAir">AirDrop</button>' : ''}<button id="gAutre">Une autre</button></div></div>`;
     if (res) { $('#gVoir').onclick = fermerGenerer; $('#gZip').onclick = exporterCarrousel; if ($('#gAir')) $('#gAir').onclick = envoyerAirdrop; $('#gAutre').onclick = () => { $('#gRes').innerHTML = ''; genererPublication(); }; }
-    if ($('#gExport') && $('#gExport').checked && !options.sansExport) await exporterCarrousel();
+    if ($('#gExport') && $('#gExport').checked && !options.sansExport && !options.silencieux) await exporterCarrousel();
     return { projet: n, source: p.source, notes: p.notes || [], alertes, trop, reduit };
   } catch (e) { if (res) res.innerHTML = `<div class="ok" style="color:#ff9b9b">${echap(e.message)}</div>`; return { erreur: e.message }; }
   finally { genEnCours = false; if (go) go.disabled = false; }
@@ -1009,15 +1033,98 @@ function brancherGenerer() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') fermerGenerer(); else if (e.key.toLowerCase() === 'g' && !e.metaKey && !e.ctrlKey && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) ouvrirGenerer(); });
 }
 
+/* ═══════════════════ 13. Assistant : on explique en français, l'IA crée ou retouche la publication ═══════════════════ */
+const CLE_CHAT = 'studioPosts:chat:v1';
+let histoChat = [], chatEnCours = false;
+function msgChat(role, texte, extra = {}) {
+  const f = $('#chatFil'), d = document.createElement('div'); d.className = 'mc ' + role; d.textContent = texte;
+  for (const n of extra.alertes || []) { const w = document.createElement('small'); w.className = 'warn'; w.textContent = '⚠ ' + n; d.appendChild(w); }
+  if (extra.note) { const n = document.createElement('small'); n.textContent = extra.note; d.appendChild(n); }
+  f.appendChild(d); f.scrollTop = f.scrollHeight; return d;
+}
+const sauverChat = () => { try { localStorage.setItem(CLE_CHAT, JSON.stringify(histoChat.slice(-30))); } catch (e) { /* stockage indisponible */ } };
+async function majChatIA() {
+  const z = $('#chatIA');
+  if (!window.studioIA) { z.textContent = 'Dans l’application Mac, l’assistant comprend toutes tes demandes grâce à l’IA locale. Ici, il comprend les demandes simples.'; return { installee: false }; }
+  const e = await window.studioIA.etat();
+  if (e.installee) z.textContent = '🧠 IA locale prête : tout se passe sur ton Mac, sans internet.';
+  else {
+    z.innerHTML = `IA locale non installée (téléchargement unique d’environ ${(e.mo / 1000).toFixed(1)} Go, partagé avec QuentMovie) : sans elle, l’assistant ne comprend que les demandes simples. <button class="mini" id="chatInstaller">Installer l’IA</button>`;
+    $('#chatInstaller').onclick = async () => {
+      z.innerHTML = '<progress max="100" value="0" style="width:100%"></progress> Téléchargement de l’IA locale…';
+      try { await window.studioIA.installer(p => { const b = z.querySelector('progress'); if (b) b.value = Math.round(p * 100); }); toast('IA locale installée'); } catch (er) { z.textContent = 'Installation impossible : ' + er.message; return; }
+      majChatIA();
+    };
+  }
+  return e;
+}
+function ouvrirChat(o = true) { $('#chat').classList.toggle('ouvert', o); if (o) { majChatIA(); $('#chatSaisie').focus(); } }
+// dépendances de génération partagées (IA locale si elle est installée)
+async function depsGeneration(options = {}) {
+  const e = window.studioIA ? await window.studioIA.etat() : { installee: false };
+  return { ecrire: options.ecrire || (window.studioIA ? m => window.studioIA.ecrire(m) : null), ia: !options.sansIA && !!(options.ecrire || e.installee), installee: e.installee };
+}
+async function envoyerChat(texte, options = {}) {
+  texte = String(texte || '').trim(); if (!texte || chatEnCours) return null;
+  chatEnCours = true; $('#chatEnvoi').disabled = true; $('#chatSugg').hidden = true;
+  msgChat('moi', texte); histoChat.push({ role: 'moi', texte });
+  const attente = msgChat('assistant', 'Je réfléchis…');
+  try {
+    const dg = await depsGeneration(options);
+    const plan = await Generation.comprendre({ message: texte, historique: histoChat.slice(0, -1), projet, marque: projet.marque, format: projet.format }, { ecrire: dg.ecrire, ia: dg.ia });
+    let reponse = plan.reponse || '', extra = { note: plan.source === 'ia' ? '' : (window.studioIA && !dg.installee ? 'IA locale non installée : demande comprise par mots-clés.' : '') }, resultat = null;
+    if (plan.action === 'generer') {
+      attente.textContent = 'J’écris la publication…';
+      const r = await genererPublication({ marque: plan.marque, themeId: plan.theme, sujet: plan.sujet, secteur: plan.secteur, format: plan.format || projet.format, consignes: plan.consignes, ecrire: options.ecrire, sansIA: options.sansIA, silencieux: true });
+      if (r.erreur) reponse = 'Je n’ai pas pu créer la publication : ' + r.erreur;
+      else {
+        resultat = r;
+        reponse = (reponse ? reponse + '\n\n' : '') + `✅ « ${r.projet.nom} » est prête : ${r.projet.slides.length} image${r.projet.slides.length > 1 ? 's' : ''} (${r.source === 'ia' ? 'écrite par l’IA locale' : 'publication déjà écrite'}). Demande-moi de la retoucher (« raccourcis le titre de l’image 2 », « rends la légende plus chaleureuse »…) ou exporte-la.`;
+        extra.alertes = [...(r.notes || []), ...(r.alertes || []), ...(r.trop ? [`${r.trop} image(s) avec un texte trop long`] : [])];
+      }
+    } else if (plan.action === 'modifier') {
+      const v = Generation.verifierModifs(projet, plan.modifications, texte);
+      if (v.ok.length) {
+        modifier(() => { for (const m of v.ok) { if (m.legende) projet.legende[m.legende] = m.valeur; else projet.slides[m.index][m.champ] = m.valeur; } });
+        if (v.ok.some(m => m.index !== undefined)) { sel = Math.min(projet.slides.length - 1, Math.max(0, v.ok.find(m => m.index !== undefined).index)); afficherListe(); afficherInspecteur(); rendreTout(); }
+        reponse = (reponse ? reponse + '\n\n' : '') + `✅ ${v.ok.length} modification${v.ok.length > 1 ? 's' : ''} faite${v.ok.length > 1 ? 's' : ''}. ⌘Z pour annuler.`;
+      } else reponse = (reponse ? reponse + '\n\n' : '') + 'Je n’ai rien modifié.';
+      extra.alertes = v.refus;
+      resultat = { modifs: v.ok.length, refus: v.refus };
+    } else if (!reponse) reponse = 'Dis-moi quelle publication créer (marque, thème, sujet, format) ou ce que je dois retoucher dans celle qui est affichée.';
+    attente.remove(); msgChat('assistant', reponse, extra); histoChat.push({ role: 'assistant', texte: reponse }); sauverChat();
+    return { plan, reponse, resultat };
+  } catch (e) { attente.remove(); msgChat('assistant', 'Je n’ai pas pu traiter ce message : ' + e.message); return { erreur: e.message }; }
+  finally { chatEnCours = false; $('#chatEnvoi').disabled = false; $('#chatSaisie').focus(); }
+}
+function brancherChat() {
+  try { histoChat = JSON.parse(localStorage.getItem(CLE_CHAT) || '[]'); } catch (e) { histoChat = []; }
+  if (histoChat.length) histoChat.forEach(h => msgChat(h.role, h.texte));
+  else msgChat('assistant', 'Bonjour ! Dis-moi en français la publication que tu veux : la marque (Le Parvis ou QuenTools), le sujet, le format (Instagram, carré, story/TikTok) et l’ambiance. Je l’écris, je la mets en page, et je la retouche si tu me le demandes.');
+  const idees = ['Une story pour un plombier à Nantes, ton rassurant', 'Un verset sur le courage pour Instagram', 'Un carrousel pour une coiffeuse : réservation en deux minutes', 'Raccourcis le titre de l’image 1'];
+  $('#chatSugg').innerHTML = idees.map(t => `<button type="button">${echap(t)}</button>`).join(''); $('#chatSugg').hidden = histoChat.length > 0;
+  $('#bChat').onclick = () => ouvrirChat(!$('#chat').classList.contains('ouvert')); $('#chatFermer').onclick = () => ouvrirChat(false);
+  $('#chatSugg').onclick = e => { const b = e.target.closest('button'); if (b) { $('#chatSaisie').value = b.textContent; $('#chatSaisie').focus(); } };
+  $('#chatForm').onsubmit = e => { e.preventDefault(); const t = $('#chatSaisie').value; $('#chatSaisie').value = ''; envoyerChat(t); };
+  $('#chatSaisie').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#chatForm').requestSubmit(); } };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') ouvrirChat(false); else if (e.key.toLowerCase() === 'c' && !e.metaKey && !e.ctrlKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) { e.preventDefault(); ouvrirChat(true); } });
+  try { if (!localStorage.getItem('studioPosts:chat:vu')) { localStorage.setItem('studioPosts:chat:vu', '1'); ouvrirChat(true); } } catch (e) { /* stockage indisponible */ }
+}
+// nouvelle version publiée : bandeau avec un bouton vers la page de téléchargement
+async function verifierMaj() {
+  if (!window.studioMaj) return;
+  try { const v = await window.studioMaj.verifier(); if (!v) return; $('#bMajTexte').textContent = `Une nouvelle version de Studio Posts est disponible (${v.version}).`; $('#bMajGo').onclick = () => window.studioMaj.ouvrir(v.url); $('#bMaj').classList.add('vu'); } catch (e) { /* hors ligne */ }
+}
+
 (async () => {
   try { await chargerPolices(); }
   catch (e) { $('#chargement').textContent = 'Polices introuvables : relancer « node tools/generateur-posts.js ».'; return; }
-  charger(); brancher(); brancherGenerer(); toutAfficher();
+  charger(); brancher(); brancherGenerer(); brancherChat(); toutAfficher(); verifierMaj();
   $('#chargement').remove();
   // accès pour les contrôles automatiques (tools/verifier-generateur-posts.js)
   window.studio = { MODELES, FORMATS, get projet() { return projet; }, ouvrir: p => { const n = nouveauProjet(p, p.marque); etat.projets.unshift(n); ouvrirProjet(n); return n; }, rendre: (p, i) => { const c = document.createElement('canvas'); c.width = W; c.height = FORMATS[p.format]; return rendre(c.getContext('2d'), p, i); },
     planche: (p, e = 0.25) => { const H = FORMATS[p.format], n = p.slides.length, c = document.createElement('canvas'), x = c.getContext('2d'); c.width = Math.round(n * W * e + (n - 1) * 12); c.height = Math.round(H * e); x.fillStyle = '#888'; x.fillRect(0, 0, c.width, c.height); hors.width = W; hors.height = H; p.slides.forEach((s, i) => { rendre(ctxH, p, i); x.drawImage(hors, 0, 0, W, H, Math.round(i * (W * e + 12)), 0, Math.round(W * e), Math.round(H * e)); }); hors.height = FORMATS[projet.format]; return c.toDataURL('image/png'); },
-    alertes: alertesContenu, generer: genererPublication };
+    alertes: alertesContenu, generer: genererPublication, chat: envoyerChat, get histoChat() { return histoChat; } };
 })();
 </script>
 </body>

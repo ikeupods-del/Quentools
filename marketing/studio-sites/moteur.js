@@ -25,10 +25,17 @@
   const slugDe = s => sansAccents(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'site';
 
   // modèle le plus proche du métier (mots clés de modeles/index.json)
-  function modeleConseille(metier, modeles) {
-    const t = sansAccents(metier); if (!t.trim()) return null;
+  // da : { ambiance, mode } facultatif. Le métier compte le plus ; l'ambiance et le mode (clair/sombre) départagent et servent seuls quand le métier est inconnu.
+  function modeleConseille(metier, modeles, da) {
+    const t = sansAccents(metier), d = da || {};
+    if (!t.trim() && !d.ambiance && !d.mode) return null;
     let meilleur = null, note = 0;
-    for (const m of modeles) { const n = String(m.mots || '').split(/\s+/).filter(x => x && t.includes(x)).length; if (n > note) { note = n; meilleur = m; } }
+    for (const m of modeles) {
+      let n = String(m.mots || '').split(/\s+/).filter(x => x && t.includes(x)).length * 10;
+      if (d.ambiance && String(m.style || '').split(/\s+/).includes(d.ambiance)) n += 4;
+      if (d.mode && (m.mode === d.mode || m.mode === 'au choix')) n += 3; else if (d.mode && m.mode && m.mode !== 'au choix') n -= 6;
+      if (n > note) { note = n; meilleur = m; }
+    }
     return meilleur || modeles.find(m => m.id === 'modele-vitrine') || modeles[0] || null;
   }
 
@@ -165,6 +172,8 @@
   }
 
   /* ───────── Contrôles des textes écrits par l'IA ───────── */
+  // mots qu'aucun site de professionnel ne doit contenir sans que l'original ou la fiche les contienne (erreurs typiques d'un petit modèle)
+  const ABSURDE = /\b(rats?|souris|cafards?|punaises?|vomi\w*|poisons?|toxiques?|cadavres?|vermine|moisi\w*)\b/i;
   const nombresFiche = fiche => new Set((JSON.stringify(fiche).match(/\d+/g) || []));
   function controleTexte(texte, slot, fiche, modele) {
     const t = String(texte || '').trim(), p = [];
@@ -172,6 +181,8 @@
     const ref = slot.base || slot.original, ph = /^\[[^\]]*\]\.?$/.test(ref.trim()), tag = slot.tag || '';
     const max = ph ? ({ h1: 80, h2: 80, h3: 56, h4: 56, p: 190, li: 110, button: 40, a: 40 }[tag] || 100) : Math.max(30, Math.round(ref.length * 1.5) + 12);
     if (/[\[\]]/.test(t)) p.push('crochets restés');
+    if (/[{}]|"\s*:\s*"|\\n/.test(t)) p.push('code recopié');
+    if (ABSURDE.test(t) && !ABSURDE.test(ref) && !ABSURDE.test(JSON.stringify(fiche))) p.push('mot absurde');
     for (const c of [fiche.telephone, fiche.email]) if (c && ref.includes(c) && !t.includes(c)) p.push('coordonnées modifiées');
     if (t.length > max) p.push('trop long');
     if (t.length < Math.min(3, ref.length)) p.push('trop court');
@@ -201,15 +212,38 @@
     if (cur.length) out.push(cur);
     return out;
   }
+  // Texte rendu par l'IA → texte simple : retire une enveloppe JSON ({"texte": "…"}), une numérotation ou des guillemets recopiés de la consigne
+  function deballer(t) {
+    let x = String(t == null ? '' : t).trim();
+    for (let k = 0; k < 3 && /^[\[{]/.test(x); k++) {
+      try { const v = JSON.parse(x); const f = v && typeof v === 'object' ? Object.values(Array.isArray(v) ? v : v).find(y => typeof y === 'string') : null; if (typeof f === 'string') { x = f.trim(); continue; } } catch (e) { /* pas du JSON valide */ }
+      const m = /^[\[{]\s*"?[\w-]+"?\s*:\s*"([\s\S]*?)"?\s*[\]}]\s*$/.exec(x); if (m) { x = m[1].trim(); continue; }
+      break;
+    }
+    return x.replace(/^\s*\d{1,2}[.)]\s+/, '').replace(/^[«"“]\s*|\s*[»"”]$/g, '').replace(/\s+/g, ' ').trim();
+  }
+  const ROLES = { h1: 'titre principal', h2: 'titre de section', h3: 'sous-titre', h4: 'sous-titre', p: 'paragraphe', li: 'élément de liste', button: 'bouton', a: 'lien', small: 'petite mention', span: 'mot court', b: 'mot en gras', strong: 'mot en gras', label: 'étiquette de champ', placeholder: 'texte d’aide d’un champ', summary: 'question', figcaption: 'légende', blockquote: 'citation', td: 'case de tableau', th: 'titre de colonne' };
+  const rolede = s => ROLES[s.tag] || 'texte';
   async function reecrireLot(lot, fiche, modele, ecrireIA) {
-    const liste = lot.map((s, i) => `${i + 1}. [${s.tag}] « ${s.base} » (${s.base.length} caractères)`).join('\n');
+    const liste = lot.map((s, i) => `${i + 1}. (${rolede(s)}, ${s.base.length} caractères) ${s.base}`).join('\n');
     const demande = `Fiche du professionnel :\n${resume(fiche)}\n\nVoici des textes d’un site d’exemple (${modele.nom || 'exemple'}), dans l’ordre de la page. Réécris-les pour ce professionnel :\n${liste}\n\n` +
       'Règles : même nombre de textes, même ordre, même rôle (titre, bouton, paragraphe…), longueur proche de l’original (jamais plus de 1,4 fois). Les passages entre *astérisques* sont mis en valeur : garde-en un au même endroit. ' +
-      'Un texte entre [crochets] est un emplacement à remplir : écris un vrai texte adapté, sans crochets. Un texte qui est un nom de service reprend les services de la fiche dans l’ordre. Un numéro de téléphone, une adresse, une adresse e-mail restent tels quels. Les boutons restent des verbes d’action courts (« Appeler », « Demander un devis »). ' +
-      'N’écris aucun prix, chiffre, délai, garantie ni avis qui ne soit pas dans la fiche : si l’original en contient, remplace par une formule générale (« sur devis », « selon votre besoin »).';
-    const schema = { type: 'object', properties: { textes: { type: 'array', minItems: lot.length, maxItems: lot.length, items: { type: 'string', maxLength: 420 } } }, required: ['textes'] };
-    const r = await ecrireIA({ systeme: SYSTEME, demande, schema, maxTokens: Math.min(1500, 120 + lot.reduce((a, s) => a + Math.ceil(s.base.length * 0.9), 0) + lot.length * 8), temperature: 0.45 });
-    return Array.isArray(r && r.textes) ? r.textes.map(x => String(x == null ? '' : x).replace(/\s+/g, ' ').trim()) : [];
+      'Un texte entre [crochets] est un emplacement à remplir : écris un vrai texte adapté, sans crochets. Un texte qui est un nom de service reprend les services de la fiche dans l’ordre. Un numéro de téléphone, une adresse, une adresse e-mail restent tels quels. Les boutons restent des verbes d’action courts. ' +
+      'N’écris aucun prix, chiffre, délai, garantie ni avis qui ne soit pas dans la fiche : si l’original en contient, remplace par une formule générale (« sur devis », « selon votre besoin »). ' +
+      'Dans chaque « texte », écris uniquement la phrase finale : ni numéro, ni guillemets, ni accolades, ni nom de balise. Reste vraisemblable : décris des choses réelles pour ce métier, sans mot absurde.';
+    const schema = { type: 'object', properties: { textes: { type: 'array', minItems: lot.length, maxItems: lot.length, items: { type: 'object', properties: { n: { type: 'integer' }, texte: { type: 'string', maxLength: 420 } }, required: ['n', 'texte'] } } }, required: ['textes'] };
+    const r = await ecrireIA({ systeme: SYSTEME, demande, schema, maxTokens: Math.min(1900, 160 + lot.reduce((a, s) => a + Math.ceil(s.base.length * 0.9), 0) + lot.length * 14), temperature: 0.45 });
+    const L = Array.isArray(r && r.textes) ? r.textes : [];
+    const out = new Array(lot.length).fill(null);
+    L.forEach((x, k) => { const v = x && typeof x === 'object' ? x.texte : x; const n = x && typeof x === 'object' && Number.isInteger(x.n) && x.n >= 1 && x.n <= lot.length ? x.n - 1 : k; if (out[n] == null) out[n] = deballer(v); });
+    return L.length === lot.length ? out.map(x => x == null ? '' : x) : [];
+  }
+  // Un seul texte refusé par les contrôles : nouvelle tentative ciblée avec la raison du refus
+  async function reecrireUn(slot, fiche, modele, ecrireIA, raison) {
+    const demande = `Fiche du professionnel :\n${resume(fiche)}\n\nTexte d’un site d’exemple (${rolede(slot)}, ${slot.base.length} caractères) : ${slot.base}\n\nRéécris-le pour ce professionnel, en une seule phrase simple et vraisemblable, de longueur proche (jamais plus de 1,4 fois). ` +
+      `Ta version précédente a été refusée : ${raison}. Ni prix, ni chiffre, ni garantie, ni lien inventés ; ni numéro, ni guillemets, ni accolades. Si tu n’as pas assez d’informations, reste général.`;
+    const r = await ecrireIA({ systeme: SYSTEME, demande, schema: { type: 'object', properties: { texte: { type: 'string', maxLength: 420 } }, required: ['texte'] }, maxTokens: Math.min(400, 60 + slot.base.length), temperature: 0.3 });
+    return deballer(r && r.texte);
   }
 
   /* ───────── Assemblage final ───────── */
@@ -218,14 +252,15 @@
   const mix = (a, b, t) => a.map((v, i) => v * (1 - t) + b[i] * t);
   function jetonsCouleur(couleur) {
     const A = rgb(couleur), BL = [255, 255, 255], NO = [13, 12, 18];
-    return `:root{--accent:${couleur};--accent-soft:${hexe(mix(A, BL, 0.88))};--lime:#fbbf24}\n  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:${hexe(mix(A, BL, 0.45))};--accent-soft:${hexe(mix(A, NO, 0.85))}}}`;
+    return `:root{--accent:${couleur};--accent-soft:${hexe(mix(A, BL, 0.88))};--lime:#fbbf24}\n  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:${hexe(mix(A, BL, 0.45))};--accent-soft:${hexe(mix(A, NO, 0.85))}}}\n  :root[data-theme="dark"]{--accent:${hexe(mix(A, BL, 0.45))};--accent-soft:${hexe(mix(A, NO, 0.85))}}`;
   }
   const RUNTIME = `(function(){var q=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
 q('.reveal,.rv,.rev,[data-reveal]').forEach(function(e){e.classList.add('in','is-in','visible','on','shown')});
 q('[data-year]').forEach(function(n){n.textContent=new Date().getFullYear()});
-q('form[data-mailto]').forEach(function(f){f.addEventListener('submit',function(ev){ev.preventDefault();var t=[],l=f.querySelectorAll('input,select,textarea');for(var i=0;i<l.length;i++){var x=l[i];if(x.type==='submit'||!x.value)continue;var b=x.id&&f.querySelector('label[for="'+x.id+'"]');t.push(((b&&b.textContent)||x.name||x.placeholder||'').trim()+' : '+x.value)}location.href='mailto:'+f.getAttribute('data-mailto')+'?subject='+encodeURIComponent(document.title)+'&body='+encodeURIComponent(t.join('\\n'))})})})();`;
+q('form[data-mailto]:not([data-qs])').forEach(function(f){f.addEventListener('submit',function(ev){ev.preventDefault();var t=[],l=f.querySelectorAll('input,select,textarea');for(var i=0;i<l.length;i++){var x=l[i];if(x.type==='submit'||!x.value)continue;var b=x.id&&f.querySelector('label[for="'+x.id+'"]');t.push(((b&&b.textContent)||x.name||x.placeholder||'').trim()+' : '+x.value)}location.href='mailto:'+f.getAttribute('data-mailto')+'?subject='+encodeURIComponent(document.title)+'&body='+encodeURIComponent(t.join('\\n'))})})})();`;
 
-  function finaliser(doc, fiche, modele, description) {
+  function finaliser(doc, fiche, modele, description, brief) {
+    const notes = [];
     const head = doc.head, d = doc.documentElement; d.setAttribute('lang', 'fr');
     const titre = [fiche.nom, [maj(fiche.metier), fiche.ville].filter(Boolean).join(' à ')].filter(Boolean).join(' · ');
     let t = head.querySelector('title'); if (!t) { t = doc.createElement('title'); head.appendChild(t); } t.textContent = titre.slice(0, 70);
@@ -236,9 +271,10 @@ q('form[data-mailto]').forEach(function(f){f.addEventListener('submit',function(
     fav.setAttribute('href', 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${fiche.couleur || '#1f3a68'}"/><text x="32" y="44" font-family="Arial,sans-serif" font-size="36" font-weight="700" text-anchor="middle" fill="#fff">${lettre}</text></svg>`));
     head.appendChild(fav);
     if (fiche.domaine) { const c = doc.createElement('link'); c.setAttribute('rel', 'canonical'); c.setAttribute('href', 'https://' + fiche.domaine.replace(/^https?:\/\//, '').replace(/\/$/, '') + '/'); head.appendChild(c); }
-    const sec = doc.createElement('style'); sec.textContent = 'img,svg{max-width:100%}header .wrap,.top .wrap,.nav .wrap{flex-wrap:wrap;row-gap:8px}.logo,.brand{min-width:0;overflow-wrap:anywhere}'; head.appendChild(sec);
+    const sec = doc.createElement('style'); sec.textContent = 'img,svg{max-width:100%}table{max-width:100%}td,th{overflow-wrap:anywhere}header .wrap,.top .wrap,.nav .wrap{flex-wrap:wrap;row-gap:8px}.logo,.brand{min-width:0;overflow-wrap:anywhere}'; head.appendChild(sec);
     // couleur de marque (modèles du design seulement : chaque exemple a sa propre palette)
-    if (modele && modele.type === 'modele' && /^#[0-9a-f]{6}$/i.test(fiche.couleur)) { const st = doc.createElement('style'); st.textContent = jetonsCouleur(fiche.couleur); head.appendChild(st); }
+    const couleurMarque = (racine.Modules ? racine.Modules.couleurDepuis((brief && brief.da && brief.da.couleur) || '') : '') || (/^#[0-9a-f]{6}$/i.test(fiche.couleur) ? fiche.couleur : '');
+    if (modele && modele.type === 'modele' && couleurMarque) { const st = doc.createElement('style'); st.textContent = jetonsCouleur(couleurMarque); head.appendChild(st); }
     // liens téléphone et e-mail, formulaire vers l'e-mail du professionnel
     doc.querySelectorAll('a[href^="tel:"]').forEach(a => { if (fiche.telephone) a.setAttribute('href', 'tel:' + e164(fiche.telephone)); else a.remove(); });
     doc.querySelectorAll('a[href^="mailto:"]').forEach(a => { if (fiche.email) a.setAttribute('href', 'mailto:' + fiche.email); else a.removeAttribute('href'); });
@@ -253,6 +289,9 @@ q('form[data-mailto]').forEach(function(f){f.addEventListener('submit',function(
     if (fiche.domaine) ld.url = 'https://' + fiche.domaine.replace(/^https?:\/\//, '');
     const s = doc.createElement('script'); s.setAttribute('type', 'application/ld+json'); s.textContent = JSON.stringify(ld); head.appendChild(s);
     const r = doc.createElement('script'); r.textContent = RUNTIME; doc.body.appendChild(r);
+    // direction artistique et fonctions choisies (modules.js)
+    if (racine.Modules && brief) { notes.push(...racine.Modules.appliquerDA(doc, brief.da, modele)); notes.push(...racine.Modules.appliquerModules(doc, fiche, brief, modele)); }
+    return notes;
   }
   const versHtml = doc => '<!doctype html>\n' + doc.documentElement.outerHTML.replace(/<script>\(function\(\)\{var q=/, m => m);
 
@@ -276,11 +315,14 @@ q('form[data-mailto]').forEach(function(f){f.addEventListener('submit',function(
           if (textes.length === lot.length) break;
         }
         if (textes.length !== lot.length) { lot.forEach(s => { s.etat = 'exemple'; s.raison = 'L’IA n’a pas répondu correctement : texte de l’exemple repris'; }); continue; }
-        lot.forEach((s, i) => {
-          const refus = controleTexte(textes[i], s, fiche, modele);
+        for (let i = 0; i < lot.length; i++) {
+          const s = lot[i]; let refus = controleTexte(textes[i], s, fiche, modele), t = textes[i];
+          for (let essai = 0; refus.length && essai < 2 && s.base.length > 3; essai++) { // nouvelle tentative ciblée, avec la raison du refus
+            try { t = await reecrireUn(s, fiche, modele, o.ecrire, refus.join(', ')); refus = controleTexte(t, s, fiche, modele); } catch (e) { break; }
+          }
           if (refus.length) { s.etat = 'exemple'; s.raison = 'Texte de l’IA refusé (' + refus.join(', ') + ') : texte de l’exemple repris'; }
-          else { s.final = textes[i]; s.etat = 'ia'; if (A_RELIRE.test(textes[i])) s.relire = true; }
-        });
+          else { s.final = t; s.etat = 'ia'; if (A_RELIRE.test(t)) s.relire = true; }
+        }
         void raison;
       }
       try {
@@ -290,15 +332,15 @@ q('form[data-mailto]').forEach(function(f){f.addEventListener('submit',function(
       } catch (e) { /* description simple */ }
     }
     for (const s of slots) ecrire(s, s.final);
-    finaliser(doc, fiche, modele, description);
+    notes.push(...finaliser(doc, fiche, modele, description, o.brief));
     return { interactives, html: versHtml(doc), slots: slots.map(s => ({ i: s.i, tag: s.tag, section: s.section, original: s.original, texte: s.final, etat: s.etat, raison: s.raison || '', relire: !!s.relire })), notes, description, aRevoir: slots.filter(s => s.etat === 'exemple' && !!o.ecrire).length };
   }
   // Reconstruit la page avec des textes modifiés à la main (même ordre d'emplacements) : aucun appel à l'IA
-  function reassembler(html, modele, fiche, textes, description, interactives) {
+  function reassembler(html, modele, fiche, textes, description, interactives, brief) {
     fiche = nettoyerFiche(fiche);
     const { doc } = preparer(html, modele, interactives), slots = collecter(doc);
     slots.forEach(s => { const t = textes[s.i]; ecrire(s, t == null ? substituer(s.original, fiche, modele) : t); });
-    finaliser(doc, fiche, modele, description);
+    finaliser(doc, fiche, modele, description, brief);
     return versHtml(doc);
   }
 
@@ -312,7 +354,7 @@ q('form[data-mailto]').forEach(function(f){f.addEventListener('submit',function(
     return h.replace(/<a[^>]*href="\.\.\/\.\.\/"[^>]*>.*?<\/a>/g, '');
   }
   function restesACompleter(html) { return [...new Set((String(html).replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, '').match(/\[[^\]\n<]{2,120}\]/g) || []).filter(x => !/^\[\d/.test(x)))]; }
-  function notesLivraison(fiche, resultat, legal) {
+  function notesLivraison(fiche, resultat, legal, brief) {
     const l = [`LIVRAISON DU SITE : ${fiche.nom}`, '', 'Contenu du dossier : index.html (le site), mentions-legales.html, assets/ (polices et styles). Ouvrir index.html pour voir le site.', ''];
     const exemple = (resultat.slots || []).filter(s => s.etat === 'exemple' && s.raison);
     if (exemple.length) { l.push('TEXTES À RELIRE OU À RÉÉCRIRE (repris de l’exemple) :'); exemple.slice(0, 40).forEach(s => l.push(`- « ${s.texte} » : ${s.raison}`)); l.push(''); }
@@ -323,11 +365,16 @@ q('form[data-mailto]').forEach(function(f){f.addEventListener('submit',function(
     const restL = restesACompleter(legal || '');
     if (restL.length) { l.push('MENTIONS LÉGALES À COMPLÉTER (statut, SIRET, hébergeur, médiateur…) :'); restL.forEach(x => l.push('- ' + x)); l.push(''); }
     (resultat.notes || []).forEach(n => l.push('- ' + n));
+    if (racine.Modules && brief && brief.modules && brief.modules.length) {
+      l.push('', 'FONCTIONS AJOUTÉES AU SITE :'); brief.modules.forEach(id => { const m = racine.Modules.CATALOGUE.find(x => x.id === id); if (m) l.push('- ' + m.nom + ' : ' + m.desc); });
+      if (racine.Modules.fichiers(fiche, brief).length) l.push('Mise en service des demandes et du panel : lire LISEZMOI-FIREBASE.txt (règles dans REGLES-FIRESTORE.txt).');
+      if (brief.modules.includes('chatbot')) l.push('L’assistant de questions répond avec les informations de la fiche (horaires, adresse, services…) : relire ses réponses en posant quelques questions sur le site.');
+    }
     l.push('', 'À FAIRE AVANT LA MISE EN LIGNE : ajouter les vraies photos et de vrais avis de clients, vérifier les coordonnées, tester sur téléphone, compléter les mentions légales.');
     l.push('Publication : déposer ce dossier sur l’hébergement choisi (GitHub Pages, par exemple) ; le formulaire ouvre le logiciel de messagerie du visiteur vers ' + (fiche.email || 'l’adresse e-mail à renseigner') + '.');
     return l.join('\n') + '\n';
   }
 
-  const api = { sectionsInteractives, FICHE_VIDE, nettoyerFiche, modeleConseille, preparer, collecter, substituer, controleTexte, generer, reassembler, mentionsLegales, notesLivraison, restesACompleter, slugDe, e164, lots };
+  const api = { sectionsInteractives, FICHE_VIDE, nettoyerFiche, modeleConseille, preparer, collecter, substituer, controleTexte, deballer, generer, reassembler, mentionsLegales, notesLivraison, restesACompleter, slugDe, e164, lots };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else racine.Moteur = api;
 })(typeof window !== 'undefined' ? window : globalThis);

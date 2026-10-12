@@ -37,3 +37,6 @@ Raccourcis : ← → changer d'image, ⌘Z annuler, ⇧⌘Z rétablir, ⌘D dupl
 
 ## Envoi par AirDrop
 Bouton « AirDrop » (⇧⌘A, menu Fichier) et bouton dans le résultat de « Générer » : les images JPG et la légende sont déposées dans un dossier temporaire puis la feuille de partage de macOS s'ouvre (`partage:envoyer` dans `main.js`, `studioPartage` dans `preload.js`). Bouton masqué hors de l'application Mac.
+
+## Assistant (tchat)
+Bouton « 💬 Assistant » (touche C) : on explique en français la publication voulue (« une story pour un plombier à Nantes, ton rassurant ») ou une retouche (« raccourcis le titre de l'image 2 »). L'IA locale choisit marque, thème, sujet, format et consignes (`Generation.comprendre`) ; la publication est ensuite écrite et contrôlée par les mêmes règles que « Générer » (les consignes ne permettent ni prix, ni lien, ni verset inventé). Retouches : champs de texte existants seulement, jamais un verset, mêmes règles de contenu (`Generation.verifierModifs`), annulables par ⌘Z. Sans IA installée, une analyse par mots-clés comprend les demandes de création. Un bandeau signale une nouvelle version publiée (`nouvelle-version.js`, copie de `marketing/ia-locale/`) : le bouton ouvre la page de téléchargement, rien ne s'installe tout seul.

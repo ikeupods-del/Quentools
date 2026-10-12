@@ -5,6 +5,8 @@
   "nom": "Plombier, chauffagiste, dépanneur",
   "mots": "plomb chauff depann electric serrur artisan batiment macon peintre carreleur couvreur vitrier",
   "ambiance": "bleu et jaune",
+  "style": "pro sobre",
+  "mode": "clair",
   "marque": "Dupont Plomberie",
   "taille": 23985
  },
@@ -14,6 +16,8 @@
   "nom": "Climatisation, froid, pompe à chaleur",
   "mots": "clim ventil froid pompe chaleur thermique",
   "ambiance": "bleu clair",
+  "style": "pro moderne",
+  "mode": "clair",
   "marque": "Alizé Clim",
   "taille": 21756
  },
@@ -23,6 +27,8 @@
   "nom": "Vendeur de bois, matériaux, négoce",
   "mots": "bois chauffage materiau negoce menuis charpent ebenis scierie",
   "ambiance": "brun",
+  "style": "chaleureux nature",
+  "mode": "clair",
   "marque": "Les Bois Granger",
   "taille": 38874
  },
@@ -32,6 +38,8 @@
   "nom": "Restaurant, bar, brasserie",
   "mots": "restaur cafe bar brasserie bistro pizz traiteur snack",
   "ambiance": "chaud",
+  "style": "chaleureux luxe",
+  "mode": "sombre",
   "marque": "Le Petit Comptoir",
   "taille": 30317
  },
@@ -41,6 +49,8 @@
   "nom": "Fleuriste, boutique, artisan d’art",
   "mots": "fleur bouquet boutique cadeau deco artisan art",
   "ambiance": "rose",
+  "style": "ludique chaleureux",
+  "mode": "clair",
   "marque": "Fleurs de Marie",
   "taille": 25991
  },
@@ -50,6 +60,8 @@
   "nom": "Coach sportif, bien-être, activité",
   "mots": "coach sport fitness yoga pilates danse musculation naturo bien-etre",
   "ambiance": "énergique",
+  "style": "energique moderne",
+  "mode": "sombre",
   "marque": "Move Coaching",
   "taille": 21101
  },
@@ -59,6 +71,8 @@
   "nom": "Ostéopathe, thérapeute, santé",
   "mots": "osteo kine therap sophro dieteti infirm medec dentiste psycho sante massage",
   "ambiance": "doux",
+  "style": "sobre nature",
+  "mode": "clair",
   "marque": "Cabinet Bien-Être",
   "taille": 29278
  },
@@ -68,6 +82,8 @@
   "nom": "Paysagiste, jardinier, espaces verts",
   "mots": "paysag jardin elagu espaces verts piscine terrasse",
   "ambiance": "vert",
+  "style": "nature chaleureux",
+  "mode": "clair",
   "marque": "Verdure & Co",
   "taille": 33416
  },
@@ -77,6 +93,8 @@
   "nom": "Garde d’animaux, pension, toilettage",
   "mots": "pet animal chien chat cheval toilettage veterin garde pension ferme",
   "ambiance": "nature",
+  "style": "ludique nature",
+  "mode": "clair",
   "marque": "La Ferme du Petit Pré",
   "taille": 33982
  },
@@ -86,6 +104,8 @@
   "nom": "Photographe, vidéaste, créatif",
   "mots": "photo video mariage film graph design studio artiste",
   "ambiance": "sombre élégant",
+  "style": "luxe moderne",
+  "mode": "sombre",
   "marque": "Atelier Lumière",
   "taille": 28765
  },
@@ -95,6 +115,8 @@
   "nom": "Formateur, page de vente d’une formation",
   "mots": "format cours ecole enseign prof stage atelier ebook guide",
   "ambiance": "moderne",
+  "style": "moderne pro",
+  "mode": "sombre",
   "marque": "Cuisine en 1 heure",
   "taille": 23959
  },
@@ -104,6 +126,8 @@
   "nom": "Vitrine simple (tous métiers)",
   "mots": "vitrine",
   "ambiance": "au choix",
+  "style": "sobre moderne",
+  "mode": "au choix",
   "marque": "",
   "taille": 10173
  },
@@ -113,6 +137,8 @@
   "nom": "Prestations sur rendez-vous (coiffeur, thérapeute…)",
   "mots": "coiffeur coiffure esthetique institut beaute barbier rendez-vous",
   "ambiance": "au choix",
+  "style": "sobre chaleureux",
+  "mode": "au choix",
   "marque": "",
   "taille": 8308
  },
@@ -122,6 +148,8 @@
   "nom": "Restaurant, boulangerie (modèle QuenTools)",
   "mots": "boulang patiss",
   "ambiance": "au choix",
+  "style": "chaleureux sobre",
+  "mode": "au choix",
   "marque": "",
   "taille": 7836
  }

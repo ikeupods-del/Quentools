@@ -3,7 +3,7 @@
    --verifier : n'écrit rien, échoue si une copie diffère de la source. */
 const fs = require('fs'), path = require('path');
 const racine = path.join(__dirname, '..', 'marketing'), source = path.join(racine, 'ia-locale');
-const destinations = ['generateur-posts', 'studio-sites'], fichiers = ['ia-locale.js', 'ia-worker.js'];
+const destinations = ['generateur-posts', 'studio-sites'], fichiers = ['ia-locale.js', 'ia-worker.js', 'nouvelle-version.js'];
 const verifier = process.argv.includes('--verifier');
 let ecart = 0;
 for (const d of destinations) {

@@ -3,6 +3,7 @@
 Outil privé (jamais publié sur le site, jamais mentionné publiquement : la règle « l'IA n'est pas un moyen de création » de `design/POSITIONNEMENT.md` s'applique aux sites livrés et à la communication). Il part de **tes exemples** (`exemples/<secteur>/`, 11 designs distincts) et des modèles `design/templates/`, et écrit un site complet pour un vrai professionnel.
 
 ## Utiliser
+0. **💬 Assistant (tchat)** : explique en français ce que tu veux (« site pour un kebab à Lyon, ambiance sombre et luxe, noir et or, avec réservation, un assistant de questions et un panel pour gérer les demandes »). L'IA locale remplit la fiche, la direction artistique et les fonctions ; le programme ne retient que ce qui est justifié par ta phrase (aucun téléphone, prix ou horaire inventé) et pose les questions qui manquent. Sans IA installée, une analyse par mots-clés comprend les demandes courantes. Après la génération, le tchat modifie le site en direct (« passe en vert sapin », « ajoute WhatsApp »). Fichiers : `conseiller.js` (tchat), `modules.js` (fonctions et style).
 1. Remplir la fiche : nom, métier, ville, téléphone, e-mail, adresse, horaires, services (un par ligne), points forts, ton, nom de domaine, SIRET.
 2. **Point de départ** : « choisi d'après le métier » (par défaut) ou un exemple précis (plombier, restaurant, coach, ostéopathe, photographe, paysagiste…) ou un modèle du design.
 3. **✨ Générer le site** (⌘G) : le design de l'exemple est gardé tel quel, les coordonnées sont remplacées à l'identique, les autres textes sont réécrits pour ce métier par l'IA locale, section par section. L'aperçu s'affiche (téléphone ou ordinateur).
@@ -31,3 +32,16 @@ Modèle Qwen3 4B (Apache 2.0, ~2,5 Go) téléchargé une fois dans `~/Movies/Que
 - Les outils interactifs propres à un exemple (calcul de commande, réservation en ligne, quiz) sont retirés ; si l'en-tête en contient un, une note le signale.
 - Le design de chaque exemple est figé (couleur modifiable seulement pour les modèles du design) ; pas de photos : à ajouter ensuite.
 - L'IA locale peut écrire des textes plats : toujours relire, surtout les textes marqués ⚠.
+
+## Fonctions et direction artistique (`modules.js`)
+Onglet « Style et fonctions » (ou tchat). Tout est du code fixe écrit par le programme, jamais par l'IA ; aucun service externe n'est chargé dans le site.
+- **Réservation** (table ou rendez-vous selon le métier) : date, créneaux déduits des horaires de la fiche, jours fermés refusés, champ piège et délai anti-robots. **Demande de devis**. Sans base Firebase, la demande s'ouvre dans la messagerie du visiteur ; avec elle, elle est envoyée à la base du professionnel (API web Firestore, sans bibliothèque).
+- **Assistant de questions** : bulle de discussion aux réponses fixes tirées de la fiche (horaires, adresse, services, réservation…) et de tes questions personnalisées ; ce n'est pas une IA, il ne répond jamais par un prix ou un fait absent de la fiche.
+- **Panel** (`admin/index.html`, `noindex`, `Disallow` dans robots.txt) : connexion e-mail/mot de passe Firebase, liste des demandes, confirmer / refuser / terminée / supprimer, recherche, export CSV protégé des formules, annonce du site. Sans clés : mode démonstration avec des demandes fictives signalées. Mise en service, règles Firestore et limites : `LISEZMOI-FIREBASE.txt` et `REGLES-FIRESTORE.txt`, créés avec le site.
+- **WhatsApp**, **bandeau d'annonce** (modifiable depuis le panel), **questions fréquentes** (faits de la fiche + tes questions).
+- **Direction artistique** : ambiance (choisit l'exemple le plus proche avec le mode clair/sombre), couleur (recoloration du design : teinte principale remplacée, autres teintes décalées, neutres gardés), police des titres (polices auto-hébergées), arrondi, densité.
+- Les fonctions s'adaptent aux couleurs du design (lues à l'affichage). Chaque fonction a son contrôle dans `tools/verifier-studio-sites-fonctions.js` (Firebase simulé).
+- Une boutique avec paiement, une application ou un espace client complexe n'existent pas : l'assistant le dit.
+
+## Contrôles
+`node tools/verifier-studio-sites.js` (textes, coordonnées, restes de l'exemple) et `node tools/verifier-studio-sites-fonctions.js` (tchat, fonctions, panel, style).

@@ -15,7 +15,7 @@ button:hover:not(:disabled){border-color:#55556a}button:disabled{opacity:.5;curs
 button.primaire{background:var(--accent-2);border-color:var(--accent-2);color:#fff;font-weight:600}button.primaire:hover:not(:disabled){background:#6a4ff7}
 header{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--ligne);background:var(--panneau)}
 header h1{font-size:15px;margin:0;font-weight:700}header .espace{flex:1}
-.corps{flex:1;display:grid;grid-template-columns:340px 1fr 340px;min-height:0}
+.corps{flex:1;display:grid;grid-template-columns:400px 1fr 340px;min-height:0}
 aside{overflow:auto;padding:14px 16px;background:var(--panneau);display:grid;gap:10px;align-content:start}
 aside.gauche{border-right:1px solid var(--ligne)}aside.droite{border-left:1px solid var(--ligne)}
 aside h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--doux);margin:6px 0 0}
@@ -36,18 +36,40 @@ iframe#apercu.mobile{width:390px}
 .slot{display:grid;gap:3px}.slot small{font-size:11px;color:var(--doux)}.slot.ia small::before{content:"● ";color:var(--ok)}.slot.exemple small::before{content:"● ";color:#7a7a88}.slot.relire small::before{content:"⚠ ";color:var(--alerte)}
 .slot input,.slot textarea{font-size:12.5px;padding:6px 8px}
 .groupe{border-top:1px solid var(--ligne);padding-top:8px;margin-top:4px;font-size:11px;color:var(--doux);text-transform:uppercase;letter-spacing:.06em}
+aside.gauche{padding:0;display:flex;flex-direction:column;overflow:hidden}
+.onglets{display:flex;gap:4px;padding:10px 12px 0;border-bottom:1px solid var(--ligne);flex-wrap:wrap}.onglets button{border-radius:8px 8px 0 0;border-bottom:0;padding:8px 11px;font-size:13px;background:transparent;color:var(--doux)}.onglets button.on{background:var(--panneau-2);color:var(--texte);border-color:var(--ligne-2)}
+.panneau{overflow:auto;padding:14px 16px;display:grid;gap:10px;align-content:start;flex:1;min-height:0}.panneau[hidden]{display:none !important}
+#p_chat{display:flex;flex-direction:column;gap:10px}.fil{flex:1;min-height:220px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+.msg{max-width:92%;padding:9px 12px;border-radius:12px;font-size:13.5px;white-space:pre-wrap;word-wrap:break-word}.msg.moi{align-self:flex-end;background:var(--accent-2);color:#fff}.msg.assistant{align-self:flex-start;background:var(--panneau-2);border:1px solid var(--ligne-2)}
+.msg small{display:block;color:var(--doux);margin-top:4px;font-size:11px}.msg ul{margin:6px 0 0;padding-left:18px}
+.sugg[hidden]{display:none}.sugg{display:flex;flex-wrap:wrap;gap:6px}.sugg button{font-size:12px;padding:5px 9px;border-radius:12px;background:transparent;color:var(--doux);white-space:normal;text-align:left}
+.saisie{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}.saisie textarea{min-height:58px;max-height:140px}
+.cahier{border-top:1px solid var(--ligne);padding-top:8px;font-size:12px;color:var(--doux);display:flex;flex-wrap:wrap;gap:5px}.cahier span{border:1px solid var(--ligne-2);border-radius:999px;padding:2px 8px;color:var(--texte)}
+.mod{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:start;padding:6px 0;border-bottom:1px solid var(--ligne)}.mod input{margin-top:3px}.mod b{font-size:13px;color:var(--texte)}.mod small{grid-column:2;color:var(--doux);font-size:11.5px;line-height:1.35}
+.ligne{display:flex;align-items:center;gap:8px}.ligne input[type=checkbox]{width:auto}
 #iaEtat{font-size:12.5px;color:var(--doux)}
+.maj{display:none;align-items:center;gap:10px;padding:7px 16px;background:#33290f;color:#ffd98a;font-size:13px}.maj.vu{display:flex}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#26262f;border:1px solid var(--ligne-2);padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;z-index:20}.toast.vu{opacity:1;transform:translateX(-50%)}
 </style>
 </head>
 <body>
+<div class="maj" id="bMaj" role="status"><span id="bMajTexte"></span><button id="bMajGo">Télécharger</button></div>
 <header>
   <h1>Studio Sites</h1><span class="doux" id="titreSite"></span><div class="espace"></div>
   <button id="bGenerer" class="primaire" title="Écrire le site à partir de la fiche (⌘G)">✨ Générer le site</button>
   <button id="bEnregistrer" disabled title="Choisir un dossier : le site y est enregistré, prêt à publier (⌘S)">📁 Enregistrer le site</button>
 </header>
 <div class="corps">
-  <aside class="gauche" id="fiche">
+  <aside class="gauche" id="gauche">
+    <div class="onglets" role="tablist"><button data-onglet="chat" class="on">💬 Assistant</button><button data-onglet="fiche">📋 Fiche</button><button data-onglet="style">🎨 Style et fonctions</button></div>
+    <div class="panneau" id="p_chat">
+      <div id="iaEtat"></div>
+      <div class="fil" id="fil" aria-live="polite"></div>
+      <div class="sugg" id="sugg"></div>
+      <div class="saisie"><textarea id="chatSaisie" placeholder="Explique ce que tu veux : le professionnel, l’ambiance, les fonctions (réservation, devis, assistant, panel…)" maxlength="1500"></textarea><button id="chatEnvoi" class="primaire">Envoyer</button></div>
+      <div class="cahier" id="cahier" aria-label="Cahier des charges"></div>
+    </div>
+    <div class="panneau" id="p_fiche" hidden><div id="fiche" style="display:grid;gap:10px">
     <h2>Le professionnel</h2>
     <label>Nom de l’entreprise *<input type="text" id="f_nom" placeholder="Boulangerie Martin"></label>
     <label>Métier *<input type="text" id="f_metier" placeholder="boulanger, plombier, coach sportif…"></label>
@@ -66,7 +88,23 @@ iframe#apercu.mobile{width:390px}
       <label>Couleur (modèles)<input type="color" id="f_couleur" value="#1f3a68"></label></div>
     <div class="duo"><label>Nom de domaine<input type="text" id="f_domaine" placeholder="martin-nantes.fr"></label><label>SIRET<input type="text" id="f_siret"></label></div>
     <label>Responsable (mentions légales)<input type="text" id="f_responsable"></label>
-    <div id="iaEtat"></div>
+  </div></div>
+    <div class="panneau" id="p_style" hidden>
+      <h2>Fonctions du site</h2><div id="listeMods"></div>
+      <label>Réservation : type<select id="o_reservation"><option value="">Selon le métier (recommandé)</option><option value="table">Table (nombre de personnes)</option><option value="rdv">Rendez-vous (prestation)</option></select></label>
+      <label>Numéro WhatsApp (sinon le téléphone de la fiche)<input type="tel" id="o_whatsapp"></label>
+      <label>Texte du bandeau d’annonce<input type="text" id="o_annonce" maxlength="160" placeholder="Fermé du 1er au 15 août"></label>
+      <label>Questions fréquentes (une par ligne : question | réponse)<textarea id="o_faq" placeholder="Acceptez-vous les chiens ? | Oui, ils sont les bienvenus."></textarea></label>
+      <h2>Direction artistique</h2>
+      <div class="duo"><label>Ambiance<select id="d_ambiance"></select></label><label>Clair / sombre<select id="d_mode"><option value="">Selon le design</option><option value="clair">Clair</option><option value="sombre">Sombre</option></select></label></div>
+      <div class="duo"><label>Police des titres<select id="d_police"></select></label><label>Arrondi<select id="d_arrondi"></select></label></div>
+      <div class="duo"><label>Densité<select id="d_densite"></select></label><label>Couleur principale<input type="color" id="d_couleur" value="#2f5bea"></label></div>
+      <label class="ligne"><input type="checkbox" id="d_couleurAuto" checked> Garder la couleur du design</label>
+      <h2>Espace professionnel (base Firebase)</h2>
+      <p class="doux">Pour recevoir les demandes dans le panel. Les deux valeurs viennent de la console Firebase (voir LISEZMOI-FIREBASE.txt, créé avec le site).</p>
+      <label>Clé API Firebase (apiKey)<input type="text" id="o_fbKey" autocomplete="off" spellcheck="false"></label>
+      <label>Identifiant du projet (projectId)<input type="text" id="o_fbProjet" autocomplete="off" spellcheck="false"></label>
+    </div>
   </aside>
   <section class="centre">
     <div class="barre"><button id="vMobile">📱 Téléphone</button><button id="vBureau" class="on">🖥 Ordinateur</button><span class="espace"></span><span class="doux" id="infoSite"></span></div>
@@ -76,7 +114,9 @@ iframe#apercu.mobile{width:390px}
   <aside class="droite" id="textes"><h2>Textes du site</h2><p class="doux">Les textes apparaissent ici après la génération : corrige-les, l’aperçu se met à jour.</p></aside>
 </div>
 <div class="toast" id="toast"></div>
+<script src="modules.js"></script>
 <script src="moteur.js"></script>
+<script src="conseiller.js"></script>
 <script>
 'use strict';
 /* Studio Sites : fenêtre. Tout le travail est dans moteur.js ; ici seulement la fiche, l'aperçu, les textes modifiables et l'enregistrement. */
@@ -84,22 +124,23 @@ const $ = s => document.querySelector(s);
 const echap = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CHAMPS = ['nom', 'metier', 'ville', 'zone', 'telephone', 'email', 'adresse', 'codePostal', 'horaires', 'services', 'atouts', 'description', 'tarifs', 'ton', 'couleur', 'domaine', 'siret', 'responsable'];
 const CLE = 'studioSites:v1';
-let modeles = [], etat = { modele: null, html: '', legal: '', resultat: null, textes: {}, interactives: [], fiche: null }, enCours = false, tImp = null;
+let modeles = [], etat = { modele: null, html: '', legal: '', resultat: null, textes: {}, interactives: [], fiche: null, brief: null }, enCours = false, tImp = null, histo = [], chatEnCours = false;
+const CLE_CHAT = 'studioSites:chat:v1';
 const API = () => window.studioSites || null;
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('vu'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('vu'), 2400); }
 function etatTexte(h, progres) { $('#etat').innerHTML = (progres !== undefined ? `<progress max="1" value="${progres}"></progress>` : '') + h; }
 
 function lireFiche() { const f = {}; for (const c of CHAMPS) { const e = $('#f_' + c); f[c] = e ? e.value : ''; } f.services = f.services.split('\n').map(x => x.trim()).filter(Boolean); return f; }
 function ecrireFiche(f) { for (const c of CHAMPS) { const e = $('#f_' + c); if (e && f[c] !== undefined) e.value = Array.isArray(f[c]) ? f[c].join('\n') : f[c]; } }
-function enregistrerFiche() { try { localStorage.setItem(CLE, JSON.stringify({ fiche: lireFiche(), modele: $('#f_modele').value })); } catch (e) { /* stockage indisponible */ } }
-function chargerFiche() { try { const d = JSON.parse(localStorage.getItem(CLE) || 'null'); if (d) { ecrireFiche(d.fiche || {}); if (d.modele) $('#f_modele').value = d.modele; } } catch (e) { /* première ouverture */ } }
+function enregistrerFiche() { try { localStorage.setItem(CLE, JSON.stringify({ fiche: lireFiche(), modele: $('#f_modele').value, brief: lireBrief() })); } catch (e) { /* stockage indisponible */ } }
+function chargerFiche() { try { const d = JSON.parse(localStorage.getItem(CLE) || 'null'); if (d) { ecrireFiche(d.fiche || {}); if (d.modele) $('#f_modele').value = d.modele; if (d.brief) ecrireBrief(d.brief); } } catch (e) { /* première ouverture */ } }
 
 function remplirModeles() {
   $('#f_modele').innerHTML = '<option value="auto">Choisi d’après le métier (recommandé)</option>' +
     '<optgroup label="Tes exemples">' + modeles.filter(m => m.type === 'exemple').map(m => `<option value="${m.id}">${echap(m.nom)}</option>`).join('') + '</optgroup>' +
     '<optgroup label="Modèles du design QuenTools">' + modeles.filter(m => m.type === 'modele').map(m => `<option value="${m.id}">${echap(m.nom)}</option>`).join('') + '</optgroup>';
 }
-function modeleChoisi() { const v = $('#f_modele').value; return v === 'auto' ? Moteur.modeleConseille(lireFiche().metier, modeles) : modeles.find(m => m.id === v); }
+function modeleChoisi() { const v = $('#f_modele').value; return v === 'auto' ? Moteur.modeleConseille(lireFiche().metier, modeles, lireBrief().da) : modeles.find(m => m.id === v); }
 function majInfoModele() { const m = modeleChoisi(); $('#modeleInfo').textContent = m ? `${$('#f_modele').value === 'auto' ? 'Proposé : ' : ''}${m.nom} (${m.type === 'exemple' ? 'design de ton exemple « ' + m.marque + ' »' : 'modèle du design QuenTools'})` : ''; }
 
 async function majIA() {
@@ -115,6 +156,81 @@ async function installerIA() {
   try { await API().ia.installer(p => etatTexte('Téléchargement de l’IA locale…', p)); toast('IA locale installée'); etatTexte(''); }
   catch (e) { etatTexte(`<span class="err">Installation impossible : ${echap(e.message)}</span>`); }
   majIA();
+}
+
+/* ───────── Cahier des charges : style et fonctions ───────── */
+const DA_CHAMPS = { ambiance: Modules.AMBIANCES, police: Modules.POLICES, arrondi: Modules.ARRONDIS, densite: Modules.DENSITES };
+function remplirStyle() {
+  $('#listeMods').innerHTML = Modules.CATALOGUE.map(m => `<label class="mod"><input type="checkbox" data-mod="${m.id}"><b>${echap(m.nom)}</b><small>${echap(m.desc)}</small></label>`).join('');
+  for (const [k, liste] of Object.entries(DA_CHAMPS)) $('#d_' + k).innerHTML = '<option value="">Selon le design</option>' + Object.entries(liste).map(([id, v]) => `<option value="${id}">${echap(typeof v === 'string' ? v : v.nom)}</option>`).join('');
+}
+function lireBrief() {
+  const b = Conseiller.BRIEF_VIDE();
+  b.modules = [...document.querySelectorAll('[data-mod]')].filter(x => x.checked).map(x => x.dataset.mod);
+  for (const k of ['ambiance', 'mode', 'police', 'arrondi', 'densite']) b.da[k] = $('#d_' + k).value;
+  b.da.couleur = $('#d_couleurAuto').checked ? '' : $('#d_couleur').value;
+  b.options.reservation = $('#o_reservation').value; b.options.whatsapp = $('#o_whatsapp').value.trim();
+  b.options.firebaseApiKey = $('#o_fbKey').value.trim(); b.options.firebaseProjectId = $('#o_fbProjet').value.trim();
+  b.annonce = $('#o_annonce').value.trim();
+  b.faq = $('#o_faq').value.split('\n').map(l => l.split('|')).filter(p => p.length >= 2 && p[0].trim() && p.slice(1).join('|').trim()).map(p => ({ q: p[0].trim(), a: p.slice(1).join('|').trim() }));
+  return b;
+}
+function ecrireBrief(b) {
+  b = Conseiller.normaliserBrief(b);
+  document.querySelectorAll('[data-mod]').forEach(x => { x.checked = b.modules.includes(x.dataset.mod); });
+  for (const k of ['ambiance', 'mode', 'police', 'arrondi', 'densite']) $('#d_' + k).value = b.da[k] || '';
+  $('#d_couleurAuto').checked = !b.da.couleur; if (b.da.couleur) $('#d_couleur').value = b.da.couleur;
+  $('#o_reservation').value = b.options.reservation || ''; $('#o_whatsapp').value = b.options.whatsapp || '';
+  $('#o_fbKey').value = b.options.firebaseApiKey || ''; $('#o_fbProjet').value = b.options.firebaseProjectId || '';
+  $('#o_annonce').value = b.annonce || ''; $('#o_faq').value = b.faq.map(x => `${x.q} | ${x.a}`).join('\n');
+  majCahier();
+}
+function majCahier() {
+  const b = lireBrief(), nomMod = id => (Modules.CATALOGUE.find(m => m.id === id) || {}).nom, p = [];
+  if (b.da.ambiance) p.push(Modules.AMBIANCES[b.da.ambiance]); if (b.da.mode) p.push('mode ' + b.da.mode); if (b.da.couleur) p.push('couleur ' + b.da.couleur);
+  if (b.da.police) p.push(Modules.POLICES[b.da.police].nom); if (b.da.arrondi) p.push(Modules.ARRONDIS[b.da.arrondi]); if (b.da.densite) p.push('densité ' + b.da.densite.toLowerCase());
+  b.modules.forEach(id => p.push('➕ ' + nomMod(id)));
+  $('#cahier').innerHTML = p.length ? p.map(x => `<span>${echap(x)}</span>`).join('') : 'Cahier des charges vide : explique ce que tu veux dans le tchat, ou règle-le à la main dans « Style et fonctions ».';
+}
+function onglet(nom) { document.querySelectorAll('[data-onglet]').forEach(b => b.classList.toggle('on', b.dataset.onglet === nom)); for (const n of ['chat', 'fiche', 'style']) $('#p_' + n).hidden = n !== nom; }
+const textesActuels = () => { const t = {}; for (const s of etat.resultat.slots) t[s.i] = etat.textes[s.i] ?? s.texte; return t; };
+function rafraichir() { // recompose le site avec le style et les fonctions actuels, sans réécrire les textes
+  if (!etat.resultat) return;
+  etat.brief = lireBrief();
+  etat.resultat.html = Moteur.reassembler(etat.html, etat.modele, lireFiche(), textesActuels(), etat.resultat.description, etat.interactives, etat.brief); afficher(etat.resultat.html);
+}
+
+/* ───────── Tchat avec l'assistant ───────── */
+function messageChat(role, texte, extra) {
+  const f = $('#fil'), d = document.createElement('div'); d.className = 'msg ' + role; d.textContent = texte;
+  if (extra && extra.questions && extra.questions.length) { const u = document.createElement('ul'); extra.questions.forEach(q => { const li = document.createElement('li'); li.textContent = q; u.appendChild(li); }); d.appendChild(u); }
+  if (extra && extra.note) { const n = document.createElement('small'); n.textContent = extra.note; d.appendChild(n); }
+  f.appendChild(d); f.scrollTop = f.scrollHeight; return d;
+}
+function sauverChat() { try { localStorage.setItem(CLE_CHAT, JSON.stringify(histo.slice(-30))); } catch (e) { /* stockage indisponible */ } }
+async function envoyerChat(texte) {
+  texte = String(texte || '').trim(); if (!texte || chatEnCours) return null;
+  chatEnCours = true; $('#chatEnvoi').disabled = true; $('#sugg').hidden = true;
+  messageChat('moi', texte); histo.push({ role: 'moi', texte });
+  const attente = messageChat('assistant', 'Je réfléchis…');
+  try {
+    const a = API(), ia = a ? await a.ia.etat() : { installee: false };
+    const r = await Conseiller.tour({ message: texte, historique: histo.slice(0, -1), fiche: lireFiche(), brief: lireBrief(), ecrire: ia.installee && a ? m => a.ia.ecrire(m) : (window.ECRIRE_TEST || null) });
+    ecrireFiche(r.fiche); ecrireBrief(r.brief); majInfoModele(); enregistrerFiche();
+    attente.remove();
+    let note = r.source === 'ia' ? '' : 'IA locale non installée : analyse simple de ta demande.';
+    if (etat.resultat) { if (r.necessiteRegeneration) note = (note ? note + ' ' : '') + 'Pour appliquer ce changement de design, clique sur « Générer le site ».'; else rafraichir(); }
+    messageChat('assistant', r.reponse, { questions: r.questions, note }); histo.push({ role: 'assistant', texte: r.reponse }); sauverChat();
+    return r;
+  } catch (e) { attente.remove(); messageChat('assistant', 'Je n’ai pas pu traiter ce message : ' + e.message); return null; }
+  finally { chatEnCours = false; $('#chatEnvoi').disabled = false; $('#chatSaisie').focus(); }
+}
+function accueilChat() {
+  try { histo = JSON.parse(localStorage.getItem(CLE_CHAT) || '[]'); } catch (e) { histo = []; }
+  if (histo.length) histo.forEach(h => messageChat(h.role, h.texte));
+  else messageChat('assistant', 'Bonjour ! Explique-moi le site que tu veux : le métier et le nom du professionnel, l’ambiance (luxe, chaleureux, moderne…), les couleurs, et les fonctions utiles (réservation, devis, assistant de questions, panel pour gérer les demandes, WhatsApp…). Je règle tout pour toi, tu pourras corriger à la main ensuite.');
+  const idees = ['Site pour un restaurant à Lyon avec réservation en ligne, ambiance chaleureuse', 'Plombier moderne, bleu nuit, avec demande de devis et WhatsApp', 'Ajoute un assistant de questions et un panel pour gérer les demandes', 'Passe en vert sapin avec des coins très arrondis'];
+  $('#sugg').innerHTML = idees.map(t => `<button>${echap(t)}</button>`).join(''); $('#sugg').hidden = histo.length > 0;
 }
 
 /* ───────── Aperçu ───────── */
@@ -142,7 +258,7 @@ function afficherTextes() {
 $('#textes').addEventListener('input', e => {
   const i = e.target.dataset && e.target.dataset.i; if (i === undefined) return;
   etat.textes[+i] = e.target.value; clearTimeout(tImp);
-  tImp = setTimeout(() => { etat.resultat.html = Moteur.reassembler(etat.html, etat.modele, lireFiche(), etat.textes, etat.resultat.description, etat.interactives); afficher(etat.resultat.html); }, 450);
+  tImp = setTimeout(() => rafraichir(), 450);
 });
 
 /* ───────── Génération ───────── */
@@ -159,8 +275,9 @@ async function genererSite(options = {}) {
     const ecrire = options.ecrire !== undefined ? options.ecrire : (ia.installee && a ? m => a.ia.ecrire(m) : null);
     etatTexte('Analyse de l’exemple…', 0.05);
     const interactives = await Moteur.sectionsInteractives(data.html);
-    const res = await Moteur.generer({ html: data.html, modele, fiche, ecrire, interactives, surEtape: (t, p) => etatTexte(echap(t), 0.08 + p * 0.9) });
-    Object.assign(etat, { modele, html: data.html, legal: data.legal, resultat: res, textes: {}, interactives, fiche });
+    const brief = options.brief || lireBrief();
+    const res = await Moteur.generer({ html: data.html, modele, fiche, ecrire, interactives, brief, surEtape: (t, p) => etatTexte(echap(t), 0.08 + p * 0.9) });
+    Object.assign(etat, { modele, html: data.html, legal: data.legal, resultat: res, textes: {}, interactives, fiche, brief });
     $('#titreSite').textContent = `· ${fiche.nom}`; $('#infoSite').textContent = `${modele.nom}${ecrire ? ' · textes écrits par l’IA locale' : ' · textes de l’exemple (IA non installée)'}`;
     afficher(res.html); afficherTextes(); enregistrerFiche();
     etatTexte(ecrire ? `✅ Site prêt : ${res.slots.filter(s => s.etat === 'ia').length} textes écrits par l’IA${res.aRevoir ? `, ${res.aRevoir} repris de l’exemple` : ''}. Relis à droite, puis enregistre.` : '✅ Site prêt avec les textes de l’exemple et les coordonnées du professionnel. Installe l’IA pour que les textes soient écrits pour ce métier.');
@@ -170,9 +287,9 @@ async function genererSite(options = {}) {
 }
 async function enregistrerSite() {
   const r = etat.resultat; if (!r) return;
-  const fiche = lireFiche(), legal = Moteur.mentionsLegales(etat.legal, fiche), notes = Moteur.notesLivraison(fiche, r, legal);
+  const fiche = lireFiche(), brief = lireBrief(), legal = Moteur.mentionsLegales(etat.legal, fiche), notes = Moteur.notesLivraison(fiche, r, legal, brief);
   try {
-    const out = await API().enregistrer({ dossier: Moteur.slugDe(fiche.nom), index: r.html, legal, notes });
+    const out = await API().enregistrer({ dossier: Moteur.slugDe(fiche.nom), index: r.html, legal, notes, fichiers: Modules.fichiers(fiche, brief) });
     if (out.annule) return;
     etatTexte(`✅ Site enregistré : ${echap(out.dossier)} <button id="bOuvrirDossier" style="margin-left:8px">Afficher dans le Finder</button> Lis LISEZMOI-LIVRAISON.txt : il liste ce qu’il reste à compléter.`);
     $('#bOuvrirDossier').onclick = () => API().ouvrir(out.dossier);
@@ -182,12 +299,17 @@ async function enregistrerSite() {
 (async () => {
   const a = API();
   try { modeles = a ? await a.modeles() : (window.MODELES_TEST || []); } catch (e) { modeles = []; }
-  remplirModeles(); chargerFiche(); majInfoModele(); majIA();
+  if (a && a.maj) a.maj.verifier().then(v => { if (!v) return; $('#bMajTexte').textContent = `Une nouvelle version de Studio Sites est disponible (${v.version}).`; $('#bMajGo').onclick = () => a.maj.ouvrir(v.url); $('#bMaj').classList.add('vu'); }).catch(() => {});
+  remplirModeles(); remplirStyle(); chargerFiche(); majInfoModele(); majIA(); majCahier(); accueilChat();
   document.querySelectorAll('#fiche input, #fiche select, #fiche textarea').forEach(e => e.addEventListener('input', () => { majInfoModele(); enregistrerFiche(); }));
+  document.querySelectorAll('#p_style input, #p_style select, #p_style textarea').forEach(e => e.addEventListener('input', () => { majCahier(); majInfoModele(); enregistrerFiche(); clearTimeout(tImp); tImp = setTimeout(rafraichir, 500); }));
+  $('#gauche').addEventListener('click', e => { const o = e.target.closest('[data-onglet]'); if (o) onglet(o.dataset.onglet); const sg = e.target.closest('#sugg button'); if (sg) { $('#chatSaisie').value = sg.textContent; $('#chatSaisie').focus(); } });
+  $('#chatEnvoi').onclick = () => { const t = $('#chatSaisie').value; $('#chatSaisie').value = ''; envoyerChat(t); };
+  $('#chatSaisie').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#chatEnvoi').click(); } });
   $('#bGenerer').onclick = () => genererSite(); $('#bEnregistrer').onclick = enregistrerSite;
   $('#vMobile').onclick = () => setVue(true); $('#vBureau').onclick = () => setVue(false);
   // accès pour les essais automatiques
-  window.sites = { genererSite, etat, modeles: () => modeles, lireFiche, ecrireFiche,
+  window.sites = { genererSite, etat, modeles: () => modeles, lireFiche, ecrireFiche, lireBrief, ecrireBrief, envoyerChat, rafraichir, onglet,
     essai: async id => { const fiche = { nom: 'Boulangerie Martin', metier: 'boulanger', ville: 'Nantes', telephone: '02 40 12 34 56', email: 'contact@martin-nantes.fr', services: ['Pain au levain', 'Viennoiseries', 'Gâteaux sur commande'] };
       const r = await genererSite({ fiche, modeleId: id, ecrire: null }); return r && !r.erreur ? { ok: true, taille: r.html.length, textes: r.slots.length } : { ok: false, erreur: r && r.erreur }; } };
 })();

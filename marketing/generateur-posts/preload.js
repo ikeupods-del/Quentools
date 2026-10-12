@@ -11,3 +11,7 @@ contextBridge.exposeInMainWorld('studioIA', {
 contextBridge.exposeInMainWorld('studioPartage', {
   envoyer: fichiers => ipcRenderer.invoke('partage:envoyer', fichiers)
 });
+contextBridge.exposeInMainWorld('studioMaj', {
+  verifier: () => ipcRenderer.invoke('maj:verifier'),
+  ouvrir: url => ipcRenderer.invoke('maj:ouvrir', url)
+});
