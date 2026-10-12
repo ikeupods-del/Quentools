@@ -123,6 +123,43 @@ const pan = dir => (q, c) => {
 };
 fx('panoD', 'Panoramique vers la droite', 'Mouvement', [], pan(1));
 fx('panoG', 'Panoramique vers la gauche', 'Mouvement', [], pan(-1));
+
+// ---------- Mouvements de caméra « pro » (départ et arrivée en douceur, dérive lente, caméra à l'épaule) ----------
+const lisse = k => `(${k}*${k}*(3-2*${k}))`;
+fx('poussee', 'Poussée douce (départ et arrivée en douceur)', 'Mouvement', [p('a', 'Amplitude', 5, 60, 1, 18, ' %')], (q, c) => {
+  const D = Math.max(0.2, c.eff).toFixed(3), z = `(1+${q.a / 100}*${lisse(`min(1,${T(c)}/${D})`)})`;
+  return `scale=w='${even(`${c.W}*${z}`)}':h='${even(`${c.H}*${z}`)}':eval=frame,crop=${c.W}:${c.H}`;
+});
+fx('derive', 'Dérive lente (effet documentaire)', 'Mouvement', [p('a', 'Amplitude', 5, 40, 1, 15, ' %')], (q, c) =>
+  `scale=${even(`${c.W}*${1 + q.a / 100}`)}:${even(`${c.H}*${1 + q.a / 100}`)},crop=${c.W}:${c.H}:x='(iw-ow)*(0.5+0.45*sin(${T(c)}*0.4))':y='(ih-oh)*(0.5+0.4*cos(${T(c)}*0.31))'`);
+fx('epaule', 'Caméra à l’épaule (léger tremblé réaliste)', 'Mouvement', [p('a', 'Force', 5, 100, 1, 40, ' %')], (q, c) => {
+  const A = (q.a / 100 * 0.018 * c.W).toFixed(1), t = T(c);
+  return `scale=${even(`${c.W}*1.07`)}:${even(`${c.H}*1.07`)},crop=${c.W}:${c.H}:x='(iw-ow)/2+${A}*(sin(${t}*2.1)+0.6*sin(${t}*5.3)+0.3*sin(${t}*11.7))':y='(ih-oh)/2+${A}*(cos(${t}*1.7)+0.6*sin(${t}*4.9)+0.3*cos(${t}*10.9))'`;
+});
+fx('orbite', 'Orbite douce (la caméra tourne autour)', 'Mouvement', [p('a', 'Amplitude', 5, 40, 1, 14, ' %'), p('d', 'Durée d’un tour (s)', 3, 30, 1, 10)], (q, c) =>
+  `scale=${even(`${c.W}*${1 + q.a / 100}`)}:${even(`${c.H}*${1 + q.a / 100}`)},crop=${c.W}:${c.H}:x='(iw-ow)*(0.5+0.5*sin(${T(c)}*6.2832/${q.d}))':y='(ih-oh)*(0.5+0.5*cos(${T(c)}*6.2832/${q.d}))'`);
+fx('reboundzoom', 'Zoom rebond (coup de poing élastique)', 'Mouvement', [p('a', 'Amplitude', 5, 60, 1, 20, ' %')], (q, c) => {
+  const k = `(1+${q.a / 100}*(1-exp(-5*${T(c)})*cos(14*${T(c)})))`;
+  return `scale=w='${even(`${c.W}*${k}`)}':h='${even(`${c.H}*${k}`)}':eval=frame,crop=${c.W}:${c.H}`;
+});
+fx('roulis', 'Roulis léger (la caméra se penche)', 'Mouvement', [p('deg', 'Angle maximal', 1, 10, 0.5, 2, '°')], (q, c) =>
+  `rotate=a='${(q.deg * Math.PI / 180).toFixed(4)}*sin(${T(c)}*0.9)':ow=iw:oh=ih:c=black,scale=${even(`iw*1.12`)}:${even(`ih*1.12`)},crop=${c.W}:${c.H}`, { needs: ['rotate'] });
+
+// ---------- Cinéma (bandes, halation, pellicule, contraste, lueur dorée) ----------
+fx('bandescine', 'Bandes cinéma (format large)', 'Cinéma', [p('r', 'Format (2,39 = cinéma)', 1.6, 2.8, 0.01, 2.39)], (q, c) => {
+  const b = Math.max(0, Math.round((c.H - c.W / q.r) / 2 / 2) * 2);
+  return b > 0 ? `drawbox=x=0:y=0:w=iw:h=${b}:color=black:t=fill,drawbox=x=0:y=ih-${b}:w=iw:h=${b}:color=black:t=fill` : 'null';
+}, { needs: ['drawbox'] });
+fx('halation', 'Halation (halo rouge autour des hautes lumières)', 'Cinéma', [p('a', 'Intensité', 5, 100, 1, 55, ' %')], q => ({
+  graph: (i, o) => `[${i}]format=yuv420p,split[a_${o}][b_${o}];[b_${o}]curves=all='0/0 0.62/0 1/1',gblur=sigma=22,lutrgb=g='val*0.35':b='val*0.12',format=yuv420p[g_${o}];[a_${o}][g_${o}]blend=all_mode=screen:all_opacity=${q.a / 100}[${o}]`
+}), { needs: ['gblur', 'blend', 'curves', 'lutrgb'] });
+fx('lueurdoree', 'Lueur dorée (bloom chaud)', 'Cinéma', [p('a', 'Intensité', 5, 100, 1, 45, ' %')], q => ({
+  graph: (i, o) => `[${i}]format=yuv420p,split[a_${o}][b_${o}];[b_${o}]gblur=sigma=28,lutrgb=r='val*1.0':g='val*0.8':b='val*0.45',format=yuv420p[g_${o}];[a_${o}][g_${o}]blend=all_mode=screen:all_opacity=${q.a / 100}[${o}]`
+}), { needs: ['gblur', 'blend', 'lutrgb'] });
+fx('film16', 'Pellicule 16 mm (grain, douceur, vignette)', 'Cinéma', [p('n', 'Grain', 5, 40, 1, 16)], q => `noise=alls=${q.n}:allf=t+u,gblur=sigma=0.6,eq=saturation=0.88:contrast=1.06,vignette=angle=0.75`, { needs: ['noise', 'gblur', 'vignette'] });
+fx('cinecontraste', 'Contraste cinéma (noirs profonds, lumières douces)', 'Cinéma', [AMOUNT], () => "curves=all='0/0.03 0.25/0.17 0.5/0.5 0.75/0.85 1/0.97',eq=saturation=1.08", { blend: true, needs: ['curves'] });
+fx('flashbattement', 'Flash au rythme (lumière qui pulse)', 'Lumière', [p('bpm', 'Rythme (bpm)', 60, 180, 1, 120), p('a', 'Force', 5, 60, 1, 22, ' %')], (q, c) =>
+  `eq=brightness='${q.a / 100}*exp(-9*mod(${T(c)}*${q.bpm}/60,1))':eval=frame`, { needs: ['eq'] });
 fx('retourh', 'Retourner (gauche/droite)', 'Mouvement', [], () => 'hflip');
 fx('retourv', 'Retourner (haut/bas)', 'Mouvement', [], () => 'vflip');
 fx('inverse', 'Lecture à l’envers', 'Mouvement', [], () => 'reverse', { needs: ['reverse'] });

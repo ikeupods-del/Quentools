@@ -83,7 +83,7 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   check('vignette d’effet', await isJpeg(await fetch(U('/api/fxthumb?file=demo.mp4&kind=video&t=1&fx=glitch'))));
 
   // 2) Texte : styles et animations
-  for (const style of ['simple', 'bandeau', 'contour', 'ombre']) for (const anim of ['aucune', 'apparition', 'glisse']) {
+  for (const style of ['simple', 'bandeau', 'contour', 'ombre']) for (const anim of ['aucune', 'apparition', 'glisse', 'monte', 'descend', 'rebond', 'balayage', 'clignote', 'tremble', 'pulse']) {
     const r = await preview(clip({ text: 'Bonjour : le monde, "test" (1/2)', textStyle: style, textAnim: anim, textPos: 'milieu', textStart: 0.5, textDur: 2 }));
     check(`texte ${style}/${anim}`, await isJpeg(r), lastErr.v);
   }

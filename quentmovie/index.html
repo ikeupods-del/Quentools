@@ -172,7 +172,7 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 .stBandeau{position:absolute;left:5%;bottom:12%;background:#5b3df5;color:#fff;padding:10px 18px;border-left:6px solid #d7f24a;animation:bandeau .5s ease-out both;font:600 2.2vw/1.25 system-ui}
 .pkcouv{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:7px;background:#0d0e11;display:block}.pkgr{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:4px 0 8px}.pkgr>div{font-size:10px;line-height:1.2;color:#aab;cursor:pointer;text-align:center}.pkgr img,.pkgr video{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:5px;display:block;background:#0d0e11;margin-bottom:2px}.pkh{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8a8f9c;margin:6px 0 2px}.pksons{display:flex;flex-wrap:wrap;gap:5px}.pksons button{font-size:11px;padding:3px 7px}
 .stDirect{position:absolute;border-radius:10px;overflow:hidden;box-shadow:0 8px 30px #0008;animation:apparait .35s ease-out both}.stDirect img,.stDirect video{display:block;width:100%;height:auto}
-.stDirect.logo{box-shadow:none;border-radius:0}.stDirect.ecran{pointer-events:auto;cursor:move;touch-action:none;outline:2px dashed #d7f24a88}.stPoignee{position:absolute;right:6px;bottom:6px;width:20px;height:20px;border-radius:50%;background:#d7f24a;border:2px solid #000;cursor:nwse-resize}.stTexte{position:absolute;left:50%;top:8%;transform:translateX(-50%);max-width:86%;background:#5b3df5;color:#fff;padding:.5em 1em;border-left:.35em solid #d7f24a;border-radius:6px;font:700 2.4vw/1.25 system-ui;text-align:center;animation:apparait .35s ease-out both;white-space:pre-wrap}
+.stDirect.logo{box-shadow:none;border-radius:0}.stDirect canvas{display:block;width:100%;height:auto}.stDirect.bulle{border-radius:50%;border:3px solid #fff;box-shadow:0 6px 22px #0009}.stDirect.ecran{pointer-events:auto;cursor:move;touch-action:none;outline:2px dashed #d7f24a88}.stPoignee{position:absolute;right:6px;bottom:6px;width:20px;height:20px;border-radius:50%;background:#d7f24a;border:2px solid #000;cursor:nwse-resize}.stTexte{position:absolute;left:50%;top:8%;transform:translateX(-50%);max-width:86%;background:#5b3df5;color:#fff;padding:.5em 1em;border-left:.35em solid #d7f24a;border-radius:6px;font:700 2.4vw/1.25 system-ui;text-align:center;animation:apparait .35s ease-out both;white-space:pre-wrap}
 #stDirectBtns{grid-template-columns:1fr 1fr;gap:6px}#stDirectBtns .carte{padding:7px 6px;font-size:12px;text-align:left}#stDirectBtns .carte.on{border-color:#d7f24a;background:#2c2a10}
 .stBandeau b{display:block;font-size:1.15em}.stBandeau span{display:block;font-weight:400;font-size:.8em;opacity:.9}
 @keyframes bandeau{from{transform:translateX(-120%)}to{transform:none}}
@@ -521,7 +521,7 @@ function sourceVignette() {
   return m ? { file: m.file, kind: m.kind, t: m.kind === 'image' ? 0 : 0.5 } : null;
 }
 const carteRep = r => `<div class="carte txt" draggable="true" data-drag="rep:${r.id}" data-rep="${r.id}">${esc(r.nom)}</div>`;
-const videoTr = id => `<video muted loop playsinline preload="auto" src="/lib/apercus/tr-${id}.mp4" onerror="this.remove()"></video>`;
+const videoTr = id => `<video muted loop playsinline preload="metadata" src="/lib/apercus/tr-${id}.mp4" onerror="this.remove()"></video>`;
 const carteTr = (t, tr) => `<div class="carte" draggable="true" data-drag="tr:${t.id}" data-tr="${t.id}" ${tr && tr.type === t.id ? 'style="border-color:var(--ac)"' : ''}>${videoTr(t.id)}<span>${esc(t.nom)}</span></div>`;
 async function apercuSousTitre(id) {
   const k = 'sous|' + id; if (APT.has(k)) return APT.get(k);
@@ -533,7 +533,9 @@ async function apercuSousTitre(id) {
   } catch (e) { return ''; }
 }
 async function chargerApercusSousTitres() {
-  for (const im of [...document.querySelectorAll('#navbody img[data-aps]')]) { if (tab !== 'packs' || !im.isConnected) return; const u = await apercuSousTitre(im.dataset.aps); if (u && im.isConnected) im.src = u; }
+  const imgs = [...document.querySelectorAll('#navbody img[data-aps]')]; if (!imgs.length) return;
+  const obs = 'IntersectionObserver' in window ? new IntersectionObserver(async es => { for (const e of es) if (e.isIntersecting) { obs.unobserve(e.target); const im = e.target; if (tab !== 'packs' || !im.isConnected || im.src) continue; const u = await apercuSousTitre(im.dataset.aps); if (u && im.isConnected) im.src = u; } }, { root: $('#navbody'), rootMargin: '200px' }) : null;
+  if (obs) imgs.forEach(im => obs.observe(im)); else for (const im of imgs) { const u = await apercuSousTitre(im.dataset.aps); if (u) im.src = u; }
 }
 function appliquerSousStyle(id) {
   const avec = proj.clips.filter(c => (c.subs || []).length);
@@ -554,9 +556,18 @@ async function apercuTitre(id, fond) {
     const url = URL.createObjectURL(await rep.blob()); APT.set(k, url); return url;
   } catch (e) { return ''; }
 }
+// Les aperçus se calculent seulement quand la carte devient visible (un à la fois) : peu de chaleur et de mémoire sur un MacBook Air
 async function chargerApercusTitres() {
-  const imgs = [...document.querySelectorAll('#navbody img[data-apt]')];
-  for (const im of imgs) { if (tab !== 'packs' || !im.isConnected) return; const u = await apercuTitre(im.dataset.apt, im.dataset.fond); if (u && im.isConnected) im.src = u; }
+  const imgs = [...document.querySelectorAll('#navbody img[data-apt]')]; if (!imgs.length) return;
+  const file = []; let actif = false;
+  const suivant = async () => {
+    if (actif) return; actif = true;
+    while (file.length) { const im = file.shift(); if (tab !== 'packs' || !im.isConnected || im.src) continue; const u = await apercuTitre(im.dataset.apt, im.dataset.fond); if (u && im.isConnected) im.src = u; }
+    actif = false;
+  };
+  if (!('IntersectionObserver' in window)) { file.push(...imgs); return suivant(); }
+  const obs = new IntersectionObserver(es => { for (const e of es) if (e.isIntersecting) { obs.unobserve(e.target); file.push(e.target); } suivant(); }, { root: $('#navbody'), rootMargin: '200px' });
+  imgs.forEach(im => obs.observe(im));
 }
 document.addEventListener('mouseover', e => { const v = e.target.closest && e.target.closest('video[src*="/lib/apercus/"]'); if (v && v.paused) v.play().catch(() => {}); });
 document.addEventListener('mouseout', e => { const v = e.target.closest && e.target.closest('video[src*="/lib/apercus/"]'); if (v && !v.paused && !v.contains(e.relatedTarget)) { v.pause(); v.currentTime = 0; } });
@@ -603,7 +614,7 @@ function navigateur() {
         <div class="pkh">Effets de coupe</div><div class="pkgr">${P.calques.map(c => `<div><img loading="lazy" src="/api/frame?file=${enc('lib:calques/' + c + '.mp4')}&t=0.5" alt="">${esc(nomLib(L.calques, c))}</div>`).join('')}</div>
         <div class="pkh">Sons${P.musique ? ' et musique' : ''}</div><div class="pksons">${P.sons.map(c => { const x = L.sons.find(y => y.id === c); return x ? `<button class="mini" data-play="${x.file}" title="Écouter">▶ ${esc(x.nom.replace(/^(Transition|Vlog) : /, ''))}</button>` : ''; }).join('')}${P.musique ? (() => { const m = L.musiques.find(y => y.id === P.musique); return m ? `<button class="mini" data-play="${m.file}" title="Écouter">♪ ${esc(m.nom)}</button>` : ''; })() : ''}</div>
         ${P.look ? `<div class="pkh">Look</div><div class="mut">${esc(nomLib(L.luts, P.look.replace(/^luts\//, '').replace(/\.cube$/, '')))}</div>` : ''}
-        <div class="ligne" style="margin-top:8px;flex-wrap:wrap;gap:8px"><label><input type="checkbox" class="pk-tr" checked> transitions</label><label><input type="checkbox" class="pk-cal" checked> effets de coupe</label><label><input type="checkbox" class="pk-son" checked> sons</label>${P.look ? '<label><input type="checkbox" class="pk-look"> look</label>' : ''}${P.musique ? '<label><input type="checkbox" class="pk-mus"> musique</label>' : ''}${P.viz ? '<label title="S’applique aux clips audio (podcast sans image) : pochette et visualiseur"><input type="checkbox" class="pk-viz"> pochette et visualiseur</label>' : ''}${P.ambiance ? '<label title="Grain de pellicule ou lumière douce posés sur tous les clips"><input type="checkbox" class="pk-amb"> ambiance</label>' : ''}</div>
+        <div class="ligne" style="margin-top:8px;flex-wrap:wrap;gap:8px"><label><input type="checkbox" class="pk-tr" checked> transitions</label><label><input type="checkbox" class="pk-cal" checked> effets de coupe</label><label><input type="checkbox" class="pk-son" checked> sons</label>${P.look ? '<label><input type="checkbox" class="pk-look"> look</label>' : ''}${P.musique ? '<label><input type="checkbox" class="pk-mus"> musique</label>' : ''}${P.viz ? '<label title="S’applique aux clips audio (podcast sans image) : pochette et visualiseur"><input type="checkbox" class="pk-viz"> pochette et visualiseur</label>' : ''}${P.ambiance ? '<label title="Grain de pellicule ou lumière douce posés sur tous les clips"><input type="checkbox" class="pk-amb"> ambiance</label>' : ''}<label title="Pose le premier titre du pack sur le premier clip et un titre de fin sur le dernier"><input type="checkbox" class="pk-tit"> titres d’ouverture et de fin</label></div>
         <button class="pri" data-pack-app="${P.id}" style="width:100%;margin-top:6px">Appliquer ${esc(P.nom)} à toutes les coupes</button></div>`).join('')).join('');
     setTimeout(chargerApercusTitres, 30); setTimeout(chargerApercusSousTitres, 60);
   } else if (tab === 'titres') {
@@ -655,7 +666,7 @@ $('#navbody').addEventListener('click', e => {
   else if (d.fx) ajouterFx(sel, d.fx);
   else if (d.afx) ajouterAfx(sel, d.afx);
   else if (d.sousstyle) appliquerSousStyle(d.sousstyle);
-  else if (d.packApp) appliquerPack(d.packApp, { tr: !!t.parentNode.querySelector('.pk-tr:checked'), cal: !!t.parentNode.querySelector('.pk-cal:checked'), son: !!t.parentNode.querySelector('.pk-son:checked'), look: !!t.parentNode.querySelector('.pk-look:checked'), mus: !!t.parentNode.querySelector('.pk-mus:checked'), viz: !!t.parentNode.querySelector('.pk-viz:checked'), amb: !!t.parentNode.querySelector('.pk-amb:checked') });
+  else if (d.packApp) appliquerPack(d.packApp, { tr: !!t.parentNode.querySelector('.pk-tr:checked'), cal: !!t.parentNode.querySelector('.pk-cal:checked'), son: !!t.parentNode.querySelector('.pk-son:checked'), look: !!t.parentNode.querySelector('.pk-look:checked'), mus: !!t.parentNode.querySelector('.pk-mus:checked'), viz: !!t.parentNode.querySelector('.pk-viz:checked'), amb: !!t.parentNode.querySelector('.pk-amb:checked'), tit: !!t.parentNode.querySelector('.pk-tit:checked') });
   else if (d.tr) appliquerTransition(d.tr);
   else if (t.id === 'bTrTous') { const tt = $('#navbody .carte[style*="--ac"]'); proj.clips.slice(0, -1).forEach(c => { c.transition = { type: (tt && tt.dataset.tr) || 'fade', dur: +$('#trDurR').value }; }); commit(); tlDessin(); }
   else if (d.titre) appliquerTitre(d.titre);
@@ -840,9 +851,15 @@ function appliquerPack(id, o) {
   if (o.look && P.look) proj.clips.forEach(c => { if (c.kind !== 'audio') c.lut = { file: 'lib:' + P.look, amount: 100 }; });
   if (o.viz && P.viz) proj.clips.forEach(c => { if (c.kind === 'audio') { c.viz = { type: P.viz.type, color: P.viz.color, h: P.viz.h, pos: P.viz.pos }; c.bgColor = P.viz.bg; if (P.viz.fond) { c.bgFile = 'lib:' + P.viz.fond; c.bgKind = 'image'; } } });
   if (o.amb && P.ambiance) proj.clips.forEach(c => { c.overlays = (c.overlays || []).filter(x => x.pack !== P.id + '-amb'); if (c.kind !== 'audio') c.overlays.push({ file: 'lib:calques/' + P.ambiance + '.mp4', kind: 'video', x: 50, y: 50, scale: 100, rot: 0, opacity: P.ambiance === 'grain-16mm' ? 38 : 70, anim: 'none', mode: 'ecran', plein: 'remplir', key: false, keySim: 0.3, start: 0, dur: 0, pack: P.id + '-amb' }); });
+  if (o.tit) { // titre d'ouverture sur le premier clip, titre de fin (abonnement si le pack en a un) sur le dernier ; les clips qui ont déjà un titre ne sont pas touchés
+    const un = id => { const r = CAT.reportage.find(x => x.id === id); return r ? { preset: id, l1: r.l1, l2: r.l2, color: r.color, font: '', start: 0.3, speed: 14 } : null; };
+    const a = proj.clips[0], z = proj.clips[proj.clips.length - 1], ouv = un(P.titres[0]), fin = un(P.titres.includes('abonne') ? 'abonne' : (P.titres[1] || P.titres[0]));
+    if (a && ouv && !a.titre) a.titre = { ...ouv, dur: Math.min(4, Math.max(2, effDur(a) - 0.5)) };
+    if (z && z !== a && fin && !z.titre) z.titre = { ...fin, dur: Math.min(4, Math.max(2, effDur(z) - 0.5)) };
+  }
   if (o.mus && P.musique) { const mu = L.musiques.find(x => x.id === P.musique); if (mu) proj.audio.push({ file: 'lib:' + mu.file, vol: 35, start: 0, fade: true, loop: true, duck: true }); }
   commit(); tout(); apercu();
-  signal(`${P.nom} appliqué : ${nT} transition(s), ${nC} effet(s) de coupe, ${nS} son(s)${o.look ? ', le look' : ''}${o.viz ? ', la pochette et le visualiseur' : ''}${o.amb ? ', l’ambiance' : ''}${o.mus ? ' et la musique' : ''}. ⌘Z pour annuler.`);
+  signal(`${P.nom} appliqué : ${nT} transition(s), ${nC} effet(s) de coupe, ${nS} son(s)${o.look ? ', le look' : ''}${o.viz ? ', la pochette et le visualiseur' : ''}${o.amb ? ', l’ambiance' : ''}${o.tit ? ', les titres d’ouverture et de fin' : ''}${o.mus ? ' et la musique' : ''}. ⌘Z pour annuler.`);
 }
 function appliquerTransition(type) {
   const cut = selCut >= 0 ? selCut : sel;
@@ -866,7 +883,7 @@ function appliquerReportage(id, idx) {
   let c = idx >= 0 ? proj.clips[idx] : clipCible();
   if (!c) { c = newSolid('#0b1d3a', 5); insererClip(c); }
   const r = CAT.reportage.find(x => x.id === id);
-  c.titre = { preset: id, l1: r.l1, l2: r.l2, color: r.color, font: 'arial', start: 0.3, dur: id === 'generique' || id === 'compte' || id === 'progression' ? 0 : Math.min(5, Math.max(2, effDur(c) - 0.5)), speed: 14 };
+  c.titre = { preset: id, l1: r.l1, l2: r.l2, color: r.color, font: '', start: 0.3, dur: id === 'generique' || id === 'compte' || id === 'progression' ? 0 : Math.min(5, Math.max(2, effDur(c) - 0.5)), speed: 14 };
   commit(); tout(); apercu(); focusTexte('titre.l1'); signal(`« ${r.nom} » ajouté au clip ${sel + 1} : change le texte dans l’inspecteur à droite.`);
 }
 function ecranPret(id) {
@@ -1639,7 +1656,7 @@ function inspecteur() {
     <div class="ligne"><select data-p="textPos">${opts([['haut', 'En haut'], ['milieu', 'Au milieu'], ['bas', 'En bas']], c.textPos)}</select><input type="color" data-p="textColor" value="${c.textColor}"></div>
     <label class="l">Police</label><select data-p="textFont">${optsPolice(c.textFont)}</select>
     <label class="l">Style</label><select data-p="textStyle">${opts([['simple', 'Simple'], ['bandeau', 'Bandeau sombre'], ['contour', 'Contour noir'], ['ombre', 'Ombre portée']], c.textStyle)}</select>
-    <label class="l">Animation</label><select data-p="textAnim">${opts([['aucune', 'Aucune'], ['apparition', 'Apparition en fondu'], ['glisse', 'Glissé vers le haut']], c.textAnim)}</select>
+    <label class="l">Animation</label><select data-p="textAnim">${opts([['aucune', 'Aucune'], ['apparition', 'Apparition en fondu'], ['glisse', 'Glissé vers le haut'], ['monte', 'Montée avec rebond'], ['descend', 'Descente avec rebond'], ['rebond', 'Rebond'], ['balayage', 'Balayage depuis la gauche'], ['clignote', 'Clignotant'], ['tremble', 'Tremblement à l’arrivée'], ['pulse', 'Respiration']], c.textAnim)}</select>
     ${sl('Taille', 'textSize', 2, 15, 0.5, ' %', c)}${sl('Apparaît à', 'textStart', 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}${sl('Durée (0 = jusqu’à la fin)', 'textDur', 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}
   </details>
   <details ${c.overlays.length ? 'open' : ''}><summary>Calques : images, stickers, vidéos (${c.overlays.length})</summary>${overlayRows(c)}
@@ -2928,7 +2945,7 @@ async function verifierMaj(manuel) {
 
 // ---------- Studio : se filmer avec la caméra et le micro du Mac, avec un prompteur ----------
 const ST_DEF = { bruitage: true, touches: {}, fond: 'lib:fonds/quentools-led-h.jpg', detourage: 'precis', synchro: 'auto', enc: 'puce', vertMode: false, seuil: 50, contour: 12, halo: 40, seul: true, lumiere: 100, chaleur: 0,
-  led: false, ledForce: 80, ledTeinte: 'neutre', ledLargeur: 70, nom: '', role: '', directMedia: '', directPos: 'haut-droite', textes: '', logo: '', logoPos: 'haut-gauche', ecranPos: 'grand-droite',
+  led: false, ledForce: 80, ledTeinte: 'neutre', ledLargeur: 70, nom: '', role: '', directMedia: '', directPos: 'haut-droite', textes: '', logo: '', logoPos: 'haut-gauche', ecranPos: 'grand-droite', bullePos: 'bas-gauche', bulleTaille: 20,
   vitesse: 45, taille: 44, largeur: 70, opacite: 55, miroirTxt: false, miroirImg: true, compte: true, defilAuto: true, qualite: '1080', bruit: true, camera: '', micro: '' };
 // Animations à faire apparaître pendant qu'on parle (touches 1 à 9) ; position et taille en % de l'image
 // Animations « Me filmer » : les 9 premières gardent leurs touches 1 à 9 ; les autres viennent de la bibliothèque (fondvert/ : touche, position, taille, bruitage)
@@ -3014,7 +3031,8 @@ function stPanneau() {
       <label class="l">Textes à afficher (un par ligne ; T montre le suivant, puis le cache)</label><textarea id="stTextes" rows="3" placeholder="Astuce n°1 : …&#10;Lien en bio&#10;Code promo : …">${esc(o.textes)}</textarea>
       <label class="l">Mon logo (touche O, reste affiché)</label><select id="stLogo"><option value="">— aucun —</option>${(LIB().marque || []).map(x => `<option value="lib:${esc(x.file)}" ${o.logo === 'lib:' + x.file ? 'selected' : ''}>${esc(x.nom)}</option>`).join('')}${medias.filter(m => m.kind === 'image').map(m => `<option value="${esc(m.file)}" ${o.logo === m.file ? 'selected' : ''}>${esc(m.file)}</option>`).join('')}</select>
       <select id="stLogoPos" style="margin-top:4px">${opts([['haut-gauche', 'En haut à gauche'], ['haut-droite', 'En haut à droite'], ['bas-droite', 'En bas à droite'], ['bas-gauche', 'En bas à gauche']], o.logoPos)}</select>
-      <label class="l">Partage d’écran (touche E)</label><select id="stEcranPos">${opts([['grand-droite', 'Grand, à droite de moi'], ['coin', 'Dans un coin'], ['plein', 'Plein écran (je disparais)']], o.ecranPos)}</select>
+      <label class="l">Partage d’écran (touche E)</label><select id="stEcranPos">${opts([['grand-droite', 'Grand, à droite de moi'], ['coin', 'Dans un coin'], ['plein', 'Plein écran (je disparais)'], ['bulle', 'Plein écran + ma caméra en bulle']], o.ecranPos)}</select>
+      <div id="stBulleReg" ${o.ecranPos === 'bulle' ? '' : 'hidden'}><select id="stBullePos" style="margin-top:4px">${opts([['bas-gauche', 'Bulle en bas à gauche'], ['bas-droite', 'Bulle en bas à droite'], ['haut-gauche', 'Bulle en haut à gauche'], ['haut-droite', 'Bulle en haut à droite']], o.bullePos)}</select>${rg('stBulleTaille', 'Taille de la bulle', 12, 40, 1, o.bulleTaille, ' %')}</div>
       <p class="mut" style="margin:4px 0 0">L’écran partagé est enregistré à part et posé dans la piste vidéo 2, calé sur ta prise.</p>
       </details>
     </details>
@@ -3202,8 +3220,10 @@ const ST_POS = {
   'haut-droite': { nom: 'En haut à droite', x: 78, y: 26, s: 36 }, 'bas-droite': { nom: 'En bas à droite', x: 78, y: 70, s: 36 },
   'haut-gauche': { nom: 'En haut à gauche', x: 22, y: 26, s: 36 }, 'bas-gauche': { nom: 'En bas à gauche', x: 22, y: 70, s: 36 },
   'grand-droite': { nom: 'Grand, à droite de moi', x: 68, y: 50, s: 58 }, 'centre': { nom: 'Grand, au centre', x: 50, y: 50, s: 70 },
-  'coin': { nom: 'Dans un coin', x: 79, y: 24, s: 34 }, 'plein': { nom: 'Plein écran', x: 50, y: 50, s: 100 }
+  'coin': { nom: 'Dans un coin', x: 79, y: 24, s: 34 }, 'plein': { nom: 'Plein écran', x: 50, y: 50, s: 100 }, 'bulle': { nom: 'Plein écran + ma bulle', x: 50, y: 50, s: 100 }
 };
+// bulle de la caméra (centre en % de l'image, la taille est réglable) quand l'écran partagé remplit l'image
+const POS_BULLE = { 'bas-gauche': { x: 12, y: 78 }, 'bas-droite': { x: 88, y: 78 }, 'haut-gauche': { x: 12, y: 24 }, 'haut-droite': { x: 88, y: 24 } };
 const POS_LOGO = { 'haut-gauche': { x: 12, y: 10, s: 16 }, 'haut-droite': { x: 88, y: 10, s: 16 }, 'bas-droite': { x: 88, y: 88, s: 16 }, 'bas-gauche': { x: 12, y: 88, s: 16 } };
 // zone de l'image filmée à l'écran (les éléments en direct s'y placent comme dans la vidéo finale)
 function stZone() {
@@ -3251,7 +3271,8 @@ async function stDirect(quoi) {
     catch (e) { stEcranAide(`Partage d’écran refusé (${esc(e.message)}).`); return; }
     const p = ST_POS[o.ecranPos] || ST_POS['grand-droite'], el = document.createElement('div'); el.className = 'stDirect';
     const v = document.createElement('video'); v.muted = true; v.autoplay = true; v.playsInline = true; v.srcObject = flux; el.appendChild(v); v.play().catch(() => {});
-    D.ecran = { el: stPlacer2(el, p), flux, pos: o.ecranPos, rec: null, geo: { x: p.x, y: p.y, s: p.s } }; stEcranManip(D.ecran);
+    D.ecran = { el: stPlacer2(el, p), flux, pos: o.ecranPos, rec: null, geo: { x: p.x, y: p.y, s: p.s } };
+    if (o.ecranPos === 'bulle') { D.ecran.bulle = stBulleCreer(); stMsg('🫧 Plein écran + bulle : ton écran remplit l’image et ta caméra est dans la bulle. Glisse la bulle pour la déplacer, tire le rond jaune pour sa taille.'); } else stEcranManip(D.ecran);
     flux.getVideoTracks()[0].addEventListener('ended', () => { if (studio && studio.direct.ecran && studio.direct.ecran.flux === flux) stEcranStop().then(() => document.querySelectorAll('#stDirectBtns [data-direct="ecran"]').forEach(b => b.classList.remove('on'))); });
     stEcranVerifier(D.ecran, v);
     if (studio.rec) stEcranRec();
@@ -3276,6 +3297,28 @@ function stEcranVerifier(E, v) {
   };
   setTimeout(test, 400);
 }
+// Plein écran + bulle : la caméra (avec le fond choisi) est dessinée dans un rond posé sur l'écran partagé, déplaçable et redimensionnable
+function stBulleCreer() {
+  const o = studio.o, b0 = POS_BULLE[o.bullePos] || POS_BULLE['bas-gauche'], geo = studio.bulle ? { ...studio.bulle } : { x: b0.x, y: b0.y, s: +o.bulleTaille || 20 };
+  const el = document.createElement('div'); el.className = 'stDirect bulle ecran'; const cv = document.createElement('canvas'); cv.width = cv.height = 360; el.appendChild(cv);
+  const poi = document.createElement('i'); poi.className = 'stPoignee'; poi.title = 'Tirer pour changer la taille'; el.appendChild(poi);
+  const B = { el, cv, geo }; studio.bulle = { ...geo }; stPlacer2(el, geo);
+  let mode = null, dep = null;
+  el.addEventListener('pointerdown', ev => { if (ev.button) return; const { W, H } = stZone(); mode = ev.target === poi ? 'taille' : 'deplace'; dep = { x: ev.clientX, y: ev.clientY, geo: { ...B.geo }, W, H }; el.setPointerCapture(ev.pointerId); ev.preventDefault(); });
+  el.addEventListener('pointermove', ev => {
+    if (!mode) return; const dx = (ev.clientX - dep.x) / dep.W * 100, dy = (ev.clientY - dep.y) / dep.H * 100;
+    B.geo = mode === 'deplace' ? { ...dep.geo, x: clamp(dep.geo.x + dx, 5, 95), y: clamp(dep.geo.y + dy, 5, 95) } : { ...dep.geo, s: clamp(dep.geo.s + dx * 2, 10, 45) };
+    stPlacer2(el, B.geo);
+  });
+  const fin = async () => { if (!mode) return; mode = null; studio.bulle = { ...B.geo }; const E = studio.direct.ecran; if (studio.rec && E && E.rec) { await stEcranRecStop(); if (studio && studio.direct.ecran === E) stEcranRec(); } };
+  el.addEventListener('pointerup', fin); el.addEventListener('pointercancel', fin);
+  $('#stAnim').appendChild(el); return B;
+}
+function stBulleDessin() {
+  const E = studio.direct.ecran, B = E && E.bulle; if (!B) return;
+  const src = studio.o.fond ? $('#stCanvas') : $('#stVideo'), vw = src.videoWidth || src.width, vh = src.videoHeight || src.height; if (!vw || !vh) return;
+  const s = Math.min(vw, vh); B.cv.getContext('2d').drawImage(src, (vw - s) / 2, (vh - s) / 2, s, s, 0, 0, 360, 360);
+}
 // L'écran partagé est enregistré à part (même rythme que la prise) puis posé dans la piste vidéo 2
 // L'écran partagé se déplace à la souris et se redimensionne par le rond jaune ; pendant la prise, chaque nouvelle place démarre un nouveau morceau
 function stEcranManip(E) {
@@ -3294,13 +3337,13 @@ function stEcranManip(E) {
 function stEcranRec() {
   const E = studio.direct.ecran; if (!E || E.rec) return;
   const mime = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'].find(t => MediaRecorder.isTypeSupported(t)) || '';
-  const rec = new MediaRecorder(E.flux, { mimeType: mime, videoBitsPerSecond: 8e6 }), morceaux = [], t = stDuree(), geo = { ...E.geo }, pos = E.pos; // place de l'écran au début de ce morceau
+  const rec = new MediaRecorder(E.flux, { mimeType: mime, videoBitsPerSecond: 8e6 }), morceaux = [], t = stDuree(), geo = { ...E.geo }, pos = E.pos, bulle = E.bulle ? { ...E.bulle.geo } : null; // place de l'écran (et de la bulle) au début de ce morceau
   rec.ondataavailable = e => { if (e.data.size) morceaux.push(e.data); };
-  E.rec = rec; E.fini = new Promise(ok => { rec.onstop = () => { studio && studio.ecranSegs.push({ blob: new Blob(morceaux, { type: mime || 'video/webm' }), mime, t, fin: E.finT, pos, geo }); ok(); }; });
+  E.rec = rec; E.fini = new Promise(ok => { rec.onstop = () => { studio && studio.ecranSegs.push({ blob: new Blob(morceaux, { type: mime || 'video/webm' }), mime, t, fin: E.finT, pos, geo, bulle }); ok(); }; });
   rec.start(1000); if (studio.pauseDebut) rec.pause();
 }
 async function stEcranRecStop() { const E = studio && studio.direct.ecran; if (!E || !E.rec) return; E.finT = stDuree(); const p = E.fini; if (E.rec.state !== 'inactive') E.rec.stop(); E.rec = null; await p; }
-async function stEcranStop() { const E = studio.direct.ecran; if (!E) return; await stEcranRecStop(); E.flux.getTracks().forEach(t => t.stop()); E.el.remove(); studio.direct.ecran = null; }
+async function stEcranStop() { const E = studio.direct.ecran; if (!E) return; await stEcranRecStop(); E.flux.getTracks().forEach(t => t.stop()); E.el.remove(); if (E.bulle) E.bulle.el.remove(); studio.direct.ecran = null; }
 // au début de la prise : ce qui est déjà affiché commence à 0
 function stDirectDebut() {
   const D = studio.direct;
@@ -3369,6 +3412,7 @@ async function ouvrirStudio() {
     if (!studio) return;
     const dt = (now - avant) / 1000; avant = now;
     if (studio.defil) { studio.pos += studio.o.vitesse * dt; stPlacer(); }
+    if (studio.direct.ecran && studio.direct.ecran.bulle) stBulleDessin();
     if (studio.rec) $('#stTemps').textContent = fmtChrono(stDuree()) + (studio.pauseDebut ? ' · en pause' : '');
     if (studio.vu) $('#stVu i').style.width = Math.min(100, studio.vu() * 140) + '%';
     if (studio.det && now - (studio.perfT || 0) > 1000) { studio.perfT = now; const p = $('#stPerf'), d = studio.det;
@@ -3461,7 +3505,8 @@ async function stEnvoyer(morceaux, mime) {
           await chargerMedias(); const me = medias.find(x => x.file === j2.file); if (!me) continue;
           const pp = sg.geo || ST_POS[sg.pos] || ST_POS['grand-droite'], du = Math.max(0.3, (sg.fin ?? finPrise) - sg.t);
           proj.pistes = proj.pistes || [];
-          proj.pistes.push({ file: me.file, kind: 'video', start: +(debut + sg.t).toFixed(2), in: 0, out: +Math.min(me.duration || du, du).toFixed(2), dur: 4, plein: pp.s >= 100, x: pp.x, y: pp.y, scale: pp.s, forme: 'arrondi', bord: '#ffffff', opacity: 100, vol: 0, hasAudio: false, anim: 'fondu' });
+          proj.pistes.push({ file: me.file, kind: 'video', start: +(debut + sg.t).toFixed(2), in: 0, out: +Math.min(me.duration || du, du).toFixed(2), dur: 4, plein: pp.s >= 100, x: pp.x, y: pp.y, scale: pp.s, forme: 'arrondi', bord: '#ffffff', opacity: 100, vol: 0, hasAudio: false, anim: 'fondu', ligne: 0 });
+          if (sg.bulle && m) proj.pistes.push({ file: m.file, kind: 'video', start: +(debut + sg.t).toFixed(2), in: +sg.t.toFixed(2), out: +Math.min(m.duration || (sg.t + du), sg.t + du).toFixed(2), dur: 4, plein: false, x: sg.bulle.x, y: sg.bulle.y, scale: sg.bulle.s, forme: 'rond', bord: '#ffffff', opacity: 100, vol: 0, hasAudio: false, anim: 'fondu', ligne: 1 });
         } catch (er) { stMsg(`<span class="err">Écran partagé non ajouté : ${esc(er.message)}</span>`); }
       }
       stSonsAnimations(evts, debut);
@@ -3531,8 +3576,10 @@ $('#stPanneau').addEventListener('input', e => {
   if (t.id === 'stScript') { proj.prompteur = t.value; commit(true); stStyle(); return; }
   const champ = { stVert: 'vertMode', stDet: 'detourage', stSync: 'synchro', stSeul: 'seul', stSeuil: 'seuil', stContour: 'contour', stHalo: 'halo', stLum: 'lumiere', stChaleur: 'chaleur',
     stLed: 'led', stLedForce: 'ledForce', stLedLarg: 'ledLargeur', stLedTeinte: 'ledTeinte', stNom: 'nom', stRole: 'role',
-    stVit: 'vitesse', stTaille: 'taille', stLarg: 'largeur', stOpa: 'opacite', stMirTxt: 'miroirTxt', stMirImg: 'miroirImg', stCpt: 'compte', stAuto: 'defilAuto', stQual: 'qualite', stEnc: 'enc', stBruit: 'bruit', stCam: 'camera', stMic: 'micro', stDMedia: 'directMedia', stDPos: 'directPos', stTextes: 'textes', stLogo: 'logo', stLogoPos: 'logoPos', stEcranPos: 'ecranPos', stBruitage: 'bruitage' }[t.id];
+    stVit: 'vitesse', stTaille: 'taille', stLarg: 'largeur', stOpa: 'opacite', stMirTxt: 'miroirTxt', stMirImg: 'miroirImg', stCpt: 'compte', stAuto: 'defilAuto', stQual: 'qualite', stEnc: 'enc', stBruit: 'bruit', stCam: 'camera', stMic: 'micro', stDMedia: 'directMedia', stDPos: 'directPos', stTextes: 'textes', stLogo: 'logo', stLogoPos: 'logoPos', stEcranPos: 'ecranPos', stBullePos: 'bullePos', stBulleTaille: 'bulleTaille', stBruitage: 'bruitage' }[t.id];
   if (!champ) return; o[champ] = v; stGarder(o);
+  if (t.id === 'stEcranPos') { const z = $('#stBulleReg'); if (z) z.hidden = v !== 'bulle'; }
+  if (t.id === 'stBullePos' || t.id === 'stBulleTaille') { const E = studio.direct.ecran; if (E && E.bulle) { const b = POS_BULLE[o.bullePos]; E.bulle.geo = { x: b.x, y: b.y, s: +o.bulleTaille }; studio.bulle = { ...E.bulle.geo }; stPlacer2(E.bulle.el, E.bulle.geo); } }
   const lab = $('#' + t.id + 'V'); if (lab) lab.textContent = v + ({ stTaille: ' px', stLedLarg: ' px', stLarg: ' %', stOpa: ' %', stHalo: ' %', stLum: ' %', stLedForce: ' %' }[t.id] || '');
   if (['stCam', 'stMic', 'stQual', 'stBruit'].includes(t.id)) { if (studio.rec) return alert('Arrête d’abord l’enregistrement.'); stFlux().catch(er => alert('Appareil indisponible : ' + er.message)); }
   if (t.id === 'stVert') { stPanneau(); if (v) stCleAuto(); else stDetoureur().catch(er => stMsg(esc(er.message))); return; }

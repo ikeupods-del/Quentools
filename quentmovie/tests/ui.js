@@ -95,6 +95,13 @@ function chromium() {
   await pg.click('[data-sousstyle="hormozi"]');
   check('pack sous-titres : style Hormozi appliqué (mot à mot, taille du style)', await ev(() => proj.clips.every(c => c.subStyle === 'hormozi' && c.subSize === tailleSous('hormozi')) && modeMots('hormozi') && !modeMots('cinema') && CAT.sousTitres.length === 12));
   await ev(() => { proj.clips.forEach(c => { c.subs = []; c.subStyle = 'contour'; }); commit(); tout(); });
+  // pack : titres d'ouverture et de fin (premier et dernier clip)
+  await ev(() => { proj.clips.forEach(c => { c.titre = null; }); commit(); tout(); allerOnglet('packs'); });
+  await pg.waitForSelector('[data-pack-app="bourse"]', { timeout: 5000 });
+  await pg.evaluate(() => { document.querySelector('[data-pack="bourse"] .pk-tit').checked = true; });
+  await pg.click('[data-pack-app="bourse"]');
+  check('pack : titres d’ouverture et de fin posés (polices du pack)', await ev(() => { const a = proj.clips[0].titre, z = proj.clips[proj.clips.length - 1].titre; return a && a.preset === 'cours-hausse' && a.font === '' && z && z.preset === 'cours-baisse' && proj.clips.slice(1, -1).every(c => !c.titre); }));
+  await ev(() => { proj.clips.forEach(c => { c.titre = null; }); commit(); tout(); });
   // pack Podcast : visualiseur sonore posé sur les clips audio seulement
   await ev(() => { proj.clips.push({ ...JSON.parse(JSON.stringify(proj.clips[0])), kind: 'audio', transition: null, overlays: [] }); commit(); tout(); allerOnglet('packs'); });
   await pg.waitForSelector('[data-pack-app="podcast-interview"]', { timeout: 5000 });
@@ -259,6 +266,18 @@ function chromium() {
   const calq = await ev(() => { const c = proj.clips[proj.clips.length - 1]; return c && c.overlays.map(o => ({ f: o.file, s: o.start, d: o.dur })); });
   check('prise : image, texte et logo devenus des calques au bon moment', !!calq && calq.length === 3 && calq.some(o => o.f === "photo.png" && o.s > 0.3 && o.d > 1) && calq.some(o => /^texte-direct-/.test(o.f) && o.d > 1) && calq.some(o => /quentools-neon/.test(o.f) && o.s === 0), JSON.stringify(calq));
   check('prise : écran partagé posé dans la piste vidéo 2', await ev(n => (proj.pistes || []).length === n + 1 && /^camera-ecran-/.test(proj.pistes[proj.pistes.length - 1].file) && proj.pistes[proj.pistes.length - 1].start > starts()[proj.clips.length - 1], nPistes));
+  await ev(() => fermerStudio());
+
+  // 7b) studio : plein écran + bulle de la caméra (écran partagé simulé) → piste de l'écran plein et piste de la bulle ronde
+  const nAv3 = await ev(() => proj.clips.length), nPistes3 = await ev(() => (proj.pistes || []).length);
+  await ev(() => ouvrirStudio()); await pg.waitForFunction(() => studio && studio.flux, null, { timeout: 15000 });
+  await ev(() => { Object.assign(studio.o, { compte: false, fond: '', ecranPos: 'bulle', bullePos: 'bas-droite', bulleTaille: 24 }); stPanneau(); });
+  await pg.click('#stRec'); await pg.waitForTimeout(700);
+  await pg.keyboard.press('e'); await pg.waitForTimeout(1500);
+  check('studio plein écran + bulle : écran plein et caméra dans un rond', await ev(() => { const E = studio.direct.ecran, b = E && E.bulle; if (!b) return false; const r = getComputedStyle(b.el); return r.borderRadius.includes('50%') && !!b.el.querySelector('canvas') && E.geo.s >= 100 && b.geo.x === 88 && b.geo.s === 24 && !E.el.classList.contains('ecran'); }));
+  await pg.click('#stRec');
+  await pg.waitForFunction(n => proj.clips.length > n && !studio.envoi, nAv3, { timeout: 90000 }).catch(() => {});
+  check('prise plein écran + bulle : piste de l’écran plein et piste de la bulle ronde', await ev(n => { const p = (proj.pistes || []).slice(n); const e = p.find(x => /^camera-ecran-/.test(x.file)), b = p.find(x => x.forme === 'rond' && /^camera-/.test(x.file) && !/ecran/.test(x.file)); return p.length === 2 && e && e.plein && b && !b.plein && b.x === 88 && b.scale === 24 && b.ligne > e.ligne && b.in >= 0; }, nPistes3));
   await ev(() => fermerStudio());
 
   // 8) coupe : sous-titres suivent chaque morceau ; chapitrage automatique (repères, titre qui s'écrit, bruit de clavier) ; clipping

@@ -3,6 +3,14 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.26.0
+- **Partage d’écran en plein écran avec ta caméra dans une bulle.** Dans le studio, « Partage d’écran » propose maintenant « Plein écran + ma caméra en bulle » : ton écran remplit l’image et ta caméra (avec ton fond virtuel) apparaît dans un rond. Choisis le coin et la taille de la bulle, ou glisse-la et tire le rond jaune pendant la prise. Dans la timeline, l’écran et la bulle sont deux éléments de la piste vidéo 2, modifiables.
+- **Mouvements de caméra pro** : poussée douce, dérive lente, caméra à l’épaule, orbite, zoom rebond, roulis. **Effets cinéma** : bandes cinéma, halation, lueur dorée, pellicule 16 mm, contraste cinéma, flash au rythme.
+- **Sept nouvelles animations de texte** : montée avec rebond, descente, rebond, balayage, clignotant, tremblement, respiration.
+- Chaque pack propose « titres d’ouverture et de fin » : le premier titre du pack est posé sur le premier clip, un titre de fin sur le dernier.
+- Les titres de pack utilisent maintenant leurs polices prévues (Futura, Copperplate, Didot, Impact…) quand tu les ajoutes depuis la bibliothèque.
+- Plus léger pour le MacBook Air : les aperçus du pack ne se calculent que lorsqu’ils sont visibles, les vidéos d’aperçu ne se préchargent pas, et quelques effets ont moins de filtres.
+
 ## 1.25.0
 - **Bourse et économie** nettement enrichies. Six nouveaux titres animés : courbe en aire qui se dessine (avec la variation en %), classement en barres horizontales, gros chiffre qui défile jusqu’à sa valeur, carte de définition (ETF, PER, inflation…), jauge de niveau de risque de 1 à 5 et barre de progression vers un objectif.
 - Nouveau pack **Finance perso et épargne** ; les packs Bourse, Économie, Crypto et Entrepreneur reçoivent les nouveaux titres, quatre sons de marché (cloche de fermeture, alerte, tracé de graphique, chiffres qui défilent) et, pour les épisodes audio, une pochette et un visualiseur aux couleurs de la bourse.
