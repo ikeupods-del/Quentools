@@ -106,6 +106,9 @@
       <button id="avance" style="width:100%">Générer 20 scénarios en avance</button>
       <p class="doux" id="avanceTxt">Travaille en arrière-plan : tu peux continuer à faire des vidéos.</p>
     </div>
+    <div class="carte options" style="margin-top:16px" id="carteIA"><b>IA locale</b>
+      <label class="case"><input type="checkbox" data-opt="ia"> Utiliser l’IA locale (sinon : fiches, bibliothèque et générateur, sans aucun risque de plantage)</label>
+    </div>
     <div class="carte options" style="margin-top:16px"><b>Dans la vidéo</b>
       <label class="case"><input type="checkbox" data-opt="karaoke"> Mots surlignés pendant qu’ils sont dits</label>
       <label class="case"><input type="checkbox" data-opt="barre"> Barre de progression en haut</label>
@@ -191,6 +194,7 @@ async function maj() {
   document.querySelectorAll('[data-opt]').forEach(el => { if (document.activeElement === el) return; if (el.type === 'checkbox') el.checked = !!o[el.dataset.opt]; else el.value = o[el.dataset.opt]; el.disabled = el.dataset.opt === 'volume_musique' && !o.musique; });
   $('#volTxt').textContent = ' volume de la musique : ' + (o.volume_musique || 0) + ' %';
   $('#caseChiffres').hidden = !invest;
+  $('#carteIA').hidden = !!e.sans_ia;
   afficherBrouillon(e);
   $('#surFiche').disabled = !!e.travail;
   $('#surSujet').disabled = !!e.travail;
@@ -199,8 +203,8 @@ async function maj() {
   $('#nbHisto').textContent = e.historique;
   $('#libHisto').textContent = invest ? 'sujets déjà publiés' : 'sketchs déjà publiés';
   const ins = e.ia_install || {};
-  $('#ia').textContent = e.ia === 'ok' ? e.modele : ins.en_cours ? `installation ${Math.round((ins.avancement || 0) * 100)} %` : e.ia === 'modele absent' ? 'à installer' : 'absente (mode sans IA)';
-  $('#iaInstaller').hidden = !(e.ia === 'modele absent' && !ins.en_cours);
+  $('#ia').textContent = e.sans_ia ? 'version sans IA' : !o.ia ? 'coupée (réglage)' : e.ia === 'ok' ? e.modele : ins.en_cours ? `installation ${Math.round((ins.avancement || 0) * 100)} %` : e.ia === 'modele absent' ? 'à installer' : 'absente (mode sans IA)';
+  $('#iaInstaller').hidden = !(e.ia === 'modele absent' && !ins.en_cours) || !!e.sans_ia || !o.ia;
   if (ins.erreur && !ins.en_cours) $('#iaInstaller').textContent = 'Reprendre l’installation de l’IA';
   $('#ia').className = 'pastille' + (e.ia === 'ok' ? ' ok' : '');
   $('#voix').textContent = e.voix === 'piper' ? 'Piper (Pierre, Jessica)' : e.voix === 'telechargement' ? 'téléchargement de la voix…' : 'bips de secours (voix non téléchargée)';

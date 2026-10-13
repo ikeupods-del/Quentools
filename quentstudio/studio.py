@@ -210,7 +210,7 @@ def etat():
         "voix": "piper" if voice.chemin_modele().exists() and not os.environ.get("QS_BIPS") else "telechargement" if voice.EN_COURS["oui"] else "bips",
         "videos": videos(), "dossier": str(config.VIDEOS), "version": config.VERSION,
         "maj": {k: maj.ETAT[k] for k in ("etat", "version", "avancement", "notes", "erreur")},
-        "options": config.options(),
+        "options": config.options(), "sans_ia": config.SANS_IA,
         "brouillon": ETAT["brouillon"] if ETAT["brouillon"] and ETAT["brouillon"]["serie"] == config.serie else None,
     }
 
@@ -377,7 +377,7 @@ def essai_ia(sortie):
 def essai(sortie):
     """Essai de l'application installée (workflow de construction) : une vidéo de chaque série, résultat en JSON."""
     import json as _json
-    res = {"version": config.VERSION, "ffmpeg": render.ffmpeg_exe(), "videos": []}
+    res = {"version": config.VERSION, "ffmpeg": render.ffmpeg_exe(), "videos": [], "sans_ia": config.SANS_IA, "ia": ia_locale.etat()}
     try:
         res["modele_voix"] = str(voice.assurer_modele(journal=print))
         for serie in config.SERIES:
