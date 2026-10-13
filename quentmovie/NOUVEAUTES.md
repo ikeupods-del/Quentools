@@ -3,6 +3,10 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.35.1
+- **Couper un clip qui porte un titre** : le titre continue sur la deuxième moitié, exactement là où il en était (son entrée ne se rejoue pas). Pareil pour le texte du clip.
+- Deux exports terminés dans la même seconde ne s'écrasent plus : le second est enregistré à côté (« …-2 »).
+
 ## 1.35.0
 - **Montage à la main réparé** : après avoir touché un curseur de l'inspecteur (début, fin, vitesse, volume…), la timeline se figeait, la coupe (S, ⌘B), I et O ne marchaient plus et ⌘Z semblait ne rien faire. C'est corrigé, et les projets déjà enregistrés sont réparés tout seuls à l'ouverture.
 - **Le son reste calé sur l'image** : raccourcir un clip (I, O, bords), le déplacer, le dupliquer ou en insérer un fait suivre les sons détachés, la piste vidéo 2 et les titres. Après une transition, les sons et titres ne tombent plus trop tôt dans la vidéo exportée.

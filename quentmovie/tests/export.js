@@ -101,6 +101,14 @@ const { execFileSync } = require('child_process');
     const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
     const ecart = t => { const a = img(sans.out, t), b = img(avec.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
     check('transition : titre posé au début du clip 2, pas une seconde trop tard', ecart(2.6) > 1 && ecart(4.2) < 0.5, [ecart(2.6), ecart(4.2)].join(' ')); }
+  // coupe d'un clip titré : le titre continue sur la 2e moitié, au même point de son animation (pas d'entrée rejouée)
+  { const ti = { preset: 'angle', l1: 'Titre continu', color: '#ff2d55', start: 0.2, dur: 0 };
+    const entier = await exporter({ ...projet('TiEntier'), clips: [clip('a.mp4', 'video', { out: 4, titre: ti })] });
+    const coupe = await exporter({ ...projet('TiCoupe'), clips: [clip('a.mp4', 'video', { out: 1, titre: ti }), clip('a.mp4', 'video', { in: 1, out: 4, titre: { ...ti, start: 0, deja: 0.8 } })] });
+    const sansT = await exporter({ ...projet('TiSans'), clips: [clip('a.mp4', 'video', { out: 4 })] });
+    const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
+    const ec = (x, y, t) => { const a = img(x.out, t), b = img(y.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
+    check('coupe d’un clip titré : titre toujours là après la coupe, sans entrée rejouée', ec(coupe, sansT, 1.15) > 1 && ec(coupe, entier, 1.15) < 0.6 && ec(coupe, entier, 2.5) < 0.6, [ec(coupe, sansT, 1.15), ec(coupe, entier, 1.15), ec(coupe, entier, 2.5)].join(' ')); }
   // niveaux : la musique est calée sous la voix (≈ -18 dB) quel que soit le niveau du fichier, les bruitages un peu en dessous
   { const L = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'bibliotheque', 'index.json'), 'utf8')), mu = (L.musiques || [])[0], so = (L.sons || []).find(x => x.duree > 0.6);
     const jn = await exporter({ ...projet('Niveaux'), clips: [clip('a.mp4', 'video', { out: 4 })], audio: [{ file: 'lib:' + mu.file, vol: 35, start: 0, fade: false, loop: true, duck: false }, { file: 'lib:' + so.file, vol: 80, start: 1, fade: false, loop: false, duck: false }] });

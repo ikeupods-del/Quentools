@@ -387,6 +387,9 @@ function chromium() {
   const nv = await ev(() => { const c0 = window.confirm; window.confirm = () => true; proj.etatPistes = { V1: { verrou: true } }; nouveau(); window.confirm = c0; return { t: proj.textes.length, e: JSON.stringify(proj.etatPistes) }; });
   check('nouveau projet : titres et état des pistes remis à zéro', nv.t === 0 && nv.e === '{}', JSON.stringify(nv));
 
+  const ct = await ev(() => { const m = medias.find(x => x.file === 'a.mp4'); const c = newClip(m); c.titre = { preset: 'angle', l1: 'Long', start: 0.5, dur: 0 }; c.text = 'Bas'; c.textStart = 0.2; proj.clips = [c]; proj.audio = []; proj.textes = []; sel = 0; selA = selP = selT = -1; tout(); placerTete(2, { sansSelection: true }); sel = 0; couper(); return { a: proj.clips[0].titre, b: proj.clips[1].titre, tb: proj.clips[1].text, td: proj.clips[1].textDeja }; });
+  check('couper un clip titré : le titre et le texte continuent sur la 2e moitié', ct.a && ct.b && ct.b.start === 0 && ct.b.deja === 1.5 && ct.tb === 'Bas' && ct.td === 1.8, JSON.stringify(ct));
+
   // assistant : nouvelles actions exécutées sur le montage (supprimer un clip, bruitage, couper à un instant, volume, fondus)
   await ev(async () => { await chargerMedias(); proj.clips = []; proj.audio = []; const m = medias.find(x => x.file === 'a.mp4'); for (let i = 0; i < 3; i++) proj.clips.push(newClip(m)); sel = 0; commit(); tout(); });
   const act = a => ev(async a => { await executerAction(a); return { clips: proj.clips.length, audio: proj.audio.map(x => x.file), vols: proj.clips.map(c => c.vol), fi: proj.clips[0].fadeIn, fo: proj.clips[proj.clips.length - 1].fadeOut, total: total() }; }, a);

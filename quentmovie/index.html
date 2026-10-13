@@ -1392,9 +1392,9 @@ function trancherClip(c, loc) {
     const fin = +c.titre.dur > 0 ? c.titre.start + c.titre.dur : Infinity;
     if (c.titre.start >= loc) { a.titre = null; b.titre = { ...c.titre, start: +(c.titre.start - loc).toFixed(2) }; }
     else if (fin <= loc) b.titre = null;
-    else if (fin !== Infinity) { b.titre = { ...c.titre, start: 0, dur: +(fin - loc).toFixed(2) }; } else b.titre = null;
+    else { b.titre = { ...c.titre, start: 0, deja: +((+c.titre.deja || 0) + loc - c.titre.start).toFixed(2) }; } // il continue sans rejouer son entrée
   }
-  if (c.text) { const ts = +c.textStart || 0; if (ts >= loc) { a.text = ''; b.textStart = +(ts - loc).toFixed(2); } else if (+c.textDur > 0 && ts + c.textDur > loc) { b.textStart = 0; b.textDur = +(ts + c.textDur - loc).toFixed(2); } else b.text = ''; }
+  if (c.text) { const ts = +c.textStart || 0; if (ts >= loc) { a.text = ''; b.textStart = +(ts - loc).toFixed(2); } else if (!(+c.textDur > 0) || ts + c.textDur > loc) { b.textStart = 0; b.textDeja = +((+c.textDeja || 0) + loc - ts).toFixed(2); } else b.text = ''; }
   a.overlays = (c.overlays || []).filter(o => (o.start || 0) < loc);
   b.overlays = (c.overlays || []).filter(o => !(+o.dur > 0 && (o.start || 0) + o.dur <= loc)).map(o => ({ ...o, start: +Math.max(0, (o.start || 0) - loc).toFixed(2), dur: +o.dur > 0 ? +Math.min(o.dur, (o.start || 0) + o.dur - loc).toFixed(2) : o.dur }));
   a.fadeOut = 0; b.fadeIn = 0; if (c.fade) { a.fade = false; b.fade = false; a.fadeIn = a.fadeIn || 0.4; b.fadeOut = b.fadeOut || 0.4; }
@@ -1720,7 +1720,7 @@ function htmlTitre(ti, e) {
 // titres visibles à l'instant t : celui du clip et ceux de la piste Titres
 function titresA(t, st, sansClip) {
   const l = [], { i } = locate(t), c = proj.clips[i], ti = c && c.titre;
-  if (!sansClip && ti && (ti.l1 || ti.l2)) { const e = t - st[i] - (+ti.start || 0), fin = +ti.dur > 0 ? +ti.dur : effDur(c) - (+ti.start || 0); if (e >= 0 && e <= fin) l.push(htmlTitre(ti, e)); }
+  if (!sansClip && ti && (ti.l1 || ti.l2)) { const dj = +ti.deja || 0, e = t - st[i] - (+ti.start || 0) + dj, fin = +ti.dur > 0 ? +ti.dur : effDur(c) - (+ti.start || 0) + dj; if (e >= dj && e <= fin) l.push(htmlTitre(ti, e)); }
   if (!etatPiste('T').cache) (proj.textes || []).forEach(x => { const e = t - x.start - (+x.titre.start || 0); if (t >= x.start && t < x.start + x.dur && e >= 0) l.push(htmlTitre(x.titre, e)); });
   return l;
 }
