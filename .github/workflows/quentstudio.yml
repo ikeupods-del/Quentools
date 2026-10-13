@@ -42,6 +42,9 @@ jobs:
           QS_DATA= QS_MODELES_SOURCE="$RUNNER_TEMP/qs-voix/modeles" python verifier.py
       - name: Essayer l'application construite (deux vidéos réelles, voix, ffmpeg et AirDrop livrés)
         run: |
+          # comme sur un Mac d'utilisateur : les certificats du Python de construction n'existent pas, l'app doit utiliser les siens
+          CA=$(python -c "import ssl; p = ssl.get_default_verify_paths(); print(p.openssl_cafile)")
+          [ -f "$CA" ] && sudo mv "$CA" "$CA.masque" || true
           QS_DATA="$RUNNER_TEMP/qs-app" dist/QuentStudio.app/Contents/MacOS/QuentStudio --essai "$PWD/essai.json"
           cat essai.json
           python - <<'PY'

@@ -122,7 +122,7 @@ async function maj() {
   $('#iaInstaller').hidden = !(e.ia === 'modele absent' && !ins.en_cours);
   if (ins.erreur && !ins.en_cours) $('#iaInstaller').textContent = 'Reprendre l’installation de l’IA';
   $('#ia').className = 'pastille' + (e.ia === 'ok' ? ' ok' : '');
-  $('#voix').textContent = e.voix === 'piper' ? 'Piper (Pierre, Jessica)' : 'bips de secours';
+  $('#voix').textContent = e.voix === 'piper' ? 'Piper (Pierre, Jessica)' : e.voix === 'telechargement' ? 'téléchargement de la voix…' : 'bips de secours (voix non téléchargée)';
   $('#voix').className = 'pastille' + (e.voix === 'piper' ? ' ok' : '');
   document.querySelectorAll('[data-mode]').forEach(b => b.disabled = !!e.travail || (b.dataset.mode === 'ia' && e.ia !== 'ok'));
   $('#barre').style.width = (e.travail ? Math.max(3, e.avancement * 100) : 0) + '%';

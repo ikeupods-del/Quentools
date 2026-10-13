@@ -15,6 +15,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+# Certificats d'internet livrés avec l'application : sans eux, l'app installée ne peut rien télécharger
+# (voix, IA, Wikipédia, mises à jour) et retombe sur les bips de secours.
+try:
+    import certifi
+    if getattr(sys, "frozen", False) or not os.environ.get("SSL_CERT_FILE"):
+        os.environ["SSL_CERT_FILE"] = certifi.where()
+except ImportError:
+    pass
+
 # Lancé depuis le Dock, le PATH est minimal : on ajoute Homebrew pour trouver ffmpeg et ollama
 for d in ("/opt/homebrew/bin", "/usr/local/bin"):
     if os.path.isdir(d) and d not in os.environ.get("PATH", "").split(":"):
@@ -130,7 +139,7 @@ def etat():
         "historique": len(history.charger()["sketchs"]),
         "ia": etat_ia(), "modele": "Qwen3 4B (intégrée)" if ia_locale.moteur_present() and ia_locale.chemin_modele() else config.MODELE_IA,
         "ia_install": {"en_cours": ia_locale.INSTALL["en_cours"], "avancement": round(ia_locale.INSTALL["avancement"], 3), "erreur": ia_locale.INSTALL["erreur"]},
-        "voix": "piper" if voice.chemin_modele().exists() and not os.environ.get("QS_BIPS") else "bips",
+        "voix": "piper" if voice.chemin_modele().exists() and not os.environ.get("QS_BIPS") else "telechargement" if voice.EN_COURS["oui"] else "bips",
         "videos": videos(), "dossier": str(config.VIDEOS), "version": config.VERSION,
         "maj": {k: maj.ETAT[k] for k in ("etat", "version", "avancement", "notes", "erreur")},
     }

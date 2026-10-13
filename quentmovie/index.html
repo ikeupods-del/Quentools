@@ -862,13 +862,23 @@ function brancherCarteAnalyse(racine) {
   }; });
   racine.querySelectorAll('[data-pack-sujet]').forEach(b => { b.onclick = () => { appliquerPack(b.dataset.packSujet, { tr: true, cal: true, son: true, look: true, mus: false, viz: false, amb: false, tit: false }); b.disabled = true; b.textContent = '✅ Pack appliqué (annulable avec ' + (MAC ? '⌘Z' : 'Ctrl+Z') + ')'; }; });
 }
+// vraie coupe = changement de plan, de fichier ou saut dans le temps ; pas une coupe de blanc au milieu d'une même prise
+function vraieCoupe(a, b) {
+  if (!a || !b || a.kind !== b.kind || a.file !== b.file || a.kind === 'image' || a.kind === 'solid') return true;
+  return Math.abs((+b.in || 0) - (+a.out || 0)) > 2.5 || (+b.in || 0) < (+a.out || 0) - 0.05;
+}
 function appliquerPack(id, o) {
   const P = (CAT.packs || []).find(p => p.id === id); if (!P) return;
   if (proj.clips.length < 2 && !o.look) return signal('Ajoute au moins deux clips sur la timeline pour poser les transitions du pack.');
-  const L = LIB(), st = starts(); let nT = 0, nC = 0, nS = 0;
+  const L = LIB(), st = starts(); let nT = 0, nC = 0, nS = 0, dernierSon = -1e9;
   if (o.cal) proj.clips.forEach(c => { c.overlays = (c.overlays || []).filter(x => !x.pack); }); // un pack remplace le précédent
+  if (o.son) proj.audio = proj.audio.filter(a => !a.pack); // les bruitages d'un pack remplacent ceux du précédent
+  // la voix en cours au moment de la coupe (sous-titres) : pas de bruitage par-dessus une phrase
+  const parole = []; proj.clips.forEach((c, k) => (c.subs || []).forEach(x => parole.push([st[k] + x.s / (c.speed || 1), st[k] + x.e / (c.speed || 1)])));
+  const parle = t => parole.some(([a, b]) => t > a + 0.15 && t < b - 0.15);
   proj.clips.slice(0, -1).forEach((c, i) => {
     const cut = st[i + 1];
+    if (!vraieCoupe(c, proj.clips[i + 1])) return; // coupe dans une même prise (blancs retirés) : rien, sinon le montage n'a plus de sens
     if (o.tr) { c.transition = { type: P.transitions[i % P.transitions.length], dur: P.dur }; nT++; }
     const cal = L.calques.find(x => x.id === P.calques[i % P.calques.length]);
     if (o.cal && cal) {
@@ -878,7 +888,9 @@ function appliquerPack(id, o) {
       suite.overlays.push({ ...base, start: 0, dur: +moitie.toFixed(2), ss: +moitie.toFixed(2), pack: P.id }); nC++;
     }
     const sn = L.sons.find(x => x.id === P.sons[i % P.sons.length]);
-    if (o.son && sn) { proj.audio.push({ file: 'lib:' + sn.file, vol: 80, start: +Math.max(0, cut - Math.min(sn.duree, 1.4) * 0.45).toFixed(1), fade: false, loop: false, duck: false }); nS++; }
+    if (o.son && sn && cut - dernierSon >= 6 && !parle(cut)) { // bruitages espacés (6 s au moins), jamais sur une phrase
+      proj.audio.push({ file: 'lib:' + sn.file, vol: 80, start: +Math.max(0, cut - Math.min(sn.duree, 1.4) * 0.45).toFixed(1), fade: false, loop: false, duck: false, pack: P.id }); nS++; dernierSon = cut;
+    }
   });
   if (o.look && P.look) proj.clips.forEach(c => { if (c.kind !== 'audio') c.lut = { file: 'lib:' + P.look, amount: 100 }; });
   if (o.viz && P.viz) proj.clips.forEach(c => { if (c.kind === 'audio') { c.viz = { type: P.viz.type, color: P.viz.color, h: P.viz.h, pos: P.viz.pos }; c.bgColor = P.viz.bg; if (P.viz.fond) { c.bgFile = 'lib:' + P.viz.fond; c.bgKind = 'image'; } } });
@@ -2040,7 +2052,7 @@ function egaliserVolumes() {
 }
 function transitionPartout(type) {
   const t = type !== undefined ? type : ($('#oTrAll') ? $('#oTrAll').value : 'fade'); let n = 0;
-  proj.clips.forEach((c, i) => { if (i < proj.clips.length - 1) { c.transition = t ? { type: t, dur: 0.6 } : null; n++; } });
+  proj.clips.forEach((c, i) => { if (i < proj.clips.length - 1) { if (t && !vraieCoupe(c, proj.clips[i + 1])) { c.transition = null; return; } c.transition = t ? { type: t, dur: 0.6 } : null; n++; } }); // pas de transition dans une même prise
   commit(); tout(); apercu(); const m = n ? (t ? `✨ Transition posée sur ${n} coupure${n > 1 ? 's' : ''}.` : `Transitions retirées (${n} coupures).`) : 'Il faut au moins deux clips.'; const e = $('#oTrAllRes'); if (e) e.textContent = m; aide(m);
 }
 

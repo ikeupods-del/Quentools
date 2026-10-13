@@ -3,6 +3,11 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.33.0
+- **Musique enfin sous la voix** : le niveau de la musique est maintenant calculé par rapport à la voix de la vidéo (environ 18 dB en dessous), quel que soit le fichier de musique. Le curseur de volume reste un réglage autour de ce niveau. Fini la musique « de fond » plus forte que la voix.
+- **Bruitages à leur place** : les bruitages des packs sont calés un peu sous la voix, jamais posés au milieu d'une phrase, et espacés d'au moins 6 secondes.
+- **Montage qui a du sens** : quand les blancs ont été coupés dans une même prise, ces petites coupes ne reçoivent plus de transition, d'effet de coupe ni de bruitage. Les packs et « transitions partout » ne décorent que les vrais changements de plan.
+
 ## 1.32.0
 - **Export jusqu'à 50 fois plus rapide avec les packs** : les transitions des packs (whip pan, zoom punch, zoom doux, glissé doux, iris, volet diagonal, glitch, secousse, stores, damier, rideau, balayage…) sont maintenant calculées par des filtres rapides, avec le même rendu. Un zoom doux en 1080p passe d'environ 26 secondes à moins d'une seconde.
 - **Assemblage rapide plus souvent** : les montages qui mélangent vidéos, photos et sons avec pochette ne refont plus tout le montage à l'export.

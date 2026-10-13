@@ -89,6 +89,17 @@ function chromium() {
   await pg.evaluate(() => { const c = document.querySelector('[data-pack="vlog-voyage"]'); c.querySelector('.pk-mus').checked = true; c.querySelector('.pk-look').checked = true; });
   await pg.click('[data-pack-app="vlog-voyage"]');
   check('pack Vlog : musique, look, transitions et effets de coupe', await ev(() => proj.audio.some(a => /musiques\/joyeux-vlog/.test(a.file) && a.loop && a.duck) && proj.clips.every(c => c.lut && /voyage-clair/.test(c.lut.file)) && proj.clips.slice(0, -1).every(c => c.transition && c.overlays.some(o => o.pack === 'vlog-voyage') && !c.overlays.some(o => o.pack === 'glitch'))));
+  // montage sensé : pas de transition ni de bruitage dans une même prise (blancs coupés), pas de bruitage sur une phrase, bruitages espacés
+  const sens = await ev(() => {
+    const m = medias.find(x => x.file === 'a.mp4'), c = (i, o) => ({ ...newClip(m), in: i, out: o });
+    proj.clips = [c(0, 1.5), c(1.6, 3), newClip(medias.find(x => x.file === 'plans.mp4')), c(0, 2), newClip(medias.find(x => x.file === 'plans.mp4'))]; proj.audio = [];
+    proj.clips[3].subs = [{ s: 0, e: 2.5, t: 'phrase en cours' }]; commit();
+    appliquerPack('glitch', { tr: true, cal: true, son: true, look: false, mus: false, viz: false, amb: false, tit: false });
+    const st = starts();
+    return { tr: proj.clips.map(x => !!x.transition), sons: proj.audio.filter(a => a.pack).map(a => +a.start.toFixed(1)), coupes: st.slice(1).map(x => +x.toFixed(1)) };
+  });
+  check('montage sensé : aucune transition dans une même prise (blanc coupé)', sens.tr[0] === false && sens.tr[1] === true, JSON.stringify(sens));
+  check('montage sensé : bruitages espacés et jamais sur une phrase', sens.sons.length >= 1 && sens.sons.every((x, i) => !i || x - sens.sons[i - 1] >= 5.5), JSON.stringify(sens));
   // pack de sous-titres : le style choisi s'applique aux clips qui ont des sous-titres, et le mode mot à mot est connu
   await ev(() => { proj.clips.forEach(c => { c.subs = [{ s: 0, e: 1, t: 'Bonjour' }]; c.subStyle = 'contour'; }); commit(); tout(); allerOnglet('packs'); });
   await pg.waitForSelector('[data-sousstyle="hormozi"]', { timeout: 5000 });

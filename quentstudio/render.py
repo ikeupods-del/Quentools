@@ -335,6 +335,10 @@ def rendre(video, sortie, journal=print, avancement=lambda f: None, serie=None):
     cta_qui, cta_texte = lignes_cta[history.cta_suivant(len(lignes_cta))]
     plans = [(s, i, p) for i, s in enumerate(video["sketchs"]) for p in s["plans"]]
 
+    if not voice.chemin_modele().exists() and not os.environ.get("QS_BIPS"):  # voix pas encore là : on l'attend plutôt que des bips
+        journal("Téléchargement de la voix avant la vidéo (une seule fois)…")
+        if not voice.assurer_modele(journal=journal):
+            journal("Voix impossible à télécharger (connexion ?) : bips de secours pour cette vidéo.")
     v = voice.Voix(ffmpeg=ffmpeg, journal=journal)
     journal(f"Voix : {'Piper (Pierre et Jessica)' if v.mode == 'piper' else 'bips de secours'}")
     sons = [v.dire(p["texte"], p["qui"], effet=S["voix"][p["qui"]]) for _, _, p in plans]

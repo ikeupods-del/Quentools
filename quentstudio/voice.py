@@ -33,8 +33,21 @@ def chemin_modele():
     return config.MODELES / f"{MODELE}.onnx"
 
 
+_verrou = __import__("threading").Lock()
+EN_COURS = {"oui": False}
+
+
 def assurer_modele(journal=print):
-    """Télécharge la voix si elle manque (seul téléchargement autorisé avec les modèles d'IA)."""
+    """Télécharge la voix si elle manque (un seul téléchargement à la fois)."""
+    with _verrou:
+        EN_COURS["oui"] = True
+        try:
+            return _assurer(journal)
+        finally:
+            EN_COURS["oui"] = False
+
+
+def _assurer(journal):
     onnx = chemin_modele()
     if onnx.exists() and Path(str(onnx) + ".json").exists():
         return onnx
@@ -60,6 +73,8 @@ def assurer_modele(journal=print):
                 return onnx
         except Exception as e:
             journal(f"  échec : {e}")
+            for f in config.MODELES.glob("*.part"):
+                f.unlink(missing_ok=True)
     return None
 
 
