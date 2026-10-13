@@ -30,7 +30,7 @@ import share  # noqa: E402
 import story  # noqa: E402
 import voice  # noqa: E402
 
-ICI = Path(__file__).resolve().parent
+ICI = config.RESSOURCES
 ETAT = {"travail": None, "avancement": 0.0, "journal": [], "avance": None, "erreur": None}
 VERROU = threading.Lock()
 
@@ -128,7 +128,7 @@ def etat():
         "historique": len(history.charger()["sketchs"]),
         "ia": etat_ia(), "modele": config.MODELE_IA,
         "voix": "piper" if voice.chemin_modele().exists() and not os.environ.get("QS_BIPS") else "bips",
-        "videos": videos(), "dossier": str(config.VIDEOS),
+        "videos": videos(), "dossier": str(config.VIDEOS), "version": config.VERSION,
     }
 
 
@@ -214,8 +214,42 @@ def icone_dock():
         pass
 
 
+def preparer_voix():
+    """Premier lancement : télécharge la voix Piper (une seule fois) sans bloquer la fenêtre."""
+    if voice.chemin_modele().exists() and voice.chemin_modele().with_suffix(".onnx.json").exists():
+        return
+    def tache():
+        journal("Téléchargement de la voix (une seule fois, environ 75 Mo)…")
+        journal("Voix prête." if voice.assurer_modele(journal=journal) else "Voix indisponible : bips de secours en attendant.")
+    threading.Thread(target=tache, daemon=True).start()
+
+
+def essai(sortie):
+    """Essai de l'application installée (workflow de construction) : une vidéo de chaque série, résultat en JSON."""
+    import json as _json
+    res = {"version": config.VERSION, "ffmpeg": render.ffmpeg_exe(), "videos": []}
+    try:
+        res["modele_voix"] = str(voice.assurer_modele(journal=print))
+        for serie in config.SERIES:
+            config.serie = serie
+            v = invest.scenario("auto", "les intérêts composés", journal=print) if serie == "quentinvest" else story.scenario("auto", journal=print)
+            f = config.VIDEOS / f"essai-{serie}.mp4"
+            meta = render.rendre(v, f, journal=print, serie=serie)
+            d = subprocess.run([render.ffmpeg_exe(), "-i", str(f)], capture_output=True, text=True).stderr
+            res["videos"].append({"serie": serie, "voix": meta["voix"], "duree": (d.split("Duration: ")[1].split(",")[0] if "Duration: " in d else None),
+                                  "taille": f.stat().st_size})
+        res["airdrop"] = str(config.outil("airdrop"))
+    except Exception as e:
+        res["erreur"] = repr(e)
+        traceback.print_exc()
+    Path(sortie).write_text(_json.dumps(res, ensure_ascii=False, indent=1), "utf-8")
+
+
 def main():
     config.DATA.mkdir(parents=True, exist_ok=True)
+    if "--essai" in sys.argv:
+        return essai(sys.argv[sys.argv.index("--essai") + 1])
+    preparer_voix()
     corpus.charger()
     reglage = config.lire_json(config.DATA / "serie.json", {})
     if reglage.get("serie") in config.SERIES:
@@ -240,7 +274,23 @@ def main():
                 time.sleep(3600)
         except KeyboardInterrupt:
             return
-    webview.create_window("QuentStudio", url, width=1060, height=820, min_size=(860, 640))
+    fenetre = webview.create_window("QuentStudio", url, width=1060, height=820, min_size=(860, 640))
+    if "--essai-fenetre" in sys.argv:  # essai de la fenêtre native (workflow de construction)
+        sortie = sys.argv[sys.argv.index("--essai-fenetre") + 1]
+
+        def verifier():
+            import json as _json
+            res = {}
+            try:
+                time.sleep(4)
+                res["statut"] = fenetre.evaluate_js("document.querySelector('#statut').textContent")
+                res["serie"] = fenetre.evaluate_js("document.querySelector('#nomSerie').textContent")
+            except Exception as e:
+                res["erreur"] = repr(e)
+            Path(sortie).write_text(_json.dumps(res, ensure_ascii=False), "utf-8")
+            fenetre.destroy()
+        webview.start(verifier)
+        return
     webview.start(icone_dock)
 
 

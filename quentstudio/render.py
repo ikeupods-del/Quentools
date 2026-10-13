@@ -57,7 +57,7 @@ def police(taille):
 
 
 def ffmpeg_exe():
-    return os.environ.get("QS_FFMPEG") or shutil.which("ffmpeg") or next(
+    return os.environ.get("QS_FFMPEG") or config.outil("ffmpeg") or shutil.which("ffmpeg") or next(
         (p for p in ("/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg") if os.path.exists(p)), "ffmpeg")
 
 
@@ -175,7 +175,7 @@ def sprite_glitchou(bouche, parle):
     return _aa((340, 360), d)
 
 
-PERSOS = Path(__file__).resolve().parent / "persos"
+PERSOS = config.RESSOURCES / "persos"
 
 
 def sprite_png(nom):

@@ -13,17 +13,21 @@ Tout est local. Rien n'est envoyé sur internet : seuls la voix Piper et le mod�
 
 ## Installer et lancer
 
+**Application prête (recommandé)** : télécharger `QuentStudio-<version>-arm64.dmg` dans les Releases du dépôt (étiquette `quentstudio-vX.Y.Z`), l'ouvrir et glisser QuentStudio dans Applications. Au premier lancement : clic droit sur QuentStudio → Ouvrir (application non signée par Apple). Tout est inclus (Python, ffmpeg, voix Piper, partage AirDrop) ; la voix (~75 Mo) se télécharge une seule fois au premier lancement. L'IA locale reste facultative : installer Ollama (ollama.com) puis `ollama pull llama3.2:3b`.
+
+L'application est construite, essayée (deux vidéos réelles, fenêtre) et publiée par le workflow « QuentStudio — application Mac » (`build_mac.sh`) à chaque modification de `quentstudio/` sur la branche par défaut. Publier = changer `version.txt` + section dans `NOUVEAUTES.md` ; sans changement de version, rien n'est republié.
+
+**Depuis le code** (développement) :
+
 ```bash
 cd quentstudio
 bash install_mac.sh                 # Python, ffmpeg, venv, voix, app, AirDrop, IA locale
-open -a QuentStudio                 # ou depuis le Launchpad / le Dock
+open -a QuentStudio
 ```
 
-- `QS_SANS_IA=1 bash install_mac.sh` installe sans Ollama. L'app marche alors sans IA : générateur procédural pour Quentools, fiches pour QuentInvest.
-- Relancer `bash install_mac.sh` après chaque modification du code : l'app installée est une copie du dossier.
-- L'app s'installe dans `/Applications`, ou dans `~/Applications` si `/Applications` n'est pas modifiable.
-- Le journal de l'app est dans `~/Movies/QuentStudio/journal.txt`.
-- Sans installation, pour essayer : `python3 studio.py` (interface dans le navigateur si pywebview manque).
+- `QS_SANS_IA=1 bash install_mac.sh` installe sans Ollama.
+- Le journal de l'app installée par ce script est dans `~/Movies/QuentStudio/journal.txt`.
+- Sans installation : `python3 studio.py` (interface dans le navigateur si pywebview manque).
 
 ## Utilisation
 

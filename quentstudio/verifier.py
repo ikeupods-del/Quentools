@@ -230,9 +230,15 @@ config.serie = "quentools"
 
 # ---------- Rendu ----------
 def duree(f):
-    r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration:stream=nb_frames,duration", "-of", "json", str(f)],
-                       capture_output=True, text=True)
-    return json.loads(r.stdout)
+    """Durée et nombre d'images : ffprobe s'il est là, sinon lecture complète par ffmpeg (Mac sans ffprobe)."""
+    if shutil.which("ffprobe"):
+        r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration:stream=nb_frames,duration", "-of", "json", str(f)],
+                           capture_output=True, text=True)
+        return json.loads(r.stdout)
+    r = subprocess.run([render.ffmpeg_exe(), "-hide_banner", "-i", str(f), "-map", "0:v", "-f", "null", "-"], capture_output=True, text=True).stderr
+    h, m, sec = re.search(r"Duration: (\d+):(\d+):([\d.]+)", r).groups()
+    images = re.findall(r"frame=\s*(\d+)", r)[-1]
+    return {"format": {"duration": str(int(h) * 3600 + int(m) * 60 + float(sec))}, "streams": [{"nb_frames": images}]}
 
 
 if "--rapide" not in sys.argv:
