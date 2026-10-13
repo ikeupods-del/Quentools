@@ -115,6 +115,57 @@ function create(opts = {}) {
   const MEM = require('./memoire'), MEMOIRE = MEM.creerStockage({ fichier: path.join(BASE, 'memoire-ia.json') }); // consignes et corrections retenues, partagées avec Studio Posts et Studio Sites
   const IA = () => ia || (ia = require('./ia').creer({ BASE, FFMPEG, memoire: () => MEM.pourPrompt(MEMOIRE.lire(), 600) }));
   // Analyse d'une vidéo à partir de son texte : calcul du programme (genre, mots-clés, rythme) puis, si l'IA locale est installée, sujet et idées fortes
+  // Analyse de l'image et du son de chaque média (gardée en cache) : changements de plan, luminosité, niveau sonore, blancs
+  async function analyseFichier(f) {
+    let st; try { st = fs.statSync(f); } catch (e) { return null; }
+    const cle = require('crypto').createHash('sha1').update(`a2|${f}|${st.size}|${st.mtimeMs}`).digest('hex'), cache = path.join(BASE, '.analyses', cle + '.json');
+    try { return JSON.parse(fs.readFileSync(cache, 'utf8')); } catch (e) { /* à calculer */ }
+    let m; try { m = await probe(f); } catch (e) { return null; }
+    const video = m.kind === 'video', audio = m.kind === 'audio' || (video && m.hasAudio !== false), g = [], maps = [];
+    if (video) { g.push(`[0:v]fps=5,scale=160:-2,signalstats${filters.has('scdet') ? ',scdet=threshold=12' : ''},metadata=print[v]`); maps.push('-map', '[v]'); }
+    if (audio) { g.push('[0:a]ebur128=framelog=quiet,silencedetect=n=-35dB:d=0.7[a]'); maps.push('-map', '[a]'); }
+    if (!g.length) return null;
+    let e = '';
+    try { e = await run(FFMPEG, ['-hide_banner', '-nostats', '-i', f, '-filter_complex', g.join(';'), ...maps, '-f', 'null', '-'], { wantErr: true }); } catch (err) { return null; }
+    const tous = (re, conv = Number) => [...e.matchAll(re)].map(x => conv(x[1]));
+    const y = tous(/lavfi\.signalstats\.YAVG=([\d.]+)/g), deb = tous(/silence_start: (-?[\d.]+)/g), fin = tous(/silence_end: ([\d.]+)/g);
+    const I = tous(/\bI:\s+(-?[\d.]+) LUFS/g), LRA = tous(/\bLRA:\s+([\d.]+) LU/g);
+    const r = {
+      duree: m.duration || 0, scenes: tous(/lavfi\.scd\.time=([\d.]+)/g),
+      luminosite: y.length ? Math.round(y.reduce((a, b) => a + b, 0) / y.length) : null,
+      lufs: I.length ? I[I.length - 1] : null, lra: LRA.length ? LRA[LRA.length - 1] : null,
+      silences: deb.map((d, i) => [Math.max(0, d), fin[i] !== undefined ? fin[i] : (m.duration || d)])
+    };
+    try { fs.mkdirSync(path.dirname(cache), { recursive: true }); fs.writeFileSync(cache, JSON.stringify(r)); } catch (err) { /* sans cache */ }
+    return r;
+  }
+  // Analyse technique de la timeline : mesures ramenées au temps du montage, et conseils avec l'action qui corrige
+  async function analyseTechnique(job, clips) {
+    const l = (Array.isArray(clips) ? clips : []).filter(c => c && c.file && !/^(lib|pack):/.test(c.file)).slice(0, 40);
+    if (!l.length) return null;
+    job.step = 'Analyse de l’image et du son…';
+    let t = 0; const scenes = [], lums = [], niveaux = []; let blanc = 0, total = 0;
+    for (const c of l) {
+      const a = await analyseFichier(mediaPath(c.file)); const sp = clamp(num(c.speed, 1), 0.25, 4), de = num(c.in, 0), a0 = num(c.out, de);
+      const deb = Number.isFinite(+c.start) ? +c.start : t, dur = Math.max(0, (a0 - de) / sp);
+      t = deb + dur; total += dur;
+      if (!a) continue;
+      a.scenes.filter(x => x > de + 0.3 && x < a0 - 0.3).forEach(x => scenes.push(+(deb + (x - de) / sp).toFixed(2)));
+      if (a.luminosite != null) lums.push([a.luminosite, dur]);
+      if (a.lufs != null && a.lufs > -70) niveaux.push([a.lufs, dur]);
+      a.silences.forEach(([x, y]) => { const u = Math.max(x, de), v = Math.min(y, a0); if (v > u) blanc += (v - u) / sp; });
+    }
+    const moy = l2 => { const d = l2.reduce((s, x) => s + x[1], 0); return d ? l2.reduce((s, x) => s + x[0] * x[1], 0) / d : null; };
+    const lum = moy(lums), lufs = moy(niveaux), parMin = total > 5 ? +(scenes.length / (total / 60)).toFixed(1) : 0, pBlanc = total ? Math.round(100 * blanc / total) : 0;
+    const conseils = [];
+    if (lufs != null && lufs < -20) conseils.push({ action: 'normaliser', texte: `Son plutôt faible (${Math.round(lufs)} LUFS) : régler le niveau comme les plateformes (-14 LUFS).` });
+    if (lufs != null && lufs > -9) conseils.push({ action: 'normaliser', texte: `Son très fort (${Math.round(lufs)} LUFS) : risque de saturation, régler le niveau.` });
+    if (pBlanc >= 15) conseils.push({ action: 'couper_blancs', texte: `${pBlanc} % de la vidéo sans voix ni son : couper les blancs rendra la vidéo plus vivante.` });
+    if (lum != null && lum < 70) conseils.push({ action: 'ameliorer', texte: 'Image plutôt sombre : améliorer l’image (luminosité, contraste).' });
+    if (lum != null && lum > 200) conseils.push({ action: 'ameliorer', texte: 'Image très claire : améliorer l’image pour retrouver du détail.' });
+    if (total > 45 && parMin < 3) conseils.push({ action: 'dynamiser', texte: `Peu de changements de plan (${parMin} par minute) : des zooms alternés relanceront l’attention.` });
+    return { scenes: scenes.sort((a, b) => a - b), parMinute: parMin, luminosite: lum == null ? null : Math.round(lum), lufs: lufs == null ? null : +lufs.toFixed(1), blancs: pBlanc, conseils };
+  }
   async function analyserLaVideo(job, segments, duree, avecIA) {
     const CH = require('./chapitrage'), brut = CH.analyserSujet(segments, duree);
     if (!brut) return { sujet: '', genre: null, motsCles: [], rythme: 'normal', points: [], resume: '', ia: false, brut: null };
@@ -163,8 +214,16 @@ function create(opts = {}) {
   // ---------- FFmpeg ----------
   // silence : délai (ms) sans aucune sortie de FFmpeg au-delà duquel il est arrêté (encodeur figé)
   function run(cmd, args, { cwd, onOut, binary, wantErr, silence } = {}) {
+    const t0 = Date.now(); // QM_CHRONO=1 : durée de chaque appel à FFmpeg (recherche de lenteurs)
+    if (process.env.QM_CHRONO) return runBrut(cmd, args, { cwd, onOut, binary, wantErr, silence }).finally(() => console.log(`[chrono] ${((Date.now() - t0) / 1000).toFixed(2)} s · ${args.filter(x => typeof x === 'string' && !x.startsWith('-')).slice(-1)[0]} · ${String(args.join(' ')).slice(0, process.env.QM_CHRONO === 'long' ? 4000 : 160)}`));
+    return runBrut(cmd, args, { cwd, onOut, binary, wantErr, silence });
+  }
+  // aperçus calculés en arrière-plan : FFmpeg en priorité basse (sur Mac, il part sur les cœurs économes : moins de batterie)
+  const dossiersBasse = new Set();
+  function runBrut(cmd, args, { cwd, onOut, binary, wantErr, silence } = {}) {
     return new Promise((resolve, reject) => {
       const p = spawn(cmd, args, { cwd });
+      if (cwd && dossiersBasse.has(cwd) && p.pid) { try { os.setPriority(p.pid, 15); } catch (e) { /* priorité inchangée */ } }
       const out = []; let err = '', fige = false, garde = null;
       // avec -progress, seule une avance réelle de la vidéo (out_time) compte ; sinon toute sortie
       let avance = -1, suiviProgres = false;
@@ -187,7 +246,7 @@ function create(opts = {}) {
   const encVt = (P, max) => ['-c:v', 'h264_videotoolbox', '-b:v', debitVt(P.w, P.h, max), '-allow_sw', 1];
   // réglages d'encodage d'un clip : les morceaux recopiés ensemble doivent tous en avoir les mêmes
   const encodeursClip = (P, proxy, max, avecPuce) => ({
-    vt: avecPuce ? encVt(P, max) : null, cpu: ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16]
+    vt: avecPuce ? encVt(P, max) : null, cpu: ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16, '-forced-idr', 1]
   });
   async function encoder(avant, encVt, encCpu, apres, opts = {}) {
     if (encVt) {
@@ -514,7 +573,7 @@ function buildClip(c, P, o = {}) {
     if (c.titre && c.titre.preset && fontFile(c.titre.font) && filters.has('drawtext')) cur = reportage(c, ctx, f, cur, lab, o);
     const fondus = fonduxDe(c, eff);
     if (!o.preview && (fondus.e || fondus.s)) lin([fondus.e ? `fade=t=in:st=0:d=${fondus.e.toFixed(2)}` : '', fondus.s ? `fade=t=out:st=${Math.max(0, eff - fondus.s).toFixed(3)}:d=${fondus.s.toFixed(2)}` : ''].filter(Boolean).join(','));
-    f.push(`[${cur}]format=yuv420p[v]`);
+    f.push(`[${cur}]format=yuv420p,setsar=1[v]`); // pixels carrés partout : clips recopiables ensemble
 
     if (o.preview) {
       args.push('-filter_complex', f.join(';'), '-map', '[v]', '-frames:v', 1, '-f', 'mjpeg', '-q:v', 4, 'pipe:1');
@@ -543,8 +602,8 @@ function buildClip(c, P, o = {}) {
     f.push(`[${src}]${af.join(',')}[a]`);
 
     const proxy = !!o.proxy;
-    args.push('-filter_complex', f.join(';'), '-map', '[v]', '-map', '[a]', '-t', eff.toFixed(3), '-r', fps,
-      ...(o.vt ? ['-c:v', 'h264_videotoolbox', '-b:v', debitVt(W, H, o.vtMax), '-allow_sw', 1] : ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16]), '-pix_fmt', 'yuv420p',
+    args.push('-filter_complex', f.join(';'), '-map', '[v]', '-map', '[a]', '-t', eff.toFixed(3), '-r', fps, '-enc_time_base:v', `1/${fps}`, '-chroma_sample_location:v', 'left', // mêmes en-têtes pour tous les clips (photos, sons à pochette…) : recopie sans réencoder
+      ...(o.vt ? ['-c:v', 'h264_videotoolbox', '-b:v', debitVt(W, H, o.vtMax), '-allow_sw', 1] : ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16, '-forced-idr', 1]), '-pix_fmt', 'yuv420p', // images clés IDR : les morceaux se recopient sans réencoder
       '-force_key_frames', EPI.expressionGop(fps), // une image clé par seconde : permet de recopier sans réencoder (assemblage rapide)
       '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-ar', 48000, '-ac', 2, '-movflags', '+faststart', '-progress', 'pipe:1', '-nostats');
     return { args, eff };
@@ -994,6 +1053,7 @@ function buildClip(c, P, o = {}) {
     if (absents.length) throw new Error(`${absents.length > 1 ? 'Ces fichiers sont' : 'Ce fichier est'} introuvable${absents.length > 1 ? 's' : ''} dans tes médias : ${absents.slice(0, 3).join(', ')}. Retire le clip concerné de la timeline (clic droit → Supprimer) ou remets le fichier dans le dossier Movies/QuentMovie/medias.`);
     const dir = fs.mkdtempSync(path.join(TMP, 'job-'));
     job.dir = dir;
+    if (proxy && project.fond) dossiersBasse.add(dir);
     try {
       // puce vidéo du Mac (VideoToolbox) pour l'encodage quand « rapide » est choisi (réglage par défaut sur Mac)
       // aperçu de 720p et plus : puce vidéo aussi (rapide jusqu'en 4K)
@@ -1051,7 +1111,7 @@ function buildClip(c, P, o = {}) {
           const t0 = Date.now(), epi = EPI.creer({ run, FFMPEG, encoder, FX, aFiltre: n => filters.has(n), clamp, num }), E = encodeursClip(P, proxy, project.quality === 'max', vt), fps = P.fps;
           const F = await epi.compterToutes(segs.map(sg => path.join(dir, sg)));
           const etape = t => { job.step = t; };
-          const r = await epi.assembler({ cwd: dir, segs, fps, trans, F, echelle: Math.min(P.w, P.h) / 1080, enc: E, paralleles: enParallele, etape });
+          const r = await epi.assembler({ cwd: dir, segs, fps, trans, F, echelle: Math.min(P.w, P.h) / 1080, dims: [P.w, P.h], enc: E, paralleles: enParallele, etape });
           let video = r.video; const raccords = r.plan.pieces.map(p => p.debut);
           if (pistes.length) {
             const intervalles = pistes.map(p => { const deb = clamp(num(p.start, 0), 0, 36000), du = p.kind === 'image' ? clamp(num(p.dur, 4), 0.3, 3600) : clamp(num(p.out, 1) - num(p.in, 0), 0.3, 36000); return { fa: Math.floor(deb * fps), fb: Math.ceil((deb + du) * fps) + 1 }; });
@@ -1086,7 +1146,9 @@ function buildClip(c, P, o = {}) {
           const tr = trans[i - 1], nv = `v${i}x`, na = `a${i}x`;
           if (tr) {
             const d = clamp(num(tr.dur, 0.6), 0.2, Math.max(0.2, Math.min(len, lens[i]) * 0.9));
-            g.push(`[${cv}][vi${i}]${FX.filtreTransition(tr.type, d, len - d, Math.min(P.w, P.h) / 1080)},${norm}[${nv}]`,
+            if (FX.natif(tr.type)) g.push(...FX.grapheTransition(tr.type, d, len - d, Math.min(P.w, P.h) / 1080, cv, `vi${i}`, `vt${i}`, { W: P.w, H: P.h, fps: P.fps, u: i }), `[vt${i}]${norm}[${nv}]`);
+            else g.push(`[${cv}][vi${i}]${FX.filtreTransition(tr.type, d, len - d, Math.min(P.w, P.h) / 1080)},${norm}[${nv}]`);
+            g.push(
               `[${ca}][ai${i}]acrossfade=d=${d.toFixed(2)}[${na}]`);
             len += lens[i] - d;
           } else {
@@ -1185,7 +1247,7 @@ function buildClip(c, P, o = {}) {
         job.out = name;
       }
       job.fin = Date.now(); job.progress = 1; job.done = true;
-    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+    } finally { dossiersBasse.delete(dir); if (!process.env.QM_GARDER) fs.rmSync(dir, { recursive: true, force: true }); }
   }
 
   // Éléments de la piste vidéo 2 (ordre des rangées : la plus haute devant), avec forme, bordure, fondu et son.
@@ -1415,6 +1477,9 @@ function buildClip(c, P, o = {}) {
           const ch = CH.proposerChapitres(segs, +b.duree || 0, { nb: b.nb });
           if (!ch.length) return { chapitres: [], ia: false };
           const analyse = await analyserLaVideo(job, segs, +b.duree || 0, b.ia !== false);
+          analyse.technique = await analyseTechnique(job, b.clips);
+          // un chapitre qui commence juste à côté d'un changement de plan est calé dessus (coupe plus nette)
+          if (analyse.technique) ch.forEach(c => { if (c.t > 1) { const sc = analyse.technique.scenes.reduce((m, x) => (Math.abs(x - c.t) < Math.abs(m - c.t) ? x : m), Infinity); if (Math.abs(sc - c.t) <= 2.5) c.t = sc; } });
           job.step = 'L’IA locale nomme les chapitres…'; job.progress = 0.6;
           const r = b.ia === false ? { chapitres: ch, ia: false } : await IA().titrerChapitres({ chapitres: ch, sujet: analyse.sujet });
           delete analyse.brut;
@@ -1424,7 +1489,7 @@ function buildClip(c, P, o = {}) {
       // Analyse de la vidéo : sujet, genre, rythme, idées fortes et pack conseillé (programme + IA locale)
       if (req.method === 'POST' && p === '/api/video/analyser') {
         const b = await readJson(req);
-        return send(res, 200, travail(async job => { const a = await analyserLaVideo(job, Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [], +b.duree || 0, b.ia !== false); delete a.brut; return a; }));
+        return send(res, 200, travail(async job => { const a = await analyserLaVideo(job, Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [], +b.duree || 0, b.ia !== false); delete a.brut; a.technique = await analyseTechnique(job, b.clips); return a; }));
       }
       // Clipping : les meilleurs extraits de la vidéo pour TikTok / Reels / Shorts
       if (req.method === 'POST' && p === '/api/clipping/proposer') {
@@ -1432,6 +1497,7 @@ function buildClip(c, P, o = {}) {
         return send(res, 200, travail(async job => {
           const CH = require('./chapitrage'), nb = clamp(Math.round(num(b.nb, 5)), 1, 12); job.step = 'Recherche des meilleurs passages…';
           const segs = Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [], analyse = await analyserLaVideo(job, segs, +b.duree || 0, b.ia !== false);
+          analyse.technique = await analyseTechnique(job, b.clips);
           const cands = CH.proposerMoments(segs, +b.duree || 0, { nb: Math.min(14, nb * 2), min: num(b.min, 20), max: num(b.max, 60), analyse: analyse.brut });
           delete analyse.brut;
           if (!cands.length) return { extraits: [], ia: false };

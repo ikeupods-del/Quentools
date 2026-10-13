@@ -3,6 +3,13 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.32.0
+- **Export jusqu'à 50 fois plus rapide avec les packs** : les transitions des packs (whip pan, zoom punch, zoom doux, glissé doux, iris, volet diagonal, glitch, secousse, stores, damier, rideau, balayage…) sont maintenant calculées par des filtres rapides, avec le même rendu. Un zoom doux en 1080p passe d'environ 26 secondes à moins d'une seconde.
+- **Assemblage rapide plus souvent** : les montages qui mélangent vidéos, photos et sons avec pochette ne refont plus tout le montage à l'export.
+- **Moins de batterie** : sur batterie, l'aperçu calculé en arrière-plan attend un peu plus après chaque modification, s'arrête quand la fenêtre est cachée et tourne en priorité basse (le Mac l'envoie sur ses cœurs économes).
+- **Analyse de l'image et du son** : en plus du sujet, l'analyse mesure les changements de plan, la luminosité, le niveau sonore et la part de blancs, et propose de corriger en un clic (niveau du son, couper les blancs, éclaircir l'image, dynamiser). Les chapitres se calent sur les vrais changements de plan.
+- Les 29 packs sont maintenant vérifiés un par un à chaque version : appliqués puis exportés pour de vrai.
+
 ## 1.31.0
 - **Chapitres et titres visibles tout de suite** : juste après un montage par l'IA, la lecture immédiate affiche maintenant les titres (le nom du chapitre s'écrit sur l'écran noir) et joue les sons (souffle, clavier, clic). Avant, l'écran restait noir et muet tant que l'aperçu complet n'était pas prêt.
 

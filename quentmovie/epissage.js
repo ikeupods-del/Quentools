@@ -98,7 +98,7 @@ function creer({ run, FFMPEG, encoder, FX, aFiltre, clamp, num }) {
   }
 
   // Fondus : un morceau « enc » = suite de clips (ou parties de clips) enchaînés par xfade, seulement autour des fondus
-  async function rendreGroupe(cwd, p, segs, fps, trans, enc, out, echelle = 1) {
+  async function rendreGroupe(cwd, p, segs, fps, trans, enc, out, echelle = 1, dims = null) {
     const ins = [], g = [];
     p.clips.forEach((c, k) => {
       ins.push('-ss', c.de / fps, '-t', ((c.a - c.de) / fps).toFixed(6), '-i', segs[c.clip]);
@@ -107,7 +107,8 @@ function creer({ run, FFMPEG, encoder, FX, aFiltre, clamp, num }) {
     let cur = 'v0', acc = p.clips[0].a - p.clips[0].de;
     for (let k = 1; k < p.clips.length; k++) {
       const D = p.fondus[k - 1], tr = trans[p.clips[k - 1].clip];
-      g.push(`[${cur}][v${k}]${FX.filtreTransition(tr.type, D / fps, (acc - D) / fps, echelle)},fps=${fps},format=yuv420p[x${k}]`);
+      if (dims && FX.natif(tr.type)) g.push(...FX.grapheTransition(tr.type, D / fps, (acc - D) / fps, echelle, cur, `v${k}`, `y${k}`, { W: dims[0], H: dims[1], fps, u: k }), `[y${k}]fps=${fps},format=yuv420p[x${k}]`);
+      else g.push(`[${cur}][v${k}]${FX.filtreTransition(tr.type, D / fps, (acc - D) / fps, echelle)},fps=${fps},format=yuv420p[x${k}]`);
       acc += p.clips[k].a - p.clips[k].de - D; cur = `x${k}`;
     }
     await encoder(['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', `[${cur}]`, '-r', fps, '-frames:v', p.longueur], enc.vt, enc.cpu,
@@ -128,14 +129,17 @@ function creer({ run, FFMPEG, encoder, FX, aFiltre, clamp, num }) {
   }
 
   // Assemble les clips : renvoie { video, plan } (image seule, sans son) ou lève une erreur (l'appelant utilise alors l'ancienne méthode)
-  async function assembler({ cwd, segs, fps, trans, F, enc, paralleles, etape, echelle = 1 }) {
+  async function assembler({ cwd, segs, fps, trans, F, enc, paralleles, etape, echelle = 1, dims = null }) {
+    // contrôle immédiat : des clips encodés différemment ne peuvent pas être recopiés ensemble (on évite tout le travail inutile)
+    const refClips = await entetes(nom(cwd, segs[0]));
+    if ((await partout(segs.slice(1).map(f => ({ f })), 6, x => entetes(nom(cwd, x.f)))).some(e => e !== refClips)) throw new Error('encodeurs différents entre les clips');
     const D = trans.map((t, i) => (t && i < segs.length - 1 ? Math.max(Math.round(0.2 * fps), Math.round(clamp(num(t.dur, 0.6), 0.2, 5) * fps)) : 0));
     const plan = planifier(F, D, fps);
     if (!plan.ok) throw new Error('assemblage rapide impossible : ' + plan.raison);
     const fichiers = [], encodes = plan.pieces.map((p, k) => ({ p, k })).filter(x => x.p.type === 'enc');
     if (encodes.length) etape('Fondus enchaînés');
     const sortieDe = new Map();
-    await sur(encodes, paralleles, async ({ p, k }) => { const f = `gr${k}.mp4`; await rendreGroupe(cwd, p, segs, fps, trans, enc, f, echelle); sortieDe.set(k, f); });
+    await sur(encodes, paralleles, async ({ p, k }) => { const f = `gr${k}.mp4`; await rendreGroupe(cwd, p, segs, fps, trans, enc, f, echelle, dims); sortieDe.set(k, f); });
     const liste = [];
     for (const [k, p] of plan.pieces.entries()) {
       if (p.type === 'copie') { const f = `cp${k}.mp4`; await copier(cwd, segs[p.clip], p.de, p.longueur, f, fps); liste.push({ f, n: p.longueur }); }
