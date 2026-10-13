@@ -452,7 +452,7 @@ function clipCible() {
   if (!proj.clips.length) return null;
   const st = starts(); let i = st.findIndex((d, k) => gt >= d && gt < d + effDur(proj.clips[k]));
   if (i < 0) i = gt >= total() ? proj.clips.length - 1 : 0;
-  sel = i; selA = -1; selP = -1; selCut = -1; return proj.clips[i];
+  sel = i; selA = -1; selP = -1; selCut = -1; selT = -1; return proj.clips[i];
 }
 // Message bref au-dessus de la timeline (remplace les fenêtres d'alerte bloquantes)
 function signal(t) { let el = $('#signal'); if (!el) { el = document.createElement('div'); el.id = 'signal'; document.body.appendChild(el); } el.textContent = t; el.classList.add('vu'); clearTimeout(signal.t); signal.t = setTimeout(() => el.classList.remove('vu'), 3200); aide(esc(t)); }
@@ -488,8 +488,21 @@ function commit(glisse) {
 function undo(d) {
   const s = snap(); if (hist[hi] !== s) { hist = hist.slice(0, hi + 1); hist.push(s); hi = hist.length - 1; }
   dernierGlisse = 0; const n = hi + d; if (n < 0 || n >= hist.length) return;
-  hi = n; selObjs.clear(); proj = JSON.parse(hist[hi]); sel = Math.min(sel, proj.clips.length - 1); selA = -1; selP = -1; selCut = -1; tout(); apercu();
+  hi = n; selObjs.clear(); proj = JSON.parse(hist[hi]); sel = Math.min(sel, proj.clips.length - 1); selA = -1; selP = -1; selCut = -1; selT = -1;
+  $('#format').value = proj.format; tout(); apercu(); majBoutons();
+  clearTimeout(saveTimer); saveTimer = setTimeout(() => fetch('/api/projet', { method: 'PUT', body: snap() }).catch(() => {}), 900);
+  majApercuEtat();
 }
+// projets enregistrés par la 1.29 à 1.34 : des réglages pouvaient être gardés en texte (« 1.7 ») au lieu de nombres
+const CHAMPS_TEXTE = new Set(['text', 'l1', 'l2', 't', 'file', 'color', 'bgColor', 'nom', 'titre', 'id', 'font', 'police', 'format', 'type', 'mode', 'kind', 'preset']);
+function reparerNombres(o) {
+  if (o && typeof o === 'object') for (const k of Object.keys(o)) {
+    const v = o[k];
+    if (typeof v === 'string' && !CHAMPS_TEXTE.has(k) && /^-?\d+(\.\d+)?$/.test(v)) o[k] = +v; else reparerNombres(v);
+  }
+  return o;
+}
+const reparerProjet = p => { ['clips', 'audio', 'pistes', 'textes'].forEach(k => reparerNombres(p[k] || [])); return p; };
 function majBoutons() { $('#bUndo').disabled = hi <= 0; $('#bRedo').disabled = hi >= hist.length - 1; }
 function aide(t) { $('#bar').innerHTML = t; }
 
@@ -508,11 +521,11 @@ async function importer(files) {
 }
 function ajouterClip(m, index) {
   const c = newClip(m); if (index === undefined || index > proj.clips.length) index = proj.clips.length;
-  proj.clips.splice(index, 0, c); commit(); sel = index; selA = -1; selP = -1; selCut = -1; tout(); placerTete(starts()[index] || 0);
+  proj.clips.splice(index, 0, c); commit(); sel = index; selA = -1; selP = -1; selCut = -1; selT = -1; tout(); placerTete(starts()[index] || 0);
 }
 function ajouterSon(file, opts = {}) { // bruitage, musique ou fichier audio dans la piste audio, à la tête de lecture
   proj.audio.push({ file, vol: opts.vol || 100, start: opts.start === undefined ? +gt.toFixed(1) : opts.start, fade: !!opts.fade, loop: !!opts.loop, duck: !!opts.duck });
-  selA = proj.audio.length - 1; selP = -1; sel = -1; selCut = -1; commit(); tout();
+  selA = proj.audio.length - 1; selP = -1; sel = -1; selT = -1; selCut = -1; commit(); tout();
 }
 $('#fichiers').onchange = e => { importer([...e.target.files]); e.target.value = ''; };
 $('#bImporter').onclick = () => $('#fichiers').click();
@@ -693,7 +706,7 @@ $('#navbody').addEventListener('click', e => {
   else if (d.outil) outil(d.outil);
 });
 $('#navbody').addEventListener('dblclick', e => { const m = e.target.closest('.media'); if (!m || e.target.closest('button')) return; const i = +m.dataset.drag.split(':')[1]; const md = medias[i]; if (!md) return; if (md.kind === 'audio') ajouterSon(md.file, { vol: 100 }); else ajouterClip(md, sel >= 0 ? sel + 1 : undefined); signal(`« ${md.file} » ajouté à la timeline.`); });
-$('#navbody').addEventListener('input', e => { if (e.target.id === 'trDurR') { const cut = selCut >= 0 ? selCut : sel, c = proj.clips[cut]; $('#trDur').textContent = fmt(+e.target.value); if (c && c.transition) { c.transition.dur = +e.target.value; commit(); tlDessin(); } } });
+$('#navbody').addEventListener('input', e => { if (e.target.id === 'trDurR') { const cut = selCut >= 0 ? selCut : sel, c = proj.clips[cut]; $('#trDur').textContent = fmt(+e.target.value); if (c && c.transition) { c.transition.dur = +e.target.value; commit(true); tlDessin(); } } });
 // Fichiers utilisés par le montage en cours (clips, images de fond, calques, décors, pistes)
 function mediasUtilises() {
   const u = new Set();
@@ -726,7 +739,7 @@ function dropSur(e, idxClip) {
   const p = v.indexOf(':'), k = v.slice(0, p), id = v.slice(p + 1);
   const r = $('#lane').getBoundingClientRect(), x = +Math.max(0, (e.clientX - r.left) / zoom).toFixed(1), st = starts();
   const avant = idxClip >= 0 && x < st[idxClip] + effDur(proj.clips[idxClip]) / 2; // moitié gauche du clip visé
-  const surClip = () => { if (idxClip >= 0) { sel = idxClip; selA = -1; selP = -1; selCut = -1; } };
+  const surClip = () => { if (idxClip >= 0) { sel = idxClip; selA = -1; selP = -1; selCut = -1; selT = -1; } };
   const aLaFin = () => { sel = idxClip >= 0 ? (avant ? idxClip - 1 : idxClip) : proj.clips.length - 1; }; // insererClip ajoute après « sel »
   if (k === 'fx') { surClip(); ajouterFx(idxClip, id); return true; }
   if (k === 'afx') { surClip(); ajouterAfx(idxClip, id); return true; }
@@ -764,7 +777,7 @@ const dureePiste = p => p.kind === 'image' ? Math.max(0.3, p.dur || 4) : Math.ma
 function ajouterPiste(m, start) {
   const p = { file: m.file, kind: m.kind === 'image' ? 'image' : 'video', start: start === undefined ? +gt.toFixed(1) : start, in: 0, out: m.kind === 'video' ? +Math.min(m.duration || 5, 12).toFixed(1) : 0, dur: 4,
     plein: false, x: 76, y: 26, scale: 34, forme: 'arrondi', bord: '#ffffff', opacity: 100, vol: 0, hasAudio: !!m.hasAudio, anim: 'fondu' };
-  proj.pistes = proj.pistes || []; proj.pistes.push(p); selP = proj.pistes.length - 1; sel = -1; selA = -1; selCut = -1; commit(); tout(); apercuRetarde();
+  proj.pistes = proj.pistes || []; proj.pistes.push(p); selP = proj.pistes.length - 1; sel = -1; selT = -1; selA = -1; selCut = -1; commit(); tout(); apercuRetarde();
   aide('Ajouté dans la piste vidéo 2 : règle sa place et sa taille dans l’inspecteur, ou choisis « Plein écran » pour un plan de coupe.');
 }
 const POS_PISTE = { hg: [24, 22], hd: [76, 22], bg: [24, 74], bd: [76, 74], c: [50, 50] };
@@ -786,7 +799,7 @@ function inspecteurPiste(el) {
 }
 
 // ---------- Actions d'ajout ----------
-function insererClip(c) { const i = sel >= 0 ? sel + 1 : proj.clips.length; proj.clips.splice(i, 0, c); commit(); sel = i; selA = -1; selP = -1; tout(); placerTete(starts()[i]); }
+function insererClip(c) { const i = sel >= 0 ? sel + 1 : proj.clips.length; proj.clips.splice(i, 0, c); commit(); sel = i; selA = -1; selP = -1; selT = -1; tout(); placerTete(starts()[i]); }
 function ajouterFx(i, id) {
   let c = proj.clips[i]; if (!c) { c = clipCible(); i = sel; } if (!c) return signal(sansClipMsg);
   const d = fxDef(CAT.video, id), p = {}; d.params.forEach(q => { p[q.k] = q.def; }); c.fx.push({ id, p }); sel = i; commit(); tout(); apercu();
@@ -917,7 +930,7 @@ function appliquerTransition(type) {
   commit(); tlDessin(); navigateur();
 }
 function appliquerTitre(id, idx) {
-  if (idx >= 0) { sel = idx; selA = -1; selP = -1; }
+  if (idx >= 0) { sel = idx; selA = -1; selP = -1; selT = -1; }
   let c = idx >= 0 ? proj.clips[idx] : clipCible();
   if (!c) { c = newSolid('#0b1d3a', 4); insererClip(c); } // timeline vide : écran titre sur fond uni
   const t = CAT.titres.find(x => x.id === id);
@@ -959,7 +972,7 @@ function inspecteurTitreT(el) {
   $('#tSuppr').onclick = () => supprimer();
 }
 function appliquerReportage(id, idx) {
-  if (idx >= 0) { sel = idx; selA = -1; selP = -1; }
+  if (idx >= 0) { sel = idx; selA = -1; selP = -1; selT = -1; }
   let c = idx >= 0 ? proj.clips[idx] : clipCible();
   if (!c) { c = newSolid('#0b1d3a', 5); insererClip(c); }
   const r = CAT.reportage.find(x => x.id === id);
@@ -1062,22 +1075,22 @@ function locate(t) { const st = starts(); let i = proj.clips.length - 1; for (le
 let pos = 0;
 function placerTete(t, opts = {}) {
   gt = clamp(t, 0, Math.max(0, total() - 0.001)); const { i, pos: p } = locate(gt); pos = p;
-  if (i !== sel && !opts.sansSelection) { sel = i; selA = -1; selP = -1; selCut = -1; inspecteur(); tlDessin(); if (tab === 'effets' || tab === 'outils') navigateur(); } else tete();
+  if (i !== sel && !opts.sansSelection) { sel = i; selA = -1; selP = -1; selCut = -1; selT = -1; inspecteur(); tlDessin(); if (tab === 'effets' || tab === 'outils') navigateur(); } else tete();
   if (!opts.sansApercu) apercuRetarde();
 }
 $('#pV').addEventListener('click', e => {
   if (presse && presse.bouge) return;
-  const cut = e.target.closest('.cut'); if (cut) { selCut = +cut.dataset.cut; selA = -1; selP = -1; tab = 'transitions'; navigateur(); tlDessin(); return; }
+  const cut = e.target.closest('.cut'); if (cut) { selCut = +cut.dataset.cut; selA = -1; selP = -1; selT = -1; tab = 'transitions'; navigateur(); tlDessin(); return; }
 });
 // Clic, glisser pour réordonner, poignées pour raccourcir
 $('#pV').addEventListener('pointerdown', e => {
   const el = e.target.closest('.clip'); if (!el || e.button === 2) return;
   if (verrouillee('V1')) return;
-  if (outilTl === 'lame') { e.preventDefault(); const r0 = $('#lane').getBoundingClientRect(); sel = +el.dataset.i; selA = -1; selP = -1; selObjs.clear(); placerTete(Math.max(0, (e.clientX - r0.left) / zoom), { sansSelection: true, sansApercu: true }); couper(true); return; }
+  if (outilTl === 'lame') { e.preventDefault(); const r0 = $('#lane').getBoundingClientRect(); sel = +el.dataset.i; selA = -1; selP = -1; selT = -1; selObjs.clear(); placerTete(Math.max(0, (e.clientX - r0.left) / zoom), { sansSelection: true, sansApercu: true }); couper(true); return; }
   if (e.shiftKey || e.metaKey || e.ctrlKey) { e.preventDefault(); basculerMulti(+el.dataset.i, e.shiftKey); return; }
   const i = +el.dataset.i, c = proj.clips[i], x0 = e.clientX, mode = e.target.classList.contains('hl') ? 'gauche' : e.target.classList.contains('hr') ? 'droite' : 'deplace';
   const r = $('#lane').getBoundingClientRect(), st0 = starts()[i];
-  presse = { bouge: false }; const etaitMulti = selObjs.size > 1; selObjs.clear(); if (etaitMulti) { inspecteur(); tlDessin(); } if (sel !== i) { sel = i; selA = -1; selP = -1; selCut = -1; inspecteur(); tlDessin(); navigateur(); }
+  presse = { bouge: false }; const etaitMulti = selObjs.size > 1; selObjs.clear(); if (etaitMulti) { inspecteur(); tlDessin(); } if (sel !== i) { sel = i; selA = -1; selP = -1; selCut = -1; selT = -1; inspecteur(); tlDessin(); navigateur(); }
   const copie = clone(c), el2 = () => document.querySelector(`.clip[data-i="${i}"]`);
   const mv = ev => {
     const dx = ev.clientX - x0; if (Math.abs(dx) > 5) presse.bouge = true; if (!presse.bouge) return;
@@ -1122,7 +1135,7 @@ $('#pT').addEventListener('pointerdown', e => {
 // Piste vidéo 2 : déplacer, raccourcir par les bords
 $('#pV2').addEventListener('pointerdown', e => {
   const el = e.target.closest('.pv'); if (!el || e.button === 2) return; if (verrouillee('V2')) return;
-  selP = +el.dataset.p; sel = -1; selA = -1; selCut = -1; inspecteur(); tlDessin(); navigateur();
+  selP = +el.dataset.p; sel = -1; selT = -1; selA = -1; selCut = -1; inspecteur(); tlDessin(); navigateur();
   const p = proj.pistes[selP], x0 = e.clientX, c0 = { ...p }, mode = e.target.classList.contains('hl') ? 'g' : e.target.classList.contains('hr') ? 'd' : 'm'; let bouge = false;
   const mv = ev => {
     const ds = (ev.clientX - x0) / zoom; if (Math.abs(ev.clientX - x0) > 3) bouge = true; if (!bouge) return;
@@ -1148,8 +1161,8 @@ function guide(t) { let g = document.getElementById('guide'); if (t == null) { i
 $('#pA').addEventListener('pointerdown', e => {
   const el = e.target.closest('.aud'); if (!el || e.button === 2) return;
   if (verrouillee('A')) return;
-  if (outilTl === 'lame') { e.preventDefault(); const r0 = $('#lane').getBoundingClientRect(); selA = +el.dataset.a; sel = -1; selP = -1; placerTete(Math.max(0, (e.clientX - r0.left) / zoom), { sansSelection: true, sansApercu: true }); couperAudio(); return; }
-  selA = +el.dataset.a; selP = -1; sel = -1; selCut = -1; selObjs.clear(); inspecteur(); tlDessin(); navigateur();
+  if (outilTl === 'lame') { e.preventDefault(); const r0 = $('#lane').getBoundingClientRect(); selA = +el.dataset.a; sel = -1; selT = -1; selP = -1; placerTete(Math.max(0, (e.clientX - r0.left) / zoom), { sansSelection: true, sansApercu: true }); couperAudio(); return; }
+  selA = +el.dataset.a; selP = -1; sel = -1; selT = -1; selCut = -1; selObjs.clear(); inspecteur(); tlDessin(); navigateur();
   const a = proj.audio[selA], x0 = e.clientX, copie = clone(a), s0 = a.start || 0, V = a.vit || 1, D0 = a.dur || durOf(a.file), I0 = a.in || 0, i0 = selA;
   const mode = e.target.classList.contains('hl') ? 'gauche' : e.target.classList.contains('hr') ? 'droite' : 'deplace', pts = pointsAimant(i0); let bouge = false;
   const mv = ev => {
@@ -1198,7 +1211,7 @@ function supprimer() {
   if (selT >= 0 && (proj.textes || [])[selT]) { proj.textes.splice(selT, 1); selT = -1; commit(); tout(); apercu(); return; }
   if (selA < 0 && selP < 0 && supprimerSelection()) return;
   if (selP >= 0) { proj.pistes.splice(selP, 1); selP = -1; }
-  else if (selA >= 0) { proj.audio.splice(selA, 1); selA = -1; selP = -1; }
+  else if (selA >= 0) { proj.audio.splice(selA, 1); selA = -1; selP = -1; selT = -1; }
   else if (sel >= 0) { const plages = plagesDe([proj.clips[sel]]); proj.clips.splice(sel, 1); recollerApres(plages); sel = Math.min(sel, proj.clips.length - 1); if (proj.clips.length) placerTete(Math.min(gt, total()), { sansApercu: true }); }
   else return;
   commit(); tout(); apercu();
@@ -1522,7 +1535,7 @@ async function ouvrirClipping() {
 
 // ---------- Visionneuse et lecture ----------
 let minuteur = null, jeton = 0, lecture = null;
-function choisir(i) { sel = i; selA = -1; selP = -1; selCut = -1; tout(); placerTete(starts()[i] || 0); }
+function choisir(i) { sel = i; selA = -1; selP = -1; selCut = -1; selT = -1; tout(); placerTete(starts()[i] || 0); }
 function reglerScrub() { $('#scrub').max = Math.max(0.1, total()); tete(); }
 $('#scrub').oninput = e => { stopLecture(); placerTete(+e.target.value); };
 function apercuRetarde() { clearTimeout(minuteur); minuteur = setTimeout(apercu, 180); }
@@ -1857,7 +1870,7 @@ $('#insp').addEventListener('change', e => {
   if (d.lutsel !== undefined && c) { c.lut = t.value ? { file: t.value, amount: c.lut ? c.lut.amount : 100 } : null; commit(); inspecteur(); apercu(); return; }
   if (d.bgfile !== undefined && c) { c.key.bgFile = t.value; c.key.bgKind = (t.selectedOptions[0] && t.selectedOptions[0].dataset.kind) || 'image'; commit(); apercu(); return; }
   if (!d.p) return; const root = racineInsp(); if (!root) return;
-  let v = t.type === 'checkbox' ? t.checked : t.value; if ($('#insp').dataset.root === 'v' && d.p === 'plein') v = v === 'plein'; setP(root, d.p, v);
+  let v = t.type === 'checkbox' ? t.checked : (t.type === 'range' || t.type === 'number') ? +t.value : t.value; if ($('#insp').dataset.root === 'v' && d.p === 'plein') v = v === 'plein'; setP(root, d.p, v);
   if ($('#insp').dataset.root === 'v') { commit(); inspecteur(); tlDessin(); apercuRetarde(); return; }
   if (['key.on', 'key.bgType', 'viz.type'].includes(d.p) || /^overlays\.\d+\.(mode|plein|key)$/.test(d.p)) inspecteur();
   suite(d.p);
@@ -1943,7 +1956,7 @@ function basculerMulti(i, plage) {
   const c = proj.clips[i]; if (!c) return;
   if (plage && sel >= 0) { for (let k = Math.min(sel, i); k <= Math.max(sel, i); k++) selObjs.add(proj.clips[k]); }
   else { const cur = curClip(); if (cur && !selObjs.size) selObjs.add(cur); selObjs.has(c) ? selObjs.delete(c) : selObjs.add(c); }
-  sel = i; selA = -1; selP = -1; selCut = -1; tout();
+  sel = i; selA = -1; selP = -1; selCut = -1; selT = -1; tout();
 }
 function detacherSon(i, silencieux) {
   const c = proj.clips[i]; if (!c || c.kind !== 'video') return false;
@@ -1951,14 +1964,14 @@ function detacherSon(i, silencieux) {
   if (c.sonDetache) { if (!silencieux) aide('Le son de ce clip est déjà détaché (clic droit → Rattacher le son).'); return false; }
   proj.audio.push({ file: c.file, start: +starts()[i].toFixed(2), in: +c.in.toFixed(2), dur: +(c.out - c.in).toFixed(2), vit: clamp(c.speed || 1, 0.25, 4), vol: c.vol || 100, fade: false, loop: false, duck: false, detache: true });
   c.volAvant = c.vol || 100; c.vol = 0; c.sonDetache = true;
-  if (!silencieux) { selA = proj.audio.length - 1; sel = -1; selP = -1; commit(); tout(); apercu(); aide('🔊 Son détaché : il est dans la piste audio, tu peux le déplacer, le couper, le régler ou le supprimer sans toucher à l’image. (Clic droit sur le clip → Rattacher le son pour annuler.)'); }
+  if (!silencieux) { selA = proj.audio.length - 1; sel = -1; selT = -1; selP = -1; commit(); tout(); apercu(); aide('🔊 Son détaché : il est dans la piste audio, tu peux le déplacer, le couper, le régler ou le supprimer sans toucher à l’image. (Clic droit sur le clip → Rattacher le son pour annuler.)'); }
   return true;
 }
 function detacherSelection() {
   const idx = proj.clips.map((c, i) => i).filter(i => selObjs.has(proj.clips[i]) || (!multi() && i === sel));
   const n = idx.filter(i => detacherSon(i, true)).length;
   if (!n) return aide('Aucun son à détacher dans la sélection (sans son ou déjà détaché).');
-  if (n === 1) { selA = proj.audio.length - 1; sel = -1; selP = -1; selObjs.clear(); } else selA = -1;
+  if (n === 1) { selA = proj.audio.length - 1; sel = -1; selT = -1; selP = -1; selObjs.clear(); } else selA = -1;
   commit(); tout(); apercu(); aide(n === 1 ? '🔊 Son détaché : il est dans la piste audio (sélectionné) : S pour le couper, glisse-le, règle-le ou supprime-le sans toucher à l’image. Clic droit sur la vidéo → Rattacher le son pour annuler.' : `🔊 Son détaché de ${n} clips : il est dans la piste audio.`);
 }
 function rattacherSon(i) {
@@ -2039,7 +2052,7 @@ $('#tlcorps').addEventListener('contextmenu', e => {
   e.preventDefault(); const M = navigator.platform.includes('Mac') ? '⌘' : 'Ctrl+';
   if (ce) {
     const i = +ce.dataset.i, c = proj.clips[i];
-    if (!selObjs.has(c)) { selObjs.clear(); if (sel !== i) { sel = i; selA = -1; selP = -1; selCut = -1; tout(); } }
+    if (!selObjs.has(c)) { selObjs.clear(); if (sel !== i) { sel = i; selA = -1; selP = -1; selCut = -1; selT = -1; tout(); } }
     const mu = multi(), vid = c.kind === 'video', cible = clipsVises(), muet = cible.every(x => !(x.vol > 0));
     const items = [
       { id: 'cut', t: '✂ Couper à la tête de lecture', k: 'S', f: couper, off: mu },
@@ -2059,7 +2072,7 @@ $('#tlcorps').addEventListener('contextmenu', e => {
     ].filter(Boolean);
     menuCtx(e.clientX, e.clientY, items);
   } else if (ae) {
-    const i = +ae.dataset.a; if (selA !== i) { selA = i; sel = -1; selP = -1; tout(); const a = proj.audio[i]; }
+    const i = +ae.dataset.a; if (selA !== i) { selA = i; sel = -1; selT = -1; selP = -1; tout(); const a = proj.audio[i]; }
     const a = proj.audio[i];
     menuCtx(e.clientX, e.clientY, [
       { id: 'acu', t: '✂ Couper à la tête de lecture', k: 'S', f: couperAudio },
@@ -2068,7 +2081,7 @@ $('#tlcorps').addEventListener('contextmenu', e => {
       { id: 'asp', t: '🗑 Supprimer', k: 'Suppr', f: supprimer }
     ]);
   } else {
-    const i = +pe.dataset.p; if (selP !== i) { selP = i; sel = -1; selA = -1; tout(); }
+    const i = +pe.dataset.p; if (selP !== i) { selP = i; sel = -1; selT = -1; selA = -1; tout(); }
     menuCtx(e.clientX, e.clientY, [{ id: 'psp', t: '🗑 Supprimer', k: 'Suppr', f: supprimer }]);
   }
 });
@@ -2551,7 +2564,7 @@ async function outil(nom) {
     const d = +$('#oDur').value, tr = $('#oTr').value, clips = items.map(m => { const c = newClip(m); if (m.kind === 'image') { c.dur = d; if ($('#oZoom').checked) c.fx.push({ id: 'zoomavant', p: { a: 18 } }); } else c.out = Math.min(m.duration, 8); return c; });
     clips.slice(0, -1).forEach(c => { c.transition = { type: tr, dur: 0.6 }; });
     proj.clips = clips; proj.pistes = []; proj.textes = []; proj.audio = $('#oMus').value ? [{ file: 'lib:' + $('#oMus').value, vol: 45, start: 0, fade: true, loop: true, duck: true }] : [];
-    commit(); sel = 0; selA = -1; selP = -1; tout(); placerTete(0); fitZoom();
+    commit(); sel = 0; selA = -1; selP = -1; selT = -1; tout(); placerTete(0); fitZoom();
   }
 }
 
@@ -2726,13 +2739,13 @@ function demander(titre, defaut) {
     $('#sOk').onclick = () => fin(i.value.trim()); $('#sAnn').onclick = () => fin(null); i.onkeydown = e => { if (e.key === 'Enter') fin(i.value.trim()); if (e.key === 'Escape') fin(null); };
   });
 }
-async function nouveau() { if (proj.clips.length && !confirm('Commencer un nouveau projet ? Pense à enregistrer le projet actuel.')) return; proj = { ...proj, clips: [], audio: [], pistes: [], markers: [], gen: null, nomsReperes: {} }; sel = selA = selCut = selP = -1; gt = 0; rendu = null; commit(); tout(); apercu(); }
+async function nouveau() { if (proj.clips.length && !confirm('Commencer un nouveau projet ? Pense à enregistrer le projet actuel.')) return; proj = { ...proj, clips: [], audio: [], pistes: [], textes: [], markers: [], etatPistes: {}, gen: null, nomsReperes: {} }; sel = selA = selCut = selP = selT = -1; selObjs.clear(); gt = 0; rendu = null; commit(); tout(); apercu(); }
 async function sauver() { const n = await demander('Nom du projet', 'Mon montage'); if (!n) return; await api('/api/projets/' + enc(n), { method: 'PUT', body: snap() }); aide('Projet « ' + esc(n) + ' » enregistré.'); }
 async function ouvrirProjet() {
   const { items } = await (await api('/api/projets')).json();
   ouvrir(`<h2>Ouvrir un projet</h2><div class="liste">${items.map(n => `<button data-pr="${esc(n)}">${esc(n)}</button>`).join('') || '<p class="mut">Aucun projet enregistré.</p>'}</div><button id="fOk" style="margin-top:8px">Fermer</button>`);
   $('#fOk').onclick = fermer;
-  $('#boite').onclick = async e => { const n = e.target.dataset.pr; if (!n) return; proj = await (await api('/api/projets/' + enc(n))).json(); proj.markers = proj.markers || []; proj.audio = proj.audio || []; proj.pistes = proj.pistes || []; proj.clips.forEach(normaliser); sel = proj.clips.length ? 0 : -1; selA = selCut = selP = -1; rendu = null; fermer(); commit(); tout(); apercu(); $('#boite').onclick = null; };
+  $('#boite').onclick = async e => { const n = e.target.dataset.pr; if (!n) return; proj = reparerProjet(await (await api('/api/projets/' + enc(n))).json()); proj.markers = proj.markers || []; proj.audio = proj.audio || []; proj.pistes = proj.pistes || []; proj.textes = proj.textes || []; proj.clips.forEach(normaliser); $('#format').value = proj.format; sel = proj.clips.length ? 0 : -1; selA = selCut = selP = selT = -1; rendu = null; fermer(); commit(); tout(); apercu(); $('#boite').onclick = null; };
 }
 $('#bNouveau').onclick = nouveau; $('#bSauver').onclick = sauver; $('#bOuvrir').onclick = ouvrirProjet;
 $('#bUndo').onclick = () => undo(-1); $('#bRedo').onclick = () => undo(1); $('#bAide').onclick = afficherAide;
@@ -3084,7 +3097,7 @@ function monterGeneree(r, p, o) {
   if (clips.length) clips[clips.length - 1].transition = null;
   if (gen && gen.express) { proj.format = gen.express.format; $('#format').value = proj.format; }
   proj.gen = { titre: p.titre, texte: r.scenes.map(s => s.texte).join(' ').slice(0, 3000) }; proj.clips = clips; proj.pistes = []; proj.textes = []; proj.audio = o.musique ? [{ file: 'lib:' + o.musique, vol: 22, start: 0, fade: true, loop: true, duck: true }] : []; proj.markers = [];
-  sel = 0; selA = -1; selP = -1; selCut = -1; commit(); tout(); fitZoom(); placerTete(0);
+  sel = 0; selA = -1; selP = -1; selCut = -1; selT = -1; commit(); tout(); fitZoom(); placerTete(0);
 }
 
 // ---------- Mises à jour automatiques (application Mac) ----------
@@ -3675,7 +3688,7 @@ async function stEnvoyer(morceaux, mime) {
     for (const e of evts) if (e.id === 'texte') { try { const r = await stTexteImage(e.txt); e.file = r.file; e.x = 50; e.y = 12; e.s = Math.min(86, Math.max(30, r.ratio * 9)); } catch (er) { /* texte ignoré */ } }
     await chargerMedias();
     if (m) {
-      const c = newClip(m); stAppliquerAnimations(c, evts); proj.clips.push(c); sel = proj.clips.length - 1; selA = -1; selP = -1;
+      const c = newClip(m); stAppliquerAnimations(c, evts); proj.clips.push(c); sel = proj.clips.length - 1; selA = -1; selP = -1; selT = -1;
       // écrans partagés : convertis en MP4 puis posés dans la piste vidéo 2, au même moment que dans la prise
       const debut = starts()[sel];
       for (const [k, sg] of segsEcran.entries()) {
@@ -3848,7 +3861,7 @@ function tout() { tlDessin(); inspecteur(); navigateur(); reglerScrub(); majBout
   CAT.polices = CAT.polices && CAT.polices.length ? CAT.polices : [{ id: 'arial', nom: 'Police par défaut' }];
   $('#etat').textContent = CAT.font ? '' : 'Titres indisponibles (police ou filtre manquant)';
   await chargerMedias(); await chargerPacks();
-  try { const s = await (await api('/api/projet')).json(); if (s && Array.isArray(s.clips)) proj = { ...proj, ...s }; } catch (e) {}
+  try { const s = await (await api('/api/projet')).json(); if (s && Array.isArray(s.clips)) proj = reparerProjet({ ...proj, ...s }); } catch (e) {}
   proj.audio = (proj.audio || []).filter(a => mediaOf(a.file)); proj.pistes = (proj.pistes || []).filter(p => mediaOf(p.file)); proj.markers = proj.markers || []; proj.textes = proj.textes || [];
   proj.clips = proj.clips.filter(c => c.kind === 'solid' || mediaOf(c.file)).map(normaliser);
   $('#format').value = proj.format; $('#zoom').value = zoom;
