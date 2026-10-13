@@ -2465,12 +2465,30 @@ async function executerAction(a) {
     case 'fondus': { const a = proj.clips[0], z = proj.clips[proj.clips.length - 1]; if (!a) return; a.fadeIn = Math.max(a.fadeIn || 0, 0.6); z.fadeOut = Math.max(z.fadeOut || 0, 0.8); commit(); tout(); apercu(); return aide('Fondu ajouté au début et à la fin de la vidéo.'); }
     case 'detacher': tous(); return detacherSelection();
     case 'vitesse': { const v = clamp(+p || 1, 0.25, 4); tous(); vitesseSelection(v); selObjs.clear(); tout(); return aide(`Vitesse ×${String(v).replace('.', ',')} sur tous les clips vidéo et audio.`); }
+    case 'montage_sujet': return montageSelonSujet();
     case 'chapitres': return ouvrirChapitres();
     case 'chapitrer': return ouvrirChapitrage();
     case 'clipping': return ouvrirClipping();
     case 'publication': return ouvrirPublication(p);
     case 'exporter': return exporter();
   }
+}
+// Montage selon le sujet : l'IA analyse la parole, puis le style (pack), la musique et le son sont choisis pour ce genre de vidéo
+const GENRE_MUSIQUE = { bourse: 'dynamique', economie: 'calme', crypto: 'electro', 'finance-perso': 'calme', entrepreneur: 'dynamique', tech: 'electro', gaming: 'electro', tuto: 'calme', podcast: 'calme', 'vlog-voyage': 'joyeuse', 'vlog-food': 'joyeuse', 'vlog-sport': 'energique', 'vlog-quotidien': 'lofi', general: 'calme' };
+async function montageSelonSujet() {
+  if (!proj.clips.length) return aide(sansClipMsg);
+  aide('🔎 J’écoute la vidéo pour comprendre son sujet…');
+  const segs = await segmentsDuMontage(t => aide(esc(t)));
+  if (!segs.length) return aide('Je n’ai trouvé aucune parole : je ne peux pas deviner le sujet. Utilise plutôt un pack dans l’onglet Packs.');
+  const { id } = await (await api('/api/video/analyser', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), ia: true }) })).json();
+  const a = await suivreTravail(id, j => aide(esc(j.step || '')));
+  const g = a.genre || {}, fait = [];
+  if (g.id && g.id !== 'general' && proj.clips.length >= 2) { appliquerPack(g.pack, { tr: true, cal: true, son: true, look: true, mus: false, viz: false, amb: false, tit: false }); fait.push(`style « ${g.nom} »`); }
+  const m = musiquePour(GENRE_MUSIQUE[g.id] || 'calme');
+  if (m && total() > 15 && !proj.audio.some(x => estMusiqueLib(x))) { proj.audio.push({ file: 'lib:' + m.file, vol: a.rythme === 'rapide' ? 16 : 22, start: 0, fade: true, loop: true, duck: true }); fait.push(`musique « ${m.nom} » baissée quand on parle`); }
+  if (proj.clips.length >= 2 && !proj.clips.every(c => (c.afx || []).some(e => e.id === 'normaliser') || c.hasAudio === false || c.kind === 'image')) { try { egaliserVolumes(); fait.push('volume égalisé'); } catch (e) { /* facultatif */ } }
+  commit(); tout(); apercu();
+  aide(`🔎 <b>${esc(a.sujet || 'Sujet non précisé')}</b>${g.id && g.id !== 'general' ? ` · ${esc(g.nom)}` : ''}${a.ia ? '' : ' (analyse sans IA locale)'}. Fait : ${fait.length ? fait.map(esc).join(', ') : 'rien de plus à ajouter'}. Pour les chapitres et les clips TikTok, ouvre « Chapitrer » ou « Clips TikTok » : ils reprennent ce sujet. Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'}.`);
 }
 async function appliquerPlan(actions, surEtat) {
   const directes = actions.filter(a => !MODALES.includes(a.action)), modale = actions.find(a => MODALES.includes(a.action)), bilan = [];

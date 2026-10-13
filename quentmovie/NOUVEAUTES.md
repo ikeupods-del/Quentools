@@ -9,6 +9,8 @@ Changer aussi `version` dans `package.json` : une version déjà publiée n'est 
 - **Clips TikTok plus pertinents** : les passages qui portent vraiment le sujet sont favorisés, et l’IA les choisit en connaissant le sujet.
 - **Style de montage conseillé** : selon le genre reconnu (bourse, économie, crypto, tuto, podcast, voyage, cuisine, sport, gaming, tech…), un bouton « Monter dans le style… » pose le pack qui convient (transitions, effets de coupe, sons, look).
 - Dans l’assistant (⌘K), « analyse ma vidéo » ouvre cette analyse.
+- **Montage selon le sujet** (assistant ⌘K : « monte ma vidéo selon son sujet », ou étape proposée par le montage automatique) : l’IA analyse la parole puis pose le style de pack du genre reconnu, une musique adaptée (baissée quand on parle) et égalise le volume.
+- **Export corrigé** : si un clip pointe vers une prise du studio déjà convertie, elle est retrouvée toute seule ; si un fichier a vraiment disparu, le message dit lequel et quoi faire (au lieu d’une erreur technique).
 - Sans l’IA installée, le programme déduit quand même le genre, les mots-clés et le rythme de parole.
 
 ## 1.27.0

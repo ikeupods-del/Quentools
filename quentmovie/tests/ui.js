@@ -309,6 +309,10 @@ function chromium() {
   const nbCl = await ev(() => document.querySelectorAll('#clListe [data-i]').length);
   check('clipping : des passages proposés avec un titre', nbCl >= 1 && nbCl <= 3 && await ev(() => [...document.querySelectorAll('#clListe .clT')].every(x => x.value.length > 3)), nbCl);
   await ev(() => fermer());
+  // montage selon le sujet : analyse de la parole, puis musique et son adaptés au genre
+  await ev(() => { proj.audio = proj.audio.filter(a => !/^lib:musiques\//.test(a.file)); });
+  await ev(() => montageSelonSujet()); await pg.waitForTimeout(300);
+  check('montage selon le sujet : sujet annoncé, musique de la bibliothèque posée', await ev(() => /Fait :/.test($('#bar').textContent || document.body.textContent) && proj.audio.some(a => /^lib:musiques\//.test(a.file) && a.loop && a.duck)));
 
   // 9) retirer un passage : le son détaché part avec l'image, ce qui suit reste calé ; la coupe (S) coupe aussi le son détaché
   await ev(() => { const m = medias.find(x => x.file === 'a.mp4'); proj.clips = []; for (let i = 0; i < 3; i++) proj.clips.push(newClip(m)); proj.audio = []; proj.pistes = []; proj.markers = []; proj.nomsReperes = {}; sel = 0; tout(); tous = null; selObjs = new Set(proj.clips); detacherSelection(); selObjs.clear(); });

@@ -77,7 +77,12 @@ function create(opts = {}) {
       if (!f.startsWith(PACKS + path.sep)) throw new Error('Chemin refusé');
       return f;
     }
-    return path.join(MEDIAS, safeName(n));
+    const f = path.join(MEDIAS, safeName(n));
+    if (!fs.existsSync(f)) { // prise du studio convertie : le fichier d'origine est remplacé par « …-prise.mp4 »
+      const e = path.extname(f), alt = [f.slice(0, -e.length || undefined) + '-prise.mp4', f.slice(0, -e.length || undefined) + '.mp4'].find(x => x !== f && fs.existsSync(x));
+      if (alt) return alt;
+    }
+    return f;
   };
   // Cadres et décors existent en horizontal (-h) et vertical (-v) : on prend celui du format du projet
   const orient = (n, W, H) => /^lib:(cadres|fonds)\/[\w\-]+-[hv]\.(png|jpg)$/.test(String(n || '')) ? String(n).replace(/-[hv]\.(png|jpg)$/, (x, e) => (W >= H ? '-h.' : '-v.') + e) : n;
@@ -947,6 +952,9 @@ function buildClip(c, P, o = {}) {
     const clips = (project.clips || []).filter(c => c && (c.file || c.kind === 'solid'));
     if (!clips.length) throw new Error('La timeline est vide.');
     const P = sizeOf(project, proxy ? 'proxy' : 'full');
+    // fichiers disparus : un message clair (quel clip, que faire) plutôt qu'une erreur de FFmpeg
+    const absents = [...new Set(clips.filter(c => c.file && c.kind !== 'solid' && !/^(lib|pack):/.test(c.file)).map(c => c.file).filter(f => !fs.existsSync(mediaPath(f))))];
+    if (absents.length) throw new Error(`${absents.length > 1 ? 'Ces fichiers sont' : 'Ce fichier est'} introuvable${absents.length > 1 ? 's' : ''} dans tes médias : ${absents.slice(0, 3).join(', ')}. Retire le clip concerné de la timeline (clic droit → Supprimer) ou remets le fichier dans le dossier Movies/QuentMovie/medias.`);
     const dir = fs.mkdtempSync(path.join(TMP, 'job-'));
     job.dir = dir;
     try {

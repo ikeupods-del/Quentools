@@ -22,6 +22,12 @@ const { execFileSync } = require('child_process');
   };
   const duree = f => +execFileSync(bins.ffmpeg, ['-hide_banner', '-i', path.join(base, 'exports', f)], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).toString().match(/Duration: (\d+):(\d+):([\d.]+)/)?.slice(1).reduce((a, x, k) => a + x * [3600, 60, 1][k], 0);
   const lireDuree = f => { try { return duree(f); } catch (e) { const m = String(e.stderr).match(/Duration: (\d+):(\d+):([\d.]+)/); return m ? +m[1] * 3600 + +m[2] * 60 + +m[3] : 0; } };
+  // fichier disparu : message clair ; prise convertie (« -prise.mp4 ») retrouvée toute seule
+  fs.copyFileSync(path.join(base, 'medias', 'a.mp4'), path.join(base, 'medias', 'camera-1-prise.mp4'));
+  const retrouve = await exporter({ ...projet('Prise'), clips: [clip('camera-1.mp4', 'video')] }).then(() => true, () => false);
+  check('prise convertie : le clip qui pointe sur l’ancien nom est retrouvé', retrouve);
+  const msg = await exporter({ ...projet('Absent'), clips: [clip('camera-fantome.mp4', 'video')] }).then(() => '', e => e.message);
+  check('fichier disparu : message clair avec le nom du fichier', /introuvable/.test(msg) && /camera-fantome\.mp4/.test(msg) && /Supprimer/.test(msg), msg);
   const j1 = await exporter(projet('Premier'));
   check('premier export : vidéo complète', Math.abs(lireDuree(j1.out) - 8.5) < 0.4, lireDuree(j1.out));
   check('premier export : clips encodés en parallèle', j1.paralleles >= 2, j1.paralleles);
