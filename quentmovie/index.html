@@ -189,6 +189,21 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 #stLumiere{position:absolute;inset:0;pointer-events:none;display:none;z-index:2;border:var(--lw,70px) solid var(--lc,#fff);box-shadow:inset 0 0 calc(var(--lw,70px) * 1.2) var(--lc,#fff);border-radius:6px}
 #stLumiere.on{display:block}
 #modal.on{display:grid}
+#revue{position:fixed;top:56px;right:10px;bottom:10px;width:380px;max-width:calc(100vw - 20px);background:#15171c;border:1px solid #3a3f4b;border-radius:12px;z-index:15;display:flex;flex-direction:column;box-shadow:0 10px 40px #000a}
+#revue[hidden]{display:none}
+#revue .rvTete{padding:12px 14px;border-bottom:1px solid #2a2d35;display:flex;flex-direction:column;gap:3px}
+#revue .rvListe{overflow:auto;flex:1;padding:6px}
+#revue .rvItem{display:flex;gap:6px;align-items:center;padding:7px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+#revue .rvItem:hover{background:#1f2229}
+#revue .rvItem.refuser{opacity:.45}
+#revue .rvItem.refuser .rvL{text-decoration:line-through}
+#revue .rvT{font:12px ui-monospace,Menlo,monospace;color:#9aa0ad;min-width:38px}
+#revue .rvL{flex:1;font-size:13px;line-height:1.35}
+#revue .rvL small{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#7d8495}
+#revue .rvItem button{padding:4px 8px;min-width:30px}
+#revue .rvItem button.on{background:#2f6f3e;color:#fff}
+#revue .rvItem button[data-rv-non].on{background:#7a2b2b}
+#revue .rvPied{padding:10px 12px;border-top:1px solid #2a2d35;display:flex;flex-wrap:wrap;gap:6px}
 #boite{background:var(--pan);border:1px solid var(--ligne);border-radius:12px;padding:16px;width:min(94vw,560px);max-height:92vh;overflow:auto;-webkit-user-select:text;user-select:text}
 #boite.large{width:min(94vw,760px)}
 #boite.xl{width:min(96vw,1060px)}
@@ -689,7 +704,7 @@ $('#navbody').addEventListener('click', e => {
   else if (d.fx) ajouterFx(sel, d.fx);
   else if (d.afx) ajouterAfx(sel, d.afx);
   else if (d.sousstyle) appliquerSousStyle(d.sousstyle);
-  else if (d.packApp) appliquerPack(d.packApp, { tr: !!t.parentNode.querySelector('.pk-tr:checked'), cal: !!t.parentNode.querySelector('.pk-cal:checked'), son: !!t.parentNode.querySelector('.pk-son:checked'), look: !!t.parentNode.querySelector('.pk-look:checked'), mus: !!t.parentNode.querySelector('.pk-mus:checked'), viz: !!t.parentNode.querySelector('.pk-viz:checked'), amb: !!t.parentNode.querySelector('.pk-amb:checked'), tit: !!t.parentNode.querySelector('.pk-tit:checked') });
+  else if (d.packApp) avecRevue('pack « ' + (((CAT.packs || []).find(P => P.id === d.packApp) || {}).nom || d.packApp) + ' »', () => appliquerPack(d.packApp, { tr: !!t.parentNode.querySelector('.pk-tr:checked'), cal: !!t.parentNode.querySelector('.pk-cal:checked'), son: !!t.parentNode.querySelector('.pk-son:checked'), look: !!t.parentNode.querySelector('.pk-look:checked'), mus: !!t.parentNode.querySelector('.pk-mus:checked'), viz: !!t.parentNode.querySelector('.pk-viz:checked'), amb: !!t.parentNode.querySelector('.pk-amb:checked'), tit: !!t.parentNode.querySelector('.pk-tit:checked') }));
   else if (d.tr) appliquerTransition(d.tr);
   else if (t.id === 'bTrTous') { const tt = $('#navbody .carte[style*="--ac"]'); proj.clips.slice(0, -1).forEach(c => { c.transition = { type: (tt && tt.dataset.tr) || 'fade', dur: +$('#trDurR').value }; }); commit(); tlDessin(); }
   else if (d.titre) appliquerTitre(d.titre);
@@ -875,10 +890,10 @@ function carteAnalyse(a) {
 function brancherCarteAnalyse(racine) {
   racine.querySelectorAll('[data-conseil]').forEach(b => { b.onclick = async () => {
     b.disabled = true; b.textContent = '…';
-    try { if (b.dataset.conseil === 'normaliser') { proj.normaliser = true; commit(); } else await executerAction({ action: b.dataset.conseil, parametre: '' }); b.textContent = '✅ Fait'; }
+    try { await avecRevue('conseil', async () => { if (b.dataset.conseil === 'normaliser') { proj.normaliser = true; commit(); } else await executerAction({ action: b.dataset.conseil, parametre: '' }); }); b.textContent = '✅ Fait'; }
     catch (e) { b.textContent = '✖'; b.title = e.message; }
   }; });
-  racine.querySelectorAll('[data-pack-sujet]').forEach(b => { b.onclick = () => { appliquerPack(b.dataset.packSujet, { tr: true, cal: true, son: true, look: true, mus: false, viz: false, amb: false, tit: false }); b.disabled = true; b.textContent = '✅ Pack appliqué (annulable avec ' + (MAC ? '⌘Z' : 'Ctrl+Z') + ')'; }; });
+  racine.querySelectorAll('[data-pack-sujet]').forEach(b => { b.onclick = () => { avecRevue('style conseillé', () => appliquerPack(b.dataset.packSujet, { tr: true, cal: true, son: true, look: true, mus: false, viz: false, amb: false, tit: false })); b.disabled = true; b.textContent = '✅ Pack appliqué (annulable avec ' + (MAC ? '⌘Z' : 'Ctrl+Z') + ')'; }; });
 }
 // vraie coupe = changement de plan, de fichier ou saut dans le temps ; pas une coupe de blanc au milieu d'une même prise
 function vraieCoupe(a, b) {
@@ -1466,7 +1481,7 @@ async function ouvrirChapitrage() {
     } catch (er) { etat(`<span class="err">${esc(er.message)}</span>`); $('#chRefaire').hidden = false; }
   }
   $('#chRefaire').onclick = chercher;
-  $('#chAppliquer').onclick = () => {
+  $('#chAppliquer').onclick = () => avecRevue('chapitres', () => {
     lire(); apprendreTitres(chapitres.filter(c => c.ia && c.ia !== c.titre).map(c => ({ avant: c.ia, apres: c.titre })));
     const mode = $('#chMode').value, clavier = $('#chClavier').checked && sonClavier();
     const liste = chapitres.slice().sort((a, b) => a.t - b.t);
@@ -1503,7 +1518,7 @@ async function ouvrirChapitrage() {
     proj.markers.sort((a, b) => a - b); sel = Math.min(sel, proj.clips.length - 1);
     commit(); tout(); apercu(); fermer(); ouvrirChapitres();
     aide(`📑 ${liste.length} chapitres posés${mode !== 'aucun' ? ' avec leur titre à l’écran' : ''}${clavier && mode !== 'aucun' ? ' et le bruit de clavier' : ''}. Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} si besoin.`);
-  };
+  });
   chercher();
 }
 
@@ -2669,7 +2684,8 @@ async function executerAction(a) {
 }
 // Montage selon le sujet : l'IA analyse la parole, puis le style (pack), la musique et le son sont choisis pour ce genre de vidéo
 const GENRE_MUSIQUE = { bourse: 'dynamique', economie: 'calme', crypto: 'electro', 'finance-perso': 'calme', entrepreneur: 'dynamique', tech: 'electro', gaming: 'electro', tuto: 'calme', podcast: 'calme', 'vlog-voyage': 'joyeuse', 'vlog-food': 'joyeuse', 'vlog-sport': 'energique', 'vlog-quotidien': 'lofi', general: 'calme' };
-async function montageSelonSujet() {
+function montageSelonSujet() { return avecRevue('montage selon le sujet', montageSujetBrut); }
+async function montageSujetBrut() {
   if (!proj.clips.length) return aide(sansClipMsg);
   aide('🔎 J’écoute la vidéo pour comprendre son sujet…');
   const segs = await segmentsDuMontage(t => aide(esc(t)));
@@ -2684,12 +2700,141 @@ async function montageSelonSujet() {
   commit(); tout(); apercu();
   aide(`🔎 <b>${esc(a.sujet || 'Sujet non précisé')}</b>${g.id && g.id !== 'general' ? ` · ${esc(g.nom)}` : ''}${a.ia ? '' : ' (analyse sans IA locale)'}. Fait : ${fait.length ? fait.map(esc).join(', ') : 'rien de plus à ajouter'}. Pour les chapitres et les clips TikTok, ouvre « Chapitrer » ou « Clips TikTok » : ils reprennent ce sujet. Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'}.`);
 }
+// ---------- Revue : ce que proposent l'assistant, un pack, le montage selon le sujet ou le chapitrage se valide une par une ----------
+// Rien n'est imposé : chaque titre, bruitage, transition, effet… s'affiche avec son moment ; « Refuser » le retire tout de suite
+// (l'aperçu montre l'état choisi), « Garder » le remet. Désactivable (case du panneau) pour revenir à l'application directe.
+const revueActive = () => { try { return localStorage.getItem('qm:revue') !== 'non'; } catch (e) { return true; } };
+const idDe = o => (o && typeof o === 'object' ? (o._id || (o._id = Math.random().toString(36).slice(2, 10))) : null);
+function marquerIds() { [proj.clips, proj.audio, proj.pistes || [], proj.textes || []].forEach(l => l.forEach(idDe)); }
+const egal = (a, b) => JSON.stringify(a == null ? null : a) === JSON.stringify(b == null ? null : b);
+const videRv = v => v == null || v === '' || v === false || (Array.isArray(v) && !v.length);
+const tps = t => fmtChrono(Math.max(0, t || 0));
+function libelleSon(a) {
+  const n = nomOf(a.file), musique = estMusiqueLib(a) || a.loop;
+  return musique ? `🎵 Musique « ${n} » (volume ${a.vol} %${a.duck ? ', baissée quand on parle' : ''})` : `🔊 Bruitage « ${n} » à ${tps(a.start)}`;
+}
+// Liste des changements entre deux états du projet ; chaque élément sait se retirer (refuser) et se remettre (garder)
+function differences(avant, apres) {
+  const l = [], st = starts(), parId = new Map(avant.clips.map(c => [c._id, c]));
+  const ajout = (type, t, libelle, refuser, garder, extra = {}) => l.push({ type, t, libelle, refuser, garder, etat: 'garder', ...extra });
+  // structure du montage (coupes, clips ajoutés ou retirés) : un seul choix, qui annule toute la proposition
+  const durAv = avant.clips.reduce((s, c) => s + effDur(c), 0), durAp = apres.clips.reduce((s, c) => s + effDur(c), 0);
+  if (avant.clips.length !== apres.clips.length || Math.abs(durAv - durAp) > 0.05 || avant.clips.some((c, i) => !apres.clips[i] || c._id !== apres.clips[i]._id))
+    ajout('structure', 0, `✂ Découpage du montage : ${avant.clips.length} → ${apres.clips.length} clips, durée ${fmtChrono(durAv)} → ${fmtChrono(durAp)}`, null, null, { structure: true });
+  // sons : ajoutés, retirés, réglés
+  const idsAv = new Map(avant.audio.map(a => [a._id, a])), idsAp = new Set(apres.audio.map(a => a._id));
+  apres.audio.forEach(a => {
+    const b = idsAv.get(a._id);
+    if (!b) ajout(estMusiqueLib(a) || a.loop ? 'musique' : 'son', a.start || 0, libelleSon(a), () => { proj.audio = proj.audio.filter(x => x._id !== a._id); }, () => { if (!proj.audio.some(x => x._id === a._id)) proj.audio.push(a); }, { son: a.file });
+    else if (!egal({ ...b, start: +(+b.start || 0).toFixed(1) }, { ...a, start: +(+a.start || 0).toFixed(1) }) && !(sonLie(a) && a.detache)) {
+      const v = clone(b), n = clone(a);
+      ajout('son', a.start || 0, `🔈 Réglage de « ${nomOf(a.file)} »${b.vol !== a.vol ? ` (volume ${b.vol} → ${a.vol} %)` : ''}`, () => Object.assign(a, clone(v)), () => Object.assign(a, clone(n)));
+    }
+  });
+  avant.audio.filter(b => !idsAp.has(b._id) && !(sonLie(b) && b.detache)).forEach(b => ajout('son', b.start || 0, `🗑 Retrait de « ${nomOf(b.file)} »`, () => { if (!proj.audio.some(x => x._id === b._id)) proj.audio.push(clone(b)); }, () => { proj.audio = proj.audio.filter(x => x._id !== b._id); }));
+  // piste Titres et piste vidéo 2
+  [['textes', 'titre', x => `🔤 Titre « ${(x.titre && (x.titre.l1 || x.titre.l2)) || ''} » à ${tps(x.start)} (${fmt(x.dur || 0)})`], ['pistes', 'piste', x => `🖼 Incrustation « ${nomOf(x.file)} » à ${tps(x.start)}`]].forEach(([cle, type, lib]) => {
+    const av = new Map((avant[cle] || []).map(x => [x._id, x])), ap = new Set((apres[cle] || []).map(x => x._id));
+    (apres[cle] || []).forEach(x => {
+      const b = av.get(x._id);
+      if (!b) ajout(type, x.start || 0, lib(x), () => { proj[cle] = (proj[cle] || []).filter(y => y._id !== x._id); }, () => { proj[cle] = proj[cle] || []; if (!proj[cle].some(y => y._id === x._id)) proj[cle].push(x); });
+      else if (!egal(b, x)) { const v = clone(b), n = clone(x); ajout(type, x.start || 0, '✏ ' + lib(x), () => Object.assign(x, clone(v)), () => Object.assign(x, clone(n))); }
+    });
+    (avant[cle] || []).filter(b => !ap.has(b._id)).forEach(b => ajout(type, b.start || 0, '🗑 Retrait : ' + lib(b), () => { proj[cle] = proj[cle] || []; if (!proj[cle].some(y => y._id === b._id)) proj[cle].push(clone(b)); }, () => { proj[cle] = (proj[cle] || []).filter(y => y._id !== b._id); }));
+  });
+  // réglages de chaque clip (comparés au clip d'origine : un clip coupé en morceaux garde son identifiant)
+  const morceaux = new Map(); apres.clips.forEach(c => morceaux.set(c._id, (morceaux.get(c._id) || 0) + 1));
+  const nomTr = id => ((CAT.transitions || []).find(t => t.id === id) || {}).nom || id, nomFx = id => (fxDef(CAT.video, id) || {}).nom || id;
+  const CHAMPS = {
+    titre: v => v && v.preset ? `🔤 Titre « ${v.l1 || v.l2 || ''} »` : null,
+    transition: v => v && v.type ? `↔ Transition « ${nomTr(v.type)} »` : null,
+    zoom: v => v > 100 ? `🔍 Zoom ${v} %` : null,
+    fx: v => (v || []).length ? `🎨 Effet ${(v || []).map(e => `« ${nomFx(e.id)} »`).join(', ')}` : null,
+    overlays: v => (v || []).length ? `✨ Effet de coupe ${(v || []).map(o => `« ${nomOf(o.file)} »`).join(', ')}` : null,
+    lut: v => v && v.file ? `🎨 Look « ${nomOf(v.file)} »` : null,
+    text: v => v ? `🔤 Texte « ${v} »` : null,
+    speed: v => v && v !== 1 ? `⏩ Vitesse ×${String(v).replace('.', ',')}` : null,
+    vol: v => `🔈 Volume ${v} %`,
+    fadeIn: v => v > 0 ? `🌓 Fondu d’ouverture (${fmt(v)})` : null,
+    fadeOut: v => v > 0 ? `🌓 Fondu de fin (${fmt(v)})` : null,
+  };
+  const groupes = { subs: [], afx: [] };
+  apres.clips.forEach((c, i) => {
+    const b = parId.get(c._id); if (!b) return;
+    const coupe = morceaux.get(c._id) > 1, t = st[i] || 0;
+    for (const [k, lib] of Object.entries(CHAMPS)) {
+      if (egal(b[k], c[k])) continue;
+      if (coupe && (videRv(c[k]) || k === 'transition' && !c.transition)) continue; // morceau d'un clip coupé : rien de nouveau
+      const texte = videRv(c[k]) || (k === 'zoom' && !(c[k] > 100)) ? (lib(b[k]) ? `🗑 Retrait : ${lib(b[k])}` : null) : lib(c[k]);
+      if (!texte) continue;
+      const v = clone(b[k] === undefined ? null : b[k]), n = clone(c[k] === undefined ? null : c[k]);
+      ajout(k === 'transition' ? 'transition' : k === 'titre' || k === 'text' ? 'titre' : 'effet', k === 'transition' ? (st[i + 1] || t) : t, k === 'transition' ? `${texte} · entre les clips ${i + 1} et ${i + 2}` : `${texte} · clip ${i + 1}`, () => { c[k] = clone(v); }, () => { c[k] = clone(n); });
+    }
+    if (!egal(b.subs, c.subs) && !coupe) groupes.subs.push([c, clone(b.subs || []), clone(c.subs || [])]);
+    if (!egal(b.afx, c.afx) && !coupe) groupes.afx.push([c, clone(b.afx || []), clone(c.afx || [])]);
+  });
+  if (groupes.subs.length) ajout('effet', 0, `💬 Sous-titres sur ${groupes.subs.length} clip${groupes.subs.length > 1 ? 's' : ''}`, () => groupes.subs.forEach(([c, v]) => { c.subs = clone(v); }), () => groupes.subs.forEach(([c, , n]) => { c.subs = clone(n); }));
+  if (groupes.afx.length) ajout('effet', 0, `🔈 Son des clips amélioré (égalisation, effets audio) sur ${groupes.afx.length} clip${groupes.afx.length > 1 ? 's' : ''}`, () => groupes.afx.forEach(([c, v]) => { c.afx = clone(v); }), () => groupes.afx.forEach(([c, , n]) => { c.afx = clone(n); }));
+  // réglages du projet
+  [['format', v => `📐 Format ${v}`], ['normaliser', v => v ? '🔈 Volume final égalisé' : null], ['markers', v => (v || []).length ? `📍 Repères (${v.length})` : null], ['nomsReperes', v => Object.keys(v || {}).length ? `📍 Noms des chapitres (${Object.keys(v).length})` : null]].forEach(([k, lib]) => {
+    if (egal(avant[k], apres[k])) return;
+    const texte = lib(apres[k]) || (lib(avant[k]) ? '🗑 Retrait : ' + lib(avant[k]) : null); if (!texte) return;
+    const v = clone(avant[k] === undefined ? null : avant[k]), n = clone(apres[k] === undefined ? null : apres[k]);
+    ajout('projet', 0, texte, () => { proj[k] = clone(v); if (k === 'format') $('#format').value = proj.format; }, () => { proj[k] = clone(n); if (k === 'format') $('#format').value = proj.format; });
+  });
+  return l.sort((a, b) => (b.structure ? 1 : 0) - (a.structure ? 1 : 0) || a.t - b.t);
+}
+let revue = null;
+async function avecRevue(nom, fn) {
+  if (!revueActive() || revue) return fn();
+  marquerIds(); const avant = clone(proj);
+  const r = await fn();
+  marquerIds();
+  const items = differences(avant, proj);
+  if (items.length) ouvrirRevue(nom, avant, items);
+  return r;
+}
+function ouvrirRevue(nom, avant, items) {
+  revue = { nom, avant, items };
+  let p = $('#revue'); if (!p) { p = document.createElement('aside'); p.id = 'revue'; document.body.appendChild(p); }
+  const TYPES = { titre: 'Titres', son: 'Bruitages et sons', musique: 'Musique', transition: 'Transitions', effet: 'Effets et réglages', piste: 'Incrustations', projet: 'Projet', structure: 'Découpage' };
+  const dessiner = () => {
+    const n = items.filter(x => x.etat === 'garder').length;
+    p.innerHTML = `<div class="rvTete"><b>À valider : ${esc(nom)}</b><span class="mut">${n} gardé${n > 1 ? 's' : ''} sur ${items.length} · clique sur une ligne pour la voir dans l’aperçu</span></div>
+      <div class="rvListe">${items.map((x, i) => `<div class="rvItem ${x.etat}" data-rv="${i}"><span class="rvT">${x.t > 0 || x.type !== 'projet' ? tps(x.t) : ''}</span><span class="rvL"><small>${esc(TYPES[x.type] || '')}</small>${esc(x.libelle)}${x.structure ? '<small class="mut">Refuser le découpage annule toute la proposition.</small>' : ''}</span>
+        ${x.son ? `<button data-rv-ecouter="${i}" title="Écouter">▶</button>` : ''}<button data-rv-oui="${i}" class="${x.etat === 'garder' ? 'on' : ''}" title="Garder">✓</button><button data-rv-non="${i}" class="${x.etat === 'refuser' ? 'on' : ''}" title="Refuser">✕</button></div>`).join('')}</div>
+      <div class="rvPied"><button id="rvTousOui">Tout garder</button><button id="rvTousNon">Tout refuser</button><button class="pri" id="rvOk">Valider mes choix</button>
+      <label class="mut" style="display:block;margin-top:8px"><input type="checkbox" id="rvActif" ${revueActive() ? 'checked' : ''}> Toujours me faire valider les propositions</label></div>`;
+  };
+  const choisir = (i, etat) => {
+    const x = items[i]; if (!x || x.etat === etat) return;
+    if (x.structure) {
+      if (etat === 'refuser') { if (!confirm('Refuser le découpage annule toute la proposition (titres, sons, transitions compris). Continuer ?')) return; proj = clone(avant); $('#format').value = proj.format; fermerRevue(); commit(); tout(); apercu(); aide('Proposition annulée : le montage est revenu à l’état d’avant.'); return; }
+      return;
+    }
+    (etat === 'refuser' ? x.refuser : x.garder)(); x.etat = etat; tout(); apercuRetarde(); dessiner();
+  };
+  p.onclick = e => {
+    const b = e.target.closest('button'), ligne = e.target.closest('[data-rv]');
+    if (b && b.dataset.rvOui) return choisir(+b.dataset.rvOui, 'garder');
+    if (b && b.dataset.rvNon) return choisir(+b.dataset.rvNon, 'refuser');
+    if (b && b.dataset.rvEcouter) return jouerLib(String(items[+b.dataset.rvEcouter].son).replace(/^lib:/, ''));
+    if (b && b.id === 'rvTousOui') { items.forEach((x, i) => choisir(i, 'garder')); return; }
+    if (b && b.id === 'rvTousNon') { if (items.some(x => x.structure)) return choisir(items.findIndex(x => x.structure), 'refuser'); items.forEach((x, i) => choisir(i, 'refuser')); return; }
+    if (b && b.id === 'rvOk') { const k = items.filter(x => x.etat === 'garder').length; fermerRevue(); commit(); tout(); apercu(); aide(`✅ ${k} proposition${k > 1 ? 's' : ''} gardée${k > 1 ? 's' : ''}, ${items.length - k} refusée${items.length - k > 1 ? 's' : ''}. Annulable avec ${MAC ? '⌘Z' : 'Ctrl+Z'}.`); return; }
+    if (ligne && !b) { const x = items[+ligne.dataset.rv]; if (x) placerTete(Math.min(Math.max(0, x.t), Math.max(0, total() - 0.05))); }
+  };
+  p.onchange = e => { if (e.target.id === 'rvActif') try { localStorage.setItem('qm:revue', e.target.checked ? 'oui' : 'non'); } catch (er) { /* réglage facultatif */ } };
+  dessiner(); p.hidden = false; document.body.classList.add('enRevue');
+  aide(`🧐 ${items.length} proposition${items.length > 1 ? 's' : ''} à valider à droite : regarde-les dans l’aperçu, garde ou refuse chacune, puis « Valider mes choix ».`);
+}
+function fermerRevue() { revue = null; const p = $('#revue'); if (p) p.hidden = true; document.body.classList.remove('enRevue'); }
 async function appliquerPlan(actions, surEtat) {
   const directes = actions.filter(a => !MODALES.includes(a.action)), modale = actions.find(a => MODALES.includes(a.action)), bilan = [];
-  for (const a of directes) {
+  await avecRevue('aide au montage', async () => { for (const a of directes) {
     surEtat(a, 'en cours');
     try { await executerAction(a); bilan.push(`✔ ${a.libelle}`); surEtat(a, 'fait', $('#bar').innerHTML); } catch (e) { bilan.push(`✖ ${a.libelle} : ${e.message}`); surEtat(a, 'erreur', esc(e.message)); }
-  }
+  } });
   if (modale) { fermer(); await executerAction(modale); } else if (directes.length) aide(bilan.map(esc).join(' · '));
 }
 let derniereDemande = '';
