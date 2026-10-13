@@ -44,8 +44,11 @@ echo "▶ Application"
   --exclude-module piper.train --exclude-module torch --exclude-module tkinter \
   --paths "$SRC" --distpath "$SRC/dist" --workpath "$B/work" --specpath "$B" "$SRC/studio.py"
 APP="$SRC/dist/QuentStudio.app"
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" -c "Set :CFBundleVersion $VERSION" "$APP/Contents/Info.plist"
-/usr/libexec/PlistBuddy -c "Add :LSMinimumSystemVersion string 11.0" "$APP/Contents/Info.plist" 2>/dev/null || true
+PL="$APP/Contents/Info.plist"
+for cle in CFBundleShortVersionString CFBundleVersion; do
+  /usr/libexec/PlistBuddy -c "Set :$cle $VERSION" "$PL" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :$cle string $VERSION" "$PL"
+done
+/usr/libexec/PlistBuddy -c "Add :LSMinimumSystemVersion string 11.0" "$PL" 2>/dev/null || true
 codesign --force --deep --sign - "$APP"
 
 echo "▶ Image disque"

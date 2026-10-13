@@ -320,6 +320,13 @@ function chromium() {
   const cv = await ev(() => ({ cartes: proj.clips.filter(c => c.kind === 'solid' && c.titre && c.titre.preset === 'chapnoir'), clav: proj.audio.filter(a => /clavi/.test(a.file)).length, souffle: proj.audio.filter(a => /whoosh/.test(a.file)).length, clic: proj.audio.filter(a => /clic/.test(a.file)).length }));
   check('chapitrage vlog : une carte noire par chapitre, numérotée', cv.cartes.length >= 3 && cv.cartes[0].color === '#050505' && /^Chapitre 01$/.test(cv.cartes[0].titre.l2) && /^Chapitre 02$/.test(cv.cartes[1].titre.l2), JSON.stringify(cv.cartes.map(c => c.titre.l2)));
   check('chapitrage vlog : souffle, clavier et clic sur chaque carte', cv.clav >= 3 && cv.souffle >= 3 && cv.clic >= 3, JSON.stringify([cv.clav, cv.souffle, cv.clic]));
+  // lecture rapide (avant que l'aperçu complet soit prêt) : la carte affiche son titre et les sons sont joués
+  await ev(() => { stopLecture(); window.__sons = []; const A0 = window.Audio; window.Audio = function (u) { const x = new A0(u); window.__sons.push(u); return x; };
+    const k = proj.clips.findIndex(c => c.titre && c.titre.preset === 'chapnoir'); gt = starts()[k] + 0.05; lectureDirecte(); });
+  await pg.waitForTimeout(1600);
+  const ld = await ev(() => ({ txt: (document.querySelector('.ldTitre') || {}).textContent || '', sons: window.__sons.slice() }));
+  await ev(() => stopLecture());
+  check('chapitrage vlog en lecture rapide : titre affiché et sons joués', /C H A P I T R E/.test(ld.txt) && ld.txt.replace(/C H A P I T R E\s*\d\s*\d/, '').trim().length > 2 && ld.sons.some(u => /whoosh/.test(u)) && ld.sons.some(u => /clavi/.test(u)), JSON.stringify(ld));
 
   // 9) retirer un passage : le son détaché part avec l'image, ce qui suit reste calé ; la coupe (S) coupe aussi le son détaché
   await ev(() => { const m = medias.find(x => x.file === 'a.mp4'); proj.clips = []; for (let i = 0; i < 3; i++) proj.clips.push(newClip(m)); proj.audio = []; proj.pistes = []; proj.markers = []; proj.nomsReperes = {}; sel = 0; tout(); tous = null; selObjs = new Set(proj.clips); detacherSelection(); selObjs.clear(); });
