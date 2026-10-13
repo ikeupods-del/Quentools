@@ -87,6 +87,12 @@ const { execFileSync } = require('child_process');
     check('vidéo HDR : export réussi', !!jh.out);
     if ((app.filtres ? app.filtres() : []).includes('zscale')) check('vidéo HDR : conversion signalée', /HDR/.test(jh.avertissement || ''), jh.avertissement);
   } catch (e) { /* encodeur HEVC absent : essai ignoré */ }
+  // niveaux : la musique est calée sous la voix (≈ -18 dB) quel que soit le niveau du fichier, les bruitages un peu en dessous
+  { const L = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'bibliotheque', 'index.json'), 'utf8')), mu = (L.musiques || [])[0], so = (L.sons || []).find(x => x.duree > 0.6);
+    const jn = await exporter({ ...projet('Niveaux'), clips: [clip('a.mp4', 'video', { out: 4 })], audio: [{ file: 'lib:' + mu.file, vol: 35, start: 0, fade: false, loop: true, duck: false }, { file: 'lib:' + so.file, vol: 80, start: 1, fade: false, loop: false, duck: false }] });
+    const n = jn.niveaux || {}, m = n['lib:' + mu.file] || {}, b = n['lib:' + so.file] || {};
+    check('niveaux : musique calée 18 dB sous la voix', n.montage != null && m.type === 'musique' && Math.abs(m.lufs + m.gainDb - (n.montage - 18)) < 0.6, JSON.stringify(n));
+    check('niveaux : bruitage calé sous la voix', b.type === 'bruitage' && Math.abs(b.lufs + b.gainDb - (n.montage - 7)) < 0.6, JSON.stringify(b)); }
   // analyse de l'image et du son : changements de plan, blancs, niveau sonore, conseils qui corrigent
   ff('-f', 'lavfi', '-i', 'color=c=red:s=320x180:r=25:d=2', '-f', 'lavfi', '-i', 'color=c=blue:s=320x180:r=25:d=2', '-f', 'lavfi', '-i', 'color=c=green:s=320x180:r=25:d=2',
     '-f', 'lavfi', '-i', 'sine=f=300:d=2', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono:d=2', '-f', 'lavfi', '-i', 'sine=f=500:d=2',

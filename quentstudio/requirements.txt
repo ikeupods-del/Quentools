@@ -1,3 +1,4 @@
 pillow>=10
 piper-tts>=1.2
 pywebview>=5; sys_platform == "darwin"
+certifi

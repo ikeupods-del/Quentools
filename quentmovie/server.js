@@ -1182,9 +1182,20 @@ function buildClip(c, P, o = {}) {
           }
         };
         await ff(['-i', joined, '-af', 'aresample=48000,apad', '-t', D, ...wav], 'son0.wav');
+        // Niveaux pensés comme un monteur : la musique se cale sous la voix (environ -18 dB), les bruitages un peu en dessous,
+        // quel que soit le niveau d'origine des fichiers ; le curseur de volume reste un réglage relatif autour de ces niveaux.
+        const lufs = async f => { try { const e = await run(FFMPEG, ['-hide_banner', '-nostats', '-i', f, '-af', 'ebur128=framelog=quiet', '-f', 'null', '-'], { cwd: dir, wantErr: true }); const m = [...e.matchAll(/\bI:\s+(-?[\d.]+) LUFS/g)]; return m.length ? +m[m.length - 1][1] : null; } catch (e) { return null; } };
+        const lufsMontage = await lufs('son0.wav'), ref = lufsMontage != null && lufsMontage > -45 ? lufsMontage : -18;
+        const typeSon = a => (a.loop || a.duck || /musiques\//.test(a.file) ? 'musique' : /^lib:sons\/|^pack:.*\/sons?\//i.test(a.file) || /^lib:/.test(a.file) ? 'bruitage' : 'autre');
+        job.niveaux = { montage: lufsMontage };
         await Promise.all(audios.map(async (a, i) => { // les pistes sont préparées en même temps
           const de = clamp(num(a.in, 0), 0, 36000), du = clamp(num(a.dur, 0), 0, 36000); // partie du fichier (son détaché d'une vidéo)
           await ff([...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(a.file), ...wav], `brut${i}.wav`);
+          const type = typeSon(a), l = type === 'autre' || a.niveauBrut ? null : await lufs(`brut${i}.wav`);
+          if (l != null && l > -60) { // gain calculé : niveau cible du type + réglage relatif du curseur
+            const base = type === 'musique' ? 35 : 80, cible = ref + (type === 'musique' ? -18 : -7), rel = 20 * Math.log10(Math.max(1, clamp(num(a.vol, base), 0, 200)) / base);
+            a.gainDb = +clamp(cible - l + rel, -40, 18).toFixed(1); job.niveaux[a.file] = { type, lufs: l, gainDb: a.gainDb };
+          }
           const st = clamp(num(a.start, 0), 0, 3600), ms = Math.round(st * 1000);
           const fd = a.fade ? `,afade=t=in:d=1.2,afade=t=out:st=${Math.max(0, dur - st - 1.5).toFixed(2)}:d=1.5` : '';
           let vit = clamp(num(a.vit, 1), 0.25, 4); const tempo = []; while (vit > 2.001) { tempo.push('atempo=2'); vit /= 2; } while (vit < 0.499) { tempo.push('atempo=0.5'); vit *= 2; } if (Math.abs(vit - 1) > 0.001) tempo.push(`atempo=${vit.toFixed(4)}`);
@@ -1194,7 +1205,8 @@ function buildClip(c, P, o = {}) {
             const l = +((await infos(path.join(dir, `brut${i}.wav`))).format.duration) || 0, n = l > 0 ? Math.min(400, Math.ceil(dur / l) + 1) : 1;
             if (n > 1) { fs.writeFileSync(path.join(dir, `boucle${i}.txt`), Array.from({ length: n }, () => `file 'brut${i}.wav'`).join('\n')); entree = ['-f', 'concat', '-safe', 0, '-i', `boucle${i}.txt`]; }
           }
-          await ff([...entree, '-af', `${tempo.length ? tempo.join(',') + ',' : ''}volume=${clamp(num(a.vol, 50), 0, 200) / 100}${fd},adelay=${ms}|${ms},apad`, '-t', D, ...wav], `son${i + 1}.wav`);
+          const gain = a.gainDb != null ? `volume=${a.gainDb}dB` : `volume=${clamp(num(a.vol, 50), 0, 200) / 100}`;
+          await ff([...entree, '-af', `${tempo.length ? tempo.join(',') + ',' : ''}${gain}${fd},adelay=${ms}|${ms},apad`, '-t', D, ...wav], `son${i + 1}.wav`);
         }));
         // « baisser quand on parle » : la musique est compressée, pilotée par le son du montage (lu à part)
         const mixer = avecBaisse => {
@@ -1729,7 +1741,7 @@ function buildClip(c, P, o = {}) {
       }
       if (req.method === 'GET' && p === '/api/job') {
         const job = jobs.get(url.searchParams.get('id'));
-        return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done, resultat: job.resultat || null, duree: job.fin && job.debut ? +((job.fin - job.debut) / 1000).toFixed(1) : null, repris: job.repris, morceaux: job.morceaux || 0, paralleles: job.paralleles || 0, assemblage: job.assemblage || null, avertissement: job.avertissement || null, msAssemblage: job.msAssemblage || 0 }) : send(res, 404, { error: 'Export inconnu' });
+        return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done, resultat: job.resultat || null, niveaux: job.niveaux, duree: job.fin && job.debut ? +((job.fin - job.debut) / 1000).toFixed(1) : null, repris: job.repris, morceaux: job.morceaux || 0, paralleles: job.paralleles || 0, assemblage: job.assemblage || null, avertissement: job.avertissement || null, msAssemblage: job.msAssemblage || 0 }) : send(res, 404, { error: 'Export inconnu' });
       }
       // Projets
       if (p === '/api/projet') { // enregistrement automatique
