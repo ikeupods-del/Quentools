@@ -89,6 +89,19 @@ function chromium() {
   await pg.evaluate(() => { const c = document.querySelector('[data-pack="vlog-voyage"]'); c.querySelector('.pk-mus').checked = true; c.querySelector('.pk-look').checked = true; });
   await pg.click('[data-pack-app="vlog-voyage"]');
   check('pack Vlog : musique, look, transitions et effets de coupe', await ev(() => proj.audio.some(a => /musiques\/joyeux-vlog/.test(a.file) && a.loop && a.duck) && proj.clips.every(c => c.lut && /voyage-clair/.test(c.lut.file)) && proj.clips.slice(0, -1).every(c => c.transition && c.overlays.some(o => o.pack === 'vlog-voyage') && !c.overlays.some(o => o.pack === 'glitch'))));
+  // piste Titres (T) : un modèle cliqué se pose à la tête de lecture, se renomme, se déplace, s'affiche en lecture rapide, se supprime
+  await ev(() => { const m = medias.find(x => x.file === 'a.mp4'); proj.clips = [newClip(m), newClip(m)]; proj.audio = []; proj.textes = []; sel = -1; commit(); tout(); placerTete(2); allerOnglet('titres'); });
+  await pg.waitForSelector('[data-rep="angle"]', { timeout: 5000 }); await pg.click('[data-rep="angle"]'); await pg.waitForTimeout(200);
+  await pg.fill('#tL1', 'Titre libre'); await pg.dispatchEvent('#tL1', 'change');
+  const t1 = await ev(() => ({ n: (proj.textes || []).length, t: proj.textes[0] && proj.textes[0].start, l1: proj.textes[0] && proj.textes[0].titre.l1, bloc: document.querySelectorAll('#pT .pt').length, clip: proj.clips.some(c => c.titre) }));
+  check('piste Titres : modèle posé à la tête de lecture, sans toucher aux clips', t1.n === 1 && t1.t === 2 && t1.l1 === 'Titre libre' && t1.bloc === 1 && !t1.clip, JSON.stringify(t1));
+  const bt = await pg.$('#pT .pt'), bb = await bt.boundingBox();
+  await pg.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await pg.mouse.down(); await pg.mouse.move(bb.x + bb.width / 2 + 2 * (await ev(() => zoom)), bb.y + bb.height / 2, { steps: 5 }); await pg.mouse.up();
+  check('piste Titres : déplacé à la souris', await ev(() => Math.abs(proj.textes[0].start - 4) < 0.3), await ev(() => proj.textes[0].start));
+  await ev(() => { stopLecture(); gt = proj.textes[0].start + 1; lectureDirecte(); }); await pg.waitForTimeout(500);
+  check('piste Titres : visible en lecture rapide', /Titre libre/.test(await ev(() => (document.querySelector('.ldTitre') || {}).textContent || '')));
+  await ev(() => { stopLecture(); selT = 0; supprimer(); });
+  check('piste Titres : supprimé', await ev(() => proj.textes.length === 0));
   // montage sensé : pas de transition ni de bruitage dans une même prise (blancs coupés), pas de bruitage sur une phrase, bruitages espacés
   const sens = await ev(() => {
     const m = medias.find(x => x.file === 'a.mp4'), c = (i, o) => ({ ...newClip(m), in: i, out: o });

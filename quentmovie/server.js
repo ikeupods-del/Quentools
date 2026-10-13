@@ -1100,7 +1100,8 @@ function buildClip(c, P, o = {}) {
       // Assemblage (avec transitions si besoin)
       job.step = 'Assemblage';
       const trans = clips.map((c, i) => (i < clips.length - 1 && c.transition && c.transition.type && c.transition.type !== 'none' && FX.TRANSITIONS.some(t => t.id === c.transition.type) && filters.has('xfade')) ? c.transition : null);
-      const pistes = (project.pistes || []).filter(x => x && x.file && fs.existsSync(mediaPath(x.file))).slice(0, 30);
+      const pistes = (project.pistes || []).filter(x => x && x.file && fs.existsSync(mediaPath(x.file))).slice(0, 30)
+        .concat((project.textes || []).filter(x => x && x.titre && x.titre.preset && FX.REPORTAGE.some(r => r.id === x.titre.preset) && filters.has('drawtext')).slice(0, 60).map(x => ({ ...x, kind: 'titre', ligne: 99 }))); // piste Titres, au-dessus de tout
       let joined = segs[0], fait = false;
       const lens = built.map(b => b.eff);
 
@@ -1114,7 +1115,7 @@ function buildClip(c, P, o = {}) {
           const r = await epi.assembler({ cwd: dir, segs, fps, trans, F, echelle: Math.min(P.w, P.h) / 1080, dims: [P.w, P.h], enc: E, paralleles: enParallele, etape });
           let video = r.video; const raccords = r.plan.pieces.map(p => p.debut);
           if (pistes.length) {
-            const intervalles = pistes.map(p => { const deb = clamp(num(p.start, 0), 0, 36000), du = p.kind === 'image' ? clamp(num(p.dur, 4), 0.3, 3600) : clamp(num(p.out, 1) - num(p.in, 0), 0.3, 36000); return { fa: Math.floor(deb * fps), fb: Math.ceil((deb + du) * fps) + 1 }; });
+            const intervalles = pistes.map(p => { const deb = clamp(num(p.start, 0), 0, 36000), du = dureePiste(p); return { fa: Math.floor(deb * fps), fb: Math.ceil((deb + du) * fps) + 1 }; });
             const z = await epi.poserZones({ cwd: dir, video, plan: r.plan, fps, intervalles, paralleles: enParallele, etape, rendreZone: (zone, entree) => poserPistes(dir, entree, pistes, P, proxy, project, { de: zone.de, n: zone.a - zone.de, enc: E }).then(f => { zone.f = f; return f; }) });
             video = z.video; z.zones.forEach(q => raccords.push(q.de, q.a));
           }
@@ -1264,6 +1265,8 @@ function buildClip(c, P, o = {}) {
 
   // Éléments de la piste vidéo 2 (ordre des rangées : la plus haute devant), avec forme, bordure, fondu et son.
   // zone = { de, n } (images) : seule cette partie de la vidéo est refaite, sans le son, avec les mêmes réglages d'encodage que les clips.
+  // durée d'un élément de piste : image (durée choisie), titre de la piste Titres (durée choisie), vidéo (partie lue)
+  const dureePiste = p => (p.kind === 'image' || p.kind === 'titre' ? clamp(num(p.dur, 4), 0.3, 3600) : clamp(num(p.out, 1) - num(p.in, 0), 0.3, 36000));
   async function poserPistes(dir, joined, pistes, P, proxy, project, zone) {
     const W = P.w, H = P.h, fps = P.fps, ins = zone ? ['-ss', zone.de / fps, '-t', (zone.n / fps).toFixed(6), '-i', joined] : ['-i', joined], g = [], sons = [];
     const decal = zone ? zone.de / fps : 0;
@@ -1273,8 +1276,17 @@ function buildClip(c, P, o = {}) {
     let cur = '0:v', n = 0;
     for (let k = 0; k < ordre.length; k++) {
       const p = ordre[k], debut = clamp(num(p.start, 0), 0, 36000) - decal;
-      const duree = p.kind === 'image' ? clamp(num(p.dur, 4), 0.3, 3600) : clamp(num(p.out, 1) - num(p.in, 0), 0.3, 36000);
+      const duree = dureePiste(p);
       if (zone && (debut + duree <= 0 || debut >= zone.n / fps)) continue; // cet élément n'est pas dans la zone
+      if (p.kind === 'titre') { // piste Titres : calque transparent sur lequel le titre animé est dessiné, posé à son instant
+        const fin = debut + duree, ctx = { W, H, fps, eff: duree, t0: 0 }, t = `titre${k}`;
+        let lab = 0; const l = () => `${t}_${lab++}`;
+        g.push(`color=c=black@0.0:s=${W}x${H}:r=${fps}:d=${duree.toFixed(3)},format=rgba[${t}]`);
+        const fin2 = reportage({ titre: { ...p.titre, start: clamp(num(p.titre && p.titre.start, 0.2), 0, duree), dur: Math.max(0.5, duree - clamp(num(p.titre && p.titre.start, 0.2), 0, duree)) } }, ctx, g, t, l, { tdir: { dir, idx: `t${k}` } });
+        g.push(`[${fin2}]format=rgba,setpts=PTS-STARTPTS+${debut.toFixed(3)}/TB[e${t}]`, `[${cur}][e${t}]overlay=0:0:eof_action=pass:format=auto:enable='between(t,${debut.toFixed(3)},${fin.toFixed(3)})'[v${t}]`);
+        cur = `v${t}`;
+        continue;
+      }
       n++;
       if (p.kind === 'image') ins.push('-loop', '1', '-framerate', fps, '-t', duree.toFixed(3), '-i', mediaPath(p.file));
       else ins.push('-ss', clamp(num(p.in, 0), 0, 36000), '-t', duree.toFixed(3), '-i', mediaPath(p.file));
