@@ -3,6 +3,10 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.29.0
+- **Vrai chapitrage façon vlog** : chaque chapitre commence par un écran noir avec « CHAPITRE 02 » en petites lettres dorées, le nom du chapitre qui s’écrit au clavier et un trait doré qui s’étire. Un souffle accompagne l’arrivée de l’écran, le bruit de clavier suit l’écriture et un petit clic marque la fin. C’est maintenant le mode proposé par défaut (les autres modes restent disponibles).
+- Nouveau modèle de titre « Chapitre vlog (écran noir, titre qui s’écrit) » dans l’onglet Titres, utilisable à la main.
+
 ## 1.28.0
 - **L’IA analyse maintenant ta vidéo avant de monter.** Elle lit ce qui est dit (début, milieu et fin), comprend le sujet, le public visé et les idées fortes, puis une carte « Ce que j’ai compris de la vidéo » s’affiche dans le chapitrage et dans les clips TikTok.
 - **Chapitres plus justes** : les titres sont écrits en restant dans le sujet de la vidéo.

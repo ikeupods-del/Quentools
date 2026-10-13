@@ -98,7 +98,6 @@ function planAuto(p) {
   const clips = p.clips, total = clips.reduce((a, c) => a + (c.dur || 0), 0), videos = clips.filter(c => c.kind === 'video');
   const parlants = clips.filter(c => (c.kind === 'video' || c.kind === 'audio') && c.hasAudio !== false && !c.sonDetache);
   if (!clips.length) return [];
-  if (parlants.length) ajoute('montage_sujet');
   if (videos.some(c => (c.dur || 0) > 45)) ajoute('plans');
   if (parlants.length) ajoute('couper_blancs');
   if (parlants.length && parlants.every(c => !(c.subs || []).length)) ajoute('sous_titres', p.format === 'vertical' ? 'tiktok' : '');

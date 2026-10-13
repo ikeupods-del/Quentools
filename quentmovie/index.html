@@ -1290,6 +1290,16 @@ function decalerApres(t, d) {
 }
 const sonClavier = () => { const l = LIB().sons || []; return l.find(s => /clavier-rafale/.test(s.file)) || l.find(s => /clavier/.test(s.file)); };
 const VITESSE_FRAPPE = 16; // lettres par seconde
+// Chapitre « vlog » : écran noir, numéro espacé, titre qui s'écrit au clavier, trait d'accent ; durée selon la longueur du titre
+const titreChapitre = (nom, rang, debut = 0.3) => ({ preset: 'chapnoir', l1: String(nom).slice(0, 80), l2: `Chapitre ${String(rang).padStart(2, '0')}`, color: '#f5c542', font: 'arial', start: debut, dur: 0, speed: VITESSE_FRAPPE });
+const dureeCarteChapitre = nom => +Math.max(3, 0.9 + String(nom).length / VITESSE_FRAPPE + 1.4).toFixed(1);
+// sons d'une carte de chapitre : souffle à l'arrivée, clavier pendant l'écriture, petit clic quand le titre est fini
+function sonsCarteChapitre(st, nom, clavier) {
+  const L = LIB().sons || [], tr = L.find(s => s.id === 'sd-whoosh-leger') || L.find(s => /whoosh/.test(s.id)), clic = L.find(s => s.id === 'vl-clic') || L.find(s => /clic/.test(s.id)), frappe = +Math.max(0.5, nom.length / VITESSE_FRAPPE).toFixed(2);
+  if (tr) proj.audio.push({ file: 'lib:' + tr.file, vol: 45, start: +Math.max(0, st).toFixed(2), fade: false, loop: false, duck: false });
+  if (clavier) proj.audio.push({ file: 'lib:' + clavier.file, vol: 70, start: +(st + 0.55).toFixed(2), dur: frappe, fade: false, loop: false, duck: false });
+  if (clic) proj.audio.push({ file: 'lib:' + clic.file, vol: 55, start: +(st + 0.55 + frappe + 0.1).toFixed(2), fade: false, loop: false, duck: false });
+}
 function titreMachine(texte, debut) { return { preset: 'machine', l1: String(texte).slice(0, 80), l2: '', color: '#ffffff', font: 'arial', start: debut, dur: 0, speed: VITESSE_FRAPPE }; }
 
 async function ouvrirChapitrage() {
@@ -1298,7 +1308,7 @@ async function ouvrirChapitrage() {
   ouvrir(`<h2>📑 Chapitrer la vidéo</h2>
     <p class="mut">QuentMovie écoute la vidéo, repère les changements de sujet et propose des chapitres. Tu relis, tu corriges, puis il les pose : repères, liste pour YouTube, et si tu veux le titre qui s’écrit à l’écran avec le bruit du clavier.</p>
     <div id="chEtat" class="mut">Préparation…</div><div id="chAnalyse"></div><div id="chListe"></div><div id="chOpts" hidden>
-      <label class="l">Titre à l’écran</label><select id="chMode">${opts([['sur', 'Écrit sur la vidéo, au début de chaque partie'], ['ecran', 'Sur un écran titre de 3 s entre les parties'], ['aucun', 'Aucun titre à l’écran (repères et liste seulement)']], 'sur')}</select>
+      <label class="l">Titre à l’écran</label><select id="chMode">${opts([['ecran', 'Écran noir avec le nom du chapitre, façon vlog (recommandé)'], ['sur', 'Écrit sur la vidéo, au début de chaque partie'], ['aucun', 'Aucun titre à l’écran (repères et liste seulement)']], 'ecran')}</select>
       <div class="sw2"><input type="checkbox" id="chClavier" checked><label for="chClavier">Bruit de clavier pendant que le titre s’écrit</label></div>
       <div class="sw2"><input type="checkbox" id="chIA" checked><label for="chIA">Faire nommer les chapitres par l’IA locale (si elle est installée)</label></div></div>
     <div class="ligne" style="margin-top:10px"><button id="chFermer">Fermer</button><button id="chRefaire" hidden>Chercher à nouveau</button><button class="pri" id="chAppliquer" hidden>Poser les chapitres</button></div>`, 'large');
@@ -1333,14 +1343,14 @@ async function ouvrirChapitrage() {
     // du dernier au premier : les temps des chapitres déjà traités ne bougent pas
     for (const c of liste.slice().reverse()) {
       const nom = c.titre.slice(0, 60);
-      if (c.t <= 0.01) { proj.nomsReperes['0.00'] = nom; if (mode !== 'aucun') { const k0 = 0, cl = proj.clips[k0]; if (cl && !cl.titre) cl.titre = titreMachine(nom, 0.3); if (clavier) proj.audio.push({ file: 'lib:' + clavier.file, vol: 70, start: 0.3, dur: +Math.max(0.5, nom.length / VITESSE_FRAPPE).toFixed(2), fade: false, loop: false, duck: false }); } continue; }
+      if (c.t <= 0.01) { proj.nomsReperes['0.00'] = nom; if (mode === 'sur') { const k0 = 0, cl = proj.clips[k0]; if (cl && !cl.titre) cl.titre = titreMachine(nom, 0.3); if (clavier) proj.audio.push({ file: 'lib:' + clavier.file, vol: 70, start: 0.3, dur: +Math.max(0.5, nom.length / VITESSE_FRAPPE).toFixed(2), fade: false, loop: false, duck: false }); } continue; }
       const frappe = +Math.max(0.5, nom.length / VITESSE_FRAPPE).toFixed(2);
       let debut = c.t;
       if (mode === 'ecran') {
         const k = couperTimelineA(c.t); if (k < 0) continue;
-        const st = starts()[k], carte = newSolid('#0b1d3a', 3); carte.titre = titreMachine(nom, 0.3); carte.transition = { type: 'fade', dur: 0.4 };
-        proj.clips.splice(k, 0, carte); decalerApres(st, 3); debut = st;
-        if (clavier) proj.audio.push({ file: 'lib:' + clavier.file, vol: 70, start: +(st + 0.3).toFixed(2), dur: frappe, fade: false, loop: false, duck: false });
+        const st = starts()[k], rang = liste.indexOf(c) + 1, dc = dureeCarteChapitre(nom), carte = newSolid('#050505', dc); carte.titre = titreChapitre(nom, rang, 0.3); carte.transition = { type: 'fade', dur: 0.4 };
+        proj.clips.splice(k, 0, carte); decalerApres(st, dc); debut = st;
+        sonsCarteChapitre(st, nom, clavier);
       } else {
         const k = couperTimelineA(c.t);
         if (k >= 0 && mode === 'sur') {
@@ -1354,10 +1364,9 @@ async function ouvrirChapitrage() {
     }
     // le premier chapitre : écran titre au tout début si demandé en mode « écran »
     if (mode === 'ecran' && liste[0] && liste[0].t <= 0.01) {
-      const carte = newSolid('#0b1d3a', 3); carte.titre = titreMachine(liste[0].titre, 0.3); carte.transition = { type: 'fade', dur: 0.4 };
-      if (proj.clips[0] && !proj.clips[0].titre) { proj.clips[0].titre = null; }
-      proj.clips.unshift(carte); decalerApres(0, 3);
-      if (clavier) proj.audio.push({ file: 'lib:' + clavier.file, vol: 70, start: 0.3, dur: +Math.max(0.5, liste[0].titre.length / VITESSE_FRAPPE).toFixed(2), fade: false, loop: false, duck: false });
+      const dc = dureeCarteChapitre(liste[0].titre), carte = newSolid('#050505', dc); carte.titre = titreChapitre(liste[0].titre, 1, 0.3); carte.transition = { type: 'fade', dur: 0.4 };
+      proj.clips.unshift(carte); decalerApres(0, dc);
+      sonsCarteChapitre(0, liste[0].titre, clavier);
       proj.nomsReperes['0.00'] = liste[0].titre;
     }
     proj.markers.sort((a, b) => a - b); sel = Math.min(sel, proj.clips.length - 1);
