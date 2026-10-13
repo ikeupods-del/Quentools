@@ -11,6 +11,7 @@ Changer aussi `version` dans `package.json` : une version déjà publiée n'est 
 - Dans l’assistant (⌘K), « analyse ma vidéo » ouvre cette analyse.
 - **Montage selon le sujet** (assistant ⌘K : « monte ma vidéo selon son sujet », ou étape proposée par le montage automatique) : l’IA analyse la parole puis pose le style de pack du genre reconnu, une musique adaptée (baissée quand on parle) et égalise le volume.
 - **Export corrigé** : si un clip pointe vers une prise du studio déjà convertie, elle est retrouvée toute seule ; si un fichier a vraiment disparu, le message dit lequel et quoi faire (au lieu d’une erreur technique).
+- **Export bien plus rapide pour les longues vidéos** : un long clip simple (par exemple une prise de 30 minutes avec sous-titres) est découpé en morceaux d’environ 2 minutes encodés en même temps par la puce du Mac, puis recollés sans réencoder. Au prochain export, seuls les morceaux modifiés sont refaits.
 - Sans l’IA installée, le programme déduit quand même le genre, les mots-clés et le rythme de parole.
 
 ## 1.27.0
