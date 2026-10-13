@@ -109,6 +109,14 @@ const { execFileSync } = require('child_process');
     const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
     const ec = (x, y, t) => { const a = img(x.out, t), b = img(y.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
     check('coupe d’un clip titré : titre toujours là après la coupe, sans entrée rejouée', ec(coupe, sansT, 1.15) > 1 && ec(coupe, entier, 1.15) < 0.6 && ec(coupe, entier, 2.5) < 0.6, [ec(coupe, sansT, 1.15), ec(coupe, entier, 1.15), ec(coupe, entier, 2.5)].join(' ')); }
+  // son calé sur l'image après de nombreuses coupes sans transition (avant : ~27 ms de décalage par coupe)
+  { const coupes = Array.from({ length: 20 }, (_, i) => clip('a.mp4', 'video', { in: (i % 8) * 0.45, out: (i % 8) * 0.45 + 0.4 }));
+    const j = await exporter({ ...projet('Sync'), clips: coupes });
+    const f = path.join(base, 'exports', j.out);
+    const images = execFileSync(bins.ffmpeg, ['-v', 'error', '-i', f, '-map', '0:v:0', '-c', 'copy', '-f', 'framecrc', '-']).toString().split('\n').filter(l => l && l[0] !== '#').length;
+    const echant = execFileSync(bins.ffmpeg, ['-v', 'error', '-i', f, '-map', '0:a:0', '-ac', '1', '-ar', '48000', '-f', 's16le', '-'], { maxBuffer: 1 << 28 }).length / 2;
+    const ecart = Math.abs(echant / 48000 - images / 30);
+    check('20 coupes sans transition : son et image de même durée (pas de glissement)', ecart < 0.05, `${(echant / 48000).toFixed(3)} s de son pour ${(images / 30).toFixed(3)} s d’image`); }
   // niveaux : la musique est calée sous la voix (≈ -18 dB) quel que soit le niveau du fichier, les bruitages un peu en dessous
   { const L = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'bibliotheque', 'index.json'), 'utf8')), mu = (L.musiques || [])[0], so = (L.sons || []).find(x => x.duree > 0.6);
     const jn = await exporter({ ...projet('Niveaux'), clips: [clip('a.mp4', 'video', { out: 4 })], audio: [{ file: 'lib:' + mu.file, vol: 35, start: 0, fade: false, loop: true, duck: false }, { file: 'lib:' + so.file, vol: 80, start: 1, fade: false, loop: false, duck: false }] });

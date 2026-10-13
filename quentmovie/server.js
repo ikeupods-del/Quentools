@@ -589,7 +589,8 @@ function buildClip(c, P, o = {}) {
     while (s < 0.5) { af.push('atempo=0.5'); s *= 2; }
     if (s !== 1) af.push(`atempo=${s}`);
     af.push(`volume=${clamp(num(c.vol, 100), 0, 300) / 100}`);
-    for (const e of (c.afx || [])) {
+    for (const e of (num(c.vol, 100) > 0 ? c.afx || [] : [])) { // clip muet : aucun effet audio (loudnorm sur du silence donnait « NaN »)
+      if (e && e.id === 'normaliser' && c.gainNorm != null) { af.push(`volume=${c.gainNorm}dB`); continue; }
       const d = FX.AUDIO.find(x => x.id === (e && e.id));
       if (!d || !d.needs.every(x => filters.has(x))) continue;
       const q = FX.defaults(d);
@@ -1062,6 +1063,11 @@ function buildClip(c, P, o = {}) {
       const opts = (i, avecPuce) => ({ tdir: { dir, idx: i }, proxy, vt: avecPuce && vt, vtMax: project.quality === 'max', hw: avecPuce && mac && hwaccels.has('videotoolbox') });
       // chaque clip est construit seul, pour savoir quels fichiers (textes des titres…) il a écrits : ils entrent dans son empreinte
       const built = [], cles = [];
+      // « égaliser » : un gain fixe par vidéo d'origine (mesurée une fois en entier, résultat gardé), le même pour tous ses morceaux :
+      // les phrases gardent leurs nuances (une normalisation par morceau aplatissait chaque phrase et échouait sur un clip muet)
+      const lufsSource = {};
+      for (const c of clips) if ((c.afx || []).some(e => e && e.id === 'normaliser') && c.file && !(c.file in lufsSource)) { const a = await analyseFichier(mediaPath(c.file)).catch(() => null); lufsSource[c.file] = a && a.lufs != null && a.lufs > -60 ? a.lufs : null; }
+      clips.forEach(c => { if (lufsSource[c.file] != null) c.gainNorm = +clamp(-16 - lufsSource[c.file], -20, 20).toFixed(1); });
       const hdrFlags = await Promise.all(clips.map(async c => (c.file && !(c.kind === 'image' || c.kind === 'solid' || c.kind === 'audio') && hdrPossible()) ? estHdr(mediaPath(c.file)) : false));
       if (hdrFlags.some(Boolean)) job.avertissement = 'Vidéo HDR détectée : conversion en image classique.';
       for (let i = 0; i < clips.length; i++) {
@@ -1125,22 +1131,23 @@ function buildClip(c, P, o = {}) {
             video = z.video; z.zones.forEach(q => raccords.push(q.de, q.a));
           }
           await epi.verifier({ cwd: dir, video, plan: r.plan, fps, raccords });
-          // son : recopié si les clips s'enchaînent sans fondu, sinon refait avec les mêmes fondus que l'image
+          // son : refait d'un seul tenant, chaque clip coupé à son nombre exact d'images (recopier l'AAC morceau par morceau
+          // ajoutait l'amorce de l'encodeur à chaque coupe : le son glissait d'environ 27 ms par coupe)
           job.step = 'Son';
-          let son = 'son-clips.m4a';
-          if (trans.some(Boolean)) await epi.sonDesClips(dir, segs, F, r.D, fps, proxy, son);
-          else {
-            fs.writeFileSync(path.join(dir, 'liste-son.txt'), segs.map(sg => `file '${sg}'`).join('\n'));
-            await run(FFMPEG, ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', 0, '-i', 'liste-son.txt', '-vn', '-c:a', 'copy', son], { cwd: dir });
-          }
+          const son = 'son-clips.m4a';
+          await epi.sonDesClips(dir, segs, F, r.D, fps, proxy, son);
           const mixe = pistes.length ? await sonPistes(dir, son, pistes, proxy, 'son-pistes.m4a') : null;
           await run(FFMPEG, ['-y', '-loglevel', 'error', '-i', video, '-i', mixe || son, '-map', '0:v:0', '-map', '1:a:0', '-c', 'copy', '-t', (r.plan.total / fps).toFixed(6), '-movflags', '+faststart', 'rapide.mp4'], { cwd: dir });
           joined = 'rapide.mp4'; fait = true; job.assemblage = 'rapide'; job.msAssemblage = Date.now() - t0;
         } catch (e) { job.assemblage = 'complet'; job.avertissement = 'Assemblage rapide impossible (' + String(e.message).split('\n')[0].slice(0, 160) + ') : assemblage complet.'; }
       }
       if (fait) { /* assemblage rapide terminé */ } else if (segs.length > 1 && !trans.some(Boolean)) {
+        // image recopiée telle quelle ; son refait d'un seul tenant, calé sur le nombre d'images de chaque clip (voir plus haut)
         fs.writeFileSync(path.join(dir, 'liste.txt'), segs.map(s => `file '${s}'`).join('\n'));
-        await run(FFMPEG, ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', 0, '-i', 'liste.txt', '-c', 'copy', 'all.mp4'], { cwd: dir });
+        await run(FFMPEG, ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', 0, '-i', 'liste.txt', '-map', '0:v:0', '-c', 'copy', 'image-seule.mp4'], { cwd: dir });
+        const epiS = EPI.creer({ run, FFMPEG, encoder, FX, aFiltre: n => filters.has(n), clamp, num }), F = await epiS.compterToutes(segs.map(sg => path.join(dir, sg)));
+        await epiS.sonDesClips(dir, segs, F, F.map(() => 0), P.fps, proxy, 'son-clips.m4a');
+        await run(FFMPEG, ['-y', '-loglevel', 'error', '-i', 'image-seule.mp4', '-i', 'son-clips.m4a', '-map', '0:v:0', '-map', '1:a:0', '-c', 'copy', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
         joined = 'all.mp4';
       } else if (segs.length > 1) {
         const inArgs = segs.flatMap(s => ['-i', s]);
@@ -1154,8 +1161,8 @@ function buildClip(c, P, o = {}) {
             const d = clamp(num(tr.dur, 0.6), 0.2, Math.max(0.2, Math.min(len, lens[i]) * 0.9));
             if (FX.natif(tr.type)) g.push(...FX.grapheTransition(tr.type, d, len - d, Math.min(P.w, P.h) / 1080, cv, `vi${i}`, `vt${i}`, { W: P.w, H: P.h, fps: P.fps, u: i }), `[vt${i}]${norm}[${nv}]`);
             else g.push(`[${cv}][vi${i}]${FX.filtreTransition(tr.type, d, len - d, Math.min(P.w, P.h) / 1080)},${norm}[${nv}]`);
-            g.push(
-              `[${ca}][ai${i}]acrossfade=d=${d.toFixed(2)}[${na}]`);
+            g.push(`[${ca}]atrim=end=${(len - d / 2).toFixed(4)},afade=t=out:st=${Math.max(0, len - d / 2 - 0.04).toFixed(4)}:d=0.04[ca${i}]`, `[ai${i}]atrim=start=${(d / 2).toFixed(4)},asetpts=PTS-STARTPTS,afade=t=in:d=0.04[ai${i}b]`,
+              `[ca${i}][ai${i}b]concat=n=2:v=0:a=1[${na}]`); // voix : coupe nette au milieu du fondu (pas deux phrases mêlées)
             len += lens[i] - d;
           } else {
             g.push(`[${cv}][${ca}][vi${i}][ai${i}]concat=n=2:v=1:a=1[${nv}][${na}]`);
@@ -1199,7 +1206,8 @@ function buildClip(c, P, o = {}) {
           await ff([...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(a.file), ...wav], `brut${i}.wav`);
           const type = typeSon(a), l = type === 'autre' || a.niveauBrut ? null : await lufs(`brut${i}.wav`);
           if (l != null && l > -60) { // gain calculé : niveau cible du type + réglage relatif du curseur
-            const base = type === 'musique' ? 35 : 80, cible = ref + (type === 'musique' ? -18 : -7), rel = 20 * Math.log10(Math.max(1, clamp(num(a.vol, base), 0, 200)) / base);
+            // musique : 12 dB sous la voix si elle est baissée quand on parle (elle descend encore pendant les phrases), 18 dB sinon
+            const base = type === 'musique' ? 35 : 80, cible = ref + (type === 'musique' ? (a.duck ? -12 : -18) : -7), rel = 20 * Math.log10(Math.max(1, clamp(num(a.vol, base), 0, 200)) / base);
             a.gainDb = +clamp(cible - l + rel, -40, 18).toFixed(1); job.niveaux[a.file] = { type, lufs: l, gainDb: a.gainDb };
           }
           const st = clamp(num(a.start, 0), 0, 3600), ms = Math.round(st * 1000);
@@ -1211,7 +1219,13 @@ function buildClip(c, P, o = {}) {
           let entree = ['-i', `brut${i}.wav`];
           if (a.loop && !du) {
             const l = +((await infos(path.join(dir, `brut${i}.wav`))).format.duration) || 0, n = l > 0 ? Math.min(400, Math.ceil(dur / l) + 1) : 1;
-            if (n > 1) { fs.writeFileSync(path.join(dir, `boucle${i}.txt`), Array.from({ length: n }, () => `file 'brut${i}.wav'`).join('\n')); entree = ['-f', 'concat', '-safe', 0, '-i', `boucle${i}.txt`]; }
+            if (n > 1 && n <= 40) {
+              // boucle sans trou : le silence et le fondu de fin du morceau sont retirés, les reprises s'enchaînent en fondu d'une seconde
+              await ff(['-i', `brut${i}.wav`, '-af', 'areverse,silenceremove=start_periods=1:start_threshold=-45dB,areverse', ...wav], `net${i}.wav`);
+              const g = Array.from({ length: n - 1 }, (_, k) => `[${k === 0 ? '0:a' : 'x' + k}][${k + 1}:a]acrossfade=d=1:c1=tri:c2=tri[x${k + 1}]`);
+              await ff([...Array.from({ length: n }, () => ['-i', `net${i}.wav`]).flat(), '-filter_complex', g.join(';'), '-map', `[x${n - 1}]`, ...wav], `boucle${i}.wav`);
+              entree = ['-i', `boucle${i}.wav`];
+            } else if (n > 1) { fs.writeFileSync(path.join(dir, `boucle${i}.txt`), Array.from({ length: n }, () => `file 'brut${i}.wav'`).join('\n')); entree = ['-f', 'concat', '-safe', 0, '-i', `boucle${i}.txt`]; }
           }
           const gain = a.gainDb != null ? `volume=${a.gainDb}dB` : `volume=${clamp(num(a.vol, 50), 0, 200) / 100}`;
           await ff([...entree, '-af', `${tempo.length ? tempo.join(',') + ',' : ''}${gain}${fd},adelay=${ms}|${ms},apad`, '-t', D, ...wav], `son${i + 1}.wav`);
@@ -1222,7 +1236,7 @@ function buildClip(c, P, o = {}) {
           const ins = ['-i', 'son0.wav', ...audios.flatMap((_, i) => ['-i', `son${i + 1}.wav`])], g = [];
           let mix = '[0:a]', dk = 0;
           audios.forEach((a, i) => {
-            if (a.duck && canDuck) { g.push(`[${i + 1}:a][side${dk++}]sidechaincompress=threshold=0.03:ratio=10:attack=30:release=600:makeup=1[m${i}]`); mix += `[m${i}]`; }
+            if (a.duck && canDuck) { g.push(`[${i + 1}:a][side${dk++}]sidechaincompress=threshold=0.06:ratio=3:attack=25:release=500:makeup=1[m${i}]`); mix += `[m${i}]`; }
             else mix += `[${i + 1}:a]`;
           });
           if (ducks) { ins.push('-i', 'son0.wav'); g.push(`[${audios.length + 1}:a]${ducks > 1 ? `asplit=${ducks}` : 'anull'}${Array.from({ length: ducks }, (_, k) => `[side${k}]`).join('')}`); }

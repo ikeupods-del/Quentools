@@ -6,6 +6,7 @@
 // actions connues : identifiant → libellé (montré avant d'appliquer)
 const ACTIONS = {
   couper_blancs: 'Couper les blancs et les « euh »',
+  niveau_final: 'Régler le volume final comme les réseaux sociaux',
   sous_titres: 'Ajouter les sous-titres automatiques',
   musique: 'Ajouter une musique de fond',
   retirer_musique: 'Retirer la musique',
@@ -87,7 +88,7 @@ function comprendre(demande, projet) {
   if (/(hashtags?|description|titre (pour|de la) (publication|video youtube|tiktok)|legende)/.test(t)) ajoute('publication', /youtube/.test(t) ? 'YouTube' : /instagram/.test(t) ? 'Instagram' : /tiktok/.test(t) ? 'TikTok' : '');
   if (/\bexport/.test(t)) ajoute('exporter');
   // ordre du montage : découpe d'abord, habillage ensuite, export à la fin
-  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'publication', 'exporter'];
+  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'niveau_final', 'publication', 'exporter'];
   return l.sort((a, b) => ORDRE.indexOf(a.action) - ORDRE.indexOf(b.action));
 }
 
@@ -99,13 +100,16 @@ function planAuto(p) {
   const parlants = clips.filter(c => (c.kind === 'video' || c.kind === 'audio') && c.hasAudio !== false && !c.sonDetache);
   if (!clips.length) return [];
   if (videos.some(c => (c.dur || 0) > 45)) ajoute('plans');
-  if (parlants.length) ajoute('couper_blancs');
-  if (parlants.length && parlants.every(c => !(c.subs || []).length)) ajoute('sous_titres', p.format === 'vertical' ? 'tiktok' : '');
-  if (parlants.length >= 2) ajoute('egaliser');
-  if (clips.length >= 4 && videos.length >= 3 && parlants.length >= 3) ajoute('dynamiser', '115');
-  if (clips.length >= 2 && !clips.some(c => c.transition)) ajoute('transitions', 'fade');
+  const sansSous = parlants.length && parlants.every(c => !(c.subs || []).length);
+  // couper les blancs et sous-titrer en une seule écoute ; les étapes suivantes regardent le résultat de la coupe
+  if (parlants.length) ajoute('couper_blancs', sansSous ? (p.format === 'vertical' ? 'avec sous-titres tiktok' : 'avec sous-titres') : '');
+  if (p.format === 'vertical' && videos.some(c => c.w && c.h && c.w / c.h > 1.2 && !c.cadrage && c.fit !== 'fit' && c.fit !== 'flou')) ajoute('format', 'vertical');
+  if (parlants.length) ajoute('egaliser');
+  if (videos.length && parlants.length) ajoute('dynamiser', '115'); // ne fait rien s'il n'y a pas de saut d'image après la coupe
+  if ((clips.length >= 2 || videos.length >= 1) && !clips.some(c => c.transition)) ajoute('transitions', 'fade'); // seulement aux vrais changements de plan
   if (!(p.audio || []).some(a => !a.detache) && total > 15) ajoute('musique', 'calme');
   if (total > 150 && parlants.length) ajoute('chapitrer');
+  if (!p.normaliser) ajoute('niveau_final');
   return l;
 }
 

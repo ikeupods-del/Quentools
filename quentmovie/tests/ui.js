@@ -126,12 +126,17 @@ function chromium() {
   await pg.fill('#cherchePack', 'podcast');
   check('recherche de pack : seuls les packs podcast restent visibles', await ev(() => { const v = [...document.querySelectorAll('#navbody .pack')].filter(e => !e.hidden).map(e => e.dataset.pack); return v.length >= 3 && v.every(id => /podcast/.test(id) || /podcast/i.test(CAT.packs.find(p => p.id === id).nom + CAT.packs.find(p => p.id === id).desc)); }));
   await pg.fill('#cherchePack', '');
-  // pack : titres d'ouverture et de fin (premier et dernier clip)
-  await ev(() => { proj.clips.forEach(c => { c.titre = null; }); commit(); tout(); allerOnglet('packs'); });
+  // pack : titre d'ouverture posé seulement avec un vrai texte (jamais « CAC 40 7 842,31 » ni « Prénom Nom ») ; rien à la fin
+  await ev(() => { fermerRevue(); try { localStorage.setItem('qm:revue', 'non'); } catch (e) {} proj.clips.forEach(c => { c.titre = null; }); proj.gen = null; proj.sujet = ''; commit(); tout(); allerOnglet('packs'); });
   await pg.waitForSelector('[data-pack-app="bourse"]', { timeout: 5000 });
   await pg.evaluate(() => { document.querySelector('[data-pack="bourse"] .pk-tit').checked = true; });
   await pg.click('[data-pack-app="bourse"]');
-  check('pack : titres d’ouverture et de fin posés (polices du pack)', await ev(() => { const a = proj.clips[0].titre, z = proj.clips[proj.clips.length - 1].titre; return a && a.preset === 'cours-hausse' && a.font === '' && z && z.preset === 'cours-baisse' && proj.clips.slice(1, -1).every(c => !c.titre); }));
+  check('pack sans sujet connu : aucun titre d’exemple posé', await ev(() => proj.clips.every(c => !c.titre)));
+  await ev(() => { proj.sujet = 'Comment investir 100 € par mois'; commit(); });
+  await pg.evaluate(() => { document.querySelector('[data-pack="bourse"] .pk-tit').checked = true; });
+  await pg.click('[data-pack-app="bourse"]');
+  check('pack avec le sujet : titre d’ouverture au vrai texte, sans chiffres d’exemple', await ev(() => { const a = proj.clips[0].titre, z = proj.clips[proj.clips.length - 1]; return a && a.l1 === 'Comment investir 100 € par mois' && TITRES_TEXTE.has(a.preset) && (z === proj.clips[0] || !z.titre); }), await ev(() => JSON.stringify([proj.clips[0].titre, textesExemple()])));
+  await ev(() => { try { localStorage.removeItem('qm:revue'); } catch (e) {} });
   await ev(() => { proj.clips.forEach(c => { c.titre = null; }); commit(); tout(); });
   // pack Podcast : visualiseur sonore posé sur les clips audio seulement
   await ev(() => { proj.clips.push({ ...JSON.parse(JSON.stringify(proj.clips[0])), kind: 'audio', transition: null, overlays: [] }); commit(); tout(); allerOnglet('packs'); });
@@ -389,6 +394,33 @@ function chromium() {
 
   const ct = await ev(() => { const m = medias.find(x => x.file === 'a.mp4'); const c = newClip(m); c.titre = { preset: 'angle', l1: 'Long', start: 0.5, dur: 0 }; c.text = 'Bas'; c.textStart = 0.2; proj.clips = [c]; proj.audio = []; proj.textes = []; sel = 0; selA = selP = selT = -1; tout(); placerTete(2, { sansSelection: true }); sel = 0; couper(); return { a: proj.clips[0].titre, b: proj.clips[1].titre, tb: proj.clips[1].text, td: proj.clips[1].textDeja }; });
   check('couper un clip titré : le titre et le texte continuent sur la 2e moitié', ct.a && ct.b && ct.b.start === 0 && ct.b.deja === 1.5 && ct.tb === 'Bas' && ct.td === 1.8, JSON.stringify(ct));
+
+  // 11) mode « je valide » : chaque proposition d'un pack se garde ou se refuse, l'aperçu suit, rien n'est imposé
+  const rv = await ev(async () => {
+    fermerRevue(); const m = medias.find(x => x.file === 'a.mp4'), b = medias.find(x => x.file === 'b.mp4') || m;
+    proj.clips = [newClip(m), newClip(b), newClip(m)]; proj.audio = []; proj.textes = []; proj.pistes = []; sel = 0; commit(); tout();
+    const P = (CAT.packs || []).find(P => P.musique) || CAT.packs[0];
+    await avecRevue('pack test', () => appliquerPack(P.id, { tr: true, cal: true, son: true, look: false, mus: true, viz: false, amb: false, tit: false }));
+    const items = revue ? revue.items.map(x => ({ type: x.type, libelle: x.libelle })) : [];
+    const ouvert = !$('#revue').hidden, lignes = document.querySelectorAll('#revue .rvItem').length;
+    // refuser toutes les transitions et la musique, garder le reste
+    revue.items.forEach((x, i) => { if (x.type === 'transition' || x.type === 'musique') document.querySelector(`[data-rv-non="${i}"]`).click(); });
+    const pendant = { tr: proj.clips.filter(c => c.transition).length, mus: proj.audio.filter(a => estMusiqueLib(a)).length, sons: proj.audio.length };
+    document.querySelector('[data-rv-oui]') && document.querySelector('#rvOk').click();
+    return { items, ouvert, lignes, pendant, ferme: $('#revue').hidden, tr: proj.clips.filter(c => c.transition).length, mus: proj.audio.filter(a => estMusiqueLib(a)).length };
+  });
+  check('je valide : le pack propose ses éléments un par un (transitions, musique…)', rv.ouvert && rv.lignes === rv.items.length && rv.items.some(x => x.type === 'transition') && rv.items.some(x => x.type === 'musique'), JSON.stringify(rv.items.slice(0, 6)));
+  check('je valide : refuser retire tout de suite (aperçu fidèle), valider ferme et garde le choix', rv.pendant.tr === 0 && rv.pendant.mus === 0 && rv.ferme && rv.tr === 0 && rv.mus === 0, JSON.stringify(rv));
+  const rv2 = await ev(async () => {
+    const m = medias.find(x => x.file === 'a.mp4'); proj.clips = [newClip(m), newClip(m)]; proj.audio = []; proj.textes = []; commit(); tout();
+    const avantN = proj.clips.length;
+    await avecRevue('test découpage', () => { const [a, b] = trancherClip(proj.clips[0], 2); proj.clips.splice(0, 1, a, b); proj.textes.push({ start: 1, dur: 2, titre: { preset: 'angle', l1: 'Essai' } }); commit(); });
+    const st = revue.items.find(x => x.structure), titre = revue.items.find(x => x.type === 'titre');
+    const c0 = window.confirm; window.confirm = () => true;
+    document.querySelector(`[data-rv-non="${revue.items.indexOf(st)}"]`).click(); window.confirm = c0;
+    return { st: !!st, titre: !!titre, n: proj.clips.length, avantN, textes: proj.textes.length, ferme: $('#revue').hidden };
+  });
+  check('je valide : refuser le découpage annule toute la proposition', rv2.st && rv2.titre && rv2.n === rv2.avantN && rv2.textes === 0 && rv2.ferme, JSON.stringify(rv2));
 
   // assistant : nouvelles actions exécutées sur le montage (supprimer un clip, bruitage, couper à un instant, volume, fondus)
   await ev(async () => { await chargerMedias(); proj.clips = []; proj.audio = []; const m = medias.find(x => x.file === 'a.mp4'); for (let i = 0; i < 3; i++) proj.clips.push(newClip(m)); sel = 0; commit(); tout(); });

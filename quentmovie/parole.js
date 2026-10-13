@@ -22,7 +22,7 @@ const VOIX = [
 const ECOUTE = { archive: 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8', mo: 660 };
 const VAD = { fichier: 'silero_vad.onnx' };
 // Hésitations retirées des sous-titres et coupées au montage
-const HESITATION = /^(euh+|heu+|euhm+|hum+|hm+|mmh*|bah|beh|eh)$/i;
+const HESITATION = /^(euh+|heu+|euhm+|hum+|hm+|mmh*|um+|uh+|em+|ah+|bah|beh|ben|eh)$/i; // le modèle écrit parfois « Um » ou « Uh » pour « hum », « euh »
 
 const unpack = p => p.replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep);
 function dossierSherpa() {
@@ -72,7 +72,8 @@ function aGarder(mots, duree, { avant = 0.12, apres = 0.18, trou = 0.35 } = {}) 
   const utiles = mots.filter(w => !estHesitation(w));
   const out = [];
   for (const w of utiles) {
-    const s = Math.max(0, w.s - avant), e = Math.min(duree, w.e + apres), d = out[out.length - 1];
+    // respiration plus longue après une fin de phrase : le rythme reste naturel (pas toutes les pauses à 0,3 s)
+    const s = Math.max(0, w.s - avant), e = Math.min(duree, w.e + (/[.!?…]["»)]?$/.test(w.m) ? Math.max(apres, 0.42) : apres)), d = out[out.length - 1];
     if (d && s - d[1] < trou) d[1] = Math.max(d[1], e); else out.push([s, e]);
   }
   return out.map(([s, e]) => [+s.toFixed(2), +e.toFixed(2)]).filter(([s, e]) => e - s >= 0.2);
