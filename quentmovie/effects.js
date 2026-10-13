@@ -344,6 +344,7 @@ const REPORTAGE = [
   { id: 'tv', nom: 'Sous-titre télé (barre complète)', l1: 'Ton sous-titre ici', l2: '', color: '#000000' },
   { id: 'chapitre', nom: 'Chapitre (titre central)', l1: 'CHAPITRE 1', l2: 'Le début de l’histoire', color: '#ffffff' },
   { id: 'citation', nom: 'Citation', l1: 'Ta citation ici, entre guillemets.', l2: '— Auteur', color: '#ffb400' },
+  { id: 'chapnoir', nom: 'Chapitre vlog (écran noir, titre qui s’écrit)', l1: 'Mon chapitre', l2: 'Chapitre 01', color: '#f5c542' },
   { id: 'machine', nom: 'Machine à écrire (lettre par lettre)', l1: 'Ton texte qui s’écrit tout seul…', l2: '', color: '#ffffff' },
   { id: 'souligne', nom: 'Titre souligné (barre qui s’étire)', l1: 'Mon titre', l2: 'Un sous-titre', color: '#ffb400' },
   { id: 'progression', nom: 'Barre de progression (en haut)', l1: '', l2: '', color: '#ff2d55' },

@@ -313,6 +313,13 @@ function chromium() {
   await ev(() => { proj.audio = proj.audio.filter(a => !/^lib:musiques\//.test(a.file)); });
   await ev(() => montageSelonSujet()); await pg.waitForTimeout(300);
   check('montage selon le sujet : sujet annoncé, musique de la bibliothèque posée', await ev(() => /Fait :/.test($('#bar').textContent || document.body.textContent) && proj.audio.some(a => /^lib:musiques\//.test(a.file) && a.loop && a.duck)));
+  // chapitrage « vlog » : écran noir avec le nom du chapitre, souffle, bruit de clavier et clic
+  await ev(() => { proj.audio = []; }); await ev(() => ouvrirChapitrage()); await pg.waitForSelector('#chAppliquer:not([hidden])', { timeout: 20000 });
+  check('chapitrage : le mode « écran noir façon vlog » est proposé par défaut', await ev(() => $('#chMode').value === 'ecran'));
+  await pg.click('#chAppliquer'); await pg.waitForTimeout(500);
+  const cv = await ev(() => ({ cartes: proj.clips.filter(c => c.kind === 'solid' && c.titre && c.titre.preset === 'chapnoir'), clav: proj.audio.filter(a => /clavi/.test(a.file)).length, souffle: proj.audio.filter(a => /whoosh/.test(a.file)).length, clic: proj.audio.filter(a => /clic/.test(a.file)).length }));
+  check('chapitrage vlog : une carte noire par chapitre, numérotée', cv.cartes.length >= 3 && cv.cartes[0].color === '#050505' && /^Chapitre 01$/.test(cv.cartes[0].titre.l2) && /^Chapitre 02$/.test(cv.cartes[1].titre.l2), JSON.stringify(cv.cartes.map(c => c.titre.l2)));
+  check('chapitrage vlog : souffle, clavier et clic sur chaque carte', cv.clav >= 3 && cv.souffle >= 3 && cv.clic >= 3, JSON.stringify([cv.clav, cv.souffle, cv.clic]));
 
   // 9) retirer un passage : le son détaché part avec l'image, ce qui suit reste calé ; la coupe (S) coupe aussi le son détaché
   await ev(() => { const m = medias.find(x => x.file === 'a.mp4'); proj.clips = []; for (let i = 0; i < 3; i++) proj.clips.push(newClip(m)); proj.audio = []; proj.pistes = []; proj.markers = []; proj.nomsReperes = {}; sel = 0; tout(); tous = null; selObjs = new Set(proj.clips); detacherSelection(); selObjs.clear(); });

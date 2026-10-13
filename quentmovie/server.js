@@ -629,6 +629,20 @@ function buildClip(c, P, o = {}) {
         parts.push(`drawtext=${font}:textfile=${file}:expansion=none:fontsize=${Math.round(size)}:fontcolor=white:x=${Math.round(W * 0.08)}:y=${Math.round(H * 0.42)}:borderw=3:bordercolor=black@0.8:enable='between(${T},${from.toFixed(3)},${to.toFixed(3)})'`);
       }
       text(parts);
+    } else if (id === 'chapnoir') { // chapitre « vlog » sur écran noir : numéro espacé, titre qui s'écrit, trait d'accent qui s'étire
+      const cps = clamp(num(ti.speed, 16), 4, 40), size = 7 * u, x0 = Math.round(W * 0.09), y0 = Math.round(H * 0.5);
+      const full = wrap(l1.slice(0, 80), Math.floor(W * 0.82 / (size * 0.58))), n = full.length, parts = [];
+      const T0 = S + 0.25; // le titre démarre juste après l'apparition du numéro
+      for (let k = 1; k <= n; k++) {
+        const file = txt('m' + k, full.slice(0, k));
+        const from = T0 + (k - 1) / cps, to = k < n ? T0 + k / cps : E;
+        parts.push(`drawtext=${font}:textfile=${file}:expansion=none:fontsize=${Math.round(size)}:fontcolor=white:x=${x0}:y=${y0}:line_spacing=${Math.round(size * 0.2)}:enable='between(${T},${from.toFixed(3)},${to.toFixed(3)})*between(${T},${S},${E})'`);
+      }
+      const num2 = l2 ? [dt(txt('b', l2.toUpperCase().split('').join(' ')), 2.6 * u, acc, `${x0}`, `${y0 - 6.5 * u}`, `:alpha='${F}'`)] : [];
+      text([...num2, ...parts]);
+      const bw = even(Math.min(W * 0.3, Math.max(10 * u, n * size * 0.4))), bh = even(Math.max(4, 0.55 * u)), src = lab(), out = lab();
+      f.push(`color=c=${acc}:s=${bw}x${bh}:r=${fps},format=rgba,scale=w='max(2,${bw}*${ease(T0, 0.9)})':h=${bh}:eval=frame[${src}]`);
+      f.push(`[${cur}][${src}]overlay=x='${x0}':y='${Math.round(y0 + 9.5 * u * (full.split('\n').length))}':shortest=1:format=auto:${en}[${out}]`); cur = out;
     } else if (id === 'souligne') { // titre avec une barre qui s'étire dessous
       const bw = even(W * 0.5), bh = even(Math.max(4, 0.9 * u)), src = lab(), out = lab();
       f.push(`color=c=${acc}:s=${bw}x${bh}:r=${fps},format=rgba,scale=w='max(2,${bw}*${ease(S, 0.7)})':h=${bh}:eval=frame[${src}]`);
