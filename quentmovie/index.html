@@ -836,16 +836,30 @@ const packsLien = () => `<p class="mut" style="margin-top:12px">📦 Tu as tél�
 // Applique un pack à toute la timeline : transition (en alternant celles du pack), effet de coupe en deux moitiés autour du raccord,
 // bruitage centré sur le raccord, et en option le look sur tous les clips
 // Carte « ce que j'ai compris de la vidéo » (sujet, genre, rythme, idées fortes) + pack conseillé selon le sujet
+// clips envoyés à l'analyse de l'image et du son (temps de la timeline)
+const clipsAnalyse = () => { const st = starts(); return proj.clips.map((c, i) => ({ file: c.file, kind: c.kind, in: c.in, out: c.out, speed: c.speed, start: st[i] })).filter(c => c.kind === 'video' || c.kind === 'audio'); };
+function carteTechnique(t) {
+  if (!t) return '';
+  const lum = t.luminosite == null ? '' : t.luminosite < 70 ? 'sombre' : t.luminosite > 200 ? 'très claire' : 'bien exposée';
+  return `<p class="mut">🎞 Image et son : ${t.parMinute} changement${t.parMinute > 1 ? 's' : ''} de plan par minute${lum ? ` · image ${lum}` : ''}${t.lufs != null ? ` · son ${Math.round(t.lufs)} LUFS` : ''} · ${t.blancs} % de blancs</p>`
+    + ((t.conseils || []).length ? `<div class="asListe">${t.conseils.map((c, i) => `<div class="asSug"><span>${esc(c.texte)}</span><button class="mini" data-conseil="${esc(c.action)}">Corriger</button></div>`).join('')}</div>` : '<p class="mut">Rien à corriger côté image et son.</p>');
+}
 function carteAnalyse(a) {
+  if (a && !(a.sujet || a.genre) && a.technique) return `<div class="encart" style="margin:8px 0"><h4>🔎 Analyse de la vidéo</h4>${carteTechnique(a.technique)}</div>`;
   if (!a || !(a.sujet || a.genre)) return '';
   const g = a.genre || {}, P = (CAT.packs || []).find(x => x.id === g.pack), pts = (a.points || []).slice(0, 5);
   return `<div class="encart" style="margin:8px 0"><h4>🔎 Ce que j’ai compris de la vidéo</h4>
     ${a.sujet ? `<p><b>Sujet :</b> ${esc(a.sujet)}</p>` : ''}${a.resume ? `<p class="mut">${esc(a.resume)}</p>` : ''}
     <p class="mut">${g.nom && g.id !== 'general' ? `Genre : ${esc(g.nom)} · ` : ''}Rythme de parole : ${a.rythme === 'rapide' ? 'rapide' : a.rythme === 'calme' ? 'posé' : 'normal'}${a.public ? ` · Public : ${esc(a.public)}` : ''}</p>
     ${pts.length ? `<ul style="margin:4px 0 4px 18px">${pts.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
-    ${P && g.id !== 'general' ? `<button data-pack-sujet="${esc(P.id)}">🎬 Monter dans le style « ${esc(P.nom)} »</button> <span class="mut">pack conseillé pour ce sujet</span>` : ''}</div>`;
+    ${P && g.id !== 'general' ? `<button data-pack-sujet="${esc(P.id)}">🎬 Monter dans le style « ${esc(P.nom)} »</button> <span class="mut">pack conseillé pour ce sujet</span>` : ''}${carteTechnique(a.technique)}</div>`;
 }
 function brancherCarteAnalyse(racine) {
+  racine.querySelectorAll('[data-conseil]').forEach(b => { b.onclick = async () => {
+    b.disabled = true; b.textContent = '…';
+    try { if (b.dataset.conseil === 'normaliser') { proj.normaliser = true; commit(); } else await executerAction({ action: b.dataset.conseil, parametre: '' }); b.textContent = '✅ Fait'; }
+    catch (e) { b.textContent = '✖'; b.title = e.message; }
+  }; });
   racine.querySelectorAll('[data-pack-sujet]').forEach(b => { b.onclick = () => { appliquerPack(b.dataset.packSujet, { tr: true, cal: true, son: true, look: true, mus: false, viz: false, amb: false, tit: false }); b.disabled = true; b.textContent = '✅ Pack appliqué (annulable avec ' + (MAC ? '⌘Z' : 'Ctrl+Z') + ')'; }; });
 }
 function appliquerPack(id, o) {
@@ -1330,7 +1344,7 @@ async function ouvrirChapitrage() {
     try {
       const segs = await segmentsDuMontage(etat);
       if (!segs.length) { etat('<span class="err">Je n’ai trouvé aucune parole dans cette vidéo : il me faut de la voix pour deviner les parties. Pose des repères à la main (touche M) si la vidéo n’a pas de paroles.</span>'); $('#chRefaire').hidden = false; return; }
-      const { id } = await (await api('/api/chapitres/proposer', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), ia: true }) })).json();
+      const { id } = await (await api('/api/chapitres/proposer', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), ia: true, clips: clipsAnalyse() }) })).json();
       const r = await suivreTravail(id, j => etat(`${esc(j.step || '')}`));
       chapitres = (r.chapitres || []).map(c => ({ ...c, ia: r.ia ? c.titre : '' }));
       $('#chAnalyse').innerHTML = carteAnalyse(r.analyse); brancherCarteAnalyse($('#chAnalyse'));
@@ -1421,7 +1435,7 @@ async function ouvrirClipping() {
       const segs = await segmentsDuMontage(etat);
       if (!segs.length) { etat('<span class="err">Je n’ai trouvé aucune parole dans cette vidéo : le clipping repose sur ce qui est dit.</span>'); $('#clChercher').disabled = false; return; }
       const [min, max] = $('#clDuree').value.split('-').map(Number);
-      const { id } = await (await api('/api/clipping/proposer', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), nb: +$('#clNb').value, min, max, sujet: (proj.gen && proj.gen.titre) || '', ia: true }) })).json();
+      const { id } = await (await api('/api/clipping/proposer', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), nb: +$('#clNb').value, min, max, sujet: (proj.gen && proj.gen.titre) || '', ia: true, clips: clipsAnalyse() }) })).json();
       const r = await suivreTravail(id, j => etat(`${esc(j.step || '')}`));
       extraits = r.extraits || [];
       $('#clAnalyse').innerHTML = carteAnalyse(r.analyse); brancherCarteAnalyse($('#clAnalyse'));
@@ -1491,15 +1505,20 @@ function pastille() {
   const p = $('#pret'); if (!p) return;
   p.textContent = !proj.clips.length ? '' : fond.cours ? '⏳ aperçu…' : rendu && rendu.sig === snap() ? '⚡ prêt' : '';
 }
+// Batterie : sur batterie, l'aperçu de fond attend plus longtemps après une modification ; fenêtre cachée = aucun calcul
+let surBatterie = false;
+if (navigator.getBattery) navigator.getBattery().then(b => { const maj = () => { surBatterie = !b.charging; }; maj(); b.addEventListener('chargingchange', maj); }).catch(() => {});
+document.addEventListener('visibilitychange', () => { if (!document.hidden && proj.clips.length) preparerEnFond(); });
 function preparerEnFond(delai = 1500) {
   clearTimeout(fond.minuteur); pastille();
-  if (!proj.clips.length || localStorage.getItem('qm:fond') === 'non') return;
+  if (!proj.clips.length || localStorage.getItem('qm:fond') === 'non' || document.hidden) return;
+  if (surBatterie) delai = Math.max(delai, 5000);
   fond.minuteur = setTimeout(() => {
     if (studio || (lecture && !lecture.direct)) return preparerEnFond(3000);
     const sig = snap(); if ((rendu && rendu.sig === sig) || fond.cours === sig) return pastille();
     if (fond.cours) return preparerEnFond(1500); // un rendu est déjà en cours : on attend sa fin
     fond.cours = sig; pastille();
-    fond.promesse = lancerJob('/api/apercu', { project: JSON.parse(sig) }, () => {})
+    fond.promesse = lancerJob('/api/apercu', { project: { ...JSON.parse(sig), fond: true } }, () => {})
       .then(url => { if (!rendu || rendu.sig !== snap()) rendu = { url, sig, perime: sig !== snap() }; return url; })
       .catch(() => null)
       .finally(() => { fond.cours = null; pastille(); if (snap() !== sig) preparerEnFond(800); });
@@ -2522,7 +2541,7 @@ async function montageSelonSujet() {
   aide('🔎 J’écoute la vidéo pour comprendre son sujet…');
   const segs = await segmentsDuMontage(t => aide(esc(t)));
   if (!segs.length) return aide('Je n’ai trouvé aucune parole : je ne peux pas deviner le sujet. Utilise plutôt un pack dans l’onglet Packs.');
-  const { id } = await (await api('/api/video/analyser', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), ia: true }) })).json();
+  const { id } = await (await api('/api/video/analyser', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), ia: true, clips: clipsAnalyse() }) })).json();
   const a = await suivreTravail(id, j => aide(esc(j.step || '')));
   const g = a.genre || {}, fait = [];
   if (g.id && g.id !== 'general' && proj.clips.length >= 2) { appliquerPack(g.pack, { tr: true, cal: true, son: true, look: true, mus: false, viz: false, amb: false, tit: false }); fait.push(`style « ${g.nom} »`); }

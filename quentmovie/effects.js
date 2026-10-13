@@ -262,6 +262,74 @@ function postTransition(id, S, D, k = 1) {
   }
   return out.length ? ',' + out.join(',') : '';
 }
+// ---------- Transitions rapides ----------
+// Les formules xfade « custom » sont calculées pixel par pixel (jusqu'à 30 s par transition en 1080p). Ici, le même rendu
+// est obtenu avec des filtres natifs dont les réglages ne sont calculés qu'une fois par image : recadrage d'une bande
+// (glissés, whips), superposition (recouvrements), zoom image par image, seuil sur un dégradé fixe (stores, damier, rideau…).
+// A et B : les deux plans pendant la transition (durée D, temps qui repart de 0) ; renvoie les instructions du graphe.
+const f3 = x => (+x).toFixed(4);
+const easeT = (D, t = 't') => `if(lt(${t}/${f3(D)},0.5),4*pow(${t}/${f3(D)},3),1-pow(2-2*${t}/${f3(D)},3)/2)`;
+const uEase = e => (e < 0.5 ? Math.cbrt(e / 4) : 1 - Math.cbrt(2 * (1 - e)) / 2); // instant (0 à 1) où la progression adoucie vaut e
+// dégradé fixe (calculé une seule fois) puis seuil qui monte avec le temps : B là où le dégradé est sous le seuil
+const seuil = (o, A, B, out, lum) => [
+  `color=c=black:s=${o.W}x${o.H}:r=${o.fps}:d=${f3(1 / o.fps)},format=yuv420p,geq=lum='${lum}':cb=128:cr=128,loop=loop=-1:size=1,trim=duration=${f3(o.D)},setpts=PTS-STARTPTS,format=gbrp[g${o.u}]`,
+  `color=c=black:s=${o.W}x${o.H}:r=${o.fps}:d=${f3(o.D)},format=yuv420p,eq=brightness='t/${f3(o.D)}*219/255':eval=frame,format=gbrp[s${o.u}]`,
+  `[${A}]format=gbrp[ga${o.u}]`, `[${B}]format=gbrp[gb${o.u}]`,
+  ...(o.doux ? [`[g${o.u}][s${o.u}]lut2=c0='clip((y-x)*${o.doux},0,255)':c1='clip((y-x)*${o.doux},0,255)':c2='clip((y-x)*${o.doux},0,255)'[m${o.u}]`, // bord fondu : masque calculé une fois par paire de valeurs
+    `[ga${o.u}][gb${o.u}][m${o.u}]maskedmerge,format=yuv420p[${out}]`]
+    : [`[g${o.u}][s${o.u}][gb${o.u}][ga${o.u}]threshold,format=yuv420p[${out}]`])
+];
+const glisse = (dir, sens) => o => { // dir h/v ; sens : 1 = A part vers la gauche/le haut, -1 = vers la droite
+  const E = easeT(o.D), pile = dir === 'h' ? 'hstack' : 'vstack', ab = sens > 0 ? `[${o.A}][${o.B}]` : `[${o.B}][${o.A}]`, pos = sens > 0 ? `${dir === 'h' ? o.W : o.H}*(${E})` : `${dir === 'h' ? o.W : o.H}*(1-(${E}))`;
+  return [`${ab}${pile},crop=${o.W}:${o.H}:${dir === 'h' ? `'${pos}':0` : `0:'${pos}'`}[${o.out}]`];
+};
+const recouvre = (dessus, x) => o => [`[${dessus === 'b' ? o.A : o.B}][${dessus === 'b' ? o.B : o.A}]overlay=x='${x(o)}':y=0:eval=frame[${o.out}]`];
+const zoomT = c => o => {
+  const zA = `1+${c}*(${easeT(o.D, 'it')})`, zB = `${1 + c}-${c}*(${easeT(o.D, 'it')})`, t1 = o.D * uEase(0.4), t2 = o.D * uEase(0.6);
+  const zp = z => `zoompan=z='${z}':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=${o.W}x${o.H}:fps=${o.fps},setpts=PTS-STARTPTS`;
+  return [`[${o.A}]${zp(zA)}[za${o.u}]`, `[${o.B}]${zp(zB)},trim=start=${f3(t1)},setpts=PTS-STARTPTS[zb${o.u}]`,
+    `[za${o.u}][zb${o.u}]xfade=transition=fade:duration=${f3(Math.max(1 / o.fps, t2 - t1))}:offset=${f3(t1)}[${o.out}]`];
+};
+const milieu = (o, apres) => [`[${o.A}]trim=end=${f3(o.D / 2)},setpts=PTS-STARTPTS[ma${o.u}]`, `[${o.B}]trim=start=${f3(o.D / 2)},setpts=PTS-STARTPTS[mb${o.u}]`,
+  `[ma${o.u}][mb${o.u}]concat=n=2:v=1:a=0,${apres}[${o.out}]`];
+const NATIF = {
+  whipg: glisse('h', 1), glissedoux: glisse('h', 1), whipd: glisse('h', -1), whiph: glisse('v', 1),
+  coverleft: recouvre('b', o => `${o.W}*(1-t/${f3(o.D)})`), coverright: recouvre('b', o => `-${o.W}*(1-t/${f3(o.D)})`),
+  revealleft: recouvre('a', o => `-${o.W}*t/${f3(o.D)}`), revealright: recouvre('a', o => `${o.W}*t/${f3(o.D)}`),
+  zoompunch: zoomT(0.8), zoomdoux: zoomT(0.35),
+  stores: o => seuil(o, o.A, o.B, o.out, `16+219*mod(Y,H/10)/(H/10)`),
+  damier: o => seuil(o, o.A, o.B, o.out, `16+219*(0.25+0.5*mod(floor(X*8/W)+floor(Y*8/H),2))`),
+  rideau: o => seuil(o, o.A, o.B, o.out, `16+219*abs(X-W/2)/(W/2)`),
+  irisdoux: o => seuil({ ...o, doux: (0.74 / 0.12).toFixed(3) }, o.A, o.B, o.out, `16+219*min(1,hypot((X-W/2)/W,(Y-H/2)/W)/0.74)`),
+  diagdoux: o => seuil({ ...o, doux: (1.3 / 0.3).toFixed(3) }, o.A, o.B, o.out, `16+219*min(1,(0.75*X/W+0.25*Y/H)/1.3)`),
+  scan: o => [...seuil(o, o.A, o.B, `sc${o.u}`, `16+219*min(1,X/W/1.12)`),
+    `[sc${o.u}]drawbox=x='${o.W}*1.12*t/${f3(o.D)}-${Math.round(6 * o.k)}':y=0:w=${Math.max(2, Math.round(12 * o.k))}:h=${o.H}:color=white@0.55:t=fill[${o.out}]`],
+  secousse: o => milieu(o, `scale=${Math.round(o.W * 1.1 / 2) * 2}:${Math.round(o.H * 1.1 / 2) * 2},crop=${o.W}:${o.H}:'(iw-${o.W})/2+${o.W}*0.04*sin((1-t/${f3(o.D)})*150)*(1-abs(1-2*t/${f3(o.D)}))':'(ih-${o.H})/2+${o.H}*0.03*cos((1-t/${f3(o.D)})*190)*(1-abs(1-2*t/${f3(o.D)}))'`),
+  glitch: o => { // bandes décalées au hasard (16 bandes), plus fortes au milieu de la transition
+    const n = 16, h = Math.floor(o.H / n / 2) * 2, l = milieu(o, `split=${n + 1}[gb${o.u}]${Array.from({ length: n }, (_, i) => `[gs${o.u}_${i}]`).join('')}`).map(x => x.replace(`[${o.out}]`, ''));
+    let cur = `gb${o.u}`;
+    for (let i = 0; i < n; i++) {
+      const dx = `${o.W}*0.22*sin(${(i * 78.233).toFixed(3)}+floor((1-t/${f3(o.D)})*14)*3.1)*(1-abs(1-2*t/${f3(o.D)}))`, nx = i === n - 1 ? o.out : `gc${o.u}_${i}`;
+      l.push(`[gs${o.u}_${i}]crop=${o.W}:${h}:0:${i * h}[gr${o.u}_${i}]`, `[${cur}][gr${o.u}_${i}]overlay=x='${dx}':y=${i * h}:eval=frame[${nx}]`); cur = nx;
+    }
+    return l;
+  }
+};
+const natif = id => !!NATIF[id];
+// Transition complète en graphe : A jusqu'au fondu, transition rapide, puis la suite de B ; mêmes temps que xfade.
+// Renvoie les instructions (sans « ; ») ; la sortie est [out]. o = { W, H, fps, u (identifiant unique) }.
+function grapheTransition(tr, D, offset, k, A, B, out, o) {
+  const u = o.u, q = { ...o, D, k, A: `ta${u}`, B: `tb${u}`, out: `tc${u}` }, l = [];
+  l.push(`[${A}]split[av${u}][ar${u}]`, `[${B}]split[bv${u}][br${u}]`);
+  l.push(`[ar${u}]trim=start=${f3(offset)}:duration=${f3(D)},setpts=PTS-STARTPTS[ta${u}]`, `[br${u}]trim=duration=${f3(D)},setpts=PTS-STARTPTS[tb${u}]`);
+  l.push(...NATIF[tr](q), `[tc${u}]setsar=1[td${u}]`); // pixels carrés partout : concat exige les mêmes réglages
+  const morceaux = [];
+  if (offset > 0.5 / o.fps) { l.push(`[av${u}]trim=duration=${f3(offset)},setpts=PTS-STARTPTS,setsar=1[tp${u}]`); morceaux.push(`tp${u}`); } else l.push(`[av${u}]nullsink`);
+  morceaux.push(`td${u}`);
+  l.push(`[bv${u}]trim=start=${f3(D)},setpts=PTS-STARTPTS,setsar=1[ts${u}]`); morceaux.push(`ts${u}`);
+  l.push(`${morceaux.map(m => `[${m}]`).join('')}concat=n=${morceaux.length}:v=1:a=0${postTransition(tr, offset, D, k)}[${out}]`);
+  return l;
+}
 // morceau de graphe : le filtre xfade de la transition + son flou ; offset et durée en secondes
 function filtreTransition(tr, D, offset, k = 1) {
   const def = TRANSITIONS.find(t => t.id === tr);
@@ -376,4 +444,4 @@ function catalogue(filters) {
   return { video: VIDEO.map(map), audio: AUDIO.map(map), transitions: TRANSITIONS.map(t => ({ id: t.id, nom: t.nom, pack: t.pack })), titres: TITLES, reportage: REPORTAGE, sousTitres: SOUS_TITRES, generateurs: GENERATEURS, positions: POSITIONS };
 }
 
-module.exports = { SOUS_TITRES, VIDEO, AUDIO, TRANSITIONS, filtreTransition, postTransition, TITLES, REPORTAGE, GENERATEURS, POSITIONS, catalogue, defaults };
+module.exports = { SOUS_TITRES, VIDEO, AUDIO, TRANSITIONS, filtreTransition, grapheTransition, natif, postTransition, TITLES, REPORTAGE, GENERATEURS, POSITIONS, catalogue, defaults };

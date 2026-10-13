@@ -87,6 +87,19 @@ const { execFileSync } = require('child_process');
     check('vidéo HDR : export réussi', !!jh.out);
     if ((app.filtres ? app.filtres() : []).includes('zscale')) check('vidéo HDR : conversion signalée', /HDR/.test(jh.avertissement || ''), jh.avertissement);
   } catch (e) { /* encodeur HEVC absent : essai ignoré */ }
+  // analyse de l'image et du son : changements de plan, blancs, niveau sonore, conseils qui corrigent
+  ff('-f', 'lavfi', '-i', 'color=c=red:s=320x180:r=25:d=2', '-f', 'lavfi', '-i', 'color=c=blue:s=320x180:r=25:d=2', '-f', 'lavfi', '-i', 'color=c=green:s=320x180:r=25:d=2',
+    '-f', 'lavfi', '-i', 'sine=f=300:d=2', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono:d=2', '-f', 'lavfi', '-i', 'sine=f=500:d=2',
+    '-filter_complex', '[0:v][1:v][2:v]concat=n=3:v=1:a=0[v];[3:a][4:a][5:a]concat=n=3:v=0:a=1,volume=0.3[a]', '-map', '[v]', '-map', '[a]', '-t', 6, '-pix_fmt', 'yuv420p', path.join(base, 'plans.mp4'));
+  await fetch(U('/api/import?name=plans.mp4'), { method: 'POST', body: fs.readFileSync(path.join(base, 'plans.mp4')) });
+  const ana = await (async () => {
+    const { id } = await (await fetch(U('/api/video/analyser'), { method: 'POST', body: JSON.stringify({ segments: [], duree: 6, ia: false, clips: [{ file: 'plans.mp4', kind: 'video', in: 0, out: 6, speed: 1, start: 0 }] }) })).json();
+    for (;;) { const j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.error) throw new Error(j.error); if (j.done) return j.resultat || j; await new Promise(r => setTimeout(r, 200)); }
+  })();
+  const te = (ana && ana.technique) || {};
+  check('analyse : changements de plan trouvés (2 s et 4 s)', (te.scenes || []).some(x => Math.abs(x - 2) < 0.4) && (te.scenes || []).some(x => Math.abs(x - 4) < 0.4), JSON.stringify(te));
+  check('analyse : part de blancs et niveau sonore mesurés', te.blancs >= 20 && te.blancs <= 50 && te.lufs < -20, JSON.stringify(te));
+  check('analyse : conseils avec l’action qui corrige (niveau, blancs)', (te.conseils || []).some(c => c.action === 'normaliser') && (te.conseils || []).some(c => c.action === 'couper_blancs'), JSON.stringify(te.conseils));
   app.stop(); fs.rmSync(base, { recursive: true, force: true });
   console.log(`Export : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
