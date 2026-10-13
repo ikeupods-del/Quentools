@@ -126,12 +126,17 @@ function chromium() {
   await pg.fill('#cherchePack', 'podcast');
   check('recherche de pack : seuls les packs podcast restent visibles', await ev(() => { const v = [...document.querySelectorAll('#navbody .pack')].filter(e => !e.hidden).map(e => e.dataset.pack); return v.length >= 3 && v.every(id => /podcast/.test(id) || /podcast/i.test(CAT.packs.find(p => p.id === id).nom + CAT.packs.find(p => p.id === id).desc)); }));
   await pg.fill('#cherchePack', '');
-  // pack : titres d'ouverture et de fin (premier et dernier clip)
-  await ev(() => { proj.clips.forEach(c => { c.titre = null; }); commit(); tout(); allerOnglet('packs'); });
+  // pack : titre d'ouverture posé seulement avec un vrai texte (jamais « CAC 40 7 842,31 » ni « Prénom Nom ») ; rien à la fin
+  await ev(() => { fermerRevue(); try { localStorage.setItem('qm:revue', 'non'); } catch (e) {} proj.clips.forEach(c => { c.titre = null; }); proj.gen = null; proj.sujet = ''; commit(); tout(); allerOnglet('packs'); });
   await pg.waitForSelector('[data-pack-app="bourse"]', { timeout: 5000 });
   await pg.evaluate(() => { document.querySelector('[data-pack="bourse"] .pk-tit').checked = true; });
   await pg.click('[data-pack-app="bourse"]');
-  check('pack : titres d’ouverture et de fin posés (polices du pack)', await ev(() => { const a = proj.clips[0].titre, z = proj.clips[proj.clips.length - 1].titre; return a && a.preset === 'cours-hausse' && a.font === '' && z && z.preset === 'cours-baisse' && proj.clips.slice(1, -1).every(c => !c.titre); }));
+  check('pack sans sujet connu : aucun titre d’exemple posé', await ev(() => proj.clips.every(c => !c.titre)));
+  await ev(() => { proj.sujet = 'Comment investir 100 € par mois'; commit(); });
+  await pg.evaluate(() => { document.querySelector('[data-pack="bourse"] .pk-tit').checked = true; });
+  await pg.click('[data-pack-app="bourse"]');
+  check('pack avec le sujet : titre d’ouverture au vrai texte, sans chiffres d’exemple', await ev(() => { const a = proj.clips[0].titre, z = proj.clips[proj.clips.length - 1]; return a && a.l1 === 'Comment investir 100 € par mois' && TITRES_TEXTE.has(a.preset) && (z === proj.clips[0] || !z.titre); }), await ev(() => JSON.stringify([proj.clips[0].titre, textesExemple()])));
+  await ev(() => { try { localStorage.removeItem('qm:revue'); } catch (e) {} });
   await ev(() => { proj.clips.forEach(c => { c.titre = null; }); commit(); tout(); });
   // pack Podcast : visualiseur sonore posé sur les clips audio seulement
   await ev(() => { proj.clips.push({ ...JSON.parse(JSON.stringify(proj.clips[0])), kind: 'audio', transition: null, overlays: [] }); commit(); tout(); allerOnglet('packs'); });

@@ -909,6 +909,8 @@ function vraieCoupe(a, b) {
 }
 // modèles de titres qui affichent des chiffres d'exemple (cours, prix, compteur…) : jamais posés automatiquement
 const MODELES_CHIFFRES = new Set(['cours-hausse', 'cours-baisse', 'bourse-defile', 'barres', 'compteur', 'prix', 'chiffre', 'caracteristiques', 'promo', 'temps', 'sommaire', 'etape', 'numero', 'jour', 'episode']);
+// modèles faits pour afficher un simple titre : seuls ceux-là reçoivent le titre d'ouverture automatique
+const TITRES_TEXTE = new Set(['etiquette', 'impact-titre', 'cadre-titre', 'cine-titre', 'glitch-titre', 'hud', 'minimal', 'souligne', 'tv', 'chapitre', 'chapnoir', 'machine', 'rubrique', 'intro-vlog', 'lieu']);
 function appliquerPack(id, o) {
   const P = (CAT.packs || []).find(p => p.id === id); if (!P) return;
   if (proj.clips.length < 2 && !o.look) return signal('Ajoute au moins deux clips sur la timeline pour poser les transitions du pack.');
@@ -943,7 +945,7 @@ function appliquerPack(id, o) {
   if (o.tit) { // titre d'ouverture sur le premier clip, avec un VRAI texte (titre du générateur ou sujet trouvé par l'analyse) :
     // jamais les textes d'exemple du catalogue (« Prénom Nom », « @tonpseudo », faux cours de bourse…) ni un modèle à chiffres
     const texte = ((proj.gen && proj.gen.titre) || proj.sujet || '').trim(), a = proj.clips[0];
-    const id = P.titres.find(t => !MODELES_CHIFFRES.has(t) && (CAT.reportage.find(x => x.id === t) || {}).l1 !== undefined);
+    const id = P.titres.find(t => TITRES_TEXTE.has(t)) || 'etiquette'; // modèle fait pour un titre écrit (pas une carte de cours, un graphique, un nom…)
     const r = id && CAT.reportage.find(x => x.id === id);
     if (a && r && !a.titre && texte) a.titre = { preset: id, l1: texte.slice(0, 60), l2: '', color: r.color, font: '', start: 0.3, speed: 14, dur: Math.min(4, Math.max(2, effDur(a) - 0.5)) };
     else if (a && !a.titre && !texte) titreManque = true;
