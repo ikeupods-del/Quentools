@@ -1,0 +1,36 @@
+<svg viewBox="0 0 460 660" xmlns="http://www.w3.org/2000/svg" stroke-linejoin="round" stroke-linecap="round">
+  <path d="M58 660 C58 480 116 412 230 410 C344 412 402 480 402 660 Z" fill="#FF7B3D" stroke="#211F2B" stroke-width="8"/>
+  <path d="M300 430 C360 460 390 520 396 656 L330 656 C336 560 330 480 300 430 Z" fill="#D9561E"/>
+  <path d="M164 418 Q230 500 296 418" fill="#E8642A" stroke="#211F2B" stroke-width="7"/>
+  <path d="M204 452 L198 520" stroke="#211F2B" stroke-width="6"/><path d="M256 452 L262 520" stroke="#211F2B" stroke-width="6"/>
+  <circle cx="198" cy="526" r="7" fill="#FFF" stroke="#211F2B" stroke-width="5"/><circle cx="262" cy="526" r="7" fill="#FFF" stroke="#211F2B" stroke-width="5"/>
+  <path d="M140 568 H320 L310 640 H150 Z" fill="#E8642A" stroke="#211F2B" stroke-width="7"/>
+  <path d="M198 352 H262 V420 Q230 436 198 420 Z" fill="#E09A70" stroke="#211F2B" stroke-width="7"/>
+  <ellipse cx="104" cy="252" rx="28" ry="36" fill="#F4BC94" stroke="#211F2B" stroke-width="7"/>
+  <ellipse cx="356" cy="252" rx="28" ry="36" fill="#F4BC94" stroke="#211F2B" stroke-width="7"/>
+  <path d="M104 230 C98 140 160 108 230 108 C300 108 362 140 356 230 C360 330 312 390 230 392 C148 390 100 330 104 230 Z" fill="#F7C9A3" stroke="#211F2B" stroke-width="8"/>
+  <path d="M330 170 C356 220 354 310 300 362 C330 300 336 230 320 180 Z" fill="#E9AE84"/>
+  <!-- cheveux en mèches -->
+  <path d="M106 206 L96 160 L130 172 L128 128 L170 150 L180 104 L214 140 L240 100 L262 142 L300 112 L304 156 L344 140 L340 184 L360 190 C330 170 300 168 230 170 C170 170 132 178 106 206 Z" fill="#4A2F22" stroke="#211F2B" stroke-width="7"/>
+  <!-- casquette à l'envers -->
+  <path d="M120 150 C130 70 330 70 340 150 C290 128 170 128 120 150 Z" fill="#2F62D8" stroke="#211F2B" stroke-width="7"/>
+  <path d="M120 150 C170 132 290 132 340 150" stroke="#211F2B" stroke-width="7" fill="none"/>
+  <path d="M318 128 C368 112 420 122 436 146 C410 160 366 158 330 150 Z" fill="#1F45A8" stroke="#211F2B" stroke-width="7"/>
+  <path d="M190 92 Q230 82 270 92" stroke="#7FA2FF" stroke-width="7" fill="none"/>
+  <!-- yeux -->
+  <path d="M146 222 Q178 200 210 220" stroke="#211F2B" stroke-width="12" fill="none"/>
+  <path d="M250 220 Q282 200 314 222" stroke="#211F2B" stroke-width="12" fill="none"/>
+  <ellipse cx="180" cy="266" rx="28" ry="32" fill="#fff" stroke="#211F2B" stroke-width="7"/>
+  <ellipse cx="280" cy="266" rx="28" ry="32" fill="#fff" stroke="#211F2B" stroke-width="7"/>
+  <circle cx="186" cy="272" r="15" fill="#3D7BE0"/><circle cx="286" cy="272" r="15" fill="#3D7BE0"/>
+  <circle cx="186" cy="272" r="8" fill="#211F2B"/><circle cx="286" cy="272" r="8" fill="#211F2B"/>
+  <circle cx="191" cy="265" r="5" fill="#fff"/><circle cx="291" cy="265" r="5" fill="#fff"/>
+  <path d="M228 290 Q218 312 236 314" stroke="#211F2B" stroke-width="6" fill="none"/>
+  <path d="M136 308 l10 -6 M146 316 l10 -6" stroke="#E86A5A" stroke-width="5"/><path d="M304 302 l10 6 M304 312 l10 6" stroke="#E86A5A" stroke-width="5"/>
+  <path d="M188 330 Q230 324 272 330 Q268 382 230 384 Q192 382 188 330 Z" fill="#6E1A28" stroke="#211F2B" stroke-width="7"/><path d="M204 364 Q230 348 256 364 Q246 380 230 380 Q214 380 204 364 Z" fill="#FF6B7B"/><path d="M196 332 H264 V344 Q230 348 196 344 Z" fill="#fff"/>
+  <!-- main + téléphone -->
+  <rect x="318" y="490" width="78" height="132" rx="16" fill="#2A2F40" stroke="#211F2B" stroke-width="7"/>
+  <rect x="330" y="504" width="54" height="100" rx="8" fill="#163828"/>
+  <polyline points="336,590 350,566 362,576 378,540" stroke="#62F28F" stroke-width="7" fill="none"/>
+  <path d="M300 560 C300 530 340 528 344 552 L344 600 C330 616 300 612 300 590 Z" fill="#F7C9A3" stroke="#211F2B" stroke-width="7"/>
+</svg>

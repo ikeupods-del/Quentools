@@ -175,57 +175,17 @@ def sprite_glitchou(bouche, parle):
     return _aa((340, 360), d)
 
 
-def sprite_max(bouche, parle):
-    """Max (QuentInvest) : jeune, casquette à l'envers, sweat orange, yeux grands ouverts."""
-    def d(g, k):
-        s = lambda *v: [x * k for x in v]
-        g.rounded_rectangle(s(70, 330, 410, 640), radius=90 * k, fill=(240, 120, 60), outline=(120, 50, 20), width=6 * k)
-        g.polygon(s(200, 330, 240, 400, 280, 330), fill=(250, 240, 230))
-        g.ellipse(s(110, 60, 370, 340), fill=(226, 178, 140), outline=(120, 80, 60), width=6 * k)
-        # casquette à l'envers
-        g.chord(s(105, 40, 375, 230), 180, 360, fill=(40, 90, 200), outline=(20, 40, 100), width=6 * k)
-        g.rounded_rectangle(s(40, 120, 150, 150), radius=14 * k, fill=(30, 70, 170))
-        # yeux enthousiastes
-        for x in (180, 300):
-            g.ellipse(s(x - 30, 165, x + 30, 235), fill=(255, 255, 255), outline=(40, 30, 30), width=5 * k)
-            g.ellipse(s(x - 12, 185, x + 14, 220), fill=(40, 30, 30))
-        g.line(s(150, 150, 210, 140), fill=(60, 40, 30), width=8 * k)
-        g.line(s(270, 140, 330, 150), fill=(60, 40, 30), width=8 * k)
-        if bouche:
-            g.chord(s(195, 255, 285, 320), 0, 180, fill=(110, 30, 40), outline=(70, 20, 30), width=4 * k)
-        else:
-            g.arc(s(200, 250, 280, 300), 20, 160, fill=(110, 50, 50), width=7 * k)
-        # téléphone en main (il suit les cours)
-        g.rounded_rectangle(s(340, 450, 400, 560), radius=12 * k, fill=(30, 34, 44), outline=(10, 10, 10), width=4 * k)
-        g.line(s(350, 520, 365, 500, 378, 510, 392, 480), fill=(120, 230, 120), width=5 * k)
-        if parle:
-            g.line(s(30, 150, 60, 170), fill=(255, 150, 90), width=8 * k)
-            g.line(s(20, 210, 55, 212), fill=(255, 150, 90), width=8 * k)
-    return _aa((460, 660), d)
+PERSOS = Path(__file__).resolve().parent / "persos"
 
 
-def sprite_pepite(bouche, parle):
-    """Pépite (QuentInvest) : pièce d'or ronde, lunettes et nœud papillon, calme et pédagogue."""
-    def d(g, k):
-        s = lambda *v: [x * k for x in v]
-        g.ellipse(s(20, 40, 320, 340), fill=(246, 200, 70), outline=(150, 105, 20), width=8 * k)
-        g.ellipse(s(48, 68, 292, 312), outline=(214, 160, 40), width=6 * k)
-        g.ellipse(s(70, 85, 150, 140), fill=(255, 232, 150))
-        for x in (120, 220):  # lunettes rondes
-            g.ellipse(s(x - 40, 140, x + 40, 220), fill=(255, 255, 255), outline=(70, 50, 20), width=7 * k)
-            g.ellipse(s(x - 12, 165, x + 16, 200), fill=(40, 30, 20))
-        g.line(s(160, 175, 180, 175), fill=(70, 50, 20), width=7 * k)
-        if bouche:
-            g.chord(s(130, 235, 210, 300), 0, 180, fill=(90, 50, 30), outline=(150, 105, 20), width=4 * k)
-        else:
-            g.arc(s(130, 230, 210, 280), 20, 160, fill=(130, 90, 20), width=7 * k)
-        g.polygon(s(125, 318, 170, 334, 215, 318, 215, 356, 170, 342, 125, 356), fill=(180, 40, 60), outline=(110, 20, 40))  # nœud papillon
-        if parle:
-            g.ellipse(s(285, 20, 320, 55), fill=(255, 240, 180))
-    return _aa((340, 390), d)
+def sprite_png(nom):
+    """Personnage dessiné en vectoriel (persos/*.svg), livré en PNG : bouche fermée ou ouverte."""
+    def charger(bouche, parle):
+        return Image.open(PERSOS / f"{nom}-{'ouvert' if bouche else 'ferme'}.png").convert("RGBA")
+    return charger
 
 
-SPRITES = {"quentools": sprite_quentools, "glitchou": sprite_glitchou, "max": sprite_max, "pepite": sprite_pepite}
+SPRITES = {"quentools": sprite_quentools, "glitchou": sprite_glitchou, "max": sprite_png("max"), "pepite": sprite_png("pepite")}
 
 
 def texte_ajuste(g, texte, boite, tailles=(72, 36), lignes_max=4, couleur=BLANC, centre=True, interligne=1.18):
@@ -368,6 +328,7 @@ def image_fin(question, cta_texte=None, S=None):
 def rendre(video, sortie, journal=print, avancement=lambda f: None, serie=None):
     serie = serie or config.serie
     S = series.serie(serie)
+    Path(sortie).parent.mkdir(parents=True, exist_ok=True)
     ffmpeg = ffmpeg_exe()
     reg = config.reglages(serie)
     lignes_cta = reg["cta_lignes"]
