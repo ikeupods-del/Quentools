@@ -363,6 +363,30 @@ function chromium() {
   const cp = await ev(() => ({ c: proj.clips.length, a: proj.audio.map(x => [x.start, x.dur]) }));
   check('couper (S) : le son détaché est coupé au même endroit', cp.c === 3 && cp.a.length === 3 && Math.abs(cp.a[1][0] - 2) < 0.06, JSON.stringify(cp));
 
+  // 10) montage manuel : réglages de l'inspecteur gardés en nombres, éléments posés qui suivent la piste V1, verrou, annulation
+  await ev(() => { const m = medias.find(x => x.file === 'a.mp4'); proj.clips = []; for (let i = 0; i < 3; i++) proj.clips.push(newClip(m)); proj.audio = []; proj.pistes = []; proj.textes = []; proj.markers = []; proj.etatPistes = {}; sel = 0; selA = selP = selT = -1; selObjs.clear(); commit(); tout(); });
+  await ev(() => { const r = document.querySelector('#insp input[type=range][data-p="in"]'); r.value = '1.5'; r.dispatchEvent(new Event('input', { bubbles: true })); r.dispatchEvent(new Event('change', { bubbles: true })); });
+  const num = await ev(() => ({ t: typeof proj.clips[0].in, v: proj.clips[0].in }));
+  check('inspecteur : un curseur garde un nombre (pas un texte)', num.t === 'number' && num.v === 1.5, JSON.stringify(num));
+  const coupeOk = await ev(() => { placerTete(2, { sansSelection: true }); sel = 0; couper(); return proj.clips.length; });
+  check('inspecteur puis S : la coupe fonctionne', coupeOk === 4, String(coupeOk));
+  check('réparation des anciens projets : textes numériques convertis', await ev(() => { const p = reparerProjet({ clips: [{ in: '1.7', out: '6', text: '2024', titre: { l1: '42' } }], audio: [{ start: '3' }] }); return p.clips[0].in === 1.7 && p.clips[0].out === 6 && p.clips[0].text === '2024' && p.clips[0].titre.l1 === '42' && p.audio[0].start === 3; }));
+  await ev(() => { const m = medias.find(x => x.file === 'a.mp4'); proj.clips = []; for (let i = 0; i < 3; i++) proj.clips.push(newClip(m)); proj.audio = []; proj.pistes = []; proj.textes = [{ start: 13, dur: 2, titre: { preset: 'simple', l1: 'Fin' } }]; sel = 0; selObjs = new Set(proj.clips); detacherSelection(); selObjs.clear(); selA = -1; sel = 0; tout(); });
+  const rog = await ev(() => { placerTete(4, { sansSelection: true }); sel = 0; rogner(false); return { a: proj.audio.map(x => [x.start, x.dur]), t: proj.textes[0].start, total: total() }; });
+  check('O (finir le clip) : sons détachés et titres de la suite reculent avec l’image', rog.total === 16 && rog.a[0][1] === 4 && rog.a[1][0] === 4 && rog.a[2][0] === 10 && rog.t === 11, JSON.stringify(rog));
+  const depl = await ev(() => { sel = 2; deplacer(-2); return proj.audio.map(x => x.start).sort((a, b) => a - b); });
+  check('déplacer un clip : son détaché déplacé avec lui', JSON.stringify(depl) === JSON.stringify([0, 6, 10]), JSON.stringify(depl));
+  const dbl = await ev(() => { undo(-1); return { n: proj.clips.length, f: $('#format').value === proj.format, selT }; });
+  check('annuler : état précédent et format affiché cohérents', dbl.n === 3 && dbl.f && dbl.selT === -1, JSON.stringify(dbl));
+  const verrou = await ev(() => { proj.etatPistes = { V1: { verrou: true } }; sel = 0; selA = selP = selT = -1; supprimer(); rogner(false); const n = proj.clips.length; proj.etatPistes = {}; return n; });
+  check('piste V1 verrouillée : Suppr et O n’y touchent pas', verrou === 3, String(verrou));
+  const tsel = await ev(() => { selT = 0; choisir(1); return { selT, sel }; });
+  check('passer à un clip désélectionne le titre (Suppr n’efface plus le titre)', tsel.selT === -1 && tsel.sel === 1, JSON.stringify(tsel));
+  const muet = await ev(() => { const c = proj.clips[0]; sel = 0; selObjs.clear(); basculerMuet(); return c.vol; });
+  check('son détaché : « remettre le son » ne double pas le son', muet === 0, String(muet));
+  const nv = await ev(() => { const c0 = window.confirm; window.confirm = () => true; proj.etatPistes = { V1: { verrou: true } }; nouveau(); window.confirm = c0; return { t: proj.textes.length, e: JSON.stringify(proj.etatPistes) }; });
+  check('nouveau projet : titres et état des pistes remis à zéro', nv.t === 0 && nv.e === '{}', JSON.stringify(nv));
+
   // assistant : nouvelles actions exécutées sur le montage (supprimer un clip, bruitage, couper à un instant, volume, fondus)
   await ev(async () => { await chargerMedias(); proj.clips = []; proj.audio = []; const m = medias.find(x => x.file === 'a.mp4'); for (let i = 0; i < 3; i++) proj.clips.push(newClip(m)); sel = 0; commit(); tout(); });
   const act = a => ev(async a => { await executerAction(a); return { clips: proj.clips.length, audio: proj.audio.map(x => x.file), vols: proj.clips.map(c => c.vol), fi: proj.clips[0].fadeIn, fo: proj.clips[proj.clips.length - 1].fadeOut, total: total() }; }, a);

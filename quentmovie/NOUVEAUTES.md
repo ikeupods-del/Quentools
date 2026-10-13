@@ -3,6 +3,12 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.35.0
+- **Montage à la main réparé** : après avoir touché un curseur de l'inspecteur (début, fin, vitesse, volume…), la timeline se figeait, la coupe (S, ⌘B), I et O ne marchaient plus et ⌘Z semblait ne rien faire. C'est corrigé, et les projets déjà enregistrés sont réparés tout seuls à l'ouverture.
+- **Le son reste calé sur l'image** : raccourcir un clip (I, O, bords), le déplacer, le dupliquer ou en insérer un fait suivre les sons détachés, la piste vidéo 2 et les titres. Après une transition, les sons et titres ne tombent plus trop tôt dans la vidéo exportée.
+- **Lecture rapide plus fidèle** : elle passe au clip suivant à l'image près (on ne voit plus les passages coupés), respecte le volume des clips et joue le bon passage des sons coupés ou accélérés.
+- ⌘Z est bien enregistré (le clip récupéré ne disparaît plus au redémarrage) ; « Nouveau projet » repart vraiment de zéro ; une piste verrouillée ne se modifie plus au clavier ; plus de son en double avec un son détaché ; un titre sélectionné n'est plus effacé à la place d'un clip ; le fondu de sortie d'un bruitage se fait à sa fin.
+
 ## 1.34.0
 - **Nouvelle piste « Titres » (T)**, en haut de la timeline : les titres ne dépendent plus des clips. Clique un modèle de l'onglet Titres (ou ＋ dans l'en-tête de la piste) : il se pose à la tête de lecture. Écris ton texte à droite, glisse le bloc pour le déplacer, étire ses bords pour changer sa durée (il s'aimante aux coupes et aux repères). Un titre peut passer par-dessus une coupe entre deux clips.
 - Les titres de la piste s'affichent aussi dans la lecture immédiate et dans l'aperçu, et l'œil de la piste permet de les masquer.
