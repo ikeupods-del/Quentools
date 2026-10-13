@@ -135,7 +135,8 @@ def etat():
         "serie": config.serie, "series": {k: {"nom": v["nom"], "sous_titre": v["sous_titre"]} for k, v in series.SERIES.items()},
         "bibliotheque": len(invest.FICHES) + len(invest.bibliotheque()) if config.serie == "quentinvest" else len(corpus.charger()),
         "reserve": len(invest.reserve()) if config.serie == "quentinvest" else len(story.reserve()),
-        "fiches": [f["titre"] for f in invest.FICHES] if config.serie == "quentinvest" else [],
+        "fiches": [{"titre": f["titre"], "theme": f["theme"], "publie": invest._deja(f["titre"])} for f in invest.FICHES]
+        if config.serie == "quentinvest" else [], "themes": invest.THEMES,
         "historique": len(history.charger()["sketchs"]),
         "ia": etat_ia(), "modele": "Qwen3 4B (intégrée)" if ia_locale.moteur_present() and ia_locale.chemin_modele() else config.MODELE_IA,
         "ia_install": {"en_cours": ia_locale.INSTALL["en_cours"], "avancement": round(ia_locale.INSTALL["avancement"], 3), "erreur": ia_locale.INSTALL["erreur"]},

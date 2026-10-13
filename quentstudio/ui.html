@@ -38,6 +38,8 @@
   body.invest .rond { background: #f6c846; box-shadow: inset -4px -4px 0 #c9971e; }
   .sujet { display: none; gap: 10px; margin-top: 14px; }
   body.invest .sujet { display: flex; }
+  .sujet select { flex: 1; font: inherit; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--bord); background: #14161d; color: var(--texte); }
+  p.sujet { display: none; } body.invest p.sujet { display: block; }
   .sujet input { flex: 1; font: inherit; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--bord); background: #14161d; color: var(--texte); }
   .verif { color: #ffcf6e; }
   @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
@@ -61,7 +63,11 @@
         <input id="sujet" maxlength="200" placeholder="Sujet pour l'IA, ex. : résume le krach boursier de 1929">
         <button class="principal" id="surSujet">Créer sur ce sujet</button>
       </div>
-      <p class="doux sujet" id="fiches" style="display:none"></p>
+      <div class="sujet">
+        <select id="fiches" aria-label="Sujets prêts"></select>
+        <button id="surFiche">Créer ce sujet</button>
+      </div>
+      <p class="doux sujet" id="fichesInfo"></p>
       <div class="barre"><i id="barre"></i></div>
       <div id="statut" class="doux">Prêt.</div>
     </div>
@@ -93,6 +99,22 @@ $('#avance').onclick = () => post('/api/avance').then(maj);
 $('#majGo').onclick = () => post('/api/maj/installer').then(r => { if (r.ok) $('#majTxt').textContent = 'Installation… QuentStudio va redémarrer.'; });
 $('#iaInstaller').onclick = () => post('/api/ia/installer').then(r => { if (r.message) alert(r.message); maj(); });
 $('#surSujet').onclick = () => { const s = $('#sujet').value.trim(); if (!s) return $('#sujet').focus(); post('/api/video', { mode: 'auto', sujet: s }).then(maj); };
+$('#surFiche').onclick = () => { const s = $('#fiches').value; if (!s) return $('#fiches').focus(); post('/api/video', { mode: 'auto', sujet: s }).then(maj); };
+let signatureFiches = '';
+function remplirFiches(e) {
+  const sig = JSON.stringify(e.fiches);
+  if (sig === signatureFiches) return;
+  signatureFiches = sig;
+  const choix = $('#fiches').value;
+  const groupes = e.themes.map(t => {
+    const fs = e.fiches.filter(f => f.theme === t);
+    return fs.length ? `<optgroup label="${esc(t)}">${fs.map(f => `<option value="${esc(f.titre)}">${esc(f.titre)}${f.publie ? ' ✓' : ''}</option>`).join('')}</optgroup>` : '';
+  }).join('');
+  $('#fiches').innerHTML = `<option value="">Choisir un sujet prêt (${e.fiches.length}, sans IA)…</option>` + groupes;
+  $('#fiches').value = choix;
+  const reste = e.fiches.filter(f => !f.publie).length;
+  $('#fichesInfo').textContent = `${reste} sujet${reste > 1 ? 's' : ''} prêt${reste > 1 ? 's' : ''} jamais publié${reste > 1 ? 's' : ''} (✓ = déjà publié). Avec l’IA locale, tout autre sujet d’économie.`;
+}
 $('#sujet').onkeydown = e => { if (e.key === 'Enter') $('#surSujet').click(); };
 document.querySelectorAll('[data-serie]').forEach(b => b.onclick = () => post('/api/serie', { serie: b.dataset.serie }).then(r => { if (!r.ok) alert('Attends la fin du travail en cours pour changer de série.'); vus = ''; maj(); }));
 let vus = '';
@@ -110,8 +132,8 @@ async function maj() {
   $('#sousTitre').textContent = e.series[e.serie].sous_titre + ' · vidéos 9:16 de 62 s · version ' + e.version;
   $('[data-mode="bibliotheque"]').textContent = invest ? 'Nouvelle vidéo (fiches)' : 'Nouvelle vidéo (bibliothèque)';
   $('#avance').textContent = invest ? 'Écrire 20 épisodes en avance (IA)' : 'Générer 20 scénarios en avance';
-  $('#fiches').style.display = invest ? 'block' : 'none';
-  $('#fiches').textContent = invest ? 'Sujets prêts sans IA : ' + e.fiches.join(' · ') + '. Avec l’IA locale, tout autre sujet d’économie.' : '';
+  if (invest) remplirFiches(e);
+  $('#surFiche').disabled = !!e.travail;
   $('#surSujet').disabled = !!e.travail;
   $('#nbBiblio').textContent = e.bibliotheque.toLocaleString('fr-FR');
   $('#nbReserve').textContent = e.reserve;

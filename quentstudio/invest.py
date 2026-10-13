@@ -14,6 +14,7 @@ import urllib.parse
 import urllib.request
 
 import config
+import fiches_invest
 import history
 import ia_locale
 import story
@@ -238,7 +239,7 @@ FICHES = [
     },
     {
         "id": "taux-directeurs", "titre": "Les taux directeurs", "lieu": "Banque centrale",
-        "cles": ["taux directeur", "taux directeurs", "banque centrale", "bce", "taux d interet"],
+        "cles": ["taux directeur", "taux directeurs", "banque centrale", "taux d interet"],
         "faits": ["Une banque centrale fixe des taux directeurs : le prix auquel les banques se financent auprès d'elle.",
                   "Quand les taux directeurs montent, les crédits deviennent en général plus chers.",
                   "Monter les taux sert souvent à freiner l'inflation.",
@@ -369,17 +370,26 @@ FICHES = [
     },
 ]
 
+# Thème de chaque fiche (liste des sujets prêts dans l'application), puis les fiches supplémentaires
+_THEMES = {"krach-1929": fiches_invest.CRISES, "subprimes-2008": fiches_invest.CRISES, "bulle-internet": fiches_invest.CRISES,
+           "tulipomanie": fiches_invest.CRISES, "hyperinflation-1923": fiches_invest.CRISES, "inflation": fiches_invest.INSTITUTIONS,
+           "taux-directeurs": fiches_invest.INSTITUTIONS, "interets-composes": fiches_invest.PLACEMENTS,
+           "diversification": fiches_invest.PLACEMENTS, "actions-obligations": fiches_invest.PLACEMENTS,
+           "fonds-indiciel": fiches_invest.PLACEMENTS, "dividende": fiches_invest.PLACEMENTS, "epargne-precaution": fiches_invest.PLACEMENTS}
+for _f in FICHES:
+    _f["theme"] = _THEMES.get(_f["id"], fiches_invest.BASES)
+FICHES += fiches_invest.FICHES
+THEMES = [fiches_invest.INSTITUTIONS, fiches_invest.ETAT, fiches_invest.CREDIT, fiches_invest.PLACEMENTS,
+          fiches_invest.CRISES, fiches_invest.BASES, fiches_invest.PIEGES]
+
 # Sujets pour l'IA quand les fiches sont épuisées (notions, sans chiffres : aucun chiffre ne sera accepté)
 SUJETS = [
-    "l'offre et la demande", "le PIB", "le chômage", "la récession", "la bourse", "le marché immobilier",
-    "le crédit immobilier", "le budget personnel", "le risque et le rendement", "la volatilité", "le capital",
-    "la monnaie", "la banque", "les impôts", "le déficit public", "la dette publique", "les matières premières",
-    "l'or comme valeur refuge", "le change entre monnaies", "la mondialisation", "la concurrence", "le monopole",
-    "la startup", "la levée de fonds", "le bénéfice et le chiffre d'affaires", "la faillite", "les frais de gestion",
-    "le biais de la peur de rater une occasion", "acheter haut et vendre bas", "l'investissement régulier",
-    "le long terme en bourse", "les arnaques aux placements miracles", "la pyramide de Ponzi", "l'assurance",
-    "la retraite par répartition", "les cryptomonnaies et leur risque", "le pouvoir d'achat", "les soldes et la psychologie des prix",
-    "l'économie circulaire", "la productivité", "le salaire brut et net", "les taux d'intérêt d'un crédit",
+    "la bourse", "le marché immobilier", "le budget personnel", "le risque et le rendement", "la volatilité", "le capital",
+    "la monnaie", "la banque", "les impôts", "les matières premières", "le change entre monnaies", "la mondialisation",
+    "la concurrence", "le monopole", "la startup", "la levée de fonds", "la faillite",
+    "le biais de la peur de rater une occasion", "acheter haut et vendre bas", "le long terme en bourse", "l'assurance",
+    "les soldes et la psychologie des prix", "l'économie circulaire", "la productivité", "le commerce extérieur",
+    "les taux d'intérêt d'un crédit", "le microcrédit", "les subventions", "la banque d'investissement", "la Bourse et les introductions en bourse",
 ]
 
 CONSIGNE = """Tu écris un épisode court de « QuentInvest », une série qui vulgarise l'économie (vidéo verticale).
@@ -416,12 +426,16 @@ def _nombres(t):
 
 
 def fiche_pour(sujet):
-    """Fiche dont un mot-clé apparaît dans le sujet (ou None)."""
-    s = " ".join(history.normaliser(sujet))
+    """Fiche du sujet (ou None) : titre exact, sinon la fiche dont les mots-clés couvrent le plus le sujet (mots entiers)."""
+    s = " " + " ".join(history.normaliser(sujet)) + " "
+    meilleure, score = None, 0
     for f in FICHES:
-        if any(" ".join(history.normaliser(c)) in s for c in f["cles"]):
+        if s.strip() == " ".join(history.normaliser(f["titre"])):
             return f
-    return None
+        n = sum(len(k) for k in (" ".join(history.normaliser(c)) for c in f["cles"]) if k and f" {k} " in s)
+        if n > score:
+            meilleure, score = f, n
+    return meilleure
 
 
 def episode_depuis_fiche(f):
