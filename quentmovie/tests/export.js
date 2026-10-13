@@ -94,6 +94,13 @@ const { execFileSync } = require('child_process');
     const ecart = t => { const a = img(sans.out, t), b = img(avec.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
     check('piste Titres : titre visible pendant sa durée (avant et après la coupe)', ecart(2.7) > 1 && ecart(3.6) > 1, [ecart(2.7), ecart(3.6)].join(' '));
     check('piste Titres : rien avant ni après', ecart(1) < 0.5 && ecart(5.2) < 0.5, [ecart(1), ecart(5.2)].join(' ')); }
+  // transitions : la vidéo raccourcit d'un fondu à chaque coupe ; les titres (et sons, piste 2) posés après restent calés sur leur clip
+  { const deux = () => [clip('a.mp4', 'video', { out: 3, transition: { type: 'fade', dur: 1 } }), clip('a.mp4', 'video', { out: 3 })];
+    const sans = await exporter({ ...projet('TrSans'), clips: deux() });
+    const avec = await exporter({ ...projet('TrAvec'), clips: deux(), textes: [{ start: 3, dur: 1.5, titre: { preset: 'angle', l1: 'Début du clip 2', color: '#ff2d55', start: 0 } }] });
+    const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
+    const ecart = t => { const a = img(sans.out, t), b = img(avec.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
+    check('transition : titre posé au début du clip 2, pas une seconde trop tard', ecart(2.6) > 1 && ecart(4.2) < 0.5, [ecart(2.6), ecart(4.2)].join(' ')); }
   // niveaux : la musique est calée sous la voix (≈ -18 dB) quel que soit le niveau du fichier, les bruitages un peu en dessous
   { const L = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'bibliotheque', 'index.json'), 'utf8')), mu = (L.musiques || [])[0], so = (L.sons || []).find(x => x.duree > 0.6);
     const jn = await exporter({ ...projet('Niveaux'), clips: [clip('a.mp4', 'video', { out: 4 })], audio: [{ file: 'lib:' + mu.file, vol: 35, start: 0, fade: false, loop: true, duck: false }, { file: 'lib:' + so.file, vol: 80, start: 1, fade: false, loop: false, duck: false }] });

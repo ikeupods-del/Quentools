@@ -1100,10 +1100,15 @@ function buildClip(c, P, o = {}) {
       // Assemblage (avec transitions si besoin)
       job.step = 'Assemblage';
       const trans = clips.map((c, i) => (i < clips.length - 1 && c.transition && c.transition.type && c.transition.type !== 'none' && FX.TRANSITIONS.some(t => t.id === c.transition.type) && filters.has('xfade')) ? c.transition : null);
-      const pistes = (project.pistes || []).filter(x => x && x.file && fs.existsSync(mediaPath(x.file))).slice(0, 30)
-        .concat((project.textes || []).filter(x => x && x.titre && x.titre.preset && FX.REPORTAGE.some(r => r.id === x.titre.preset) && filters.has('drawtext')).slice(0, 60).map(x => ({ ...x, kind: 'titre', ligne: 99 }))); // piste Titres, au-dessus de tout
-      let joined = segs[0], fait = false;
       const lens = built.map(b => b.eff);
+      // Un fondu enchaîné fait chevaucher deux clips : la vidéo exportée raccourcit de sa durée à chaque transition.
+      // Les sons, la piste vidéo 2 et les titres sont posés en temps de la timeline : on les ramène au temps de la vidéo.
+      const coupes = []; { let t = 0; lens.forEach((l, i) => { t += l; if (trans[i]) coupes.push({ t, d: clamp(num(trans[i].dur, 0.6), 0.2, Math.max(0.2, Math.min(l, lens[i + 1] || l) * 0.9)) }); }); }
+      const versExport = t => { t = num(t, 0); let r = t; for (const k of coupes) if (t >= k.t - 0.01) r -= k.d; return Math.max(0, +r.toFixed(3)); };
+      const pistes = (project.pistes || []).filter(x => x && x.file && fs.existsSync(mediaPath(x.file))).slice(0, 30)
+        .concat((project.textes || []).filter(x => x && x.titre && x.titre.preset && FX.REPORTAGE.some(r => r.id === x.titre.preset) && filters.has('drawtext')).slice(0, 60).map(x => ({ ...x, kind: 'titre', ligne: 99 }))) // piste Titres, au-dessus de tout
+        .map(x => ({ ...x, start: versExport(x.start) }));
+      let joined = segs[0], fait = false;
 
       // Assemblage rapide : seuls les fondus enchaînés et les incrustations sont réencodés, le reste des clips est recopié.
       // En cas de doute (contrôle final non concluant), on repart sur l'assemblage complet ci-dessous.
@@ -1168,7 +1173,7 @@ function buildClip(c, P, o = {}) {
       if (pistes.length && !fait) { job.step = 'Piste vidéo 2'; joined = await poserPistes(dir, joined, pistes, P, proxy, project); }
 
       // Pistes audio (musique, voix off, bruitages) ; « baisser quand on parle » = compression pilotée par la voix
-      const audios = (project.audio || []).filter(a => a && a.file && fs.existsSync(mediaPath(a.file)));
+      const audios = (project.audio || []).filter(a => a && a.file && fs.existsSync(mediaPath(a.file))).map(a => ({ ...a, start: versExport(a.start) }));
       if (audios.length) {
         job.step = 'Mixage du son';
         const dur = +((await infos(path.join(dir, joined))).format.duration) || 1;
@@ -1198,8 +1203,10 @@ function buildClip(c, P, o = {}) {
             a.gainDb = +clamp(cible - l + rel, -40, 18).toFixed(1); job.niveaux[a.file] = { type, lufs: l, gainDb: a.gainDb };
           }
           const st = clamp(num(a.start, 0), 0, 3600), ms = Math.round(st * 1000);
-          const fd = a.fade ? `,afade=t=in:d=1.2,afade=t=out:st=${Math.max(0, dur - st - 1.5).toFixed(2)}:d=1.5` : '';
-          let vit = clamp(num(a.vit, 1), 0.25, 4); const tempo = []; while (vit > 2.001) { tempo.push('atempo=2'); vit /= 2; } while (vit < 0.499) { tempo.push('atempo=0.5'); vit *= 2; } if (Math.abs(vit - 1) > 0.001) tempo.push(`atempo=${vit.toFixed(4)}`);
+          let vit = clamp(num(a.vit, 1), 0.25, 4);
+          // fondu de sortie à la fin du son lui-même (un bruitage court ou un morceau coupé), pas à la fin de la vidéo
+          const lg = du > 0 ? du / vit : a.loop ? dur - st : (+((await infos(path.join(dir, `brut${i}.wav`))).format.duration) || dur) / vit;
+          const fd = a.fade ? `,afade=t=in:d=${Math.min(1.2, lg / 3).toFixed(2)},afade=t=out:st=${Math.max(0, Math.min(lg, dur - st) - Math.min(1.5, lg / 3)).toFixed(2)}:d=${Math.min(1.5, lg / 3).toFixed(2)}` : ''; const tempo = []; while (vit > 2.001) { tempo.push('atempo=2'); vit /= 2; } while (vit < 0.499) { tempo.push('atempo=0.5'); vit *= 2; } if (Math.abs(vit - 1) > 0.001) tempo.push(`atempo=${vit.toFixed(4)}`);
           // boucle : le même fichier répété par une liste (la boucle automatique de FFmpeg se figeait parfois)
           let entree = ['-i', `brut${i}.wav`];
           if (a.loop && !du) {
