@@ -249,12 +249,12 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
   }
 
   // Titres de chapitres : l'IA nomme chaque partie à partir de son texte ; sans IA, les titres proposés par le programme sont gardés
-  async function titrerChapitres({ chapitres = [] }) {
+  async function titrerChapitres({ chapitres = [], sujet = '' }) {
     const garde = chapitres.map(c => ({ ...c }));
     utiliser('');
     if (!installe() || !garde.length) return { chapitres: garde, ia: false };
     const systeme = 'Tu nommes les chapitres d’une vidéo en français, uniquement à partir du texte de chaque partie. Titres courts (2 à 5 mots), précis, sans point final, sans guillemets, sans numéro. Tu n’inventes rien.';
-    const demande = garde.map((c, i) => `Partie ${i + 1} (${c.titre}) : ${String(c.texte || '').slice(0, 600)}`).join('\n\n') + `\n\nDonne exactement ${garde.length} titres, dans l’ordre. La première partie est l’introduction si elle présente la vidéo ; la dernière est la conclusion si elle conclut.`;
+    const demande = (sujet ? `Sujet général de la vidéo : ${String(sujet).slice(0, 200)}\nLes titres doivent rester dans ce sujet.\n\n` : '') + garde.map((c, i) => `Partie ${i + 1} (${c.titre}) : ${String(c.texte || '').slice(0, 600)}`).join('\n\n') + `\n\nDonne exactement ${garde.length} titres, dans l’ordre. La première partie est l’introduction si elle présente la vidéo ; la dernière est la conclusion si elle conclut.`;
     const schema = { type: 'object', properties: { titres: { type: 'array', minItems: garde.length, maxItems: garde.length, items: { type: 'string' } } }, required: ['titres'] };
     try {
       const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.3 }, garde.length * 24 + 60);
@@ -262,6 +262,26 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
       if (t.length === garde.length && t.every(x => x.length >= 3)) return { chapitres: garde.map((c, i) => ({ ...c, titre: t[i] })), ia: true };
     } catch (e) { /* titres du programme gardés */ }
     return { chapitres: garde, ia: false };
+  }
+
+  // Analyse de la vidéo : l'IA lit des extraits du début, du milieu et de la fin et résume le sujet, le public et les idées fortes.
+  // Elle ne fait que décrire ce qui est dit ; l'analyse du programme (genre, mots-clés) sert de repli et de garde-fou.
+  async function analyserVideo({ segments = [], base = null }) {
+    utiliser('');
+    const texte = segments.map(s => String(s.t || '').trim()).filter(Boolean);
+    if (!installe() || texte.length < 4) return { sujet: base ? base.sujet : '', resume: '', points: [], public: '', ia: false };
+    const n = texte.length, tiers = Math.max(1, Math.floor(n / 3)), pris = [...texte.slice(0, tiers), ...texte.slice(tiers, tiers * 2).filter((_, i) => i % 2 === 0), ...texte.slice(tiers * 2).filter((_, i) => i % 2 === 0)];
+    const extrait = pris.join(' ').slice(0, 3800);
+    const systeme = 'Tu analyses une vidéo en français à partir de ce qui y est dit. Tu décris le sujet, le public visé et les idées fortes, sans rien inventer qui ne soit pas dans le texte.';
+    const demande = `Texte de la vidéo (extraits) :\n${extrait}\n\nDonne : le sujet en une phrase courte, le public visé en quelques mots, un résumé de 2 phrases, et 3 à 6 idées fortes (4 à 8 mots chacune).`;
+    const schema = { type: 'object', properties: { sujet: { type: 'string' }, public: { type: 'string' }, resume: { type: 'string' }, points: { type: 'array', minItems: 1, maxItems: 6, items: { type: 'string' } } }, required: ['sujet', 'resume', 'points'] };
+    try {
+      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.2 }, 320);
+      const x = r.resultat || {}, net = (t, m) => SQ.nettoyerTexte(t).slice(0, m);
+      const sujet = net(x.sujet, 140);
+      if (sujet.length >= 6) return { sujet, public: net(x.public, 80), resume: net(x.resume, 380), points: (x.points || []).map(p => net(p, 80)).filter(p => p.length >= 4).slice(0, 6), ia: true };
+    } catch (e) { /* analyse du programme gardée */ }
+    return { sujet: base ? base.sujet : '', resume: '', points: [], public: '', ia: false };
   }
   // Clipping : parmi des extraits candidats (calculés par le programme), l'IA choisit les plus accrocheurs pour TikTok et écrit leur titre.
   // Elle ne choisit que des numéros de la liste et ne peut ni modifier ni inventer un extrait.
@@ -318,7 +338,7 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
   }
 
   const arreter = () => { if (proc) proc.kill(); };
-  return { etat, installer, ecrireScript, reecrireScene, comprendreDemande, textesPublication, titrerChapitres, choisirExtraits, telecharger, arreter };
+  return { etat, installer, ecrireScript, reecrireScene, comprendreDemande, textesPublication, titrerChapitres, analyserVideo, choisirExtraits, telecharger, arreter };
 }
 
 module.exports = { creer, STYLES, MODELE, lireConsignes, regroupe, TYPES, PUBLICS, TONS, RYTHMES };

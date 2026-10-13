@@ -297,6 +297,7 @@ function chromium() {
   await ev(() => ouvrirChapitrage()); await pg.waitForSelector('#chAppliquer:not([hidden])', { timeout: 20000 });
   const prop = await ev(() => [...document.querySelectorAll('#chListe .chN')].map(x => x.value));
   check('chapitrage : des chapitres proposés, le premier est l’introduction', prop.length >= 3 && prop[0] === 'Introduction', JSON.stringify(prop));
+  check('chapitrage : la carte « ce que j’ai compris » donne le sujet de la vidéo', await ev(() => { const a = $('#chAnalyse'); return !!a && /Ce que j’ai compris/.test(a.textContent) && /Sujet/.test(a.textContent) && /sommeil|chambre|dormir/i.test(a.textContent); }));
   await pg.selectOption('#chMode', 'sur'); await pg.click('#chAppliquer'); await pg.waitForTimeout(500);
   const rc = await ev(() => ({ n: proj.clips.length, marks: proj.markers.length, noms: Object.keys(proj.nomsReperes).length, titres: proj.clips.filter(c => c.titre && c.titre.preset === 'machine').length, clav: proj.audio.filter(a => /clavier/.test(a.file)).length, ok: proj.clips.every(c => c.subs.every(x => x.e <= effDur(c) + 0.01)) }));
   check('chapitrage : repères nommés, titres qui s’écrivent et bruit de clavier posés', rc.marks >= 2 && rc.noms >= 3 && rc.titres >= 3 && rc.clav >= 3 && rc.n >= 3 && rc.ok, JSON.stringify(rc));
@@ -304,9 +305,14 @@ function chromium() {
   await ev(() => fermer());
   // clipping : les meilleurs passages sont proposés (sans IA installée : classement du programme)
   await ev(() => ouvrirClipping()); await pg.selectOption('#clNb', '3'); await pg.click('#clChercher'); await pg.waitForSelector('#clCreer', { timeout: 20000 });
+  check('clipping : la carte d’analyse du sujet est aussi affichée', await ev(() => /Ce que j’ai compris/.test($('#clAnalyse').textContent)));
   const nbCl = await ev(() => document.querySelectorAll('#clListe [data-i]').length);
   check('clipping : des passages proposés avec un titre', nbCl >= 1 && nbCl <= 3 && await ev(() => [...document.querySelectorAll('#clListe .clT')].every(x => x.value.length > 3)), nbCl);
   await ev(() => fermer());
+  // montage selon le sujet : analyse de la parole, puis musique et son adaptés au genre
+  await ev(() => { proj.audio = proj.audio.filter(a => !/^lib:musiques\//.test(a.file)); });
+  await ev(() => montageSelonSujet()); await pg.waitForTimeout(300);
+  check('montage selon le sujet : sujet annoncé, musique de la bibliothèque posée', await ev(() => /Fait :/.test($('#bar').textContent || document.body.textContent) && proj.audio.some(a => /^lib:musiques\//.test(a.file) && a.loop && a.duck)));
 
   // 9) retirer un passage : le son détaché part avec l'image, ce qui suit reste calé ; la coupe (S) coupe aussi le son détaché
   await ev(() => { const m = medias.find(x => x.file === 'a.mp4'); proj.clips = []; for (let i = 0; i < 3; i++) proj.clips.push(newClip(m)); proj.audio = []; proj.pistes = []; proj.markers = []; proj.nomsReperes = {}; sel = 0; tout(); tous = null; selObjs = new Set(proj.clips); detacherSelection(); selObjs.clear(); });

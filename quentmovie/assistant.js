@@ -19,6 +19,7 @@ const ACTIONS = {
   rythme: 'Caler les photos sur le rythme de la musique',
   reperes_rythme: 'Poser des repères sur les temps de la musique',
   titre: 'Ajouter un écran titre au début',
+  montage_sujet: 'Analyser la vidéo et la monter selon son sujet (style, musique, son)',
   chapitres: 'Préparer les chapitres YouTube',
   chapitrer: 'Chapitrer la vidéo : titres à l’écran et bruit de clavier',
   clipping: 'Créer des clips TikTok avec les meilleurs passages',
@@ -81,11 +82,12 @@ function comprendre(demande, projet) {
   const tit = /(?:titre|ecran titre)\s*(?:«|"|:)\s*([^»"]{2,60})/.exec(demande ? sansAccents(demande) : '');
   const titOrig = /(?:titre|écran titre)\s*(?:«|"|:)\s*([^»"]{2,60})/i.exec(String(demande || ''));
   if (/(ecran titre|titre au debut|ajoute (un|le) titre|mets (un|le) titre)/.test(t) || tit) ajoute('titre', titOrig ? titOrig[1].trim() : '');
+  if (/(analyse (la|ma|cette) video|de quoi parle|sujet de la video|monte (la|ma|cette) video selon|monte selon le sujet|montage intelligent|monte (moi )?ca tout seul)/.test(t) && !/chapitr/.test(t)) ajoute('montage_sujet');
   if (/chapitr/.test(t)) ajoute(/(liste|copi|description)/.test(t) && !/(clavier|ecran|titre)/.test(t) ? 'chapitres' : 'chapitrer');
   if (/(hashtags?|description|titre (pour|de la) (publication|video youtube|tiktok)|legende)/.test(t)) ajoute('publication', /youtube/.test(t) ? 'YouTube' : /instagram/.test(t) ? 'Instagram' : /tiktok/.test(t) ? 'TikTok' : '');
   if (/\bexport/.test(t)) ajoute('exporter');
   // ordre du montage : découpe d'abord, habillage ensuite, export à la fin
-  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'chapitres', 'chapitrer', 'clipping', 'publication', 'exporter'];
+  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'publication', 'exporter'];
   return l.sort((a, b) => ORDRE.indexOf(a.action) - ORDRE.indexOf(b.action));
 }
 
@@ -96,6 +98,7 @@ function planAuto(p) {
   const clips = p.clips, total = clips.reduce((a, c) => a + (c.dur || 0), 0), videos = clips.filter(c => c.kind === 'video');
   const parlants = clips.filter(c => (c.kind === 'video' || c.kind === 'audio') && c.hasAudio !== false && !c.sonDetache);
   if (!clips.length) return [];
+  if (parlants.length) ajoute('montage_sujet');
   if (videos.some(c => (c.dur || 0) > 45)) ajoute('plans');
   if (parlants.length) ajoute('couper_blancs');
   if (parlants.length && parlants.every(c => !(c.subs || []).length)) ajoute('sous_titres', p.format === 'vertical' ? 'tiktok' : '');
@@ -119,6 +122,7 @@ function suggerer(p) {
   if (parlants.length >= 2 && !parlants.every(c => (c.afx || []).some(e => e.id === 'normaliser'))) s.push({ action: 'egaliser', libelle: 'Égaliser le volume : même niveau d’un clip à l’autre.' });
   if (!(p.audio || []).some(a => !a.detache) && total > 15) s.push({ action: 'musique', parametre: 'calme', libelle: 'Ajouter une musique de fond discrète (baissée quand on parle).' });
   if (clips.length >= 4 && clips.filter(c => c.kind === 'video').length >= 3 && parlants.length >= 3 && !clips.some(c => (c.zoom || 100) > 100)) s.push({ action: 'dynamiser', parametre: '115', libelle: 'Dynamiser la vidéo parlée (zoom léger un plan sur deux).' });
+  if (parlants.length && total > 20) s.push({ action: 'montage_sujet', libelle: 'Analyser la vidéo et la monter selon son sujet : style, musique et son adaptés.' });
   if (total > 150 && parlants.length) s.push({ action: 'chapitrer', libelle: 'Chapitrer la vidéo : titres à l’écran, bruit de clavier et liste pour YouTube.' });
   if (total > 90 && parlants.length) s.push({ action: 'clipping', libelle: 'Créer des clips TikTok avec les meilleurs passages de la vidéo.' });
   if ((p.markers || []).length >= 2 && total > 60) s.push({ action: 'chapitres', libelle: 'Préparer les chapitres YouTube à partir des repères.' });

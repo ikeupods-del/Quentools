@@ -77,7 +77,12 @@ function create(opts = {}) {
       if (!f.startsWith(PACKS + path.sep)) throw new Error('Chemin refusé');
       return f;
     }
-    return path.join(MEDIAS, safeName(n));
+    const f = path.join(MEDIAS, safeName(n));
+    if (!fs.existsSync(f)) { // prise du studio convertie : le fichier d'origine est remplacé par « …-prise.mp4 »
+      const e = path.extname(f), alt = [f.slice(0, -e.length || undefined) + '-prise.mp4', f.slice(0, -e.length || undefined) + '.mp4'].find(x => x !== f && fs.existsSync(x));
+      if (alt) return alt;
+    }
+    return f;
   };
   // Cadres et décors existent en horizontal (-h) et vertical (-v) : on prend celui du format du projet
   const orient = (n, W, H) => /^lib:(cadres|fonds)\/[\w\-]+-[hv]\.(png|jpg)$/.test(String(n || '')) ? String(n).replace(/-[hv]\.(png|jpg)$/, (x, e) => (W >= H ? '-h.' : '-v.') + e) : n;
@@ -109,6 +114,14 @@ function create(opts = {}) {
   let parole = null, ia = opts.ia || null; // opts.ia : IA de remplacement pour les essais
   const MEM = require('./memoire'), MEMOIRE = MEM.creerStockage({ fichier: path.join(BASE, 'memoire-ia.json') }); // consignes et corrections retenues, partagées avec Studio Posts et Studio Sites
   const IA = () => ia || (ia = require('./ia').creer({ BASE, FFMPEG, memoire: () => MEM.pourPrompt(MEMOIRE.lire(), 600) }));
+  // Analyse d'une vidéo à partir de son texte : calcul du programme (genre, mots-clés, rythme) puis, si l'IA locale est installée, sujet et idées fortes
+  async function analyserLaVideo(job, segments, duree, avecIA) {
+    const CH = require('./chapitrage'), brut = CH.analyserSujet(segments, duree);
+    if (!brut) return { sujet: '', genre: null, motsCles: [], rythme: 'normal', points: [], resume: '', ia: false, brut: null };
+    job.step = 'Analyse du sujet de la vidéo…'; job.progress = 0.15;
+    const r = avecIA ? await IA().analyserVideo({ segments, base: brut }) : { sujet: brut.sujet, points: [], resume: '', public: '', ia: false };
+    return { sujet: r.sujet || brut.sujet, resume: r.resume, points: r.points, public: r.public, ia: r.ia, genre: brut.genre, motsCles: brut.motsCles, rythme: brut.rythme, debit: brut.debit, brut };
+  }
   const PAROLE = () => parole || (parole = require('./parole').creer({ run, FFMPEG, BASE }));
   // Réglages locaux (clés gratuites des banques de photos : gardées dans le dossier QuentMovie de l'utilisateur, jamais dans le dépôt)
   const REGL = path.join(BASE, 'reglages.json');
@@ -934,11 +947,37 @@ function buildClip(c, P, o = {}) {
       let cumul = 0; for (const x of l) { cumul += x.n; if (cumul > max) fs.rmSync(path.join(CACHE_RENDU, x.f), { force: true }); }
     } catch (e) { /* pas encore de cache */ }
   }
+  // Longs clips « simples » (sans effet, titre, incrustation ni image clé) : découpés en morceaux d'environ deux minutes, encodés en même temps
+  // (la puce vidéo gère plusieurs flux) puis recollés sans réencoder ; un morceau inchangé est aussi repris du cache au prochain export.
+  // Les sous-titres et fondus sont répartis sur les morceaux : le résultat est identique au clip entier.
+  function morceauxDe(clips) {
+    const L = +process.env.QM_MORCEAU || 120, out = [];
+    for (const c of clips) {
+      const eff = (num(c.out, 0) - num(c.in, 0)) / (num(c.speed, 1) || 1);
+      const simple = c.kind === 'video' && num(c.speed, 1) === 1 && eff >= L * 1.6 && !(c.fx || []).length && !(c.overlays || []).length && !c.titre && !(c.key && c.key.on) && !c.viz && !c.text
+        && !(Array.isArray(c.cadrage) && c.cadrage.length) && !c.bgFile && !c.sonDetache;
+      if (!simple || process.env.QM_SANS_MORCEAUX) { out.push(c); continue; }
+      const n = Math.max(2, Math.round(eff / L)), len = eff / n, fo = fonduxDe(c, eff);
+      for (let k = 0; k < n; k++) {
+        const a = k * len, b = (k + 1) * len, d = { ...c };
+        d.in = +(num(c.in, 0) + a).toFixed(3); d.out = k === n - 1 ? num(c.out, 0) : +(num(c.in, 0) + b).toFixed(3);
+        d.fade = false; d.fadeIn = k === 0 ? fo.e : 0; d.fadeOut = k === n - 1 ? fo.s : 0;
+        d.transition = k === n - 1 ? c.transition : null;
+        d.subs = (c.subs || []).filter(x => x && num(x.e, 0) > a && num(x.s, 0) < b).map(x => ({ ...x, s: +Math.max(0, num(x.s, 0) - a).toFixed(3), e: +(Math.min(num(x.e, 0), b) - a).toFixed(3) }));
+        d.morceau = true; out.push(d);
+      }
+    }
+    return out;
+  }
   async function exportProject(job, project, { proxy } = {}) {
     job.debut = Date.now();
-    const clips = (project.clips || []).filter(c => c && (c.file || c.kind === 'solid'));
-    if (!clips.length) throw new Error('La timeline est vide.');
+    const clipsBruts = (project.clips || []).filter(c => c && (c.file || c.kind === 'solid'));
+    if (!clipsBruts.length) throw new Error('La timeline est vide.');
+    const clips = morceauxDe(clipsBruts); job.morceaux = clips.length - clipsBruts.length;
     const P = sizeOf(project, proxy ? 'proxy' : 'full');
+    // fichiers disparus : un message clair (quel clip, que faire) plutôt qu'une erreur de FFmpeg
+    const absents = [...new Set(clips.filter(c => c.file && c.kind !== 'solid' && !/^(lib|pack):/.test(c.file)).map(c => c.file).filter(f => !fs.existsSync(mediaPath(f))))];
+    if (absents.length) throw new Error(`${absents.length > 1 ? 'Ces fichiers sont' : 'Ce fichier est'} introuvable${absents.length > 1 ? 's' : ''} dans tes médias : ${absents.slice(0, 3).join(', ')}. Retire le clip concerné de la timeline (clic droit → Supprimer) ou remets le fichier dans le dossier Movies/QuentMovie/medias.`);
     const dir = fs.mkdtempSync(path.join(TMP, 'job-'));
     job.dir = dir;
     try {
@@ -1358,23 +1397,33 @@ function buildClip(c, P, o = {}) {
         const b = await readJson(req);
         return send(res, 200, travail(async job => {
           const CH = require('./chapitrage'); job.step = 'Lecture du texte de la vidéo…';
-          const ch = CH.proposerChapitres(Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [], +b.duree || 0, { nb: b.nb });
+          const segs = Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [];
+          const ch = CH.proposerChapitres(segs, +b.duree || 0, { nb: b.nb });
           if (!ch.length) return { chapitres: [], ia: false };
-          job.step = 'L’IA locale nomme les chapitres…'; job.progress = 0.4;
-          const r = b.ia === false ? { chapitres: ch, ia: false } : await IA().titrerChapitres({ chapitres: ch });
-          return { chapitres: r.chapitres.map(c => ({ t: c.t, titre: c.titre })), ia: r.ia };
+          const analyse = await analyserLaVideo(job, segs, +b.duree || 0, b.ia !== false);
+          job.step = 'L’IA locale nomme les chapitres…'; job.progress = 0.6;
+          const r = b.ia === false ? { chapitres: ch, ia: false } : await IA().titrerChapitres({ chapitres: ch, sujet: analyse.sujet });
+          delete analyse.brut;
+          return { chapitres: r.chapitres.map(c => ({ t: c.t, titre: c.titre })), ia: r.ia, analyse };
         }));
+      }
+      // Analyse de la vidéo : sujet, genre, rythme, idées fortes et pack conseillé (programme + IA locale)
+      if (req.method === 'POST' && p === '/api/video/analyser') {
+        const b = await readJson(req);
+        return send(res, 200, travail(async job => { const a = await analyserLaVideo(job, Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [], +b.duree || 0, b.ia !== false); delete a.brut; return a; }));
       }
       // Clipping : les meilleurs extraits de la vidéo pour TikTok / Reels / Shorts
       if (req.method === 'POST' && p === '/api/clipping/proposer') {
         const b = await readJson(req);
         return send(res, 200, travail(async job => {
           const CH = require('./chapitrage'), nb = clamp(Math.round(num(b.nb, 5)), 1, 12); job.step = 'Recherche des meilleurs passages…';
-          const cands = CH.proposerMoments(Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [], +b.duree || 0, { nb: Math.min(14, nb * 2), min: num(b.min, 20), max: num(b.max, 60) });
+          const segs = Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [], analyse = await analyserLaVideo(job, segs, +b.duree || 0, b.ia !== false);
+          const cands = CH.proposerMoments(segs, +b.duree || 0, { nb: Math.min(14, nb * 2), min: num(b.min, 20), max: num(b.max, 60), analyse: analyse.brut });
+          delete analyse.brut;
           if (!cands.length) return { extraits: [], ia: false };
           job.step = 'L’IA locale choisit les plus accrocheurs…'; job.progress = 0.4;
-          const r = b.ia === false ? { extraits: cands.slice(0, nb), ia: false } : await IA().choisirExtraits({ candidats: cands, nb, sujet: String(b.sujet || '') });
-          return { extraits: r.extraits.map(e => ({ s: e.s, e: e.e, titre: e.titre, texte: String(e.t || '').slice(0, 240) })), ia: r.ia };
+          const r = b.ia === false ? { extraits: cands.slice(0, nb), ia: false } : await IA().choisirExtraits({ candidats: cands, nb, sujet: analyse.sujet || String(b.sujet || '') });
+          return { extraits: r.extraits.map(e => ({ s: e.s, e: e.e, titre: e.titre, texte: String(e.t || '').slice(0, 240) })), ia: r.ia, analyse };
         }));
       }
       // Clipping : chaque extrait choisi devient une vidéo à part (vertical, sous-titres TikTok, accroche), rangée avec les exports
@@ -1600,7 +1649,7 @@ function buildClip(c, P, o = {}) {
       }
       if (req.method === 'GET' && p === '/api/job') {
         const job = jobs.get(url.searchParams.get('id'));
-        return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done, resultat: job.resultat || null, duree: job.fin && job.debut ? +((job.fin - job.debut) / 1000).toFixed(1) : null, repris: job.repris || 0, paralleles: job.paralleles || 0, assemblage: job.assemblage || null, avertissement: job.avertissement || null, msAssemblage: job.msAssemblage || 0 }) : send(res, 404, { error: 'Export inconnu' });
+        return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done, resultat: job.resultat || null, duree: job.fin && job.debut ? +((job.fin - job.debut) / 1000).toFixed(1) : null, repris: job.repris, morceaux: job.morceaux || 0, paralleles: job.paralleles || 0, assemblage: job.assemblage || null, avertissement: job.avertissement || null, msAssemblage: job.msAssemblage || 0 }) : send(res, 404, { error: 'Export inconnu' });
       }
       // Projets
       if (p === '/api/projet') { // enregistrement automatique

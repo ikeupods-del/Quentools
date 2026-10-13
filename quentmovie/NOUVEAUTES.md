@@ -3,6 +3,17 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.28.0
+- **L’IA analyse maintenant ta vidéo avant de monter.** Elle lit ce qui est dit (début, milieu et fin), comprend le sujet, le public visé et les idées fortes, puis une carte « Ce que j’ai compris de la vidéo » s’affiche dans le chapitrage et dans les clips TikTok.
+- **Chapitres plus justes** : les titres sont écrits en restant dans le sujet de la vidéo.
+- **Clips TikTok plus pertinents** : les passages qui portent vraiment le sujet sont favorisés, et l’IA les choisit en connaissant le sujet.
+- **Style de montage conseillé** : selon le genre reconnu (bourse, économie, crypto, tuto, podcast, voyage, cuisine, sport, gaming, tech…), un bouton « Monter dans le style… » pose le pack qui convient (transitions, effets de coupe, sons, look).
+- Dans l’assistant (⌘K), « analyse ma vidéo » ouvre cette analyse.
+- **Montage selon le sujet** (assistant ⌘K : « monte ma vidéo selon son sujet », ou étape proposée par le montage automatique) : l’IA analyse la parole puis pose le style de pack du genre reconnu, une musique adaptée (baissée quand on parle) et égalise le volume.
+- **Export corrigé** : si un clip pointe vers une prise du studio déjà convertie, elle est retrouvée toute seule ; si un fichier a vraiment disparu, le message dit lequel et quoi faire (au lieu d’une erreur technique).
+- **Export bien plus rapide pour les longues vidéos** : un long clip simple (par exemple une prise de 30 minutes avec sous-titres) est découpé en morceaux d’environ 2 minutes encodés en même temps par la puce du Mac, puis recollés sans réencoder. Au prochain export, seuls les morceaux modifiés sont refaits.
+- Sans l’IA installée, le programme déduit quand même le genre, les mots-clés et le rythme de parole.
+
 ## 1.27.0
 - **Animations du studio refaites** : liseré blanc façon autocollant et ombre portée, sons mieux choisis (message, clic, alerte de marché…).
 - **Pack sound design** : 23 sons (passages léger, moyen et lourd, passage inversé, montées de 1, 3 et 6 secondes, impacts sec, boom et métallique, braam de cinéma, accord de tension, battement sourd, sons d’interface, jingles positif et négatif…).
