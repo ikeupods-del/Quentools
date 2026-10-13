@@ -1,16 +1,19 @@
-"""Scénarios : IA locale (Ollama), bibliothèque, générateur procédural ; validation par clean()."""
+"""Scénarios : IA intégrée (ou Ollama), bibliothèque, générateur procédural ; validation par clean()."""
 import json
 import random
 import re
-import urllib.request
 
 import config
 import corpus
 import history
+import ia_locale
 import procedural
 
 
-# Ton : léger, jamais méchant, pas de vraie personne ni de marque
+# Ton : léger, jamais méchant, pas de vraie personne ni de marque (QuentInvest peut citer celles de son sujet)
+GROSSIER = ["con", "conne", "connard", "idiot", "idiote", "debile", "abruti", "nul", "nulle", "merde", "putain", "crétin",
+            "tuer", "suicide", "drogue", "sexe", "arme"]
+INTERDITS_INVEST = re.compile(r"\b(" + "|".join(GROSSIER) + r")\b", re.I)
 INTERDITS = re.compile(r"\b(" + "|".join([
     "apple", "iphone", "ipad", "macbook", "google", "android", "samsung", "microsoft", "windows", "amazon", "alexa",
     "siri", "netflix", "spotify", "facebook", "instagram", "tiktok", "youtube", "twitter", "chatgpt", "openai",
@@ -21,16 +24,16 @@ INTERDITS = re.compile(r"\b(" + "|".join([
 ]) + r")\b", re.I)
 
 
-def _texte(x, maxi):
+def _texte(x, maxi, interdits=None):
     t = re.sub(r"\s+", " ", str(x or "")).strip().strip('"').strip()
     if not t or len(t) > maxi:
         raise ValueError(f"texte vide ou trop long : {t[:40]}")
-    if INTERDITS.search(t):
+    if (interdits or INTERDITS).search(t):
         raise ValueError(f"mot interdit : {t[:40]}")
     return t
 
 
-def clean_sketch(d):
+def clean_sketch(d, interdits=None):
     """Sketch validé et normalisé (ValueError sinon)."""
     if not isinstance(d, dict):
         raise ValueError("sketch absent")
@@ -44,14 +47,14 @@ def clean_sketch(d):
         qui = str(p.get("qui", "")).strip().upper()[:1]
         if qui not in ("Q", "G"):
             raise ValueError("personnage inconnu")
-        t = _texte(p.get("texte"), 120)
+        t = _texte(p.get("texte"), 120, interdits)
         if len(t.split()) > 22:
             raise ValueError("réplique trop longue")
         out.append({"qui": qui, "texte": t})
     if {p["qui"] for p in out} != {"Q", "G"}:
         raise ValueError("les deux personnages doivent parler")
-    titre = _texte(d.get("titre"), 60)
-    lieu = _texte(d.get("lieu") or "Maison", 30)
+    titre = _texte(d.get("titre"), 60, interdits)
+    lieu = _texte(d.get("lieu") or "Maison", 30, interdits)
     mots = [m for m in (str(x).strip().lower() for x in (d.get("mots") or []) if isinstance(x, (str, int))) if m][:5]
     if len(mots) < 2:
         mots = history.normaliser(titre)[:4]
@@ -103,25 +106,10 @@ Règles :
 Réponds uniquement en JSON."""
 
 
-def _http(chemin, donnees=None, delai=180):
-    req = urllib.request.Request(config.OLLAMA + chemin, method="POST" if donnees is not None else "GET",
-                                 data=json.dumps(donnees).encode() if donnees is not None else None,
-                                 headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=delai) as r:
-        return json.loads(r.read().decode("utf-8"))
-
-
 def ollama_etat():
-    """'ok', 'modele absent' ou 'absent'."""
-    try:
-        tags = _http("/api/tags", delai=3)
-    except Exception:
-        return "absent"
-    noms = {m.get("name", "") for m in tags.get("models", [])}
-    base = config.MODELE_IA.split(":")[0]
-    if config.MODELE_IA in noms or any(n.split(":")[0] == base and config.MODELE_IA.endswith(n.split(":")[-1]) for n in noms):
-        return "ok"
-    return "modele absent"
+    """État de l'IA : 'ok', 'modele absent' (IA intégrée à installer) ou 'absent'. Nom historique (Ollama en secours)."""
+    e = ia_locale.etat()
+    return "ok" if e == "ok" else "modele absent" if e == "a_installer" else "absent"
 
 
 def ia_sketch(eviter=(), rng=random):
@@ -136,13 +124,7 @@ def ia_sketch(eviter=(), rng=random):
         + "\n\nTitres déjà utilisés, à éviter : " + "; ".join(t for t in titres if t)
         + f"\n\nIdée de départ (libre de t'en écarter) : {piste[1]}, lieu « {piste[3]} ».\nÉcris un nouveau sketch."
     )
-    r = _http("/api/chat", {
-        "model": config.MODELE_IA, "stream": False, "format": SCHEMA,
-        "options": {"temperature": 0.9, "top_p": 0.95, "num_predict": 400},
-        "messages": [{"role": "system", "content": CONSIGNE}, {"role": "user", "content": demande}],
-    })
-    contenu = (r.get("message") or {}).get("content", "")
-    d = json.loads(contenu)
+    d = json.loads(ia_locale.discuter(CONSIGNE, demande, SCHEMA, temperature=0.9, max_tokens=400))
     d["source"] = "ia"
     return clean_sketch(d)
 
@@ -218,7 +200,7 @@ def scenario(mode="auto", journal=print):
 
     auto : réserve, puis IA locale, puis générateur procédural (jamais de liste finie).
     bibliotheque : sketchs de la bibliothèque pas encore utilisés (complété par le procédural si épuisée).
-    ia : uniquement l'IA locale (erreur si Ollama est absent).
+    ia : uniquement l'IA (erreur si elle n'est pas installée).
     """
     n = config.SKETCHS
     sk, origine = [], []
@@ -228,8 +210,8 @@ def scenario(mode="auto", journal=print):
     elif mode == "ia":
         etat = ollama_etat()
         if etat != "ok":
-            raise RuntimeError("IA locale indisponible : lance Ollama puis « ollama pull %s »." % config.MODELE_IA
-                               if etat == "absent" else f"Modèle {config.MODELE_IA} absent : « ollama pull {config.MODELE_IA} ».")
+            raise RuntimeError("IA intégrée pas encore installée : clique sur « Installer l'IA » (une seule fois)."
+                               if etat == "modele absent" else "IA intégrée indisponible sur cette installation.")
         sk = sketchs_ia(n, journal=journal)
         if len(sk) < n:
             raise RuntimeError("L'IA locale n'a pas produit assez de sketchs valides, réessaie.")

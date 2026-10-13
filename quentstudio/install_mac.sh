@@ -1,7 +1,7 @@
 #!/bin/bash
 # Installe (ou met à jour) QuentStudio.app sur ce Mac.
 #   bash install_mac.sh            installation complète (voix + IA locale si possible)
-#   QS_SANS_IA=1 bash install_mac.sh   sans installer Ollama
+#   QS_SANS_IA=1 bash install_mac.sh   sans télécharger le modèle d'IA (2,5 Go)
 set -eo pipefail
 
 cd "$(dirname "$0")"
@@ -9,7 +9,6 @@ SRC="$(pwd)"
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 SUPPORT="$HOME/Library/Application Support/QuentStudio"
 VENV="$SUPPORT/venv"
-MODELE_IA="${QS_MODELE:-llama3.2:3b}"
 
 etape() { printf '\n\033[1;32m▶ %s\033[0m\n' "$1"; }
 stop() { printf '\n\033[1;31m✖ %s\033[0m\n' "$1"; exit 1; }
@@ -115,18 +114,12 @@ etape "Partage AirDrop (petit programme Swift)"
 "$VENV/bin/python" -c "import sys; sys.path.insert(0, '$SRC'); import share; print('AirDrop :', share.programme_airdrop())" \
   || echo "Compilation Swift impossible : le bouton AirDrop montrera la vidéo dans le Finder."
 
+etape "IA intégrée (moteur llama.cpp + modèle Qwen3 4B partagé avec QuentMovie)"
+"$VENV/bin/python" -m pip install --quiet --only-binary=:all: llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/metal \
+  || CMAKE_ARGS="-DGGML_METAL=on" "$VENV/bin/python" -m pip install --quiet llama-cpp-python \
+  || echo "Moteur d'IA non installé : l'app marche sans IA (générateur intégré et fiches)."
 if [ -z "$QS_SANS_IA" ]; then
-  etape "IA locale (Ollama, modèle $MODELE_IA)"
-  if ! command -v ollama >/dev/null 2>&1; then
-    if command -v brew >/dev/null 2>&1; then brew install ollama; else echo "Ollama absent : installe-le depuis https://ollama.com puis relance (l'app marche sans, en mode procédural)."; fi
-  fi
-  if command -v ollama >/dev/null 2>&1; then
-    if ! curl -s -m 2 http://127.0.0.1:11434/api/tags >/dev/null; then
-      (brew services start ollama >/dev/null 2>&1 || (nohup ollama serve >/dev/null 2>&1 &)) || true
-      for _ in 1 2 3 4 5 6 7 8 9 10; do curl -s -m 2 http://127.0.0.1:11434/api/tags >/dev/null && break; sleep 1; done
-    fi
-    ollama pull "$MODELE_IA" || echo "Téléchargement du modèle impossible pour l'instant : relance plus tard « ollama pull $MODELE_IA »."
-  fi
+  "$VENV/bin/python" -c "import sys; sys.path.insert(0, '$SRC'); import ia_locale as i; i.chemin_modele() or i.installer(); print('IA :', i.etat(), i.chemin_modele())"
 fi
 
 etape "Vérification rapide"

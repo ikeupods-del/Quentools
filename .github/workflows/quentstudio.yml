@@ -58,6 +58,25 @@ jobs:
           print("Échecs : " + ", ".join(ko) if ko else "Application : tout fonctionne")
           sys.exit(1 if ko else 0)
           PY
+      - uses: actions/cache@v4
+        with:
+          path: ~/Movies/QuentMovie/modeles
+          key: ia-qwen3-4b-instruct-2507-q4km
+      - name: Essayer l'IA intégrée de l'application (sujet libre QuentInvest avec Wikipédia, sketchs Quentools)
+        run: |
+          QS_DATA="$RUNNER_TEMP/qs-ia" dist/QuentStudio.app/Contents/MacOS/QuentStudio --essai-ia "$PWD/essai-ia.json"
+          cat essai-ia.json
+          python - <<'PY'
+          import json, sys
+          r = json.load(open("essai-ia.json")); ko = []
+          if r.get("erreur"): ko.append("erreur : " + r["erreur"])
+          if not r.get("moteur"): ko.append("moteur d'IA absent de l'application")
+          if r.get("etat") != "ok": ko.append("IA non prête : " + str(r.get("etat")))
+          if "IA" not in (r.get("invest") or {}).get("mode", ""): ko.append("épisode QuentInvest non écrit par l'IA")
+          if len((r.get("quentools") or {}).get("titres", [])) != 3: ko.append("sketchs Quentools")
+          print("Échecs : " + ", ".join(ko) if ko else "IA intégrée : tout fonctionne")
+          sys.exit(1 if ko else 0)
+          PY
       - name: Essayer la fenêtre native
         run: |
           python - <<'PY'

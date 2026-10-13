@@ -1,7 +1,7 @@
 """QuentStudio : fenêtre de l'application (pywebview) autour d'un petit serveur local.
 
 Lancement : python studio.py  (ou QuentStudio.app après `bash install_mac.sh`).
-Tout reste local : seules la voix Piper et le modèle Ollama sont téléchargés une fois.
+Tout reste local : seules la voix Piper et le modèle d'IA sont téléchargés une fois (Wikipédia sert de source aux sujets libres de QuentInvest).
 """
 import json
 import os
@@ -23,7 +23,9 @@ for d in ("/opt/homebrew/bin", "/usr/local/bin"):
 import config  # noqa: E402
 import corpus  # noqa: E402
 import history  # noqa: E402
+import ia_locale  # noqa: E402
 import invest  # noqa: E402
+import maj  # noqa: E402
 import render  # noqa: E402
 import series  # noqa: E402
 import share  # noqa: E402
@@ -126,9 +128,11 @@ def etat():
         "reserve": len(invest.reserve()) if config.serie == "quentinvest" else len(story.reserve()),
         "fiches": [f["titre"] for f in invest.FICHES] if config.serie == "quentinvest" else [],
         "historique": len(history.charger()["sketchs"]),
-        "ia": etat_ia(), "modele": config.MODELE_IA,
+        "ia": etat_ia(), "modele": "Qwen3 4B (intégrée)" if ia_locale.moteur_present() and ia_locale.chemin_modele() else config.MODELE_IA,
+        "ia_install": {"en_cours": ia_locale.INSTALL["en_cours"], "avancement": round(ia_locale.INSTALL["avancement"], 3), "erreur": ia_locale.INSTALL["erreur"]},
         "voix": "piper" if voice.chemin_modele().exists() and not os.environ.get("QS_BIPS") else "bips",
         "videos": videos(), "dossier": str(config.VIDEOS), "version": config.VERSION,
+        "maj": {k: maj.ETAT[k] for k in ("etat", "version", "avancement", "notes", "erreur")},
     }
 
 
@@ -180,6 +184,17 @@ class Serveur(BaseHTTPRequestHandler):
             config.ecrire_json(config.DATA / "serie.json", {"serie": config.serie})
             config.chemin("x").parent.mkdir(parents=True, exist_ok=True)
             return self._envoyer(200, {"ok": True})
+        if p == "/api/maj/installer":
+            ok = maj.installer(relancer=True)
+            if ok and FENETRE.get("f"):
+                threading.Timer(0.6, FENETRE["f"].destroy).start()
+            return self._envoyer(200, {"ok": ok})
+        if p == "/api/ia/installer":
+            if not ia_locale.moteur_present():
+                return self._envoyer(200, {"ok": False, "message": "Moteur d'IA absent de cette installation."})
+            threading.Thread(target=ia_locale.installer, kwargs={"journal": journal}, daemon=True).start()
+            _ia["t"] = 0
+            return self._envoyer(200, {"ok": True})
         if p == "/api/avance":
             return self._envoyer(200, {"ok": generer_en_avance(20)})
         if p in ("/api/ouvrir", "/api/finder", "/api/airdrop"):
@@ -224,6 +239,28 @@ def preparer_voix():
     threading.Thread(target=tache, daemon=True).start()
 
 
+def essai_ia(sortie):
+    """Essai de l'IA intégrée de l'application construite : un épisode QuentInvest sur un sujet libre et 3 sketchs."""
+    import json as _json
+    res = {"moteur": ia_locale.moteur_present(), "modele": str(ia_locale.chemin_modele())}
+    try:
+        if not ia_locale.chemin_modele():
+            ia_locale.installer(journal=print)
+        res["etat"] = ia_locale.etat()
+        t = time.time()
+        config.serie = "quentinvest"
+        v = invest.scenario("auto", "résume l'histoire de Warren Buffett", journal=print)
+        res["invest"] = {"episode": v["episode"], "mode": v["mode"], "parties": [s["titre"] for s in v["sketchs"]], "repliques": [p["texte"] for s in v["sketchs"] for p in s["plans"]][:4], "s": round(time.time() - t, 1)}
+        t = time.time()
+        config.serie = "quentools"
+        q = story.scenario("ia", journal=print)
+        res["quentools"] = {"titres": [s["titre"] for s in q["sketchs"]], "mode": q["mode"], "s": round(time.time() - t, 1)}
+    except Exception as e:
+        res["erreur"] = repr(e)
+        traceback.print_exc()
+    Path(sortie).write_text(_json.dumps(res, ensure_ascii=False, indent=1), "utf-8")
+
+
 def essai(sortie):
     """Essai de l'application installée (workflow de construction) : une vidéo de chaque série, résultat en JSON."""
     import json as _json
@@ -245,8 +282,13 @@ def essai(sortie):
     Path(sortie).write_text(_json.dumps(res, ensure_ascii=False, indent=1), "utf-8")
 
 
+FENETRE = {}
+
+
 def main():
     config.DATA.mkdir(parents=True, exist_ok=True)
+    if "--essai-ia" in sys.argv:
+        return essai_ia(sys.argv[sys.argv.index("--essai-ia") + 1])
     if "--essai" in sys.argv:
         return essai(sys.argv[sys.argv.index("--essai") + 1])
     preparer_voix()
@@ -275,6 +317,7 @@ def main():
         except KeyboardInterrupt:
             return
     fenetre = webview.create_window("QuentStudio", url, width=1060, height=820, min_size=(860, 640))
+    FENETRE["f"] = fenetre
     if "--essai-fenetre" in sys.argv:  # essai de la fenêtre native (workflow de construction)
         sortie = sys.argv[sys.argv.index("--essai-fenetre") + 1]
 
@@ -291,7 +334,10 @@ def main():
             fenetre.destroy()
         webview.start(verifier)
         return
+    maj.surveiller(journal)
     webview.start(icone_dock)
+    if maj.ETAT["etat"] == "pret":  # mise à jour téléchargée : installée à la fermeture
+        maj.installer(relancer=False)
 
 
 if __name__ == "__main__":

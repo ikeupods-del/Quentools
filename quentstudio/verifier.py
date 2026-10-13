@@ -204,7 +204,7 @@ try:
     invest.scenario(sujet="le marché du cacao", journal=lambda m: None)
     check("QuentInvest sans IA : sujet libre refusé proprement", False)
 except RuntimeError as e:
-    check("QuentInvest sans IA : sujet libre refusé proprement", "IA locale" in str(e))
+    check("QuentInvest sans IA : sujet libre refusé proprement", "Installer l" in str(e))
 reponses_inv = [json.dumps({"titre": "Le cacao", "parties": [{"titre": "Une fève précieuse", "plans": [
     {"qui": "Q", "texte": "Pépite, pourquoi le chocolat coûte plus cher ?"}, {"qui": "G", "texte": "Le prix du cacao dépend de l'offre et de la demande."},
     {"qui": "Q", "texte": "Donc moins de fèves, prix plus haut ?"}, {"qui": "G", "texte": "En général, oui. La météo compte beaucoup."}]}] * 2 + [{"titre": "La leçon", "plans": [
@@ -224,9 +224,61 @@ config.OLLAMA = f"http://127.0.0.1:{srv.server_address[1]}"
 v = invest.scenario(sujet="le marché du cacao", journal=lambda m: None)
 check("QuentInvest avec IA : sujet libre écrit et marqué à vérifier", v["episode"] == "Le cacao" and v["verifier"] and len(v["sketchs"]) == 3)
 check("QuentInvest : l'épisode IA rejoint la bibliothèque", any(x.get("episode") == "Le cacao" for x in invest.bibliotheque()))
+# sujet libre sur une vraie personne : faits tirés de Wikipédia (simulé ici), nom et dates permis car présents dans les faits
+check("sujet libre : demande nettoyée", invest.nettoyer_sujet("resume l’histoire de warren buffet") == "warren buffet" and invest.nettoyer_sujet("Explique-moi la bulle des tulipes") == "bulle des tulipes")
+_vrai = invest._lire_json
+def _faux_wiki(u):
+    if "list=search" in u:
+        return {"query": {"search": [{"title": "Warren Buffett"}]}}
+    return {"query": {"pages": {"1": {"extract": "Warren Buffett, né le 30 août 1930 à Omaha, est un investisseur américain. Il dirige la société Berkshire Hathaway depuis 1965. Il est connu pour sa stratégie d'investissement dans la valeur sur le long terme."}}}}
+invest._lire_json = _faux_wiki
+titre_w, faits_w = invest.faits_wikipedia("résume l'histoire de Warren Buffett", journal=lambda m: None)
+check("sujet libre : faits de Wikipédia lus", titre_w == "Warren Buffett" and len(faits_w) == 3 and "1930" in faits_w[0], faits_w)
+buffett = {"titre": "Warren Buffett", "parties": [
+    {"titre": "Les débuts", "plans": [{"qui": "Q", "texte": "Pépite, c'est qui Warren Buffett ?"}, {"qui": "G", "texte": "Un investisseur américain, né le 30 août 1930 à Omaha."},
+                                       {"qui": "Q", "texte": "Il a commencé jeune ?"}, {"qui": "G", "texte": "Il dirige Berkshire Hathaway depuis 1965."}]},
+    {"titre": "La méthode", "plans": [{"qui": "Q", "texte": "Son secret, c'est quoi ?"}, {"qui": "G", "texte": "Investir dans la valeur, sur le long terme."},
+                                      {"qui": "Q", "texte": "Donc pas de coups rapides ?"}, {"qui": "G", "texte": "Non : de la patience, surtout."}]},
+    {"titre": "La leçon", "plans": [{"qui": "Q", "texte": "Je peux faire pareil ?"}, {"qui": "G", "texte": "Tu peux surtout comprendre ce que tu achètes."},
+                                    {"qui": "Q", "texte": "Et attendre longtemps."}, {"qui": "G", "texte": "Retenir : la patience compte plus que la vitesse."}]}],
+    "question": "Tu connaissais l'histoire de Warren Buffett ?"}
+faux = dict(buffett, parties=[dict(buffett["parties"][0], plans=buffett["parties"][0]["plans"][:3] + [{"qui": "G", "texte": "Il a gagné 2000 milliards en 1999."}])] + buffett["parties"][1:])
+reponses_inv[:] = [json.dumps(faux), json.dumps(buffett)]
+v = invest.scenario(sujet="résume l'histoire de Warren Buffett", journal=lambda m: None)
+check("sujet libre : épisode IA appuyé sur Wikipédia, chiffre inventé refusé puis réécrit", v["episode"] == "Warren Buffett" and "Wikipédia" in v["mode"] and v["verifier"], v.get("mode"))
+invest._lire_json = _vrai
 srv.shutdown()
 config.OLLAMA = "http://127.0.0.1:9"
 config.serie = "quentools"
+
+# ---------- Mises à jour automatiques ----------
+import maj  # noqa: E402
+check("mises à jour : comparaison des versions", maj.comparer("1.2.0", "1.1.9") > 0 and maj.comparer("1.0.0", "1.0.0") == 0 and maj.comparer("1.0.1", "dev") > 0)
+check("mises à jour : inactives hors application installée", "installée" in maj.peut_remplacer(maj.app_actuelle()))
+
+
+class FauxGitHub(BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def do_GET(self):
+        c = json.dumps([{"draft": False, "prerelease": False, "body": "Nouveautés", "assets": [
+            {"name": "QuentStudio-9.1.0-arm64.dmg", "browser_download_url": "http://x/a.dmg", "size": 10},
+            {"name": "QuentMovie-99.0.0-arm64.dmg", "browser_download_url": "http://x/b.dmg", "size": 10}]},
+            {"draft": False, "prerelease": False, "assets": [{"name": "QuentStudio-9.0.0-arm64.dmg", "browser_download_url": "http://x/c.dmg"}]}]).encode()
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(c)))
+        self.end_headers()
+        self.wfile.write(c)
+
+
+srv = ThreadingHTTPServer(("127.0.0.1", 0), FauxGitHub)
+threading.Thread(target=srv.serve_forever, daemon=True).start()
+maj.API = f"http://127.0.0.1:{srv.server_address[1]}"
+trouve = maj.chercher("1.0.0")
+check("mises à jour : la version la plus récente de QuentStudio est trouvée (pas celle de QuentMovie)", trouve and trouve["version"] == "9.1.0" and trouve["url"].endswith("a.dmg"), trouve)
+check("mises à jour : rien si déjà à jour", maj.chercher("9.1.0") is None)
+srv.shutdown()
 
 # ---------- Rendu ----------
 def duree(f):

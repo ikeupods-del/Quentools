@@ -14,6 +14,11 @@ echo "▶ Environnement Python"
 "$B/venv/bin/python" -m pip install --quiet --upgrade pip
 "$B/venv/bin/python" -m pip install --quiet -r requirements.txt pyinstaller
 
+echo "▶ Moteur de l'IA intégrée (llama.cpp avec la puce graphique)"
+"$B/venv/bin/python" -m pip install --quiet --only-binary=:all: llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/metal \
+  || CMAKE_ARGS="-DGGML_METAL=on" "$B/venv/bin/python" -m pip install --quiet llama-cpp-python
+"$B/venv/bin/python" -c "import llama_cpp; print('llama.cpp', llama_cpp.__version__)"
+
 echo "▶ FFmpeg pour puce Apple (même source que QuentMovie)"
 npm install --silent --no-save --no-audit --no-fund --prefix "$B/npm" ffmpeg-static@5.2.0
 cp "$B/npm/node_modules/ffmpeg-static/ffmpeg" "$B/bin/ffmpeg"
@@ -39,7 +44,7 @@ echo "▶ Application"
   --icon "$B/QuentStudio.icns" --osx-bundle-identifier fr.quentools.quentstudio --target-arch arm64 \
   --add-data "$SRC/ui.html:." --add-data "$SRC/version.txt:." --add-data "$SRC/persos/*.png:persos" \
   --add-binary "$B/bin/ffmpeg:bin" --add-binary "$B/bin/airdrop:bin" \
-  --collect-all piper --collect-all onnxruntime --collect-all webview \
+  --collect-all piper --collect-all onnxruntime --collect-all webview --collect-all llama_cpp \
   --hidden-import AppKit --hidden-import Foundation --hidden-import WebKit --hidden-import objc \
   --exclude-module piper.train --exclude-module torch --exclude-module tkinter \
   --paths "$SRC" --distpath "$SRC/dist" --workpath "$B/work" --specpath "$B" "$SRC/studio.py"

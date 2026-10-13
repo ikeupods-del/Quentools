@@ -13,7 +13,7 @@ Tout est local. Rien n'est envoyé sur internet : seuls la voix Piper et le mod�
 
 ## Installer et lancer
 
-**Application prête (recommandé)** : télécharger `QuentStudio-<version>-arm64.dmg` dans les Releases du dépôt (étiquette `quentstudio-vX.Y.Z`), l'ouvrir et glisser QuentStudio dans Applications. Au premier lancement : clic droit sur QuentStudio → Ouvrir (application non signée par Apple). Tout est inclus (Python, ffmpeg, voix Piper, partage AirDrop) ; la voix (~75 Mo) se télécharge une seule fois au premier lancement. L'IA locale reste facultative : installer Ollama (ollama.com) puis `ollama pull llama3.2:3b`.
+**Application prête (recommandé)** : télécharger `QuentStudio-<version>-arm64.dmg` dans les Releases du dépôt (étiquette `quentstudio-vX.Y.Z`), l'ouvrir et glisser QuentStudio dans Applications. Au premier lancement : clic droit sur QuentStudio → Ouvrir (application non signée par Apple). Tout est inclus (Python, ffmpeg, voix Piper, partage AirDrop) ; la voix (~75 Mo) se télécharge une seule fois au premier lancement. L'IA est intégrée (moteur llama.cpp livré, modèle Qwen3 4B partagé avec QuentMovie dans `~/Movies/QuentMovie/modeles` ; bouton « Installer l'IA » s'il manque) ; Ollama reste utilisé en secours s'il tourne. Mises à jour automatiques : `maj.py` (Releases `quentstudio-vX.Y.Z`, installation à la fermeture).
 
 L'application est construite, essayée (deux vidéos réelles, fenêtre) et publiée par le workflow « QuentStudio — application Mac » (`build_mac.sh`) à chaque modification de `quentstudio/` sur la branche par défaut. Publier = changer `version.txt` + section dans `NOUVEAUTES.md` ; sans changement de version, rien n'est republié.
 
