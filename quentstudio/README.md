@@ -50,6 +50,7 @@ Les vidéos sont enregistrées dans `~/Movies/QuentStudio/videos`. À côté de 
 - **Avec l'IA**, le sujet tapé est d'abord rapproché d'une fiche. Si une fiche correspond, l'IA réécrit l'épisode à partir de ses faits.
 - **Contrôle des chiffres** : tout chiffre ou toute date qui n'apparaît ni dans les faits ni dans le sujet fait refuser l'épisode, qui est alors réécrit. Ce contrôle est fait par le programme, pas par l'IA.
 - **Sujet libre sans fiche** : l'épisode est marqué « À relire avant publication ».
+- **Personnages** (style cartoon à contour) : dessinés en vectoriel dans `persos/*.svg`, livrés en PNG (bouche fermée / ouverte). Après une retouche d'un SVG : `node persos/generer.js` (outil de développement, l'application n'utilise que les PNG).
 - **Mention fixe** sur chaque image : « Vulgarisation · pas un conseil en investissement ».
 
 ## Calage à 62,0 s
@@ -92,7 +93,7 @@ python3 verifier.py              # + rendu de vidéos et durée exacte vérifié
 
 ## Fichiers
 
-`studio.py` (fenêtre et serveur local) · `ui.html` (interface) · `story.py` (Quentools : IA, réserve, `clean`) · `procedural.py` · `corpus.py` · `history.py` · `invest.py` (QuentInvest) · `series.py` (personnages, couleurs, voix) · `render.py` · `voice.py` · `share.py` (AirDrop) · `config.py` · `icon.py` · `install_mac.sh` · `verifier.py`.
+`studio.py` (fenêtre et serveur local) · `ui.html` (interface) · `story.py` (Quentools : IA, réserve, `clean`) · `procedural.py` · `corpus.py` · `history.py` · `invest.py` (QuentInvest) · `series.py` (personnages, couleurs, voix) · `render.py` · `voice.py` · `share.py` (AirDrop) · `config.py` · `persos/` (Max et Pépite) · `icon.py` · `install_mac.sh` · `verifier.py`.
 
 ## Limites connues
 

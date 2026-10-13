@@ -187,6 +187,8 @@ for f in invest.FICHES:
         invest.clean_episode(invest.episode_depuis_fiche(f), f["faits"])
     except ValueError as e:
         check("fiche QuentInvest valide", False, f"{f['id']} : {e}")
+check("QuentInvest : personnages Max et Pépite livrés (PNG)", all((ICI / "persos" / f"{n}-{e}.png").exists() for n in ("max", "pepite") for e in ("ferme", "ouvert")))
+check("QuentInvest : personnages chargés à la bonne taille", render.SPRITES["max"](True, False).size == (460, 660) and render.SPRITES["pepite"](False, False).size == (340, 376))
 check("QuentInvest : sujet reconnu (krach de 1929)", (invest.fiche_pour("résume le krach boursier de 1929") or {}).get("id") == "krach-1929")
 check("QuentInvest : sujet inconnu sans fiche", invest.fiche_pour("le marché du cacao") is None)
 ep = invest.episode_depuis_fiche(invest.FICHES[0])

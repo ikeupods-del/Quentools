@@ -59,6 +59,7 @@ TMP="$(mktemp -d)"
 APP="$TMP/QuentStudio.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/app"
 cp "$SRC"/*.py "$SRC"/ui.html "$SRC"/requirements.txt "$APP/Contents/Resources/app/"
+mkdir -p "$APP/Contents/Resources/app/persos" && cp "$SRC"/persos/*.png "$APP/Contents/Resources/app/persos/"
 
 # Icône : PNG 1024 → iconset (sips) → .icns (iconutil) ; sans icône si l'un échoue
 ICONSET="$TMP/QuentStudio.iconset"
