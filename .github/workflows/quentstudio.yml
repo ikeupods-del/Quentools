@@ -73,7 +73,8 @@ jobs:
         env:
           PYTHONUNBUFFERED: '1'
         run: |
-          QS_DATA="$RUNNER_TEMP/qs-ia" dist/QuentStudio.app/Contents/MacOS/QuentStudio --essai-ia "$PWD/essai-ia.json" || true
+          QS_IA_DELAI=300 QS_DATA="$RUNNER_TEMP/qs-ia" dist/QuentStudio.app/Contents/MacOS/QuentStudio --essai-ia "$PWD/essai-ia.json" || true
+          cat "$RUNNER_TEMP/qs-ia/ia-journal.txt" 2>/dev/null | tail -40 || true
           cat essai-ia.json
           python - <<'PY'
           import json, sys

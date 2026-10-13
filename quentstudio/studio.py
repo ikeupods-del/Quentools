@@ -356,4 +356,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if "--ia-serveur" in sys.argv:  # moteur de l'IA lancé à part par l'application elle-même
+        ia_locale.serveur()
+    else:
+        main()
