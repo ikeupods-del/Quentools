@@ -60,7 +60,14 @@ jobs:
           PY
       - name: Essayer la fenêtre native
         run: |
-          QS_DATA="$RUNNER_TEMP/qs-app" timeout 120 dist/QuentStudio.app/Contents/MacOS/QuentStudio --essai-fenetre "$PWD/fenetre.json" || true
+          python - <<'PY'
+          import os, subprocess
+          env = {**os.environ, "QS_DATA": os.environ["RUNNER_TEMP"] + "/qs-app"}
+          try:
+              subprocess.run(["dist/QuentStudio.app/Contents/MacOS/QuentStudio", "--essai-fenetre", os.path.abspath("fenetre.json")], env=env, timeout=120)
+          except subprocess.TimeoutExpired:
+              print("Fenêtre : délai dépassé")
+          PY
           cat fenetre.json || echo "Pas de résultat (fenêtre non affichable sur cette machine)"
       - name: Contrôler que chaque programme livré tourne sur puce Apple
         run: |
