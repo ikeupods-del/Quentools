@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuentStudio</title>
+<style>
+  :root { --fond: #16181f; --carte: #1f222c; --bord: #2c303d; --texte: #eceef4; --doux: #9aa0b3; --vert: #c6e84a; --rouge: #e53935; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; background: var(--fond); color: var(--texte); }
+  header { display: flex; align-items: center; gap: 14px; padding: 18px 24px; border-bottom: 1px solid var(--bord); }
+  header h1 { margin: 0; font-size: 22px; }
+  .rond { width: 34px; height: 34px; border-radius: 50%; background: var(--vert); box-shadow: inset -4px -4px 0 #9cbf2c; }
+  main { padding: 20px 24px; display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+  .carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 14px; padding: 16px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  button { font: inherit; border: 0; border-radius: 10px; padding: 11px 16px; cursor: pointer; background: #343947; color: var(--texte); }
+  button.principal { background: var(--vert); color: #1b2008; font-weight: 700; }
+  button:disabled { opacity: .45; cursor: default; }
+  .barre { height: 8px; background: #2a2e3a; border-radius: 6px; overflow: hidden; margin: 12px 0 4px; }
+  .barre i { display: block; height: 100%; width: 0; background: var(--vert); transition: width .3s; }
+  .compteurs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .compteur b { display: block; font-size: 26px; }
+  .compteur span, .doux { color: var(--doux); font-size: 13px; }
+  #journal { font: 12px/1.5 ui-monospace, Menlo, monospace; color: var(--doux); white-space: pre-wrap; max-height: 210px; overflow: auto; margin: 0; }
+  .videos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
+  .video { background: #191b23; border-radius: 12px; padding: 8px; }
+  .video img { width: 100%; aspect-ratio: 9/16; object-fit: cover; border-radius: 8px; background: #000; }
+  .video p { margin: 6px 0; font-size: 12px; color: var(--doux); }
+  .video .actions button { padding: 6px 8px; font-size: 12px; }
+  .erreur { color: #ff8a80; }
+  .pastille { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; background: #2c303d; }
+  .pastille.ok { background: #31411a; color: var(--vert); }
+  .switch { margin-left: auto; display: flex; background: #262a35; border-radius: 12px; padding: 4px; }
+  .switch button { background: transparent; padding: 8px 14px; border-radius: 9px; color: var(--doux); }
+  .switch button.actif { background: var(--vert); color: #1b2008; font-weight: 700; }
+  body.invest { --vert: #f6c846; }
+  body.invest .rond { background: #f6c846; box-shadow: inset -4px -4px 0 #c9971e; }
+  .sujet { display: none; gap: 10px; margin-top: 14px; }
+  body.invest .sujet { display: flex; }
+  .sujet input { flex: 1; font: inherit; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--bord); background: #14161d; color: var(--texte); }
+  .verif { color: #ffcf6e; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header><div class="rond"></div><h1 id="nomSerie">QuentStudio</h1><span class="doux" id="sousTitre">vidéos 9:16 de 62 s</span>
+  <div class="switch" role="tablist" aria-label="Série">
+    <button data-serie="quentools">Quentools</button><button data-serie="quentinvest">QuentInvest</button>
+  </div></header>
+<main>
+  <section>
+    <div class="carte">
+      <div class="actions">
+        <button class="principal" data-mode="auto">Nouvelle vidéo</button>
+        <button data-mode="bibliotheque">Nouvelle vidéo (bibliothèque)</button>
+        <button data-mode="ia">Nouvelle vidéo (IA locale)</button>
+      </div>
+      <div class="sujet">
+        <input id="sujet" maxlength="200" placeholder="Sujet pour l'IA, ex. : résume le krach boursier de 1929">
+        <button class="principal" id="surSujet">Créer sur ce sujet</button>
+      </div>
+      <p class="doux sujet" id="fiches" style="display:none"></p>
+      <div class="barre"><i id="barre"></i></div>
+      <div id="statut" class="doux">Prêt.</div>
+    </div>
+    <div class="carte" style="margin-top:16px">
+      <b>Vidéos</b> <span class="doux" id="dossier"></span>
+      <div class="videos" id="videos"></div>
+    </div>
+  </section>
+  <aside>
+    <div class="carte compteurs">
+      <div class="compteur"><b id="nbBiblio">–</b><span>scénarios dans la bibliothèque</span></div>
+      <div class="compteur"><b id="nbReserve">–</b><span>prêts en avance</span></div>
+      <div class="compteur"><b id="nbHisto">–</b><span id="libHisto">sketchs déjà publiés</span></div>
+      <div class="compteur"><span>IA locale</span><br><span class="pastille" id="ia">–</span><br><span>Voix</span><br><span class="pastille" id="voix">–</span></div>
+    </div>
+    <div class="carte" style="margin-top:16px">
+      <button id="avance" style="width:100%">Générer 20 scénarios en avance</button>
+      <p class="doux" id="avanceTxt">Travaille en arrière-plan : tu peux continuer à faire des vidéos.</p>
+    </div>
+    <div class="carte" style="margin-top:16px"><b>Journal</b><pre id="journal"></pre></div>
+  </aside>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const post = (u, b = {}) => fetch(u, { method: 'POST', body: JSON.stringify(b) }).then(r => r.json());
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => post('/api/video', { mode: b.dataset.mode }).then(maj));
+$('#avance').onclick = () => post('/api/avance').then(maj);
+$('#surSujet').onclick = () => { const s = $('#sujet').value.trim(); if (!s) return $('#sujet').focus(); post('/api/video', { mode: 'auto', sujet: s }).then(maj); };
+$('#sujet').onkeydown = e => { if (e.key === 'Enter') $('#surSujet').click(); };
+document.querySelectorAll('[data-serie]').forEach(b => b.onclick = () => post('/api/serie', { serie: b.dataset.serie }).then(r => { if (!r.ok) alert('Attends la fin du travail en cours pour changer de série.'); vus = ''; maj(); }));
+let vus = '';
+async function maj() {
+  let e;
+  try { e = await fetch('/api/etat').then(r => r.json()); } catch (_) { return; }
+  const invest = e.serie === 'quentinvest';
+  document.body.classList.toggle('invest', invest);
+  document.querySelectorAll('[data-serie]').forEach(b => { b.classList.toggle('actif', b.dataset.serie === e.serie); b.disabled = !!e.travail || !!e.avance; });
+  $('#nomSerie').textContent = e.series[e.serie].nom;
+  $('#sousTitre').textContent = e.series[e.serie].sous_titre + ' · vidéos 9:16 de 62 s';
+  $('[data-mode="bibliotheque"]').textContent = invest ? 'Nouvelle vidéo (fiches)' : 'Nouvelle vidéo (bibliothèque)';
+  $('#avance').textContent = invest ? 'Écrire 20 épisodes en avance (IA)' : 'Générer 20 scénarios en avance';
+  $('#fiches').style.display = invest ? 'block' : 'none';
+  $('#fiches').textContent = invest ? 'Sujets prêts sans IA : ' + e.fiches.join(' · ') + '. Avec l’IA locale, tout autre sujet d’économie.' : '';
+  $('#surSujet').disabled = !!e.travail;
+  $('#nbBiblio').textContent = e.bibliotheque.toLocaleString('fr-FR');
+  $('#nbReserve').textContent = e.reserve;
+  $('#nbHisto').textContent = e.historique;
+  $('#libHisto').textContent = invest ? 'sujets déjà publiés' : 'sketchs déjà publiés';
+  $('#ia').textContent = e.ia === 'ok' ? e.modele : e.ia === 'modele absent' ? 'modèle à télécharger' : 'absente (mode sans IA)';
+  $('#ia').className = 'pastille' + (e.ia === 'ok' ? ' ok' : '');
+  $('#voix').textContent = e.voix === 'piper' ? 'Piper (Pierre, Jessica)' : 'bips de secours';
+  $('#voix').className = 'pastille' + (e.voix === 'piper' ? ' ok' : '');
+  document.querySelectorAll('[data-mode]').forEach(b => b.disabled = !!e.travail || (b.dataset.mode === 'ia' && e.ia !== 'ok'));
+  $('#barre').style.width = (e.travail ? Math.max(3, e.avancement * 100) : 0) + '%';
+  $('#statut').innerHTML = e.travail ? esc(e.travail) + ' : ' + Math.round(e.avancement * 100) + ' %' : e.erreur ? '<span class="erreur">' + esc(e.erreur) + '</span>' : 'Prêt.';
+  $('#avance').disabled = !!e.avance;
+  $('#avanceTxt').textContent = e.avance ? 'Génération en cours : ' + e.avance : 'Travaille en arrière-plan : tu peux continuer à faire des vidéos.';
+  $('#journal').textContent = e.journal.join('\n');
+  $('#journal').scrollTop = 1e6;
+  $('#dossier').textContent = e.dossier;
+  const cle = JSON.stringify(e.videos);
+  if (cle !== vus) {
+    vus = cle;
+    $('#videos').innerHTML = e.videos.map(v => `<div class="video">
+      ${v.vignette ? `<img src="/vignette/${encodeURIComponent(v.nom)}?${Date.now()}" alt="">` : '<img alt="">'}
+      <p>${esc(v.titres.join(' · '))}<br>${esc(v.mode || '')}${v.voix === 'bips' ? ' · bips' : ''}${v.a_verifier ? '<br><span class="verif">À relire avant publication (sujet libre)</span>' : ''}</p>
+      <div class="actions"><button data-a="ouvrir">Voir</button><button data-a="airdrop">AirDrop</button><button data-a="finder">Finder</button></div>
+    </div>`).join('') || '<p class="doux">Aucune vidéo pour l’instant.</p>';
+    $('#videos').querySelectorAll('.video').forEach((el, i) => el.querySelectorAll('[data-a]').forEach(b =>
+      b.onclick = () => post('/api/' + b.dataset.a, { nom: e.videos[i].nom }).then(r => { if (r.message) alert(r.message); if (r.par === 'finder') alert('AirDrop direct indisponible : la vidéo est montrée dans le Finder et la fenêtre AirDrop est ouverte.'); })));
+  }
+}
+maj(); setInterval(maj, 1000);
+</script>
+</body>
+</html>
