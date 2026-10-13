@@ -10,9 +10,12 @@ réécrit (contrôle du programme, pas de l'IA). Un sujet libre sans fiche est m
 import json
 import random
 import re
+import urllib.parse
+import urllib.request
 
 import config
 import history
+import ia_locale
 import story
 
 # Fiches : épisodes écrits à la main (utilisables sans IA) et faits fournis à l'IA pour réécrire le sujet
@@ -388,7 +391,8 @@ Règles :
 - 22 mots maximum par réplique, français correct, ton léger et bienveillant.
 - Exactitude : n'utilise QUE les faits fournis. N'invente aucun chiffre, aucune date, aucun nom.
   Écris les nombres en chiffres. Si aucun fait n'est fourni, n'écris aucun chiffre ni aucune date.
-- Jamais de conseil personnalisé du type « achète ceci » ; pas de marque, pas de personne réelle.
+- Une personne ou une entreprise réelle n'est citée que si elle est le sujet, avec respect et seulement d'après les faits.
+- Jamais de conseil personnalisé du type « achète ceci ».
 - La dernière réplique de la partie 3 donne la leçon à retenir.
 - « question » : une question pour les commentaires.
 Réponds uniquement en JSON."""
@@ -429,12 +433,13 @@ def clean_episode(d, faits=(), sujet=""):
     """Épisode validé : 3 parties de 4 répliques, aucun chiffre absent des faits ou du sujet (ValueError sinon)."""
     if not isinstance(d, dict) or not isinstance(d.get("parties"), list) or len(d["parties"]) != 3:
         raise ValueError("il faut exactement 3 parties")
-    titre = story._texte(d.get("titre"), 60)
-    lieu = story._texte(d.get("lieu") or "Économie", 30)
+    I = story.INTERDITS_INVEST  # noms propres du sujet permis ; grossièretés toujours refusées
+    titre = story._texte(d.get("titre"), 60, I)
+    lieu = story._texte(d.get("lieu") or "Économie", 30, I)
     autorises = _nombres(" ".join(faits) + " " + sujet)
     sketchs = []
     for k, p in enumerate(d["parties"]):
-        s = story.clean_sketch({"titre": (p or {}).get("titre"), "lieu": lieu, "mots": [titre, str(k)], "plans": (p or {}).get("plans"), "source": d.get("source", "ia")})
+        s = story.clean_sketch({"titre": (p or {}).get("titre"), "lieu": lieu, "mots": [titre, str(k)], "plans": (p or {}).get("plans"), "source": d.get("source", "ia")}, I)
         if not any(x["qui"] == "G" for x in s["plans"]):
             raise ValueError("Pépite doit expliquer dans chaque partie")
         for x in s["plans"]:
@@ -442,7 +447,7 @@ def clean_episode(d, faits=(), sujet=""):
             if inconnus:
                 raise ValueError(f"chiffre non vérifié : {', '.join(sorted(inconnus))}")
         sketchs.append(s)
-    q = story._texte(d.get("question") or "Tu connaissais cette histoire ?", 90)
+    q = story._texte(d.get("question") or "Tu connaissais cette histoire ?", 90, I)
     for s in sketchs:  # surtitre : titre de l'épisode
         s["episode"] = titre
     return {"titre": titre, "sketchs": sketchs, "question": q if q.endswith(("?", "!", ".")) else q + " ?"}
@@ -452,15 +457,44 @@ def ia_episode(sujet, faits=()):
     demande = (f"Sujet : {sujet}\n" + ("Faits vérifiés (seule source autorisée pour les chiffres et dates) :\n- " + "\n- ".join(faits)
                                        if faits else "Aucun fait fourni : n'écris aucun chiffre ni aucune date.")
                + "\nÉcris l'épisode.")
-    r = story._http("/api/chat", {
-        "model": config.MODELE_IA, "stream": False, "format": SCHEMA,
-        "options": {"temperature": 0.7, "num_predict": 1100},
-        "messages": [{"role": "system", "content": CONSIGNE}, {"role": "user", "content": demande}],
-    })
-    d = json.loads((r.get("message") or {}).get("content", ""))
+    d = json.loads(ia_locale.discuter(CONSIGNE, demande, SCHEMA, temperature=0.7, max_tokens=1100))
     d["lieu"] = d.get("lieu") or "Économie"
     d["source"] = "ia"
     return clean_episode(d, faits, sujet)
+
+
+def nettoyer_sujet(sujet):
+    """« résume l'histoire de Warren Buffett » → « Warren Buffett »."""
+    t = re.sub(r"\s+", " ", sujet).strip(" ?!.")
+    t = re.sub(r"^(?:fais(?: moi)? une vidéo sur|résume|resume|raconte|explique|parle de|présente|c'est quoi|qu'est-ce que|qui est|qui était)\s*(?:-?moi)?\s*", "", t, flags=re.I)
+    t = re.sub(r"^(?:l['’]histoire|la vie|la biographie|le parcours)\s+(?:de|d['’]|du|des)\s*", "", t, flags=re.I)
+    t = re.sub(r"^(?:le|la|les|l['’]|un|une|des)\s*", "", t, flags=re.I)
+    return t.strip() or sujet
+
+
+def _lire_json(u):
+    req = urllib.request.Request(u, headers={"User-Agent": "QuentStudio/1.0 (logiciel personnel de vidéos de vulgarisation)"})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def faits_wikipedia(sujet, journal=print):
+    """Faits du sujet tirés de l'introduction de l'article Wikipédia en français (source des dates et chiffres)."""
+    q = nettoyer_sujet(sujet)
+    lire = _lire_json
+    try:
+        r = lire("https://fr.wikipedia.org/w/api.php?" + urllib.parse.urlencode({"action": "query", "list": "search", "srsearch": q, "srlimit": 1, "format": "json"}))
+        res = r.get("query", {}).get("search", [])
+        if not res:
+            return None, []
+        titre = res[0]["title"]
+        r = lire("https://fr.wikipedia.org/w/api.php?" + urllib.parse.urlencode({"action": "query", "prop": "extracts", "exintro": 1, "explaintext": 1, "redirects": 1, "titles": titre, "format": "json"}))
+        texte = " ".join(p.get("extract", "") for p in r.get("query", {}).get("pages", {}).values())
+    except Exception as e:
+        journal(f"Wikipédia indisponible ({e}) : épisode sans chiffres ni dates.")
+        return None, []
+    phrases = [x.strip() for x in re.split(r"(?<=[.!?])\s+", re.sub(r"\s+", " ", texte)) if 20 < len(x.strip()) < 320]
+    return titre, phrases[:14]
 
 
 def _deja(titre):
@@ -503,7 +537,7 @@ def _video_ia_liste(journal=print, exclus=()):
 def pregenerer(n=20, journal=print, avancement=lambda i, n: None):
     """n épisodes écrits en avance par l'IA (sujets de la liste), mis en réserve et en bibliothèque."""
     if story.ollama_etat() != "ok":
-        raise RuntimeError("QuentInvest a besoin de l'IA locale pour écrire des épisodes en avance (les fiches sont déjà prêtes).")
+        raise RuntimeError("QuentInvest a besoin de l'IA pour écrire des épisodes en avance : clique sur « Installer l'IA » (les fiches sont déjà prêtes).")
     r = reserve()
     faits = 0
     for i in range(n):
@@ -530,13 +564,18 @@ def scenario(mode="auto", sujet="", journal=print):
     verifier = False
     if sujet:
         f = fiche_pour(sujet)
+        faits = f["faits"] if f else []
+        if not f and ia:  # sujet libre : les faits viennent de Wikipédia (dates et chiffres vérifiables)
+            source, faits = faits_wikipedia(sujet, journal)
+            if source:
+                journal(f"Faits tirés de Wikipédia : « {source} » ({len(faits)} phrases)")
         if f and (not ia or mode == "bibliotheque"):
             ep, origine = clean_episode(episode_depuis_fiche(f), f["faits"]), "fiche"
         elif ia:
-            ep, origine, err = None, "IA locale" + (" + fiche" if f else ""), None
+            ep, origine, err = None, "IA" + (" + fiche" if f else " + Wikipédia" if faits else ""), None
             for _ in range(4):
                 try:
-                    ep = ia_episode(sujet, f["faits"] if f else ())
+                    ep = ia_episode(sujet, faits)
                     break
                 except Exception as e:
                     err = e
@@ -548,8 +587,8 @@ def scenario(mode="auto", sujet="", journal=print):
                     raise RuntimeError(f"L'IA locale n'a pas écrit d'épisode valide ({err}). Réessaie ou reformule le sujet.")
             verifier = not f
         else:
-            raise RuntimeError("Aucune fiche sur ce sujet et IA locale indisponible : lance Ollama, ou choisis un sujet "
-                               "parmi : " + ", ".join(x["titre"] for x in FICHES) + ".")
+            raise RuntimeError("Pour un sujet libre, l'IA doit être installée : clique sur « Installer l'IA » (une seule fois), "
+                               "ou choisis un sujet prêt : " + ", ".join(x["titre"] for x in FICHES) + ".")
     else:
         r = reserve()
         if r and mode != "bibliotheque":

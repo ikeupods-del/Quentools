@@ -48,6 +48,7 @@
   <div class="switch" role="tablist" aria-label="Série">
     <button data-serie="quentools">Quentools</button><button data-serie="quentinvest">QuentInvest</button>
   </div></header>
+<div id="majBandeau" hidden style="background:#2b3a1a;color:#e9f7c8;padding:10px 24px;display:flex;gap:12px;align-items:center"><span id="majTxt"></span><button id="majGo" class="principal" hidden>Redémarrer pour installer</button></div>
 <main>
   <section>
     <div class="carte">
@@ -74,7 +75,7 @@
       <div class="compteur"><b id="nbBiblio">–</b><span>scénarios dans la bibliothèque</span></div>
       <div class="compteur"><b id="nbReserve">–</b><span>prêts en avance</span></div>
       <div class="compteur"><b id="nbHisto">–</b><span id="libHisto">sketchs déjà publiés</span></div>
-      <div class="compteur"><span>IA locale</span><br><span class="pastille" id="ia">–</span><br><span>Voix</span><br><span class="pastille" id="voix">–</span></div>
+      <div class="compteur"><span>IA locale</span><br><span class="pastille" id="ia">–</span><br><button id="iaInstaller" hidden style="margin-top:6px;padding:6px 10px;font-size:12px">Installer l’IA (2,5 Go, une fois)</button><br><span>Voix</span><br><span class="pastille" id="voix">–</span></div>
     </div>
     <div class="carte" style="margin-top:16px">
       <button id="avance" style="width:100%">Générer 20 scénarios en avance</button>
@@ -89,6 +90,8 @@ const post = (u, b = {}) => fetch(u, { method: 'POST', body: JSON.stringify(b) }
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => post('/api/video', { mode: b.dataset.mode }).then(maj));
 $('#avance').onclick = () => post('/api/avance').then(maj);
+$('#majGo').onclick = () => post('/api/maj/installer').then(r => { if (r.ok) $('#majTxt').textContent = 'Installation… QuentStudio va redémarrer.'; });
+$('#iaInstaller').onclick = () => post('/api/ia/installer').then(r => { if (r.message) alert(r.message); maj(); });
 $('#surSujet').onclick = () => { const s = $('#sujet').value.trim(); if (!s) return $('#sujet').focus(); post('/api/video', { mode: 'auto', sujet: s }).then(maj); };
 $('#sujet').onkeydown = e => { if (e.key === 'Enter') $('#surSujet').click(); };
 document.querySelectorAll('[data-serie]').forEach(b => b.onclick = () => post('/api/serie', { serie: b.dataset.serie }).then(r => { if (!r.ok) alert('Attends la fin du travail en cours pour changer de série.'); vus = ''; maj(); }));
@@ -97,6 +100,10 @@ async function maj() {
   let e;
   try { e = await fetch('/api/etat').then(r => r.json()); } catch (_) { return; }
   const invest = e.serie === 'quentinvest';
+  const m = e.maj || {};
+  $('#majBandeau').hidden = !['telechargement', 'pret'].includes(m.etat);
+  $('#majTxt').textContent = m.etat === 'pret' ? `QuentStudio ${m.version} est prête (installée à la fermeture).` : m.etat === 'telechargement' ? `Nouvelle version ${m.version} : téléchargement ${Math.round((m.avancement || 0) * 100)} %` : '';
+  $('#majGo').hidden = m.etat !== 'pret';
   document.body.classList.toggle('invest', invest);
   document.querySelectorAll('[data-serie]').forEach(b => { b.classList.toggle('actif', b.dataset.serie === e.serie); b.disabled = !!e.travail || !!e.avance; });
   $('#nomSerie').textContent = e.series[e.serie].nom;
@@ -110,7 +117,10 @@ async function maj() {
   $('#nbReserve').textContent = e.reserve;
   $('#nbHisto').textContent = e.historique;
   $('#libHisto').textContent = invest ? 'sujets déjà publiés' : 'sketchs déjà publiés';
-  $('#ia').textContent = e.ia === 'ok' ? e.modele : e.ia === 'modele absent' ? 'modèle à télécharger' : 'absente (mode sans IA)';
+  const ins = e.ia_install || {};
+  $('#ia').textContent = e.ia === 'ok' ? e.modele : ins.en_cours ? `installation ${Math.round((ins.avancement || 0) * 100)} %` : e.ia === 'modele absent' ? 'à installer' : 'absente (mode sans IA)';
+  $('#iaInstaller').hidden = !(e.ia === 'modele absent' && !ins.en_cours);
+  if (ins.erreur && !ins.en_cours) $('#iaInstaller').textContent = 'Reprendre l’installation de l’IA';
   $('#ia').className = 'pastille' + (e.ia === 'ok' ? ' ok' : '');
   $('#voix').textContent = e.voix === 'piper' ? 'Piper (Pierre, Jessica)' : 'bips de secours';
   $('#voix').className = 'pastille' + (e.voix === 'piper' ? ' ok' : '');
