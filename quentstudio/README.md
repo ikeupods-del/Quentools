@@ -41,6 +41,16 @@ open -a QuentStudio
 
 Les vidéos sont enregistrées dans `~/Movies/QuentStudio/videos`. À côté de chaque vidéo, un fichier `.json` donne le texte, les temps de chaque plan, la voix utilisée et l'appel à s'abonner. Le bouton **AirDrop** ouvre directement la fenêtre de partage. S'il échoue, la vidéo est montrée dans le Finder et la fenêtre AirDrop du Finder s'ouvre.
 
+## Dans la vidéo, et prêt à publier
+
+- **Mots surlignés** : le mot en train d'être dit s'allume dans le sous-titre (minutage estimé d'après la longueur des mots, pas une reconnaissance de la voix).
+- **Barre de progression** en haut, **chiffre clé** en grand dans QuentInvest (« 22,6 % », « 1929 »…, repris tel quel de la réplique).
+- **Musique de fond** (bibliothèque libre de droits de QuentMovie, dossier `sons/`) qui baisse quand quelqu'un parle, **bruitage** entre les sketchs ou parties, « ba-dum-tss » après la chute des sketchs Quentools.
+- Chaque option se coupe dans la carte « Dans la vidéo » (enregistrée dans `options.json`).
+- À côté de chaque vidéo : **texte de publication** (`.txt` : titre, description, hashtags, mention pour QuentInvest ; bouton « Texte » = copié) et **couverture** (`-couverture.png`, 1080×1920).
+- **Relire et modifier le texte avant de fabriquer** (case à cocher) : le texte proposé s'affiche, chaque réplique se modifie, la longueur et les mots sont contrôlés avant la fabrication ; une vidéo modifiée est marquée « relu et modifié ». Les faits de la fiche (source des chiffres) sont affichés pour vérifier.
+- **Plusieurs vidéos d'un coup** : 1, 3, 5 ou 10 à la suite.
+
 ## Scénarios quasi infinis (Quentools)
 
 - **IA locale (Ollama, `llama3.2:3b`)** : elle écrit de nouveaux sketchs en continu. Elle s'inspire de 4 exemples tirés de la bibliothèque et d'une idée de départ au hasard, et reçoit les titres déjà utilisés à éviter. Le JSON est imposé (schéma) puis contrôlé par `story.clean_sketch` : 4 répliques, les deux personnages, 22 mots maximum, ni marque, ni vraie personne, ni grossièreté.

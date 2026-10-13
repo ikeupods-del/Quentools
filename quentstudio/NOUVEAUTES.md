@@ -2,6 +2,13 @@
 
 Chaque section devient le texte de la version publiée. Changer aussi `version.txt` : une version déjà publiée n'est pas republiée.
 
+## 1.3.0
+- **Des vidéos plus vivantes** : le mot en train d'être dit s'allume dans le sous-titre, une barre de progression avance en haut, et dans QuentInvest le chiffre important de la réplique apparaît en grand (« 22,6 % », « 1929 »…).
+- **Musique de fond** qui baisse toute seule quand Max, Pépite, Quentools ou Glitchou parlent, **bruitage** entre les sketchs et un « ba-dum-tss » après chaque chute. Tout se règle (ou se coupe) dans la carte « Dans la vidéo ».
+- **Relire et modifier le texte avant de fabriquer** : coche la case, le texte s'affiche, tu changes ce que tu veux, puis « Fabriquer la vidéo ». QuentStudio vérifie la longueur des répliques avant.
+- **Plusieurs vidéos d'un coup** (3, 5 ou 10).
+- **Prêt à publier** : à côté de chaque vidéo, un texte de publication (titre, description, hashtags) copié d'un clic avec le bouton « Texte », et une image de couverture (bouton « Couverture »).
+
 ## 1.2.1
 - **Plus de plantage avec l'IA locale** : l'IA tourne maintenant à part. Si elle plante, QuentStudio reste ouvert, relance l'IA sans la puce graphique (un peu plus lente, mais stable) et s'en souvient pour les fois suivantes. Si l'IA ne marche vraiment pas, la vidéo est faite sans elle (fiches et bibliothèque) au lieu de fermer le logiciel.
 - Ce qui s'est passé est noté dans le fichier ia-journal.txt du dossier Vidéos → QuentStudio, pour pouvoir corriger la cause.

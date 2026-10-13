@@ -612,7 +612,7 @@ def scenario(mode="auto", sujet="", journal=print):
             return v
         libres = [f for f in FICHES if not _deja(f["titre"])]
         if libres and (mode != "ia" or not ia):
-            f = libres[0]
+            f = random.choice(libres[:6])  # un peu de variété (et « Autre texte » propose vraiment un autre sujet)
             ep, origine = clean_episode(episode_depuis_fiche(f), f["faits"]), "fiche"
         elif ia:
             v = _video_ia_liste(journal)
@@ -622,7 +622,8 @@ def scenario(mode="auto", sujet="", journal=print):
             f = min(FICHES, key=lambda x: random.random())
             ep, origine = clean_episode(episode_depuis_fiche(f), f["faits"]), "fiche (déjà publiée)"
             journal("Toutes les fiches ont été publiées : lance l'IA locale pour de nouveaux sujets, ou donne un sujet.")
-    v = {"sketchs": ep["sketchs"], "question": ep["question"], "mode": origine, "verifier": verifier, "episode": ep["titre"]}
+    v = {"sketchs": ep["sketchs"], "question": ep["question"], "mode": origine, "verifier": verifier, "episode": ep["titre"],
+         "faits": list(faits if sujet else f["faits"])[:14], "sujet": sujet}
     if origine.startswith("IA"):
         _ajouter(v)
     return v

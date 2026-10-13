@@ -259,7 +259,7 @@ def fond_lieu(lieu, S=None):
     return im
 
 
-def image_plan(sketch, rang, plan, S=None):
+def image_plan(sketch, rang, plan, S=None, avec_texte=True):
     """Image de base d'un plan (fond, titre, sous-titre) ; les personnages sont posés à part."""
     S = S or series.serie("quentools")
     im = fond_lieu(sketch["lieu"], S)
@@ -267,13 +267,171 @@ def image_plan(sketch, rang, plan, S=None):
     etiquette = S["etiquette"].format(n=rang + 1, total=config.SKETCHS, episode=sketch.get("episode", "")).upper()
     texte_ajuste(g, etiquette, (60, 80, W - 60, 135), tailles=(38, 26), lignes_max=1, couleur=S["couleurs"]["G"])
     texte_ajuste(g, sketch["titre"], (60, 140, W - 60, 340), tailles=(74, 40), lignes_max=2)
-    # sous-titre
-    couleur = S["couleurs"][plan["qui"]]
-    g.rounded_rectangle([40, 1290, W - 40, 1660], radius=40, fill=(14, 15, 22), outline=couleur, width=6)
-    g.text((90, 1312), S["noms"][plan["qui"]], font=police(40), fill=couleur)
-    texte_ajuste(g, plan["texte"], (80, 1370, W - 80, 1635), tailles=(68, 38), lignes_max=4)
+    if avec_texte:
+        im.paste(sous_titre(plan, S, None), (ST_X, ST_Y))
     mention(g, S)
     return im
+
+
+# ---------- Sous-titre mot par mot, chiffre clé, barre de progression ----------
+ST_X, ST_Y, ST_W, ST_H = 30, 1280, W - 60, 392
+
+
+def disposer(texte, largeur, hauteur, tailles=(68, 38), lignes_max=4, interligne=1.18):
+    """Mise en page du sous-titre : taille, et position (x, y) de chaque mot dans la boîte."""
+    for taille in range(tailles[0], tailles[1] - 1, -2):
+        f = police(taille)
+        lignes = couper(texte, f, largeur)
+        h = len(lignes) * taille * interligne
+        if len(lignes) <= lignes_max and h <= hauteur and all(f.getlength(l) <= largeur for l in lignes):
+            break
+    mots, y, esp = [], (hauteur - h) / 2, f.getlength(" ")
+    for l in lignes:
+        x = (largeur - f.getlength(l)) / 2
+        for m in l.split(" "):
+            mots.append((m, x, y))
+            x += f.getlength(m) + esp
+        y += taille * interligne
+    return f, mots
+
+
+def sous_titre(plan, S, actif):
+    """Bandeau du sous-titre ; le mot « actif » (en cours de prononciation) est éclairé à la couleur du personnage."""
+    couleur = S["couleurs"][plan["qui"]]
+    im = Image.new("RGB", (ST_W, ST_H), NUIT)
+    g = ImageDraw.Draw(im)
+    g.rounded_rectangle([10, 10, ST_W - 10, ST_H - 12], radius=40, fill=(14, 15, 22), outline=couleur, width=6)
+    g.text((60, 32), S["noms"][plan["qui"]], font=police(40), fill=couleur)
+    f, mots = disposer(plan["texte"], ST_W - 100, 265)
+    for k, (m, x, y) in enumerate(mots):
+        if k == actif:
+            l = f.getlength(m)
+            g.rounded_rectangle([50 + x - 10, 90 + y - 4, 50 + x + l + 10, 90 + y + f.size * 1.08], radius=14, fill=couleur)
+            g.text((50 + x, 90 + y), m, font=f, fill=(14, 15, 22))
+        else:
+            g.text((50 + x, 90 + y), m, font=f, fill=BLANC)
+    return im
+
+
+def instants_mots(texte, duree):
+    """Début de chaque mot (s après le début de la voix), d'après sa longueur et la ponctuation qui suit."""
+    mots = insecables(texte).split(" ")
+    poids = [len(re.sub(r"\W", "", m)) + 2 + (5 if re.search(r"[,;:]$", m) else 8 if re.search(r"[.!?…»]$", m) else 0) for m in mots]
+    total, t, out = sum(poids) or 1, 0.0, []
+    for p in poids:
+        out.append(t * duree / total)
+        t += p
+    return out
+
+
+RE_CHIFFRE = re.compile(r"(\d[\d\s\u00a0\u202f]*(?:[.,]\d+)?)\s?(%|€|\$|milliards?(?: d['’]euros| de dollars)?|millions?(?: d['’]euros)?|dollars|euros|points|ans|fois)?", re.I)
+
+
+def chiffre_cle(texte):
+    """Chiffre marquant d'une réplique (« 22,6 % », « 3 300 milliards d'euros », « 1929 ») ou None."""
+    meilleurs = []
+    for m in RE_CHIFFRE.finditer(texte):
+        n, u = re.sub(r"[\s\u00a0\u202f]+", " ", m.group(1)).strip(), (m.group(2) or "").strip()
+        n = n.rstrip(" ")
+        if not re.search(r"\d", n):
+            continue
+        if texte[m.end():m.end() + 2].lower().startswith("er"):  # « 1er juin »
+            continue
+        brut = re.sub(r"\D", "", n)
+        if u:
+            meilleurs.append((2, f"{n}\u00a0{u}" if u not in ("%", "€", "$") else f"{n}\u00a0{u}"))
+        elif len(brut) == 4 and 1000 <= int(brut) <= 2099:
+            meilleurs.append((1, n))
+        elif len(brut) >= 3:
+            meilleurs.append((0, n))
+    if not meilleurs:
+        return None
+    return max(meilleurs, key=lambda x: x[0])[1][:26]
+
+
+def badge_chiffre(texte, couleur):
+    """Grande étiquette du chiffre clé (image RGBA)."""
+    for taille in range(120, 50, -6):
+        f = police(taille)
+        if f.getlength(texte) <= 800:
+            break
+    lw, lh = int(f.getlength(texte)) + 90, taille + 70
+    b = Image.new("RGBA", (lw, lh), (0, 0, 0, 0))
+    g = ImageDraw.Draw(b)
+    g.rounded_rectangle([0, 0, lw - 1, lh - 1], radius=36, fill=(14, 15, 22, 235), outline=couleur + (255,), width=6)
+    g.text((45, 22), texte, font=f, fill=couleur)
+    return b
+
+
+def barre_progression(octets, image_n, couleur):
+    """Barre de progression en haut de l'image (écrite sur les octets bruts : aucune copie de l'image)."""
+    hb, w = 10, int(W * (image_n + 1) / TOTAL)
+    ligne = bytes(couleur) * w + bytes((60, 62, 76)) * (W - w)
+    return ligne * hb, memoryview(octets)[hb * W * 3:]
+
+
+# ---------- Ambiance sonore : musique de fond (baissée sous les voix) et bruitages ----------
+SONS = config.RESSOURCES / "sons"
+_sons = {}
+
+
+def charger_son(nom, ffmpeg=None):
+    """Son livré (sons/<nom>.mp3) en échantillons mono au taux de la voix, ou None."""
+    if nom not in _sons:
+        f = SONS / f"{nom}.mp3"
+        a = None
+        if f.exists():
+            try:
+                r = subprocess.run([ffmpeg or ffmpeg_exe(), "-v", "error", "-i", str(f), "-ac", "1", "-ar", str(voice.TAUX), "-f", "s16le", "-"],
+                                   capture_output=True, timeout=60)
+                if r.returncode == 0 and r.stdout:
+                    a = array.array("h")
+                    a.frombytes(r.stdout[:len(r.stdout) // 2 * 2])
+                    if sys.byteorder == "big":
+                        a.byteswap()
+            except Exception:
+                a = None
+        _sons[nom] = a
+    return _sons[nom]
+
+
+def ajouter_musique(mix, voix, nom, volume, debut_fin, ffmpeg=None):
+    """Musique en boucle sous tout le montage : basse quand quelqu'un parle, un peu plus présente sinon, fondu à la fin."""
+    m = charger_son(nom, ffmpeg)
+    if not m or volume <= 0:
+        return False
+    n, bloc = len(mix), voice.TAUX // 20  # enveloppe calculée par tranches de 50 ms
+    parle = []
+    for k in range(0, n, bloc):
+        t = voix[k:k + bloc:8]
+        parle.append((sum(x * x for x in t) / len(t)) ** 0.5 > 500 if len(t) else False)
+    # tient compte d'un petit délai avant et après la voix, pour ne pas « pomper »
+    garde = [any(parle[max(0, i - 3):i + 6]) for i in range(len(parle))]
+    bas, haut = 0.07 * volume / 100, 0.16 * volume / 100
+    g, fondu = bas, int(1.5 * voice.TAUX)
+    pas_g = 1 / (voice.TAUX * 0.25)
+    fin_fondu = n - fondu
+    L = len(m)
+    for k in range(n):
+        cible = bas if garde[k // bloc] else haut
+        g += max(-pas_g, min(pas_g, cible - g))
+        e = g * (1 if k < fin_fondu else (n - k) / fondu)
+        x = mix[k] + int(m[k % L] * e)
+        mix[k] = 32767 if x > 32767 else -32767 if x < -32767 else x
+    return True
+
+
+def ajouter_bruitage(mix, nom, instant, gain=0.6, ffmpeg=None):
+    a = charger_son(nom, ffmpeg)
+    if not a:
+        return False
+    d = int(instant * voice.TAUX)
+    for k in range(len(a)):
+        i = d + k
+        if 0 <= i < len(mix):
+            x = mix[i] + int(a[k] * gain)
+            mix[i] = 32767 if x > 32767 else -32767 if x < -32767 else x
+    return True
 
 
 def mention(g, S):
@@ -324,6 +482,62 @@ def image_fin(question, cta_texte=None, S=None):
     return im
 
 
+# ---------- Couverture et texte de publication ----------
+def couverture(video, S):
+    """Image de couverture 1080×1920 (miniature YouTube Shorts, Instagram) : grand titre et les deux personnages."""
+    s0 = video["sketchs"][0]
+    im = fond_lieu(s0["lieu"], S)
+    g = ImageDraw.Draw(im)
+    g.rectangle([0, 0, W, 375], fill=NUIT)
+    titre = video.get("episode") or s0["titre"]
+    sur = S["nom"].upper() if video.get("episode") else f"{S['nom'].upper()} · {len(video['sketchs'])} SKETCHS"
+    f = police(44)
+    g.text(((W - f.getlength(sur)) / 2, 70), sur, font=f, fill=S["couleurs"]["G"])
+    texte_ajuste(g, titre, (50, 130, W - 50, 360), tailles=(104, 54), lignes_max=2)
+    gq = SPRITES[S["sprites"]["Q"]](True, True)
+    gg = SPRITES[S["sprites"]["G"]](False, False)
+    gq = gq.resize((int(gq.width * 1.25), int(gq.height * 1.25)), Image.LANCZOS)
+    gg = gg.resize((int(gg.width * 1.25), int(gg.height * 1.25)), Image.LANCZOS)
+    im.paste(gq, (30, 1300 - gq.height), gq)
+    im.paste(gg, (W - gg.width - 30, 1180 - gg.height + 120), gg)
+    g.rectangle([0, 1300, W, H], fill=NUIT)
+    texte_ajuste(g, video["question"], (70, 1360, W - 70, 1640), tailles=(70, 40), lignes_max=3, couleur=BLANC)
+    mention(g, S)
+    return im
+
+
+def _diese(mot):
+    import unicodedata
+    m = unicodedata.normalize("NFD", mot)
+    m = "".join(c for c in m if unicodedata.category(c) != "Mn")
+    return "#" + re.sub(r"[^A-Za-z0-9]", "", m.title().replace(" ", "")).lower()
+
+
+def texte_publication(video, serie):
+    """Titre, description et hashtags prêts à coller sous la vidéo (aucun lien, aucun prix)."""
+    if serie == "quentinvest":
+        ep = video.get("episode") or video["sketchs"][0]["titre"]
+        sujets = []
+        try:
+            import invest
+            f = invest.fiche_pour(ep)
+            sujets = [c for c in (f or {}).get("cles", []) if len(c) > 2 and not c.isdigit()][:3]
+        except Exception:
+            pass
+        tags = ["#economie", "#finance", "#argent", "#apprendre"] + [_diese(c) for c in sujets] + ["#quentinvest", "#pourtoi"]
+        lignes = [f"{ep} : expliqué en 1 minute 💡", "", video["question"], "", "Vulgarisation, pas un conseil en investissement."]
+    else:
+        titres = [s["titre"] for s in video["sketchs"]]
+        tags = ["#humour", "#sketch", "#comedie", "#drole", "#quentools", "#glitchou", "#pourtoi"]
+        lignes = [f"{titres[0]} 😂", "", "Au programme : " + " · ".join(titres), "", video["question"]]
+    vus, uniques = set(), []
+    for t in tags:
+        if len(t) > 2 and t not in vus:
+            vus.add(t)
+            uniques.append(t)
+    return "\n".join(lignes + ["", " ".join(uniques)]) + "\n"
+
+
 # ---------- Rendu ----------
 def rendre(video, sortie, journal=print, avancement=lambda f: None, serie=None):
     serie = serie or config.serie
@@ -363,7 +577,29 @@ def rendre(video, sortie, journal=print, avancement=lambda f: None, serie=None):
     debut_fin = t
     _poser(pistes[cta_qui], son_cta, int((debut_fin / FPS + VOIX_CTA) * voice.TAUX))
     mix = array.array("h", (max(-32767, min(32767, a + b)) for a, b in zip(pistes["Q"], pistes["G"])))
+    voix_seules = array.array("h", mix)
     _poser(mix, voice.ding(), int((debut_fin / FPS + POP) * voice.TAUX), ajouter=True)
+
+    # ambiance : bruitage entre les sketchs (ou parties), ponctuation après la chute, musique de fond sous les voix
+    opts = config.options()
+    durees_voix = [len(a) / voice.TAUX for a in sons]
+    if opts["bruitages"]:
+        for j in range(len(plans)):
+            if j and j % config.PLANS == 0 and S.get("transition"):
+                ajouter_bruitage(mix, S["transition"], max(0, debuts[j] / FPS - 0.12), 0.55, ffmpeg)
+            if S.get("chute") and j % config.PLANS == config.PLANS - 1:
+                fin_plan = (debuts[j] + images[j]) / FPS
+                quand = debuts[j] / FPS + DEBUT_VOIX + durees_voix[j] + 0.05
+                if quand < fin_plan + 0.2:
+                    ajouter_bruitage(mix, S["chute"], quand, 0.45, ffmpeg)
+        if S.get("transition"):
+            ajouter_bruitage(mix, S["transition"], max(0, debut_fin / FPS - 0.12), 0.5, ffmpeg)
+    musique = None
+    if opts["musique"] and S.get("musiques"):
+        graine = int(hashlib.md5("|".join(s["titre"] for s in video["sketchs"]).encode("utf-8")).hexdigest(), 16)
+        musique = S["musiques"][graine % len(S["musiques"])]
+        if not ajouter_musique(mix, voix_seules, musique, opts["volume_musique"], debut_fin / FPS, ffmpeg):
+            musique = None
 
     with tempfile.TemporaryDirectory() as d:
         wav = os.path.join(d, "son.wav")
@@ -376,18 +612,25 @@ def rendre(video, sortie, journal=print, avancement=lambda f: None, serie=None):
                 m = array.array("h", mix)
                 m.byteswap()
             w.writeframes(m.tobytes())
-        _encoder(ffmpeg, wav, sortie, video, plans, images, debuts, debut_fin, pistes, reg["cta_bouton"], cta_texte, avancement, S)
+        _encoder(ffmpeg, wav, sortie, video, plans, images, debuts, debut_fin, pistes, reg["cta_bouton"], cta_texte, avancement, S,
+                 durees_voix, opts)
 
     meta = {
         "serie": serie, "episode": video.get("episode"), "a_verifier": bool(video.get("verifier")),
         "titres": [s["titre"] for s in video["sketchs"]], "question": video["question"], "mode": video.get("mode"),
-        "voix": v.mode, "locuteurs": getattr(v, "spk", None), "tempo": round(tempo, 3),
+        "voix": v.mode, "locuteurs": getattr(v, "spk", None), "tempo": round(tempo, 3), "musique": musique,
+        "options": opts, "chiffres": [c for c in (chiffre_cle(p["texte"]) for _, _, p in plans) if c] if S.get("chiffres") else [],
         "cta": {"qui": cta_qui, "texte": cta_texte, "debut": round(debut_fin / FPS, 3)},
         "plans": [{"qui": p["qui"], "texte": p["texte"], "debut": round(d / FPS, 3), "duree": round(nb / FPS, 3),
                    "voix": round(len(a) / voice.TAUX, 3)} for (s, i, p), d, nb, a in zip(plans, debuts, images, sons)],
         "sketchs": video["sketchs"],
     }
     Path(sortie).with_suffix(".json").write_text(json.dumps(meta, ensure_ascii=False, indent=1), "utf-8")
+    try:  # à côté de la vidéo : texte à publier et couverture
+        Path(sortie).with_suffix(".txt").write_text(texte_publication(video, serie), "utf-8")
+        couverture(video, S).save(Path(sortie).with_name(Path(sortie).stem + "-couverture.png"))
+    except Exception as e:
+        journal(f"Couverture ou texte de publication impossible : {e}")
     return meta
 
 
@@ -420,7 +663,11 @@ def _encodeur(ffmpeg):
     return ["-c:v", "libx264", "-preset", "veryfast", "-crf", "20"]
 
 
-def _encoder(ffmpeg, wav, sortie, video, plans, images, debuts, debut_fin, pistes, bouton, cta_texte, avancement, S):
+def _encoder(ffmpeg, wav, sortie, video, plans, images, debuts, debut_fin, pistes, bouton, cta_texte, avancement, S, durees_voix=None, opts=None):
+    opts = opts or config.options()
+    durees_voix = durees_voix or [0.0] * len(plans)
+    karaoke, barre = opts["karaoke"], opts["barre"]
+    coul_barre = S["couleurs"]["G"]
     bq, bg = _bouches(pistes["Q"], TOTAL), _bouches(pistes["G"], TOTAL)
     spr = {(c, o, p): SPRITES[S["sprites"][c]](o, p)
            for c in "QG" for o in (False, True) for p in (False, True)}
@@ -429,21 +676,50 @@ def _encoder(ffmpeg, wav, sortie, video, plans, images, debuts, debut_fin, piste
            "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-ar", "48000", "-frames:v", str(TOTAL),
            "-t", f"{config.DUREE:.3f}", "-movflags", "+faststart", str(sortie)]
     pr = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    def ecrire(octets, img_n):
+        if barre:
+            haut, reste = barre_progression(octets, img_n, coul_barre)
+            pr.stdin.write(haut)
+            pr.stdin.write(reste)
+        else:
+            pr.stdin.write(octets)
+
+    def garder(cache, cle, octets, maxi=40):  # mémoire bornée (MacBook Air)
+        cache[cle] = octets
+        if len(cache) > maxi:
+            cache.pop(next(iter(cache)))
     try:
         f = 0
-        for (s, rang, p), debut, nb in zip(plans, debuts, images):
-            base = image_plan(s, rang, p, S)
-            cache = {}
+        for (s, rang, p), debut, nb, dv in zip(plans, debuts, images, durees_voix):
+            base = image_plan(s, rang, p, S, avec_texte=not karaoke)
+            inst = instants_mots(p["texte"], dv) if karaoke and dv > 0 else None
+            ch = chiffre_cle(p["texte"]) if S.get("chiffres") and opts["chiffres"] else None
+            badge = badge_chiffre(ch, S["couleurs"]["G"]) if ch else None
+            bandeaux, cache = {}, {}
             for k in range(nb):
                 img_n = debut + k
                 bob = int(4 * (1 + math.sin(img_n / FPS * 2 * math.pi * 0.9)))  # Glitchou flotte
-                cle = (bq[img_n], bg[img_n], bob)
+                t = k / FPS - DEBUT_VOIX
+                actif = -1
+                if inst and 0 <= t <= dv + 0.1:
+                    actif = max(i for i, x in enumerate(inst) if x <= t)
+                pop = min(k, 7) if badge else 0
+                cle = (bq[img_n], bg[img_n], bob, actif, pop)
                 if cle not in cache:
                     im = base.copy()
+                    if badge:  # le chiffre clé arrive avec un petit rebond
+                        e = (0.55, 0.8, 1.02, 1.12, 1.08, 1.03, 1.01, 1.0)[pop]
+                        b = badge if e == 1.0 else badge.resize((max(1, int(badge.width * e)), max(1, int(badge.height * e))), Image.LANCZOS)
+                        im.paste(b, (int(W - 70 - badge.width / 2 - b.width / 2), int(520 - b.height / 2)), b)
                     im.paste(*_place(spr[("Q", bq[img_n], p["qui"] == "Q")], 90, 1240 - 660))
                     im.paste(*_place(spr[("G", bg[img_n], p["qui"] == "G")], 640, 760 + bob * 6))
-                    cache[cle] = im.tobytes()
-                pr.stdin.write(cache[cle])
+                    if karaoke:
+                        if actif not in bandeaux:
+                            bandeaux[actif] = sous_titre(p, S, actif)
+                        im.paste(bandeaux[actif], (ST_X, ST_Y))
+                    garder(cache, cle, im.tobytes())
+                ecrire(cache[cle], img_n)
                 f += 1
             avancement(0.15 + 0.8 * f / TOTAL)
         bases = {False: image_fin(video["question"], None, S), True: image_fin(video["question"], cta_texte, S)}
@@ -464,10 +740,8 @@ def _encoder(ffmpeg, wav, sortie, video, plans, images, debuts, debut_fin, piste
                 if pas_e > 0:
                     b = bouton_abonner(bouton, pas_e, angle)
                     im.paste(b, (int((W - b.width) / 2), int(1300 + 80 - b.height / 2)), b)
-                cache[cle] = im.tobytes()
-                if len(cache) > 64:
-                    cache.pop(next(iter(cache)))
-            pr.stdin.write(cache[cle])
+                garder(cache, cle, im.tobytes(), 64)
+            ecrire(cache[cle], img_n)
         pr.stdin.close()
     except BrokenPipeError:
         pass

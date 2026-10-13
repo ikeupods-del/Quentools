@@ -42,7 +42,7 @@ iconutil -c icns "$B/QuentStudio.iconset" -o "$B/QuentStudio.icns"
 echo "▶ Application"
 "$B/venv/bin/pyinstaller" --noconfirm --log-level WARN --windowed --name QuentStudio \
   --icon "$B/QuentStudio.icns" --osx-bundle-identifier fr.quentools.quentstudio --target-arch arm64 \
-  --add-data "$SRC/ui.html:." --add-data "$SRC/version.txt:." --add-data "$SRC/persos/*.png:persos" \
+  --add-data "$SRC/ui.html:." --add-data "$SRC/version.txt:." --add-data "$SRC/persos/*.png:persos" --add-data "$SRC/sons/*.mp3:sons" \
   --add-binary "$B/bin/ffmpeg:bin" --add-binary "$B/bin/airdrop:bin" \
   --collect-all piper --collect-all onnxruntime --collect-all webview --collect-all llama_cpp \
   --hidden-import AppKit --hidden-import Foundation --hidden-import WebKit --hidden-import objc \
