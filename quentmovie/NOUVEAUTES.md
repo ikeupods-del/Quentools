@@ -3,6 +3,11 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.34.0
+- **Nouvelle piste « Titres » (T)**, en haut de la timeline : les titres ne dépendent plus des clips. Clique un modèle de l'onglet Titres (ou ＋ dans l'en-tête de la piste) : il se pose à la tête de lecture. Écris ton texte à droite, glisse le bloc pour le déplacer, étire ses bords pour changer sa durée (il s'aimante aux coupes et aux repères). Un titre peut passer par-dessus une coupe entre deux clips.
+- Les titres de la piste s'affichent aussi dans la lecture immédiate et dans l'aperçu, et l'œil de la piste permet de les masquer.
+- Les écrans plein cadre (générique, compte à rebours, chapitre façon vlog…) se posent toujours sur un fond, comme avant.
+
 ## 1.33.0
 - **Musique enfin sous la voix** : le niveau de la musique est maintenant calculé par rapport à la voix de la vidéo (environ 18 dB en dessous), quel que soit le fichier de musique. Le curseur de volume reste un réglage autour de ce niveau. Fini la musique « de fond » plus forte que la voix.
 - **Bruitages à leur place** : les bruitages des packs sont calés un peu sous la voix, jamais posés au milieu d'une phrase, et espacés d'au moins 6 secondes.
