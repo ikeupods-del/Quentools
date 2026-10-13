@@ -100,7 +100,7 @@ async function maj() {
   document.body.classList.toggle('invest', invest);
   document.querySelectorAll('[data-serie]').forEach(b => { b.classList.toggle('actif', b.dataset.serie === e.serie); b.disabled = !!e.travail || !!e.avance; });
   $('#nomSerie').textContent = e.series[e.serie].nom;
-  $('#sousTitre').textContent = e.series[e.serie].sous_titre + ' · vidéos 9:16 de 62 s';
+  $('#sousTitre').textContent = e.series[e.serie].sous_titre + ' · vidéos 9:16 de 62 s · version ' + e.version;
   $('[data-mode="bibliotheque"]').textContent = invest ? 'Nouvelle vidéo (fiches)' : 'Nouvelle vidéo (bibliothèque)';
   $('#avance').textContent = invest ? 'Écrire 20 épisodes en avance (IA)' : 'Générer 20 scénarios en avance';
   $('#fiches').style.display = invest ? 'block' : 'none';

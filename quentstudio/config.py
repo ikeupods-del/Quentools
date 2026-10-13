@@ -7,7 +7,19 @@ créer `~/Movies/QuentStudio/config.json`, par exemple
 """
 import json
 import os
+import sys
 from pathlib import Path
+
+# Fichiers livrés avec l'application (ui.html, persos/, bin/) : dossier du code, ou celui de l'app .dmg
+RESSOURCES = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+VERSION = (RESSOURCES / "version.txt").read_text("utf-8").strip() if (RESSOURCES / "version.txt").exists() else "dev"
+
+
+def outil(nom):
+    """Programme livré dans l'application (bin/ffmpeg, bin/airdrop), ou None."""
+    f = RESSOURCES / "bin" / nom
+    return str(f) if f.exists() else None
+
 
 DATA = Path(os.environ.get("QS_DATA") or Path.home() / "Movies" / "QuentStudio")
 VIDEOS = DATA / "videos"

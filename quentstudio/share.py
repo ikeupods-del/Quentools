@@ -35,7 +35,9 @@ app.run()
 
 
 def programme_airdrop():
-    """Compile le partage AirDrop une fois (outils en ligne de commande Xcode requis)."""
+    """Programme de partage AirDrop : livré dans l'application, sinon compilé une fois (outils Xcode requis)."""
+    if config.outil("airdrop"):
+        return Path(config.outil("airdrop"))
     exe = config.DATA / "outils" / "airdrop"
     src = exe.with_suffix(".swift")
     if exe.exists() and src.exists() and src.read_text("utf-8") == SWIFT:
