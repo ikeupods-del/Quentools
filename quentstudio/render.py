@@ -673,7 +673,8 @@ def _encoder(ffmpeg, wav, sortie, video, plans, images, debuts, debut_fin, piste
            for c in "QG" for o in (False, True) for p in (False, True)}
     cmd = [ffmpeg, "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
            "-i", wav, "-map", "0:v", "-map", "1:a"] + _encodeur(ffmpeg) + [
-           "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-ar", "48000", "-frames:v", str(TOTAL),
+           "-pix_fmt", "yuv420p", "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-ac", "2",  # stéréo au niveau des réseaux (-14 LUFS)
+           "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-frames:v", str(TOTAL),
            "-t", f"{config.DUREE:.3f}", "-movflags", "+faststart", str(sortie)]
     pr = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
 

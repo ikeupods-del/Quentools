@@ -2,6 +2,9 @@
 
 Chaque section devient le texte de la version publiée. Changer aussi `version.txt` : une version déjà publiée n'est pas republiée.
 
+## 1.3.2
+- **Voix plus fortes et son en stéréo** : le son est réglé au niveau des réseaux sociaux (TikTok, Instagram) et s'entend sur tous les téléphones et haut-parleurs.
+
 ## 1.3.1
 - **Version sans IA** : un deuxième fichier, QuentStudio-…-sans-ia.dmg, plus léger, sans aucun moteur d'IA, donc sans risque de plantage. Les vidéos se font avec les 43 sujets prêts de QuentInvest et la bibliothèque et le générateur de Quentools. Elle se met à jour toute seule en restant sans IA.
 - **Interrupteur « Utiliser l'IA locale »** dans la version normale : décoché, l'IA n'est jamais lancée.
