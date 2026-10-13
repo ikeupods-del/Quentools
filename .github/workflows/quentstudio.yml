@@ -58,6 +58,8 @@ jobs:
           for v in r.get("videos", []):
               if v["duree"] != "00:01:02.00": ko.append(f"durée {v['serie']} : {v['duree']}")
               if v["voix"] != "piper": ko.append(f"voix {v['serie']} : {v['voix']}")
+              if not v.get("musique"): ko.append(f"musique de fond absente ({v['serie']})")
+              if not (v.get("couverture") and v.get("texte")): ko.append(f"couverture ou texte de publication absent ({v['serie']})")
           print("Échecs : " + ", ".join(ko) if ko else "Application : tout fonctionne")
           sys.exit(1 if ko else 0)
           PY

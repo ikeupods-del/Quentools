@@ -7,6 +7,7 @@
 <style>
   :root { --fond: #16181f; --carte: #1f222c; --bord: #2c303d; --texte: #eceef4; --doux: #9aa0b3; --vert: #c6e84a; --rouge: #e53935; }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body { margin: 0; font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; background: var(--fond); color: var(--texte); }
   header { display: flex; align-items: center; gap: 14px; padding: 18px 24px; border-bottom: 1px solid var(--bord); }
   header h1 { margin: 0; font-size: 22px; }
@@ -42,6 +43,19 @@
   p.sujet { display: none; } body.invest p.sujet { display: block; }
   .sujet input { flex: 1; font: inherit; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--bord); background: #14161d; color: var(--texte); }
   .verif { color: #ffcf6e; }
+  .ligne { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .ligne select { font: inherit; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--bord); background: #14161d; color: var(--texte); }
+  label.case { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+  .options label.case { margin: 7px 0; }
+  .options input[type=range] { width: 100%; }
+  #brouillon { border-color: var(--vert); }
+  #brouillon h3 { margin: 14px 0 6px; font-size: 14px; }
+  #brouillon input, #brouillon textarea { width: 100%; font: inherit; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--bord); background: #14161d; color: var(--texte); }
+  #brouillon textarea { resize: vertical; min-height: 44px; }
+  .replique { display: grid; grid-template-columns: 96px 1fr; gap: 8px; align-items: start; margin: 6px 0; }
+  .replique b { font-size: 12px; padding-top: 10px; }
+  .faits { font-size: 12px; color: var(--doux); margin: 8px 0 0; padding-left: 18px; }
+  .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: #2b3a1a; color: #e9f7c8; padding: 10px 16px; border-radius: 10px; }
   @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -68,9 +82,14 @@
         <button id="surFiche">Créer ce sujet</button>
       </div>
       <p class="doux sujet" id="fichesInfo"></p>
+      <div class="ligne">
+        <label>Nombre de vidéos <select id="nb"><option value="1">1</option><option value="3">3</option><option value="5">5</option><option value="10">10</option></select></label>
+        <label class="case"><input type="checkbox" data-opt="relire"> Relire et modifier le texte avant de fabriquer</label>
+      </div>
       <div class="barre"><i id="barre"></i></div>
       <div id="statut" class="doux">Prêt.</div>
     </div>
+    <div class="carte" id="brouillon" style="margin-top:16px" hidden></div>
     <div class="carte" style="margin-top:16px">
       <b>Vidéos</b> <span class="doux" id="dossier"></span>
       <div class="videos" id="videos"></div>
@@ -87,6 +106,14 @@
       <button id="avance" style="width:100%">Générer 20 scénarios en avance</button>
       <p class="doux" id="avanceTxt">Travaille en arrière-plan : tu peux continuer à faire des vidéos.</p>
     </div>
+    <div class="carte options" style="margin-top:16px"><b>Dans la vidéo</b>
+      <label class="case"><input type="checkbox" data-opt="karaoke"> Mots surlignés pendant qu’ils sont dits</label>
+      <label class="case"><input type="checkbox" data-opt="barre"> Barre de progression en haut</label>
+      <label class="case" id="caseChiffres"><input type="checkbox" data-opt="chiffres"> Chiffre clé affiché en grand</label>
+      <label class="case"><input type="checkbox" data-opt="bruitages"> Bruitages de transition</label>
+      <label class="case"><input type="checkbox" data-opt="musique"> Musique de fond (baisse quand on parle)</label>
+      <input type="range" min="20" max="200" step="10" data-opt="volume_musique" aria-label="Volume de la musique"><span class="doux" id="volTxt"></span>
+    </div>
     <div class="carte" style="margin-top:16px"><b>Journal</b><pre id="journal"></pre></div>
   </aside>
 </main>
@@ -94,12 +121,39 @@
 const $ = s => document.querySelector(s);
 const post = (u, b = {}) => fetch(u, { method: 'POST', body: JSON.stringify(b) }).then(r => r.json());
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => post('/api/video', { mode: b.dataset.mode }).then(maj));
+const nb = () => +$('#nb').value || 1;
+document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => post('/api/video', { mode: b.dataset.mode, n: nb() }).then(maj));
+document.querySelectorAll('[data-opt]').forEach(el => el.onchange = () => post('/api/options', { [el.dataset.opt]: el.type === 'checkbox' ? el.checked : +el.value }).then(maj));
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 2600); }
+let sigBrouillon = '';
+function afficherBrouillon(e) {
+  const br = e.brouillon, el = $('#brouillon');
+  const sig = br ? JSON.stringify(br) : '';
+  if (sig === sigBrouillon) return;
+  sigBrouillon = sig; el.hidden = !br;
+  if (!br) { el.innerHTML = ''; return; }
+  const v = br.video, noms = e.series[br.serie].noms, invest = br.serie === 'quentinvest';
+  el.innerHTML = `<b>Texte à relire</b> <span class="doux">${esc(v.episode || '')} · ${esc(v.mode || '')}</span>
+    ${v.verifier ? '<p class="verif">Sujet libre : vérifie les faits et les chiffres avant de fabriquer.</p>' : ''}
+    ${v.sketchs.map((s, i) => `<h3>${invest ? 'Partie' : 'Sketch'} ${i + 1}</h3><input data-t="${i}" value="${esc(s.titre)}" maxlength="60" aria-label="Titre">
+      ${s.plans.map((p, j) => `<div class="replique"><b>${esc(noms[p.qui])}</b><textarea data-p="${i}:${j}" maxlength="120" rows="2">${esc(p.texte)}</textarea></div>`).join('')}`).join('')}
+    <h3>Question pour les commentaires</h3><input id="brQ" value="${esc(v.question)}" maxlength="90">
+    ${(v.faits || []).length ? `<details style="margin-top:10px"><summary class="doux">Faits de la fiche (source des chiffres)</summary><ul class="faits">${v.faits.map(f => `<li>${esc(f)}</li>`).join('')}</ul></details>` : ''}
+    <div class="actions" style="margin-top:14px"><button class="principal" id="brOk">Fabriquer la vidéo</button><button id="brAutre">Autre texte</button><button id="brAnnuler">Annuler</button></div>
+    <p class="doux">22 mots au plus par réplique. Une modification est vérifiée avant la fabrication.</p>`;
+  $('#brOk').onclick = () => {
+    const sk = v.sketchs.map((s, i) => ({ titre: el.querySelector(`[data-t="${i}"]`).value, plans: s.plans.map((p, j) => el.querySelector(`[data-p="${i}:${j}"]`).value) }));
+    const modifie = JSON.stringify(sk) !== JSON.stringify(v.sketchs.map(s => ({ titre: s.titre, plans: s.plans.map(p => p.texte) }))) || $('#brQ').value !== v.question;
+    post('/api/brouillon/fabriquer', { sketchs: sk, question: $('#brQ').value, modifie }).then(r => { if (!r.ok && r.message) alert(r.message); maj(); });
+  };
+  $('#brAutre').onclick = () => post('/api/video', { mode: 'auto', sujet: v.sujet || '' }).then(maj);
+  $('#brAnnuler').onclick = () => post('/api/brouillon/annuler').then(maj);
+}
 $('#avance').onclick = () => post('/api/avance').then(maj);
 $('#majGo').onclick = () => post('/api/maj/installer').then(r => { if (r.ok) $('#majTxt').textContent = 'Installation… QuentStudio va redémarrer.'; });
 $('#iaInstaller').onclick = () => post('/api/ia/installer').then(r => { if (r.message) alert(r.message); maj(); });
-$('#surSujet').onclick = () => { const s = $('#sujet').value.trim(); if (!s) return $('#sujet').focus(); post('/api/video', { mode: 'auto', sujet: s }).then(maj); };
-$('#surFiche').onclick = () => { const s = $('#fiches').value; if (!s) return $('#fiches').focus(); post('/api/video', { mode: 'auto', sujet: s }).then(maj); };
+$('#surSujet').onclick = () => { const s = $('#sujet').value.trim(); if (!s) return $('#sujet').focus(); post('/api/video', { mode: 'auto', sujet: s, n: nb() }).then(maj); };
+$('#surFiche').onclick = () => { const s = $('#fiches').value; if (!s) return $('#fiches').focus(); post('/api/video', { mode: 'auto', sujet: s, n: nb() }).then(maj); };
 let signatureFiches = '';
 function remplirFiches(e) {
   const sig = JSON.stringify(e.fiches);
@@ -133,6 +187,11 @@ async function maj() {
   $('[data-mode="bibliotheque"]').textContent = invest ? 'Nouvelle vidéo (fiches)' : 'Nouvelle vidéo (bibliothèque)';
   $('#avance').textContent = invest ? 'Écrire 20 épisodes en avance (IA)' : 'Générer 20 scénarios en avance';
   if (invest) remplirFiches(e);
+  const o = e.options || {};
+  document.querySelectorAll('[data-opt]').forEach(el => { if (document.activeElement === el) return; if (el.type === 'checkbox') el.checked = !!o[el.dataset.opt]; else el.value = o[el.dataset.opt]; el.disabled = el.dataset.opt === 'volume_musique' && !o.musique; });
+  $('#volTxt').textContent = ' volume de la musique : ' + (o.volume_musique || 0) + ' %';
+  $('#caseChiffres').hidden = !invest;
+  afficherBrouillon(e);
   $('#surFiche').disabled = !!e.travail;
   $('#surSujet').disabled = !!e.travail;
   $('#nbBiblio').textContent = e.bibliotheque.toLocaleString('fr-FR');
@@ -160,10 +219,10 @@ async function maj() {
     $('#videos').innerHTML = e.videos.map(v => `<div class="video">
       ${v.vignette ? `<img src="/vignette/${encodeURIComponent(v.nom)}?${Date.now()}" alt="">` : '<img alt="">'}
       <p>${esc(v.titres.join(' · '))}<br>${esc(v.mode || '')}${v.voix === 'bips' ? ' · bips' : ''}${v.a_verifier ? '<br><span class="verif">À relire avant publication (sujet libre)</span>' : ''}</p>
-      <div class="actions"><button data-a="ouvrir">Voir</button><button data-a="airdrop">AirDrop</button><button data-a="finder">Finder</button></div>
+      <div class="actions"><button data-a="ouvrir">Voir</button><button data-a="airdrop">AirDrop</button><button data-a="finder">Finder</button>${v.texte ? '<button data-a="texte" title="Titre, description et hashtags copiés">Texte</button>' : ''}${v.couverture ? '<button data-a="couverture">Couverture</button>' : ''}</div>
     </div>`).join('') || '<p class="doux">Aucune vidéo pour l’instant.</p>';
     $('#videos').querySelectorAll('.video').forEach((el, i) => el.querySelectorAll('[data-a]').forEach(b =>
-      b.onclick = () => post('/api/' + b.dataset.a, { nom: e.videos[i].nom }).then(r => { if (r.message) alert(r.message); if (r.par === 'finder') alert('AirDrop direct indisponible : la vidéo est montrée dans le Finder et la fenêtre AirDrop est ouverte.'); })));
+      b.onclick = () => post('/api/' + b.dataset.a, { nom: e.videos[i].nom }).then(r => { if (b.dataset.a === 'texte' && r.texte) { try { navigator.clipboard.writeText(r.texte); } catch (_) {} return toast('Texte de publication copié : colle-le sous ta vidéo.'); } if (r.message) alert(r.message); if (r.par === 'finder') alert('AirDrop direct indisponible : la vidéo est montrée dans le Finder et la fenêtre AirDrop est ouverte.'); })));
   }
 }
 maj(); setInterval(maj, 1000);

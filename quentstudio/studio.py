@@ -42,7 +42,7 @@ import story  # noqa: E402
 import voice  # noqa: E402
 
 ICI = config.RESSOURCES
-ETAT = {"travail": None, "avancement": 0.0, "journal": [], "avance": None, "erreur": None}
+ETAT = {"travail": None, "avancement": 0.0, "journal": [], "avance": None, "erreur": None, "brouillon": None}
 VERROU = threading.Lock()
 
 
@@ -58,36 +58,51 @@ def videos():
         m = config.lire_json(f.with_suffix(".json"), {})
         titres = [m["episode"]] if m.get("episode") else m.get("titres", [])
         out.append({"nom": f.name, "titres": titres, "mode": m.get("mode"), "voix": m.get("voix"), "a_verifier": m.get("a_verifier"),
-                    "vignette": f.with_suffix(".jpg").exists()})
+                    "vignette": f.with_suffix(".jpg").exists(), "texte": f.with_suffix(".txt").exists(),
+                    "couverture": f.with_name(f.stem + "-couverture.png").exists()})
     return out
 
 
-def nouvelle_video(mode, sujet=""):
+def ecrire_scenario(serie, mode, sujet=""):
+    if serie == "quentinvest":
+        journal(f"Écriture de l'épisode ({sujet or mode})…")
+        v = invest.scenario(mode, sujet, journal=journal)
+        journal(f"Épisode : {v['episode']} [{v['mode']}]" + (" · à relire avant publication" if v.get("verifier") else ""))
+    else:
+        journal(f"Écriture des sketchs ({mode})…")
+        v = story.scenario(mode, journal=journal)
+        journal("Sketchs : " + " · ".join(s["titre"] for s in v["sketchs"]) + f" [{v['mode']}]")
+    return v
+
+
+def fabriquer(v, serie, part=(0.0, 1.0)):
+    """Rend la vidéo du scénario v (+ vignette, texte de publication, couverture) et note ses sketchs comme publiés."""
+    a, b = part
+    nom = time.strftime(serie + "-%Y%m%d-%H%M%S.mp4")
+    sortie = config.VIDEOS / nom
+    k = 2
+    while sortie.exists():  # deux vidéos dans la même seconde (lot)
+        sortie = config.VIDEOS / nom.replace(".mp4", f"-{k}.mp4")
+        k += 1
+    render.rendre(v, sortie, journal=journal, avancement=lambda x: ETAT.update(avancement=a + (b - a) * (0.05 + 0.9 * x)), serie=serie)
+    if serie == "quentinvest":
+        history.noter([{"titre": t, "mots": []} for t in (v.get("episode"), v.get("sujet")) if t])
+    else:
+        history.noter(v["sketchs"])
+    subprocess.run([render.ffmpeg_exe(), "-v", "error", "-y", "-ss", "8", "-i", str(sortie), "-frames:v", "1",
+                    "-vf", "scale=270:-1", str(sortie.with_suffix(".jpg"))])
+    journal(f"Vidéo prête : {sortie.name} (avec son texte de publication et sa couverture)")
+    return sortie
+
+
+def _en_fond(titre, travail):
     if not VERROU.acquire(blocking=False):
         return False
-    serie = config.serie
 
     def tache():
         try:
-            ETAT.update(travail=f"Nouvelle vidéo {series.serie(serie)['nom']} ({sujet or mode})", avancement=0.02, erreur=None)
-            if serie == "quentinvest":
-                journal(f"Écriture de l'épisode ({sujet or mode})…")
-                v = invest.scenario(mode, sujet, journal=journal)
-                journal(f"Épisode : {v['episode']} [{v['mode']}]" + (" · à relire avant publication" if v.get("verifier") else ""))
-            else:
-                journal(f"Écriture des sketchs ({mode})…")
-                v = story.scenario(mode, journal=journal)
-                journal("Sketchs : " + " · ".join(s["titre"] for s in v["sketchs"]) + f" [{v['mode']}]")
-            nom = time.strftime(serie + "-%Y%m%d-%H%M%S.mp4")
-            sortie = config.VIDEOS / nom
-            render.rendre(v, sortie, journal=journal, avancement=lambda x: ETAT.update(avancement=0.05 + 0.9 * x), serie=serie)
-            if serie == "quentinvest":
-                history.noter([{"titre": t, "mots": []} for t in (v["episode"], v.get("sujet")) if t])
-            else:
-                history.noter(v["sketchs"])
-            subprocess.run([render.ffmpeg_exe(), "-v", "error", "-y", "-ss", "8", "-i", str(sortie), "-frames:v", "1",
-                            "-vf", "scale=270:-1", str(sortie.with_suffix(".jpg"))])
-            journal(f"Vidéo prête : {nom}")
+            ETAT.update(travail=titre, avancement=0.02, erreur=None)
+            travail()
         except Exception as e:
             ETAT["erreur"] = str(e)
             journal(f"Erreur : {e}")
@@ -98,6 +113,58 @@ def nouvelle_video(mode, sujet=""):
 
     threading.Thread(target=tache, daemon=True).start()
     return True
+
+
+def nouvelle_video(mode, sujet="", n=1):
+    """n vidéos à la suite ; avec « Relire avant de fabriquer » (et une seule vidéo), le texte est d'abord proposé."""
+    serie, n = config.serie, max(1, min(10, int(n or 1)))
+    relire = config.options()["relire"] and n == 1
+
+    def travail():
+        if relire:
+            v = ecrire_scenario(serie, mode, sujet)
+            ETAT["brouillon"] = {"serie": serie, "video": v}
+            journal("Texte prêt : relis-le, modifie-le si besoin, puis clique sur « Fabriquer la vidéo ».")
+            return
+        for i in range(n):
+            if n > 1:
+                journal(f"— Vidéo {i + 1} sur {n} —")
+                ETAT["travail"] = f"{n} vidéos {series.serie(serie)['nom']} : {i + 1}/{n}"
+            v = ecrire_scenario(serie, mode, sujet)
+            fabriquer(v, serie, (i / n, (i + 1) / n))
+    nom = series.serie(serie)["nom"]
+    return _en_fond(f"{'Texte' if relire else 'Nouvelle vidéo'} {nom} ({sujet or mode})" if n == 1 else f"{n} vidéos {nom}", travail)
+
+
+def corriger_brouillon(modif):
+    """Applique les modifications du propriétaire au brouillon et le valide (longueur, mots interdits…)."""
+    br = ETAT.get("brouillon")
+    if not br:
+        raise ValueError("aucun texte en attente")
+    v = json.loads(json.dumps(br["video"]))
+    I = story.INTERDITS_INVEST if br["serie"] == "quentinvest" else None
+    sk = modif.get("sketchs") or []
+    for i, s in enumerate(v["sketchs"]):
+        m = sk[i] if i < len(sk) and isinstance(sk[i], dict) else {}
+        textes = m.get("plans") if isinstance(m.get("plans"), list) else []
+        d = {**s, "titre": str(m.get("titre") or s["titre"]),
+             "plans": [{"qui": p["qui"], "texte": str(textes[j]).strip() if j < len(textes) and str(textes[j] or "").strip() else p["texte"]}
+                       for j, p in enumerate(s["plans"])]}
+        try:
+            propre = story.clean_sketch(d, I)
+        except ValueError as e:
+            raison = ("une réplique est vide ou trop longue (22 mots et 120 caractères au plus ; titre : 60 caractères)"
+                      if "long" in str(e) or "vide" in str(e) else "un mot n'est pas accepté (grossièreté)" if "interdit" in str(e) else str(e))
+            raise ValueError(f"{'Partie' if br['serie'] == 'quentinvest' else 'Sketch'} {i + 1} : {raison}.")
+        for k in ("episode",):
+            if s.get(k):
+                propre[k] = s[k]
+        v["sketchs"][i] = propre
+    q = str(modif.get("question") or v["question"]).strip()[:90]
+    v["question"] = q if q.endswith(("?", "!", ".")) else q + " ?"
+    if modif.get("modifie"):
+        v["mode"] = (v.get("mode") or "") + " · relu et modifié"
+    return br["serie"], v
 
 
 def generer_en_avance(n=20):
@@ -132,7 +199,7 @@ def etat():
     return {
         "travail": ETAT["travail"], "avancement": round(ETAT["avancement"], 3), "erreur": ETAT["erreur"],
         "avance": ETAT["avance"], "journal": ETAT["journal"][-14:],
-        "serie": config.serie, "series": {k: {"nom": v["nom"], "sous_titre": v["sous_titre"]} for k, v in series.SERIES.items()},
+        "serie": config.serie, "series": {k: {"nom": v["nom"], "sous_titre": v["sous_titre"], "noms": v["noms"]} for k, v in series.SERIES.items()},
         "bibliotheque": len(invest.FICHES) + len(invest.bibliotheque()) if config.serie == "quentinvest" else len(corpus.charger()),
         "reserve": len(invest.reserve()) if config.serie == "quentinvest" else len(story.reserve()),
         "fiches": [{"titre": f["titre"], "theme": f["theme"], "publie": invest._deja(f["titre"])} for f in invest.FICHES]
@@ -143,6 +210,8 @@ def etat():
         "voix": "piper" if voice.chemin_modele().exists() and not os.environ.get("QS_BIPS") else "telechargement" if voice.EN_COURS["oui"] else "bips",
         "videos": videos(), "dossier": str(config.VIDEOS), "version": config.VERSION,
         "maj": {k: maj.ETAT[k] for k in ("etat", "version", "avancement", "notes", "erreur")},
+        "options": config.options(),
+        "brouillon": ETAT["brouillon"] if ETAT["brouillon"] and ETAT["brouillon"]["serie"] == config.serie else None,
     }
 
 
@@ -186,7 +255,34 @@ class Serveur(BaseHTTPRequestHandler):
         if p == "/api/video":
             mode = b.get("mode") if b.get("mode") in ("auto", "bibliotheque", "ia", "procedural") else "auto"
             sujet = str(b.get("sujet") or "").strip()[:200] if config.serie == "quentinvest" else ""
-            return self._envoyer(200, {"ok": nouvelle_video(mode, sujet)})
+            try:
+                n = int(b.get("n") or 1)
+            except (TypeError, ValueError):
+                n = 1
+            return self._envoyer(200, {"ok": nouvelle_video(mode, sujet, n)})
+        if p == "/api/options":
+            return self._envoyer(200, {"ok": True, "options": config.ecrire_options(b)})
+        if p == "/api/brouillon/fabriquer":
+            try:
+                serie, v = corriger_brouillon(b)
+            except ValueError as e:
+                return self._envoyer(200, {"ok": False, "message": str(e)})
+            ok = _en_fond(f"Nouvelle vidéo {series.serie(serie)['nom']} (texte relu)", lambda: fabriquer(v, serie))
+            if ok:
+                ETAT["brouillon"] = None
+            return self._envoyer(200, {"ok": ok})
+        if p == "/api/brouillon/annuler":
+            ETAT["brouillon"] = None
+            return self._envoyer(200, {"ok": True})
+        if p == "/api/texte":
+            f = self._video(b.get("nom", ""))
+            t = f.with_suffix(".txt") if f else None
+            if not t or not t.exists():
+                return self._envoyer(404, {"erreur": "texte introuvable"})
+            texte = t.read_text("utf-8")
+            if sys.platform == "darwin":  # copié dans le presse-papiers du Mac
+                subprocess.run(["pbcopy"], input=texte.encode("utf-8"))
+            return self._envoyer(200, {"ok": True, "texte": texte})
         if p == "/api/serie":
             if b.get("serie") not in config.SERIES or ETAT["travail"] or ETAT["avance"]:
                 return self._envoyer(200, {"ok": False})
@@ -207,13 +303,15 @@ class Serveur(BaseHTTPRequestHandler):
             return self._envoyer(200, {"ok": True})
         if p == "/api/avance":
             return self._envoyer(200, {"ok": generer_en_avance(20)})
-        if p in ("/api/ouvrir", "/api/finder", "/api/airdrop"):
+        if p in ("/api/ouvrir", "/api/finder", "/api/airdrop", "/api/couverture"):
             f = self._video(b.get("nom", ""))
+            if f and p == "/api/couverture":
+                f = f.with_name(f.stem + "-couverture.png")
             if not f:
                 return self._envoyer(404, {"erreur": "vidéo introuvable"})
             if sys.platform != "darwin":
                 return self._envoyer(200, {"ok": False, "message": f"Fichier : {f}"})
-            if p == "/api/ouvrir":
+            if p in ("/api/ouvrir", "/api/couverture"):
                 subprocess.run(["open", str(f)])
                 return self._envoyer(200, {"ok": True})
             if p == "/api/finder":
@@ -289,7 +387,8 @@ def essai(sortie):
             meta = render.rendre(v, f, journal=print, serie=serie)
             d = subprocess.run([render.ffmpeg_exe(), "-i", str(f)], capture_output=True, text=True).stderr
             res["videos"].append({"serie": serie, "voix": meta["voix"], "duree": (d.split("Duration: ")[1].split(",")[0] if "Duration: " in d else None),
-                                  "taille": f.stat().st_size})
+                                  "taille": f.stat().st_size, "musique": meta.get("musique"),
+                                  "couverture": f.with_name(f.stem + "-couverture.png").exists(), "texte": f.with_suffix(".txt").exists()})
         res["airdrop"] = str(config.outil("airdrop"))
     except Exception as e:
         res["erreur"] = repr(e)

@@ -95,6 +95,30 @@ def reglages(s=None):
     return r
 
 
+# Options de la vidéo (cases de l'application), enregistrées dans options.json
+OPTIONS = {"musique": True, "volume_musique": 100, "bruitages": True, "karaoke": True, "barre": True, "chiffres": True, "relire": False}
+
+
+def options():
+    o = dict(OPTIONS)
+    lu = lire_json(DATA / "options.json", {})
+    if isinstance(lu, dict):
+        for k, v in lu.items():
+            if k in OPTIONS and type(v) is type(OPTIONS[k]):
+                o[k] = v
+    o["volume_musique"] = max(0, min(200, int(o["volume_musique"])))
+    return o
+
+
+def ecrire_options(nouvelles):
+    o = options()
+    for k, v in (nouvelles or {}).items():
+        if k in OPTIONS and type(v) is type(OPTIONS[k]):
+            o[k] = v
+    ecrire_json(DATA / "options.json", o)
+    return options()
+
+
 def lire_json(f, defaut):
     try:
         return json.loads(Path(f).read_text("utf-8"))

@@ -14,6 +14,11 @@ SERIES = {
         "decor": "fenetre",
         "mention": None,
         "fin": "À TOI !",
+        # ambiance sonore : musiques de fond (au hasard), bruitage entre sketchs, ponctuation comique après la chute
+        "musiques": ["joyeux-vlog", "lofi-tranquille", "house-groove"],
+        "transition": "whoosh-court",
+        "chute": "ba-dum-tss",
+        "chiffres": False,
     },
     "quentinvest": {
         "nom": "QuentInvest",
@@ -29,6 +34,10 @@ SERIES = {
         "decor": "courbe",
         "mention": "Vulgarisation · pas un conseil en investissement",
         "fin": "ET TOI ?",
+        "musiques": ["documentaire-doux", "corporate-lumineux", "piano-chill"],
+        "transition": "sd-whoosh-leger",
+        "chute": None,
+        "chiffres": True,  # chiffre clé de la réplique affiché en grand (22,6 %, 1929…)
     },
 }
 

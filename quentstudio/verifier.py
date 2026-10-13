@@ -29,6 +29,7 @@ import corpus  # noqa: E402
 import history  # noqa: E402
 import procedural  # noqa: E402
 import render  # noqa: E402
+import series  # noqa: E402
 import story  # noqa: E402
 
 ok = ko = 0
@@ -360,7 +361,52 @@ if "--rapide" not in sys.argv:
     d = duree(sortie)
     check("vidéo QuentInvest : durée exacte 62,000 s", abs(float(d["format"]["duration"]) - 62.0) < 0.0005, d["format"]["duration"])
     check("vidéo QuentInvest : appel à s'abonner de la série", meta["cta"]["texte"] in [t for _, t in config.CTA_LIGNES_INVEST])
+    check("vidéo : musique de fond et chiffres clés", meta.get("musique") in series.serie("quentinvest")["musiques"] and len(meta["chiffres"]) >= 2, meta.get("chiffres"))
+    pub = sortie.with_suffix(".txt").read_text("utf-8") if sortie.with_suffix(".txt").exists() else ""
+    check("vidéo : texte de publication (titre, hashtags, mention) et couverture", "#quentinvest" in pub and "pas un conseil" in pub
+          and sortie.with_name(sortie.stem + "-couverture.png").exists(), pub[:120])
     config.serie = "quentools"
+
+    # ---------- Application : texte relu et modifié avant de fabriquer, puis vidéo ----------
+    import studio  # noqa: E402
+    import time  # noqa: E402
+    config.VIDEOS = Path(DATA) / "videos-app"
+    config.ecrire_options({"relire": True})
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), studio.Serveur)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{srv.server_address[1]}"
+
+    def appel(chemin, corps=None):
+        import urllib.request
+        r = urllib.request.Request(base + chemin, data=json.dumps(corps or {}).encode() if corps is not None else None, method="POST" if corps is not None else "GET")
+        return json.loads(urllib.request.urlopen(r, timeout=30).read())
+
+    def attendre(cond, s=240):
+        fin = time.time() + s
+        while time.time() < fin:
+            e = appel("/api/etat")
+            if cond(e):
+                return e
+            time.sleep(0.5)
+        return appel("/api/etat")
+    appel("/api/video", {"mode": "auto"})
+    e = attendre(lambda e: e["brouillon"] and not e["travail"])
+    check("application : texte proposé avant la fabrication", bool(e["brouillon"]), e["journal"][-3:])
+    if e["brouillon"]:
+        sk = [{"titre": x["titre"], "plans": [p["texte"] for p in x["plans"]]} for x in e["brouillon"]["video"]["sketchs"]]
+        trop = dict(sk[0], plans=["mot " * 40] + sk[0]["plans"][1:])
+        r = appel("/api/brouillon/fabriquer", {"sketchs": [trop] + sk[1:], "question": "Test ?"})
+        check("application : réplique trop longue refusée avec un message", not r["ok"] and "trop longue" in r.get("message", ""), r)
+        sk[0]["plans"][0] = "Ceci est une réplique modifiée à la main."
+        r = appel("/api/brouillon/fabriquer", {"sketchs": sk, "question": "Tu as aimé ce sketch ?", "modifie": True})
+        e = attendre(lambda e: not e["travail"] and e["videos"])
+        v0 = (e["videos"] or [{}])[0]
+        meta = config.lire_json(config.VIDEOS / v0.get("nom", "x.mp4").replace(".mp4", ".json"), {})
+        check("application : vidéo fabriquée avec le texte modifié, son texte et sa couverture",
+              r["ok"] and v0.get("texte") and v0.get("couverture") and meta.get("plans", [{}])[0].get("texte") == "Ceci est une réplique modifiée à la main."
+              and "modifié" in (meta.get("mode") or ""), (r, v0, e["journal"][-3:]))
+    srv.shutdown()
+    config.ecrire_options({"relire": False})
 
 print(f"QuentStudio : {ok} contrôles réussis, {ko} échecs")
 if "--garder" not in sys.argv:
