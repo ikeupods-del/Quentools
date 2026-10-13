@@ -50,7 +50,7 @@ Les vidéos sont enregistrées dans `~/Movies/QuentStudio/videos`. À côté de 
 
 ## QuentInvest et exactitude
 
-- **13 fiches vérifiées** (`invest.py`) : krach de 1929, crise de 2008, bulle internet, intérêts composés, inflation, diversification, actions et obligations, fonds indiciels, taux directeurs, dividende, épargne de précaution, tulipomanie, hyperinflation de 1923. Elles sont utilisables sans IA.
+- **43 fiches vérifiées** (`invest.py` et `fiches_invest.py`), rangées par thème : crises (1929, 1987, 2000, 2008, Grèce, choc pétrolier…), banques centrales et monnaie (BCE, FMI, Banque de France, euro, planche à billets…), État (dette publique, TVA, chômage, retraite, notation), crédit (lombard, immobilier), placements (Livret A, assurance-vie, PEA, CAC 40, or, bitcoin…), notions de base et arnaques. Elles sont utilisables sans IA ; les chiffres datés (dette publique fin 2024) sont à mettre à jour quand de nouveaux chiffres officiels paraissent.
 - **Avec l'IA**, le sujet tapé est d'abord rapproché d'une fiche. Si une fiche correspond, l'IA réécrit l'épisode à partir de ses faits.
 - **Contrôle des chiffres** : tout chiffre ou toute date qui n'apparaît ni dans les faits ni dans le sujet fait refuser l'épisode, qui est alors réécrit. Ce contrôle est fait par le programme, pas par l'IA.
 - **Sujet libre sans fiche** : l'épisode est marqué « À relire avant publication ».

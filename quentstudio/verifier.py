@@ -190,6 +190,17 @@ for f in invest.FICHES:
 check("QuentInvest : personnages Max et Pépite livrés (PNG)", all((ICI / "persos" / f"{n}-{e}.png").exists() for n in ("max", "pepite") for e in ("ferme", "ouvert")))
 check("QuentInvest : personnages chargés à la bonne taille", render.SPRITES["max"](True, False).size == (460, 660) and render.SPRITES["pepite"](False, False).size == (340, 376))
 check("QuentInvest : sujet reconnu (krach de 1929)", (invest.fiche_pour("résume le krach boursier de 1929") or {}).get("id") == "krach-1929")
+check("QuentInvest : plus de 40 sujets prêts, identifiants et titres uniques",
+      len(invest.FICHES) >= 40 and len({f["id"] for f in invest.FICHES}) == len({f["titre"] for f in invest.FICHES}) == len(invest.FICHES))
+check("QuentInvest : chaque sujet prêt a un thème connu", all(f["theme"] in invest.THEMES for f in invest.FICHES))
+check("QuentInvest : chaque titre retrouve sa fiche", all(invest.fiche_pour(f["titre"]) is f for f in invest.FICHES),
+      [f["id"] for f in invest.FICHES if invest.fiche_pour(f["titre"]) is not f])
+_attendus = {"explique la BCE": "bce", "le rôle du FMI": "fmi", "la dette publique de la France": "dette-publique",
+             "c'est quoi un crédit lombard": "credit-lombard", "le plan d'épargne en actions": "pea",
+             "les taux directeurs de la banque centrale": "taux-directeurs", "la retraite par capitalisation": "retraite",
+             "le passage à l'euro": "euro", "les actions et les obligations": "actions-obligations"}
+check("QuentInvest : sujets reconnus (BCE, FMI, dette, lombard…)", all((invest.fiche_pour(k) or {}).get("id") == v for k, v in _attendus.items()),
+      {k: (invest.fiche_pour(k) or {}).get("id") for k, v in _attendus.items() if (invest.fiche_pour(k) or {}).get("id") != v})
 check("QuentInvest : sujet inconnu sans fiche", invest.fiche_pour("le marché du cacao") is None)
 ep = invest.episode_depuis_fiche(invest.FICHES[0])
 ep["parties"][0]["plans"][1]["texte"] = "En 1931, tout le monde avait 3 voitures."

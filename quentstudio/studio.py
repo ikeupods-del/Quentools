@@ -135,7 +135,8 @@ def etat():
         "serie": config.serie, "series": {k: {"nom": v["nom"], "sous_titre": v["sous_titre"]} for k, v in series.SERIES.items()},
         "bibliotheque": len(invest.FICHES) + len(invest.bibliotheque()) if config.serie == "quentinvest" else len(corpus.charger()),
         "reserve": len(invest.reserve()) if config.serie == "quentinvest" else len(story.reserve()),
-        "fiches": [f["titre"] for f in invest.FICHES] if config.serie == "quentinvest" else [],
+        "fiches": [{"titre": f["titre"], "theme": f["theme"], "publie": invest._deja(f["titre"])} for f in invest.FICHES]
+        if config.serie == "quentinvest" else [], "themes": invest.THEMES,
         "historique": len(history.charger()["sketchs"]),
         "ia": etat_ia(), "modele": "Qwen3 4B (intégrée)" if ia_locale.moteur_present() and ia_locale.chemin_modele() else config.MODELE_IA,
         "ia_install": {"en_cours": ia_locale.INSTALL["en_cours"], "avancement": round(ia_locale.INSTALL["avancement"], 3), "erreur": ia_locale.INSTALL["erreur"]},
@@ -252,14 +253,19 @@ def essai_ia(sortie):
     """Essai de l'IA intégrée de l'application construite : un épisode QuentInvest sur un sujet libre et 3 sketchs."""
     import json as _json
     res = {"moteur": ia_locale.moteur_present(), "modele": str(ia_locale.chemin_modele())}
+
+    def noter():  # résultat écrit à chaque étape : lisible même si l'essai est interrompu
+        Path(sortie).write_text(_json.dumps(res, ensure_ascii=False, indent=1), "utf-8")
     try:
         if not ia_locale.chemin_modele():
             ia_locale.installer(journal=print)
         res["etat"] = ia_locale.etat()
+        noter()
         t = time.time()
         config.serie = "quentinvest"
         v = invest.scenario("auto", "résume l'histoire de Warren Buffett", journal=print)
         res["invest"] = {"episode": v["episode"], "mode": v["mode"], "parties": [s["titre"] for s in v["sketchs"]], "repliques": [p["texte"] for s in v["sketchs"] for p in s["plans"]][:4], "s": round(time.time() - t, 1)}
+        noter()
         t = time.time()
         config.serie = "quentools"
         q = story.scenario("ia", journal=print)

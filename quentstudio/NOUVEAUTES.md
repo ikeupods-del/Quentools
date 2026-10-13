@@ -2,6 +2,11 @@
 
 Chaque section devient le texte de la version publiée. Changer aussi `version.txt` : une version déjà publiée n'est pas republiée.
 
+## 1.2.0
+- **30 nouveaux sujets prêts dans QuentInvest** (43 en tout), écrits à la main avec des faits vérifiés et utilisables sans IA : la BCE, le FMI, la dette publique, le crédit lombard, la Banque de France, la planche à billets, le passage à l'euro, la fin du dollar en or, les agences de notation, le PIB et la récession, le chômage, la TVA, la retraite par répartition, le Livret A, l'assurance-vie, le PEA, le CAC 40, le crédit immobilier, l'or, le bitcoin, investir chaque mois, les frais, la pyramide de Ponzi, le lundi noir de 1987, la crise grecque, le choc pétrolier de 1973, l'offre et la demande, le salaire brut et net, chiffre d'affaires et bénéfice.
+- **Liste des sujets prêts rangée par thème** (banques centrales, État, crédit, placements, crises, notions de base, arnaques) : on choisit un sujet et on clique sur « Créer ce sujet ». Un ✓ marque les sujets déjà publiés.
+- Le sujet tapé est mieux reconnu : « explique la BCE » ou « c'est quoi un crédit lombard » vont directement sur la bonne fiche.
+
 ## 1.1.1
 - **Les vraies voix fonctionnent dans l'application installée** : les certificats d'internet sont maintenant livrés avec QuentStudio. Sans eux, la voix (et l'IA, Wikipédia, les mises à jour) ne pouvait pas se télécharger et les vidéos sortaient avec des bips.
 - Si la voix n'est pas encore téléchargée au moment de créer une vidéo, QuentStudio l'attend au lieu de mettre des bips ; l'état de la voix est affiché clairement.
