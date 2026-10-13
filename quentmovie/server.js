@@ -109,6 +109,14 @@ function create(opts = {}) {
   let parole = null, ia = opts.ia || null; // opts.ia : IA de remplacement pour les essais
   const MEM = require('./memoire'), MEMOIRE = MEM.creerStockage({ fichier: path.join(BASE, 'memoire-ia.json') }); // consignes et corrections retenues, partagées avec Studio Posts et Studio Sites
   const IA = () => ia || (ia = require('./ia').creer({ BASE, FFMPEG, memoire: () => MEM.pourPrompt(MEMOIRE.lire(), 600) }));
+  // Analyse d'une vidéo à partir de son texte : calcul du programme (genre, mots-clés, rythme) puis, si l'IA locale est installée, sujet et idées fortes
+  async function analyserLaVideo(job, segments, duree, avecIA) {
+    const CH = require('./chapitrage'), brut = CH.analyserSujet(segments, duree);
+    if (!brut) return { sujet: '', genre: null, motsCles: [], rythme: 'normal', points: [], resume: '', ia: false, brut: null };
+    job.step = 'Analyse du sujet de la vidéo…'; job.progress = 0.15;
+    const r = avecIA ? await IA().analyserVideo({ segments, base: brut }) : { sujet: brut.sujet, points: [], resume: '', public: '', ia: false };
+    return { sujet: r.sujet || brut.sujet, resume: r.resume, points: r.points, public: r.public, ia: r.ia, genre: brut.genre, motsCles: brut.motsCles, rythme: brut.rythme, debit: brut.debit, brut };
+  }
   const PAROLE = () => parole || (parole = require('./parole').creer({ run, FFMPEG, BASE }));
   // Réglages locaux (clés gratuites des banques de photos : gardées dans le dossier QuentMovie de l'utilisateur, jamais dans le dépôt)
   const REGL = path.join(BASE, 'reglages.json');
@@ -1358,23 +1366,33 @@ function buildClip(c, P, o = {}) {
         const b = await readJson(req);
         return send(res, 200, travail(async job => {
           const CH = require('./chapitrage'); job.step = 'Lecture du texte de la vidéo…';
-          const ch = CH.proposerChapitres(Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [], +b.duree || 0, { nb: b.nb });
+          const segs = Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [];
+          const ch = CH.proposerChapitres(segs, +b.duree || 0, { nb: b.nb });
           if (!ch.length) return { chapitres: [], ia: false };
-          job.step = 'L’IA locale nomme les chapitres…'; job.progress = 0.4;
-          const r = b.ia === false ? { chapitres: ch, ia: false } : await IA().titrerChapitres({ chapitres: ch });
-          return { chapitres: r.chapitres.map(c => ({ t: c.t, titre: c.titre })), ia: r.ia };
+          const analyse = await analyserLaVideo(job, segs, +b.duree || 0, b.ia !== false);
+          job.step = 'L’IA locale nomme les chapitres…'; job.progress = 0.6;
+          const r = b.ia === false ? { chapitres: ch, ia: false } : await IA().titrerChapitres({ chapitres: ch, sujet: analyse.sujet });
+          delete analyse.brut;
+          return { chapitres: r.chapitres.map(c => ({ t: c.t, titre: c.titre })), ia: r.ia, analyse };
         }));
+      }
+      // Analyse de la vidéo : sujet, genre, rythme, idées fortes et pack conseillé (programme + IA locale)
+      if (req.method === 'POST' && p === '/api/video/analyser') {
+        const b = await readJson(req);
+        return send(res, 200, travail(async job => { const a = await analyserLaVideo(job, Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [], +b.duree || 0, b.ia !== false); delete a.brut; return a; }));
       }
       // Clipping : les meilleurs extraits de la vidéo pour TikTok / Reels / Shorts
       if (req.method === 'POST' && p === '/api/clipping/proposer') {
         const b = await readJson(req);
         return send(res, 200, travail(async job => {
           const CH = require('./chapitrage'), nb = clamp(Math.round(num(b.nb, 5)), 1, 12); job.step = 'Recherche des meilleurs passages…';
-          const cands = CH.proposerMoments(Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [], +b.duree || 0, { nb: Math.min(14, nb * 2), min: num(b.min, 20), max: num(b.max, 60) });
+          const segs = Array.isArray(b.segments) ? b.segments.slice(0, 6000) : [], analyse = await analyserLaVideo(job, segs, +b.duree || 0, b.ia !== false);
+          const cands = CH.proposerMoments(segs, +b.duree || 0, { nb: Math.min(14, nb * 2), min: num(b.min, 20), max: num(b.max, 60), analyse: analyse.brut });
+          delete analyse.brut;
           if (!cands.length) return { extraits: [], ia: false };
           job.step = 'L’IA locale choisit les plus accrocheurs…'; job.progress = 0.4;
-          const r = b.ia === false ? { extraits: cands.slice(0, nb), ia: false } : await IA().choisirExtraits({ candidats: cands, nb, sujet: String(b.sujet || '') });
-          return { extraits: r.extraits.map(e => ({ s: e.s, e: e.e, titre: e.titre, texte: String(e.t || '').slice(0, 240) })), ia: r.ia };
+          const r = b.ia === false ? { extraits: cands.slice(0, nb), ia: false } : await IA().choisirExtraits({ candidats: cands, nb, sujet: analyse.sujet || String(b.sujet || '') });
+          return { extraits: r.extraits.map(e => ({ s: e.s, e: e.e, titre: e.titre, texte: String(e.t || '').slice(0, 240) })), ia: r.ia, analyse };
         }));
       }
       // Clipping : chaque extrait choisi devient une vidéo à part (vertical, sous-titres TikTok, accroche), rangée avec les exports

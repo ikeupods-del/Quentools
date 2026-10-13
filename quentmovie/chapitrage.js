@@ -48,6 +48,55 @@ function titre(texte, rang, total, global) {
   return j.charAt(0).toUpperCase() + j.slice(1);
 }
 
+
+// ---------- Analyse du sujet : de quoi parle la vidéo, quel genre, quel rythme (calculé par le programme, l'IA locale peut l'affiner) ----------
+const GENRES = [
+  { id: 'bourse', nom: 'Bourse et investissement', pack: 'bourse', mots: 'bourse action actions etf dividende dividendes portefeuille investir investissement investisseur marche marches cac krach rendement placement courtier bilan trader trading indice obligations' },
+  { id: 'economie', nom: 'Économie', pack: 'economie', mots: 'economie inflation croissance chomage pib recession banque centrale taux interet dette deficit budget impot impots salaire prix pouvoir achat croissance' },
+  { id: 'crypto', nom: 'Crypto', pack: 'crypto', mots: 'bitcoin crypto ethereum blockchain wallet token minage altcoin binance halving nft' },
+  { id: 'finance-perso', nom: 'Finances personnelles', pack: 'finance-perso', mots: 'epargne livret budget economiser depenses retraite assurance vie pel immobilier credit pret revenus patrimoine' },
+  { id: 'entrepreneur', nom: 'Entrepreneuriat', pack: 'entrepreneur', mots: 'entreprise entrepreneur startup business clients client chiffre affaires vendre vente marketing levee fonds fondateur freelance auto-entrepreneur' },
+  { id: 'tech', nom: 'Tech', pack: 'tech', mots: 'application logiciel smartphone iphone android ordinateur code programmation intelligence artificielle ia ordi mac windows processeur test appareil gadget mise jour' },
+  { id: 'gaming', nom: 'Gaming', pack: 'gaming', mots: 'jeu jeux joueur partie niveau boss manette console stream fortnite minecraft fifa ps5 xbox rang victoire defaite' },
+  { id: 'tuto', nom: 'Tutoriel', pack: 'tuto', mots: 'tutoriel etape cliquez cliquer ouvrez ouvrir installer parametres astuce methode apprendre expliquer comment montrer exemple outil' },
+  { id: 'podcast', nom: 'Podcast et interview', pack: 'podcast-interview', mots: 'invite interview podcast episode question parcours racontez histoire raconter reponse echange discussion rencontre' },
+  { id: 'vlog-voyage', nom: 'Voyage', pack: 'vlog-voyage', mots: 'voyage vacances avion hotel plage ville visite visiter decouvrir pays aeroport train randonnee paysage' },
+  { id: 'vlog-food', nom: 'Cuisine et food', pack: 'vlog-food', mots: 'recette cuisine restaurant gout plat manger cuire four ingredients repas gateau delicieux saveur' },
+  { id: 'vlog-sport', nom: 'Sport', pack: 'vlog-sport', mots: 'sport entrainement musculation course seance muscle match equipe courir salle exercice cardio' },
+  { id: 'vlog-quotidien', nom: 'Vlog du quotidien', pack: 'vlog-quotidien', mots: 'journee matin reveil routine maison soiree vlog quotidien semaine aujourd\'hui' }
+];
+const STOP_SUJET = new Set('aujourd hui parle regardez voir video chaine abonnez abonne like pouce commentaire commentaires lien description cliquez'.split(' '));
+
+// → { genre:{id,nom,pack,confiance}, motsCles[], sujet, rythme:'rapide'|'normal'|'calme', debit, nbMots, theme:[{mot,n}] } ou null si pas de parole
+function analyserSujet(segments, duree) {
+  const ph = phrases(segments);
+  if (!ph.length) return null;
+  const txt = ph.map(p => p.t).join(' '), tousMots = mots(txt).filter(m => !STOP_SUJET.has(m));
+  const freq = new Map(); for (const m of tousMots) freq.set(m, (freq.get(m) || 0) + 1);
+  const theme = [...freq.entries()].filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([mot, n]) => ({ mot, n }));
+  // genre : nombre d'occurrences des mots du lexique (radicaux comparés)
+  const rad = m => m.replace(/(s|x)$/, '');
+  let meilleur = null;
+  for (const g of GENRES) {
+    const lex = new Set(ASCII(g.mots).split(/\s+/).map(rad)); let pts = 0;
+    for (const [m, n] of freq) if (lex.has(m)) pts += Math.min(n, 6);
+    if (!meilleur || pts > meilleur.pts) meilleur = { g, pts };
+  }
+  const total = Math.max(1, tousMots.length), confiance = meilleur ? Math.min(1, meilleur.pts / Math.max(6, total * 0.04)) : 0;
+  const genre = meilleur && meilleur.pts >= 4 ? { id: meilleur.g.id, nom: meilleur.g.nom, pack: meilleur.g.pack, confiance: +confiance.toFixed(2) } : { id: 'general', nom: 'Vidéo générale', pack: 'vlog-quotidien', confiance: 0 };
+  const D = Math.max(1, +duree || ph[ph.length - 1].e), nb = nbMots(txt), debit = nb / D;
+  const entiers = theme.slice(0, 5).map(t => (String(txt).match(/[\p{L}'’-]+/gu) || []).find(w => ASCII(w).replace(/(s|x)$/, '') === t.mot) || t.mot);
+  return { genre, motsCles: entiers.map(w => w.toLowerCase()), theme, sujet: entiers.slice(0, 3).join(', '), rythme: debit > 2.8 ? 'rapide' : debit < 1.6 ? 'calme' : 'normal', debit: +debit.toFixed(2), nbMots: nb };
+}
+
+// pondération par le sujet : part des mots-clés de la vidéo présents dans un texte (0 à 1)
+function pertinence(texte, analyse) {
+  if (!analyse || !analyse.theme || !analyse.theme.length) return 0;
+  const m = new Set(mots(texte)); let p = 0, tot = 0;
+  analyse.theme.forEach((t, i) => { const w = 1 - i * 0.06; tot += w; if (m.has(t.mot)) p += w; });
+  return tot ? p / tot : 0;
+}
+
 // → [{ t, titre }] ; le premier chapitre est à 0. nb : nombre souhaité (sinon environ un chapitre par minute et demie)
 function proposerChapitres(segments, duree, o = {}) {
   const ph = phrases(segments), D = Math.max(0, +duree || (ph.length ? ph[ph.length - 1].e : 0));
@@ -108,6 +157,7 @@ function proposerMoments(segments, duree, o = {}) {
       if (/[.!?…]["»”)]*$/.test(f[f.length - 1].t)) score += 0.8;
       const suite = ph[j + 1]; if (suite && SIGNAUX_PARTIE.test(ASCII(suite.t))) score += 0.6; // finit juste avant une nouvelle partie
       score -= Math.abs(d - Math.min(max, 40)) / 40; // durée proche de 40 s (sans dépasser le maximum)
+      if (o.analyse) score += pertinence(txt, o.analyse) * 2.4; // extraits qui portent le sujet de la vidéo
       cands.push({ s: +s.toFixed(2), e: +e.toFixed(2), t: txt, score: +score.toFixed(3), i, j });
     }
   }
@@ -140,4 +190,4 @@ function segmentsDuProjet(proj) {
   return out;
 }
 
-module.exports = { phrases, proposerChapitres, proposerMoments, titreAccroche, segmentsDuProjet, mots };
+module.exports = { analyserSujet, pertinence, GENRES, phrases, proposerChapitres, proposerMoments, titreAccroche, segmentsDuProjet, mots };

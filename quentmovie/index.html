@@ -831,6 +831,19 @@ async function appliquerDecor(file, kind) {
 const packsLien = () => `<p class="mut" style="margin-top:12px">📦 Tu as téléchargé des packs gratuits ? <a href="#" data-outil="packs">Ajoute-les dans « Mes packs »</a>.</p>`;
 // Applique un pack à toute la timeline : transition (en alternant celles du pack), effet de coupe en deux moitiés autour du raccord,
 // bruitage centré sur le raccord, et en option le look sur tous les clips
+// Carte « ce que j'ai compris de la vidéo » (sujet, genre, rythme, idées fortes) + pack conseillé selon le sujet
+function carteAnalyse(a) {
+  if (!a || !(a.sujet || a.genre)) return '';
+  const g = a.genre || {}, P = (CAT.packs || []).find(x => x.id === g.pack), pts = (a.points || []).slice(0, 5);
+  return `<div class="encart" style="margin:8px 0"><h4>🔎 Ce que j’ai compris de la vidéo</h4>
+    ${a.sujet ? `<p><b>Sujet :</b> ${esc(a.sujet)}</p>` : ''}${a.resume ? `<p class="mut">${esc(a.resume)}</p>` : ''}
+    <p class="mut">${g.nom && g.id !== 'general' ? `Genre : ${esc(g.nom)} · ` : ''}Rythme de parole : ${a.rythme === 'rapide' ? 'rapide' : a.rythme === 'calme' ? 'posé' : 'normal'}${a.public ? ` · Public : ${esc(a.public)}` : ''}</p>
+    ${pts.length ? `<ul style="margin:4px 0 4px 18px">${pts.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+    ${P && g.id !== 'general' ? `<button data-pack-sujet="${esc(P.id)}">🎬 Monter dans le style « ${esc(P.nom)} »</button> <span class="mut">pack conseillé pour ce sujet</span>` : ''}</div>`;
+}
+function brancherCarteAnalyse(racine) {
+  racine.querySelectorAll('[data-pack-sujet]').forEach(b => { b.onclick = () => { appliquerPack(b.dataset.packSujet, { tr: true, cal: true, son: true, look: true, mus: false, viz: false, amb: false, tit: false }); b.disabled = true; b.textContent = '✅ Pack appliqué (annulable avec ' + (MAC ? '⌘Z' : 'Ctrl+Z') + ')'; }; });
+}
 function appliquerPack(id, o) {
   const P = (CAT.packs || []).find(p => p.id === id); if (!P) return;
   if (proj.clips.length < 2 && !o.look) return signal('Ajoute au moins deux clips sur la timeline pour poser les transitions du pack.');
@@ -1284,7 +1297,7 @@ async function ouvrirChapitrage() {
   stopLecture();
   ouvrir(`<h2>📑 Chapitrer la vidéo</h2>
     <p class="mut">QuentMovie écoute la vidéo, repère les changements de sujet et propose des chapitres. Tu relis, tu corriges, puis il les pose : repères, liste pour YouTube, et si tu veux le titre qui s’écrit à l’écran avec le bruit du clavier.</p>
-    <div id="chEtat" class="mut">Préparation…</div><div id="chListe"></div><div id="chOpts" hidden>
+    <div id="chEtat" class="mut">Préparation…</div><div id="chAnalyse"></div><div id="chListe"></div><div id="chOpts" hidden>
       <label class="l">Titre à l’écran</label><select id="chMode">${opts([['sur', 'Écrit sur la vidéo, au début de chaque partie'], ['ecran', 'Sur un écran titre de 3 s entre les parties'], ['aucun', 'Aucun titre à l’écran (repères et liste seulement)']], 'sur')}</select>
       <div class="sw2"><input type="checkbox" id="chClavier" checked><label for="chClavier">Bruit de clavier pendant que le titre s’écrit</label></div>
       <div class="sw2"><input type="checkbox" id="chIA" checked><label for="chIA">Faire nommer les chapitres par l’IA locale (si elle est installée)</label></div></div>
@@ -1306,6 +1319,7 @@ async function ouvrirChapitrage() {
       const { id } = await (await api('/api/chapitres/proposer', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), ia: true }) })).json();
       const r = await suivreTravail(id, j => etat(`${esc(j.step || '')}`));
       chapitres = (r.chapitres || []).map(c => ({ ...c, ia: r.ia ? c.titre : '' }));
+      $('#chAnalyse').innerHTML = carteAnalyse(r.analyse); brancherCarteAnalyse($('#chAnalyse'));
       etat(chapitres.length ? `${chapitres.length} chapitres proposés${r.ia ? ' (nommés par l’IA locale)' : ''}. Corrige les titres et les temps si besoin.` : '<span class="err">La vidéo est trop courte ou trop uniforme pour la découper en parties. Pose des repères à la main (touche M).</span>');
       rendre();
     } catch (er) { etat(`<span class="err">${esc(er.message)}</span>`); $('#chRefaire').hidden = false; }
@@ -1363,7 +1377,7 @@ async function ouvrirClipping() {
     <div class="sw2"><input type="checkbox" id="clAccroche" checked><label for="clAccroche">Écrire le titre d’accroche en haut au début du clip</label></div>
     <div class="sw2"><input type="checkbox" id="clNorm" checked><label for="clNorm">Égaliser le volume</label></div>
     <div class="ligne" style="margin-top:8px"><button id="clFermer">Fermer</button><button class="pri" id="clChercher">Trouver les meilleurs passages</button></div>
-    <div id="clEtat" class="mut" style="margin-top:8px"></div><div id="clListe"></div>`, 'large');
+    <div id="clEtat" class="mut" style="margin-top:8px"></div><div id="clAnalyse"></div><div id="clListe"></div>`, 'large');
   $('#clFermer').onclick = fermer;
   let extraits = [];
   const etat = t => { const e = $('#clEtat'); if (e) e.innerHTML = t; };
@@ -1397,6 +1411,7 @@ async function ouvrirClipping() {
       const { id } = await (await api('/api/clipping/proposer', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), nb: +$('#clNb').value, min, max, sujet: (proj.gen && proj.gen.titre) || '', ia: true }) })).json();
       const r = await suivreTravail(id, j => etat(`${esc(j.step || '')}`));
       extraits = r.extraits || [];
+      $('#clAnalyse').innerHTML = carteAnalyse(r.analyse); brancherCarteAnalyse($('#clAnalyse'));
       etat(extraits.length ? `${extraits.length} passage${extraits.length > 1 ? 's' : ''} trouvé${extraits.length > 1 ? 's' : ''}${r.ia ? ' (choisis par l’IA locale)' : ''}. Décoche ceux dont tu ne veux pas, corrige les titres.` : '<span class="err">Aucun passage assez long et complet n’a été trouvé : essaie une durée plus courte.</span>');
       rendre();
     } catch (er) { etat(`<span class="err">${esc(er.message)}</span>`); }

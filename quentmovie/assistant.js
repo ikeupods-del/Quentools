@@ -81,6 +81,7 @@ function comprendre(demande, projet) {
   const tit = /(?:titre|ecran titre)\s*(?:«|"|:)\s*([^»"]{2,60})/.exec(demande ? sansAccents(demande) : '');
   const titOrig = /(?:titre|écran titre)\s*(?:«|"|:)\s*([^»"]{2,60})/i.exec(String(demande || ''));
   if (/(ecran titre|titre au debut|ajoute (un|le) titre|mets (un|le) titre)/.test(t) || tit) ajoute('titre', titOrig ? titOrig[1].trim() : '');
+  if (/(analyse (la|ma|cette) video|de quoi parle|sujet de la video)/.test(t) && !/chapitr/.test(t)) ajoute('chapitrer');
   if (/chapitr/.test(t)) ajoute(/(liste|copi|description)/.test(t) && !/(clavier|ecran|titre)/.test(t) ? 'chapitres' : 'chapitrer');
   if (/(hashtags?|description|titre (pour|de la) (publication|video youtube|tiktok)|legende)/.test(t)) ajoute('publication', /youtube/.test(t) ? 'YouTube' : /instagram/.test(t) ? 'Instagram' : /tiktok/.test(t) ? 'TikTok' : '');
   if (/\bexport/.test(t)) ajoute('exporter');

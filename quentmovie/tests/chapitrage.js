@@ -50,4 +50,16 @@ check('TikTok : vertical + sous-titres gros + accroche', tk.format === 'vertical
 let erreur = ''; try { extraireSegment(proj, 5, 5.1); } catch (er) { erreur = er.message; }
 check('découpe : extrait trop court refusé', /court/.test(erreur));
 check('segments : lus depuis les sous-titres du montage', segmentsDuProjet(proj).length === 3 && segmentsDuProjet(proj)[2].s === 25);
+// analyse du sujet
+const { analyserSujet, pertinence } = require('../chapitrage');
+const bourse = []; { let t = 0; const ph = ['Aujourd’hui on parle de bourse et d’investissement.', 'Les actions et les ETF permettent de construire un portefeuille.', 'Le dividende est un revenu régulier.', 'Attention au krach du marché.', 'Comment choisir son courtier pour investir ?']; for (let i = 0; i < 40; i++) { bourse.push({ s: t, e: t + 5, t: ph[i % 5] }); t += 6; } }
+const an = analyserSujet(bourse, 240);
+check('analyse : genre bourse reconnu, pack conseillé « bourse »', an && an.genre.id === 'bourse' && an.genre.pack === 'bourse', JSON.stringify(an && an.genre));
+check('analyse : mots-clés du sujet sans mots creux', an.motsCles.includes('bourse') && !an.motsCles.includes('hui'), an.motsCles.join(','));
+check('analyse : rythme de parole calculé', ['rapide', 'normal', 'calme'].includes(an.rythme) && an.debit > 0);
+check('analyse : vidéo sans parole → rien', analyserSujet([], 60) === null);
+check('analyse : sujet inconnu → vidéo générale', analyserSujet(segs.slice(0, 6).map(x => ({ ...x, t: 'zorglub plouf zorglub plouf quux' })), 60).genre.id === 'general');
+check('pertinence : un texte du sujet pèse plus qu’un texte étranger', pertinence('la bourse et les actions du portefeuille', an) > pertinence('la météo de demain matin', an));
+const exA = proposerMoments(bourse, 240, { nb: 2, analyse: an });
+check('extraits avec analyse du sujet', exA.length === 2 && exA.every(m => m.e - m.s >= 19.9));
 console.log(`Chapitres et clipping : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);
