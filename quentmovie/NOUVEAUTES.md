@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.30.0
+- **Beaucoup moins de batterie** : quand la fenêtre de QuentMovie passe derrière une autre ou est réduite, l’application se met au ralenti au lieu de continuer à tout calculer. Elle reste à pleine vitesse uniquement quand le studio caméra est ouvert, pour ne rien perdre d’un enregistrement. Les exports continuent normalement en arrière-plan.
+
 ## 1.29.0
 - **Vrai chapitrage façon vlog** : chaque chapitre commence par un écran noir avec « CHAPITRE 02 » en petites lettres dorées, le nom du chapitre qui s’écrit au clavier et un trait doré qui s’étire. Un souffle accompagne l’arrivée de l’écran, le bruit de clavier suit l’écriture et un petit clic marque la fin. C’est maintenant le mode proposé par défaut (les autres modes restent disponibles).
 - Nouveau modèle de titre « Chapitre vlog (écran noir, titre qui s’écrit) » dans l’onglet Titres, utilisable à la main.

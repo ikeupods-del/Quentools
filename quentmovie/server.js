@@ -1679,6 +1679,7 @@ function buildClip(c, P, o = {}) {
         return send(res, 200, { out: name });
       }
       if (req.method === 'GET' && p === '/api/ecran') return send(res, 200, { statut: opts.ecran ? opts.ecran.statut() : 'granted' }); // autorisation d'enregistrement de l'écran (macOS)
+      if (req.method === 'POST' && p === '/api/energie') { const b = await readJson(req).catch(() => ({})); if (opts.energie) opts.energie(!!b.studio); return send(res, 200, { ok: !!opts.energie }); } // studio ouvert = fenêtre non ralentie
       if (req.method === 'POST' && p === '/api/ecran/reglages') { if (opts.ecran) opts.ecran.reglages(); return send(res, 200, { ok: !!opts.ecran }); }
       if (req.method === 'POST' && p === '/api/partager') { // feuille de partage de macOS (AirDrop, Messages, Mail…) pour des fichiers des exports
         const noms = [].concat((await readJson(req)).files || []).slice(0, 50).map(n => path.join(EXPORTS, safeName(String(n)))).filter(f => fs.existsSync(f));

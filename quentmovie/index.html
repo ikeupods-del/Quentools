@@ -3437,10 +3437,12 @@ function stSonsAnimations(evts, debut) {
   return n;
 }
 
+// Batterie : la fenêtre n'est ralentie en arrière-plan que si le studio n'est pas ouvert
+const energieStudio = on => fetch('/api/energie', { method: 'POST', body: JSON.stringify({ studio: on }) }).catch(() => {});
 async function ouvrirStudio() {
   if (studio) return;
   if (!navigator.mediaDevices || !window.MediaRecorder) return alert('La caméra n’est pas disponible dans cette fenêtre.');
-  stopLecture();
+  stopLecture(); energieStudio(true);
   studio = { o: stLire(), appareils: [], flux: null, rec: null, defil: false, pos: 0, t0: 0, raf: 0, evts: [], direct: {}, ecranSegs: [] };
   $('#studio').classList.add('on');
   try { await stFlux(); }
@@ -3472,7 +3474,7 @@ function stDefiler(on) { studio.defil = on === undefined ? !studio.defil : on; $
 function fermerStudio() {
   if (!studio) return;
   if (studio.rec) { if (!confirm('Un enregistrement est en cours. Arrêter et l’ajouter à la timeline ?')) return; studio.fermerApres = true; if (studio.pauseDebut) stPause(); studio.rec.stop(); return; }
-  cancelAnimationFrame(studio.raf); if (studio.flux) studio.flux.getTracks().forEach(t => t.stop()); if (studio.ctx) studio.ctx.close().catch(() => {});
+  energieStudio(false); cancelAnimationFrame(studio.raf); if (studio.flux) studio.flux.getTracks().forEach(t => t.stop()); if (studio.ctx) studio.ctx.close().catch(() => {});
   if (studio.direct && studio.direct.ecran) studio.direct.ecran.flux.getTracks().forEach(t => t.stop());
   if (studio.decor && studio.decor.pause) studio.decor.pause();
   if (studio.rvfc) $('#stVideo').cancelVideoFrameCallback(studio.rvfc); stArreterDetoureur();
