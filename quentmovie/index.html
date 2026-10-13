@@ -57,6 +57,10 @@ h3:first-child{margin-top:0}
 /* visionneuse */
 #view{grid-area:view;display:flex;flex-direction:column;align-items:center;padding:8px 10px;gap:6px;min-width:0;min-height:0;overflow:hidden}
 #stage{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.ldTitre{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 9%;pointer-events:none;font-family:Arial,Helvetica,sans-serif;color:#fff;text-shadow:0 2px 6px #0008}
+.ldTitre:empty{display:none}.ldNum{font-weight:700;font-size:clamp(10px,1.6vw,18px);letter-spacing:.08em;margin-bottom:.6em}
+.ldGros{font-weight:800;font-size:clamp(16px,3.6vw,44px);line-height:1.15}.ldPetit{font-size:clamp(11px,1.8vw,20px);margin-top:.4em;opacity:.85}
+.ldTrait{height:4px;border-radius:2px;margin-top:.7em;transition:width .1s}.ldCurseur{opacity:.8}
 #stage img,#stage video{max-width:100%;max-height:100%;border-radius:6px;background:#000;box-shadow:0 4px 28px #000a}
 #stage .vide{color:var(--mut);text-align:center;max-width:420px}
 #stage .vide .actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
@@ -1539,8 +1543,11 @@ async function lectureDirecte() {
   v.playsInline = true; im.style.cssText = 'position:absolute;inset:0;background:#000 center/contain no-repeat;display:none';
   $('#stage').innerHTML = ''; $('#stage').append(v, im);
   const badge = document.createElement('div'); badge.className = 'mut'; badge.style.cssText = 'position:absolute;top:8px;left:8px;background:#000a;padding:3px 8px;border-radius:6px;font-size:11px';
-  badge.textContent = '▶ Lecture directe (sans effets) — l’aperçu complet se prépare'; $('#stage').append(badge);
+  badge.textContent = '▶ Lecture rapide (titres et sons simplifiés) — l’aperçu complet se prépare'; $('#stage').append(badge);
+  const tx = document.createElement('div'); tx.className = 'ldTitre'; $('#stage').append(tx);
   const lec = lecture = { video: v, direct: true }; let { i, pos: p } = locate(gt), minuteur = 0;
+  // titres et bruitages joués aussi en lecture rapide (sinon un écran de chapitre reste noir et muet)
+  const sons = new Map(), departs = st.slice(), ticker = setInterval(() => { if (lecture !== lec) return; majTitreDirect(tx, gt, departs); majSonsDirect(sons, gt); }, 50);
   majPlay(true);
   const suivant = () => { clearInterval(minuteur); i++; p = 0; if (lecture === lec) jouer(); };
   const jouer = async () => {
@@ -1560,8 +1567,34 @@ async function lectureDirecte() {
       minuteur = setInterval(() => { if (lecture !== lec) return clearInterval(minuteur); const e = (performance.now() - t0) / 1000; gt = st[i] + e; tete(); if (e >= effDur(c)) suivant(); }, 40);
     }
   };
-  lec.arreter = () => clearInterval(minuteur);
+  lec.arreter = () => { clearInterval(minuteur); clearInterval(ticker); sons.forEach(a => a && a.pause()); sons.clear(); };
   jouer();
+}
+// Lecture rapide : titre du clip affiché en HTML (chapitre « vlog » : numéro, titre qui s'écrit, trait d'accent)
+function majTitreDirect(tx, t, st) {
+  const { i } = locate(t), c = proj.clips[i], ti = c && c.titre;
+  const e = ti ? t - st[i] - (+ti.start || 0) : -1, fin = ti && +ti.dur > 0 ? +ti.dur : effDur(c || {}) - (+((ti || {}).start) || 0);
+  if (!ti || e < 0 || e > fin || !(ti.l1 || ti.l2)) { if (tx.innerHTML) tx.innerHTML = ''; return; }
+  const ecrit = ['chapnoir', 'machine', 'chapitre'].includes(ti.preset), n = ecrit ? Math.max(0, Math.floor((e - 0.25) * (+ti.speed || VITESSE_FRAPPE))) : 1e9;
+  const l1 = String(ti.l1 || '').slice(0, n), coul = ti.color || '#ffffff', fini = n >= String(ti.l1 || '').length;
+  const html = ti.preset === 'chapnoir'
+    ? `<div class="ldNum" style="color:${esc(coul)}">${esc(String(ti.l2 || '').toUpperCase().split('').join(' '))}</div><div class="ldGros">${esc(l1)}<span class="ldCurseur">${fini ? '' : '|'}</span></div><div class="ldTrait" style="background:${esc(coul)};width:${Math.round(Math.min(1, e / 0.9) * 60)}%"></div>`
+    : `<div class="ldGros" style="color:${esc(coul)}">${esc(l1)}</div>${ti.l2 ? `<div class="ldPetit">${esc(ti.l2)}</div>` : ''}`;
+  if (tx.innerHTML !== html) tx.innerHTML = html;
+}
+// Lecture rapide : bruitages et musiques de la piste audio lancés à leur place
+function majSonsDirect(sons, t) {
+  proj.audio.forEach((a, k) => {
+    const deb = +a.start || 0, en = a.dur > 0 ? deb + +a.dur : Infinity, actif = t >= deb && t < en && !etatPiste('A').muet;
+    let el = sons.get(k);
+    if (actif && !sons.has(k)) {
+      el = new Audio(a.file.startsWith('lib:') ? '/lib/' + a.file.slice(4) : '/media/' + enc(a.file));
+      el.volume = clamp((a.vol == null ? 100 : +a.vol) / 100, 0, 1); el.loop = !!a.loop;
+      el.onloadedmetadata = () => { if (t - deb < el.duration) el.currentTime = Math.max(0, t - deb); };
+      el.play().catch(() => {}); sons.set(k, el);
+      el.onended = () => { if (!el.loop) sons.set(k, null); };
+    } else if (!actif && sons.has(k)) { if (el) el.pause(); sons.delete(k); }
+  });
 }
 async function lireOriginal() { // lecture rapide du clip sélectionné, sans effets (n'importe quel format)
   const c = curClip(); if (!c || !['video', 'audio'].includes(c.kind)) return aide('La lecture sans effets sert pour les vidéos et les sons.');

@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.31.0
+- **Chapitres et titres visibles tout de suite** : juste après un montage par l'IA, la lecture immédiate affiche maintenant les titres (le nom du chapitre s'écrit sur l'écran noir) et joue les sons (souffle, clavier, clic). Avant, l'écran restait noir et muet tant que l'aperçu complet n'était pas prêt.
+
 ## 1.30.0
 - **Beaucoup moins de batterie** : quand la fenêtre de QuentMovie passe derrière une autre ou est réduite, l’application se met au ralenti au lieu de continuer à tout calculer. Elle reste à pleine vitesse uniquement quand le studio caméra est ouvert, pour ne rien perdre d’un enregistrement. Les exports continuent normalement en arrière-plan.
 
