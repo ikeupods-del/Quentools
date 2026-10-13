@@ -2,6 +2,10 @@
 
 Chaque section devient le texte de la version publiée. Changer aussi `version.txt` : une version déjà publiée n'est pas republiée.
 
+## 1.2.1
+- **Plus de plantage avec l'IA locale** : l'IA tourne maintenant à part. Si elle plante, QuentStudio reste ouvert, relance l'IA sans la puce graphique (un peu plus lente, mais stable) et s'en souvient pour les fois suivantes. Si l'IA ne marche vraiment pas, la vidéo est faite sans elle (fiches et bibliothèque) au lieu de fermer le logiciel.
+- Ce qui s'est passé est noté dans le fichier ia-journal.txt du dossier Vidéos → QuentStudio, pour pouvoir corriger la cause.
+
 ## 1.2.0
 - **30 nouveaux sujets prêts dans QuentInvest** (43 en tout), écrits à la main avec des faits vérifiés et utilisables sans IA : la BCE, le FMI, la dette publique, le crédit lombard, la Banque de France, la planche à billets, le passage à l'euro, la fin du dollar en or, les agences de notation, le PIB et la récession, le chômage, la TVA, la retraite par répartition, le Livret A, l'assurance-vie, le PEA, le CAC 40, le crédit immobilier, l'or, le bitcoin, investir chaque mois, les frais, la pyramide de Ponzi, le lundi noir de 1987, la crise grecque, le choc pétrolier de 1973, l'offre et la demande, le salaire brut et net, chiffre d'affaires et bénéfice.
 - **Liste des sujets prêts rangée par thème** (banques centrales, État, crédit, placements, crises, notions de base, arnaques) : on choisit un sujet et on clique sur « Créer ce sujet ». Un ✓ marque les sujets déjà publiés.

@@ -178,6 +178,42 @@ a = story.scenario("auto", journal=lambda m: None)
 check("le mode auto puise d'abord dans la réserve", a["mode"].startswith("réserve") and len(story.reserve()) == 2, a["mode"])
 
 
+# ---------- IA intégrée : un moteur qui plante n'arrête pas l'application ----------
+import ia_locale  # noqa: E402
+
+faux = Path(tempfile.mkdtemp()) / "faux_moteur.py"
+faux.write_text("""import json, os, sys
+if os.environ.get("QS_IA_GPU") == "1":
+    os.abort()  # plantage brutal, comme la puce graphique
+for l in sys.stdin:
+    print(json.dumps({"texte": json.dumps({"ok": True})}), flush=True)
+""", "utf-8")
+_avant = (ia_locale.moteur_present, ia_locale.chemin_modele, os.environ.get("QS_IA_COMMANDE"))
+ia_locale.moteur_present, ia_locale.chemin_modele = (lambda: True), (lambda: Path("/modele.gguf"))
+os.environ["QS_IA_COMMANDE"] = json.dumps([sys.executable, str(faux)])
+config.ecrire_json(config.DATA / "ia.json", {})
+try:
+    rep = ia_locale.discuter("s", "d", {"type": "object"})
+    check("IA : moteur planté avec la puce graphique → relancé sur le processeur, réponse obtenue",
+          json.loads(rep).get("ok") is True and config.lire_json(config.DATA / "ia.json", {}).get("sans_gpu") is True, rep)
+    rep2 = ia_locale.discuter("s", "d", {"type": "object"})
+    check("IA : demandes suivantes servies par le même moteur", json.loads(rep2).get("ok") is True)
+    faux.write_text("import os\nos.abort()\n", "utf-8")  # moteur toujours en panne
+    ia_locale._arreter(); config.ecrire_json(config.DATA / "ia.json", {})
+    try:
+        ia_locale.discuter("s", "d", {"type": "object"})
+        check("IA : moteur toujours en panne signalé", False)
+    except Exception as e:
+        check("IA : moteur toujours en panne → erreur propre, IA mise de côté (vidéo faite sans IA)", ia_locale._HS["oui"] and "arrêté" in str(e), repr(e))
+except Exception as e:
+    check("IA : moteur planté géré sans arrêter l'application", False, repr(e))
+finally:
+    ia_locale._arreter()
+    ia_locale._HS["oui"] = False
+    ia_locale.moteur_present, ia_locale.chemin_modele = _avant[0], _avant[1]
+    os.environ.pop("QS_IA_COMMANDE", None)
+    config.ecrire_json(config.DATA / "ia.json", {})
+
 # ---------- QuentInvest ----------
 import invest  # noqa: E402
 
