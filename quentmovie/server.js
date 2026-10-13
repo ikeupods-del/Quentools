@@ -555,7 +555,7 @@ function buildClip(c, P, o = {}) {
       const idx = o.tdir ? o.tdir.idx : 0, file = `t${idx}.txt`;
       const size = Math.round(H * clamp(num(c.textSize, 6), 2, 15) / 100);
       fs.writeFileSync(path.join(o.tdir ? o.tdir.dir : TMP, file), wrap(String(c.text).slice(0, 300), Math.floor(W * 0.88 / (size * 0.6))));
-      const T = `(t+${ctx.t0})`, S = clamp(num(c.textStart, 0), 0, 600), D = num(c.textDur, 0);
+      const T = `(t+${(ctx.t0 + clamp(num(c.textDeja, 0), 0, 3600)).toFixed(3)})`, S = clamp(num(c.textStart, 0), 0, 600), D = num(c.textDur, 0); // textDeja : texte qui continue après une coupe
       const base = c.textPos === 'haut' ? 'h*0.12' : c.textPos === 'milieu' ? '(h-text_h)/2' : 'h*0.8-text_h';
       const anim = c.textAnim || 'aucune', ap = `min(1,max(0,(${T}-${S})/0.5))`;
       let style = '';
@@ -613,7 +613,7 @@ function buildClip(c, P, o = {}) {
   function reportage(c, ctx, f, cur, lab, o) {
     const ti = c.titre, { W, H, fps, eff } = ctx, u = Math.min(W, H) / 100;
     const dir = o.tdir ? o.tdir.dir : TMP, idx = o.tdir ? o.tdir.idx : 0;
-    const T = `(t+${ctx.t0})`, S = clamp(num(ti.start, 0), 0, 3600), D = num(ti.dur, 0);
+    const T = `(t+${(ctx.t0 + clamp(num(ti.deja, 0), 0, 3600)).toFixed(3)})`, S = clamp(num(ti.start, 0), 0, 3600), D = num(ti.dur, 0); // deja : titre qui continue après une coupe, sans rejouer son entrée
     const E = D > 0 ? S + D : eff + 10, OUT = D > 0 ? 1 : 0;
     const ease = (a, d) => `(1-pow(1-min(1,max(0,(${T}-(${a}))/${d})),3))`;
     const fin = ease(S, 0.5), fout = D > 0 ? ease(E - 0.5, 0.5) : '0';
@@ -1262,8 +1262,9 @@ function buildClip(c, P, o = {}) {
         fs.copyFileSync(path.join(dir, final), path.join(APERCUS, name));
         job.url = '/apercu/' + name;
       } else {
-        const name = `montage-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}.${sortie}`;
-        fs.copyFileSync(path.join(dir, final), path.join(EXPORTS, name), fs.constants.COPYFILE_FICLONE); // copie instantanée sur le disque du Mac (APFS)
+        // nom unique : deux exports finis dans la même seconde ne s'écrasent pas (montage-…-2.mp4)
+        const racine = `montage-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}`; let name = `${racine}.${sortie}`;
+        for (let n = 2; ; n++) { try { fs.copyFileSync(path.join(dir, final), path.join(EXPORTS, name), fs.constants.COPYFILE_FICLONE | fs.constants.COPYFILE_EXCL); break; } catch (e) { if (e.code !== 'EEXIST' || n > 99) throw e; name = `${racine}-${n}.${sortie}`; } } // copie instantanée sur le disque du Mac (APFS)
         job.out = name;
       }
       job.fin = Date.now(); job.progress = 1; job.done = true;
