@@ -21,6 +21,8 @@ const ecran = {
   statut: () => (process.platform === 'darwin' ? systemPreferences.getMediaAccessStatus('screen') : 'granted'),
   reglages: () => shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture')
 };
+// Économie de batterie : la fenêtre passée derrière est ralentie, sauf pendant que le studio (caméra, enregistrement) est ouvert
+const energie = studio => { if (win && !win.isDestroyed()) win.webContents.setBackgroundThrottling(!studio); };
 const partager = fichiers => { if (process.platform === 'darwin' && win) new ShareMenu({ filePaths: fichiers }).popup({ window: win }); };
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
@@ -29,8 +31,8 @@ async function demarrer() {
   const bins = await resolveFfmpeg();
   const base = process.env.QM_AUTOTEST && process.env.QM_BASE ? process.env.QM_BASE : path.join(app.getPath('home'), 'Movies', 'QuentMovie');
   let port;
-  try { moteur = create({ port: 41730, base, ...bins, maj: hooksMaj, partager, ecran }); port = await moteur.start(); }
-  catch (e) { moteur = create({ port: 0, base, ...bins, maj: hooksMaj, partager, ecran }); port = await moteur.start(); }
+  try { moteur = create({ port: 41730, base, ...bins, maj: hooksMaj, partager, ecran, energie }); port = await moteur.start(); }
+  catch (e) { moteur = create({ port: 0, base, ...bins, maj: hooksMaj, partager, ecran, energie }); port = await moteur.start(); }
 
   // Caméra et micro (studio, voix off) : autorisés uniquement pour la fenêtre de QuentMovie
   const local = u => /^http:\/\/127\.0\.0\.1:\d+\//.test(u || '');
@@ -57,7 +59,7 @@ async function demarrer() {
 
   win = new BrowserWindow({
     width: 1480, height: 920, minWidth: 1100, minHeight: 700, backgroundColor: '#141518', title: 'QuentMovie',
-    webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, backgroundThrottling: false } // le studio et les rendus continuent si la fenêtre passe derrière
+    webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false } // fenêtre en arrière-plan ralentie pour économiser la batterie ; levé seulement pendant le studio (voir `energie`)
   });
   win.loadURL(`http://127.0.0.1:${port}/`);
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
