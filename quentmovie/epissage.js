@@ -117,15 +117,16 @@ function creer({ run, FFMPEG, encoder, FX, aFiltre, clamp, num }) {
 
   // Son de toute la timeline à partir des clips (fondus enchaînés du son aux mêmes endroits que l'image)
   async function sonDesClips(cwd, segs, F, D, fps, proxy, out) {
-    const ins = segs.flatMap(s => ['-i', s]), g = [];
-    segs.forEach((s, i) => g.push(`[${i}:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,atrim=end=${(F[i] / fps).toFixed(6)},asetpts=PTS-STARTPTS,apad=whole_dur=${(F[i] / fps).toFixed(6)}[a${i}]`));
-    let cur = 'a0';
-    for (let i = 1; i < segs.length; i++) {
-      const nx = `m${i}`;
-      g.push(D[i - 1] ? `[${cur}][a${i}]acrossfade=d=${(D[i - 1] / fps).toFixed(6)}[${nx}]` : `[${cur}][a${i}]concat=n=2:v=0:a=1[${nx}]`);
-      cur = nx;
-    }
-    await run(FFMPEG, ['-y', '-v', 'error', ...ins, '-filter_complex', g.join(';'), '-map', `[${cur}]`, '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', out], { cwd });
+    // pendant un fondu enchaîné, l'image se mêle mais pas les voix : le son de A s'arrête au milieu du fondu et celui de B
+    // y commence (micro-fondus de 40 ms contre les clics) ; la durée totale reste celle de l'image
+    const ins = segs.flatMap(s => ['-i', s]), g = [], k = (D || []).map(d => (d || 0) / 2 / fps);
+    segs.forEach((s, i) => {
+      const deb = i ? k[i - 1] : 0, fin = F[i] / fps - (k[i] || 0), lg = Math.max(0.02, fin - deb);
+      const fondus = [i && k[i - 1] ? 'afade=t=in:d=0.04' : '', k[i] ? `afade=t=out:st=${Math.max(0, lg - 0.04).toFixed(6)}:d=0.04` : ''].filter(Boolean).join(',');
+      g.push(`[${i}:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,apad,atrim=start=${deb.toFixed(6)}:end=${fin.toFixed(6)},asetpts=PTS-STARTPTS${fondus ? ',' + fondus : ''}[a${i}]`);
+    });
+    g.push(`${segs.map((_, i) => `[a${i}]`).join('')}concat=n=${segs.length}:v=0:a=1[son]`);
+    await run(FFMPEG, ['-y', '-v', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '[son]', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', out], { cwd });
   }
 
   // Assemble les clips : renvoie { video, plan } (image seule, sans son) ou lève une erreur (l'appelant utilise alors l'ancienne méthode)

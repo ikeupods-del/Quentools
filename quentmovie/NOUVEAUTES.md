@@ -3,6 +3,16 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.36.0
+- **Tu valides chaque proposition** : quand l'aide au montage, un pack, le montage selon le sujet ou le chapitrage veut changer quelque chose, un panneau à droite liste chaque titre, bruitage, transition, effet ou réglage avec son moment. Clique une ligne pour la voir dans l'aperçu, ▶ pour écouter un bruitage, ✓ pour garder, ✕ pour refuser (retiré tout de suite), puis « Valider mes choix ».
+- **Le son reste calé sur l'image** : après beaucoup de coupes, le son glissait petit à petit (jusqu'à une demi-seconde après 20 coupes). C'est corrigé.
+- **Plus de faux textes** : les packs ne posent plus « Prénom Nom », « @tonpseudo » ni de faux cours de bourse ; le titre d'ouverture n'est posé qu'avec le vrai sujet de ta vidéo. Avant l'export, QuentMovie te prévient s'il reste un texte d'exemple.
+- **Musique bien dosée** : elle s'entend enfin (environ 12 dB sous la voix, et un peu plus basse quand tu parles), une seule musique à la fois, et sa boucle s'enchaîne sans trou.
+- **Bruitages et transitions à leur place** : jamais sur un mot, seulement les sons courts, et les transitions se posent aux vrais changements de plan (pas au milieu d'une même prise). Pendant un fondu, les deux voix ne se mélangent plus.
+- **Coupe des blancs plus naturelle** : une vraie respiration après chaque fin de phrase, et les « um », « uh », « ben » sont aussi retirés.
+- **Égaliser le son** garde les nuances de ta voix (un seul réglage par vidéo d'origine) et ne fait plus échouer l'export d'un clip muet. Le montage automatique règle aussi le volume final comme les réseaux sociaux.
+- Une vidéo horizontale importée dans un projet vide règle le projet en horizontal (plus de recadrage surprise en vertical).
+
 ## 1.35.1
 - **Couper un clip qui porte un titre** : le titre continue sur la deuxième moitié, exactement là où il en était (son entrée ne se rejoue pas). Pareil pour le texte du clip.
 - Deux exports terminés dans la même seconde ne s'écrasent plus : le second est enregistré à côté (« …-2 »).
