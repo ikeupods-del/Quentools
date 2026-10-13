@@ -19,7 +19,7 @@ import config
 
 DEPOT = "ikeupods-del/Quentools"
 API = os.environ.get("QS_MAJ_API", "https://api.github.com")
-RE_DMG = re.compile(r"^QuentStudio-(\d+)\.(\d+)\.(\d+)-arm64\.dmg$")
+RE_DMG = re.compile(r"^QuentStudio-(\d+)\.(\d+)\.(\d+)-arm64(-sans-ia)?\.dmg$")
 DOSSIER = Path.home() / "Library" / "Application Support" / "QuentStudio" / "mises-a-jour"
 ETAT = {"etat": "inactif", "version": None, "avancement": 0.0, "notes": "", "erreur": None, "fichier": None}
 
@@ -43,9 +43,9 @@ def chercher(actuelle):
             continue
         for a in rel.get("assets") or []:
             m = RE_DMG.match(a.get("name") or "")
-            if not m:
+            if not m or bool(m.group(4)) != config.SANS_IA:  # la mise à jour garde la même version (avec ou sans IA)
                 continue
-            v = ".".join(m.groups())
+            v = ".".join(m.groups()[:3])
             if comparer(v, actuelle) > 0 and (not meilleure or comparer(v, meilleure["version"]) > 0):
                 d = a.get("digest") or ""
                 meilleure = {"version": v, "url": a["browser_download_url"], "taille": a.get("size"),

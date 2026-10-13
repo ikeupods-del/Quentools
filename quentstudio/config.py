@@ -12,6 +12,9 @@ from pathlib import Path
 
 # Fichiers livrés avec l'application (ui.html, persos/, bin/) : dossier du code, ou celui de l'app .dmg
 RESSOURCES = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+# version « sans IA » du .dmg : fichier repère dans l'application (aucun moteur d'IA livré)
+SANS_IA = bool(os.environ.get("QS_SANS_IA")) or (RESSOURCES / "sans-ia").exists() or (
+    getattr(sys, "frozen", False) and (Path(sys.executable).resolve().parents[1] / "Resources" / "sans-ia").exists())
 VERSION = (RESSOURCES / "version.txt").read_text("utf-8").strip() if (RESSOURCES / "version.txt").exists() else "dev"
 
 
@@ -96,7 +99,7 @@ def reglages(s=None):
 
 
 # Options de la vidéo (cases de l'application), enregistrées dans options.json
-OPTIONS = {"musique": True, "volume_musique": 100, "bruitages": True, "karaoke": True, "barre": True, "chiffres": True, "relire": False}
+OPTIONS = {"musique": True, "volume_musique": 100, "bruitages": True, "karaoke": True, "barre": True, "chiffres": True, "relire": False, "ia": True}
 
 
 def options():

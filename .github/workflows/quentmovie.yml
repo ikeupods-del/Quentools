@@ -116,5 +116,15 @@ jobs:
             exit 0
           fi
           node scripts/notes-version.js "$VERSION" > notes.md
-          gh release create "quentmovie-v$VERSION" dist/QuentMovie-$VERSION-arm64.dmg \
-            --title "QuentMovie $VERSION" --notes-file notes.md --target "${{ github.sha }}"
+          # GitHub refuse parfois la publication au premier essai (403 passager) : on réessaie
+          for essai in 1 2 3 4 5; do
+            if gh release view "quentmovie-v$VERSION" >/dev/null 2>&1; then
+              gh release upload "quentmovie-v$VERSION" dist/QuentMovie-$VERSION-arm64.dmg --clobber && exit 0
+            elif gh release create "quentmovie-v$VERSION" dist/QuentMovie-$VERSION-arm64.dmg \
+                --title "QuentMovie $VERSION" --notes-file notes.md --target "${{ github.sha }}"; then
+              exit 0
+            fi
+            echo "Publication refusée (essai $essai) : nouvel essai dans $((essai * 20)) s"
+            sleep $((essai * 20))
+          done
+          exit 1

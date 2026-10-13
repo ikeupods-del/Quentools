@@ -181,6 +181,7 @@ check("le mode auto puise d'abord dans la réserve", a["mode"].startswith("rése
 
 # ---------- IA intégrée : un moteur qui plante n'arrête pas l'application ----------
 import ia_locale  # noqa: E402
+import maj  # noqa: E402
 
 faux = Path(tempfile.mkdtemp()) / "faux_moteur.py"
 faux.write_text("""import json, os, sys
@@ -192,15 +193,15 @@ for l in sys.stdin:
 _avant = (ia_locale.moteur_present, ia_locale.chemin_modele, os.environ.get("QS_IA_COMMANDE"))
 ia_locale.moteur_present, ia_locale.chemin_modele = (lambda: True), (lambda: Path("/modele.gguf"))
 os.environ["QS_IA_COMMANDE"] = json.dumps([sys.executable, str(faux)])
-config.ecrire_json(config.DATA / "ia.json", {})
+config.ecrire_json(config.DATA / "ia.json", {"gpu": True})
 try:
     rep = ia_locale.discuter("s", "d", {"type": "object"})
     check("IA : moteur planté avec la puce graphique → relancé sur le processeur, réponse obtenue",
-          json.loads(rep).get("ok") is True and config.lire_json(config.DATA / "ia.json", {}).get("sans_gpu") is True, rep)
+          json.loads(rep).get("ok") is True and config.lire_json(config.DATA / "ia.json", {}).get("gpu") is False, rep)
     rep2 = ia_locale.discuter("s", "d", {"type": "object"})
     check("IA : demandes suivantes servies par le même moteur", json.loads(rep2).get("ok") is True)
     faux.write_text("import os\nos.abort()\n", "utf-8")  # moteur toujours en panne
-    ia_locale._arreter(); config.ecrire_json(config.DATA / "ia.json", {})
+    ia_locale._arreter(); config.ecrire_json(config.DATA / "ia.json", {"gpu": True})
     try:
         ia_locale.discuter("s", "d", {"type": "object"})
         check("IA : moteur toujours en panne signalé", False)
@@ -214,6 +215,15 @@ finally:
     ia_locale.moteur_present, ia_locale.chemin_modele = _avant[0], _avant[1]
     os.environ.pop("QS_IA_COMMANDE", None)
     config.ecrire_json(config.DATA / "ia.json", {})
+
+check("mises à jour : la version sans IA reste sans IA", maj.RE_DMG.match("QuentStudio-1.4.0-arm64-sans-ia.dmg").group(4) == "-sans-ia"
+      and maj.RE_DMG.match("QuentStudio-1.4.0-arm64.dmg").group(4) is None)
+config.ecrire_options({"ia": False})
+check("IA coupée dans les réglages : jamais lancée", ia_locale.etat() == "absent" and not ia_locale.moteur_present())
+config.ecrire_options({"ia": True})
+config.SANS_IA = True
+check("version sans IA : aucun moteur", ia_locale.etat() == "absent" and not ia_locale.moteur_present())
+config.SANS_IA = False
 
 # ---------- QuentInvest ----------
 import invest  # noqa: E402

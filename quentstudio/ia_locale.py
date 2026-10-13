@@ -39,8 +39,15 @@ def chemin_modele():
     return None
 
 
+def ia_permise():
+    """IA coupée dans les réglages, ou version de QuentStudio livrée sans IA : jamais lancée."""
+    return not config.SANS_IA and config.options()["ia"]
+
+
 def moteur_present():
     """Moteur livré ? (sans le charger : il ne tourne que dans son propre processus)"""
+    if not ia_permise():
+        return False
     try:
         import importlib.util
         return importlib.util.find_spec("llama_cpp") is not None
@@ -66,6 +73,8 @@ def ollama_pret():
 
 def etat():
     """'ok' (prête), 'a_installer' (moteur présent, modèle à télécharger), 'absent' (ni moteur ni Ollama)."""
+    if not ia_permise():
+        return "absent"
     if moteur_present() and chemin_modele() and not _HS["oui"]:
         return "ok"
     if ollama_pret():
@@ -117,7 +126,8 @@ def _reglages():
 
 
 def _sans_gpu():
-    return os.environ.get("QS_IA_CPU") == "1" or bool(_reglages().get("sans_gpu"))
+    """Processeur par défaut (stable sur tous les Mac) ; la puce graphique seulement si ia.json → « gpu » vaut vrai."""
+    return os.environ.get("QS_IA_CPU") == "1" or not bool(_reglages().get("gpu"))
 
 
 def _noter(texte):
@@ -197,7 +207,7 @@ def _local(systeme, demande, schema, temperature, max_tokens):
             raise
         # plantage avec la puce graphique : on retient de s'en passer et on recommence sur le processeur
         _noter(f"Moteur arrêté avec la puce graphique ({e}) : passage sur le processeur.")
-        config.ecrire_json(config.DATA / "ia.json", {**_reglages(), "sans_gpu": True})
+        config.ecrire_json(config.DATA / "ia.json", {**_reglages(), "gpu": False})
         try:
             return _demander(msg)
         except (RuntimeError, TimeoutError) as e2:
@@ -229,6 +239,8 @@ def serveur():
 
 def discuter(systeme, demande, schema, temperature=0.8, max_tokens=900):
     """Réponse JSON (texte) au format imposé par le schéma : IA intégrée, sinon Ollama."""
+    if not ia_permise():
+        raise RuntimeError("IA coupée dans les réglages")
     if moteur_present() and chemin_modele() and not _HS["oui"]:
         with _verrou:  # un seul calcul à la fois (mémoire du MacBook Air)
             return _local(systeme, demande, schema, temperature, max_tokens)

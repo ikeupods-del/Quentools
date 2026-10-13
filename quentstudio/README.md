@@ -41,6 +41,10 @@ open -a QuentStudio
 
 Les vidéos sont enregistrées dans `~/Movies/QuentStudio/videos`. À côté de chaque vidéo, un fichier `.json` donne le texte, les temps de chaque plan, la voix utilisée et l'appel à s'abonner. Le bouton **AirDrop** ouvre directement la fenêtre de partage. S'il échoue, la vidéo est montrée dans le Finder et la fenêtre AirDrop du Finder s'ouvre.
 
+## Version sans IA
+
+Chaque version est publiée en deux fichiers : `QuentStudio-X.Y.Z-arm64.dmg` (avec l'IA locale) et `QuentStudio-X.Y.Z-arm64-sans-ia.dmg` (sans moteur d'IA : fichier repère `Contents/Resources/sans-ia`, bibliothèques de llama.cpp retirées). La mise à jour automatique garde la même variante. Dans la version avec IA, la case « Utiliser l'IA locale » coupe l'IA (`options.json → ia`). L'IA tourne sur le processeur par défaut ; la puce graphique ne sert que si `ia.json` contient `"gpu": true` (elle se bloquait sur la machine de construction et faisait planter l'app chez le propriétaire).
+
 ## Dans la vidéo, et prêt à publier
 
 - **Mots surlignés** : le mot en train d'être dit s'allume dans le sous-titre (minutage estimé d'après la longueur des mots, pas une reconnaissance de la voix).

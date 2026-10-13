@@ -19,7 +19,7 @@ permissions:
 jobs:
   mac:
     runs-on: macos-latest
-    timeout-minutes: 90
+    timeout-minutes: 110
     defaults:
       run:
         working-directory: quentstudio
@@ -61,6 +61,18 @@ jobs:
               if not v.get("musique"): ko.append(f"musique de fond absente ({v['serie']})")
               if not (v.get("couverture") and v.get("texte")): ko.append(f"couverture ou texte de publication absent ({v['serie']})")
           print("Échecs : " + ", ".join(ko) if ko else "Application : tout fonctionne")
+          sys.exit(1 if ko else 0)
+          PY
+      - name: Essayer la version sans IA (vidéos réelles, aucun moteur d'IA)
+        run: |
+          QS_DATA="$RUNNER_TEMP/qs-sans-ia" build-mac/sans-ia/QuentStudio.app/Contents/MacOS/QuentStudio --essai "$PWD/essai-sans-ia.json"
+          python - <<'PY'
+          import json, sys
+          r = json.load(open("essai-sans-ia.json")); ko = []
+          if r.get("erreur"): ko.append("erreur : " + r["erreur"])
+          if not r.get("sans_ia") or r.get("ia") != "absent": ko.append(f"IA encore présente : {r.get('sans_ia')} {r.get('ia')}")
+          if len(r.get("videos", [])) != 2 or any(v["duree"] != "00:01:02.00" or v["voix"] != "piper" for v in r.get("videos", [])): ko.append("vidéos")
+          print("Échecs : " + ", ".join(ko) if ko else "Version sans IA : tout fonctionne")
           sys.exit(1 if ko else 0)
           PY
       - uses: actions/cache@v4
@@ -126,5 +138,16 @@ jobs:
           fi
           awk -v v="## $VERSION" '$0==v{f=1;next} /^## /{f=0} f' NOUVEAUTES.md > notes.md
           printf '\nInstallation : ouvrir le .dmg et glisser QuentStudio dans Applications. Au premier lancement, clic droit sur QuentStudio → Ouvrir.\n' >> notes.md
-          gh release create "quentstudio-v$VERSION" "dist/QuentStudio-$VERSION-arm64.dmg" \
-            --title "QuentStudio $VERSION" --notes-file notes.md --target "${{ github.sha }}"
+          printf 'Deux fichiers : QuentStudio-%s-arm64.dmg (avec IA locale) et QuentStudio-%s-arm64-sans-ia.dmg (sans IA, plus léger).\n' "$VERSION" "$VERSION" >> notes.md
+          # GitHub refuse parfois la publication au premier essai (403 passager) : on réessaie
+          for essai in 1 2 3 4 5; do
+            if gh release view "quentstudio-v$VERSION" >/dev/null 2>&1; then
+              gh release upload "quentstudio-v$VERSION" dist/QuentStudio-$VERSION-arm64*.dmg --clobber && exit 0
+            elif gh release create "quentstudio-v$VERSION" dist/QuentStudio-$VERSION-arm64*.dmg \
+                --title "QuentStudio $VERSION" --notes-file notes.md --target "${{ github.sha }}"; then
+              exit 0
+            fi
+            echo "Publication refusée (essai $essai) : nouvel essai dans $((essai * 20)) s"
+            sleep $((essai * 20))
+          done
+          exit 1
