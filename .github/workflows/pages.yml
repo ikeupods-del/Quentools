@@ -31,6 +31,8 @@ jobs:
         working-directory: wouf
       - run: npm test
         working-directory: wouf
+      - name: Contrôler le Pack Commerçant (réservation, acompte, fidélité, avis)
+        run: node tools/verifier-pack-commercant.js
 
   deploy:
     needs: test

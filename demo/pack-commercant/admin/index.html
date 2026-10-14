@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<title>Espace commerçant — {nom}</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="../../../assets/qt.css">
+<link rel="stylesheet" href="../pack.css">
+<script src="../config.js"></script>
+<script src="../pack.js"></script>
+</head>
+<body>
+<header class="nav"><div class="wrap"><a class="brand" href="../"><span data-p="nom">Commerce</span>&nbsp;<small class="muted">· espace commerçant</small></a></div></header>
+<main id="contenu" class="section" style="padding-top:var(--s-6)"><div class="wrap" style="max-width:860px">
+  <div id="login" class="card" style="max-width:460px">
+    <h1 class="h-section" style="font-size:var(--t-2xl);margin-top:0">Espace commerçant</h1>
+    <p class="muted">Rendez-vous, acomptes, cartes de fidélité et demandes d’avis.</p>
+    <button class="btn btn-accent" id="entrer" type="button">Se connecter</button>
+    <p class="notice warn" id="err" hidden></p>
+  </div>
+  <div id="app" hidden>
+    <div class="pk-tabs" role="tablist">
+      <button role="tab" data-t="rdv" aria-selected="true">Rendez-vous</button><button role="tab" data-t="fid" aria-selected="false">Fidélité</button>
+      <button role="tab" data-t="avis" aria-selected="false">Avis</button><button role="tab" data-t="reglages" aria-selected="false">Réglages</button>
+    </div>
+    <section id="t-rdv"></section><section id="t-fid" hidden></section><section id="t-avis" hidden></section><section id="t-reglages" hidden></section>
+  </div>
+</div></main>
+<script src="../store.js"></script>
+<script src="../qr.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
