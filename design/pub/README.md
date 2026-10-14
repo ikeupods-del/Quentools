@@ -56,9 +56,10 @@ Même méthode que Paperdecrypt : `tools/pub/quentools.html` (animation), `tools
 | Fichier | Usage | Format | Son |
 |---|---|---|---|
 | `quentools-pub-30s-reseaux-9x16.mp4` | TikTok, Reels, Stories, Shorts, publicité Facebook/Instagram | 1080×1920, 30 i/s, H.264 | AAC, −14 LUFS |
-| `quentools-pub-30s-tele-16x9.mp4` | YouTube, LinkedIn, site, écran en boutique | 1920×1080, 25 i/s, H.264 | AAC, −23 LUFS |
+| `quentools-pub-30s-web-16x9.mp4` | YouTube, LinkedIn, site, écran en boutique | 1920×1080, 25 i/s, H.264 | AAC, −14 LUFS |
+| `quentools-pub-30s-tele-16x9.mp4` | Diffusion à la télévision uniquement (norme des chaînes, son volontairement plus faible) | 1920×1080, 25 i/s, H.264 | AAC, −23 LUFS |
 
-Refaire un rendu : `PUB=quentools node tools/pub/render.js port 30` et `PUB=quentools node tools/pub/render.js land 25` ; aperçu en images fixes : `PUB=quentools node tools/pub/apercu.js port`.
+Refaire un rendu : `PUB=quentools node tools/pub/render.js port 30` et `PUB=quentools node tools/pub/render.js land 25` (ajouter `TV=1` pour la copie télévision) ; bandes son seules : `quentools-pub-bande-son-*.mp3` ; aperçu en images fixes : `PUB=quentools node tools/pub/apercu.js port`.
 
 | Temps | Plan | Message |
 |---|---|---|

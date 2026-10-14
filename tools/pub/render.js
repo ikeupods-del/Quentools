@@ -8,8 +8,10 @@ const ROOT = path.join(__dirname, '..', '..'), OUT = path.join(ROOT, 'design', '
 const fmt = process.argv[2] === 'land' ? 'land' : 'port', fps = +process.argv[3] || (fmt === 'land' ? 25 : 30);
 const W = fmt === 'land' ? 1920 : 1080, H = fmt === 'land' ? 1080 : 1920, tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pub-'));
 const QT = process.env.PUB === 'quentools', page = QT ? 'quentools.html' : 'pub.html', pre = QT ? 'quentools-pub-30s' : 'paperdecrypt-pub-45s';
-const name = fmt === 'land' ? `${pre}-tele-16x9.mp4` : `${pre}-reseaux-9x16.mp4`;
-const lufs = fmt === 'land' ? { I: -23, TP: -2.0, LRA: 7 } : { I: -14, TP: -1.5, LRA: 9 };
+// Volume : réseaux et web à −14 LUFS ; TV=1 pour la norme des chaînes de télévision (−23 LUFS, trop faible sur un téléphone).
+const TV = !!process.env.TV || (!QT && fmt === 'land');
+const name = fmt === 'land' ? `${pre}-${TV ? 'tele' : 'web'}-16x9.mp4` : `${pre}-reseaux-9x16.mp4`;
+const lufs = TV ? { I: -23, TP: -2.0, LRA: 7 } : { I: -14, TP: -1.5, LRA: 9 };
 fs.mkdirSync(OUT, { recursive: true });
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.woff2': 'font/woff2', '.jpg': 'image/jpeg', '.png': 'image/png' };
 const srv = http.createServer((q, r) => { const f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); } else { r.writeHead(200, { 'Content-Type': mime[path.extname(f)] || 'application/octet-stream' }); r.end(d); } }); }).listen(0);
@@ -27,7 +29,7 @@ const srv = http.createServer((q, r) => { const f = path.join(ROOT, decodeURICom
   const norm = path.join(tmp, 'son-norm.wav');
   cp.execFileSync('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-i', wav, '-af', `loudnorm=I=${lufs.I}:TP=${lufs.TP}:LRA=${lufs.LRA}:measured_I=${j.input_i}:measured_TP=${j.input_tp}:measured_LRA=${j.input_lra}:measured_thresh=${j.input_thresh}:offset=${j.target_offset}:linear=true`, '-ar', '48000', norm]);
   // Bande son seule (montage, diffuseur) : même volume que la vidéo.
-  cp.execFileSync('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-i', norm, '-c:a', 'libmp3lame', '-b:a', '192k', path.join(OUT, `${QT ? 'quentools' : 'paperdecrypt'}-pub-bande-son-${fmt === 'land' ? 'tele' : 'reseaux'}.mp3`)]);
+  cp.execFileSync('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-i', norm, '-c:a', 'libmp3lame', '-b:a', '192k', path.join(OUT, `${QT ? 'quentools' : 'paperdecrypt'}-pub-bande-son-${fmt === 'land' ? (TV ? 'tele' : 'web') : 'reseaux'}.mp3`)]);
   // PRORES=1 : copie de travail pour la télévision ou le montage (ProRes 422 HQ, son PCM) au lieu du H.264.
   const pro = !!process.env.PRORES, out = path.join(OUT, pro ? name.replace(/\.mp4$/, '-master.mov') : name);
   const venc = pro ? ['-c:v', 'prores_ks', '-profile:v', '3', '-vendor', 'apl0', '-pix_fmt', 'yuv422p10le', '-c:a', 'pcm_s16le'] : ['-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart'];
