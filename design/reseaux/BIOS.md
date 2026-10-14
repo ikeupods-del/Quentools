@@ -30,7 +30,7 @@ Ce que nous créons :
 • Outils métier : devis, planning, suivi des clients, calculs
 • Réservation en ligne et prise de commande, avec acompte
 • Espace client et tableau de bord pour gérer votre activité
-• Sites internet, pour présenter votre activité et accueillir vos outils
+• Pack Commerçant : réservation avec acompte, carte de fidélité sur téléphone et demandes d'avis Google
 
 Notre façon de travailler : un besoin réel, un prix fixé avant de commencer, une première version montrée avant la suite, et quelqu'un de joignable après la livraison.
 
