@@ -8,7 +8,7 @@ const fs = require('fs'), path = require('path');
 const racine = path.join(__dirname, '..'), base = 'https://quentools.fr/', mail = 'contact.quentools@gmail.com';
 const INSTAGRAM = '';   // adresse du compte Instagram de QuenTools (https://www.instagram.com/…), ajoutée aux profils de l'entreprise si renseignée
 const OG = 'assets/og-creation-site-internet-artisan.jpg', OG_ALT = 'QuenTools : création de site internet pour artisans, site vitrine clé en main dès 299 €';
-const OG_ACCUEIL = 'assets/partage.jpg', OG_ALT_ACCUEIL = 'QuenTools : agence de communication digitale, sites web et outils sur mesure';
+const OG_ACCUEIL = 'assets/partage.jpg', OG_ALT_ACCUEIL = 'QuenTools : studio de création d’apps et d’outils sur mesure';
 const lire = f => fs.readFileSync(path.join(racine, f), 'utf8'), ecrire = (f, s) => { fs.mkdirSync(path.dirname(path.join(racine, f)), { recursive: true }); fs.writeFileSync(path.join(racine, f), s); };
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const w = {}; new Function('window', lire('assets/qt-templates.js'))(w); const T = w.QTT, opt = id => T.options.find(o => o.id === id);
@@ -17,7 +17,7 @@ const erreurs = [];
 
 /* ---------- Titres et descriptions (title 50-60 caractères, description 140-155) ---------- */
 const PAGES = {
-  '': ['QuenTools — Agence de communication digitale et sites web', 'Agence de communication digitale : sites web dès 299 €, boutiques, réseaux sociaux et outils sur mesure pour indépendants et TPE. Prix fixé d’avance.'],
+  '': ['QuenTools — Création d’apps et d’outils pour les TPE', 'Studio de création d’applications web et d’outils métier pour indépendants et TPE : réservation, commandes, espace client, devis. Prix fixé d’avance.'],
   'devis/': ['Devis gratuit pour site internet d’artisan | QuenTools', 'Demandez un devis gratuit pour votre site vitrine artisan, un site web clé en main ou une refonte de site. Réponse sous 48 h, prix fixé d’avance.'],
   'templates/': ['Site web clé en main dès 299 € pour artisans | QuenTools', 'Modèles de site web clé en main par métier dès 299 € : site vitrine artisan à votre marque, nom de domaine offert, 3 mois d’assistance offerts.'],
   'audit/': ['Audit de sécurité de site web express, 100 € | QuenTools', 'Audit de sécurité express de votre site internet : HTTPS, cookies, formulaires, fichiers exposés. Rapport PDF sous 48 h, 100 €, avec votre accord écrit.'],
@@ -109,11 +109,11 @@ const FORMULES = [
   { id: 'complet', nom: 'Complet', prix: 799, texte: 'Le sur mesure avec, en plus, la prise de rendez-vous en ligne, le référencement local de base et un pack de visuels pour vos réseaux sociaux. Paiement unique.' }
 ];
 const FAQ = [
+  ['Combien coûte une application ou un outil sur mesure ?', 'Chaque outil est chiffré sur devis, gratuitement et avant de commencer : le prix dépend des écrans, des comptes utilisateurs et des paiements à prévoir. Vous recevez le devis sous 48 h, sans frais cachés.'],
+  ['Mon application sera-t-elle sur l’App Store ?', 'Nos applications web s’installent directement sur l’écran d’accueil du téléphone (iPhone et Android), sans passer par les magasins d’applications ni payer leur commission. Elles se mettent à jour toutes seules.'],
   ['Combien coûte la création d’un site internet ?', `Trois formules à paiement unique : ${FORMULES.map(f => `${f.nom} ${f.prix} €`).join(', ')}. Le prix est fixé dans le devis avant de commencer, sans frais cachés. TVA non applicable, article 293 B du CGI.`],
-  ['Quel est le délai pour avoir mon site en ligne ?', 'Vous recevez votre devis sous 48 h. Une première version vous est montrée avant la suite, puis la mise en ligne se fait en quelques semaines, selon la formule et la rapidité de vos retours (textes, photos).'],
-  ['Y a-t-il un abonnement à payer ?', `Non, le site se paie une seule fois. L’assistance est offerte pendant 3 mois. Ensuite, un suivi mensuel est possible (${T.fmt(opt('suivi').price)} par mois : hébergement, sauvegardes, mises à jour et modifications simples), mais il reste facultatif.`],
-  ['Puis-je modifier mon site après sa mise en ligne ?', `Oui. Une série de retouches et une notice d’utilisation sont comprises, et pendant les 3 mois d’assistance les modifications simples (textes, prix, horaires, photos) sont faites sous 48 h ouvrées. Les modifications importantes ou nouvelles fonctions se chiffrent à partir de ${T.fmt(opt('modifs').price)}.`],
-  ['Qui s’occupe de l’hébergement et du nom de domaine ?', 'Nous mettons le site en ligne sur votre propre nom de domaine, offert la première année (renouvellement ensuite au prix du fournisseur). L’hébergement et les sauvegardes sont assurés pendant les 3 mois d’assistance, puis dans le suivi mensuel si vous le souhaitez.']
+  ['Quel est le délai pour avoir mon outil ou mon site en ligne ?', 'Vous recevez votre devis sous 48 h. Une première version vous est montrée avant la suite, puis la mise en ligne se fait en quelques semaines, selon le projet et la rapidité de vos retours.'],
+  ['Y a-t-il un abonnement à payer ?', `Non, l’outil ou le site se paie une seule fois. L’assistance est offerte pendant 3 mois. Ensuite, un suivi mensuel est possible (${T.fmt(opt('suivi').price)} par mois : hébergement, sauvegardes, mises à jour et modifications simples), mais il reste facultatif.`]
 ];
 const section = (nom, html) => `<!--seo:${nom}-->${html}<!--/seo:${nom}-->`;
 const reMarq = nom => new RegExp(`\\s*<!--seo:${nom}-->.*?<!--/seo:${nom}-->`, 's');
@@ -138,23 +138,23 @@ function accueil(h) {
   const faq = section('faq', `
   <section class="section" id="questions" style="padding-top:0">
     <div class="wrap">
-      <div class="section-head"><span class="eyebrow reveal">Questions fréquentes</span><h2 class="h-section reveal" style="--i:1">Création de site internet : vos questions, nos réponses.</h2></div>
+      <div class="section-head"><span class="eyebrow reveal">Questions fréquentes</span><h2 class="h-section reveal" style="--i:1">Apps, outils et sites : vos questions, nos réponses.</h2></div>
       <div class="faq reveal">${FAQ.map(([q, r]) => `<details><summary>${esc(q)}</summary><p>${esc(r)}</p></details>`).join('')}</div>
     </div>
   </section>`);
   h = h.replace(reMarq('pourqui'), '').replace(reMarq('faq'), '');
   h = reMarq('formules').test(h) ? h.replace(reMarq('formules'), () => formules) : h.replace(/\n\s*<article class="is-main reveal"><h3>Site prêt à l’emploi<\/h3>.*?<\/article>/s, () => formules);
   h = h.replace(/(\n\s*<section class="section" id="sur-mesure")/, (m, a) => faq + a);
-  /* h1 : accroche de l'agence ; les mots restent animés un à un */
+  /* h1 : accroche du studio ; les mots restent animés un à un */
   h = h.replace(/<h1 class="display reveal" style="--i:1">.*?<\/h1>/s, () => {
     const m = (mot, k) => `<span class="m" style="--k:${k}">${mot}</span>`;
-    return '<h1 class="display reveal" style="--i:1">' + m('Votre', 0) + ' ' + m('site,', 1) + ' <em>' + m('sur', 2) + ' ' + m('mesure', 3) + '</em> ' + ['et', 'en', 'ligne', 'en', 'quelques', 'semaines.'].map((x, i) => m(x, i + 4)).join(' ') + '</h1>';
+    return '<h1 class="display reveal" style="--i:1">' + m('Votre', 0) + ' ' + m('outil,', 1) + ' <em>' + m('sur', 2) + ' ' + m('mesure,', 3) + '</em> ' + ['prêt', 'en', 'quelques', 'semaines.'].map((x, i) => m(x, i + 4)).join(' ') + '</h1>';
   });
   /* données structurées de l'entreprise, du site et des formules */
   const org = { '@type': 'ProfessionalService', '@id': base + '#organisation', name: 'QuenTools', url: base, logo: base + 'assets/icon-512.png', image: base + OG_ACCUEIL, email: mail,
-    description: 'Agence de communication digitale : sites web, boutiques, contenus pour les réseaux sociaux et outils sur mesure pour indépendants, commerçants et TPE.',
-    areaServed: { '@type': 'Country', name: 'France' }, knowsLanguage: 'fr', slogan: 'Votre site, sur mesure et en ligne en quelques semaines',
-    serviceType: ['Création de site internet', 'Site vitrine clé en main', 'Refonte de site', 'Boutique en ligne Shopify', 'Contenus pour les réseaux sociaux', 'Outil sur mesure', 'Audit de sécurité de site web'],
+    description: 'Studio de création d’applications web et d’outils métier pour indépendants, commerçants et TPE : réservation, commandes, espace client, sites web.',
+    areaServed: { '@type': 'Country', name: 'France' }, knowsLanguage: 'fr', slogan: 'Votre outil, sur mesure, prêt en quelques semaines',
+    serviceType: ['Création d’application web', 'Outil métier sur mesure', 'Système de réservation en ligne', 'Prise de commande en ligne', 'Espace client et administration', 'Création de site internet', 'Audit de sécurité de site web'],
     contactPoint: { '@type': 'ContactPoint', contactType: 'customer service', email: mail, availableLanguage: 'French', url: base + 'devis/' },
     sameAs: ['https://www.tiktok.com/@quentools'].concat(INSTAGRAM ? [INSTAGRAM] : []),
     hasOfferCatalog: { '@type': 'OfferCatalog', name: 'Formules de création de site internet', itemListElement: FORMULES.map(f => ({ '@type': 'Offer', name: f.nom, description: f.texte, price: String(f.prix), priceCurrency: 'EUR', url: base + '#tarifs', availability: 'https://schema.org/InStock',
