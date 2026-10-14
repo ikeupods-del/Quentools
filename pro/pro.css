@@ -1,0 +1,31 @@
+/* Pack Commerçant en abonnement : formulaire de la fiche (inscription et réglages), page d'inscription. Sur assets/qt.css et pack.css. */
+.pro-form{display:grid;gap:var(--s-5);margin-bottom:var(--s-5)}
+.pro-bloc{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:clamp(18px,4vw,28px);margin:0;display:grid;gap:var(--s-4);min-width:0}
+.pro-bloc legend{font:700 var(--t-lg)/1.2 var(--f-display);padding:0 8px;margin-left:-8px}
+.pro-bloc>p{margin:0}
+.pro-2{display:grid;gap:var(--s-4);grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.pro-lab{font-weight:600;font-size:var(--t-sm)}
+.pro-url{display:flex;align-items:center;border:1px solid var(--line-2);border-radius:var(--r-md);background:var(--surface);overflow:hidden}
+.pro-url span{padding:0 4px 0 14px;color:var(--muted);font-size:var(--t-sm);white-space:nowrap}
+.field .pro-url input{border:0;padding-left:2px;min-width:0;box-shadow:none}
+.pro-couleurs{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.pro-couleurs label{cursor:pointer}.pro-couleurs input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+.pro-couleurs label span{display:block;width:38px;height:38px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 1px var(--line-2)}
+.pro-couleurs input:checked+span{box-shadow:0 0 0 3px var(--ink)}
+.pro-couleurs input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.pro-autre{display:flex;align-items:center;gap:8px;font-size:var(--t-sm)}.pro-autre input{width:44px;height:38px;border:0;background:none;padding:0}
+.pro-prest{display:grid;grid-template-columns:minmax(0,1fr) 110px 110px auto;gap:8px;align-items:center;margin-bottom:8px}
+.pro-prest input,.pro-prest select,.pro-plages input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-md);padding:10px 12px;min-height:46px;width:100%;min-width:0}
+.pro-euro{position:relative;display:block}.pro-euro span{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted)}.pro-euro input{padding-right:28px}
+.pro-jour{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.pro-jour:first-child{border-top:0}.pro-jour .check{min-width:120px;font-weight:600;color:var(--ink)}
+.pro-plages{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.pro-plages input{width:auto;min-height:40px;padding:6px 8px}
+.pro-jour:has([data-k=ouvert]:not(:checked)) .pro-plages{opacity:.35;pointer-events:none}
+.pro-et{color:var(--muted);font-size:var(--t-sm)}
+.pro-liste{display:grid;gap:12px}
+.pro-hero{padding-block:clamp(36px,7vw,80px) var(--s-6)}
+.pro-hero h1{font:800 clamp(2rem,6vw,3.6rem)/1.04 var(--f-display);letter-spacing:-.03em;margin:var(--s-4) 0}
+.pro-points{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));margin:var(--s-6) 0}
+.pro-points div{border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;background:var(--surface)}
+.pro-points b{display:block;margin-bottom:4px}
+@media (max-width:560px){.pro-prest{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.pro-prest>input{grid-column:1/-1}}

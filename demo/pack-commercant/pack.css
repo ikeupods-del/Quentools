@@ -39,3 +39,4 @@
 .pk-affiche h1{font:800 clamp(2rem,6vw,3rem)/1.05 var(--f-display);margin:var(--s-4) 0}
 @media print{.no-print,.demo-bandeau{display:none!important}body{background:#fff}.pk-affiche{border-width:3px}}
 .nav{background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:saturate(1.4) blur(14px);border-bottom-color:var(--line)}
+.pk-charge body{visibility:hidden}

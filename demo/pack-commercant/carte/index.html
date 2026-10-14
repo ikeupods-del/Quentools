@@ -23,12 +23,13 @@
 <script>
 (() => {
   const P = window.PACK, S = window.PACKS, esc = window.PK.esc, F = P.fidelite || { tampons: 8, recompense: '' }, vue = document.getElementById('vue');
-  const CLE = 'pack-carte:' + P.nom;
+  const CLE = 'pack-carte:' + (P.heberge || P.nom);
   const memo = () => { try { return localStorage.getItem(CLE); } catch (e) { return null; } };
   // Adresse lue par l'appareil photo du commerçant : elle ouvre son administration sur cette carte.
-  const lienAdmin = id => new URL('../admin/?tampon=' + id, location.href).href;
+  const lienAdmin = id => new URL('../admin/' + window.PK.q({ tampon: id }), location.href).href;
 
   function creer() {
+    if (P.inactif) { vue.innerHTML = `<p class="notice warn">La carte de fidélité en ligne est momentanément indisponible. Demandez-la au comptoir.</p>`; return; }
     vue.innerHTML = `<p>Un tampon à chaque visite. Au bout de <b>${F.tampons}</b> tampons : <b>${esc(F.recompense)}</b>.</p>
       <form id="f" class="form" style="display:grid;gap:var(--s-4)"><div class="field"><label for="prenom">Votre prénom</label><input id="prenom" maxlength="40" autocomplete="given-name" required></div>
       <p class="notice warn" id="err" hidden></p><button class="btn btn-accent">Créer ma carte</button></form>

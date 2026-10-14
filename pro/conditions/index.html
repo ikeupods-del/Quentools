@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conditions d’utilisation · Pack Commerçant · QuenTools</title>
+<meta name="description" content="Conditions d'utilisation et d'abonnement du Pack Commerçant de QuenTools : essai, prix, résiliation, données des clients.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../assets/qt.css">
+</head>
+<body>
+<header class="nav"><div class="wrap"><a class="brand" href="../../">QuenTools</a><a class="btn btn-sm btn-ghost" href="../inscription/">Créer ma page</a></div></header>
+<main id="contenu" class="section"><div class="wrap prose" style="max-width:760px">
+  <h1 class="h-section">Conditions d’utilisation du Pack Commerçant</h1>
+  <p class="muted">En vigueur au 14 octobre 2026.</p>
+
+  <h2>1. Le service</h2>
+  <p>Le Pack Commerçant, édité par QuenTools (voir les <a href="../../mentions-legales/">mentions légales</a>), fournit au professionnel (« le commerçant ») une page de réservation en ligne à son nom, une carte de fidélité sur téléphone pour ses clients, des messages préparés pour les rappels et les demandes d’avis, et un espace commerçant pour gérer le tout. Le compte est ouvert par le commerçant avec son compte Google.</p>
+
+  <h2>2. Essai, prix et résiliation</h2>
+  <ul>
+    <li>Essai gratuit de 14 jours à partir de la création de la page, sans moyen de paiement demandé.</li>
+    <li>Ensuite : <b><span id="prix">39</span> € par mois</b>, TVA non applicable (article 293 B du CGI), payable d’avance par le lien de paiement fourni dans l’espace commerçant.</li>
+    <li>Sans engagement : l’abonnement s’arrête à la fin de la période payée si elle n’est pas renouvelée. Aucune somme n’est due au-delà.</li>
+    <li>À la fin de l’essai ou de la période payée, la réservation en ligne et la création de cartes sont suspendues ; le commerçant garde l’accès à ses rendez-vous et à ses cartes pendant 90 jours, puis ses données peuvent être supprimées.</li>
+    <li>Le prix peut évoluer ; tout changement est annoncé au moins 30 jours à l’avance et ne s’applique qu’à la période suivante.</li>
+  </ul>
+
+  <h2>3. Acomptes et paiements des clients</h2>
+  <p>Les acomptes sont payés par les clients directement au commerçant, par son propre lien PayPal ou Stripe. QuenTools n’encaisse, ne détient et ne rembourse aucune somme pour le compte du commerçant. Le commerçant vérifie lui-même la réception d’un acompte avant de le marquer « reçu ». Il fixe et applique ses propres conditions d’annulation.</p>
+
+  <h2>4. Données des clients du commerçant</h2>
+  <ul>
+    <li>Le commerçant est <b>responsable du traitement</b> des données de ses clients (nom, téléphone, e-mail, rendez-vous, carte de fidélité). QuenTools agit comme <b>sous-traitant</b> : il héberge ces données pour lui, sur Google Firebase, uniquement pour faire fonctionner le service.</li>
+    <li>QuenTools ne lit pas ces données, sauf demande d’assistance du commerçant ou obligation légale, ne les vend pas, ne les utilise pas pour de la publicité et ne les transmet à personne d’autre que son hébergeur.</li>
+    <li>Le commerçant informe ses clients de l’usage de leurs données et répond à leurs demandes (accès, rectification, suppression). Il peut demander la suppression complète de ses données à tout moment, par e-mail.</li>
+    <li>Les messages de rappel et de demande d’avis partent du téléphone du commerçant (WhatsApp ou SMS) : aucun envoi automatique n’est fait par QuenTools.</li>
+  </ul>
+
+  <h2>5. Utilisation correcte</h2>
+  <p>Le commerçant fournit des informations exactes sur son activité et n’utilise le service que pour son propre commerce. Sont interdits : se faire passer pour une autre entreprise ou une autre personne, proposer des prestations illicites, utiliser la page pour collecter des données sans rapport avec un rendez-vous, ou pour diriger les clients vers un site trompeur. Les liens de paiement acceptés sont ceux de PayPal et de Stripe, les liens d’avis ceux de Google. En cas de manquement, QuenTools peut suspendre la page sans préavis.</p>
+  <p>Les demandes d’avis sont proposées à tous les clients, sans tri : il est interdit d’offrir une contrepartie contre un avis ou de rédiger de faux avis.</p>
+
+  <h2>6. Disponibilité et responsabilité</h2>
+  <p>QuenTools fait de son mieux pour que le service soit disponible et sauvegardé, sans pouvoir garantir l’absence d’interruption (maintenance, panne de l’hébergeur, connexion du client). Le commerçant garde un moyen de joindre ses clients en dehors du service. La responsabilité de QuenTools est limitée au montant payé par le commerçant pour les trois derniers mois.</p>
+
+  <h2>7. Contact et litiges</h2>
+  <p>Questions, assistance, résiliation, suppression des données : <a id="mail" href="mailto:contact.quentools@gmail.com">contact.quentools@gmail.com</a>. En cas de désaccord, une solution amiable est recherchée en premier lieu ; à défaut, le droit français s’applique.</p>
+</div></main>
+<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0"><span>© QuenTools</span><a href="../../mentions-legales/">Mentions légales</a></div></div></footer>
+<script src="../../assets/qt-config.js"></script>
+<script src="../../assets/qt-templates.js"></script>
+<script>
+  const t = (window.QTT.templates || []).find(x => x.id === 'pack'); if (t) document.getElementById('prix').textContent = t.monthly;
+  if (window.QT.email) { const m = document.getElementById('mail'); m.href = 'mailto:' + window.QT.email; m.textContent = window.QT.email; }
+</script>
+</body>
+</html>

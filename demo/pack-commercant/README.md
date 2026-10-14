@@ -25,6 +25,9 @@ node tools/pack-commercant.js fiche.json               # → clients/<dossier>/s
 ```
 Le client fournit : ses prestations, prix, durées et horaires ; son lien de paiement (PayPal ou Stripe) ; le lien « Laisser un avis » de sa fiche Google ; un projet Firebase gratuit à son nom (Firestore + connexion Google) et l'adresse Google qui gère l'espace commerçant.
 
+## Abonnement en libre-service (`pro/`)
+Même code, hébergé par QuenTools pour tous les commerces : le commerçant crée sa page seul (`pro/inscription/`, connexion Google), essaie 14 jours, puis s'abonne (39 €/mois, catalogue). Fiche dans Firestore `qt_pack/<adresse>` (projet QuenTools), données sous ce document, fin d'abonnement dans `qt_pack_abos/<adresse>` (écrite seulement depuis l'administration, onglet Abonnés Pack). Pages `pro/index.html`, `carte/`, `admin/`, `affiche/` générées depuis ce dossier par `node tools/pack-pro.js` (ne pas les modifier à la main) ; chargeur, formulaire des réglages et nettoyage de la fiche dans `pro/pro.js` (types forcés, liens limités à PayPal, Stripe et Google). Règles : administration → Règles (`qt_pack`). Contrôle avec l'émulateur Firestore : `node tools/verifier-pack-pro.js` (aussi avant chaque publication).
+
 ## Contrôle
 `node tools/verifier-pack-commercant.js` : règles, parcours complet dans un navigateur (réservation, double réservation refusée, acompte, annulation, avis, 8 tampons et récompense, affiche), site client généré, téléphone et ordinateur. Lancé aussi avant chaque publication.
 

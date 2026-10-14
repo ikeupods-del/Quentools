@@ -20,7 +20,12 @@
     statut: ['attente', 'confirme', 'fait', 'annule'].includes(r.statut) ? r.statut : 'attente', date: String(r.date || ''), heure: String(r.heure || '') });
   const normCarte = c => ({ ...c, id: sur(c.id), tampons: Math.max(0, +c.tampons || 0), recompenses: Math.max(0, +c.recompenses || 0) });
   const chargerRdv = async () => (await A.rdv()).map(normRdv), chargerCartes = async () => (await A.cartes()).map(normCarte);
-  async function tout() { [RDV, CARTES] = await Promise.all([chargerRdv(), chargerCartes()]); vueRdv(); vueFid(); vueAvis(); vueReglages(); }
+  // Abonnement hébergé (pro/) : bandeau d'essai ou d'abonnement, réglages modifiables par le commerçant (pro/pro.js)
+  const PRO = P.heberge && window.PK_PRO;
+  async function tout() {
+    [RDV, CARTES] = await Promise.all([chargerRdv(), chargerCartes()]); vueRdv(); vueFid(); vueAvis(); vueReglages();
+    if (PRO && !$('#pro-bandeau')) $('#app').insertAdjacentHTML('afterbegin', `<div id="pro-bandeau">${PRO.bandeau(P)}</div>`);
+  }
   function onglet(t) {
     document.querySelectorAll('[role=tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.t === t)));
     ['rdv', 'fid', 'avis', 'reglages'].forEach(x => { $('#t-' + x).hidden = x !== t; });
@@ -83,7 +88,7 @@
         <p class="muted">Le plus simple : scannez le QR code de la carte du client avec l’appareil photo de votre téléphone (connecté à cet espace). Sinon, tapez les 8 premiers caractères du code.</p>
         <form id="cherche" style="display:flex;gap:10px;flex-wrap:wrap"><input class="input" id="code" placeholder="Code de la carte" maxlength="12" style="max-width:220px;text-transform:uppercase"><button class="btn btn-ghost">Ouvrir</button></form></div>
       <h2 style="font-size:var(--t-lg);margin-top:var(--s-6)">${CARTES.length} carte${CARTES.length > 1 ? 's' : ''}</h2>
-      <div class="pk-liste">${CARTES.slice().sort((a, b) => (b.tampons - a.tampons)).map(x => `<a class="pk-rdv" style="text-decoration:none;color:inherit" href="?tampon=${x.id}"><header><b>${esc(x.prenom)}</b><span class="chip">${x.tampons}/${F.tampons}${x.recompenses ? ` · ${x.recompenses} récompense${x.recompenses > 1 ? 's' : ''}` : ''}</span></header><span class="muted">${esc(x.id.slice(0, 4) + ' ' + x.id.slice(4, 8))}</span></a>`).join('') || '<p class="pk-vide">Aucune carte pour le moment.</p>'}</div>`;
+      <div class="pk-liste">${CARTES.slice().sort((a, b) => (b.tampons - a.tampons)).map(x => `<a class="pk-rdv" style="text-decoration:none;color:inherit" href="${window.PK.q({ tampon: x.id })}"><header><b>${esc(x.prenom)}</b><span class="chip">${x.tampons}/${F.tampons}${x.recompenses ? ` · ${x.recompenses} récompense${x.recompenses > 1 ? 's' : ''}` : ''}</span></header><span class="muted">${esc(x.id.slice(0, 4) + ' ' + x.id.slice(4, 8))}</span></a>`).join('') || '<p class="pk-vide">Aucune carte pour le moment.</p>'}</div>`;
   }
   $('#t-fid').addEventListener('click', async e => {
     const b = e.target.closest('button[data-f]'); if (!b) return;
@@ -96,7 +101,7 @@
   $('#t-fid').addEventListener('submit', e => {
     e.preventDefault(); const v = $('#code').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     const c = v.length >= 8 && CARTES.find(x => x.id.startsWith(v));
-    if (c) location.search = '?tampon=' + c.id; else alert('Aucune carte ne correspond à ce code.');
+    if (c) location.search = window.PK.q({ tampon: c.id }); else alert('Aucune carte ne correspond à ce code.');
   });
 
   /* ---------- Avis et réglages ---------- */
@@ -109,6 +114,7 @@
       : '<p class="notice warn">Ajoutez le lien « Laisser un avis » de votre fiche Google dans la configuration pour activer les demandes d’avis.</p>';
   }
   function vueReglages() {
+    if (PRO) return PRO.reglages($('#t-reglages'), P, S);
     const a = P.acompte || {};
     $('#t-reglages').innerHTML = `<div class="card"><h2 style="font-size:var(--t-lg);margin-top:0">Votre configuration</h2><table style="width:100%;border-collapse:collapse">
       <tr><th style="text-align:left">Prestations</th><td>${P.prestations.map(p => esc(p.nom) + ' (' + O.euros(p.prix) + ')').join(', ')}</td></tr>

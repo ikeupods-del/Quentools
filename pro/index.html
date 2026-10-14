@@ -1,0 +1,71 @@
+<!doctype html>
+<!-- Page générée par tools/pack-pro.js depuis demo/pack-commercant/index.html : modifier la page d'origine puis relancer le script. -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>{nom} — réservation en ligne</title>
+<meta name="description" content="Réservez votre rendez-vous en ligne, réglez l'acompte et retrouvez votre carte de fidélité sur votre téléphone.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preload" href="../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/qt.css">
+<link rel="stylesheet" href="../demo/pack-commercant/pack.css">
+<script src="../assets/qt-config.js"></script>
+<script src="../assets/qt-templates.js"></script>
+<link rel="stylesheet" href="pro.css">
+<script src="pro.js" data-charger></script>
+<script type="text/x-pk" src="../demo/pack-commercant/pack.js"></script>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="./" data-p="nom">Commerce</a>
+  <ul class="nav-links"><li><a href="#reserver">Réserver</a></li><li><a href="carte/">Fidélité</a></li><li><a href="#infos">Infos</a></li></ul>
+  <a class="btn btn-sm btn-accent" href="#reserver">Réserver</a>
+</div></header>
+
+<main id="contenu">
+  <section class="pk-hero"><div class="wrap">
+    <span class="chip chip-accent"><span data-p="metier"></span>&nbsp;·&nbsp;<span data-p="ville"></span></span>
+    <h1 data-p="accroche">Réservez en ligne.</h1>
+    <p class="lede">Choisissez votre prestation et votre créneau en moins d’une minute, à toute heure.</p>
+    <div class="pk-actions"><a class="btn btn-accent" href="#reserver">Prendre rendez-vous</a><a class="btn btn-ghost" href="carte/">Ma carte de fidélité</a></div>
+  </div></section>
+
+  <section class="section" id="reserver" style="padding-top:0"><div class="wrap" style="max-width:760px">
+    <h2 class="h-section">Prendre rendez-vous</h2>
+    <form id="resa" novalidate>
+      <div class="pk-etape"><h3><span>1.</span> Votre prestation</h3><div class="pk-prest" id="prest"></div></div>
+      <div class="pk-etape" id="e-jour" hidden><h3><span>2.</span> Le jour</h3><div class="pk-jours" id="jours" role="group" aria-label="Jour"></div></div>
+      <div class="pk-etape" id="e-heure" hidden><h3><span>3.</span> L’heure</h3><div class="pk-heures" id="heures" role="group" aria-label="Heure"></div></div>
+      <div class="pk-etape" id="e-coord" hidden>
+        <h3><span>4.</span> Vos coordonnées</h3>
+        <div class="pk-recap" id="recap"></div>
+        <div class="field"><label for="nom">Prénom et nom</label><input id="nom" name="nom" autocomplete="name" required maxlength="80"></div>
+        <div class="field"><label for="tel">Téléphone</label><input id="tel" name="tel" type="tel" autocomplete="tel" required maxlength="20" inputmode="tel"><small>Pour vous envoyer le rappel de votre rendez-vous.</small></div>
+        <div class="field"><label for="email">E-mail (facultatif)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="120"></div>
+        <div class="field"><label for="note">Un mot pour nous (facultatif)</label><input id="note" name="note" maxlength="300"></div>
+        <label class="check"><input type="checkbox" id="ok" required> <span>J’accepte les conditions : <span data-p="annulation"></span> Mes coordonnées servent uniquement à gérer ce rendez-vous.</span></label>
+        <p class="notice warn" id="err" hidden></p>
+        <button class="btn btn-accent" type="submit" id="go">Réserver</button>
+      </div>
+    </form>
+    <div id="fin" hidden></div>
+  </div></section>
+
+  <section class="section" style="padding-top:0"><div class="wrap"><div class="grid grid-2">
+    <article class="card"><h3 style="margin-top:0">Votre carte de fidélité</h3><p class="muted">Un tampon à chaque visite, directement sur votre téléphone. Au bout de <b data-p="fidelite.tampons"></b> tampons : <b data-p="fidelite.recompense"></b>.</p><a class="btn btn-ghost" href="carte/">Ouvrir ma carte</a></article>
+    <article class="card" id="bloc-avis"><h3 style="margin-top:0">Merci de votre visite</h3><p class="muted">Votre avis aide d’autres clients à nous trouver. Merci pour le temps que vous y consacrez.</p><a class="btn btn-ghost" id="lien-avis" href="#" rel="noopener">Laisser un avis</a></article>
+  </div></div></section>
+
+  <section class="section" id="infos" style="padding-top:0"><div class="wrap"><div class="grid grid-2">
+    <article class="card"><h3 style="margin-top:0">Horaires</h3><table id="horaires" style="width:100%;border-collapse:collapse"></table></article>
+    <article class="card"><h3 style="margin-top:0">Nous trouver</h3><p data-p="adresse"></p><p><a id="lien-tel" href="#"><span data-p="telephone"></span></a></p></article>
+  </div></div></section>
+</main>
+<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0"><span>© <span data-p="nom"></span></span><a href="admin/" class="muted">Espace commerçant</a></div></div></footer>
+<script type="text/x-pk" src="../demo/pack-commercant/store.js"></script>
+<script type="text/x-pk" src="../demo/pack-commercant/reserver.js"></script>
+</body>
+</html>

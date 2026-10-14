@@ -8,6 +8,8 @@
   $('#horaires').innerHTML = [1, 2, 3, 4, 5, 6, 7].map(j => `<tr><th style="text-align:left;font-weight:600;padding:6px 0">${JL[j]}</th><td style="text-align:right;color:var(--muted)">${(P.horaires[j] || []).map(x => x.replace(/:/g, 'h').replace('-', ' – ')).join(', ') || 'Fermé'}</td></tr>`).join('');
   const tel = $('#lien-tel'); if (P.telephone) tel.href = 'tel:' + P.telephone.replace(/\s/g, ''); else tel.hidden = true;
   const avis = (P.avis || {}).lien; if (/^https:\/\//.test(avis || '')) $('#lien-avis').href = avis; else $('#bloc-avis').hidden = true;
+  // Abonnement hébergé arrêté (essai terminé, pas d'abonnement) : la page reste visible, la réservation en ligne est suspendue.
+  if (P.inactif) { $('#resa').outerHTML = `<p class="notice warn">La réservation en ligne est momentanément indisponible. Pour prendre rendez-vous, contactez-nous${P.telephone ? ' au <a href="tel:' + esc(P.telephone.replace(/\s/g, '')) + '">' + esc(P.telephone) + '</a>' : ''}.</p>`; return; }
 
   async function chargerPris() { try { etat.pris = await S.pris(); } catch (e) { etat.pris = []; } }
   function jours() {

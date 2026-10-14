@@ -1,8 +1,10 @@
 /* Pack Commerçant — règles et données (réservation avec acompte, carte de fidélité, liens de rappel et d'avis).
    Deux stockages pour la même interface :
    - démonstration (PACK.firebase vide) : navigateur du visiteur (localStorage), site et administration partagés sur le même appareil ;
-   - réel : Firestore du commerçant par son API web (sans bibliothèque). Réservation et créneaux écrits d'un seul coup
-     (un créneau déjà pris fait échouer l'écriture : pas de double réservation). Administration avec le jeton de connexion Google. */
+   - réel : Firestore par son API web (sans bibliothèque). Réservation et créneaux écrits d'un seul coup
+     (un créneau déjà pris fait échouer l'écriture : pas de double réservation). Administration avec le jeton de connexion Google.
+     PACK.chemin vide = projet Firebase du commerçant (données à la racine) ; rempli (ex. « qt_pack/atelier-lila ») = abonnement
+     hébergé par QuenTools (pro/), données du commerce rangées sous ce document. */
 (() => {
   const P = window.PACK || {}, F = P.firebase || {};
   const reel = !!(F.projectId && F.apiKey);
@@ -60,7 +62,7 @@
   const sms = (tel, texte) => `sms:${String(tel || '').replace(/\s/g, '')}?&body=${encodeURIComponent(texte)}`;
 
   /* ---------- Stockage : démonstration ---------- */
-  const KEY = 'pack:' + (P.nom || 'demo');
+  const KEY = 'pack:' + (P.heberge || P.nom || 'demo');
   const lire = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
   const ecrire = d => { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) { /* stockage indisponible */ } };
   const demo = {
@@ -85,15 +87,21 @@
   };
 
   /* ---------- Stockage : Firestore (API web) ---------- */
-  const racine = `projects/${F.projectId}/databases/(default)/documents`, api = `https://firestore.googleapis.com/v1/${racine}`;
-  const enc = o => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, typeof v === 'boolean' ? { booleanValue: v }
-    : Number.isInteger(v) ? { integerValue: String(v) } : typeof v === 'number' ? { doubleValue: v } : { stringValue: String(v ?? '') }]));
-  const dec = doc => { const o = { id: doc.name.split('/').pop() }; for (const [k, v] of Object.entries(doc.fields || {}))
-    o[k] = 'stringValue' in v ? v.stringValue : 'booleanValue' in v ? v.booleanValue : 'integerValue' in v ? +v.integerValue : 'doubleValue' in v ? v.doubleValue : null; return o; };
+  const base = `projects/${F.projectId}/databases/(default)/documents`, racine = base + (P.chemin ? '/' + P.chemin : '');
+  const api = `https://firestore.googleapis.com/v1/${racine}`, apiBase = `https://firestore.googleapis.com/v1/${base}`;
+  // Valeurs Firestore : textes, nombres, booléens, listes et objets (horaires, prestations…)
+  const val = v => v == null ? { stringValue: '' } : typeof v === 'boolean' ? { booleanValue: v } : Number.isInteger(v) ? { integerValue: String(v) }
+    : typeof v === 'number' ? { doubleValue: v } : Array.isArray(v) ? { arrayValue: { values: v.map(val) } }
+    : typeof v === 'object' ? { mapValue: { fields: enc(v) } } : { stringValue: String(v) };
+  const enc = o => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, val(v)]));
+  const unval = v => 'stringValue' in v ? v.stringValue : 'booleanValue' in v ? v.booleanValue : 'integerValue' in v ? +v.integerValue : 'doubleValue' in v ? v.doubleValue
+    : 'timestampValue' in v ? v.timestampValue : 'mapValue' in v ? champs((v.mapValue || {}).fields) : 'arrayValue' in v ? ((v.arrayValue || {}).values || []).map(unval) : null;
+  const champs = f => Object.fromEntries(Object.entries(f || {}).map(([k, v]) => [k, unval(v)]));
+  const dec = doc => ({ id: doc.name.split('/').pop(), ...champs(doc.fields) });
   let jeton = null;
-  async function appel(chemin, opts = {}) {
+  async function appel(chemin, opts = {}, depuis = api) {
     const h = { 'Content-Type': 'application/json' }; if (jeton) h.Authorization = 'Bearer ' + (await jeton());
-    const r = await fetch(api + chemin + (chemin.includes('?') ? '&' : '?') + 'key=' + F.apiKey, { ...opts, headers: h });
+    const r = await fetch(depuis + chemin + (chemin.includes('?') ? '&' : '?') + 'key=' + F.apiKey, { ...opts, headers: h });
     if (r.status === 404) return null;
     if (!r.ok) { const e = new Error(r.status === 403 ? 'refuse' : 'erreur ' + r.status); e.status = r.status; throw e; }
     return r.status === 204 ? null : r.json();
@@ -106,7 +114,7 @@
       const ecritures = casesDe(r.heure, r.duree).map(h => ({ update: { name: `${racine}/creneaux/${r.date}_${h.replace(':', '')}`, fields: enc({ date: r.date, heure: h, rdv: r.id }) }, currentDocument: { exists: false } }));
       const { id: rid, ...champs } = r;
       ecritures.push({ update: { name: `${racine}/rdv/${rid}`, fields: enc(champs) }, currentDocument: { exists: false } });
-      try { await appel(':commit', { method: 'POST', body: JSON.stringify({ writes: ecritures }) }); }
+      try { await appel(':commit', { method: 'POST', body: JSON.stringify({ writes: ecritures }) }, apiBase); }
       catch (e) { if (e.status === 400 || e.status === 409 || e.status === 403) throw new Error('pris'); throw e; }
       return r;
     },
@@ -118,7 +126,7 @@
         const [{ initializeApp }, Au] = await Promise.all([import(B + 'firebase-app.js'), import(B + 'firebase-auth.js')]);
         const auth = Au.getAuth(initializeApp({ apiKey: F.apiKey, authDomain: F.authDomain || F.projectId + '.firebaseapp.com', projectId: F.projectId }));
         const u = auth.currentUser || (await Au.signInWithPopup(auth, new Au.GoogleAuthProvider())).user;
-        jeton = () => u.getIdToken(); return { email: u.email };
+        jeton = () => u.getIdToken(); return { email: u.email, uid: u.uid };
       },
       async rdv() { return requete('rdv'); },
       async majRdv(rid, champs) { await appel(`/rdv/${rid}?` + Object.keys(champs).map(k => 'updateMask.fieldPaths=' + k).join('&'), { method: 'PATCH', body: JSON.stringify({ fields: enc(champs) }) }); },
@@ -129,5 +137,5 @@
   };
 
   window.PACKS = { reel, ...(reel ? firestore : demo), regles: { prestation, acompte, lienPaiement, creneauxDuJour, joursOuverts, casesDe },
-    messages, whatsapp, sms, outils: { iso, euros, id, dateLongue, telIntl } };
+    messages, whatsapp, sms, outils: { iso, euros, id, dateLongue, telIntl }, firestore: { enc, dec, champs, appel, apiBase, racine, base, connecte: () => !!jeton } };
 })();

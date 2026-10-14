@@ -1,0 +1,70 @@
+<!doctype html>
+<!-- Page générée par tools/pack-pro.js depuis demo/pack-commercant/carte/index.html : modifier la page d'origine puis relancer le script. -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Carte de fidélité — {nom}</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="../../assets/qt.css">
+<link rel="stylesheet" href="../../demo/pack-commercant/pack.css">
+<script src="../../assets/qt-config.js"></script>
+<script src="../../assets/qt-templates.js"></script>
+<link rel="stylesheet" href="../pro.css">
+<script src="../pro.js" data-charger></script>
+<script type="text/x-pk" src="../../demo/pack-commercant/pack.js"></script>
+</head>
+<body>
+<header class="nav"><div class="wrap"><a class="brand" href="../" data-p="nom">Commerce</a><a class="btn btn-sm btn-accent" href="../#reserver">Réserver</a></div></header>
+<main id="contenu" class="section"><div class="wrap" style="max-width:560px">
+  <span class="eyebrow">Carte de fidélité</span>
+  <h1 class="h-section" style="margin-top:var(--s-3)" data-p="nom">Commerce</h1>
+  <div id="vue"><p class="muted">Chargement…</p></div>
+</div></main>
+<script type="text/x-pk" src="../../demo/pack-commercant/store.js"></script>
+<script type="text/x-pk" src="../../demo/pack-commercant/qr.js"></script>
+<script type="text/x-pk">
+(() => {
+  const P = window.PACK, S = window.PACKS, esc = window.PK.esc, F = P.fidelite || { tampons: 8, recompense: '' }, vue = document.getElementById('vue');
+  const CLE = 'pack-carte:' + (P.heberge || P.nom);
+  const memo = () => { try { return localStorage.getItem(CLE); } catch (e) { return null; } };
+  // Adresse lue par l'appareil photo du commerçant : elle ouvre son administration sur cette carte.
+  const lienAdmin = id => new URL('../admin/' + window.PK.q({ tampon: id }), location.href).href;
+
+  function creer() {
+    if (P.inactif) { vue.innerHTML = `<p class="notice warn">La carte de fidélité en ligne est momentanément indisponible. Demandez-la au comptoir.</p>`; return; }
+    vue.innerHTML = `<p>Un tampon à chaque visite. Au bout de <b>${F.tampons}</b> tampons : <b>${esc(F.recompense)}</b>.</p>
+      <form id="f" class="form" style="display:grid;gap:var(--s-4)"><div class="field"><label for="prenom">Votre prénom</label><input id="prenom" maxlength="40" autocomplete="given-name" required></div>
+      <p class="notice warn" id="err" hidden></p><button class="btn btn-accent">Créer ma carte</button></form>
+      <p class="muted" style="font-size:var(--t-sm)">La carte reste sur ce téléphone. Aucun compte, aucun mot de passe.</p>`;
+    document.getElementById('f').addEventListener('submit', async e => {
+      e.preventDefault(); const prenom = document.getElementById('prenom').value.trim(), err = document.getElementById('err');
+      if (!prenom) { err.textContent = 'Indiquez votre prénom.'; err.hidden = false; return; }
+      const c = { id: S.outils.id(16), prenom, tampons: 0, recompenses: 0, at: new Date().toISOString() };
+      try { await S.creerCarte(c); localStorage.setItem(CLE, c.id); afficher(c); }
+      catch (x) { err.textContent = 'La carte n’a pas pu être créée. Vérifiez votre connexion.'; err.hidden = false; }
+    });
+  }
+  function afficher(c) {
+    const n = F.tampons, t = Math.min(c.tampons || 0, n), reste = n - t;
+    vue.innerHTML = `<div class="card" style="display:grid;gap:var(--s-5);justify-items:center;text-align:center">
+      <p style="margin:0">Bonjour <b>${esc(c.prenom)}</b> !</p>
+      <div class="pk-carte" aria-label="${t} tampons sur ${n}">${Array.from({ length: n }, (_, i) => `<span class="${i < t ? 'on' : ''}">${i < t ? '✓' : i + 1}</span>`).join('')}</div>
+      <p style="margin:0" id="etat">${reste ? `Encore <b>${reste}</b> tampon${reste > 1 ? 's' : ''} avant ${esc(F.recompense)}.` : `<b>Bravo !</b> Montrez cette carte : ${esc(F.recompense)}.`}</p>
+      <div class="pk-qr">${window.QR.svg(lienAdmin(c.id), 240)}</div>
+      <p class="muted" style="margin:0;font-size:var(--t-sm)">À chaque visite, montrez ce code au comptoir pour recevoir votre tampon.<br>Code de la carte : <b>${esc(c.id.slice(0, 4) + ' ' + c.id.slice(4, 8))}</b>${c.recompenses ? ` · ${c.recompenses} récompense${c.recompenses > 1 ? 's' : ''} obtenue${c.recompenses > 1 ? 's' : ''}` : ''}</p>
+      <button class="btn btn-ghost btn-sm" id="maj" type="button">Actualiser</button></div>
+      <p class="muted" style="font-size:var(--t-sm)">Astuce : ajoutez cette page à l’écran d’accueil de votre téléphone pour la retrouver en un geste.</p>`;
+    document.getElementById('maj').addEventListener('click', charger);
+  }
+  async function charger() {
+    const id = memo(); if (!id) return creer();
+    try { const c = await S.carte(id); if (!c) { localStorage.removeItem(CLE); return creer(); } afficher({ id, ...c }); }
+    catch (e) { vue.innerHTML = '<p class="notice warn">Impossible de lire votre carte pour le moment. Vérifiez votre connexion puis actualisez.</p>'; }
+  }
+  charger();
+})();
+</script>
+</body>
+</html>
