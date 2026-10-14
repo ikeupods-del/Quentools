@@ -41,7 +41,10 @@ const PAGES = {
   'creation-site/formation/': ['Page de vente pour formation, création de site | QuenTools', 'Page de vente pour formateur : promesse claire, bénéfices concrets, aperçu du contenu, présentation de l’auteur. Site web clé en main, devis gratuit.'],
   'creation-site/climatisation/': ['Site vitrine climatisation, création de site | QuenTools', 'Site vitrine pour installateur de climatisation : installation, entretien, dépannage, devis en ligne. Site web clé en main, refonte de site. Devis gratuit.']
 };
-for (const m of metiers) PAGES[m.slug + '/'] = [m.t, m.d];
+/* Pages « site internet par métier » à la racine : retirées à la demande du propriétaire ; leurs adresses renvoient vers creation-site/. */
+const METIERS_RACINE = false;
+if (METIERS_RACINE) for (const m of metiers) PAGES[m.slug + '/'] = [m.t, m.d];
+else PAGES['creation-site/plombier/'] = ['Site vitrine pour plombier, création de site | QuenTools', 'Site vitrine pour plombier chauffagiste : bouton d’appel dès l’accueil, zones d’intervention, types de dépannage. Exemple à voir, devis gratuit.'];
 const PRIVE = { 'mentions-legales/': 'noindex', 'espace/': 'noindex', 'cadeau/carte/': 'noindex', 'formation/8gbuw1z5ua58n9/': 'noindex' };   // pages sans Open Graph
 
 /* ---------- Balises de tête ---------- */
@@ -72,7 +75,7 @@ const lienMetiers = pre => 'Sites par métier : ' + metiers.map(m => `<a href="$
 function pied(p, h) {
   const pre = prefixe(p) || '';
   const liens = `<a href="${pre || './'}">Accueil</a> · <a href="${pre}creation-site/">Site internet artisan</a> · <a href="${pre}templates/">Site clé en main</a> · <a href="${pre}devis/">Devis</a> · <a href="${pre}realisations/">Réalisations</a> · <a href="${pre}conseils/">Conseils</a> · <a href="${pre}mentions-legales/">Mentions légales</a> · <a href="${pre}politique-confidentialite.html">Confidentialité</a> · <a href="mailto:${mail}">Contact</a>`;
-  const metiersP = `<p data-seo="pied-metiers" class="muted" style="margin:var(--s-4) 0 0;font-size:var(--t-sm)">${lienMetiers(pre)}</p>`;
+  const metiersP = !METIERS_RACINE ? '' : `<p data-seo="pied-metiers" class="muted" style="margin:var(--s-4) 0 0;font-size:var(--t-sm)">${lienMetiers(pre)}</p>`;
   h = h.replace(/\s*<p data-seo="pied-metiers"[^>]*>.*?<\/p>/s, '').replace(/(<a href="[^"]*mentions-legales\/")\s+rel="nofollow"/g, '$1');
   if (/<div class="footer-bottom"/.test(h) && !/footer-grid/.test(h)) {
     h = h.replace(/(<span>© <span data-year>\d+<\/span> QuenTools\.?<\/span>)<span(?: data-seo="pied")?>.*?<\/span>(\s*<\/div>)(<\/div>)(<\/footer>)/s, `$1<span data-seo="pied">${liens}</span>$2${metiersP}$3$4`);
@@ -269,9 +272,25 @@ ${bloc}
 
 /* ---------- Écriture ---------- */
 let n = 0;
+const redirection = (vers, texte) => `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuenTools — page déplacée</title>
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="${base}${vers}">
+<meta http-equiv="refresh" content="0;url=../${vers}">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+</head>
+<body>
+<p>Cette page a déménagé : <a href="../${vers}">${texte}</a>.</p>
+</body>
+</html>
+`;
 for (const m of metiers) {
   const f = m.slug + '/index.html';
-  ecrire(f, pageMetier(m));
+  ecrire(f, METIERS_RACINE ? pageMetier(m) : m.slug === 'site-internet-plombier' ? redirection('creation-site/plombier/', 'site internet pour plombier') : redirection('creation-site/', 'création de site par métier'));
 }
 const aTraiter = Object.keys(PAGES).concat(Object.keys(PRIVE));
 for (const p of aTraiter) {
@@ -286,7 +305,7 @@ for (const p of aTraiter) {
 { const f = 'formation/8gbuw1z5ua58n9/index.html'; let h = lire(f); h = h.replace(/<meta name="robots"[^>]*>/, '<meta name="robots" content="noindex,nofollow,noarchive">'); ecrire(f, h); }
 
 /* Anciennes adresses : /creation-site/plombier/ renvoie vers la page du métier à la racine */
-{ const [t, d] = PAGES['site-internet-plombier/'], u = base + 'site-internet-plombier/';
+if (METIERS_RACINE) { const [t, d] = PAGES['site-internet-plombier/'], u = base + 'site-internet-plombier/';
   ecrire('creation-site/plombier/index.html', `<!doctype html>
 <html lang="fr">
 <head>
@@ -306,22 +325,23 @@ for (const p of aTraiter) {
 /* Liens « Autres métiers » : ancienne adresse du plombier remplacée */
 for (const p of Object.keys(PAGES).filter(x => x.startsWith('creation-site/') && x !== 'creation-site/plombier/')) {
   const f = p + 'index.html'; let h = lire(f);
-  h = h.replace(/href="\.\.\/plombier\/"/g, 'href="../../site-internet-plombier/"');
+  h = METIERS_RACINE ? h.replace(/href="\.\.\/plombier\/"/g, 'href="../../site-internet-plombier/"') : h.replace(/href="\.\.\/\.\.\/site-internet-plombier\/"/g, 'href="../plombier/"');
   ecrire(f, h);
 }
 { const f = 'creation-site/index.html'; let h = lire(f);
-  h = h.replace('href="plombier/"', 'href="../site-internet-plombier/"');
+  h = METIERS_RACINE ? h.replace('href="plombier/"', 'href="../site-internet-plombier/"') : h.replace(/href="\.\.\/site-internet-plombier\/"/g, 'href="plombier/"');
   h = h.replace(/\s*<section class="section" data-seo="metiers".*?<\/section>/s, '');
+  if (METIERS_RACINE) {
   const liste = metiers.map(m => `<li><a href="../${m.slug}/">Site internet pour ${m.nom.toLowerCase()}</a> : ${COURT[m.slug].replace(/\.$/, '')}.</li>`).join('');
-  h = h.replace('</main>', `  <section class="section" data-seo="metiers" style="padding-top:0"><div class="wrap"><div style="max-width:820px"><h2 class="h-section reveal" style="max-width:none">Création de site internet pour artisans</h2><p class="muted reveal">Le bâtiment, la coiffure et l’artisanat ont chacun leurs besoins. Voici nos pages dédiées, avec ce que votre site vitrine doit contenir et un devis gratuit.</p><ul class="reveal" style="padding-left:1.2em;display:grid;gap:8px">${liste}</ul></div></div></section>\n</main>`);
+  h = h.replace('</main>', `  <section class="section" data-seo="metiers" style="padding-top:0"><div class="wrap"><div style="max-width:820px"><h2 class="h-section reveal" style="max-width:none">Création de site internet pour artisans</h2><p class="muted reveal">Le bâtiment, la coiffure et l’artisanat ont chacun leurs besoins. Voici nos pages dédiées, avec ce que votre site vitrine doit contenir et un devis gratuit.</p><ul class="reveal" style="padding-left:1.2em;display:grid;gap:8px">${liste}</ul></div></div></section>\n</main>`); }
   ecrire(f, h); }
 { /* accueil et pages à image : plombier du bloc exemples → nouvelle adresse */
-  for (const f of ['exemples/index.html', 'exemples/plombier/index.html']) if (fs.existsSync(path.join(racine, f))) { const h = lire(f); if (/creation-site\/plombier/.test(h)) ecrire(f, h.replace(/creation-site\/plombier\//g, 'site-internet-plombier/')); } }
+  for (const f of ['exemples/index.html', 'exemples/plombier/index.html']) if (fs.existsSync(path.join(racine, f))) { const h = lire(f); if (METIERS_RACINE && /creation-site\/plombier/.test(h)) ecrire(f, h.replace(/creation-site\/plombier\//g, 'site-internet-plombier/')); else if (!METIERS_RACINE && /site-internet-plombier\//.test(h)) ecrire(f, h.replace(/(\.\.\/)*site-internet-plombier\//g, m => m.replace('site-internet-plombier/', 'creation-site/plombier/'))); } }
 
 /* ---------- Plan du site et robots.txt ---------- */
 const prio = p => p === '' ? '1.0' : p === 'devis/' ? '0.9' : /^(templates|realisations)\/$/.test(p) ? '0.8' : /^site-internet-|^creation-site\//.test(p) ? '0.7' : /^(audit|cadeau|outils)\/$/.test(p) ? '0.7' : '0.6';
 const jour = new Date().toISOString().slice(0, 10);
-const publiques = Object.keys(PAGES).filter(p => p !== 'creation-site/plombier/');
+const publiques = Object.keys(PAGES).filter(p => METIERS_RACINE ? p !== 'creation-site/plombier/' : true);
 ecrire('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${publiques.map(p => `  <url><loc>${base}${p}</loc><lastmod>${jour}</lastmod><priority>${prio(p)}</priority></url>`).join('\n')}\n</urlset>\n`);
 ecrire('robots.txt', `User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /demo/\nDisallow: /espace/\nDisallow: /formation/\nDisallow: /cadeau/carte/\n\nSitemap: ${base}sitemap.xml\n`);
 
