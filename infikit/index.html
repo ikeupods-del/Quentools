@@ -606,6 +606,10 @@ function vTournee() {
     <div class="grow"><b>${longDate(date)}</b><button class="tiny muted" onclick="ui.date=today();render()">${isToday ? "Aujourd'hui" : "Revenir à aujourd'hui"}${isHoliday(date, S.country) ? ' · jour férié' : ''}</button></div>
     <button class="icon" onclick="ui.date=addDays(ui.date,1);render()" aria-label="Jour suivant">${I.next}</button></div>`;
   h += `<div class="kpis"><div class="kpi"><b>${done}/${stops.length}</b><span>visites</span></div><div class="kpi"><b>${eur0(total)}</b><span>${done === stops.length && stops.length ? 'réalisé' : 'prévu'}</span></div><div class="kpi"><b>${km ? Math.round(km) + ' km' : '—'}</b><span>trajet estimé</span></div></div>`;
+  if (!S.patients.length) h += `<section class="card" style="margin-top:10px"><h2 style="margin:0 0 6px">Pour commencer, 3 étapes</h2>
+    <ol class="small" style="margin:0 0 10px;padding-left:20px;line-height:1.6"><li>Ajoutez votre premier patient : nom, adresse, médecin.</li><li>Joignez son ordonnance (photo ou PDF) pour être alertée avant sa fin.</li><li>Faites une sauvegarde chiffrée, pour retrouver vos données sur un autre téléphone.</li></ol>
+    <div class="row"><button class="btn pri" onclick="editPatient()">+ Ajouter un patient</button><button class="btn" onclick="go('reglages')">Sauvegarde</button></div>
+    <p class="tiny muted" style="margin:8px 0 0">Les données restent sur ce téléphone. Rien n’est envoyé sans votre accord.</p></section>`;
   if (isToday && backupDue()) h += `<div class="alert"><span class="grow">💾 <b>${S.lastBackup ? 'Dernière sauvegarde il y a ' + Math.round((parseISO(today()) - parseISO(S.lastBackup)) / 864e5) + ' jours.' : 'Aucune sauvegarde pour l’instant.'}</b> Rangez une copie chiffrée dans votre Google Drive ou iCloud : 2 touches, sans compte à créer.</span><button class="btn sm pri" onclick="exportBackup()">Sauvegarder</button></div>`;
   const alerts = [...new Set(stops.map(s => s.pid))].map(patient).filter(Boolean).map(p => [p, ordoState(p)]).filter(x => x[1]);
   for (const [p, a] of alerts) h += `<div class="alert ${a.c}">⚠️ <span><b>${esc(fullName(p))}</b> — ${a.t}. Pensez au renouvellement.</span></div>`;
