@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Référencement du site vitrine : balises de chaque page (titre, description, adresse canonique, Open Graph, Twitter Card, icônes),
-   accueil (section « Pour qui ? », formules, questions fréquentes + données structurées), pages « site internet par métier »,
+   accueil (formules, questions fréquentes + données structurées ; sans section métiers), pages « site internet par métier »,
    pied de page commun (mentions légales, contact, métiers), images WebP, plan du site et robots.txt.
    Idempotent : on peut le relancer à volonté. Ensuite : node tools/seo-site.js (fil d'Ariane) puis node tools/verifier-site.js.
    Usage : node tools/seo-pages.js */
@@ -8,6 +8,7 @@ const fs = require('fs'), path = require('path');
 const racine = path.join(__dirname, '..'), base = 'https://quentools.fr/', mail = 'contact.quentools@gmail.com';
 const INSTAGRAM = '';   // adresse du compte Instagram de QuenTools (https://www.instagram.com/…), ajoutée aux profils de l'entreprise si renseignée
 const OG = 'assets/og-creation-site-internet-artisan.jpg', OG_ALT = 'QuenTools : création de site internet pour artisans, site vitrine clé en main dès 299 €';
+const OG_ACCUEIL = 'assets/partage.jpg', OG_ALT_ACCUEIL = 'QuenTools : agence de communication digitale, sites web et outils sur mesure';
 const lire = f => fs.readFileSync(path.join(racine, f), 'utf8'), ecrire = (f, s) => { fs.mkdirSync(path.dirname(path.join(racine, f)), { recursive: true }); fs.writeFileSync(path.join(racine, f), s); };
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const w = {}; new Function('window', lire('assets/qt-templates.js'))(w); const T = w.QTT, opt = id => T.options.find(o => o.id === id);
@@ -16,7 +17,7 @@ const erreurs = [];
 
 /* ---------- Titres et descriptions (title 50-60 caractères, description 140-155) ---------- */
 const PAGES = {
-  '': ['Création de site internet pour artisans | QuenTools', 'Création de site internet pour artisans : site vitrine clé en main dès 299 €, refonte de site, prix fixé d’avance. Devis gratuit sous 48 h, sans engagement'],
+  '': ['QuenTools — Agence de communication digitale et sites web', 'Agence de communication digitale : sites web dès 299 €, boutiques, réseaux sociaux et outils sur mesure pour indépendants et TPE. Prix fixé d’avance.'],
   'devis/': ['Devis gratuit pour site internet d’artisan | QuenTools', 'Demandez un devis gratuit pour votre site vitrine artisan, un site web clé en main ou une refonte de site. Réponse sous 48 h, prix fixé d’avance.'],
   'templates/': ['Site web clé en main dès 299 € pour artisans | QuenTools', 'Modèles de site web clé en main par métier dès 299 € : site vitrine artisan à votre marque, nom de domaine offert, 3 mois d’assistance offerts.'],
   'audit/': ['Audit de sécurité de site web express, 100 € | QuenTools', 'Audit de sécurité express de votre site internet : HTTPS, cookies, formulaires, fichiers exposés. Rapport PDF sous 48 h, 100 €, avec votre accord écrit.'],
@@ -55,11 +56,11 @@ function tete(p, h) {
     .replace(/\s*<meta data-seo="tete">/g, '');   // ancien marqueur
   const icones = p !== 'infikit/';   // Infikit garde ses propres icônes d'application
   if (icones) h = h.replace(/\s*<link rel="(?:icon|apple-touch-icon)"[^>]*>/g, '');
-  const img = base + OG;
+  const img = base + (p === '' ? OG_ACCUEIL : OG);
   const lignes = [`<meta name="description" content="${esc(d)}">`, `<link rel="canonical" href="${url}">`,
     `<meta property="og:type" content="website">`, `<meta property="og:site_name" content="QuenTools">`, `<meta property="og:locale" content="fr_FR">`, `<meta property="og:url" content="${url}">`,
     `<meta property="og:title" content="${esc(t)}">`, `<meta property="og:description" content="${esc(d)}">`, `<meta property="og:image" content="${img}">`,
-    `<meta property="og:image:width" content="1200">`, `<meta property="og:image:height" content="630">`, `<meta property="og:image:alt" content="${esc(OG_ALT)}">`,
+    `<meta property="og:image:width" content="1200">`, `<meta property="og:image:height" content="630">`, `<meta property="og:image:alt" content="${esc(p === '' ? OG_ALT_ACCUEIL : OG_ALT)}">`,
     `<meta name="twitter:card" content="summary_large_image">`, `<meta name="twitter:title" content="${esc(t)}">`, `<meta name="twitter:description" content="${esc(d)}">`, `<meta name="twitter:image" content="${img}">`]
     .concat(icones ? [`<link rel="icon" href="${pre}assets/logo.svg" type="image/svg+xml">`, `<link rel="icon" href="${pre}assets/favicon-32x32.png" type="image/png" sizes="32x32">`, `<link rel="icon" href="${pre}favicon.ico" sizes="48x48">`,
     `<link rel="apple-touch-icon" href="${pre}assets/apple-touch-icon.png">`] : []);
@@ -77,7 +78,9 @@ function pied(p, h) {
     h = h.replace(/(<span>© <span data-year>\d+<\/span> QuenTools\.?<\/span>)<span(?: data-seo="pied")?>.*?<\/span>(\s*<\/div>)(<\/div>)(<\/footer>)/s, `$1<span data-seo="pied">${liens}</span>$2${metiersP}$3$4`);
     h = h.replace(/(<span data-seo="pied">.*?<\/span>)/s, `<span data-seo="pied">${liens}</span>`);
   } else if (/footer-grid/.test(h)) {
-    h = h.replace(/(<\/div>\s*<div class="footer-bottom">)/, `${metiersP}\n    $1`);
+    if (p !== '') h = h.replace(/(<\/div>\s*<div class="footer-bottom">)/, `${metiersP}\n    $1`);   // accueil : pas de liste de métiers
+    const conf = `<li><a href="politique-confidentialite.html">Confidentialité</a></li><li><a href="mailto:${mail}">Contact</a></li>`;
+    while (h.includes(conf + conf)) h = h.replace(conf + conf, conf);
     h = h.replace(/<li><a href="mentions-legales\/">Mentions légales et confidentialité<\/a><\/li>(?!<li><a href="mailto)/, `<li><a href="mentions-legales/">Mentions légales et confidentialité</a></li><li><a href="politique-confidentialite.html">Confidentialité</a></li><li><a href="mailto:${mail}">Contact</a></li>`);
   } else if (/<footer class="foot"><div class="wrap">/.test(h) && !/mentions-legales/.test(h)) {
     h = h.replace(/(<footer class="foot"><div class="wrap">.*?)(<\/div><\/footer>)/s, `$1 · <a href="${base}mentions-legales/">Mentions légales</a>$2`);
@@ -94,7 +97,7 @@ function images(p, h) {
   });
 }
 
-/* ---------- Accueil : Pour qui ?, formules, questions fréquentes ---------- */
+/* ---------- Accueil : formules, questions fréquentes (la section « Pour qui ? » est retirée) ---------- */
 const COURT = { 'site-internet-plombier': 'Dépannage, chauffage, zones d’intervention et bouton d’appel.', 'site-internet-electricien': 'Dépannage, mise aux normes, qualifications et devis en ligne.', 'site-internet-menuisier': 'Une galerie de réalisations et une demande de devis guidée.',
   'site-internet-macon': 'Chantiers avant et après, spécialités et secteur desservi.', 'site-internet-coiffeur': 'Tarifs affichés, ambiance du salon et réservation en ligne.', 'site-internet-couvreur': 'Toiture, zinguerie, garanties expliquées et contact immédiat.', 'site-internet-peintre-batiment': 'Avant et après, méthode de travail et estimation en ligne.' };
 const FORMULES = [
@@ -103,7 +106,7 @@ const FORMULES = [
   { id: 'complet', nom: 'Complet', prix: 799, texte: 'Le sur mesure avec, en plus, la prise de rendez-vous en ligne, le référencement local de base et un pack de visuels pour vos réseaux sociaux. Paiement unique.' }
 ];
 const FAQ = [
-  ['Combien coûte la création d’un site internet pour un artisan ?', `Trois formules à paiement unique : ${FORMULES.map(f => `${f.nom} ${f.prix} €`).join(', ')}. Le prix est fixé dans le devis avant de commencer, sans frais cachés. TVA non applicable, article 293 B du CGI.`],
+  ['Combien coûte la création d’un site internet ?', `Trois formules à paiement unique : ${FORMULES.map(f => `${f.nom} ${f.prix} €`).join(', ')}. Le prix est fixé dans le devis avant de commencer, sans frais cachés. TVA non applicable, article 293 B du CGI.`],
   ['Quel est le délai pour avoir mon site en ligne ?', 'Vous recevez votre devis sous 48 h. Une première version vous est montrée avant la suite, puis la mise en ligne se fait en quelques semaines, selon la formule et la rapidité de vos retours (textes, photos).'],
   ['Y a-t-il un abonnement à payer ?', `Non, le site se paie une seule fois. L’assistance est offerte pendant 3 mois. Ensuite, un suivi mensuel est possible (${T.fmt(opt('suivi').price)} par mois : hébergement, sauvegardes, mises à jour et modifications simples), mais il reste facultatif.`],
   ['Puis-je modifier mon site après sa mise en ligne ?', `Oui. Une série de retouches et une notice d’utilisation sont comprises, et pendant les 3 mois d’assistance les modifications simples (textes, prix, horaires, photos) sont faites sous 48 h ouvrées. Les modifications importantes ou nouvelles fonctions se chiffrent à partir de ${T.fmt(opt('modifs').price)}.`],
@@ -137,19 +140,18 @@ function accueil(h) {
     </div>
   </section>`);
   h = h.replace(reMarq('pourqui'), '').replace(reMarq('faq'), '');
-  h = h.replace(/(\n\s*<section class="section" id="services")/, (m, a) => pourqui + a);
   h = reMarq('formules').test(h) ? h.replace(reMarq('formules'), () => formules) : h.replace(/\n\s*<article class="is-main reveal"><h3>Site prêt à l’emploi<\/h3>.*?<\/article>/s, () => formules);
   h = h.replace(/(\n\s*<section class="section" id="sur-mesure")/, (m, a) => faq + a);
-  /* h1 : mot-clé principal ; les mots restent animés un à un */
+  /* h1 : accroche de l'agence ; les mots restent animés un à un */
   h = h.replace(/<h1 class="display reveal" style="--i:1">.*?<\/h1>/s, () => {
-    const mots = [['Création', 0], ['de', 1], ['site', 2], ['internet', 3], ['pour', 4], ['artisans,', 5]], em = [['clé', 6], ['en', 7], ['main', 8]];
-    return '<h1 class="display reveal" style="--i:1">' + mots.map(([m, k]) => `<span class="m" style="--k:${k}">${m}</span>`).join(' ') + ' <em>' + em.map(([m, k]) => `<span class="m" style="--k:${k}">${m}</span>`).join(' ') + '</em></h1>';
+    const m = (mot, k) => `<span class="m" style="--k:${k}">${mot}</span>`;
+    return '<h1 class="display reveal" style="--i:1">' + m('Votre', 0) + ' ' + m('site,', 1) + ' <em>' + m('sur', 2) + ' ' + m('mesure', 3) + '</em> ' + ['et', 'en', 'ligne', 'en', 'quelques', 'semaines.'].map((x, i) => m(x, i + 4)).join(' ') + '</h1>';
   });
   /* données structurées de l'entreprise, du site et des formules */
-  const org = { '@type': 'ProfessionalService', '@id': base + '#organisation', name: 'QuenTools', url: base, logo: base + 'assets/icon-512.png', image: base + OG, email: mail,
-    description: 'Agence de communication digitale : création de site internet pour artisans et indépendants, site vitrine clé en main, refonte de site, boutiques, réseaux sociaux et outils sur mesure.',
-    areaServed: { '@type': 'Country', name: 'France' }, knowsLanguage: 'fr', slogan: 'Création de site internet pour artisans',
-    serviceType: ['Création de site internet pour artisans', 'Site vitrine clé en main', 'Refonte de site', 'Boutique en ligne Shopify', 'Contenus pour les réseaux sociaux', 'Outil sur mesure', 'Audit de sécurité de site web'],
+  const org = { '@type': 'ProfessionalService', '@id': base + '#organisation', name: 'QuenTools', url: base, logo: base + 'assets/icon-512.png', image: base + OG_ACCUEIL, email: mail,
+    description: 'Agence de communication digitale : sites web, boutiques, contenus pour les réseaux sociaux et outils sur mesure pour indépendants, commerçants et TPE.',
+    areaServed: { '@type': 'Country', name: 'France' }, knowsLanguage: 'fr', slogan: 'Votre site, sur mesure et en ligne en quelques semaines',
+    serviceType: ['Création de site internet', 'Site vitrine clé en main', 'Refonte de site', 'Boutique en ligne Shopify', 'Contenus pour les réseaux sociaux', 'Outil sur mesure', 'Audit de sécurité de site web'],
     contactPoint: { '@type': 'ContactPoint', contactType: 'customer service', email: mail, availableLanguage: 'French', url: base + 'devis/' },
     sameAs: ['https://www.tiktok.com/@quentools'].concat(INSTAGRAM ? [INSTAGRAM] : []),
     hasOfferCatalog: { '@type': 'OfferCatalog', name: 'Formules de création de site internet', itemListElement: FORMULES.map(f => ({ '@type': 'Offer', name: f.nom, description: f.texte, price: String(f.prix), priceCurrency: 'EUR', url: base + '#tarifs', availability: 'https://schema.org/InStock',
