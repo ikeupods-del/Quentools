@@ -1,7 +1,9 @@
 # QuenTools — positionnement (à relire avant tout texte, devis ou publication)
 
-## Activité principale
-**Agence de communication digitale + création de sites web** pour indépendants, artisans, commerçants et petites entreprises. Les outils gratuits (Infikit, Freelance Kit, Gourmet AI, Patrimoine AI) et Wouf sont des réalisations et des vitrines, pas le cœur de l'offre. Pas d'application complexe (type Wouf) dans l'offre.
+## Activité principale (depuis le 14 octobre 2026)
+**Studio de création d'apps et d'outils** pour indépendants, artisans, commerçants et petites entreprises : applications web installables sur téléphone, outils métier (devis, planning, suivi client), réservation et prise de commande, espace client et administration. Les sites web restent vendus (299/599/799 €) comme première brique. Les applications maison (Wouf, Paperdecrypt, Infikit, Freelance Kit, Gourmet AI…) servent de preuves. Plus de « agence de communication digitale » ni de réseaux sociaux ou boutiques comme services phares.
+
+Promesse : « Votre outil, sur mesure, prêt en quelques semaines. » Audit du marché, opportunités classées, gamme et prix conseillés (à valider avant affichage), plan à 90 jours : `design/STRATEGIE-APPS.md`. Pas de très gros projet (réseau social, place de marché) ; pas de logiciel de caisse ni de plateforme de facturation agréée.
 
 ## Ce que QuenTools vend aujourd'hui
 | Offre | Prix public |
