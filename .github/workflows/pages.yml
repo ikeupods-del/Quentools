@@ -69,13 +69,15 @@ jobs:
           rsync -a exemples _site/
           rsync -a outils _site/
           rsync -a creation-site _site/
-          for d in site-internet-*/; do rsync -a "$d" _site/; done
+          for d in site-internet-*/; do rsync -a "${d%/}" _site/; done
           rsync -a mentions-legales _site/
           rsync -a --exclude oauth-worker infikit _site/
           rsync -a freelance _site/
           rsync -a gourmet _site/
           rsync -a --exclude billing-worker --exclude tests --exclude docs --exclude node_modules --exclude 'package*.json' --exclude '.gitignore' wouf _site/
           touch _site/.nojekyll
+          # L'accueil publié doit être la vraie page d'accueil (une copie mal placée l'avait déjà remplacé par une page de redirection)
+          grep -q 'class="vitrine"' _site/index.html || { echo "✗ _site/index.html n'est pas l'accueil QuenTools"; exit 1; }
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

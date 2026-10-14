@@ -276,6 +276,7 @@ const redirection = (page, vers, texte) => { const pre = prefixe(page); return `
 <meta name="robots" content="noindex,follow">
 <link rel="canonical" href="${base}${vers}">
 <meta http-equiv="refresh" content="0;url=${pre}${vers}">
+<script>location.replace(${JSON.stringify(pre + vers)});</script>
 <link rel="icon" href="${pre}assets/logo.svg" type="image/svg+xml">
 </head>
 <body>
@@ -285,10 +286,10 @@ const redirection = (page, vers, texte) => { const pre = prefixe(page); return `
 `; };
 /* Offres de sites retirées à la demande du propriétaire : modèles et pages « site par métier » renvoient vers les offres d'apps et d'outils */
 const RETIREES = ['templates/', 'creation-site/', ...fs.readdirSync(path.join(racine, 'creation-site'), { withFileTypes: true }).filter(d => d.isDirectory()).map(d => 'creation-site/' + d.name + '/')];
-for (const p of RETIREES) ecrire(p + 'index.html', redirection(p, '#tarifs', 'nos offres d’apps et d’outils'));
+for (const p of RETIREES) ecrire(p + 'index.html', redirection(p, '#apps', 'nos apps'));
 for (const m of metiers) {
   const f = m.slug + '/index.html';
-  ecrire(f, METIERS_RACINE ? pageMetier(m) : redirection(m.slug + '/', '#tarifs', 'nos offres d’apps et d’outils'));
+  ecrire(f, METIERS_RACINE ? pageMetier(m) : redirection(m.slug + '/', '#apps', 'nos apps'));
 }
 const aTraiter = Object.keys(PAGES).concat(Object.keys(PRIVE));
 for (const p of aTraiter) {
