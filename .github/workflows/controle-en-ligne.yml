@@ -1,0 +1,26 @@
+# Contrôle du site publié : ouvre quentools.fr comme un visiteur et vérifie que l'accueil actuel est bien servi.
+name: Contrôler le site en ligne
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Publier sur GitHub Pages"]
+    types: [completed]
+permissions:
+  contents: read
+jobs:
+  controle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Accueil, ancienne adresse et pages clés
+        run: |
+          set -u
+          ok=1
+          for u in https://quentools.fr/ https://www.quentools.fr/ https://ikeupods-del.github.io/Quentools/ https://quentools.fr/pro/inscription/ https://quentools.fr/sw.js; do
+            code=$(curl -s -o /tmp/p -w '%{http_code} %{url_effective}' -L "$u")
+            titre=$(grep -o '<title>[^<]*' /tmp/p | head -1 | sed 's/<title>//')
+            echo "$u → $code · ${titre:-(sans titre)}"
+          done
+          curl -sL https://quentools.fr/ -o /tmp/a
+          grep -q 'Des apps qui' /tmp/a && echo "✓ accueil actuel servi" || { echo "✗ l'accueil servi n'est pas la version actuelle"; head -c 600 /tmp/a; ok=0; }
+          grep -q 'class="vitrine"' /tmp/a && echo "✓ vitrine des apps présente" || ok=0
+          [ $ok = 1 ]
