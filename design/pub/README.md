@@ -75,3 +75,7 @@ Aucun prix (règle des publications), écrans du Pack Commerçant signalés comm
 
 Voix off proposée (30 s) :
 > « Excel, des papiers, des messages à toute heure ? QuenTools crée vos apps et vos outils. Vos clients réservent, paient l'acompte et reviennent. Vos devis se font sur téléphone, devant le client. Et votre appli s'installe sur l'écran d'accueil. Prix fixé avant de commencer, à votre nom. QuenTools, studio de création d'apps et d'outils. Devis gratuit sur quentools.fr. »
+
+## Versions avec voix off (QuenTools)
+`quentools-pub-30s-reseaux-9x16-voix.mp4` et `quentools-pub-30s-web-16x9-voix.mp4` (bandes son seules : `quentools-pub-bande-son-voix-*.mp3`) : voix française posée au début de chaque plan, musique baissée sous la voix, −14 LUFS. Fabriquées par `python3 tools/pub/voix-off.py fr-siwis-medium.onnx` (Piper, modèle à télécharger depuis les versions de rhasspy/piper, non versionné).
+**Crédit obligatoire de la voix** (licence CC BY 4.0) : ajouter « Voix : SIWIS (CC BY 4.0) » dans la description de la publication ou de la vidéo.
