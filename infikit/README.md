@@ -55,7 +55,7 @@ Les montants sont des calculs d'aide. Vérifiez-les avant de facturer, et pour l
 
 - **Sur votre téléphone**, dans le navigateur qui fait tourner l'application. C'est le seul endroit où elles sont toujours.
 - **Dans la sauvegarde** : un fichier chiffré que vous rangez où vous voulez.
-- **Dans la synchronisation Google** (facultative, à activer dans Réglages → Synchronisation) : les données chiffrées avec votre phrase secrète sont stockées sur l'infrastructure Google Firebase du projet QuenTools. QuenTools ne peut pas les lire, mais elle en assure l'hébergement. À n'activer qu'après la relecture juridique indiquée dans le guide de l'éditeur.
+- **Synchronisation Google** : désactivée pour l'instant. QuenTools n'héberge aucune donnée de santé.
 - **Dans la synchronisation GitHub** (facultative) : un fichier chiffré est créé dans votre propre compte GitHub.
 
 ## Limites
@@ -68,5 +68,6 @@ Les montants sont des calculs d'aide. Vérifiez-les avant de facturer, et pour l
 
 - Code : `infikit/index.html` (une seule page), réglages de connexion : `infikit/config.js`.
 - Publication : sur la branche principale, par le workflow de publication GitHub Pages.
-- Données de santé : avant d'ouvrir la synchronisation Google à de vrais patients, faire relire par un professionnel (juriste ou délégué à la protection des données) l'hébergement sur Firebase. Pour un hébergement de données de santé pour le compte de tiers, la certification HDS est exigée : voir la liste officielle des hébergeurs certifiés sur esante.gouv.fr.
+- Données de santé : la synchronisation Google est désactivée (`googleSync: false` dans config.js). Ne la réactiver qu'après relecture juridique et avec un hébergeur certifié HDS (liste officielle : esante.gouv.fr).
+- Les données déjà envoyées à Firebase par des utilisateurs de la synchronisation Google ne sont pas supprimées automatiquement : à traiter sur demande, après vérification.
 - Après une modification : ouvrir `https://quentools.fr/infikit/` sur téléphone et vérifier la tournée, la création d'un patient et la sauvegarde.

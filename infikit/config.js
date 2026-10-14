@@ -12,6 +12,9 @@ window.INFIKIT_CONFIG = {
     messagingSenderId: "55024741286",
     appId: "1:55024741286:web:957475540e24ed223b7d67"
   },
+  // Synchronisation Google (Firebase) désactivée : elle hébergerait des données de santé chez QuenTools, sans certification HDS.
+  // Mettre true seulement après relecture juridique et hébergement certifié. Les données déjà envoyées restent dans Firebase.
+  googleSync: false,
   // GitHub, connexion en un clic (facultatif). Sans ces deux valeurs,
   // la connexion GitHub se fait en collant un jeton « gist ».
   githubClientId: '',
