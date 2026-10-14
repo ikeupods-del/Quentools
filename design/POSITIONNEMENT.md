@@ -1,18 +1,20 @@
 # QuenTools — positionnement (à relire avant tout texte, devis ou publication)
 
 ## Activité principale (depuis le 14 octobre 2026)
-**Studio de création d'apps et d'outils** pour indépendants, artisans, commerçants et petites entreprises : applications web installables sur téléphone, outils métier (devis, planning, suivi client), réservation et prise de commande, espace client et administration. Les sites web restent vendus (299/599/799 €) comme première brique. Les applications maison (Wouf, Paperdecrypt, Infikit, Freelance Kit, Gourmet AI…) servent de preuves. Plus de « agence de communication digitale » ni de réseaux sociaux ou boutiques comme services phares.
+**Studio de création d'apps et d'outils** pour indépendants, artisans, commerçants et petites entreprises : applications web installables sur téléphone, outils métier (devis, planning, suivi client), réservation et prise de commande, espace client et administration. Les sites web ne sont plus vendus (décision du propriétaire, 14 octobre 2026). Les applications maison (Wouf, Paperdecrypt, Infikit, Freelance Kit, Gourmet AI…) servent de preuves. Plus de « agence de communication digitale » ni de réseaux sociaux ou boutiques comme services phares.
 
 Promesse : « Votre outil, sur mesure, prêt en quelques semaines. » Audit du marché, opportunités classées, gamme et prix conseillés (à valider avant affichage), plan à 90 jours : `design/STRATEGIE-APPS.md`. Pas de très gros projet (réseau social, place de marché) ; pas de logiciel de caisse ni de plateforme de facturation agréée.
 
-## Ce que QuenTools vend aujourd'hui
+## Ce que QuenTools vend aujourd'hui (grille du 14 octobre 2026)
 | Offre | Prix public |
 |---|---|
-| Site prêt à l'emploi (template personnalisé) | dès 299 € (3 mois d'assistance offerts, domaine offert la 1re année) |
-| Système de réservation intégré | 99 € (paiement unique) |
+| Pack Commerçant (réservation avec acompte, fidélité, avis Google, espace commerçant) | 290 € + 39 €/mois |
+| Outil métier sur mesure | dès 1 490 € |
+| Application web installable | dès 2 490 € |
+| Suivi des outils sur mesure après 3 mois offerts | 49 €/mois |
 | Audit de sécurité express | 100 € |
-| Suivi mensuel après les 3 mois offerts | 69,99 €/mois |
-| Boutique Shopify, site vitrine sur mesure, outil sur mesure, contenus réseaux sociaux | sur devis |
+
+Sites vitrines, templates, boutiques et réseaux sociaux : **retirés de l'offre** à la demande du propriétaire.
 
 Source des prix : `assets/qt-templates.js` (catalogue partagé accueil, devis, templates, admin) et `design/TARIFS.md`. Les réseaux sociaux (carrousels, visuels, publications) existent déjà dans le dépôt (`tools/carrousels.js`, `conseils/`), mais sans tarif défini : à fixer avec le propriétaire avant de l'afficher.
 

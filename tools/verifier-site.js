@@ -18,18 +18,20 @@ if (!/noindex/.test(lire('formation/8gbuw1z5ua58n9/index.html'))) ko('formation/
   if (!ld) ko('index.html', 'données structurées de l’accueil absentes'); else { const g = JSON.parse(ld)['@graph'], types = g.map(x => x['@type']);
     for (const t of ['ProfessionalService', 'WebSite', 'FAQPage']) if (!types.includes(t)) ko('index.html', `données structurées : ${t} absent`);
     const offres = ((g.find(x => x['@type'] === 'ProfessionalService') || {}).hasOfferCatalog || {}).itemListElement || [];
-    if (offres.map(o => o.price).join() !== '299,599,799') ko('index.html', 'les trois formules (299, 599, 799 €) doivent figurer dans les données structurées');
+    const W = {}; new Function('window', lire('assets/qt-templates.js'))(W);
+    if (offres.map(o => o.price).join() !== W.QTT.templates.map(t => t.base).join()) ko('index.html', 'les offres des données structurées doivent reprendre les prix du catalogue (assets/qt-templates.js)');
     const faq = g.find(x => x['@type'] === 'FAQPage'); if (!faq || faq.mainEntity.length !== 5) ko('index.html', 'la FAQ doit compter 5 questions');
     for (const q of (faq || { mainEntity: [] }).mainEntity) if (!acc.includes(q.name.replace(/&/g, '&amp;'))) ko('index.html', `question absente du contenu visible : ${q.name}`);
     for (const o of offres) if (!acc.replace(/\u00a0|\u202f/g, ' ').includes(String(o.price).replace(/(\d)(\d{3})$/, '$1 $2') + ' €')) ko('index.html', `prix de la formule ${o.name} absent du contenu visible`); } }
 
-// Prix des options : la page templates est écrite à la main, elle doit rester alignée sur le catalogue (assets/qt-templates.js) ; pas d'option en double.
-{ const w = {}; new Function('window', lire('assets/qt-templates.js'))(w); const T = w.QTT, page = lire('templates/index.html').replace(/\u00a0|\u202f/g, ' ');
+// Catalogue des offres (assets/qt-templates.js) : pas d'option en double, démonstrations présentes ; anciennes pages de sites redirigées
+{ const w = {}; new Function('window', lire('assets/qt-templates.js'))(w); const T = w.QTT;
   const noms = T.options.map(o => o.name.toLowerCase()); if (new Set(noms).size !== noms.length) ko('assets/qt-templates.js', 'option en double');
-  for (const o of T.options) if (o.price && !page.includes(T.fmt(o.price).replace(/ €$/, ' €'))) ko('templates/index.html', `prix de l’option « ${o.name} » (${T.fmt(o.price)}) absent ou différent du catalogue`);
-  for (const t of T.templates) if (!fs.existsSync(path.join(root, t.demo))) ko('assets/qt-templates.js', `démonstration introuvable : ${t.demo}`); }
+  for (const t of T.templates) if (!fs.existsSync(path.join(root, t.demo))) ko('assets/qt-templates.js', `démonstration introuvable : ${t.demo}`);
+  for (const f of ['templates/index.html', 'creation-site/index.html']) if (!/http-equiv="refresh"/.test(lire(f))) ko(f, 'page de site retirée : la redirection vers les offres manque');
+  if (plan.some(p => /^(templates|creation-site|exemples)\//.test(p))) ko('sitemap.xml', 'les pages de vente de sites retirées ne doivent plus figurer dans le plan du site'); }
 const titres = new Set(), descriptions = new Set();
-const pages = new Set([...plan.map(p => p + 'index.html'), 'index.html', 'devis/index.html', 'realisations/index.html', 'exemples/index.html']);
+const pages = new Set([...plan.map(p => p + 'index.html'), 'index.html', 'devis/index.html', 'realisations/index.html']);
 for (const p of pages) {
   if (!fs.existsSync(path.join(root, p))) { ko(p, 'fichier introuvable'); continue; }
   const h = lire(p), dir = path.dirname(p);

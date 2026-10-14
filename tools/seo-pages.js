@@ -7,7 +7,7 @@
 const fs = require('fs'), path = require('path');
 const racine = path.join(__dirname, '..'), base = 'https://quentools.fr/', mail = 'contact.quentools@gmail.com';
 const INSTAGRAM = '';   // adresse du compte Instagram de QuenTools (https://www.instagram.com/…), ajoutée aux profils de l'entreprise si renseignée
-const OG = 'assets/og-creation-site-internet-artisan.jpg', OG_ALT = 'QuenTools : création de site internet pour artisans, site vitrine clé en main dès 299 €';
+const OG = 'assets/partage.jpg', OG_ALT = 'QuenTools : studio de création d’apps et d’outils pour indépendants et TPE';
 const OG_ACCUEIL = 'assets/partage.jpg', OG_ALT_ACCUEIL = 'QuenTools : studio de création d’apps et d’outils sur mesure';
 const lire = f => fs.readFileSync(path.join(racine, f), 'utf8'), ecrire = (f, s) => { fs.mkdirSync(path.dirname(path.join(racine, f)), { recursive: true }); fs.writeFileSync(path.join(racine, f), s); };
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -18,34 +18,22 @@ const erreurs = [];
 /* ---------- Titres et descriptions (title 50-60 caractères, description 140-155) ---------- */
 const PAGES = {
   '': ['QuenTools — Création d’apps et d’outils pour les TPE', 'Studio de création d’applications web et d’outils métier pour indépendants et TPE : réservation, commandes, espace client, devis. Prix fixé d’avance.'],
-  'devis/': ['Devis gratuit pour site internet d’artisan | QuenTools', 'Demandez un devis gratuit pour votre site vitrine artisan, un site web clé en main ou une refonte de site. Réponse sous 48 h, prix fixé d’avance.'],
-  'templates/': ['Site web clé en main dès 299 € pour artisans | QuenTools', 'Modèles de site web clé en main par métier dès 299 € : site vitrine artisan à votre marque, nom de domaine offert, 3 mois d’assistance offerts.'],
+  'devis/': ['Devis gratuit pour une app ou un outil métier | QuenTools', 'Demandez un devis gratuit pour le Pack Commerçant, un outil métier sur mesure ou une application web installable. Réponse sous 48 h, prix fixé d’avance.'],
   'audit/': ['Audit de sécurité de site web express, 100 € | QuenTools', 'Audit de sécurité express de votre site internet : HTTPS, cookies, formulaires, fichiers exposés. Rapport PDF sous 48 h, 100 €, avec votre accord écrit.'],
   'conseils/': ['Conseils pour le site internet d’un artisan | QuenTools', 'Conseils simples pour artisans et indépendants : site vitrine sur téléphone, fiche Google, nom de domaine, mentions légales, refonte de site, sécurité.'],
-  'realisations/': ['Réalisations : sites web et outils sur mesure | QuenTools', 'Réalisations QuenTools : site vitrine, site web clé en main, outils sur mesure et applications. Le problème, la solution et le résultat de chaque projet.'],
+  'realisations/': ['Réalisations : applications et outils sur mesure | QuenTools', 'Réalisations QuenTools : applications web, outils métier, réservation et prise de commande. Le problème, la solution et le résultat de chaque projet.'],
   'outils/': ['Outils gratuits pour artisans et indépendants | QuenTools', 'Outils gratuits en ligne : Infikit, Freelance Kit, Gourmet AI, Wouf, carnet d’entretien auto. Sur téléphone et ordinateur, sans inscription obligatoire.'],
-  'exemples/': ['Exemples de sites vitrines pour artisans | QuenTools', 'Treize exemples de site vitrine pour artisans, commerçants et indépendants : plombier, fleuriste, restaurant… Voyez votre site avant de vous lancer.'],
-  'cadeau/': ['Carte cadeau création de site internet | QuenTools', 'Offrez une carte cadeau QuenTools : un site vitrine, un site web clé en main ou un coup de pouce numérique. Montant au choix, valable un an.'],
+  'cadeau/': ['Carte cadeau QuenTools : une appli ou un outil | QuenTools', 'Offrez une carte cadeau QuenTools : le Pack Commerçant, un outil métier ou une application web pour un indépendant. Montant au choix, valable un an.'],
   'infikit/': ['Infikit : l’appli gratuite des infirmières | QuenTools', 'Infikit, l’application gratuite des infirmières à domicile : tournée, fiches patients, ordonnances, cotations et compta. Sur téléphone, sans installation.'],
   'freelance/': ['Freelance Kit : calculateur de TJM et devis | QuenTools', 'Calculateur de TJM et générateur de devis pour freelances : votre tarif journalier, vos charges et un devis prêt à envoyer. Gratuit, sur téléphone et PC.'],
   'gourmet/': ['Gourmet AI : recettes, menu et liste de courses | QuenTools', 'Gourmet AI : des recettes du monde entier, cuisiner avec ce qu’on a, menu de la semaine, liste de courses et budget. Gratuit, sur téléphone et ordinateur.'],
   'outils/carnet-entretien/': ['Carnet d’entretien auto gratuit en ligne | QuenTools', 'Carnet d’entretien auto gratuit : vidanges, pneus, freins, contrôle technique, alertes en km ou en mois, coûts. Sans inscription, données chez vous.'],
-  'outils/revisions/': ['Aide à la révision gratuite pour étudiants | QuenTools', 'Aide à la révision gratuite : fiches à répétition espacée, planning d’examens, minuteur, moyennes. Sans inscription ni pub, données sur votre appareil.'],
-  'creation-site/': ['Site internet par métier pour artisans | QuenTools', 'Création de site internet artisan par métier : plombier, électricien, menuisier, coiffeur, paysagiste, restaurant… Site vitrine clé en main, devis gratuit.'],
-  'creation-site/paysagiste/': ['Site vitrine pour paysagiste, création de site | QuenTools', 'Site vitrine pour paysagiste : galerie de jardins, services, zone d’intervention et devis en ligne. Site web clé en main ou refonte de site, devis gratuit.'],
-  'creation-site/photographe/': ['Site vitrine pour photographe : portfolio | QuenTools', 'Site vitrine pour photographe : portfolio soigné, tarifs, réservation de séances et contact. Site web clé en main ou refonte de site. Devis gratuit.'],
-  'creation-site/fleuriste/': ['Site vitrine pour fleuriste, création de site | QuenTools', 'Site vitrine pour fleuriste : bouquets, abonnements, horaires et commande en ligne. Site web clé en main ou refonte de site, prix fixé. Devis gratuit.'],
-  'creation-site/osteopathe/': ['Site vitrine pour ostéopathe, création de site | QuenTools', 'Site vitrine pour ostéopathe : présentation du cabinet, déroulé de séance, tarifs et rendez-vous. Site web clé en main ou refonte de site. Devis gratuit.'],
-  'creation-site/coach/': ['Site vitrine pour coach sportif en ligne | QuenTools', 'Site vitrine pour coach sportif : programmes, planning des séances, tarifs et contact. Site web clé en main ou refonte de site, prix fixé. Devis gratuit.'],
-  'creation-site/restaurant/': ['Site vitrine pour restaurant, création de site | QuenTools', 'Site vitrine pour restaurant : carte, horaires, ambiance et réservation de table. Site web clé en main ou refonte de site, prix fixé. Devis gratuit.'],
-  'creation-site/formation/': ['Page de vente pour formation, création de site | QuenTools', 'Page de vente pour formateur : promesse claire, bénéfices concrets, aperçu du contenu, présentation de l’auteur. Site web clé en main, devis gratuit.'],
-  'creation-site/climatisation/': ['Site vitrine climatisation, création de site | QuenTools', 'Site vitrine pour installateur de climatisation : installation, entretien, dépannage, devis en ligne. Site web clé en main, refonte de site. Devis gratuit.']
+  'outils/revisions/': ['Aide à la révision gratuite pour étudiants | QuenTools', 'Aide à la révision gratuite : fiches à répétition espacée, planning d’examens, minuteur, moyennes. Sans inscription ni pub, données sur votre appareil.']
 };
 /* Pages « site internet par métier » à la racine : retirées à la demande du propriétaire ; leurs adresses renvoient vers creation-site/. */
 const METIERS_RACINE = false;
 if (METIERS_RACINE) for (const m of metiers) PAGES[m.slug + '/'] = [m.t, m.d];
-else PAGES['creation-site/plombier/'] = ['Site vitrine pour plombier, création de site | QuenTools', 'Site vitrine pour plombier chauffagiste : bouton d’appel dès l’accueil, zones d’intervention, types de dépannage. Exemple à voir, devis gratuit.'];
-const PRIVE = { 'mentions-legales/': 'noindex', 'espace/': 'noindex', 'cadeau/carte/': 'noindex', 'formation/8gbuw1z5ua58n9/': 'noindex' };   // pages sans Open Graph
+const PRIVE = { 'exemples/': 'noindex', 'mentions-legales/': 'noindex', 'espace/': 'noindex', 'cadeau/carte/': 'noindex', 'formation/8gbuw1z5ua58n9/': 'noindex' };   // pages sans Open Graph
 
 /* ---------- Balises de tête ---------- */
 const prefixe = p => '../'.repeat(p.split('/').filter(Boolean).length);
@@ -74,7 +62,7 @@ function tete(p, h) {
 const lienMetiers = pre => 'Sites par métier : ' + metiers.map(m => `<a href="${pre}${m.slug}/">${m.nom}</a>`).join(' · ') + ` · <a href="${pre}creation-site/">Tous les métiers</a>`;
 function pied(p, h) {
   const pre = prefixe(p) || '';
-  const liens = `<a href="${pre || './'}">Accueil</a> · <a href="${pre}creation-site/">Site internet artisan</a> · <a href="${pre}templates/">Site clé en main</a> · <a href="${pre}devis/">Devis</a> · <a href="${pre}realisations/">Réalisations</a> · <a href="${pre}conseils/">Conseils</a> · <a href="${pre}mentions-legales/">Mentions légales</a> · <a href="${pre}politique-confidentialite.html">Confidentialité</a> · <a href="mailto:${mail}">Contact</a>`;
+  const liens = `<a href="${pre || './'}">Accueil</a> · <a href="${pre}demo/pack-commercant/">Pack Commerçant</a> · <a href="${pre}outils/">Nos apps</a> · <a href="${pre}devis/">Devis</a> · <a href="${pre}realisations/">Réalisations</a> · <a href="${pre}conseils/">Conseils</a> · <a href="${pre}mentions-legales/">Mentions légales</a> · <a href="${pre}politique-confidentialite.html">Confidentialité</a> · <a href="mailto:${mail}">Contact</a>`;
   const metiersP = !METIERS_RACINE ? '' : `<p data-seo="pied-metiers" class="muted" style="margin:var(--s-4) 0 0;font-size:var(--t-sm)">${lienMetiers(pre)}</p>`;
   h = h.replace(/\s*<p data-seo="pied-metiers"[^>]*>.*?<\/p>/s, '').replace(/(<a href="[^"]*mentions-legales\/")\s+rel="nofollow"/g, '$1');
   if (/<div class="footer-bottom"/.test(h) && !/footer-grid/.test(h)) {
@@ -103,17 +91,24 @@ function images(p, h) {
 /* ---------- Accueil : formules, questions fréquentes (la section « Pour qui ? » est retirée) ---------- */
 const COURT = { 'site-internet-plombier': 'Dépannage, chauffage, zones d’intervention et bouton d’appel.', 'site-internet-electricien': 'Dépannage, mise aux normes, qualifications et devis en ligne.', 'site-internet-menuisier': 'Une galerie de réalisations et une demande de devis guidée.',
   'site-internet-macon': 'Chantiers avant et après, spécialités et secteur desservi.', 'site-internet-coiffeur': 'Tarifs affichés, ambiance du salon et réservation en ligne.', 'site-internet-couvreur': 'Toiture, zinguerie, garanties expliquées et contact immédiat.', 'site-internet-peintre-batiment': 'Avant et après, méthode de travail et estimation en ligne.' };
+/* Offres affichées sur l'accueil : prix lus dans le catalogue partagé (assets/qt-templates.js). Les offres de sites ont été retirées à la demande du propriétaire. */
+const tplP = id => T.templates.find(t => t.id === id);
+const fmtA = n => T.fmt(n).replace(/\u202f/g, '\u00a0');   // espace insécable classique : la police des titres n'a pas l'espace fine
 const FORMULES = [
-  { id: 'cle-en-main', nom: 'Clé en main', prix: 299, dès: true, texte: 'Un site vitrine pensé pour votre métier, personnalisé à votre marque (nom, couleurs, textes, photos). Nom de domaine offert la première année, 3 mois d’assistance offerts.' },
-  { id: 'sur-mesure', nom: 'Sur mesure', prix: 599, texte: 'Un site conçu avec vous pour votre activité : structure, pages et textes adaptés, formulaire de devis, mise en ligne sur votre nom. Paiement unique.' },
-  { id: 'complet', nom: 'Complet', prix: 799, texte: 'Le sur mesure avec, en plus, la prise de rendez-vous en ligne, le référencement local de base et un pack de visuels pour vos réseaux sociaux. Paiement unique.' }
+  { id: 'pack', nom: 'Pack Commerçant', prix: tplP('pack').base, mensuel: tplP('pack').monthly, lien: 'demo/pack-commercant/', cta: 'Essayer la démonstration →',
+    texte: 'Réservation avec acompte, carte de fidélité sur téléphone, demandes d’avis Google et espace commerçant, à votre nom. L’abonnement couvre l’hébergement, les données et les mises à jour.' },
+  { id: 'outil', nom: 'Outil métier sur mesure', prix: tplP('outil').base, dès: true, lien: 'devis/?type=Outil%20sur%20mesure', cta: 'Demander un devis →',
+    texte: 'Devis, planning, suivi des clients, commandes ou calculs : un outil conçu pour votre façon de travailler. Paiement unique, 3 mois d’assistance offerts.' },
+  { id: 'appli', nom: 'Application web installable', prix: tplP('appli').base, dès: true, lien: 'devis/?type=Application%20web', cta: 'Demander un devis →',
+    texte: 'Votre application sur l’écran d’accueil du téléphone de vos clients : comptes, espace client et administration, sans magasin d’applications ni commission.' }
 ];
+const prixTexte = f => (f.dès ? 'dès ' : '') + T.fmt(f.prix) + (f.mensuel ? ' puis ' + T.fmt(f.mensuel) + ' par mois' : '');
 const FAQ = [
-  ['Combien coûte une application ou un outil sur mesure ?', 'Chaque outil est chiffré sur devis, gratuitement et avant de commencer : le prix dépend des écrans, des comptes utilisateurs et des paiements à prévoir. Vous recevez le devis sous 48 h, sans frais cachés.'],
-  ['Mon application sera-t-elle sur l’App Store ?', 'Nos applications web s’installent directement sur l’écran d’accueil du téléphone (iPhone et Android), sans passer par les magasins d’applications ni payer leur commission. Elles se mettent à jour toutes seules.'],
-  ['Combien coûte la création d’un site internet ?', `Trois formules à paiement unique : ${FORMULES.map(f => `${f.nom} ${f.prix} €`).join(', ')}. Le prix est fixé dans le devis avant de commencer, sans frais cachés. TVA non applicable, article 293 B du CGI.`],
-  ['Quel est le délai pour avoir mon outil ou mon site en ligne ?', 'Vous recevez votre devis sous 48 h. Une première version vous est montrée avant la suite, puis la mise en ligne se fait en quelques semaines, selon le projet et la rapidité de vos retours.'],
-  ['Y a-t-il un abonnement à payer ?', `Non, l’outil ou le site se paie une seule fois. L’assistance est offerte pendant 3 mois. Ensuite, un suivi mensuel est possible (${T.fmt(opt('suivi').price)} par mois : hébergement, sauvegardes, mises à jour et modifications simples), mais il reste facultatif.`]
+  ['Combien coûte une application ou un outil ?', `${FORMULES.map(f => `${f.nom} : ${prixTexte(f)}`).join(' ; ')}. Le prix exact est fixé dans le devis gratuit, avant de commencer, sans frais cachés. TVA non applicable, article 293 B du CGI.`],
+  ['Que comprend le Pack Commerçant ?', 'La réservation en ligne avec acompte contre les rendez-vous non honorés, une carte de fidélité sur le téléphone de vos clients, les demandes d’avis Google et un espace commerçant pour tout gérer, à vos couleurs. L’abonnement couvre l’hébergement, vos données, les mises à jour et les modifications simples.'],
+  ['Quel est le délai pour avoir mon outil ?', 'Vous recevez votre devis sous 48 h. Le Pack Commerçant est prêt quelques jours après réception de vos informations. Un outil ou une application sur mesure demande quelques semaines : une première version vous est montrée avant la suite.'],
+  ['Y a-t-il un abonnement à payer ?', `Le Pack Commerçant fonctionne avec un abonnement de ${T.fmt(tplP('pack').monthly)} par mois. Les outils et applications sur mesure se paient une seule fois, avec 3 mois d’assistance offerts ; ensuite, un suivi de ${T.fmt(opt('suivi').price)} par mois est possible (hébergement, sauvegardes, mises à jour), mais il reste facultatif.`],
+  ['Mon application sera-t-elle sur l’App Store ?', 'Nos applications web s’installent directement sur l’écran d’accueil du téléphone (iPhone et Android), sans passer par les magasins d’applications ni payer leur commission. Elles se mettent à jour toutes seules.']
 ];
 const section = (nom, html) => `<!--seo:${nom}-->${html}<!--/seo:${nom}-->`;
 const reMarq = nom => new RegExp(`\\s*<!--seo:${nom}-->.*?<!--/seo:${nom}-->`, 's');
@@ -133,17 +128,17 @@ function accueil(h) {
       <p class="note reveal"><a href="creation-site/">Voir tous les métiers : création de site internet par activité</a> · <a href="exemples/">exemples de sites vitrines</a></p>
     </div>
   </section>`);
-  const ligne = (f, i) => `<article class="${i === 0 ? 'is-main ' : ''}reveal"${i ? ` style="--i:${i}"` : ''}><h3>${f.nom}</h3><div class="pr">${f.dès ? '<small>dès </small>' : ''}<span${f.dès ? ' data-tpl="base"' : ''}>${T.fmt(f.prix)}</span></div><p>${f.texte}</p><a href="${i === 0 ? 'templates/' : 'devis/?type=Site%20vitrine'}">${i === 0 ? 'Voir les modèles de sites →' : 'Demander un devis →'}</a></article>`;
+  const ligne = (f, i) => `<article class="${i === 0 ? 'is-main ' : ''}reveal"${i ? ` style="--i:${i}"` : ''}><h3>${f.nom}</h3><div class="pr">${f.dès ? '<small>dès </small>' : ''}<span>${fmtA(f.prix)}</span>${f.mensuel ? `<small> + ${fmtA(f.mensuel)}/mois</small>` : ''}</div><p>${f.texte}</p><a href="${f.lien}">${f.cta}</a></article>`;
   const formules = section('formules', '\n        ' + FORMULES.map(ligne).join('\n        '));
   const faq = section('faq', `
   <section class="section" id="questions" style="padding-top:0">
     <div class="wrap">
-      <div class="section-head"><span class="eyebrow reveal">Questions fréquentes</span><h2 class="h-section reveal" style="--i:1">Apps, outils et sites : vos questions, nos réponses.</h2></div>
+      <div class="section-head"><span class="eyebrow reveal">Questions fréquentes</span><h2 class="h-section reveal" style="--i:1">Apps et outils : vos questions, nos réponses.</h2></div>
       <div class="faq reveal">${FAQ.map(([q, r]) => `<details><summary>${esc(q)}</summary><p>${esc(r)}</p></details>`).join('')}</div>
     </div>
   </section>`);
   h = h.replace(reMarq('pourqui'), '').replace(reMarq('faq'), '');
-  h = reMarq('formules').test(h) ? h.replace(reMarq('formules'), () => formules) : h.replace(/\n\s*<article class="is-main reveal"><h3>Site prêt à l’emploi<\/h3>.*?<\/article>/s, () => formules);
+  h = reMarq('formules').test(h) ? h.replace(reMarq('formules'), () => formules) : h;
   h = h.replace(/(\n\s*<section class="section" id="sur-mesure")/, (m, a) => faq + a);
   /* h1 : accroche du studio ; les mots restent animés un à un */
   h = h.replace(/<h1 class="display reveal" style="--i:1">.*?<\/h1>/s, () => {
@@ -152,13 +147,13 @@ function accueil(h) {
   });
   /* données structurées de l'entreprise, du site et des formules */
   const org = { '@type': 'ProfessionalService', '@id': base + '#organisation', name: 'QuenTools', url: base, logo: base + 'assets/icon-512.png', image: base + OG_ACCUEIL, email: mail,
-    description: 'Studio de création d’applications web et d’outils métier pour indépendants, commerçants et TPE : réservation, commandes, espace client, sites web.',
+    description: 'Studio de création d’applications web et d’outils métier pour indépendants, commerçants et TPE : réservation avec acompte, fidélité, commandes, espace client.',
     areaServed: { '@type': 'Country', name: 'France' }, knowsLanguage: 'fr', slogan: 'Votre outil, sur mesure, prêt en quelques semaines',
-    serviceType: ['Création d’application web', 'Outil métier sur mesure', 'Système de réservation en ligne', 'Prise de commande en ligne', 'Espace client et administration', 'Création de site internet', 'Audit de sécurité de site web'],
+    serviceType: ['Création d’application web', 'Outil métier sur mesure', 'Système de réservation en ligne avec acompte', 'Carte de fidélité numérique', 'Prise de commande en ligne', 'Espace client et administration', 'Audit de sécurité de site web'],
     contactPoint: { '@type': 'ContactPoint', contactType: 'customer service', email: mail, availableLanguage: 'French', url: base + 'devis/' },
     sameAs: ['https://www.tiktok.com/@quentools'].concat(INSTAGRAM ? [INSTAGRAM] : []),
-    hasOfferCatalog: { '@type': 'OfferCatalog', name: 'Formules de création de site internet', itemListElement: FORMULES.map(f => ({ '@type': 'Offer', name: f.nom, description: f.texte, price: String(f.prix), priceCurrency: 'EUR', url: base + '#tarifs', availability: 'https://schema.org/InStock',
-      itemOffered: { '@type': 'Service', name: 'Site web ' + f.nom.toLowerCase(), provider: { '@id': base + '#organisation' } } })) } };
+    hasOfferCatalog: { '@type': 'OfferCatalog', name: 'Offres QuenTools : applications et outils', itemListElement: FORMULES.map(f => ({ '@type': 'Offer', name: f.nom, description: f.texte, price: String(f.prix), priceCurrency: 'EUR', url: base + '#tarifs', availability: 'https://schema.org/InStock',
+      itemOffered: { '@type': 'Service', name: f.nom, provider: { '@id': base + '#organisation' } } })) } };
   const site = { '@type': 'WebSite', '@id': base + '#site', url: base, name: 'QuenTools', inLanguage: 'fr-FR', publisher: { '@id': base + '#organisation' } };
   const faqLd = { '@type': 'FAQPage', '@id': base + '#faq', inLanguage: 'fr-FR', mainEntity: FAQ.map(([q, r]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: r } })) };
   const ld = `<script type="application/ld+json" data-seo="accueil">${JSON.stringify({ '@context': 'https://schema.org', '@graph': [org, site, faqLd] })}</script>`;
@@ -272,7 +267,8 @@ ${bloc}
 
 /* ---------- Écriture ---------- */
 let n = 0;
-const redirection = (vers, texte) => `<!doctype html>
+/* Page déplacée : renvoi vers une adresse du site (profondeur calculée d'après le chemin de la page) */
+const redirection = (page, vers, texte) => { const pre = prefixe(page); return `<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -280,17 +276,20 @@ const redirection = (vers, texte) => `<!doctype html>
 <title>QuenTools — page déplacée</title>
 <meta name="robots" content="noindex,follow">
 <link rel="canonical" href="${base}${vers}">
-<meta http-equiv="refresh" content="0;url=../${vers}">
-<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<meta http-equiv="refresh" content="0;url=${pre}${vers}">
+<link rel="icon" href="${pre}assets/logo.svg" type="image/svg+xml">
 </head>
 <body>
-<p>Cette page a déménagé : <a href="../${vers}">${texte}</a>.</p>
+<p>Cette page a déménagé : <a href="${pre}${vers}">${texte}</a>.</p>
 </body>
 </html>
-`;
+`; };
+/* Offres de sites retirées à la demande du propriétaire : modèles et pages « site par métier » renvoient vers les offres d'apps et d'outils */
+const RETIREES = ['templates/', 'creation-site/', ...fs.readdirSync(path.join(racine, 'creation-site'), { withFileTypes: true }).filter(d => d.isDirectory()).map(d => 'creation-site/' + d.name + '/')];
+for (const p of RETIREES) ecrire(p + 'index.html', redirection(p, '#tarifs', 'nos offres d’apps et d’outils'));
 for (const m of metiers) {
   const f = m.slug + '/index.html';
-  ecrire(f, METIERS_RACINE ? pageMetier(m) : m.slug === 'site-internet-plombier' ? redirection('creation-site/plombier/', 'site internet pour plombier') : redirection('creation-site/', 'création de site par métier'));
+  ecrire(f, METIERS_RACINE ? pageMetier(m) : redirection(m.slug + '/', '#tarifs', 'nos offres d’apps et d’outils'));
 }
 const aTraiter = Object.keys(PAGES).concat(Object.keys(PRIVE));
 for (const p of aTraiter) {
@@ -322,22 +321,6 @@ if (METIERS_RACINE) { const [t, d] = PAGES['site-internet-plombier/'], u = base 
 </body>
 </html>
 `); }
-/* Liens « Autres métiers » : ancienne adresse du plombier remplacée */
-for (const p of Object.keys(PAGES).filter(x => x.startsWith('creation-site/') && x !== 'creation-site/plombier/')) {
-  const f = p + 'index.html'; let h = lire(f);
-  h = METIERS_RACINE ? h.replace(/href="\.\.\/plombier\/"/g, 'href="../../site-internet-plombier/"') : h.replace(/href="\.\.\/\.\.\/site-internet-plombier\/"/g, 'href="../plombier/"');
-  ecrire(f, h);
-}
-{ const f = 'creation-site/index.html'; let h = lire(f);
-  h = METIERS_RACINE ? h.replace('href="plombier/"', 'href="../site-internet-plombier/"') : h.replace(/href="\.\.\/site-internet-plombier\/"/g, 'href="plombier/"');
-  h = h.replace(/\s*<section class="section" data-seo="metiers".*?<\/section>/s, '');
-  if (METIERS_RACINE) {
-  const liste = metiers.map(m => `<li><a href="../${m.slug}/">Site internet pour ${m.nom.toLowerCase()}</a> : ${COURT[m.slug].replace(/\.$/, '')}.</li>`).join('');
-  h = h.replace('</main>', `  <section class="section" data-seo="metiers" style="padding-top:0"><div class="wrap"><div style="max-width:820px"><h2 class="h-section reveal" style="max-width:none">Création de site internet pour artisans</h2><p class="muted reveal">Le bâtiment, la coiffure et l’artisanat ont chacun leurs besoins. Voici nos pages dédiées, avec ce que votre site vitrine doit contenir et un devis gratuit.</p><ul class="reveal" style="padding-left:1.2em;display:grid;gap:8px">${liste}</ul></div></div></section>\n</main>`); }
-  ecrire(f, h); }
-{ /* accueil et pages à image : plombier du bloc exemples → nouvelle adresse */
-  for (const f of ['exemples/index.html', 'exemples/plombier/index.html']) if (fs.existsSync(path.join(racine, f))) { const h = lire(f); if (METIERS_RACINE && /creation-site\/plombier/.test(h)) ecrire(f, h.replace(/creation-site\/plombier\//g, 'site-internet-plombier/')); else if (!METIERS_RACINE && /site-internet-plombier\//.test(h)) ecrire(f, h.replace(/(\.\.\/)*site-internet-plombier\//g, m => m.replace('site-internet-plombier/', 'creation-site/plombier/'))); } }
-
 /* ---------- Plan du site et robots.txt ---------- */
 const prio = p => p === '' ? '1.0' : p === 'devis/' ? '0.9' : /^(templates|realisations)\/$/.test(p) ? '0.8' : /^site-internet-|^creation-site\//.test(p) ? '0.7' : /^(audit|cadeau|outils)\/$/.test(p) ? '0.7' : '0.6';
 const jour = new Date().toISOString().slice(0, 10);

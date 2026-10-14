@@ -2,69 +2,56 @@
 /* Teste l'assistant du site (mode local) : pose de vraies questions dans la bulle et contrôle les réponses (prix lus dans le catalogue, liens, sujets proches).
    Prérequis : Playwright (wouf/node_modules). Le serveur statique est lancé ici même.
    Usage : node tools/test-assistant.js */
-const { chromium } = require('../wouf/node_modules/playwright');
+const { chromium } = require([process.env.PW, require('path').join(__dirname, '../wouf/node_modules/playwright'), '/opt/node22/lib/node_modules/playwright'].find(x => x && require('fs').existsSync(x)));
 const http = require('http'), fs = require('fs'), path = require('path');
 const racine = path.join(__dirname, '..'), types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.png': 'image/png', '.woff2': 'font/woff2', '.json': 'application/json' };
 const w = {}; new Function('window', fs.readFileSync(path.join(racine, 'assets', 'qt-templates.js'), 'utf8'))(w); const T = w.QTT;
 const prix = id => T.priceText(T.options.find(o => o.id === id)).replace(/ | /g, ' ');
-const base = T.templates[0].base;
 
 /* [question, motif attendu dans la réponse, motif interdit (facultatif)] */
+const offre = id => { const t = T.templates.find(x => x.id === id); return String(t.base).replace(/(\d)(\d{3})$/, '$1\\s?$2') + '\\s?€'; };   // espace insécable ou fine selon le navigateur
 const CAS = [
   ['bonjour', /Bonjour/],
   ['qui êtes vous ?', /assistant automatique/],
-  ['vous êtes une agence de com ?', /agence de communication/i],
+  ['vous êtes une agence de com ?', /studio de création d’apps/i],
   ['combien coûte la version anglaise', new RegExp(prix('anglais'))],
   ['vous faites des logos ?', new RegExp(prix('logo'))],
-  ['je veux des visuels pour instagram', new RegExp(prix('social'))],
-  ['je veux être visible sur google', new RegExp(prix('seo'))],
   ['et la prise en main en visio ?', new RegExp(prix('priseenmain'))],
-  ['qui écrit les textes ?', new RegExp(prix('textes'))],
-  ['prix des pages supplémentaires', new RegExp(prix('pages'))],
   ['à quoi servent les e-mails de confirmation ?', /rappel avant son rendez-vous/],
-  ['je veux accepter le paiement par carte', new RegExp(prix('paiement'))],
-  ['réservations enregistrées dans une base de données', new RegExp(prix('bdd'))],
-  ['système de réservation pour mon site vitrine', new RegExp(prix('reservation'))],
-  ['quelle réservation choisir ?', /jamais besoin des deux/],
-  ['que se passe-t-il après les 3 mois offerts ?', new RegExp(prix('suivi'))],
+  ['comment marche l\'acompte ?', /Acompte reçu/],
+  ['que se passe-t-il après les 3 mois ?', new RegExp(prix('suivi'))],
   ['et le suivi mensuel ?', new RegExp(prix('suivi'))],
-  ['combien coûte un site ?', new RegExp(String(base))],
+  ['c\'est quoi le pack commerçant', new RegExp(offre('pack'))],
+  ['mes clientes ne viennent pas au rendez-vous', /acompte/i],
+  ['une carte de fidélité sur téléphone ?', /fidélité/i],
+  ['combien coûte un outil sur mesure ?', new RegExp(offre('outil'))],
+  ['je veux une application pour mes clients', new RegExp(offre('appli'))],
   ['les tarifs svp', /Repères/],
-  ['je suis coiffeur', /Barbier de luxe/],
-  ['je suis esthéticienne', /Institut de beauté et coiffure/],
-  ['je suis plombier', /plombier/i],
-  ['je répare des téléphones', /Réparateur/],
+  ['je suis coiffeur', /Pack Commerçant/],
+  ['je suis prothésiste ongulaire', /onglerie/i],
+  ['je suis plombier', /outil métier/i],
+  ['je fais des plateaux sur commande', /commande/i],
   ['audit de sécurité', /100 €/],
-  ['pourquoi vous choisir plutôt qu\'une autre agence ?', /prix fixé avant de commencer/],
-  ['le site m\'appartient ?', /nom de domaine est à votre nom/],
-  ['je ne sais pas quoi choisir', /votre métier/],
-  ['vous faites des applications comme Wouf ?', /ne propose pas/],
-  ['quelles sont vos options', /Options des templates/],
+  ['pourquoi vous choisir ?', /prix fixé avant de commencer/],
+  ['mes données sont à qui ?', /chez vous/],
+  ['je ne sais pas quoi choisir', /métier/],
+  ['vous pouvez créer un réseau social ?', /très gros projets/],
+  ['vous faites des sites vitrines ?', /ne crée plus de sites/],
+  ['quelles sont vos options', /Options, prix publics/],
   ['y a-t-il des cookies ?', /ni cookie/],
   ['qjuelle est la prise en mian', /50 €/],
   ['merci beaucoup', /plaisir/],
-  ['combien coûte un chatbot pour mon site ?', new RegExp(prix('assistant'))],
-  ['vous pouvez mettre un assistant comme ça sur mon site ?', new RegExp(prix('assistant'))],
   ['bonjour, quels sont vos horaires ?', /48 h ouvrées/],
-  ['vous pouvez créer un réseau social ?', /ne propose pas/],
-  ['je cherche quelqu\'un pour mes réseaux sociaux', new RegExp(prix('social'))],
-  ['mon site peut il être en anglais', new RegExp(prix('anglais'))],
-  ['je veux un logo pour ma boulangerie', new RegExp(prix('logo'))],
-  ['vous faites les photos ?', /./],
-  ['combien de temps pour avoir mon site', /délai/i],
+  ['combien de temps pour avoir mon outil', /quelques jours|quelques semaines/i],
   ['je peux vous appeler ?', /devis/i],
   ['tarif audit', /100 €/],
-  ['qu\'est ce qu\'un template', /site déjà conçu/],
-  ['mon site doit être sur téléphone', /téléphone/i],
-  ['je suis restaurateur', /Restaurant|restaurant/],
-  ['je vends des gâteaux sur commande', /Plateaux et commandes/],
-  ['mon salon de coiffure veut des rendez-vous en ligne', /réservation/i],
+  ['vos applications gratuites', /Wouf/],
   ['dois-je payer des frais cachés ?', /prix fixé|fixé/i],
   ['blablabla zzzzz', /(pas sûr|pas bien compris)/]
 ];
 /* Questions dont la réponse ne doit PAS venir d'un sujet voisin */
 const INTERDITS = [
-  ['paiement en ligne', /Les infos légales/],
+  ['paiement en ligne', /informations légales/],
   ['e-mail de confirmation', /Le devis est gratuit et sans engagement, avec un prix fixé/]
 ];
 
@@ -96,7 +83,7 @@ const INTERDITS = [
   for (const [q, bad] of INTERDITS) { const r = await ask(q); if (bad.test(r)) { ko++; console.log('✗ (sujet voisin)', q, '\n   →', r.slice(0, 160).replace(/\n/g, ' ')); } }
   // Conversation conservée d'une page à l'autre, puis « nouvelle conversation ».
   await ask('combien coûte la version anglaise');
-  await p.goto(url.replace('index.html', 'templates/')); await p.waitForSelector('.qa-open'); await p.click('.qa-open');
+  await p.goto(url.replace('index.html', 'audit/')); await p.waitForSelector('.qa-open'); await p.click('.qa-open');
   const kept = await p.locator('.qa-m.me').count(); if (!kept) { ko++; console.log('✗ la conversation n’est pas conservée entre deux pages'); }
   await p.click('.qa-new'); if (await p.locator('.qa-m.me').count()) { ko++; console.log('✗ « nouvelle conversation » ne vide pas la discussion'); }
   // Suites proposées : jamais de bouton vide ni de sujet inconnu.

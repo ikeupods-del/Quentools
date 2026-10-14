@@ -1,7 +1,7 @@
 /* QuenTools — bannières des réseaux sociaux : node tools/bannieres.js
    Écrit design/reseaux/banniere-facebook.png (1640×720 : lisible sur ordinateur et sur téléphone)
    et design/reseaux/banniere-linkedin.png (1128×191 en double résolution, logo de la page en bas à gauche).
-   Textes des bios : design/reseaux/BIOS.md. Nécessite Playwright (voir tools/visuels-social.js). */
+   et assets/partage.jpg (image de partage du site, 1200×630). Textes des bios : design/reseaux/BIOS.md. Nécessite Playwright (voir tools/visuels-social.js). */
 const fs = require('fs'), path = require('path');
 const { chromium } = require(process.env.PW || '/opt/node-tools/node_modules/playwright');
 const root = path.join(__dirname, '..'), fonts = path.join(root, 'assets', 'fonts'), sortie = path.join(root, 'design', 'reseaux');
@@ -52,6 +52,21 @@ img.ico{background:none;box-shadow:none;filter:drop-shadow(0 10px 14px rgba(0,0,
 <div class="apps">${APPS.map(([n, i]) => `<div class="app">${i}<span>${n}</span></div>`).join('')}</div>
 <div class="site">${mark}quentools.fr · nos applications, déjà en ligne</div></div>`;
 
+/* Image de partage du site (Open Graph, 1200×630) : assets/partage.jpg, même contenu que la bannière Facebook. */
+const partage = base(1200, 630) + `<style>
+@font-face{font-family:E;src:url("file:///usr/share/fonts/truetype/noto/NotoColorEmoji.ttf")}
+.txt{position:absolute;left:40px;right:40px;top:112px;text-align:center;display:grid;justify-items:center}
+.eyebrow{font-size:19px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#d7f24a}
+h1{font-size:50px;margin:14px 0 34px}.apps{display:flex;justify-content:center;width:1110px}
+.app{width:123px;display:grid;justify-items:center;gap:9px;font-weight:700;font-size:15px;line-height:1.15;text-align:center}
+.ico{width:70px;height:70px;border-radius:18px;display:grid;place-items:center;box-shadow:0 12px 24px -10px rgba(0,0,0,.55);object-fit:cover}
+img.ico{background:none;box-shadow:none;filter:drop-shadow(0 10px 14px rgba(0,0,0,.35))}.emo{font-family:E;font-size:38px;line-height:1}
+.site{margin-top:34px;font-size:22px;font-weight:700;display:flex;align-items:center;gap:12px}.site svg{width:32px;height:32px}
+</style><div class="txt"><div class="eyebrow">Studio de création d’apps et d’outils</div>
+<h1>Votre outil, <em>sur mesure</em>,<br>prêt en quelques semaines.</h1>
+<div class="apps">${APPS.map(([n, i]) => `<div class="app">${i}<span>${n}</span></div>`).join('')}</div>
+<div class="site">${mark}quentools.fr</div></div>`;
+
 const linkedin = base(2256, 382) + `<style>
 .txt{position:absolute;left:700px;top:70px;width:1100px}
 h1{font-size:84px}.chips{font-size:26px;margin-top:30px}
@@ -63,10 +78,12 @@ h1{font-size:84px}.chips{font-size:26px;margin-top:30px}
 (async () => {
   fs.mkdirSync(sortie, { recursive: true });
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium' });
-  for (const [nom, html, w, h] of [['banniere-facebook', facebook, 1640, 720], ['banniere-linkedin', linkedin, 2256, 382]]) {
+  for (const [nom, html, w, h] of [['banniere-facebook', facebook, 1640, 720], ['banniere-linkedin', linkedin, 2256, 382], ['partage', partage, 1200, 630]]) {
     const pg = await b.newPage({ viewport: { width: w, height: h } }), tmp = path.join(sortie, '_tmp.html');
     fs.writeFileSync(tmp, html); await pg.goto('file://' + tmp); await pg.evaluate(() => document.fonts.ready); await pg.waitForTimeout(300);
-    await pg.screenshot({ path: path.join(sortie, nom + '.png') }); fs.unlinkSync(tmp); await pg.close();
+    if (nom === 'partage') await pg.screenshot({ path: path.join(root, 'assets', 'partage.jpg'), type: 'jpeg', quality: 88 });
+    else await pg.screenshot({ path: path.join(sortie, nom + '.png') });
+    fs.unlinkSync(tmp); await pg.close();
     console.log(nom + '.png', w + '×' + h);
   }
   await b.close();

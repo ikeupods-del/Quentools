@@ -449,7 +449,8 @@ const tplOf = () => QTT.templates.find(t => t.id === tpl.id) || null;
 const optPrice = id => tpl.price[id] ?? OPT_PRICE[id] ?? 0;
 /* Lignes de devis d'un template et de ses options ; « notes » liste ce qui n'est pas inclus (option sur devis). */
 function tplBuild(t, opts, price) {
-  const lignes = [{ l: `Template « ${t.name} » personnalisé et mis en ligne\n${TPL_COMPRIS}`, q: 1, pu: t.base, rem: '', m: false }], off = [];
+  const lignes = [{ l: `${t.name}\nCompris : ${t.inclus || TPL_COMPRIS}`, q: 1, pu: t.base, rem: '', m: false }], off = [];
+  if (t.monthly) lignes.push({ l: `Abonnement ${t.name} (hébergement, données, mises à jour, modifications simples)`, q: 1, pu: t.monthly, rem: '', m: true });
   QTT.optionsFor(t.id).forEach(o => {
     if (opts[o.id]) lignes.push({ l: o.name, q: o.qty ? opts[o.id] : 1, pu: price[o.id] ?? OPT_PRICE[o.id] ?? 0, rem: '', m: !!o.monthly });
     else if (['bdd', 'paiement', 'emails'].includes(o.id)) off.push(o.name.charAt(0).toLowerCase() + o.name.slice(1));
@@ -458,21 +459,21 @@ function tplBuild(t, opts, price) {
 }
 function tplTotals() {
   const t = tplOf(); if (!t) return { once: 0, rec: 0 };
-  let once = t.base, rec = 0;
+  let once = t.base, rec = t.monthly || 0;
   QTT.optionsFor(t.id).forEach(o => { if (tpl.opts[o.id]) { const v = (o.qty ? tpl.opts[o.id] : 1) * optPrice(o.id); if (o.monthly) rec += v; else once += v; } });
   return { once, rec };
 }
-const tplTotTxt = () => { const k = tplTotals(); return `Template et options : ${QTD.eur(k.once)}${k.rec ? ` + ${QTD.eur(k.rec)} / mois` : ''}`; };
+const tplTotTxt = () => { const k = tplTotals(); return `Offre et options : ${QTD.eur(k.once)}${k.rec ? ` + ${QTD.eur(k.rec)} / mois` : ''}`; };
 function tplHtml() {
   const t = tplOf(), x = estFor && items.find(i => i.id === estFor), cl = x ? QTT.parse(x.besoin) : { template: null, options: [] };
   const banner = cl.template && !tpl.id ? `<div class="notice">Le client a demandé le template <b>${esc(cl.template.name)}</b>${cl.options.length ? ', avec : ' + cl.options.map(o => esc(QTT.options.find(z => z.id === o.id).name.toLowerCase())).join(', ') : ', sans option'}. <button type="button" class="btn btn-sm btn-accent" data-do="tpl-client" style="margin-left:8px">Reprendre son choix</button></div>` : '';
-  const picks = QTT.templates.map(z => `<button type="button" class="tpl-pick" data-do="tpl-pick" data-id="${z.id}" aria-pressed="${z.id === tpl.id}"><b>${esc(z.name)}</b><small>Dès ${eur(z.base)} · ${esc(z.resume)}</small></button>`).join('');
+  const picks = QTT.templates.map(z => `<button type="button" class="tpl-pick" data-do="tpl-pick" data-id="${z.id}" aria-pressed="${z.id === tpl.id}"><b>${esc(z.name)}</b><small>Dès ${eur(z.base)}${z.monthly ? ` + ${eur(z.monthly)} / mois` : ''} · ${esc(z.resume)}</small></button>`).join('');
   const opts = t ? QTT.optionsFor(t.id).map(o => { const on = !!tpl.opts[o.id];
     return `<div class="tpl-opt"><label class="chk"><input type="checkbox" data-tplopt="${o.id}"${on ? ' checked' : ''}><span><b>${esc(o.name)}</b>${o.monthly ? ' <span class="muted">(par mois)</span>' : ''}<br><small class="muted">${esc(o.hint)}</small></span></label>${on ? `<div class="tpl-nums">${o.qty ? `<label>Qté<input type="number" min="1" max="50" data-tplqty="${o.id}" value="${tpl.opts[o.id]}"></label>` : ''}<label>${o.monthly ? '€ / mois' : o.qty ? '€ l’unité' : 'Prix (€)'}<input type="number" min="0" step="0.01" data-tplprice="${o.id}" value="${optPrice(o.id)}"></label></div>` : ''}</div>`; }).join('') : '';
-  return `<section class="card dv-card"><h3 class="dv-h">Template et options</h3>${banner}<div class="tpl-picks">${picks}</div>
-    ${t ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Prix de départ ${eur(t.base)} : personnalisation, mise en ligne, nom de domaine offert (1re année), 3 mois d’assistance, une série de retouches.${t.demo ? ` <a href="../${esc(t.demo)}" target="_blank" rel="noopener">Voir la démonstration</a>.` : ''}</p>
+  return `<section class="card dv-card"><h3 class="dv-h">Offre et options</h3>${banner}<div class="tpl-picks">${picks}</div>
+    ${t ? `<p class="muted" style="margin:0;font-size:var(--t-sm)">Prix de départ ${eur(t.base)}${t.monthly ? ` + ${eur(t.monthly)} / mois` : ''} : ${esc(t.inclus || '')}${t.demo ? ` <a href="../${esc(t.demo)}" target="_blank" rel="noopener">Voir la démonstration</a>.` : ''}</p>
       <div class="tpl-opts">${opts}</div><div class="ag-act"><button type="button" class="btn btn-accent" data-do="tpl-add">Ajouter au devis</button><span class="tpl-tot" id="tpl-tot">${tplTotTxt()}</span></div>`
-      : '<p class="muted" style="margin:0;font-size:var(--t-sm)">Choisissez un template pour ajouter son prix de départ et ses options au devis, en un clic. Les lignes restent modifiables ensuite.</p>'}</section>`;
+      : '<p class="muted" style="margin:0;font-size:var(--t-sm)">Choisissez une offre pour ajouter son prix de départ et ses options au devis, en un clic. Les lignes restent modifiables ensuite.</p>'}</section>`;
 }
 function dvHtml() {
   if (!dv) return '';
