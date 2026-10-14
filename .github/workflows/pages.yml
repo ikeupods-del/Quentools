@@ -33,6 +33,8 @@ jobs:
         working-directory: wouf
       - name: Contrôler le Pack Commerçant (réservation, acompte, fidélité, avis)
         run: node tools/verifier-pack-commercant.js
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
       - name: Contrôler le Pack Commerçant en abonnement (règles de sécurité dans l'émulateur Firestore, inscription, essai)
         run: |
           npx -y firebase-tools@15.33.0 setup:emulators:firestore
