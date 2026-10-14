@@ -33,6 +33,10 @@ jobs:
         working-directory: wouf
       - name: Contrôler le Pack Commerçant (réservation, acompte, fidélité, avis)
         run: node tools/verifier-pack-commercant.js
+      - name: Contrôler le Pack Commerçant en abonnement (règles de sécurité dans l'émulateur Firestore, inscription, essai)
+        run: |
+          npx -y firebase-tools@15.33.0 setup:emulators:firestore
+          QT_EXIGER_EMULATEUR=1 node tools/verifier-pack-pro.js
 
   deploy:
     needs: test
@@ -59,6 +63,7 @@ jobs:
           rsync -a admin _site/
           rsync -a espace _site/
           rsync -a demo _site/
+          rsync -a pro _site/
           rsync -a exemples _site/
           rsync -a outils _site/
           rsync -a creation-site _site/

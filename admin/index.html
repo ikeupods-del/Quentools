@@ -856,7 +856,7 @@ function viewGifts() {
 /* ---------- Écrans ---------- */
 const toast = (m, warn) => { const n = document.getElementById('toast'); if (!n) return; n.innerHTML = `<div class="notice${warn ? ' warn' : ''}">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => n.innerHTML = '', 3500); };
 const NAV = [
-  ['Activité', [['demandes', 'Demandes', 'M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z'], ['agenda', 'Agenda', 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4'], ['estimer', 'Devis', 'M7 3h8l4 4v14H7zM14 3v5h5M10 13h6M10 17h6'], ['usage', 'Paperdecrypt', 'M4 19h16M7 16V9M12 16V5M17 16v-4'], ['premium', 'Premium', 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z']]],
+  ['Activité', [['demandes', 'Demandes', 'M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z'], ['agenda', 'Agenda', 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4'], ['estimer', 'Devis', 'M7 3h8l4 4v14H7zM14 3v5h5M10 13h6M10 17h6'], ['usage', 'Paperdecrypt', 'M4 19h16M7 16V9M12 16V5M17 16v-4'], ['premium', 'Premium', 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z'], ['abonnes', 'Abonnés Pack', 'M4 7h16v12H4zM8 7V5h8v2M4 12h16']]],
   ['Gestion', [['clients', 'Sites clients', 'M5 11h14v10H5zM8 11V8a4 4 0 0 1 8 0v3'], ['cadeaux', 'Cartes cadeaux', 'M3 9h18v4H3zM5 13v8h14v-8M12 9v12M12 9c-2-4-6-3-5 0 1 2 5 0 5 0zM12 9c2-4 6-3 5 0-1 2-5 0-5 0z'], ['contacts', 'Contacts', 'M4 20c0-4 3.500-6 8-6s8 2 8 6M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'], ['stats', 'Chiffres', 'M5 20V10M12 20V4M19 20v-7']]],
   ['Site', [['site', 'Réglages du site', 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18'], ['liens', 'Raccourcis', 'M14 4h6v6M20 4l-9 9M10 6H5v13h13v-5'], ['regles', 'Règles de sécurité', 'M12 3l8 3v6c0 5-3.500 8-8 9-4.500-1-8-4-8-9V6z']]]];
 const TITLES = {
@@ -867,6 +867,7 @@ const TITLES = {
   cadeaux: ['Cartes cadeaux', 'Commandes à valider et cartes émises.'],
   contacts: ['Contacts', 'Les adresses laissées sur le site.'],
   premium: ['Premium', 'Les acheteurs de Paperdecrypt Premium : activez un paiement, retirez un accès.'],
+  abonnes: ['Abonnés Pack', 'Les commerces inscrits seuls au Pack Commerçant (pro/) : essais, abonnements, revenus mensuels.'],
   usage: ['Paperdecrypt', 'Qui utilise l’outil, ce qui sert le plus, et ce qui marche. Données anonymes.'],
   stats: ['Chiffres', 'Ce que rapportent les demandes et les devis.'],
   site: ['Réglages du site', 'Bandeau d’annonce, disponibilité, coordonnées et informations sur les devis.'],
@@ -885,7 +886,7 @@ function shell(body) {
     <div id="toast" role="status" aria-live="polite"></div>${body}</div></div>`;
 }
 function render() {
-  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'usage' ? viewUsage() : tab === 'premium' ? viewPremium() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'cadeaux' ? viewGifts() : tab === 'clients' ? viewClients() : viewLinks());
+  shell(tab === 'demandes' ? viewRequests() : tab === 'agenda' ? viewAgenda() : tab === 'stats' ? viewStats() : tab === 'usage' ? viewUsage() : tab === 'premium' ? viewPremium() : tab === 'abonnes' ? viewAbonnes() : tab === 'estimer' ? viewEstimate() : tab === 'site' ? viewSite() : tab === 'regles' ? viewRules() : tab === 'contacts' ? viewContacts() : tab === 'cadeaux' ? viewGifts() : tab === 'clients' ? viewClients() : viewLinks());
   if (tab === 'estimer') estimate();
 }
 
@@ -971,7 +972,53 @@ match /qt_devis/{id} {
         || (qtClient(get(/databases/$(database)/documents/qt_devis/$(id)).data) && request.resource.data.from == 'client'));
     allow update, delete: if qtAdmin();
   }
-}`;
+}
+function packTexte(v, n) { return v is string && v.size() <= n; }
+function packFiche(d) {
+  return d.keys().hasOnly(['nom','metier','ville','accroche','couleur','telephone','email','adresse','horaires','pas','delaiMin','jours','prestations','acompte','annulation','fidelite','avis','uid','cree'])
+    && packTexte(d.nom, 80) && d.nom.size() > 0 && packTexte(d.metier, 80) && packTexte(d.ville, 60) && packTexte(d.accroche, 160)
+    && d.couleur is string && d.couleur.matches('^#[0-9a-fA-F]{6}$') && packTexte(d.telephone, 20) && packTexte(d.email, 120) && packTexte(d.adresse, 160) && packTexte(d.annulation, 300)
+    && d.horaires is map && d.horaires.size() <= 7 && d.prestations is list && d.prestations.size() > 0 && d.prestations.size() <= 30
+    && d.pas in [15, 30] && d.delaiMin is int && d.delaiMin >= 0 && d.delaiMin <= 72 && d.jours is int && d.jours >= 1 && d.jours <= 90
+    && d.acompte is map && d.fidelite is map && d.avis is map && d.uid is string && d.cree is timestamp;
+}
+function packDoc(slug) { return get(/databases/$(database)/documents/qt_pack/$(slug)).data; }
+function packProprio(slug) { return request.auth != null && packDoc(slug).uid == request.auth.uid; }
+function packActif(slug) {
+  return packDoc(slug).cree + duration.value(14, 'd') > request.time
+    || (exists(/databases/$(database)/documents/qt_pack_abos/$(slug)) && get(/databases/$(database)/documents/qt_pack_abos/$(slug)).data.jusquau > request.time);
+}
+match /qt_pack/{slug} {
+  allow get: if true;
+  allow list: if qtAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+  allow create: if request.auth != null && slug.matches('^[a-z0-9][a-z0-9-]{2,39}$')
+    && request.resource.data.uid == request.auth.uid && request.resource.data.cree == request.time && packFiche(request.resource.data);
+  allow update: if qtAdmin() || (request.auth != null && resource.data.uid == request.auth.uid
+    && request.resource.data.uid == resource.data.uid && request.resource.data.cree == resource.data.cree && packFiche(request.resource.data));
+  allow delete: if qtAdmin();
+  match /creneaux/{id} {
+    allow get, list: if true;
+    allow create: if packActif(slug) && request.resource.data.keys().hasOnly(['date', 'heure', 'rdv'])
+      && packTexte(request.resource.data.date, 10) && packTexte(request.resource.data.heure, 5) && packTexte(request.resource.data.rdv, 20);
+    allow delete: if packProprio(slug) || qtAdmin();
+  }
+  match /rdv/{id} {
+    allow create: if packActif(slug) && request.resource.data.keys().hasOnly(['prestationId', 'prestation', 'prix', 'duree', 'date', 'heure', 'nom', 'tel', 'email', 'note', 'acompte', 'acompteRecu', 'statut', 'at'])
+      && request.resource.data.statut == 'attente' && request.resource.data.acompteRecu == false
+      && request.resource.data.prix is number && request.resource.data.duree is int && request.resource.data.acompte is number
+      && packTexte(request.resource.data.nom, 80) && packTexte(request.resource.data.tel, 20) && packTexte(request.resource.data.email, 120)
+      && packTexte(request.resource.data.note, 300) && packTexte(request.resource.data.prestation, 120) && packTexte(request.resource.data.date, 10) && packTexte(request.resource.data.heure, 5)
+      && existsAfter(/databases/$(database)/documents/qt_pack/$(slug)/creneaux/$(request.resource.data.date + '_' + request.resource.data.heure.replace(':', '')));
+    allow read, update, delete: if packProprio(slug) || qtAdmin();
+  }
+  match /cartes/{id} {
+    allow get: if true;
+    allow create: if packActif(slug) && id.size() >= 16 && request.resource.data.keys().hasOnly(['prenom', 'tampons', 'recompenses', 'at'])
+      && request.resource.data.tampons == 0 && request.resource.data.recompenses == 0 && packTexte(request.resource.data.prenom, 40);
+    allow list, update, delete: if packProprio(slug) || qtAdmin();
+  }
+}
+match /qt_pack_abos/{slug} { allow get: if true; allow list, write: if qtAdmin(); }`;
 }
 function viewRules() {
   return `<section class="card" style="padding:clamp(20px,4vw,36px)"><h2 style="margin-top:0">Règles de sécurité Firestore</h2>
@@ -1211,6 +1258,40 @@ function viewPremium() {
     <p class="muted" style="font-size:var(--t-xs)">Le lien de paiement (Stripe, PayPal) se renseigne dans <code>decodeur-courrier.html</code> : <code>CONFIG.PREMIUM_URL</code> et <code>CONFIG.PREMIUM_PRIX</code>. Les règles de la collection <code>qt_premium</code> ne permettent à un client de lire que sa propre fiche.</p>`;
 }
 
+/* ---------- Abonnés du Pack Commerçant (pro/) : fiches qt_pack, abonnements payés qt_pack_abos (date de fin écrite ici seulement) ---------- */
+let abList = [], abAbos = {}, abErr = '';
+const AB_ESSAI = 14, AB_PRIX = (QTT.templates.find(t => t.id === 'pack') || {}).monthly || 39;
+async function loadAbonnes() {
+  abErr = '';
+  if (DEMO) { abList = [{ id: 'atelier-lila', nom: 'Atelier Lila', ville: 'Nantes', telephone: '06 00 00 00 00', email: 'contact@exemple.fr', cree: new Date(Date.now() - 3 * 864e5) }, { id: 'barber-mistral', nom: 'Barber Mistral', ville: 'Aix', telephone: '06 11 11 11 11', email: '', cree: new Date(Date.now() - 40 * 864e5) }];
+    abAbos = { 'barber-mistral': { jusquau: new Date(Date.now() + 20 * 864e5), plan: 'mensuel', note: 'Stripe' } }; return; }
+  try {
+    const { Fs, db } = await fb(); const [a, b] = await Promise.all([Fs.getDocs(Fs.collection(db, 'qt_pack')), Fs.getDocs(Fs.collection(db, 'qt_pack_abos'))]);
+    abList = a.docs.map(d => ({ id: d.id, ...d.data() })).sort((x, y) => ms(y.cree) - ms(x.cree)); abAbos = Object.fromEntries(b.docs.map(d => [d.id, d.data()]));
+  } catch (e) { abList = []; abAbos = {}; abErr = /permission/i.test(e.code || e.message) ? 'rules' : 'other'; }
+}
+function abEtat(c) {
+  const fin = ms(c.cree) + AB_ESSAI * 864e5, j = ms((abAbos[c.id] || {}).jusquau), now = Date.now();
+  return j > now ? { k: 'paye', l: 'Abonné jusqu’au ' + new Date(j).toLocaleDateString('fr-FR'), cl: 'chip-ok' } : fin > now ? { k: 'essai', l: 'Essai : ' + Math.ceil((fin - now) / 864e5) + ' j restants', cl: 'chip-accent' } : { k: 'fini', l: j ? 'Abonnement expiré' : 'Essai terminé', cl: '' };
+}
+function abMessage(c, k) {
+  const page = 'https://quentools.fr/pro/?c=' + c.id;
+  return k === 'fin' ? `Bonjour,\n\nVotre essai du Pack Commerçant pour ${c.nom} se termine bientôt. Pour garder la réservation en ligne, la carte de fidélité et les demandes d’avis, l’abonnement est de ${AB_PRIX} € par mois, sans engagement.${C.packAbonnement ? '\n\nLien pour vous abonner : ' + C.packAbonnement : '\n\nRépondez à ce message et je vous envoie le lien de paiement.'}\n\nVotre page : ${page}\n\nQuenTools`
+    : `Bonjour,\n\nMerci ! Votre abonnement au Pack Commerçant est activé pour ${c.nom}. Votre page de réservation reste en ligne : ${page}\n\nUne question ? Répondez simplement à ce message.\n\nQuenTools`;
+}
+function viewAbonnes() {
+  if (abErr === 'rules') return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Une étape à faire une seule fois</h2><p>Les commerces inscrits sont rangés dans <code>qt_pack</code> et leurs abonnements dans <code>qt_pack_abos</code>. Ajoutez leurs règles : onglet <b>Règles</b>, copiez-les dans Firebase et publiez.</p><div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-accent" data-tab="regles">Voir les règles</button><button class="btn btn-ghost" data-do="reload">J’ai publié les règles</button></div></section>`;
+  if (abErr) return `<section class="card" style="padding:var(--s-6)"><h2 style="margin-top:0">Lecture impossible</h2><button class="btn btn-ghost" data-do="reload">Réessayer</button></section>`;
+  const et = abList.map(c => [c, abEtat(c)]), payes = et.filter(([, e]) => e.k === 'paye').length, essais = et.filter(([, e]) => e.k === 'essai').length;
+  return `<div class="kpis"><div><b>${payes}</b><span>abonnés</span></div><div><b>${(payes * AB_PRIX).toLocaleString('fr-FR')} €</b><span>par mois</span></div><div><b>${essais}</b><span>en essai</span></div><div><b>${et.length - payes - essais}</b><span>essais terminés</span></div></div>
+    ${C.packAbonnement ? '' : '<div class="notice warn" style="margin-bottom:var(--s-4)">Pas encore de lien d’abonnement : créez dans Stripe un « lien de paiement » en abonnement mensuel à ' + AB_PRIX + ' €, puis collez-le dans <code>assets/qt-config.js</code> (<code>packAbonnement</code>). En attendant, le bouton « S’abonner » des commerçants ouvre un e-mail vers vous.</div>'}
+    <section class="card" style="padding:var(--s-5)"><h2 style="margin:0 0 var(--s-3);font-size:var(--t-lg)">Commerces inscrits</h2>${et.length ? et.map(([c, e]) => `<div style="display:grid;gap:8px;border-bottom:1px solid var(--line);padding:12px 0" data-ab="${esc(c.id)}">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:baseline"><span><b>${esc(c.nom || c.id)}</b> <span class="muted">· ${esc(c.ville || '')} · inscrit le ${new Date(ms(c.cree)).toLocaleDateString('fr-FR')}</span></span><span class="chip ${e.cl}">${esc(e.l)}</span></div>
+      <div class="muted" style="font-size:var(--t-sm)"><a href="../pro/?c=${esc(c.id)}" target="_blank" rel="noopener">quentools.fr/pro/?c=${esc(c.id)}</a>${c.telephone ? ' · ' + esc(c.telephone) : ''}${c.email ? ' · ' + esc(c.email) : ''}${(abAbos[c.id] || {}).note ? ' · ' + esc(abAbos[c.id].note) : ''}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn btn-sm btn-accent" data-do="ab-mois">Paiement reçu : +1 mois</button><button class="btn btn-sm btn-ghost" data-do="ab-an">+1 an</button><button class="btn btn-sm btn-ghost" data-do="ab-stop">Arrêter</button><button class="btn btn-sm btn-ghost" data-do="ab-msg-fin">Message fin d’essai</button><button class="btn btn-sm btn-ghost" data-do="ab-suppr">Retirer la page</button></div></div>`).join('') : '<p class="muted">Aucun commerce inscrit pour l’instant. Page d’inscription : <a href="../pro/inscription/" target="_blank">quentools.fr/pro/inscription/</a></p>'}</section>
+    <p class="muted" style="font-size:var(--t-xs)">« +1 mois » prolonge à partir de la fin en cours (ou d’aujourd’hui). Dans Stripe, la référence du paiement (<code>client_reference_id</code>) est l’adresse du commerce. « Retirer la page » supprime la fiche (page hors ligne) : à réserver aux abus ou aux demandes de suppression.</p>`;
+}
+
 function viewSite() {
   const s = site || {}, v = k => esc(s[k] ?? '');
   return `<form class="form card" id="site-form" style="padding:clamp(20px,4vw,36px)" onsubmit="return false">
@@ -1282,13 +1363,13 @@ app.addEventListener('click', async e => {
     return;
   }
   const b = e.target.closest('[data-tab],[data-filter],[data-do],[data-agday]'); if (!b) return;
-  if (b.dataset.tab) { tab = b.dataset.tab; if (tab === 'estimer' && !dv) dvInit(); if (tab === 'contacts') { await loadLeads(); } if (tab === 'usage') { render(); await loadUsage(); } if (tab === 'premium') { render(); await loadPremium(); } return render(); }
+  if (b.dataset.tab) { tab = b.dataset.tab; if (tab === 'estimer' && !dv) dvInit(); if (tab === 'contacts') { await loadLeads(); } if (tab === 'usage') { render(); await loadUsage(); } if (tab === 'premium') { render(); await loadPremium(); } if (tab === 'abonnes') { render(); await loadAbonnes(); } return render(); }
   if (b.dataset.filter) { filter = b.dataset.filter; return render(); }
   if (b.dataset.agday !== undefined) { agDay = b.dataset.agday; return render(); }
   const card = b.closest('.req'), x = card && items.find(i => i.id === card.dataset.id), d = b.dataset.do;
   try {
     if (d === 'logout') { const { Au, auth } = await fb(); await Au.signOut(auth); }
-    else if (d === 'reload') { await load(); if (tab === 'usage') await loadUsage(); if (tab === 'premium') await loadPremium(); render(); }
+    else if (d === 'reload') { await load(); if (tab === 'usage') await loadUsage(); if (tab === 'premium') await loadPremium(); if (tab === 'abonnes') await loadAbonnes(); render(); }
     else if (d === 'pm-add') {
       const email = document.getElementById('pm-email').value.trim().toLowerCase(), plan = document.getElementById('pm-plan').value, until = document.getElementById('pm-until').value, note = document.getElementById('pm-note').value.trim().slice(0, 120);
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast('Adresse e-mail invalide', true);
@@ -1298,6 +1379,20 @@ app.addEventListener('click', async e => {
     }
     else if (d === 'pm-del') { const id = b.closest('[data-pm]').dataset.pm; if (!confirm('Retirer Premium à ' + id + ' ?')) return; if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_premium', id)); } pmList = pmList.filter(m => m.id !== id); render(); toast('Accès retiré'); }
     else if (d === 'pm-copy') copy(pmMessage(b.closest('[data-pm]').dataset.pm));
+    else if (d.startsWith('ab-')) {
+      const id = b.closest('[data-ab]').dataset.ab, c = abList.find(z => z.id === id); if (!c) return;
+      if (d === 'ab-msg-fin') return copy(abMessage(c, 'fin'));
+      if (d === 'ab-suppr') { if (!confirm(`Retirer la page de ${c.nom} ? Elle ne sera plus accessible.`)) return; if (!DEMO) { const { Fs, db } = await fb(); await Fs.deleteDoc(Fs.doc(db, 'qt_pack', id)); } abList = abList.filter(z => z.id !== id); render(); return toast('Page retirée'); }
+      const cur = ms((abAbos[id] || {}).jusquau), base = new Date(Math.max(cur, Date.now()));
+      let fin = null;
+      if (d === 'ab-mois') { fin = new Date(base); fin.setMonth(fin.getMonth() + 1); }
+      if (d === 'ab-an') { fin = new Date(base); fin.setFullYear(fin.getFullYear() + 1); }
+      if (d === 'ab-stop') { if (!confirm(`Arrêter l’abonnement de ${c.nom} aujourd’hui ?`)) return; fin = new Date(); }
+      const note = d === 'ab-stop' ? 'Arrêté le ' + new Date().toLocaleDateString('fr-FR') : 'Payé le ' + new Date().toLocaleDateString('fr-FR');
+      if (!DEMO) { const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_pack_abos', id), { jusquau: Fs.Timestamp.fromDate(fin), plan: d === 'ab-an' ? 'annuel' : 'mensuel', note, at: Fs.serverTimestamp() }); }
+      abAbos[id] = { jusquau: fin, plan: d === 'ab-an' ? 'annuel' : 'mensuel', note }; render();
+      if (d !== 'ab-stop') { toast(`Abonnement de ${c.nom} prolongé jusqu’au ${fin.toLocaleDateString('fr-FR')} ✓`); copy(abMessage(c, 'ok')); } else toast('Abonnement arrêté');
+    }
     else if (d === 'pd-range') { usageRange = +b.dataset.n || 30; render(); }
     else if (d === 'pd-csv') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([usageCSV()], { type: 'text/csv;charset=utf-8' })); a.download = 'paperdecrypt-usage.csv'; a.click(); }
     else if (d === 'gf-filter') { gFilter = b.dataset.k; gOpen = null; render(); }

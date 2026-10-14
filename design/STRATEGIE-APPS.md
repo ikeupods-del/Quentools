@@ -23,6 +23,17 @@
 - **Pack Commerçant** (14 octobre 2026) : réservation avec acompte + carte de fidélité + avis Google + espace commerçant, dupliqué par client avec `node tools/pack-commercant.js`. Démonstration : `demo/pack-commercant/`. Reprend les n°1, 5 et 7 de la liste « ce qui marche aux États-Unis » (Genius AI, Podium, Square Loyalty). Prix conseillé à valider : 39 à 49 €/mois ou mise en place + abonnement.
 - Pistes suivantes : SMS automatique après un appel manqué (fournisseur payant Twilio/Brevo, essai réel par téléphone nécessaire), devis et suivi des paiements pour les petits métiers.
 
+## Nouveau cap (14 octobre 2026) : éditeur d'apps à abonnement, sans démarchage
+Décision du propriétaire : plus de prospection pour du sur-mesure (trop de temps et de contraintes). Le revenu vient des abonnements à des apps en libre-service ; le sur-mesure reste possible seulement pour les demandes qui arrivent seules. Repères : avec un modèle gratuit + payant, 2 à 5 % des utilisateurs paient ; 1 000 €/mois = ~26 commerces à 39 €/mois, ou ~800 abonnés Wouf à 14,99 €/an.
+
+- **Pack Commerçant en libre-service** (`pro/`, construit le 14 octobre 2026) : inscription seule avec Google (`pro/inscription/`), page `quentools.fr/pro/?c=<adresse>`, essai 14 jours sans carte bancaire, puis 39 €/mois sans engagement (prix du catalogue) ; réglages modifiables par le commerçant ; abonnement activé dans l'administration (onglet Abonnés Pack) ; conditions `pro/conditions/`. La mise en place à 290 € reste pour qui veut qu'on s'occupe de tout.
+
+### Plan du mois (d'ici mi-novembre 2026)
+1. **Semaine 1 (fait)** : Pack Commerçant en abonnement. Reste au propriétaire : coller les règles (administration → Règles) et créer le lien Stripe d'abonnement mensuel (`packAbonnement` dans `assets/qt-config.js`).
+2. **Semaine 2** : site repositionné en éditeur d'apps (accueil : « Essai gratuit 14 jours » vers `pro/inscription/`, sur-mesure en second plan) ; activation du paiement de Wouf (sur confirmation explicite du propriétaire, infos légales déjà dans les mentions légales).
+3. **Semaine 3** : Paperdecrypt Premium en vente (lien de paiement `PREMIUM_URL`) ; Wouf et Paperdecrypt sur Google Play (application web empaquetée ; compte développeur Google Play à ouvrir par le propriétaire, 25 $ une fois).
+4. **Semaine 4** : vidéos courtes de démonstration (réserver en 15 s, tamponner une carte) et petite publicité payante (5 à 10 €/jour) vers l'inscription ; suivi des inscriptions, essais et abonnés dans l'administration.
+
 ## Gamme et affichage
 Le site n'affiche que les prix déjà au catalogue (`assets/qt-templates.js` : sites 299/599/799 €, réservation 99 €, audit 100 €, suivi 69,99 €/mois). Applications et outils = « sur devis » tant que le propriétaire n'a pas validé les prix ci-dessus ; une fois validés : catalogue, devis, accueil et `TARIFS.md`.
 

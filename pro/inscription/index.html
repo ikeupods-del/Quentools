@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Créer ma page de réservation · Pack Commerçant · QuenTools</title>
+<meta name="description" content="Réservation en ligne avec acompte, carte de fidélité sur téléphone et demandes d'avis Google pour votre commerce. 14 jours d'essai gratuit, sans engagement.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+<link rel="preload" href="../../assets/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/qt.css">
+<link rel="stylesheet" href="../../demo/pack-commercant/pack.css">
+<link rel="stylesheet" href="../pro.css">
+<script src="../../assets/qt-config.js"></script>
+<script src="../../assets/qt-templates.js"></script>
+<script>window.PACK = { firebase: window.QT.firebase };</script>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="../../">QuenTools</a>
+  <ul class="nav-links"><li><a href="../../demo/pack-commercant/">Voir la démonstration</a></li></ul>
+  <a class="btn btn-sm btn-ghost" href="#commencer">Commencer</a>
+</div></header>
+<main id="contenu">
+  <section class="pro-hero"><div class="wrap" style="max-width:860px">
+    <span class="chip chip-accent">Pack Commerçant · 14 jours d’essai gratuit</span>
+    <h1>Vos clients réservent seuls, paient l’acompte et reviennent.</h1>
+    <p class="lede">Une page de réservation à vos couleurs, une carte de fidélité sur téléphone et les demandes d’avis Google. Vous la créez vous-même en 5 minutes, sans installation.</p>
+    <div class="pro-points">
+      <div><b>Réservation avec acompte</b><span class="muted">Créneaux d’après vos horaires, acompte par votre lien PayPal ou Stripe.</span></div>
+      <div><b>Carte de fidélité</b><span class="muted">Sur le téléphone du client, un tampon en scannant son QR code.</span></div>
+      <div><b>Avis Google</b><span class="muted">Message prêt à envoyer après la visite et affiche pour le comptoir.</span></div>
+    </div>
+    <p><b id="prix">39 € par mois</b> après l’essai, sans engagement, tout compris. Aucune carte bancaire demandée pour essayer.</p>
+  </div></section>
+
+  <section class="section" id="commencer" style="padding-top:0"><div class="wrap" style="max-width:860px">
+    <div id="etape-connexion" class="card" style="display:grid;gap:var(--s-4);justify-items:start">
+      <h2 style="margin:0;font-size:var(--t-xl)">Créer ma page</h2>
+      <p class="muted" style="margin:0">Connectez-vous avec votre compte Google : il protège votre espace commerçant (rendez-vous, clients, cartes de fidélité).</p>
+      <button class="btn btn-accent" id="connexion" type="button">Continuer avec Google</button>
+      <p class="notice warn" id="err-connexion" hidden></p>
+      <p class="muted" style="margin:0;font-size:var(--t-sm)">En continuant, vous acceptez les <a href="../conditions/">conditions d’utilisation</a>.</p>
+    </div>
+    <div id="etape-mes" hidden></div>
+    <div id="etape-fiche" hidden>
+      <h2 class="h-section" style="font-size:var(--t-2xl)">Votre commerce</h2>
+      <p class="muted">Tout reste modifiable ensuite dans votre espace commerçant (onglet Réglages).</p>
+      <form id="fiche" class="pro-form" novalidate></form>
+      <label class="check" style="margin-bottom:var(--s-4)"><input type="checkbox" id="accord"> <span>J’ai lu et j’accepte les <a href="../conditions/" target="_blank">conditions d’utilisation</a>. Je suis responsable des données de mes clients enregistrées dans mon espace.</span></label>
+      <p class="notice warn" id="err" hidden></p>
+      <button class="btn btn-accent" id="creer" type="button">Créer ma page et commencer l’essai</button>
+    </div>
+    <div id="etape-fin" hidden></div>
+  </div></section>
+</main>
+<footer class="footer"><div class="wrap"><div class="footer-bottom" style="margin-top:0;border-top:0;padding-top:0"><span>© QuenTools</span><span><a href="../conditions/">Conditions</a> · <a href="../../mentions-legales/">Mentions légales</a></span></div></div></footer>
+<script src="../../demo/pack-commercant/store.js"></script>
+<script src="../../demo/pack-commercant/qr.js"></script>
+<script src="../pro.js"></script>
+<script>
+(() => {
+  const S = window.PACKS, PRO = window.PRO, esc = PRO.esc, $ = s => document.querySelector(s);
+  let user = null;
+  $('#prix').textContent = PRO.prixMensuel() + ' € par mois';
+  const page = a => location.origin + PRO.racine + '?c=' + a, espace = a => PRO.racine + 'admin/?c=' + a;
+
+  $('#connexion').addEventListener('click', async () => {
+    const b = $('#connexion'), err = $('#err-connexion'); b.disabled = true; err.hidden = true;
+    try { user = await S.admin.connexion(); await apresConnexion(); }
+    catch (e) { b.disabled = false; err.textContent = 'Connexion impossible. Autorisez les fenêtres de connexion puis réessayez.'; err.hidden = false; }
+  });
+  async function apresConnexion() {
+    $('#etape-connexion').hidden = true;
+    let mes = [];
+    try { mes = await PRO.mesCommerces(S, user.uid); } catch (e) { mes = []; }
+    if (mes.length) {
+      $('#etape-mes').innerHTML = `<div class="card" style="display:grid;gap:var(--s-4);margin-bottom:var(--s-6)"><h2 style="margin:0;font-size:var(--t-xl)">Vos pages</h2>
+        <div class="pro-liste">${mes.map(m => `<div class="pk-rdv"><header><b>${esc(m.nom)}</b><span class="muted">quentools.fr/pro/?c=${esc(m.id)}</span></header>
+          <div class="act"><a class="btn btn-accent btn-sm" href="${esc(espace(m.id))}">Ouvrir mon espace</a><a class="btn btn-ghost btn-sm" href="${esc(page(m.id))}">Voir ma page</a></div></div>`).join('')}</div>
+        <button class="btn btn-ghost btn-sm" style="justify-self:start" id="autre" type="button">Créer une autre page</button></div>`;
+      $('#etape-mes').hidden = false;
+      $('#autre').addEventListener('click', () => { $('#autre').remove(); ouvrirFiche(); });
+    } else ouvrirFiche();
+  }
+  function ouvrirFiche() { PRO.formulaire($('#fiche'), {}, { adresse: '' }); $('#etape-fiche').hidden = false; $('#etape-fiche').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+
+  $('#creer').addEventListener('click', async () => {
+    const b = $('#creer'), err = $('#err'), d = PRO.lire($('#fiche')), a = d._adresse || PRO.adresseDe(d.nom), fautes = PRO.valider(d);
+    if (!PRO.adresseOk(a)) fautes.unshift('Adresse de la page : 3 à 40 caractères, minuscules, chiffres et tirets (certains mots sont réservés).');
+    if (!$('#accord').checked) fautes.push('Merci d’accepter les conditions d’utilisation.');
+    if (fautes.length) { err.innerHTML = fautes.map(esc).join('<br>'); err.hidden = false; return; }
+    err.hidden = true; b.disabled = true; b.textContent = 'Création…';
+    try {
+      if (await PRO.lireDoc('qt_pack/' + a)) throw new Error('prise');
+      await PRO.creer(S, a, PRO.normaliser(d), user.uid);
+    } catch (e) {
+      b.disabled = false; b.textContent = 'Créer ma page et commencer l’essai';
+      err.textContent = e.message === 'prise' ? `L’adresse « ${a} » est déjà prise : choisissez-en une autre.` : 'La création a échoué. Vérifiez la connexion et réessayez.'; err.hidden = false; return;
+    }
+    const fin = new Date(Date.now() + PRO.ESSAI_JOURS * 864e5).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    $('#etape-fiche').hidden = true; $('#etape-mes').hidden = true;
+    $('#etape-fin').innerHTML = `<div class="card" style="display:grid;gap:var(--s-4);justify-items:start"><span class="chip chip-ok">Page créée</span>
+      <h2 style="margin:0">C’est prêt : votre essai gratuit court jusqu’au ${esc(fin)}.</h2>
+      <p style="margin:0;word-break:break-all">Votre page de réservation : <a href="${esc(page(a))}">${esc(page(a).replace(/^https?:\/\//, ''))}</a></p>
+      <div class="pk-qr">${window.QR.svg(page(a), 200)}</div>
+      <ol style="margin:0;padding-left:1.2em;display:grid;gap:6px"><li>Mettez le lien dans votre bio Instagram et votre fiche Google.</li><li>Ouvrez votre espace commerçant sur votre téléphone : rendez-vous, acomptes, tampons.</li><li>Imprimez l’affiche des avis pour le comptoir (onglet Avis).</li></ol>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-accent" href="${esc(espace(a))}">Ouvrir mon espace commerçant</a><a class="btn btn-ghost" href="${esc(page(a))}">Voir ma page</a></div></div>`;
+    $('#etape-fin').hidden = false; $('#etape-fin').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<!-- Page générée par tools/pack-pro.js depuis demo/pack-commercant/admin/index.html : modifier la page d'origine puis relancer le script. -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<title>Espace commerçant — {nom}</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="../../assets/qt.css">
+<link rel="stylesheet" href="../../demo/pack-commercant/pack.css">
+<script src="../../assets/qt-config.js"></script>
+<script src="../../assets/qt-templates.js"></script>
+<link rel="stylesheet" href="../pro.css">
+<script src="../pro.js" data-charger></script>
+<script type="text/x-pk" src="../../demo/pack-commercant/pack.js"></script>
+</head>
+<body>
+<header class="nav"><div class="wrap"><a class="brand" href="../"><span data-p="nom">Commerce</span>&nbsp;<small class="muted">· espace commerçant</small></a></div></header>
+<main id="contenu" class="section" style="padding-top:var(--s-6)"><div class="wrap" style="max-width:860px">
+  <div id="login" class="card" style="max-width:460px">
+    <h1 class="h-section" style="font-size:var(--t-2xl);margin-top:0">Espace commerçant</h1>
+    <p class="muted">Rendez-vous, acomptes, cartes de fidélité et demandes d’avis.</p>
+    <button class="btn btn-accent" id="entrer" type="button">Se connecter</button>
+    <p class="notice warn" id="err" hidden></p>
+  </div>
+  <div id="app" hidden>
+    <div class="pk-tabs" role="tablist">
+      <button role="tab" data-t="rdv" aria-selected="true">Rendez-vous</button><button role="tab" data-t="fid" aria-selected="false">Fidélité</button>
+      <button role="tab" data-t="avis" aria-selected="false">Avis</button><button role="tab" data-t="reglages" aria-selected="false">Réglages</button>
+    </div>
+    <section id="t-rdv"></section><section id="t-fid" hidden></section><section id="t-avis" hidden></section><section id="t-reglages" hidden></section>
+  </div>
+</div></main>
+<script type="text/x-pk" src="../../demo/pack-commercant/store.js"></script>
+<script type="text/x-pk" src="../../demo/pack-commercant/qr.js"></script>
+<script type="text/x-pk" src="../../demo/pack-commercant/admin/admin.js"></script>
+</body>
+</html>
