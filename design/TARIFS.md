@@ -11,6 +11,20 @@ Mémo commercial à relire avant un devis (évite de tout recalculer). Estimatio
 | Design, tests, mise en ligne | 10–15 | 4 000–9 000 € |
 | **Total** | **105–145** | **≈ 40 000–85 000 €** (agence : 80 000–150 000 €) |
 
+## Grille publique en vigueur (depuis le 14 octobre 2026, validée par le propriétaire)
+Source unique des prix : `assets/qt-templates.js` (accueil, devis, administration, flyer, assistant du site).
+
+| Offre | Prix | Contenu |
+|---|---|---|
+| **Pack Commerçant** | **290 € de mise en place + 39 €/mois** | réservation avec acompte, carte de fidélité, avis Google, espace commerçant (`demo/pack-commercant/`, `tools/pack-commercant.js`) ; l'abonnement couvre hébergement, données, mises à jour, modifications simples |
+| **Outil métier sur mesure** | **dès 1 490 €** | devis, planning, suivi client, commandes, calculs ; paiement unique, 3 mois d'assistance |
+| **Application web installable** | **dès 2 490 €** | appli sur l'écran d'accueil, comptes, espace client, administration |
+| Suivi des outils sur mesure | 49 €/mois | facultatif, après les 3 mois offerts |
+| Audit de sécurité express | 100 € | inchangé |
+| Options | paiement en ligne 99,99 € · e-mails automatiques 150 € · anglais 120 € · logo 60 € · prise en main 50 € · nouvelle fonction 150 € l'unité | |
+
+**Offres de sites retirées** (sites vitrines, templates à 299/599/799 €, boutiques Shopify, réseaux sociaux) : plus vendues ni affichées ; pages `templates/` et `creation-site/` redirigées vers les offres. Les tableaux ci-dessous restent comme historique.
+
 ## Grille à proposer aux clients (QuenTools)
 **Applications complètes (type Wouf) : non proposées.** Trop de temps de travail pour trop peu de demandes ; elles ne figurent ni dans le formulaire de devis ni dans l'estimateur. Wouf reste présenté comme réalisation (page `realisations/`) et comme référence de coût ci-dessus. Si un client en demande une, répondre par un outil sur mesure ou décliner. Même logique pour tout projet complexe ou de grande envergure : le formulaire de devis ne propose plus de budget au-delà de « plus de 3 000 € (à discuter d'abord) » et précise ce que QuenTools prend en charge ; un outil sur mesure reste un outil ciblé (grille 1 000 à 3 000 €).
 

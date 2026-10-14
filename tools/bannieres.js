@@ -1,7 +1,7 @@
 /* QuenTools — bannières des réseaux sociaux : node tools/bannieres.js
-   Écrit design/reseaux/banniere-facebook.png (1640×624, zone sûre centrale pour le téléphone)
+   Écrit design/reseaux/banniere-facebook.png (1640×720 : lisible sur ordinateur et sur téléphone)
    et design/reseaux/banniere-linkedin.png (1128×191 en double résolution, logo de la page en bas à gauche).
-   Textes des bios : design/reseaux/BIOS.md. Nécessite Playwright (voir tools/visuels-social.js). */
+   et assets/partage.jpg (image de partage du site, 1200×630). Textes des bios : design/reseaux/BIOS.md. Nécessite Playwright (voir tools/visuels-social.js). */
 const fs = require('fs'), path = require('path');
 const { chromium } = require(process.env.PW || '/opt/node-tools/node_modules/playwright');
 const root = path.join(__dirname, '..'), fonts = path.join(root, 'assets', 'fonts'), sortie = path.join(root, 'design', 'reseaux');
@@ -21,16 +21,51 @@ h1 em{font-style:normal;background:linear-gradient(transparent 60%,#d7f24a 60% 9
 .tel img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
 </style><div class="grille"></div>`;
 
-const facebook = base(1640, 624) + `<style>
-.txt{position:absolute;left:250px;top:110px;width:760px}
-h1{font-size:76px;margin:22px 0 28px}.chips{font-size:22px}.eyebrow{font-size:22px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#d7f24a}
-.marque{position:absolute;left:250px;bottom:56px;font-size:30px}.site{position:absolute;right:250px;bottom:62px;font-size:24px;font-weight:600;opacity:.85}
-.t1{width:190px;height:380px;left:1050px;top:150px;transform:rotate(-8deg)}.t2{width:210px;height:420px;left:1170px;top:90px;z-index:2}.t3{width:190px;height:380px;left:1300px;top:160px;transform:rotate(8deg)}
+/* Facebook : fichier 1640×720 (deux fois 820×360). Ordinateur = bande centrale 820×312 ; téléphone = 640×360, côtés coupés.
+   Tout tient dans la zone visible partout (centre 1280×560) ; coin bas gauche laissé libre pour la photo de profil.
+   Rangée des applications : icône + nom, pour que les prospects voient ce qui existe déjà. */
+const fichier = f => 'file://' + path.join(root, f);
+const tuile = (fond, emoji) => `<span class="ico" style="background:${fond}"><span class="emo">${emoji}</span></span>`;
+const APPS = [
+  ['Wouf', `<img class="ico" src="${fichier('wouf/icons/icon-192.png')}">`],
+  ['Paperdecrypt', `<img class="ico" src="${fichier('assets/paperdecrypt/icon-192.png')}">`],
+  ['Infikit', `<img class="ico" src="${fichier('infikit/icons/icon-192.png')}">`],
+  ['Gourmet AI', tuile('linear-gradient(140deg,#ffb35c,#f0602a)', '🍳')],
+  ['Freelance Kit', tuile('linear-gradient(140deg,#6d7cff,#3b3fd9)', '💼')],
+  ['Patrimoine AI', tuile('linear-gradient(140deg,#34d399,#0f8a5f)', '📈')],
+  ['QuentMovie', `<img class="ico" src="${fichier('quentmovie/build/icon.png')}">`],
+  ['QuentStudio', `<img class="ico" src="${fichier('design/reseaux/icones/quentstudio.png')}">`],
+  ['Pack<br>Commerçant', tuile('linear-gradient(140deg,#d7f24a,#a8c91f)', '🗓️')]
+];
+const facebook = base(1640, 720) + `<style>
+@font-face{font-family:E;src:url("file:///usr/share/fonts/truetype/noto/NotoColorEmoji.ttf")}
+.txt{position:absolute;left:180px;right:180px;top:150px;text-align:center;display:grid;justify-items:center}
+.eyebrow{font-size:22px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#d7f24a}
+h1{font-size:56px;margin:16px 0 34px}
+.apps{display:flex;justify-content:center;align-items:flex-start;gap:0;width:1170px}
+.app{width:130px;display:grid;justify-items:center;gap:10px;font-weight:700;font-size:17px;line-height:1.15;letter-spacing:-.01em;text-align:center}
+.ico{width:84px;height:84px;border-radius:22px;display:grid;place-items:center;box-shadow:0 14px 28px -12px rgba(0,0,0,.55);object-fit:cover}
+img.ico{background:none;box-shadow:none;filter:drop-shadow(0 10px 14px rgba(0,0,0,.35))}.emo{font-family:E;font-size:46px;line-height:1}
+.site{margin-top:30px;font-size:24px;font-weight:700;display:flex;align-items:center;gap:12px}.site svg{width:34px;height:34px}
 </style><div class="txt"><div class="eyebrow">Studio de création d’apps et d’outils</div>
-<h1>Votre outil, <em>sur mesure</em>, prêt en quelques semaines.</h1>
-<div class="chips"><span>Applications web</span><span>Réservation</span><span>Commandes</span><span>Espace client</span></div></div>
-<div class="tel t1"><img src="${url('ecran-infikit.jpg')}"></div><div class="tel t2"><img src="${url('ecran-wouf.jpg')}"></div><div class="tel t3"><img src="${url('ecran-gourmet.jpg')}"></div>
-<div class="marque">${mark}QuenTools</div><div class="site">quentools.fr</div>`;
+<h1>Votre outil, <em>sur mesure</em>,<br>prêt en quelques semaines.</h1>
+<div class="apps">${APPS.map(([n, i]) => `<div class="app">${i}<span>${n}</span></div>`).join('')}</div>
+<div class="site">${mark}quentools.fr · nos applications, déjà en ligne</div></div>`;
+
+/* Image de partage du site (Open Graph, 1200×630) : assets/partage.jpg, même contenu que la bannière Facebook. */
+const partage = base(1200, 630) + `<style>
+@font-face{font-family:E;src:url("file:///usr/share/fonts/truetype/noto/NotoColorEmoji.ttf")}
+.txt{position:absolute;left:40px;right:40px;top:112px;text-align:center;display:grid;justify-items:center}
+.eyebrow{font-size:19px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#d7f24a}
+h1{font-size:50px;margin:14px 0 34px}.apps{display:flex;justify-content:center;width:1110px}
+.app{width:123px;display:grid;justify-items:center;gap:9px;font-weight:700;font-size:15px;line-height:1.15;text-align:center}
+.ico{width:70px;height:70px;border-radius:18px;display:grid;place-items:center;box-shadow:0 12px 24px -10px rgba(0,0,0,.55);object-fit:cover}
+img.ico{background:none;box-shadow:none;filter:drop-shadow(0 10px 14px rgba(0,0,0,.35))}.emo{font-family:E;font-size:38px;line-height:1}
+.site{margin-top:34px;font-size:22px;font-weight:700;display:flex;align-items:center;gap:12px}.site svg{width:32px;height:32px}
+</style><div class="txt"><div class="eyebrow">Studio de création d’apps et d’outils</div>
+<h1>Votre outil, <em>sur mesure</em>,<br>prêt en quelques semaines.</h1>
+<div class="apps">${APPS.map(([n, i]) => `<div class="app">${i}<span>${n}</span></div>`).join('')}</div>
+<div class="site">${mark}quentools.fr</div></div>`;
 
 const linkedin = base(2256, 382) + `<style>
 .txt{position:absolute;left:700px;top:70px;width:1100px}
@@ -43,10 +78,12 @@ h1{font-size:84px}.chips{font-size:26px;margin-top:30px}
 (async () => {
   fs.mkdirSync(sortie, { recursive: true });
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium' });
-  for (const [nom, html, w, h] of [['banniere-facebook', facebook, 1640, 624], ['banniere-linkedin', linkedin, 2256, 382]]) {
+  for (const [nom, html, w, h] of [['banniere-facebook', facebook, 1640, 720], ['banniere-linkedin', linkedin, 2256, 382], ['partage', partage, 1200, 630]]) {
     const pg = await b.newPage({ viewport: { width: w, height: h } }), tmp = path.join(sortie, '_tmp.html');
     fs.writeFileSync(tmp, html); await pg.goto('file://' + tmp); await pg.evaluate(() => document.fonts.ready); await pg.waitForTimeout(300);
-    await pg.screenshot({ path: path.join(sortie, nom + '.png') }); fs.unlinkSync(tmp); await pg.close();
+    if (nom === 'partage') await pg.screenshot({ path: path.join(root, 'assets', 'partage.jpg'), type: 'jpeg', quality: 88 });
+    else await pg.screenshot({ path: path.join(sortie, nom + '.png') });
+    fs.unlinkSync(tmp); await pg.close();
     console.log(nom + '.png', w + '×' + h);
   }
   await b.close();
