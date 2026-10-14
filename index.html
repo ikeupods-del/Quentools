@@ -121,6 +121,8 @@
 <script>
   // Anciens liens de Wouf (adresse racine avec « # » ou « ? ») : on les renvoie vers l'app.
   if (/^#\//.test(location.hash) || /[?&](maj|proprio)=/.test(location.search)) location.replace('wouf/' + location.search + location.hash);
+  // Ancien mode hors connexion de Wouf resté installé à la racine (avant son déménagement) : retiré, l'accueil s'affiche à nouveau (voir sw.js).
+  try { navigator.serviceWorker && navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => { if (new URL(r.scope).pathname === '/') r.unregister(); })).catch(() => {}); } catch (e) { /* navigateur sans prise en charge */ }
 </script>
 <link rel="stylesheet" href="assets/assistant.css?v=2">
 </head>
