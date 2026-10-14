@@ -1877,7 +1877,8 @@ document.addEventListener('click', e => { if (e.target.id === 'sheet') closeShee
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
 (function boot() {
   load();
-  render();
+  // Lien de démonstration (?demo) : sans données sur ce téléphone, la tournée fictive s'ouvre directement, pour une présentation.
+  if (!S && /[?&]demo(=|&|$)/.test(location.search)) { start(true); toast('Démonstration : patients fictifs. Réglages → Données pour tout effacer.'); } else render();
   if (S && S.pin) unlock();
   pwaBoot();
   if (!githubCallback() && S && !S.pin) syncNow({ silent: true });
