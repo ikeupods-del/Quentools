@@ -39,6 +39,8 @@ jobs:
         run: |
           npx -y firebase-tools@15.33.0 setup:emulators:firestore
           QT_EXIGER_EMULATEUR=1 node tools/verifier-pack-pro.js
+      - name: Contrôler Infikit (premier lancement, tournée, patients, démonstration)
+        run: node tools/verifier-infikit.js
 
   deploy:
     needs: test

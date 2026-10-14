@@ -258,6 +258,7 @@ Wouf — service worker : l'app s'ouvre sans réseau. Les données (carnet, docu
 
 ## Workflows
 - apercu.yml
+- controle-en-ligne.yml
 - instagram.yml
 - pages.yml
 - photos-libres.yml
