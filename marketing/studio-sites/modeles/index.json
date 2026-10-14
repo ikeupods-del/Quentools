@@ -8,7 +8,7 @@
   "style": "pro sobre",
   "mode": "clair",
   "marque": "Dupont Plomberie",
-  "taille": 23985
+  "taille": 23837
  },
  {
   "id": "climatisation",
@@ -19,7 +19,7 @@
   "style": "pro moderne",
   "mode": "clair",
   "marque": "Alizé Clim",
-  "taille": 21756
+  "taille": 21608
  },
  {
   "id": "bois",
@@ -30,7 +30,7 @@
   "style": "chaleureux nature",
   "mode": "clair",
   "marque": "Les Bois Granger",
-  "taille": 38874
+  "taille": 38726
  },
  {
   "id": "restaurant",
@@ -41,7 +41,7 @@
   "style": "chaleureux luxe",
   "mode": "sombre",
   "marque": "Le Petit Comptoir",
-  "taille": 30317
+  "taille": 30169
  },
  {
   "id": "fleuriste",
@@ -52,7 +52,7 @@
   "style": "ludique chaleureux",
   "mode": "clair",
   "marque": "Fleurs de Marie",
-  "taille": 25991
+  "taille": 25843
  },
  {
   "id": "coach",
@@ -63,7 +63,7 @@
   "style": "energique moderne",
   "mode": "sombre",
   "marque": "Move Coaching",
-  "taille": 21101
+  "taille": 20953
  },
  {
   "id": "osteopathe",
@@ -74,7 +74,7 @@
   "style": "sobre nature",
   "mode": "clair",
   "marque": "Cabinet Bien-Être",
-  "taille": 29278
+  "taille": 29130
  },
  {
   "id": "paysagiste",
@@ -85,7 +85,7 @@
   "style": "nature chaleureux",
   "mode": "clair",
   "marque": "Verdure & Co",
-  "taille": 33416
+  "taille": 33268
  },
  {
   "id": "petsitter",
@@ -96,7 +96,7 @@
   "style": "ludique nature",
   "mode": "clair",
   "marque": "La Ferme du Petit Pré",
-  "taille": 33982
+  "taille": 33834
  },
  {
   "id": "photographe",
@@ -107,7 +107,7 @@
   "style": "luxe moderne",
   "mode": "sombre",
   "marque": "Atelier Lumière",
-  "taille": 28765
+  "taille": 28617
  },
  {
   "id": "formation",
@@ -118,7 +118,7 @@
   "style": "moderne pro",
   "mode": "sombre",
   "marque": "Cuisine en 1 heure",
-  "taille": 23959
+  "taille": 23811
  },
  {
   "id": "modele-vitrine",
@@ -129,7 +129,7 @@
   "style": "sobre moderne",
   "mode": "au choix",
   "marque": "",
-  "taille": 10173
+  "taille": 9954
  },
  {
   "id": "modele-rendez-vous",
@@ -140,7 +140,7 @@
   "style": "sobre chaleureux",
   "mode": "au choix",
   "marque": "",
-  "taille": 8308
+  "taille": 8089
  },
  {
   "id": "modele-restaurant",
@@ -151,6 +151,6 @@
   "style": "chaleureux sobre",
   "mode": "au choix",
   "marque": "",
-  "taille": 7836
+  "taille": 7617
  }
 ]

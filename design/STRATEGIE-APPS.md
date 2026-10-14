@@ -27,7 +27,7 @@
 Le site n'affiche que les prix déjà au catalogue (`assets/qt-templates.js` : sites 299/599/799 €, réservation 99 €, audit 100 €, suivi 69,99 €/mois). Applications et outils = « sur devis » tant que le propriétaire n'a pas validé les prix ci-dessus ; une fois validés : catalogue, devis, accueil et `TARIFS.md`.
 
 ## Plan à 90 jours
-- Novembre 2026 : valider les prix ; dupliquer Naw Fruity en outil « à votre nom » ; contacter 30 traiteurs et créateurs de plateaux ; trancher la publicité AdSense (78 pages la chargent alors que l'accueil affiche « 0 cookie, ni traceur, ni publicité »).
+- Novembre 2026 : valider les prix ; dupliquer Naw Fruity en outil « à votre nom » ; contacter 30 traiteurs et créateurs de plateaux. Publicité AdSense retirée des pages (octobre 2026) ; seul Paperdecrypt garde un emplacement prévu, vide tant que ADSENSE_SLOT n’est pas renseigné.
 - Décembre 2026 : même chose avec la réservation (Maison Blade) pour barbiers et instituts ; une étude de cas par outil vendu ; suivi mensuel proposé à chaque client.
 - Janvier 2027 : liste d'attente du kit facture électronique ; relance de Paperdecrypt Premium ; 3 comptables ou chambres de métiers contactés.
 

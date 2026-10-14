@@ -44,6 +44,7 @@ for (const p of pages) {
   const h = lire(p), dir = path.dirname(p);
   if (/ikeupods-del\.github\.io\/Quentools/i.test(h) && !p.startsWith('wouf')) ko(p, 'ancienne adresse du site');
   if (!/<html lang="fr"/.test(h)) ko(p, 'langue absente');
+  if (/adsbygoogle\.js/.test(h)) ko(p, "script publicitaire Google : l’accueil annonce 0 cookie, ni traceur, ni publicité");
   if (!/<title>[^<]{10,}<\/title>/.test(h)) ko(p, 'titre absent ou trop court');
   { const t = (h.match(/<title>([^<]*)<\/title>/) || [])[1] || '', d = (h.match(/<meta name="description" content="([^"]*)"/) || [])[1] || '';
     if (t.length < 50 || t.length > 60) ko(p, `titre de ${t.length} caractères (50 à 60 attendus)`);
