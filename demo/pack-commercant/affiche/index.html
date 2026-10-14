@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Affiche avis — {nom}</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="../../../assets/qt.css">
+<link rel="stylesheet" href="../pack.css">
+<script src="../config.js"></script>
+<script src="../pack.js"></script>
+</head>
+<body>
+<!-- Affiche à imprimer (A4 ou A5) pour le comptoir : QR code vers la page « Laisser un avis » de la fiche Google. -->
+<main class="section"><div class="wrap">
+  <div class="pk-affiche">
+    <span class="eyebrow" data-p="nom">Commerce</span>
+    <h1>Votre avis compte&nbsp;!</h1>
+    <p class="lede" style="margin:0 auto var(--s-5)">Scannez ce code avec l’appareil photo de votre téléphone pour laisser un avis Google. Merci&nbsp;!</p>
+    <div class="pk-qr" id="qr"></div>
+    <p class="muted" style="margin-top:var(--s-5)">Fidélité : demandez votre carte au comptoir ou sur notre page de réservation.</p>
+  </div>
+  <p class="no-print" style="text-align:center;margin-top:var(--s-5)"><button class="btn btn-accent" onclick="print()">Imprimer</button></p>
+</div></main>
+<script src="../qr.js"></script>
+<script>
+  const l = (window.PACK.avis || {}).lien;
+  document.getElementById('qr').innerHTML = /^https:\/\//.test(l || '') ? window.QR.svg(l, 280) : '<p class="notice warn">Lien de la fiche Google à ajouter dans la configuration.</p>';
+</script>
+</body>
+</html>

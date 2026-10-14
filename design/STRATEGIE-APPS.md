@@ -19,6 +19,10 @@
 | 5 | Wouf Plus | Propriétaires d'animaux | 14,99 €/an ou 29,99 € à vie | `wouf/` |
 | 6 | Infikit Pro | Infirmières libérales | 9,99 €/mois (relecture juridique HDS avant toute synchronisation) | `infikit/` |
 
+## Construit
+- **Pack Commerçant** (14 octobre 2026) : réservation avec acompte + carte de fidélité + avis Google + espace commerçant, dupliqué par client avec `node tools/pack-commercant.js`. Démonstration : `demo/pack-commercant/`. Reprend les n°1, 5 et 7 de la liste « ce qui marche aux États-Unis » (Genius AI, Podium, Square Loyalty). Prix conseillé à valider : 39 à 49 €/mois ou mise en place + abonnement.
+- Pistes suivantes : SMS automatique après un appel manqué (fournisseur payant Twilio/Brevo, essai réel par téléphone nécessaire), devis et suivi des paiements pour les petits métiers.
+
 ## Gamme et affichage
 Le site n'affiche que les prix déjà au catalogue (`assets/qt-templates.js` : sites 299/599/799 €, réservation 99 €, audit 100 €, suivi 69,99 €/mois). Applications et outils = « sur devis » tant que le propriétaire n'a pas validé les prix ci-dessus ; une fois validés : catalogue, devis, accueil et `TARIFS.md`.
 
