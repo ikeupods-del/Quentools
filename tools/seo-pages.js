@@ -17,7 +17,7 @@ const erreurs = [];
 
 /* ---------- Titres et descriptions (title 50-60 caractères, description 140-155) ---------- */
 const PAGES = {
-  '': ['QuenTools — Création d’apps et d’outils pour les TPE', 'Studio de création d’applications web et d’outils métier pour indépendants et TPE : réservation, commandes, espace client, devis. Prix fixé d’avance.'],
+  '': ['QuenTools — Éditeur d’apps et développement sur mesure', 'Wouf, Paperdecrypt, Pack Commerçant, Infikit : les apps de QuenTools, prêtes à l’emploi. Et le développement de votre application ou outil sur mesure.'],
   'devis/': ['Devis gratuit pour une app ou un outil métier | QuenTools', 'Demandez un devis gratuit pour le Pack Commerçant, un outil métier sur mesure ou une application web installable. Réponse sous 48 h, prix fixé d’avance.'],
   'audit/': ['Audit de sécurité de site web express, 100 € | QuenTools', 'Audit de sécurité express de votre site internet : HTTPS, cookies, formulaires, fichiers exposés. Rapport PDF sous 48 h, 100 €, avec votre accord écrit.'],
   'conseils/': ['Conseils numériques pour artisans et commerçants | QuenTools', 'Conseils simples pour artisans, commerçants et indépendants : fiche Google, site lisible sur téléphone, nom de domaine, mentions légales et sécurité.'],
@@ -95,19 +95,19 @@ const COURT = { 'site-internet-plombier': 'Dépannage, chauffage, zones d’inte
 const tplP = id => T.templates.find(t => t.id === id);
 const fmtA = n => T.fmt(n).replace(/\u202f/g, '\u00a0');   // espace insécable classique : la police des titres n'a pas l'espace fine
 const FORMULES = [
-  { id: 'pack', nom: 'Pack Commerçant', prix: tplP('pack').base, mensuel: tplP('pack').monthly, lien: 'demo/pack-commercant/', cta: 'Essayer la démonstration →',
-    texte: 'Réservation avec acompte, carte de fidélité sur téléphone, demandes d’avis Google et espace commerçant, à votre nom. L’abonnement couvre l’hébergement, les données et les mises à jour.' },
+  { id: 'pack', nom: 'Pack Commerçant', prix: tplP('pack').base, mensuel: tplP('pack').monthly, abonnement: true, lien: 'pro/inscription/', cta: 'Essai gratuit 14 jours →',
+    texte: `Réservation avec acompte, carte de fidélité et avis Google : créez votre page vous-même en 5 minutes, sans engagement. Mise en place faite pour vous : ${fmtA(tplP('pack').base)}.` },
   { id: 'outil', nom: 'Outil métier sur mesure', prix: tplP('outil').base, dès: true, lien: 'devis/?type=Outil%20sur%20mesure', cta: 'Demander un devis →',
     texte: 'Devis, planning, suivi des clients, commandes ou calculs : un outil conçu pour votre façon de travailler. Paiement unique, 3 mois d’assistance offerts.' },
   { id: 'appli', nom: 'Application web installable', prix: tplP('appli').base, dès: true, lien: 'devis/?type=Application%20web', cta: 'Demander un devis →',
     texte: 'Votre application sur l’écran d’accueil du téléphone de vos clients : comptes, espace client et administration, sans magasin d’applications ni commission.' }
 ];
-const prixTexte = f => (f.dès ? 'dès ' : '') + T.fmt(f.prix) + (f.mensuel ? ' puis ' + T.fmt(f.mensuel) + ' par mois' : '');
+const prixTexte = f => f.abonnement ? T.fmt(f.mensuel) + ' par mois après 14 jours d’essai gratuit (mise en place faite pour vous : ' + T.fmt(f.prix) + ')' : (f.dès ? 'dès ' : '') + T.fmt(f.prix) + (f.mensuel ? ' puis ' + T.fmt(f.mensuel) + ' par mois' : '');
 const FAQ = [
   ['Combien coûte une application ou un outil ?', `${FORMULES.map(f => `${f.nom} : ${prixTexte(f)}`).join(' ; ')}. Le prix exact est fixé dans le devis gratuit, avant de commencer, sans frais cachés. TVA non applicable, article 293 B du CGI.`],
-  ['Que comprend le Pack Commerçant ?', 'La réservation en ligne avec acompte contre les rendez-vous non honorés, une carte de fidélité sur le téléphone de vos clients, les demandes d’avis Google et un espace commerçant pour tout gérer, à vos couleurs. L’abonnement couvre l’hébergement, vos données, les mises à jour et les modifications simples.'],
-  ['Quel est le délai pour avoir mon outil ?', 'Vous recevez votre devis sous 48 h. Le Pack Commerçant est prêt quelques jours après réception de vos informations. Un outil ou une application sur mesure demande quelques semaines : une première version vous est montrée avant la suite.'],
-  ['Y a-t-il un abonnement à payer ?', `Le Pack Commerçant fonctionne avec un abonnement de ${T.fmt(tplP('pack').monthly)} par mois. Les outils et applications sur mesure se paient une seule fois, avec 3 mois d’assistance offerts ; ensuite, un suivi de ${T.fmt(opt('suivi').price)} par mois est possible (hébergement, sauvegardes, mises à jour), mais il reste facultatif.`],
+  ['Que comprend le Pack Commerçant ?', 'La réservation en ligne avec acompte contre les rendez-vous non honorés, une carte de fidélité sur le téléphone de vos clients, les demandes d’avis Google et un espace commerçant pour tout gérer, à vos couleurs. Vous créez votre page vous-même en quelques minutes et vous l’essayez 14 jours gratuitement, sans carte bancaire.'],
+  ['Quel est le délai pour avoir mon outil ?', 'Le Pack Commerçant est en ligne dès votre inscription. Pour un outil ou une application sur mesure, vous recevez votre devis sous 48 h, puis comptez quelques semaines : une première version vous est montrée avant la suite.'],
+  ['Y a-t-il un abonnement à payer ?', `Le Pack Commerçant fonctionne avec un abonnement de ${T.fmt(tplP('pack').monthly)} par mois, sans engagement, après 14 jours d’essai gratuit. Les outils et applications sur mesure se paient une seule fois, avec 3 mois d’assistance offerts ; ensuite, un suivi de ${T.fmt(opt('suivi').price)} par mois est possible (hébergement, sauvegardes, mises à jour), mais il reste facultatif.`],
   ['Mon application sera-t-elle sur l’App Store ?', 'Nos applications web s’installent directement sur l’écran d’accueil du téléphone (iPhone et Android), sans passer par les magasins d’applications ni payer leur commission. Elles se mettent à jour toutes seules.']
 ];
 const section = (nom, html) => `<!--seo:${nom}-->${html}<!--/seo:${nom}-->`;
@@ -128,7 +128,7 @@ function accueil(h) {
       <p class="note reveal"><a href="creation-site/">Voir tous les métiers : création de site internet par activité</a> · <a href="exemples/">exemples de sites vitrines</a></p>
     </div>
   </section>`);
-  const ligne = (f, i) => `<article class="${i === 0 ? 'is-main ' : ''}reveal"${i ? ` style="--i:${i}"` : ''}><h3>${f.nom}</h3><div class="pr">${f.dès ? '<small>dès </small>' : ''}<span>${fmtA(f.prix)}</span>${f.mensuel ? `<small> + ${fmtA(f.mensuel)}/mois</small>` : ''}</div><p>${f.texte}</p><a href="${f.lien}">${f.cta}</a></article>`;
+  const ligne = (f, i) => `<article class="${i === 0 ? 'is-main ' : ''}reveal"${i ? ` style="--i:${i}"` : ''}><h3>${f.nom}</h3><div class="pr">${f.abonnement ? `<span>${fmtA(f.mensuel)}</span><small>/mois</small>` : `${f.dès ? '<small>dès </small>' : ''}<span>${fmtA(f.prix)}</span>${f.mensuel ? `<small> + ${fmtA(f.mensuel)}/mois</small>` : ''}`}</div><p>${f.texte}</p><a href="${f.lien}">${f.cta}</a></article>`;
   const formules = section('formules', '\n        ' + FORMULES.map(ligne).join('\n        '));
   const faq = section('faq', `
   <section class="section" id="questions" style="padding-top:0">
@@ -140,15 +140,15 @@ function accueil(h) {
   h = h.replace(reMarq('pourqui'), '').replace(reMarq('faq'), '');
   h = reMarq('formules').test(h) ? h.replace(reMarq('formules'), () => formules) : h;
   h = h.replace(/(\n\s*<section class="section" id="sur-mesure")/, (m, a) => faq + a);
-  /* h1 : accroche du studio ; les mots restent animés un à un */
+  /* h1 : accroche de l'éditeur d'apps ; les mots restent animés un à un */
   h = h.replace(/<h1 class="display reveal" style="--i:1">.*?<\/h1>/s, () => {
     const m = (mot, k) => `<span class="m" style="--k:${k}">${mot}</span>`;
-    return '<h1 class="display reveal" style="--i:1">' + m('Votre', 0) + ' ' + m('outil,', 1) + ' <em>' + m('sur', 2) + ' ' + m('mesure,', 3) + '</em> ' + ['prêt', 'en', 'quelques', 'semaines.'].map((x, i) => m(x, i + 4)).join(' ') + '</h1>';
+    return '<h1 class="display reveal" style="--i:1">' + m('Des', 0) + ' ' + m('apps', 1) + ' ' + m('qui', 2) + ' <em>' + m('simplifient', 3) + '</em> ' + ['le', 'quotidien.'].map((x, i) => m(x, i + 4)).join(' ') + '</h1>';
   });
   /* données structurées de l'entreprise, du site et des formules */
   const org = { '@type': 'ProfessionalService', '@id': base + '#organisation', name: 'QuenTools', url: base, logo: base + 'assets/icon-512.png', image: base + OG_ACCUEIL, email: mail,
-    description: 'Studio de création d’applications web et d’outils métier pour indépendants, commerçants et TPE : réservation avec acompte, fidélité, commandes, espace client.',
-    areaServed: { '@type': 'Country', name: 'France' }, knowsLanguage: 'fr', slogan: 'Votre outil, sur mesure, prêt en quelques semaines',
+    description: 'Éditeur d’applications (Wouf, Paperdecrypt, Pack Commerçant, Infikit) et développement d’applications web et d’outils métier sur mesure pour indépendants et TPE.',
+    areaServed: { '@type': 'Country', name: 'France' }, knowsLanguage: 'fr', slogan: 'Des apps qui simplifient le quotidien',
     serviceType: ['Création d’application web', 'Outil métier sur mesure', 'Système de réservation en ligne avec acompte', 'Carte de fidélité numérique', 'Prise de commande en ligne', 'Espace client et administration', 'Audit de sécurité de site web'],
     contactPoint: { '@type': 'ContactPoint', contactType: 'customer service', email: mail, availableLanguage: 'French', url: base + 'devis/' },
     sameAs: ['https://www.tiktok.com/@quentools'].concat(INSTAGRAM ? [INSTAGRAM] : []),
