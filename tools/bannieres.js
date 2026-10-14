@@ -1,5 +1,5 @@
 /* QuenTools — bannières des réseaux sociaux : node tools/bannieres.js
-   Écrit design/reseaux/banniere-facebook.png (1640×624, zone sûre centrale pour le téléphone)
+   Écrit design/reseaux/banniere-facebook.png (1640×720 : lisible sur ordinateur et sur téléphone)
    et design/reseaux/banniere-linkedin.png (1128×191 en double résolution, logo de la page en bas à gauche).
    Textes des bios : design/reseaux/BIOS.md. Nécessite Playwright (voir tools/visuels-social.js). */
 const fs = require('fs'), path = require('path');
@@ -21,16 +21,19 @@ h1 em{font-style:normal;background:linear-gradient(transparent 60%,#d7f24a 60% 9
 .tel img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
 </style><div class="grille"></div>`;
 
-const facebook = base(1640, 624) + `<style>
-.txt{position:absolute;left:250px;top:110px;width:760px}
-h1{font-size:76px;margin:22px 0 28px}.chips{font-size:22px}.eyebrow{font-size:22px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#d7f24a}
-.marque{position:absolute;left:250px;bottom:56px;font-size:30px}.site{position:absolute;right:250px;bottom:62px;font-size:24px;font-weight:600;opacity:.85}
-.t1{width:190px;height:380px;left:1050px;top:150px;transform:rotate(-8deg)}.t2{width:210px;height:420px;left:1170px;top:90px;z-index:2}.t3{width:190px;height:380px;left:1300px;top:160px;transform:rotate(8deg)}
-</style><div class="txt"><div class="eyebrow">Studio de création d’apps et d’outils</div>
-<h1>Votre outil, <em>sur mesure</em>, prêt en quelques semaines.</h1>
-<div class="chips"><span>Applications web</span><span>Réservation</span><span>Commandes</span><span>Espace client</span></div></div>
-<div class="tel t1"><img src="${url('ecran-infikit.jpg')}"></div><div class="tel t2"><img src="${url('ecran-wouf.jpg')}"></div><div class="tel t3"><img src="${url('ecran-gourmet.jpg')}"></div>
-<div class="marque">${mark}QuenTools</div><div class="site">quentools.fr</div>`;
+/* Facebook : fichier 1640×720 (deux fois 820×360). Ordinateur = bande centrale 820×312 ; téléphone = 640×360, côtés coupés.
+   Tout le texte tient dans la zone visible partout (centre 1280×560) ; coin bas gauche laissé libre pour la photo de profil. */
+const facebook = base(1640, 720) + `<style>
+.txt{position:absolute;left:180px;right:180px;top:165px;text-align:center;display:grid;justify-items:center}
+.eyebrow{font-size:24px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#d7f24a}
+h1{font-size:72px;margin:22px 0 30px}.chips{font-size:24px;justify-content:center}
+.site{margin-top:26px;font-size:26px;font-weight:700;display:flex;align-items:center;gap:12px}.site svg{width:36px;height:36px}
+.t1{width:150px;height:300px;right:-30px;top:300px;transform:rotate(10deg);opacity:.9}.t2{width:150px;height:300px;left:-40px;top:40px;transform:rotate(-10deg);opacity:.9}
+</style><div class="tel t1"><img src="${url('ecran-wouf.jpg')}"></div><div class="tel t2"><img src="${url('ecran-infikit.jpg')}"></div>
+<div class="txt"><div class="eyebrow">Studio de création d’apps et d’outils</div>
+<h1>Votre outil, <em>sur mesure</em>,<br>prêt en quelques semaines.</h1>
+<div class="chips"><span>Applications web</span><span>Réservation</span><span>Commandes</span><span>Espace client</span></div>
+<div class="site">${mark}quentools.fr</div></div>`;
 
 const linkedin = base(2256, 382) + `<style>
 .txt{position:absolute;left:700px;top:70px;width:1100px}
@@ -43,7 +46,7 @@ h1{font-size:84px}.chips{font-size:26px;margin-top:30px}
 (async () => {
   fs.mkdirSync(sortie, { recursive: true });
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium' });
-  for (const [nom, html, w, h] of [['banniere-facebook', facebook, 1640, 624], ['banniere-linkedin', linkedin, 2256, 382]]) {
+  for (const [nom, html, w, h] of [['banniere-facebook', facebook, 1640, 720], ['banniere-linkedin', linkedin, 2256, 382]]) {
     const pg = await b.newPage({ viewport: { width: w, height: h } }), tmp = path.join(sortie, '_tmp.html');
     fs.writeFileSync(tmp, html); await pg.goto('file://' + tmp); await pg.evaluate(() => document.fonts.ready); await pg.waitForTimeout(300);
     await pg.screenshot({ path: path.join(sortie, nom + '.png') }); fs.unlinkSync(tmp); await pg.close();

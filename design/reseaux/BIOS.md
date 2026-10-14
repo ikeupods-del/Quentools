@@ -42,7 +42,7 @@ Secteur : « Développement de logiciels ». Taille : 1 salarié. Site : `https:
 Bannière : `banniere-linkedin.png` (1128×191, fournie en double résolution ; le logo de la page recouvre le coin bas gauche, laissé vide).
 
 ## Facebook (page)
-Bannière : `banniere-facebook.png` (1640×624 ; textes dans la zone centrale, visibles sur téléphone).
+Bannière : `banniere-facebook.png` (1640×720 : sur ordinateur, Facebook garde la bande centrale ; sur téléphone, il coupe les côtés. Tout le texte est au centre, lisible dans les deux cas ; coin bas gauche libre pour la photo de profil). Après l'envoi, ne pas déplacer l'image : la laisser centrée.
 
 Présentation courte (255 caractères maximum) :
 ```
