@@ -1,4 +1,6 @@
-# Publicité Paperdecrypt (45 s)
+# Publicités vidéo
+
+## Paperdecrypt (45 s)
 
 Film d'animation (motion design) généré par le code : `tools/pub/pub.html` (animation pilotée à la seconde près), `tools/pub/audio.py` (musique et bruitages synthétisés, aucun morceau tiers), `tools/pub/render.js` (rendu image par image puis assemblage ffmpeg).
 
@@ -46,3 +48,29 @@ Poser la voix à environ −18 LUFS sur la musique, qui peut descendre de 6 dB p
 - La mention légale de fin de film (« ne remplace pas l'avis d'un professionnel », « seul un état des lieux signé par les deux parties fait foi ») reste obligatoire à l'écran.
 - Les écrans montrés sont de l'interface réelle ou fidèle, avec des données fictives (adresse, noms, montants d'exemple).
 - Pour une diffusion télévisée, le diffuseur impose en général un contrôle technique (loudness, formats, mentions) et un numéro d'identification de la publicité : à demander à la régie.
+
+# Publicité QuenTools (30 s) : studio de création d'apps et d'outils
+
+Même méthode que Paperdecrypt : `tools/pub/quentools.html` (animation), `tools/pub/audio.py` (musique et bruitages générés), `tools/pub/render.js` avec `PUB=quentools`.
+
+| Fichier | Usage | Format | Son |
+|---|---|---|---|
+| `quentools-pub-30s-reseaux-9x16.mp4` | TikTok, Reels, Stories, Shorts, publicité Facebook/Instagram | 1080×1920, 30 i/s, H.264 | AAC, −14 LUFS |
+| `quentools-pub-30s-tele-16x9.mp4` | YouTube, LinkedIn, site, écran en boutique | 1920×1080, 25 i/s, H.264 | AAC, −23 LUFS |
+
+Refaire un rendu : `PUB=quentools node tools/pub/render.js port 30` et `PUB=quentools node tools/pub/render.js land 25` ; aperçu en images fixes : `PUB=quentools node tools/pub/apercu.js port`.
+
+| Temps | Plan | Message |
+|---|---|---|
+| 0 – 4 s | Tableur, devis papier, notifications (rendez-vous annulé, message à toute heure, appels manqués) | « Excel, papiers, messages à toute heure ? » |
+| 4 – 8 s | Logo, icônes des applications déjà en ligne | « QuenTools crée vos apps et vos outils. » |
+| 8 – 14 s | Pack Commerçant : réservation, acompte reçu, tampons de fidélité, avis | « Vos clients réservent, paient l'acompte et reviennent. » |
+| 14 – 19 s | Devis qui se remplit, total, envoyé au client | « Vos devis faits sur téléphone, devant le client. » |
+| 19 – 23,5 s | Installation sur l'écran d'accueil, sans magasin d'applications | « Votre appli sur l'écran d'accueil. » |
+| 23,5 – 26,5 s | Prix fixé avant de commencer, première version montrée, données chez vous, quelqu'un de joignable | « Simple, à votre nom. » |
+| 26,5 – 30 s | Logo, adresse, devis gratuit | « Studio de création d'apps et d'outils. quentools.fr » |
+
+Aucun prix (règle des publications), écrans du Pack Commerçant signalés comme exemple fictif, devis d'exemple marqué « Exemple ».
+
+Voix off proposée (30 s) :
+> « Excel, des papiers, des messages à toute heure ? QuenTools crée vos apps et vos outils. Vos clients réservent, paient l'acompte et reviennent. Vos devis se font sur téléphone, devant le client. Et votre appli s'installe sur l'écran d'accueil. Prix fixé avant de commencer, à votre nom. QuenTools, studio de création d'apps et d'outils. Devis gratuit sur quentools.fr. »

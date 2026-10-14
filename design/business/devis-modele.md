@@ -5,7 +5,7 @@
 **Client** : [nom], [adresse], [e-mail]
 
 ## Objet
-[Création d'un site vitrine de [n] pages / boutique Shopify de [n] produits / outil de [fonction]].
+[Pack Commerçant à votre nom (réservation avec acompte, carte de fidélité, avis Google, espace commerçant) / outil métier sur mesure : [fonction] / application web installable : [fonction]].
 
 ## Ce qui est inclus
 - [livrable 1]

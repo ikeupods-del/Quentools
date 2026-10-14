@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="../assets/qt.css?v=20261001h">
 <script src="../assets/qt-config.js"></script>
 <script src="../assets/qt-devis.js"></script>
-<script src="../assets/qt-templates.js?v=3"></script>
+<script src="../assets/qt-templates.js?v=4"></script>
 <style>
   .adm{display:grid;grid-template-columns:232px minmax(0,1fr);gap:var(--s-6);align-items:start}
   .side{position:sticky;top:88px;display:grid;gap:var(--s-5)}
@@ -199,11 +199,12 @@ const STATUS = [['nouveau', 'Nouvelle'], ['discussion', 'En discussion'], ['envo
 const WON = ['gagne', 'encours', 'livre'];
 const stLabel = k => (STATUS.find(s => s[0] === k) || STATUS[0])[1];
 
-/* Grille QuenTools (design/TARIFS.md, « Prix QuenTools conseillé ») */
+/* Grille QuenTools (design/TARIFS.md, « Grille publique en vigueur ») : bas de fourchette = prix de départ du catalogue (assets/qt-templates.js) */
+const offreBase = id => (QTT.templates.find(t => t.id === id) || {}).base || 0;
 const GRID = {
-  'Site vitrine': [200, 400], 'Boutique Shopify': [150, 260], 'Outil sur mesure': [1000, 3000], 'Audit express': [100, 100]
+  'Pack Commerçant': [offreBase('pack'), offreBase('pack')], 'Outil sur mesure': [offreBase('outil'), 4000], 'Application web': [offreBase('appli'), 6000], 'Audit express': [100, 100]
 };
-const EXTRA_PAY = [500, 1500], MAINT = 69.99;
+const EXTRA_PAY = [500, 1500], MAINT = (QTT.options.find(o => o.id === 'suivi') || {}).price || 49;
 const LEVEL = { simple: [0, .4], standard: [.3, .7], avance: [.6, 1] };
 
 /* ---------- Données : Firestore (ou démonstration locale) ---------- */
@@ -218,16 +219,16 @@ async function fb() {
 }
 const demo = {
   items: [
-    { id: 'd0', type: 'Template', nom: 'Salon Mistral', email: 'mistral@example.com', tel: '06 22 33 44 55', delai: 'Dans le mois', budget: 'Moins de 1 000 €', besoin: 'Template souhaité : Barbier de luxe\nOptions souhaitées : Paiement en ligne réel (PayPal ou Stripe); E-mails de confirmation et de rappel réellement envoyés\n\nJe tiens un salon de coiffure homme à Aix et je voudrais prendre les réservations en ligne.', status: 'nouveau', at: new Date(Date.now() - 3600e3) },
-    { id: 'd1', type: 'Site vitrine', nom: 'Julie Martin', email: 'julie@example.com', tel: '06 00 00 00 00', delai: 'Dans le mois', budget: '1 000 à 3 000 €', besoin: 'Je suis fleuriste à Nîmes et je voudrais un site simple avec mes horaires, des photos et un bouton pour commander.', status: 'nouveau', at: new Date(Date.now() - 3600e3).toISOString() },
+    { id: 'd0', type: 'Pack Commerçant', nom: 'Salon Mistral', email: 'mistral@example.com', tel: '06 22 33 44 55', delai: 'Dans le mois', budget: 'Moins de 1 000 €', besoin: 'Offre souhaitée : Pack Commerçant\nOptions souhaitées : E-mails de confirmation et de rappel automatiques; Prise en main (1 h en visio)\nAncienne demande : Paiement en ligne réel (PayPal ou Stripe); E-mails de confirmation et de rappel réellement envoyés\n\nJe tiens un salon de coiffure homme à Aix et je voudrais prendre les réservations en ligne.', status: 'nouveau', at: new Date(Date.now() - 3600e3) },
+    { id: 'd1', type: 'Outil sur mesure', nom: 'Julie Martin', email: 'julie@example.com', tel: '06 00 00 00 00', delai: 'Dans le mois', budget: '1 000 à 3 000 €', besoin: 'Je suis fleuriste à Nîmes et je voudrais que mes clients commandent leurs bouquets en ligne, avec retrait en boutique.', status: 'nouveau', at: new Date(Date.now() - 3600e3).toISOString() },
     { id: 'd2', type: 'Outil sur mesure', nom: 'Karim B.', email: 'karim@example.com', tel: '', delai: 'Dès que possible', budget: 'Je ne sais pas encore', besoin: 'Plombier, je fais mes devis sur Excel. Je veux un outil sur téléphone pour faire un devis devant le client.', status: 'envoye', montant: 1800, note: 'Rappeler jeudi', at: new Date(Date.now() - 5 * 864e5).toISOString() },
     { id: 'd3', type: 'Outil sur mesure', nom: 'Asso Les Pattes', email: 'contact@example.org', tel: '', delai: 'Dans les 3 mois', budget: '3 000 à 6 000 €', besoin: 'Outil pour suivre les adoptions et les familles d’accueil.', status: 'gagne', montant: 4200, at: new Date(Date.now() - 20 * 864e5).toISOString() }
   ], site: { announceOn: false, announce: '', announceUrl: '', available: true, availText: '' }
 };
 const demoExtra = () => [
-  { id: 'd4', type: 'Site vitrine', nom: 'Léa Coiffure', email: 'lea@example.com', tel: '06 11 22 33 44', delai: 'Dans le mois', budget: '1 000 à 3 000 €', besoin: 'Site pour mon salon de coiffure à domicile, avec prise de rendez-vous par téléphone.', status: 'gagne', montant: 450, at: new Date(Date.now() - 40 * 864e5) },
+  { id: 'd4', type: 'Pack Commerçant', nom: 'Léa Coiffure', email: 'lea@example.com', tel: '06 11 22 33 44', delai: 'Dans le mois', budget: '1 000 à 3 000 €', besoin: 'Réservation avec acompte pour mon activité de coiffure à domicile.', status: 'gagne', montant: 290, at: new Date(Date.now() - 40 * 864e5) },
   { id: 'd5', type: 'Outil sur mesure', nom: 'Plomberie Dupont', email: 'dupont@example.com', tel: '', delai: 'Dès que possible', budget: '3 000 à 6 000 €', besoin: 'Outil de devis et de suivi de chantier sur téléphone pour mes deux salariés.', status: 'livre', montant: 1800, at: new Date(Date.now() - 75 * 864e5) },
-  { id: 'd6', type: 'Boutique Shopify', nom: 'Atelier Bois', email: 'atelier@example.com', tel: '', delai: 'Dans les 3 mois', budget: 'Moins de 1 000 €', besoin: 'Petite boutique pour vendre mes planches à découper faites main.', status: 'envoye', montant: 320, at: new Date(Date.now() - 9 * 864e5) }];
+  { id: 'd6', type: 'Application web', nom: 'Atelier Bois', email: 'atelier@example.com', tel: '', delai: 'Dans les 3 mois', budget: 'Moins de 1 000 €', besoin: 'Une appli pour que mes clients suivent leurs commandes de planches sur mesure.', status: 'envoye', montant: 2490, at: new Date(Date.now() - 9 * 864e5) }];
 const ms = v => !v ? 0 : typeof v === 'string' ? Date.parse(v) : v.toMillis ? v.toMillis() : +v;
 let notes = {}, threads = {}, openId = null, rulesOld = false, leads = [], leadsErr = false, lq = '';
 
@@ -379,9 +380,9 @@ const SELLER_DEF = { marque: 'QuenTools', titulaire: 'Quentin Storace EI', adres
   conditions: 'La première version est présentée avant la suite du travail ; les modifications demandées après sa validation peuvent faire l’objet d’un devis complémentaire.\nEn cas de retard de paiement : pénalités égales à trois fois le taux d’intérêt légal et, pour les clients professionnels, indemnité forfaitaire de 40 € pour frais de recouvrement.\n' + CLAUSE };
 const seller = () => ({ ...SELLER_DEF, ...(notes._vendeur || {}) });
 /* Préréglages de prestations (prix indicatifs, dans la grille QuenTools : à adapter). [désignation, prix, mensuel] */
-const CAT_BASE = [['Site vitrine (jusqu’à 5 pages)', 300], ['Page supplémentaire', 50], ['Boutique Shopify : configuration et mise en ligne', 200], ['Outil sur mesure', 1500], ['Audit de sécurité express (1 site, rapport PDF sous 48 h)', 100],
-  ['Paiement en ligne et administration', 800], ['Rédaction des textes', 80], ['Nom de domaine (1 an)', 12], ['Prise en main (1 h en visio)', 50], ['Assistant de site (bulle de discussion)', 79.99], ['Référencement local de base', 90], ['Pack de 5 visuels pour les réseaux sociaux', 90], ['Logo simple et couleurs', 60], ['Version en anglais', 120],
-  ['Maintenance mensuelle : hébergement, sauvegardes, petites modifications', 69.99, true]];
+const CAT_BASE = [['Pack Commerçant : mise en place à votre nom (réservation avec acompte, fidélité, avis Google, espace commerçant)', offreBase('pack')], ['Abonnement Pack Commerçant : hébergement, données, mises à jour', (QTT.templates.find(t => t.id === 'pack') || {}).monthly || 39, true],
+  ['Outil métier sur mesure', offreBase('outil')], ['Application web installable', offreBase('appli')], ['Audit de sécurité express (1 site, rapport PDF sous 48 h)', 100],
+  ...QTT.options.map(o => [o.name, o.price, !!o.monthly])];
 const catCustom = () => { try { const c = JSON.parse((notes._catalogue || {}).items || '[]'); return Array.isArray(c) ? c.filter(x => x && x[0]) : []; } catch (e) { return []; } };
 async function catSave(list) { notes._catalogue = { items: JSON.stringify(list) }; if (DEMO) return; const { Fs, db } = await fb(); await Fs.setDoc(Fs.doc(db, 'qt_notes', '_catalogue'), notes._catalogue); }
 let dv = null;
@@ -416,7 +417,7 @@ function dvInit() {
     const r = tplBuild(cl.template, tpl.opts, tpl.price);
     dv = from({ lignes: r.lignes, acompte: 30, validite: 30, notes: r.notes, client: { nom: x.nom, email: x.email } }); return;
   }
-  const type = g('e-type') ? g('e-type').value : (x && GRID[x.type] ? x.type : 'Site vitrine'), gm = GRID[type] || GRID['Site vitrine'];
+  const type = g('e-type') ? g('e-type').value : (x && GRID[x.type] ? x.type : 'Outil sur mesure'), gm = GRID[type] || GRID['Outil sur mesure'];
   const lvl = g('e-lvl') ? g('e-lvl').selectedOptions[0].textContent.split(' (')[0].toLowerCase() : 'standard';
   dv = from({ lignes: [{ l: `${type} (${lvl}) : conception, réalisation et mise en ligne`, q: 1, pu: estMid || Math.round((gm[0] + gm[1]) / 100) * 50 }], acompte: 30, validite: 30,
     notes: g('e-maint') && g('e-maint').checked ? `Maintenance facultative : ${eur2(MAINT)} par mois (hébergement, sauvegardes, petites modifications).` : '',
@@ -481,7 +482,7 @@ function dvHtml() {
   const short = s => String(s).split(' : ')[0].split(' (')[0];
   const chips = CAT_BASE.map((c, i) => `<button type="button" data-do="cat-add" data-i="b${i}">+ ${esc(short(c[0]))} · ${eur(c[1])}${c[2] ? '/mois' : ''}</button>`).join('')
     + cus.map((c, i) => `<span class="cchip"><button type="button" data-do="cat-add" data-i="c${i}">★ ${esc(short(c[0]).slice(0, 26))} · ${eur(+c[1])}${c[2] ? '/mois' : ''}</button><button type="button" class="cx" data-do="cat-del" data-i="${i}" aria-label="Retirer ce préréglage">✕</button></span>`).join('');
-  const line = (l, i) => `<div class="dv-l"><label>Désignation<textarea data-dvl="${i}:l" rows="2" maxlength="500" placeholder="Ex. Site vitrine 5 pages">${esc(l.l)}</textarea></label>
+  const line = (l, i) => `<div class="dv-l"><label>Désignation<textarea data-dvl="${i}:l" rows="2" maxlength="500" placeholder="Ex. Outil de devis sur téléphone">${esc(l.l)}</textarea></label>
     <div class="r"><label>Qté<input data-dvl="${i}:q" type="number" min="0" step="1" inputmode="numeric" value="${esc(l.q ?? 1)}"></label>
       <label>Prix unitaire (€)<input data-dvl="${i}:pu" type="number" min="0" step="1" inputmode="decimal" value="${esc(l.pu ?? '')}"></label>
       <label>Remise (%)<input data-dvl="${i}:rem" type="number" min="0" max="100" step="1" inputmode="decimal" value="${esc(l.rem ?? '')}"></label>
@@ -747,7 +748,7 @@ async function loadGiftsBase() {
     if (!gifts.length && !cards.length) {
       gifts = [{ id: 'CCK7M2PX', montant: 100, pour: 'Camille', de: 'Léo', message: 'Pour que ton atelier ait enfin son site !', nom: 'Léo Durand', email: 'leo@example.com', envoi: 'destinataire', destEmail: 'camille@example.com', dateEnvoi: addDays(today(), 3), paiement: 'paypal', status: 'attente', at: new Date(Date.now() - 2 * 3600e3) },
         { id: 'CC9H3TQA', montant: 200, pour: 'Papa', de: 'Inès', message: '', nom: 'Inès B.', email: 'ines@example.com', envoi: 'moi', destEmail: '', dateEnvoi: '', paiement: 'paypal', status: 'payee', code: 'QT-8XWD-4M2K', at: new Date(Date.now() - 12 * 864e5) }];
-      cards = [{ id: 'QT-8XWD-4M2K', montant: 200, solde: 120, pour: 'Papa', de: 'Inès', message: 'Joyeux anniversaire !', expire: addMonths(today(), 11), statut: 'active', ref: 'CC9H3TQA', historique: JSON.stringify([{ d: addDays(today(), -5), m: 80, n: 'Devis site vitrine' }]), at: new Date(Date.now() - 12 * 864e5) }];
+      cards = [{ id: 'QT-8XWD-4M2K', montant: 200, solde: 120, pour: 'Papa', de: 'Inès', message: 'Joyeux anniversaire !', expire: addMonths(today(), 11), statut: 'active', ref: 'CC9H3TQA', historique: JSON.stringify([{ d: addDays(today(), -5), m: 80, n: 'Acompte outil sur mesure' }]), at: new Date(Date.now() - 12 * 864e5) }];
     }
     return;
   }
@@ -844,7 +845,7 @@ function viewGifts() {
       <span class="meta"><span class="chip">💶 ${esc(eur2(c.solde))} / ${esc(eur2(c.montant))}</span>${c.pour ? `<span class="chip">pour ${esc(c.pour)}</span>` : ''}<span class="chip">jusqu’au ${esc(new Date(c.expire + 'T12:00').toLocaleDateString('fr-FR'))}</span>${c.ref ? '' : '<span class="chip">offerte</span>'}</span></button></div>
       ${exp ? `<div class="req-body">${c.message ? `<p class="need">« ${esc(c.message)} »</p>` : ''}
         ${h.length ? `<div class="thread">${h.map(x => `<div class="msg systeme">${esc(new Date(x.d + 'T12:00').toLocaleDateString('fr-FR'))} · − ${esc(eur2(x.m))}${x.n ? ' · ' + esc(x.n) : ''}</div>`).join('')}</div>` : '<p class="muted" style="margin:0;font-size:var(--t-sm)">Pas encore utilisée.</p>'}
-        ${cardLive(c) ? `<div class="row3"><input data-cd="m" type="number" min="0.01" max="${esc(c.solde)}" step="0.01" inputmode="decimal" placeholder="Montant utilisé (€)" aria-label="Montant utilisé"><input data-cd="n" maxlength="120" placeholder="Pour quoi ? Ex. devis site vitrine" aria-label="Pour quoi"><button class="btn btn-sm btn-accent" data-do="cd-use">Déduire</button></div>` : ''}
+        ${cardLive(c) ? `<div class="row3"><input data-cd="m" type="number" min="0.01" max="${esc(c.solde)}" step="0.01" inputmode="decimal" placeholder="Montant utilisé (€)" aria-label="Montant utilisé"><input data-cd="n" maxlength="120" placeholder="Pour quoi ? Ex. acompte Pack Commerçant" aria-label="Pour quoi"><button class="btn btn-sm btn-accent" data-do="cd-use">Déduire</button></div>` : ''}
         <div class="row"><a class="btn btn-sm btn-ghost" href="${esc(giftMail(c, g))}">✉️ Envoyer</a><button class="btn btn-sm btn-ghost" data-do="cd-copy">Copier le lien</button><a class="btn btn-sm btn-ghost" href="${esc(cardUrl(c.id))}" target="_blank" rel="noopener">Voir / imprimer</a>
           ${c.statut === 'annulee' ? '<button class="btn btn-sm btn-ghost" data-do="cd-on" style="margin-left:auto">Réactiver</button>' : `${c.expire < today() ? '<button class="btn btn-sm btn-ghost" data-do="cd-extend">Prolonger de 3 mois</button>' : ''}<button class="btn btn-sm btn-ghost" data-do="cd-off" style="margin-left:auto">Annuler la carte</button>`}</div></div>` : ''}</article>`; };
   let list;
@@ -862,7 +863,7 @@ const NAV = [
 const TITLES = {
   demandes: ['Demandes', 'Les projets qui arrivent, de la première demande à la livraison.'],
   agenda: ['Agenda', 'Appels, travail sur les projets, rendez-vous et rappels.'],
-  estimer: ['Devis', 'Estimez un prix, composez le devis avec un template et ses options, puis publiez-le chez le client.'],
+  estimer: ['Devis', 'Estimez un prix, composez le devis avec une offre et ses options, puis publiez-le chez le client.'],
   clients: ['Sites clients', 'Suivez les paiements, verrouillez un site tant que le solde n’est pas réglé, relancez en un clic.'],
   cadeaux: ['Cartes cadeaux', 'Commandes à valider et cartes émises.'],
   contacts: ['Contacts', 'Les adresses laissées sur le site.'],
@@ -1046,7 +1047,7 @@ let estFor = null;
 function viewEstimate() {
   const x = estFor && items.find(i => i.id === estFor);
   const opt = (v, l, sel) => `<option value="${esc(v)}"${sel ? ' selected' : ''}>${esc(l)}</option>`;
-  const type = x && GRID[x.type] ? x.type : 'Site vitrine';
+  const type = x && GRID[x.type] ? x.type : 'Outil sur mesure';
   const pick = `<section class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"><label class="mini">Devis pour<select id="dv-for" aria-label="Demande concernée"><option value="">Devis libre (sans demande)</option>${items.filter(i => (i.status || 'nouveau') !== 'perdu' || i.id === estFor).map(i => `<option value="${esc(i.id)}"${i.id === estFor ? ' selected' : ''}>${esc(i.nom)} · ${esc(i.type)}${i.devisData ? ' · devis publié' : i.devisDraft ? ' · brouillon' : ''}</option>`).join('')}</select></label>
     ${x ? `<p class="muted" style="margin:8px 0 0;font-size:var(--t-sm)">Budget indiqué par le client : <b>${esc(x.budget)}</b> · délai souhaité : ${esc(x.delai)}</p>` : ''}</section>`;
   const est = `<details id="est-box" class="card" style="padding:var(--s-4) var(--s-5);margin-bottom:var(--s-4)"${estOpen ? ' open' : ''}><summary style="cursor:pointer;font-weight:700;padding:6px 0">Estimer un prix conseillé</summary>

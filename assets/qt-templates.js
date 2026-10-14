@@ -41,7 +41,7 @@
     return out;
   }
   const fmt = n => n.toLocaleString('fr-FR', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' €';
-  /* Texte du prix d'une option : « 249,99 € », « 150 € l'unité », « 69,99 € par mois » */
+  /* Texte du prix d'une option : « 99,99 € », « 150 € l'unité », « 49 € par mois » */
   const priceText = o => fmt(o.price) + (o.monthly ? ' par mois' : o.qty ? ' l’unité' : '');
   /* Total indicatif d'un template et de ses options : { once, rec } (rec = montant mensuel) ; chosen = { idOption: quantité } */
   function total(templateId, chosen) {

@@ -1,4 +1,4 @@
-/* QuenTools — rend la publicité Paperdecrypt en vidéo : node tools/pub/render.js <port|land> [fps]
+/* QuenTools — rend une publicité en vidéo : node tools/pub/render.js <port|land> [fps]   (PUB=quentools : publicité QuenTools, sinon Paperdecrypt)
    1) ouvre pub.html (animation pilotée à la seconde près), 2) génère la bande son (audio.py) à partir des repères,
    3) photographie chaque image avec Chromium, 4) assemble en H.264 + AAC avec ffmpeg et règle le volume (télé : −23 LUFS, réseaux : −14 LUFS).
    Sorties dans design/pub/ . Nécessite Playwright, ffmpeg et Python avec numpy. */
@@ -7,7 +7,8 @@ const http = require('http'), fs = require('fs'), path = require('path'), os = r
 const ROOT = path.join(__dirname, '..', '..'), OUT = path.join(ROOT, 'design', 'pub');
 const fmt = process.argv[2] === 'land' ? 'land' : 'port', fps = +process.argv[3] || (fmt === 'land' ? 25 : 30);
 const W = fmt === 'land' ? 1920 : 1080, H = fmt === 'land' ? 1080 : 1920, tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pub-'));
-const name = fmt === 'land' ? 'paperdecrypt-pub-45s-tele-16x9.mp4' : 'paperdecrypt-pub-45s-reseaux-9x16.mp4';
+const QT = process.env.PUB === 'quentools', page = QT ? 'quentools.html' : 'pub.html', pre = QT ? 'quentools-pub-30s' : 'paperdecrypt-pub-45s';
+const name = fmt === 'land' ? `${pre}-tele-16x9.mp4` : `${pre}-reseaux-9x16.mp4`;
 const lufs = fmt === 'land' ? { I: -23, TP: -2.0, LRA: 7 } : { I: -14, TP: -1.5, LRA: 9 };
 fs.mkdirSync(OUT, { recursive: true });
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.woff2': 'font/woff2', '.jpg': 'image/jpeg', '.png': 'image/png' };
@@ -16,9 +17,9 @@ const srv = http.createServer((q, r) => { const f = path.join(ROOT, decodeURICom
   const port = srv.address().port;
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
   const pg = await b.newPage({ viewport: { width: W, height: H } }); const errs = []; pg.on('pageerror', e => errs.push(e.message));
-  await pg.goto(`http://localhost:${port}/tools/pub/pub.html?fmt=${fmt}`); await pg.evaluate(() => window.ready);
+  await pg.goto(`http://localhost:${port}/tools/pub/${page}?fmt=${fmt}`); await pg.evaluate(() => window.ready);
   const cues = await pg.evaluate(() => window.CUES), dur = await pg.evaluate(() => window.DUR);
-  fs.writeFileSync(path.join(tmp, 'cues.json'), JSON.stringify({ dur, cues })); fs.writeFileSync(path.join(OUT, 'repères-son.json'), JSON.stringify(cues));
+  fs.writeFileSync(path.join(tmp, 'cues.json'), JSON.stringify({ dur, cues })); fs.writeFileSync(path.join(OUT, QT ? 'quentools-repères-son.json' : 'repères-son.json'), JSON.stringify(cues));
   const wav = path.join(tmp, 'son.wav'); cp.execFileSync('python3', [path.join(__dirname, 'audio.py'), path.join(tmp, 'cues.json'), wav], { stdio: 'inherit' });
   // mesure du volume (1re passe) puis réglage
   const m = cp.spawnSync('ffmpeg', ['-hide_banner', '-nostats', '-i', wav, '-af', `loudnorm=I=${lufs.I}:TP=${lufs.TP}:LRA=${lufs.LRA}:print_format=json`, '-f', 'null', '-'], { encoding: 'utf8' }).stderr;
@@ -26,7 +27,7 @@ const srv = http.createServer((q, r) => { const f = path.join(ROOT, decodeURICom
   const norm = path.join(tmp, 'son-norm.wav');
   cp.execFileSync('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-i', wav, '-af', `loudnorm=I=${lufs.I}:TP=${lufs.TP}:LRA=${lufs.LRA}:measured_I=${j.input_i}:measured_TP=${j.input_tp}:measured_LRA=${j.input_lra}:measured_thresh=${j.input_thresh}:offset=${j.target_offset}:linear=true`, '-ar', '48000', norm]);
   // Bande son seule (montage, diffuseur) : même volume que la vidéo.
-  cp.execFileSync('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-i', norm, '-c:a', 'libmp3lame', '-b:a', '192k', path.join(OUT, fmt === 'land' ? 'paperdecrypt-pub-bande-son-tele.mp3' : 'paperdecrypt-pub-bande-son-reseaux.mp3')]);
+  cp.execFileSync('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-i', norm, '-c:a', 'libmp3lame', '-b:a', '192k', path.join(OUT, `${QT ? 'quentools' : 'paperdecrypt'}-pub-bande-son-${fmt === 'land' ? 'tele' : 'reseaux'}.mp3`)]);
   // PRORES=1 : copie de travail pour la télévision ou le montage (ProRes 422 HQ, son PCM) au lieu du H.264.
   const pro = !!process.env.PRORES, out = path.join(OUT, pro ? name.replace(/\.mp4$/, '-master.mov') : name);
   const venc = pro ? ['-c:v', 'prores_ks', '-profile:v', '3', '-vendor', 'apl0', '-pix_fmt', 'yuv422p10le', '-c:a', 'pcm_s16le'] : ['-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart'];

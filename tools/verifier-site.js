@@ -30,6 +30,13 @@ if (!/noindex/.test(lire('formation/8gbuw1z5ua58n9/index.html'))) ko('formation/
   for (const t of T.templates) if (!fs.existsSync(path.join(root, t.demo))) ko('assets/qt-templates.js', `démonstration introuvable : ${t.demo}`);
   for (const f of ['templates/index.html', 'creation-site/index.html']) if (!/http-equiv="refresh"/.test(lire(f))) ko(f, 'page de site retirée : la redirection vers les offres manque');
   if (plan.some(p => /^(templates|creation-site|exemples)\//.test(p))) ko('sitemap.xml', 'les pages de vente de sites retirées ne doivent plus figurer dans le plan du site'); }
+// Cohérence des offres : aucune ancienne offre de site ni ancien prix dans ce qui est publié ou montré aux clients
+{ const fichiers = ['index.html', '404.html', 'decodeur-courrier.html', 'devis/index.html', 'cadeau/index.html', 'espace/index.html', 'realisations/index.html', 'outils/index.html', 'conseils/index.html',
+    'audit/index.html', 'admin/index.html', 'assets/assistant-qt.js', 'assets/qt-templates.js', 'design/flyer/flyer.html', 'demo/pack-commercant/index.html', 'design/reseaux/BIOS.md'];
+  const anciens = /dès 299|299 €|599 €|799 €|69,99|69\.99|79,99|249,99|clé en main|cle en main|agence de communication|communication digitale|site vitrine|sites vitrines|boutique shopify|template prêt|templates prêts|nom de domaine offert/i;
+  const g = new RegExp(anciens.source, 'gi');
+  for (const f of fichiers) { const t = lire(f);
+    for (const m of t.matchAll(g)) if (!/ne crée plus de sites vitrines|ne faisons plus de sites vitrines|k: '[^']*$/.test(t.slice(Math.max(0, m.index - 80), m.index)) && !/ne crée plus de sites vitrines|ne faisons plus de sites vitrines/.test(t.slice(m.index - 40, m.index + 80))) ko(f, `ancienne offre ou ancien prix : « ${m[0]} »`); } }
 const titres = new Set(), descriptions = new Set();
 const pages = new Set([...plan.map(p => p + 'index.html'), 'index.html', 'devis/index.html', 'realisations/index.html']);
 for (const p of pages) {
