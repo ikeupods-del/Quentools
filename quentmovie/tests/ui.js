@@ -198,6 +198,17 @@ function chromium() {
   check('chapitres : 10 s minimum entre deux chapitres', await ev(() => JSON.stringify(chapitres())) === JSON.stringify(['0:00 Introduction', '0:12 Partie 2']), await ev(() => JSON.stringify(chapitres())));
   await ev(() => { if (!vues.grille) basculerVue('grille'); }); check('grille des tiers activée', await ev(() => vues.grille && $('#vGrille').classList.contains('on')));
   await ev(() => basculerVue('grille'));
+  // animations en direct du studio : vert retiré par la puce graphique (WebGL), même rendu que le repli par le processeur
+  const det = await ev(() => {
+    const src = document.createElement('canvas'); src.width = 64; src.height = 32; const g = src.getContext('2d'); g.fillStyle = '#00ff00'; g.fillRect(0, 0, 32, 32); g.fillStyle = '#c83232'; g.fillRect(32, 0, 32, 32);
+    const lire = el => { const o = document.createElement('canvas'); o.width = 64; o.height = 32; const og = o.getContext('2d'); og.drawImage(el, 0, 0); return [og.getImageData(8, 16, 1, 1).data[3], ...og.getImageData(48, 16, 1, 1).data]; };
+    const c1 = document.createElement('canvas'); c1.width = 64; c1.height = 32; const d1 = detoureurVert(c1); d1.dessiner(src); const r1 = lire(d1.el); d1.fin();
+    const c2 = document.createElement('canvas'); c2.width = 64; c2.height = 32; c2.getContext('2d'); const d2 = detoureurVert(c2); d2.dessiner(src); const r2 = lire(d2.el);
+    return { gpu: d1.gpu, r1, cpu: !d2.gpu, r2 };
+  });
+  const bonRendu = r => r[0] === 0 && r[1] > 180 && r[2] < 80 && r[4] === 255;
+  check('studio : animation sur fond vert détourée par la puce graphique', det.gpu && bonRendu(det.r1), JSON.stringify(det));
+  check('studio : repli sans puce graphique, même rendu', det.cpu && bonRendu(det.r2), JSON.stringify(det));
 
   // 3 ter) assistant de montage (⌘K) : demande en français → étapes cochées → appliquées ; suggestions ; textes de publication sans IA
   await ev(() => { const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v), newClip(v), newClip(v)]; proj.audio = []; proj.markers = []; proj.clips.forEach(c => { c.transition = null; c.afx = []; }); sel = 0; commit(); tout(); });

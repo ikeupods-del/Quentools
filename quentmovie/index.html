@@ -3822,6 +3822,39 @@ function stCleAuto() {
   stMsg(`Couleur du fond vert reprise : rgb(${Math.round(R / n)}, ${Math.round(G / n)}, ${Math.round(B / n)}).`);
 }
 // Animations en direct : aperçu immédiat, et noté pour être ajouté à la prise
+// Retire le vert d'une vidéo dans un canvas : par la puce graphique (WebGL, une image entière d'un coup),
+// sinon pixel par pixel (même rendu : vert franc transparent, bords adoucis, reflets verts retirés)
+function detoureurVert(el) {
+  const gl = el.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });
+  if (gl) {
+    try {
+      const sh = (t, src) => { const x = gl.createShader(t); gl.shaderSource(x, src); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; };
+      const pr = gl.createProgram();
+      gl.attachShader(pr, sh(gl.VERTEX_SHADER, 'attribute vec2 p;varying vec2 u;void main(){u=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}'));
+      gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, 'precision mediump float;varying vec2 u;uniform sampler2D t;void main(){vec4 c=texture2D(t,u);float m=max(c.r,c.b),e=(c.g-m)*255.;float a=e>70.?0.:e>25.?(70.-e)/45.:1.;vec3 r=e>25.?vec3(c.r,m,c.b):c.rgb;gl_FragColor=vec4(r*a,a);}'));
+      gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error('programme');
+      gl.useProgram(pr); gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      const lp = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp, 2, gl.FLOAT, false, 0, 0);
+      gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+      [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE));
+      [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.LINEAR));
+      gl.viewport(0, 0, el.width, el.height); gl.clearColor(0, 0, 0, 0);
+      return { gpu: true, el,
+        dessiner(v) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, v); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); },
+        fin() { const x = gl.getExtension('WEBGL_lose_context'); if (x && !gl.isContextLost()) x.loseContext(); } }; // libère la puce tout de suite (nombre de contextes limité)
+    } catch (e) { el = el.cloneNode(); } // repli sur le processeur, dans un nouveau canvas
+  }
+  const g = el.getContext('2d', { willReadFrequently: true }), cw = el.width, ch = el.height;
+  return { gpu: false, el,
+    dessiner(v) {
+      g.drawImage(v, 0, 0, cw, ch); const d = g.getImageData(0, 0, cw, ch), px = d.data;
+      for (let i = 0; i < px.length; i += 4) {
+        const r = px[i], gr = px[i + 1], bl = px[i + 2], e = gr - Math.max(r, bl);
+        if (e > 70) px[i + 3] = 0; else if (e > 25) { px[i + 3] = 255 * (70 - e) / 45; px[i + 1] = Math.max(r, bl); }
+      }
+      g.putImageData(d, 0, 0);
+    }, fin() {} };
+}
 function stAnimer(id) {
   if (!studio) return;
   const t = studio.rec ? stDuree() : null, calque = $('#stAnim'), v = studio.o.fond ? $('#stCanvas') : $('#stVideo');
@@ -3837,22 +3870,16 @@ function stAnimer(id) {
   const a = animsDirect().find(x => x.id === id); if (!a) return;
   // aperçu : la vidéo sur fond vert est dessinée en retirant le vert (même rendu que dans le montage)
   const vid = document.createElement('video'); vid.src = `/lib/fondvert/${a.id}.mp4`; vid.muted = true; vid.playsInline = true;
-  const cw = a.w > a.h ? 640 : 360, ch = Math.round(cw * a.h / a.w), el = document.createElement('canvas'); el.width = cw; el.height = ch; const g = el.getContext('2d', { willReadFrequently: true });
+  const cw = a.w > a.h ? 640 : 360, ch = Math.round(cw * a.h / a.w), toile = document.createElement('canvas'); toile.width = cw; toile.height = ch; const dt = detoureurVert(toile), el = dt.el;
   const taille = W * a.s / 100, hauteur = taille * a.h / a.w; Object.assign(el.style, { position: 'absolute', width: taille + 'px', height: hauteur + 'px', left: (W * a.x / 100 - taille / 2) + 'px', top: (H * a.y / 100 - hauteur / 2) + 'px' });
   if (!studio.rec && a.son && studio.o.bruitage !== false) { try { const son = new Audio('/lib/' + a.son); son.volume = 0.6; son.play().catch(() => {}); } catch (er) { /* pas de bruit d'aperçu */ } } // jamais pendant la prise : le micro l'entendrait
   const image = () => {
-    if (!el.isConnected) return;
-    if (vid.readyState >= 2) {
-      g.drawImage(vid, 0, 0, cw, ch); const d = g.getImageData(0, 0, cw, ch), px = d.data;
-      for (let i = 0; i < px.length; i += 4) {
-        const r = px[i], gr = px[i + 1], bl = px[i + 2], e = gr - Math.max(r, bl);
-        if (e > 70) px[i + 3] = 0; else if (e > 25) { px[i + 3] = 255 * (70 - e) / 45; px[i + 1] = Math.max(r, bl); }
-      }
-      g.putImageData(d, 0, 0);
-    }
+    if (!el.isConnected) return dt.fin();
+    if (vid.readyState >= 2) dt.dessiner(vid);
     requestAnimationFrame(image);
   };
-  vid.onended = vid.onerror = () => el.remove(); calque.appendChild(el); vid.play().then(image).catch(() => el.remove());
+  const retirer = () => { el.remove(); dt.fin(); };
+  vid.onended = vid.onerror = retirer; calque.appendChild(el); vid.play().then(image).catch(retirer);
   if (t !== null) studio.evts.push({ id, t });
 }
 // ---------- Afficher en direct : image ou vidéo, textes, logo, partage d'écran ----------
