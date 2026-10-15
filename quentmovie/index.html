@@ -1101,9 +1101,24 @@ $('#poignee').onpointerdown = e => {
   document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
 };
 $('#poignee').ondblclick = () => { hTl(280); tlDessin(); };
+// Pendant la lecture, la timeline suit la tête de lecture, sauf si on la fait défiler soi-même (molette, barre) : on peut alors
+// s'y promener librement ; le suivi reprend 4 s après le dernier geste, ou dès qu'on clique pour se placer
+let suiviLibre = 0;
 function tete() {
   $('#tete').style.left = (gt * zoom) + 'px'; $('#tc').textContent = tc(gt, proj.fps); if (document.activeElement !== $('#scrub')) $('#scrub').value = gt;
-  const sc = $('#scroll'), x = gt * zoom; if (x < sc.scrollLeft + 10 || x > sc.scrollLeft + sc.clientWidth - 30) { if (lecture) sc.scrollLeft = Math.max(0, x - 80); }
+  const sc = $('#scroll'), x = gt * zoom; if (x < sc.scrollLeft + 10 || x > sc.scrollLeft + sc.clientWidth - 30) { if (lecture && Date.now() - suiviLibre > 4000) sc.scrollLeft = Math.max(0, x - 80); }
+}
+$('#scroll').addEventListener('wheel', e => { if (!e.ctrlKey && !e.metaKey) suiviLibre = Date.now(); }, { passive: true });
+$('#scroll').addEventListener('pointerdown', e => { if (e.target === $('#scroll')) suiviLibre = Date.now(); }); // barre de défilement
+// Clic dans la timeline pendant la lecture : la lecture continue depuis cet endroit (avant : seul le curseur de l'aperçu le permettait)
+let minuteurSaut = 0;
+function sauterLecture(t) {
+  if (!lecture) return; suiviLibre = 0; clearTimeout(minuteurSaut);
+  minuteurSaut = setTimeout(() => {
+    if (!lecture) return;
+    if (lecture.direct) { const l = lecture; l.video.pause(); if (l.arreter) l.arreter(); lecture = null; gt = t; lectureDirecte(); return; } // lecture rapide : reprise au bon clip
+    const v = lecture.video, T = total(); if (v.duration > 0 && T > 0) { v.currentTime = clamp(t * (v.duration / T), 0, Math.max(0, v.duration - 0.05)); if (v.paused) v.play().catch(() => {}); }
+  }, 120);
 }
 function setZoom(z) { zoom = clamp(Math.round(z), 6, 200); $('#zoom').value = zoom; tlDessin(); }
 $('#zoom').oninput = e => setZoom(+e.target.value);
@@ -1121,6 +1136,7 @@ function locate(t) { const st = starts(); let i = proj.clips.length - 1; for (le
 let pos = 0;
 function placerTete(t, opts = {}) {
   gt = clamp(t, 0, Math.max(0, total() - 0.001)); const { i, pos: p } = locate(gt); pos = p;
+  if (lecture) sauterLecture(gt);
   if (i !== sel && !opts.sansSelection) { sel = i; selA = -1; selP = -1; selCut = -1; selT = -1; inspecteur(); tlDessin(); if (tab === 'effets' || tab === 'outils') navigateur(); } else tete();
   if (!opts.sansApercu) apercuRetarde();
 }
@@ -2509,7 +2525,7 @@ async function miniSauver() {
   } catch (e) { $('#mRes').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
 }
 // ---------- Parole : sous-titres automatiques, coupe des blancs et des « euh » (reconnaissance locale, parole.js) ----------
-const PAROLE_DEF = { style: 'bandeau', priseSous: false, priseCoupe: false, dico: '' };
+const PAROLE_DEF = { style: 'bandeau', priseSous: false, priseCoupe: false, dico: '', coupe: 'douce' };
 // Noms propres souvent mal entendus, corrigés dans les sous-titres ; l'utilisateur ajoute les siens (« entendu = bon mot »)
 const CORRECTIONS = [[/\b(?:cantools?|kantools?|cantouls|quentouls|quentools|kenttools|quent tools)\b/gi, 'QuenTools'], [/\b(?:kumovie|quentmovie|quent movie|kent movie|cometmovie)\b/gi, 'QuentMovie']];
 function corriger(t) {
@@ -2554,7 +2570,9 @@ function paroleAppliquer(i, r, { sous, couper, style }) {
     if (sous) { c.subs = sousTitresPour(r, style, 0, dur + 1, sp); c.subStyle = style; if (modeMots(style)) c.subSize = Math.max(c.subSize || 0, tailleSous(style)); }
     return { pieces: 1, gagne: 0, n: sous ? c.subs.length : 0 };
   }
-  const segs = r.garder.filter(([x, y]) => y > x + 0.15 && x < dur);
+  // niveau de coupe choisi (douce par défaut : seuls les vrais blancs partent, la vidéo reste fluide)
+  const niv = paroleOpts().coupe || 'douce', garder = (r.garderNiveaux && r.garderNiveaux[niv]) || r.garder;
+  const segs = garder.filter(([x, y]) => y > x + 0.15 && x < dur);
   if (!segs.length) return { pieces: 1, gagne: 0, n: 0 };
   // morceaux gardés : titre, texte, cadrage et calques recalés et continués (decouperClip), sous-titres refaits sur la parole
   const morceaux = segs.map(([x, y]) => [x / sp, Math.min(y, dur) / sp]), st0 = starts()[i];
@@ -2627,7 +2645,8 @@ function outilsHtml() {
       <div class="sw2"><input type="checkbox" id="oPriseSous" ${po.priseSous ? 'checked' : ''}><label for="oPriseSous">Sous-titrer automatiquement mes prises du studio</label></div>
       <label class="l">Corrections des noms propres (une par ligne)</label><textarea id="oDico" rows="2" placeholder="mot entendu = bon mot&#10;ex. : Michel Lin = Michelin">${esc(po.dico)}</textarea>
       <div class="mut" id="oSousRes" style="margin-top:4px"></div></div>
-    <div class="encart"><h4>✂ Couper les blancs et les « euh »</h4><p class="mut">Garde seulement les moments où tu parles : les blancs, les hésitations et les « euh » sont retirés. Les sous-titres sont recalés.</p>
+    <div class="encart"><h4>✂ Couper les blancs et les « euh »</h4><p class="mut">Garde seulement les moments où tu parles. Les sous-titres, la musique et les calques sont recalés.</p>
+      <label class="l">Force de la coupe</label><select id="oCoupeNiv">${opts([['douce', 'Douce : seulement les longs blancs (vidéo fluide, recommandé)'], ['normale', 'Normale : blancs et « euh »'], ['serree', 'Serrée : toutes les pauses (rythme haché)']], po.coupe || 'douce')}</select>
       <div class="ligne"><button class="pri" data-outil="coupe-clip">Clip sélectionné</button><button class="pri" data-outil="coupe-tout">Toute la vidéo</button></div>
       <div class="sw2"><input type="checkbox" id="oPriseCoupe" ${po.priseCoupe ? 'checked' : ''}><label for="oPriseCoupe">Couper automatiquement mes prises du studio</label></div><div class="mut" id="oCoupeRes" style="margin-top:4px"></div></div>
     <div class="encart"><h4>✨ Améliorer la qualité</h4><p class="mut">Image débruitée et plus nette, couleurs ravivées ; son sans souffle, voix claire et volume régulier. Sur tous les clips en un clic.</p>
@@ -2670,7 +2689,7 @@ function outilsHtml() {
     <div class="encart"><h4>⌨ Raccourcis clavier</h4><button data-outil="aide" style="width:100%">Afficher tous les raccourcis (?)</button></div>`;
 }
 $('#navbody').addEventListener('change', e => {
-  const k = { oSousStyle: 'style', oPriseSous: 'priseSous', oPriseCoupe: 'priseCoupe', oDico: 'dico' }[e.target.id]; if (!k) return;
+  const k = { oSousStyle: 'style', oPriseSous: 'priseSous', oPriseCoupe: 'priseCoupe', oDico: 'dico', oCoupeNiv: 'coupe' }[e.target.id]; if (!k) return;
   const o = paroleOpts(); o[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; paroleGarder(o);
 });
 $('#navbody').addEventListener('input', e => {

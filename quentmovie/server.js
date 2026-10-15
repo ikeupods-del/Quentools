@@ -644,6 +644,11 @@ function buildClip(c, P, o = {}) {
     }
     if (fondus.e) af.push(`afade=t=in:d=${fondus.e.toFixed(2)}`);
     if (fondus.s) af.push(`afade=t=out:st=${Math.max(0, eff - fondus.s).toFixed(3)}:d=${fondus.s.toFixed(2)}`);
+    // morceau de parole (blancs coupés) : fondu sonore imperceptible aux raccords, sans le petit clic d'une coupe sèche
+    if (c.parle && eff > 0.1) {
+      if (!fondus.e && c.microE !== false) af.push('afade=t=in:d=0.012');
+      if (!fondus.s && c.microS !== false) af.push(`afade=t=out:st=${Math.max(0, eff - 0.012).toFixed(3)}:d=0.012`);
+    }
     af.push('aresample=48000', 'aformat=sample_fmts=fltp:channel_layouts=stereo');
     f.push(`[${src}]${af.join(',')}[a]`);
 
@@ -1083,6 +1088,7 @@ function buildClip(c, P, o = {}) {
         const a = k * len, b = (k + 1) * len, d = { ...c };
         d.in = +(num(c.in, 0) + a).toFixed(3); d.out = k === n - 1 ? num(c.out, 0) : +(num(c.in, 0) + b).toFixed(3);
         d.fade = false; d.fadeIn = k === 0 ? fo.e : 0; d.fadeOut = k === n - 1 ? fo.s : 0;
+        d.microE = k === 0; d.microS = k === n - 1; // raccords internes du découpage : pas de fondu sonore
         d.transition = k === n - 1 ? c.transition : null;
         d.subs = (c.subs || []).filter(x => x && num(x.e, 0) > a && num(x.s, 0) < b).map(x => ({ ...x, s: +Math.max(0, num(x.s, 0) - a).toFixed(3), e: +(Math.min(num(x.e, 0), b) - a).toFixed(3) }));
         d.overlays = [];
@@ -1707,7 +1713,8 @@ function buildClip(c, P, o = {}) {
         return send(res, 200, travail(async job => {
           job.step = 'Écoute de la voix…';
           const P = require('./parole'), r = await PAROLE().ecouter(f, clamp(num(b.in, 0), 0, 1e6), clamp(num(b.out, 0), 0, 1e6));
-          return { ...r, st: { phrase: P.sousTitres(r.mots, 'phrase'), mots: P.sousTitres(r.mots, 'mots') }, garder: P.aGarder(r.mots, r.duree) };
+          const niveaux = P.garderNiveaux(r.mots, r.duree);
+          return { ...r, st: { phrase: P.sousTitres(r.mots, 'phrase'), mots: P.sousTitres(r.mots, 'mots') }, garder: niveaux.douce, garderNiveaux: niveaux };
         }));
       }
       if (req.method === 'POST' && p === '/api/parole/reglages-mac') { // Réglages Système → voix (pour télécharger les voix « Premium » d'Apple)

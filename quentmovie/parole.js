@@ -67,17 +67,27 @@ function sousTitres(mots, style = 'phrase') {
   return out;
 }
 
-// Passages à garder : la parole sans les blancs ni les hésitations ; [debut, fin] en secondes
-function aGarder(mots, duree, { avant = 0.12, apres = 0.18, trou = 0.35 } = {}) {
-  const utiles = mots.filter(w => !estHesitation(w));
+// Passages à garder : la parole sans les blancs (ni, sauf en coupe douce, les hésitations) ; [debut, fin] en secondes.
+// Trois niveaux : « douce » (par défaut dans l'application : seuls les vrais blancs partent, les respirations et les « euh »
+// restent, la vidéo reste fluide), « normale », « serree » (tout blanc de plus de 0,35 s coupé : rythme très haché).
+const NIVEAUX_COUPE = {
+  douce: { avant: 0.3, apres: 0.4, finPhrase: 0.75, trou: 1.2, hesitations: true },
+  normale: { avant: 0.2, apres: 0.28, finPhrase: 0.55, trou: 0.7, hesitations: false },
+  serree: { avant: 0.12, apres: 0.18, finPhrase: 0.42, trou: 0.35, hesitations: false }
+};
+function aGarder(mots, duree, o = {}) {
+  const { avant, apres, finPhrase, trou, hesitations } = { ...NIVEAUX_COUPE[o.niveau || 'serree'], ...o };
+  const utiles = hesitations ? mots : mots.filter(w => !estHesitation(w));
   const out = [];
   for (const w of utiles) {
-    // respiration plus longue après une fin de phrase : le rythme reste naturel (pas toutes les pauses à 0,3 s)
-    const s = Math.max(0, w.s - avant), e = Math.min(duree, w.e + (/[.!?…]["»)]?$/.test(w.m) ? Math.max(apres, 0.42) : apres)), d = out[out.length - 1];
+    // respiration plus longue après une fin de phrase : le rythme reste naturel (pas toutes les pauses au minimum)
+    const s = Math.max(0, w.s - avant), e = Math.min(duree, w.e + (/[.!?…]["»)]?$/.test(w.m) ? Math.max(apres, finPhrase) : apres)), d = out[out.length - 1];
     if (d && s - d[1] < trou) d[1] = Math.max(d[1], e); else out.push([s, e]);
   }
   return out.map(([s, e]) => [+s.toFixed(2), +e.toFixed(2)]).filter(([s, e]) => e - s >= 0.2);
 }
+// les trois niveaux d'un coup (le choix se fait dans l'application, sans réécouter)
+const garderNiveaux = (mots, duree) => Object.fromEntries(Object.keys(NIVEAUX_COUPE).map(n => [n, aGarder(mots, duree, { niveau: n })]));
 
 // ---------- Gestionnaire (dans le moteur) ----------
 function creer({ run, FFMPEG, BASE }) {
@@ -169,4 +179,4 @@ function creer({ run, FFMPEG, BASE }) {
   return { etat, installer, parler, ecouter, arreter, VOIX };
 }
 
-module.exports = { creer, motsDe, sousTitres, aGarder, estHesitation, VOIX, ECOUTE };
+module.exports = { creer, motsDe, sousTitres, aGarder, garderNiveaux, NIVEAUX_COUPE, estHesitation, VOIX, ECOUTE };

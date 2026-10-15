@@ -64,6 +64,7 @@ Touche **?** dans l'application pour la liste complète. Principaux : ⌘K assis
 
 ## Limites
 - Une piste vidéo principale (les clips se suivent), une piste vidéo 2 au-dessus et des calques par clip ; pas de multicam, de suivi de mouvement ni d'étalonnage par courbes.
+- Coupe des blancs : trois forces (`NIVEAUX_COUPE` dans parole.js) ; « douce » par défaut (blancs de 2 s environ, respirations et « euh » gardés, fondu sonore de 12 ms aux raccords), « normale », « serrée » (toutes les pauses de plus de 0,35 s, rythme haché).
 - Les sous-titres automatiques et la coupe des « euh » dépendent de la reconnaissance : relire les sous-titres (noms propres) avant de publier. Une hésitation non reconnue comme mot est coupée comme un blanc.
 - Le détourage sans fond vert (studio, miniature) est très bon dans une pièce éclairée ; un vrai fond vert reste plus net pour les cheveux fins.
 - L'aperçu avec effets est un rendu rapide (quelques secondes selon la durée), pas une lecture instantanée.

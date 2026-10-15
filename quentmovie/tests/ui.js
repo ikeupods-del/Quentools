@@ -348,6 +348,15 @@ function chromium() {
   check('prise plein écran + bulle : piste de l’écran plein et piste de la bulle ronde', await ev(n => { const p = (proj.pistes || []).slice(n); const e = p.find(x => /^camera-ecran-/.test(x.file)), b = p.find(x => x.forme === 'rond' && /^camera-/.test(x.file) && !/ecran/.test(x.file)); return p.length === 2 && e && e.plein && b && !b.plein && b.x === 88 && b.scale === 24 && b.ligne > e.ligne && b.in >= 0; }, nPistes3));
   await ev(() => fermerStudio());
 
+  // 7 bis) lecture : clic dans la règle de la timeline → la lecture continue depuis là ; défilement libre pendant la lecture
+  await ev(() => { stopLecture(); const ph = medias.find(m => m.file === 'photo.png'); proj.clips = []; proj.audio = []; proj.pistes = []; proj.textes = []; for (let i = 0; i < 6; i++) { const c = newClip(ph); c.kind = 'image'; c.dur = 4; proj.clips.push(c); } sel = 0; setZoom(40); commit(); tout(); placerTete(0); lectureDirecte(); });
+  await pg.waitForTimeout(600);
+  { const r = await ev(() => { const b = $('#regle').getBoundingClientRect(), l = $('#lane').getBoundingClientRect(); return { x: l.left + 14 * zoom, y: b.top + b.height / 2 }; });
+    await pg.mouse.click(r.x, r.y); await pg.waitForTimeout(900);
+    check('lecture : un clic dans la timeline fait continuer la lecture depuis cet endroit', await ev(() => !!lecture && gt > 14.3 && gt < 16.5 && locate(gt).i === 3), await ev(() => `${!!lecture} ${gt}`)); }
+  await ev(() => { $('#scroll').scrollLeft = 0; }); await pg.mouse.move(700, await ev(() => $('#pV').getBoundingClientRect().top + 20)); await pg.mouse.wheel(600, 0); await pg.waitForTimeout(700);
+  check('lecture : la timeline se fait défiler librement pendant la lecture', await ev(() => !!lecture && Date.now() - suiviLibre < 4000), await ev(() => `${$('#scroll').scrollLeft} ${suiviLibre}`));
+  await ev(() => stopLecture());
   // 8) coupe : sous-titres suivent chaque morceau ; chapitrage automatique (repères, titre qui s'écrit, bruit de clavier) ; clipping
   await ev(() => { const m = medias.find(x => x.file === 'a.mp4'); const c = newClip(m); c.subs = [{ s: 1, e: 2, t: 'un' }, { s: 4, e: 5, t: 'deux' }]; proj.clips = [c]; proj.audio = []; proj.pistes = []; proj.markers = []; proj.nomsReperes = {}; sel = 0; commit(); tout(); });
   await ev(() => { placerTete(3, { sansSelection: true }); couper(); });
