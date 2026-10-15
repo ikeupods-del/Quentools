@@ -906,6 +906,8 @@ function carteAnalyse(a) {
     ${pts.length ? `<ul style="margin:4px 0 4px 18px">${pts.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
     ${P && g.id !== 'general' ? `<button data-pack-sujet="${esc(P.id)}">🎬 Monter dans le style « ${esc(P.nom)} »</button> <span class="mut">pack conseillé pour ce sujet</span>` : ''}${carteTechnique(a.technique)}</div>`;
 }
+// ce que l'analyse a compris (sujet, résumé, mots-clés, idées) : gardé dans le projet pour les textes de publication
+function garderAnalyse(a) { if (a && a.sujet) proj.analyse = { sujet: a.sujet, resume: a.resume || '', motsCles: (a.motsCles || []).slice(0, 6), points: (a.points || []).slice(0, 6), genre: (a.genre && a.genre.nom) || '' }; }
 function brancherCarteAnalyse(racine) {
   racine.querySelectorAll('[data-aller]').forEach(b => { b.onclick = e => { e.preventDefault(); placerTete(+b.dataset.aller); }; }); // idée forte → son moment dans la vidéo
   racine.querySelectorAll('[data-conseil]').forEach(b => { b.onclick = async () => {
@@ -1430,11 +1432,15 @@ function chapitres() {
   for (const t of pts) if (!garde.length || t - garde[garde.length - 1] >= 10) garde.push(t); // YouTube : 10 s minimum par chapitre
   return garde.map((t, k) => `${hms(t)} ${nomRepere(t) || (k ? `Partie ${k + 1}` : 'Introduction')}`);
 }
+// sommaire avec le résumé de chaque chapitre (description, article, publication)
+function sommaireDetaille() { const R = proj.resumesChapitres || {}; return chapitres().map(l => { const nom = l.replace(/^\S+ /, ''); return R[nom] ? `${l} — ${R[nom]}` : l; }); }
 function ouvrirChapitres() {
-  const l = chapitres(), ok2 = l.length >= 3;
+  const l = chapitres(), ok2 = l.length >= 3, som = sommaireDetaille(), avecRes = som.some((x, i) => x !== l[i]);
   ouvrir(`<h2>📑 Chapitres YouTube</h2><p class="mut">${ok2 ? 'À coller dans la description de ta vidéo YouTube : les chapitres apparaissent sur la barre de lecture.' : 'YouTube demande au moins 3 chapitres de 10 secondes : pose des repères (touche M) aux débuts de parties, puis double-clique dessus pour les nommer.'}</p>
     <textarea id="chTxt" rows="${Math.max(4, l.length + 1)}" style="width:100%;font-family:ui-monospace,Menlo,monospace">${esc(l.join('\n'))}</textarea>
+    ${avecRes ? `<label class="l">Sommaire détaillé (avec le résumé de chaque chapitre)</label><textarea id="chSom" rows="${Math.max(4, som.length + 1)}" style="width:100%">${esc(som.join('\n'))}</textarea><button class="mini" id="chCopierSom" style="margin-top:4px">Copier le sommaire</button>` : ''}
     <div class="ligne" style="margin-top:10px"><button id="chFermer">Fermer</button><button class="pri" id="chCopier" ${ok2 ? '' : 'disabled'}>Copier</button></div>`);
+  if (avecRes) $('#chCopierSom').onclick = async () => { try { await navigator.clipboard.writeText($('#chSom').value); aide('📋 Sommaire copié.'); } catch (e) { $('#chSom').select(); document.execCommand('copy'); } };
   $('#chFermer').onclick = fermer; $('#chCopier').onclick = async () => { try { await navigator.clipboard.writeText($('#chTxt').value); aide('📋 Chapitres copiés.'); } catch (e) { $('#chTxt').select(); document.execCommand('copy'); } fermer(); };
 }
 
@@ -1606,11 +1612,11 @@ async function ouvrirChapitrage() {
   const etat = t => { const e = $('#chEtat'); if (e) e.innerHTML = t; };
   let chapitres = [];
   const rendre = () => {
-    $('#chListe').innerHTML = chapitres.length ? `<div class="asListe">${chapitres.map((c, i) => `<div class="ligne" data-i="${i}" style="margin:3px 0"><input type="text" class="chT" value="${hmsCourt(c.t)}" style="flex:none;width:64px" ${i ? '' : 'readonly'}><input type="text" class="chN" value="${esc(c.titre)}" maxlength="60"><button class="mini" data-del="${i}" title="Retirer ce chapitre" ${i ? '' : 'disabled'}>✕</button></div>`).join('')}</div>` : '';
+    $('#chListe').innerHTML = chapitres.length ? `<div class="asListe">${chapitres.map((c, i) => `<div data-i="${i}" style="margin:3px 0 7px"><div class="ligne"><input type="text" class="chT" value="${hmsCourt(c.t)}" style="flex:none;width:64px" ${i ? '' : 'readonly'}><input type="text" class="chN" value="${esc(c.titre)}" maxlength="60"><button class="mini" data-del="${i}" title="Retirer ce chapitre" ${i ? '' : 'disabled'}>✕</button></div><input type="text" class="chR" value="${esc(c.resume || '')}" maxlength="220" placeholder="Résumé en une phrase (facultatif)" title="Résumé du chapitre : repris dans le sommaire détaillé" style="width:calc(100% - 72px);margin:3px 0 0 72px;font-size:12px"></div>`).join('')}</div>` : '';
     $('#chOpts').hidden = !chapitres.length; $('#chAppliquer').hidden = !chapitres.length; $('#chRefaire').hidden = false;
   };
   $('#chListe').onclick = e => { const d = e.target.closest('[data-del]'); if (!d) return; lire(); chapitres.splice(+d.dataset.del, 1); rendre(); };
-  const lire = () => document.querySelectorAll('#chListe [data-i]').forEach(r => { const i = +r.dataset.i, t = lireTemps(r.querySelector('.chT').value); if (chapitres[i]) { if (Number.isFinite(t) && i) chapitres[i].t = Math.min(total() - 1, Math.max(1, t)); chapitres[i].titre = r.querySelector('.chN').value.trim() || chapitres[i].titre; } });
+  const lire = () => document.querySelectorAll('#chListe [data-i]').forEach(r => { const i = +r.dataset.i, t = lireTemps(r.querySelector('.chT').value); if (chapitres[i]) { if (Number.isFinite(t) && i) chapitres[i].t = Math.min(total() - 1, Math.max(1, t)); chapitres[i].titre = r.querySelector('.chN').value.trim() || chapitres[i].titre; chapitres[i].resume = r.querySelector('.chR').value.trim(); } });
   async function chercher() {
     $('#chRefaire').hidden = true; $('#chAppliquer').hidden = true; $('#chOpts').hidden = true; $('#chListe').innerHTML = '';
     try {
@@ -1619,7 +1625,7 @@ async function ouvrirChapitrage() {
       const { id } = await (await api('/api/chapitres/proposer', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), ia: true, clips: clipsAnalyse() }) })).json();
       const r = await suivreTravail(id, j => etat(`${esc(j.step || '')}`));
       chapitres = (r.chapitres || []).map(c => ({ ...c, ia: r.ia ? c.titre : '' }));
-      $('#chAnalyse').innerHTML = carteAnalyse(r.analyse); brancherCarteAnalyse($('#chAnalyse'));
+      garderAnalyse(r.analyse); $('#chAnalyse').innerHTML = carteAnalyse(r.analyse); brancherCarteAnalyse($('#chAnalyse'));
       etat(chapitres.length ? `${chapitres.length} chapitres proposés${r.ia ? ' (nommés par l’IA locale)' : ''}. Corrige les titres et les temps si besoin.` : '<span class="err">La vidéo est trop courte ou trop uniforme pour la découper en parties. Pose des repères à la main (touche M).</span>');
       rendre();
     } catch (er) { etat(`<span class="err">${esc(er.message)}</span>`); $('#chRefaire').hidden = false; }
@@ -1630,6 +1636,7 @@ async function ouvrirChapitrage() {
     const mode = $('#chMode').value, clavier = $('#chClavier').checked && sonClavier();
     const liste = chapitres.slice().sort((a, b) => a.t - b.t);
     proj.nomsReperes = { ...(proj.nomsReperes || {}) };
+    proj.resumesChapitres = {}; liste.forEach(c => { if (c.resume) proj.resumesChapitres[c.titre.slice(0, 60)] = c.resume.slice(0, 220); });
     // du dernier au premier : les temps des chapitres déjà traités ne bougent pas
     for (const c of liste.slice().reverse()) {
       const nom = c.titre.slice(0, 60);
@@ -1710,7 +1717,7 @@ async function ouvrirClipping() {
       const { id } = await (await api('/api/clipping/proposer', { method: 'POST', body: JSON.stringify({ segments: segs, duree: total(), nb: +$('#clNb').value, min, max, sujet: (proj.gen && proj.gen.titre) || '', ia: true, clips: clipsAnalyse() }) })).json();
       const r = await suivreTravail(id, j => etat(`${esc(j.step || '')}`));
       extraits = r.extraits || [];
-      $('#clAnalyse').innerHTML = carteAnalyse(r.analyse); brancherCarteAnalyse($('#clAnalyse'));
+      garderAnalyse(r.analyse); $('#clAnalyse').innerHTML = carteAnalyse(r.analyse); brancherCarteAnalyse($('#clAnalyse'));
       etat(extraits.length ? `${extraits.length} passage${extraits.length > 1 ? 's' : ''} trouvé${extraits.length > 1 ? 's' : ''}${r.ia ? ' (choisis par l’IA locale)' : ''}. Décoche ceux dont tu ne veux pas, corrige les titres.` : '<span class="err">Aucun passage assez long et complet n’a été trouvé : essaie une durée plus courte.</span>');
       rendre();
     } catch (er) { etat(`<span class="err">${esc(er.message)}</span>`); }
@@ -3119,21 +3126,22 @@ async function ouvrirAssistant(demande) {
 async function ouvrirPublication(plateforme) {
   const pf = ['YouTube', 'TikTok', 'Instagram'].includes(plateforme) ? plateforme : proj.format === 'vertical' ? 'TikTok' : 'YouTube';
   ouvrir(`<h2>✍ Textes de publication</h2>
-    <p class="mut">Titre, description et hashtags écrits à partir du contenu de ta vidéo (texte généré et sous-titres). Relis-les toujours avant de publier.</p>
+    <p class="mut">Titre, description et hashtags écrits à partir du contenu de ta vidéo (sous-titres, texte généré et ce que l’analyse a compris ; pour YouTube, les chapitres sont ajoutés à la description). Relis-les toujours avant de publier.</p>
     <label class="l">Plateforme</label><select id="puPf">${opts([['YouTube', 'YouTube'], ['TikTok', 'TikTok'], ['Instagram', 'Instagram (Reels)']], pf)}</select>
     <label class="l">De quoi parle la vidéo ? (facultatif si elle a des sous-titres)</label><input type="text" id="puSujet" value="${esc((proj.gen && proj.gen.titre) || '')}" placeholder="ex. : visite de Lisbonne en 3 jours">
     <div class="ligne" style="margin-top:8px"><button id="puFermer">Fermer</button><button class="pri" id="puGo">Écrire les textes</button></div><div id="puRes" style="margin-top:10px"></div>`, 'large');
   $('#puFermer').onclick = fermer;
   $('#puGo').onclick = async () => {
     const texte = texteVideo(), titre = $('#puSujet').value.trim(), z = $('#puRes');
-    if (!texte && !titre) { z.innerHTML = '<p class="mut">Dis en quelques mots de quoi parle la vidéo, ou ajoute d’abord les sous-titres automatiques : l’assistant n’invente rien.</p>'; return; }
+    const an = proj.analyse && proj.analyse.sujet ? proj.analyse : null, chap = $('#puPf').value === 'YouTube' && chapitres().length >= 3 ? chapitres() : [];
+    if (!texte && !titre && !an) { z.innerHTML = '<p class="mut">Dis en quelques mots de quoi parle la vidéo, ou ajoute d’abord les sous-titres automatiques : l’assistant n’invente rien.</p>'; return; }
     $('#puGo').disabled = true;
     try {
-      const { id } = await (await api('/api/assistant/publication', { method: 'POST', body: JSON.stringify({ texte, titre, plateforme: $('#puPf').value }) })).json();
+      const { id } = await (await api('/api/assistant/publication', { method: 'POST', body: JSON.stringify({ texte, titre, plateforme: $('#puPf').value, analyse: an, chapitres: chap }) })).json();
       const r = await suivreTravail(id, j => { z.innerHTML = `<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`; });
-      const bloc = (nom, val) => `<label class="l">${nom}</label><div class="ligne"><textarea rows="${val.length > 90 ? 3 : 1}" readonly>${esc(val)}</textarea><button class="mini" data-copie="${esc(val)}">Copier</button></div>`;
+      const bloc = (nom, val) => `<label class="l">${nom}</label><div class="ligne"><textarea rows="${Math.min(14, Math.max(val.length > 90 ? 3 : 1, val.split('\n').length))}" readonly>${esc(val)}</textarea><button class="mini" data-copie="${esc(val)}">Copier</button></div>`;
       z.innerHTML = (r.titres || []).map((t, i) => bloc(`Titre ${i + 1}`, t)).join('') + (r.description ? bloc('Description', r.description) : '') + ((r.hashtags || []).length ? bloc('Hashtags', r.hashtags.join(' ')) : '')
-        + (proj.markers.length >= 2 && $('#puPf').value === 'YouTube' ? '<p class="mut">Astuce : ajoute les chapitres (Outils → Chapitres YouTube) à la description.</p>' : '')
+        + (!chap.length && $('#puPf').value === 'YouTube' ? '<p class="mut">Astuce : chapitre la vidéo (Assistant → « Chapitre ma vidéo ») : les chapitres seront ajoutés à la description.</p>' : '')
         + (r.ia ? '' : '<p class="mut">Textes simples (l’IA locale n’est pas installée : ouvre « Générer » une fois pour l’installer et obtenir de meilleurs textes).</p>');
       z.onclick = e => { const b = e.target.closest('[data-copie]'); if (!b) return; navigator.clipboard.writeText(b.dataset.copie).then(() => { b.textContent = 'Copié ✔'; }, () => { b.textContent = 'Sélectionne le texte'; }); };
     } catch (e) { z.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
@@ -3152,7 +3160,7 @@ function demander(titre, defaut) {
     $('#sOk').onclick = () => fin(i.value.trim()); $('#sAnn').onclick = () => fin(null); i.onkeydown = e => { if (e.key === 'Enter') fin(i.value.trim()); if (e.key === 'Escape') fin(null); };
   });
 }
-async function nouveau() { if (proj.clips.length && !confirm('Commencer un nouveau projet ? Pense à enregistrer le projet actuel.')) return; proj = { ...proj, clips: [], audio: [], pistes: [], textes: [], markers: [], etatPistes: {}, gen: null, nomsReperes: {} }; sel = selA = selCut = selP = selT = -1; selObjs.clear(); gt = 0; rendu = null; commit(); tout(); apercu(); }
+async function nouveau() { if (proj.clips.length && !confirm('Commencer un nouveau projet ? Pense à enregistrer le projet actuel.')) return; proj = { ...proj, clips: [], audio: [], pistes: [], textes: [], markers: [], etatPistes: {}, gen: null, nomsReperes: {}, resumesChapitres: {}, analyse: null }; sel = selA = selCut = selP = selT = -1; selObjs.clear(); gt = 0; rendu = null; commit(); tout(); apercu(); }
 async function sauver() { const n = await demander('Nom du projet', 'Mon montage'); if (!n) return; await api('/api/projets/' + enc(n), { method: 'PUT', body: snap() }); aide('Projet « ' + esc(n) + ' » enregistré.'); }
 async function ouvrirProjet() {
   const { items } = await (await api('/api/projets')).json();

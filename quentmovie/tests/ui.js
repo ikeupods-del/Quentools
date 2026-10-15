@@ -375,10 +375,17 @@ function chromium() {
   const prop = await ev(() => [...document.querySelectorAll('#chListe .chN')].map(x => x.value));
   check('chapitrage : des chapitres proposés, le premier est l’introduction', prop.length >= 3 && prop[0] === 'Introduction', JSON.stringify(prop));
   check('chapitrage : la carte « ce que j’ai compris » donne le sujet de la vidéo', await ev(() => { const a = $('#chAnalyse'); return !!a && /Ce que j’ai compris/.test(a.textContent) && /Sujet/.test(a.textContent) && /sommeil|chambre|dormir/i.test(a.textContent); }));
+  check('chapitrage : un résumé d’une phrase proposé pour chaque chapitre', await ev(() => { const r = [...document.querySelectorAll('#chListe .chR')].map(x => x.value); return r.length >= 3 && r.every(x => x.length >= 20); }), await ev(() => JSON.stringify([...document.querySelectorAll('#chListe .chR')].map(x => x.value))));
+  check('chapitrage : ce que l’analyse a compris est gardé dans le projet', await ev(() => !!(proj.analyse && /sommeil|chambre|dormir|ecran|écran/i.test(proj.analyse.sujet))), await ev(() => JSON.stringify(proj.analyse)));
   await pg.selectOption('#chMode', 'sur'); await pg.click('#chAppliquer'); await pg.waitForTimeout(500);
   const rc = await ev(() => ({ n: proj.clips.length, marks: proj.markers.length, noms: Object.keys(proj.nomsReperes).length, titres: proj.clips.filter(c => c.titre && c.titre.preset === 'machine').length, clav: proj.audio.filter(a => /clavier/.test(a.file)).length, ok: proj.clips.every(c => c.subs.every(x => x.e <= effDur(c) + 0.01)) }));
   check('chapitrage : repères nommés, titres qui s’écrivent et bruit de clavier posés', rc.marks >= 2 && rc.noms >= 3 && rc.titres >= 3 && rc.clav >= 3 && rc.n >= 3 && rc.ok, JSON.stringify(rc));
   check('chapitrage : la liste YouTube s’affiche', await ev(() => /0:00 Introduction/.test($('#chTxt').value)));
+  check('chapitrage : sommaire détaillé avec le résumé de chaque chapitre', await ev(() => !!$('#chSom') && /^0:00 Introduction — .{20,}/.test($('#chSom').value) && $('#chSom').value.split('\n').length >= 3), await ev(() => $('#chSom') && $('#chSom').value));
+  await ev(() => fermer());
+  // textes de publication YouTube : sujet de l'analyse, chapitres ajoutés à la fin de la description
+  await ev(() => ouvrirPublication('YouTube')); await pg.click('#puGo'); await pg.waitForSelector('#puRes [data-copie]', { timeout: 15000 });
+  check('publication YouTube : chapitres ajoutés à la description', await ev(() => { const d = [...document.querySelectorAll('#puRes textarea')].map(x => x.value).find(v => /Chapitres :/.test(v)); return !!d && /\n0:00 Introduction\n/.test(d); }), await ev(() => $('#puRes').textContent));
   await ev(() => fermer());
   // clipping : les meilleurs passages sont proposés (sans IA installée : classement du programme)
   await ev(() => ouvrirClipping()); await pg.selectOption('#clNb', '3'); await pg.click('#clChercher'); await pg.waitForSelector('#clCreer', { timeout: 20000 });

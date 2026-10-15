@@ -230,21 +230,28 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
     return ((r.resultat && r.resultat.actions) || []).filter(a => ids.includes(a.action) && !vus.has(a.action) && vus.add(a.action))
       .map(a => ({ action: a.action, parametre: String(a.parametre || '').slice(0, 60), libelle: AS.ACTIONS[a.action] + (a.parametre ? ` (${String(a.parametre).slice(0, 60)})` : '') }));
   }
-  // Textes de publication (3 titres, description, hashtags) tirés du texte de la vidéo ; sans IA installée, repli simple (hashtags fréquents)
-  async function textesPublication({ texte = '', plateforme = '', titre = '' }) {
-    const AS = require('./assistant'), base = String(texte || titre).slice(0, 3000);
-    const repli = () => ({ titres: [titre || base.split(/[.!?]/)[0].slice(0, 70)].filter(Boolean), description: base.split(/(?<=[.!?])\s+/).slice(0, 2).join(' ').slice(0, 300), hashtags: AS.hashtagsSimples(`${titre} ${base}`, 8), ia: false });
+  // Textes de publication (3 titres, description, hashtags) tirés du texte de la vidéo et de ce que l'analyse en a compris
+  // (sujet, résumé, mots-clés) ; pour YouTube, les chapitres sont ajoutés tels quels à la fin de la description (par le programme).
+  // Sans IA installée, repli simple (sujet et résumé de l'analyse, hashtags fréquents).
+  async function textesPublication({ texte = '', plateforme = '', titre = '', analyse = {}, chapitres = [] }) {
+    const AS = require('./assistant'), base = String(texte || titre || analyse.resume || analyse.sujet || '').slice(0, 3000);
+    const cles = (analyse.motsCles || []).map(m => '#' + AS.sansAccents(m).replace(/[^a-z0-9]+/g, '')).filter(h => h.length > 2);
+    const avecChapitres = d => (chapitres.length >= 3 ? `${d}\n\nChapitres :\n${chapitres.join('\n')}` : d);
+    const repli = () => ({ titres: [titre || analyse.sujet || base.split(/[.!?]/)[0].slice(0, 70)].filter(Boolean),
+      description: avecChapitres(analyse.resume || base.split(/(?<=[.!?])\s+/).slice(0, 2).join(' ').slice(0, 300)),
+      hashtags: [...new Set([...cles, ...AS.hashtagsSimples(`${titre} ${analyse.sujet || ''} ${base}`, 8)])].slice(0, 10), ia: false });
     utiliser('');
     if (!installe() || !base.trim()) return repli();
     const pf = plateforme || 'les réseaux sociaux';
+    const compris = analyse.sujet ? `Sujet de la vidéo : ${analyse.sujet}\n${analyse.resume ? `Résumé : ${analyse.resume}\n` : ''}${(analyse.points || []).length ? `Idées fortes : ${analyse.points.join(' ; ')}\n` : ''}${(analyse.motsCles || []).length ? `Mots-clés : ${analyse.motsCles.join(', ')}\n` : ''}` : '';
     const systeme = 'Tu rédiges les textes de publication de vidéos en français, sans rien inventer : uniquement à partir du contenu fourni. Aucun émoji superflu, aucune promesse.';
-    const demande = `Plateforme : ${pf}.\n${titre ? `Titre de travail : ${titre}\n` : ''}Contenu de la vidéo :\n${base}\n\nÉcris : « titres » (3 titres différents, 70 caractères maximum, accrocheurs mais fidèles), « description » (2 ou 3 phrases, ${/tiktok|instagram/i.test(pf) ? 'courte et directe' : 'claire, avec les mots-clés du sujet'}), « hashtags » (6 à 10 mots-clés en minuscules, sans le #).`;
+    const demande = `Plateforme : ${pf}.\n${titre ? `Titre de travail : ${titre}\n` : ''}${compris}Contenu de la vidéo :\n${base}\n\nÉcris : « titres » (3 titres différents, 70 caractères maximum, accrocheurs mais fidèles${analyse.sujet ? ', centrés sur le sujet' : ''}), « description » (2 ou 3 phrases, ${/tiktok|instagram/i.test(pf) ? 'courte et directe' : 'claire, avec les mots-clés du sujet'}), « hashtags » (6 à 10 mots-clés en minuscules, sans le #).`;
     const schema = { type: 'object', properties: { titres: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'string' } }, description: { type: 'string' }, hashtags: { type: 'array', maxItems: 10, items: { type: 'string' } } }, required: ['titres', 'description', 'hashtags'] };
     try {
       const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.5 }, 420);
       const o = r.resultat || {};
       const tags = (o.hashtags || []).map(h => '#' + AS.sansAccents(h).replace(/[^a-z0-9]+/g, '')).filter(h => h.length > 2);
-      return { titres: (o.titres || []).map(x => SQ.nettoyerTexte(x).slice(0, 100)).filter(Boolean), description: SQ.nettoyerTexte(o.description || '').slice(0, 1000), hashtags: [...new Set(tags)].slice(0, 10), ia: true };
+      return { titres: (o.titres || []).map(x => SQ.nettoyerTexte(x).slice(0, 100)).filter(Boolean), description: avecChapitres(SQ.nettoyerTexte(o.description || '').slice(0, 1000)), hashtags: [...new Set([...tags, ...cles])].slice(0, 10), ia: true };
     } catch (e) { return repli(); }
   }
 
@@ -253,13 +260,18 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
     const garde = chapitres.map(c => ({ ...c }));
     utiliser('');
     if (!installe() || !garde.length) return { chapitres: garde, ia: false };
-    const systeme = 'Tu nommes les chapitres d’une vidéo en français, uniquement à partir du texte de chaque partie. Titres courts (2 à 5 mots), précis, sans point final, sans guillemets, sans numéro. Tu n’inventes rien.';
-    const demande = (sujet ? `Sujet général de la vidéo : ${String(sujet).slice(0, 200)}\n${motsCles.length ? `Mots-clés de la vidéo : ${motsCles.slice(0, 6).join(', ')}\n` : ''}Les titres doivent rester dans ce sujet.\n\n` : '') + garde.map((c, i) => `Partie ${i + 1} (${c.titre}) : ${String(c.texte || '').slice(0, 600)}`).join('\n\n') + `\n\nDonne exactement ${garde.length} titres, dans l’ordre. La première partie est l’introduction si elle présente la vidéo ; la dernière est la conclusion si elle conclut.`;
-    const schema = { type: 'object', properties: { titres: { type: 'array', minItems: garde.length, maxItems: garde.length, items: { type: 'string' } } }, required: ['titres'] };
+    const CH = require('./chapitrage');
+    const systeme = 'Tu nommes et résumes les chapitres d’une vidéo en français, uniquement à partir du texte de chaque partie. Titres courts (2 à 5 mots), précis, sans point final, sans guillemets, sans numéro. Résumés d’une phrase (25 mots au plus) qui disent ce qu’on apprend dans la partie. Tu n’inventes rien.';
+    const demande = (sujet ? `Sujet général de la vidéo : ${String(sujet).slice(0, 200)}\n${motsCles.length ? `Mots-clés de la vidéo : ${motsCles.slice(0, 6).join(', ')}\n` : ''}Les titres doivent rester dans ce sujet.\n\n` : '') + garde.map((c, i) => `Partie ${i + 1} (${c.titre}) : ${String(c.texte || '').slice(0, 600)}`).join('\n\n') + `\n\nDonne exactement ${garde.length} chapitres (titre et résumé), dans l’ordre. La première partie est l’introduction si elle présente la vidéo ; la dernière est la conclusion si elle conclut.`;
+    const schema = { type: 'object', properties: { chapitres: { type: 'array', minItems: garde.length, maxItems: garde.length, items: { type: 'object', properties: { titre: { type: 'string' }, resume: { type: 'string' } }, required: ['titre', 'resume'] } } }, required: ['chapitres'] };
     try {
-      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.3 }, garde.length * 24 + 60);
-      const t = ((r.resultat && r.resultat.titres) || []).map(x => SQ.nettoyerTexte(x).replace(/[.:;,!]+$/, '').slice(0, 60));
-      if (t.length === garde.length && t.every(x => x.length >= 3)) return { chapitres: garde.map((c, i) => ({ ...c, titre: t[i] })), ia: true };
+      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.3 }, garde.length * 70 + 60);
+      const l = (r.resultat && r.resultat.chapitres) || [];
+      const t = l.map(x => SQ.nettoyerTexte(x && x.titre).replace(/[.:;,!]+$/, '').slice(0, 60));
+      if (t.length === garde.length && t.every(x => x.length >= 3)) {
+        // résumé gardé seulement s'il reprend ce qui est dit dans la partie ; sinon la phrase clé choisie par le programme
+        return { chapitres: garde.map((c, i) => { const res = SQ.nettoyerTexte(l[i].resume || '').slice(0, 220); return { ...c, titre: t[i], resume: res.length >= 15 && CH.ancrage(res, [{ t: c.texte || '' }]) >= 0.5 ? res : c.resume }; }), ia: true };
+      }
     } catch (e) { /* titres du programme gardés */ }
     return { chapitres: garde, ia: false };
   }

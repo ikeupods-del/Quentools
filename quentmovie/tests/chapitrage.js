@@ -22,6 +22,8 @@ check('chapitres : premier = Introduction', ch[0] && ch[0].titre === 'Introducti
 check('chapitres : dernier = Conclusion', ch[ch.length - 1].titre === 'Conclusion', ch.map(c => c.titre).join(' | '));
 check('chapitres : séparés d’au moins 10 s', ch.every((c, i) => !i || c.t - ch[i - 1].t >= 10));
 check('chapitres : une coupure au changement de sujet (écrans, café)', [/ecran|écran/i, /caf/i].every(re => ch.some(c => re.test(c.titre))), ch.map(c => c.titre).join(' | '));
+check('chapitres : un résumé par partie, tiré de ce qui est dit', ch.every(c => c.resume && c.resume.length >= 20 && segs.some(x => x.t.includes(c.resume.replace(/…$/, '').slice(0, 30)))), ch.map(c => c.resume).join(' | '));
+check('chapitres : le résumé de la partie sur les écrans en parle', ch.filter(c => /[ée]cran/i.test(c.titre)).every(c => /[ée]cran|t[ée]l[ée]phone|lumi[eè]re/i.test(c.resume)), ch.map(c => c.resume).join(' | '));
 check('chapitres : trop court = rien', proposerChapitres(segs.slice(0, 1), 20).length === 0);
 
 const ex = proposerMoments(segs, total, { nb: 3, min: 20, max: 60 });

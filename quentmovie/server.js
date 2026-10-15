@@ -1704,7 +1704,7 @@ function buildClip(c, P, o = {}) {
           job.step = 'L’IA locale nomme les chapitres…'; job.progress = 0.6;
           const r = b.ia === false ? { chapitres: ch, ia: false } : await IA().titrerChapitres({ chapitres: ch, sujet: analyse.sujet, motsCles: analyse.motsCles || [] });
           delete analyse.brut;
-          return { chapitres: r.chapitres.map(c => ({ t: c.t, titre: c.titre })), ia: r.ia, analyse };
+          return { chapitres: r.chapitres.map(c => ({ t: c.t, titre: c.titre, resume: c.resume || '' })), ia: r.ia, analyse };
         }));
       }
       // Analyse de la vidéo : sujet, genre, rythme, idées fortes et pack conseillé (programme + IA locale)
@@ -1746,7 +1746,10 @@ function buildClip(c, P, o = {}) {
           return { fichiers };
         }));
       }
-      if (req.method === 'POST' && p === '/api/assistant/publication') { const b = await readJson(req); return send(res, 200, travail(job => { job.step = 'Écriture du titre, de la description et des hashtags…'; return IA().textesPublication({ texte: String(b.texte || '').slice(0, 3000), plateforme: String(b.plateforme || '').slice(0, 20), titre: String(b.titre || '').slice(0, 120) }); })); }
+      if (req.method === 'POST' && p === '/api/assistant/publication') { const b = await readJson(req); return send(res, 200, travail(job => { job.step = 'Écriture du titre, de la description et des hashtags…'; const a = b.analyse && typeof b.analyse === 'object' ? b.analyse : {};
+        return IA().textesPublication({ texte: String(b.texte || '').slice(0, 3000), plateforme: String(b.plateforme || '').slice(0, 20), titre: String(b.titre || '').slice(0, 120),
+          analyse: { sujet: String(a.sujet || '').slice(0, 160), resume: String(a.resume || '').slice(0, 400), motsCles: (Array.isArray(a.motsCles) ? a.motsCles : []).map(m => String(m).slice(0, 40)).slice(0, 6), points: (Array.isArray(a.points) ? a.points : []).map(m => String(m).slice(0, 100)).slice(0, 6) },
+          chapitres: (Array.isArray(b.chapitres) ? b.chapitres : []).map(l => String(l).slice(0, 80)).filter(l => /^\d+(:\d{2}){1,2} \S/.test(l)).slice(0, 40) }); })); }
       if (req.method === 'POST' && p === '/api/generer/images') { const b = await readJson(req); return send(res, 200, { images: await GEN().proposer(String(b.q || '').slice(0, 120), { vertical: b.format === 'vertical', videos: !!b.videos }) }); }
       if (req.method === 'POST' && p === '/api/telecharger') { const b = await readJson(req); return send(res, 200, travail(job => IA().telecharger(String(b.lien || ''), MEDIAS, job))); }
       if (req.method === 'GET' && p === '/api/parole') {

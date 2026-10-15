@@ -55,6 +55,14 @@ function titre(texte, rang, total, global) {
   return j.charAt(0).toUpperCase() + j.slice(1);
 }
 
+// Résumé d'une partie sans IA : sa phrase la plus parlante (mots propres à cette partie), telle qu'elle est dite
+function phraseCle(parties, global) {
+  const note = p => { const m = mots(p.t); return m.length ? m.reduce((a, w) => a + Math.log(1 + (global.total || 1) / (1 + (global.df.get(w) || 0))), 0) / Math.sqrt(m.length + 2) : 0; };
+  const l = parties.filter(p => p.t.length >= 25 && p.t.length <= 220 && !/^(bonjour|salut|merci|abonnez|a bientot)/.test(ASCII(p.t)));
+  const best = (l.length ? l : parties).reduce((a, p) => (note(p) > note(a) ? p : a), (l.length ? l : parties)[0]);
+  if (!best) return '';
+  const t = best.t.replace(/\s+/g, ' ').trim(); return t.length > 180 ? t.slice(0, 177).replace(/\s+\S*$/, '') + '…' : t;
+}
 
 // ---------- Analyse du sujet : de quoi parle la vidéo, quel genre, quel rythme (calculé par le programme, l'IA locale peut l'affiner) ----------
 const GENRES = [
@@ -182,7 +190,7 @@ function proposerChapitres(segments, duree, o = {}) {
   return choisis.map((c, k) => {
     let nom = titre(parties[k].map(x => x.t).join(' '), k, choisis.length, global);
     if (vus.has(nom)) nom = `${nom} (${k + 1})`; vus.add(nom);
-    return { t: k ? +c.t.toFixed(2) : 0, titre: nom, texte: parties[k].map(x => x.t).join(' ').slice(0, 700) };
+    return { t: k ? +c.t.toFixed(2) : 0, titre: nom, resume: phraseCle(parties[k], global), texte: parties[k].map(x => x.t).join(' ').slice(0, 700) };
   });
 }
 
