@@ -343,10 +343,14 @@ function create(opts = {}) {
   const dureesCalques = new Map();
   async function calquesEnBoucle(c) {
     for (const ov of (c && c.overlays) || []) {
-      if (!ov || ov.kind !== 'video' || !(num(ov.ss, 0) > 0) || !ov.file) continue;
-      let f; try { f = mediaPath(ov.file); } catch (e) { continue; }
-      if (!dureesCalques.has(f)) dureesCalques.set(f, await probe(f).then(m => m.duration || 0, () => 0));
-      const d = dureesCalques.get(f); if (d > 0.2) ov.ss = +(num(ov.ss, 0) % d).toFixed(3);
+      if (!ov || ov.kind !== 'video' || !ov.file) continue;
+      let f; try { f = mediaPath(orient(ov.file, 16, 9)); } catch (e) { continue; }
+      if (!fs.existsSync(f)) continue;
+      const st = fs.statSync(f), k = `${f}|${st.size}|${st.mtimeMs}`;
+      if (!dureesCalques.has(k)) dureesCalques.set(k, await probe(f).then(m => m.duration || 0, () => 0));
+      const d = dureesCalques.get(k); if (!(d > 0.2)) continue;
+      ov.duree = +d.toFixed(3); // l'aperçu se place au bon moment de l'animation
+      if (num(ov.ss, 0) > 0) ov.ss = +(num(ov.ss, 0) % d).toFixed(3);
     }
   }
   // Vidéo HDR (HLG ou PQ : iPhone, appareils récents) : sans conversion, les couleurs paraissent ternes. Résultat gardé par fichier.
@@ -528,7 +532,9 @@ function buildClip(c, P, o = {}) {
       // calque limité au temps où il est visible (sinon il est lu et détouré pendant tout le clip, même caché) ;
       // une fois fini, l'image du clip passe telle quelle (eof_action=pass)
       const lim = !o.preview ? Math.min(E0, eff) - S0 + 0.5 : 0, duree = lim ? ['-t', lim.toFixed(3)] : [], fin = lim ? 'eof_action=pass' : 'shortest=1';
-      if (isVid) args.push(...(o.preview && t > S0 || num(ov.ss, 0) > 0 ? ['-ss', ((o.preview && t > S0 ? Math.min(t - S0, 1.8) : 0) + clamp(num(ov.ss, 0), 0, 600)).toFixed(2)] : []), '-stream_loop', '-1', ...duree, '-i', ovf); else args.push('-loop', '1', '-framerate', fps, ...duree, '-i', ovf);
+      // aperçu : l'image de l'animation à cet instant (durée connue : position dans la boucle ; sinon au plus 1,8 s)
+      const dansAnim = o.preview && t > S0 ? (num(ov.duree, 0) > 0.2 ? (t - S0 + num(ov.ss, 0)) % num(ov.duree, 1) - num(ov.ss, 0) : Math.min(t - S0, 1.8)) : 0;
+      if (isVid) args.push(...(o.preview && t > S0 || num(ov.ss, 0) > 0 ? ['-ss', Math.max(0, dansAnim + clamp(num(ov.ss, 0), 0, 600)).toFixed(2)] : []), '-stream_loop', '-1', ...duree, '-i', ovf); else args.push('-loop', '1', '-framerate', fps, ...duree, '-i', ovf);
       const idx = n++, id = lab(), sc = clamp(num(ov.scale, 30), 2, 150) / 100;
       const op = clamp(num(ov.opacity, 100), 5, 100) / 100, en = o.preview ? '' : `:enable='between(t,${S0},${E0})'`;
       // fond vert de l'élément (animations « fond vert ») : la couleur verte devient transparente
@@ -1359,7 +1365,7 @@ function buildClip(c, P, o = {}) {
         job.url = '/apercu/' + name;
       } else {
         // nom unique : deux exports finis dans la même seconde ne s'écrasent pas (montage-…-2.mp4)
-        const racine = `montage-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}`; let name = `${racine}.${sortie}`;
+        const racine = `${job.extrait ? 'extrait' : 'montage'}-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}`; let name = `${racine}.${sortie}`;
         for (let n = 2; ; n++) { try { fs.copyFileSync(path.join(dir, final), path.join(EXPORTS, name), fs.constants.COPYFILE_FICLONE | fs.constants.COPYFILE_EXCL); break; } catch (e) { if (e.code !== 'EEXIST' || n > 99) throw e; name = `${racine}-${n}.${sortie}`; } } // copie instantanée sur le disque du Mac (APFS)
         job.out = name;
       }
@@ -1853,7 +1859,10 @@ function buildClip(c, P, o = {}) {
         const id = String(Date.now()) + Math.floor(Math.random() * 1000);
         const job = { progress: 0, step: 'Préparation', out: null, url: null, error: null, done: false };
         jobs.set(id, job);
-        exportProject(job, body.project || {}, { proxy: p === '/api/apercu' }).catch(e => { job.error = job.annule ? 'Export annulé.' : messageClair(e.message); })
+        // export d'un passage seulement (essai avant un long export) : le montage est découpé entre s et e
+        const pl = body.plage, projet = pl && num(pl.e, 0) > num(pl.s, 0) ? require('./decoupe').extraireSegment(body.project || {}, num(pl.s, 0), num(pl.e, 0)) : body.project || {};
+        if (pl) job.extrait = true;
+        exportProject(job, projet, { proxy: p === '/api/apercu' }).catch(e => { job.error = job.annule ? 'Export annulé.' : messageClair(e.message); })
           .finally(() => { if (job.dir) { dossiersAnnules.delete(job.dir); enCours.delete(job.dir); } });
         return send(res, 200, { id });
       }

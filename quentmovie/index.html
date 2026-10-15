@@ -121,6 +121,7 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 .clip b{position:absolute;left:8px;top:3px;right:8px;font-size:11px;text-shadow:0 1px 3px #000;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;pointer-events:none}
 .clip small{position:absolute;left:8px;bottom:3px;font-size:10px;text-shadow:0 1px 3px #000;pointer-events:none}
 .clip .tags{position:absolute;right:8px;bottom:2px;font-size:11px;text-shadow:0 1px 3px #000;pointer-events:none}
+.clip .ovm{position:absolute;top:17px;height:4px;border-radius:2px;background:#ffcc00;box-shadow:0 0 0 1px #0008;pointer-events:none;z-index:2}
 .clip .hl,.clip .hr{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize;background:#ffffff22;z-index:3}
 .clip .hl{left:0}.clip .hr{right:0}
 .clip .hl:hover,.clip .hr:hover{background:#ffffff66}
@@ -494,6 +495,9 @@ function commit(glisse) {
   if (hist[hi] !== s) {
     if (glisse && now - dernierGlisse < 900 && hi > 0) hist[hi] = s;
     else { hist = hist.slice(0, hi + 1); hist.push(s); if (hist.length > 150) hist.shift(); hi = hist.length - 1; }
+    // long montage sous-titré : l'historique garde au plus ~80 Mo (sinon des centaines de Mo de mémoire sur un MacBook Air)
+    let poids = hist.reduce((a, x) => a + x.length, 0);
+    while (poids > 8e7 && hist.length > 10) { poids -= hist.shift().length; hi--; }
   }
   dernierGlisse = glisse ? now : 0;
   majBoutons();
@@ -779,7 +783,7 @@ function dropSur(e, idxClip) {
     ajouterSon(file, it ? { vol: 40, fade: true, loop: true, duck: true, start: x } : { vol: 100, start: x }); return true;
   }
   if (k === 'sticker') { surClip(); ajouterCalque('lib:' + id, 'image'); return true; }
-  if (k === 'pose') { surClip(); const [typ, f] = [id.slice(0, id.indexOf('|')), id.slice(id.indexOf('|') + 1)]; ajouterCalque(f, typ === 'cadre' || typ === 'image' ? 'image' : 'video', POSES[typ]); return true; }
+  if (k === 'pose') { surClip(); const [typ, f] = [id.slice(0, id.indexOf('|')), id.slice(id.indexOf('|') + 1)]; ajouterCalque(f, typ === 'cadre' || typ === 'image' ? 'image' : 'video', POSES[typ], x); return true; } // animation : jouée là où elle est déposée
   if (k === 'decor') { surClip(); if (idxClip < 0) sel = -1; const [kind, f] = [id.slice(0, id.indexOf('|')), id.slice(id.indexOf('|') + 1)]; appliquerDecor(f, kind); return true; }
   if (k === 'lut') { surClip(); ajouterLut(id); return true; }
   if (k === 'media') {
@@ -835,11 +839,11 @@ const POSES = {
   cadre: { plein: 'cadre', anim: 'none' },
   image: {}, video: {}
 };
-function ajouterCalque(file, kind, extra = {}) {
+function ajouterCalque(file, kind, extra = {}, tPose = gt) { // tPose : instant visé dans la timeline (tête de lecture, ou endroit où l'élément est déposé)
   const c = clipCible(); if (!c) return signal(sansClipMsg);
   if (!c.overlays) c.overlays = [];
   // animation sur fond vert (Breaking news, flèche…) : jouée une fois, à la tête de lecture si elle est dans ce clip
-  const it = /fondvert\//.test(file) ? libItem(file) : null, k = proj.clips.indexOf(c), dans = gt - starts()[k];
+  const it = /fondvert\//.test(file) ? libItem(file) : null, k = proj.clips.indexOf(c), dans = tPose - starts()[k];
   const quand = it ? { start: dans > 0 && dans < effDur(c) - 0.3 ? +dans.toFixed(2) : 0, dur: +Math.min(it.duree || 3, effDur(c)).toFixed(2) } : {};
   c.overlays.push({ file, kind: kind === 'video' ? 'video' : 'image', x: 50, y: 50, scale: /lib:stickers/.test(file) ? 25 : 40, rot: 0, opacity: 100, start: 0, dur: 0, anim: 'pop', mode: '', plein: '', key: false, keySim: 0.3, ...extra, ...quand });
   commit(); tout(); apercu(); signal('Élément posé sur le clip ' + (sel + 1) + (quand.start ? ' à ' + fmt(quand.start) : '') + ' : règle-le dans l’inspecteur à droite.');
@@ -1029,6 +1033,8 @@ function ecranPret(id) {
 // ---------- Timeline ----------
 const kindIcon = c => ({ video: '', image: '', audio: '🎙 ', solid: '▭ ' }[c.kind] || '');
 const vague = c => (c.kind === 'video' && c.hasAudio !== false && !c.sonDetache && c.vol > 0 ? `<span class="wv" style="background-image:url('/api/wave?file=${enc(c.file)}&w=${clamp(Math.ceil(effDur(c) * zoom / 200) * 200, 200, 2400)}&h=24&in=${c.in.toFixed(1)}&dur=${(c.out - c.in).toFixed(1)}')"></span>` : '');
+// moments où les calques du clip sont visibles (barres jaunes) : on retrouve d'un coup d'œil un « Breaking news » posé au studio
+const barresCalques = c => (c.overlays || []).filter(o => o && o.on !== false && !o.pack).slice(0, 24).map(o => { const s = +o.start || 0, d = +o.dur > 0 ? +o.dur : effDur(c) - s; return s < effDur(c) ? `<i class="ovm" style="left:${(s * zoom).toFixed(1)}px;width:${Math.max(3, Math.min(d, effDur(c) - s) * zoom).toFixed(1)}px" title="${esc(nomOf(o.file))}"></i>` : ''; }).join('');
 function tlDessin() {
   const st = starts(), T = total(), W = Math.max(T, ...proj.audio.map(a => (a.start || 0) + dureeAudio(a)), ...(proj.pistes || []).map(p => p.start + dureePiste(p)), ...(proj.textes || []).map(p => p.start + p.dur), 10) + 6;
   $('#lane').style.width = (W * zoom + 60) + 'px';
@@ -1043,7 +1049,7 @@ function tlDessin() {
     else if (c.kind === 'audio') bg = `background-image:url('/api/wave?file=${enc(c.file)}&w=1200&h=70')`;
     else if (c.kind === 'solid') bg = `background-color:${c.color}`;
     const tags = (c.fx.length ? '✨' + c.fx.length : '') + (c.key.on ? ' 🟩' : '') + (c.text ? ' T' : '') + (c.titre ? ' 📰' : '') + (c.overlays.length ? ' ▣' + c.overlays.length : '') + (c.subs.length ? ' ≡' : '') + (c.afx.length ? ' 🔊' : '') + (c.speed !== 1 ? ' ⏩' : '');
-    return `<div class="clip k-${c.kind} ${i === sel || selObjs.has(c) ? 'sel' : ''}" data-i="${i}" style="left:${st[i] * zoom}px;width:${Math.max(26, effDur(c) * zoom - 2)}px;${bg}"><i class="hl"></i><i class="hr"></i>${vague(c)}<b>${kindIcon(c)}${esc(c.file ? nomOf(c.file) : 'Fond uni')}</b><small>${fmt(effDur(c))}</small><span class="tags">${tags}</span></div>`;
+    return `<div class="clip k-${c.kind} ${i === sel || selObjs.has(c) ? 'sel' : ''}" data-i="${i}" style="left:${st[i] * zoom}px;width:${Math.max(26, effDur(c) * zoom - 2)}px;${bg}"><i class="hl"></i><i class="hr"></i>${vague(c)}${barresCalques(c)}<b>${kindIcon(c)}${esc(c.file ? nomOf(c.file) : 'Fond uni')}</b><small>${fmt(effDur(c))}</small><span class="tags">${tags}</span></div>`;
   }).join('') + proj.clips.slice(0, -1).map((c, i) => `<button class="cut ${c.transition ? 'on' : ''} ${i === selCut ? 'sel' : ''}" data-cut="${i}" style="left:${(st[i] + effDur(c)) * zoom}px" title="${c.transition ? esc((CAT.transitions.find(t => t.id === c.transition.type) || {}).nom || '') : 'Ajouter une transition'}">⋈</button>`).join('');
   const fins = [], ligne = [];
   proj.audio.map((a, i) => i).sort((x, y) => (proj.audio[x].start || 0) - (proj.audio[y].start || 0)).forEach(i => {
@@ -1147,7 +1153,11 @@ $('#pV').addEventListener('pointerdown', e => {
         for (let k = 0; k < proj.clips.length; k++) if (k !== i && sts[k] + effDur(proj.clips[k]) / 2 < centre) n++;
         if (n !== i) { suivreV1(() => { const [m] = proj.clips.splice(i, 1); proj.clips.splice(n, 0, m); }); sel = n; }
         commit(); tout(); apercu();
-      } else { const fin = { in: c.in, out: c.out, dur: c.dur }; Object.assign(c, { in: copie.in, out: copie.out, dur: copie.dur }); suivreV1(() => Object.assign(c, fin)); commit(); inspecteur(); reglerScrub(); apercu(); tlDessin(); }
+      } else {
+        const fin = { in: c.in, out: c.out, dur: c.dur }; Object.assign(c, { in: copie.in, out: copie.out, dur: copie.dur }); suivreV1(() => Object.assign(c, fin));
+        if (mode === 'gauche') decalerDebut(c, copie, c.kind === 'image' || c.kind === 'solid' ? copie.dur - c.dur : (c.in - copie.in) / (c.speed || 1)); // sous-titres et calques restent sur leur image
+        commit(); inspecteur(); reglerScrub(); apercu(); tlDessin();
+      }
       setTimeout(() => { presse = null; }, 0);
     } else {
       presse = null; placerTete(Math.max(0, (ev.clientX - r.left) / zoom), { sansSelection: true }); pos = clamp(gt - st0, 0, effDur(c)); apercu();
@@ -1439,6 +1449,19 @@ function repartirCalques(overlays, morceaux) {
     });
   }
   return res;
+}
+// Début d'un clip raccourci (ou rallongé) : sous-titres, calques, titres, texte et cadrage restent calés sur l'image et la parole.
+// base : le clip avant le changement ; delta : secondes retirées au début (négatif : ajoutées).
+const CONTENU_CLIP = ['subs', 'overlays', 'titre', 'text', 'textStart', 'textDeja', 'cadrage'];
+function decalerDebut(c, base, delta) {
+  if (delta > 0.001) { const [, b] = trancherClip(base, Math.min(delta, Math.max(0.05, effDur(base) - 0.05))); for (const k of CONTENU_CLIP) c[k] = b[k]; return; }
+  const d = -delta; for (const k of CONTENU_CLIP) c[k] = clone(base[k] === undefined ? null : base[k]); if (base.text === undefined) delete c.text;
+  if (d < 0.001) return;
+  c.subs = (base.subs || []).map(x => ({ ...x, s: +(x.s + d).toFixed(2), e: +(x.e + d).toFixed(2) }));
+  c.overlays = (base.overlays || []).map(o => ({ ...o, start: +((+o.start || 0) + d).toFixed(2) }));
+  if (base.titre) c.titre = { ...base.titre, start: +((+base.titre.start || 0) + d).toFixed(2) };
+  if (base.text) c.textStart = +((+base.textStart || 0) + d).toFixed(2);
+  if ((base.cadrage || []).length) c.cadrage = base.cadrage.map(q => ({ ...q, t: +(q.t + d).toFixed(3) }));
 }
 // Coupe un clip en deux à `loc` secondes (temps de montage) en gardant sous-titres, titres et calques à la bonne place
 function trancherClip(c, loc) {
@@ -1857,7 +1880,9 @@ function overlayRows(c) {
     ${plein ? '' : sl('Position horizontale', `overlays.${i}.x`, -10, 110, 1, ' %', c) + sl('Position verticale', `overlays.${i}.y`, -10, 110, 1, ' %', c) + sl('Taille', `overlays.${i}.scale`, 2, 150, 1, ' %', c) + sl('Rotation', `overlays.${i}.rot`, -180, 180, 1, '°', c)}
     ${sl('Opacité', `overlays.${i}.opacity`, 5, 100, 1, ' %', c)}
     ${o.mode ? '' : `<label class="l">Animation</label><select data-p="overlays.${i}.anim">${opts(plein ? [['none', 'Aucune'], ['fade', 'Fondu']] : ANIMS, o.anim)}</select>`}
-    ${sl('Apparaît à', `overlays.${i}.start`, 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}${sl('Durée (0 = jusqu’à la fin)', `overlays.${i}.dur`, 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}</div>`; }).join('');
+    ${sl('Apparaît à', `overlays.${i}.start`, 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}${sl('Durée (0 = jusqu’à la fin)', `overlays.${i}.dur`, 0, Math.max(1, Math.ceil(effDur(c))), 0.1, ' s', c)}
+    <button class="mini" data-ovtete="${i}" style="width:auto;padding:0 8px;margin-top:4px" title="Faire apparaître ce calque à l’endroit de la tête de lecture">⏱ À la tête de lecture</button></div>`; }).join('') +
+    (c.overlays.length > 24 ? '<p class="err">Plus de 24 calques sur ce clip : les suivants ne seront pas affichés. Coupe le clip (S) pour les répartir.</p>' : '');
 }
 function optsLook(cur) {
   const L = [...LIB().luts.map(x => ({ ...x, file: 'lib:' + x.file })), ...PACKS.luts.map(x => ({ ...x, cat: 'Mes looks · ' + x.cat }))];
@@ -1952,7 +1977,7 @@ $('#insp').addEventListener('input', e => {
   if (d.sub) { const [i, f] = d.sub.split(':'); const c = curClip(); c.subs[+i][f] = f === 't' ? t.value : +t.value; commit(true); apercuRetarde(); return; }
   if (!d.p) return; const root = racineInsp(); if (!root) return;
   const v = t.type === 'checkbox' ? t.checked : (t.type === 'range' || t.type === 'number') ? +t.value : t.value;
-  poserP(root, d.p, v); const lab = document.getElementById(idOf(d.p)); if (lab) lab.textContent = (typeof v === 'number' ? +v.toFixed(2) : v) + (d.u || '');
+  avantDebutInsp(root, d.p); poserP(root, d.p, v); majDebutInsp(root, d.p); const lab = document.getElementById(idOf(d.p)); if (lab) lab.textContent = (typeof v === 'number' ? +v.toFixed(2) : v) + (d.u || '');
   if (t.type === 'checkbox' || t.tagName === 'SELECT') return;
   suite(d.p, true);
 });
@@ -1965,12 +1990,17 @@ $('#insp').addEventListener('change', e => {
   if (d.lutsel !== undefined && c) { c.lut = t.value ? { file: t.value, amount: c.lut ? c.lut.amount : 100 } : null; commit(); inspecteur(); apercu(); return; }
   if (d.bgfile !== undefined && c) { c.key.bgFile = t.value; c.key.bgKind = (t.selectedOptions[0] && t.selectedOptions[0].dataset.kind) || 'image'; commit(); apercu(); return; }
   if (!d.p) return; const root = racineInsp(); if (!root) return;
-  let v = t.type === 'checkbox' ? t.checked : (t.type === 'range' || t.type === 'number') ? +t.value : t.value; if ($('#insp').dataset.root === 'v' && d.p === 'plein') v = v === 'plein'; poserP(root, d.p, v);
+  let v = t.type === 'checkbox' ? t.checked : (t.type === 'range' || t.type === 'number') ? +t.value : t.value; if ($('#insp').dataset.root === 'v' && d.p === 'plein') v = v === 'plein'; avantDebutInsp(root, d.p); poserP(root, d.p, v); majDebutInsp(root, d.p); debutInsp = null;
   if ($('#insp').dataset.root === 'v') { commit(); inspecteur(); tlDessin(); apercuRetarde(); return; }
   if (['key.on', 'key.bgType', 'viz.type'].includes(d.p) || /^overlays\.\d+\.(mode|plein|key)$/.test(d.p)) inspecteur();
   suite(d.p);
 });
 const racineInsp = () => ({ a: proj.audio[selA], v: (proj.pistes || [])[selP] })[$('#insp').dataset.root] || curClip();
+// curseur « Début » d'un clip : le contenu du clip est recalé depuis son état d'avant le glissement (aucune perte en revenant en arrière)
+let debutInsp = null;
+const estDebutClip = (root, p) => p === 'in' && proj.clips.includes(root) && root.kind !== 'image' && root.kind !== 'solid';
+function avantDebutInsp(root, p) { if (estDebutClip(root, p) && (!debutInsp || debutInsp.c !== root)) debutInsp = { c: root, base: clone(root) }; }
+function majDebutInsp(root, p) { if (estDebutClip(root, p) && debutInsp && debutInsp.c === root) decalerDebut(root, debutInsp.base, (root.in - debutInsp.base.in) / (root.speed || 1)); }
 function suite(path, glisse) {
   commit(glisse);
   if ($('#insp').dataset.root === 'v') { tlDessin(); apercuRetarde(); return; }
@@ -2000,6 +2030,7 @@ $('#insp').addEventListener('click', e => {
   if (t.id === 'bClavier') { const f = LIB().sons.find(x => x.id === 'clavier-rafale'); if (f) ajouterSon('lib:' + f.file, { start: +(starts()[sel] + (c.titre.start || 0)).toFixed(1), vol: 80 }); sel = starts().length ? sel : sel; return; }
   if (d.rmsub !== undefined) { c.subs.splice(+d.rmsub, 1); commit(); inspecteur(); return apercu(); }
   if (d.rmov !== undefined) { c.overlays.splice(+d.rmov, 1); commit(); inspecteur(); return apercu(); }
+  if (d.ovtete !== undefined) { const o = c.overlays[+d.ovtete], dans = gt - starts()[sel]; if (!o) return; if (!(dans >= 0 && dans < effDur(c))) return signal('Place d’abord la tête de lecture sur ce clip.'); o.start = +dans.toFixed(2); delete o.ss; commit(); inspecteur(); tlDessin(); return apercu(); }
   if (d.rm) { const [k, i] = d.rm.split(':'); c[k].splice(+i, 1); commit(); inspecteur(); tlDessin(); apercu(); }
   if (d.mv) { const [k, i, dd] = d.mv.split(':'); const j = +i + +dd; if (j < 0 || j >= c[k].length) return; [c[k][i], c[k][j]] = [c[k][j], c[k][i]]; commit(); inspecteur(); apercu(); }
 });
@@ -3008,6 +3039,15 @@ function textesExemple() {
   (proj.textes || []).forEach(x => { const t = ex(x.titre); if (t) l.push(`${t} (piste Titres, ${fmtChrono(x.start || 0)})`); });
   return l;
 }
+// Parties exportables : tout, un essai de 20 s à la tête de lecture (vérifier un réglage avant un long export), le clip choisi, entre deux repères
+function partiesExport() {
+  const T = total(), l = [['', `Tout le montage (${fmt(T)})`]];
+  if (T > 25) { const a = Math.min(gt, Math.max(0, T - 20)); l.push([`${a.toFixed(2)}-${Math.min(T, a + 20).toFixed(2)}`, `Essai : 20 s à partir de ${fmtChrono(a)} (tête de lecture)`]); }
+  if (proj.clips[sel] && proj.clips.length > 1) { const a = starts()[sel]; l.push([`${a.toFixed(2)}-${(a + effDur(proj.clips[sel])).toFixed(2)}`, `Le clip sélectionné (n° ${sel + 1}, ${fmt(effDur(proj.clips[sel]))})`]); }
+  const m = (proj.markers || []).slice().sort((x, y) => x - y);
+  if (m.length >= 2 && m[1] - m[0] > 0.5) l.push([`${m[0].toFixed(2)}-${m[1].toFixed(2)}`, `Entre les deux premiers repères (${fmtChrono(m[0])} → ${fmtChrono(m[1])})`]);
+  return l;
+}
 function exporter() {
   if (!proj.clips.length) return alert('La timeline est vide.'); stopLecture();
   const ex = textesExemple();
@@ -3021,6 +3061,7 @@ function exporter() {
     <label class="l">Encodage</label><select id="xQ">${opts(CAT.hwenc ? [['rapide', 'Puce vidéo du Mac : le plus rapide (recommandé)'], ['max', 'Puce vidéo du Mac : qualité maximale (fichier plus lourd, presque aussi rapide)'], ['haute', 'Processeur (beaucoup plus lent)']] : [['rapide', 'Rapide'], ['haute', 'Qualité (plus lent)']], ['rapide', 'max', 'haute'].includes(proj.quality) ? proj.quality : 'rapide')}</select>
     <p class="mut" style="margin-top:4px">${CAT.hwenc ? 'L’export utilise la puce du Mac pour lire et encoder les vidéos, encode plusieurs clips à la fois et réutilise les clips qui n’ont pas changé depuis le dernier export.' : ''}</p>
     <div class="sw2"><input type="checkbox" id="xNorm" ${proj.normaliser ? 'checked' : ''}><label for="xNorm">Égaliser le volume (recommandé pour un podcast)</label></div>
+    <label class="l">Partie à exporter</label><select id="xPartie">${partiesExport().map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join('')}</select>
     <p class="mut">Durée : ${fmt(total())} · format ${esc({ vertical: 'vertical 9:16', horizontal: 'horizontal 16:9', carre: 'carré' }[proj.format])}</p>
     <div id="expo"><div class="ligne"><button id="xAnn">Annuler</button><button class="pri" id="xGo">Lancer l’export</button></div></div>`);
   $('#xAnn').onclick = fermer;
@@ -3043,9 +3084,13 @@ function exporter() {
     // l'aperçu de fond s'arrête : toute la puissance du Mac va à l'export
     exportEnCours = true; if (fond.cours) annulerJob(fond.id);
     let idExp = null; $('#xStop').onclick = () => { $('#xStop').disabled = true; $('#xStop').textContent = 'Arrêt…'; annulerJob(idExp); };
+    const partie = ($('#xPartie') || {}).value || '', [ps, pe] = partie.split('-').map(Number), plage = partie ? { s: ps, e: pe } : undefined;
+    const t0 = Date.now(), reste = p => { if (p < 0.04 || p >= 0.99) return ''; const r = (Date.now() - t0) / 1000 * (1 - p) / p; return r < 45 ? ' · moins d’une minute' : ` · environ ${Math.round(r / 60)} min restante${r >= 90 ? 's' : ''}`; };
     try {
-      const j = await lancerJob('/api/export', { project: proj }, (p, s) => { $('#barreExp i').style.width = Math.round(p * 100) + '%'; $('#xTxt').textContent = `${s} — ${Math.round(p * 100)} %`; }, id => { idExp = id; });
+      const j = await lancerJob('/api/export', { project: proj, plage }, (p, s) => { $('#barreExp i').style.width = Math.round(p * 100) + '%'; $('#xTxt').textContent = `${s} — ${Math.round(p * 100)} %${reste(p)}`; }, id => { idExp = id; });
       exportEnCours = false;
+      // export long : prévenu même si la fenêtre est cachée (notification du Mac)
+      if (document.hidden || Date.now() - t0 > 60000) { try { new Notification('Export terminé', { body: j.out, silent: false }); } catch (er) { /* notifications indisponibles */ } }
       $('#expo').innerHTML = `<p>✅ Terminé${j.duree ? ` en ${fmt(j.duree)}` : ''} : <b>${esc(j.out)}</b>${j.repris ? `<br><span class="mut">${j.repris} clip${j.repris > 1 ? 's' : ''} inchangé${j.repris > 1 ? 's' : ''} repris du dernier export.</span>` : ''}</p><div class="ligne"><button id="xFind">Afficher dans le Finder</button><button id="xAir">Envoyer par AirDrop</button><a href="/exports/${enc(j.out)}"><button style="width:100%">Télécharger</button></a><button class="pri" id="xFin">Fermer</button></div><p class="mut">Dossier : Films → QuentMovie → exports</p>`;
       $('#xAir').onclick = () => partagerFichiers([j.out]); $('#xFin').onclick = fermer; $('#xFind').onclick = () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) });
     } catch (e) { exportEnCours = false; $('#expo').innerHTML = `<p class="${/annulé/.test(e.message) ? 'mut' : 'err'}">${esc(e.message)}</p><button id="xFin">Fermer</button>`; $('#xFin').onclick = fermer; preparerEnFond(); }

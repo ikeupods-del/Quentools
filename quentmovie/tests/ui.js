@@ -155,6 +155,11 @@ function chromium() {
     return a.start === 1 && a.dur === 1 && a.anim === 'pop' && b.start === 0 && b.dur === 2 && b.ss === 1 && b.anim === 'none' && c.start === 0 && c.dur === 1 && c.ss === 3;
   }));
   check('découpe : une animation lancée pendant un blanc démarre au morceau suivant', await ev(() => { const r = repartirCalques([{ file: 'x', kind: 'video', start: 2.5, dur: 1 }], [[0, 2], [3, 5]]); return !r[0].length && r[1].length === 1 && r[1][0].start === 0 && r[1][0].dur === 1 && !r[1][0].ss; }));
+  check('début du clip raccourci ou rallongé : sous-titres, calques et titre restent sur leur image', await ev(() => {
+    const base = newClip(medias.find(m => m.file === 'a.mp4')); base.in = 1; base.subs = [{ s: 2, e: 3, t: 'mot' }, { s: 0.2, e: 0.6, t: 'retiré' }]; base.overlays = [{ file: 'x', kind: 'video', start: 2, dur: 1 }]; base.titre = { preset: 'angle', start: 2.5, dur: 1 };
+    const c = clone(base); c.in = 2; decalerDebut(c, base, 1); const d = clone(base); d.in = 0.5; decalerDebut(d, base, -0.5);
+    return c.subs.length === 1 && c.subs[0].s === 1 && c.overlays[0].start === 1 && c.titre.start === 1.5 && d.subs[0].s === 2.5 && d.overlays[0].start === 2.5 && d.titre.start === 3;
+  }));
   check('coupe au milieu d’une animation : la 2e moitié continue sans recommencer', await ev(() => { const c = newClip(medias.find(m => m.file === 'a.mp4')); c.overlays = [{ file: 'x', kind: 'video', start: 1, dur: 3, anim: 'pop' }]; const [a, b] = trancherClip(c, 2); return a.overlays.length === 1 && a.overlays[0].dur === 1 && b.overlays[0].start === 0 && b.overlays[0].ss === 1 && b.overlays[0].dur === 2 && b.overlays[0].anim === 'none'; }));
   await ev(() => { const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v)]; proj.audio = [{ file: 'son.wav', start: 0, in: 0, dur: 6, vol: 100 }]; proj.pistes = []; proj.markers = []; proj.etatPistes = {}; sel = 0; selA = -1; setZoom(40); commit(); tout(); choisirOutil('lame'); });
   await pg.waitForTimeout(200);

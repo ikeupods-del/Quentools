@@ -168,6 +168,12 @@ const { execFileSync } = require('child_process');
     const silence = { ...clip('a.mp4', 'video', { out: 4, vol: 0 }) };
     const bz = await exporter({ ...projet('Bruitage'), clips: [silence], audio: [{ file: 'lib:' + so.file, vol: 100, start: 2, fade: false, loop: false, duck: false, niveauBrut: true }] });
     check('bruitage : entendu à son instant, pas avant', niveau(bz.out, 1.2) < -60 && niveau(bz.out, 2.05) > -40, `${niveau(bz.out, 1.2).toFixed(1)} / ${niveau(bz.out, 2.05).toFixed(1)} dB`); }
+  // export d'un passage (essai) : seulement la partie choisie, nommée « extrait-… » ; titres de la piste T recalés
+  { const { id } = await (await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: { ...projet('Extrait'), textes: [{ start: 3, dur: 2, titre: { preset: 'angle', l1: 'Titre', color: '#ff2d55', start: 0 } }] }, plage: { s: 1.5, e: 4.5 } }) })).json();
+    let j; for (;;) { j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.error || j.done) break; await new Promise(r => setTimeout(r, 200)); }
+    check('export d’un passage : 3 s, fichier « extrait-… »', !j.error && /^extrait-/.test(j.out || '') && Math.abs(lireDuree(j.out) - 3) < 0.25, `${j.error || ''} ${j.out} ${j.out && lireDuree(j.out)}`);
+    const D = require('../decoupe'), q = D.extraireSegment({ clips: [clip('a.mp4', 'video', { out: 4, overlays: [{ file: 'x', kind: 'video', start: 1, dur: 2, anim: 'pop' }] })], audio: [], pistes: [], textes: [{ start: 3, dur: 2, titre: { start: 0.2 } }, { start: 0.5, dur: 1, titre: {} }] }, 2, 4);
+    check('extrait : calque commencé avant continue, titre de la piste T recalé', q.clips[0].overlays[0].ss === 1 && q.clips[0].overlays[0].dur === 1 && q.clips[0].overlays[0].anim === 'none' && q.textes.length === 1 && q.textes[0].start === 1, JSON.stringify([q.clips[0].overlays, q.textes])); }
   // annulation : l'export s'arrête vite, avec un message clair
   { const long = { ...projet('Annule'), res: 1080, clips: Array.from({ length: 12 }, (_, i) => clip('a.mp4', 'video', { out: 4, text: 'Texte ' + i, fx: [{ id: 'flou' }] })) };
     const { id } = await (await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: long }) })).json();
