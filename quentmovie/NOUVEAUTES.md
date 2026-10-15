@@ -3,7 +3,13 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
-## 1.37.1
+## 1.38.0
+- **L'analyse de la vidéo lit toute la vidéo** : sur une longue vidéo, l'IA ne lisait que les premières minutes. Elle lit maintenant des passages répartis du début à la fin (conclusion comprise), avec leur moment.
+- **Idées fortes avec leur moment** : clique sur l'heure d'une idée forte pour y aller dans la timeline. Les mots-clés sont affichés, et les expressions comme « assurance vie » ou « chiffre d'affaires » sont reconnues.
+- **Plus de sujets reconnus** : mode et beauté, immobilier, santé, école, église, mariage, culture et récit (avec leur pack conseillé). Quand le programme hésite, l'IA choisit le genre dans la liste.
+- **Rien d'inventé** : chaque phrase de l'IA est comparée à ce qui est vraiment dit dans la vidéo ; une idée sans rapport est écartée.
+- **Plus rapide la deuxième fois** : l'analyse est gardée ; chapitres, extraits et montage selon le sujet ne refont pas travailler l'IA sur la même vidéo.
+- Les mots de l'oral (« vraiment », « genre », « bonjour »…) ne sont plus pris pour des mots-clés.
 - **Timeline libre pendant la lecture** : clique n'importe où dans la timeline (règle, clip, repère) pendant que la vidéo joue, la lecture continue depuis cet endroit. Tu peux aussi faire défiler la timeline à la molette ou avec la barre sans qu'elle revienne de force sur la tête de lecture (le suivi reprend tout seul après 4 secondes).
 - **Coupe des blancs plus douce** : par défaut, seuls les vrais blancs (environ 2 secondes ou plus) sont retirés ; les respirations et les « euh » restent, la vidéo reste fluide. Choix « Douce », « Normale » ou « Serrée » dans Outils → Couper les blancs.
 - Plus de petit « clic » sonore aux raccords des blancs coupés.

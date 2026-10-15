@@ -166,12 +166,25 @@ function create(opts = {}) {
     if (total > 45 && parMin < 3) conseils.push({ action: 'dynamiser', texte: `Peu de changements de plan (${parMin} par minute) : des zooms alternés relanceront l’attention.` });
     return { scenes: scenes.sort((a, b) => a - b), parMinute: parMin, luminosite: lum == null ? null : Math.round(lum), lufs: lufs == null ? null : +lufs.toFixed(1), blancs: pBlanc, conseils };
   }
+  // résultats gardés (mémoire et disque) : le chapitrage, le clipping et le montage selon le sujet relisent la même analyse sans refaire travailler l'IA
+  const analysesFaites = new Map();
   async function analyserLaVideo(job, segments, duree, avecIA) {
     const CH = require('./chapitrage'), brut = CH.analyserSujet(segments, duree);
-    if (!brut) return { sujet: '', genre: null, motsCles: [], rythme: 'normal', points: [], resume: '', ia: false, brut: null };
-    job.step = 'Analyse du sujet de la vidéo…'; job.progress = 0.15;
-    const r = avecIA ? await IA().analyserVideo({ segments, base: brut }) : { sujet: brut.sujet, points: [], resume: '', public: '', ia: false };
-    return { sujet: r.sujet || brut.sujet, resume: r.resume, points: r.points, public: r.public, ia: r.ia, genre: brut.genre, motsCles: brut.motsCles, rythme: brut.rythme, debit: brut.debit, brut };
+    if (!brut) return { sujet: '', genre: null, motsCles: [], rythme: 'normal', points: [], moments: [], resume: '', ia: false, brut: null };
+    const cle = require('crypto').createHash('sha1').update(JSON.stringify(['a3', Math.round(+duree || 0), !!avecIA, segments.map(x => [Math.round(+x.s || 0), String(x.t || '')])])).digest('hex');
+    const fichier = path.join(BASE, '.analyses', 'sujet-' + cle + '.json');
+    let r = analysesFaites.get(cle);
+    if (!r) { try { r = JSON.parse(fs.readFileSync(fichier, 'utf8')); } catch (e) { /* à calculer */ } }
+    if (!r) {
+      job.step = avecIA ? 'L’IA locale lit toute la vidéo…' : 'Analyse du sujet de la vidéo…'; job.progress = 0.15;
+      r = avecIA ? await IA().analyserVideo({ segments, base: brut, duree }) : { sujet: brut.sujet, points: [], moments: [], motsCles: [], resume: '', public: '', genre: '', ia: false };
+      if (r.ia || !avecIA) { analysesFaites.set(cle, r); try { fs.mkdirSync(path.dirname(fichier), { recursive: true }); fs.writeFileSync(fichier, JSON.stringify(r)); } catch (e) { /* sans cache */ } }
+    }
+    // genre : celui du programme quand il est sûr ; sinon celui que l'IA a choisi dans la liste (sujet mal couvert par les mots du programme)
+    let genre = brut.genre; const gIA = CH.GENRES.find(g => g.id === r.genre);
+    if (gIA && (brut.genre.id === 'general' || brut.genre.confiance < 0.5 || (brut.genreProche && brut.genreProche.id === gIA.id))) genre = { id: gIA.id, nom: gIA.nom, pack: gIA.pack, confiance: brut.genre.id === gIA.id ? brut.genre.confiance : 0.5, ia: true };
+    const motsCles = [...new Set([...(r.motsCles || []), ...brut.motsCles])].slice(0, 6);
+    return { sujet: r.sujet || brut.sujet, resume: r.resume, points: r.points || [], moments: r.moments || [], public: r.public, ia: r.ia, genre, motsCles, rythme: brut.rythme, debit: brut.debit, brut };
   }
   const PAROLE = () => parole || (parole = require('./parole').creer({ run, FFMPEG, BASE }));
   // Réglages locaux (clés gratuites des banques de photos : gardées dans le dossier QuentMovie de l'utilisateur, jamais dans le dépôt)

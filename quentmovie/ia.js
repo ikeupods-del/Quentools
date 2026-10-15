@@ -264,24 +264,35 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
     return { chapitres: garde, ia: false };
   }
 
-  // Analyse de la vidéo : l'IA lit des extraits du début, du milieu et de la fin et résume le sujet, le public et les idées fortes.
-  // Elle ne fait que décrire ce qui est dit ; l'analyse du programme (genre, mots-clés) sert de repli et de garde-fou.
-  async function analyserVideo({ segments = [], base = null }) {
+  // Analyse de la vidéo : l'IA lit des extraits datés de toute la vidéo (une part par minute environ, jusqu'à 10) et résume le sujet,
+  // le public, les idées fortes (avec leur moment), les mots-clés et le genre (choisi dans la liste du programme).
+  // Elle ne fait que décrire ce qui est dit : chaque phrase est comparée au texte de la vidéo (ancrage) et ce qui n'y est pas est écarté ;
+  // l'analyse du programme (genre, mots-clés) lui sert de repère et de repli.
+  async function analyserVideo({ segments = [], base = null, duree = 0 }) {
     utiliser('');
-    const texte = segments.map(s => String(s.t || '').trim()).filter(Boolean);
-    if (!installe() || texte.length < 4) return { sujet: base ? base.sujet : '', resume: '', points: [], public: '', ia: false };
-    const n = texte.length, tiers = Math.max(1, Math.floor(n / 3)), pris = [...texte.slice(0, tiers), ...texte.slice(tiers, tiers * 2).filter((_, i) => i % 2 === 0), ...texte.slice(tiers * 2).filter((_, i) => i % 2 === 0)];
-    const extrait = pris.join(' ').slice(0, 3800);
-    const systeme = 'Tu analyses une vidéo en français à partir de ce qui y est dit. Tu décris le sujet, le public visé et les idées fortes, sans rien inventer qui ne soit pas dans le texte.';
-    const demande = `Texte de la vidéo (extraits) :\n${extrait}\n\nDonne : le sujet en une phrase courte, le public visé en quelques mots, un résumé de 2 phrases, et 3 à 6 idées fortes (4 à 8 mots chacune).`;
-    const schema = { type: 'object', properties: { sujet: { type: 'string' }, public: { type: 'string' }, resume: { type: 'string' }, points: { type: 'array', minItems: 1, maxItems: 6, items: { type: 'string' } } }, required: ['sujet', 'resume', 'points'] };
+    const CH = require('./chapitrage'), texte = segments.map(s => String(s.t || '').trim()).filter(Boolean);
+    const repli = { sujet: base ? base.sujet : '', resume: '', points: [], moments: [], motsCles: [], public: '', genre: '', ia: false };
+    if (!installe() || texte.length < 4) return repli;
+    const extrait = CH.echantillon(segments, duree, 4200), ids = CH.GENRES.map(g => g.id);
+    const systeme = 'Tu analyses une vidéo en français à partir de ce qui y est dit (extraits datés [minutes:secondes] pris sur toute la durée). Tu décris le sujet, le public visé et les idées fortes, sans rien inventer qui ne soit pas dans le texte.';
+    const reperes = base ? `Repères du programme (à vérifier, pas forcément justes) : genre probable « ${base.genre.nom} »${base.motsCles.length ? `, mots fréquents : ${base.motsCles.join(', ')}` : ''}.\n` : '';
+    const demande = `${reperes}Texte de la vidéo (extraits datés) :\n${extrait}\n\nDonne :\n- le sujet en une phrase courte et précise (ce dont parle vraiment la vidéo, sans « cette vidéo parle de »),\n- le public visé en quelques mots,\n- un résumé de 2 phrases,\n- 3 à 6 idées fortes (4 à 10 mots chacune), chacune avec le moment [mm:ss] de l’extrait où elle est dite,\n- 3 à 6 mots-clés tirés du texte,\n- le genre parmi : ${ids.join(', ')}, general.`;
+    const schema = { type: 'object', properties: { sujet: { type: 'string' }, public: { type: 'string' }, resume: { type: 'string' },
+      points: { type: 'array', minItems: 1, maxItems: 6, items: { type: 'object', properties: { idee: { type: 'string' }, moment: { type: 'string' } }, required: ['idee', 'moment'] } },
+      motsCles: { type: 'array', minItems: 1, maxItems: 6, items: { type: 'string' } }, genre: { type: 'string', enum: [...ids, 'general'] } }, required: ['sujet', 'resume', 'points', 'motsCles', 'genre'] };
     try {
-      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.2 }, 320);
-      const x = r.resultat || {}, net = (t, m) => SQ.nettoyerTexte(t).slice(0, m);
-      const sujet = net(x.sujet, 140);
-      if (sujet.length >= 6) return { sujet, public: net(x.public, 80), resume: net(x.resume, 380), points: (x.points || []).map(p => net(p, 80)).filter(p => p.length >= 4).slice(0, 6), ia: true };
+      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.2 }, 520);
+      const x = r.resultat || {}, net = (t, m) => SQ.nettoyerTexte(t).slice(0, m), ancre = t => CH.ancrage(t, segments);
+      const D = Math.max(+duree || 0, ...segments.map(s => +s.e || 0)), temps = m => { const k = /(\d{1,3})\s*[:h]\s*(\d{1,2})/.exec(String(m || '')); return k ? Math.min(D, +k[1] * 60 + +k[2]) : null; };
+      let sujet = net(x.sujet, 140).replace(/^(cette |la )?vid[ée]o (parle|traite|porte) (de |du |des |d’|d'|sur )/i, ''); sujet = sujet.charAt(0).toUpperCase() + sujet.slice(1);
+      if (sujet.length < 6) return repli;
+      if (ancre(sujet) < 0.2 && base && base.sujet) sujet = base.sujet; // sujet sans rapport avec ce qui est dit : celui du programme
+      const pts = (x.points || []).map(p => ({ idee: net(p && p.idee, 90), t: temps(p && p.moment) })).filter(p => p.idee.length >= 4 && ancre(p.idee) >= 0.3).slice(0, 6);
+      const cles = (x.motsCles || []).map(m => net(m, 40).toLowerCase()).filter(m => m.length >= 3 && ancre(m) > 0).slice(0, 6);
+      return { sujet, public: net(x.public, 80), resume: net(x.resume, 380), points: pts.map(p => p.idee), moments: pts.filter(p => p.t != null).map(p => ({ t: p.t, idee: p.idee })),
+        motsCles: cles, genre: ids.includes(x.genre) ? x.genre : '', ia: true };
     } catch (e) { /* analyse du programme gardée */ }
-    return { sujet: base ? base.sujet : '', resume: '', points: [], public: '', ia: false };
+    return repli;
   }
   // Clipping : parmi des extraits candidats (calculés par le programme), l'IA choisit les plus accrocheurs pour TikTok et écrit leur titre.
   // Elle ne choisit que des numéros de la liste et ne peut ni modifier ni inventer un extrait.

@@ -73,6 +73,22 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   check('assistant : montage vide → conseil de départ', AS.suggerer({ clips: [] })[0].action === 'aucune');
   check('assistant : hashtags sans IA', AS.hashtagsSimples('Le voyage en Islande : volcans, glaciers et volcans actifs du voyage').slice(0, 2).join() === '#volcans,#voyage');
 
+  // Analyse de la vidéo : extraits pris sur toute la durée, genre et idées de l'IA vérifiés, résultat gardé (l'IA ne relit pas deux fois)
+  { const CH = require('../chapitrage'), segs = []; let t = 0;
+    for (let i = 0; i < 400; i++) { segs.push({ s: t, e: t + 4, t: i < 380 ? `Phrase ${i} sur le maquillage du teint et le soin de la peau.` : `Pour finir, la crème hydratante du soir numéro ${i}.` }); t += 5; }
+    const ech = CH.echantillon(segs, t);
+    check('analyse : les extraits pour l’IA couvrent toute la vidéo (fin comprise)', ech.length <= 4300 && /crème hydratante/.test(ech) && /\[3[0-3]:/.test(ech), ech.slice(-200));
+    check('analyse : une phrase inventée par l’IA est repérée', CH.ancrage('Le maquillage du teint', segs) > 0.6 && CH.ancrage('Les cryptomonnaies et le bitcoin', segs) === 0);
+    let appels = 0;
+    const fausse = { analyserVideo: async ({ segments, base, duree }) => { appels++; return { sujet: 'Le maquillage du teint et le soin de la peau', resume: 'Conseils.', public: 'débutantes', points: ['Bien préparer la peau'], moments: [{ t: 1900, idee: 'La crème du soir' }], motsCles: ['teint'], genre: 'beaute', ia: true, _vu: [!!base, duree] }; }, arreter() {} };
+    const baseA = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-ana-')), appA = create({ port: 0, base: baseA, ...bins, ia: fausse }), portA = await appA.start();
+    const analyser = async () => { const { id } = await (await fetch(`http://127.0.0.1:${portA}/api/video/analyser`, { method: 'POST', body: JSON.stringify({ segments: segs, duree: t, ia: true, clips: [] }) })).json(); for (;;) { await new Promise(r => setTimeout(r, 100)); const j = await (await fetch(`http://127.0.0.1:${portA}/api/job?id=${id}`)).json(); if (j.done || j.error) return j.resultat || j; } };
+    const a1 = await analyser(), a2 = await analyser();
+    check('analyse : genre reconnu (mode et beauté), pack conseillé', a1.genre && a1.genre.id === 'beaute' && a1.genre.pack === 'beaute', JSON.stringify(a1.genre));
+    check('analyse : idées fortes avec leur moment, mots-clés réunis', a1.moments.length === 1 && a1.moments[0].t === 1900 && a1.motsCles[0] === 'teint' && a1.motsCles.length > 1, JSON.stringify([a1.moments, a1.motsCles]));
+    check('analyse : résultat gardé, l’IA ne relit pas la même vidéo', appels === 1 && a2.sujet === a1.sujet, appels);
+    appA.stop(); fs.rmSync(baseA, { recursive: true, force: true }); }
+
   if (process.env.QM_RESEAU) {
     const IA = require('../ia').creer({ BASE: base, FFMPEG: bins.ffmpeg });
     const faits = 'Michelin est une entreprise française de pneumatiques fondée en 1889 à Clermont-Ferrand par les frères André et Édouard Michelin.\n[Les débuts] En 1891, ils déposent le brevet du pneu démontable pour bicyclette.\n[Le Bibendum] En 1898, le dessinateur O\'Galop crée le Bibendum.\n[Le guide] En 1900 paraît le premier guide Michelin.\n[Le pneu radial] En 1946, Michelin invente le pneu à carcasse radiale.';

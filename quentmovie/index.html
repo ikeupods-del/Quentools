@@ -893,14 +893,17 @@ function carteTechnique(t) {
 function carteAnalyse(a) {
   if (a && !(a.sujet || a.genre) && a.technique) return `<div class="encart" style="margin:8px 0"><h4>🔎 Analyse de la vidéo</h4>${carteTechnique(a.technique)}</div>`;
   if (!a || !(a.sujet || a.genre)) return '';
-  const g = a.genre || {}, P = (CAT.packs || []).find(x => x.id === g.pack), pts = (a.points || []).slice(0, 5);
+  const g = a.genre || {}, P = (CAT.packs || []).find(x => x.id === g.pack), mo = (a.moments || []).slice(0, 6), pts = mo.length ? [] : (a.points || []).slice(0, 5);
   return `<div class="encart" style="margin:8px 0"><h4>🔎 Ce que j’ai compris de la vidéo</h4>
     ${a.sujet ? `<p><b>Sujet :</b> ${esc(a.sujet)}</p>` : ''}${a.resume ? `<p class="mut">${esc(a.resume)}</p>` : ''}
     <p class="mut">${g.nom && g.id !== 'general' ? `Genre : ${esc(g.nom)} · ` : ''}Rythme de parole : ${a.rythme === 'rapide' ? 'rapide' : a.rythme === 'calme' ? 'posé' : 'normal'}${a.public ? ` · Public : ${esc(a.public)}` : ''}</p>
+    ${(a.motsCles || []).length ? `<p class="mut">Mots-clés : ${a.motsCles.slice(0, 6).map(esc).join(' · ')}</p>` : ''}
+    ${mo.length ? `<ul style="margin:4px 0 4px 18px">${mo.map(x => `<li><a href="#" data-aller="${(+x.t).toFixed(2)}" title="Aller à ce moment">${fmtChrono(+x.t)}</a> ${esc(x.idee)}</li>`).join('')}</ul>` : ''}
     ${pts.length ? `<ul style="margin:4px 0 4px 18px">${pts.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
     ${P && g.id !== 'general' ? `<button data-pack-sujet="${esc(P.id)}">🎬 Monter dans le style « ${esc(P.nom)} »</button> <span class="mut">pack conseillé pour ce sujet</span>` : ''}${carteTechnique(a.technique)}</div>`;
 }
 function brancherCarteAnalyse(racine) {
+  racine.querySelectorAll('[data-aller]').forEach(b => { b.onclick = e => { e.preventDefault(); placerTete(+b.dataset.aller); }; }); // idée forte → son moment dans la vidéo
   racine.querySelectorAll('[data-conseil]').forEach(b => { b.onclick = async () => {
     b.disabled = true; b.textContent = '…';
     try { await avecRevue('conseil', async () => { if (b.dataset.conseil === 'normaliser') { proj.normaliser = true; commit(); } else await executerAction({ action: b.dataset.conseil, parametre: '' }); }); b.textContent = '✅ Fait'; }
@@ -2856,7 +2859,7 @@ async function executerAction(a) {
   }
 }
 // Montage selon le sujet : l'IA analyse la parole, puis le style (pack), la musique et le son sont choisis pour ce genre de vidéo
-const GENRE_MUSIQUE = { bourse: 'dynamique', economie: 'calme', crypto: 'electro', 'finance-perso': 'calme', entrepreneur: 'dynamique', tech: 'electro', gaming: 'electro', tuto: 'calme', podcast: 'calme', 'vlog-voyage': 'joyeuse', 'vlog-food': 'joyeuse', 'vlog-sport': 'energique', 'vlog-quotidien': 'lofi', general: 'calme' };
+const GENRE_MUSIQUE = { bourse: 'dynamique', economie: 'calme', crypto: 'electro', 'finance-perso': 'calme', entrepreneur: 'dynamique', tech: 'electro', gaming: 'electro', tuto: 'calme', podcast: 'calme', 'vlog-voyage': 'joyeuse', 'vlog-food': 'joyeuse', 'vlog-sport': 'energique', 'vlog-quotidien': 'lofi', beaute: 'joyeuse', immobilier: 'calme', sante: 'calme', ecole: 'calme', eglise: 'calme', mariage: 'joyeuse', recit: 'calme', general: 'calme' };
 function montageSelonSujet() { return avecRevue('montage selon le sujet', montageSujetBrut); }
 async function montageSujetBrut() {
   if (!proj.clips.length) return aide(sansClipMsg);
