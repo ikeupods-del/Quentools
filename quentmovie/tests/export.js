@@ -4,7 +4,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const { execFileSync, spawnSync } = require('child_process');
 
 (async () => {
   const { create } = require('../server'), { resolveFfmpeg } = require('../ffmpeg-path');
@@ -170,6 +170,10 @@ const { execFileSync } = require('child_process');
     const silence = { ...clip('a.mp4', 'video', { out: 4, vol: 0 }) };
     const bz = await exporter({ ...projet('Bruitage'), clips: [silence], audio: [{ file: 'lib:' + so.file, vol: 100, start: 2, fade: false, loop: false, duck: false, niveauBrut: true }] });
     check('bruitage : entendu à son instant, pas avant', niveau(bz.out, 1.2) < -60 && niveau(bz.out, 2.05) > -40, `${niveau(bz.out, 1.2).toFixed(1)} / ${niveau(bz.out, 2.05).toFixed(1)} dB`); }
+  // « Égaliser le volume » : mesure du montage entier puis réglage en une fois, niveau final proche de -16 LUFS
+  { const jn = await exporter({ ...projet('Egal'), normaliser: true, clips: [clip('a.mp4', 'video', { out: 4, vol: 25 }), clip('a.mp4', 'video', { in: 1, out: 4 })] });
+    const r = spawnSync(bins.ffmpeg, ['-hide_banner', '-nostats', '-i', path.join(base, 'exports', jn.out), '-af', 'ebur128=framelog=quiet', '-f', 'null', '-']).stderr.toString(), m = [...r.matchAll(/\bI:\s+(-?[\d.]+) LUFS/g)], I = m.length ? +m[m.length - 1][1] : null;
+    check('égaliser le volume : montage mesuré puis réglé en une fois (≈ -16 LUFS)', jn.niveaux && jn.niveaux.final != null && I != null && Math.abs(I + 16) < 2, `${jn.niveaux && jn.niveaux.final} → ${I}`); }
   // long clip avec calque, titre et texte : découpé en morceaux parallèles, même image que le clip entier
   { process.env.QM_MORCEAU = '1';
     const riche = clip('a.mp4', 'video', { out: 4, fx: [{ id: 'cine', p: {} }], titre: { preset: 'angle', l1: 'Titre long', color: '#ff2d55', start: 0.2, dur: 0 }, text: 'Texte', textStart: 0.5, overlays: [{ file: 'p.png', kind: 'image', x: 30, y: 30, scale: 30, rot: 0, opacity: 100, start: 1.5, dur: 1.2, anim: 'none', plein: '', key: false }] });

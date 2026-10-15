@@ -1413,7 +1413,19 @@ function buildClip(c, P, o = {}) {
 
       // Format de sortie
       const sortie = sortiesDispo().includes(project.sortie) ? project.sortie : 'mp4';
-      const norm = project.normaliser ? ['-af', 'loudnorm=I=-16:TP=-1.5:LRA=11'] : [];
+      // « Égaliser le volume » : mesure du montage entier puis réglage linéaire en une fois (deux passes) ;
+      // la passe unique corrigeait au fil de l'eau et faisait « pomper » le son. Mesure impossible : passe unique.
+      let norm = [];
+      if (project.normaliser && !proxy && sortie !== 'gif') {
+        job.step = 'Mesure du volume du montage';
+        const m = await run(FFMPEG, ['-hide_banner', '-nostats', '-i', joined, '-vn', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json', '-f', 'null', '-'], { cwd: dir, wantErr: true })
+          .then(e => { const j = String(e).match(/\{[^{}]*"input_i"[^{}]*\}/); return j ? JSON.parse(j[0]) : null; }).catch(() => null);
+        const v = k => m && Number.isFinite(+m[k]) ? +m[k] : null;
+        norm = ['-af', (v('input_i') != null && v('input_i') > -70 && v('input_tp') != null && v('input_lra') != null && v('input_thresh') != null
+          ? `loudnorm=I=-16:TP=-1.5:LRA=11:measured_I=${v('input_i')}:measured_TP=${v('input_tp')}:measured_LRA=${v('input_lra')}:measured_thresh=${v('input_thresh')}:offset=${v('target_offset') || 0}:linear=true`
+          : 'loudnorm=I=-16:TP=-1.5:LRA=11') + ',aresample=48000'];
+        job.niveaux = Object.assign(job.niveaux || {}, { final: v('input_i') });
+      }
       let final = joined;
       if (!proxy && (sortie !== 'mp4' || norm.length)) {
         job.step = 'Encodage final';
