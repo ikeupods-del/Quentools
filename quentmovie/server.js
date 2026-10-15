@@ -1453,7 +1453,7 @@ function buildClip(c, P, o = {}) {
         const v = k => m && Number.isFinite(+m[k]) ? +m[k] : null;
         norm = ['-af', (v('input_i') != null && v('input_i') > -70 && v('input_tp') != null && v('input_lra') != null && v('input_thresh') != null
           ? `loudnorm=I=-16:TP=-1.5:LRA=11:measured_I=${v('input_i')}:measured_TP=${v('input_tp')}:measured_LRA=${v('input_lra')}:measured_thresh=${v('input_thresh')}:offset=${v('target_offset') || 0}:linear=true`
-          : 'loudnorm=I=-16:TP=-1.5:LRA=11') + ',aresample=48000'];
+          : 'loudnorm=I=-16:TP=-1.5:LRA=11') + ',aresample=48000,aformat=channel_layouts=stereo|mono']; // FFmpeg 6.0 (Mac) : disposition des voies à préciser après loudnorm
         job.niveaux = Object.assign(job.niveaux || {}, { final: v('input_i') });
       }
       let final = joined;
