@@ -172,12 +172,14 @@ const { execFileSync } = require('child_process');
     check('bruitage : entendu à son instant, pas avant', niveau(bz.out, 1.2) < -60 && niveau(bz.out, 2.05) > -40, `${niveau(bz.out, 1.2).toFixed(1)} / ${niveau(bz.out, 2.05).toFixed(1)} dB`); }
   // long clip avec calque, titre et texte : découpé en morceaux parallèles, même image que le clip entier
   { process.env.QM_MORCEAU = '1';
-    const riche = clip('a.mp4', 'video', { out: 4, titre: { preset: 'angle', l1: 'Titre long', color: '#ff2d55', start: 0.2, dur: 0 }, text: 'Texte', textStart: 0.5, overlays: [{ file: 'p.png', kind: 'image', x: 30, y: 30, scale: 30, rot: 0, opacity: 100, start: 1.5, dur: 1.2, anim: 'none', plein: '', key: false }] });
+    const riche = clip('a.mp4', 'video', { out: 4, fx: [{ id: 'cine', p: {} }], titre: { preset: 'angle', l1: 'Titre long', color: '#ff2d55', start: 0.2, dur: 0 }, text: 'Texte', textStart: 0.5, overlays: [{ file: 'p.png', kind: 'image', x: 30, y: 30, scale: 30, rot: 0, opacity: 100, start: 1.5, dur: 1.2, anim: 'none', plein: '', key: false }] });
     const jm = await exporter({ ...projet('MorcRiche'), clips: [riche] });
     process.env.QM_SANS_MORCEAUX = '1'; const je = await exporter({ ...projet('EntierRiche'), clips: [riche] }); delete process.env.QM_SANS_MORCEAUX; delete process.env.QM_MORCEAU;
     const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
     const ec = t => { const a = img(jm.out, t), b = img(je.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
-    check('clip long avec calque, titre et texte : découpé en morceaux, même image que d’un seul bloc', jm.morceaux >= 2 && [1.2, 2.2, 3.5].every(t => ec(t) < 2.5), `${jm.morceaux} ${[1.2, 2.2, 3.5].map(t => ec(t).toFixed(2)).join(' ')}`); }
+    process.env.QM_MORCEAU = '1'; const jz = await exporter({ ...projet('MorcZoom'), clips: [clip('a.mp4', 'video', { out: 4, fx: [{ id: 'zoomavant', p: {} }] })] }); delete process.env.QM_MORCEAU;
+    check('effet qui bouge dans le temps (zoom) : le clip n’est pas découpé', !jz.morceaux, jz.morceaux);
+    check('clip long avec look, calque, titre et texte : découpé en morceaux, même image que d’un seul bloc', jm.morceaux >= 2 && [1.2, 2.2, 3.5].every(t => ec(t) < 2.5), `${jm.morceaux} ${[1.2, 2.2, 3.5].map(t => ec(t).toFixed(2)).join(' ')}`); }
   // clip avec des milliers de sous-titres : tous affichés (avant : les 300 premiers seulement), graphe passé par un fichier
   { ff('-f', 'lavfi', '-i', 'color=c=gray:s=640x360:r=30:d=62', '-f', 'lavfi', '-i', 'sine=f=300:d=62', '-shortest', '-pix_fmt', 'yuv420p', path.join(base, 'gris.mp4'));
     // la création de la vidéo bloque le script plus de 5 s : la connexion gardée ouverte est fermée par le serveur, on réessaie une fois

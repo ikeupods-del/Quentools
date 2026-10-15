@@ -1103,13 +1103,25 @@ function buildClip(c, P, o = {}) {
   // Longs clips « simples » (sans effet, titre, incrustation ni image clé) : découpés en morceaux d'environ deux minutes, encodés en même temps
   // (la puce vidéo gère plusieurs flux) puis recollés sans réencoder ; un morceau inchangé est aussi repris du cache au prochain export.
   // Les sous-titres et fondus sont répartis sur les morceaux : le résultat est identique au clip entier.
+  // effets qui ne dépendent pas du temps (couleurs, looks, netteté, grain…) : identiques d'un morceau à l'autre, le long clip peut être découpé
+  const TEMPOREL = /\b(deshake|vidstab\w*|zoompan|tmix|minterpolate|fade|loop|setpts|reverse|tblend|deflicker|framestep|random|tpad|trim|xfade|fps|mpdecimate|lagfun|amplify|atadenoise|tmedian)\b/;
+  const sansTemps = new Map();
+  const fxSansTemps = e => {
+    if (!e || !e.id) return true;
+    if (!sansTemps.has(e.id)) {
+      const d = FX.VIDEO.find(x => x.id === e.id); let f = null;
+      try { f = d ? d.make(FX.defaults(d), { W: 1920, H: 1080, fps: 30, eff: 200, t0: 0 }) : null; } catch (er) { f = null; }
+      sansTemps.set(e.id, typeof f === 'string' && !TEMPOREL.test(f) && !/[(*+\-\/,]\s*(t|n)\s*[)*+\-\/,]|\(t\)|\bsin\(|\bcos\(/.test(f));
+    }
+    return sansTemps.get(e.id);
+  };
   function morceauxDe(clips) {
     const L = +process.env.QM_MORCEAU || 120, out = [];
     for (const c of clips) {
       const eff = (num(c.out, 0) - num(c.in, 0)) / (num(c.speed, 1) || 1);
       // calques, titre et texte suivent les morceaux (ils continuent là où ils en étaient) : une longue prise avec un « Breaking news »
       // ou l'ambiance d'un pack s'encode aussi en morceaux parallèles
-      const simple = c.kind === 'video' && num(c.speed, 1) === 1 && eff >= L * 1.6 && !(c.fx || []).length && !(c.key && c.key.on) && !c.viz
+      const simple = c.kind === 'video' && num(c.speed, 1) === 1 && eff >= L * 1.6 && (c.fx || []).every(fxSansTemps) && !(c.key && c.key.on && c.key.bgType === 'file' && c.key.bgKind === 'video') && !c.viz
         && !(Array.isArray(c.cadrage) && c.cadrage.length) && !c.bgFile && !c.sonDetache;
       if (!simple || process.env.QM_SANS_MORCEAUX) { out.push(c); continue; }
       const n = Math.max(2, Math.round(eff / L)), len = eff / n, fo = fonduxDe(c, eff);
