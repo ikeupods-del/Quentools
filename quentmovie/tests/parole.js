@@ -26,6 +26,12 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   const g = P.aGarder(mots, 9);
   check('blanc et hésitation coupés', g.length === 2 && g[0][1] < 2.6 && g[1][0] > 2.9, JSON.stringify(g));
   check('marges autour de la parole', g[0][0] === 0.38 && g[1][1] >= 5.45, JSON.stringify(g));
+  // coupe douce (par défaut dans l'application) : les respirations et les « euh » restent, seuls les longs blancs partent
+  const N = P.garderNiveaux(mots, 9);
+  check('coupe douce : pause courte et « euh » gardés (vidéo fluide)', N.douce.length === 1 && N.douce[0][0] <= 0.25 && N.douce[0][1] >= 5.9, JSON.stringify(N.douce));
+  const long = P.motsDe([M('▁Bon', 0.5), M('jour', 0.7), M('.', 0.9, 0.05), M('▁Ensuite', 4.5), M('.', 4.8, 0.05)]);
+  check('coupe douce : un long blanc (3 s) est quand même coupé', P.garderNiveaux(long, 6).douce.length === 2, JSON.stringify(P.garderNiveaux(long, 6).douce));
+  check('coupe normale : « euh » coupé, plus de marge que la coupe serrée', N.normale.length === 2 && N.normale[0][0] < g[0][0] && N.normale[1][1] > g[1][1], JSON.stringify(N.normale));
 
   if (process.env.QM_RESEAU) {
     const { create } = require('../server');

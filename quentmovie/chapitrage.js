@@ -8,7 +8,14 @@ const VIDES = new Set(('alors aussi avec avoir avant apres autre autres bien cel
   'sans sont sous tout tous tres vous votre voila comment ainsi parce peut etait ont cest quil quon quelque quelques cet ete suis sommes etes sera seront serait avez avons avait avaient fois peu beaucoup deja toujours jamais souvent ' +
   'tout toute toutes rien chose choses gens les des une aux par sur est pas que qui quoi dont ici voir veux veut peux fais fait dit dire donne donner aller vais vont allez bon ben euh hein voici ceci celui celle ceux ' +
   'faut falloir il y a on se sa son ses ils je tu me te ne en au du de le la un et ou si ca ce mon ton ma ta mes tes nos vos lui eux moi toi soi c\'est j\'ai n\'est l\'on d\'un d\'une qu\'on qu\'il qu\'elle').split(/\s+/));
-const mots = t => ASCII(t).split(/[^a-z0-9]+/).filter(m => m.length > 2 && !VIDES.has(m) && !/^\d+$/.test(m)).map(m => m.replace(/(s|x)$/, ''));
+// mots de l'oral qui ne disent rien du sujet (« vraiment », « genre », « truc »…) : écartés des mots-clés et du choix du genre
+const ORAL = new Set(('vraiment juste genre truc trucs enfin voila ouais oui non okay merci bonjour salut bienvenue coucou super gros grosse petit petite grand grande assez plutot puis maintenant hui demain hier ' +
+  'vas allons allait aurait auraient aura auront fallait faudra faudrait pouvez pouvons pourrait pourriez doit doivent devez devons dois doit sais savez savoir sait pense pensez penser crois croire ' +
+  'veux voulez vouloir voulais prendre prend prenez mettre met mettez mis mise dis disait disent parler parle parlez regarder regarde regardez trouve trouver trouvez ' +
+  'chaque moment moments annee annees jour jours mois semaine semaines gens personne personnes monde coup coups vrai vraie bonne bon bonnes bons meilleur meilleure ' +
+  'premier premiere deuxieme dernier derniere seul seule seulement surtout notamment simplement exactement completement totalement absolument forcement evidemment ' +
+  'vais etes etait sommes avons avez avoir etre faites faisons ceux celle celles ensuite aussi autant combien beaucoup trop tant tellement vers pendant lorsque puisque').split(/\s+/));
+const mots = t => ASCII(t).split(/[^a-z0-9]+/).filter(m => m.length > 2 && !VIDES.has(m) && !ORAL.has(m) && !/^\d+$/.test(m)).map(m => m.replace(/(s|x)$/, ''));
 const nbMots = t => String(t || '').split(/\s+/).filter(Boolean).length;
 
 // Phrases : on recolle les segments jusqu'à une ponctuation forte ou un long silence
@@ -63,7 +70,14 @@ const GENRES = [
   { id: 'vlog-voyage', nom: 'Voyage', pack: 'vlog-voyage', mots: 'voyage vacances avion hotel plage ville visite visiter decouvrir pays aeroport train randonnee paysage' },
   { id: 'vlog-food', nom: 'Cuisine et food', pack: 'vlog-food', mots: 'recette cuisine restaurant gout plat manger cuire four ingredients repas gateau delicieux saveur' },
   { id: 'vlog-sport', nom: 'Sport', pack: 'vlog-sport', mots: 'sport entrainement musculation course seance muscle match equipe courir salle exercice cardio' },
-  { id: 'vlog-quotidien', nom: 'Vlog du quotidien', pack: 'vlog-quotidien', mots: 'journee matin reveil routine maison soiree vlog quotidien semaine aujourd\'hui' }
+  { id: 'vlog-quotidien', nom: 'Vlog du quotidien', pack: 'vlog-quotidien', mots: 'journee matin reveil routine maison soiree vlog quotidien semaine aujourd\'hui' },
+  { id: 'beaute', nom: 'Mode et beauté', pack: 'beaute', mots: 'maquillage makeup teint fond rouge levres mascara peau soin soins creme cheveux coiffure tenue look mode vetement vetements robe style tendance parfum ongles' },
+  { id: 'immobilier', nom: 'Immobilier', pack: 'immobilier', mots: 'appartement maison piece pieces chambre cuisine salon jardin terrasse metre carre surface loyer locataire proprietaire achat acheter vendre notaire agence visite quartier travaux renovation' },
+  { id: 'sante', nom: 'Santé et bien-être', pack: 'sante', mots: 'sante medecin docteur maladie symptome symptomes douleur traitement soin soins sommeil stress alimentation nutrition vitamine bien-etre meditation respiration corps mental poids regime' },
+  { id: 'ecole', nom: 'École et cours', pack: 'ecole', mots: 'cours lecon eleve eleves professeur prof classe ecole college lycee examen bac controle exercice exercices revision reviser apprendre comprendre chapitre formule definition' },
+  { id: 'eglise', nom: 'Église et spiritualité', pack: 'eglise', mots: 'dieu jesus christ seigneur esprit saint bible verset versets priere prier foi eglise pasteur culte evangile grace amen louange paroisse fidele croyant' },
+  { id: 'mariage', nom: 'Mariage et événement', pack: 'mariage', mots: 'mariage maries mariee marie noces ceremonie alliance alliances temoin temoins invites fete reception anniversaire bapteme evenement celebration' },
+  { id: 'recit', nom: 'Culture et récit', pack: 'podcast-recit', mots: 'histoire siecle guerre roi reine epoque empire revolution ancien antique legende mystere enquete affaire biographie auteur livre roman film culture' }
 ];
 const STOP_SUJET = new Set('aujourd hui parle regardez voir video chaine abonnez abonne like pouce commentaire commentaires lien description cliquez'.split(' '));
 
@@ -85,8 +99,50 @@ function analyserSujet(segments, duree) {
   const total = Math.max(1, tousMots.length), confiance = meilleur ? Math.min(1, meilleur.pts / Math.max(6, total * 0.04)) : 0;
   const genre = meilleur && meilleur.pts >= 4 ? { id: meilleur.g.id, nom: meilleur.g.nom, pack: meilleur.g.pack, confiance: +confiance.toFixed(2) } : { id: 'general', nom: 'Vidéo générale', pack: 'vlog-quotidien', confiance: 0 };
   const D = Math.max(1, +duree || ph[ph.length - 1].e), nb = nbMots(txt), debit = nb / D;
-  const entiers = theme.slice(0, 5).map(t => (String(txt).match(/[\p{L}'’-]+/gu) || []).find(w => ASCII(w).replace(/(s|x)$/, '') === t.mot) || t.mot);
-  return { genre, motsCles: entiers.map(w => w.toLowerCase()), theme, sujet: entiers.slice(0, 3).join(', '), rythme: debit > 2.8 ? 'rapide' : debit < 1.6 ? 'calme' : 'normal', debit: +debit.toFixed(2), nbMots: nb };
+  const forme = r => (String(txt).match(/[\p{L}-]+/gu) || []).find(w => ASCII(w).replace(/(s|x)$/, '') === r) || r; // « d'affaires » → « affaires »
+  // expressions de deux mots répétées (« assurance vie », « intelligence artificielle ») : plus parlantes qu'un mot seul
+  // (mots vraiment côte à côte dans une phrase, éventuellement reliés par « de » : « chiffre d'affaires », « pouvoir d'achat »)
+  const paires = new Map(), utile = w => w && w.length > 2 && !VIDES.has(w) && !ORAL.has(w) && !STOP_SUJET.has(w.replace(/(s|x)$/, '')) && !/^\d+$/.test(w);
+  for (const p of ph) {
+    const r = ASCII(p.t).replace(/\b([a-z])'/g, '$1 ').split(/[^a-z0-9]+/).filter(Boolean);
+    for (let i = 0; i < r.length - 1; i++) {
+      const j = ['de', 'd', 'du'].includes(r[i + 1]) ? i + 2 : i + 1;
+      if (!utile(r[i]) || !utile(r[j])) continue;
+      const k = rad(r[i]) + ' ' + rad(r[j]); if (rad(r[i]) !== rad(r[j])) paires.set(k, (paires.get(k) || 0) + 1);
+    }
+  }
+  const expressions = [...paires.entries()].filter(([k, n]) => { const [a, b] = k.split(' '); return n >= 3 && n >= 0.5 * Math.min(freq.get(a) || n, freq.get(b) || n); })
+    .sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k.split(' '));
+  const cles = [], pris = new Set();
+  for (const [a, b] of expressions) { cles.push(`${forme(a)} ${forme(b)}`); pris.add(a); pris.add(b); }
+  for (const t of theme) { if (cles.length >= 6) break; if (!pris.has(t.mot)) { cles.push(forme(t.mot)); pris.add(t.mot); } }
+  const second = GENRES.map(g => { const lex = new Set(ASCII(g.mots).split(/\s+/).map(rad)); let pts = 0; for (const [m, n] of freq) if (lex.has(m)) pts += Math.min(n, 6); return { g, pts }; }).sort((a, b) => b.pts - a.pts)[1];
+  return { genre, genreProche: second && second.pts >= 4 ? { id: second.g.id, nom: second.g.nom, pack: second.g.pack } : null, motsCles: cles.slice(0, 6).map(w => w.toLowerCase()), theme,
+    sujet: cles.slice(0, 3).join(', '), rythme: debit > 2.8 ? 'rapide' : debit < 1.6 ? 'calme' : 'normal', debit: +debit.toFixed(2), nbMots: nb };
+}
+
+// Extraits de toute la vidéo pour l'IA : la parole est découpée en parts égales dans le temps (début, milieu, fin…),
+// chacune résumée par ses premières phrases et datée [mm:ss]. Avant, seul le début d'une longue vidéo était lu.
+function echantillon(segments, duree, budget = 4200, parts = 10) {
+  const ph = phrases(segments); if (!ph.length) return '';
+  const D = Math.max(+duree || 0, ph[ph.length - 1].e), mmss = t => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+  const tout = ph.map(p => p.t).join(' ');
+  if (tout.length <= budget) return ph.map(p => `[${mmss(p.s)}] ${p.t}`).join('\n');
+  const n = Math.max(3, Math.min(parts, Math.round(D / 60) || parts)), part = Math.floor(budget / n) - 10, out = [];
+  for (let k = 0; k < n; k++) {
+    const a = D * k / n, b = D * (k + 1) / n, dans = ph.filter(p => p.s >= a && p.s < b); if (!dans.length) continue;
+    // dernière part : ses dernières phrases (la conclusion) ; les autres : leurs premières phrases
+    const fin = k === n - 1, l = fin ? dans.slice().reverse() : dans; let t = '', d0 = l[0];
+    for (const p of l) { if (t.length + p.t.length > part) { if (!t) t = p.t.slice(0, part); break; } t = fin ? p.t + (t ? ' ' + t : '') : t + (t ? ' ' : '') + p.t; d0 = p; }
+    out.push(`[${mmss((fin ? d0 : dans[0]).s)}] ${t}`);
+  }
+  return out.join('\n');
+}
+// Part des mots importants d'une phrase de l'IA qui sont vraiment dans la vidéo (0 à 1) : écarte ce qui serait inventé
+function ancrage(phrase, segments) {
+  const m = mots(phrase); if (!m.length) return 1;
+  const dits = new Set(mots((segments || []).map(x => x.t).join(' ')));
+  return m.filter(w => dits.has(w)).length / m.length;
 }
 
 // pondération par le sujet : part des mots-clés de la vidéo présents dans un texte (0 à 1)
@@ -190,4 +246,4 @@ function segmentsDuProjet(proj) {
   return out;
 }
 
-module.exports = { analyserSujet, pertinence, GENRES, phrases, proposerChapitres, proposerMoments, titreAccroche, segmentsDuProjet, mots };
+module.exports = { analyserSujet, pertinence, echantillon, ancrage, GENRES, phrases, proposerChapitres, proposerMoments, titreAccroche, segmentsDuProjet, mots };

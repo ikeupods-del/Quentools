@@ -166,12 +166,25 @@ function create(opts = {}) {
     if (total > 45 && parMin < 3) conseils.push({ action: 'dynamiser', texte: `Peu de changements de plan (${parMin} par minute) : des zooms alternés relanceront l’attention.` });
     return { scenes: scenes.sort((a, b) => a - b), parMinute: parMin, luminosite: lum == null ? null : Math.round(lum), lufs: lufs == null ? null : +lufs.toFixed(1), blancs: pBlanc, conseils };
   }
+  // résultats gardés (mémoire et disque) : le chapitrage, le clipping et le montage selon le sujet relisent la même analyse sans refaire travailler l'IA
+  const analysesFaites = new Map();
   async function analyserLaVideo(job, segments, duree, avecIA) {
     const CH = require('./chapitrage'), brut = CH.analyserSujet(segments, duree);
-    if (!brut) return { sujet: '', genre: null, motsCles: [], rythme: 'normal', points: [], resume: '', ia: false, brut: null };
-    job.step = 'Analyse du sujet de la vidéo…'; job.progress = 0.15;
-    const r = avecIA ? await IA().analyserVideo({ segments, base: brut }) : { sujet: brut.sujet, points: [], resume: '', public: '', ia: false };
-    return { sujet: r.sujet || brut.sujet, resume: r.resume, points: r.points, public: r.public, ia: r.ia, genre: brut.genre, motsCles: brut.motsCles, rythme: brut.rythme, debit: brut.debit, brut };
+    if (!brut) return { sujet: '', genre: null, motsCles: [], rythme: 'normal', points: [], moments: [], resume: '', ia: false, brut: null };
+    const cle = require('crypto').createHash('sha1').update(JSON.stringify(['a3', Math.round(+duree || 0), !!avecIA, segments.map(x => [Math.round(+x.s || 0), String(x.t || '')])])).digest('hex');
+    const fichier = path.join(BASE, '.analyses', 'sujet-' + cle + '.json');
+    let r = analysesFaites.get(cle);
+    if (!r) { try { r = JSON.parse(fs.readFileSync(fichier, 'utf8')); } catch (e) { /* à calculer */ } }
+    if (!r) {
+      job.step = avecIA ? 'L’IA locale lit toute la vidéo…' : 'Analyse du sujet de la vidéo…'; job.progress = 0.15;
+      r = avecIA ? await IA().analyserVideo({ segments, base: brut, duree }) : { sujet: brut.sujet, points: [], moments: [], motsCles: [], resume: '', public: '', genre: '', ia: false };
+      if (r.ia || !avecIA) { analysesFaites.set(cle, r); try { fs.mkdirSync(path.dirname(fichier), { recursive: true }); fs.writeFileSync(fichier, JSON.stringify(r)); } catch (e) { /* sans cache */ } }
+    }
+    // genre : celui du programme quand il est sûr ; sinon celui que l'IA a choisi dans la liste (sujet mal couvert par les mots du programme)
+    let genre = brut.genre; const gIA = CH.GENRES.find(g => g.id === r.genre);
+    if (gIA && (brut.genre.id === 'general' || brut.genre.confiance < 0.5 || (brut.genreProche && brut.genreProche.id === gIA.id))) genre = { id: gIA.id, nom: gIA.nom, pack: gIA.pack, confiance: brut.genre.id === gIA.id ? brut.genre.confiance : 0.5, ia: true };
+    const motsCles = [...new Set([...(r.motsCles || []), ...brut.motsCles])].slice(0, 6);
+    return { sujet: r.sujet || brut.sujet, resume: r.resume, points: r.points || [], moments: r.moments || [], public: r.public, ia: r.ia, genre, motsCles, rythme: brut.rythme, debit: brut.debit, brut };
   }
   const PAROLE = () => parole || (parole = require('./parole').creer({ run, FFMPEG, BASE }));
   // Réglages locaux (clés gratuites des banques de photos : gardées dans le dossier QuentMovie de l'utilisateur, jamais dans le dépôt)
@@ -644,6 +657,11 @@ function buildClip(c, P, o = {}) {
     }
     if (fondus.e) af.push(`afade=t=in:d=${fondus.e.toFixed(2)}`);
     if (fondus.s) af.push(`afade=t=out:st=${Math.max(0, eff - fondus.s).toFixed(3)}:d=${fondus.s.toFixed(2)}`);
+    // morceau de parole (blancs coupés) : fondu sonore imperceptible aux raccords, sans le petit clic d'une coupe sèche
+    if (c.parle && eff > 0.1) {
+      if (!fondus.e && c.microE !== false) af.push('afade=t=in:d=0.012');
+      if (!fondus.s && c.microS !== false) af.push(`afade=t=out:st=${Math.max(0, eff - 0.012).toFixed(3)}:d=0.012`);
+    }
     af.push('aresample=48000', 'aformat=sample_fmts=fltp:channel_layouts=stereo');
     f.push(`[${src}]${af.join(',')}[a]`);
 
@@ -1083,6 +1101,7 @@ function buildClip(c, P, o = {}) {
         const a = k * len, b = (k + 1) * len, d = { ...c };
         d.in = +(num(c.in, 0) + a).toFixed(3); d.out = k === n - 1 ? num(c.out, 0) : +(num(c.in, 0) + b).toFixed(3);
         d.fade = false; d.fadeIn = k === 0 ? fo.e : 0; d.fadeOut = k === n - 1 ? fo.s : 0;
+        d.microE = k === 0; d.microS = k === n - 1; // raccords internes du découpage : pas de fondu sonore
         d.transition = k === n - 1 ? c.transition : null;
         d.subs = (c.subs || []).filter(x => x && num(x.e, 0) > a && num(x.s, 0) < b).map(x => ({ ...x, s: +Math.max(0, num(x.s, 0) - a).toFixed(3), e: +(Math.min(num(x.e, 0), b) - a).toFixed(3) }));
         d.overlays = [];
@@ -1643,7 +1662,7 @@ function buildClip(c, P, o = {}) {
           // un chapitre qui commence juste à côté d'un changement de plan est calé dessus (coupe plus nette)
           if (analyse.technique) ch.forEach(c => { if (c.t > 1) { const sc = analyse.technique.scenes.reduce((m, x) => (Math.abs(x - c.t) < Math.abs(m - c.t) ? x : m), Infinity); if (Math.abs(sc - c.t) <= 2.5) c.t = sc; } });
           job.step = 'L’IA locale nomme les chapitres…'; job.progress = 0.6;
-          const r = b.ia === false ? { chapitres: ch, ia: false } : await IA().titrerChapitres({ chapitres: ch, sujet: analyse.sujet });
+          const r = b.ia === false ? { chapitres: ch, ia: false } : await IA().titrerChapitres({ chapitres: ch, sujet: analyse.sujet, motsCles: analyse.motsCles || [] });
           delete analyse.brut;
           return { chapitres: r.chapitres.map(c => ({ t: c.t, titre: c.titre })), ia: r.ia, analyse };
         }));
@@ -1664,7 +1683,7 @@ function buildClip(c, P, o = {}) {
           delete analyse.brut;
           if (!cands.length) return { extraits: [], ia: false };
           job.step = 'L’IA locale choisit les plus accrocheurs…'; job.progress = 0.4;
-          const r = b.ia === false ? { extraits: cands.slice(0, nb), ia: false } : await IA().choisirExtraits({ candidats: cands, nb, sujet: analyse.sujet || String(b.sujet || '') });
+          const r = b.ia === false ? { extraits: cands.slice(0, nb), ia: false } : await IA().choisirExtraits({ candidats: cands, nb, sujet: analyse.sujet || String(b.sujet || ''), idees: analyse.points || [] });
           return { extraits: r.extraits.map(e => ({ s: e.s, e: e.e, titre: e.titre, texte: String(e.t || '').slice(0, 240) })), ia: r.ia, analyse };
         }));
       }
@@ -1707,7 +1726,8 @@ function buildClip(c, P, o = {}) {
         return send(res, 200, travail(async job => {
           job.step = 'Écoute de la voix…';
           const P = require('./parole'), r = await PAROLE().ecouter(f, clamp(num(b.in, 0), 0, 1e6), clamp(num(b.out, 0), 0, 1e6));
-          return { ...r, st: { phrase: P.sousTitres(r.mots, 'phrase'), mots: P.sousTitres(r.mots, 'mots') }, garder: P.aGarder(r.mots, r.duree) };
+          const niveaux = P.garderNiveaux(r.mots, r.duree);
+          return { ...r, st: { phrase: P.sousTitres(r.mots, 'phrase'), mots: P.sousTitres(r.mots, 'mots') }, garder: niveaux.douce, garderNiveaux: niveaux };
         }));
       }
       if (req.method === 'POST' && p === '/api/parole/reglages-mac') { // Réglages Système → voix (pour télécharger les voix « Premium » d'Apple)
