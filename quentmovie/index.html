@@ -2182,7 +2182,7 @@ async function imageFixe() {
     const j = await (await api('/api/import?name=' + enc(`image-fixe-${Date.now().toString(36)}.jpg`), { method: 'POST', body: blob })).json();
     await chargerMedias(); const m = medias.find(x => x.file === j.file); if (!m) throw new Error('image introuvable');
     const f = newClip(m); f.kind = 'image'; f.dur = 3;
-    if (at > c.in + 0.2 && at < c.out - 0.2) { const b = clone(c); b.in = at; c.out = at; c.transition = null; proj.clips.splice(sel + 1, 0, f, b); }
+    if (at > c.in + 0.2 && at < c.out - 0.2) { const [a, b] = trancherClip(c, loc); b.transition = c.transition; proj.clips.splice(sel, 1, a, f, b); } // sous-titres et calques suivent chaque partie
     else proj.clips.splice(sel + 1, 0, f);
     const apres = at > c.in + 0.2 && at < c.out - 0.2 ? gt : st + effDur(c), dec = x => { if ((+x.start || 0) >= apres - 0.01) x.start = +((+x.start || 0) + f.dur).toFixed(2); };
     for (const x of proj.audio.slice()) if (sonLie(x) && (+x.start || 0) < apres - 0.01) { const y = couperSonA(x, apres); if (y) proj.audio.splice(proj.audio.indexOf(x) + 1, 0, y); } // le son est coupé où l'image s'arrête
@@ -2813,7 +2813,7 @@ async function executerAction(a) {
     case 'reperes_rythme': return rythmeMusique('reperes');
     case 'titre': { const t = p || (proj.gen && proj.gen.titre) || await demander('Texte de l’écran titre', ''); if (!t) return;
       const c = newSolid('#0b1d3a', 3); c.titre = { preset: 'chapitre', l1: String(t).toUpperCase().slice(0, 60), l2: '', color: '#ffffff', font: 'arial', start: 0.3, dur: 0, speed: 14 }; c.transition = { type: 'fade', dur: 0.6 };
-      proj.clips.unshift(c); sel = 0; commit(); tout(); apercu(); return aide('🅣 Écran titre ajouté au début (modifiable dans l’inspecteur).'); }
+      suivreV1(() => proj.clips.unshift(c)); sel = 0; commit(); tout(); apercu(); return aide('🅣 Écran titre ajouté au début (modifiable dans l’inspecteur).'); } // la suite (sons, piste 2, titres) recule de l'écran titre
     case 'supprimer_clip': {
       if (!proj.clips.length) return aide('Aucun clip à supprimer.');
       const i = p === 'dernier' ? proj.clips.length - 1 : p === 'premier' || !p ? 0 : +p - 1;
@@ -3147,7 +3147,7 @@ function exporter() {
       exportEnCours = false;
       // export long : prévenu même si la fenêtre est cachée (notification du Mac)
       if (document.hidden || Date.now() - t0 > 60000) { try { new Notification('Export terminé', { body: j.out, silent: false }); } catch (er) { /* notifications indisponibles */ } }
-      $('#expo').innerHTML = `<p>✅ Terminé${j.duree ? ` en ${fmt(j.duree)}` : ''} : <b>${esc(j.out)}</b>${j.repris ? `<br><span class="mut">${j.repris} clip${j.repris > 1 ? 's' : ''} inchangé${j.repris > 1 ? 's' : ''} repris du dernier export.</span>` : ''}</p><div class="ligne"><button id="xFind">Afficher dans le Finder</button><button id="xAir">Envoyer par AirDrop</button><a href="/exports/${enc(j.out)}"><button style="width:100%">Télécharger</button></a><button class="pri" id="xFin">Fermer</button></div><p class="mut">Dossier : Films → QuentMovie → exports</p>`;
+      $('#expo').innerHTML = `<p>✅ Terminé${j.duree ? ` en ${fmt(j.duree)}` : ''} : <b>${esc(j.out)}</b>${j.repris ? `<br><span class="mut">${j.repris} clip${j.repris > 1 ? 's' : ''} inchangé${j.repris > 1 ? 's' : ''} repris du dernier export.</span>` : ''}${j.avertissement ? `<br><span class="mut">ℹ ${esc(j.avertissement)}</span>` : ''}</p><div class="ligne"><button id="xFind">Afficher dans le Finder</button><button id="xAir">Envoyer par AirDrop</button><a href="/exports/${enc(j.out)}"><button style="width:100%">Télécharger</button></a><button class="pri" id="xFin">Fermer</button></div><p class="mut">Dossier : Films → QuentMovie → exports</p>`;
       $('#xAir').onclick = () => partagerFichiers([j.out]); $('#xFin').onclick = fermer; $('#xFind').onclick = () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) });
     } catch (e) { exportEnCours = false; $('#expo').innerHTML = `<p class="${/annulé/.test(e.message) ? 'mut' : 'err'}">${esc(e.message)}</p><button id="xFin">Fermer</button>`; $('#xFin').onclick = fermer; preparerEnFond(); }
   };

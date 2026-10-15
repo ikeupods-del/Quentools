@@ -1114,6 +1114,8 @@ function buildClip(c, P, o = {}) {
     if (!clipsBruts.length) throw new Error('La timeline est vide.');
     const clips = morceauxDe(clipsBruts); job.morceaux = clips.length - clipsBruts.length;
     for (const c of clips) await calquesEnBoucle(c);
+    const tropSous = clips.filter(c => (c.subs || []).filter(x => x && String(x.t || '').trim()).length > 300).length;
+    if (tropSous) job.avertissement = `${tropSous > 1 ? `${tropSous} clips ont` : 'Un clip a'} plus de 300 sous-titres : seuls les 300 premiers sont affichés. Coupe ce long clip en deux (touche S) pour tous les voir.`;
     const P = sizeOf(project, proxy ? 'proxy' : 'full');
     // fichiers disparus : un message clair (quel clip, que faire) plutôt qu'une erreur de FFmpeg
     const absents = [...new Set(clips.filter(c => c.file && c.kind !== 'solid' && !/^(lib|pack):/.test(c.file)).map(c => c.file).filter(f => !fs.existsSync(mediaPath(f))))];
@@ -1142,7 +1144,7 @@ function buildClip(c, P, o = {}) {
       const videoSource = c => c.file && !(c.kind === 'image' || c.kind === 'solid' || c.kind === 'audio') && hdrPossible(), hdrFichier = {};
       for (const c of clips) if (videoSource(c) && !(c.file in hdrFichier)) hdrFichier[c.file] = await estHdr(mediaPath(c.file));
       const hdrFlags = clips.map(c => videoSource(c) && !!hdrFichier[c.file]); stop();
-      if (hdrFlags.some(Boolean)) job.avertissement = 'Vidéo HDR détectée : conversion en image classique.';
+      if (hdrFlags.some(Boolean)) job.avertissement = [job.avertissement, 'Vidéo HDR détectée : conversion en image classique.'].filter(Boolean).join(' ');
       for (let i = 0; i < clips.length; i++) {
         const avant = new Set(fs.readdirSync(dir));
         built.push(buildClip(clips[i], P, { ...opts(i, true), hdr: hdrFlags[i] }));
@@ -1230,7 +1232,7 @@ function buildClip(c, P, o = {}) {
           await run(FFMPEG, ['-y', '-loglevel', 'error', '-i', video, '-i', mixe || son, '-map', '0:v:0', '-map', '1:a:0', '-c', 'copy', '-t', (r.plan.total / fps).toFixed(6), '-movflags', '+faststart', 'rapide.mp4'], { cwd: dir });
           joined = 'rapide.mp4'; fait = true; job.assemblage = 'rapide'; job.msAssemblage = Date.now() - t0;
           jeterSi(/^(seg\d+|h-seg\d+|vid[01]|cp\d+|gr\d+|zone-\d+|zc\d+|zfin)\.mp4$|^son-(clips|pistes)\.m4a$/); // tout est dans rapide.mp4
-        } catch (e) { job.assemblage = 'complet'; job.avertissement = 'Assemblage rapide impossible (' + String(e.message).split('\n')[0].slice(0, 160) + ') : assemblage complet.'; }
+        } catch (e) { job.assemblage = 'complet'; job.raisonRapide = 'Assemblage rapide impossible (' + String(e.message).split('\n')[0].slice(0, 160) + ') : assemblage complet.'; }
       }
       if (fait) { /* assemblage rapide terminé */ } else if (segs.length > 1 && !trans.some(Boolean)) {
         // image recopiée telle quelle ; son refait d'un seul tenant, calé sur le nombre d'images de chaque clip (voir plus haut)
@@ -1239,7 +1241,7 @@ function buildClip(c, P, o = {}) {
         if (Number.isInteger(P.fps)) {
           for (const toutCpu of [false, true]) {
             try { const r = await epiS.harmoniser({ cwd: dir, segs, fps: P.fps, enc: toutCpu ? { vt: null, cpu: E.cpu } : E, tous: toutCpu, paralleles: enParallele, etape: t => { job.step = t; } }); if (r.length) job.harmonises = r.length; break; }
-            catch (e) { if (toutCpu || !/encodeurs différents/.test(e.message)) { job.avertissement = 'Clips encodés différemment : ' + String(e.message).split('\n')[0].slice(0, 160); break; } }
+            catch (e) { if (toutCpu || !/encodeurs différents/.test(e.message)) { job.raisonRapide = 'Clips encodés différemment : ' + String(e.message).split('\n')[0].slice(0, 160); break; } }
           }
         }
         fs.writeFileSync(path.join(dir, 'liste.txt'), segs.map(s => `file '${s}'`).join('\n'));
@@ -1276,7 +1278,7 @@ function buildClip(c, P, o = {}) {
             proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17],
             ['-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
         } catch (e) { // la cause d'origine (assemblage rapide refusé) aide à comprendre
-          throw new Error(String(e.message).split('\n').slice(-2).join(' ') + (job.avertissement ? ' — ' + job.avertissement : ''));
+          throw new Error(String(e.message).split('\n').slice(-2).join(' ') + (job.raisonRapide ? ' — ' + job.raisonRapide : ''));
         }
         joined = 'all.mp4'; jeterSi(/^seg\d+\.mp4$/);
       }
@@ -1899,7 +1901,7 @@ function buildClip(c, P, o = {}) {
       }
       if (req.method === 'GET' && p === '/api/job') {
         const job = jobs.get(url.searchParams.get('id'));
-        return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done, resultat: job.resultat || null, niveaux: job.niveaux, duree: job.fin && job.debut ? +((job.fin - job.debut) / 1000).toFixed(1) : null, repris: job.repris, morceaux: job.morceaux || 0, paralleles: job.paralleles || 0, assemblage: job.assemblage || null, harmonises: job.harmonises || 0, avertissement: job.avertissement || null, msAssemblage: job.msAssemblage || 0 }) : send(res, 404, { error: 'Export inconnu' });
+        return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done, resultat: job.resultat || null, niveaux: job.niveaux, duree: job.fin && job.debut ? +((job.fin - job.debut) / 1000).toFixed(1) : null, repris: job.repris, morceaux: job.morceaux || 0, paralleles: job.paralleles || 0, assemblage: job.assemblage || null, harmonises: job.harmonises || 0, avertissement: job.avertissement || null, raisonRapide: job.raisonRapide || null, msAssemblage: job.msAssemblage || 0 }) : send(res, 404, { error: 'Export inconnu' });
       }
       // Projets
       // Secours du studio : la prise est aussi écrite sur le disque pendant l'enregistrement (récupérable si l'application se ferme)

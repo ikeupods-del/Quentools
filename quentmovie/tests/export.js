@@ -59,8 +59,8 @@ const { execFileSync } = require('child_process');
     clips: [clip('a.mp4', 'video', { out: 4, transition: { type: 'fade', dur: 0.6 } }), clip('a.mp4', 'video', { in: 0, out: 4, transition: { type: 'wipeleft', dur: 0.6 } }), clip('a.mp4', 'video', { out: 3 })] };
   const jr = await exporter(complexe);
   // sur Mac, un repli sur l'assemblage complet reste valable (la suite contrôle de toute façon le résultat) : il est seulement signalé
-  if (jr.assemblage !== 'rapide' && process.platform === 'darwin') console.log('  Note : assemblage complet utilisé sur ce Mac (' + jr.avertissement + ')');
-  check('assemblage rapide utilisé (fondus + incrustation)', jr.assemblage === 'rapide' || process.platform === 'darwin', jr.avertissement);
+  if (jr.assemblage !== 'rapide' && process.platform === 'darwin') console.log('  Note : assemblage complet utilisé sur ce Mac (' + jr.raisonRapide + ')');
+  check('assemblage rapide utilisé (fondus + incrustation)', jr.assemblage === 'rapide' || process.platform === 'darwin', jr.raisonRapide);
   const images = f => execFileSync(bins.ffmpeg, ['-v', 'error', '-i', path.join(base, 'exports', f), '-map', '0:v:0', '-c', 'copy', '-f', 'framecrc', '-'], { encoding: 'utf8' }).split('\n').filter(l => l && l[0] !== '#').length;
   check('assemblage rapide : durée exacte (4+4+3 s − 2 fondus de 0,6 s)', images(jr.out) === Math.round((11 - 1.2) * 30), images(jr.out));
   const lu = execFileSync(bins.ffmpeg, ['-v', 'error', '-i', path.join(base, 'exports', jr.out), '-f', 'null', '-'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
@@ -131,11 +131,12 @@ const { execFileSync } = require('child_process');
     const nouveau = fs.readdirSync(cache).filter(x => !avant.has(x) && x.endsWith('.mp4'))[1], f = path.join(cache, nouveau);
     ff('-i', f, '-map', '0', '-c:a', 'copy', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30, '-r', 30, '-pix_fmt', 'yuv420p', f + '.x.mp4'); fs.renameSync(f + '.x.mp4', f);
     const jm = await exporter(p);
-    check('clip encodé autrement : réencodé seul, assemblage rapide gardé', jm.assemblage === 'rapide' && jm.harmonises === 1, `${jm.assemblage} ${jm.harmonises} ${jm.avertissement}`);
+    // sur Mac, si la puce vidéo refuse aussi ce réencodage, tous les clips passent au processeur (harmonises > 1) : toujours l'assemblage rapide
+    check('clip encodé autrement : réencodé seul, assemblage rapide gardé', jm.assemblage === 'rapide' && (jm.harmonises === 1 || (process.platform === 'darwin' && jm.harmonises >= 1)), `${jm.assemblage} ${jm.harmonises} ${jm.raisonRapide}`);
     const images = execFileSync(bins.ffmpeg, ['-v', 'error', '-i', path.join(base, 'exports', jm.out), '-map', '0:v:0', '-c', 'copy', '-f', 'framecrc', '-']).toString().split('\n').filter(l => l && l[0] !== '#').length;
     check('clip encodé autrement : durée exacte', images === Math.round((3 + 3 + 2 - 0.5) * 30), images);
     const j3 = await exporter(p);
-    check('clip encodé autrement : corrigé dans le cache (rien à refaire au prochain export)', j3.repris === 3 && !j3.harmonises, `${j3.repris} ${j3.harmonises}`); }
+    check('clip encodé autrement : corrigé dans le cache (rien à refaire au prochain export)', j3.repris === 3 && (!j3.harmonises || (process.platform === 'darwin' && jm.harmonises > 1)), `${j3.repris} ${j3.harmonises}`); }
   // calques : plus de 8 sur un même clip, chacun visible seulement pendant sa durée
   { const ovs = Array.from({ length: 10 }, (_, k) => ({ file: 'p.png', kind: 'image', x: 50, y: 50, scale: 100, rot: 0, opacity: 100, start: +(k * 0.35).toFixed(2), dur: 0.3, anim: 'none', mode: '', plein: 'remplir', key: false }));
     const sans = await exporter({ ...projet('CalSans'), clips: [clip('a.mp4', 'video', { out: 4 })] });

@@ -3,10 +3,18 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
-## 1.36.1
-- **Les longs montages s'exportent** : l'erreur « Failed to configure output pad on Parsed_xfade… » ne bloque plus l'export. Quand un clip avait été préparé autrement que les autres (souvent celui qui porte un calque), QuentMovie le refait seul au lieu de tout reprendre d'un coup, ce qui échouait au-delà d'une centaine de clips.
-- **Calques sans limite cachée** : jusqu'à 24 calques par clip (avant, à partir du 9e, ils n'apparaissaient ni dans l'aperçu ni dans l'export). Chaque calque n'est préparé que pendant le moment où il est visible : l'export est aussi plus rapide.
-- **Animations sur fond vert (Breaking news…)** : posées depuis l'onglet Calques, elles démarrent à la tête de lecture et se jouent une fois, au lieu de tourner en boucle depuis le début du clip.
+## 1.37.0
+- **Les longs montages s'exportent** : l'erreur « Failed to configure output pad on Parsed_xfade… » ne bloque plus l'export. Un clip préparé autrement que les autres (souvent celui qui porte un calque) est refait seul, au lieu de tout reprendre d'un coup, ce qui échouait au-delà d'une centaine de clips.
+- **Export plus léger pour le Mac** : beaucoup moins de fichiers temporaires (un long montage pouvait remplir le disque), le son se mélange sans fichiers géants, l'aperçu de fond s'arrête pendant l'export, et les longs clips avec calques ou titres s'encodent aussi en plusieurs morceaux à la fois.
+- **Annuler un export**, voir le **temps restant**, être **prévenu à la fin** (notification du Mac), et QuentMovie demande confirmation si tu le quittes pendant un export.
+- **Exporter seulement un passage** : un essai de 20 s à la tête de lecture, le clip sélectionné ou le passage entre deux repères, pour vérifier un réglage avant le long export.
+- **Calques enfin visibles dans l'aperçu** : un calque ou une animation qui commence en cours de clip (Breaking news, animations du studio…) n'apparaissait pas dans l'aperçu. Jusqu'à 24 calques par clip (avant, à partir du 9e, ils n'apparaissaient nulle part).
+- **Les animations ne disparaissent plus quand tu coupes** : après « Couper les blancs », le pré-montage du studio, une coupe ou un découpage aux changements de plan, chaque animation reste sur son image et continue là où elle en était. Une animation lancée pendant un silence démarre juste après, au lieu d'être supprimée.
+- **Animations sur fond vert** (Breaking news…) : posées à la tête de lecture (ou là où tu les déposes) et jouées une fois. Des barres jaunes sur les clips montrent où sont les calques ; bouton « ⏱ À la tête de lecture » dans l'inspecteur.
+- **Tout reste calé quand tu coupes les blancs ou les silences** : musique, bruitages (dont ceux des animations du studio), piste vidéo 2, titres et repères suivent le montage raccourci, et la voix détachée est coupée aux mêmes endroits. Raccourcir le début d'un clip, changer sa vitesse ou insérer une image fixe garde aussi les sous-titres et calques sur la bonne image.
+- **Effets de coupe des packs** joués depuis leur début, et le son d'un élément de la piste vidéo 2 ne fait plus doubler le volume du reste de la vidéo après sa fin.
+- **Prise du studio protégée** : elle est enregistrée sur le disque pendant que tu filmes ; si QuentMovie se ferme pendant la prise, elle t'est proposée au démarrage suivant.
+- Durées affichées en minutes (« 36 min 23 s »), messages d'erreur d'export expliqués en français (disque plein, fichier abîmé…).
 
 ## 1.36.0
 - **Tu valides chaque proposition** : quand l'aide au montage, un pack, le montage selon le sujet ou le chapitrage veut changer quelque chose, un panneau à droite liste chaque titre, bruitage, transition, effet ou réglage avec son moment. Clique une ligne pour la voir dans l'aperçu, ▶ pour écouter un bruitage, ✓ pour garder, ✕ pour refuser (retiré tout de suite), puis « Valider mes choix ».
