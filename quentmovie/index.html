@@ -409,7 +409,8 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const enc = encodeURIComponent;
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-const fmt = s => (Math.round(s * 10) / 10).toString().replace('.', ',') + ' s';
+// durée lisible : « 4,2 s », « 2 min 05 s », « 1 h 02 min »
+const fmt = s => { s = +s || 0; if (s < 60) return (Math.round(s * 10) / 10).toString().replace('.', ',') + ' s'; const m = Math.floor(s / 60), r = Math.round(s % 60); if (m < 60) return `${m} min ${String(r === 60 ? 59 : r).padStart(2, '0')} s`; return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min`; };
 const MAC = /Mac/.test(navigator.platform);
 const api = async (url, opt) => {
   const r = await fetch(url, opt);
@@ -1418,6 +1419,27 @@ async function segmentsDuMontage(surEtat) {
 }
 const hmsCourt = t => { t = Math.max(0, Math.round(t)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
 const lireTemps = v => { const m = String(v).trim().match(/^(?:(\d+):)?(\d+)(?:[:.,](\d+))?$/); if (!m) return NaN; return (+m[1] || 0) * 60 + +m[2] + (m[3] ? +('0.' + m[3]) : 0); };
+// Calques d'un clip découpé en morceaux gardés [de, a[ (secondes du clip, dans l'ordre) : chaque calque reste à sa place
+// dans la vidéo finale et continue sur les morceaux suivants là où il en était (`ss` : déjà joué), sans rejouer son entrée.
+// Un calque déclenché dans un passage retiré (un blanc) démarre au début du morceau suivant, au lieu de disparaître.
+function repartirCalques(overlays, morceaux) {
+  const res = morceaux.map(() => []); if (!morceaux.length) return res;
+  const debuts = []; let t = 0; for (const [de, a] of morceaux) { debuts.push(t); t += Math.max(0, a - de); }
+  const total = t;
+  for (const o of overlays || []) {
+    const s = +o.start || 0, D = +o.dur > 0 ? +o.dur : Infinity;
+    let T0 = null; // instant du calque dans la suite des morceaux
+    for (let k = 0; k < morceaux.length && T0 === null; k++) { const [de, a] = morceaux[k]; if (s < a) T0 = debuts[k] + Math.max(0, s - de); }
+    if (T0 === null) { if (D === Infinity) continue; T0 = Math.max(debuts[morceaux.length - 1], total - D); } // après le dernier morceau : à la fin
+    morceaux.forEach(([de, a], k) => {
+      const L = Math.max(0, a - de), deb = Math.max(T0, debuts[k]), fin = Math.min(T0 + D, debuts[k] + L);
+      if (fin - deb < 0.05) return;
+      const suite = deb > T0 + 0.01;
+      res[k].push({ ...o, start: +(deb - debuts[k]).toFixed(2), dur: D === Infinity ? 0 : +(fin - deb).toFixed(2), ...(suite ? { ss: +((+o.ss || 0) + deb - T0).toFixed(2), anim: 'none' } : {}) });
+    });
+  }
+  return res;
+}
 // Coupe un clip en deux à `loc` secondes (temps de montage) en gardant sous-titres, titres et calques à la bonne place
 function trancherClip(c, loc) {
   const vit = c.speed || 1, a = clone(c), b = clone(c);
@@ -1434,8 +1456,7 @@ function trancherClip(c, loc) {
     else { b.titre = { ...c.titre, start: 0, deja: +((+c.titre.deja || 0) + loc - c.titre.start).toFixed(2) }; } // il continue sans rejouer son entrée
   }
   if (c.text) { const ts = +c.textStart || 0; if (ts >= loc) { a.text = ''; b.textStart = +(ts - loc).toFixed(2); } else if (!(+c.textDur > 0) || ts + c.textDur > loc) { b.textStart = 0; b.textDeja = +((+c.textDeja || 0) + loc - ts).toFixed(2); } else b.text = ''; }
-  a.overlays = (c.overlays || []).filter(o => (o.start || 0) < loc);
-  b.overlays = (c.overlays || []).filter(o => !(+o.dur > 0 && (o.start || 0) + o.dur <= loc)).map(o => ({ ...o, start: +Math.max(0, (o.start || 0) - loc).toFixed(2), dur: +o.dur > 0 ? +Math.min(o.dur, (o.start || 0) + o.dur - loc).toFixed(2) : o.dur }));
+  [a.overlays, b.overlays] = repartirCalques(c.overlays, [[0, loc], [loc, Math.max(loc + 0.1, effDur(c))]]); // une animation coupée continue sans recommencer
   a.fadeOut = 0; b.fadeIn = 0; if (c.fade) { a.fade = false; b.fade = false; a.fadeIn = a.fadeIn || 0.4; b.fadeOut = b.fadeOut || 0.4; }
   return [a, b];
 }
@@ -1661,7 +1682,8 @@ function pastille() {
   p.textContent = !proj.clips.length ? '' : fond.cours ? '⏳ aperçu…' : rendu && rendu.sig === snap() ? '⚡ prêt' : '';
 }
 // Batterie : sur batterie, l'aperçu de fond attend plus longtemps après une modification ; fenêtre cachée = aucun calcul
-let surBatterie = false;
+let surBatterie = false, exportEnCours = false;
+const annulerJob = id => (id ? api('/api/annuler?id=' + enc(id), { method: 'POST' }).catch(() => {}) : null);
 if (navigator.getBattery) navigator.getBattery().then(b => { const maj = () => { surBatterie = !b.charging; }; maj(); b.addEventListener('chargingchange', maj); }).catch(() => {});
 document.addEventListener('visibilitychange', () => { if (!document.hidden && proj.clips.length) preparerEnFond(); });
 function preparerEnFond(delai = 1500) {
@@ -1669,19 +1691,20 @@ function preparerEnFond(delai = 1500) {
   if (!proj.clips.length || localStorage.getItem('qm:fond') === 'non' || document.hidden) return;
   if (surBatterie) delai = Math.max(delai, 5000);
   fond.minuteur = setTimeout(() => {
-    if (studio || (lecture && !lecture.direct)) return preparerEnFond(3000);
+    if (studio || exportEnCours || (lecture && !lecture.direct)) return preparerEnFond(3000);
     const sig = snap(); if ((rendu && rendu.sig === sig) || fond.cours === sig) return pastille();
     if (fond.cours) return preparerEnFond(1500); // un rendu est déjà en cours : on attend sa fin
     fond.cours = sig; pastille();
-    fond.promesse = lancerJob('/api/apercu', { project: { ...JSON.parse(sig), fond: true } }, () => {})
+    fond.promesse = lancerJob('/api/apercu', { project: { ...JSON.parse(sig), fond: true } }, () => {}, id => { fond.id = id; })
       .then(url => { if (!rendu || rendu.sig !== snap()) rendu = { url, sig, perime: sig !== snap() }; return url; })
       .catch(() => null)
       .finally(() => { fond.cours = null; pastille(); if (snap() !== sig) preparerEnFond(800); });
   }, delai);
 }
-async function lancerJob(url, body, onProg) {
+async function lancerJob(url, body, onProg, onId) {
   if (body && body.project) body = { ...body, project: pourRendu(body.project) };
   const { id } = await (await api(url, { method: 'POST', body: JSON.stringify(body) })).json();
+  if (onId) onId(id);
   for (;;) {
     await new Promise(r => setTimeout(r, 450));
     const j = await (await api('/api/job?id=' + id)).json();
@@ -2170,7 +2193,10 @@ async function detecterPlans(toutes) {
     for (const i of cibles.slice().reverse()) {
       const c = proj.clips[i], r = await (await api(`/api/plans?file=${enc(c.file)}&in=${c.in.toFixed(2)}&out=${c.out.toFixed(2)}`)).json();
       const coupes = (r.plans || []).filter(t => t > c.in + 0.4 && t < c.out - 0.4); if (!coupes.length) continue;
-      const bornes = [c.in, ...coupes, c.out], parts = bornes.slice(0, -1).map((d, k) => { const p = clone(c); p.in = +d.toFixed(2); p.out = +bornes[k + 1].toFixed(2); if (k) { p.titre = null; p.text = ''; p.overlays = []; p.subs = []; } if (k < bornes.length - 2) p.transition = null; return p; });
+      // coupes successives : sous-titres, titres, textes et calques suivent chaque plan (avant : perdus après le premier plan)
+      const parts = []; let reste = c;
+      for (const t of coupes) { const [a, b] = trancherClip(reste, (t - reste.in) / (reste.speed || 1)); parts.push(a); reste = b; }
+      parts.push(reste);
       proj.clips.splice(i, 1, ...parts); total += parts.length - 1;
     }
     if (!total) return res('Aucun changement de plan net trouvé : la vidéo est un plan continu.');
@@ -2441,10 +2467,11 @@ function paroleAppliquer(i, r, { sous, couper, style }) {
   }
   const segs = r.garder.filter(([x, y]) => y > x + 0.15 && x < dur);
   if (!segs.length) return { pieces: 1, gagne: 0, n: 0 };
+  const calquesMorceaux = repartirCalques(c.overlays, segs.map(([x, y]) => [x / sp, Math.min(y, dur) / sp]));
   const nouveaux = segs.map(([x, y], k) => {
     const n = clone(c); n.in = +(c.in + x).toFixed(2); n.out = +(c.in + Math.min(y, dur)).toFixed(2); n.transition = k === segs.length - 1 ? c.transition : null; n.parle = true;
-    // calques et titre animés : gardés dans le morceau où ils apparaissent, à la même place dans la parole
-    n.overlays = (c.overlays || []).filter(o => o.start * sp >= x && o.start * sp < y).map(o => ({ ...o, start: +((o.start * sp - x) / sp).toFixed(2) }));
+    // calques : à la même place dans la parole, continués sur les morceaux suivants (voir repartirCalques)
+    n.overlays = calquesMorceaux[k];
     n.titre = c.titre && c.titre.start * sp >= x && c.titre.start * sp < y ? { ...c.titre, start: +((c.titre.start * sp - x) / sp).toFixed(2) } : (k === 0 && c.titre && c.titre.start * sp < x ? { ...c.titre, start: 0 } : null);
     n.subs = sous ? sousTitresPour(r, style, x, Math.min(y, dur), sp) : [];
     if (sous) { n.subStyle = style; if (modeMots(style)) n.subSize = Math.max(n.subSize || 0, tailleSous(style)); }
@@ -3012,12 +3039,16 @@ function exporter() {
   };
   $('#xGo').onclick = async () => {
     proj.sortie = $('#xSortie').value; proj.res = +$('#xRes').value; proj.fps = +$('#xFps').value; proj.quality = $('#xQ').value; proj.normaliser = $('#xNorm').checked; commit();
-    $('#expo').innerHTML = '<div id="xTxt">Préparation…</div><div id="barreExp"><i></i></div>';
+    $('#expo').innerHTML = '<div id="xTxt">Préparation…</div><div id="barreExp"><i></i></div><button id="xStop" style="margin-top:8px">Annuler l’export</button>';
+    // l'aperçu de fond s'arrête : toute la puissance du Mac va à l'export
+    exportEnCours = true; if (fond.cours) annulerJob(fond.id);
+    let idExp = null; $('#xStop').onclick = () => { $('#xStop').disabled = true; $('#xStop').textContent = 'Arrêt…'; annulerJob(idExp); };
     try {
-      const j = await lancerJob('/api/export', { project: proj }, (p, s) => { $('#barreExp i').style.width = Math.round(p * 100) + '%'; $('#xTxt').textContent = `${s} — ${Math.round(p * 100)} %`; });
+      const j = await lancerJob('/api/export', { project: proj }, (p, s) => { $('#barreExp i').style.width = Math.round(p * 100) + '%'; $('#xTxt').textContent = `${s} — ${Math.round(p * 100)} %`; }, id => { idExp = id; });
+      exportEnCours = false;
       $('#expo').innerHTML = `<p>✅ Terminé${j.duree ? ` en ${fmt(j.duree)}` : ''} : <b>${esc(j.out)}</b>${j.repris ? `<br><span class="mut">${j.repris} clip${j.repris > 1 ? 's' : ''} inchangé${j.repris > 1 ? 's' : ''} repris du dernier export.</span>` : ''}</p><div class="ligne"><button id="xFind">Afficher dans le Finder</button><button id="xAir">Envoyer par AirDrop</button><a href="/exports/${enc(j.out)}"><button style="width:100%">Télécharger</button></a><button class="pri" id="xFin">Fermer</button></div><p class="mut">Dossier : Films → QuentMovie → exports</p>`;
       $('#xAir').onclick = () => partagerFichiers([j.out]); $('#xFin').onclick = fermer; $('#xFind').onclick = () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) });
-    } catch (e) { $('#expo').innerHTML = `<p class="err">${esc(e.message)}</p><button id="xFin">Fermer</button>`; $('#xFin').onclick = fermer; }
+    } catch (e) { exportEnCours = false; $('#expo').innerHTML = `<p class="${/annulé/.test(e.message) ? 'mut' : 'err'}">${esc(e.message)}</p><button id="xFin">Fermer</button>`; $('#xFin').onclick = fermer; preparerEnFond(); }
   };
 }
 $('#bExport').onclick = exporter;

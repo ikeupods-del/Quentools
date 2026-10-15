@@ -220,9 +220,29 @@ function create(opts = {}) {
   }
   // aperçus calculés en arrière-plan : FFmpeg en priorité basse (sur Mac, il part sur les cœurs économes : moins de batterie)
   const dossiersBasse = new Set();
+  // erreur de FFmpeg → explication en français (le détail technique reste à la fin, utile pour un dépannage)
+  function messageClair(m) {
+    const brut = String(m || 'Erreur inconnue'), detail = brut.split('\n').filter(Boolean).slice(-2).join(' ').slice(0, 300);
+    const cas = [
+      [/No space left on device|ENOSPC/i, 'Le disque du Mac est plein. Libère de la place (vide la corbeille, supprime d’anciens exports dans Movies/QuentMovie/exports), puis relance l’export.'],
+      [/Encodage figé/i, 'L’encodage s’est bloqué. Relance l’export ; si cela recommence, choisis « Processeur » dans Encodage.'],
+      [/moov atom not found|Invalid data found when processing input|End of file/i, 'Un fichier du montage est abîmé ou incomplet (copie interrompue ?). Réimporte-le ou retire le clip concerné.'],
+      [/Cannot allocate memory|out of memory/i, 'Le Mac manque de mémoire. Ferme les autres applications puis relance l’export.']
+    ];
+    for (const [re, txt] of cas) if (re.test(brut)) return `${txt} (détail : ${detail})`;
+    return brut.length > 400 ? detail : brut;
+  }
+  // export annulé : tous les FFmpeg qui travaillent dans son dossier sont arrêtés, et ceux qui démarreraient encore aussi
+  const dossiersAnnules = new Set(), enCours = new Map();
+  function annulerDossier(dir) {
+    if (!dir) return; dossiersAnnules.add(dir);
+    for (const p of enCours.get(dir) || []) { try { p.kill('SIGKILL'); } catch (e) { /* déjà fini */ } }
+  }
   function runBrut(cmd, args, { cwd, onOut, binary, wantErr, silence } = {}) {
     return new Promise((resolve, reject) => {
+      if (cwd && dossiersAnnules.has(cwd)) return reject(new Error('Export annulé.'));
       const p = spawn(cmd, args, { cwd });
+      if (cwd) { if (!enCours.has(cwd)) enCours.set(cwd, new Set()); enCours.get(cwd).add(p); p.on('close', () => { const l = enCours.get(cwd); if (l) { l.delete(p); if (!l.size) enCours.delete(cwd); } }); }
       if (cwd && dossiersBasse.has(cwd) && p.pid) { try { os.setPriority(p.pid, 15); } catch (e) { /* priorité inchangée */ } }
       const out = []; let err = '', fige = false, garde = null;
       // avec -progress, seule une avance réelle de la vidéo (out_time) compte ; sinon toute sortie
@@ -236,7 +256,7 @@ function create(opts = {}) {
       });
       p.stderr.on('data', d => { if (!suiviProgres) veille(); err += d; if (!wantErr && err.length > 8000) err = err.slice(-8000); });
       p.on('error', e => { clearTimeout(garde); reject(new Error(e.code === 'ENOENT' ? 'FFmpeg est introuvable.' : e.message)); });
-      p.on('close', code => { clearTimeout(garde); if (fige) return reject(new Error('Encodage figé, arrêté')); code === 0 ? resolve(wantErr ? err : binary ? Buffer.concat(out) : '') : reject(new Error(err.trim().split('\n').slice(-4).join('\n') || 'Erreur FFmpeg')); });
+      p.on('close', code => { clearTimeout(garde); if (cwd && dossiersAnnules.has(cwd)) return reject(new Error('Export annulé.')); if (fige) return reject(new Error('Encodage figé, arrêté')); code === 0 ? resolve(wantErr ? err : binary ? Buffer.concat(out) : '') : reject(new Error(err.trim().split('\n').slice(-4).join('\n') || 'Erreur FFmpeg')); });
     });
   }
   // Encodage par la puce vidéo (VideoToolbox) si demandé, surveillé ; en cas d'échec ou de blocage, par le processeur
@@ -318,6 +338,17 @@ function create(opts = {}) {
     return { kind, duration: kind === 'image' ? 3 : dur, w: v ? v.width : 0, h: v ? v.height : 0, hasAudio: !!a, native, codec: v ? v.codec_name : (a ? a.codec_name : '') };
   }
 
+  // Calques vidéo repris en cours de route (`ss` : déjà joué, après une coupe) : position ramenée dans la durée du fichier,
+  // car le calque tourne en boucle (une position au-delà de la fin ne donnait aucune image)
+  const dureesCalques = new Map();
+  async function calquesEnBoucle(c) {
+    for (const ov of (c && c.overlays) || []) {
+      if (!ov || ov.kind !== 'video' || !(num(ov.ss, 0) > 0) || !ov.file) continue;
+      let f; try { f = mediaPath(ov.file); } catch (e) { continue; }
+      if (!dureesCalques.has(f)) dureesCalques.set(f, await probe(f).then(m => m.duration || 0, () => 0));
+      const d = dureesCalques.get(f); if (d > 0.2) ov.ss = +(num(ov.ss, 0) % d).toFixed(3);
+    }
+  }
   // Vidéo HDR (HLG ou PQ : iPhone, appareils récents) : sans conversion, les couleurs paraissent ternes. Résultat gardé par fichier.
   const hdrCache = new Map();
   async function estHdr(file) {
@@ -496,20 +527,22 @@ function buildClip(c, P, o = {}) {
       const mode = MODES[ov.mode] && filters.has('blend') ? MODES[ov.mode] : null;
       // calque limité au temps où il est visible (sinon il est lu et détouré pendant tout le clip, même caché) ;
       // une fois fini, l'image du clip passe telle quelle (eof_action=pass)
-      const lim = !o.preview && !mode ? Math.min(E0, eff) - S0 + 0.5 : 0, duree = lim ? ['-t', lim.toFixed(3)] : [], fin = lim ? 'eof_action=pass' : 'shortest=1';
+      const lim = !o.preview ? Math.min(E0, eff) - S0 + 0.5 : 0, duree = lim ? ['-t', lim.toFixed(3)] : [], fin = lim ? 'eof_action=pass' : 'shortest=1';
       if (isVid) args.push(...(o.preview && t > S0 || num(ov.ss, 0) > 0 ? ['-ss', ((o.preview && t > S0 ? Math.min(t - S0, 1.8) : 0) + clamp(num(ov.ss, 0), 0, 600)).toFixed(2)] : []), '-stream_loop', '-1', ...duree, '-i', ovf); else args.push('-loop', '1', '-framerate', fps, ...duree, '-i', ovf);
       const idx = n++, id = lab(), sc = clamp(num(ov.scale, 30), 2, 150) / 100;
       const op = clamp(num(ov.opacity, 100), 5, 100) / 100, en = o.preview ? '' : `:enable='between(t,${S0},${E0})'`;
       // fond vert de l'élément (animations « fond vert ») : la couleur verte devient transparente
       const cle = ov.key ? `,colorkey=0x00ff00:${clamp(num(ov.keySim, 0.3), 0.05, 0.7)}:0.12` : '';
+      // le calque commence à son instant (son début, pas un moment au hasard de sa boucle) ; l'aperçu, lui, est déjà avancé au bon moment
+      const dec = o.preview ? 0 : S0;
       if (mode) { // calque plein écran mélangé à l'image (fuites de lumière, poussière, grain…)
-        f.push(`[${idx}:v]fps=${fps},${ov.plein === 'cadre' ? `scale=${W}:${H},setsar=1` : scFill},format=gbrp[${id}]`);
+        f.push(`[${idx}:v]fps=${fps},setpts=PTS-STARTPTS+${dec}/TB,${ov.plein === 'cadre' ? `scale=${W}:${H},setsar=1` : scFill},format=gbrp[${id}]`);
         const a = lab(), out = lab();
-        f.push(`[${cur}]format=gbrp[${a}]`, `[${a}][${id}]blend=all_mode=${mode}:all_opacity=${op}:shortest=1${en},format=yuv420p[${out}]`);
+        f.push(`[${cur}]format=gbrp[${a}]`, `[${a}][${id}]blend=all_mode=${mode}:all_opacity=${op}:${o.preview ? 'shortest=1' : 'eof_action=pass'}${en},format=yuv420p[${out}]`);
         cur = out; continue;
       }
       if (ov.plein) { // cadre ou décor plein écran
-        let ch = `[${idx}:v]fps=${fps},setpts=PTS-STARTPTS+${S0}/TB,${ov.plein === 'cadre' ? `scale=${W}:${H},setsar=1` : scFill},format=rgba${cle}`;
+        let ch = `[${idx}:v]fps=${fps},setpts=PTS-STARTPTS+${dec}/TB,${ov.plein === 'cadre' ? `scale=${W}:${H},setsar=1` : scFill},format=rgba${cle}`;
         if (op < 1) ch += `,colorchannelmixer=aa=${op}`;
         if (!o.preview && ov.anim === 'fade') ch += `,fade=t=in:st=${S0}:d=0.4:alpha=1` + (Dd > 0 ? `,fade=t=out:st=${Math.max(S0, E0 - 0.4)}:d=0.4:alpha=1` : '');
         f.push(`${ch}[${id}]`);
@@ -520,7 +553,7 @@ function buildClip(c, P, o = {}) {
       const px = clamp(num(ov.x, 50), -20, 120) / 100, py = clamp(num(ov.y, 50), -20, 120) / 100;
       const baseW = W * sc;
       const w = anim === 'pop' ? `trunc(${baseW}*max(0.02,min(1.15,1-exp(-7*(${Tt}-${S0}))*cos(18*(${Tt}-${S0}))))/2)*2` : `${even(baseW)}`;
-      let chain = `[${idx}:v]fps=${fps},setpts=PTS-STARTPTS+${S0}/TB,format=rgba${cle}`;
+      let chain = `[${idx}:v]fps=${fps},setpts=PTS-STARTPTS+${dec}/TB,format=rgba${cle}`;
       chain += anim === 'pop' ? `,scale=w='${w}':h=-2:eval=frame` : `,scale=${w}:-2`;
       if (num(ov.rot, 0)) chain += `,rotate=${(num(ov.rot, 0) * Math.PI / 180).toFixed(4)}:ow='hypot(iw,ih)':oh='hypot(iw,ih)':c=none`;
       if (op < 1) chain += `,colorchannelmixer=aa=${op}`;
@@ -1054,6 +1087,7 @@ function buildClip(c, P, o = {}) {
     const clipsBruts = (project.clips || []).filter(c => c && (c.file || c.kind === 'solid'));
     if (!clipsBruts.length) throw new Error('La timeline est vide.');
     const clips = morceauxDe(clipsBruts); job.morceaux = clips.length - clipsBruts.length;
+    for (const c of clips) await calquesEnBoucle(c);
     const P = sizeOf(project, proxy ? 'proxy' : 'full');
     // fichiers disparus : un message clair (quel clip, que faire) plutôt qu'une erreur de FFmpeg
     const absents = [...new Set(clips.filter(c => c.file && c.kind !== 'solid' && !/^(lib|pack):/.test(c.file)).map(c => c.file).filter(f => !fs.existsSync(mediaPath(f))))];
@@ -1072,9 +1106,13 @@ function buildClip(c, P, o = {}) {
       // « égaliser » : un gain fixe par vidéo d'origine (mesurée une fois en entier, résultat gardé), le même pour tous ses morceaux :
       // les phrases gardent leurs nuances (une normalisation par morceau aplatissait chaque phrase et échouait sur un clip muet)
       const lufsSource = {};
-      for (const c of clips) if ((c.afx || []).some(e => e && e.id === 'normaliser') && c.file && !(c.file in lufsSource)) { const a = await analyseFichier(mediaPath(c.file)).catch(() => null); lufsSource[c.file] = a && a.lufs != null && a.lufs > -60 ? a.lufs : null; }
+      const stop = () => { if (job.annule) throw new Error('Export annulé.'); };
+      for (const c of clips) if ((c.afx || []).some(e => e && e.id === 'normaliser') && c.file && !(c.file in lufsSource)) { stop(); job.step = 'Mesure du volume'; const a = await analyseFichier(mediaPath(c.file)).catch(() => null); lufsSource[c.file] = a && a.lufs != null && a.lufs > -60 ? a.lufs : null; }
       clips.forEach(c => { if (lufsSource[c.file] != null) c.gainNorm = +clamp(-16 - lufsSource[c.file], -20, 20).toFixed(1); });
-      const hdrFlags = await Promise.all(clips.map(async c => (c.file && !(c.kind === 'image' || c.kind === 'solid' || c.kind === 'audio') && hdrPossible()) ? estHdr(mediaPath(c.file)) : false));
+      // HDR : une lecture par fichier (pas une par clip : 200 morceaux d'une même vidéo lançaient 200 FFmpeg à la fois)
+      const videoSource = c => c.file && !(c.kind === 'image' || c.kind === 'solid' || c.kind === 'audio') && hdrPossible(), hdrFichier = {};
+      for (const c of clips) if (videoSource(c) && !(c.file in hdrFichier)) hdrFichier[c.file] = await estHdr(mediaPath(c.file));
+      const hdrFlags = clips.map(c => videoSource(c) && !!hdrFichier[c.file]); stop();
       if (hdrFlags.some(Boolean)) job.avertissement = 'Vidéo HDR détectée : conversion en image classique.';
       for (let i = 0; i < clips.length; i++) {
         const avant = new Set(fs.readdirSync(dir));
@@ -1087,6 +1125,7 @@ function buildClip(c, P, o = {}) {
       const segs = built.map((b, i) => `seg${i}.mp4`);
       let repris = 0, faits = 0;
       const encoderClip = async i => {
+        stop();
         const cache = cles[i] && path.join(CACHE_RENDU, cles[i] + '.mp4');
         if (cache && fs.existsSync(cache)) {
           try { fs.copyFileSync(cache, path.join(dir, segs[i]), fs.constants.COPYFILE_FICLONE); fs.utimesSync(cache, new Date(), new Date()); avance[i] = built[i].eff; repris++; faits++; suivi(); return; }
@@ -1110,7 +1149,7 @@ function buildClip(c, P, o = {}) {
       let suivant = 0;
       await Promise.all(Array.from({ length: enParallele }, async () => { while (suivant < built.length) await encoderClip(suivant++); }));
       job.repris = repris;
-      nettoyerCache();
+      nettoyerCache(); stop();
 
       // Assemblage (avec transitions si besoin)
       job.step = 'Assemblage';
@@ -1217,6 +1256,7 @@ function buildClip(c, P, o = {}) {
 
       // Pistes audio (musique, voix off, bruitages) ; « baisser quand on parle » = compression pilotée par la voix
       const audios = (project.audio || []).filter(a => a && a.file && fs.existsSync(mediaPath(a.file))).map(a => ({ ...a, start: versExport(a.start) }));
+      stop();
       if (audios.length) {
         job.step = 'Mixage du son';
         const dur = +((await infos(path.join(dir, joined))).format.duration) || 1;
@@ -1237,7 +1277,8 @@ function buildClip(c, P, o = {}) {
         const lufsMontage = await lufs('son0.wav'), ref = lufsMontage != null && lufsMontage > -45 ? lufsMontage : -18;
         const typeSon = a => (a.loop || a.duck || /musiques\//.test(a.file) ? 'musique' : /^lib:sons\/|^pack:.*\/sons?\//i.test(a.file) || /^lib:/.test(a.file) ? 'bruitage' : 'autre');
         job.niveaux = { montage: lufsMontage };
-        await Promise.all(audios.map(async (a, i) => { // les pistes sont préparées en même temps
+        // quelques sons préparés à la fois (un pack pose une centaine de bruitages sur un long montage : jamais cent FFmpeg d'un coup)
+        let prochain = 0; const unSon = async (a, i) => {
           const de = clamp(num(a.in, 0), 0, 36000), du = clamp(num(a.dur, 0), 0, 36000); // partie du fichier (son détaché d'une vidéo)
           await ff([...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(a.file), ...wav], `brut${i}.wav`);
           const type = typeSon(a), l = type === 'autre' || a.niveauBrut ? null : await lufs(`brut${i}.wav`);
@@ -1246,7 +1287,7 @@ function buildClip(c, P, o = {}) {
             const base = type === 'musique' ? 35 : 80, cible = ref + (type === 'musique' ? (a.duck ? -12 : -18) : -7), rel = 20 * Math.log10(Math.max(1, clamp(num(a.vol, base), 0, 200)) / base);
             a.gainDb = +clamp(cible - l + rel, -40, 18).toFixed(1); job.niveaux[a.file] = { type, lufs: l, gainDb: a.gainDb };
           }
-          const st = clamp(num(a.start, 0), 0, 3600), ms = Math.round(st * 1000);
+          const st = clamp(num(a.start, 0), 0, 36000), ms = Math.round(st * 1000);
           let vit = clamp(num(a.vit, 1), 0.25, 4);
           // fondu de sortie à la fin du son lui-même (un bruitage court ou un morceau coupé), pas à la fin de la vidéo
           const lg = du > 0 ? du / vit : a.loop ? dur - st : (+((await infos(path.join(dir, `brut${i}.wav`))).format.duration) || dur) / vit;
@@ -1264,16 +1305,21 @@ function buildClip(c, P, o = {}) {
             } else if (n > 1) { fs.writeFileSync(path.join(dir, `boucle${i}.txt`), Array.from({ length: n }, () => `file 'brut${i}.wav'`).join('\n')); entree = ['-f', 'concat', '-safe', 0, '-i', `boucle${i}.txt`]; }
           }
           const gain = a.gainDb != null ? `volume=${a.gainDb}dB` : `volume=${clamp(num(a.vol, 50), 0, 200) / 100}`;
-          await ff([...entree, '-af', `${tempo.length ? tempo.join(',') + ',' : ''}${gain}${fd},adelay=${ms}|${ms},apad`, '-t', D, ...wav], `son${i + 1}.wav`);
-        }));
+          // fichier court (le son seul) : le décalage et le silence jusqu'à la fin sont ajoutés au moment du mélange
+          // (avant : un WAV de toute la durée par son, plus de 400 Mo chacun pour un montage de 36 min)
+          a.ms = ms;
+          await ff([...entree, '-af', `${tempo.length ? tempo.join(',') + ',' : ''}${gain}${fd}`, '-t', Math.max(0.05, dur - st).toFixed(3), ...wav], `son${i + 1}.wav`);
+        };
+        await Promise.all(Array.from({ length: Math.min(4, audios.length) }, async () => { while (prochain < audios.length) { const i = prochain++; await unSon(audios[i], i); } }));
         // « baisser quand on parle » : la musique est compressée, pilotée par le son du montage (lu à part)
         const mixer = avecBaisse => {
           const canDuck = avecBaisse && filters.has('sidechaincompress'), ducks = audios.filter(a => a.duck && canDuck).length;
           const ins = ['-i', 'son0.wav', ...audios.flatMap((_, i) => ['-i', `son${i + 1}.wav`])], g = [];
           let mix = '[0:a]', dk = 0;
           audios.forEach((a, i) => {
-            if (a.duck && canDuck) { g.push(`[${i + 1}:a][side${dk++}]sidechaincompress=threshold=0.06:ratio=3:attack=25:release=500:makeup=1[m${i}]`); mix += `[m${i}]`; }
-            else mix += `[${i + 1}:a]`;
+            g.push(`[${i + 1}:a]adelay=${a.ms || 0}|${a.ms || 0},apad[d${i}]`); // calé à son instant, prolongé en silence (volume constant du mélange)
+            if (a.duck && canDuck) { g.push(`[d${i}][side${dk++}]sidechaincompress=threshold=0.06:ratio=3:attack=25:release=500:makeup=1[m${i}]`); mix += `[m${i}]`; }
+            else mix += `[d${i}]`;
           });
           if (ducks) { ins.push('-i', 'son0.wav'); g.push(`[${audios.length + 1}:a]${ducks > 1 ? `asplit=${ducks}` : 'anull'}${Array.from({ length: ducks }, (_, k) => `[side${k}]`).join('')}`); }
           g.push(`${mix}amix=inputs=${audios.length + 1}:duration=first:dropout_transition=0,volume=${audios.length + 1},alimiter=limit=0.95[a]`);
@@ -1371,7 +1417,7 @@ function buildClip(c, P, o = {}) {
       g.push(`${ch},setpts=PTS-STARTPTS+${debut.toFixed(3)}/TB[e${n}]`);
       g.push(`[${cur}][e${n}]overlay=x='${x}':y='${y}':eof_action=pass:format=auto:enable='between(t,${debut.toFixed(3)},${fin.toFixed(3)})'[v${n}]`);
       cur = `v${n}`;
-      if (!zone && p.kind === 'video' && p.hasAudio && num(p.vol, 0) > 0) { const ms = Math.round(debut * 1000); sons.push(`s${n}`); g.push(`[${n}:a]aresample=48000,aformat=channel_layouts=stereo,volume=${clamp(num(p.vol, 0), 0, 200) / 100},adelay=${ms}|${ms}[s${n}]`); }
+      if (!zone && p.kind === 'video' && p.hasAudio && num(p.vol, 0) > 0) { const ms = Math.round(debut * 1000); sons.push(`s${n}`); g.push(`[${n}:a]aresample=48000,aformat=channel_layouts=stereo,volume=${clamp(num(p.vol, 0), 0, 200) / 100},adelay=${ms}|${ms},apad[s${n}]`); } // apad : sans lui, le reste du montage doublait de volume à la fin de ce son
     }
     g.push(`[${cur}]format=yuv420p[vout]`);
     if (zone) {
@@ -1397,7 +1443,7 @@ function buildClip(c, P, o = {}) {
       if (!(p.kind === 'video' && p.hasAudio && num(p.vol, 0) > 0)) continue;
       const n = sons.length + 1, ms = Math.round(clamp(num(p.start, 0), 0, 36000) * 1000);
       ins.push('-ss', clamp(num(p.in, 0), 0, 36000), '-t', clamp(num(p.out, 1) - num(p.in, 0), 0.3, 36000).toFixed(3), '-i', mediaPath(p.file));
-      sons.push(`[s${n}]`); g.push(`[${n}:a]aresample=48000,aformat=channel_layouts=stereo,volume=${clamp(num(p.vol, 0), 0, 200) / 100},adelay=${ms}|${ms}[s${n}]`);
+      sons.push(`[s${n}]`); g.push(`[${n}:a]aresample=48000,aformat=channel_layouts=stereo,volume=${clamp(num(p.vol, 0), 0, 200) / 100},adelay=${ms}|${ms},apad[s${n}]`); // prolongé en silence (voir poserPistes)
     }
     if (!sons.length) return null;
     g.push(`[0:a]${sons.join('')}amix=inputs=${sons.length + 1}:duration=first:dropout_transition=0,volume=${sons.length + 1},alimiter=limit=0.95[aout]`);
@@ -1785,7 +1831,8 @@ function buildClip(c, P, o = {}) {
         const dir = fs.mkdtempSync(path.join(TMP, 'pv-'));
         try {
           const taille = body.mode === 'hd' ? sizeOf({ ...(body.project || {}), res: 1080 }, 'full') : sizeOf(body.project || {}, 'thumb' === body.mode ? 'thumb' : 'proxy');
-          const c0 = body.clip || {}, hdr = c0.file && !['image', 'solid', 'audio'].includes(c0.kind) && hdrPossible() ? await estHdr(mediaPath(c0.file)) : false;
+          const c0 = body.clip || {}; await calquesEnBoucle(c0);
+          const hdr = c0.file && !['image', 'solid', 'audio'].includes(c0.kind) && hdrPossible() ? await estHdr(mediaPath(c0.file)) : false;
           const args = buildClip(body.clip, taille, { preview: true, t: body.t, tdir: { dir, idx: 0 }, hdr });
           return send(res, 200, await run(FFMPEG, args, { cwd: dir, binary: true }), 'image/jpeg');
         } finally { fs.rmSync(dir, { recursive: true, force: true }); }
@@ -1806,8 +1853,14 @@ function buildClip(c, P, o = {}) {
         const id = String(Date.now()) + Math.floor(Math.random() * 1000);
         const job = { progress: 0, step: 'Préparation', out: null, url: null, error: null, done: false };
         jobs.set(id, job);
-        exportProject(job, body.project || {}, { proxy: p === '/api/apercu' }).catch(e => { job.error = e.message; });
+        exportProject(job, body.project || {}, { proxy: p === '/api/apercu' }).catch(e => { job.error = job.annule ? 'Export annulé.' : messageClair(e.message); })
+          .finally(() => { if (job.dir) { dossiersAnnules.delete(job.dir); enCours.delete(job.dir); } });
         return send(res, 200, { id });
+      }
+      if (req.method === 'POST' && p === '/api/annuler') { // arrêt d'un export ou d'un aperçu en cours
+        const job = jobs.get(url.searchParams.get('id'));
+        if (job && !job.done && !job.error) { job.annule = true; annulerDossier(job.dir); }
+        return send(res, 200, { ok: !!job });
       }
       if (req.method === 'GET' && p === '/api/job') {
         const job = jobs.get(url.searchParams.get('id'));

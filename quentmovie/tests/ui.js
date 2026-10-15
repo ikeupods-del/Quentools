@@ -149,6 +149,13 @@ function chromium() {
   // 3 bis) outils pro : lame, pistes (verrou, muet, masquer), repères nommés et chapitres, grille
   // animation sur fond vert (Breaking news…) posée depuis l'onglet Calques : à la tête de lecture, jouée une fois
   check('calque fond vert : posé à la tête de lecture, joué une fois', await ev(() => { const c = newClip(medias.find(m => m.file === 'a.mp4')); proj.clips = [c]; sel = 0; gt = 1.2; commit(); tout(); const it = LIB().fondvert[0]; ajouterCalque('lib:' + it.file, 'video', POSES.vert); const o = c.overlays[c.overlays.length - 1]; return Math.abs(o.start - 1.2) < 0.05 && o.dur > 0 && o.dur <= it.duree + 0.01 && o.key; }));
+  // calques d'un clip découpé (blancs coupés, coupe, plans) : continués sur les morceaux suivants, jamais perdus dans un blanc
+  check('découpe : une animation continue sur les morceaux suivants là où elle en était', await ev(() => {
+    const r = repartirCalques([{ file: 'x', kind: 'video', start: 1, dur: 4, anim: 'pop' }], [[0, 2], [3, 5], [6, 9]]), [a, b, c] = r.map(l => l[0]);
+    return a.start === 1 && a.dur === 1 && a.anim === 'pop' && b.start === 0 && b.dur === 2 && b.ss === 1 && b.anim === 'none' && c.start === 0 && c.dur === 1 && c.ss === 3;
+  }));
+  check('découpe : une animation lancée pendant un blanc démarre au morceau suivant', await ev(() => { const r = repartirCalques([{ file: 'x', kind: 'video', start: 2.5, dur: 1 }], [[0, 2], [3, 5]]); return !r[0].length && r[1].length === 1 && r[1][0].start === 0 && r[1][0].dur === 1 && !r[1][0].ss; }));
+  check('coupe au milieu d’une animation : la 2e moitié continue sans recommencer', await ev(() => { const c = newClip(medias.find(m => m.file === 'a.mp4')); c.overlays = [{ file: 'x', kind: 'video', start: 1, dur: 3, anim: 'pop' }]; const [a, b] = trancherClip(c, 2); return a.overlays.length === 1 && a.overlays[0].dur === 1 && b.overlays[0].start === 0 && b.overlays[0].ss === 1 && b.overlays[0].dur === 2 && b.overlays[0].anim === 'none'; }));
   await ev(() => { const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v)]; proj.audio = [{ file: 'son.wav', start: 0, in: 0, dur: 6, vol: 100 }]; proj.pistes = []; proj.markers = []; proj.etatPistes = {}; sel = 0; selA = -1; setZoom(40); commit(); tout(); choisirOutil('lame'); });
   await pg.waitForTimeout(200);
   let bx = await ev(() => { const e = document.querySelector('.clip[data-i="0"]').getBoundingClientRect(), r = $('#lane').getBoundingClientRect(); return { x: r.left + 2 * 40, y: e.y + e.height / 2 }; });
