@@ -66,6 +66,25 @@ function create(opts = {}) {
   const LIB = (opts.lib || path.join(__dirname, 'bibliotheque')).replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep);
   const LIB_LISTES = ['sons', 'musiques', 'stickers', 'marque', 'luts', 'calques', 'cadres', 'fonds', 'fondvert'];
   const libIndex = () => { let j = {}; try { j = JSON.parse(fs.readFileSync(path.join(LIB, 'index.json'), 'utf8')); } catch (e) { /* bibliothèque absente */ } LIB_LISTES.forEach(k => { j[k] = j[k] || []; }); return j; };
+  // Vignettes et ondes sonores de la timeline gardées sur le disque : un projet rouvert s'affiche sans relancer FFmpeg.
+  // Clé = fichier (chemin, taille, date de modification) + réglages ; une même image demandée deux fois à la fois n'est calculée qu'une fois.
+  const CACHE_TL = path.join(BASE, '.cache-timeline'), calculsTl = new Map(); let ecritsTl = 0;
+  const elaguerTl = () => { // au-delà de 250 Mo, les plus anciennes partent
+    try {
+      const l = fs.readdirSync(CACHE_TL).map(n => { const st = fs.statSync(path.join(CACHE_TL, n)); return { n, t: st.atimeMs > st.mtimeMs ? st.atimeMs : st.mtimeMs, o: st.size }; }).sort((a, b) => b.t - a.t);
+      let tot = 0; for (const x of l) { tot += x.o; if (tot > 250e6) fs.unlinkSync(path.join(CACHE_TL, x.n)); }
+    } catch (e) { /* cache facultatif */ }
+  };
+  const enCache = async (fichier, reglages, fabriquer) => {
+    let st; try { st = fs.statSync(fichier); } catch (e) { return fabriquer(); }
+    const cle = require('crypto').createHash('sha1').update(JSON.stringify([fichier, st.size, Math.round(st.mtimeMs), reglages])).digest('hex'), f = path.join(CACHE_TL, cle);
+    try { const b = fs.readFileSync(f); const t = new Date(); fs.utimes(f, t, t, () => {}); return b; } catch (e) { /* pas encore calculé */ }
+    if (!calculsTl.has(cle)) calculsTl.set(cle, fabriquer().then(b => {
+      try { fs.mkdirSync(CACHE_TL, { recursive: true }); fs.writeFileSync(f + '.part', b); fs.renameSync(f + '.part', f); if (++ecritsTl % 300 === 0) elaguerTl(); } catch (e) { /* disque plein : l'image est quand même affichée */ }
+      return b;
+    }).finally(() => calculsTl.delete(cle)));
+    return calculsTl.get(cle);
+  };
   // Packs ajoutés par l'utilisateur (LUT, sons, images, vidéos) : dossier « Mes packs »
   const PACKS = path.join(BASE, 'packs'); fs.mkdirSync(PACKS, { recursive: true });
   // « lib:sons/clavier.mp3 » = bibliothèque ; « pack:Dossier/fichier.wav » = Mes packs ; sinon fichier importé
@@ -1087,8 +1106,14 @@ function buildClip(c, P, o = {}) {
   const CACHE_RENDU = path.join(BASE, '.cache-rendu');
   function empreinteClip(args, dir, ecrits) {
     try {
-      const h = require('crypto').createHash('sha1').update('v1|' + version + '|' + JSON.stringify(args).split(dir).join('@'));
-      for (const f of ecrits.sort()) h.update('|' + f + '|').update(fs.readFileSync(path.join(dir, f)));
+      // les fichiers écrits pour le clip (textes, sous-titres…) portent son rang dans la timeline : remplacés par leur ordre d'apparition,
+      // un clip qui change de place (plan ajouté avant, prise coupée) garde la même empreinte et reste repris du cache
+      let txt = JSON.stringify(args).split(dir).join('@');
+      const motif = f => new RegExp(`(^|[^\\w])${f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w.])`, 'g');
+      const ordre = ecrits.map(f => ({ f, i: txt.search(motif(f)) })).sort((a, b) => a.i - b.i || (a.f < b.f ? -1 : 1));
+      ordre.forEach((x, k) => { txt = txt.replace(motif(x.f), `$1#${k}#`); });
+      const h = require('crypto').createHash('sha1').update('v2|' + version + '|' + txt);
+      for (const x of ordre) h.update('|#|').update(fs.readFileSync(path.join(dir, x.f)));
       for (const a of args) if (typeof a === 'string' && path.isAbsolute(a) && !a.startsWith(dir)) { const st = fs.statSync(a); h.update(`|${a}|${st.size}|${st.mtimeMs}`); }
       return h.digest('hex');
     } catch (e) { return null; } // fichier introuvable : pas de cache pour ce clip
@@ -1124,10 +1149,15 @@ function buildClip(c, P, o = {}) {
       const simple = c.kind === 'video' && num(c.speed, 1) === 1 && eff >= L * 1.6 && (c.fx || []).every(fxSansTemps) && !(c.key && c.key.on && c.key.bgType === 'file' && c.key.bgKind === 'video') && !c.viz
         && !(Array.isArray(c.cadrage) && c.cadrage.length) && !c.bgFile && !c.sonDetache;
       if (!simple || process.env.QM_SANS_MORCEAUX) { out.push(c); continue; }
-      const n = Math.max(2, Math.round(eff / L)), len = eff / n, fo = fonduxDe(c, eff);
+      // limites calées sur des repères fixes de la vidéo d'origine (toutes les L secondes) : raccourcir le début ou la fin,
+      // ou couper la prise en deux, ne change que les morceaux touchés ; les autres sont repris du cache (aperçu et export)
+      const i0 = num(c.in, 0), bornes = [0];
+      for (let x = Math.ceil((i0 + L * 0.3) / L) * L; x < i0 + eff - L * 0.3; x += L) bornes.push(+(x - i0).toFixed(3));
+      bornes.push(eff);
+      const n = bornes.length - 1, fo = fonduxDe(c, eff);
       for (let k = 0; k < n; k++) {
-        const a = k * len, b = (k + 1) * len, d = { ...c };
-        d.in = +(num(c.in, 0) + a).toFixed(3); d.out = k === n - 1 ? num(c.out, 0) : +(num(c.in, 0) + b).toFixed(3);
+        const a = bornes[k], b = bornes[k + 1], d = { ...c };
+        d.in = +(i0 + a).toFixed(3); d.out = k === n - 1 ? num(c.out, 0) : +(i0 + b).toFixed(3);
         d.fade = false; d.fadeIn = k === 0 ? fo.e : 0; d.fadeOut = k === n - 1 ? fo.s : 0;
         d.microE = k === 0; d.microS = k === n - 1; // raccords internes du découpage : pas de fondu sonore
         d.transition = k === n - 1 ? c.transition : null;
@@ -1858,8 +1888,9 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && p === '/api/wave') { // forme d'onde d'un son
         const w = clamp(Math.round(num(url.searchParams.get('w'), 800)), 50, 4000), h = clamp(Math.round(num(url.searchParams.get('h'), 80)), 20, 400);
         const de = num(url.searchParams.get('in'), 0), du = num(url.searchParams.get('dur'), 0);
-        const img = await run(FFMPEG, ['-v', 'error', ...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(url.searchParams.get('file')), '-vn', '-filter_complex', `aformat=channel_layouts=mono,showwavespic=s=${w}x${h}:colors=white`,
-          '-frames:v', 1, '-f', 'image2pipe', '-vcodec', 'png', 'pipe:1'], { binary: true });
+        const src = mediaPath(url.searchParams.get('file'));
+        const img = await enCache(src, ['onde', w, h, de, du], () => run(FFMPEG, ['-v', 'error', ...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', src, '-vn', '-filter_complex', `aformat=channel_layouts=mono,showwavespic=s=${w}x${h}:colors=white`,
+          '-frames:v', 1, '-f', 'image2pipe', '-vcodec', 'png', 'pipe:1'], { binary: true }));
         return send(res, 200, img, 'image/png', 'max-age=86400');
       }
       // Banques de photos : liste, activation, clé gratuite (les clés ne sont jamais renvoyées)
@@ -1919,8 +1950,8 @@ function buildClip(c, P, o = {}) {
         return send(res, 200, { silences: sil.map(x => ({ s: +(from + x.s).toFixed(2), e: +(from + x.e).toFixed(2) })) });
       }
       if (req.method === 'GET' && p === '/api/frame') {
-        const img = await run(FFMPEG, ['-v', 'error', '-ss', num(url.searchParams.get('t'), 0), '-i', mediaPath(url.searchParams.get('file')), '-frames:v', 1,
-          '-vf', `scale=${clamp(Math.round(num(url.searchParams.get('w'), 480) / 2) * 2, 64, 3840)}:-2`, '-f', 'mjpeg', '-q:v', url.searchParams.get('w') ? 2 : 5, 'pipe:1'], { binary: true });
+        const src = mediaPath(url.searchParams.get('file')), t = num(url.searchParams.get('t'), 0), w = clamp(Math.round(num(url.searchParams.get('w'), 480) / 2) * 2, 64, 3840), q = url.searchParams.get('w') ? 2 : 5;
+        const img = await enCache(src, ['image', t, w, q], () => run(FFMPEG, ['-v', 'error', '-ss', t, '-i', src, '-frames:v', 1, '-vf', `scale=${w}:-2`, '-f', 'mjpeg', '-q:v', q, 'pipe:1'], { binary: true }));
         return send(res, 200, img, 'image/jpeg', 'max-age=3600');
       }
       if (req.method === 'POST' && p === '/api/preview') {

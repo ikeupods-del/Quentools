@@ -35,6 +35,11 @@ const { execFileSync, spawnSync } = require('child_process');
   process.env.QM_SANS_MORCEAUX = '1'; const jt = await exporter({ ...projet('Entier'), clips: [long] }); delete process.env.QM_SANS_MORCEAUX; delete process.env.QM_MORCEAU;
   check('clip long : découpé en morceaux', jm.morceaux >= 2 && !jt.morceaux, `${jm.morceaux}/${jt.morceaux}`);
   check('clip long : même durée que le clip entier', Math.abs(lireDuree(jm.out) - lireDuree(jt.out)) < 0.35, `${lireDuree(jm.out)} / ${lireDuree(jt.out)}`);
+  // aperçu et export qui ne refont que ce qui a changé : morceaux calés sur la vidéo d'origine, empreinte indépendante du rang du clip
+  { process.env.QM_MORCEAU = '1';
+    const court = { ...long, in: 0.5, subs: [{ s: 0, e: 0.9, t: 'un' }, { s: 1.1, e: 3.3, t: 'deux' }] };
+    const jd = await exporter({ ...projet('Morceaux décalés'), clips: [clip('p.png', 'image', { dur: 1, text: 'Avant' }), court] }); delete process.env.QM_MORCEAU;
+    check('longue prise raccourcie au début, plan ajouté avant : seuls les morceaux touchés sont refaits', jd.repris === 3 && jd.morceaux === 3, `${jd.repris} repris, ${jd.morceaux} morceaux en plus`); }
   const j1 = await exporter(projet('Premier'));
   check('premier export : vidéo complète', Math.abs(lireDuree(j1.out) - 8.5) < 0.4, lireDuree(j1.out));
   check('premier export : clips encodés en parallèle', j1.paralleles >= 2, j1.paralleles);

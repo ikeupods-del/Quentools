@@ -3,6 +3,18 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.39.0
+- **Fichiers exportés plus légers** à qualité égale : la puce du Mac règle sa qualité image par image au lieu d'un débit fixe.
+- **Sous-titres sans limite** : sur une longue vidéo, seuls les 300 premiers sous-titres s'affichaient ; tous apparaissent maintenant, jusqu'à la fin.
+- **Voir la coupe des blancs avant de couper** : les passages qui vont partir s'affichent en rouge sur la timeline. Clique sur un passage pour le garder, puis « Couper » ou « Tout garder ».
+- **Export plus rapide des longues prises avec un look** (couleur, ciné, netteté…) : elles s'encodent en plusieurs morceaux à la fois, comme les prises sans effet.
+- **Aperçu plus rapide après une retouche** : raccourcir le début d'une longue prise, la couper ou ajouter un plan avant ne fait refaire que les passages touchés ; le reste est repris tel quel.
+- **Timeline instantanée à la réouverture** : les images et les ondes sonores des clips sont gardées sur le disque.
+- **« Égaliser le volume » plus naturel** : tout le montage est mesuré avant d'être réglé ; le son ne « pompe » plus entre les phrases.
+- **Résumé de chaque chapitre** : le chapitrage propose une phrase de résumé par chapitre (modifiable) et un sommaire détaillé à copier.
+- **Description YouTube complète** : les textes de publication s'appuient sur ce que l'analyse a compris de la vidéo, et les chapitres sont ajoutés à la fin de la description.
+- **Animations en direct du studio plus fluides** : le fond vert des animations (touches 1 à 9) est retiré par la puce graphique, le Mac chauffe moins pendant la prise.
+
 ## 1.38.0
 - **L'analyse de la vidéo lit toute la vidéo** : sur une longue vidéo, l'IA ne lisait que les premières minutes. Elle lit maintenant des passages répartis du début à la fin (conclusion comprise), avec leur moment.
 - **Idées fortes avec leur moment** : clique sur l'heure d'une idée forte pour y aller dans la timeline. Les mots-clés sont affichés, et les expressions comme « assurance vie » ou « chiffre d'affaires » sont reconnues.
