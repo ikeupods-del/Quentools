@@ -143,8 +143,9 @@ const { execFileSync } = require('child_process');
     const avec = await exporter({ ...projet('CalAvec'), clips: [clip('a.mp4', 'video', { out: 4, overlays: ovs })] });
     const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
     const ecart = t => { const a = img(sans.out, t), b = img(avec.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
-    check('calques : le 10e calque d’un clip apparaît à son instant', ecart(0.15) > 1 && ecart(3.3) > 1, [ecart(0.15), ecart(3.3)].join(' '));
-    check('calques : rien en dehors de leur durée, clip complet', ecart(3.8) < 0.5 && Math.abs(lireDuree(avec.out) - 4) < 0.2, [ecart(3.8), lireDuree(avec.out)].join(' ')); }
+    // un calque orange plein écran change l'image de plusieurs dizaines de niveaux ; l'encodage par la puce du Mac laisse ~1 niveau de bruit
+    check('calques : le 10e calque d’un clip apparaît à son instant', ecart(0.15) > 10 && ecart(3.3) > 10, [ecart(0.15), ecart(3.3)].join(' '));
+    check('calques : rien en dehors de leur durée, clip complet', ecart(3.8) < 3 && Math.abs(lireDuree(avec.out) - 4) < 0.2, [ecart(3.8), lireDuree(avec.out)].join(' ')); }
   // aperçu : un calque qui commence après le début du clip est visible à son instant (avant : jamais dans l'aperçu)
   { const ov = { file: 'p.png', kind: 'image', x: 50, y: 50, scale: 100, rot: 0, opacity: 100, anim: 'none', plein: 'remplir', key: false };
     const couleur = async (o, t) => { const r = await fetch(U('/api/preview'), { method: 'POST', body: JSON.stringify({ clip: clip('a.mp4', 'video', { out: 4, overlays: [o] }), t, project: { format: 'horizontal', res: 360, fps: 30 } }) });
@@ -176,7 +177,7 @@ const { execFileSync } = require('child_process');
     process.env.QM_SANS_MORCEAUX = '1'; const je = await exporter({ ...projet('EntierRiche'), clips: [riche] }); delete process.env.QM_SANS_MORCEAUX; delete process.env.QM_MORCEAU;
     const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
     const ec = t => { const a = img(jm.out, t), b = img(je.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
-    check('clip long avec calque, titre et texte : découpé en morceaux, même image que d’un seul bloc', jm.morceaux >= 2 && [1.2, 2.2, 3.5].every(t => ec(t) < 1.5), `${jm.morceaux} ${[1.2, 2.2, 3.5].map(t => ec(t).toFixed(2)).join(' ')}`); }
+    check('clip long avec calque, titre et texte : découpé en morceaux, même image que d’un seul bloc', jm.morceaux >= 2 && [1.2, 2.2, 3.5].every(t => ec(t) < 2.5), `${jm.morceaux} ${[1.2, 2.2, 3.5].map(t => ec(t).toFixed(2)).join(' ')}`); }
   // export d'un passage (essai) : seulement la partie choisie, nommée « extrait-… » ; titres de la piste T recalés
   { const { id } = await (await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: { ...projet('Extrait'), textes: [{ start: 3, dur: 2, titre: { preset: 'angle', l1: 'Titre', color: '#ff2d55', start: 0 } }] }, plage: { s: 1.5, e: 4.5 } }) })).json();
     let j; for (;;) { j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.error || j.done) break; await new Promise(r => setTimeout(r, 200)); }
