@@ -249,12 +249,12 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
   }
 
   // Titres de chapitres : l'IA nomme chaque partie à partir de son texte ; sans IA, les titres proposés par le programme sont gardés
-  async function titrerChapitres({ chapitres = [], sujet = '' }) {
+  async function titrerChapitres({ chapitres = [], sujet = '', motsCles = [] }) {
     const garde = chapitres.map(c => ({ ...c }));
     utiliser('');
     if (!installe() || !garde.length) return { chapitres: garde, ia: false };
     const systeme = 'Tu nommes les chapitres d’une vidéo en français, uniquement à partir du texte de chaque partie. Titres courts (2 à 5 mots), précis, sans point final, sans guillemets, sans numéro. Tu n’inventes rien.';
-    const demande = (sujet ? `Sujet général de la vidéo : ${String(sujet).slice(0, 200)}\nLes titres doivent rester dans ce sujet.\n\n` : '') + garde.map((c, i) => `Partie ${i + 1} (${c.titre}) : ${String(c.texte || '').slice(0, 600)}`).join('\n\n') + `\n\nDonne exactement ${garde.length} titres, dans l’ordre. La première partie est l’introduction si elle présente la vidéo ; la dernière est la conclusion si elle conclut.`;
+    const demande = (sujet ? `Sujet général de la vidéo : ${String(sujet).slice(0, 200)}\n${motsCles.length ? `Mots-clés de la vidéo : ${motsCles.slice(0, 6).join(', ')}\n` : ''}Les titres doivent rester dans ce sujet.\n\n` : '') + garde.map((c, i) => `Partie ${i + 1} (${c.titre}) : ${String(c.texte || '').slice(0, 600)}`).join('\n\n') + `\n\nDonne exactement ${garde.length} titres, dans l’ordre. La première partie est l’introduction si elle présente la vidéo ; la dernière est la conclusion si elle conclut.`;
     const schema = { type: 'object', properties: { titres: { type: 'array', minItems: garde.length, maxItems: garde.length, items: { type: 'string' } } }, required: ['titres'] };
     try {
       const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.3 }, garde.length * 24 + 60);
@@ -296,12 +296,12 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
   }
   // Clipping : parmi des extraits candidats (calculés par le programme), l'IA choisit les plus accrocheurs pour TikTok et écrit leur titre.
   // Elle ne choisit que des numéros de la liste et ne peut ni modifier ni inventer un extrait.
-  async function choisirExtraits({ candidats = [], nb = 5, sujet = '' }) {
+  async function choisirExtraits({ candidats = [], nb = 5, sujet = '', idees = [] }) {
     utiliser('');
     const garde = candidats.slice(0, 14);
     if (!installe() || garde.length <= 1) return { extraits: candidats.slice(0, nb), ia: false };
     const systeme = 'Tu choisis les meilleurs extraits d’une vidéo pour TikTok, en français. Un bon extrait donne envie de regarder jusqu’au bout dès la première phrase, se comprend seul, et se termine sur une idée complète.';
-    const demande = `${sujet ? `Sujet de la vidéo : ${String(sujet).slice(0, 120)}\n` : ''}Extraits possibles :\n${garde.map((c, i) => `${i + 1}. (${Math.round(c.e - c.s)} s) ${String(c.t).slice(0, 380)}`).join('\n')}\n\nChoisis les ${Math.min(nb, garde.length)} meilleurs extraits (numéros différents) et écris pour chacun un titre d’accroche de 8 mots maximum, fidèle au contenu, sans émoji.`;
+    const demande = `${sujet ? `Sujet de la vidéo : ${String(sujet).slice(0, 120)}\n` : ''}${idees.length ? `Idées fortes de la vidéo (à privilégier) : ${idees.slice(0, 6).join(' ; ')}\n` : ''}Extraits possibles :\n${garde.map((c, i) => `${i + 1}. (${Math.round(c.e - c.s)} s) ${String(c.t).slice(0, 380)}`).join('\n')}\n\nChoisis les ${Math.min(nb, garde.length)} meilleurs extraits (numéros différents) et écris pour chacun un titre d’accroche de 8 mots maximum, fidèle au contenu, sans émoji.`;
     const schema = { type: 'object', properties: { choix: { type: 'array', minItems: 1, maxItems: nb, items: { type: 'object', properties: { numero: { type: 'integer' }, titre: { type: 'string' } }, required: ['numero', 'titre'] } } }, required: ['choix'] };
     try {
       const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.3 }, nb * 40 + 80);

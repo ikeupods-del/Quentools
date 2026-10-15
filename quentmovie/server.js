@@ -1662,7 +1662,7 @@ function buildClip(c, P, o = {}) {
           // un chapitre qui commence juste à côté d'un changement de plan est calé dessus (coupe plus nette)
           if (analyse.technique) ch.forEach(c => { if (c.t > 1) { const sc = analyse.technique.scenes.reduce((m, x) => (Math.abs(x - c.t) < Math.abs(m - c.t) ? x : m), Infinity); if (Math.abs(sc - c.t) <= 2.5) c.t = sc; } });
           job.step = 'L’IA locale nomme les chapitres…'; job.progress = 0.6;
-          const r = b.ia === false ? { chapitres: ch, ia: false } : await IA().titrerChapitres({ chapitres: ch, sujet: analyse.sujet });
+          const r = b.ia === false ? { chapitres: ch, ia: false } : await IA().titrerChapitres({ chapitres: ch, sujet: analyse.sujet, motsCles: analyse.motsCles || [] });
           delete analyse.brut;
           return { chapitres: r.chapitres.map(c => ({ t: c.t, titre: c.titre })), ia: r.ia, analyse };
         }));
@@ -1683,7 +1683,7 @@ function buildClip(c, P, o = {}) {
           delete analyse.brut;
           if (!cands.length) return { extraits: [], ia: false };
           job.step = 'L’IA locale choisit les plus accrocheurs…'; job.progress = 0.4;
-          const r = b.ia === false ? { extraits: cands.slice(0, nb), ia: false } : await IA().choisirExtraits({ candidats: cands, nb, sujet: analyse.sujet || String(b.sujet || '') });
+          const r = b.ia === false ? { extraits: cands.slice(0, nb), ia: false } : await IA().choisirExtraits({ candidats: cands, nb, sujet: analyse.sujet || String(b.sujet || ''), idees: analyse.points || [] });
           return { extraits: r.extraits.map(e => ({ s: e.s, e: e.e, titre: e.titre, texte: String(e.t || '').slice(0, 240) })), ia: r.ia, analyse };
         }));
       }
