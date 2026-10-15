@@ -57,6 +57,7 @@ h3:first-child{margin-top:0}
 /* visionneuse */
 #view{grid-area:view;display:flex;flex-direction:column;align-items:center;padding:8px 10px;gap:6px;min-width:0;min-height:0;overflow:hidden}
 #stage{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.ldCalques{position:absolute;pointer-events:none;overflow:hidden}#stage .ldCalques img,#stage .ldCalques video,#stage .ldCalques canvas{position:absolute;max-width:none;max-height:none;border-radius:0;background:none;box-shadow:none}
 .ldTitre{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 9%;pointer-events:none;font-family:Arial,Helvetica,sans-serif;color:#fff;text-shadow:0 2px 6px #0008}
 .ldTitre:empty{display:none}.ldBloc{margin:.5em 0}.ldNum{font-weight:700;font-size:clamp(10px,1.6vw,18px);letter-spacing:.08em;margin-bottom:.6em}
 .ldGros{font-weight:800;font-size:clamp(16px,3.6vw,44px);line-height:1.15}.ldPetit{font-size:clamp(11px,1.8vw,20px);margin-top:.4em;opacity:.85}
@@ -1851,9 +1852,10 @@ async function lectureDirecte() {
   const badge = document.createElement('div'); badge.className = 'mut'; badge.style.cssText = 'position:absolute;top:8px;left:8px;background:#000a;padding:3px 8px;border-radius:6px;font-size:11px';
   badge.textContent = '▶ Lecture rapide (titres et sons simplifiés) — l’aperçu complet se prépare'; $('#stage').append(badge);
   const tx = document.createElement('div'); tx.className = 'ldTitre'; $('#stage').append(tx);
+  const couche = document.createElement('div'); couche.className = 'ldCalques'; couche._els = new Map(); im.after(couche); // calques sous les titres, comme à l'export
   const lec = lecture = { video: v, direct: true }; let { i, pos: p } = locate(gt), minuteur = 0;
   // titres et bruitages joués aussi en lecture rapide (sinon un écran de chapitre reste noir et muet)
-  const sons = new Map(), departs = st.slice(), ticker = setInterval(() => { if (lecture !== lec) return; majTitreDirect(tx, gt, departs); majSonsDirect(sons, gt); }, 50);
+  const sons = new Map(), departs = st.slice(), ticker = setInterval(() => { if (lecture !== lec) return; majTitreDirect(tx, gt, departs); majSonsDirect(sons, gt); majCalquesDirect(couche, gt, departs, v); }, 50);
   majPlay(true);
   const suivant = () => { clearInterval(minuteur); i++; p = 0; if (lecture === lec) jouer(); };
   const jouer = async () => {
@@ -1877,8 +1879,62 @@ async function lectureDirecte() {
       minuteur = setInterval(() => { if (lecture !== lec) return clearInterval(minuteur); const e = (performance.now() - t0) / 1000; gt = st[i] + e; tete(); if (e >= effDur(c)) suivant(); }, 40);
     }
   };
-  lec.arreter = () => { clearInterval(minuteur); clearInterval(ticker); sons.forEach(a => a && a.pause()); sons.clear(); };
+  lec.arreter = () => { clearInterval(minuteur); clearInterval(ticker); sons.forEach(a => a && a.pause()); sons.clear(); couche._els.forEach(retirerCalqueDirect); couche._els.clear(); };
   jouer();
+}
+// Lecture rapide : calques du clip (images, vidéos, animations sur fond vert comme « Breaking news ») posés comme à l'export :
+// même instant, même place et même taille ; le vert est retiré par la puce graphique (detoureurVert)
+const urlFichier = f => (f.startsWith('lib:') ? '/lib/' + f.slice(4) : '/media/' + enc(f));
+const orientLib = (f, paysage) => (/^lib:(cadres|fonds)\/[\w\-]+-[hv]\.(png|jpg)$/.test(f) ? f.replace(/-[hv]\.(png|jpg)$/, (x, e) => (paysage ? '-h.' : '-v.') + e) : f);
+const MELANGES = { ecran: 'screen', addition: 'plus-lighter', eclaircir: 'lighten', produit: 'multiply', incrustation: 'overlay', lumiere: 'soft-light' };
+const nombre = (x, d) => (x === '' || x == null || !Number.isFinite(+x) ? d : +x);
+function creerCalqueDirect(ov, ecoule, paysage) {
+  const vid = ov.kind === 'video', src = vid ? document.createElement('video') : new Image(), x = { src, el: src, dt: null };
+  if (vid) {
+    Object.assign(src, { muted: true, loop: true, playsInline: true });
+    src.onloadedmetadata = () => { const d = src.duration || 0, p = ecoule + Math.max(0, nombre(ov.ss, 0)); src.currentTime = d > 0.2 ? p % d : p; src.play().catch(() => {}); };
+  }
+  if (ov.key && !ov.mode) { // fond vert retiré : dessiné dans un canvas à la taille de la source
+    const cv = document.createElement('canvas'); cv.width = 16; cv.height = 9; x.el = cv;
+    const pret = () => {
+      const w0 = vid ? src.videoWidth : src.naturalWidth, h0 = vid ? src.videoHeight : src.naturalHeight; if (!w0 || !h0) return;
+      const k = Math.min(1, 640 / Math.max(w0, h0)); cv.width = Math.round(w0 * k); cv.height = Math.round(h0 * k);
+      x.dt = detoureurVert(cv); if (x.dt.el !== cv) { x.dt.el.style.cssText = cv.style.cssText; cv.replaceWith(x.dt.el); x.el = x.dt.el; }
+      const image = () => { if (!x.el.isConnected || !x.dt) return; if (!vid || src.readyState >= 2) x.dt.dessiner(src); if (vid) requestAnimationFrame(image); };
+      requestAnimationFrame(image);
+    };
+    if (vid) src.addEventListener('loadeddata', pret, { once: true }); else src.onload = pret;
+  }
+  src.src = urlFichier(orientLib(ov.file, paysage));
+  return x;
+}
+function retirerCalqueDirect(x) { try { x.el.remove(); if (x.src.pause) { x.src.pause(); x.src.removeAttribute('src'); x.src.load(); } if (x.dt) x.dt.fin(); } catch (e) { /* déjà retiré */ } x.dt = null; }
+function placerCalqueDirect(x, ov, r) {
+  const st = x.el.style, mel = MELANGES[ov.mode] || '';
+  st.opacity = clamp(nombre(ov.opacity, 100), 5, 100) / 100; st.mixBlendMode = mel;
+  if (ov.plein || mel) { Object.assign(st, { left: 0, top: 0, width: '100%', height: '100%', objectFit: ov.plein === 'cadre' ? 'fill' : 'cover', transform: '' }); return; }
+  const w = r.w * clamp(nombre(ov.scale, 30), 2, 150) / 100;
+  Object.assign(st, { width: w + 'px', height: 'auto', left: (r.w * clamp(nombre(ov.x, 50), -20, 120) / 100) + 'px', top: (r.h * clamp(nombre(ov.y, 50), -20, 120) / 100) + 'px',
+    transform: `translate(-50%,-50%) rotate(${nombre(ov.rot, 0)}deg)`, objectFit: '' });
+}
+function majCalquesDirect(couche, t, st, v) {
+  const { i } = locate(t), c = proj.clips[i], e = c ? t - st[i] : 0, actifs = new Set(), sr = $('#stage').getBoundingClientRect();
+  // zone de l'image : la vidéo affichée, sinon le cadre du format du projet
+  let r;
+  if (v.style.display !== 'none' && v.videoWidth) { const b = v.getBoundingClientRect(); r = { x: b.left - sr.left, y: b.top - sr.top, w: b.width, h: b.height }; }
+  else { const k = RATIO[proj.format] || 16 / 9; let w = sr.width, h = w / k; if (h > sr.height) { h = sr.height; w = h * k; } r = { x: (sr.width - w) / 2, y: (sr.height - h) / 2, w, h }; }
+  Object.assign(couche.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
+  let n = 0;
+  if (c && !etatPiste('V1').cache) (c.overlays || []).forEach((ov, k) => {
+    if (!ov || !ov.file || ov.on === false) return;
+    const S0 = Math.max(0, nombre(ov.start, 0)), D = nombre(ov.dur, 0), E0 = D > 0 ? S0 + D : Infinity;
+    if (!(e >= S0 && e < E0 && S0 < effDur(c)) || ++n > 24) return;
+    const cle = `${i}:${k}:${ov.file}:${S0}`; actifs.add(cle);
+    let x = couche._els.get(cle);
+    if (!x) { x = creerCalqueDirect(ov, e - S0, r.w >= r.h); couche._els.set(cle, x); couche.appendChild(x.el); }
+    placerCalqueDirect(x, ov, r);
+  });
+  for (const [cle, x] of couche._els) if (!actifs.has(cle)) { retirerCalqueDirect(x); couche._els.delete(cle); }
 }
 // Lecture rapide : titre du clip affiché en HTML (chapitre « vlog » : numéro, titre qui s'écrit, trait d'accent)
 function htmlTitre(ti, e) {
