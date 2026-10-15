@@ -36,7 +36,8 @@ function extraireSegment(proj, t0, t1) {
       if (perdu > 0) { // textes et titres animés comptés depuis le début du clip d'origine
         if (c.titre && Number.isFinite(+c.titre.start)) { const fin = +c.titre.dur > 0 ? c.titre.start + c.titre.dur : Infinity; if (fin <= perdu) c.titre = null; else { c.titre.start = r2(Math.max(0, c.titre.start - perdu)); if (+c.titre.dur > 0) c.titre.dur = r2(fin - perdu - c.titre.start); } }
         if (c.text) { const ts = +c.textStart || 0, fin = +c.textDur > 0 ? ts + c.textDur : Infinity; if (fin <= perdu) c.text = ''; else { c.textStart = r2(Math.max(0, ts - perdu)); if (+c.textDur > 0) c.textDur = r2(fin - perdu - c.textStart); } }
-        c.overlays = decaler(c.overlays, perdu, Infinity, o => +o.dur || 0);
+        // calque déjà commencé : il continue là où il en était (sans rejouer son entrée)
+        c.overlays = decaler(c.overlays, perdu, Infinity, o => +o.dur || 0, (o, p, reste) => { if (p > 0) { o.ss = r2((+o.ss || 0) + p); if (+o.dur > 0) o.dur = r2(reste); o.anim = 'none'; } });
         c.fadeIn = 0; // le début de l'extrait n'est pas le début du clip
       }
       if (b < st + d) { c.fadeOut = c.fadeOut || 0; } // la fin du clip d'origine n'est pas la fin de l'extrait
@@ -54,8 +55,12 @@ function extraireSegment(proj, t0, t1) {
   const pistes = decaler(proj.pistes, t0, t0 + T, p => (p.kind === 'image' ? (+p.dur || 4) : Math.max(0.3, (+p.out || 1) - (+p.in || 0))), (p, perdu) => {
     if (perdu > 0) { if (p.kind === 'image') p.dur = r2(Math.max(0.3, (+p.dur || 4) - perdu)); else p.in = r2((+p.in || 0) + perdu); }
   });
+  // piste Titres : recalée sur l'extrait ; un titre déjà commencé continue sans rejouer son entrée
+  const textes = decaler(proj.textes, t0, t0 + T, t => +t.dur || 4, (t, perdu, reste) => {
+    if (perdu > 0 && t.titre) { const s0 = +t.titre.start || 0; t.titre = { ...t.titre, start: r2(Math.max(0, s0 - perdu)), deja: r2((+t.titre.deja || 0) + Math.max(0, perdu - s0)) }; t.dur = r2(Math.max(0.3, reste)); }
+  });
   const q = clone(proj);
-  Object.assign(q, { clips, audio, pistes, markers: [], nomsReperes: {} });
+  Object.assign(q, { clips, audio, pistes, textes, markers: [], nomsReperes: {} });
   return q;
 }
 

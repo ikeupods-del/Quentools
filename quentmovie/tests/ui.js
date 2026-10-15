@@ -147,6 +147,33 @@ function chromium() {
   await ev(() => { proj.clips = proj.clips.filter(c => c.kind !== 'audio'); commit(); tout(); });
 
   // 3 bis) outils pro : lame, pistes (verrou, muet, masquer), repères nommés et chapitres, grille
+  // animation sur fond vert (Breaking news…) posée depuis l'onglet Calques : à la tête de lecture, jouée une fois
+  check('calque fond vert : posé à la tête de lecture, joué une fois', await ev(() => { const c = newClip(medias.find(m => m.file === 'a.mp4')); proj.clips = [c]; sel = 0; gt = 1.2; commit(); tout(); const it = LIB().fondvert[0]; ajouterCalque('lib:' + it.file, 'video', POSES.vert); const o = c.overlays[c.overlays.length - 1]; return Math.abs(o.start - 1.2) < 0.05 && o.dur > 0 && o.dur <= it.duree + 0.01 && o.key; }));
+  // calques d'un clip découpé (blancs coupés, coupe, plans) : continués sur les morceaux suivants, jamais perdus dans un blanc
+  check('découpe : une animation continue sur les morceaux suivants là où elle en était', await ev(() => {
+    const r = repartirCalques([{ file: 'x', kind: 'video', start: 1, dur: 4, anim: 'pop' }], [[0, 2], [3, 5], [6, 9]]), [a, b, c] = r.map(l => l[0]);
+    return a.start === 1 && a.dur === 1 && a.anim === 'pop' && b.start === 0 && b.dur === 2 && b.ss === 1 && b.anim === 'none' && c.start === 0 && c.dur === 1 && c.ss === 3;
+  }));
+  check('découpe : une animation lancée pendant un blanc démarre au morceau suivant', await ev(() => { const r = repartirCalques([{ file: 'x', kind: 'video', start: 2.5, dur: 1 }], [[0, 2], [3, 5]]); return !r[0].length && r[1].length === 1 && r[1][0].start === 0 && r[1][0].dur === 1 && !r[1][0].ss; }));
+  check('début du clip raccourci ou rallongé : sous-titres, calques et titre restent sur leur image', await ev(() => {
+    const base = newClip(medias.find(m => m.file === 'a.mp4')); base.in = 1; base.subs = [{ s: 2, e: 3, t: 'mot' }, { s: 0.2, e: 0.6, t: 'retiré' }]; base.overlays = [{ file: 'x', kind: 'video', start: 2, dur: 1 }]; base.titre = { preset: 'angle', start: 2.5, dur: 1 };
+    const c = clone(base); c.in = 2; decalerDebut(c, base, 1); const d = clone(base); d.in = 0.5; decalerDebut(d, base, -0.5);
+    return c.subs.length === 1 && c.subs[0].s === 1 && c.overlays[0].start === 1 && c.titre.start === 1.5 && d.subs[0].s === 2.5 && d.overlays[0].start === 2.5 && d.titre.start === 3;
+  }));
+  check('vitesse ×2 : sous-titres, calques et titre suivent la parole accélérée', await ev(() => {
+    const c = newClip(medias.find(m => m.file === 'a.mp4')); c.subs = [{ s: 2, e: 3, t: 'mot' }]; c.overlays = [{ file: 'x', kind: 'video', start: 4, dur: 1 }]; c.titre = { preset: 'angle', start: 1 };
+    proj.clips = [c]; sel = 0; selObjs.clear(); vitesseSelection(2); const d = proj.clips[0];
+    return d.speed === 2 && d.subs[0].s === 1 && d.subs[0].e === 1.5 && d.overlays[0].start === 2 && d.overlays[0].dur === 1 && d.titre.start === 0.5;
+  }));
+  check('blancs coupés : sons, titres T, repères et calques suivent ; texte du clip pas recopié partout', await ev(() => {
+    const c = newClip(medias.find(m => m.file === 'a.mp4')); c.in = 0; c.out = 6; c.text = 'Bonjour'; c.textStart = 0; c.textDur = 1; c.overlays = [{ file: 'x', kind: 'video', start: 3, dur: 1 }];
+    proj.clips = [c]; proj.audio = [{ file: 'lib:sons/x.mp3', start: 5, vol: 100 }, { file: 'a.mp4', start: 0, in: 0, dur: 6, vol: 100, detache: true }]; proj.textes = [{ start: 4.5, dur: 1, titre: { preset: 'angle' } }]; proj.markers = [5.5]; proj.pistes = [];
+    paroleAppliquer(0, { garder: [[0, 2], [4, 6]], st: { phrase: [], mots: [] } }, { sous: false, couper: true, style: 'phrase' });
+    const [a, b] = proj.clips, voix = proj.audio.filter(x => x.file === 'a.mp4').sort((x, y) => x.start - y.start), bz = proj.audio.find(x => x.file === 'lib:sons/x.mp3');
+    return proj.clips.length === 2 && a.text === 'Bonjour' && b.text === '' && b.overlays.length === 1 && b.overlays[0].start === 0 && bz.start === 3 && proj.textes[0].start === 2.5 && proj.markers[0] === 3.5
+      && voix.length === 2 && voix[0].start === 0 && voix[0].dur === 2 && voix[1].start === 2 && voix[1].in === 4 && voix[1].dur === 2;
+  }));
+  check('coupe au milieu d’une animation : la 2e moitié continue sans recommencer', await ev(() => { const c = newClip(medias.find(m => m.file === 'a.mp4')); c.overlays = [{ file: 'x', kind: 'video', start: 1, dur: 3, anim: 'pop' }]; const [a, b] = trancherClip(c, 2); return a.overlays.length === 1 && a.overlays[0].dur === 1 && b.overlays[0].start === 0 && b.overlays[0].ss === 1 && b.overlays[0].dur === 2 && b.overlays[0].anim === 'none'; }));
   await ev(() => { const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v)]; proj.audio = [{ file: 'son.wav', start: 0, in: 0, dur: 6, vol: 100 }]; proj.pistes = []; proj.markers = []; proj.etatPistes = {}; sel = 0; selA = -1; setZoom(40); commit(); tout(); choisirOutil('lame'); });
   await pg.waitForTimeout(200);
   let bx = await ev(() => { const e = document.querySelector('.clip[data-i="0"]').getBoundingClientRect(), r = $('#lane').getBoundingClientRect(); return { x: r.left + 2 * 40, y: e.y + e.height / 2 }; });
@@ -269,16 +296,21 @@ function chromium() {
   // 5) studio : pause pendant la prise (caméra et micro de test de Chromium)
   const nAvant = await pg.evaluate(() => proj.clips.length);
   await pg.evaluate(() => ouvrirStudio()); await pg.waitForFunction(() => studio && studio.flux, null, { timeout: 15000 });
-  await pg.evaluate(() => { studio.o.compte = false; studio.o.fond = ''; });
+  // format qui livre la prise au fil de l'eau (H.264 en WebM sur Mac ; ce Chromium d'essai n'a que VP8/VP9) : copie de secours vérifiable
+  await pg.evaluate(() => { studio.o.compte = false; studio.o.fond = ''; window.__tsOrig = MediaRecorder.isTypeSupported; MediaRecorder.isTypeSupported = t => !/mp4/.test(t) && window.__tsOrig.call(MediaRecorder, t); });
   await pg.click('#stRec'); await pg.waitForTimeout(1500);
+  await pg.evaluate(() => { MediaRecorder.isTypeSupported = window.__tsOrig; });
   check('studio : bouton pause visible pendant la prise', await pg.evaluate(() => !$('#stPause').hidden));
   await pg.click('#stPause'); await pg.waitForTimeout(1600);
   check('studio : prise en pause, le chrono s’arrête', await pg.evaluate(() => studio.rec.state === 'paused' && /Reprendre/.test($('#stPause').textContent) && stDuree() < 2.2), await pg.evaluate(() => studio.rec.state + ' ' + stDuree()));
   await pg.keyboard.press('p'); await pg.waitForTimeout(1200);
   check('studio : reprise (touche P), la pause n’est pas comptée', await pg.evaluate(() => studio.rec.state === 'recording' && stDuree() > 2.2 && stDuree() < 3.6), await pg.evaluate(() => studio.rec.state + ' ' + stDuree()));
+  check('studio : copie de secours écrite sur le disque pendant la prise', await pg.evaluate(async () => { await studio.secours.chaine; const l = (await (await fetch('/api/prise/secours')).json()).prises; return l.length === 1 && l[0].includes(studio.secours.id); }));
   await pg.click('#stPause'); await pg.click('#stRec');
   await pg.waitForFunction(n => proj.clips.length > n, nAvant, { timeout: 60000 }).catch(() => {});
   check('studio : arrêt pendant une pause, prise ajoutée à la timeline', await pg.evaluate(n => proj.clips.length === n + 1 && $('#stPause').hidden, nAvant));
+  await pg.waitForTimeout(800);
+  check('studio : copie de secours retirée une fois la prise arrivée', await pg.evaluate(async () => !(await (await fetch('/api/prise/secours')).json()).prises.length));
   await pg.evaluate(() => fermerStudio());
 
   // 7) studio : afficher en direct (image, textes, logo, écran partagé simulé) → calques et piste vidéo 2 de la prise
