@@ -1121,6 +1121,9 @@ function buildClip(c, P, o = {}) {
     const dir = fs.mkdtempSync(path.join(TMP, 'job-'));
     job.dir = dir;
     if (proxy && project.fond) dossiersBasse.add(dir);
+    // fichiers intermédiaires supprimés dès qu'ils ne servent plus (un montage de 36 min en 1080p en laissait plus de 15 Go à la fois)
+    const jeter = (...noms) => { for (const n of noms) { try { fs.unlinkSync(path.join(dir, n)); } catch (e) { /* déjà retiré */ } } };
+    const jeterSi = (re, garder = []) => { try { for (const n of fs.readdirSync(dir)) if (re.test(n) && !garder.includes(n)) jeter(n); } catch (e) { /* dossier absent */ } };
     try {
       // puce vidéo du Mac (VideoToolbox) pour l'encodage quand « rapide » est choisi (réglage par défaut sur Mac)
       // aperçu de 720p et plus : puce vidéo aussi (rapide jusqu'en 4K)
@@ -1226,6 +1229,7 @@ function buildClip(c, P, o = {}) {
           const mixe = pistes.length ? await sonPistes(dir, son, pistes, proxy, 'son-pistes.m4a') : null;
           await run(FFMPEG, ['-y', '-loglevel', 'error', '-i', video, '-i', mixe || son, '-map', '0:v:0', '-map', '1:a:0', '-c', 'copy', '-t', (r.plan.total / fps).toFixed(6), '-movflags', '+faststart', 'rapide.mp4'], { cwd: dir });
           joined = 'rapide.mp4'; fait = true; job.assemblage = 'rapide'; job.msAssemblage = Date.now() - t0;
+          jeterSi(/^(seg\d+|h-seg\d+|vid[01]|cp\d+|gr\d+|zone-\d+|zc\d+|zfin)\.mp4$|^son-(clips|pistes)\.m4a$/); // tout est dans rapide.mp4
         } catch (e) { job.assemblage = 'complet'; job.avertissement = 'Assemblage rapide impossible (' + String(e.message).split('\n')[0].slice(0, 160) + ') : assemblage complet.'; }
       }
       if (fait) { /* assemblage rapide terminé */ } else if (segs.length > 1 && !trans.some(Boolean)) {
@@ -1243,7 +1247,7 @@ function buildClip(c, P, o = {}) {
         const F = await epiS.compterToutes(segs.map(sg => path.join(dir, sg)));
         await epiS.sonDesClips(dir, segs, F, F.map(() => 0), P.fps, proxy, 'son-clips.m4a');
         await run(FFMPEG, ['-y', '-loglevel', 'error', '-i', 'image-seule.mp4', '-i', 'son-clips.m4a', '-map', '0:v:0', '-map', '1:a:0', '-c', 'copy', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
-        joined = 'all.mp4';
+        joined = 'all.mp4'; jeterSi(/^seg\d+\.mp4$/); jeter('image-seule.mp4', 'son-clips.m4a');
       } else if (segs.length > 1) {
         // chaque clip ramené à la taille, aux pixels carrés et au format du montage, sans reconfiguration en cours de route :
         // un fondu (xfade) refuse deux images différentes (« Failed to configure output pad on Parsed_xfade »)
@@ -1274,11 +1278,11 @@ function buildClip(c, P, o = {}) {
         } catch (e) { // la cause d'origine (assemblage rapide refusé) aide à comprendre
           throw new Error(String(e.message).split('\n').slice(-2).join(' ') + (job.avertissement ? ' — ' + job.avertissement : ''));
         }
-        joined = 'all.mp4';
+        joined = 'all.mp4'; jeterSi(/^seg\d+\.mp4$/);
       }
 
       // Piste vidéo 2 : images dans l'image et plans de coupe posés par-dessus le montage
-      if (pistes.length && !fait) { job.step = 'Piste vidéo 2'; joined = await poserPistes(dir, joined, pistes, P, proxy, project); }
+      if (pistes.length && !fait) { job.step = 'Piste vidéo 2'; const avant = joined; joined = await poserPistes(dir, joined, pistes, P, proxy, project); if (joined !== avant && avant !== segs[0]) jeter(avant); }
 
       // Pistes audio (musique, voix off, bruitages) ; « baisser quand on parle » = compression pilotée par la voix
       const audios = (project.audio || []).filter(a => a && a.file && fs.existsSync(mediaPath(a.file))).map(a => ({ ...a, start: versExport(a.start) }));
@@ -1335,6 +1339,7 @@ function buildClip(c, P, o = {}) {
           // (avant : un WAV de toute la durée par son, plus de 400 Mo chacun pour un montage de 36 min)
           a.ms = ms;
           await ff([...entree, '-af', `${tempo.length ? tempo.join(',') + ',' : ''}${gain}${fd}`, '-t', Math.max(0.05, dur - st).toFixed(3), ...wav], `son${i + 1}.wav`);
+          jeter(`brut${i}.wav`, `net${i}.wav`, `boucle${i}.wav`, `boucle${i}.txt`); // étapes du son, plus utiles
         };
         await Promise.all(Array.from({ length: Math.min(4, audios.length) }, async () => { while (prochain < audios.length) { const i = prochain++; await unSon(audios[i], i); } }));
         // « baisser quand on parle » : la musique est compressée, pilotée par le son du montage (lu à part)
@@ -1354,7 +1359,7 @@ function buildClip(c, P, o = {}) {
         try { await mixer(true); }
         catch (e) { if (!/figé/.test(e.message)) throw e; job.step = 'Mixage du son (sans baisse automatique)'; await mixer(false); }
         await ff(['-i', joined, '-i', 'mix.wav', '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-t', D, '-movflags', '+faststart'], 'final.mp4');
-        joined = 'final.mp4';
+        if (joined !== segs[0]) jeter(joined); jeterSi(/\.wav$/); joined = 'final.mp4';
       }
 
       // Format de sortie
@@ -1374,6 +1379,7 @@ function buildClip(c, P, o = {}) {
         // ProRes : moteur ProRes des puces Apple s'il est disponible, sinon le processeur
         if (sortie === 'mov' && process.platform === 'darwin' && encoders.has('prores_videotoolbox')) await encoder(['-y', '-loglevel', 'error', '-i', joined], ['-c:v', 'prores_videotoolbox', '-profile:v', 'hq'], o2.slice(0, 6), [...o2.slice(6), final], { cwd: dir });
         else await run(FFMPEG, ['-y', '-loglevel', 'error', '-i', joined, ...o2, final], { cwd: dir });
+        if (final !== joined) jeter(joined);
       }
 
       if (proxy) {
@@ -1896,6 +1902,25 @@ function buildClip(c, P, o = {}) {
         return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done, resultat: job.resultat || null, niveaux: job.niveaux, duree: job.fin && job.debut ? +((job.fin - job.debut) / 1000).toFixed(1) : null, repris: job.repris, morceaux: job.morceaux || 0, paralleles: job.paralleles || 0, assemblage: job.assemblage || null, harmonises: job.harmonises || 0, avertissement: job.avertissement || null, msAssemblage: job.msAssemblage || 0 }) : send(res, 404, { error: 'Export inconnu' });
       }
       // Projets
+      // Secours du studio : la prise est aussi écrite sur le disque pendant l'enregistrement (récupérable si l'application se ferme)
+      if (p === '/api/prise/secours') {
+        const dossier = path.join(BASE, 'prises-a-verifier'), id = String(url.searchParams.get('id') || '').replace(/[^\w-]/g, '').slice(0, 40);
+        if (req.method === 'GET') { // prises interrompues trouvées au démarrage
+          let l = []; try { l = fs.readdirSync(dossier).filter(n => /^prise-interrompue-[\w-]+\.(mp4|webm)$/.test(n) && fs.statSync(path.join(dossier, n)).size > 20000); } catch (e) { /* aucun dossier */ }
+          return send(res, 200, { prises: l, dossier });
+        }
+        if (!id) throw new Error('Prise inconnue');
+        const ext = url.searchParams.get('ext') === 'webm' ? 'webm' : 'mp4', f = path.join(dossier, `prise-interrompue-${id}.${ext}`);
+        if (req.method === 'POST') { fs.mkdirSync(dossier, { recursive: true }); await new Promise((ok, ko) => { const w = fs.createWriteStream(f, { flags: 'a' }); req.pipe(w); w.on('finish', ok); w.on('error', ko); req.on('error', ko); }); return send(res, 200, { ok: true }); }
+        if (req.method === 'DELETE') { for (const e of ['mp4', 'webm']) { try { fs.unlinkSync(path.join(dossier, `prise-interrompue-${id}.${e}`)); } catch (er) { /* déjà retirée */ } } return send(res, 200, { ok: true }); }
+      }
+      if (req.method === 'POST' && p === '/api/prise/recuperer') { // prise interrompue → médias (convertie comme une prise normale)
+        const nom = path.basename(String(url.searchParams.get('fichier') || '')), src = path.join(BASE, 'prises-a-verifier', nom);
+        if (!/^prise-interrompue-[\w-]+\.(mp4|webm)$/.test(nom) || !fs.existsSync(src)) throw new Error('Prise introuvable');
+        const dest = path.join(MEDIAS, 'camera-recuperee-' + nom.replace(/^prise-interrompue-/, ''));
+        fs.renameSync(src, dest);
+        return send(res, 200, await importerPrise(dest));
+      }
       if (p === '/api/projet') { // enregistrement automatique
         const f = path.join(BASE, 'projet-auto.json');
         if (req.method === 'PUT') { fs.writeFileSync(f, JSON.stringify(await readJson(req))); return send(res, 200, { ok: true }); }

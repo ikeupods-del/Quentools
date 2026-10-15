@@ -296,16 +296,21 @@ function chromium() {
   // 5) studio : pause pendant la prise (caméra et micro de test de Chromium)
   const nAvant = await pg.evaluate(() => proj.clips.length);
   await pg.evaluate(() => ouvrirStudio()); await pg.waitForFunction(() => studio && studio.flux, null, { timeout: 15000 });
-  await pg.evaluate(() => { studio.o.compte = false; studio.o.fond = ''; });
+  // format qui livre la prise au fil de l'eau (H.264 en WebM sur Mac ; ce Chromium d'essai n'a que VP8/VP9) : copie de secours vérifiable
+  await pg.evaluate(() => { studio.o.compte = false; studio.o.fond = ''; window.__tsOrig = MediaRecorder.isTypeSupported; MediaRecorder.isTypeSupported = t => !/mp4/.test(t) && window.__tsOrig.call(MediaRecorder, t); });
   await pg.click('#stRec'); await pg.waitForTimeout(1500);
+  await pg.evaluate(() => { MediaRecorder.isTypeSupported = window.__tsOrig; });
   check('studio : bouton pause visible pendant la prise', await pg.evaluate(() => !$('#stPause').hidden));
   await pg.click('#stPause'); await pg.waitForTimeout(1600);
   check('studio : prise en pause, le chrono s’arrête', await pg.evaluate(() => studio.rec.state === 'paused' && /Reprendre/.test($('#stPause').textContent) && stDuree() < 2.2), await pg.evaluate(() => studio.rec.state + ' ' + stDuree()));
   await pg.keyboard.press('p'); await pg.waitForTimeout(1200);
   check('studio : reprise (touche P), la pause n’est pas comptée', await pg.evaluate(() => studio.rec.state === 'recording' && stDuree() > 2.2 && stDuree() < 3.6), await pg.evaluate(() => studio.rec.state + ' ' + stDuree()));
+  check('studio : copie de secours écrite sur le disque pendant la prise', await pg.evaluate(async () => { await studio.secours.chaine; const l = (await (await fetch('/api/prise/secours')).json()).prises; return l.length === 1 && l[0].includes(studio.secours.id); }));
   await pg.click('#stPause'); await pg.click('#stRec');
   await pg.waitForFunction(n => proj.clips.length > n, nAvant, { timeout: 60000 }).catch(() => {});
   check('studio : arrêt pendant une pause, prise ajoutée à la timeline', await pg.evaluate(n => proj.clips.length === n + 1 && $('#stPause').hidden, nAvant));
+  await pg.waitForTimeout(800);
+  check('studio : copie de secours retirée une fois la prise arrivée', await pg.evaluate(async () => !(await (await fetch('/api/prise/secours')).json()).prises.length));
   await pg.evaluate(() => fermerStudio());
 
   // 7) studio : afficher en direct (image, textes, logo, écran partagé simulé) → calques et piste vidéo 2 de la prise

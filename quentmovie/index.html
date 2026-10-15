@@ -4008,12 +4008,20 @@ async function stEnregistrer() {
   const mp4 = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a', 'video/mp4'], webm = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
   // H.264 : compressé par la puce vidéo du Mac, le processeur reste libre pour le détourage (VP8, compressé par le processeur,
   // faisait saccader l'image pendant l'enregistrement) ; VP8 en secours, ou si « Format de compatibilité » est choisi
-  const types = fond && studio.o.enc === 'vp8' ? ['video/webm;codecs=vp8,opus', ...webm, ...mp4] : [...mp4, 'video/webm;codecs=h264,opus', ...webm];
+  // H.264 en WebM d'abord : même encodage par la puce, mais la prise arrive seconde par seconde (copie de secours sur le disque) ;
+  // en MP4, la fenêtre ne livre la prise qu'à la fin (perdue si l'application se ferme pendant l'enregistrement)
+  const types = fond && studio.o.enc === 'vp8' ? ['video/webm;codecs=vp8,opus', ...webm, ...mp4] : ['video/webm;codecs=h264,opus', ...mp4, ...webm];
   const mime = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
   if (fond) { if ($('#stCanvas').width < 16) studio.comp.dessiner($('#stVideo')); studio.piste = $('#stCanvas').captureStream(30).getVideoTracks()[0]; } // l'image a déjà sa taille définitive
   const source = fond ? new MediaStream([studio.piste, ...studio.flux.getAudioTracks()]) : studio.flux;
   const rec = new MediaRecorder(source, { mimeType: mime, videoBitsPerSecond: studio.o.qualite === '1080' ? 10e6 : 5e6, audioBitsPerSecond: 192000 });
-  const morceaux = []; rec.ondataavailable = e => { if (e.data.size) morceaux.push(e.data); };
+  // secours : chaque seconde enregistrée est aussi écrite sur le disque (prise récupérable si l'application se ferme pendant la prise)
+  const sec = { id: Date.now().toString(36), ext: /mp4/.test(mime) ? 'mp4' : 'webm', chaine: Promise.resolve(), ok: true };
+  const morceaux = []; rec.ondataavailable = e => {
+    if (!e.data.size) return; morceaux.push(e.data);
+    if (sec.ok) sec.chaine = sec.chaine.then(() => fetch(`/api/prise/secours?id=${sec.id}&ext=${sec.ext}`, { method: 'POST', body: e.data })).then(r => { if (!r.ok) sec.ok = false; }).catch(() => { sec.ok = false; });
+  };
+  studio.secours = sec;
   rec.onerror = e => stMsg(`<span class="err">Erreur d’enregistrement : ${esc((e.error && e.error.message) || 'inconnue')}</span>`);
   rec.onstop = () => stEnvoyer(morceaux, mime);
   studio.rec = rec; studio.evts = []; studio.ecranSegs = []; studio.t0 = Date.now(); studio.pauseCumul = 0; studio.pauseDebut = 0; rec.start(1000); stDirectDebut();
@@ -4037,7 +4045,10 @@ function stPause() {
 }
 async function stEnvoyer(morceaux, mime) {
   const finPrise = stDuree(); await stEcranRecStop(); // l'écran partagé s'arrête avec la prise
-  const st = studio; st.rec = null; st.pauseDebut = 0; $('#stPause').hidden = true; $('#stPause').classList.remove('on'); $('#stPause').textContent = '⏸ Pause'; $('#stTemps').classList.remove('pause'); $('#stRec').classList.remove('pause'); if (st.piste) { st.piste.stop(); st.piste = null; } st.envoi = true; stDefiler(false);
+  const st = studio, sec = st.secours; st.rec = null; st.pauseDebut = 0;
+  // la prise est arrivée : le secours ne sert plus
+  const finSecours = () => { if (sec) sec.chaine.then(() => fetch(`/api/prise/secours?id=${sec.id}`, { method: 'DELETE' })).catch(() => {}); };
+  $('#stPause').hidden = true; $('#stPause').classList.remove('on'); $('#stPause').textContent = '⏸ Pause'; $('#stTemps').classList.remove('pause'); $('#stRec').classList.remove('pause'); if (st.piste) { st.piste.stop(); st.piste = null; } st.envoi = true; stDefiler(false);
   const evts = st.evts.slice(); st.evts = []; evts.forEach(e => { if (e.fin == null && ['media', 'texte', 'logo'].includes(e.id)) e.fin = finPrise; });
   const segsEcran = st.ecranSegs.splice(0);
   $('#stRec').textContent = '● Enregistrer'; $('#stRec').classList.remove('enreg');
@@ -4045,8 +4056,8 @@ async function stEnvoyer(morceaux, mime) {
   stMsg('Préparation de la prise…');
   const ext = /mp4/.test(mime) ? 'mp4' : 'webm', nom = 'camera-' + new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14) + '.' + ext;
   try {
-    if (blob.size < 2000) throw new Error('rien n’a été enregistré par la caméra. Ferme le studio, rouvre-le et réessaie.');
-    const j = await (await api('/api/import?name=' + enc(nom), { method: 'POST', body: blob })).json();
+    if (blob.size < 2000) { finSecours(); throw new Error('rien n’a été enregistré par la caméra. Ferme le studio, rouvre-le et réessaie.'); }
+    const j = await (await api('/api/import?name=' + enc(nom), { method: 'POST', body: blob })).json(); finSecours();
     await chargerMedias();
     const m = medias.find(x => x.file === j.file);
     for (const e of evts) if (e.id === 'texte') { try { const r = await stTexteImage(e.txt); e.file = r.file; e.x = 50; e.y = 12; e.s = Math.min(86, Math.max(30, r.ratio * 9)); } catch (er) { /* texte ignoré */ } }
@@ -4232,7 +4243,17 @@ function tout() { tlDessin(); inspecteur(); navigateur(); reglerScrub(); majBout
   sel = proj.clips.length ? 0 : -1; hist = [snap()]; hi = 0; tout();
   if (sel >= 0) { placerTete(0); } else vide();
   aide(`Astuce : appuie sur <kbd>?</kbd> pour voir tous les raccourcis clavier · <kbd>Espace</kbd> lit le montage avec ses effets · <kbd>S</kbd> coupe à la tête de lecture`);
+  proposerPrisesInterrompues();
 })();
+// Prise du studio interrompue (application fermée ou plantée pendant l'enregistrement) : sa copie de secours est proposée
+async function proposerPrisesInterrompues() {
+  let l = []; try { l = (await (await api('/api/prise/secours')).json()).prises || []; } catch (e) { return; }
+  if (!l.length || !confirm(`${l.length > 1 ? `${l.length} prises du studio ont été interrompues` : 'Une prise du studio a été interrompue'} (QuentMovie s’est fermé pendant l’enregistrement). Une copie de secours a été gardée.\n\nLa récupérer dans tes médias ?`)) return;
+  for (const f of l) {
+    try { aide('Récupération de la prise…'); const j = await (await api('/api/prise/recuperer?fichier=' + enc(f), { method: 'POST' })).json(); await chargerMedias(); navigateur(); aide(`✅ Prise récupérée : ${esc(j.file)} (dans tes médias).`); }
+    catch (e) { aide(`<span class="err">Prise non récupérée : ${esc(e.message)} (le fichier reste dans Movies/QuentMovie/prises-a-verifier).</span>`); }
+  }
+}
 </script>
 </body>
 </html>
