@@ -198,6 +198,17 @@ function chromium() {
   check('chapitres : 10 s minimum entre deux chapitres', await ev(() => JSON.stringify(chapitres())) === JSON.stringify(['0:00 Introduction', '0:12 Partie 2']), await ev(() => JSON.stringify(chapitres())));
   await ev(() => { if (!vues.grille) basculerVue('grille'); }); check('grille des tiers activée', await ev(() => vues.grille && $('#vGrille').classList.contains('on')));
   await ev(() => basculerVue('grille'));
+  // animations en direct du studio : vert retiré par la puce graphique (WebGL), même rendu que le repli par le processeur
+  const det = await ev(() => {
+    const src = document.createElement('canvas'); src.width = 64; src.height = 32; const g = src.getContext('2d'); g.fillStyle = '#00ff00'; g.fillRect(0, 0, 32, 32); g.fillStyle = '#c83232'; g.fillRect(32, 0, 32, 32);
+    const lire = el => { const o = document.createElement('canvas'); o.width = 64; o.height = 32; const og = o.getContext('2d'); og.drawImage(el, 0, 0); return [og.getImageData(8, 16, 1, 1).data[3], ...og.getImageData(48, 16, 1, 1).data]; };
+    const c1 = document.createElement('canvas'); c1.width = 64; c1.height = 32; const d1 = detoureurVert(c1); d1.dessiner(src); const r1 = lire(d1.el); d1.fin();
+    const c2 = document.createElement('canvas'); c2.width = 64; c2.height = 32; c2.getContext('2d'); const d2 = detoureurVert(c2); d2.dessiner(src); const r2 = lire(d2.el);
+    return { gpu: d1.gpu, r1, cpu: !d2.gpu, r2 };
+  });
+  const bonRendu = r => r[0] === 0 && r[1] > 180 && r[2] < 80 && r[4] === 255;
+  check('studio : animation sur fond vert détourée par la puce graphique', det.gpu && bonRendu(det.r1), JSON.stringify(det));
+  check('studio : repli sans puce graphique, même rendu', det.cpu && bonRendu(det.r2), JSON.stringify(det));
 
   // 3 ter) assistant de montage (⌘K) : demande en français → étapes cochées → appliquées ; suggestions ; textes de publication sans IA
   await ev(() => { const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v), newClip(v), newClip(v)]; proj.audio = []; proj.markers = []; proj.clips.forEach(c => { c.transition = null; c.afx = []; }); sel = 0; commit(); tout(); });
@@ -348,6 +359,13 @@ function chromium() {
   check('prise plein écran + bulle : piste de l’écran plein et piste de la bulle ronde', await ev(n => { const p = (proj.pistes || []).slice(n); const e = p.find(x => /^camera-ecran-/.test(x.file)), b = p.find(x => x.forme === 'rond' && /^camera-/.test(x.file) && !/ecran/.test(x.file)); return p.length === 2 && e && e.plein && b && !b.plein && b.x === 88 && b.scale === 24 && b.ligne > e.ligne && b.in >= 0; }, nPistes3));
   await ev(() => fermerStudio());
 
+  // 7 ter) aperçu de la coupe des blancs : zones rouges, clic = garder, « Couper » applique seulement le reste
+  await ev(() => { stopLecture(); const c = newClip(medias.find(m => m.file === 'a.mp4')); c.in = 0; c.out = 6; proj.clips = [c]; proj.audio = []; proj.pistes = []; proj.textes = []; sel = 0; setZoom(60); commit(); tout();
+    window.assurerEcoute = async () => {}; ecoutes.set(`${c.file}|${c.in}|${c.out}`, { mots: [], duree: 6, st: { phrase: [], mots: [] }, garder: [[0, 1.5], [2.5, 4], [5, 6]], garderNiveaux: { douce: [[0, 1.5], [2.5, 4], [5, 6]] } }); });
+  await ev(() => previsualiserCoupe([0], { couper: true, sous: false, style: 'phrase', apercu: true }, () => {}));
+  check('coupe des blancs : les passages qui partent sont montrés en rouge avant de couper', await ev(() => document.querySelectorAll('#pV .zc').length === 2 && !!$('#barreCoupe') && proj.clips.length === 1));
+  await pg.click('#pV .zc[data-zc="0:1"]'); await pg.click('#bcOk');
+  check('coupe des blancs : un passage cliqué est gardé, le reste est coupé', await ev(() => proj.clips.length === 2 && Math.abs(total() - 5) < 0.05 && !$('#barreCoupe') && !document.querySelector('#pV .zc')), await ev(() => `${proj.clips.length} ${total()}`));
   // 7 bis) lecture : clic dans la règle de la timeline → la lecture continue depuis là ; défilement libre pendant la lecture
   await ev(() => { stopLecture(); const ph = medias.find(m => m.file === 'photo.png'); proj.clips = []; proj.audio = []; proj.pistes = []; proj.textes = []; for (let i = 0; i < 6; i++) { const c = newClip(ph); c.kind = 'image'; c.dur = 4; proj.clips.push(c); } sel = 0; setZoom(40); commit(); tout(); placerTete(0); lectureDirecte(); });
   await pg.waitForTimeout(600);
@@ -368,10 +386,17 @@ function chromium() {
   const prop = await ev(() => [...document.querySelectorAll('#chListe .chN')].map(x => x.value));
   check('chapitrage : des chapitres proposés, le premier est l’introduction', prop.length >= 3 && prop[0] === 'Introduction', JSON.stringify(prop));
   check('chapitrage : la carte « ce que j’ai compris » donne le sujet de la vidéo', await ev(() => { const a = $('#chAnalyse'); return !!a && /Ce que j’ai compris/.test(a.textContent) && /Sujet/.test(a.textContent) && /sommeil|chambre|dormir/i.test(a.textContent); }));
+  check('chapitrage : un résumé d’une phrase proposé pour chaque chapitre', await ev(() => { const r = [...document.querySelectorAll('#chListe .chR')].map(x => x.value); return r.length >= 3 && r.every(x => x.length >= 20); }), await ev(() => JSON.stringify([...document.querySelectorAll('#chListe .chR')].map(x => x.value))));
+  check('chapitrage : ce que l’analyse a compris est gardé dans le projet', await ev(() => !!(proj.analyse && /sommeil|chambre|dormir|ecran|écran/i.test(proj.analyse.sujet))), await ev(() => JSON.stringify(proj.analyse)));
   await pg.selectOption('#chMode', 'sur'); await pg.click('#chAppliquer'); await pg.waitForTimeout(500);
   const rc = await ev(() => ({ n: proj.clips.length, marks: proj.markers.length, noms: Object.keys(proj.nomsReperes).length, titres: proj.clips.filter(c => c.titre && c.titre.preset === 'machine').length, clav: proj.audio.filter(a => /clavier/.test(a.file)).length, ok: proj.clips.every(c => c.subs.every(x => x.e <= effDur(c) + 0.01)) }));
   check('chapitrage : repères nommés, titres qui s’écrivent et bruit de clavier posés', rc.marks >= 2 && rc.noms >= 3 && rc.titres >= 3 && rc.clav >= 3 && rc.n >= 3 && rc.ok, JSON.stringify(rc));
   check('chapitrage : la liste YouTube s’affiche', await ev(() => /0:00 Introduction/.test($('#chTxt').value)));
+  check('chapitrage : sommaire détaillé avec le résumé de chaque chapitre', await ev(() => !!$('#chSom') && /^0:00 Introduction — .{20,}/.test($('#chSom').value) && $('#chSom').value.split('\n').length >= 3), await ev(() => $('#chSom') && $('#chSom').value));
+  await ev(() => fermer());
+  // textes de publication YouTube : sujet de l'analyse, chapitres ajoutés à la fin de la description
+  await ev(() => ouvrirPublication('YouTube')); await pg.click('#puGo'); await pg.waitForSelector('#puRes [data-copie]', { timeout: 15000 });
+  check('publication YouTube : chapitres ajoutés à la description', await ev(() => { const d = [...document.querySelectorAll('#puRes textarea')].map(x => x.value).find(v => /Chapitres :/.test(v)); return !!d && /\n0:00 Introduction\n/.test(d); }), await ev(() => $('#puRes').textContent));
   await ev(() => fermer());
   // clipping : les meilleurs passages sont proposés (sans IA installée : classement du programme)
   await ev(() => ouvrirClipping()); await pg.selectOption('#clNb', '3'); await pg.click('#clChercher'); await pg.waitForSelector('#clCreer', { timeout: 20000 });

@@ -53,6 +53,13 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   { const r = await fetch(U('/api/import?name=faux.mov'), { method: 'POST', body: Buffer.from('ce nest pas une video') }); check('fichier invalide refusé proprement', r.status === 500); }
   { const j = await (await fetch(U('/api/proxy?file=mov-h264.mov'))).json(); const v = await fetch(U(j.url)); check('copie de lecture d’un .mov', v.ok && (await v.arrayBuffer()).byteLength > 3000); }
   { const w = await fetch(U('/api/wave?file=musique.mp3&w=600&h=60')); check('forme d’onde', w.ok && (await w.arrayBuffer()).byteLength > 100); }
+  { // vignettes et ondes gardées sur le disque : rendues à l'identique sans FFmpeg, recalculées si le fichier change
+    const ct = path.join(base, '.cache-timeline'), nb = () => (fs.existsSync(ct) ? fs.readdirSync(ct).filter(n => !/\.part$/.test(n)).length : 0);
+    const a = Buffer.from(await (await fetch(U('/api/frame?file=mov-h264.mov&t=0.5'))).arrayBuffer()), n1 = nb();
+    const b = Buffer.from(await (await fetch(U('/api/frame?file=mov-h264.mov&t=0.5'))).arrayBuffer());
+    check('vignettes et ondes gardées sur le disque, relues à l’identique', n1 >= 2 && nb() === n1 && a.length > 500 && a.equals(b), `${n1} ${a.length}`);
+    const f = path.join(base, 'medias', 'mov-h264.mov'), t = new Date(Date.now() + 5000); fs.utimesSync(f, t, t);
+    await fetch(U('/api/frame?file=mov-h264.mov&t=0.5')); check('fichier modifié : vignette recalculée', nb() === n1 + 1, nb()); }
   const cat = await (await fetch(U('/api/catalogue'))).json();
   check('catalogue', cat.video.length >= 30 && cat.audio.length >= 8 && cat.transitions.length >= 15);
   console.log(`Banque : ${cat.video.length} effets image, ${cat.audio.length} effets son, ${cat.transitions.length} transitions`);

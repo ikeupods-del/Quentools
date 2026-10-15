@@ -62,9 +62,29 @@ function create(opts = {}) {
   const APERCUS = path.join(TMP, 'apercus'), PROXIES = path.join(TMP, 'proxies'); fs.mkdirSync(APERCUS, { recursive: true }); fs.mkdirSync(PROXIES, { recursive: true });
   let FFMPEG = opts.ffmpeg || 'ffmpeg', FFPROBE = opts.ffprobe === null ? null : opts.ffprobe || 'ffprobe';
   let filters = new Set(), encoders = new Set(), hwaccels = new Set(), version = '';
+  const ffmpegMajeur = () => { const m = /version (?:n)?(\d+)\./.exec(version); return m ? +m[1] : 99; }; // compilation de développement (« N-… ») : récente
   const LIB = (opts.lib || path.join(__dirname, 'bibliotheque')).replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep);
   const LIB_LISTES = ['sons', 'musiques', 'stickers', 'marque', 'luts', 'calques', 'cadres', 'fonds', 'fondvert'];
   const libIndex = () => { let j = {}; try { j = JSON.parse(fs.readFileSync(path.join(LIB, 'index.json'), 'utf8')); } catch (e) { /* bibliothèque absente */ } LIB_LISTES.forEach(k => { j[k] = j[k] || []; }); return j; };
+  // Vignettes et ondes sonores de la timeline gardées sur le disque : un projet rouvert s'affiche sans relancer FFmpeg.
+  // Clé = fichier (chemin, taille, date de modification) + réglages ; une même image demandée deux fois à la fois n'est calculée qu'une fois.
+  const CACHE_TL = path.join(BASE, '.cache-timeline'), calculsTl = new Map(); let ecritsTl = 0;
+  const elaguerTl = () => { // au-delà de 250 Mo, les plus anciennes partent
+    try {
+      const l = fs.readdirSync(CACHE_TL).map(n => { const st = fs.statSync(path.join(CACHE_TL, n)); return { n, t: st.atimeMs > st.mtimeMs ? st.atimeMs : st.mtimeMs, o: st.size }; }).sort((a, b) => b.t - a.t);
+      let tot = 0; for (const x of l) { tot += x.o; if (tot > 250e6) fs.unlinkSync(path.join(CACHE_TL, x.n)); }
+    } catch (e) { /* cache facultatif */ }
+  };
+  const enCache = async (fichier, reglages, fabriquer) => {
+    let st; try { st = fs.statSync(fichier); } catch (e) { return fabriquer(); }
+    const cle = require('crypto').createHash('sha1').update(JSON.stringify([fichier, st.size, Math.round(st.mtimeMs), reglages])).digest('hex'), f = path.join(CACHE_TL, cle);
+    try { const b = fs.readFileSync(f); const t = new Date(); fs.utimes(f, t, t, () => {}); return b; } catch (e) { /* pas encore calculé */ }
+    if (!calculsTl.has(cle)) calculsTl.set(cle, fabriquer().then(b => {
+      try { fs.mkdirSync(CACHE_TL, { recursive: true }); fs.writeFileSync(f + '.part', b); fs.renameSync(f + '.part', f); if (++ecritsTl % 300 === 0) elaguerTl(); } catch (e) { /* disque plein : l'image est quand même affichée */ }
+      return b;
+    }).finally(() => calculsTl.delete(cle)));
+    return calculsTl.get(cle);
+  };
   // Packs ajoutés par l'utilisateur (LUT, sons, images, vidéos) : dossier « Mes packs »
   const PACKS = path.join(BASE, 'packs'); fs.mkdirSync(PACKS, { recursive: true });
   // « lib:sons/clavier.mp3 » = bibliothèque ; « pack:Dossier/fichier.wav » = Mes packs ; sinon fichier importé
@@ -276,10 +296,14 @@ function create(opts = {}) {
   const VT_SURVEILLANCE = 45000;
   // Débit de la puce vidéo : « qualité max » double le débit (image plus fine, à peine plus lent : c'est la puce qui travaille)
   const debitVt = (W, H, max) => (Math.min(W, H) >= 1500 ? (max ? '80M' : '45M') : (max ? '36M' : '20M'));
-  const encVt = (P, max) => ['-c:v', 'h264_videotoolbox', '-b:v', debitVt(P.w, P.h, max), '-allow_sw', 1];
+  // Puce des Mac Apple Silicon : qualité constante (les plans calmes, un podcast, prennent 2 à 3 fois moins de place qu'à débit fixe,
+  // sans perte visible) ; débit fixe si la puce ne sait pas faire (Mac Intel, machine virtuelle) ou si QM_VT_DEBIT est posé
+  let vtQualite = false;
+  const reglageVt = (W, H, max, proxy) => (vtQualite ? ['-q:v', proxy ? 50 : max ? 75 : 62] : ['-b:v', debitVt(W, H, max)]);
+  const encVt = (P, max, proxy) => ['-c:v', 'h264_videotoolbox', ...reglageVt(P.w, P.h, max, proxy), '-allow_sw', 1];
   // réglages d'encodage d'un clip : les morceaux recopiés ensemble doivent tous en avoir les mêmes
   const encodeursClip = (P, proxy, max, avecPuce) => ({
-    vt: avecPuce ? encVt(P, max) : null, cpu: ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16, '-forced-idr', 1]
+    vt: avecPuce ? encVt(P, max, proxy) : null, cpu: ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16, '-forced-idr', 1]
   });
   async function encoder(avant, encVt, encCpu, apres, opts = {}) {
     if (encVt) {
@@ -295,6 +319,9 @@ function create(opts = {}) {
     encoders = new Set(e.split('\n').map(l => l.trim().split(/\s+/)[1]).filter(Boolean));
     try { hwaccels = new Set((await run(FFMPEG, ['-hide_banner', '-hwaccels'], { binary: true })).toString().split('\n').slice(1).map(l => l.trim()).filter(Boolean)); } catch (er) { hwaccels = new Set(); }
     version = (await run(FFMPEG, ['-version'], { binary: true })).toString().split('\n')[0];
+    if (process.platform === 'darwin' && encoders.has('h264_videotoolbox') && !process.env.QM_VT_DEBIT) { // qualité constante : seulement si la puce elle-même l'accepte
+      try { await run(FFMPEG, ['-v', 'error', '-f', 'lavfi', '-i', 'testsrc=s=320x240:r=30:d=0.4', '-c:v', 'h264_videotoolbox', '-q:v', 62, '-f', 'null', '-'], { silence: 15000 }); vtQualite = true; } catch (e) { vtQualite = false; }
+    }
   }
   // Description d'un fichier comme ffprobe, lue dans le résumé affiché par FFmpeg lui-même.
   // Sert quand ffprobe est absent ou inutilisable (le ffprobe livré pour les Mac à puce Apple est en réalité un programme Intel).
@@ -387,6 +414,12 @@ function create(opts = {}) {
 function fonduxDe(c, eff) {
   const auto = c.fade ? 0.4 : 0, e = num(c.fadeIn, 0) > 0 ? num(c.fadeIn, 0) : auto, s = num(c.fadeOut, 0) > 0 ? num(c.fadeOut, 0) : auto, m = Math.max(0.05, eff / 2);
   return { e: Math.min(clamp(e, 0, 10), m), s: Math.min(clamp(s, 0, 10), m) };
+}
+// Graphe de filtres très long (des milliers de sous-titres) : écrit dans un fichier, la ligne de commande du Mac a une taille limitée
+function grapheFiltre(g, tdir) {
+  if (g.length < 60000 || !tdir) return ['-filter_complex', g];
+  const nom = `graphe${tdir.idx}.txt`; fs.writeFileSync(path.join(tdir.dir, nom), g);
+  return ffmpegMajeur() >= 7 ? ['-/filter_complex', nom] : ['-filter_complex_script', nom];
 }
 function buildClip(c, P, o = {}) {
     const W = P.w, H = P.h, fps = P.fps;
@@ -588,7 +621,9 @@ function buildClip(c, P, o = {}) {
     }
 
     // Sous-titres (une ligne par repère, en bas)
-    const subs = (c.subs || []).filter(x => x && String(x.t || '').trim()).slice(0, 300);
+    // tous les sous-titres du clip (avant : 300 au plus, la suite d'un long clip n'était pas affichée) ; l'aperçu d'une image ne garde que ceux de cet instant
+    const tousSous = (c.subs || []).filter(x => x && String(x.t || '').trim());
+    const subs = o.preview ? tousSous.filter(x => num(x.e, 0) >= t - 0.1 && num(x.s, 0) <= t + 1.6) : tousSous.slice(0, 5000);
     if (subs.length && fontFile(c.textFont) && filters.has('drawtext')) {
       const idx = o.tdir ? o.tdir.idx : 0, dir = o.tdir ? o.tdir.dir : TMP, u = Math.min(W, H) / 100, size = Math.round(u * clamp(num(c.subSize, 4.4), 2, 10));
       const T = `(t+${ctx.t0})`, tk = c.subStyle === 'tiktok', col = c.subStyle === 'jaune' ? '0xffe600' : 'white', def = SUBDEF[c.subStyle];
@@ -666,8 +701,8 @@ function buildClip(c, P, o = {}) {
     f.push(`[${src}]${af.join(',')}[a]`);
 
     const proxy = !!o.proxy;
-    args.push('-filter_complex', f.join(';'), '-map', '[v]', '-map', '[a]', '-t', eff.toFixed(3), '-r', fps, '-enc_time_base:v', `1/${fps}`, '-chroma_sample_location:v', 'left', // mêmes en-têtes pour tous les clips (photos, sons à pochette…) : recopie sans réencoder
-      ...(o.vt ? ['-c:v', 'h264_videotoolbox', '-b:v', debitVt(W, H, o.vtMax), '-allow_sw', 1] : ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16, '-forced-idr', 1]), '-pix_fmt', 'yuv420p', // images clés IDR : les morceaux se recopient sans réencoder
+    args.push(...grapheFiltre(f.join(';'), o.tdir), '-map', '[v]', '-map', '[a]', '-t', eff.toFixed(3), '-r', fps, '-enc_time_base:v', `1/${fps}`, '-chroma_sample_location:v', 'left', // mêmes en-têtes pour tous les clips (photos, sons à pochette…) : recopie sans réencoder
+      ...(o.vt ? ['-c:v', 'h264_videotoolbox', ...reglageVt(W, H, o.vtMax, proxy), '-allow_sw', 1] : ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16, '-forced-idr', 1]), '-pix_fmt', 'yuv420p', // images clés IDR : les morceaux se recopient sans réencoder
       '-force_key_frames', EPI.expressionGop(fps), // une image clé par seconde : permet de recopier sans réencoder (assemblage rapide)
       '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-ar', 48000, '-ac', 2, '-movflags', '+faststart', '-progress', 'pipe:1', '-nostats');
     return { args, eff };
@@ -1071,8 +1106,14 @@ function buildClip(c, P, o = {}) {
   const CACHE_RENDU = path.join(BASE, '.cache-rendu');
   function empreinteClip(args, dir, ecrits) {
     try {
-      const h = require('crypto').createHash('sha1').update('v1|' + version + '|' + JSON.stringify(args).split(dir).join('@'));
-      for (const f of ecrits.sort()) h.update('|' + f + '|').update(fs.readFileSync(path.join(dir, f)));
+      // les fichiers écrits pour le clip (textes, sous-titres…) portent son rang dans la timeline : remplacés par leur ordre d'apparition,
+      // un clip qui change de place (plan ajouté avant, prise coupée) garde la même empreinte et reste repris du cache
+      let txt = JSON.stringify(args).split(dir).join('@');
+      const motif = f => new RegExp(`(^|[^\\w])${f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w.])`, 'g');
+      const ordre = ecrits.map(f => ({ f, i: txt.search(motif(f)) })).sort((a, b) => a.i - b.i || (a.f < b.f ? -1 : 1));
+      ordre.forEach((x, k) => { txt = txt.replace(motif(x.f), `$1#${k}#`); });
+      const h = require('crypto').createHash('sha1').update('v2|' + version + '|' + txt);
+      for (const x of ordre) h.update('|#|').update(fs.readFileSync(path.join(dir, x.f)));
       for (const a of args) if (typeof a === 'string' && path.isAbsolute(a) && !a.startsWith(dir)) { const st = fs.statSync(a); h.update(`|${a}|${st.size}|${st.mtimeMs}`); }
       return h.digest('hex');
     } catch (e) { return null; } // fichier introuvable : pas de cache pour ce clip
@@ -1087,19 +1128,36 @@ function buildClip(c, P, o = {}) {
   // Longs clips « simples » (sans effet, titre, incrustation ni image clé) : découpés en morceaux d'environ deux minutes, encodés en même temps
   // (la puce vidéo gère plusieurs flux) puis recollés sans réencoder ; un morceau inchangé est aussi repris du cache au prochain export.
   // Les sous-titres et fondus sont répartis sur les morceaux : le résultat est identique au clip entier.
+  // effets qui ne dépendent pas du temps (couleurs, looks, netteté, grain…) : identiques d'un morceau à l'autre, le long clip peut être découpé
+  const TEMPOREL = /\b(deshake|vidstab\w*|zoompan|tmix|minterpolate|fade|loop|setpts|reverse|tblend|deflicker|framestep|random|tpad|trim|xfade|fps|mpdecimate|lagfun|amplify|atadenoise|tmedian)\b/;
+  const sansTemps = new Map();
+  const fxSansTemps = e => {
+    if (!e || !e.id) return true;
+    if (!sansTemps.has(e.id)) {
+      const d = FX.VIDEO.find(x => x.id === e.id); let f = null;
+      try { f = d ? d.make(FX.defaults(d), { W: 1920, H: 1080, fps: 30, eff: 200, t0: 0 }) : null; } catch (er) { f = null; }
+      sansTemps.set(e.id, typeof f === 'string' && !TEMPOREL.test(f) && !/[(*+\-\/,]\s*(t|n)\s*[)*+\-\/,]|\(t\)|\bsin\(|\bcos\(/.test(f));
+    }
+    return sansTemps.get(e.id);
+  };
   function morceauxDe(clips) {
     const L = +process.env.QM_MORCEAU || 120, out = [];
     for (const c of clips) {
       const eff = (num(c.out, 0) - num(c.in, 0)) / (num(c.speed, 1) || 1);
       // calques, titre et texte suivent les morceaux (ils continuent là où ils en étaient) : une longue prise avec un « Breaking news »
       // ou l'ambiance d'un pack s'encode aussi en morceaux parallèles
-      const simple = c.kind === 'video' && num(c.speed, 1) === 1 && eff >= L * 1.6 && !(c.fx || []).length && !(c.key && c.key.on) && !c.viz
+      const simple = c.kind === 'video' && num(c.speed, 1) === 1 && eff >= L * 1.6 && (c.fx || []).every(fxSansTemps) && !(c.key && c.key.on && c.key.bgType === 'file' && c.key.bgKind === 'video') && !c.viz
         && !(Array.isArray(c.cadrage) && c.cadrage.length) && !c.bgFile && !c.sonDetache;
       if (!simple || process.env.QM_SANS_MORCEAUX) { out.push(c); continue; }
-      const n = Math.max(2, Math.round(eff / L)), len = eff / n, fo = fonduxDe(c, eff);
+      // limites calées sur des repères fixes de la vidéo d'origine (toutes les L secondes) : raccourcir le début ou la fin,
+      // ou couper la prise en deux, ne change que les morceaux touchés ; les autres sont repris du cache (aperçu et export)
+      const i0 = num(c.in, 0), bornes = [0];
+      for (let x = Math.ceil((i0 + L * 0.3) / L) * L; x < i0 + eff - L * 0.3; x += L) bornes.push(+(x - i0).toFixed(3));
+      bornes.push(eff);
+      const n = bornes.length - 1, fo = fonduxDe(c, eff);
       for (let k = 0; k < n; k++) {
-        const a = k * len, b = (k + 1) * len, d = { ...c };
-        d.in = +(num(c.in, 0) + a).toFixed(3); d.out = k === n - 1 ? num(c.out, 0) : +(num(c.in, 0) + b).toFixed(3);
+        const a = bornes[k], b = bornes[k + 1], d = { ...c };
+        d.in = +(i0 + a).toFixed(3); d.out = k === n - 1 ? num(c.out, 0) : +(i0 + b).toFixed(3);
         d.fade = false; d.fadeIn = k === 0 ? fo.e : 0; d.fadeOut = k === n - 1 ? fo.s : 0;
         d.microE = k === 0; d.microS = k === n - 1; // raccords internes du découpage : pas de fondu sonore
         d.transition = k === n - 1 ? c.transition : null;
@@ -1133,8 +1191,8 @@ function buildClip(c, P, o = {}) {
     if (!clipsBruts.length) throw new Error('La timeline est vide.');
     const clips = morceauxDe(clipsBruts); job.morceaux = clips.length - clipsBruts.length;
     for (const c of clips) await calquesEnBoucle(c);
-    const tropSous = clips.filter(c => (c.subs || []).filter(x => x && String(x.t || '').trim()).length > 300).length;
-    if (tropSous) job.avertissement = `${tropSous > 1 ? `${tropSous} clips ont` : 'Un clip a'} plus de 300 sous-titres : seuls les 300 premiers sont affichés. Coupe ce long clip en deux (touche S) pour tous les voir.`;
+    const tropSous = clips.filter(c => (c.subs || []).filter(x => x && String(x.t || '').trim()).length > 5000).length;
+    if (tropSous) job.avertissement = `${tropSous > 1 ? `${tropSous} clips ont` : 'Un clip a'} plus de 5 000 sous-titres : seuls les 5 000 premiers sont affichés. Coupe ce long clip en deux (touche S) pour tous les voir.`;
     const P = sizeOf(project, proxy ? 'proxy' : 'full');
     // fichiers disparus : un message clair (quel clip, que faire) plutôt qu'une erreur de FFmpeg
     const absents = [...new Set(clips.filter(c => c.file && c.kind !== 'solid' && !/^(lib|pack):/.test(c.file)).map(c => c.file).filter(f => !fs.existsSync(mediaPath(f))))];
@@ -1293,7 +1351,7 @@ function buildClip(c, P, o = {}) {
           cv = nv; ca = na;
         }
         try {
-          await encoder(['-y', '-loglevel', 'error', ...inArgs, '-filter_complex', g.join(';'), '-map', `[${cv}]`, '-map', `[${ca}]`], vt ? encVt(P, project.quality === 'max') : null,
+          await encoder(['-y', '-loglevel', 'error', ...inArgs, '-filter_complex', g.join(';'), '-map', `[${cv}]`, '-map', `[${ca}]`], vt ? encVt(P, project.quality === 'max', proxy) : null,
             proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17],
             ['-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
         } catch (e) { // la cause d'origine (assemblage rapide refusé) aide à comprendre
@@ -1385,7 +1443,19 @@ function buildClip(c, P, o = {}) {
 
       // Format de sortie
       const sortie = sortiesDispo().includes(project.sortie) ? project.sortie : 'mp4';
-      const norm = project.normaliser ? ['-af', 'loudnorm=I=-16:TP=-1.5:LRA=11'] : [];
+      // « Égaliser le volume » : mesure du montage entier puis réglage linéaire en une fois (deux passes) ;
+      // la passe unique corrigeait au fil de l'eau et faisait « pomper » le son. Mesure impossible : passe unique.
+      let norm = [];
+      if (project.normaliser && !proxy && sortie !== 'gif') {
+        job.step = 'Mesure du volume du montage';
+        const m = await run(FFMPEG, ['-hide_banner', '-nostats', '-i', joined, '-vn', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json', '-f', 'null', '-'], { cwd: dir, wantErr: true })
+          .then(e => { const j = String(e).match(/\{[^{}]*"input_i"[^{}]*\}/); return j ? JSON.parse(j[0]) : null; }).catch(() => null);
+        const v = k => m && Number.isFinite(+m[k]) ? +m[k] : null;
+        norm = ['-af', (v('input_i') != null && v('input_i') > -70 && v('input_tp') != null && v('input_lra') != null && v('input_thresh') != null
+          ? `loudnorm=I=-16:TP=-1.5:LRA=11:measured_I=${v('input_i')}:measured_TP=${v('input_tp')}:measured_LRA=${v('input_lra')}:measured_thresh=${v('input_thresh')}:offset=${v('target_offset') || 0}:linear=true`
+          : 'loudnorm=I=-16:TP=-1.5:LRA=11') + ',aresample=48000'];
+        job.niveaux = Object.assign(job.niveaux || {}, { final: v('input_i') });
+      }
       let final = joined;
       if (!proxy && (sortie !== 'mp4' || norm.length)) {
         job.step = 'Encodage final';
@@ -1485,7 +1555,7 @@ function buildClip(c, P, o = {}) {
       mapA = ['-map', '[aout]', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k'];
     }
     const vt = !proxy && process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality !== 'haute';
-    await encoder(['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '[vout]', ...mapA], vt ? encVt(P) : null,
+    await encoder(['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '[vout]', ...mapA], vt ? encVt(P, false, proxy) : null,
       proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17], ['-pix_fmt', 'yuv420p', '-movflags', '+faststart', 'pistes.mp4'], { cwd: dir });
     return 'pistes.mp4';
   }
@@ -1592,7 +1662,7 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && p.startsWith('/exports/')) return serveFile(req, res, path.join(EXPORTS, safeName(decodeURIComponent(p.slice(9)))), true);
       if (req.method === 'GET' && p.startsWith('/apercu/')) return serveFile(req, res, path.join(APERCUS, safeName(decodeURIComponent(p.slice(8)))));
 
-      if (req.method === 'GET' && p === '/api/catalogue') return send(res, 200, { ...FX.catalogue(filters), packs: require('./packs').PACKS, version_app: VERSION_APP, font: !!FONT && filters.has('drawtext'), version, folder: BASE, bibliotheque: libIndex(), polices: FONTS_OK.map(x => ({ id: x.id, nom: x.nom })), sorties: sortiesDispo(), duck: filters.has('sidechaincompress'), hwenc: process.platform === 'darwin' && encoders.has('h264_videotoolbox') });
+      if (req.method === 'GET' && p === '/api/catalogue') return send(res, 200, { ...FX.catalogue(filters), packs: require('./packs').PACKS, version_app: VERSION_APP, font: !!FONT && filters.has('drawtext'), version, folder: BASE, bibliotheque: libIndex(), polices: FONTS_OK.map(x => ({ id: x.id, nom: x.nom })), sorties: sortiesDispo(), duck: filters.has('sidechaincompress'), vtQualite, hwenc: process.platform === 'darwin' && encoders.has('h264_videotoolbox') });
       // Mises à jour (application Mac uniquement)
       if (p === '/api/maj') return send(res, 200, opts.maj ? opts.maj.etat() : { etat: 'inactif', version: VERSION_APP });
       if (req.method === 'POST' && p === '/api/maj/verifier') return send(res, 200, opts.maj ? opts.maj.verifier() : { etat: 'inactif', version: VERSION_APP });
@@ -1664,7 +1734,7 @@ function buildClip(c, P, o = {}) {
           job.step = 'L’IA locale nomme les chapitres…'; job.progress = 0.6;
           const r = b.ia === false ? { chapitres: ch, ia: false } : await IA().titrerChapitres({ chapitres: ch, sujet: analyse.sujet, motsCles: analyse.motsCles || [] });
           delete analyse.brut;
-          return { chapitres: r.chapitres.map(c => ({ t: c.t, titre: c.titre })), ia: r.ia, analyse };
+          return { chapitres: r.chapitres.map(c => ({ t: c.t, titre: c.titre, resume: c.resume || '' })), ia: r.ia, analyse };
         }));
       }
       // Analyse de la vidéo : sujet, genre, rythme, idées fortes et pack conseillé (programme + IA locale)
@@ -1706,7 +1776,10 @@ function buildClip(c, P, o = {}) {
           return { fichiers };
         }));
       }
-      if (req.method === 'POST' && p === '/api/assistant/publication') { const b = await readJson(req); return send(res, 200, travail(job => { job.step = 'Écriture du titre, de la description et des hashtags…'; return IA().textesPublication({ texte: String(b.texte || '').slice(0, 3000), plateforme: String(b.plateforme || '').slice(0, 20), titre: String(b.titre || '').slice(0, 120) }); })); }
+      if (req.method === 'POST' && p === '/api/assistant/publication') { const b = await readJson(req); return send(res, 200, travail(job => { job.step = 'Écriture du titre, de la description et des hashtags…'; const a = b.analyse && typeof b.analyse === 'object' ? b.analyse : {};
+        return IA().textesPublication({ texte: String(b.texte || '').slice(0, 3000), plateforme: String(b.plateforme || '').slice(0, 20), titre: String(b.titre || '').slice(0, 120),
+          analyse: { sujet: String(a.sujet || '').slice(0, 160), resume: String(a.resume || '').slice(0, 400), motsCles: (Array.isArray(a.motsCles) ? a.motsCles : []).map(m => String(m).slice(0, 40)).slice(0, 6), points: (Array.isArray(a.points) ? a.points : []).map(m => String(m).slice(0, 100)).slice(0, 6) },
+          chapitres: (Array.isArray(b.chapitres) ? b.chapitres : []).map(l => String(l).slice(0, 80)).filter(l => /^\d+(:\d{2}){1,2} \S/.test(l)).slice(0, 40) }); })); }
       if (req.method === 'POST' && p === '/api/generer/images') { const b = await readJson(req); return send(res, 200, { images: await GEN().proposer(String(b.q || '').slice(0, 120), { vertical: b.format === 'vertical', videos: !!b.videos }) }); }
       if (req.method === 'POST' && p === '/api/telecharger') { const b = await readJson(req); return send(res, 200, travail(job => IA().telecharger(String(b.lien || ''), MEDIAS, job))); }
       if (req.method === 'GET' && p === '/api/parole') {
@@ -1815,8 +1888,9 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && p === '/api/wave') { // forme d'onde d'un son
         const w = clamp(Math.round(num(url.searchParams.get('w'), 800)), 50, 4000), h = clamp(Math.round(num(url.searchParams.get('h'), 80)), 20, 400);
         const de = num(url.searchParams.get('in'), 0), du = num(url.searchParams.get('dur'), 0);
-        const img = await run(FFMPEG, ['-v', 'error', ...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(url.searchParams.get('file')), '-vn', '-filter_complex', `aformat=channel_layouts=mono,showwavespic=s=${w}x${h}:colors=white`,
-          '-frames:v', 1, '-f', 'image2pipe', '-vcodec', 'png', 'pipe:1'], { binary: true });
+        const src = mediaPath(url.searchParams.get('file'));
+        const img = await enCache(src, ['onde', w, h, de, du], () => run(FFMPEG, ['-v', 'error', ...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', src, '-vn', '-filter_complex', `aformat=channel_layouts=mono,showwavespic=s=${w}x${h}:colors=white`,
+          '-frames:v', 1, '-f', 'image2pipe', '-vcodec', 'png', 'pipe:1'], { binary: true }));
         return send(res, 200, img, 'image/png', 'max-age=86400');
       }
       // Banques de photos : liste, activation, clé gratuite (les clés ne sont jamais renvoyées)
@@ -1876,8 +1950,8 @@ function buildClip(c, P, o = {}) {
         return send(res, 200, { silences: sil.map(x => ({ s: +(from + x.s).toFixed(2), e: +(from + x.e).toFixed(2) })) });
       }
       if (req.method === 'GET' && p === '/api/frame') {
-        const img = await run(FFMPEG, ['-v', 'error', '-ss', num(url.searchParams.get('t'), 0), '-i', mediaPath(url.searchParams.get('file')), '-frames:v', 1,
-          '-vf', `scale=${clamp(Math.round(num(url.searchParams.get('w'), 480) / 2) * 2, 64, 3840)}:-2`, '-f', 'mjpeg', '-q:v', url.searchParams.get('w') ? 2 : 5, 'pipe:1'], { binary: true });
+        const src = mediaPath(url.searchParams.get('file')), t = num(url.searchParams.get('t'), 0), w = clamp(Math.round(num(url.searchParams.get('w'), 480) / 2) * 2, 64, 3840), q = url.searchParams.get('w') ? 2 : 5;
+        const img = await enCache(src, ['image', t, w, q], () => run(FFMPEG, ['-v', 'error', '-ss', t, '-i', src, '-frames:v', 1, '-vf', `scale=${w}:-2`, '-f', 'mjpeg', '-q:v', q, 'pipe:1'], { binary: true }));
         return send(res, 200, img, 'image/jpeg', 'max-age=3600');
       }
       if (req.method === 'POST' && p === '/api/preview') {

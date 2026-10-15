@@ -4,7 +4,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const { execFileSync, spawnSync } = require('child_process');
 
 (async () => {
   const { create } = require('../server'), { resolveFfmpeg } = require('../ffmpeg-path');
@@ -35,6 +35,11 @@ const { execFileSync } = require('child_process');
   process.env.QM_SANS_MORCEAUX = '1'; const jt = await exporter({ ...projet('Entier'), clips: [long] }); delete process.env.QM_SANS_MORCEAUX; delete process.env.QM_MORCEAU;
   check('clip long : découpé en morceaux', jm.morceaux >= 2 && !jt.morceaux, `${jm.morceaux}/${jt.morceaux}`);
   check('clip long : même durée que le clip entier', Math.abs(lireDuree(jm.out) - lireDuree(jt.out)) < 0.35, `${lireDuree(jm.out)} / ${lireDuree(jt.out)}`);
+  // aperçu et export qui ne refont que ce qui a changé : morceaux calés sur la vidéo d'origine, empreinte indépendante du rang du clip
+  { process.env.QM_MORCEAU = '1';
+    const court = { ...long, in: 0.5, subs: [{ s: 0, e: 0.9, t: 'un' }, { s: 1.1, e: 3.3, t: 'deux' }] };
+    const jd = await exporter({ ...projet('Morceaux décalés'), clips: [clip('p.png', 'image', { dur: 1, text: 'Avant' }), court] }); delete process.env.QM_MORCEAU;
+    check('longue prise raccourcie au début, plan ajouté avant : seuls les morceaux touchés sont refaits', jd.repris === 3 && jd.morceaux === 3, `${jd.repris} repris, ${jd.morceaux} morceaux en plus`); }
   const j1 = await exporter(projet('Premier'));
   check('premier export : vidéo complète', Math.abs(lireDuree(j1.out) - 8.5) < 0.4, lireDuree(j1.out));
   check('premier export : clips encodés en parallèle', j1.paralleles >= 2, j1.paralleles);
@@ -170,14 +175,32 @@ const { execFileSync } = require('child_process');
     const silence = { ...clip('a.mp4', 'video', { out: 4, vol: 0 }) };
     const bz = await exporter({ ...projet('Bruitage'), clips: [silence], audio: [{ file: 'lib:' + so.file, vol: 100, start: 2, fade: false, loop: false, duck: false, niveauBrut: true }] });
     check('bruitage : entendu à son instant, pas avant', niveau(bz.out, 1.2) < -60 && niveau(bz.out, 2.05) > -40, `${niveau(bz.out, 1.2).toFixed(1)} / ${niveau(bz.out, 2.05).toFixed(1)} dB`); }
+  // « Égaliser le volume » : mesure du montage entier puis réglage en une fois, niveau final proche de -16 LUFS
+  { const jn = await exporter({ ...projet('Egal'), normaliser: true, clips: [clip('a.mp4', 'video', { out: 4, vol: 25 }), clip('a.mp4', 'video', { in: 1, out: 4 })] });
+    const r = spawnSync(bins.ffmpeg, ['-hide_banner', '-nostats', '-i', path.join(base, 'exports', jn.out), '-af', 'ebur128=framelog=quiet', '-f', 'null', '-']).stderr.toString(), m = [...r.matchAll(/\bI:\s+(-?[\d.]+) LUFS/g)], I = m.length ? +m[m.length - 1][1] : null;
+    check('égaliser le volume : montage mesuré puis réglé en une fois (≈ -16 LUFS)', jn.niveaux && jn.niveaux.final != null && I != null && Math.abs(I + 16) < 2, `${jn.niveaux && jn.niveaux.final} → ${I}`); }
   // long clip avec calque, titre et texte : découpé en morceaux parallèles, même image que le clip entier
   { process.env.QM_MORCEAU = '1';
-    const riche = clip('a.mp4', 'video', { out: 4, titre: { preset: 'angle', l1: 'Titre long', color: '#ff2d55', start: 0.2, dur: 0 }, text: 'Texte', textStart: 0.5, overlays: [{ file: 'p.png', kind: 'image', x: 30, y: 30, scale: 30, rot: 0, opacity: 100, start: 1.5, dur: 1.2, anim: 'none', plein: '', key: false }] });
+    const riche = clip('a.mp4', 'video', { out: 4, fx: [{ id: 'cine', p: {} }], titre: { preset: 'angle', l1: 'Titre long', color: '#ff2d55', start: 0.2, dur: 0 }, text: 'Texte', textStart: 0.5, overlays: [{ file: 'p.png', kind: 'image', x: 30, y: 30, scale: 30, rot: 0, opacity: 100, start: 1.5, dur: 1.2, anim: 'none', plein: '', key: false }] });
     const jm = await exporter({ ...projet('MorcRiche'), clips: [riche] });
     process.env.QM_SANS_MORCEAUX = '1'; const je = await exporter({ ...projet('EntierRiche'), clips: [riche] }); delete process.env.QM_SANS_MORCEAUX; delete process.env.QM_MORCEAU;
     const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
     const ec = t => { const a = img(jm.out, t), b = img(je.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
-    check('clip long avec calque, titre et texte : découpé en morceaux, même image que d’un seul bloc', jm.morceaux >= 2 && [1.2, 2.2, 3.5].every(t => ec(t) < 2.5), `${jm.morceaux} ${[1.2, 2.2, 3.5].map(t => ec(t).toFixed(2)).join(' ')}`); }
+    process.env.QM_MORCEAU = '1'; const jz = await exporter({ ...projet('MorcZoom'), clips: [clip('a.mp4', 'video', { out: 4, fx: [{ id: 'zoomavant', p: {} }] })] }); delete process.env.QM_MORCEAU;
+    check('effet qui bouge dans le temps (zoom) : le clip n’est pas découpé', !jz.morceaux, jz.morceaux);
+    check('clip long avec look, calque, titre et texte : découpé en morceaux, même image que d’un seul bloc', jm.morceaux >= 2 && [1.2, 2.2, 3.5].every(t => ec(t) < 2.5), `${jm.morceaux} ${[1.2, 2.2, 3.5].map(t => ec(t).toFixed(2)).join(' ')}`); }
+  // clip avec des milliers de sous-titres : tous affichés (avant : les 300 premiers seulement), graphe passé par un fichier
+  { ff('-f', 'lavfi', '-i', 'color=c=gray:s=640x360:r=30:d=62', '-f', 'lavfi', '-i', 'sine=f=300:d=62', '-shortest', '-pix_fmt', 'yuv420p', path.join(base, 'gris.mp4'));
+    // la création de la vidéo bloque le script plus de 5 s : la connexion gardée ouverte est fermée par le serveur, on réessaie une fois
+    await fetch(U('/api/import?name=gris.mp4'), { method: 'POST', body: fs.readFileSync(path.join(base, 'gris.mp4')) }).catch(() => fetch(U('/api/import?name=gris.mp4'), { method: 'POST', body: fs.readFileSync(path.join(base, 'gris.mp4')) }));
+    const subs = Array.from({ length: 1200 }, (_, i) => ({ s: +(i * 0.05).toFixed(2), e: +(i * 0.05 + 0.05).toFixed(2), t: 'Mot ' + i }));
+    subs.push({ s: 60.5, e: 61.5, t: 'DERNIER SOUS-TITRE BIEN VISIBLE' });
+    process.env.QM_SANS_MORCEAUX = '1';
+    const avec = await exporter({ ...projet('MilleSous'), clips: [clip('gris.mp4', 'video', { out: 62, subs, subSize: 9 })] }), sans = await exporter({ ...projet('SansSous'), clips: [clip('gris.mp4', 'video', { out: 62 })] });
+    delete process.env.QM_SANS_MORCEAUX;
+    const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
+    const ec = t => { const a = img(avec.out, t), b = img(sans.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
+    check('1 200 sous-titres sur un clip : le dernier (à 60 s) s’affiche', ec(61) > 2 && ec(61.8) < 1, [ec(61), ec(61.8)].join(' ')); }
   // export d'un passage (essai) : seulement la partie choisie, nommée « extrait-… » ; titres de la piste T recalés
   { const { id } = await (await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: { ...projet('Extrait'), textes: [{ start: 3, dur: 2, titre: { preset: 'angle', l1: 'Titre', color: '#ff2d55', start: 0 } }] }, plage: { s: 1.5, e: 4.5 } }) })).json();
     let j; for (;;) { j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.error || j.done) break; await new Promise(r => setTimeout(r, 200)); }

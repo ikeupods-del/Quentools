@@ -83,7 +83,7 @@ async function autotest(port) {
     await new Promise(ok => win.webContents.once('did-finish-load', ok));
     const ex = c => win.webContents.executeJavaScript(c, true);
     await ex('new Promise(r => setTimeout(r, 2500))');
-    res.page = await ex('({ version: CAT.version_app, hwenc: CAT.hwenc, sorties: CAT.sorties, medias: medias.length })');
+    res.page = await ex('({ version: CAT.version_app, hwenc: CAT.hwenc, qualiteConstante: CAT.vtQualite, sorties: CAT.sorties, medias: medias.length })');
     // enregistrement : formats proposés par la fenêtre
     res.enregistrement = await ex(`['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a', 'video/webm;codecs=h264,opus', 'video/webm;codecs=vp8,opus'].filter(t => MediaRecorder.isTypeSupported(t))`);
     // carte graphique, compositeur et détourage dans son fil (image de test de la bibliothèque)
