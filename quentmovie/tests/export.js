@@ -168,6 +168,14 @@ const { execFileSync } = require('child_process');
     const silence = { ...clip('a.mp4', 'video', { out: 4, vol: 0 }) };
     const bz = await exporter({ ...projet('Bruitage'), clips: [silence], audio: [{ file: 'lib:' + so.file, vol: 100, start: 2, fade: false, loop: false, duck: false, niveauBrut: true }] });
     check('bruitage : entendu à son instant, pas avant', niveau(bz.out, 1.2) < -60 && niveau(bz.out, 2.05) > -40, `${niveau(bz.out, 1.2).toFixed(1)} / ${niveau(bz.out, 2.05).toFixed(1)} dB`); }
+  // long clip avec calque, titre et texte : découpé en morceaux parallèles, même image que le clip entier
+  { process.env.QM_MORCEAU = '1';
+    const riche = clip('a.mp4', 'video', { out: 4, titre: { preset: 'angle', l1: 'Titre long', color: '#ff2d55', start: 0.2, dur: 0 }, text: 'Texte', textStart: 0.5, overlays: [{ file: 'p.png', kind: 'image', x: 30, y: 30, scale: 30, rot: 0, opacity: 100, start: 1.5, dur: 1.2, anim: 'none', plein: '', key: false }] });
+    const jm = await exporter({ ...projet('MorcRiche'), clips: [riche] });
+    process.env.QM_SANS_MORCEAUX = '1'; const je = await exporter({ ...projet('EntierRiche'), clips: [riche] }); delete process.env.QM_SANS_MORCEAUX; delete process.env.QM_MORCEAU;
+    const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
+    const ec = t => { const a = img(jm.out, t), b = img(je.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
+    check('clip long avec calque, titre et texte : découpé en morceaux, même image que d’un seul bloc', jm.morceaux >= 2 && [1.2, 2.2, 3.5].every(t => ec(t) < 1.5), `${jm.morceaux} ${[1.2, 2.2, 3.5].map(t => ec(t).toFixed(2)).join(' ')}`); }
   // export d'un passage (essai) : seulement la partie choisie, nommée « extrait-… » ; titres de la piste T recalés
   { const { id } = await (await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: { ...projet('Extrait'), textes: [{ start: 3, dur: 2, titre: { preset: 'angle', l1: 'Titre', color: '#ff2d55', start: 0 } }] }, plage: { s: 1.5, e: 4.5 } }) })).json();
     let j; for (;;) { j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.error || j.done) break; await new Promise(r => setTimeout(r, 200)); }

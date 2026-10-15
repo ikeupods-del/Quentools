@@ -64,6 +64,11 @@ async function demarrer() {
   win.loadURL(`http://127.0.0.1:${port}/`);
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
   win.on('closed', () => { win = null; });
+  // export en cours au moment de quitter : on demande avant de tout arrêter
+  win.webContents.on('will-prevent-unload', e => {
+    const r = dialog.showMessageBoxSync(win, { type: 'question', buttons: ['Continuer l’export', 'Quitter quand même'], defaultId: 0, cancelId: 0, message: 'Un export est en cours.', detail: 'Si tu quittes maintenant, l’export est arrêté et la vidéo ne sera pas créée.' });
+    if (r === 1) e.preventDefault(); // preventDefault : la fermeture continue
+  });
   if (process.env.QM_AUTOTEST) return autotest(port);
   setTimeout(() => maj.verifier().then(prevenir), 8000); // recherche discrète après le démarrage
   setInterval(() => maj.verifier().then(prevenir), 6 * 3600 * 1000);

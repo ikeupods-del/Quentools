@@ -927,7 +927,7 @@ function appliquerPack(id, o) {
   if (o.cal) proj.clips.forEach(c => { c.overlays = (c.overlays || []).filter(x => !x.pack); }); // un pack remplace le précédent
   if (o.son) proj.audio = proj.audio.filter(a => !a.pack); // les bruitages d'un pack remplacent ceux du précédent
   // la voix en cours au moment de la coupe (sous-titres) : pas de bruitage par-dessus une phrase
-  const parole = []; proj.clips.forEach((c, k) => (c.subs || []).forEach(x => parole.push([st[k] + x.s / (c.speed || 1), st[k] + x.e / (c.speed || 1)])));
+  const parole = []; proj.clips.forEach((c, k) => (c.subs || []).forEach(x => parole.push([st[k] + x.s, st[k] + x.e]))); // sous-titres comptés en temps du montage (vitesse déjà prise en compte)
   proj.clips.forEach((c, k) => { if (c.parle) parole.push([st[k] + 0.08, st[k] + effDur(c) - 0.12]); }); // morceaux de parole gardés par « couper les blancs »
   const parle = (t, d = 0) => parole.some(([a, b]) => t + d > a + 0.05 && t < b - 0.05);
   proj.clips.slice(0, -1).forEach((c, i) => {
@@ -1463,6 +1463,57 @@ function decalerDebut(c, base, delta) {
   if (base.text) c.textStart = +((+base.textStart || 0) + d).toFixed(2);
   if ((base.cadrage || []).length) c.cadrage = base.cadrage.map(q => ({ ...q, t: +(q.t + d).toFixed(3) }));
 }
+// Vitesse changée : le contenu du clip (compté en temps du montage) suit l'image accélérée ou ralentie
+function recalerVitesse(c, base, ancienne, nouvelle) {
+  const k = (ancienne || 1) / (nouvelle || 1), r = x => +(x * k).toFixed(2);
+  c.subs = (base.subs || []).map(x => ({ ...x, s: r(x.s), e: r(x.e) }));
+  c.overlays = (base.overlays || []).map(o => ({ ...o, start: r(+o.start || 0) }));
+  c.titre = base.titre ? { ...base.titre, start: r(+base.titre.start || 0) } : base.titre;
+  if (base.text) c.textStart = r(+base.textStart || 0);
+  if ((base.cadrage || []).length) c.cadrage = base.cadrage.map(q => ({ ...q, t: +(q.t * k).toFixed(3) }));
+}
+// Garde seulement des passages [a, b[ d'un clip (secondes du clip) : un clip par passage, avec ses sous-titres, titre, texte et cadrage
+// recalés, et les calques continués d'un passage à l'autre (repartirCalques)
+function decouperClip(c, morceaux) {
+  const calques = repartirCalques(c.overlays, morceaux);
+  return morceaux.map(([a, b], k) => {
+    let p = c;
+    if (a > 0.001) p = trancherClip(p, a)[1];
+    if (b - a < effDur(p) - 0.001) p = trancherClip(p, b - a)[0];
+    if (p === c) p = clone(c);
+    p.overlays = calques[k]; p.transition = k === morceaux.length - 1 ? c.transition : null;
+    if (k) { p.fadeIn = 0; p.fade = false; } if (k < morceaux.length - 1) { p.fadeOut = 0; p.fade = false; }
+    return p;
+  });
+}
+// Un clip remplacé par ses morceaux gardés (blancs ou silences retirés) : tout ce qui est posé sur la timeline suit.
+// st0 : début du clip ; ancienne : sa durée avant ; morceaux : passages gardés [a, b[ en secondes du clip.
+// Les sons de la vidéo (voix détachée…) posés sur ce clip sont découpés de la même façon, pour rester synchrones.
+function recalerApresDecoupe(c, st0, ancienne, morceaux) {
+  const debuts = []; let t = 0; for (const [a, b] of morceaux) { debuts.push(t); t += b - a; }
+  const nouvelle = t, fin0 = st0 + ancienne;
+  const vers = x => { // instant de l'ancienne timeline → nouvelle timeline
+    if (x < st0) return x; if (x >= fin0) return x - ancienne + nouvelle;
+    const l = x - st0; for (let k = 0; k < morceaux.length; k++) { const [a, b] = morceaux[k]; if (l < b) return st0 + debuts[k] + Math.max(0, l - a); }
+    return st0 + nouvelle;
+  };
+  const r2 = x => +x.toFixed(2), sons = [];
+  for (const a of proj.audio) {
+    const s0 = +a.start || 0, V = +a.vit || 1, d = (a.dur || durOf(a.file)) / V;
+    if (sonLie(a) && a.file === c.file && s0 < fin0 - 0.05 && s0 + d > st0 + 0.05) { // le son de ce clip : coupé aux mêmes endroits
+      morceaux.forEach(([ma, mb], k) => {
+        const deb = Math.max(s0, st0 + ma), fn = Math.min(s0 + d, st0 + mb); if (fn - deb < 0.05) return;
+        sons.push({ ...a, start: r2(st0 + debuts[k] + deb - (st0 + ma)), in: r2((+a.in || 0) + (deb - s0) * V), dur: r2((fn - deb) * V) });
+      });
+      continue;
+    }
+    sons.push({ ...a, start: r2(vers(s0)) });
+  }
+  proj.audio = sons;
+  (proj.pistes || []).forEach(p => { p.start = r2(vers(+p.start || 0)); });
+  (proj.textes || []).forEach(x => { x.start = r2(vers(+x.start || 0)); });
+  if (proj.markers) { const noms = {}, anciens = proj.nomsReperes || {}; proj.markers = proj.markers.map(m => { const n = r2(vers(m)); if (anciens[(+m).toFixed(2)]) noms[n.toFixed(2)] = anciens[(+m).toFixed(2)]; return n; }); proj.nomsReperes = noms; }
+}
 // Coupe un clip en deux à `loc` secondes (temps de montage) en gardant sous-titres, titres et calques à la bonne place
 function trancherClip(c, loc) {
   const vit = c.speed || 1, a = clone(c), b = clone(c);
@@ -1706,6 +1757,8 @@ function pastille() {
 }
 // Batterie : sur batterie, l'aperçu de fond attend plus longtemps après une modification ; fenêtre cachée = aucun calcul
 let surBatterie = false, exportEnCours = false;
+// fermeture pendant un export : l'application demande confirmation (sinon l'export est perdu)
+window.addEventListener('beforeunload', e => { if (exportEnCours) { e.preventDefault(); e.returnValue = ''; } });
 const annulerJob = id => (id ? api('/api/annuler?id=' + enc(id), { method: 'POST' }).catch(() => {}) : null);
 if (navigator.getBattery) navigator.getBattery().then(b => { const maj = () => { surBatterie = !b.charging; }; maj(); b.addEventListener('chargingchange', maj); }).catch(() => {});
 document.addEventListener('visibilitychange', () => { if (!document.hidden && proj.clips.length) preparerEnFond(); });
@@ -1713,6 +1766,7 @@ function preparerEnFond(delai = 1500) {
   clearTimeout(fond.minuteur); pastille();
   if (!proj.clips.length || localStorage.getItem('qm:fond') === 'non' || document.hidden) return;
   if (surBatterie) delai = Math.max(delai, 5000);
+  if (total() > 600) delai = Math.max(delai, 4000); // long montage : on attend que les retouches soient finies avant de tout recalculer
   fond.minuteur = setTimeout(() => {
     if (studio || exportEnCours || (lecture && !lecture.direct)) return preparerEnFond(3000);
     const sig = snap(); if ((rendu && rendu.sig === sig) || fond.cours === sig) return pastille();
@@ -1998,9 +2052,13 @@ $('#insp').addEventListener('change', e => {
 const racineInsp = () => ({ a: proj.audio[selA], v: (proj.pistes || [])[selP] })[$('#insp').dataset.root] || curClip();
 // curseur « Début » d'un clip : le contenu du clip est recalé depuis son état d'avant le glissement (aucune perte en revenant en arrière)
 let debutInsp = null;
-const estDebutClip = (root, p) => p === 'in' && proj.clips.includes(root) && root.kind !== 'image' && root.kind !== 'solid';
-function avantDebutInsp(root, p) { if (estDebutClip(root, p) && (!debutInsp || debutInsp.c !== root)) debutInsp = { c: root, base: clone(root) }; }
-function majDebutInsp(root, p) { if (estDebutClip(root, p) && debutInsp && debutInsp.c === root) decalerDebut(root, debutInsp.base, (root.in - debutInsp.base.in) / (root.speed || 1)); }
+const estDebutClip = (root, p) => (p === 'in' || p === 'speed') && proj.clips.includes(root) && root.kind !== 'image' && root.kind !== 'solid';
+function avantDebutInsp(root, p) { if (estDebutClip(root, p) && (!debutInsp || debutInsp.c !== root || debutInsp.p !== p)) debutInsp = { c: root, p, base: clone(root) }; }
+function majDebutInsp(root, p) {
+  if (!estDebutClip(root, p) || !debutInsp || debutInsp.c !== root) return;
+  if (p === 'speed') recalerVitesse(root, debutInsp.base, debutInsp.base.speed, root.speed); // la parole et ses sous-titres vont à la même vitesse
+  else decalerDebut(root, debutInsp.base, (root.in - debutInsp.base.in) / (root.speed || 1));
+}
 function suite(path, glisse) {
   commit(glisse);
   if ($('#insp').dataset.root === 'v') { tlDessin(); apercuRetarde(); return; }
@@ -2113,7 +2171,7 @@ function basculerMuet() {
   l.forEach(c => { if (tousMuets) c.vol = c.volAvant || 100; else { if (c.vol > 0) c.volAvant = c.vol; c.vol = 0; } });
   commit(); tout(); apercu(); aide(tousMuets ? '🔈 Son remis.' : '🔇 Son coupé (clic droit → Remettre le son).');
 }
-function vitesseSelection(v) { clipsVises().filter(c => c.kind === 'video' || c.kind === 'audio').forEach(c => { c.speed = v; }); commit(); tout(); apercu(); }
+function vitesseSelection(v) { clipsVises().filter(c => c.kind === 'video' || c.kind === 'audio').forEach(c => { const base = clone(c); c.speed = v; recalerVitesse(c, base, base.speed, v); }); commit(); tout(); apercu(); }
 // Image fixe : la vidéo est coupée à la tête de lecture et une image figée de 3 secondes est insérée
 async function imageFixe() {
   const c = curClip(); if (!c || c.kind !== 'video') return aide('Place la tête de lecture sur une vidéo.');
@@ -2498,18 +2556,17 @@ function paroleAppliquer(i, r, { sous, couper, style }) {
   }
   const segs = r.garder.filter(([x, y]) => y > x + 0.15 && x < dur);
   if (!segs.length) return { pieces: 1, gagne: 0, n: 0 };
-  const calquesMorceaux = repartirCalques(c.overlays, segs.map(([x, y]) => [x / sp, Math.min(y, dur) / sp]));
-  const nouveaux = segs.map(([x, y], k) => {
-    const n = clone(c); n.in = +(c.in + x).toFixed(2); n.out = +(c.in + Math.min(y, dur)).toFixed(2); n.transition = k === segs.length - 1 ? c.transition : null; n.parle = true;
-    // calques : à la même place dans la parole, continués sur les morceaux suivants (voir repartirCalques)
-    n.overlays = calquesMorceaux[k];
-    n.titre = c.titre && c.titre.start * sp >= x && c.titre.start * sp < y ? { ...c.titre, start: +((c.titre.start * sp - x) / sp).toFixed(2) } : (k === 0 && c.titre && c.titre.start * sp < x ? { ...c.titre, start: 0 } : null);
+  // morceaux gardés : titre, texte, cadrage et calques recalés et continués (decouperClip), sous-titres refaits sur la parole
+  const morceaux = segs.map(([x, y]) => [x / sp, Math.min(y, dur) / sp]), st0 = starts()[i];
+  const nouveaux = decouperClip(c, morceaux).map((n, k) => {
+    const [x, y] = segs[k]; n.in = +(c.in + x).toFixed(2); n.out = +(c.in + Math.min(y, dur)).toFixed(2); n.parle = true;
     n.subs = sous ? sousTitresPour(r, style, x, Math.min(y, dur), sp) : [];
     if (sous) { n.subStyle = style; if (modeMots(style)) n.subSize = Math.max(n.subSize || 0, tailleSous(style)); }
     return n;
   });
   const garde = segs.reduce((a, [x, y]) => a + Math.min(y, dur) - x, 0);
   proj.clips.splice(i, 1, ...nouveaux);
+  recalerApresDecoupe(c, st0, effDur(c), morceaux); // musique, bruitages, piste vidéo 2, titres T et repères suivent le montage raccourci
   return { pieces: nouveaux.length, gagne: (dur - garde) / sp, n: nouveaux.reduce((a, n) => a + n.subs.length, 0) };
 }
 // Sous-titrer et/ou couper une liste de clips (indices) ; surEtat(texte) pour suivre
@@ -2665,9 +2722,8 @@ async function outil(nom) {
       if (c.out - start >= 0.2) segs.push([start, c.out]);
       if (!silences.length || !segs.length) { $('#oSilRes').textContent = 'Aucun silence trouvé avec ces réglages.'; return; }
       const gagne = (c.out - c.in) - segs.reduce((a, [x, y]) => a + (y - x), 0);
-      const nouveaux = segs.map(([x, y]) => { const n = clone(c); n.in = +x.toFixed(2); n.out = +y.toFixed(2); n.transition = null; n.titre = null; return n; });
-      if (c.titre) nouveaux[0].titre = c.titre;
-      proj.clips.splice(sel, 1, ...nouveaux); commit(); tout(); apercu();
+      const sp = c.speed || 1, morceaux = segs.map(([x, y]) => [(x - c.in) / sp, (y - c.in) / sp]), nouveaux = decouperClip(c, morceaux), st0 = starts()[sel]; // sous-titres et calques recalés dans chaque morceau
+      proj.clips.splice(sel, 1, ...nouveaux); recalerApresDecoupe(c, st0, effDur(c), morceaux); commit(); tout(); apercu();
       $('#oSilRes').textContent = `✅ ${silences.length} silences coupés, ${fmt(gagne)} gagnées. Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} si besoin.`;
     } catch (e) { $('#oSilRes').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
   } else if (nom === 'micro') {

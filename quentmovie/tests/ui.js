@@ -160,6 +160,19 @@ function chromium() {
     const c = clone(base); c.in = 2; decalerDebut(c, base, 1); const d = clone(base); d.in = 0.5; decalerDebut(d, base, -0.5);
     return c.subs.length === 1 && c.subs[0].s === 1 && c.overlays[0].start === 1 && c.titre.start === 1.5 && d.subs[0].s === 2.5 && d.overlays[0].start === 2.5 && d.titre.start === 3;
   }));
+  check('vitesse ×2 : sous-titres, calques et titre suivent la parole accélérée', await ev(() => {
+    const c = newClip(medias.find(m => m.file === 'a.mp4')); c.subs = [{ s: 2, e: 3, t: 'mot' }]; c.overlays = [{ file: 'x', kind: 'video', start: 4, dur: 1 }]; c.titre = { preset: 'angle', start: 1 };
+    proj.clips = [c]; sel = 0; selObjs.clear(); vitesseSelection(2); const d = proj.clips[0];
+    return d.speed === 2 && d.subs[0].s === 1 && d.subs[0].e === 1.5 && d.overlays[0].start === 2 && d.overlays[0].dur === 1 && d.titre.start === 0.5;
+  }));
+  check('blancs coupés : sons, titres T, repères et calques suivent ; texte du clip pas recopié partout', await ev(() => {
+    const c = newClip(medias.find(m => m.file === 'a.mp4')); c.in = 0; c.out = 6; c.text = 'Bonjour'; c.textStart = 0; c.textDur = 1; c.overlays = [{ file: 'x', kind: 'video', start: 3, dur: 1 }];
+    proj.clips = [c]; proj.audio = [{ file: 'lib:sons/x.mp3', start: 5, vol: 100 }, { file: 'a.mp4', start: 0, in: 0, dur: 6, vol: 100, detache: true }]; proj.textes = [{ start: 4.5, dur: 1, titre: { preset: 'angle' } }]; proj.markers = [5.5]; proj.pistes = [];
+    paroleAppliquer(0, { garder: [[0, 2], [4, 6]], st: { phrase: [], mots: [] } }, { sous: false, couper: true, style: 'phrase' });
+    const [a, b] = proj.clips, voix = proj.audio.filter(x => x.file === 'a.mp4').sort((x, y) => x.start - y.start), bz = proj.audio.find(x => x.file === 'lib:sons/x.mp3');
+    return proj.clips.length === 2 && a.text === 'Bonjour' && b.text === '' && b.overlays.length === 1 && b.overlays[0].start === 0 && bz.start === 3 && proj.textes[0].start === 2.5 && proj.markers[0] === 3.5
+      && voix.length === 2 && voix[0].start === 0 && voix[0].dur === 2 && voix[1].start === 2 && voix[1].in === 4 && voix[1].dur === 2;
+  }));
   check('coupe au milieu d’une animation : la 2e moitié continue sans recommencer', await ev(() => { const c = newClip(medias.find(m => m.file === 'a.mp4')); c.overlays = [{ file: 'x', kind: 'video', start: 1, dur: 3, anim: 'pop' }]; const [a, b] = trancherClip(c, 2); return a.overlays.length === 1 && a.overlays[0].dur === 1 && b.overlays[0].start === 0 && b.overlays[0].ss === 1 && b.overlays[0].dur === 2 && b.overlays[0].anim === 'none'; }));
   await ev(() => { const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v)]; proj.audio = [{ file: 'son.wav', start: 0, in: 0, dur: 6, vol: 100 }]; proj.pistes = []; proj.markers = []; proj.etatPistes = {}; sel = 0; selA = -1; setZoom(40); commit(); tout(); choisirOutil('lame'); });
   await pg.waitForTimeout(200);

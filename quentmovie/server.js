@@ -1073,7 +1073,9 @@ function buildClip(c, P, o = {}) {
     const L = +process.env.QM_MORCEAU || 120, out = [];
     for (const c of clips) {
       const eff = (num(c.out, 0) - num(c.in, 0)) / (num(c.speed, 1) || 1);
-      const simple = c.kind === 'video' && num(c.speed, 1) === 1 && eff >= L * 1.6 && !(c.fx || []).length && !(c.overlays || []).length && !c.titre && !(c.key && c.key.on) && !c.viz && !c.text
+      // calques, titre et texte suivent les morceaux (ils continuent là où ils en étaient) : une longue prise avec un « Breaking news »
+      // ou l'ambiance d'un pack s'encode aussi en morceaux parallèles
+      const simple = c.kind === 'video' && num(c.speed, 1) === 1 && eff >= L * 1.6 && !(c.fx || []).length && !(c.key && c.key.on) && !c.viz
         && !(Array.isArray(c.cadrage) && c.cadrage.length) && !c.bgFile && !c.sonDetache;
       if (!simple || process.env.QM_SANS_MORCEAUX) { out.push(c); continue; }
       const n = Math.max(2, Math.round(eff / L)), len = eff / n, fo = fonduxDe(c, eff);
@@ -1083,6 +1085,24 @@ function buildClip(c, P, o = {}) {
         d.fade = false; d.fadeIn = k === 0 ? fo.e : 0; d.fadeOut = k === n - 1 ? fo.s : 0;
         d.transition = k === n - 1 ? c.transition : null;
         d.subs = (c.subs || []).filter(x => x && num(x.e, 0) > a && num(x.s, 0) < b).map(x => ({ ...x, s: +Math.max(0, num(x.s, 0) - a).toFixed(3), e: +(Math.min(num(x.e, 0), b) - a).toFixed(3) }));
+        d.overlays = [];
+        for (const o of c.overlays || []) {
+          if (!o) continue;
+          const s0 = num(o.start, 0), D = num(o.dur, 0) > 0 ? num(o.dur, 0) : Infinity, deb = Math.max(s0, a), fin = Math.min(s0 + D, b);
+          if (fin - deb < 0.05) continue;
+          d.overlays.push({ ...o, start: +(deb - a).toFixed(3), dur: D === Infinity ? 0 : +(fin - deb).toFixed(3), ...(deb > s0 + 0.01 ? { ss: +(num(o.ss, 0) + deb - s0).toFixed(3), anim: 'none' } : {}) });
+        }
+        // titre et texte du clip : dans les morceaux où ils sont visibles ; déjà commencés, ils continuent sans rejouer leur entrée
+        // (deja / textDeja : temps déjà affiché ; leur durée reste celle d'origine, comptée depuis leur début)
+        if (c.titre) {
+          const ts = num(c.titre.start, 0), D = num(c.titre.dur, 0) > 0 ? num(c.titre.dur, 0) : Infinity;
+          d.titre = ts + D > a && ts < b ? (ts >= a ? { ...c.titre, start: +(ts - a).toFixed(3) } : { ...c.titre, start: 0, deja: +(num(c.titre.deja, 0) + a - ts).toFixed(3) }) : null;
+        }
+        if (c.text) {
+          const ts = num(c.textStart, 0), D = num(c.textDur, 0) > 0 ? num(c.textDur, 0) : Infinity;
+          if (ts + D > a && ts < b) { if (ts >= a) d.textStart = +(ts - a).toFixed(3); else { d.textStart = 0; d.textDeja = +(num(c.textDeja, 0) + a - ts).toFixed(3); } }
+          else d.text = '';
+        }
         d.morceau = true; out.push(d);
       }
     }
@@ -1921,7 +1941,7 @@ function buildClip(c, P, o = {}) {
       await new Promise((ok, ko) => { server.once('error', ko); server.listen(PORT, '127.0.0.1', ok); });
       return server.address().port;
     },
-    stop() { server.close(); if (parole) parole.arreter(); if (ia) ia.arreter(); }
+    stop() { server.close(); if (parole) parole.arreter(); if (ia) ia.arreter(); for (const l of enCours.values()) for (const p of l) { try { p.kill('SIGKILL'); } catch (e) { /* déjà fini */ } } }, // aucun FFmpeg ne continue après la fermeture
   };
 }
 
