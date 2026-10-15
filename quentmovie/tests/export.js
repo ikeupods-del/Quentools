@@ -123,6 +123,27 @@ const { execFileSync } = require('child_process');
     const n = jn.niveaux || {}, m = n['lib:' + mu.file] || {}, b = n['lib:' + so.file] || {};
     check('niveaux : musique calée 18 dB sous la voix', n.montage != null && m.type === 'musique' && Math.abs(m.lufs + m.gainDb - (n.montage - 18)) < 0.6, JSON.stringify(n));
     check('niveaux : bruitage calé sous la voix', b.type === 'bruitage' && Math.abs(b.lufs + b.gainDb - (n.montage - 7)) < 0.6, JSON.stringify(b)); }
+  // clip encodé autrement que les autres (sur Mac : puce vidéo refusée pour ce clip) : réencodé seul comme les autres,
+  // l'assemblage rapide reste utilisé (avant : assemblage complet de tous les clips à la fois, en échec sur les longs montages)
+  { const cache = path.join(base, '.cache-rendu'), avant = new Set(fs.existsSync(cache) ? fs.readdirSync(cache) : []);
+    const p = { ...projet('Mixte'), clips: [clip('a.mp4', 'video', { out: 3, transition: { type: 'fade', dur: 0.5 } }), clip('a.mp4', 'video', { in: 0.5, out: 3.5 }), clip('a.mp4', 'video', { in: 1, out: 3 })] };
+    await exporter(p);
+    const nouveau = fs.readdirSync(cache).filter(x => !avant.has(x) && x.endsWith('.mp4'))[1], f = path.join(cache, nouveau);
+    ff('-i', f, '-map', '0', '-c:a', 'copy', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30, '-r', 30, '-pix_fmt', 'yuv420p', f + '.x.mp4'); fs.renameSync(f + '.x.mp4', f);
+    const jm = await exporter(p);
+    check('clip encodé autrement : réencodé seul, assemblage rapide gardé', jm.assemblage === 'rapide' && jm.harmonises === 1, `${jm.assemblage} ${jm.harmonises} ${jm.avertissement}`);
+    const images = execFileSync(bins.ffmpeg, ['-v', 'error', '-i', path.join(base, 'exports', jm.out), '-map', '0:v:0', '-c', 'copy', '-f', 'framecrc', '-']).toString().split('\n').filter(l => l && l[0] !== '#').length;
+    check('clip encodé autrement : durée exacte', images === Math.round((3 + 3 + 2 - 0.5) * 30), images);
+    const j3 = await exporter(p);
+    check('clip encodé autrement : corrigé dans le cache (rien à refaire au prochain export)', j3.repris === 3 && !j3.harmonises, `${j3.repris} ${j3.harmonises}`); }
+  // calques : plus de 8 sur un même clip, chacun visible seulement pendant sa durée
+  { const ovs = Array.from({ length: 10 }, (_, k) => ({ file: 'p.png', kind: 'image', x: 50, y: 50, scale: 100, rot: 0, opacity: 100, start: +(k * 0.35).toFixed(2), dur: 0.3, anim: 'none', mode: '', plein: 'remplir', key: false }));
+    const sans = await exporter({ ...projet('CalSans'), clips: [clip('a.mp4', 'video', { out: 4 })] });
+    const avec = await exporter({ ...projet('CalAvec'), clips: [clip('a.mp4', 'video', { out: 4, overlays: ovs })] });
+    const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
+    const ecart = t => { const a = img(sans.out, t), b = img(avec.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
+    check('calques : le 10e calque d’un clip apparaît à son instant', ecart(0.15) > 1 && ecart(3.3) > 1, [ecart(0.15), ecart(3.3)].join(' '));
+    check('calques : rien en dehors de leur durée, clip complet', ecart(3.8) < 0.5 && Math.abs(lireDuree(avec.out) - 4) < 0.2, [ecart(3.8), lireDuree(avec.out)].join(' ')); }
   // analyse de l'image et du son : changements de plan, blancs, niveau sonore, conseils qui corrigent
   ff('-f', 'lavfi', '-i', 'color=c=red:s=320x180:r=25:d=2', '-f', 'lavfi', '-i', 'color=c=blue:s=320x180:r=25:d=2', '-f', 'lavfi', '-i', 'color=c=green:s=320x180:r=25:d=2',
     '-f', 'lavfi', '-i', 'sine=f=300:d=2', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono:d=2', '-f', 'lavfi', '-i', 'sine=f=500:d=2',

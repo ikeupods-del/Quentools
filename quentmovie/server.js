@@ -485,17 +485,23 @@ function buildClip(c, P, o = {}) {
     }
 
     // Calques : images, vidéos, stickers ; position, taille, rotation, apparition animée
-    for (const ov of (c.overlays || []).slice(0, 8)) {
+    // jusqu'à 24 calques par clip (les animations du studio en ajoutent une par touche) ; seuls ceux qui apparaissent dans le clip comptent
+    let nCalques = 0;
+    for (const ov of c.overlays || []) {
       if (!ov || !ov.file || ov.on === false) continue;
       const S0 = clamp(num(ov.start, 0), 0, 3600), Dd = num(ov.dur, 0), E0 = Dd > 0 ? S0 + Dd : eff + 10;
       if (o.preview && !(t >= S0 && t < E0)) continue; // l'aperçu d'une image n'affiche que ce qui est visible à cet instant
+      if (S0 >= eff || ++nCalques > 24) continue;
       const isVid = ov.kind === 'video', ovf = mediaPath(orient(ov.file, W, H));
-      if (isVid) args.push(...(o.preview && t > S0 || num(ov.ss, 0) > 0 ? ['-ss', ((o.preview && t > S0 ? Math.min(t - S0, 1.8) : 0) + clamp(num(ov.ss, 0), 0, 600)).toFixed(2)] : []), '-stream_loop', '-1', '-i', ovf); else args.push('-loop', '1', '-framerate', fps, '-i', ovf);
+      const mode = MODES[ov.mode] && filters.has('blend') ? MODES[ov.mode] : null;
+      // calque limité au temps où il est visible (sinon il est lu et détouré pendant tout le clip, même caché) ;
+      // une fois fini, l'image du clip passe telle quelle (eof_action=pass)
+      const lim = !o.preview && !mode ? Math.min(E0, eff) - S0 + 0.5 : 0, duree = lim ? ['-t', lim.toFixed(3)] : [], fin = lim ? 'eof_action=pass' : 'shortest=1';
+      if (isVid) args.push(...(o.preview && t > S0 || num(ov.ss, 0) > 0 ? ['-ss', ((o.preview && t > S0 ? Math.min(t - S0, 1.8) : 0) + clamp(num(ov.ss, 0), 0, 600)).toFixed(2)] : []), '-stream_loop', '-1', ...duree, '-i', ovf); else args.push('-loop', '1', '-framerate', fps, ...duree, '-i', ovf);
       const idx = n++, id = lab(), sc = clamp(num(ov.scale, 30), 2, 150) / 100;
       const op = clamp(num(ov.opacity, 100), 5, 100) / 100, en = o.preview ? '' : `:enable='between(t,${S0},${E0})'`;
       // fond vert de l'élément (animations « fond vert ») : la couleur verte devient transparente
       const cle = ov.key ? `,colorkey=0x00ff00:${clamp(num(ov.keySim, 0.3), 0.05, 0.7)}:0.12` : '';
-      const mode = MODES[ov.mode] && filters.has('blend') ? MODES[ov.mode] : null;
       if (mode) { // calque plein écran mélangé à l'image (fuites de lumière, poussière, grain…)
         f.push(`[${idx}:v]fps=${fps},${ov.plein === 'cadre' ? `scale=${W}:${H},setsar=1` : scFill},format=gbrp[${id}]`);
         const a = lab(), out = lab();
@@ -507,7 +513,7 @@ function buildClip(c, P, o = {}) {
         if (op < 1) ch += `,colorchannelmixer=aa=${op}`;
         if (!o.preview && ov.anim === 'fade') ch += `,fade=t=in:st=${S0}:d=0.4:alpha=1` + (Dd > 0 ? `,fade=t=out:st=${Math.max(S0, E0 - 0.4)}:d=0.4:alpha=1` : '');
         f.push(`${ch}[${id}]`);
-        const out = lab(); f.push(`[${cur}][${id}]overlay=0:0:shortest=1:format=auto${en}[${out}]`); cur = out; continue;
+        const out = lab(); f.push(`[${cur}][${id}]overlay=0:0:${fin}:format=auto${en}[${out}]`); cur = out; continue;
       }
       const anim = o.preview ? 'none' : (ov.anim || 'none'), Tt = 't';
       const ease = (a, d) => `(1-pow(1-min(1,max(0,(${Tt}-(${a}))/${d})),3))`;
@@ -526,7 +532,7 @@ function buildClip(c, P, o = {}) {
       if (anim === 'monte') ye = `${ye}+(1-${ease(S0, 0.5)})*H*0.4`;
       if (anim === 'rebond') ye = `${ye}-abs(sin((${Tt}-${S0})*9))*H*0.04*exp(-(${Tt}-${S0})*1.5)`;
       const out = lab();
-      f.push(`[${cur}][${id}]overlay=x='${xe}':y='${ye}':shortest=1:format=auto${en}[${out}]`); cur = out;
+      f.push(`[${cur}][${id}]overlay=x='${xe}':y='${ye}':${fin}:format=auto${en}[${out}]`); cur = out;
     }
 
     // Sous-titres (une ligne par repère, en bas)
@@ -1088,9 +1094,12 @@ function buildClip(c, P, o = {}) {
         }
         const prog = d => { const m = d.match(/out_time_us=(\d+)/g); if (m) { avance[i] = Math.min(built[i].eff, +m[m.length - 1].split('=')[1] / 1e6); suivi(); } };
         try { await run(FFMPEG, [...built[i].args, segs[i]], { cwd: dir, onOut: prog, silence: vt ? VT_SURVEILLANCE : 0 }); }
-        catch (e) { // la puce vidéo refuse ce clip : décodage et encodage par le processeur
+        catch (e) { // la puce vidéo refuse ce clip : lecture par le processeur et encodage par la puce (même encodeur que les autres clips),
+          // puis, en dernier recours, tout par le processeur (ce clip sera réencodé comme les autres à l'assemblage)
           if (!vt && !opts(i, true).hw) throw e;
-          await run(FFMPEG, [...buildClip(clips[i], P, { ...opts(i, false), hdr: hdrFlags[i] }).args, segs[i]], { cwd: dir, onOut: prog });
+          let refait = false;
+          if (vt && opts(i, true).hw) { try { await run(FFMPEG, [...buildClip(clips[i], P, { ...opts(i, true), hw: false, hdr: hdrFlags[i] }).args, segs[i]], { cwd: dir, onOut: prog, silence: VT_SURVEILLANCE }); refait = true; } catch (e2) { /* processeur seul */ } }
+          if (!refait) await run(FFMPEG, [...buildClip(clips[i], P, { ...opts(i, false), hdr: hdrFlags[i] }).args, segs[i]], { cwd: dir, onOut: prog });
         }
         avance[i] = built[i].eff; faits++; suivi();
         job.step = `Clips : ${faits} sur ${built.length}${repris ? ` (${repris} déjà prêt${repris > 1 ? 's' : ''})` : ''}`;
@@ -1120,15 +1129,28 @@ function buildClip(c, P, o = {}) {
       // En cas de doute (contrôle final non concluant), on repart sur l'assemblage complet ci-dessous.
       if (!process.env.QM_ASSEMBLAGE_CLASSIQUE && (trans.some(Boolean) || pistes.length) && Number.isInteger(P.fps)) {
         try {
-          const t0 = Date.now(), epi = EPI.creer({ run, FFMPEG, encoder, FX, aFiltre: n => filters.has(n), clamp, num }), E = encodeursClip(P, proxy, project.quality === 'max', vt), fps = P.fps;
-          const F = await epi.compterToutes(segs.map(sg => path.join(dir, sg)));
+          const t0 = Date.now(), epi = EPI.creer({ run, FFMPEG, encoder, FX, aFiltre: n => filters.has(n), clamp, num }), fps = P.fps;
+          const E = encodeursClip(P, proxy, project.quality === 'max', vt); let F, r, video, raccords;
           const etape = t => { job.step = t; };
-          const r = await epi.assembler({ cwd: dir, segs, fps, trans, F, echelle: Math.min(P.w, P.h) / 1080, dims: [P.w, P.h], enc: E, paralleles: enParallele, etape });
-          let video = r.video; const raccords = r.plan.pieces.map(p => p.debut);
-          if (pistes.length) {
-            const intervalles = pistes.map(p => { const deb = clamp(num(p.start, 0), 0, 36000), du = dureePiste(p); return { fa: Math.floor(deb * fps), fb: Math.ceil((deb + du) * fps) + 1 }; });
-            const z = await epi.poserZones({ cwd: dir, video, plan: r.plan, fps, intervalles, paralleles: enParallele, etape, rendreZone: (zone, entree) => poserPistes(dir, entree, pistes, P, proxy, project, { de: zone.de, n: zone.a - zone.de, enc: E }).then(f => { zone.f = f; return f; }) });
-            video = z.video; z.zones.forEach(q => raccords.push(q.de, q.a));
+          // Un clip que la puce vidéo a refusé (encodé par le processeur) ne se recopie pas avec les autres : il est réencodé
+          // comme eux ; si la puce vidéo refuse encore (clip, fondu ou incrustation), tout passe au processeur. Jamais l'assemblage complet
+          // pour cette raison : il ouvre tous les clips à la fois et échoue sur les longs montages.
+          for (const toutCpu of [false, true]) {
+            const enc = toutCpu ? { vt: null, cpu: E.cpu } : E;
+            try {
+              const refaits = await epi.harmoniser({ cwd: dir, segs, fps, enc, tous: toutCpu, paralleles: enParallele, etape });
+              if (!toutCpu) for (const i of refaits) { const cache = cles[i] && path.join(CACHE_RENDU, cles[i] + '.mp4'); if (cache) { try { fs.copyFileSync(path.join(dir, segs[i]), cache + '.part', fs.constants.COPYFILE_FICLONE); fs.renameSync(cache + '.part', cache); } catch (e) { /* cache indisponible */ } } }
+              if (refaits.length) job.harmonises = refaits.length;
+              F = await epi.compterToutes(segs.map(sg => path.join(dir, sg)));
+              r = await epi.assembler({ cwd: dir, segs, fps, trans, F, echelle: Math.min(P.w, P.h) / 1080, dims: [P.w, P.h], enc, paralleles: enParallele, etape });
+              video = r.video; raccords = r.plan.pieces.map(p => p.debut);
+              if (pistes.length) {
+                const intervalles = pistes.map(p => { const deb = clamp(num(p.start, 0), 0, 36000), du = dureePiste(p); return { fa: Math.floor(deb * fps), fb: Math.ceil((deb + du) * fps) + 1 }; });
+                const z = await epi.poserZones({ cwd: dir, video, plan: r.plan, fps, intervalles, paralleles: enParallele, etape, rendreZone: (zone, entree) => poserPistes(dir, entree, pistes, P, proxy, project, { de: zone.de, n: zone.a - zone.de, enc }).then(f => { zone.f = f; return f; }) });
+                video = z.video; z.zones.forEach(q => raccords.push(q.de, q.a));
+              }
+              break;
+            } catch (e) { if (toutCpu || !/encodeurs différents/.test(e.message)) throw e; }
           }
           await epi.verifier({ cwd: dir, video, plan: r.plan, fps, raccords });
           // son : refait d'un seul tenant, chaque clip coupé à son nombre exact d'images (recopier l'AAC morceau par morceau
@@ -1143,15 +1165,25 @@ function buildClip(c, P, o = {}) {
       }
       if (fait) { /* assemblage rapide terminé */ } else if (segs.length > 1 && !trans.some(Boolean)) {
         // image recopiée telle quelle ; son refait d'un seul tenant, calé sur le nombre d'images de chaque clip (voir plus haut)
+        // clips encodés différemment (puce vidéo refusée pour l'un d'eux) : réencodés comme les autres avant la recopie
+        const epiS = EPI.creer({ run, FFMPEG, encoder, FX, aFiltre: n => filters.has(n), clamp, num }), E = encodeursClip(P, proxy, project.quality === 'max', vt);
+        if (Number.isInteger(P.fps)) {
+          for (const toutCpu of [false, true]) {
+            try { const r = await epiS.harmoniser({ cwd: dir, segs, fps: P.fps, enc: toutCpu ? { vt: null, cpu: E.cpu } : E, tous: toutCpu, paralleles: enParallele, etape: t => { job.step = t; } }); if (r.length) job.harmonises = r.length; break; }
+            catch (e) { if (toutCpu || !/encodeurs différents/.test(e.message)) { job.avertissement = 'Clips encodés différemment : ' + String(e.message).split('\n')[0].slice(0, 160); break; } }
+          }
+        }
         fs.writeFileSync(path.join(dir, 'liste.txt'), segs.map(s => `file '${s}'`).join('\n'));
         await run(FFMPEG, ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', 0, '-i', 'liste.txt', '-map', '0:v:0', '-c', 'copy', 'image-seule.mp4'], { cwd: dir });
-        const epiS = EPI.creer({ run, FFMPEG, encoder, FX, aFiltre: n => filters.has(n), clamp, num }), F = await epiS.compterToutes(segs.map(sg => path.join(dir, sg)));
+        const F = await epiS.compterToutes(segs.map(sg => path.join(dir, sg)));
         await epiS.sonDesClips(dir, segs, F, F.map(() => 0), P.fps, proxy, 'son-clips.m4a');
         await run(FFMPEG, ['-y', '-loglevel', 'error', '-i', 'image-seule.mp4', '-i', 'son-clips.m4a', '-map', '0:v:0', '-map', '1:a:0', '-c', 'copy', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
         joined = 'all.mp4';
       } else if (segs.length > 1) {
-        const inArgs = segs.flatMap(s => ['-i', s]);
-        const g = []; const norm = `settb=AVTB,fps=${P.fps},format=yuv420p`;
+        // chaque clip ramené à la taille, aux pixels carrés et au format du montage, sans reconfiguration en cours de route :
+        // un fondu (xfade) refuse deux images différentes (« Failed to configure output pad on Parsed_xfade »)
+        const inArgs = segs.flatMap(s => ['-reinit_filter', 0, '-i', s]);
+        const g = []; const norm = `scale=${P.w}:${P.h},setsar=1,settb=AVTB,fps=${P.fps},format=yuv420p`;
         let cv = 'v0', ca = 'a0', len = lens[0];
         g.push(`[0:v]${norm}[v0]`, '[0:a]aresample=48000[a0]');
         for (let i = 1; i < segs.length; i++) {
@@ -1170,9 +1202,13 @@ function buildClip(c, P, o = {}) {
           }
           cv = nv; ca = na;
         }
-        await encoder(['-y', '-loglevel', 'error', ...inArgs, '-filter_complex', g.join(';'), '-map', `[${cv}]`, '-map', `[${ca}]`], vt ? encVt(P, project.quality === 'max') : null,
-          proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17],
-          ['-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
+        try {
+          await encoder(['-y', '-loglevel', 'error', ...inArgs, '-filter_complex', g.join(';'), '-map', `[${cv}]`, '-map', `[${ca}]`], vt ? encVt(P, project.quality === 'max') : null,
+            proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17],
+            ['-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
+        } catch (e) { // la cause d'origine (assemblage rapide refusé) aide à comprendre
+          throw new Error(String(e.message).split('\n').slice(-2).join(' ') + (job.avertissement ? ' — ' + job.avertissement : ''));
+        }
         joined = 'all.mp4';
       }
 
@@ -1775,7 +1811,7 @@ function buildClip(c, P, o = {}) {
       }
       if (req.method === 'GET' && p === '/api/job') {
         const job = jobs.get(url.searchParams.get('id'));
-        return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done, resultat: job.resultat || null, niveaux: job.niveaux, duree: job.fin && job.debut ? +((job.fin - job.debut) / 1000).toFixed(1) : null, repris: job.repris, morceaux: job.morceaux || 0, paralleles: job.paralleles || 0, assemblage: job.assemblage || null, avertissement: job.avertissement || null, msAssemblage: job.msAssemblage || 0 }) : send(res, 404, { error: 'Export inconnu' });
+        return job ? send(res, 200, { progress: job.progress, step: job.step, out: job.out, url: job.url, error: job.error, done: job.done, resultat: job.resultat || null, niveaux: job.niveaux, duree: job.fin && job.debut ? +((job.fin - job.debut) / 1000).toFixed(1) : null, repris: job.repris, morceaux: job.morceaux || 0, paralleles: job.paralleles || 0, assemblage: job.assemblage || null, harmonises: job.harmonises || 0, avertissement: job.avertissement || null, msAssemblage: job.msAssemblage || 0 }) : send(res, 404, { error: 'Export inconnu' });
       }
       // Projets
       if (p === '/api/projet') { // enregistrement automatique

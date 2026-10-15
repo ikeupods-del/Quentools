@@ -129,6 +129,25 @@ function creer({ run, FFMPEG, encoder, FX, aFiltre, clamp, num }) {
     await run(FFMPEG, ['-y', '-v', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '[son]', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', out], { cwd });
   }
 
+  // Clips encodés différemment des autres (puce vidéo refusée pour un clip, ancien cache…) : seuls ceux-là sont réencodés
+  // comme la majorité, pour que tout se recopie ensemble. tous = dernier recours : chaque clip réencodé de la même façon.
+  // Renvoie les numéros des clips réencodés ; lève une erreur si les en-têtes restent différents.
+  async function harmoniser({ cwd, segs, fps, enc, tous = false, paralleles = 2, etape }) {
+    const h = await partout(segs, 6, f => entetes(nom(cwd, f)));
+    if (!tous && h.every(x => x === h[0])) return [];
+    const n = new Map(); h.forEach(x => n.set(x, (n.get(x) || 0) + 1));
+    const ref = [...n].sort((a, b) => b[1] - a[1])[0][0], refaits = segs.map((_, i) => i).filter(i => tous || h[i] !== ref);
+    if (etape) etape(`Harmonisation de ${refaits.length} clip${refaits.length > 1 ? 's' : ''}`);
+    await sur(refaits, paralleles, async i => {
+      const f = segs[i], tmp = 'h-' + f;
+      await encoder(['-y', '-loglevel', 'error', '-i', f, '-map', '0:v:0', '-map', '0:a?'], enc.vt, enc.cpu,
+        ['-r', fps, '-enc_time_base:v', `1/${fps}`, '-chroma_sample_location:v', 'left', '-pix_fmt', 'yuv420p', '-force_key_frames', expressionGop(fps), '-c:a', 'copy', '-movflags', '+faststart', tmp], { cwd });
+      fs.renameSync(nom(cwd, tmp), nom(cwd, f)); h[i] = await entetes(nom(cwd, f));
+    });
+    if (h.some(x => x !== (tous ? h[0] : ref))) throw new Error('encodeurs différents entre les clips');
+    return refaits;
+  }
+
   // Assemble les clips : renvoie { video, plan } (image seule, sans son) ou lève une erreur (l'appelant utilise alors l'ancienne méthode)
   async function assembler({ cwd, segs, fps, trans, F, enc, paralleles, etape, echelle = 1, dims = null }) {
     // contrôle immédiat : des clips encodés différemment ne peuvent pas être recopiés ensemble (on évite tout le travail inutile)
@@ -186,7 +205,7 @@ function creer({ run, FFMPEG, encoder, FX, aFiltre, clamp, num }) {
     });
   }
 
-  return { assembler, poserZones, verifier, sonDesClips, compterImages, compterToutes: (fichiers, limite = 6) => partout(fichiers, limite, f => compterImages(f)), entetes, copier };
+  return { assembler, harmoniser, poserZones, verifier, sonDesClips, compterImages, compterToutes: (fichiers, limite = 6) => partout(fichiers, limite, f => compterImages(f)), entetes, copier };
 }
 
 module.exports = { planifier, zonesPistes, expressionGop, creer };

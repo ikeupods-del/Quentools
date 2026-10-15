@@ -147,6 +147,8 @@ function chromium() {
   await ev(() => { proj.clips = proj.clips.filter(c => c.kind !== 'audio'); commit(); tout(); });
 
   // 3 bis) outils pro : lame, pistes (verrou, muet, masquer), repères nommés et chapitres, grille
+  // animation sur fond vert (Breaking news…) posée depuis l'onglet Calques : à la tête de lecture, jouée une fois
+  check('calque fond vert : posé à la tête de lecture, joué une fois', await ev(() => { const c = newClip(medias.find(m => m.file === 'a.mp4')); proj.clips = [c]; sel = 0; gt = 1.2; commit(); tout(); const it = LIB().fondvert[0]; ajouterCalque('lib:' + it.file, 'video', POSES.vert); const o = c.overlays[c.overlays.length - 1]; return Math.abs(o.start - 1.2) < 0.05 && o.dur > 0 && o.dur <= it.duree + 0.01 && o.key; }));
   await ev(() => { const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v)]; proj.audio = [{ file: 'son.wav', start: 0, in: 0, dur: 6, vol: 100 }]; proj.pistes = []; proj.markers = []; proj.etatPistes = {}; sel = 0; selA = -1; setZoom(40); commit(); tout(); choisirOutil('lame'); });
   await pg.waitForTimeout(200);
   let bx = await ev(() => { const e = document.querySelector('.clip[data-i="0"]').getBoundingClientRect(), r = $('#lane').getBoundingClientRect(); return { x: r.left + 2 * 40, y: e.y + e.height / 2 }; });

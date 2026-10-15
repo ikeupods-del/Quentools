@@ -836,8 +836,12 @@ const POSES = {
 };
 function ajouterCalque(file, kind, extra = {}) {
   const c = clipCible(); if (!c) return signal(sansClipMsg);
-  c.overlays.push({ file, kind: kind === 'video' ? 'video' : 'image', x: 50, y: 50, scale: /lib:stickers/.test(file) ? 25 : 40, rot: 0, opacity: 100, start: 0, dur: 0, anim: 'pop', mode: '', plein: '', key: false, keySim: 0.3, ...extra });
-  commit(); tout(); apercu(); signal('Élément posé sur le clip ' + (sel + 1) + ' : règle-le dans l’inspecteur à droite.');
+  if (!c.overlays) c.overlays = [];
+  // animation sur fond vert (Breaking news, flèche…) : jouée une fois, à la tête de lecture si elle est dans ce clip
+  const it = /fondvert\//.test(file) ? libItem(file) : null, k = proj.clips.indexOf(c), dans = gt - starts()[k];
+  const quand = it ? { start: dans > 0 && dans < effDur(c) - 0.3 ? +dans.toFixed(2) : 0, dur: +Math.min(it.duree || 3, effDur(c)).toFixed(2) } : {};
+  c.overlays.push({ file, kind: kind === 'video' ? 'video' : 'image', x: 50, y: 50, scale: /lib:stickers/.test(file) ? 25 : 40, rot: 0, opacity: 100, start: 0, dur: 0, anim: 'pop', mode: '', plein: '', key: false, keySim: 0.3, ...extra, ...quand });
+  commit(); tout(); apercu(); signal('Élément posé sur le clip ' + (sel + 1) + (quand.start ? ' à ' + fmt(quand.start) : '') + ' : règle-le dans l’inspecteur à droite.');
 }
 function ajouterLut(file) {
   const c = clipCible(); if (!c) return signal(sansClipMsg);

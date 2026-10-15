@@ -3,6 +3,11 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.36.1
+- **Les longs montages s'exportent** : l'erreur « Failed to configure output pad on Parsed_xfade… » ne bloque plus l'export. Quand un clip avait été préparé autrement que les autres (souvent celui qui porte un calque), QuentMovie le refait seul au lieu de tout reprendre d'un coup, ce qui échouait au-delà d'une centaine de clips.
+- **Calques sans limite cachée** : jusqu'à 24 calques par clip (avant, à partir du 9e, ils n'apparaissaient ni dans l'aperçu ni dans l'export). Chaque calque n'est préparé que pendant le moment où il est visible : l'export est aussi plus rapide.
+- **Animations sur fond vert (Breaking news…)** : posées depuis l'onglet Calques, elles démarrent à la tête de lecture et se jouent une fois, au lieu de tourner en boucle depuis le début du clip.
+
 ## 1.36.0
 - **Tu valides chaque proposition** : quand l'aide au montage, un pack, le montage selon le sujet ou le chapitrage veut changer quelque chose, un panneau à droite liste chaque titre, bruitage, transition, effet ou réglage avec son moment. Clique une ligne pour la voir dans l'aperçu, ▶ pour écouter un bruitage, ✓ pour garder, ✕ pour refuser (retiré tout de suite), puis « Valider mes choix ».
 - **Le son reste calé sur l'image** : après beaucoup de coupes, le son glissait petit à petit (jusqu'à une demi-seconde après 20 coupes). C'est corrigé.
