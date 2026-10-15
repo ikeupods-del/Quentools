@@ -121,6 +121,10 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 .clip b{position:absolute;left:8px;top:3px;right:8px;font-size:11px;text-shadow:0 1px 3px #000;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;pointer-events:none}
 .clip small{position:absolute;left:8px;bottom:3px;font-size:10px;text-shadow:0 1px 3px #000;pointer-events:none}
 .clip .tags{position:absolute;right:8px;bottom:2px;font-size:11px;text-shadow:0 1px 3px #000;pointer-events:none}
+.zc{position:absolute;top:0;bottom:0;z-index:4;cursor:pointer;border-radius:3px;border:1px solid #ff5a6a;background:repeating-linear-gradient(45deg,#e0102acc 0 6px,#e0102a55 6px 12px)}
+.zc.garde{background:#19d38a33;border-color:#19d38a}
+#barreCoupe{position:fixed;left:50%;transform:translateX(-50%);top:62px;z-index:60;background:var(--panel,#1c1d22);border:1px solid #e0102a;border-radius:10px;padding:8px 12px;box-shadow:0 6px 24px #0008;font-size:13px;max-width:780px}
+#barreCoupe button{margin-left:6px}
 .clip .ovm{position:absolute;top:17px;height:4px;border-radius:2px;background:#ffcc00;box-shadow:0 0 0 1px #0008;pointer-events:none;z-index:2}
 .clip .hl,.clip .hr{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize;background:#ffffff22;z-index:3}
 .clip .hl{left:0}.clip .hr{right:0}
@@ -1053,7 +1057,7 @@ function tlDessin() {
     else if (c.kind === 'solid') bg = `background-color:${c.color}`;
     const tags = (c.fx.length ? '✨' + c.fx.length : '') + (c.key.on ? ' 🟩' : '') + (c.text ? ' T' : '') + (c.titre ? ' 📰' : '') + (c.overlays.length ? ' ▣' + c.overlays.length : '') + (c.subs.length ? ' ≡' : '') + (c.afx.length ? ' 🔊' : '') + (c.speed !== 1 ? ' ⏩' : '');
     return `<div class="clip k-${c.kind} ${i === sel || selObjs.has(c) ? 'sel' : ''}" data-i="${i}" style="left:${st[i] * zoom}px;width:${Math.max(26, effDur(c) * zoom - 2)}px;${bg}"><i class="hl"></i><i class="hr"></i>${vague(c)}${barresCalques(c)}<b>${kindIcon(c)}${esc(c.file ? nomOf(c.file) : 'Fond uni')}</b><small>${fmt(effDur(c))}</small><span class="tags">${tags}</span></div>`;
-  }).join('') + proj.clips.slice(0, -1).map((c, i) => `<button class="cut ${c.transition ? 'on' : ''} ${i === selCut ? 'sel' : ''}" data-cut="${i}" style="left:${(st[i] + effDur(c)) * zoom}px" title="${c.transition ? esc((CAT.transitions.find(t => t.id === c.transition.type) || {}).nom || '') : 'Ajouter une transition'}">⋈</button>`).join('');
+  }).join('') + zonesCoupe(st) + proj.clips.slice(0, -1).map((c, i) => `<button class="cut ${c.transition ? 'on' : ''} ${i === selCut ? 'sel' : ''}" data-cut="${i}" style="left:${(st[i] + effDur(c)) * zoom}px" title="${c.transition ? esc((CAT.transitions.find(t => t.id === c.transition.type) || {}).nom || '') : 'Ajouter une transition'}">⋈</button>`).join('');
   const fins = [], ligne = [];
   proj.audio.map((a, i) => i).sort((x, y) => (proj.audio[x].start || 0) - (proj.audio[y].start || 0)).forEach(i => {
     const a = proj.audio[i], s = a.start || 0; let r = fins.findIndex(e => e <= s + 0.01);
@@ -1144,11 +1148,13 @@ function placerTete(t, opts = {}) {
   if (!opts.sansApercu) apercuRetarde();
 }
 $('#pV').addEventListener('click', e => {
+  const zc = e.target.closest('.zc'); if (zc && previsuCoupe) { const [k, m] = zc.dataset.zc.split(':').map(Number), z = previsuCoupe.items[k].zones[m]; z.garder = !z.garder; tlDessin(); barreCoupe(); return; } // blanc gardé ou coupé
   if (presse && presse.bouge) return;
   const cut = e.target.closest('.cut'); if (cut) { selCut = +cut.dataset.cut; selA = -1; selP = -1; selT = -1; tab = 'transitions'; navigateur(); tlDessin(); return; }
 });
 // Clic, glisser pour réordonner, poignées pour raccourcir
 $('#pV').addEventListener('pointerdown', e => {
+  if (e.target.closest('.zc')) return; // zone de l'aperçu de coupe : gérée au clic
   const el = e.target.closest('.clip'); if (!el || e.button === 2) return;
   if (verrouillee('V1')) return;
   if (outilTl === 'lame') { e.preventDefault(); const r0 = $('#lane').getBoundingClientRect(); sel = +el.dataset.i; selA = -1; selP = -1; selT = -1; selObjs.clear(); placerTete(Math.max(0, (e.clientX - r0.left) / zoom), { sansSelection: true, sansApercu: true }); couper(true); return; }
@@ -2611,11 +2617,60 @@ async function parolePourClips(indices, o, surEtat = t => aide(t)) {
   commit(); sel = Math.min(Math.max(0, sel), proj.clips.length - 1); tout(); apercu();
   return { gagne, n, clips: liste.length };
 }
+// ---------- Aperçu de la coupe des blancs : les passages qui partent sont en rouge sur la timeline, un clic garde un passage, puis « Couper » ----------
+let previsuCoupe = null;
+const unionIntervalles = l => { const o = []; for (const [a, b] of l.slice().sort((x, y) => x[0] - y[0])) { const d = o[o.length - 1]; if (d && a <= d[1] + 0.01) d[1] = Math.max(d[1], b); else o.push([a, b]); } return o; };
+const clipInchange = it => proj.clips.includes(it.c) && it.c.in === it.etat[0] && it.c.out === it.etat[1] && (it.c.speed || 1) === it.etat[2];
+async function previsualiserCoupe(indices, o, e) {
+  await assurerEcoute(e);
+  e('Repérage des changements de plan…'); await chargerPlans(indices.map(i => proj.clips[i]).filter(Boolean));
+  const liste = indices.filter(i => proj.clips[i] && ['video', 'audio'].includes(proj.clips[i].kind) && proj.clips[i].hasAudio !== false);
+  if (!liste.length) throw new Error('Aucun clip avec du son à écouter.');
+  const niv = paroleOpts().coupe || 'douce', items = []; let k = 0;
+  for (const i of liste) {
+    k++; const c = proj.clips[i], r = await ecouterClip(c, t => e(`${t} (clip ${k} sur ${liste.length})`));
+    const dur = c.out - c.in, g = ((r.garderNiveaux && r.garderNiveaux[niv]) || r.garder).filter(([x, y]) => y > x + 0.15 && x < dur);
+    if (!g.length) continue;
+    const zones = []; let pos = 0;
+    for (const [x, y] of g) { if (x - pos > 0.05) zones.push({ a: +pos.toFixed(2), b: x, garder: false }); pos = Math.max(pos, Math.min(y, dur)); }
+    if (dur - pos > 0.05) zones.push({ a: +pos.toFixed(2), b: +dur.toFixed(2), garder: false });
+    if (zones.length) items.push({ c, r, g, zones, etat: [c.in, c.out, c.speed || 1] });
+  }
+  if (!items.length) { e('Aucun blanc à couper avec ce réglage.'); return; }
+  previsuCoupe = { o, items }; tlDessin(); barreCoupe(); e('Les passages en rouge seront coupés : clique sur un passage pour le garder, puis « Couper ».');
+}
+function zonesCoupe(st) {
+  if (!previsuCoupe) return '';
+  if (!previsuCoupe.items.some(clipInchange)) { previsuCoupe = null; setTimeout(barreCoupe, 0); return ''; } // montage changé entre-temps (annuler, autre coupe) : l'aperçu n'a plus de sens
+  return previsuCoupe.items.map((it, k) => { if (!clipInchange(it)) return ''; const j = proj.clips.indexOf(it.c), sp = it.c.speed || 1;
+    return it.zones.map((z, m) => `<div class="zc ${z.garder ? 'garde' : ''}" data-zc="${k}:${m}" style="left:${((st[j] + z.a / sp) * zoom).toFixed(1)}px;width:${Math.max(3, (z.b - z.a) / sp * zoom).toFixed(1)}px" title="${z.garder ? 'Gardé' : 'Coupé'} (${fmt((z.b - z.a) / sp)}) : clic pour ${z.garder ? 'le couper' : 'le garder'}"></div>`).join(''); }).join('');
+}
+function barreCoupe() {
+  let b = $('#barreCoupe'); if (!previsuCoupe) { if (b) b.remove(); return; }
+  if (!b) { b = document.createElement('div'); b.id = 'barreCoupe'; document.body.appendChild(b); }
+  const z = previsuCoupe.items.filter(clipInchange).flatMap(it => it.zones.map(x => ({ ...x, sp: it.c.speed || 1 }))), coupe = z.filter(x => !x.garder), s = coupe.reduce((a, x) => a + (x.b - x.a) / x.sp, 0);
+  b.innerHTML = `✂ <b>${coupe.length} blanc${coupe.length > 1 ? 's' : ''}</b> à couper (${fmt(s)} en moins)${z.length > coupe.length ? `, ${z.length - coupe.length} gardé${z.length - coupe.length > 1 ? 's' : ''}` : ''}. Rouge = coupé, clic = garder. <button class="pri" id="bcOk">Couper</button><button id="bcTout">Tout garder</button><button id="bcNon">Annuler</button>`;
+  $('#bcOk').onclick = appliquerCoupe;
+  $('#bcTout').onclick = () => { const tous = z.every(x => x.garder); previsuCoupe.items.forEach(it => it.zones.forEach(x => { x.garder = !tous; })); tlDessin(); barreCoupe(); };
+  $('#bcNon').onclick = () => { previsuCoupe = null; barreCoupe(); tlDessin(); aide('Coupe annulée : rien n’a été modifié.'); };
+}
+function appliquerCoupe() {
+  const p = previsuCoupe; if (!p) return; previsuCoupe = null; barreCoupe();
+  const items = p.items.filter(clipInchange).sort((a, b) => proj.clips.indexOf(b.c) - proj.clips.indexOf(a.c)); // de la fin vers le début : les places restent justes
+  let gagne = 0, n = 0;
+  for (const it of items) {
+    const garder = unionIntervalles([...it.g, ...it.zones.filter(z => z.garder).map(z => [z.a, z.b])]);
+    const x = paroleAppliquer(proj.clips.indexOf(it.c), { ...it.r, garderNiveaux: null, garder }, p.o); gagne += x.gagne; n += x.n;
+  }
+  commit(); sel = Math.min(Math.max(0, sel), proj.clips.length - 1); tout(); apercu();
+  aide(`✅ ${fmt(gagne)} de blancs coupés${p.o.sous ? ` · ${n} sous-titres` : ''}. Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} si besoin.`);
+}
 async function outilParole(portee, o, res) {
   const e = t => { const el = res && $(res); if (el) el.innerHTML = t; aide(t); };
   const indices = portee === 'tout' ? proj.clips.map((c, i) => i) : clipCible() ? [sel] : [];
   if (!indices.length) return signal(sansClipMsg);
   try {
+    if (o.couper && o.apercu && revueActive()) return await previsualiserCoupe(indices, o, e); // on montre d'abord ce qui part
     const r = await parolePourClips(indices, o, e);
     e(`✅ ${o.sous ? `${r.n} sous-titres créés` : ''}${o.sous && o.couper ? ' · ' : ''}${o.couper ? `${fmt(r.gagne)} de blancs et d’hésitations coupés` : ''} (${r.clips} clip${r.clips > 1 ? 's' : ''}). Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} si besoin.`);
   } catch (er) { e(`<span class="err">${esc(er.message)}</span>`); }
@@ -2727,7 +2782,7 @@ async function outil(nom) {
   if (nom === 'vertical') { proj.format = 'vertical'; $('#format').value = 'vertical'; commit(); tout(); return recadrerClips(proj.clips.map((c, i) => i), '#oVertRes'); }
   if (nom === 'medias-inutiles' || nom === 'medias-tous') return supprimerMedias(nom === 'medias-tous');
   if (/^(sous|coupe)-(clip|tout)$/.test(nom)) { const [q, p] = nom.split('-'), st = $('#oSousStyle') ? $('#oSousStyle').value : paroleOpts().style;
-    const o = { sous: q === 'sous' || (q === 'coupe' && proj.clips.some(c => c.subs && c.subs.length)), couper: q === 'coupe', style: st };
+    const o = { sous: q === 'sous' || (q === 'coupe' && proj.clips.some(c => c.subs && c.subs.length)), couper: q === 'coupe', style: st, apercu: q === 'coupe' };
     return outilParole(p, o, q === 'sous' ? '#oSousRes' : '#oCoupeRes'); }
   if (nom === 'maj') return verifierMaj(true);
   if (nom === 'packs') { allerOnglet('outils'); const e = $('#encartPacks'); if (e) e.scrollIntoView({ block: 'start' }); return; }

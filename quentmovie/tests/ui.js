@@ -348,6 +348,13 @@ function chromium() {
   check('prise plein écran + bulle : piste de l’écran plein et piste de la bulle ronde', await ev(n => { const p = (proj.pistes || []).slice(n); const e = p.find(x => /^camera-ecran-/.test(x.file)), b = p.find(x => x.forme === 'rond' && /^camera-/.test(x.file) && !/ecran/.test(x.file)); return p.length === 2 && e && e.plein && b && !b.plein && b.x === 88 && b.scale === 24 && b.ligne > e.ligne && b.in >= 0; }, nPistes3));
   await ev(() => fermerStudio());
 
+  // 7 ter) aperçu de la coupe des blancs : zones rouges, clic = garder, « Couper » applique seulement le reste
+  await ev(() => { stopLecture(); const c = newClip(medias.find(m => m.file === 'a.mp4')); c.in = 0; c.out = 6; proj.clips = [c]; proj.audio = []; proj.pistes = []; proj.textes = []; sel = 0; setZoom(60); commit(); tout();
+    window.assurerEcoute = async () => {}; ecoutes.set(`${c.file}|${c.in}|${c.out}`, { mots: [], duree: 6, st: { phrase: [], mots: [] }, garder: [[0, 1.5], [2.5, 4], [5, 6]], garderNiveaux: { douce: [[0, 1.5], [2.5, 4], [5, 6]] } }); });
+  await ev(() => previsualiserCoupe([0], { couper: true, sous: false, style: 'phrase', apercu: true }, () => {}));
+  check('coupe des blancs : les passages qui partent sont montrés en rouge avant de couper', await ev(() => document.querySelectorAll('#pV .zc').length === 2 && !!$('#barreCoupe') && proj.clips.length === 1));
+  await pg.click('#pV .zc[data-zc="0:1"]'); await pg.click('#bcOk');
+  check('coupe des blancs : un passage cliqué est gardé, le reste est coupé', await ev(() => proj.clips.length === 2 && Math.abs(total() - 5) < 0.05 && !$('#barreCoupe') && !document.querySelector('#pV .zc')), await ev(() => `${proj.clips.length} ${total()}`));
   // 7 bis) lecture : clic dans la règle de la timeline → la lecture continue depuis là ; défilement libre pendant la lecture
   await ev(() => { stopLecture(); const ph = medias.find(m => m.file === 'photo.png'); proj.clips = []; proj.audio = []; proj.pistes = []; proj.textes = []; for (let i = 0; i < 6; i++) { const c = newClip(ph); c.kind = 'image'; c.dur = 4; proj.clips.push(c); } sel = 0; setZoom(40); commit(); tout(); placerTete(0); lectureDirecte(); });
   await pg.waitForTimeout(600);
