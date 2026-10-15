@@ -178,6 +178,18 @@ const { execFileSync } = require('child_process');
     const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
     const ec = t => { const a = img(jm.out, t), b = img(je.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
     check('clip long avec calque, titre et texte : découpé en morceaux, même image que d’un seul bloc', jm.morceaux >= 2 && [1.2, 2.2, 3.5].every(t => ec(t) < 2.5), `${jm.morceaux} ${[1.2, 2.2, 3.5].map(t => ec(t).toFixed(2)).join(' ')}`); }
+  // clip avec des milliers de sous-titres : tous affichés (avant : les 300 premiers seulement), graphe passé par un fichier
+  { ff('-f', 'lavfi', '-i', 'color=c=gray:s=640x360:r=30:d=62', '-f', 'lavfi', '-i', 'sine=f=300:d=62', '-shortest', '-pix_fmt', 'yuv420p', path.join(base, 'gris.mp4'));
+    // la création de la vidéo bloque le script plus de 5 s : la connexion gardée ouverte est fermée par le serveur, on réessaie une fois
+    await fetch(U('/api/import?name=gris.mp4'), { method: 'POST', body: fs.readFileSync(path.join(base, 'gris.mp4')) }).catch(() => fetch(U('/api/import?name=gris.mp4'), { method: 'POST', body: fs.readFileSync(path.join(base, 'gris.mp4')) }));
+    const subs = Array.from({ length: 1200 }, (_, i) => ({ s: +(i * 0.05).toFixed(2), e: +(i * 0.05 + 0.05).toFixed(2), t: 'Mot ' + i }));
+    subs.push({ s: 60.5, e: 61.5, t: 'DERNIER SOUS-TITRE BIEN VISIBLE' });
+    process.env.QM_SANS_MORCEAUX = '1';
+    const avec = await exporter({ ...projet('MilleSous'), clips: [clip('gris.mp4', 'video', { out: 62, subs, subSize: 9 })] }), sans = await exporter({ ...projet('SansSous'), clips: [clip('gris.mp4', 'video', { out: 62 })] });
+    delete process.env.QM_SANS_MORCEAUX;
+    const img = (f, t) => execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', t, '-i', path.join(base, 'exports', f), '-frames:v', 1, '-f', 'rawvideo', '-pix_fmt', 'gray', '-s', '160x90', '-']);
+    const ec = t => { const a = img(avec.out, t), b = img(sans.out, t); let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length; };
+    check('1 200 sous-titres sur un clip : le dernier (à 60 s) s’affiche', ec(61) > 2 && ec(61.8) < 1, [ec(61), ec(61.8)].join(' ')); }
   // export d'un passage (essai) : seulement la partie choisie, nommée « extrait-… » ; titres de la piste T recalés
   { const { id } = await (await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: { ...projet('Extrait'), textes: [{ start: 3, dur: 2, titre: { preset: 'angle', l1: 'Titre', color: '#ff2d55', start: 0 } }] }, plage: { s: 1.5, e: 4.5 } }) })).json();
     let j; for (;;) { j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.error || j.done) break; await new Promise(r => setTimeout(r, 200)); }

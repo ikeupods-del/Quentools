@@ -62,6 +62,7 @@ function create(opts = {}) {
   const APERCUS = path.join(TMP, 'apercus'), PROXIES = path.join(TMP, 'proxies'); fs.mkdirSync(APERCUS, { recursive: true }); fs.mkdirSync(PROXIES, { recursive: true });
   let FFMPEG = opts.ffmpeg || 'ffmpeg', FFPROBE = opts.ffprobe === null ? null : opts.ffprobe || 'ffprobe';
   let filters = new Set(), encoders = new Set(), hwaccels = new Set(), version = '';
+  const ffmpegMajeur = () => { const m = /version (?:n)?(\d+)\./.exec(version); return m ? +m[1] : 99; }; // compilation de développement (« N-… ») : récente
   const LIB = (opts.lib || path.join(__dirname, 'bibliotheque')).replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep);
   const LIB_LISTES = ['sons', 'musiques', 'stickers', 'marque', 'luts', 'calques', 'cadres', 'fonds', 'fondvert'];
   const libIndex = () => { let j = {}; try { j = JSON.parse(fs.readFileSync(path.join(LIB, 'index.json'), 'utf8')); } catch (e) { /* bibliothèque absente */ } LIB_LISTES.forEach(k => { j[k] = j[k] || []; }); return j; };
@@ -276,10 +277,14 @@ function create(opts = {}) {
   const VT_SURVEILLANCE = 45000;
   // Débit de la puce vidéo : « qualité max » double le débit (image plus fine, à peine plus lent : c'est la puce qui travaille)
   const debitVt = (W, H, max) => (Math.min(W, H) >= 1500 ? (max ? '80M' : '45M') : (max ? '36M' : '20M'));
-  const encVt = (P, max) => ['-c:v', 'h264_videotoolbox', '-b:v', debitVt(P.w, P.h, max), '-allow_sw', 1];
+  // Puce des Mac Apple Silicon : qualité constante (les plans calmes, un podcast, prennent 2 à 3 fois moins de place qu'à débit fixe,
+  // sans perte visible) ; débit fixe si la puce ne sait pas faire (Mac Intel, machine virtuelle) ou si QM_VT_DEBIT est posé
+  let vtQualite = false;
+  const reglageVt = (W, H, max, proxy) => (vtQualite ? ['-q:v', proxy ? 50 : max ? 75 : 62] : ['-b:v', debitVt(W, H, max)]);
+  const encVt = (P, max, proxy) => ['-c:v', 'h264_videotoolbox', ...reglageVt(P.w, P.h, max, proxy), '-allow_sw', 1];
   // réglages d'encodage d'un clip : les morceaux recopiés ensemble doivent tous en avoir les mêmes
   const encodeursClip = (P, proxy, max, avecPuce) => ({
-    vt: avecPuce ? encVt(P, max) : null, cpu: ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16, '-forced-idr', 1]
+    vt: avecPuce ? encVt(P, max, proxy) : null, cpu: ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16, '-forced-idr', 1]
   });
   async function encoder(avant, encVt, encCpu, apres, opts = {}) {
     if (encVt) {
@@ -295,6 +300,9 @@ function create(opts = {}) {
     encoders = new Set(e.split('\n').map(l => l.trim().split(/\s+/)[1]).filter(Boolean));
     try { hwaccels = new Set((await run(FFMPEG, ['-hide_banner', '-hwaccels'], { binary: true })).toString().split('\n').slice(1).map(l => l.trim()).filter(Boolean)); } catch (er) { hwaccels = new Set(); }
     version = (await run(FFMPEG, ['-version'], { binary: true })).toString().split('\n')[0];
+    if (process.platform === 'darwin' && encoders.has('h264_videotoolbox') && !process.env.QM_VT_DEBIT) { // qualité constante : seulement si la puce elle-même l'accepte
+      try { await run(FFMPEG, ['-v', 'error', '-f', 'lavfi', '-i', 'testsrc=s=320x240:r=30:d=0.4', '-c:v', 'h264_videotoolbox', '-q:v', 62, '-f', 'null', '-'], { silence: 15000 }); vtQualite = true; } catch (e) { vtQualite = false; }
+    }
   }
   // Description d'un fichier comme ffprobe, lue dans le résumé affiché par FFmpeg lui-même.
   // Sert quand ffprobe est absent ou inutilisable (le ffprobe livré pour les Mac à puce Apple est en réalité un programme Intel).
@@ -387,6 +395,12 @@ function create(opts = {}) {
 function fonduxDe(c, eff) {
   const auto = c.fade ? 0.4 : 0, e = num(c.fadeIn, 0) > 0 ? num(c.fadeIn, 0) : auto, s = num(c.fadeOut, 0) > 0 ? num(c.fadeOut, 0) : auto, m = Math.max(0.05, eff / 2);
   return { e: Math.min(clamp(e, 0, 10), m), s: Math.min(clamp(s, 0, 10), m) };
+}
+// Graphe de filtres très long (des milliers de sous-titres) : écrit dans un fichier, la ligne de commande du Mac a une taille limitée
+function grapheFiltre(g, tdir) {
+  if (g.length < 60000 || !tdir) return ['-filter_complex', g];
+  const nom = `graphe${tdir.idx}.txt`; fs.writeFileSync(path.join(tdir.dir, nom), g);
+  return ffmpegMajeur() >= 7 ? ['-/filter_complex', nom] : ['-filter_complex_script', nom];
 }
 function buildClip(c, P, o = {}) {
     const W = P.w, H = P.h, fps = P.fps;
@@ -588,7 +602,9 @@ function buildClip(c, P, o = {}) {
     }
 
     // Sous-titres (une ligne par repère, en bas)
-    const subs = (c.subs || []).filter(x => x && String(x.t || '').trim()).slice(0, 300);
+    // tous les sous-titres du clip (avant : 300 au plus, la suite d'un long clip n'était pas affichée) ; l'aperçu d'une image ne garde que ceux de cet instant
+    const tousSous = (c.subs || []).filter(x => x && String(x.t || '').trim());
+    const subs = o.preview ? tousSous.filter(x => num(x.e, 0) >= t - 0.1 && num(x.s, 0) <= t + 1.6) : tousSous.slice(0, 5000);
     if (subs.length && fontFile(c.textFont) && filters.has('drawtext')) {
       const idx = o.tdir ? o.tdir.idx : 0, dir = o.tdir ? o.tdir.dir : TMP, u = Math.min(W, H) / 100, size = Math.round(u * clamp(num(c.subSize, 4.4), 2, 10));
       const T = `(t+${ctx.t0})`, tk = c.subStyle === 'tiktok', col = c.subStyle === 'jaune' ? '0xffe600' : 'white', def = SUBDEF[c.subStyle];
@@ -666,8 +682,8 @@ function buildClip(c, P, o = {}) {
     f.push(`[${src}]${af.join(',')}[a]`);
 
     const proxy = !!o.proxy;
-    args.push('-filter_complex', f.join(';'), '-map', '[v]', '-map', '[a]', '-t', eff.toFixed(3), '-r', fps, '-enc_time_base:v', `1/${fps}`, '-chroma_sample_location:v', 'left', // mêmes en-têtes pour tous les clips (photos, sons à pochette…) : recopie sans réencoder
-      ...(o.vt ? ['-c:v', 'h264_videotoolbox', '-b:v', debitVt(W, H, o.vtMax), '-allow_sw', 1] : ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16, '-forced-idr', 1]), '-pix_fmt', 'yuv420p', // images clés IDR : les morceaux se recopient sans réencoder
+    args.push(...grapheFiltre(f.join(';'), o.tdir), '-map', '[v]', '-map', '[a]', '-t', eff.toFixed(3), '-r', fps, '-enc_time_base:v', `1/${fps}`, '-chroma_sample_location:v', 'left', // mêmes en-têtes pour tous les clips (photos, sons à pochette…) : recopie sans réencoder
+      ...(o.vt ? ['-c:v', 'h264_videotoolbox', ...reglageVt(W, H, o.vtMax, proxy), '-allow_sw', 1] : ['-c:v', 'libx264', '-preset', proxy ? 'ultrafast' : 'veryfast', '-crf', proxy ? 30 : 16, '-forced-idr', 1]), '-pix_fmt', 'yuv420p', // images clés IDR : les morceaux se recopient sans réencoder
       '-force_key_frames', EPI.expressionGop(fps), // une image clé par seconde : permet de recopier sans réencoder (assemblage rapide)
       '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-ar', 48000, '-ac', 2, '-movflags', '+faststart', '-progress', 'pipe:1', '-nostats');
     return { args, eff };
@@ -1133,8 +1149,8 @@ function buildClip(c, P, o = {}) {
     if (!clipsBruts.length) throw new Error('La timeline est vide.');
     const clips = morceauxDe(clipsBruts); job.morceaux = clips.length - clipsBruts.length;
     for (const c of clips) await calquesEnBoucle(c);
-    const tropSous = clips.filter(c => (c.subs || []).filter(x => x && String(x.t || '').trim()).length > 300).length;
-    if (tropSous) job.avertissement = `${tropSous > 1 ? `${tropSous} clips ont` : 'Un clip a'} plus de 300 sous-titres : seuls les 300 premiers sont affichés. Coupe ce long clip en deux (touche S) pour tous les voir.`;
+    const tropSous = clips.filter(c => (c.subs || []).filter(x => x && String(x.t || '').trim()).length > 5000).length;
+    if (tropSous) job.avertissement = `${tropSous > 1 ? `${tropSous} clips ont` : 'Un clip a'} plus de 5 000 sous-titres : seuls les 5 000 premiers sont affichés. Coupe ce long clip en deux (touche S) pour tous les voir.`;
     const P = sizeOf(project, proxy ? 'proxy' : 'full');
     // fichiers disparus : un message clair (quel clip, que faire) plutôt qu'une erreur de FFmpeg
     const absents = [...new Set(clips.filter(c => c.file && c.kind !== 'solid' && !/^(lib|pack):/.test(c.file)).map(c => c.file).filter(f => !fs.existsSync(mediaPath(f))))];
@@ -1293,7 +1309,7 @@ function buildClip(c, P, o = {}) {
           cv = nv; ca = na;
         }
         try {
-          await encoder(['-y', '-loglevel', 'error', ...inArgs, '-filter_complex', g.join(';'), '-map', `[${cv}]`, '-map', `[${ca}]`], vt ? encVt(P, project.quality === 'max') : null,
+          await encoder(['-y', '-loglevel', 'error', ...inArgs, '-filter_complex', g.join(';'), '-map', `[${cv}]`, '-map', `[${ca}]`], vt ? encVt(P, project.quality === 'max', proxy) : null,
             proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17],
             ['-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k', '-movflags', '+faststart', 'all.mp4'], { cwd: dir });
         } catch (e) { // la cause d'origine (assemblage rapide refusé) aide à comprendre
@@ -1485,7 +1501,7 @@ function buildClip(c, P, o = {}) {
       mapA = ['-map', '[aout]', '-c:a', 'aac', '-b:a', proxy ? '96k' : '192k'];
     }
     const vt = !proxy && process.platform === 'darwin' && encoders.has('h264_videotoolbox') && project.quality !== 'haute';
-    await encoder(['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '[vout]', ...mapA], vt ? encVt(P) : null,
+    await encoder(['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '[vout]', ...mapA], vt ? encVt(P, false, proxy) : null,
       proxy ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 30] : ['-c:v', 'libx264', '-preset', 'medium', '-crf', 17], ['-pix_fmt', 'yuv420p', '-movflags', '+faststart', 'pistes.mp4'], { cwd: dir });
     return 'pistes.mp4';
   }
@@ -1592,7 +1608,7 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && p.startsWith('/exports/')) return serveFile(req, res, path.join(EXPORTS, safeName(decodeURIComponent(p.slice(9)))), true);
       if (req.method === 'GET' && p.startsWith('/apercu/')) return serveFile(req, res, path.join(APERCUS, safeName(decodeURIComponent(p.slice(8)))));
 
-      if (req.method === 'GET' && p === '/api/catalogue') return send(res, 200, { ...FX.catalogue(filters), packs: require('./packs').PACKS, version_app: VERSION_APP, font: !!FONT && filters.has('drawtext'), version, folder: BASE, bibliotheque: libIndex(), polices: FONTS_OK.map(x => ({ id: x.id, nom: x.nom })), sorties: sortiesDispo(), duck: filters.has('sidechaincompress'), hwenc: process.platform === 'darwin' && encoders.has('h264_videotoolbox') });
+      if (req.method === 'GET' && p === '/api/catalogue') return send(res, 200, { ...FX.catalogue(filters), packs: require('./packs').PACKS, version_app: VERSION_APP, font: !!FONT && filters.has('drawtext'), version, folder: BASE, bibliotheque: libIndex(), polices: FONTS_OK.map(x => ({ id: x.id, nom: x.nom })), sorties: sortiesDispo(), duck: filters.has('sidechaincompress'), vtQualite, hwenc: process.platform === 'darwin' && encoders.has('h264_videotoolbox') });
       // Mises à jour (application Mac uniquement)
       if (p === '/api/maj') return send(res, 200, opts.maj ? opts.maj.etat() : { etat: 'inactif', version: VERSION_APP });
       if (req.method === 'POST' && p === '/api/maj/verifier') return send(res, 200, opts.maj ? opts.maj.verifier() : { etat: 'inactif', version: VERSION_APP });
