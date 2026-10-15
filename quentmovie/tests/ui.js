@@ -100,6 +100,15 @@ function chromium() {
   check('piste Titres : déplacé à la souris', await ev(() => Math.abs(proj.textes[0].start - 4) < 0.3), await ev(() => proj.textes[0].start));
   await ev(() => { stopLecture(); gt = proj.textes[0].start + 1; lectureDirecte(); }); await pg.waitForTimeout(500);
   check('piste Titres : visible en lecture rapide', /Titre libre/.test(await ev(() => (document.querySelector('.ldTitre') || {}).textContent || '')));
+  // calques en lecture rapide (avant : invisibles tant que l'aperçu complet n'était pas prêt, « Breaking news » n'apparaissait pas)
+  await ev(() => { stopLecture(); const c = proj.clips[0]; c.overlays = [{ file: 'lib:' + LIB().stickers[0].file, kind: 'image', x: 30, y: 70, scale: 40, rot: 0, opacity: 100, start: 0.3, dur: 0.8, anim: 'none', mode: '', plein: '', key: false },
+    { file: 'lib:fondvert/breaking.mp4', kind: 'video', x: 50, y: 50, scale: 100, rot: 0, opacity: 100, start: 0.3, dur: 0.8, anim: 'none', mode: '', plein: '', key: true, keySim: 0.3 }]; commit(); gt = starts()[0] + 0.5; lectureDirecte(); });
+  await pg.waitForTimeout(700);
+  const cq = await ev(() => { const k = document.querySelector('.ldCalques'), r = k.getBoundingClientRect(), a = k.children[0] && k.children[0].getBoundingClientRect();
+    return { n: k.children.length, canvas: !!k.querySelector('canvas'), w: a ? a.width / r.width : 0, x: a ? (a.left + a.width / 2 - r.left) / r.width : 0 }; });
+  check('lecture rapide : calques visibles (image et animation sur fond vert), à leur place et à leur taille', cq.n === 2 && cq.canvas && Math.abs(cq.w - 0.4) < 0.03 && Math.abs(cq.x - 0.3) < 0.03, JSON.stringify(cq));
+  check('lecture rapide : calque retiré après sa durée', await ev(() => { const k = document.querySelector('.ldCalques'); majCalquesDirect(k, starts()[0] + 1.3, starts(), document.querySelector('#stage video')); return k.children.length === 0; }));
+  await ev(() => { stopLecture(); proj.clips[0].overlays = []; commit(); });
   await ev(() => { stopLecture(); selT = 0; supprimer(); });
   check('piste Titres : supprimé', await ev(() => proj.textes.length === 0));
   // montage sensé : pas de transition ni de bruitage dans une même prise (blancs coupés), pas de bruitage sur une phrase, bruitages espacés
@@ -312,10 +321,11 @@ function chromium() {
   await pg.click('#stRec'); await pg.waitForTimeout(1500);
   await pg.evaluate(() => { MediaRecorder.isTypeSupported = window.__tsOrig; });
   check('studio : bouton pause visible pendant la prise', await pg.evaluate(() => !$('#stPause').hidden));
-  await pg.click('#stPause'); await pg.waitForTimeout(1600);
-  check('studio : prise en pause, le chrono s’arrête', await pg.evaluate(() => studio.rec.state === 'paused' && /Reprendre/.test($('#stPause').textContent) && stDuree() < 2.2), await pg.evaluate(() => studio.rec.state + ' ' + stDuree()));
+  // chrono comparé à lui-même (et non à une durée fixe) : le test ne dépend pas de la vitesse de la machine
+  await pg.click('#stPause'); await pg.waitForTimeout(150); const dPause = await pg.evaluate(() => stDuree()); await pg.waitForTimeout(1500);
+  check('studio : prise en pause, le chrono s’arrête', await pg.evaluate(d => studio.rec.state === 'paused' && /Reprendre/.test($('#stPause').textContent) && Math.abs(stDuree() - d) < 0.05, dPause), await pg.evaluate(() => studio.rec.state + ' ' + stDuree()) + ' / ' + dPause);
   await pg.keyboard.press('p'); await pg.waitForTimeout(1200);
-  check('studio : reprise (touche P), la pause n’est pas comptée', await pg.evaluate(() => studio.rec.state === 'recording' && stDuree() > 2.2 && stDuree() < 3.6), await pg.evaluate(() => studio.rec.state + ' ' + stDuree()));
+  check('studio : reprise (touche P), la pause n’est pas comptée', await pg.evaluate(d => studio.rec.state === 'recording' && stDuree() > d + 0.8 && stDuree() < d + 2.2, dPause), await pg.evaluate(() => studio.rec.state + ' ' + stDuree()) + ' / ' + dPause);
   check('studio : copie de secours écrite sur le disque pendant la prise', await pg.evaluate(async () => { await studio.secours.chaine; const l = (await (await fetch('/api/prise/secours')).json()).prises; return l.length === 1 && l[0].includes(studio.secours.id); }));
   await pg.click('#stPause'); await pg.click('#stRec');
   await pg.waitForFunction(n => proj.clips.length > n, nAvant, { timeout: 60000 }).catch(() => {});

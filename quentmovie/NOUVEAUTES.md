@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.39.1
+- **Les incrustations s'affichent pendant la lecture** : « Breaking news » et les autres animations sur fond vert, images, stickers et vidéos posés sur un clip apparaissent maintenant dès que tu lances la lecture, à leur place et à leur taille, sans attendre que l'aperçu complet soit prêt (sur un long montage, elles n'apparaissaient qu'à l'export).
+
 ## 1.39.0
 - **Fichiers exportés plus légers** à qualité égale : la puce du Mac règle sa qualité image par image au lieu d'un débit fixe.
 - **Sous-titres sans limite** : sur une longue vidéo, seuls les 300 premiers sous-titres s'affichaient ; tous apparaissent maintenant, jusqu'à la fin.
