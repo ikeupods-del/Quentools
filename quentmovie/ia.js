@@ -44,7 +44,8 @@ function regroupe(consigne, opt = {}) {
 }
 const consignesDe = rg => [TYPES[rg.type], rg.public ? `Public visé : ${PUBLICS[rg.public]}.` : '', TONS[rg.ton], RYTHMES[rg.rythme], rg.inclure.length ? `Utilise naturellement ces mots ou expressions : ${rg.inclure.join(', ')}.` : '',
   rg.eviter.length ? `N’emploie JAMAIS ces mots ou expressions : ${rg.eviter.join(', ')}.` : ''].filter(Boolean).join(' ');
-const SCHEMA_PLAN = n => ({ type: 'object', properties: { titre: { type: 'string' }, scenes: { type: 'array', minItems: n, maxItems: n, items: { type: 'object', properties: { section: { type: 'string' }, idee: { type: 'string' }, sujet: { type: 'string' }, recherche: { type: 'string' } }, required: ['section', 'idee', 'sujet', 'recherche'] } } }, required: ['titre', 'scenes'] });
+// longueurs bornées : sans limite, l'IA pouvait s'emballer sur un champ et sa réponse était coupée (JSON illisible)
+const SCHEMA_PLAN = n => ({ type: 'object', properties: { titre: { type: 'string', maxLength: 90 }, scenes: { type: 'array', minItems: n, maxItems: n, items: { type: 'object', properties: { section: { type: 'string', maxLength: 40 }, idee: { type: 'string', maxLength: 220 }, sujet: { type: 'string', maxLength: 60 }, recherche: { type: 'string', maxLength: 60 } }, required: ['section', 'idee', 'sujet', 'recherche'] } } }, required: ['titre', 'scenes'] });
 const SCHEMA_MOTS = { type: 'object', properties: { scenes: { type: 'array', items: { type: 'object', properties: { sujet: { type: 'string' }, recherche: { type: 'string' } }, required: ['sujet', 'recherche'] } } }, required: ['scenes'] };
 const nbMots = t => String(t).split(/\s+/).filter(Boolean).length;
 const ASCII = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'");
@@ -184,7 +185,7 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
     const sysPlan = 'Scénariste de vidéos courtes en français. Tu construis des plans concrets et précis, sans généralités. Tu n’inventes aucun nom de personne, d’entreprise ou de lieu, ni aucun chiffre ou date.' + adresse;
     const faitsWiki = String(contexte || '').slice(0, 2800);
     const demPlan = `${ordres}Sujet de la vidéo : ${titre}\nTon : ${ton}.\n${faitsWiki ? `Faits vérifiés (Wikipédia), à utiliser en priorité ; n’en ajoute aucun autre :\n${faitsWiki}\n` : ''}Écris le plan de ${n} scènes qui se suivent logiquement.${structure}\nPour chaque scène : « section » (titre de partie, 2 à 4 mots), « idee » (UNE phrase : ce que la scène explique, concrète), « sujet » (ce qu’on PHOTOGRAPHIERAIT : un objet ou une scène concrète, 1 à 3 mots en français, ex. « casque de vélo », « piste cyclable » ; jamais une idée abstraite), « recherche » (le même sujet en 2 ou 3 mots anglais pour une banque de photos). « titre » : titre accrocheur de 8 mots maximum.\nExemple de bonne scène pour « 3 astuces pour économiser l’eau » : section « Douche courte », idee « Une douche de cinq minutes consomme bien moins d’eau qu’un bain. », sujet « pommeau de douche », recherche « shower head ». Les conseils doivent être concrets, courants et vérifiables ; n’invente aucune règle ni aucune loi.`;
-    const rp = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme: sysPlan, demande: demPlan, schema: SCHEMA_PLAN(n), ctx: contexteDe(sysPlan, demPlan), temperature: 0.45 }, n * 70 + 80);
+    const rp = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme: sysPlan, demande: demPlan, schema: SCHEMA_PLAN(n), ctx: contexteDe(sysPlan, demPlan), temperature: 0.45 }, n * 150 + 100); // assez pour les longueurs maximales du schéma
     gpu = rp.gpu || gpu;
     const plan = ((rp.resultat && rp.resultat.scenes) || []).filter(x => String(x.idee || '').trim().length > 8);
     if (!plan.length) throw new Error('L’IA n’a pas réussi à préparer un plan : réessaie ou précise ton sujet.');
@@ -246,9 +247,9 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
     const compris = analyse.sujet ? `Sujet de la vidéo : ${analyse.sujet}\n${analyse.resume ? `Résumé : ${analyse.resume}\n` : ''}${(analyse.points || []).length ? `Idées fortes : ${analyse.points.join(' ; ')}\n` : ''}${(analyse.motsCles || []).length ? `Mots-clés : ${analyse.motsCles.join(', ')}\n` : ''}` : '';
     const systeme = 'Tu rédiges les textes de publication de vidéos en français, sans rien inventer : uniquement à partir du contenu fourni. Aucun émoji superflu, aucune promesse.';
     const demande = `Plateforme : ${pf}.\n${titre ? `Titre de travail : ${titre}\n` : ''}${compris}Contenu de la vidéo :\n${base}\n\nÉcris : « titres » (3 titres différents, 70 caractères maximum, accrocheurs mais fidèles${analyse.sujet ? ', centrés sur le sujet' : ''}), « description » (2 ou 3 phrases, ${/tiktok|instagram/i.test(pf) ? 'courte et directe' : 'claire, avec les mots-clés du sujet'}), « hashtags » (6 à 10 mots-clés en minuscules, sans le #).`;
-    const schema = { type: 'object', properties: { titres: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'string' } }, description: { type: 'string' }, hashtags: { type: 'array', maxItems: 10, items: { type: 'string' } } }, required: ['titres', 'description', 'hashtags'] };
+    const schema = { type: 'object', properties: { titres: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'string', maxLength: 100 } }, description: { type: 'string', maxLength: 600 }, hashtags: { type: 'array', maxItems: 10, items: { type: 'string', maxLength: 30 } } }, required: ['titres', 'description', 'hashtags'] };
     try {
-      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.5 }, 420);
+      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.5 }, 600);
       const o = r.resultat || {};
       const tags = (o.hashtags || []).map(h => '#' + AS.sansAccents(h).replace(/[^a-z0-9]+/g, '')).filter(h => h.length > 2);
       return { titres: (o.titres || []).map(x => SQ.nettoyerTexte(x).slice(0, 100)).filter(Boolean), description: avecChapitres(SQ.nettoyerTexte(o.description || '').slice(0, 1000)), hashtags: [...new Set([...tags, ...cles])].slice(0, 10), ia: true };
@@ -263,9 +264,9 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
     const CH = require('./chapitrage');
     const systeme = 'Tu nommes et résumes les chapitres d’une vidéo en français, uniquement à partir du texte de chaque partie. Titres courts (2 à 5 mots), précis, sans point final, sans guillemets, sans numéro. Résumés d’une phrase (25 mots au plus) qui disent ce qu’on apprend dans la partie. Tu n’inventes rien.';
     const demande = (sujet ? `Sujet général de la vidéo : ${String(sujet).slice(0, 200)}\n${motsCles.length ? `Mots-clés de la vidéo : ${motsCles.slice(0, 6).join(', ')}\n` : ''}Les titres doivent rester dans ce sujet.\n\n` : '') + garde.map((c, i) => `Partie ${i + 1} (${c.titre}) : ${String(c.texte || '').slice(0, 600)}`).join('\n\n') + `\n\nDonne exactement ${garde.length} chapitres (titre et résumé), dans l’ordre. La première partie est l’introduction si elle présente la vidéo ; la dernière est la conclusion si elle conclut.`;
-    const schema = { type: 'object', properties: { chapitres: { type: 'array', minItems: garde.length, maxItems: garde.length, items: { type: 'object', properties: { titre: { type: 'string' }, resume: { type: 'string' } }, required: ['titre', 'resume'] } } }, required: ['chapitres'] };
+    const schema = { type: 'object', properties: { chapitres: { type: 'array', minItems: garde.length, maxItems: garde.length, items: { type: 'object', properties: { titre: { type: 'string', maxLength: 60 }, resume: { type: 'string', maxLength: 220 } }, required: ['titre', 'resume'] } } }, required: ['chapitres'] };
     try {
-      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.3 }, garde.length * 70 + 60);
+      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.3 }, garde.length * 120 + 60);
       const l = (r.resultat && r.resultat.chapitres) || [];
       const t = l.map(x => SQ.nettoyerTexte(x && x.titre).replace(/[.:;,!]+$/, '').slice(0, 60));
       if (t.length === garde.length && t.every(x => x.length >= 3)) {
