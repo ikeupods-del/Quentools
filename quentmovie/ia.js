@@ -48,6 +48,23 @@ const consignesDe = rg => [TYPES[rg.type], rg.public ? `Public visé : ${PUBLICS
 const SCHEMA_PLAN = n => ({ type: 'object', properties: { titre: { type: 'string', maxLength: 90 }, scenes: { type: 'array', minItems: n, maxItems: n, items: { type: 'object', properties: { section: { type: 'string', maxLength: 40 }, idee: { type: 'string', maxLength: 220 }, sujet: { type: 'string', maxLength: 60 }, recherche: { type: 'string', maxLength: 60 } }, required: ['section', 'idee', 'sujet', 'recherche'] } } }, required: ['titre', 'scenes'] });
 const SCHEMA_MOTS = { type: 'object', properties: { scenes: { type: 'array', items: { type: 'object', properties: { sujet: { type: 'string' }, recherche: { type: 'string' } }, required: ['sujet', 'recherche'] } } }, required: ['scenes'] };
 const nbMots = t => String(t).split(/\s+/).filter(Boolean).length;
+// Langues de traduction des sous-titres (nom donné à l'IA en français et en anglais)
+const LANGUES = { it: { nom: 'italien', en: 'Italian' }, en: { nom: 'anglais', en: 'English' }, es: { nom: 'espagnol', en: 'Spanish' }, de: { nom: 'allemand', en: 'German' }, pt: { nom: 'portugais', en: 'Portuguese' }, fr: { nom: 'français', en: 'French' } };
+// Une ligne traduite rendue propre (numéro, guillemets, retours à la ligne retirés)
+const nettoyerTraduction = t => String(t || '').replace(/\s+/g, ' ').replace(/^\s*\d{1,3}[.)]\s+/, '').replace(/^["«“]\s*|\s*["»”]$/g, '').trim();
+// Contrôle d'une ligne traduite : '' si elle est bonne, sinon la raison du refus
+function controleTraduction(src, tr, langue = 'it') {
+  src = String(src || '').trim(); tr = String(tr || '').trim();
+  if (!src) return '';
+  if (!tr) return 'ligne vide';
+  const chiffres = s => (s.replace(/(\d)[\s.,](?=\d{3}\b)/g, '$1').match(/\d+/g) || []);
+  const manquants = chiffres(src).filter(n => !chiffres(tr).includes(n));
+  if (manquants.length) return 'nombre perdu : ' + manquants.join(', ');
+  const l1 = src.length, l2 = tr.length;
+  if (l2 > l1 * 2.6 + 12 || l2 < l1 * 0.3 - 6) return 'longueur incohérente';
+  if (langue !== 'fr' && nbMots(src) >= 4 && ASCII(src).replace(/[^a-z0-9]/g, '') === ASCII(tr).replace(/[^a-z0-9]/g, '')) return 'non traduite';
+  return '';
+}
 const ASCII = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'");
 // Ce que l'utilisateur interdit ou impose, lu par le programme (pas par l'IA) : « pas d'intro », « sans musique », « tutoie-moi »…
 // Ces règles sont appliquées dans le code, l'IA ne peut donc pas les oublier.
@@ -81,7 +98,7 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
   }
   const demander = msg => new Promise((ok, ko) => {
     const id = ++num; attente.set(id, { ok, ko });
-    let mem = ''; try { mem = msg.type === 'ecrire' && msg.systeme && memoire ? memoire() : ''; } catch (e) { mem = ''; }
+    let mem = ''; try { mem = msg.type === 'ecrire' && msg.systeme && memoire && !msg.sansMemoire ? memoire() : ''; } catch (e) { mem = ''; }
     const m = { ...msg };
     if (m.systeme) m.systeme = m.systeme + (mem ? '\n' + mem : '') + (MOD.aucunePensee ? ' /no_think' : '');
     if (mem && m.contexte) m.contexte = Math.min(8192, m.contexte + 384); // place pour la mémoire
@@ -218,13 +235,50 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
     return { texte: r.texte, gpu };
   }
 
+  // Traduction des sous-titres : lignes envoyées par lots de 10 (avec les lignes précédentes pour le sens), chaque ligne contrôlée
+  // (nombres gardés, longueur cohérente, vraiment traduite) ; une ligne refusée est retraduite seule. Les heures ne changent pas.
+  async function traduire({ lignes = [], langue = 'it' }, job) {
+    const L = LANGUES[langue]; if (!L) throw new Error('Langue de traduction inconnue.');
+    utiliser('');
+    if (!installe()) await installer(job);
+    const src = lignes.map(x => String(x || '').replace(/\s+/g, ' ').trim().slice(0, 300)), out = src.map(() => ''), n = src.length, TAILLE = 10;
+    const etape = (t, p) => { if (job) { job.step = t; job.progress = p; } };
+    const vers = (/^[aeiouy]/.test(L.nom) ? 'l’' : 'le ') + L.nom;
+    const systeme = `Tu es un traducteur professionnel de sous-titres vidéo. Tu traduis vers ${vers} (${L.en}) de façon naturelle et fidèle, comme un sous-titreur : même sens, même ton, phrases courtes et parlées. Tu ne rajoutes rien, tu ne résumes rien, tu ne commentes rien. Tu gardes tels quels les noms propres, les marques, les nombres et les chiffres.`;
+    for (let i = 0; i < n; i += TAILLE) {
+      const lot = src.slice(i, i + TAILLE); if (!lot.some(Boolean)) continue;
+      etape(`Traduction en ${L.nom} : lignes ${i + 1} à ${Math.min(n, i + TAILLE)} sur ${n}…`, i / n * 0.9);
+      const avant = src.slice(Math.max(0, i - 3), i).filter(Boolean).join(' ');
+      const demande = `${avant ? `Ce qui est dit juste avant (pour le sens, ne pas le traduire) : ${avant}\n` : ''}Traduis en ${L.nom} chacune de ces ${lot.length} lignes de sous-titres, dans le même ordre : une traduction par ligne. Une ligne peut être un morceau de phrase : traduis-la telle quelle, sans la compléter ni la fusionner avec la suivante.\n${lot.map((t, k) => `${k + 1}. ${t || '…'}`).join('\n')}`;
+      const schema = { type: 'object', properties: { lignes: { type: 'array', minItems: lot.length, maxItems: lot.length, items: { type: 'string', maxLength: 420 } } }, required: ['lignes'] };
+      let l = [];
+      try { const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.2, sansMemoire: true }, Math.ceil(jetons(lot.join(' ')) * 1.8) + 40 * lot.length); gpu = r.gpu || gpu; l = (r.resultat && r.resultat.lignes) || []; }
+      catch (e) { debug('lot refusé', e.message); }
+      lot.forEach((t, k) => { const tr = nettoyerTraduction(l[k]); const raison = controleTraduction(t, tr, langue); if (!raison) out[i + k] = tr; else debug(`ligne ${i + k + 1} refusée (${raison}) : ${t} → ${tr}`); });
+    }
+    // lignes refusées : retraduites une par une, plus sagement ; à défaut la meilleure proposition est gardée et comptée
+    let echecs = 0;
+    const reste = src.map((t, k) => k).filter(k => src[k] && !out[k]);
+    for (const [m, k] of reste.entries()) {
+      etape(`Traduction en ${L.nom} : vérification de ${reste.length} ligne${reste.length > 1 ? 's' : ''}…`, 0.9 + m / reste.length * 0.1);
+      let meilleur = '';
+      for (const temperature of [0.1, 0.35]) {
+        const demande = `${k ? `Contexte : ${src[k - 1]}\n` : ''}Traduis en ${L.nom} cette ligne de sous-titre, sans rien ajouter. Réponds uniquement par la traduction.\n${src[k]}`;
+        try { const r = await demander({ type: 'ecrire', modele: cheminModele, systeme, demande, maxTokens: jetons(src[k]) * 3 + 30, contexte: contexteDe(systeme, demande)(jetons(src[k]) * 3 + 30), temperature, sansMemoire: true });
+          const tr = nettoyerTraduction(r.resultat); if (!controleTraduction(src[k], tr, langue)) { out[k] = tr; break; } meilleur = meilleur || tr; } catch (e) { debug('ligne refusée', e.message); }
+      }
+      if (!out[k]) { echecs++; out[k] = meilleur || src[k]; }
+    }
+    return { lignes: out, echecs, langue, gpu };
+  }
+
   // Assistant de montage : une demande que les règles d'assistant.js n'ont pas comprise → actions connues (jamais d'action inventée)
   async function comprendreDemande(texte) {
     const AS = require('./assistant'), ids = Object.keys(AS.ACTIONS);
     utiliser('');
     if (!installe()) throw new Error('L’IA locale n’est pas encore installée : ouvre « Générer » une fois pour l’installer, ou écris une demande plus simple (« coupe les blancs », « ajoute une musique calme »).');
     const systeme = 'Tu es l’assistant d’un logiciel de montage vidéo. Tu traduis la demande de l’utilisateur en actions de la liste fournie, sans jamais en inventer.';
-    const demande = `Actions possibles :\n${ids.map(id => `- ${id} : ${AS.ACTIONS[id]}`).join('\n')}\nParamètres : format = vertical, horizontal ou carre ; musique = ambiance en un mot ; vitesse = nombre (0.5, 2…) ; transitions = fade, slideleft, zoomin ou fadeblack ; dynamiser = 110 à 140 ; titre = texte du titre ; sous_titres = tiktok ou rien ; publication = YouTube, TikTok ou Instagram.\nDemande : ${String(texte).slice(0, 500)}\nDonne les actions demandées, dans l’ordre (aucune si rien ne correspond).`;
+    const demande = `Actions possibles :\n${ids.map(id => `- ${id} : ${AS.ACTIONS[id]}`).join('\n')}\nParamètres : format = vertical, horizontal ou carre ; musique = ambiance en un mot ; vitesse = nombre (0.5, 2…) ; transitions = fade, slideleft, zoomin ou fadeblack ; dynamiser = 110 à 140 ; titre = texte du titre ; sous_titres = tiktok ou rien ; traduire_sous = italien, anglais, espagnol, allemand, portugais ou français ; publication = YouTube, TikTok ou Instagram.\nDemande : ${String(texte).slice(0, 500)}\nDonne les actions demandées, dans l’ordre (aucune si rien ne correspond).`;
     const schema = { type: 'object', properties: { actions: { type: 'array', maxItems: 8, items: { type: 'object', properties: { action: { enum: ids }, parametre: { type: 'string' } }, required: ['action', 'parametre'] } } }, required: ['actions'] };
     const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.1 }, 260);
     const vus = new Set();
@@ -362,7 +416,7 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
   }
 
   const arreter = () => { if (proc) proc.kill(); };
-  return { etat, installer, ecrireScript, reecrireScene, comprendreDemande, textesPublication, titrerChapitres, analyserVideo, choisirExtraits, telecharger, arreter };
+  return { etat, installer, ecrireScript, reecrireScene, traduire, comprendreDemande, textesPublication, titrerChapitres, analyserVideo, choisirExtraits, telecharger, arreter };
 }
 
-module.exports = { creer, STYLES, MODELE, lireConsignes, regroupe, TYPES, PUBLICS, TONS, RYTHMES };
+module.exports = { creer, STYLES, MODELE, lireConsignes, regroupe, TYPES, PUBLICS, TONS, RYTHMES, LANGUES, controleTraduction, nettoyerTraduction };

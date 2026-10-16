@@ -37,6 +37,11 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   check('mémoire : « oublie… » retire la consigne', /oublié/.test((await dire('oublie le tutoiement')).memoire) && (await (await fetch(U('/api/memoire'))).json()).consignes.length === 0);
   check('mémoire : une demande de montage normale n’est pas prise pour une consigne', (await dire('coupe les blancs')).actions.length > 0);
 
+  // traduction des sous-titres : contrôle de chaque ligne (nombres gardés, vraiment traduite), requête vide refusée
+  const { controleTraduction: ctl, nettoyerTraduction: net } = require('../ia');
+  check('traduction : ligne fidèle acceptée, nombre perdu ou ligne non traduite refusée', ctl('Il est 9 heures et ça coûte 1 000 euros', 'Sono le 9 e costa 1000 euro') === '' && /nombre/.test(ctl('Il est 9 heures', 'Sono le nove')) && /non traduite/.test(ctl('Bonjour à tous et bienvenue', 'Bonjour à tous et bienvenue')) && /vide/.test(ctl('Merci', '')));
+  check('traduction : numéro et guillemets retirés', net('2. « Ciao a tutti »') === 'Ciao a tutti');
+  check('traduction : demande sans texte refusée', (await fetch(U('/api/ia/traduire'), { method: 'POST', body: JSON.stringify({ lignes: ['', ' '], langue: 'it' }) })).status === 400);
   const { lireConsignes: lire } = require('../ia');
   const c1 = lire('Pas d’intro, pas de conclusion, tutoie-moi, sans musique'), c2 = lire('Fais une vidéo avec une intro percutante');
   check('consignes : pas d’intro ni de conclusion lus', !c1.accroche && !c1.ouverture && !c1.conclusion && !c1.musique && c1.sousTitres && c1.adresse === 'tu', JSON.stringify(c1));
@@ -108,6 +113,13 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     console.log('Publication (IA) :', JSON.stringify(pub));
     check('publication IA : 3 titres, description, hashtags', pub.ia && pub.titres.length === 3 && pub.description.length > 20 && pub.hashtags.length >= 3 && pub.hashtags.every(h => /^#[a-z0-9]+$/.test(h)), JSON.stringify(pub));
     check('IA sur la puce graphique', process.platform !== 'darwin' || r.gpu === 'metal', r.gpu);
+    // sous-titres traduits en italien : une traduction par ligne, nombres et noms gardés, vrai italien
+    const fr = ['Bonjour à tous et bienvenue sur ma chaîne.', 'Aujourd’hui je vais vous montrer', 'comment monter une vidéo en 5 minutes', 'avec QuentMovie sur mon Mac.', 'Merci de votre attention et à bientôt !'];
+    const tr = await IA.traduire({ lignes: fr, langue: 'it' }, {});
+    console.log('Traduction en italien :', JSON.stringify(tr));
+    check('traduction en italien : une ligne traduite par ligne', tr.lignes.length === fr.length && tr.lignes.every((t, k) => t && t !== fr[k]), JSON.stringify(tr.lignes));
+    check('traduction en italien : nombres et noms gardés', /\b5\b/.test(tr.lignes[2]) && /QuentMovie/.test(tr.lignes[3]) && /Mac/.test(tr.lignes[3]), JSON.stringify(tr.lignes));
+    check('traduction en italien : vrai italien', /\b(ciao|benvenut[io]|canale|oggi|come|video|grazie|minuti)\b/i.test(tr.lignes.join(' ')), JSON.stringify(tr.lignes));
     // consignes de l'utilisateur : « pas d'intro, pas de conclusion » = ni accroche ni phrase de fin ajoutées
     check('consignes suivies : ni accroche ni conclusion', !r.regles.accroche && !r.regles.conclusion && nbMots(r.scenes[0].texte) <= nbMots(paragraphes[0].texte) * 1.3 && nbMots(r.scenes[4].texte) <= nbMots(paragraphes[4].texte) * 1.3, `${nbMots(r.scenes[0].texte)} / ${nbMots(paragraphes[0].texte)}`);
     IA.arreter();

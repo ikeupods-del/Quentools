@@ -105,7 +105,14 @@ function create(opts = {}) {
     return f;
   };
   // Cadres et décors existent en horizontal (-h) et vertical (-v) : on prend celui du format du projet
-  const orient = (n, W, H) => /^lib:(cadres|fonds)\/[\w\-]+-[hv]\.(png|jpg)$/.test(String(n || '')) ? String(n).replace(/-[hv]\.(png|jpg)$/, (x, e) => (W >= H ? '-h.' : '-v.') + e) : n;
+  // Animations plein écran sur fond vert (« Breaking news ») : version verticale « -v » pour les formats 9:16, 4:5 et carré
+  const orient = (n, W, H) => {
+    const s = String(n || '');
+    if (/^lib:(cadres|fonds)\/[\w\-]+-[hv]\.(png|jpg)$/.test(s)) return s.replace(/-[hv]\.(png|jpg)$/, (x, e) => (W >= H ? '-h.' : '-v.') + e);
+    const m = /^lib:fondvert\/([\w\-]+)\.mp4$/.exec(s);
+    if (m && W / H < 1.25 && !/-v$/.test(m[1])) { const v = `lib:fondvert/${m[1]}-v.mp4`; try { if (fs.existsSync(mediaPath(v))) return v; } catch (e) { /* pas de version verticale */ } }
+    return n;
+  };
   // Chemin utilisable dans un filtre FFmpeg (sinon copie sous un nom simple)
   const cheminFiltre = f => {
     if (/^[\w\-./ ]+$/.test(f)) return f;
@@ -1681,6 +1688,11 @@ function buildClip(c, P, o = {}) {
         Promise.resolve().then(() => fn(job)).then(r => { job.resultat = r || null; job.progress = 1; job.done = true; }).catch(e => { job.error = e.message; }); return { id }; };
       // IA locale du générateur et téléchargement depuis un lien (ia.js)
       if (req.method === 'GET' && p === '/api/ia') return send(res, 200, IA().etat());
+      if (req.method === 'POST' && p === '/api/ia/traduire') { // sous-titres traduits (italien, anglais…) par l'IA locale, mêmes heures
+        const b = await readJson(req), lignes = (Array.isArray(b.lignes) ? b.lignes : []).slice(0, 6000).map(x => String(x || '').slice(0, 300));
+        if (!lignes.some(x => x.trim())) return send(res, 400, { error: 'Aucun sous-titre à traduire.' });
+        return send(res, 200, travail(job => IA().traduire({ lignes, langue: String(b.langue || '') }, job)));
+      }
       if (req.method === 'POST' && p === '/api/ia/installer') { const b = await readJson(req).catch(() => ({})); return send(res, 200, travail(job => IA().installer(job, String(b.modele || '')))); }
       if (req.method === 'POST' && p === '/api/generer/ia') {
         const b = await readJson(req);

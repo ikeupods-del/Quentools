@@ -158,6 +158,24 @@ function chromium() {
   // 3 bis) outils pro : lame, pistes (verrou, muet, masquer), repères nommés et chapitres, grille
   // animation sur fond vert (Breaking news…) posée depuis l'onglet Calques : à la tête de lecture, jouée une fois
   check('calque fond vert : posé à la tête de lecture, joué une fois', await ev(() => { const c = newClip(medias.find(m => m.file === 'a.mp4')); proj.clips = [c]; sel = 0; gt = 1.2; commit(); tout(); const it = LIB().fondvert[0]; ajouterCalque('lib:' + it.file, 'video', POSES.vert); const o = c.overlays[c.overlays.length - 1]; return Math.abs(o.start - 1.2) < 0.05 && o.dur > 0 && o.dur <= it.duree + 0.01 && o.key; }));
+  check('« Breaking news » posé depuis l’onglet Calques : plein écran, version verticale en 9:16', await ev(() => { const c = proj.clips[0]; ajouterCalque('lib:fondvert/breaking.mp4', 'video', POSES.vert); const o = c.overlays[c.overlays.length - 1]; return o.plein === 'remplir' && o.scale === 100 && o.key && orientLib(o.file, false, 9 / 16) === 'lib:fondvert/breaking-v.mp4' && orientLib(o.file, true, 16 / 9) === o.file; }));
+  check('« Breaking news » du studio : plein écran dans le montage', await ev(() => { const c = { overlays: [] }; stAppliquerAnimations(c, [{ id: 'breaking', t: 1 }, { id: 'exclusif', t: 2 }]); return c.overlays.length === 2 && c.overlays[0].plein === 'remplir' && c.overlays[1].plein === '' && animsDirect().some(a => a.id === 'breaking-plein' && a.plein); }));
+  // sous-titres traduits (italien…) : mêmes heures, texte remplacé, mot à mot réparti sur la phrase, ⌘Z = texte d'origine (IA simulée)
+  check('traduction : les mots d’une phrase en mot à mot sont regroupés puis répartis sur sa durée', await ev(() => {
+    const subs = [{ s: 0, e: 0.4, t: 'BONJOUR' }, { s: 0.4, e: 0.8, t: 'À' }, { s: 0.8, e: 1.2, t: 'TOUS.' }, { s: 3, e: 3.5, t: 'MERCI' }], g = phrasesSous(subs, true);
+    const r = sousTraduits(subs, g, ['Ciao a tutti voi.', 'Grazie']);
+    return g.length === 2 && g[0].t === 'BONJOUR À TOUS.' && r.length === 5 && r[0].t === 'CIAO' && r[0].s === 0 && r[3].e === 1.2 && r[4].t === 'GRAZIE' && r[4].s === 3 && r[4].e === 3.5 && r.every((x, k) => !k || x.s >= r[k - 1].s);
+  }));
+  await pg.route('**/api/ia', rt => rt.fulfill({ contentType: 'application/json', body: JSON.stringify({ installee: true, mo: 2500, styles: [], modeles: [] }) }));
+  let envoye = null;
+  await pg.route('**/api/ia/traduire', rt => { envoye = JSON.parse(rt.request().postData()); rt.fulfill({ contentType: 'application/json', body: JSON.stringify({ id: 'trad1' }) }); });
+  await pg.route('**/api/job?id=trad1', rt => rt.fulfill({ contentType: 'application/json', body: JSON.stringify({ done: true, progress: 1, resultat: { lignes: envoye.lignes.map(t => 'IT ' + t), echecs: 0 } }) }));
+  await ev(() => { const c = newClip(medias.find(m => m.file === 'a.mp4')); c.subs = [{ s: 0.5, e: 1.5, t: 'Bonjour à tous' }, { s: 2, e: 3, t: 'il est 9 heures' }]; c.subStyle = 'bandeau'; proj.clips = [c]; sel = 0; commit(); tout(); });
+  await ev(() => outilTraduire('clip', 'it', null));
+  check('traduction : lignes envoyées à l’IA en italien, heures gardées', envoye && envoye.langue === 'it' && envoye.lignes.length === 2 && await ev(() => { const c = proj.clips[0]; return c.subLangue === 'it' && c.subs[0].t === 'IT Bonjour à tous' && c.subs[0].s === 0.5 && c.subs[1].e === 3; }), JSON.stringify(envoye));
+  check('traduction : ⌘Z revient au texte d’origine', await ev(() => { undo(-1); return proj.clips[0].subs[0].t === 'Bonjour à tous' && !proj.clips[0].subLangue; }));
+  check('traduction : bouton « Traduire » dans l’inspecteur et choix de la langue dans les outils', await ev(() => { inspecteur(); const s = $('#iSubLangue'); return !!$('#bSubTrad') && s && s.value === 'it' && /Italien/.test(outilsHtml()) && /oSousLangue/.test(outilsHtml()) && /traduire-tout/.test(outilsHtml()); }));
+  await pg.unroute('**/api/ia'); await pg.unroute('**/api/ia/traduire'); await pg.unroute('**/api/job?id=trad1');
   // calques d'un clip découpé (blancs coupés, coupe, plans) : continués sur les morceaux suivants, jamais perdus dans un blanc
   check('découpe : une animation continue sur les morceaux suivants là où elle en était', await ev(() => {
     const r = repartirCalques([{ file: 'x', kind: 'video', start: 1, dur: 4, anim: 'pop' }], [[0, 2], [3, 5], [6, 9]]), [a, b, c] = r.map(l => l[0]);
