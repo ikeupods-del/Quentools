@@ -73,5 +73,5 @@ Format de chaque image : 480 × 600, fond transparent, buste (même cadrage que 
 ## Prochaines étapes
 1. Valider l'allure de Pico (ou demander des retouches : couleurs, yeux, accessoires).
 2. Ajouter la série dans le studio : entrée `pico` (voix, palette, mention, sprites) et lecture des expressions selon le texte (curieux sur une question, surpris sur un chiffre, inquiet sur un risque).
-3. Écrire l'épisode pilote (sujet simple, par exemple « Pourquoi les prix montent ? ») avec ses sources, et le fabriquer de bout en bout.
+3. Épisode pilote « Pourquoi les prix montent ? » : texte et sources écrits dans `episodes/01-pourquoi-les-prix-montent.md` (à relire) ; reste à le fabriquer de bout en bout.
 4. Vous le relisez : la chaîne ne publie qu'après votre validation.
