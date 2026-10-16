@@ -3,6 +3,12 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.40.0
+- **« Breaking news » en plein écran** : l'animation couvre maintenant tout l'écran, quel que soit le format de la vidéo (16:9, 9:16, 4:5 ou carré), depuis l'onglet Calques comme depuis le studio.
+- **Version verticale** pour TikTok, Reels et Shorts : en format vertical ou carré, une version dessinée pour le téléphone est choisie toute seule (rien n'est coupé ni écrasé).
+- **Nouvelle animation « Breaking news (plein écran) »** (touche Maj+B dans le studio) : elle reste plein écran du début à la fin, sans se réduire en bandeau.
+- **Bandeau défilant plus propre** : le texte « EN DIRECT » ne se chevauche plus et n'est plus coupé.
+
 ## 1.39.1
 - **Les incrustations s'affichent pendant la lecture** : « Breaking news » et les autres animations sur fond vert, images, stickers et vidéos posés sur un clip apparaissent maintenant dès que tu lances la lecture, à leur place et à leur taille, sans attendre que l'aperçu complet soit prêt (sur un long montage, elles n'apparaissaient qu'à l'export).
 

@@ -2412,7 +2412,9 @@
    "x": 50,
    "y": 50,
    "s": 100,
-   "son": "sons/generique-info.mp3"
+   "son": "sons/generique-info.mp3",
+   "plein": true,
+   "v": "fondvert/breaking-v.mp4"
   },
   {
    "id": "exclusif",
@@ -2638,6 +2640,23 @@
    "y": 55,
    "s": 40,
    "son": "sons/applaudissements-courts.mp3"
+  },
+  {
+   "id": "breaking-plein",
+   "nom": "BREAKING NEWS (plein écran)",
+   "cat": "Animations sur fond vert",
+   "groupe": "Infos",
+   "file": "fondvert/breaking-plein.mp4",
+   "duree": 5.4,
+   "w": 1920,
+   "h": 1080,
+   "touche": "Maj+b",
+   "x": 50,
+   "y": 50,
+   "s": 100,
+   "son": "sons/generique-info.mp3",
+   "plein": true,
+   "v": "fondvert/breaking-plein-v.mp4"
   }
  ],
  "marque": [

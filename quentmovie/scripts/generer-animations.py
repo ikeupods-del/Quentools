@@ -206,6 +206,7 @@ def v_suivre(t):
 # ---------- Infos ----------
 # Générique d'édition spéciale, dans l'esprit des journaux télévisés (fond bleu profond, globe filaire, bandeau rouge, bas d'écran) :
 # création originale, sans logo, jingle ni charte d'une chaîne. 0 à 3,6 s plein écran, puis le bas d'écran reste jusqu'à 7 s.
+# Existe en paysage (1920×1080) et en vertical (1080×1920, « -v ») : QuentMovie prend celui du format du projet et le pose en plein écran.
 _FOND = {}
 
 
@@ -234,11 +235,47 @@ def _globe(d, cx, cy, r, t, a=(120, 190, 255)):
 
 
 def _faisceaux(im, t, alpha=46):
-    lay = Image.new('RGBA', im.size, (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
+    lay = Image.new('RGBA', im.size, (0, 0, 0, 0)); ld = ImageDraw.Draw(lay); H = im.size[1]; L = im.size[0] / SS + 680
     for k in range(4):
-        bx = (((t * 260 + k * 560) % 2600) - 400) * SS
-        ld.polygon([(bx, 0), (bx + 150 * SS, 0), (bx - 250 * SS, 1080 * SS), (bx - 400 * SS, 1080 * SS)], fill=(150, 200, 255, alpha))
+        bx = (((t * 260 + k * 560) % L) - 400) * SS
+        ld.polygon([(bx, 0), (bx + 150 * SS, 0), (bx - 250 * SS, H), (bx - 400 * SS, H)], fill=(150, 200, 255, alpha))
     im.paste(Image.alpha_composite(im.convert('RGBA'), lay).convert('RGB'))
+
+
+def _fond_info_v():
+    if 'v' not in _FOND:
+        W, H = 1080 * SS, 1920 * SS
+        y = np.linspace(0, 1, H)[:, None]; x = np.linspace(0, 1, W)[None, :]
+        r = np.sqrt((x - 0.5) ** 2 + ((y - 0.36) * 1.15) ** 2)
+        g = np.clip(1 - r * 1.35, 0, 1) ** 1.6
+        base = np.stack([4 + 18 * g + 6 * y * np.ones_like(x), 12 + 62 * g + 6 * y, 44 + 150 * g + 14 * y], -1)
+        _FOND['v'] = Image.fromarray(np.clip(base, 0, 255).astype(np.uint8), 'RGB')
+    return _FOND['v'].copy()
+
+
+MSG_INFO = 'INFORMATION IMPORTANTE  •  RESTEZ CONNECTÉS  •  À SUIVRE  •  '
+larg = lambda t, taille: police(taille * SS).getlength(t) / SS  # largeur réelle d'un texte (pixels de la vidéo)
+
+
+def _defile(bd, t, taille, h, vitesse=300, x0=30):
+    """Texte qui défile sans jamais se chevaucher : il est répété tous les « largeur du texte »."""
+    pas = larg(MSG_INFO, taille); ox = (t * vitesse) % pas
+    for k in range(int(bd.im.size[0] / SS / pas) + 2):
+        texte(bd, (x0 + k * pas - ox) * SS, h * SS / 2, MSG_INFO, taille * SS, BLANC, ancre='lm')
+
+
+def _defilant(im, t, x0, y0, w, h, taille, depart=1.0):
+    """Bandeau « EN DIRECT » et texte qui défile, en bas de l'écran plein (il entre depuis le bas)."""
+    p = ease((t - depart) / 0.45)
+    if p <= 0:
+        return
+    d = ImageDraw.Draw(im); dy = int(h * 1.6 * (1 - p) * SS); Y0 = y0 * SS + dy; tg = int(h * 1.0 + larg('EN DIRECT', taille * 1.05) + h * 0.45)
+    bande = Image.new('RGB', ((w - tg) * SS, h * SS), (10, 14, 30)); _defile(ImageDraw.Draw(bande), t, taille, h)
+    im.paste(bande, ((x0 + tg) * SS, Y0))
+    d.rectangle([x0 * SS, Y0, (x0 + tg) * SS, Y0 + h * SS], fill=(255, 205, 45))
+    if int(t * 2.5) % 2 == 0:
+        disque(d, (x0 + h * 0.55) * SS, Y0 + h * SS / 2, h * 0.17 * SS, ROUGE)
+    texte(d, (x0 + h * 1.0) * SS, Y0 + h * SS / 2, 'EN DIRECT', taille * 1.05 * SS, NOIR, ancre='lm')
 
 
 def _plein(t):
@@ -266,6 +303,34 @@ def _plein(t):
     p3 = ease((t - 1.9) / 0.5)
     texte(d, 1000 * SS, 780 * SS, 'L’INFORMATION EN CONTINU', 54 * SS, (255, 255, 255) if p3 > 0.5 else (60, 100, 170), ancre='lm')
     d.rectangle([1000 * SS, 820 * SS, (1000 + 760 * p3) * SS, 828 * SS], fill=(255, 205, 45))
+    _defilant(im, t, 0, 972, 1920, 72, 40)
+    return im
+
+
+def _plein_v(t):
+    """Écran plein en vertical : globe en haut, titre au centre (lisible aussi recadré en carré ou en 4:5)."""
+    im = _fond_info_v(); _faisceaux(im, t); d = ImageDraw.Draw(im)
+    pa = ease(t / 0.9); _globe(d, 540 * SS, (640 - 260 * (1 - pa)) * SS, 280 * SS * (0.6 + 0.4 * pa), t)
+    e = ease(t / 0.5)
+    d.rectangle([0, 0, 1080 * SS * e, 18 * SS], fill=(235, 30, 45)); d.rectangle([1080 * SS * (1 - e), 1902 * SS, 1080 * SS, 1920 * SS], fill=(235, 30, 45))
+    p1 = ease((t - 0.45) / 0.45); p2 = ease((t - 0.7) / 0.5)
+    ox1, ox2 = 1100 * SS * (1 - p1), 1200 * SS * (1 - p2)
+    d.rectangle([90 * SS + ox1, 1000 * SS, 690 * SS + ox1, 1070 * SS], fill=(255, 205, 45))
+    texte(d, 120 * SS + ox1, 1035 * SS, 'ÉDITION SPÉCIALE', 44 * SS, NOIR, ancre='lm')
+    d.rectangle([90 * SS + ox2, 1070 * SS, 990 * SS + ox2, 1420 * SS], fill=(205, 15, 32))
+    d.rectangle([90 * SS + ox2, 1070 * SS, 110 * SS + ox2, 1420 * SS], fill=BLANC)
+    texte(d, 150 * SS + ox2, 1165 * SS, 'BREAKING', 124 * SS, BLANC, ancre='lm'); texte(d, 150 * SS + ox2, 1325 * SS, 'NEWS', 124 * SS, BLANC, ancre='lm')
+    sh = (t - 1.5) / 0.7
+    if 0 <= sh <= 1:
+        lay = Image.new('RGBA', im.size, (0, 0, 0, 0)); ld = ImageDraw.Draw(lay); bx = (20 + 1050 * sh) * SS
+        ld.polygon([(bx, 1070 * SS), (bx + 90 * SS, 1070 * SS), (bx + 20 * SS, 1420 * SS), (bx - 70 * SS, 1420 * SS)], fill=(255, 255, 255, 120))
+        m = Image.new('L', im.size, 0); ImageDraw.Draw(m).rectangle([90 * SS, 1070 * SS, 990 * SS, 1420 * SS], fill=255)
+        lay.putalpha(Image.composite(lay.getchannel('A'), Image.new('L', im.size, 0), m)); im.paste(Image.alpha_composite(im.convert('RGBA'), lay).convert('RGB'))
+        d = ImageDraw.Draw(im)
+    p3 = ease((t - 1.9) / 0.5)
+    texte(d, 110 * SS, 1490 * SS, 'L’INFORMATION EN CONTINU', 50 * SS, (255, 255, 255) if p3 > 0.5 else (60, 100, 170), ancre='lm')
+    d.rectangle([110 * SS, 1528 * SS, (110 + 720 * p3) * SS, 1536 * SS], fill=(255, 205, 45))
+    _defilant(im, t, 0, 1600, 1080, 64, 34)
     return im
 
 
@@ -279,15 +344,62 @@ def _bas(t, y0=780):
     d.rectangle([60 * SS, y0 * SS, 330 * SS, (y0 + 220) * SS], fill=(10, 28, 90))
     _globe(d, 195 * SS, (y0 + 110) * SS, 70 * SS, t)
     n = max(1, int(13 * min(1, max(0, (t - 0.3) / 0.6)))); texte(d, 370 * SS, (y0 + 65) * SS, 'BREAKING NEWS'[:n], 100 * SS, BLANC, ancre='lm')
-    bande = Image.new('RGB', (1530 * SS, 90 * SS), (10, 14, 30)); bd = ImageDraw.Draw(bande); ox = -((t * 340) % 1700) * SS
-    for k in range(3):
-        texte(bd, 290 * SS + k * 1700 * SS + ox, 45 * SS, 'INFORMATION IMPORTANTE  •  RESTEZ CONNECTÉS  •  À SUIVRE', 46 * SS, BLANC, ancre='lm')
+    tg = int(80 + larg('EN DIRECT', 48) + 34)
+    bande = Image.new('RGB', (1530 * SS, 90 * SS), (10, 14, 30)); _defile(ImageDraw.Draw(bande), t, 46, 90, 340, tg + 30)
     im.paste(bande, (330 * SS, (y0 + 130) * SS))
-    d.rectangle([330 * SS, (y0 + 130) * SS, 600 * SS, (y0 + 220) * SS], fill=(255, 205, 45))
+    d.rectangle([330 * SS, (y0 + 130) * SS, (330 + tg) * SS, (y0 + 220) * SS], fill=(255, 205, 45))
     if int(t * 2.5) % 2 == 0:
         disque(d, 375 * SS, (y0 + 175) * SS, 13 * SS, ROUGE)
     texte(d, 410 * SS, (y0 + 175) * SS, 'EN DIRECT', 48 * SS, NOIR, ancre='lm')
     return im
+
+
+def _bas_v(t, y0=1240):
+    """Bas d'écran vertical : placé au-dessus de la zone des boutons de TikTok et des Reels, et visible si la vidéo est recadrée en carré."""
+    im = Image.new('RGB', (1080 * SS, 1920 * SS), VERT); d = ImageDraw.Draw(im)
+    d.rectangle([40 * SS, y0 * SS, 1040 * SS, (y0 + 120) * SS], fill=(205, 15, 32))
+    for k in range(5):
+        bx = (40 + ((t * 600 + k * 260) % 1260) - 140) * SS
+        d.polygon([(bx, y0 * SS), (bx + 70 * SS, y0 * SS), (bx + 25 * SS, (y0 + 120) * SS), (bx - 45 * SS, (y0 + 120) * SS)], fill=(225, 45, 55))
+    d.rectangle([40 * SS, y0 * SS, 230 * SS, (y0 + 200) * SS], fill=(10, 28, 90))
+    _globe(d, 135 * SS, (y0 + 100) * SS, 62 * SS, t)
+    n = max(1, int(13 * min(1, max(0, (t - 0.3) / 0.6)))); texte(d, 262 * SS, (y0 + 60) * SS, 'BREAKING NEWS'[:n], 80 * SS, BLANC, ancre='lm')
+    tg = int(66 + larg('EN DIRECT', 40) + 28)
+    bande = Image.new('RGB', (810 * SS, 80 * SS), (10, 14, 30)); _defile(ImageDraw.Draw(bande), t, 36, 80, 300, tg + 24)
+    im.paste(bande, (230 * SS, (y0 + 120) * SS))
+    d.rectangle([230 * SS, (y0 + 120) * SS, (230 + tg) * SS, (y0 + 200) * SS], fill=(255, 205, 45))
+    if int(t * 2.5) % 2 == 0:
+        disque(d, 268 * SS, (y0 + 160) * SS, 12 * SS, ROUGE)
+    texte(d, 296 * SS, (y0 + 160) * SS, 'EN DIRECT', 40 * SS, NOIR, ancre='lm')
+    return im
+
+
+def v_breaking_v(t):
+    if t < 3.6:
+        im = Image.new('RGB', (1080 * SS, 1920 * SS), VERT); A = _plein_v(t); q = ease((t - 3.0) / 0.6) if t > 3.0 else 0.0
+        box = (int(40 * q * SS), int(1240 * q * SS), int((1080 - 40 * q) * SS), int((1920 - 480 * q) * SS))
+        im.paste(A.crop(box), box[:2])
+    else:
+        im = _bas_v(t - 3.6 + 1.0, 1240 + int(700 * ease((t - 7.0) / 0.55)))
+    return out(im, 1080, 1920, ombre=False)
+
+
+def _sortie(A, t, duree, w, h):
+    """Fin de l'écran plein : il glisse vers la gauche et laisse revenir l'image (le vert est retiré par QuentMovie)."""
+    q = ease((t - (duree - 0.45)) / 0.45) if t > duree - 0.45 else 0.0
+    if q <= 0:
+        return A
+    im = Image.new('RGB', (w * SS, h * SS), VERT); ox = int(w * SS * q); im.paste(A.crop((ox, 0, w * SS, h * SS)), (0, 0))
+    ImageDraw.Draw(im).rectangle([w * SS - ox, 0, min(w * SS, w * SS - ox + 26 * SS), h * SS], fill=(235, 30, 45))
+    return im
+
+
+def v_breaking_plein(t):
+    return out(_sortie(_plein(t), t, 5.4, 1920, 1080), 1920, 1080, ombre=False)
+
+
+def v_breaking_plein_v(t):
+    return out(_sortie(_plein_v(t), t, 5.4, 1080, 1920), 1080, 1920, ombre=False)
 
 
 def v_breaking(t):
@@ -505,6 +617,7 @@ ANIMS = [
     ('enregistrer', 'Enregistrer', 'Réseaux', 2.8, v_enregistrer, E, E, 'z', 50, 55, 48, 'vl-clic'),
     ('suivre', 'Suis-moi', 'Réseaux', 3.4, v_suivre, E, E, 'v', 50, 78, 50, 'souris-clic'),
     ('breaking', 'BREAKING NEWS (générique)', 'Infos', 7.6, v_breaking, 1920, 1080, 'b', 50, 50, 100, 'generique-info'),
+    ('breaking-plein', 'BREAKING NEWS (plein écran)', 'Infos', 5.4, v_breaking_plein, 1920, 1080, 'Maj+b', 50, 50, 100, 'generique-info'),
     ('exclusif', 'Exclusif', 'Infos', 2.8, v_exclusif, E, E, 'x', 50, 45, 48, 'tada'),
     ('a-suivre', 'À suivre…', 'Infos', 3.2, v_a_suivre, 1920, 540, 'q', 50, 80, 80, 'tr-whoosh-long'),
     ('alerte', 'Attention', 'Infos', 3.0, v_alerte, E, E, 'a', 50, 50, 48, 'fin-alerte'),
@@ -523,6 +636,10 @@ ANIMS = [
 ]
 
 
+# Animations qui couvrent tout l'écran : posées en plein écran, avec une version verticale pour les vidéos 9:16 (et carrées, 4:5)
+VERTICALES = {'breaking': v_breaking_v, 'breaking-plein': v_breaking_plein_v}
+
+
 def main():
     seul = set(a for a in sys.argv[1:] if a != '--index')
     idx_f = os.path.join(F.RACINE, 'index.json')
@@ -533,8 +650,12 @@ def main():
         if seul and id_ not in seul:
             continue
         if '--index' not in sys.argv:
-                encoder(os.path.join(F.RACINE, 'fondvert', id_ + '.mp4'), (w, h), gen, duree, crf=20)
+            encoder(os.path.join(F.RACINE, 'fondvert', id_ + '.mp4'), (w, h), gen, duree, crf=20)
+            if id_ in VERTICALES:
+                encoder(os.path.join(F.RACINE, 'fondvert', id_ + '-v.mp4'), (h, w), VERTICALES[id_], duree, crf=20)
         existants[id_] = {'id': id_, 'nom': nom, 'cat': 'Animations sur fond vert', 'groupe': cat, 'file': f'fondvert/{id_}.mp4', 'duree': duree, 'w': w, 'h': h, 'touche': touche, 'x': x, 'y': y, 's': s, 'son': f'sons/{bruit}.mp3'}
+        if id_ in VERTICALES:
+            existants[id_].update(plein=True, v=f'fondvert/{id_}-v.mp4')
         print(' ', nom)
     if os.environ.get('ANIM_SANS_INDEX'):  # lots en parallèle : l'index est écrit à la fin par un dernier passage sans filtre (--index)
         return

@@ -850,7 +850,8 @@ function ajouterCalque(file, kind, extra = {}, tPose = gt) { // tPose : instant 
   // animation sur fond vert (Breaking news, flèche…) : jouée une fois, à la tête de lecture si elle est dans ce clip
   const it = /fondvert\//.test(file) ? libItem(file) : null, k = proj.clips.indexOf(c), dans = tPose - starts()[k];
   const quand = it ? { start: dans > 0 && dans < effDur(c) - 0.3 ? +dans.toFixed(2) : 0, dur: +Math.min(it.duree || 3, effDur(c)).toFixed(2) } : {};
-  c.overlays.push({ file, kind: kind === 'video' ? 'video' : 'image', x: 50, y: 50, scale: /lib:stickers/.test(file) ? 25 : 40, rot: 0, opacity: 100, start: 0, dur: 0, anim: 'pop', mode: '', plein: '', key: false, keySim: 0.3, ...extra, ...quand });
+  const plein = it && it.plein ? { x: 50, y: 50, scale: 100, plein: 'remplir' } : {}; // « Breaking news » : tout l'écran, quel que soit le format
+  c.overlays.push({ file, kind: kind === 'video' ? 'video' : 'image', x: 50, y: 50, scale: /lib:stickers/.test(file) ? 25 : 40, rot: 0, opacity: 100, start: 0, dur: 0, anim: 'pop', mode: '', plein: '', key: false, keySim: 0.3, ...extra, ...plein, ...quand });
   commit(); tout(); apercu(); signal('Élément posé sur le clip ' + (sel + 1) + (quand.start ? ' à ' + fmt(quand.start) : '') + ' : règle-le dans l’inspecteur à droite.');
 }
 function ajouterLut(file) {
@@ -1885,10 +1886,15 @@ async function lectureDirecte() {
 // Lecture rapide : calques du clip (images, vidéos, animations sur fond vert comme « Breaking news ») posés comme à l'export :
 // même instant, même place et même taille ; le vert est retiré par la puce graphique (detoureurVert)
 const urlFichier = f => (f.startsWith('lib:') ? '/lib/' + f.slice(4) : '/media/' + enc(f));
-const orientLib = (f, paysage) => (/^lib:(cadres|fonds)\/[\w\-]+-[hv]\.(png|jpg)$/.test(f) ? f.replace(/-[hv]\.(png|jpg)$/, (x, e) => (paysage ? '-h.' : '-v.') + e) : f);
+const orientLib = (f, paysage, ratio) => {
+  if (/^lib:(cadres|fonds)\/[\w\-]+-[hv]\.(png|jpg)$/.test(f)) return f.replace(/-[hv]\.(png|jpg)$/, (x, e) => (paysage ? '-h.' : '-v.') + e);
+  // animation plein écran (« Breaking news ») : sa version verticale pour les formats 9:16, 4:5 et carré, comme à l'export
+  const it = /^lib:fondvert\//.test(f) && ratio < 1.25 ? libItem(f) : null;
+  return it && it.v ? 'lib:' + it.v : f;
+};
 const MELANGES = { ecran: 'screen', addition: 'plus-lighter', eclaircir: 'lighten', produit: 'multiply', incrustation: 'overlay', lumiere: 'soft-light' };
 const nombre = (x, d) => (x === '' || x == null || !Number.isFinite(+x) ? d : +x);
-function creerCalqueDirect(ov, ecoule, paysage) {
+function creerCalqueDirect(ov, ecoule, paysage, ratio = paysage ? 16 / 9 : 9 / 16) {
   const vid = ov.kind === 'video', src = vid ? document.createElement('video') : new Image(), x = { src, el: src, dt: null };
   if (vid) {
     Object.assign(src, { muted: true, loop: true, playsInline: true });
@@ -1905,7 +1911,7 @@ function creerCalqueDirect(ov, ecoule, paysage) {
     };
     if (vid) src.addEventListener('loadeddata', pret, { once: true }); else src.onload = pret;
   }
-  src.src = urlFichier(orientLib(ov.file, paysage));
+  src.src = urlFichier(orientLib(ov.file, paysage, ratio));
   return x;
 }
 function retirerCalqueDirect(x) { try { x.el.remove(); if (x.src.pause) { x.src.pause(); x.src.removeAttribute('src'); x.src.load(); } if (x.dt) x.dt.fin(); } catch (e) { /* déjà retiré */ } x.dt = null; }
@@ -1931,7 +1937,7 @@ function majCalquesDirect(couche, t, st, v) {
     if (!(e >= S0 && e < E0 && S0 < effDur(c)) || ++n > 24) return;
     const cle = `${i}:${k}:${ov.file}:${S0}`; actifs.add(cle);
     let x = couche._els.get(cle);
-    if (!x) { x = creerCalqueDirect(ov, e - S0, r.w >= r.h); couche._els.set(cle, x); couche.appendChild(x.el); }
+    if (!x) { x = creerCalqueDirect(ov, e - S0, r.w >= r.h, r.w / r.h); couche._els.set(cle, x); couche.appendChild(x.el); }
     placerCalqueDirect(x, ov, r);
   });
   for (const [cle, x] of couche._els) if (!actifs.has(cle)) { retirerCalqueDirect(x); couche._els.delete(cle); }
@@ -3657,7 +3663,7 @@ function animsDirect() {
   const lib = (typeof LIB === 'function' ? LIB().fondvert : []) || [], vus = new Set(ANIM_BASE.map(a => a.id)), touches = (studio && studio.o && studio.o.touches) || {};
   const l = ANIM_BASE.map(a => ({ ...a }));
   for (const it of lib) if (!vus.has(it.id)) l.push({ id: it.id, t: it.touche || '', nom: it.nom, x: it.x ?? 50, y: it.y ?? 50, s: it.s ?? 50, groupe: it.groupe || 'Divers', son: it.son || '' });
-  for (const a of l) { const it = lib.find(x => x.id === a.id) || {}; a.w = it.w || 1080; a.h = it.h || 1080; a.duree = it.duree || 3; if (touches[a.id] !== undefined) a.t = touches[a.id]; }
+  for (const a of l) { const it = lib.find(x => x.id === a.id) || {}; a.w = it.w || 1080; a.h = it.h || 1080; a.duree = it.duree || 3; a.plein = !!it.plein; a.v = it.v || ''; if (touches[a.id] !== undefined) a.t = touches[a.id]; }
   return l;
 }
 const stLibTouche = t => String(t || '').replace('Maj+', '⇧').toUpperCase();
@@ -3925,9 +3931,12 @@ function stAnimer(id) {
   }
   const a = animsDirect().find(x => x.id === id); if (!a) return;
   // aperçu : la vidéo sur fond vert est dessinée en retirant le vert (même rendu que dans le montage)
-  const vid = document.createElement('video'); vid.src = `/lib/fondvert/${a.id}.mp4`; vid.muted = true; vid.playsInline = true;
-  const cw = a.w > a.h ? 640 : 360, ch = Math.round(cw * a.h / a.w), toile = document.createElement('canvas'); toile.width = cw; toile.height = ch; const dt = detoureurVert(toile), el = dt.el;
-  const taille = W * a.s / 100, hauteur = taille * a.h / a.w; Object.assign(el.style, { position: 'absolute', width: taille + 'px', height: hauteur + 'px', left: (W * a.x / 100 - taille / 2) + 'px', top: (H * a.y / 100 - hauteur / 2) + 'px' });
+  // animation plein écran (« Breaking news ») : couvre toute l'image filmée, en version verticale si la caméra filme en vertical
+  const vert = a.plein && a.v && W / H < 1.25, fw = vert ? a.h : a.w, fh = vert ? a.w : a.h;
+  const vid = document.createElement('video'); vid.src = vert ? '/lib/' + a.v : `/lib/fondvert/${a.id}.mp4`; vid.muted = true; vid.playsInline = true;
+  const cw = fw > fh ? 640 : 360, ch = Math.round(cw * fh / fw), toile = document.createElement('canvas'); toile.width = cw; toile.height = ch; const dt = detoureurVert(toile), el = dt.el;
+  if (a.plein) Object.assign(el.style, { position: 'absolute', left: 0, top: 0, width: W + 'px', height: H + 'px', objectFit: 'cover' });
+  else { const taille = W * a.s / 100, hauteur = taille * a.h / a.w; Object.assign(el.style, { position: 'absolute', width: taille + 'px', height: hauteur + 'px', left: (W * a.x / 100 - taille / 2) + 'px', top: (H * a.y / 100 - hauteur / 2) + 'px' }); }
   if (!studio.rec && a.son && studio.o.bruitage !== false) { try { const son = new Audio('/lib/' + a.son); son.volume = 0.6; son.play().catch(() => {}); } catch (er) { /* pas de bruit d'aperçu */ } } // jamais pendant la prise : le micro l'entendrait
   const image = () => {
     if (!el.isConnected) return dt.fin();
@@ -4103,7 +4112,7 @@ function stAppliquerAnimations(c, evts) {
     }
     const a = animsDirect().find(x => x.id === e.id), it = LIB().fondvert.find(x => x.id === e.id);
     if (!a || c.overlays.length >= 16) continue;
-    c.overlays.push({ file: `lib:fondvert/${a.id}.mp4`, kind: 'video', x: a.x, y: a.y, scale: a.s, rot: 0, opacity: 100, start: +e.t.toFixed(2), dur: (it && it.duree) || 3, anim: 'none', mode: '', plein: '', key: true, keySim: 0.3 });
+    c.overlays.push({ file: `lib:fondvert/${a.id}.mp4`, kind: 'video', x: a.x, y: a.y, scale: a.s, rot: 0, opacity: 100, start: +e.t.toFixed(2), dur: (it && it.duree) || 3, anim: 'none', mode: '', plein: it && it.plein ? 'remplir' : '', key: true, keySim: 0.3 });
   }
 }
 // bruitages des animations déclenchées : posés dans la piste audio, au moment où l'animation apparaît

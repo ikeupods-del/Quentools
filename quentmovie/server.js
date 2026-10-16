@@ -105,7 +105,14 @@ function create(opts = {}) {
     return f;
   };
   // Cadres et décors existent en horizontal (-h) et vertical (-v) : on prend celui du format du projet
-  const orient = (n, W, H) => /^lib:(cadres|fonds)\/[\w\-]+-[hv]\.(png|jpg)$/.test(String(n || '')) ? String(n).replace(/-[hv]\.(png|jpg)$/, (x, e) => (W >= H ? '-h.' : '-v.') + e) : n;
+  // Animations plein écran sur fond vert (« Breaking news ») : version verticale « -v » pour les formats 9:16, 4:5 et carré
+  const orient = (n, W, H) => {
+    const s = String(n || '');
+    if (/^lib:(cadres|fonds)\/[\w\-]+-[hv]\.(png|jpg)$/.test(s)) return s.replace(/-[hv]\.(png|jpg)$/, (x, e) => (W >= H ? '-h.' : '-v.') + e);
+    const m = /^lib:fondvert\/([\w\-]+)\.mp4$/.exec(s);
+    if (m && W / H < 1.25 && !/-v$/.test(m[1])) { const v = `lib:fondvert/${m[1]}-v.mp4`; try { if (fs.existsSync(mediaPath(v))) return v; } catch (e) { /* pas de version verticale */ } }
+    return n;
+  };
   // Chemin utilisable dans un filtre FFmpeg (sinon copie sous un nom simple)
   const cheminFiltre = f => {
     if (/^[\w\-./ ]+$/.test(f)) return f;

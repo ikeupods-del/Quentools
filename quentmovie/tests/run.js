@@ -157,6 +157,17 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
   }
   check('décor seul dans la timeline', await isJpeg(await preview({ file: 'lib:' + L.fonds[0].file, kind: 'image', dur: 3, fit: 'fill', fx: [], key: {} })), lastErr.v);
   for (const x of L.fondvert) check('animation fond vert ' + x.id, await isJpeg(await preview(clip({ overlays: [{ file: 'lib:' + x.file, kind: 'video', key: true, keySim: 0.3, x: 50, y: 50, scale: 60, anim: 'none', start: 0, dur: 0 }] }))), lastErr.v);
+  // « Breaking news » plein écran : version verticale présente, et l'image entière est couverte (haut, milieu et bas), en vertical comme en carré
+  {
+    const pleins = L.fondvert.filter(x => x.plein);
+    check('animations plein écran avec leur version verticale', pleins.length >= 2 && pleins.every(x => x.v && fs.existsSync(path.join(__dirname, '..', 'bibliotheque', x.v))), pleins.map(x => x.id).join(','));
+    const lire = async (c, format) => { const r = await fetch(U('/api/preview'), { method: 'POST', body: JSON.stringify({ project: project([c], { format }), clip: c, t: 2.2 }) }); const f = path.join(base, 'bn-' + format + '.jpg'); fs.writeFileSync(f, Buffer.from(await r.arrayBuffer())); return execFileSync(bins.ffmpeg, ['-v', 'error', '-i', f, '-vf', 'scale=4:12:flags=area', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-']); };
+    for (const format of ['vertical', 'carre', 'horizontal']) {
+      const nu = await lire(clip(), format), bn = await lire(clip({ overlays: [{ file: 'lib:fondvert/breaking.mp4', kind: 'video', key: true, keySim: 0.3, x: 50, y: 50, scale: 100, anim: 'none', start: 0, dur: 0, plein: 'remplir' }] }), format);
+      const zones = [0, 5, 11].map(l => { let s = 0; for (let k = l * 12; k < l * 12 + 12; k++) s += Math.abs(nu[k] - bn[k]); return s / 12; });
+      check('« Breaking news » couvre tout l’écran en ' + format, zones.every(z => z > 12), zones.map(z => z.toFixed(0)).join(' / '));
+    }
+  }
   { // export : look + effet animé + cadre + animation fond vert sur le même clip
     const rr = await (async () => { const { id } = await (await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: project([clip({ out: 2, lut: { file: 'lib:' + L.luts[0].file, amount: 80 },
       overlays: [{ file: 'lib:' + L.calques[0].file, kind: 'video', mode: 'ecran', opacity: 80, start: 0.5, dur: 1 }, { file: 'lib:' + L.cadres[0].file, kind: 'image', plein: 'cadre', anim: 'fade', start: 0, dur: 0 },
