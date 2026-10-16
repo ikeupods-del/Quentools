@@ -1,16 +1,17 @@
 // Pico, présentateur de la chaîne YouTube QuentInvest : dessine les expressions en vectoriel (SVG), les exporte en PNG transparents,
 // puis compose la planche du personnage et l'avatar de la chaîne.
 // Usage : node design/quentinvest-youtube/personnage/generer.js   (Chromium requis ; QS_CHROMIUM=chemin si besoin)
-// Même style et mêmes couleurs que Max et Pépite (quentstudio/persos) : aplats, contour épais #211F2B, bouche fermée ou ouverte pour la synchronisation des lèvres.
+// Même style que Max et Pépite (quentstudio/persos) : aplats, contour épais, bouche fermée ou ouverte pour la synchronisation des lèvres.
+// Couleurs de Patrimoine AI (index.html) : noir chaud #151311, vert émeraude #10b981 et menthe #34d399, crème #f4f2ee, ambre #fbbf24.
 'use strict';
 const fs = require('fs'), path = require('path');
 let pw;
 try { pw = require(process.env.PW || 'playwright'); } catch (e) { pw = require('/opt/node-tools/node_modules/playwright'); }
 const OUT = __dirname, FONTS = path.join(__dirname, '..', '..', '..', 'assets', 'fonts');
 
-/* Couleurs de la série QuentInvest : bleu de la casquette de Max (corps), orange de son sweat (écharpe), or de Pépite (bout des antennes) */
-const C = { l: '#211F2B', corps: '#2F62D8', ombre: '#234BA8', clair: '#7FA3F5', museau: '#E7EEFF', echarpe: '#FF7B3D', echarpeOmbre: '#D9561E',
-  joue: '#FF8FA3', blanc: '#FFFFFF', iris: '#6B3F12', bouche: '#5B1F2B', langue: '#FF7E8F', verre: '#BEE8FF', bois: '#9A6532', or: '#FFC531', goutte: '#8FD3FF' };
+/* Couleurs de Patrimoine AI : vert émeraude (corps), ambre (écharpe et bout des antennes), crème (museau), noir chaud (contour) */
+const C = { l: '#151311', corps: '#10B981', ombre: '#047857', clair: '#6EE7B7', museau: '#F4F2EE', echarpe: '#FBBF24', echarpeOmbre: '#D69E0B',
+  joue: '#FF8FA3', blanc: '#FFFFFF', iris: '#6B3F12', bouche: '#4A1B26', langue: '#FF7E8F', verre: '#BEE8FF', bois: '#9A6532', or: '#FBBF24', goutte: '#8FD3FF' };
 const T = (x, y, r, inner) => `<g transform="translate(${x} ${y}) rotate(${r || 0})">${inner}</g>`;
 const trait = (d, w = 8, c = C.l) => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}"/>`;
 
@@ -107,23 +108,23 @@ const svgPng = (svg, w, h) => svg.replace('<svg ', `<svg width="${w}" height="${
   }
   /* planche du personnage */
   const vignette = k => { const n = k + '-' + (POSES[k + '-ouvert'] ? 'ouvert' : 'ferme'); return `<figure><div class="v">${svgPng(pico(POSES[n]), 300, 375)}</div><figcaption><b>${NOMS[k]}</b><span>${LEGENDES[k]}</span></figcaption></figure>`; };
-  const pal = [['Bleu Pico', C.corps], ['Bleu ombre', C.ombre], ['Orange écharpe', C.echarpe], ['Museau', C.museau], ['Encre', C.l], ['Or des antennes', C.or]];
-  const html = `<html><head><style>${fonts}*{box-sizing:border-box}body{margin:0;width:1600px;background:#FFF6EA;color:#211F2B;font-family:Inter,sans-serif;padding:56px 64px}
-header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:4px solid #211F2B;padding-bottom:22px}
-h1{font:800 120px/1 Inter;margin:0;letter-spacing:-.03em}h1 em{font-style:normal;background:#FFC531;padding:0 14px;border-radius:12px}
+  const pal = [['Vert Pico', C.corps], ['Vert ombre', C.ombre], ['Ambre (écharpe, antennes)', C.echarpe], ['Crème (museau)', C.museau], ['Noir chaud (contour)', C.l], ['Menthe (reflet)', C.clair]];
+  const html = `<html><head><style>${fonts}*{box-sizing:border-box}body{margin:0;width:1600px;background:#F3F4F1;color:#151311;font-family:Inter,sans-serif;padding:56px 64px}
+header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:4px solid #151311;padding-bottom:22px}
+h1{font:800 120px/1 Inter;margin:0;letter-spacing:-.03em}h1 em{font-style:normal;background:#34D399;padding:0 14px;border-radius:12px}
 header p{font-size:26px;max-width:560px;margin:0;line-height:1.35}
 .grille{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:34px}
-figure{margin:0;background:#fff;border:4px solid #211F2B;border-radius:26px;padding:18px 18px 22px;box-shadow:8px 8px 0 #211F2B}
-.v{height:375px;display:flex;justify-content:center;background:#E7EEFF;border-radius:16px;overflow:hidden}
+figure{margin:0;background:#fff;border:4px solid #151311;border-radius:26px;padding:18px 18px 22px;box-shadow:8px 8px 0 #151311}
+.v{height:375px;display:flex;justify-content:center;background:#DDF6EA;border-radius:16px;overflow:hidden}
 figcaption{margin-top:14px;font-size:22px;display:flex;flex-direction:column;gap:2px}figcaption b{font:700 32px Inter}
 .bas{display:grid;grid-template-columns:1.1fr 1fr;gap:26px;margin-top:30px;align-items:start}
-.bloc{background:#fff;border:4px solid #211F2B;border-radius:26px;padding:26px 30px;box-shadow:8px 8px 0 #211F2B}
+.bloc{background:#fff;border:4px solid #151311;border-radius:26px;padding:26px 30px;box-shadow:8px 8px 0 #151311}
 .bloc h2{font:700 30px Inter;margin:0 0 12px}.bloc ul{margin:0;padding-left:22px;font-size:22px;line-height:1.5}
-.pal{display:flex;gap:14px;flex-wrap:wrap}.pal div{width:150px;font-size:18px}.pal i{display:block;height:70px;border-radius:14px;border:3px solid #211F2B;margin-bottom:6px}
+.pal{display:flex;gap:14px;flex-wrap:wrap}.pal div{width:150px;font-size:18px}.pal i{display:block;height:70px;border-radius:14px;border:3px solid #151311;margin-bottom:6px}
 </style></head><body>
 <header><div><h1>Pico<em>.</em></h1></div><p><b>La petite fourmi qui pose les questions que tout le monde se pose.</b> L’économie expliquée simplement, un grain après l’autre.</p></header>
 <div class="grille">${['neutre', 'curieux', 'surpris', 'content', 'reflechi', 'inquiet'].map(vignette).join('')}</div>
-<div class="bas"><div class="bloc"><h2>Identité</h2><ul><li><b>Chaîne :</b> QuentInvest, l’économie expliquée simplement</li><li><b>Public :</b> la colonie (ses spectateurs)</li><li><b>Signe distinctif :</b> deux antennes qui expriment tout, bout or comme Pépite</li><li><b>Accessoire :</b> sa loupe, pour regarder les chiffres de près</li><li><b>Couleurs :</b> bleu de la casquette de Max, orange de son sweat</li><li><b>Voix :</b> claire, un peu aiguë, rythme vif mais posé</li></ul></div>
+<div class="bas"><div class="bloc"><h2>Identité</h2><ul><li><b>Chaîne :</b> QuentInvest, l’économie expliquée simplement</li><li><b>Public :</b> la colonie (ses spectateurs)</li><li><b>Signe distinctif :</b> deux antennes qui expriment tout, bout ambre</li><li><b>Accessoire :</b> sa loupe, pour regarder les chiffres de près</li><li><b>Couleurs :</b> celles de Patrimoine AI : vert émeraude, ambre, noir chaud</li><li><b>Voix :</b> claire, un peu aiguë, rythme vif mais posé</li></ul></div>
 <div class="bloc"><h2>Palette</h2><div class="pal">${pal.map(([n, c]) => `<div><i style="background:${c}"></i>${n}<br><span style="opacity:.6">${c}</span></div>`).join('')}</div></div></div>
 </body></html>`;
   const fp = await b.newPage({ viewport: { width: 1600, height: 1000 } });
@@ -131,7 +132,7 @@ figcaption{margin-top:14px;font-size:22px;display:flex;flex-direction:column;gap
   await fp.screenshot({ path: path.join(OUT, 'planche-pico.png'), fullPage: true });
   /* avatar de la chaîne (carré, recadré en rond par YouTube) */
   const av = await b.newPage({ viewport: { width: 800, height: 800 } });
-  await av.setContent(`<html><body style="margin:0;width:800px;height:800px;background:radial-gradient(circle at 50% 38%,#3C6FE0,#101A3A 78%);overflow:hidden"><div style="position:absolute;left:50px;top:70px;width:700px;height:875px">${svgPng(pico({ ...POSES['content-ouvert'], loupe: 0, etincelles: 0 }), 700, 875)}</div></body></html>`);
+  await av.setContent(`<html><body style="margin:0;width:800px;height:800px;background:radial-gradient(circle at 50% 38%,#0E6B4F,#151311 78%);overflow:hidden"><div style="position:absolute;left:50px;top:70px;width:700px;height:875px">${svgPng(pico({ ...POSES['content-ouvert'], loupe: 0, etincelles: 0 }), 700, 875)}</div></body></html>`);
   await av.screenshot({ path: path.join(OUT, 'avatar-800.png') });
   await b.close();
   console.log('planche-pico.png, avatar-800.png');

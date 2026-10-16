@@ -1,6 +1,6 @@
 # Pico — fiche du personnage de la chaîne
 
-Présentateur unique de la **chaîne YouTube QuentInvest** (l'économie expliquée simplement). Max et Pépite restent les personnages des vidéos courtes ; Pico porte les vidéos longues. Dessins : `personnage/` (planche `planche-pico.png`, expressions en SVG et PNG transparents, avatar `avatar-800.png`) ; à régénérer avec `node design/quentinvest-youtube/personnage/generer.js`.
+Présentateur unique de la **chaîne YouTube QuentInvest** (l'économie expliquée simplement), **aux couleurs de Patrimoine AI**. Max et Pépite restent les personnages des vidéos courtes ; Pico porte les vidéos longues. Dessins : `personnage/` (planche `planche-pico.png`, expressions en SVG et PNG transparents, avatar `avatar-800.png`) ; à régénérer avec `node design/quentinvest-youtube/personnage/generer.js`.
 
 ## En une phrase
 **Pico est la petite fourmi qui pose les questions que tout le monde se pose**, puis cherche la réponse avec sa loupe, un grain après l'autre.
@@ -9,7 +9,7 @@ Présentateur unique de la **chaîne YouTube QuentInvest** (l'économie expliqu�
 - Elle met de côté, elle s'organise en colonie : c'est la fable de l'épargne que tout le monde connaît (la cigale et la fourmi), sans le côté donneur de leçons.
 - Elle est minuscule face à un sujet immense : le spectateur débutant se reconnaît en elle.
 - Ses deux antennes jouent les émotions (haute = surprise, tombante = inquiet, courbée = question) : lisible en petit sur une miniature ou un téléphone.
-- Bleu, orange et or sont les couleurs de la série : le bleu de la casquette de Max, l'orange de son sweat, l'or de Pépite. Pico se reconnaît d'emblée comme de la maison QuentInvest, tout en étant le seul bleu : les chaînes d'argent sont surtout vertes et dorées.
+- Vert émeraude, ambre, crème et noir chaud sont les couleurs de Patrimoine AI (l'icône en losange, les boutons, les chiffres) : la chaîne et l'application ont la même identité, et Pico ressemble à ce qu'on voit déjà dans l'application.
 
 ## Personnalité
 - **Curieux, jamais savant.** Il ne sait pas d'avance : il cherche avec le spectateur et le dit (« je ne savais pas ça non plus »).
