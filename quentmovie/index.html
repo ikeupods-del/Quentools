@@ -2106,6 +2106,7 @@ function inspecteur() {
   <details ${c.subs.length ? 'open' : ''}><summary>Sous-titres (${c.subs.length})</summary>
     ${c.subs.map((s, i) => `<div class="subrow"><input type="number" step="0.1" min="0" data-sub="${i}:s" value="${s.s}" title="Début (s)"><input type="number" step="0.1" min="0" data-sub="${i}:e" value="${s.e}" title="Fin (s)"><input type="text" data-sub="${i}:t" value="${esc(s.t)}"><button class="mini" data-rmsub="${i}">✕</button></div>`).join('')}
     ${k === 'video' || k === 'audio' ? `<button id="bSubAuto" class="pri" style="width:100%;margin-top:6px">✨ Sous-titres automatiques (écoute ta voix)</button>` : ''}
+    ${c.subs.length ? `<div class="ligne" style="margin-top:6px"><select id="iSubLangue" title="Langue de la traduction">${opts(LANGUES_SOUS.filter(x => x[0]), c.subLangue || paroleOpts().langue || 'it')}</select><button id="bSubTrad" style="flex:none">🌍 Traduire</button></div>` : ''}
     <div class="ligne" style="margin-top:6px"><button id="bAddSub">＋ Ligne ici</button><button id="bSrt">Importer .srt</button></div><input type="file" id="fSrt" accept=".srt,text/plain" hidden>
     <label class="l">Style</label><select data-p="subStyle">${opts(stylesSous(), c.subStyle)}</select>${sl('Taille', 'subSize', 2, 10, 0.2, '', c)}
   </details>
@@ -2176,6 +2177,7 @@ $('#insp').addEventListener('click', e => {
   if (t.id === 'bDetacher') { detacherSon(sel); return; }
   if (t.id === 'bSuivre') { t.disabled = true; recadrerClips([sel], '#suiviRes').finally(() => inspecteur()); return; }
   if (t.id === 'bSuivreSuppr') { delete c.cadrage; commit(); inspecteur(); return apercu(); }
+  if (t.id === 'bSubTrad') { t.disabled = true; outilTraduire('clip', $('#iSubLangue').value, null).finally(() => { t.disabled = false; inspecteur(); }); return; }
   if (t.id === 'bSubAuto') { const st = c.subStyle && c.subStyle !== 'contour' ? c.subStyle : paroleOpts().style; t.disabled = true; outilParole('clip', { sous: true, couper: false, style: st }, null).finally(() => { t.disabled = false; inspecteur(); }); return; }
   if (t.id === 'bAddSub') { const loc = clamp(pos, 0, effDur(c)); c.subs.push({ s: +loc.toFixed(1), e: +Math.min(effDur(c), loc + 2.5).toFixed(1), t: 'Ton sous-titre' }); commit(); inspecteur(); return apercu(); }
   if (t.id === 'bSrt') return $('#fSrt').click();
@@ -2603,7 +2605,7 @@ async function miniSauver() {
   } catch (e) { $('#mRes').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
 }
 // ---------- Parole : sous-titres automatiques, coupe des blancs et des « euh » (reconnaissance locale, parole.js) ----------
-const PAROLE_DEF = { style: 'bandeau', priseSous: false, priseCoupe: false, dico: '', coupe: 'douce' };
+const PAROLE_DEF = { style: 'bandeau', priseSous: false, priseCoupe: false, dico: '', coupe: 'douce', langue: '' };
 // Noms propres souvent mal entendus, corrigés dans les sous-titres ; l'utilisateur ajoute les siens (« entendu = bon mot »)
 const CORRECTIONS = [[/\b(?:cantools?|kantools?|cantouls|quentouls|quentools|kenttools|quent tools)\b/gi, 'QuenTools'], [/\b(?:kumovie|quentmovie|quent movie|kent movie|cometmovie)\b/gi, 'QuentMovie']];
 function corriger(t) {
@@ -2641,11 +2643,72 @@ async function ecouterClip(c, surEtat) {
 function sousTitresPour(r, style, a, b, speed) {
   return (modeMots(style) ? r.st.mots : r.st.phrase).filter(x => x.s >= a - 0.05 && x.s < b).map(x => ({ s: +((Math.max(x.s, a) - a) / speed).toFixed(2), e: +((Math.min(x.e, b) - a) / speed).toFixed(2), t: corriger(x.t) }));
 }
+// ---------- Sous-titres traduits (italien, anglais…) par l'IA locale : mêmes heures, texte traduit ----------
+const LANGUES_SOUS = [['', 'Langue parlée (sans traduction)'], ['it', '🇮🇹 Italien'], ['en', '🇬🇧 Anglais'], ['es', '🇪🇸 Espagnol'], ['de', '🇩🇪 Allemand'], ['pt', '🇵🇹 Portugais'], ['fr', '🇫🇷 Français']];
+const NOMS_LANGUES = { italien: 'it', anglais: 'en', espagnol: 'es', allemand: 'de', portugais: 'pt', français: 'fr', francais: 'fr' };
+const nomLangue = code => ((LANGUES_SOUS.find(x => x[0] === code) || [])[1] || '').replace(/^\S+\s/, '').toLowerCase();
+// Sous-titres d'un clip → phrases à traduire : un sous-titre = une ligne ; en mot à mot, les mots d'une même phrase sont regroupés
+function phrasesSous(subs, mots) {
+  const g = [], nbm = t => t.split(/\s+/).filter(Boolean).length;
+  (subs || []).forEach((x, k) => {
+    const t = String(x.t || '').trim(), d = g[g.length - 1]; if (!t) return;
+    if (mots && d && +x.s - d.e < 0.6 && d.n < 14 && !/[.!?…]$/.test(d.t)) { d.t += ' ' + t; d.e = +x.e; d.n += nbm(t); d.k.push(k); }
+    else g.push({ t, s: +x.s, e: +x.e, n: nbm(t), k: [k] });
+  });
+  return g;
+}
+// Phrases traduites → sous-titres : mêmes heures ; en mot à mot, la traduction est répartie sur la durée de la phrase (même nombre de mots par sous-titre)
+function sousTraduits(subs, groupes, trads) {
+  const res = [];
+  groupes.forEach((g, i) => {
+    const maj = g.t === g.t.toUpperCase() && /\p{Lu}/u.test(g.t), tr = String(trads[i] || '').trim() || g.t, t = maj ? tr.toUpperCase() : tr;
+    if (g.k.length === 1) { res.push({ ...subs[g.k[0]], t }); return; }
+    const mots = t.split(/\s+/).filter(Boolean), par = Math.max(1, Math.round(g.n / g.k.length)), parts = [];
+    for (let j = 0; j < mots.length; j += par) parts.push(mots.slice(j, j + par).join(' '));
+    const total = parts.reduce((a, p) => a + p.length + 1, 0), D = g.e - g.s; let pos = g.s;
+    parts.forEach((p, j) => { const d = D * (p.length + 1) / total; res.push({ ...subs[g.k[0]], s: +pos.toFixed(2), e: +(j === parts.length - 1 ? g.e : pos + d).toFixed(2), t: p }); pos += d; });
+  });
+  return res;
+}
+// Traduit les sous-titres des clips donnés ; l'IA locale est installée au premier usage (avec accord)
+async function traduireSousTitres(clips, langue, surEtat = t => aide(t)) {
+  const nom = nomLangue(langue); if (!langue || !nom) return { n: 0 };
+  const items = clips.filter(c => c && (c.subs || []).some(x => String(x.t || '').trim())).map(c => ({ c, ref: c.subs, g: phrasesSous(c.subs, modeMots(c.subStyle)) }));
+  if (!items.length) throw new Error('Aucun sous-titre à traduire : crée-les d’abord (« ✨ Sous-titres automatiques »).');
+  const e = await (await api('/api/ia')).json();
+  if (!e.installee && !confirm(`Première traduction : QuentMovie va télécharger son IA locale (≈ ${(e.mo / 1000).toFixed(1)} Go, une seule fois). Elle traduit ensuite sur ton Mac, sans internet. Continuer ?`)) throw new Error('Traduction annulée.');
+  const lignes = items.flatMap(x => x.g.map(g => g.t));
+  const { id } = await (await api('/api/ia/traduire', { method: 'POST', body: JSON.stringify({ lignes, langue }) })).json();
+  const r = await suivreTravail(id, j => surEtat(`🌍 ${j.step || 'Traduction…'}`));
+  let p = 0, n = 0;
+  for (const x of items) {
+    const tr = r.lignes.slice(p, p + x.g.length); p += x.g.length;
+    if (x.c.subs !== x.ref || !proj.clips.includes(x.c)) continue; // sous-titres modifiés pendant la traduction : gardés tels quels
+    x.c.subs = sousTraduits(x.c.subs, x.g, tr); x.c.subLangue = langue; n += x.g.length;
+  }
+  commit(); tout(); apercu();
+  return { n, echecs: r.echecs || 0, nom };
+}
+// Langue des sous-titres choisie (italien…) : sous-titres traduits juste après leur création, en une étape d'annulation à part (⌘Z = texte d'origine)
+async function traduireApres(o, clips, n, surEtat) {
+  const langue = o.langue === undefined ? paroleOpts().langue : o.langue;
+  if (!o.sous || !langue || !n) return null;
+  try { return await traduireSousTitres(clips, langue, surEtat); } catch (er) { return { erreur: er.message }; }
+}
+const texteTraduction = tr => (!tr ? '' : tr.erreur ? ` · <span class="err">traduction : ${esc(tr.erreur)}</span>` : ` · traduits en ${tr.nom}${tr.echecs ? ` (${tr.echecs} à relire)` : ''}`);
+async function outilTraduire(portee, langue, res) {
+  const e = t => { const el = res && $(res); if (el) el.innerHTML = t; aide(t); };
+  if (!langue) return e('Choisis d’abord la langue des sous-titres (italien, anglais…).');
+  const clips = portee === 'tout' ? proj.clips.slice() : clipCible() ? [proj.clips[sel]] : [];
+  if (!clips.length) return signal(sansClipMsg);
+  try { const r = await traduireSousTitres(clips, langue, e); e(`✅ Sous-titres traduits en ${r.nom} (${r.n} ligne${r.n > 1 ? 's' : ''})${r.echecs ? ` · ${r.echecs} à relire` : ''}. Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} pour revenir au texte d’origine.`); }
+  catch (er) { e(`<span class="err">${esc(er.message)}</span>`); }
+}
 // i : index du clip ; renvoie le nombre de secondes retirées (coupe) ou de sous-titres créés
 function paroleAppliquer(i, r, { sous, couper, style }) {
   const c = proj.clips[i], sp = c.speed || 1, dur = c.out - c.in;
   if (!couper) {
-    if (sous) { c.subs = sousTitresPour(r, style, 0, dur + 1, sp); c.subStyle = style; if (modeMots(style)) c.subSize = Math.max(c.subSize || 0, tailleSous(style)); }
+    if (sous) { c.subs = sousTitresPour(r, style, 0, dur + 1, sp); c.subStyle = style; c.subLangue = ''; if (modeMots(style)) c.subSize = Math.max(c.subSize || 0, tailleSous(style)); }
     return { pieces: 1, gagne: 0, n: sous ? c.subs.length : 0 };
   }
   // niveau de coupe choisi (douce par défaut : seuls les vrais blancs partent, la vidéo reste fluide)
@@ -2657,7 +2720,7 @@ function paroleAppliquer(i, r, { sous, couper, style }) {
   const nouveaux = decouperClip(c, morceaux).map((n, k) => {
     const [x, y] = segs[k]; n.in = +(c.in + x).toFixed(2); n.out = +(c.in + Math.min(y, dur)).toFixed(2); n.parle = true;
     n.subs = sous ? sousTitresPour(r, style, x, Math.min(y, dur), sp) : [];
-    if (sous) { n.subStyle = style; if (modeMots(style)) n.subSize = Math.max(n.subSize || 0, tailleSous(style)); }
+    if (sous) { n.subStyle = style; n.subLangue = ''; if (modeMots(style)) n.subSize = Math.max(n.subSize || 0, tailleSous(style)); }
     return n;
   });
   const garde = segs.reduce((a, [x, y]) => a + Math.min(y, dur) - x, 0);
@@ -2678,13 +2741,13 @@ async function parolePourClips(indices, o, surEtat = t => aide(t)) {
   if (o.couper) { surEtat('Repérage des changements de plan…'); await chargerPlans(indices.map(i => proj.clips[i]).filter(Boolean)); }
   const liste = indices.filter(i => proj.clips[i] && ['video', 'audio'].includes(proj.clips[i].kind) && proj.clips[i].hasAudio !== false).sort((a, b) => b - a); // de la fin vers le début : les indices restent justes
   if (!liste.length) throw new Error('Aucun clip avec du son à écouter.');
-  let gagne = 0, n = 0, k = 0;
+  let gagne = 0, n = 0, k = 0; const faits = [];
   for (const i of liste) {
     k++; const r = await ecouterClip(proj.clips[i], t => surEtat(`${t} (clip ${k} sur ${liste.length})`));
-    const x = paroleAppliquer(i, r, o); gagne += x.gagne; n += x.n;
+    const x = paroleAppliquer(i, r, o); gagne += x.gagne; n += x.n; faits.push(...proj.clips.slice(i, i + x.pieces));
   }
   commit(); sel = Math.min(Math.max(0, sel), proj.clips.length - 1); tout(); apercu();
-  return { gagne, n, clips: liste.length };
+  return { gagne, n, clips: liste.length, trad: await traduireApres(o, faits, n, surEtat) };
 }
 // ---------- Aperçu de la coupe des blancs : les passages qui partent sont en rouge sur la timeline, un clic garde un passage, puis « Couper » ----------
 let previsuCoupe = null;
@@ -2723,16 +2786,17 @@ function barreCoupe() {
   $('#bcTout').onclick = () => { const tous = z.every(x => x.garder); previsuCoupe.items.forEach(it => it.zones.forEach(x => { x.garder = !tous; })); tlDessin(); barreCoupe(); };
   $('#bcNon').onclick = () => { previsuCoupe = null; barreCoupe(); tlDessin(); aide('Coupe annulée : rien n’a été modifié.'); };
 }
-function appliquerCoupe() {
+async function appliquerCoupe() {
   const p = previsuCoupe; if (!p) return; previsuCoupe = null; barreCoupe();
   const items = p.items.filter(clipInchange).sort((a, b) => proj.clips.indexOf(b.c) - proj.clips.indexOf(a.c)); // de la fin vers le début : les places restent justes
-  let gagne = 0, n = 0;
+  let gagne = 0, n = 0; const faits = [];
   for (const it of items) {
-    const garder = unionIntervalles([...it.g, ...it.zones.filter(z => z.garder).map(z => [z.a, z.b])]);
-    const x = paroleAppliquer(proj.clips.indexOf(it.c), { ...it.r, garderNiveaux: null, garder }, p.o); gagne += x.gagne; n += x.n;
+    const garder = unionIntervalles([...it.g, ...it.zones.filter(z => z.garder).map(z => [z.a, z.b])]), i = proj.clips.indexOf(it.c);
+    const x = paroleAppliquer(i, { ...it.r, garderNiveaux: null, garder }, p.o); gagne += x.gagne; n += x.n; faits.push(...proj.clips.slice(i, i + x.pieces));
   }
   commit(); sel = Math.min(Math.max(0, sel), proj.clips.length - 1); tout(); apercu();
-  aide(`✅ ${fmt(gagne)} de blancs coupés${p.o.sous ? ` · ${n} sous-titres` : ''}. Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} si besoin.`);
+  const msg = t => aide(`✅ ${fmt(gagne)} de blancs coupés${p.o.sous ? ` · ${n} sous-titres` : ''}${t}. Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} si besoin.`);
+  msg(''); const tr = await traduireApres(p.o, faits, n, t => aide(t)); if (tr) msg(texteTraduction(tr));
 }
 async function outilParole(portee, o, res) {
   const e = t => { const el = res && $(res); if (el) el.innerHTML = t; aide(t); };
@@ -2741,7 +2805,8 @@ async function outilParole(portee, o, res) {
   try {
     if (o.couper && o.apercu && revueActive()) return await previsualiserCoupe(indices, o, e); // on montre d'abord ce qui part
     const r = await parolePourClips(indices, o, e);
-    e(`✅ ${o.sous ? `${r.n} sous-titres créés` : ''}${o.sous && o.couper ? ' · ' : ''}${o.couper ? `${fmt(r.gagne)} de blancs et d’hésitations coupés` : ''} (${r.clips} clip${r.clips > 1 ? 's' : ''}). Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} si besoin.`);
+    const tr = texteTraduction(r.trad);
+    e(`✅ ${o.sous ? `${r.n} sous-titres créés` : ''}${o.sous && o.couper ? ' · ' : ''}${o.couper ? `${fmt(r.gagne)} de blancs et d’hésitations coupés` : ''} (${r.clips} clip${r.clips > 1 ? 's' : ''})${tr}. Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} si besoin.`);
   } catch (er) { e(`<span class="err">${esc(er.message)}</span>`); }
 }
 // ---------- Outils : silences, diaporama, podcast, voix off ----------
@@ -2768,7 +2833,10 @@ function outilsHtml() {
       <div class="ligne"><select id="oTrAll"><option value="">Aucune (retirer)</option>${CAT.transitions.filter(t => t.id !== 'none').map(t => `<option value="${t.id}" ${t.id === 'fade' ? 'selected' : ''}>${esc(t.nom)}</option>`).join('')}</select><button class="pri" data-outil="transition-tout" style="flex:none">Appliquer partout</button></div><div class="mut" id="oTrAllRes" style="margin-top:4px"></div></div>
     <div class="encart"><h4>💬 Sous-titres automatiques</h4><p class="mut">QuentMovie écoute ta voix et écrit les sous-titres au bon moment (sans internet, sur ton Mac). Les « euh » ne sont pas écrits.</p>
       <label class="l">Style</label><select id="oSousStyle">${opts(stylesSous(), po.style)}</select>
+      <label class="l">Langue des sous-titres</label><select id="oSousLangue">${opts(LANGUES_SOUS, po.langue)}</select>
       <div class="ligne" style="margin-top:8px"><button class="pri" data-outil="sous-clip">Clip sélectionné</button><button class="pri" data-outil="sous-tout">Toute la vidéo</button></div>
+      <p class="mut" style="margin:6px 0 2px">Autre langue choisie : les sous-titres sont écrits puis traduits par l’IA locale, au même moment que la voix. Déjà sous-titré ?</p>
+      <div class="ligne"><button data-outil="traduire-clip">🌍 Traduire le clip</button><button data-outil="traduire-tout">🌍 Traduire toute la vidéo</button></div>
       <div class="sw2"><input type="checkbox" id="oPriseSous" ${po.priseSous ? 'checked' : ''}><label for="oPriseSous">Sous-titrer automatiquement mes prises du studio</label></div>
       <label class="l">Corrections des noms propres (une par ligne)</label><textarea id="oDico" rows="2" placeholder="mot entendu = bon mot&#10;ex. : Michel Lin = Michelin">${esc(po.dico)}</textarea>
       <div class="mut" id="oSousRes" style="margin-top:4px"></div></div>
@@ -2816,7 +2884,7 @@ function outilsHtml() {
     <div class="encart"><h4>⌨ Raccourcis clavier</h4><button data-outil="aide" style="width:100%">Afficher tous les raccourcis (?)</button></div>`;
 }
 $('#navbody').addEventListener('change', e => {
-  const k = { oSousStyle: 'style', oPriseSous: 'priseSous', oPriseCoupe: 'priseCoupe', oDico: 'dico', oCoupeNiv: 'coupe' }[e.target.id]; if (!k) return;
+  const k = { oSousStyle: 'style', oSousLangue: 'langue', oPriseSous: 'priseSous', oPriseCoupe: 'priseCoupe', oDico: 'dico', oCoupeNiv: 'coupe' }[e.target.id]; if (!k) return;
   const o = paroleOpts(); o[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.value; paroleGarder(o);
 });
 $('#navbody').addEventListener('input', e => {
@@ -2850,8 +2918,9 @@ async function outil(nom) {
   }
   if (nom === 'vertical') { proj.format = 'vertical'; $('#format').value = 'vertical'; commit(); tout(); return recadrerClips(proj.clips.map((c, i) => i), '#oVertRes'); }
   if (nom === 'medias-inutiles' || nom === 'medias-tous') return supprimerMedias(nom === 'medias-tous');
+  if (/^traduire-(clip|tout)$/.test(nom)) return outilTraduire(nom.split('-')[1], $('#oSousLangue') ? $('#oSousLangue').value : paroleOpts().langue, '#oSousRes');
   if (/^(sous|coupe)-(clip|tout)$/.test(nom)) { const [q, p] = nom.split('-'), st = $('#oSousStyle') ? $('#oSousStyle').value : paroleOpts().style;
-    const o = { sous: q === 'sous' || (q === 'coupe' && proj.clips.some(c => c.subs && c.subs.length)), couper: q === 'coupe', style: st, apercu: q === 'coupe' };
+    const o = { sous: q === 'sous' || (q === 'coupe' && proj.clips.some(c => c.subs && c.subs.length)), couper: q === 'coupe', style: st, apercu: q === 'coupe', langue: $('#oSousLangue') ? $('#oSousLangue').value : undefined };
     return outilParole(p, o, q === 'sous' ? '#oSousRes' : '#oCoupeRes'); }
   if (nom === 'maj') return verifierMaj(true);
   if (nom === 'packs') { allerOnglet('outils'); const e = $('#encartPacks'); if (e) e.scrollIntoView({ block: 'start' }); return; }
@@ -2938,6 +3007,9 @@ async function executerAction(a) {
       return outilParole('tout', { sous: avec, couper: true, style: /tiktok/.test(p) ? 'tiktok' : paroleOpts().style });
     }
     case 'sous_titres': return outilParole('tout', { sous: true, couper: false, style: p === 'tiktok' ? 'tiktok' : paroleOpts().style });
+    case 'traduire_sous': { const lg = NOMS_LANGUES[p.toLowerCase()] || (nomLangue(p) ? p : 'it'); // pas encore de sous-titres : ils sont créés puis traduits
+      if (!proj.clips.some(c => (c.subs || []).length)) return outilParole('tout', { sous: true, couper: false, style: paroleOpts().style, langue: lg });
+      return outilTraduire('tout', lg); }
     case 'musique': { const m = musiquePour(p); if (!m) return aide('Aucune musique dans la bibliothèque.');
       proj.audio = proj.audio.filter(x => !estMusiqueLib(x)); proj.audio.push({ file: 'lib:' + m.file, vol: 35, start: 0, fade: true, loop: true, duck: true });
       commit(); tout(); apercu(); return aide(`🎵 Musique « ${esc(m.nom)} » ajoutée sur toute la vidéo, baissée automatiquement quand on parle.`); }

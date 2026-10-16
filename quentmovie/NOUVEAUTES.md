@@ -8,6 +8,7 @@ Changer aussi `version` dans `package.json` : une version déjà publiée n'est 
 - **Version verticale** pour TikTok, Reels et Shorts : en format vertical ou carré, une version dessinée pour le téléphone est choisie toute seule (rien n'est coupé ni écrasé).
 - **Nouvelle animation « Breaking news (plein écran) »** (touche Maj+B dans le studio) : elle reste plein écran du début à la fin, sans se réduire en bandeau.
 - **Bandeau défilant plus propre** : le texte « EN DIRECT » ne se chevauche plus et n'est plus coupé.
+- **Sous-titres en italien** (et en anglais, espagnol, allemand, portugais) : choisis la « Langue des sous-titres » dans Outils → Sous-titres automatiques, ou clique sur « 🌍 Traduire » pour des sous-titres déjà faits. La traduction se fait sur ton Mac, sans internet, au même moment que la voix ; ⌘Z revient au texte d'origine. Aussi avec l'assistant ⌘K : « mets les sous-titres en italien ».
 
 ## 1.39.1
 - **Les incrustations s'affichent pendant la lecture** : « Breaking news » et les autres animations sur fond vert, images, stickers et vidéos posés sur un clip apparaissent maintenant dès que tu lances la lecture, à leur place et à leur taille, sans attendre que l'aperçu complet soit prêt (sur un long montage, elles n'apparaissaient qu'à l'export).

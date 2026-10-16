@@ -10,6 +10,8 @@ const CAS = [
   ['coupe à 10 secondes', 'couper_a:10'], ['coupe à 1:30', 'couper_a:90'], ['mets le volume à 50 %', 'volume:50'], ['coupe le son', 'volume:0'], ['baisse le volume', 'volume:60'],
   ['ajoute un fondu au début et à la fin', 'fondus'], ['ajoute du zoom', 'dynamiser:120'], ['supprime la musique', 'retirer_musique'], ['retire les transitions', 'retirer_transitions'],
   ['ajoute une musique calme et supprime les blancs', 'couper_blancs musique:calme'], ['coupe les blancs et ajoute des sous-titres tiktok', 'couper_blancs sous_titres:tiktok'],
+  ['mets les sous-titres en italien', 'traduire_sous:italien'], ['traduis les sous-titres en anglais', 'traduire_sous:anglais'], ['ajoute des sous-titres en français', 'sous_titres'],
+  ['coupe les blancs et mets des sous-titres en italien', 'couper_blancs traduire_sous:italien'],
   ['sans les blancs', ''], ['garde les silences', ''], ['ajoute une musique calme', 'musique:calme'], ['passe en vertical', 'format:vertical']
 ];
 for (const [d, att] of CAS) check(`« ${d} »`, v(d) === att, `obtenu : « ${v(d)} », attendu : « ${att} »`);

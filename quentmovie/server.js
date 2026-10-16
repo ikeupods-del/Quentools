@@ -1688,6 +1688,11 @@ function buildClip(c, P, o = {}) {
         Promise.resolve().then(() => fn(job)).then(r => { job.resultat = r || null; job.progress = 1; job.done = true; }).catch(e => { job.error = e.message; }); return { id }; };
       // IA locale du générateur et téléchargement depuis un lien (ia.js)
       if (req.method === 'GET' && p === '/api/ia') return send(res, 200, IA().etat());
+      if (req.method === 'POST' && p === '/api/ia/traduire') { // sous-titres traduits (italien, anglais…) par l'IA locale, mêmes heures
+        const b = await readJson(req), lignes = (Array.isArray(b.lignes) ? b.lignes : []).slice(0, 6000).map(x => String(x || '').slice(0, 300));
+        if (!lignes.some(x => x.trim())) return send(res, 400, { error: 'Aucun sous-titre à traduire.' });
+        return send(res, 200, travail(job => IA().traduire({ lignes, langue: String(b.langue || '') }, job)));
+      }
       if (req.method === 'POST' && p === '/api/ia/installer') { const b = await readJson(req).catch(() => ({})); return send(res, 200, travail(job => IA().installer(job, String(b.modele || '')))); }
       if (req.method === 'POST' && p === '/api/generer/ia') {
         const b = await readJson(req);

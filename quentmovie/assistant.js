@@ -8,6 +8,7 @@ const ACTIONS = {
   couper_blancs: 'Couper les blancs et les « euh »',
   niveau_final: 'Régler le volume final comme les réseaux sociaux',
   sous_titres: 'Ajouter les sous-titres automatiques',
+  traduire_sous: 'Traduire les sous-titres',
   musique: 'Ajouter une musique de fond',
   retirer_musique: 'Retirer la musique',
   format: 'Changer le format de la vidéo',
@@ -34,6 +35,8 @@ const ACTIONS = {
   fondus: 'Ajouter des fondus au début et à la fin',
   exporter: 'Exporter la vidéo'
 };
+// langues des sous-titres traduits : mot de la demande → nom montré (le code est retrouvé par l'interface)
+const LANGUES_SOUS = { italien: 'italien', italian: 'italien', anglais: 'anglais', english: 'anglais', espagnol: 'espagnol', allemand: 'allemand', portugais: 'portugais', francais: 'français' };
 const AMBIANCES = ['calme', 'douce', 'piano', 'dynamique', 'energique', 'epique', 'cinema', 'hip-hop', 'joyeuse', 'triste', 'suspense', 'lofi', 'electro', 'acoustique', 'pop'];
 const sansAccents = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'");
 
@@ -45,7 +48,10 @@ function comprendre(demande, projet) {
   if (/(montage (automatique|auto|complet)|monte[- ]?(la|le|moi|ma|mon|mes|les|cette|ces|tout)\b|fais[- ]moi (le|un|mon) montage|auto-?monte|monte (automatiquement|tout))/.test(t) && !/monte[- ]?(le )?son/.test(t)) return planAuto(projet);
   const non = mot => new RegExp(`(sans|pas de|enleve|retire|supprime|vire)( les?| la| l'| des| de)? ?${mot}`).test(t);
   if (/\b(blancs?|silences?|euh|hesitations?|temps morts?)\b/.test(t) && !/(sans|pas de|garde|laisse|conserve)( les?| la| l'| des| de)? ?(blancs?|silences?|euh|hesitations?|temps morts?)/.test(t)) ajoute('couper_blancs'); // « supprime les blancs » = les couper
-  if (/sous[- ]?titr/.test(t) && !non('sous[- ]?titr')) ajoute('sous_titres', /tiktok|gros|grand|anime|karaoke|mot a mot/.test(t) ? 'tiktok' : '');
+  // « sous-titres en italien », « traduis les sous-titres en anglais » : traduction (créés d'abord s'il n'y en a pas) ; « en français » seul = la langue parlée
+  const lg = /(?:sous[- ]?titr|tradu)/.test(t) && Object.keys(LANGUES_SOUS).find(m => new RegExp(`\\b(?:en |in )?${m}s?\\b`).test(t) && (m !== 'francais' || /tradu/.test(t)));
+  if (lg && !non('sous[- ]?titr')) ajoute('traduire_sous', LANGUES_SOUS[lg]);
+  else if (/sous[- ]?titr/.test(t) && !non('sous[- ]?titr')) ajoute('sous_titres', /tiktok|gros|grand|anime|karaoke|mot a mot/.test(t) ? 'tiktok' : '');
   if (/\b(plans?|changements? de plan|decoupe automatique)\b/.test(t) && /(decoup|detect|separ|coupe)/.test(t) && !/premier plan|arriere[- ]plan/.test(t)) ajoute('plans');
   if (/(detach|separ|extrai)\w* (le |la |du )?(son|audio|piste audio)/.test(t)) ajoute('detacher');
   if (/(ameliore|nettete|debruit|plus net|qualite)/.test(t)) ajoute('ameliorer');
@@ -88,7 +94,7 @@ function comprendre(demande, projet) {
   if (/(hashtags?|description|titre (pour|de la) (publication|video youtube|tiktok)|legende)/.test(t)) ajoute('publication', /youtube/.test(t) ? 'YouTube' : /instagram/.test(t) ? 'Instagram' : /tiktok/.test(t) ? 'TikTok' : '');
   if (/\bexport/.test(t)) ajoute('exporter');
   // ordre du montage : découpe d'abord, habillage ensuite, export à la fin
-  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'niveau_final', 'publication', 'exporter'];
+  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'traduire_sous', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'niveau_final', 'publication', 'exporter'];
   return l.sort((a, b) => ORDRE.indexOf(a.action) - ORDRE.indexOf(b.action));
 }
 
