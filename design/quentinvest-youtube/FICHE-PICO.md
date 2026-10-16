@@ -1,6 +1,6 @@
 # Pico — fiche du personnage de la chaîne
 
-Présentateur unique de la chaîne d'économie expliquée simplement (ligne QuentInvest). Dessins : `personnage/` (planche `planche-pico.png`, expressions en SVG et PNG transparents, avatar `avatar-800.png`) ; à régénérer avec `node design/chaine-youtube/personnage/generer.js`.
+Présentateur unique de la **chaîne YouTube QuentInvest** (l'économie expliquée simplement). Max et Pépite restent les personnages des vidéos courtes ; Pico porte les vidéos longues. Dessins : `personnage/` (planche `planche-pico.png`, expressions en SVG et PNG transparents, avatar `avatar-800.png`) ; à régénérer avec `node design/quentinvest-youtube/personnage/generer.js`.
 
 ## En une phrase
 **Pico est la petite fourmi qui pose les questions que tout le monde se pose**, puis cherche la réponse avec sa loupe, un grain après l'autre.
@@ -9,7 +9,7 @@ Présentateur unique de la chaîne d'économie expliquée simplement (ligne Quen
 - Elle met de côté, elle s'organise en colonie : c'est la fable de l'épargne que tout le monde connaît (la cigale et la fourmi), sans le côté donneur de leçons.
 - Elle est minuscule face à un sujet immense : le spectateur débutant se reconnaît en elle.
 - Ses deux antennes jouent les émotions (haute = surprise, tombante = inquiet, courbée = question) : lisible en petit sur une miniature ou un téléphone.
-- Violet et citron = les couleurs de QuenTools ; aucune autre chaîne d'argent n'utilise ces teintes (le vert et l'or sont partout).
+- Bleu, orange et or sont les couleurs de la série : le bleu de la casquette de Max, l'orange de son sweat, l'or de Pépite. Pico se reconnaît d'emblée comme de la maison QuentInvest, tout en étant le seul bleu : les chaînes d'argent sont surtout vertes et dorées.
 
 ## Personnalité
 - **Curieux, jamais savant.** Il ne sait pas d'avance : il cherche avec le spectateur et le dit (« je ne savais pas ça non plus »).
@@ -25,6 +25,7 @@ Présentateur unique de la chaîne d'économie expliquée simplement (ligne Quen
 | La question | « Bon. Question de fourmi : … ? » |
 | Une idée | « Tic-tic ! » (il tapote ses antennes) |
 | Un chiffre | « Regardons ça de plus près. » (il sort la loupe) |
+| Un clin d'œil | Pépite peut apparaître en petite vignette (« la définition du jour »), Max en exemple de débutant pressé |
 | Un piège | « Attention, grain de sable. » |
 | Fin | « Un grain après l'autre. À bientôt dans la fourmilière ! » |
 

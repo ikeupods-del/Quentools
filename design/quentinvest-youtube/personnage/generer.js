@@ -1,16 +1,16 @@
-// Pico, présentateur de la chaîne : dessine les expressions en vectoriel (SVG), les exporte en PNG transparents,
+// Pico, présentateur de la chaîne YouTube QuentInvest : dessine les expressions en vectoriel (SVG), les exporte en PNG transparents,
 // puis compose la planche du personnage et l'avatar de la chaîne.
-// Usage : node design/chaine-youtube/personnage/generer.js   (Chromium requis ; QS_CHROMIUM=chemin si besoin)
-// Même style que Max et Pépite (quentstudio/persos) : aplats, contour épais #211F2B, bouche fermée ou ouverte pour la synchronisation des lèvres.
+// Usage : node design/quentinvest-youtube/personnage/generer.js   (Chromium requis ; QS_CHROMIUM=chemin si besoin)
+// Même style et mêmes couleurs que Max et Pépite (quentstudio/persos) : aplats, contour épais #211F2B, bouche fermée ou ouverte pour la synchronisation des lèvres.
 'use strict';
 const fs = require('fs'), path = require('path');
 let pw;
 try { pw = require(process.env.PW || 'playwright'); } catch (e) { pw = require('/opt/node-tools/node_modules/playwright'); }
 const OUT = __dirname, FONTS = path.join(__dirname, '..', '..', '..', 'assets', 'fonts');
 
-/* Couleurs : violet de la marque QuenTools pour le corps, citron pour l'écharpe et le bout des antennes */
-const C = { l: '#211F2B', corps: '#7B5CFF', ombre: '#5A3FD1', clair: '#A58CFF', museau: '#F1EAFF', citron: '#C6E84A', citronOmbre: '#9BBE2A',
-  joue: '#FF8FA3', blanc: '#FFFFFF', iris: '#1FB5A2', bouche: '#5B1F2B', langue: '#FF7E8F', verre: '#BEE8FF', bois: '#9A6532', or: '#FFC93C', goutte: '#8FD3FF' };
+/* Couleurs de la série QuentInvest : bleu de la casquette de Max (corps), orange de son sweat (écharpe), or de Pépite (bout des antennes) */
+const C = { l: '#211F2B', corps: '#2F62D8', ombre: '#234BA8', clair: '#7FA3F5', museau: '#E7EEFF', echarpe: '#FF7B3D', echarpeOmbre: '#D9561E',
+  joue: '#FF8FA3', blanc: '#FFFFFF', iris: '#6B3F12', bouche: '#5B1F2B', langue: '#FF7E8F', verre: '#BEE8FF', bois: '#9A6532', or: '#FFC531', goutte: '#8FD3FF' };
 const T = (x, y, r, inner) => `<g transform="translate(${x} ${y}) rotate(${r || 0})">${inner}</g>`;
 const trait = (d, w = 8, c = C.l) => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}"/>`;
 
@@ -21,7 +21,7 @@ const ANTENNES = {
   curieuse: [['M200 128 C176 82 150 62 112 60', 108, 60], ['M280 128 C290 90 296 64 300 44', 300, 40]],
   tombantes: [['M196 130 C170 100 140 96 108 128', 102, 134], ['M284 130 C310 100 340 96 372 128', 378, 134]]
 };
-const antennes = k => ANTENNES[k].map(([d, x, y]) => trait(d, 9) + `<circle cx="${x}" cy="${y}" r="17" fill="${C.citron}" stroke="${C.l}" stroke-width="7"/>`).join('');
+const antennes = k => ANTENNES[k].map(([d, x, y]) => trait(d, 9) + `<circle cx="${x}" cy="${y}" r="17" fill="${C.or}" stroke="${C.l}" stroke-width="7"/>`).join('');
 
 const oeil = (cx, o) => {
   const rx = 40 * (o.gros || 1), ry = 46 * (o.gros || 1), px = cx + (o.dx || 0), py = 238 + (o.dy || 0);
@@ -61,8 +61,8 @@ const goutte = () => `<path d="M392 182 C382 206 376 216 392 232 C410 216 402 20
 function pico(p) {
   const corps = `<path d="M50 600 C50 470 120 405 240 402 C360 405 430 470 430 600 Z" fill="${C.corps}" stroke="${C.l}" stroke-width="8"/>`
     + `<path d="M334 424 C402 452 428 520 430 598 L362 598 C364 522 352 462 334 424 Z" fill="${C.ombre}"/>`
-    + `<path d="M136 394 Q240 452 344 394 L356 432 Q240 496 124 432 Z" fill="${C.citron}" stroke="${C.l}" stroke-width="7"/>`
-    + `<path d="M292 466 L326 556 L282 568 L262 478 Z" fill="${C.citron}" stroke="${C.l}" stroke-width="7"/><path d="M300 480 L318 540" stroke="${C.citronOmbre}" stroke-width="8" fill="none"/>`;
+    + `<path d="M136 394 Q240 452 344 394 L356 432 Q240 496 124 432 Z" fill="${C.echarpe}" stroke="${C.l}" stroke-width="7"/>`
+    + `<path d="M292 466 L326 556 L282 568 L262 478 Z" fill="${C.echarpe}" stroke="${C.l}" stroke-width="7"/><path d="M300 480 L318 540" stroke="${C.echarpeOmbre}" stroke-width="8" fill="none"/>`;
   const tete = `<ellipse cx="240" cy="244" rx="154" ry="140" fill="${C.corps}" stroke="${C.l}" stroke-width="8"/>`
     + `<path d="M344 150 C398 204 396 296 334 354 C364 292 370 218 340 160 Z" fill="${C.ombre}"/>`
     + `<path d="M126 176 C148 128 198 104 252 104" fill="none" stroke="${C.clair}" stroke-width="11"/>`
@@ -92,7 +92,7 @@ const LEGENDES = { neutre: 'Il explique', curieux: 'Il se pose la question', sur
 const NOMS = { neutre: 'Neutre', curieux: 'Curieux', surpris: 'Surpris', content: 'Content', reflechi: 'Réfléchi', inquiet: 'Inquiet' };
 
 const b64 = f => 'data:font/woff2;base64,' + fs.readFileSync(path.join(FONTS, f)).toString('base64');
-const fonts = `@font-face{font-family:Bricolage;src:url(${b64('bricolage.woff2')});font-weight:200 800}@font-face{font-family:Inter;src:url(${b64('inter.woff2')});font-weight:100 900}`;
+const fonts = `@font-face{font-family:Inter;src:url(${b64('inter.woff2')});font-weight:100 900}`;
 const svgPng = (svg, w, h) => svg.replace('<svg ', `<svg width="${w}" height="${h}" `);
 
 (async () => {
@@ -107,23 +107,23 @@ const svgPng = (svg, w, h) => svg.replace('<svg ', `<svg width="${w}" height="${
   }
   /* planche du personnage */
   const vignette = k => { const n = k + '-' + (POSES[k + '-ouvert'] ? 'ouvert' : 'ferme'); return `<figure><div class="v">${svgPng(pico(POSES[n]), 300, 375)}</div><figcaption><b>${NOMS[k]}</b><span>${LEGENDES[k]}</span></figcaption></figure>`; };
-  const pal = [['Violet Pico', C.corps], ['Violet ombre', C.ombre], ['Citron', C.citron], ['Museau', C.museau], ['Encre', C.l], ['Or', C.or]];
-  const html = `<html><head><style>${fonts}*{box-sizing:border-box}body{margin:0;width:1600px;background:#F6F3EC;color:#211F2B;font-family:Inter,sans-serif;padding:56px 64px}
+  const pal = [['Bleu Pico', C.corps], ['Bleu ombre', C.ombre], ['Orange écharpe', C.echarpe], ['Museau', C.museau], ['Encre', C.l], ['Or des antennes', C.or]];
+  const html = `<html><head><style>${fonts}*{box-sizing:border-box}body{margin:0;width:1600px;background:#FFF6EA;color:#211F2B;font-family:Inter,sans-serif;padding:56px 64px}
 header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:4px solid #211F2B;padding-bottom:22px}
-h1{font:800 120px/1 Bricolage;margin:0;letter-spacing:-.03em}h1 em{font-style:normal;background:#C6E84A;padding:0 14px;border-radius:12px}
+h1{font:800 120px/1 Inter;margin:0;letter-spacing:-.03em}h1 em{font-style:normal;background:#FFC531;padding:0 14px;border-radius:12px}
 header p{font-size:26px;max-width:560px;margin:0;line-height:1.35}
 .grille{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:34px}
 figure{margin:0;background:#fff;border:4px solid #211F2B;border-radius:26px;padding:18px 18px 22px;box-shadow:8px 8px 0 #211F2B}
-.v{height:375px;display:flex;justify-content:center;background:#EDE7FF;border-radius:16px;overflow:hidden}
-figcaption{margin-top:14px;font-size:22px;display:flex;flex-direction:column;gap:2px}figcaption b{font:700 32px Bricolage}
+.v{height:375px;display:flex;justify-content:center;background:#E7EEFF;border-radius:16px;overflow:hidden}
+figcaption{margin-top:14px;font-size:22px;display:flex;flex-direction:column;gap:2px}figcaption b{font:700 32px Inter}
 .bas{display:grid;grid-template-columns:1.1fr 1fr;gap:26px;margin-top:30px;align-items:start}
 .bloc{background:#fff;border:4px solid #211F2B;border-radius:26px;padding:26px 30px;box-shadow:8px 8px 0 #211F2B}
-.bloc h2{font:700 30px Bricolage;margin:0 0 12px}.bloc ul{margin:0;padding-left:22px;font-size:22px;line-height:1.5}
+.bloc h2{font:700 30px Inter;margin:0 0 12px}.bloc ul{margin:0;padding-left:22px;font-size:22px;line-height:1.5}
 .pal{display:flex;gap:14px;flex-wrap:wrap}.pal div{width:150px;font-size:18px}.pal i{display:block;height:70px;border-radius:14px;border:3px solid #211F2B;margin-bottom:6px}
 </style></head><body>
 <header><div><h1>Pico<em>.</em></h1></div><p><b>La petite fourmi qui pose les questions que tout le monde se pose.</b> L’économie expliquée simplement, un grain après l’autre.</p></header>
 <div class="grille">${['neutre', 'curieux', 'surpris', 'content', 'reflechi', 'inquiet'].map(vignette).join('')}</div>
-<div class="bas"><div class="bloc"><h2>Identité</h2><ul><li><b>Public :</b> la colonie (ses spectateurs)</li><li><b>Signe distinctif :</b> deux antennes qui expriment tout, bout citron</li><li><b>Accessoire :</b> sa loupe, pour regarder les chiffres de près</li><li><b>Écharpe citron :</b> la marque QuenTools</li><li><b>Voix :</b> claire, un peu aiguë, rythme vif mais posé</li></ul></div>
+<div class="bas"><div class="bloc"><h2>Identité</h2><ul><li><b>Chaîne :</b> QuentInvest, l’économie expliquée simplement</li><li><b>Public :</b> la colonie (ses spectateurs)</li><li><b>Signe distinctif :</b> deux antennes qui expriment tout, bout or comme Pépite</li><li><b>Accessoire :</b> sa loupe, pour regarder les chiffres de près</li><li><b>Couleurs :</b> bleu de la casquette de Max, orange de son sweat</li><li><b>Voix :</b> claire, un peu aiguë, rythme vif mais posé</li></ul></div>
 <div class="bloc"><h2>Palette</h2><div class="pal">${pal.map(([n, c]) => `<div><i style="background:${c}"></i>${n}<br><span style="opacity:.6">${c}</span></div>`).join('')}</div></div></div>
 </body></html>`;
   const fp = await b.newPage({ viewport: { width: 1600, height: 1000 } });
@@ -131,7 +131,7 @@ figcaption{margin-top:14px;font-size:22px;display:flex;flex-direction:column;gap
   await fp.screenshot({ path: path.join(OUT, 'planche-pico.png'), fullPage: true });
   /* avatar de la chaîne (carré, recadré en rond par YouTube) */
   const av = await b.newPage({ viewport: { width: 800, height: 800 } });
-  await av.setContent(`<html><body style="margin:0;width:800px;height:800px;background:radial-gradient(circle at 50% 38%,#4B35B8,#1B1530 78%);overflow:hidden"><div style="position:absolute;left:50px;top:70px;width:700px;height:875px">${svgPng(pico({ ...POSES['content-ouvert'], loupe: 0, etincelles: 0 }), 700, 875)}</div></body></html>`);
+  await av.setContent(`<html><body style="margin:0;width:800px;height:800px;background:radial-gradient(circle at 50% 38%,#3C6FE0,#101A3A 78%);overflow:hidden"><div style="position:absolute;left:50px;top:70px;width:700px;height:875px">${svgPng(pico({ ...POSES['content-ouvert'], loupe: 0, etincelles: 0 }), 700, 875)}</div></body></html>`);
   await av.screenshot({ path: path.join(OUT, 'avatar-800.png') });
   await b.close();
   console.log('planche-pico.png, avatar-800.png');
