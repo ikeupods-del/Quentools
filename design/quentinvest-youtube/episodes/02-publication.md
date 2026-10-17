@@ -36,6 +36,19 @@ Un grain après l'autre. À bientôt dans la fourmilière !
 #inflation #pouvoirdachat #économie #finance #vulgarisation #QuentInvest
 ```
 
+## Description courte (à coller telle quelle)
+```
+1 000 € dans un tiroir pendant 10 ans : que reste-t-il vraiment ? Pico, la petite fourmi de QuentInvest, explique ce que l'inflation fait à l'argent qui dort.
+
+Source : Insee, inflation en France 2022-2024 (≈ +12,6 % cumulés). Les exemples à 2 % et 3 % sont des hypothèses, pas des taux réels.
+
+Vulgarisation, pas un conseil en investissement. Voix de synthèse.
+
+Quel sujet veux-tu pour la prochaine vidéo ? Dis-le en commentaire !
+
+#inflation #pouvoirdachat #économie #QuentInvest
+```
+
 ## Légende TikTok (à coller telle quelle)
 ```
 1 000 € dans un tiroir pendant 10 ans : combien il te reste vraiment ? 🐜 Pico t'explique l'inflation en 3 minutes. Exemple pédagogique, pas un conseil en investissement. Voix de synthèse. #inflation #pouvoirdachat #économie #apprendre #QuentInvest
