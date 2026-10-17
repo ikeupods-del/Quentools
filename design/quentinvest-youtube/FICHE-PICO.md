@@ -53,7 +53,7 @@ Format de chaque image : 480 × 600, fond transparent, buste (même cadrage que 
 
 ## Voix
 - Voix de synthèse Piper (`fr_FR-upmc-medium`, comme la série QuentInvest), à choisir à l'oreille entre les deux voix du modèle.
-- Réglage de départ, à affiner : plus aiguë et un peu plus vive que Max — hauteur `asetrate={t}*1.08`, tempo `atempo=1.06` (même écriture que `quentstudio/series.py`).
+- Réglage actuel : voix Pierre (locuteur 1), plus aiguë que Max — hauteur `asetrate={t}*1.08`, allure de synthèse 0,65 (≈ 175 mots par minute), à affiner à l'oreille (options `--locuteur` et `--vitesse` de `fabrication/fabriquer.js`).
 - Rythme : vif sur l'explication, plus lent sur le chiffre clé et sur le piège (une respiration avant).
 
 ## Structure type d'une vidéo (8 à 10 minutes)
@@ -73,5 +73,5 @@ Format de chaque image : 480 × 600, fond transparent, buste (même cadrage que 
 ## Prochaines étapes
 1. Valider l'allure de Pico (ou demander des retouches : couleurs, yeux, accessoires).
 2. Ajouter la série dans le studio : entrée `pico` (voix, palette, mention, sprites) et lecture des expressions selon le texte (curieux sur une question, surpris sur un chiffre, inquiet sur un risque).
-3. Épisode pilote « Pourquoi les prix montent ? » : texte et sources écrits dans `episodes/01-pourquoi-les-prix-montent.md` (à relire) ; reste à le fabriquer de bout en bout.
+3. Épisode pilote « Pourquoi les prix montent ? » : texte et sources dans `episodes/01-pourquoi-les-prix-montent.md` (lecture) et `.json` (scènes, source de la fabrication) ; vidéo fabriquée avec `node design/quentinvest-youtube/fabrication/fabriquer.js design/quentinvest-youtube/episodes/01-pourquoi-les-prix-montent.json` (voix Piper, images, montage et export par le moteur de QuentMovie ; voir l'en-tête du script pour les options).
 4. Vous le relisez : la chaîne ne publie qu'après votre validation.
