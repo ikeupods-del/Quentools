@@ -75,3 +75,11 @@ Format de chaque image : 480 × 600, fond transparent, buste (même cadrage que 
 2. Ajouter la série dans le studio : entrée `pico` (voix, palette, mention, sprites) et lecture des expressions selon le texte (curieux sur une question, surpris sur un chiffre, inquiet sur un risque).
 3. Épisode pilote « Pourquoi les prix montent ? » : texte et sources dans `episodes/01-pourquoi-les-prix-montent.md` (lecture) et `.json` (scènes, source de la fabrication) ; vidéo fabriquée avec `node design/quentinvest-youtube/fabrication/fabriquer.js design/quentinvest-youtube/episodes/01-pourquoi-les-prix-montent.json` (voix Piper, images, montage et export par le moteur de QuentMovie ; voir l'en-tête du script pour les options).
 4. Vous le relisez : la chaîne ne publie qu'après votre validation.
+
+## Réservé à l'épisode 2 : les animations
+Décision du propriétaire : l'épisode 1 reste avec des écrans fixes (changement d'image à chaque idée). Les animations sont gardées pour l'épisode 2 :
+- barres et chiffres qui se remplissent ou se comptent (5,2 % → 4,9 % → 2,0 %), panier dont les produits s'allument un à un ;
+- gâteaux et clients qui arrivent, flèches de coût qui se tracent, calcul affiché ligne par ligne ;
+- Pico qui entre et sort, antennes et loupe qui bougent entre deux répliques ;
+- transitions entre les parties avec les effets de QuentMovie (packs, titres animés).
+Technique prévue : le script `fabrication/fabriquer.js` fabrique aujourd'hui deux images par réplique (bouche ouverte/fermée) ; il faudra une suite d'images par réplique (animations pilotées par le temps dans la page HTML, capturées image par image) ou des animations de QuentMovie posées sur la timeline. À écrire avec l'épisode 2.
