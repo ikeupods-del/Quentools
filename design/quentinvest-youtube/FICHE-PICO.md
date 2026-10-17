@@ -29,6 +29,7 @@ Logo de la chaîne (marque, avatar, logos horizontaux clair et sombre, bannière
 | Un chiffre | « Regardons ça de plus près. » (il sort la loupe) |
 | Un clin d'œil | Pépite peut apparaître en petite vignette (« la définition du jour »), Max en exemple de débutant pressé |
 | Un piège | « Attention, grain de sable. » |
+| Abonnement (au début) | « Si tu veux rejoindre la colonie, abonne-toi : une nouvelle vidéo arrive bientôt. » |
 | Fin | « Un grain après l'autre. À bientôt dans la fourmilière ! » |
 
 Tutoiement. Phrases courtes. Un terme technique = défini dans la phrase d'après, avec un exemple.
@@ -59,7 +60,7 @@ Format de chaque image : 480 × 600, fond transparent, buste (même cadrage que 
 - Rythme : vif sur l'explication, plus lent sur le chiffre clé et sur le piège (une respiration avant).
 
 ## Structure type d'une vidéo (8 à 10 minutes)
-1. **Accroche (15 s)** : la question de fourmi, une image forte, pas d'introduction.
+1. **Accroche (15 s)** : la question de fourmi, une image forte, pas d'introduction. **Appel à s'abonner dès le début** (à partir de l'épisode 3) : une phrase de 5 secondes au maximum, dite juste après la question de fourmi, dans les 20 premières secondes, quand l'attention est la plus forte ; puis on enchaîne tout de suite sur le contenu. Le même appel s'affiche en une ligne en tête de la description et de la légende TikTok. La fin de la vidéo ne garde que la question à la colonie, sans second appel long.
 2. **Le problème** : pourquoi on se pose cette question (un exemple de vie courante).
 3. **Trois idées**, chacune avec un exemple, un schéma, un chiffre sourcé.
 4. **Le piège** : ce qui est souvent mal compris.
