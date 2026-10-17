@@ -16,3 +16,20 @@ Chaque publication est programmée à l'avance (pas immédiate) : elle reste vis
 
 ## Point technique à valider au premier essai
 Metricool télécharge la vidéo depuis une adresse publique. Les vidéos ne passent pas par la conversation (trop lourdes) : elles seront déposées sur une adresse publique (dépôt GitHub public dédié ou dossier Google Drive relié à Metricool), puis la programmation pointe vers cette adresse. Le premier essai se fait avec une publication privée pour vérifier que Metricool accepte le fichier.
+
+## Compte relié (17 octobre 2026)
+Marque Metricool n° 7483174 (propriétaire `ikeupods@gmail.com`, fuseau Europe/Paris) : TikTok « woufapp » et chaîne YouTube `UCQDy7BsKRARXG9P_LG6NPHg`. Le propriétaire a demandé de programmer les publications.
+
+## Calendrier proposé (heures de Paris, d'après les meilleurs créneaux de Metricool)
+YouTube : mardi et vendredi à 16 h (créneau le plus fort de la semaine pour la chaîne). TikTok : le même jour à 18 h (second pic de la journée), avec la mention « vidéo complète sur la chaîne ».
+
+| Épisode | YouTube | TikTok |
+|---|---|---|
+| 3 · Les intérêts composés | mar. 20 oct. 16 h | mar. 20 oct. 18 h |
+| 4 · Un crédit de 10 000 € | ven. 23 oct. 16 h | ven. 23 oct. 18 h |
+| 5 · 100 € par mois pendant 20 ans | mar. 27 oct. 16 h | mar. 27 oct. 18 h |
+| 6 · 1,5 % de frais par an | ven. 30 oct. 16 h | ven. 30 oct. 18 h |
+| 7 · 2 000 € sur 20 ans | mar. 3 nov. 16 h | mar. 3 nov. 18 h |
+| 8 · 5 000 € dans un tiroir | ven. 6 nov. 16 h | ven. 6 nov. 18 h |
+
+Réglages de chaque publication : YouTube public, catégorie Éducation, « pas destiné aux enfants », contenu de synthèse déclaré ; TikTok public, contenu généré par ordinateur déclaré ; textes tirés de `NN-sujet-publication.json`.
