@@ -1,7 +1,7 @@
 # Épisode 3 — Les intérêts composés : la boule de neige de l'argent
 
 Statut : prêt à relire, rien n'est publié.
-Vidéos : `03-interets-composes-youtube.mp4` (2:18), `03-interets-composes-tiktok.mp4` (verticale) ; miniatures `03-miniature.png` et `03-miniature-tiktok.png`.
+Vidéos : `03-interets-composes-youtube.mp4` (2:17), `03-interets-composes-tiktok.mp4` (verticale) ; miniatures `03-miniature.png` et `03-miniature-tiktok.png`.
 
 ## Titre
 ```
@@ -17,10 +17,10 @@ Pico explique les intérêts composés : pourquoi 1 000 € peuvent devenir plus
 Chapitres
 0:00 La question
 0:10 Les intérêts simples
-0:22 Les intérêts composés
-1:00 Le temps compte
-1:22 Le piège
-1:47 En une phrase
+0:21 Les intérêts composés
+0:58 Le temps compte
+1:21 Le piège
+1:46 En une phrase
 
 Sources
 S1 · Formule des intérêts composés : capital × (1 + taux)^années (calcul QuentInvest)
@@ -60,7 +60,7 @@ Formule des intérêts composés : capital × (1 + taux)^années (calcul QuentIn
 ## Réglages
 - Public : pas destiné aux enfants. Langue : français. Catégorie : Éducation.
 - Déclarer le contenu de synthèse (voix) selon les règles de la plateforme le jour de la publication.
-- Prochain épisode annoncé : Où garder son argent de précaution ?.
+- Prochain épisode annoncé : Un crédit de 10 000 € coûte combien en tout ?.
 
 ## À faire avant de publier
 - Les chiffres sont des calculs de la chaîne (formule en source) : relire le résultat une fois.

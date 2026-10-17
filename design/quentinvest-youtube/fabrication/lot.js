@@ -18,7 +18,7 @@ for (const nom of fiches) {
   const argv = [path.join(__dirname, 'episode.js'), path.join(FICHES, nom), '--sortie', dossier, ...(arg('modeles') ? ['--modeles', arg('modeles')] : []), ...drapeaux];
   const t = Date.now(), r = spawnSync('node', argv, { encoding: 'utf8', maxBuffer: 1e9, env: process.env });
   const min = ((Date.now() - t) / 60000).toFixed(1);
-  if (r.status === 0) { ok++; const alertes = (r.stdout.match(/ · [^\n]*/g) || []).filter(l => !/Rien à signaler/.test(l)); console.log(`✓ ${base} (${min} min)${alertes.length ? ' · ' + alertes.length + ' avertissement(s) : ' + alertes.map(a => a.trim()).join(' ') : ''}`); }
+  if (r.status === 0) { ok++; const alertes = (r.stdout.match(/^ {2}· [^\n]*/gm) || []).filter(l => !/Rien à signaler/.test(l)); console.log(`✓ ${base} (${min} min)${alertes.length ? ' · ' + alertes.length + ' avertissement(s) : ' + alertes.map(a => a.trim()).join(' ') : ''}`); }
   else { echecs++; console.log(`✗ ${base} : ${(r.stderr || r.stdout).split('\n').filter(l => l && !/csrc/.test(l)).slice(-3).join(' | ')}`); }
 }
 console.log(`\n${ok} fabriqué(s), ${ignores} déjà fait(s), ${echecs} échec(s) en ${((Date.now() - t0) / 60000).toFixed(0)} min. Dossier : ${RACINE}`);

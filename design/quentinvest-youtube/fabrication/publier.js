@@ -13,6 +13,8 @@ function publication(f, r) {
   const NUM = String(f.numero).padStart(2, '0'), ch = [];
   r.scenes.forEach(s => { if (s.section && !ch.some(c => c.t === (s.debutExport ?? s.debut))) ch.push({ t: s.debutExport ?? s.debut, titre: s.section }); });
   if (ch.length) ch[0].t = 0;
+  // YouTube exige des chapitres d'au moins 10 secondes : un chapitre trop proche du précédent (ou de la fin) est fondu dans le précédent
+  for (let i = ch.length - 1; i > 0; i--) if (ch[i].t - ch[i - 1].t < 10 || r.duree - ch[i].t < 10) ch.splice(i, 1);
   const chapitres = ch.length >= 3 ? ch.map(c => `${horodate(c.t)} ${c.titre}`).join('\n') : '';
   const externes = f.sourcesExternes !== false;
   const sources = (f.sources || []).join('\n') + (externes ? '\nConsultées le : [date de consultation à compléter]' : '');

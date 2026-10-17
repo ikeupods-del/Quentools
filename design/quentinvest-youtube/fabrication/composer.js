@@ -66,9 +66,9 @@ function compose(f) {
     er.forEach((e, i) => L.push({ expr: 'inquiet', ecran: { type: 'erreur', numero: i + 1, titre: e.titre }, texte: e.texte }));
   }
   L.push({ expr: 'content', section: 'En une phrase', ecran: { type: 'resume', titre: 'En une phrase', texte: maj(f.resume.ecran || f.resume.texte.replace(/^En une phrase\s*:\s*/i, '')) }, texte: f.resume.texte });
-  const suite = f.suite || {}, fin = (suite.texte ? suite.texte + ' ' : '') + f.question + ' Dis-le en commentaire. Rappel : vulgarisation, pas un conseil en investissement.';
+  const suite = f.suite || {}, fin = (suite.texte ? suite.texte + ' ' : '') + f.question + ' Dis-le en commentaire.';
   L.push({ expr: 'curieux', geste: 'penche', ecran: { type: 'suite', label: 'Prochain épisode', titre: suite.titre || 'À bientôt', sous: suite.sous || f.question + ' Dis-le en commentaire.' }, texte: fin });
-  L.push({ expr: 'content', ecran: { type: 'fin' }, sortie: true, texte: "Un grain après l'autre. À bientôt dans la fourmilière !" });
+  L.push({ expr: 'content', ecran: { type: 'fin' }, sortie: true, texte: "Rappel : vulgarisation, pas un conseil en investissement. Un grain après l'autre. À bientôt dans la fourmilière !" });
   const long = { ...base, musique: f.musique || 'documentaire-doux', suite: suite.titre, scenes: L };
   if (f.musiqueRevelation && rev >= 0) long.musiqueRevelation = { id: f.musiqueRevelation, scene: rev };
 
