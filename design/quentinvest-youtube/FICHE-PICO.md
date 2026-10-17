@@ -83,3 +83,23 @@ Format de chaque image : 480 × 600, fond transparent, buste (même cadrage que 
 Écrans animés, fabriqués par `fabrication/ecrans.js` : chaque écran est une page HTML pilotée par `setT(t)`, capturée image par image (attributs `data-a` : `fade`, `pop`, `grow`, `count`, `draw`, `on`). Les éléments qui arrivent l'un après l'autre sont étalés sur la durée de la voix (`pas`) ; compteurs, courbe et résultats sont calés sur les mots dits. Pico est posé par-dessus par FFmpeg : bouche synchronisée, respiration, rebond quand l'expression change, entrée par la droite à la première réplique (`entree` sur une réplique pour la rejouer) et sortie (`sortie`). Nouveaux écrans : `pieces`, `duo` (compteur qui descend), `taux` (intérêt − inflation = gain réel), `courbe` (valeur affichée contre pouvoir d'achat). Les écrans de l'épisode 1 sont animés aussi s'il est refabriqué.
 
 Commande de l'épisode 2 : `node design/quentinvest-youtube/fabrication/fabriquer.js design/quentinvest-youtube/episodes/02-que-fait-linflation-a-ton-argent.json --voix ~/Movies/QuentMovie/modeles/kokoro-multi-lang-v1_0`.
+
+## Style 2 (épisodes suivants, clé `"style": 2`)
+Les épisodes 1 et 2 gardent leur rendu d'origine. Un nouvel épisode part de `episodes/_modele-episode.json` et active :
+- **Accroche chiffrée** (écran `accroche`) : le chiffre choc est à l'écran dès la première seconde, avec la question de fourmi ; **appel à s'abonner** juste après (écran `abonne` : le bouton devient « Abonné ») ; **teaser** de l'épisode suivant en fin de vidéo (écran `suite`).
+- **Textes plus gros** (lisibles sur téléphone) et **zoom lent** du fond (1 → 1,045 sur la durée de chaque écran), pour que l'image ne reste jamais figée.
+- **Voix rythmée** : phrase par phrase, avec une vraie respiration après un point, une question ou deux-points ; `"lent": true` ralentit la dernière phrase de la réplique (chiffre clé).
+- **Pico qui joue** : `"geste"` = `pointe` (se penche vers l'écran), `hoche` (acquiesce) ou `penche` (intrigué), en plus de la respiration et du rebond au changement d'expression.
+- **Bruitages** (banque de QuentMovie, discrets) : « pop » à chaque élément qui apparaît, « whoosh » à chaque nouvel écran, et un effet de révélation au choix : `"effet": "baisse" | "hausse" | "pieces" | "ding" | "succes" | "impact"` (instant réglable avec `effetT`).
+- **Contrôle du rythme** avant l'export (`--controle` pour le lancer seul) : accroche de 9 s au plus, appel à s'abonner avant 20 s, aucun écran de plus de 11 s, aucune réplique de plus de 45 mots.
+- **Format vertical** : `"format": "vertical"` (1080 × 1920, TikTok, Shorts) : écran en haut, Pico dessous, sous-titres de 3 mots. Exemple : `episodes/02-tiktok.json` (62 s, tiré de l'épisode 2).
+- **Voix du propriétaire** (option) : `--voix-perso <dossier>` remplace la voix de synthèse par des enregistrements `v00.wav`, `v01.wav`… (un par réplique, dans l'ordre du fichier) ; une réplique sans fichier reste en voix de synthèse.
+- **Voix masculines gratuites à comparer** (Piper, modèles `vits-piper-fr_FR-tom-medium` et `vits-piper-fr_FR-gilles-low`) : extraits proposés au propriétaire, choix en attente ; la voix de l'épisode 2 reste la référence.
+
+Commande d'un épisode vertical : `node design/quentinvest-youtube/fabrication/fabriquer.js design/quentinvest-youtube/episodes/02-tiktok.json --voix ~/Movies/QuentMovie/modeles/kokoro-multi-lang-v1_0`.
+
+## Règles de contenu des nouveaux épisodes
+- Un exemple chiffré que le spectateur peut refaire avec ses propres chiffres (« et toi, combien as-tu dans ton tiroir ? »).
+- Un fil entre les épisodes : le teaser de fin annonce le sujet suivant (clé `suite` du fichier, reprise dans la description).
+- Chaque chiffre a sa source sur l'écran ; une hypothèse est toujours annoncée comme telle ; jamais de taux de produit réel inventé.
+

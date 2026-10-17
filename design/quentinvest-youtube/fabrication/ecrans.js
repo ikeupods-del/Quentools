@@ -77,6 +77,79 @@ svg.graphe text{font-family:Inter,sans-serif;fill:#a8a196;font-size:26px;font-we
 svg.graphe .lab{font-size:34px;font-weight:800}
 `;
 
+
+// ---------- style 2 (nouveaux épisodes) : textes plus gros, lisibles sur téléphone ----------
+const CSS_V2 = `
+.v2 .sous{font-size:46px}
+.v2 .etiquette{font-size:44px}
+.v2 .liste{font-size:48px}
+.v2 .source{font-size:28px}
+.v2 .mention{font-size:28px;height:60px}
+.v2 .def{font-size:62px}
+.v2 .resume{font-size:68px}
+.v2 .section{font-size:30px}
+.accroche .rang3{display:flex;align-items:baseline;gap:34px;white-space:nowrap}
+.accroche .av{font-size:112px;font-weight:800;color:var(--creme);letter-spacing:-2px}
+.accroche .ap{font-size:150px;font-weight:800;color:var(--ambre);letter-spacing:-3px;font-variant-numeric:tabular-nums}
+.accroche .fl{font-size:90px;font-weight:800;color:var(--doux)}
+.accroche .intro{font-size:50px;font-weight:600;color:var(--creme);line-height:1.25}
+.abo{position:relative;width:620px;height:150px}
+.abo div{position:absolute;inset:0;border-radius:75px;display:flex;align-items:center;justify-content:center;font-size:58px;font-weight:800;letter-spacing:2px}
+.abo .a1{background:var(--vert);color:#06281d;box-shadow:0 0 50px rgba(16,185,129,.45)}
+.abo .a2{background:var(--ambre);color:#151311}
+.suite .mot{font-size:36px}
+`;
+// ---------- format vertical 1080×1920 (TikTok, Shorts) : l'écran en haut, Pico sous l'écran, sous-titres au milieu bas ----------
+const CSS_VERT = `
+body.vert{width:1080px;height:1920px}
+.vert .marque{left:60px;top:64px;font-size:38px}
+.vert .section{right:60px;top:70px;font-size:28px}
+.vert .zone{left:60px;top:190px;width:960px;height:720px;gap:22px}
+.vert .source{left:60px;top:930px;font-size:28px}
+.vert .mention{top:1500px;bottom:auto;height:60px;font-size:26px;background:none;border:0}
+.vert h1{font-size:88px}
+.vert h1[style]{font-size:110px!important}
+.vert h2{font-size:66px}
+.vert .sous{font-size:48px}
+.vert .mot{font-size:40px}
+.vert svg.graphe text{font-size:30px}
+.vert svg.graphe .lab{font-size:40px}
+.vert .source{width:560px}
+.vert .gros{font-size:170px}
+.vert .def{font-size:60px}
+.vert .resume{font-size:64px}
+.vert .liste{font-size:40px}
+.vert .etiquette{font-size:40px}
+.vert .calc .l{font-size:40px}
+.vert .calc .r{font-size:66px}
+.vert .carte{padding:36px 40px}
+.vert .duo{flex-direction:column;gap:20px;align-items:stretch}
+.vert .duo .carte{min-width:0}
+.vert .duo .n{font-size:100px}
+.vert .duo .fleche{display:none}
+.vert .taux{flex-wrap:wrap;justify-content:center;gap:14px}
+.vert .taux .c{padding:24px 26px}
+.vert .taux .c small{font-size:24px}
+.vert .taux .c b{font-size:80px}
+.vert .taux .s{font-size:60px}
+.vert svg.graphe{width:960px;height:462px}
+.vert .cout{flex-wrap:wrap;gap:20px}
+.vert .cout .e{font-size:38px;padding:22px 28px}
+.vert .cout .p{font-size:46px;padding:26px 34px}
+.vert .barre .an{width:110px!important;font-size:34px!important}
+.vert .barre .v{width:210px;font-size:50px}
+.vert .barre .rail{height:70px}
+.vert .rang2{flex-direction:column;align-items:flex-start;gap:30px}
+.vert .pastille{height:80px}
+.vert .accroche .rang3{flex-direction:column;align-items:flex-start;gap:6px}
+.vert .accroche .av{font-size:100px}
+.vert .accroche .ap{font-size:190px}
+.vert .accroche .fl{font-size:70px}
+.vert .accroche .intro{font-size:50px}
+.vert .abo{width:760px}
+.vert .num{width:100px;height:100px;font-size:70px}
+`;
+
 // ---------- animation : exécutée dans la page ----------
 const RUNTIME = `(()=>{
 const out=x=>1-Math.pow(1-x,3), back=x=>{const c=1.70158;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
@@ -99,10 +172,11 @@ window.setT=t=>{ for(const e of els){
 setT(0);
 })();`;
 
-const page = (corps, { section, source, mention, chaine }) => `<!doctype html><html lang="fr"><meta charset="utf-8"><style>${CSS}</style><body>
+const EVENTS = `window.EVENTS=[...new Set([...document.querySelectorAll('[data-a]')].filter(e=>/pop|count|on/.test(e.dataset.a)).map(e=>+e.dataset.d))].sort((a,b)=>a-b);`;
+const page = (corps, { section, source, mention, chaine, style, vertical }) => `<!doctype html><html lang="fr"><meta charset="utf-8"><style>${CSS}${style >= 2 ? CSS_V2 : ''}${vertical ? CSS_VERT : ''}</style><body${style >= 2 || vertical ? ` class="${[style >= 2 ? 'v2' : '', vertical ? 'vert' : ''].filter(Boolean).join(' ')}"` : ''}>
 <div class="marque"><i></i><span>${esc(chaine)}</span></div>${section ? `<div class="section">${esc(section)}</div>` : ''}
 ${corps}${source ? `<div class="source">${esc(source)}</div>` : ''}
-<div class="mention">${esc(mention)}</div><script>${RUNTIME}</script></body></html>`;
+<div class="mention">${esc(mention)}</div><script>${RUNTIME}${style >= 2 ? EVENTS : ''}</script></body></html>`;
 
 const zone = h => `<div class="zone">${h}</div>`;
 const A = (k, d, u = 0.6, x = '') => `data-a="${k}" data-d="${d.toFixed(2)}" data-u="${u}" ${x}`;
@@ -135,6 +209,14 @@ const TYPES = {
   resume: e => zone(`<div class="mot" ${A('fade', 0)}>${esc(e.titre)}</div><div class="resume" ${A('fade', 0.4, 0.9)}>${esc(e.texte)}</div>`),
   fin: () => zone(`<h2 style="margin-top:40px" ${A('fade', 0)}>Sources</h2><ul class="liste">${FIN_SOURCES.map((s, i) => `<li ${A('fade', 0.4 + i * 0.3, 0.5)}><span>${esc(s.slice(0, 2))}</span>${esc(s.slice(2))}</li>`).join('')}</ul>`),
 
+  // ---- épisodes suivants (style 2) ----
+  // accroche : le chiffre choc à l'écran dès la première seconde (avant → après)
+  accroche: e => zone(`<div class="accroche"><div class="intro" ${A('fade', 0, 0.5)}>${esc(e.intro)}</div><div class="rang3" style="margin-top:26px"><div class="av" ${A('pop', 0.15, 0.5)}>${esc(e.avant)}</div><div class="fl" ${A('fade', 0.7, 0.3)}>→</div><div class="ap" ${A('pop count', 0.9, 1.1, cpt(e.de != null ? e.de : 0, e.a != null ? e.a : 0, 0, '', e.suffixe || ''))}>${esc(e.apres)}</div></div><div class="sous" style="margin-top:22px" ${A('fade', 1.6, 0.5)}>${esc(e.legende || '')}</div></div>`),
+  // appel à s'abonner : le bouton se transforme en « abonné »
+  abonne: e => zone(`<h2 ${A('fade', 0, 0.5)}>${esc(e.texte || 'Rejoins la colonie')}</h2><div class="abo" ${A('pop', 0.4, 0.5)}><div class="a1">${esc(e.bouton || "S'ABONNER")}</div><div class="a2" ${A('pop', 1.7, 0.4)}>${esc(e.fait || 'ABONNÉ ✓')}</div></div><div class="sous" ${A('fade', 1.0, 0.5)}>${esc(e.sous || '')}</div>`),
+  // teaser de l'épisode suivant
+  suite: e => zone(`<div class="suite"><div class="mot" ${A('fade', 0)}>${esc(e.label || 'Prochain épisode')}</div><h2 style="margin-top:22px;font-size:76px" ${A('fade', 0.4, 0.7)}>${esc(e.titre)}</h2><div class="sous" style="margin-top:22px" ${A('fade', 1.1)}>${esc(e.sous || '')}</div></div>`),
+
   // ---- épisode 2 ----
   // n pièces qui tombent dans le tiroir, à côté de la somme
   pieces: (e, c) => { const p = Math.min(0.2, 1.6 / e.n); return zone(`<div class="rang2"><div class="pieces">${Array.from({ length: e.n }, (_, i) => `<div class="piece" ${A('pop', 0.2 + i * p, 0.4)}>€</div>`).join('')}</div><div class="gros" style="font-size:140px" ${A('fade', 0.4, 0.8)}>${esc(e.valeur)}</div></div><div class="sous" ${A('fade', 0.4 + e.n * p)}>${esc(e.legende)}</div>`); },
@@ -161,11 +243,11 @@ const TYPES = {
 };
 let FIN_SOURCES = [];
 
-// ctx : { section, mention, chaine, sources, duree (durée de la voix, pour étaler les éléments) }
+// ctx : { section, mention, chaine, sources, duree (durée de la voix, pour étaler les éléments), style (2 = textes plus gros, nouveaux épisodes), vertical (format 9:16) }
 function image(ecran, ctx) {
   FIN_SOURCES = ctx.sources || [];
   const f = TYPES[ecran.type];
   if (!f) throw new Error('Type d’écran inconnu : ' + ecran.type);
-  return page(f(ecran, ctx), { section: ctx.section, source: ecran.source, mention: ctx.mention, chaine: ctx.chaine });
+  return page(f(ecran, ctx), { section: ctx.section, source: ecran.source, mention: ctx.mention, chaine: ctx.chaine, style: ctx.style, vertical: ctx.vertical });
 }
 module.exports = { image, b64 };

@@ -3,14 +3,17 @@
 //   3. une vidéo par réplique, 4. montage et export par le moteur de QuentMovie (fondus, sous-titres, musique, volume).
 // Voix : Piper (upmc, épisode 1) ou Kokoro (voix « siwis » abaissée, à partir de l'épisode 2) — réglées dans la clé `voix` du fichier de l'épisode.
 // Écrans animés : les images de chaque écran sont rendues image par image (ecrans.js), Pico est posé par-dessus par FFmpeg (bouche, entrée, rebond).
-// Usage : node fabriquer.js <episode.json> [--voix <dossier du modèle>] [--sortie <dossier>] [--locuteur 0|1] [--vitesse 0.85]
+// Style 2 (clé `style: 2` du fichier de l'épisode, nouveaux épisodes seulement ; les épisodes 1 et 2 gardent leur rendu) :
+//   voix rythmée phrase par phrase (pauses, mot lent `lent`), bruitages posés sur les animations, zoom lent du fond, gestes de Pico (`geste`),
+//   textes plus gros, contrôle du rythme avant l'export. Clé `format: "vertical"` : vidéo 9:16 (TikTok, Shorts), sous-titres en 3 mots.
+// Usage : node fabriquer.js <episode.json> [--voix <dossier du modèle>] [--sortie <dossier>] [--locuteur 0|1] [--vitesse 0.85] [--voix-perso <dossier>] [--controle]
 'use strict';
 const fs = require('fs'), os = require('os'), path = require('path');
 const { execFileSync } = require('child_process');
 
 const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : d; };
 const fichier = process.argv[2];
-if (!fichier || fichier.startsWith('--')) { console.log('Usage : node fabriquer.js <episode.json> [--voix <dossier>] [--sortie <dossier>] [--locuteur 0|1] [--vitesse 0.85]'); process.exit(1); }
+if (!fichier || fichier.startsWith('--')) { console.log('Usage : node fabriquer.js <episode.json> [--voix <dossier>] [--sortie <dossier>] [--locuteur 0|1] [--vitesse 0.85] [--voix-perso <dossier>] [--controle]'); process.exit(1); }
 const EP = JSON.parse(fs.readFileSync(fichier, 'utf8'));
 const V = EP.voix || { moteur: 'piper' }; // { moteur: 'piper'|'kokoro', sid, vitesse, hauteur }
 const KOKORO = V.moteur === 'kokoro';
@@ -22,7 +25,9 @@ const QM = path.join(__dirname, '..', '..', '..', 'quentmovie');
 const PICO = path.join(__dirname, '..', 'personnage', 'png');
 const VITESSE = +arg('vitesse', V.vitesse || 0.65); // allure de la voix (1 = normale)
 const HAUTEUR = V.hauteur || (KOKORO ? 1 : 1.08); // > 1 : plus aiguë (Pico, fourmi), < 1 : plus grave (durée conservée avec Kokoro)
+const STYLE2 = (EP.style | 0) >= 2, VERT = EP.format === 'vertical', LARG = VERT ? 1080 : 1920, HAUT = VERT ? 1920 : 1080;
 const FPS = 30, PAUSE = 0.35, PAUSE_SECTION = 0.8, ANIM_MAX = 14;
+const SONS = path.join(QM, 'bibliotheque', 'sons');
 const ff = (...a) => execFileSync('ffmpeg', ['-y', '-v', 'error', ...a], { maxBuffer: 1e8 });
 const sh = (n, d = 2) => String(n).padStart(d, '0');
 for (const d of ['audio', 'images', 'clips']) fs.mkdirSync(path.join(TRAVAIL, d), { recursive: true });
@@ -39,8 +44,22 @@ function synthese() {
   EP.scenes.forEach((s, i) => {
     const brut = path.join(TRAVAIL, 'audio', `b${sh(i)}.wav`), fin = wavDe(i);
     if (fs.existsSync(fin)) return;
+    // voix du propriétaire : un enregistrement par réplique (v00.wav, v01.wav…) dans le dossier donné par --voix-perso, sans réglage de hauteur
+    const perso = arg('voix-perso', '') && path.join(arg('voix-perso', ''), `v${sh(i)}.wav`);
+    if (perso && fs.existsSync(perso)) { ff('-i', perso, '-af', `aresample=44100,silenceremove=start_periods=1:start_threshold=-45dB,apad=pad_dur=${pauseDe(i)}`, '-ac', '1', fin); return; }
     // `voix` : lecture à voix haute quand elle diffère du texte affiché (nombres, sigles)
-    const a = tts.generate({ text: pourLaVoix(s.voix || s.texte), sid: Math.min(LOCUTEUR, tts.numSpeakers - 1), speed: VITESSE, enableExternalBuffer: false });
+    const lire = (t, v) => tts.generate({ text: pourLaVoix(t), sid: Math.min(LOCUTEUR, tts.numSpeakers - 1), speed: v, enableExternalBuffer: false });
+    let a;
+    if (!STYLE2) a = lire(s.voix || s.texte, VITESSE);
+    else { // style 2 : phrase par phrase, avec de vraies respirations (un point, une question, deux-points) et la dernière phrase plus lente si `lent`
+      const phrases = (s.voix || s.texte).match(/[^.!?:]+[.!?:]*/g).map(x => x.trim()).filter(Boolean), morceaux = []; let sr0 = 0;
+      phrases.forEach((ph, k) => {
+        const r = lire(ph, s.lent && k === phrases.length - 1 ? VITESSE * 0.88 : VITESSE); sr0 = r.sampleRate; morceaux.push(r.samples);
+        if (k < phrases.length - 1) morceaux.push(new Float32Array(Math.round(r.sampleRate * ({ '?': 0.42, ':': 0.36, '!': 0.28 }[ph.slice(-1)] || 0.26))));
+      });
+      const tout = new Float32Array(morceaux.reduce((n, m) => n + m.length, 0)); let o = 0; for (const m of morceaux) { tout.set(m, o); o += m.length; }
+      a = { samples: tout, sampleRate: sr0 };
+    }
     sherpa.writeWave(brut, { samples: a.samples, sampleRate: a.sampleRate });
     // hauteur de la voix de Pico (fiche FICHE-PICO.md) ; Kokoro : durée conservée par atempo ; puis silence de fin
     const sr = a.sampleRate, filtre = `asetrate=${sr}*${HAUTEUR},aresample=44100${KOKORO && HAUTEUR !== 1 ? `,atempo=${(1 / HAUTEUR).toFixed(4)}` : ''},apad=pad_dur=${pauseDe(i)}`;
@@ -62,18 +81,19 @@ function bouche(wav) {
 const spritePico = (expr, ouvert) => { const f = (o) => path.join(PICO, `pico-${expr}-${o ? 'ouvert' : 'ferme'}.png`); return fs.existsSync(f(ouvert)) ? f(ouvert) : f(!ouvert); };
 
 // ---------- 3. écrans animés (images) ----------
+const EVENTS = []; // EVENTS[i] = instants (s) où un élément apparaît dans l'écran de la réplique i (style 2 : posent les bruitages)
 const ANIM = []; // ANIM[i] = nombre d'images d'animation de l'écran de la réplique i (0 : l'écran de la réplique précédente continue)
 async function images() {
   let pw; try { pw = require(process.env.PW || 'playwright'); } catch (e) { pw = require('/opt/node-tools/node_modules/playwright'); }
   const { image } = require('./ecrans'), b = await pw.chromium.launch({ executablePath: process.env.QS_CHROMIUM || undefined, args: ['--no-sandbox'] });
-  const p = await b.newPage({ viewport: { width: 1920, height: 1080 } });
+  const p = await b.newPage({ viewport: { width: LARG, height: HAUT } });
   let ecran = null, section = '';
   for (let i = 0; i < EP.scenes.length; i++) {
     const s = EP.scenes[i], nouveau = s.ecran !== '=', fichierAnim = path.join(TRAVAIL, 'images', `a${sh(i)}.json`);
     if (nouveau) ecran = s.ecran; if (s.section) section = s.section;
     const dVoix = duree(wavDe(i)) - pauseDe(i);
-    await p.setContent(image(ecran, { section, mention: EP.mention, chaine: EP.chaine, sources: EP.sources, duree: dVoix }), { waitUntil: 'load' });
-    let n = 0;
+    await p.setContent(image(ecran, { section, mention: EP.mention, chaine: EP.chaine, sources: EP.sources, duree: dVoix, style: EP.style, vertical: VERT }), { waitUntil: 'load' });
+    let n = 0; EVENTS[i] = STYLE2 && nouveau ? await p.evaluate(() => window.EVENTS || []) : [];
     if (nouveau) {
       n = Math.ceil(Math.min(await p.evaluate(() => window.FIN), ANIM_MAX) * FPS);
       for (let k = 0; k < n; k++) { await p.evaluate(t => window.setT(t), k / FPS); await p.screenshot({ path: path.join(TRAVAIL, 'images', `i${sh(i)}-${sh(k, 3)}.png`) }); }
@@ -87,6 +107,32 @@ async function images() {
 }
 
 // ---------- 4. une vidéo par réplique : écran animé + Pico (bouche, entrée, rebond) ----------
+const SFX = { baisse: 'baisse', hausse: 'hausse', pieces: 'pieces', ding: 'ding-cloche', succes: 'succes', impact: 'impact-leger' };
+// style 2 : bruitages discrets posés sur les animations (pop quand un élément arrive, whoosh à chaque nouvel écran, effet choisi pour la révélation)
+function bruitages(i, d) {
+  const s = EP.scenes[i], l = [];
+  if (i > 0 && s.ecran !== '=') l.push(['whoosh-court', 0.02, 0.32]);
+  let dernier = -1, n = 0;
+  for (const t of EVENTS[i] || []) if (t > 0.25 && t - dernier >= 0.45 && n < 6 && t < d - 0.4) { l.push(['pop', t, 0.30]); dernier = t; n++; }
+  if (s.effet && SFX[s.effet]) l.push([SFX[s.effet], s.effetT != null ? s.effetT : 0.9, 0.5]);
+  return l.map(([nom, t, v]) => ({ f: path.join(SONS, nom + '.mp3'), t, v })).filter(x => fs.existsSync(x.f));
+}
+// Pico : angle (rad) selon le geste de la réplique ; `pointe` se penche vers l'écran, `hoche` acquiesce, `penche` est intrigué
+const angleDe = (s, debut) => {
+  const vie = `0.022*sin(2*PI*(t+${debut.toFixed(2)})/3.3)`;
+  return { pointe: `${vie}-0.11*min(1,t/0.35)`, hoche: `${vie}+if(lt(t,2.7),0.07*sin(2*PI*t/0.9)*min(1,t/0.3),0)`, penche: `${vie}+0.12*min(1,t/0.4)` }[s.geste] || vie;
+};
+
+// groupes d'écrans : le zoom lent du fond continue d'une réplique à l'autre tant que l'écran reste le même
+let GROUPES = [];
+function groupes(durees) {
+  const g = []; let debut = 0, t = 0;
+  EP.scenes.forEach((s, i) => { if (s.ecran !== '=' || i === 0) { debut = i; t = 0; } g[i] = { debut, t0: t }; t += durees[i]; });
+  const tot = {}; EP.scenes.forEach((s, i) => { tot[g[i].debut] = (tot[g[i].debut] || 0) + durees[i]; });
+  EP.scenes.forEach((s, i) => { g[i].T = tot[g[i].debut]; });
+  return g;
+}
+
 function clip(i, debut) {
   const s = EP.scenes[i], wav = wavDe(i), d = duree(wav), etat = bouche(wav), nb = Math.round(d * FPS), imgs = path.join(TRAVAIL, 'images');
   const fond = [], nAnim = Math.min(ANIM[i], nb);
@@ -103,15 +149,46 @@ function clip(i, debut) {
   const sortie = s.sortie ? `if(gt(t,${(d - pauseDe(i) - 0.5).toFixed(2)}),900*pow((t-${(d - pauseDe(i) - 0.5).toFixed(2)})/0.5,3),0)` : '0';
   const saut = i > 0 && EP.scenes[i - 1].expr !== s.expr || s.saut ? 'if(lt(t,0.35),-26*sin(PI*t/0.35),0)' : '0';
   const respire = `7*sin(2*PI*(t+${debut.toFixed(2)})/2.4)`;
-  const filtre = `[0:v]fps=${FPS}[b];[1:v]fps=${FPS},scale=-1:690[p];[b][p]overlay=x='W-w-80+${entree}+${sortie}':y='H-h-240+${respire}+${saut}',format=yuv420p[v]`;
   const out = path.join(TRAVAIL, 'clips', `scene${sh(i)}.mp4`);
-  ff('-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, '-filter_complex', filtre, '-map', '[v]', '-map', '2:a', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', d.toFixed(3), '-movflags', '+faststart', out);
+  if (!STYLE2) { // épisodes 1 et 2 : rendu d'origine
+    const filtre = `[0:v]fps=${FPS}[b];[1:v]fps=${FPS},scale=-1:690[p];[b][p]overlay=x='W-w-80+${entree}+${sortie}':y='H-h-240+${respire}+${saut}',format=yuv420p[v]`;
+    ff('-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, '-filter_complex', filtre, '-map', '[v]', '-map', '2:a', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', d.toFixed(3), '-movflags', '+faststart', out);
+    return { out, d };
+  }
+  // style 2 : zoom lent du fond (de 1 à 1,045 sur la durée de l'écran), Pico qui se penche / hoche, bruitages
+  const g = GROUPES[i], z = `(1+0.045*min(1,(${g.t0.toFixed(3)}+t)/${g.T.toFixed(3)}))`;
+  const fondZ = `[0:v]fps=${FPS},scale=w='trunc(${LARG}*${z}/2)*2':h='trunc(${HAUT}*${z}/2)*2':eval=frame,crop=${LARG}:${HAUT}[b]`;
+  const hp = VERT ? 480 : 690, marge = 40, px = VERT ? 'W-w' : 'W-w-40', py = VERT ? '840' : 'H-h-200'; // position de Pico (marge transparente de 40 px autour pour la rotation)
+  const px2 = `${px}+${entree}+${sortie}${s.geste === 'pointe' ? '-40*min(1,t/0.35)' : ''}`;
+  const pico = `[1:v]fps=${FPS},scale=-1:${hp},format=rgba,pad=w=iw+${marge * 2}:h=ih+${marge * 2}:x=${marge}:y=${marge}:color=black@0,rotate=a='${angleDe(s, debut)}':c=none[p]`;
+  const sons = bruitages(i, d), entrees = [], mix = [`[2:a]aformat=sample_rates=44100:channel_layouts=mono[v0]`];
+  sons.forEach((x, k) => { entrees.push('-i', x.f); mix.push(`[${3 + k}:a]aformat=sample_rates=44100:channel_layouts=mono,adelay=${Math.round(x.t * 1000)},volume=${x.v}[s${k}]`); });
+  const audio = sons.length ? `${mix.join(';')};[v0]${sons.map((_, k) => `[s${k}]`).join('')}amix=inputs=${sons.length + 1}:duration=first:normalize=0[a]` : mix[0].replace('[v0]', '[a]');
+  const filtre = `${fondZ};${pico};[b][p]overlay=x='${px2}':y='${py}+${respire}+${saut}',format=yuv420p[v];${audio}`;
+  ff('-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, ...entrees, '-filter_complex', filtre, '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', d.toFixed(3), '-movflags', '+faststart', out);
   return { out, d };
 }
 
+// ---------- contrôle du rythme (style 2) : accroche, appel à s'abonner, écrans qui durent, phrases longues ----------
+function controle(durees) {
+  const alertes = [], tc = []; let t = 0; EP.scenes.forEach((s, i) => { tc[i] = t; t += durees[i]; });
+  const g = groupes(durees), mots = s => (s.texte.match(/\S+/g) || []).length;
+  if (durees[0] > 9) alertes.push(`Accroche trop longue (${durees[0].toFixed(1)} s) : vise 8 s au plus avant le premier changement d'écran.`);
+  const chiffre = JSON.stringify(EP.scenes[0].ecran) + EP.scenes[0].texte;
+  if (!/\d/.test(chiffre) && !/\?/.test(EP.scenes[0].texte)) alertes.push('La première réplique n’a ni chiffre ni question : mets le chiffre choc à l’écran dès la première seconde.');
+  const ia = EP.scenes.findIndex(s => (s.ecran !== '=' && s.ecran.type === 'abonne') || /abonne/i.test(s.texte));
+  if (ia < 0) alertes.push('Aucun appel à s’abonner : place-le dans les 20 premières secondes.');
+  else if (tc[ia] > 20) alertes.push(`L’appel à s’abonner arrive à ${tc[ia].toFixed(0)} s : avance-le avant 20 s.`);
+  const vus = new Set(); EP.scenes.forEach((s, i) => { if (!vus.has(g[i].debut)) { vus.add(g[i].debut); if (g[i].T > 11) alertes.push(`L’écran de la réplique ${g[i].debut + 1} reste ${g[i].T.toFixed(0)} s : coupe-le en deux écrans ou ajoute un exemple.`); } });
+  EP.scenes.forEach((s, i) => { if (mots(s) > 45) alertes.push(`Réplique ${i + 1} : ${mots(s)} mots, c’est long ; une idée par réplique.`); });
+  const total = durees.reduce((a, b) => a + b, 0);
+  console.log(`Contrôle du rythme : ${Math.floor(total / 60)} min ${Math.round(total % 60)} s, ${EP.scenes.length} répliques.`);
+  console.log(alertes.length ? alertes.map(a => ' · ' + a).join('\n') : ' · Rien à signaler.');
+}
+
 // ---------- sous-titres : phrases coupées en morceaux courts, répartis selon la longueur du texte ----------
-function sousTitres(texte, voixDuree) {
-  const morceaux = []; for (const ph of texte.match(/[^.!?:]+[.!?:]*/g) || [texte]) { const mots = ph.trim().split(/\s+/).filter(Boolean); for (let k = 0; k < mots.length; k += 8) morceaux.push(mots.slice(k, k + 8).join(' ')); }
+function sousTitres(texte, voixDuree, par = 8) {
+  const morceaux = []; for (const ph of texte.match(/[^.!?:]+[.!?:]*/g) || [texte]) { const mots = ph.trim().split(/\s+/).filter(Boolean); for (let k = 0; k < mots.length; k += par) morceaux.push(mots.slice(k, k + par).join(' ')); }
   const total = morceaux.reduce((a, m) => a + m.length, 0); let t = 0;
   return morceaux.map(m => { const dd = voixDuree * m.length / total, o = { s: +t.toFixed(2), e: +(t + dd).toFixed(2), t: m.replace(/[:]$/, '') }; t += dd; return o; });
 }
@@ -125,16 +202,18 @@ async function montage(clips) {
   EP.scenes.forEach((s, i) => {
     const nom = `pico-${sh(i)}.mp4`; fs.copyFileSync(clips[i].out, path.join(base, 'medias', nom));
     const suivante = EP.scenes[i + 1];
-    liste.push({ nom, d: clips[i].d, subs: sousTitres(s.texte, Math.max(0.5, clips[i].d - (suivante && !suivante.section ? PAUSE : PAUSE_SECTION))), fondu: !!(suivante && suivante.section) });
+    liste.push({ nom, d: clips[i].d, subs: sousTitres(s.texte, Math.max(0.5, clips[i].d - (suivante && !suivante.section ? PAUSE : PAUSE_SECTION)), VERT ? 3 : 8), fondu: !!(suivante && suivante.section) });
   });
   return { app, port, U, liste, base };
 }
 async function exporter() {
+  const durees = EP.scenes.map((_, i) => duree(wavDe(i)));
+  if (STYLE2) { GROUPES = groupes(durees); controle(durees); }
   let t0 = 0; const clips = EP.scenes.map((_, i) => { const c = clip(i, t0); t0 += c.d; return c; }), M = await montage(clips);
   await Promise.all(M.liste.map(async c => { await fetch(M.U('/api/import?name=' + c.nom), { method: 'POST', body: fs.readFileSync(path.join(M.base, 'medias', c.nom)) }); }));
   const projet = {
-    format: 'horizontal', res: 1080, fps: FPS, quality: 'rapide', sortie: 'mp4', normaliser: true, pistes: [], textes: [], markers: [],
-    clips: M.liste.map(c => ({ file: c.nom, kind: 'video', in: 0, out: +c.d.toFixed(3), dur: +c.d.toFixed(3), speed: 1, vol: 100, hasAudio: true, fx: [], afx: [], overlays: [], key: { on: false }, subs: c.subs, subStyle: 'bandeau', subSize: 4,
+    format: VERT ? 'vertical' : 'horizontal', res: 1080, fps: FPS, quality: 'rapide', sortie: 'mp4', normaliser: true, pistes: [], textes: [], markers: [],
+    clips: M.liste.map(c => ({ file: c.nom, kind: 'video', in: 0, out: +c.d.toFixed(3), dur: +c.d.toFixed(3), speed: 1, vol: 100, hasAudio: true, fx: [], afx: [], overlays: [], key: { on: false }, subs: c.subs, subStyle: VERT ? 'tiktok' : 'bandeau', subSize: VERT ? 5.6 : STYLE2 ? 4.6 : 4,
       transition: c.fondu ? { type: 'fade', dur: 0.5 } : null })),
     audio: [{ file: 'lib:' + EP.musique, vol: 35, start: 0, fade: true, loop: true, duck: true }]
   };
@@ -150,4 +229,8 @@ async function exporter() {
   await M.app.stop?.(); process.exit(0);
 }
 
-(async () => { synthese(); await images(); await exporter(); })().catch(e => { console.error(e); process.exit(1); });
+(async () => {
+  synthese();
+  if (process.argv.includes('--controle')) { controle(EP.scenes.map((_, i) => duree(wavDe(i)))); return; }
+  await images(); await exporter();
+})().catch(e => { console.error(e); process.exit(1); });
