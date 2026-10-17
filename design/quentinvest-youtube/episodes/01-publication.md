@@ -48,7 +48,7 @@ inflation, pourquoi les prix montent, inflation expliquée simplement, inflation
 ## Réglages à la publication
 - Public : **contenu non conçu pour les enfants** (c'est de l'économie, même si le personnage est un dessin).
 - Langue : français. Catégorie : Éducation.
-- Miniature : `01-miniature.png` (1280×720, Pico « surpris » et le titre en gros), fabriquée par `fabrication/miniature.js`.
+- Miniature : `01-miniature.png` (YouTube, 1280×720) et `01-miniature-tiktok.png` (TikTok, 1080×1920 ; avec `--tiktok`), fabriquées par `fabrication/miniature.js`.
 - Écran de fin et cartes : proposer l'épisode 2 quand il existera.
 - **Contenu modifié ou de synthèse** : relire la règle de YouTube le jour de la publication et déclarer ce qu'elle demande (voix de synthèse, personnage dessiné). Décision avec vous ; en cas de doute, on déclare.
 - Pas de mention de Patrimoine AI dans la description pour l'instant : à décider avec vous (voir `FICHE-PICO.md`, « À décider »).
