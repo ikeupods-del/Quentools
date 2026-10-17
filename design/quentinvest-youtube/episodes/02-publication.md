@@ -36,6 +36,11 @@ Un grain après l'autre. À bientôt dans la fourmilière !
 #inflation #pouvoirdachat #économie #finance #vulgarisation #QuentInvest
 ```
 
+## Légende TikTok (à coller telle quelle)
+```
+1 000 € dans un tiroir pendant 10 ans : combien il te reste vraiment ? 🐜 Pico t'explique l'inflation en 3 minutes. Exemple pédagogique, pas un conseil en investissement. Voix de synthèse. #inflation #pouvoirdachat #économie #apprendre #QuentInvest
+```
+
 ## Commentaire épinglé (à poster à la publication)
 « Salut la colonie ! Les sources et les calculs sont dans la description. Les exemples de la vidéo (2 %, 3 %) sont des hypothèses, pas des taux réels. Si tu vois une erreur, dis-le-moi ici : je la corrige et je l'épingle. Et toi, quel sujet veux-tu pour l'épisode 3 ? »
 
