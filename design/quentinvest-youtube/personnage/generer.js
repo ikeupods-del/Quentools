@@ -22,7 +22,8 @@ const ANTENNES = {
   curieuse: [['M200 128 C176 82 150 62 112 60', 108, 60], ['M280 128 C290 90 296 64 300 44', 300, 40]],
   tombantes: [['M196 130 C170 100 140 96 108 128', 102, 134], ['M284 130 C310 100 340 96 372 128', 378, 134]]
 };
-const antennes = k => ANTENNES[k].map(([d, x, y]) => trait(d, 9) + `<circle cx="${x}" cy="${y}" r="17" fill="${C.or}" stroke="${C.l}" stroke-width="7"/>`).join('');
+// tige : liseré noir + cœur vert, pour rester visible sur un fond noir chaud (le contour seul s'y confond)
+const antennes = k => ANTENNES[k].map(([d, x, y]) => trait(d, 15) + trait(d, 7, C.corps) + `<circle cx="${x}" cy="${y}" r="17" fill="${C.or}" stroke="${C.l}" stroke-width="7"/>`).join('');
 
 const oeil = (cx, o) => {
   const rx = 40 * (o.gros || 1), ry = 46 * (o.gros || 1), px = cx + (o.dx || 0), py = 238 + (o.dy || 0);
@@ -134,6 +135,27 @@ figcaption{margin-top:14px;font-size:22px;display:flex;flex-direction:column;gap
   const av = await b.newPage({ viewport: { width: 800, height: 800 } });
   await av.setContent(`<html><body style="margin:0;width:800px;height:800px;background:radial-gradient(circle at 50% 38%,#0E6B4F,#151311 78%);overflow:hidden"><div style="position:absolute;left:50px;top:70px;width:700px;height:875px">${svgPng(pico({ ...POSES['content-ouvert'], loupe: 0, etincelles: 0 }), 700, 875)}</div></body></html>`);
   await av.screenshot({ path: path.join(OUT, 'avatar-800.png') });
+
+  /* logo de la chaîne : marque (tête seule), avatar, logo horizontal clair et sombre, bannière YouTube → ../logo/ */
+  const LOGO = path.join(OUT, '..', 'logo'); fs.mkdirSync(LOGO, { recursive: true });
+  const tete = pico({ ...POSES['neutre-ferme'], loupe: 0, etincelles: 0 }).replace('viewBox="0 0 480 600"', 'viewBox="62 14 356 376"');
+  const marque = h => svgPng(tete, h * 356 / 376, h);
+  const NOM = (fond, clair) => `<span style="font:800 1em/1 Inter;letter-spacing:-.03em;color:${clair ? '#151311' : '#F4F2EE'}">Quent</span><span style="font:800 1em/1 Inter;letter-spacing:-.03em;color:${clair ? '#047857' : '#34D399'}">Invest</span>`;
+  const rendre = async (nom, l, h, corps, transparent) => {
+    const pg2 = await b.newPage({ viewport: { width: l, height: h } });
+    await pg2.setContent(`<html><head><style>${fonts}*{box-sizing:border-box}</style></head><body style="margin:0;width:${l}px;height:${h}px;overflow:hidden;position:relative">${corps}</body></html>`);
+    await pg2.waitForTimeout(250); await pg2.screenshot({ path: path.join(LOGO, nom), omitBackground: !!transparent }); await pg2.close(); console.log('logo/' + nom);
+  };
+  await rendre('logo-marque.png', 1024, 1024, `<div style="position:absolute;left:62px;top:62px">${marque(900)}</div>`, true);
+  await rendre('logo-avatar-800.png', 800, 800, `<div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,#0E6B4F,#151311 76%)"></div><div style="position:absolute;left:104px;top:96px">${marque(600)}</div>`);
+  const horiz = (clair) => `<div style="position:absolute;inset:0;background:${clair ? '#F4F2EE' : '#151311'}"></div><div style="position:absolute;left:90px;top:60px">${marque(380)}</div>
+    <div style="position:absolute;left:520px;top:120px;font-size:190px;white-space:nowrap">${NOM(0, clair)}</div>
+    <div style="position:absolute;left:530px;top:330px;font:600 52px Inter;color:${clair ? '#5b564d' : '#A8A196'};white-space:nowrap">L’économie expliquée simplement</div>`;
+  await rendre('logo-horizontal-sombre.png', 1800, 500, horiz(false));
+  await rendre('logo-horizontal-clair.png', 1800, 500, horiz(true));
+  /* bannière YouTube 2560×1440 : tout le texte dans la zone visible partout (1546×423 au centre) */
+  await rendre('banniere-youtube.png', 2560, 1440, `<div style="position:absolute;inset:0;background:radial-gradient(1400px 800px at 78% 85%,rgba(16,185,129,.35),transparent 60%),radial-gradient(1000px 600px at 8% 0%,rgba(251,191,36,.10),transparent 60%),#151311"></div>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:56px"><div>${marque(340)}</div><div><div style="font-size:156px;white-space:nowrap">${NOM(0, false)}</div><div style="font:600 46px Inter;color:#A8A196;margin-top:18px;white-space:nowrap">L’économie expliquée simplement</div></div></div>`);
   await b.close();
   console.log('planche-pico.png, avatar-800.png');
 })();

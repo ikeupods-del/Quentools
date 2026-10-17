@@ -2,6 +2,8 @@
 
 Présentateur unique de la **chaîne YouTube QuentInvest** (l'économie expliquée simplement), **aux couleurs de Patrimoine AI**. Max et Pépite restent les personnages des vidéos courtes ; Pico porte les vidéos longues. Dessins : `personnage/` (planche `planche-pico.png`, expressions en SVG et PNG transparents, avatar `avatar-800.png`) ; à régénérer avec `node design/quentinvest-youtube/personnage/generer.js`.
 
+Logo de la chaîne (marque, avatar, logos horizontaux clair et sombre, bannière YouTube) : `logo/` ; régénéré par le même script.
+
 ## En une phrase
 **Pico est la petite fourmi qui pose les questions que tout le monde se pose**, puis cherche la réponse avec sa loupe, un grain après l'autre.
 
