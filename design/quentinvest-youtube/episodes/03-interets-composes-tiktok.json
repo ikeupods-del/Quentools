@@ -1,0 +1,146 @@
+{
+ "titre": "1 000 € pendant 30 ans à 5 % par an (hypothèse) : combien ça fait ? (version TikTok)",
+ "chaine": "QuentInvest",
+ "mention": "Vulgarisation · pas un conseil en investissement",
+ "style": 2,
+ "voix": {
+  "moteur": "piper",
+  "modele": "vits-piper-fr_FR-tom-medium",
+  "sid": 0,
+  "vitesse": 0.9,
+  "hauteur": 1
+ },
+ "sources": [
+  "S1 · Formule des intérêts composés : capital × (1 + taux)^années (calcul QuentInvest)",
+  "S2 · Calculs QuentInvest, hypothèse de 5 % par an : 1 000 × 1,05³⁰ ≈ 4 322 € ; 1 000 + 50 × 30 = 2 500 €",
+  "S3 · Règle des 72 : approximation (calcul exact : 14,2 ans à 5 %)"
+ ],
+ "miniature": {
+  "lignes": [
+   "BOULE",
+   "DE NEIGE",
+   "D'ARGENT ?"
+  ],
+  "accent": "NEIGE",
+  "bas": [
+   "1 000 €",
+   "→ 4 322 €"
+  ]
+ },
+ "format": "vertical",
+ "musique": "corporate-lumineux",
+ "scenes": [
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "ecran": {
+    "type": "accroche",
+    "intro": "1 000 € pendant 30 ans, à 5 % par an (hypothèse)",
+    "avant": "1 000 €",
+    "apres": "≈ 4 322 €",
+    "de": 1000,
+    "a": 4322,
+    "suffixe": " €",
+    "legende": "Sans rien ajouter.",
+    "source": "Calcul : 1 000 × 1,05³⁰ ≈ 4 322 €"
+   },
+   "effet": "hausse",
+   "effetT": 1,
+   "texte": "Mille euros pendant trente ans : combien ça fait ? Tout dépend d'un petit mot."
+  },
+  {
+   "expr": "content",
+   "geste": "hoche",
+   "ecran": {
+    "type": "abonne",
+    "texte": "Rejoins la colonie",
+    "sous": "Une vidéo d'économie simple, régulièrement."
+   },
+   "texte": "Salut la colonie ! Abonne-toi pour ne rien rater."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "5 % de 1 000 € = 50 € par an",
+     "50 € × 30 ans = 1 500 €"
+    ],
+    "resultat": "1 000 € + 1 500 € = 2 500 €",
+    "source": "Calcul QuentInvest (hypothèse : 5 % par an)"
+   },
+   "texte": "Intérêts simples : cinquante euros par an. Au bout de trente ans, deux mille cinq cents euros."
+  },
+  {
+   "expr": "neutre",
+   "geste": "pointe",
+   "ecran": {
+    "type": "definition",
+    "mot": "Intérêts composés",
+    "texte": "Des intérêts qui rapportent eux-mêmes des intérêts"
+   },
+   "texte": "Intérêts composés : les intérêts rapportent eux-mêmes des intérêts. Une boule de neige."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "croissance",
+    "capital": 1000,
+    "taux": 5,
+    "annees": 30,
+    "etiquetteSimple": "≈ 2 500 € (simples)",
+    "etiquetteCompose": "≈ 4 322 € (composés)",
+    "source": "Calcul QuentInvest : 1 000 × 1,05³⁰ ≈ 4 322 € (hypothèse : 5 % par an)"
+   },
+   "effet": "hausse",
+   "effetT": 5,
+   "texte": "Trente ans plus tard : deux mille cinq cents euros en simple, plus de quatre mille trois cents en composé."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "72 ÷ 5 % ≈ 14,4"
+    ],
+    "resultat": "≈ 14 ans pour doubler",
+    "source": "Règle des 72 (approximation) : le calcul exact donne 14,2 ans"
+   },
+   "texte": "Règle des soixante-douze : divise soixante-douze par le taux. À cinq pour cent, ton argent double en environ quatorze ans."
+  },
+  {
+   "expr": "inquiet",
+   "geste": "penche",
+   "ecran": {
+    "type": "message",
+    "titre": "Grain de sable",
+    "sous": "Ce qui est souvent mal compris"
+   },
+   "texte": "Attention, grain de sable : cinq pour cent n'est pas garanti, et l'inflation grignote le résultat."
+  },
+  {
+   "expr": "content",
+   "ecran": {
+    "type": "resume",
+    "titre": "En une phrase",
+    "texte": "avec les intérêts composés, le temps travaille pour toi, sans garantie."
+   },
+   "texte": "En une phrase : avec les intérêts composés, le temps travaille pour toi, sans garantie."
+  },
+  {
+   "expr": "curieux",
+   "geste": "hoche",
+   "sortie": true,
+   "ecran": {
+    "type": "suite",
+    "label": "Vidéo complète sur la chaîne",
+    "titre": "Les intérêts composés : la boule de neige de l'argent",
+    "sous": "Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ? Dis-le en commentaire."
+   },
+   "texte": "Vidéo complète sur la chaîne. Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ? Dis-le en commentaire."
+  }
+ ]
+}

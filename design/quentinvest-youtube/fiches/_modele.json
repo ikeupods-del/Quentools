@@ -1,0 +1,38 @@
+{
+ "numero": 4,
+ "slug": "sujet-en-quelques-mots",
+ "titre": "Titre de l'épisode ?",
+ "promesse": "La question du spectateur, en une phrase, avec son chiffre.",
+ "description": "Deux phrases : ce que Pico explique et ce que le spectateur retient.",
+ "hashtags": "#sujet #économie #apprendre #QuentInvest",
+ "musique": "documentaire-doux",
+ "musiqueRevelation": "corporate-lumineux",
+ "accroche": {
+  "texte": "La question de fourmi, 8 secondes au plus, avec un chiffre ou une question.",
+  "court": "La même, en plus court (version TikTok).",
+  "ecran": { "intro": "La situation en une ligne.", "avant": "1 000 €", "apres": "≈ 820 €", "de": 1000, "a": 820, "suffixe": " €", "legende": "Le chiffre choc.", "source": "Source ou hypothèse affichée à l'écran" }
+ },
+ "blocs": [
+  { "section": "Premier titre de chapitre",
+    "texte": "Une idée par bloc, 45 mots au plus, phrases courtes, tutoiement.",
+    "court": "Texte court : le bloc est repris dans la version TikTok (sans `court`, il n'y est pas).",
+    "ecran": { "type": "definition", "mot": "Un mot clé", "texte": "Sa définition en une phrase" } },
+  { "revelation": true, "effet": "hausse", "effetT": 5.0, "texte": "Le chiffre clé : la musique change ici, l'effet sonore se déclenche.",
+    "ecran": { "type": "duo", "a": { "valeur": "1 000 €", "legende": "Avant" }, "b": { "valeur": "≈ 888 €", "de": 1000, "a": 888, "prefixe": "≈ ", "suffixe": " €", "legende": "Après" } } },
+  { "texte": "Un écran qui continue : « ecran »: \"=\".", "ecran": "=" }
+ ],
+ "piege": {
+  "intro": "Attention, grain de sable. Il y a deux erreurs courantes.",
+  "court": "Version courte du piège.",
+  "erreurs": [
+   { "titre": "Titre court de l'erreur 1", "texte": "Un : …" },
+   { "titre": "Titre court de l'erreur 2", "texte": "Deux : …" }
+  ]
+ },
+ "resume": { "texte": "En une phrase : …", "court": "En une phrase : … (courte)" },
+ "question": "Et toi, … ?",
+ "suite": { "titre": "Titre du prochain épisode", "texte": "La prochaine fois : …" },
+ "sources": ["S1 · Source officielle, chiffre, année", "S2 · Calcul QuentInvest d'après S1 : …"],
+ "sourcesExternes": true,
+ "miniature": { "lignes": ["LIGNE 1", "LIGNE 2", "LIGNE 3 ?"], "accent": "LIGNE", "bas": ["1 000 €", "→ 820 €"] }
+}

@@ -84,7 +84,8 @@ const CSS_V2 = `
 .v2 .etiquette{font-size:44px}
 .v2 .liste{font-size:48px}
 .v2 .source{font-size:28px}
-.v2 .mention{font-size:28px;height:60px}
+.v2 .mention{font-size:28px;height:60px;padding-bottom:20px}
+.v2 .calc .r{font-size:70px;white-space:nowrap}
 .v2 .def{font-size:62px}
 .v2 .resume{font-size:68px}
 .v2 .section{font-size:30px}
@@ -98,6 +99,9 @@ const CSS_V2 = `
 .abo .a1{background:var(--vert);color:#06281d;box-shadow:0 0 50px rgba(16,185,129,.45)}
 .abo .a2{background:var(--ambre);color:#151311}
 .suite .mot{font-size:36px}
+.coche{display:flex;align-items:center;gap:30px;font-size:54px;font-weight:700}
+.coche i{flex:none;width:72px;height:72px;border-radius:50%;background:var(--vert);color:#06281d;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:44px;font-weight:800}
+.coche small{display:block;font-size:34px;font-weight:500;color:var(--doux);margin-top:4px}
 `;
 // ---------- format vertical 1080×1920 (TikTok, Shorts) : l'écran en haut, Pico sous l'écran, sous-titres au milieu bas ----------
 const CSS_VERT = `
@@ -114,7 +118,7 @@ body.vert{width:1080px;height:1920px}
 .vert .mot{font-size:40px}
 .vert svg.graphe text{font-size:30px}
 .vert svg.graphe .lab{font-size:40px}
-.vert .source{width:560px}
+.vert .source{width:620px}
 .vert .gros{font-size:170px}
 .vert .def{font-size:60px}
 .vert .resume{font-size:64px}
@@ -214,6 +218,23 @@ const TYPES = {
   accroche: e => zone(`<div class="accroche"><div class="intro" ${A('fade', 0, 0.5)}>${esc(e.intro)}</div><div class="rang3" style="margin-top:26px"><div class="av" ${A('pop', 0.15, 0.5)}>${esc(e.avant)}</div><div class="fl" ${A('fade', 0.7, 0.3)}>→</div><div class="ap" ${A('pop count', 0.9, 1.1, cpt(e.de != null ? e.de : 0, e.a != null ? e.a : 0, 0, '', e.suffixe || ''))}>${esc(e.apres)}</div></div><div class="sous" style="margin-top:22px" ${A('fade', 1.6, 0.5)}>${esc(e.legende || '')}</div></div>`),
   // appel à s'abonner : le bouton se transforme en « abonné »
   abonne: e => zone(`<h2 ${A('fade', 0, 0.5)}>${esc(e.texte || 'Rejoins la colonie')}</h2><div class="abo" ${A('pop', 0.4, 0.5)}><div class="a1">${esc(e.bouton || "S'ABONNER")}</div><div class="a2" ${A('pop', 1.7, 0.4)}>${esc(e.fait || 'ABONNÉ ✓')}</div></div><div class="sous" ${A('fade', 1.0, 0.5)}>${esc(e.sous || '')}</div>`),
+  // liste à cocher : les points arrivent un par un (texte + précision facultative)
+  liste: (e, c) => { const p = pas(e.points.length, c); return zone(`${e.titre ? `<div class="mot" ${A('fade', 0)}>${esc(e.titre)}</div>` : ''}${e.points.map((x, i) => `<div class="coche" ${A('fade', 0.3 + i * p, 0.5)}><i>✓</i><div>${esc(Array.isArray(x) ? x[0] : x)}${Array.isArray(x) ? `<small>${esc(x[1])}</small>` : ''}</div></div>`).join('')}`); },
+  // croissance : deux courbes sur n années (intérêts simples en ligne droite, composés en courbe qui s'envole), hypothèse affichée
+  croissance: (e, c) => {
+    const D = c.duree || 12, d0 = D * 0.2, du = D * 0.5, L = 1040, H = 420, X0 = 70, Y0 = 30, simple = a => e.capital * (1 + e.taux / 100 * a), compose = a => e.capital * (1 + e.taux / 100) ** a;
+    const haut = compose(e.annees) * 1.04, bas = e.capital * 0.9, x = a => X0 + L * a / e.annees, y = v => Y0 + H * (haut - v) / (haut - bas);
+    let ds = '', dc = ''; for (let a = 0; a <= e.annees; a += 0.25) { ds += `${a ? 'L' : 'M'}${x(a).toFixed(1)},${y(simple(a)).toFixed(1)}`; dc += `${a ? 'L' : 'M'}${x(a).toFixed(1)},${y(compose(a)).toFixed(1)}`; }
+    const ans = Array.from({ length: e.annees + 1 }, (_, a) => a), pas5 = e.annees > 20 ? 10 : 5;
+    return zone(`<svg class="graphe" viewBox="0 0 1120 540">
+      ${ans.filter(a => a % pas5 === 0).map(a => `<line x1="${x(a)}" y1="${Y0}" x2="${x(a)}" y2="${Y0 + H}" stroke="#2e2a26" stroke-width="2"/><text x="${x(a)}" y="${Y0 + H + 44}" text-anchor="middle">${a} an${a > 1 ? 's' : ''}</text>`).join('')}
+      <path d="${ds}" stroke="#f4f2ee" stroke-width="8" stroke-linecap="round" fill="none" ${A('draw', d0, du)}/>
+      <path d="${dc}" stroke="#fbbf24" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none" ${A('draw', d0 + 0.3, du)}/>
+      <text class="lab" x="${x(e.annees) - 8}" y="${y(simple(e.annees)) + 96}" text-anchor="end" style="fill:#f4f2ee" ${A('fade', d0 + du)}>${esc(e.etiquetteSimple)}</text>
+      <circle cx="${x(e.annees)}" cy="${y(compose(e.annees))}" r="14" fill="#fbbf24" ${A('pop', d0 + du + 0.3, 0.4)} style="transform-box:fill-box;transform-origin:center"/>
+      <text class="lab" x="${x(e.annees) - 24}" y="${y(compose(e.annees)) + 12}" text-anchor="end" style="fill:#fbbf24" ${A('fade', d0 + du + 0.4)}>${esc(e.etiquetteCompose)}</text>
+    </svg>`);
+  },
   // teaser de l'épisode suivant
   suite: e => zone(`<div class="suite"><div class="mot" ${A('fade', 0)}>${esc(e.label || 'Prochain épisode')}</div><h2 style="margin-top:22px;font-size:76px" ${A('fade', 0.4, 0.7)}>${esc(e.titre)}</h2><div class="sous" style="margin-top:22px" ${A('fade', 1.1)}>${esc(e.sous || '')}</div></div>`),
 

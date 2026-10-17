@@ -19,7 +19,7 @@ const V = EP.voix || { moteur: 'piper' }; // { moteur: 'piper'|'kokoro', sid, vi
 const KOKORO = V.moteur === 'kokoro';
 const TRAVAIL = path.resolve(arg('sortie', path.join(os.tmpdir(), 'pico-episode')));
 const MODELES = path.join(os.homedir(), 'Movies', 'QuentMovie', 'modeles');
-const VOIX = arg('voix', path.join(MODELES, KOKORO ? 'kokoro-multi-lang-v1_0' : 'vits-piper-fr_FR-upmc-medium'));
+const VOIX = arg('voix', path.join(MODELES, KOKORO ? 'kokoro-multi-lang-v1_0' : V.modele || 'vits-piper-fr_FR-upmc-medium')); // Piper : `modele` = dossier du modèle (ex. vits-piper-fr_FR-tom-medium, voix d'homme)
 const LOCUTEUR = +arg('locuteur', V.sid != null ? V.sid : 1); // Piper upmc : 0 = Jessica, 1 = Pierre · Kokoro : 30 = voix française « siwis »
 const QM = path.join(__dirname, '..', '..', '..', 'quentmovie');
 const PICO = path.join(__dirname, '..', 'personnage', 'png');
@@ -31,6 +31,8 @@ const SONS = path.join(QM, 'bibliotheque', 'sons');
 const ff = (...a) => execFileSync('ffmpeg', ['-y', '-v', 'error', ...a], { maxBuffer: 1e8 });
 const sh = (n, d = 2) => String(n).padStart(d, '0');
 for (const d of ['audio', 'images', 'clips']) fs.mkdirSync(path.join(TRAVAIL, d), { recursive: true });
+const crypto = require('crypto');
+const cleVoix = i => crypto.createHash('md5').update(JSON.stringify([EP.scenes[i].voix || EP.scenes[i].texte, EP.scenes[i].lent || 0, V, VITESSE, STYLE2, pauseDe(i), arg('voix-perso', '')])).digest('hex');
 const wavDe = i => path.join(TRAVAIL, 'audio', `v${sh(i)}.wav`);
 const pauseDe = i => { const suivante = EP.scenes[i + 1]; return !suivante || suivante.section ? PAUSE_SECTION : PAUSE; };
 
@@ -43,7 +45,9 @@ function synthese() {
   const tts = new sherpa.OfflineTts({ model: { ...modele, numThreads: 2, debug: false, provider: 'cpu' }, maxNumSentences: 2 });
   EP.scenes.forEach((s, i) => {
     const brut = path.join(TRAVAIL, 'audio', `b${sh(i)}.wav`), fin = wavDe(i);
-    if (fs.existsSync(fin)) return;
+    const cle = path.join(TRAVAIL, 'audio', `v${sh(i)}.cle`);
+    if (fs.existsSync(fin) && fs.existsSync(cle) && fs.readFileSync(cle, 'utf8') === cleVoix(i)) return; // voix déjà fabriquée pour ce texte et ce réglage
+    fs.writeFileSync(cle, cleVoix(i));
     // voix du propriétaire : un enregistrement par réplique (v00.wav, v01.wav…) dans le dossier donné par --voix-perso, sans réglage de hauteur
     const perso = arg('voix-perso', '') && path.join(arg('voix-perso', ''), `v${sh(i)}.wav`);
     if (perso && fs.existsSync(perso)) { ff('-i', perso, '-af', `aresample=44100,silenceremove=start_periods=1:start_threshold=-45dB,apad=pad_dur=${pauseDe(i)}`, '-ac', '1', fin); return; }
@@ -155,8 +159,8 @@ function clip(i, debut) {
     ff('-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, '-filter_complex', filtre, '-map', '[v]', '-map', '2:a', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', d.toFixed(3), '-movflags', '+faststart', out);
     return { out, d };
   }
-  // style 2 : zoom lent du fond (de 1 à 1,045 sur la durée de l'écran), Pico qui se penche / hoche, bruitages
-  const g = GROUPES[i], z = `(1+0.045*min(1,(${g.t0.toFixed(3)}+t)/${g.T.toFixed(3)}))`;
+  // style 2 : zoom lent du fond (de 1 à 1,03 sur la durée de l'écran), Pico qui se penche / hoche, bruitages
+  const g = GROUPES[i], z = `(1+0.03*min(1,(${g.t0.toFixed(3)}+t)/${g.T.toFixed(3)}))`;
   const fondZ = `[0:v]fps=${FPS},scale=w='trunc(${LARG}*${z}/2)*2':h='trunc(${HAUT}*${z}/2)*2':eval=frame,crop=${LARG}:${HAUT}[b]`;
   const hp = VERT ? 480 : 690, marge = 40, px = VERT ? 'W-w' : 'W-w-40', py = VERT ? '840' : 'H-h-200'; // position de Pico (marge transparente de 40 px autour pour la rotation)
   const px2 = `${px}+${entree}+${sortie}${s.geste === 'pointe' ? '-40*min(1,t/0.35)' : ''}`;
@@ -179,7 +183,7 @@ function controle(durees) {
   const ia = EP.scenes.findIndex(s => (s.ecran !== '=' && s.ecran.type === 'abonne') || /abonne/i.test(s.texte));
   if (ia < 0) alertes.push('Aucun appel à s’abonner : place-le dans les 20 premières secondes.');
   else if (tc[ia] > 20) alertes.push(`L’appel à s’abonner arrive à ${tc[ia].toFixed(0)} s : avance-le avant 20 s.`);
-  const vus = new Set(); EP.scenes.forEach((s, i) => { if (!vus.has(g[i].debut)) { vus.add(g[i].debut); if (g[i].T > 11) alertes.push(`L’écran de la réplique ${g[i].debut + 1} reste ${g[i].T.toFixed(0)} s : coupe-le en deux écrans ou ajoute un exemple.`); } });
+  const vus = new Set(); EP.scenes.forEach((s, i) => { if (!vus.has(g[i].debut)) { vus.add(g[i].debut); if (g[i].T > 16) alertes.push(`L’écran de la réplique ${g[i].debut + 1} reste ${g[i].T.toFixed(0)} s : coupe-le en deux écrans ou ajoute un exemple.`); } });
   EP.scenes.forEach((s, i) => { if (mots(s) > 45) alertes.push(`Réplique ${i + 1} : ${mots(s)} mots, c’est long ; une idée par réplique.`); });
   const total = durees.reduce((a, b) => a + b, 0);
   console.log(`Contrôle du rythme : ${Math.floor(total / 60)} min ${Math.round(total % 60)} s, ${EP.scenes.length} répliques.`);
@@ -209,13 +213,19 @@ async function montage(clips) {
 async function exporter() {
   const durees = EP.scenes.map((_, i) => duree(wavDe(i)));
   if (STYLE2) { GROUPES = groupes(durees); controle(durees); }
+  // rapport de fabrication : début et durée de chaque réplique (chapitres de la description : `debutExport` tient compte des fondus de 0,5 s entre sections, qui raccourcissent la vidéo)
+  const debuts = []; durees.reduce((t, d, i) => (debuts[i] = t, t + d), 0);
+  fs.writeFileSync(path.join(TRAVAIL, 'rapport.json'), JSON.stringify({ duree: +durees.reduce((a, b) => a + b, 0).toFixed(2), scenes: EP.scenes.map((s, i) => ({ debut: +debuts[i].toFixed(2), debutExport: +(debuts[i] - 0.5 * EP.scenes.slice(1, i + 1).filter(x => x.section).length).toFixed(2), duree: +durees[i].toFixed(2), section: s.section || '' })) }));
   let t0 = 0; const clips = EP.scenes.map((_, i) => { const c = clip(i, t0); t0 += c.d; return c; }), M = await montage(clips);
   await Promise.all(M.liste.map(async c => { await fetch(M.U('/api/import?name=' + c.nom), { method: 'POST', body: fs.readFileSync(path.join(M.base, 'medias', c.nom)) }); }));
   const projet = {
     format: VERT ? 'vertical' : 'horizontal', res: 1080, fps: FPS, quality: 'rapide', sortie: 'mp4', normaliser: true, pistes: [], textes: [], markers: [],
     clips: M.liste.map(c => ({ file: c.nom, kind: 'video', in: 0, out: +c.d.toFixed(3), dur: +c.d.toFixed(3), speed: 1, vol: 100, hasAudio: true, fx: [], afx: [], overlays: [], key: { on: false }, subs: c.subs, subStyle: VERT ? 'tiktok' : 'bandeau', subSize: VERT ? 5.6 : STYLE2 ? 4.6 : 4,
       transition: c.fondu ? { type: 'fade', dur: 0.5 } : null })),
-    audio: [{ file: 'lib:' + EP.musique, vol: 35, start: 0, fade: true, loop: true, duck: true }]
+    audio: EP.musiqueRevelation && STYLE2 // la musique change au chiffre clé : douce avant, plus vivante après
+      ? [{ file: 'lib:' + EP.musique, vol: 35, start: 0, dur: +debuts[EP.musiqueRevelation.scene].toFixed(2), fade: true, loop: true, duck: true },
+         { file: 'lib:' + EP.musiqueRevelation.id, vol: 35, start: +debuts[EP.musiqueRevelation.scene].toFixed(2), fade: true, loop: true, duck: true }]
+      : [{ file: 'lib:' + EP.musique, vol: 35, start: 0, fade: true, loop: true, duck: true }]
   };
   projet.clips[projet.clips.length - 1].transition = null;
   fs.writeFileSync(path.join(TRAVAIL, 'projet-quentmovie.json'), JSON.stringify(projet));

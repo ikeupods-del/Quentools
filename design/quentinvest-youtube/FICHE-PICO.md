@@ -87,14 +87,14 @@ Commande de l'épisode 2 : `node design/quentinvest-youtube/fabrication/fabrique
 ## Style 2 (épisodes suivants, clé `"style": 2`)
 Les épisodes 1 et 2 gardent leur rendu d'origine. Un nouvel épisode part de `episodes/_modele-episode.json` et active :
 - **Accroche chiffrée** (écran `accroche`) : le chiffre choc est à l'écran dès la première seconde, avec la question de fourmi ; **appel à s'abonner** juste après (écran `abonne` : le bouton devient « Abonné ») ; **teaser** de l'épisode suivant en fin de vidéo (écran `suite`).
-- **Textes plus gros** (lisibles sur téléphone) et **zoom lent** du fond (1 → 1,045 sur la durée de chaque écran), pour que l'image ne reste jamais figée.
+- **Textes plus gros** (lisibles sur téléphone) et **zoom lent** du fond (1 → 1,03 sur la durée de chaque écran), pour que l'image ne reste jamais figée.
 - **Voix rythmée** : phrase par phrase, avec une vraie respiration après un point, une question ou deux-points ; `"lent": true` ralentit la dernière phrase de la réplique (chiffre clé).
 - **Pico qui joue** : `"geste"` = `pointe` (se penche vers l'écran), `hoche` (acquiesce) ou `penche` (intrigué), en plus de la respiration et du rebond au changement d'expression.
 - **Bruitages** (banque de QuentMovie, discrets) : « pop » à chaque élément qui apparaît, « whoosh » à chaque nouvel écran, et un effet de révélation au choix : `"effet": "baisse" | "hausse" | "pieces" | "ding" | "succes" | "impact"` (instant réglable avec `effetT`).
-- **Contrôle du rythme** avant l'export (`--controle` pour le lancer seul) : accroche de 9 s au plus, appel à s'abonner avant 20 s, aucun écran de plus de 11 s, aucune réplique de plus de 45 mots.
+- **Contrôle du rythme** avant l'export (`--controle` pour le lancer seul) : accroche de 9 s au plus, appel à s'abonner avant 20 s, aucun écran de plus de 16 s, aucune réplique de plus de 45 mots.
 - **Format vertical** : `"format": "vertical"` (1080 × 1920, TikTok, Shorts) : écran en haut, Pico dessous, sous-titres de 3 mots. Exemple : `episodes/02-tiktok.json` (62 s, tiré de l'épisode 2).
 - **Voix du propriétaire** (option) : `--voix-perso <dossier>` remplace la voix de synthèse par des enregistrements `v00.wav`, `v01.wav`… (un par réplique, dans l'ordre du fichier) ; une réplique sans fichier reste en voix de synthèse.
-- **Voix masculines gratuites à comparer** (Piper, modèles `vits-piper-fr_FR-tom-medium` et `vits-piper-fr_FR-gilles-low`) : extraits proposés au propriétaire, choix en attente ; la voix de l'épisode 2 reste la référence.
+- **Voix des nouveaux épisodes : Tom** (Piper `vits-piper-fr_FR-tom-medium`, voix d'homme, allure 0,9), choisie par le propriétaire parmi trois extraits (Siwis abaissée, Tom, Gilles). Les épisodes 1 (Piper upmc) et 2 (Kokoro Siwis) gardent leur voix. Modèle à télécharger une fois dans `~/Movies/QuentMovie/modeles` (archive `vits-piper-fr_FR-tom-medium.tar.bz2` des modèles sherpa-onnx).
 
 Commande d'un épisode vertical : `node design/quentinvest-youtube/fabrication/fabriquer.js design/quentinvest-youtube/episodes/02-tiktok.json --voix ~/Movies/QuentMovie/modeles/kokoro-multi-lang-v1_0`.
 
