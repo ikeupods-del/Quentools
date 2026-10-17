@@ -318,6 +318,24 @@
    }
   },
   {
+   "section": "Les limites",
+   "texte": "Ce modèle est volontairement simplifié : il ne tient compte ni des impôts, ni des variations d'une année à l'autre, ni de ta situation personnelle. C'est un outil pour comprendre, pas pour prévoir.",
+   "ecran": {
+    "type": "message",
+    "titre": "Un modèle simplifié",
+    "sous": "Pour comprendre, pas pour prévoir"
+   }
+  },
+  {
+   "section": "Ton défi",
+   "texte": "Petit défi pour toi : refais le calcul avec ta propre somme, ton taux et ta durée. Compare le résultat avec ce que tu imaginais : c'est souvent surprenant.",
+   "ecran": {
+    "type": "message",
+    "titre": "Ton défi",
+    "sous": "Refais le calcul avec tes chiffres"
+   }
+  },
+  {
    "section": "Avant de te lancer",
    "texte": "Avant de te lancer dans un projet d'épargne, trois questions à te poser : pour quand ai-je besoin de cet argent ? Quel est le taux, et est-il garanti ? Et quels sont les frais ? Les réponses changent tout.",
    "ecran": {

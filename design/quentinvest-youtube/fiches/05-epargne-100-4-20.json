@@ -356,6 +356,24 @@
    }
   },
   {
+   "section": "Les limites",
+   "texte": "Ce modèle est volontairement simplifié : il ne tient compte ni des impôts, ni des variations d'une année à l'autre, ni de ta situation personnelle. C'est un outil pour comprendre, pas pour prévoir.",
+   "ecran": {
+    "type": "message",
+    "titre": "Un modèle simplifié",
+    "sous": "Pour comprendre, pas pour prévoir"
+   }
+  },
+  {
+   "section": "Ton défi",
+   "texte": "Petit défi pour toi : choisis la somme que tu pourrais mettre de côté chaque mois sans te priver, et refais le calcul. Compare le résultat avec ce que tu imaginais : c'est souvent surprenant.",
+   "ecran": {
+    "type": "message",
+    "titre": "Ton défi",
+    "sous": "Refais le calcul avec tes chiffres"
+   }
+  },
+  {
    "section": "Avant de te lancer",
    "texte": "Avant de commencer, trois questions : combien puis-je mettre chaque mois sans me priver ? Pour quel projet ? Et pour combien de temps ? Les réponses fixent le bon rythme.",
    "ecran": {

@@ -94,7 +94,7 @@ Les épisodes 1 et 2 gardent leur rendu d'origine. Un nouvel épisode part de `e
 - **Contrôle du rythme** avant l'export (`--controle` pour le lancer seul) : accroche de 9 s au plus, appel à s'abonner avant 20 s, aucun écran de plus de 18 s, aucune réplique de plus de 45 mots, **durée de la vidéo YouTube d'au moins 5 minutes** (bloquant ; la version TikTok dure environ 1 minute).
 - **Format vertical** : `"format": "vertical"` (1080 × 1920, TikTok, Shorts) : écran en haut, Pico dessous, sous-titres de 3 mots. Exemple : `episodes/02-tiktok.json` (62 s, tiré de l'épisode 2).
 - **Voix du propriétaire** (option) : `--voix-perso <dossier>` remplace la voix de synthèse par des enregistrements `v00.wav`, `v01.wav`… (un par réplique, dans l'ordre du fichier) ; une réplique sans fichier reste en voix de synthèse.
-- **Voix des nouveaux épisodes : Tom** (Piper `vits-piper-fr_FR-tom-medium`, voix d'homme, allure 0,9), choisie par le propriétaire parmi trois extraits (Siwis abaissée, Tom, Gilles). Les épisodes 1 (Piper upmc) et 2 (Kokoro Siwis) gardent leur voix. Modèle à télécharger une fois dans `~/Movies/QuentMovie/modeles` (archive `vits-piper-fr_FR-tom-medium.tar.bz2` des modèles sherpa-onnx).
+- **Voix des nouveaux épisodes : Siwis**, la voix de l'épisode 2 (Kokoro, identifiant 30, abaissée à 0,78, allure 0,78), qui obtient le plus de « j'aime » sur la chaîne (constat du propriétaire). Tom (Piper `vits-piper-fr_FR-tom-medium`, voix d'homme) reste disponible : clé `voix` de la fiche ou de l'épisode. L'épisode 1 garde Piper upmc.
 
 Commande d'un épisode vertical : `node design/quentinvest-youtube/fabrication/fabriquer.js design/quentinvest-youtube/episodes/02-tiktok.json --voix ~/Movies/QuentMovie/modeles/kokoro-multi-lang-v1_0`.
 

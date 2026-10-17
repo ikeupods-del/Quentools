@@ -305,6 +305,7 @@ const EXTRAS = {
     fin: question(`Vrai ou faux : si tu verses deux fois plus par mois, le résultat final est-il deux fois plus grand ?`, `Réponse : vrai. Avec ${eur(2 * m)} par mois, tu obtiens ${eur(VF(2 * m))}, contre ${eur(VF(m))} avec ${eur(m)}. Les intérêts sont proportionnels à ce que tu verses : c'est la durée qui change la donne.`, { type: 'calcul', lignes: [`${eur(m)} par mois : ${eur(VF(m))}`, `${eur(2 * m)} par mois : ${eur(VF(2 * m))}`], resultat: 'Le double, pour le double', source: 'Calcul de la chaîne (hypothèse)' }, 'Vrai ou faux') }; }
 };
 
+const DEFI = {interets: "refais le calcul avec ta propre somme, ton taux et ta durée", inflation: "prends une somme que tu as de côté, et calcule ce qu'elle vaudra dans dix ans avec ton inflation d'exemple", frais: "repère les frais courants par an d'un produit qui t'intéresse, et refais le calcul avec et sans frais", credit: 'prends un crédit que tu connais, note le montant, le taux et la durée, puis calcule le coût total', epargne: 'choisis la somme que tu pourrais mettre de côté chaque mois sans te priver, et refais le calcul'};
 // ---------- plan : des chiffres qui tournent pour varier les épisodes ----------
 const PLAN = [
   ['credit', { montant: 10000, taux: 4, annees: 5 }], ['epargne', { mensuel: 100, taux: 4, annees: 20 }], ['frais', { capital: 10000, rendement: 5, frais: 1.5, annees: 25 }],
@@ -317,12 +318,15 @@ const PLAN = [
 function construire(type, params, numero, suivant) {
   const T = TYPES[type]; if (!T) throw new Error('Type inconnu : ' + type + ' (types : ' + Object.keys(TYPES).join(', ') + ')');
   const p = { ...T.defaut, ...params }, f = T.fiche(p), ex = EXTRAS[type](p);
-  f.blocs = [...ex.debut, ...f.blocs.slice(0, -1), ...ex.fin, f.blocs[f.blocs.length - 1]];
+  f.blocs = [...ex.debut, ...f.blocs.slice(0, -1), ...ex.fin,
+    { section: 'Les limites', texte: "Ce modèle est volontairement simplifié : il ne tient compte ni des impôts, ni des variations d'une année à l'autre, ni de ta situation personnelle. C'est un outil pour comprendre, pas pour prévoir.", ecran: { type: 'message', titre: 'Un modèle simplifié', sous: 'Pour comprendre, pas pour prévoir' } },
+    { section: 'Ton défi', texte: `Petit défi pour toi : ${DEFI[type]}. Compare le résultat avec ce que tu imaginais : c'est souvent surprenant.`, ecran: { type: 'message', titre: 'Ton défi', sous: 'Refais le calcul avec tes chiffres' } },
+    f.blocs[f.blocs.length - 1]];
   const blocs = [...f.blocs, ...f.piege.erreurs, f.recap, f.intro];
   const trop = blocs.findIndex(b => (b.texte || '').split(/\s+/).length > 48); if (trop >= 0) throw new Error(`Un bloc dépasse 48 mots (${type}, n° ${trop + 1}) : ${blocs[trop].texte.slice(0, 60)}…`);
   const fiche = { numero, slug: slug(`${type}-${Object.values(p).join('-')}`), ...f, musique: 'documentaire-doux', musiqueRevelation: 'corporate-lumineux', question: QUESTIONS[numero % QUESTIONS.length],
     suite: { titre: suivant || "Un nouveau sujet d'économie", texte: suivant ? `La prochaine fois : ${suivant.charAt(0).toLowerCase() + suivant.slice(1)}` : 'La prochaine fois : un nouveau sujet.' }, sourcesExternes: false };
-  const duree = estimer(compose(fiche).long.scenes);
+  const C = compose(fiche), duree = estimer(C.long.scenes, C.long.voix);
   if (duree < DUREE_VISEE && !process.env.SANS_MINI) throw new Error(`Épisode trop court (${duree} s estimées, il faut au moins ${DUREE_VISEE} s pour dépasser 5 minutes) : ${type} ${JSON.stringify(p)}`);
   return fiche;
 }

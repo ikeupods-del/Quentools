@@ -327,6 +327,24 @@
    }
   },
   {
+   "section": "Les limites",
+   "texte": "Ce modèle est volontairement simplifié : il ne tient compte ni des impôts, ni des variations d'une année à l'autre, ni de ta situation personnelle. C'est un outil pour comprendre, pas pour prévoir.",
+   "ecran": {
+    "type": "message",
+    "titre": "Un modèle simplifié",
+    "sous": "Pour comprendre, pas pour prévoir"
+   }
+  },
+  {
+   "section": "Ton défi",
+   "texte": "Petit défi pour toi : prends une somme que tu as de côté, et calcule ce qu'elle vaudra dans dix ans avec ton inflation d'exemple. Compare le résultat avec ce que tu imaginais : c'est souvent surprenant.",
+   "ecran": {
+    "type": "message",
+    "titre": "Ton défi",
+    "sous": "Refais le calcul avec tes chiffres"
+   }
+  },
+  {
    "section": "Avant de te lancer",
    "texte": "Trois questions à te poser sur ton argent : combien me faut-il pour les imprévus ? À quoi servira le reste, et dans combien de temps ? Et que rapporte-t-il ? Ce sont de bonnes questions avant toute décision.",
    "ecran": {

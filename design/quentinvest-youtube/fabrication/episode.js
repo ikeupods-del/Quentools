@@ -6,7 +6,7 @@
 'use strict';
 const fs = require('fs'), os = require('os'), path = require('path');
 const { spawnSync } = require('child_process');
-const { compose } = require('./composer'), { publication } = require('./publier');
+const { compose } = require('./composer'), { publication, publicationDonnees } = require('./publier');
 
 const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : d; }, drapeau = n => process.argv.includes('--' + n);
 const fichier = process.argv[2];
@@ -16,7 +16,7 @@ const EPISODES = path.join(__dirname, '..', 'episodes'), SORTIE = path.resolve(a
 const MODELES = arg('modeles', path.join(os.homedir(), 'Movies', 'QuentMovie', 'modeles'));
 fs.mkdirSync(SORTIE, { recursive: true });
 const dossierVoix = (EP) => path.join(MODELES, EP.voix.moteur === 'kokoro' ? 'kokoro-multi-lang-v1_0' : EP.voix.modele || 'vits-piper-fr_FR-upmc-medium');
-{ const { estimer, DUREE_MINI } = require('./composer'), est = estimer(C.long.scenes);
+{ const { estimer, DUREE_MINI } = require('./composer'), est = estimer(C.long.scenes, C.long.voix);
   if (!drapeau('sans-youtube') && !drapeau('court') && est < DUREE_MINI) { console.error(`Fiche trop courte : environ ${Math.floor(est / 60)} min ${est % 60} s estimées. Une vidéo YouTube dure au moins 5 minutes : ajoute des blocs à la fiche.`); process.exit(2); } }
 const etape = t => console.log('• ' + t);
 
@@ -42,6 +42,7 @@ if (long) {
   etape('Texte de publication');
   fs.writeFileSync(path.join(SORTIE, `${C.base}-publication.md`), publication(F, long.rapport));
   fs.copyFileSync(path.join(SORTIE, `${C.base}-publication.md`), path.join(EPISODES, `${C.base}-publication.md`));
+  fs.writeFileSync(path.join(SORTIE, `${C.base}-publication.json`), JSON.stringify(publicationDonnees(F, long.rapport), null, 1)); // même contenu, pour la programmation automatique des publications
 }
 fs.copyFileSync(path.join(SORTIE, `${C.NUM}-miniature.png`), path.join(EPISODES, `${C.NUM}-miniature.png`)); fs.copyFileSync(path.join(SORTIE, `${C.NUM}-miniature-tiktok.png`), path.join(EPISODES, `${C.NUM}-miniature-tiktok.png`));
 console.log('\nPrêt à relire, rien n\'est publié. Dossier : ' + SORTIE);

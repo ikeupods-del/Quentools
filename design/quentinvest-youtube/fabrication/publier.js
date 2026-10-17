@@ -9,7 +9,7 @@ const horodate = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padSta
 const bloc = t => '```\n' + t + '\n```';
 const MENTION = "Vulgarisation : cette vidéo explique des idées générales, ce n'est pas un conseil en investissement. Les exemples chiffrés sont des hypothèses pour comprendre. Voix de synthèse.";
 
-function publication(f, r) {
+function publication_(f, r) {
   const NUM = String(f.numero).padStart(2, '0'), ch = [];
   r.scenes.forEach(s => { if (s.section && !ch.some(c => c.t === (s.debutExport ?? s.debut))) ch.push({ t: s.debutExport ?? s.debut, titre: s.section }); });
   if (ch.length) ch[0].t = 0;
@@ -31,7 +31,9 @@ function publication(f, r) {
   const courte = [`${f.promesse} Pico, la petite fourmi de QuentInvest, t'explique.`, '', f.sources && f.sources[0] ? 'Source : ' + f.sources[0].replace(/^S\d+ · /, '') + '.' : '', "Vulgarisation, pas un conseil en investissement. Voix de synthèse.", '', f.question + ' Dis-le en commentaire !', '', hash].filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i)).join('\n');
   const tiktok = `🐜 Abonne-toi pour rejoindre la colonie ! ${f.promesse} Exemple pédagogique, pas un conseil en investissement. Voix de synthèse. Vidéo complète sur la chaîne.\n${hash}`;
   const epingle = `${(f.sources || []).map(s => s.replace(/^S\d+ · /, '')).join(' ; ')}. Les exemples chiffrés sont des hypothèses pour comprendre, pas des taux réels. ${f.question}`;
-  return `# Épisode ${f.numero} — ${f.titre}
+  const tags = (hash.match(/#[^\s#]+/g) || []).map(h => h.slice(1));
+  const donnees = { titre: f.titre, descriptionYoutube: longue, descriptionCourte: courte, legendeTikTok: tiktok, commentaireEpingle: epingle, tagsYoutube: tags, madeForKids: false, contenuDeSynthese: true, categorie: 'EDUCATION', dureeYoutubeSecondes: Math.round(r.duree), prochainEpisode: f.suite && f.suite.titre || '' };
+  return { donnees, md: `# Épisode ${f.numero} — ${f.titre}
 
 Statut : prêt à relire, rien n'est publié.
 Vidéos : \`${NUM}-${f.slug}-youtube.mp4\` (${horodate(r.duree)}), \`${NUM}-${f.slug}-tiktok.mp4\` (verticale) ; miniatures \`${NUM}-miniature.png\` et \`${NUM}-miniature-tiktok.png\`.
@@ -59,13 +61,13 @@ ${bloc(epingle)}
 ## À faire avant de publier
 ${externes ? "- Vérifier les sources externes et compléter la date de consultation dans la description.\n" : "- Les chiffres sont des calculs de la chaîne (formule en source) : relire le résultat une fois.\n"}- Le propriétaire valide la vidéo (voix, rythme, texte) et la miniature.
 - Rien n'est publié sans son accord.
-`;
+` };
 }
-module.exports = { publication };
+module.exports = { publication: (f, r) => publication_(f, r).md, publicationDonnees: (f, r) => publication_(f, r).donnees };
 
 if (require.main === module) {
   const [, , fichier, rapport, sortie] = process.argv;
   if (!fichier || !rapport) { console.log('Usage : node publier.js <fiche.json> <rapport.json> [sortie.md]'); process.exit(1); }
-  const md = publication(JSON.parse(fs.readFileSync(fichier, 'utf8')), JSON.parse(fs.readFileSync(rapport, 'utf8')));
+  const md = module.exports.publication(JSON.parse(fs.readFileSync(fichier, 'utf8')), JSON.parse(fs.readFileSync(rapport, 'utf8')));
   if (sortie) { fs.writeFileSync(sortie, md); console.log(sortie); } else process.stdout.write(md);
 }
