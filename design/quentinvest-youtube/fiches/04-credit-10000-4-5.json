@@ -1,0 +1,135 @@
+{
+ "numero": 4,
+ "slug": "credit-10000-4-5",
+ "mention": "Exemple pédagogique · pas une offre de crédit · pas un conseil",
+ "titre": "Un crédit de 10 000 € coûte combien en tout ?",
+ "promesse": "Un crédit de 10 000 € sur 5 ans à 4 % (exemple) : combien ça coûte en tout ?",
+ "description": "Pico explique le coût d'un crédit : 10 000 € empruntés sur 5 ans à 4 % (exemple) font environ 11 050 € à rembourser. La mensualité, le coût des intérêts et les pièges. Exemple pédagogique, pas une offre de crédit.",
+ "hashtags": "#crédit #taux #économie #apprendre #QuentInvest",
+ "accroche": {
+  "texte": "Emprunter 10 000 €, ça coûte combien en tout ? Pas seulement 10 000 €.",
+  "court": "Emprunter 10 000 €, ça coûte combien en tout ? Pas seulement 10 000 €.",
+  "ecran": {
+   "intro": "10 000 € empruntés sur 5 ans, à 4 % par an (exemple)",
+   "avant": "10 000 €",
+   "apres": "≈ 11 050 €",
+   "de": 10000,
+   "a": 11050,
+   "suffixe": " €",
+   "legende": "À rembourser en tout.",
+   "source": "Calcul : mensualité ≈ 184,17 € × 60 mois"
+  },
+  "effet": "impact"
+ },
+ "blocs": [
+  {
+   "section": "Le taux",
+   "texte": "Le taux, c'est le prix de l'argent emprunté : un pourcentage que tu paies à la banque en plus de la somme prêtée.",
+   "court": "Le taux, c'est le prix de l'argent emprunté.",
+   "ecran": {
+    "type": "definition",
+    "mot": "Taux d'intérêt",
+    "texte": "Le prix de l'argent emprunté"
+   }
+  },
+  {
+   "section": "Le calcul",
+   "texte": "Pour 10 000 € sur 5 ans à 4 %, la mensualité est d'environ 184,17 €. Sur 60 mois, ça fait 11 050 € en tout.",
+   "court": "Mensualité d'environ 184,17 €, pendant 60 mois : 11 050 € en tout.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Mensualité ≈ 184,17 €",
+     "184,17 € × 60 mois ≈ 11 050 €"
+    ],
+    "resultat": "11 050 € − 10 000 € = 1 050 €",
+    "source": "Calcul : mensualité constante, taux mensuel = 4 % ÷ 12"
+   }
+  },
+  {
+   "revelation": true,
+   "effet": "impact",
+   "effetT": 2.5,
+   "texte": "Au final, tu rembourses environ 11 050 € : 1 050 € de plus que la somme empruntée. C'est le coût du crédit.",
+   "court": "Au final : 11 050 € remboursés, soit 1 050 € de plus que la somme empruntée.",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "10 000 €",
+     "legende": "Ce que tu empruntes"
+    },
+    "b": {
+     "valeur": "≈ 11 050 €",
+     "de": 10000,
+     "a": 11050,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Ce que tu rembourses en tout"
+    },
+    "source": "Intérêts : 1 050 €"
+   }
+  },
+  {
+   "texte": "Trois leviers pour payer moins : une durée plus courte, un taux plus bas, ou emprunter moins. Mais une durée plus courte augmente la mensualité.",
+   "ecran": {
+    "type": "liste",
+    "titre": "Ce qui fait baisser le coût",
+    "points": [
+     [
+      "Une durée plus courte",
+      "moins d'intérêts, mensualité plus haute"
+     ],
+     [
+      "Un taux plus bas",
+      "se compare avec le TAEG"
+     ],
+     [
+      "Emprunter moins",
+      "un apport plus grand"
+     ]
+    ]
+   }
+  }
+ ],
+ "piege": {
+  "court": "Attention, grain de sable : une petite mensualité peut cacher un crédit très long, donc très cher.",
+  "erreurs": [
+   {
+    "titre": "Ne regarder que la mensualité",
+    "texte": "Un : ne regarder que la mensualité. Une mensualité basse peut cacher une durée longue, donc plus d'intérêts payés."
+   },
+   {
+    "titre": "Oublier le TAEG",
+    "texte": "Deux : oublier les frais annexes. Le TAEG regroupe le taux et la plupart des frais : c'est lui qu'on compare."
+   }
+  ]
+ },
+ "resume": {
+  "texte": "En une phrase : un crédit coûte la somme empruntée plus les intérêts, et la durée pèse autant que le taux.",
+  "court": "En une phrase : un crédit coûte la somme empruntée plus les intérêts, et la durée compte autant que le taux."
+ },
+ "sources": [
+  "S1 · Formule de la mensualité constante : capital × i ÷ (1 − (1 + i)^−n), i = taux mensuel (calcul de la chaîne)",
+  "S2 · Calculs, exemple de 10 000 € à 4 % sur 5 ans : mensualité ≈ 184,17 € ; total ≈ 11 050 € ; intérêts ≈ 1 050 €"
+ ],
+ "miniature": {
+  "lignes": [
+   "UN CRÉDIT",
+   "COÛTE",
+   "COMBIEN ?"
+  ],
+  "accent": "COMBIEN",
+  "bas": [
+   "10 000 €",
+   "→ 11 050 €"
+  ]
+ },
+ "musique": "documentaire-doux",
+ "musiqueRevelation": "corporate-lumineux",
+ "question": "Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ?",
+ "suite": {
+  "titre": "100 € par mois pendant 20 ans : combien ça fait ?",
+  "texte": "La prochaine fois : 100 € par mois pendant 20 ans : combien ça fait ?"
+ },
+ "sourcesExternes": false
+}

@@ -1,0 +1,135 @@
+{
+ "numero": 8,
+ "slug": "inflation-5000-3-15-2-5",
+ "titre": "5 000 € dans un tiroir pendant 15 ans : que reste-t-il ?",
+ "promesse": "5 000 € dans un tiroir pendant 15 ans (hypothèse : 3 % d'inflation par an) : que reste-t-il ?",
+ "description": "Pico explique ce que l'inflation fait à l'argent qui dort : avec 3 % d'inflation par an (hypothèse), 5 000 € n'achètent plus que 3 209 € au bout de 15 ans. Le pouvoir d'achat, le rendement réel et les pièges.",
+ "hashtags": "#inflation #pouvoirdachat #économie #apprendre #QuentInvest",
+ "accroche": {
+  "texte": "5 000 € dans un tiroir pendant 15 ans : combien te reste-t-il vraiment ?",
+  "court": "5 000 € dans un tiroir pendant 15 ans : combien te reste-t-il vraiment ?",
+  "ecran": {
+   "intro": "5 000 € dans un tiroir pendant 15 ans (hypothèse : 3 % d'inflation par an)",
+   "avant": "5 000 €",
+   "apres": "≈ 3 209 €",
+   "de": 5000,
+   "a": 3209,
+   "suffixe": " €",
+   "legende": "Tu n'as rien dépensé.",
+   "source": "Calcul : 5 000 € ÷ 1,03¹⁵ ≈ 3 209 €"
+  },
+  "effet": "baisse"
+ },
+ "blocs": [
+  {
+   "section": "Le pouvoir d'achat",
+   "texte": "Un mot important : le pouvoir d'achat. C'est ce que tu peux acheter avec ton argent. Si les prix montent, la même somme en achète moins.",
+   "court": "Le piège : le pouvoir d'achat. Pas ton solde, mais ce que tu peux acheter.",
+   "ecran": {
+    "type": "definition",
+    "mot": "Pouvoir d'achat",
+    "texte": "Ce que tu peux acheter avec une somme d'argent"
+   }
+  },
+  {
+   "section": "L'exemple",
+   "texte": "Imaginons 5 000 € qui ne rapportent rien, et des prix qui montent de 3 % par an. C'est une hypothèse pour comprendre, pas une prévision.",
+   "ecran": {
+    "type": "message",
+    "titre": "Hypothèse",
+    "sous": "5 000 € sans intérêts · prix en hausse de 3 % par an"
+   }
+  },
+  {
+   "revelation": true,
+   "effet": "baisse",
+   "effetT": 6,
+   "texte": "Sur le compte, la somme ne bouge pas. Mais chaque année, elle achète un peu moins. Au bout de 15 ans, c'est comme s'il ne te restait que 3 209 € environ.",
+   "court": "15 ans plus tard, 5 000 € sur le compte n'achètent plus que 3 209 €.",
+   "ecran": {
+    "type": "courbe",
+    "capital": 5000,
+    "taux": 3,
+    "annees": 15,
+    "etiquetteAffichee": "5 000 € sur le compte",
+    "etiquetteReelle": "≈ 3 209 € de pouvoir d'achat",
+    "source": "Hypothèse : 3 % d'inflation par an"
+   }
+  },
+  {
+   "texte": "Le calcul : les prix sont multipliés par 1,558 en 15 ans, donc ton argent achète 1,558 fois moins. Tu divises.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Prix après 15 ans : × 1,558",
+     "Ton argent achète : ÷ 1,558"
+    ],
+    "resultat": "5 000 € → ≈ 3 209 €",
+    "source": "Calcul : 5 000 € ÷ 1,03¹⁵ ≈ 3 209 €"
+   }
+  },
+  {
+   "section": "Les intérêts",
+   "texte": "Et les intérêts ? Si ton argent rapporte 2,5 % par an et que les prix montent de 3 %, ton pouvoir d'achat baisse d'environ 0,5 pour cent par an.",
+   "court": "Un compte à 2,5 %, face à 3 % d'inflation : environ -0,5 pour cent de gain réel.",
+   "ecran": {
+    "type": "taux",
+    "gain": {
+     "nom": "Intérêts",
+     "valeur": "2,5 %"
+    },
+    "inflation": {
+     "nom": "Inflation",
+     "valeur": "3 %"
+    },
+    "reel": {
+     "nom": "Perte réelle",
+     "valeur": "≈ -0,5 %"
+    },
+    "legende": "Exemple chiffré, pas un taux réel du marché",
+    "source": "Hypothèse : 1,025 ÷ 1,03 ≈ 0,995"
+   }
+  }
+ ],
+ "piege": {
+  "court": "Attention, grain de sable : un solde qui ne baisse pas ne veut pas dire que tu n'as rien perdu.",
+  "erreurs": [
+   {
+    "titre": "Solde stable, rien perdu ?",
+    "texte": "Un : penser que si le solde n'a pas baissé, on n'a rien perdu. Le chiffre est le même, mais ce qu'il permet d'acheter peut avoir baissé."
+   },
+   {
+    "titre": "Placer, ce n'est pas gagner",
+    "texte": "Deux : croire qu'il suffit de placer son argent pour gagner. Tout placement a des risques, et aucun n'est magique."
+   }
+  ]
+ },
+ "resume": {
+  "texte": "En une phrase : l'inflation réduit ce que ton argent peut acheter, même quand le chiffre sur ton compte ne bouge pas.",
+  "court": "En une phrase : le chiffre sur ton compte ne dit pas ce que tu peux acheter."
+ },
+ "sources": [
+  "S1 · Calcul de la chaîne : 5 000 € ÷ 1,03¹⁵ ≈ 3 209 € (hypothèse : 3 % d'inflation par an)",
+  "S2 · Exemple chiffré (hypothèse) : 1,025 ÷ 1,03 ≈ 0,995"
+ ],
+ "miniature": {
+  "lignes": [
+   "TON ARGENT",
+   "PERD SA",
+   "VALEUR ?"
+  ],
+  "accent": "VALEUR",
+  "bas": [
+   "5 000 €",
+   "→ 3 209 €"
+  ]
+ },
+ "musique": "documentaire-doux",
+ "musiqueRevelation": "corporate-lumineux",
+ "question": "Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ?",
+ "suite": {
+  "titre": "Un nouveau sujet d'économie",
+  "texte": "La prochaine fois : un nouveau sujet."
+ },
+ "sourcesExternes": false
+}

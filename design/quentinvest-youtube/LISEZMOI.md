@@ -2,7 +2,14 @@
 
 Chaîne de vulgarisation de l'économie, présentée par Pico, une petite fourmi (« la colonie » = les spectateurs). Personnage, voix, structure et règles : `FICHE-PICO.md`. Rien n'est publié sans la validation du propriétaire.
 
-## Faire un nouvel épisode (une commande)
+## Produire beaucoup, sans rédiger (le plus économe)
+Cinq types d'épisodes « calcul » s'écrivent tout seuls : on donne des chiffres, le programme rédige la fiche complète (accroche, explications, calculs à l'écran, piège, résumé, sources = formules de la chaîne, texte court TikTok).
+1. `node design/quentinvest-youtube/fabrication/serie.js --plan 10` : écrit 10 fiches variées (crédit, épargne régulière, frais, intérêts composés, inflation ; chiffres qui tournent, numéros à la suite, teaser du prochain épisode chaîné). Ou un épisode précis : `serie.js interets --capital 2000 --taux 4 --annees 20` (types et valeurs par défaut : `serie.js --liste`). Le plan prévoit 15 épisodes ; ajouter des lignes à `PLAN` dans `serie.js` pour en avoir plus.
+2. `node design/quentinvest-youtube/fabrication/lot.js` : fabrique à la suite toutes les fiches qui n'ont pas encore de résultat (sans surveillance, reprise possible après une coupure, une ligne par épisode, `lot.js 04 05` pour certains numéros). Compter environ 10 à 15 minutes par épisode (vidéo YouTube + TikTok).
+3. Relire les `NN-sujet-publication.md` et les vidéos dans `~/Movies/QuentInvest/` ; rien n'est publié sans validation.
+Les épisodes qui demandent des faits extérieurs (taux du Livret A, barème d'impôt, chiffres de l'Insee…) passent par une fiche écrite à la main (ci-dessous) avec les sources officielles.
+
+## Faire un épisode rédigé (une commande)
 1. Écrire une **fiche** courte : copier `fiches/_modele.json` en `fiches/NN-sujet.json` (le fond seulement : accroche chiffrée, idées, piège, résumé, question, sources). Idées de sujets et sources à chercher : `fiches/IDEES.md`. Exemple complet : `fiches/03-interets-composes.json`.
 2. Lancer : `node design/quentinvest-youtube/fabrication/episode.js design/quentinvest-youtube/fiches/NN-sujet.json`
    (modèles de voix dans `~/Movies/QuentMovie/modeles`, option `--modeles`, `--sortie`, `--sans-tiktok`, `--sans-youtube`).
@@ -10,8 +17,11 @@ Chaîne de vulgarisation de l'économie, présentée par Pico, une petite fourmi
 
 Ce que le programme ajoute seul : appel à s'abonner dans les premières secondes, accroche chiffrée, expressions et gestes de Pico, bruitages, musique qui change au chiffre clé, zoom lent, sous-titres, contrôle du rythme (avertissements affichés), chapitres, miniatures, texte de publication. Seul le fond de la fiche demande de la rédaction.
 
+## Contrôle rapide (2 secondes, sans fabrication)
+`node design/quentinvest-youtube/fabrication/verifier.js` : les écrans des épisodes 1 et 2 sont identiques à la référence, et toutes les fiches se composent sans erreur. À lancer après toute modification du moteur.
+
 ## Fichiers
-- `fabrication/episode.js` (commande unique), `composer.js` (fiche → épisodes), `fabriquer.js` (voix, écrans, montage), `ecrans.js` (écrans animés), `miniature.js`, `publier.js`.
+- `fabrication/serie.js` (fiches « calcul » automatiques), `lot.js` (plusieurs épisodes à la suite), `episode.js` (un épisode), `composer.js` (fiche → épisodes), `fabriquer.js` (voix, écrans, montage), `ecrans.js` (écrans animés), `miniature.js`, `publier.js`, `verifier.js`.
 - `episodes/` : épisodes 1 et 2 (rendu d'origine conservé), version TikTok de l'épisode 2, épisode 3 et modèle.
 - Épisode seul sans fiche : `node fabrication/fabriquer.js episodes/<fichier>.json --voix <dossier du modèle>` (`--controle` pour le seul contrôle du rythme).
 

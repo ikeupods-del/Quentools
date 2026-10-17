@@ -28,6 +28,7 @@ const gesteDe = b => {
   if (['definition', 'calcul', 'courbe', 'croissance', 'comparaison', 'barres', 'duo', 'taux'].includes(type)) return 'pointe';
   return undefined;
 };
+const maj = t => t.charAt(0).toUpperCase() + t.slice(1);
 const nettoie = o => { for (const k of Object.keys(o)) if (o[k] === undefined) delete o[k]; return o; };
 
 // vérifie la fiche avant de lancer une fabrication longue : message clair en français plutôt qu'une erreur au milieu du montage
@@ -64,7 +65,7 @@ function compose(f) {
     L.push({ expr: 'inquiet', section: 'Le piège', ecran: { type: 'message', titre: 'Grain de sable', sous: f.piege.sous || 'Ce qui est souvent mal compris' }, texte: f.piege.intro || `Attention, grain de sable. Il y a ${er.length > 1 ? er.length + ' erreurs courantes' : 'une erreur courante'}.` });
     er.forEach((e, i) => L.push({ expr: 'inquiet', ecran: { type: 'erreur', numero: i + 1, titre: e.titre }, texte: e.texte }));
   }
-  L.push({ expr: 'content', section: 'En une phrase', ecran: { type: 'resume', titre: 'En une phrase', texte: f.resume.ecran || f.resume.texte.replace(/^En une phrase\s*:\s*/i, '') }, texte: f.resume.texte });
+  L.push({ expr: 'content', section: 'En une phrase', ecran: { type: 'resume', titre: 'En une phrase', texte: maj(f.resume.ecran || f.resume.texte.replace(/^En une phrase\s*:\s*/i, '')) }, texte: f.resume.texte });
   const suite = f.suite || {}, fin = (suite.texte ? suite.texte + ' ' : '') + f.question + ' Dis-le en commentaire. Rappel : vulgarisation, pas un conseil en investissement.';
   L.push({ expr: 'curieux', geste: 'penche', ecran: { type: 'suite', label: 'Prochain épisode', titre: suite.titre || 'À bientôt', sous: suite.sous || f.question + ' Dis-le en commentaire.' }, texte: fin });
   L.push({ expr: 'content', ecran: { type: 'fin' }, sortie: true, texte: "Un grain après l'autre. À bientôt dans la fourmilière !" });
@@ -82,7 +83,7 @@ function compose(f) {
     T.push(nettoie({ expr: exprDe(b), geste: gesteDe(b), ecran, effet: b.effet, effetT: b.effetT, texte: b.court })); precedent = true;
   });
   if (f.piege && f.piege.court) T.push({ expr: 'inquiet', geste: 'penche', ecran: { type: 'message', titre: 'Grain de sable', sous: f.piege.sous || 'Ce qui est souvent mal compris' }, texte: f.piege.court });
-  T.push({ expr: 'content', ecran: { type: 'resume', titre: 'En une phrase', texte: f.resume.court ? f.resume.court.replace(/^En une phrase\s*:\s*/i, '') : (f.resume.ecran || f.resume.texte.replace(/^En une phrase\s*:\s*/i, '')) }, texte: f.resume.court || f.resume.texte });
+  T.push({ expr: 'content', ecran: { type: 'resume', titre: 'En une phrase', texte: maj(f.resume.court ? f.resume.court.replace(/^En une phrase\s*:\s*/i, '') : (f.resume.ecran || f.resume.texte.replace(/^En une phrase\s*:\s*/i, ''))) }, texte: f.resume.court || f.resume.texte });
   T.push({ expr: 'curieux', geste: 'hoche', sortie: true, ecran: { type: 'suite', label: 'Vidéo complète sur la chaîne', titre: f.titre, sous: f.question + ' Dis-le en commentaire.' }, texte: 'Vidéo complète sur la chaîne. ' + f.question + ' Dis-le en commentaire.' });
   const tiktok = { ...base, titre: (f.promesse || f.titre) + ' (version TikTok)', format: 'vertical', musique: f.musiqueTiktok || 'corporate-lumineux', scenes: T };
   return { NUM, long, tiktok, base: `${NUM}-${f.slug}` };

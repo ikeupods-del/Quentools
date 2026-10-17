@@ -215,7 +215,10 @@ const TYPES = {
 
   // ---- épisodes suivants (style 2) ----
   // accroche : le chiffre choc à l'écran dès la première seconde (avant → après)
-  accroche: e => zone(`<div class="accroche"><div class="intro" ${A('fade', 0, 0.5)}>${esc(e.intro)}</div><div class="rang3" style="margin-top:26px"><div class="av" ${A('pop', 0.15, 0.5)}>${esc(e.avant)}</div><div class="fl" ${A('fade', 0.7, 0.3)}>→</div><div class="ap" ${A('pop count', 0.9, 1.1, cpt(e.de != null ? e.de : 0, e.a != null ? e.a : 0, 0, '', e.suffixe || ''))}>${esc(e.apres)}</div></div><div class="sous" style="margin-top:22px" ${A('fade', 1.6, 0.5)}>${esc(e.legende || '')}</div></div>`),
+  // les grands nombres rétrécissent pour rester dans l'écran (largeur estimée à 0,6 em par caractère)
+  accroche: (e, c) => {
+    const v = !!c.vertical, Lv = String(e.avant).length, La = String(e.apres).length, w = v ? Math.max(0.6 * 100 * Lv, 0.6 * 190 * La) : 0.6 * 112 * Lv + 0.6 * 150 * La + 160, k = Math.min(1, (v ? 940 : 1090) / w), pa = Math.round((v ? 190 : 150) * k), pv = Math.round((v ? 100 : 112) * k), pre = String(e.apres).startsWith('≈') ? '≈ ' : '';
+    return zone(`<div class="accroche"><div class="intro" ${A('fade', 0, 0.5)}>${esc(e.intro)}</div><div class="rang3" style="margin-top:26px"><div class="av" style="font-size:${pv}px" ${A('pop', 0.15, 0.5)}>${esc(e.avant)}</div><div class="fl" ${A('fade', 0.7, 0.3)}>→</div><div class="ap" style="font-size:${pa}px" ${A('pop count', 0.9, 1.1, cpt(e.de != null ? e.de : 0, e.a != null ? e.a : 0, 0, pre, e.suffixe || ''))}>${esc(e.apres)}</div></div><div class="sous" style="margin-top:22px" ${A('fade', 1.6, 0.5)}>${esc(e.legende || '')}</div></div>`); },
   // appel à s'abonner : le bouton se transforme en « abonné »
   abonne: e => zone(`<h2 ${A('fade', 0, 0.5)}>${esc(e.texte || 'Rejoins la colonie')}</h2><div class="abo" ${A('pop', 0.4, 0.5)}><div class="a1">${esc(e.bouton || "S'ABONNER")}</div><div class="a2" ${A('pop', 1.7, 0.4)}>${esc(e.fait || 'ABONNÉ ✓')}</div></div><div class="sous" ${A('fade', 1.0, 0.5)}>${esc(e.sous || '')}</div>`),
   // liste à cocher : les points arrivent un par un (texte + précision facultative)

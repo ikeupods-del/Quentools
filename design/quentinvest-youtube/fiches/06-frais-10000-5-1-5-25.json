@@ -1,0 +1,132 @@
+{
+ "numero": 6,
+ "slug": "frais-10000-5-1-5-25",
+ "titre": "1,5 % de frais par an : combien ça coûte sur 25 ans ?",
+ "promesse": "1,5 % de frais par an sur 25 ans (hypothèse : 5 % avant frais) : combien ça coûte ?",
+ "description": "Pico explique l'effet des frais annuels : avec 1,5 % de frais par an (hypothèse), 10 000 € deviennent 23 632 € au lieu de 33 864 € en 25 ans. Où chercher les frais et les pièges.",
+ "hashtags": "#frais #épargne #économie #apprendre #QuentInvest",
+ "accroche": {
+  "texte": "1,5 % de frais par an, ça paraît peu. Mais sur 25 ans, combien ça coûte vraiment ?",
+  "court": "1,5 % de frais par an, ça paraît peu. Sur 25 ans, combien ça coûte ?",
+  "ecran": {
+   "intro": "10 000 € pendant 25 ans, 5 % par an avant frais (hypothèse)",
+   "avant": "33 864 €",
+   "apres": "≈ 23 632 €",
+   "de": 33864,
+   "a": 23632,
+   "suffixe": " €",
+   "legende": "Avec 1,5 % de frais par an.",
+   "source": "Calcul : 10 000 € × 1,035²⁵ ≈ 23 632 €"
+  },
+  "effet": "baisse"
+ },
+ "blocs": [
+  {
+   "section": "Les frais annuels",
+   "texte": "Les frais annuels, c'est un pourcentage prélevé chaque année sur ton capital, que ça monte ou que ça baisse. Ils s'appliquent sur toute la somme, pas seulement sur les gains.",
+   "court": "Frais annuels : un pourcentage prélevé chaque année sur ton capital.",
+   "ecran": {
+    "type": "definition",
+    "mot": "Frais annuels",
+    "texte": "Un pourcentage prélevé chaque année sur ton capital"
+   }
+  },
+  {
+   "section": "Le calcul",
+   "texte": "Prenons 10 000 € qui rapportent 5 % par an. Sans frais, au bout de 25 ans : environ 33 864 €. Avec 1,5 % de frais, le rendement tombe à 3,5 % : environ 23 632 €.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Sans frais : 5 % par an",
+     "Avec frais : 3,5 % par an"
+    ],
+    "resultat": "33 864 € → 23 632 €",
+    "source": "Calcul : 10 000 € × 1,050²⁵ et × 1,035²⁵"
+   }
+  },
+  {
+   "revelation": true,
+   "effet": "baisse",
+   "effetT": 2.5,
+   "texte": "Résultat : 10 231 € de moins, soit 43 pour cent des gains avalés par les frais.",
+   "court": "25 ans plus tard : 33 864 € sans frais, 23 632 € avec 1,5 % de frais.",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "33 864 €",
+     "legende": "Sans frais"
+    },
+    "b": {
+     "valeur": "≈ 23 632 €",
+     "de": 33864,
+     "a": 23632,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Avec 1,5 % de frais par an"
+    },
+    "source": "Écart : 10 231 €"
+   }
+  },
+  {
+   "texte": "Trois sortes de frais à repérer : les frais courants, chaque année ; les frais d'entrée ou de sortie ; et les frais de transaction. Ils sont détaillés dans les documents d'information du produit.",
+   "ecran": {
+    "type": "liste",
+    "titre": "Où chercher les frais",
+    "points": [
+     [
+      "Frais courants",
+      "prélevés chaque année"
+     ],
+     [
+      "Frais d'entrée ou de sortie",
+      "à l'achat ou à la vente"
+     ],
+     [
+      "Frais de transaction",
+      "à chaque opération"
+     ]
+    ]
+   }
+  }
+ ],
+ "piege": {
+  "court": "Attention, grain de sable : un petit pourcentage répété chaque année pèse lourd, et le moins cher n'est pas toujours le meilleur.",
+  "erreurs": [
+   {
+    "titre": "Un petit pourcentage, ça ne change rien ?",
+    "texte": "Un : penser qu'un petit pourcentage ne change rien. Chaque année, il s'applique sur toute la somme : l'effet s'accumule."
+   },
+   {
+    "titre": "Choisir sur les frais seulement",
+    "texte": "Deux : choisir uniquement sur les frais. Un produit moins cher n'est pas forcément meilleur : les frais ne sont qu'un élément à comparer."
+   }
+  ]
+ },
+ "resume": {
+  "texte": "En une phrase : un petit pourcentage de frais, répété chaque année, peut avaler une grande part des gains.",
+  "court": "En une phrase : un petit pourcentage de frais, chaque année, peut avaler une grande part des gains."
+ },
+ "sources": [
+  "S1 · Calculs de la chaîne (hypothèses : 5 % par an avant frais, 1,5 % de frais par an) : 10 000 € × 1,050²⁵ ≈ 33 864 € ; 10 000 € × 1,035²⁵ ≈ 23 632 €"
+ ],
+ "miniature": {
+  "lignes": [
+   "LES FRAIS",
+   "COÛTENT",
+   "CHER ?"
+  ],
+  "accent": "CHER",
+  "bas": [
+   "33 864 €",
+   "→ 23 632 €"
+  ]
+ },
+ "musique": "documentaire-doux",
+ "musiqueRevelation": "corporate-lumineux",
+ "question": "Et toi, quel chiffre t'a le plus surpris ?",
+ "suite": {
+  "titre": "2 000 € sur 20 ans : la boule de neige des intérêts composés",
+  "texte": "La prochaine fois : 2 000 € sur 20 ans : la boule de neige des intérêts composés"
+ },
+ "sourcesExternes": false
+}

@@ -1,0 +1,155 @@
+{
+ "numero": 5,
+ "slug": "epargne-100-4-20",
+ "titre": "100 € par mois pendant 20 ans : combien ça fait ?",
+ "promesse": "100 € par mois pendant 20 ans à 4 % par an (hypothèse) : combien ça fait ?",
+ "description": "Pico explique l'épargne régulière : 100 € par mois pendant 20 ans à 4 % par an (hypothèse) donnent environ 36 384 €, dont 24 000 € versés. L'effet du temps et les pièges.",
+ "hashtags": "#épargne #intérêtscomposés #économie #apprendre #QuentInvest",
+ "accroche": {
+  "texte": "100 € par mois pendant 20 ans : combien ça fait ?",
+  "court": "100 € par mois pendant 20 ans : combien ça fait ?",
+  "ecran": {
+   "intro": "100 € par mois pendant 20 ans, à 4 % par an (hypothèse)",
+   "avant": "24 000 €",
+   "apres": "≈ 36 384 €",
+   "de": 24000,
+   "a": 36384,
+   "suffixe": " €",
+   "legende": "Versés → obtenus.",
+   "source": "Calcul : 100 € × 240 mois, intérêts composés"
+  },
+  "effet": "hausse"
+ },
+ "blocs": [
+  {
+   "section": "Ce que tu verses",
+   "texte": "D'abord ce que tu verses : 100 € fois 240 mois, ça fait 24 000 €. C'est ton effort.",
+   "court": "Tu verses 100 € par mois : 24 000 € au bout de 20 ans.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "100 € × 12 mois = 1 200 € par an",
+     "1 200 € × 20 ans = 24 000 €"
+    ],
+    "resultat": "24 000 € versés",
+    "source": "Calcul : 100 € × 240 mois"
+   }
+  },
+  {
+   "section": "L'épargne régulière",
+   "texte": "L'épargne régulière, c'est mettre la même somme de côté chaque mois. Chaque versement commence à rapporter des intérêts dès qu'il arrive.",
+   "court": "Épargne régulière : la même somme de côté chaque mois, qui rapporte dès qu'elle arrive.",
+   "ecran": {
+    "type": "definition",
+    "mot": "Épargne régulière",
+    "texte": "La même somme de côté chaque mois"
+   }
+  },
+  {
+   "revelation": true,
+   "effet": "hausse",
+   "effetT": 2.5,
+   "texte": "Avec 4 % par an, tu obtiens environ 36 384 € : 12 384 € viennent des intérêts, pas de ta poche.",
+   "court": "20 ans plus tard : 24 000 € versés, environ 36 384 € au total.",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "24 000 €",
+     "legende": "Ce que tu as versé"
+    },
+    "b": {
+     "valeur": "≈ 36 384 €",
+     "de": 24000,
+     "a": 36384,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Ce que tu as à la fin (hypothèse : 4 %)"
+    },
+    "source": "Intérêts : ≈ 12 384 €"
+   }
+  },
+  {
+   "section": "Commencer tôt",
+   "texte": "Et si tu attends ? Avec la même somme chaque mois, mais 10 ans au lieu de 20, tu obtiens environ 14 670 € au lieu de 36 384 €.",
+   "court": "Si tu attends 10 ans de plus : environ 14 670 € au lieu de 36 384 €.",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "≈ 14 670 €",
+     "legende": "Si tu commences 10 ans plus tard"
+    },
+    "b": {
+     "valeur": "≈ 36 384 €",
+     "de": 14670,
+     "a": 36384,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Si tu commences maintenant"
+    },
+    "source": "Même somme mensuelle, 10 ans au lieu de 20"
+   }
+  },
+  {
+   "texte": "Trois choses comptent : la régularité, la durée, et de commencer tôt. Même un petit montant compte, parce que le temps fait une grande partie du travail.",
+   "ecran": {
+    "type": "liste",
+    "titre": "Ce qui compte pour l'épargne régulière",
+    "points": [
+     [
+      "La régularité",
+      "même somme, chaque mois"
+     ],
+     [
+      "La durée",
+      "le temps fait grossir les intérêts"
+     ],
+     [
+      "Commencer tôt",
+      "un petit montant compte"
+     ]
+    ]
+   }
+  }
+ ],
+ "piege": {
+  "court": "Attention, grain de sable : 4 % n'est pas garanti, et l'inflation grignote le résultat.",
+  "erreurs": [
+   {
+    "titre": "4 % n'est pas garanti",
+    "texte": "Un : croire que ces 4 % sont garantis. C'est une hypothèse : un vrai rendement varie, et certains placements peuvent faire perdre de l'argent."
+   },
+   {
+    "titre": "L'inflation grignote le résultat",
+    "texte": "Deux : oublier l'inflation. 36 384 € dans 20 ans n'achèteront pas autant qu'aujourd'hui."
+   }
+  ]
+ },
+ "resume": {
+  "texte": "En une phrase : verser régulièrement, c'est laisser le temps travailler, sans garantie de résultat.",
+  "court": "En une phrase : verser régulièrement, c'est laisser le temps travailler, sans garantie."
+ },
+ "sources": [
+  "S1 · Formule de l'épargne régulière : versement × ((1 + i)^n − 1) ÷ i, i = taux mensuel équivalent (calcul de la chaîne)",
+  "S2 · Calculs, hypothèse de 4 % par an : 100 € par mois pendant 20 ans ≈ 36 384 € dont 24 000 € versés"
+ ],
+ "miniature": {
+  "lignes": [
+   "100 €",
+   "PAR MOIS,",
+   "COMBIEN ?"
+  ],
+  "accent": "COMBIEN",
+  "bas": [
+   "24 000 €",
+   "→ 36 384 €"
+  ]
+ },
+ "musique": "documentaire-doux",
+ "musiqueRevelation": "corporate-lumineux",
+ "question": "Et toi, tu avais déjà fait ce calcul ?",
+ "suite": {
+  "titre": "1,5 % de frais par an : combien ça coûte sur 25 ans ?",
+  "texte": "La prochaine fois : 1,5 % de frais par an : combien ça coûte sur 25 ans ?"
+ },
+ "sourcesExternes": false
+}

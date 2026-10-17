@@ -28,7 +28,7 @@
   ]
  },
  "musique": "documentaire-doux",
- "suite": "Où garder son argent de précaution ?",
+ "suite": "Un crédit de 10 000 € coûte combien en tout ?",
  "scenes": [
   {
    "expr": "curieux",
@@ -43,7 +43,7 @@
     "a": 4322,
     "suffixe": " €",
     "legende": "Sans rien ajouter.",
-    "source": "Calcul QuentInvest : 1 000 × 1,05³⁰ ≈ 4 322 €"
+    "source": "Calcul : 1 000 × 1,05³⁰ ≈ 4 322 €"
    },
    "effet": "hausse",
    "effetT": 1,
@@ -188,7 +188,7 @@
    "ecran": {
     "type": "resume",
     "titre": "En une phrase",
-    "texte": "avec les intérêts composés, le temps travaille pour toi, à condition de ne pas oublier que les taux ne sont pas garantis."
+    "texte": "Avec les intérêts composés, le temps travaille pour toi, à condition de ne pas oublier que les taux ne sont pas garantis."
    },
    "texte": "En une phrase : avec les intérêts composés, le temps travaille pour toi, à condition de ne pas oublier que les taux ne sont pas garantis."
   },
@@ -198,10 +198,10 @@
    "ecran": {
     "type": "suite",
     "label": "Prochain épisode",
-    "titre": "Où garder son argent de précaution ?",
+    "titre": "Un crédit de 10 000 € coûte combien en tout ?",
     "sous": "Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ? Dis-le en commentaire."
    },
-   "texte": "La prochaine fois : où garder son argent de précaution ? Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ? Dis-le en commentaire. Rappel : vulgarisation, pas un conseil en investissement."
+   "texte": "La prochaine fois : un crédit de 10 000 euros, ça coûte combien en tout ? Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ? Dis-le en commentaire. Rappel : vulgarisation, pas un conseil en investissement."
   },
   {
    "expr": "content",

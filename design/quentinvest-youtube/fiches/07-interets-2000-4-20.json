@@ -1,0 +1,155 @@
+{
+ "numero": 7,
+ "slug": "interets-2000-4-20",
+ "titre": "2 000 € sur 20 ans : la boule de neige des intérêts composés",
+ "promesse": "2 000 € pendant 20 ans à 4 % par an (hypothèse) : combien ça fait ?",
+ "description": "Pico explique les intérêts composés : pourquoi 2 000 € peuvent devenir 4 382 € en 20 ans à 4 % par an (hypothèse), la règle des 72 et les pièges à éviter.",
+ "hashtags": "#intérêtscomposés #épargne #économie #apprendre #QuentInvest",
+ "accroche": {
+  "texte": "2 000 € qui grossissent pendant 20 ans : combien ça fait ? Tout dépend d'un petit mot.",
+  "court": "2 000 € pendant 20 ans : combien ça fait ? Tout dépend d'un petit mot.",
+  "ecran": {
+   "intro": "2 000 € pendant 20 ans, à 4 % par an (hypothèse)",
+   "avant": "2 000 €",
+   "apres": "≈ 4 382 €",
+   "de": 2000,
+   "a": 4382,
+   "suffixe": " €",
+   "legende": "Sans rien ajouter.",
+   "source": "Calcul : 2 000 € × 1,04²⁰ ≈ 4 382 €"
+  }
+ },
+ "blocs": [
+  {
+   "section": "Les intérêts simples",
+   "texte": "Commençons par le plus simple. Les intérêts simples : chaque année, tu touches un pourcentage de la somme de départ, toujours la même. 4 % de 2 000 €, ça fait 80 € par an.",
+   "court": "Intérêts simples : 80 € par an. Au bout de 20 ans, 3 600 €.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "4 % de 2 000 € = 80 € par an",
+     "80 € × 20 ans = 1 600 €"
+    ],
+    "resultat": "2 000 € + 1 600 € = 3 600 €",
+    "source": "Calcul (hypothèse : 4 % par an)"
+   }
+  },
+  {
+   "section": "Les intérêts composés",
+   "texte": "Maintenant, les intérêts composés. Chaque année, les intérêts s'ajoutent à la somme. L'année suivante, tu touches des intérêts sur les intérêts. C'est l'effet boule de neige.",
+   "court": "Intérêts composés : les intérêts rapportent eux-mêmes des intérêts. Une boule de neige.",
+   "ecran": {
+    "type": "definition",
+    "mot": "Intérêts composés",
+    "texte": "Des intérêts qui rapportent eux-mêmes des intérêts"
+   }
+  },
+  {
+   "revelation": true,
+   "effet": "hausse",
+   "effetT": 5,
+   "texte": "Regarde la différence. Avec les intérêts simples, la somme monte en ligne droite. Avec les intérêts composés, la courbe s'envole : au bout de 20 ans, environ 4 382 €, contre 3 600 €.",
+   "court": "20 ans plus tard : 3 600 € en simple, 4 382 € en composé.",
+   "ecran": {
+    "type": "croissance",
+    "capital": 2000,
+    "taux": 4,
+    "annees": 20,
+    "etiquetteSimple": "≈ 3 600 € (simples)",
+    "etiquetteCompose": "≈ 4 382 € (composés)",
+    "source": "Calcul : 2 000 € × 1,04²⁰ ≈ 4 382 € (hypothèse : 4 % par an)"
+   }
+  },
+  {
+   "texte": "Autrement dit : un gain de 80 pour cent en simple, et 119 pour cent en composé. Même taux, même durée. Seul le mécanisme change.",
+   "ecran": {
+    "type": "comparaison",
+    "titre": "Gain sur 20 ans, à 4 % par an (hypothèse)",
+    "a": [
+     "Intérêts simples",
+     80
+    ],
+    "b": [
+     "Intérêts composés",
+     119
+    ]
+   }
+  },
+  {
+   "section": "Le temps compte",
+   "texte": "Le secret, c'est le temps. Une règle pratique : divise 72 par le taux. À 4 %, 72 divisé par 4, ça fait environ 18,0 ans pour doubler.",
+   "court": "Règle des 72 : divise 72 par le taux. À 4 %, ton argent double en environ 18,0 ans.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "72 ÷ 4 % ≈ 18,0"
+    ],
+    "resultat": "≈ 18 ans pour doubler",
+    "source": "Règle des 72 (approximation) : le calcul exact donne 17,7 ans"
+   }
+  },
+  {
+   "texte": "Trois choses font grossir la boule de neige : le temps, le taux, et la régularité. Le temps est le plus puissant, parce qu'il ne se rattrape pas.",
+   "ecran": {
+    "type": "liste",
+    "titre": "Ce qui fait grossir la boule de neige",
+    "points": [
+     [
+      "Le temps",
+      "le plus puissant"
+     ],
+     [
+      "Le taux",
+      "plus il est haut, plus ça va vite"
+     ],
+     [
+      "La régularité",
+      "laisser les intérêts s'ajouter"
+     ]
+    ]
+   }
+  }
+ ],
+ "piege": {
+  "court": "Attention, grain de sable : 4 % n'est pas garanti, et l'inflation grignote le résultat.",
+  "erreurs": [
+   {
+    "titre": "4 % n'est pas garanti",
+    "texte": "Un : croire que ces 4 % existent toujours. C'est une hypothèse pour comprendre. Un vrai taux change, et certains placements peuvent faire perdre de l'argent."
+   },
+   {
+    "titre": "L'inflation grignote le résultat",
+    "texte": "Deux : oublier l'inflation. 4 382 € dans 20 ans n'achèteront pas autant qu'aujourd'hui."
+   }
+  ]
+ },
+ "resume": {
+  "texte": "En une phrase : avec les intérêts composés, le temps travaille pour toi, à condition de ne pas oublier que les taux ne sont pas garantis.",
+  "court": "En une phrase : avec les intérêts composés, le temps travaille pour toi, sans garantie."
+ },
+ "sources": [
+  "S1 · Formule des intérêts composés : capital × (1 + taux)^années (calcul de la chaîne)",
+  "S2 · Calculs, hypothèse de 4 % par an : 2 000 € × 1,04²⁰ ≈ 4 382 € ; 2 000 € + 80 € × 20 = 3 600 €",
+  "S3 · Règle des 72 : approximation (calcul exact : 17,7 ans à 4 %)"
+ ],
+ "miniature": {
+  "lignes": [
+   "BOULE",
+   "DE NEIGE",
+   "D'ARGENT ?"
+  ],
+  "accent": "NEIGE",
+  "bas": [
+   "2 000 €",
+   "→ 4 382 €"
+  ]
+ },
+ "musique": "documentaire-doux",
+ "musiqueRevelation": "corporate-lumineux",
+ "question": "Et toi, quelle question d'argent te trotte dans la tête ?",
+ "suite": {
+  "titre": "5 000 € dans un tiroir pendant 15 ans : que reste-t-il ?",
+  "texte": "La prochaine fois : 5 000 € dans un tiroir pendant 15 ans : que reste-t-il ?"
+ },
+ "sourcesExternes": false
+}
