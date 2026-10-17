@@ -8,7 +8,7 @@
 const fs = require('fs'), path = require('path');
 
 // Voix de l'épisode 2 (Kokoro « Siwis » abaissée) : c'est celle qui a le plus de « j'aime » sur la chaîne. Tom (Piper, voix d'homme) reste disponible : voix: { moteur: 'piper', modele: 'vits-piper-fr_FR-tom-medium', sid: 0, vitesse: 0.9, hauteur: 1 }
-const VOIX_PAR_DEFAUT = { moteur: 'kokoro', sid: 30, vitesse: 0.78, hauteur: 0.78 };
+const VOIX_PAR_DEFAUT = { moteur: 'kokoro', sid: 30, vitesse: 0.82, hauteur: 0.78 };
 const TYPES_GRAPHIQUES = ['duo', 'courbe', 'croissance', 'comparaison', 'barres', 'taux', 'calcul', 'panier', 'chiffre'];
 
 const exprDe = (b, role) => {
@@ -45,8 +45,8 @@ function verifier(f) {
   if (!(f.blocs || []).some(b => b.court)) console.warn('Aucun bloc avec « court » : la version TikTok sera très courte.');
 }
 
-// durée estimée (secondes) d'une vidéo : environ 0,33 s par mot dit avec la voix Siwis (0,38 avec Tom), plus 0,7 s de respiration par réplique (mesuré sur les épisodes 2 à 5)
-const estimer = (scenes, voix = VOIX_PAR_DEFAUT) => { const k = (voix.moteur === 'kokoro' ? 0.33 : 0.38) * (voix.moteur === 'kokoro' ? 0.82 / (voix.vitesse || 0.82) : 1); return Math.round(scenes.reduce((t, x) => t + (x.texte.match(/\S+/g) || []).length * k + 0.7, 0)); };
+// durée estimée (secondes) d'une vidéo : environ 0,44 s par mot dit avec la voix Siwis (0,38 avec Tom), plus 0,7 s de respiration par réplique (mesuré sur les épisodes 2 à 5)
+const estimer = (scenes, voix = VOIX_PAR_DEFAUT) => { const k = voix.moteur === 'kokoro' ? 0.46 * 0.78 / (voix.vitesse || 0.82) : 0.38; return Math.round(scenes.reduce((t, x) => t + (x.texte.match(/\S+/g) || []).length * k + 0.7, 0)); };
 const DUREE_MINI = 300; // une vidéo YouTube ne fait pas moins de 5 minutes
 
 function compose(f) {
