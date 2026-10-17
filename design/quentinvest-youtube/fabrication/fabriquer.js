@@ -111,15 +111,23 @@ async function images() {
 }
 
 // ---------- 4. une vidéo par réplique : écran animé + Pico (bouche, entrée, rebond) ----------
+// Niveau des bruitages : mesuré par rapport à la voix de chaque réplique (et non réglé « à l'oreille » : les fichiers de bruitage sont bien plus forts que la voix de synthèse).
+// Un son « 30 % moins fort » que la voix = environ −5 dB (la sensation de volume est divisée par deux tous les −10 dB). Réglable : clé `sons.effetsDb` du fichier d'épisode.
+const EFFETS_DB = EP.sons && EP.sons.effetsDb != null ? EP.sons.effetsDb : -5;
+const { spawnSync } = require('child_process');
+const rmsDb = (f, filtre) => { const r = spawnSync('ffmpeg', ['-v', 'info', '-i', f, '-af', `${filtre ? filtre + ',' : ''}astats=metadata=0`, '-f', 'null', '-'], { encoding: 'utf8', maxBuffer: 1e8 }), m = [...(r.stderr || '').matchAll(/RMS level dB:\s*(-?[\d.]+)/g)]; return m.length ? +m[m.length - 1][1] : -30; };
+const RMS_SON = {}, rmsSon = f => RMS_SON[f] != null ? RMS_SON[f] : (RMS_SON[f] = rmsDb(f, 'silenceremove=stop_periods=-1:stop_threshold=-50dB'));
+const rmsVoix = wav => rmsDb(wav, 'silenceremove=stop_periods=-1:stop_threshold=-40dB:stop_duration=0.15'); // niveau de la voix quand elle parle (sans les silences)
 const SFX = { baisse: 'baisse', hausse: 'hausse', pieces: 'pieces', ding: 'ding-cloche', succes: 'succes', impact: 'impact-leger' };
 // style 2 : bruitages discrets posés sur les animations (pop quand un élément arrive, whoosh à chaque nouvel écran, effet choisi pour la révélation)
 function bruitages(i, d) {
   const s = EP.scenes[i], l = [];
-  if (i > 0 && s.ecran !== '=') l.push(['whoosh-court', 0.02, 0.32]);
+  if (i > 0 && s.ecran !== '=') l.push(['whoosh-court', 0.02, 0.8]);
   let dernier = -1, n = 0;
-  for (const t of EVENTS[i] || []) if (t > 0.25 && t - dernier >= 0.45 && n < 6 && t < d - 0.4) { l.push(['pop', t, 0.30]); dernier = t; n++; }
-  if (s.effet && SFX[s.effet]) l.push([SFX[s.effet], s.effetT != null ? s.effetT : 0.9, 0.5]);
-  return l.map(([nom, t, v]) => ({ f: path.join(SONS, nom + '.mp3'), t, v })).filter(x => fs.existsSync(x.f));
+  for (const t of EVENTS[i] || []) if (t > 0.25 && t - dernier >= 0.45 && n < 6 && t < d - 0.4) { l.push(['pop', t, 0.8]); dernier = t; n++; }
+  if (s.effet && SFX[s.effet]) l.push([SFX[s.effet], s.effetT != null ? s.effetT : 0.9, 1]);
+  const voix = rmsVoix(wavDe(i)); // chaque son est calé à (niveau de la voix + EFFETS_DB), quel que soit son niveau d'origine ; v = poids relatif (1 = niveau cible)
+  return l.map(([nom, t, v]) => ({ f: path.join(SONS, nom + '.mp3'), t, v })).filter(x => fs.existsSync(x.f)).map(x => ({ ...x, db: +(voix + EFFETS_DB + 20 * Math.log10(x.v) - rmsSon(x.f)).toFixed(2) }));
 }
 // Pico : angle (rad) selon le geste de la réplique ; `pointe` se penche vers l'écran, `hoche` acquiesce, `penche` est intrigué
 const angleDe = (s, debut) => {
@@ -166,7 +174,7 @@ function clip(i, debut) {
   const px2 = `${px}+${entree}+${sortie}${s.geste === 'pointe' ? '-40*min(1,t/0.35)' : ''}`;
   const pico = `[1:v]fps=${FPS},scale=-1:${hp},format=rgba,pad=w=iw+${marge * 2}:h=ih+${marge * 2}:x=${marge}:y=${marge}:color=black@0,rotate=a='${angleDe(s, debut)}':c=none[p]`;
   const sons = bruitages(i, d), entrees = [], mix = [`[2:a]aformat=sample_rates=44100:channel_layouts=mono[v0]`];
-  sons.forEach((x, k) => { entrees.push('-i', x.f); mix.push(`[${3 + k}:a]aformat=sample_rates=44100:channel_layouts=mono,adelay=${Math.round(x.t * 1000)},volume=${x.v}[s${k}]`); });
+  sons.forEach((x, k) => { entrees.push('-i', x.f); mix.push(`[${3 + k}:a]aformat=sample_rates=44100:channel_layouts=mono,adelay=${Math.round(x.t * 1000)},volume=${x.db}dB[s${k}]`); });
   const audio = sons.length ? `${mix.join(';')};[v0]${sons.map((_, k) => `[s${k}]`).join('')}amix=inputs=${sons.length + 1}:duration=first:normalize=0[a]` : mix[0].replace('[v0]', '[a]');
   const filtre = `${fondZ};${pico};[b][p]overlay=x='${px2}':y='${py}+${respire}+${saut}',format=yuv420p[v];${audio}`;
   ff('-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, ...entrees, '-filter_complex', filtre, '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', d.toFixed(3), '-movflags', '+faststart', out);
@@ -183,7 +191,7 @@ function controle(durees) {
   const ia = EP.scenes.findIndex(s => (s.ecran !== '=' && s.ecran.type === 'abonne') || /abonne/i.test(s.texte));
   if (ia < 0) alertes.push('Aucun appel à s’abonner : place-le dans les 20 premières secondes.');
   else if (tc[ia] > 20) alertes.push(`L’appel à s’abonner arrive à ${tc[ia].toFixed(0)} s : avance-le avant 20 s.`);
-  const vus = new Set(); EP.scenes.forEach((s, i) => { if (!vus.has(g[i].debut)) { vus.add(g[i].debut); if (g[i].T > 16) alertes.push(`L’écran de la réplique ${g[i].debut + 1} reste ${g[i].T.toFixed(0)} s : coupe-le en deux écrans ou ajoute un exemple.`); } });
+  const vus = new Set(); EP.scenes.forEach((s, i) => { if (!vus.has(g[i].debut)) { vus.add(g[i].debut); if (g[i].T > 18) alertes.push(`L’écran de la réplique ${g[i].debut + 1} reste ${g[i].T.toFixed(0)} s : coupe-le en deux écrans ou ajoute un exemple.`); } });
   EP.scenes.forEach((s, i) => { if (mots(s) > 45) alertes.push(`Réplique ${i + 1} : ${mots(s)} mots, c’est long ; une idée par réplique.`); });
   const total = durees.reduce((a, b) => a + b, 0);
   console.log(`Contrôle du rythme : ${Math.floor(total / 60)} min ${Math.round(total % 60)} s, ${EP.scenes.length} répliques.`);
@@ -241,6 +249,8 @@ async function exporter() {
 
 (async () => {
   synthese();
+  // une vidéo YouTube (16:9, style 2) fait au moins 5 minutes : on s'arrête avant le montage, long et inutile, si la voix est plus courte
+  if (STYLE2 && !VERT && !process.argv.includes('--court')) { const total = EP.scenes.reduce((t, _, i) => t + duree(wavDe(i)), 0); if (total < 300) { console.error(`Vidéo trop courte : ${Math.floor(total / 60)} min ${Math.round(total % 60)} s. Une vidéo YouTube dure au moins 5 minutes : ajoute du contenu à la fiche (ou --court pour passer outre).`); process.exit(2); } }
   if (process.argv.includes('--controle')) { controle(EP.scenes.map((_, i) => duree(wavDe(i)))); return; }
   await images(); await exporter();
 })().catch(e => { console.error(e); process.exit(1); });

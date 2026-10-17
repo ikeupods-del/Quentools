@@ -3,7 +3,7 @@
  "slug": "frais-10000-5-1-5-25",
  "titre": "1,5 % de frais par an : combien ça coûte sur 25 ans ?",
  "promesse": "1,5 % de frais par an sur 25 ans (hypothèse : 5 % avant frais) : combien ça coûte ?",
- "description": "Pico explique l'effet des frais annuels : avec 1,5 % de frais par an (hypothèse), 10 000 € deviennent 23 632 € au lieu de 33 864 € en 25 ans. Où chercher les frais et les pièges.",
+ "description": "Pico explique l'effet des frais annuels : avec 1,5 % de frais par an (hypothèse), 10 000 € deviennent 23 632 € au lieu de 33 864 € en 25 ans. Les niveaux de frais, le duel de Léa et Tom, où chercher les frais et les pièges.",
  "hashtags": "#frais #épargne #économie #apprendre #QuentInvest",
  "accroche": {
   "texte": "1,5 % de frais par an, ça paraît peu. Mais sur 25 ans, combien ça coûte vraiment ?",
@@ -20,7 +20,41 @@
   },
   "effet": "baisse"
  },
+ "intro": {
+  "texte": "Au programme : ce que sont les frais annuels, combien ils coûtent selon leur niveau et la durée, un duel entre Léa et Tom, et les pièges à éviter.",
+  "ecran": {
+   "type": "liste",
+   "titre": "Au programme",
+   "points": [
+    "Les frais annuels",
+    "Selon le niveau et la durée",
+    "Léa contre Tom",
+    "Les pièges à éviter"
+   ]
+  }
+ },
  "blocs": [
+  {
+   "section": "Pourquoi ça compte",
+   "texte": "Pourquoi regarder les frais ? Parce qu'on les voit rarement : ils sont prélevés en douceur, année après année. Et pourtant, ils font partie des rares choses qu'on peut comparer avant de choisir.",
+   "ecran": {
+    "type": "message",
+    "titre": "Pourquoi ça compte",
+    "sous": "On les voit rarement, mais on peut les comparer"
+   }
+  },
+  {
+   "texte": "Prends un abonnement à 15 euros par mois : ça fait 180 euros par an, et 1 800 euros en dix ans. Les petites sommes répétées pèsent lourd. Les frais d'un placement fonctionnent de la même façon.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "15 € par mois × 12 = 180 € par an",
+     "180 € × 10 ans = 1 800 €"
+    ],
+    "resultat": "Les petites sommes pèsent",
+    "source": "Calcul de la chaîne"
+   }
+  },
   {
    "section": "Les frais annuels",
    "texte": "Les frais annuels, c'est un pourcentage prélevé chaque année sur ton capital, que ça monte ou que ça baisse. Ils s'appliquent sur toute la somme, pas seulement sur les gains.",
@@ -29,6 +63,15 @@
     "type": "definition",
     "mot": "Frais annuels",
     "texte": "Un pourcentage prélevé chaque année sur ton capital"
+   }
+  },
+  {
+   "section": "Ça sert à quoi ?",
+   "texte": "Les frais ne sont pas toujours un mauvais signe : ils paient la gestion, la conservation, le fonctionnement. La question est de savoir ce qu'on obtient en échange, et de comparer.",
+   "ecran": {
+    "type": "message",
+    "titre": "Des frais, pour quoi ?",
+    "sous": "La gestion, la conservation, le fonctionnement : à comparer"
    }
   },
   {
@@ -42,6 +85,26 @@
     ],
     "resultat": "33 864 € → 23 632 €",
     "source": "Calcul : 10 000 € × 1,050²⁵ et × 1,035²⁵"
+   }
+  },
+  {
+   "texte": "Autrement dit, ton rendement n'est pas 5 %, c'est 5 % moins 1,5 %, soit 3,5 %. C'est ce chiffre-là qui compte pour ta somme finale.",
+   "ecran": {
+    "type": "taux",
+    "gain": {
+     "nom": "Rendement",
+     "valeur": "5 %"
+    },
+    "inflation": {
+     "nom": "Frais",
+     "valeur": "1,5 %"
+    },
+    "reel": {
+     "nom": "Rendement net",
+     "valeur": "3,5 %"
+    },
+    "legende": "Exemple chiffré (hypothèse)",
+    "source": "Hypothèse : 5 % − 1,5 % = 3,5 %"
    }
   },
   {
@@ -68,6 +131,197 @@
    }
   },
   {
+   "section": "Première année",
+   "texte": "Dès la première année, 1,5 % de 10 000 €, c'est 150 € qui partent en frais. Et l'année suivante, le calcul se refait sur un capital plus grand.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "1,5 % × 10 000 € = 150 €"
+    ],
+    "resultat": "150 € la première année",
+    "source": "Calcul de la chaîne"
+   }
+  },
+  {
+   "section": "Année par année",
+   "texte": "Année par année, l'écart grandit. Au début, il est discret. Après 25 ans, il atteint 10 231 €. Comme les frais s'appliquent sur un capital qui grossit, l'écart s'accélère.",
+   "ecran": {
+    "type": "tableau",
+    "titre": "10 000 €, 5 % par an avant frais (hypothèse)",
+    "colonnes": [
+     "Année",
+     "Sans frais",
+     "Avec frais"
+    ],
+    "lignes": [
+     [
+      "5 ans",
+      "12 763 €",
+      "11 877 €"
+     ],
+     [
+      "10 ans",
+      "16 289 €",
+      "14 106 €"
+     ],
+     [
+      "15 ans",
+      "20 789 €",
+      "16 753 €"
+     ],
+     [
+      "25 ans",
+      "33 864 €",
+      "23 632 €"
+     ]
+    ],
+    "surligne": 3
+   }
+  },
+  {
+   "section": "Selon le niveau",
+   "texte": "Comparons plusieurs niveaux de frais. À 0,5 %, il reste 30 054 €. À 1,5 %, 23 632 €. À 3 %, 16 406 €. Chaque dixième de point compte, parce qu'il se répète chaque année.",
+   "ecran": {
+    "type": "tableau",
+    "titre": "Après 25 ans (hypothèses)",
+    "colonnes": [
+     "Frais par an",
+     "Capital final",
+     "Perdu"
+    ],
+    "lignes": [
+     [
+      "0,5 %",
+      "30 054 €",
+      "3 809 €"
+     ],
+     [
+      "1 %",
+      "26 658 €",
+      "7 205 €"
+     ],
+     [
+      "1,5 %",
+      "23 632 €",
+      "10 231 €"
+     ],
+     [
+      "3 %",
+      "16 406 €",
+      "17 457 €"
+     ]
+    ],
+    "surligne": 2
+   }
+  },
+  {
+   "section": "Selon la durée",
+   "texte": "Et selon la durée ? Après 13 ans, les frais avalent 36 pour cent des gains. Après 25 ans, 43. Après 35 ans, 48. Plus on reste longtemps, plus la part grignotée est grande.",
+   "ecran": {
+    "type": "tableau",
+    "titre": "1,5 % de frais par an (hypothèse)",
+    "colonnes": [
+     "Durée",
+     "Perdu",
+     "Part des gains"
+    ],
+    "lignes": [
+     [
+      "13 ans",
+      "3 217 €",
+      "36 %"
+     ],
+     [
+      "25 ans",
+      "10 231 €",
+      "43 %"
+     ],
+     [
+      "35 ans",
+      "21 824 €",
+      "48 %"
+     ]
+    ],
+    "surligne": 1
+   }
+  },
+  {
+   "section": "Léa et Tom",
+   "texte": "Léa choisit un produit à 1,5 % de frais par an. Tom en choisit un à 0,5 %, avec le même rendement avant frais. Après 25 ans : 23 632 € pour Léa, 30 054 € pour Tom.",
+   "court": "Léa paie 1,5 % de frais, Tom 0,5 % : 23 632 € contre 30 054 € après 25 ans.",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "23 632 €",
+     "legende": "Léa, 1,5 % de frais"
+    },
+    "b": {
+     "valeur": "≈ 30 054 €",
+     "de": 23632,
+     "a": 30054,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Tom, 0,5 % de frais"
+    }
+   }
+  },
+  {
+   "section": "Petite question",
+   "texte": "Petite question pour toi. Si les frais passent de 1,5 % à 3 %, la perte est-elle deux fois plus grande ? Mets la vidéo en pause si tu veux réfléchir.",
+   "ecran": {
+    "type": "message",
+    "titre": "Petite question",
+    "sous": "Si les frais passent de 1,5 % à 3 %, la perte est-elle deux fois plus grande ?"
+   }
+  },
+  {
+   "texte": "Réponse : elle est 1,7 fois plus grande. 10 231 € de perte avec 1,5 %, 17 457 € avec 3 %. L'effet monte plus vite que les frais, à cause du temps.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "À 1,5 % : 10 231 € perdus",
+     "À 3 % : 17 457 € perdus"
+    ],
+    "resultat": "× 1,7",
+    "source": "Calcul de la chaîne (hypothèses)"
+   }
+  },
+  {
+   "section": "Et l'inflation ?",
+   "texte": "N'oublie pas l'inflation. Si les prix montent de 2 % par an, en hypothèse, le rendement net de 3,5 % ne fait plus que 1,5 pour cent en pouvoir d'achat.",
+   "ecran": {
+    "type": "taux",
+    "gain": {
+     "nom": "Rendement net",
+     "valeur": "3,5 %"
+    },
+    "inflation": {
+     "nom": "Inflation",
+     "valeur": "2 %"
+    },
+    "reel": {
+     "nom": "En pouvoir d'achat",
+     "valeur": "≈ 1,5 %"
+    },
+    "legende": "Exemple chiffré (hypothèse)",
+    "source": "Hypothèse : 1,035 ÷ 1,02"
+   }
+  },
+  {
+   "section": "Calcule-le toi-même",
+   "texte": "Pour calculer toi-même : multiplie ta somme par 1,050, autant de fois que d'années, puis recommence avec 1,035. Compare les deux résultats, c'est tout.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Sans frais : × 1,050²⁵",
+     "Avec frais : × 1,035²⁵"
+    ],
+    "resultat": "33 864 € contre 23 632 €",
+    "source": "Calcul : 10 000 € multiplié"
+   }
+  },
+  {
+   "section": "Où chercher",
    "texte": "Trois sortes de frais à repérer : les frais courants, chaque année ; les frais d'entrée ou de sortie ; et les frais de transaction. Ils sont détaillés dans les documents d'information du produit.",
    "ecran": {
     "type": "liste",
@@ -87,9 +341,48 @@
      ]
     ]
    }
+  },
+  {
+   "section": "Vrai ou faux",
+   "texte": "Petite question pour toi. Vrai ou faux : des frais plus élevés garantissent-ils un meilleur rendement ? Mets la vidéo en pause si tu veux réfléchir.",
+   "ecran": {
+    "type": "message",
+    "titre": "Petite question",
+    "sous": "Vrai ou faux : des frais plus élevés garantissent-ils un meilleur rendement ?"
+   }
+  },
+  {
+   "texte": "Réponse : faux. Les frais sont un coût certain, le rendement ne l'est pas. Un produit plus cher peut faire mieux, ou moins bien. Il faut comparer les deux, et jamais l'un sans l'autre.",
+   "ecran": {
+    "type": "message",
+    "titre": "Faux",
+    "sous": "Les frais sont certains, le rendement ne l'est pas"
+   }
+  },
+  {
+   "texte": "Avant de choisir, trois questions à poser : quels sont les frais courants par an ? Y a-t-il des frais d'entrée ou de sortie ? Et où sont-ils écrits ? Les réponses doivent être claires.",
+   "ecran": {
+    "type": "liste",
+    "titre": "Trois questions à poser",
+    "points": [
+     [
+      "Les frais par an",
+      "en pourcentage"
+     ],
+     [
+      "Entrée et sortie",
+      "y en a-t-il ?"
+     ],
+     [
+      "Où les lire",
+      "documents du produit"
+     ]
+    ]
+   }
   }
  ],
  "piege": {
+  "intro": "Attention, grain de sable. Il y a trois erreurs courantes.",
   "court": "Attention, grain de sable : un petit pourcentage répété chaque année pèse lourd, et le moins cher n'est pas toujours le meilleur.",
   "erreurs": [
    {
@@ -99,8 +392,33 @@
    {
     "titre": "Choisir sur les frais seulement",
     "texte": "Deux : choisir uniquement sur les frais. Un produit moins cher n'est pas forcément meilleur : les frais ne sont qu'un élément à comparer."
+   },
+   {
+    "titre": "Frais même quand ça baisse",
+    "texte": "Trois : oublier que les frais sont prélevés même quand le rendement est faible ou négatif. Ils s'appliquent quoi qu'il arrive."
    }
   ]
+ },
+ "recap": {
+  "texte": "Pour résumer en trois points. Un : les frais s'appliquent chaque année sur tout le capital. Deux : leur effet s'accumule avec le temps. Trois : on les compare, sans oublier ce qu'on obtient en échange.",
+  "ecran": {
+   "type": "liste",
+   "titre": "À retenir",
+   "points": [
+    [
+     "Chaque année",
+     "sur tout le capital"
+    ],
+    [
+     "L'effet s'accumule",
+     "avec le temps"
+    ],
+    [
+     "On compare",
+     "et on regarde ce qu'on obtient"
+    ]
+   ]
+  }
  },
  "resume": {
   "texte": "En une phrase : un petit pourcentage de frais, répété chaque année, peut avaler une grande part des gains.",

@@ -44,6 +44,10 @@ function verifier(f) {
   if (!(f.blocs || []).some(b => b.court)) console.warn('Aucun bloc avec « court » : la version TikTok sera très courte.');
 }
 
+// durée estimée (secondes) d'une vidéo : environ 0,38 s par mot dit, plus 0,7 s de respiration par réplique (mesuré sur les épisodes 3 à 5)
+const estimer = scenes => Math.round(scenes.reduce((t, x) => t + (x.texte.match(/\S+/g) || []).length * 0.38 + 0.7, 0));
+const DUREE_MINI = 300; // une vidéo YouTube ne fait pas moins de 5 minutes
+
 function compose(f) {
   verifier(f);
   const NUM = String(f.numero).padStart(2, '0'), base = { titre: f.titre, chaine: f.chaine || 'QuentInvest', mention: f.mention || 'Vulgarisation · pas un conseil en investissement', style: 2, voix: f.voix || VOIX_PAR_DEFAUT, sources: f.sources || [], miniature: f.miniature };
@@ -65,6 +69,7 @@ function compose(f) {
     L.push({ expr: 'inquiet', section: 'Le piège', ecran: { type: 'message', titre: 'Grain de sable', sous: f.piege.sous || 'Ce qui est souvent mal compris' }, texte: f.piege.intro || `Attention, grain de sable. Il y a ${er.length > 1 ? er.length + ' erreurs courantes' : 'une erreur courante'}.` });
     er.forEach((e, i) => L.push({ expr: 'inquiet', ecran: { type: 'erreur', numero: i + 1, titre: e.titre }, texte: e.texte }));
   }
+  if (f.recap) L.push({ expr: 'content', section: 'À retenir', ecran: f.recap.ecran, texte: f.recap.texte });
   L.push({ expr: 'content', section: 'En une phrase', ecran: { type: 'resume', titre: 'En une phrase', texte: maj(f.resume.ecran || f.resume.texte.replace(/^En une phrase\s*:\s*/i, '')) }, texte: f.resume.texte });
   const suite = f.suite || {}, fin = (suite.texte ? suite.texte + ' ' : '') + f.question + ' Dis-le en commentaire.';
   L.push({ expr: 'curieux', geste: 'penche', ecran: { type: 'suite', label: 'Prochain épisode', titre: suite.titre || 'À bientôt', sous: suite.sous || f.question + ' Dis-le en commentaire.' }, texte: fin });
@@ -85,11 +90,14 @@ function compose(f) {
   if (f.piege && f.piege.court) T.push({ expr: 'inquiet', geste: 'penche', ecran: { type: 'message', titre: 'Grain de sable', sous: f.piege.sous || 'Ce qui est souvent mal compris' }, texte: f.piege.court });
   T.push({ expr: 'content', ecran: { type: 'resume', titre: 'En une phrase', texte: maj(f.resume.court ? f.resume.court.replace(/^En une phrase\s*:\s*/i, '') : (f.resume.ecran || f.resume.texte.replace(/^En une phrase\s*:\s*/i, ''))) }, texte: f.resume.court || f.resume.texte });
   T.push({ expr: 'curieux', geste: 'hoche', sortie: true, ecran: { type: 'suite', label: 'Vidéo complète sur la chaîne', titre: f.titre, sous: f.question + ' Dis-le en commentaire.' }, texte: 'Vidéo complète sur la chaîne. ' + f.question + ' Dis-le en commentaire.' });
+  // la version verticale vise une minute : on retire les blocs les plus longs (sauf la révélation, le piège, le résumé et la fin) tant que l'estimation dépasse 58 s
+  const retirable = () => T.map((x, k) => ({ x, k })).filter(({ x, k }) => k > 1 && k < T.length - 2 && !(x.effet && x.effetT >= 2 && /croissance|duo|courbe/.test(x.ecran && x.ecran.type)) && x.ecran && x.ecran.type !== 'message' && x.ecran !== '=');
+  while (estimer(T) > 58) { const r = retirable().sort((p, q) => q.x.texte.length - p.x.texte.length)[0]; if (!r) break; T.splice(r.k, 1); }
   const tiktok = { ...base, titre: (f.promesse || f.titre) + ' (version TikTok)', format: 'vertical', musique: f.musiqueTiktok || 'corporate-lumineux', scenes: T };
   return { NUM, long, tiktok, base: `${NUM}-${f.slug}` };
 }
 
-module.exports = { compose, VOIX_PAR_DEFAUT };
+module.exports = { compose, estimer, DUREE_MINI, VOIX_PAR_DEFAUT };
 
 if (require.main === module) {
   const fichier = process.argv[2], dossier = path.resolve(process.argv[3] || path.join(__dirname, '..', 'episodes'));

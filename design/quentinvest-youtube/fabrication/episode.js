@@ -10,12 +10,14 @@ const { compose } = require('./composer'), { publication } = require('./publier'
 
 const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : d; }, drapeau = n => process.argv.includes('--' + n);
 const fichier = process.argv[2];
-if (!fichier || fichier.startsWith('--')) { console.log('Usage : node episode.js <fiche.json> [--sortie <dossier>] [--modeles <dossier des voix>] [--sans-tiktok] [--sans-youtube]'); process.exit(1); }
+if (!fichier || fichier.startsWith('--')) { console.log('Usage : node episode.js <fiche.json> [--sortie <dossier>] [--modeles <dossier des voix>] [--sans-tiktok] [--sans-youtube] [--court]'); process.exit(1); }
 const F = JSON.parse(fs.readFileSync(fichier, 'utf8')), C = compose(F);
 const EPISODES = path.join(__dirname, '..', 'episodes'), SORTIE = path.resolve(arg('sortie', path.join(os.homedir(), 'Movies', 'QuentInvest', C.base)));
 const MODELES = arg('modeles', path.join(os.homedir(), 'Movies', 'QuentMovie', 'modeles'));
 fs.mkdirSync(SORTIE, { recursive: true });
 const dossierVoix = (EP) => path.join(MODELES, EP.voix.moteur === 'kokoro' ? 'kokoro-multi-lang-v1_0' : EP.voix.modele || 'vits-piper-fr_FR-upmc-medium');
+{ const { estimer, DUREE_MINI } = require('./composer'), est = estimer(C.long.scenes);
+  if (!drapeau('sans-youtube') && !drapeau('court') && est < DUREE_MINI) { console.error(`Fiche trop courte : environ ${Math.floor(est / 60)} min ${est % 60} s estimées. Une vidéo YouTube dure au moins 5 minutes : ajoute des blocs à la fiche.`); process.exit(2); } }
 const etape = t => console.log('• ' + t);
 
 function fabriquer(nom, EP) {

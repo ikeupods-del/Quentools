@@ -99,6 +99,11 @@ const CSS_V2 = `
 .abo .a1{background:var(--vert);color:#06281d;box-shadow:0 0 50px rgba(16,185,129,.45)}
 .abo .a2{background:var(--ambre);color:#151311}
 .suite .mot{font-size:36px}
+.tab{display:flex;flex-direction:column;gap:12px}
+.tl{display:grid;gap:20px;align-items:center;padding:18px 30px;border-radius:18px;background:var(--carte);border:2px solid var(--trait);font-size:42px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tl.th{background:none;border:0;padding-top:0;padding-bottom:0;color:var(--doux);font-size:28px;letter-spacing:2px;text-transform:uppercase}
+.tl.hl{border-color:var(--ambre);color:var(--ambre);box-shadow:0 0 30px rgba(251,191,36,.25)}
+.tl span:not(:first-child){text-align:right}
 .coche{display:flex;align-items:center;gap:30px;font-size:54px;font-weight:700}
 .coche i{flex:none;width:72px;height:72px;border-radius:50%;background:var(--vert);color:#06281d;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:44px;font-weight:800}
 .coche small{display:block;font-size:34px;font-weight:500;color:var(--doux);margin-top:4px}
@@ -151,6 +156,8 @@ body.vert{width:1080px;height:1920px}
 .vert .accroche .fl{font-size:70px}
 .vert .accroche .intro{font-size:50px}
 .vert .abo{width:760px}
+.vert .tl{font-size:36px;padding:16px 22px;gap:12px}
+.vert .tl.th{font-size:24px}
 .vert .num{width:100px;height:100px;font-size:70px}
 `;
 
@@ -221,6 +228,9 @@ const TYPES = {
     return zone(`<div class="accroche"><div class="intro" ${A('fade', 0, 0.5)}>${esc(e.intro)}</div><div class="rang3" style="margin-top:26px"><div class="av" style="font-size:${pv}px" ${A('pop', 0.15, 0.5)}>${esc(e.avant)}</div><div class="fl" ${A('fade', 0.7, 0.3)}>→</div><div class="ap" style="font-size:${pa}px" ${A('pop count', 0.9, 1.1, cpt(e.de != null ? e.de : 0, e.a != null ? e.a : 0, 0, pre, e.suffixe || ''))}>${esc(e.apres)}</div></div><div class="sous" style="margin-top:22px" ${A('fade', 1.6, 0.5)}>${esc(e.legende || '')}</div></div>`); },
   // appel à s'abonner : le bouton se transforme en « abonné »
   abonne: e => zone(`<h2 ${A('fade', 0, 0.5)}>${esc(e.texte || 'Rejoins la colonie')}</h2><div class="abo" ${A('pop', 0.4, 0.5)}><div class="a1">${esc(e.bouton || "S'ABONNER")}</div><div class="a2" ${A('pop', 1.7, 0.4)}>${esc(e.fait || 'ABONNÉ ✓')}</div></div><div class="sous" ${A('fade', 1.0, 0.5)}>${esc(e.sous || '')}</div>`),
+  // tableau : les lignes arrivent une à une ; `surligne` = numéro de la ligne mise en valeur (0 = première)
+  tableau: (e, c) => { const p = Math.min(0.9, pas(e.lignes.length, c)), g = `style="grid-template-columns:1.1fr ${'1fr '.repeat(e.colonnes.length - 1)}"`;
+    return zone(`${e.titre ? `<div class="mot" ${A('fade', 0)}>${esc(e.titre)}</div>` : ''}<div class="tab"><div class="tl th" ${g} ${A('fade', 0.2, 0.4)}>${e.colonnes.map(x => `<span>${esc(x)}</span>`).join('')}</div>${e.lignes.map((l, i) => `<div class="tl${i === e.surligne ? ' hl' : ''}" ${g} ${A('fade', 0.5 + i * p, 0.5)}>${l.map(x => `<span>${esc(x)}</span>`).join('')}</div>`).join('')}</div>`); },
   // liste à cocher : les points arrivent un par un (texte + précision facultative)
   liste: (e, c) => { const p = pas(e.points.length, c); return zone(`${e.titre ? `<div class="mot" ${A('fade', 0)}>${esc(e.titre)}</div>` : ''}${e.points.map((x, i) => `<div class="coche" ${A('fade', 0.3 + i * p, 0.5)}><i>✓</i><div>${esc(Array.isArray(x) ? x[0] : x)}${Array.isArray(x) ? `<small>${esc(x[1])}</small>` : ''}</div></div>`).join('')}`); },
   // croissance : deux courbes sur n années (intérêts simples en ligne droite, composés en courbe qui s'envole), hypothèse affichée

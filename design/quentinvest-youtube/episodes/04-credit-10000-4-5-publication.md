@@ -1,7 +1,7 @@
 # Épisode 4 — Un crédit de 10 000 € coûte combien en tout ?
 
 Statut : prêt à relire, rien n'est publié.
-Vidéos : `04-credit-10000-4-5-youtube.mp4` (1:36), `04-credit-10000-4-5-tiktok.mp4` (verticale) ; miniatures `04-miniature.png` et `04-miniature-tiktok.png`.
+Vidéos : `04-credit-10000-4-5-youtube.mp4` (5:59), `04-credit-10000-4-5-tiktok.mp4` (verticale) ; miniatures `04-miniature.png` et `04-miniature-tiktok.png`.
 
 ## Titre
 ```
@@ -12,12 +12,24 @@ Un crédit de 10 000 € coûte combien en tout ?
 ```
 👉 Abonne-toi pour rejoindre la colonie : une vidéo d'économie simple, régulièrement.
 
-Pico explique le coût d'un crédit : 10 000 € empruntés sur 5 ans à 4 % (exemple) font environ 11 050 € à rembourser. La mensualité, le coût des intérêts et les pièges. Exemple pédagogique, pas une offre de crédit.
+Pico explique le coût d'un crédit : 10 000 € empruntés sur 5 ans à 4 % (exemple) font environ 11 050 € à rembourser. La mensualité, le coût des intérêts, la durée, le TAEG, le duel de Léa et Tom et les pièges. Exemple pédagogique, pas une offre de crédit.
 
 Chapitres
 0:00 La question
-0:45 Le piège
-1:06 En une phrase
+0:19 Pourquoi ça compte
+0:45 Le taux
+1:12 Première mensualité
+1:41 Selon la durée
+2:02 Rembourser plus vite
+2:18 Selon le taux
+3:00 Léa et Tom
+3:17 Le TAEG
+3:27 Calcule-le toi-même
+3:43 Petite question
+4:03 Petite question
+4:30 Avant de signer
+5:09 À retenir
+5:23 En une phrase
 
 Sources
 S1 · Formule de la mensualité constante : capital × i ÷ (1 − (1 + i)^−n), i = taux mensuel (calcul de la chaîne)

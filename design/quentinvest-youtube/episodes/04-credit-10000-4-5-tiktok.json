@@ -105,6 +105,26 @@
    "texte": "Au final : 11 050 € remboursés, soit 1 050 € de plus que la somme empruntée."
   },
   {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "11 050 €",
+     "legende": "Léa, sur 5 ans"
+    },
+    "b": {
+     "valeur": "≈ 11 702 €",
+     "de": 11050,
+     "a": 11702,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Tom, sur 8 ans"
+    }
+   },
+   "texte": "Léa rembourse sur 5 ans, Tom sur 8 : 11 050 € contre 11 702 € au total."
+  },
+  {
    "expr": "inquiet",
    "geste": "penche",
    "ecran": {
