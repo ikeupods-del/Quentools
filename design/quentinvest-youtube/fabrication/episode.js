@@ -12,6 +12,9 @@ const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ?
 const fichier = process.argv[2];
 if (!fichier || fichier.startsWith('--')) { console.log('Usage : node episode.js <fiche.json> [--sortie <dossier>] [--modeles <dossier des voix>] [--sans-tiktok] [--sans-youtube] [--court] [--voix-perso <dossier YouTube>] [--voix-perso-tiktok <dossier TikTok>]'); process.exit(1); }
 const F = JSON.parse(fs.readFileSync(fichier, 'utf8')), C = compose(F);
+// contrôle de la fiche avant la fabrication (longueur, phrases, chiffres sans source, mots à ajouter au dictionnaire) : avertissements seulement
+try { const FQ = require('../../../quentmovie/fiche-quentinvest'); const R = FQ.controler(F, { lexique: require('../../../quentmovie/voix-texte').lexiqueActuel() }); for (const x of R.avertissements) console.log('⚠ ' + x.slice(0, 220)); }
+catch (e) { /* contrôle facultatif */ }
 const EPISODES = path.join(__dirname, '..', 'episodes'), SORTIE = path.resolve(arg('sortie', path.join(os.homedir(), 'Movies', 'QuentInvest', C.base)));
 const MODELES = arg('modeles', path.join(os.homedir(), 'Movies', 'QuentMovie', 'modeles'));
 fs.mkdirSync(SORTIE, { recursive: true });
@@ -23,7 +26,15 @@ const dossierVoix = (EP) => path.join(MODELES, EP.voix.moteur === 'kokoro' ? 'ko
 const etape = t => console.log('• ' + t);
 
 // voix du propriétaire (doublage de QuentMovie) : un dossier par version, v00.wav, v01.wav… une réplique chacun
-const persoDe = nom => { const d = arg(nom ? 'voix-perso-tiktok' : 'voix-perso', ''); return d ? ['--voix-perso', path.resolve(d)] : []; };
+// version TikTok avec ta voix : sans dossier dédié (--voix-perso-tiktok), elle est montée à partir des répliques de la vidéo YouTube (tiktok-voix.js) ; --tiktok-synthese la garde en voix de synthèse
+let tiktokEpisode = C.tiktok, tiktokPerso = arg('voix-perso-tiktok', '');
+if (!drapeau('sans-tiktok') && !drapeau('tiktok-synthese') && arg('voix-perso', '') && !tiktokPerso) {
+  etape('Version TikTok : voix tirée de la vidéo YouTube');
+  const T = require('./tiktok-voix').preparer({ C, dossierYoutube: path.resolve(arg('voix-perso')), sortie: path.join(SORTIE, 'travail-tiktok-voix') });
+  tiktokEpisode = T.episode; tiktokPerso = T.dossier;
+  for (const r of T.rapport) console.log('  ' + (r.retiree ? `réplique ${r.scene + 1} retirée (${r.raison})` : `réplique ${r.scene + 1} : ${r.voix}${r.source ? ' (' + r.source + ')' : ''}`));
+}
+const persoDe = nom => { const d = nom ? tiktokPerso : arg('voix-perso', ''); return d ? ['--voix-perso', path.resolve(d)] : []; };
 function fabriquer(nom, EP) {
   const json = path.join(EPISODES, `${C.base}${nom}.json`); fs.writeFileSync(json, JSON.stringify(EP, null, 1) + '\n');
   const trav = path.join(SORTIE, 'travail' + nom);
@@ -38,7 +49,7 @@ function fabriquer(nom, EP) {
 
 let long = null;
 if (!drapeau('sans-youtube')) { etape('Vidéo YouTube'); long = fabriquer('', C.long); }
-if (!drapeau('sans-tiktok')) { etape('Version TikTok'); fabriquer('-tiktok', C.tiktok); }
+if (!drapeau('sans-tiktok')) { etape('Version TikTok'); fabriquer('-tiktok', tiktokEpisode); }
 fs.writeFileSync(path.join(EPISODES, `${C.base}.json`), JSON.stringify(C.long, null, 1) + '\n'); // la miniature lit le fichier d'épisode, même sans vidéo YouTube
 etape('Miniatures');
 const mini = (extra, nom) => { const r = spawnSync('node', [path.join(__dirname, 'miniature.js'), path.join(EPISODES, `${C.base}.json`), 'surpris-ouvert', path.join(SORTIE, nom), ...extra], { encoding: 'utf8' }); if (r.status !== 0) throw new Error(r.stderr); };

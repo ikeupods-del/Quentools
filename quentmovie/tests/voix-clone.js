@@ -57,7 +57,7 @@ echo "ETAPE : Terminé"
 if [ "$1" = "-m" ] && [ "$2" = "venv" ]; then mkdir -p "$3/bin"; cp "${fauxVenv}" "$3/bin/python"; exit 0; fi
 exit 1
 `); fs.chmodSync(faux, 0o755);
-  process.env.QM_PYTHON = faux;
+  process.env.QM_PYTHON = faux; process.env.QM_VC_ESPACE_MIN = '0'; // le disque du poste de test ne compte pas
 
   if (py) {
     const app = create({ port: 0, base, ...bins }), port = await app.start(), U = p => `http://127.0.0.1:${port}${p}`;
@@ -80,6 +80,13 @@ exit 1
     const r2 = await (await fetch(U('/api/voix-clone/essai'), { method: 'POST', body: JSON.stringify({ moteurs: ['qwen'] }) })).json();
     let j2; for (let k = 0; k < 60; k++) { await new Promise(r => setTimeout(r, 500)); j2 = await (await fetch(U('/api/job?id=' + r2.id))).json(); if (j2.done || j2.error) break; }
     check('essai sans voix : message compréhensible', j2.error && /Pas encore de voix enregistrée/.test(j2.error), JSON.stringify(j2));
+    const jr = await (await fetch(U('/api/voix-clone/journal'))).json();
+    check('rapport : journal et état renvoyés', typeof jr.texte === 'string' && jr.etat && jr.etat.moteurs.length === 2);
+    process.env.QM_VC_ESPACE_MIN = '99999999'; fs.rmSync(path.join(base, 'voix-clone', 'venv-qwen'), { recursive: true, force: true });
+    const r3 = await (await fetch(U('/api/voix-clone/essai'), { method: 'POST', body: JSON.stringify({ moteurs: ['qwen'] }) })).json();
+    let j3; for (let k = 0; k < 40; k++) { await new Promise(r => setTimeout(r, 300)); j3 = await (await fetch(U('/api/job?id=' + r3.id))).json(); if (j3.done || j3.error) break; }
+    check('installation : refusée avec un message clair quand le disque est trop plein', j3.error && /Espace disque insuffisant/.test(j3.error), JSON.stringify(j3).slice(0, 200));
+    process.env.QM_VC_ESPACE_MIN = '0';
     // dictionnaire de prononciation (routes + lecture par la voix)
     let pr = await (await fetch(U('/api/prononciations'))).json();
     check('prononciations : mots livrés lus, rien de personnel au départ', pr.livre.krach === 'crac' && Object.keys(pr.perso).length === 0, JSON.stringify(pr).slice(0, 120));

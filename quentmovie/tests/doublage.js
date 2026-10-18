@@ -99,6 +99,12 @@ function chromium() {
     check('prononciations : mot ajouté gardé dans le fichier', fs.existsSync(path.join(base, 'prononciations.json')) && /Goldgarbis/.test(fs.readFileSync(path.join(base, 'prononciations.json'), 'utf8')));
     check('prononciations : mots livrés listés', await ev(() => /Mots déjà connus \(\d+\)/.test(document.querySelector('#boite').textContent)));
     await pg.keyboard.press('Escape'); await ev(() => fermer());
+    // contrôle d'une fiche QuentInvest depuis le doublage
+    await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Une.'); await pg.fill('#dbNom', 'ui-fiche'); await pg.click('#dbGo'); await pg.waitForSelector('#dbFiche', { timeout: 10000 });
+    await pg.click('#dbFiche'); await pg.waitForSelector('#fiGo', { timeout: 10000 });
+    await pg.fill('#fiTexte', JSON.stringify({ numero: 1, slug: 'x', titre: 'T', blocs: [{ texte: 'Un bloc.' }] })); await pg.click('#fiGo'); await pg.waitForFunction(() => /À corriger/.test(document.querySelector('#fiRes').textContent), null, { timeout: 8000 });
+    check('fiche : une fiche incomplète est signalée dans la fenêtre', await ev(() => /incomplète/.test(document.querySelector('#fiRes').textContent)));
+    await pg.keyboard.press('Escape'); await ev(() => fermer());
     // doublage d'une vidéo : chaque réplique démarre à l'instant de la phrase d'origine
     await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Phrase un.\nPhrase deux.'); await pg.fill('#dbNom', 'ui-calage');
     check('doublage : fichier vidéo ou son accepté pour lire le texte', await ev(() => /video\/\*/.test(document.querySelector('#dbF').accept)));
