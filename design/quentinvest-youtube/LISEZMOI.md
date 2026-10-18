@@ -36,6 +36,15 @@ Un bloc de fiche peut avoir une **photo ou une vidéo en fond** (le texte et les
 - **Dictionnaire de prononciation** : `quentmovie/prononciations.json` (mots livrés) + `~/Movies/QuentMovie/prononciations.json` (celui du propriétaire, prioritaire ; à envoyer pour que la chaîne l'utilise, ou `QM_PRONONCIATIONS=<fichier>`). Appliqué à la voix de synthèse de la chaîne ; les sous-titres gardent l'orthographe. À chaque épisode, relever les noms propres, sigles et mots étrangers et compléter le dictionnaire.
 - **Guide d'écriture pour une IA** : `GUIDE-IA-LOCALE.md` (rôle, forme de la fiche, style pour l'oreille, prudence sur les faits, méthode de recherche, prononciation, consignes « retiens que… » pour l'assistant de QuentMovie).
 
+## TikTok avec ta voix, sans réenregistrer
+Avec `--voix-perso <dossier YouTube>` et sans `--voix-perso-tiktok`, `episode.js` monte la version TikTok à partir des répliques de la vidéo YouTube (`fabrication/tiktok-voix.js`) : chaque réplique est découpée en phrases dans les silences, chaque phrase de la version TikTok est associée à la phrase YouTube la plus proche, les silences trop longs sont raccourcis, le texte affiché devient celui qui est dit, et les répliques de peu de valeur (piège, fragments) sont retirées pour tenir en une minute. `--tiktok-synthese` garde la voix de synthèse. Compte rendu dans `travail-tiktok-voix/tiktok-voix.json`.
+
+## Publication
+`episode.js` écrit aussi `<NN-sujet>.zip` (dossier `<NN-sujet>` avec les deux vidéos, les miniatures et le texte de publication) : le propriétaire le dézippe sur son Mac (Téléchargements ou `~/Movies/QuentInvest`) puis utilise **Publier** dans QuentMovie (YouTube privé ou programmé, brouillon TikTok). Rien n'est publié sans son clic.
+
+## Contrôle d'une fiche avant fabrication
+`node quentmovie/fiche-quentinvest.js fiches/NN-sujet.json` (ou le bouton « Fiche » de QuentMovie) : longueur, phrases, chiffres sans source, conseils, mots à ajouter au dictionnaire ; `episode.js` affiche les mêmes avertissements avant de fabriquer. Brouillon d'une fiche depuis un sujet : bouton « Fiche » de QuentMovie (Wikipédia + IA locale), à relire et compléter.
+
 ## Contrôle rapide (2 secondes, sans fabrication)
 `node design/quentinvest-youtube/fabrication/verifier.js` : les écrans des épisodes 1 et 2 sont identiques à la référence, et toutes les fiches se composent sans erreur. À lancer après toute modification du moteur.
 

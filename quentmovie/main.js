@@ -1,6 +1,6 @@
 // QuentMovie : fenêtre de l'application Mac (Electron) autour du moteur de montage local.
 'use strict';
-const { app, BrowserWindow, Menu, shell, dialog, session, systemPreferences, desktopCapturer, ShareMenu } = require('electron');
+const { app, BrowserWindow, Menu, shell, dialog, session, systemPreferences, desktopCapturer, ShareMenu, safeStorage } = require('electron');
 const path = require('path');
 const { create } = require('./server');
 const { resolveFfmpeg } = require('./ffmpeg-path');
@@ -24,6 +24,9 @@ const ecran = {
 // Économie de batterie : la fenêtre passée derrière est ralentie, sauf pendant que le studio (caméra, enregistrement) est ouvert
 const energie = studio => { if (win && !win.isDestroyed()) win.webContents.setBackgroundThrottling(!studio); };
 const ouvrirDossier = dossier => shell.openPath(dossier);
+const ouvrirUrl = url => { if (/^https:\/\//.test(url)) shell.openExternal(url); }; // connexion aux comptes (YouTube, TikTok) et pages de publication
+// clés des comptes de publication : chiffrées par le trousseau de macOS quand il est disponible
+const coffre = { chiffrer: t => safeStorage.encryptString(t).toString('base64'), dechiffrer: t => safeStorage.decryptString(Buffer.from(t, 'base64')) };
 const partager = fichiers => { if (process.platform === 'darwin' && win) new ShareMenu({ filePaths: fichiers }).popup({ window: win }); };
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
@@ -32,8 +35,8 @@ async function demarrer() {
   const bins = await resolveFfmpeg();
   const base = process.env.QM_AUTOTEST && process.env.QM_BASE ? process.env.QM_BASE : path.join(app.getPath('home'), 'Movies', 'QuentMovie');
   let port;
-  try { moteur = create({ port: 41730, base, ...bins, maj: hooksMaj, partager, ecran, energie, ouvrirDossier }); port = await moteur.start(); }
-  catch (e) { moteur = create({ port: 0, base, ...bins, maj: hooksMaj, partager, ecran, energie, ouvrirDossier }); port = await moteur.start(); }
+  try { moteur = create({ port: 41730, base, ...bins, maj: hooksMaj, partager, ecran, energie, ouvrirDossier, ouvrirUrl, coffre: safeStorage.isEncryptionAvailable() ? coffre : null }); port = await moteur.start(); }
+  catch (e) { moteur = create({ port: 0, base, ...bins, maj: hooksMaj, partager, ecran, energie, ouvrirDossier, ouvrirUrl, coffre: safeStorage.isEncryptionAvailable() ? coffre : null }); port = await moteur.start(); }
 
   // Caméra et micro (studio, voix off) : autorisés uniquement pour la fenêtre de QuentMovie
   const local = u => /^http:\/\/127\.0\.0\.1:\d+\//.test(u || '');

@@ -28,10 +28,14 @@ function creer(base) {
       dossier, essais, journal,
       moteurs: Object.entries(MOTEURS).map(([id, m]) => ({ id, nom: m.nom, go: m.go, installe: fs.existsSync(marque(id)) })),
       python: fs.existsSync(pythonLocal()),
-      fichiers, rapports,
+      fichiers, rapports, libre: espaceLibre(),
       arch: process.platform === 'darwin' ? process.arch : 'autre'
     };
   }
+
+  // Espace libre sur le disque (Go) ; null si le système ne le dit pas
+  function espaceLibre() { try { fs.mkdirSync(dossier, { recursive: true }); const st = fs.statfsSync(dossier); return +(st.bavail * st.bsize / 1e9).toFixed(1); } catch (e) { return null; } }
+  const journalFin = (n = 60) => { try { return fs.readFileSync(journal, 'utf8').split('\n').slice(-n).join('\n'); } catch (e) { return ''; } };
 
   const ecrire = t => { try { fs.mkdirSync(dossier, { recursive: true }); fs.appendFileSync(journal, t); } catch (e) { /* journal facultatif */ } };
 
@@ -93,6 +97,9 @@ function creer(base) {
     const liste = (moteurs && moteurs.length ? moteurs : Object.keys(MOTEURS)).filter(m => MOTEURS[m]);
     if (!liste.length) throw new Error('Aucun modèle choisi');
     fs.mkdirSync(essais, { recursive: true });
+    // un téléchargement de plusieurs Go qui échoue au milieu laisse un environnement à moitié installé : on vérifie la place avant
+    const besoin = liste.filter(m => !fs.existsSync(marque(m))).reduce((t, m) => t + MOTEURS[m].go * 2, fs.existsSync(pythonLocal()) ? 0 : 1), libre = espaceLibre(), mini = process.env.QM_VC_ESPACE_MIN != null ? +process.env.QM_VC_ESPACE_MIN : besoin; // QM_VC_ESPACE_MIN : seuil forcé (essais)
+    if (libre != null && besoin > 0 && libre < mini) throw new Error(`Espace disque insuffisant : ${libre} Go libres, environ ${mini} Go nécessaires pour l’installation. Libère de la place puis relance l’essai.`);
     await preparerPython(job);
     const parts = liste.map((_, i) => [0.1 + 0.8 * i / liste.length, 0.1 + 0.8 * (i + 0.5) / liste.length]);
     const echecs = [];
@@ -122,7 +129,7 @@ function creer(base) {
     const f = path.join(essais, n); return fs.existsSync(f) ? f : null;
   }
 
-  return { etat, essai, annuler, fichier, dossier, essais, MOTEURS };
+  return { etat, essai, annuler, fichier, journalFin, dossier, essais, MOTEURS };
 }
 
 module.exports = { creer, MOTEURS };

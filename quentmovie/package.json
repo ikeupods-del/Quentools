@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "1.43.0",
+  "version": "1.44.0",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -8,7 +8,7 @@
   "scripts": {
     "start": "electron .",
     "serveur": "node server.js",
-    "test": "node tests/run.js && node tests/export.js && node tests/maj.js && node tests/compositeur.js && node tests/generateur.js && node tests/parole.js && node tests/pistes.js && node tests/cadrage.js && node tests/ia.js && node tests/assistant.js && node tests/voix.js && node tests/doublage.js && node tests/voix-clone.js && node tests/montage.js && node tests/chapitrage.js && node tests/banques.js && node tests/packs.js && node tests/ui.js && node tests/parcours.js",
+    "test": "node tests/run.js && node tests/export.js && node tests/maj.js && node tests/compositeur.js && node tests/generateur.js && node tests/parole.js && node tests/pistes.js && node tests/cadrage.js && node tests/ia.js && node tests/assistant.js && node tests/voix.js && node tests/doublage.js && node tests/voix-clone.js && node tests/prononciations.js && node tests/fiche.js && node tests/publication.js && node tests/montage.js && node tests/chapitrage.js && node tests/banques.js && node tests/packs.js && node tests/ui.js && node tests/parcours.js",
     "dist": "electron-builder --mac dmg --arm64 --publish never"
   },
   "dependencies": {
@@ -50,6 +50,13 @@
       "decoupe.js",
       "parole-worker.js",
     "voix-clone.js",
+    "routes-voix.js",
+    "publication.js",
+    "routes-publier.js",
+    "ui-voix.js",
+    "ui-publier.js",
+    "fiche-quentinvest.js",
+    "prononciation-controle.js",
     "voix-clone/**",
       "ia.js",
       "ia-worker.js",
