@@ -41,6 +41,8 @@ const ordinal = (n, fem) => { const w = n === 1 ? (fem ? 'première' : 'premier'
 const romain = s => { const v = { I: 1, V: 5, X: 10, L: 50 }; let n = 0; for (let i = 0; i < s.length; i++) { const a = v[s[i]], b = v[s[i + 1]] || 0; n += a < b ? -a : a; } return n; };
 // 1 et 1,5 restent au singulier ; au-delà, pluriel
 const pluriel = (nb, s, p) => (/^[01](?:[.,]\d+)?$/.test(nb.trim()) ? s : p);
+const CARDINAL = ['', 'premier', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf', 'vingt', 'vingt et un', 'vingt-deux', 'vingt-trois', 'vingt-quatre', 'vingt-cinq', 'vingt-six', 'vingt-sept', 'vingt-huit', 'vingt-neuf', 'trente', 'trente et un', 'trente-deux', 'trente-trois', 'trente-quatre', 'trente-cinq', 'trente-six', 'trente-sept', 'trente-huit', 'trente-neuf'];
+const PRENOMS = 'Louis|Charles|Henri|Jean|Philippe|François|Napoléon|Élisabeth|Elisabeth|George|Georges|Guillaume|Frédéric|Alexandre|Pierre|Catherine|Léon|Pie|Benoît|Grégoire|Clément|Urbain|Innocent|Boniface|Paul|Jules|Édouard|Edouard|Richard|Alphonse|Ferdinand|Isabelle|Marie|Anne|Nicolas|Victor|Jacques|Louis-Philippe|Charles-Quint|Jean-Paul|Henry|Elizabeth|Victoria|Ramsès|Ramses|Louis-Napoléon';
 const NB = '(\\d+(?:[.,]\\d+)?)';
 
 const UNITES = [ // [motif, singulier, pluriel] — toujours précédées d'un nombre
@@ -86,6 +88,8 @@ function pourLaVoix(texte) {
   // ordinaux : 1er, 2e, 3ème, XIXe siècle
   t = t.replace(/\b1(er|re|ère)\b/g, (m, x) => ordinal(1, x !== 'er')).replace(/\b(\d{1,2})\s?(?:e|ème|eme|è)\b/g, (m, n) => ordinal(+n)).replace(/\b2nd(e)?\b/g, (m, f) => (f ? 'seconde' : 'second'));
   t = t.replace(/\b([IVXL]+)(er|re|ère|e|ème)\b/g, (m, r, x) => { const n = romain(r); return n >= 1 && n <= 30 ? ordinal(n, /^(re|ère)$/.test(x)) : m; });
+  // souverains et papes : « Louis XIV » → « Louis quatorze », « Henri Ier » → « Henri premier » (les siècles, « XIVe », sont lus plus haut)
+  t = t.replace(new RegExp('\\b(' + PRENOMS + ')\\s+(?:(I)er|([IVX]{2,6}))(?![\\p{L}\\d])', 'gu'), (m, nom, un, r) => { if (un) return `${nom} premier`; const n = romain(r); return n >= 2 && n <= 39 ? `${nom} ${CARDINAL[n]}` : m; });
   t = t.replace(/\s&\s/g, ' et ').replace(/(\d)\s?\+\s?(\d)/g, '$1 plus $2').replace(/\s\+\s/g, ' plus ');
   return t.replace(/[ \t]{2,}/g, ' ').replace(/ +([,.;])/g, '$1').trim();
 }

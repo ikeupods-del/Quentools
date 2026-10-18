@@ -34,6 +34,9 @@ eq('La vie en 2024 à Paris, la Vie est belle', 'La vie en 2024 à Paris, la Vie
 eq('Le chat a 3 ans et 2 enfants', 'Le chat a 3 ans et 2 enfants');
 eq('Une histoire en huit heures', 'Une histoire en huit heures');
 eq('Il a 5 ha de vignes', 'Il a 5 hectares de vignes');
+eq('Louis XIV et Henri IV, Charles Ier', 'Louis quatorze et Henri quatre, Charles premier');
+eq('Le XIVe siècle et Louis XVI', 'Le quatorzième siècle et Louis seize');
+eq('Pie XII', 'Pie douze');
 // dictionnaire de prononciation
 eq('Le krach de 1637 et le Krach de 1929, les krachs', 'Le crac de 1637 et le Crac de 1929, les cracs');
 eq('Mon PEA et le TRI, mais pas le per', 'Mon P E A et le T R I, mais pas le per');
