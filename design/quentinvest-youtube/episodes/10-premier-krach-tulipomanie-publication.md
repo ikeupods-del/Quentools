@@ -37,9 +37,7 @@ S3 · Charles Mackay, Extraordinary Popular Delusions and the Madness of Crowds,
 S4 · Calculs de la chaîne : 5 000 ÷ 300 ≈ 17 ; 100 × 1,5⁵ ≈ 759 (ordres de grandeur)
 Consultées le : [date de consultation à compléter]
 
-0
-0
-Vulgarisation : cette vidéo explique des idées générales, ce n'est pas un conseil en investissement. Les exemples chiffrés sont des hypothèses pour comprendre. Voix de synthèse.
+Vulgarisation : cette vidéo explique des idées générales, ce n'est pas un conseil en investissement. Les exemples chiffrés sont des hypothèses pour comprendre.
 
 Et toi, quelle histoire d'argent aimerais-tu qu'on vérifie ensuite ? Dis-le en commentaire !
 
@@ -51,7 +49,7 @@ Et toi, quelle histoire d'argent aimerais-tu qu'on vérifie ensuite ? Dis-le en 
 1637 : un bulbe de tulipe à 5 000 florins, puis l'effondrement. Vrai ou exagéré ? Pico, la petite fourmi de QuentInvest, t'explique.
 
 Source : Wikipédia, « Tulipomanie » (fr) et « Tulip mania » (en).
-Vulgarisation, pas un conseil en investissement. Voix de synthèse.
+Vulgarisation, pas un conseil en investissement.
 
 Et toi, quelle histoire d'argent aimerais-tu qu'on vérifie ensuite ? Dis-le en commentaire !
 
@@ -60,7 +58,7 @@ Et toi, quelle histoire d'argent aimerais-tu qu'on vérifie ensuite ? Dis-le en 
 
 ## Légende TikTok (à coller telle quelle)
 ```
-🐜 Abonne-toi pour rejoindre la colonie ! 1637 : un bulbe de tulipe à 5 000 florins, puis l'effondrement. Vrai ou exagéré ? Exemple pédagogique, pas un conseil en investissement. Voix de synthèse. Vidéo complète sur la chaîne.
+🐜 Abonne-toi pour rejoindre la colonie ! 1637 : un bulbe de tulipe à 5 000 florins, puis l'effondrement. Vrai ou exagéré ? Exemple pédagogique, pas un conseil en investissement. Vidéo complète sur la chaîne.
 #tulipomanie #krach #histoire #économie #QuentInvest
 ```
 
@@ -71,7 +69,7 @@ Wikipédia, « Tulipomanie » (fr) et « Tulip mania » (en) ; Anne Goldgar, Tul
 
 ## Réglages
 - Public : pas destiné aux enfants. Langue : français. Catégorie : Éducation.
-- Déclarer le contenu de synthèse (voix) selon les règles de la plateforme le jour de la publication.
+- Voix de l'auteur (doublage) : pas de déclaration de voix de synthèse.
 - Prochain épisode annoncé : Les bulles de 1720 : que s'est-il vraiment passé ?.
 
 ## À faire avant de publier

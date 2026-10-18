@@ -45,9 +45,9 @@ const mini = (extra, nom) => { const r = spawnSync('node', [path.join(__dirname,
 mini([], `${C.NUM}-miniature.png`); mini(['--tiktok'], `${C.NUM}-miniature-tiktok.png`);
 if (long) {
   etape('Texte de publication');
-  fs.writeFileSync(path.join(SORTIE, `${C.base}-publication.md`), publication(F, long.rapport));
+  fs.writeFileSync(path.join(SORTIE, `${C.base}-publication.md`), publication(F, long.rapport, { voixPerso: !!arg('voix-perso', '') }));
   fs.copyFileSync(path.join(SORTIE, `${C.base}-publication.md`), path.join(EPISODES, `${C.base}-publication.md`));
-  fs.writeFileSync(path.join(SORTIE, `${C.base}-publication.json`), JSON.stringify(publicationDonnees(F, long.rapport), null, 1)); // même contenu, pour la programmation automatique des publications
+  fs.writeFileSync(path.join(SORTIE, `${C.base}-publication.json`), JSON.stringify(publicationDonnees(F, long.rapport, { voixPerso: !!arg('voix-perso', '') }), null, 1)); // même contenu, pour la programmation automatique des publications
 }
 fs.copyFileSync(path.join(SORTIE, `${C.NUM}-miniature.png`), path.join(EPISODES, `${C.NUM}-miniature.png`)); fs.copyFileSync(path.join(SORTIE, `${C.NUM}-miniature-tiktok.png`), path.join(EPISODES, `${C.NUM}-miniature-tiktok.png`));
 console.log('\nPrêt à relire, rien n\'est publié. Dossier : ' + SORTIE);
