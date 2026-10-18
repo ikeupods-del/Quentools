@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>QuentMovie · Montage</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0E11}
+a{color:#8FA3FF;text-decoration:none}a:hover{color:#B4C2FF}
+.seg:hover{color:#ECEDF0}
+.ib:hover{background:#22252D;color:#ECEDF0}
+.cat:hover{color:#ECEDF0}
+.tuile:hover{border-color:#3A4050}
+.ligne:hover{background:#1C1F26}
+input[type=range]{accent-color:#5B78FF;width:100%;margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #0D0E11; color: #ECEDF0; font-family: 'Geist', -apple-system, system-ui, sans-serif; font-size: 13px; display: flex; flex-direction: column; overflow: hidden">
+
+  <!-- Barre du haut -->
+  <header style="height: 56px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 16px 0 20px; border-bottom: 1px solid #22252D; background: #111317">
+    <div style="display: flex; align-items: center; gap: 10px; width: 420px">
+      <div style="width: 28px; height: 28px; border-radius: 8px; background: #3F5EF0; display: flex; align-items: center; justify-content: center">
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z" fill="#fff"/></svg>
+      </div>
+      <span style="color: #8B919C">/</span>
+      <button style="display: flex; align-items: center; gap: 6px; border: 0; background: transparent; color: #ECEDF0; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; padding: 6px 8px; border-radius: 8px">QuentInvest · L’inflation
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A0A6B2" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <span style="font-size: 12px; color: #8B919C">Enregistré</span>
+    </div>
+    <nav aria-label="Étapes" style="flex: 1; display: flex; justify-content: center">
+      <div style="display: flex; gap: 4px; padding: 4px; background: #181A20; border: 1px solid #22252D; border-radius: 12px">
+        <a class="seg" href="Main.dc.html" style="padding: 7px 18px; border-radius: 8px; color: #A0A6B2; font-size: 13px; font-weight: 500">Créer</a>
+        <a href="Montage.dc.html" style="padding: 7px 18px; border-radius: 8px; background: #2A2E38; color: #ECEDF0; font-size: 13px; font-weight: 600">Monter</a>
+        <a class="seg" href="Publier.dc.html" style="padding: 7px 18px; border-radius: 8px; color: #A0A6B2; font-size: 13px; font-weight: 500">Publier</a>
+      </div>
+    </nav>
+    <div style="width: 420px; display: flex; justify-content: flex-end; gap: 8px; align-items: center">
+      <button class="ib" aria-label="Annuler" style="width: 36px; height: 36px; border-radius: 9px; border: 0; background: transparent; color: #A0A6B2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5 M4 9h11a5 5 0 010 10h-3"/></svg>
+      </button>
+      <button class="ib" aria-label="Rétablir" style="width: 36px; height: 36px; border-radius: 9px; border: 0; background: transparent; color: #A0A6B2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5 M20 9H9a5 5 0 000 10h3"/></svg>
+      </button>
+      <button onClick="{{ouvrirChat}}" style="height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 10px 0 12px; border-radius: 10px; border: 1px solid #2E3340; background: #15171C; color: #B8BDC7; font: inherit; font-size: 13px; cursor: pointer; width: 190px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8FA3FF" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></svg>
+        <span style="flex: 1; text-align: left">Demander…</span>
+        <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #8B919C">⌘K</span>
+      </button>
+      <a href="Publier.dc.html" style="height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-radius: 10px; background: #3F5EF0; color: #fff; font-size: 13px; font-weight: 600">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3 M7 8l5-5 5 5 M5 12v8h14v-8"/></svg>Exporter
+      </a>
+    </div>
+  </header>
+
+  <!-- Zone de travail -->
+  <div style="flex: 1; display: flex; min-height: 0">
+
+    <!-- Bibliothèque : rail + panneau -->
+    <nav aria-label="Bibliothèque" style="width: 76px; flex: none; display: flex; flex-direction: column; gap: 4px; padding: 10px 8px; background: #111317; border-right: 1px solid #22252D; box-sizing: border-box">
+      <sc-for list="{{cats}}" as="c" hint-placeholder-count="6">
+        <button class="cat" onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 9px 0 8px; border: 0; border-radius: 10px; background: {{c.bg}}; color: {{c.fg}}; font: inherit; font-size: 11px; font-weight: 500; cursor: pointer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{c.icone}}"/></svg>
+          {{c.nom}}
+        </button>
+      </sc-for>
+    </nav>
+
+    <aside style="width: 272px; flex: none; display: flex; flex-direction: column; background: #15171C; border-right: 1px solid #22252D; min-height: 0">
+      <div style="padding: 14px 14px 10px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <h2 style="margin: 0; font-size: 15px; font-weight: 600">{{titreLib}}</h2>
+          <sc-if value="{{isMedias}}" hint-placeholder-val="{{ true }}">
+            <button style="height: 28px; padding: 0 10px; border-radius: 8px; border: 0; background: #3F5EF0; color: #fff; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">＋ Importer</button>
+          </sc-if>
+        </div>
+        <label style="display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; border-radius: 9px; background: #0F1115; border: 1px solid #262A33">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B919C" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
+          <input aria-label="Rechercher" placeholder="Rechercher" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #ECEDF0; font: inherit">
+        </label>
+        <sc-if value="{{aSous}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; gap: 6px">
+            <sc-for list="{{sous}}" as="s" hint-placeholder-count="3">
+              <button onClick="{{s.pick}}" style="padding: 5px 11px; border-radius: 999px; border: 1px solid {{s.bord}}; background: {{s.bg}}; color: {{s.fg}}; font: inherit; font-size: 12px; cursor: pointer">{{s.nom}}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="flex: 1; overflow: hidden; padding: 0 14px 14px">
+        <!-- Médias -->
+        <sc-if value="{{isMedias}}" hint-placeholder-val="{{ true }}">
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+            <sc-for list="{{medias}}" as="m" hint-placeholder-count="6">
+              <button class="tuile" style="display: flex; flex-direction: column; gap: 6px; padding: 0; border: 1px solid #262A33; border-radius: 10px; background: #1A1D23; overflow: hidden; color: #ECEDF0; font: inherit; text-align: left; cursor: grab">
+                <span style="height: 72px; width: 100%; background: {{m.fond}}; display: flex; align-items: flex-end; justify-content: flex-end; padding: 5px; box-sizing: border-box">
+                  <span style="font-family: 'Geist Mono', monospace; font-size: 10.5px; padding: 2px 5px; border-radius: 4px; background: rgba(0,0,0,0.65); color: #fff">{{m.duree}}</span>
+                </span>
+                <span style="padding: 0 8px 8px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{m.nom}}</span>
+              </button>
+            </sc-for>
+          </div>
+          <p style="margin: 14px 0 0; font-size: 12px; color: #8B919C; line-height: 1.5">Glisse un média sur la timeline, ou double-clique pour l’ajouter à la tête de lecture.</p>
+        </sc-if>
+
+        <!-- Titres et textes -->
+        <sc-if value="{{isTexte}}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+            <sc-for list="{{titres}}" as="t" hint-placeholder-count="6">
+              <button class="tuile" style="display: flex; flex-direction: column; gap: 6px; padding: 0; border: 1px solid #262A33; border-radius: 10px; background: #1A1D23; overflow: hidden; color: #ECEDF0; font: inherit; text-align: left; cursor: grab">
+                <span style="height: 64px; width: 100%; background: #0F1115; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: {{t.couleur}}; letter-spacing: 0.02em">{{t.apercu}}</span>
+                <span style="padding: 0 8px 8px; font-size: 12px">{{t.nom}}</span>
+              </button>
+            </sc-for>
+          </div>
+          <button style="margin-top: 12px; width: 100%; height: 38px; border-radius: 10px; border: 1px solid #2E3340; background: #1A1D23; color: #ECEDF0; font: inherit; font-weight: 600; cursor: pointer">Sous-titres automatiques</button>
+        </sc-if>
+
+        <!-- Audio -->
+        <sc-if value="{{isAudio}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <sc-for list="{{audio}}" as="s" hint-placeholder-count="7">
+              <div class="ligne" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 9px">
+                <button aria-label="Écouter {{s.nom}}" style="width: 30px; height: 30px; flex: none; border-radius: 999px; border: 0; background: #252933; color: #ECEDF0; display: flex; align-items: center; justify-content: center; cursor: pointer">
+                  <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z" fill="currentColor"/></svg>
+                </button>
+                <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                  <span style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{s.nom}}</span>
+                  <span style="font-size: 11.5px; color: #8B919C">{{s.info}}</span>
+                </span>
+                <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #A0A6B2">{{s.duree}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- Effets -->
+        <sc-if value="{{isEffets}}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+            <sc-for list="{{effets}}" as="e" hint-placeholder-count="8">
+              <button class="tuile" style="display: flex; flex-direction: column; gap: 6px; padding: 0; border: 1px solid #262A33; border-radius: 10px; background: #1A1D23; overflow: hidden; color: #ECEDF0; font: inherit; text-align: left; cursor: grab">
+                <span style="height: 58px; width: 100%; display: flex">
+                  <span style="flex: 1; background: {{e.a}}"></span><span style="flex: 1; background: {{e.b}}"></span>
+                </span>
+                <span style="padding: 0 8px 8px; font-size: 12px">{{e.nom}}</span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- Packs -->
+        <sc-if value="{{isPacks}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <sc-for list="{{packs}}" as="p" hint-placeholder-count="4">
+              <div style="padding: 12px; border-radius: 12px; background: #1A1D23; border: 1px solid #262A33; display: flex; flex-direction: column; gap: 8px">
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <span style="width: 34px; height: 34px; border-radius: 9px; background: {{p.fond}}; flex: none"></span>
+                  <span style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+                    <span style="font-size: 13.5px; font-weight: 600">{{p.nom}}</span>
+                    <span style="font-size: 11.5px; color: #8B919C">{{p.contenu}}</span>
+                  </span>
+                </div>
+                <button style="height: 30px; border-radius: 8px; border: 1px solid #2E3340; background: #22252D; color: #ECEDF0; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">Appliquer au montage</button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- Outils -->
+        <sc-if value="{{isOutils}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <sc-for list="{{outils}}" as="o" hint-placeholder-count="7">
+              <button class="ligne" style="display: flex; align-items: center; gap: 10px; padding: 9px 8px; border: 0; border-radius: 9px; background: transparent; color: #ECEDF0; font: inherit; text-align: left; cursor: pointer">
+                <span style="width: 32px; height: 32px; flex: none; border-radius: 9px; background: #222631; display: flex; align-items: center; justify-content: center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8FA3FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{o.icone}}"/></svg>
+                </span>
+                <span style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+                  <span style="font-size: 13px; font-weight: 500">{{o.nom}}</span>
+                  <span style="font-size: 11.5px; color: #8B919C">{{o.info}}</span>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </aside>
+
+    <!-- Visionneuse -->
+    <main style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: #0D0E11">
+      <div style="height: 44px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 14px">
+        <button style="height: 28px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 8px; border: 1px solid #2A2E38; background: #15171C; color: #ECEDF0; font: inherit; font-size: 12px; cursor: pointer">
+          <span style="width: 8px; height: 13px; border: 1.5px solid #A0A6B2; border-radius: 2px"></span>Vertical 9:16
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A0A6B2" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <span style="flex: 1"></span>
+        <button class="ib" aria-label="Grille des tiers" style="width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent; color: #A0A6B2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 3h18v18H3z M9 3v18 M15 3v18 M3 9h18 M3 15h18"/></svg>
+        </button>
+        <button class="ib" aria-label="Zones de sécurité" style="width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent; color: #A0A6B2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 3h18v18H3z M6.5 6.5h11v11h-11z"/></svg>
+        </button>
+        <button class="ib" aria-label="Plein écran" style="width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent; color: #A0A6B2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5"/></svg>
+        </button>
+      </div>
+
+      <div style="flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center">
+        <div style="width: 216px; height: 384px; border-radius: 6px; background: #1E2A44; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5)">
+          <div style="position: absolute; left: 50%; top: 92px; width: 110px; height: 110px; margin-left: -55px; border-radius: 999px; background: #2D3D63"></div>
+          <div style="position: absolute; left: 50%; top: 196px; width: 170px; height: 190px; margin-left: -85px; border-radius: 90px 90px 0 0; background: #2D3D63"></div>
+          <div style="position: absolute; left: 14px; top: 18px; padding: 4px 8px; border-radius: 6px; background: #F2B92B; color: #111; font-size: 10px; font-weight: 700; letter-spacing: 0.04em">QUENTINVEST</div>
+          <div style="position: absolute; left: 12px; right: 12px; bottom: 70px; text-align: center; font-size: 17px; font-weight: 800; line-height: 1.2; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.6)">L’inflation, c’est <span style="color: #F2B92B">quoi</span> ?</div>
+        </div>
+      </div>
+
+      <div style="height: 56px; flex: none; display: flex; align-items: center; gap: 14px; padding: 0 16px">
+        <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #ECEDF0; width: 112px">00:00:14:08</span>
+        <span style="flex: 1"></span>
+        <button class="ib" aria-label="Reculer d’une seconde" style="width: 34px; height: 34px; border-radius: 999px; border: 0; background: transparent; color: #A0A6B2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 6l-7 6 7 6z M20 6l-7 6 7 6z" fill="currentColor"/></svg>
+        </button>
+        <button onClick="{{basculer}}" aria-label="{{libLecture}}" style="width: 44px; height: 44px; border-radius: 999px; border: 0; background: #ECEDF0; color: #0D0E11; display: flex; align-items: center; justify-content: center; cursor: pointer">
+          <sc-if value="{{enLecture}}" hint-placeholder-val="{{ false }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h4v16H7z M13 4h4v16h-4z" fill="currentColor"/></svg>
+          </sc-if>
+          <sc-if value="{{enPause}}" hint-placeholder-val="{{ true }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l13 8-13 8z" fill="currentColor"/></svg>
+          </sc-if>
+        </button>
+        <button class="ib" aria-label="Avancer d’une seconde" style="width: 34px; height: 34px; border-radius: 999px; border: 0; background: transparent; color: #A0A6B2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 6l7 6-7 6z M4 6l7 6-7 6z" fill="currentColor"/></svg>
+        </button>
+        <span style="flex: 1"></span>
+        <span style="width: 112px; text-align: right; font-size: 12px; color: #8B919C">Aperçu 720p ✓</span>
+      </div>
+    </main>
+
+    <!-- Inspecteur -->
+    <aside aria-label="Inspecteur et assistant" style="width: 320px; flex: none; display: flex; flex-direction: column; background: #15171C; border-left: 1px solid #22252D; min-height: 0">
+      <div style="display: flex; gap: 18px; padding: 0 16px; height: 42px; align-items: stretch; border-bottom: 1px solid #22252D">
+        <sc-for list="{{panneaux}}" as="p" hint-placeholder-count="2">
+          <button onClick="{{p.pick}}" aria-pressed="{{p.on}}" style="border: 0; border-bottom: 2px solid {{p.trait}}; background: transparent; color: {{p.fg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0">{{p.nom}}</button>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{isChat}}" hint-placeholder-val="{{ false }}">
+        <div style="height: 426px; display: flex; flex-direction: column">
+          <div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; padding: 12px 14px">
+            <sc-for list="{{messages}}" as="m" hint-placeholder-count="4">
+              <div style="display: flex; flex-direction: column; align-items: {{m.align}}; gap: 6px">
+                <div style="max-width: 250px; padding: 8px 11px; border-radius: {{m.rayon}}; background: {{m.bg}}; color: #ECEDF0; font-size: 12.5px; line-height: 1.45; white-space: pre-line">{{m.texte}}</div>
+                <sc-if value="{{m.aBoutons}}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; gap: 6px">
+                    <sc-for list="{{m.boutons}}" as="b" hint-placeholder-count="2">
+                      <button style="height: 26px; padding: 0 9px; border-radius: 7px; border: 1px solid #2E3340; background: #1C1F26; color: #C9D2FF; font: inherit; font-size: 11.5px; cursor: pointer">{{b}}</button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding: 10px 12px 12px; display: flex; align-items: center; gap: 8px">
+            <input aria-label="Écrire à l’assistant" placeholder="Écris ce que tu veux changer…" value="{{saisie}}" onChange="{{taper}}" onKeyDown="{{touche}}" style="flex: 1; min-width: 0; height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid #2E3340; background: #0F1115; color: #ECEDF0; font: inherit; font-size: 12.5px; outline: none">
+            <button onClick="{{envoyer}}" aria-label="Envoyer" style="width: 36px; height: 36px; flex: none; border-radius: 10px; border: 0; background: #3F5EF0; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5 M5 12l7-7 7 7"/></svg>
+            </button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isReglages}}" hint-placeholder-val="{{ true }}">
+      <div style="padding: 14px 16px 12px; display: flex; align-items: center; gap: 10px">
+        <span style="width: 44px; height: 30px; border-radius: 6px; background: #2D3D63; flex: none"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span style="font-size: 13.5px; font-weight: 600">prise-camera-02.mp4</span>
+          <span style="font-size: 11.5px; color: #8B919C">Clip 2 sur 5 · 00:42</span>
+        </span>
+      </div>
+      <div role="tablist" style="display: flex; gap: 2px; margin: 0 12px; padding: 3px; background: #0F1115; border-radius: 10px">
+        <sc-for list="{{onglets}}" as="o" hint-placeholder-count="4">
+          <button role="tab" aria-selected="{{o.on}}" onClick="{{o.pick}}" style="flex: 1; height: 28px; border: 0; border-radius: 7px; background: {{o.bg}}; color: {{o.fg}}; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">{{o.nom}}</button>
+        </sc-for>
+      </div>
+
+      <div style="flex: 1; overflow: hidden; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px">
+        <div style="padding: 10px 12px; border-radius: 10px; background: #1A2340; border: 1px solid #2A3866; display: flex; gap: 10px; align-items: center">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8FA3FF" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></svg>
+          <span style="flex: 1; font-size: 12px; color: #C9D2FF; line-height: 1.4">{{conseil}}</span>
+          <button style="height: 26px; padding: 0 10px; border-radius: 7px; border: 0; background: #3F5EF0; color: #fff; font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer">{{conseilAction}}</button>
+        </div>
+
+        <sc-for list="{{reglages}}" as="r" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; justify-content: space-between; align-items: baseline">
+              <label style="font-size: 12.5px; color: #B8BDC7">{{r.nom}}</label>
+              <span style="font-family: 'Geist Mono', monospace; font-size: 11.5px; padding: 2px 7px; border-radius: 6px; background: #0F1115; color: #ECEDF0">{{r.valeur}}</span>
+            </div>
+            <input type="range" aria-label="{{r.nom}}" min="0" max="100" value="{{r.pos}}">
+          </div>
+        </sc-for>
+
+        <sc-if value="{{aPuces}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 12.5px; color: #B8BDC7">{{titrePuces}}</span>
+            <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+              <sc-for list="{{puces}}" as="p" hint-placeholder-count="6">
+                <button style="height: 30px; border-radius: 8px; border: 1px solid {{p.bord}}; background: {{p.bg}}; color: #ECEDF0; font: inherit; font-size: 12px; cursor: pointer">{{p.nom}}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+      </sc-if>
+    </aside>
+  </div>
+
+  <!-- Timeline -->
+  <section aria-label="Timeline" style="height: 320px; flex: none; display: flex; flex-direction: column; background: #111317; border-top: 1px solid #22252D">
+    <div style="height: 46px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 12px; border-bottom: 1px solid #1E2128">
+      <div role="group" aria-label="Outils" style="display: flex; gap: 2px; padding: 3px; background: #0F1115; border-radius: 9px">
+        <sc-for list="{{outilsTl}}" as="t" hint-placeholder-count="3">
+          <button onClick="{{t.pick}}" aria-label="{{t.nom}}" aria-pressed="{{t.on}}" style="width: 30px; height: 28px; border: 0; border-radius: 7px; background: {{t.bg}}; color: {{t.fg}}; display: flex; align-items: center; justify-content: center; cursor: pointer">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.icone}}"/></svg>
+          </button>
+        </sc-for>
+      </div>
+      <span style="width: 1px; height: 22px; background: #262A33"></span>
+      <sc-for list="{{actionsTl}}" as="t" hint-placeholder-count="4">
+        <button class="ib" style="height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 9px; border-radius: 8px; border: 0; background: transparent; color: #B8BDC7; font: inherit; font-size: 12px; cursor: pointer">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.icone}}"/></svg>{{t.nom}}
+        </button>
+      </sc-for>
+      <span style="flex: 1"></span>
+      <span style="font-size: 12px; color: #8B919C">Durée totale <span style="font-family: 'Geist Mono', monospace; color: #ECEDF0">01:02</span></span>
+      <span style="width: 1px; height: 22px; background: #262A33"></span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A0A6B2" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5 M8 11h6"/></svg>
+      <input type="range" aria-label="Zoom de la timeline" min="0" max="100" value="45" style="width: 110px">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A0A6B2" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5 M8 11h6 M11 8v6"/></svg>
+    </div>
+
+    <div style="flex: 1; display: flex; min-height: 0; position: relative">
+      <!-- en-têtes de pistes -->
+      <div style="width: 112px; flex: none; display: flex; flex-direction: column; border-right: 1px solid #1E2128">
+        <div style="height: 26px"></div>
+        <sc-for list="{{pistes}}" as="p" hint-placeholder-count="5">
+          <div style="height: {{p.h}}; display: flex; align-items: center; gap: 8px; padding: 0 10px; box-sizing: border-box; border-bottom: 1px solid #1A1D23">
+            <span style="width: 8px; height: 8px; border-radius: 999px; background: {{p.couleur}}; flex: none"></span>
+            <span style="flex: 1; font-size: 12px; color: #B8BDC7">{{p.nom}}</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8B919C" stroke-width="1.8" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z M12 15a3 3 0 100-6 3 3 0 000 6z"/></svg>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- pistes -->
+      <div style="flex: 1; position: relative; overflow: hidden">
+        <div style="height: 26px; display: flex; border-bottom: 1px solid #1E2128">
+          <sc-for list="{{graduations}}" as="g" hint-placeholder-count="14">
+            <span style="width: 94px; flex: none; padding-left: 4px; box-sizing: border-box; border-left: 1px solid #262A33; font-family: 'Geist Mono', monospace; font-size: 10.5px; color: #8B919C; line-height: 26px">{{g}}</span>
+          </sc-for>
+        </div>
+
+        <!-- T : titres -->
+        <div style="height: 34px; position: relative; border-bottom: 1px solid #1A1D23">
+          <span style="position: absolute; left: 10px; top: 5px; width: 220px; height: 24px; border-radius: 6px; background: #3A2E10; border: 1px solid #6B5317; color: #F6D27A; font-size: 11.5px; line-height: 22px; padding: 0 8px; box-sizing: border-box; white-space: nowrap; overflow: hidden">Aa  L’inflation, c’est quoi ?</span>
+          <span style="position: absolute; left: 640px; top: 5px; width: 180px; height: 24px; border-radius: 6px; background: #3A2E10; border: 1px solid #6B5317; color: #F6D27A; font-size: 11.5px; line-height: 22px; padding: 0 8px; box-sizing: border-box; white-space: nowrap; overflow: hidden">Aa  Chiffre clé : 2,1 %</span>
+        </div>
+        <!-- V2 -->
+        <div style="height: 40px; position: relative; border-bottom: 1px solid #1A1D23">
+          <span style="position: absolute; left: 470px; top: 5px; width: 150px; height: 30px; border-radius: 6px; background: #2A2147; border: 1px solid #4C3D86; color: #D3C4FF; font-size: 11.5px; line-height: 28px; padding: 0 8px; box-sizing: border-box">graphique-prix.png</span>
+        </div>
+        <!-- V1 -->
+        <div style="height: 70px; position: relative; border-bottom: 1px solid #1A1D23">
+          <sc-for list="{{clips}}" as="c" hint-placeholder-count="5">
+            <span style="position: absolute; left: {{c.x}}; top: 5px; width: {{c.w}}; height: 60px; border-radius: 7px; background: {{c.fond}}; border: 2px solid {{c.bord}}; box-sizing: border-box; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between">
+              <span style="font-size: 11px; font-weight: 600; color: #fff; padding: 4px 7px; text-shadow: 0 1px 3px rgba(0,0,0,0.7); white-space: nowrap">{{c.nom}}</span>
+              <span style="height: 14px; background: rgba(0,0,0,0.35)"></span>
+            </span>
+          </sc-for>
+          <sc-for list="{{fondus}}" as="f" hint-placeholder-count="2">
+            <span style="position: absolute; left: {{f}}; top: 26px; width: 18px; height: 18px; border-radius: 999px; background: #ECEDF0; color: #0D0E11; font-size: 10px; line-height: 18px; text-align: center; font-weight: 700">⋈</span>
+          </sc-for>
+        </div>
+        <!-- A1 voix -->
+        <div style="height: 52px; position: relative; border-bottom: 1px solid #1A1D23">
+          <div style="position: absolute; left: 10px; top: 5px; width: 1060px; height: 42px; border-radius: 7px; background: #11302A; border: 1px solid #1F5A4C; display: flex; align-items: center; gap: 2px; padding: 0 6px; box-sizing: border-box; overflow: hidden">
+            <sc-for list="{{onde}}" as="h" hint-placeholder-count="80">
+              <span style="width: 3px; flex: none; height: {{h}}; border-radius: 2px; background: #4FD1A5"></span>
+            </sc-for>
+          </div>
+        </div>
+        <!-- A2 musique -->
+        <div style="height: 40px; position: relative">
+          <div style="position: absolute; left: 10px; top: 5px; width: 1180px; height: 30px; border-radius: 7px; background: #33220F; border: 1px solid #5E4219; color: #F3C27A; font-size: 11.5px; line-height: 28px; padding: 0 8px; box-sizing: border-box">♪  Musique calme · -18 dB</div>
+        </div>
+
+        <!-- tête de lecture -->
+        <div style="position: absolute; left: 330px; top: 0; bottom: 0; width: 2px; background: #FF5A5F">
+          <span style="position: absolute; top: 0; left: -6px; width: 14px; height: 14px; border-radius: 3px 3px 7px 7px; background: #FF5A5F"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = {
+      lib: 'medias', sous: 0, onglet: 'video', outil: 'sel', lecture: false, panneau: 'reglages', saisie: '',
+      messages: [
+        { qui: 'moi', texte: 'coupe les blancs de la prise 2 mais garde les respirations' },
+        { qui: 'ia', texte: '3 blancs trouvés (7 s en tout), en rouge sur la timeline. Je coupe ?', boutons: ['Couper', 'Voir d’abord'] },
+        { qui: 'moi', texte: 'oui, et mets le titre en jaune' },
+        { qui: 'ia', texte: 'Fait : 3 coupes, titre « L’inflation, c’est quoi ? » en jaune.', boutons: ['Annuler'] }
+      ]
+    };
+  }
+  renderVals() {
+    const s = this.state;
+    const envoyer = (t) => {
+      const texte = String(t || s.saisie).trim(); if (!texte) return;
+      this.setState({ saisie: '', messages: s.messages.concat([{ qui: 'moi', texte }, { qui: 'ia', texte: 'Compris, je m’en occupe. (Maquette : la réponse est simulée.)' }]).slice(-6) });
+    };
+    const chat = {
+      panneaux: [['reglages', 'Réglages du clip'], ['chat', 'Assistant']].map(([id, nom]) => ({ nom, on: id === s.panneau ? 'true' : 'false', fg: id === s.panneau ? '#ECEDF0' : '#A0A6B2', trait: id === s.panneau ? '#5B78FF' : 'transparent', pick: () => this.setState({ panneau: id }) })),
+      isChat: s.panneau === 'chat', isReglages: s.panneau !== 'chat',
+      ouvrirChat: () => this.setState({ panneau: 'chat' }),
+      messages: s.messages.map(m => ({ texte: m.texte, align: m.qui === 'moi' ? 'flex-end' : 'flex-start', bg: m.qui === 'moi' ? '#2C3A7A' : '#1F232B', rayon: m.qui === 'moi' ? '14px 14px 4px 14px' : '14px 14px 14px 4px', aBoutons: !!(m.boutons && m.boutons.length), boutons: m.boutons || [] })),
+      saisie: s.saisie,
+      taper: (e) => this.setState({ saisie: e.target.value }),
+      touche: (e) => { if (e.key === 'Enter') envoyer(); },
+      envoyer: () => envoyer()
+    };
+    const CATS = [
+      { id: 'medias', nom: 'Médias', icone: 'M3 6h18v12H3z M10 9l5 3-5 3z' },
+      { id: 'texte', nom: 'Texte', icone: 'M5 5h14 M12 5v14 M9 19h6' },
+      { id: 'audio', nom: 'Audio', icone: 'M9 18V5l12-2v13 M9 18a3 3 0 11-6 0 3 3 0 016 0z M21 16a3 3 0 11-6 0 3 3 0 016 0z' },
+      { id: 'effets', nom: 'Effets', icone: 'M4 20L16 8 M14 6l4 4 M18 2v3 M20 4h-3 M7 3v2 M8 4H6' },
+      { id: 'packs', nom: 'Packs', icone: 'M3 8l9-5 9 5v8l-9 5-9-5z M3 8l9 5 9-5 M12 13v8' },
+      { id: 'outils', nom: 'Outils', icone: 'M14 6a4 4 0 00-5 5L3 17l4 4 6-6a4 4 0 005-5l-3 3-3-3z' }
+    ];
+    const SOUS = { audio: ['Voix', 'Sons', 'Musique'], effets: ['Effets', 'Transitions', 'Calques'] };
+    const TITRES = { medias: 'Médias du projet', texte: 'Titres et textes', audio: 'Audio', effets: 'Effets', packs: 'Packs de montage', outils: 'Outils intelligents' };
+    const sous = (SOUS[s.lib] || []).map((nom, i) => ({ nom, bord: i === s.sous ? '#5B78FF' : '#2A2E38', bg: i === s.sous ? '#1D2647' : 'transparent', fg: i === s.sous ? '#ECEDF0' : '#A0A6B2', pick: () => this.setState({ sous: i }) }));
+    const AUDIO = [
+      [['Ma voix · épisode 12', 'Doublage · 14 répliques', '08:31'], ['Voix Piper · Pico', 'Voix de synthèse', '—'], ['Ajouter une voix off', 'Écrire un texte, la voix le lit', '']],
+      [['Passage léger', 'Transition', '0:01'], ['Impact sec', 'Bruitage', '0:01'], ['Montée 3 s', 'Tension', '0:03'], ['Jingle positif', 'Interface', '0:02'], ['Braam de cinéma', 'Impact', '0:04']],
+      [['Calme et confiant', 'Musique libre de droits', '2:48'], ['Économie lo-fi', 'Musique libre de droits', '3:12'], ['Énergie matin', 'Musique libre de droits', '2:05'], ['Suspense doux', 'Musique libre de droits', '2:30']]
+    ];
+    const EFFETS = [
+      [['Netteté', '#2B3550', '#3A4A72'], ['Look ciné', '#3A2A1E', '#5E3D24'], ['Noir et blanc', '#2A2A2A', '#5A5A5A'], ['Zoom lent', '#1E3340', '#2C5066'], ['Flou d’arrière-plan', '#22303D', '#33465A'], ['Stabiliser', '#2B2B40', '#40406A']],
+      [['Fondu', '#2B3550', '#11141B'], ['Glissé doux', '#2B3550', '#4C3D86'], ['Fondu au noir', '#2B3550', '#000000'], ['Iris', '#3A2A1E', '#2B3550'], ['Glitch', '#4C3D86', '#11302A'], ['Diagonale', '#22303D', '#5E3D24']],
+      [['Breaking news', '#5A1A1A', '#2B3550'], ['Bandeau défilant', '#3A2E10', '#22303D'], ['Logo QuenTools', '#1D2647', '#11141B'], ['Cadre arrondi', '#2B2B40', '#1E3340'], ['Flèche animée', '#33220F', '#22303D'], ['Bulle caméra', '#11302A', '#2B3550']]
+    ];
+    const ONGLETS = [{ id: 'video', nom: 'Image' }, { id: 'son', nom: 'Son' }, { id: 'vitesse', nom: 'Vitesse' }, { id: 'couleur', nom: 'Couleur' }];
+    const REG = {
+      video: { conseil: 'Ce clip est un peu sombre.', action: 'Éclaircir', r: [['Zoom', '100 %', 0], ['Position horizontale', 'Centre', 50], ['Opacité', '100 %', 100], ['Arrondi des coins', '0 px', 0]], puces: ['Remplir', 'Ajuster', 'Recadrer'], titrePuces: 'Cadrage', choisie: 0 },
+      son: { conseil: '3 blancs de plus de 2 s dans ce clip.', action: 'Couper', r: [['Volume', '100 %', 70], ['Fondu d’entrée', '0,0 s', 0], ['Fondu de sortie', '0,4 s', 20], ['Réduction du bruit', 'Douce', 35]], puces: ['Voix', 'Musique', 'Muet'], titrePuces: 'Rôle du son', choisie: 0 },
+      vitesse: { conseil: 'Passage lent repéré de 0:12 à 0:18.', action: 'Accélérer', r: [['Début du clip', '0:00', 0], ['Fin du clip', '0:42', 100]], puces: ['0,5×', '1×', '1,25×', '1,5×', '2×', '4×'], titrePuces: 'Vitesse', choisie: 1 },
+      couleur: { conseil: 'Look conseillé pour la finance : « Net et froid ».', action: 'Appliquer', r: [['Luminosité', '+0', 50], ['Contraste', '+8', 58], ['Saturation', '-4', 46], ['Température', 'Neutre', 50]], puces: ['Aucun', 'Ciné', 'Net et froid', 'Chaud', 'Vintage', 'N et B'], titrePuces: 'Look', choisie: 2 }
+    };
+    const reg = REG[s.onglet];
+    const OUTILS_TL = [
+      { id: 'sel', nom: 'Sélection (A)', icone: 'M6 3l13 9-6 1.5L10 20z' },
+      { id: 'lame', nom: 'Lame (B)', icone: 'M4 20L15 9 M13 5l6 6 M15 3l6 6-4 4-6-6z' },
+      { id: 'aimant', nom: 'Magnétisme (N)', icone: 'M6 3v8a6 6 0 0012 0V3 M6 7h4 M14 7h4' }
+    ];
+    const lib = s.lib;
+    const onde = [];
+    for (let i = 0; i < 210; i++) { const v = Math.abs(Math.sin(i * 0.37) * 0.6 + Math.sin(i * 1.3) * 0.3 + Math.sin(i * 0.11) * 0.25); onde.push(Math.max(3, Math.round(v * 30)) + 'px'); }
+    const CLIPS = [['intro-pico.mp4', 10, 200, '#2B3550'], ['prise-camera-02.mp4', 214, 250, '#2D3D63'], ['graphique.mp4', 468, 170, '#33465A'], ['prise-camera-03.mp4', 642, 270, '#2D3D63'], ['fin-abonne.mp4', 916, 180, '#3A2A1E']];
+    return {
+      ...chat,
+      cats: CATS.map(c => ({ ...c, on: c.id === lib ? 'true' : 'false', bg: c.id === lib ? '#22252D' : 'transparent', fg: c.id === lib ? '#ECEDF0' : '#A0A6B2', pick: () => this.setState({ lib: c.id, sous: 0 }) })),
+      titreLib: TITRES[lib], sous, aSous: sous.length > 0,
+      isMedias: lib === 'medias', isTexte: lib === 'texte', isAudio: lib === 'audio', isEffets: lib === 'effets', isPacks: lib === 'packs', isOutils: lib === 'outils',
+      medias: [['intro-pico.mp4', '0:10', '#2B3550'], ['prise-camera-02.mp4', '0:42', '#2D3D63'], ['prise-camera-03.mp4', '1:05', '#2D3D63'], ['graphique.mp4', '0:08', '#33465A'], ['graphique-prix.png', 'Photo', '#2A2147'], ['fin-abonne.mp4', '0:06', '#3A2A1E']].map(([nom, duree, fond]) => ({ nom, duree, fond })),
+      titres: [['Titre simple', 'Aa', '#ECEDF0'], ['Bandeau bas', '▬ Aa', '#8FA3FF'], ['Breaking news', 'URGENT', '#FF8A8A'], ['Chiffre clé', '2,1 %', '#F2B92B'], ['Chapitre', '01 ·', '#6EE7B7'], ['Générique', '≡', '#C3A4FF']].map(([nom, apercu, couleur]) => ({ nom, apercu, couleur })),
+      audio: (AUDIO[s.sous] || AUDIO[0]).map(([nom, info, duree]) => ({ nom, info, duree })),
+      effets: (EFFETS[s.sous] || EFFETS[0]).map(([nom, a, b]) => ({ nom, a, b })),
+      packs: [['Tech et finance', 'Transitions nettes, chiffres clés, look froid', '#1D2647'], ['Vlog', 'Coupes rythmées, sons légers, look chaud', '#3A2A1E'], ['Podcast', 'Visualiseur sonore, chapitres, bandeaux', '#11302A'], ['Événement', 'Fondus lents, musique émotion, titres élégants', '#2A2147']].map(([nom, contenu, fond]) => ({ nom, contenu, fond })),
+      outils: [['Couper les blancs', 'Aperçu en rouge avant de couper', 'M6 9a3 3 0 100-6 3 3 0 000 6z M6 21a3 3 0 100-6 3 3 0 000 6z M8.5 7.5L20 19 M8.5 16.5L20 5'], ['Sous-titres automatiques', 'Français, italien, anglais…', 'M4 6h16v12H4z M7 14h4 M13 14h4 M7 11h10'], ['Égaliser le volume', 'Tout le montage au même niveau', 'M3 12h2 M7 8v8 M11 5v14 M15 9v6 M19 11v2'], ['Chapitres', 'Calés sur les changements de plan', 'M5 21V4 M5 4h11l-2 4 2 4H5'], ['Extraits TikTok', 'Les meilleurs moments en 9:16', 'M7 3h10v18H7z M11 18h2'], ['Analyser la vidéo', 'Sujet, idées fortes, pack conseillé', 'M11 18a7 7 0 100-14 7 7 0 000 14z M21 21l-5-5'], ['Miniature', 'Image de couverture YouTube', 'M3 5h18v14H3z M3 16l5-5 4 4 3-3 6 6']].map(([nom, info, icone]) => ({ nom, info, icone })),
+      onglets: ONGLETS.map(o => ({ ...o, on: o.id === s.onglet ? 'true' : 'false', bg: o.id === s.onglet ? '#2A2E38' : 'transparent', fg: o.id === s.onglet ? '#ECEDF0' : '#A0A6B2', pick: () => this.setState({ onglet: o.id }) })),
+      conseil: reg.conseil, conseilAction: reg.action,
+      reglages: reg.r.map(([nom, valeur, pos]) => ({ nom, valeur, pos })),
+      aPuces: true, titrePuces: reg.titrePuces,
+      puces: reg.puces.map((nom, i) => ({ nom, bord: i === reg.choisie ? '#5B78FF' : '#2A2E38', bg: i === reg.choisie ? '#1D2647' : '#1A1D23' })),
+      outilsTl: OUTILS_TL.map(t => ({ ...t, on: t.id === s.outil ? 'true' : 'false', bg: t.id === s.outil ? '#2A2E38' : 'transparent', fg: t.id === s.outil ? '#ECEDF0' : '#A0A6B2', pick: () => this.setState({ outil: t.id }) })),
+      actionsTl: [['Couper', 'M6 9a3 3 0 100-6 3 3 0 000 6z M6 21a3 3 0 100-6 3 3 0 000 6z M8.5 7.5L20 19 M8.5 16.5L20 5'], ['Dupliquer', 'M8 8h12v12H8z M4 16V4h12'], ['Détacher le son', 'M3 9h4l5-4v14l-5-4H3z M16 8l5 8 M21 8l-5 8'], ['Repère', 'M5 21V4 M5 4h11l-2 4 2 4H5'], ['Supprimer', 'M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13']].map(([nom, icone]) => ({ nom, icone })),
+      pistes: [['Titres', '#F2B92B', '34px'], ['Incrustations', '#A78BFA', '40px'], ['Vidéo', '#5B78FF', '70px'], ['Voix', '#4FD1A5', '52px'], ['Musique', '#F3A64A', '40px']].map(([nom, couleur, h]) => ({ nom, couleur, h })),
+      graduations: ['0:00', '0:05', '0:10', '0:15', '0:20', '0:25', '0:30', '0:35', '0:40', '0:45', '0:50', '0:55', '1:00', '1:05'],
+      clips: CLIPS.map(([nom, x, w, fond], i) => ({ nom, x: x + 'px', w: w + 'px', fond, bord: i === 1 ? '#F2B92B' : 'transparent' })),
+      fondus: ['203px', '633px'],
+      onde,
+      enLecture: s.lecture, enPause: !s.lecture, libLecture: s.lecture ? 'Pause' : 'Lire',
+      basculer: () => this.setState({ lecture: !s.lecture })
+    };
+  }
+}
+</script>
+</body>
+</html>

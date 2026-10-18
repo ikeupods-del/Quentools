@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>QuentMovie · Exporter et publier</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0E11}
+a{color:#8FA3FF;text-decoration:none}a:hover{color:#B4C2FF}
+.seg:hover{color:#ECEDF0}
+.dest:hover{border-color:#3A4050}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #0D0E11; color: #ECEDF0; font-family: 'Geist', -apple-system, system-ui, sans-serif; font-size: 13px; display: flex; flex-direction: column; overflow: hidden">
+
+  <header style="height: 56px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 16px 0 20px; border-bottom: 1px solid #22252D; background: #111317">
+    <div style="display: flex; align-items: center; gap: 10px; width: 420px">
+      <div style="width: 28px; height: 28px; border-radius: 8px; background: #3F5EF0; display: flex; align-items: center; justify-content: center">
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z" fill="#fff"/></svg>
+      </div>
+      <span style="color: #8B919C">/</span>
+      <span style="font-size: 14px; font-weight: 600; padding: 6px 8px">QuentInvest · L’inflation</span>
+    </div>
+    <nav aria-label="Étapes" style="flex: 1; display: flex; justify-content: center">
+      <div style="display: flex; gap: 4px; padding: 4px; background: #181A20; border: 1px solid #22252D; border-radius: 12px">
+        <a class="seg" href="Main.dc.html" style="padding: 7px 18px; border-radius: 8px; color: #A0A6B2; font-size: 13px; font-weight: 500">Créer</a>
+        <a class="seg" href="Montage.dc.html" style="padding: 7px 18px; border-radius: 8px; color: #A0A6B2; font-size: 13px; font-weight: 500">Monter</a>
+        <a href="Publier.dc.html" style="padding: 7px 18px; border-radius: 8px; background: #2A2E38; color: #ECEDF0; font-size: 13px; font-weight: 600">Publier</a>
+      </div>
+    </nav>
+    <div style="width: 420px"></div>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex; gap: 40px; padding: 36px 64px; box-sizing: border-box">
+
+    <!-- Aperçu -->
+    <section style="width: 360px; flex: none; display: flex; flex-direction: column; gap: 16px">
+      <div style="width: 360px; height: 640px; max-height: 560px; border-radius: 14px; background: #1E2A44; position: relative; overflow: hidden">
+        <div style="position: absolute; left: 50%; top: 120px; width: 150px; height: 150px; margin-left: -75px; border-radius: 999px; background: #2D3D63"></div>
+        <div style="position: absolute; left: 50%; top: 262px; width: 240px; height: 300px; margin-left: -120px; border-radius: 120px 120px 0 0; background: #2D3D63"></div>
+        <div style="position: absolute; left: 20px; right: 20px; bottom: 110px; text-align: center; font-size: 26px; font-weight: 800; line-height: 1.2; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.6)">L’inflation, c’est <span style="color: #F2B92B">quoi</span> ?</div>
+        <button aria-label="Lire l’aperçu" style="position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 999px; border: 0; background: rgba(255,255,255,0.92); color: #0D0E11; display: flex; align-items: center; justify-content: center; cursor: pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l13 8-13 8z" fill="currentColor"/></svg>
+        </button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <div style="padding: 10px 12px; border-radius: 10px; background: #15171C; border: 1px solid #22252D; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 11px; color: #8B919C">Durée</span><span style="font-family: 'Geist Mono', monospace; font-size: 13px">01:02</span></div>
+        <div style="padding: 10px 12px; border-radius: 10px; background: #15171C; border: 1px solid #22252D; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 11px; color: #8B919C">Format</span><span style="font-family: 'Geist Mono', monospace; font-size: 13px">9:16</span></div>
+        <div style="padding: 10px 12px; border-radius: 10px; background: #15171C; border: 1px solid #22252D; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 11px; color: #8B919C">Taille</span><span style="font-family: 'Geist Mono', monospace; font-size: 13px">≈ {{taille}}</span></div>
+      </div>
+    </section>
+
+    <!-- Réglages -->
+    <section style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 26px">
+      <div>
+        <h1 style="margin: 0 0 6px; font-size: 26px; font-weight: 600; letter-spacing: -0.02em">Exporter et publier</h1>
+        <p style="margin: 0; color: #A0A6B2; font-size: 14px">Choisis la qualité et où envoyer la vidéo. Rien n’est mis en ligne sans ton clic.</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 12px; font-weight: 600; color: #A0A6B2; text-transform: uppercase; letter-spacing: 0.08em">Qualité</h2>
+        <div style="display: flex; gap: 8px">
+          <sc-for list="{{qualites}}" as="q" hint-placeholder-count="4">
+            <button onClick="{{q.pick}}" aria-pressed="{{q.on}}" style="padding: 9px 16px; border-radius: 10px; border: 1px solid {{q.bord}}; background: {{q.bg}}; color: #ECEDF0; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 2px">{{q.nom}}<span style="font-size: 11px; font-weight: 400; color: #A0A6B2">{{q.info}}</span></button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 12px; font-weight: 600; color: #A0A6B2; text-transform: uppercase; letter-spacing: 0.08em">Où l’envoyer</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <sc-for list="{{destinations}}" as="d" hint-placeholder-count="4">
+            <button class="dest" onClick="{{d.pick}}" aria-pressed="{{d.on}}" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px; border: 1px solid {{d.bord}}; background: {{d.bg}}; color: #ECEDF0; font: inherit; text-align: left; cursor: pointer">
+              <span style="width: 40px; height: 40px; flex: none; border-radius: 11px; background: {{d.fond}}; display: flex; align-items: center; justify-content: center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{d.couleur}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{d.icone}}"/></svg>
+              </span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 3px">
+                <span style="font-size: 14px; font-weight: 600">{{d.nom}}</span>
+                <span style="font-size: 12px; color: #A0A6B2">{{d.info}}</span>
+              </span>
+              <span style="width: 22px; height: 22px; border-radius: 7px; border: 1.5px solid {{d.caseBord}}; background: {{d.caseFond}}; display: flex; align-items: center; justify-content: center; flex: none">
+                <sc-if value="{{d.actif}}" hint-placeholder-val="{{ true }}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
+                </sc-if>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{youtube}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 14px; background: #15171C; border: 1px solid #22252D">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <h2 style="margin: 0; font-size: 14px; font-weight: 600">Textes de publication</h2>
+            <button style="height: 28px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 8px; border: 1px solid #2A3866; background: #1A2340; color: #C9D2FF; font: inherit; font-size: 12px; cursor: pointer">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8FA3FF" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></svg>Rédiger depuis la vidéo
+            </button>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #A0A6B2">Titre
+            <input value="L’inflation, c’est quoi ? Expliqué en 1 minute" style="height: 38px; padding: 0 12px; border-radius: 9px; border: 1px solid #2A2E38; background: #0F1115; color: #ECEDF0; font: inherit; font-size: 13.5px">
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #A0A6B2">Description
+            <textarea rows="3" style="padding: 10px 12px; border-radius: 9px; border: 1px solid #2A2E38; background: #0F1115; color: #ECEDF0; font: inherit; font-size: 13px; line-height: 1.5; resize: none">Pourquoi les prix montent, et ce que ça change pour ton épargne.
+0:00 Introduction · 0:14 Les prix · 0:38 Ton épargne</textarea>
+          </label>
+          <div style="display: flex; gap: 8px; align-items: center">
+            <span style="font-size: 12px; color: #A0A6B2; margin-right: 4px">YouTube :</span>
+            <sc-for list="{{visibilites}}" as="v" hint-placeholder-count="3">
+              <button onClick="{{v.pick}}" aria-pressed="{{v.on}}" style="padding: 6px 12px; border-radius: 999px; border: 1px solid {{v.bord}}; background: {{v.bg}}; color: #ECEDF0; font: inherit; font-size: 12px; cursor: pointer">{{v.nom}}</button>
+            </sc-for>
+            <sc-if value="{{programme}}" hint-placeholder-val="{{ false }}">
+              <span style="margin-left: 6px; padding: 6px 10px; border-radius: 8px; border: 1px solid #2A2E38; background: #0F1115; font-family: 'Geist Mono', monospace; font-size: 12px">mar. 21 oct. · 18:00</span>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="margin-top: auto; display: flex; align-items: center; gap: 14px">
+        <button style="height: 48px; padding: 0 26px; border-radius: 12px; border: 0; background: #3F5EF0; color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3 M7 8l5-5 5 5 M5 12v8h14v-8"/></svg>{{bouton}}
+        </button>
+        <span style="font-size: 12.5px; color: #8B919C">{{resume}}</span>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { q: 1, dest: { mac: true, youtube: true, tiktok: true, airdrop: false }, vis: 2 }; }
+  renderVals() {
+    const s = this.state;
+    const Q = [['720p', 'Rapide, léger', '24 Mo'], ['1080p', 'Conseillé', '48 Mo'], ['4K', 'Qualité maximale', '160 Mo'], ['Son seul', 'MP3 du montage', '1 Mo']];
+    const D = [
+      { id: 'mac', nom: 'Enregistrer sur le Mac', info: 'Dossier Films › QuentMovie › exports', fond: '#1D2647', couleur: '#8FA3FF', icone: 'M3 5h18v11H3z M8 20h8 M12 16v4' },
+      { id: 'youtube', nom: 'YouTube', info: 'Privée, non répertoriée ou programmée', fond: '#3A1F24', couleur: '#FF8A8A', icone: 'M3 7a3 3 0 013-3h12a3 3 0 013 3v10a3 3 0 01-3 3H6a3 3 0 01-3-3z M10 9l5 3-5 3z' },
+      { id: 'tiktok', nom: 'TikTok', info: 'Dans tes brouillons, tu publies depuis l’app', fond: '#14303A', couleur: '#67D3F0', icone: 'M14 3v11a4 4 0 11-4-4 M14 3c0 3 2 5 5 5' },
+      { id: 'airdrop', nom: 'AirDrop', info: 'Vers ton iPhone', fond: '#173329', couleur: '#6EE7B7', icone: 'M12 14a2 2 0 100-4 2 2 0 000 4z M8 16a6 6 0 118 0 M5 19a10 10 0 1114 0' }
+    ];
+    const VIS = ['Privée', 'Non répertoriée', 'Programmée'];
+    const choisies = D.filter(d => s.dest[d.id]).map(d => d.nom);
+    return {
+      taille: Q[s.q][2],
+      qualites: Q.map(([nom, info], i) => ({ nom, info, on: i === s.q ? 'true' : 'false', bord: i === s.q ? '#5B78FF' : '#2A2E38', bg: i === s.q ? '#1D2647' : '#15171C', pick: () => this.setState({ q: i }) })),
+      destinations: D.map(d => { const on = !!s.dest[d.id]; return { ...d, actif: on, on: on ? 'true' : 'false', bord: on ? '#5B78FF' : '#22252D', bg: on ? '#171C2E' : '#15171C', caseBord: on ? '#5B78FF' : '#3A4050', caseFond: on ? '#3F5EF0' : 'transparent', pick: () => this.setState({ dest: { ...s.dest, [d.id]: !on } }) }; }),
+      youtube: !!s.dest.youtube,
+      visibilites: VIS.map((nom, i) => ({ nom, on: i === s.vis ? 'true' : 'false', bord: i === s.vis ? '#5B78FF' : '#2A2E38', bg: i === s.vis ? '#1D2647' : 'transparent', pick: () => this.setState({ vis: i }) })),
+      programme: s.vis === 2,
+      bouton: choisies.length > 1 || (choisies.length === 1 && !s.dest.mac) ? 'Exporter et publier' : 'Exporter',
+      resume: choisies.length ? 'Destinations : ' + choisies.join(', ') : 'Choisis au moins une destination'
+    };
+  }
+}
+</script>
+</body>
+</html>

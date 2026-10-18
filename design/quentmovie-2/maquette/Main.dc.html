@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>QuentMovie · Accueil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0E11}
+a{color:#8FA3FF;text-decoration:none}a:hover{color:#B4C2FF}
+.carte:hover{border-color:#3A4050;background:#1C1F26}
+.proj:hover{border-color:#3A4050}
+.seg:hover{color:#ECEDF0}
+.ib:hover{background:#1C1F26;color:#ECEDF0}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #0D0E11; color: #ECEDF0; font-family: 'Geist', -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+  <!-- Barre du haut -->
+  <header style="height: 56px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 16px 0 20px; border-bottom: 1px solid #22252D; background: #111317">
+    <div style="display: flex; align-items: center; gap: 10px; width: 300px">
+      <div style="width: 28px; height: 28px; border-radius: 8px; background: #3F5EF0; display: flex; align-items: center; justify-content: center">
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z" fill="#fff"/></svg>
+      </div>
+      <span style="font-weight: 600; font-size: 15px; letter-spacing: -0.01em">QuentMovie</span>
+    </div>
+    <nav aria-label="Étapes" style="flex: 1; display: flex; justify-content: center">
+      <div style="display: flex; gap: 4px; padding: 4px; background: #181A20; border: 1px solid #22252D; border-radius: 12px">
+        <a href="Main.dc.html" style="padding: 7px 18px; border-radius: 8px; background: #2A2E38; color: #ECEDF0; font-size: 13px; font-weight: 600">Créer</a>
+        <a class="seg" href="Montage.dc.html" style="padding: 7px 18px; border-radius: 8px; color: #A0A6B2; font-size: 13px; font-weight: 500">Monter</a>
+        <a class="seg" href="Publier.dc.html" style="padding: 7px 18px; border-radius: 8px; color: #A0A6B2; font-size: 13px; font-weight: 500">Publier</a>
+      </div>
+    </nav>
+    <div style="width: 300px; display: flex; justify-content: flex-end; gap: 8px; align-items: center">
+      <button class="ib" aria-label="Réglages" style="width: 36px; height: 36px; border-radius: 9px; border: 0; background: transparent; color: #A0A6B2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 00-2-1.2L14 3h-4l-.5 2.6a7 7 0 00-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 000 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 002 1.2L10 21h4l.5-2.6a7 7 0 002-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></svg>
+      </button>
+      <button class="ib" aria-label="Raccourcis clavier" style="width: 36px; height: 36px; border-radius: 9px; border: 0; background: transparent; color: #A0A6B2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18v12H3z M7 10h1 M11 10h1 M15 10h1 M7 14h10"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main style="flex: 1; overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 56px 80px 0">
+    <div style="width: 100%; max-width: 1120px; display: flex; flex-direction: column; gap: 40px">
+
+      <!-- Assistant -->
+      <section style="display: flex; flex-direction: column; align-items: center; gap: 20px">
+        <h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -0.025em">Qu’est-ce qu’on crée aujourd’hui ?</h1>
+        <label for="demande" style="width: 720px; height: 56px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 0 8px 0 18px; background: #15171C; border: 1px solid #2E3340; border-radius: 16px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8FA3FF" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z M19 15l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg>
+          <input id="demande" placeholder="Décris ta vidéo : « un épisode sur l’inflation, format TikTok, avec ma voix »" style="flex: 1; background: transparent; border: 0; outline: none; color: #ECEDF0; font: inherit; font-size: 15px">
+          <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #A0A6B2; padding: 4px 8px; border: 1px solid #2E3340; border-radius: 6px">⌘K</span>
+          <a href="Montage.dc.html" style="height: 40px; padding: 0 18px; border-radius: 11px; background: #3F5EF0; color: #fff; font-size: 14px; font-weight: 600; display: flex; align-items: center">Lancer</a>
+        </label>
+        <div style="display: flex; gap: 8px">
+          <sc-for list="{{idees}}" as="i" hint-placeholder-count="4">
+            <button style="padding: 6px 12px; border-radius: 999px; border: 1px solid #2A2E38; background: transparent; color: #B8BDC7; font: inherit; font-size: 12.5px; cursor: pointer">{{i}}</button>
+          </sc-for>
+        </div>
+      </section>
+
+      <!-- Commencer -->
+      <section style="display: flex; flex-direction: column; gap: 14px">
+        <h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #A0A6B2; text-transform: uppercase; letter-spacing: 0.08em">Commencer</h2>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+          <sc-for list="{{actions}}" as="a" hint-placeholder-count="6">
+            <a class="carte" href="{{a.lien}}" style="display: flex; gap: 16px; align-items: flex-start; padding: 20px; border-radius: 16px; background: #15171C; border: 1px solid #22252D; color: #ECEDF0">
+              <span style="width: 44px; height: 44px; flex: none; border-radius: 12px; background: {{a.fond}}; display: flex; align-items: center; justify-content: center">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{a.couleur}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.icone}}"/></svg>
+              </span>
+              <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+                <span style="font-size: 15px; font-weight: 600">{{a.titre}}</span>
+                <span style="font-size: 13px; color: #A0A6B2; line-height: 1.45">{{a.texte}}</span>
+              </span>
+              <span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 11px; color: #8B919C">{{a.touche}}</span>
+            </a>
+          </sc-for>
+        </div>
+      </section>
+
+      <!-- Projets récents -->
+      <section style="display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #A0A6B2; text-transform: uppercase; letter-spacing: 0.08em">Reprendre un projet</h2>
+          <a href="Montage.dc.html" style="font-size: 13px">Tous les projets</a>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+          <sc-for list="{{projets}}" as="p" hint-placeholder-count="4">
+            <a class="proj" href="Montage.dc.html" style="display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: #15171C; border: 1px solid #22252D; color: #ECEDF0">
+              <span style="height: 128px; background: {{p.fond}}; position: relative; display: flex; align-items: flex-end; padding: 10px; box-sizing: border-box">
+                <span style="font-size: 11px; font-weight: 600; padding: 3px 7px; border-radius: 6px; background: rgba(0,0,0,0.6); color: #fff">{{p.format}}</span>
+                <span style="margin-left: auto; font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 7px; border-radius: 6px; background: rgba(0,0,0,0.6); color: #fff">{{p.duree}}</span>
+              </span>
+              <span style="padding: 12px 14px; display: flex; flex-direction: column; gap: 3px">
+                <span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.nom}}</span>
+                <span style="font-size: 12px; color: #A0A6B2">{{p.date}}</span>
+              </span>
+            </a>
+          </sc-for>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      idees: ['Couper les blancs de ma prise', 'Sous-titres en italien', 'Extraits TikTok de ma vidéo', 'Monter avec le pack Finance'],
+      actions: [
+        { titre: 'Importer des vidéos', texte: 'Glisse tes fichiers ici : vidéos, photos, sons. Tous les formats.', touche: '⌘I', fond: '#1D2647', couleur: '#8FA3FF', icone: 'M12 3v12 M7 10l5 5 5-5 M4 17v4h16v-4' },
+        { titre: 'Me filmer', texte: 'Caméra, micro et prompteur, avec fond virtuel et animations en direct.', touche: '⇧⌘R', fond: '#3A1F24', couleur: '#FF8A8A', icone: 'M3 7h12v10H3z M15 10l6-3v10l-6-3z' },
+        { titre: 'Générer une vidéo', texte: 'Un sujet, et QuentMovie écrit, illustre et fait la voix off.', touche: '⇧⌘G', fond: '#2D2147', couleur: '#C3A4FF', icone: 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z M19 15l1 2 2 1-2 1-1 2-1-2-2-1 2-1z' },
+        { titre: 'Doublage', texte: 'Enregistre ta voix réplique par réplique, ou double une vidéo.', touche: '⇧⌘D', fond: '#173329', couleur: '#6EE7B7', icone: 'M12 3a3 3 0 00-3 3v6a3 3 0 006 0V6a3 3 0 00-3-3z M5 11a7 7 0 0014 0 M12 18v3' },
+        { titre: 'Podcast', texte: 'Plusieurs micros, niveaux égalisés, chapitres et extraits automatiques.', touche: '', fond: '#3A2A14', couleur: '#FBBF5B', icone: 'M3 12h2 M7 8v8 M11 5v14 M15 9v6 M19 11v2' },
+        { titre: 'Épisode QuentInvest', texte: 'Un sujet, et Pico présente : écrans, décors, animations, sons et TikTok.', touche: '', fond: '#123026', couleur: '#34D399', icone: 'M6 3h8l4 4v14H6z M14 3v4h4 M9 12h6 M9 16h6' }
+      ].map(a => ({ ...a, lien: a.titre === 'Épisode QuentInvest' ? 'Studio.dc.html' : 'Montage.dc.html' })),
+      projets: [
+        { nom: 'QuentInvest · L’inflation', date: 'Modifié il y a 2 h', format: '16:9', duree: '08:42', fond: '#1E2A44' },
+        { nom: 'QuentInvest · L’inflation (TikTok)', date: 'Modifié hier', format: '9:16', duree: '01:02', fond: '#2B2140' },
+        { nom: 'Vlog du dimanche', date: 'Modifié le 16 oct.', format: '16:9', duree: '12:15', fond: '#203329' },
+        { nom: 'Podcast épisode 3', date: 'Modifié le 14 oct.', format: '1:1', duree: '41:08', fond: '#3A2B1A' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

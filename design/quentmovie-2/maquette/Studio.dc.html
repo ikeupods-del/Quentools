@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>QuentMovie · Studio QuentInvest</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Geist+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0E11}
+a{color:#8FA3FF;text-decoration:none}a:hover{color:#B4C2FF}
+.seg:hover{color:#ECEDF0}
+.ib:hover{background:#22252D;color:#ECEDF0}
+.rep:hover{border-color:#3A4050}
+.mot{cursor:pointer}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #0D0E11; color: #ECEDF0; font-family: 'Geist', -apple-system, system-ui, sans-serif; font-size: 13px; display: flex; flex-direction: column; overflow: hidden">
+
+  <header style="height: 56px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 16px 0 20px; border-bottom: 1px solid #22252D; background: #111317">
+    <div style="display: flex; align-items: center; gap: 10px; width: 420px">
+      <div style="width: 28px; height: 28px; border-radius: 8px; background: #3F5EF0; display: flex; align-items: center; justify-content: center">
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z" fill="#fff"/></svg>
+      </div>
+      <span style="color: #8B919C">/</span>
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; padding: 6px 8px">
+        <span style="width: 10px; height: 10px; border-radius: 3px; background: #10B981; transform: rotate(45deg)"></span>QuentInvest · Épisode 12 · L’inflation
+      </span>
+    </div>
+    <nav aria-label="Étapes" style="flex: 1; display: flex; justify-content: center">
+      <div style="display: flex; gap: 4px; padding: 4px; background: #181A20; border: 1px solid #22252D; border-radius: 12px">
+        <a href="Main.dc.html" style="padding: 7px 18px; border-radius: 8px; background: #2A2E38; color: #ECEDF0; font-size: 13px; font-weight: 600">Créer</a>
+        <a class="seg" href="Montage.dc.html" style="padding: 7px 18px; border-radius: 8px; color: #A0A6B2; font-size: 13px; font-weight: 500">Monter</a>
+        <a class="seg" href="Publier.dc.html" style="padding: 7px 18px; border-radius: 8px; color: #A0A6B2; font-size: 13px; font-weight: 500">Publier</a>
+      </div>
+    </nav>
+    <div style="width: 420px; display: flex; justify-content: flex-end; gap: 8px">
+      <a href="Montage.dc.html" style="height: 36px; display: flex; align-items: center; padding: 0 14px; border-radius: 10px; border: 1px solid #2E3340; background: #15171C; color: #ECEDF0; font-size: 13px; font-weight: 500">Ouvrir dans le montage</a>
+      <a href="Publier.dc.html" style="height: 36px; display: flex; align-items: center; padding: 0 16px; border-radius: 10px; background: #3F5EF0; color: #fff; font-size: 13px; font-weight: 600">Valider et publier</a>
+    </div>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex">
+
+    <!-- Étapes -->
+    <aside aria-label="Étapes de l’épisode" style="width: 250px; flex: none; padding: 20px 16px; box-sizing: border-box; background: #111317; border-right: 1px solid #22252D; display: flex; flex-direction: column; gap: 22px">
+      <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+        <sc-for list="{{etapes}}" as="e" hint-placeholder-count="6">
+          <li style="display: flex; gap: 12px; padding: 9px 10px; border-radius: 10px; background: {{e.bg}}">
+            <span style="width: 24px; height: 24px; flex: none; border-radius: 999px; background: {{e.pastille}}; color: {{e.pastilleTexte}}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">{{e.signe}}</span>
+            <span style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 13px; font-weight: 600; color: {{e.couleur}}">{{e.nom}}</span>
+              <span style="font-size: 11.5px; color: #8B919C">{{e.info}}</span>
+            </span>
+          </li>
+        </sc-for>
+      </ol>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; padding-top: 18px; border-top: 1px solid #22252D">
+        <h2 style="margin: 0; font-size: 11.5px; font-weight: 600; color: #A0A6B2; text-transform: uppercase; letter-spacing: 0.08em">Réglages de la chaîne</h2>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; color: #B8BDC7">Voix</span>
+          <div style="display: flex; gap: 2px; padding: 3px; background: #0F1115; border-radius: 9px">
+            <sc-for list="{{voix}}" as="v" hint-placeholder-count="2">
+              <button onClick="{{v.pick}}" aria-pressed="{{v.on}}" style="flex: 1; height: 28px; border: 0; border-radius: 7px; background: {{v.bg}}; color: {{v.fg}}; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">{{v.nom}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px"><span style="color: #B8BDC7">Bruitages</span><span style="font-family: 'Geist Mono', monospace">−20 dB</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px"><span style="color: #B8BDC7">Musique</span><span style="font-family: 'Geist Mono', monospace">15 / 100</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px"><span style="color: #B8BDC7">Dictionnaire</span><span style="font-family: 'Geist Mono', monospace">2 014 mots</span></div>
+      </div>
+    </aside>
+
+    <!-- Épisode -->
+    <main style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 18px 22px; box-sizing: border-box">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="display: flex; gap: 2px; padding: 3px; background: #15171C; border: 1px solid #22252D; border-radius: 10px">
+          <sc-for list="{{versions}}" as="v" hint-placeholder-count="2">
+            <button onClick="{{v.pick}}" aria-pressed="{{v.on}}" style="height: 28px; padding: 0 14px; border: 0; border-radius: 7px; background: {{v.bg}}; color: {{v.fg}}; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">{{v.nom}}</button>
+          </sc-for>
+        </div>
+        <span style="font-size: 12px; color: #8B919C">{{infoVersion}}</span>
+        <span style="flex: 1"></span>
+        <span style="font-size: 12px; padding: 5px 10px; border-radius: 999px; background: #3A2E10; color: #F6D27A">3 points à relire</span>
+      </div>
+
+      <!-- lecteur : écran de l’épisode -->
+      <div style="display: flex; gap: 16px; align-items: stretch">
+        <div style="width: 560px; height: 315px; flex: none; border-radius: 12px; overflow: hidden; position: relative; background: #151311">
+          <div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: radial-gradient(500px 300px at 85% 95%, rgba(16,185,129,0.25), transparent 65%)"></div>
+          <div style="position: absolute; left: 28px; top: 24px; display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: #F4F2EE">
+            <span style="width: 11px; height: 11px; border-radius: 3px; background: #10B981; transform: rotate(45deg)"></span>QuentInvest
+          </div>
+          <div style="position: absolute; left: 28px; top: 70px; width: 320px; display: flex; flex-direction: column; gap: 12px">
+            <span style="font-size: 13px; font-weight: 700; color: #A8A196; text-transform: uppercase; letter-spacing: 0.08em">{{ecran}}</span>
+            <span style="font-size: 30px; font-weight: 800; line-height: 1.1; color: #F4F2EE">{{grand}}</span>
+            <span style="align-self: flex-start; padding: 8px 14px; border-radius: 12px; background: #FBBF24; color: #151311; font-size: 22px; font-weight: 800">{{chiffre}}</span>
+          </div>
+          <img src="{{picoImg}}" alt="Pico, expression : {{picoNom}}" style="position: absolute; right: 18px; bottom: 0; width: 200px; height: 250px; object-fit: contain">
+          <div style="position: absolute; left: 0; right: 0; bottom: 14px; text-align: center">
+            <span style="display: inline-block; max-width: 440px; padding: 6px 12px; border-radius: 8px; background: rgba(0,0,0,0.7); color: #fff; font-size: 13px; font-weight: 600; line-height: 1.35">{{sousTitre}}</span>
+          </div>
+        </div>
+
+        <!-- Pico : expressions -->
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 12px; background: #15171C; border: 1px solid #22252D">
+          <span style="font-size: 12.5px; font-weight: 600">Pico dans cette réplique</span>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+            <sc-for list="{{expressions}}" as="x" hint-placeholder-count="5">
+              <button onClick="{{x.pick}}" aria-pressed="{{x.on}}" style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 4px; border-radius: 10px; border: 1px solid {{x.bord}}; background: {{x.bg}}; color: #ECEDF0; font: inherit; font-size: 11px; cursor: pointer">
+                <img src="{{x.img}}" alt="" style="width: 44px; height: 55px; object-fit: contain">{{x.nom}}
+              </button>
+            </sc-for>
+          </div>
+          <span style="font-size: 12.5px; font-weight: 600; margin-top: 4px">Écran</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{ecrans}}" as="c" hint-placeholder-count="5">
+              <span style="padding: 4px 9px; border-radius: 999px; border: 1px solid {{c.bord}}; background: {{c.bg}}; font-size: 11.5px">{{c.nom}}</span>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <!-- répliques -->
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <h2 style="margin: 0; font-size: 14px; font-weight: 600">Répliques</h2>
+        <span style="font-size: 12px; color: #8B919C">Clique un mot souligné pour corriger sa prononciation</span>
+      </div>
+      <div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 6px">
+        <sc-for list="{{repliques}}" as="r" hint-placeholder-count="6">
+          <div class="rep" style="display: flex; flex-direction: column; gap: 8px; padding: 9px 12px; border-radius: 10px; border: 1px solid {{r.bord}}; background: {{r.bg}}">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <button onClick="{{r.pick}}" aria-label="Choisir la réplique {{r.num}}" style="width: 30px; height: 30px; flex: none; border-radius: 8px; border: 0; background: #22252D; color: #ECEDF0; font: inherit; font-family: 'Geist Mono', monospace; font-size: 11.5px; cursor: pointer">{{r.num}}</button>
+              <img src="{{r.img}}" alt="" style="width: 26px; height: 32px; object-fit: contain; flex: none">
+              <span style="flex: none; width: 72px; font-size: 11px; color: #A0A6B2">{{r.ecran}}</span>
+              <span style="flex: 1; min-width: 0; font-size: 13px; line-height: 1.45">
+                <sc-for list="{{r.morceaux}}" as="m" hint-placeholder-count="3"><span class="mot" onClick="{{m.pick}}" style="{{m.style}}">{{m.t}}</span></sc-for>
+              </span>
+              <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #8B919C">{{r.temps}}</span>
+              <button class="ib" aria-label="Écouter la réplique {{r.num}}" style="width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent; color: #A0A6B2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+                <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z" fill="currentColor"/></svg>
+              </button>
+              <button class="ib" aria-label="Refaire la voix de la réplique {{r.num}}" style="width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent; color: #A0A6B2; display: flex; align-items: center; justify-content: center; cursor: pointer">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0114-5l2 2 M20 4v5h-5 M20 12a8 8 0 01-14 5l-2-2 M4 20v-5h5"/></svg>
+              </button>
+            </div>
+            <sc-if value="{{r.prononcer}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; align-items: center; gap: 10px; margin-left: 40px; padding: 9px 12px; border-radius: 9px; background: #1F1A0E; border: 1px solid #5E4A17">
+                <span style="font-size: 12.5px">« <b>{{motChoisi}}</b> » doit se dire</span>
+                <input aria-label="Prononciation de {{motChoisi}}" value="{{dit}}" style="width: 120px; height: 30px; padding: 0 10px; border-radius: 7px; border: 1px solid #5E4A17; background: #0F1115; color: #F6D27A; font: inherit; font-size: 13px">
+                <button style="height: 30px; padding: 0 10px; border-radius: 7px; border: 0; background: #2A2E38; color: #ECEDF0; font: inherit; font-size: 12px; cursor: pointer">▶ Écouter</button>
+                <button style="height: 30px; padding: 0 12px; border-radius: 7px; border: 0; background: #FBBF24; color: #151311; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer">Ajouter au dictionnaire</button>
+                <span style="font-size: 11.5px; color: #A0A6B2">{{concernees}}</span>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </main>
+
+    <!-- Discussion avec l’IA -->
+    <aside aria-label="Discussion avec l’assistant" style="width: 370px; flex: none; display: flex; flex-direction: column; background: #15171C; border-left: 1px solid #22252D">
+      <div style="height: 56px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid #22252D">
+        <span style="width: 30px; height: 30px; border-radius: 9px; background: #1D2647; display: flex; align-items: center; justify-content: center">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8FA3FF" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></svg>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 1px">
+          <span style="font-size: 14px; font-weight: 600">Assistant</span>
+          <span style="font-size: 11.5px; color: #8B919C">IA locale · tout reste sur ton Mac</span>
+        </span>
+      </div>
+      <div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; padding: 14px">
+        <sc-for list="{{messages}}" as="m" hint-placeholder-count="6">
+          <div style="display: flex; flex-direction: column; align-items: {{m.align}}; gap: 6px">
+            <div style="max-width: 290px; padding: 9px 12px; border-radius: {{m.rayon}}; background: {{m.bg}}; color: #ECEDF0; font-size: 13px; line-height: 1.45; white-space: pre-line">{{m.texte}}</div>
+            <sc-if value="{{m.aBoutons}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; gap: 6px; flex-wrap: wrap">
+                <sc-for list="{{m.boutons}}" as="b" hint-placeholder-count="2">
+                  <button style="height: 28px; padding: 0 10px; border-radius: 8px; border: 1px solid #2E3340; background: #1C1F26; color: #C9D2FF; font: inherit; font-size: 12px; cursor: pointer">{{b}}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding: 12px; border-top: 1px solid #22252D; display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; gap: 6px; flex-wrap: wrap">
+          <sc-for list="{{suggestions}}" as="s" hint-placeholder-count="3">
+            <button onClick="{{s.pick}}" style="padding: 4px 9px; border-radius: 999px; border: 1px solid #2A2E38; background: transparent; color: #B8BDC7; font: inherit; font-size: 11.5px; cursor: pointer">{{s.t}}</button>
+          </sc-for>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 8px; padding: 6px 6px 6px 12px; border-radius: 12px; background: #0F1115; border: 1px solid #2E3340">
+          <input aria-label="Écrire à l’assistant" placeholder="Écris ce que tu veux changer…" value="{{saisie}}" onChange="{{taper}}" onKeyDown="{{touche}}" style="flex: 1; min-width: 0; height: 32px; background: transparent; border: 0; outline: none; color: #ECEDF0; font: inherit; font-size: 13px">
+          <button onClick="{{envoyer}}" aria-label="Envoyer" style="width: 32px; height: 32px; flex: none; border-radius: 9px; border: 0; background: #3F5EF0; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5 M5 12l7-7 7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = {
+      rep: 1, version: 0, voix: 0, mot: true, saisie: '',
+      expr: { 0: 'curieux', 1: 'content', 2: 'reflechi', 3: 'inquiet', 4: 'surpris', 5: 'content' },
+      messages: [
+        { qui: 'moi', texte: 'Fais l’épisode 12 sur l’inflation, en YouTube et en TikTok, avec la voix de Pico.' },
+        { qui: 'ia', texte: 'Fiche prête : 21 blocs, 870 mots, environ 6 minutes.\nUn chiffre n’a pas de source : le taux de 2,1 %. Je l’indique comme exemple de calcul ?', boutons: ['Oui', 'Voir la fiche'] },
+        { qui: 'moi', texte: 'oui, et lance la fabrication' },
+        { qui: 'ia', texte: 'C’est fabriqué : YouTube 6:12, TikTok 1:02.\nJ’ai repéré 3 points à relire, surlignés dans les répliques.' },
+        { qui: 'moi', texte: 'Pico doit avoir l’air inquiet au moment du piège' },
+        { qui: 'ia', texte: 'Fait : réplique 4, Pico inquiet. Seul ce passage est refait (12 s).', boutons: ['Annuler', 'Revoir le passage'] }
+      ]
+    };
+  }
+  renderVals() {
+    const s = this.state;
+    const IMG = { content: '/_blob/6d695151d710e2928531431f5535fbb3', inquiet: '/_blob/85977376e421b1bab684347fff96144c', surpris: '/_blob/1028b1773a837c1ab8465309f89cf59f', curieux: '/_blob/16c8ba90ad6e9318dae464402b94e8a6', reflechi: '/_blob/0a1340ceb2f64125cda26befea3bcd33' };
+    const NOMS = { content: 'Content', inquiet: 'Inquiet', surpris: 'Surpris', curieux: 'Curieux', reflechi: 'Réfléchi' };
+    const R = [
+      { temps: '0:00', ecran: 'Accroche', grand: 'Ton euro a rétréci', chiffre: '1 000 € → 812 €', morceaux: [['Salut la colonie ! Ton euro d’il y a dix ans ne vaut plus vraiment un euro. On regarde pourquoi ?']] },
+      { temps: '0:14', ecran: 'Programme', grand: 'Au programme', chiffre: '3 questions', morceaux: [['Au programme : ce qu’est l’inflation, comment la '], ['BCE', 'B C E', '3 répliques concernées'], [' essaie de la freiner, et ce que ça change pour ton épargne.']] },
+      { temps: '0:41', ecran: 'Calcul', grand: 'Le calcul', chiffre: '2,1 % par an', morceaux: [['Avec 2,1 % d’inflation par an, 1 000 € achètent dans dix ans ce que 812 € achètent aujourd’hui.']] },
+      { temps: '1:08', ecran: 'Piège', grand: 'Le piège', chiffre: '1 % < 2,1 %', morceaux: [['Le piège : croire qu’un compte à 1 % te protège. En réalité, ton pouvoir d’achat baisse chaque année.']] },
+      { temps: '1:32', ecran: 'Duel', grand: 'Léa ou Tom ?', chiffre: '5 000 €', morceaux: [['Léa garde '], ['5 000 €', null], [' sur son compte courant, Tom les place à 3 %. Qui s’en sort le mieux au bout de cinq ans ?']] },
+      { temps: '2:05', ecran: 'À retenir', grand: 'À retenir', chiffre: 'Taux − inflation', morceaux: [['À retenir : un taux ne veut rien dire tant qu’on ne le compare pas à l’inflation.']] }
+    ];
+    const r = R[s.rep];
+    const expr = s.expr[s.rep];
+    const ETAPES = [
+      ['Sujet', 'L’inflation', 'ok'], ['Fiche', '21 blocs · 870 mots', 'ok'], ['Voix', s.voix ? 'Ma voix · 14 répliques' : 'Pico · voix de synthèse', 'ok'],
+      ['Fabrication', 'Écrans, décors, animations, sons', 'ok'], ['Relecture', '3 points à vérifier', 'cours'], ['Publication', 'YouTube et TikTok', 'attente']
+    ];
+    const msgs = s.messages.map(m => ({ texte: m.texte, align: m.qui === 'moi' ? 'flex-end' : 'flex-start', bg: m.qui === 'moi' ? '#2C3A7A' : '#1F232B', rayon: m.qui === 'moi' ? '14px 14px 4px 14px' : '14px 14px 14px 4px', aBoutons: !!(m.boutons && m.boutons.length), boutons: m.boutons || [] }));
+    const envoyer = (t) => {
+      const texte = String(t || s.saisie).trim(); if (!texte) return;
+      this.setState({ saisie: '', messages: s.messages.concat([{ qui: 'moi', texte }, { qui: 'ia', texte: 'Compris, je m’en occupe. (Maquette : la réponse est simulée.)' }]).slice(-6) });
+    };
+    return {
+      etapes: ETAPES.map(([nom, info, etat], i) => ({ nom, info, signe: etat === 'ok' ? '✓' : String(i + 1), pastille: etat === 'ok' ? '#10B981' : etat === 'cours' ? '#FBBF24' : '#2A2E38', pastilleTexte: etat === 'attente' ? '#A0A6B2' : '#0D0E11', couleur: etat === 'attente' ? '#A0A6B2' : '#ECEDF0', bg: etat === 'cours' ? '#1C1F26' : 'transparent' })),
+      voix: ['Pico', 'Ma voix'].map((nom, i) => ({ nom, on: i === s.voix ? 'true' : 'false', bg: i === s.voix ? '#2A2E38' : 'transparent', fg: i === s.voix ? '#ECEDF0' : '#A0A6B2', pick: () => this.setState({ voix: i }) })),
+      versions: ['YouTube 16:9', 'TikTok 9:16'].map((nom, i) => ({ nom, on: i === s.version ? 'true' : 'false', bg: i === s.version ? '#2A2E38' : 'transparent', fg: i === s.version ? '#ECEDF0' : '#A0A6B2', pick: () => this.setState({ version: i }) })),
+      infoVersion: s.version ? '1:02 · tirée de la version YouTube' : '6:12 · 21 écrans · chapitres prêts',
+      ecran: r.ecran, grand: r.grand, chiffre: r.chiffre, sousTitre: r.morceaux.map(m => m[0]).join(''),
+      picoImg: IMG[expr], picoNom: NOMS[expr],
+      expressions: Object.keys(IMG).map(k => ({ nom: NOMS[k], img: IMG[k], on: k === expr ? 'true' : 'false', bord: k === expr ? '#10B981' : '#2A2E38', bg: k === expr ? '#123026' : '#1A1D23', pick: () => this.setState({ expr: { ...s.expr, [s.rep]: k } }) })),
+      ecrans: ['Accroche', 'Programme', 'Calcul', 'Piège', 'Duel', 'À retenir'].map(nom => ({ nom, bord: nom === r.ecran ? '#10B981' : '#2A2E38', bg: nom === r.ecran ? '#123026' : 'transparent' })),
+      repliques: R.map((x, i) => ({
+        num: String(i + 1).padStart(2, '0'), temps: x.temps, ecran: x.ecran, img: IMG[s.expr[i]],
+        bord: i === s.rep ? '#3F5EF0' : '#22252D', bg: i === s.rep ? '#171C2E' : '#15171C',
+        pick: () => this.setState({ rep: i }),
+        prononcer: i === s.rep && s.mot && x.morceaux.some(m => m[1]),
+        morceaux: x.morceaux.map(m => ({ t: m[0], style: m[1] ? 'color:#F6D27A;text-decoration:underline dotted #FBBF24;text-underline-offset:3px;font-weight:600' : (m.length > 1 ? 'background:#3A2E10;border-radius:4px;padding:0 3px' : ''), pick: m[1] ? () => this.setState({ rep: i, mot: true }) : () => this.setState({ rep: i }) }))
+      })),
+      motChoisi: 'BCE', dit: 'B C E', concernees: '3 répliques seront refaites',
+      messages: msgs,
+      suggestions: ['Pico plus surpris à l’accroche', 'Raccourcir le TikTok', 'Musique plus calme'].map(t => ({ t, pick: () => envoyer(t) })),
+      saisie: s.saisie,
+      taper: (e) => this.setState({ saisie: e.target.value }),
+      touche: (e) => { if (e.key === 'Enter') envoyer(); },
+      envoyer: () => envoyer()
+    };
+  }
+}
+</script>
+</body>
+</html>
