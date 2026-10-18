@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.42.0
+- **Doublage d'une vidéo** : dans la fenêtre Doublage, choisis une vidéo ou un son (fichier .mp4, .mov, .mp3… ou un média déjà importé) puis « Lire le texte de cette vidéo » : QuentMovie écoute la voix, écrit chaque phrase sur une ligne (à corriger si besoin), et tes répliques se posent dans la piste audio à l'instant où chaque phrase était dite.
+
 ## 1.41.0
 - **Doublage** (bouton « Doublage » ou ⇧⌘D) : enregistre ta propre voix réplique par réplique. Colle un texte (une ligne par réplique) ou charge un épisode QuentInvest ; chaque ligne s'affiche en grand, tu enregistres avec Espace, tu réécoutes avec L, tu passes à la suivante (ou tu refais). Le silence du début et de la fin est retiré tout seul.
 - **Poser sur la timeline** : toutes les répliques s'enchaînent dans la piste audio à partir de la tête de lecture ; tu peux recommencer et reposer sans doublon.

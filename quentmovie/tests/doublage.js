@@ -87,6 +87,14 @@ function chromium() {
     await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Une.\nDeux.'); await pg.fill('#dbNom', 'ui-essai'); await pg.click('#dbGo'); await pg.waitForSelector('#dbRec', { timeout: 10000 });
     check('doublage : prises déjà enregistrées reprises sous le même nom', await ev(() => !!dbl.prises[0] && dbl.cur === 1));
     await pg.keyboard.press('Escape'); check('doublage : Échap ferme', await ev(() => dbl === null && !document.querySelector('#modal').classList.contains('on')));
+    // doublage d'une vidéo : chaque réplique démarre à l'instant de la phrase d'origine
+    await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Phrase un.\nPhrase deux.'); await pg.fill('#dbNom', 'ui-calage');
+    check('doublage : fichier vidéo ou son accepté pour lire le texte', await ev(() => /video\/\*/.test(document.querySelector('#dbF').accept)));
+    await ev(() => { dbl.debuts = [2, 6]; }); await pg.click('#dbGo'); await pg.waitForSelector('#dbRec', { timeout: 10000 });
+    for (let k = 0; k < 2; k++) { await pg.keyboard.press('Space'); await pg.waitForTimeout(1500); await pg.keyboard.press('Space'); await pg.waitForFunction(i => dbl && dbl.prises[i] && !dbl.enreg, k, { timeout: 15000 }).catch(() => {}); }
+    await ev(() => { gt = 0; }); await pg.click('#dbPoser'); await pg.waitForFunction(() => !dbl, null, { timeout: 15000 }).catch(() => {});
+    const caler = await ev(() => proj.audio.filter(a => /^doublage-ui-calage-/.test(a.file)).map(a => a.start));
+    check('doublage : répliques calées sur les phrases d’origine', caler.length === 2 && caler[0] === 2 && caler[1] === 6, JSON.stringify(caler));
     check('aucune erreur dans la page', !errs.length, errs.slice(0, 3).join(' | '));
     await b.close();
   }

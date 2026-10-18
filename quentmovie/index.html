@@ -3455,31 +3455,53 @@ function dblLire(txt) {
 }
 const dblDuree = s => s < 90 ? Math.round(s) + ' s' : Math.floor(s / 60) + ' min ' + String(Math.round(s % 60)).padStart(2, '0') + ' s';
 const dblSec = s => String(s.toFixed(1)).replace('.', ',') + ' s';
+// la voix d'une vidéo ou d'un son est écoutée (reconnaissance locale) : une phrase par ligne, avec l'instant où elle est dite
+async function dblLireMedia(file, nom) {
+  const m = medias.find(x => x.file === file), msg = $('#dbMsg'); if (!m) { msg.innerHTML = '<span class="err">Média introuvable.</span>'; return; }
+  const go = $('#dbGo'); go.disabled = true;
+  try {
+    await assurerEcoute(t => { msg.textContent = t; });
+    const r = await ecouterClip({ file: m.file, in: 0, out: m.duration }, t => { msg.textContent = t; });
+    const phrases = (r.st.phrase || []).map(x => ({ t: String(x.t || '').trim(), s: +x.s })).filter(x => x.t);
+    if (!phrases.length) { msg.innerHTML = '<span class="err">Aucune parole reconnue dans ce média.</span>'; return; }
+    $('#dbTexte').value = phrases.map(x => x.t).join('\n'); $('#dbNom').value = dblNom(nom); dbl.debuts = phrases.map(x => x.s);
+    msg.textContent = `${phrases.length} phrases lues dans « ${file} ». Relis et corrige le texte si besoin ; ta voix sera posée à l’endroit où elles étaient dites.`;
+  } catch (er) { msg.innerHTML = `<span class="err">${esc(er.message)}</span>`; }
+  finally { go.disabled = false; }
+}
 function ouvrirDoublage() {
   if (dbl) return;
   stopLecture();
-  const nom0 = dblNom((proj.gen && proj.gen.titre) || proj.sujet || ''), texteVideo = (proj.gen && proj.gen.texte) || '';
+  const dblMedias = medias.filter(m => m.kind === 'video' || m.kind === 'audio'), nom0 = dblNom((proj.gen && proj.gen.titre) || proj.sujet || ''), texteVideo = (proj.gen && proj.gen.texte) || '';
   dbl = { nom: nom0, lignes: [], prises: {}, cur: 0, enreg: false, auto: true, flux: null, vue: false };
   ouvrir(`<h2>🎙 Doublage : ta voix, phrase par phrase</h2>
     <p class="mut">Colle le texte à lire (une réplique par ligne) ou charge un épisode QuentInvest. Tu enregistres chaque ligne, tu la réécoutes, tu la refais si besoin : le silence du début et de la fin est retiré tout seul. Ensuite les répliques se posent dans la piste audio, ou la chaîne QuentInvest les utilise à la place de la voix de Pico.</p>
     <label class="l">Nom du doublage (un dossier à ce nom est créé)</label><input type="text" id="dbNom" value="${esc(nom0)}">
     <label class="l">Texte à lire</label><textarea id="dbTexte" rows="9" placeholder="Une réplique par ligne. Exemple :&#10;Salut la colonie !&#10;Aujourd’hui, on parle des intérêts composés."></textarea>
-    <div class="ligne" style="margin-top:6px"><button id="dbFichier">📂 Charger un épisode ou un texte…</button>${texteVideo ? '<button id="dbVideo">Utiliser le texte de la vidéo</button>' : ''}<input type="file" id="dbF" accept=".json,.txt,.md,text/plain,application/json" hidden></div>
+    <div class="ligne" style="margin-top:6px"><button id="dbFichier">📂 Charger un épisode ou un texte…</button>${texteVideo ? '<button id="dbVideo">Utiliser le texte de la vidéo</button>' : ''}<input type="file" id="dbF" accept=".json,.txt,.md,text/plain,application/json,video/*,audio/*,.mp4,.mov,.m4a,.mp3,.wav" hidden></div>
+    ${dblMedias.length ? `<div class="ligne" style="margin-top:6px"><select id="dbMedia" style="flex:1">${dblMedias.map(m => `<option value="${esc(m.file)}">${esc(m.file)}</option>`).join('')}</select><button id="dbLire">🎧 Lire le texte de cette vidéo</button></div>` : ''}
     <p class="mut" id="dbMsg" style="margin:6px 0 0"></p>
     <div class="ligne" style="margin-top:10px"><button class="pri" id="dbGo" style="flex:1">Commencer l’enregistrement</button><button id="dbAnnuler">Fermer</button></div>`, 'xl');
   $('#dbTexte').focus();
   $('#dbFichier').onclick = () => $('#dbF').click();
   $('#dbF').onchange = async e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    if (/^(video|audio)\//.test(f.type) || /\.(mp4|mov|m4v|mkv|webm|m4a|mp3|wav|aac|flac|ogg)$/i.test(f.name)) { // une vidéo ou un son : sa voix est transcrite pour servir de texte
+      $('#dbMsg').textContent = 'Import de ' + f.name + '…';
+      try { const r = await (await api('/api/import?name=' + enc(f.name), { method: 'POST', body: f })).json(); await chargerMedias(); await dblLireMedia(r.file || f.name, f.name.replace(/\.[^.]+$/, '')); }
+      catch (er) { $('#dbMsg').innerHTML = `<span class="err">${esc(er.message)}</span>`; }
+      return;
+    }
     const l = dblLire(await f.text()); $('#dbTexte').value = l.join('\n'); $('#dbNom').value = dblNom(f.name.replace(/\.[^.]+$/, ''));
     $('#dbMsg').textContent = `${l.length} réplique${l.length > 1 ? 's' : ''} chargée${l.length > 1 ? 's' : ''}. Garde leur ordre : chaque ligne correspond à une réplique de l’épisode.`;
   };
   if (texteVideo) $('#dbVideo').onclick = () => { const l = texteVideo.split(/(?<=[.!?])\s+/).map(x => x.trim()).filter(Boolean); $('#dbTexte').value = l.join('\n'); $('#dbMsg').textContent = `${l.length} phrases reprises du texte de la vidéo.`; };
+  const bl = $('#dbLire'); if (bl) bl.onclick = () => dblLireMedia($('#dbMedia').value, $('#dbMedia').value.replace(/\.[^.]+$/, ''));
   $('#dbAnnuler').onclick = fermer;
   $('#dbGo').onclick = async () => {
     const lignes = dblLignes($('#dbTexte').value), nom = dblNom($('#dbNom').value);
     if (!lignes.length) return alert('Écris ou charge d’abord le texte à lire.');
-    dbl.nom = nom; dbl.lignes = lignes; $('#dbGo').disabled = true; $('#dbMsg').textContent = 'Préparation du micro…';
+    dbl.nom = nom; dbl.lignes = lignes; if (dbl.debuts && dbl.debuts.length !== lignes.length) dbl.debuts = null; $('#dbGo').disabled = true; $('#dbMsg').textContent = 'Préparation du micro…';
     try {
       dbl.flux = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
     } catch (er) { $('#dbGo').disabled = false; $('#dbMsg').innerHTML = `<span class="err">Micro indisponible : ${esc(er.message)}. Autorise QuentMovie dans Réglages Système → Confidentialité et sécurité → Micro.</span>`; return; }
@@ -3561,7 +3583,8 @@ async function dblPoser() {
   const prises = Object.entries(dbl.prises).map(([n, p]) => ({ n: +n, ...p })).sort((a, b) => a.n - b.n); if (!prises.length) return;
   await chargerMedias();
   const prefixe = `doublage-${dbl.nom}-`; proj.audio = proj.audio.filter(a => !String(a.file).startsWith(prefixe));
-  let t = gt; for (const p of prises) { proj.audio.push({ file: p.file, vol: 100, start: +t.toFixed(2), fade: false, loop: false, duck: false }); t += p.duree + 0.25; }
+  const deb = dbl.debuts; let t = gt; // doublage d'une vidéo : chaque réplique démarre quand la phrase d'origine était dite, sans chevaucher la précédente
+  for (const p of prises) { if (deb && deb[p.n] !== undefined) t = Math.max(t, gt + deb[p.n]); proj.audio.push({ file: p.file, vol: 100, start: +t.toFixed(2), fade: false, loop: false, duck: false }); t += p.duree + 0.25; }
   selA = proj.audio.length - 1; selP = -1; sel = -1; selT = -1; selCut = -1; commit(); tout(); navigateur();
   signal(`🎙 ${prises.length} réplique${prises.length > 1 ? 's' : ''} posée${prises.length > 1 ? 's' : ''} dans la piste audio (${fmt(t - gt)}).`);
   fermer();
