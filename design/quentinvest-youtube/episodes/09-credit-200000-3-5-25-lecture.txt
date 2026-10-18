@@ -1,0 +1,33 @@
+Emprunter 200 000 €, ça coûte combien en tout ? Pas seulement 200 000 €.
+Salut la colonie ! Abonne-toi pour ne rien rater.
+Au programme : le taux et la mensualité, le coût total du crédit, ce qui change avec la durée et le taux, un duel entre Léa et Tom, et les pièges à éviter.
+Pourquoi s'intéresser au coût d'un crédit ? Parce qu'on regarde souvent la mensualité, alors que le vrai coût est le total remboursé. Connaître le calcul permet de comparer des offres sans se laisser surprendre.
+Un crédit, c'est un peu comme louer de l'argent : tu paies un loyer, les intérêts, pour pouvoir l'utiliser tout de suite au lieu d'attendre. Plus tu le gardes longtemps, plus le loyer total est élevé.
+Le taux, c'est le prix de l'argent emprunté : un pourcentage que tu paies à la banque en plus de la somme prêtée.
+Pour 200 000 € sur 25 ans à 3,5 %, la mensualité est d'environ 1 001,25 €. Sur 300 mois, ça fait 300 374 € en tout.
+Au final, tu rembourses environ 300 374 € : 100 374 € de plus que la somme empruntée. C'est le coût du crédit.
+Dans la première mensualité de 1 001,25 €, 583,33 € partent en intérêts et 417,91 € remboursent le capital. Avec le temps, la part des intérêts diminue et celle du capital augmente.
+Rapporté à chaque année, les 100 374 € d'intérêts font en moyenne 4 015 € par an, soit 334,58 € par mois en plus de la somme prêtée. C'est le prix du temps que la banque t'accorde.
+Comparons plusieurs durées. Sur 23 ans : mensualité 1 056 €, coût 91 462 €. Sur 25 ans : 1 001 € et 100 374 €. Sur 30 ans : 898 € et 123 312 €. Plus c'est long, la mensualité baisse, le coût monte.
+Et si tu rembourses plus vite ? En passant de 25 à 23 ans, tu économises 8 912 € d'intérêts. Mais la mensualité passe de 1 001 € à 1 056 €. C'est un équilibre à trouver.
+Et selon le taux ? À 2,5 %, le crédit coûte 69 170 €. À 3,5 %, 100 374 €. À 5,5 %, 168 452 €. Un petit écart de taux change beaucoup le coût.
+Un seul point de taux en plus : à 4,5 %, le coût passe de 100 374 € à 133 499 €, soit 33 125 € de plus. Un petit écart de taux pèse vraiment sur le coût final.
+Et si tu empruntes moins ? Avec 160 000 € au lieu de 200 000 €, le coût des intérêts passe de 100 374 € à 80 299 €. Le coût suit la somme empruntée : un apport plus grand fait baisser la facture.
+Léa emprunte 200 000 € sur 25 ans : 1 001 € par mois. Tom emprunte la même somme sur 28 ans : 935 € par mois. Tom paie moins chaque mois, mais au total 314 025 € contre 300 374 €.
+Le TAEG est le taux qui regroupe le taux d'intérêt et la plupart des frais. Deux offres au même taux peuvent avoir un TAEG différent. C'est le TAEG qu'il faut comparer.
+Pour calculer toi-même, la plupart des banques et des sites proposent un simulateur. Tu entres la somme, le taux et la durée, et il donne la mensualité, comme ici : environ 1 001,25 € par mois sur 300 mois.
+Petite question pour toi. Les intérêts représentent quelle part de la somme empruntée ? Mets la vidéo en pause si tu veux réfléchir.
+Réponse : 50,2 pour cent. Pour 200 000 € empruntés, 100 374 € d'intérêts. Plus le taux et la durée augmentent, plus ce pourcentage monte.
+Petite question pour toi. Vrai ou faux : un crédit sur 30 ans coûte-t-il moins cher qu'un crédit sur 25 ans ? Mets la vidéo en pause si tu veux réfléchir.
+Réponse : faux. Sur 25 ans, les intérêts sont de 100 374 €. Sur 30 ans, ils montent à 123 312 €. La mensualité baisse de 1 001 € à 898 €, mais le coût total augmente.
+Ce modèle est volontairement simplifié : il ne tient compte ni des impôts, ni des variations d'une année à l'autre, ni de ta situation personnelle. C'est un outil pour comprendre, pas pour prévoir.
+Petit défi pour toi : prends un crédit que tu connais, note le montant, le taux et la durée, puis calcule le coût total. Compare le résultat avec ce que tu imaginais : c'est souvent surprenant.
+Avant de signer, trois questions : quel est le TAEG ? Quelle est la durée ? Et quel est le coût total du crédit ? Ce sont les trois chiffres à demander.
+Attention, grain de sable. Il y a trois erreurs courantes.
+Un : ne regarder que la mensualité. Une mensualité basse peut cacher une durée longue, donc plus d'intérêts payés.
+Deux : oublier les frais annexes. Le TAEG regroupe le taux et la plupart des frais : c'est lui qu'on compare.
+Trois : ne pas comparer plusieurs offres. Deux crédits avec la même mensualité peuvent avoir un coût total très différent.
+Pour résumer en trois points. Un : un crédit coûte la somme empruntée plus les intérêts. Deux : la durée pèse autant que le taux. Trois : on compare le TAEG et le coût total, pas seulement la mensualité.
+En une phrase : un crédit coûte la somme empruntée plus les intérêts, et la durée pèse autant que le taux.
+La prochaine fois : un nouveau sujet. Et toi, tu avais déjà fait ce calcul ? Dis-le en commentaire.
+Rappel : vulgarisation, pas un conseil en investissement. Un grain après l'autre. À bientôt dans la fourmilière !

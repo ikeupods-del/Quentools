@@ -1,0 +1,33 @@
+Emprunter 10 000 €, ça coûte combien en tout ? Pas seulement 10 000 €.
+Salut la colonie ! Abonne-toi pour ne rien rater.
+Au programme : le taux et la mensualité, le coût total du crédit, ce qui change avec la durée et le taux, un duel entre Léa et Tom, et les pièges à éviter.
+Pourquoi s'intéresser au coût d'un crédit ? Parce qu'on regarde souvent la mensualité, alors que le vrai coût est le total remboursé. Connaître le calcul permet de comparer des offres sans se laisser surprendre.
+Un crédit, c'est un peu comme louer de l'argent : tu paies un loyer, les intérêts, pour pouvoir l'utiliser tout de suite au lieu d'attendre. Plus tu le gardes longtemps, plus le loyer total est élevé.
+Le taux, c'est le prix de l'argent emprunté : un pourcentage que tu paies à la banque en plus de la somme prêtée.
+Pour 10 000 € sur 5 ans à 4 %, la mensualité est d'environ 184,17 €. Sur 60 mois, ça fait 11 050 € en tout.
+Au final, tu rembourses environ 11 050 € : 1 050 € de plus que la somme empruntée. C'est le coût du crédit.
+Dans la première mensualité de 184,17 €, 33,33 € partent en intérêts et 150,83 € remboursent le capital. Avec le temps, la part des intérêts diminue et celle du capital augmente.
+Rapporté à chaque année, les 1 050 € d'intérêts font en moyenne 210 € par an, soit 17,50 € par mois en plus de la somme prêtée. C'est le prix du temps que la banque t'accorde.
+Comparons plusieurs durées. Sur 3 ans : mensualité 295 €, coût 629 €. Sur 5 ans : 184 € et 1 050 €. Sur 10 ans : 101 € et 2 149 €. Plus c'est long, la mensualité baisse, le coût monte.
+Et si tu rembourses plus vite ? En passant de 5 à 3 ans, tu économises 421 € d'intérêts. Mais la mensualité passe de 184 € à 295 €. C'est un équilibre à trouver.
+Et selon le taux ? À 3 %, le crédit coûte 781 €. À 4 %, 1 050 €. À 6 %, 1 600 €. Un petit écart de taux change beaucoup le coût.
+Un seul point de taux en plus : à 5 %, le coût passe de 1 050 € à 1 323 €, soit 273 € de plus. Un petit écart de taux pèse vraiment sur le coût final.
+Et si tu empruntes moins ? Avec 8 000 € au lieu de 10 000 €, le coût des intérêts passe de 1 050 € à 840 €. Le coût suit la somme empruntée : un apport plus grand fait baisser la facture.
+Léa emprunte 10 000 € sur 5 ans : 184 € par mois. Tom emprunte la même somme sur 8 ans : 122 € par mois. Tom paie moins chaque mois, mais au total 11 702 € contre 11 050 €.
+Le TAEG est le taux qui regroupe le taux d'intérêt et la plupart des frais. Deux offres au même taux peuvent avoir un TAEG différent. C'est le TAEG qu'il faut comparer.
+Pour calculer toi-même, la plupart des banques et des sites proposent un simulateur. Tu entres la somme, le taux et la durée, et il donne la mensualité, comme ici : environ 184,17 € par mois sur 60 mois.
+Petite question pour toi. Les intérêts représentent quelle part de la somme empruntée ? Mets la vidéo en pause si tu veux réfléchir.
+Réponse : 10,5 pour cent. Pour 10 000 € empruntés, 1 050 € d'intérêts. Plus le taux et la durée augmentent, plus ce pourcentage monte.
+Petite question pour toi. Vrai ou faux : un crédit sur 10 ans coûte-t-il moins cher qu'un crédit sur 5 ans ? Mets la vidéo en pause si tu veux réfléchir.
+Réponse : faux. Sur 5 ans, les intérêts sont de 1 050 €. Sur 10 ans, ils montent à 2 149 €. La mensualité baisse de 184 € à 101 €, mais le coût total augmente.
+Ce modèle est volontairement simplifié : il ne tient compte ni des impôts, ni des variations d'une année à l'autre, ni de ta situation personnelle. C'est un outil pour comprendre, pas pour prévoir.
+Petit défi pour toi : prends un crédit que tu connais, note le montant, le taux et la durée, puis calcule le coût total. Compare le résultat avec ce que tu imaginais : c'est souvent surprenant.
+Avant de signer, trois questions : quel est le TAEG ? Quelle est la durée ? Et quel est le coût total du crédit ? Ce sont les trois chiffres à demander.
+Attention, grain de sable. Il y a trois erreurs courantes.
+Un : ne regarder que la mensualité. Une mensualité basse peut cacher une durée longue, donc plus d'intérêts payés.
+Deux : oublier les frais annexes. Le TAEG regroupe le taux et la plupart des frais : c'est lui qu'on compare.
+Trois : ne pas comparer plusieurs offres. Deux crédits avec la même mensualité peuvent avoir un coût total très différent.
+Pour résumer en trois points. Un : un crédit coûte la somme empruntée plus les intérêts. Deux : la durée pèse autant que le taux. Trois : on compare le TAEG et le coût total, pas seulement la mensualité.
+En une phrase : un crédit coûte la somme empruntée plus les intérêts, et la durée pèse autant que le taux.
+La prochaine fois : 100 € par mois pendant 20 ans : combien ça fait ? Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ? Dis-le en commentaire.
+Rappel : vulgarisation, pas un conseil en investissement. Un grain après l'autre. À bientôt dans la fourmilière !

@@ -27,7 +27,8 @@ Un bloc de fiche peut avoir une **photo ou une vidéo en fond** (le texte et les
 - Pas de photo ou vidéo dont la licence n'est pas vérifiée, et jamais de logo ou d'image de marque sans droit.
 
 ## Ta propre voix (doublage)
-- Dans QuentMovie, **Doublage** (⇧⌘D) : charger `episodes/NN-sujet.json` (YouTube) ou `episodes/NN-sujet-tiktok.json` (TikTok) et enregistrer chaque réplique. Les fichiers `v00.wav`, `v01.wav`… sont rangés dans `~/Movies/QuentMovie/doublages/<nom>/`.
+- **Texte à lire automatique** : chaque `episode.js` écrit à côté des vidéos et dans `episodes/` `NN-sujet-lecture.txt` (YouTube) et `NN-sujet-lecture-tiktok.txt` (une réplique par ligne) ainsi que `NN-sujet-lecture.md` (guide : ton conseillé, durée, commande de fabrication). Pour un épisode déjà fabriqué : `node fabrication/lecture.js fiches/NN-sujet.json`.
+- Dans QuentMovie, **Doublage** (⇧⌘D) : charger `episodes/NN-sujet-lecture.txt` (YouTube) ou `NN-sujet-lecture-tiktok.txt` (TikTok) et enregistrer chaque réplique. Les fichiers `v00.wav`, `v01.wav`… sont rangés dans `~/Movies/QuentMovie/doublages/<nom>/`.
 - Fabrication avec ta voix (montage, écrans, bruitages, sous-titres inchangés) : `node fabrication/episode.js fiches/NN-sujet.json --voix-perso <dossier YouTube> --voix-perso-tiktok <dossier TikTok>`. Une réplique refaite est reprise automatiquement (la date du fichier compte). Une réplique sans fichier garde la voix de synthèse.
 - `~/Movies/QuentMovie/ma-voix/` (sons + `metadata.csv`) cumule toutes les répliques enregistrées avec leur texte : le corpus pour reproduire ta voix. Reproduction automatique pas encore en place (modèles à comparer sur le Mac : qualité en français, licence, vitesse) ; la durée enregistrée est affichée dans la fenêtre Doublage.
 
