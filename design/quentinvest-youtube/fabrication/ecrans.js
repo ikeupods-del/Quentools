@@ -81,6 +81,7 @@ svg.graphe .lab{font-size:34px;font-weight:800}
 // ---------- style 2 (nouveaux épisodes) : textes plus gros, lisibles sur téléphone ----------
 const CSS_V2 = `
 .v2 .sous{font-size:46px}
+.v2 .duo .carte,.v2 .taux .c{flex:none}
 .v2 .etiquette{font-size:44px}
 .v2 .liste{font-size:48px}
 .v2 .source{font-size:28px}
@@ -192,11 +193,20 @@ window.setT=t=>{ for(const e of els){
 setT(0);
 })();`;
 
+// style 2 : un écran dont le contenu dépasse la zone (grands nombres, cartes côte à côte) est réduit pour y tenir, sans toucher aux animations ;
+// mesuré à l'état final, une fois la police chargée (fabriquer.js attend `window.PRET`)
+const AJUSTE = `window.PRET=document.fonts.load('800 100px Inter').then(()=>document.fonts.ready).then(()=>{
+const z=document.querySelector('.zone'); if(!z) return; window.setT(1e3); z.style.transform='';
+const r=z.getBoundingClientRect(); let R=r.left,H=r.top,B=r.bottom;
+z.querySelectorAll('*').forEach(e=>{const q=e.getBoundingClientRect(); if(q.width&&q.height){R=Math.max(R,q.left+(e.ownerSVGElement||e.tagName=='svg'?q.width:Math.max(q.width,e.scrollWidth)));H=Math.min(H,q.top);B=Math.max(B,q.top+(e.ownerSVGElement||e.tagName=='svg'?q.height:Math.max(q.height,e.scrollHeight)));}});
+const k=Math.max(0.6,Math.min(1,r.width/(R-r.left),r.height/(B-H)));
+if(k<0.995){ z.style.transformOrigin='left center'; z.style.transform='scale('+k.toFixed(3)+')'; }
+window.setT(0); });`;
 const EVENTS = `window.EVENTS=[...new Set([...document.querySelectorAll('[data-a]')].filter(e=>/pop|count|on/.test(e.dataset.a)).map(e=>+e.dataset.d))].sort((a,b)=>a-b);`;
 const page = (corps, { section, source, mention, chaine, style, vertical, transp }) => `<!doctype html><html lang="fr"><meta charset="utf-8"><style>${CSS}${style >= 2 ? CSS_V2 : ''}${vertical ? CSS_VERT : ''}${transp ? CSS_TRANSP : ''}</style><body${style >= 2 || vertical || transp ? ` class="${[style >= 2 ? 'v2' : '', vertical ? 'vert' : '', transp ? 'transp' : ''].filter(Boolean).join(' ')}"` : ''}>
 <div class="marque"><i></i><span>${esc(chaine)}</span></div>${section ? `<div class="section">${esc(section)}</div>` : ''}
 ${corps}${source ? `<div class="source">${esc(source)}</div>` : ''}
-<div class="mention">${esc(mention)}</div><script>${RUNTIME}${style >= 2 ? EVENTS : ''}</script></body></html>`;
+<div class="mention">${esc(mention)}</div><script>${RUNTIME}${style >= 2 ? EVENTS + AJUSTE : ''}</script></body></html>`;
 
 const zone = h => `<div class="zone">${h}</div>`;
 const A = (k, d, u = 0.6, x = '') => `data-a="${k}" data-d="${d.toFixed(2)}" data-u="${u}" ${x}`;
