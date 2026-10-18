@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.43.0
+- **Voix clonée (essai)** : dans la fenêtre Doublage, le bouton « 🧬 Voix clonée » fait dire quatre phrases par deux modèles qui imitent ta voix (Chatterbox et Qwen3-TTS) à partir de tes enregistrements, pour que tu écoutes et compares avec ta vraie voix. La première fois, QuentMovie installe tout seul ce qu'il faut (de 15 à 40 minutes, jusqu'à 8 Go d'espace libre) ; les essais suivants sont rapides. Rien n'est envoyé : tout reste sur ton Mac, dans `~/Movies/QuentMovie/voix-clone`.
+
 ## 1.42.0
 - **Doublage d'une vidéo** : dans la fenêtre Doublage, choisis une vidéo ou un son (fichier .mp4, .mov, .mp3… ou un média déjà importé) puis « Lire le texte de cette vidéo » : QuentMovie écoute la voix, écrit chaque phrase sur une ligne (à corriger si besoin), et tes répliques se posent dans la piste audio à l'instant où chaque phrase était dite.
 

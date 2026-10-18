@@ -214,6 +214,7 @@ function create(opts = {}) {
     return { sujet: r.sujet || brut.sujet, resume: r.resume, points: r.points || [], moments: r.moments || [], public: r.public, ia: r.ia, genre, motsCles, rythme: brut.rythme, debit: brut.debit, brut };
   }
   const PAROLE = () => parole || (parole = require('./parole').creer({ run, FFMPEG, BASE }));
+  let voixClone = null; const VOIXCLONE = () => voixClone || (voixClone = require('./voix-clone').creer(BASE));
   // Réglages locaux (clés gratuites des banques de photos : gardées dans le dossier QuentMovie de l'utilisateur, jamais dans le dépôt)
   const REGL = path.join(BASE, 'reglages.json');
   const lireRegl = () => { try { return JSON.parse(fs.readFileSync(REGL, 'utf8')); } catch (e) { return {}; } };
@@ -2002,7 +2003,7 @@ function buildClip(c, P, o = {}) {
       }
       if (req.method === 'POST' && p === '/api/annuler') { // arrêt d'un export ou d'un aperçu en cours
         const job = jobs.get(url.searchParams.get('id'));
-        if (job && !job.done && !job.error) { job.annule = true; annulerDossier(job.dir); }
+        if (job && !job.done && !job.error) { job.annule = true; annulerDossier(job.dir); if (job.enfant) { try { job.enfant.kill('SIGTERM'); } catch (e) { /* déjà arrêté */ } } }
         return send(res, 200, { ok: !!job });
       }
       if (req.method === 'GET' && p === '/api/job') {
@@ -2028,6 +2029,20 @@ function buildClip(c, P, o = {}) {
         const dest = path.join(MEDIAS, 'camera-recuperee-' + nom.replace(/^prise-interrompue-/, ''));
         fs.renameSync(src, dest);
         return send(res, 200, await importerPrise(dest));
+      }
+      // Voix clonée (essai) : modèles de clonage installés à la demande, mêmes phrases dites par chacun avec ta voix (voix-clone.js)
+      if (p.startsWith('/api/voix-clone')) {
+        const VC = VOIXCLONE();
+        if (req.method === 'GET' && p === '/api/voix-clone') {
+          let corpus = { prises: 0, secondes: 0 }; try { const l = Object.values(JSON.parse(fs.readFileSync(path.join(BASE, 'ma-voix', 'index.json'), 'utf8'))); corpus = { prises: l.length, secondes: +l.reduce((t, x) => t + (x.duree || 0), 0).toFixed(1) }; } catch (e) { /* pas encore de corpus */ }
+          return send(res, 200, { ...VC.etat(), corpus });
+        }
+        if (req.method === 'POST' && p === '/api/voix-clone/essai') { const b = await readJson(req); return send(res, 200, travail(job => VC.essai(Array.isArray(b.moteurs) ? b.moteurs.map(String) : [], job))); }
+        if (req.method === 'GET' && p === '/api/voix-clone/audio') {
+          const f = VC.fichier(url.searchParams.get('f')); if (!f) return send(res, 404, { error: 'Fichier introuvable' });
+          res.writeHead(200, { 'Content-Type': 'audio/wav', 'Content-Length': fs.statSync(f).size, 'Cache-Control': 'no-cache' }); return fs.createReadStream(f).pipe(res);
+        }
+        if (req.method === 'POST' && p === '/api/voix-clone/dossier') { fs.mkdirSync(VC.essais, { recursive: true }); if (opts.ouvrirDossier) opts.ouvrirDossier(VC.essais); return send(res, 200, { ok: !!opts.ouvrirDossier, dossier: VC.essais }); }
       }
       // Doublage : ta voix, réplique par réplique (v00.wav, v01.wav…), rangée dans un dossier par doublage ; les fabrications de la chaîne QuentInvest la lisent (--voix-perso)
       if (p.startsWith('/api/doublage')) {

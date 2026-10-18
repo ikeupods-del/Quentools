@@ -87,6 +87,11 @@ function chromium() {
     await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Une.\nDeux.'); await pg.fill('#dbNom', 'ui-essai'); await pg.click('#dbGo'); await pg.waitForSelector('#dbRec', { timeout: 10000 });
     check('doublage : prises déjà enregistrées reprises sous le même nom', await ev(() => !!dbl.prises[0] && dbl.cur === 1));
     await pg.keyboard.press('Escape'); check('doublage : Échap ferme', await ev(() => dbl === null && !document.querySelector('#modal').classList.contains('on')));
+    // voix clonée : l'essai s'ouvre depuis le doublage, sans rien lancer
+    await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Une.'); await pg.fill('#dbNom', 'ui-clone'); await pg.click('#dbGo'); await pg.waitForSelector('#dbClone', { timeout: 10000 });
+    await pg.click('#dbClone'); await pg.waitForSelector('#vcLancer', { timeout: 10000 });
+    check('voix clonée : fenêtre d’essai ouverte (deux modèles, doublage fermé)', await ev(() => dbl === null && !!document.querySelector('#vcChatterbox') && !!document.querySelector('#vcQwen') && /répliques/.test(document.querySelector('#boite').textContent)));
+    await pg.keyboard.press('Escape'); await ev(() => fermer());
     // doublage d'une vidéo : chaque réplique démarre à l'instant de la phrase d'origine
     await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Phrase un.\nPhrase deux.'); await pg.fill('#dbNom', 'ui-calage');
     check('doublage : fichier vidéo ou son accepté pour lire le texte', await ev(() => /video\/\*/.test(document.querySelector('#dbF').accept)));

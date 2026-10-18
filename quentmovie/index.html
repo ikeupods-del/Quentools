@@ -181,6 +181,7 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 .dblTexte{font-size:26px;line-height:1.35;font-weight:600;margin:6px 0 12px;min-height:3.4em}
 #dbVu{width:110px;height:8px;background:#222;border-radius:4px;overflow:hidden;flex:none}#dbVu i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3c3,#fd0 70%,#f33)}
 #dbTemps{font:600 14px ui-monospace,Menlo,monospace;min-width:56px}
+.vcSon{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bord,#2a2a2e)}.vcSon audio{flex:none;height:34px}
 .dblListe{max-height:32vh;overflow:auto;border:1px solid #ffffff1c;border-radius:8px;margin:10px 0}
 .dblL{display:flex;gap:8px;padding:6px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid #ffffff10;align-items:baseline}.dblL:hover{background:#ffffff0c}.dblL.cur{background:#ffffff1c}
 .dblL .n{width:30px;opacity:.6;flex:none}.dblL .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dblL .d{flex:none;opacity:.75}
@@ -3469,6 +3470,43 @@ async function dblLireMedia(file, nom) {
   } catch (er) { msg.innerHTML = `<span class="err">${esc(er.message)}</span>`; }
   finally { go.disabled = false; }
 }
+// Voix clonée (essai) : des modèles imitent ta voix à partir du corpus « Ma voix » ; on écoute les mêmes phrases dites par chacun
+const VC_PHRASES = ['Salut la colonie ! Abonne-toi pour ne rien rater.', 'En 1637, un seul bulbe de tulipe aurait été payé 5 000 florins, alors qu’un artisan en gagnait environ 300 par an.', 'Imaginons un contrat à 100 florins, revendu cinq fois, avec 50 pour cent de hausse à chaque revente.', 'Un grain après l’autre, à bientôt dans la fourmilière !'];
+let vcEnCours = false;
+async function ouvrirVoixClone() {
+  if (dbl) dblFin();
+  let e; try { e = await (await api('/api/voix-clone')).json(); } catch (er) { return alert(er.message); }
+  const mac = e.arch !== 'autre', sec = (e.corpus && e.corpus.secondes) || 0;
+  const nomF = f => f === 'reel.wav' ? 'Ta vraie voix (extrait de référence)' : (f.startsWith('chatterbox') ? 'Chatterbox' : 'Qwen3-TTS') + ' — phrase ' + /-(\d+)\.wav/.exec(f)[1];
+  const calcul = f => { const r = (e.rapports || []).find(x => x.fichier === f); return r ? ` <span class="mut">(calculé en ${r.calcul} s pour ${r.duree} s de voix)</span>` : ''; };
+  const sons = (e.fichiers || []).map(f => `<div class="vcSon"><div><b>${esc(nomF(f))}</b>${calcul(f)}${f === 'reel.wav' ? '' : `<div class="mut">« ${esc(VC_PHRASES[+/-(\d+)\.wav/.exec(f)[1] - 1] || '')} »</div>`}</div><audio controls preload="none" src="/api/voix-clone/audio?f=${enc(f)}&v=${Date.now()}"></audio></div>`).join('');
+  ouvrir(`<h2>🧬 Voix clonée — essai</h2>
+    <p>Cet essai fait dire quatre phrases par deux modèles qui imitent ta voix, pour que tu juges s’ils sont assez naturels. Il utilise tes enregistrements du Doublage (<b>${(e.corpus && e.corpus.prises) || 0}</b> répliques, ${dblDuree(sec)}). Rien n’est publié ni envoyé : tout se passe sur ton Mac.</p>
+    ${mac ? '' : '<p class="mut">Cet essai est prévu pour l’application Mac.</p>'}
+    <div class="sw2"><input type="checkbox" id="vcChatterbox" checked><label for="vcChatterbox">Chatterbox (multilingue) — environ ${e.moteurs[0].go} Go${e.moteurs[0].installe ? ' · déjà installé' : ''}</label></div>
+    <div class="sw2"><input type="checkbox" id="vcQwen" checked><label for="vcQwen">Qwen3-TTS — environ ${e.moteurs[1].go} Go${e.moteurs[1].installe ? ' · déjà installé' : ''}</label></div>
+    <p class="mut" style="margin:6px 0">La première fois, l’installation et les téléchargements prennent de 15 à 40 minutes (jusqu’à 8 Go d’espace libre). Garde l’application ouverte et le Mac branché. Les essais suivants sont rapides.</p>
+    <div class="ligne"><button class="pri" id="vcLancer" ${mac ? '' : 'disabled'}>Lancer l’essai</button><button id="vcAnnuler" style="display:none">Arrêter</button><button id="vcDossier">📂 Ouvrir le dossier</button><button id="vcFermer">Fermer</button></div>
+    <div id="vcEtat" class="mut" style="margin:8px 0"></div>
+    <div id="vcSons">${sons}</div>`, 'xl');
+  $('#vcFermer').onclick = fermer;
+  $('#vcDossier').onclick = async () => { try { const j = await (await api('/api/voix-clone/dossier', { method: 'POST' })).json(); if (!j.ok) signal('Dossier : ' + j.dossier); } catch (er) { alert(er.message); } };
+  let jobId = null;
+  $('#vcAnnuler').onclick = () => { if (jobId) api('/api/annuler?id=' + enc(jobId), { method: 'POST' }); };
+  $('#vcLancer').onclick = async () => {
+    if (vcEnCours) return;
+    const moteurs = [$('#vcChatterbox').checked && 'chatterbox', $('#vcQwen').checked && 'qwen'].filter(Boolean);
+    if (!moteurs.length) return alert('Choisis au moins un modèle.');
+    vcEnCours = true; $('#vcLancer').disabled = true; $('#vcAnnuler').style.display = '';
+    const etat = $('#vcEtat');
+    try {
+      const { id } = await (await api('/api/voix-clone/essai', { method: 'POST', body: JSON.stringify({ moteurs }) })).json(); jobId = id;
+      await suivreTravail(id, j => { if (etat.isConnected) etat.textContent = Math.round((j.progress || 0) * 100) + ' % · ' + (j.step || ''); });
+      if (etat.isConnected) { etat.textContent = 'Terminé : écoute et compare.'; ouvrirVoixClone(); }
+    } catch (er) { if ($('#vcEtat')) $('#vcEtat').innerHTML = '<span style="color:#f87171">' + esc(er.message) + '</span> <span class="mut">Le détail est dans le dossier (journal.txt).</span>'; }
+    finally { vcEnCours = false; const l = $('#vcLancer'); if (l) l.disabled = false; const a = $('#vcAnnuler'); if (a) a.style.display = 'none'; }
+  };
+}
 function ouvrirDoublage() {
   if (dbl) return;
   stopLecture();
@@ -3538,7 +3576,7 @@ function dblVue() {
       <div id="dbVu"><i></i></div><span id="dbTemps"></span></div>
     <div class="sw2"><input type="checkbox" id="dbAuto" ${dbl.auto ? 'checked' : ''}><label for="dbAuto">Passer à la réplique suivante dès que j’arrête</label></div>
     <div class="dblListe" id="dbListe">${liste}</div>
-    <div class="ligne"><button class="pri" id="dbPoser" ${fait ? '' : 'disabled'}>Poser sur la timeline (piste audio)</button><button id="dbDossier">📂 Ouvrir le dossier</button><button id="dbTexteRetour">✏️ Modifier le texte</button><button id="dbFermer">Fermer</button></div>
+    <div class="ligne"><button class="pri" id="dbPoser" ${fait ? '' : 'disabled'}>Poser sur la timeline (piste audio)</button><button id="dbDossier">📂 Ouvrir le dossier</button><button id="dbTexteRetour">✏️ Modifier le texte</button><button id="dbClone" title="Essayer des modèles qui imitent ta voix">🧬 Voix clonée</button><button id="dbFermer">Fermer</button></div>
     <p class="mut" id="dbInfo" style="margin:8px 0 0">Dossier des répliques : <b>${esc(dbl.dossier || '~/Movies/QuentMovie/doublages/' + dbl.nom)}</b> (fichiers v00.wav, v01.wav…). Pour fabriquer un épisode QuentInvest avec ta voix : <code>episode.js &lt;fiche&gt; --voix-perso &lt;ce dossier&gt;</code>.</p>
     ${dbl.voix && dbl.voix.prises ? `<p class="mut" style="margin:4px 0 0">🧬 <b>Ma voix</b> : ${dbl.voix.prises} répliques gardées avec leur texte (${dblDuree(dbl.voix.secondes)}), tous doublages confondus. Chaque réplique enrichit le corpus qui servira à reproduire ta voix. <a href="#" id="dbVoixDossier">Ouvrir le dossier</a></p>` : ''}`, 'xl');
   dbl.vue = true;
@@ -3549,6 +3587,7 @@ function dblVue() {
   $('#dbPoser').onclick = dblPoser;
   const vd = $('#dbVoixDossier'); if (vd) vd.onclick = async e => { e.preventDefault(); try { const j = await (await api('/api/doublage/dossier?nom=' + enc(dbl.nom) + '&voix=1', { method: 'POST' })).json(); if (!j.ok) signal('Dossier : ' + j.dossier); } catch (er) { alert(er.message); } };
   $('#dbDossier').onclick = async () => { try { const j = await (await api('/api/doublage/dossier?nom=' + enc(dbl.nom), { method: 'POST' })).json(); if (!j.ok) signal('Dossier : ' + j.dossier); } catch (er) { alert(er.message); } };
+  $('#dbClone').onclick = () => { if (dbl.enreg) return; ouvrirVoixClone(); };
   $('#dbTexteRetour').onclick = () => { if (dbl.enreg) return; const lignes = dbl.lignes.join('\n'), nom = dbl.nom; dblFin(); ouvrirDoublage(); $('#dbTexte').value = lignes; $('#dbNom').value = nom; };
   $('#dbFermer').onclick = fermer;
 }
