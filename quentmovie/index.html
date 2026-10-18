@@ -354,6 +354,7 @@ body.lame #pV .clip,body.lame #pA .aud{cursor:crosshair}
   <button class="tb" id="bAssistant" title="Assistant de montage : dis ce que tu veux faire (⌘K)"><svg class="ic"><use href="#i-assistant"/></svg><span>Assistant</span></button>
   <button class="tb" id="bGenerer" title="Générer une vidéo à partir d’un sujet : texte, images, voix off (⇧⌘G)"><svg class="ic"><use href="#i-generer"/></svg><span>Générer</span></button>
   <button class="tb" id="bDoublage" title="Enregistrer ta voix réplique par réplique, pour doubler une vidéo ou en faire une (⇧⌘D)"><svg class="ic"><use href="#i-voix"/></svg><span>Doublage</span></button>
+  <button class="tb" id="bPublier" title="Publier un épisode sur YouTube et dans les brouillons TikTok"><svg class="ic"><use href="#i-exporter"/></svg><span>Publier</span></button>
   <button class="tb" id="bStudio" title="Me filmer avec la caméra, le micro et le prompteur (⇧⌘R)"><svg class="ic"><use href="#i-camera"/></svg><span>Me filmer</span></button>
   <button class="tb" id="bApercu" title="Aperçu avec effets (⌘R)"><svg class="ic"><use href="#i-film"/></svg><span>Aperçu</span></button>
   <button class="ib" id="bAide" title="Raccourcis clavier (?)"><svg class="ic"><use href="#i-clavier"/></svg></button>
@@ -420,6 +421,7 @@ body.lame #pV .clip,body.lame #pA .aud{cursor:crosshair}
 </div>
 
 <script src="/ui-voix.js"></script>
+<script src="/ui-publier.js"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -4391,7 +4393,7 @@ async function stPremonter(i, o) {
     dire(res);
   } catch (er) { const t = `<span class="err">Pré-montage : ${esc(er.message)}</span>`; if (z) z.innerHTML = `<h4 style="margin:0">${t}</h4>`; dire(t); }
 }
-$('#bStudio').onclick = ouvrirStudio; $('#bDoublage').onclick = ouvrirDoublage; $('#bGenerer').onclick = ouvrirGenerateur;
+$('#bStudio').onclick = ouvrirStudio; $('#bDoublage').onclick = ouvrirDoublage; $('#bPublier').onclick = ouvrirPublier; $('#bGenerer').onclick = ouvrirGenerateur;
 $('#stFermer').onclick = fermerStudio; $('#stRec').onclick = stEnregistrer; $('#stPause').onclick = stPause; $('#stDefil').onclick = () => stDefiler();
 $('#stDebut').onclick = () => { studio.pos = 0; stPlacer(); };
 $('#stPrompt').onclick = () => stDefiler();

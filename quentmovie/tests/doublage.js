@@ -105,6 +105,12 @@ function chromium() {
     await pg.fill('#fiTexte', JSON.stringify({ numero: 1, slug: 'x', titre: 'T', blocs: [{ texte: 'Un bloc.' }] })); await pg.click('#fiGo'); await pg.waitForFunction(() => /À corriger/.test(document.querySelector('#fiRes').textContent), null, { timeout: 8000 });
     check('fiche : une fiche incomplète est signalée dans la fenêtre', await ev(() => /incomplète/.test(document.querySelector('#fiRes').textContent)));
     await pg.keyboard.press('Escape'); await ev(() => fermer());
+    // publication : la fenêtre s'ouvre, les clés se configurent, la connexion est proposée
+    await pg.click('#bPublier'); await pg.waitForSelector('#puYt', { timeout: 10000 });
+    check('publication : YouTube et TikTok à configurer au départ', await ev(() => /à configurer/.test(document.querySelector('#puYt').parentElement.textContent) && /à configurer/.test(document.querySelector('#puTt').parentElement.textContent)));
+    await pg.fill('#ytId', 'client-youtube-123'); await pg.fill('#ytSec', 'SECRET-youtube-456'); await pg.click('#ytCfg'); await pg.waitForSelector('#ytCo', { timeout: 8000 });
+    check('publication : après les clés, « Se connecter à YouTube » est proposé avec les aides manuelles', await ev(() => /Se connecter à YouTube/.test(document.querySelector('#puYt').textContent) && !!document.querySelector('#mYtDesc') && !!document.querySelector('#mTtLeg')));
+    await pg.keyboard.press('Escape'); await ev(() => fermer());
     // doublage d'une vidéo : chaque réplique démarre à l'instant de la phrase d'origine
     await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Phrase un.\nPhrase deux.'); await pg.fill('#dbNom', 'ui-calage');
     check('doublage : fichier vidéo ou son accepté pour lire le texte', await ev(() => /video\/\*/.test(document.querySelector('#dbF').accept)));

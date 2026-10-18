@@ -61,5 +61,15 @@ if (long) {
   fs.writeFileSync(path.join(SORTIE, `${C.base}-publication.json`), JSON.stringify(publicationDonnees(F, long.rapport, { voixPerso: !!arg('voix-perso', '') }), null, 1)); // même contenu, pour la programmation automatique des publications
 }
 fs.copyFileSync(path.join(SORTIE, `${C.NUM}-miniature.png`), path.join(EPISODES, `${C.NUM}-miniature.png`)); fs.copyFileSync(path.join(SORTIE, `${C.NUM}-miniature-tiktok.png`), path.join(EPISODES, `${C.NUM}-miniature-tiktok.png`));
+// un seul fichier à déposer sur le Mac : dézippé dans ~/Movies/QuentInvest (ou Téléchargements), l'épisode apparaît dans « Publier » de QuentMovie
+{ const noms = fs.readdirSync(SORTIE).filter(n => /\.(mp4|png)$/.test(n) || /-publication\.(json|md)$/.test(n));
+  const z = path.join(SORTIE, `${C.base}.zip`); fs.rmSync(z, { force: true });
+  const rz = spawnSync('zip', ['-q', '-r', z, ...noms.map(n => n)], { cwd: SORTIE });
+  if (rz.status === 0) { // le dossier de l'archive porte le nom de l'épisode
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'qi-zip-')), dossier = path.join(tmp, C.base); fs.mkdirSync(dossier);
+    for (const n of noms) fs.copyFileSync(path.join(SORTIE, n), path.join(dossier, n)); fs.rmSync(z, { force: true });
+    spawnSync('zip', ['-q', '-r', z, C.base], { cwd: tmp }); fs.rmSync(tmp, { recursive: true, force: true });
+  }
+}
 console.log('\nPrêt à relire, rien n\'est publié. Dossier : ' + SORTIE);
 for (const f of fs.readdirSync(SORTIE).filter(n => /\.(mp4|png|md)$/.test(n))) console.log('  ' + f);

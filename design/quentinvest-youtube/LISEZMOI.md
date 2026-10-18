@@ -39,6 +39,9 @@ Un bloc de fiche peut avoir une **photo ou une vidéo en fond** (le texte et les
 ## TikTok avec ta voix, sans réenregistrer
 Avec `--voix-perso <dossier YouTube>` et sans `--voix-perso-tiktok`, `episode.js` monte la version TikTok à partir des répliques de la vidéo YouTube (`fabrication/tiktok-voix.js`) : chaque réplique est découpée en phrases dans les silences, chaque phrase de la version TikTok est associée à la phrase YouTube la plus proche, les silences trop longs sont raccourcis, le texte affiché devient celui qui est dit, et les répliques de peu de valeur (piège, fragments) sont retirées pour tenir en une minute. `--tiktok-synthese` garde la voix de synthèse. Compte rendu dans `travail-tiktok-voix/tiktok-voix.json`.
 
+## Publication
+`episode.js` écrit aussi `<NN-sujet>.zip` (dossier `<NN-sujet>` avec les deux vidéos, les miniatures et le texte de publication) : le propriétaire le dézippe sur son Mac (Téléchargements ou `~/Movies/QuentInvest`) puis utilise **Publier** dans QuentMovie (YouTube privé ou programmé, brouillon TikTok). Rien n'est publié sans son clic.
+
 ## Contrôle d'une fiche avant fabrication
 `node quentmovie/fiche-quentinvest.js fiches/NN-sujet.json` (ou le bouton « Fiche » de QuentMovie) : longueur, phrases, chiffres sans source, conseils, mots à ajouter au dictionnaire ; `episode.js` affiche les mêmes avertissements avant de fabriquer. Brouillon d'une fiche depuis un sujet : bouton « Fiche » de QuentMovie (Wikipédia + IA locale), à relire et compléter.
 
