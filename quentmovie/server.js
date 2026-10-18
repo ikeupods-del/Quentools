@@ -2029,6 +2029,59 @@ function buildClip(c, P, o = {}) {
         fs.renameSync(src, dest);
         return send(res, 200, await importerPrise(dest));
       }
+      // Doublage : ta voix, réplique par réplique (v00.wav, v01.wav…), rangée dans un dossier par doublage ; les fabrications de la chaîne QuentInvest la lisent (--voix-perso)
+      if (p.startsWith('/api/doublage')) {
+        const nom = safeName(url.searchParams.get('nom') || 'doublage').replace(/\.+$/, '') || 'doublage', dossier = path.join(BASE, 'doublages', nom);
+        const nTexte = url.searchParams.get('n'), n = nTexte === null || nTexte === '' ? -1 : Math.floor(num(nTexte, -1)), wav = k => path.join(dossier, `v${String(k).padStart(2, '0')}.wav`), pose = k => `doublage-${nom}-${String(k).padStart(2, '0')}.wav`;
+        // « Ma voix » : toutes les répliques de tous les doublages, avec leur texte, au format d'entraînement d'une voix (wavs/ + metadata.csv « id|texte|texte »)
+        const MAVOIX = path.join(BASE, 'ma-voix'), idx = path.join(MAVOIX, 'index.json');
+        const lireVoix = () => { try { return JSON.parse(fs.readFileSync(idx, 'utf8')); } catch (e) { return {}; } };
+        const resumeVoix = d => { const l = Object.values(d); return { prises: l.length, secondes: +l.reduce((t, x) => t + (x.duree || 0), 0).toFixed(1), dossier: MAVOIX }; };
+        const ecrireVoix = d => { fs.mkdirSync(MAVOIX, { recursive: true }); fs.writeFileSync(idx, JSON.stringify(d, null, 1)); fs.writeFileSync(path.join(MAVOIX, 'metadata.csv'), Object.entries(d).sort(([a], [b]) => a.localeCompare(b)).map(([id, x]) => { const t = String(x.texte || '').replace(/[|\r\n]+/g, ' ').trim(); return `${id}|${t}|${t}`; }).join('\n') + '\n'); };
+        const idVoix = k => `${nom}-${String(k).padStart(2, '0')}`;
+        if (req.method === 'GET' && p === '/api/doublage') { // lignes gardées et prises déjà enregistrées
+          let lignes = []; try { lignes = JSON.parse(fs.readFileSync(path.join(dossier, 'script.json'), 'utf8')).lignes || []; } catch (e) { /* nouveau doublage */ }
+          const prises = []; let l = []; try { l = fs.readdirSync(dossier); } catch (e) { /* dossier absent */ }
+          for (const f of l) { const m = /^v(\d+)\.wav$/.exec(f); if (m) prises.push({ n: +m[1], duree: +((await probe(path.join(dossier, f))).duration || 0).toFixed(2), file: pose(+m[1]) }); }
+          return send(res, 200, { nom, dossier, lignes, prises: prises.sort((a, b) => a.n - b.n), voix: resumeVoix(lireVoix()) });
+        }
+        if (req.method === 'PUT' && p === '/api/doublage/script') { // le texte à lire, gardé pour reprendre plus tard
+          const j = await readJson(req); fs.mkdirSync(dossier, { recursive: true });
+          fs.writeFileSync(path.join(dossier, 'script.json'), JSON.stringify({ lignes: (j.lignes || []).map(x => String(x).slice(0, 2000)).slice(0, 400) }, null, 1));
+          return send(res, 200, { ok: true, dossier });
+        }
+        if (req.method === 'POST' && p === '/api/doublage/prise') { // une réplique : le silence du début et de la fin est retiré, le souffle grave coupé
+          if (n < 0 || n > 999) throw new Error('Numéro de réplique invalide');
+          fs.mkdirSync(dossier, { recursive: true });
+          const brut = path.join(dossier, `brut-${String(n).padStart(2, '0')}.webm`);
+          await new Promise((ok, ko) => { const w = fs.createWriteStream(brut); req.pipe(w); w.on('finish', ok); w.on('error', ko); req.on('error', ko); });
+          const tmp = wav(n) + '.tmp.wav', garde = '-45dB';
+          const filtre = `highpass=f=70,silenceremove=start_periods=1:start_threshold=${garde}:start_silence=0.08,areverse,silenceremove=start_periods=1:start_threshold=${garde}:start_silence=0.15,areverse`;
+          try { await run(FFMPEG, ['-y', '-v', 'error', '-i', brut, '-vn', '-af', filtre, '-ac', '1', '-ar', '44100', '-c:a', 'pcm_s16le', tmp]); }
+          catch (e) { try { fs.unlinkSync(tmp); } catch (e2) { /* rien à retirer */ } throw new Error('Cet enregistrement n’a pas pu être lu : recommence la réplique.'); }
+          const info = await probe(tmp), duree = +(info.duration || 0);
+          if (!(duree > 0.25)) { fs.unlinkSync(tmp); throw new Error('Aucune voix détectée : vérifie le micro et recommence la réplique.'); }
+          fs.renameSync(tmp, wav(n)); fs.copyFileSync(wav(n), path.join(MEDIAS, pose(n)));
+          fs.mkdirSync(path.join(MAVOIX, 'wavs'), { recursive: true }); fs.copyFileSync(wav(n), path.join(MAVOIX, 'wavs', idVoix(n) + '.wav'));
+          const voix = lireVoix(); voix[idVoix(n)] = { texte: String(url.searchParams.get('texte') || '').slice(0, 2000), duree: +duree.toFixed(2), le: new Date().toISOString() }; ecrireVoix(voix);
+          return send(res, 200, { n, duree: +duree.toFixed(2), file: pose(n), voix: resumeVoix(voix) });
+        }
+        if (req.method === 'DELETE' && p === '/api/doublage/prise') {
+          if (n < 0) throw new Error('Numéro de réplique invalide');
+          for (const f of [wav(n), path.join(dossier, `brut-${String(n).padStart(2, '0')}.webm`), path.join(MEDIAS, pose(n)), path.join(MAVOIX, 'wavs', idVoix(n) + '.wav')]) { try { fs.unlinkSync(f); } catch (e) { /* déjà retirée */ } }
+          const voix = lireVoix(); if (voix[idVoix(n)]) { delete voix[idVoix(n)]; ecrireVoix(voix); }
+          return send(res, 200, { ok: true, voix: resumeVoix(voix) });
+        }
+        if (req.method === 'POST' && p === '/api/doublage/dossier' && url.searchParams.get('voix')) { // le dossier « Ma voix »
+          fs.mkdirSync(MAVOIX, { recursive: true }); if (opts.ouvrirDossier) opts.ouvrirDossier(MAVOIX);
+          return send(res, 200, { ok: !!opts.ouvrirDossier, dossier: MAVOIX });
+        }
+        if (req.method === 'POST' && p === '/api/doublage/dossier') { // ouvre le dossier dans le Finder (application Mac)
+          fs.mkdirSync(dossier, { recursive: true });
+          if (opts.ouvrirDossier) opts.ouvrirDossier(dossier);
+          return send(res, 200, { ok: !!opts.ouvrirDossier, dossier });
+        }
+      }
       if (p === '/api/projet') { // enregistrement automatique
         const f = path.join(BASE, 'projet-auto.json');
         if (req.method === 'PUT') { fs.writeFileSync(f, JSON.stringify(await readJson(req))); return send(res, 200, { ok: true }); }

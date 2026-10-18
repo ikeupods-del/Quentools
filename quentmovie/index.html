@@ -177,6 +177,14 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 @keyframes clign{50%{opacity:.6}}
 #stTemps{font:600 15px ui-monospace,Menlo,monospace;min-width:70px;text-align:center}
 #stVu{width:90px;height:8px;background:#222;border-radius:4px;overflow:hidden}#stVu i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3c3,#fd0 70%,#f33)}
+/* Doublage : ta voix, réplique par réplique */
+.dblTexte{font-size:26px;line-height:1.35;font-weight:600;margin:6px 0 12px;min-height:3.4em}
+#dbVu{width:110px;height:8px;background:#222;border-radius:4px;overflow:hidden;flex:none}#dbVu i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3c3,#fd0 70%,#f33)}
+#dbTemps{font:600 14px ui-monospace,Menlo,monospace;min-width:56px}
+.dblListe{max-height:32vh;overflow:auto;border:1px solid #ffffff1c;border-radius:8px;margin:10px 0}
+.dblL{display:flex;gap:8px;padding:6px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid #ffffff10;align-items:baseline}.dblL:hover{background:#ffffff0c}.dblL.cur{background:#ffffff1c}
+.dblL .n{width:30px;opacity:.6;flex:none}.dblL .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dblL .d{flex:none;opacity:.75}
+.enreg{background:#d4001a !important;color:#fff !important}
 #stPanneau{background:var(--pan);padding:14px;overflow:auto;border-left:1px solid #0006}
 #stPanneau textarea{width:100%;min-height:160px;font-size:13px}
 #stPanneau details{border-top:1px solid #ffffff14;padding:6px 0}#stPanneau summary{cursor:pointer;font-weight:600;padding:4px 0}
@@ -344,6 +352,7 @@ body.lame #pV .clip,body.lame #pA .aud{cursor:crosshair}
   <select id="format" title="Format de l’image"><option value="vertical">Vertical 9:16</option><option value="horizontal">Horizontal 16:9</option><option value="carre">Carré 1:1</option></select>
   <button class="tb" id="bAssistant" title="Assistant de montage : dis ce que tu veux faire (⌘K)"><svg class="ic"><use href="#i-assistant"/></svg><span>Assistant</span></button>
   <button class="tb" id="bGenerer" title="Générer une vidéo à partir d’un sujet : texte, images, voix off (⇧⌘G)"><svg class="ic"><use href="#i-generer"/></svg><span>Générer</span></button>
+  <button class="tb" id="bDoublage" title="Enregistrer ta voix réplique par réplique, pour doubler une vidéo ou en faire une (⇧⌘D)"><svg class="ic"><use href="#i-voix"/></svg><span>Doublage</span></button>
   <button class="tb" id="bStudio" title="Me filmer avec la caméra, le micro et le prompteur (⇧⌘R)"><svg class="ic"><use href="#i-camera"/></svg><span>Me filmer</span></button>
   <button class="tb" id="bApercu" title="Aperçu avec effets (⌘R)"><svg class="ic"><use href="#i-film"/></svg><span>Aperçu</span></button>
   <button class="ib" id="bAide" title="Raccourcis clavier (?)"><svg class="ic"><use href="#i-clavier"/></svg></button>
@@ -2859,6 +2868,8 @@ function outilsHtml() {
       <button class="pri" data-outil="generer" style="width:100%">Générer une vidéo (⇧${M}G)</button></div>
     <div class="encart"><h4>🎥 Me filmer avec le prompteur</h4><p class="mut">Caméra et micro du Mac, ton texte qui défile sous la caméra, compte à rebours. Chaque prise arrive dans la timeline.</p>
       <button class="pri" data-outil="studio" style="width:100%">Ouvrir le studio (⇧${M}R)</button></div>
+    <div class="encart"><h4>🎙 Doublage : ta voix, phrase par phrase</h4><p class="mut">Un texte (ou un épisode QuentInvest) lu ligne par ligne avec ton micro : chaque réplique est nettoyée, réécoutable, refaisable, puis posée dans la piste audio.</p>
+      <button class="pri" data-outil="doublage" style="width:100%">Ouvrir le doublage (⇧${M}D)</button></div>
     <div class="encart"><h4>🎙 Enregistrer une voix off</h4><p class="mut">Enregistre avec le micro du Mac ; le son arrive dans la piste audio à la tête de lecture.</p>
       <button data-outil="micro" id="bMicro" style="width:100%">● Démarrer l’enregistrement</button><button id="bMicroPause" style="width:100%;margin-top:4px" hidden>⏸ Pause</button><div class="mut" id="oMicroRes" style="margin-top:4px"></div></div>
     <div class="encart"><h4>🎧 Nouvel épisode de podcast</h4><p class="mut">Un son, une pochette et un visualiseur animé : une vidéo prête pour YouTube ou les réseaux.</p>
@@ -2895,6 +2906,7 @@ let micro = null;
 async function outil(nom) {
   if (nom === 'aide') return afficherAide();
   if (nom === 'studio') return ouvrirStudio();
+  if (nom === 'doublage') return ouvrirDoublage();
   if (nom === 'generer') return ouvrirGenerateur();
   if (nom === 'voix') return gererVoix($('#oVoixZone'));
   if (nom === 'miniature') return ouvrirMiniature();
@@ -3286,7 +3298,7 @@ $('#bAssistant').onclick = () => ouvrirAssistant();
 
 // ---------- Fenêtres : projets, export, aide ----------
 function ouvrir(html, large) { $('#boite').className = large === 'xl' ? 'xl' : large ? 'large' : ''; $('#boite').innerHTML = html; $('#modal').classList.add('on'); }
-function fermer() { $('#modal').classList.remove('on'); }
+function fermer() { if (dbl) dblFin(); $('#modal').classList.remove('on'); }
 function demander(titre, defaut) {
   return new Promise(ok => {
     ouvrir(`<h2>${esc(titre)}</h2><input type="text" id="saisie" value="${esc(defaut || '')}"><div class="ligne" style="margin-top:10px"><button id="sAnn">Annuler</button><button class="pri" id="sOk">OK</button></div>`);
@@ -3304,7 +3316,7 @@ async function ouvrirProjet() {
 }
 $('#bNouveau').onclick = nouveau; $('#bSauver').onclick = sauver; $('#bOuvrir').onclick = ouvrirProjet;
 $('#bUndo').onclick = () => undo(-1); $('#bRedo').onclick = () => undo(1); $('#bAide').onclick = afficherAide;
-$('#modal').onclick = e => { if (e.target.id === 'modal' && !$('#barreExp')) fermer(); };
+$('#modal').onclick = e => { if (e.target.id === 'modal' && !$('#barreExp') && !(dbl && dbl.vue)) fermer(); };
 const SORTIES = { mp4: 'Vidéo MP4 (recommandé)', mov: 'Vidéo MOV ProRes (montage pro, très lourd)', webm: 'Vidéo WebM', gif: 'GIF animé (60 s maximum)', mp3: 'Audio MP3 (podcast)', m4a: 'Audio M4A', wav: 'Audio WAV (sans perte)' };
 // textes d'exemple restés dans le montage (« Prénom Nom », « Ton texte ici », faux chiffres…) : signalés avant l'export
 function textesExemple() {
@@ -3429,6 +3441,148 @@ async function essaiVoix(voix, texte, vitesse, bouton) {
     window.voixAp = new Audio('/media/' + enc(r.file) + '?t=' + Date.now()); voixAp.play().catch(() => {});
   } catch (e) { alert('Écoute impossible : ' + e.message); }
   finally { if (bouton) { bouton.disabled = false; bouton.textContent = lab; } }
+}
+// ---------- Doublage : ta voix, réplique par réplique ----------
+// Chaque réplique est envoyée au moteur (/api/doublage/prise) qui retire le silence du début et de la fin et la range dans
+// ~/Movies/QuentMovie/doublages/<nom>/vNN.wav ; ce dossier est celui que la chaîne QuentInvest lit avec --voix-perso.
+let dbl = null;
+const dblNom = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'doublage';
+const dblLignes = txt => String(txt || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
+// un épisode QuentInvest (scenes[].texte), une liste de textes ou un simple texte : une ligne par réplique, dans l'ordre
+function dblLire(txt) {
+  try { const j = JSON.parse(txt); if (Array.isArray(j)) return j.map(x => typeof x === 'string' ? x : (x && x.texte) || '').filter(Boolean); if (j && Array.isArray(j.scenes)) return j.scenes.map(x => (x && x.texte) || '').filter(Boolean); } catch (e) { /* texte simple */ }
+  return dblLignes(txt);
+}
+const dblDuree = s => s < 90 ? Math.round(s) + ' s' : Math.floor(s / 60) + ' min ' + String(Math.round(s % 60)).padStart(2, '0') + ' s';
+const dblSec = s => String(s.toFixed(1)).replace('.', ',') + ' s';
+function ouvrirDoublage() {
+  if (dbl) return;
+  stopLecture();
+  const nom0 = dblNom((proj.gen && proj.gen.titre) || proj.sujet || ''), texteVideo = (proj.gen && proj.gen.texte) || '';
+  dbl = { nom: nom0, lignes: [], prises: {}, cur: 0, enreg: false, auto: true, flux: null, vue: false };
+  ouvrir(`<h2>🎙 Doublage : ta voix, phrase par phrase</h2>
+    <p class="mut">Colle le texte à lire (une réplique par ligne) ou charge un épisode QuentInvest. Tu enregistres chaque ligne, tu la réécoutes, tu la refais si besoin : le silence du début et de la fin est retiré tout seul. Ensuite les répliques se posent dans la piste audio, ou la chaîne QuentInvest les utilise à la place de la voix de Pico.</p>
+    <label class="l">Nom du doublage (un dossier à ce nom est créé)</label><input type="text" id="dbNom" value="${esc(nom0)}">
+    <label class="l">Texte à lire</label><textarea id="dbTexte" rows="9" placeholder="Une réplique par ligne. Exemple :&#10;Salut la colonie !&#10;Aujourd’hui, on parle des intérêts composés."></textarea>
+    <div class="ligne" style="margin-top:6px"><button id="dbFichier">📂 Charger un épisode ou un texte…</button>${texteVideo ? '<button id="dbVideo">Utiliser le texte de la vidéo</button>' : ''}<input type="file" id="dbF" accept=".json,.txt,.md,text/plain,application/json" hidden></div>
+    <p class="mut" id="dbMsg" style="margin:6px 0 0"></p>
+    <div class="ligne" style="margin-top:10px"><button class="pri" id="dbGo" style="flex:1">Commencer l’enregistrement</button><button id="dbAnnuler">Fermer</button></div>`, 'xl');
+  $('#dbTexte').focus();
+  $('#dbFichier').onclick = () => $('#dbF').click();
+  $('#dbF').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    const l = dblLire(await f.text()); $('#dbTexte').value = l.join('\n'); $('#dbNom').value = dblNom(f.name.replace(/\.[^.]+$/, ''));
+    $('#dbMsg').textContent = `${l.length} réplique${l.length > 1 ? 's' : ''} chargée${l.length > 1 ? 's' : ''}. Garde leur ordre : chaque ligne correspond à une réplique de l’épisode.`;
+  };
+  if (texteVideo) $('#dbVideo').onclick = () => { const l = texteVideo.split(/(?<=[.!?])\s+/).map(x => x.trim()).filter(Boolean); $('#dbTexte').value = l.join('\n'); $('#dbMsg').textContent = `${l.length} phrases reprises du texte de la vidéo.`; };
+  $('#dbAnnuler').onclick = fermer;
+  $('#dbGo').onclick = async () => {
+    const lignes = dblLignes($('#dbTexte').value), nom = dblNom($('#dbNom').value);
+    if (!lignes.length) return alert('Écris ou charge d’abord le texte à lire.');
+    dbl.nom = nom; dbl.lignes = lignes; $('#dbGo').disabled = true; $('#dbMsg').textContent = 'Préparation du micro…';
+    try {
+      dbl.flux = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    } catch (er) { $('#dbGo').disabled = false; $('#dbMsg').innerHTML = `<span class="err">Micro indisponible : ${esc(er.message)}. Autorise QuentMovie dans Réglages Système → Confidentialité et sécurité → Micro.</span>`; return; }
+    try {
+      const avant = await (await api('/api/doublage?nom=' + enc(nom))).json(); // prises déjà enregistrées sous ce nom : on reprend
+      for (const p of avant.prises) if (p.n < lignes.length) dbl.prises[p.n] = { duree: p.duree, file: p.file };
+      dbl.dossier = avant.dossier; dbl.voix = avant.voix;
+      await api('/api/doublage/script?nom=' + enc(nom), { method: 'PUT', body: JSON.stringify({ lignes }) });
+    } catch (er) { /* le doublage fonctionne aussi sans la liste des anciennes prises */ }
+    const premiere = lignes.findIndex((_, i) => !dbl.prises[i]); dbl.cur = premiere < 0 ? 0 : premiere;
+    dblMicroVu(); dbl.vue = true; dblVue();
+  };
+}
+// vu-mètre et chronomètre
+function dblMicroVu() {
+  const ctx = new AudioContext(), an = ctx.createAnalyser(); an.fftSize = 1024; ctx.createMediaStreamSource(dbl.flux).connect(an); dbl.ctx = ctx;
+  const buf = new Uint8Array(an.fftSize);
+  const boucle = () => {
+    if (!dbl) return; an.getByteTimeDomainData(buf); let m = 0; for (const v of buf) m = Math.max(m, Math.abs(v - 128));
+    const i = document.querySelector('#dbVu i'); if (i) i.style.width = Math.min(100, m / 128 * 140) + '%';
+    if (dbl.enreg) { const t = $('#dbTemps'); if (t) t.textContent = dblSec((Date.now() - dbl.t0) / 1000); }
+    dbl.raf = requestAnimationFrame(boucle);
+  };
+  boucle();
+}
+function dblVue() {
+  const L = dbl.lignes, n = dbl.cur, fait = Object.keys(dbl.prises).length;
+  const liste = L.map((t, i) => { const p = dbl.prises[i]; return `<div class="dblL ${i === n ? 'cur' : ''}" data-n="${i}"><span class="n">${i + 1}</span><span class="t">${esc(t)}</span><span class="d">${p ? '✅ ' + dblSec(p.duree) : '⬜'}</span></div>`; }).join('');
+  ouvrir(`<h2>🎙 Doublage : ${esc(dbl.nom)}</h2>
+    <div class="mut">Réplique ${n + 1} sur ${L.length} · ${fait} enregistrée${fait > 1 ? 's' : ''}</div>
+    <div class="dblTexte">${esc(L[n])}</div>
+    <div class="ligne"><button class="pri ${dbl.enreg ? 'enreg' : ''}" id="dbRec" style="min-width:210px">${dbl.enreg ? '■ Arrêter (Espace)' : '● Enregistrer (Espace)'}</button>
+      <button id="dbEcoute" ${dbl.prises[n] ? '' : 'disabled'}>▶ Réécouter (L)</button><button id="dbPrec" title="Réplique précédente (←)">←</button><button id="dbSuiv" title="Réplique suivante (→)">→</button>
+      <div id="dbVu"><i></i></div><span id="dbTemps"></span></div>
+    <div class="sw2"><input type="checkbox" id="dbAuto" ${dbl.auto ? 'checked' : ''}><label for="dbAuto">Passer à la réplique suivante dès que j’arrête</label></div>
+    <div class="dblListe" id="dbListe">${liste}</div>
+    <div class="ligne"><button class="pri" id="dbPoser" ${fait ? '' : 'disabled'}>Poser sur la timeline (piste audio)</button><button id="dbDossier">📂 Ouvrir le dossier</button><button id="dbTexteRetour">✏️ Modifier le texte</button><button id="dbFermer">Fermer</button></div>
+    <p class="mut" id="dbInfo" style="margin:8px 0 0">Dossier des répliques : <b>${esc(dbl.dossier || '~/Movies/QuentMovie/doublages/' + dbl.nom)}</b> (fichiers v00.wav, v01.wav…). Pour fabriquer un épisode QuentInvest avec ta voix : <code>episode.js &lt;fiche&gt; --voix-perso &lt;ce dossier&gt;</code>.</p>
+    ${dbl.voix && dbl.voix.prises ? `<p class="mut" style="margin:4px 0 0">🧬 <b>Ma voix</b> : ${dbl.voix.prises} répliques gardées avec leur texte (${dblDuree(dbl.voix.secondes)}), tous doublages confondus. Chaque réplique enrichit le corpus qui servira à reproduire ta voix. <a href="#" id="dbVoixDossier">Ouvrir le dossier</a></p>` : ''}`, 'xl');
+  dbl.vue = true;
+  $('#dbRec').onclick = dblBascule; $('#dbEcoute').onclick = dblEcouter; $('#dbPrec').onclick = () => dblAller(n - 1); $('#dbSuiv').onclick = () => dblAller(n + 1);
+  $('#dbAuto').onchange = e => { dbl.auto = e.target.checked; };
+  $('#dbListe').onclick = e => { const l = e.target.closest('.dblL'); if (l) dblAller(+l.dataset.n); };
+  const c = document.querySelector('.dblL.cur'); if (c) c.scrollIntoView({ block: 'nearest' });
+  $('#dbPoser').onclick = dblPoser;
+  const vd = $('#dbVoixDossier'); if (vd) vd.onclick = async e => { e.preventDefault(); try { const j = await (await api('/api/doublage/dossier?nom=' + enc(dbl.nom) + '&voix=1', { method: 'POST' })).json(); if (!j.ok) signal('Dossier : ' + j.dossier); } catch (er) { alert(er.message); } };
+  $('#dbDossier').onclick = async () => { try { const j = await (await api('/api/doublage/dossier?nom=' + enc(dbl.nom), { method: 'POST' })).json(); if (!j.ok) signal('Dossier : ' + j.dossier); } catch (er) { alert(er.message); } };
+  $('#dbTexteRetour').onclick = () => { if (dbl.enreg) return; const lignes = dbl.lignes.join('\n'), nom = dbl.nom; dblFin(); ouvrirDoublage(); $('#dbTexte').value = lignes; $('#dbNom').value = nom; };
+  $('#dbFermer').onclick = fermer;
+}
+function dblAller(i) { if (!dbl || dbl.enreg) return; dbl.cur = clamp(i, 0, dbl.lignes.length - 1); if (dbl.ap) dbl.ap.pause(); dblVue(); }
+function dblEcouter() {
+  const p = dbl && dbl.prises[dbl.cur]; if (!p || dbl.enreg) return;
+  if (dbl.ap) dbl.ap.pause(); dbl.ap = new Audio('/media/' + enc(p.file) + '?t=' + Date.now()); dbl.ap.play().catch(() => {});
+}
+function dblBascule() {
+  if (!dbl || !dbl.flux) return;
+  if (dbl.ap) dbl.ap.pause();
+  if (dbl.enreg) { dbl.rec.stop(); return; }
+  const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(t => MediaRecorder.isTypeSupported(t)) || '', morceaux = [], n = dbl.cur;
+  const rec = new MediaRecorder(dbl.flux, mime ? { mimeType: mime } : undefined);
+  rec.ondataavailable = e => { if (e.data.size) morceaux.push(e.data); };
+  rec.onstop = async () => {
+    if (!dbl) return; dbl.enreg = false; const b = $('#dbRec'); if (b) { b.classList.remove('enreg'); b.textContent = 'Envoi…'; b.disabled = true; }
+    try {
+      const r = await (await api(`/api/doublage/prise?nom=${enc(dbl.nom)}&n=${n}&texte=${enc(dbl.lignes[n])}`, { method: 'POST', body: new Blob(morceaux, { type: 'audio/webm' }) })).json();
+      dbl.prises[n] = { duree: r.duree, file: r.file }; dbl.voix = r.voix;
+      if (dbl.auto && n < dbl.lignes.length - 1) dbl.cur = n + 1;
+    } catch (er) { alert(er.message); }
+    if (dbl) dblVue();
+  };
+  dbl.rec = rec; dbl.enreg = true; dbl.t0 = Date.now(); rec.start();
+  const b = $('#dbRec'); b.classList.add('enreg'); b.textContent = '■ Arrêter (Espace)';
+  for (const id of ['dbPrec', 'dbSuiv', 'dbEcoute', 'dbPoser', 'dbTexteRetour']) { const x = $('#' + id); if (x) x.disabled = true; }
+}
+// les répliques enregistrées, à la suite dans la piste audio, à partir de la tête de lecture ; une pose précédente du même doublage est remplacée
+async function dblPoser() {
+  if (!dbl || dbl.enreg) return;
+  const prises = Object.entries(dbl.prises).map(([n, p]) => ({ n: +n, ...p })).sort((a, b) => a.n - b.n); if (!prises.length) return;
+  await chargerMedias();
+  const prefixe = `doublage-${dbl.nom}-`; proj.audio = proj.audio.filter(a => !String(a.file).startsWith(prefixe));
+  let t = gt; for (const p of prises) { proj.audio.push({ file: p.file, vol: 100, start: +t.toFixed(2), fade: false, loop: false, duck: false }); t += p.duree + 0.25; }
+  selA = proj.audio.length - 1; selP = -1; sel = -1; selT = -1; selCut = -1; commit(); tout(); navigateur();
+  signal(`🎙 ${prises.length} réplique${prises.length > 1 ? 's' : ''} posée${prises.length > 1 ? 's' : ''} dans la piste audio (${fmt(t - gt)}).`);
+  fermer();
+}
+function dblFin() {
+  const d = dbl; if (!d) return; dbl = null;
+  cancelAnimationFrame(d.raf); if (d.ap) d.ap.pause();
+  if (d.enreg && d.rec) { d.rec.onstop = null; try { d.rec.stop(); } catch (e) { /* déjà arrêté */ } }
+  if (d.flux) d.flux.getTracks().forEach(t => t.stop()); if (d.ctx) d.ctx.close().catch(() => {});
+}
+// touches pendant le doublage ; renvoie vrai quand la touche est prise en charge
+function toucheDoublage(e) {
+  const k = e.key, kl = k.length === 1 ? k.toLowerCase() : k, tag = (e.target.tagName || '').toLowerCase(), f = fn => { e.preventDefault(); fn(); return true; };
+  if (e.metaKey || e.ctrlKey) return false;
+  if (k === 'Escape') return f(() => { if (dbl.enreg && !confirm('Un enregistrement est en cours. Le perdre et fermer ?')) return; fermer(); });
+  if (!dbl.vue || tag === 'textarea' || (tag === 'input' && e.target.type === 'text')) return true; // préparation du texte : les touches restent à la saisie
+  if (k === ' ' || kl === 'r') return f(dblBascule);
+  if (kl === 'l') return f(dblEcouter);
+  if (k === 'ArrowRight' || k === 'ArrowDown' || (k === 'Enter' && tag !== 'button')) return f(() => dblAller(dbl.cur + 1));
+  if (k === 'ArrowLeft' || k === 'ArrowUp') return f(() => dblAller(dbl.cur - 1));
+  return true;
 }
 async function ouvrirGenerateur() {
   stopLecture();
@@ -4375,7 +4529,7 @@ async function stPremonter(i, o) {
     dire(res);
   } catch (er) { const t = `<span class="err">Pré-montage : ${esc(er.message)}</span>`; if (z) z.innerHTML = `<h4 style="margin:0">${t}</h4>`; dire(t); }
 }
-$('#bStudio').onclick = ouvrirStudio; $('#bGenerer').onclick = ouvrirGenerateur;
+$('#bStudio').onclick = ouvrirStudio; $('#bDoublage').onclick = ouvrirDoublage; $('#bGenerer').onclick = ouvrirGenerateur;
 $('#stFermer').onclick = fermerStudio; $('#stRec').onclick = stEnregistrer; $('#stPause').onclick = stPause; $('#stDefil').onclick = () => stDefiler();
 $('#stDebut').onclick = () => { studio.pos = 0; stPlacer(); };
 $('#stPrompt').onclick = () => stDefiler();
@@ -4428,7 +4582,7 @@ function toucheStudio(e) {
 }
 
 const RACCOURCIS = [
-  ['Lecture', [['Espace', 'Lire / pause (avec les effets)'], ['⌥ Espace', 'Lire le clip sans effets'], ['J / L', 'Reculer / avancer d’1 seconde'], ['K', 'Pause'], ['← / →', 'Image précédente / suivante'], ['⇧ ← / →', '1 seconde'], ['↑ / ↓', 'Clip précédent / suivant'], ['Début / Fin', 'Début / fin de la timeline'], ['F', 'Plein écran de la visionneuse'], [M + ' R', 'Aperçu avec effets'], ['⇧' + M + ' R', 'Me filmer (caméra, micro, prompteur)'], ['R / P (studio)', 'Enregistrer ou arrêter / mettre en pause et reprendre la prise'], ['M / T / O / E (studio)', 'Afficher en direct : image ou vidéo, texte suivant, logo, partage d’écran'], ['⇧' + M + ' G', 'Générer une vidéo à partir d’un sujet']]],
+  ['Lecture', [['Espace', 'Lire / pause (avec les effets)'], ['⌥ Espace', 'Lire le clip sans effets'], ['J / L', 'Reculer / avancer d’1 seconde'], ['K', 'Pause'], ['← / →', 'Image précédente / suivante'], ['⇧ ← / →', '1 seconde'], ['↑ / ↓', 'Clip précédent / suivant'], ['Début / Fin', 'Début / fin de la timeline'], ['F', 'Plein écran de la visionneuse'], [M + ' R', 'Aperçu avec effets'], ['⇧' + M + ' R', 'Me filmer (caméra, micro, prompteur)'], ['R / P (studio)', 'Enregistrer ou arrêter / mettre en pause et reprendre la prise'], ['M / T / O / E (studio)', 'Afficher en direct : image ou vidéo, texte suivant, logo, partage d’écran'], ['⇧' + M + ' G', 'Générer une vidéo à partir d’un sujet'], ['⇧' + M + ' D', 'Doublage : enregistrer ta voix réplique par réplique'], ['Espace / L / ← → (doublage)', 'Enregistrer ou arrêter / réécouter / réplique précédente ou suivante']]],
   ['Assistant et outils', [[M + ' K', 'Assistant de montage : « monte ma vidéo », « chapitre ma vidéo », « crée des clips TikTok »…'], ['A', 'Outil Sélection'], ['B', 'Outil Lame (coupe là où tu cliques)'], ['N', 'Magnétisme activé / désactivé'], ['G', 'Grille des tiers sur la visionneuse'], ['Double-clic sur un repère', 'Le nommer (chapitres YouTube)']]],
   ['Montage', [['S ou ' + M + ' B', 'Couper à la tête de lecture (l’image et son son détaché)'], ['D', 'Détacher le son du clip (piste audio à part)'], ['⇧ clic / ' + M + ' clic', 'Sélectionner plusieurs clips (détacher, supprimer, vitesse… en une fois)'], [M + ' A', 'Tout sélectionner'], ['Clic droit', 'Menu du clip : détacher le son, image fixe, vitesse, copier…'], ['I / O', 'Début / fin du clip à la tête de lecture'], ['Suppr', 'Supprimer le clip : son détaché retiré avec lui, la suite se recolle'], [M + ' D', 'Dupliquer'], [M + ' [ / ]', 'Déplacer à gauche / droite'], [M + ' C / V', 'Copier / coller un clip'], ['⌥' + M + ' V', 'Coller seulement les effets'], ['M', 'Ajouter un repère'], ['[ / ]', 'Repère précédent / suivant']]],
   ['Fichier et affichage', [[M + ' N / O / S', 'Nouveau / ouvrir / enregistrer'], [M + ' I', 'Importer des médias'], [M + ' E', 'Exporter'], [M + ' Z / ⇧' + M + ' Z', 'Annuler / rétablir'], ['+ / −', 'Zoom de la timeline'], ['⇧ Z', 'Tout afficher'], [M + ' + molette', 'Zoom à la souris'], ['1 … 9', 'Onglets Médias, Effets, Transitions, Titres, Voix, Sons, Musique, Calques, Outils'], ['T', 'Titres'], ['?', 'Cette aide']]],
@@ -4440,6 +4594,7 @@ function afficherAide() {
 }
 document.addEventListener('keydown', e => {
   if (studio) return toucheStudio(e);
+  if (dbl && $('#modal').classList.contains('on') && toucheDoublage(e)) return;
   const tag = (e.target.tagName || '').toLowerCase(), saisie = tag === 'input' && !['range', 'checkbox', 'color'].includes(e.target.type) || tag === 'textarea' || tag === 'select';
   const cmd = e.metaKey || e.ctrlKey, k = e.key, kl = k.length === 1 ? k.toLowerCase() : k;
   if (k === 'Escape') { if (document.getElementById('menuCtx')) { fermerMenu(); return; } if ($('#modal').classList.contains('on') && !$('#barreExp')) fermer(); else if (selObjs.size) { selObjs.clear(); tout(); } return; }
@@ -4447,6 +4602,7 @@ document.addEventListener('keydown', e => {
     const faire = f => { e.preventDefault(); f(); };
     if (kl === 'z') return faire(() => undo(e.shiftKey ? 1 : -1));
     if (kl === 'a') return faire(() => { selObjs = new Set(proj.clips); tout(); aide(`${proj.clips.length} clips sélectionnés : Suppr, D (détacher le son), clic droit…`); });
+    if (kl === 'd' && e.shiftKey) return faire(ouvrirDoublage);
     if (kl === 'b') return faire(couper); if (kl === 'd') return faire(dupliquer); if (kl === 'n') return faire(nouveau); if (kl === 'o') return faire(ouvrirProjet);
     if (kl === 's') return faire(sauver); if (kl === 'i') return faire(() => $('#fichiers').click()); if (kl === 'e') return faire(exporter);
     if (kl === 'k') return faire(() => ouvrirAssistant());

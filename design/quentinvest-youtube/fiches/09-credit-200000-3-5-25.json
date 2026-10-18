@@ -1,0 +1,445 @@
+{
+ "numero": 9,
+ "slug": "credit-200000-3-5-25",
+ "mention": "Exemple pédagogique · pas une offre de crédit · pas un conseil",
+ "titre": "Un crédit de 200 000 € coûte combien en tout ?",
+ "promesse": "Un crédit de 200 000 € sur 25 ans à 3,5 % (exemple) : combien ça coûte en tout ?",
+ "description": "Pico explique le coût d'un crédit : 200 000 € empruntés sur 25 ans à 3,5 % (exemple) font environ 300 374 € à rembourser. La mensualité, le coût des intérêts, la durée, le TAEG, le duel de Léa et Tom et les pièges. Exemple pédagogique, pas une offre de crédit.",
+ "hashtags": "#crédit #taux #économie #apprendre #QuentInvest",
+ "accroche": {
+  "texte": "Emprunter 200 000 €, ça coûte combien en tout ? Pas seulement 200 000 €.",
+  "court": "Emprunter 200 000 €, ça coûte combien en tout ? Pas seulement 200 000 €.",
+  "ecran": {
+   "intro": "200 000 € empruntés sur 25 ans, à 3,5 % par an (exemple)",
+   "avant": "200 000 €",
+   "apres": "≈ 300 374 €",
+   "de": 200000,
+   "a": 300374,
+   "suffixe": " €",
+   "legende": "À rembourser en tout.",
+   "source": "Calcul : mensualité ≈ 1 001,25 € × 300 mois"
+  },
+  "effet": "impact"
+ },
+ "intro": {
+  "texte": "Au programme : le taux et la mensualité, le coût total du crédit, ce qui change avec la durée et le taux, un duel entre Léa et Tom, et les pièges à éviter.",
+  "ecran": {
+   "type": "liste",
+   "titre": "Au programme",
+   "points": [
+    "Taux et mensualité",
+    "Le coût total",
+    "Durée et taux",
+    "Léa contre Tom"
+   ]
+  }
+ },
+ "blocs": [
+  {
+   "section": "Pourquoi ça compte",
+   "texte": "Pourquoi s'intéresser au coût d'un crédit ? Parce qu'on regarde souvent la mensualité, alors que le vrai coût est le total remboursé. Connaître le calcul permet de comparer des offres sans se laisser surprendre.",
+   "ecran": {
+    "type": "message",
+    "titre": "Pourquoi ça compte",
+    "sous": "Le vrai coût, c'est le total remboursé"
+   }
+  },
+  {
+   "texte": "Un crédit, c'est un peu comme louer de l'argent : tu paies un loyer, les intérêts, pour pouvoir l'utiliser tout de suite au lieu d'attendre. Plus tu le gardes longtemps, plus le loyer total est élevé.",
+   "ecran": {
+    "type": "message",
+    "titre": "Louer de l'argent",
+    "sous": "Les intérêts sont le loyer"
+   }
+  },
+  {
+   "section": "Le taux",
+   "texte": "Le taux, c'est le prix de l'argent emprunté : un pourcentage que tu paies à la banque en plus de la somme prêtée.",
+   "court": "Le taux, c'est le prix de l'argent emprunté.",
+   "ecran": {
+    "type": "definition",
+    "mot": "Taux d'intérêt",
+    "texte": "Le prix de l'argent emprunté"
+   }
+  },
+  {
+   "section": "Le calcul",
+   "texte": "Pour 200 000 € sur 25 ans à 3,5 %, la mensualité est d'environ 1 001,25 €. Sur 300 mois, ça fait 300 374 € en tout.",
+   "court": "Mensualité d'environ 1 001,25 €, pendant 300 mois : 300 374 € en tout.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Mensualité ≈ 1 001,25 €",
+     "1 001,25 € × 300 mois ≈ 300 374 €"
+    ],
+    "resultat": "300 374 € − 200 000 € = 100 374 €",
+    "source": "Calcul : mensualité constante, taux mensuel = 3,5 % ÷ 12"
+   }
+  },
+  {
+   "revelation": true,
+   "effet": "impact",
+   "effetT": 2.5,
+   "texte": "Au final, tu rembourses environ 300 374 € : 100 374 € de plus que la somme empruntée. C'est le coût du crédit.",
+   "court": "Au final : 300 374 € remboursés, soit 100 374 € de plus que la somme empruntée.",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "200 000 €",
+     "legende": "Ce que tu empruntes"
+    },
+    "b": {
+     "valeur": "≈ 300 374 €",
+     "de": 200000,
+     "a": 300374,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Ce que tu rembourses en tout"
+    },
+    "source": "Intérêts : 100 374 €"
+   }
+  },
+  {
+   "section": "Première mensualité",
+   "texte": "Dans la première mensualité de 1 001,25 €, 583,33 € partent en intérêts et 417,91 € remboursent le capital. Avec le temps, la part des intérêts diminue et celle du capital augmente.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Intérêts du 1er mois : 583,33 €",
+     "Capital remboursé : 417,91 €"
+    ],
+    "resultat": "Mensualité : 1 001,25 €",
+    "source": "Calcul : 200 000 € × 3,5 % ÷ 12"
+   }
+  },
+  {
+   "texte": "Rapporté à chaque année, les 100 374 € d'intérêts font en moyenne 4 015 € par an, soit 334,58 € par mois en plus de la somme prêtée. C'est le prix du temps que la banque t'accorde.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "100 374 € ÷ 25 ans = 4 015 € par an",
+     "100 374 € ÷ 300 mois = 334,58 €"
+    ],
+    "resultat": "100 374 € au total",
+    "source": "Calcul de la chaîne"
+   }
+  },
+  {
+   "section": "Selon la durée",
+   "texte": "Comparons plusieurs durées. Sur 23 ans : mensualité 1 056 €, coût 91 462 €. Sur 25 ans : 1 001 € et 100 374 €. Sur 30 ans : 898 € et 123 312 €. Plus c'est long, la mensualité baisse, le coût monte.",
+   "ecran": {
+    "type": "tableau",
+    "titre": "200 000 € à 3,5 % (exemple)",
+    "colonnes": [
+     "Durée",
+     "Mensualité",
+     "Coût"
+    ],
+    "lignes": [
+     [
+      "23 ans",
+      "1 056 €",
+      "91 462 €"
+     ],
+     [
+      "25 ans",
+      "1 001 €",
+      "100 374 €"
+     ],
+     [
+      "27 ans",
+      "955 €",
+      "109 438 €"
+     ],
+     [
+      "30 ans",
+      "898 €",
+      "123 312 €"
+     ]
+    ],
+    "surligne": 1
+   }
+  },
+  {
+   "section": "Rembourser plus vite",
+   "texte": "Et si tu rembourses plus vite ? En passant de 25 à 23 ans, tu économises 8 912 € d'intérêts. Mais la mensualité passe de 1 001 € à 1 056 €. C'est un équilibre à trouver.",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "100 374 €",
+     "legende": "Intérêts sur 25 ans"
+    },
+    "b": {
+     "valeur": "≈ 91 462 €",
+     "de": 100374,
+     "a": 91462,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Intérêts sur 23 ans"
+    }
+   }
+  },
+  {
+   "section": "Selon le taux",
+   "texte": "Et selon le taux ? À 2,5 %, le crédit coûte 69 170 €. À 3,5 %, 100 374 €. À 5,5 %, 168 452 €. Un petit écart de taux change beaucoup le coût.",
+   "ecran": {
+    "type": "tableau",
+    "titre": "200 000 € sur 25 ans (exemple)",
+    "colonnes": [
+     "Taux",
+     "Mensualité",
+     "Coût"
+    ],
+    "lignes": [
+     [
+      "2,5 %",
+      "897 €",
+      "69 170 €"
+     ],
+     [
+      "3,5 %",
+      "1 001 €",
+      "100 374 €"
+     ],
+     [
+      "4,5 %",
+      "1 112 €",
+      "133 499 €"
+     ],
+     [
+      "5,5 %",
+      "1 228 €",
+      "168 452 €"
+     ]
+    ],
+    "surligne": 1
+   }
+  },
+  {
+   "texte": "Un seul point de taux en plus : à 4,5 %, le coût passe de 100 374 € à 133 499 €, soit 33 125 € de plus. Un petit écart de taux pèse vraiment sur le coût final.",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "100 374 €",
+     "legende": "Coût à 3,5 %"
+    },
+    "b": {
+     "valeur": "≈ 133 499 €",
+     "de": 100374,
+     "a": 133499,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Coût à 4,5 %"
+    }
+   }
+  },
+  {
+   "texte": "Et si tu empruntes moins ? Avec 160 000 € au lieu de 200 000 €, le coût des intérêts passe de 100 374 € à 80 299 €. Le coût suit la somme empruntée : un apport plus grand fait baisser la facture.",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "100 374 €",
+     "legende": "Intérêts sur 200 000 €"
+    },
+    "b": {
+     "valeur": "≈ 80 299 €",
+     "de": 100374,
+     "a": 80299,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Intérêts sur 160 000 €"
+    }
+   }
+  },
+  {
+   "section": "Léa et Tom",
+   "texte": "Léa emprunte 200 000 € sur 25 ans : 1 001 € par mois. Tom emprunte la même somme sur 28 ans : 935 € par mois. Tom paie moins chaque mois, mais au total 314 025 € contre 300 374 €.",
+   "court": "Léa rembourse sur 25 ans, Tom sur 28 : 300 374 € contre 314 025 € au total.",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "300 374 €",
+     "legende": "Léa, sur 25 ans"
+    },
+    "b": {
+     "valeur": "≈ 314 025 €",
+     "de": 300374,
+     "a": 314025,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Tom, sur 28 ans"
+    }
+   }
+  },
+  {
+   "section": "Le TAEG",
+   "texte": "Le TAEG est le taux qui regroupe le taux d'intérêt et la plupart des frais. Deux offres au même taux peuvent avoir un TAEG différent. C'est le TAEG qu'il faut comparer.",
+   "ecran": {
+    "type": "definition",
+    "mot": "TAEG",
+    "texte": "Le taux d'intérêt, plus la plupart des frais : le chiffre à comparer"
+   }
+  },
+  {
+   "section": "Calcule-le toi-même",
+   "texte": "Pour calculer toi-même, la plupart des banques et des sites proposent un simulateur. Tu entres la somme, le taux et la durée, et il donne la mensualité, comme ici : environ 1 001,25 € par mois sur 300 mois.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Taux mensuel = 3,5 % ÷ 12 ≈ 0,292 %",
+     "300 mensualités"
+    ],
+    "resultat": "Mensualité ≈ 1 001,25 €",
+    "source": "Formule de la mensualité constante"
+   }
+  },
+  {
+   "section": "Petite question",
+   "texte": "Petite question pour toi. Les intérêts représentent quelle part de la somme empruntée ? Mets la vidéo en pause si tu veux réfléchir.",
+   "ecran": {
+    "type": "message",
+    "titre": "Petite question",
+    "sous": "Les intérêts représentent quelle part de la somme empruntée ?"
+   }
+  },
+  {
+   "texte": "Réponse : 50,2 pour cent. Pour 200 000 € empruntés, 100 374 € d'intérêts. Plus le taux et la durée augmentent, plus ce pourcentage monte.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "100 374 € ÷ 200 000 €"
+    ],
+    "resultat": "≈ 50,2 % de la somme",
+    "source": "Calcul de la chaîne"
+   }
+  },
+  {
+   "section": "Vrai ou faux",
+   "texte": "Petite question pour toi. Vrai ou faux : un crédit sur 30 ans coûte-t-il moins cher qu'un crédit sur 25 ans ? Mets la vidéo en pause si tu veux réfléchir.",
+   "ecran": {
+    "type": "message",
+    "titre": "Petite question",
+    "sous": "Vrai ou faux : un crédit sur 30 ans coûte-t-il moins cher qu'un crédit sur 25 ans ?"
+   }
+  },
+  {
+   "texte": "Réponse : faux. Sur 25 ans, les intérêts sont de 100 374 €. Sur 30 ans, ils montent à 123 312 €. La mensualité baisse de 1 001 € à 898 €, mais le coût total augmente.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "25 ans : mensualité 1 001 €",
+     "30 ans : mensualité 898 €"
+    ],
+    "resultat": "Coût : 100 374 € → 123 312 €",
+    "source": "Calcul de la chaîne (exemple)"
+   }
+  },
+  {
+   "section": "Les limites",
+   "texte": "Ce modèle est volontairement simplifié : il ne tient compte ni des impôts, ni des variations d'une année à l'autre, ni de ta situation personnelle. C'est un outil pour comprendre, pas pour prévoir.",
+   "ecran": {
+    "type": "message",
+    "titre": "Un modèle simplifié",
+    "sous": "Pour comprendre, pas pour prévoir"
+   }
+  },
+  {
+   "section": "Ton défi",
+   "texte": "Petit défi pour toi : prends un crédit que tu connais, note le montant, le taux et la durée, puis calcule le coût total. Compare le résultat avec ce que tu imaginais : c'est souvent surprenant.",
+   "ecran": {
+    "type": "message",
+    "titre": "Ton défi",
+    "sous": "Refais le calcul avec tes chiffres"
+   }
+  },
+  {
+   "section": "Avant de signer",
+   "texte": "Avant de signer, trois questions : quel est le TAEG ? Quelle est la durée ? Et quel est le coût total du crédit ? Ce sont les trois chiffres à demander.",
+   "ecran": {
+    "type": "liste",
+    "titre": "Trois chiffres à demander",
+    "points": [
+     [
+      "Le TAEG",
+      "taux et frais"
+     ],
+     [
+      "La durée",
+      "en mois"
+     ],
+     [
+      "Le coût total",
+      "ce que tu rembourses en tout"
+     ]
+    ]
+   }
+  }
+ ],
+ "piege": {
+  "intro": "Attention, grain de sable. Il y a trois erreurs courantes.",
+  "court": "Attention, grain de sable : une petite mensualité peut cacher un crédit très long, donc très cher.",
+  "erreurs": [
+   {
+    "titre": "Ne regarder que la mensualité",
+    "texte": "Un : ne regarder que la mensualité. Une mensualité basse peut cacher une durée longue, donc plus d'intérêts payés."
+   },
+   {
+    "titre": "Oublier le TAEG",
+    "texte": "Deux : oublier les frais annexes. Le TAEG regroupe le taux et la plupart des frais : c'est lui qu'on compare."
+   },
+   {
+    "titre": "Ne pas comparer",
+    "texte": "Trois : ne pas comparer plusieurs offres. Deux crédits avec la même mensualité peuvent avoir un coût total très différent."
+   }
+  ]
+ },
+ "recap": {
+  "texte": "Pour résumer en trois points. Un : un crédit coûte la somme empruntée plus les intérêts. Deux : la durée pèse autant que le taux. Trois : on compare le TAEG et le coût total, pas seulement la mensualité.",
+  "ecran": {
+   "type": "liste",
+   "titre": "À retenir",
+   "points": [
+    [
+     "Capital plus intérêts",
+     "le coût total"
+    ],
+    [
+     "La durée",
+     "pèse autant que le taux"
+    ],
+    [
+     "TAEG et coût total",
+     "pas seulement la mensualité"
+    ]
+   ]
+  }
+ },
+ "resume": {
+  "texte": "En une phrase : un crédit coûte la somme empruntée plus les intérêts, et la durée pèse autant que le taux.",
+  "court": "En une phrase : un crédit coûte la somme empruntée plus les intérêts, et la durée compte autant que le taux."
+ },
+ "sources": [
+  "S1 · Formule de la mensualité constante : capital × i ÷ (1 − (1 + i)^−n), i = taux mensuel (calcul de la chaîne)",
+  "S2 · Calculs, exemple de 200 000 € à 3,5 % sur 25 ans : mensualité ≈ 1 001,25 € ; total ≈ 300 374 € ; intérêts ≈ 100 374 €"
+ ],
+ "miniature": {
+  "lignes": [
+   "UN CRÉDIT",
+   "COÛTE",
+   "COMBIEN ?"
+  ],
+  "accent": "COMBIEN",
+  "bas": [
+   "200 000 €",
+   "→ 300 374 €"
+  ]
+ },
+ "musique": "documentaire-doux",
+ "musiqueRevelation": "corporate-lumineux",
+ "question": "Et toi, tu avais déjà fait ce calcul ?",
+ "suite": {
+  "titre": "Un nouveau sujet d'économie",
+  "texte": "La prochaine fois : un nouveau sujet."
+ },
+ "sourcesExternes": false
+}

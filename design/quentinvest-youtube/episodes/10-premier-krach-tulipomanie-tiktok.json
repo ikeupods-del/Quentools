@@ -1,0 +1,134 @@
+{
+ "titre": "1637 : un bulbe de tulipe à 5 000 florins, puis l'effondrement. Vrai ou exagéré ? (version TikTok)",
+ "chaine": "QuentInvest",
+ "mention": "Vulgarisation historique · pas un conseil en investissement",
+ "style": 2,
+ "voix": {
+  "moteur": "kokoro",
+  "sid": 30,
+  "vitesse": 0.82,
+  "hauteur": 0.78
+ },
+ "sources": [
+  "S1 · Wikipédia, « Tulipomanie » (fr) et « Tulip mania » (en)",
+  "S2 · Anne Goldgar, Tulipmania: Money, Honor, and Knowledge in the Dutch Golden Age, University of Chicago Press, 2007 (chiffres d'après des recensions)",
+  "S3 · Charles Mackay, Extraordinary Popular Delusions and the Madness of Crowds, 1841",
+  "S4 · Calculs de la chaîne : 5 000 ÷ 300 ≈ 17 ; 100 × 1,5⁵ ≈ 759 (ordres de grandeur)"
+ ],
+ "miniature": {
+  "lignes": [
+   "LE PREMIER",
+   "KRACH DE",
+   "L'HISTOIRE ?"
+  ],
+  "accent": "KRACH",
+  "bas": [
+   "1637",
+   "→ krach"
+  ]
+ },
+ "format": "vertical",
+ "musique": "corporate-lumineux",
+ "scenes": [
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "ecran": {
+    "type": "accroche",
+    "intro": "Provinces-Unies, 1637 : un artisan qualifié gagne environ 300 florins par an.",
+    "avant": "300 florins",
+    "apres": "5 000 florins",
+    "de": 300,
+    "a": 5000,
+    "suffixe": " florins",
+    "legende": "Le record documenté pour un bulbe de tulipe.",
+    "source": "S2 · d'après l'historienne Anne Goldgar"
+   },
+   "effet": "hausse",
+   "effetT": 1,
+   "texte": "En 1637, un bulbe de tulipe à 5 000 florins : le premier krach de l'histoire ?"
+  },
+  {
+   "expr": "content",
+   "geste": "hoche",
+   "ecran": {
+    "type": "abonne",
+    "texte": "Rejoins la colonie",
+    "sous": "Une vidéo d'économie simple, régulièrement."
+   },
+   "texte": "Salut la colonie ! Abonne-toi pour ne rien rater."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "≈ 300 florins",
+     "legende": "Revenu annuel d'un artisan qualifié"
+    },
+    "b": {
+     "valeur": "5 000 florins",
+     "de": 300,
+     "a": 5000,
+     "suffixe": " florins",
+     "legende": "Prix record documenté (cas isolé)"
+    },
+    "source": "S2 · d'après les recensions de Goldgar (à vérifier dans l'ouvrage)"
+   },
+   "effet": "impact",
+   "effetT": 3,
+   "texte": "Record documenté : 5 000 florins pour un bulbe, contre 300 par an pour un artisan."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "message",
+    "titre": "Février 1637",
+    "sous": "Les prix s'effondrent, le commerce s'arrête",
+    "source": "S1 · Wikipédia, Tulip mania"
+   },
+   "texte": "Début février 1637, les prix des contrats s'effondrent et le commerce s'arrête."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "message",
+    "titre": "Faux, ou très exagéré",
+    "sous": "Une petite communauté touchée, pas toute la société"
+   },
+   "texte": "Vrai ou faux : tous les Néerlandais se sont ruinés ? Faux, ou très exagéré : la crise a touché une petite communauté."
+  },
+  {
+   "expr": "inquiet",
+   "geste": "penche",
+   "ecran": {
+    "type": "message",
+    "titre": "Grain de sable",
+    "sous": "Ce qui est souvent mal compris"
+   },
+   "texte": "Attention, grain de sable : une histoire spectaculaire n'est pas forcément vraie."
+  },
+  {
+   "expr": "content",
+   "ecran": {
+    "type": "resume",
+    "titre": "En une phrase",
+    "texte": "Un prix peut s'envoler quand chacun espère revendre plus cher."
+   },
+   "texte": "En une phrase : un prix peut s'envoler quand chacun espère revendre plus cher."
+  },
+  {
+   "expr": "curieux",
+   "geste": "hoche",
+   "sortie": true,
+   "ecran": {
+    "type": "suite",
+    "label": "Vidéo complète sur la chaîne",
+    "titre": "Le premier krach de l'histoire ? La tulipomanie",
+    "sous": "Et toi, quelle histoire d'argent aimerais-tu qu'on vérifie ensuite ? Dis-le en commentaire."
+   },
+   "texte": "Vidéo complète sur la chaîne. Et toi, quelle histoire d'argent aimerais-tu qu'on vérifie ensuite ? Dis-le en commentaire."
+  }
+ ]
+}

@@ -1,0 +1,537 @@
+{
+ "titre": "Un crédit de 10 000 € coûte combien en tout ?",
+ "chaine": "QuentInvest",
+ "mention": "Exemple pédagogique · pas une offre de crédit · pas un conseil",
+ "style": 2,
+ "voix": {
+  "moteur": "kokoro",
+  "sid": 30,
+  "vitesse": 0.82,
+  "hauteur": 0.78
+ },
+ "sources": [
+  "S1 · Formule de la mensualité constante : capital × i ÷ (1 − (1 + i)^−n), i = taux mensuel (calcul de la chaîne)",
+  "S2 · Calculs, exemple de 10 000 € à 4 % sur 5 ans : mensualité ≈ 184,17 € ; total ≈ 11 050 € ; intérêts ≈ 1 050 €"
+ ],
+ "miniature": {
+  "lignes": [
+   "UN CRÉDIT",
+   "COÛTE",
+   "COMBIEN ?"
+  ],
+  "accent": "COMBIEN",
+  "bas": [
+   "10 000 €",
+   "→ 11 050 €"
+  ]
+ },
+ "musique": "documentaire-doux",
+ "suite": "100 € par mois pendant 20 ans : combien ça fait ?",
+ "scenes": [
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "section": "La question",
+   "ecran": {
+    "type": "accroche",
+    "intro": "10 000 € empruntés sur 5 ans, à 4 % par an (exemple)",
+    "avant": "10 000 €",
+    "apres": "≈ 11 050 €",
+    "de": 10000,
+    "a": 11050,
+    "suffixe": " €",
+    "legende": "À rembourser en tout.",
+    "source": "Calcul : mensualité ≈ 184,17 € × 60 mois"
+   },
+   "effet": "impact",
+   "effetT": 1,
+   "texte": "Emprunter 10 000 €, ça coûte combien en tout ? Pas seulement 10 000 €."
+  },
+  {
+   "expr": "content",
+   "geste": "hoche",
+   "ecran": {
+    "type": "abonne",
+    "texte": "Rejoins la colonie",
+    "sous": "Une vidéo d'économie simple, régulièrement."
+   },
+   "texte": "Salut la colonie ! Abonne-toi pour ne rien rater."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "liste",
+    "titre": "Au programme",
+    "points": [
+     "Taux et mensualité",
+     "Le coût total",
+     "Durée et taux",
+     "Léa contre Tom"
+    ]
+   },
+   "texte": "Au programme : le taux et la mensualité, le coût total du crédit, ce qui change avec la durée et le taux, un duel entre Léa et Tom, et les pièges à éviter."
+  },
+  {
+   "expr": "curieux",
+   "section": "Pourquoi ça compte",
+   "ecran": {
+    "type": "message",
+    "titre": "Pourquoi ça compte",
+    "sous": "Le vrai coût, c'est le total remboursé"
+   },
+   "texte": "Pourquoi s'intéresser au coût d'un crédit ? Parce qu'on regarde souvent la mensualité, alors que le vrai coût est le total remboursé. Connaître le calcul permet de comparer des offres sans se laisser surprendre."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "message",
+    "titre": "Louer de l'argent",
+    "sous": "Les intérêts sont le loyer"
+   },
+   "texte": "Un crédit, c'est un peu comme louer de l'argent : tu paies un loyer, les intérêts, pour pouvoir l'utiliser tout de suite au lieu d'attendre. Plus tu le gardes longtemps, plus le loyer total est élevé."
+  },
+  {
+   "expr": "neutre",
+   "geste": "pointe",
+   "section": "Le taux",
+   "ecran": {
+    "type": "definition",
+    "mot": "Taux d'intérêt",
+    "texte": "Le prix de l'argent emprunté"
+   },
+   "texte": "Le taux, c'est le prix de l'argent emprunté : un pourcentage que tu paies à la banque en plus de la somme prêtée."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "section": "Le calcul",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Mensualité ≈ 184,17 €",
+     "184,17 € × 60 mois ≈ 11 050 €"
+    ],
+    "resultat": "11 050 € − 10 000 € = 1 050 €",
+    "source": "Calcul : mensualité constante, taux mensuel = 4 % ÷ 12"
+   },
+   "texte": "Pour 10 000 € sur 5 ans à 4 %, la mensualité est d'environ 184,17 €. Sur 60 mois, ça fait 11 050 € en tout."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "10 000 €",
+     "legende": "Ce que tu empruntes"
+    },
+    "b": {
+     "valeur": "≈ 11 050 €",
+     "de": 10000,
+     "a": 11050,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Ce que tu rembourses en tout"
+    },
+    "source": "Intérêts : 1 050 €"
+   },
+   "effet": "impact",
+   "effetT": 2.5,
+   "texte": "Au final, tu rembourses environ 11 050 € : 1 050 € de plus que la somme empruntée. C'est le coût du crédit."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "section": "Première mensualité",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Intérêts du 1er mois : 33,33 €",
+     "Capital remboursé : 150,83 €"
+    ],
+    "resultat": "Mensualité : 184,17 €",
+    "source": "Calcul : 10 000 € × 4 % ÷ 12"
+   },
+   "texte": "Dans la première mensualité de 184,17 €, 33,33 € partent en intérêts et 150,83 € remboursent le capital. Avec le temps, la part des intérêts diminue et celle du capital augmente."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "1 050 € ÷ 5 ans = 210 € par an",
+     "1 050 € ÷ 60 mois = 17,50 €"
+    ],
+    "resultat": "1 050 € au total",
+    "source": "Calcul de la chaîne"
+   },
+   "texte": "Rapporté à chaque année, les 1 050 € d'intérêts font en moyenne 210 € par an, soit 17,50 € par mois en plus de la somme prêtée. C'est le prix du temps que la banque t'accorde."
+  },
+  {
+   "expr": "neutre",
+   "section": "Selon la durée",
+   "ecran": {
+    "type": "tableau",
+    "titre": "10 000 € à 4 % (exemple)",
+    "colonnes": [
+     "Durée",
+     "Mensualité",
+     "Coût"
+    ],
+    "lignes": [
+     [
+      "3 ans",
+      "295 €",
+      "629 €"
+     ],
+     [
+      "5 ans",
+      "184 €",
+      "1 050 €"
+     ],
+     [
+      "7 ans",
+      "137 €",
+      "1 482 €"
+     ],
+     [
+      "10 ans",
+      "101 €",
+      "2 149 €"
+     ]
+    ],
+    "surligne": 1
+   },
+   "texte": "Comparons plusieurs durées. Sur 3 ans : mensualité 295 €, coût 629 €. Sur 5 ans : 184 € et 1 050 €. Sur 10 ans : 101 € et 2 149 €. Plus c'est long, la mensualité baisse, le coût monte."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "section": "Rembourser plus vite",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "1 050 €",
+     "legende": "Intérêts sur 5 ans"
+    },
+    "b": {
+     "valeur": "≈ 629 €",
+     "de": 1050,
+     "a": 629,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Intérêts sur 3 ans"
+    }
+   },
+   "texte": "Et si tu rembourses plus vite ? En passant de 5 à 3 ans, tu économises 421 € d'intérêts. Mais la mensualité passe de 184 € à 295 €. C'est un équilibre à trouver."
+  },
+  {
+   "expr": "curieux",
+   "section": "Selon le taux",
+   "ecran": {
+    "type": "tableau",
+    "titre": "10 000 € sur 5 ans (exemple)",
+    "colonnes": [
+     "Taux",
+     "Mensualité",
+     "Coût"
+    ],
+    "lignes": [
+     [
+      "3 %",
+      "180 €",
+      "781 €"
+     ],
+     [
+      "4 %",
+      "184 €",
+      "1 050 €"
+     ],
+     [
+      "5 %",
+      "189 €",
+      "1 323 €"
+     ],
+     [
+      "6 %",
+      "193 €",
+      "1 600 €"
+     ]
+    ],
+    "surligne": 1
+   },
+   "texte": "Et selon le taux ? À 3 %, le crédit coûte 781 €. À 4 %, 1 050 €. À 6 %, 1 600 €. Un petit écart de taux change beaucoup le coût."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "1 050 €",
+     "legende": "Coût à 4 %"
+    },
+    "b": {
+     "valeur": "≈ 1 323 €",
+     "de": 1050,
+     "a": 1323,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Coût à 5 %"
+    }
+   },
+   "texte": "Un seul point de taux en plus : à 5 %, le coût passe de 1 050 € à 1 323 €, soit 273 € de plus. Un petit écart de taux pèse vraiment sur le coût final."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "1 050 €",
+     "legende": "Intérêts sur 10 000 €"
+    },
+    "b": {
+     "valeur": "≈ 840 €",
+     "de": 1050,
+     "a": 840,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Intérêts sur 8 000 €"
+    }
+   },
+   "texte": "Et si tu empruntes moins ? Avec 8 000 € au lieu de 10 000 €, le coût des intérêts passe de 1 050 € à 840 €. Le coût suit la somme empruntée : un apport plus grand fait baisser la facture."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "section": "Léa et Tom",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "11 050 €",
+     "legende": "Léa, sur 5 ans"
+    },
+    "b": {
+     "valeur": "≈ 11 702 €",
+     "de": 11050,
+     "a": 11702,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Tom, sur 8 ans"
+    }
+   },
+   "texte": "Léa emprunte 10 000 € sur 5 ans : 184 € par mois. Tom emprunte la même somme sur 8 ans : 122 € par mois. Tom paie moins chaque mois, mais au total 11 702 € contre 11 050 €."
+  },
+  {
+   "expr": "neutre",
+   "geste": "pointe",
+   "section": "Le TAEG",
+   "ecran": {
+    "type": "definition",
+    "mot": "TAEG",
+    "texte": "Le taux d'intérêt, plus la plupart des frais : le chiffre à comparer"
+   },
+   "texte": "Le TAEG est le taux qui regroupe le taux d'intérêt et la plupart des frais. Deux offres au même taux peuvent avoir un TAEG différent. C'est le TAEG qu'il faut comparer."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "section": "Calcule-le toi-même",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Taux mensuel = 4 % ÷ 12 ≈ 0,333 %",
+     "60 mensualités"
+    ],
+    "resultat": "Mensualité ≈ 184,17 €",
+    "source": "Formule de la mensualité constante"
+   },
+   "texte": "Pour calculer toi-même, la plupart des banques et des sites proposent un simulateur. Tu entres la somme, le taux et la durée, et il donne la mensualité, comme ici : environ 184,17 € par mois sur 60 mois."
+  },
+  {
+   "expr": "neutre",
+   "section": "Petite question",
+   "ecran": {
+    "type": "message",
+    "titre": "Petite question",
+    "sous": "Les intérêts représentent quelle part de la somme empruntée ?"
+   },
+   "texte": "Petite question pour toi. Les intérêts représentent quelle part de la somme empruntée ? Mets la vidéo en pause si tu veux réfléchir."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "1 050 € ÷ 10 000 €"
+    ],
+    "resultat": "≈ 10,5 % de la somme",
+    "source": "Calcul de la chaîne"
+   },
+   "texte": "Réponse : 10,5 pour cent. Pour 10 000 € empruntés, 1 050 € d'intérêts. Plus le taux et la durée augmentent, plus ce pourcentage monte."
+  },
+  {
+   "expr": "neutre",
+   "section": "Vrai ou faux",
+   "ecran": {
+    "type": "message",
+    "titre": "Petite question",
+    "sous": "Vrai ou faux : un crédit sur 10 ans coûte-t-il moins cher qu'un crédit sur 5 ans ?"
+   },
+   "texte": "Petite question pour toi. Vrai ou faux : un crédit sur 10 ans coûte-t-il moins cher qu'un crédit sur 5 ans ? Mets la vidéo en pause si tu veux réfléchir."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "5 ans : mensualité 184 €",
+     "10 ans : mensualité 101 €"
+    ],
+    "resultat": "Coût : 1 050 € → 2 149 €",
+    "source": "Calcul de la chaîne (exemple)"
+   },
+   "texte": "Réponse : faux. Sur 5 ans, les intérêts sont de 1 050 €. Sur 10 ans, ils montent à 2 149 €. La mensualité baisse de 184 € à 101 €, mais le coût total augmente."
+  },
+  {
+   "expr": "neutre",
+   "section": "Les limites",
+   "ecran": {
+    "type": "message",
+    "titre": "Un modèle simplifié",
+    "sous": "Pour comprendre, pas pour prévoir"
+   },
+   "texte": "Ce modèle est volontairement simplifié : il ne tient compte ni des impôts, ni des variations d'une année à l'autre, ni de ta situation personnelle. C'est un outil pour comprendre, pas pour prévoir."
+  },
+  {
+   "expr": "neutre",
+   "section": "Ton défi",
+   "ecran": {
+    "type": "message",
+    "titre": "Ton défi",
+    "sous": "Refais le calcul avec tes chiffres"
+   },
+   "texte": "Petit défi pour toi : prends un crédit que tu connais, note le montant, le taux et la durée, puis calcule le coût total. Compare le résultat avec ce que tu imaginais : c'est souvent surprenant."
+  },
+  {
+   "expr": "curieux",
+   "section": "Avant de signer",
+   "ecran": {
+    "type": "liste",
+    "titre": "Trois chiffres à demander",
+    "points": [
+     [
+      "Le TAEG",
+      "taux et frais"
+     ],
+     [
+      "La durée",
+      "en mois"
+     ],
+     [
+      "Le coût total",
+      "ce que tu rembourses en tout"
+     ]
+    ]
+   },
+   "texte": "Avant de signer, trois questions : quel est le TAEG ? Quelle est la durée ? Et quel est le coût total du crédit ? Ce sont les trois chiffres à demander."
+  },
+  {
+   "expr": "inquiet",
+   "section": "Le piège",
+   "ecran": {
+    "type": "message",
+    "titre": "Grain de sable",
+    "sous": "Ce qui est souvent mal compris"
+   },
+   "texte": "Attention, grain de sable. Il y a trois erreurs courantes."
+  },
+  {
+   "expr": "inquiet",
+   "ecran": {
+    "type": "erreur",
+    "numero": 1,
+    "titre": "Ne regarder que la mensualité"
+   },
+   "texte": "Un : ne regarder que la mensualité. Une mensualité basse peut cacher une durée longue, donc plus d'intérêts payés."
+  },
+  {
+   "expr": "inquiet",
+   "ecran": {
+    "type": "erreur",
+    "numero": 2,
+    "titre": "Oublier le TAEG"
+   },
+   "texte": "Deux : oublier les frais annexes. Le TAEG regroupe le taux et la plupart des frais : c'est lui qu'on compare."
+  },
+  {
+   "expr": "inquiet",
+   "ecran": {
+    "type": "erreur",
+    "numero": 3,
+    "titre": "Ne pas comparer"
+   },
+   "texte": "Trois : ne pas comparer plusieurs offres. Deux crédits avec la même mensualité peuvent avoir un coût total très différent."
+  },
+  {
+   "expr": "content",
+   "section": "À retenir",
+   "ecran": {
+    "type": "liste",
+    "titre": "À retenir",
+    "points": [
+     [
+      "Capital plus intérêts",
+      "le coût total"
+     ],
+     [
+      "La durée",
+      "pèse autant que le taux"
+     ],
+     [
+      "TAEG et coût total",
+      "pas seulement la mensualité"
+     ]
+    ]
+   },
+   "texte": "Pour résumer en trois points. Un : un crédit coûte la somme empruntée plus les intérêts. Deux : la durée pèse autant que le taux. Trois : on compare le TAEG et le coût total, pas seulement la mensualité."
+  },
+  {
+   "expr": "content",
+   "section": "En une phrase",
+   "ecran": {
+    "type": "resume",
+    "titre": "En une phrase",
+    "texte": "Un crédit coûte la somme empruntée plus les intérêts, et la durée pèse autant que le taux."
+   },
+   "texte": "En une phrase : un crédit coûte la somme empruntée plus les intérêts, et la durée pèse autant que le taux."
+  },
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "ecran": {
+    "type": "suite",
+    "label": "Prochain épisode",
+    "titre": "100 € par mois pendant 20 ans : combien ça fait ?",
+    "sous": "Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ? Dis-le en commentaire."
+   },
+   "texte": "La prochaine fois : 100 € par mois pendant 20 ans : combien ça fait ? Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ? Dis-le en commentaire."
+  },
+  {
+   "expr": "content",
+   "ecran": {
+    "type": "fin"
+   },
+   "sortie": true,
+   "texte": "Rappel : vulgarisation, pas un conseil en investissement. Un grain après l'autre. À bientôt dans la fourmilière !"
+  }
+ ],
+ "musiqueRevelation": {
+  "id": "corporate-lumineux",
+  "scene": 7
+ }
+}

@@ -1,0 +1,117 @@
+{
+ "titre": "5 000 € dans un tiroir pendant 15 ans (hypothèse : 3 % d'inflation par an) : que reste-t-il ? (version TikTok)",
+ "chaine": "QuentInvest",
+ "mention": "Vulgarisation · pas un conseil en investissement",
+ "style": 2,
+ "voix": {
+  "moteur": "kokoro",
+  "sid": 30,
+  "vitesse": 0.82,
+  "hauteur": 0.78
+ },
+ "sources": [
+  "S1 · Calcul de la chaîne : 5 000 € ÷ 1,03¹⁵ ≈ 3 209 € (hypothèse : 3 % d'inflation par an)",
+  "S2 · Exemple chiffré (hypothèse) : 1,025 ÷ 1,03 ≈ 0,995"
+ ],
+ "miniature": {
+  "lignes": [
+   "TON ARGENT",
+   "PERD SA",
+   "VALEUR ?"
+  ],
+  "accent": "VALEUR",
+  "bas": [
+   "5 000 €",
+   "→ 3 209 €"
+  ]
+ },
+ "format": "vertical",
+ "musique": "corporate-lumineux",
+ "scenes": [
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "ecran": {
+    "type": "accroche",
+    "intro": "5 000 € dans un tiroir pendant 15 ans (hypothèse : 3 % d'inflation par an)",
+    "avant": "5 000 €",
+    "apres": "≈ 3 209 €",
+    "de": 5000,
+    "a": 3209,
+    "suffixe": " €",
+    "legende": "Tu n'as rien dépensé.",
+    "source": "Calcul : 5 000 € ÷ 1,03¹⁵ ≈ 3 209 €"
+   },
+   "effet": "baisse",
+   "effetT": 1,
+   "texte": "5 000 € dans un tiroir pendant 15 ans : combien te reste-t-il vraiment ?"
+  },
+  {
+   "expr": "content",
+   "geste": "hoche",
+   "ecran": {
+    "type": "abonne",
+    "texte": "Rejoins la colonie",
+    "sous": "Une vidéo d'économie simple, régulièrement."
+   },
+   "texte": "Salut la colonie ! Abonne-toi pour ne rien rater."
+  },
+  {
+   "expr": "neutre",
+   "geste": "pointe",
+   "ecran": {
+    "type": "definition",
+    "mot": "Pouvoir d'achat",
+    "texte": "Ce que tu peux acheter avec une somme d'argent"
+   },
+   "texte": "Le piège : le pouvoir d'achat. Pas ton solde, mais ce que tu peux acheter."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "courbe",
+    "capital": 5000,
+    "taux": 3,
+    "annees": 15,
+    "etiquetteAffichee": "5 000 € sur le compte",
+    "etiquetteReelle": "≈ 3 209 € de pouvoir d'achat",
+    "source": "Hypothèse : 3 % d'inflation par an"
+   },
+   "effet": "baisse",
+   "effetT": 6,
+   "texte": "15 ans plus tard, 5 000 € sur le compte n'achètent plus que 3 209 €."
+  },
+  {
+   "expr": "inquiet",
+   "geste": "penche",
+   "ecran": {
+    "type": "message",
+    "titre": "Grain de sable",
+    "sous": "Ce qui est souvent mal compris"
+   },
+   "texte": "Attention, grain de sable : un solde qui ne baisse pas ne veut pas dire que tu n'as rien perdu."
+  },
+  {
+   "expr": "content",
+   "ecran": {
+    "type": "resume",
+    "titre": "En une phrase",
+    "texte": "Le chiffre sur ton compte ne dit pas ce que tu peux acheter."
+   },
+   "texte": "En une phrase : le chiffre sur ton compte ne dit pas ce que tu peux acheter."
+  },
+  {
+   "expr": "curieux",
+   "geste": "hoche",
+   "sortie": true,
+   "ecran": {
+    "type": "suite",
+    "label": "Vidéo complète sur la chaîne",
+    "titre": "5 000 € dans un tiroir pendant 15 ans : que reste-t-il ?",
+    "sous": "Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ? Dis-le en commentaire."
+   },
+   "texte": "Vidéo complète sur la chaîne. Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ? Dis-le en commentaire."
+  }
+ ]
+}

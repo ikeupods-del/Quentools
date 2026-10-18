@@ -1,0 +1,123 @@
+{
+ "titre": "1,5 % de frais par an sur 25 ans (hypothèse : 5 % avant frais) : combien ça coûte ? (version TikTok)",
+ "chaine": "QuentInvest",
+ "mention": "Vulgarisation · pas un conseil en investissement",
+ "style": 2,
+ "voix": {
+  "moteur": "kokoro",
+  "sid": 30,
+  "vitesse": 0.82,
+  "hauteur": 0.78
+ },
+ "sources": [
+  "S1 · Calculs de la chaîne (hypothèses : 5 % par an avant frais, 1,5 % de frais par an) : 10 000 € × 1,050²⁵ ≈ 33 864 € ; 10 000 € × 1,035²⁵ ≈ 23 632 €"
+ ],
+ "miniature": {
+  "lignes": [
+   "LES FRAIS",
+   "COÛTENT",
+   "CHER ?"
+  ],
+  "accent": "CHER",
+  "bas": [
+   "33 864 €",
+   "→ 23 632 €"
+  ]
+ },
+ "format": "vertical",
+ "musique": "corporate-lumineux",
+ "scenes": [
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "ecran": {
+    "type": "accroche",
+    "intro": "10 000 € pendant 25 ans, 5 % par an avant frais (hypothèse)",
+    "avant": "33 864 €",
+    "apres": "≈ 23 632 €",
+    "de": 33864,
+    "a": 23632,
+    "suffixe": " €",
+    "legende": "Avec 1,5 % de frais par an.",
+    "source": "Calcul : 10 000 € × 1,035²⁵ ≈ 23 632 €"
+   },
+   "effet": "baisse",
+   "effetT": 1,
+   "texte": "1,5 % de frais par an, ça paraît peu. Sur 25 ans, combien ça coûte ?"
+  },
+  {
+   "expr": "content",
+   "geste": "hoche",
+   "ecran": {
+    "type": "abonne",
+    "texte": "Rejoins la colonie",
+    "sous": "Une vidéo d'économie simple, régulièrement."
+   },
+   "texte": "Salut la colonie ! Abonne-toi pour ne rien rater."
+  },
+  {
+   "expr": "neutre",
+   "geste": "pointe",
+   "ecran": {
+    "type": "definition",
+    "mot": "Frais annuels",
+    "texte": "Un pourcentage prélevé chaque année sur ton capital"
+   },
+   "texte": "Frais annuels : un pourcentage prélevé chaque année sur ton capital."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "33 864 €",
+     "legende": "Sans frais"
+    },
+    "b": {
+     "valeur": "≈ 23 632 €",
+     "de": 33864,
+     "a": 23632,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Avec 1,5 % de frais par an"
+    },
+    "source": "Écart : 10 231 €"
+   },
+   "effet": "baisse",
+   "effetT": 2.5,
+   "texte": "25 ans plus tard : 33 864 € sans frais, 23 632 € avec 1,5 % de frais."
+  },
+  {
+   "expr": "inquiet",
+   "geste": "penche",
+   "ecran": {
+    "type": "message",
+    "titre": "Grain de sable",
+    "sous": "Ce qui est souvent mal compris"
+   },
+   "texte": "Attention, grain de sable : un petit pourcentage répété chaque année pèse lourd, et le moins cher n'est pas toujours le meilleur."
+  },
+  {
+   "expr": "content",
+   "ecran": {
+    "type": "resume",
+    "titre": "En une phrase",
+    "texte": "Un petit pourcentage de frais, chaque année, peut avaler une grande part des gains."
+   },
+   "texte": "En une phrase : un petit pourcentage de frais, chaque année, peut avaler une grande part des gains."
+  },
+  {
+   "expr": "curieux",
+   "geste": "hoche",
+   "sortie": true,
+   "ecran": {
+    "type": "suite",
+    "label": "Vidéo complète sur la chaîne",
+    "titre": "1,5 % de frais par an : combien ça coûte sur 25 ans ?",
+    "sous": "Et toi, quel chiffre t'a le plus surpris ? Dis-le en commentaire."
+   },
+   "texte": "Vidéo complète sur la chaîne. Et toi, quel chiffre t'a le plus surpris ? Dis-le en commentaire."
+  }
+ ]
+}

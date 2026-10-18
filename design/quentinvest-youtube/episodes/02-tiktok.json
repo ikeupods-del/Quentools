@@ -1,0 +1,34 @@
+{
+ "titre": "1 000 € dans un tiroir : que reste-t-il ? (version TikTok)",
+ "chaine": "QuentInvest",
+ "mention": "Vulgarisation · pas un conseil en investissement",
+ "musique": "corporate-lumineux",
+ "format": "vertical",
+ "style": 2,
+ "voix": { "moteur": "kokoro", "sid": 30, "vitesse": 0.82, "hauteur": 0.78 },
+ "sources": [
+  "S1 · Insee, indice des prix à la consommation, moyennes annuelles 2022, 2023, 2024",
+  "S2 · Calcul QuentInvest : 1 000 ÷ 1,126 ≈ 888 €",
+  "S3 · Exemples chiffrés (hypothèses) : 1 000 ÷ 1,02¹⁰ ≈ 820 € ; 1,03 ÷ 1,02 ≈ 1,01"
+ ],
+ "scenes": [
+  { "expr": "curieux", "geste": "penche", "ecran": { "type": "accroche", "intro": "Mille euros dans un tiroir, pendant dix ans.", "avant": "1 000 €", "apres": "≈ 820 €", "de": 1000, "a": 820, "suffixe": " €", "legende": "Tu n'as rien dépensé.", "source": "Exemple chiffré (hypothèse : 2 % d'inflation par an)" }, "effet": "baisse", "effetT": 1.0,
+    "texte": "Mille euros dans un tiroir pendant dix ans : combien te reste-t-il vraiment ?" },
+  { "expr": "content", "geste": "hoche", "ecran": { "type": "abonne", "texte": "Rejoins la colonie", "sous": "Une vidéo d'économie simple, régulièrement." },
+    "texte": "Salut la colonie ! Abonne-toi pour ne rien rater." },
+  { "expr": "neutre", "geste": "pointe", "ecran": { "type": "definition", "mot": "Pouvoir d'achat", "texte": "Ce que tu peux acheter avec ton argent" },
+    "texte": "Le piège : le pouvoir d'achat. Pas ton solde, mais ce que tu peux acheter." },
+  { "expr": "surpris", "ecran": { "type": "duo", "a": { "valeur": "1 000 €", "legende": "Sur ton compte : rien n'a bougé" }, "b": { "valeur": "≈ 888 €", "de": 1000, "a": 888, "prefixe": "≈ ", "suffixe": " €", "legende": "Ce que ça achète, comparé à avant" }, "source": "Insee 2022-2024 : prix ≈ +12,6 %" }, "effet": "baisse", "effetT": 2.6,
+    "texte": "En trois ans, les prix ont monté de plus de douze pour cent. Mille euros n'achètent plus que huit cent quatre-vingt-huit euros d'avant." },
+  { "expr": "curieux", "geste": "pointe", "ecran": { "type": "courbe", "capital": 1000, "taux": 2, "annees": 10, "etiquetteAffichee": "1 000 € sur le compte", "etiquetteReelle": "≈ 820 € de pouvoir d'achat", "source": "Hypothèse : 2 % d'inflation par an" },
+    "texte": "Sur dix ans, avec deux pour cent d'inflation par an, la somme ne bouge pas. Mais elle n'achète plus que huit cent vingt euros environ." },
+  { "expr": "neutre", "ecran": { "type": "taux", "gain": { "nom": "Intérêts", "valeur": "3 %" }, "inflation": { "nom": "Inflation", "valeur": "2 %" }, "reel": { "nom": "Gain réel", "valeur": "≈ 1 %" }, "legende": "Exemple chiffré, pas un taux réel", "source": "Hypothèse : 1,03 ÷ 1,02 ≈ 1,01" }, "effet": "succes", "effetT": 5.2,
+    "texte": "Un compte à trois pour cent, face à deux pour cent d'inflation : environ un pour cent de gain réel." },
+  { "expr": "inquiet", "geste": "penche", "ecran": { "type": "message", "titre": "Grain de sable", "sous": "Intérêts plus bas que l'inflation : le chiffre grossit, mais il achète moins" },
+    "texte": "Attention, grain de sable : si l'intérêt est plus bas que l'inflation, ton argent grossit, mais il achète moins." },
+  { "expr": "content", "ecran": { "type": "resume", "titre": "En une phrase", "texte": "Le chiffre sur ton compte ne dit pas ce que tu peux acheter." },
+    "texte": "En une phrase : le chiffre sur ton compte ne dit pas ce que tu peux acheter." },
+  { "expr": "curieux", "geste": "hoche", "ecran": { "type": "suite", "label": "Vidéo complète sur la chaîne", "titre": "Que fait l'inflation à ton argent ?", "sous": "Et toi, tu laisses ton argent dormir ? Dis-le en commentaire." }, "sortie": true,
+    "texte": "Vidéo complète sur la chaîne. Et toi, tu laisses ton argent dormir ? Dis-le en commentaire." }
+ ]
+}

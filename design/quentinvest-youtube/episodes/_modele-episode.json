@@ -1,0 +1,33 @@
+{
+ "titre": "Titre de l'épisode ?",
+ "chaine": "QuentInvest",
+ "mention": "Vulgarisation · pas un conseil en investissement",
+ "musique": "documentaire-doux",
+ "style": 2,
+ "voix": { "moteur": "kokoro", "sid": 30, "vitesse": 0.82, "hauteur": 0.78 },
+ "sources": [
+  "S1 · Source officielle, chiffre et année",
+  "S2 · Calcul QuentInvest d'après S1 : …"
+ ],
+ "suite": "Titre de l'épisode suivant (pour l'écran de fin et la description)",
+ "scenes": [
+  { "expr": "curieux", "geste": "penche", "section": "L'accroche",
+    "ecran": { "type": "accroche", "intro": "Une situation de la vie courante.", "avant": "1 000 €", "apres": "≈ 820 €", "de": 1000, "a": 820, "suffixe": " €", "legende": "Le chiffre choc, à l'écran dès la première seconde." },
+    "effet": "baisse", "effetT": 1.0,
+    "texte": "Question de fourmi : … ? (8 secondes au plus, une question ou un chiffre)" },
+  { "expr": "content", "geste": "hoche",
+    "ecran": { "type": "abonne", "texte": "Rejoins la colonie", "sous": "Une vidéo d'économie simple, régulièrement." },
+    "texte": "Salut la colonie ! Abonne-toi pour ne rien rater. (5 secondes au plus, dans les 20 premières secondes)" },
+  { "expr": "neutre", "geste": "pointe", "section": "Le problème",
+    "ecran": { "type": "definition", "mot": "Un mot clé", "texte": "Sa définition en une phrase" },
+    "texte": "Une idée par réplique, 45 mots au plus." },
+  { "expr": "surpris", "ecran": "=", "lent": true, "texte": "Un écran qui continue : « = ». Un nouvel écran toutes les 8 à 10 secondes au plus." },
+  { "expr": "inquiet", "section": "Le piège", "ecran": { "type": "message", "titre": "Grain de sable", "sous": "Ce qui est souvent mal compris" },
+    "texte": "Attention, grain de sable : …" },
+  { "expr": "content", "section": "En une phrase", "ecran": { "type": "resume", "titre": "En une phrase", "texte": "Le résumé que le spectateur peut répéter." },
+    "texte": "En une phrase : …" },
+  { "expr": "curieux", "ecran": { "type": "suite", "label": "Prochain épisode", "titre": "Titre de l'épisode suivant", "sous": "Et toi, quelle est ta question ? Dis-le en commentaire." },
+    "texte": "La prochaine fois : … Et toi, … ? Dis-le en commentaire. Rappel : vulgarisation, pas un conseil en investissement." },
+  { "expr": "content", "ecran": { "type": "fin" }, "sortie": true, "texte": "Un grain après l'autre. À bientôt dans la fourmilière !" }
+ ]
+}

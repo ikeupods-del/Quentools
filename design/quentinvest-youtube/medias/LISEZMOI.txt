@@ -1,0 +1,1 @@
+Photos et vidéos utilisées en fond des vidéos (clé `fond` d'un bloc de fiche). Voir LISEZMOI.md, section « Photos et vidéos ». Les fichiers téléchargés automatiquement vont dans cache/ (non versionné).

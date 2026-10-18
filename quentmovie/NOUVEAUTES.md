@@ -3,6 +3,12 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 1.41.0
+- **Doublage** (bouton « Doublage » ou ⇧⌘D) : enregistre ta propre voix réplique par réplique. Colle un texte (une ligne par réplique) ou charge un épisode QuentInvest ; chaque ligne s'affiche en grand, tu enregistres avec Espace, tu réécoutes avec L, tu passes à la suivante (ou tu refais). Le silence du début et de la fin est retiré tout seul.
+- **Poser sur la timeline** : toutes les répliques s'enchaînent dans la piste audio à partir de la tête de lecture ; tu peux recommencer et reposer sans doublon.
+- **Dossier de répliques** (`~/Movies/QuentMovie/doublages/<nom>/v00.wav, v01.wav…`) lisible par la fabrication des vidéos QuentInvest à la place de la voix de Pico.
+- **Ma voix** : chaque réplique est aussi gardée avec son texte dans `~/Movies/QuentMovie/ma-voix/` (sons + `metadata.csv`), de plus en plus complet au fil des doublages ; c'est la base pour reproduire ta voix plus tard.
+
 ## 1.40.0
 - **« Breaking news » en plein écran** : l'animation couvre maintenant tout l'écran, quel que soit le format de la vidéo (16:9, 9:16, 4:5 ou carré), depuis l'onglet Calques comme depuis le studio.
 - **Version verticale** pour TikTok, Reels et Shorts : en format vertical ou carré, une version dessinée pour le téléphone est choisie toute seule (rien n'est coupé ni écrasé).
