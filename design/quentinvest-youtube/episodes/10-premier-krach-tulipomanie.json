@@ -1,0 +1,411 @@
+{
+ "titre": "Le premier krach de l'histoire ? La tulipomanie",
+ "chaine": "QuentInvest",
+ "mention": "Vulgarisation historique · pas un conseil en investissement",
+ "style": 2,
+ "voix": {
+  "moteur": "kokoro",
+  "sid": 30,
+  "vitesse": 0.82,
+  "hauteur": 0.78
+ },
+ "sources": [
+  "S1 · Wikipédia, « Tulipomanie » (fr) et « Tulip mania » (en)",
+  "S2 · Anne Goldgar, Tulipmania: Money, Honor, and Knowledge in the Dutch Golden Age, University of Chicago Press, 2007 (chiffres d'après des recensions)",
+  "S3 · Charles Mackay, Extraordinary Popular Delusions and the Madness of Crowds, 1841",
+  "S4 · Calculs de la chaîne : 5 000 ÷ 300 ≈ 17 ; 100 × 1,5⁵ ≈ 759 (ordres de grandeur)"
+ ],
+ "miniature": {
+  "lignes": [
+   "LE PREMIER",
+   "KRACH DE",
+   "L'HISTOIRE ?"
+  ],
+  "accent": "KRACH",
+  "bas": [
+   "1637",
+   "→ krach"
+  ]
+ },
+ "musique": "documentaire-doux",
+ "suite": "Les bulles de 1720 : que s'est-il vraiment passé ?",
+ "scenes": [
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "section": "La question",
+   "ecran": {
+    "type": "accroche",
+    "intro": "Provinces-Unies, 1637 : un artisan qualifié gagne environ 300 florins par an.",
+    "avant": "300 florins",
+    "apres": "5 000 florins",
+    "de": 300,
+    "a": 5000,
+    "suffixe": " florins",
+    "legende": "Le record documenté pour un bulbe de tulipe.",
+    "source": "S2 · d'après l'historienne Anne Goldgar"
+   },
+   "effet": "hausse",
+   "effetT": 1,
+   "texte": "En 1637, un seul bulbe de tulipe aurait été payé 5 000 florins, alors qu'un artisan en gagnait environ 300 par an. Est-ce le premier krach de l'histoire ?"
+  },
+  {
+   "expr": "content",
+   "geste": "hoche",
+   "ecran": {
+    "type": "abonne",
+    "texte": "Rejoins la colonie",
+    "sous": "Une vidéo d'économie simple, régulièrement."
+   },
+   "texte": "Salut la colonie ! Abonne-toi pour ne rien rater."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "liste",
+    "titre": "Au programme",
+    "points": [
+     "Un marché de contrats",
+     "Les chiffres",
+     "Le krach de février 1637",
+     "Mythe ou réalité ?"
+    ]
+   },
+   "texte": "Au programme : comment fonctionnait ce marché, les chiffres, le krach de février 1637, et surtout ce que les historiens en pensent aujourd'hui. Car l'histoire est plus nuancée qu'on ne le dit."
+  },
+  {
+   "expr": "neutre",
+   "section": "Le contexte",
+   "ecran": {
+    "type": "message",
+    "titre": "Provinces-Unies, 1593",
+    "sous": "Le botaniste Clusius apporte ses bulbes à Leyde",
+    "source": "S1 · Wikipédia, Tulip mania"
+   },
+   "texte": "Nous sommes aux Provinces-Unies, au début du dix-septième siècle. La tulipe y devient populaire à partir de 1593, quand le botaniste Clusius apporte ses bulbes à Leyde. Rare et magnifique, elle devient un objet de prestige."
+  },
+  {
+   "expr": "neutre",
+   "geste": "pointe",
+   "section": "Le mécanisme",
+   "ecran": {
+    "type": "definition",
+    "mot": "Contrat à terme",
+    "texte": "Une promesse d'acheter ou de vendre plus tard, à un prix fixé aujourd'hui",
+    "source": "S1 · Wikipédia, Tulipomanie"
+   },
+   "texte": "On n'achète pas toujours le bulbe lui-même. On achète des contrats, des promesses de livraison pour des bulbes encore en terre. C'est un marché à terme, comparable aux contrats à terme d'aujourd'hui."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "liste",
+    "titre": "Le cercle de la spéculation",
+    "points": [
+     [
+      "J'achète un contrat",
+      "avant la livraison"
+     ],
+     [
+      "Je le revends plus cher",
+      "à quelqu'un d'autre"
+     ],
+     [
+      "Le suivant fait pareil",
+      "jusqu'à ce que ça s'arrête"
+     ]
+    ]
+   },
+   "texte": "Un contrat peut être revendu avant la livraison. Pendant l'hiver 1636-1637, certains changent de mains jusqu'à cinq fois. Chacun espère revendre plus cher au suivant, sans jamais voir un seul bulbe."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "≈ 300 florins",
+     "legende": "Revenu annuel d'un artisan qualifié"
+    },
+    "b": {
+     "valeur": "5 000 florins",
+     "de": 300,
+     "a": 5000,
+     "suffixe": " florins",
+     "legende": "Prix record documenté (cas isolé)"
+    },
+    "source": "S2 · d'après les recensions de Goldgar (à vérifier dans l'ouvrage)"
+   },
+   "effet": "impact",
+   "effetT": 3,
+   "texte": "Les chiffres exacts sont discutés. Les archives étudiées par l'historienne Anne Goldgar montrent un record de 5 000 florins pour un bulbe, quand un artisan qualifié gagnait environ 300 florins par an."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "5 000 florins ÷ 300 florins par an"
+    ],
+    "resultat": "≈ 17 ans de salaire",
+    "source": "S4 · Calcul de la chaîne (ordre de grandeur)"
+   },
+   "texte": "Faisons le calcul : 5 000 divisé par 300, ça fait environ dix-sept. Il faudrait donc dix-sept ans de salaire d'artisan pour payer ce seul bulbe. C'est un ordre de grandeur, pas une mesure exacte."
+  },
+  {
+   "expr": "neutre",
+   "section": "Le krach",
+   "ecran": {
+    "type": "message",
+    "titre": "Février 1637",
+    "sous": "Les prix s'effondrent, le commerce s'arrête",
+    "source": "S1 · Wikipédia, Tulip mania"
+   },
+   "texte": "Début février 1637, les prix des contrats s'effondrent et le commerce s'arrête. Un récit de l'époque raconte qu'à Haarlem, le 3 février, un vendeur ne trouve plus aucun acheteur. Ce récit vient peut-être d'une satire."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "message",
+    "titre": "Après le krach",
+    "sous": "Contrats annulés ou réglés pour une fraction de leur prix",
+    "source": "S1 · Wikipédia (versions néerlandaise et norvégienne)"
+   },
+   "texte": "Aucun bulbe n'avait encore été livré. Les négociants ont fini par annuler les contrats, ou par les régler à l'amiable pour une petite fraction de leur prix. Beaucoup de promesses n'ont donc jamais été honorées."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "section": "Un exemple chiffré",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "100 florins × 1,5 × 1,5 × 1,5 × 1,5 × 1,5"
+    ],
+    "resultat": "≈ 759 florins",
+    "source": "S4 · Exemple chiffré (hypothèse) : 1,5⁵ ≈ 7,59"
+   },
+   "texte": "Imaginons un contrat à 100 florins, revendu cinq fois, avec 50 pour cent de hausse à chaque revente. Il vaut alors environ 759 florins. Rien n'a changé dans la tulipe : seul le pari a grossi."
+  },
+  {
+   "expr": "curieux",
+   "geste": "pointe",
+   "section": "Le mythe",
+   "ecran": {
+    "type": "definition",
+    "mot": "Charles Mackay, 1841",
+    "texte": "Le livre qui a popularisé l'image d'une folie collective",
+    "source": "S3 · Mackay, Extraordinary Popular Delusions, 1841"
+   },
+   "texte": "Mais l'histoire est-elle vraie telle qu'on la raconte ? Elle vient surtout d'un livre de 1841, celui de Charles Mackay, et de pamphlets de 1637 qui critiquaient les spéculateurs. Des historiens la jugent exagérée."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "liste",
+    "titre": "Ce que disent les archives",
+    "points": [
+     [
+      "Surtout des marchands",
+      "et des artisans aisés"
+     ],
+     [
+      "Une crise courte",
+      "limitée à un petit milieu"
+     ],
+     [
+      "Les affaires continuent",
+      "pour la plupart des négociants"
+     ]
+    ]
+   },
+   "texte": "L'historienne Anne Goldgar a étudié les archives. Selon elle, la crise a touché surtout une petite communauté de marchands et d'artisans aisés, pas toute la société. Et la plupart des négociants ont continué leurs affaires."
+  },
+  {
+   "expr": "inquiet",
+   "section": "Le premier krach ?",
+   "ecran": {
+    "type": "message",
+    "titre": "Le premier krach ?",
+    "sous": "Le plus célèbre, pas forcément le plus grave"
+   },
+   "texte": "Alors, est-ce le premier krach de l'histoire ? C'est l'exemple le plus célèbre d'une bulle spéculative. Mais « premier » est un mot dangereux, et les historiens discutent encore de l'ampleur réelle de l'épisode."
+  },
+  {
+   "expr": "neutre",
+   "geste": "pointe",
+   "section": "La bulle",
+   "ecran": {
+    "type": "definition",
+    "mot": "Bulle spéculative",
+    "texte": "Un prix qui monte parce qu'on espère le revendre plus cher"
+   },
+   "texte": "Une bulle, c'est quand le prix d'un actif monte bien au-delà de sa valeur, surtout parce que chacun espère le revendre plus cher. Quand les acheteurs disparaissent, le prix peut chuter d'un coup."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "liste",
+    "titre": "Les signes d'une bulle",
+    "points": [
+     [
+      "Le prix monte vite",
+      "sans raison nouvelle"
+     ],
+     [
+      "On achète pour revendre",
+      "pas pour utiliser"
+     ],
+     [
+      "Tout le monde en parle",
+      "l'argent facile attire"
+     ]
+    ]
+   },
+   "texte": "Trois signes reviennent souvent : un prix qui grimpe très vite, des achats faits pour revendre plutôt que pour posséder, et un engouement général. Aucun signe ne prouve une bulle à lui seul."
+  },
+  {
+   "expr": "curieux",
+   "section": "Pourquoi ça compte",
+   "ecran": {
+    "type": "message",
+    "titre": "Pourquoi ça compte",
+    "sous": "Une histoire célèbre n'est pas forcément exacte"
+   },
+   "texte": "Pourquoi raconter cette histoire ? Parce qu'elle revient sous d'autres formes. Mais aussi parce qu'elle montre qu'une anecdote célèbre n'est pas forcément exacte. Il faut toujours regarder qui la raconte, et quand."
+  },
+  {
+   "expr": "neutre",
+   "section": "Petite question",
+   "ecran": {
+    "type": "message",
+    "titre": "Petite question",
+    "sous": "Tous les Néerlandais se sont-ils ruinés avec les tulipes ?"
+   },
+   "texte": "Petite question pour toi. Vrai ou faux : tous les Néerlandais de l'époque se sont ruinés avec les tulipes ? Mets la vidéo en pause si tu veux réfléchir."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "message",
+    "titre": "Faux, ou très exagéré",
+    "sous": "Une petite communauté touchée, pas toute la société"
+   },
+   "texte": "Réponse : faux, ou très exagéré. D'après Anne Goldgar, la crise a touché une petite communauté, et la plupart des négociants ont continué leurs affaires. Le récit d'une société entière ruinée est surtout une légende."
+  },
+  {
+   "expr": "neutre",
+   "section": "Les limites",
+   "ecran": {
+    "type": "message",
+    "titre": "Des données fragiles",
+    "sous": "Les archives des années 1630 sont rares et souvent partisanes"
+   },
+   "texte": "Une précaution : les données des années 1630 sont rares et souvent partisanes. Les chiffres cités ici viennent de recensions de l'ouvrage de Goldgar, et les sources ne s'accordent pas toujours. Ce sont des ordres de grandeur."
+  },
+  {
+   "expr": "neutre",
+   "section": "Ton défi",
+   "ecran": {
+    "type": "message",
+    "titre": "Ton défi",
+    "sous": "Vérifie l'origine d'une histoire d'argent célèbre"
+   },
+   "texte": "Petit défi pour toi : choisis une histoire d'argent célèbre, et cherche qui l'a racontée en premier. Compare avec ce que disent les historiens : c'est souvent surprenant."
+  },
+  {
+   "expr": "inquiet",
+   "section": "Le piège",
+   "ecran": {
+    "type": "message",
+    "titre": "Grain de sable",
+    "sous": "Ce qui est souvent mal compris"
+   },
+   "texte": "Attention, grain de sable. Il y a trois erreurs courantes."
+  },
+  {
+   "expr": "inquiet",
+   "ecran": {
+    "type": "erreur",
+    "numero": 1,
+    "titre": "Croire sans vérifier"
+   },
+   "texte": "Un : croire une histoire spectaculaire sans vérifier ses sources. Celle des tulipes vient en grande partie de textes écrits pour critiquer la spéculation."
+  },
+  {
+   "expr": "inquiet",
+   "ecran": {
+    "type": "erreur",
+    "numero": 2,
+    "titre": "Acheter parce que tout le monde achète"
+   },
+   "texte": "Deux : acheter parce que tout le monde achète. Quand le prix ne repose que sur l'espoir de revendre, il peut s'effondrer d'un coup."
+  },
+  {
+   "expr": "inquiet",
+   "ecran": {
+    "type": "erreur",
+    "numero": 3,
+    "titre": "Confondre prix et valeur"
+   },
+   "texte": "Trois : confondre le prix et la valeur. Un prix qui monte ne prouve pas que la valeur monte."
+  },
+  {
+   "expr": "content",
+   "section": "À retenir",
+   "ecran": {
+    "type": "liste",
+    "titre": "À retenir",
+    "points": [
+     [
+      "La tulipomanie",
+      "l'exemple le plus célèbre de bulle"
+     ],
+     [
+      "Chiffres discutés",
+      "par les historiens"
+     ],
+     [
+      "Prix et valeur",
+      "ne sont pas la même chose"
+     ]
+    ]
+   },
+   "texte": "Pour résumer en trois points. Un : la tulipomanie est l'exemple le plus célèbre de bulle spéculative. Deux : l'ampleur et les chiffres sont discutés par les historiens. Trois : un prix qui monte ne prouve pas une valeur qui monte."
+  },
+  {
+   "expr": "content",
+   "section": "En une phrase",
+   "ecran": {
+    "type": "resume",
+    "titre": "En une phrase",
+    "texte": "La tulipomanie montre qu'un prix peut s'envoler quand chacun espère revendre plus cher, mais aussi qu'il faut vérifier les histoires qu'on raconte."
+   },
+   "texte": "En une phrase : la tulipomanie montre qu'un prix peut s'envoler quand chacun espère revendre plus cher, mais aussi qu'il faut vérifier les histoires qu'on raconte."
+  },
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "ecran": {
+    "type": "suite",
+    "label": "Prochain épisode",
+    "titre": "Les bulles de 1720 : que s'est-il vraiment passé ?",
+    "sous": "Et toi, quelle histoire d'argent aimerais-tu qu'on vérifie ensuite ? Dis-le en commentaire."
+   },
+   "texte": "La prochaine fois : les bulles de 1720 : que s'est-il vraiment passé ? Et toi, quelle histoire d'argent aimerais-tu qu'on vérifie ensuite ? Dis-le en commentaire."
+  },
+  {
+   "expr": "content",
+   "ecran": {
+    "type": "fin"
+   },
+   "sortie": true,
+   "texte": "Rappel : vulgarisation, pas un conseil en investissement. Un grain après l'autre. À bientôt dans la fourmilière !"
+  }
+ ],
+ "musiqueRevelation": {
+  "id": "cinema-epique",
+  "scene": 6
+ }
+}
