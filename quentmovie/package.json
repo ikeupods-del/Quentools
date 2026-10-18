@@ -39,6 +39,7 @@
       "detoureur.js",
       "parole.js",
       "voix-texte.js",
+    "prononciations.json",
       "images.js",
       "script-qualite.js",
       "rythme.js",

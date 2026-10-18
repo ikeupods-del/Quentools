@@ -32,6 +32,10 @@ Un bloc de fiche peut avoir une **photo ou une vidéo en fond** (le texte et les
 - Fabrication avec ta voix (montage, écrans, bruitages, sous-titres inchangés) : `node fabrication/episode.js fiches/NN-sujet.json --voix-perso <dossier YouTube> --voix-perso-tiktok <dossier TikTok>`. Une réplique refaite est reprise automatiquement (la date du fichier compte). Une réplique sans fichier garde la voix de synthèse.
 - `~/Movies/QuentMovie/ma-voix/` (sons + `metadata.csv`) cumule toutes les répliques enregistrées avec leur texte : le corpus pour reproduire ta voix. Reproduction automatique pas encore en place (modèles à comparer sur le Mac : qualité en français, licence, vitesse) ; la durée enregistrée est affichée dans la fenêtre Doublage.
 
+## Prononciation et écriture assistée
+- **Dictionnaire de prononciation** : `quentmovie/prononciations.json` (mots livrés) + `~/Movies/QuentMovie/prononciations.json` (celui du propriétaire, prioritaire ; à envoyer pour que la chaîne l'utilise, ou `QM_PRONONCIATIONS=<fichier>`). Appliqué à la voix de synthèse de la chaîne ; les sous-titres gardent l'orthographe. À chaque épisode, relever les noms propres, sigles et mots étrangers et compléter le dictionnaire.
+- **Guide d'écriture pour une IA** : `GUIDE-IA-LOCALE.md` (rôle, forme de la fiche, style pour l'oreille, prudence sur les faits, méthode de recherche, prononciation, consignes « retiens que… » pour l'assistant de QuentMovie).
+
 ## Contrôle rapide (2 secondes, sans fabrication)
 `node design/quentinvest-youtube/fabrication/verifier.js` : les écrans des épisodes 1 et 2 sont identiques à la référence, et toutes les fiches se composent sans erreur. À lancer après toute modification du moteur.
 

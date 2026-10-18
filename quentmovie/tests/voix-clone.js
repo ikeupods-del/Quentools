@@ -80,6 +80,12 @@ exit 1
     const r2 = await (await fetch(U('/api/voix-clone/essai'), { method: 'POST', body: JSON.stringify({ moteurs: ['qwen'] }) })).json();
     let j2; for (let k = 0; k < 60; k++) { await new Promise(r => setTimeout(r, 500)); j2 = await (await fetch(U('/api/job?id=' + r2.id))).json(); if (j2.done || j2.error) break; }
     check('essai sans voix : message compréhensible', j2.error && /Pas encore de voix enregistrée/.test(j2.error), JSON.stringify(j2));
+    // dictionnaire de prononciation (routes + lecture par la voix)
+    let pr = await (await fetch(U('/api/prononciations'))).json();
+    check('prononciations : mots livrés lus, rien de personnel au départ', pr.livre.krach === 'crac' && Object.keys(pr.perso).length === 0, JSON.stringify(pr).slice(0, 120));
+    pr = await (await fetch(U('/api/prononciations'), { method: 'PUT', body: JSON.stringify({ mots: { Quentin: 'Kantin', '': 'vide', _x: 'ignoré' } }) })).json();
+    check('prononciations : mot personnel gardé (mots vides ou réservés ignorés)', pr.ok && JSON.stringify(pr.perso) === '{"Quentin":"Kantin"}', JSON.stringify(pr));
+    check('prononciations : fichier écrit dans le dossier QuentMovie et utilisé par la voix', fs.existsSync(path.join(base, 'prononciations.json')) && require('../voix-texte').pourLaVoix('Quentin et le krach') === 'Kantin et le crac');
     app.stop();
   }
   fs.rmSync(base, { recursive: true, force: true });

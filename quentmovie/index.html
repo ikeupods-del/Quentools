@@ -181,7 +181,7 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 .dblTexte{font-size:26px;line-height:1.35;font-weight:600;margin:6px 0 12px;min-height:3.4em}
 #dbVu{width:110px;height:8px;background:#222;border-radius:4px;overflow:hidden;flex:none}#dbVu i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3c3,#fd0 70%,#f33)}
 #dbTemps{font:600 14px ui-monospace,Menlo,monospace;min-width:56px}
-.vcSon{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bord,#2a2a2e)}.vcSon audio{flex:none;height:34px}
+.prLig{display:flex;gap:8px;align-items:center;padding:3px 0}.prLig input{flex:1;min-width:0}.vcSon{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--bord,#2a2a2e)}.vcSon audio{flex:none;height:34px}
 .dblListe{max-height:32vh;overflow:auto;border:1px solid #ffffff1c;border-radius:8px;margin:10px 0}
 .dblL{display:flex;gap:8px;padding:6px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid #ffffff10;align-items:baseline}.dblL:hover{background:#ffffff0c}.dblL.cur{background:#ffffff1c}
 .dblL .n{width:30px;opacity:.6;flex:none}.dblL .t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dblL .d{flex:none;opacity:.75}
@@ -3420,10 +3420,12 @@ async function gererVoix(cible, apres) {
     <h4 style="margin-top:10px">Voix du Mac</h4>${e.mac.length ? `<p class="mut">${e.mac.map(v => (v.premium ? '★ ' : '') + esc(v.nom)).join(' · ')}</p>` : '<p class="mut">Aucune voix française du Mac.</p>'}
     ${e.reglagesMac ? `<p class="mut">Les voix ★ « Premium » d’Apple sont excellentes mais se téléchargent dans les réglages du Mac : clique ci-dessous, puis sur ⓘ à côté de « Voix du système » → Français → choisis une voix « Premium » ou « Améliorée ». Elle apparaît ensuite ici avec une ★.</p>
       <button id="vReglages" style="width:100%">Ouvrir les réglages des voix du Mac</button>` : ''}
+    <button id="vPron" style="width:100%;margin-top:8px">📖 Dictionnaire de prononciation</button>
     <div id="vProg" class="mut" style="margin-top:6px"></div></div>`;
   cible.onclick = async ev => {
     const d = ev.target.dataset;
     if (ev.target.id === 'vReglages') return api('/api/parole/reglages-mac', { method: 'POST' });
+    if (ev.target.id === 'vPron') return ouvrirPrononciations();
     if (d.vessai) return essaiVoix(d.vessai, 'Bonjour ! Voici la voix que tu peux utiliser pour tes vidéos.', 1, ev.target);
     if (d.vinst) {
       cible.querySelectorAll('[data-vinst]').forEach(b => { b.disabled = true; });
@@ -3469,6 +3471,37 @@ async function dblLireMedia(file, nom) {
     msg.textContent = `${phrases.length} phrases lues dans « ${file} ». Relis et corrige le texte si besoin ; ta voix sera posée à l’endroit où elles étaient dites.`;
   } catch (er) { msg.innerHTML = `<span class="err">${esc(er.message)}</span>`; }
   finally { go.disabled = false; }
+}
+// Dictionnaire de prononciation : « mot écrit → comme il se dit », pour toutes les voix de synthèse (les sous-titres gardent l'orthographe)
+async function ouvrirPrononciations() {
+  if (dbl) dblFin();
+  let e; try { e = await (await api('/api/prononciations')).json(); } catch (er) { return alert(er.message); }
+  const lst = Object.entries(e.perso || {}).map(([k, v]) => [k, v]);
+  const livres = Object.entries(e.livre || {}).sort((a, b) => a[0].localeCompare(b[0], 'fr'));
+  const garder = async () => { const mots = {}; for (const [k, v] of lst) if (k.trim()) mots[k.trim()] = (v || '').trim(); await api('/api/prononciations', { method: 'PUT', body: JSON.stringify({ mots }) }); };
+  const lignes = () => lst.map(([k, v], i) => `<div class="prLig"><input class="prE" data-i="${i}" value="${esc(k)}" placeholder="mot écrit"> <span class="mut">→ se dit</span> <input class="prL" data-i="${i}" value="${esc(v)}" placeholder="comme tu le dirais (ex. : Maquaï)"> <button class="mini" data-pe="${i}" title="Écouter">▶</button><button class="mini" data-ps="${i}" title="Retirer">✕</button></div>`).join('') || '<p class="mut">Aucun mot à toi pour l’instant. Ajoute ceux que la voix prononce mal.</p>';
+  ouvrir(`<h2>📖 Dictionnaire de prononciation</h2>
+    <p>Écris le mot tel qu’il apparaît dans tes textes, puis comme il doit se dire (en lettres françaises : « Goldgar » → « Golgar »). Les voix le prononcent ainsi dans tes vidéos ; les sous-titres gardent l’orthographe. Pour un sigle, sépare les lettres : « PEA » → « P E A ». Une case « se dit » vide retire le mot du dictionnaire livré.</p>
+    <div id="prListe">${lignes()}</div>
+    <div class="ligne"><button class="pri" id="prAjout">+ Ajouter un mot</button><button id="prFermer">Fermer</button></div>
+    <details style="margin-top:10px"><summary class="mut">Mots déjà connus (${livres.length})</summary><div id="prLivres" style="max-height:220px;overflow:auto;margin-top:6px">${livres.map(([k, v]) => `<div class="prLig"><span><b>${esc(k)}</b> <span class="mut">→ ${esc(v)}</span></span> <button class="mini" data-pc="${esc(k)}" title="Modifier pour toi">✎</button></div>`).join('')}</div></details>
+    <p class="mut" id="prInfo" style="margin:8px 0 0">Fichier : <b>${esc(e.fichier || '')}</b>. Pour les vidéos fabriquées par la chaîne QuentInvest, envoie ce fichier pour qu’il soit pris en compte.</p>`, 'xl');
+  const liste = $('#prListe');
+  const redessiner = () => { liste.innerHTML = lignes(); };
+  $('#prFermer').onclick = fermer;
+  $('#prAjout').onclick = () => { lst.push(['', '']); redessiner(); const l = liste.querySelectorAll('.prE'); if (l.length) l[l.length - 1].focus(); };
+  liste.onchange = async ev => { const i = ev.target.dataset.i; if (i == null) return; lst[+i][ev.target.classList.contains('prE') ? 0 : 1] = ev.target.value; try { await garder(); } catch (er) { alert(er.message); } };
+  liste.onclick = async ev => {
+    const d = ev.target.dataset;
+    if (d.ps != null) { lst.splice(+d.ps, 1); redessiner(); try { await garder(); } catch (er) { alert(er.message); } }
+    if (d.pe != null) {
+      const [k, v] = lst[+d.pe]; if (!k.trim()) return;
+      try { await garder(); const p = await (await api('/api/parole')).json(), vp = (p.voix || []).find(x => x.installee), voix = vp ? 'piper:' + vp.id : ((p.mac || [])[0] || {}).nom;
+        if (!voix) return alert('Installe d’abord une voix (Voix naturelles) pour écouter.');
+        essaiVoix(voix, 'On parle de ' + k + ' aujourd’hui. ' + k + '.', 1, ev.target); } catch (er) { alert(er.message); }
+    }
+  };
+  $('#prLivres').onclick = ev => { const k = ev.target.dataset.pc; if (!k) return; if (!lst.some(x => x[0] === k)) { lst.push([k, (e.livre || {})[k] || '']); garder().catch(() => {}); } redessiner(); signal('Ajouté à ton dictionnaire : modifie-le ci-dessus.'); };
 }
 // Voix clonée (essai) : des modèles imitent ta voix à partir du corpus « Ma voix » ; on écoute les mêmes phrases dites par chacun
 const VC_PHRASES = ['Salut la colonie ! Abonne-toi pour ne rien rater.', 'En 1637, un seul bulbe de tulipe aurait été payé 5 000 florins, alors qu’un artisan en gagnait environ 300 par an.', 'Imaginons un contrat à 100 florins, revendu cinq fois, avec 50 pour cent de hausse à chaque revente.', 'Un grain après l’autre, à bientôt dans la fourmilière !'];
@@ -3576,7 +3609,7 @@ function dblVue() {
       <div id="dbVu"><i></i></div><span id="dbTemps"></span></div>
     <div class="sw2"><input type="checkbox" id="dbAuto" ${dbl.auto ? 'checked' : ''}><label for="dbAuto">Passer à la réplique suivante dès que j’arrête</label></div>
     <div class="dblListe" id="dbListe">${liste}</div>
-    <div class="ligne"><button class="pri" id="dbPoser" ${fait ? '' : 'disabled'}>Poser sur la timeline (piste audio)</button><button id="dbDossier">📂 Ouvrir le dossier</button><button id="dbTexteRetour">✏️ Modifier le texte</button><button id="dbClone" title="Essayer des modèles qui imitent ta voix">🧬 Voix clonée</button><button id="dbFermer">Fermer</button></div>
+    <div class="ligne"><button class="pri" id="dbPoser" ${fait ? '' : 'disabled'}>Poser sur la timeline (piste audio)</button><button id="dbDossier">📂 Ouvrir le dossier</button><button id="dbTexteRetour">✏️ Modifier le texte</button><button id="dbClone" title="Essayer des modèles qui imitent ta voix">🧬 Voix clonée</button><button id="dbPron" title="Mots que la voix prononce mal">📖 Prononciations</button><button id="dbFermer">Fermer</button></div>
     <p class="mut" id="dbInfo" style="margin:8px 0 0">Dossier des répliques : <b>${esc(dbl.dossier || '~/Movies/QuentMovie/doublages/' + dbl.nom)}</b> (fichiers v00.wav, v01.wav…). Pour fabriquer un épisode QuentInvest avec ta voix : <code>episode.js &lt;fiche&gt; --voix-perso &lt;ce dossier&gt;</code>.</p>
     ${dbl.voix && dbl.voix.prises ? `<p class="mut" style="margin:4px 0 0">🧬 <b>Ma voix</b> : ${dbl.voix.prises} répliques gardées avec leur texte (${dblDuree(dbl.voix.secondes)}), tous doublages confondus. Chaque réplique enrichit le corpus qui servira à reproduire ta voix. <a href="#" id="dbVoixDossier">Ouvrir le dossier</a></p>` : ''}`, 'xl');
   dbl.vue = true;
@@ -3587,6 +3620,7 @@ function dblVue() {
   $('#dbPoser').onclick = dblPoser;
   const vd = $('#dbVoixDossier'); if (vd) vd.onclick = async e => { e.preventDefault(); try { const j = await (await api('/api/doublage/dossier?nom=' + enc(dbl.nom) + '&voix=1', { method: 'POST' })).json(); if (!j.ok) signal('Dossier : ' + j.dossier); } catch (er) { alert(er.message); } };
   $('#dbDossier').onclick = async () => { try { const j = await (await api('/api/doublage/dossier?nom=' + enc(dbl.nom), { method: 'POST' })).json(); if (!j.ok) signal('Dossier : ' + j.dossier); } catch (er) { alert(er.message); } };
+  $('#dbPron').onclick = () => { if (dbl.enreg) return; ouvrirPrononciations(); };
   $('#dbClone').onclick = () => { if (dbl.enreg) return; ouvrirVoixClone(); };
   $('#dbTexteRetour').onclick = () => { if (dbl.enreg) return; const lignes = dbl.lignes.join('\n'), nom = dbl.nom; dblFin(); ouvrirDoublage(); $('#dbTexte').value = lignes; $('#dbNom').value = nom; };
   $('#dbFermer').onclick = fermer;

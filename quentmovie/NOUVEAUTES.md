@@ -4,6 +4,7 @@ Chaque section devient le texte affiché dans l'application quand la mise à jou
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
 ## 1.43.0
+- **Dictionnaire de prononciation** (bouton « 📖 Prononciations » du Doublage, ou dans Voix naturelles) : écris un mot tel qu'il apparaît et comme il doit se dire (« Mackay » → « Maquaï », « PEA » → « P E A »), puis écoute-le avec ▶. Toutes les voix de synthèse l'appliquent ; les sous-titres gardent l'orthographe. Une cinquantaine de mots de finance et d'histoire sont déjà connus. Les symboles « ≈ », « × » et « ÷ » sont aussi lus (« environ », « fois », « divisé par »).
 - **Voix clonée (essai)** : dans la fenêtre Doublage, le bouton « 🧬 Voix clonée » fait dire quatre phrases par deux modèles qui imitent ta voix (Chatterbox et Qwen3-TTS) à partir de tes enregistrements, pour que tu écoutes et compares avec ta vraie voix. La première fois, QuentMovie installe tout seul ce qu'il faut (de 15 à 40 minutes, jusqu'à 8 Go d'espace libre) ; les essais suivants sont rapides. Rien n'est envoyé : tout reste sur ton Mac, dans `~/Movies/QuentMovie/voix-clone`.
 
 ## 1.42.0

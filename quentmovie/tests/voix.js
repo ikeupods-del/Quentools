@@ -1,7 +1,10 @@
 // Texte écrit → texte prononcé (heures, sommes, unités, ordinaux, abréviations).
 'use strict';
-const { pourLaVoix: v } = require('../voix-texte');
-let ok = 0, ko = 0;
+const fs = require('fs'), os = require('os'), path = require('path');
+const perso = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'qm-pron-')), 'prononciations.json');
+process.env.QM_PRONONCIATIONS = perso; // jamais le dictionnaire personnel du poste
+const { pourLaVoix: v, definirFichierPerso, lexiqueActuel } = require('../voix-texte');
+let ok = 0, ko = 0; const check = (n, c) => { if (c) ok++; else { ko++; console.log('  ÉCHEC :', n); } };
 const eq = (entree, attendu) => { const r = v(entree); if (r === attendu) ok++; else { ko++; console.log('  ÉCHEC :', JSON.stringify(entree), '→', JSON.stringify(r), 'au lieu de', JSON.stringify(attendu)); } };
 eq('Rendez-vous à 9h.', 'Rendez-vous à 9 heures.');
 eq('Départ à 9h30 précises', 'Départ à 9 heures 30 précises');
@@ -31,5 +34,18 @@ eq('La vie en 2024 à Paris, la Vie est belle', 'La vie en 2024 à Paris, la Vie
 eq('Le chat a 3 ans et 2 enfants', 'Le chat a 3 ans et 2 enfants');
 eq('Une histoire en huit heures', 'Une histoire en huit heures');
 eq('Il a 5 ha de vignes', 'Il a 5 hectares de vignes');
+// dictionnaire de prononciation
+eq('Le krach de 1637 et le Krach de 1929, les krachs', 'Le crac de 1637 et le Crac de 1929, les cracs');
+eq('Mon PEA et le TRI, mais pas le per', 'Mon P E A et le T R I, mais pas le per');
+eq('Warren Buffett et Buffett chez Berkshire Hathaway', 'Ouarenne Beuffette et Beuffette chez Beurkchire Hatha-ouay');
+eq('Le PEAU rouge', 'Le PEAU rouge'); // un mot qui contient un sigle reste intact
+eq('5 000 ÷ 300 ≈ 17', '5000 divisé par 300 environ 17');
+fs.writeFileSync(perso, JSON.stringify({ mots: { krach: 'krack', Quentin: 'Kantin', 'start-up': '' } }));
+definirFichierPerso(perso);
+eq('Le krach de Quentin et une start-up', 'Le krack de Kantin et une start-up'); // le dictionnaire personnel passe avant, une valeur vide retire un mot livré
+check(Object.keys(lexiqueActuel()).length > 30, 'dictionnaire livré chargé');
+fs.writeFileSync(perso, '{ pas du json');
+definirFichierPerso(perso);
+eq('Le krach', 'Le crac'); // un fichier personnel abîmé est ignoré
 console.log(`Texte lu : ${ok} contrôles réussis, ${ko} échecs`);
 process.exit(ko ? 1 : 0);
