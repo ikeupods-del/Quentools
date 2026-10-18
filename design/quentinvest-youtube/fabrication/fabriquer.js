@@ -129,8 +129,9 @@ async function images() {
 
 // ---------- 4. une vidéo par réplique : écran animé + Pico (bouche, entrée, rebond) ----------
 // Niveau des bruitages : mesuré par rapport à la voix de chaque réplique (et non réglé « à l'oreille » : les fichiers de bruitage sont bien plus forts que la voix de synthèse).
-// Un son « 30 % moins fort » que la voix = environ −5 dB (la sensation de volume est divisée par deux tous les −10 dB). Réglable : clé `sons.effetsDb` du fichier d'épisode.
-const EFFETS_DB = EP.sons && EP.sons.effetsDb != null ? EP.sons.effetsDb : -5;
+// Demande du propriétaire : bruitages bien plus discrets que la voix. Premier réglage −5 dB (30 % de moins), puis encore 30 % de moins = environ −10 dB sous la voix
+// (la sensation de volume est divisée par deux tous les −10 dB). Réglable : clé `sons.effetsDb` du fichier d'épisode.
+const EFFETS_DB = EP.sons && EP.sons.effetsDb != null ? EP.sons.effetsDb : -10;
 const { spawnSync } = require('child_process');
 const rmsDb = (f, filtre) => { const r = spawnSync('ffmpeg', ['-v', 'info', '-i', f, '-af', `${filtre ? filtre + ',' : ''}astats=metadata=0`, '-f', 'null', '-'], { encoding: 'utf8', maxBuffer: 1e8 }), m = [...(r.stderr || '').matchAll(/RMS level dB:\s*(-?[\d.]+)/g)]; return m.length ? +m[m.length - 1][1] : -30; };
 const RMS_SON = {}, rmsSon = f => RMS_SON[f] != null ? RMS_SON[f] : (RMS_SON[f] = rmsDb(f, 'silenceremove=stop_periods=-1:stop_threshold=-50dB'));
@@ -256,9 +257,9 @@ async function exporter() {
     clips: M.liste.map(c => ({ file: c.nom, kind: 'video', in: 0, out: +c.d.toFixed(3), dur: +c.d.toFixed(3), speed: 1, vol: 100, hasAudio: true, fx: [], afx: [], overlays: [], key: { on: false }, subs: c.subs, subStyle: VERT ? 'tiktok' : 'bandeau', subSize: VERT ? 5.6 : STYLE2 ? 4.6 : 4,
       transition: c.fondu ? { type: 'fade', dur: 0.5 } : null })),
     audio: EP.musiqueRevelation && STYLE2 // la musique change au chiffre clé : douce avant, plus vivante après
-      ? [{ file: 'lib:' + EP.musique, vol: 35, start: 0, dur: +debuts[EP.musiqueRevelation.scene].toFixed(2), fade: true, loop: true, duck: true },
-         { file: 'lib:' + EP.musiqueRevelation.id, vol: 35, start: +debuts[EP.musiqueRevelation.scene].toFixed(2), fade: true, loop: true, duck: true }]
-      : [{ file: 'lib:' + EP.musique, vol: 35, start: 0, fade: true, loop: true, duck: true }]
+      ? [{ file: 'lib:' + EP.musique, vol: 25, start: 0, dur: +debuts[EP.musiqueRevelation.scene].toFixed(2), fade: true, loop: true, duck: true },
+         { file: 'lib:' + EP.musiqueRevelation.id, vol: 25, start: +debuts[EP.musiqueRevelation.scene].toFixed(2), fade: true, loop: true, duck: true }]
+      : [{ file: 'lib:' + EP.musique, vol: 25, start: 0, fade: true, loop: true, duck: true }]
   };
   projet.clips[projet.clips.length - 1].transition = null;
   fs.writeFileSync(path.join(TRAVAIL, 'projet-quentmovie.json'), JSON.stringify(projet));
