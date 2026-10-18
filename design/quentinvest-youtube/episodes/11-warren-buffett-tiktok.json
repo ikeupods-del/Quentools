@@ -1,0 +1,127 @@
+{
+ "titre": "Warren Buffett : 60 ans de placement, environ 20 % par an. Son secret n'est pas ce que tu crois. (version TikTok)",
+ "chaine": "QuentInvest",
+ "mention": "Vulgarisation · pas un conseil en investissement",
+ "style": 2,
+ "voix": {
+  "moteur": "kokoro",
+  "sid": 30,
+  "vitesse": 0.82,
+  "hauteur": 0.78
+ },
+ "sources": [
+  "S1 · Wikipédia, « Warren Buffett » et « Berkshire Hathaway »",
+  "S2 · Berkshire Hathaway, lettre aux actionnaires et rapport annuel 2024 (rendements 1965 à 2024 : 19,9 % par an contre 10,4 % pour le S&P 500 avec dividendes ; environ 20 années sur 60 en retard sur l'indice)",
+  "S3 · Presse financière (CNBC, Fortune, Yahoo Finance) : premières actions vers onze ans, fortune acquise surtout après cinquante ans ; Benjamin Graham, The Intelligent Investor",
+  "S4 · Calculs de la chaîne : 10 000 × 1,104ⁿ et 10 000 × 1,199ⁿ (illustration, sans impôts ni frais)",
+  "S5 · Warren Buffett, « Buy American. I Am. », The New York Times, 17 octobre 2008",
+  "S6 · Annonce de l'assemblée annuelle de Berkshire, 3 mai 2025 (Greg Abel directeur général au 1er janvier 2026)"
+ ],
+ "miniature": {
+  "lignes": [
+   "LE SECRET",
+   "DE WARREN",
+   "BUFFETT"
+  ],
+  "accent": "BUFFETT",
+  "bas": [
+   "60 ans",
+   "≈ 20 %/an"
+  ]
+ },
+ "format": "vertical",
+ "musique": "corporate-lumineux",
+ "scenes": [
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "ecran": {
+    "type": "accroche",
+    "intro": "Berkshire Hathaway, 1965 à 2024, rendement moyen par an.",
+    "avant": "≈ 10 % par an",
+    "apres": "≈ 20 % par an",
+    "de": 10,
+    "a": 20,
+    "suffixe": " %",
+    "legende": "La Bourse américaine, puis Berkshire Hathaway.",
+    "source": "S2 · Rapport annuel de Berkshire, 2024 : 19,9 % contre 10,4 %"
+   },
+   "effet": "hausse",
+   "effetT": 1,
+   "texte": "Warren Buffett : environ 20 % par an pendant 60 ans, contre 10 % pour la Bourse. Son secret ?"
+  },
+  {
+   "expr": "content",
+   "geste": "hoche",
+   "ecran": {
+    "type": "abonne",
+    "texte": "Rejoins la colonie",
+    "sous": "Une vidéo d'économie simple, régulièrement."
+   },
+   "texte": "Salut la colonie ! Abonne-toi pour ne rien rater."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "≈ 10,4 % par an",
+     "legende": "Indice S&P 500, dividendes compris"
+    },
+    "b": {
+     "valeur": "≈ 19,9 % par an",
+     "de": 10.4,
+     "a": 19.9,
+     "suffixe": " %",
+     "legende": "Berkshire Hathaway, 1965 à 2024"
+    },
+    "source": "S2 · Lettre aux actionnaires de Berkshire, 2024 (rendements annuels moyens)"
+   },
+   "effet": "impact",
+   "effetT": 3,
+   "texte": "De 1965 à 2024 : environ 19,9 % par an pour Berkshire, contre 10,4 % pour l'indice américain."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "message",
+    "titre": "Cercle de compétence",
+    "sous": "N'acheter que ce que l'on comprend vraiment",
+    "source": "S3 · Lettres aux actionnaires de Berkshire"
+   },
+   "texte": "Son premier principe : ne jamais investir dans ce qu'on ne comprend pas."
+  },
+  {
+   "expr": "inquiet",
+   "geste": "penche",
+   "ecran": {
+    "type": "message",
+    "titre": "Grain de sable",
+    "sous": "Ce qui est souvent mal compris"
+   },
+   "texte": "Attention, grain de sable : copier un grand investisseur ne garantit pas son résultat."
+  },
+  {
+   "expr": "content",
+   "ecran": {
+    "type": "resume",
+    "titre": "En une phrase",
+    "texte": "Le secret de Buffett, c'est une méthode simple appliquée avec patience pendant très longtemps."
+   },
+   "texte": "En une phrase : le secret de Buffett, c'est une méthode simple appliquée avec patience pendant très longtemps."
+  },
+  {
+   "expr": "curieux",
+   "geste": "hoche",
+   "sortie": true,
+   "ecran": {
+    "type": "suite",
+    "label": "Vidéo complète sur la chaîne",
+    "titre": "Warren Buffett : le secret d'un investisseur patient",
+    "sous": "Et toi, quel grand investisseur ou quelle histoire d'argent aimerais-tu qu'on décortique ensuite ? Dis-le en commentaire."
+   },
+   "texte": "Vidéo complète sur la chaîne. Et toi, quel grand investisseur ou quelle histoire d'argent aimerais-tu qu'on décortique ensuite ? Dis-le en commentaire."
+  }
+ ]
+}
