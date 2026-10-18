@@ -85,25 +85,41 @@ function bouche(wav) {
 const spritePico = (expr, ouvert) => { const f = (o) => path.join(PICO, `pico-${expr}-${o ? 'ouvert' : 'ferme'}.png`); return fs.existsSync(f(ouvert)) ? f(ouvert) : f(!ouvert); };
 
 // ---------- 3. écrans animés (images) ----------
+// ---------- photos et vidéos en fond (clé `fond` d'une réplique : { fichier | url, credit, sombre, debut }) ----------
+// `fichier` : chemin absolu ou relatif au dossier medias/ ; `url` : téléchargée une fois dans medias/cache. Le média reste jusqu'au prochain nouvel écran.
+const MEDIAS = path.join(__dirname, '..', 'medias'), FONDS = [];
+function resoudreFond(f, type) {
+  if (!f) return null;
+  let fichier = f.fichier ? (path.isAbsolute(f.fichier) ? f.fichier : path.join(MEDIAS, f.fichier)) : null;
+  if (!fichier && f.url) {
+    const ext = (f.url.split('?')[0].match(/\.(jpe?g|png|webp|mp4|webm|mov|m4v)$/i) || ['', '.jpg'])[0].toLowerCase();
+    fichier = path.join(MEDIAS, 'cache', crypto.createHash('md5').update(f.url).digest('hex').slice(0, 12) + ext);
+    if (!fs.existsSync(fichier)) { fs.mkdirSync(path.dirname(fichier), { recursive: true }); execFileSync('curl', ['-sSL', '-m', '120', '-A', 'QuentInvestBot/1.0 (educational video project)', '-o', fichier, f.url]); }
+  }
+  if (!fichier || !fs.existsSync(fichier)) throw new Error('Média de fond introuvable : ' + (f.fichier || f.url));
+  return { fichier, video: /\.(mp4|webm|mov|m4v)$/i.test(fichier), sombre: f.sombre != null ? !!f.sombre : type !== 'visuel', debut: +f.debut || 0 };
+}
+function preparerFonds() { let courant = null; EP.scenes.forEach((s, i) => { if (s.ecran !== '=' || i === 0) courant = resoudreFond(s.fond, s.ecran && s.ecran.type); else if (s.fond) courant = resoudreFond(s.fond, null); FONDS[i] = courant; }); }
 const EVENTS = []; // EVENTS[i] = instants (s) où un élément apparaît dans l'écran de la réplique i (style 2 : posent les bruitages)
 const ANIM = []; // ANIM[i] = nombre d'images d'animation de l'écran de la réplique i (0 : l'écran de la réplique précédente continue)
 async function images() {
   let pw; try { pw = require(process.env.PW || 'playwright'); } catch (e) { pw = require('/opt/node-tools/node_modules/playwright'); }
   const { image } = require('./ecrans'), b = await pw.chromium.launch({ executablePath: process.env.QS_CHROMIUM || undefined, args: ['--no-sandbox'] });
+  preparerFonds();
   const p = await b.newPage({ viewport: { width: LARG, height: HAUT } });
   let ecran = null, section = '';
   for (let i = 0; i < EP.scenes.length; i++) {
     const s = EP.scenes[i], nouveau = s.ecran !== '=', fichierAnim = path.join(TRAVAIL, 'images', `a${sh(i)}.json`);
     if (nouveau) ecran = s.ecran; if (s.section) section = s.section;
     const dVoix = duree(wavDe(i)) - pauseDe(i);
-    await p.setContent(image(ecran, { section, mention: EP.mention, chaine: EP.chaine, sources: EP.sources, duree: dVoix, style: EP.style, vertical: VERT }), { waitUntil: 'load' });
+    await p.setContent(image(ecran, { section, mention: EP.mention, chaine: EP.chaine, sources: EP.sources, duree: dVoix, style: EP.style, vertical: VERT, transp: !!FONDS[i] }), { waitUntil: 'load' });
     let n = 0; EVENTS[i] = STYLE2 && nouveau ? await p.evaluate(() => window.EVENTS || []) : [];
     if (nouveau) {
       n = Math.ceil(Math.min(await p.evaluate(() => window.FIN), ANIM_MAX) * FPS);
-      for (let k = 0; k < n; k++) { await p.evaluate(t => window.setT(t), k / FPS); await p.screenshot({ path: path.join(TRAVAIL, 'images', `i${sh(i)}-${sh(k, 3)}.png`) }); }
+      for (let k = 0; k < n; k++) { await p.evaluate(t => window.setT(t), k / FPS); await p.screenshot({ path: path.join(TRAVAIL, 'images', `i${sh(i)}-${sh(k, 3)}.png`), omitBackground: !!FONDS[i] }); }
     }
     await p.evaluate(() => window.setT(1e3));
-    await p.screenshot({ path: path.join(TRAVAIL, 'images', `i${sh(i)}-fin.png`) });
+    await p.screenshot({ path: path.join(TRAVAIL, 'images', `i${sh(i)}-fin.png`), omitBackground: !!FONDS[i] });
     ANIM[i] = n; fs.writeFileSync(fichierAnim, String(n));
     process.stdout.write(`\rÉcrans ${i + 1}/${EP.scenes.length} (${n} images)   `);
   }
@@ -169,15 +185,23 @@ function clip(i, debut) {
   }
   // style 2 : zoom lent du fond (de 1 à 1,03 sur la durée de l'écran), Pico qui se penche / hoche, bruitages
   const g = GROUPES[i], z = `(1+0.03*min(1,(${g.t0.toFixed(3)}+t)/${g.T.toFixed(3)}))`;
-  const fondZ = `[0:v]fps=${FPS},scale=w='trunc(${LARG}*${z}/2)*2':h='trunc(${HAUT}*${z}/2)*2':eval=frame,crop=${LARG}:${HAUT}[b]`;
+  const F = FONDS[i], fondZ = `[0:v]fps=${FPS},scale=w='trunc(${LARG}*${z}/2)*2':h='trunc(${HAUT}*${z}/2)*2':eval=frame,crop=${LARG}:${HAUT}${F ? ',format=rgba' : ''}[b]`;
   const hp = VERT ? 480 : 690, marge = 40, px = VERT ? 'W-w' : 'W-w-40', py = VERT ? '840' : 'H-h-200'; // position de Pico (marge transparente de 40 px autour pour la rotation)
   const px2 = `${px}+${entree}+${sortie}${s.geste === 'pointe' ? '-40*min(1,t/0.35)' : ''}`;
   const pico = `[1:v]fps=${FPS},scale=-1:${hp},format=rgba,pad=w=iw+${marge * 2}:h=ih+${marge * 2}:x=${marge}:y=${marge}:color=black@0,rotate=a='${angleDe(s, debut)}':c=none[p]`;
   const sons = bruitages(i, d), entrees = [], mix = [`[2:a]aformat=sample_rates=44100:channel_layouts=mono[v0]`];
   sons.forEach((x, k) => { entrees.push('-i', x.f); mix.push(`[${3 + k}:a]aformat=sample_rates=44100:channel_layouts=mono,adelay=${Math.round(x.t * 1000)},volume=${x.db}dB[s${k}]`); });
   const audio = sons.length ? `${mix.join(';')};[v0]${sons.map((_, k) => `[s${k}]`).join('')}amix=inputs=${sons.length + 1}:duration=first:normalize=0[a]` : mix[0].replace('[v0]', '[a]');
-  const filtre = `${fondZ};${pico};[b][p]overlay=x='${px2}':y='${py}+${respire}+${saut}',format=yuv420p[v];${audio}`;
-  ff('-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, ...entrees, '-filter_complex', filtre, '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', d.toFixed(3), '-movflags', '+faststart', out);
+  // photo ou vidéo en fond : cadrée plein écran (assombrie sous le texte), zoom lent sur une photo, lecture en boucle pour une vidéo ; l'écran transparent est posé dessus
+  let entreeFond = [], composition = '[b]', fondMedia = '';
+  if (F) {
+    const iFond = 3 + sons.length, sombre = F.sombre ? ',eq=brightness=-0.28:saturation=0.9' : '', f0 = Math.round(g.t0 * FPS), fT = Math.max(1, Math.round(g.T * FPS));
+    if (F.video) { entreeFond = ['-stream_loop', '-1', '-ss', (F.debut + g.t0).toFixed(2), '-i', F.fichier]; fondMedia = `[${iFond}:v]fps=${FPS},scale=${LARG}:${HAUT}:force_original_aspect_ratio=increase,crop=${LARG}:${HAUT}${sombre}[m]`; }
+    else { entreeFond = ['-loop', '1', '-framerate', String(FPS), '-t', d.toFixed(3), '-i', F.fichier]; fondMedia = `[${iFond}:v]scale=${LARG * 2}:${HAUT * 2}:force_original_aspect_ratio=increase,crop=${LARG * 2}:${HAUT * 2},zoompan=z='1+0.12*(${f0}+on)/${fT}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${LARG}x${HAUT}:fps=${FPS}${sombre}[m]`; }
+    composition = '[m][b]overlay=0:0:format=auto[bm];[bm]';
+  }
+  const filtre = `${F ? fondMedia + ';' : ''}${fondZ};${pico};${composition}[p]overlay=x='${px2}':y='${py}+${respire}+${saut}',format=yuv420p[v];${audio}`;
+  ff('-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, ...entrees, ...entreeFond, '-filter_complex', filtre, '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', d.toFixed(3), '-movflags', '+faststart', out);
   return { out, d };
 }
 

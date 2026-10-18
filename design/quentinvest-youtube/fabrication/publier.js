@@ -19,11 +19,13 @@ function publication_(f, r) {
   const externes = f.sourcesExternes !== false;
   const sources = (f.sources || []).join('\n') + (externes ? '\nConsultées le : [date de consultation à compléter]' : '');
   const hash = f.hashtags || '#économie #apprendre #QuentInvest';
+  const credits = [...new Set((f.blocs || []).concat(f.accroche ? [f.accroche] : []).map(b => b.fond && b.fond.credit).filter(Boolean))];
   const longue = [
     "👉 Abonne-toi pour rejoindre la colonie : une vidéo d'économie simple, régulièrement.", '',
     f.description, '',
     chapitres && 'Chapitres', chapitres, chapitres && '',
     'Sources', sources, '',
+    credits.length && 'Images et vidéos : ' + credits.join(' ; '), credits.length && '',
     MENTION, '',
     f.question + ' Dis-le en commentaire !', '',
     hash

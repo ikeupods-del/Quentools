@@ -30,6 +30,8 @@ const gesteDe = b => {
   return undefined;
 };
 const maj = t => t.charAt(0).toUpperCase() + t.slice(1);
+// photo ou vidéo en fond d'un bloc (`fond: { fichier | url, credit }`) : le crédit s'affiche à l'écran et dans la description
+const avecCredit = b => { if (b.fond && b.fond.credit && b.ecran && b.ecran !== '=' && !b.ecran.source) b.ecran.source = 'Image : ' + b.fond.credit; return b; };
 const nettoie = o => { for (const k of Object.keys(o)) if (o[k] === undefined) delete o[k]; return o; };
 
 // vérifie la fiche avant de lancer une fabrication longue : message clair en français plutôt qu'une erreur au milieu du montage
@@ -63,7 +65,7 @@ function compose(f) {
   let rev = -1;
   (f.blocs || []).forEach(b => {
     if (b.revelation) rev = L.length;
-    L.push(nettoie({ expr: exprDe(b), geste: gesteDe(b), section: b.section, ecran: b.ecran, effet: b.effet, effetT: b.effetT, lent: b.lent, saut: b.saut, voix: b.voix, texte: b.texte }));
+    L.push(nettoie({ expr: exprDe(b), geste: gesteDe(b), section: b.section, fond: avecCredit(b).fond, ecran: b.ecran, effet: b.effet, effetT: b.effetT, lent: b.lent, saut: b.saut, voix: b.voix, texte: b.texte }));
   });
   if (f.piege) {
     const er = f.piege.erreurs || [];
@@ -86,7 +88,7 @@ function compose(f) {
     if (!b.court) { precedent = false; return; }
     const ecran = b.ecran === '=' ? (precedent ? '=' : null) : (b.ecranTiktok || b.ecran);
     if (!ecran) { precedent = false; return; }
-    T.push(nettoie({ expr: exprDe(b), geste: gesteDe(b), ecran, effet: b.effet, effetT: b.effetT, texte: b.court })); precedent = true;
+    T.push(nettoie({ expr: exprDe(b), geste: gesteDe(b), fond: b.fondTiktok || b.fond, ecran, effet: b.effet, effetT: b.effetT, texte: b.court })); precedent = true;
   });
   if (f.piege && f.piege.court) T.push({ expr: 'inquiet', geste: 'penche', ecran: { type: 'message', titre: 'Grain de sable', sous: f.piege.sous || 'Ce qui est souvent mal compris' }, texte: f.piege.court });
   T.push({ expr: 'content', ecran: { type: 'resume', titre: 'En une phrase', texte: maj(f.resume.court ? f.resume.court.replace(/^En une phrase\s*:\s*/i, '') : (f.resume.ecran || f.resume.texte.replace(/^En une phrase\s*:\s*/i, ''))) }, texte: f.resume.court || f.resume.texte });

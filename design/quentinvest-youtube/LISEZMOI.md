@@ -18,6 +18,14 @@ Les épisodes qui demandent des faits extérieurs (taux du Livret A, barème d'i
 
 Ce que le programme ajoute seul : appel à s'abonner dans les premières secondes, accroche chiffrée, expressions et gestes de Pico, bruitages, musique qui change au chiffre clé, zoom lent, sous-titres, contrôle du rythme (avertissements affichés), chapitres, miniatures, texte de publication. Seul le fond de la fiche demande de la rédaction.
 
+## Photos et vidéos
+Un bloc de fiche peut avoir une **photo ou une vidéo en fond** (le texte et les calculs restent affichés par-dessus, Pico reste à l'écran) :
+- `"fond": { "fichier": "nom.jpg", "credit": "Auteur, licence, source" }` : fichier rangé dans `medias/` (ou chemin complet), ou `"url"` (téléchargée une fois dans `medias/cache/`). Une photo est cadrée plein écran, assombrie sous le texte, avec un zoom lent ; une vidéo tourne en boucle (`"debut"` : seconde de départ, `"sombre": false` pour la laisser claire). Le fond dure jusqu'au prochain nouvel écran (un bloc `"ecran": "="` le garde).
+- Écran `{ "type": "visuel", "legende": "…" }` : uniquement le média, avec une légende facultative.
+- Le crédit s'affiche à l'écran (« Image : … ») et la description YouTube ajoute « Images et vidéos : … ». Version TikTok : `fondTiktok` pour un autre média (sinon le même).
+- Images libres de droits : `node fabrication/medias.js commons "Nom_du_fichier.jpg" nom-court` télécharge l'image de Wikimedia Commons avec son crédit et **refuse toute licence non libre** (domaine public, CC0, CC BY, CC BY-SA acceptés). Wikimedia limite les appels depuis certains serveurs : si la commande répond « licence non vérifiable », la lancer plus tard ou depuis le Mac ; on peut aussi fournir soi-même une photo ou une vidéo dont on possède les droits (la déposer dans `medias/`).
+- Pas de photo ou vidéo dont la licence n'est pas vérifiée, et jamais de logo ou d'image de marque sans droit.
+
 ## Contrôle rapide (2 secondes, sans fabrication)
 `node design/quentinvest-youtube/fabrication/verifier.js` : les écrans des épisodes 1 et 2 sont identiques à la référence, et toutes les fiches se composent sans erreur. À lancer après toute modification du moteur.
 

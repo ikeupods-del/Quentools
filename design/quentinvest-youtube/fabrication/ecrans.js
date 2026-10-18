@@ -161,6 +161,15 @@ body.vert{width:1080px;height:1920px}
 .vert .num{width:100px;height:100px;font-size:70px}
 `;
 
+// ---------- photo ou vidéo en fond (`fond` d'une réplique) : l'écran est rendu sur fond transparent, fabriquer.js le pose sur le média ----------
+const CSS_TRANSP = `
+body.transp{background:none!important}
+.transp .mention{background:rgba(0,0,0,.5)}
+.transp h1,.transp h2,.transp .sous,.transp .resume,.transp .def{text-shadow:0 3px 14px rgba(0,0,0,.65)}
+.legende-visuel{position:absolute;left:90px;top:150px;max-width:1100px;background:rgba(0,0,0,.62);padding:18px 32px;border-radius:16px;font-size:40px;font-weight:700}
+.vert .legende-visuel{left:60px;right:60px;top:190px;font-size:36px;max-width:none}
+`;
+
 // ---------- animation : exécutée dans la page ----------
 const RUNTIME = `(()=>{
 const out=x=>1-Math.pow(1-x,3), back=x=>{const c=1.70158;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
@@ -184,7 +193,7 @@ setT(0);
 })();`;
 
 const EVENTS = `window.EVENTS=[...new Set([...document.querySelectorAll('[data-a]')].filter(e=>/pop|count|on/.test(e.dataset.a)).map(e=>+e.dataset.d))].sort((a,b)=>a-b);`;
-const page = (corps, { section, source, mention, chaine, style, vertical }) => `<!doctype html><html lang="fr"><meta charset="utf-8"><style>${CSS}${style >= 2 ? CSS_V2 : ''}${vertical ? CSS_VERT : ''}</style><body${style >= 2 || vertical ? ` class="${[style >= 2 ? 'v2' : '', vertical ? 'vert' : ''].filter(Boolean).join(' ')}"` : ''}>
+const page = (corps, { section, source, mention, chaine, style, vertical, transp }) => `<!doctype html><html lang="fr"><meta charset="utf-8"><style>${CSS}${style >= 2 ? CSS_V2 : ''}${vertical ? CSS_VERT : ''}${transp ? CSS_TRANSP : ''}</style><body${style >= 2 || vertical || transp ? ` class="${[style >= 2 ? 'v2' : '', vertical ? 'vert' : '', transp ? 'transp' : ''].filter(Boolean).join(' ')}"` : ''}>
 <div class="marque"><i></i><span>${esc(chaine)}</span></div>${section ? `<div class="section">${esc(section)}</div>` : ''}
 ${corps}${source ? `<div class="source">${esc(source)}</div>` : ''}
 <div class="mention">${esc(mention)}</div><script>${RUNTIME}${style >= 2 ? EVENTS : ''}</script></body></html>`;
@@ -231,6 +240,8 @@ const TYPES = {
   // tableau : les lignes arrivent une à une ; `surligne` = numéro de la ligne mise en valeur (0 = première)
   tableau: (e, c) => { const p = Math.min(0.9, pas(e.lignes.length, c)), g = `style="grid-template-columns:1.1fr ${'1fr '.repeat(e.colonnes.length - 1)}"`;
     return zone(`${e.titre ? `<div class="mot" ${A('fade', 0)}>${esc(e.titre)}</div>` : ''}<div class="tab"><div class="tl th" ${g} ${A('fade', 0.2, 0.4)}>${e.colonnes.map(x => `<span>${esc(x)}</span>`).join('')}</div>${e.lignes.map((l, i) => `<div class="tl${i === e.surligne ? ' hl' : ''}" ${g} ${A('fade', 0.5 + i * p, 0.5)}>${l.map(x => `<span>${esc(x)}</span>`).join('')}</div>`).join('')}</div>`); },
+  // visuel : rien que le média de fond (photo ou vidéo), avec une légende facultative
+  visuel: e => `${e.legende ? `<div class="legende-visuel" ${A('fade', 0.4, 0.6)}>${esc(e.legende)}</div>` : ''}`,
   // liste à cocher : les points arrivent un par un (texte + précision facultative)
   liste: (e, c) => { const p = pas(e.points.length, c); return zone(`${e.titre ? `<div class="mot" ${A('fade', 0)}>${esc(e.titre)}</div>` : ''}${e.points.map((x, i) => `<div class="coche" ${A('fade', 0.3 + i * p, 0.5)}><i>✓</i><div>${esc(Array.isArray(x) ? x[0] : x)}${Array.isArray(x) ? `<small>${esc(x[1])}</small>` : ''}</div></div>`).join('')}`); },
   // croissance : deux courbes sur n années (intérêts simples en ligne droite, composés en courbe qui s'envole), hypothèse affichée
@@ -282,6 +293,6 @@ function image(ecran, ctx) {
   FIN_SOURCES = ctx.sources || [];
   const f = TYPES[ecran.type];
   if (!f) throw new Error('Type d’écran inconnu : ' + ecran.type);
-  return page(f(ecran, ctx), { section: ctx.section, source: ecran.source, mention: ctx.mention, chaine: ctx.chaine, style: ctx.style, vertical: ctx.vertical });
+  return page(f(ecran, ctx), { section: ctx.section, source: ecran.source, mention: ctx.mention, chaine: ctx.chaine, style: ctx.style, vertical: ctx.vertical, transp: ctx.transp });
 }
 module.exports = { image, b64 };
