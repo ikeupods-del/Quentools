@@ -1,0 +1,138 @@
+{
+ "titre": "Un crédit de 200 000 € sur 25 ans à 3,5 % (exemple) : combien ça coûte en tout ? (version TikTok)",
+ "chaine": "QuentInvest",
+ "mention": "Exemple pédagogique · pas une offre de crédit · pas un conseil",
+ "style": 2,
+ "voix": {
+  "moteur": "kokoro",
+  "sid": 30,
+  "vitesse": 0.82,
+  "hauteur": 0.78
+ },
+ "sources": [
+  "S1 · Formule de la mensualité constante : capital × i ÷ (1 − (1 + i)^−n), i = taux mensuel (calcul de la chaîne)",
+  "S2 · Calculs, exemple de 200 000 € à 3,5 % sur 25 ans : mensualité ≈ 1 001,25 € ; total ≈ 300 374 € ; intérêts ≈ 100 374 €"
+ ],
+ "miniature": {
+  "lignes": [
+   "UN CRÉDIT",
+   "COÛTE",
+   "COMBIEN ?"
+  ],
+  "accent": "COMBIEN",
+  "bas": [
+   "200 000 €",
+   "→ 300 374 €"
+  ]
+ },
+ "format": "vertical",
+ "musique": "corporate-lumineux",
+ "scenes": [
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "ecran": {
+    "type": "accroche",
+    "intro": "200 000 € empruntés sur 25 ans, à 3,5 % par an (exemple)",
+    "avant": "200 000 €",
+    "apres": "≈ 300 374 €",
+    "de": 200000,
+    "a": 300374,
+    "suffixe": " €",
+    "legende": "À rembourser en tout.",
+    "source": "Calcul : mensualité ≈ 1 001,25 € × 300 mois"
+   },
+   "effet": "impact",
+   "effetT": 1,
+   "texte": "Emprunter 200 000 €, ça coûte combien en tout ? Pas seulement 200 000 €."
+  },
+  {
+   "expr": "content",
+   "geste": "hoche",
+   "ecran": {
+    "type": "abonne",
+    "texte": "Rejoins la colonie",
+    "sous": "Une vidéo d'économie simple, régulièrement."
+   },
+   "texte": "Salut la colonie ! Abonne-toi pour ne rien rater."
+  },
+  {
+   "expr": "neutre",
+   "geste": "pointe",
+   "ecran": {
+    "type": "definition",
+    "mot": "Taux d'intérêt",
+    "texte": "Le prix de l'argent emprunté"
+   },
+   "texte": "Le taux, c'est le prix de l'argent emprunté."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Mensualité ≈ 1 001,25 €",
+     "1 001,25 € × 300 mois ≈ 300 374 €"
+    ],
+    "resultat": "300 374 € − 200 000 € = 100 374 €",
+    "source": "Calcul : mensualité constante, taux mensuel = 3,5 % ÷ 12"
+   },
+   "texte": "Mensualité d'environ 1 001,25 €, pendant 300 mois : 300 374 € en tout."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "200 000 €",
+     "legende": "Ce que tu empruntes"
+    },
+    "b": {
+     "valeur": "≈ 300 374 €",
+     "de": 200000,
+     "a": 300374,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Ce que tu rembourses en tout"
+    },
+    "source": "Intérêts : 100 374 €"
+   },
+   "effet": "impact",
+   "effetT": 2.5,
+   "texte": "Au final : 300 374 € remboursés, soit 100 374 € de plus que la somme empruntée."
+  },
+  {
+   "expr": "inquiet",
+   "geste": "penche",
+   "ecran": {
+    "type": "message",
+    "titre": "Grain de sable",
+    "sous": "Ce qui est souvent mal compris"
+   },
+   "texte": "Attention, grain de sable : une petite mensualité peut cacher un crédit très long, donc très cher."
+  },
+  {
+   "expr": "content",
+   "ecran": {
+    "type": "resume",
+    "titre": "En une phrase",
+    "texte": "Un crédit coûte la somme empruntée plus les intérêts, et la durée compte autant que le taux."
+   },
+   "texte": "En une phrase : un crédit coûte la somme empruntée plus les intérêts, et la durée compte autant que le taux."
+  },
+  {
+   "expr": "curieux",
+   "geste": "hoche",
+   "sortie": true,
+   "ecran": {
+    "type": "suite",
+    "label": "Vidéo complète sur la chaîne",
+    "titre": "Un crédit de 200 000 € coûte combien en tout ?",
+    "sous": "Et toi, tu avais déjà fait ce calcul ? Dis-le en commentaire."
+   },
+   "texte": "Vidéo complète sur la chaîne. Et toi, tu avais déjà fait ce calcul ? Dis-le en commentaire."
+  }
+ ]
+}

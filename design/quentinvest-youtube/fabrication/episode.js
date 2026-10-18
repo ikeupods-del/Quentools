@@ -35,6 +35,7 @@ function fabriquer(nom, EP) {
 let long = null;
 if (!drapeau('sans-youtube')) { etape('Vidéo YouTube'); long = fabriquer('', C.long); }
 if (!drapeau('sans-tiktok')) { etape('Version TikTok'); fabriquer('-tiktok', C.tiktok); }
+fs.writeFileSync(path.join(EPISODES, `${C.base}.json`), JSON.stringify(C.long, null, 1) + '\n'); // la miniature lit le fichier d'épisode, même sans vidéo YouTube
 etape('Miniatures');
 const mini = (extra, nom) => { const r = spawnSync('node', [path.join(__dirname, 'miniature.js'), path.join(EPISODES, `${C.base}.json`), 'surpris-ouvert', path.join(SORTIE, nom), ...extra], { encoding: 'utf8' }); if (r.status !== 0) throw new Error(r.stderr); };
 mini([], `${C.NUM}-miniature.png`); mini(['--tiktok'], `${C.NUM}-miniature-tiktok.png`);
