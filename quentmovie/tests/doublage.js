@@ -87,6 +87,18 @@ function chromium() {
     await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Une.\nDeux.'); await pg.fill('#dbNom', 'ui-essai'); await pg.click('#dbGo'); await pg.waitForSelector('#dbRec', { timeout: 10000 });
     check('doublage : prises déjà enregistrées reprises sous le même nom', await ev(() => !!dbl.prises[0] && dbl.cur === 1));
     await pg.keyboard.press('Escape'); check('doublage : Échap ferme', await ev(() => dbl === null && !document.querySelector('#modal').classList.contains('on')));
+    // voix clonée : l'essai s'ouvre depuis le doublage, sans rien lancer
+    await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Une.'); await pg.fill('#dbNom', 'ui-clone'); await pg.click('#dbGo'); await pg.waitForSelector('#dbClone', { timeout: 10000 });
+    await pg.click('#dbClone'); await pg.waitForSelector('#vcLancer', { timeout: 10000 });
+    check('voix clonée : fenêtre d’essai ouverte (deux modèles, doublage fermé)', await ev(() => dbl === null && !!document.querySelector('#vcChatterbox') && !!document.querySelector('#vcQwen') && /répliques/.test(document.querySelector('#boite').textContent)));
+    await pg.keyboard.press('Escape'); await ev(() => fermer());
+    // dictionnaire de prononciation : s'ouvre depuis le doublage, un mot ajouté est gardé dans le fichier
+    await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Une.'); await pg.fill('#dbNom', 'ui-pron'); await pg.click('#dbGo'); await pg.waitForSelector('#dbPron', { timeout: 10000 });
+    await pg.click('#dbPron'); await pg.waitForSelector('#prAjout', { timeout: 10000 });
+    await pg.click('#prAjout'); await pg.fill('.prE', 'Goldgarbis'); await pg.fill('.prL', 'Golgarbis'); await pg.press('.prL', 'Tab'); await pg.waitForTimeout(600);
+    check('prononciations : mot ajouté gardé dans le fichier', fs.existsSync(path.join(base, 'prononciations.json')) && /Goldgarbis/.test(fs.readFileSync(path.join(base, 'prononciations.json'), 'utf8')));
+    check('prononciations : mots livrés listés', await ev(() => /Mots déjà connus \(\d+\)/.test(document.querySelector('#boite').textContent)));
+    await pg.keyboard.press('Escape'); await ev(() => fermer());
     // doublage d'une vidéo : chaque réplique démarre à l'instant de la phrase d'origine
     await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Phrase un.\nPhrase deux.'); await pg.fill('#dbNom', 'ui-calage');
     check('doublage : fichier vidéo ou son accepté pour lire le texte', await ev(() => /video\/\*/.test(document.querySelector('#dbF').accept)));

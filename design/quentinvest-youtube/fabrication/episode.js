@@ -15,6 +15,8 @@ const F = JSON.parse(fs.readFileSync(fichier, 'utf8')), C = compose(F);
 const EPISODES = path.join(__dirname, '..', 'episodes'), SORTIE = path.resolve(arg('sortie', path.join(os.homedir(), 'Movies', 'QuentInvest', C.base)));
 const MODELES = arg('modeles', path.join(os.homedir(), 'Movies', 'QuentMovie', 'modeles'));
 fs.mkdirSync(SORTIE, { recursive: true });
+// texte à lire pour le Doublage de QuentMovie (voix du propriétaire) : rangé à côté des vidéos et dans episodes/
+{ const L = require('./lecture'); for (const [ep, v] of [[C.long, false], [C.tiktok, true]]) L.ecrire(ep, C.base, v, [SORTIE, EPISODES]); }
 const dossierVoix = (EP) => path.join(MODELES, EP.voix.moteur === 'kokoro' ? 'kokoro-multi-lang-v1_0' : EP.voix.modele || 'vits-piper-fr_FR-upmc-medium');
 { const { estimer, DUREE_MINI } = require('./composer'), est = estimer(C.long.scenes, C.long.voix);
   if (!drapeau('sans-youtube') && !drapeau('court') && est < DUREE_MINI) { console.error(`Fiche trop courte : environ ${Math.floor(est / 60)} min ${est % 60} s estimées. Une vidéo YouTube dure au moins 5 minutes : ajoute des blocs à la fiche.`); process.exit(2); } }
@@ -43,9 +45,9 @@ const mini = (extra, nom) => { const r = spawnSync('node', [path.join(__dirname,
 mini([], `${C.NUM}-miniature.png`); mini(['--tiktok'], `${C.NUM}-miniature-tiktok.png`);
 if (long) {
   etape('Texte de publication');
-  fs.writeFileSync(path.join(SORTIE, `${C.base}-publication.md`), publication(F, long.rapport));
+  fs.writeFileSync(path.join(SORTIE, `${C.base}-publication.md`), publication(F, long.rapport, { voixPerso: !!arg('voix-perso', '') }));
   fs.copyFileSync(path.join(SORTIE, `${C.base}-publication.md`), path.join(EPISODES, `${C.base}-publication.md`));
-  fs.writeFileSync(path.join(SORTIE, `${C.base}-publication.json`), JSON.stringify(publicationDonnees(F, long.rapport), null, 1)); // même contenu, pour la programmation automatique des publications
+  fs.writeFileSync(path.join(SORTIE, `${C.base}-publication.json`), JSON.stringify(publicationDonnees(F, long.rapport, { voixPerso: !!arg('voix-perso', '') }), null, 1)); // même contenu, pour la programmation automatique des publications
 }
 fs.copyFileSync(path.join(SORTIE, `${C.NUM}-miniature.png`), path.join(EPISODES, `${C.NUM}-miniature.png`)); fs.copyFileSync(path.join(SORTIE, `${C.NUM}-miniature-tiktok.png`), path.join(EPISODES, `${C.NUM}-miniature-tiktok.png`));
 console.log('\nPrêt à relire, rien n\'est publié. Dossier : ' + SORTIE);

@@ -20,7 +20,7 @@ else {
   if (diff.length) { erreurs++; console.log('✗ Écrans des épisodes 1 et 2 modifiés : ' + diff.join(', ')); } else console.log(`✓ Épisodes 1 et 2 : ${Object.keys(ref).length} écrans identiques à la référence`);
 }
 for (const f of fs.readdirSync(FICHES).filter(n => /^\d.*\.json$/.test(n))) {
-  try { const c = compose(JSON.parse(fs.readFileSync(path.join(FICHES, f), 'utf8'))); console.log(`✓ Fiche ${f} : ${c.long.scenes.length} répliques YouTube, ${c.tiktok.scenes.length} TikTok`); }
+  try { const c = compose(JSON.parse(fs.readFileSync(path.join(FICHES, f), 'utf8'))); const lec = require('./lecture'); if (lec.lignes(c.long).length !== c.long.scenes.length || lec.lignes(c.tiktok).some(x => !x)) throw new Error('texte à lire incohérent avec les répliques'); console.log(`✓ Fiche ${f} : ${c.long.scenes.length} répliques YouTube, ${c.tiktok.scenes.length} TikTok, texte à lire prêt`); }
   catch (e) { erreurs++; console.log(`✗ Fiche ${f} : ${e.message}`); }
 }
 process.exit(erreurs ? 1 : 0);

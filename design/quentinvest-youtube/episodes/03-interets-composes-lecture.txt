@@ -1,0 +1,32 @@
+1 000 € qui grossissent pendant 30 ans : combien ça fait ? Tout dépend d'un petit mot.
+Salut la colonie ! Abonne-toi pour ne rien rater.
+Au programme : la différence entre intérêts simples et composés, ce qui change quand le taux ou la durée change, un duel entre Léa et Tom, et les pièges à éviter.
+Pourquoi s'intéresser aux intérêts composés ? Parce qu'ils s'appliquent à l'épargne comme aux dettes. Comprendre cette mécanique, c'est comprendre pourquoi le temps pèse autant sur l'argent, dans un sens comme dans l'autre.
+Pense à une boule de neige qui roule dans une pente. Au début, elle est petite. Plus elle grossit, plus elle ramasse de neige à chaque tour. Les intérêts composés fonctionnent exactement pareil.
+Commençons par le plus simple. Les intérêts simples : chaque année, tu touches un pourcentage de la somme de départ, toujours la même. 5 % de 1 000 €, ça fait 50 € par an.
+Maintenant, les intérêts composés. Chaque année, les intérêts s'ajoutent à la somme. L'année suivante, tu touches des intérêts sur les intérêts. C'est l'effet boule de neige.
+Regarde la différence. Avec les intérêts simples, la somme monte en ligne droite. Avec les intérêts composés, la courbe s'envole : au bout de 30 ans, environ 4 322 €, contre 2 500 €.
+Autrement dit : un gain de 150 pour cent en simple, et 332 pour cent en composé. Même taux, même durée. Seul le mécanisme change.
+Regardons année par année. Au début, la différence est minuscule : après un an, c'est pareil. Après 30 ans, 1 822 € d'écart. La boule de neige a besoin de temps pour grossir.
+Le secret, c'est le temps. Une règle pratique : divise 72 par le taux. À 5 %, 72 divisé par 5, ça fait environ 14,4 ans pour doubler.
+Et si le taux change ? À 3 %, tu obtiens 2 427 €. À 5 %, 4 322 €. À 7 %, 7 612 €. Quelques points d'écart par an, et le résultat change beaucoup.
+Et si la durée change ? 20 ans : 2 653 €. 30 ans : 4 322 €. 40 ans : 7 040 €. Chaque année de plus pèse davantage que la précédente.
+Léa place 1 000 € aujourd'hui. Tom attend 10 ans, puis place la même somme, au même taux. Au bout de 30 ans pour Léa, Tom n'a eu que 20 ans : 2 653 € contre 4 322 €.
+Pour calculer toi-même, c'est simple : tu multiplies la somme par 1,05, autant de fois que d'années. Sur une calculatrice, tape 1,05, la touche puissance, 30, puis multiplie par 1 000 €.
+Sur les 3 322 € d'intérêts gagnés au total, 1 822 € viennent uniquement des intérêts sur les intérêts. C'est exactement ce que les intérêts simples n'ont pas.
+Et en vrai ? Avec 2 % d'inflation par an, en hypothèse, 4 322 € dans 30 ans valent environ 2 386 € d'aujourd'hui. Il faut toujours regarder le résultat en pouvoir d'achat.
+Petite question pour toi. Au bout de 30 ans, par combien ta somme est-elle multipliée avec les intérêts composés ? Mets la vidéo en pause si tu veux réfléchir.
+Réponse : par 4,3. 1 000 € deviennent 4 322 €. Avec les intérêts simples, elle serait seulement multipliée par 2,5.
+Petite question pour toi. Vrai ou faux : si le taux est multiplié par deux, passe de 5 % à 10 %, les gains sont-ils multipliés par deux ? Mets la vidéo en pause si tu veux réfléchir.
+Réponse : faux. À 5 %, tu gagnes 3 322 €. À 10 %, 16 449 €. Les gains sont multipliés par 5,0, pas par deux, à cause des intérêts sur les intérêts.
+Ce modèle est volontairement simplifié : il ne tient compte ni des impôts, ni des variations d'une année à l'autre, ni de ta situation personnelle. C'est un outil pour comprendre, pas pour prévoir.
+Petit défi pour toi : refais le calcul avec ta propre somme, ton taux et ta durée. Compare le résultat avec ce que tu imaginais : c'est souvent surprenant.
+Avant de te lancer dans un projet d'épargne, trois questions à te poser : pour quand ai-je besoin de cet argent ? Quel est le taux, et est-il garanti ? Et quels sont les frais ? Les réponses changent tout.
+Attention, grain de sable. Il y a trois erreurs courantes.
+Un : croire que ces 5 % existent toujours. C'est une hypothèse pour comprendre. Un vrai taux change, et certains placements peuvent faire perdre de l'argent.
+Deux : oublier l'inflation. 4 322 € dans 30 ans n'achèteront pas autant qu'aujourd'hui.
+Trois : attendre le moment parfait pour commencer. Dans l'exemple de Léa et Tom, 10 ans d'attente coûtent 1 669 €. Le temps passé ne se rattrape pas.
+Pour résumer en trois points. Un : les intérêts composés rapportent des intérêts sur les intérêts. Deux : le temps compte plus que le montant. Trois : un taux n'est jamais garanti, et il faut penser à l'inflation.
+En une phrase : avec les intérêts composés, le temps travaille pour toi, à condition de ne pas oublier que les taux ne sont pas garantis.
+La prochaine fois : un crédit de 10 000 € coûte combien en tout ? Et toi, quelle question d'argent te trotte dans la tête ? Dis-le en commentaire.
+Rappel : vulgarisation, pas un conseil en investissement. Un grain après l'autre. À bientôt dans la fourmilière !

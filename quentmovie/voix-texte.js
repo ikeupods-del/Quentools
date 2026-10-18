@@ -1,7 +1,38 @@
 // QuentMovie : texte écrit → texte prononcé. Les voix de synthèse lisent « 9h » comme « neuf hache » ;
 // ici heures, sommes, pourcentages, unités, ordinaux et abréviations sont écrits comme on les dit.
 // Appliqué à toutes les voix (Piper et Mac) ; les sous-titres gardent le texte d'origine. Aucun appel à l'IA.
+// Dictionnaire de prononciation : prononciations.json (livré) + ~/Movies/QuentMovie/prononciations.json (celui de l'utilisateur, prioritaire).
 'use strict';
+const fs = require('fs'), os = require('os'), path = require('path');
+
+const LIVRE = path.join(__dirname, 'prononciations.json');
+let persoChemin = process.env.QM_PRONONCIATIONS || path.join(os.homedir(), 'Movies', 'QuentMovie', 'prononciations.json');
+const definirFichierPerso = f => { persoChemin = f; cache = null; };
+const lireMots = f => { try { const d = JSON.parse(fs.readFileSync(f, 'utf8')); return d && typeof d.mots === 'object' && d.mots ? d.mots : {}; } catch (e) { return {}; } };
+const horodate = f => { try { return fs.statSync(f).mtimeMs; } catch (e) { return 0; } };
+let cache = null; // { cle, mots, re }
+const echapper = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// Fusion livré + perso (une valeur vide ou null retire un mot livré), puis une seule expression : les mots longs d'abord, une passe, sans enchaînement
+function lexique() {
+  const cle = horodate(LIVRE) + '|' + horodate(persoChemin) + '|' + persoChemin;
+  if (cache && cache.cle === cle) return cache;
+  const mots = {}; for (const [k, v] of Object.entries({ ...lireMots(LIVRE), ...lireMots(persoChemin) })) if (k && !k.startsWith('_') && typeof v === 'string' && v.trim()) mots[k.trim()] = v.trim();
+  const cles = Object.keys(mots).sort((a, b) => b.length - a.length);
+  // un sigle écrit en majuscules (PEA, TRI) n'est remplacé qu'en majuscules ; les autres mots sans tenir compte de la casse
+  const majuscule = k => /\p{L}/u.test(k) && k === k.toUpperCase();
+  const tableau = new Map(cles.map(k => [k.toLowerCase(), { cle: k, lu: mots[k], sigle: majuscule(k) }]));
+  const re = cles.length ? new RegExp('(?<![\\p{L}\\p{N}])(?:' + cles.map(echapper).join('|') + ')s?(?![\\p{L}\\p{N}])', 'giu') : null;
+  return (cache = { cle, mots, re, tableau });
+}
+function appliquerLexique(t) {
+  const L = lexique(); if (!L.re) return t;
+  return t.replace(L.re, m => {
+    let e = L.tableau.get(m.toLowerCase()), pl = '';
+    if (!e && /s$/i.test(m)) { e = L.tableau.get(m.slice(0, -1).toLowerCase()); pl = e && !e.sigle && !/s$/.test(e.lu) ? 's' : ''; if (e && e.sigle) return m; } // pluriel : « krachs » → « cracs »
+    if (!e || (e.sigle && m !== e.cle)) return m;
+    return (/^\p{Lu}/u.test(m) && /^\p{Ll}/u.test(e.lu) && m !== m.toUpperCase() ? e.lu[0].toUpperCase() + e.lu.slice(1) : e.lu) + pl; // « Krach » → « Crac »
+  });
+}
 
 const ORD = ['', 'premier', 'deuxième', 'troisième', 'quatrième', 'cinquième', 'sixième', 'septième', 'huitième', 'neuvième', 'dixième', 'onzième', 'douzième', 'treizième', 'quatorzième', 'quinzième',
   'seizième', 'dix-septième', 'dix-huitième', 'dix-neuvième', 'vingtième', 'vingt et unième', 'vingt-deuxième', 'vingt-troisième', 'vingt-quatrième', 'vingt-cinquième', 'vingt-sixième', 'vingt-septième',
@@ -10,6 +41,8 @@ const ordinal = (n, fem) => { const w = n === 1 ? (fem ? 'première' : 'premier'
 const romain = s => { const v = { I: 1, V: 5, X: 10, L: 50 }; let n = 0; for (let i = 0; i < s.length; i++) { const a = v[s[i]], b = v[s[i + 1]] || 0; n += a < b ? -a : a; } return n; };
 // 1 et 1,5 restent au singulier ; au-delà, pluriel
 const pluriel = (nb, s, p) => (/^[01](?:[.,]\d+)?$/.test(nb.trim()) ? s : p);
+const CARDINAL = ['', 'premier', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf', 'vingt', 'vingt et un', 'vingt-deux', 'vingt-trois', 'vingt-quatre', 'vingt-cinq', 'vingt-six', 'vingt-sept', 'vingt-huit', 'vingt-neuf', 'trente', 'trente et un', 'trente-deux', 'trente-trois', 'trente-quatre', 'trente-cinq', 'trente-six', 'trente-sept', 'trente-huit', 'trente-neuf'];
+const PRENOMS = 'Louis|Charles|Henri|Jean|Philippe|François|Napoléon|Élisabeth|Elisabeth|George|Georges|Guillaume|Frédéric|Alexandre|Pierre|Catherine|Léon|Pie|Benoît|Grégoire|Clément|Urbain|Innocent|Boniface|Paul|Jules|Édouard|Edouard|Richard|Alphonse|Ferdinand|Isabelle|Marie|Anne|Nicolas|Victor|Jacques|Louis-Philippe|Charles-Quint|Jean-Paul|Henry|Elizabeth|Victoria|Ramsès|Ramses|Louis-Napoléon';
 const NB = '(\\d+(?:[.,]\\d+)?)';
 
 const UNITES = [ // [motif, singulier, pluriel] — toujours précédées d'un nombre
@@ -32,7 +65,8 @@ const ABREV = [
 ];
 
 function pourLaVoix(texte) {
-  let t = String(texte == null ? '' : texte);
+  let t = appliquerLexique(String(texte == null ? '' : texte));
+  t = t.replace(/\s?≈\s?/g, ' environ ').replace(/\s?×\s?/g, ' fois ').replace(/\s?÷\s?/g, ' divisé par ').replace(/\s?→\s?/g, ', ');
   // guillemets, tirets longs et puces : inutiles à l'oral
   t = t.replace(/[«»“”"]/g, '').replace(/\s[—–]\s/g, ', ').replace(/[•·▪]/g, ' ').replace(/…/g, '...');
   // nombres groupés par milliers : « 12 000 » → « 12000 » (sinon lus chiffre par chiffre)
@@ -54,8 +88,10 @@ function pourLaVoix(texte) {
   // ordinaux : 1er, 2e, 3ème, XIXe siècle
   t = t.replace(/\b1(er|re|ère)\b/g, (m, x) => ordinal(1, x !== 'er')).replace(/\b(\d{1,2})\s?(?:e|ème|eme|è)\b/g, (m, n) => ordinal(+n)).replace(/\b2nd(e)?\b/g, (m, f) => (f ? 'seconde' : 'second'));
   t = t.replace(/\b([IVXL]+)(er|re|ère|e|ème)\b/g, (m, r, x) => { const n = romain(r); return n >= 1 && n <= 30 ? ordinal(n, /^(re|ère)$/.test(x)) : m; });
+  // souverains et papes : « Louis XIV » → « Louis quatorze », « Henri Ier » → « Henri premier » (les siècles, « XIVe », sont lus plus haut)
+  t = t.replace(new RegExp('\\b(' + PRENOMS + ')\\s+(?:(I)er|([IVX]{2,6}))(?![\\p{L}\\d])', 'gu'), (m, nom, un, r) => { if (un) return `${nom} premier`; const n = romain(r); return n >= 2 && n <= 39 ? `${nom} ${CARDINAL[n]}` : m; });
   t = t.replace(/\s&\s/g, ' et ').replace(/(\d)\s?\+\s?(\d)/g, '$1 plus $2').replace(/\s\+\s/g, ' plus ');
   return t.replace(/[ \t]{2,}/g, ' ').replace(/ +([,.;])/g, '$1').trim();
 }
 
-module.exports = { pourLaVoix };
+module.exports = { pourLaVoix, definirFichierPerso, lexiqueActuel: () => ({ ...lexique().mots }), motsLivres: () => lireMots(LIVRE), motsPerso: () => lireMots(persoChemin), fichierPerso: () => persoChemin };

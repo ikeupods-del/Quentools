@@ -1,7 +1,7 @@
 # Épisode 10 — Le premier krach de l'histoire ? La tulipomanie
 
 Statut : prêt à relire, rien n'est publié.
-Vidéos : `10-premier-krach-tulipomanie-youtube.mp4` (6:14), `10-premier-krach-tulipomanie-tiktok.mp4` (verticale) ; miniatures `10-miniature.png` et `10-miniature-tiktok.png`.
+Vidéos : `10-premier-krach-tulipomanie-youtube.mp4` (6:17), `10-premier-krach-tulipomanie-tiktok.mp4` (verticale) ; miniatures `10-miniature.png` et `10-miniature-tiktok.png`.
 
 ## Titre
 ```
@@ -16,20 +16,19 @@ Pico raconte la tulipomanie néerlandaise de 1637, souvent présentée comme le 
 
 Chapitres
 0:00 La question
-0:29 Le contexte
-0:46 Le mécanisme
-1:43 Le krach
-2:13 Un exemple chiffré
-2:28 Le mythe
-2:59 Le premier krach ?
-3:12 La bulle
-3:36 Pourquoi ça compte
-3:50 Petite question
-4:17 Les limites
-4:33 Ton défi
-4:45 Le piège
-5:17 À retenir
-5:34 En une phrase
+0:30 Le contexte
+0:48 Le mécanisme
+1:47 Le krach
+2:18 Un exemple chiffré
+2:34 Le mythe
+3:05 Le premier krach ?
+3:20 La bulle
+3:47 Pourquoi ça compte
+4:00 Petite question
+4:27 Les limites
+4:41 Ton défi
+5:21 À retenir
+5:39 En une phrase
 
 Sources
 S1 · Wikipédia, « Tulipomanie » (fr) et « Tulip mania » (en)
@@ -38,7 +37,7 @@ S3 · Charles Mackay, Extraordinary Popular Delusions and the Madness of Crowds,
 S4 · Calculs de la chaîne : 5 000 ÷ 300 ≈ 17 ; 100 × 1,5⁵ ≈ 759 (ordres de grandeur)
 Consultées le : [date de consultation à compléter]
 
-Vulgarisation : cette vidéo explique des idées générales, ce n'est pas un conseil en investissement. Les exemples chiffrés sont des hypothèses pour comprendre. Voix de synthèse.
+Vulgarisation : cette vidéo explique des idées générales, ce n'est pas un conseil en investissement. Les exemples chiffrés sont des hypothèses pour comprendre.
 
 Et toi, quelle histoire d'argent aimerais-tu qu'on vérifie ensuite ? Dis-le en commentaire !
 
@@ -50,7 +49,7 @@ Et toi, quelle histoire d'argent aimerais-tu qu'on vérifie ensuite ? Dis-le en 
 1637 : un bulbe de tulipe à 5 000 florins, puis l'effondrement. Vrai ou exagéré ? Pico, la petite fourmi de QuentInvest, t'explique.
 
 Source : Wikipédia, « Tulipomanie » (fr) et « Tulip mania » (en).
-Vulgarisation, pas un conseil en investissement. Voix de synthèse.
+Vulgarisation, pas un conseil en investissement.
 
 Et toi, quelle histoire d'argent aimerais-tu qu'on vérifie ensuite ? Dis-le en commentaire !
 
@@ -59,7 +58,7 @@ Et toi, quelle histoire d'argent aimerais-tu qu'on vérifie ensuite ? Dis-le en 
 
 ## Légende TikTok (à coller telle quelle)
 ```
-🐜 Abonne-toi pour rejoindre la colonie ! 1637 : un bulbe de tulipe à 5 000 florins, puis l'effondrement. Vrai ou exagéré ? Exemple pédagogique, pas un conseil en investissement. Voix de synthèse. Vidéo complète sur la chaîne.
+🐜 Abonne-toi pour rejoindre la colonie ! 1637 : un bulbe de tulipe à 5 000 florins, puis l'effondrement. Vrai ou exagéré ? Exemple pédagogique, pas un conseil en investissement. Vidéo complète sur la chaîne.
 #tulipomanie #krach #histoire #économie #QuentInvest
 ```
 
@@ -70,7 +69,7 @@ Wikipédia, « Tulipomanie » (fr) et « Tulip mania » (en) ; Anne Goldgar, Tul
 
 ## Réglages
 - Public : pas destiné aux enfants. Langue : français. Catégorie : Éducation.
-- Déclarer le contenu de synthèse (voix) selon les règles de la plateforme le jour de la publication.
+- Voix de l'auteur (doublage) : pas de déclaration de voix de synthèse.
 - Prochain épisode annoncé : Les bulles de 1720 : que s'est-il vraiment passé ?.
 
 ## À faire avant de publier

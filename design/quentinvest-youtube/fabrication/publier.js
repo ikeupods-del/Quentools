@@ -7,9 +7,11 @@ const fs = require('fs'), path = require('path');
 
 const horodate = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 const bloc = t => '```\n' + t + '\n```';
-const MENTION = "Vulgarisation : cette vidéo explique des idées générales, ce n'est pas un conseil en investissement. Les exemples chiffrés sont des hypothèses pour comprendre. Voix de synthèse.";
+const MENTION = "Vulgarisation : cette vidéo explique des idées générales, ce n'est pas un conseil en investissement. Les exemples chiffrés sont des hypothèses pour comprendre.";
 
-function publication_(f, r) {
+// opts.voixPerso : la voix est celle de l'auteur (pas de mention « voix de synthèse », contenu non déclaré comme synthétique)
+function publication_(f, r, opts = {}) {
+  const SYNTH = opts.voixPerso ? '' : ' Voix de synthèse.';
   const NUM = String(f.numero).padStart(2, '0'), ch = [];
   r.scenes.forEach(s => { if (s.section && !ch.some(c => c.t === (s.debutExport ?? s.debut))) ch.push({ t: s.debutExport ?? s.debut, titre: s.section }); });
   if (ch.length) ch[0].t = 0;
@@ -23,18 +25,18 @@ function publication_(f, r) {
   const longue = [
     "👉 Abonne-toi pour rejoindre la colonie : une vidéo d'économie simple, régulièrement.", '',
     f.description, '',
-    chapitres && 'Chapitres', chapitres, chapitres && '',
+    chapitres ? 'Chapitres' : undefined, chapitres || undefined, chapitres ? '' : undefined,
     'Sources', sources, '',
-    credits.length && 'Images et vidéos : ' + credits.join(' ; '), credits.length && '',
-    MENTION, '',
+    credits.length ? 'Images et vidéos : ' + credits.join(' ; ') : undefined, credits.length ? '' : undefined,
+    MENTION + SYNTH, '',
     f.question + ' Dis-le en commentaire !', '',
     hash
   ].filter(x => x !== undefined && x !== false).join('\n').replace(/\n{3,}/g, '\n\n');
-  const courte = [`${f.promesse} Pico, la petite fourmi de QuentInvest, t'explique.`, '', f.sources && f.sources[0] ? 'Source : ' + f.sources[0].replace(/^S\d+ · /, '') + '.' : '', "Vulgarisation, pas un conseil en investissement. Voix de synthèse.", '', f.question + ' Dis-le en commentaire !', '', hash].filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i)).join('\n');
-  const tiktok = `🐜 Abonne-toi pour rejoindre la colonie ! ${f.promesse} Exemple pédagogique, pas un conseil en investissement. Voix de synthèse. Vidéo complète sur la chaîne.\n${hash}`;
+  const courte = [`${f.promesse} Pico, la petite fourmi de QuentInvest, t'explique.`, '', f.sources && f.sources[0] ? 'Source : ' + f.sources[0].replace(/^S\d+ · /, '') + '.' : '', "Vulgarisation, pas un conseil en investissement." + SYNTH, '', f.question + ' Dis-le en commentaire !', '', hash].filter((x, i, a) => x !== '' || (a[i - 1] !== '' && i)).join('\n');
+  const tiktok = `🐜 Abonne-toi pour rejoindre la colonie ! ${f.promesse} Exemple pédagogique, pas un conseil en investissement.${SYNTH} Vidéo complète sur la chaîne.\n${hash}`;
   const epingle = `${(f.sources || []).map(s => s.replace(/^S\d+ · /, '')).join(' ; ')}. Les exemples chiffrés sont des hypothèses pour comprendre, pas des taux réels. ${f.question}`;
   const tags = (hash.match(/#[^\s#]+/g) || []).map(h => h.slice(1));
-  const donnees = { titre: f.titre, descriptionYoutube: longue, descriptionCourte: courte, legendeTikTok: tiktok, commentaireEpingle: epingle, tagsYoutube: tags, madeForKids: false, contenuDeSynthese: true, categorie: 'EDUCATION', dureeYoutubeSecondes: Math.round(r.duree), prochainEpisode: f.suite && f.suite.titre || '' };
+  const donnees = { titre: f.titre, descriptionYoutube: longue, descriptionCourte: courte, legendeTikTok: tiktok, commentaireEpingle: epingle, tagsYoutube: tags, madeForKids: false, contenuDeSynthese: !opts.voixPerso, categorie: 'EDUCATION', dureeYoutubeSecondes: Math.round(r.duree), prochainEpisode: f.suite && f.suite.titre || '' };
   return { donnees, md: `# Épisode ${f.numero} — ${f.titre}
 
 Statut : prêt à relire, rien n'est publié.
@@ -57,7 +59,7 @@ ${bloc(epingle)}
 
 ## Réglages
 - Public : pas destiné aux enfants. Langue : français. Catégorie : Éducation.
-- Déclarer le contenu de synthèse (voix) selon les règles de la plateforme le jour de la publication.
+${opts.voixPerso ? "- Voix de l'auteur (doublage) : pas de déclaration de voix de synthèse." : '- Déclarer le contenu de synthèse (voix) selon les règles de la plateforme le jour de la publication.'}
 - Prochain épisode annoncé : ${f.suite && f.suite.titre ? f.suite.titre : 'à définir'}.
 
 ## À faire avant de publier
@@ -65,7 +67,7 @@ ${externes ? "- Vérifier les sources externes et compléter la date de consulta
 - Rien n'est publié sans son accord.
 ` };
 }
-module.exports = { publication: (f, r) => publication_(f, r).md, publicationDonnees: (f, r) => publication_(f, r).donnees };
+module.exports = { publication: (f, r, o) => publication_(f, r, o).md, publicationDonnees: (f, r, o) => publication_(f, r, o).donnees };
 
 if (require.main === module) {
   const [, , fichier, rapport, sortie] = process.argv;
