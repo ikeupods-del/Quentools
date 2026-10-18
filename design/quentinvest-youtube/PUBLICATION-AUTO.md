@@ -33,3 +33,6 @@ YouTube : mardi et vendredi à 16 h (créneau le plus fort de la semaine pour la
 | 8 · 5 000 € dans un tiroir | ven. 6 nov. 16 h | ven. 6 nov. 18 h |
 
 Réglages de chaque publication : YouTube public, catégorie Éducation, « pas destiné aux enfants », contenu de synthèse déclaré ; TikTok public, contenu généré par ordinateur déclaré ; textes tirés de `NN-sujet-publication.json`.
+
+## Limite Metricool (18 octobre 2026)
+Le propriétaire signale que la limite de l'offre Metricool est atteinte : **ne plus créer de publication dans Metricool sans sa décision.** Les 12 publications déjà programmées (état « en attente », vérifié le 18 octobre) restent en place. Miniatures : les six publications YouTube portent la miniature de l'épisode (elle ne s'affiche que si la chaîne est vérifiée par téléphone) ; Metricool ignore la couverture TikTok sur un compte TikTok personnel. Pistes pour la suite : offre Metricool supérieure ; programmation native dans YouTube Studio et TikTok (envoi manuel) ; autre planificateur. Make (offre gratuite) ne convient pas : fichiers limités à 5 Mo.
