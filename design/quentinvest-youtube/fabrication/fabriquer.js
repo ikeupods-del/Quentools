@@ -32,7 +32,8 @@ const ff = (...a) => execFileSync('ffmpeg', ['-y', '-v', 'error', ...a], { maxBu
 const sh = (n, d = 2) => String(n).padStart(d, '0');
 for (const d of ['audio', 'images', 'clips']) fs.mkdirSync(path.join(TRAVAIL, d), { recursive: true });
 const crypto = require('crypto');
-const cleVoix = i => crypto.createHash('md5').update(JSON.stringify([EP.scenes[i].voix || EP.scenes[i].texte, EP.scenes[i].lent || 0, V, VITESSE, STYLE2, pauseDe(i), arg('voix-perso', '')])).digest('hex');
+const persoDate = i => { const f = arg('voix-perso', '') && path.join(arg('voix-perso', ''), `v${sh(i)}.wav`); try { return f ? fs.statSync(f).mtimeMs : 0; } catch (e) { return 0; } };
+const cleVoix = i => crypto.createHash('md5').update(JSON.stringify([EP.scenes[i].voix || EP.scenes[i].texte, EP.scenes[i].lent || 0, V, VITESSE, STYLE2, pauseDe(i), arg('voix-perso', ''), ...(arg('voix-perso', '') ? [persoDate(i)] : [])])).digest('hex');
 const wavDe = i => path.join(TRAVAIL, 'audio', `v${sh(i)}.wav`);
 const pauseDe = i => { const suivante = EP.scenes[i + 1]; return !suivante || suivante.section ? PAUSE_SECTION : PAUSE; };
 
@@ -56,7 +57,7 @@ function synthese() {
     let a;
     if (!STYLE2) a = lire(s.voix || s.texte, VITESSE);
     else { // style 2 : phrase par phrase, avec de vraies respirations (un point, une question, deux-points) et la dernière phrase plus lente si `lent`
-      const phrases = (s.voix || s.texte).match(/[^.!?:]+[.!?:]*/g).map(x => x.trim()).filter(Boolean), morceaux = []; let sr0 = 0;
+      const phrases = (s.voix || s.texte).match(/[^.!?:]+[.!?:]*/g).map(x => x.trim()).filter(x => /[\p{L}\p{N}]/u.test(x)), morceaux = []; let sr0 = 0;
       phrases.forEach((ph, k) => {
         const r = lire(ph, s.lent && k === phrases.length - 1 ? VITESSE * 0.88 : VITESSE); sr0 = r.sampleRate; morceaux.push(r.samples);
         if (k < phrases.length - 1) morceaux.push(new Float32Array(Math.round(r.sampleRate * ({ '?': 0.42, ':': 0.36, '!': 0.28 }[ph.slice(-1)] || 0.26))));

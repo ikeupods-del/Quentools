@@ -26,6 +26,11 @@ Un bloc de fiche peut avoir une **photo ou une vidéo en fond** (le texte et les
 - Images libres de droits : `node fabrication/medias.js commons "Nom_du_fichier.jpg" nom-court` télécharge l'image de Wikimedia Commons avec son crédit et **refuse toute licence non libre** (domaine public, CC0, CC BY, CC BY-SA acceptés). Wikimedia limite les appels depuis certains serveurs : si la commande répond « licence non vérifiable », la lancer plus tard ou depuis le Mac ; on peut aussi fournir soi-même une photo ou une vidéo dont on possède les droits (la déposer dans `medias/`).
 - Pas de photo ou vidéo dont la licence n'est pas vérifiée, et jamais de logo ou d'image de marque sans droit.
 
+## Ta propre voix (doublage)
+- Dans QuentMovie, **Doublage** (⇧⌘D) : charger `episodes/NN-sujet.json` (YouTube) ou `episodes/NN-sujet-tiktok.json` (TikTok) et enregistrer chaque réplique. Les fichiers `v00.wav`, `v01.wav`… sont rangés dans `~/Movies/QuentMovie/doublages/<nom>/`.
+- Fabrication avec ta voix (montage, écrans, bruitages, sous-titres inchangés) : `node fabrication/episode.js fiches/NN-sujet.json --voix-perso <dossier YouTube> --voix-perso-tiktok <dossier TikTok>`. Une réplique refaite est reprise automatiquement (la date du fichier compte). Une réplique sans fichier garde la voix de synthèse.
+- `~/Movies/QuentMovie/ma-voix/` (sons + `metadata.csv`) cumule toutes les répliques enregistrées avec leur texte : le corpus pour reproduire ta voix. Reproduction automatique pas encore en place (modèles à comparer sur le Mac : qualité en français, licence, vitesse) ; la durée enregistrée est affichée dans la fenêtre Doublage.
+
 ## Contrôle rapide (2 secondes, sans fabrication)
 `node design/quentinvest-youtube/fabrication/verifier.js` : les écrans des épisodes 1 et 2 sont identiques à la référence, et toutes les fiches se composent sans erreur. À lancer après toute modification du moteur.
 
