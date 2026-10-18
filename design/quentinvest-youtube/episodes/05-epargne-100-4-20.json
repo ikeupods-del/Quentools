@@ -1,0 +1,556 @@
+{
+ "titre": "100 € par mois pendant 20 ans : combien ça fait ?",
+ "chaine": "QuentInvest",
+ "mention": "Vulgarisation · pas un conseil en investissement",
+ "style": 2,
+ "voix": {
+  "moteur": "kokoro",
+  "sid": 30,
+  "vitesse": 0.82,
+  "hauteur": 0.78
+ },
+ "sources": [
+  "S1 · Formule de l'épargne régulière : versement × ((1 + i)^n − 1) ÷ i, i = taux mensuel équivalent (calcul de la chaîne)",
+  "S2 · Calculs, hypothèse de 4 % par an : 100 € par mois pendant 20 ans ≈ 36 384 € dont 24 000 € versés"
+ ],
+ "miniature": {
+  "lignes": [
+   "100 €",
+   "PAR MOIS,",
+   "COMBIEN ?"
+  ],
+  "accent": "COMBIEN",
+  "bas": [
+   "24 000 €",
+   "→ 36 384 €"
+  ]
+ },
+ "musique": "documentaire-doux",
+ "suite": "1,5 % de frais par an : combien ça coûte sur 25 ans ?",
+ "scenes": [
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "section": "La question",
+   "ecran": {
+    "type": "accroche",
+    "intro": "100 € par mois pendant 20 ans, à 4 % par an (hypothèse)",
+    "avant": "24 000 €",
+    "apres": "≈ 36 384 €",
+    "de": 24000,
+    "a": 36384,
+    "suffixe": " €",
+    "legende": "Versés → obtenus.",
+    "source": "Calcul : 100 € × 240 mois, intérêts composés"
+   },
+   "effet": "hausse",
+   "effetT": 1,
+   "texte": "100 € par mois pendant 20 ans : combien ça fait ?"
+  },
+  {
+   "expr": "content",
+   "geste": "hoche",
+   "ecran": {
+    "type": "abonne",
+    "texte": "Rejoins la colonie",
+    "sous": "Une vidéo d'économie simple, régulièrement."
+   },
+   "texte": "Salut la colonie ! Abonne-toi pour ne rien rater."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "liste",
+    "titre": "Au programme",
+    "points": [
+     "Versé et obtenu",
+     "Durée, montant, taux",
+     "Léa contre Tom",
+     "Les pièges à éviter"
+    ]
+   },
+   "texte": "Au programme : ce que tu verses et ce que tu obtiens, ce qui change avec la durée, le montant et le taux, un duel entre Léa et Tom, et les pièges à éviter."
+  },
+  {
+   "expr": "curieux",
+   "section": "Pourquoi ça compte",
+   "ecran": {
+    "type": "message",
+    "titre": "Pourquoi ça compte",
+    "sous": "Un petit geste répété change tout avec le temps"
+   },
+   "texte": "Pourquoi parler d'épargne régulière ? Parce que beaucoup de gens n'ont pas une grosse somme à placer d'un coup, mais peuvent mettre un peu de côté chaque mois. Et ce petit geste répété change tout avec le temps."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "message",
+    "titre": "La tirelire",
+    "sous": "La même pièce, chaque semaine"
+   },
+   "texte": "Pense à une tirelire où tu glisses la même pièce chaque semaine. Au début, ça ne se voit pas. Après des années, elle est lourde. L'épargne régulière marche pareil, avec des intérêts en plus."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "section": "Ce que tu verses",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "100 € × 12 mois = 1 200 € par an",
+     "1 200 € × 20 ans = 24 000 €"
+    ],
+    "resultat": "24 000 € versés",
+    "source": "Calcul : 100 € × 240 mois"
+   },
+   "texte": "D'abord ce que tu verses : 100 € fois 240 mois, ça fait 24 000 €. C'est ton effort."
+  },
+  {
+   "expr": "neutre",
+   "geste": "pointe",
+   "section": "L'épargne régulière",
+   "ecran": {
+    "type": "definition",
+    "mot": "Épargne régulière",
+    "texte": "La même somme de côté chaque mois"
+   },
+   "texte": "L'épargne régulière, c'est mettre la même somme de côté chaque mois. Chaque versement commence à rapporter des intérêts dès qu'il arrive."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "message",
+    "titre": "Un automatisme",
+    "sous": "Verser chaque mois, c'est répartir l'effort dans le temps"
+   },
+   "texte": "Verser chaque mois, c'est aussi un automatisme : tu ne te demandes pas si c'est le bon moment. Tu répartis ton effort dans le temps, au lieu de tout décider d'un coup."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "24 000 €",
+     "legende": "Ce que tu as versé"
+    },
+    "b": {
+     "valeur": "≈ 36 384 €",
+     "de": 24000,
+     "a": 36384,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Ce que tu as à la fin (hypothèse : 4 %)"
+    },
+    "source": "Intérêts : ≈ 12 384 €"
+   },
+   "effet": "hausse",
+   "effetT": 2.5,
+   "texte": "Avec 4 % par an, tu obtiens environ 36 384 € : 12 384 € viennent des intérêts, pas de ta poche."
+  },
+  {
+   "expr": "neutre",
+   "section": "Année par année",
+   "ecran": {
+    "type": "tableau",
+    "titre": "100 € par mois à 4 % (hypothèse)",
+    "colonnes": [
+     "Année",
+     "Versé",
+     "Obtenu"
+    ],
+    "lignes": [
+     [
+      "1 an",
+      "1 200 €",
+      "1 222 €"
+     ],
+     [
+      "5 ans",
+      "6 000 €",
+      "6 618 €"
+     ],
+     [
+      "10 ans",
+      "12 000 €",
+      "14 670 €"
+     ],
+     [
+      "20 ans",
+      "24 000 €",
+      "36 384 €"
+     ]
+    ],
+    "surligne": 3
+   },
+   "texte": "Année par année : au début, tu ajoutes surtout de ta poche. Plus le temps passe, plus les intérêts pèsent. Après 20 ans, ils représentent 34 pour cent du total."
+  },
+  {
+   "expr": "curieux",
+   "section": "Selon la durée",
+   "ecran": {
+    "type": "tableau",
+    "titre": "100 € par mois à 4 % (hypothèse)",
+    "colonnes": [
+     "Durée",
+     "Versé",
+     "Obtenu"
+    ],
+    "lignes": [
+     [
+      "10 ans",
+      "12 000 €",
+      "14 670 €"
+     ],
+     [
+      "20 ans",
+      "24 000 €",
+      "36 384 €"
+     ],
+     [
+      "30 ans",
+      "36 000 €",
+      "68 527 €"
+     ]
+    ],
+    "surligne": 1
+   },
+   "texte": "Et selon la durée ? Sur 10 ans, tu obtiens 14 670 €. Sur 20 ans, 36 384 €. Sur 30 ans, 68 527 €. Chaque année de plus compte davantage que la précédente."
+  },
+  {
+   "expr": "curieux",
+   "section": "Selon le montant",
+   "ecran": {
+    "type": "tableau",
+    "titre": "Sur 20 ans à 4 % (hypothèse)",
+    "colonnes": [
+     "Par mois",
+     "Versé",
+     "Obtenu"
+    ],
+    "lignes": [
+     [
+      "50 €",
+      "12 000 €",
+      "18 192 €"
+     ],
+     [
+      "100 €",
+      "24 000 €",
+      "36 384 €"
+     ],
+     [
+      "200 €",
+      "48 000 €",
+      "72 768 €"
+     ]
+    ],
+    "surligne": 1
+   },
+   "texte": "Et selon le montant ? 50 € par mois donnent 18 192 €. 100 € donnent 36 384 €. 200 € donnent 72 768 €. Le résultat suit directement ton effort mensuel."
+  },
+  {
+   "expr": "curieux",
+   "section": "Selon le taux",
+   "ecran": {
+    "type": "tableau",
+    "titre": "100 € par mois pendant 20 ans",
+    "colonnes": [
+     "Taux",
+     "Obtenu"
+    ],
+    "lignes": [
+     [
+      "2 %",
+      "29 423 €"
+     ],
+     [
+      "4 %",
+      "36 384 €"
+     ],
+     [
+      "6 %",
+      "45 344 €"
+     ]
+    ],
+    "surligne": 1
+   },
+   "texte": "Et selon le taux ? À 2 %, tu obtiens 29 423 €. À 4 %, 36 384 €. À 6 %, 45 344 €. Un taux plus bas ou plus haut change la fin de l'histoire."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "section": "Léa et Tom",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "≈ 14 670 €",
+     "legende": "Tom, qui commence 10 ans plus tard"
+    },
+    "b": {
+     "valeur": "≈ 36 384 €",
+     "de": 14670,
+     "a": 36384,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Léa, qui commence maintenant"
+    }
+   },
+   "texte": "Léa commence aujourd'hui. Tom attend 10 ans, mais verse la même somme chaque mois. Léa a 20 ans devant elle, Tom seulement 10 : 36 384 € contre 14 670 €."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "≈ 29 339 €",
+     "legende": "Tom, 200 € par mois pendant 10 ans"
+    },
+    "b": {
+     "valeur": "≈ 36 384 €",
+     "de": 29339,
+     "a": 36384,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Léa, 100 € par mois pendant 20 ans"
+    }
+   },
+   "texte": "Imaginons que Tom veuille verser la même somme au total, mais sur 10 ans. Il devra mettre 200 € par mois, et il obtiendra 29 339 € contre 36 384 € pour Léa. Pour compenser, il doit faire un plus gros effort."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "section": "Et l'inflation ?",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "36 384 €",
+     "legende": "Le chiffre sur le compte"
+    },
+    "b": {
+     "valeur": "≈ 24 486 €",
+     "de": 36384,
+     "a": 24486,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Ce qu'il achète, en euros d'aujourd'hui"
+    }
+   },
+   "texte": "Et en vrai ? Avec 2 % d'inflation par an, en hypothèse, 36 384 € dans 20 ans valent environ 24 486 € d'aujourd'hui. Il faut toujours regarder le résultat en pouvoir d'achat."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "section": "L'objectif",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Objectif : 10 000 € en 20 ans",
+     "Taux : 4 % par an (hypothèse)"
+    ],
+    "resultat": "≈ 27 € par mois",
+    "source": "Calcul de la chaîne (formule inversée)"
+   },
+   "texte": "Tu peux aussi faire le calcul à l'envers : combien verser pour atteindre une somme donnée ? Pour obtenir 10 000 € en 20 ans, à 4 % en hypothèse, il faut environ 27 € par mois."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "section": "Calcule-le toi-même",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "100 € par mois",
+     "4 % par an ≈ 0,327 % par mois"
+    ],
+    "resultat": "≈ 36 384 € après 20 ans",
+    "source": "Formule de l'épargne régulière"
+   },
+   "texte": "Pour estimer toi-même, un simulateur d'épargne suffit : tu entres la somme mensuelle, le taux et la durée. Il refait le même calcul, mois après mois, en ajoutant les intérêts du mois."
+  },
+  {
+   "expr": "neutre",
+   "section": "Petite question",
+   "ecran": {
+    "type": "message",
+    "titre": "Petite question",
+    "sous": "Quelle part du résultat final vient des intérêts ?"
+   },
+   "texte": "Petite question pour toi. Quelle part du résultat final vient des intérêts ? Mets la vidéo en pause si tu veux réfléchir."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "12 384 € ÷ 36 384 €"
+    ],
+    "resultat": "≈ 34 % du total",
+    "source": "Calcul de la chaîne"
+   },
+   "texte": "Réponse : 34 pour cent. 12 384 € sur 36 384 €. Le reste, c'est ce que tu as versé toi-même."
+  },
+  {
+   "expr": "neutre",
+   "section": "Vrai ou faux",
+   "ecran": {
+    "type": "message",
+    "titre": "Petite question",
+    "sous": "Vrai ou faux : si tu verses deux fois plus par mois, le résultat final est-il deux fois plus grand ?"
+   },
+   "texte": "Petite question pour toi. Vrai ou faux : si tu verses deux fois plus par mois, le résultat final est-il deux fois plus grand ? Mets la vidéo en pause si tu veux réfléchir."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "100 € par mois : 36 384 €",
+     "200 € par mois : 72 768 €"
+    ],
+    "resultat": "Le double, pour le double",
+    "source": "Calcul de la chaîne (hypothèse)"
+   },
+   "texte": "Réponse : vrai. Avec 200 € par mois, tu obtiens 72 768 €, contre 36 384 € avec 100 €. Les intérêts sont proportionnels à ce que tu verses : c'est la durée qui change la donne."
+  },
+  {
+   "expr": "neutre",
+   "section": "Les limites",
+   "ecran": {
+    "type": "message",
+    "titre": "Un modèle simplifié",
+    "sous": "Pour comprendre, pas pour prévoir"
+   },
+   "texte": "Ce modèle est volontairement simplifié : il ne tient compte ni des impôts, ni des variations d'une année à l'autre, ni de ta situation personnelle. C'est un outil pour comprendre, pas pour prévoir."
+  },
+  {
+   "expr": "neutre",
+   "section": "Ton défi",
+   "ecran": {
+    "type": "message",
+    "titre": "Ton défi",
+    "sous": "Refais le calcul avec tes chiffres"
+   },
+   "texte": "Petit défi pour toi : choisis la somme que tu pourrais mettre de côté chaque mois sans te priver, et refais le calcul. Compare le résultat avec ce que tu imaginais : c'est souvent surprenant."
+  },
+  {
+   "expr": "curieux",
+   "section": "Avant de te lancer",
+   "ecran": {
+    "type": "liste",
+    "titre": "Trois questions à se poser",
+    "points": [
+     [
+      "Combien ?",
+      "sans te priver"
+     ],
+     [
+      "Pour quel projet ?",
+      "ça donne un but"
+     ],
+     [
+      "Combien de temps ?",
+      "la durée compte"
+     ]
+    ]
+   },
+   "texte": "Avant de commencer, trois questions : combien puis-je mettre chaque mois sans me priver ? Pour quel projet ? Et pour combien de temps ? Les réponses fixent le bon rythme."
+  },
+  {
+   "expr": "inquiet",
+   "section": "Le piège",
+   "ecran": {
+    "type": "message",
+    "titre": "Grain de sable",
+    "sous": "Ce qui est souvent mal compris"
+   },
+   "texte": "Attention, grain de sable. Il y a trois erreurs courantes."
+  },
+  {
+   "expr": "inquiet",
+   "ecran": {
+    "type": "erreur",
+    "numero": 1,
+    "titre": "4 % n'est pas garanti"
+   },
+   "texte": "Un : croire que ces 4 % sont garantis. C'est une hypothèse : un vrai rendement varie, et certains placements peuvent faire perdre de l'argent."
+  },
+  {
+   "expr": "inquiet",
+   "ecran": {
+    "type": "erreur",
+    "numero": 2,
+    "titre": "L'inflation grignote le résultat"
+   },
+   "texte": "Deux : oublier l'inflation. 36 384 € dans 20 ans n'achèteront pas autant qu'aujourd'hui."
+  },
+  {
+   "expr": "inquiet",
+   "ecran": {
+    "type": "erreur",
+    "numero": 3,
+    "titre": "Oublier la réserve"
+   },
+   "texte": "Trois : oublier de garder une réserve pour les imprévus avant d'épargner sur le long terme. Une épargne longue ne doit pas t'obliger à tout arrêter au premier coup dur."
+  },
+  {
+   "expr": "content",
+   "section": "À retenir",
+   "ecran": {
+    "type": "liste",
+    "titre": "À retenir",
+    "points": [
+     [
+      "Régulier",
+      "laisser le temps travailler"
+     ],
+     [
+      "Durée, montant, taux",
+      "tout change le résultat"
+     ],
+     [
+      "Rien de garanti",
+      "et l'inflation compte"
+     ]
+    ]
+   },
+   "texte": "Pour résumer en trois points. Un : verser régulièrement, c'est laisser le temps travailler. Deux : la durée, le montant et le taux changent le résultat. Trois : rien n'est garanti, et l'inflation compte."
+  },
+  {
+   "expr": "content",
+   "section": "En une phrase",
+   "ecran": {
+    "type": "resume",
+    "titre": "En une phrase",
+    "texte": "Verser régulièrement, c'est laisser le temps travailler, sans garantie de résultat."
+   },
+   "texte": "En une phrase : verser régulièrement, c'est laisser le temps travailler, sans garantie de résultat."
+  },
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "ecran": {
+    "type": "suite",
+    "label": "Prochain épisode",
+    "titre": "1,5 % de frais par an : combien ça coûte sur 25 ans ?",
+    "sous": "Et toi, tu avais déjà fait ce calcul ? Dis-le en commentaire."
+   },
+   "texte": "La prochaine fois : 1,5 % de frais par an : combien ça coûte sur 25 ans ? Et toi, tu avais déjà fait ce calcul ? Dis-le en commentaire."
+  },
+  {
+   "expr": "content",
+   "ecran": {
+    "type": "fin"
+   },
+   "sortie": true,
+   "texte": "Rappel : vulgarisation, pas un conseil en investissement. Un grain après l'autre. À bientôt dans la fourmilière !"
+  }
+ ],
+ "musiqueRevelation": {
+  "id": "corporate-lumineux",
+  "scene": 8
+ }
+}

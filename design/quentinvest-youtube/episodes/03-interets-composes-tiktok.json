@@ -6,7 +6,7 @@
  "voix": {
   "moteur": "kokoro",
   "sid": 30,
-  "vitesse": 0.78,
+  "vitesse": 0.82,
   "hauteur": 0.78
  },
  "sources": [
@@ -86,39 +86,6 @@
    "effet": "hausse",
    "effetT": 5,
    "texte": "30 ans plus tard : 2 500 € en simple, 4 322 € en composé."
-  },
-  {
-   "expr": "reflechi",
-   "geste": "pointe",
-   "ecran": {
-    "type": "calcul",
-    "lignes": [
-     "72 ÷ 5 % ≈ 14,4"
-    ],
-    "resultat": "≈ 14 ans pour doubler",
-    "source": "Règle des 72 (approximation) : le calcul exact donne 14,2 ans"
-   },
-   "texte": "Règle des 72 : divise 72 par le taux. À 5 %, ton argent double en environ 14,4 ans."
-  },
-  {
-   "expr": "surpris",
-   "geste": "pointe",
-   "ecran": {
-    "type": "duo",
-    "a": {
-     "valeur": "2 653 €",
-     "legende": "Tom, après 20 ans"
-    },
-    "b": {
-     "valeur": "≈ 4 322 €",
-     "de": 2653,
-     "a": 4322,
-     "prefixe": "≈ ",
-     "suffixe": " €",
-     "legende": "Léa, après 30 ans"
-    }
-   },
-   "texte": "Léa place 1 000 € maintenant, Tom attend 10 ans : 2 653 € contre 4 322 €."
   },
   {
    "expr": "inquiet",

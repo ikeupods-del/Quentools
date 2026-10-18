@@ -4,11 +4,10 @@
  "mention": "Exemple pédagogique · pas une offre de crédit · pas un conseil",
  "style": 2,
  "voix": {
-  "moteur": "piper",
-  "modele": "vits-piper-fr_FR-tom-medium",
-  "sid": 0,
-  "vitesse": 0.9,
-  "hauteur": 1
+  "moteur": "kokoro",
+  "sid": 30,
+  "vitesse": 0.82,
+  "hauteur": 0.78
  },
  "sources": [
   "S1 · Formule de la mensualité constante : capital × i ÷ (1 − (1 + i)^−n), i = taux mensuel (calcul de la chaîne)",
@@ -103,26 +102,6 @@
    "effet": "impact",
    "effetT": 2.5,
    "texte": "Au final : 11 050 € remboursés, soit 1 050 € de plus que la somme empruntée."
-  },
-  {
-   "expr": "surpris",
-   "geste": "pointe",
-   "ecran": {
-    "type": "duo",
-    "a": {
-     "valeur": "11 050 €",
-     "legende": "Léa, sur 5 ans"
-    },
-    "b": {
-     "valeur": "≈ 11 702 €",
-     "de": 11050,
-     "a": 11702,
-     "prefixe": "≈ ",
-     "suffixe": " €",
-     "legende": "Tom, sur 8 ans"
-    }
-   },
-   "texte": "Léa rembourse sur 5 ans, Tom sur 8 : 11 050 € contre 11 702 € au total."
   },
   {
    "expr": "inquiet",

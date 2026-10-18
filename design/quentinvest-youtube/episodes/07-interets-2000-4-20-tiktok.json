@@ -1,0 +1,122 @@
+{
+ "titre": "2 000 € pendant 20 ans à 4 % par an (hypothèse) : combien ça fait ? (version TikTok)",
+ "chaine": "QuentInvest",
+ "mention": "Vulgarisation · pas un conseil en investissement",
+ "style": 2,
+ "voix": {
+  "moteur": "kokoro",
+  "sid": 30,
+  "vitesse": 0.82,
+  "hauteur": 0.78
+ },
+ "sources": [
+  "S1 · Formule des intérêts composés : capital × (1 + taux)^années (calcul de la chaîne)",
+  "S2 · Calculs, hypothèse de 4 % par an : 2 000 € × 1,04²⁰ ≈ 4 382 € ; 2 000 € + 80 € × 20 = 3 600 €",
+  "S3 · Règle des 72 : approximation (calcul exact : 17,7 ans à 4 %)"
+ ],
+ "miniature": {
+  "lignes": [
+   "BOULE",
+   "DE NEIGE",
+   "D'ARGENT ?"
+  ],
+  "accent": "NEIGE",
+  "bas": [
+   "2 000 €",
+   "→ 4 382 €"
+  ]
+ },
+ "format": "vertical",
+ "musique": "corporate-lumineux",
+ "scenes": [
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "ecran": {
+    "type": "accroche",
+    "intro": "2 000 € pendant 20 ans, à 4 % par an (hypothèse)",
+    "avant": "2 000 €",
+    "apres": "≈ 4 382 €",
+    "de": 2000,
+    "a": 4382,
+    "suffixe": " €",
+    "legende": "Sans rien ajouter.",
+    "source": "Calcul : 2 000 € × 1,04²⁰ ≈ 4 382 €"
+   },
+   "effet": "hausse",
+   "effetT": 1,
+   "texte": "2 000 € pendant 20 ans : combien ça fait ? Tout dépend d'un petit mot."
+  },
+  {
+   "expr": "content",
+   "geste": "hoche",
+   "ecran": {
+    "type": "abonne",
+    "texte": "Rejoins la colonie",
+    "sous": "Une vidéo d'économie simple, régulièrement."
+   },
+   "texte": "Salut la colonie ! Abonne-toi pour ne rien rater."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "4 % de 2 000 € = 80 € par an",
+     "80 € × 20 ans = 1 600 €"
+    ],
+    "resultat": "2 000 € + 1 600 € = 3 600 €",
+    "source": "Calcul (hypothèse : 4 % par an)"
+   },
+   "texte": "Intérêts simples : 80 € par an. Au bout de 20 ans, 3 600 €."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "croissance",
+    "capital": 2000,
+    "taux": 4,
+    "annees": 20,
+    "etiquetteSimple": "≈ 3 600 € (simples)",
+    "etiquetteCompose": "≈ 4 382 € (composés)",
+    "source": "Calcul : 2 000 € × 1,04²⁰ ≈ 4 382 € (hypothèse : 4 % par an)"
+   },
+   "effet": "hausse",
+   "effetT": 5,
+   "texte": "20 ans plus tard : 3 600 € en simple, 4 382 € en composé."
+  },
+  {
+   "expr": "inquiet",
+   "geste": "penche",
+   "ecran": {
+    "type": "message",
+    "titre": "Grain de sable",
+    "sous": "Ce qui est souvent mal compris"
+   },
+   "texte": "Attention, grain de sable : 4 % n'est pas garanti, et l'inflation grignote le résultat."
+  },
+  {
+   "expr": "content",
+   "ecran": {
+    "type": "resume",
+    "titre": "En une phrase",
+    "texte": "Avec les intérêts composés, le temps travaille pour toi, sans garantie."
+   },
+   "texte": "En une phrase : avec les intérêts composés, le temps travaille pour toi, sans garantie."
+  },
+  {
+   "expr": "curieux",
+   "geste": "hoche",
+   "sortie": true,
+   "ecran": {
+    "type": "suite",
+    "label": "Vidéo complète sur la chaîne",
+    "titre": "2 000 € sur 20 ans : la boule de neige des intérêts composés",
+    "sous": "Et toi, quelle question d'argent te trotte dans la tête ? Dis-le en commentaire."
+   },
+   "texte": "Vidéo complète sur la chaîne. Et toi, quelle question d'argent te trotte dans la tête ? Dis-le en commentaire."
+  }
+ ]
+}

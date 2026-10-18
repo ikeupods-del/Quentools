@@ -4,11 +4,10 @@
  "mention": "Exemple pédagogique · pas une offre de crédit · pas un conseil",
  "style": 2,
  "voix": {
-  "moteur": "piper",
-  "modele": "vits-piper-fr_FR-tom-medium",
-  "sid": 0,
-  "vitesse": 0.9,
-  "hauteur": 1
+  "moteur": "kokoro",
+  "sid": 30,
+  "vitesse": 0.82,
+  "hauteur": 0.78
  },
  "sources": [
   "S1 · Formule de la mensualité constante : capital × i ÷ (1 − (1 + i)^−n), i = taux mensuel (calcul de la chaîne)",
@@ -204,7 +203,7 @@
     ],
     "surligne": 1
    },
-   "texte": "Comparons plusieurs durées. Sur 3 ans : mensualité 295 €, coût 629 €. Sur 5 ans : 184 € et 1 050 €. Sur 10 ans : 101 € et 2 149 €. Plus c'est long, plus la mensualité baisse et plus le coût monte."
+   "texte": "Comparons plusieurs durées. Sur 3 ans : mensualité 295 €, coût 629 €. Sur 5 ans : 184 € et 1 050 €. Sur 10 ans : 101 € et 2 149 €. Plus c'est long, la mensualité baisse, le coût monte."
   },
   {
    "expr": "surpris",
@@ -376,7 +375,7 @@
   },
   {
    "expr": "neutre",
-   "section": "Petite question",
+   "section": "Vrai ou faux",
    "ecran": {
     "type": "message",
     "titre": "Petite question",
@@ -397,6 +396,26 @@
     "source": "Calcul de la chaîne (exemple)"
    },
    "texte": "Réponse : faux. Sur 5 ans, les intérêts sont de 1 050 €. Sur 10 ans, ils montent à 2 149 €. La mensualité baisse de 184 € à 101 €, mais le coût total augmente."
+  },
+  {
+   "expr": "neutre",
+   "section": "Les limites",
+   "ecran": {
+    "type": "message",
+    "titre": "Un modèle simplifié",
+    "sous": "Pour comprendre, pas pour prévoir"
+   },
+   "texte": "Ce modèle est volontairement simplifié : il ne tient compte ni des impôts, ni des variations d'une année à l'autre, ni de ta situation personnelle. C'est un outil pour comprendre, pas pour prévoir."
+  },
+  {
+   "expr": "neutre",
+   "section": "Ton défi",
+   "ecran": {
+    "type": "message",
+    "titre": "Ton défi",
+    "sous": "Refais le calcul avec tes chiffres"
+   },
+   "texte": "Petit défi pour toi : prends un crédit que tu connais, note le montant, le taux et la durée, puis calcule le coût total. Compare le résultat avec ce que tu imaginais : c'est souvent surprenant."
   },
   {
    "expr": "curieux",

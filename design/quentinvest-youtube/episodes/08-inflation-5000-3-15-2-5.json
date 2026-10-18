@@ -1,0 +1,526 @@
+{
+ "titre": "5 000 € dans un tiroir pendant 15 ans : que reste-t-il ?",
+ "chaine": "QuentInvest",
+ "mention": "Vulgarisation · pas un conseil en investissement",
+ "style": 2,
+ "voix": {
+  "moteur": "kokoro",
+  "sid": 30,
+  "vitesse": 0.82,
+  "hauteur": 0.78
+ },
+ "sources": [
+  "S1 · Calcul de la chaîne : 5 000 € ÷ 1,03¹⁵ ≈ 3 209 € (hypothèse : 3 % d'inflation par an)",
+  "S2 · Exemple chiffré (hypothèse) : 1,025 ÷ 1,03 ≈ 0,995"
+ ],
+ "miniature": {
+  "lignes": [
+   "TON ARGENT",
+   "PERD SA",
+   "VALEUR ?"
+  ],
+  "accent": "VALEUR",
+  "bas": [
+   "5 000 €",
+   "→ 3 209 €"
+  ]
+ },
+ "musique": "documentaire-doux",
+ "suite": "Un nouveau sujet d'économie",
+ "scenes": [
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "section": "La question",
+   "ecran": {
+    "type": "accroche",
+    "intro": "5 000 € dans un tiroir pendant 15 ans (hypothèse : 3 % d'inflation par an)",
+    "avant": "5 000 €",
+    "apres": "≈ 3 209 €",
+    "de": 5000,
+    "a": 3209,
+    "suffixe": " €",
+    "legende": "Tu n'as rien dépensé.",
+    "source": "Calcul : 5 000 € ÷ 1,03¹⁵ ≈ 3 209 €"
+   },
+   "effet": "baisse",
+   "effetT": 1,
+   "texte": "5 000 € dans un tiroir pendant 15 ans : combien te reste-t-il vraiment ?"
+  },
+  {
+   "expr": "content",
+   "geste": "hoche",
+   "ecran": {
+    "type": "abonne",
+    "texte": "Rejoins la colonie",
+    "sous": "Une vidéo d'économie simple, régulièrement."
+   },
+   "texte": "Salut la colonie ! Abonne-toi pour ne rien rater."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "liste",
+    "titre": "Au programme",
+    "points": [
+     "Le pouvoir d'achat",
+     "Année après année",
+     "Léa contre Tom",
+     "Les pièges à éviter"
+    ]
+   },
+   "texte": "Au programme : le pouvoir d'achat, ce qui se passe année après année, un duel entre Léa et Tom, et les pièges à éviter."
+  },
+  {
+   "expr": "curieux",
+   "section": "Pourquoi ça compte",
+   "ecran": {
+    "type": "message",
+    "titre": "Pourquoi ça compte",
+    "sous": "Elle agit en silence sur l'argent mis de côté"
+   },
+   "texte": "Pourquoi parler d'inflation ? Parce qu'elle touche tout le monde, tous les jours, sans qu'on la voie : le prix du pain, du loyer, de l'énergie. Et elle agit en silence sur l'argent qu'on met de côté."
+  },
+  {
+   "expr": "neutre",
+   "ecran": {
+    "type": "message",
+    "titre": "Le prix du quotidien",
+    "sous": "Le chiffre sur ton compte ne change pas, ce qu'il achète si"
+   },
+   "texte": "Pense à un ticket de cinéma ou à une baguette de pain. Le prix d'il y a dix ans n'est plus celui d'aujourd'hui. Ton argent, lui, n'a pas changé de chiffre. C'est exactement ça, l'inflation."
+  },
+  {
+   "expr": "neutre",
+   "geste": "pointe",
+   "section": "Le pouvoir d'achat",
+   "ecran": {
+    "type": "definition",
+    "mot": "Pouvoir d'achat",
+    "texte": "Ce que tu peux acheter avec une somme d'argent"
+   },
+   "texte": "Un mot important : le pouvoir d'achat. C'est ce que tu peux acheter avec ton argent. Si les prix montent, la même somme en achète moins."
+  },
+  {
+   "expr": "neutre",
+   "section": "L'exemple",
+   "ecran": {
+    "type": "message",
+    "titre": "Hypothèse",
+    "sous": "5 000 € sans intérêts · prix en hausse de 3 % par an"
+   },
+   "texte": "Imaginons 5 000 € qui ne rapportent rien, et des prix qui montent de 3 % par an. C'est une hypothèse pour comprendre, pas une prévision."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "ecran": {
+    "type": "courbe",
+    "capital": 5000,
+    "taux": 3,
+    "annees": 15,
+    "etiquetteAffichee": "5 000 € sur le compte",
+    "etiquetteReelle": "≈ 3 209 € de pouvoir d'achat",
+    "source": "Hypothèse : 3 % d'inflation par an"
+   },
+   "effet": "baisse",
+   "effetT": 6,
+   "texte": "Sur le compte, la somme ne bouge pas. Mais chaque année, elle achète un peu moins. Au bout de 15 ans, c'est comme s'il ne te restait que 3 209 € environ."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Prix après 15 ans : × 1,558",
+     "Ton argent achète : ÷ 1,558"
+    ],
+    "resultat": "5 000 € → ≈ 3 209 €",
+    "source": "Calcul : 5 000 € ÷ 1,03¹⁵ ≈ 3 209 €"
+   },
+   "texte": "Le calcul : les prix sont multipliés par 1,558 en 15 ans, donc ton argent achète 1,558 fois moins. Tu divises."
+  },
+  {
+   "expr": "inquiet",
+   "section": "Année par année",
+   "ecran": {
+    "type": "tableau",
+    "titre": "Prix en hausse de 3 % par an (hypothèse)",
+    "colonnes": [
+     "Année",
+     "Prix",
+     "Pouvoir d'achat"
+    ],
+    "lignes": [
+     [
+      "1 an",
+      "× 1,03",
+      "4 854 €"
+     ],
+     [
+      "5 ans",
+      "× 1,16",
+      "4 313 €"
+     ],
+     [
+      "10 ans",
+      "× 1,34",
+      "3 720 €"
+     ],
+     [
+      "15 ans",
+      "× 1,56",
+      "3 209 €"
+     ]
+    ],
+    "surligne": 3
+   },
+   "texte": "Année par année : au bout d'un an, la perte semble minuscule. Mais elle s'accumule. Après 15 ans, les prix sont multipliés par 1,56, et tes 5 000 € n'achètent plus que 3 209 €."
+  },
+  {
+   "expr": "curieux",
+   "section": "Et si ça change ?",
+   "ecran": {
+    "type": "tableau",
+    "titre": "Après 15 ans, 5 000 € sans intérêts",
+    "colonnes": [
+     "Inflation",
+     "Pouvoir d'achat"
+    ],
+    "lignes": [
+     [
+      "2 %",
+      "3 715 €"
+     ],
+     [
+      "3 %",
+      "3 209 €"
+     ],
+     [
+      "5 %",
+      "2 405 €"
+     ]
+    ],
+    "surligne": 1
+   },
+   "texte": "Et si l'inflation est différente ? À 2 %, il reste 3 715 €. À 3 %, 3 209 €. À 5 %, seulement 2 405 €. Un petit écart par an, et la différence se creuse avec le temps."
+  },
+  {
+   "expr": "curieux",
+   "ecran": {
+    "type": "tableau",
+    "titre": "À 3 % d'inflation par an (hypothèse)",
+    "colonnes": [
+     "Durée",
+     "Pouvoir d'achat"
+    ],
+    "lignes": [
+     [
+      "8 ans",
+      "3 947 €"
+     ],
+     [
+      "15 ans",
+      "3 209 €"
+     ],
+     [
+      "30 ans",
+      "2 060 €"
+     ]
+    ],
+    "surligne": 1
+   },
+   "texte": "Et si l'argent dort plus longtemps ? Après 8 ans : 3 947 €. Après 15 ans : 3 209 €. Après 30 ans : 2 060 €. Le temps joue contre l'argent qui ne rapporte rien."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "section": "Le panier de courses",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "100 €",
+     "legende": "Le panier aujourd'hui"
+    },
+    "b": {
+     "valeur": "≈ 156 €",
+     "de": 100,
+     "a": 156,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Le même panier dans 15 ans"
+    }
+   },
+   "texte": "Prenons un panier de courses à 100 euros aujourd'hui. Avec 3 % d'inflation par an, il coûtera environ 156 € dans 15 ans. Ton argent, lui, n'a pas bougé : il achète moins de paniers."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "section": "Ton salaire",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "2 000 €",
+     "legende": "Ton salaire, qui ne bouge pas"
+    },
+    "b": {
+     "valeur": "≈ 1 284 €",
+     "de": 2000,
+     "a": 1284,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "En pouvoir d'achat, après 15 ans"
+    }
+   },
+   "texte": "Et ton salaire ? Imaginons 2 000 € par mois, qui ne montent jamais. Après 15 ans de hausse des prix, c'est comme si tu touchais 1 284 € d'aujourd'hui. On compare toujours une hausse à l'inflation."
+  },
+  {
+   "expr": "surpris",
+   "geste": "pointe",
+   "section": "Léa et Tom",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "3 209 €",
+     "legende": "Léa, sans intérêts"
+    },
+    "b": {
+     "valeur": "≈ 4 648 €",
+     "de": 3209,
+     "a": 4648,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Tom, à 2,5 % par an"
+    }
+   },
+   "texte": "Léa laisse 5 000 € sur un compte qui ne rapporte rien. Tom place la même somme à 2,5 % par an, en hypothèse. Après 15 ans, avec 3 % d'inflation, Léa garde 3 209 € de pouvoir d'achat, et Tom 4 648 €."
+  },
+  {
+   "expr": "inquiet",
+   "geste": "pointe",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "5 000 €",
+     "legende": "Ce que tu as aujourd'hui"
+    },
+    "b": {
+     "valeur": "≈ 7 790 €",
+     "de": 5000,
+     "a": 7790,
+     "prefixe": "≈ ",
+     "suffixe": " €",
+     "legende": "Pour avoir le même pouvoir d'achat dans 15 ans"
+    }
+   },
+   "texte": "Pour garder tout son pouvoir d'achat après 15 ans, il faudrait 7 790 € sur le compte. C'est la somme à atteindre juste pour ne rien perdre, avant même de gagner quoi que ce soit."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "section": "Les intérêts",
+   "ecran": {
+    "type": "taux",
+    "gain": {
+     "nom": "Intérêts",
+     "valeur": "2,5 %"
+    },
+    "inflation": {
+     "nom": "Inflation",
+     "valeur": "3 %"
+    },
+    "reel": {
+     "nom": "Perte réelle",
+     "valeur": "≈ -0,5 %"
+    },
+    "legende": "Exemple chiffré, pas un taux réel du marché",
+    "source": "Hypothèse : 1,025 ÷ 1,03 ≈ 0,995"
+   },
+   "texte": "Et les intérêts ? Si ton argent rapporte 2,5 % par an et que les prix montent de 3 %, ton pouvoir d'achat baisse d'environ 0,5 pour cent par an."
+  },
+  {
+   "expr": "neutre",
+   "section": "Petite question",
+   "ecran": {
+    "type": "message",
+    "titre": "Petite question",
+    "sous": "Avec 3 % d'inflation par an, au bout de combien d'années ton argent perd-il la moitié de son pouvoir d'achat ?"
+   },
+   "texte": "Petite question pour toi. Avec 3 % d'inflation par an, au bout de combien d'années ton argent perd-il la moitié de son pouvoir d'achat ? Mets la vidéo en pause si tu veux réfléchir."
+  },
+  {
+   "expr": "reflechi",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "72 ÷ 3 ≈ 24,0 ans"
+    ],
+    "resultat": "≈ 23 ans pour perdre la moitié",
+    "source": "Calcul exact : ln 2 ÷ ln 1,03 ≈ 23,4 ans"
+   },
+   "texte": "Réponse : environ 23 ans. Une règle rapide : 72 divisé par 3 donne 24,0. Ça paraît long, mais les années passent vite."
+  },
+  {
+   "expr": "inquiet",
+   "section": "Vrai ou faux",
+   "ecran": {
+    "type": "message",
+    "titre": "Petite question",
+    "sous": "Vrai ou faux : si l'inflation passe de 3 % à 6 %, la perte de pouvoir d'achat double-t-elle ?"
+   },
+   "texte": "Petite question pour toi. Vrai ou faux : si l'inflation passe de 3 % à 6 %, la perte de pouvoir d'achat double-t-elle ? Mets la vidéo en pause si tu veux réfléchir."
+  },
+  {
+   "expr": "inquiet",
+   "geste": "pointe",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "À 3 % : 1 791 € perdus",
+     "À 6 % : 2 914 € perdus"
+    ],
+    "resultat": "× 1,6 la perte",
+    "source": "Calcul de la chaîne (hypothèses)"
+   },
+   "texte": "Réponse : pas tout à fait. Après 15 ans, la perte est de 1 791 € à 3 %, et de 2 914 € à 6 %. Elle est multipliée par 1,6 : l'effet s'amplifie avec le temps."
+  },
+  {
+   "expr": "neutre",
+   "section": "Les limites",
+   "ecran": {
+    "type": "message",
+    "titre": "Un modèle simplifié",
+    "sous": "Pour comprendre, pas pour prévoir"
+   },
+   "texte": "Ce modèle est volontairement simplifié : il ne tient compte ni des impôts, ni des variations d'une année à l'autre, ni de ta situation personnelle. C'est un outil pour comprendre, pas pour prévoir."
+  },
+  {
+   "expr": "neutre",
+   "section": "Ton défi",
+   "ecran": {
+    "type": "message",
+    "titre": "Ton défi",
+    "sous": "Refais le calcul avec tes chiffres"
+   },
+   "texte": "Petit défi pour toi : prends une somme que tu as de côté, et calcule ce qu'elle vaudra dans dix ans avec ton inflation d'exemple. Compare le résultat avec ce que tu imaginais : c'est souvent surprenant."
+  },
+  {
+   "expr": "curieux",
+   "section": "Avant de te lancer",
+   "ecran": {
+    "type": "liste",
+    "titre": "Trois questions à se poser",
+    "points": [
+     [
+      "Les imprévus",
+      "combien garder de côté ?"
+     ],
+     [
+      "Le projet",
+      "à quoi, et pour quand ?"
+     ],
+     [
+      "Le rendement",
+      "et face à l'inflation ?"
+     ]
+    ]
+   },
+   "texte": "Trois questions à te poser sur ton argent : combien me faut-il pour les imprévus ? À quoi servira le reste, et dans combien de temps ? Et que rapporte-t-il ? Ce sont de bonnes questions avant toute décision."
+  },
+  {
+   "expr": "inquiet",
+   "section": "Le piège",
+   "ecran": {
+    "type": "message",
+    "titre": "Grain de sable",
+    "sous": "Ce qui est souvent mal compris"
+   },
+   "texte": "Attention, grain de sable. Il y a trois erreurs courantes."
+  },
+  {
+   "expr": "inquiet",
+   "ecran": {
+    "type": "erreur",
+    "numero": 1,
+    "titre": "Solde stable, rien perdu ?"
+   },
+   "texte": "Un : penser que si le solde n'a pas baissé, on n'a rien perdu. Le chiffre est le même, mais ce qu'il permet d'acheter peut avoir baissé."
+  },
+  {
+   "expr": "inquiet",
+   "ecran": {
+    "type": "erreur",
+    "numero": 2,
+    "titre": "Placer, ce n'est pas gagner"
+   },
+   "texte": "Deux : croire qu'il suffit de placer son argent pour gagner. Tout placement a des risques, et aucun n'est magique."
+  },
+  {
+   "expr": "inquiet",
+   "ecran": {
+    "type": "erreur",
+    "numero": 3,
+    "titre": "Chacun son inflation"
+   },
+   "texte": "Trois : croire que l'inflation touche tout le monde de la même façon. Le loyer, la nourriture ou l'énergie ne montent pas au même rythme : chacun a sa propre inflation."
+  },
+  {
+   "expr": "content",
+   "section": "À retenir",
+   "ecran": {
+    "type": "liste",
+    "titre": "À retenir",
+    "points": [
+     [
+      "Le pouvoir d'achat",
+      "ce que tu peux acheter"
+     ],
+     [
+      "Le temps amplifie",
+      "l'effet de l'inflation"
+     ],
+     [
+      "Le rendement réel",
+      "intérêts moins inflation"
+     ]
+    ]
+   },
+   "texte": "Pour résumer en trois points. Un : l'inflation réduit ce que ton argent achète. Deux : le temps amplifie l'effet. Trois : ce qui compte, c'est le rendement réel, les intérêts moins l'inflation."
+  },
+  {
+   "expr": "content",
+   "section": "En une phrase",
+   "ecran": {
+    "type": "resume",
+    "titre": "En une phrase",
+    "texte": "L'inflation réduit ce que ton argent peut acheter, même quand le chiffre sur ton compte ne bouge pas."
+   },
+   "texte": "En une phrase : l'inflation réduit ce que ton argent peut acheter, même quand le chiffre sur ton compte ne bouge pas."
+  },
+  {
+   "expr": "curieux",
+   "geste": "penche",
+   "ecran": {
+    "type": "suite",
+    "label": "Prochain épisode",
+    "titre": "Un nouveau sujet d'économie",
+    "sous": "Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ? Dis-le en commentaire."
+   },
+   "texte": "La prochaine fois : un nouveau sujet. Et toi, quel sujet d'argent aimerais-tu comprendre ensuite ? Dis-le en commentaire."
+  },
+  {
+   "expr": "content",
+   "ecran": {
+    "type": "fin"
+   },
+   "sortie": true,
+   "texte": "Rappel : vulgarisation, pas un conseil en investissement. Un grain après l'autre. À bientôt dans la fourmilière !"
+  }
+ ],
+ "musiqueRevelation": {
+  "id": "corporate-lumineux",
+  "scene": 7
+ }
+}

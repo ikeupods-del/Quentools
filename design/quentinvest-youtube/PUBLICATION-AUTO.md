@@ -14,13 +14,13 @@ Chaque fabrication écrit `NN-sujet-publication.json` à côté des vidéos : ti
 - Rythme proposé : 1 vidéo YouTube et 3 à 4 TikTok par semaine, heures conseillées par Metricool pour la marque.
 Chaque publication est programmée à l'avance (pas immédiate) : elle reste visible et annulable dans le planificateur Metricool avant sa sortie.
 
-## Point technique à valider au premier essai
-Metricool télécharge la vidéo depuis une adresse publique. Les vidéos ne passent pas par la conversation (trop lourdes) : elles seront déposées sur une adresse publique (dépôt GitHub public dédié ou dossier Google Drive relié à Metricool), puis la programmation pointe vers cette adresse. Le premier essai se fait avec une publication privée pour vérifier que Metricool accepte le fichier.
+## Méthode validée (17 et 18 octobre 2026)
+Metricool télécharge la vidéo depuis une adresse publique, puis la copie chez lui : l'adresse n'a donc besoin d'exister que le temps de la programmation. Les vidéos sont déposées sur une branche temporaire `medias-publication` du dépôt (script `fabrication/heberger-publication.sh`, qui compresse la vidéo YouTube à environ 35 Mo et vérifie les adresses), la programmation est créée dans Metricool, puis la branche est vidée (les adresses répondent alors « introuvable »). Metricool accepte ce format et la miniature personnalisée. Chaque publication reste annulable ou modifiable dans le planificateur.
 
 ## Compte relié (17 octobre 2026)
-Marque Metricool n° 7483174 (propriétaire `ikeupods@gmail.com`, fuseau Europe/Paris) : TikTok « woufapp » et chaîne YouTube `UCQDy7BsKRARXG9P_LG6NPHg`. Le propriétaire a demandé de programmer les publications.
+Marque Metricool n° 7483174 (propriétaire `ikeupods@gmail.com`, fuseau Europe/Paris) : TikTok « woufapp » et chaîne YouTube `UCQDy7BsKRARXG9P_LG6NPHg`. Le propriétaire a demandé de programmer les publications (accord du 17 octobre) : les six épisodes sont programmés, YouTube et TikTok.
 
-## Calendrier proposé (heures de Paris, d'après les meilleurs créneaux de Metricool)
+## Calendrier programmé (heures de Paris, d'après les meilleurs créneaux de Metricool)
 YouTube : mardi et vendredi à 16 h (créneau le plus fort de la semaine pour la chaîne). TikTok : le même jour à 18 h (second pic de la journée), avec la mention « vidéo complète sur la chaîne ».
 
 | Épisode | YouTube | TikTok |
