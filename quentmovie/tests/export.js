@@ -234,6 +234,7 @@ const { execFileSync, spawnSync } = require('child_process');
     const r413 = await fetch(U('/api/projets/trop'), { method: 'PUT', body: 'x'.repeat(21e6) });
     check('projet trop volumineux : 413 avec un message clair', r413.status === 413 && /trop volumineux/.test((await r413.json()).error || ''), r413.status);
     await new Promise(ok => { const rq = require('http').request({ host: '127.0.0.1', port, method: 'POST', path: '/api/import?name=coupe.mp4', headers: { 'Content-Length': 1e6 } }); rq.on('error', () => ok()); rq.write(Buffer.alloc(50000, 1)); setTimeout(() => { rq.destroy(); setTimeout(ok, 400); }, 200); });
+    for (let k = 0; k < 30 && fs.readdirSync(path.join(base, 'medias')).some(n => /^coupe/.test(n)); k++) await new Promise(r => setTimeout(r, 100)); // machine chargée : le retrait peut tarder
     check('import coupé : aucun fichier restant dans les médias', !fs.readdirSync(path.join(base, 'medias')).some(n => /^coupe/.test(n)), fs.readdirSync(path.join(base, 'medias')).join(' '));
     const jpg = Buffer.concat([Buffer.from([0xff, 0xd8]), Buffer.alloc(2000)]), mini = async () => (await (await fetch(U('/api/miniature'), { method: 'POST', body: jpg })).json()).out;
     const m1 = await mini(), m2 = await mini();

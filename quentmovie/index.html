@@ -106,6 +106,7 @@ input[type=color]{height:30px;padding:1px;border:1px solid var(--ligne);border-r
 #lane{position:relative;min-height:100%;min-width:100%}
 #regle{height:22px;position:sticky;top:0;background:var(--pan2);border-bottom:1px solid var(--ligne);cursor:pointer;z-index:6}
 #regle i{position:absolute;top:0;bottom:0;border-left:1px solid var(--ligne);padding-left:3px;font-size:10px;color:var(--mut);font-style:normal;pointer-events:none}
+#regle em{position:absolute;top:9px;width:9px;height:9px;border-radius:50%;background:#ff5fa2;transform:translateX(-4px);cursor:pointer;box-shadow:0 0 0 2px #0d0e11}#regle em.fait{background:#5b6170}
 #regle b{position:absolute;top:10px;width:0;height:0;border:5px solid transparent;border-top-color:#ffb400;transform:translateX(-5px);cursor:pointer}
 .piste{position:relative;height:80px;margin:6px 0;border-radius:6px;background:#0003}
 .piste.a{height:60px;min-height:60px}
@@ -429,6 +430,17 @@ button.dictee.on{background:#5a1a1f;border-color:#ff5a5f;color:#fff}
 .dr-onglets button{border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:var(--mut);font-weight:600;padding:0;height:40px}
 .dr-onglets button.on{color:var(--txt);border-bottom-color:#5b78ff}
 #chat{flex:1;min-height:0;display:flex;flex-direction:column}
+#retours{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:10px 12px;overflow:auto}
+.rt-tc{display:flex;justify-content:space-between;align-items:baseline}.rt-tc b{font:600 15px ui-monospace,Menlo,monospace;color:#ffcf40}
+.rt-nav{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.rt-nav button{min-width:54px}.rt-aide{margin:0;font-size:12px}
+.rt-saisie{display:flex;gap:6px;align-items:stretch}.rt-saisie textarea{flex:1;resize:vertical;min-height:44px}
+.rt-liste{display:flex;flex-direction:column;gap:6px}.rt-r{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:start;background:var(--pan2);border-radius:8px;padding:8px}
+.rt-r.fait{opacity:.55}.rt-r.fait .rt-txt{text-decoration:line-through}.rt-t{font:600 12px ui-monospace,Menlo,monospace;color:#ffcf40;background:transparent;border:0;padding:0;cursor:pointer;white-space:nowrap}
+.rt-txt{font-size:13px;line-height:1.4;white-space:pre-wrap;word-break:break-word}.rt-b{display:flex;gap:4px}.rt-actions{display:flex;gap:6px;flex-wrap:wrap}.rt-revue{align-self:flex-start}
+.rv{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr);gap:16px}.rv-g video{width:100%;max-height:60vh;background:#000;border-radius:8px}
+.rv-barre{position:relative;margin:8px 0}.rv-barre input{width:100%}.rv-mk{position:absolute;left:0;right:0;top:-8px;height:8px;pointer-events:none}.rv-mk i{position:absolute;width:6px;height:6px;border-radius:50%;background:#ff5fa2;transform:translateX(-3px)}
+.rv-tc{font:600 15px ui-monospace,Menlo,monospace;color:#ffcf40;margin-left:auto}.rv-d{display:flex;flex-direction:column;gap:8px;min-width:0;max-height:75vh;overflow:auto}
+@media (max-width:900px){.rv{grid-template-columns:1fr}}
 #chMsgs{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:12px 12px 6px}
 .ch-m{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.ch-m.moi{align-items:flex-end}
 .ch-bulle{max-width:92%;padding:8px 11px;border-radius:14px 14px 14px 4px;background:#1f232b;font-size:12.5px;line-height:1.45;white-space:pre-line;overflow-wrap:anywhere}
@@ -1210,6 +1222,7 @@ function tlDessin() {
   let r = ''; const pas = zoom >= 80 ? 1 : zoom >= 36 ? 2 : zoom >= 18 ? 5 : 10;
   for (let s = 0; s < W; s += pas) r += `<i style="left:${s * zoom}px">${s >= 60 ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : s + 's'}</i>`;
   r += (proj.markers || []).map((t, i) => `<b data-mk="${i}" style="left:${t * zoom}px" title="${esc(nomRepere(t) || 'Repère')} à ${fmt(t)} (clic : y aller · double-clic : nommer · ⇧clic : supprimer)"></b>${nomRepere(t) ? `<span class="mkn" style="left:${t * zoom}px">${esc(nomRepere(t))}</span>` : ''}`).join('');
+  r += (proj.retours || []).filter(x => !x.source).map(x => `<em data-rtk="${esc(x.id)}" class="${x.fait ? 'fait' : ''}" style="left:${x.t * zoom}px" title="Retour : ${esc(String(x.texte).slice(0, 80))}"></em>`).join('');
   $('#regle').innerHTML = r;
   $('#pV').innerHTML = (proj.clips.length ? '' : '<span class="vide2">Glisse ici tes vidéos et photos</span>') + proj.clips.map((c, i) => {
     let bg = '';
@@ -1293,6 +1306,8 @@ $('#zFit').onclick = fitZoom;
 function fitZoom() { setZoom(($('#scroll').clientWidth - 90) / Math.max(5, total() || 10)); $('#scroll').scrollLeft = 0; }
 $('#scroll').addEventListener('wheel', e => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.12 : 0.89)); } }, { passive: false });
 $('#regle').onpointerdown = e => {
+  const rk = e.target.closest('em[data-rtk]');
+  if (rk) { const x = (proj.retours || []).find(y => y.id === rk.dataset.rtk); if (x) { placerTete(x.t); if (typeof panneauDroite === 'function') panneauDroite('retours'); } return; }
   const mk = e.target.closest('b[data-mk]');
   if (mk) { const i = +mk.dataset.mk; if (e.shiftKey) { proj.markers.splice(i, 1); commit(); tlDessin(); } else placerTete(proj.markers[i]); return; }
   const r = $('#lane').getBoundingClientRect(); const mv = ev => placerTete(Math.max(0, (ev.clientX - r.left) / zoom)); mv(e);
@@ -1461,6 +1476,7 @@ function recollerApres(intervalles) {
     const noms = {}, anciens = proj.nomsReperes || {};
     proj.markers = proj.markers.filter(m => m < a || m >= b).map(m => { const n = m >= b ? +(m - d).toFixed(2) : m; if (anciens[m.toFixed(2)]) noms[n.toFixed(2)] = anciens[m.toFixed(2)]; return n; });
     proj.nomsReperes = noms;
+    recalerRetours(t => (t >= b ? t - d : t >= a ? a : t)); // un retour sur un passage retiré reste à la coupe
   }
 }
 const plagesDe = liste => { const st = starts(); return liste.map(c => { const k = proj.clips.indexOf(c); return [st[k], st[k] + effDur(c)]; }); };
@@ -1700,6 +1716,7 @@ function recalerApresDecoupe(c, st0, ancienne, morceaux) {
   proj.audio = sons;
   (proj.pistes || []).forEach(p => { p.start = r2(vers(+p.start || 0)); });
   (proj.textes || []).forEach(x => { x.start = r2(vers(+x.start || 0)); });
+  recalerRetours(t => vers(t));
   if (proj.markers) { const noms = {}, anciens = proj.nomsReperes || {}; proj.markers = proj.markers.map(m => { const n = r2(vers(m)); if (anciens[(+m).toFixed(2)]) noms[n.toFixed(2)] = anciens[(+m).toFixed(2)]; return n; }); proj.nomsReperes = noms; }
 }
 // Coupe un clip en deux à `loc` secondes (temps de montage) en gardant sous-titres, titres et calques à la bonne place
@@ -1740,7 +1757,10 @@ function decalerApres(t, d) {
   const noms = {}, anciens = proj.nomsReperes || {};
   proj.markers = proj.markers.map(m => { const n = m >= t - 0.001 ? +(m + d).toFixed(2) : m; if (anciens[m.toFixed(2)]) noms[n.toFixed(2)] = anciens[m.toFixed(2)]; return n; });
   proj.nomsReperes = noms;
+  recalerRetours(x => (x >= t - 0.001 ? x + d : x));
 }
+// retours image par image (ui-retours.js) posés sur le montage : suivent les coupes comme les repères (ceux d'un rendu exporté gardent leur temps)
+function recalerRetours(f) { (proj.retours || []).forEach(r => { if (!r.source) { r.t = +Math.max(0, f(+r.t || 0)).toFixed(3); r.image = Math.round(r.t * (proj.fps || 30)); } }); }
 const sonClavier = () => { const l = LIB().sons || []; return l.find(s => /clavier-rafale/.test(s.file)) || l.find(s => /clavier/.test(s.file)); };
 const VITESSE_FRAPPE = 16; // lettres par seconde
 // Chapitre « vlog » : écran noir, numéro espacé, titre qui s'écrit au clavier, trait d'accent ; durée selon la longueur du titre
@@ -4692,5 +4712,6 @@ async function proposerPrisesInterrompues() {
 <script src="/ui-v2.js"></script>
 <script src="/ui-chat.js"></script>
 <script src="/ui-animations.js"></script>
+<script src="/ui-retours.js"></script>
 </body>
 </html>

@@ -57,6 +57,7 @@
     "ui-publier.js",
     "ui-v2.js",
     "ui-chat.js",
+    "ui-retours.js",
     "routes-pico.js",
     "routes-animations.js",
     "animations.js",

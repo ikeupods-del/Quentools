@@ -1912,6 +1912,7 @@ function buildClip(c, P, o = {}) {
           const rate = e => { if (fin) return; fin = true; const retirer = () => fs.rm(part, { force: true }, () => ko(e)); if (w.closed) retirer(); else { w.once('close', retirer); w.destroy(); } }; // retiré une fois le fichier fermé
           req.pipe(w); w.on('finish', () => { if (fin) return; fin = true; try { fs.renameSync(part, dest); ok(); } catch (e) { fs.rm(part, { force: true }, () => ko(e)); } });
           w.on('error', rate); req.on('error', rate); req.on('aborted', () => rate(new Error('Import interrompu'))); req.on('close', () => { if (!req.complete) rate(new Error('Import interrompu')); });
+          if (req.destroyed && !req.complete) rate(new Error('Import interrompu')); // coupé avant même d'être lu
         });
         if (/\.(heic|heif)$/i.test(dest)) { // photos iPhone : conversion par l'outil intégré à macOS
           if (process.platform !== 'darwin') { fs.unlinkSync(dest); throw new Error('Les photos HEIC ne sont lues que sur Mac : exporte-les en JPG.'); }

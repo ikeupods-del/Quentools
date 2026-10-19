@@ -64,11 +64,8 @@ async function afficherAccueil() {
     a.querySelector('.acc-recents').innerHTML = items.length ? items.slice(-8).reverse().map(n => `<button class="acc-projet" data-acc-pr="${esc(n)}"><svg class="ic"><use href="#i-film"/></svg>${esc(n)}</button>`).join('') : '<p class="mut">Aucun projet enregistré pour l’instant.</p>';
   } catch (e) { a.querySelector('.acc-recents').innerHTML = ''; }
 }
-async function reprendreV2(n) { // même chargement que « Ouvrir un projet »
-  proj = reparerProjet(await (await api('/api/projets/' + enc(n))).json());
-  proj.markers = proj.markers || []; proj.audio = proj.audio || []; proj.pistes = proj.pistes || []; proj.textes = proj.textes || []; proj.clips.forEach(normaliser);
-  $('#format').value = proj.format; sel = proj.clips.length ? 0 : -1; selA = selCut = selP = selT = -1; rendu = null;
-  masquerAccueil(); commit(); tout(); apercu();
+async function reprendreV2(n) { // même chargement que « Ouvrir un projet » (médias manquants écartés, lecture arrêtée)
+  await ouvrirProjetNomme(n); if (proj.clips.length) masquerAccueil();
 }
 
 $('#eCreer').onclick = () => { if ($('#publierV2') && !exportEnCours) fermerPublierV2(); afficherAccueil(); };
@@ -269,7 +266,7 @@ function dessinerPublierV2() {
       <label class="l">Mots-clés et hashtags</label><input type="text" id="pvTags" value="${esc(T.tags)}" placeholder="#économie #inflation">
       <div id="pvVis"></div><p class="mut" id="pvRedigerEtat"></p>`;
   const vz = $('#pvVis');
-  if (vz) vz.innerHTML = D.youtube ? `<div class="pv2-vis"><span class="mut">YouTube :</span>${VISIBILITES_V2.map(([id, nom]) => `<button data-visv2="${id}" class="${id === pubV2.vis ? 'on' : ''}" aria-pressed="${id === pubV2.vis}">${nom}</button>`).join('')}${pubV2.vis === 'prog' ? `<input type="datetime-local" id="pvDate" value="${esc(pubV2.date || '')}">` : ''}<label class="pv2-synth"><input type="checkbox" id="pvSynth" ${pubV2.synthese ? 'checked' : ''}> Voix de synthèse</label></div>` : '<p class="mut">TikTok reçoit la vidéo en brouillon : la légende (titre et hashtags) est copiée pour que tu la colles dans l’application.</p>';
+  if (vz) vz.innerHTML = D.youtube ? `<div class="pv2-vis"><span class="mut">YouTube :</span>${VISIBILITES_V2.map(([id, nom]) => `<button data-visv2="${id}" class="${id === pubV2.vis ? 'on' : ''}" aria-pressed="${id === pubV2.vis}">${nom}</button>`).join('')}${pubV2.vis === 'prog' ? `<input type="datetime-local" id="pvDate" value="${esc(pubV2.date || '')}">` : ''}<label class="pv2-synth"><input type="checkbox" id="pvSynth" ${pubV2.synthese ? 'checked' : ''}> Contenu modifié ou généré (déclaration YouTube)</label></div>` : '<p class="mut">TikTok reçoit la vidéo en brouillon : la légende (titre et hashtags) est copiée pour que tu la colles dans l’application.</p>';
   const s = $('#pvSynth'); if (s) s.onchange = () => { pubV2.synthese = s.checked; };
   const noms = DESTS_V2.filter(d => D[d.id]).map(d => d.id === 'mac' ? 'Mac' : d.nom);
   $('#xGo').textContent = enLigneV2() || (noms.length && !D.mac) ? 'Exporter et publier' : 'Exporter';

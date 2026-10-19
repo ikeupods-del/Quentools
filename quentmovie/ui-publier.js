@@ -33,7 +33,7 @@ async function ouvrirPublier() {
     const y = $('#puYt');
     if (!e.youtube.configure) y.innerHTML = formulaire('yt', 'YouTube', aideYt);
     else if (!e.youtube.connecte) y.innerHTML = `<div class="ligne"><button class="pri" id="ytCo">Se connecter à YouTube</button><button id="ytRaz">Changer les clés</button></div>`;
-    else y.innerHTML = `<div class="ligne" style="flex-wrap:wrap;align-items:center"><label>Mise en ligne <select id="ytConf"><option value="private">Privée (je publie moi-même)</option><option value="unlisted">Non répertoriée</option><option value="prog">Programmée…</option></select></label><input id="ytDate" type="datetime-local" style="display:none"><label><input type="checkbox" id="ytSynth" ${x && x.synthese ? 'checked' : ''}> Contenu de synthèse (voix générée)</label></div>
+    else y.innerHTML = `<div class="ligne" style="flex-wrap:wrap;align-items:center"><label>Mise en ligne <select id="ytConf"><option value="private">Privée (je publie moi-même)</option><option value="unlisted">Non répertoriée</option><option value="prog">Programmée…</option></select></label><input id="ytDate" type="datetime-local" style="display:none"><label><input type="checkbox" id="ytSynth" ${x && x.synthese ? 'checked' : ''}> Contenu modifié ou généré (déclaration YouTube)</label></div>
       <div class="ligne"><button class="pri" id="ytEnv" ${x && x.video.youtube ? '' : 'disabled'}>Envoyer la vidéo sur YouTube</button><button id="ytRaz">Déconnecter</button></div>`;
     // TikTok
     const t = $('#puTt');
