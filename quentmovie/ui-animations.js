@@ -5,6 +5,7 @@
 
 let catalogueAnim = null;
 const valeursAnim = {}; // valeurs écrites, gardées pendant la séance
+const animEnCours = new Map(); // modèle → texte d'avancement, pendant sa fabrication (le panneau peut être redessiné entre-temps)
 const navV22 = navigateur;
 navigateur = function () {
   navV22.apply(this, arguments);
@@ -22,26 +23,30 @@ async function dessinerAnimations() {
       <p class="mut">${esc(m.desc)}</p><div class="anim-apercu" hidden></div>
       ${m.champs.map(c => c.cle === 'couleur' ? `<label class="l">${esc(c.libelle)}</label><select data-champ="${c.cle}">${(m.couleurs || []).map(x => `<option value="${x}" ${(v[c.cle] || c.defaut) === x ? 'selected' : ''}>${x}</option>`).join('')}</select>`
         : `<label class="l">${esc(c.libelle)}</label><input type="text" data-champ="${c.cle}" value="${esc(v[c.cle] != null ? v[c.cle] : c.cle === 'titre' && titre && m.id === 'intro' ? titre : '')}" placeholder="${esc(c.defaut)}">`).join('')}
-      <div class="ligne" style="margin-top:8px"><button class="mini" data-anim-voir>Aperçu</button><span class="sp"></span><button class="mini pri" data-anim-poser>Poser</button></div><div class="mut anim-etat"></div></div>`; }).join('')}</div>`);
+      <div class="ligne" style="margin-top:8px"><button class="mini" data-anim-voir>Aperçu</button><span class="sp"></span><button class="mini pri" data-anim-poser ${animEnCours.has(m.id) ? 'disabled' : ''}>Poser</button></div><div class="mut anim-etat">${esc(animEnCours.get(m.id) || '')}</div></div>`; }).join('')}</div>`);
 }
 const valeursDe = carte => { const v = {}; carte.querySelectorAll('[data-champ]').forEach(x => { v[x.dataset.champ] = x.value; }); valeursAnim[carte.dataset.anim] = v; return v; };
 $('#navbody').addEventListener('click', async e => {
   const b = e.target.closest('[data-anim-voir],[data-anim-poser]'); if (!b || tab !== 'animations') return;
-  const carte = b.closest('[data-anim]'), id = carte.dataset.anim, etat = carte.querySelector('.anim-etat'), v = valeursDe(carte);
-  b.disabled = true;
+  const carte = b.closest('[data-anim]'), id = carte.dataset.anim, v = valeursDe(carte), poser = b.dataset.animPoser !== undefined;
+  if (poser && animEnCours.has(id)) return;
+  // carte affichée en ce moment (le panneau a pu être redessiné)
+  const ici = () => $('#navbody').querySelector(`.anim-liste [data-anim="${id}"]`) || carte;
+  const dire = t => { if (poser && animEnCours.has(id)) animEnCours.set(id, t); const e = ici().querySelector('.anim-etat'); if (e) e.textContent = t; };
+  b.disabled = true; if (poser) animEnCours.set(id, 'Fabrication…');
   try {
     if (b.dataset.animVoir !== undefined) {
-      etat.textContent = 'Aperçu…';
+      dire('Aperçu…');
       const r = await api('/api/animations/apercu', { method: 'POST', body: JSON.stringify({ id, valeurs: v, format: proj.format }) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Aperçu impossible');
-      const a = carte.querySelector('.anim-apercu'); a.hidden = false; a.classList.toggle('damier', j.type === 'calque'); a.innerHTML = `<img src="${j.image}" alt="Aperçu de l’animation">`; etat.textContent = '';
+      const a = ici().querySelector('.anim-apercu'); a.hidden = false; a.classList.toggle('damier', j.type === 'calque'); a.innerHTML = `<img src="${j.image}" alt="Aperçu de l’animation">`; dire('');
     } else {
-      etat.textContent = 'Fabrication…';
+      dire('Fabrication…');
       const { id: job } = await (await api('/api/animations/rendre', { method: 'POST', body: JSON.stringify({ id, valeurs: v, format: proj.format }) })).json().then(j => { if (j.error) throw new Error(j.error); return j; });
-      const r = await suivreTravail(job, k => { etat.textContent = `${k.step || ''} ${Math.round((k.progress || 0) * 100)} %`; });
-      await chargerMedias(); poserAnimation(r); etat.textContent = '✅ Posée.';
+      const r = await suivreTravail(job, k => { dire(`Fabrication… ${k.step || ''} ${Math.round((k.progress || 0) * 100)} %`); });
+      animEnCours.delete(id); await chargerMedias(); poserAnimation(r); dire('✅ Posée.');
     }
-  } catch (er) { etat.textContent = er.message; }
-  b.disabled = false;
+  } catch (er) { if (poser) animEnCours.delete(id); dire(er.message); }
+  b.disabled = false; const p = ici().querySelector(b.dataset.animVoir !== undefined ? '[data-anim-voir]' : '[data-anim-poser]'); if (p) p.disabled = false;
 });
 $('#navbody').addEventListener('input', e => { const c = e.target.closest('[data-anim]'); if (c && e.target.dataset.champ) valeursDe(c); });
 // générique d'ouverture : premier clip ; générique de fin : dernier clip ; le reste : piste vidéo 2 à la tête de lecture, plein écran

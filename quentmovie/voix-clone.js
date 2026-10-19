@@ -14,9 +14,35 @@ const ARCH = process.arch === 'arm64' ? 'aarch64' : 'x86_64';
 // Python ne lit pas dans l'archive de l'application : le script est livré à côté, dans app.asar.unpacked (asarUnpack de package.json)
 const ESSAI = path.join(__dirname, 'voix-clone', 'essai.py').replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep);
 
+// Processus lancés dans leur propre groupe (spawn detached) : les arrêter arrête aussi ce qu'ils ont lancé (pip, fabriquer.js, FFmpeg…).
+// kill() envoie le signal à tout le groupe, puis SIGKILL 5 s plus tard à ce qui reste ; arreterTout() sert à la fermeture de QuentMovie.
+const groupes = new Set();
+const vivant = pid => { try { process.kill(-pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
+function enGroupe(p) {
+  if (!p.pid) return p;
+  const kill = p.kill.bind(p); groupes.add(p);
+  p.kill = (sig = 'SIGTERM') => {
+    try { process.kill(-p.pid, sig); } catch (e) { try { kill(sig); } catch (e2) { /* déjà fini */ } }
+    if (sig !== 'SIGKILL') setTimeout(() => { try { process.kill(-p.pid, 'SIGKILL'); } catch (e) { /* groupe fini */ } }, 5000).unref();
+    return true;
+  };
+  return p;
+}
+// après la fin de l'enfant : ce qui reste de son groupe est arrêté, et on attend que tout soit fini (6 s au plus)
+async function finGroupe(p) {
+  if (p.pid && vivant(p.pid)) {
+    try { process.kill(-p.pid, 'SIGTERM'); } catch (e) { /* fini entre-temps */ }
+    for (let i = 0; i < 60 && vivant(p.pid); i++) { if (i === 50) { try { process.kill(-p.pid, 'SIGKILL'); } catch (e) { /* fini */ } } await new Promise(r => setTimeout(r, 100)); }
+  }
+  groupes.delete(p);
+}
+function arreterTout() { for (const p of groupes) { try { process.kill(-p.pid, 'SIGKILL'); } catch (e) { /* déjà fini */ } } groupes.clear(); }
+
 function creer(base) {
   const dossier = path.join(base, 'voix-clone'), essais = path.join(dossier, 'essais'), voix = path.join(base, 'ma-voix');
   const pythonLocal = () => process.env.QM_PYTHON || path.join(dossier, 'python', 'bin', 'python3');
+  // Python installé jusqu'au bout (fichier .complet écrit après l'extraction) ; QM_PYTHON : Python fourni (essais)
+  const pythonPret = () => fs.existsSync(pythonLocal()) && (!!process.env.QM_PYTHON || fs.existsSync(path.join(dossier, 'python', '.complet')));
   const venv = m => path.join(dossier, 'venv-' + m);
   const pyVenv = m => path.join(venv(m), 'bin', 'python');
   const marque = m => path.join(venv(m), '.complet');
@@ -29,7 +55,7 @@ function creer(base) {
     return {
       dossier, essais, journal,
       moteurs: Object.entries(MOTEURS).map(([id, m]) => ({ id, nom: m.nom, go: m.go, installe: fs.existsSync(marque(id)) })),
-      python: fs.existsSync(pythonLocal()),
+      python: pythonPret(),
       fichiers, rapports, libre: espaceLibre(),
       arch: process.platform === 'darwin' ? process.arch : 'autre'
     };
@@ -44,8 +70,9 @@ function creer(base) {
   // Lance un programme, retransmet ses lignes (la dernière devient l'étape affichée) et attend sa fin
   function lancer(job, cmd, args, { env = {}, cwd, etape } = {}) {
     return new Promise((ok, ko) => {
+      if (job.annule) return ko(new Error('Essai annulé'));
       ecrire(`\n$ ${cmd} ${args.join(' ')}\n`);
-      const p = spawn(cmd, args, { cwd, env: { ...process.env, PYTHONUNBUFFERED: '1', PIP_DISABLE_PIP_VERSION_CHECK: '1', ...env } });
+      const p = enGroupe(spawn(cmd, args, { cwd, detached: true, env: { ...process.env, PYTHONUNBUFFERED: '1', PIP_DISABLE_PIP_VERSION_CHECK: '1', ...env } }));
       job.enfant = p;
       let derniere = '', erreurLue = '', tampon = '';
       const lire = d => {
@@ -59,14 +86,14 @@ function creer(base) {
         }
       };
       p.stdout.on('data', lire); p.stderr.on('data', lire);
-      p.on('error', er => ko(new Error(`Programme introuvable : ${cmd} (${er.message})`)));
-      p.on('close', code => { job.enfant = null; if (job.annule) return ko(new Error('Essai annulé')); code === 0 ? ok() : ko(new Error(erreurLue || `${path.basename(cmd)} s’est arrêté (code ${code})${derniere ? ' : ' + derniere.slice(0, 200) : ''}`)); });
+      p.on('error', er => { groupes.delete(p); ko(new Error(`Programme introuvable : ${cmd} (${er.message})`)); });
+      p.on('close', async code => { await finGroupe(p); if (job.enfant === p) job.enfant = null; if (job.annule) return ko(new Error('Essai annulé')); code === 0 ? ok() : ko(new Error(erreurLue || `${path.basename(cmd)} s’est arrêté (code ${code})${derniere ? ' : ' + derniere.slice(0, 200) : ''}`)); });
     });
   }
 
   // Python autonome (build indépendant, sans toucher au Python du Mac)
   async function preparerPython(job) {
-    if (fs.existsSync(pythonLocal())) return;
+    if (pythonPret()) return;
     if (process.platform !== 'darwin') throw new Error('Le Python autonome n’est prévu que pour le Mac : définis QM_PYTHON pour utiliser un autre Python.');
     fs.mkdirSync(dossier, { recursive: true });
     job.step = 'Recherche de Python…';
@@ -74,12 +101,19 @@ function creer(base) {
     const re = new RegExp(`^cpython-3\\.11\\.\\d+\\+\\d+-${ARCH}-apple-darwin-install_only\\.tar\\.gz$`);
     const actif = (sortie.assets || []).find(a => re.test(a.name));
     if (!actif) throw new Error('Python 3.11 pour ce Mac introuvable dans la dernière version publiée');
-    const archive = path.join(dossier, 'python.tar.gz');
-    await requete(actif.browser_download_url, { dest: archive, quoi: 'de Python', onProgress: (r, t) => { if (t) { job.progress = 0.02 + 0.06 * r / t; job.step = `Téléchargement de Python… ${Math.round(100 * r / t)} %`; } } });
+    const archive = path.join(dossier, 'python.tar.gz'), tmp = path.join(dossier, 'python-extraction'), final = path.join(dossier, 'python');
+    const r = await requete(actif.browser_download_url, { dest: archive, quoi: 'de Python', onProgress: (r, t) => { if (t) { job.progress = 0.02 + 0.06 * r / t; job.step = `Téléchargement de Python… ${Math.round(100 * r / t)} %`; } } });
+    const attendu = /^sha256:([0-9a-f]{64})$/.exec(actif.digest || '');
+    if ((attendu && r.sha256 !== attendu[1]) || (actif.size && r.taille !== actif.size)) { fs.rmSync(archive, { force: true }); throw new Error('Archive Python abîmée (empreinte différente) : relance l’essai.'); }
     job.step = 'Installation de Python…';
-    await new Promise((ok, ko) => execFile('tar', ['-xzf', archive, '-C', dossier], e => (e ? ko(new Error('Décompression de Python impossible : ' + e.message)) : ok())));
-    fs.rmSync(archive, { force: true });
-    if (!fs.existsSync(pythonLocal())) throw new Error('Archive Python inattendue');
+    // extraction à part puis renommage : une installation interrompue n'est jamais prise pour une installation finie
+    fs.rmSync(tmp, { recursive: true, force: true }); fs.mkdirSync(tmp, { recursive: true });
+    try {
+      await new Promise((ok, ko) => execFile('tar', ['-xzf', archive, '-C', tmp], e => (e ? ko(new Error('Décompression de Python impossible : ' + e.message)) : ok())));
+      if (!fs.existsSync(path.join(tmp, 'python', 'bin', 'python3'))) throw new Error('Archive Python inattendue');
+      fs.rmSync(final, { recursive: true, force: true }); fs.renameSync(path.join(tmp, 'python'), final);
+      fs.writeFileSync(path.join(final, '.complet'), new Date().toISOString());
+    } finally { fs.rmSync(tmp, { recursive: true, force: true }); fs.rmSync(archive, { force: true }); }
   }
 
   async function installer(m, job, part) {
@@ -100,7 +134,7 @@ function creer(base) {
     if (!liste.length) throw new Error('Aucun modèle choisi');
     fs.mkdirSync(essais, { recursive: true });
     // un téléchargement de plusieurs Go qui échoue au milieu laisse un environnement à moitié installé : on vérifie la place avant
-    const besoin = liste.filter(m => !fs.existsSync(marque(m))).reduce((t, m) => t + MOTEURS[m].go * 2, fs.existsSync(pythonLocal()) ? 0 : 1), libre = espaceLibre(), mini = process.env.QM_VC_ESPACE_MIN != null ? +process.env.QM_VC_ESPACE_MIN : besoin; // QM_VC_ESPACE_MIN : seuil forcé (essais)
+    const besoin = liste.filter(m => !fs.existsSync(marque(m))).reduce((t, m) => t + MOTEURS[m].go * 2, pythonPret() ? 0 : 1), libre = espaceLibre(), mini = process.env.QM_VC_ESPACE_MIN != null ? +process.env.QM_VC_ESPACE_MIN : besoin; // QM_VC_ESPACE_MIN : seuil forcé (essais)
     if (libre != null && besoin > 0 && libre < mini) throw new Error(`Espace disque insuffisant : ${libre} Go libres, environ ${mini} Go nécessaires pour l’installation. Libère de la place puis relance l’essai.`);
     await preparerPython(job);
     const parts = liste.map((_, i) => [0.1 + 0.8 * i / liste.length, 0.1 + 0.8 * (i + 0.5) / liste.length]);
@@ -151,4 +185,4 @@ function creer(base) {
   return { etat, essai, dire, prete, annuler, fichier, journalFin, dossier, essais, MOTEURS };
 }
 
-module.exports = { creer, MOTEURS };
+module.exports = { creer, MOTEURS, enGroupe, finGroupe, arreterTout };

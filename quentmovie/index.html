@@ -636,7 +636,13 @@ function normaliser(c) { // anciens projets : ajoute les champs manquants
 
 // ---------- Historique, sauvegarde automatique ----------
 let hist = [], hi = -1, saveTimer = null, dernierGlisse = 0;
-const snap = () => JSON.stringify(proj);
+// rangées de la piste vidéo 2 (la plus haute passe devant) : calculées ici pour que l'historique et l'enregistrement les contiennent
+function lignesPistes() {
+  const fv = [], lv = [], ps = proj.pistes || [];
+  ps.map((p, i) => i).sort((x, y) => ps[x].start - ps[y].start).forEach(i => { const p = ps[i]; let r = fv.findIndex(e => e <= p.start + 0.01); if (r < 0) { r = fv.length; fv.push(0); } fv[r] = p.start + dureePiste(p); lv[i] = r; });
+  return { n: fv.length, lv };
+}
+const snap = () => { const { lv } = lignesPistes(); (proj.pistes || []).forEach((p, i) => { p.ligne = lv[i]; }); return JSON.stringify(proj); };
 // Chaque action crée une étape d'annulation ; les mouvements d'un même curseur sont regroupés en une seule étape.
 function commit(glisse) {
   const s = snap(), now = Date.now();
@@ -649,16 +655,25 @@ function commit(glisse) {
   }
   dernierGlisse = glisse ? now : 0;
   majBoutons();
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => fetch('/api/projet', { method: 'PUT', body: snap() }).catch(() => {}), 900);
+  sauverPlusTard();
   majApercuEtat();
 }
+// enregistrement automatique 0,9 s après la dernière action ; envoyé tout de suite à la fermeture de la fenêtre
+let saveAttente = false;
+function sauverPlusTard() { clearTimeout(saveTimer); saveAttente = true; saveTimer = setTimeout(sauverMaintenant, 900); }
+function sauverMaintenant(fin) {
+  clearTimeout(saveTimer); if (!saveAttente) return; saveAttente = false;
+  const corps = snap(); // keepalive limité à 64 Ko par le navigateur : au-delà, envoi ordinaire
+  fetch('/api/projet', { method: 'PUT', body: corps, keepalive: !!fin && corps.length < 6e4 }).catch(() => {});
+}
+window.addEventListener('pagehide', () => sauverMaintenant(true));
+window.addEventListener('beforeunload', () => sauverMaintenant(true));
 function undo(d) {
   const s = snap(); if (hist[hi] !== s) { hist = hist.slice(0, hi + 1); hist.push(s); hi = hist.length - 1; }
   dernierGlisse = 0; const n = hi + d; if (n < 0 || n >= hist.length) return;
   hi = n; selObjs.clear(); proj = JSON.parse(hist[hi]); sel = Math.min(sel, proj.clips.length - 1); selA = -1; selP = -1; selCut = -1; selT = -1;
   $('#format').value = proj.format; tout(); apercu(); majBoutons();
-  clearTimeout(saveTimer); saveTimer = setTimeout(() => fetch('/api/projet', { method: 'PUT', body: snap() }).catch(() => {}), 900);
+  sauverPlusTard();
   majApercuEtat();
 }
 // projets enregistrés par la 1.29 à 1.34 : des réglages pouvaient être gardés en texte (« 1.7 ») au lieu de nombres
@@ -1216,14 +1231,11 @@ function tlDessin() {
     return `<div class="aud r-${roleSon(a)} ${i === selA ? 'sel' : ''}" data-a="${i}" style="top:${8 + ligne[i] * 44}px;height:40px;bottom:auto;left:${(a.start || 0) * zoom}px;width:${Math.max(30, d * zoom)}px;background-image:url('/api/wave?file=${enc(a.file)}&w=1200&h=60${a.dur ? `&in=${a.in || 0}&dur=${a.dur}` : ''}')">${a.detache ? '🔊' : '🎵'} ${esc(nomOf(a.file))}${a.duck ? ' ⤵' : ''}<i class="hl"></i><i class="hr"></i></div>`;
   }).join('');
   // pistes vidéo au-dessus : rangées automatiques, la plus haute passe devant
-  const fv = [], lv = [];
-  (proj.pistes || []).map((p, i) => i).sort((x, y) => proj.pistes[x].start - proj.pistes[y].start).forEach(i => {
-    const p = proj.pistes[i]; let r = fv.findIndex(e => e <= p.start + 0.01); if (r < 0) { r = fv.length; fv.push(0); } fv[r] = p.start + dureePiste(p); lv[i] = r; p.ligne = r;
-  });
-  $('#pV2').style.height = (Math.max(1, fv.length) * 44 + 8) + 'px';
+  const { n: nv, lv } = lignesPistes(); // aucune écriture dans proj pendant le dessin (⌘Z)
+  $('#pV2').style.height = (Math.max(1, nv) * 44 + 8) + 'px';
   $('#pV2').innerHTML = ((proj.pistes || []).length ? '' : '<span class="vide2">Glisse ici une vidéo ou une photo à incruster (image dans l’image, plan de coupe) — bouton ⧉ dans Médias</span>') + (proj.pistes || []).map((p, i) => {
     const bg = p.kind === 'image' ? `/media/${enc(p.file)}` : `/api/frame?file=${enc(p.file)}&t=${(p.in + 0.3).toFixed(1)}`;
-    return `<div class="pv ${i === selP ? 'sel' : ''}" data-p="${i}" style="top:${4 + (fv.length - 1 - lv[i]) * 44}px;left:${p.start * zoom}px;width:${Math.max(26, dureePiste(p) * zoom)}px;background-image:url('${bg}')"><i class="hl"></i><i class="hr"></i>${p.plein ? '⛶' : '⧉'} ${esc(nomOf(p.file))}</div>`;
+    return `<div class="pv ${i === selP ? 'sel' : ''}" data-p="${i}" style="top:${4 + (nv - 1 - lv[i]) * 44}px;left:${p.start * zoom}px;width:${Math.max(26, dureePiste(p) * zoom)}px;background-image:url('${bg}')"><i class="hl"></i><i class="hr"></i>${p.plein ? '⛶' : '⧉'} ${esc(nomOf(p.file))}</div>`;
   }).join('');
   // piste Titres : rangées automatiques si des titres se chevauchent
   const ft = [], lt = [], tx = proj.textes || [];
@@ -1270,7 +1282,7 @@ function sauterLecture(t) {
   if (!lecture) return; suiviLibre = 0; clearTimeout(minuteurSaut);
   minuteurSaut = setTimeout(() => {
     if (!lecture) return;
-    if (lecture.direct) { const l = lecture; l.video.pause(); if (l.arreter) l.arreter(); lecture = null; gt = t; lectureDirecte(); return; } // lecture rapide : reprise au bon clip
+    if (lecture.direct) { const l = lecture; l.video.pause(); if (l.arreter) l.arreter(); lecture = null; libererLecteur(l.video); gt = t; lectureDirecte(); return; } // lecture rapide : reprise au bon clip
     const v = lecture.video, T = total(); if (v.duration > 0 && T > 0) { v.currentTime = clamp(t * (v.duration / T), 0, Math.max(0, v.duration - 0.05)); if (v.paused) v.play().catch(() => {}); }
   }, 120);
 }
@@ -1554,7 +1566,7 @@ let vuCtx = null, vuAnim = 0;
 function brancherVu(v) {
   try {
     vuCtx = vuCtx || new AudioContext(); if (vuCtx.state === 'suspended') vuCtx.resume();
-    if (!v._vu) { const src = vuCtx.createMediaElementSource(v), sp = vuCtx.createChannelSplitter(2), a = [vuCtx.createAnalyser(), vuCtx.createAnalyser()]; src.connect(sp); a.forEach((x, k) => { x.fftSize = 512; sp.connect(x, k); }); src.connect(vuCtx.destination); v._vu = a; }
+    if (!v._vu) { const src = v._src = vuCtx.createMediaElementSource(v), sp = vuCtx.createChannelSplitter(2), a = [vuCtx.createAnalyser(), vuCtx.createAnalyser()]; src.connect(sp); a.forEach((x, k) => { x.fftSize = 512; sp.connect(x, k); }); src.connect(vuCtx.destination); v._vu = a; }
     const tampon = new Float32Array(512), barres = document.querySelectorAll('#vu i');
     cancelAnimationFrame(vuAnim);
     const boucle = () => { if (v.paused || !v.isConnected) return vuStop();
@@ -1890,8 +1902,8 @@ async function apercu() {
   const mon = ++jeton, t = curClip() ? pos : ici.pos;
   try {
     const r = await api('/api/preview', { method: 'POST', body: JSON.stringify({ project: { format: proj.format, fps: proj.fps }, clip: c, t }) });
-    const url = URL.createObjectURL(await r.blob()); if (mon !== jeton || lecture) return;
-    $('#stage').innerHTML = `<img src="${url}" alt="Aperçu">`; pistesApercu();
+    const url = URL.createObjectURL(await r.blob()); if (mon !== jeton || lecture) return URL.revokeObjectURL(url); // réponse périmée
+    $('#stage').innerHTML = `<img src="${url}" alt="Aperçu">`; if (apercu.url) URL.revokeObjectURL(apercu.url); apercu.url = url; pistesApercu();
   } catch (e) { if (mon === jeton && !lecture) $('#stage').innerHTML = `<div class="vide err">${esc(e.message)}</div>`; }
 }
 // Piste vidéo 2 dans l'aperçu (image fixe) : éléments visibles à la tête de lecture, posés par-dessus
@@ -1922,7 +1934,9 @@ function pistesApercu() {
   };
   if (img.complete && img.naturalWidth) poser(); else img.addEventListener('load', poser, { once: true });
 }
-function stopLecture() { if (lecture) { lecture.video.pause(); if (lecture.arreter) lecture.arreter(); lecture = null; majPlay(false); apercu(); } }
+// lecteur arrêté : branchement du vumètre retiré et fichier relâché (sinon un décodeur reste ouvert à chaque lecture)
+function libererLecteur(v) { v.pause(); if (v._src) { try { v._src.disconnect(); } catch (e) { /* déjà débranché */ } v._src = null; v._vu = null; } v.onerror = v.onloadedmetadata = v.ontimeupdate = null; v.removeAttribute('src'); v.load(); }
+function stopLecture() { if (lecture) { const l = lecture; l.video.pause(); if (l.arreter) l.arreter(); lecture = null; libererLecteur(l.video); majPlay(false); apercu(); } }
 function majApercuEtat() { if (rendu && rendu.sig !== snap()) { rendu.perime = true; } preparerEnFond(); }
 // Aperçu préparé en arrière-plan 1,5 s après chaque modification : la lecture démarre tout de suite
 const fond = { cours: null, promesse: null, minuteur: 0 };
@@ -2298,9 +2312,11 @@ function majDebutInsp(root, p) {
   else decalerDebut(root, debutInsp.base, (root.in - debutInsp.base.in) / (root.speed || 1));
 }
 function suite(path, glisse) {
+  const v = $('#insp').dataset.root === 'v', c = v ? null : curClip();
+  if (c && ['in', 'out'].includes(path) && c.out - c.in < 0.2) { path === 'in' ? c.in = c.out - 0.2 : c.out = c.in + 0.2; } // avant l'étape d'annulation
   commit(glisse);
-  if ($('#insp').dataset.root === 'v') { tlDessin(); apercuRetarde(); return; }
-  if (['in', 'out', 'speed', 'dur', 'start'].includes(path)) { const c = curClip(); if (c && ['in', 'out'].includes(path) && c.out - c.in < 0.2) { path === 'in' ? c.in = c.out - 0.2 : c.out = c.in + 0.2; } reglerScrub(); tlDessin(); }
+  if (v) { tlDessin(); apercuRetarde(); return; }
+  if (['in', 'out', 'speed', 'dur', 'start'].includes(path)) { reglerScrub(); tlDessin(); }
   else if (!/^(fx|afx|overlays|titre|viz)\./.test(path)) tlDessin();
   if ($('#insp').dataset.root !== 'a') apercuRetarde();
 }
@@ -2622,6 +2638,7 @@ async function ouvrirMiniature() {
   stopLecture();
   const ici = locate(gt), c = curClip() || proj.clips[ici.i];
   const [W, H] = proj.format === 'vertical' ? [1080, 1920] : proj.format === 'carre' ? [1080, 1080] : [1280, 720];
+  if (mini && mini.url) URL.revokeObjectURL(mini.url);
   mini = { ...MINI_DEF, l1: (proj.clips.find(x => x.titre && x.titre.l1) || {}).titre ? proj.clips.find(x => x.titre && x.titre.l1).titre.l1 : '', W, H, image: null, masque: null, source: 'tete' };
   const photos = medias.filter(m => m.kind === 'image');
   ouvrir(`<h2>🖼 Miniature</h2><p class="mut">L’image qui donne envie de cliquer : une image de ta vidéo, un gros titre, toi détouré avec un contour. ${W} × ${H} px, prête pour ${W > H ? 'YouTube' : 'TikTok, Reels, Shorts'}.</p>
@@ -2660,7 +2677,10 @@ async function miniCharger(source) {
     const r = await api('/api/preview', { method: 'POST', body: JSON.stringify({ project: { format: proj.format, fps: proj.fps }, clip: c, t: curClip() ? pos : ici.pos, mode: 'hd' }) });
     url = URL.createObjectURL(await r.blob());
   } else url = '/media/' + enc(source);
-  mini.image = await new Promise((ok, ko) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ko(new Error('image illisible')); im.src = url; }).catch(e => { miniEtat(e.message); return null; });
+  const m = mini, jeton = m.jeton = (m.jeton || 0) + 1, blob = url.startsWith('blob:');
+  const im = await new Promise((ok, ko) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ko(new Error('image illisible')); im.src = url; }).catch(e => { miniEtat(e.message); return null; });
+  if (mini !== m || m.jeton !== jeton) { if (blob) URL.revokeObjectURL(url); return; } // image périmée (autre source choisie ou fenêtre refermée)
+  if (m.url) URL.revokeObjectURL(m.url); m.url = blob ? url : null; m.image = im;
   miniEtat('');
   miniDessiner(); if (mini.detoure) miniMasque();
 }
@@ -3005,7 +3025,7 @@ function outilsHtml() {
     <div class="encart"><h4>🎙 Doublage : ta voix, phrase par phrase</h4><p class="mut">Un texte (ou un épisode QuentInvest) lu ligne par ligne avec ton micro : chaque réplique est nettoyée, réécoutable, refaisable, puis posée dans la piste audio.</p>
       <button class="pri" data-outil="doublage" style="width:100%">Ouvrir le doublage (⇧${M}D)</button></div>
     <div class="encart"><h4>🎙 Enregistrer une voix off</h4><p class="mut">Enregistre avec le micro du Mac ; le son arrive dans la piste audio à la tête de lecture.</p>
-      <button data-outil="micro" id="bMicro" style="width:100%">● Démarrer l’enregistrement</button><button id="bMicroPause" style="width:100%;margin-top:4px" hidden>⏸ Pause</button><div class="mut" id="oMicroRes" style="margin-top:4px"></div></div>
+      <button data-outil="micro" id="bMicro" style="width:100%">${micro ? '■ Arrêter l’enregistrement' : '● Démarrer l’enregistrement'}</button><button data-outil="microPause" id="bMicroPause" style="width:100%;margin-top:4px" ${micro ? '' : 'hidden'}>${micro && micro.pauseDebut ? '▶ Reprendre' : '⏸ Pause'}</button><div class="mut" id="oMicroRes" style="margin-top:4px"></div></div>
     <div class="encart"><h4>🎧 Nouvel épisode de podcast</h4><p class="mut">Un son, une pochette et un visualiseur animé : une vidéo prête pour YouTube ou les réseaux.</p>
       <label class="l">Fichier audio</label><select id="oPodA">${audios.map(m => `<option value="${esc(m.file)}">${esc(m.file)}</option>`).join('') || '<option value="">Importe d’abord un fichier audio</option>'}</select>
       <label class="l">Pochette (facultatif)</label><select id="oPodImg"><option value="">Couleur unie</option>${imgs.map(m => `<option value="${esc(m.file)}">${esc(m.file)}</option>`).join('')}</select>
@@ -3037,6 +3057,13 @@ $('#navbody').addEventListener('input', e => {
   if (m) $('#' + m[0]).textContent = m[1](e.target.value);
 });
 let micro = null;
+// boutons et texte de la voix off relus à chaque fois : l'onglet peut avoir été redessiné pendant l'enregistrement
+function majMicro(h) {
+  const b = $('#bMicro'), bp = $('#bMicroPause'), r = $('#oMicroRes');
+  if (b) b.textContent = micro ? '■ Arrêter l’enregistrement' : '● Démarrer l’enregistrement';
+  if (bp) { bp.hidden = !micro; bp.textContent = micro && micro.pauseDebut ? '▶ Reprendre' : '⏸ Pause'; }
+  if (r && h !== undefined) r.innerHTML = h;
+}
 async function outil(nom) {
   if (nom === 'aide') return afficherAide();
   if (nom === 'studio') return ouvrirStudio();
@@ -3087,30 +3114,28 @@ async function outil(nom) {
       proj.clips.splice(sel, 1, ...nouveaux); recalerApresDecoupe(c, st0, effDur(c), morceaux); commit(); tout(); apercu();
       $('#oSilRes').textContent = `✅ ${silences.length} silences coupés, ${fmt(gagne)} gagnées. Annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'} si besoin.`;
     } catch (e) { $('#oSilRes').innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+  } else if (nom === 'microPause') {
+    if (!micro) return; const rec = micro.rec;
+    if (rec.state === 'recording') { rec.pause(); micro.pauseDebut = Date.now(); }
+    else if (rec.state === 'paused') { micro.pauseCumul += Date.now() - micro.pauseDebut; micro.pauseDebut = 0; rec.resume(); }
+    majMicro();
   } else if (nom === 'micro') {
-    const b = $('#bMicro'), r = $('#oMicroRes');
     if (micro) { micro.rec.stop(); return; }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } }); const rec = new MediaRecorder(stream), morceaux = [], t0 = Date.now();
-      micro = { rec, pauseCumul: 0, pauseDebut: 0 };
-      const duree = () => Math.round((Date.now() - t0 - micro.pauseCumul - (micro.pauseDebut ? Date.now() - micro.pauseDebut : 0)) / 1000);
-      micro.timer = setInterval(() => { r.innerHTML = micro.pauseDebut ? `<span>⏸ En pause · ${duree()} s enregistrées</span>` : `<span class="rec">● Enregistrement ${duree()} s</span>`; }, 500);
-      const bp = $('#bMicroPause'); bp.hidden = false; bp.textContent = '⏸ Pause';
-      bp.onclick = () => {
-        if (!micro) return;
-        if (rec.state === 'recording') { rec.pause(); micro.pauseDebut = Date.now(); bp.textContent = '▶ Reprendre'; }
-        else if (rec.state === 'paused') { micro.pauseCumul += Date.now() - micro.pauseDebut; micro.pauseDebut = 0; rec.resume(); bp.textContent = '⏸ Pause'; }
-      };
+      const m = micro = { rec, pauseCumul: 0, pauseDebut: 0 };
+      const duree = () => Math.round((Date.now() - t0 - m.pauseCumul - (m.pauseDebut ? Date.now() - m.pauseDebut : 0)) / 1000);
+      m.timer = setInterval(() => majMicro(m.pauseDebut ? `<span>⏸ En pause · ${duree()} s enregistrées</span>` : `<span class="rec">● Enregistrement ${duree()} s</span>`), 500);
       rec.ondataavailable = ev => morceaux.push(ev.data);
       rec.onstop = async () => {
-        clearInterval(micro.timer); stream.getTracks().forEach(x => x.stop()); micro = null; $('#bMicroPause').hidden = true; b.textContent = '● Démarrer l’enregistrement'; r.textContent = 'Envoi de l’enregistrement…';
+        clearInterval(m.timer); stream.getTracks().forEach(x => x.stop()); micro = null; majMicro('Envoi de l’enregistrement…');
         const nom = 'voix-off-' + new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14) + '.webm';
         try { await api('/api/import?name=' + enc(nom), { method: 'POST', body: new Blob(morceaux, { type: 'audio/webm' }) }); await chargerMedias();
-          const m = medias.find(x => x.file.startsWith(nom.replace('.webm', ''))); if (m) ajouterSon(m.file, { vol: 100 }); r.textContent = '✅ Voix off ajoutée à la piste audio.'; navigateur(); }
-        catch (er) { r.innerHTML = `<span class="err">${esc(er.message)}</span>`; }
+          const f = medias.find(x => x.file.startsWith(nom.replace('.webm', ''))); if (f) ajouterSon(f.file, { vol: 100 }); majMicro('✅ Voix off ajoutée à la piste audio.'); navigateur(); }
+        catch (er) { majMicro(`<span class="err">${esc(er.message)}</span>`); }
       };
-      rec.start(); b.textContent = '■ Arrêter l’enregistrement';
-    } catch (e) { r.innerHTML = `<span class="err">Micro indisponible : ${esc(e.message)}. Autorise QuentMovie dans Réglages Système → Confidentialité → Micro.</span>`; }
+      rec.start(); majMicro();
+    } catch (e) { micro = null; majMicro(`<span class="err">Micro indisponible : ${esc(e.message)}. Autorise QuentMovie dans Réglages Système → Confidentialité → Micro.</span>`); }
   } else if (nom === 'podcast') {
     const f = $('#oPodA').value; if (!f) return alert('Importe d’abord un fichier audio (onglet Médias).');
     const m = medias.find(x => x.file === f), c = newClip(m); c.bgFile = $('#oPodImg').value;
@@ -3159,6 +3184,13 @@ async function executerAction(a) {
     case 'musique': { const m = musiquePour(p); if (!m) return aide('Aucune musique dans la bibliothèque.');
       proj.audio = proj.audio.filter(x => !estMusiqueLib(x)); proj.audio.push({ file: 'lib:' + m.file, vol: 35, start: 0, fade: true, loop: true, duck: true });
       commit(); tout(); apercu(); return aide(`🎵 Musique « ${esc(m.nom)} » ajoutée sur toute la vidéo, baissée automatiquement quand on parle.`); }
+    case 'volume_musique': { // nombre en %, « plus », « moins » ou 0 pour couper
+      const l = proj.audio.filter(x => estMusiqueLib(x)); if (!l.length) return aide('Aucune musique de la bibliothèque dans le montage.');
+      const q = String(p).trim().replace(',', '.'), nb = /^\d+(\.\d+)?$/.test(q);
+      if (!nb && q !== 'plus' && q !== 'moins') return aide('Quel volume pour la musique ? Dis par exemple « musique à 20 % », « monte la musique » ou « baisse la musique ».');
+      l.forEach(x => { const v = x.vol == null ? 100 : +x.vol || 0; x.vol = Math.round(clamp(nb ? +q : q === 'plus' ? Math.max(v, 5) * 1.4 : v * 0.6, 0, 200)); });
+      commit(); tout(); apercu(); const v = l[0].vol;
+      return aide(v ? `🎵 Volume de la musique réglé à ${v} %.` : '🔇 Musique coupée (volume à 0 %).'); }
     case 'retirer_musique': { const n = proj.audio.length; proj.audio = proj.audio.filter(x => !estMusiqueLib(x)); commit(); tout(); apercu(); return aide(n > proj.audio.length ? 'Musique retirée.' : 'Aucune musique de la bibliothèque à retirer.'); }
     case 'format': { const f = ['vertical', 'horizontal', 'carre'].includes(p) ? p : 'vertical'; if (f === 'vertical') return outil('vertical');
       proj.format = f; $('#format').value = f; commit(); tout(); apercu(); return aide(`Format ${f === 'carre' ? 'carré' : 'horizontal 16:9'}.`); }
@@ -3180,7 +3212,8 @@ async function executerAction(a) {
       suivreV1(() => proj.clips.unshift(c)); sel = 0; commit(); tout(); apercu(); return aide('🅣 Écran titre ajouté au début (modifiable dans l’inspecteur).'); } // la suite (sons, piste 2, titres) recule de l'écran titre
     case 'supprimer_clip': {
       if (!proj.clips.length) return aide('Aucun clip à supprimer.');
-      const i = p === 'dernier' ? proj.clips.length - 1 : p === 'premier' || !p ? 0 : +p - 1;
+      if (!p) return aide('Quel clip ? Dis par exemple « supprime le clip 2 », « le premier » ou « le dernier ».');
+      const i = p === 'dernier' ? proj.clips.length - 1 : p === 'premier' ? 0 : +p - 1;
       if (!proj.clips[i]) return aide(`Il n’y a pas de clip ${esc(p)} (le montage en a ${proj.clips.length}).`);
       const c = proj.clips[i], plages = plagesDe([c]); proj.clips.splice(i, 1); recollerApres(plages); sel = Math.min(sel, proj.clips.length - 1); commit(); tout(); apercu(); return aide(`🗑 Clip ${i + 1} supprimé (⌘Z pour annuler).`); }
     case 'bruitage': {
@@ -3188,7 +3221,8 @@ async function executerAction(a) {
       const cle = Object.keys(mots).find(k => p.startsWith(k)) || 'whoosh', f = (LIB().sons || []).find(x => x.id === mots[cle]); if (!f) return aide('Bruitage introuvable dans la bibliothèque.');
       ajouterSon('lib:' + f.file, { vol: 80 }); return aide(`🔊 « ${esc(f.nom)} » ajouté dans la piste audio, à la tête de lecture.`); }
     case 'couper_a': { const t = +p; if (!(t > 0) || t >= total()) return aide(`Je ne peux pas couper à ${esc(p)} s : le montage dure ${fmt(total())}.`); couperTimelineA(t); commit(); tout(); apercu(); return aide(`✂ Montage coupé à ${fmt(t)}.`); }
-    case 'volume': { const v = clamp(+p, 0, 200); proj.clips.forEach(c => { if (c.hasAudio !== false && c.kind !== 'image' && c.kind !== 'solid') c.vol = v; }); commit(); tout(); apercu(); return aide(`🔈 Volume des clips réglé à ${v} %.`); }
+    case 'volume': { if (!/^\d+([.,]\d+)?$/.test(String(p).trim())) return aide('Quel volume ? Dis par exemple « volume à 80 % ».');
+      const v = clamp(+String(p).trim().replace(',', '.'), 0, 200); proj.clips.forEach(c => { if (c.hasAudio !== false && c.kind !== 'image' && c.kind !== 'solid') c.vol = v; }); commit(); tout(); apercu(); return aide(`🔈 Volume des clips réglé à ${v} %.`); }
     case 'fondus': { const a = proj.clips[0], z = proj.clips[proj.clips.length - 1]; if (!a) return; a.fadeIn = Math.max(a.fadeIn || 0, 0.6); z.fadeOut = Math.max(z.fadeOut || 0, 0.8); commit(); tout(); apercu(); return aide('Fondu ajouté au début et à la fin de la vidéo.'); }
     case 'detacher': tous(); return detacherSelection();
     case 'vitesse': { const v = clamp(+p || 1, 0.25, 4); tous(); vitesseSelection(v); selObjs.clear(); tout(); return aide(`Vitesse ×${String(v).replace('.', ',')} sur tous les clips vidéo et audio.`); }
@@ -3431,26 +3465,59 @@ async function ouvrirPublication(plateforme) {
 $('#bAssistant').onclick = () => ouvrirAssistant();
 
 // ---------- Fenêtres : projets, export, aide ----------
-function ouvrir(html, large) { $('#boite').className = large === 'xl' ? 'xl' : large ? 'large' : ''; $('#boite').innerHTML = html; $('#modal').classList.add('on'); }
-function fermer() { if (dbl) dblFin(); $('#modal').classList.remove('on'); }
+let finFenetre = null; // appelée quand la fenêtre se ferme ou est remplacée (demander → null)
+function ouvrir(html, large) {
+  if (dbl && !html.startsWith('<h2>🎙 Doublage')) dblFin(); // doublage remplacé par une autre fenêtre : micro coupé
+  const f = finFenetre; finFenetre = null; if (f) f();
+  $('#boite').className = large === 'xl' ? 'xl' : large ? 'large' : ''; $('#boite').innerHTML = html; $('#modal').classList.add('on');
+}
+function fermer() { if (dbl) dblFin(); $('#modal').classList.remove('on'); const f = finFenetre; finFenetre = null; if (f) f(); }
+// Échap ou clic sur le fond : confirmation si un grand champ contient un texte tapé
+$('#boite').addEventListener('input', e => { if (e.target.tagName === 'TEXTAREA') e.target.dataset.tape = '1'; });
+const fermetureOk = () => ![...$('#boite').querySelectorAll('textarea[data-tape]')].some(t => t.value.trim()) || confirm('Fermer et perdre le texte ?');
 function demander(titre, defaut) {
   return new Promise(ok => {
     ouvrir(`<h2>${esc(titre)}</h2><input type="text" id="saisie" value="${esc(defaut || '')}"><div class="ligne" style="margin-top:10px"><button id="sAnn">Annuler</button><button class="pri" id="sOk">OK</button></div>`);
-    const i = $('#saisie'); i.focus(); i.select(); const fin = v => { fermer(); ok(v); };
-    $('#sOk').onclick = () => fin(i.value.trim()); $('#sAnn').onclick = () => fin(null); i.onkeydown = e => { if (e.key === 'Enter') fin(i.value.trim()); if (e.key === 'Escape') fin(null); };
+    finFenetre = () => ok(null);
+    const i = $('#saisie'); i.focus(); i.select(); const fin = v => { finFenetre = null; fermer(); ok(v); };
+    $('#sOk').onclick = () => fin(i.value.trim()); $('#sAnn').onclick = () => fin(null); i.onkeydown = e => { if (e.key === 'Enter') fin(i.value.trim()); if (e.key === 'Escape') { e.stopPropagation(); fin(null); } };
   });
 }
 async function nouveau() { if (proj.clips.length && !confirm('Commencer un nouveau projet ? Pense à enregistrer le projet actuel.')) return; proj = { ...proj, clips: [], audio: [], pistes: [], textes: [], markers: [], etatPistes: {}, gen: null, nomsReperes: {}, resumesChapitres: {}, analyse: null }; sel = selA = selCut = selP = selT = -1; selObjs.clear(); gt = 0; rendu = null; commit(); tout(); apercu(); }
-async function sauver() { const n = await demander('Nom du projet', 'Mon montage'); if (!n) return; await api('/api/projets/' + enc(n), { method: 'PUT', body: snap() }); aide('Projet « ' + esc(n) + ' » enregistré.'); }
+async function sauver() {
+  const n = await demander('Nom du projet', 'Mon montage'); if (!n) return;
+  let items = []; try { items = (await (await api('/api/projets')).json()).items || []; } catch (e) { /* liste indisponible */ }
+  try {
+    if (items.includes(n) && !confirm(`Un projet « ${n} » existe déjà. Le remplacer ?`)) return;
+    await api('/api/projets/' + enc(n), { method: 'PUT', body: snap() }); signal('Projet « ' + n + ' » enregistré.');
+  } catch (e) { signal('Projet non enregistré : ' + e.message); }
+}
+const PROJ0 = JSON.stringify(proj); // réglages par défaut d'un projet
+// projet lu (enregistrement automatique ou projet nommé) : réparé, médias manquants écartés ; renvoie le nombre d'éléments écartés
+function poserProjet(s) {
+  proj = reparerProjet({ ...JSON.parse(PROJ0), ...s });
+  const n0 = (proj.audio || []).length + (proj.pistes || []).length + proj.clips.length;
+  proj.audio = (proj.audio || []).filter(a => mediaOf(a.file)); proj.pistes = (proj.pistes || []).filter(p => mediaOf(p.file)); proj.markers = proj.markers || []; proj.textes = proj.textes || [];
+  proj.clips = proj.clips.filter(c => c.kind === 'solid' || mediaOf(c.file)).map(normaliser);
+  $('#format').value = proj.format;
+  return n0 - proj.audio.length - proj.pistes.length - proj.clips.length;
+}
+async function ouvrirProjetNomme(n) {
+  let s; try { s = JSON.parse(await (await api('/api/projets/' + enc(n))).text()); } catch (e) { s = null; }
+  if (!s || !Array.isArray(s.clips)) return signal(`Le projet « ${n} » est illisible : il n’a pas été ouvert.`);
+  stopLecture(); const manque = poserProjet(s);
+  sel = proj.clips.length ? 0 : -1; selA = selCut = selP = selT = -1; selObjs.clear(); gt = 0; rendu = null; $('#boite').onclick = null; fermer(); commit(); tout(); apercu();
+  signal(`Projet « ${n} » ouvert.` + (manque ? ` ${manque} élément${manque > 1 ? 's' : ''} retiré${manque > 1 ? 's' : ''} : fichier introuvable dans tes médias.` : ''));
+}
 async function ouvrirProjet() {
   const { items } = await (await api('/api/projets')).json();
   ouvrir(`<h2>Ouvrir un projet</h2><div class="liste">${items.map(n => `<button data-pr="${esc(n)}">${esc(n)}</button>`).join('') || '<p class="mut">Aucun projet enregistré.</p>'}</div><button id="fOk" style="margin-top:8px">Fermer</button>`);
   $('#fOk').onclick = fermer;
-  $('#boite').onclick = async e => { const n = e.target.dataset.pr; if (!n) return; proj = reparerProjet(await (await api('/api/projets/' + enc(n))).json()); proj.markers = proj.markers || []; proj.audio = proj.audio || []; proj.pistes = proj.pistes || []; proj.textes = proj.textes || []; proj.clips.forEach(normaliser); $('#format').value = proj.format; sel = proj.clips.length ? 0 : -1; selA = selCut = selP = selT = -1; rendu = null; fermer(); commit(); tout(); apercu(); $('#boite').onclick = null; };
+  $('#boite').onclick = e => { const n = e.target.dataset.pr; if (n) ouvrirProjetNomme(n); };
 }
 $('#bNouveau').onclick = nouveau; $('#bSauver').onclick = sauver; $('#bOuvrir').onclick = ouvrirProjet;
 $('#bUndo').onclick = () => undo(-1); $('#bRedo').onclick = () => undo(1); $('#bAide').onclick = afficherAide;
-$('#modal').onclick = e => { if (e.target.id === 'modal' && !$('#barreExp') && !(dbl && dbl.vue)) fermer(); };
+$('#modal').onclick = e => { if (e.target.id === 'modal' && !$('#barreExp') && !(dbl && dbl.vue) && fermetureOk()) fermer(); };
 const SORTIES = { mp4: 'Vidéo MP4 (recommandé)', mov: 'Vidéo MOV ProRes (montage pro, très lourd)', webm: 'Vidéo WebM', gif: 'GIF animé (60 s maximum)', mp3: 'Audio MP3 (podcast)', m4a: 'Audio M4A', wav: 'Audio WAV (sans perte)' };
 // textes d'exemple restés dans le montage (« Prénom Nom », « Ton texte ici », faux chiffres…) : signalés avant l'export
 function textesExemple() {
@@ -3696,8 +3763,10 @@ function restaurerOptionsGen() {
   try { const o = JSON.parse(localStorage.getItem('qm:gen-options') || 'null'); if (!o) return; OPT_IDS.forEach(id => { const k = { oType: 'type', oPublic: 'public', oTon: 'ton', oRythme: 'rythme', oAdresse: 'adresse', oScenes: 'scenes', oQualite: 'qualite', oCta: 'cta', oInclure: 'inclure', oEviter: 'eviter' }[id]; if (o[k] !== undefined && $('#' + id)) $('#' + id).value = String(o[k]); });
     $('#oAccroche').checked = o.accroche !== false; $('#oConclusion').checked = o.conclusion !== false; } catch (e) { /* réglages indisponibles */ }
 }
+// progression du générateur : rien si la fenêtre a été fermée (la fabrication continue)
+const progGen = (sel, h) => { const e = $(sel); if (e) e.innerHTML = h; };
 async function genExpress() {
-  const idee = $('#xIdee').value.trim(), pr = t => { $('#xProg').innerHTML = t; }; if (!idee) return pr('Décris d’abord ta vidéo.');
+  const idee = $('#xIdee').value.trim(), pr = t => progGen('#xProg', t); if (!idee) return pr('Décris d’abord ta vidéo.');
   const format = $('#xFormat').value, duree = +$('#xDuree').value, style = $('#xStyle').value, relire = $('#xRelire').checked, videos = $('#xVideos').checked; $('#xGo').disabled = true;
   try {
     let article = '', titre = idee;
@@ -3707,10 +3776,14 @@ async function genExpress() {
     const r = await suivreTravail(id, j => pr(`<progress max="100" value="${Math.round((j.progress || 0) * 100)}" style="width:100%"></progress> ${esc(j.step || '')}`));
     gen.prep = { titre: r.titre || titre, article, libre: r.libre, images: r.images || [], scenes: r.scenes, sources: (r.regles && r.regles.sources) || [] }; gen.consigne = idee; gen.style = style;
     gen.express = { format, tiktok: format === 'vertical' }; gen.ia = { ...(gen.ia || {}), installee: true };
+    if (!$('#gZone')) { // fenêtre fermée pendant l'écriture : montage avec les réglages par défaut
+      if (relire) return signal('Script prêt : rouvre le générateur pour le relire.');
+      const rg = r.regles || {}; return genCreer({ sous: rg.sousTitres !== false, ouv: rg.ouverture !== false, musique: rg.musique === false ? '' : undefined });
+    }
     $('#panX').style.display = 'none'; $('#tabX').style.display = 'none'; $('#tabG').style.display = 'none';
     genEtape2(); genRegles(r.regles); if ($('#gDuree')) $('#gDuree').value = String(duree);
     if (!relire) await genCreer();
-  } catch (e) { pr(`<span class="err">${esc(e.message)}</span>`); $('#xGo').disabled = false; }
+  } catch (e) { pr(`<span class="err">${esc(e.message)}</span>`); if ($('#xGo')) $('#xGo').disabled = false; if (!$('#gZone')) signal('Vidéo non créée : ' + e.message); }
 }
 // Ce que l'utilisateur a interdit dans ses consignes (« pas d'intro », « sans musique »…) décoche les options correspondantes
 function genRegles(r) {
@@ -3728,11 +3801,13 @@ async function genIA() {
     $('#gIAProg').textContent = `✅ Script écrit par l’IA locale (${r.scenes.length} scènes). Relis-le : tu peux tout modifier.`;
   } catch (e) { $('#gIAProg').innerHTML = `<span class="err">${esc(e.message)}</span>`; b.disabled = false; }
 }
-async function genCreer() {
-  const p = gen.prep; p.titre = $('#gTitre').value.trim() || p.titre;
-  const o = { voix: $('#gVoix').value, vitesse: +$('#gVit').value, musique: $('#gMus').value, sous: $('#gSous').checked, ouv: $('#gOuv').checked, generique: $('#gGen').checked };
+async function genCreer(defaut) {
+  const p = gen.prep, d = defaut && !defaut.target ? defaut : {}, val = (id, v) => { const e = $(id); return !e ? v : e.type === 'checkbox' ? e.checked : e.value; };
+  const musDef = ((LIB().musiques || []).find(m => /piano|ambiance/.test(m.id)) || {}).file || ''; // même choix que la fenêtre
+  p.titre = String(val('#gTitre', '')).trim() || p.titre;
+  const o = { voix: val('#gVoix', gen.voixChoisie || gen.defaut || ''), vitesse: +val('#gVit', gen.vitesse || 175), musique: val('#gMus', d.musique !== undefined ? d.musique : musDef), sous: val('#gSous', d.sous !== false), ouv: val('#gOuv', d.ouv !== false), generique: val('#gGen', true) };
   p.scenes = p.scenes.filter(s => s.texte.trim()); if (!p.scenes.length) return;
-  $('#gCreer').disabled = true; if (window.voixAp) voixAp.pause();
+  if ($('#gCreer')) $('#gCreer').disabled = true; if (window.voixAp) voixAp.pause();
   try {
     const { id } = await (await api('/api/generer/creer', { method: 'POST', body: JSON.stringify({ titre: p.titre, scenes: p.scenes, images: p.images, voix: o.voix, vitesse: o.vitesse }) })).json(); // scènes avec leur partie (section)
     let j;
@@ -3740,12 +3815,13 @@ async function genCreer() {
       await new Promise(r => setTimeout(r, 600));
       j = await (await api('/api/job?id=' + id)).json();
       if (j.error) throw new Error(j.error);
-      $('#gProg').innerHTML = `<progress max="100" value="${j.progress}" style="width:100%"></progress> ${esc(j.step || '')}`;
+      progGen('#gProg', `<progress max="100" value="${j.progress}" style="width:100%"></progress> ${esc(j.step || '')}`);
       if (j.done) break;
     }
-    await chargerMedias(); monterGeneree(j.resultat, p, o); fermer();
+    await chargerMedias(); monterGeneree(j.resultat, p, o); if ($('#gZone')) fermer(); // une autre fenêtre ouverte entre-temps reste ouverte
+    signal(`✅ Vidéo « ${p.titre} » créée`);
     aide(`✅ Vidéo « ${esc(p.titre)} » créée : ${j.resultat.scenes.length} scènes. Relis-la avec <kbd>Espace</kbd>, puis exporte avec ${MAC ? '⌘E' : 'Ctrl+E'}.${j.resultat.synthese ? '' : ' (Voix off muette : la synthèse vocale n’existe que sur Mac.)'}`);
-  } catch (e) { $('#gProg').innerHTML = `<span class="err">${esc(e.message)}</span>`; $('#gCreer').disabled = false; }
+  } catch (e) { progGen('#gProg', `<span class="err">${esc(e.message)}</span>`); if ($('#gCreer')) $('#gCreer').disabled = false; else signal('Vidéo non créée : ' + e.message); }
 }
 // Sous-titres : la phrase est découpée en morceaux courts, affichés au rythme de la voix
 function sousTitresDe(texte, duree, max = 7) {
@@ -4540,7 +4616,13 @@ function afficherAide() {
 }
 document.addEventListener('keydown', e => {
   if (studio) return toucheStudio(e);
-  if (dbl && $('#modal').classList.contains('on') && toucheDoublage(e)) return;
+  const fenetre = $('#modal').classList.contains('on');
+  if (fenetre && e.key === 'Escape' && !$('#barreExp') && !document.getElementById('menuCtx')) {
+    e.stopImmediatePropagation(); // l'écran du dessous (export, accueil) reste ouvert
+    if (!fermetureOk()) return e.preventDefault();
+  }
+  if (dbl && fenetre && toucheDoublage(e)) return;
+  if (fenetre && e.key !== 'Escape') return; // fenêtre ouverte : les raccourcis du montage ne touchent pas la timeline derrière
   const tag = (e.target.tagName || '').toLowerCase(), saisie = tag === 'input' && !['range', 'checkbox', 'color'].includes(e.target.type) || tag === 'textarea' || tag === 'select';
   const cmd = e.metaKey || e.ctrlKey, k = e.key, kl = k.length === 1 ? k.toLowerCase() : k;
   if (k === 'Escape') { if (document.getElementById('menuCtx')) { fermerMenu(); return; } if ($('#modal').classList.contains('on') && !$('#barreExp')) fermer(); else if (selObjs.size) { selObjs.clear(); tout(); } return; }
@@ -4587,13 +4669,14 @@ function tout() { tlDessin(); inspecteur(); navigateur(); reglerScrub(); majBout
   CAT.polices = CAT.polices && CAT.polices.length ? CAT.polices : [{ id: 'arial', nom: 'Police par défaut' }];
   $('#etat').textContent = CAT.font ? '' : 'Titres indisponibles (police ou filtre manquant)';
   await chargerMedias(); await chargerPacks();
-  try { const s = await (await api('/api/projet')).json(); if (s && Array.isArray(s.clips)) proj = reparerProjet({ ...proj, ...s }); } catch (e) {}
-  proj.audio = (proj.audio || []).filter(a => mediaOf(a.file)); proj.pistes = (proj.pistes || []).filter(p => mediaOf(p.file)); proj.markers = proj.markers || []; proj.textes = proj.textes || [];
-  proj.clips = proj.clips.filter(c => c.kind === 'solid' || mediaOf(c.file)).map(normaliser);
+  let illisible = false;
+  try { const t = await (await api('/api/projet')).text(), s = JSON.parse(t); if (s && Array.isArray(s.clips)) poserProjet(s); else if (s !== null) illisible = true; } catch (e) { illisible = true; }
+  if (!illisible) { proj.audio = proj.audio || []; proj.pistes = proj.pistes || []; proj.markers = proj.markers || []; proj.textes = proj.textes || []; }
   $('#format').value = proj.format; $('#zoom').value = zoom;
   sel = proj.clips.length ? 0 : -1; hist = [snap()]; hi = 0; tout();
   if (sel >= 0) { placerTete(0); } else vide();
   aide(`Astuce : appuie sur <kbd>?</kbd> pour voir tous les raccourcis clavier · <kbd>Espace</kbd> lit le montage avec ses effets · <kbd>S</kbd> coupe à la tête de lecture`);
+  if (illisible) aide('<span class="err">⚠ Le dernier projet enregistré automatiquement est illisible : un projet vide est ouvert. Rouvre un projet enregistré (⌘O) ; le fichier projet-auto.json (dossier Movies/QuentMovie) reste en place tant que tu ne modifies rien.</span>');
   proposerPrisesInterrompues();
 })();
 // Prise du studio interrompue (application fermée ou plantée pendant l'enregistrement) : sa copie de secours est proposée

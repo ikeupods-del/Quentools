@@ -4,9 +4,14 @@
 'use strict';
 const fs = require('fs'), os = require('os'), path = require('path'), crypto = require('crypto');
 const { spawn } = require('child_process');
+const { enGroupe, finGroupe, arreterTout: arreterGroupes } = require('./voix-clone');
 const NON = Symbol('non traité');
-const JETON = crypto.randomBytes(18).toString('hex');
-const enCours = new Set(); // fabrications lancées (une seule à la fois : mémoire et chaleur d'un MacBook Air)
+const enCours = new Set(); // place réservée dès la requête par une fabrication ou une écoute (une seule à la fois : mémoire et chaleur d'un MacBook Air)
+const OCCUPE = 'Une fabrication d’épisode est déjà en cours : attends qu’elle finisse (une seule à la fois, pour garder le Mac fluide).';
+// un jeton par processus de fabrication : il n'ouvre que ses fenêtres cachées, fermées à sa fin (même s'il meurt en route)
+const jetons = new Map(); // jeton → ids des fenêtres ouvertes
+// fermeture de QuentMovie : fabrications, voix clonée et leurs FFmpeg arrêtés
+function arreterTout() { arreterGroupes(); }
 const EXPRESSIONS = ['neutre', 'content', 'inquiet', 'surpris', 'curieux', 'reflechi']; // dessins de Pico (personnage/png) // un par lancement de QuentMovie : seule la fabrication lancée par ce moteur le connaît
 
 // dossier du programme de la chaîne : à côté de QuentMovie dans le dépôt, ou livré dans l'application (Resources/pico)
@@ -25,7 +30,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
   const entier = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v) || a));
 
   // environnement de la fabrication : outils de QuentMovie, dossiers de ~/Movies/QuentInvest, fenêtres cachées pour les écrans
-  function envFabrication(pico, fProg, port) {
+  function envFabrication(pico, fProg, port, jeton) {
     const sherpa = require('./parole').dossierSherpa(), pont = !!nav();
     return {
       ...process.env, QI_QM: __dirname, QI_RACINE: racinePolices(pico), QI_FFMPEG: FFMPEG, FFMPEG, QI_NODE: process.execPath,
@@ -35,7 +40,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       ...(module_('sherpa-onnx-node') ? { SHERPA: module_('sherpa-onnx-node') } : {}),
       ...(sherpa ? { DYLD_LIBRARY_PATH: [sherpa, process.env.DYLD_LIBRARY_PATH].filter(Boolean).join(':'), LD_LIBRARY_PATH: [sherpa, process.env.LD_LIBRARY_PATH].filter(Boolean).join(':') } : {}),
       // écrans : fenêtres cachées de QuentMovie (application Mac) ; sinon Playwright si présent (essais, ligne de commande)
-      ...(pont ? { PW: path.join(__dirname, 'navigateur-pont.js'), QI_NAVIGATEUR: `http://127.0.0.1:${port}/api/navigateur`, QI_JETON: JETON } : module_('playwright-core') && !process.env.PW ? { PW: module_('playwright-core') } : {})
+      ...(pont ? { PW: path.join(__dirname, 'navigateur-pont.js'), QI_NAVIGATEUR: `http://127.0.0.1:${port}/api/navigateur`, QI_JETON: jeton } : module_('playwright-core') && !process.env.PW ? { PW: module_('playwright-core') } : {})
     };
   }
   // un programme de la chaîne dans un processus à part ; avancement lu dans un petit fichier ; `phases` : noms des vidéos fabriquées à la suite
@@ -43,7 +48,11 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
     const trav = path.join(SORTIES, '.travail'); fs.mkdirSync(trav, { recursive: true });
     const fProg = path.join(trav, nom + '-progres.json'); fs.rmSync(fProg, { force: true });
     return new Promise((ok, ko) => {
-      const enfant = spawn(process.execPath, [path.join(pico, 'fabrication', script), ...args], { env: envFabrication(pico, fProg, job.port), stdio: ['ignore', 'pipe', 'pipe'] }); job.enfant = enfant;
+      if (job.annule) return ko(new Error('Fabrication annulée.'));
+      // groupe à part (detached) : « Arrêter » arrête episode.js, fabriquer.js et leurs FFmpeg d'un coup (kill() de enGroupe)
+      const jeton = crypto.randomBytes(18).toString('hex'); jetons.set(jeton, new Set());
+      const fermerFenetres = () => { const ids = jetons.get(jeton) || []; jetons.delete(jeton); const N = nav(); if (N) for (const id of ids) Promise.resolve().then(() => N.fermer(id)).catch(() => {}); };
+      const enfant = enGroupe(spawn(process.execPath, [path.join(pico, 'fabrication', script), ...args], { env: envFabrication(pico, fProg, job.port, jeton), stdio: ['ignore', 'pipe', 'pipe'], detached: true })); job.enfant = enfant;
       // MacBook Air (16 Go, sans ventilateur) : la fabrication et ses FFmpeg passent après le montage en cours, la fenêtre reste fluide
       try { os.setPriority(enfant.pid, 10); } catch (e) { /* priorité inchangée */ }
       let sortie = '', erreurs = '', phase = phase0; const n = Math.max(1, phases.length);
@@ -59,9 +68,9 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       const minuteur = setInterval(lire, 700);
       enfant.stdout.on('data', d => { sortie += d; });
       enfant.stderr.on('data', d => { erreurs = (erreurs + d).slice(-20000); });
-      enfant.on('error', e => { clearInterval(minuteur); ko(e); });
-      enfant.on('close', code => {
-        clearInterval(minuteur); fs.rmSync(fProg, { force: true });
+      enfant.on('error', e => { clearInterval(minuteur); fermerFenetres(); finGroupe(enfant).then(() => ko(e)); });
+      enfant.on('close', async code => {
+        clearInterval(minuteur); await finGroupe(enfant); fermerFenetres(); fs.rmSync(fProg, { force: true }); if (job.enfant === enfant) job.enfant = null;
         if (job.annule) return ko(new Error('Fabrication annulée.'));
         if (code !== 0) {
           // le message utile est écrit avant la pile d'appels de Node (« …episode.js:44 ») : on garde ses dernières lignes
@@ -151,15 +160,17 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
   return async function traiter(req, res, p, url) {
     // navigateur des écrans (fenêtres cachées de l'application), appelé par navigateur-pont.js pendant la fabrication
     if (p.startsWith('/api/navigateur/')) {
-      if (req.method !== 'POST' || req.headers['x-jeton'] !== JETON) return send(res, 403, { error: 'Accès refusé' });
+      const fen = jetons.get(String(req.headers['x-jeton'] || ''));
+      if (req.method !== 'POST' || !fen) return send(res, 403, { error: 'Accès refusé' });
       const N = nav(); if (!N) throw new Error('Navigateur des écrans indisponible');
       const b = await readJson(req), a = p.slice(16);
+      if (a !== 'ouvrir' && !fen.has(+b.id)) throw new Error('Page des écrans inconnue'); // seulement les fenêtres de cette fabrication
       let r = null;
-      if (a === 'ouvrir') r = await N.ouvrir(entier(b.largeur, 64, 4096), entier(b.hauteur, 64, 4096));
+      if (a === 'ouvrir') { r = await N.ouvrir(entier(b.largeur, 64, 4096), entier(b.hauteur, 64, 4096)); if (jetons.get(req.headers['x-jeton']) === fen) fen.add(+r); else await N.fermer(r); } // fabrication finie entre-temps : fenêtre refermée
       else if (a === 'contenu') await N.contenu(b.id, String(b.html || ''));
       else if (a === 'evaluer') r = await N.evaluer(b.id, String(b.code || ''));
       else if (a === 'capture') { const c = String(b.chemin || ''); if (!path.isAbsolute(c) || !/\.png$/i.test(c)) throw new Error('Image d’écran invalide'); fs.mkdirSync(path.dirname(c), { recursive: true }); await N.capture(b.id, c, !!b.transparent); }
-      else if (a === 'fermer') await N.fermer(b.id);
+      else if (a === 'fermer') { fen.delete(+b.id); await N.fermer(b.id); }
       else return send(res, 404, { error: 'Introuvable' });
       return send(res, 200, { resultat: r === undefined ? null : r });
     }
@@ -186,57 +197,73 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
     }
     // écouter une phrase avec la voix de Pico (dictionnaire compris) : la fabrication ne fait que la voix d'une réplique
     if (req.method === 'POST' && p === '/api/pico/ecouter') {
-      const b = await readJson(req), texte = String(b.texte || '').replace(/\s+/g, ' ').trim().slice(0, 300); if (!texte) throw new Error('Rien à dire.');
-      const pico = dossierPico(opts); if (!pico) throw new Error('Programme de la chaîne QuentInvest introuvable dans cette installation.');
-      let voix = { moteur: 'kokoro', sid: 30, vitesse: 0.82, hauteur: 0.78 }, choix = { mode: 'pico' }; try { const E = episodeFabrique(b.base); voix = E.EP.voix || voix; choix = choixVoix(E.dossier); } catch (e) { /* voix de Pico par défaut */ }
-      const port = req.socket.localPort;
-      return send(res, 200, travail(async job => {
-        job.port = port;
-        if (choix.mode === 'ma-voix') { // la phrase dite par ta voix clonée
-          const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-ma-voix-')), wav = path.join(dir, 'v00.wav');
-          try { await VOIXCLONE().dire(choix.moteur, [{ texte: require('./voix-texte').pourLaVoix(texte), fichier: wav }], job); const nom = `ma-voix-ecoute-${Date.now()}.m4a`;
-            await new Promise((ok, ko) => require('child_process').execFile(FFMPEG, ['-y', '-v', 'error', '-i', wav, '-c:a', 'aac', '-b:a', '128k', path.join(BASE, 'medias', nom)], e => (e ? ko(e) : ok()))); return { file: nom }; }
-          finally { fs.rmSync(dir, { recursive: true, force: true }); }
-        }
-        if (choix.mode !== 'pico' || !process.env.QI_ESSAI_SYNTHESE) throw new Error(choix.mode === 'doublage' ? 'Épisode doublé : c’est ta propre voix, réenregistre la phrase dans le Doublage pour changer sa prononciation.' : SYNTHESE_REFUSEE);
-        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-pico-ecoute-')), json = path.join(dir, 'ep.json');
-        try {
-          fs.writeFileSync(json, JSON.stringify({ titre: 'écoute', style: 2, voix, scenes: [{ expr: 'neutre', ecran: { type: 'titre', titre: '' }, texte }] }));
-          await lancer(job, pico, 'fabriquer.js', [json, '--voix', dossierVoix({ voix }), '--sortie', dir, '--court', '--controle'], 'ecoute-' + path.basename(dir), ['Écoute']);
-          const nom = `pico-ecoute-${Date.now()}.m4a`, MEDIAS = path.join(BASE, 'medias');
-          await new Promise((ok, ko) => require('child_process').execFile(FFMPEG, ['-y', '-v', 'error', '-i', path.join(dir, 'audio', 'v00.wav'), '-c:a', 'aac', '-b:a', '128k', path.join(MEDIAS, nom)], e => (e ? ko(e) : ok())));
-          return { file: nom };
-        } finally { fs.rmSync(dir, { recursive: true, force: true }); }
-      }));
+      // le modèle de ta voix ne tourne jamais deux fois : refusé pendant une fabrication, place réservée avant tout await
+      if (enCours.size) throw new Error('Une fabrication d’épisode est en cours : écoute la phrase quand elle sera finie.');
+      const place = {}; enCours.add(place);
+      try { return await ecouter(req, res, place); } catch (e) { enCours.delete(place); throw e; }
     }
     // refaire après relecture : changements [{ i, expr, texte }] ; `tiktok` : refaire aussi la version TikTok (après une correction de prononciation)
     if (req.method === 'POST' && p === '/api/pico/refaire') {
-      if (enCours.size) throw new Error('Une fabrication d’épisode est déjà en cours : attends qu’elle finisse.');
-      const b = await readJson(req), E = episodeFabrique(b.base), ch = (Array.isArray(b.changements) ? b.changements : []).slice(0, 200).map(c => ({ i: Math.round(+c.i), expr: c.expr ? String(c.expr) : '', texte: c.texte != null ? String(c.texte) : null }));
-      const port = req.socket.localPort;
-      return send(res, 200, travail(async job => { job.port = port; enCours.add(job); try { return await refaire(job, E.base, ch, !!b.tiktok); } finally { enCours.delete(job); } }));
+      if (enCours.size) throw new Error(OCCUPE);
+      const place = {}; enCours.add(place);
+      try {
+        const b = await readJson(req), E = episodeFabrique(b.base), ch = (Array.isArray(b.changements) ? b.changements : []).slice(0, 200).map(c => ({ i: Math.round(+c.i), expr: c.expr ? String(c.expr) : '', texte: c.texte != null ? String(c.texte) : null }));
+        const port = req.socket.localPort;
+        return send(res, 200, travail(async job => { job.port = port; try { return await refaire(job, E.base, ch, !!b.tiktok); } finally { enCours.delete(place); } }));
+      } catch (e) { enCours.delete(place); throw e; }
     }
     if (req.method === 'POST' && p === '/api/pico/fabriquer') {
-      if (enCours.size) throw new Error('Une fabrication d’épisode est déjà en cours : attends qu’elle finisse (une seule à la fois, pour garder le Mac fluide).');
-      const b = await readJson(req); let fiche = b.fiche;
-      if (typeof fiche === 'string') { try { fiche = JSON.parse(fiche); } catch (e) { throw new Error('La fiche n’est pas un texte JSON valide.'); } }
-      if (!fiche || typeof fiche !== 'object' || Array.isArray(fiche)) throw new Error('Fiche manquante.');
-      const pico = dossierPico(opts); if (!pico) throw new Error('Programme de la chaîne QuentInvest introuvable dans cette installation.');
-      require(path.join(pico, 'fabrication', 'composer.js')).compose(fiche); // fiche incomplète : refusée tout de suite, avant la tâche de fond
-      const port = req.socket.localPort, o = b.options && typeof b.options === 'object' ? b.options : {};
-      const choixVoix_ = modeVoix(o.voix);
-      return send(res, 200, travail(async job => {
-        // voix de l'épisode : Kokoro (voix de Pico, par défaut) ou une voix Piper de QuentMovie ; téléchargée une seule fois
-        const v = require(path.join(pico, 'fabrication', 'composer.js')).compose(fiche).long.voix || {}, PA = require('./parole');
-        if (choixVoix_.mode !== 'pico') { /* ta voix : rien à télécharger pour Pico */ }
-        else if (v.moteur === 'kokoro' || !v.moteur) { if (!PAROLE().etat().pico.installee) { job.step = 'Voix de Pico…'; await PAROLE().installer('pico', job); } }
-        else { const pv = PA.VOIX.find(x => x.archive === (v.modele || 'vits-piper-fr_FR-upmc-medium')); if (pv && !PAROLE().etat().voix.find(x => x.id === pv.id).installee) await PAROLE().installer('voix:' + pv.id, job); }
-        job.progress = 0; job.step = 'Préparation de l’épisode';
-        job.port = port; enCours.add(job); try { return await fabriquer(job, fiche, { court: !!o.court, sansTiktok: !!o.sansTiktok, sansYoutube: !!o.sansYoutube, choixVoix: choixVoix_ }); } finally { enCours.delete(job); }
-      }));
+      if (enCours.size) throw new Error(OCCUPE);
+      const place = {}; enCours.add(place);
+      try { return await demandeFabrication(req, res, place); } catch (e) { enCours.delete(place); throw e; }
     }
     return NON;
   };
+  // écouter une phrase (place déjà réservée : libérée à la fin de la tâche)
+  async function ecouter(req, res, place) {
+    const b = await readJson(req), texte = String(b.texte || '').replace(/\s+/g, ' ').trim().slice(0, 300); if (!texte) throw new Error('Rien à dire.');
+    const pico = dossierPico(opts); if (!pico) throw new Error('Programme de la chaîne QuentInvest introuvable dans cette installation.');
+    let voix = { moteur: 'kokoro', sid: 30, vitesse: 0.82, hauteur: 0.78 }, choix = { mode: 'pico' }; try { const E = episodeFabrique(b.base); voix = E.EP.voix || voix; choix = choixVoix(E.dossier); } catch (e) { /* voix de Pico par défaut */ }
+    const port = req.socket.localPort;
+    return send(res, 200, travail(async job => { try {
+      job.port = port;
+      if (choix.mode === 'ma-voix') { // la phrase dite par ta voix clonée (l'IA du montage laisse la place à son modèle)
+        libererIA();
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-ma-voix-')), wav = path.join(dir, 'v00.wav');
+        try { await VOIXCLONE().dire(choix.moteur, [{ texte: require('./voix-texte').pourLaVoix(texte), fichier: wav }], job); const nom = `ma-voix-ecoute-${Date.now()}.m4a`;
+          await new Promise((ok, ko) => require('child_process').execFile(FFMPEG, ['-y', '-v', 'error', '-i', wav, '-c:a', 'aac', '-b:a', '128k', path.join(BASE, 'medias', nom)], e => (e ? ko(e) : ok()))); return { file: nom }; }
+        finally { fs.rmSync(dir, { recursive: true, force: true }); }
+      }
+      if (choix.mode !== 'pico' || !process.env.QI_ESSAI_SYNTHESE) throw new Error(choix.mode === 'doublage' ? 'Épisode doublé : c’est ta propre voix, réenregistre la phrase dans le Doublage pour changer sa prononciation.' : SYNTHESE_REFUSEE);
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-pico-ecoute-')), json = path.join(dir, 'ep.json');
+      try {
+        fs.writeFileSync(json, JSON.stringify({ titre: 'écoute', style: 2, voix, scenes: [{ expr: 'neutre', ecran: { type: 'titre', titre: '' }, texte }] }));
+        await lancer(job, pico, 'fabriquer.js', [json, '--voix', dossierVoix({ voix }), '--sortie', dir, '--court', '--controle'], 'ecoute-' + path.basename(dir), ['Écoute']);
+        const nom = `pico-ecoute-${Date.now()}.m4a`, MEDIAS = path.join(BASE, 'medias');
+        await new Promise((ok, ko) => require('child_process').execFile(FFMPEG, ['-y', '-v', 'error', '-i', path.join(dir, 'audio', 'v00.wav'), '-c:a', 'aac', '-b:a', '128k', path.join(MEDIAS, nom)], e => (e ? ko(e) : ok())));
+        return { file: nom };
+      } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+    } finally { enCours.delete(place); } }));
+  }
+  // demande de fabrication (place déjà réservée : libérée à la fin de la tâche)
+  async function demandeFabrication(req, res, place) {
+    const b = await readJson(req); let fiche = b.fiche;
+    if (typeof fiche === 'string') { try { fiche = JSON.parse(fiche); } catch (e) { throw new Error('La fiche n’est pas un texte JSON valide.'); } }
+    if (!fiche || typeof fiche !== 'object' || Array.isArray(fiche)) throw new Error('Fiche manquante.');
+    const pico = dossierPico(opts); if (!pico) throw new Error('Programme de la chaîne QuentInvest introuvable dans cette installation.');
+    require(path.join(pico, 'fabrication', 'composer.js')).compose(fiche); // fiche incomplète : refusée tout de suite, avant la tâche de fond
+    const port = req.socket.localPort, o = b.options && typeof b.options === 'object' ? b.options : {};
+    const choixVoix_ = modeVoix(o.voix);
+    return send(res, 200, travail(async job => { try {
+      // voix de l'épisode : Kokoro (voix de Pico, par défaut) ou une voix Piper de QuentMovie ; téléchargée une seule fois
+      const v = require(path.join(pico, 'fabrication', 'composer.js')).compose(fiche).long.voix || {}, PA = require('./parole');
+      if (choixVoix_.mode !== 'pico') { /* ta voix : rien à télécharger pour Pico */ }
+      else if (v.moteur === 'kokoro' || !v.moteur) { if (!PAROLE().etat().pico.installee) { job.step = 'Voix de Pico…'; await PAROLE().installer('pico', job); } }
+      else { const pv = PA.VOIX.find(x => x.archive === (v.modele || 'vits-piper-fr_FR-upmc-medium')); if (pv && !PAROLE().etat().voix.find(x => x.id === pv.id).installee) await PAROLE().installer('voix:' + pv.id, job); }
+      job.progress = 0; job.step = 'Préparation de l’épisode';
+      job.port = port; return await fabriquer(job, fiche, { court: !!o.court, sansTiktok: !!o.sansTiktok, sansYoutube: !!o.sansYoutube, choixVoix: choixVoix_ });
+    } finally { enCours.delete(place); } }));
+  }
 }
 
-module.exports = { creer, NON, dossierPico };
+module.exports = { creer, NON, dossierPico, arreterTout };

@@ -44,17 +44,20 @@
     const fs = require('fs'), path = require('path');
     const vide = () => ({ version: 1, consignes: [], corrections: [] });
     const lire = () => { try { const d = JSON.parse(fs.readFileSync(fichier, 'utf8')); return { ...vide(), ...d, consignes: Array.isArray(d.consignes) ? d.consignes : [], corrections: Array.isArray(d.corrections) ? d.corrections : [] }; } catch (e) { return vide(); } };
-    const ecrire = d => { fs.mkdirSync(path.dirname(fichier), { recursive: true }); const tmp = fichier + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(d, null, 1)); fs.renameSync(tmp, fichier); return d; };
+    // nom temporaire propre à chaque écriture : deux logiciels qui écrivent en même temps ne mélangent pas leurs fichiers
+    const ecrire = d => { fs.mkdirSync(path.dirname(fichier), { recursive: true }); const tmp = `${fichier}.tmp-${process.pid}-${Math.random().toString(36).slice(2, 8)}`; try { fs.writeFileSync(tmp, JSON.stringify(d, null, 1)); fs.renameSync(tmp, fichier); } catch (e) { try { fs.unlinkSync(tmp); } catch (e2) { /* rien à retirer */ } throw e; } return d; };
+    // relu juste avant d'écrire : une consigne ajoutée entre-temps par un autre logiciel n'est pas perdue
+    const modifier = fn => { const d = lire(); const r = fn(d); ecrire(d); return r === undefined ? d : r; };
     const id = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     return {
       fichier, lire,
-      ajouter(texte, source = '') { const t = propre(texte); if (t.length < 6) throw new Error('Phrase trop courte à retenir.'); const d = lire(); if (!d.consignes.some(x => sansAccents(x.texte) === sansAccents(t))) d.consignes.push({ id: id(), texte: t, source: propre(source, 40), date: new Date().toISOString().slice(0, 10) }); d.consignes = d.consignes.slice(-MAX_CONSIGNES); return ecrire(d); },
+      ajouter(texte, source = '') { const t = propre(texte); if (t.length < 6) throw new Error('Phrase trop courte à retenir.'); return modifier(d => { if (!d.consignes.some(x => sansAccents(x.texte) === sansAccents(t))) d.consignes.push({ id: id(), texte: t, source: propre(source, 40), date: new Date().toISOString().slice(0, 10) }); d.consignes = d.consignes.slice(-MAX_CONSIGNES); }); },
       // cible : numéro (1 = première de la liste) ou morceau de phrase ; retourne { memoire, retirees }
       correspond(cible) { const c = String(cible || '').trim(); return lire().consignes.filter((x, i) => /^\d+$/.test(c) ? i === +c - 1 : correspondTexte(x.texte, c)); },
-      oublier(cible) { const d = lire(), c = String(cible || '').trim(), n = /^\d+$/.test(c) ? +c : 0; const avant = d.consignes.length; d.consignes = d.consignes.filter((x, i) => !(n ? i === n - 1 : correspondTexte(x.texte, c))); return { memoire: ecrire(d), retirees: avant - d.consignes.length }; },
-      oublierId(idc) { const d = lire(); d.consignes = d.consignes.filter(x => x.id !== idc); return ecrire(d); },
+      oublier(cible) { const c = String(cible || '').trim(), n = /^\d+$/.test(c) ? +c : 0; return modifier(d => { const avant = d.consignes.length; d.consignes = d.consignes.filter((x, i) => !(n ? i === n - 1 : correspondTexte(x.texte, c))); return { memoire: d, retirees: avant - d.consignes.length }; }); },
+      oublierId(idc) { return modifier(d => { d.consignes = d.consignes.filter(x => x.id !== idc); }); },
       vider() { return ecrire(vide()); },
-      corrections(paires, source = '') { const p = pairesUtiles(paires); if (!p.length) return lire(); const d = lire(); for (const x of p) if (!d.corrections.some(y => sansAccents(y.apres) === sansAccents(x.apres))) d.corrections.push({ ...x, source: propre(source, 40), date: new Date().toISOString().slice(0, 10) }); d.corrections = d.corrections.slice(-MAX_CORRECTIONS); return ecrire(d); }
+      corrections(paires, source = '') { const p = pairesUtiles(paires); if (!p.length) return lire(); return modifier(d => { for (const x of p) if (!d.corrections.some(y => sansAccents(y.apres) === sansAccents(x.apres))) d.corrections.push({ ...x, source: propre(source, 40), date: new Date().toISOString().slice(0, 10) }); d.corrections = d.corrections.slice(-MAX_CORRECTIONS); }); }
     };
   }
   // Applique une instruction détectée au stockage et renvoie la phrase à dire à l'utilisateur

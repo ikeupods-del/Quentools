@@ -29,6 +29,10 @@ async function dblLireMedia(file, nom) {
 }
 // « fais une vidéo sur le krach de 2008 » → « le krach de 2008 » (même règle que sujetDe de fiche-ia.js, refaite côté serveur)
 const sujetDemande = t => String(t || '').replace(/\s+/g, ' ').trim().replace(/^(?:peux-tu |tu peux |pourrais-tu )?(?:(?:me )?(?:fais|fait|faire|crée|créer|cree|prépare|préparer|fabrique|fabriquer|réalise|réaliser)(?:-moi| moi)? |je veux |je voudrais |j['’]aimerais )?(?:une |la |un )?(?:nouvelle )?(?:vidéo|video|épisode|episode)(?: quentinvest| youtube| de pico)? (?:sur|à propos d[eu']|a propos d[eu']|au sujet d[eu']|concernant|qui explique|pour expliquer|expliquant) ?/i, '').replace(/[.!?\s]+$/, '').trim();
+// élément de la fenêtre ouverte ; fenêtre fermée pendant un long travail : rien à faire
+const siLa = (sel, f) => { const e = $(sel); if (e) f(e); return e; };
+// zone du résultat : la sienne si la fenêtre est restée ouverte, sinon celle de la fenêtre rouverte (si elle ne suit pas un autre travail)
+const zoneFin = (z, sel) => { const n = $(sel); return z.isConnected || !n || n.querySelector('progress') ? z : n; };
 // Contrôle d'une fiche d'épisode QuentInvest : colle ou charge le fichier .json, le rapport dit ce qu'il faut corriger avant la fabrication
 function ouvrirFiche() {
   if (dbl) dblFin();
@@ -68,16 +72,16 @@ function ouvrirFiche() {
       z.innerHTML = '<progress max="100" value="0" style="width:100%"></progress><div id="fiAutoEtape"></div><button class="mini" id="fiAutoStop" style="margin-top:6px">Arrêter</button>';
       $('#fiAutoStop').onclick = () => { $('#fiAutoStop').disabled = true; annulerJob(j.id); };
       const t0 = Date.now(), x = await suivreTravail(j.id, k => { const p = $('#fiAutoRes progress'), e = $('#fiAutoEtape'); if (p) p.value = Math.round((k.progress || 0) * 100); if (e) e.textContent = `${k.step || ''}${k.progress > 0.08 ? ` · environ ${Math.max(1, Math.round((Date.now() - t0) / 60000 * (1 - k.progress) / k.progress))} min restantes` : ''}`; });
-      if (x.fiche) { $('#fiTexte').value = JSON.stringify(x.fiche, null, 1); }
-      finPico(z, x, x.article ? `Texte écrit d’après l’article Wikipédia « ${x.article} » : vérifie les faits en regardant la vidéo.` : '');
-    } catch (er) { z.innerHTML = `<span style="color:#f87171">${esc(er.message)}</span>`; }
+      if (x.fiche) siLa('#fiTexte', e => { e.value = JSON.stringify(x.fiche, null, 1); });
+      finPico(zoneFin(z, '#fiAutoRes'), x, x.article ? `Texte écrit d’après l’article Wikipédia « ${x.article} » : vérifie les faits en regardant la vidéo.` : '');
+    } catch (er) { zoneFin(z, '#fiAutoRes').innerHTML = `<span style="color:#f87171">${esc(er.message)}</span>`; signal('Épisode QuentInvest : ' + er.message); }
     b.disabled = false;
   };
   $('#fiF').onchange = async e => { const f = e.target.files[0]; if (f) $('#fiTexte').value = await f.text(); };
   $('#fiDepuisScript').onclick = async () => {
     const t = $('#fiScript').value, prog = $('#fiProg');
     try { const r = await api('/api/quentinvest/script', { method: 'POST', body: JSON.stringify({ texte: t }) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Script illisible');
-      $('#fiAvance').open = true; $('#fiTexte').value = JSON.stringify(j.fiche, null, 1); $('#fiGo').click(); $('#fiTexte').scrollIntoView({ block: 'center' }); }
+      if (!siLa('#fiTexte', e => { e.value = JSON.stringify(j.fiche, null, 1); })) return; $('#fiAvance').open = true; $('#fiGo').click(); $('#fiTexte').scrollIntoView({ block: 'center' }); }
     catch (er) { signal(er.message); }
   };
   $('#fiBrouillon').onclick = async () => {
@@ -86,10 +90,12 @@ function ouvrirFiche() {
     try {
       const { id } = await (await api('/api/quentinvest/brouillon', { method: 'POST', body: JSON.stringify({ sujet }) })).json();
       const r = await suivreTravail(id, j => { prog.textContent = Math.round((j.progress || 0) * 100) + ' % · ' + (j.step || ''); });
-      $('#fiAvance').open = true; $('#fiTexte').value = JSON.stringify(r.fiche, null, 1); prog.innerHTML = `Texte écrit d’après l’article Wikipédia « ${esc(r.article)} » et gardé dans <b>${esc(r.fichier)}</b>. Relis-le et réécris ce qui est à compléter (titre, accroche, piège, question, suite) dans la fiche ci-dessous, puis « Contrôler » et « Fabriquer ».`;
+      signal('Texte de l’épisode écrit : ' + r.fichier);
+      if (!siLa('#fiTexte', e => { e.value = JSON.stringify(r.fiche, null, 1); })) return; // fenêtre fermée : le texte reste dans son fichier
+      $('#fiAvance').open = true; siLa('#fiProg', e => { e.innerHTML = `Texte écrit d’après l’article Wikipédia « ${esc(r.article)} » et gardé dans <b>${esc(r.fichier)}</b>. Relis-le et réécris ce qui est à compléter (titre, accroche, piège, question, suite) dans la fiche ci-dessous, puis « Contrôler » et « Fabriquer ».`; });
       $('#fiGo').click();
-    } catch (er) { prog.innerHTML = '<span style="color:#f87171">' + esc(er.message) + '</span>'; }
-    finally { $('#fiBrouillon').disabled = false; }
+    } catch (er) { siLa('#fiProg', e => { e.innerHTML = '<span style="color:#f87171">' + esc(er.message) + '</span>'; }); signal('Texte de l’épisode : ' + er.message); }
+    finally { siLa('#fiBrouillon', e => { e.disabled = false; }); }
   };
   $('#fiGo').onclick = async () => {
     const res = $('#fiRes'); res.textContent = 'Contrôle…';
@@ -124,8 +130,8 @@ async function fabriquerPico(texte, options) {
     z.innerHTML = '<progress max="100" value="0" style="width:100%"></progress><div id="fiFabEtape"></div><button class="mini" id="fiFabStop" style="margin-top:6px">Arrêter</button>';
     $('#fiFabStop').onclick = () => { $('#fiFabStop').disabled = true; annulerJob(id); };
     const t0 = Date.now(), x = await suivreTravail(id, k => { const p = $('#fiFabRes progress'), e = $('#fiFabEtape'); if (p) p.value = Math.round((k.progress || 0) * 100); if (e) e.textContent = `${k.step || ''}${k.progress > 0.05 ? ` · environ ${Math.max(1, Math.round((Date.now() - t0) / 60000 * (1 - k.progress) / k.progress))} min restantes` : ''}`; });
-    finPico(z, x);
-  } catch (er) { z.innerHTML = `<span style="color:#f87171">${esc(er.message)}</span>`; }
+    finPico(zoneFin(z, '#fiFabRes'), x);
+  } catch (er) { zoneFin(z, '#fiFabRes').innerHTML = `<span style="color:#f87171">${esc(er.message)}</span>`; signal('Fabrication de l’épisode : ' + er.message); }
   b.disabled = false;
 }
 // fin d'une fabrication : dossier, relecture, publication et remarques sur la fiche
@@ -145,13 +151,15 @@ async function ouvrirRelecturePico(base) {
   let E; try { const r = await api('/api/pico/episode?base=' + encodeURIComponent(base)), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Épisode introuvable'); E = j; } catch (er) { return alert(er.message); }
   const ch = new Map(), aRefaire = new Set(); let dico = false;
   const difficiles = new Set(E.difficiles.map(m => m.toLowerCase()));
-  const motsDe = t => String(t).split(/(\s+)/).map(m => { const nu = m.replace(/^[«(“"']+|[»)”"'.,;:!?…]+$/g, ''); return /\S/.test(m) && nu ? `<span class="rlMot${difficiles.has(nu.toLowerCase()) ? ' dur' : ''}" data-mot="${esc(nu)}">${esc(m)}</span>` : esc(m); }).join('');
+  const motsDe = t => String(t).split(/(\s+)/).map(m => { const nu = m.replace(/^[«(“"']+|[»)”"'.,;:!?…]+$/g, ''); return /\S/.test(m) && nu ? `<span class="rlMot${difficiles.has(nu.toLowerCase()) ? ' dur' : ''}" data-mot="${esc(nu)}" tabindex="0" role="button">${esc(m)}</span>` : esc(m); }).join('');
   const texteDe = s => (ch.get(s.i) || {}).texte ?? s.texte, exprDe = s => (ch.get(s.i) || {}).expr || s.expr;
   ouvrir(`<h2>🔍 Relire « ${esc(E.titre)} »</h2>
     <p class="mut">Pour chaque réplique : l’expression de Pico, la phrase (✏ pour la modifier) et la prononciation (clic sur un mot ; les mots <span class="rlMot dur">soulignés</span> sont à vérifier). Seules les voix et les écrans des répliques changées sont refaits ; le montage final est refait en entier (quelques minutes).</p>
     <div id="rlListe" class="rlListe"></div>
     <div id="rlPied" class="ligne" style="margin-top:10px"><span class="mut" id="rlEtat">Aucun changement.</span><span class="sp"></span><button id="rlFermer">Fermer</button><button class="pri" id="rlRefaire" disabled>Refaire</button></div>`, 'xl');
+  const fen = $('#rlListe'), ouverte = () => fen.isConnected; // fenêtre de relecture encore affichée
   const dessiner = () => {
+    if (!ouverte()) return;
     $('#rlListe').innerHTML = E.scenes.map(s => `<div class="rlLigne ${aRefaire.has(s.i) ? 'change' : ''}" data-i="${s.i}">
       ${s.section ? `<div class="rlSection">${esc(s.section)}</div>` : ''}
       <div class="rlCorps"><span class="rlNum">${s.i + 1}</span><select data-expr="${s.i}" title="Expression de Pico">${E.expressions.map(x => `<option value="${x}" ${x === exprDe(s) ? 'selected' : ''}>${NOMS_EXPR[x] || x}</option>`).join('')}</select>
@@ -161,6 +169,7 @@ async function ouvrirRelecturePico(base) {
   };
   const changer = (i, k, v) => { const c = ch.get(i) || {}; c[k] = v; ch.set(i, c); aRefaire.add(i); dessiner(); };
   $('#rlFermer').onclick = fermer;
+  $('#rlListe').onkeydown = e => { const m = e.target.closest('[data-mot]'); if (m && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); m.click(); } }; // mots au clavier : Entrée ou Espace
   $('#rlListe').onchange = e => { const t = e.target; if (t.dataset.expr !== undefined) changer(+t.dataset.expr, 'expr', t.value); };
   $('#rlListe').onclick = async e => {
     const ed = e.target.closest('[data-edit]');
@@ -192,11 +201,13 @@ async function ouvrirRelecturePico(base) {
     try {
       const { id } = await (await api('/api/pico/refaire', { method: 'POST', body: JSON.stringify({ base: E.base, changements, tiktok: dico }) })).json();
       const r = await suivreTravail(id, k => { const p = $('#rlEtat progress'), t = $('#rlProg'); if (p) p.value = Math.round((k.progress || 0) * 100); if (t) t.textContent = k.step || ''; });
-      ch.clear(); aRefaire.clear(); dico = false; Object.assign(E, await (await api('/api/pico/episode?base=' + encodeURIComponent(E.base))).json()); dessiner();
+      ch.clear(); aRefaire.clear(); dico = false; signal(`Épisode « ${E.titre} » mis à jour : ${r.versions.join(' et ')}.`);
+      if (!ouverte()) return; Object.assign(E, await (await api('/api/pico/episode?base=' + encodeURIComponent(E.base))).json()); dessiner();
+      if (!ouverte()) return;
       $('#rlEtat').innerHTML = `✅ ${esc(r.versions.join(' et '))} mis à jour. <a href="#" id="rlDossier">Ouvrir le dossier</a> · <a href="#" id="rlPublier">Publier…</a>`;
       $('#rlDossier').onclick = ev => { ev.preventDefault(); api('/api/publier/ouvrir', { method: 'POST', body: JSON.stringify({ cible: 'dossier', episode: E.base }) }); };
       $('#rlPublier').onclick = ev => { ev.preventDefault(); ouvrirPublier(); };
-    } catch (er) { $('#rlEtat').innerHTML = `<span style="color:#f87171">${esc(er.message)}</span>`; $('#rlRefaire').disabled = false; }
+    } catch (er) { signal('Relecture : ' + er.message); if (ouverte()) { $('#rlEtat').innerHTML = `<span style="color:#f87171">${esc(er.message)}</span>`; $('#rlRefaire').disabled = false; } }
   };
   dessiner();
 }
@@ -415,6 +426,7 @@ function dblFin() {
 // touches pendant le doublage ; renvoie vrai quand la touche est prise en charge
 function toucheDoublage(e) {
   const k = e.key, kl = k.length === 1 ? k.toLowerCase() : k, tag = (e.target.tagName || '').toLowerCase(), f = fn => { e.preventDefault(); fn(); return true; };
+  if (!$('#dbRec') && !$('#dbGo')) { dblFin(); return false; } // une autre fenêtre a remplacé le doublage : micro rendu
   if (e.metaKey || e.ctrlKey) return false;
   if (k === 'Escape') return f(() => { if (dbl.enreg && !confirm('Un enregistrement est en cours. Le perdre et fermer ?')) return; fermer(); });
   if (!dbl.vue || tag === 'textarea' || (tag === 'input' && e.target.type === 'text')) return true; // préparation du texte : les touches restent à la saisie

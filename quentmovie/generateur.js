@@ -7,7 +7,9 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { execFile } = require('child_process');
-const { requete } = require('./maj');
+const MAJ = require('./maj');
+// téléchargement vers un fichier : en cas d'échec, le fichier partiel est retiré
+const requete = (url, o = {}, ...r) => MAJ.requete(url, o, ...r).catch(e => { if (o.dest) { try { require('fs').rmSync(o.dest, { force: true }); } catch (er) { /* rien à retirer */ } } throw e; });
 const IM = require('./images');
 const FILTRE_META = 'Artist|LicenseShortName|ImageDescription|ObjectName|Categories';
 

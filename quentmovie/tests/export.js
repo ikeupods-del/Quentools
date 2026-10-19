@@ -213,7 +213,35 @@ const { execFileSync, spawnSync } = require('child_process');
     await new Promise(r => setTimeout(r, 700)); const t0 = Date.now();
     await fetch(U('/api/annuler?id=' + id), { method: 'POST' });
     let j; for (;;) { j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.error || j.done) break; await new Promise(r => setTimeout(r, 100)); }
-    check('annulation : export arrêté vite avec « Export annulé. »', j.error === 'Export annulé.' && Date.now() - t0 < 5000, `${j.error} ${Date.now() - t0} ms`); }
+    check('annulation : export arrêté vite avec « Export annulé. »', j.error === 'Export annulé.' && Date.now() - t0 < 5000, `${j.error} ${Date.now() - t0} ms`);
+    check('annulation : dossier de travail supprimé', !fs.readdirSync(path.join(base, '.tmp')).some(n => /^job-/.test(n)), fs.readdirSync(path.join(base, '.tmp')).join(' ')); }
+  // clip illisible au milieu d'un export parallèle : erreur, aucun FFmpeg orphelin ni dossier de travail restant
+  { fs.writeFileSync(path.join(base, 'medias', 'casse.mp4'), Buffer.alloc(5000, 7));
+    const { id } = await (await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: { ...projet('Casse'), clips: [clip('a.mp4', 'video', { out: 4, text: 'x1' }), clip('casse.mp4', 'video'), clip('a.mp4', 'video', { out: 4, text: 'x2' })] } }) })).json();
+    let j; for (;;) { j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.error || j.done) break; await new Promise(r => setTimeout(r, 100)); }
+    check('clip illisible : export en erreur, dossier de travail supprimé', !!j.error && !fs.readdirSync(path.join(base, '.tmp')).some(n => /^job-/.test(n)), `${j.error} ${fs.readdirSync(path.join(base, '.tmp')).join(' ')}`); }
+  // serveur : demandes de plage invalides (416, sans plantage), accents d'un gros projet, projet trop gros (413), import coupé
+  { fs.writeFileSync(path.join(base, 'medias', 'vide.mp4'), '');
+    const taille = fs.statSync(path.join(base, 'medias', 'a.mp4')).size, plage = async (f, r) => fetch(U('/media/' + f), { headers: { Range: r } });
+    const r1 = await plage('a.mp4', `bytes=${taille + 5000}-`), r2 = await plage('vide.mp4', 'bytes=0-'), r3 = await plage('a.mp4', 'bytes=-10'), r4 = await plage('a.mp4', 'bytes=0-99');
+    check('plage au-delà de la fin et fichier vide : 416', r1.status === 416 && r2.status === 416, `${r1.status} ${r2.status}`);
+    check('plage « -10 » : les 10 derniers octets', r3.status === 206 && (await r3.arrayBuffer()).byteLength === 10 && r4.status === 206 && (await r4.arrayBuffer()).byteLength === 100);
+    check('serveur toujours vivant après les plages invalides', (await fetch(U('/api/catalogue'))).ok);
+    const gros = { nom: 'Été à Noël — « ça marche »', clips: Array.from({ length: 3000 }, (_, i) => ({ text: 'Fête éèàçù ' + i + ' œ€' })) };
+    const ecrit = async o => (await fetch(U('/api/projets/accents'), { method: 'PUT', body: JSON.stringify(o) })).status;
+    await ecrit({ v: 1 }); const st = await ecrit(gros), relu = await (await fetch(U('/api/projets/accents'))).json();
+    check('gros projet : accents conservés et version précédente gardée (.bak)', st === 200 && JSON.stringify(relu) === JSON.stringify(gros) && fs.existsSync(path.join(base, 'projets', 'accents.qmovie.bak')), st);
+    const r413 = await fetch(U('/api/projets/trop'), { method: 'PUT', body: 'x'.repeat(21e6) });
+    check('projet trop volumineux : 413 avec un message clair', r413.status === 413 && /trop volumineux/.test((await r413.json()).error || ''), r413.status);
+    await new Promise(ok => { const rq = require('http').request({ host: '127.0.0.1', port, method: 'POST', path: '/api/import?name=coupe.mp4', headers: { 'Content-Length': 1e6 } }); rq.on('error', () => ok()); rq.write(Buffer.alloc(50000, 1)); setTimeout(() => { rq.destroy(); setTimeout(ok, 400); }, 200); });
+    check('import coupé : aucun fichier restant dans les médias', !fs.readdirSync(path.join(base, 'medias')).some(n => /^coupe/.test(n)), fs.readdirSync(path.join(base, 'medias')).join(' '));
+    const jpg = Buffer.concat([Buffer.from([0xff, 0xd8]), Buffer.alloc(2000)]), mini = async () => (await (await fetch(U('/api/miniature'), { method: 'POST', body: jpg })).json()).out;
+    const m1 = await mini(), m2 = await mini();
+    check('deux miniatures dans la même seconde : deux fichiers', m1 && m2 && m1 !== m2, `${m1} ${m2}`); }
+  // plage invalide : export complet nommé « montage-… »
+  { const { id } = await (await fetch(U('/api/export'), { method: 'POST', body: JSON.stringify({ project: { ...projet('Plage'), clips: [clip('p.png', 'image', { dur: 1 })] }, plage: { s: 3, e: 2 } }) })).json();
+    let j; for (;;) { j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.error || j.done) break; await new Promise(r => setTimeout(r, 200)); }
+    check('plage invalide : export entier, nommé « montage-… »', !j.error && /^montage-/.test(j.out || ''), `${j.error || ''} ${j.out}`); }
   // analyse de l'image et du son : changements de plan, blancs, niveau sonore, conseils qui corrigent
   ff('-f', 'lavfi', '-i', 'color=c=red:s=320x180:r=25:d=2', '-f', 'lavfi', '-i', 'color=c=blue:s=320x180:r=25:d=2', '-f', 'lavfi', '-i', 'color=c=green:s=320x180:r=25:d=2',
     '-f', 'lavfi', '-i', 'sine=f=300:d=2', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono:d=2', '-f', 'lavfi', '-i', 'sine=f=500:d=2',

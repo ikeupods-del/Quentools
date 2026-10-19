@@ -592,6 +592,27 @@ function chromium() {
   const avantCoupe = r1.clips; r1 = await act({ action: 'couper_a', parametre: '3' }); check('assistant : couper à un instant', r1.clips === avantCoupe + 1, JSON.stringify(r1));
   r1 = await act({ action: 'couper_a', parametre: '9999' }); check('assistant : coupe hors du montage refusée', r1.clips === avantCoupe + 1);
 
+  r1 = await act({ action: 'supprimer_clip', parametre: '' }); check('assistant : supprimer sans dire quel clip ne supprime rien', r1.clips === avantCoupe + 1);
+  r1 = await act({ action: 'volume', parametre: '' }); check('assistant : volume sans nombre ne met pas tout à 0', r1.vols.every(v => v === 40), JSON.stringify(r1.vols));
+  const vm = await ev(async () => { await executerAction({ action: 'musique', parametre: '' }); const v = () => proj.audio.filter(x => estMusiqueLib(x)).map(x => x.vol)[0], l = [];
+    for (const p of ['20', 'plus', 'moins', '0', '500']) { await executerAction({ action: 'volume_musique', parametre: p }); l.push(v()); } return l; });
+  check('assistant : volume de la musique (20 %, plus, moins, couper, borné à 200)', vm[0] === 20 && vm[1] === 28 && vm[2] === 17 && vm[3] === 0 && vm[4] === 200, JSON.stringify(vm));
+
+  // ⌘Z après un ajout sur la piste vidéo 2 : l'état revient bien en arrière (le dessin ne modifie plus le projet)
+  await ev(async () => { proj.pistes = []; commit(); tout(); ajouterPiste(medias.find(x => x.file === 'photo.png'), 1); });
+  await pg.mouse.click(5, 5); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(200);
+  check('⌘Z annule un ajout sur la piste vidéo 2', await ev(() => (proj.pistes || []).length === 0));
+  await pg.keyboard.press('Control+Shift+z'); await pg.waitForTimeout(200); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(200);
+  check('⌘Z refonctionne après un rétablissement', await ev(() => (proj.pistes || []).length === 0));
+  // fenêtre ouverte : Suppr ne touche pas la timeline derrière ; Échap la ferme sans fermer l'écran du dessous
+  const nAv = await ev(async () => { sel = 0; tout(); await ouvrirProjet(); return proj.clips.length; });
+  await pg.keyboard.press('Delete'); await pg.keyboard.press('s'); await pg.waitForTimeout(200);
+  check('fenêtre ouverte : Suppr et S ne modifient pas les clips derrière', await ev(n => proj.clips.length === n && $('#modal').classList.contains('on'), nAv));
+  await pg.keyboard.press('Escape'); check('Échap ferme la fenêtre', await ev(() => !$('#modal').classList.contains('on')));
+  check('demander : fermée par le fond, la réponse est vide', await ev(async () => { const p = demander('Essai', 'x'); $('#modal').click(); return (await Promise.race([p, new Promise(r => setTimeout(() => r('bloqué'), 500))])) === null; }));
+  check('texte tapé : Échap demande confirmation', await ev(() => { ouvrir('<h2>Essai</h2><textarea id="tt"></textarea>'); const t = $('#tt'); t.value = 'Mon texte'; t.dispatchEvent(new Event('input', { bubbles: true })); const c0 = window.confirm; window.confirm = () => false;
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); const reste = $('#modal').classList.contains('on'); window.confirm = c0; fermer(); return reste; }));
+
   check('aucune erreur dans la page', !errs.length, errs.slice(0, 3).join(' | '));
   await b.close(); app.stop(); fs.rmSync(base, { recursive: true, force: true });
   console.log(`Interface : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);

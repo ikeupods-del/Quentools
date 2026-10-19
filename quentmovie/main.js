@@ -6,6 +6,7 @@ const { create } = require('./server');
 const navigateurEcrans = require('./navigateur-electron'); // fenêtres cachées qui dessinent les écrans de Pico (fabrication des épisodes QuentInvest)
 const { resolveFfmpeg } = require('./ffmpeg-path');
 const { Maj, emplacementApp } = require('./maj');
+const RPI = require('./routes-pico'); // fabrications d'épisodes et voix clonée (processus à part), arrêtées à la fermeture
 
 let win = null, moteur = null;
 // Mises à jour automatiques : uniquement pour l'application installée sur Mac
@@ -13,7 +14,7 @@ const maj = new Maj({ version: app.getVersion(), dossier: path.join(app.getPath(
 const hooksMaj = {
   etat: () => maj.etat,
   verifier: () => { maj.verifier().then(prevenir); return maj.etat; },
-  installer: () => { if (maj.installer(true)) setTimeout(() => app.quit(), 200); return maj.etat; }
+  installer: () => { if (maj.installer(true)) setTimeout(() => app.quit(), 200); return maj.etat; } // remplacement lancé au will-quit seulement (un export en cours peut retenir la fermeture)
 };
 const prevenir = e => { if (win && e && e.etat === 'pret') win.webContents.executeJavaScript('window.majPrete && majPrete()').catch(() => {}); };
 // Partage AirDrop : feuille de partage de macOS ouverte sur les fichiers exportés
@@ -67,7 +68,8 @@ async function demarrer() {
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false } // fenêtre en arrière-plan ralentie pour économiser la batterie ; levé seulement pendant le studio (voir `energie`)
   });
   win.loadURL(`http://127.0.0.1:${port}/`);
-  win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
+  win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//.test(url)) shell.openExternal(url); return { action: 'deny' }; }); // seules les pages web s'ouvrent dans le navigateur
+  win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith(`http://127.0.0.1:${port}/`)) { e.preventDefault(); if (/^https:\/\//.test(url)) shell.openExternal(url); } }); // la fenêtre ne quitte jamais le moteur local
   win.on('closed', () => { win = null; BrowserWindow.getAllWindows().forEach(w => { if (!w.isDestroyed()) w.destroy(); }); }); // fenêtres cachées des écrans de Pico fermées avec QuentMovie
   // export en cours au moment de quitter : on demande avant de tout arrêter
   win.webContents.on('will-prevent-unload', e => {
@@ -174,6 +176,8 @@ app.whenReady().then(async () => {
   try { await demarrer(); }
   catch (e) { dialog.showErrorBox('QuentMovie ne peut pas démarrer', e.message); app.quit(); }
 });
-app.on('window-all-closed', () => { if (moteur) moteur.stop(); app.quit(); });
-// Une mise à jour téléchargée s'installe à la fermeture (relancée au prochain démarrage)
-app.on('will-quit', () => { maj.installer(false); });
+// moteur, FFmpeg, fabrications d'épisodes et voix clonée arrêtés (Cmd+Q compris : rien ne continue après la fermeture)
+const arreter = () => { if (moteur) { try { moteur.stop(); } catch (e) { /* déjà arrêté */ } moteur = null; } RPI.arreterTout(); };
+app.on('window-all-closed', () => { arreter(); app.quit(); });
+// Une mise à jour téléchargée s'installe à la fermeture (relancée si demandée par « Redémarrer pour installer »)
+app.on('will-quit', () => { arreter(); maj.installer(false); });

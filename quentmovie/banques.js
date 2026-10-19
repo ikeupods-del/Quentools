@@ -23,8 +23,8 @@ function getJson(url, headers = {}, delai = 12000) {
     const local = ['127.0.0.1', 'localhost'].includes(u.hostname);
     if (u.protocol !== 'https:' && !(u.protocol === 'http:' && local)) return ko(new Error('adresse refusée'));
     const r = require(u.protocol === 'https:' ? 'https' : 'http').get(u, { headers: { 'User-Agent': UA, Accept: 'application/json', ...headers }, timeout: delai }, res => {
-      let s = ''; res.setEncoding('utf8'); res.on('data', d => { s += d; if (s.length > 4e6) r.destroy(); });
-      res.on('end', () => { if (res.statusCode !== 200) { const e = new Error('erreur ' + res.statusCode); e.code = res.statusCode; return ko(e); } try { ok(JSON.parse(s)); } catch (e) { ko(new Error('réponse illisible')); } });
+      let s = '', trop = false; res.setEncoding('utf8'); res.on('data', d => { if (trop) return; s += d; if (s.length > 4e6) { trop = true; r.destroy(); ko(new Error('réponse trop volumineuse')); } });
+      res.on('end', () => { if (trop) return; if (res.statusCode !== 200) { const e = new Error('erreur ' + res.statusCode); e.code = res.statusCode; return ko(e); } try { ok(JSON.parse(s)); } catch (e) { ko(new Error('réponse illisible')); } });
     });
     r.on('timeout', () => r.destroy(new Error('trop long'))); r.on('error', ko);
   });

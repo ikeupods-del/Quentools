@@ -20,6 +20,7 @@
 function panneauDroite(p) {
   document.querySelectorAll('#droite [data-dr]').forEach(b => { b.classList.toggle('on', b.dataset.dr === p); b.setAttribute('aria-selected', b.dataset.dr === p); });
   $('#insp').hidden = p === 'chat'; $('#chat').hidden = p !== 'chat';
+  if (p !== 'chat' && typeof arreterDictee === 'function') arreterDictee(true); // micro coupé en quittant la discussion
   if (p === 'chat') { if (!discussion.length) accueilChat(); dessinerChat(); setTimeout(() => $('#chTexte').focus(), 30); }
 }
 
@@ -70,15 +71,22 @@ const CIBLABLES_V21 = ['couper_blancs', 'sous_titres', 'volume', 'vitesse', 'ame
 const aCetInstant = (actions, t) => actions.map(a => (t != null && !a.cible && CIBLABLES_V21.includes(a.action) ? { ...a, cible: String(clipA(t) + 1), libelle: `${a.libelle} — clip ${clipA(t) + 1} (à ${fmtChrono(t)})`, instant: t } : { ...a, instant: t }));
 
 // ---------- Envoi d'une demande ----------
+// sujet d'une demande de vidéo de Pico (« fais un épisode sur la bourse ») ; '' si ce n'est pas une demande de création
+const VERBE_CREER = /^(?:peux-tu |tu peux |pourrais-tu )?(?:(?:me )?(?:fais|fait|faire|crée|créer|cree|prépare|préparer|fabrique|fabriquer|réalise|réaliser)(?:-moi| moi)? |je veux |je voudrais |j['’]aimerais )/i;
+function sujetPico(texte) {
+  if (!/(?<!\p{L})(?:quentinvest|pico)(?!\p{L})|(?<!\p{L})[ée]pisode/iu.test(texte)) return '';
+  const t = texte.replace(/^\s*pico\s*[,:!]?\s*/i, '').replace(/(?<!\p{L})(?:quentinvest|de pico|avec pico)(?!\p{L})/giu, ' ').replace(/\s+/g, ' ').trim(), sujet = sujetDemande(t);
+  return VERBE_CREER.test(t) && sujet !== t.replace(/[.!?\s]+$/, '') && sujet.length >= 3 ? sujet : '';
+}
 async function envoyerChat(texte) {
   texte = String(texte == null ? $('#chTexte').value : texte).trim(); if (!texte) return;
   const t = instantActuel();
   $('#chTexte').value = ''; discussion.push({ qui: 'moi', texte, t }); dessinerChat();
-  // « fais un épisode QuentInvest sur le krach de 2008 » : la vidéo de Pico est écrite et fabriquée toute seule (fenêtre Épisode QuentInvest)
-  if (/\b(quentinvest|pico)\b|\bépisode\b/i.test(texte) && /\b(vid[ée]o|[ée]pisode)\b.*\b(sur|propos|sujet|concernant|explique)/i.test(texte)) {
-    const sujet = sujetDemande(texte.replace(/\b(?:quentinvest|de pico|avec pico)\b/gi, ' '));
-    if (sujet.length >= 3) { ouvrirFiche(); $('#fiSujet').value = sujet; $('#fiLancer').click(); return direIA(`🎬 C’est parti : Pico prépare une vidéo sur « ${sujet} » (texte d’après Wikipédia, contrôle, puis fabrication). Suis l’avancement dans la fenêtre Épisode QuentInvest ; rien n’est publié sans toi.`); }
-  }
+  // « fais un épisode QuentInvest sur le krach de 2008 » : la vidéo de Pico est proposée (fenêtre Épisode QuentInvest), lancée seulement après le clic
+  const sujet = sujetPico(texte);
+  if (sujet) return direIA(`Je peux faire écrire et fabriquer la vidéo de Pico sur « ${sujet} » (texte d’après Wikipédia, contrôle, puis fabrication ; rien n’est publié sans toi).`, [
+    { nom: `🎬 Fabriquer la vidéo sur « ${sujet} »`, pri: true, faire: () => { ouvrirFiche(); $('#fiSujet').value = sujet; $('#fiLancer').click(); direIA('🎬 C’est parti : suis l’avancement dans la fenêtre Épisode QuentInvest.'); } },
+    { nom: 'Non merci', faire: () => direIA('D’accord, je ne lance rien.') }]);
   const attente = direIA('…');
   let r;
   try { r = await (await api('/api/assistant/comprendre', { method: 'POST', body: JSON.stringify({ demande: texte, ia: true, discussion: true, instant: t, projet: { ...resumeProjet(), normaliser: !!proj.normaliser } }) })).json(); }
@@ -181,7 +189,10 @@ function annulerDepuis(avant, apres) {
 }
 
 // ---------- Ouverture : ⌘K, bouton « Demander… », carte de l'accueil ----------
-function ouvrirChat(demande) { masquerAccueil(); if (typeof fermerPublierV2 === 'function' && $('#publierV2')) fermerPublierV2(); panneauDroite('chat'); if (demande) envoyerChat(demande); }
+function ouvrirChat(demande) {
+  if ($('#publierV2') && exportEnCours) return signal('Un export est en cours : attends la fin, ou « Annuler l’export ».'); // l'écran d'export reste ouvert
+  masquerAccueil(); if (typeof fermerPublierV2 === 'function' && $('#publierV2')) fermerPublierV2(); panneauDroite('chat'); if (demande) envoyerChat(demande);
+}
 $('#bAssistant').onclick = () => ouvrirChat();
 document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k' && !$('#modal').classList.contains('on')) { e.preventDefault(); e.stopImmediatePropagation(); ouvrirChat(); } }, true);
 document.addEventListener('click', e => { const b = e.target.closest('#accueil [data-acc="assistant"]'); if (b) { e.stopImmediatePropagation(); masquerAccueil(); ouvrirChat(); } }, true);

@@ -134,6 +134,12 @@ const crypto = require('crypto');
   await post('/api/publier/deconnecter', { plateforme: 'youtube' }); e = await (await fetch(U('/api/publier'))).json();
   check('déconnexion : compte retiré', !e.youtube.configure && !e.youtube.connecte && e.tiktok.connecte);
   const o = await (await post('/api/publier/ouvrir', { cible: 'studio' })).json(); check('aide manuelle : YouTube Studio ouvert', o.ok && /studio\.youtube\.com/.test(navigateur));
+  { // trousseau qui ne sait plus déchiffrer : le panneau reste lisible, le compte est à reconnecter
+    const dB = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-pub-coffre-')), P = require('../publication');
+    P.creer({ base: dB, coffre }).configurer('youtube', 'identifiant-1234', 'secret-12345678');
+    let e2 = null; try { e2 = P.creer({ base: dB, coffre: { chiffrer: t => t, dechiffrer: () => { throw new Error('trousseau illisible'); } } }).etat(); } catch (er) { e2 = { erreur: er.message }; }
+    check('clé illisible : état lisible, compte à reconnecter', e2 && e2.youtube && e2.youtube.aReconnecter === true && !e2.youtube.configure && !e2.tiktok.aReconnecter, JSON.stringify(e2));
+    fs.rmSync(dB, { recursive: true, force: true }); }
   app.stop(); srv.close(); fs.rmSync(base, { recursive: true, force: true });
   console.log(`Publication : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
