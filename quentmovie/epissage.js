@@ -99,10 +99,13 @@ function creer({ run, FFMPEG, encoder, FX, aFiltre, clamp, num }) {
 
   // Fondus : un morceau « enc » = suite de clips (ou parties de clips) enchaînés par xfade, seulement autour des fondus
   async function rendreGroupe(cwd, p, segs, fps, trans, enc, out, echelle = 1, dims = null) {
-    const ins = [], g = [];
+    // lecture avec une marge de quelques images de part et d'autre, puis images choisies par leur horodatage d'origine (-copyts) :
+    // couper la lecture pile sur la dernière image en perdait une selon la version de FFmpeg (assemblage rapide refusé sur Mac)
+    const ins = ['-copyts'], g = [];
     p.clips.forEach((c, k) => {
-      ins.push('-ss', c.de / fps, '-t', ((c.a - c.de) / fps).toFixed(6), '-i', segs[c.clip]);
-      g.push(`[${k}:v]settb=AVTB,fps=${fps},format=yuv420p,setpts=PTS-STARTPTS[v${k}]`);
+      const m = Math.min(c.de, 3);
+      ins.push(...(c.de - m > 0 ? ['-ss', ((c.de - m) / fps).toFixed(6)] : []), '-t', ((c.a - c.de + m + 3) / fps).toFixed(6), '-i', segs[c.clip]);
+      g.push(`[${k}:v]trim=start=${Math.max(0, (c.de - 0.5) / fps).toFixed(6)}:end=${((c.a - 0.5) / fps).toFixed(6)},setpts=PTS-STARTPTS,settb=AVTB,fps=${fps},format=yuv420p[v${k}]`);
     });
     let cur = 'v0', acc = p.clips[0].a - p.clips[0].de;
     for (let k = 1; k < p.clips.length; k++) {
