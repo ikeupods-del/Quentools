@@ -68,7 +68,7 @@ $('#retours').addEventListener('click', async e => {
   if (n) { const k = n.dataset.rtn, pas = 1 / (proj.fps || 30);
     if (k === 'lire') return lecture ? stopLecture() : lire();
     if (lecture) stopLecture();
-    return placerTete(Math.max(0, gt + ({ '-1': -1, '+1': 1, '-i': -pas, '+i': pas })[k]), { sansSelection: true }); }
+    placerTete(Math.max(0, gt + ({ '-1': -1, '+1': 1, '-i': -pas, '+i': pas })[k]), { sansSelection: true }); return majTc(); }
   const ligne = e.target.closest('[data-rt]'); if (!ligne) return;
   const r = retoursDe().find(x => x.id === ligne.dataset.rt); if (!r) return;
   if (e.target.closest('[data-rtsup]')) { proj.retours = retoursDe().filter(x => x !== r); commit(); return dessinerRetours(); }

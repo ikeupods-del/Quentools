@@ -3,6 +3,19 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.6.0
+- **Retours image par image** (onglet « Retours » à côté de l'Assistant) : mets la vidéo sur l'image exacte (−1 s, −1 image, +1 image, +1 s), écris ton retour, Entrée. La liste garde le minutage et le numéro d'image ; un clic y ramène, un point rose sur la timeline le montre, et les retours suivent les coupes. « ✨ Faire corriger » envoie chaque retour à l'assistant, à son instant : tu valides ses propositions. « Copier » et « .json » pour garder la liste.
+- **Revoir un rendu exporté** en grand, image par image (Espace, ← →, ↑ pour écrire), avec plein écran et repères sur la barre.
+- L'assistant comprend mieux : « baisse la musique », « musique à 30 % », « coupe là », « coupe la vidéo à 10 secondes », « noir et blanc », « passe en 16/9 », « mets un titre ici : … ». « Monte le volume » ne lance plus le montage complet.
+- Plus fiable :
+  - ⌘Z marche de nouveau après un ajout sur la piste vidéo 2 ;
+  - les accents ne s'abîment plus dans les gros projets et les exports ;
+  - les raccourcis n'agissent plus derrière une fenêtre ouverte ;
+  - la dernière modification est gardée même si tu fermes vite ;
+  - une fenêtre fermée pendant un long travail ne fait plus perdre le résultat.
+- Plus léger pour le Mac : « Arrêter » arrête vraiment la fabrication d'un épisode, l'IA ne se charge plus plusieurs fois en mémoire, les fichiers temporaires et caches sont rangés tout seuls, et la mémoire des aperçus est libérée.
+- Mise à jour plus sûre : jamais pendant que l'application tourne, version vérifiée, ancienne version gardée jusqu'au démarrage suivant.
+
 ## 2.5.0
 - **« Fais une vidéo sur le krach de 2008 »** : dans Épisode QuentInvest, écris ton sujet et choisis **🤖 Tout seul**. QuentMovie lit l'article Wikipédia, écrit le texte de Pico sans rien inventer, le contrôle et fabrique la vidéo (YouTube, TikTok, miniatures), sans autre clic. Marche aussi dans la discussion : « fais un épisode QuentInvest sur l'inflation ».
 - **👀 Je relis avant** : le texte est écrit pour toi, tu le corriges, puis tu lances la vidéo.

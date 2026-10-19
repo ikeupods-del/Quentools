@@ -1699,7 +1699,7 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && p.startsWith('/media/')) return serveFile(req, res, mediaPath(decodeURIComponent(p.slice(7))));
       if (req.method === 'GET' && p.startsWith('/lib/')) return serveFile(req, res, mediaPath('lib:' + decodeURIComponent(p.slice(5))));
       // Studio : détourage de la personne (MediaPipe, en local) et moteur de mélange du fond virtuel
-      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js' || p === '/ui-voix.js' || p === '/ui-publier.js' || p === '/ui-v2.js' || p === '/ui-chat.js' || p === '/ui-animations.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
+      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js' || p === '/ui-voix.js' || p === '/ui-publier.js' || p === '/ui-v2.js' || p === '/ui-chat.js' || p === '/ui-animations.js' || p === '/ui-retours.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
       if (req.method === 'GET' && p.startsWith('/vendor/vision/')) {
         const n = decodeURIComponent(p.slice(15));
         if (!/^(vision_bundle\.m?js|wasm\/vision_wasm(_nosimd)?_internal\.(js|wasm))$/.test(n)) return send(res, 404, { error: 'Introuvable' });
@@ -1707,6 +1707,10 @@ function buildClip(c, P, o = {}) {
       }
       if (req.method === 'GET' && /^\/modeles\/[\w.]+\.tflite$/.test(p)) return serveFile(req, res, path.join(__dirname, p));
       if (req.method === 'GET' && p.startsWith('/proxy/')) return serveFile(req, res, path.join(PROXIES, safeName(decodeURIComponent(p.slice(7)))));
+      if (req.method === 'GET' && p === '/api/exports') { // vidéos exportées, les plus récentes d'abord (revue image par image)
+        let l = []; try { l = fs.readdirSync(EXPORTS).filter(n => !n.startsWith('.') && !/\.part$/.test(n)).map(n => { const st = fs.statSync(path.join(EXPORTS, n)); return { nom: n, taille: st.size, date: st.mtimeMs }; }).filter(x => x.taille > 0); } catch (e) { /* dossier absent */ }
+        return send(res, 200, { exports: l.sort((x, y) => y.date - x.date) });
+      }
       if (req.method === 'GET' && p.startsWith('/exports/')) return serveFile(req, res, path.join(EXPORTS, safeName(decodeURIComponent(p.slice(9)))), true);
       if (req.method === 'GET' && p.startsWith('/apercu/')) return serveFile(req, res, path.join(APERCUS, safeName(decodeURIComponent(p.slice(8)))));
 

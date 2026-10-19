@@ -19,7 +19,8 @@ function chromium() {
   const bins = await resolveFfmpeg(), base = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-rt-')), app = create({ port: 0, base, ...bins }), port = await app.start(), U = p => `http://127.0.0.1:${port}${p}`;
   execFileSync(bins.ffmpeg, ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'testsrc=s=640x360:r=30:d=4', '-f', 'lavfi', '-i', 'sine=f=440:d=4', '-shortest', '-pix_fmt', 'yuv420p', path.join(base, 'a.mp4')]);
   await fetch(U('/api/import?name=a.mp4'), { method: 'POST', body: fs.readFileSync(path.join(base, 'a.mp4')) });
-  fs.mkdirSync(path.join(base, 'exports'), { recursive: true }); fs.copyFileSync(path.join(base, 'a.mp4'), path.join(base, 'exports', 'montage-essai.mp4'));
+  fs.mkdirSync(path.join(base, 'exports'), { recursive: true }); // rendu en WebM : le Chromium des essais ne lit pas le H.264 (l'application, si)
+  execFileSync(bins.ffmpeg, ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'testsrc=s=320x180:r=30:d=4', '-c:v', 'libvpx', '-b:v', '300k', path.join(base, 'exports', 'montage-essai.webm')]);
   const b = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] }), pg = await b.newPage({ viewport: { width: 1440, height: 900 } }), errs = [];
   pg.on('pageerror', e => errs.push(e.message)); pg.on('dialog', d => d.accept().catch(() => {}));
   await pg.goto(U('/')); await pg.waitForTimeout(1000);
@@ -50,13 +51,13 @@ function chromium() {
   check('↑ met le curseur dans le champ du retour', await ev(() => document.activeElement === $('#rtTexte')));
   // revue d'un rendu exporté
   const ex = await (await fetch(U('/api/exports'))).json();
-  check('liste des vidéos exportées', (ex.exports || []).some(x => x.nom === 'montage-essai.mp4'), JSON.stringify(ex));
+  check('liste des vidéos exportées', (ex.exports || []).some(x => x.nom === 'montage-essai.webm'), JSON.stringify(ex));
   await ev(() => ouvrirRevueExport()); await pg.waitForSelector('#rvV');
   await pg.waitForFunction(() => $('#rvV').readyState >= 1, null, { timeout: 8000 }).catch(() => {});
   await ev(() => { $('#rvV').currentTime = 2; }); await pg.waitForTimeout(300);
   await pg.fill('#rvTexte', 'Le titre arrive trop tard'); await pg.press('#rvTexte', 'Enter');
-  check('revue : retour sur le rendu, avec le nom du fichier', await ev(() => proj.retours.some(r => r.source === 'montage-essai.mp4' && Math.round(r.t) === 2 && /trop tard/.test(r.texte))));
-  check('revue : repère sur la barre de la vidéo', await ev(() => document.querySelectorAll('#rvMk i').length === 1));
+  check('revue : retour sur le rendu, avec le nom du fichier', await ev(() => proj.retours.some(r => r.source === 'montage-essai.webm' && Math.round(r.t) === 2 && /trop tard/.test(r.texte))));
+  check('revue : repère sur la barre de la vidéo', await ev(() => document.querySelectorAll('#rvMk i').length === 1), await ev(() => $('#rvV').duration + ' ' + $('#rvMk').innerHTML));
   await ev(() => document.activeElement.blur()); await pg.keyboard.press('ArrowRight');
   check('revue : → avance d’une image (sans toucher au montage)', await ev(() => Math.abs($('#rvV').currentTime - (2 + 1 / 30)) < 0.02 && proj.clips.length === 1), await ev(() => $('#rvV').currentTime));
   await ev(() => fermer());
