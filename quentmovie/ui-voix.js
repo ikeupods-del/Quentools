@@ -33,6 +33,7 @@ const sujetDemande = t => String(t || '').replace(/\s+/g, ' ').trim().replace(/^
 const siLa = (sel, f) => { const e = $(sel); if (e) f(e); return e; };
 // zone du résultat : la sienne si la fenêtre est restée ouverte, sinon celle de la fenêtre rouverte (si elle ne suit pas un autre travail)
 const zoneFin = (z, sel) => { const n = $(sel); return z.isConnected || !n || n.querySelector('progress') ? z : n; };
+const fiMemo = { script: '', doublage: '' }; // script en cours gardé pendant l'enregistrement du Doublage
 // Contrôle d'une fiche d'épisode QuentInvest : colle ou charge le fichier .json, le rapport dit ce qu'il faut corriger avant la fabrication
 function ouvrirFiche() {
   if (dbl) dblFin();
@@ -44,7 +45,7 @@ function ouvrirFiche() {
       <div id="fiZoneScript" hidden><p class="mut" style="margin:0 0 6px">Un titre (# Titre), l’accroche, des paragraphes (une ligne courte = un titre de partie, des lignes « - » = une liste), puis « En une phrase : … ». QuentMovie le découpe en répliques et choisit les écrans (chiffres, définitions, listes) sans rien ajouter.</p>
         <textarea id="fiScript" rows="6" style="width:100%" placeholder="# Pourquoi les prix montent ?&#10;&#10;Ton panier coûtait 50 € il y a cinq ans…"></textarea></div>
       <div class="ligne" id="fiZoneVoix" style="margin-top:6px"><label>Voix <select id="fiAutoVoix"><option value="ma-voix">Ma voix clonée</option></select></label><label><input type="checkbox" id="fiAutoTiktok" checked> Version TikTok aussi</label></div><div id="fiAutoVoixInfo" class="mut"></div>
-      <div class="ligne" style="margin-top:6px"><span class="sp"></span><button id="fiDepuisScript" hidden>📄 Voir la fiche d’abord</button><button id="fiBrouillon" hidden>✍️ Écrire le texte</button><button class="pri" id="fiLancer">🎬 Faire la vidéo</button></div>
+      <div class="ligne" style="margin-top:6px"><span class="sp"></span><button id="fiDoubler" hidden title="Ouvre le Doublage avec exactement les répliques de la vidéo, dans l’ordre">🎙 Enregistrer ces répliques</button><button id="fiDepuisScript" hidden>📄 Voir la fiche d’abord</button><button id="fiBrouillon" hidden>✍️ Écrire le texte</button><button class="pri" id="fiLancer">🎬 Faire la vidéo</button></div>
       <div id="fiProg" class="mut" style="margin-top:6px"></div><div id="fiAutoRes" style="margin-top:6px"></div></div>
     <div id="fiDeja"></div>
     <details id="fiAvance"><summary>Fiche détaillée (texte de l’épisode, contrôle)</summary><p class="mut">Le texte complet de l’épisode : QuentMovie vérifie qu’il est complet, qu’il dépasse 5 minutes, que les phrases restent courtes, que les chiffres ont une source, qu’aucun conseil d’investissement ne s’est glissé dedans, et liste les mots à ajouter au dictionnaire de prononciation.</p>
@@ -57,8 +58,22 @@ function ouvrirFiche() {
     z.onclick = ev => { const b = ev.target.closest('[data-relire]'); if (b) ouvrirRelecturePico(b.dataset.relire); }; }).catch(() => {});
   const AIDES = { seul: 'Tu donnes le sujet : QuentMovie lit l’article Wikipédia, l’IA locale écrit le texte de Pico sans rien inventer, le contrôle, puis fabrique la vidéo (YouTube, TikTok, miniatures, texte de publication). Rien n’est publié : tu regardes avant.', relire: 'Le texte est écrit d’après Wikipédia et s’affiche dans la fiche : tu corriges ce que tu veux, puis tu lances la fabrication.', script: 'Tu écris le texte toi-même : idéal pour un sujet d’actualité, que Wikipédia ne connaît pas encore. QuentMovie le découpe en répliques et fabrique la vidéo, sans rien ajouter.' };
   const mode = () => (document.querySelector('[name="fiMode"]:checked') || {}).value || 'seul';
-  const majMode = () => { const m = mode(); $('#fiModeAide').textContent = AIDES[m]; $('#fiZoneSujet').hidden = m === 'script'; $('#fiZoneScript').hidden = m !== 'script'; $('#fiDepuisScript').hidden = m !== 'script'; $('#fiZoneVoix').hidden = m === 'relire'; $('#fiAutoVoixInfo').hidden = m === 'relire'; $('#fiLancer').textContent = m === 'relire' ? '✍️ Écrire le texte' : '🎬 Faire la vidéo'; };
-  document.querySelectorAll('[name="fiMode"]').forEach(x => { x.onchange = majMode; }); majMode();
+  const majMode = () => { const m = mode(); $('#fiModeAide').textContent = AIDES[m]; $('#fiZoneSujet').hidden = m === 'script'; $('#fiZoneScript').hidden = m !== 'script'; $('#fiDepuisScript').hidden = m !== 'script'; $('#fiDoubler').hidden = m !== 'script'; $('#fiZoneVoix').hidden = m === 'relire'; $('#fiAutoVoixInfo').hidden = m === 'relire'; $('#fiLancer').textContent = m === 'relire' ? '✍️ Écrire le texte' : '🎬 Faire la vidéo'; };
+  document.querySelectorAll('[name="fiMode"]').forEach(x => { x.onchange = majMode; });
+  if (fiMemo.script) { $('#fiScript').value = fiMemo.script; const r = document.querySelector('[name="fiMode"][value="script"]'); if (r) r.checked = true; } // retour du Doublage : ton script est gardé
+  majMode();
+  $('#fiScript').oninput = () => { fiMemo.script = $('#fiScript').value; };
+  // ton script lu avec ta voix : le Doublage reçoit les répliques telles que la fabrication les découpe (accroche, salut, blocs, fin)
+  $('#fiDoubler').onclick = async () => {
+    const script = $('#fiScript').value; if (script.trim().length < 80) return signal('Écris d’abord ton script : une accroche, quelques paragraphes et une conclusion.');
+    try {
+      const r = await api('/api/pico/repliques', { method: 'POST', body: JSON.stringify({ script }) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Script illisible');
+      fiMemo.script = script; fiMemo.doublage = j.nom;
+      fermer(); ouvrirDoublage();
+      siLa('#dbTexte', e => { e.value = j.lignes.map(x => String(x).replace(/\s+/g, ' ').trim()).join('\n'); }); siLa('#dbNom', e => { e.value = j.nom; });
+      siLa('#dbMsg', e => { e.textContent = `${j.lignes.length} répliques de ta vidéo, dans l’ordre de la fabrication (avec l’accroche, le salut et la fin de la chaîne). Ne change ni l’ordre ni les phrases : enregistre-les, puis reviens dans Épisode QuentInvest et choisis « Mon doublage « ${j.nom} » ».`; });
+    } catch (er) { signal(er.message); }
+  };
   choixVoixPico('#fiAutoVoix', '#fiAutoVoixInfo');
   $('#fiSujet').onkeydown = e => { if (e.key === 'Enter') $('#fiLancer').click(); };
   $('#fiLancer').onclick = async () => {
@@ -116,7 +131,7 @@ async function choixVoixPico(selId = '#fiVoix', infoId = '#fiVoixInfo') {
   // jamais de voix de synthèse sur la chaîne : ta voix clonée ou un de tes doublages
   const mv = e.maVoix || {}, sansVoix = mv.assez === false;
   sel.innerHTML = `<option value="ma-voix">Ma voix clonée${sansVoix ? ' (enregistre d’abord ta voix)' : mv.installee ? '' : ' (à installer, plusieurs Go)'}</option>${(e.doublages || []).map(n => `<option value="doublage:${esc(n)}">Mon doublage « ${esc(n)} »</option>`).join('')}`;
-  sel.value = 'ma-voix';
+  sel.value = fiMemo.doublage && (e.doublages || []).includes(fiMemo.doublage) ? 'doublage:' + fiMemo.doublage : 'ma-voix';
   // la voix clonée imite ta voix à partir de tes enregistrements du Doublage : sans eux, rien à imiter
   const dire = () => {
     if (sel.value !== 'ma-voix') { info.textContent = 'Tes enregistrements du Doublage, réplique par réplique. Il faut une prise pour chaque réplique : s’il en manque, la fabrication s’arrête et liste celles à enregistrer.'; return; }

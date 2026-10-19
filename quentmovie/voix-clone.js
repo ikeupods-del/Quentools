@@ -41,6 +41,7 @@ function arreterTout() { for (const p of groupes) { try { process.kill(-p.pid, '
 // secondes de ta voix utilisables pour la cloner, choisies comme choisir_reference d'essai.py : répliques de 3 à 10 s
 // (corpus « Ma voix », sinon anciens doublages), jusqu'à environ 12 s ; il en faut au moins VOIX_MIN.
 const VOIX_MIN = 8;
+const paquetVoix = () => Math.max(1, +process.env.QM_VC_PAQUET || 8); // répliques dites par un même processus Python
 function dureeWav(f) {
   try {
     const d = fs.readFileSync(f); let o = 12, fmt = null;
@@ -197,11 +198,17 @@ function creer(base) {
     const libre = espaceLibre();
     if (!fs.existsSync(marque(moteur)) && libre != null && libre < MOTEURS[moteur].go * 2 + 2) throw new Error(`Espace disque insuffisant pour installer ta voix clonée : ${libre} Go libres, environ ${MOTEURS[moteur].go * 2 + 2} Go nécessaires.`);
     await preparerPython(job); await installer(moteur, job, [0.02, 0.2]);
-    const liste = path.join(dossier, `lot-${process.pid}-${Date.now()}.json`); fs.mkdirSync(dossier, { recursive: true });
-    fs.writeFileSync(liste, JSON.stringify(aFaire.map(x => ({ texte: x.texte, fichier: x.fichier }))));
-    try { await lancer(job, pyVenv(moteur), [ESSAI, '--moteur', moteur, '--voix', voix, '--sortie', path.join(dossier, 'reference'), '--lot', liste], { etape: 'Ta voix' }); }
-    finally { fs.rmSync(liste, { force: true }); }
-    for (const x of aFaire) { if (!fs.existsSync(x.fichier)) throw new Error('Réplique non dite par la voix clonée : ' + path.basename(x.fichier)); fs.writeFileSync(x.fichier + '.txt', x.texte); }
+    // par paquets de PAQUET répliques, chacun dans un Python neuf : toute la mémoire de la puce est rendue entre deux paquets
+    // (16 Go sur un MacBook Air), et une réplique déjà dite est gardée si la suite s'arrête
+    fs.mkdirSync(dossier, { recursive: true });
+    const PAQUET = paquetVoix();
+    for (let k = 0; k < aFaire.length; k += PAQUET) {
+      const paquet = aFaire.slice(k, k + PAQUET), liste = path.join(dossier, `lot-${process.pid}-${Date.now()}.json`);
+      fs.writeFileSync(liste, JSON.stringify(paquet.map(x => ({ texte: x.texte, fichier: x.fichier }))));
+      try { await lancer(job, pyVenv(moteur), [ESSAI, '--moteur', moteur, '--voix', voix, '--sortie', path.join(dossier, 'reference'), '--lot', liste, '--premiere', String(k + 1), '--total', String(aFaire.length)], { etape: 'Ta voix' }); }
+      finally { fs.rmSync(liste, { force: true }); }
+      for (const x of paquet) { if (!fs.existsSync(x.fichier)) throw new Error('Réplique non dite par la voix clonée : ' + path.basename(x.fichier)); fs.writeFileSync(x.fichier + '.txt', x.texte); }
+    }
     return { faites: aFaire.length };
   }
   const prete = () => Object.keys(MOTEURS).filter(m => fs.existsSync(marque(m))); // modèles déjà installés (l'essai a été fait)

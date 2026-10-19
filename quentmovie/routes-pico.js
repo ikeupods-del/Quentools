@@ -96,8 +96,18 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
     throw new Error(SYNTHESE_REFUSEE);
   }
   // dossiers de voix par version (YouTube, TikTok) : les répliques de ta voix clonée sont dites (ou gardées si le texte n'a pas changé)
+  // un doublage suit les répliques d'un texte précis : enregistré pour un autre découpage, ta voix tomberait sur les mauvais écrans
+  const pareil = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '');
+  function doublageConforme(nom, scenes) {
+    let lignes; try { lignes = lireJson(path.join(BASE, 'doublages', nom, 'script.json')).lignes; } catch (e) { return; } // ancien doublage sans texte gardé : les prises manquantes seront listées
+    if (!Array.isArray(lignes)) return;
+    const ecarts = scenes.map((s, i) => ({ i, attendu: s.texte, lu: lignes[i] })).filter(x => pareil(x.attendu) !== pareil(x.lu));
+    if (!ecarts.length && lignes.length === scenes.length) return;
+    const ex = ecarts.slice(0, 2).map(x => `réplique ${x.i + 1} : la vidéo dit « ${String(x.attendu).slice(0, 70)} »${x.lu ? `, ton doublage « ${String(x.lu).slice(0, 70)} »` : ', pas enregistrée'}`).join(' ; ');
+    throw new Error(`Ton doublage « ${nom} » ne suit pas les répliques de cette vidéo (${scenes.length} répliques, ${lignes.length} lignes enregistrées${ex ? ' ; ' + ex : ''}). Clique « 🎙 Enregistrer ces répliques » : le Doublage s’ouvre avec exactement les phrases de la vidéo, dans l’ordre.`);
+  }
   async function voixDesVersions(job, choix, dossier, versions) {
-    if (choix.mode === 'doublage') return { youtube: path.join(BASE, 'doublages', choix.nom), tiktok: '' };
+    if (choix.mode === 'doublage') { doublageConforme(choix.nom, versions[0][1].scenes); return { youtube: path.join(BASE, 'doublages', choix.nom), tiktok: '' }; }
     if (choix.mode !== 'ma-voix') return {};
     const VT = require('./voix-texte'), lignes = [], dirs = {};
     for (const [nom, EP] of versions) {
@@ -176,6 +186,15 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       return send(res, 200, { resultat: r === undefined ? null : r });
     }
     if (!p.startsWith('/api/pico')) return NON;
+    // les répliques d'une vidéo (fiche ou script), à enregistrer dans le Doublage dans l'ordre exact de la fabrication
+    if (req.method === 'POST' && p === '/api/pico/repliques') {
+      const b = await readJson(req), pico = dossierPico(opts); if (!pico) throw new Error('Programme de la chaîne QuentInvest introuvable dans cette installation.');
+      let fiche = b.fiche; if (typeof fiche === 'string') { try { fiche = JSON.parse(fiche); } catch (e) { throw new Error('La fiche n’est pas un texte JSON valide.'); } }
+      if (!fiche && String(b.script || '').trim().length >= 80) fiche = require('./fiche-quentinvest').ficheDepuisScript(String(b.script).slice(0, 60000), { numero: 1 });
+      if (!fiche || typeof fiche !== 'object') throw new Error('Écris d’abord ton script ou ta fiche.');
+      const C = require(path.join(pico, 'fabrication', 'composer.js')).compose(fiche);
+      return send(res, 200, { nom: C.base.replace(/^\d+-/, ''), titre: fiche.titre || '', lignes: C.long.scenes.map(s => s.texte) });
+    }
     if (req.method === 'GET' && p === '/api/pico') {
       const pico = dossierPico(opts), e = PAROLE().etat();
       let doublages = []; try { doublages = fs.readdirSync(path.join(BASE, 'doublages')).filter(n => fs.existsSync(path.join(BASE, 'doublages', n, 'v00.wav'))); } catch (er) { /* aucun */ }

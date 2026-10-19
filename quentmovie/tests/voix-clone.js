@@ -115,6 +115,19 @@ exit 1
     const er = await Promise.race([p, new Promise(r => setTimeout(() => r(new Error('délai dépassé')), 20000))]), duree = Date.now() - t0, restes = (spawnSync('ps', ['-eo', 'stat=,args='], { encoding: 'utf8', timeout: 10000 }).stdout || '').split('\n').filter(l => /sleep 4[78]/.test(l) && !/^Z/.test(l.trim()));
     check('annulation : python et ses sous-processus arrêtés', er instanceof Error && /annulé/.test(er.message) && duree < 8000 && !restes.length, `${er && er.message} ${duree} ms ${restes.join(' | ')}`);
   }
+  { // répliques d'un épisode par paquets : un Python neuf par paquet (mémoire rendue), numérotation continue, rien redit au second passage
+    const f = path.join(base, 'lot.sh'), trace = path.join(base, 'appels.txt');
+    fs.writeFileSync(f, `#!/bin/sh\necho "$@" >> '${trace}'\nlot=""; while [ $# -gt 0 ]; do [ "$1" = "--lot" ] && lot="$2"; shift; done\nfor x in $(grep -o '"fichier":"[^"]*"' "$lot" | cut -d'"' -f4); do printf 'RIFF' > "$x"; done\n`); fs.chmodSync(f, 0o755);
+    fs.copyFileSync(f, path.join(base, 'voix-clone', 'venv-qwen', 'bin', 'python')); process.env.QM_VC_PAQUET = '2';
+    const VC = require('../voix-clone').creer(base), lignes = [1, 2, 3, 4, 5].map(k => ({ texte: 'Phrase ' + k + '.', fichier: path.join(base, 'lot', `v0${k}.wav`) }));
+    fs.mkdirSync(path.join(base, 'lot'), { recursive: true }); fs.rmSync(trace, { force: true });
+    const r = await VC.dire('qwen', lignes, {}).catch(e => e), appels = fs.existsSync(trace) ? fs.readFileSync(trace, 'utf8').trim().split('\n') : [];
+    check('paquets : un processus par paquet de 2 répliques', !(r instanceof Error) && appels.length === 3 && lignes.every(x => fs.existsSync(x.fichier)), (r && r.message) || appels.join(' | '));
+    check('paquets : numérotation continue sur tout l’épisode', /--premiere 3 --total 5/.test(appels[1] || '') && /--premiere 5 --total 5/.test(appels[2] || ''), appels.join(' | '));
+    fs.rmSync(trace, { force: true }); const r2 = await VC.dire('qwen', lignes, {});
+    check('paquets : répliques déjà dites gardées', r2.faites === 0 && !fs.existsSync(trace));
+    delete process.env.QM_VC_PAQUET;
+  }
   fs.rmSync(base, { recursive: true, force: true });
   console.log(`Voix clonée : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -3,6 +3,12 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.7.3
+- **Mon script** : un script collé sans ligne vide entre les paragraphes est bien découpé (il était refusé comme « trop court »). Ta fin « abonne-toi, la cloche, c'était Pico » n'est plus dite en double : la chaîne a déjà sa fin.
+- **🎙 Enregistrer ces répliques** (Épisode QuentInvest, Mon script) : le Doublage s'ouvre avec exactement les phrases de la vidéo, dans l'ordre (accroche, salut, blocs, fin). Ton script est gardé, et ton doublage est choisi quand tu reviens.
+- **Ma voix clonée sur un MacBook Air** : elle ne s'arrête plus sur « MPS backend out of memory ». Chaque réplique est dite phrase par phrase, la mémoire est rendue après chaque phrase, et les répliques sont faites par paquets de 8 ; celles déjà dites sont gardées si tu relances.
+- Un doublage enregistré pour un autre texte est refusé avant la fabrication, au lieu de poser ta voix sur les mauvais écrans.
+
 ## 2.7.2
 - **Ma voix clonée** : elle imite ta voix à partir de tes enregistrements du Doublage. S'il n'y en a pas encore assez (au moins 8 secondes : 3 ou 4 phrases lues), QuentMovie le dit tout de suite, avec un bouton « 🎙 Enregistrer ma voix », au lieu de lancer l'écriture et l'installation pour rien.
 

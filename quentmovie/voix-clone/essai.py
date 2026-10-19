@@ -145,33 +145,96 @@ def qwen(ref, texte_ref, sortie, rapport):
         rapport.append({'moteur': 'qwen', 'phrase': i, 'fichier': os.path.basename(f), 'calcul': round(calcul, 1), 'duree': round(len(sons[0]) / sr, 1), 'appareil': dev})
 
 
-def lot(moteur, ref, texte_ref, liste):
-    """Répliques d'un épisode dites avec la voix clonée : le modèle est chargé une seule fois."""
-    import torch
+MORCEAU_MAX = 200  # caractères dits d'un coup : au-delà, la mémoire demandée par le modèle grimpe vite (16 Go sur un MacBook Air)
+
+
+def morceaux(texte, n=MORCEAU_MAX):
+    """Découpe une réplique en phrases regroupées jusqu'à n caractères (une phrase trop longue est coupée aux virgules)."""
+    import re
+    pieces = []
+    for p in (q.strip() for q in re.split(r'(?<=[.!?…])\s+', texte.strip())):
+        while len(p) > n:
+            k = p.rfind(',', 0, n)
+            if k < n // 3:
+                k = p.rfind(' ', 0, n)
+            if k <= 0:
+                k = n - 1
+            pieces.append(p[:k + 1].strip())
+            p = p[k + 1:].strip()
+        if p:
+            pieces.append(p)
+    sortie = []
+    for p in pieces:
+        if sortie and len(sortie[-1]) + 1 + len(p) <= n:
+            sortie[-1] += ' ' + p
+        else:
+            sortie.append(p)
+    return sortie or [texte]
+
+
+def liberer(dev):
+    """Rend la mémoire de la puce entre deux phrases (sinon elle s'accumule jusqu'au débordement)."""
+    import gc, torch
+    gc.collect()
+    if dev == 'mps' and hasattr(torch, 'mps'):
+        torch.mps.empty_cache()
+    elif dev == 'cuda':
+        torch.cuda.empty_cache()
+
+
+def lot(moteur, ref, texte_ref, liste, premiere=1, total=0):
+    """Répliques d'un épisode dites avec la voix clonée : le modèle est chargé une seule fois ;
+    chaque réplique est dite phrase par phrase, la mémoire est rendue après chaque phrase."""
+    import torch, numpy
     dev = appareil()
     if moteur == 'chatterbox':
-        import torchaudio
         etape('Chargement de Chatterbox')
         if dev != 'cuda':
             charger = torch.load
             torch.load = lambda *a, **k: charger(*a, **{**k, 'map_location': torch.device(dev if dev == 'mps' else 'cpu')})
         from chatterbox.mtl_tts import ChatterboxMultilingualTTS
         modele = ChatterboxMultilingualTTS.from_pretrained(device=dev)
-        dire = lambda t, f: torchaudio.save(f, modele.generate(t, language_id='fr', audio_prompt_path=ref).detach().cpu(), modele.sr)
+        sr = modele.sr
+        def un(t):
+            return modele.generate(t, language_id='fr', audio_prompt_path=ref).detach().cpu().numpy().reshape(-1)
     else:
-        import soundfile
         etape('Chargement de Qwen3-TTS')
         from qwen_tts import Qwen3TTSModel
         modele = Qwen3TTSModel.from_pretrained('Qwen/Qwen3-TTS-12Hz-0.6B-Base', device_map=dev if dev != 'cpu' else 'cpu', dtype=torch.float32)
         prompt = modele.create_voice_clone_prompt(ref_audio=ref, ref_text=texte_ref, x_vector_only_mode=False)
-        def dire(t, f):
+        sr = None
+        def un(t):
+            nonlocal sr
             sons, sr = modele.generate_voice_clone(text=t, language='French', voice_clone_prompt=prompt)
-            soundfile.write(f, sons[0], sr)
+            return numpy.asarray(sons[0], dtype=numpy.float32).reshape(-1)
+
+    def phrase(t):
+        with torch.inference_mode():
+            try:
+                return un(t)
+            except RuntimeError as e:
+                if 'out of memory' not in str(e).lower():
+                    raise
+                liberer(dev)  # mémoire pleine : on la rend et on réessaie une fois
+                return un(t)
+            finally:
+                liberer(dev)
+
+    try:
+        import soundfile
+        ecrire = lambda f, son: soundfile.write(f, son, sr, subtype='PCM_16')
+    except ImportError:  # Chatterbox installé sans soundfile : torchaudio écrit le fichier
+        import torchaudio
+        ecrire = lambda f, son: torchaudio.save(f, torch.from_numpy(son).unsqueeze(0), sr)
     for i, x in enumerate(liste, 1):
-        etape('Ta voix : réplique %d sur %d' % (i, len(liste)))
+        etape('Ta voix : réplique %d sur %d' % (premiere + i - 1, total or len(liste)))
         os.makedirs(os.path.dirname(x['fichier']), exist_ok=True)
-        dire(x['texte'], x['fichier'] + '.tmp.wav')
+        parts = [phrase(m) for m in morceaux(x['texte'])]
+        pause = numpy.zeros(int(0.18 * sr), dtype=numpy.float32)
+        son = numpy.concatenate([p for k, q in enumerate(parts) for p in ((pause, q) if k else (q,))])
+        ecrire(x['fichier'] + '.tmp.wav', son)
         os.replace(x['fichier'] + '.tmp.wav', x['fichier'])
+        print('FAIT : ' + x['fichier'], flush=True)
 
 
 def main():
@@ -181,6 +244,8 @@ def main():
     a.add_argument('--sortie', required=True)
     a.add_argument('--selection-seule', action='store_true')
     a.add_argument('--lot')
+    a.add_argument('--premiere', type=int, default=1)  # numéro de la première réplique du lot (lots successifs d'un même épisode)
+    a.add_argument('--total', type=int, default=0)
     o = a.parse_args()
     etape('Choix de l\'extrait de ta voix')
     ref, texte, total = choisir_reference(o.voix, o.sortie)
@@ -191,7 +256,7 @@ def main():
         with open(o.lot, encoding='utf-8') as f:
             liste = json.load(f)
         try:
-            lot(o.moteur, ref, texte, liste)
+            lot(o.moteur, ref, texte, liste, o.premiere, o.total)
         except Exception as e:
             import traceback
             traceback.print_exc()
