@@ -4,7 +4,9 @@
 const fs = require('fs');
 const path = require('path');
 const { fork, spawn, execFile } = require('child_process');
-const { requete } = require('./maj');
+const MAJ = require('./maj');
+// téléchargement vers un fichier : en cas d'échec, le fichier partiel est retiré
+const requete = (url, o = {}, ...r) => MAJ.requete(url, o, ...r).catch(e => { if (o.dest) { try { require('fs').rmSync(o.dest, { force: true }); } catch (er) { /* rien à retirer */ } } throw e; });
 
 const MODELE = { fichier: 'Qwen3-4B-Instruct-2507-Q4_K_M.gguf', url: 'https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF/resolve/main/Qwen3-4B-Instruct-2507-Q4_K_M.gguf', mo: 2500 };
 MODELE.nom = 'Standard (Qwen3 4B, rapide)';

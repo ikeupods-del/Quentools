@@ -95,6 +95,17 @@ exit 1
     check('prononciations : fichier écrit dans le dossier QuentMovie et utilisé par la voix', fs.existsSync(path.join(base, 'prononciations.json')) && require('../voix-texte').pourLaVoix('Quentin et le krach') === 'Kantin et le crac');
     app.stop();
   }
+  { // arrêt d'un essai : python et tout ce qu'il a lancé (pip, sous-processus) s'arrêtent, l'essai ne finit qu'après
+    const VC = require('../voix-clone').creer(base), job = {}, f = path.join(base, 'enfants.sh');
+    fs.writeFileSync(f, '#!/bin/sh\necho "ETAPE : en cours"\nsleep 47 &\nsleep 48\n'); fs.chmodSync(f, 0o755);
+    process.env.QM_PYTHON = f; fs.mkdirSync(path.join(base, 'voix-clone', 'venv-qwen'), { recursive: true }); fs.writeFileSync(path.join(base, 'voix-clone', 'venv-qwen', '.complet'), 'essai');
+    const venvPy = path.join(base, 'voix-clone', 'venv-qwen', 'bin', 'python'); fs.mkdirSync(path.dirname(venvPy), { recursive: true }); fs.copyFileSync(f, venvPy); fs.chmodSync(venvPy, 0o755);
+    const p = VC.dire('qwen', [{ texte: 'Bonjour.', fichier: path.join(base, 'x.wav') }], job).catch(e => e);
+    for (let i = 0; i < 50 && !job.enfant; i++) await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 300)); VC.annuler(job); const t0 = Date.now();
+    const er = await Promise.race([p, new Promise(r => setTimeout(() => r(new Error('délai dépassé')), 20000))]), duree = Date.now() - t0, restes = (spawnSync('ps', ['-eo', 'stat=,args='], { encoding: 'utf8', timeout: 10000 }).stdout || '').split('\n').filter(l => /sleep 4[78]/.test(l) && !/^Z/.test(l.trim()));
+    check('annulation : python et ses sous-processus arrêtés', er instanceof Error && /annulé/.test(er.message) && duree < 8000 && !restes.length, `${er && er.message} ${duree} ms ${restes.join(' | ')}`);
+  }
   fs.rmSync(base, { recursive: true, force: true });
   console.log(`Voix clonée : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

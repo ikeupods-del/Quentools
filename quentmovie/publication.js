@@ -40,13 +40,14 @@ function creer({ base, coffre = null, ouvrirUrl = null, points = {} }) {
   const ecrire = d => { fs.mkdirSync(dossier, { recursive: true }); fs.writeFileSync(fichierComptes + '.tmp', JSON.stringify(d, null, 1), { mode: 0o600 }); fs.renameSync(fichierComptes + '.tmp', fichierComptes); };
   // secrets chiffrés par le trousseau quand il existe ; sinon dans un fichier réservé à l'utilisateur (droits 600)
   const sceller = v => (coffre && v ? { c: 1, v: coffre.chiffrer(v) } : { c: 0, v });
-  const ouvrir = o => (!o ? '' : o.c ? (coffre ? coffre.dechiffrer(o.v) : '') : o.v || '');
-  const compte = n => { const c = lire()[n] || {}; return { id: c.id || '', secret: ouvrir(c.secret), refresh: ouvrir(c.refresh), acces: ouvrir(c.acces), expire: c.expire || 0, nom: c.nom || '' }; };
+  // trousseau changé ou clé illisible : valeur vide, le compte est à reconnecter (le panneau Publier reste utilisable)
+  const ouvrir = (o, k) => { if (!o) return ''; if (!o.c) return o.v || ''; try { return coffre ? coffre.dechiffrer(o.v) : (k.illisible = true, ''); } catch (e) { k.illisible = true; return ''; } };
+  const compte = n => { const c = lire()[n] || {}, k = {}; return Object.assign(k, { id: c.id || '', secret: ouvrir(c.secret, k), refresh: ouvrir(c.refresh, k), acces: ouvrir(c.acces, k), expire: c.expire || 0, nom: c.nom || '' }); };
   const garder = (n, o) => { const d = lire(), c = d[n] || {}; d[n] = { ...c, ...Object.fromEntries(Object.entries(o).map(([k, v]) => [k, ['secret', 'refresh', 'acces'].includes(k) ? sceller(v) : v])) }; ecrire(d); };
 
   function etat() {
     const g = compte('youtube'), t = compte('tiktok');
-    return { youtube: { configure: !!(g.id && g.secret), connecte: !!g.refresh, nom: g.nom }, tiktok: { configure: !!(t.id && t.secret), connecte: !!t.refresh, nom: t.nom }, chiffre: !!coffre, dossier };
+    return { youtube: { configure: !!(g.id && g.secret), connecte: !!g.refresh, nom: g.nom, aReconnecter: !!g.illisible }, tiktok: { configure: !!(t.id && t.secret), connecte: !!t.refresh, nom: t.nom, aReconnecter: !!t.illisible }, chiffre: !!coffre, dossier };
   }
   function configurer(n, id, secret) {
     if (!['youtube', 'tiktok'].includes(n)) throw new Error('Plateforme inconnue');

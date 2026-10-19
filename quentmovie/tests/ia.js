@@ -139,6 +139,23 @@ const check = (nom, cond, info = '') => { if (cond) ok++; else { ko++; console.l
     console.log('Téléchargement depuis un lien :', j.error || j.resultat.file);
     check('vidéo téléchargée depuis un lien', j.done && j.resultat && fs.existsSync(path.join(base, 'medias', j.resultat.file)), j.error);
   }
+  { // processus de l'IA (ia-worker.js) avec un faux node-llama-cpp : une demande à la fois, modèle jamais chargé deux fois ni libéré en cours d'usage
+    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-ia-file-')), faux = path.join(d, 'faux-llama.mjs'), pause = 'new Promise(r => setTimeout(r, 120))';
+    fs.writeFileSync(faux, `const S = { charges: 0, chargeEnCours: 0, maxCharge: 0, usage: 0, maxUsage: 0, liberesEnUsage: 0 };
+export async function getLlama() { return { gpu: false, async loadModel({ modelPath }) { S.charges++; S.chargeEnCours++; S.maxCharge = Math.max(S.maxCharge, S.chargeEnCours); await ${pause}; S.chargeEnCours--;
+  return { chemin: modelPath, async dispose() { if (S.usage) S.liberesEnUsage++; }, async createContext() { return { getSequence: () => ({}), async dispose() {} }; } }; } }; }
+export class LlamaChatSession { async prompt() { S.usage++; S.maxUsage = Math.max(S.maxUsage, S.usage); await ${pause}; S.usage--; return JSON.stringify(S); } }\n`);
+    fs.writeFileSync(path.join(d, 'crochets.mjs'), `export async function resolve(s, c, n) { return s === 'node-llama-cpp' ? { url: ${JSON.stringify(require('url').pathToFileURL(faux).href)}, shortCircuit: true } : n(s, c); }\n`);
+    fs.writeFileSync(path.join(d, 'enregistrer.mjs'), `import { register } from 'node:module'; register('./crochets.mjs', import.meta.url);\n`);
+    const w = require('child_process').fork(path.join(__dirname, '..', 'ia-worker.js'), [], { execArgv: ['--import', require('url').pathToFileURL(path.join(d, 'enregistrer.mjs')).href], stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+    const rep = new Map(); w.on('message', m => { if (m.id) rep.set(m.id, m); });
+    await new Promise((ok, ko) => { w.once('message', ok); w.once('exit', () => ko(new Error('processus de l’IA arrêté'))); setTimeout(() => ko(new Error('processus de l’IA sans réponse')), 20000).unref(); });
+    ['a', 'a', 'a', 'b', 'a'].forEach((m, i) => w.send({ id: i + 1, type: 'ecrire', modele: m, systeme: '', demande: 'x' }));
+    for (let i = 0; i < 100 && rep.size < 5; i++) await new Promise(r => setTimeout(r, 50));
+    const S = JSON.parse((rep.get(5) || {}).resultat || '{}');
+    check('IA : demandes traitées une à une (modèle chargé une fois à la fois, jamais libéré en cours d’usage)', rep.size === 5 && [...rep.values()].every(m => m.ok) && S.maxCharge === 1 && S.maxUsage === 1 && S.liberesEnUsage === 0 && S.charges === 3, JSON.stringify({ S, n: rep.size }));
+    w.kill(); fs.rmSync(d, { recursive: true, force: true });
+  }
   app.stop(); if (!process.env.QM_BASE) fs.rmSync(base, { recursive: true, force: true });
   console.log(`IA et liens : ${ok} contrôles réussis, ${ko} échecs`);
   process.exit(ko ? 1 : 0);

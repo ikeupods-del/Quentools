@@ -24,8 +24,12 @@ async function ecrire({ modele: fichier, systeme, demande, schema, maxTokens = 2
   } finally { await ctx.dispose(); }
 }
 
-process.on('message', async m => {
-  try { process.send({ id: m.id, ok: true, ...(m.type === 'ecrire' ? await ecrire(m) : { pong: true }) }); }
-  catch (e) { process.send({ id: m.id, ok: false, erreur: String((e && e.message) || e) }); }
+// une demande à la fois : le modèle (2,5 à 5 Go) n'est jamais chargé deux fois en même temps, ni libéré pendant qu'une demande l'utilise
+let file = Promise.resolve();
+process.on('message', m => {
+  file = file.then(async () => {
+    try { process.send({ id: m.id, ok: true, ...(m.type === 'ecrire' ? await ecrire(m) : { pong: true }) }); }
+    catch (e) { process.send({ id: m.id, ok: false, erreur: String((e && e.message) || e) }); }
+  }).catch(() => { /* canal fermé : la file continue */ });
 });
 process.send({ pret: true });

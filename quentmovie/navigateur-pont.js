@@ -4,7 +4,9 @@
 'use strict';
 
 async function appel(action, corps) {
-  const r = await fetch(`${process.env.QI_NAVIGATEUR}/${action}`, { method: 'POST', headers: { 'x-jeton': process.env.QI_JETON || '' }, body: JSON.stringify(corps) });
+  // une page bloquée ne gèle pas la fabrication : sans réponse en 60 s, l'écran est en échec
+  const r = await fetch(`${process.env.QI_NAVIGATEUR}/${action}`, { method: 'POST', headers: { 'x-jeton': process.env.QI_JETON || '' }, body: JSON.stringify(corps), signal: AbortSignal.timeout(60000) })
+    .catch(e => { throw new Error(e && e.name === 'TimeoutError' ? `Navigateur des écrans sans réponse (${action})` : `Navigateur des écrans indisponible (${(e && e.message) || e})`); });
   const j = await r.json().catch(() => ({}));
   if (!r.ok || j.error) throw new Error(j.error || `Navigateur des écrans indisponible (${r.status})`);
   return j.resultat;

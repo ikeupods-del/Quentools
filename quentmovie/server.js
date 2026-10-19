@@ -53,6 +53,8 @@ const num = (v, d) => (Number.isFinite(+v) ? +v : d);
 const safeName = n => path.basename(String(n || 'media')).replace(/[^\w.\- ()]/g, '_').slice(-120) || 'media';
 const hex = c => (/^#?[0-9a-f]{6}$/i.test(c || '') ? '0x' + String(c).replace('#', '') : '0x00ff00');
 const even = n => Math.max(2, Math.round(n / 2) * 2);
+// date et heure locales pour les noms de fichiers (20261019-153012 → « 20261019153012 »)
+const horodatage = (d = new Date()) => [d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds()].map((n, i) => String(n).padStart(i ? 2 : 4, '0')).join('');
 
 function create(opts = {}) {
   const PORT = opts.port || 0;
@@ -69,12 +71,15 @@ function create(opts = {}) {
   // Vignettes et ondes sonores de la timeline gardées sur le disque : un projet rouvert s'affiche sans relancer FFmpeg.
   // Clé = fichier (chemin, taille, date de modification) + réglages ; une même image demandée deux fois à la fois n'est calculée qu'une fois.
   const CACHE_TL = path.join(BASE, '.cache-timeline'), calculsTl = new Map(); let ecritsTl = 0;
-  const elaguerTl = () => { // au-delà de 250 Mo, les plus anciennes partent
+  // cache limité : au-delà de max octets (ou de age ms sans usage), les fichiers les plus anciens partent
+  const elaguer = (dir, max, age = Infinity) => {
     try {
-      const l = fs.readdirSync(CACHE_TL).map(n => { const st = fs.statSync(path.join(CACHE_TL, n)); return { n, t: st.atimeMs > st.mtimeMs ? st.atimeMs : st.mtimeMs, o: st.size }; }).sort((a, b) => b.t - a.t);
-      let tot = 0; for (const x of l) { tot += x.o; if (tot > 250e6) fs.unlinkSync(path.join(CACHE_TL, x.n)); }
+      const l = fs.readdirSync(dir).map(n => { const st = fs.statSync(path.join(dir, n)); return { n, t: st.atimeMs > st.mtimeMs ? st.atimeMs : st.mtimeMs, o: st.size, f: st.isFile() }; }).filter(x => x.f).sort((a, b) => b.t - a.t);
+      let tot = 0; for (const x of l) { tot += x.o; if (tot > max || Date.now() - x.t > age) { try { fs.unlinkSync(path.join(dir, x.n)); } catch (e) { /* déjà retiré */ } } }
     } catch (e) { /* cache facultatif */ }
   };
+  const elaguerTl = () => elaguer(CACHE_TL, 250e6); // au-delà de 250 Mo, les plus anciennes partent
+  const VIGNETTES = path.join(BASE, 'cache-vignettes'); let ecritsVig = 0;
   const enCache = async (fichier, reglages, fabriquer) => {
     let st; try { st = fs.statSync(fichier); } catch (e) { return fabriquer(); }
     const cle = require('crypto').createHash('sha1').update(JSON.stringify([fichier, st.size, Math.round(st.mtimeMs), reglages])).digest('hex'), f = path.join(CACHE_TL, cle);
@@ -116,7 +121,7 @@ function create(opts = {}) {
   // Chemin utilisable dans un filtre FFmpeg (sinon copie sous un nom simple)
   const cheminFiltre = f => {
     if (/^[\w\-./ ]+$/.test(f)) return f;
-    const dest = path.join(TMP, 'lut-' + require('crypto').createHash('md5').update(f).digest('hex') + path.extname(f));
+    const st = fs.statSync(f), dest = path.join(TMP, 'lut-' + require('crypto').createHash('md5').update(`${f}|${st.size}|${st.mtimeMs}`).digest('hex') + path.extname(f)); // LUT réimporté sous le même nom : nouvelle copie
     if (!fs.existsSync(dest)) fs.copyFileSync(f, dest);
     return dest;
   };
@@ -125,7 +130,7 @@ function create(opts = {}) {
   const packCache = new Map();
   let gen = null;
   // téléchargement des vignettes : 4 à la fois, nouvel essai si Wikimedia répond « trop de demandes »
-  const vigAttente = []; let vigActifs = 0;
+  const vigAttente = [], vigEnCours = new Map(); let vigActifs = 0;
   const vignetteFile = (u, f) => new Promise((ok, ko) => { vigAttente.push({ u, f, ok, ko }); vigPompe(); });
   function vigPompe() {
     while (vigActifs < 4 && vigAttente.length) {
@@ -133,7 +138,7 @@ function create(opts = {}) {
       (async () => {
         for (let essai = 0; ; essai++) {
           try { await require('./maj').requete(t.u, { dest: t.f + '.part', ua: 'QuentMovie/1.7 (logiciel de montage personnel; https://github.com/ikeupods-del/Quentools)', accept: 'image/*', quoi: 'd’images' }); fs.renameSync(t.f + '.part', t.f); return; }
-          catch (e) { if (e.code === 429 && essai < 3) { await new Promise(r => setTimeout(r, 1500 * (essai + 1))); continue; } throw e; }
+          catch (e) { if (e.code === 429 && essai < 3) { await new Promise(r => setTimeout(r, 1500 * (essai + 1))); continue; } try { fs.rmSync(t.f + '.part', { force: true }); } catch (e2) { /* rien à retirer */ } throw e; }
         }
       })().then(t.ok, t.ko).finally(() => { vigActifs--; vigPompe(); });
     }
@@ -143,7 +148,7 @@ function create(opts = {}) {
   const IA = () => ia || (ia = require('./ia').creer({ BASE, FFMPEG, memoire: () => MEM.pourPrompt(MEMOIRE.lire(), 600) }));
   // Analyse d'une vidéo à partir de son texte : calcul du programme (genre, mots-clés, rythme) puis, si l'IA locale est installée, sujet et idées fortes
   // Analyse de l'image et du son de chaque média (gardée en cache) : changements de plan, luminosité, niveau sonore, blancs
-  async function analyseFichier(f) {
+  async function analyseFichier(f, cwd) { // cwd : dossier d'un export (arrêté avec lui)
     let st; try { st = fs.statSync(f); } catch (e) { return null; }
     const cle = require('crypto').createHash('sha1').update(`a2|${f}|${st.size}|${st.mtimeMs}`).digest('hex'), cache = path.join(BASE, '.analyses', cle + '.json');
     try { return JSON.parse(fs.readFileSync(cache, 'utf8')); } catch (e) { /* à calculer */ }
@@ -153,7 +158,7 @@ function create(opts = {}) {
     if (audio) { g.push('[0:a]ebur128=framelog=quiet,silencedetect=n=-35dB:d=0.7[a]'); maps.push('-map', '[a]'); }
     if (!g.length) return null;
     let e = '';
-    try { e = await run(FFMPEG, ['-hide_banner', '-nostats', '-i', f, '-filter_complex', g.join(';'), ...maps, '-f', 'null', '-'], { wantErr: true }); } catch (err) { return null; }
+    try { e = await run(FFMPEG, ['-hide_banner', '-nostats', '-i', f, '-filter_complex', g.join(';'), ...maps, '-f', 'null', '-'], { wantErr: true, cwd }); } catch (err) { return null; }
     const tous = (re, conv = Number) => [...e.matchAll(re)].map(x => conv(x[1]));
     const y = tous(/lavfi\.signalstats\.YAVG=([\d.]+)/g), deb = tous(/silence_start: (-?[\d.]+)/g), fin = tous(/silence_end: ([\d.]+)/g);
     const I = tous(/\bI:\s+(-?[\d.]+) LUFS/g), LRA = tous(/\bLRA:\s+([\d.]+) LU/g);
@@ -280,15 +285,18 @@ function create(opts = {}) {
     return brut.length > 400 ? detail : brut;
   }
   // export annulé : tous les FFmpeg qui travaillent dans son dossier sont arrêtés, et ceux qui démarreraient encore aussi
-  const dossiersAnnules = new Set(), enCours = new Map();
+  const dossiersAnnules = new Set(), enCours = new Map(), tousProcessus = new Set(); // tousProcessus : arrêtés à la fermeture, même lancés sans dossier
   function annulerDossier(dir) {
     if (!dir) return; dossiersAnnules.add(dir);
     for (const p of enCours.get(dir) || []) { try { p.kill('SIGKILL'); } catch (e) { /* déjà fini */ } }
   }
+  // attend que tous les FFmpeg d'un dossier soient arrêtés (avant de supprimer le dossier)
+  const finDuDossier = dir => new Promise(ok => { const l = [...(enCours.get(dir) || [])]; let n = l.length; if (!n) return ok(); l.forEach(p => p.once('close', () => { if (--n === 0) ok(); })); });
   function runBrut(cmd, args, { cwd, onOut, binary, wantErr, silence } = {}) {
     return new Promise((resolve, reject) => {
       if (cwd && dossiersAnnules.has(cwd)) return reject(new Error('Export annulé.'));
       const p = spawn(cmd, args, { cwd });
+      tousProcessus.add(p); p.on('close', () => tousProcessus.delete(p)); p.on('error', () => tousProcessus.delete(p));
       if (cwd) { if (!enCours.has(cwd)) enCours.set(cwd, new Set()); enCours.get(cwd).add(p); p.on('close', () => { const l = enCours.get(cwd); if (l) { l.delete(p); if (!l.size) enCours.delete(cwd); } }); }
       if (cwd && dossiersBasse.has(cwd) && p.pid) { try { os.setPriority(p.pid, 15); } catch (e) { /* priorité inchangée */ } }
       const out = []; let err = '', fige = false, garde = null;
@@ -344,6 +352,7 @@ function create(opts = {}) {
   function sonde(file) {
     return new Promise((ok, ko) => {
       const p = spawn(FFMPEG, ['-hide_banner', '-i', file]); let err = '';
+      tousProcessus.add(p); p.on('close', () => tousProcessus.delete(p)); p.on('error', () => tousProcessus.delete(p));
       p.stderr.on('data', d => { err += d; });
       p.on('error', e => ko(new Error(e.code === 'ENOENT' ? 'FFmpeg est introuvable.' : e.message)));
       p.on('close', () => {
@@ -1131,6 +1140,7 @@ function buildClip(c, P, o = {}) {
       const h = require('crypto').createHash('sha1').update('v2|' + version + '|' + txt);
       for (const x of ordre) h.update('|#|').update(fs.readFileSync(path.join(dir, x.f)));
       for (const a of args) if (typeof a === 'string' && path.isAbsolute(a) && !a.startsWith(dir)) { const st = fs.statSync(a); h.update(`|${a}|${st.size}|${st.mtimeMs}`); }
+      for (const m of txt.matchAll(/file='([^']+)'/g)) if (path.isAbsolute(m[1])) { const st = fs.statSync(m[1]); h.update(`|${m[1]}|${st.size}|${st.mtimeMs}`); } // LUT réimporté sous le même nom
       return h.digest('hex');
     } catch (e) { return null; } // fichier introuvable : pas de cache pour ce clip
   }
@@ -1231,7 +1241,7 @@ function buildClip(c, P, o = {}) {
       // les phrases gardent leurs nuances (une normalisation par morceau aplatissait chaque phrase et échouait sur un clip muet)
       const lufsSource = {};
       const stop = () => { if (job.annule) throw new Error('Export annulé.'); };
-      for (const c of clips) if ((c.afx || []).some(e => e && e.id === 'normaliser') && c.file && !(c.file in lufsSource)) { stop(); job.step = 'Mesure du volume'; const a = await analyseFichier(mediaPath(c.file)).catch(() => null); lufsSource[c.file] = a && a.lufs != null && a.lufs > -60 ? a.lufs : null; }
+      for (const c of clips) if ((c.afx || []).some(e => e && e.id === 'normaliser') && c.file && !(c.file in lufsSource)) { stop(); job.step = 'Mesure du volume'; const a = await analyseFichier(mediaPath(c.file), dir).catch(() => null); lufsSource[c.file] = a && a.lufs != null && a.lufs > -60 ? a.lufs : null; }
       clips.forEach(c => { if (lufsSource[c.file] != null) c.gainNorm = +clamp(-16 - lufsSource[c.file], -20, 20).toFixed(1); });
       // HDR : une lecture par fichier (pas une par clip : 200 morceaux d'une même vidéo lançaient 200 FFmpeg à la fois)
       const videoSource = c => c.file && !(c.kind === 'image' || c.kind === 'solid' || c.kind === 'audio') && hdrPossible(), hdrFichier = {};
@@ -1270,8 +1280,10 @@ function buildClip(c, P, o = {}) {
       };
       const enParallele = Math.max(1, Math.min(built.length, vt ? Math.min(4, Math.max(2, Math.floor(os.cpus().length / 3))) : 2));
       job.step = `Clips : 0 sur ${built.length}`; job.paralleles = enParallele;
-      let suivant = 0;
-      await Promise.all(Array.from({ length: enParallele }, async () => { while (suivant < built.length) await encoderClip(suivant++); }));
+      let suivant = 0, echec = null;
+      // un clip en échec : les autres FFmpeg sont arrêtés et attendus avant de supprimer le dossier
+      await Promise.all(Array.from({ length: enParallele }, async () => { while (!echec && suivant < built.length) { try { await encoderClip(suivant++); } catch (e) { if (!echec) { echec = e; annulerDossier(dir); } } } }));
+      if (echec) throw echec;
       job.repris = repris;
       nettoyerCache(); stop();
 
@@ -1404,7 +1416,8 @@ function buildClip(c, P, o = {}) {
         job.niveaux = { montage: lufsMontage };
         // quelques sons préparés à la fois (un pack pose une centaine de bruitages sur un long montage : jamais cent FFmpeg d'un coup)
         let prochain = 0; const unSon = async (a, i) => {
-          const de = clamp(num(a.in, 0), 0, 36000), du = clamp(num(a.dur, 0), 0, 36000); // partie du fichier (son détaché d'une vidéo)
+          const du = clamp(num(a.dur, 0), 0, 36000), boucle = a.loop && !du, deBoucle = boucle ? clamp(num(a.in, 0), 0, 36000) : 0, de = boucle ? 0 : clamp(num(a.in, 0), 0, 36000); // partie du fichier (son détaché d'une vidéo)
+          // musique en boucle commencée avant un extrait : fichier entier, la reprise se fait dans la boucle (début modulo sa durée)
           await ff([...(de > 0 ? ['-ss', de] : []), ...(du > 0 ? ['-t', du] : []), '-i', mediaPath(a.file), ...wav], `brut${i}.wav`);
           const type = typeSon(a), l = type === 'autre' || a.niveauBrut ? null : await lufs(`brut${i}.wav`);
           if (l != null && l > -60) { // gain calculé : niveau cible du type + réglage relatif du curseur
@@ -1418,9 +1431,10 @@ function buildClip(c, P, o = {}) {
           const lg = du > 0 ? du / vit : a.loop ? dur - st : (+((await infos(path.join(dir, `brut${i}.wav`))).format.duration) || dur) / vit;
           const fd = a.fade ? `,afade=t=in:d=${Math.min(1.2, lg / 3).toFixed(2)},afade=t=out:st=${Math.max(0, Math.min(lg, dur - st) - Math.min(1.5, lg / 3)).toFixed(2)}:d=${Math.min(1.5, lg / 3).toFixed(2)}` : ''; const tempo = []; while (vit > 2.001) { tempo.push('atempo=2'); vit /= 2; } while (vit < 0.499) { tempo.push('atempo=0.5'); vit *= 2; } if (Math.abs(vit - 1) > 0.001) tempo.push(`atempo=${vit.toFixed(4)}`);
           // boucle : le même fichier répété par une liste (la boucle automatique de FFmpeg se figeait parfois)
-          let entree = ['-i', `brut${i}.wav`];
-          if (a.loop && !du) {
-            const l = +((await infos(path.join(dir, `brut${i}.wav`))).format.duration) || 0, n = l > 0 ? Math.min(400, Math.ceil(dur / l) + 1) : 1;
+          let entree = ['-i', `brut${i}.wav`], decal = 0;
+          if (boucle) {
+            const l = +((await infos(path.join(dir, `brut${i}.wav`))).format.duration) || 0; decal = l > 0 ? deBoucle % l : 0;
+            const n = l > 0 ? Math.min(400, Math.ceil((dur + decal) / l) + 1) : 1;
             if (n > 1 && n <= 40) {
               // boucle sans trou : le silence et le fondu de fin du morceau sont retirés, les reprises s'enchaînent en fondu d'une seconde
               await ff(['-i', `brut${i}.wav`, '-af', 'areverse,silenceremove=start_periods=1:start_threshold=-45dB,areverse', ...wav], `net${i}.wav`);
@@ -1433,7 +1447,7 @@ function buildClip(c, P, o = {}) {
           // fichier court (le son seul) : le décalage et le silence jusqu'à la fin sont ajoutés au moment du mélange
           // (avant : un WAV de toute la durée par son, plus de 400 Mo chacun pour un montage de 36 min)
           a.ms = ms;
-          await ff([...entree, '-af', `${tempo.length ? tempo.join(',') + ',' : ''}${gain}${fd}`, '-t', Math.max(0.05, dur - st).toFixed(3), ...wav], `son${i + 1}.wav`);
+          await ff([...(decal > 0.01 ? ['-ss', decal.toFixed(3)] : []), ...entree, '-af', `${tempo.length ? tempo.join(',') + ',' : ''}${gain}${fd}`, '-t', Math.max(0.05, dur - st).toFixed(3), ...wav], `son${i + 1}.wav`);
           jeter(`brut${i}.wav`, `net${i}.wav`, `boucle${i}.wav`, `boucle${i}.txt`); // étapes du son, plus utiles
         };
         await Promise.all(Array.from({ length: Math.min(4, audios.length) }, async () => { while (prochain < audios.length) { const i = prochain++; await unSon(audios[i], i); } }));
@@ -1498,12 +1512,15 @@ function buildClip(c, P, o = {}) {
         job.url = '/apercu/' + name;
       } else {
         // nom unique : deux exports finis dans la même seconde ne s'écrasent pas (montage-…-2.mp4)
-        const racine = `${job.extrait ? 'extrait' : 'montage'}-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}`; let name = `${racine}.${sortie}`;
+        const racine = `${job.extrait ? 'extrait' : 'montage'}-${horodatage()}`; let name = `${racine}.${sortie}`;
         for (let n = 2; ; n++) { try { fs.copyFileSync(path.join(dir, final), path.join(EXPORTS, name), fs.constants.COPYFILE_FICLONE | fs.constants.COPYFILE_EXCL); break; } catch (e) { if (e.code !== 'EEXIST' || n > 99) throw e; name = `${racine}-${n}.${sortie}`; } } // copie instantanée sur le disque du Mac (APFS)
         job.out = name;
       }
       job.fin = Date.now(); job.progress = 1; job.done = true;
-    } finally { dossiersBasse.delete(dir); if (!process.env.QM_GARDER) fs.rmSync(dir, { recursive: true, force: true }); }
+    } finally {
+      if (!job.done) { annulerDossier(dir); await finDuDossier(dir); } // échec ou annulation : aucun FFmpeg ne continue dans un dossier supprimé
+      dossiersBasse.delete(dir); if (!process.env.QM_GARDER) fs.rmSync(dir, { recursive: true, force: true });
+    }
   }
 
   // Éléments de la piste vidéo 2 (ordre des rangées : la plus haute devant), avec forme, bordure, fondu et son.
@@ -1605,25 +1622,40 @@ function buildClip(c, P, o = {}) {
     res.writeHead(code, { 'Content-Type': type, 'Cache-Control': cache });
     res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body));
   }
-  function readJson(req) {
+  // corps d'une requête : morceaux décodés ensemble (un accent coupé entre deux morceaux restait abîmé) ; au-delà de max, erreur 413
+  function lireCorps(req, max, trop = 'Projet trop volumineux') {
     return new Promise((resolve, reject) => {
-      let s = '';
-      req.on('data', d => { s += d; if (s.length > 2e7) req.destroy(); });
-      req.on('end', () => { try { resolve(JSON.parse(s || '{}')); } catch (e) { reject(new Error('Requête invalide')); } });
+      const l = []; let n = 0, fini = false;
+      req.on('data', d => { if (fini) return; n += d.length; if (n > max) { fini = true; l.length = 0; const e = new Error(`${trop} (plus de ${Math.round(max / 1e6)} Mo).`); e.status = 413; reject(e); } else l.push(d); }); // le reste est lu sans être gardé : la réponse 413 part
+      req.on('end', () => { if (!fini) { fini = true; resolve(Buffer.concat(l)); } });
+      req.on('error', e => { if (!fini) { fini = true; reject(e); } });
+      req.on('close', () => { if (!fini) { fini = true; reject(new Error('Envoi interrompu')); } });
     });
   }
+  function readJson(req) {
+    return lireCorps(req, 2e7).then(b => { try { return JSON.parse(b.toString('utf8') || '{}'); } catch (e) { throw new Error('Requête invalide'); } });
+  }
   function serveFile(req, res, file, download) {
-    if (!fs.existsSync(file) || !fs.statSync(file).isFile()) return send(res, 404, { error: 'Introuvable' });
-    const st = fs.statSync(file);
+    let st = null; try { st = fs.statSync(file); } catch (e) { /* absent */ }
+    if (!st || !st.isFile()) return send(res, 404, { error: 'Introuvable' });
     const h = { 'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream', 'Accept-Ranges': 'bytes' };
     if (download) h['Content-Disposition'] = `attachment; filename="${path.basename(file)}"`;
-    const m = /bytes=(\d*)-(\d*)/.exec(req.headers.range || '');
-    if (m) {
-      const a = m[1] ? +m[1] : 0, b = m[2] ? Math.min(+m[2], st.size - 1) : st.size - 1;
+    const flux = o => { const r = fs.createReadStream(file, o); r.on('error', () => res.destroy()); r.pipe(res); };
+    const m = /^bytes=(\d*)-(\d*)$/.exec(String(req.headers.range || '').trim());
+    if (m && (m[1] || m[2])) {
+      // « bytes=-N » : les N derniers octets ; début au-delà de la fin (ou fichier vide) : 416
+      const a = m[1] ? +m[1] : Math.max(0, st.size - +m[2]), b = m[1] && m[2] ? Math.min(+m[2], st.size - 1) : st.size - 1;
+      if (!st.size || a >= st.size || a > b) { res.writeHead(416, { ...h, 'Content-Range': `bytes */${st.size}` }); return res.end(); }
       res.writeHead(206, { ...h, 'Content-Range': `bytes ${a}-${b}/${st.size}`, 'Content-Length': b - a + 1 });
-      fs.createReadStream(file, { start: a, end: b }).pipe(res);
-    } else { res.writeHead(200, { ...h, 'Content-Length': st.size }); fs.createReadStream(file).pipe(res); }
+      flux({ start: a, end: b });
+    } else { res.writeHead(200, { ...h, 'Content-Length': st.size }); flux(); }
   }
+  // écriture sûre d'un projet : fichier temporaire puis renommage, version précédente gardée en « .bak »
+  const ecrireProjet = (f, txt) => {
+    const tmp = `${f}.tmp-${process.pid}-${Math.random().toString(36).slice(2, 8)}`;
+    try { fs.writeFileSync(tmp, txt); if (fs.existsSync(f)) fs.copyFileSync(f, f + '.bak'); fs.renameSync(tmp, f); }
+    catch (e) { try { fs.unlinkSync(tmp); } catch (e2) { /* rien à retirer */ } throw e; }
+  };
   // Prise du studio (fichier du navigateur : WebM ou MP4 fragmenté, images irrégulières) → MP4 propre.
   // Plusieurs méthodes sont essayées ; en dernier recours la prise brute est gardée, jamais perdue.
   async function importerPrise(brut) {
@@ -1667,7 +1699,7 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && p.startsWith('/media/')) return serveFile(req, res, mediaPath(decodeURIComponent(p.slice(7))));
       if (req.method === 'GET' && p.startsWith('/lib/')) return serveFile(req, res, mediaPath('lib:' + decodeURIComponent(p.slice(5))));
       // Studio : détourage de la personne (MediaPipe, en local) et moteur de mélange du fond virtuel
-      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js' || p === '/ui-voix.js' || p === '/ui-publier.js' || p === '/ui-v2.js' || p === '/ui-chat.js' || p === '/ui-animations.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
+      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js' || p === '/ui-voix.js' || p === '/ui-publier.js' || p === '/ui-v2.js' || p === '/ui-chat.js' || p === '/ui-animations.js' || p === '/ui-retours.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
       if (req.method === 'GET' && p.startsWith('/vendor/vision/')) {
         const n = decodeURIComponent(p.slice(15));
         if (!/^(vision_bundle\.m?js|wasm\/vision_wasm(_nosimd)?_internal\.(js|wasm))$/.test(n)) return send(res, 404, { error: 'Introuvable' });
@@ -1675,6 +1707,10 @@ function buildClip(c, P, o = {}) {
       }
       if (req.method === 'GET' && /^\/modeles\/[\w.]+\.tflite$/.test(p)) return serveFile(req, res, path.join(__dirname, p));
       if (req.method === 'GET' && p.startsWith('/proxy/')) return serveFile(req, res, path.join(PROXIES, safeName(decodeURIComponent(p.slice(7)))));
+      if (req.method === 'GET' && p === '/api/exports') { // vidéos exportées, les plus récentes d'abord (revue image par image)
+        let l = []; try { l = fs.readdirSync(EXPORTS).filter(n => !n.startsWith('.') && !/\.part$/.test(n)).map(n => { const st = fs.statSync(path.join(EXPORTS, n)); return { nom: n, taille: st.size, date: st.mtimeMs }; }).filter(x => x.taille > 0); } catch (e) { /* dossier absent */ }
+        return send(res, 200, { exports: l.sort((x, y) => y.date - x.date) });
+      }
       if (req.method === 'GET' && p.startsWith('/exports/')) return serveFile(req, res, path.join(EXPORTS, safeName(decodeURIComponent(p.slice(9)))), true);
       if (req.method === 'GET' && p.startsWith('/apercu/')) return serveFile(req, res, path.join(APERCUS, safeName(decodeURIComponent(p.slice(8)))));
 
@@ -1858,7 +1894,7 @@ function buildClip(c, P, o = {}) {
       }
       if (req.method === 'GET' && p === '/api/medias') {
         const items = [];
-        for (const n of fs.readdirSync(MEDIAS).filter(x => !x.startsWith('.'))) {
+        for (const n of fs.readdirSync(MEDIAS).filter(x => !x.startsWith('.') && !x.endsWith('.part'))) { // .part : import en cours
           try { items.push({ file: n, ...(await probe(path.join(MEDIAS, n))) }); } catch (e) { /* fichier ignoré */ }
         }
         return send(res, 200, { items });
@@ -1866,7 +1902,7 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'POST' && p === '/api/import' && /\.cube$/i.test(url.searchParams.get('name') || '')) { // look LUT : rangé dans Mes packs
         const dir = path.join(PACKS, 'LUT importés'); fs.mkdirSync(dir, { recursive: true });
         const name = safeName(url.searchParams.get('name')), dest = path.join(dir, name);
-        const txt = await new Promise((ok, ko) => { let b = ''; req.on('data', d => { b += d; if (b.length > 6e7) req.destroy(); }); req.on('end', () => ok(b)); req.on('error', ko); });
+        const txt = (await lireCorps(req, 6e7, 'Fichier LUT trop volumineux')).toString('utf8');
         if (!/LUT_3D_SIZE\s+\d+/.test(txt)) throw new Error('Ce fichier .cube n’est pas un LUT 3D.');
         fs.writeFileSync(dest, txt);
         return send(res, 200, { file: 'pack:LUT importés/' + name, kind: 'lut' });
@@ -1874,7 +1910,14 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'POST' && p === '/api/import') {
         let name = safeName(url.searchParams.get('name')), dest = path.join(MEDIAS, name), i = 2;
         while (fs.existsSync(dest)) { const e = path.extname(name); dest = path.join(MEDIAS, `${path.basename(name, e)}-${i++}${e}`); }
-        await new Promise((ok, ko) => { const w = fs.createWriteStream(dest); req.pipe(w); w.on('finish', ok); w.on('error', ko); req.on('error', ko); });
+        // écrit d'abord dans « .part », renommé une fois reçu en entier : un envoi coupé ne laisse pas de média tronqué
+        await new Promise((ok, ko) => {
+          const part = dest + '.part', w = fs.createWriteStream(part); let fin = false;
+          const rate = e => { if (fin) return; fin = true; const retirer = () => fs.rm(part, { force: true }, () => ko(e)); if (w.closed) retirer(); else { w.once('close', retirer); w.destroy(); } }; // retiré une fois le fichier fermé
+          req.pipe(w); w.on('finish', () => { if (fin) return; fin = true; try { fs.renameSync(part, dest); ok(); } catch (e) { fs.rm(part, { force: true }, () => ko(e)); } });
+          w.on('error', rate); req.on('error', rate); req.on('aborted', () => rate(new Error('Import interrompu'))); req.on('close', () => { if (!req.complete) rate(new Error('Import interrompu')); });
+          if (req.destroyed && !req.complete) rate(new Error('Import interrompu')); // coupé avant même d'être lu
+        });
         if (/\.(heic|heif)$/i.test(dest)) { // photos iPhone : conversion par l'outil intégré à macOS
           if (process.platform !== 'darwin') { fs.unlinkSync(dest); throw new Error('Les photos HEIC ne sont lues que sur Mac : exporte-les en JPG.'); }
           const jpg = dest.replace(/\.(heic|heif)$/i, '.jpg');
@@ -1902,6 +1945,8 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'DELETE' && p.startsWith('/api/medias/')) {
         const f = path.join(MEDIAS, safeName(decodeURIComponent(p.slice(12)))); // jamais la bibliothèque ni les packs
         if (fs.existsSync(f)) fs.unlinkSync(f);
+        const pre = path.basename(f) + '-'; // copies de lecture de ce média
+        try { for (const n of fs.readdirSync(PROXIES)) if (n.startsWith(pre) && /^-\d+-\d+\.(mp4|m4a)/.test(n.slice(pre.length - 1))) fs.rmSync(path.join(PROXIES, n), { force: true }); } catch (e) { /* aucune copie */ }
         return send(res, 200, { ok: true });
       }
       if (req.method === 'GET' && p === '/api/proxy') { // copie légère H.264 pour lire n'importe quel format dans la fenêtre
@@ -1912,7 +1957,7 @@ function buildClip(c, P, o = {}) {
           if (!proxyJobs.has(name)) {
             const tmp = dest + '.part.' + (audioOnly ? 'm4a' : 'mp4');
             const a = audioOnly ? ['-vn', '-c:a', 'aac', '-b:a', '128k'] : ['-vf', 'scale=-2:540,fps=30,format=yuv420p', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', 27, '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart'];
-            proxyJobs.set(name, run(FFMPEG, ['-y', '-v', 'error', '-i', src, ...a, tmp]).then(() => fs.renameSync(tmp, dest)).finally(() => proxyJobs.delete(name)));
+            proxyJobs.set(name, run(FFMPEG, ['-y', '-v', 'error', '-i', src, ...a, tmp]).then(() => fs.renameSync(tmp, dest), e => { fs.rmSync(tmp, { force: true }); throw e; }).finally(() => proxyJobs.delete(name)));
           }
           await proxyJobs.get(name);
         }
@@ -1949,8 +1994,11 @@ function buildClip(c, P, o = {}) {
         const PAS = [20, 40, 60, 120, 250, 330, 500, 960, 1280, 1920, 3840], w = clamp(Math.round(num(url.searchParams.get('w'), 330)), 20, 3840), std = PAS.find(x => x >= w) || 3840;
         // un fichier d'origine (photo plus petite que la miniature demandée) est réduit lui aussi plutôt que téléchargé en entier
         const m = /^(https:\/\/upload\.wikimedia\.org\/wikipedia\/commons)\/([0-9a-f]\/[0-9a-f]{2})\/([^/?]+\.(?:jpe?g|png))(?:\?.*)?$/i.exec(u0);
-        const u = ux.hostname === 'upload.wikimedia.org' ? (m ? `${m[1]}/thumb/${m[2]}/${m[3]}/${std}px-${m[3]}` : u0).replace(/\/(\d+)px-/, `/${std}px-`) : u0, fich = path.join(BASE, 'cache-vignettes', require('crypto').createHash('sha1').update(u).digest('hex') + '.img');
-        if (!fs.existsSync(fich)) { fs.mkdirSync(path.dirname(fich), { recursive: true }); await vignetteFile(u, fich); }
+        const u = ux.hostname === 'upload.wikimedia.org' ? (m ? `${m[1]}/thumb/${m[2]}/${m[3]}/${std}px-${m[3]}` : u0).replace(/\/(\d+)px-/, `/${std}px-`) : u0, fich = path.join(VIGNETTES, require('crypto').createHash('sha1').update(u).digest('hex') + '.img');
+        if (!fs.existsSync(fich)) { // la même vignette demandée deux fois à la fois : un seul téléchargement
+          if (!vigEnCours.has(fich)) vigEnCours.set(fich, (async () => { fs.mkdirSync(path.dirname(fich), { recursive: true }); await vignetteFile(u, fich); if (++ecritsVig % 200 === 0) elaguer(VIGNETTES, 300e6); })().finally(() => vigEnCours.delete(fich)));
+          await vigEnCours.get(fich);
+        }
         const tete = Buffer.alloc(4); const fd = fs.openSync(fich, 'r'); fs.readSync(fd, tete, 0, 4, 0); fs.closeSync(fd);
         res.writeHead(200, { 'Content-Type': tete[0] === 0x89 ? 'image/png' : tete[0] === 0x52 ? 'image/webp' : 'image/jpeg', 'Cache-Control': 'max-age=86400' });
         return fs.createReadStream(fich).pipe(res);
@@ -2015,10 +2063,10 @@ function buildClip(c, P, o = {}) {
         const job = { progress: 0, step: 'Préparation', out: null, url: null, error: null, done: false };
         jobs.set(id, job);
         // export d'un passage seulement (essai avant un long export) : le montage est découpé entre s et e
-        const pl = body.plage, projet = pl && num(pl.e, 0) > num(pl.s, 0) ? require('./decoupe').extraireSegment(body.project || {}, num(pl.s, 0), num(pl.e, 0)) : body.project || {};
-        if (pl) job.extrait = true;
+        const pl = body.plage, coupe = !!pl && num(pl.e, 0) > num(pl.s, 0), projet = coupe ? require('./decoupe').extraireSegment(body.project || {}, num(pl.s, 0), num(pl.e, 0)) : body.project || {};
+        if (coupe) job.extrait = true;
         exportProject(job, projet, { proxy: p === '/api/apercu' }).catch(e => { job.error = job.annule ? 'Export annulé.' : messageClair(e.message); })
-          .finally(() => { if (job.dir) { dossiersAnnules.delete(job.dir); enCours.delete(job.dir); } });
+          .finally(() => { if (job.dir) dossiersAnnules.delete(job.dir); }); // les FFmpeg du dossier sont déjà arrêtés (exportProject les attend)
         return send(res, 200, { id });
       }
       if (req.method === 'POST' && p === '/api/annuler') { // arrêt d'un export ou d'un aperçu en cours
@@ -2056,14 +2104,14 @@ function buildClip(c, P, o = {}) {
       { const r = await RV.creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail, PAROLE, VOIXCLONE, GEN, IA, safeName, num })(req, res, p, url); if (r !== RV.NON) return r; } // doublage, voix clonée, prononciations, fiche (routes-voix.js)
       if (p === '/api/projet') { // enregistrement automatique
         const f = path.join(BASE, 'projet-auto.json');
-        if (req.method === 'PUT') { fs.writeFileSync(f, JSON.stringify(await readJson(req))); return send(res, 200, { ok: true }); }
+        if (req.method === 'PUT') { ecrireProjet(f, JSON.stringify(await readJson(req))); return send(res, 200, { ok: true }); }
         return send(res, 200, fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : 'null');
       }
       if (req.method === 'POST' && p === '/api/miniature') { // miniature (JPEG dessiné par la fenêtre) rangée avec les exports
-        const buf = await new Promise((ok, ko) => { const l = []; let n = 0; req.on('data', d => { n += d.length; if (n > 2e7) req.destroy(); else l.push(d); }); req.on('end', () => ok(Buffer.concat(l))); req.on('error', ko); });
+        const buf = await lireCorps(req, 2e7, 'Miniature trop volumineuse');
         if (buf.length < 1000 || buf[0] !== 0xff || buf[1] !== 0xd8) throw new Error('Image de miniature invalide');
-        const name = `miniature-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}.jpg`;
-        fs.writeFileSync(path.join(EXPORTS, name), buf);
+        const racine = `miniature-${horodatage()}`; let name = `${racine}.jpg`; // deux miniatures dans la même seconde : « -2 »
+        for (let n = 2; ; n++) { try { fs.writeFileSync(path.join(EXPORTS, name), buf, { flag: 'wx' }); break; } catch (e) { if (e.code !== 'EEXIST' || n > 99) throw e; name = `${racine}-${n}.jpg`; } }
         return send(res, 200, { out: name });
       }
       if (req.method === 'GET' && p === '/api/ecran') return send(res, 200, { statut: opts.ecran ? opts.ecran.statut() : 'granted' }); // autorisation d'enregistrement de l'écran (macOS)
@@ -2094,22 +2142,40 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && p === '/api/projets') return send(res, 200, { items: fs.readdirSync(PROJETS).filter(n => n.endsWith('.qmovie')).map(n => n.replace(/\.qmovie$/, '')) });
       if (p.startsWith('/api/projets/')) {
         const f = projFile(decodeURIComponent(p.slice(13)));
-        if (req.method === 'PUT') { fs.writeFileSync(f, JSON.stringify(await readJson(req))); return send(res, 200, { ok: true }); }
+        if (req.method === 'PUT') { ecrireProjet(f, JSON.stringify(await readJson(req))); return send(res, 200, { ok: true }); }
         if (req.method === 'GET') return fs.existsSync(f) ? send(res, 200, fs.readFileSync(f, 'utf8')) : send(res, 404, { error: 'Projet introuvable' });
         if (req.method === 'DELETE') { if (fs.existsSync(f)) fs.unlinkSync(f); return send(res, 200, { ok: true }); }
       }
       send(res, 404, { error: 'Introuvable' });
-    } catch (e) { send(res, 500, { error: e.message }); }
+    } catch (e) { if (res.headersSent) res.destroy(); else send(res, e.status || 500, { error: e.message }); }
   });
+
+  // Dossiers de travail laissés par une fermeture brutale, copies partielles, caches limités
+  function nettoyerAuDemarrage() {
+    try { for (const n of fs.readdirSync(TMP)) if (/^(job|pv|th)-|^dictee-|^lut-/.test(n)) fs.rmSync(path.join(TMP, n), { recursive: true, force: true }); } catch (e) { /* rien à nettoyer */ }
+    for (const d of [PROXIES, VIGNETTES]) { try { for (const n of fs.readdirSync(d)) if (/\.part(\.|$)/.test(n)) fs.rmSync(path.join(d, n), { force: true }); } catch (e) { /* dossier absent */ } }
+    try { for (const n of fs.readdirSync(MEDIAS)) if (n.endsWith('.part')) fs.rmSync(path.join(MEDIAS, n), { force: true }); } catch (e) { /* aucun import coupé */ }
+    elaguerTl(); elaguer(VIGNETTES, 300e6); elaguer(PROXIES, 8e9, 60 * 864e5); // copies de lecture : 8 Go au plus, refaites à la demande si elles ont plus de 60 jours
+  }
+  // travaux terminés oubliés au bout de 10 minutes (la page a eu le temps de lire le résultat)
+  let minuterieJobs = null;
+  function oublierJobs() {
+    const t = Date.now();
+    for (const [id, j] of jobs) { if (!(j.done || j.error)) continue; if (!j.finiA) j.finiA = t; else if (t - j.finiA > 10 * 60e3) jobs.delete(id); }
+  }
+
+  // connexions gardées ouvertes plus longtemps que celles du navigateur : une connexion réutilisée au moment où le serveur la fermait coupait la requête
+  server.keepAliveTimeout = 65000; server.headersTimeout = 66000;
 
   return {
     server, buildClip, sizeOf, mediaPath, probe, get filters() { return filters; },
     async start() {
+      nettoyerAuDemarrage(); minuterieJobs = setInterval(oublierJobs, 60e3); minuterieJobs.unref();
       await detect();
       await new Promise((ok, ko) => { server.once('error', ko); server.listen(PORT, '127.0.0.1', ok); });
       return server.address().port;
     },
-    stop() { server.close(); if (parole) parole.arreter(); if (ia) ia.arreter(); for (const l of enCours.values()) for (const p of l) { try { p.kill('SIGKILL'); } catch (e) { /* déjà fini */ } } }, // aucun FFmpeg ne continue après la fermeture
+    stop() { server.close(); clearInterval(minuterieJobs); if (parole) parole.arreter(); if (ia) ia.arreter(); for (const p of tousProcessus) { try { p.kill('SIGKILL'); } catch (e) { /* déjà fini */ } } }, // aucun FFmpeg ne continue après la fermeture
   };
 }
 

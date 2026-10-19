@@ -1,5 +1,7 @@
 // Interface de la publication : envoi d'un épisode sur YouTube (vidéo privée ou programmée) et dans les brouillons TikTok, comptes, aides à la publication manuelle.
 // Script classique chargé avant le script principal (utilise api, $, esc, ouvrir, fermer, signal, suivreTravail à l'exécution).
+// Envoi en cours (épisode, plateforme, travail) : gardé hors de la fenêtre, qui peut être fermée puis rouverte pendant l'envoi.
+let envoiPublier = null;
 async function ouvrirPublier() {
   if (typeof dbl !== 'undefined' && dbl) dblFin();
   let e; try { e = await (await api('/api/publier')).json(); } catch (er) { return alert(er.message); }
@@ -14,7 +16,7 @@ async function ouvrirPublier() {
     <p class="mut" style="margin:6px 0 0">Les clés restent sur ton Mac${e.chiffre ? ', chiffrées par le trousseau' : ' (fichier réservé à ton compte)'}. ${esc(e.dossier)}</p>`, 'xl');
   const cur = () => ep.find(x => x.nom === ($('#puEp') || {}).value) || ep[0];
   const copie = async (t, n) => { try { await navigator.clipboard.writeText(t || ''); signal(n + ' copié.'); } catch (er) { alert('Copie impossible : ' + er.message); } };
-  const etat = t => { $('#puEtat').textContent = t; };
+  const fen = $('#puEtat'), etat = t => { const z = $('#puEtat'); if (z) z.textContent = t; }; // fenêtre fermée : rien à afficher
   const ouvrirLien = (cible, ex) => api('/api/publier/ouvrir', { method: 'POST', body: JSON.stringify({ cible, episode: ex ? ex.nom : '' }) });
   $('#puFermer').onclick = fermer;
   $('#puDossier').onclick = () => { const x = cur(); if (x) ouvrirLien('dossier', x).then(r => r.json()).then(j => { if (!j.ok) signal('Dossier : ' + j.dossier); }); };
@@ -25,12 +27,13 @@ async function ouvrirPublier() {
   const aideTt = guide('tt', '', `<li>Va sur TikTok for Developers, crée une application, ajoute « Content Posting API » (envoi en brouillon).</li><li>Ajoute l’adresse de retour <code>http://127.0.0.1</code> comme adresse de redirection, et ton compte comme utilisateur test.</li><li>Copie « Client key » et « Client secret » ici. La vidéo arrive en brouillon dans ton application TikTok : tu ajoutes la légende et tu publies.</li>`);
 
   function dessiner() {
+    if (!fen.isConnected) return; // fenêtre fermée ou remplacée
     const x = cur();
     // YouTube
     const y = $('#puYt');
     if (!e.youtube.configure) y.innerHTML = formulaire('yt', 'YouTube', aideYt);
     else if (!e.youtube.connecte) y.innerHTML = `<div class="ligne"><button class="pri" id="ytCo">Se connecter à YouTube</button><button id="ytRaz">Changer les clés</button></div>`;
-    else y.innerHTML = `<div class="ligne" style="flex-wrap:wrap;align-items:center"><label>Mise en ligne <select id="ytConf"><option value="private">Privée (je publie moi-même)</option><option value="unlisted">Non répertoriée</option><option value="prog">Programmée…</option></select></label><input id="ytDate" type="datetime-local" style="display:none"><label><input type="checkbox" id="ytSynth" ${x && x.synthese ? 'checked' : ''}> Contenu de synthèse (voix générée)</label></div>
+    else y.innerHTML = `<div class="ligne" style="flex-wrap:wrap;align-items:center"><label>Mise en ligne <select id="ytConf"><option value="private">Privée (je publie moi-même)</option><option value="unlisted">Non répertoriée</option><option value="prog">Programmée…</option></select></label><input id="ytDate" type="datetime-local" style="display:none"><label><input type="checkbox" id="ytSynth" ${x && x.synthese ? 'checked' : ''}> Contenu modifié ou généré (déclaration YouTube)</label></div>
       <div class="ligne"><button class="pri" id="ytEnv" ${x && x.video.youtube ? '' : 'disabled'}>Envoyer la vidéo sur YouTube</button><button id="ytRaz">Déconnecter</button></div>`;
     // TikTok
     const t = $('#puTt');
@@ -52,19 +55,28 @@ async function ouvrirPublier() {
       });
     }
     const conf = $('#ytConf'); if (conf) conf.onchange = () => { $('#ytDate').style.display = conf.value === 'prog' ? '' : 'none'; };
+    const html = h => { const z = $('#puEtat'); if (z) z.innerHTML = h; return z; };
     const envoi = async (p, corps) => {
       const x = cur(); if (!x) return;
-      const lib = p === 'youtube' ? 'sur YouTube (vidéo privée ou programmée)' : 'dans tes brouillons TikTok';
+      if (envoiPublier) return signal('Un envoi est déjà en cours : attends sa fin.');
+      const lib = p === 'youtube' ? 'sur YouTube (vidéo privée ou programmée)' : 'dans tes brouillons TikTok', nomP = p === 'youtube' ? 'YouTube' : 'TikTok';
       if (!confirm(`Envoyer « ${x.titre} » ${lib} ?`)) return;
-      try { etat('Envoi…'); const { id } = await (await api('/api/publier/envoyer', { method: 'POST', body: JSON.stringify({ plateforme: p, episode: x.nom, ...corps }) })).json();
-        const r = await suivreTravail(id, j => etat(`${Math.round((j.progress || 0) * 100)} % · ${j.step || ''}`));
-        etat(''); $('#puEtat').innerHTML = p === 'youtube' ? `✅ Envoyée (${r.programmation ? 'programmée le ' + esc(new Date(r.programmation).toLocaleString('fr-FR')) : esc(r.confidentialite === 'private' ? 'privée' : 'non répertoriée')}). ${r.miniature === true ? 'Miniature posée. ' : r.miniature ? '⚠️ ' + esc(r.miniature) + ' ' : ''}<a href="#" id="puLien">Ouvrir dans YouTube Studio</a> pour vérifier et publier.` : '✅ ' + esc(r.message);
-        const lien = $('#puLien'); if (lien) lien.onclick = ev => { ev.preventDefault(); ouvrirLien('studio'); };
-      } catch (er) { etat(''); $('#puEtat').innerHTML = '<span style="color:#f87171">' + esc(er.message) + '</span>'; }
+      envoiPublier = { episode: x.nom, titre: x.titre, plateforme: nomP, id: null, etape: 'Envoi…' }; bloquerEnvois();
+      try { etat('Envoi…'); const { id } = await (await api('/api/publier/envoyer', { method: 'POST', body: JSON.stringify({ plateforme: p, episode: x.nom, ...corps }) })).json(); envoiPublier.id = id;
+        const r = await suivreTravail(id, j => { envoiPublier.etape = `${Math.round((j.progress || 0) * 100)} % · ${j.step || ''}`; etat(`${nomP} : ${envoiPublier.etape}`); });
+        const z = html(p === 'youtube' ? `✅ Envoyée (${r.programmation ? 'programmée le ' + esc(new Date(r.programmation).toLocaleString('fr-FR')) : esc(r.confidentialite === 'private' ? 'privée' : 'non répertoriée')}). ${r.miniature === true ? 'Miniature posée. ' : r.miniature ? '⚠️ ' + esc(r.miniature) + ' ' : ''}<a href="#" id="puLien">Ouvrir dans YouTube Studio</a> pour vérifier et publier.` : '✅ ' + esc(r.message));
+        const lien = z && z.querySelector('#puLien'); if (lien) lien.onclick = ev => { ev.preventDefault(); ouvrirLien('studio'); };
+        signal(`${nomP} : « ${x.titre} » envoyé.`);
+      } catch (er) { html('<span style="color:#f87171">' + esc(er.message) + '</span>'); signal(`${nomP} : ${er.message}`); }
+      finally { envoiPublier = null; document.querySelectorAll('[data-bloque]').forEach(b => { b.disabled = false; delete b.dataset.bloque; }); }
     };
-    l('ytEnv', () => { const c = $('#ytConf').value, d = $('#ytDate').value; if (c === 'prog' && !d) return alert('Choisis la date et l’heure de mise en ligne.'); envoi('youtube', { confidentialite: c === 'prog' ? 'private' : c, programmation: c === 'prog' ? new Date(d).toISOString() : '', synthese: $('#ytSynth').checked }); });
+    l('ytEnv', () => { const c = $('#ytConf').value, d = $('#ytDate').value; if (c === 'prog' && !d) return alert('Choisis la date et l’heure de mise en ligne.');
+      if (c === 'prog' && !(new Date(d).getTime() > Date.now() + 15 * 60000)) return alert('Choisis une date de mise en ligne au moins 15 minutes dans le futur.'); envoi('youtube', { confidentialite: c === 'prog' ? 'private' : c, programmation: c === 'prog' ? new Date(d).toISOString() : '', synthese: $('#ytSynth').checked }); });
     l('ttEnv', () => envoi('tiktok', {}));
+    if (envoiPublier) { bloquerEnvois(); etat(`${envoiPublier.plateforme} : envoi de « ${envoiPublier.titre} » en cours · ${envoiPublier.etape}`); } // fenêtre rouverte pendant un envoi
   }
   dessiner();
   const sel = $('#puEp'); if (sel) sel.onchange = dessiner;
 }
+// boutons d'envoi désactivés tant qu'un envoi est en cours (réactivés à sa fin)
+function bloquerEnvois() { for (const id of ['ytEnv', 'ttEnv']) { const b = $('#' + id); if (b && !b.disabled) { b.disabled = true; b.dataset.bloque = '1'; } } }

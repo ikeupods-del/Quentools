@@ -52,6 +52,7 @@ jobs:
   mac:
     if: ${{ !inputs.exemples }}
     runs-on: macos-latest
+    timeout-minutes: 120
     defaults:
       run:
         working-directory: quentmovie
@@ -65,6 +66,7 @@ jobs:
           NODE_LLAMA_CPP_SKIP_DOWNLOAD: 'true'
         run: npm ci
       - name: Contrôler le moteur sans ffprobe (comme sur un Mac à puce Apple sans Rosetta)
+        timeout-minutes: 75
         run: QM_SANS_FFPROBE=1 npm test
       - name: Essai réel du générateur (Wikipédia, images, voix du Mac, montage)
         run: QM_RESEAU=1 QM_SANS_FFPROBE=1 node tests/generateur-reel.js
@@ -79,6 +81,7 @@ jobs:
       - name: Contrôler que le script de la voix clonée est lisible par Python (hors de l’archive de l’application)
         run: python3 -m py_compile dist/mac-arm64/QuentMovie.app/Contents/Resources/app.asar.unpacked/voix-clone/essai.py
       - name: Lancer l'application installée et l'essayer (carte graphique, enregistrement, conversion, voix)
+        timeout-minutes: 30
         run: |
           QI_ESSAI_SYNTHESE=1 QM_GARDER=1 QM_AUTOTEST="$PWD/autotest.json" QM_BASE="$RUNNER_TEMP/qm-autotest" dist/mac-arm64/QuentMovie.app/Contents/MacOS/QuentMovie || true
           cat autotest.json

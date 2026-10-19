@@ -44,4 +44,13 @@ check('« coupe ici » sans pause : rien d’inventé', v('coupe ici') === '');
 check('choix proposé : « trop fort » baisse le volume (jamais 0)', A.proches('ici le son est trop fort', P).some(a => a.action === 'volume' && a.parametre === '70'), JSON.stringify(A.proches('ici le son est trop fort', P)));
 check('animations : générique d’ouverture, de fin, abonne-toi, bandeau', v('mets un générique d’ouverture') === 'animation:intro' && v('ajoute un générique de fin') === 'animation:fin' && v('mets un abonne-toi') === 'animation:abonne' && v('ajoute un bandeau avec mon nom') === 'animation:bandeau', [v('mets un générique d’ouverture'), v('ajoute un générique de fin'), v('mets un abonne-toi'), v('ajoute un bandeau avec mon nom')].join(' | '));
 check('« écran titre » reste un écran titre', v('ajoute un écran titre « Mon voyage »') === 'titre:Mon voyage');
+// audit : demandes courantes mal comprises auparavant
+check('« monte le volume / la musique » ne lance pas le montage automatique', v('monte le volume') === 'volume:140' && v('monte la musique') === 'volume_musique:plus', v('monte la musique'));
+check('« coupe la vidéo à 10 secondes » vidéo en pause : coupe à 10 s', ci('coupe la vidéo à 10 secondes') === 'couper_a:10', ci('coupe la vidéo à 10 secondes'));
+check('« coupe la musique » n’est pas une coupe à l’instant', ci('coupe la musique') === 'volume_musique:0', ci('coupe la musique'));
+check('« coupe là » coupe à l’instant de la pause', ci('coupe là') === 'couper_a:12.4');
+check('« baisse la musique » règle son volume (pas de nouvelle musique)', v('baisse la musique') === 'volume_musique:moins' && v('mets la musique à 30 %') === 'volume_musique:30');
+check('« noir et blanc » ne coupe pas les blancs ; « retire le zoom » n’en ajoute pas', v('mets la vidéo en noir et blanc') === '' && v('retire le zoom') === '');
+check('formats 16/9 et 9/16 compris', v('passe en 16/9') === 'format:horizontal' && v('mets en 9/16') === 'format:vertical' && v('format 16:9') === 'format:horizontal');
+check('« mets un titre ici : Bonjour » pose le texte à l’instant', ci('mets un titre ici : Bonjour') === 'titre_ici:Bonjour', ci('mets un titre ici : Bonjour'));
 console.log(`Assistant : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);

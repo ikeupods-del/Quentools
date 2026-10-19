@@ -64,11 +64,8 @@ async function afficherAccueil() {
     a.querySelector('.acc-recents').innerHTML = items.length ? items.slice(-8).reverse().map(n => `<button class="acc-projet" data-acc-pr="${esc(n)}"><svg class="ic"><use href="#i-film"/></svg>${esc(n)}</button>`).join('') : '<p class="mut">Aucun projet enregistré pour l’instant.</p>';
   } catch (e) { a.querySelector('.acc-recents').innerHTML = ''; }
 }
-async function reprendreV2(n) { // même chargement que « Ouvrir un projet »
-  proj = reparerProjet(await (await api('/api/projets/' + enc(n))).json());
-  proj.markers = proj.markers || []; proj.audio = proj.audio || []; proj.pistes = proj.pistes || []; proj.textes = proj.textes || []; proj.clips.forEach(normaliser);
-  $('#format').value = proj.format; sel = proj.clips.length ? 0 : -1; selA = selCut = selP = selT = -1; rendu = null;
-  masquerAccueil(); commit(); tout(); apercu();
+async function reprendreV2(n) { // même chargement que « Ouvrir un projet » (médias manquants écartés, lecture arrêtée)
+  await ouvrirProjetNomme(n); if (proj.clips.length) masquerAccueil();
 }
 
 $('#eCreer').onclick = () => { if ($('#publierV2') && !exportEnCours) fermerPublierV2(); afficherAccueil(); };
@@ -104,23 +101,29 @@ inspecteur = function () {
 $('#insp').addEventListener('click', e => { const b = e.target.closest('[data-oi]'); if (b) { ongletInsp = b.dataset.oi; inspecteur(); } });
 
 // Dictée vocale dans l'assistant : un clic pour parler, un clic pour arrêter ; la reconnaissance de la voix du Mac écrit la demande.
+// Le champ caché ou retiré (autre onglet, fenêtre fermée) arrête le micro sans rien écrire.
 let dicteeV2 = null;
+function arreterDictee(abandon) { const r = dicteeV2; if (!r) return; if (abandon) r.abandon = true; try { r.stop(); } catch (e) { /* déjà arrêté */ } }
 async function basculerDictee(bouton, champ) {
-  if (dicteeV2) { dicteeV2.stop(); return; }
+  if (dicteeV2) { arreterDictee(); return; }
   let flux;
   try { flux = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { aide('🎤 Micro indisponible : autorise QuentMovie dans Réglages Système → Confidentialité → Micro.'); return; }
   const morceaux = [], rec = new MediaRecorder(flux); dicteeV2 = rec;
-  bouton.classList.add('on'); bouton.textContent = '⏹ Arrêter';
+  const lib = bouton.textContent; bouton.classList.add('on'); bouton.textContent = '⏹ Arrêter';
+  const garde = setInterval(() => { if (!champ.isConnected || !champ.getClientRects().length) arreterDictee(true); }, 400);
   rec.ondataavailable = e => { if (e.data.size) morceaux.push(e.data); };
   rec.onstop = async () => {
-    flux.getTracks().forEach(t => t.stop()); dicteeV2 = null; bouton.classList.remove('on'); bouton.textContent = '⏳ J’écris…'; bouton.disabled = true;
+    clearInterval(garde); flux.getTracks().forEach(t => t.stop()); dicteeV2 = null; bouton.classList.remove('on');
+    if (rec.abandon || !champ.isConnected) { bouton.textContent = lib; return; }
+    bouton.textContent = '⏳ J’écris…'; bouton.disabled = true;
     try {
       const { id } = await (await api('/api/parole/dictee', { method: 'POST', body: new Blob(morceaux, { type: 'audio/webm' }) })).json();
       const r = await suivreTravail(id, () => {});
-      if (r && r.texte) { champ.value = (champ.value.trim() ? champ.value.trim() + ' ' : '') + r.texte; champ.focus(); }
+      if (!champ.isConnected) { /* fenêtre fermée entre-temps : rien à écrire */ }
+      else if (r && r.texte) { champ.value = (champ.value.trim() ? champ.value.trim() + ' ' : '') + r.texte; champ.focus(); }
       else aide('🎤 Je n’ai rien entendu : parle un peu plus près du micro.');
     } catch (e) { aide('🎤 ' + esc(e.message || e) + ' (Outils → Voix et parole pour installer la reconnaissance de la voix).'); }
-    bouton.disabled = false; bouton.textContent = '🎤 Dicter';
+    bouton.disabled = false; bouton.textContent = lib;
   };
   rec.start();
 }
@@ -199,6 +202,7 @@ const textesV2 = () => (proj.publication = proj.publication || { titre: '', desc
 const enLigneV2 = () => pubV2.dest.youtube || pubV2.dest.tiktok;
 function fermerPublierV2() { const x = $('#publierV2'); if (x) x.remove(); etapeV2($('#accueil') ? 'creer' : 'monter'); }
 function exporter() {
+  if (exportEnCours) { if ($('#publierV2')) { masquerAccueil(); etapeV2('publier'); } return signal('Un export est déjà en cours : attends la fin, ou « Annuler l’export ».'); } // on revient à l'écran en cours
   if (!proj.clips.length) return alert('La timeline est vide.'); stopLecture();
   masquerAccueil(); fermerPublierV2(); etapeV2('publier');
   const x = document.createElement('div'); x.id = 'publierV2'; document.body.appendChild(x);
@@ -262,7 +266,7 @@ function dessinerPublierV2() {
       <label class="l">Mots-clés et hashtags</label><input type="text" id="pvTags" value="${esc(T.tags)}" placeholder="#économie #inflation">
       <div id="pvVis"></div><p class="mut" id="pvRedigerEtat"></p>`;
   const vz = $('#pvVis');
-  if (vz) vz.innerHTML = D.youtube ? `<div class="pv2-vis"><span class="mut">YouTube :</span>${VISIBILITES_V2.map(([id, nom]) => `<button data-visv2="${id}" class="${id === pubV2.vis ? 'on' : ''}" aria-pressed="${id === pubV2.vis}">${nom}</button>`).join('')}${pubV2.vis === 'prog' ? `<input type="datetime-local" id="pvDate" value="${esc(pubV2.date || '')}">` : ''}<label class="pv2-synth"><input type="checkbox" id="pvSynth" ${pubV2.synthese ? 'checked' : ''}> Voix de synthèse</label></div>` : '<p class="mut">TikTok reçoit la vidéo en brouillon : la légende (titre et hashtags) est copiée pour que tu la colles dans l’application.</p>';
+  if (vz) vz.innerHTML = D.youtube ? `<div class="pv2-vis"><span class="mut">YouTube :</span>${VISIBILITES_V2.map(([id, nom]) => `<button data-visv2="${id}" class="${id === pubV2.vis ? 'on' : ''}" aria-pressed="${id === pubV2.vis}">${nom}</button>`).join('')}${pubV2.vis === 'prog' ? `<input type="datetime-local" id="pvDate" value="${esc(pubV2.date || '')}">` : ''}<label class="pv2-synth"><input type="checkbox" id="pvSynth" ${pubV2.synthese ? 'checked' : ''}> Contenu modifié ou généré (déclaration YouTube)</label></div>` : '<p class="mut">TikTok reçoit la vidéo en brouillon : la légende (titre et hashtags) est copiée pour que tu la colles dans l’application.</p>';
   const s = $('#pvSynth'); if (s) s.onchange = () => { pubV2.synthese = s.checked; };
   const noms = DESTS_V2.filter(d => D[d.id]).map(d => d.id === 'mac' ? 'Mac' : d.nom);
   $('#xGo').textContent = enLigneV2() || (noms.length && !D.mac) ? 'Exporter et publier' : 'Exporter';
@@ -288,6 +292,7 @@ async function lancerPublierV2() {
   const D = { ...pubV2.dest }, T = textesV2(), C = pubV2.comptes;
   if (D.youtube && !String(T.titre || '').trim()) { $('#pvTitre').focus(); return signal('Écris le titre de la vidéo pour YouTube.'); }
   if (D.youtube && pubV2.vis === 'prog' && !pubV2.date) return signal('Choisis la date et l’heure de mise en ligne.');
+  if (D.youtube && pubV2.vis === 'prog' && !(new Date(pubV2.date).getTime() > Date.now() + 15 * 60000)) return signal('Choisis une date de mise en ligne au moins 15 minutes dans le futur.');
   const manque = ['youtube', 'tiktok'].filter(p => D[p] && !(C && C[p] && C[p].connecte));
   if (manque.length) return signal(`Connecte d’abord ${manque.map(p => p === 'youtube' ? 'YouTube' : 'TikTok').join(' et ')} : lien « Régler les comptes ».`);
   const ex = textesExemple();
@@ -302,10 +307,13 @@ async function lancerPublierV2() {
   const barre = (p, t) => { const b = $('#barreExp i'); if (b) b.style.width = Math.round(p * 100) + '%'; const x = $('#xTxt'); if (x) x.textContent = t; };
   let j;
   try { j = await lancerJob('/api/export', { project: proj, plage }, (p, s) => barre(p, `${s} — ${Math.round(p * 100)} %${reste(p)}`), id => { idExp = id; }); }
-  catch (e) { exportEnCours = false; z.innerHTML = `<p class="${/annulé/.test(e.message) ? 'mut' : 'err'}">${esc(e.message)}</p><button id="xFin">Revenir</button>`; $('#xFin').onclick = () => exporter(); preparerEnFond(); return; }
-  exportEnCours = false;
+  catch (e) { exportEnCours = false; z.innerHTML = `<p class="${/annulé/.test(e.message) ? 'mut' : 'err'}">${esc(e.message)}</p><button id="xFin">Revenir</button>`; z.querySelector('#xFin').onclick = () => exporter(); signal('Export : ' + e.message); preparerEnFond(); return; }
+  try { await finExportV2(j, D, T, z, t0, barre); } finally { exportEnCours = false; } // l'envoi en ligne compte dans l'export : pas de second export pendant ce temps
+  preparerEnFond();
+}
+async function finExportV2(j, D, T, z, t0, barre) {
   const lignes = [`✅ Exporté${j.duree ? ` en ${fmt(j.duree)}` : ''} : <b>${esc(j.out)}</b>${j.repris ? ` <span class="mut">(${j.repris} clip${j.repris > 1 ? 's' : ''} inchangé${j.repris > 1 ? 's' : ''} repris)</span>` : ''}${j.avertissement ? `<br><span class="mut">ℹ ${esc(j.avertissement)}</span>` : ''}`];
-  let envoisOk = true;
+  let envoisOk = true; const enLigne = D.youtube || D.tiktok; // destinations choisies au lancement
   const envoyer = async (plateforme, corps) => {
     const { id } = await (await api('/api/publier/montage', { method: 'POST', body: JSON.stringify({ plateforme, fichier: j.out, ...corps }) })).json();
     return suivreTravail(id, k => barre(k.progress || 0, `${plateforme === 'youtube' ? 'YouTube' : 'TikTok'} : ${k.step || 'envoi…'}`));
@@ -323,13 +331,15 @@ async function lancerPublierV2() {
     catch (e) { envoisOk = false; lignes.push(`<span class="err">TikTok : ${esc(e.message)}</span>`); }
   }
   if (D.airdrop) { partagerFichiers([j.out]); lignes.push('📲 AirDrop : choisis ton iPhone dans la fenêtre de partage.'); }
-  if (!D.mac && enLigneV2() && envoisOk) { await api('/api/exports/retirer', { method: 'POST', body: JSON.stringify({ file: j.out }) }).catch(() => {}); lignes.push('<span class="mut">Fichier retiré du Mac après l’envoi (case « Enregistrer sur le Mac » décochée).</span>'); }
+  // AirDrop coché : le fichier reste sur le Mac (la feuille de partage le lit encore)
+  if (!D.mac && !D.airdrop && enLigne && envoisOk) { await api('/api/exports/retirer', { method: 'POST', body: JSON.stringify({ file: j.out }) }).catch(() => {}); lignes.push('<span class="mut">Fichier retiré du Mac après l’envoi (case « Enregistrer sur le Mac » décochée).</span>'); }
   else lignes.push('<span class="mut">Dossier : Films → QuentMovie → exports</span>');
-  if (document.hidden || Date.now() - t0 > 60000) { try { new Notification(enLigneV2() ? 'Export et envoi terminés' : 'Export terminé', { body: j.out, silent: false }); } catch (er) { /* notifications indisponibles */ } }
-  const garde = D.mac || !enLigneV2() || !envoisOk;
+  if (document.hidden || Date.now() - t0 > 60000) { try { new Notification(enLigne ? 'Export et envoi terminés' : 'Export terminé', { body: j.out, silent: false }); } catch (er) { /* notifications indisponibles */ } }
+  const garde = D.mac || D.airdrop || !enLigne || !envoisOk;
   z.innerHTML = `<div class="pv2-fin">${lignes.map(l => `<p>${l}</p>`).join('')}<div class="ligne">${garde ? `<button id="xFind">Afficher dans le Finder</button>${D.airdrop ? '' : '<button id="xAir">Envoyer par AirDrop</button>'}` : ''}<button class="pri" id="xFin">Retour au montage</button></div></div>`;
-  const l = (id, f) => { const b = $('#' + id); if (b) b.onclick = f; };
+  const l = (id, f) => { const b = z.querySelector('#' + id); if (b) b.onclick = f; };
   l('xFin', fermerPublierV2); l('xAir', () => partagerFichiers([j.out])); l('xFind', () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) }));
   z.querySelectorAll('[data-ouvrir]').forEach(a => { a.onclick = ev => { ev.preventDefault(); api('/api/publier/ouvrir', { method: 'POST', body: JSON.stringify({ cible: a.dataset.ouvrir }) }); }; });
+  signal(`${envoisOk ? 'Export terminé' : 'Export terminé, envoi en échec'} : ${j.out}`);
 }
 $('#bExport').onclick = () => exporter();

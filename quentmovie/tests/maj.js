@@ -16,7 +16,9 @@ const rejette = async (p, motif) => { try { await p; return false; } catch (e) {
 (async () => {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-maj-'));
   // Fausse application « installée » (version 1.0.0) et nouvelle version emballée
-  const fabriquerApp = (dossier, version) => { const c = path.join(dossier, 'QuentMovie.app', 'Contents'); fs.mkdirSync(c, { recursive: true }); fs.writeFileSync(path.join(c, 'version.txt'), version); return path.join(dossier, 'QuentMovie.app'); };
+  const fabriquerApp = (dossier, version) => { const c = path.join(dossier, 'QuentMovie.app', 'Contents'); fs.mkdirSync(c, { recursive: true }); fs.writeFileSync(path.join(c, 'version.txt'), version);
+    fs.writeFileSync(path.join(c, 'Info.plist'), `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0"><dict><key>CFBundleShortVersionString</key><string>${version}</string></dict></plist>\n`);
+    return path.join(dossier, 'QuentMovie.app'); };
   const appli = fabriquerApp(path.join(base, 'Applications'), '1.0.0');
   const paquet = path.join(base, 'paquet'); fabriquerApp(paquet, '1.4.0');
   let dmg = path.join(base, 'nouvelle.dmg');
@@ -73,7 +75,8 @@ const rejette = async (p, motif) => { try { await p; return false; } catch (e) {
   // Remplacement : attend la fermeture de l'application, échange les versions
   const nouvelle = appli + '.nouvelle';
   if (process.platform === 'darwin') {
-    const n = await M.extraire(f, appli);
+    check('version extraite différente de celle annoncée : refusée', await rejette(M.extraire(f, appli, 'QuentMovie', '1.5.0'), /inattendu/) && !fs.existsSync(appli + '.nouvelle'));
+    const n = await M.extraire(f, appli, 'QuentMovie', '1.4.0');
     check('nouvelle application extraite du .dmg', fs.readFileSync(path.join(n, 'Contents', 'version.txt'), 'utf8') === '1.4.0');
   } else fabriquerApp(path.join(base, 'tmp'), '1.4.0') && fs.renameSync(path.join(base, 'tmp', 'QuentMovie.app'), nouvelle);
   const enCours = spawn('sleep', ['1.5']); const t0 = Date.now();
@@ -82,10 +85,21 @@ const rejette = async (p, motif) => { try { await p; return false; } catch (e) {
   for (let i = 0; i < 40 && fs.existsSync(nouvelle); i++) await new Promise(r => setTimeout(r, 250));
   check('remplacement après la fermeture seulement', Date.now() - t0 >= 1200, Date.now() - t0);
   check('application remplacée par la nouvelle version', fs.readFileSync(path.join(appli, 'Contents', 'version.txt'), 'utf8') === '1.4.0');
-  check('aucun reste de l’ancienne version', !fs.existsSync(appli + '.ancienne') && !fs.existsSync(nouvelle));
+  check('ancienne version gardée jusqu’au démarrage suivant', fs.existsSync(appli + '.ancienne') && !fs.existsSync(nouvelle));
+  await new M.Maj({ version: '1.4.0', dossier: path.join(base, 'maj-n'), app: appli, api, actif: true }).verifier();
+  check('démarrage réussi : ancienne version effacée', !fs.existsSync(appli + '.ancienne'));
+  // application encore ouverte à la fin de l'attente (export qui retient la fermeture) : rien n'est remplacé
+  fabriquerApp(path.join(base, 'tmp2'), '9.9.9'); fs.renameSync(path.join(base, 'tmp2', 'QuentMovie.app'), nouvelle);
+  const vit = spawnSync('/bin/sh', ['-c', M.scriptRemplacement({ app: appli, nouvelle, pid: process.pid, relancer: false, attente: 0.5 })], { timeout: 20000 });
+  check('application encore ouverte : rien n’est remplacé', vit.status === 0 && fs.readFileSync(path.join(appli, 'Contents', 'version.txt'), 'utf8') === '1.4.0' && fs.existsSync(nouvelle));
+  fs.rmSync(nouvelle, { recursive: true, force: true });
+  // « Redémarrer pour installer » : rien n'est lancé avant la fermeture réelle (will-quit)
+  const prete = new M.Maj({ version: '1.3.0', dossier: path.join(base, 'maj-r'), app: path.join(base, 'absente', 'QuentMovie.app'), api, actif: true, attente: 0.5 });
+  Object.assign(prete.etat, { etat: 'pret' }); prete.nouvelleApp = path.join(base, 'absente', 'QuentMovie.app.nouvelle');
+  check('redémarrer pour installer : script lancé seulement à la fermeture', prete.installer(true) === true && !fs.existsSync(path.join(base, 'maj-r', 'remplacer.sh')) && prete.installer(false) === true && fs.existsSync(path.join(base, 'maj-r', 'remplacer.sh')) && /open "\$APP"/.test(fs.readFileSync(path.join(base, 'maj-r', 'remplacer.sh'), 'utf8')));
   // Sans nouvelle version disponible, l'application reste intacte
   const s = M.scriptRemplacement({ app: appli, nouvelle: appli + '.absente', pid: 999999, relancer: false });
-  spawnSync('/bin/sh', ['-c', s]);
+  spawnSync('/bin/sh', ['-c', s], { timeout: 20000 });
   check('application intacte sans nouvelle version', fs.readFileSync(path.join(appli, 'Contents', 'version.txt'), 'utf8') === '1.4.0');
   check('chemins avec apostrophe protégés', /'\/Applications\/Pack d'\\''été\/QuentMovie\.app'/.test(M.scriptRemplacement({ app: "/Applications/Pack d'été/QuentMovie.app", nouvelle: '/x', pid: 1 })));
 
