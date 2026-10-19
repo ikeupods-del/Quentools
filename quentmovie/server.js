@@ -220,6 +220,7 @@ function create(opts = {}) {
   let publication = null; const PUB = () => publication || (publication = require('./publication').creer({ base: BASE, coffre: opts.coffre || null, ouvrirUrl: opts.ouvrirUrl || null, points: opts.publicationPoints || {} }));
   const RP = require('./routes-publier');
   const RPI = require('./routes-pico');
+  const RAN = require('./routes-animations');
   // Réglages locaux (clés gratuites des banques de photos : gardées dans le dossier QuentMovie de l'utilisateur, jamais dans le dépôt)
   const REGL = path.join(BASE, 'reglages.json');
   const lireRegl = () => { try { return JSON.parse(fs.readFileSync(REGL, 'utf8')); } catch (e) { return {}; } };
@@ -1666,7 +1667,7 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && p.startsWith('/media/')) return serveFile(req, res, mediaPath(decodeURIComponent(p.slice(7))));
       if (req.method === 'GET' && p.startsWith('/lib/')) return serveFile(req, res, mediaPath('lib:' + decodeURIComponent(p.slice(5))));
       // Studio : détourage de la personne (MediaPipe, en local) et moteur de mélange du fond virtuel
-      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js' || p === '/ui-voix.js' || p === '/ui-publier.js' || p === '/ui-v2.js' || p === '/ui-chat.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
+      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js' || p === '/ui-voix.js' || p === '/ui-publier.js' || p === '/ui-v2.js' || p === '/ui-chat.js' || p === '/ui-animations.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
       if (req.method === 'GET' && p.startsWith('/vendor/vision/')) {
         const n = decodeURIComponent(p.slice(15));
         if (!/^(vision_bundle\.m?js|wasm\/vision_wasm(_nosimd)?_internal\.(js|wasm))$/.test(n)) return send(res, 404, { error: 'Introuvable' });
@@ -2049,6 +2050,7 @@ function buildClip(c, P, o = {}) {
         fs.renameSync(src, dest);
         return send(res, 200, await importerPrise(dest));
       }
+      { const r = await RAN.creer({ MEDIAS, FFMPEG, opts, send, readJson, travail })(req, res, p); if (r !== RAN.NON) return r; } // animations (génériques, chiffres clés, bandeaux…) : routes-animations.js
       { const r = await RPI.creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA: () => { try { if (ia && ia.arreter) ia.arreter(); } catch (e) { /* déjà arrêtée */ } } })(req, res, p, url); if (r !== RPI.NON) return r; } // épisode Pico fabriqué dans QuentMovie, navigateur des écrans (routes-pico.js)
       { const r = await RP.creer({ PUB, opts, send, readJson, travail, EXPORTS, safeName })(req, res, p); if (r !== RP.NON) return r; } // publication YouTube et TikTok (routes-publier.js)
       { const r = await RV.creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail, PAROLE, VOIXCLONE, GEN, IA, safeName, num })(req, res, p, url); if (r !== RV.NON) return r; } // doublage, voix clonée, prononciations, fiche (routes-voix.js)

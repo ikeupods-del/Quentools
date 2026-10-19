@@ -3,6 +3,18 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.4.0
+- **Animations** (rubrique Texte → Animations) : sept modèles animés à remplir, regarder et poser d'un clic, fabriqués sur ton Mac sans rien installer :
+  - générique d'ouverture, posé au début de la vidéo ;
+  - générique de fin, posé à la fin ;
+  - chiffre clé qui défile jusqu'à sa valeur ;
+  - bandeau nom (tiers inférieur) ;
+  - bouton « S'abonner » qui devient « Abonné ✓ » ;
+  - liste à points ;
+  - volet de transition.
+- Les animations posées par-dessus la vidéo sont transparentes, sur la piste vidéo 2, à la tête de lecture. Même rendu en horizontal, vertical et carré.
+- **Aussi dans la discussion** : « mets un générique d'ouverture », « ajoute un bandeau », « mets un abonne-toi ici » (vidéo en pause).
+
 ## 2.3.0
 - **Commenter la vidéo en pause** : mets la vidéo sur pause, puis écris dans l'Assistant. Ton message porte le moment exact (« 📍 00:12 · image 372 ») ; un clic sur cette étiquette ramène la vidéo à ce moment. Exemples :
   - « coupe ici » coupe à cet instant ;

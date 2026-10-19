@@ -20,7 +20,10 @@ function creer(BrowserWindow) {
       const f = de(id), wc = f.w.webContents;
       wc.invalidate(); // rendu hors écran : l'image suivante est redessinée après le dernier réglage de l'animation
       await wc.executeJavaScript('new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))', false);
-      let img = await wc.capturePage(); const t = img.getSize();
+      let img = await wc.capturePage();
+      for (let essai = 0; img.isEmpty() && essai < 5; essai++) { wc.invalidate(); await new Promise(r => setTimeout(r, 50)); img = await wc.capturePage(); } // image pas encore dessinée : on attend la suivante
+      if (img.isEmpty()) throw new Error('Écran non dessiné');
+      const t = img.getSize();
       if (t.width !== f.largeur || t.height !== f.hauteur) img = img.resize({ width: f.largeur, height: f.hauteur, quality: 'best' }); // écran Retina : image ramenée à la taille demandée
       fs.writeFileSync(chemin, img.toPNG());
     },

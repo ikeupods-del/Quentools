@@ -78,7 +78,7 @@ jobs:
         run: npm run dist
       - name: Lancer l'application installée et l'essayer (carte graphique, enregistrement, conversion, voix)
         run: |
-          QM_AUTOTEST="$PWD/autotest.json" QM_BASE="$RUNNER_TEMP/qm-autotest" dist/mac-arm64/QuentMovie.app/Contents/MacOS/QuentMovie || true
+          QM_GARDER=1 QM_AUTOTEST="$PWD/autotest.json" QM_BASE="$RUNNER_TEMP/qm-autotest" dist/mac-arm64/QuentMovie.app/Contents/MacOS/QuentMovie || true
           cat autotest.json
           node -e '
             const r = require("./autotest.json"), ko = [];
@@ -90,8 +90,20 @@ jobs:
             if (!r.lecture || !r.lecture.direct || !(r.lecture.avance > 1)) ko.push("lecture immédiate");
             if (!r.parole || !r.parole.dispo || !/\.m4a$/.test(r.parole.essai || "")) ko.push("voix naturelle");
             if (!r.parole || !/voix naturelle/i.test(r.parole.ecoute || "")) ko.push("reconnaissance de la voix");
+            if (!r.animation || r.animation.erreur || !r.animation.file) ko.push("animation");
+            else { const f = require("path").join(process.env.RUNNER_TEMP, "qm-autotest", "medias", r.animation.file), px = (x, y) => [...require("child_process").execFileSync(require("ffmpeg-static"), ["-v", "error", "-ss", "2", "-i", f, "-frames:v", "1", "-vf", "crop=1:1:" + x + ":" + y + ",format=rgba", "-f", "rawvideo", "-"])];
+              const c = px(960, 540), k = px(5, 5); console.log("Animation : centre", c, "coin", k); if (!(c[3] > 200 && k[3] === 0)) ko.push("transparence de l’animation"); }
             if (!r.pico || r.pico.erreur || !(r.pico.fichiers || []).includes("98-essai-pico-youtube.mp4") || !(r.pico.fichiers || []).includes("98-miniature.png")) ko.push("épisode Pico");
             if (ko.length) { console.log("Échecs :", ko.join(", ")); process.exit(1); } else console.log("Application : tout fonctionne");'
+      - name: Diagnostic de l’épisode Pico (si l’essai a échoué)
+        if: failure()
+        run: node tests/diagnostic-pico.js "$RUNNER_TEMP/qm-autotest/QuentInvest" || true
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: diagnostic-pico
+          path: ${{ runner.temp }}/qm-autotest/QuentInvest
+          if-no-files-found: ignore
       - name: Contrôler que chaque programme livré tourne sur puce Apple
         run: |
           fautifs=0
