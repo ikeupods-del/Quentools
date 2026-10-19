@@ -4,7 +4,7 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 
-const RACINE = path.join(__dirname, '..', '..', '..');
+const RACINE = process.env.QI_RACINE || path.join(__dirname, '..', '..', '..'); // QI_RACINE : dossier des polices quand la fabrication tourne dans QuentMovie
 const b64 = (f, mime) => `data:${mime};base64,` + fs.readFileSync(f).toString('base64');
 const POLICE = b64(path.join(RACINE, 'assets', 'fonts', 'inter.woff2'), 'font/woff2');
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

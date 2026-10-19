@@ -21,15 +21,18 @@ const TRAVAIL = path.resolve(arg('sortie', path.join(os.tmpdir(), 'pico-episode'
 const MODELES = path.join(os.homedir(), 'Movies', 'QuentMovie', 'modeles');
 const VOIX = arg('voix', path.join(MODELES, KOKORO ? 'kokoro-multi-lang-v1_0' : V.modele || 'vits-piper-fr_FR-upmc-medium')); // Piper : `modele` = dossier du modèle (ex. vits-piper-fr_FR-tom-medium, voix d'homme)
 const LOCUTEUR = +arg('locuteur', V.sid != null ? V.sid : 1); // Piper upmc : 0 = Jessica, 1 = Pierre · Kokoro : 30 = voix française « siwis »
-const QM = path.join(__dirname, '..', '..', '..', 'quentmovie');
+const QM = process.env.QI_QM || path.join(__dirname, '..', '..', '..', 'quentmovie'); // QI_* : chemins donnés par QuentMovie quand il lance la fabrication
 const PICO = path.join(__dirname, '..', 'personnage', 'png');
 const VITESSE = +arg('vitesse', V.vitesse || 0.65); // allure de la voix (1 = normale)
 const HAUTEUR = V.hauteur || (KOKORO ? 1 : 1.08); // > 1 : plus aiguë (Pico, fourmi), < 1 : plus grave (durée conservée avec Kokoro)
 const STYLE2 = (EP.style | 0) >= 2, VERT = EP.format === 'vertical', LARG = VERT ? 1080 : 1920, HAUT = VERT ? 1920 : 1080;
 const FPS = 30, PAUSE = 0.35, PAUSE_SECTION = 0.8, ANIM_MAX = 14;
-const SONS = path.join(QM, 'bibliotheque', 'sons');
-const ff = (...a) => execFileSync('ffmpeg', ['-y', '-v', 'error', ...a], { maxBuffer: 1e8 });
+const SONS = process.env.QI_SONS || path.join(QM, 'bibliotheque', 'sons'); // QI_SONS : bibliothèque hors de l'archive de l'application (lue par FFmpeg)
+const FFMPEG = process.env.QI_FFMPEG || 'ffmpeg';
+const ff = (...a) => execFileSync(FFMPEG, ['-y', '-v', 'error', ...a], { maxBuffer: 1e8 });
 const sh = (n, d = 2) => String(n).padStart(d, '0');
+// avancement lu par QuentMovie quand il lance la fabrication (QI_PROGRES : fichier réécrit à chaque étape)
+const progres = x => { if (process.env.QI_PROGRES) try { fs.writeFileSync(process.env.QI_PROGRES, JSON.stringify(x)); } catch (e) { /* facultatif */ } };
 for (const d of ['audio', 'images', 'clips']) fs.mkdirSync(path.join(TRAVAIL, d), { recursive: true });
 const crypto = require('crypto');
 const persoDate = i => { const f = arg('voix-perso', '') && path.join(arg('voix-perso', ''), `v${sh(i)}.wav`); try { return f ? fs.statSync(f).mtimeMs : 0; } catch (e) { return 0; } };
@@ -45,6 +48,7 @@ function synthese() {
     : { vits: { model: path.join(VOIX, fs.readdirSync(VOIX).find(n => n.endsWith('.onnx'))), tokens: path.join(VOIX, 'tokens.txt'), dataDir: path.join(VOIX, 'espeak-ng-data') } };
   const tts = new sherpa.OfflineTts({ model: { ...modele, numThreads: 2, debug: false, provider: 'cpu' }, maxNumSentences: 2 });
   EP.scenes.forEach((s, i) => {
+    progres({ etape: 'voix', i: i + 1, n: EP.scenes.length });
     const brut = path.join(TRAVAIL, 'audio', `b${sh(i)}.wav`), fin = wavDe(i);
     const cle = path.join(TRAVAIL, 'audio', `v${sh(i)}.cle`);
     if (fs.existsSync(fin) && fs.existsSync(cle) && fs.readFileSync(cle, 'utf8') === cleVoix(i)) return; // voix déjà fabriquée pour ce texte et ce réglage
@@ -71,11 +75,13 @@ function synthese() {
     ff('-i', brut, '-af', filtre, '-ac', '1', fin);
   });
 }
-function duree(f) { return +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f], { encoding: 'utf8' }).trim(); }
+// durée d'un son : lue dans l'en-tête WAV (même valeur que ffprobe, qui n'est pas livré avec QuentMovie), ffprobe pour les autres fichiers
+const { dureeWav } = require('./duree');
+function duree(f) { const d = dureeWav(f); return d != null ? d : +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f], { encoding: 'utf8' }).trim(); }
 
 // ---------- 2. bouche synchronisée : enveloppe de la voix → ouverte / fermée ----------
 function bouche(wav) {
-  const pcm = execFileSync('ffmpeg', ['-v', 'error', '-i', wav, '-f', 's16le', '-ac', '1', '-ar', '8000', '-'], { maxBuffer: 1e9 }), n = pcm.length / 2, fen = 80; // 10 ms
+  const pcm = execFileSync(FFMPEG, ['-v', 'error', '-i', wav, '-f', 's16le', '-ac', '1', '-ar', '8000', '-'], { maxBuffer: 1e9 }), n = pcm.length / 2, fen = 80; // 10 ms
   const e = []; for (let i = 0; i + fen <= n; i += fen) { let s = 0; for (let k = 0; k < fen; k++) { const v = pcm.readInt16LE((i + k) * 2) / 32768; s += v * v; } e.push(Math.sqrt(s / fen)); }
   const max = Math.max(...e) || 1, seuil = max * 0.12, par = Math.round(1 / FPS * 100), etat = [];
   for (let t = 0; t < e.length; t += par) { const m = Math.max(...e.slice(t, t + par)); etat.push(m > seuil); }
@@ -88,7 +94,7 @@ const spritePico = (expr, ouvert) => { const f = (o) => path.join(PICO, `pico-${
 // ---------- 3. écrans animés (images) ----------
 // ---------- photos et vidéos en fond (clé `fond` d'une réplique : { fichier | url, credit, sombre, debut }) ----------
 // `fichier` : chemin absolu ou relatif au dossier medias/ ; `url` : téléchargée une fois dans medias/cache. Le média reste jusqu'au prochain nouvel écran.
-const MEDIAS = path.join(__dirname, '..', 'medias'), FONDS = [];
+const MEDIAS = process.env.QI_MEDIAS || path.join(__dirname, '..', 'medias'), FONDS = [];
 function resoudreFond(f, type) {
   if (!f) return null;
   let fichier = f.fichier ? (path.isAbsolute(f.fichier) ? f.fichier : path.join(MEDIAS, f.fichier)) : null;
@@ -123,7 +129,7 @@ async function images() {
     await p.evaluate(() => window.setT(1e3));
     await p.screenshot({ path: path.join(TRAVAIL, 'images', `i${sh(i)}-fin.png`), omitBackground: !!FONDS[i] });
     ANIM[i] = n; fs.writeFileSync(fichierAnim, String(n));
-    process.stdout.write(`\rÉcrans ${i + 1}/${EP.scenes.length} (${n} images)   `);
+    process.stdout.write(`\rÉcrans ${i + 1}/${EP.scenes.length} (${n} images)   `); progres({ etape: 'ecrans', i: i + 1, n: EP.scenes.length });
   }
   console.log(); await b.close();
 }
@@ -134,7 +140,7 @@ async function images() {
 // (la sensation de volume est divisée par deux tous les −10 dB). Réglable : clé `sons.effetsDb` du fichier d'épisode.
 const EFFETS_DB = EP.sons && EP.sons.effetsDb != null ? EP.sons.effetsDb : -20;
 const { spawnSync } = require('child_process');
-const rmsDb = (f, filtre) => { const r = spawnSync('ffmpeg', ['-v', 'info', '-i', f, '-af', `${filtre ? filtre + ',' : ''}astats=metadata=0`, '-f', 'null', '-'], { encoding: 'utf8', maxBuffer: 1e8 }), m = [...(r.stderr || '').matchAll(/RMS level dB:\s*(-?[\d.]+)/g)]; return m.length ? +m[m.length - 1][1] : -30; };
+const rmsDb = (f, filtre) => { const r = spawnSync(FFMPEG, ['-v', 'info', '-i', f, '-af', `${filtre ? filtre + ',' : ''}astats=metadata=0`, '-f', 'null', '-'], { encoding: 'utf8', maxBuffer: 1e8 }), m = [...(r.stderr || '').matchAll(/RMS level dB:\s*(-?[\d.]+)/g)]; return m.length ? +m[m.length - 1][1] : -30; };
 const RMS_SON = {}, rmsSon = f => RMS_SON[f] != null ? RMS_SON[f] : (RMS_SON[f] = rmsDb(f, 'silenceremove=stop_periods=-1:stop_threshold=-50dB'));
 const rmsVoix = wav => rmsDb(wav, 'silenceremove=stop_periods=-1:stop_threshold=-40dB:stop_duration=0.15'); // niveau de la voix quand elle parle (sans les silences)
 const SFX = { baisse: 'baisse', hausse: 'hausse', pieces: 'pieces', ding: 'ding-cloche', succes: 'succes', impact: 'impact-leger' };
@@ -251,7 +257,7 @@ async function exporter() {
   // rapport de fabrication : début et durée de chaque réplique (chapitres de la description : `debutExport` tient compte des fondus de 0,5 s entre sections, qui raccourcissent la vidéo)
   const debuts = []; durees.reduce((t, d, i) => (debuts[i] = t, t + d), 0);
   fs.writeFileSync(path.join(TRAVAIL, 'rapport.json'), JSON.stringify({ duree: +durees.reduce((a, b) => a + b, 0).toFixed(2), scenes: EP.scenes.map((s, i) => ({ debut: +debuts[i].toFixed(2), debutExport: +(debuts[i] - 0.5 * EP.scenes.slice(1, i + 1).filter(x => x.section).length).toFixed(2), duree: +durees[i].toFixed(2), section: s.section || '' })) }));
-  let t0 = 0; const clips = EP.scenes.map((_, i) => { const c = clip(i, t0); t0 += c.d; return c; }), M = await montage(clips);
+  let t0 = 0; const clips = EP.scenes.map((_, i) => { progres({ etape: 'clips', i: i + 1, n: EP.scenes.length }); const c = clip(i, t0); t0 += c.d; return c; }), M = await montage(clips);
   await Promise.all(M.liste.map(async c => { await fetch(M.U('/api/import?name=' + c.nom), { method: 'POST', body: fs.readFileSync(path.join(M.base, 'medias', c.nom)) }); }));
   const projet = {
     format: VERT ? 'vertical' : 'horizontal', res: 1080, fps: FPS, quality: 'rapide', sortie: 'mp4', normaliser: true, pistes: [], textes: [], markers: [],
@@ -269,7 +275,7 @@ async function exporter() {
     const j = await (await fetch(M.U('/api/job?id=' + id))).json();
     if (j.error) throw new Error(j.error);
     if (j.done) { const dest = path.join(TRAVAIL, 'episode.mp4'); fs.copyFileSync(path.join(M.base, 'exports', j.out), dest); console.log('Vidéo :', dest, '·', j.duree ? Math.round(j.duree) + ' s' : ''); break; }
-    process.stdout.write(`\r${j.step || ''} ${j.progress ? Math.round(j.progress * 100) + ' %' : ''}   `); await new Promise(r => setTimeout(r, 1000));
+    process.stdout.write(`\r${j.step || ''} ${j.progress ? Math.round(j.progress * 100) + ' %' : ''}   `); progres({ etape: 'export', p: j.progress || 0, step: j.step || '' }); await new Promise(r => setTimeout(r, 1000));
   }
   await M.app.stop?.(); process.exit(0);
 }

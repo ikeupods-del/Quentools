@@ -3,6 +3,16 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.2.0
+- **Épisode QuentInvest avec Pico, fabriqué dans QuentMovie** : carte « Épisode QuentInvest » de l'accueil.
+  - Donne un sujet : la fiche s'écrit (Wikipédia et l'IA du Mac), puis tu la relis et la contrôles.
+  - Un clic sur « 🎬 Fabriquer » fait le reste : vidéo YouTube, version TikTok, miniatures et texte de publication, avec les écrans animés, les bruitages et la musique de la chaîne.
+  - La progression s'affiche et un bouton permet d'arrêter. Tu continues à monter pendant ce temps.
+  - Quand c'est prêt, « 📤 Publier… » envoie l'épisode sur YouTube (vidéo privée) ou dans tes brouillons TikTok, seulement quand tu le décides.
+- **Plus de programme à part à lancer** : QuentMovie fabrique l'épisode avec ses propres outils. La voix de Pico se télécharge une seule fois au premier épisode (≈ 350 Mo) ; l'application ne grossit que d'environ 1 Mo.
+- **Réglages de la chaîne gardés** : bruitages à −20 dB sous la voix, musique à 15 sur 100.
+- **Pour corriger une phrase**, modifie la fiche et fabrique de nouveau : les répliques inchangées gardent leur voix.
+
 ## 2.1.0
 - **Discussion avec l'assistant**, à droite (onglet « Assistant », ⌘K ou « Demander… ») : écris comme à quelqu'un, « coupe les blancs de la prise 2 », « mets le titre en jaune », « mets le volume du dernier clip à 40 % ». L'assistant répond ce qu'il va faire, avec un bouton « Faire » (et « Voir d'abord » pour la coupe des blancs, en rouge sur la timeline). Une fois fait, un bouton « Annuler » remet le montage comme avant.
 - **Le clip visé est compris** : « la prise 2 », « le clip 3 », « la deuxième prise », « le dernier clip », « ce clip ». Pour les titres, douze couleurs sont comprises (jaune, rouge, bleu, bleu clair, vert, orange, rose, violet, doré, blanc, noir, gris).

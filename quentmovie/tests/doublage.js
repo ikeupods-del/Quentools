@@ -104,6 +104,8 @@ function chromium() {
     await pg.click('#dbFiche'); await pg.waitForSelector('#fiGo', { timeout: 10000 });
     await pg.fill('#fiTexte', JSON.stringify({ numero: 1, slug: 'x', titre: 'T', blocs: [{ texte: 'Un bloc.' }] })); await pg.click('#fiGo'); await pg.waitForFunction(() => /À corriger/.test(document.querySelector('#fiRes').textContent), null, { timeout: 8000 });
     check('fiche : une fiche incomplète est signalée dans la fenêtre', await ev(() => /incomplète/.test(document.querySelector('#fiRes').textContent)));
+    await pg.fill('#fiTexte', fs.readFileSync(path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fiches', '03-interets-composes.json'), 'utf8')); await pg.click('#fiGo'); await pg.waitForFunction(() => /fabricable|À corriger/.test(document.querySelector('#fiRes').textContent), null, { timeout: 8000 });
+    check('fiche : une fiche complète propose « Fabriquer l’épisode »', await ev(() => /fabricable/.test(document.querySelector('#fiRes').textContent) && !!document.querySelector('#fiFabriquer')), await ev(() => document.querySelector('#fiRes').textContent.slice(0, 200)));
     await pg.keyboard.press('Escape'); await ev(() => fermer());
     // publication : la fenêtre s'ouvre, les clés se configurent, la connexion est proposée
     await ev(() => ouvrirPublier()); await pg.waitForSelector('#puYt', { timeout: 10000 });

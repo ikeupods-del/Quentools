@@ -55,9 +55,33 @@ function ouvrirFiche() {
     try {
       const r = await (await api('/api/quentinvest/controle', { method: 'POST', body: JSON.stringify({ fiche: $('#fiTexte').value }) })).json();
       const li = (c, t) => t.map(x => `<div style="margin:3px 0">${c} ${esc(x)}</div>`).join('');
-      res.innerHTML = li('ℹ️', r.infos) + li('❌', r.erreurs) + li('⚠️', r.avertissements) + `<p><b>${r.ok ? '✅ Fiche fabricable.' : '❌ À corriger avant la fabrication.'}</b></p>`;
+      res.innerHTML = li('ℹ️', r.infos) + li('❌', r.erreurs) + li('⚠️', r.avertissements) + `<p><b>${r.ok ? '✅ Fiche fabricable.' : '❌ À corriger avant la fabrication.'}</b></p>`
+        + (r.ok ? `<div class="encart" id="fiFab"><h4>🎬 Fabriquer l’épisode</h4><p class="mut" style="margin:0 0 6px">Vidéo YouTube, version TikTok, miniatures et texte de publication, avec la voix de Pico (téléchargée une fois, ≈ 350 Mo). Compte environ 15 à 20 minutes ; tu peux continuer à monter pendant ce temps. Rien n’est publié.</p>
+          <div class="ligne"><label><input type="checkbox" id="fiTiktok" checked> Version TikTok aussi</label><span class="sp"></span><button class="pri" id="fiFabriquer">🎬 Fabriquer</button></div><div id="fiFabRes" class="mut" style="margin-top:6px"></div></div>` : '');
+      const fb = $('#fiFabriquer'); if (fb) fb.onclick = () => fabriquerPico($('#fiTexte').value, { sansTiktok: !$('#fiTiktok').checked });
     } catch (er) { res.innerHTML = '<span style="color:#f87171">' + esc(er.message) + '</span>'; }
   };
+}
+// Épisode Pico fabriqué dans QuentMovie (routes-pico.js) : avancement, arrêt possible, puis dossier, publication et avertissements du rythme
+async function fabriquerPico(texte, options) {
+  const z = $('#fiFabRes'), b = $('#fiFabriquer'); if (!z) return;
+  let fiche; try { fiche = JSON.parse(texte); } catch (e) { z.innerHTML = '<span style="color:#f87171">La fiche n’est pas un texte JSON valide.</span>'; return; }
+  b.disabled = true; z.innerHTML = 'Démarrage…';
+  let id;
+  try {
+    const r = await api('/api/pico/fabriquer', { method: 'POST', body: JSON.stringify({ fiche, options }) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Fabrication impossible'); id = j.id;
+    z.innerHTML = '<progress max="100" value="0" style="width:100%"></progress><div id="fiFabEtape"></div><button class="mini" id="fiFabStop" style="margin-top:6px">Arrêter</button>';
+    $('#fiFabStop').onclick = () => { $('#fiFabStop').disabled = true; annulerJob(id); };
+    const t0 = Date.now(), x = await suivreTravail(id, k => { const p = $('#fiFabRes progress'), e = $('#fiFabEtape'); if (p) p.value = Math.round((k.progress || 0) * 100); if (e) e.textContent = `${k.step || ''}${k.progress > 0.05 ? ` · environ ${Math.max(1, Math.round((Date.now() - t0) / 60000 * (1 - k.progress) / k.progress))} min restantes` : ''}`; });
+    z.innerHTML = `<p>✅ <b>${esc(x.titre)}</b> est prêt à relire : ${x.fichiers.filter(n => /\.(mp4|png)$/.test(n)).length} fichiers (vidéos et miniatures) dans <b>${esc(x.dossier)}</b>.</p>
+      ${(x.avertissements || []).length ? `<details><summary>${x.avertissements.length} remarque${x.avertissements.length > 1 ? 's' : ''} sur la fiche</summary>${x.avertissements.map(a => `<div style="margin:3px 0">⚠️ ${esc(a)}</div>`).join('')}</details>` : ''}
+      <div class="ligne" style="margin-top:6px"><button id="fiFabDossier">📂 Ouvrir le dossier</button><button class="pri" id="fiFabPublier">📤 Publier…</button></div>
+      <p class="mut" style="margin:6px 0 0">Regarde les vidéos avant de publier. Pour corriger une phrase, modifie la fiche ci-dessus et fabrique de nouveau : les répliques inchangées gardent leur voix.</p>`;
+    $('#fiFabDossier').onclick = () => api('/api/publier/ouvrir', { method: 'POST', body: JSON.stringify({ cible: 'dossier', episode: x.base }) });
+    $('#fiFabPublier').onclick = () => ouvrirPublier();
+    signal('Épisode prêt à relire : ' + x.titre);
+  } catch (er) { z.innerHTML = `<span style="color:#f87171">${esc(er.message)}</span>`; }
+  b.disabled = false;
 }
 // Dictionnaire de prononciation : « mot écrit → comme il se dit », pour toutes les voix de synthèse (les sous-titres gardent l'orthographe)
 async function ouvrirPrononciations() {

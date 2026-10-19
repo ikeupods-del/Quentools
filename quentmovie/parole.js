@@ -19,6 +19,8 @@ const VOIX = [
   { id: 'upmc-jessica', nom: 'Jessica — voix de femme, douce', archive: 'vits-piper-fr_FR-upmc-medium', mo: 77, locuteur: 0 },
   { id: 'upmc-pierre', nom: 'Pierre — voix d’homme, chaleureuse', archive: 'vits-piper-fr_FR-upmc-medium', mo: 77, locuteur: 1 }
 ];
+// voix de Pico (chaîne QuentInvest) : Kokoro multilingue, voix française « siwis » abaissée par la fabrication
+const PICO = { archive: 'kokoro-multi-lang-v1_0', mo: 350 };
 const ECOUTE = { archive: 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8', mo: 660 };
 const VAD = { fichier: 'silero_vad.onnx' };
 // Hésitations retirées des sous-titres et coupées au montage
@@ -116,7 +118,8 @@ function creer({ run, FFMPEG, BASE }) {
     return {
       dispo: !!sherpa,
       voix: VOIX.map(v => ({ id: v.id, nom: v.nom, mo: v.mo, installee: installe(v.archive) })),
-      ecoute: { mo: ECOUTE.mo + 2, installee: installe(ECOUTE.archive) && fs.existsSync(path.join(MODELES, VAD.fichier)) }
+      ecoute: { mo: ECOUTE.mo + 2, installee: installe(ECOUTE.archive) && fs.existsSync(path.join(MODELES, VAD.fichier)) },
+      pico: { mo: PICO.mo, installee: installe(PICO.archive) }
     };
   }
 
@@ -142,6 +145,9 @@ function creer({ run, FFMPEG, BASE }) {
         if (job) job.step = 'Téléchargement de la reconnaissance de la voix (≈ 660 Mo, une seule fois)…';
         if (!fs.existsSync(path.join(MODELES, VAD.fichier))) { fs.mkdirSync(MODELES, { recursive: true }); await requete(`${DEPOT}asr-models/${VAD.fichier}`, { dest: path.join(MODELES, VAD.fichier + '.part'), quoi: 'de modèles' }); fs.renameSync(path.join(MODELES, VAD.fichier + '.part'), path.join(MODELES, VAD.fichier)); }
         await archive(ECOUTE.archive, 'asr-models', job, [0.02, 0.97]);
+      } else if (quoi === 'pico') {
+        if (job) job.step = `Téléchargement de la voix de Pico (≈ ${PICO.mo} Mo, une seule fois)…`;
+        await archive(PICO.archive, 'tts-models', job, [0, 0.97]);
       } else {
         const v = VOIX.find(x => 'voix:' + x.id === quoi); if (!v) throw new Error('Voix inconnue');
         if (job) job.step = `Téléchargement de la voix ${v.nom.split(' —')[0]} (≈ ${v.mo} Mo, une seule fois)…`;
@@ -179,4 +185,4 @@ function creer({ run, FFMPEG, BASE }) {
   return { etat, installer, parler, ecouter, arreter, VOIX };
 }
 
-module.exports = { creer, motsDe, sousTitres, aGarder, garderNiveaux, NIVEAUX_COUPE, estHesitation, VOIX, ECOUTE };
+module.exports = { creer, dossierSherpa, PICO, motsDe, sousTitres, aGarder, garderNiveaux, NIVEAUX_COUPE, estHesitation, VOIX, ECOUTE };
