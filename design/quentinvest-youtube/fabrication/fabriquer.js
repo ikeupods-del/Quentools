@@ -36,7 +36,9 @@ const progres = x => { if (process.env.QI_PROGRES) try { fs.writeFileSync(proces
 for (const d of ['audio', 'images', 'clips']) fs.mkdirSync(path.join(TRAVAIL, d), { recursive: true });
 const crypto = require('crypto');
 const persoDate = i => { const f = arg('voix-perso', '') && path.join(arg('voix-perso', ''), `v${sh(i)}.wav`); try { return f ? fs.statSync(f).mtimeMs : 0; } catch (e) { return 0; } };
-const cleVoix = i => crypto.createHash('md5').update(JSON.stringify([EP.scenes[i].voix || EP.scenes[i].texte, EP.scenes[i].lent || 0, V, VITESSE, STYLE2, pauseDe(i), arg('voix-perso', ''), ...(arg('voix-perso', '') ? [persoDate(i)] : [])])).digest('hex');
+// la clé suit le texte tel qu'il est dit (dictionnaire de prononciation compris) : un mot corrigé refait la voix des seules répliques qui le contiennent
+const ditPar = (() => { try { return require(path.join(QM, 'voix-texte.js')).pourLaVoix; } catch (e) { return t => t; } })();
+const cleVoix = i => crypto.createHash('md5').update(JSON.stringify([ditPar(EP.scenes[i].voix || EP.scenes[i].texte), EP.scenes[i].lent || 0, V, VITESSE, STYLE2, pauseDe(i), arg('voix-perso', ''), ...(arg('voix-perso', '') ? [persoDate(i)] : [])])).digest('hex');
 const wavDe = i => path.join(TRAVAIL, 'audio', `v${sh(i)}.wav`);
 const pauseDe = i => { const suivante = EP.scenes[i + 1]; return !suivante || suivante.section ? PAUSE_SECTION : PAUSE; };
 
@@ -110,28 +112,44 @@ function preparerFonds() { let courant = null; EP.scenes.forEach((s, i) => { if 
 const EVENTS = []; // EVENTS[i] = instants (s) où un élément apparaît dans l'écran de la réplique i (style 2 : posent les bruitages)
 const ANIM = []; // ANIM[i] = nombre d'images d'animation de l'écran de la réplique i (0 : l'écran de la réplique précédente continue)
 async function images() {
-  let pw; try { pw = require(process.env.PW || 'playwright'); } catch (e) { pw = require('/opt/node-tools/node_modules/playwright'); }
-  const { image } = require('./ecrans'), b = await pw.chromium.launch({ executablePath: process.env.QS_CHROMIUM || undefined, args: ['--no-sandbox'] });
+  const { image } = require('./ecrans');
+  // navigateur ouvert seulement si un écran est à dessiner : les écrans déjà dessinés pour le même contenu sont gardés (clé = page + réglages)
+  let b = null, p = null;
+  const page = async () => {
+    if (p) return p;
+    let pw; try { pw = require(process.env.PW || 'playwright'); } catch (e) { pw = require('/opt/node-tools/node_modules/playwright'); }
+    b = await pw.chromium.launch({ executablePath: process.env.QS_CHROMIUM || undefined, args: ['--no-sandbox'] });
+    p = await b.newPage({ viewport: { width: LARG, height: HAUT } }); return p;
+  };
   preparerFonds();
-  const p = await b.newPage({ viewport: { width: LARG, height: HAUT } });
-  let ecran = null, section = '';
+  let ecran = null, section = '', gardes = 0;
   for (let i = 0; i < EP.scenes.length; i++) {
     const s = EP.scenes[i], nouveau = s.ecran !== '=', fichierAnim = path.join(TRAVAIL, 'images', `a${sh(i)}.json`);
     if (nouveau) ecran = s.ecran; if (s.section) section = s.section;
     const dVoix = duree(wavDe(i)) - pauseDe(i);
-    await p.setContent(image(ecran, { section, mention: EP.mention, chaine: EP.chaine, sources: EP.sources, duree: dVoix, style: EP.style, vertical: VERT, transp: !!FONDS[i] }), { waitUntil: 'load' });
-    await p.evaluate(() => window.PRET);
-    let n = 0; EVENTS[i] = STYLE2 && nouveau ? await p.evaluate(() => window.EVENTS || []) : [];
-    if (nouveau) {
-      n = Math.ceil(Math.min(await p.evaluate(() => window.FIN), ANIM_MAX) * FPS);
-      for (let k = 0; k < n; k++) { await p.evaluate(t => window.setT(t), k / FPS); await p.screenshot({ path: path.join(TRAVAIL, 'images', `i${sh(i)}-${sh(k, 3)}.png`), omitBackground: !!FONDS[i] }); }
+    const html = image(ecran, { section, mention: EP.mention, chaine: EP.chaine, sources: EP.sources, duree: dVoix, style: EP.style, vertical: VERT, transp: !!FONDS[i] });
+    const cle = crypto.createHash('md5').update(JSON.stringify([html, nouveau, STYLE2, ANIM_MAX, FPS, LARG, HAUT, !!FONDS[i]])).digest('hex'), fCle = path.join(TRAVAIL, 'images', `i${sh(i)}.cle`);
+    const deja = (() => { try { return fs.readFileSync(fCle, 'utf8') === cle && JSON.parse(fs.readFileSync(path.join(TRAVAIL, 'images', `e${sh(i)}.json`), 'utf8')); } catch (e) { return null; } })();
+    if (deja && fs.existsSync(path.join(TRAVAIL, 'images', `i${sh(i)}-fin.png`))) {
+      ANIM[i] = deja.n; EVENTS[i] = deja.events; gardes++;
+      process.stdout.write(`\rÉcrans ${i + 1}/${EP.scenes.length} (gardé)   `); progres({ etape: 'ecrans', i: i + 1, n: EP.scenes.length }); continue;
     }
-    await p.evaluate(() => window.setT(1e3));
-    await p.screenshot({ path: path.join(TRAVAIL, 'images', `i${sh(i)}-fin.png`), omitBackground: !!FONDS[i] });
+    fs.rmSync(fCle, { force: true });
+    const pg = await page();
+    await pg.setContent(html, { waitUntil: 'load' });
+    await pg.evaluate(() => window.PRET);
+    let n = 0; EVENTS[i] = STYLE2 && nouveau ? await pg.evaluate(() => window.EVENTS || []) : [];
+    if (nouveau) {
+      n = Math.ceil(Math.min(await pg.evaluate(() => window.FIN), ANIM_MAX) * FPS);
+      for (let k = 0; k < n; k++) { await pg.evaluate(t => window.setT(t), k / FPS); await pg.screenshot({ path: path.join(TRAVAIL, 'images', `i${sh(i)}-${sh(k, 3)}.png`), omitBackground: !!FONDS[i] }); }
+    }
+    await pg.evaluate(() => window.setT(1e3));
+    await pg.screenshot({ path: path.join(TRAVAIL, 'images', `i${sh(i)}-fin.png`), omitBackground: !!FONDS[i] });
     ANIM[i] = n; fs.writeFileSync(fichierAnim, String(n));
+    fs.writeFileSync(path.join(TRAVAIL, 'images', `e${sh(i)}.json`), JSON.stringify({ n, events: EVENTS[i] })); fs.writeFileSync(fCle, cle);
     process.stdout.write(`\rÉcrans ${i + 1}/${EP.scenes.length} (${n} images)   `); progres({ etape: 'ecrans', i: i + 1, n: EP.scenes.length });
   }
-  console.log(); await b.close();
+  console.log(gardes ? `\n${gardes} écran(s) gardé(s) de la fabrication précédente` : ''); if (b) await b.close();
 }
 
 // ---------- 4. une vidéo par réplique : écran animé + Pico (bouche, entrée, rebond) ----------
@@ -170,6 +188,14 @@ function groupes(durees) {
   return g;
 }
 
+// une réplique déjà encodée avec exactement la même commande, la même voix et les mêmes écrans est gardée (refaire une réplique ne refait pas les autres)
+function ffClip(i, out, ...args) { // args : la commande FFmpeg complète (fichier de sortie compris)
+  const lire = f => { try { return fs.readFileSync(f, 'utf8'); } catch (e) { return ''; } };
+  const cle = crypto.createHash('md5').update(JSON.stringify([args, lire(path.join(TRAVAIL, 'audio', `v${sh(i)}.cle`)), lire(path.join(TRAVAIL, 'images', `i${sh(i)}.cle`))])).digest('hex');
+  const fCle = path.join(TRAVAIL, 'clips', `scene${sh(i)}.cle`);
+  if (fs.existsSync(out) && lire(fCle) === cle) return;
+  fs.rmSync(fCle, { force: true }); ff(...args); fs.writeFileSync(fCle, cle);
+}
 function clip(i, debut) {
   const s = EP.scenes[i], wav = wavDe(i), d = duree(wav), etat = bouche(wav), nb = Math.round(d * FPS), imgs = path.join(TRAVAIL, 'images');
   const fond = [], nAnim = Math.min(ANIM[i], nb);
@@ -189,7 +215,7 @@ function clip(i, debut) {
   const out = path.join(TRAVAIL, 'clips', `scene${sh(i)}.mp4`);
   if (!STYLE2) { // épisodes 1 et 2 : rendu d'origine
     const filtre = `[0:v]fps=${FPS}[b];[1:v]fps=${FPS},scale=-1:690[p];[b][p]overlay=x='W-w-80+${entree}+${sortie}':y='H-h-240+${respire}+${saut}',format=yuv420p[v]`;
-    ff('-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, '-filter_complex', filtre, '-map', '[v]', '-map', '2:a', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', d.toFixed(3), '-movflags', '+faststart', out);
+    ffClip(i, out, '-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, '-filter_complex', filtre, '-map', '[v]', '-map', '2:a', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', d.toFixed(3), '-movflags', '+faststart', out);
     return { out, d };
   }
   // style 2 : zoom lent du fond (de 1 à 1,03 sur la durée de l'écran), Pico qui se penche / hoche, bruitages
@@ -210,7 +236,7 @@ function clip(i, debut) {
     composition = '[m][b]overlay=0:0:format=auto[bm];[bm]';
   }
   const filtre = `${F ? fondMedia + ';' : ''}${fondZ};${pico};${composition}[p]overlay=x='${px2}':y='${py}+${respire}+${saut}',format=yuv420p[v];${audio}`;
-  ff('-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, ...entrees, ...entreeFond, '-filter_complex', filtre, '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', d.toFixed(3), '-movflags', '+faststart', out);
+  ffClip(i, out, '-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, ...entrees, ...entreeFond, '-filter_complex', filtre, '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', d.toFixed(3), '-movflags', '+faststart', out);
   return { out, d };
 }
 

@@ -75,6 +75,38 @@ async function navigateurEssai(exe) {
     check('fabrication : épisode prêt pour « Publier »', require('../publication').episodes(sorties).some(x => x.nom === '98-essai-pico'), JSON.stringify(require('../publication').episodes(sorties).map(x => x.nom)));
     if (r.dossier) { const out = execFileSync(bins.ffmpeg, ['-hide_banner', '-i', path.join(r.dossier, '98-essai-pico-youtube.mp4'), '-f', 'null', '-'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).toString(); check('fabrication : vidéo lisible', true, out.slice(0, 1)); }
     console.log(`  fabrication réelle en ${Math.round((Date.now() - t0) / 1000)} s`);
+    // relecture : l'épisode se lit réplique par réplique, une expression et une phrase changées ne refont que ces répliques
+    const E = await (await fetch(U('/api/pico/episode?base=98-essai-pico'))).json();
+    check('relecture : répliques avec expression et texte', E.scenes && E.scenes.length >= 4 && E.scenes.every(x => E.expressions.includes(x.expr) && x.texte), JSON.stringify(E).slice(0, 300));
+    check('relecture : épisode listé parmi les épisodes fabriqués', (await (await fetch(U('/api/pico/episodes'))).json()).episodes.some(x => x.base === '98-essai-pico'));
+    check('relecture : nom d’épisode invalide refusé', (await fetch(U('/api/pico/episode?base=../../etc'))).status >= 400);
+    const trav = path.join(sorties, '98-essai-pico', 'travail'), date = f => fs.statSync(path.join(trav, f)).mtimeMs, der = E.scenes.length - 1;
+    const avant = { v0: date('audio/v00.wav'), c0: date('clips/scene00.mp4'), i0: date('images/i00-fin.png'), v1: date('audio/v01.wav'), cDer: date(`clips/scene${String(der).padStart(2, '0')}.mp4`) };
+    const exprDer = E.scenes[der].expr === 'content' ? 'inquiet' : 'content', t1 = Date.now();
+    const rf = await (await post('/api/pico/refaire', { base: '98-essai-pico', changements: [{ i: 1, texte: 'Un euro vaut exactement cent centimes.' }, { i: der, expr: exprDer }] })).json(), jr = await attendre(rf.id);
+    check('refaire : terminé', jr.done && !jr.error, jr.error || '');
+    const E2 = await (await fetch(U('/api/pico/episode?base=98-essai-pico'))).json();
+    check('refaire : phrase et expression gardées dans l’épisode', E2.scenes[1].texte === 'Un euro vaut exactement cent centimes.' && E2.scenes[der].expr === exprDer);
+    check('refaire : la réplique 1 et ses écrans sont gardés', date('audio/v00.wav') === avant.v0 && date('clips/scene00.mp4') === avant.c0 && date('images/i00-fin.png') === avant.i0, JSON.stringify(avant));
+    check('refaire : la phrase changée a une nouvelle voix', date('audio/v01.wav') > avant.v1);
+    check('refaire : l’expression changée refait sa réplique', date(`clips/scene${String(der).padStart(2, '0')}.mp4`) > avant.cDer);
+    check('refaire : vidéo YouTube remplacée', fs.statSync(path.join(sorties, '98-essai-pico', '98-essai-pico-youtube.mp4')).mtimeMs > t1);
+    console.log(`  refaire en ${Math.round((Date.now() - t1) / 1000)} s`);
+    const ec = await (await post('/api/pico/ecouter', { base: '98-essai-pico', texte: 'Mackay se dit maquaï.' })).json(), je = await attendre(ec.id);
+    check('écouter : phrase dite par la voix de l’épisode', je.done && /\.m4a$/.test((je.resultat || {}).file || '') && fs.existsSync(path.join(base, 'medias', je.resultat.file)), je.error || '');
+    // écran de relecture dans la fenêtre : lignes, expressions, mot cliquable avec « se dit », écouter et ajouter
+    const pg = await nav.b.newPage({ viewport: { width: 1440, height: 900 } }), errs = []; pg.on('pageerror', x => errs.push(x.message));
+    await pg.goto(U('/')); await pg.waitForTimeout(800); await pg.evaluate(() => ouvrirRelecturePico('98-essai-pico')); await pg.waitForSelector('#rlListe .rlLigne');
+    check('écran de relecture : une ligne par réplique avec son expression', await pg.evaluate(n => document.querySelectorAll('#rlListe .rlLigne').length === n && document.querySelectorAll('#rlListe select[data-expr]').length === n, E.scenes.length));
+    await pg.selectOption('select[data-expr="0"]', 'surpris');
+    check('écran de relecture : expression changée → « Refaire 1 réplique »', await pg.evaluate(() => /Refaire 1 réplique/.test(document.querySelector('#rlRefaire').textContent) && !document.querySelector('#rlRefaire').disabled));
+    await pg.click('#rlListe .rlLigne[data-i="1"] [data-mot]'); await pg.waitForSelector('#rlDit');
+    check('écran de relecture : clic sur un mot → « se dit », écouter, ajouter au dictionnaire', await pg.evaluate(() => !!document.querySelector('#rlEcouter') && !!document.querySelector('#rlAjouter')));
+    await pg.fill('#rlDit', 'eux'); await pg.click('#rlAjouter'); await pg.waitForTimeout(500);
+    check('écran de relecture : mot ajouté → répliques qui le contiennent à refaire', await pg.evaluate(() => document.querySelectorAll('#rlListe .rlLigne.change').length >= 2), await pg.evaluate(() => document.querySelector('#rlEtat').textContent));
+    check('écran de relecture : aucune erreur dans la page', !errs.length, errs.join(' | '));
+    await pg.close();
+
   }
   if (nav) await nav.b.close();
   app.stop && app.stop(); if (process.env.QM_GARDER) console.log('  dossier gardé : ' + base); else fs.rmSync(base, { recursive: true, force: true });

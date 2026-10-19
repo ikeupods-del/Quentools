@@ -413,6 +413,14 @@ button.dictee.on{background:#5a1a1f;border-color:#ff5a5f;color:#fff}
 .aud.r-son{border:1px solid #6b4a1c;box-shadow:inset 0 0 0 100px #3a2a14b0;color:#fbd29a}
 .clip.sel,.aud.sel,.pv.sel,.pt.sel{border:2px solid var(--sel)}
 #entetes #eA{box-shadow:inset 3px 0 0 #4fd1a5,inset 6px 0 0 #f3a64a}
+/* Relecture d'un épisode Pico */
+.rlListe{display:flex;flex-direction:column;gap:6px;max-height:58vh;overflow:auto;padding-right:4px}
+.rlLigne{padding:8px 10px;border-radius:10px;background:#1a1d23;border:1px solid #262a33}.rlLigne.change{border-color:#5b78ff;background:#171c2e}
+.rlSection{font-size:11px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.rlCorps{display:flex;gap:10px;align-items:flex-start}.rlNum{width:22px;flex:none;color:var(--mut);font:12px ui-monospace,Menlo,monospace;padding-top:5px}
+.rlCorps select{width:110px;flex:none}.rlTexte{flex:1;line-height:1.6;padding-top:3px}
+.rlMot{cursor:pointer;border-radius:4px}.rlMot:hover{background:#2a2e38}.rlMot.dur{text-decoration:underline wavy #f2b92b;text-underline-offset:4px}
+.rlPron{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 0 32px;padding:8px;border-radius:8px;background:#0f1115}.rlPron input{flex:1;min-width:180px}
 /* Panneau de droite 2.1 : réglages du clip ou discussion avec l'assistant */
 #droite{grid-area:insp;display:flex;flex-direction:column;min-height:0;background:var(--pan);border-left:1px solid #22252d}
 #droite #insp{grid-area:auto;flex:1;min-height:0;border-left:0}#droite #insp[hidden],#chat[hidden]{display:none}

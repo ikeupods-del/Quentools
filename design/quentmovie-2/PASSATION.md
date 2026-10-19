@@ -24,10 +24,7 @@ Le propriétaire n'est pas développeur : lui répondre en français simple, agi
 - Étude : la fabrication demande Node, FFmpeg, la voix (sherpa-onnx) et un navigateur pour dessiner les écrans. QuentMovie a déjà les quatre : le navigateur de Playwright est remplacé par des fenêtres cachées de l'application. Ajout à l'application : ≈ 1 Mo (programme, dessins de Pico, police). Seule la voix de Pico (Kokoro, ≈ 350 Mo) se télécharge, une fois, au premier épisode.
 - Réglages de la chaîne inchangés (bruitages −20 dB sous la voix, musique 15/100) ; épisodes 1 et 2 intacts (`verifier.js`).
 
-**2.2.1 : à faire — relecture fine avant publication**
-- Écran de relecture de l'épisode fabriqué : la liste des répliques avec, pour chacune, l'expression de Pico (content, inquiet, surpris, curieux, réfléchi), la phrase modifiable et les mots soulignés (noms propres, sigles, mots signalés par le contrôle de prononciation).
-- Clic sur un mot souligné : écrire comment le dire, l'écouter, l'ajouter au dictionnaire.
-- « Refaire » ne refait que les répliques concernées (la voix est déjà gardée par réplique ; les écrans et les clips d'une réplique inchangée sont à garder aussi).
+**2.2.1 : faite** — relecture d'un épisode fabriqué (« 🔍 Relire et corriger ») : expression de Pico par réplique, phrase modifiable, mots à vérifier soulignés, clic sur un mot → « se dit », écoute avec la voix de Pico, ajout au dictionnaire ; « Refaire » ne refait que les répliques changées (voix, écrans et clips gardés par réplique), puis le montage final.
 
 ## HyperFrames : étude faite, choix à faire par le propriétaire
 - Étude complète : `design/quentmovie-2/ETUDE-HYPERFRAMES.md`. Essai réussi avec le modèle « warm-grain » de leur catalogue (10 s en 1080p fabriquées en 27 s), une fois ses fichiers extérieurs (GSAP, texture) copiés en local.

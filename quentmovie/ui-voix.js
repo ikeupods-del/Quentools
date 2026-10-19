@@ -34,10 +34,14 @@ function ouvrirFiche() {
     <p>Colle le contenu d’une fiche (ou charge le fichier) : QuentMovie vérifie qu’elle est complète, qu’elle dépasse 5 minutes, que les phrases restent courtes, que les chiffres ont une source, qu’aucun conseil d’investissement ne s’est glissé dedans, et liste les mots à ajouter au dictionnaire de prononciation.</p>
     <div class="encart" style="margin-bottom:8px"><h4>Brouillon automatique</h4><p class="mut" style="margin:0 0 6px">Donne un sujet : QuentMovie lit l’article Wikipédia, l’IA locale reformule les faits pour la voix et la structure de l’épisode est ajoutée. C’est un <b>brouillon</b> : le titre, l’accroche, les erreurs du piège et la question sont à réécrire, et les sources à vérifier.</p>
       <div class="ligne"><input id="fiSujet" placeholder="Ex. : Le krach de 1929" style="flex:1"><button id="fiBrouillon">✍️ Écrire un brouillon</button></div><div id="fiProg" class="mut" style="margin-top:6px"></div></div>
+    <div id="fiDeja"></div>
     <textarea id="fiTexte" rows="9" style="width:100%;font-family:monospace;font-size:12px" placeholder='{ "numero": 12, "slug": "…", … }'></textarea>
     <div class="ligne"><label class="bouton" style="cursor:pointer">📂 Charger un fichier<input type="file" id="fiF" accept=".json,application/json" hidden></label><button class="pri" id="fiGo">Contrôler</button><button id="fiFermer">Fermer</button></div>
     <div id="fiRes" style="margin-top:8px"></div>`, 'xl');
   $('#fiFermer').onclick = fermer;
+  api('/api/pico/episodes').then(r => r.json()).then(r => { const l = (r.episodes || []).slice(0, 6), z = $('#fiDeja'); if (!z || !l.length) return;
+    z.innerHTML = `<div class="encart" style="margin-bottom:8px"><h4>Épisodes déjà fabriqués</h4><div class="ligne" style="flex-wrap:wrap">${l.map(e => `<button class="mini" data-relire="${esc(e.base)}">🔍 ${esc(e.titre || e.base)}</button>`).join('')}</div></div>`;
+    z.onclick = ev => { const b = ev.target.closest('[data-relire]'); if (b) ouvrirRelecturePico(b.dataset.relire); }; }).catch(() => {});
   $('#fiF').onchange = async e => { const f = e.target.files[0]; if (f) $('#fiTexte').value = await f.text(); };
   $('#fiBrouillon').onclick = async () => {
     const sujet = $('#fiSujet').value.trim(), prog = $('#fiProg'); if (sujet.length < 3) return signal('Écris le sujet de l’épisode.');
@@ -75,13 +79,75 @@ async function fabriquerPico(texte, options) {
     const t0 = Date.now(), x = await suivreTravail(id, k => { const p = $('#fiFabRes progress'), e = $('#fiFabEtape'); if (p) p.value = Math.round((k.progress || 0) * 100); if (e) e.textContent = `${k.step || ''}${k.progress > 0.05 ? ` · environ ${Math.max(1, Math.round((Date.now() - t0) / 60000 * (1 - k.progress) / k.progress))} min restantes` : ''}`; });
     z.innerHTML = `<p>✅ <b>${esc(x.titre)}</b> est prêt à relire : ${x.fichiers.filter(n => /\.(mp4|png)$/.test(n)).length} fichiers (vidéos et miniatures) dans <b>${esc(x.dossier)}</b>.</p>
       ${(x.avertissements || []).length ? `<details><summary>${x.avertissements.length} remarque${x.avertissements.length > 1 ? 's' : ''} sur la fiche</summary>${x.avertissements.map(a => `<div style="margin:3px 0">⚠️ ${esc(a)}</div>`).join('')}</details>` : ''}
-      <div class="ligne" style="margin-top:6px"><button id="fiFabDossier">📂 Ouvrir le dossier</button><button class="pri" id="fiFabPublier">📤 Publier…</button></div>
-      <p class="mut" style="margin:6px 0 0">Regarde les vidéos avant de publier. Pour corriger une phrase, modifie la fiche ci-dessus et fabrique de nouveau : les répliques inchangées gardent leur voix.</p>`;
+      <div class="ligne" style="margin-top:6px"><button id="fiFabDossier">📂 Ouvrir le dossier</button><button id="fiFabRelire">🔍 Relire et corriger</button><button class="pri" id="fiFabPublier">📤 Publier…</button></div>
+      <p class="mut" style="margin:6px 0 0">Regarde les vidéos avant de publier. « Relire et corriger » change l’expression de Pico, une phrase ou la prononciation d’un mot, et ne refait que ces répliques.</p>`;
+    $('#fiFabRelire').onclick = () => ouvrirRelecturePico(x.base);
     $('#fiFabDossier').onclick = () => api('/api/publier/ouvrir', { method: 'POST', body: JSON.stringify({ cible: 'dossier', episode: x.base }) });
     $('#fiFabPublier').onclick = () => ouvrirPublier();
     signal('Épisode prêt à relire : ' + x.titre);
   } catch (er) { z.innerHTML = `<span style="color:#f87171">${esc(er.message)}</span>`; }
   b.disabled = false;
+}
+// Relecture d'un épisode Pico fabriqué : expression de chaque réplique, phrase, prononciation d'un mot (dictionnaire) ; seules les répliques changées sont refaites
+const NOMS_EXPR = { neutre: 'neutre', content: 'content', inquiet: 'inquiet', surpris: 'surpris', curieux: 'curieux', reflechi: 'réfléchi' };
+async function ouvrirRelecturePico(base) {
+  let E; try { const r = await api('/api/pico/episode?base=' + encodeURIComponent(base)), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Épisode introuvable'); E = j; } catch (er) { return alert(er.message); }
+  const ch = new Map(), aRefaire = new Set(); let dico = false;
+  const difficiles = new Set(E.difficiles.map(m => m.toLowerCase()));
+  const motsDe = t => String(t).split(/(\s+)/).map(m => { const nu = m.replace(/^[«(“"']+|[»)”"'.,;:!?…]+$/g, ''); return /\S/.test(m) && nu ? `<span class="rlMot${difficiles.has(nu.toLowerCase()) ? ' dur' : ''}" data-mot="${esc(nu)}">${esc(m)}</span>` : esc(m); }).join('');
+  const texteDe = s => (ch.get(s.i) || {}).texte ?? s.texte, exprDe = s => (ch.get(s.i) || {}).expr || s.expr;
+  ouvrir(`<h2>🔍 Relire « ${esc(E.titre)} »</h2>
+    <p class="mut">Pour chaque réplique : l’expression de Pico, la phrase (✏ pour la modifier) et la prononciation (clic sur un mot ; les mots <span class="rlMot dur">soulignés</span> sont à vérifier). Seules les voix et les écrans des répliques changées sont refaits ; le montage final est refait en entier (quelques minutes).</p>
+    <div id="rlListe" class="rlListe"></div>
+    <div id="rlPied" class="ligne" style="margin-top:10px"><span class="mut" id="rlEtat">Aucun changement.</span><span class="sp"></span><button id="rlFermer">Fermer</button><button class="pri" id="rlRefaire" disabled>Refaire</button></div>`, 'xl');
+  const dessiner = () => {
+    $('#rlListe').innerHTML = E.scenes.map(s => `<div class="rlLigne ${aRefaire.has(s.i) ? 'change' : ''}" data-i="${s.i}">
+      ${s.section ? `<div class="rlSection">${esc(s.section)}</div>` : ''}
+      <div class="rlCorps"><span class="rlNum">${s.i + 1}</span><select data-expr="${s.i}" title="Expression de Pico">${E.expressions.map(x => `<option value="${x}" ${x === exprDe(s) ? 'selected' : ''}>${NOMS_EXPR[x] || x}</option>`).join('')}</select>
+      <div class="rlTexte" data-texte="${s.i}">${motsDe(texteDe(s))}</div><button class="mini" data-edit="${s.i}" title="Modifier la phrase">✏</button></div></div>`).join('');
+    const n = aRefaire.size; $('#rlEtat').textContent = n ? `${n} réplique${n > 1 ? 's' : ''} à refaire${dico && E.tiktok ? ' · la version TikTok sera aussi refaite (prononciation)' : ''}.` : 'Aucun changement.';
+    $('#rlRefaire').disabled = !n; $('#rlRefaire').textContent = n ? `Refaire ${n} réplique${n > 1 ? 's' : ''}` : 'Refaire';
+  };
+  const changer = (i, k, v) => { const c = ch.get(i) || {}; c[k] = v; ch.set(i, c); aRefaire.add(i); dessiner(); };
+  $('#rlFermer').onclick = fermer;
+  $('#rlListe').onchange = e => { const t = e.target; if (t.dataset.expr !== undefined) changer(+t.dataset.expr, 'expr', t.value); };
+  $('#rlListe').onclick = async e => {
+    const ed = e.target.closest('[data-edit]');
+    if (ed) { const i = +ed.dataset.edit, s = E.scenes[i], z = $(`[data-texte="${i}"]`); z.innerHTML = `<textarea rows="3" style="width:100%">${esc(texteDe(s))}</textarea><div class="ligne"><button class="mini pri" data-ok="${i}">OK</button></div>`; z.querySelector('textarea').focus(); return; }
+    const ok = e.target.closest('[data-ok]');
+    if (ok) { const i = +ok.dataset.ok, v = $(`[data-texte="${i}"] textarea`).value.replace(/\s+/g, ' ').trim(); if (v && v !== E.scenes[i].texte) changer(i, 'texte', v); else dessiner(); return; }
+    const m = e.target.closest('[data-mot]'); if (!m || e.target.closest('textarea')) return;
+    const mot = m.dataset.mot, ligne = m.closest('.rlLigne'), i = +ligne.dataset.i;
+    document.querySelectorAll('.rlPron').forEach(x => x.remove());
+    let dit = ''; try { const d = await (await api('/api/prononciations')).json(); dit = (d.perso || {})[mot] || (d.livre || {})[mot] || ''; } catch (er) { /* dictionnaire indisponible */ }
+    ligne.insertAdjacentHTML('beforeend', `<div class="rlPron"><b>« ${esc(mot)} »</b> se dit <input id="rlDit" value="${esc(dit)}" placeholder="comme tu le dirais, en lettres françaises"><button class="mini" id="rlEcouter">▶ Écouter</button><button class="mini pri" id="rlAjouter">➕ Ajouter au dictionnaire</button><span class="mut" id="rlPronEtat"></span></div>`);
+    $('#rlDit').focus();
+    $('#rlEcouter').onclick = async () => {
+      const v = $('#rlDit').value.trim(), et = $('#rlPronEtat'), phrase = texteDe(E.scenes[i]).split(mot).join(v || mot); et.textContent = 'La voix de Pico prépare la phrase…'; $('#rlEcouter').disabled = true;
+      try { const { id } = await (await api('/api/pico/ecouter', { method: 'POST', body: JSON.stringify({ base: E.base, texte: phrase }) })).json(); const r = await suivreTravail(id, k => { et.textContent = k.step || '…'; }); et.textContent = ''; new Audio('/media/' + encodeURIComponent(r.file)).play(); }
+      catch (er) { et.textContent = er.message; }
+      $('#rlEcouter').disabled = false;
+    };
+    $('#rlAjouter').onclick = async () => {
+      const v = $('#rlDit').value.trim(), et = $('#rlPronEtat'); if (!v) return $('#rlDit').focus();
+      try { const d = await (await api('/api/prononciations')).json(), mots = { ...(d.perso || {}), [mot]: v }; const r = await api('/api/prononciations', { method: 'PUT', body: JSON.stringify({ mots }) }); if (!r.ok) throw new Error((await r.json()).error || 'Dictionnaire non enregistré');
+        dico = true; const re = new RegExp(`(^|[^\\p{L}])${mot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=[^\\p{L}]|$)`, 'iu'); E.scenes.forEach(s => { if (re.test(texteDe(s))) aRefaire.add(s.i); }); difficiles.delete(mot.toLowerCase()); dessiner(); signal(`« ${mot} » ajouté au dictionnaire.`); }
+      catch (er) { et.textContent = er.message; }
+    };
+  };
+  $('#rlRefaire').onclick = async () => {
+    const changements = [...aRefaire].map(i => ({ i, ...(ch.get(i) || {}) }));
+    $('#rlRefaire').disabled = true; $('#rlEtat').innerHTML = '<progress max="100" value="0" style="width:260px"></progress> <span id="rlProg">Démarrage…</span>';
+    try {
+      const { id } = await (await api('/api/pico/refaire', { method: 'POST', body: JSON.stringify({ base: E.base, changements, tiktok: dico }) })).json();
+      const r = await suivreTravail(id, k => { const p = $('#rlEtat progress'), t = $('#rlProg'); if (p) p.value = Math.round((k.progress || 0) * 100); if (t) t.textContent = k.step || ''; });
+      ch.clear(); aRefaire.clear(); dico = false; Object.assign(E, await (await api('/api/pico/episode?base=' + encodeURIComponent(E.base))).json()); dessiner();
+      $('#rlEtat').innerHTML = `✅ ${esc(r.versions.join(' et '))} mis à jour. <a href="#" id="rlDossier">Ouvrir le dossier</a> · <a href="#" id="rlPublier">Publier…</a>`;
+      $('#rlDossier').onclick = ev => { ev.preventDefault(); api('/api/publier/ouvrir', { method: 'POST', body: JSON.stringify({ cible: 'dossier', episode: E.base }) }); };
+      $('#rlPublier').onclick = ev => { ev.preventDefault(); ouvrirPublier(); };
+    } catch (er) { $('#rlEtat').innerHTML = `<span style="color:#f87171">${esc(er.message)}</span>`; $('#rlRefaire').disabled = false; }
+  };
+  dessiner();
 }
 // Dictionnaire de prononciation : « mot écrit → comme il se dit », pour toutes les voix de synthèse (les sous-titres gardent l'orthographe)
 async function ouvrirPrononciations() {
