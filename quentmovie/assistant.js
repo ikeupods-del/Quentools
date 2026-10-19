@@ -5,6 +5,7 @@
 
 // actions connues : identifiant → libellé (montré avant d'appliquer)
 const ACTIONS = {
+  volume_musique: 'Régler le volume de la musique',
   couper_blancs: 'Couper les blancs et les « euh »',
   niveau_final: 'Régler le volume final comme les réseaux sociaux',
   sous_titres: 'Ajouter les sous-titres automatiques',
@@ -64,7 +65,7 @@ function comprendre(demande, projet, instant) {
   const t = ' ' + sansAccents(demande).replace(/[^a-z0-9'«»"%,.:\- ]+/g, ' ') + ' ', l = [];
   const ajoute = (action, parametre = '') => { if (!l.some(x => x.action === action)) l.push({ action, parametre: String(parametre), libelle: ACTIONS[action] + (parametre ? ` (${parametre})` : '') }); };
   // « monte ma vidéo » : l'assistant enchaîne lui-même les étapes utiles à CE montage
-  if (/(montage (automatique|auto|complet)|monte[- ]?(la|le|moi|ma|mon|mes|les|cette|ces|tout)\b|fais[- ]moi (le|un|mon) montage|auto-?monte|monte (automatiquement|tout))/.test(t) && !/monte[- ]?(le )?son/.test(t)) return planAuto(projet);
+  if (/(montage (automatique|auto|complet)|monte[- ]?(la|le|moi|ma|mon|mes|les|cette|ces|tout)\b|fais[- ]moi (le|un|mon) montage|auto-?monte|monte (automatiquement|tout))/.test(t) && !/monte[- ]?(un peu )?(le |la |les )?(son|volume|musique|niveau|voix|basses|aigus)\b/.test(t)) return planAuto(projet);
   // couleur d'un titre : « mets le titre en jaune », « texte en rouge » (pas un nouvel écran titre)
   const coul = /\b(titres?|textes?)\b/.test(t) && !/sous[- ]?titr/.test(t) && Object.keys(COULEURS).find(k => new RegExp(`\\b(?:en|couleur) ${k}s?\\b`).test(t));
   if (coul) ajoute('couleur_titre', coul);
@@ -74,7 +75,7 @@ function comprendre(demande, projet, instant) {
     : /\bvolet\b/.test(t) ? 'volet' : /liste (a|à) points|liste animee/.test(t) ? 'liste' : '';
   if (anim) ajoute('animation', anim);
   const non = mot => new RegExp(`(sans|pas de|enleve|retire|supprime|vire)( les?| la| l'| des| de)? ?${mot}`).test(t);
-  if (/\b(blancs?|silences?|euh|hesitations?|temps morts?)\b/.test(t) && !/(sans|pas de|garde|laisse|conserve)( les?| la| l'| des| de)? ?(blancs?|silences?|euh|hesitations?|temps morts?)/.test(t)) ajoute('couper_blancs'); // « supprime les blancs » = les couper
+  if (/\b(blancs?|silences?|euh|hesitations?|temps morts?)\b/.test(t) && !/noir (et|&) blanc/.test(t) && !/(sans|pas de|garde|laisse|conserve)( les?| la| l'| des| de)? ?(blancs?|silences?|euh|hesitations?|temps morts?)/.test(t)) ajoute('couper_blancs'); // « supprime les blancs » = les couper
   // « sous-titres en italien », « traduis les sous-titres en anglais » : traduction (créés d'abord s'il n'y en a pas) ; « en français » seul = la langue parlée
   const lg = /(?:sous[- ]?titr|tradu)/.test(t) && Object.keys(LANGUES_SOUS).find(m => new RegExp(`\\b(?:en |in )?${m}s?\\b`).test(t) && (m !== 'francais' || /tradu/.test(t)));
   if (lg && !non('sous[- ]?titr')) ajoute('traduire_sous', LANGUES_SOUS[lg]);
@@ -83,7 +84,10 @@ function comprendre(demande, projet, instant) {
   if (/(detach|separ|extrai)\w* (le |la |du )?(son|audio|piste audio)/.test(t)) ajoute('detacher');
   if (/(ameliore|nettete|debruit|plus net|qualite)/.test(t)) ajoute('ameliorer');
   if (/(egalis|normalis|meme (volume|niveau)|niveau sonore|volume regulier)/.test(t)) ajoute('egaliser');
-  if (non('musique')) ajoute('retirer_musique');
+  // volume de la musique : « baisse la musique », « la musique est trop forte », « musique à 30 % » (jamais une nouvelle musique)
+  const musVol = /\bmusique\b/.test(t) && (/(baisse|diminue|reduis|attenue|moins fort|trop fort|trop haut|plus bas|monte|augmente|plus fort|trop bas|trop faible|volume|niveau|%|pour ?cent)/.test(t) || /coupe\w*\s+(?:le son de\s+)?la musique/.test(t));
+  if (musVol) { const pc = /(\d{1,3})\s*(?:%|pour ?cent)/.exec(t); ajoute('volume_musique', /coupe/.test(t) && !pc ? '0' : pc ? String(Math.min(200, +pc[1])) : /(monte|augmente|plus fort|trop bas|trop faible)/.test(t) ? 'plus' : 'moins'); }
+  else if (non('musique')) ajoute('retirer_musique');
   else if (/\b(musique|son de fond|fond sonore|ambiance sonore)\b/.test(t)) ajoute('musique', AMBIANCES.find(a => t.includes(a.replace('-', ''))) || AMBIANCES.find(a => t.includes(a)) || '');
   if (/(rythme|tempo|beat|temps forts?|en musique)/.test(t) && /(cal|synchro|sur le|au rythme)/.test(t)) ajoute(/repere/.test(t) ? 'reperes_rythme' : 'rythme');
   if (non('transitions?')) ajoute('retirer_transitions');
@@ -98,12 +102,14 @@ function comprendre(demande, projet, instant) {
   const bru = /(?:bruit(?:age)?|son|effet sonore|sound|applaudissements?|whoosh|ding|clic|sonnerie|rire|explosion|tonnerre|gong|cymbale|bip|clavier|camera|appareil photo|jackpot|fanfare|sirene)\b/.exec(t);
   if (bru && /(ajoute|mets|met|insere|colle|place|rajoute|joue|avec)/.test(t) && !/(chapitr|musique|volume|egalis|normalis|detach|extrai|separ|sous[- ]?titr|retire|supprim)/.test(t) && /(bruit|applaudi|whoosh|ding|clic|sonnerie|rire|explosion|tonnerre|gong|cymbale|bip|clavier|appareil|jackpot|fanfare|sirene|effet sonore)/.test(t)) ajoute('bruitage', (/(clavier|applaudi\w*|whoosh|ding|clic|sonnerie|rire|explosion|tonnerre|gong|cymbale|bip|appareil photo|jackpot|fanfare|sirene|hausse|baisse|pieces)/.exec(t) || ['', 'whoosh'])[1]);
   // couper à un instant : « coupe à 10 secondes », « coupe à 1:30 »
-  const ICI = /\b(ici|la|a ce moment(?: la)?|a cet (?:endroit|instant)|maintenant|cette image|ce moment|a cette image)\b/;
+  // « là » s'écrit avec un accent : sans accent, « la » est l'article (« coupe la musique ») et n'est jamais un instant
+  const orig = String(demande || '').toLowerCase(), LA = /(?:^|[\s,])là(?![\p{L}])/u.test(orig);
+  const ICI = /\b(ici|a ce moment(?: la)?|a cet (?:endroit|instant)|maintenant|cette image|ce moment|a cette image)\b/, ici = ICI.test(t) || LA;
   const aInstant = instant != null && Number.isFinite(+instant) && +instant >= 0;
-  if (aInstant && /(?:coupe|decoupe|separe|scinde|divise)\w*\s+(?:la video\s+|le clip\s+)?(ici|la|a ce moment|maintenant|a cet endroit|a cet instant)\b/.test(t)) ajoute('couper_a', String(+(+instant).toFixed(2)));
-  const txtIci = /(?:mets|met|ajoute|ecris|affiche|pose)\w*\s+(?:un |le |du )?(?:titre|texte)\s*(?:«|"|:)\s*([^»"]{1,80})/i.exec(String(demande || ''));
-  if (aInstant && txtIci && ICI.test(t)) ajoute('titre_ici', txtIci[1].trim());
   const cou = /(?:coupe|decoupe|separe|scinde|divise)\w*\s+(?:la video\s+|le montage\s+)?(?:a|au|vers)\s+(?:(\d{1,2}):(\d{2})|(\d+(?:[.,]\d+)?)\s*(?:s\b|sec|secondes?)|(\d+)\s*(?:min|minutes?)(?:\s*(\d{1,2}))?)/.exec(t);
+  if (aInstant && !cou && (/(?:coupe|decoupe|separe|scinde|divise)\w*\s+(?:la video\s+|le clip\s+)?(ici|a ce moment|maintenant|a cet endroit|a cet instant)\b/.test(t) || /(?:coupe|découpe|decoupe|sépare|separe|scinde|divise)\S*\s+(?:la vidéo\s+|la video\s+|le clip\s+)?là(?![\p{L}])/u.test(orig))) ajoute('couper_a', String(+(+instant).toFixed(2)));
+  const txtIci = /(?:mets|met|ajoute|écris|ecris|affiche|pose)\S*\s+(?:un |le |du )?(?:titre|texte)\s*(?:(?:ici|là|a ce moment|à ce moment)\s*)?(?:«|"|:)\s*([^»"]{1,80})/iu.exec(String(demande || ''));
+  if (aInstant && txtIci && ici) ajoute('titre_ici', txtIci[1].trim());
   if (cou) ajoute('couper_a', cou[1] ? String(+cou[1] * 60 + +cou[2]) : cou[3] ? cou[3].replace(',', '.') : String(+cou[4] * 60 + (+cou[5] || 0)));
   // volume : « mets le volume à 50 % », « coupe le son », « baisse le volume », « monte le son »
   const volp = /volume|le son\b|niveau sonore/.exec(t) && /(?:a|sur|=)\s*(\d{1,3})\s*(?:%|pour ?cent)?/.exec(t);
@@ -112,12 +118,12 @@ function comprendre(demande, projet, instant) {
   else if (/(baisse|diminue|reduis)\w*\s+(?:un peu\s+)?le\s+(volume|son)/.test(t) && !/musique/.test(t)) ajoute('volume', '60');
   else if (/(monte|augmente|booste)\w*\s+(?:un peu\s+)?le\s+(volume|son)/.test(t) && !/musique/.test(t)) ajoute('volume', '140');
   if (/\bfondus?\b/.test(t) && /(debut|fin|entree|sortie|noir|ouverture|ferm)/.test(t) && !/enchaine/.test(t)) ajoute('fondus');
-  if (/\bzoom/.test(t) && !/transition|zoom ?(in|out)? ?(sur|vers)/.test(t) && !l.some(x => x.action === 'dynamiser')) ajoute('dynamiser', /fort|beaucoup/.test(t) ? '135' : '120');
+  if (/\bzoom/.test(t) && !non('zooms?') && !/transition|zoom ?(in|out)? ?(sur|vers)/.test(t) && !l.some(x => x.action === 'dynamiser')) ajoute('dynamiser', /fort|beaucoup/.test(t) ? '135' : '120');
   const veutClips = /\b(clips?|clipping|extraits?|moments? forts?|meilleurs? (passages?|moments?)|shorts)\b/.test(t) && /(cree|genere|fais|sors|extrais|decoupe|trouve|propose|tiktok|reels?|shorts)/.test(t);
   if (veutClips) ajoute('clipping');
-  else if (/(vertical|tiktok|reels?|shorts?|9 ?\/ ?16|story|stories)/.test(t) && /(format|passe|mets|en |pour )/.test(t)) ajoute('format', 'vertical');
-  else if (/(horizontal|youtube|16 ?\/ ?9|paysage)/.test(t) && /(format|passe|mets|en )/.test(t)) ajoute('format', 'horizontal');
-  else if (/\bcarre\b|1 ?\/ ?1/.test(t)) ajoute('format', 'carre');
+  else if (/(vertical|tiktok|reels?|shorts?|\b9 ?[:/ ]? ?16\b|story|stories)/.test(t) && /(format|passe|mets|en |pour )/.test(t)) ajoute('format', 'vertical');
+  else if (/(horizontal|youtube|\b16 ?[:/ ]? ?9\b|paysage)/.test(t) && /(format|passe|mets|en )/.test(t)) ajoute('format', 'horizontal');
+  else if (/\bcarre\b/.test(t) || (/\b1 ?[:/ ] ?1\b/.test(t) && /(format|passe|mets|en )/.test(t))) ajoute('format', 'carre');
   const tit = /(?:titre|ecran titre)\s*(?:«|"|:)\s*([^»"]{2,60})/.exec(demande ? sansAccents(demande) : '');
   const titOrig = /(?:titre|écran titre)\s*(?:«|"|:)\s*([^»"]{2,60})/i.exec(String(demande || ''));
   if (!coul && !l.some(x => x.action === 'titre_ici') && (/(ecran titre|titre au debut|ajoute (un|le) titre|mets (un|le) titre)/.test(t) || tit)) ajoute('titre', titOrig ? titOrig[1].trim() : '');
@@ -126,7 +132,7 @@ function comprendre(demande, projet, instant) {
   if (/(hashtags?|description|titre (pour|de la) (publication|video youtube|tiktok)|legende)/.test(t)) ajoute('publication', /youtube/.test(t) ? 'YouTube' : /instagram/.test(t) ? 'Instagram' : /tiktok/.test(t) ? 'TikTok' : '');
   if (/\bexport/.test(t)) ajoute('exporter');
   // ordre du montage : découpe d'abord, habillage ensuite, export à la fin
-  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'traduire_sous', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'titre_ici', 'couleur_titre', 'animation', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'niveau_final', 'publication', 'exporter'];
+  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'volume_musique', 'sous_titres', 'traduire_sous', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'titre_ici', 'couleur_titre', 'animation', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'niveau_final', 'publication', 'exporter'];
   const cible = cibleDe(t);
   if (cible) l.forEach(a => { if (CIBLABLES.has(a.action)) { a.cible = cible; a.libelle += ` — ${nomCible(cible)}`; } });
   return l.sort((a, b) => ORDRE.indexOf(a.action) - ORDRE.indexOf(b.action));
