@@ -1663,7 +1663,7 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && p.startsWith('/media/')) return serveFile(req, res, mediaPath(decodeURIComponent(p.slice(7))));
       if (req.method === 'GET' && p.startsWith('/lib/')) return serveFile(req, res, mediaPath('lib:' + decodeURIComponent(p.slice(5))));
       // Studio : détourage de la personne (MediaPipe, en local) et moteur de mélange du fond virtuel
-      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js' || p === '/ui-voix.js' || p === '/ui-publier.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
+      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js' || p === '/ui-voix.js' || p === '/ui-publier.js' || p === '/ui-v2.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
       if (req.method === 'GET' && p.startsWith('/vendor/vision/')) {
         const n = decodeURIComponent(p.slice(15));
         if (!/^(vision_bundle\.m?js|wasm\/vision_wasm(_nosimd)?_internal\.(js|wasm))$/.test(n)) return send(res, 404, { error: 'Introuvable' });

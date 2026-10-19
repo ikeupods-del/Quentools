@@ -338,6 +338,47 @@ body.lame #pV .clip,body.lame #pA .aud{cursor:crosshair}
 #menuCtx{background:#26262a;border-color:#000}
 
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chip{font-size:11.5px;padding:4px 9px;border-radius:999px;background:#2c2c30;border:1px solid #3a3a40;color:#cfd0d6}.chip:hover{border-color:var(--sel,#f5c518);color:#fff}
+/* Interface 2.0 : palette graphite, accent bleu unique, étapes Créer / Monter / Publier, accueil */
+:root{--bg:#0d0e11;--pan:#15171c;--pan2:#1a1d23;--pan3:#22252d;--ligne:#262a33;--txt:#ecedf0;--mut:#a0a6b2;--ac:#3f5ef0;--sel:#f2b92b}
+body{grid-template-rows:52px minmax(0,1fr) var(--hTl,280px) 24px}
+button{border-radius:8px}
+button.pri{background:#3f5ef0;border-color:#3f5ef0}button.pri:hover{background:#5b78ff}
+header{background:#111317;border-bottom:1px solid #22252d}
+header .logo{background:#3f5ef0;box-shadow:none;border-radius:7px;width:24px;height:24px}
+.groupe{background:#0f1115;border-color:#22252d}
+#bGenerer,#bDoublage,#bStudio{display:none}
+#etapes{display:flex;gap:3px;padding:3px;background:#181a20;border:1px solid #22252d;border-radius:11px}
+#etapes button{height:28px;padding:0 16px;border:0;border-radius:8px;background:transparent;color:var(--mut);font-weight:600}
+#etapes button:hover{color:var(--txt)}
+#etapes button.on{background:#2a2e38;color:var(--txt)}
+#bAssistant{min-width:150px;justify-content:flex-start;background:#15171c;border-color:#2e3340;color:#b8bdc7}
+#bAssistant span{flex:1;text-align:left}#bAssistant kbd{font-size:10.5px}
+#bar,#tabs{background:#111317}
+#nav{grid-template-columns:72px minmax(0,1fr)}
+#tabs{border-right-color:#22252d;gap:4px;padding:8px 6px}
+#tabs button{font-size:11px;padding:9px 0 7px;border-radius:10px}
+#tabs button.on{background:#22252d;color:var(--txt)}
+#tabs button[hidden]{display:none}
+.puces-v2{display:flex;gap:6px;margin:0 0 10px}
+.puces-v2 button{padding:4px 11px;border-radius:999px;background:transparent;border-color:#2a2e38;color:var(--mut);font-size:12px}
+.puces-v2 button.on{background:#1d2647;border-color:#5b78ff;color:var(--txt)}
+.media,.carte,.encart{background:#1a1d23;border-color:#262a33}
+#view,#stage{background:var(--bg)}
+#vbar,.transport{background:#111317;border-color:#22252d}
+#accueil{position:fixed;left:0;right:0;top:52px;bottom:0;z-index:12;background:var(--bg);overflow:auto;-webkit-user-select:none;user-select:none}
+.acc-int{max-width:1080px;margin:0 auto;padding:48px 40px 60px;display:flex;flex-direction:column;gap:14px}
+.acc-int h2{margin:0 0 6px;text-align:center;font-size:30px;font-weight:600;letter-spacing:-.02em}
+.acc-int h3{margin:22px 0 0;font-size:12px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.acc-demande{align-self:center;width:min(720px,100%);height:52px;display:flex;align-items:center;gap:12px;padding:0 14px 0 18px;border-radius:16px;background:var(--pan);border:1px solid #2e3340;color:var(--mut);font-size:14px;text-align:left}
+.acc-demande span{flex:1}.acc-demande .ic{color:#8fa3ff}
+.acc-cartes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.acc-carte{display:flex;gap:14px;align-items:flex-start;padding:18px;border-radius:16px;background:var(--pan);border:1px solid #22252d;text-align:left;color:var(--txt)}
+.acc-carte:hover{border-color:#3a4050;background:#1c1f26}
+.acc-ic{width:42px;height:42px;flex:none;border-radius:12px;display:grid;place-items:center}.acc-ic svg{width:22px;height:22px}
+.acc-t{display:flex;flex-direction:column;gap:4px;flex:1}.acc-t b{font-size:14.5px}.acc-t small{color:var(--mut);font-size:12.5px;line-height:1.45}
+.acc-recents{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.acc-projet{display:flex;align-items:center;gap:10px;padding:14px;border-radius:12px;background:var(--pan);border:1px solid #22252d;color:var(--txt);text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.acc-projet:hover{border-color:#3a4050}
 .asListe{display:flex;flex-direction:column;gap:4px}.asEtape,.asSug{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:8px;background:#1b1b1e;border:1px solid #303036}.asEtape span,.asSug span{flex:1}.asEtape em{font-style:normal;font-size:11.5px;max-width:45%}
 </style>
 </head>
@@ -349,12 +390,13 @@ body.lame #pV .clip,body.lame #pA .aud{cursor:crosshair}
   <div class="groupe"><button class="ib" id="bUndo" title="Annuler (⌘Z)"><svg class="ic"><use href="#i-annuler"/></svg></button><button class="ib" id="bRedo" title="Rétablir (⇧⌘Z)"><svg class="ic"><use href="#i-retablir"/></svg></button></div>
   <div class="groupe outils" role="group" aria-label="Outils de la timeline"><button class="ib on" id="oSel" title="Outil Sélection (A)"><svg class="ic"><use href="#i-fleche"/></svg></button><button class="ib" id="oLame" title="Outil Lame : un clic coupe le clip à cet endroit (B)"><svg class="ic"><use href="#i-lame"/></svg></button><button class="ib on" id="oAimant" title="Magnétisme : les sons se collent aux clips, repères et tête de lecture (N)"><svg class="ic"><use href="#i-aimant"/></svg></button></div>
   <span class="sp"></span>
+  <nav id="etapes" aria-label="Étapes"><button data-etape="creer" id="eCreer" title="Accueil : importer, me filmer, générer, doubler">Créer</button><button data-etape="monter" id="eMonter" class="on" title="Montage">Monter</button><button data-etape="publier" id="bPublier" title="Publier un épisode sur YouTube et dans les brouillons TikTok">Publier</button></nav>
+  <span class="sp"></span>
   <span class="mut" id="etat"></span>
   <select id="format" title="Format de l’image"><option value="vertical">Vertical 9:16</option><option value="horizontal">Horizontal 16:9</option><option value="carre">Carré 1:1</option></select>
-  <button class="tb" id="bAssistant" title="Assistant de montage : dis ce que tu veux faire (⌘K)"><svg class="ic"><use href="#i-assistant"/></svg><span>Assistant</span></button>
+  <button class="tb" id="bAssistant" title="Assistant de montage : dis ce que tu veux faire (⌘K)"><svg class="ic"><use href="#i-assistant"/></svg><span>Demander…</span><kbd>⌘K</kbd></button>
   <button class="tb" id="bGenerer" title="Générer une vidéo à partir d’un sujet : texte, images, voix off (⇧⌘G)"><svg class="ic"><use href="#i-generer"/></svg><span>Générer</span></button>
   <button class="tb" id="bDoublage" title="Enregistrer ta voix réplique par réplique, pour doubler une vidéo ou en faire une (⇧⌘D)"><svg class="ic"><use href="#i-voix"/></svg><span>Doublage</span></button>
-  <button class="tb" id="bPublier" title="Publier un épisode sur YouTube et dans les brouillons TikTok"><svg class="ic"><use href="#i-exporter"/></svg><span>Publier</span></button>
   <button class="tb" id="bStudio" title="Me filmer avec la caméra, le micro et le prompteur (⇧⌘R)"><svg class="ic"><use href="#i-camera"/></svg><span>Me filmer</span></button>
   <button class="tb" id="bApercu" title="Aperçu avec effets (⌘R)"><svg class="ic"><use href="#i-film"/></svg><span>Aperçu</span></button>
   <button class="ib" id="bAide" title="Raccourcis clavier (?)"><svg class="ic"><use href="#i-clavier"/></svg></button>
@@ -4524,5 +4566,6 @@ async function proposerPrisesInterrompues() {
   }
 }
 </script>
+<script src="/ui-v2.js"></script>
 </body>
 </html>

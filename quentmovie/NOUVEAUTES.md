@@ -3,6 +3,13 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.0.0
+- **Nouvelle interface** : couleurs plus douces, un seul bleu pour les actions, coins arrondis, tout est plus lisible.
+- **Trois étapes en haut : Créer, Monter, Publier.** Créer ouvre l'accueil, Monter le montage, Publier l'envoi sur YouTube et TikTok.
+- **Écran d'accueil** : « Qu'est-ce qu'on crée aujourd'hui ? » avec l'assistant, six cartes pour commencer (importer, me filmer, générer une vidéo, doublage, podcast, épisode QuentInvest) et tes projets à reprendre. Échap ou « Monter » pour revenir au montage.
+- **Six rubriques au lieu de dix** à gauche : Médias, Texte, Audio (voix, sons, musique), Effets (effets, transitions, calques), Packs et Outils ; les sous-parties se choisissent par des puces en haut de la liste. Les touches 1 à 0 marchent comme avant.
+- Le bouton « Demander… ⌘K » remplace « Assistant ». Générer, Doublage et Me filmer passent dans l'accueil (raccourcis inchangés).
+
 ## 1.44.0
 - **Publier** (nouveau bouton « Publier ») : envoie un épisode fabriqué par la chaîne QuentInvest sur **YouTube** (vidéo **privée**, non répertoriée ou **programmée** à la date choisie, avec titre, description, mots-clés, miniature et déclaration de contenu de synthèse) et dans tes **brouillons TikTok** (tu ajoutes la légende et tu publies dans l'application). Rien n'est publié sans ton clic de confirmation. Il faut créer une seule fois tes accès (Google Cloud et TikTok for Developers, mode d'emploi dans la fenêtre) ; les clés restent sur ton Mac, chiffrées par le trousseau. Sans accès, les boutons « Copier le titre / la description / la légende » et « Ouvrir YouTube Studio / TikTok » restent disponibles.
 - **Fiche QuentInvest** (bouton « 🧾 Fiche » du Doublage) : colle ou charge une fiche d'épisode, QuentMovie vérifie qu'elle est complète, qu'elle dure plus de 5 minutes, que les phrases restent courtes, que chaque chiffre a une source, qu'aucun conseil d'investissement ne s'est glissé dedans, et liste les mots à ajouter au dictionnaire de prononciation. Un **brouillon automatique** part d'un sujet : l'article Wikipédia donne les faits, l'IA locale les reformule pour la voix, la structure de l'épisode est ajoutée (à relire et à compléter).

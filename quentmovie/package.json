@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "1.44.0",
+  "version": "2.0.0",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -55,6 +55,7 @@
     "routes-publier.js",
     "ui-voix.js",
     "ui-publier.js",
+    "ui-v2.js",
     "fiche-quentinvest.js",
     "prononciation-controle.js",
     "voix-clone/**",
