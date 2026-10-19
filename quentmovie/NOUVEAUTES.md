@@ -3,6 +3,12 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.5.0
+- **« Fais une vidéo sur le krach de 2008 »** : dans Épisode QuentInvest, écris ton sujet et choisis **🤖 Tout seul**. QuentMovie lit l'article Wikipédia, écrit le texte de Pico sans rien inventer, le contrôle et fabrique la vidéo (YouTube, TikTok, miniatures), sans autre clic. Marche aussi dans la discussion : « fais un épisode QuentInvest sur l'inflation ».
+- **👀 Je relis avant** : le texte est écrit pour toi, tu le corriges, puis tu lances la vidéo.
+- **✍️ Mon script** : pour un sujet d'actualité que Wikipédia ne connaît pas encore, écris ton texte : il devient une vidéo directement.
+- Rien n'est publié : tu regardes la vidéo, tu la corriges si besoin, puis « Publier ».
+
 ## 2.4.1
 - **Ta voix clonée fonctionne dans l'application** : « Fabriquer l'épisode » avec « Ma voix clonée » et l'essai « Voix clonée » du Doublage s'arrêtaient sur « can't open file … essai.py ». C'est réparé.
 

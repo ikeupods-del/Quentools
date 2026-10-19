@@ -63,4 +63,24 @@ async function brouillon({ sujet, numero = 99, article, faits, ecrire, url = '' 
   return { fiche, controle, faits: brut.slice(0, 20000) };
 }
 
-module.exports = { brouillon, blocsDe, chiffreChoc, slugDe };
+// « fais une vidéo sur le krach de 2008 » → « le krach de 2008 » (la demande peut aussi être le sujet seul)
+function sujetDe(demande) {
+  return String(demande || '').replace(/\s+/g, ' ').trim()
+    .replace(/^(?:peux-tu |tu peux |pourrais-tu )?(?:(?:me )?(?:fais|fait|faire|crée|créer|cree|prépare|préparer|fabrique|fabriquer|réalise|réaliser)(?:-moi| moi)? |je veux |je voudrais |j['’]aimerais )?(?:une |la |un )?(?:nouvelle )?(?:vidéo|video|épisode|episode)(?: quentinvest| youtube| de pico)? (?:sur|à propos d[eu']|a propos d[eu']|au sujet d[eu']|concernant|qui explique|pour expliquer|expliquant) ?/i, '')
+    .replace(/[.!?\s]+$/, '').trim();
+}
+const lignesMiniature = titre => String(titre).toUpperCase().split(' ').reduce((l, w) => { const d = l[l.length - 1]; if (d && (d + ' ' + w).length <= 14 && l.length <= 3) l[l.length - 1] = d + ' ' + w; else l.push(w); return l; }, []).slice(0, 3);
+// Vidéo faite sans relecture : titre tiré du sujet demandé, rien de « à définir » dans le texte dit (la suite devient un appel à s'abonner)
+function pourAuto(fiche, sujet) {
+  const s = String(sujet || '').trim(), f = { ...fiche };
+  if (s.length >= 3) {
+    const nom = s.charAt(0).toUpperCase() + s.slice(1);
+    f.titre = `${nom} : ce qu'il faut vraiment savoir`;
+    f.miniature = { ...f.miniature, lignes: lignesMiniature(nom), accent: (nom.split(' ').find(w => w.length > 3) || nom.split(' ')[0]).toUpperCase() };
+  }
+  f.suite = { titre: 'La suite', texte: 'Abonne-toi : un nouveau sujet arrive bientôt.' };
+  delete f.aCompleter;
+  return f;
+}
+
+module.exports = { brouillon, blocsDe, chiffreChoc, slugDe, sujetDe, pourAuto };
