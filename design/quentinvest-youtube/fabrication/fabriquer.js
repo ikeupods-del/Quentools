@@ -237,7 +237,7 @@ function clip(i, debut) {
     else { entreeFond = ['-loop', '1', '-framerate', String(FPS), '-t', d.toFixed(3), '-i', F.fichier]; fondMedia = `[${iFond}:v]scale=${LARG * 2}:${HAUT * 2}:force_original_aspect_ratio=increase,crop=${LARG * 2}:${HAUT * 2},zoompan=z='1+0.12*(${f0}+on)/${fT}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${LARG}x${HAUT}:fps=${FPS}${sombre}[m]`; }
     composition = '[m][b]overlay=0:0:format=auto[bm];[bm]';
   }
-  const filtre = `${F ? fondMedia + ';' : ''}${fondZ};${pico};${composition}[p]overlay=x='${px2}':y='${py}+${respire}+${saut}',format=yuv420p[v];${audio}`;
+  const filtre = `${F ? fondMedia + ';' : ''}${fondZ};${pico};${composition}[p]overlay=x='${px2}':y='${py}+${respire}+${saut}',setsar=1,format=yuv420p[v];${audio}`;
   ffClip(i, out, '-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, ...entrees, ...entreeFond, '-filter_complex', filtre, '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', dImages.toFixed(5), '-movflags', '+faststart', out);
   return { out, d: dImages };
 }
