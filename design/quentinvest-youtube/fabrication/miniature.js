@@ -7,7 +7,7 @@ let pw; try { pw = require(process.env.PW || 'playwright'); } catch (e) { pw = r
 const TIKTOK = process.argv.includes('--tiktok'), ARGS = process.argv.filter(a => a !== '--tiktok');
 const EP = JSON.parse(fs.readFileSync(ARGS[2], 'utf8'));
 const expr = ARGS[3] || 'surpris-ouvert', sortie = path.resolve(ARGS[4] || path.join(path.dirname(ARGS[2]), path.basename(ARGS[2], '.json') + (TIKTOK ? '-miniature-tiktok.png' : '-miniature.png')));
-const RACINE = path.join(__dirname, '..', '..', '..'), svg = fs.readFileSync(path.join(__dirname, '..', 'personnage', 'svg', `pico-${expr}.svg`), 'utf8');
+const RACINE = process.env.QI_RACINE || path.join(__dirname, '..', '..', '..'), svg = fs.readFileSync(path.join(__dirname, '..', 'personnage', 'svg', `pico-${expr}.svg`), 'utf8');
 const police = 'data:font/woff2;base64,' + fs.readFileSync(path.join(RACINE, 'assets', 'fonts', 'inter.woff2')).toString('base64');
 const MOTS = (EP.miniature && EP.miniature.lignes) || EP.titre.replace(/\s*\?$/, '').toUpperCase().split(/(?<=\s)(?=LES |DES |LE |LA )|(?<=^POURQUOI )/).filter(Boolean);
 const accent = (EP.miniature && EP.miniature.accent) || 'PRIX';

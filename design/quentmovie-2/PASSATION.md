@@ -20,15 +20,14 @@ Le propriétaire n'est pas développeur : lui répondre en français simple, agi
 
 **2.1.0 : faite** — discussion avec l'assistant dans le panneau de droite (onglet « Assistant », ⌘K) : réponses avec boutons « Faire » / « Voir d'abord », « Annuler » par demande, clip visé (« prise 2 », « dernier clip »), couleur des titres, questions sur le montage répondues par le programme, choix proposés quand la demande est floue, mémoire et dictée reprises.
 
-**2.2 : l'épisode QuentInvest avec Pico, fait automatiquement dans QuentMovie**
-- Aujourd'hui, les épisodes de Pico (écrans animés, décors, bruitages, musique, version TikTok) sont fabriqués par un programme à part, lancé à la main. Il faut le faire depuis QuentMovie.
-- Le parcours voulu : on donne un sujet, la fiche est écrite puis vérifiée, la vidéo est fabriquée, le propriétaire relit, puis publie.
-- Le propriétaire ne veut corriger que les détails :
-  - l'expression de Pico à chaque réplique (content, inquiet, surpris, curieux, réfléchi) ;
-  - une phrase ;
-  - la prononciation d'un mot. Un clic sur un mot souligné permet d'écrire comment le dire, de l'écouter et de l'ajouter au dictionnaire ; seules les répliques concernées sont refaites.
-- Garder les réglages de la chaîne : bruitages à −20 dB sous la voix, musique à 15 sur 100. Ne pas les remonter.
-- À étudier d'abord : ce que la fabrication demande d'installer sur le Mac, et combien cela alourdit l'application.
+**2.2.0 : faite** — l'épisode Pico se fabrique depuis QuentMovie (fenêtre Fiche : sujet → brouillon → contrôle → « 🎬 Fabriquer » → « 📤 Publier… »).
+- Étude : la fabrication demande Node, FFmpeg, la voix (sherpa-onnx) et un navigateur pour dessiner les écrans. QuentMovie a déjà les quatre : le navigateur de Playwright est remplacé par des fenêtres cachées de l'application. Ajout à l'application : ≈ 1 Mo (programme, dessins de Pico, police). Seule la voix de Pico (Kokoro, ≈ 350 Mo) se télécharge, une fois, au premier épisode.
+- Réglages de la chaîne inchangés (bruitages −20 dB sous la voix, musique 15/100) ; épisodes 1 et 2 intacts (`verifier.js`).
+
+**2.2.1 : à faire — relecture fine avant publication**
+- Écran de relecture de l'épisode fabriqué : la liste des répliques avec, pour chacune, l'expression de Pico (content, inquiet, surpris, curieux, réfléchi), la phrase modifiable et les mots soulignés (noms propres, sigles, mots signalés par le contrôle de prononciation).
+- Clic sur un mot souligné : écrire comment le dire, l'écouter, l'ajouter au dictionnaire.
+- « Refaire » ne refait que les répliques concernées (la voix est déjà gardée par réplique ; les écrans et les clips d'une réplique inchangée sont à garder aussi).
 
 ## HyperFrames (envoyé par le propriétaire, à intégrer)
 - Le propriétaire a envoyé les fichiers de présentation du projet **HyperFrames** de HeyGen (licence Apache 2.0, donc utilisable) : le mode d'emploi, la licence et les réglages. Le programme lui-même ne faisait pas partie de l'envoi : il s'installe depuis npm, sous le nom `hyperframes`.

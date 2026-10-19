@@ -219,6 +219,7 @@ function create(opts = {}) {
   const RV = require('./routes-voix');
   let publication = null; const PUB = () => publication || (publication = require('./publication').creer({ base: BASE, coffre: opts.coffre || null, ouvrirUrl: opts.ouvrirUrl || null, points: opts.publicationPoints || {} }));
   const RP = require('./routes-publier');
+  const RPI = require('./routes-pico');
   // Réglages locaux (clés gratuites des banques de photos : gardées dans le dossier QuentMovie de l'utilisateur, jamais dans le dépôt)
   const REGL = path.join(BASE, 'reglages.json');
   const lireRegl = () => { try { return JSON.parse(fs.readFileSync(REGL, 'utf8')); } catch (e) { return {}; } };
@@ -2046,6 +2047,7 @@ function buildClip(c, P, o = {}) {
         fs.renameSync(src, dest);
         return send(res, 200, await importerPrise(dest));
       }
+      { const r = await RPI.creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE })(req, res, p, url); if (r !== RPI.NON) return r; } // épisode Pico fabriqué dans QuentMovie, navigateur des écrans (routes-pico.js)
       { const r = await RP.creer({ PUB, opts, send, readJson, travail, EXPORTS, safeName })(req, res, p); if (r !== RP.NON) return r; } // publication YouTube et TikTok (routes-publier.js)
       { const r = await RV.creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail, PAROLE, VOIXCLONE, GEN, IA, safeName, num })(req, res, p, url); if (r !== RV.NON) return r; } // doublage, voix clonée, prononciations, fiche (routes-voix.js)
       if (p === '/api/projet') { // enregistrement automatique

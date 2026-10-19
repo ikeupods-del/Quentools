@@ -11,14 +11,15 @@ const jetons = t => new Set((sansAccents(t).match(/[a-z0-9]+/g) || []).filter(w 
 const dice = (a, b) => { const A = jetons(a), B = jetons(b); if (!A.size || !B.size) return 0; let c = 0; for (const x of A) if (B.has(x)) c++; return 2 * c / (A.size + B.size); };
 const phrases = t => (String(t).match(/[^.!?…]+[.!?…]*/g) || []).map(x => x.trim()).filter(x => /[\p{L}\p{N}]/u.test(x));
 const sh = i => String(i).padStart(2, '0');
+const FFMPEG = process.env.QI_FFMPEG || 'ffmpeg', { dureeWav } = require('./duree');
 const DUREE_TIKTOK = 60, SILENCE_ENTRE = 0.25;
 
 // silences d'une réplique : [{ d, f }]
 function silences(wav) {
-  const r = spawnSync('ffmpeg', ['-i', wav, '-af', 'silencedetect=noise=-33dB:d=0.12', '-f', 'null', '-'], { encoding: 'utf8' }).stderr || '', d = [...r.matchAll(/silence_start: ([\d.]+)/g)].map(x => +x[1]), f = [...r.matchAll(/silence_end: ([\d.]+)/g)].map(x => +x[1]);
+  const r = spawnSync(FFMPEG, ['-i', wav, '-af', 'silencedetect=noise=-33dB:d=0.12', '-f', 'null', '-'], { encoding: 'utf8' }).stderr || '', d = [...r.matchAll(/silence_start: ([\d.]+)/g)].map(x => +x[1]), f = [...r.matchAll(/silence_end: ([\d.]+)/g)].map(x => +x[1]);
   return d.map((x, i) => ({ d: x, f: f[i] != null ? f[i] : Infinity }));
 }
-const duree = wav => +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', wav], { encoding: 'utf8' }).trim();
+const duree = wav => dureeWav(wav) ?? +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', wav], { encoding: 'utf8' }).trim();
 
 // découpe d'une réplique en phrases : [{ texte, de, a }] (secondes). La fin d'une phrase est le silence le plus long et le plus proche
 // de l'instant attendu (longueur de la phrase rapportée à la durée de la réplique) ; sans silence net, on coupe à l'instant attendu.
@@ -53,11 +54,11 @@ function preparer({ C, dossierYoutube, sortie }) {
     else for (const ph of phrases(s.texte)) { const m = pool.filter(p => !p.utilisee && p.type !== 'accroche' && p.type !== 'abonne').map(p => ({ p, sc: dice(ph, p.texte) })).sort((a, b) => b.sc - a.sc)[0]; if (m && m.sc >= 0.4) { choisies.push(m.p); m.p.utilisee = true; } }
     if (!choisies.length) { rapport.push({ scene: i, texte: s.texte, voix: 'synthèse' }); garde.push({ i, s, wav: null }); return; }
     // morceaux coupés, silences longs raccourcis, recollés avec une respiration
-    const morceaux = choisies.map((p, k) => { const f = path.join(base, `p${sh(i)}_${k}.wav`); execFileSync('ffmpeg', ['-v', 'error', '-y', '-ss', String(p.de), '-t', String(Math.max(0.2, p.a - p.de)), '-i', p.wav, '-af', 'aresample=44100,afade=t=in:d=0.01,' + filtre, '-ac', '1', '-c:a', 'pcm_s16le', f]); return f; });
+    const morceaux = choisies.map((p, k) => { const f = path.join(base, `p${sh(i)}_${k}.wav`); execFileSync(FFMPEG, ['-v', 'error', '-y', '-ss', String(p.de), '-t', String(Math.max(0.2, p.a - p.de)), '-i', p.wav, '-af', 'aresample=44100,afade=t=in:d=0.01,' + filtre, '-ac', '1', '-c:a', 'pcm_s16le', f]); return f; });
     const liste = path.join(base, `l${sh(i)}.txt`), sil = path.join(base, 'silence.wav');
-    if (!fs.existsSync(sil)) execFileSync('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', String(SILENCE_ENTRE), '-c:a', 'pcm_s16le', sil]);
+    if (!fs.existsSync(sil)) execFileSync(FFMPEG, ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', String(SILENCE_ENTRE), '-c:a', 'pcm_s16le', sil]);
     fs.writeFileSync(liste, morceaux.map((f, k) => `file '${f}'\n` + (k < morceaux.length - 1 ? `file '${sil}'\n` : '')).join(''));
-    const tmp = path.join(base, `t${sh(i)}.wav`); execFileSync('ffmpeg', ['-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', liste, '-c:a', 'pcm_s16le', tmp]);
+    const tmp = path.join(base, `t${sh(i)}.wav`); execFileSync(FFMPEG, ['-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', liste, '-c:a', 'pcm_s16le', tmp]);
     const d = duree(tmp), texte = choisies.map(p => p.texte).join(' ');
     rapport.push({ scene: i, texte, voix: 'propriétaire', duree: +d.toFixed(1), source: choisies.map(p => `v${sh(p.scene)}`).join('+') });
     garde.push({ i, s: { ...s, texte }, wav: tmp, d, type });

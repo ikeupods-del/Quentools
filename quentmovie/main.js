@@ -3,6 +3,7 @@
 const { app, BrowserWindow, Menu, shell, dialog, session, systemPreferences, desktopCapturer, ShareMenu, safeStorage } = require('electron');
 const path = require('path');
 const { create } = require('./server');
+const navigateurEcrans = require('./navigateur-electron'); // fenêtres cachées qui dessinent les écrans de Pico (fabrication des épisodes QuentInvest)
 const { resolveFfmpeg } = require('./ffmpeg-path');
 const { Maj, emplacementApp } = require('./maj');
 
@@ -32,11 +33,11 @@ if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 
 async function demarrer() {
-  const bins = await resolveFfmpeg();
+  const bins = await resolveFfmpeg(), navigateur = navigateurEcrans.creer(BrowserWindow);
   const base = process.env.QM_AUTOTEST && process.env.QM_BASE ? process.env.QM_BASE : path.join(app.getPath('home'), 'Movies', 'QuentMovie');
   let port;
-  try { moteur = create({ port: 41730, base, ...bins, maj: hooksMaj, partager, ecran, energie, ouvrirDossier, ouvrirUrl, coffre: safeStorage.isEncryptionAvailable() ? coffre : null }); port = await moteur.start(); }
-  catch (e) { moteur = create({ port: 0, base, ...bins, maj: hooksMaj, partager, ecran, energie, ouvrirDossier, ouvrirUrl, coffre: safeStorage.isEncryptionAvailable() ? coffre : null }); port = await moteur.start(); }
+  try { moteur = create({ port: 41730, base, ...bins, maj: hooksMaj, partager, ecran, energie, ouvrirDossier, ouvrirUrl, navigateur, ...(process.env.QM_AUTOTEST ? { sortiesPico: path.join(base, 'QuentInvest') } : {}), coffre: safeStorage.isEncryptionAvailable() ? coffre : null }); port = await moteur.start(); }
+  catch (e) { moteur = create({ port: 0, base, ...bins, maj: hooksMaj, partager, ecran, energie, ouvrirDossier, ouvrirUrl, navigateur, ...(process.env.QM_AUTOTEST ? { sortiesPico: path.join(base, 'QuentInvest') } : {}), coffre: safeStorage.isEncryptionAvailable() ? coffre : null }); port = await moteur.start(); }
 
   // Caméra et micro (studio, voix off) : autorisés uniquement pour la fenêtre de QuentMovie
   const local = u => /^http:\/\/127\.0\.0\.1:\d+\//.test(u || '');
@@ -67,7 +68,7 @@ async function demarrer() {
   });
   win.loadURL(`http://127.0.0.1:${port}/`);
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
-  win.on('closed', () => { win = null; });
+  win.on('closed', () => { win = null; BrowserWindow.getAllWindows().forEach(w => { if (!w.isDestroyed()) w.destroy(); }); }); // fenêtres cachées des écrans de Pico fermées avec QuentMovie
   // export en cours au moment de quitter : on demande avant de tout arrêter
   win.webContents.on('will-prevent-unload', e => {
     const r = dialog.showMessageBoxSync(win, { type: 'question', buttons: ['Continuer l’export', 'Quitter quand même'], defaultId: 0, cancelId: 0, message: 'Un export est en cours.', detail: 'Si tu quittes maintenant, l’export est arrêté et la vidéo ne sera pas créée.' });
@@ -82,7 +83,7 @@ async function demarrer() {
 async function autotest(port) {
   const fs = require('fs'), res = { version: app.getVersion(), electron: process.versions.electron, chrome: process.versions.chrome, macos: process.getSystemVersion(), arch: process.arch };
   const ecrire = () => { fs.writeFileSync(process.env.QM_AUTOTEST, JSON.stringify(res, null, 2)); app.exit(0); };
-  setTimeout(() => { res.erreur = 'délai dépassé'; ecrire(); }, 1200000);
+  setTimeout(() => { res.erreur = 'délai dépassé'; ecrire(); }, 1800000);
   try {
     await new Promise(ok => win.webContents.once('did-finish-load', ok));
     const ex = c => win.webContents.executeJavaScript(c, true);
@@ -135,6 +136,16 @@ async function autotest(port) {
       if (inst.error) return { ...res, ecoute: inst.error };
       const t1 = performance.now(), ec = await suivre((await (await fetch('/api/parole/ecouter', { method: 'POST', body: JSON.stringify({ file: j.file, in: 0, out: 0 }) })).json()).id);
       return { ...res, ecoute: ec.error || ec.resultat.mots.map(m => m.m).join(' '), sousTitres: ec.resultat ? ec.resultat.st.phrase.length : 0, ecouteMs: Math.round(performance.now() - t1) };
+    })()`);
+    // épisode Pico fabriqué dans l'application : programme de la chaîne livré, Node d'Electron, voix, FFmpeg et écrans dessinés par les fenêtres cachées
+    res.pico = await ex(`(async () => {
+      const fiche = { numero: 98, slug: 'essai-pico', titre: 'Un euro, c’est quoi ?', promesse: 'Un euro ?', description: 'Essai.', hashtags: '#essai', voix: { moteur: 'piper', modele: 'vits-piper-fr_FR-upmc-medium', sid: 1, vitesse: 0.9, hauteur: 1.08 }, musique: 'documentaire-doux',
+        accroche: { texte: 'Un euro, c’est quoi ?', court: 'Un euro ?', ecran: { intro: 'Une pièce.', avant: '1 €', apres: '100 centimes', de: 1, a: 100, legende: 'Cent centimes.', source: 'Définition' } },
+        blocs: [{ section: 'La pièce', texte: 'Un euro vaut cent centimes.', ecran: { type: 'definition', mot: 'Euro', texte: 'La monnaie commune.' } }],
+        resume: { texte: 'En une phrase : un euro, c’est cent centimes.', court: 'Cent centimes.' }, question: 'Et toi ?', suite: { titre: 'La suite', texte: 'La prochaine fois : le centime.' }, sources: ['S1 · Définition'], miniature: { lignes: ['UN EURO'], accent: 'EURO', bas: ['1 €', '→ 100 c'] } };
+      const e = await (await fetch('/api/pico')).json(), t0 = performance.now();
+      const r = await fetch('/api/pico/fabriquer', { method: 'POST', body: JSON.stringify({ fiche, options: { court: true, sansTiktok: true } }) }), j = await r.json(); if (!r.ok) return { etat: e, erreur: j.error };
+      for (;;) { await new Promise(x => setTimeout(x, 1000)); const k = await (await fetch('/api/job?id=' + j.id)).json(); if (k.error) return { etat: e, erreur: k.error }; if (k.done) return { etat: e, fichiers: k.resultat.fichiers, ms: Math.round(performance.now() - t0) }; }
     })()`);
   } catch (e) { res.erreur = String(e && e.message || e); }
   ecrire();
