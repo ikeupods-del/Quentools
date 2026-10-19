@@ -73,14 +73,17 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       });
     });
   }
-  // ---------- voix de l'épisode : ta voix clonée (« ma-voix »), un doublage enregistré (« doublage:<nom> ») ou la voix de synthèse de Pico (« pico ») ----------
+  // ---------- voix de l'épisode : ta voix clonée (« ma-voix », par défaut) ou un doublage enregistré (« doublage:<nom> ») ----------
+  // RÈGLE DE LA CHAÎNE : jamais de voix de synthèse. « pico » (synthèse) n'est accepté que pour les essais automatiques (QI_ESSAI_SYNTHESE=1).
   // ta voix : chaque réplique est dite par le modèle de clonage dans un dossier vNN.wav, puis la fabrication la prend comme une voix enregistrée
   const choixVoix = (dossier) => { try { return JSON.parse(fs.readFileSync(path.join(dossier, 'voix.json'), 'utf8')); } catch (e) { return { mode: 'pico' }; } };
+  const SYNTHESE_REFUSEE = 'La chaîne n’utilise jamais de voix de synthèse : choisis ta voix clonée ou un doublage enregistré.';
   function modeVoix(v) {
-    const m = String(v || 'pico');
+    const m = String(v || 'ma-voix');
     if (m === 'ma-voix') { const VC = VOIXCLONE && VOIXCLONE(), prets = VC ? VC.prete() : []; return { mode: 'ma-voix', moteur: prets.includes('chatterbox') ? 'chatterbox' : prets[0] || 'chatterbox' }; }
     if (m.startsWith('doublage:')) { const nom = path.basename(m.slice(9)); const d = path.join(BASE, 'doublages', nom); if (!nom || !fs.existsSync(d)) throw new Error('Doublage introuvable : ' + nom); return { mode: 'doublage', nom }; }
-    return { mode: 'pico' };
+    if (m === 'pico' && process.env.QI_ESSAI_SYNTHESE) return { mode: 'pico' };
+    throw new Error(SYNTHESE_REFUSEE);
   }
   // dossiers de voix par version (YouTube, TikTok) : les répliques de ta voix clonée sont dites (ou gardées si le texte n'a pas changé)
   async function voixDesVersions(job, choix, dossier, versions) {
@@ -102,7 +105,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
     const dossier = path.join(SORTIES, C.base), fiches = path.join(SORTIES, 'fiches');
     for (const d of [dossier, fiches, path.join(SORTIES, 'medias'), path.join(SORTIES, 'episodes')]) fs.mkdirSync(d, { recursive: true });
     const fFiche = path.join(fiches, C.base + '.json'); fs.writeFileSync(fFiche, JSON.stringify(fiche, null, 1) + '\n');
-    const choix = o.choixVoix || { mode: 'pico' }; fs.writeFileSync(path.join(dossier, 'voix.json'), JSON.stringify(choix));
+    const choix = o.choixVoix || modeVoix(); fs.writeFileSync(path.join(dossier, 'voix.json'), JSON.stringify(choix));
     const V = await voixDesVersions(job, choix, dossier, [['youtube', C.long], ['tiktok', C.tiktok]]);
     const perso = [...(V.youtube ? ['--voix-perso', V.youtube] : []), ...(V.tiktok ? ['--voix-perso-tiktok', V.tiktok] : [])];
     const args = [fFiche, '--sortie', dossier, '--modeles', path.join(BASE, 'modeles'), ...perso, ...(o.court ? ['--court'] : []), ...(o.sansTiktok ? ['--sans-tiktok'] : []), ...(o.sansYoutube ? ['--sans-youtube'] : [])];
@@ -195,7 +198,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
             await new Promise((ok, ko) => require('child_process').execFile(FFMPEG, ['-y', '-v', 'error', '-i', wav, '-c:a', 'aac', '-b:a', '128k', path.join(BASE, 'medias', nom)], e => (e ? ko(e) : ok()))); return { file: nom }; }
           finally { fs.rmSync(dir, { recursive: true, force: true }); }
         }
-        if (voix.moteur === 'kokoro' && !PAROLE().etat().pico.installee) { job.step = 'Voix de Pico…'; await PAROLE().installer('pico', job); }
+        if (choix.mode !== 'pico' || !process.env.QI_ESSAI_SYNTHESE) throw new Error(choix.mode === 'doublage' ? 'Épisode doublé : c’est ta propre voix, réenregistre la phrase dans le Doublage pour changer sa prononciation.' : SYNTHESE_REFUSEE);
         const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-pico-ecoute-')), json = path.join(dir, 'ep.json');
         try {
           fs.writeFileSync(json, JSON.stringify({ titre: 'écoute', style: 2, voix, scenes: [{ expr: 'neutre', ecran: { type: 'titre', titre: '' }, texte }] }));

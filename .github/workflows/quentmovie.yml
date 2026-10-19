@@ -80,7 +80,7 @@ jobs:
         run: python3 -m py_compile dist/mac-arm64/QuentMovie.app/Contents/Resources/app.asar.unpacked/voix-clone/essai.py
       - name: Lancer l'application installée et l'essayer (carte graphique, enregistrement, conversion, voix)
         run: |
-          QM_GARDER=1 QM_AUTOTEST="$PWD/autotest.json" QM_BASE="$RUNNER_TEMP/qm-autotest" dist/mac-arm64/QuentMovie.app/Contents/MacOS/QuentMovie || true
+          QI_ESSAI_SYNTHESE=1 QM_GARDER=1 QM_AUTOTEST="$PWD/autotest.json" QM_BASE="$RUNNER_TEMP/qm-autotest" dist/mac-arm64/QuentMovie.app/Contents/MacOS/QuentMovie || true
           cat autotest.json
           node -e '
             const r = require("./autotest.json"), ko = [];

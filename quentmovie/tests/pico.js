@@ -52,6 +52,19 @@ async function navigateurEssai(exe) {
   check('navigateur des écrans : refusé avec un faux jeton', (await post('/api/navigateur/ouvrir', { largeur: 100, hauteur: 100 }, { 'x-jeton': 'faux' })).status === 403);
   const vide = await post('/api/pico/fabriquer', { fiche: { numero: 1 } }); check('fiche incomplète refusée tout de suite', vide.status >= 400);
   check('fiche qui n’est pas du JSON refusée', (await post('/api/pico/fabriquer', { fiche: '{ pas du json' })).status >= 400);
+  // règle de la chaîne : jamais de voix de synthèse (ni en choix, ni en secours d'une réplique manquante)
+  const ficheRegle = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fiches', '03-interets-composes.json'), 'utf8'));
+  const syn = await post('/api/pico/fabriquer', { fiche: ficheRegle, options: { voix: 'pico' } });
+  check('voix de synthèse refusée pour la chaîne', syn.status >= 400 && /jamais de voix de synthèse/.test((await syn.json()).error || ''));
+  { const { spawnSync } = require('child_process'), dEp = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-regle-')), env = { ...process.env, QI_EPISODES: fs.mkdtempSync(path.join(os.tmpdir(), 'qm-regle-ep-')) }; delete env.QI_ESSAI_SYNTHESE;
+    const r = spawnSync(process.execPath, [path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fabrication', 'episode.js'), path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fiches', '03-interets-composes.json'), '--sortie', dEp], { encoding: 'utf8', env });
+    check('episode.js sans voix enregistrée : textes à lire écrits, rien de fabriqué', r.status === 3 && /jamais de voix de synthèse/.test(r.stderr) && fs.existsSync(path.join(dEp, '03-interets-composes-lecture.txt')) && !fs.readdirSync(dEp).some(n => /\.mp4$/.test(n)), r.stderr.slice(0, 300));
+    const vide = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-regle-v-')); fs.writeFileSync(path.join(vide, 'v00.wav'), '');
+    const r2 = spawnSync(process.execPath, [path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fabrication', 'episode.js'), path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fiches', '03-interets-composes.json'), '--sortie', dEp, '--voix-perso', vide, '--sans-tiktok'], { encoding: 'utf8', env });
+    check('réplique sans enregistrement : la fabrication s’arrête et la liste (pas de synthèse de secours)', r2.status !== 0 && /sans voix enregistrée/.test(r2.stderr + r2.stdout) && /v01\.wav/.test(r2.stderr + r2.stdout), (r2.stderr + r2.stdout).slice(-300));
+    const r3 = spawnSync(process.execPath, [path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fabrication', 'episode.js'), path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fiches', '03-interets-composes.json'), '--sortie', dEp, '--tiktok-synthese'], { encoding: 'utf8', env });
+    check('option --tiktok-synthese retirée', r3.status !== 0 && /retirée/.test(r3.stderr));
+    fs.rmSync(dEp, { recursive: true, force: true }); fs.rmSync(vide, { recursive: true, force: true }); }
 
   // ton script → fiche de Pico (programme seul) : répliques, écrans choisis, numéro suivant
   const sc = await (await post('/api/quentinvest/script', { texte: '# Pourquoi les prix montent ?\n\nTon panier coûtait 50 € il y a cinq ans. Aujourd’hui, près de 60 €. Pourquoi ?\n\nL’inflation\nL’inflation, c’est la hausse générale des prix. Chaque euro achète un peu moins.\n\nTrois causes :\n- l’énergie plus chère\n- les salaires qui montent\n\nEn une phrase : l’inflation grignote ton pouvoir d’achat. Et toi, tu l’as sentie ?' })).json();

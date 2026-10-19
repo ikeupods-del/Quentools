@@ -39,7 +39,7 @@ function ouvrirFiche() {
       <div id="fiZoneSujet" class="ligne"><input id="fiSujet" placeholder="Ex. : fais une vidéo sur le krach de 2008" style="flex:1"></div>
       <div id="fiZoneScript" hidden><p class="mut" style="margin:0 0 6px">Un titre (# Titre), l’accroche, des paragraphes (une ligne courte = un titre de partie, des lignes « - » = une liste), puis « En une phrase : … ». QuentMovie le découpe en répliques et choisit les écrans (chiffres, définitions, listes) sans rien ajouter.</p>
         <textarea id="fiScript" rows="6" style="width:100%" placeholder="# Pourquoi les prix montent ?&#10;&#10;Ton panier coûtait 50 € il y a cinq ans…"></textarea></div>
-      <div class="ligne" id="fiZoneVoix" style="margin-top:6px"><label>Voix <select id="fiAutoVoix"><option value="pico">Voix de synthèse de Pico</option></select></label><label><input type="checkbox" id="fiAutoTiktok" checked> Version TikTok aussi</label></div><div id="fiAutoVoixInfo" class="mut"></div>
+      <div class="ligne" id="fiZoneVoix" style="margin-top:6px"><label>Voix <select id="fiAutoVoix"><option value="ma-voix">Ma voix clonée</option></select></label><label><input type="checkbox" id="fiAutoTiktok" checked> Version TikTok aussi</label></div><div id="fiAutoVoixInfo" class="mut"></div>
       <div class="ligne" style="margin-top:6px"><span class="sp"></span><button id="fiDepuisScript" hidden>📄 Voir la fiche d’abord</button><button id="fiBrouillon" hidden>✍️ Écrire le texte</button><button class="pri" id="fiLancer">🎬 Faire la vidéo</button></div>
       <div id="fiProg" class="mut" style="margin-top:6px"></div><div id="fiAutoRes" style="margin-top:6px"></div></div>
     <div id="fiDeja"></div>
@@ -98,18 +98,19 @@ function ouvrirFiche() {
       const li = (c, t) => t.map(x => `<div style="margin:3px 0">${c} ${esc(x)}</div>`).join('');
       res.innerHTML = li('ℹ️', r.infos) + li('❌', r.erreurs) + li('⚠️', r.avertissements) + `<p><b>${r.ok ? '✅ Fiche fabricable.' : '❌ À corriger avant la fabrication.'}</b></p>`
         + (r.ok ? `<div class="encart" id="fiFab"><h4>🎬 Fabriquer l’épisode</h4><p class="mut" style="margin:0 0 6px">Vidéo YouTube, version TikTok, miniatures et texte de publication. Compte environ 15 à 20 minutes ; tu peux continuer à monter pendant ce temps. Rien n’est publié.</p>
-          <div class="ligne"><label>Voix <select id="fiVoix"><option value="pico">Voix de synthèse de Pico</option></select></label><label><input type="checkbox" id="fiTiktok" checked> Version TikTok aussi</label><span class="sp"></span><button class="pri" id="fiFabriquer">🎬 Fabriquer</button></div><div id="fiVoixInfo" class="mut"></div><div id="fiFabRes" class="mut" style="margin-top:6px"></div></div>` : '');
+          <div class="ligne"><label>Voix <select id="fiVoix"><option value="ma-voix">Ma voix clonée</option></select></label><label><input type="checkbox" id="fiTiktok" checked> Version TikTok aussi</label><span class="sp"></span><button class="pri" id="fiFabriquer">🎬 Fabriquer</button></div><div id="fiVoixInfo" class="mut"></div><div id="fiFabRes" class="mut" style="margin-top:6px"></div></div>` : '');
       const fb = $('#fiFabriquer'); if (fb) { fb.onclick = () => fabriquerPico($('#fiTexte').value, { sansTiktok: !$('#fiTiktok').checked, voix: $('#fiVoix').value }); choixVoixPico(); }
     } catch (er) { res.innerHTML = '<span style="color:#f87171">' + esc(er.message) + '</span>'; }
   };
 }
-// voix proposées : ta voix clonée (si l'essai de voix clonée est installé), tes doublages enregistrés, la voix de synthèse de Pico
+// voix proposées : ta voix clonée (par défaut) et tes doublages enregistrés ; jamais de voix de synthèse pour la chaîne
 async function choixVoixPico(selId = '#fiVoix', infoId = '#fiVoixInfo') {
   const sel = $(selId), info = $(infoId); if (!sel) return;
   let e; try { e = await (await api('/api/pico')).json(); } catch (er) { return; }
-  sel.innerHTML = `<option value="ma-voix">Ma voix clonée${e.maVoix.installee ? '' : ' (à installer, plusieurs Go)'}</option>${(e.doublages || []).map(n => `<option value="doublage:${esc(n)}">Mon doublage « ${esc(n)} »</option>`).join('')}<option value="pico">Voix de synthèse de Pico${e.voix && e.voix.installee ? '' : ' (≈ 350 Mo à télécharger)'}</option>`;
-  sel.value = e.maVoix.installee ? 'ma-voix' : 'pico';
-  const dire = () => { info.textContent = sel.value === 'ma-voix' ? 'Chaque réplique est dite par ta voix clonée (modèle de l’essai « Voix clonée » du Doublage), à partir de tes enregistrements. Plus lent que la synthèse : compte plusieurs minutes de plus.' : sel.value.startsWith('doublage:') ? 'Tes enregistrements du Doublage, réplique par réplique (texte à lire : fichier « …-lecture.txt » de l’épisode). Une réplique sans enregistrement garde la voix de synthèse.' : ''; };
+  // jamais de voix de synthèse sur la chaîne : ta voix clonée ou un de tes doublages
+  sel.innerHTML = `<option value="ma-voix">Ma voix clonée${e.maVoix.installee ? '' : ' (à installer, plusieurs Go)'}</option>${(e.doublages || []).map(n => `<option value="doublage:${esc(n)}">Mon doublage « ${esc(n)} »</option>`).join('')}`;
+  sel.value = 'ma-voix';
+  const dire = () => { info.textContent = sel.value === 'ma-voix' ? 'Chaque réplique est dite par ta voix clonée (modèle de l’essai « Voix clonée » du Doublage), à partir de tes enregistrements. Compte plusieurs minutes de plus que le montage seul.' : 'Tes enregistrements du Doublage, réplique par réplique. Il faut une prise pour chaque réplique : s’il en manque, la fabrication s’arrête et liste celles à enregistrer.'; };
   sel.onchange = dire; dire();
 }
 // Épisode Pico fabriqué dans QuentMovie (routes-pico.js) : avancement, arrêt possible, puis dossier, publication et avertissements du rythme

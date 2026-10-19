@@ -143,13 +143,14 @@ async function autotest(port) {
       for (;;) { await new Promise(x => setTimeout(x, 500)); const k = await (await fetch('/api/job?id=' + j.id)).json(); if (k.error) return { erreur: k.error }; if (k.done) return k.resultat; }
     })()`);
     // épisode Pico fabriqué dans l'application : programme de la chaîne livré, Node d'Electron, voix, FFmpeg et écrans dessinés par les fenêtres cachées
+    // (voix de synthèse acceptée seulement parce que le workflow lance l'essai avec QI_ESSAI_SYNTHESE=1 : la chaîne ne l'utilise jamais)
     res.pico = await ex(`(async () => {
       const fiche = { numero: 98, slug: 'essai-pico', titre: 'Un euro, c’est quoi ?', promesse: 'Un euro ?', description: 'Essai.', hashtags: '#essai', voix: { moteur: 'piper', modele: 'vits-piper-fr_FR-upmc-medium', sid: 1, vitesse: 0.9, hauteur: 1.08 }, musique: 'documentaire-doux',
         accroche: { texte: 'Un euro, c’est quoi ?', court: 'Un euro ?', ecran: { intro: 'Une pièce.', avant: '1 €', apres: '100 centimes', de: 1, a: 100, legende: 'Cent centimes.', source: 'Définition' } },
         blocs: [{ section: 'La pièce', texte: 'Un euro vaut cent centimes.', ecran: { type: 'definition', mot: 'Euro', texte: 'La monnaie commune.' } }],
         resume: { texte: 'En une phrase : un euro, c’est cent centimes.', court: 'Cent centimes.' }, question: 'Et toi ?', suite: { titre: 'La suite', texte: 'La prochaine fois : le centime.' }, sources: ['S1 · Définition'], miniature: { lignes: ['UN EURO'], accent: 'EURO', bas: ['1 €', '→ 100 c'] } };
       const e = await (await fetch('/api/pico')).json(), t0 = performance.now();
-      const r = await fetch('/api/pico/fabriquer', { method: 'POST', body: JSON.stringify({ fiche, options: { court: true, sansTiktok: true } }) }), j = await r.json(); if (!r.ok) return { etat: e, erreur: j.error };
+      const r = await fetch('/api/pico/fabriquer', { method: 'POST', body: JSON.stringify({ fiche, options: { court: true, sansTiktok: true, voix: 'pico' } }) }), j = await r.json(); if (!r.ok) return { etat: e, erreur: j.error };
       for (;;) { await new Promise(x => setTimeout(x, 1000)); const k = await (await fetch('/api/job?id=' + j.id)).json(); if (k.error) return { etat: e, erreur: k.error }; if (k.done) return { etat: e, fichiers: k.resultat.fichiers, ms: Math.round(performance.now() - t0) }; }
     })()`);
   } catch (e) { res.erreur = String(e && e.message || e); }

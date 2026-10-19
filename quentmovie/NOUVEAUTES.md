@@ -8,6 +8,7 @@ Changer aussi `version` dans `package.json` : une version déjà publiée n'est 
 - **👀 Je relis avant** : le texte est écrit pour toi, tu le corriges, puis tu lances la vidéo.
 - **✍️ Mon script** : pour un sujet d'actualité que Wikipédia ne connaît pas encore, écris ton texte : il devient une vidéo directement.
 - Rien n'est publié : tu regardes la vidéo, tu la corriges si besoin, puis « Publier ».
+- **Toujours ta voix** : les épisodes QuentInvest sont dits par ta voix clonée ou par ton doublage, jamais par une voix de synthèse. S'il manque une réplique à ton doublage, QuentMovie te dit laquelle enregistrer.
 
 ## 2.4.1
 - **Ta voix clonée fonctionne dans l'application** : « Fabriquer l'épisode » avec « Ma voix clonée » et l'essai « Voix clonée » du Doublage s'arrêtaient sur « can't open file … essai.py ». C'est réparé.
