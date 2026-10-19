@@ -55,8 +55,9 @@ Mention fixe à chaque vidéo, à l'écran et à l'oral : **« Vulgarisation · 
 Format de chaque image : 480 × 600, fond transparent, buste (même cadrage que Max et Pépite) ; il se place dans un coin du cadre ou au centre selon la scène.
 
 ## Voix
-- Voix de synthèse. Épisode 1 : Piper `fr_FR-upmc-medium`. **À partir de l'épisode 2 : Kokoro, voix française « siwis » (identifiant 30, modèle `kokoro-multi-lang-v1_0`), abaissée à 0,78 de sa hauteur avec la durée conservée** : plus fluide que Piper, choisie à l'oreille par le propriétaire. Réglage dans la clé `voix` du fichier de l'épisode : `{ "moteur": "kokoro", "sid": 30, "vitesse": 0.82, "hauteur": 0.78 }` (option `--voix <dossier du modèle>` pour le chemin). Modèle à télécharger une fois (≈ 350 Mo, archive `kokoro-multi-lang-v1_0.tar.bz2` des modèles sherpa-onnx) dans `~/Movies/QuentMovie/modeles`. Kokoro n'a pas de voix française masculine. Le champ `voix` d'une réplique remplace le texte lu à voix haute quand il diffère du texte affiché.
-- Réglage actuel : voix Pierre (locuteur 1), plus aiguë que Max — hauteur `asetrate={t}*1.08`, allure de synthèse 0,65 (≈ 175 mots par minute), à affiner à l'oreille (options `--locuteur` et `--vitesse` de `fabrication/fabriquer.js`).
+- **Règle absolue : la voix du propriétaire, jamais de voix de synthèse.** Chaque réplique est enregistrée par le propriétaire (Doublage de QuentMovie, ⇧⌘D, puis `episode.js --voix-perso <dossier>`) ou dite par sa voix clonée (QuentMovie, « Ma voix clonée »). Pas de Kokoro, Siwis, Piper ni `say`, pas même pour une seule réplique manquante : on l'enregistre ou on la clone. Les synthèses font perdre le rythme. Le programme refuse de fabriquer une vidéo sans voix enregistrée.
+- Historique : les épisodes 1 (Piper) et 2 (Kokoro « siwis ») ont été faits en synthèse ; ils restent tels quels et ne sont pas refaits.
+- Écriture : phrases courtes, faciles à dire à voix haute. La voix donne le rythme, le montage se cale dessus (durée de chaque réplique = durée de l'enregistrement).
 - Rythme : vif sur l'explication, plus lent sur le chiffre clé et sur le piège (une respiration avant).
 
 ## Structure type d'une vidéo (8 à 10 minutes)
@@ -70,7 +71,7 @@ Format de chaque image : 480 × 600, fond transparent, buste (même cadrage que 
 ## À décider avant la première vidéo
 - **Nom de la chaîne** (Pico est le nom du personnage, pas forcément celui de la chaîne). Vérifier que le nom et l'identifiant YouTube sont libres, et la marque auprès de l'INPI ; plan B si « Pico » est pris : Grain, Mirette, Tilou.
 - **Voix** : choix de la voix et du réglage, après écoute de deux ou trois épisodes d'essai.
-- **Mentions de la plateforme** sur les contenus de synthèse : lire les règles en vigueur au moment de la publication, et décider avec vous de ce qui est déclaré.
+- **Mentions de la plateforme** sur les contenus modifiés ou générés (voix clonée) : lire les règles en vigueur au moment de la publication, et décider avec vous de ce qui est déclaré.
 - **Visage du personnage en vidéo** : fixe avec changement d'expression (prévu ici) ou animé (bouche qui bouge, antennes) avec les outils de QuentMovie.
 
 ## Prochaines étapes
@@ -93,8 +94,7 @@ Les épisodes 1 et 2 gardent leur rendu d'origine. Un nouvel épisode part de `e
 - **Bruitages** (banque de QuentMovie), **30 % moins forts que la voix** (≈ −5 dB, mesurés par rapport à la voix de chaque réplique ; `sons.effetsDb` pour changer) : « pop » à chaque élément qui apparaît, « whoosh » à chaque nouvel écran, et un effet de révélation au choix : `"effet": "baisse" | "hausse" | "pieces" | "ding" | "succes" | "impact"` (instant réglable avec `effetT`).
 - **Contrôle du rythme** avant l'export (`--controle` pour le lancer seul) : accroche de 9 s au plus, appel à s'abonner avant 20 s, aucun écran de plus de 18 s, aucune réplique de plus de 45 mots, **durée de la vidéo YouTube d'au moins 5 minutes** (bloquant ; la version TikTok dure environ 1 minute).
 - **Format vertical** : `"format": "vertical"` (1080 × 1920, TikTok, Shorts) : écran en haut, Pico dessous, sous-titres de 3 mots. Exemple : `episodes/02-tiktok.json` (62 s, tiré de l'épisode 2).
-- **Voix du propriétaire** (option) : `--voix-perso <dossier>` remplace la voix de synthèse par des enregistrements `v00.wav`, `v01.wav`… (un par réplique, dans l'ordre du fichier) ; une réplique sans fichier reste en voix de synthèse.
-- **Voix des nouveaux épisodes : Siwis**, la voix de l'épisode 2 (Kokoro, identifiant 30, abaissée à 0,78, allure 0,78), qui obtient le plus de « j'aime » sur la chaîne (constat du propriétaire). Tom (Piper `vits-piper-fr_FR-tom-medium`, voix d'homme) reste disponible : clé `voix` de la fiche ou de l'épisode. L'épisode 1 garde Piper upmc.
+- **Voix** : `--voix-perso <dossier>` donne les enregistrements `v00.wav`, `v01.wav`… (un par réplique, dans l'ordre du fichier), venant du Doublage ou de la voix clonée ; une réplique sans fichier arrête la fabrication (jamais de voix de synthèse).
 
 Commande d'un épisode vertical : `node design/quentinvest-youtube/fabrication/fabriquer.js design/quentinvest-youtube/episodes/02-tiktok.json --voix ~/Movies/QuentMovie/modeles/kokoro-multi-lang-v1_0`.
 

@@ -44,6 +44,11 @@ const pauseDe = i => { const suivante = EP.scenes[i + 1]; return !suivante || su
 
 // ---------- 1. voix ----------
 function synthese() {
+  // RÈGLE DE LA CHAÎNE : jamais de voix de synthèse, pas même pour une réplique (QI_ESSAI_SYNTHESE=1 : essais automatiques seulement)
+  if (!process.env.QI_ESSAI_SYNTHESE) {
+    const manquantes = EP.scenes.map((s, i) => ({ i, s })).filter(({ i }) => { const f = arg('voix-perso', '') && path.join(arg('voix-perso', ''), `v${sh(i)}.wav`); return !(f && fs.existsSync(f)); });
+    if (manquantes.length) { console.error(`${manquantes.length} réplique(s) sans voix enregistrée (la chaîne n'utilise jamais de voix de synthèse) : enregistre-les dans le Doublage de QuentMovie ou fais-les dire par ta voix clonée.\n` + manquantes.slice(0, 12).map(({ i, s }) => `  v${sh(i)}.wav : « ${String(s.texte).slice(0, 90)} »`).join('\n') + (manquantes.length > 12 ? '\n  …' : '')); process.exit(3); }
+  }
   const sherpa = require(process.env.SHERPA || 'sherpa-onnx-node'), { pourLaVoix } = require(path.join(QM, 'voix-texte.js'));
   const modele = () => KOKORO
     ? { kokoro: { model: path.join(VOIX, 'model.onnx'), voices: path.join(VOIX, 'voices.bin'), tokens: path.join(VOIX, 'tokens.txt'), dataDir: path.join(VOIX, 'espeak-ng-data'), dictDir: path.join(VOIX, 'dict'), lexicon: [path.join(VOIX, 'lexicon-gb-en.txt'), path.join(VOIX, 'lexicon-zh.txt')].join(','), lang: 'fr' } }

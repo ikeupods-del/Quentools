@@ -41,7 +41,7 @@ Copie la forme de `fiches/_modele.json` (exemple complet : `fiches/10-premier-kr
 6. Images : uniquement des images libres de droits avec crédit (Wikimedia Commons : domaine public, CC0, CC BY, CC BY-SA). Jamais de logo ni de marque sans droit.
 
 ## 6. Prononciation : le dictionnaire (`quentmovie/prononciations.json`)
-La voix de synthèse lit mal les noms propres, les sigles et les mots étrangers. Le dictionnaire donne « mot écrit → comme il se dit » ; les sous-titres gardent l'orthographe.
+La voix clonée lit mal les noms propres, les sigles et les mots étrangers. Le dictionnaire donne « mot écrit → comme il se dit » ; les sous-titres gardent l'orthographe.
 - **À chaque nouvel épisode**, relève tous les noms propres, sigles, mots anglais et mots rares du texte, vérifie qu'ils sont dans le dictionnaire (le livré + celui du propriétaire, dans QuentMovie : Voix → Dictionnaire de prononciation), et propose les entrées manquantes.
 - Règles d'écriture de la lecture : lettres françaises, syllabes simples, tirets pour couper ; sigle = lettres séparées (« PEA » → « P E A ») ; mot anglais = comme un Français l'entend (« subprime » → « sub-praïme », « Lehman Brothers » → « Lémane Brodeurse ») ; nom propre étranger = prononciation d'usage en France.
 - Vérification : on écoute la phrase d'essai (bouton ▶ du dictionnaire). Une graphie validée par le propriétaire est définitive. En cas de doute, **demande** : ne devine pas la prononciation d'un nom de personne ou de marque (exemple ouvert : comment le propriétaire veut que « QuentInvest » soit dit).

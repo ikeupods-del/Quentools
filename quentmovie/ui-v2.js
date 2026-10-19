@@ -33,7 +33,7 @@ const CARTES_V2 = [
   { id: 'generer', titre: 'Générer une vidéo', texte: 'Un sujet : texte, images et voix off.', touche: '⇧⌘G', couleur: '#C3A4FF', fond: '#2D2147', icone: 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z M19 15l1 2 2 1-2 1-1 2-1-2-2-1 2-1z' },
   { id: 'doublage', titre: 'Doublage', texte: 'Ta voix réplique par réplique, ou le doublage d’une vidéo.', touche: '⇧⌘D', couleur: '#6EE7B7', fond: '#173329', icone: 'M12 3a3 3 0 00-3 3v6a3 3 0 006 0V6a3 3 0 00-3-3z M5 11a7 7 0 0014 0 M12 18v3' },
   { id: 'podcast', titre: 'Podcast', texte: 'Plusieurs micros, niveaux égalisés, chapitres et extraits.', touche: '', couleur: '#FBBF5B', fond: '#3A2A14', icone: 'M3 12h2 M7 8v8 M11 5v14 M15 9v6 M19 11v2' },
-  { id: 'fiche', titre: 'Épisode QuentInvest', texte: 'Un sujet : la fiche de Pico s’écrit, se contrôle, puis la vidéo se fabrique.', touche: '', couleur: '#34D399', fond: '#123026', icone: 'M6 3h8l4 4v14H6z M14 3v4h4 M9 12h6 M9 16h6' }
+  { id: 'fiche', titre: 'Épisode QuentInvest', texte: '« Fais une vidéo sur… » : Pico écrit et fabrique tout seul, ou d’après ton script.', touche: '', couleur: '#34D399', fond: '#123026', icone: 'M6 3h8l4 4v14H6z M14 3v4h4 M9 12h6 M9 16h6' }
 ];
 const ACTIONS_V2 = {
   importer: () => $('#fichiers').click(), filmer: () => ouvrirStudio(), generer: () => ouvrirGenerateur(), doublage: () => ouvrirDoublage(),

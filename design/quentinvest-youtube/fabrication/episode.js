@@ -20,15 +20,23 @@ const MODELES = arg('modeles', path.join(os.homedir(), 'Movies', 'QuentMovie', '
 fs.mkdirSync(SORTIE, { recursive: true }); fs.mkdirSync(EPISODES, { recursive: true });
 // texte à lire pour le Doublage de QuentMovie (voix du propriétaire) : rangé à côté des vidéos et dans episodes/
 { const L = require('./lecture'); for (const [ep, v] of [[C.long, false], [C.tiktok, true]]) L.ecrire(ep, C.base, v, [SORTIE, EPISODES]); }
+// RÈGLE DE LA CHAÎNE : jamais de voix de synthèse. Chaque réplique est dite par le propriétaire (Doublage de QuentMovie) ou par sa voix clonée.
+// Sans voix enregistrée, l'épisode n'est pas fabriqué : les textes à lire viennent d'être écrits (code de sortie 3 = « à enregistrer », lu par lot.js).
+// QI_ESSAI_SYNTHESE=1 est réservé aux essais automatiques (aucune vidéo publiable).
+if (drapeau('tiktok-synthese')) { console.error('L’option --tiktok-synthese est retirée : la chaîne n’utilise jamais de voix de synthèse.'); process.exit(2); }
+if (!arg('voix-perso', '') && !arg('voix-perso-tiktok', '') && !process.env.QI_ESSAI_SYNTHESE) {
+  console.error(`Aucune voix enregistrée : la chaîne n'utilise jamais de voix de synthèse.\nTextes à lire : ${path.join(SORTIE, C.base + '-lecture.txt')} (YouTube) et ${C.base}-lecture-tiktok.txt.\nEnregistre-les dans le Doublage de QuentMovie (⇧⌘D), puis relance avec --voix-perso <dossier du doublage>, ou fabrique l'épisode dans QuentMovie avec « Ma voix clonée ».`);
+  process.exit(3);
+}
 const dossierVoix = (EP) => path.join(MODELES, EP.voix.moteur === 'kokoro' ? 'kokoro-multi-lang-v1_0' : EP.voix.modele || 'vits-piper-fr_FR-upmc-medium');
 { const { estimer, DUREE_MINI } = require('./composer'), est = estimer(C.long.scenes, C.long.voix);
   if (!drapeau('sans-youtube') && !drapeau('court') && est < DUREE_MINI) { console.error(`Fiche trop courte : environ ${Math.floor(est / 60)} min ${est % 60} s estimées. Une vidéo YouTube dure au moins 5 minutes : ajoute des blocs à la fiche.`); process.exit(2); } }
 const etape = t => { console.log('• ' + t); if (process.env.QI_PROGRES) try { fs.writeFileSync(process.env.QI_PROGRES, JSON.stringify({ etape: 'phase', t })); } catch (e) { /* facultatif */ } };
 
 // voix du propriétaire (doublage de QuentMovie) : un dossier par version, v00.wav, v01.wav… une réplique chacun
-// version TikTok avec ta voix : sans dossier dédié (--voix-perso-tiktok), elle est montée à partir des répliques de la vidéo YouTube (tiktok-voix.js) ; --tiktok-synthese la garde en voix de synthèse
+// version TikTok avec ta voix : sans dossier dédié (--voix-perso-tiktok), elle est montée à partir des répliques de la vidéo YouTube (tiktok-voix.js)
 let tiktokEpisode = C.tiktok, tiktokPerso = arg('voix-perso-tiktok', '');
-if (!drapeau('sans-tiktok') && !drapeau('tiktok-synthese') && arg('voix-perso', '') && !tiktokPerso) {
+if (!drapeau('sans-tiktok') && arg('voix-perso', '') && !tiktokPerso) {
   etape('Version TikTok : voix tirée de la vidéo YouTube');
   const T = require('./tiktok-voix').preparer({ C, dossierYoutube: path.resolve(arg('voix-perso')), sortie: path.join(SORTIE, 'travail-tiktok-voix') });
   tiktokEpisode = T.episode; tiktokPerso = T.dossier;

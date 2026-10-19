@@ -74,6 +74,11 @@ async function envoyerChat(texte) {
   texte = String(texte == null ? $('#chTexte').value : texte).trim(); if (!texte) return;
   const t = instantActuel();
   $('#chTexte').value = ''; discussion.push({ qui: 'moi', texte, t }); dessinerChat();
+  // « fais un épisode QuentInvest sur le krach de 2008 » : la vidéo de Pico est écrite et fabriquée toute seule (fenêtre Épisode QuentInvest)
+  if (/\b(quentinvest|pico)\b|\bépisode\b/i.test(texte) && /\b(vid[ée]o|[ée]pisode)\b.*\b(sur|propos|sujet|concernant|explique)/i.test(texte)) {
+    const sujet = sujetDemande(texte.replace(/\b(?:quentinvest|de pico|avec pico)\b/gi, ' '));
+    if (sujet.length >= 3) { ouvrirFiche(); $('#fiSujet').value = sujet; $('#fiLancer').click(); return direIA(`🎬 C’est parti : Pico prépare une vidéo sur « ${sujet} » (texte d’après Wikipédia, contrôle, puis fabrication). Suis l’avancement dans la fenêtre Épisode QuentInvest ; rien n’est publié sans toi.`); }
+  }
   const attente = direIA('…');
   let r;
   try { r = await (await api('/api/assistant/comprendre', { method: 'POST', body: JSON.stringify({ demande: texte, ia: true, discussion: true, instant: t, projet: { ...resumeProjet(), normaliser: !!proj.normaliser } }) })).json(); }

@@ -1,7 +1,7 @@
 // Version TikTok avec la voix du propriétaire, tirée des répliques déjà enregistrées pour la vidéo YouTube (aucun nouvel enregistrement) :
 // chaque réplique YouTube est découpée en phrases (coupe dans un silence, d'après la longueur des phrases),
 // chaque phrase de la version TikTok est associée à la phrase YouTube la plus proche, les silences trop longs sont raccourcis.
-// Le texte affiché (sous-titres) devient celui qui est réellement dit. Une réplique sans correspondance garde la voix de synthèse.
+// Le texte affiché (sous-titres) devient celui qui est réellement dit. Une réplique sans correspondance est retirée (jamais de voix de synthèse sur la chaîne).
 // Usage (via episode.js : --voix-perso <dossier>, sans --voix-perso-tiktok) ou : node tiktok-voix.js <fiche.json> <dossier voix YouTube> <sortie>
 'use strict';
 const fs = require('fs'), path = require('path'), { execFileSync, spawnSync } = require('child_process');
@@ -52,7 +52,7 @@ function preparer({ C, dossierYoutube, sortie }) {
     if (type === 'accroche') choisies = pool.filter(p => p.scene === 0 || (p.type === 'accroche'));
     else if (type === 'abonne') choisies = pool.filter(p => p.type === 'abonne');
     else for (const ph of phrases(s.texte)) { const m = pool.filter(p => !p.utilisee && p.type !== 'accroche' && p.type !== 'abonne').map(p => ({ p, sc: dice(ph, p.texte) })).sort((a, b) => b.sc - a.sc)[0]; if (m && m.sc >= 0.4) { choisies.push(m.p); m.p.utilisee = true; } }
-    if (!choisies.length) { rapport.push({ scene: i, texte: s.texte, voix: 'synthèse' }); garde.push({ i, s, wav: null }); return; }
+    if (!choisies.length) { rapport.push({ scene: i, texte: s.texte, retiree: true, raison: 'phrase absente de la vidéo YouTube' }); return; }
     // morceaux coupés, silences longs raccourcis, recollés avec une respiration
     const morceaux = choisies.map((p, k) => { const f = path.join(base, `p${sh(i)}_${k}.wav`); execFileSync(FFMPEG, ['-v', 'error', '-y', '-ss', String(p.de), '-t', String(Math.max(0.2, p.a - p.de)), '-i', p.wav, '-af', 'aresample=44100,afade=t=in:d=0.01,' + filtre, '-ac', '1', '-c:a', 'pcm_s16le', f]); return f; });
     const liste = path.join(base, `l${sh(i)}.txt`), sil = path.join(base, 'silence.wav');
@@ -63,7 +63,7 @@ function preparer({ C, dossierYoutube, sortie }) {
     rapport.push({ scene: i, texte, voix: 'propriétaire', duree: +d.toFixed(1), source: choisies.map(p => `v${sh(p.scene)}`).join('+') });
     garde.push({ i, s: { ...s, texte }, wav: tmp, d, type });
   });
-  // durée : une minute environ ; on retire d'abord les répliques de peu de valeur (piège, fragments, voix de synthèse), puis les plus longues parmi les messages
+  // durée : une minute environ ; on retire d'abord les répliques de peu de valeur (piège, fragments), puis les plus longues parmi les messages
   const total = g => g.reduce((t, x) => t + (x.d || 6) + 0.36, 0);
   const valeur = (x, k, n) => { const t = x.s.ecran && x.s.ecran.type; if (k <= 1 || k === n - 1) return 9; if (!x.wav || x.d < 1.5 || x.s.expr === 'inquiet') return 1; return ['duo', 'chiffre', 'calcul', 'taux', 'courbe', 'croissance', 'resume'].includes(t) ? 3 : 2; };
   let liste = garde.slice();

@@ -52,6 +52,19 @@ async function navigateurEssai(exe) {
   check('navigateur des écrans : refusé avec un faux jeton', (await post('/api/navigateur/ouvrir', { largeur: 100, hauteur: 100 }, { 'x-jeton': 'faux' })).status === 403);
   const vide = await post('/api/pico/fabriquer', { fiche: { numero: 1 } }); check('fiche incomplète refusée tout de suite', vide.status >= 400);
   check('fiche qui n’est pas du JSON refusée', (await post('/api/pico/fabriquer', { fiche: '{ pas du json' })).status >= 400);
+  // règle de la chaîne : jamais de voix de synthèse (ni en choix, ni en secours d'une réplique manquante)
+  const ficheRegle = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fiches', '03-interets-composes.json'), 'utf8'));
+  const syn = await post('/api/pico/fabriquer', { fiche: ficheRegle, options: { voix: 'pico' } });
+  check('voix de synthèse refusée pour la chaîne', syn.status >= 400 && /jamais de voix de synthèse/.test((await syn.json()).error || ''));
+  { const { spawnSync } = require('child_process'), dEp = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-regle-')), env = { ...process.env, QI_EPISODES: fs.mkdtempSync(path.join(os.tmpdir(), 'qm-regle-ep-')) }; delete env.QI_ESSAI_SYNTHESE;
+    const r = spawnSync(process.execPath, [path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fabrication', 'episode.js'), path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fiches', '03-interets-composes.json'), '--sortie', dEp], { encoding: 'utf8', env });
+    check('episode.js sans voix enregistrée : textes à lire écrits, rien de fabriqué', r.status === 3 && /jamais de voix de synthèse/.test(r.stderr) && fs.existsSync(path.join(dEp, '03-interets-composes-lecture.txt')) && !fs.readdirSync(dEp).some(n => /\.mp4$/.test(n)), r.stderr.slice(0, 300));
+    const vide = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-regle-v-')); fs.writeFileSync(path.join(vide, 'v00.wav'), '');
+    const r2 = spawnSync(process.execPath, [path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fabrication', 'episode.js'), path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fiches', '03-interets-composes.json'), '--sortie', dEp, '--voix-perso', vide, '--sans-tiktok'], { encoding: 'utf8', env });
+    check('réplique sans enregistrement : la fabrication s’arrête et la liste (pas de synthèse de secours)', r2.status !== 0 && /sans voix enregistrée/.test(r2.stderr + r2.stdout) && /v01\.wav/.test(r2.stderr + r2.stdout), (r2.stderr + r2.stdout).slice(-300));
+    const r3 = spawnSync(process.execPath, [path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fabrication', 'episode.js'), path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fiches', '03-interets-composes.json'), '--sortie', dEp, '--tiktok-synthese'], { encoding: 'utf8', env });
+    check('option --tiktok-synthese retirée', r3.status !== 0 && /retirée/.test(r3.stderr));
+    fs.rmSync(dEp, { recursive: true, force: true }); fs.rmSync(vide, { recursive: true, force: true }); }
 
   // ton script → fiche de Pico (programme seul) : répliques, écrans choisis, numéro suivant
   const sc = await (await post('/api/quentinvest/script', { texte: '# Pourquoi les prix montent ?\n\nTon panier coûtait 50 € il y a cinq ans. Aujourd’hui, près de 60 €. Pourquoi ?\n\nL’inflation\nL’inflation, c’est la hausse générale des prix. Chaque euro achète un peu moins.\n\nTrois causes :\n- l’énergie plus chère\n- les salaires qui montent\n\nEn une phrase : l’inflation grignote ton pouvoir d’achat. Et toi, tu l’as sentie ?' })).json();
@@ -117,10 +130,25 @@ async function navigateurEssai(exe) {
     const rm = await (await post('/api/pico/refaire', { base: '97-essai-ma-voix', changements: [{ i: 1, texte: 'Une phrase refaite avec ta voix.' }] })).json(), jrm = await attendre(rm.id);
     check('ta voix : refaire ne redit que la phrase changée', jrm.done && !jrm.error && fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v00.wav')).mtimeMs === d0 && fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v01.wav')).mtimeMs > d1, jrm.error || '');
     check('une seule fabrication à la fois', await (async () => { const a = await (await post('/api/pico/refaire', { base: '97-essai-ma-voix', changements: [] })).json(); const b2 = await post('/api/pico/fabriquer', { fiche: ficheMaVoix, options: { court: true, sansTiktok: true, voix: 'ma-voix' } }); await attendre(a.id); return b2.status >= 400; })());
+    // vidéo d'une traite d'après ton script (sujet d'actualité) : script → fiche → contrôle → fabrication, numéro suivant
+    check('vidéo d’une traite : sujet vide refusé', (await post('/api/quentinvest/auto', { demande: 'fais une vidéo sur' })).status >= 400);
+    check('vidéo d’une traite : script trop court refusé', (await post('/api/quentinvest/auto', { script: 'Bonjour.' })).status >= 400);
+    const scriptActu = '# La BCE baisse ses taux\n\nLa banque centrale vient de baisser son taux de 0,25 %. Pourquoi ça change ton crédit ?\n\nUn taux directeur, c’est le prix auquel les banques empruntent. Quand il baisse, les crédits deviennent souvent moins chers.\n\nEn une phrase : un taux plus bas rend l’argent emprunté moins cher.';
+    const au = await (await post('/api/quentinvest/auto', { script: scriptActu, options: { voix: 'ma-voix', sansTiktok: true, court: true } })).json(), ja = await attendre(au.id);
+    check('vidéo d’une traite : ton script devient une vidéo sans autre clic', ja.done && !ja.error && (ja.resultat.fichiers || []).some(n => /-youtube\.mp4$/.test(n)) && ja.resultat.fiche && /BCE/.test(ja.resultat.fiche.titre), ja.error || JSON.stringify(ja.resultat && ja.resultat.fichiers));
     // écran de relecture dans la fenêtre : lignes, expressions, mot cliquable avec « se dit », écouter et ajouter
     const pg = await nav.b.newPage({ viewport: { width: 1440, height: 900 } }), errs = []; pg.on('pageerror', x => errs.push(x.message));
     await pg.goto(U('/')); await pg.waitForTimeout(800); await pg.evaluate(() => ouvrirRelecturePico('98-essai-pico')); await pg.waitForSelector('#rlListe .rlLigne');
     check('écran de relecture : une ligne par réplique avec son expression', await pg.evaluate(n => document.querySelectorAll('#rlListe .rlLigne').length === n && document.querySelectorAll('#rlListe select[data-expr]').length === n, E.scenes.length));
+    // fenêtre Épisode QuentInvest : trois façons de faire, la zone du script n'apparaît qu'avec « Mon script »
+    await pg.evaluate(() => { fermer(); ouvrirFiche(); });
+    check('épisode : trois façons de faire (tout seul, je relis avant, mon script)', await pg.evaluate(() => document.querySelectorAll('[name="fiMode"]').length === 3 && !!document.querySelector('[name="fiMode"][value="seul"]:checked') && document.querySelector('#fiZoneScript').hidden && /Faire la vidéo/.test(document.querySelector('#fiLancer').textContent)));
+    await pg.click('[name="fiMode"][value="script"]');
+    check('épisode : « Mon script » montre la zone du script', await pg.evaluate(() => !document.querySelector('#fiZoneScript').hidden && document.querySelector('#fiZoneSujet').hidden && !document.querySelector('#fiDepuisScript').hidden));
+    await pg.click('[name="fiMode"][value="relire"]');
+    check('épisode : « Je relis avant » écrit le texte sans fabriquer', await pg.evaluate(() => /Écrire le texte/.test(document.querySelector('#fiLancer').textContent) && document.querySelector('#fiZoneVoix').hidden));
+    check('épisode : la demande « fais une vidéo sur … » donne le sujet', await pg.evaluate(() => sujetDemande('Fais-moi une vidéo sur le krach de 2008') === 'le krach de 2008'));
+    await pg.evaluate(() => { fermer(); ouvrirRelecturePico('98-essai-pico'); }); await pg.waitForSelector('#rlListe .rlLigne');
     await pg.selectOption('select[data-expr="0"]', 'surpris');
     check('écran de relecture : expression changée → « Refaire 1 réplique »', await pg.evaluate(() => /Refaire 1 réplique/.test(document.querySelector('#rlRefaire').textContent) && !document.querySelector('#rlRefaire').disabled));
     await pg.click('#rlListe .rlLigne[data-i="1"] [data-mot]'); await pg.waitForSelector('#rlDit');

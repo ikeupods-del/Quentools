@@ -12,6 +12,20 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
     let max = 0; for (const d of dossiers) { try { for (const n of fs.readdirSync(d)) { const m = /^(\d{1,3})-/.exec(n); if (m && +m[1] < 98) max = Math.max(max, +m[1]); } } catch (e) { /* dossier absent */ } }
     return max + 1;
   }
+  // Brouillon d'une fiche : article Wikipédia + IA locale (reformulation contrôlée) + structure de la chaîne ; gardé dans ~/Movies/QuentMovie/quentinvest/fiches
+  async function brouillonDe(sujet, job, { article: art, numero } = {}) {
+    job.step = 'Recherche de l’article Wikipédia…';
+    const article = String(art || '').trim() || ((await GEN().chercher(sujet)).resultats[0] || {}).titre;
+    if (!article) throw new Error(`Aucun article Wikipédia trouvé pour « ${sujet} ». Sujet d’actualité ? Écris ton script.`);
+    const r = await require('./fiche-ia').brouillon({
+      sujet, article, numero: Math.max(1, Math.floor(num(numero, prochainNumero()))), url: `https://fr.wikipedia.org/wiki/${encodeURIComponent(article.replace(/ /g, '_'))}`,
+      faits: (a, d) => GEN().faits(a, d),
+      ecrire: (o, j) => IA().ecrireScript({ ...o, style: 'documentaire', consigne: 'Tutoie le spectateur, phrases courtes de vingt mots au plus, aucun fait ajouté.', recherche: false }, j)
+    }, job);
+    const dossier = path.join(BASE, 'quentinvest', 'fiches'); fs.mkdirSync(dossier, { recursive: true });
+    const f = path.join(dossier, `${String(r.fiche.numero).padStart(2, '0')}-${r.fiche.slug}.json`); fs.writeFileSync(f, JSON.stringify(r.fiche, null, 1) + '\n');
+    return { ...r, fichier: f, article };
+  }
   return async function traiter(req, res, p, url) {
     // Dictionnaire de prononciation : « mot écrit → comme il se dit », appliqué à toutes les voix (voix-texte.js) ; celui de l'utilisateur passe avant le livré
     if (p === '/api/prononciations') {
@@ -114,7 +128,6 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
         return send(res, 200, { ok: !!opts.ouvrirDossier, dossier });
       }
     }
-    // Brouillon de fiche : article Wikipédia + IA locale (reformulation contrôlée) + structure de la chaîne ; la fiche est gardée dans ~/Movies/QuentMovie/quentinvest/fiches
     // ton script (texte libre) → fiche de Pico, par le programme seul ; numéro = le suivant des épisodes déjà faits
     if (req.method === 'POST' && p === '/api/quentinvest/script') {
       const b = await readJson(req), texte = String(b.texte || '').slice(0, 60000);
@@ -125,17 +138,42 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
     if (req.method === 'POST' && p === '/api/quentinvest/brouillon') {
       const b = await readJson(req), sujet = String(b.sujet || '').trim().slice(0, 120);
       if (sujet.length < 3) throw new Error('Écris le sujet de l’épisode (par exemple « Le krach de 1929 »).');
+      return send(res, 200, travail(job => brouillonDe(sujet, job, { article: b.article, numero: b.numero })));
+    }
+    // Vidéo QuentInvest d'une traite : « fais une vidéo sur le krach de 2008 » (texte écrit d'après Wikipédia) ou ton script (sujet d'actualité),
+    // puis contrôle et fabrication par /api/pico/fabriquer (mêmes voix, une fabrication à la fois) ; l'avancement des deux étapes est suivi ici
+    if (req.method === 'POST' && p === '/api/quentinvest/auto') {
+      const b = await readJson(req), FI = require('./fiche-ia'), FQ = require('./fiche-quentinvest');
+      const script = String(b.script || '').slice(0, 60000), sujet = FI.sujetDe(String(b.demande || '').slice(0, 200)).slice(0, 120);
+      if (script.trim()) { if (script.trim().length < 80) throw new Error('Ton script est trop court : une accroche, quelques paragraphes et une conclusion.'); }
+      else if (sujet.length < 3) throw new Error('Écris le sujet de la vidéo (par exemple « fais une vidéo sur le krach de 2008 »).');
+      const port = req.socket.localPort, U = q => `http://127.0.0.1:${port}${q}`, o = b.options && typeof b.options === 'object' ? b.options : {};
       return send(res, 200, travail(async job => {
-        job.step = 'Recherche de l’article Wikipédia…';
-        const article = String(b.article || '').trim() || (await GEN().chercher(sujet)).resultats[0].titre;
-        const r = await require('./fiche-ia').brouillon({
-          sujet, article, numero: Math.max(1, Math.floor(num(b.numero, prochainNumero()))), url: `https://fr.wikipedia.org/wiki/${encodeURIComponent(article.replace(/ /g, '_'))}`,
-          faits: (a, d) => GEN().faits(a, d),
-          ecrire: (o, j) => IA().ecrireScript({ ...o, style: 'documentaire', consigne: 'Tutoie le spectateur, phrases courtes de vingt mots au plus, aucun fait ajouté.', recherche: false }, j)
-        }, job);
-        const dossier = path.join(BASE, 'quentinvest', 'fiches'); fs.mkdirSync(dossier, { recursive: true });
-        const f = path.join(dossier, `${String(r.fiche.numero).padStart(2, '0')}-${r.fiche.slug}.json`); fs.writeFileSync(f, JSON.stringify(r.fiche, null, 1) + '\n');
-        return { ...r, fichier: f, article };
+        const part = (a, z) => k => { job.step = k.step || job.step; job.progress = a + (z - a) * (k.progress || 0); };
+        let fiche, fichier = null, article = null;
+        if (script.trim()) { job.step = 'Découpage de ton script…'; fiche = FQ.ficheDepuisScript(script, { titre: String(b.titre || '').slice(0, 120), numero: prochainNumero() }); }
+        else {
+          const sous = { step: '', progress: 0 }, suivre = setInterval(() => part(0, 0.3)(sous), 500);
+          try { const r = await brouillonDe(sujet, sous); fiche = FI.pourAuto(r.fiche, sujet); article = r.article; fichier = r.fichier; fs.writeFileSync(fichier, JSON.stringify(fiche, null, 1) + '\n'); }
+          finally { clearInterval(suivre); }
+        }
+        if (job.annule) throw new Error('Arrêté.');
+        const c = FQ.controler(fiche, { lexique: require('./voix-texte').lexiqueActuel() });
+        if (o.court) c.erreurs = c.erreurs.filter(e => !/^Trop court/.test(e)); // version courte (essais) : moins de 5 minutes accepté
+        c.ok = !c.erreurs.length;
+        if (!c.ok) throw new Error('Texte pas encore fabricable : ' + c.erreurs.join(' ; ') + (article ? ` (article Wikipédia « ${article} »). Choisis « Je relis avant » pour le compléter.` : ''));
+        job.step = 'Fabrication de la vidéo…'; job.progress = script.trim() ? 0.05 : 0.3;
+        const r = await fetch(U('/api/pico/fabriquer'), { method: 'POST', body: JSON.stringify({ fiche, options: { voix: o.voix, sansTiktok: !!o.sansTiktok, court: !!o.court } }) }), j = await r.json();
+        if (!r.ok || j.error) throw new Error(j.error || 'Fabrication impossible');
+        const a = job.progress;
+        for (;;) {
+          await new Promise(x => setTimeout(x, 1000));
+          if (job.annule) { await fetch(U('/api/annuler?id=' + j.id), { method: 'POST' }).catch(() => {}); throw new Error('Arrêté.'); }
+          const k = await (await fetch(U('/api/job?id=' + j.id))).json();
+          if (k.error) throw new Error(k.error);
+          part(a, 1)(k);
+          if (k.done) return { ...k.resultat, fiche, fichierFiche: fichier, article, controle: c };
+        }
       }));
     }
     return NON;
