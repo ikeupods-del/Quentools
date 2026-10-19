@@ -124,9 +124,12 @@ function ficheDepuisScript(script, { titre = '', numero = 1 } = {}) {
       }
       const pt = l.replace(/^[-•*]\s+/, ''); cur.points.push(pt); cur.texte += (cur.texte ? ' ' : '') + pt.replace(/^./, c => c.toUpperCase()).replace(/([^.!?])$/, '$1.'); continue;
     }
-    if (!cur || cur.points) { cur = { texte: '', section }; paras.push(cur); section = ''; }
+    // nouveau paragraphe aussi après une phrase finie suivie d'un retour à la ligne (scripts écrits sans ligne vide entre les paragraphes)
+    if (!cur || cur.points || /[.!?…»"”)]$/.test(cur.texte)) { cur = { texte: '', section }; paras.push(cur); section = ''; }
     cur.texte += (cur.texte ? ' ' : '') + l;
   }
+  // fin écrite à la façon d'une vidéo (« abonne-toi », « la cloche », « c'était Pico ») : la chaîne a déjà sa fin fixe, elle n'est pas dite deux fois
+  while (paras.length > 3 && /\b(abonne|cloche|notifications?|en commentaire|à la prochaine|a la prochaine|c[’']était pico|c[’']etait pico)\b/i.test(paras[paras.length - 1].texte) && !/^(en une phrase|en résumé|à retenir)/i.test(paras[paras.length - 1].texte)) paras.pop();
   if (paras.length < 3) throw new Error('Script trop court : il faut au moins une accroche, quelques paragraphes et une conclusion.');
   const titreF = String(titre || titreScript || coupe(phrasesDe(paras[0].texte)[0] || 'Mon épisode', 70)).trim();
   let iRes = paras.findIndex(x => /^(en une phrase|en résumé|en resume|pour résumer|à retenir)\b/i.test(x.texte)); if (iRes < 1) iRes = paras.length - 1;

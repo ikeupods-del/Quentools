@@ -50,6 +50,13 @@ const { controler, nombres } = require('../fiche-quentinvest');
   check('demande → sujet', sujetDe('fais une vidéo sur le krach de 2008') === 'le krach de 2008' && sujetDe('Fais-moi un épisode à propos de l’inflation.') === 'l’inflation' && sujetDe('La tulipomanie') === 'La tulipomanie', sujetDe('Fais-moi un épisode à propos de l’inflation.'));
   const au = pourAuto(bd, 'le krach de 2008');
   check('vidéo tout seul : titre tiré du sujet, rien « à définir » dans le texte dit', /^Le krach de 2008 :/.test(au.titre) && !/définir/.test(au.suite.texte) && !au.aCompleter && au.miniature.lignes.join(' ').includes('KRACH'), JSON.stringify([au.titre, au.suite, au.miniature]));
+  { // script collé sans ligne vide entre les paragraphes, terminé par une fin « à la façon d'une vidéo »
+    const FQ = require('../fiche-quentinvest');
+    const t = 'Imagine un pays où tout le monde devient millionnaire en un an. C’est arrivé au Koweït en 1982.\nLe Souk Al-Manakh était une bourse parallèle. On y payait avec des chèques antidatés.\nPersonne n’avait l’argent. Tout le monde payait plus tard.\nLe trou atteint 94 milliards de dollars.\nCe krach reste une anomalie fascinante de l’histoire moderne.\nDis-moi en commentaire ce que tu aurais fait, active la cloche, c’était Pico, à la prochaine !';
+    let f = null; try { f = FQ.ficheDepuisScript(t); } catch (e) { /* refusé */ }
+    check('script sans ligne vide : une ligne finie = un paragraphe', f && f.blocs.length >= 3, f ? f.blocs.length : 'refusé');
+    check('script : la fin « abonne-toi / la cloche » n’est pas dite deux fois', f && /anomalie/.test(f.resume.texte) && !JSON.stringify(f).includes('cloche'), f && f.resume.texte);
+  }
   app.stop(); srv.close(); fs.rmSync(racine, { recursive: true, force: true });
   console.log(`Fiches QuentInvest : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

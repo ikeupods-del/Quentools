@@ -156,9 +156,28 @@ async function navigateurEssai(exe) {
     const scriptActu = '# La BCE baisse ses taux\n\nLa banque centrale vient de baisser son taux de 0,25 %. Pourquoi ça change ton crédit ?\n\nUn taux directeur, c’est le prix auquel les banques empruntent. Quand il baisse, les crédits deviennent souvent moins chers.\n\nEn une phrase : un taux plus bas rend l’argent emprunté moins cher.';
     const au = await (await post('/api/quentinvest/auto', { script: scriptActu, options: { voix: 'ma-voix', sansTiktok: true, court: true } })).json(), ja = await attendre(au.id);
     check('vidéo d’une traite : ton script devient une vidéo sans autre clic', ja.done && !ja.error && (ja.resultat.fichiers || []).some(n => /-youtube\.mp4$/.test(n)) && ja.resultat.fiche && /BCE/.test(ja.resultat.fiche.titre), ja.error || JSON.stringify(ja.resultat && ja.resultat.fichiers));
+    // ton script dit avec un doublage : les répliques à enregistrer sont celles de la fabrication ; un doublage d'un autre découpage est refusé
+    const rq = await (await post('/api/pico/repliques', { script: scriptActu })).json();
+    check('répliques à enregistrer : celles de la fabrication, dans l’ordre', Array.isArray(rq.lignes) && rq.lignes.length > 4 && rq.lignes.some(l => /colonie/i.test(l)) && rq.nom && !/^\d/.test(rq.nom), JSON.stringify(rq).slice(0, 200));
+    const doubler = (nom, lignes) => { const d = path.join(base, 'doublages', nom); fs.mkdirSync(d, { recursive: true }); fs.writeFileSync(path.join(d, 'script.json'), JSON.stringify({ lignes }));
+      lignes.forEach((t, k) => execFileSync(bins.ffmpeg, ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=f=160:d=' + Math.min(5, 0.6 + t.length / 20), '-ar', '24000', '-ac', '1', path.join(d, `v${String(k).padStart(2, '0')}.wav`)])); };
+    doubler('mauvais', scriptActu.split(/\n+/).filter(Boolean));
+    const am = await (await post('/api/quentinvest/auto', { script: scriptActu, options: { voix: 'doublage:mauvais', sansTiktok: true, court: true } })).json(), jam = await attendre(am.id);
+    check('doublage d’un autre découpage : refusé, avec la marche à suivre', /ne suit pas les répliques/.test(jam.error || '') && /Enregistrer ces répliques/.test(jam.error || ''), jam.error || 'accepté');
+    doubler(rq.nom, rq.lignes);
+    const ab = await (await post('/api/quentinvest/auto', { script: scriptActu, options: { voix: 'doublage:' + rq.nom, sansTiktok: true, court: true } })).json(), jab = await attendre(ab.id);
+    check('doublage des répliques de la vidéo : vidéo fabriquée', jab.done && !jab.error && (jab.resultat.fichiers || []).some(n => /-youtube\.mp4$/.test(n)), jab.error || '');
     // écran de relecture dans la fenêtre : lignes, expressions, mot cliquable avec « se dit », écouter et ajouter
     const pg = await nav.b.newPage({ viewport: { width: 1440, height: 900 } }), errs = []; pg.on('pageerror', x => errs.push(x.message));
-    await pg.goto(U('/')); await pg.waitForTimeout(800); await pg.evaluate(() => ouvrirRelecturePico('98-essai-pico')); await pg.waitForSelector('#rlListe .rlLigne');
+    await pg.goto(U('/')); await pg.waitForTimeout(800);
+    await pg.evaluate(() => ouvrirFiche()); await pg.click('[name="fiMode"][value="script"]'); await pg.fill('#fiScript', scriptActu);
+    check('fiche : en mode script, le champ du sujet est caché', await pg.evaluate(() => getComputedStyle(document.querySelector('#fiZoneSujet')).display === 'none' && !document.querySelector('#fiDoubler').hidden));
+    await pg.click('#fiDoubler'); await pg.waitForSelector('#dbTexte');
+    check('« Enregistrer ces répliques » : le Doublage s’ouvre avec les répliques de la vidéo', await pg.evaluate(l => document.querySelector('#dbTexte').value.split('\n').length === l.length && document.querySelector('#dbNom').value, rq.lignes));
+    await pg.evaluate(() => { dblFin(); fermer(); ouvrirFiche(); }); await pg.waitForTimeout(500);
+    check('retour dans Épisode QuentInvest : ton script est gardé et ton doublage choisi', await pg.evaluate(n => document.querySelector('#fiScript').value.length > 80 && document.querySelector('#fiAutoVoix').value === 'doublage:' + n, rq.nom));
+    await pg.evaluate(() => { fermer(); fiMemo.script = ''; fiMemo.doublage = ''; });
+    await pg.evaluate(() => ouvrirRelecturePico('98-essai-pico')); await pg.waitForSelector('#rlListe .rlLigne');
     check('écran de relecture : une ligne par réplique avec son expression', await pg.evaluate(n => document.querySelectorAll('#rlListe .rlLigne').length === n && document.querySelectorAll('#rlListe select[data-expr]').length === n, E.scenes.length));
     // fenêtre Épisode QuentInvest : trois façons de faire, la zone du script n'apparaît qu'avec « Mon script »
     await pg.evaluate(() => { fermer(); ouvrirFiche(); });
