@@ -1,0 +1,76 @@
+name: QuentMovie — essai réel QuentInvest
+
+# Fabrique de vraies vidéos QuentInvest dans l'application construite, sur un vrai Mac, comme le propriétaire :
+# « Mon script » (script collé tel quel) puis « Tout seul » (Wikipédia + IA locale), avec la voix clonée
+# (Python, modèle de clonage et IA téléchargés et installés par l'application elle-même). Aucune voix de synthèse
+# pour les épisodes : le corpus « Ma voix » imité est préparé par tests/reel/preparer-voix.js.
+# Long (une à trois heures) : il ne bloque pas la publication de l'application.
+on:
+  workflow_dispatch:
+    inputs:
+      sujet:
+        description: "Demande du mode « Tout seul »"
+        type: string
+        default: fais une vidéo sur le krach de 1929
+      seul:
+        description: "Essayer aussi le mode « Tout seul » (Wikipédia + IA locale)"
+        type: boolean
+        default: true
+  push:
+    branches: ['claude/infirmiere-ordonnances-upload-26nl16']
+    paths: ['quentmovie/**', 'design/quentinvest-youtube/fabrication/**', '.github/workflows/quentinvest-reel.yml']
+
+concurrency:
+  group: quentinvest-reel
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  reel:
+    runs-on: macos-latest
+    timeout-minutes: 340
+    defaults:
+      run:
+        working-directory: quentmovie
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installer les dépendances
+        env:
+          NODE_LLAMA_CPP_SKIP_DOWNLOAD: 'true'
+        run: npm ci
+      - name: Construire l'application
+        run: npm run dist
+      - name: Préparer le corpus « Ma voix » (voix à imiter)
+        run: node tests/reel/preparer-voix.js "$RUNNER_TEMP/qm-qi"
+      - name: Fabriquer les vidéos dans l'application installée
+        timeout-minutes: 320
+        env:
+          QM_AUTOTEST_SUJET: ${{ inputs.sujet || 'fais une vidéo sur le krach de 1929' }}
+          QM_AUTOTEST_SANS_SEUL: ${{ github.event_name == 'workflow_dispatch' && !inputs.seul && '1' || '' }}
+        run: |
+          QM_AUTOTEST="$PWD/autotest-qi.json" QM_AUTOTEST_QI=1 QM_AUTOTEST_MAX_MIN=315 QM_AUTOTEST_SCRIPT="$PWD/tests/reel/script-souk.txt" \
+            QM_BASE="$RUNNER_TEMP/qm-qi" dist/mac-arm64/QuentMovie.app/Contents/MacOS/QuentMovie || true
+          node tests/reel/verifier.js autotest-qi.json
+      - name: Journaux de la voix clonée et de l'IA (si l'essai a échoué)
+        if: failure()
+        run: |
+          for f in "$RUNNER_TEMP/qm-qi/voix-clone/journal.txt" "$RUNNER_TEMP/qm-qi/ia-journal.txt"; do
+            [ -f "$f" ] && { echo "=== $f"; tail -n 150 "$f"; }
+          done
+          ls -la "$RUNNER_TEMP/qm-qi" "$RUNNER_TEMP/qm-qi/QuentInvest" 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: videos-quentinvest
+          path: |
+            ${{ runner.temp }}/qm-qi/QuentInvest/*/*.mp4
+            ${{ runner.temp }}/qm-qi/QuentInvest/*/*.png
+            ${{ runner.temp }}/qm-qi/voix-clone/journal.txt
+            quentmovie/autotest-qi.json
+          retention-days: 7
+          if-no-files-found: ignore
