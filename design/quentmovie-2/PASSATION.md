@@ -29,11 +29,10 @@ Le propriétaire n'est pas développeur : lui répondre en français simple, agi
 - Clic sur un mot souligné : écrire comment le dire, l'écouter, l'ajouter au dictionnaire.
 - « Refaire » ne refait que les répliques concernées (la voix est déjà gardée par réplique ; les écrans et les clips d'une réplique inchangée sont à garder aussi).
 
-## HyperFrames (envoyé par le propriétaire, à intégrer)
-- Le propriétaire a envoyé les fichiers de présentation du projet **HyperFrames** de HeyGen (licence Apache 2.0, donc utilisable) : le mode d'emploi, la licence et les réglages. Le programme lui-même ne faisait pas partie de l'envoi : il s'installe depuis npm, sous le nom `hyperframes`.
-- Ce que fait HyperFrames : il transforme une page web animée (texte, images, animations, sous-titres, voix off, visuels qui bougent avec le son) en vidéo MP4. On écrit la page, et il filme chaque image dans un navigateur caché.
-- L'idée pour QuentMovie : une rubrique « Animations » qui fabrique des génériques, des écrans de chiffres, des transitions et des habillages réseaux sociaux avec HyperFrames, puis les pose directement dans la timeline. Elle servirait aussi aux écrans de Pico.
-- À vérifier d'abord : ce qu'il faut installer sur le Mac (Node et Chrome) et le poids ajouté à l'application ; puis faire un essai avec un modèle de leur catalogue.
+## HyperFrames : étude faite, choix à faire par le propriétaire
+- Étude complète : `design/quentmovie-2/ETUDE-HYPERFRAMES.md`. Essai réussi avec le modèle « warm-grain » de leur catalogue (10 s en 1080p fabriquées en 27 s), une fois ses fichiers extérieurs (GSAP, texture) copiés en local.
+- Il manque sur le Mac : ffprobe pour puce Apple (HyperFrames refuse de démarrer sans lui), Chrome (≈ 100 Mo s'il n'est pas installé) et le programme (124 Mo de modules, ≈ 42 Mo compressé) : à télécharger au premier usage, pas à livrer dans l'application. Mesure d'audience de HyperFrames à couper.
+- Recommandé : une rubrique « Animations » sur le moteur maison des écrans de Pico (rien à télécharger), HyperFrames complet seulement si le propriétaire veut tout leur catalogue.
 
 ## Patrimoine AI (dépôt séparé `ikeupods-del/patrimoineai`)
 **Fait le 19 octobre (version Mac 6.5.0, en ligne)** :
