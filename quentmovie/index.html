@@ -368,6 +368,51 @@ button.dictee.on{background:#5a1a1f;border-color:#ff5a5f;color:#fff}
 #entetes .ent{box-shadow:inset 3px 0 0 var(--piste,transparent)}
 #eT{--piste:#f2b92b}#eV2{--piste:#a78bfa}#eV{--piste:#5b78ff}#eA{--piste:#4fd1a5}
 #entetes #eT b{color:#f6d27a}#entetes #eV b{color:#b4c2ff}#entetes #eA b{color:#6ee7b7}
+#publierV2 a{color:#8fa3ff;text-decoration:none}#publierV2 a:hover{color:#b4c2ff}
+#publierV2{position:fixed;left:0;right:0;top:52px;bottom:0;z-index:12;background:var(--bg);overflow:auto}
+.pv2-int{display:flex;gap:40px;padding:36px 64px;max-width:1240px;margin:0 auto;box-sizing:border-box}
+.pv2-apercu{width:340px;flex:none;display:flex;flex-direction:column;gap:14px}
+.pv2-ecran{border-radius:14px;background:#1e2a44;overflow:hidden;display:grid;place-items:center;aspect-ratio:9/16;max-height:540px}
+.pv2-ecran.f-horizontal{aspect-ratio:16/9}.pv2-ecran.f-carre{aspect-ratio:1}
+.pv2-ecran img,.pv2-ecran video{width:100%;height:100%;object-fit:cover;display:block}.pv2-vide{color:var(--mut)}
+.pv2-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pv2-stats div{padding:10px 12px;border-radius:10px;background:var(--pan);border:1px solid #22252d;display:flex;flex-direction:column;gap:3px}
+.pv2-stats span{font-size:11px;color:#8b919c}.pv2-stats b{font:500 13px ui-monospace,Menlo,monospace}
+.pv2-lien{font-size:12px;margin:0}
+.pv2-reglages{flex:1;min-width:0;display:flex;flex-direction:column;gap:24px}
+.pv2-reglages h1{margin:0 0 6px;font-size:26px;font-weight:600;letter-spacing:-.02em}.pv2-reglages h1+p{margin:0;font-size:14px}
+.pv2-reglages h2{margin:0 0 10px;font-size:12px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.pv2-qualites{display:flex;gap:8px;flex-wrap:wrap}
+.pv2-qualites button{padding:9px 16px;border-radius:10px;border:1px solid #2a2e38;background:var(--pan);font-weight:600;display:flex;flex-direction:column;align-items:flex-start;gap:2px;height:auto}
+.pv2-qualites button span{font-size:11px;font-weight:400;color:var(--mut)}
+.pv2-qualites button.on,.pv2-vis button.on{border-color:#5b78ff;background:#1d2647}
+.pv2-dests{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pv2-dest{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;border:1px solid #22252d;background:var(--pan);text-align:left;height:auto}
+.pv2-dest:hover{border-color:#3a4050}.pv2-dest.on{border-color:#5b78ff;background:#171c2e}.pv2-dest:disabled{opacity:.4;cursor:not-allowed}
+.pv2-ic{width:40px;height:40px;flex:none;border-radius:11px;display:grid;place-items:center}.pv2-ic svg{width:20px;height:20px}
+.pv2-t{flex:1;display:flex;flex-direction:column;gap:3px}.pv2-t b{font-size:14px}.pv2-t small{font-size:12px;color:var(--mut)}
+.pv2-case{width:22px;height:22px;flex:none;border-radius:7px;border:1.5px solid #3a4050;display:grid;place-items:center}.pv2-case svg{width:13px;height:13px}
+.pv2-dest.on .pv2-case{border-color:#5b78ff;background:#3f5ef0}
+#pvComptes{margin-top:8px;font-size:12.5px}
+.pv2-textes:not(:empty){padding:18px;border-radius:14px;background:var(--pan);border:1px solid #22252d}
+.pv2-tete{display:flex;align-items:center;justify-content:space-between}.pv2-tete h2{margin:0;font-size:14px;color:var(--txt);text-transform:none;letter-spacing:0}
+.pv2-textes input[type=text],.pv2-textes textarea{width:100%;box-sizing:border-box}
+.pv2-vis{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}.pv2-vis button{border-radius:999px;padding:5px 12px;height:auto}.pv2-synth{margin-left:auto;font-size:12px;color:var(--mut)}
+.pv2-avance summary{cursor:pointer;color:var(--mut);font-size:12.5px}
+.pv2-action{display:flex;align-items:center;gap:14px;margin-top:auto}.pv2-action .sp{flex:1}
+.pv2-action #xGo{height:48px;padding:0 26px;border-radius:12px;font-size:15px;font-weight:600}
+.pv2-prog,.pv2-fin{flex:1}.pv2-fin p{margin:0 0 8px}
+@media (max-width:1000px){.pv2-int{flex-direction:column;padding:24px}.pv2-apercu{width:100%;max-width:340px}}
+.conseilI{display:flex;gap:10px;align-items:center;padding:9px 11px;margin-bottom:10px;border-radius:10px;background:#1a2340;border:1px solid #2a3866;color:#c9d2ff;font-size:12px;line-height:1.4}
+.conseilI svg{width:16px;height:16px;flex:none;color:#8fa3ff}.conseilI span{flex:1}.conseilI button{flex:none;white-space:nowrap}
+/* sons colorés selon leur rôle : voix en vert, musique et bruitages en orange ; titres ambre, incrustations violet */
+.pt{background:#3a2e10;border:1px solid #6b5317;color:#f6d27a}
+.pv{border:1px solid #4c3d86;box-shadow:inset 0 0 0 100px #2a214799;color:#d3c4ff}
+.aud.r-voix{border:1px solid #1f5a4c;box-shadow:inset 0 0 0 100px #11302acc;color:#a8f0d6}
+.aud.r-musique{border:1px solid #5e4219;box-shadow:inset 0 0 0 100px #33220fcc;color:#f3c27a}
+.aud.r-son{border:1px solid #6b4a1c;box-shadow:inset 0 0 0 100px #3a2a14b0;color:#fbd29a}
+.clip.sel,.aud.sel,.pv.sel,.pt.sel{border:2px solid var(--sel)}
+#entetes #eA{box-shadow:inset 3px 0 0 #4fd1a5,inset 6px 0 0 #f3a64a}
 .puces-v2{display:flex;gap:6px;margin:0 0 10px}
 .puces-v2 button{padding:4px 11px;border-radius:999px;background:transparent;border-color:#2a2e38;color:var(--mut);font-size:12px}
 .puces-v2 button.on{background:#1d2647;border-color:#5b78ff;color:var(--txt)}
@@ -399,7 +444,7 @@ button.dictee.on{background:#5a1a1f;border-color:#ff5a5f;color:#fff}
   <div class="groupe"><button class="ib" id="bUndo" title="Annuler (⌘Z)"><svg class="ic"><use href="#i-annuler"/></svg></button><button class="ib" id="bRedo" title="Rétablir (⇧⌘Z)"><svg class="ic"><use href="#i-retablir"/></svg></button></div>
   <div class="groupe outils" role="group" aria-label="Outils de la timeline"><button class="ib on" id="oSel" title="Outil Sélection (A)"><svg class="ic"><use href="#i-fleche"/></svg></button><button class="ib" id="oLame" title="Outil Lame : un clic coupe le clip à cet endroit (B)"><svg class="ic"><use href="#i-lame"/></svg></button><button class="ib on" id="oAimant" title="Magnétisme : les sons se collent aux clips, repères et tête de lecture (N)"><svg class="ic"><use href="#i-aimant"/></svg></button></div>
   <span class="sp"></span>
-  <nav id="etapes" aria-label="Étapes"><button data-etape="creer" id="eCreer" title="Accueil : importer, me filmer, générer, doubler">Créer</button><button data-etape="monter" id="eMonter" class="on" title="Montage">Monter</button><button data-etape="publier" id="bPublier" title="Publier un épisode sur YouTube et dans les brouillons TikTok">Publier</button></nav>
+  <nav id="etapes" aria-label="Étapes"><button data-etape="creer" id="eCreer" title="Accueil : importer, me filmer, générer, doubler">Créer</button><button data-etape="monter" id="eMonter" class="on" title="Montage">Monter</button><button data-etape="publier" id="bPublier" title="Exporter et publier : Mac, YouTube, TikTok, AirDrop (⌘E)">Publier</button></nav>
   <span class="sp"></span>
   <span class="mut" id="etat"></span>
   <select id="format" title="Format de l’image"><option value="vertical">Vertical 9:16</option><option value="horizontal">Horizontal 16:9</option><option value="carre">Carré 1:1</option></select>
@@ -445,7 +490,7 @@ button.dictee.on{background:#5a1a1f;border-color:#ff5a5f;color:#fff}
       <div class="ent" id="eT" title="Titres : textes et titres animés posés par-dessus tout le montage, indépendants des clips"><b>T</b><small>Titres</small><span class="pbt"><button data-piste="T:ajout" title="Ajouter un titre à la tête de lecture">＋</button><button data-piste="T:cache" title="Masquer cette piste"><svg class="ic"><use href="#i-oeil"/></svg></button><button data-piste="T:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div>
       <div class="ent" id="eV2" title="Vidéo 2 : image dans l’image, plans de coupe (au-dessus du montage)"><b>V2</b><small>Incrustations</small><span class="pbt"><button data-piste="V2:cache" title="Masquer cette piste"><svg class="ic"><use href="#i-oeil"/></svg></button><button data-piste="V2:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div>
       <div class="ent" id="eV" title="Vidéo principale : les clips se suivent"><b>V1</b><small>Vidéo</small><span class="pbt"><button data-piste="V1:muet" title="Couper le son des vidéos"><svg class="ic"><use href="#i-son"/></svg></button><button data-piste="V1:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div>
-      <div class="ent" id="eA" title="Audio : musique, voix off, bruitages"><b>A1</b><small>Audio</small><span class="pbt"><button data-piste="A:muet" title="Couper la piste audio"><svg class="ic"><use href="#i-son"/></svg></button><button data-piste="A:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div></div>
+      <div class="ent" id="eA" title="Audio : musique, voix off, bruitages"><b>A1</b><small>Voix et musique</small><span class="pbt"><button data-piste="A:muet" title="Couper la piste audio"><svg class="ic"><use href="#i-son"/></svg></button><button data-piste="A:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div></div>
     <div id="scroll"><div id="lane">
       <div id="regle"></div>
       <div class="piste t" id="pT"></div>
@@ -973,7 +1018,7 @@ function carteAnalyse(a) {
     ${P && g.id !== 'general' ? `<button data-pack-sujet="${esc(P.id)}">🎬 Monter dans le style « ${esc(P.nom)} »</button> <span class="mut">pack conseillé pour ce sujet</span>` : ''}${carteTechnique(a.technique)}</div>`;
 }
 // ce que l'analyse a compris (sujet, résumé, mots-clés, idées) : gardé dans le projet pour les textes de publication
-function garderAnalyse(a) { if (a && a.sujet) proj.analyse = { sujet: a.sujet, resume: a.resume || '', motsCles: (a.motsCles || []).slice(0, 6), points: (a.points || []).slice(0, 6), genre: (a.genre && a.genre.nom) || '' }; }
+function garderAnalyse(a) { if (a && a.sujet) proj.analyse = { sujet: a.sujet, resume: a.resume || '', motsCles: (a.motsCles || []).slice(0, 6), points: (a.points || []).slice(0, 6), genre: (a.genre && a.genre.nom) || '', pack: (a.genre && a.genre.id !== 'general' && a.genre.pack) || '' }; }
 function brancherCarteAnalyse(racine) {
   racine.querySelectorAll('[data-aller]').forEach(b => { b.onclick = e => { e.preventDefault(); placerTete(+b.dataset.aller); }; }); // idée forte → son moment dans la vidéo
   racine.querySelectorAll('[data-conseil]').forEach(b => { b.onclick = async () => {
@@ -1134,7 +1179,7 @@ function tlDessin() {
   $('#pA').style.height = (Math.max(1, fins.length) * 44 + 12) + 'px';
   $('#pA').innerHTML = (proj.audio.length ? '' : '<span class="vide2">Musique, voix off, bruitages : onglets Sons et Musique, ou glisse un son ici</span>') + proj.audio.map((a, i) => {
     const d = dureeAudio(a);
-    return `<div class="aud ${i === selA ? 'sel' : ''}" data-a="${i}" style="top:${8 + ligne[i] * 44}px;height:40px;bottom:auto;left:${(a.start || 0) * zoom}px;width:${Math.max(30, d * zoom)}px;background-image:url('/api/wave?file=${enc(a.file)}&w=1200&h=60${a.dur ? `&in=${a.in || 0}&dur=${a.dur}` : ''}')">${a.detache ? '🔊' : '🎵'} ${esc(nomOf(a.file))}${a.duck ? ' ⤵' : ''}<i class="hl"></i><i class="hr"></i></div>`;
+    return `<div class="aud r-${roleSon(a)} ${i === selA ? 'sel' : ''}" data-a="${i}" style="top:${8 + ligne[i] * 44}px;height:40px;bottom:auto;left:${(a.start || 0) * zoom}px;width:${Math.max(30, d * zoom)}px;background-image:url('/api/wave?file=${enc(a.file)}&w=1200&h=60${a.dur ? `&in=${a.in || 0}&dur=${a.dur}` : ''}')">${a.detache ? '🔊' : '🎵'} ${esc(nomOf(a.file))}${a.duck ? ' ⤵' : ''}<i class="hl"></i><i class="hr"></i></div>`;
   }).join('');
   // pistes vidéo au-dessus : rangées automatiques, la plus haute passe devant
   const fv = [], lv = [];
@@ -3390,55 +3435,7 @@ function partiesExport() {
   if (m.length >= 2 && m[1] - m[0] > 0.5) l.push([`${m[0].toFixed(2)}-${m[1].toFixed(2)}`, `Entre les deux premiers repères (${fmtChrono(m[0])} → ${fmtChrono(m[1])})`]);
   return l;
 }
-function exporter() {
-  if (!proj.clips.length) return alert('La timeline est vide.'); stopLecture();
-  const ex = textesExemple();
-  if (ex.length && !confirm(`Ces titres contiennent encore le texte d’exemple :\n\n${ex.slice(0, 8).join('\n')}\n\nExporter quand même ? (Annuler pour les corriger d’abord.)`)) return;
-  ouvrir(`<h2>Exporter</h2>
-    <label class="l">Pour…</label><div class="grille g3" id="xPresets">${[['tiktok', '📱 TikTok, Reels, Shorts'], ['youtube', '▶ YouTube 1080p'], ['youtube4k', '▶ YouTube 4K'], ['insta', '◻ Instagram carré'], ['podcast', '🎧 Podcast (MP3)'], ['gif', '🎞 GIF animé']].map(([k, t]) => `<button class="carte txt" data-preset="${k}">${t}</button>`).join('')}</div>
-    <p class="mut" id="xPresetInfo" style="margin:4px 0 0"></p>
-    <label class="l">Format</label><select id="xSortie">${CAT.sorties.map(s => `<option value="${s}" ${proj.sortie === s ? 'selected' : ''}>${SORTIES[s] || s}</option>`).join('')}</select>
-    <label class="l">Résolution</label><select id="xRes">${opts([['720', '720p'], ['1080', 'Full HD 1080p'], ['2160', '4K']], String(proj.res))}</select>
-    <label class="l">Images par seconde</label><select id="xFps">${opts([['24', '24'], ['30', '30'], ['60', '60']], String(proj.fps))}</select>
-    <label class="l">Encodage</label><select id="xQ">${opts(CAT.hwenc ? [['rapide', 'Puce vidéo du Mac : le plus rapide (recommandé)'], ['max', 'Puce vidéo du Mac : qualité maximale (fichier plus lourd, presque aussi rapide)'], ['haute', 'Processeur (beaucoup plus lent)']] : [['rapide', 'Rapide'], ['haute', 'Qualité (plus lent)']], ['rapide', 'max', 'haute'].includes(proj.quality) ? proj.quality : 'rapide')}</select>
-    <p class="mut" style="margin-top:4px">${CAT.hwenc ? 'L’export utilise la puce du Mac pour lire et encoder les vidéos, encode plusieurs clips à la fois et réutilise les clips qui n’ont pas changé depuis le dernier export.' : ''}</p>
-    <div class="sw2"><input type="checkbox" id="xNorm" ${proj.normaliser ? 'checked' : ''}><label for="xNorm">Égaliser le volume (recommandé pour un podcast)</label></div>
-    <label class="l">Partie à exporter</label><select id="xPartie">${partiesExport().map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join('')}</select>
-    <p class="mut">Durée : ${fmt(total())} · format ${esc({ vertical: 'vertical 9:16', horizontal: 'horizontal 16:9', carre: 'carré' }[proj.format])}</p>
-    <div id="expo"><div class="ligne"><button id="xAnn">Annuler</button><button class="pri" id="xGo">Lancer l’export</button></div></div>`);
-  $('#xAnn').onclick = fermer;
-  // réglages en un clic (le format de l'image change aussi si besoin)
-  $('#xPresets').onclick = e => {
-    const k = (e.target.closest('[data-preset]') || {}).dataset; if (!k || !k.preset) return;
-    const p = { tiktok: ['vertical', 'mp4', 1080, 30], youtube: ['horizontal', 'mp4', 1080, 30], youtube4k: ['horizontal', 'mp4', 2160, 30], insta: ['carre', 'mp4', 1080, 30], podcast: [null, 'mp3', null, null], gif: [null, 'gif', 720, 24] }[k.preset];
-    if (p[1] && CAT.sorties.includes(p[1])) $('#xSortie').value = p[1]; if (p[2]) $('#xRes').value = String(p[2]); if (p[3]) $('#xFps').value = String(p[3]);
-    let info = '';
-    if (p[0] && p[0] !== proj.format) {
-      proj.format = p[0]; $('#format').value = p[0]; commit(); tout(); apercu();
-      info = p[0] === 'vertical' && proj.clips.some(c => c.kind === 'video' && partVisible(c) < 0.95) ? 'Format passé en vertical. Astuce : Outils → « Passer en vertical et suivre la personne » pour que l’image suive la personne.' : `Format passé en ${{ vertical: 'vertical 9:16', horizontal: 'horizontal 16:9', carre: 'carré' }[p[0]]}.`;
-    }
-    $('#xPresetInfo').textContent = info || 'Réglages appliqués.';
-    document.querySelectorAll('#xPresets [data-preset]').forEach(b => b.style.borderColor = b.dataset.preset === k.preset ? 'var(--ac)' : '');
-  };
-  $('#xGo').onclick = async () => {
-    proj.sortie = $('#xSortie').value; proj.res = +$('#xRes').value; proj.fps = +$('#xFps').value; proj.quality = $('#xQ').value; proj.normaliser = $('#xNorm').checked; commit();
-    $('#expo').innerHTML = '<div id="xTxt">Préparation…</div><div id="barreExp"><i></i></div><button id="xStop" style="margin-top:8px">Annuler l’export</button>';
-    // l'aperçu de fond s'arrête : toute la puissance du Mac va à l'export
-    exportEnCours = true; if (fond.cours) annulerJob(fond.id);
-    let idExp = null; $('#xStop').onclick = () => { $('#xStop').disabled = true; $('#xStop').textContent = 'Arrêt…'; annulerJob(idExp); };
-    const partie = ($('#xPartie') || {}).value || '', [ps, pe] = partie.split('-').map(Number), plage = partie ? { s: ps, e: pe } : undefined;
-    const t0 = Date.now(), reste = p => { if (p < 0.04 || p >= 0.99) return ''; const r = (Date.now() - t0) / 1000 * (1 - p) / p; return r < 45 ? ' · moins d’une minute' : ` · environ ${Math.round(r / 60)} min restante${r >= 90 ? 's' : ''}`; };
-    try {
-      const j = await lancerJob('/api/export', { project: proj, plage }, (p, s) => { $('#barreExp i').style.width = Math.round(p * 100) + '%'; $('#xTxt').textContent = `${s} — ${Math.round(p * 100)} %${reste(p)}`; }, id => { idExp = id; });
-      exportEnCours = false;
-      // export long : prévenu même si la fenêtre est cachée (notification du Mac)
-      if (document.hidden || Date.now() - t0 > 60000) { try { new Notification('Export terminé', { body: j.out, silent: false }); } catch (er) { /* notifications indisponibles */ } }
-      $('#expo').innerHTML = `<p>✅ Terminé${j.duree ? ` en ${fmt(j.duree)}` : ''} : <b>${esc(j.out)}</b>${j.repris ? `<br><span class="mut">${j.repris} clip${j.repris > 1 ? 's' : ''} inchangé${j.repris > 1 ? 's' : ''} repris du dernier export.</span>` : ''}${j.avertissement ? `<br><span class="mut">ℹ ${esc(j.avertissement)}</span>` : ''}</p><div class="ligne"><button id="xFind">Afficher dans le Finder</button><button id="xAir">Envoyer par AirDrop</button><a href="/exports/${enc(j.out)}"><button style="width:100%">Télécharger</button></a><button class="pri" id="xFin">Fermer</button></div><p class="mut">Dossier : Films → QuentMovie → exports</p>`;
-      $('#xAir').onclick = () => partagerFichiers([j.out]); $('#xFin').onclick = fermer; $('#xFind').onclick = () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) });
-    } catch (e) { exportEnCours = false; $('#expo').innerHTML = `<p class="${/annulé/.test(e.message) ? 'mut' : 'err'}">${esc(e.message)}</p><button id="xFin">Fermer</button>`; $('#xFin').onclick = fermer; preparerEnFond(); }
-  };
-}
-$('#bExport').onclick = exporter;
+// exporter() : écran « Exporter et publier » (ui-v2.js)
 
 // ---------- Raccourcis clavier ----------
 const M = MAC ? '⌘' : 'Ctrl';
@@ -4444,7 +4441,7 @@ async function stPremonter(i, o) {
     dire(res);
   } catch (er) { const t = `<span class="err">Pré-montage : ${esc(er.message)}</span>`; if (z) z.innerHTML = `<h4 style="margin:0">${t}</h4>`; dire(t); }
 }
-$('#bStudio').onclick = ouvrirStudio; $('#bDoublage').onclick = ouvrirDoublage; $('#bPublier').onclick = ouvrirPublier; $('#bGenerer').onclick = ouvrirGenerateur;
+$('#bStudio').onclick = ouvrirStudio; $('#bDoublage').onclick = ouvrirDoublage; $('#bGenerer').onclick = ouvrirGenerateur;
 $('#stFermer').onclick = fermerStudio; $('#stRec').onclick = stEnregistrer; $('#stPause').onclick = stPause; $('#stDefil').onclick = () => stDefiler();
 $('#stDebut').onclick = () => { studio.pos = 0; stPlacer(); };
 $('#stPrompt').onclick = () => stDefiler();

@@ -115,6 +115,19 @@ const crypto = require('crypto');
   check('TikTok : brouillon envoyé', j.done && !j.error && j.resultat.publication === 'PUB1' && /brouillon|application TikTok/.test(j.resultat.message), JSON.stringify(j).slice(0, 200));
   check('TikTok : déclaration de la taille et des parties', jour.init.source_info.video_size === 7000 && jour.init.source_info.chunk_size === 2000 && jour.init.source_info.total_chunk_count === 3, JSON.stringify(jour.init));
   check('TikTok : parties envoyées avec les bonnes plages', jour.chunks.map(c => c.range).join() === 'bytes 0-1999/7000,bytes 2000-3999/7000,bytes 4000-6999/7000' && jour.chunks.map(c => c.taille).join() === '2000,2000,3000', JSON.stringify(jour.chunks));
+  // vidéo exportée du montage en cours (écran « Exporter et publier ») : titre et description de la fenêtre, fichier pris dans les exports
+  fs.writeFileSync(path.join(base, 'exports', 'mon-montage.mp4'), Buffer.alloc(9000, 1));
+  r = await (await post('/api/publier/montage', { plateforme: 'youtube', fichier: 'mon-montage.mp4', titre: 'Mon montage', description: 'Texte', tags: ['velo', 'ville'], confidentialite: 'unlisted' })).json(); j = await attendre(r.id);
+  const mm = jour.meta[jour.meta.length - 1];
+  check('montage → YouTube : vidéo exportée envoyée, non répertoriée, avec ses textes', j.done && !j.error && mm.m.snippet.title === 'Mon montage' && mm.m.snippet.tags.join() === 'velo,ville' && mm.m.status.privacyStatus === 'unlisted' && jour.uploads[jour.uploads.length - 1].taille === 9000, JSON.stringify(j).slice(0, 200));
+  r = await (await post('/api/publier/montage', { plateforme: 'youtube', fichier: 'mon-montage.mp4', confidentialite: 'public' })).json().catch(() => ({}));
+  check('montage → YouTube : sans titre refusé', !r.id);
+  const pub = await (await post('/api/publier/montage', { plateforme: 'youtube', fichier: 'mon-montage.mp4', titre: 'X', confidentialite: 'public' })).json(); j = await attendre(pub.id);
+  check('montage → YouTube : jamais publique directement', jour.meta[jour.meta.length - 1].m.status.privacyStatus === 'private');
+  const hors = await post('/api/publier/montage', { plateforme: 'youtube', fichier: '../publication/comptes.json', titre: 'X' }); check('montage : fichier hors des exports refusé', hors.status >= 400);
+  r = await (await post('/api/publier/montage', { plateforme: 'tiktok', fichier: 'mon-montage.mp4' })).json(); j = await attendre(r.id);
+  check('montage → TikTok : brouillon envoyé', j.done && !j.error && /brouillon|application TikTok/.test(j.resultat.message), JSON.stringify(j).slice(0, 200));
+  await post('/api/exports/retirer', { file: 'mon-montage.mp4' }); check('montage : fichier retiré du Mac sur demande', !fs.existsSync(path.join(base, 'exports', 'mon-montage.mp4')));
   // épisode inconnu, plateforme inconnue, déconnexion
   const x = await post('/api/publier/envoyer', { plateforme: 'youtube', episode: '../../etc' }); check('envoi : épisode hors liste refusé', x.status >= 400);
   const y = await post('/api/publier/envoyer', { plateforme: 'dailymotion', episode: '10-test' }); check('envoi : plateforme inconnue refusée', y.status >= 400);

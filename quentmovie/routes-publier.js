@@ -4,7 +4,7 @@
 const os = require('os'), path = require('path');
 const NON = Symbol('non traité');
 
-function creer({ PUB, opts, send, readJson, travail }) {
+function creer({ PUB, opts, send, readJson, travail, EXPORTS = '', safeName = n => path.basename(String(n || '')) }) {
   const racine = opts.sortiesQuentInvest || [path.join(os.homedir(), 'Movies', 'QuentInvest'), path.join(os.homedir(), 'Downloads'), path.join(os.homedir(), 'Desktop')];
   const { episodes } = require('./publication');
   const trouver = nom => { const e = episodes(racine).find(x => x.nom === String(nom || '')); if (!e) throw new Error('Épisode introuvable : fabrique-le d’abord avec la chaîne QuentInvest.'); return e; };
@@ -27,6 +27,18 @@ function creer({ PUB, opts, send, readJson, travail }) {
         const prog = (x, t) => { job.progress = x; job.step = t; };
         if (plateforme === 'youtube') return P.envoyerYoutube({ video: e.video.youtube, titre: String(b.titre || e.titre), description: String(b.description != null ? b.description : e.description), tags: e.tags, confidentialite: String(b.confidentialite || 'private'), programmation: String(b.programmation || ''), synthese: b.synthese != null ? !!b.synthese : e.synthese, miniature: e.miniature.youtube }, prog);
         return P.envoyerTiktok({ video: e.video.tiktok }, prog);
+      }));
+    }
+    if (req.method === 'POST' && p === '/api/publier/montage') { // la vidéo exportée du montage en cours (écran « Exporter et publier »)
+      const b = await readJson(req), plateforme = String(b.plateforme || ''), video = path.join(EXPORTS, safeName(String(b.fichier || '')));
+      if (!['youtube', 'tiktok'].includes(plateforme)) throw new Error('Plateforme inconnue');
+      if (!EXPORTS || !b.fichier || !require('fs').existsSync(video)) throw new Error('Vidéo exportée introuvable : exporte d’abord le montage.');
+      const titre = String(b.titre || '').trim();
+      if (plateforme === 'youtube' && !titre) throw new Error('Écris le titre de la vidéo avant de l’envoyer sur YouTube.');
+      return send(res, 200, travail(async job => {
+        const prog = (x, t) => { job.progress = x; job.step = t; };
+        if (plateforme === 'youtube') return P.envoyerYoutube({ video, titre: titre.slice(0, 100), description: String(b.description || '').slice(0, 5000), tags: [].concat(b.tags || []).map(String).slice(0, 30), confidentialite: b.confidentialite === 'unlisted' ? 'unlisted' : 'private', programmation: String(b.programmation || ''), synthese: !!b.synthese }, prog);
+        return P.envoyerTiktok({ video }, prog);
       }));
     }
     if (req.method === 'POST' && p === '/api/publier/ouvrir') {

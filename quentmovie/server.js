@@ -2042,7 +2042,7 @@ function buildClip(c, P, o = {}) {
         fs.renameSync(src, dest);
         return send(res, 200, await importerPrise(dest));
       }
-      { const r = await RP.creer({ PUB, opts, send, readJson, travail })(req, res, p); if (r !== RP.NON) return r; } // publication YouTube et TikTok (routes-publier.js)
+      { const r = await RP.creer({ PUB, opts, send, readJson, travail, EXPORTS, safeName })(req, res, p); if (r !== RP.NON) return r; } // publication YouTube et TikTok (routes-publier.js)
       { const r = await RV.creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail, PAROLE, VOIXCLONE, GEN, IA, safeName, num })(req, res, p, url); if (r !== RV.NON) return r; } // doublage, voix clonée, prononciations, fiche (routes-voix.js)
       if (p === '/api/projet') { // enregistrement automatique
         const f = path.join(BASE, 'projet-auto.json');
@@ -2064,6 +2064,16 @@ function buildClip(c, P, o = {}) {
         if (!noms.length) return send(res, 404, { error: 'Fichier introuvable dans les exports.' });
         if (!opts.partager) return send(res, 200, { ok: false, folder: EXPORTS, message: 'Le partage AirDrop est disponible dans l’application Mac.' });
         opts.partager(noms);
+        return send(res, 200, { ok: true });
+      }
+      if (req.method === 'POST' && p === '/api/clip/analyse') { // mesures d'un média (blancs, luminosité, niveau, plans) pour la suggestion de l'inspecteur ; gardées en cache
+        const b = await readJson(req), f = String(b.file || '');
+        if (!f || /^(lib|pack):/.test(f)) return send(res, 200, { analyse: null });
+        return send(res, 200, { analyse: await analyseFichier(mediaPath(f)) });
+      }
+      if (req.method === 'POST' && p === '/api/exports/retirer') { // vidéo envoyée en ligne sans la garder sur le Mac (case décochée dans « Exporter et publier »)
+        const f = path.join(EXPORTS, safeName((await readJson(req)).file));
+        if (fs.existsSync(f)) fs.unlinkSync(f);
         return send(res, 200, { ok: true });
       }
       if (req.method === 'POST' && p === '/api/reveal') { // afficher un export dans le Finder
