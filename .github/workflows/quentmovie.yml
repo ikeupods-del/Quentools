@@ -76,6 +76,8 @@ jobs:
         run: QM_RESEAU=1 QM_BASE="$RUNNER_TEMP/qm-autotest" node tests/ia.js
       - name: Construire l'application
         run: npm run dist
+      - name: Contrôler que le script de la voix clonée est lisible par Python (hors de l’archive de l’application)
+        run: python3 -m py_compile dist/mac-arm64/QuentMovie.app/Contents/Resources/app.asar.unpacked/voix-clone/essai.py
       - name: Lancer l'application installée et l'essayer (carte graphique, enregistrement, conversion, voix)
         run: |
           QM_GARDER=1 QM_AUTOTEST="$PWD/autotest.json" QM_BASE="$RUNNER_TEMP/qm-autotest" dist/mac-arm64/QuentMovie.app/Contents/MacOS/QuentMovie || true

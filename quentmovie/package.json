@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -74,7 +74,8 @@
       "!node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_module_internal.*",
       "index.html",
       "package.json",
-      "bibliotheque/**"
+      "bibliotheque/**",
+      "voix-clone/**"
     ],
     "asarUnpack": [
       "node_modules/ffmpeg-static/**",
