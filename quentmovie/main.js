@@ -85,7 +85,8 @@ async function demarrer() {
 async function autotest(port) {
   const fs = require('fs'), res = { version: app.getVersion(), electron: process.versions.electron, chrome: process.versions.chrome, macos: process.getSystemVersion(), arch: process.arch };
   const ecrire = () => { fs.writeFileSync(process.env.QM_AUTOTEST, JSON.stringify(res, null, 2)); app.exit(0); };
-  setTimeout(() => { res.erreur = 'délai dépassé'; ecrire(); }, 1800000);
+  setTimeout(() => { res.erreur = 'délai dépassé'; ecrire(); }, (+process.env.QM_AUTOTEST_MAX_MIN || 30) * 60000);
+  if (process.env.QM_AUTOTEST_QI) { try { await autotestQuentinvest(port, res); } catch (e) { res.erreur = String(e && e.message || e); } return ecrire(); }
   try {
     await new Promise(ok => win.webContents.once('did-finish-load', ok));
     const ex = c => win.webContents.executeJavaScript(c, true);
@@ -157,6 +158,31 @@ async function autotest(port) {
     })()`);
   } catch (e) { res.erreur = String(e && e.message || e); }
   ecrire();
+}
+
+// Essai réel d'une vidéo QuentInvest dans l'application installée (workflow « essai réel QuentInvest ») : comme le propriétaire,
+// avec ta voix clonée (installation de Python et du modèle, répliques dites par le modèle) — ton script collé tel quel, puis « Tout seul »
+// (article Wikipédia + IA locale). Aucune voix de synthèse : la référence de voix est un corpus « Ma voix » préparé par le workflow.
+async function autotestQuentinvest(port, res) {
+  const fs = require('fs'), U = q => `http://127.0.0.1:${port}${q}`, post = (q, b) => fetch(U(q), { method: 'POST', body: JSON.stringify(b) });
+  const pause = ms => new Promise(r => setTimeout(r, ms));
+  const suivre = async (id, nom) => {
+    const t0 = Date.now(), etapes = [];
+    for (;;) {
+      await pause(3000); const k = await (await fetch(U('/api/job?id=' + id))).json(), s = Math.round((Date.now() - t0) / 1000);
+      if (k.step && etapes[etapes.length - 1] !== k.step) { etapes.push(k.step); console.log(`[${nom}] ${s} s · ${k.step}`); }
+      if (k.error) { console.log(`[${nom}] ÉCHEC après ${s} s : ${k.error}`); return { erreur: k.error, etapes: etapes.slice(-20), s }; }
+      if (k.done) { const r = k.resultat || {}; console.log(`[${nom}] terminé en ${s} s : ${(r.fichiers || []).join(', ')}`); return { s, base: r.base, dossier: r.dossier, fichiers: r.fichiers, avertissements: r.avertissements, article: r.article, titre: r.fiche && r.fiche.titre, repliques: r.fiche && r.fiche.blocs && r.fiche.blocs.length }; }
+    }
+  };
+  await new Promise(ok => win.webContents.once('did-finish-load', ok));
+  res.etat = (await (await fetch(U('/api/pico'))).json()).maVoix;
+  console.log('Ma voix enregistrée :', JSON.stringify(res.etat));
+  const lancer = async (nom, corps) => { const r = await post('/api/quentinvest/auto', corps), j = await r.json(); if (!r.ok) { console.log(`[${nom}] refusé : ${j.error}`); return { erreur: j.error }; } return suivre(j.id, nom); };
+  // 1. ton script, collé comme dans la fenêtre (paragraphes séparés par un simple retour à la ligne, fin « abonne-toi / cloche »)
+  res.script = await lancer('Mon script', { script: fs.readFileSync(process.env.QM_AUTOTEST_SCRIPT, 'utf8'), options: { voix: 'ma-voix' } });
+  // 2. « Tout seul » : Wikipédia + IA locale + ta voix clonée
+  if (!process.env.QM_AUTOTEST_SANS_SEUL) res.seul = await lancer('Tout seul', { demande: process.env.QM_AUTOTEST_SUJET || 'fais une vidéo sur le krach de 1929', options: { voix: 'ma-voix' } });
 }
 
 const js = code => () => win && win.webContents.executeJavaScript(code);
