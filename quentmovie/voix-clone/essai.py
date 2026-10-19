@@ -2,7 +2,8 @@
 """Essai de voix clonée : lit les enregistrements du corpus « Ma voix », en tire un extrait de référence,
 puis fait dire les mêmes phrases d'essai par un modèle de clonage (Chatterbox multilingue ou Qwen3-TTS).
 
-Usage : essai.py --moteur chatterbox|qwen --voix <dossier ma-voix> --sortie <dossier> [--selection-seule]
+Usage : essai.py --moteur chatterbox|qwen --voix <dossier ma-voix> --sortie <dossier> [--selection-seule] [--lot <fichier.json>]
+--lot : liste [{"texte": …, "fichier": …}] à dire avec la voix clonée (répliques d'un épisode), un fichier WAV par phrase.
 Sortie : <sortie>/reel.wav (l'extrait de référence), <sortie>/<moteur>-N.wav, <sortie>/rapport.json.
 Les lignes « ETAPE : … » et « ERREUR : … » sont lues par QuentMovie pour afficher l'avancement.
 """
@@ -144,17 +145,58 @@ def qwen(ref, texte_ref, sortie, rapport):
         rapport.append({'moteur': 'qwen', 'phrase': i, 'fichier': os.path.basename(f), 'calcul': round(calcul, 1), 'duree': round(len(sons[0]) / sr, 1), 'appareil': dev})
 
 
+def lot(moteur, ref, texte_ref, liste):
+    """Répliques d'un épisode dites avec la voix clonée : le modèle est chargé une seule fois."""
+    import torch
+    dev = appareil()
+    if moteur == 'chatterbox':
+        import torchaudio
+        etape('Chargement de Chatterbox')
+        if dev != 'cuda':
+            charger = torch.load
+            torch.load = lambda *a, **k: charger(*a, **{**k, 'map_location': torch.device(dev if dev == 'mps' else 'cpu')})
+        from chatterbox.mtl_tts import ChatterboxMultilingualTTS
+        modele = ChatterboxMultilingualTTS.from_pretrained(device=dev)
+        dire = lambda t, f: torchaudio.save(f, modele.generate(t, language_id='fr', audio_prompt_path=ref).detach().cpu(), modele.sr)
+    else:
+        import soundfile
+        etape('Chargement de Qwen3-TTS')
+        from qwen_tts import Qwen3TTSModel
+        modele = Qwen3TTSModel.from_pretrained('Qwen/Qwen3-TTS-12Hz-0.6B-Base', device_map=dev if dev != 'cpu' else 'cpu', dtype=torch.float32)
+        prompt = modele.create_voice_clone_prompt(ref_audio=ref, ref_text=texte_ref, x_vector_only_mode=False)
+        def dire(t, f):
+            sons, sr = modele.generate_voice_clone(text=t, language='French', voice_clone_prompt=prompt)
+            soundfile.write(f, sons[0], sr)
+    for i, x in enumerate(liste, 1):
+        etape('Ta voix : réplique %d sur %d' % (i, len(liste)))
+        os.makedirs(os.path.dirname(x['fichier']), exist_ok=True)
+        dire(x['texte'], x['fichier'] + '.tmp.wav')
+        os.replace(x['fichier'] + '.tmp.wav', x['fichier'])
+
+
 def main():
     a = argparse.ArgumentParser()
     a.add_argument('--moteur', choices=['chatterbox', 'qwen'], required=True)
     a.add_argument('--voix', required=True)
     a.add_argument('--sortie', required=True)
     a.add_argument('--selection-seule', action='store_true')
+    a.add_argument('--lot')
     o = a.parse_args()
     etape('Choix de l\'extrait de ta voix')
     ref, texte, total = choisir_reference(o.voix, o.sortie)
     print('Extrait de référence : %.1f s' % total, flush=True)
     if o.selection_seule:
+        return
+    if o.lot:
+        with open(o.lot, encoding='utf-8') as f:
+            liste = json.load(f)
+        try:
+            lot(o.moteur, ref, texte, liste)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            erreur('%s : %s' % (type(e).__name__, str(e)[:300]), 3)
+        etape('Terminé')
         return
     rapport = []
     fichier_rapport = os.path.join(o.sortie, 'rapport-%s.json' % o.moteur)

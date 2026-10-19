@@ -36,4 +36,10 @@ check('question : aide', /retiens que/.test(A.repondre('que sais-tu faire ?', P)
 check('une demande de montage n’est pas une question', !A.repondre('coupe les blancs', P));
 check('non compris : actions proches proposées', A.proches('le son est trop faible', P).some(a => a.action === 'volume'), JSON.stringify(A.proches('le son est trop faible', P)));
 check('non compris : sinon les suggestions du montage', A.proches('fais un truc cool', P).length >= 2);
+// commentaire écrit vidéo en pause : « ici » = l'instant de la pause
+const ci = d => A.comprendre(d, undefined, 12.4).map(a => a.action + (a.parametre ? ':' + a.parametre : '')).join(' ');
+check('« coupe ici » coupe à l’instant de la pause', ci('coupe ici') === 'couper_a:12.4', ci('coupe ici'));
+check('« mets le texte « … » ici » pose un texte à cet instant', ci('mets le texte « 2 % par an » ici') === 'titre_ici:2 % par an', ci('mets le texte « 2 % par an » ici'));
+check('« coupe ici » sans pause : rien d’inventé', v('coupe ici') === '');
+check('choix proposé : « trop fort » baisse le volume (jamais 0)', A.proches('ici le son est trop fort', P).some(a => a.action === 'volume' && a.parametre === '70'), JSON.stringify(A.proches('ici le son est trop fort', P)));
 console.log(`Assistant : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);

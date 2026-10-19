@@ -3,6 +3,25 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.3.0
+- **Commenter la vidéo en pause** : mets la vidéo sur pause, puis écris dans l'Assistant. Ton message porte le moment exact (« 📍 00:12 · image 372 ») ; un clic sur cette étiquette ramène la vidéo à ce moment. Exemples :
+  - « coupe ici » coupe à cet instant ;
+  - « mets le texte « 2 % par an » ici » pose le texte à ce moment ;
+  - « ici le son est trop fort » propose de baisser le volume de ce clip ;
+  - si l'assistant ne sait pas faire, « 📍 Garder comme note » laisse ton commentaire sur la timeline.
+- **Épisodes de Pico avec ta voix** : au moment de « 🎬 Fabriquer », choisis « Ma voix clonée » (chaque réplique est dite par ta voix clonée, à partir de tes enregistrements) ou un de tes doublages enregistrés. La voix de synthèse de Pico n'est plus téléchargée si tu ne t'en sers pas. Relire et refaire une phrase la redit avec ta voix.
+- **Ton propre script** : colle ton texte dans la fenêtre Fiche, puis « 📄 Transformer mon script en fiche ». QuentMovie le découpe en répliques et choisit les écrans (chiffres, définitions, listes) sans rien ajouter. Le brouillon automatique à partir d'un sujet reste là, pour tous les sujets d'économie et d'investissement qui ont un article Wikipédia.
+- **Relire et corriger un épisode de Pico** (« 🔍 Relire et corriger ») : l'expression de Pico à chaque réplique, une phrase, ou la prononciation d'un mot (clic sur le mot, ▶ écoute, ➕ dictionnaire). Seules les répliques changées sont refaites (détails dans 2.2.1 ci-dessous).
+- **Plus fluide sur MacBook Air** : une seule fabrication d'épisode à la fois, en priorité basse (le montage reste fluide pendant ce temps). L'IA du Mac libère sa mémoire pendant que ta voix clonée travaille.
+
+## 2.2.1
+- **Relire et corriger un épisode de Pico** : bouton « 🔍 Relire et corriger » après la fabrication, ou dans « Épisodes déjà fabriqués » de la fenêtre Fiche. Chaque réplique s'affiche avec :
+  - l'expression de Pico à choisir (neutre, content, inquiet, surpris, curieux, réfléchi) ;
+  - la phrase, à modifier avec ✏ ;
+  - les mots à vérifier, soulignés.
+- **Prononciation d'un mot** : clique sur un mot, écris comment le dire, ▶ écoute-le avec la voix de Pico, puis ➕ ajoute-le au dictionnaire. Les répliques qui contiennent ce mot sont refaites, et la version TikTok aussi.
+- **Seules les répliques changées sont refaites** : les autres gardent leur voix, leurs écrans et leur image. La vidéo et les chapitres de la description sont mis à jour.
+
 ## 2.2.0
 - **Épisode QuentInvest avec Pico, fabriqué dans QuentMovie** : carte « Épisode QuentInvest » de l'accueil.
   - Donne un sujet : la fiche s'écrit (Wikipédia et l'IA du Mac), puis tu la relis et la contrôles.

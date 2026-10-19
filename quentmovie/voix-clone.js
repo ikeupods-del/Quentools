@@ -121,6 +121,23 @@ function creer(base) {
     return { ...r, echecs };
   }
 
+  // répliques d'un épisode dites avec la voix clonée : lignes [{ texte, fichier }] ; une réplique déjà dite avec le même texte est gardée (fichier .txt à côté)
+  async function dire(moteur, lignes, job) {
+    if (!MOTEURS[moteur]) throw new Error('Modèle de voix clonée inconnu');
+    const aFaire = lignes.filter(x => { try { return fs.readFileSync(x.fichier + '.txt', 'utf8') !== x.texte || !fs.existsSync(x.fichier); } catch (e) { return true; } });
+    if (!aFaire.length) return { faites: 0 };
+    const libre = espaceLibre();
+    if (!fs.existsSync(marque(moteur)) && libre != null && libre < MOTEURS[moteur].go * 2 + 2) throw new Error(`Espace disque insuffisant pour installer ta voix clonée : ${libre} Go libres, environ ${MOTEURS[moteur].go * 2 + 2} Go nécessaires.`);
+    await preparerPython(job); await installer(moteur, job, [0.02, 0.2]);
+    const liste = path.join(dossier, `lot-${process.pid}-${Date.now()}.json`); fs.mkdirSync(dossier, { recursive: true });
+    fs.writeFileSync(liste, JSON.stringify(aFaire.map(x => ({ texte: x.texte, fichier: x.fichier }))));
+    try { await lancer(job, pyVenv(moteur), [path.join(__dirname, 'voix-clone', 'essai.py'), '--moteur', moteur, '--voix', voix, '--sortie', path.join(dossier, 'reference'), '--lot', liste], { etape: 'Ta voix' }); }
+    finally { fs.rmSync(liste, { force: true }); }
+    for (const x of aFaire) { if (!fs.existsSync(x.fichier)) throw new Error('Réplique non dite par la voix clonée : ' + path.basename(x.fichier)); fs.writeFileSync(x.fichier + '.txt', x.texte); }
+    return { faites: aFaire.length };
+  }
+  const prete = () => Object.keys(MOTEURS).filter(m => fs.existsSync(marque(m))); // modèles déjà installés (l'essai a été fait)
+
   function annuler(job) { job.annule = true; if (job.enfant) { try { job.enfant.kill('SIGTERM'); } catch (e) { /* déjà arrêté */ } } }
 
   function fichier(nom) { // un seul niveau, noms connus : l'interface lit les essais par cette route
@@ -129,7 +146,7 @@ function creer(base) {
     const f = path.join(essais, n); return fs.existsSync(f) ? f : null;
   }
 
-  return { etat, essai, annuler, fichier, journalFin, dossier, essais, MOTEURS };
+  return { etat, essai, dire, prete, annuler, fichier, journalFin, dossier, essais, MOTEURS };
 }
 
 module.exports = { creer, MOTEURS };

@@ -37,6 +37,10 @@ async function navigateurEssai(exe) {
   const nav = exe && pw ? await navigateurEssai(exe) : null;
   const modeles = process.env.QM_MODELES || path.join(base, 'modeles');
   if (process.env.QM_MODELES) fs.symlinkSync(process.env.QM_MODELES, path.join(base, 'modeles'));
+  // faux modèle de voix clonée : dit chaque réplique demandée (une note dont la durée suit la longueur du texte), comme essai.py --lot
+  const vc = path.join(base, 'voix-clone', 'venv-chatterbox'), fauxPython = path.join(vc, 'bin', 'python'); fs.mkdirSync(path.dirname(fauxPython), { recursive: true });
+  fs.writeFileSync(fauxPython, `#!${process.execPath}\nconst fs = require('fs'), { execFileSync } = require('child_process'), a = process.argv, lot = a[a.indexOf('--lot') + 1];\nfor (const x of JSON.parse(fs.readFileSync(lot, 'utf8'))) { console.log('ETAPE : Ta voix'); fs.mkdirSync(require('path').dirname(x.fichier), { recursive: true }); execFileSync(${JSON.stringify(bins.ffmpeg)}, ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=f=200:d=' + Math.min(6, 0.5 + x.texte.length / 18), '-ar', '24000', '-ac', '1', x.fichier]); }\n`); fs.chmodSync(fauxPython, 0o755);
+  fs.writeFileSync(path.join(vc, '.complet'), 'essai'); process.env.QM_PYTHON = fauxPython;
   const app = create({ port: 0, base, ...bins, ...(process.env.QM_SANS_FFPROBE ? { ffprobe: null } : {}), sortiesPico: sorties, navigateur: nav }), port = await app.start(), U = p => `http://127.0.0.1:${port}${p}`;
   const post = (p, o, h = {}) => fetch(U(p), { method: 'POST', headers: h, body: JSON.stringify(o || {}) });
   const attendre = async id => { for (;;) { await new Promise(r => setTimeout(r, 800)); const j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.error || j.done) return j; } };
@@ -49,6 +53,13 @@ async function navigateurEssai(exe) {
   const vide = await post('/api/pico/fabriquer', { fiche: { numero: 1 } }); check('fiche incomplète refusée tout de suite', vide.status >= 400);
   check('fiche qui n’est pas du JSON refusée', (await post('/api/pico/fabriquer', { fiche: '{ pas du json' })).status >= 400);
 
+  // ton script → fiche de Pico (programme seul) : répliques, écrans choisis, numéro suivant
+  const sc = await (await post('/api/quentinvest/script', { texte: '# Pourquoi les prix montent ?\n\nTon panier coûtait 50 € il y a cinq ans. Aujourd’hui, près de 60 €. Pourquoi ?\n\nL’inflation\nL’inflation, c’est la hausse générale des prix. Chaque euro achète un peu moins.\n\nTrois causes :\n- l’énergie plus chère\n- les salaires qui montent\n\nEn une phrase : l’inflation grignote ton pouvoir d’achat. Et toi, tu l’as sentie ?' })).json();
+  check('script → fiche : écrans chiffre, définition et liste choisis', sc.fiche && sc.fiche.accroche.ecran.type === 'chiffre' && sc.fiche.blocs.some(b => b.ecran.type === 'definition') && sc.fiche.blocs.some(b => b.ecran.type === 'liste'), JSON.stringify(sc).slice(0, 300));
+  check('script → fiche : question et résumé repris du script', sc.fiche && sc.fiche.question === 'Et toi, tu l’as sentie ?' && /grignote/.test(sc.fiche.resume.texte));
+  check('script → fiche : fabricable par la chaîne', (() => { try { require('../../design/quentinvest-youtube/fabrication/composer.js').compose(sc.fiche); return true; } catch (e) { return false; } })());
+  check('script trop court refusé', (await post('/api/quentinvest/script', { texte: 'Bonjour.' })).status >= 400);
+  check('état : ta voix clonée prête', (await (await fetch(U('/api/pico'))).json()).maVoix.installee === true);
   // vraie fabrication : petite fiche, voix Piper « Pierre », vidéo YouTube courte seulement
   const voixPrete = fs.existsSync(path.join(modeles, 'vits-piper-fr_FR-upmc-medium', '.complet'));
   if (!nav) console.log('  (fabrication réelle ignorée : aucun Chromium pour dessiner les écrans)');
@@ -69,12 +80,56 @@ async function navigateurEssai(exe) {
     check('fabrication réelle : terminée', j.done && !j.error, j.error || '');
     check('fabrication : vidéo YouTube dans le dossier de l’épisode', (r.fichiers || []).includes('98-essai-pico-youtube.mp4'), JSON.stringify(r.fichiers));
     check('fabrication : miniatures et texte de publication', ['98-miniature.png', '98-essai-pico-publication.md'].every(n => (r.fichiers || []).includes(n)), JSON.stringify(r.fichiers));
+    check('fabrication : répliques recollées sans réencoder (durées calées sur les images)', r.assemblage === 'rapide', r.assemblage);
     check('fabrication : écrans dessinés par le pont du navigateur', nav.appels.ouvrir >= 3 && nav.appels.capture > 20, JSON.stringify(nav.appels));
     check('fabrication : avancement suivi (voix, écrans, montage)', ['voix', 'écrans animés', 'montage'].every(m => [...etapes].some(x => x.includes(m))), JSON.stringify([...etapes]));
     check('fabrication : fiche gardée avec les épisodes', fs.existsSync(path.join(sorties, 'fiches', '98-essai-pico.json')));
     check('fabrication : épisode prêt pour « Publier »', require('../publication').episodes(sorties).some(x => x.nom === '98-essai-pico'), JSON.stringify(require('../publication').episodes(sorties).map(x => x.nom)));
     if (r.dossier) { const out = execFileSync(bins.ffmpeg, ['-hide_banner', '-i', path.join(r.dossier, '98-essai-pico-youtube.mp4'), '-f', 'null', '-'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).toString(); check('fabrication : vidéo lisible', true, out.slice(0, 1)); }
     console.log(`  fabrication réelle en ${Math.round((Date.now() - t0) / 1000)} s`);
+    // relecture : l'épisode se lit réplique par réplique, une expression et une phrase changées ne refont que ces répliques
+    const E = await (await fetch(U('/api/pico/episode?base=98-essai-pico'))).json();
+    check('relecture : répliques avec expression et texte', E.scenes && E.scenes.length >= 4 && E.scenes.every(x => E.expressions.includes(x.expr) && x.texte), JSON.stringify(E).slice(0, 300));
+    check('relecture : épisode listé parmi les épisodes fabriqués', (await (await fetch(U('/api/pico/episodes'))).json()).episodes.some(x => x.base === '98-essai-pico'));
+    check('relecture : nom d’épisode invalide refusé', (await fetch(U('/api/pico/episode?base=../../etc'))).status >= 400);
+    const trav = path.join(sorties, '98-essai-pico', 'travail'), date = f => fs.statSync(path.join(trav, f)).mtimeMs, der = E.scenes.length - 1;
+    const avant = { v0: date('audio/v00.wav'), c0: date('clips/scene00.mp4'), i0: date('images/i00-fin.png'), v1: date('audio/v01.wav'), cDer: date(`clips/scene${String(der).padStart(2, '0')}.mp4`) };
+    const exprDer = E.scenes[der].expr === 'content' ? 'inquiet' : 'content', t1 = Date.now();
+    const rf = await (await post('/api/pico/refaire', { base: '98-essai-pico', changements: [{ i: 1, texte: 'Un euro vaut exactement cent centimes.' }, { i: der, expr: exprDer }] })).json(), jr = await attendre(rf.id);
+    check('refaire : terminé', jr.done && !jr.error, jr.error || '');
+    const E2 = await (await fetch(U('/api/pico/episode?base=98-essai-pico'))).json();
+    check('refaire : phrase et expression gardées dans l’épisode', E2.scenes[1].texte === 'Un euro vaut exactement cent centimes.' && E2.scenes[der].expr === exprDer);
+    check('refaire : la réplique 1 et ses écrans sont gardés', date('audio/v00.wav') === avant.v0 && date('clips/scene00.mp4') === avant.c0 && date('images/i00-fin.png') === avant.i0, JSON.stringify(avant));
+    check('refaire : la phrase changée a une nouvelle voix', date('audio/v01.wav') > avant.v1);
+    check('refaire : l’expression changée refait sa réplique', date(`clips/scene${String(der).padStart(2, '0')}.mp4`) > avant.cDer);
+    check('refaire : vidéo YouTube remplacée', fs.statSync(path.join(sorties, '98-essai-pico', '98-essai-pico-youtube.mp4')).mtimeMs > t1);
+    console.log(`  refaire en ${Math.round((Date.now() - t1) / 1000)} s`);
+    const ec = await (await post('/api/pico/ecouter', { base: '98-essai-pico', texte: 'Mackay se dit maquaï.' })).json(), je = await attendre(ec.id);
+    check('écouter : phrase dite par la voix de l’épisode', je.done && /\.m4a$/.test((je.resultat || {}).file || '') && fs.existsSync(path.join(base, 'medias', je.resultat.file)), je.error || '');
+    // épisode avec ta voix clonée : chaque réplique dite par le modèle de clonage, aucune voix de synthèse à télécharger
+    const ficheMaVoix = { ...fiche, numero: 97, slug: 'essai-ma-voix' }; delete ficheMaVoix.voix; // voix par défaut = Kokoro, jamais téléchargée ici
+    const fm = await (await post('/api/pico/fabriquer', { fiche: ficheMaVoix, options: { court: true, sansTiktok: true, voix: 'ma-voix' } })).json(), jm = await attendre(fm.id);
+    check('ta voix : épisode fabriqué sans voix de synthèse', jm.done && !jm.error && (jm.resultat.fichiers || []).includes('97-essai-ma-voix-youtube.mp4'), jm.error || '');
+    const dmv = path.join(sorties, '97-essai-ma-voix');
+    check('ta voix : une réplique dite par ta voix pour chaque réplique', fs.existsSync(path.join(dmv, 'ma-voix-youtube', 'v00.wav')) && JSON.parse(fs.readFileSync(path.join(dmv, 'voix.json'), 'utf8')).mode === 'ma-voix');
+    check('ta voix : la voix de Pico n’a pas été téléchargée', !fs.existsSync(path.join(base, 'modeles', 'kokoro-multi-lang-v1_0')));
+    const d0 = fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v00.wav')).mtimeMs, d1 = fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v01.wav')).mtimeMs;
+    const rm = await (await post('/api/pico/refaire', { base: '97-essai-ma-voix', changements: [{ i: 1, texte: 'Une phrase refaite avec ta voix.' }] })).json(), jrm = await attendre(rm.id);
+    check('ta voix : refaire ne redit que la phrase changée', jrm.done && !jrm.error && fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v00.wav')).mtimeMs === d0 && fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v01.wav')).mtimeMs > d1, jrm.error || '');
+    check('une seule fabrication à la fois', await (async () => { const a = await (await post('/api/pico/refaire', { base: '97-essai-ma-voix', changements: [] })).json(); const b2 = await post('/api/pico/fabriquer', { fiche: ficheMaVoix, options: { court: true, sansTiktok: true, voix: 'ma-voix' } }); await attendre(a.id); return b2.status >= 400; })());
+    // écran de relecture dans la fenêtre : lignes, expressions, mot cliquable avec « se dit », écouter et ajouter
+    const pg = await nav.b.newPage({ viewport: { width: 1440, height: 900 } }), errs = []; pg.on('pageerror', x => errs.push(x.message));
+    await pg.goto(U('/')); await pg.waitForTimeout(800); await pg.evaluate(() => ouvrirRelecturePico('98-essai-pico')); await pg.waitForSelector('#rlListe .rlLigne');
+    check('écran de relecture : une ligne par réplique avec son expression', await pg.evaluate(n => document.querySelectorAll('#rlListe .rlLigne').length === n && document.querySelectorAll('#rlListe select[data-expr]').length === n, E.scenes.length));
+    await pg.selectOption('select[data-expr="0"]', 'surpris');
+    check('écran de relecture : expression changée → « Refaire 1 réplique »', await pg.evaluate(() => /Refaire 1 réplique/.test(document.querySelector('#rlRefaire').textContent) && !document.querySelector('#rlRefaire').disabled));
+    await pg.click('#rlListe .rlLigne[data-i="1"] [data-mot]'); await pg.waitForSelector('#rlDit');
+    check('écran de relecture : clic sur un mot → « se dit », écouter, ajouter au dictionnaire', await pg.evaluate(() => !!document.querySelector('#rlEcouter') && !!document.querySelector('#rlAjouter')));
+    await pg.fill('#rlDit', 'eux'); await pg.click('#rlAjouter'); await pg.waitForTimeout(500);
+    check('écran de relecture : mot ajouté → répliques qui le contiennent à refaire', await pg.evaluate(() => document.querySelectorAll('#rlListe .rlLigne.change').length >= 2), await pg.evaluate(() => document.querySelector('#rlEtat').textContent));
+    check('écran de relecture : aucune erreur dans la page', !errs.length, errs.join(' | '));
+    await pg.close();
+
   }
   if (nav) await nav.b.close();
   app.stop && app.stop(); if (process.env.QM_GARDER) console.log('  dossier gardé : ' + base); else fs.rmSync(base, { recursive: true, force: true });

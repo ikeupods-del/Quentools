@@ -34,6 +34,8 @@ const ACTIONS = {
   volume: 'Régler le volume des clips',
   fondus: 'Ajouter des fondus au début et à la fin',
   couleur_titre: 'Changer la couleur du titre',
+  titre_ici: 'Écrire un texte à l’écran à cet instant',
+  note: 'Garder ce commentaire comme note sur la timeline',
   exporter: 'Exporter la vidéo'
 };
 // langues des sous-titres traduits : mot de la demande → nom montré (le code est retrouvé par l'interface)
@@ -56,7 +58,8 @@ const nomCible = c => c === 'dernier' ? 'dernier clip' : c === 'selection' ? 'cl
 const sansAccents = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'");
 
 // Demande en français → [{ action, parametre, libelle }], dans l'ordre logique du montage
-function comprendre(demande, projet) {
+// instant : moment de la vidéo en pause quand la demande a été écrite (commentaire « ici », « à ce moment »)
+function comprendre(demande, projet, instant) {
   const t = ' ' + sansAccents(demande).replace(/[^a-z0-9'«»"%,.:\- ]+/g, ' ') + ' ', l = [];
   const ajoute = (action, parametre = '') => { if (!l.some(x => x.action === action)) l.push({ action, parametre: String(parametre), libelle: ACTIONS[action] + (parametre ? ` (${parametre})` : '') }); };
   // « monte ma vidéo » : l'assistant enchaîne lui-même les étapes utiles à CE montage
@@ -89,6 +92,11 @@ function comprendre(demande, projet) {
   const bru = /(?:bruit(?:age)?|son|effet sonore|sound|applaudissements?|whoosh|ding|clic|sonnerie|rire|explosion|tonnerre|gong|cymbale|bip|clavier|camera|appareil photo|jackpot|fanfare|sirene)\b/.exec(t);
   if (bru && /(ajoute|mets|met|insere|colle|place|rajoute|joue|avec)/.test(t) && !/(chapitr|musique|volume|egalis|normalis|detach|extrai|separ|sous[- ]?titr|retire|supprim)/.test(t) && /(bruit|applaudi|whoosh|ding|clic|sonnerie|rire|explosion|tonnerre|gong|cymbale|bip|clavier|appareil|jackpot|fanfare|sirene|effet sonore)/.test(t)) ajoute('bruitage', (/(clavier|applaudi\w*|whoosh|ding|clic|sonnerie|rire|explosion|tonnerre|gong|cymbale|bip|appareil photo|jackpot|fanfare|sirene|hausse|baisse|pieces)/.exec(t) || ['', 'whoosh'])[1]);
   // couper à un instant : « coupe à 10 secondes », « coupe à 1:30 »
+  const ICI = /\b(ici|la|a ce moment(?: la)?|a cet (?:endroit|instant)|maintenant|cette image|ce moment|a cette image)\b/;
+  const aInstant = instant != null && Number.isFinite(+instant) && +instant >= 0;
+  if (aInstant && /(?:coupe|decoupe|separe|scinde|divise)\w*\s+(?:la video\s+|le clip\s+)?(ici|la|a ce moment|maintenant|a cet endroit|a cet instant)\b/.test(t)) ajoute('couper_a', String(+(+instant).toFixed(2)));
+  const txtIci = /(?:mets|met|ajoute|ecris|affiche|pose)\w*\s+(?:un |le |du )?(?:titre|texte)\s*(?:«|"|:)\s*([^»"]{1,80})/i.exec(String(demande || ''));
+  if (aInstant && txtIci && ICI.test(t)) ajoute('titre_ici', txtIci[1].trim());
   const cou = /(?:coupe|decoupe|separe|scinde|divise)\w*\s+(?:la video\s+|le montage\s+)?(?:a|au|vers)\s+(?:(\d{1,2}):(\d{2})|(\d+(?:[.,]\d+)?)\s*(?:s\b|sec|secondes?)|(\d+)\s*(?:min|minutes?)(?:\s*(\d{1,2}))?)/.exec(t);
   if (cou) ajoute('couper_a', cou[1] ? String(+cou[1] * 60 + +cou[2]) : cou[3] ? cou[3].replace(',', '.') : String(+cou[4] * 60 + (+cou[5] || 0)));
   // volume : « mets le volume à 50 % », « coupe le son », « baisse le volume », « monte le son »
@@ -106,13 +114,13 @@ function comprendre(demande, projet) {
   else if (/\bcarre\b|1 ?\/ ?1/.test(t)) ajoute('format', 'carre');
   const tit = /(?:titre|ecran titre)\s*(?:«|"|:)\s*([^»"]{2,60})/.exec(demande ? sansAccents(demande) : '');
   const titOrig = /(?:titre|écran titre)\s*(?:«|"|:)\s*([^»"]{2,60})/i.exec(String(demande || ''));
-  if (!coul && (/(ecran titre|titre au debut|ajoute (un|le) titre|mets (un|le) titre)/.test(t) || tit)) ajoute('titre', titOrig ? titOrig[1].trim() : '');
+  if (!coul && !l.some(x => x.action === 'titre_ici') && (/(ecran titre|titre au debut|ajoute (un|le) titre|mets (un|le) titre)/.test(t) || tit)) ajoute('titre', titOrig ? titOrig[1].trim() : '');
   if (/(analyse (la|ma|cette) video|de quoi parle|sujet de la video|monte (la|ma|cette) video selon|monte selon le sujet|montage intelligent|monte (moi )?ca tout seul)/.test(t) && !/chapitr/.test(t)) ajoute('montage_sujet');
   if (/chapitr/.test(t)) ajoute(/(liste|copi|description)/.test(t) && !/(clavier|ecran|titre)/.test(t) ? 'chapitres' : 'chapitrer');
   if (/(hashtags?|description|titre (pour|de la) (publication|video youtube|tiktok)|legende)/.test(t)) ajoute('publication', /youtube/.test(t) ? 'YouTube' : /instagram/.test(t) ? 'Instagram' : /tiktok/.test(t) ? 'TikTok' : '');
   if (/\bexport/.test(t)) ajoute('exporter');
   // ordre du montage : découpe d'abord, habillage ensuite, export à la fin
-  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'traduire_sous', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'couleur_titre', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'niveau_final', 'publication', 'exporter'];
+  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'traduire_sous', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'titre_ici', 'couleur_titre', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'niveau_final', 'publication', 'exporter'];
   const cible = cibleDe(t);
   if (cible) l.forEach(a => { if (CIBLABLES.has(a.action)) { a.cible = cible; a.libelle += ` — ${nomCible(cible)}`; } });
   return l.sort((a, b) => ORDRE.indexOf(a.action) - ORDRE.indexOf(b.action));
@@ -130,16 +138,27 @@ function repondre(demande, p) {
   return '';
 }
 
+// réglage proposé avec une action devinée (jamais un volume à zéro par défaut) : « trop fort » → 70 %, « trop faible » → 140 %…
+function parDefaut(id, t) {
+  if (id === 'volume') return /(faibl|bas\b|pas assez fort|monte|plus fort|entend pas)/.test(t) ? '140' : '70';
+  if (id === 'vitesse') return /(rapide|vite|presse)/.test(t) ? '0.85' : '1.25';
+  if (id === 'musique') return AMBIANCES.find(a => t.includes(a)) || 'calme';
+  if (id === 'transitions') return 'fade';
+  if (id === 'dynamiser') return '120';
+  if (id === 'format') return /(horizontal|youtube)/.test(t) ? 'horizontal' : 'vertical';
+  return '';
+}
 // Demande non comprise : les actions les plus proches (mots en commun avec leur libellé), sinon les suggestions du montage
 const RACINE = m => m.slice(0, 5);
 // mots courants qui désignent une action sans reprendre son libellé
 const SYNONYMES = { fort: 'volume', faibl: 'volume', bruit: 'ameliorer', clair: 'ameliorer', propr: 'ameliorer', sombr: 'ameliorer', flou: 'ameliorer', ennuy: 'dynamiser', rythm: 'dynamiser', vivan: 'dynamiser', lente: 'vitesse', rapid: 'vitesse', lisib: 'sous_titres', texte: 'sous_titres', sourd: 'sous_titres', youtu: 'publication', court: 'clipping', silen: 'couper_blancs', pause: 'couper_blancs', ambia: 'musique', fond: 'musique' };
 function proches(demande, p, n = 3) {
+  const t = sansAccents(demande);
   const mots = new Set(sansAccents(demande).split(/[^a-z0-9]+/).filter(m => m.length > 3 && !VIDES.has(m)).map(RACINE));
   const notes = Object.entries(ACTIONS).filter(([id]) => !['exporter', 'supprimer_clip', 'couper_a', 'couleur_titre'].includes(id))
     .map(([id, lib]) => ({ id, lib, n: sansAccents(lib).split(/[^a-z0-9]+/).filter(m => m.length > 3).map(RACINE).filter(m => mots.has(m)).length }))
     .map(x => ({ ...x, n: x.n + [...mots].filter(m => SYNONYMES[m] === x.id).length }))
-    .filter(x => x.n > 0).sort((a, b) => b.n - a.n).slice(0, n).map(x => ({ action: x.id, parametre: '', libelle: x.lib }));
+    .filter(x => x.n > 0).sort((a, b) => b.n - a.n).slice(0, n).map(x => { const p = parDefaut(x.id, t); return { action: x.id, parametre: p, libelle: x.lib + (p ? ` (${p}${x.id === 'volume' ? ' %' : x.id === 'vitesse' ? '×' : ''})` : '') }; });
   if (notes.length) return notes;
   return suggerer(p || {}).filter(s => s.action !== 'aucune').slice(0, n);
 }

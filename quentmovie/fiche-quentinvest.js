@@ -88,7 +88,78 @@ function controler(f, { faits = '', lexique = {} } = {}) {
   return { ok: !erreurs.length, erreurs, avertissements, infos, mots, secondes, difficiles: [...difficiles.keys()] };
 }
 
-module.exports = { controler, textesDits, nombres };
+// ---------- Ton script → fiche de Pico, par le programme seul (aucun mot ajouté au fond du script) ----------
+// Une ligne courte sans point final (ou qui commence par #) = un titre de partie ; un paragraphe = une ou plusieurs répliques (45 mots au plus) ;
+// l'écran de chaque réplique est choisi d'après son contenu : chiffre (nombre avec %, €, $), définition (« X, c'est… »), liste (lignes « - »), sinon message.
+// Le premier paragraphe devient l'accroche, celui qui commence par « En une phrase » / « En résumé » (sinon le dernier) le résumé, la dernière question la question finale.
+const phrasesDe = t => (String(t).replace(/\s+/g, ' ').trim().match(/[^.!?…]+[.!?…]+["»”)]*|[^.!?…]+$/g) || []).map(x => x.trim()).filter(Boolean);
+const coupe = (t, n) => { t = String(t).replace(/\s+/g, ' ').trim(); if (t.length <= n) return t; const c = t.slice(0, n), k = c.lastIndexOf(' '); return (k > n * 0.5 ? c.slice(0, k) : c).replace(/[,;:]$/, '') + '…'; };
+const NOMBRE = /(?:≈\s*)?\d[\d\s  ]*(?:[.,]\d+)?\s*(?:%|€|\$|euros?\b|dollars?\b|ans?\b|mois\b|millions?\b|milliards?\b)/i;
+function ecranDe(texte, section, points, titreListe) {
+  if (points && points.length >= 2) return { type: 'liste', titre: coupe(titreListe || section || '', 50), points: points.slice(0, 6).map(x => coupe(x.replace(/^./, c => c.toUpperCase()), 60)) };
+  const ph = phrasesDe(texte), n = NOMBRE.exec(texte);
+  if (n) { const p = ph.find(x => x.includes(n[0].trim())) || ph[0] || ''; return { type: 'chiffre', valeur: n[0].replace(/\s+/g, ' ').trim(), legende: coupe(p, 80) }; }
+  const d = /^(?:l[ea]s?\s+|l'|un[e]?\s+)?([\p{L}\p{N}'’ -]{2,32}?),?\s+(?:c'est|c’est|est|désigne|signifie)\s+(.{8,})$/iu.exec(ph[0] || '');
+  if (d) return { type: 'definition', mot: d[1].trim().replace(/^./, c => c.toUpperCase()), texte: coupe(d[2].replace(/[.!]$/, ''), 90) };
+  return { type: 'message', titre: coupe(section || ph[0] || '', 50), sous: coupe(section ? ph[0] || '' : ph[1] || '', 90) };
+}
+const repliques = t => { // un paragraphe trop long devient plusieurs répliques (40 mots environ), sans couper une phrase
+  const l = [], ph = phrasesDe(t); let cur = '';
+  for (const x of ph) { if (cur && nbMots(cur + ' ' + x) > 40) { l.push(cur); cur = x; } else cur = cur ? cur + ' ' + x : x; }
+  if (cur) l.push(cur); return l;
+};
+const slugDe = t => sansAccents(t).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').split('-').slice(0, 6).join('-') || 'episode';
+function ficheDepuisScript(script, { titre = '', numero = 1 } = {}) {
+  const lignes = String(script || '').replace(/\r/g, '').split('\n'), paras = []; let cur = null, section = '', titreScript = '';
+  const sources = [];
+  for (const brut of lignes) {
+    const l = brut.trim();
+    if (!l) { cur = null; continue; }
+    if (/^sources?\s*:/i.test(l) || /^S\d+\s*·/.test(l)) { sources.push(l.replace(/^sources?\s*:\s*/i, '')); cur = null; continue; }
+    const estTitre = /^#{1,3}\s/.test(l) || (nbMots(l) <= 7 && !/[.!?…:;,]$/.test(l) && !/^[-•*]/.test(l));
+    if (estTitre) { const t = l.replace(/^#{1,3}\s*/, ''); if (!titreScript && !paras.length && /^#\s/.test(l)) titreScript = t; else section = t; cur = null; continue; }
+    if (/^[-•*]\s+/.test(l)) {
+      if (!cur || !cur.points) { // « Trois causes : » suivi d'une liste : la phrase devient le titre de la liste
+        if (cur && /:$/.test(cur.texte)) { cur.points = []; cur.titreListe = cur.texte.replace(/\s*:$/, ''); } else { cur = { texte: '', points: [], section }; paras.push(cur); section = ''; }
+      }
+      const pt = l.replace(/^[-•*]\s+/, ''); cur.points.push(pt); cur.texte += (cur.texte ? ' ' : '') + pt.replace(/^./, c => c.toUpperCase()).replace(/([^.!?])$/, '$1.'); continue;
+    }
+    if (!cur || cur.points) { cur = { texte: '', section }; paras.push(cur); section = ''; }
+    cur.texte += (cur.texte ? ' ' : '') + l;
+  }
+  if (paras.length < 3) throw new Error('Script trop court : il faut au moins une accroche, quelques paragraphes et une conclusion.');
+  const titreF = String(titre || titreScript || coupe(phrasesDe(paras[0].texte)[0] || 'Mon épisode', 70)).trim();
+  let iRes = paras.findIndex(x => /^(en une phrase|en résumé|en resume|pour résumer|à retenir)\b/i.test(x.texte)); if (iRes < 1) iRes = paras.length - 1;
+  const tout = paras.map(x => x.texte).join(' '), questions = phrasesDe(tout).filter(x => /\?$/.test(x));
+  const accroche = paras[0], resume = paras[iRes], milieu = paras.filter((x, k) => k > 0 && k !== iRes);
+  const n0 = NOMBRE.exec(accroche.texte), ph0 = phrasesDe(accroche.texte);
+  const blocs = []; let vus = 0;
+  for (const x of milieu) {
+    repliques(x.texte).forEach((r, k) => {
+      const b = { texte: r, ecran: k ? '=' : ecranDe(x.texte, x.section, x.points, x.titreListe) };
+      if (!k && x.section) b.section = x.section;
+      if (!k && vus < 7) { b.court = coupe(phrasesDe(r)[0] || r, 160); vus++; } // version TikTok : la première phrase de chaque passage, 7 au plus
+      blocs.push(b);
+    });
+  }
+  const derniere = questions.length ? questions[questions.length - 1] : 'Et toi, qu’en penses-tu ?';
+  const motsTitre = titreF.toUpperCase().replace(/\s*\?$/, ' ?').split(/\s+/), parLigne = Math.ceil(motsTitre.length / Math.min(3, Math.max(1, Math.ceil(motsTitre.length / 3))));
+  const lignesMini = []; for (let k = 0; k < motsTitre.length; k += parLigne) lignesMini.push(motsTitre.slice(k, k + parLigne).join(' '));
+  const resTexte = resume.texte.replace(/^(en une phrase|en résumé|en resume|pour résumer|à retenir)\s*[:,]?\s*/i, '');
+  const resPh = phrasesDe(resTexte), resSans = resPh.filter(x => !/\?$/.test(x)).join(' ') || resTexte; // la question finale est dite à la fin, pas dans le résumé
+  return {
+    numero, slug: slugDe(titreF), titre: titreF, promesse: titreF, description: coupe(ph0.slice(0, 2).join(' '), 300),
+    hashtags: '#économie #investissement #apprendre #QuentInvest', musique: 'documentaire-doux',
+    accroche: { texte: coupe(accroche.texte, 400), court: coupe(ph0[0] || accroche.texte, 160),
+      ecran: n0 ? { type: 'chiffre', valeur: n0[0].replace(/\s+/g, ' ').trim(), legende: coupe(ph0[0] || '', 80) } : { type: 'message', titre: coupe(titreF, 50), sous: coupe(ph0[0] || '', 90) } },
+    blocs,
+    resume: { texte: 'En une phrase : ' + resSans, court: 'En une phrase : ' + coupe(phrasesDe(resSans)[0] || resSans, 160) },
+    question: derniere, sources: sources.length ? sources : ['S1 · Script écrit par l’auteur de la chaîne (sources à ajouter pour chaque chiffre)'],
+    miniature: { lignes: lignesMini.slice(0, 3), accent: (motsTitre.find(m => m.length > 4) || motsTitre[0] || '').replace(/[?!.,]/g, '') }
+  };
+}
+
+module.exports = { controler, textesDits, nombres, ficheDepuisScript };
 
 if (require.main === module) {
   const [, , fiche, faits] = process.argv;
