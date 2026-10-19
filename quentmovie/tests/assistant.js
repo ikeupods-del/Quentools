@@ -19,4 +19,21 @@ check('« supprime la musique » ne supprime pas un clip', !/supprimer_clip/.tes
 check('« mets un titre » reste un titre', /titre/.test(v('ajoute un titre au début')) && !/bruitage/.test(v('ajoute un titre au début')));
 check('« enlève le son de la vidéo » ne devient pas un bruitage', !/bruitage/.test(v('détache le son de la vidéo')));
 check('ordre : suppression et coupe avant le reste', v('ajoute une musique calme et supprime le dernier clip').startsWith('supprimer_clip'));
+// 2.1 : clip visé, couleur du titre, questions sur le montage, choix proposés quand la demande n'est pas comprise
+const c = d => A.comprendre(d).map(a => a.action + (a.parametre ? ':' + a.parametre : '') + (a.cible ? '@' + a.cible : '')).join(' ');
+for (const [d, att] of [['coupe les blancs de la prise 2', 'couper_blancs@2'], ['coupe les blancs de la deuxième prise', 'couper_blancs@2'], ['coupe les blancs du plan 3', 'couper_blancs@3'],
+  ['mets le volume de la prise 2 à 50 %', 'volume:50@2'], ['accélère la dernière prise x2', 'vitesse:2@dernier'], ['ajoute des sous-titres sur ce clip', 'sous_titres@selection'],
+  ['mets le titre en jaune', 'couleur_titre:jaune'], ['passe le texte en bleu clair', 'couleur_titre:bleu clair'], ['coupe les blancs et mets le titre en rouge', 'couper_blancs couleur_titre:rouge'],
+  ['mets les sous-titres en italien', 'traduire_sous:italien'], ['supprime le clip 2', 'supprimer_clip:2']]) check(`« ${d} »`, c(d) === att, `obtenu : « ${c(d)} », attendu : « ${att} »`);
+check('« mets le titre en jaune » ne crée pas d’écran titre', !/(^| )titre/.test(v('mets le titre en jaune')));
+check('le libellé nomme le clip visé', /clip 2/.test(A.comprendre('coupe les blancs de la prise 2')[0].libelle));
+check('couleurs : chaque nom a sa couleur', Object.values(A.COULEURS).every(x => /^#[0-9a-f]{6}$/.test(x)));
+const P = { format: 'vertical', clips: [{ kind: 'video', dur: 30, hasAudio: true }, { kind: 'video', dur: 45.4, hasAudio: true }] };
+check('question : durée du montage', A.repondre('combien dure la vidéo ?', P) === 'Le montage dure 1 min 15 s, en 2 clips.', A.repondre('combien dure la vidéo ?', P));
+check('question : nombre de clips', /2 clips/.test(A.repondre('combien de prises il y a ?', P)));
+check('question : format', /vertical/.test(A.repondre('c’est quel format ?', P)));
+check('question : aide', /retiens que/.test(A.repondre('que sais-tu faire ?', P)));
+check('une demande de montage n’est pas une question', !A.repondre('coupe les blancs', P));
+check('non compris : actions proches proposées', A.proches('le son est trop faible', P).some(a => a.action === 'volume'), JSON.stringify(A.proches('le son est trop faible', P)));
+check('non compris : sinon les suggestions du montage', A.proches('fais un truc cool', P).length >= 2);
 console.log(`Assistant : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);

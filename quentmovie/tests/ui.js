@@ -261,8 +261,8 @@ function chromium() {
 
   // 3 ter) assistant de montage (⌘K) : demande en français → étapes cochées → appliquées ; suggestions ; textes de publication sans IA
   await ev(() => { const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v), newClip(v), newClip(v)]; proj.audio = []; proj.markers = []; proj.clips.forEach(c => { c.transition = null; c.afx = []; }); sel = 0; commit(); tout(); });
-  await pg.keyboard.press('Control+k'); await pg.waitForSelector('#asDemande');
-  check('assistant : ⌘K ouvre l’assistant', true);
+  await ev(() => ouvrirAssistant()); await pg.waitForSelector('#asDemande');
+  check('assistant : la fenêtre des étapes détaillées s’ouvre', true);
   await pg.waitForSelector('#asSugg .asSug', { timeout: 10000 }).catch(() => {});
   check('assistant : suggestions pour le montage', await ev(() => /sous-titres/i.test($('#asSugg').textContent)), await ev(() => $('#asSugg').textContent));
   await pg.fill('#asDemande', 'mets des transitions en fondu partout, une musique calme et égalise le son'); await pg.click('#asComprendre'); await pg.waitForSelector('#asGo', { timeout: 10000 });
@@ -273,6 +273,31 @@ function chromium() {
   check('assistant : écran titre ajouté au début', await ev(() => proj.clips[0].kind === 'solid' && proj.clips[0].titre.l1 === 'MON VOYAGE'));
   await pg.fill('#asDemande', 'blablabla'); await pg.click('#asComprendre'); await pg.waitForTimeout(400);
   check('assistant : demande incomprise expliquée', await ev(() => /pas compris|IA locale/.test($('#asPlan').textContent)), await ev(() => $('#asPlan').textContent));
+  // 2.1 : discussion avec l'assistant dans le panneau de droite
+  await ev(() => { fermer(); fermerRevue(); const v = medias.find(m => m.file === 'a.mp4'); proj.clips = [newClip(v), newClip(v), newClip(v)]; proj.audio = []; proj.textes = []; proj.clips.forEach(c => { c.transition = null; c.titre = null; c.text = ''; }); sel = 0; commit(); tout(); });
+  await pg.keyboard.press('Control+k'); await pg.waitForSelector('#chat:not([hidden]) #chTexte');
+  check('discussion : ⌘K ouvre l’assistant dans le panneau de droite', await ev(() => $('#insp').hidden && /Bonjour/.test($('#chMsgs').textContent) && $('#droite [data-dr="chat"]').classList.contains('on')));
+  const dernier = () => ev(() => { const l = document.querySelectorAll('#chMsgs .ch-m.ia'); return l[l.length - 1].textContent; });
+  const attendreIA = async re => { await pg.waitForFunction(r => { const l = document.querySelectorAll('#chMsgs .ch-m.ia'); return l.length && new RegExp(r).test(l[l.length - 1].textContent); }, re, { timeout: 15000 }).catch(() => {}); };
+  await pg.fill('#chTexte', 'combien dure la vidéo ?'); await pg.keyboard.press('Enter'); await attendreIA('dure');
+  check('discussion : question sur le montage répondue par le programme', /Le montage dure 18 s, en 3 clips/.test(await dernier()), await dernier());
+  await pg.fill('#chTexte', 'mets le volume de la prise 2 à 40 %'); await pg.keyboard.press('Enter'); await attendreIA('Je le fais');
+  check('discussion : l’assistant dit ce qu’il va faire et demande', /clip 2/.test(await dernier()) && await ev(() => proj.clips[1].vol === 100), await dernier());
+  await pg.click('#chMsgs .ch-m.ia:last-child button.pri'); await attendreIA('Fait');
+  check('discussion : « Faire » ne change que le clip visé', await ev(() => proj.clips[1].vol === 40 && proj.clips[0].vol === 100 && proj.clips[2].vol === 100), await dernier());
+  await pg.click('#chMsgs .ch-m.ia:last-child button'); await attendreIA('annulé');
+  check('discussion : « Annuler » remet le montage comme avant', await ev(() => proj.clips[1].vol === 100), await dernier());
+  await ev(() => { proj.clips[0].text = 'Bonjour'; proj.textes = [{ start: 1, dur: 3, titre: { preset: (CAT.reportage[0] || {}).id, l1: 'Mon titre', l2: '', color: '#ffffff' } }]; sel = -1; selT = -1; commit(); tout(); });
+  await pg.fill('#chTexte', 'mets le titre en jaune'); await pg.keyboard.press('Enter'); await attendreIA('Je le fais'); await pg.click('#chMsgs .ch-m.ia:last-child button.pri'); await attendreIA('Fait');
+  check('discussion : « mets le titre en jaune » colore les titres', await ev(() => proj.textes[0].titre.color === '#ffd400' && proj.clips[0].textColor === '#ffd400'), await dernier());
+  await pg.fill('#chTexte', 'le son est trop faible'); await pg.keyboard.press('Enter'); await attendreIA('Tu veux dire');
+  check('discussion : demande floue → des choix proposés', await ev(() => { const b = [...document.querySelectorAll('#chMsgs .ch-m.ia:last-child button')].map(x => x.textContent); return b.length >= 2 && b.includes('Autre chose'); }), await dernier());
+  await pg.fill('#chTexte', 'coupe les blancs de la prise 9'); await pg.keyboard.press('Enter'); await attendreIA('Je le fais'); await pg.click('#chMsgs .ch-m.ia:last-child button.pri'); await attendreIA('clip 9');
+  check('discussion : clip inexistant expliqué', /pas de clip 9/.test(await dernier()), await dernier());
+  await pg.fill('#chTexte', 'retiens que je préfère les musiques calmes'); await pg.keyboard.press('Enter'); await attendreIA('🧠');
+  check('discussion : « retiens que… » garde la consigne', /🧠/.test(await dernier()) && await ev(async () => JSON.stringify(await (await api('/api/memoire')).json()).includes('musiques calmes')), await dernier());
+  await ev(() => panneauDroite('reglages'));
+  check('discussion : retour aux réglages du clip', await ev(() => !$('#insp').hidden && $('#chat').hidden));
   await ev(() => { fermer(); proj.clips[1].subs = [{ s: 0, e: 2, t: 'Les volcans d’Islande sont parmi les plus actifs' }, { s: 2, e: 4, t: 'On visite les volcans et les glaciers' }]; commit(); ouvrirPublication('YouTube'); });
   await pg.click('#puGo'); await pg.waitForSelector('#puRes [data-copie]', { timeout: 15000 });
   check('publication : titre, description et hashtags (sans IA)', await ev(() => /#volcans/.test($('#puRes').textContent) && document.querySelectorAll('#puRes textarea').length >= 3), await ev(() => $('#puRes').textContent));

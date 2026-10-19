@@ -18,11 +18,7 @@ Le propriétaire n'est pas développeur : lui répondre en français simple, agi
 
 **2.0.1 : faite** — suggestion en haut des réglages du clip, écran unique « Exporter et publier » (qualité, destinations Mac / YouTube / TikTok / AirDrop, textes juste en dessous, un seul bouton), sons colorés selon leur rôle.
 
-**2.1 : une vraie discussion avec l'IA** (la dictée vocale est déjà prête : la reprendre dans le futur panneau)
-- Un panneau « Assistant » où le propriétaire écrit comme dans une conversation : « coupe les blancs de la prise 2 », « mets le titre en jaune ».
-- L'IA répond, propose des boutons d'action, et chaque changement peut être annulé.
-- La mémoire « retiens que… » existe déjà ; elle doit continuer à marcher.
-- C'est la petite IA installée sur le Mac : elle est bonne pour les demandes simples, et pour le reste elle doit proposer des choix.
+**2.1.0 : faite** — discussion avec l'assistant dans le panneau de droite (onglet « Assistant », ⌘K) : réponses avec boutons « Faire » / « Voir d'abord », « Annuler » par demande, clip visé (« prise 2 », « dernier clip »), couleur des titres, questions sur le montage répondues par le programme, choix proposés quand la demande est floue, mémoire et dictée reprises.
 
 **2.2 : l'épisode QuentInvest avec Pico, fait automatiquement dans QuentMovie**
 - Aujourd'hui, les épisodes de Pico (écrans animés, décors, bruitages, musique, version TikTok) sont fabriqués par un programme à part, lancé à la main. Il faut le faire depuis QuentMovie.

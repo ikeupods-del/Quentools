@@ -33,11 +33,26 @@ const ACTIONS = {
   couper_a: 'Couper la vidéo à un instant',
   volume: 'Régler le volume des clips',
   fondus: 'Ajouter des fondus au début et à la fin',
+  couleur_titre: 'Changer la couleur du titre',
   exporter: 'Exporter la vidéo'
 };
 // langues des sous-titres traduits : mot de la demande → nom montré (le code est retrouvé par l'interface)
 const LANGUES_SOUS = { italien: 'italien', italian: 'italien', anglais: 'anglais', english: 'anglais', espagnol: 'espagnol', allemand: 'allemand', portugais: 'portugais', francais: 'français' };
 const AMBIANCES = ['calme', 'douce', 'piano', 'dynamique', 'energique', 'epique', 'cinema', 'hip-hop', 'joyeuse', 'triste', 'suspense', 'lofi', 'electro', 'acoustique', 'pop'];
+// couleurs comprises pour les titres (mot de la demande → couleur posée)
+const COULEURS = { 'bleu clair': '#7cc4ff', jaune: '#ffd400', dore: '#e6b422', or: '#e6b422', rouge: '#ff3b30', orange: '#ff9500', rose: '#ff4fa3', violet: '#a78bfa', bleu: '#3f8cff', vert: '#34c759', blanc: '#ffffff', noir: '#000000', gris: '#9aa0a6' };
+const ORDINAUX = { premier: 1, premiere: 1, deuxieme: 2, second: 2, seconde: 2, troisieme: 3, quatrieme: 4, cinquieme: 5, sixieme: 6, septieme: 7, huitieme: 8, neuvieme: 9, dixieme: 10 };
+// actions qui peuvent viser un seul clip (« coupe les blancs de la prise 2 »)
+const CIBLABLES = new Set(['couper_blancs', 'sous_titres', 'volume', 'vitesse', 'ameliorer', 'detacher']);
+// clip visé par la demande : numéro (« prise 2 », « clip 3 », « la deuxième prise »), « dernier », « selection » (« ce clip »), ou rien
+function cibleDe(t) {
+  let m = /\b(?:prise|clip|plan|sequence|morceau)s?\s*(?:n[o°]?\s*)?(\d{1,2})\b/.exec(t); if (m) return m[1];
+  m = new RegExp(`\\b(${Object.keys(ORDINAUX).join('|')})s?\\s+(?:prise|clip|plan|sequence)`).exec(t); if (m) return String(ORDINAUX[m[1]]);
+  if (/\b(derniere|dernier)\s+(prise|clip|plan|sequence)/.test(t)) return 'dernier';
+  if (/\b(ce|cette)\s+(clip|prise|plan|sequence)\b|\bclip (selectionne|choisi)\b/.test(t)) return 'selection';
+  return '';
+}
+const nomCible = c => c === 'dernier' ? 'dernier clip' : c === 'selection' ? 'clip sélectionné' : 'clip ' + c;
 const sansAccents = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'");
 
 // Demande en français → [{ action, parametre, libelle }], dans l'ordre logique du montage
@@ -46,13 +61,16 @@ function comprendre(demande, projet) {
   const ajoute = (action, parametre = '') => { if (!l.some(x => x.action === action)) l.push({ action, parametre: String(parametre), libelle: ACTIONS[action] + (parametre ? ` (${parametre})` : '') }); };
   // « monte ma vidéo » : l'assistant enchaîne lui-même les étapes utiles à CE montage
   if (/(montage (automatique|auto|complet)|monte[- ]?(la|le|moi|ma|mon|mes|les|cette|ces|tout)\b|fais[- ]moi (le|un|mon) montage|auto-?monte|monte (automatiquement|tout))/.test(t) && !/monte[- ]?(le )?son/.test(t)) return planAuto(projet);
+  // couleur d'un titre : « mets le titre en jaune », « texte en rouge » (pas un nouvel écran titre)
+  const coul = /\b(titres?|textes?)\b/.test(t) && !/sous[- ]?titr/.test(t) && Object.keys(COULEURS).find(k => new RegExp(`\\b(?:en|couleur) ${k}s?\\b`).test(t));
+  if (coul) ajoute('couleur_titre', coul);
   const non = mot => new RegExp(`(sans|pas de|enleve|retire|supprime|vire)( les?| la| l'| des| de)? ?${mot}`).test(t);
   if (/\b(blancs?|silences?|euh|hesitations?|temps morts?)\b/.test(t) && !/(sans|pas de|garde|laisse|conserve)( les?| la| l'| des| de)? ?(blancs?|silences?|euh|hesitations?|temps morts?)/.test(t)) ajoute('couper_blancs'); // « supprime les blancs » = les couper
   // « sous-titres en italien », « traduis les sous-titres en anglais » : traduction (créés d'abord s'il n'y en a pas) ; « en français » seul = la langue parlée
   const lg = /(?:sous[- ]?titr|tradu)/.test(t) && Object.keys(LANGUES_SOUS).find(m => new RegExp(`\\b(?:en |in )?${m}s?\\b`).test(t) && (m !== 'francais' || /tradu/.test(t)));
   if (lg && !non('sous[- ]?titr')) ajoute('traduire_sous', LANGUES_SOUS[lg]);
   else if (/sous[- ]?titr/.test(t) && !non('sous[- ]?titr')) ajoute('sous_titres', /tiktok|gros|grand|anime|karaoke|mot a mot/.test(t) ? 'tiktok' : '');
-  if (/\b(plans?|changements? de plan|decoupe automatique)\b/.test(t) && /(decoup|detect|separ|coupe)/.test(t) && !/premier plan|arriere[- ]plan/.test(t)) ajoute('plans');
+  if (/\b(plans?|changements? de plan|decoupe automatique)\b/.test(t) && /(decoup|detect|separ|coupe)/.test(t) && !/premier plan|arriere[- ]plan|\bplans?\s*(n[o°]?\s*)?\d/.test(t) && !cibleDe(t)) ajoute('plans');
   if (/(detach|separ|extrai)\w* (le |la |du )?(son|audio|piste audio)/.test(t)) ajoute('detacher');
   if (/(ameliore|nettete|debruit|plus net|qualite)/.test(t)) ajoute('ameliorer');
   if (/(egalis|normalis|meme (volume|niveau)|niveau sonore|volume regulier)/.test(t)) ajoute('egaliser');
@@ -88,14 +106,42 @@ function comprendre(demande, projet) {
   else if (/\bcarre\b|1 ?\/ ?1/.test(t)) ajoute('format', 'carre');
   const tit = /(?:titre|ecran titre)\s*(?:«|"|:)\s*([^»"]{2,60})/.exec(demande ? sansAccents(demande) : '');
   const titOrig = /(?:titre|écran titre)\s*(?:«|"|:)\s*([^»"]{2,60})/i.exec(String(demande || ''));
-  if (/(ecran titre|titre au debut|ajoute (un|le) titre|mets (un|le) titre)/.test(t) || tit) ajoute('titre', titOrig ? titOrig[1].trim() : '');
+  if (!coul && (/(ecran titre|titre au debut|ajoute (un|le) titre|mets (un|le) titre)/.test(t) || tit)) ajoute('titre', titOrig ? titOrig[1].trim() : '');
   if (/(analyse (la|ma|cette) video|de quoi parle|sujet de la video|monte (la|ma|cette) video selon|monte selon le sujet|montage intelligent|monte (moi )?ca tout seul)/.test(t) && !/chapitr/.test(t)) ajoute('montage_sujet');
   if (/chapitr/.test(t)) ajoute(/(liste|copi|description)/.test(t) && !/(clavier|ecran|titre)/.test(t) ? 'chapitres' : 'chapitrer');
   if (/(hashtags?|description|titre (pour|de la) (publication|video youtube|tiktok)|legende)/.test(t)) ajoute('publication', /youtube/.test(t) ? 'YouTube' : /instagram/.test(t) ? 'Instagram' : /tiktok/.test(t) ? 'TikTok' : '');
   if (/\bexport/.test(t)) ajoute('exporter');
   // ordre du montage : découpe d'abord, habillage ensuite, export à la fin
-  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'traduire_sous', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'niveau_final', 'publication', 'exporter'];
+  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'traduire_sous', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'couleur_titre', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'niveau_final', 'publication', 'exporter'];
+  const cible = cibleDe(t);
+  if (cible) l.forEach(a => { if (CIBLABLES.has(a.action)) { a.cible = cible; a.libelle += ` — ${nomCible(cible)}`; } });
   return l.sort((a, b) => ORDRE.indexOf(a.action) - ORDRE.indexOf(b.action));
+}
+
+// Questions sur le montage, répondues par le programme (jamais d'invention) : durée, nombre de clips, format, ce que l'assistant sait faire
+function repondre(demande, p) {
+  const t = ' ' + sansAccents(demande) + ' ', clips = (p && p.clips) || [], total = clips.reduce((a, c) => a + (c.dur || 0), 0);
+  const duree = s => { s = Math.round(s); return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')} s`; };
+  if (/(combien de temps|quelle duree|duree (de la|du) (video|montage)|dure combien|combien dure|la video dure)/.test(t)) return clips.length ? `Le montage dure ${duree(total)}, en ${clips.length} clip${clips.length > 1 ? 's' : ''}.` : 'La timeline est vide pour l’instant.';
+  if (/combien (de|d') ?(clips?|prises?|plans?|sequences?)/.test(t)) return `Il y a ${clips.length} clip${clips.length > 1 ? 's' : ''} sur la timeline${clips.length ? ` (${duree(total)})` : ''}.`;
+  if (/(quel format|en quel format|c'?est quel format)/.test(t)) return `Le format est ${({ vertical: 'vertical 9:16 (TikTok, Reels, Shorts)', horizontal: 'horizontal 16:9 (YouTube)', carre: 'carré 1:1' })[p && p.format] || 'non choisi'}.`;
+  if (/(que sais[- ]tu faire|tu (sais|peux) faire quoi|qu'?est[- ]ce que tu (sais|peux) faire|aide[- ]moi|comment ca marche|\baide\b)/.test(t)) return 'Je comprends les demandes de montage simples : « coupe les blancs de la prise 2 », « mets le titre en jaune », « ajoute une musique calme », « sous-titres en italien », « passe en vertical », « exporte ». Je te montre ce que je vais faire, tu valides, et chaque changement s’annule d’un clic. Je retiens aussi tes consignes : « retiens que… ».';
+  if (/^ ?(bonjour|salut|coucou|hello|bonsoir|merci)\b/.test(t)) return /merci/.test(t) ? 'Avec plaisir ! Autre chose à changer ?' : 'Bonjour ! Dis-moi ce que tu veux changer dans le montage.';
+  return '';
+}
+
+// Demande non comprise : les actions les plus proches (mots en commun avec leur libellé), sinon les suggestions du montage
+const RACINE = m => m.slice(0, 5);
+// mots courants qui désignent une action sans reprendre son libellé
+const SYNONYMES = { fort: 'volume', faibl: 'volume', bruit: 'ameliorer', clair: 'ameliorer', propr: 'ameliorer', sombr: 'ameliorer', flou: 'ameliorer', ennuy: 'dynamiser', rythm: 'dynamiser', vivan: 'dynamiser', lente: 'vitesse', rapid: 'vitesse', lisib: 'sous_titres', texte: 'sous_titres', sourd: 'sous_titres', youtu: 'publication', court: 'clipping', silen: 'couper_blancs', pause: 'couper_blancs', ambia: 'musique', fond: 'musique' };
+function proches(demande, p, n = 3) {
+  const mots = new Set(sansAccents(demande).split(/[^a-z0-9]+/).filter(m => m.length > 3 && !VIDES.has(m)).map(RACINE));
+  const notes = Object.entries(ACTIONS).filter(([id]) => !['exporter', 'supprimer_clip', 'couper_a', 'couleur_titre'].includes(id))
+    .map(([id, lib]) => ({ id, lib, n: sansAccents(lib).split(/[^a-z0-9]+/).filter(m => m.length > 3).map(RACINE).filter(m => mots.has(m)).length }))
+    .map(x => ({ ...x, n: x.n + [...mots].filter(m => SYNONYMES[m] === x.id).length }))
+    .filter(x => x.n > 0).sort((a, b) => b.n - a.n).slice(0, n).map(x => ({ action: x.id, parametre: '', libelle: x.lib }));
+  if (notes.length) return notes;
+  return suggerer(p || {}).filter(s => s.action !== 'aucune').slice(0, n);
 }
 
 // Montage automatique : les étapes utiles d'après l'état du projet (forme de suggerer), sans rien refaire de déjà fait
@@ -147,4 +193,4 @@ function hashtagsSimples(texte, n = 8) {
   return [...f.entries()].sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).slice(0, n).map(([m]) => '#' + m);
 }
 
-module.exports = { ACTIONS, comprendre, planAuto, suggerer, hashtagsSimples, sansAccents };
+module.exports = { ACTIONS, COULEURS, comprendre, repondre, proches, planAuto, suggerer, hashtagsSimples, sansAccents };
