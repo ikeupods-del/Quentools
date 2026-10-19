@@ -42,4 +42,6 @@ check('« coupe ici » coupe à l’instant de la pause', ci('coupe ici') === 'c
 check('« mets le texte « … » ici » pose un texte à cet instant', ci('mets le texte « 2 % par an » ici') === 'titre_ici:2 % par an', ci('mets le texte « 2 % par an » ici'));
 check('« coupe ici » sans pause : rien d’inventé', v('coupe ici') === '');
 check('choix proposé : « trop fort » baisse le volume (jamais 0)', A.proches('ici le son est trop fort', P).some(a => a.action === 'volume' && a.parametre === '70'), JSON.stringify(A.proches('ici le son est trop fort', P)));
+check('animations : générique d’ouverture, de fin, abonne-toi, bandeau', v('mets un générique d’ouverture') === 'animation:intro' && v('ajoute un générique de fin') === 'animation:fin' && v('mets un abonne-toi') === 'animation:abonne' && v('ajoute un bandeau avec mon nom') === 'animation:bandeau', [v('mets un générique d’ouverture'), v('ajoute un générique de fin'), v('mets un abonne-toi'), v('ajoute un bandeau avec mon nom')].join(' | '));
+check('« écran titre » reste un écran titre', v('ajoute un écran titre « Mon voyage »') === 'titre:Mon voyage');
 console.log(`Assistant : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);

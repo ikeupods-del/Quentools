@@ -3,16 +3,17 @@
 'use strict';
 
 // Rubriques regroupées : l'onglet de tête reste visible dans le rail, les autres deviennent des puces.
-const GROUPES_V2 = { voix: ['voix', 'sons', 'musiques'], effets: ['effets', 'transitions', 'stickers'] };
-const NOMS_V2 = { voix: 'Voix', sons: 'Sons', musiques: 'Musique', effets: 'Effets', transitions: 'Transitions', stickers: 'Calques' };
+const GROUPES_V2 = { titres: ['titres', 'animations'], voix: ['voix', 'sons', 'musiques'], effets: ['effets', 'transitions', 'stickers'] };
+const NOMS_V2 = { titres: 'Titres', animations: 'Animations', voix: 'Voix', sons: 'Sons', musiques: 'Musique', effets: 'Effets', transitions: 'Transitions', stickers: 'Calques' };
 const TETE_V2 = {}; Object.entries(GROUPES_V2).forEach(([t, l]) => l.forEach(x => { TETE_V2[x] = t; }));
 
 (function railV2() {
   const rail = $('#tabs'), b = t => rail.querySelector(`[data-tab="${t}"]`);
+  if (!b('animations')) { const x = document.createElement('button'); x.dataset.tab = 'animations'; x.innerHTML = '<span>Animations</span>'; rail.appendChild(x); } // rubrique des animations (ui-animations.js)
   b('titres').querySelector('span').textContent = 'Texte';
   b('voix').querySelector('span').textContent = 'Audio';
   ['medias', 'titres', 'voix', 'effets', 'packs', 'outils'].forEach(t => rail.appendChild(b(t))); // nouvel ordre
-  ['sons', 'musiques', 'transitions', 'stickers'].forEach(t => { b(t).hidden = true; rail.appendChild(b(t)); });
+  ['sons', 'musiques', 'transitions', 'stickers', 'animations'].forEach(t => { b(t).hidden = true; rail.appendChild(b(t)); });
   const nav = navigateur;
   navigateur = function () {
     nav.apply(this, arguments);

@@ -440,6 +440,12 @@ button.dictee.on{background:#5a1a1f;border-color:#ff5a5f;color:#fff}
 .ch-saisie{display:flex;gap:6px;align-items:center;padding:8px 10px 10px;flex:none}
 .ch-saisie input{flex:1;min-width:0;height:36px;border-radius:10px;padding:0 12px;background:#0f1115;border:1px solid #2e3340}
 .ch-saisie .ib{width:36px;height:36px;flex:none;border-radius:10px}
+/* Animations (Texte → Animations) */
+.anim-carte{padding:10px;border-radius:12px;background:#1a1d23;border:1px solid #262a33;margin-bottom:10px}
+.anim-tete{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.anim-carte p{margin:4px 0 6px;font-size:12px}
+.anim-apercu{margin:6px 0;border-radius:8px;overflow:hidden;background:#0d0e11;display:grid;place-items:center}.anim-apercu img{max-width:100%;display:block}
+.anim-apercu.damier{background:repeating-conic-gradient(#2a2e38 0 25%,#1a1d23 0 50%) 0 0/16px 16px}
+.anim-etat{margin-top:4px;font-size:12px}
 .puces-v2{display:flex;gap:6px;margin:0 0 10px}
 .puces-v2 button{padding:4px 11px;border-radius:999px;background:transparent;border-color:#2a2e38;color:var(--mut);font-size:12px}
 .puces-v2 button.on{background:#1d2647;border-color:#5b78ff;color:var(--txt)}
@@ -4601,5 +4607,6 @@ async function proposerPrisesInterrompues() {
 </script>
 <script src="/ui-v2.js"></script>
 <script src="/ui-chat.js"></script>
+<script src="/ui-animations.js"></script>
 </body>
 </html>

@@ -36,6 +36,7 @@ const ACTIONS = {
   couleur_titre: 'Changer la couleur du titre',
   titre_ici: 'Écrire un texte à l’écran à cet instant',
   note: 'Garder ce commentaire comme note sur la timeline',
+  animation: 'Poser une animation',
   exporter: 'Exporter la vidéo'
 };
 // langues des sous-titres traduits : mot de la demande → nom montré (le code est retrouvé par l'interface)
@@ -67,6 +68,11 @@ function comprendre(demande, projet, instant) {
   // couleur d'un titre : « mets le titre en jaune », « texte en rouge » (pas un nouvel écran titre)
   const coul = /\b(titres?|textes?)\b/.test(t) && !/sous[- ]?titr/.test(t) && Object.keys(COULEURS).find(k => new RegExp(`\\b(?:en|couleur) ${k}s?\\b`).test(t));
   if (coul) ajoute('couleur_titre', coul);
+  // animations (Texte → Animations) : génériques, bandeau, « Abonne-toi », volet, liste
+  const anim = /generique (d'?ouverture|de debut|d'?intro)|\bintro anime|animation d'?ouverture/.test(t) ? 'intro' : /generique de fin|\boutro\b|animation de fin/.test(t) ? 'fin'
+    : /(bouton|animation) (d'?)?(abonne|abonnement|s'abonner)|abonne[- ]toi (anime|en animation)|\b(mets|ajoute) (un |le )?abonne[- ]toi/.test(t) ? 'abonne' : /\b(bandeau|tiers inferieur)\b/.test(t) && !/sous[- ]?titr/.test(t) ? 'bandeau'
+    : /\bvolet\b/.test(t) ? 'volet' : /liste (a|à) points|liste animee/.test(t) ? 'liste' : '';
+  if (anim) ajoute('animation', anim);
   const non = mot => new RegExp(`(sans|pas de|enleve|retire|supprime|vire)( les?| la| l'| des| de)? ?${mot}`).test(t);
   if (/\b(blancs?|silences?|euh|hesitations?|temps morts?)\b/.test(t) && !/(sans|pas de|garde|laisse|conserve)( les?| la| l'| des| de)? ?(blancs?|silences?|euh|hesitations?|temps morts?)/.test(t)) ajoute('couper_blancs'); // « supprime les blancs » = les couper
   // « sous-titres en italien », « traduis les sous-titres en anglais » : traduction (créés d'abord s'il n'y en a pas) ; « en français » seul = la langue parlée
@@ -120,7 +126,7 @@ function comprendre(demande, projet, instant) {
   if (/(hashtags?|description|titre (pour|de la) (publication|video youtube|tiktok)|legende)/.test(t)) ajoute('publication', /youtube/.test(t) ? 'YouTube' : /instagram/.test(t) ? 'Instagram' : /tiktok/.test(t) ? 'TikTok' : '');
   if (/\bexport/.test(t)) ajoute('exporter');
   // ordre du montage : découpe d'abord, habillage ensuite, export à la fin
-  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'traduire_sous', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'titre_ici', 'couleur_titre', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'niveau_final', 'publication', 'exporter'];
+  const ORDRE = ['supprimer_clip', 'couper_a', 'format', 'plans', 'detacher', 'couper_blancs', 'vitesse', 'dynamiser', 'ameliorer', 'egaliser', 'volume', 'sous_titres', 'traduire_sous', 'bruitage', 'retirer_musique', 'musique', 'rythme', 'reperes_rythme', 'transitions', 'retirer_transitions', 'fondus', 'titre', 'titre_ici', 'couleur_titre', 'animation', 'montage_sujet', 'chapitres', 'chapitrer', 'clipping', 'niveau_final', 'publication', 'exporter'];
   const cible = cibleDe(t);
   if (cible) l.forEach(a => { if (CIBLABLES.has(a.action)) { a.cible = cible; a.libelle += ` — ${nomCible(cible)}`; } });
   return l.sort((a, b) => ORDRE.indexOf(a.action) - ORDRE.indexOf(b.action));

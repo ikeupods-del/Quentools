@@ -137,6 +137,11 @@ async function autotest(port) {
       const t1 = performance.now(), ec = await suivre((await (await fetch('/api/parole/ecouter', { method: 'POST', body: JSON.stringify({ file: j.file, in: 0, out: 0 }) })).json()).id);
       return { ...res, ecoute: ec.error || ec.resultat.mots.map(m => m.m).join(' '), sousTitres: ec.resultat ? ec.resultat.st.phrase.length : 0, ecouteMs: Math.round(performance.now() - t1) };
     })()`);
+    // animation transparente (Texte → Animations) dessinée par les fenêtres cachées : le fichier est vérifié par le workflow (transparence du coin, centre dessiné)
+    res.animation = await ex(`(async () => {
+      const r = await fetch('/api/animations/rendre', { method: 'POST', body: JSON.stringify({ id: 'chiffre', valeurs: { valeur: '1 500 €' }, format: 'horizontal' }) }), j = await r.json(); if (!r.ok) return { erreur: j.error };
+      for (;;) { await new Promise(x => setTimeout(x, 500)); const k = await (await fetch('/api/job?id=' + j.id)).json(); if (k.error) return { erreur: k.error }; if (k.done) return k.resultat; }
+    })()`);
     // épisode Pico fabriqué dans l'application : programme de la chaîne livré, Node d'Electron, voix, FFmpeg et écrans dessinés par les fenêtres cachées
     res.pico = await ex(`(async () => {
       const fiche = { numero: 98, slug: 'essai-pico', titre: 'Un euro, c’est quoi ?', promesse: 'Un euro ?', description: 'Essai.', hashtags: '#essai', voix: { moteur: 'piper', modele: 'vits-piper-fr_FR-upmc-medium', sid: 1, vitesse: 0.9, hauteur: 1.08 }, musique: 'documentaire-doux',
