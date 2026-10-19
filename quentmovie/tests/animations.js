@@ -15,8 +15,8 @@ function chromium() {
 async function navigateurEssai(exe) {
   const pw = require('playwright-core'), b = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] }), pages = new Map(); let n = 0;
   return {
-    b, appels: { ouvrir: 0, capture: 0 },
-    async ouvrir(l, h) { this.appels.ouvrir++; const p = await b.newPage({ viewport: { width: l, height: h } }); pages.set(++n, p); return n; },
+    b, appels: { ouvrir: 0, capture: 0 }, erreurs: [],
+    async ouvrir(l, h) { this.appels.ouvrir++; const p = await b.newPage({ viewport: { width: l, height: h } }); p.on('pageerror', x => this.erreurs.push(x.message)); pages.set(++n, p); return n; },
     async contenu(id, html) { await pages.get(+id).setContent(html, { waitUntil: 'load' }); },
     evaluer(id, code) { return pages.get(+id).evaluate(code); },
     async capture(id, chemin, transparent) { this.appels.capture++; await pages.get(+id).screenshot({ path: chemin, omitBackground: transparent }); },
@@ -36,7 +36,7 @@ async function navigateurEssai(exe) {
   const ff = (...a) => execFileSync(bins.ffmpeg, ['-hide_banner', ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   check('nombre lu dans « 2,1 % » et « 1 500 € »', JSON.stringify(A.nombreDe('2,1 %')) === JSON.stringify({ avant: '', valeur: 2.1, dec: 1, apres: ' %', milliers: false }) && A.nombreDe('1 500 €').valeur === 1500 && A.nombreDe('1 500 €').milliers);
   const cat = await (await fetch(U('/api/animations'))).json();
-  check('catalogue : 7 modèles, génériques et calques', cat.modeles.length === 7 && cat.modeles.filter(m => m.type === 'plein').length === 2 && cat.pret === true, JSON.stringify(cat).slice(0, 200));
+  check('catalogue : 11 modèles, génériques et calques', cat.modeles.length === 11 && cat.modeles.filter(m => m.type === 'plein').length === 5 && cat.pret === true, JSON.stringify(cat).slice(0, 200));
   const ap = await (await post('/api/animations/apercu', { id: 'chiffre', valeurs: { valeur: '2,1 %', legende: 'd’inflation' }, format: 'horizontal' })).json();
   check('aperçu : une image PNG', /^data:image\/png;base64,/.test(ap.image || '') && ap.type === 'calque');
   check('modèle inconnu refusé', (await post('/api/animations/rendre', { id: 'nimporte' })).status >= 400);
@@ -49,8 +49,25 @@ async function navigateurEssai(exe) {
   check('calque : vidéo transparente (QuickTime Animation, ARGB)', /qtrle/.test(info(faits.chiffre.file)) && /argb/.test(info(faits.chiffre.file)), info(faits.chiffre.file).slice(-300));
   check('générique : vidéo H.264 de la bonne durée', /h264/.test(info(faits.intro.file)) && Math.abs(faits.intro.duree - 3.5) < 0.05);
   check('bandeau en vertical : 1080 × 1920', /1080x1920/.test(info(faits.bandeau.file)));
-  // transparence réelle : au milieu de l'animation, le centre est dessiné et le coin reste vide
   const px = (f, t, x, y) => { const b = execFileSync(bins.ffmpeg, ['-v', 'error', '-ss', String(t), '-i', path.join(base, 'medias', f), '-frames:v', '1', '-vf', `crop=1:1:${x}:${y},format=rgba`, '-f', 'rawvideo', '-'], { maxBuffer: 1e6 }); return [...b]; };
+  // modèles éditoriaux : aperçu et fabrication dans les trois formats, fond crème des écrans pleins, centre du cadre caméra transparent
+  const NOUVEAUX = ['grand-titre', 'parcours', 'grille', 'cadre-camera'], FORMATS = { horizontal: [1920, 1080], vertical: [1080, 1920], carre: [1080, 1080] };
+  for (const id of NOUVEAUX) for (const [f, [L, H]] of Object.entries(FORMATS)) {
+    const a = await (await post('/api/animations/apercu', { id, valeurs: {}, format: f })).json();
+    check(`aperçu ${id} (${f})`, /^data:image\/png;base64,/.test(a.image || ''), a.error || '');
+    const r = f === 'horizontal' ? faits[id] : await (async () => { const { id: job } = await (await post('/api/animations/rendre', { id, valeurs: {}, format: f })).json(), j = await attendre(job); check(`fabrication ${id} (${f})`, j.done && !j.error, j.error || ''); return j.resultat; })();
+    if (!r) continue;
+    check(`${id} (${f}) : ${L} × ${H}`, new RegExp(`${L}x${H}`).test(info(r.file)));
+    if (id === 'cadre-camera') { // coin haut-droit : 46 × 34,5 vmin à 5 vmin des bords, liseré de 1,2 vmin
+      const v = Math.min(L, H) / 100, cy = Math.round(5 * v + 17.25 * v), milieu = px(r.file, 2, Math.round(L - 28 * v), cy), bord = px(r.file, 2, Math.round(L - 51 * v + 0.6 * v), cy), loin = px(r.file, 2, 10, H - 10);
+      check(`cadre-camera (${f}) : centre transparent, liseré dessiné`, milieu[3] === 0 && bord[3] > 200 && loin[3] === 0, JSON.stringify({ milieu, bord, loin }));
+    } else { const c = px(r.file, r.duree / 2, 4, 4);
+      check(`${id} (${f}) : fond crème`, Math.abs(c[0] - 246) < 10 && Math.abs(c[1] - 239) < 10 && Math.abs(c[2] - 199) < 12, JSON.stringify(c)); }
+  }
+  const sombre = await (await post('/api/animations/apercu', { id: 'grand-titre', valeurs: { theme: 'sombre', titre: 'Une phrase bien plus longue que prévu pour vérifier que le texte se réduit tout seul', mot: 'seul' }, format: 'vertical' })).json();
+  check('grand titre : variante sombre et titre long', /^data:image\/png;base64,/.test(sombre.image || ''));
+  check('modèles éditoriaux : aucune erreur dans les pages dessinées', !nav.erreurs.length, nav.erreurs.join(' | '));
+  // transparence réelle : au milieu de l'animation, le centre est dessiné et le coin reste vide
   const centre = px(faits.chiffre.file, 2, 960, 540), coin = px(faits.chiffre.file, 2, 5, 5);
   check('calque : centre dessiné, coin transparent', centre[3] > 200 && coin[3] === 0, JSON.stringify({ centre, coin }));
   // montage avec l'animation par-dessus (piste vidéo 2) : export et chiffre visible sur l'image
@@ -68,7 +85,8 @@ async function navigateurEssai(exe) {
   await pg.goto(U('/')); await pg.waitForTimeout(900);
   await pg.evaluate(async () => { await chargerMedias(); const m = medias.find(x => x.file === 'fond.mp4'); proj.clips = [newClip(m)]; proj.pistes = []; commit(); tout(); placerTete(1, { sansSelection: true }); });
   await pg.click('#tabs button[data-tab="titres"]'); await pg.click('[data-sous-v2="animations"]'); await pg.waitForSelector('.anim-carte');
-  check('panneau : une carte par modèle', await pg.evaluate(() => document.querySelectorAll('.anim-carte').length === 7));
+  check('panneau : une carte par modèle', await pg.evaluate(() => document.querySelectorAll('.anim-carte').length === 11));
+  check('panneau : choix du coin et du fond en listes', await pg.evaluate(() => document.querySelectorAll('[data-anim="cadre-camera"] select[data-champ="coin"] option').length === 4 && document.querySelectorAll('[data-anim="grille"] select[data-champ="theme"] option').length === 2));
   await pg.fill('[data-anim="bandeau"] [data-champ="nom"]', 'Pico'); await pg.click('[data-anim="bandeau"] [data-anim-voir]'); await pg.waitForSelector('[data-anim="bandeau"] .anim-apercu img', { timeout: 20000 });
   check('panneau : aperçu affiché', true);
   await pg.click('[data-anim="bandeau"] [data-anim-poser]'); await pg.waitForFunction(() => /Posée/.test(document.querySelector('[data-anim="bandeau"] .anim-etat').textContent), null, { timeout: 60000 }).catch(() => {});

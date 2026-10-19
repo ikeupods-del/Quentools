@@ -21,7 +21,7 @@ async function dessinerAnimations() {
     ${catalogueAnim.modeles.map(m => { const v = valeursAnim[m.id] || {};
       return `<div class="anim-carte" data-anim="${m.id}"><div class="anim-tete"><b>${esc(m.nom)}</b><small class="mut">${m.type === 'plein' ? 'générique' : 'par-dessus'} · ${String(m.duree).replace('.', ',')} s</small></div>
       <p class="mut">${esc(m.desc)}</p><div class="anim-apercu" hidden></div>
-      ${m.champs.map(c => c.cle === 'couleur' ? `<label class="l">${esc(c.libelle)}</label><select data-champ="${c.cle}">${(m.couleurs || []).map(x => `<option value="${x}" ${(v[c.cle] || c.defaut) === x ? 'selected' : ''}>${x}</option>`).join('')}</select>`
+      ${m.champs.map(c => c.cle === 'couleur' || c.options ? `<label class="l">${esc(c.libelle)}</label><select data-champ="${c.cle}">${(c.options || m.couleurs || []).map(x => `<option value="${x}" ${(v[c.cle] || c.defaut) === x ? 'selected' : ''}>${x}</option>`).join('')}</select>`
         : `<label class="l">${esc(c.libelle)}</label><input type="text" data-champ="${c.cle}" value="${esc(v[c.cle] != null ? v[c.cle] : c.cle === 'titre' && titre && m.id === 'intro' ? titre : '')}" placeholder="${esc(c.defaut)}">`).join('')}
       <div class="ligne" style="margin-top:8px"><button class="mini" data-anim-voir>Aperçu</button><span class="sp"></span><button class="mini pri" data-anim-poser ${animEnCours.has(m.id) ? 'disabled' : ''}>Poser</button></div><div class="mut anim-etat">${esc(animEnCours.get(m.id) || '')}</div></div>`; }).join('')}</div>`);
 }
