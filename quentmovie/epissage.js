@@ -114,7 +114,10 @@ function creer({ run, FFMPEG, encoder, FX, aFiltre, clamp, num }) {
       else g.push(`[${cur}][v${k}]${FX.filtreTransition(tr.type, D / fps, (acc - D) / fps, echelle)},fps=${fps},format=yuv420p[x${k}]`);
       acc += p.clips[k].a - p.clips[k].de - D; cur = `x${k}`;
     }
-    await encoder(['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', `[${cur}]`, '-r', fps, '-frames:v', p.longueur], enc.vt, enc.cpu,
+    // dernière image répétée au besoin : selon la version de FFmpeg (Mac), les fondus en rendent une de moins que prévu,
+    // et le morceau doit avoir exactement sa longueur pour être recollé sans réencoder
+    g.push(`[${cur}]tpad=stop_mode=clone:stop=3[fin]`);
+    await encoder(['-y', '-loglevel', 'error', ...ins, '-filter_complex', g.join(';'), '-map', '[fin]', '-r', fps, '-frames:v', p.longueur], enc.vt, enc.cpu,
       ['-pix_fmt', 'yuv420p', '-force_key_frames', expressionGop(fps), '-an', out], { cwd });
   }
 
