@@ -53,6 +53,28 @@ function chromium() {
   check('couper un son détaché', aud.length === 2 && Math.abs(aud[0].dur - 2.5) < 0.06 && Math.abs(aud[1].start - 2.5) < 0.06 && Math.abs(aud[1].dur - 3.5) < 0.06, JSON.stringify(aud));
   check('inspecteur : zoom et fondus', await ev(() => { sel = 0; selA = -1; inspecteur(); return /Zoom et cadrage/.test($('#insp').textContent) && /Fondu d’entrée/.test($('#insp').textContent); }));
 
+  // interface 2.0 : onglets du clip et suggestion en haut, couleurs des sons, écran « Exporter et publier »
+  check('inspecteur : onglets Découpe, Image, Son, Couleur', await ev(() => { sel = 0; selA = -1; inspecteur(); return [...document.querySelectorAll('#insp [data-oi]')].map(b => b.textContent).join(',') === 'Découpe,Image,Son,Couleur'; }));
+  await pg.click('#insp [data-oi="couleur"]');
+  check('inspecteur : un onglet montre ses réglages et cache les autres', await ev(() => { const v = n => { const e = document.querySelector('#insp [data-p="' + n + '"]'); return !!e && e.offsetParent !== null; }; return v('bright') && !v('in') && !v('zoom'); }));
+  check('suggestion : mesures du média lues par le moteur', await ev(async () => { const r = await (await api('/api/clip/analyse', { method: 'POST', body: JSON.stringify({ file: proj.clips[0].file }) })).json(); return r.analyse && Array.isArray(r.analyse.silences) && r.analyse.luminosite != null; }));
+  check('suggestion : blancs comptés dans la partie gardée du clip', await ev(() => { const r = blancsDuClip({ in: 1, out: 9, speed: 1 }, { silences: [[0, 3], [4, 4.5], [6, 8], [8.5, 12]] }); return r.n === 2 && Math.abs(r.s - 4) < 0.01; }));
+  check('suggestion : look conseillé selon le genre, avec son bouton', await ev(async () => { proj.analyse = { pack: 'cinema', genre: 'Cinéma' }; proj.clips[0].lut = null; inspecteur(); await new Promise(r => setTimeout(r, 400)); const ok = /Look conseillé/.test($('#inspConseil').textContent) && !!$('#inspConseil button'); $('#inspConseil button').click(); return ok && /cine-teal-orange/.test((proj.clips[0].lut || {}).file || ''); }));
+  check('suggestion : annulable avec ⌘Z', await ev(() => { undo(-1); return !proj.clips[0].lut; }));
+  check('timeline : couleur par rôle des sons (voix, musique, bruitage)', await ev(() => { const L = LIB(); return roleSon({ file: 'voix-off.wav' }) === 'voix' && (!L.musiques.length || roleSon({ file: 'lib:' + L.musiques[0].file }) === 'musique') && (!L.sons.length || roleSon({ file: 'lib:' + L.sons[0].file }) === 'son'); }));
+  await ev(() => { proj.analyse = null; exporter(); }); await pg.waitForSelector('#publierV2 #xGo', { timeout: 5000 });
+  check('publier : un seul écran avec qualité et destinations', await ev(() => document.querySelectorAll('#pvQualites [data-qv2]').length === 4 && document.querySelectorAll('#pvDests [data-dv2]').length === 4 && $('#etapes .on').dataset.etape === 'publier'));
+  check('publier : sans mise en ligne, pas de textes et bouton « Exporter »', await ev(() => !$('#pvTitre') && $('#xGo').textContent === 'Exporter'));
+  await pg.click('[data-dv2="youtube"]');
+  check('publier : YouTube coché → textes juste en dessous et visibilité', await ev(() => !!$('#pvTitre') && !!document.querySelector('[data-visv2="prog"]') && $('#xGo').textContent === 'Exporter et publier' && /YouTube/.test($('#pvResume').textContent)));
+  await pg.fill('#pvTitre', 'Mon titre'); await pg.click('[data-qv2="son"]');
+  check('publier : « Son seul » écarte YouTube et TikTok', await ev(() => !pubV2.dest.youtube && document.querySelector('[data-dv2="youtube"]').disabled && proj.sortie === 'mp3' && !$('#pvTitre')));
+  check('publier : le titre écrit est gardé dans le projet', await ev(() => proj.publication && proj.publication.titre === 'Mon titre'));
+  await pg.click('[data-qv2="720"]'); await pg.click('#xGo'); await pg.waitForSelector('.pv2-fin', { timeout: 60000 });
+  check('publier : export sur le Mac depuis l’écran unique', await ev(() => /Exporté/.test($('.pv2-fin').textContent) && /\.mp4/.test($('.pv2-fin').textContent)));
+  await ev(() => fermerPublierV2());
+  check('publier : retour au montage', await ev(() => !$('#publierV2') && $('#etapes .on').dataset.etape === 'monter'));
+
   // 2) sons : aimantation et poignées
   await ev(() => { proj.clips = []; proj.audio = [{ file: 'son.wav', start: 5, in: 0, dur: 10, vol: 100, fade: false, loop: false, duck: false }]; selA = -1; sel = -1; setZoom(40); gt = 1; commit(); tout(); }); await pg.waitForTimeout(300);
   const box = () => ev(() => { const e = document.querySelector('.aud').getBoundingClientRect(); return { x: e.x, y: e.y, w: e.width, h: e.height }; });

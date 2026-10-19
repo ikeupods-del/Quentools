@@ -3,7 +3,7 @@
 Le propriétaire n'est pas développeur : lui répondre en français simple, agir à sa place, expliquer le résultat plutôt que la technique. Suivre les règles du fichier `.claude/CLAUDE.md` du dépôt.
 
 ## Où on en est
-- **QuentMovie 2.0.0 est faite** (branche `quentmovie-2`, mise en ligne sur la branche principale). Elle apporte :
+- **QuentMovie 2.0.0 est faite** (sur la branche principale). Elle apporte :
   - un nouveau style (gris graphite, un seul bleu pour les actions, coins arrondis) ;
   - trois étapes en haut de l'écran : **Créer, Monter, Publier** ;
   - un **écran d'accueil** : une question « Qu'est-ce qu'on crée aujourd'hui ? », six cartes (importer, me filmer, générer, doublage, podcast, épisode QuentInvest) et les projets à reprendre ;
@@ -16,12 +16,7 @@ Le propriétaire n'est pas développeur : lui répondre en français simple, agi
 
 ## Ce qu'il reste à faire, dans l'ordre (une version publiée à chaque étape)
 
-**2.0.x : finir la nouvelle interface comme sur la maquette**
-- En haut des réglages du clip, une suggestion utile, par exemple « 3 blancs dans ce clip : Couper ».
-- Un écran **Exporter et publier** unique :
-  - on choisit la qualité, puis on coche où envoyer (Mac, YouTube, TikTok, AirDrop) ;
-  - les textes de publication sont juste en dessous ;
-  - un seul bouton.
+**2.0.1 : faite** — suggestion en haut des réglages du clip, écran unique « Exporter et publier » (qualité, destinations Mac / YouTube / TikTok / AirDrop, textes juste en dessous, un seul bouton), sons colorés selon leur rôle.
 
 **2.1 : une vraie discussion avec l'IA** (la dictée vocale est déjà prête : la reprendre dans le futur panneau)
 - Un panneau « Assistant » où le propriétaire écrit comme dans une conversation : « coupe les blancs de la prise 2 », « mets le titre en jaune ».

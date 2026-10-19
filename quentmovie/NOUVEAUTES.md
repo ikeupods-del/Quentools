@@ -3,6 +3,11 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.0.1
+- **Une suggestion en haut des réglages du clip** quand elle est utile : « 2 blancs d'au moins 1 s dans ce clip : Couper » (les passages coupés s'affichent d'abord en rouge), « Ce clip est un peu sombre : Éclaircir », « Son plutôt faible : Égaliser », le look conseillé pour le sujet de la vidéo… Un clic suffit, ⌘Z annule.
+- **Un seul écran « Exporter et publier »** (étape Publier, bouton Exporter ou ⌘E) : choisis la qualité (720p, 1080p, 4K ou son seul), coche où envoyer (ton Mac, YouTube, TikTok, AirDrop), écris ou fais rédiger les textes juste en dessous, puis un seul bouton. YouTube reçoit une vidéo privée, non répertoriée ou programmée ; TikTok un brouillon, avec la légende copiée. Le titre et la description restent dans le projet. Les épisodes QuentInvest déjà fabriqués se publient toujours par le lien sous l'aperçu.
+- **Couleurs de la timeline complétées** : voix en vert, musique et bruitages en orange, titres en ambre, incrustations en violet.
+
 ## 2.0.0
 - **Nouvelle interface** : couleurs plus douces, un seul bleu pour les actions, coins arrondis, tout est plus lisible.
 - **Trois étapes en haut : Créer, Monter, Publier.** Créer ouvre l'accueil, Monter le montage, Publier l'envoi sur YouTube et TikTok.

@@ -106,7 +106,7 @@ function chromium() {
     check('fiche : une fiche incomplète est signalée dans la fenêtre', await ev(() => /incomplète/.test(document.querySelector('#fiRes').textContent)));
     await pg.keyboard.press('Escape'); await ev(() => fermer());
     // publication : la fenêtre s'ouvre, les clés se configurent, la connexion est proposée
-    await pg.click('#bPublier'); await pg.waitForSelector('#puYt', { timeout: 10000 });
+    await ev(() => ouvrirPublier()); await pg.waitForSelector('#puYt', { timeout: 10000 });
     check('publication : YouTube et TikTok à configurer au départ', await ev(() => /à configurer/.test(document.querySelector('#puYt').parentElement.textContent) && /à configurer/.test(document.querySelector('#puTt').parentElement.textContent)));
     await pg.fill('#ytId', 'client-youtube-123'); await pg.fill('#ytSec', 'SECRET-youtube-456'); await pg.click('#ytCfg'); await pg.waitForSelector('#ytCo', { timeout: 8000 });
     check('publication : après les clés, « Se connecter à YouTube » est proposé avec les aides manuelles', await ev(() => /Se connecter à YouTube/.test(document.querySelector('#puYt').textContent) && !!document.querySelector('#mYtDesc') && !!document.querySelector('#mTtLeg')));
