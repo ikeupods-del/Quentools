@@ -1810,6 +1810,14 @@ function buildClip(c, P, o = {}) {
         else await PAROLE().parler(String(b.texte || '').slice(0, 400), v, path.join(MEDIAS, f), { vitesse: clamp(num(b.vitesse, 1), 0.5, 2) });
         return send(res, 200, { file: f });
       }
+      if (req.method === 'POST' && p === '/api/parole/dictee') { // dictée de l'assistant : le son du micro devient du texte (rien n'est gardé)
+        const f = path.join(TMP, `dictee-${Date.now()}.webm`);
+        await new Promise((ok, ko) => { const w = fs.createWriteStream(f); req.pipe(w); w.on('finish', ok); w.on('error', ko); req.on('error', ko); });
+        return send(res, 200, travail(async job => {
+          job.step = 'Écoute de ta voix…';
+          try { const r = await PAROLE().ecouter(f, 0, 0); return { texte: r.mots.map(w => w.m).join(' ').replace(/\s+([,.?!])/g, '$1').trim() }; } finally { fs.rmSync(f, { force: true }); }
+        }));
+      }
       if (req.method === 'POST' && p === '/api/parole/ecouter') {
         const b = await readJson(req), f = mediaPath(b.file);
         if (!fs.existsSync(f)) throw new Error('Média introuvable');

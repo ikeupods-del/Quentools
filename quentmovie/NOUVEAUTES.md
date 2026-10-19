@@ -10,6 +10,7 @@ Changer aussi `version` dans `package.json` : une version déjà publiée n'est 
 - **Six rubriques au lieu de dix** à gauche : Médias, Texte, Audio (voix, sons, musique), Effets (effets, transitions, calques), Packs et Outils ; les sous-parties se choisissent par des puces en haut de la liste. Les touches 1 à 0 marchent comme avant.
 - **Réglages du clip en onglets** à droite : Découpe, Image, Son, Couleur ; seuls les réglages de l'onglet choisi s'affichent, déjà ouverts.
 - **Une couleur par piste** dans la timeline : titres en jaune, incrustations en violet, vidéo en bleu, son en vert.
+- **Dictée vocale dans l'assistant** : bouton « 🎤 Dicter », tu parles, tu cliques sur « Arrêter », ta demande s'écrit toute seule. Tout se fait sur ton Mac, sans internet (la reconnaissance de la voix s'installe une fois dans Outils → Voix et parole).
 - Le bouton « Demander… ⌘K » remplace « Assistant ». Générer, Doublage et Me filmer passent dans l'accueil (raccourcis inchangés).
 
 ## 1.44.0

@@ -7,21 +7,23 @@ Le propriétaire n'est pas développeur : lui répondre en français simple, agi
   - un nouveau style (gris graphite, un seul bleu pour les actions, coins arrondis) ;
   - trois étapes en haut de l'écran : **Créer, Monter, Publier** ;
   - un **écran d'accueil** : une question « Qu'est-ce qu'on crée aujourd'hui ? », six cartes (importer, me filmer, générer, doublage, podcast, épisode QuentInvest) et les projets à reprendre ;
-  - à gauche, **6 rubriques au lieu de 10** : Audio regroupe voix, sons et musique, et Effets regroupe effets, transitions et calques, avec des puces pour passer de l'un à l'autre.
+  - à gauche, **6 rubriques au lieu de 10** : Audio regroupe voix, sons et musique, et Effets regroupe effets, transitions et calques, avec des puces pour passer de l'un à l'autre ;
+  - à droite, les réglages du clip en 4 onglets (Découpe, Image, Son, Couleur) ;
+  - une couleur par piste dans la timeline ;
+  - la **dictée vocale** dans l'assistant (bouton « Dicter »), qui utilise la reconnaissance de la voix déjà installée sur le Mac.
 - Aucune fonction n'a été retirée et les raccourcis clavier sont inchangés.
 - La maquette complète validée par le propriétaire est dans `design/quentmovie-2/maquette/` (4 écrans) avec une capture de l'ancienne interface.
 
 ## Ce qu'il reste à faire, dans l'ordre (une version publiée à chaque étape)
 
 **2.0.x : finir la nouvelle interface comme sur la maquette**
-- À droite, les réglages du clip rangés en 4 onglets (Image, Son, Vitesse, Couleur) au lieu d'une longue liste, avec en haut une suggestion utile, par exemple « 3 blancs dans ce clip : Couper ».
+- En haut des réglages du clip, une suggestion utile, par exemple « 3 blancs dans ce clip : Couper ».
 - Un écran **Exporter et publier** unique :
   - on choisit la qualité, puis on coche où envoyer (Mac, YouTube, TikTok, AirDrop) ;
   - les textes de publication sont juste en dessous ;
   - un seul bouton.
-- La timeline avec une couleur par piste : titres ambre, incrustations violet, vidéo bleu, voix vert, musique orange.
 
-**2.1 : une vraie discussion avec l'IA**
+**2.1 : une vraie discussion avec l'IA** (la dictée vocale est déjà prête : la reprendre dans le futur panneau)
 - Un panneau « Assistant » où le propriétaire écrit comme dans une conversation : « coupe les blancs de la prise 2 », « mets le titre en jaune ».
 - L'IA répond, propose des boutons d'action, et chaque changement peut être annulé.
 - La mémoire « retiens que… » existe déjà ; elle doit continuer à marcher.
@@ -36,6 +38,12 @@ Le propriétaire n'est pas développeur : lui répondre en français simple, agi
   - la prononciation d'un mot. Un clic sur un mot souligné permet d'écrire comment le dire, de l'écouter et de l'ajouter au dictionnaire ; seules les répliques concernées sont refaites.
 - Garder les réglages de la chaîne : bruitages à −20 dB sous la voix, musique à 15 sur 100. Ne pas les remonter.
 - À étudier d'abord : ce que la fabrication demande d'installer sur le Mac, et combien cela alourdit l'application.
+
+## HyperFrames (envoyé par le propriétaire, à intégrer)
+- Le propriétaire a envoyé les fichiers de présentation du projet **HyperFrames** de HeyGen (licence Apache 2.0, donc utilisable) : le mode d'emploi, la licence et les réglages. Le programme lui-même ne faisait pas partie de l'envoi : il s'installe depuis npm, sous le nom `hyperframes`.
+- Ce que fait HyperFrames : il transforme une page web animée (texte, images, animations, sous-titres, voix off, visuels qui bougent avec le son) en vidéo MP4. On écrit la page, et il filme chaque image dans un navigateur caché.
+- L'idée pour QuentMovie : une rubrique « Animations » qui fabrique des génériques, des écrans de chiffres, des transitions et des habillages réseaux sociaux avec HyperFrames, puis les pose directement dans la timeline. Elle servirait aussi aux écrans de Pico.
+- À vérifier d'abord : ce qu'il faut installer sur le Mac (Node et Chrome) et le poids ajouté à l'application ; puis faire un essai avec un modèle de leur catalogue.
 
 ## Autre sujet en attente : Patrimoine AI
 - La liaison avec la banque est déjà prête dans l'application, mais elle n'est **pas encore en service**.

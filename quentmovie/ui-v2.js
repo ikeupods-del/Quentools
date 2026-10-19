@@ -100,3 +100,26 @@ inspecteur = function () {
   parts[0].insertAdjacentHTML('beforebegin', `<div class="onglets-insp" role="tablist">${presents.map(o => `<button role="tab" data-oi="${o.id}" class="${o.id === ongletInsp ? 'on' : ''}">${o.nom}</button>`).join('')}</div>`);
 };
 $('#insp').addEventListener('click', e => { const b = e.target.closest('[data-oi]'); if (b) { ongletInsp = b.dataset.oi; inspecteur(); } });
+
+// Dictée vocale dans l'assistant : un clic pour parler, un clic pour arrêter ; la reconnaissance de la voix du Mac écrit la demande.
+let dicteeV2 = null;
+async function basculerDictee(bouton, champ) {
+  if (dicteeV2) { dicteeV2.stop(); return; }
+  let flux;
+  try { flux = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { aide('🎤 Micro indisponible : autorise QuentMovie dans Réglages Système → Confidentialité → Micro.'); return; }
+  const morceaux = [], rec = new MediaRecorder(flux); dicteeV2 = rec;
+  bouton.classList.add('on'); bouton.textContent = '⏹ Arrêter';
+  rec.ondataavailable = e => { if (e.data.size) morceaux.push(e.data); };
+  rec.onstop = async () => {
+    flux.getTracks().forEach(t => t.stop()); dicteeV2 = null; bouton.classList.remove('on'); bouton.textContent = '⏳ J’écris…'; bouton.disabled = true;
+    try {
+      const { id } = await (await api('/api/parole/dictee', { method: 'POST', body: new Blob(morceaux, { type: 'audio/webm' }) })).json();
+      const r = await suivreTravail(id, () => {});
+      if (r && r.texte) { champ.value = (champ.value.trim() ? champ.value.trim() + ' ' : '') + r.texte; champ.focus(); }
+      else aide('🎤 Je n’ai rien entendu : parle un peu plus près du micro.');
+    } catch (e) { aide('🎤 ' + esc(e.message || e) + ' (Outils → Voix et parole pour installer la reconnaissance de la voix).'); }
+    bouton.disabled = false; bouton.textContent = '🎤 Dicter';
+  };
+  rec.start();
+}
+document.addEventListener('click', e => { const b = e.target.closest('#asDictee'); if (b) basculerDictee(b, $('#asDemande')); });

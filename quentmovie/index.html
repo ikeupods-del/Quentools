@@ -363,6 +363,7 @@ header .logo{background:#3f5ef0;box-shadow:none;border-radius:7px;width:24px;hei
 .onglets-insp button{flex:1;height:28px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--mut);font-size:12px;font-weight:600}
 .onglets-insp button.on{background:#2a2e38;color:var(--txt)}
 #insp details[hidden]{display:none}
+button.dictee.on{background:#5a1a1f;border-color:#ff5a5f;color:#fff}
 :root{--clip:#2d3d63;--audio:#1f5a4c}
 #entetes .ent{box-shadow:inset 3px 0 0 var(--piste,transparent)}
 #eT{--piste:#f2b92b}#eV2{--piste:#a78bfa}#eV{--piste:#5b78ff}#eA{--piste:#4fd1a5}
@@ -3284,7 +3285,7 @@ async function ouvrirAssistant(demande) {
   ouvrir(`<h2>${icone('assistant')} Assistant de montage</h2>
     <p class="mut">Dis ce que tu veux en français : l’assistant prépare les étapes, tu vérifies, puis il les fait pour toi. Tout s’annule avec ${MAC ? '⌘Z' : 'Ctrl+Z'}.</p>
     <textarea id="asDemande" rows="2" placeholder="ex. : coupe les blancs, ajoute des sous-titres et une musique calme, passe en vertical">${esc(demande || derniereDemande)}</textarea>
-    <div class="ligne" style="margin-top:8px"><button id="asFermer">Fermer</button><button class="pri" id="asComprendre">Préparer les étapes</button></div>
+    <div class="ligne" style="margin-top:8px"><button id="asFermer">Fermer</button><button id="asDictee" class="dictee" title="Dicter ta demande au micro (clique pour arrêter)">🎤 Dicter</button><button class="pri" id="asComprendre">Préparer les étapes</button></div>
     <div class="chips" id="asEx">${EX.map(x => `<button class="chip" data-ex="${esc(x)}">${esc(x)}</button>`).join('')}</div>
     <div id="asPlan"></div>
     <h4 style="margin:14px 0 4px">Suggestions pour ce montage</h4><div id="asSugg" class="mut">Analyse du montage…</div>`, 'large');
