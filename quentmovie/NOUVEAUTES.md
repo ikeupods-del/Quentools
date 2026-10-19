@@ -3,6 +3,15 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.7.0
+- **Tableau des projets** (bouton sur l'accueil, à côté d'« Ouvrir un projet », ou ⇧⌘O) : nombre de projets, ceux qui ont un export, les exports périmés à refaire, et la place sur le disque avec « Ranger » qui libère les fichiers recréables (jamais tes projets, médias ni exports). Cartes avec vignette, format, durée, date et état ; recherche, filtres et tri ; Ouvrir, Revoir l'export image par image, Dupliquer, Supprimer.
+- **Nouvelles animations** (Texte → Animations), fond crème ou sombre :
+  - grand titre en grosses lettres qui arrive mot par mot, un mot en couleur et une phrase manuscrite soulignée ;
+  - courbe de parcours avec trois étapes ;
+  - grille de vignettes qui apparaissent une à une ;
+  - cadre arrondi dans un coin, pour ta caméra au-dessus d'un fond.
+- ⌘S propose le nom du projet ouvert.
+
 ## 2.6.0
 - **Retours image par image** (onglet « Retours » à côté de l'Assistant) : mets la vidéo sur l'image exacte (−1 s, −1 image, +1 image, +1 s), écris ton retour, Entrée. La liste garde le minutage et le numéro d'image ; un clic y ramène, un point rose sur la timeline le montre, et les retours suivent les coupes. « ✨ Faire corriger » envoie chaque retour à l'assistant, à son instant : tu valides ses propositions. « Copier » et « .json » pour garder la liste.
 - **Revoir un rendu exporté** en grand, image par image (Espace, ← →, ↑ pour écrire), avec plein écran et repères sur la barre.

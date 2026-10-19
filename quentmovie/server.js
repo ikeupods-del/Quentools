@@ -226,6 +226,7 @@ function create(opts = {}) {
   const RP = require('./routes-publier');
   const RPI = require('./routes-pico');
   const RAN = require('./routes-animations');
+  const RPR = require('./routes-projets');
   // Réglages locaux (clés gratuites des banques de photos : gardées dans le dossier QuentMovie de l'utilisateur, jamais dans le dépôt)
   const REGL = path.join(BASE, 'reglages.json');
   const lireRegl = () => { try { return JSON.parse(fs.readFileSync(REGL, 'utf8')); } catch (e) { return {}; } };
@@ -1699,7 +1700,7 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && p.startsWith('/media/')) return serveFile(req, res, mediaPath(decodeURIComponent(p.slice(7))));
       if (req.method === 'GET' && p.startsWith('/lib/')) return serveFile(req, res, mediaPath('lib:' + decodeURIComponent(p.slice(5))));
       // Studio : détourage de la personne (MediaPipe, en local) et moteur de mélange du fond virtuel
-      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js' || p === '/ui-voix.js' || p === '/ui-publier.js' || p === '/ui-v2.js' || p === '/ui-chat.js' || p === '/ui-animations.js' || p === '/ui-retours.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
+      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js' || p === '/ui-voix.js' || p === '/ui-publier.js' || p === '/ui-v2.js' || p === '/ui-chat.js' || p === '/ui-animations.js' || p === '/ui-retours.js' || p === '/ui-projets.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
       if (req.method === 'GET' && p.startsWith('/vendor/vision/')) {
         const n = decodeURIComponent(p.slice(15));
         if (!/^(vision_bundle\.m?js|wasm\/vision_wasm(_nosimd)?_internal\.(js|wasm))$/.test(n)) return send(res, 404, { error: 'Introuvable' });
@@ -1708,7 +1709,7 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && /^\/modeles\/[\w.]+\.tflite$/.test(p)) return serveFile(req, res, path.join(__dirname, p));
       if (req.method === 'GET' && p.startsWith('/proxy/')) return serveFile(req, res, path.join(PROXIES, safeName(decodeURIComponent(p.slice(7)))));
       if (req.method === 'GET' && p === '/api/exports') { // vidéos exportées, les plus récentes d'abord (revue image par image)
-        let l = []; try { l = fs.readdirSync(EXPORTS).filter(n => !n.startsWith('.') && !/\.part$/.test(n)).map(n => { const st = fs.statSync(path.join(EXPORTS, n)); return { nom: n, taille: st.size, date: st.mtimeMs }; }).filter(x => x.taille > 0); } catch (e) { /* dossier absent */ }
+        let l = []; try { l = fs.readdirSync(EXPORTS).filter(n => !n.startsWith('.') && !/\.part$/.test(n) && n !== 'index.json').map(n => { const st = fs.statSync(path.join(EXPORTS, n)); return { nom: n, taille: st.size, date: st.mtimeMs }; }).filter(x => x.taille > 0); } catch (e) { /* dossier absent */ }
         return send(res, 200, { exports: l.sort((x, y) => y.date - x.date) });
       }
       if (req.method === 'GET' && p.startsWith('/exports/')) return serveFile(req, res, path.join(EXPORTS, safeName(decodeURIComponent(p.slice(9)))), true);
@@ -2065,7 +2066,9 @@ function buildClip(c, P, o = {}) {
         // export d'un passage seulement (essai avant un long export) : le montage est découpé entre s et e
         const pl = body.plage, coupe = !!pl && num(pl.e, 0) > num(pl.s, 0), projet = coupe ? require('./decoupe').extraireSegment(body.project || {}, num(pl.s, 0), num(pl.e, 0)) : body.project || {};
         if (coupe) job.extrait = true;
-        exportProject(job, projet, { proxy: p === '/api/apercu' }).catch(e => { job.error = job.annule ? 'Export annulé.' : messageClair(e.message); })
+        // export d'un projet nommé : lien gardé dans exports/index.json (tableau des projets : à jour ou périmé)
+        const lien = p === '/api/export' && body.nomProjet ? { projet: path.basename(projFile(String(body.nomProjet)), '.qmovie'), empreinteProjet: RPR.empreinte(JSON.stringify(body.project || {})), extrait: coupe } : null;
+        exportProject(job, projet, { proxy: p === '/api/apercu' }).then(() => { if (lien && job.out) RPR.noterExport(EXPORTS, job.out, lien); }).catch(e => { job.error = job.annule ? 'Export annulé.' : messageClair(e.message); })
           .finally(() => { if (job.dir) dossiersAnnules.delete(job.dir); }); // les FFmpeg du dossier sont déjà arrêtés (exportProject les attend)
         return send(res, 200, { id });
       }
@@ -2098,6 +2101,7 @@ function buildClip(c, P, o = {}) {
         fs.renameSync(src, dest);
         return send(res, 200, await importerPrise(dest));
       }
+      { const r = await RPR.creer({ BASE, EXPORTS, PROJETS, TMP, send, readJson, mediaPath, projFile, occupe: () => [...jobs.values()].some(j => !j.done && !j.error) })(req, res, p); if (r !== RPR.NON) return r; } // tableau des projets (routes-projets.js)
       { const r = await RAN.creer({ MEDIAS, FFMPEG, opts, send, readJson, travail })(req, res, p); if (r !== RAN.NON) return r; } // animations (génériques, chiffres clés, bandeaux…) : routes-animations.js
       { const r = await RPI.creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA: () => { try { if (ia && ia.arreter) ia.arreter(); } catch (e) { /* déjà arrêtée */ } } })(req, res, p, url); if (r !== RPI.NON) return r; } // épisode Pico fabriqué dans QuentMovie, navigateur des écrans (routes-pico.js)
       { const r = await RP.creer({ PUB, opts, send, readJson, travail, EXPORTS, safeName })(req, res, p); if (r !== RP.NON) return r; } // publication YouTube et TikTok (routes-publier.js)

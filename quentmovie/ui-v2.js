@@ -50,12 +50,13 @@ async function afficherAccueil() {
     <button class="acc-demande" data-acc="assistant"><svg class="ic"><use href="#i-assistant"/></svg><span>Décris ce que tu veux faire : « coupe les blancs », « sous-titres en italien »…</span><kbd>⌘K</kbd></button>
     <h3>Commencer</h3>
     <div class="acc-cartes">${CARTES_V2.map(c => `<button class="acc-carte" data-acc="${c.id}"><span class="acc-ic" style="background:${c.fond}"><svg viewBox="0 0 24 24" fill="none" stroke="${c.couleur}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${c.icone}"/></svg></span><span class="acc-t"><b>${c.titre}</b><small>${c.texte}</small></span>${c.touche ? `<kbd>${c.touche}</kbd>` : ''}</button>`).join('')}</div>
-    <h3>Reprendre un projet</h3><div class="acc-recents"><p class="mut">Chargement…</p></div>
+    <h3 class="acc-h3">Reprendre un projet <button class="acc-tous" data-acc="projets" title="Tous les projets, leurs exports et la place sur le disque (⇧⌘O)">Tableau des projets <kbd>⇧⌘O</kbd></button></h3><div class="acc-recents"><p class="mut">Chargement…</p></div>
   </div>`;
   document.body.appendChild(a);
   a.onclick = e => {
     const b = e.target.closest('[data-acc],[data-acc-pr]'); if (!b) return;
     if (b.dataset.accPr !== undefined) return reprendreV2(b.dataset.accPr);
+    if (b.dataset.acc === 'projets') return ouvrirTableauProjets(); // fenêtre par-dessus l'accueil
     masquerAccueil();
     if (b.dataset.acc === 'assistant') ouvrirAssistant(); else ACTIONS_V2[b.dataset.acc]();
   };
@@ -306,7 +307,7 @@ async function lancerPublierV2() {
   const t0 = Date.now(), reste = p => { if (p < 0.04 || p >= 0.99) return ''; const r = (Date.now() - t0) / 1000 * (1 - p) / p; return r < 45 ? ' · moins d’une minute' : ` · environ ${Math.round(r / 60)} min restante${r >= 90 ? 's' : ''}`; };
   const barre = (p, t) => { const b = $('#barreExp i'); if (b) b.style.width = Math.round(p * 100) + '%'; const x = $('#xTxt'); if (x) x.textContent = t; };
   let j;
-  try { j = await lancerJob('/api/export', { project: proj, plage }, (p, s) => barre(p, `${s} — ${Math.round(p * 100)} %${reste(p)}`), id => { idExp = id; }); }
+  try { j = await lancerJob('/api/export', { project: proj, plage, nomProjet: projetCourant || undefined }, (p, s) => barre(p, `${s} — ${Math.round(p * 100)} %${reste(p)}`), id => { idExp = id; }); }
   catch (e) { exportEnCours = false; z.innerHTML = `<p class="${/annulé/.test(e.message) ? 'mut' : 'err'}">${esc(e.message)}</p><button id="xFin">Revenir</button>`; z.querySelector('#xFin').onclick = () => exporter(); signal('Export : ' + e.message); preparerEnFond(); return; }
   try { await finExportV2(j, D, T, z, t0, barre); } finally { exportEnCours = false; } // l'envoi en ligne compte dans l'export : pas de second export pendant ce temps
   preparerEnFond();

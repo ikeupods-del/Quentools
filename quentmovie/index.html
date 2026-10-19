@@ -3503,13 +3503,16 @@ function demander(titre, defaut) {
     $('#sOk').onclick = () => fin(i.value.trim()); $('#sAnn').onclick = () => fin(null); i.onkeydown = e => { if (e.key === 'Enter') fin(i.value.trim()); if (e.key === 'Escape') { e.stopPropagation(); fin(null); } };
   });
 }
-async function nouveau() { if (proj.clips.length && !confirm('Commencer un nouveau projet ? Pense à enregistrer le projet actuel.')) return; proj = { ...proj, clips: [], audio: [], pistes: [], textes: [], markers: [], etatPistes: {}, gen: null, nomsReperes: {}, resumesChapitres: {}, analyse: null }; sel = selA = selCut = selP = selT = -1; selObjs.clear(); gt = 0; rendu = null; commit(); tout(); apercu(); }
+// nom du projet enregistré en cours (lien export ↔ projet du tableau des projets), gardé d'une session à l'autre
+let projetCourant = (() => { try { return localStorage.getItem('qm:projet') || ''; } catch (e) { return ''; } })();
+const choisirProjetCourant = n => { projetCourant = n || ''; try { localStorage.setItem('qm:projet', projetCourant); } catch (e) { /* stockage indisponible */ } };
+async function nouveau() { if (proj.clips.length && !confirm('Commencer un nouveau projet ? Pense à enregistrer le projet actuel.')) return; choisirProjetCourant(''); proj = { ...proj, clips: [], audio: [], pistes: [], textes: [], markers: [], etatPistes: {}, gen: null, nomsReperes: {}, resumesChapitres: {}, analyse: null }; sel = selA = selCut = selP = selT = -1; selObjs.clear(); gt = 0; rendu = null; commit(); tout(); apercu(); }
 async function sauver() {
-  const n = await demander('Nom du projet', 'Mon montage'); if (!n) return;
+  const n = await demander('Nom du projet', projetCourant || 'Mon montage'); if (!n) return;
   let items = []; try { items = (await (await api('/api/projets')).json()).items || []; } catch (e) { /* liste indisponible */ }
   try {
-    if (items.includes(n) && !confirm(`Un projet « ${n} » existe déjà. Le remplacer ?`)) return;
-    await api('/api/projets/' + enc(n), { method: 'PUT', body: snap() }); signal('Projet « ' + n + ' » enregistré.');
+    if (items.includes(n) && n !== projetCourant && !confirm(`Un projet « ${n} » existe déjà. Le remplacer ?`)) return;
+    await api('/api/projets/' + enc(n), { method: 'PUT', body: snap() }); choisirProjetCourant(n); signal('Projet « ' + n + ' » enregistré.');
   } catch (e) { signal('Projet non enregistré : ' + e.message); }
 }
 const PROJ0 = JSON.stringify(proj); // réglages par défaut d'un projet
@@ -3525,7 +3528,7 @@ function poserProjet(s) {
 async function ouvrirProjetNomme(n) {
   let s; try { s = JSON.parse(await (await api('/api/projets/' + enc(n))).text()); } catch (e) { s = null; }
   if (!s || !Array.isArray(s.clips)) return signal(`Le projet « ${n} » est illisible : il n’a pas été ouvert.`);
-  stopLecture(); const manque = poserProjet(s);
+  stopLecture(); const manque = poserProjet(s); choisirProjetCourant(n);
   sel = proj.clips.length ? 0 : -1; selA = selCut = selP = selT = -1; selObjs.clear(); gt = 0; rendu = null; $('#boite').onclick = null; fermer(); commit(); tout(); apercu();
   signal(`Projet « ${n} » ouvert.` + (manque ? ` ${manque} élément${manque > 1 ? 's' : ''} retiré${manque > 1 ? 's' : ''} : fichier introuvable dans tes médias.` : ''));
 }
@@ -4627,7 +4630,7 @@ const RACCOURCIS = [
   ['Lecture', [['Espace', 'Lire / pause (avec les effets)'], ['⌥ Espace', 'Lire le clip sans effets'], ['J / L', 'Reculer / avancer d’1 seconde'], ['K', 'Pause'], ['← / →', 'Image précédente / suivante'], ['⇧ ← / →', '1 seconde'], ['↑ / ↓', 'Clip précédent / suivant'], ['Début / Fin', 'Début / fin de la timeline'], ['F', 'Plein écran de la visionneuse'], [M + ' R', 'Aperçu avec effets'], ['⇧' + M + ' R', 'Me filmer (caméra, micro, prompteur)'], ['R / P (studio)', 'Enregistrer ou arrêter / mettre en pause et reprendre la prise'], ['M / T / O / E (studio)', 'Afficher en direct : image ou vidéo, texte suivant, logo, partage d’écran'], ['⇧' + M + ' G', 'Générer une vidéo à partir d’un sujet'], ['⇧' + M + ' D', 'Doublage : enregistrer ta voix réplique par réplique'], ['Espace / L / ← → (doublage)', 'Enregistrer ou arrêter / réécouter / réplique précédente ou suivante']]],
   ['Assistant et outils', [[M + ' K', 'Assistant de montage : « monte ma vidéo », « chapitre ma vidéo », « crée des clips TikTok »…'], ['A', 'Outil Sélection'], ['B', 'Outil Lame (coupe là où tu cliques)'], ['N', 'Magnétisme activé / désactivé'], ['G', 'Grille des tiers sur la visionneuse'], ['Double-clic sur un repère', 'Le nommer (chapitres YouTube)']]],
   ['Montage', [['S ou ' + M + ' B', 'Couper à la tête de lecture (l’image et son son détaché)'], ['D', 'Détacher le son du clip (piste audio à part)'], ['⇧ clic / ' + M + ' clic', 'Sélectionner plusieurs clips (détacher, supprimer, vitesse… en une fois)'], [M + ' A', 'Tout sélectionner'], ['Clic droit', 'Menu du clip : détacher le son, image fixe, vitesse, copier…'], ['I / O', 'Début / fin du clip à la tête de lecture'], ['Suppr', 'Supprimer le clip : son détaché retiré avec lui, la suite se recolle'], [M + ' D', 'Dupliquer'], [M + ' [ / ]', 'Déplacer à gauche / droite'], [M + ' C / V', 'Copier / coller un clip'], ['⌥' + M + ' V', 'Coller seulement les effets'], ['M', 'Ajouter un repère'], ['[ / ]', 'Repère précédent / suivant']]],
-  ['Fichier et affichage', [[M + ' N / O / S', 'Nouveau / ouvrir / enregistrer'], [M + ' I', 'Importer des médias'], [M + ' E', 'Exporter'], [M + ' Z / ⇧' + M + ' Z', 'Annuler / rétablir'], ['+ / −', 'Zoom de la timeline'], ['⇧ Z', 'Tout afficher'], [M + ' + molette', 'Zoom à la souris'], ['1 … 9', 'Onglets Médias, Effets, Transitions, Titres, Voix, Sons, Musique, Calques, Outils'], ['T', 'Titres'], ['?', 'Cette aide']]],
+  ['Fichier et affichage', [[M + ' N / O / S', 'Nouveau / ouvrir / enregistrer'], ['⇧' + M + ' O', 'Tableau des projets (exports à refaire, place sur le disque)'], [M + ' I', 'Importer des médias'], [M + ' E', 'Exporter'], [M + ' Z / ⇧' + M + ' Z', 'Annuler / rétablir'], ['+ / −', 'Zoom de la timeline'], ['⇧ Z', 'Tout afficher'], [M + ' + molette', 'Zoom à la souris'], ['1 … 9', 'Onglets Médias, Effets, Transitions, Titres, Voix, Sons, Musique, Calques, Outils'], ['T', 'Titres'], ['?', 'Cette aide']]],
   ['À la souris', [['Glisser un clip', 'Changer son ordre'], ['Bords d’un clip', 'Raccourcir ou rallonger'], ['Bords d’un son', 'Raccourcir ou rallonger (le son garde sa place)'], ['Glisser un son', 'Se colle à la tête de lecture, aux clips et aux repères (⌥ pour éviter)'], ['Clic sur la règle', 'Placer la tête de lecture'], ['Glisser un effet', 'Le poser sur un clip'], ['⇧ clic sur un repère', 'Le supprimer']]]
 ];
 function afficherAide() {
@@ -4651,6 +4654,7 @@ document.addEventListener('keydown', e => {
     if (kl === 'z') return faire(() => undo(e.shiftKey ? 1 : -1));
     if (kl === 'a') return faire(() => { selObjs = new Set(proj.clips); tout(); aide(`${proj.clips.length} clips sélectionnés : Suppr, D (détacher le son), clic droit…`); });
     if (kl === 'd' && e.shiftKey) return faire(ouvrirDoublage);
+    if (kl === 'o' && e.shiftKey) return faire(ouvrirTableauProjets);
     if (kl === 'b') return faire(couper); if (kl === 'd') return faire(dupliquer); if (kl === 'n') return faire(nouveau); if (kl === 'o') return faire(ouvrirProjet);
     if (kl === 's') return faire(sauver); if (kl === 'i') return faire(() => $('#fichiers').click()); if (kl === 'e') return faire(exporter);
     if (kl === 'k') return faire(() => ouvrirAssistant());
@@ -4713,5 +4717,6 @@ async function proposerPrisesInterrompues() {
 <script src="/ui-chat.js"></script>
 <script src="/ui-animations.js"></script>
 <script src="/ui-retours.js"></script>
+<script src="/ui-projets.js"></script>
 </body>
 </html>

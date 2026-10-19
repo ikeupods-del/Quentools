@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -58,6 +58,8 @@
     "ui-v2.js",
     "ui-chat.js",
     "ui-retours.js",
+    "ui-projets.js",
+    "routes-projets.js",
     "routes-pico.js",
     "routes-animations.js",
     "animations.js",
