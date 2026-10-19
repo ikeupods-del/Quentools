@@ -87,6 +87,17 @@ async function navigateurEssai(exe) {
       suite: { titre: 'La suite', texte: 'La prochaine fois : le centime.' }, sources: ['S1 · Définition de l’euro'], miniature: { lignes: ['UN EURO', 'C’EST QUOI ?'], accent: 'EURO', bas: ['1 €', '→ 100 c'] }
     };
     const t0 = Date.now(), etapes = new Set();
+    // sans enregistrement de ta voix, rien à imiter : refusé tout de suite, avec la marche à suivre
+    const sv = await post('/api/pico/fabriquer', { fiche, options: { court: true, sansTiktok: true, voix: 'ma-voix' } }), svj = await sv.json();
+    check('ta voix : sans enregistrement, refusée tout de suite', sv.status >= 400 && /Doublage/.test(svj.error || ''), JSON.stringify(svj));
+    const sa = await post('/api/quentinvest/auto', { demande: 'fais une vidéo sur le krach de 2008', options: { voix: 'ma-voix' } }), saj = await sa.json();
+    check('vidéo d’une traite : sans ta voix, refusée avant d’écrire le texte', sa.status >= 400 && /Doublage/.test(saj.error || ''), JSON.stringify(saj));
+    check('état : secondes de ta voix enregistrées', (await (await fetch(U('/api/pico'))).json()).maVoix.assez === false);
+    // corpus « Ma voix » : trois répliques de 4 s (comme après quelques prises du Doublage)
+    const corpus = path.join(base, 'ma-voix'), idx = {}; fs.mkdirSync(path.join(corpus, 'wavs'), { recursive: true });
+    for (const k of [1, 2, 3]) { const id = 'p' + k; execFileSync(bins.ffmpeg, ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=f=180:d=4', '-ar', '24000', '-ac', '1', path.join(corpus, 'wavs', id + '.wav')]); idx[id] = { texte: 'Phrase lue numéro ' + k, duree: 4 }; }
+    fs.writeFileSync(path.join(corpus, 'index.json'), JSON.stringify(idx));
+    check('état : ta voix enregistrée suffit', (await (await fetch(U('/api/pico'))).json()).maVoix.assez === true);
     const { id } = await (await post('/api/pico/fabriquer', { fiche, options: { court: true, sansTiktok: true } })).json();
     let j; for (;;) { await new Promise(r => setTimeout(r, 700)); j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.step) etapes.add(j.step.replace(/ \d+\/\d+$/, '')); if (j.error || j.done) break; }
     const r = j.resultat || {};

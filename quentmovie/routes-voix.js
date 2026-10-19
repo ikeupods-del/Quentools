@@ -147,6 +147,8 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
       const script = String(b.script || '').slice(0, 60000), sujet = FI.sujetDe(String(b.demande || '').slice(0, 200)).slice(0, 120);
       if (script.trim()) { if (script.trim().length < 80) throw new Error('Ton script est trop court : une accroche, quelques paragraphes et une conclusion.'); }
       else if (sujet.length < 3) throw new Error('Écris le sujet de la vidéo (par exemple « fais une vidéo sur le krach de 2008 »).');
+      const voixClone = require('./voix-clone'); // ta voix clonée sans enregistrement : refusé tout de suite, avant d'écrire le texte
+      if (String((b.options || {}).voix || 'ma-voix') === 'ma-voix' && !voixClone.voixEnregistree(BASE).assez) throw new Error(voixClone.SANS_VOIX);
       const port = req.socket.localPort, U = q => `http://127.0.0.1:${port}${q}`, o = b.options && typeof b.options === 'object' ? b.options : {};
       return send(res, 200, travail(async job => {
         const part = (a, z) => k => { job.step = k.step || job.step; job.progress = a + (z - a) * (k.progress || 0); };

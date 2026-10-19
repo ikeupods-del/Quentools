@@ -38,6 +38,37 @@ async function finGroupe(p) {
 }
 function arreterTout() { for (const p of groupes) { try { process.kill(-p.pid, 'SIGKILL'); } catch (e) { /* déjà fini */ } } groupes.clear(); }
 
+// secondes de ta voix utilisables pour la cloner, choisies comme choisir_reference d'essai.py : répliques de 3 à 10 s
+// (corpus « Ma voix », sinon anciens doublages), jusqu'à environ 12 s ; il en faut au moins VOIX_MIN.
+const VOIX_MIN = 8;
+function dureeWav(f) {
+  try {
+    const d = fs.readFileSync(f); let o = 12, fmt = null;
+    while (o + 8 <= d.length) {
+      const id = d.toString('latin1', o, o + 4), n = d.readUInt32LE(o + 4);
+      if (id === 'fmt ') fmt = { canaux: d.readUInt16LE(o + 10), taux: d.readUInt32LE(o + 12), bits: d.readUInt16LE(o + 22) };
+      if (id === 'data' && fmt) return Math.min(n, d.length - o - 8) / (fmt.taux * fmt.canaux * fmt.bits / 8);
+      o += 8 + n + (n & 1);
+    }
+  } catch (e) { /* illisible */ }
+  return 0;
+}
+function voixEnregistree(base) {
+  const durees = [], voix = path.join(base, 'ma-voix');
+  try { for (const [id, x] of Object.entries(JSON.parse(fs.readFileSync(path.join(voix, 'index.json'), 'utf8')))) if ((x.texte || '').trim() && fs.existsSync(path.join(voix, 'wavs', id + '.wav'))) durees.push(+x.duree || 0); } catch (e) { /* pas de corpus */ }
+  if (!durees.some(t => t >= 3 && t <= 10)) {
+    const racine = path.join(base, 'doublages'); let noms = []; try { noms = fs.readdirSync(racine); } catch (e) { /* aucun doublage */ }
+    for (const nom of noms) {
+      let lignes = []; try { lignes = JSON.parse(fs.readFileSync(path.join(racine, nom, 'script.json'), 'utf8')).lignes || []; } catch (e) { continue; }
+      lignes.forEach((t, n) => { if (String(t).trim()) durees.push(dureeWav(path.join(racine, nom, `v${String(n).padStart(2, '0')}.wav`))); });
+    }
+  }
+  let total = 0;
+  for (const t of durees.filter(t => t >= 3 && t <= 10).sort((a, b) => Math.abs(a - 6) - Math.abs(b - 6))) { if (total >= 12) break; if (total + t <= 16) total += t; }
+  return { secondes: +total.toFixed(1), assez: total >= VOIX_MIN };
+}
+const SANS_VOIX = `Ta voix clonée a besoin de tes enregistrements : il faut au moins ${VOIX_MIN} secondes de ta voix. Ouvre le Doublage (⇧⌘D) et lis 3 ou 4 phrases à voix haute (3 à 10 secondes chacune), puis relance. Tu peux aussi choisir un doublage déjà enregistré.`;
+
 function creer(base) {
   const dossier = path.join(base, 'voix-clone'), essais = path.join(dossier, 'essais'), voix = path.join(base, 'ma-voix');
   const pythonLocal = () => process.env.QM_PYTHON || path.join(dossier, 'python', 'bin', 'python3');
@@ -162,6 +193,7 @@ function creer(base) {
     if (!MOTEURS[moteur]) throw new Error('Modèle de voix clonée inconnu');
     const aFaire = lignes.filter(x => { try { return fs.readFileSync(x.fichier + '.txt', 'utf8') !== x.texte || !fs.existsSync(x.fichier); } catch (e) { return true; } });
     if (!aFaire.length) return { faites: 0 };
+    if (!voixEnregistree(base).assez) throw new Error(SANS_VOIX); // avant d'installer plusieurs Go pour rien
     const libre = espaceLibre();
     if (!fs.existsSync(marque(moteur)) && libre != null && libre < MOTEURS[moteur].go * 2 + 2) throw new Error(`Espace disque insuffisant pour installer ta voix clonée : ${libre} Go libres, environ ${MOTEURS[moteur].go * 2 + 2} Go nécessaires.`);
     await preparerPython(job); await installer(moteur, job, [0.02, 0.2]);
@@ -185,4 +217,4 @@ function creer(base) {
   return { etat, essai, dire, prete, annuler, fichier, journalFin, dossier, essais, MOTEURS };
 }
 
-module.exports = { creer, MOTEURS, enGroupe, finGroupe, arreterTout };
+module.exports = { creer, MOTEURS, voixEnregistree, SANS_VOIX, VOIX_MIN, enGroupe, finGroupe, arreterTout };

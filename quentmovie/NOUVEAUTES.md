@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.7.2
+- **Ma voix clonée** : elle imite ta voix à partir de tes enregistrements du Doublage. S'il n'y en a pas encore assez (au moins 8 secondes : 3 ou 4 phrases lues), QuentMovie le dit tout de suite, avec un bouton « 🎙 Enregistrer ma voix », au lieu de lancer l'écriture et l'installation pour rien.
+
 ## 2.7.1
 - Correction : « Faire la vidéo » (Épisode QuentInvest) s'arrêtait sur « Cannot find module './fiche-ia' » dans l'application installée.
 
