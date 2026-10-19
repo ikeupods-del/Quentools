@@ -101,7 +101,7 @@ function chromium() {
     await pg.keyboard.press('Escape'); await ev(() => fermer());
     // contrôle d'une fiche QuentInvest depuis le doublage
     await ev(() => ouvrirDoublage()); await pg.fill('#dbTexte', 'Une.'); await pg.fill('#dbNom', 'ui-fiche'); await pg.click('#dbGo'); await pg.waitForSelector('#dbFiche', { timeout: 10000 });
-    await pg.click('#dbFiche'); await pg.waitForSelector('#fiGo', { timeout: 10000 });
+    await pg.click('#dbFiche'); await pg.waitForSelector('#fiAvance summary', { timeout: 10000 }); await pg.click('#fiAvance summary'); await pg.waitForSelector('#fiGo', { timeout: 10000 });
     await pg.fill('#fiTexte', JSON.stringify({ numero: 1, slug: 'x', titre: 'T', blocs: [{ texte: 'Un bloc.' }] })); await pg.click('#fiGo'); await pg.waitForFunction(() => /À corriger/.test(document.querySelector('#fiRes').textContent), null, { timeout: 8000 });
     check('fiche : une fiche incomplète est signalée dans la fenêtre', await ev(() => /incomplète/.test(document.querySelector('#fiRes').textContent)));
     await pg.fill('#fiTexte', fs.readFileSync(path.join(__dirname, '..', '..', 'design', 'quentinvest-youtube', 'fiches', '03-interets-composes.json'), 'utf8')); await pg.click('#fiGo'); await pg.waitForFunction(() => /fabricable|À corriger/.test(document.querySelector('#fiRes').textContent), null, { timeout: 8000 });
