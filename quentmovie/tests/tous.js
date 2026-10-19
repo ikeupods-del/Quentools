@@ -2,7 +2,7 @@
 // (lui et ses processus) et nommé, au lieu de bloquer la construction de l'application. QM_ESSAI_MAX_MIN : durée maximale en minutes.
 'use strict';
 const { spawn } = require('child_process'), path = require('path');
-const ESSAIS = ['run', 'export', 'maj', 'compositeur', 'generateur', 'parole', 'pistes', 'cadrage', 'ia', 'assistant', 'voix', 'doublage', 'voix-clone', 'prononciations', 'fiche', 'publication', 'pico', 'animations', 'montage', 'chapitrage', 'banques', 'packs', 'ui', 'fenetres', 'retours', 'projets', 'parcours'];
+const ESSAIS = ['paquet', 'run', 'export', 'maj', 'compositeur', 'generateur', 'parole', 'pistes', 'cadrage', 'ia', 'assistant', 'voix', 'doublage', 'voix-clone', 'prononciations', 'fiche', 'publication', 'pico', 'animations', 'montage', 'chapitrage', 'banques', 'packs', 'ui', 'fenetres', 'retours', 'projets', 'parcours'];
 const MAX = (+process.env.QM_ESSAI_MAX_MIN || 25) * 60000, choisis = process.argv.slice(2);
 (async () => {
   for (const nom of ESSAIS.filter(n => !choisis.length || choisis.includes(n))) {

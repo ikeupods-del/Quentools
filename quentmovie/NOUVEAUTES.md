@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.7.1
+- Correction : « Faire la vidéo » (Épisode QuentInvest) s'arrêtait sur « Cannot find module './fiche-ia' » dans l'application installée.
+
 ## 2.7.0
 - **Tableau des projets** (bouton sur l'accueil, à côté d'« Ouvrir un projet », ou ⇧⌘O) : nombre de projets, ceux qui ont un export, les exports périmés à refaire, et la place sur le disque avec « Ranger » qui libère les fichiers recréables (jamais tes projets, médias ni exports). Cartes avec vignette, format, durée, date et état ; recherche, filtres et tri ; Ouvrir, Revoir l'export image par image, Dupliquer, Supprimer.
 - **Nouvelles animations** (Texte → Animations), fond crème ou sombre :
