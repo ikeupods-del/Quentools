@@ -11,6 +11,7 @@ Changer aussi `version` dans `package.json` : une version déjà publiée n'est 
   - si l'assistant ne sait pas faire, « 📍 Garder comme note » laisse ton commentaire sur la timeline.
 - **Épisodes de Pico avec ta voix** : au moment de « 🎬 Fabriquer », choisis « Ma voix clonée » (chaque réplique est dite par ta voix clonée, à partir de tes enregistrements) ou un de tes doublages enregistrés. La voix de synthèse de Pico n'est plus téléchargée si tu ne t'en sers pas. Relire et refaire une phrase la redit avec ta voix.
 - **Ton propre script** : colle ton texte dans la fenêtre Fiche, puis « 📄 Transformer mon script en fiche ». QuentMovie le découpe en répliques et choisit les écrans (chiffres, définitions, listes) sans rien ajouter. Le brouillon automatique à partir d'un sujet reste là, pour tous les sujets d'économie et d'investissement qui ont un article Wikipédia.
+- **Relire et corriger un épisode de Pico** (« 🔍 Relire et corriger ») : l'expression de Pico à chaque réplique, une phrase, ou la prononciation d'un mot (clic sur le mot, ▶ écoute, ➕ dictionnaire). Seules les répliques changées sont refaites (détails dans 2.2.1 ci-dessous).
 - **Plus fluide sur MacBook Air** : une seule fabrication d'épisode à la fois, en priorité basse (le montage reste fluide pendant ce temps). L'IA du Mac libère sa mémoire pendant que ta voix clonée travaille.
 
 ## 2.2.1
