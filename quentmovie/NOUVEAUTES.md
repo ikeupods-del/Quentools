@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.4.1
+- **Ta voix clonée fonctionne dans l'application** : « Fabriquer l'épisode » avec « Ma voix clonée » et l'essai « Voix clonée » du Doublage s'arrêtaient sur « can't open file … essai.py ». C'est réparé.
+
 ## 2.4.0
 - **Animations** (rubrique Texte → Animations) : sept modèles animés à remplir, regarder et poser d'un clic, fabriqués sur ton Mac sans rien installer :
   - générique d'ouverture, posé au début de la vidéo ;

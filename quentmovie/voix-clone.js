@@ -11,6 +11,8 @@ const MOTEURS = {
 };
 const PYTHON_RELEASES = 'https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest';
 const ARCH = process.arch === 'arm64' ? 'aarch64' : 'x86_64';
+// Python ne lit pas dans l'archive de l'application : le script est livré à côté, dans app.asar.unpacked (asarUnpack de package.json)
+const ESSAI = path.join(__dirname, 'voix-clone', 'essai.py').replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep);
 
 function creer(base) {
   const dossier = path.join(base, 'voix-clone'), essais = path.join(dossier, 'essais'), voix = path.join(base, 'ma-voix');
@@ -108,7 +110,7 @@ function creer(base) {
       try {
         await installer(m, job, parts[i]);
         job.progress = 0.1 + 0.8 * (i + 0.5) / liste.length;
-        await lancer(job, pyVenv(m), [path.join(__dirname, 'voix-clone', 'essai.py'), '--moteur', m, '--voix', voix, '--sortie', essais], { etape: MOTEURS[m].nom });
+        await lancer(job, pyVenv(m), [ESSAI, '--moteur', m, '--voix', voix, '--sortie', essais], { etape: MOTEURS[m].nom });
         job.progress = 0.1 + 0.8 * (i + 1) / liste.length;
       } catch (e) {
         if (job.annule) throw e;
@@ -131,7 +133,7 @@ function creer(base) {
     await preparerPython(job); await installer(moteur, job, [0.02, 0.2]);
     const liste = path.join(dossier, `lot-${process.pid}-${Date.now()}.json`); fs.mkdirSync(dossier, { recursive: true });
     fs.writeFileSync(liste, JSON.stringify(aFaire.map(x => ({ texte: x.texte, fichier: x.fichier }))));
-    try { await lancer(job, pyVenv(moteur), [path.join(__dirname, 'voix-clone', 'essai.py'), '--moteur', moteur, '--voix', voix, '--sortie', path.join(dossier, 'reference'), '--lot', liste], { etape: 'Ta voix' }); }
+    try { await lancer(job, pyVenv(moteur), [ESSAI, '--moteur', moteur, '--voix', voix, '--sortie', path.join(dossier, 'reference'), '--lot', liste], { etape: 'Ta voix' }); }
     finally { fs.rmSync(liste, { force: true }); }
     for (const x of aFaire) { if (!fs.existsSync(x.fichier)) throw new Error('Réplique non dite par la voix clonée : ' + path.basename(x.fichier)); fs.writeFileSync(x.fichier + '.txt', x.texte); }
     return { faites: aFaire.length };
