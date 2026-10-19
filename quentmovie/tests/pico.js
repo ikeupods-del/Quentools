@@ -131,12 +131,12 @@ async function navigateurEssai(exe) {
     check('ta voix : refaire ne redit que la phrase changée', jrm.done && !jrm.error && fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v00.wav')).mtimeMs === d0 && fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v01.wav')).mtimeMs > d1, jrm.error || '');
     check('une seule fabrication à la fois', await (async () => { const a = await (await post('/api/pico/refaire', { base: '97-essai-ma-voix', changements: [] })).json(); const b2 = await post('/api/pico/fabriquer', { fiche: ficheMaVoix, options: { court: true, sansTiktok: true, voix: 'ma-voix' } }); await attendre(a.id); return b2.status >= 400; })());
     // « Arrêter » : episode.js, fabriquer.js et leurs FFmpeg s'arrêtent tous ; la place reste prise jusqu'à leur fin réelle
-    { const { spawnSync } = require('child_process'), restes = motif => spawnSync('ps', ['-eo', 'stat=,args='], { encoding: 'utf8' }).stdout.split('\n').filter(l => l.includes(base) && motif.test(l) && !/^Z/.test(l.trim()));
+    { const { spawnSync } = require('child_process'), restes = motif => (spawnSync('ps', ['-eo', 'stat=,args='], { encoding: 'utf8', timeout: 10000 }).stdout || '').split('\n').filter(l => l.includes(base) && motif.test(l) && !/^Z/.test(l.trim()));
       const fa = await (await post('/api/pico/fabriquer', { fiche: { ...ficheMaVoix, numero: 96, slug: 'essai-arret' }, options: { court: true, sansTiktok: true, voix: 'ma-voix' } })).json();
       for (let i = 0; i < 300 && !restes(/fabriquer\.js/).length; i++) await new Promise(r => setTimeout(r, 200));
       const lance = restes(/fabriquer\.js/).length > 0;
       await post('/api/annuler?id=' + fa.id); const seconde = await post('/api/pico/fabriquer', { fiche: ficheMaVoix, options: { court: true, sansTiktok: true, voix: 'ma-voix' } });
-      const ja2 = await attendre(fa.id);
+      const ja2 = await Promise.race([attendre(fa.id), new Promise(r => setTimeout(() => r({ error: 'délai dépassé' }), 120000))]);
       check('arrêter : seconde fabrication refusée tant que la première s’arrête', lance && seconde.status >= 400, `lancée ${lance}, statut ${seconde.status}`);
       check('arrêter : aucun fabriquer.js ni FFmpeg de l’épisode encore en vie', /annulée/.test(ja2.error || '') && !restes(/fabriquer\.js|episode\.js|ffmpeg/).length, (ja2.error || '') + ' ' + restes(/./).join(' | ')); }
     // vidéo d'une traite d'après ton script (sujet d'actualité) : script → fiche → contrôle → fabrication, numéro suivant

@@ -149,7 +149,7 @@ export class LlamaChatSession { async prompt() { S.usage++; S.maxUsage = Math.ma
     fs.writeFileSync(path.join(d, 'enregistrer.mjs'), `import { register } from 'node:module'; register('./crochets.mjs', import.meta.url);\n`);
     const w = require('child_process').fork(path.join(__dirname, '..', 'ia-worker.js'), [], { execArgv: ['--import', require('url').pathToFileURL(path.join(d, 'enregistrer.mjs')).href], stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
     const rep = new Map(); w.on('message', m => { if (m.id) rep.set(m.id, m); });
-    await new Promise((ok, ko) => { w.once('message', ok); w.once('exit', () => ko(new Error('processus de l’IA arrêté'))); });
+    await new Promise((ok, ko) => { w.once('message', ok); w.once('exit', () => ko(new Error('processus de l’IA arrêté'))); setTimeout(() => ko(new Error('processus de l’IA sans réponse')), 20000).unref(); });
     ['a', 'a', 'a', 'b', 'a'].forEach((m, i) => w.send({ id: i + 1, type: 'ecrire', modele: m, systeme: '', demande: 'x' }));
     for (let i = 0; i < 100 && rep.size < 5; i++) await new Promise(r => setTimeout(r, 50));
     const S = JSON.parse((rep.get(5) || {}).resultat || '{}');

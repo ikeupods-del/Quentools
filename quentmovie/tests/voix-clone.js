@@ -103,7 +103,7 @@ exit 1
     const p = VC.dire('qwen', [{ texte: 'Bonjour.', fichier: path.join(base, 'x.wav') }], job).catch(e => e);
     for (let i = 0; i < 50 && !job.enfant; i++) await new Promise(r => setTimeout(r, 100));
     await new Promise(r => setTimeout(r, 300)); VC.annuler(job); const t0 = Date.now();
-    const er = await p, duree = Date.now() - t0, restes = spawnSync('ps', ['-eo', 'stat=,args='], { encoding: 'utf8' }).stdout.split('\n').filter(l => /sleep 4[78]/.test(l) && !/^Z/.test(l.trim()));
+    const er = await Promise.race([p, new Promise(r => setTimeout(() => r(new Error('délai dépassé')), 20000))]), duree = Date.now() - t0, restes = (spawnSync('ps', ['-eo', 'stat=,args='], { encoding: 'utf8', timeout: 10000 }).stdout || '').split('\n').filter(l => /sleep 4[78]/.test(l) && !/^Z/.test(l.trim()));
     check('annulation : python et ses sous-processus arrêtés', er instanceof Error && /annulé/.test(er.message) && duree < 8000 && !restes.length, `${er && er.message} ${duree} ms ${restes.join(' | ')}`);
   }
   fs.rmSync(base, { recursive: true, force: true });

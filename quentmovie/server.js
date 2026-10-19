@@ -2159,6 +2159,9 @@ function buildClip(c, P, o = {}) {
     for (const [id, j] of jobs) { if (!(j.done || j.error)) continue; if (!j.finiA) j.finiA = t; else if (t - j.finiA > 10 * 60e3) jobs.delete(id); }
   }
 
+  // connexions gardées ouvertes plus longtemps que celles du navigateur : une connexion réutilisée au moment où le serveur la fermait coupait la requête
+  server.keepAliveTimeout = 65000; server.headersTimeout = 66000;
+
   return {
     server, buildClip, sizeOf, mediaPath, probe, get filters() { return filters; },
     async start() {

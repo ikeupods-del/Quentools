@@ -90,7 +90,7 @@ const rejette = async (p, motif) => { try { await p; return false; } catch (e) {
   check('démarrage réussi : ancienne version effacée', !fs.existsSync(appli + '.ancienne'));
   // application encore ouverte à la fin de l'attente (export qui retient la fermeture) : rien n'est remplacé
   fabriquerApp(path.join(base, 'tmp2'), '9.9.9'); fs.renameSync(path.join(base, 'tmp2', 'QuentMovie.app'), nouvelle);
-  const vit = spawnSync('/bin/sh', ['-c', M.scriptRemplacement({ app: appli, nouvelle, pid: process.pid, relancer: false, attente: 0.5 })]);
+  const vit = spawnSync('/bin/sh', ['-c', M.scriptRemplacement({ app: appli, nouvelle, pid: process.pid, relancer: false, attente: 0.5 })], { timeout: 20000 });
   check('application encore ouverte : rien n’est remplacé', vit.status === 0 && fs.readFileSync(path.join(appli, 'Contents', 'version.txt'), 'utf8') === '1.4.0' && fs.existsSync(nouvelle));
   fs.rmSync(nouvelle, { recursive: true, force: true });
   // « Redémarrer pour installer » : rien n'est lancé avant la fermeture réelle (will-quit)
@@ -99,7 +99,7 @@ const rejette = async (p, motif) => { try { await p; return false; } catch (e) {
   check('redémarrer pour installer : script lancé seulement à la fermeture', prete.installer(true) === true && !fs.existsSync(path.join(base, 'maj-r', 'remplacer.sh')) && prete.installer(false) === true && fs.existsSync(path.join(base, 'maj-r', 'remplacer.sh')) && /open "\$APP"/.test(fs.readFileSync(path.join(base, 'maj-r', 'remplacer.sh'), 'utf8')));
   // Sans nouvelle version disponible, l'application reste intacte
   const s = M.scriptRemplacement({ app: appli, nouvelle: appli + '.absente', pid: 999999, relancer: false });
-  spawnSync('/bin/sh', ['-c', s]);
+  spawnSync('/bin/sh', ['-c', s], { timeout: 20000 });
   check('application intacte sans nouvelle version', fs.readFileSync(path.join(appli, 'Contents', 'version.txt'), 'utf8') === '1.4.0');
   check('chemins avec apostrophe protégés', /'\/Applications\/Pack d'\\''été\/QuentMovie\.app'/.test(M.scriptRemplacement({ app: "/Applications/Pack d'été/QuentMovie.app", nouvelle: '/x', pid: 1 })));
 
