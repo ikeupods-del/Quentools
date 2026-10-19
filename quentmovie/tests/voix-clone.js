@@ -38,6 +38,12 @@ const { execFileSync, spawnSync } = require('child_process');
     fs.writeFileSync(path.join(dd, 'script.json'), JSON.stringify({ lignes: ['Un.', 'Deux.', 'Trois.'] }));
     const p3 = spawnSync(py, ['-I', SCRIPT, '--moteur', 'qwen', '--voix', path.join(ancien, 'ma-voix'), '--sortie', path.join(ancien, 'sortie'), '--selection-seule'], { encoding: 'utf8' });
     check('extrait : repli sur les anciens doublages', p3.status === 0 && fs.existsSync(path.join(ancien, 'sortie', 'reel.wav')), p3.stdout);
+    // même décision côté QuentMovie, avant de lancer quoi que ce soit (installation de plusieurs Go)
+    const VE = require('../voix-clone').voixEnregistree;
+    check('voix enregistrée : corpus suffisant', VE(base).assez && VE(base).secondes >= 8, JSON.stringify(VE(base)));
+    check('voix enregistrée : une seule réplique ne suffit pas', !VE(pauvre).assez && VE(pauvre).secondes === 4, JSON.stringify(VE(pauvre)));
+    check('voix enregistrée : anciens doublages comptés (durée lue dans le WAV)', VE(ancien).assez && VE(ancien).secondes === 15, JSON.stringify(VE(ancien)));
+    check('voix enregistrée : rien du tout', !VE(path.join(base, 'vide')).assez);
   } else console.log('  (python3 absent : contrôle de l’extrait ignoré)');
 
   // faux Python : « -m venv D » crée D/bin/python ; « -m pip … » ne fait rien ; le script d'essai appelle le vrai python3 (sélection) puis fabrique de faux fichiers
@@ -100,6 +106,9 @@ exit 1
     fs.writeFileSync(f, '#!/bin/sh\necho "ETAPE : en cours"\nsleep 47 &\nsleep 48\n'); fs.chmodSync(f, 0o755);
     process.env.QM_PYTHON = f; fs.mkdirSync(path.join(base, 'voix-clone', 'venv-qwen'), { recursive: true }); fs.writeFileSync(path.join(base, 'voix-clone', 'venv-qwen', '.complet'), 'essai');
     const venvPy = path.join(base, 'voix-clone', 'venv-qwen', 'bin', 'python'); fs.mkdirSync(path.dirname(venvPy), { recursive: true }); fs.copyFileSync(f, venvPy); fs.chmodSync(venvPy, 0o755);
+    const mv3 = path.join(base, 'ma-voix', 'wavs'); fs.mkdirSync(mv3, { recursive: true }); // voix enregistrée : dire() refuse sans elle
+    for (const id of ['b-0', 'b-1']) ff('-f', 'lavfi', '-i', 'sine=f=220:r=44100:d=5', '-ac', '1', '-c:a', 'pcm_s16le', path.join(mv3, id + '.wav'));
+    fs.writeFileSync(path.join(base, 'ma-voix', 'index.json'), JSON.stringify({ 'b-0': { texte: 'Un.', duree: 5 }, 'b-1': { texte: 'Deux.', duree: 5 } }));
     const p = VC.dire('qwen', [{ texte: 'Bonjour.', fichier: path.join(base, 'x.wav') }], job).catch(e => e);
     for (let i = 0; i < 50 && !job.enfant; i++) await new Promise(r => setTimeout(r, 100));
     await new Promise(r => setTimeout(r, 300)); VC.annuler(job); const t0 = Date.now();

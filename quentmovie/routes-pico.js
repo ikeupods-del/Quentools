@@ -89,6 +89,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
   const SYNTHESE_REFUSEE = 'La chaîne n’utilise jamais de voix de synthèse : choisis ta voix clonée ou un doublage enregistré.';
   function modeVoix(v) {
     const m = String(v || 'ma-voix');
+    if (m === 'ma-voix' && !require('./voix-clone').voixEnregistree(BASE).assez) throw new Error(require('./voix-clone').SANS_VOIX);
     if (m === 'ma-voix') { const VC = VOIXCLONE && VOIXCLONE(), prets = VC ? VC.prete() : []; return { mode: 'ma-voix', moteur: prets.includes('chatterbox') ? 'chatterbox' : prets[0] || 'chatterbox' }; }
     if (m.startsWith('doublage:')) { const nom = path.basename(m.slice(9)); const d = path.join(BASE, 'doublages', nom); if (!nom || !fs.existsSync(d)) throw new Error('Doublage introuvable : ' + nom); return { mode: 'doublage', nom }; }
     if (m === 'pico' && process.env.QI_ESSAI_SYNTHESE) return { mode: 'pico' };
@@ -180,7 +181,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       let doublages = []; try { doublages = fs.readdirSync(path.join(BASE, 'doublages')).filter(n => fs.existsSync(path.join(BASE, 'doublages', n, 'v00.wav'))); } catch (er) { /* aucun */ }
       const VC = VOIXCLONE && VOIXCLONE(), mv = VC ? VC.etat() : null;
       return send(res, 200, { pret: !!pico, dispo: e.dispo, voix: e.pico, navigateur: !!nav() || !!module_('playwright-core'), sorties: SORTIES,
-        maVoix: { installee: VC ? VC.prete().length > 0 : false, essai: !!(mv && mv.fichiers.some(f => f !== 'reel.wav')) }, doublages });
+        maVoix: { installee: VC ? VC.prete().length > 0 : false, ...require('./voix-clone').voixEnregistree(BASE), min: require('./voix-clone').VOIX_MIN, essai: !!(mv && mv.fichiers.some(f => f !== 'reel.wav')) }, doublages });
     }
     // épisode fabriqué à relire : répliques (section, expression, texte), mots à vérifier, versions présentes
     if (req.method === 'GET' && p === '/api/pico/episode') {

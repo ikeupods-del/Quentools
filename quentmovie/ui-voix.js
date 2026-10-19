@@ -114,9 +114,16 @@ async function choixVoixPico(selId = '#fiVoix', infoId = '#fiVoixInfo') {
   const sel = $(selId), info = $(infoId); if (!sel) return;
   let e; try { e = await (await api('/api/pico')).json(); } catch (er) { return; }
   // jamais de voix de synthèse sur la chaîne : ta voix clonée ou un de tes doublages
-  sel.innerHTML = `<option value="ma-voix">Ma voix clonée${e.maVoix.installee ? '' : ' (à installer, plusieurs Go)'}</option>${(e.doublages || []).map(n => `<option value="doublage:${esc(n)}">Mon doublage « ${esc(n)} »</option>`).join('')}`;
+  const mv = e.maVoix || {}, sansVoix = mv.assez === false;
+  sel.innerHTML = `<option value="ma-voix">Ma voix clonée${sansVoix ? ' (enregistre d’abord ta voix)' : mv.installee ? '' : ' (à installer, plusieurs Go)'}</option>${(e.doublages || []).map(n => `<option value="doublage:${esc(n)}">Mon doublage « ${esc(n)} »</option>`).join('')}`;
   sel.value = 'ma-voix';
-  const dire = () => { info.textContent = sel.value === 'ma-voix' ? 'Chaque réplique est dite par ta voix clonée (modèle de l’essai « Voix clonée » du Doublage), à partir de tes enregistrements. Compte plusieurs minutes de plus que le montage seul.' : 'Tes enregistrements du Doublage, réplique par réplique. Il faut une prise pour chaque réplique : s’il en manque, la fabrication s’arrête et liste celles à enregistrer.'; };
+  // la voix clonée imite ta voix à partir de tes enregistrements du Doublage : sans eux, rien à imiter
+  const dire = () => {
+    if (sel.value !== 'ma-voix') { info.textContent = 'Tes enregistrements du Doublage, réplique par réplique. Il faut une prise pour chaque réplique : s’il en manque, la fabrication s’arrête et liste celles à enregistrer.'; return; }
+    if (sansVoix) { info.innerHTML = `<b style="color:#fbbf24">Pas encore assez de ta voix enregistrée</b> (${mv.secondes || 0} s sur ${mv.min || 8} s). La voix clonée imite ta voix à partir de tes enregistrements : ouvre le Doublage, lis 3 ou 4 phrases à voix haute (3 à 10 secondes chacune), une seule fois. Ensuite, toutes tes vidéos peuvent être dites par ta voix clonée. <button class="mini" type="button" data-ouvre-doublage>🎙 Enregistrer ma voix</button>`;
+      const b = info.querySelector('[data-ouvre-doublage]'); if (b) b.onclick = () => ouvrirDoublage(); return; }
+    info.textContent = `Chaque réplique est dite par ta voix clonée, imitée à partir de ${mv.secondes} s de tes enregistrements du Doublage. Compte plusieurs minutes de plus que le montage seul.`;
+  };
   sel.onchange = dire; dire();
 }
 // Épisode Pico fabriqué dans QuentMovie (routes-pico.js) : avancement, arrêt possible, puis dossier, publication et avertissements du rythme
