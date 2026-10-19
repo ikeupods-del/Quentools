@@ -1,0 +1,367 @@
+{
+ "numero": 12,
+ "slug": "souk-al-manakh-cheques-sans-provision",
+ "titre": "94 milliards de dollars en chèques sans provision : le krach du Souk Al-Manakh",
+ "promesse": "Koweït, 1982 : des milliards échangés avec des chèques sans provision. Comment tout s'est écroulé ?",
+ "description": "Pico raconte le Souk Al-Manakh, la bourse parallèle du Koweït où l'on achetait des actions avec des chèques postdatés, jusqu'au krach d'août 1982. Ce qu'on retient : une dette finit toujours par être réclamée.",
+ "hashtags": "#krach #histoire #Koweït #bulle #économie #QuentInvest",
+ "musique": "documentaire-doux",
+ "musiqueRevelation": "cinema-epique",
+ "mention": "Vulgarisation historique · pas un conseil en investissement",
+ "accroche": {
+  "texte": "Imagine payer un million avec un chèque sans un sou sur ton compte. Et le vendeur te sourit. Au Koweït, ça a fait un trou de 94 milliards de dollars.",
+  "court": "Payer un million avec un chèque sans provision ? Au Koweït, ça a fait un trou de 94 milliards de dollars.",
+  "ecran": {
+   "intro": "Koweït, août 1982 : le marché parallèle s'effondre.",
+   "avant": "0 $ sur le compte",
+   "apres": "94 milliards $",
+   "de": 0,
+   "a": 94,
+   "suffixe": " milliards $",
+   "legende": "La valeur des chèques impayés au moment du krach.",
+   "source": "S1 · S2"
+  },
+  "effet": "impact"
+ },
+ "intro": {
+  "texte": "Au programme : un pays qui déborde d'argent, et un marché sans règles. Puis une monnaie en papier, et le jour où quelqu'un a demandé à être payé.",
+  "ecran": {
+   "type": "liste",
+   "titre": "Au programme",
+   "points": [
+    "Le Koweït du pétrole",
+    "Un marché sans règles",
+    "Les chèques postdatés",
+    "Le krach d'août 1982"
+   ]
+  }
+ },
+ "blocs": [
+  {
+   "section": "Le contexte",
+   "texte": "Fin des années soixante-dix. Le prix du pétrole s'envole et le Koweït déborde d'argent. Beaucoup de familles cherchent où placer leurs économies.",
+   "court": "Fin des années soixante-dix : le pétrole s'envole, le Koweït déborde d'argent.",
+   "ecran": {
+    "type": "message",
+    "titre": "Koweït, fin des années 1970",
+    "sous": "Les revenus du pétrole explosent",
+    "source": "S1"
+   }
+  },
+  {
+   "texte": "Mais la bourse officielle est petite et très encadrée. Créer une nouvelle société cotée y est difficile. L'argent cherche donc une autre sortie.",
+   "ecran": {
+    "type": "message",
+    "titre": "La bourse officielle",
+    "sous": "Petite, très encadrée, peu de nouvelles sociétés",
+    "source": "S1 · S2"
+   }
+  },
+  {
+   "texte": "Cette sortie, c'est le Souk Al-Manakh. Un centre commercial moderne et climatisé, bâti à l'endroit d'un ancien marché aux chameaux. Son nom rappelle ce passé.",
+   "ecran": {
+    "type": "definition",
+    "mot": "Souk Al-Manakh",
+    "texte": "Un centre commercial de Koweït devenu une bourse parallèle, sans règles officielles",
+    "source": "S1"
+   }
+  },
+  {
+   "section": "Un marché sans règles",
+   "texte": "Dans ses couloirs, on échange des actions de sociétés enregistrées à Bahreïn ou aux Émirats arabes unis. Pas besoin de l'accord des autorités koweïtiennes.",
+   "court": "On y échange des actions de sociétés enregistrées à Bahreïn ou aux Émirats.",
+   "ecran": {
+    "type": "liste",
+    "titre": "Ce qu'on y échange",
+    "points": [
+     [
+      "Des sociétés du Golfe",
+      "enregistrées hors du Koweït"
+     ],
+     [
+      "Peu de contrôles",
+      "aucune autorité de marché"
+     ],
+     [
+      "Des prix qui grimpent",
+      "semaine après semaine"
+     ]
+    ],
+    "source": "S1 · S2"
+   }
+  },
+  {
+   "texte": "Beaucoup de ces sociétés n'ont presque pas d'activité. Peu de bureaux, peu d'employés, parfois aucun chiffre d'affaires. Leurs actions s'arrachent quand même.",
+   "ecran": {
+    "type": "message",
+    "titre": "Des sociétés presque vides",
+    "sous": "Et pourtant, leurs actions s'arrachent",
+    "source": "S2"
+   }
+  },
+  {
+   "texte": "Tout le monde s'y met. Des notables, des fonctionnaires, des commerçants, des chauffeurs. Selon les récits, certaines actions valent plusieurs fois plus en quelques semaines.",
+   "court": "Tout le monde s'y met. Certaines actions valent plusieurs fois plus en quelques semaines.",
+   "ecran": {
+    "type": "message",
+    "titre": "La fièvre",
+    "sous": "Des notables aux chauffeurs de taxi",
+    "source": "S1 · S2"
+   }
+  },
+  {
+   "texte": "Les transactions se font de la main à la main, dans les couloirs et les cafés du centre commercial. Pas d'autorité de marché, pas de contrôle des comptes. La confiance remplace les garanties.",
+   "ecran": {
+    "type": "message",
+    "titre": "De la main à la main",
+    "sous": "Ni autorité de marché, ni contrôle des comptes",
+    "source": "S1 · S2"
+   }
+  },
+  {
+   "section": "Les chèques postdatés",
+   "texte": "Pour acheter sans avoir l'argent, on utilise une arme simple : le chèque postdaté. C'est un chèque daté de plus tard, encaissable seulement dans plusieurs mois.",
+   "ecran": {
+    "type": "definition",
+    "mot": "Chèque postdaté",
+    "texte": "Un chèque daté dans le futur : on ne peut l'encaisser qu'à cette date",
+    "source": "S1"
+   }
+  },
+  {
+   "revelation": true,
+   "effet": "hausse",
+   "effetT": 4.0,
+   "texte": "Exemple. Des actions valent cent mille dollars aujourd'hui. Tu signes au vendeur un chèque de cent cinquante mille, payable dans un an. Le vendeur accepte d'attendre contre une prime de cinquante pour cent.",
+   "court": "Des actions à 100 000 dollars, payées avec un chèque de 150 000 à un an : 50 % de prime.",
+   "ecran": {
+    "type": "calcul",
+    "lignes": [
+     "Actions : 100 000 $ aujourd'hui",
+     "Chèque : 150 000 $ dans un an"
+    ],
+    "resultat": "+ 50 % de prime",
+    "source": "S3 · exemple"
+   }
+  },
+  {
+   "texte": "Ces primes très élevées sont courantes au souk. Certains récits y voient aussi une façon de contourner l'interdiction religieuse du prêt à intérêt.",
+   "ecran": "="
+  },
+  {
+   "texte": "Le vrai piège : personne n'attend la date du chèque. Le vendeur s'en sert tout de suite comme garantie, et signe à son tour un nouveau chèque, encore plus gros.",
+   "court": "Personne n'attend la date. Chaque chèque sert à en signer un autre, encore plus gros.",
+   "ecran": {
+    "type": "liste",
+    "titre": "La chaîne des chèques",
+    "points": [
+     [
+      "Chèque de 150 000 $",
+      "reçu par le vendeur"
+     ],
+     [
+      "Utilisé comme garantie",
+      "tout de suite"
+     ],
+     [
+      "Nouveau chèque de 250 000 $",
+      "signé à son tour"
+     ]
+    ],
+    "source": "S3 · exemple"
+   }
+  },
+  {
+   "texte": "Bientôt, toute une économie parallèle tourne sur des promesses écrites sur du papier. Les chèques circulent presque comme une monnaie. Tout repose sur une seule idée : les prix vont continuer de monter.",
+   "ecran": {
+    "type": "message",
+    "titre": "Une monnaie en papier",
+    "sous": "Tout repose sur la hausse des prix",
+    "source": "S1 · S2"
+   }
+  },
+  {
+   "texte": "Pourquoi ça tient ? Tant que les prix montent, tout le monde gagne sur le papier. Chacun se sent riche, alors personne n'a envie de demander son argent. C'est le principe d'une bulle.",
+   "court": "Tant que les prix montent, tout le monde se sent riche. C'est le principe d'une bulle.",
+   "ecran": {
+    "type": "definition",
+    "mot": "Bulle spéculative",
+    "texte": "Des prix qui montent surtout parce qu'on espère revendre plus cher",
+    "source": "S1"
+   }
+  },
+  {
+   "texte": "Certains deviennent des légendes. Le plus célèbre s'appelle Jassim al-Mutawa. Selon les récits, cet ancien petit fonctionnaire accumule des milliards de dollars de positions, à coups de signatures.",
+   "ecran": {
+    "type": "message",
+    "titre": "Jassim al-Mutawa",
+    "sous": "Le plus célèbre des spéculateurs du souk",
+    "source": "S1 · S2"
+   }
+  },
+  {
+   "section": "Le krach",
+   "texte": "Août 1982. Un chèque postdaté est présenté à la banque avant l'heure. Il n'y a pas assez d'argent sur le compte. Le chèque est refusé.",
+   "court": "Août 1982 : un chèque est présenté à la banque. Il est refusé, faute d'argent.",
+   "ecran": {
+    "type": "message",
+    "titre": "Août 1982",
+    "sous": "Un premier chèque refusé",
+    "source": "S1"
+   }
+  },
+  {
+   "texte": "Le récit le plus souvent raconté parle d'une femme qui a voulu encaisser un chèque d'al-Mutawa. Les détails varient selon les sources. Mais la suite, elle, est bien documentée.",
+   "ecran": "="
+  },
+  {
+   "texte": "La nouvelle fait le tour du souk. Chacun court à sa banque pour encaisser avant les autres. Mais chacun comptait sur le chèque du voisin. Les refus tombent en cascade.",
+   "court": "Chacun court encaisser avant les autres. Les refus tombent en cascade.",
+   "ecran": {
+    "type": "liste",
+    "titre": "L'effet domino",
+    "points": [
+     [
+      "Un chèque refusé",
+      "la rumeur se répand"
+     ],
+     [
+      "Tout le monde encaisse",
+      "en même temps"
+     ],
+     [
+      "Personne n'a l'argent",
+      "refus en cascade"
+     ]
+    ],
+    "source": "S1"
+   }
+  },
+  {
+   "texte": "Reprenons notre exemple. Les actions achetées cent mille dollars ne valent presque plus rien. Mais le chèque de cent cinquante mille, lui, est toujours dû. La richesse a disparu, la dette est restée.",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "150 000 $",
+     "legende": "la dette, toujours due"
+    },
+    "b": {
+     "valeur": "presque 0 $",
+     "legende": "la valeur des actions"
+    },
+    "source": "S3 · exemple"
+   }
+  },
+  {
+   "revelation": true,
+   "effet": "impact",
+   "effetT": 3.0,
+   "texte": "Le bilan donne le vertige. Les autorités recensent plus de vingt-huit mille chèques impayés, pour environ 94 milliards de dollars. C'est bien plus que tout ce que le Koweït produit en une année.",
+   "court": "Plus de 28 000 chèques impayés, environ 94 milliards de dollars : plus que la production du Koweït en un an.",
+   "ecran": {
+    "type": "duo",
+    "a": {
+     "valeur": "28 000",
+     "legende": "chèques impayés, au moins"
+    },
+    "b": {
+     "valeur": "94 milliards $",
+     "de": 0,
+     "a": 94,
+     "suffixe": " milliards $",
+     "legende": "de dettes en chèques"
+    },
+    "source": "S1 · S2"
+   }
+  },
+  {
+   "texte": "Le gouvernement doit intervenir. Il fait recenser les dettes, aide les petits épargnants, soutient les banques fragilisées, et le marché parallèle disparaît.",
+   "ecran": {
+    "type": "message",
+    "titre": "L'État intervient",
+    "sous": "Recensement des dettes, aide aux banques et aux petits épargnants",
+    "source": "S1 · S2"
+   }
+  },
+  {
+   "texte": "Pendant des années, l'économie du Koweït en garde la trace. Le krach du Souk Al-Manakh reste l'une des plus étranges bulles de l'histoire moderne.",
+   "ecran": "="
+  },
+  {
+   "section": "La leçon",
+   "texte": "Ce que cette histoire montre ? Une richesse fondée sur des promesses n'existe que tant que personne ne demande à être payé. Le jour où quelqu'un vérifie, il ne reste que les dettes.",
+   "ecran": {
+    "type": "message",
+    "titre": "La leçon du souk",
+    "sous": "Une promesse n'est pas de l'argent",
+    "source": "S1"
+   }
+  }
+ ],
+ "piege": {
+  "intro": "Attention, grain de sable. Il y a trois erreurs courantes.",
+  "court": "Attention, grain de sable : une promesse de paiement n'est pas de l'argent.",
+  "erreurs": [
+   {
+    "titre": "Confondre promesse et argent",
+    "texte": "Un : confondre une promesse de paiement avec de l'argent. Un chèque n'a de valeur que si le compte est approvisionné."
+   },
+   {
+    "titre": "Croire que ça monte toujours",
+    "texte": "Deux : croire que les prix montent toujours. Au souk, tout reposait sur cette idée, et elle s'est effondrée en quelques jours."
+   },
+   {
+    "titre": "Oublier la chaîne",
+    "texte": "Trois : oublier que chaque dette dépend des autres. Quand un seul maillon casse, toute la chaîne peut céder."
+   }
+  ]
+ },
+ "recap": {
+  "texte": "Pour résumer en trois points. Un : au Koweït, un marché parallèle s'est construit sur des chèques postdatés. Deux : chaque chèque servait à en signer un autre. Trois : un seul refus a suffi pour tout faire tomber.",
+  "ecran": {
+   "type": "liste",
+   "titre": "À retenir",
+   "points": [
+    [
+     "Un marché parallèle",
+     "bâti sur des chèques postdatés"
+    ],
+    [
+     "Une chaîne de dettes",
+     "chaque chèque en garantit un autre"
+    ],
+    [
+     "Un seul refus",
+     "et tout s'écroule"
+    ]
+   ]
+  }
+ },
+ "resume": {
+  "texte": "En une phrase : un stylo peut fabriquer une richesse en papier, mais une dette finit toujours par être réclamée.",
+  "court": "En une phrase : une dette finit toujours par être réclamée."
+ },
+ "question": "Et toi, tu connais d'autres bulles construites sur des promesses ?",
+ "suite": {
+  "titre": "1929 : comment le krach a commencé",
+  "texte": "La prochaine fois : 1929, comment le grand krach a commencé."
+ },
+ "sources": [
+  "S1 · Wikipédia, « Souk Al-Manakh stock market crash » (en) et « Krach du Souk Al-Manakh » (fr)",
+  "S2 · Fida Darwiche, The Gulf Stock Exchange Crash: The Rise and Fall of the Souq Al-Manakh, Croom Helm, 1986",
+  "S3 · Calculs de la chaîne : exemple 100 000 → 150 000 = + 50 % ; 150 000 → 250 000 (chaîne d'exemples, pas des chiffres historiques)"
+ ],
+ "sourcesExternes": true,
+ "miniature": {
+  "lignes": [
+   "94 MILLIARDS",
+   "EN CHÈQUES",
+   "SANS PROVISION"
+  ],
+  "accent": "94 MILLIARDS",
+  "bas": [
+   "Koweït 1982",
+   "→ krach"
+  ]
+ }
+}
