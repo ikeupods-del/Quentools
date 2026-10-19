@@ -1663,7 +1663,7 @@ function buildClip(c, P, o = {}) {
       if (req.method === 'GET' && p.startsWith('/media/')) return serveFile(req, res, mediaPath(decodeURIComponent(p.slice(7))));
       if (req.method === 'GET' && p.startsWith('/lib/')) return serveFile(req, res, mediaPath('lib:' + decodeURIComponent(p.slice(5))));
       // Studio : détourage de la personne (MediaPipe, en local) et moteur de mélange du fond virtuel
-      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js' || p === '/ui-voix.js' || p === '/ui-publier.js' || p === '/ui-v2.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
+      if (req.method === 'GET' && (p === '/compositeur.js' || p === '/detoureur.js' || p === '/ui-voix.js' || p === '/ui-publier.js' || p === '/ui-v2.js' || p === '/ui-chat.js')) return serveFile(req, res, path.join(__dirname, p.slice(1)));
       if (req.method === 'GET' && p.startsWith('/vendor/vision/')) {
         const n = decodeURIComponent(p.slice(15));
         if (!/^(vision_bundle\.m?js|wasm\/vision_wasm(_nosimd)?_internal\.(js|wasm))$/.test(n)) return send(res, 404, { error: 'Introuvable' });
@@ -1729,9 +1729,13 @@ function buildClip(c, P, o = {}) {
         const b = await readJson(req), demande = String(b.demande || '').slice(0, 500), AS = require('./assistant');
         const ordre = MEM.detecter(demande), repMem = ordre ? MEM.appliquer(MEMOIRE, ordre, 'QuentMovie') : null; // « retiens que… », « oublie… », « que retiens-tu ? »
         if (repMem) return send(res, 200, { actions: [], ia: false, memoire: repMem });
-        const regles = AS.comprendre(demande, b.projet && typeof b.projet === 'object' ? b.projet : undefined);
-        if (regles.length || !b.ia) return send(res, 200, { actions: regles, ia: false });
-        try { return send(res, 200, { actions: await IA().comprendreDemande(demande), ia: true }); } catch (e) { return send(res, 200, { actions: [], ia: false, erreur: e.message }); }
+        const projet = b.projet && typeof b.projet === 'object' ? b.projet : undefined, regles = AS.comprendre(demande, projet);
+        const reponse = !regles.length && b.discussion ? AS.repondre(demande, projet) : ''; // discussion : une question sur le montage reçoit sa réponse, calculée par le programme
+        if (reponse) return send(res, 200, { actions: [], ia: false, reponse });
+        const choix = () => (b.discussion ? AS.proches(demande, projet) : undefined); // pas compris : des choix plutôt qu'un refus
+        const teinte = l => l.map(a => (a.action === 'couleur_titre' ? { ...a, couleur: AS.COULEURS[AS.sansAccents(a.parametre)] || '' } : a)); // la couleur posée vient de la liste du programme
+        if (regles.length || !b.ia) return send(res, 200, { actions: teinte(regles), ia: false, choix: regles.length ? undefined : choix() });
+        try { const actions = teinte(await IA().comprendreDemande(demande)); return send(res, 200, { actions, ia: true, choix: actions.length ? undefined : choix() }); } catch (e) { return send(res, 200, { actions: [], ia: false, erreur: e.message, choix: choix() }); }
       }
       if (req.method === 'GET' && p === '/api/memoire') return send(res, 200, MEMOIRE.lire());
       if (req.method === 'POST' && p === '/api/memoire/corrections') { const b = await readJson(req); MEMOIRE.corrections(Array.isArray(b.paires) ? b.paires.slice(0, 12) : [], 'QuentMovie'); return send(res, 200, { ok: true }); }

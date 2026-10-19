@@ -413,6 +413,21 @@ button.dictee.on{background:#5a1a1f;border-color:#ff5a5f;color:#fff}
 .aud.r-son{border:1px solid #6b4a1c;box-shadow:inset 0 0 0 100px #3a2a14b0;color:#fbd29a}
 .clip.sel,.aud.sel,.pv.sel,.pt.sel{border:2px solid var(--sel)}
 #entetes #eA{box-shadow:inset 3px 0 0 #4fd1a5,inset 6px 0 0 #f3a64a}
+/* Panneau de droite 2.1 : réglages du clip ou discussion avec l'assistant */
+#droite{grid-area:insp;display:flex;flex-direction:column;min-height:0;background:var(--pan);border-left:1px solid #22252d}
+#droite #insp{grid-area:auto;flex:1;min-height:0;border-left:0}#droite #insp[hidden],#chat[hidden]{display:none}
+.dr-onglets{display:flex;gap:18px;padding:0 14px;height:40px;flex:none;border-bottom:1px solid #22252d}
+.dr-onglets button{border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:var(--mut);font-weight:600;padding:0;height:40px}
+.dr-onglets button.on{color:var(--txt);border-bottom-color:#5b78ff}
+#chat{flex:1;min-height:0;display:flex;flex-direction:column}
+#chMsgs{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:12px 12px 6px}
+.ch-m{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.ch-m.moi{align-items:flex-end}
+.ch-bulle{max-width:92%;padding:8px 11px;border-radius:14px 14px 14px 4px;background:#1f232b;font-size:12.5px;line-height:1.45;white-space:pre-line;overflow-wrap:anywhere}
+.ch-m.moi .ch-bulle{background:#2c3a7a;border-radius:14px 14px 4px 14px}
+.ch-b{display:flex;gap:6px;flex-wrap:wrap}.ch-b button{height:auto;min-height:26px;padding:3px 9px;border-radius:7px;text-align:left}.ch-b button:not(.pri){background:#1c1f26;border-color:#2e3340;color:#c9d2ff}
+.ch-saisie{display:flex;gap:6px;align-items:center;padding:8px 10px 10px;flex:none}
+.ch-saisie input{flex:1;min-width:0;height:36px;border-radius:10px;padding:0 12px;background:#0f1115;border:1px solid #2e3340}
+.ch-saisie .ib{width:36px;height:36px;flex:none;border-radius:10px}
 .puces-v2{display:flex;gap:6px;margin:0 0 10px}
 .puces-v2 button{padding:4px 11px;border-radius:999px;background:transparent;border-color:#2a2e38;color:var(--mut);font-size:12px}
 .puces-v2 button.on{background:#1d2647;border-color:#5b78ff;color:var(--txt)}
@@ -4573,5 +4588,6 @@ async function proposerPrisesInterrompues() {
 }
 </script>
 <script src="/ui-v2.js"></script>
+<script src="/ui-chat.js"></script>
 </body>
 </html>

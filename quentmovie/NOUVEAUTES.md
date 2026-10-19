@@ -3,6 +3,13 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.1.0
+- **Discussion avec l'assistant**, à droite (onglet « Assistant », ⌘K ou « Demander… ») : écris comme à quelqu'un, « coupe les blancs de la prise 2 », « mets le titre en jaune », « mets le volume du dernier clip à 40 % ». L'assistant répond ce qu'il va faire, avec un bouton « Faire » (et « Voir d'abord » pour la coupe des blancs, en rouge sur la timeline). Une fois fait, un bouton « Annuler » remet le montage comme avant.
+- **Le clip visé est compris** : « la prise 2 », « le clip 3 », « la deuxième prise », « le dernier clip », « ce clip ». Pour les titres, douze couleurs sont comprises (jaune, rouge, bleu, bleu clair, vert, orange, rose, violet, doré, blanc, noir, gris).
+- **Questions sur le montage** : « combien dure la vidéo ? », « c'est quel format ? », « combien de clips ? », « que sais-tu faire ? ». La réponse est calculée par QuentMovie, jamais inventée.
+- **Quand l'assistant n'est pas sûr**, il propose des choix au lieu de dire « pas compris ».
+- La dictée vocale (🎤) et la mémoire (« retiens que… », « oublie… », « que retiens-tu ? ») marchent dans la discussion. La fenêtre des étapes détaillées reste disponible (bouton « Choisir les étapes »).
+
 ## 2.0.1
 - **Une suggestion en haut des réglages du clip** quand elle est utile : « 2 blancs d'au moins 1 s dans ce clip : Couper » (les passages coupés s'affichent d'abord en rouge), « Ce clip est un peu sombre : Éclaircir », « Son plutôt faible : Égaliser », le look conseillé pour le sujet de la vidéo… Un clic suffit, ⌘Z annule.
 - **Un seul écran « Exporter et publier »** (étape Publier, bouton Exporter ou ⌘E) : choisis la qualité (720p, 1080p, 4K ou son seul), coche où envoyer (ton Mac, YouTube, TikTok, AirDrop), écris ou fais rédiger les textes juste en dessous, puis un seul bouton. YouTube reçoit une vidéo privée, non répertoriée ou programmée ; TikTok un brouillon, avec la légende copiée. Le titre et la description restent dans le projet. Les épisodes QuentInvest déjà fabriqués se publient toujours par le lien sous l'aperçu.
