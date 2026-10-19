@@ -108,6 +108,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
     const args = [fFiche, '--sortie', dossier, '--modeles', path.join(BASE, 'modeles'), ...perso, ...(o.court ? ['--court'] : []), ...(o.sansTiktok ? ['--sans-tiktok'] : []), ...(o.sansYoutube ? ['--sans-youtube'] : [])];
     const lignes = await lancer(job, pico, 'episode.js', args, C.base, [...(o.sansYoutube ? [] : ['YouTube']), ...(o.sansTiktok ? [] : ['TikTok'])]);
     return { base: C.base, titre: fiche.titre || C.base, dossier, fichier: fFiche, fichiers: fs.readdirSync(dossier).filter(n => /\.(mp4|png|md|zip)$/.test(n)),
+      assemblage: ((lignes.find(l => /· assemblage (rapide|complet)/.test(l)) || '').match(/assemblage (rapide|complet)/) || [])[1] || '', // « rapide » : répliques recollées sans réencoder
       avertissements: lignes.filter(l => /^⚠/.test(l)).map(l => l.replace(/^⚠\s*/, '')).slice(0, 30), controle: lignes.filter(l => /^\s+.* · /.test(l)).map(l => l.trim()).slice(0, 30) };
   }
   // ---------- relecture d'un épisode fabriqué : expression, phrase, prononciation ; seules les répliques changées sont refaites ----------

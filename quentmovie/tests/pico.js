@@ -80,6 +80,7 @@ async function navigateurEssai(exe) {
     check('fabrication réelle : terminée', j.done && !j.error, j.error || '');
     check('fabrication : vidéo YouTube dans le dossier de l’épisode', (r.fichiers || []).includes('98-essai-pico-youtube.mp4'), JSON.stringify(r.fichiers));
     check('fabrication : miniatures et texte de publication', ['98-miniature.png', '98-essai-pico-publication.md'].every(n => (r.fichiers || []).includes(n)), JSON.stringify(r.fichiers));
+    check('fabrication : répliques recollées sans réencoder (durées calées sur les images)', r.assemblage === 'rapide', r.assemblage);
     check('fabrication : écrans dessinés par le pont du navigateur', nav.appels.ouvrir >= 3 && nav.appels.capture > 20, JSON.stringify(nav.appels));
     check('fabrication : avancement suivi (voix, écrans, montage)', ['voix', 'écrans animés', 'montage'].every(m => [...etapes].some(x => x.includes(m))), JSON.stringify([...etapes]));
     check('fabrication : fiche gardée avec les épisodes', fs.existsSync(path.join(sorties, 'fiches', '98-essai-pico.json')));

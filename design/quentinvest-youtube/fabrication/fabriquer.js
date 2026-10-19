@@ -219,6 +219,8 @@ function clip(i, debut) {
     return { out, d };
   }
   // style 2 : zoom lent du fond (de 1 à 1,03 sur la durée de l'écran), Pico qui se penche / hoche, bruitages
+  // durée calée sur un nombre entier d'images : le montage de QuentMovie recolle alors les répliques sans réencoder (sinon une image d'écart bascule sur l'assemblage complet)
+  const dImages = nb / FPS;
   const g = GROUPES[i], z = `(1+0.03*min(1,(${g.t0.toFixed(3)}+t)/${g.T.toFixed(3)}))`;
   const F = FONDS[i], fondZ = `[0:v]fps=${FPS},scale=w='trunc(${LARG}*${z}/2)*2':h='trunc(${HAUT}*${z}/2)*2':eval=frame,crop=${LARG}:${HAUT}${F ? ',format=rgba' : ''}[b]`;
   const hp = VERT ? 480 : 690, marge = 40, px = VERT ? 'W-w' : 'W-w-40', py = VERT ? '840' : 'H-h-200'; // position de Pico (marge transparente de 40 px autour pour la rotation)
@@ -236,8 +238,8 @@ function clip(i, debut) {
     composition = '[m][b]overlay=0:0:format=auto[bm];[bm]';
   }
   const filtre = `${F ? fondMedia + ';' : ''}${fondZ};${pico};${composition}[p]overlay=x='${px2}':y='${py}+${respire}+${saut}',format=yuv420p[v];${audio}`;
-  ffClip(i, out, '-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, ...entrees, ...entreeFond, '-filter_complex', filtre, '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', d.toFixed(3), '-movflags', '+faststart', out);
-  return { out, d };
+  ffClip(i, out, '-f', 'concat', '-safe', '0', '-i', lf, '-f', 'concat', '-safe', '0', '-i', lb, '-i', wav, ...entrees, ...entreeFond, '-filter_complex', filtre, '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-c:a', 'aac', '-b:a', '192k', '-t', dImages.toFixed(5), '-movflags', '+faststart', out);
+  return { out, d: dImages };
 }
 
 // ---------- contrôle du rythme (style 2) : accroche, appel à s'abonner, écrans qui durent, phrases longues ----------
@@ -287,7 +289,7 @@ async function exporter() {
   await Promise.all(M.liste.map(async c => { await fetch(M.U('/api/import?name=' + c.nom), { method: 'POST', body: fs.readFileSync(path.join(M.base, 'medias', c.nom)) }); }));
   const projet = {
     format: VERT ? 'vertical' : 'horizontal', res: 1080, fps: FPS, quality: 'rapide', sortie: 'mp4', normaliser: true, pistes: [], textes: [], markers: [],
-    clips: M.liste.map(c => ({ file: c.nom, kind: 'video', in: 0, out: +c.d.toFixed(3), dur: +c.d.toFixed(3), speed: 1, vol: 100, hasAudio: true, fx: [], afx: [], overlays: [], key: { on: false }, subs: c.subs, subStyle: VERT ? 'tiktok' : 'bandeau', subSize: VERT ? 5.6 : STYLE2 ? 4.6 : 4,
+    clips: M.liste.map(c => ({ file: c.nom, kind: 'video', in: 0, out: +c.d.toFixed(STYLE2 ? 6 : 3), dur: +c.d.toFixed(STYLE2 ? 6 : 3), speed: 1, vol: 100, hasAudio: true, fx: [], afx: [], overlays: [], key: { on: false }, subs: c.subs, subStyle: VERT ? 'tiktok' : 'bandeau', subSize: VERT ? 5.6 : STYLE2 ? 4.6 : 4,
       transition: c.fondu ? { type: 'fade', dur: 0.5 } : null })),
     audio: EP.musiqueRevelation && STYLE2 // la musique change au chiffre clé : douce avant, plus vivante après
       ? [{ file: 'lib:' + EP.musique, vol: 15, start: 0, dur: +debuts[EP.musiqueRevelation.scene].toFixed(2), fade: true, loop: true, duck: true },
@@ -296,14 +298,22 @@ async function exporter() {
   };
   projet.clips[projet.clips.length - 1].transition = null;
   fs.writeFileSync(path.join(TRAVAIL, 'projet-quentmovie.json'), JSON.stringify(projet));
-  const { id } = await (await fetch(M.U('/api/export'), { method: 'POST', body: JSON.stringify({ project: projet }) })).json();
+  // montage : puce vidéo du Mac d'abord ; en cas d'échec, une seconde fois par le processeur (plus lent, plus sûr)
+  for (const qualite of ['rapide', 'haute']) {
+    projet.quality = qualite;
+    const { id } = await (await fetch(M.U('/api/export'), { method: 'POST', body: JSON.stringify({ project: projet }) })).json();
+    const fin = await suivreExport(M, id).then(() => true, e => { if (qualite === 'haute') throw e; console.log(`\nMontage par la puce impossible (${String(e.message).slice(0, 160)}) : nouvel essai par le processeur.`); return false; });
+    if (fin) break;
+  }
+  await M.app.stop?.(); process.exit(0);
+}
+async function suivreExport(M, id) {
   for (;;) {
     const j = await (await fetch(M.U('/api/job?id=' + id))).json();
     if (j.error) throw new Error(j.error);
-    if (j.done) { const dest = path.join(TRAVAIL, 'episode.mp4'); fs.copyFileSync(path.join(M.base, 'exports', j.out), dest); console.log('Vidéo :', dest, '·', j.duree ? Math.round(j.duree) + ' s' : ''); break; }
+    if (j.done) { const dest = path.join(TRAVAIL, 'episode.mp4'); fs.copyFileSync(path.join(M.base, 'exports', j.out), dest); console.log('Vidéo :', dest, '·', j.duree ? Math.round(j.duree) + ' s' : '', j.assemblage ? '· assemblage ' + j.assemblage + (j.raisonRapide ? ' (' + j.raisonRapide + ')' : '') : ''); break; }
     process.stdout.write(`\r${j.step || ''} ${j.progress ? Math.round(j.progress * 100) + ' %' : ''}   `); progres({ etape: 'export', p: j.progress || 0, step: j.step || '' }); await new Promise(r => setTimeout(r, 1000));
   }
-  await M.app.stop?.(); process.exit(0);
 }
 
 (async () => {
