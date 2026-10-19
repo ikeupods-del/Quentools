@@ -85,7 +85,7 @@ const ONGLETS_INSP = [
   { id: 'son', nom: 'Son', motif: /^(Effets sonores|Podcast)/ },
   { id: 'couleur', nom: 'Couleur', motif: /^(Couleurs|Look)/ }
 ];
-let ongletInsp = 'decoupe';
+let ongletInsp = 'decoupe', clipInsp = null;
 const inspV1 = inspecteur;
 inspecteur = function () {
   inspV1.apply(this, arguments);
@@ -93,6 +93,8 @@ inspecteur = function () {
   if (parts.length < 3) return;
   const de = d => { const t = (d.querySelector('summary') || {}).textContent || ''; const o = ONGLETS_INSP.find(x => x.motif.test(t.trim())); return o ? o.id : 'image'; };
   const presents = ONGLETS_INSP.filter(o => parts.some(d => de(d) === o.id));
+  const c = proj.clips[sel];
+  if (c !== clipInsp) { clipInsp = c; ongletInsp = c && (c.kind === 'solid' || c.text) ? 'image' : 'decoupe'; } // nouveau clip : un écran titre s'ouvre sur son texte
   if (!presents.some(o => o.id === ongletInsp)) ongletInsp = presents[0].id;
   parts.forEach(d => { const dans = de(d) === ongletInsp; d.hidden = !dans; if (dans) d.open = true; });
   parts[0].insertAdjacentHTML('beforebegin', `<div class="onglets-insp" role="tablist">${presents.map(o => `<button role="tab" data-oi="${o.id}" class="${o.id === ongletInsp ? 'on' : ''}">${o.nom}</button>`).join('')}</div>`);

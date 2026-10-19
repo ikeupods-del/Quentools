@@ -316,13 +316,13 @@ function chromium() {
   check('glisser un titre de reportage sur un clip', await ev(() => !!proj.clips[2].titre));
   await ev(() => { sel = -1; gt = starts()[0] + 0.5; }); await pg.click('[data-titre] >> nth=1'); await pg.waitForTimeout(200);
   check('titre sans clip sélectionné : posé sur le clip sous la tête de lecture', await ev(() => !!proj.clips[0].text && sel === 0));
-  await pg.click('#tabs button[data-tab="transitions"]'); const b1 = await boite(1);
+  await pg.click('#tabs button[data-tab="effets"]'); await pg.click('[data-sous-v2="transitions"]'); const b1 = await boite(1);
   await glisse('[data-tr]:not([data-tr="none"]) >> nth=0', b1.x + b1.width - 6, b1.y + b1.height / 2);
   check('glisser une transition sur la droite d’un clip', await ev(() => !!proj.clips[1].transition));
-  await pg.click('#tabs button[data-tab="musiques"]');
+  await pg.click('#tabs button[data-tab="voix"]'); await pg.click('[data-sous-v2="musiques"]');
   await glisse('#navbody .son >> nth=0', b1.x + 30, b1.y + b1.height + 30);
   check('glisser une musique dans la timeline : à l’endroit du dépôt, en boucle', await ev(() => proj.audio.length === 1 && proj.audio[0].loop && proj.audio[0].start > 0));
-  await pg.click('#tabs button[data-tab="stickers"]'); const bv2 = await boite(2);
+  await pg.click('#tabs button[data-tab="effets"]'); await pg.click('[data-sous-v2="stickers"]'); const bv2 = await boite(2);
   await glisse('[data-sticker] >> nth=0', bv2.x + bv2.width / 2, bv2.y + bv2.height / 2);
   check('glisser un autocollant sur un clip', await ev(() => proj.clips[2].overlays.length === 1));
   await pg.click('#tabs button[data-tab="effets"]');
