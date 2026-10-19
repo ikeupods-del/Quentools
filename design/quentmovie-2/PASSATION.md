@@ -45,9 +45,17 @@ Le propriétaire n'est pas développeur : lui répondre en français simple, agi
 - L'idée pour QuentMovie : une rubrique « Animations » qui fabrique des génériques, des écrans de chiffres, des transitions et des habillages réseaux sociaux avec HyperFrames, puis les pose directement dans la timeline. Elle servirait aussi aux écrans de Pico.
 - À vérifier d'abord : ce qu'il faut installer sur le Mac (Node et Chrome) et le poids ajouté à l'application ; puis faire un essai avec un modèle de leur catalogue.
 
-## Autre sujet en attente : Patrimoine AI
-- La liaison avec la banque est déjà prête dans l'application, mais elle n'est **pas encore en service**.
-- Le propriétaire doit choisir entre deux solutions :
-  - importer chaque mois le relevé de Boursorama (rien à installer) ;
-  - mettre la liaison en service. Il faut alors créer un site gratuit chez Netlify et un accès chez Enable Banking, puis remplir quatre réglages ; le mode d'emploi est dans le dépôt patrimoineai, fichier `docs/BANQUE.md`.
-- S'il choisit la mise en service, il faudra ensuite noter l'adresse du site Netlify dans les réglages de l'application.
+## Patrimoine AI (dépôt séparé `ikeupods-del/patrimoineai`)
+**Fait le 19 octobre (version Mac 6.5.0, en ligne)** :
+- dictée de la question dans l'assistant (bouton micro dans la version en ligne ; sur le Mac, dictée du système avec la touche Fn deux fois) ;
+- deux nouvelles alertes dans « À surveiller » : l'épargne de précaution pas encore atteinte, et beaucoup d'argent qui dort au-delà de cette épargne.
+
+**À faire, dans cet ordre** :
+1. **Mettre la liaison bancaire en service.** Elle est déjà programmée, mais pas branchée. Le propriétaire doit choisir :
+   - soit importer chaque mois le relevé de Boursorama, et il n'y a rien à installer ;
+   - soit mettre la liaison en service : créer un site gratuit chez Netlify depuis le dépôt, puis un accès chez Enable Banking en « Restricted Production », et remplir quatre réglages. Le mode d'emploi est dans `docs/BANQUE.md`. Il faut ensuite noter l'adresse Netlify dans les réglages de l'application.
+2. **Importer le portefeuille de bourse en un fichier.** Il existe déjà un import par fichier modèle. Il faudrait lire directement le fichier exporté par Boursorama pour le PEA et le compte-titres : lignes, quantités, prix de revient. Demander d'abord un exemple de fichier au propriétaire pour ne rien inventer.
+3. **Lire les relevés de Bricks et BienPrêter.** Les paiements reçus et le capital remboursé seraient remplis tout seuls. Là aussi, demander un exemple de fichier.
+4. **Aide à la déclaration d'impôts** : dividendes, intérêts et revenus fonciers de l'année, avec la case où les reporter. C'est indicatif, et il faut le dire ; vérifier chaque case sur les sources officielles.
+5. **Autres alertes** : frais élevés sur un placement, abonnement qui augmente.
+6. **Mode à deux** : un patrimoine commun et un patrimoine propre à chacun, avec une vue d'ensemble.
