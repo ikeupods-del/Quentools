@@ -26,6 +26,9 @@ Le propriétaire n'est pas développeur : lui répondre en français simple, agi
 
 **2.2.1 : faite** — relecture d'un épisode fabriqué (« 🔍 Relire et corriger ») : expression de Pico par réplique, phrase modifiable, mots à vérifier soulignés, clic sur un mot → « se dit », écoute avec la voix de Pico, ajout au dictionnaire ; « Refaire » ne refait que les répliques changées (voix, écrans et clips gardés par réplique), puis le montage final.
 
+**2.3.0 (demandes du propriétaire du 19 octobre)** — commentaires datés dans la discussion (vidéo en pause : instant et numéro d'image joints, « coupe ici », « texte ici », note sur la timeline) ; épisodes de Pico avec la voix clonée du propriétaire ou un doublage, voix de synthèse seulement si elle est choisie ; script libre transformé en fiche ; fabrication seule et en priorité basse, IA libérée pendant la voix clonée (MacBook Air M5, 16 Go).
+- Limite : la voix clonée réelle (Chatterbox, Qwen3-TTS) n'est essayée que sur le Mac ; les essais de développement utilisent un faux modèle. Qualité et vitesse à vérifier par le propriétaire sur un premier épisode.
+
 ## HyperFrames : étude faite, choix à faire par le propriétaire
 - Étude complète : `design/quentmovie-2/ETUDE-HYPERFRAMES.md`. Essai réussi avec le modèle « warm-grain » de leur catalogue (10 s en 1080p fabriquées en 27 s), une fois ses fichiers extérieurs (GSAP, texture) copiés en local.
 - Il manque sur le Mac : ffprobe pour puce Apple (HyperFrames refuse de démarrer sans lui), Chrome (≈ 100 Mo s'il n'est pas installé) et le programme (124 Mo de modules, ≈ 42 Mo compressé) : à télécharger au premier usage, pas à livrer dans l'application. Mesure d'audience de HyperFrames à couper.

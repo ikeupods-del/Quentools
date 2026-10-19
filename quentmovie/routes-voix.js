@@ -6,6 +6,12 @@ const fs = require('fs'), path = require('path');
 const NON = Symbol('non traité');
 
 function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail, PAROLE, VOIXCLONE, GEN, IA, safeName, num }) {
+  // numéro du prochain épisode : un de plus que les fiches et épisodes déjà présents (dépôt de la chaîne, ~/Movies/QuentInvest, brouillons)
+  function prochainNumero() {
+    const os = require('os'), dossiers = [path.join(BASE, 'quentinvest', 'fiches'), path.join(opts.sortiesPico || path.join(os.homedir(), 'Movies', 'QuentInvest'), 'fiches'), path.join(opts.sortiesPico || path.join(os.homedir(), 'Movies', 'QuentInvest'), 'episodes'), path.join(__dirname, '..', 'design', 'quentinvest-youtube', 'fiches')];
+    let max = 0; for (const d of dossiers) { try { for (const n of fs.readdirSync(d)) { const m = /^(\d{1,3})-/.exec(n); if (m && +m[1] < 98) max = Math.max(max, +m[1]); } } catch (e) { /* dossier absent */ } }
+    return max + 1;
+  }
   return async function traiter(req, res, p, url) {
     // Dictionnaire de prononciation : « mot écrit → comme il se dit », appliqué à toutes les voix (voix-texte.js) ; celui de l'utilisateur passe avant le livré
     if (p === '/api/prononciations') {
@@ -109,6 +115,13 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
       }
     }
     // Brouillon de fiche : article Wikipédia + IA locale (reformulation contrôlée) + structure de la chaîne ; la fiche est gardée dans ~/Movies/QuentMovie/quentinvest/fiches
+    // ton script (texte libre) → fiche de Pico, par le programme seul ; numéro = le suivant des épisodes déjà faits
+    if (req.method === 'POST' && p === '/api/quentinvest/script') {
+      const b = await readJson(req), texte = String(b.texte || '').slice(0, 60000);
+      if (texte.trim().length < 80) throw new Error('Colle ton script : une accroche, quelques paragraphes et une conclusion.');
+      const fiche = require('./fiche-quentinvest').ficheDepuisScript(texte, { titre: String(b.titre || '').slice(0, 120), numero: prochainNumero() });
+      return send(res, 200, { fiche, controle: require('./fiche-quentinvest').controler(fiche, { lexique: require('./voix-texte').lexiqueActuel() }) });
+    }
     if (req.method === 'POST' && p === '/api/quentinvest/brouillon') {
       const b = await readJson(req), sujet = String(b.sujet || '').trim().slice(0, 120);
       if (sujet.length < 3) throw new Error('Écris le sujet de l’épisode (par exemple « Le krach de 1929 »).');
@@ -116,7 +129,7 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
         job.step = 'Recherche de l’article Wikipédia…';
         const article = String(b.article || '').trim() || (await GEN().chercher(sujet)).resultats[0].titre;
         const r = await require('./fiche-ia').brouillon({
-          sujet, article, numero: Math.max(1, Math.floor(num(b.numero, 99))), url: `https://fr.wikipedia.org/wiki/${encodeURIComponent(article.replace(/ /g, '_'))}`,
+          sujet, article, numero: Math.max(1, Math.floor(num(b.numero, prochainNumero()))), url: `https://fr.wikipedia.org/wiki/${encodeURIComponent(article.replace(/ /g, '_'))}`,
           faits: (a, d) => GEN().faits(a, d),
           ecrire: (o, j) => IA().ecrireScript({ ...o, style: 'documentaire', consigne: 'Tutoie le spectateur, phrases courtes de vingt mots au plus, aucun fait ajouté.', recherche: false }, j)
         }, job);

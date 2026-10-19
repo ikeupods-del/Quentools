@@ -1730,7 +1730,7 @@ function buildClip(c, P, o = {}) {
         const b = await readJson(req), demande = String(b.demande || '').slice(0, 500), AS = require('./assistant');
         const ordre = MEM.detecter(demande), repMem = ordre ? MEM.appliquer(MEMOIRE, ordre, 'QuentMovie') : null; // « retiens que… », « oublie… », « que retiens-tu ? »
         if (repMem) return send(res, 200, { actions: [], ia: false, memoire: repMem });
-        const projet = b.projet && typeof b.projet === 'object' ? b.projet : undefined, regles = AS.comprendre(demande, projet);
+        const projet = b.projet && typeof b.projet === 'object' ? b.projet : undefined, regles = AS.comprendre(demande, projet, b.instant);
         const reponse = !regles.length && b.discussion ? AS.repondre(demande, projet) : ''; // discussion : une question sur le montage reçoit sa réponse, calculée par le programme
         if (reponse) return send(res, 200, { actions: [], ia: false, reponse });
         const choix = () => (b.discussion ? AS.proches(demande, projet) : undefined); // pas compris : des choix plutôt qu'un refus
@@ -2047,7 +2047,7 @@ function buildClip(c, P, o = {}) {
         fs.renameSync(src, dest);
         return send(res, 200, await importerPrise(dest));
       }
-      { const r = await RPI.creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE })(req, res, p, url); if (r !== RPI.NON) return r; } // épisode Pico fabriqué dans QuentMovie, navigateur des écrans (routes-pico.js)
+      { const r = await RPI.creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA: () => { try { if (ia && ia.arreter) ia.arreter(); } catch (e) { /* déjà arrêtée */ } } })(req, res, p, url); if (r !== RPI.NON) return r; } // épisode Pico fabriqué dans QuentMovie, navigateur des écrans (routes-pico.js)
       { const r = await RP.creer({ PUB, opts, send, readJson, travail, EXPORTS, safeName })(req, res, p); if (r !== RP.NON) return r; } // publication YouTube et TikTok (routes-publier.js)
       { const r = await RV.creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail, PAROLE, VOIXCLONE, GEN, IA, safeName, num })(req, res, p, url); if (r !== RV.NON) return r; } // doublage, voix clonée, prononciations, fiche (routes-voix.js)
       if (p === '/api/projet') { // enregistrement automatique

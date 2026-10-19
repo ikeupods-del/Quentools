@@ -35,6 +35,8 @@ function ouvrirFiche() {
     <div class="encart" style="margin-bottom:8px"><h4>Brouillon automatique</h4><p class="mut" style="margin:0 0 6px">Donne un sujet : QuentMovie lit l’article Wikipédia, l’IA locale reformule les faits pour la voix et la structure de l’épisode est ajoutée. C’est un <b>brouillon</b> : le titre, l’accroche, les erreurs du piège et la question sont à réécrire, et les sources à vérifier.</p>
       <div class="ligne"><input id="fiSujet" placeholder="Ex. : Le krach de 1929" style="flex:1"><button id="fiBrouillon">✍️ Écrire un brouillon</button></div><div id="fiProg" class="mut" style="margin-top:6px"></div></div>
     <div id="fiDeja"></div>
+    <div class="encart" style="margin-bottom:8px"><h4>Ton script</h4><p class="mut" style="margin:0 0 6px">Colle ton texte tel que tu l’as écrit : un titre (# Titre), l’accroche, des paragraphes (une ligne courte = un titre de partie, des lignes « - » = une liste), puis « En une phrase : … ». QuentMovie le découpe en répliques et choisit les écrans (chiffres, définitions, listes) sans rien ajouter.</p>
+      <textarea id="fiScript" rows="5" style="width:100%" placeholder="# Pourquoi les prix montent ?&#10;&#10;Ton panier coûtait 50 € il y a cinq ans…"></textarea><div class="ligne"><span class="sp"></span><button id="fiDepuisScript">📄 Transformer mon script en fiche</button></div></div>
     <textarea id="fiTexte" rows="9" style="width:100%;font-family:monospace;font-size:12px" placeholder='{ "numero": 12, "slug": "…", … }'></textarea>
     <div class="ligne"><label class="bouton" style="cursor:pointer">📂 Charger un fichier<input type="file" id="fiF" accept=".json,application/json" hidden></label><button class="pri" id="fiGo">Contrôler</button><button id="fiFermer">Fermer</button></div>
     <div id="fiRes" style="margin-top:8px"></div>`, 'xl');
@@ -43,6 +45,12 @@ function ouvrirFiche() {
     z.innerHTML = `<div class="encart" style="margin-bottom:8px"><h4>Épisodes déjà fabriqués</h4><div class="ligne" style="flex-wrap:wrap">${l.map(e => `<button class="mini" data-relire="${esc(e.base)}">🔍 ${esc(e.titre || e.base)}</button>`).join('')}</div></div>`;
     z.onclick = ev => { const b = ev.target.closest('[data-relire]'); if (b) ouvrirRelecturePico(b.dataset.relire); }; }).catch(() => {});
   $('#fiF').onchange = async e => { const f = e.target.files[0]; if (f) $('#fiTexte').value = await f.text(); };
+  $('#fiDepuisScript').onclick = async () => {
+    const t = $('#fiScript').value, prog = $('#fiProg');
+    try { const r = await api('/api/quentinvest/script', { method: 'POST', body: JSON.stringify({ texte: t }) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Script illisible');
+      $('#fiTexte').value = JSON.stringify(j.fiche, null, 1); $('#fiGo').click(); $('#fiTexte').scrollIntoView({ block: 'center' }); }
+    catch (er) { signal(er.message); }
+  };
   $('#fiBrouillon').onclick = async () => {
     const sujet = $('#fiSujet').value.trim(), prog = $('#fiProg'); if (sujet.length < 3) return signal('Écris le sujet de l’épisode.');
     $('#fiBrouillon').disabled = true; prog.textContent = 'Préparation…';
@@ -60,11 +68,20 @@ function ouvrirFiche() {
       const r = await (await api('/api/quentinvest/controle', { method: 'POST', body: JSON.stringify({ fiche: $('#fiTexte').value }) })).json();
       const li = (c, t) => t.map(x => `<div style="margin:3px 0">${c} ${esc(x)}</div>`).join('');
       res.innerHTML = li('ℹ️', r.infos) + li('❌', r.erreurs) + li('⚠️', r.avertissements) + `<p><b>${r.ok ? '✅ Fiche fabricable.' : '❌ À corriger avant la fabrication.'}</b></p>`
-        + (r.ok ? `<div class="encart" id="fiFab"><h4>🎬 Fabriquer l’épisode</h4><p class="mut" style="margin:0 0 6px">Vidéo YouTube, version TikTok, miniatures et texte de publication, avec la voix de Pico (téléchargée une fois, ≈ 350 Mo). Compte environ 15 à 20 minutes ; tu peux continuer à monter pendant ce temps. Rien n’est publié.</p>
-          <div class="ligne"><label><input type="checkbox" id="fiTiktok" checked> Version TikTok aussi</label><span class="sp"></span><button class="pri" id="fiFabriquer">🎬 Fabriquer</button></div><div id="fiFabRes" class="mut" style="margin-top:6px"></div></div>` : '');
-      const fb = $('#fiFabriquer'); if (fb) fb.onclick = () => fabriquerPico($('#fiTexte').value, { sansTiktok: !$('#fiTiktok').checked });
+        + (r.ok ? `<div class="encart" id="fiFab"><h4>🎬 Fabriquer l’épisode</h4><p class="mut" style="margin:0 0 6px">Vidéo YouTube, version TikTok, miniatures et texte de publication. Compte environ 15 à 20 minutes ; tu peux continuer à monter pendant ce temps. Rien n’est publié.</p>
+          <div class="ligne"><label>Voix <select id="fiVoix"><option value="pico">Voix de synthèse de Pico</option></select></label><label><input type="checkbox" id="fiTiktok" checked> Version TikTok aussi</label><span class="sp"></span><button class="pri" id="fiFabriquer">🎬 Fabriquer</button></div><div id="fiVoixInfo" class="mut"></div><div id="fiFabRes" class="mut" style="margin-top:6px"></div></div>` : '');
+      const fb = $('#fiFabriquer'); if (fb) { fb.onclick = () => fabriquerPico($('#fiTexte').value, { sansTiktok: !$('#fiTiktok').checked, voix: $('#fiVoix').value }); choixVoixPico(); }
     } catch (er) { res.innerHTML = '<span style="color:#f87171">' + esc(er.message) + '</span>'; }
   };
+}
+// voix proposées : ta voix clonée (si l'essai de voix clonée est installé), tes doublages enregistrés, la voix de synthèse de Pico
+async function choixVoixPico() {
+  const sel = $('#fiVoix'), info = $('#fiVoixInfo'); if (!sel) return;
+  let e; try { e = await (await api('/api/pico')).json(); } catch (er) { return; }
+  sel.innerHTML = `<option value="ma-voix">Ma voix clonée${e.maVoix.installee ? '' : ' (à installer, plusieurs Go)'}</option>${(e.doublages || []).map(n => `<option value="doublage:${esc(n)}">Mon doublage « ${esc(n)} »</option>`).join('')}<option value="pico">Voix de synthèse de Pico${e.voix && e.voix.installee ? '' : ' (≈ 350 Mo à télécharger)'}</option>`;
+  sel.value = e.maVoix.installee ? 'ma-voix' : 'pico';
+  const dire = () => { info.textContent = sel.value === 'ma-voix' ? 'Chaque réplique est dite par ta voix clonée (modèle de l’essai « Voix clonée » du Doublage), à partir de tes enregistrements. Plus lent que la synthèse : compte plusieurs minutes de plus.' : sel.value.startsWith('doublage:') ? 'Tes enregistrements du Doublage, réplique par réplique (texte à lire : fichier « …-lecture.txt » de l’épisode). Une réplique sans enregistrement garde la voix de synthèse.' : ''; };
+  sel.onchange = dire; dire();
 }
 // Épisode Pico fabriqué dans QuentMovie (routes-pico.js) : avancement, arrêt possible, puis dossier, publication et avertissements du rythme
 async function fabriquerPico(texte, options) {

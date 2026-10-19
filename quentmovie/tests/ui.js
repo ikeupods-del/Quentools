@@ -296,6 +296,24 @@ function chromium() {
   check('discussion : clip inexistant expliqué', /pas de clip 9/.test(await dernier()), await dernier());
   await pg.fill('#chTexte', 'retiens que je préfère les musiques calmes'); await pg.keyboard.press('Enter'); await attendreIA('🧠');
   check('discussion : « retiens que… » garde la consigne', /🧠/.test(await dernier()) && await ev(async () => JSON.stringify(await (await api('/api/memoire')).json()).includes('musiques calmes')), await dernier());
+  // commentaire vidéo en pause : le message porte l'instant (et le numéro d'image), « ici » = ce moment
+  await ev(() => { stopLecture(); proj.textes = []; proj.markers = []; proj.nomsReperes = {}; commit(); tout(); placerTete(2.3, { sansSelection: true }); }); await pg.waitForTimeout(500);
+  check('commentaire : l’instant de la pause est proposé avec le numéro d’image', await ev(() => /00:02,3 · image 69/.test($('#chInstant').textContent)), await ev(() => $('#chInstant').textContent));
+  const nClips = await ev(() => proj.clips.length);
+  await pg.fill('#chTexte', 'coupe ici'); await pg.keyboard.press('Enter'); await attendreIA('Je le fais');
+  check('commentaire : le message garde son instant (cliquable)', await ev(() => { const b = [...document.querySelectorAll('#chMsgs .ch-t')].pop(); return b && +b.dataset.cht === 2.3; }));
+  await pg.click('#chMsgs .ch-m.ia:last-child button.pri'); await attendreIA('Fait');
+  check('commentaire : « coupe ici » coupe à l’instant de la pause', await ev(n => proj.clips.length === n + 1 && Math.abs(starts()[1] - 2.3) < 0.05, nClips), await dernier());
+  await ev(() => placerTete(4, { sansSelection: true }));
+  await pg.fill('#chTexte', 'mets le texte « Deux pour cent » ici'); await pg.keyboard.press('Enter'); await attendreIA('Je le fais'); await pg.click('#chMsgs .ch-m.ia:last-child button.pri'); await attendreIA('Fait');
+  check('commentaire : texte posé à cet instant sur la piste Titres', await ev(() => proj.textes.some(x => x.titre.l1 === 'Deux pour cent' && Math.abs(x.start - 4) < 0.05)), await dernier());
+  await ev(() => placerTete(5, { sansSelection: true }));
+  await pg.fill('#chTexte', 'ici ça ne va pas du tout'); await pg.keyboard.press('Enter'); await attendreIA('Tu veux dire');
+  await pg.click('#chMsgs .ch-m.ia:last-child button:has-text("Garder comme note")'); await attendreIA('Fait');
+  check('commentaire : gardé comme note (repère nommé) à cet instant', await ev(() => proj.markers.some(m => Math.abs(m - 5) < 0.05) && /ne va pas/.test(proj.nomsReperes['5.00'] || '')), await dernier());
+  await ev(() => placerTete(1, { sansSelection: true }));
+  await pg.fill('#chTexte', 'ici le son est trop fort'); await pg.keyboard.press('Enter'); await attendreIA('Tu veux dire');
+  check('commentaire : « ici le son est trop fort » propose de baisser le volume de ce clip', await ev(() => [...document.querySelectorAll('#chMsgs .ch-m.ia:last-child button')].some(b => /volume.*70 %.*clip 1/i.test(b.textContent))), await dernier());
   await ev(() => panneauDroite('reglages'));
   check('discussion : retour aux réglages du clip', await ev(() => !$('#insp').hidden && $('#chat').hidden));
   await ev(() => { fermer(); proj.clips[1].subs = [{ s: 0, e: 2, t: 'Les volcans d’Islande sont parmi les plus actifs' }, { s: 2, e: 4, t: 'On visite les volcans et les glaciers' }]; commit(); ouvrirPublication('YouTube'); });

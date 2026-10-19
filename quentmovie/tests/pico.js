@@ -37,6 +37,10 @@ async function navigateurEssai(exe) {
   const nav = exe && pw ? await navigateurEssai(exe) : null;
   const modeles = process.env.QM_MODELES || path.join(base, 'modeles');
   if (process.env.QM_MODELES) fs.symlinkSync(process.env.QM_MODELES, path.join(base, 'modeles'));
+  // faux modèle de voix clonée : dit chaque réplique demandée (une note dont la durée suit la longueur du texte), comme essai.py --lot
+  const vc = path.join(base, 'voix-clone', 'venv-chatterbox'), fauxPython = path.join(vc, 'bin', 'python'); fs.mkdirSync(path.dirname(fauxPython), { recursive: true });
+  fs.writeFileSync(fauxPython, `#!${process.execPath}\nconst fs = require('fs'), { execFileSync } = require('child_process'), a = process.argv, lot = a[a.indexOf('--lot') + 1];\nfor (const x of JSON.parse(fs.readFileSync(lot, 'utf8'))) { console.log('ETAPE : Ta voix'); fs.mkdirSync(require('path').dirname(x.fichier), { recursive: true }); execFileSync(${JSON.stringify(bins.ffmpeg)}, ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=f=200:d=' + Math.min(6, 0.5 + x.texte.length / 18), '-ar', '24000', '-ac', '1', x.fichier]); }\n`); fs.chmodSync(fauxPython, 0o755);
+  fs.writeFileSync(path.join(vc, '.complet'), 'essai'); process.env.QM_PYTHON = fauxPython;
   const app = create({ port: 0, base, ...bins, ...(process.env.QM_SANS_FFPROBE ? { ffprobe: null } : {}), sortiesPico: sorties, navigateur: nav }), port = await app.start(), U = p => `http://127.0.0.1:${port}${p}`;
   const post = (p, o, h = {}) => fetch(U(p), { method: 'POST', headers: h, body: JSON.stringify(o || {}) });
   const attendre = async id => { for (;;) { await new Promise(r => setTimeout(r, 800)); const j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.error || j.done) return j; } };
@@ -49,6 +53,13 @@ async function navigateurEssai(exe) {
   const vide = await post('/api/pico/fabriquer', { fiche: { numero: 1 } }); check('fiche incomplète refusée tout de suite', vide.status >= 400);
   check('fiche qui n’est pas du JSON refusée', (await post('/api/pico/fabriquer', { fiche: '{ pas du json' })).status >= 400);
 
+  // ton script → fiche de Pico (programme seul) : répliques, écrans choisis, numéro suivant
+  const sc = await (await post('/api/quentinvest/script', { texte: '# Pourquoi les prix montent ?\n\nTon panier coûtait 50 € il y a cinq ans. Aujourd’hui, près de 60 €. Pourquoi ?\n\nL’inflation\nL’inflation, c’est la hausse générale des prix. Chaque euro achète un peu moins.\n\nTrois causes :\n- l’énergie plus chère\n- les salaires qui montent\n\nEn une phrase : l’inflation grignote ton pouvoir d’achat. Et toi, tu l’as sentie ?' })).json();
+  check('script → fiche : écrans chiffre, définition et liste choisis', sc.fiche && sc.fiche.accroche.ecran.type === 'chiffre' && sc.fiche.blocs.some(b => b.ecran.type === 'definition') && sc.fiche.blocs.some(b => b.ecran.type === 'liste'), JSON.stringify(sc).slice(0, 300));
+  check('script → fiche : question et résumé repris du script', sc.fiche && sc.fiche.question === 'Et toi, tu l’as sentie ?' && /grignote/.test(sc.fiche.resume.texte));
+  check('script → fiche : fabricable par la chaîne', (() => { try { require('../../design/quentinvest-youtube/fabrication/composer.js').compose(sc.fiche); return true; } catch (e) { return false; } })());
+  check('script trop court refusé', (await post('/api/quentinvest/script', { texte: 'Bonjour.' })).status >= 400);
+  check('état : ta voix clonée prête', (await (await fetch(U('/api/pico'))).json()).maVoix.installee === true);
   // vraie fabrication : petite fiche, voix Piper « Pierre », vidéo YouTube courte seulement
   const voixPrete = fs.existsSync(path.join(modeles, 'vits-piper-fr_FR-upmc-medium', '.complet'));
   if (!nav) console.log('  (fabrication réelle ignorée : aucun Chromium pour dessiner les écrans)');
@@ -94,6 +105,17 @@ async function navigateurEssai(exe) {
     console.log(`  refaire en ${Math.round((Date.now() - t1) / 1000)} s`);
     const ec = await (await post('/api/pico/ecouter', { base: '98-essai-pico', texte: 'Mackay se dit maquaï.' })).json(), je = await attendre(ec.id);
     check('écouter : phrase dite par la voix de l’épisode', je.done && /\.m4a$/.test((je.resultat || {}).file || '') && fs.existsSync(path.join(base, 'medias', je.resultat.file)), je.error || '');
+    // épisode avec ta voix clonée : chaque réplique dite par le modèle de clonage, aucune voix de synthèse à télécharger
+    const ficheMaVoix = { ...fiche, numero: 97, slug: 'essai-ma-voix' }; delete ficheMaVoix.voix; // voix par défaut = Kokoro, jamais téléchargée ici
+    const fm = await (await post('/api/pico/fabriquer', { fiche: ficheMaVoix, options: { court: true, sansTiktok: true, voix: 'ma-voix' } })).json(), jm = await attendre(fm.id);
+    check('ta voix : épisode fabriqué sans voix de synthèse', jm.done && !jm.error && (jm.resultat.fichiers || []).includes('97-essai-ma-voix-youtube.mp4'), jm.error || '');
+    const dmv = path.join(sorties, '97-essai-ma-voix');
+    check('ta voix : une réplique dite par ta voix pour chaque réplique', fs.existsSync(path.join(dmv, 'ma-voix-youtube', 'v00.wav')) && JSON.parse(fs.readFileSync(path.join(dmv, 'voix.json'), 'utf8')).mode === 'ma-voix');
+    check('ta voix : la voix de Pico n’a pas été téléchargée', !fs.existsSync(path.join(base, 'modeles', 'kokoro-multi-lang-v1_0')));
+    const d0 = fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v00.wav')).mtimeMs, d1 = fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v01.wav')).mtimeMs;
+    const rm = await (await post('/api/pico/refaire', { base: '97-essai-ma-voix', changements: [{ i: 1, texte: 'Une phrase refaite avec ta voix.' }] })).json(), jrm = await attendre(rm.id);
+    check('ta voix : refaire ne redit que la phrase changée', jrm.done && !jrm.error && fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v00.wav')).mtimeMs === d0 && fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v01.wav')).mtimeMs > d1, jrm.error || '');
+    check('une seule fabrication à la fois', await (async () => { const a = await (await post('/api/pico/refaire', { base: '97-essai-ma-voix', changements: [] })).json(); const b2 = await post('/api/pico/fabriquer', { fiche: ficheMaVoix, options: { court: true, sansTiktok: true, voix: 'ma-voix' } }); await attendre(a.id); return b2.status >= 400; })());
     // écran de relecture dans la fenêtre : lignes, expressions, mot cliquable avec « se dit », écouter et ajouter
     const pg = await nav.b.newPage({ viewport: { width: 1440, height: 900 } }), errs = []; pg.on('pageerror', x => errs.push(x.message));
     await pg.goto(U('/')); await pg.waitForTimeout(800); await pg.evaluate(() => ouvrirRelecturePico('98-essai-pico')); await pg.waitForSelector('#rlListe .rlLigne');

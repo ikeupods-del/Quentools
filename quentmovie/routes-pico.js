@@ -6,6 +6,7 @@ const fs = require('fs'), os = require('os'), path = require('path'), crypto = r
 const { spawn } = require('child_process');
 const NON = Symbol('non traité');
 const JETON = crypto.randomBytes(18).toString('hex');
+const enCours = new Set(); // fabrications lancées (une seule à la fois : mémoire et chaleur d'un MacBook Air)
 const EXPRESSIONS = ['neutre', 'content', 'inquiet', 'surpris', 'curieux', 'reflechi']; // dessins de Pico (personnage/png) // un par lancement de QuentMovie : seule la fabrication lancée par ce moteur le connaît
 
 // dossier du programme de la chaîne : à côté de QuentMovie dans le dépôt, ou livré dans l'application (Resources/pico)
@@ -18,7 +19,7 @@ const racinePolices = pico => [path.join(pico, '..', '..'), pico].find(d => fs.e
 // chemin d'un module livré avec QuentMovie (le programme de la chaîne ne les cherche pas tout seul quand il est dans l'application)
 const module_ = n => { try { return path.dirname(require.resolve(n + '/package.json')).replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep); } catch (e) { return null; } };
 
-function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE }) {
+function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA = () => {} }) {
   const SORTIES = opts.sortiesPico || path.join(os.homedir(), 'Movies', 'QuentInvest');
   const nav = () => opts.navigateur || null;
   const entier = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v) || a));
@@ -43,6 +44,8 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE }) {
     const fProg = path.join(trav, nom + '-progres.json'); fs.rmSync(fProg, { force: true });
     return new Promise((ok, ko) => {
       const enfant = spawn(process.execPath, [path.join(pico, 'fabrication', script), ...args], { env: envFabrication(pico, fProg, job.port), stdio: ['ignore', 'pipe', 'pipe'] }); job.enfant = enfant;
+      // MacBook Air (16 Go, sans ventilateur) : la fabrication et ses FFmpeg passent après le montage en cours, la fenêtre reste fluide
+      try { os.setPriority(enfant.pid, 10); } catch (e) { /* priorité inchangée */ }
       let sortie = '', erreurs = '', phase = phase0; const n = Math.max(1, phases.length);
       const lire = () => { let x; try { x = JSON.parse(fs.readFileSync(fProg, 'utf8')); } catch (e) { return; }
         const PART = { voix: [0, 0.12], ecrans: [0.12, 0.45], clips: [0.45, 0.6], export: [0.6, 1] };
@@ -70,6 +73,28 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE }) {
       });
     });
   }
+  // ---------- voix de l'épisode : ta voix clonée (« ma-voix »), un doublage enregistré (« doublage:<nom> ») ou la voix de synthèse de Pico (« pico ») ----------
+  // ta voix : chaque réplique est dite par le modèle de clonage dans un dossier vNN.wav, puis la fabrication la prend comme une voix enregistrée
+  const choixVoix = (dossier) => { try { return JSON.parse(fs.readFileSync(path.join(dossier, 'voix.json'), 'utf8')); } catch (e) { return { mode: 'pico' }; } };
+  function modeVoix(v) {
+    const m = String(v || 'pico');
+    if (m === 'ma-voix') { const VC = VOIXCLONE && VOIXCLONE(), prets = VC ? VC.prete() : []; return { mode: 'ma-voix', moteur: prets.includes('chatterbox') ? 'chatterbox' : prets[0] || 'chatterbox' }; }
+    if (m.startsWith('doublage:')) { const nom = path.basename(m.slice(9)); const d = path.join(BASE, 'doublages', nom); if (!nom || !fs.existsSync(d)) throw new Error('Doublage introuvable : ' + nom); return { mode: 'doublage', nom }; }
+    return { mode: 'pico' };
+  }
+  // dossiers de voix par version (YouTube, TikTok) : les répliques de ta voix clonée sont dites (ou gardées si le texte n'a pas changé)
+  async function voixDesVersions(job, choix, dossier, versions) {
+    if (choix.mode === 'doublage') return { youtube: path.join(BASE, 'doublages', choix.nom), tiktok: '' };
+    if (choix.mode !== 'ma-voix') return {};
+    const VT = require('./voix-texte'), lignes = [], dirs = {};
+    for (const [nom, EP] of versions) {
+      const d = path.join(dossier, 'ma-voix-' + nom); dirs[nom] = d;
+      EP.scenes.forEach((s, i) => lignes.push({ texte: VT.pourLaVoix(s.voix || s.texte), fichier: path.join(d, `v${String(i).padStart(2, '0')}.wav`) }));
+    }
+    job.step = 'Ta voix…'; libererIA(); // 16 Go de mémoire : l'IA du montage (≈ 3 Go) laisse la place au modèle de ta voix, elle se relance seule à la demande suivante
+    await VOIXCLONE().dire(choix.moteur, lignes, job);
+    return dirs;
+  }
   // une fabrication complète : episode.js (YouTube, TikTok, miniatures, texte de publication)
   async function fabriquer(job, fiche, o) {
     const pico = dossierPico(opts); if (!pico) throw new Error('Programme de la chaîne QuentInvest introuvable dans cette installation.');
@@ -77,7 +102,10 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE }) {
     const dossier = path.join(SORTIES, C.base), fiches = path.join(SORTIES, 'fiches');
     for (const d of [dossier, fiches, path.join(SORTIES, 'medias'), path.join(SORTIES, 'episodes')]) fs.mkdirSync(d, { recursive: true });
     const fFiche = path.join(fiches, C.base + '.json'); fs.writeFileSync(fFiche, JSON.stringify(fiche, null, 1) + '\n');
-    const args = [fFiche, '--sortie', dossier, '--modeles', path.join(BASE, 'modeles'), ...(o.court ? ['--court'] : []), ...(o.sansTiktok ? ['--sans-tiktok'] : []), ...(o.sansYoutube ? ['--sans-youtube'] : [])];
+    const choix = o.choixVoix || { mode: 'pico' }; fs.writeFileSync(path.join(dossier, 'voix.json'), JSON.stringify(choix));
+    const V = await voixDesVersions(job, choix, dossier, [['youtube', C.long], ['tiktok', C.tiktok]]);
+    const perso = [...(V.youtube ? ['--voix-perso', V.youtube] : []), ...(V.tiktok ? ['--voix-perso-tiktok', V.tiktok] : [])];
+    const args = [fFiche, '--sortie', dossier, '--modeles', path.join(BASE, 'modeles'), ...perso, ...(o.court ? ['--court'] : []), ...(o.sansTiktok ? ['--sans-tiktok'] : []), ...(o.sansYoutube ? ['--sans-youtube'] : [])];
     const lignes = await lancer(job, pico, 'episode.js', args, C.base, [...(o.sansYoutube ? [] : ['YouTube']), ...(o.sansTiktok ? [] : ['TikTok'])]);
     return { base: C.base, titre: fiche.titre || C.base, dossier, fichier: fFiche, fichiers: fs.readdirSync(dossier).filter(n => /\.(mp4|png|md|zip)$/.test(n)),
       avertissements: lignes.filter(l => /^⚠/.test(l)).map(l => l.replace(/^⚠\s*/, '')).slice(0, 30), controle: lignes.filter(l => /^\s+.* · /.test(l)).map(l => l.trim()).slice(0, 30) };
@@ -100,9 +128,11 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE }) {
       if (typeof c.texte === 'string' && c.texte.trim()) { const t = c.texte.replace(/\s+/g, ' ').trim().slice(0, 600); if (t !== s.texte) { s.texte = t; delete s.voix; } } // `voix` (lecture différente du texte) ne correspond plus
     }
     fs.writeFileSync(E.f, JSON.stringify(EP, null, 1) + '\n');
+    const choix = choixVoix(E.dossier), fT = path.join(SORTIES, 'episodes', E.base + '-tiktok.json');
+    const V = await voixDesVersions(job, choix, E.dossier, [['youtube', EP], ...(choix.mode === 'ma-voix' && avecTiktok && E.tiktok ? [['tiktok', lireJson(fT)]] : [])]);
     const versions = [['', E.f, 'travail', `${E.base}-youtube.mp4`, 'YouTube'], ...(avecTiktok && E.tiktok ? [['-tiktok', path.join(SORTIES, 'episodes', E.base + '-tiktok.json'), 'travail-tiktok', `${E.base}-tiktok.mp4`, 'TikTok']] : [])];
     for (const [k, [, json, trav, video, nom]] of versions.entries()) {
-      const T = lireJson(json), args = [json, '--voix', dossierVoix(T), '--sortie', path.join(E.dossier, trav), '--court'];
+      const T = lireJson(json), dv = k ? V.tiktok : V.youtube, args = [json, '--voix', dossierVoix(T), '--sortie', path.join(E.dossier, trav), '--court', ...(dv ? ['--voix-perso', dv] : [])];
       job.step = nom; await lancer(job, pico, 'fabriquer.js', args, E.base + '-refaire', versions.map(v => v[4]), k);
       fs.copyFileSync(path.join(E.dossier, trav, 'episode.mp4'), path.join(E.dossier, video));
       if (!k) { // texte de publication : chapitres recalés sur les nouvelles durées
@@ -132,7 +162,10 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE }) {
     if (!p.startsWith('/api/pico')) return NON;
     if (req.method === 'GET' && p === '/api/pico') {
       const pico = dossierPico(opts), e = PAROLE().etat();
-      return send(res, 200, { pret: !!pico, dispo: e.dispo, voix: e.pico, navigateur: !!nav() || !!module_('playwright-core'), sorties: SORTIES });
+      let doublages = []; try { doublages = fs.readdirSync(path.join(BASE, 'doublages')).filter(n => fs.existsSync(path.join(BASE, 'doublages', n, 'v00.wav'))); } catch (er) { /* aucun */ }
+      const VC = VOIXCLONE && VOIXCLONE(), mv = VC ? VC.etat() : null;
+      return send(res, 200, { pret: !!pico, dispo: e.dispo, voix: e.pico, navigateur: !!nav() || !!module_('playwright-core'), sorties: SORTIES,
+        maVoix: { installee: VC ? VC.prete().length > 0 : false, essai: !!(mv && mv.fichiers.some(f => f !== 'reel.wav')) }, doublages });
     }
     // épisode fabriqué à relire : répliques (section, expression, texte), mots à vérifier, versions présentes
     if (req.method === 'GET' && p === '/api/pico/episode') {
@@ -151,10 +184,16 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE }) {
     if (req.method === 'POST' && p === '/api/pico/ecouter') {
       const b = await readJson(req), texte = String(b.texte || '').replace(/\s+/g, ' ').trim().slice(0, 300); if (!texte) throw new Error('Rien à dire.');
       const pico = dossierPico(opts); if (!pico) throw new Error('Programme de la chaîne QuentInvest introuvable dans cette installation.');
-      let voix = { moteur: 'kokoro', sid: 30, vitesse: 0.82, hauteur: 0.78 }; try { voix = episodeFabrique(b.base).EP.voix || voix; } catch (e) { /* voix de Pico par défaut */ }
+      let voix = { moteur: 'kokoro', sid: 30, vitesse: 0.82, hauteur: 0.78 }, choix = { mode: 'pico' }; try { const E = episodeFabrique(b.base); voix = E.EP.voix || voix; choix = choixVoix(E.dossier); } catch (e) { /* voix de Pico par défaut */ }
       const port = req.socket.localPort;
       return send(res, 200, travail(async job => {
         job.port = port;
+        if (choix.mode === 'ma-voix') { // la phrase dite par ta voix clonée
+          const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-ma-voix-')), wav = path.join(dir, 'v00.wav');
+          try { await VOIXCLONE().dire(choix.moteur, [{ texte: require('./voix-texte').pourLaVoix(texte), fichier: wav }], job); const nom = `ma-voix-ecoute-${Date.now()}.m4a`;
+            await new Promise((ok, ko) => require('child_process').execFile(FFMPEG, ['-y', '-v', 'error', '-i', wav, '-c:a', 'aac', '-b:a', '128k', path.join(BASE, 'medias', nom)], e => (e ? ko(e) : ok()))); return { file: nom }; }
+          finally { fs.rmSync(dir, { recursive: true, force: true }); }
+        }
         if (voix.moteur === 'kokoro' && !PAROLE().etat().pico.installee) { job.step = 'Voix de Pico…'; await PAROLE().installer('pico', job); }
         const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-pico-ecoute-')), json = path.join(dir, 'ep.json');
         try {
@@ -168,24 +207,28 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE }) {
     }
     // refaire après relecture : changements [{ i, expr, texte }] ; `tiktok` : refaire aussi la version TikTok (après une correction de prononciation)
     if (req.method === 'POST' && p === '/api/pico/refaire') {
+      if (enCours.size) throw new Error('Une fabrication d’épisode est déjà en cours : attends qu’elle finisse.');
       const b = await readJson(req), E = episodeFabrique(b.base), ch = (Array.isArray(b.changements) ? b.changements : []).slice(0, 200).map(c => ({ i: Math.round(+c.i), expr: c.expr ? String(c.expr) : '', texte: c.texte != null ? String(c.texte) : null }));
       const port = req.socket.localPort;
-      return send(res, 200, travail(async job => { job.port = port; return refaire(job, E.base, ch, !!b.tiktok); }));
+      return send(res, 200, travail(async job => { job.port = port; enCours.add(job); try { return await refaire(job, E.base, ch, !!b.tiktok); } finally { enCours.delete(job); } }));
     }
     if (req.method === 'POST' && p === '/api/pico/fabriquer') {
+      if (enCours.size) throw new Error('Une fabrication d’épisode est déjà en cours : attends qu’elle finisse (une seule à la fois, pour garder le Mac fluide).');
       const b = await readJson(req); let fiche = b.fiche;
       if (typeof fiche === 'string') { try { fiche = JSON.parse(fiche); } catch (e) { throw new Error('La fiche n’est pas un texte JSON valide.'); } }
       if (!fiche || typeof fiche !== 'object' || Array.isArray(fiche)) throw new Error('Fiche manquante.');
       const pico = dossierPico(opts); if (!pico) throw new Error('Programme de la chaîne QuentInvest introuvable dans cette installation.');
       require(path.join(pico, 'fabrication', 'composer.js')).compose(fiche); // fiche incomplète : refusée tout de suite, avant la tâche de fond
       const port = req.socket.localPort, o = b.options && typeof b.options === 'object' ? b.options : {};
+      const choixVoix_ = modeVoix(o.voix);
       return send(res, 200, travail(async job => {
         // voix de l'épisode : Kokoro (voix de Pico, par défaut) ou une voix Piper de QuentMovie ; téléchargée une seule fois
         const v = require(path.join(pico, 'fabrication', 'composer.js')).compose(fiche).long.voix || {}, PA = require('./parole');
-        if (v.moteur === 'kokoro' || !v.moteur) { if (!PAROLE().etat().pico.installee) { job.step = 'Voix de Pico…'; await PAROLE().installer('pico', job); } }
+        if (choixVoix_.mode !== 'pico') { /* ta voix : rien à télécharger pour Pico */ }
+        else if (v.moteur === 'kokoro' || !v.moteur) { if (!PAROLE().etat().pico.installee) { job.step = 'Voix de Pico…'; await PAROLE().installer('pico', job); } }
         else { const pv = PA.VOIX.find(x => x.archive === (v.modele || 'vits-piper-fr_FR-upmc-medium')); if (pv && !PAROLE().etat().voix.find(x => x.id === pv.id).installee) await PAROLE().installer('voix:' + pv.id, job); }
         job.progress = 0; job.step = 'Préparation de l’épisode';
-        job.port = port; return fabriquer(job, fiche, { court: !!o.court, sansTiktok: !!o.sansTiktok, sansYoutube: !!o.sansYoutube });
+        job.port = port; enCours.add(job); try { return await fabriquer(job, fiche, { court: !!o.court, sansTiktok: !!o.sansTiktok, sansYoutube: !!o.sansYoutube, choixVoix: choixVoix_ }); } finally { enCours.delete(job); }
       }));
     }
     return NON;

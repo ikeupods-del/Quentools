@@ -45,10 +45,10 @@ const pauseDe = i => { const suivante = EP.scenes[i + 1]; return !suivante || su
 // ---------- 1. voix ----------
 function synthese() {
   const sherpa = require(process.env.SHERPA || 'sherpa-onnx-node'), { pourLaVoix } = require(path.join(QM, 'voix-texte.js'));
-  const modele = KOKORO
+  const modele = () => KOKORO
     ? { kokoro: { model: path.join(VOIX, 'model.onnx'), voices: path.join(VOIX, 'voices.bin'), tokens: path.join(VOIX, 'tokens.txt'), dataDir: path.join(VOIX, 'espeak-ng-data'), dictDir: path.join(VOIX, 'dict'), lexicon: [path.join(VOIX, 'lexicon-gb-en.txt'), path.join(VOIX, 'lexicon-zh.txt')].join(','), lang: 'fr' } }
     : { vits: { model: path.join(VOIX, fs.readdirSync(VOIX).find(n => n.endsWith('.onnx'))), tokens: path.join(VOIX, 'tokens.txt'), dataDir: path.join(VOIX, 'espeak-ng-data') } };
-  const tts = new sherpa.OfflineTts({ model: { ...modele, numThreads: 2, debug: false, provider: 'cpu' }, maxNumSentences: 2 });
+  let tts0 = null; const tts = () => tts0 || (tts0 = new sherpa.OfflineTts({ model: { ...modele(), numThreads: 2, debug: false, provider: 'cpu' }, maxNumSentences: 2 })); // chargée seulement si une réplique n'a pas de voix enregistrée
   EP.scenes.forEach((s, i) => {
     progres({ etape: 'voix', i: i + 1, n: EP.scenes.length });
     const brut = path.join(TRAVAIL, 'audio', `b${sh(i)}.wav`), fin = wavDe(i);
@@ -59,7 +59,7 @@ function synthese() {
     const perso = arg('voix-perso', '') && path.join(arg('voix-perso', ''), `v${sh(i)}.wav`);
     if (perso && fs.existsSync(perso)) { ff('-i', perso, '-af', `aresample=44100,silenceremove=start_periods=1:start_threshold=-45dB,apad=pad_dur=${pauseDe(i)}`, '-ac', '1', fin); return; }
     // `voix` : lecture à voix haute quand elle diffère du texte affiché (nombres, sigles)
-    const lire = (t, v) => tts.generate({ text: pourLaVoix(t), sid: Math.min(LOCUTEUR, tts.numSpeakers - 1), speed: v, enableExternalBuffer: false });
+    const lire = (t, v) => tts().generate({ text: pourLaVoix(t), sid: Math.min(LOCUTEUR, tts().numSpeakers - 1), speed: v, enableExternalBuffer: false });
     let a;
     if (!STYLE2) a = lire(s.voix || s.texte, VITESSE);
     else { // style 2 : phrase par phrase, avec de vraies respirations (un point, une question, deux-points) et la dernière phrase plus lente si `lent`

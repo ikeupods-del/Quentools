@@ -12,6 +12,7 @@
   d.appendChild(insp);
   const c = document.createElement('section'); c.id = 'chat'; c.hidden = true;
   c.innerHTML = `<div id="chMsgs" aria-live="polite"></div>
+    <div class="ch-instant" id="chInstantZone"><button id="chInstant" class="on" title="Le message parle de ce moment de la vidéo (clique pour l’enlever)"></button></div>
     <div class="ch-saisie"><button id="chDictee" class="dictee ib" title="Dicter ta demande au micro (clique pour arrêter)">🎤</button><input id="chTexte" type="text" placeholder="Écris ce que tu veux changer…" aria-label="Écrire à l’assistant"><button id="chEnvoyer" class="pri ib" aria-label="Envoyer">↑</button></div>`;
   d.appendChild(c);
   d.querySelector('.dr-onglets').onclick = e => { const b = e.target.closest('[data-dr]'); if (b) panneauDroite(b.dataset.dr); };
@@ -30,11 +31,12 @@ function dessinerChat() {
   const z = $('#chMsgs'); if (!z) return;
   z.innerHTML = discussion.slice(-40).map((m, k) => {
     const i = discussion.length - Math.min(40, discussion.length) + k;
-    return `<div class="ch-m ${m.qui}"><div class="ch-bulle">${esc(m.texte)}</div>${(m.boutons || []).length ? `<div class="ch-b">${m.boutons.map((b, j) => `<button class="mini ${b.pri ? 'pri' : ''}" data-chb="${i}:${j}" ${m.fini ? 'disabled' : ''}>${esc(b.nom)}</button>`).join('')}</div>` : ''}</div>`;
+    return `<div class="ch-m ${m.qui}">${m.t != null ? `<button class="ch-t" data-cht="${m.t}" title="Revenir à ce moment">📍 ${esc(etiquetteInstant(m.t))}</button>` : ''}<div class="ch-bulle">${esc(m.texte)}</div>${(m.boutons || []).length ? `<div class="ch-b">${m.boutons.map((b, j) => `<button class="mini ${b.pri ? 'pri' : ''}" data-chb="${i}:${j}" ${m.fini ? 'disabled' : ''}>${esc(b.nom)}</button>`).join('')}</div>` : ''}</div>`;
   }).join('');
   z.scrollTop = z.scrollHeight;
 }
 $('#chMsgs').addEventListener('click', async e => {
+  const t = e.target.closest('[data-cht]'); if (t) { stopLecture(); placerTete(+t.dataset.cht); return; }
   const b = e.target.closest('[data-chb]'); if (!b) return;
   const [i, j] = b.dataset.chb.split(':').map(Number), m = discussion[i], bt = m && m.boutons[j]; if (!bt || m.fini) return;
   if (!bt.garder) { m.fini = true; dessinerChat(); }
@@ -49,20 +51,40 @@ async function accueilChat() {
   } catch (e) { /* suggestions facultatives */ }
 }
 
+// ---------- Commentaire à un instant : vidéo en pause, le message porte le moment (minutes, secondes et numéro d'image) ----------
+let instantJoint = true;
+const etiquetteInstant = t => { const d = Math.floor(t * 10 + 1e-6) % 10; return `${fmtChrono(t)}${d ? ',' + d : ''} · image ${Math.round(t * (proj.fps || 30))}`; };
+const instantActuel = () => (!lecture && proj.clips.length && instantJoint ? +gt.toFixed(2) : null);
+function majInstant() {
+  const b = $('#chInstant'), z = $('#chInstantZone'); if (!b || $('#chat').hidden) return;
+  if (!proj.clips.length) { z.hidden = true; return; }
+  z.hidden = false;
+  b.textContent = lecture ? '▶ En lecture : mets sur pause pour commenter un moment' : `📍 ${instantJoint ? '' : 'Joindre '}${etiquetteInstant(gt)}${instantJoint ? '  ✕' : ''}`;
+  b.classList.toggle('on', !lecture && instantJoint); b.disabled = !!lecture;
+}
+setInterval(majInstant, 400);
+$('#chInstant').onclick = () => { instantJoint = !instantJoint; majInstant(); };
+// clip sous un instant (1 = premier) : « ici, le son est trop fort » vise ce clip
+const clipA = t => { const st = starts(); for (let i = 0; i < proj.clips.length; i++) if (t >= st[i] && t < st[i] + effDur(proj.clips[i])) return i; return proj.clips.length - 1; };
+const CIBLABLES_V21 = ['couper_blancs', 'sous_titres', 'volume', 'vitesse', 'ameliorer', 'detacher'];
+const aCetInstant = (actions, t) => actions.map(a => (t != null && !a.cible && CIBLABLES_V21.includes(a.action) ? { ...a, cible: String(clipA(t) + 1), libelle: `${a.libelle} — clip ${clipA(t) + 1} (à ${fmtChrono(t)})`, instant: t } : { ...a, instant: t }));
+
 // ---------- Envoi d'une demande ----------
 async function envoyerChat(texte) {
   texte = String(texte == null ? $('#chTexte').value : texte).trim(); if (!texte) return;
-  $('#chTexte').value = ''; discussion.push({ qui: 'moi', texte }); dessinerChat();
+  const t = instantActuel();
+  $('#chTexte').value = ''; discussion.push({ qui: 'moi', texte, t }); dessinerChat();
   const attente = direIA('…');
   let r;
-  try { r = await (await api('/api/assistant/comprendre', { method: 'POST', body: JSON.stringify({ demande: texte, ia: true, discussion: true, projet: { ...resumeProjet(), normaliser: !!proj.normaliser } }) })).json(); }
+  try { r = await (await api('/api/assistant/comprendre', { method: 'POST', body: JSON.stringify({ demande: texte, ia: true, discussion: true, instant: t, projet: { ...resumeProjet(), normaliser: !!proj.normaliser } }) })).json(); }
   catch (e) { discussion.splice(discussion.indexOf(attente), 1); return direIA('Je n’arrive pas à joindre le moteur de QuentMovie : ' + e.message); }
   discussion.splice(discussion.indexOf(attente), 1);
   if (r.memoire) return direIA('🧠 ' + r.memoire);
   if (r.reponse) return direIA(r.reponse);
-  if ((r.actions || []).length) return proposer(r.actions, r.ia ? 'compris par l’IA du Mac' : '');
-  const choix = r.choix || [];
-  if (choix.length) return direIA('Je ne suis pas sûr de comprendre. Tu veux dire :', [...choix.map(a => ({ nom: a.libelle, faire: () => proposer([a], '') })), { nom: 'Autre chose', faire: () => { direIA('D’accord : dis-le avec d’autres mots, par exemple « ajoute une musique calme » ou « coupe à 10 secondes ».'); $('#chTexte').focus(); } }]);
+  if ((r.actions || []).length) return proposer(aCetInstant(r.actions, t), r.ia ? 'compris par l’IA du Mac' : '');
+  const choix = aCetInstant(r.choix || [], t);
+  if (t != null) choix.push({ action: 'note', parametre: texte.slice(0, 60), instant: t, libelle: `📍 Garder comme note à ${fmtChrono(t)}` });
+  if (choix.length) return direIA('Je ne suis pas sûr de comprendre. Tu veux dire :', [...choix.map(a => ({ nom: a.libelle, faire: () => faire([a]) })), { nom: 'Autre chose', faire: () => { direIA('D’accord : dis-le avec d’autres mots, par exemple « ajoute une musique calme » ou « coupe à 10 secondes ».'); $('#chTexte').focus(); } }]);
   direIA('Je n’ai pas compris cette demande. Essaie avec des mots simples : « coupe les blancs », « ajoute une musique calme », « passe en vertical ».');
 }
 $('#chEnvoyer').onclick = () => envoyerChat();
@@ -95,6 +117,17 @@ async function voirCoupe(a) {
 // actions qui visent un clip ou changent la couleur d'un titre : faites ici ; les autres passent par executerAction
 const execV20 = executerAction;
 executerAction = async function (a) {
+  if (a.instant != null && Number.isFinite(+a.instant)) placerTete(Math.min(+a.instant, Math.max(0, total() - 0.04)), { sansSelection: true }); // bruitage, sous-titre… posés à ce moment
+  const p0 = a.parametre || '';
+  if (a.action === 'titre_ici') { // texte sur la piste Titres, à l'instant du commentaire, 3 s
+    const r = CAT.reportage.find(x => x.id === 'bandeau') || CAT.reportage[0]; proj.textes = proj.textes || [];
+    proj.textes.push({ start: +(+a.instant || gt).toFixed(2), dur: 3, titre: { preset: r.id, l1: p0.slice(0, 80), l2: '', color: r.color, font: '', start: 0.2, speed: 14 } });
+    commit(); tout(); apercu(); return aide(`🔤 Texte « ${esc(p0)} » posé à ${fmtChrono(+a.instant || gt)} sur la piste Titres (3 s).`);
+  }
+  if (a.action === 'note') { // repère nommé : le commentaire reste visible sur la timeline
+    const t = +(+a.instant || gt).toFixed(2); proj.markers = proj.markers || []; if (!proj.markers.some(m => Math.abs(m - t) < 0.05)) proj.markers.push(t);
+    proj.nomsReperes = { ...(proj.nomsReperes || {}), [t.toFixed(2)]: p0.slice(0, 60) }; commit(); tlDessin(); return aide(`📍 Note gardée à ${fmtChrono(t)} : « ${esc(p0)} ».`);
+  }
   const i = indexCible(a.cible), c = proj.clips[i], p = a.parametre || '';
   if (a.action === 'couleur_titre') return couleurTitre(p, a.couleur);
   if (i < 0) return execV20.apply(this, arguments);
