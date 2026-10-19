@@ -8,6 +8,8 @@ Changer aussi `version` dans `package.json` : une version déjà publiée n'est 
 - **Trois étapes en haut : Créer, Monter, Publier.** Créer ouvre l'accueil, Monter le montage, Publier l'envoi sur YouTube et TikTok.
 - **Écran d'accueil** : « Qu'est-ce qu'on crée aujourd'hui ? » avec l'assistant, six cartes pour commencer (importer, me filmer, générer une vidéo, doublage, podcast, épisode QuentInvest) et tes projets à reprendre. Échap ou « Monter » pour revenir au montage.
 - **Six rubriques au lieu de dix** à gauche : Médias, Texte, Audio (voix, sons, musique), Effets (effets, transitions, calques), Packs et Outils ; les sous-parties se choisissent par des puces en haut de la liste. Les touches 1 à 0 marchent comme avant.
+- **Réglages du clip en onglets** à droite : Découpe, Image, Son, Couleur ; seuls les réglages de l'onglet choisi s'affichent, déjà ouverts.
+- **Une couleur par piste** dans la timeline : titres en jaune, incrustations en violet, vidéo en bleu, son en vert.
 - Le bouton « Demander… ⌘K » remplace « Assistant ». Générer, Doublage et Me filmer passent dans l'accueil (raccourcis inchangés).
 
 ## 1.44.0

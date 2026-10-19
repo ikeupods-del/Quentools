@@ -77,3 +77,24 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#accuei
 const toutV1 = tout;
 tout = function () { toutV1.apply(this, arguments); if (proj.clips.length && $('#accueil')) masquerAccueil(); };
 setTimeout(() => { if (!proj.clips.length && !$('#modal').classList.contains('on')) afficherAccueil(); }, 600);
+
+// Réglages du clip rangés en onglets : seules les parties de l'onglet choisi sont affichées (et ouvertes).
+const ONGLETS_INSP = [
+  { id: 'decoupe', nom: 'Découpe', motif: /^(Découpe|Fond uni)/ },
+  { id: 'image', nom: 'Image', motif: /^(Zoom|Effets image|Calques|Titre)/ },
+  { id: 'son', nom: 'Son', motif: /^(Effets sonores|Podcast)/ },
+  { id: 'couleur', nom: 'Couleur', motif: /^(Couleurs|Look)/ }
+];
+let ongletInsp = 'decoupe';
+const inspV1 = inspecteur;
+inspecteur = function () {
+  inspV1.apply(this, arguments);
+  const parts = [...document.querySelectorAll('#insp > details, #insp .insp > details')];
+  if (parts.length < 3) return;
+  const de = d => { const t = (d.querySelector('summary') || {}).textContent || ''; const o = ONGLETS_INSP.find(x => x.motif.test(t.trim())); return o ? o.id : 'image'; };
+  const presents = ONGLETS_INSP.filter(o => parts.some(d => de(d) === o.id));
+  if (!presents.some(o => o.id === ongletInsp)) ongletInsp = presents[0].id;
+  parts.forEach(d => { const dans = de(d) === ongletInsp; d.hidden = !dans; if (dans) d.open = true; });
+  parts[0].insertAdjacentHTML('beforebegin', `<div class="onglets-insp" role="tablist">${presents.map(o => `<button role="tab" data-oi="${o.id}" class="${o.id === ongletInsp ? 'on' : ''}">${o.nom}</button>`).join('')}</div>`);
+};
+$('#insp').addEventListener('click', e => { const b = e.target.closest('[data-oi]'); if (b) { ongletInsp = b.dataset.oi; inspecteur(); } });
