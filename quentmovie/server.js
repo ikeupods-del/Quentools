@@ -332,6 +332,8 @@ function create(opts = {}) {
     encoders = new Set(e.split('\n').map(l => l.trim().split(/\s+/)[1]).filter(Boolean));
     try { hwaccels = new Set((await run(FFMPEG, ['-hide_banner', '-hwaccels'], { binary: true })).toString().split('\n').slice(1).map(l => l.trim()).filter(Boolean)); } catch (er) { hwaccels = new Set(); }
     version = (await run(FFMPEG, ['-version'], { binary: true })).toString().split('\n')[0];
+    // sansPuce : tout par le processeur (lecture et encodage), pour les montages faits par un programme (épisodes de Pico) dont le rendu doit être identique partout
+    if (opts.sansPuce || process.env.QM_SANS_PUCE) { for (const n of [...encoders]) if (/videotoolbox/.test(n)) encoders.delete(n); hwaccels = new Set(); }
     if (process.platform === 'darwin' && encoders.has('h264_videotoolbox') && !process.env.QM_VT_DEBIT) { // qualité constante : seulement si la puce elle-même l'accepte
       try { await run(FFMPEG, ['-v', 'error', '-f', 'lavfi', '-i', 'testsrc=s=320x240:r=30:d=0.4', '-c:v', 'h264_videotoolbox', '-q:v', 62, '-f', 'null', '-'], { silence: 15000 }); vtQualite = true; } catch (e) { vtQualite = false; }
     }

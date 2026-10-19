@@ -270,7 +270,8 @@ function sousTitres(texte, voixDuree, par = 8) {
 async function montage(clips) {
   const { create } = require(path.join(QM, 'server.js')), { resolveFfmpeg } = require(path.join(QM, 'ffmpeg-path.js'));
   const base = path.join(TRAVAIL, 'quentmovie'); fs.mkdirSync(base, { recursive: true });
-  const app = create({ port: 0, base, ...(await resolveFfmpeg()) }), port = await app.start(), U = p => `http://127.0.0.1:${port}${p}`;
+  // montage par le processeur : la lecture par la puce perdait une image et faisait échouer l'assemblage sur Mac
+  const app = create({ port: 0, base, ...(await resolveFfmpeg()), sansPuce: true }), port = await app.start(), U = p => `http://127.0.0.1:${port}${p}`;
   const liste = [];
   EP.scenes.forEach((s, i) => {
     const nom = `pico-${sh(i)}.mp4`; fs.copyFileSync(clips[i].out, path.join(base, 'medias', nom));
@@ -298,13 +299,10 @@ async function exporter() {
   };
   projet.clips[projet.clips.length - 1].transition = null;
   fs.writeFileSync(path.join(TRAVAIL, 'projet-quentmovie.json'), JSON.stringify(projet));
-  // montage : puce vidéo du Mac d'abord ; en cas d'échec, une seconde fois par le processeur (plus lent, plus sûr)
-  for (const qualite of ['rapide', 'haute']) {
-    projet.quality = qualite;
-    const { id } = await (await fetch(M.U('/api/export'), { method: 'POST', body: JSON.stringify({ project: projet }) })).json();
-    const fin = await suivreExport(M, id).then(() => true, e => { if (qualite === 'haute') throw e; console.log(`\nMontage par la puce impossible (${String(e.message).slice(0, 160)}) : nouvel essai par le processeur.`); return false; });
-    if (fin) break;
-  }
+  // montage par le processeur (serveur créé avec sansPuce)
+  projet.quality = 'rapide';
+  const { id } = await (await fetch(M.U('/api/export'), { method: 'POST', body: JSON.stringify({ project: projet }) })).json();
+  await suivreExport(M, id);
   await M.app.stop?.(); process.exit(0);
 }
 async function suivreExport(M, id) {
