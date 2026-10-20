@@ -655,7 +655,8 @@ function buildClip(c, P, o = {}) {
       const T = `(t+${ctx.t0})`, tk = c.subStyle === 'tiktok', col = c.subStyle === 'jaune' ? '0xffe600' : 'white', def = SUBDEF[c.subStyle];
       // « tiktok » : 1 à 3 mots, gros, au centre bas de l'image, contour épais et ombre ; les styles de pack (SUBDEF) ajoutent police, capitales, couleurs et calques
       const st = c.subStyle === 'bandeau' ? `:box=1:boxcolor=black@0.6:boxborderw=${Math.round(size / 3)}` : tk ? `:borderw=${Math.max(3, Math.round(size / 7))}:bordercolor=black:shadowx=${Math.round(size / 16)}:shadowy=${Math.round(size / 12)}:shadowcolor=black@0.55` : `:borderw=${Math.max(2, Math.round(size / 10))}:bordercolor=black`;
-      const yy = tk ? 'h*0.70-text_h/2' : 'h*0.84-text_h';
+      // subY : hauteur du centre des sous-titres TikTok (part de l'image), réglée par un montage qui place autre chose au milieu (Pico des épisodes QuentInvest)
+      const yy = tk ? `h*${clamp(num(c.subY, 0.70), 0.15, 0.9).toFixed(3)}-text_h/2` : 'h*0.84-text_h';
       const parts = subs.map((x, k) => {
         const file = `s${idx}_${k}.txt`, en = `:enable='between(${T},${num(x.s, 0)},${num(x.e, 0)})'`;
         if (def) { // style de pack : un ou plusieurs calques de texte superposés
@@ -2103,7 +2104,7 @@ function buildClip(c, P, o = {}) {
       }
       { const r = await RPR.creer({ BASE, EXPORTS, PROJETS, TMP, send, readJson, mediaPath, projFile, occupe: () => [...jobs.values()].some(j => !j.done && !j.error) })(req, res, p); if (r !== RPR.NON) return r; } // tableau des projets (routes-projets.js)
       { const r = await RAN.creer({ MEDIAS, FFMPEG, opts, send, readJson, travail })(req, res, p); if (r !== RAN.NON) return r; } // animations (génériques, chiffres clés, bandeaux…) : routes-animations.js
-      { const r = await RPI.creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA: () => { try { if (ia && ia.arreter) ia.arreter(); } catch (e) { /* déjà arrêtée */ } }, illustrer: (...a) => GEN().illustrer(...a) })(req, res, p, url); if (r !== RPI.NON) return r; } // épisode Pico fabriqué dans QuentMovie, navigateur des écrans (routes-pico.js)
+      { const r = await RPI.creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA: () => { try { if (ia && ia.arreter) ia.arreter(); } catch (e) { /* déjà arrêtée */ } }, illustrer: (...a) => GEN().illustrer(...a), titrer: (...a) => IA().titrerEcrans(...a) })(req, res, p, url); if (r !== RPI.NON) return r; } // épisode Pico fabriqué dans QuentMovie, navigateur des écrans (routes-pico.js)
       { const r = await RP.creer({ PUB, opts, send, readJson, travail, EXPORTS, safeName })(req, res, p); if (r !== RP.NON) return r; } // publication YouTube et TikTok (routes-publier.js)
       { const r = await RV.creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail, PAROLE, VOIXCLONE, GEN, IA, safeName, num })(req, res, p, url); if (r !== RV.NON) return r; } // doublage, voix clonée, prononciations, fiche (routes-voix.js)
       if (p === '/api/projet') { // enregistrement automatique

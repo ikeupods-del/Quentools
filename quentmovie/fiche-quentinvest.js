@@ -103,6 +103,9 @@ function resumer(t, n) {
   t = String(t || '').replace(/\s+/g, ' ').trim(); if (t.length <= n) return t;
   let r = ''; for (const p of phrasesDe(t)) { const x = r ? r + ' ' + p : p; if (x.length > n) break; r = x; }
   if (r) return r;
+  // incise retirée d'abord (« Les banques, qui avaient prêté massivement, se retrouvent en faillite » → « Les banques se retrouvent en faillite »)
+  const sansIncise = t.replace(/,\s+(?:qui|que|qu['’]|dont|où|lorsqu['’]|alors qu['’]|même si|bien qu['’])[^,.!?]{3,140},\s*/gi, ' ').replace(/\s+/g, ' ');
+  if (sansIncise !== t) return resumer(sansIncise, n);
   const parts = t.split(/(?<=[,;:])\s+|\s+(?=[—–]\s)/); let acc = '', k = 0;
   for (const p of parts) { const x = acc ? acc + ' ' + p : p; if (x.length > n - 5) break; acc = x; k++; }
   const suite = parts[k] || '';
@@ -111,7 +114,7 @@ function resumer(t, n) {
     return acc.replace(/\s*[,;:—–]$/, '');
   }
   let c = t.slice(0, n + 1); c = c.slice(0, Math.max(c.lastIndexOf(' '), 1)).replace(/[\s,;:—–]+$/, '');
-  const lien = [...c.matchAll(/\s(?:et|mais|sans|car|donc|puis|alors|parce|quand|lorsque|pendant|avant|après|alors que|tandis)\s/gi)].map(m => m.index).filter(i => i >= n * 0.45).pop();
+  const lien = [...c.matchAll(/\s(?:et|mais|sans|car|donc|puis|alors|parce|quand|lorsque|pendant|avant|après|alors que|tandis|pour|afin|grâce)\s/gi)].map(m => m.index).filter(i => i >= n * 0.45).pop();
   if (lien) return c.slice(0, lien).replace(/[\s,;:—–]+$/, ''); // « …se croyait riche » plutôt que « …riche et personne ne voyait »
   for (let i = 0; i < 6 && PETITS.test(c); i++) c = c.replace(PETITS, '').replace(/[\s,;:—–]+$/, '');
   return c;
@@ -136,8 +139,14 @@ function ecranDe(texte, section, points, titreListe) {
   if (n) { const p = ph.find(x => x.includes(n[0].trim())) || ph[0] || ''; return { type: 'chiffre', valeur: n[0].replace(/\s+/g, ' ').trim(), legende: resumer(p, 110) }; }
   const d = /^(?:l[ea]s?\s+|l'|un[e]?\s+)?([\p{L}\p{N}'’ -]{2,32}?),?\s+(?:c'est|c’est|est|désigne|signifie)\s+(.{8,})$/iu.exec(ph[0] || '');
   if (d) return { type: 'definition', mot: d[1].trim().replace(/^./, c => c.toUpperCase()), texte: resumer(d[2].replace(/[.!]$/, ''), 130) };
-  return { type: 'message', titre: resumer(section || ph[0] || '', section ? 60 : 90), sous: resumer(section ? ph[0] || '' : ph[1] || '', 150) };
+  if (section) return { type: 'message', titre: resumer(section, 60), sous: resumer(ph[0] || '', 150) };
+  // sans titre de partie : la première phrase en titre si elle est courte, sinon son idée principale (jusqu'à une virgule ou un mot de liaison) ;
+  // dessous, la phrase suivante (jamais la même phrase répétée)
+  const p0 = ph[0] || '', titre = p0.length <= 90 ? p0 : resumer(p0, 75);
+  return { type: 'message', titre, sous: ph[1] ? resumer(ph[1], 150) : '' };
 }
+// la même phrase en titre et en sous-titre (le titre est le début du sous-titre) : le sous-titre passe à la phrase suivante
+const repete = (titre, sous) => { const n = t => sansAccents(t).replace(/[^a-z0-9]+/g, ''); return !!n(titre) && n(sous).startsWith(n(titre)); };
 const repliques = t => { // un paragraphe trop long devient plusieurs répliques (40 mots environ), sans couper une phrase
   const l = [], ph = phrasesDe(t); let cur = '';
   for (const x of ph) { if (cur && nbMots(cur + ' ' + x) > 40) { l.push(cur); cur = x; } else cur = cur ? cur + ' ' + x : x; }
@@ -180,6 +189,8 @@ function ficheDepuisScript(script, { titre = '', numero = 1 } = {}) {
       blocs.push(b);
     });
   }
+  // script sans titre de partie : l'étiquette du haut de l'écran resterait « La question » (celle de l'accroche) jusqu'à la fin
+  if (blocs.length && !blocs.some(b => b.section)) blocs[0].section = 'Les faits';
   const derniere = questions.length ? questions[questions.length - 1] : 'Et toi, qu’en penses-tu ?';
   const motsTitre = titreF.toUpperCase().replace(/\s*\?$/, ' ?').split(/\s+/), parLigne = Math.ceil(motsTitre.length / Math.min(3, Math.max(1, Math.ceil(motsTitre.length / 3))));
   const lignesMini = []; for (let k = 0; k < motsTitre.length; k += parLigne) lignesMini.push(motsTitre.slice(k, k + parLigne).join(' '));
@@ -189,15 +200,18 @@ function ficheDepuisScript(script, { titre = '', numero = 1 } = {}) {
     numero, slug: slugDe(titreF), titre: titreF, promesse: titreF, description: coupe(ph0.slice(0, 2).join(' '), 300),
     hashtags: '#économie #investissement #apprendre #QuentInvest', musique: 'documentaire-doux',
     accroche: { texte: resumerDit(accroche.texte, 400), court: resumerDit(ph0[0] || accroche.texte, 160),
-      ecran: n0 ? { type: 'chiffre', valeur: n0[0].replace(/\s+/g, ' ').trim(), legende: resumer(ph0[0] || '', 110) } : { type: 'message', titre: resumer(titreF, 70), sous: resumer(ph0[0] || '', 150) } },
+      ecran: n0 ? { type: 'chiffre', valeur: n0[0].replace(/\s+/g, ' ').trim(), legende: resumer(ph0[0] || '', 110) }
+        : { type: 'message', titre: resumer(titreF, 70), sous: resumer(repete(resumer(titreF, 70), ph0[0] || '') ? ph0[1] || '' : ph0[0] || '', 150) } },
     blocs,
-    resume: { texte: 'En une phrase : ' + resSans, court: 'En une phrase : ' + resumerDit(phrasesDe(resSans)[0] || resSans, 160) },
-    question: derniere, sources: sources.length ? sources : ['S1 · Script écrit par l’auteur de la chaîne (sources à ajouter pour chaque chiffre)'],
+    // l'écran du résumé : l'idée principale en quelques mots, pas tout le paragraphe (la voix dit le résumé en entier)
+    resume: { texte: 'En une phrase : ' + resSans, court: 'En une phrase : ' + resumerDit(phrasesDe(resSans)[0] || resSans, 160), ecran: resumer(resSans, 120) },
+    // sans source donnée, l'écran final ne montre pas de note de travail : les chiffres à sourcer sont signalés dans les remarques de la fiche
+    question: derniere, sources: sources.length ? sources : ['S1 · Script de la chaîne QuentInvest'],
     miniature: { lignes: lignesMini.slice(0, 3), accent: (motsTitre.find(m => m.length > 4) || motsTitre[0] || '').replace(/[?!.,]/g, '') }
   };
 }
 
-module.exports = { controler, textesDits, nombres, ficheDepuisScript, resumer, resumerDit, finirEcrans };
+module.exports = { controler, textesDits, nombres, ficheDepuisScript, resumer, resumerDit, finirEcrans, ecranDe };
 
 if (require.main === module) {
   const [, , fiche, faits] = process.argv;

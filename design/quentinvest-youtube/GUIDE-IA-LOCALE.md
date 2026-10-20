@@ -54,6 +54,15 @@ La voix clonée lit mal les noms propres, les sigles et les mots étrangers. Le 
 - Aucune phrase de plus de 20 mots ; aucun mot du texte dit absent du dictionnaire s'il est difficile à lire.
 - Rends **uniquement le JSON**, puis, séparément, la liste des points que le propriétaire doit contrôler (chiffres à vérifier dans l'ouvrage, prononciations à confirmer).
 
+## 7 bis. Les écrans (relus automatiquement avant chaque fabrication : `quentmovie/relecture-ecrans.js`)
+Règles tirées de la relecture image par image d'une vraie vidéo ; le programme les applique, l'IA locale écrit les titres courts (`titrerEcrans`, ia.js) :
+- Un titre d'écran est une idée complète en 3 à 9 mots : jamais une phrase coupée au milieu, jamais « … », jamais un petit mot en fin (« d'un », « et »).
+- Une phrase trop longue garde son idée principale (« Le gouvernement doit renflouer les banques »), sans incise ni ajout : aucun chiffre, nom ou date absent de la phrase.
+- Le sous-titre de l'écran ne répète pas le titre ; une énumération trop longue s'arrête sur « etc. ».
+- L'écran « En une phrase » tient en une ligne ou deux, pas un paragraphe.
+- L'accroche ne met face à face que deux chiffres de même nature (deux pourcentages, deux montants).
+- Pas de sous-titres incrustés par défaut : l'écran explique déjà ce qui est dit.
+
 ## 8. Consignes à donner à l'assistant de QuentMovie (⌘K), une par message
 Chaque ligne est apprise par l'IA locale (mémoire partagée, relue à chaque demande) :
 1. `retiens que la chaîne QuentInvest explique l'économie simplement avec Pico la fourmi, au tutoiement, sans jamais donner de conseil en investissement`

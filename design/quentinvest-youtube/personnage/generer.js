@@ -28,6 +28,7 @@ const antennes = k => ANTENNES[k].map(([d, x, y]) => trait(d, 15) + trait(d, 7, 
 const oeil = (cx, o) => {
   const rx = 40 * (o.gros || 1), ry = 46 * (o.gros || 1), px = cx + (o.dx || 0), py = 238 + (o.dy || 0);
   if (o.ferme) return trait(`M${cx - 38} 246 Q${cx} 200 ${cx + 38} 246`, 10);
+  if (o.cligne) return trait(`M${cx - 38} 240 Q${cx} 254 ${cx + 38} 240`, 10); // paupière baissée (clignement), pas l'œil rieur
   return `<ellipse cx="${cx}" cy="238" rx="${rx}" ry="${ry}" fill="${C.blanc}" stroke="${C.l}" stroke-width="7"/>`
     + `<circle cx="${px}" cy="${py}" r="${19 * (o.gros || 1)}" fill="${C.iris}"/><circle cx="${px}" cy="${py}" r="${10 * (o.gros || 1)}" fill="${C.l}"/><circle cx="${px + 6}" cy="${py - 7}" r="5" fill="${C.blanc}"/>`;
 };
@@ -46,6 +47,13 @@ const BOUCHES = {
   ouvert: `<path d="M194 312 Q240 304 286 312 Q282 376 240 380 Q198 376 194 312 Z" fill="${C.bouche}" stroke="${C.l}" stroke-width="7"/><path d="M212 356 Q240 340 268 356 Q256 378 240 378 Q224 378 212 356 Z" fill="${C.langue}"/><path d="M204 314 Q240 322 276 314" fill="none" stroke="${C.blanc}" stroke-width="9"/>`,
   surpris: `<ellipse cx="240" cy="340" rx="24" ry="32" fill="${C.bouche}" stroke="${C.l}" stroke-width="7"/><ellipse cx="240" cy="354" rx="13" ry="12" fill="${C.langue}"/>`,
   grand: `<path d="M186 308 Q240 410 294 308 Z" fill="${C.bouche}" stroke="${C.l}" stroke-width="7"/><path d="M208 356 Q240 334 272 356 Q258 388 240 388 Q222 388 208 356 Z" fill="${C.langue}"/><path d="M196 310 Q240 322 284 310" fill="none" stroke="${C.blanc}" stroke-width="9"/>`,
+  // mi-ouvertes (synchronisation des lèvres à trois positions) et bouches parlantes des expressions qui n'en avaient qu'une
+  mi: `<path d="M204 318 Q240 312 276 318 Q272 350 240 353 Q208 350 204 318 Z" fill="${C.bouche}" stroke="${C.l}" stroke-width="7"/><path d="M220 342 Q240 333 260 342 Q252 352 240 352 Q228 352 220 342 Z" fill="${C.langue}"/>`,
+  grandMi: `<path d="M196 312 Q240 368 284 312 Z" fill="${C.bouche}" stroke="${C.l}" stroke-width="7"/><path d="M216 340 Q240 328 264 340 Q254 356 240 356 Q226 356 216 340 Z" fill="${C.langue}"/>`,
+  surprisMi: `<ellipse cx="240" cy="338" rx="18" ry="22" fill="${C.bouche}" stroke="${C.l}" stroke-width="7"/><ellipse cx="240" cy="348" rx="9" ry="8" fill="${C.langue}"/>`,
+  surprisFerme: `<ellipse cx="240" cy="336" rx="12" ry="13" fill="${C.bouche}" stroke="${C.l}" stroke-width="7"/>`,
+  reflechiOuvert: `<path d="M216 330 Q246 322 272 334 Q266 362 244 364 Q222 362 216 330 Z" fill="${C.bouche}" stroke="${C.l}" stroke-width="7"/><path d="M228 352 Q246 344 262 352 Q254 362 244 362 Q234 362 228 352 Z" fill="${C.langue}"/>`,
+  reflechiMi: `<path d="M216 334 Q246 326 272 338 Q264 352 244 353 Q224 352 216 334 Z" fill="${C.bouche}" stroke="${C.l}" stroke-width="7"/>`,
   reflechi: trait('M214 336 Q246 326 272 342', 8),
   inquiet: trait('M202 344 Q221 322 240 344 T278 344', 8)
 };
@@ -90,6 +98,13 @@ const POSES = {
   'inquiet-ferme': { antennes: 'tombantes', sourcils: 'inquiet', bouche: 'inquiet', oeil: { dx: 0, dy: 6 }, sueur: 1 },
   'inquiet-ouvert': { antennes: 'tombantes', sourcils: 'inquiet', bouche: 'ouvert', oeil: { dx: 0, dy: 6 }, sueur: 1 }
 };
+// poses ajoutées pour l'animation (style 2) : bouche mi-ouverte, bouches parlantes, et chaque pose les yeux fermés le temps d'un clignement
+Object.assign(POSES, {
+  'neutre-mi': { ...POSES['neutre-ferme'], bouche: 'mi' }, 'curieux-mi': { ...POSES['curieux-ferme'], bouche: 'mi' }, 'inquiet-mi': { ...POSES['inquiet-ferme'], bouche: 'mi' },
+  'content-mi': { ...POSES['content-ferme'], bouche: 'grandMi' }, 'surpris-mi': { ...POSES['surpris-ouvert'], bouche: 'surprisMi' }, 'surpris-ferme': { ...POSES['surpris-ouvert'], bouche: 'surprisFerme' },
+  'reflechi-ouvert': { ...POSES['reflechi-ferme'], bouche: 'reflechiOuvert' }, 'reflechi-mi': { ...POSES['reflechi-ferme'], bouche: 'reflechiMi' }
+});
+for (const [nom, p] of Object.entries({ ...POSES })) if (!/^content-/.test(nom)) POSES[nom + '-cligne'] = { ...p, oeil: { ...(p.oeil || {}), cligne: 1 } };
 const LEGENDES = { neutre: 'Il explique', curieux: 'Il se pose la question', surpris: 'Il découvre un chiffre', content: 'Il a compris', reflechi: 'Il réfléchit', inquiet: 'Il y a un piège' };
 const NOMS = { neutre: 'Neutre', curieux: 'Curieux', surpris: 'Surpris', content: 'Content', reflechi: 'Réfléchi', inquiet: 'Inquiet' };
 
@@ -101,12 +116,16 @@ const svgPng = (svg, w, h) => svg.replace('<svg ', `<svg width="${w}" height="${
   const b = await pw.chromium.launch({ executablePath: process.env.QS_CHROMIUM || undefined, args: ['--no-sandbox'] });
   const pg = await b.newPage({ viewport: { width: 480, height: 600 } });
   fs.mkdirSync(path.join(OUT, 'svg'), { recursive: true }); fs.mkdirSync(path.join(OUT, 'png'), { recursive: true });
+  // --nouveaux : seulement les dessins absents (les existants restent identiques au pixel près : épisodes déjà fabriqués)
+  const NOUVEAUX = process.argv.includes('--nouveaux');
   for (const [nom, p] of Object.entries(POSES)) {
+    if (NOUVEAUX && fs.existsSync(path.join(OUT, 'png', 'pico-' + nom + '.png'))) continue;
     const svg = pico(p); fs.writeFileSync(path.join(OUT, 'svg', 'pico-' + nom + '.svg'), svg.replace('<svg ', '<svg width="480" height="600" ') + '\n');
     await pg.setContent(`<html><body style="margin:0;background:transparent">${svgPng(svg, 480, 600)}</body></html>`);
     await pg.screenshot({ path: path.join(OUT, 'png', 'pico-' + nom + '.png'), omitBackground: true });
     console.log('pico-' + nom);
   }
+  if (NOUVEAUX) { await b.close(); return; }
   /* planche du personnage */
   const vignette = k => { const n = k + '-' + (POSES[k + '-ouvert'] ? 'ouvert' : 'ferme'); return `<figure><div class="v">${svgPng(pico(POSES[n]), 300, 375)}</div><figcaption><b>${NOMS[k]}</b><span>${LEGENDES[k]}</span></figcaption></figure>`; };
   const pal = [['Vert Pico', C.corps], ['Vert ombre', C.ombre], ['Ambre (écharpe, antennes)', C.echarpe], ['Crème (museau)', C.museau], ['Noir chaud (contour)', C.l], ['Menthe (reflet)', C.clair]];
