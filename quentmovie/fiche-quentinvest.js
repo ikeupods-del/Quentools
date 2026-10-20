@@ -94,14 +94,49 @@ function controler(f, { faits = '', lexique = {} } = {}) {
 // Le premier paragraphe devient l'accroche, celui qui commence par « En une phrase » / « En résumé » (sinon le dernier) le résumé, la dernière question la question finale.
 const phrasesDe = t => (String(t).replace(/\s+/g, ' ').trim().match(/[^.!?…]+[.!?…]+["»”)]*|[^.!?…]+$/g) || []).map(x => x.trim()).filter(Boolean);
 const coupe = (t, n) => { t = String(t).replace(/\s+/g, ' ').trim(); if (t.length <= n) return t; const c = t.slice(0, n), k = c.lastIndexOf(' '); return (k > n * 0.5 ? c.slice(0, k) : c).replace(/[,;:]$/, '') + '…'; };
+// texte d'un écran (ou d'une phrase dite) qui doit tenir en n caractères : jamais une phrase coupée au milieu ni « … ».
+// Phrases entières d'abord ; sinon la phrase arrêtée à une virgule (« une villa, des voitures, des montres » → « une villa, etc. ») ;
+// sinon coupée entre deux mots, sans finir sur un petit mot (« d'un », « de », « et »…). Les écrans réduisent leur texte s'il dépasse (AJUSTE).
+const PETITS = /\s+(?:de|du|des|d['’]un|d['’]une|d['’]|un|une|le|la|les|l['’]|à|au|aux|en|et|ou|où|ce|cet|cette|ces|son|sa|ses|mon|ma|mes|ton|ta|tes|notre|nos|votre|vos|leur|leurs|qui|que|qu['’]|dont|pour|par|sur|avec|dans|sans|plus|très|mais|car|si|ne|n['’]|pas|tout|tous|toute|même|se|s['’]|y|il|elle|on|tu|je|nous|vous|ils|elles)$/i;
+const DETERMINANT = /^(?:des|du|de la|de l['’]|les|la|le|l['’]|un|une|ses|sa|son|leurs?|mes|tes|nos|vos|\d)/i;
+function resumer(t, n) {
+  t = String(t || '').replace(/\s+/g, ' ').trim(); if (t.length <= n) return t;
+  let r = ''; for (const p of phrasesDe(t)) { const x = r ? r + ' ' + p : p; if (x.length > n) break; r = x; }
+  if (r) return r;
+  const parts = t.split(/(?<=[,;:])\s+|\s+(?=[—–]\s)/); let acc = '', k = 0;
+  for (const p of parts) { const x = acc ? acc + ' ' + p : p; if (x.length > n - 5) break; acc = x; k++; }
+  const suite = parts[k] || '';
+  if (acc.length >= n * 0.35 && k >= 1) {
+    if (/,$/.test(acc) && DETERMINANT.test(suite) && (suite.match(/\S+/g) || []).length <= 5) return acc + ' etc.';
+    return acc.replace(/\s*[,;:—–]$/, '');
+  }
+  let c = t.slice(0, n + 1); c = c.slice(0, Math.max(c.lastIndexOf(' '), 1)).replace(/[\s,;:—–]+$/, '');
+  const lien = [...c.matchAll(/\s(?:et|mais|sans|car|donc|puis|alors|parce|quand|lorsque|pendant|avant|après|alors que|tandis)\s/gi)].map(m => m.index).filter(i => i >= n * 0.45).pop();
+  if (lien) return c.slice(0, lien).replace(/[\s,;:—–]+$/, ''); // « …se croyait riche » plutôt que « …riche et personne ne voyait »
+  for (let i = 0; i < 6 && PETITS.test(c); i++) c = c.replace(PETITS, '').replace(/[\s,;:—–]+$/, '');
+  return c;
+}
+// dernier contrôle avant fabrication, quelle que soit l'origine de la fiche (IA, script, fiche écrite à la main) : un texte d'écran ne finit
+// jamais par « … » ni par un petit mot (« d'un », « et ») ; renvoie le nombre de textes corrigés
+function finirEcrans(fiche) {
+  let n = 0;
+  const finir = t => { let c = String(t).replace(/\s*(?:…|\.{3})\s*$/, '').replace(/[\s,;:—–]+$/, ''); for (let i = 0; i < 6 && PETITS.test(c); i++) c = c.replace(PETITS, '').replace(/[\s,;:—–]+$/, ''); return c; };
+  const ecran = e => { if (!e || typeof e !== 'object') return; for (const k of Object.keys(e)) {
+    if (typeof e[k] === 'string' && k !== 'type' && k !== 'source' && /(?:…|\.{3})\s*$|\s(?:de|du|des|d['’]un|d['’]une|un|une|le|la|les|et|ou|à|au|en)$/i.test(e[k])) { const v = finir(e[k]); if (v && v !== e[k]) { e[k] = v; n++; } }
+    else if (Array.isArray(e[k])) e[k].forEach((x, i) => { if (typeof x === 'string' && /(?:…|\.{3})\s*$/.test(x)) { const v = finir(x); if (v) { e[k][i] = v; n++; } } }); } };
+  const parcourir = o => { if (!o || typeof o !== 'object') return; if (Array.isArray(o)) return o.forEach(parcourir); for (const [k, v] of Object.entries(o)) { if (k === 'ecran' || k === 'ecranTiktok') ecran(v); else parcourir(v); } };
+  parcourir(fiche); return n;
+}
+// phrase dite par la voix : résumée comme un écran, et toujours terminée par une ponctuation
+const resumerDit = (t, n) => { const r = resumer(t, n); return /[.!?…»"”)]$/.test(r) ? r : r + '.'; };
 const NOMBRE = /(?:≈\s*)?\d[\d\s  ]*(?:[.,]\d+)?\s*(?:%|€|\$|euros?\b|dollars?\b|ans?\b|mois\b|millions?\b|milliards?\b)/i;
 function ecranDe(texte, section, points, titreListe) {
-  if (points && points.length >= 2) return { type: 'liste', titre: coupe(titreListe || section || '', 50), points: points.slice(0, 6).map(x => coupe(x.replace(/^./, c => c.toUpperCase()), 60)) };
+  if (points && points.length >= 2) return { type: 'liste', titre: resumer(titreListe || section || '', 60), points: points.slice(0, 6).map(x => resumer(x.replace(/^./, c => c.toUpperCase()), 70)) };
   const ph = phrasesDe(texte), n = NOMBRE.exec(texte);
-  if (n) { const p = ph.find(x => x.includes(n[0].trim())) || ph[0] || ''; return { type: 'chiffre', valeur: n[0].replace(/\s+/g, ' ').trim(), legende: coupe(p, 80) }; }
+  if (n) { const p = ph.find(x => x.includes(n[0].trim())) || ph[0] || ''; return { type: 'chiffre', valeur: n[0].replace(/\s+/g, ' ').trim(), legende: resumer(p, 110) }; }
   const d = /^(?:l[ea]s?\s+|l'|un[e]?\s+)?([\p{L}\p{N}'’ -]{2,32}?),?\s+(?:c'est|c’est|est|désigne|signifie)\s+(.{8,})$/iu.exec(ph[0] || '');
-  if (d) return { type: 'definition', mot: d[1].trim().replace(/^./, c => c.toUpperCase()), texte: coupe(d[2].replace(/[.!]$/, ''), 90) };
-  return { type: 'message', titre: coupe(section || ph[0] || '', 50), sous: coupe(section ? ph[0] || '' : ph[1] || '', 90) };
+  if (d) return { type: 'definition', mot: d[1].trim().replace(/^./, c => c.toUpperCase()), texte: resumer(d[2].replace(/[.!]$/, ''), 130) };
+  return { type: 'message', titre: resumer(section || ph[0] || '', section ? 60 : 90), sous: resumer(section ? ph[0] || '' : ph[1] || '', 150) };
 }
 const repliques = t => { // un paragraphe trop long devient plusieurs répliques (40 mots environ), sans couper une phrase
   const l = [], ph = phrasesDe(t); let cur = '';
@@ -131,7 +166,7 @@ function ficheDepuisScript(script, { titre = '', numero = 1 } = {}) {
   // fin écrite à la façon d'une vidéo (« abonne-toi », « la cloche », « c'était Pico ») : la chaîne a déjà sa fin fixe, elle n'est pas dite deux fois
   while (paras.length > 3 && /\b(abonne|cloche|notifications?|en commentaire|à la prochaine|a la prochaine|c[’']était pico|c[’']etait pico)\b/i.test(paras[paras.length - 1].texte) && !/^(en une phrase|en résumé|à retenir)/i.test(paras[paras.length - 1].texte)) paras.pop();
   if (paras.length < 3) throw new Error('Script trop court : il faut au moins une accroche, quelques paragraphes et une conclusion.');
-  const titreF = String(titre || titreScript || coupe(phrasesDe(paras[0].texte)[0] || 'Mon épisode', 70)).trim();
+  const titreF = String(titre || titreScript || resumer(phrasesDe(paras[0].texte)[0] || 'Mon épisode', 70)).trim();
   let iRes = paras.findIndex(x => /^(en une phrase|en résumé|en resume|pour résumer|à retenir)\b/i.test(x.texte)); if (iRes < 1) iRes = paras.length - 1;
   const tout = paras.map(x => x.texte).join(' '), questions = phrasesDe(tout).filter(x => /\?$/.test(x));
   const accroche = paras[0], resume = paras[iRes], milieu = paras.filter((x, k) => k > 0 && k !== iRes);
@@ -141,7 +176,7 @@ function ficheDepuisScript(script, { titre = '', numero = 1 } = {}) {
     repliques(x.texte).forEach((r, k) => {
       const b = { texte: r, ecran: k ? '=' : ecranDe(x.texte, x.section, x.points, x.titreListe) };
       if (!k && x.section) b.section = x.section;
-      if (!k && vus < 7) { b.court = coupe(phrasesDe(r)[0] || r, 160); vus++; } // version TikTok : la première phrase de chaque passage, 7 au plus
+      if (!k && vus < 7) { b.court = resumerDit(phrasesDe(r)[0] || r, 160); vus++; } // version TikTok : la première phrase de chaque passage, 7 au plus
       blocs.push(b);
     });
   }
@@ -153,16 +188,16 @@ function ficheDepuisScript(script, { titre = '', numero = 1 } = {}) {
   return {
     numero, slug: slugDe(titreF), titre: titreF, promesse: titreF, description: coupe(ph0.slice(0, 2).join(' '), 300),
     hashtags: '#économie #investissement #apprendre #QuentInvest', musique: 'documentaire-doux',
-    accroche: { texte: coupe(accroche.texte, 400), court: coupe(ph0[0] || accroche.texte, 160),
-      ecran: n0 ? { type: 'chiffre', valeur: n0[0].replace(/\s+/g, ' ').trim(), legende: coupe(ph0[0] || '', 80) } : { type: 'message', titre: coupe(titreF, 50), sous: coupe(ph0[0] || '', 90) } },
+    accroche: { texte: resumerDit(accroche.texte, 400), court: resumerDit(ph0[0] || accroche.texte, 160),
+      ecran: n0 ? { type: 'chiffre', valeur: n0[0].replace(/\s+/g, ' ').trim(), legende: resumer(ph0[0] || '', 110) } : { type: 'message', titre: resumer(titreF, 70), sous: resumer(ph0[0] || '', 150) } },
     blocs,
-    resume: { texte: 'En une phrase : ' + resSans, court: 'En une phrase : ' + coupe(phrasesDe(resSans)[0] || resSans, 160) },
+    resume: { texte: 'En une phrase : ' + resSans, court: 'En une phrase : ' + resumerDit(phrasesDe(resSans)[0] || resSans, 160) },
     question: derniere, sources: sources.length ? sources : ['S1 · Script écrit par l’auteur de la chaîne (sources à ajouter pour chaque chiffre)'],
     miniature: { lignes: lignesMini.slice(0, 3), accent: (motsTitre.find(m => m.length > 4) || motsTitre[0] || '').replace(/[?!.,]/g, '') }
   };
 }
 
-module.exports = { controler, textesDits, nombres, ficheDepuisScript };
+module.exports = { controler, textesDits, nombres, ficheDepuisScript, resumer, resumerDit, finirEcrans };
 
 if (require.main === module) {
   const [, , fiche, faits] = process.argv;

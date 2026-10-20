@@ -2,13 +2,14 @@
 // (script contrôlé : mêmes noms, dates et chiffres), le programme ajoute la structure (accroche, blocs de 40 mots, écrans, sources, à retenir, TikTok).
 // Rien n'est inventé : le piège, la question et le teaser sont des modèles à réécrire ; le contrôle (fiche-quentinvest.js) dit ce qui reste à faire.
 'use strict';
-const { controler } = require('./fiche-quentinvest');
+const { controler, resumer, resumerDit } = require('./fiche-quentinvest');
 
 const slugDe = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'sujet';
 const mots = t => String(t).match(/\S+/g) || [];
 const phrases = t => (String(t).match(/[^.!?…]+[.!?…]*/g) || []).map(x => x.trim()).filter(x => x.length > 2);
 const maj = t => t.charAt(0).toUpperCase() + t.slice(1);
-const coupe = (t, n) => { const m = mots(t); return m.length <= n ? t : m.slice(0, n).join(' ').replace(/[,;:]$/, '') + '…'; };
+// n mots au plus (environ 7 caractères par mot) : jamais de phrase coupée au milieu ni de « … » (resumer, fiche-quentinvest.js)
+const coupe = (t, n) => (mots(t).length <= n ? String(t) : resumer(t, n * 7)), coupeDit = (t, n) => (mots(t).length <= n ? String(t) : resumerDit(t, n * 7));
 
 // regroupe les phrases d'une scène en blocs de 40 mots au plus (jamais au milieu d'une phrase)
 function blocsDe(texte, max = 40) {
@@ -39,19 +40,19 @@ async function brouillon({ sujet, numero = 99, article, faits, ecrire, url = '' 
   const blocs = [];
   for (const s of scenes) blocsDe(s.texte).forEach((texte, k) => blocs.push({ section: k === 0 ? coupe(String(s.section || article), 5) : undefined, texte, court: undefined, section0: s.section }));
   const premier = blocs.shift() || { texte: '' }, choc = chiffreChoc(brut), phr = phrases(brut)[0] || '';
-  const accrocheTexte = (premier.texte.match(/\?/) ? premier.texte : `${coupe(phr, 22)} Est-ce vraiment aussi simple ?`);
+  const accrocheTexte = (premier.texte.match(/\?/) ? premier.texte : `${coupeDit(phr, 22)} Est-ce vraiment aussi simple ?`);
   const titre = `${maj(article)} : ce qu'il faut vraiment savoir`;
   const fiche = {
     numero, slug: slugDe(article), titre,
     promesse: coupe(phrases(scenes[0].texte)[0] || titre, 22), description: `Pico explique ${article} d'après Wikipédia : les faits, les chiffres cités par les sources, et ce qu'il faut retenir.`,
     hashtags: `#${slugDe(article).replace(/-/g, '')} #économie #apprendre #QuentInvest`, musique: 'documentaire-doux', musiqueRevelation: 'corporate-lumineux',
-    accroche: { texte: accrocheTexte, court: coupe(accrocheTexte, 16), ecran: { intro: coupe(phr, 14), avant: choc ? choc.avant : '', apres: choc ? choc.apres : '', ...(choc ? { de: choc.de, a: choc.a } : {}), legende: `Chiffres cités par Wikipédia (${article}).`, source: 'S1 · Wikipédia' }, effet: 'hausse' },
+    accroche: { texte: accrocheTexte, court: coupeDit(accrocheTexte, 16), ecran: { intro: coupe(phr, 14), avant: choc ? choc.avant : '', apres: choc ? choc.apres : '', ...(choc ? { de: choc.de, a: choc.a } : {}), legende: `Chiffres cités par Wikipédia (${article}).`, source: 'S1 · Wikipédia' }, effet: 'hausse' },
     intro: { texte: `Au programme : ${scenes.slice(0, 4).map(s => String(s.section || '').toLowerCase()).filter(Boolean).join(', ') || 'les faits essentiels'}.`, ecran: { type: 'liste', titre: 'Au programme', points: scenes.slice(0, 4).map(s => coupe(String(s.section || article), 5)) } },
-    blocs: blocs.map((b, i) => ({ ...(b.section ? { section: b.section } : {}), texte: b.texte, ...(i % 3 === 0 ? { court: coupe(b.texte, 20) } : {}), ecran: b.section || i === 0 ? { type: 'message', titre: coupe(String(b.section || article), 6), sous: coupe(phrases(b.texte)[0] || b.texte, 12), source: 'S1 · Wikipédia' } : '=' })),
+    blocs: blocs.map((b, i) => ({ ...(b.section ? { section: b.section } : {}), texte: b.texte, ...(i % 3 === 0 ? { court: coupeDit(b.texte, 20) } : {}), ecran: b.section || i === 0 ? { type: 'message', titre: coupe(String(b.section || article), 6), sous: coupe(phrases(b.texte)[0] || b.texte, 12), source: 'S1 · Wikipédia' } : '=' })),
     piege: { intro: 'Attention, grain de sable. Il y a trois erreurs courantes.', court: 'Attention, grain de sable : une histoire spectaculaire n\'est pas forcément vraie.', erreurs: [
       { titre: 'Croire sans vérifier', texte: 'Un : croire une histoire spectaculaire sans vérifier ses sources.' }, { titre: 'Généraliser un cas', texte: 'Deux : prendre un cas célèbre pour la règle générale.' }, { titre: 'Confondre prix et valeur', texte: 'Trois : confondre le prix et la valeur.' }] },
-    recap: { texte: `Pour résumer. ${scenes.slice(0, 3).map((s, i) => `${['Un', 'Deux', 'Trois'][i]} : ${coupe(phrases(s.texte)[0] || '', 18)}`).join(' ')}`, points: scenes.slice(0, 3).map(s => coupe(String(s.section || article), 6)) },
-    resume: { texte: `En une phrase : ${coupe((phrases(scenes[scenes.length - 1].texte).pop() || '').replace(/^./, c => c.toLowerCase()), 28)}`, court: `En une phrase : ${coupe((phrases(scenes[scenes.length - 1].texte).pop() || '').replace(/^./, c => c.toLowerCase()), 16)}` },
+    recap: { texte: `Pour résumer. ${scenes.slice(0, 3).map((s, i) => `${['Un', 'Deux', 'Trois'][i]} : ${coupeDit(phrases(s.texte)[0] || '', 18)}`).join(' ')}`, points: scenes.slice(0, 3).map(s => coupe(String(s.section || article), 6)) },
+    resume: { texte: `En une phrase : ${coupeDit((phrases(scenes[scenes.length - 1].texte).pop() || '').replace(/^./, c => c.toLowerCase()), 28)}`, court: `En une phrase : ${coupeDit((phrases(scenes[scenes.length - 1].texte).pop() || '').replace(/^./, c => c.toLowerCase()), 16)}` },
     question: 'Et toi, quelle histoire d\'argent aimerais-tu qu\'on vérifie ensuite ?', suite: { titre: 'À définir', texte: 'La prochaine fois : à définir.' },
     sources: [`S1 · Wikipédia, « ${article} »${url ? ' (' + url + ')' : ''}`], sourcesExternes: true,
     miniature: { lignes: titre.toUpperCase().split(' ').reduce((l, w) => { const d = l[l.length - 1]; if (d && (d + ' ' + w).length <= 14 && l.length <= 3) l[l.length - 1] = d + ' ' + w; else l.push(w); return l; }, []).slice(0, 3), accent: article.split(' ')[0].toUpperCase(), bas: choc ? [choc.avant, '→ ' + choc.apres] : ['À compléter'] },

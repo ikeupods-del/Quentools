@@ -97,6 +97,8 @@ function grouper(liste) {
 // Images utilisables comme illustration (photos et gravures ; pas de logos, drapeaux, icônes ni cartes vectorielles)
 const IMAGE_REFUSEE = /logo|ic[oô]ne?|icon|flag|drapeau|blason|coat[_ ]of[_ ]arms|signature|pictogram|symbol|wiki|commons|edit|question|disambig|portail|portal|star|[ée]toile|\.svg$/i;
 function texteSimple(html) { return String(html || '').replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&#039;/g, '’').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim(); }
+// licences acceptées pour illustrer une vidéo publiée : domaine public, CC0, CC BY, CC BY-SA, licences des banques gratuites (jamais NC, ND ni « tous droits réservés »)
+const LICENCE_LIBRE = l => { const t = String(l || '').toLowerCase(); return !/\bnc\b|non[- ]?commercial|\bnd\b|no ?deriv|fair use|copyright|tous droits|all rights|©/.test(t) && /public|cc0|pdm|cc[ -]?by|attribution|pexels|pixabay|unsplash|nasa|gfdl|free art|licence libre/.test(t); };
 function imageDe(page) {
   const ii = page && page.imageinfo && page.imageinfo[0]; if (!ii) return null;
   const m = ii.extmetadata || {}, nom = page.title.replace(/^[^:]+:/, '');
@@ -297,6 +299,24 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     const sel = IM.attribuer(reqs, pool, { vertical });
     return { images: pool, choix: sel.choix, propositions: sel.listes };
   }
+  // Photos qui illustrent des passages (épisodes QuentInvest) : la mieux notée de chaque passage, jamais deux fois la même, téléchargée dans `dossier`
+  // avec son crédit ; null quand aucune photo n'est assez pertinente (l'écran reste alors tel quel, plutôt qu'une photo hors sujet)
+  async function illustrer(requetes, { ancre = '', dossier, vertical = false, job = {} } = {}) {
+    const r = await mediasPour(requetes, { ancre, ancreRequete: '', vertical }), out = [];
+    fs.mkdirSync(dossier, { recursive: true });
+    for (let i = 0; i < requetes.length; i++) {
+      const im = r.images[r.choix[i]]; if (!im || im.video || !LICENCE_LIBRE(im.licence)) { out.push(null); continue; }
+      job.step = `Illustrations : photo ${i + 1} sur ${requetes.length}`;
+      const f = path.join(dossier, `photo-${String(i + 1).padStart(2, '0')}-${require('crypto').createHash('md5').update(im.url).digest('hex').slice(0, 8)}${/\.png($|\?)/i.test(im.url) ? '.png' : '.jpg'}`);
+      try {
+        if (!fs.existsSync(f)) await requete(im.url, { dest: f, ua: UA, accept: 'image/*', quoi: 'd’images' });
+        if (banques && im.suivi) banques().signaler(im).catch(() => {});
+        out.push({ fichier: f, credit: `${im.auteur}, ${im.licence}${im.source ? ', ' + im.source : ''}`, nom: im.nom, page: im.page || '' });
+      } catch (e) { out.push(null); } // photo injoignable : passage laissé sans photo
+      await new Promise(x => setTimeout(x, 120));
+    }
+    return out;
+  }
   // Toutes les banques activées (Commons + Openverse, NASA, Pexels, Pixabay, Unsplash) ; une banque en panne est ignorée
   async function rechercherImages(q, { vertical = false, limit = 20 } = {}) {
     const B = banques ? banques() : null;
@@ -332,7 +352,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     } catch (err) { return { texte: '', articles: [] }; }
   }
   const lireMac = async (texte, fichier, v) => { const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-essai-')); try { return await lire(texte, fichier, { voix: v }, dir); } finally { fs.rmSync(dir, { recursive: true, force: true }); } };
-  return { chercher, contexte, preparer, voix, fabriquer, lireMac, faits, mediasPour, imagesDeScenes, proposer };
+  return { chercher, contexte, preparer, voix, fabriquer, lireMac, faits, mediasPour, illustrer, imagesDeScenes, proposer };
 }
 
 module.exports = { creer, sujetDe, phrases, nettoyerPhrase, construireScript, construireScenes, choisirImages, imageDe };

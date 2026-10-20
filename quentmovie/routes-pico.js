@@ -24,7 +24,7 @@ const racinePolices = pico => [path.join(pico, '..', '..'), pico].find(d => fs.e
 // chemin d'un module livré avec QuentMovie (le programme de la chaîne ne les cherche pas tout seul quand il est dans l'application)
 const module_ = n => { try { return path.dirname(require.resolve(n + '/package.json')).replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep); } catch (e) { return null; } };
 
-function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA = () => {} }) {
+function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA = () => {}, illustrer = null }) {
   const SORTIES = opts.sortiesPico || path.join(os.homedir(), 'Movies', 'QuentInvest');
   const nav = () => opts.navigateur || null;
   const entier = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v) || a));
@@ -118,25 +118,43 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
     await VOIXCLONE().dire(choix.moteur, lignes, job);
     return dirs;
   }
+  // illustrations : une photo libre de droits en fond des écrans de texte (message, définition, chiffre), choisie et notée par le moteur
+  // de photos du Générateur (Commons, Openverse, NASA, Pexels… ; licences libres seulement). Passage sans photo assez pertinente : écran inchangé.
+  // Sans réseau, la vidéo est faite sans photos. Les photos déjà données par la fiche (`fond`) sont gardées.
+  const TYPES_PHOTO = new Set(['message', 'definition', 'chiffre']);
+  async function illustrerFiche(job, fiche, base) {
+    const blocs = (fiche.blocs || []).filter(b => b && !b.fond && b.ecran && typeof b.ecran === 'object' && TYPES_PHOTO.has(b.ecran.type));
+    if (!illustrer || !blocs.length) return 0;
+    job.step = 'Illustrations : recherche de photos libres de droits…';
+    const req = blocs.map(b => ({ fr: [b.section, b.ecran.titre, b.ecran.mot, b.ecran.legende].filter(Boolean).join(' '), en: '', texte: b.texte }));
+    let r; try { r = await illustrer(req, { ancre: fiche.titre || '', dossier: path.join(SORTIES, 'medias', 'illustrations', base), job }); } catch (e) { return 0; }
+    let n = 0; (r || []).forEach((x, k) => { if (x && x.fichier && fs.existsSync(x.fichier)) { blocs[k].fond = { fichier: x.fichier, credit: x.credit }; n++; } });
+    return n;
+  }
   // une fabrication complète : episode.js (YouTube, TikTok, miniatures, texte de publication)
   async function fabriquer(job, fiche, o) {
     const pico = dossierPico(opts); if (!pico) throw new Error('Programme de la chaîne QuentInvest introuvable dans cette installation.');
     const C = require(path.join(pico, 'fabrication', 'composer.js')).compose(fiche); // erreur claire si la fiche est incomplète
     const dossier = path.join(SORTIES, C.base), fiches = path.join(SORTIES, 'fiches');
     for (const d of [dossier, fiches, path.join(SORTIES, 'medias'), path.join(SORTIES, 'episodes')]) fs.mkdirSync(d, { recursive: true });
+    require('./fiche-quentinvest').finirEcrans(fiche); // aucun écran ne finit par « … » ni par un petit mot
+    const illustrations = o.illustrer === false ? 0 : await illustrerFiche(job, fiche, C.base);
     const fFiche = path.join(fiches, C.base + '.json'); fs.writeFileSync(fFiche, JSON.stringify(fiche, null, 1) + '\n');
     const choix = o.choixVoix || modeVoix(); fs.writeFileSync(path.join(dossier, 'voix.json'), JSON.stringify(choix));
     const V = await voixDesVersions(job, choix, dossier, [['youtube', C.long], ['tiktok', C.tiktok]]);
     const perso = [...(V.youtube ? ['--voix-perso', V.youtube] : []), ...(V.tiktok ? ['--voix-perso-tiktok', V.tiktok] : [])];
     const args = [fFiche, '--sortie', dossier, '--modeles', path.join(BASE, 'modeles'), ...perso, ...(o.court ? ['--court'] : []), ...(o.sansTiktok ? ['--sans-tiktok'] : []), ...(o.sansYoutube ? ['--sans-youtube'] : [])];
     const lignes = await lancer(job, pico, 'episode.js', args, C.base, [...(o.sansYoutube ? [] : ['YouTube']), ...(o.sansTiktok ? [] : ['TikTok'])]);
-    return { base: C.base, titre: fiche.titre || C.base, dossier, fichier: fFiche, fichiers: fs.readdirSync(dossier).filter(n => /\.(mp4|png|md|zip)$/.test(n)),
+    return { base: C.base, titre: fiche.titre || C.base, dossier, fichier: fFiche, illustrations, fichiers: fs.readdirSync(dossier).filter(n => /\.(mp4|png|md|zip)$/.test(n)),
       assemblage: ((lignes.find(l => /· assemblage (rapide|complet)/.test(l)) || '').match(/assemblage (rapide|complet)/) || [])[1] || '', // « rapide » : répliques recollées sans réencoder
       avertissements: lignes.filter(l => /^⚠/.test(l)).map(l => l.replace(/^⚠\s*/, '')).slice(0, 30), controle: lignes.filter(l => /^\s+.* · /.test(l)).map(l => l.trim()).slice(0, 30) };
   }
   // ---------- relecture d'un épisode fabriqué : expression, phrase, prononciation ; seules les répliques changées sont refaites ----------
   const nomSur = b => { const n = String(b || ''); if (!/^\d{2,3}-[a-z0-9-]{1,80}$/.test(n)) throw new Error('Épisode inconnu'); return n; };
   const lireJson = f => JSON.parse(fs.readFileSync(f, 'utf8'));
+  // textes modifiables d'un écran (« = » : l'écran de la réplique précédente continue) : champs texte et points d'une liste
+  const champsEcran = e => { if (!e || e === '=' || typeof e !== 'object') return null; const champs = {}; for (const [k, v] of Object.entries(e)) if (k !== 'type' && typeof v === 'string') champs[k] = v;
+    return Object.keys(champs).length || Array.isArray(e.points) ? { type: e.type, champs, ...(Array.isArray(e.points) && e.points.every(x => typeof x === 'string') ? { points: e.points } : {}) } : null; };
   const dossierVoix = (EP) => path.join(BASE, 'modeles', EP.voix && EP.voix.moteur === 'kokoro' ? 'kokoro-multi-lang-v1_0' : (EP.voix && EP.voix.modele) || 'vits-piper-fr_FR-upmc-medium');
   function episodeFabrique(base) {
     base = nomSur(base); const f = path.join(SORTIES, 'episodes', base + '.json'), dossier = path.join(SORTIES, base);
@@ -149,6 +167,10 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
     for (const c of changements) {
       const s = EP.scenes[c.i]; if (!s) continue;
       if (c.expr && EXPRESSIONS.includes(c.expr)) s.expr = c.expr;
+      if (c.ecran && s.ecran && s.ecran !== '=') for (const [k, v] of Object.entries(c.ecran)) { // texte de l'écran corrigé à la main (titre, sous-titre, points d'une liste…)
+        if (k === 'points' && Array.isArray(s.ecran.points) && Array.isArray(v)) { const l = v.map(x => String(x).replace(/\s+/g, ' ').trim().slice(0, 200)).filter(Boolean).slice(0, 8); if (l.length) s.ecran.points = l; }
+        else if (k !== 'type' && typeof s.ecran[k] === 'string' && typeof v === 'string') s.ecran[k] = v.replace(/\s+/g, ' ').trim().slice(0, 300);
+      }
       if (typeof c.texte === 'string' && c.texte.trim()) { const t = c.texte.replace(/\s+/g, ' ').trim().slice(0, 600); if (t !== s.texte) { s.texte = t; delete s.voix; } } // `voix` (lecture différente du texte) ne correspond plus
     }
     fs.writeFileSync(E.f, JSON.stringify(EP, null, 1) + '\n');
@@ -209,7 +231,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       try { const VT = require('./voix-texte'); difficiles = require('./fiche-quentinvest').controler(lireJson(fFiche), { lexique: VT.lexiqueActuel() }).difficiles || []; } catch (e) { /* sans fiche : aucun mot signalé */ }
       let section = '';
       return send(res, 200, { base: E.base, titre: E.EP.titre, tiktok: E.tiktok, expressions: EXPRESSIONS, difficiles,
-        scenes: E.EP.scenes.map((x, i) => ({ i, section: x.section ? (section = x.section) : '', dans: section, expr: x.expr || 'neutre', texte: x.texte })) });
+        scenes: E.EP.scenes.map((x, i) => ({ i, section: x.section ? (section = x.section) : '', dans: section, expr: x.expr || 'neutre', texte: x.texte, ecran: champsEcran(x.ecran) })) });
     }
     // épisode fabriqué posé sur la timeline : une réplique = un clip (écran + Pico + voix), sous-titres, musique ; tout reste modifiable
     if (req.method === 'POST' && p === '/api/pico/montage') {
@@ -244,7 +266,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       if (enCours.size) throw new Error(OCCUPE);
       const place = {}; enCours.add(place);
       try {
-        const b = await readJson(req), E = episodeFabrique(b.base), ch = (Array.isArray(b.changements) ? b.changements : []).slice(0, 200).map(c => ({ i: Math.round(+c.i), expr: c.expr ? String(c.expr) : '', texte: c.texte != null ? String(c.texte) : null }));
+        const b = await readJson(req), E = episodeFabrique(b.base), ch = (Array.isArray(b.changements) ? b.changements : []).slice(0, 200).map(c => ({ i: Math.round(+c.i), expr: c.expr ? String(c.expr) : '', texte: c.texte != null ? String(c.texte) : null, ecran: c.ecran && typeof c.ecran === 'object' && !Array.isArray(c.ecran) ? c.ecran : null }));
         const port = req.socket.localPort;
         return send(res, 200, travail(async job => { job.port = port; try { return await refaire(job, E.base, ch, !!b.tiktok); } finally { enCours.delete(place); } }));
       } catch (e) { enCours.delete(place); throw e; }
@@ -298,7 +320,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       else if (v.moteur === 'kokoro' || !v.moteur) { if (!PAROLE().etat().pico.installee) { job.step = 'Voix de Pico…'; await PAROLE().installer('pico', job); } }
       else { const pv = PA.VOIX.find(x => x.archive === (v.modele || 'vits-piper-fr_FR-upmc-medium')); if (pv && !PAROLE().etat().voix.find(x => x.id === pv.id).installee) await PAROLE().installer('voix:' + pv.id, job); }
       job.progress = 0; job.step = 'Préparation de l’épisode';
-      job.port = port; return await fabriquer(job, fiche, { court: !!o.court, sansTiktok: !!o.sansTiktok, sansYoutube: !!o.sansYoutube, choixVoix: choixVoix_ });
+      job.port = port; return await fabriquer(job, fiche, { court: !!o.court, sansTiktok: !!o.sansTiktok, sansYoutube: !!o.sansYoutube, illustrer: o.illustrer !== false, choixVoix: choixVoix_ });
     } finally { enCours.delete(place); } }));
   }
 }

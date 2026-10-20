@@ -78,6 +78,11 @@ function sujetPico(texte) {
   const t = texte.replace(/^\s*pico\s*[,:!]?\s*/i, '').replace(/(?<!\p{L})(?:quentinvest|de pico|avec pico)(?!\p{L})/giu, ' ').replace(/\s+/g, ' ').trim(), sujet = sujetDemande(t);
   return VERBE_CREER.test(t) && sujet !== t.replace(/[.!?\s]+$/, '') && sujet.length >= 3 ? sujet : '';
 }
+// plan de la timeline venant d'un épisode monté (« 12-sujet-07.mp4 », « 12-sujet-tiktok-07.mp4 ») : à l'instant donné, sinon le clip choisi
+function repliqueVisee(t) {
+  const c = proj.clips[t != null ? clipA(t) : sel], m = c && /^(\d{2,3}-[a-z0-9-]+?)(-tiktok)?-(\d{2,3})\.mp4$/.exec(c.file || '');
+  return m ? { base: m[1], tiktok: !!m[2], n: +m[3] } : null;
+}
 async function envoyerChat(texte) {
   texte = String(texte == null ? $('#chTexte').value : texte).trim(); if (!texte) return;
   const t = instantActuel();
@@ -87,6 +92,13 @@ async function envoyerChat(texte) {
   if (sujet) return direIA(`Je peux faire écrire et fabriquer la vidéo de Pico sur « ${sujet} » (texte d’après Wikipédia, contrôle, puis fabrication ; rien n’est publié sans toi).`, [
     { nom: `🎬 Fabriquer la vidéo sur « ${sujet} »`, pri: true, faire: () => { ouvrirFiche(); $('#fiSujet').value = sujet; $('#fiLancer').click(); direIA('🎬 C’est parti : suis l’avancement dans la fenêtre Épisode QuentInvest.'); } },
     { nom: 'Non merci', faire: () => direIA('D’accord, je ne lance rien.') }]);
+  // « corrige cette image » sur un plan d'épisode QuentInvest : son écran est une image fabriquée, ses textes se corrigent dans la relecture
+  const rep = repliqueVisee(t);
+  if (rep && rep.tiktok && /[ée]cran|image|[ée]crit|affich|titre|texte|phrase/i.test(texte)) return direIA('Ce plan vient de la version TikTok : son écran est une image fabriquée, je ne peux pas réécrire son texte. Pose un titre ou une image sur la piste vidéo 2 au-dessus de ce plan (onglet Titres) pour le couvrir, ou coupe le plan.');
+  if (rep && /[ée]cran|image|[ée]crit|affich|titre|texte|phrase/i.test(texte) && /corrig|chang|modifi|erreur|faute|sens|refai|remplac|enl[eè]v|r[ée]écri|\bmets?\b|coup/i.test(texte))
+    return direIA(`Ce plan est la réplique ${rep.n + 1} de l’épisode « ${rep.base} » : l’écran est une image fabriquée, je ne peux pas réécrire son texte depuis la timeline. Corrige-le dans la relecture (🖼), puis « Refaire » : seule cette réplique est refaite, et ta timeline la reprend avec « 🎞 Monter dans la timeline ».`, [
+      { nom: `🖼 Corriger l’écran de la réplique ${rep.n + 1}`, pri: true, faire: async () => { await ouvrirRelecturePico(rep.base); const b = document.querySelector(`[data-ecran="${rep.n}"]`); if (b) { b.click(); b.scrollIntoView({ block: 'center' }); } else direIA('Cette réplique garde l’écran de la précédente : corrige celui de la réplique d’avant (🖼).'); } },
+      { nom: 'Le cacher par un titre', faire: () => { direIA('D’accord : pose un titre ou une image sur la piste vidéo 2 au-dessus de ce plan (onglet Titres), il couvrira l’écran.'); } }]);
   const attente = direIA('…');
   let r;
   try { r = await (await api('/api/assistant/comprendre', { method: 'POST', body: JSON.stringify({ demande: texte, ia: true, discussion: true, instant: t, projet: { ...resumeProjet(), normaliser: !!proj.normaliser } }) })).json(); }
