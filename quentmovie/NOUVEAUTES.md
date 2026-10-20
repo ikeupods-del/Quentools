@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.7.6
+- **Installation de ta voix clonée** : elle ne s'arrête plus sur « Serveur de Python : erreur 403 » (limite de demandes de GitHub) ; Python est alors trouvé par un autre chemin.
+
 ## 2.7.5
 - **Ta voix clonée plus rapide** : une phrase identique dans la version YouTube et la version TikTok n'est plus dite deux fois, le son est réutilisé.
 
