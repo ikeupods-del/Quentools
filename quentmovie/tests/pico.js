@@ -128,6 +128,14 @@ async function navigateurEssai(exe) {
     check('refaire : l’expression changée refait sa réplique', date(`clips/scene${String(der).padStart(2, '0')}.mp4`) > avant.cDer);
     check('refaire : vidéo YouTube remplacée', fs.statSync(path.join(sorties, '98-essai-pico', '98-essai-pico-youtube.mp4')).mtimeMs > t1);
     console.log(`  refaire en ${Math.round((Date.now() - t1) / 1000)} s`);
+    // la vidéo posée sur la timeline : une réplique = un clip, médias copiés dans ceux du montage, sous-titres et musique
+    const mo = await (await post('/api/pico/montage', { base: '98-essai-pico' })).json(), Pm = mo.projet || { clips: [] };
+    check('timeline : un clip par réplique', Pm.clips.length === E2.scenes.length && Pm.clips.every(c => c.kind === 'video' && c.dur > 0.3 && c.subs && c.subs.length), JSON.stringify(mo).slice(0, 300));
+    check('timeline : répliques copiées dans les médias', Pm.clips.every(c => /^98-essai-pico-\d{2}\.mp4$/.test(c.file) && fs.existsSync(path.join(base, 'medias', c.file))), JSON.stringify(Pm.clips.map(c => c.file)));
+    check('timeline : réplique refaite copiée à jour', fs.statSync(path.join(base, 'medias', '98-essai-pico-01.mp4')).size === fs.statSync(path.join(trav, 'quentmovie', 'medias', 'pico-01.mp4')).size);
+    check('timeline : musique de la bibliothèque (trouvée) et nom du projet', Pm.audio.length >= 1 && Pm.audio.every(a => /^lib:musiques\/[\w-]+\.mp3$/.test(a.file) && fs.existsSync(path.join(__dirname, '..', 'bibliotheque', a.file.slice(4)))) && /^[\w.\- ()]+$/.test(mo.nom || ''), JSON.stringify([mo.nom, Pm.audio]));
+    check('timeline : version TikTok absente refusée clairement', /TikTok/.test((await (await post('/api/pico/montage', { base: '98-essai-pico', version: 'tiktok' })).json()).error || ''));
+    check('timeline : épisode inconnu refusé', (await post('/api/pico/montage', { base: '../x' })).status >= 400);
     const ec = await (await post('/api/pico/ecouter', { base: '98-essai-pico', texte: 'Mackay se dit maquaï.' })).json(), je = await attendre(ec.id);
     check('écouter : phrase dite par la voix de l’épisode', je.done && /\.m4a$/.test((je.resultat || {}).file || '') && fs.existsSync(path.join(base, 'medias', je.resultat.file)), je.error || '');
     // épisode avec ta voix clonée : chaque réplique dite par le modèle de clonage, aucune voix de synthèse à télécharger
@@ -169,7 +177,7 @@ async function navigateurEssai(exe) {
     const ab = await (await post('/api/quentinvest/auto', { script: scriptActu, options: { voix: 'doublage:' + rq.nom, sansTiktok: true, court: true } })).json(), jab = await attendre(ab.id);
     check('doublage des répliques de la vidéo : vidéo fabriquée', jab.done && !jab.error && (jab.resultat.fichiers || []).some(n => /-youtube\.mp4$/.test(n)), jab.error || '');
     // écran de relecture dans la fenêtre : lignes, expressions, mot cliquable avec « se dit », écouter et ajouter
-    const pg = await nav.b.newPage({ viewport: { width: 1440, height: 900 } }), errs = []; pg.on('pageerror', x => errs.push(x.message));
+    const pg = await nav.b.newPage({ viewport: { width: 1440, height: 900 } }), errs = []; pg.on('pageerror', x => errs.push(x.message)); pg.on('dialog', d => { if (d.type() === 'alert') errs.push('alerte : ' + d.message()); d.dismiss().catch(() => {}); });
     await pg.goto(U('/')); await pg.waitForTimeout(800);
     await pg.evaluate(() => ouvrirFiche()); await pg.click('[name="fiMode"][value="script"]'); await pg.fill('#fiScript', scriptActu);
     check('fiche : en mode script, le champ du sujet est caché', await pg.evaluate(() => getComputedStyle(document.querySelector('#fiZoneSujet')).display === 'none' && !document.querySelector('#fiDoubler').hidden));
@@ -195,6 +203,12 @@ async function navigateurEssai(exe) {
     check('écran de relecture : clic sur un mot → « se dit », écouter, ajouter au dictionnaire', await pg.evaluate(() => !!document.querySelector('#rlEcouter') && !!document.querySelector('#rlAjouter')));
     await pg.fill('#rlDit', 'eux'); await pg.click('#rlAjouter'); await pg.waitForTimeout(500);
     check('écran de relecture : mot ajouté → répliques qui le contiennent à refaire', await pg.evaluate(() => document.querySelectorAll('#rlListe .rlLigne.change').length >= 2), await pg.evaluate(() => document.querySelector('#rlEtat').textContent));
+    // « Monter dans la timeline » depuis la relecture : la timeline reçoit un clip par réplique, enregistrée comme projet
+    await pg.evaluate(() => { window.confirm = () => true; }); await pg.click('#rlMonter [data-monter="youtube"]');
+    await pg.waitForFunction(() => proj.clips.length > 0, null, { timeout: 15000 }).catch(() => {});
+    check('timeline : l’épisode monté réplique par réplique, avec la musique', await pg.evaluate(n => proj.clips.length === n && proj.clips.every(c => /^98-essai-pico-\d{2}\.mp4$/.test(c.file)) && proj.audio.length >= 1 && proj.format === 'horizontal' && !document.querySelector('#modal').classList.contains('on'), E.scenes.length), await pg.evaluate(() => JSON.stringify([proj.clips.length, proj.audio, proj.format, !!document.querySelector('#rlListe')])));
+    await pg.waitForFunction(n => projetCourant === n, mo.nom, { timeout: 10000 }).catch(() => {});
+    check('timeline : montage enregistré comme projet', (await (await fetch(U('/api/projets'))).json()).items.includes(mo.nom), JSON.stringify((await (await fetch(U('/api/projets'))).json()).items));
     check('écran de relecture : aucune erreur dans la page', !errs.length, errs.join(' | '));
     await pg.close();
 

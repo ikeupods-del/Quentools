@@ -3,6 +3,10 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.7.7
+- **Ta vidéo QuentInvest sur la timeline** : bouton « 🎞 Monter dans la timeline » à la fin de la fabrication et dans « 🔍 Relire et corriger » (aussi pour la version TikTok). Chaque réplique devient un clip (écran, Pico et ta voix), avec ses sous-titres et la musique : coupe un plan, remplace-le, mets une photo, une vidéo ou un titre par-dessus, puis exporte. Le montage est enregistré comme projet ; si la timeline est vide, la vidéo y est posée toute seule.
+- La musique des vidéos QuentInvest est de nouveau là (à 15/100, sous ta voix) : son nom n'était pas trouvé et elle disparaissait sans prévenir.
+
 ## 2.7.6
 - **Installation de ta voix clonée** : elle ne s'arrête plus sur « Serveur de Python : erreur 403 » (limite de demandes de GitHub) ; Python est alors trouvé par un autre chemin.
 

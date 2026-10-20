@@ -160,12 +160,30 @@ async function fabriquerPico(texte, options) {
 function finPico(z, x, note = '') {
   z.innerHTML = `<p>✅ <b>${esc(x.titre)}</b> est prêt à relire${note ? ' · ' + esc(note) : ''} : ${x.fichiers.filter(n => /\.(mp4|png)$/.test(n)).length} fichiers (vidéos et miniatures) dans <b>${esc(x.dossier)}</b>.</p>
     ${(x.avertissements || []).length ? `<details><summary>${x.avertissements.length} remarque${x.avertissements.length > 1 ? 's' : ''} sur la fiche</summary>${x.avertissements.map(a => `<div style="margin:3px 0">⚠️ ${esc(a)}</div>`).join('')}</details>` : ''}
-    <div class="ligne" style="margin-top:6px"><button data-fin="dossier">📂 Ouvrir le dossier</button><button data-fin="relire">🔍 Relire et corriger</button><button class="pri" data-fin="publier">📤 Publier…</button></div>
-    <p class="mut" style="margin:6px 0 0">Regarde les vidéos avant de publier. « Relire et corriger » change l’expression de Pico, une phrase ou la prononciation d’un mot, et ne refait que ces répliques.</p>`;
+    <div class="ligne" style="margin-top:6px;flex-wrap:wrap"><button data-fin="dossier">📂 Ouvrir le dossier</button><button data-fin="relire">🔍 Relire et corriger</button>${boutonsMontage(x.fichiers.some(n => /-youtube\.mp4$/.test(n)), x.fichiers.some(n => /-tiktok\.mp4$/.test(n)))}<button class="pri" data-fin="publier">📤 Publier…</button></div>
+    <p class="mut" style="margin:6px 0 0">Regarde les vidéos avant de publier. « Relire et corriger » change l’expression de Pico, une phrase ou la prononciation d’un mot, et ne refait que ces répliques. « Monter dans la timeline » pose la vidéo réplique par réplique sur ta timeline : coupe, remplace un plan, ajoute un titre ou une image par-dessus, puis exporte.</p>`;
+  z.onclick = ev => { const b = ev.target.closest('[data-monter]'); if (b) monterPico(x.base, b.dataset.monter); };
   z.querySelector('[data-fin=relire]').onclick = () => ouvrirRelecturePico(x.base);
   z.querySelector('[data-fin=dossier]').onclick = () => api('/api/publier/ouvrir', { method: 'POST', body: JSON.stringify({ cible: 'dossier', episode: x.base }) });
   z.querySelector('[data-fin=publier]').onclick = () => ouvrirPublier();
   signal('Épisode prêt à relire : ' + x.titre);
+  if (!proj.clips.length && x.fichiers.some(n => /-youtube\.mp4$/.test(n))) monterPico(x.base, 'youtube'); // timeline vide : la vidéo y est posée tout de suite
+}
+// Épisode fabriqué posé sur la timeline (routes-pico.js, /api/pico/montage) : une réplique = un clip, avec ses sous-titres et la musique
+const boutonsMontage = (youtube, tiktok) => (youtube ? '<button data-monter="youtube" title="Chaque réplique devient un clip de ta timeline">🎞 Monter dans la timeline</button>' : '') + (tiktok ? `<button data-monter="tiktok" title="La version verticale, réplique par réplique">🎞 ${youtube ? 'TikTok' : 'Monter la version TikTok'}</button>` : '');
+async function monterPico(base, version = 'youtube') {
+  try {
+    const r = await api('/api/pico/montage', { method: 'POST', body: JSON.stringify({ base, version }) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Montage impossible');
+    let items = []; try { items = (await (await api('/api/projets')).json()).items || []; } catch (e) { /* liste indisponible */ }
+    if (items.includes(j.nom) && confirm(`Tu as déjà commencé le montage « ${j.nom} ». Le rouvrir tel que tu l’as laissé ?\n\n(Annuler : repartir de la vidéo fabriquée, ton montage actuel reste enregistré.)`)) return ouvrirProjetNomme(j.nom);
+    if (proj.clips.length && projetCourant !== j.nom && !confirm('Remplacer le montage affiché par cet épisode ? Pense à enregistrer ton projet actuel s’il n’est pas enregistré.')) return;
+    let nom = j.nom; for (let k = 2; items.includes(nom); k++) nom = `${j.nom} (${k})`;
+    stopLecture(); await chargerMedias(); const manque = poserProjet(j.projet);
+    sel = proj.clips.length ? 0 : -1; selA = selCut = selP = selT = -1; selObjs.clear(); gt = 0; rendu = null; $('#boite').onclick = null; fermer(); commit(); tout(); fitZoom(); placerTete(0); apercu();
+    try { await api('/api/projets/' + enc(nom), { method: 'PUT', body: snap() }); choisirProjetCourant(nom); } catch (e) { /* enregistrement automatique quand même */ }
+    signal(`Épisode posé sur la timeline : ${proj.clips.length} répliques.`);
+    aide(`🎞 « ${esc(nom)} » est sur ta timeline : <b>un clip par réplique</b> (écran, Pico et ta voix), les sous-titres et la musique. Coupe ou supprime un plan, mets une photo, une vidéo ou un titre par-dessus sur la piste vidéo 2, puis exporte avec ${MAC ? '⌘E' : 'Ctrl+E'}.${manque ? ` ${manque} élément(s) introuvable(s) retiré(s).` : ''}`);
+  } catch (er) { alert(er.message); }
 }
 // Relecture d'un épisode Pico fabriqué : expression de chaque réplique, phrase, prononciation d'un mot (dictionnaire) ; seules les répliques changées sont refaites
 const NOMS_EXPR = { neutre: 'neutre', content: 'content', inquiet: 'inquiet', surpris: 'surpris', curieux: 'curieux', reflechi: 'réfléchi' };
@@ -178,7 +196,7 @@ async function ouvrirRelecturePico(base) {
   ouvrir(`<h2>🔍 Relire « ${esc(E.titre)} »</h2>
     <p class="mut">Pour chaque réplique : l’expression de Pico, la phrase (✏ pour la modifier) et la prononciation (clic sur un mot ; les mots <span class="rlMot dur">soulignés</span> sont à vérifier). Seules les voix et les écrans des répliques changées sont refaits ; le montage final est refait en entier (quelques minutes).</p>
     <div id="rlListe" class="rlListe"></div>
-    <div id="rlPied" class="ligne" style="margin-top:10px"><span class="mut" id="rlEtat">Aucun changement.</span><span class="sp"></span><button id="rlFermer">Fermer</button><button class="pri" id="rlRefaire" disabled>Refaire</button></div>`, 'xl');
+    <div id="rlPied" class="ligne" style="margin-top:10px;flex-wrap:wrap"><span class="mut" id="rlEtat">Aucun changement.</span><span class="sp"></span><span id="rlMonter">${boutonsMontage(true, E.tiktok)}</span><button id="rlFermer">Fermer</button><button class="pri" id="rlRefaire" disabled>Refaire</button></div>`, 'xl');
   const fen = $('#rlListe'), ouverte = () => fen.isConnected; // fenêtre de relecture encore affichée
   const dessiner = () => {
     if (!ouverte()) return;
@@ -191,6 +209,7 @@ async function ouvrirRelecturePico(base) {
   };
   const changer = (i, k, v) => { const c = ch.get(i) || {}; c[k] = v; ch.set(i, c); aRefaire.add(i); dessiner(); };
   $('#rlFermer').onclick = fermer;
+  $('#rlMonter').onclick = ev => { const b = ev.target.closest('[data-monter]'); if (b) monterPico(E.base, b.dataset.monter); };
   $('#rlListe').onkeydown = e => { const m = e.target.closest('[data-mot]'); if (m && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); m.click(); } }; // mots au clavier : Entrée ou Espace
   $('#rlListe').onchange = e => { const t = e.target; if (t.dataset.expr !== undefined) changer(+t.dataset.expr, 'expr', t.value); };
   $('#rlListe').onclick = async e => {

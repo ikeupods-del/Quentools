@@ -211,6 +211,23 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       return send(res, 200, { base: E.base, titre: E.EP.titre, tiktok: E.tiktok, expressions: EXPRESSIONS, difficiles,
         scenes: E.EP.scenes.map((x, i) => ({ i, section: x.section ? (section = x.section) : '', dans: section, expr: x.expr || 'neutre', texte: x.texte })) });
     }
+    // épisode fabriqué posé sur la timeline : une réplique = un clip (écran + Pico + voix), sous-titres, musique ; tout reste modifiable
+    if (req.method === 'POST' && p === '/api/pico/montage') {
+      const b = await readJson(req), E = episodeFabrique(b.base), tk = b.version === 'tiktok';
+      const trav = path.join(E.dossier, tk ? 'travail-tiktok' : 'travail'), fProj = path.join(trav, 'projet-quentmovie.json'), src = path.join(trav, 'quentmovie', 'medias');
+      if (!fs.existsSync(fProj)) throw new Error(tk ? 'La version TikTok de cet épisode n’a pas été fabriquée.' : 'Cet épisode a été fabriqué par une ancienne version : refais-le une fois pour pouvoir le monter.');
+      const P = lireJson(fProj), MEDIAS = path.join(BASE, 'medias'), pre = E.base + (tk ? '-tiktok' : '');
+      fs.mkdirSync(MEDIAS, { recursive: true });
+      P.clips = P.clips.map(c => {
+        const f = path.join(src, path.basename(c.file)); if (!fs.existsSync(f)) throw new Error('Réplique introuvable dans le dossier de l’épisode : ' + path.basename(c.file) + '. Refais l’épisode.');
+        const nom = `${pre}-${path.basename(c.file).replace(/^pico-/, '')}`, dest = path.join(MEDIAS, nom);
+        const st = fs.statSync(f); let d = null; try { d = fs.statSync(dest); } catch (e) { /* pas encore copiée */ }
+        if (!d || d.size !== st.size || d.mtimeMs < st.mtimeMs) fs.copyFileSync(f, dest); // une réplique refaite remplace l'ancienne copie
+        return { ...c, file: nom };
+      });
+      P.audio = (P.audio || []).map(a => /^lib:[\w-]+$/.test(a.file || '') ? { ...a, file: `lib:musiques/${a.file.slice(4)}.mp3` } : a); // épisode fabriqué avant la correction du nom de la musique
+      return send(res, 200, { nom: `${E.EP.titre || E.base}${tk ? ' (TikTok)' : ''}`.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w.\- ()]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || E.base, projet: P, repliques: P.clips.length });
+    }
     if (req.method === 'GET' && p === '/api/pico/episodes') { // épisodes fabriqués dans QuentMovie (les plus récents d'abord)
       const d = path.join(SORTIES, 'episodes'); let l = []; try { l = fs.readdirSync(d).filter(n => /^\d{2,3}-[a-z0-9-]+\.json$/.test(n) && !/-tiktok\.json$/.test(n)).map(n => n.replace(/\.json$/, '')).filter(b => fs.existsSync(path.join(SORTIES, b, 'travail'))); } catch (e) { /* aucun */ }
       return send(res, 200, { episodes: l.map(b => ({ base: b, titre: (() => { try { return lireJson(path.join(d, b + '.json')).titre; } catch (e) { return b; } })(), date: fs.statSync(path.join(d, b + '.json')).mtimeMs })).sort((a, b) => b.date - a.date) });
