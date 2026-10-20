@@ -67,7 +67,7 @@
     "navigateur-pont.js",
     "navigateur-electron.js",
     "fiche-quentinvest.js",
-    "fiche-ia.js",
+    "fiche-ia.js", "relecture-ecrans.js",
     "prononciation-controle.js",
     "voix-clone/**",
       "ia.js",

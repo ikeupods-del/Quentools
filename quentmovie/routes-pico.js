@@ -24,7 +24,7 @@ const racinePolices = pico => [path.join(pico, '..', '..'), pico].find(d => fs.e
 // chemin d'un module livré avec QuentMovie (le programme de la chaîne ne les cherche pas tout seul quand il est dans l'application)
 const module_ = n => { try { return path.dirname(require.resolve(n + '/package.json')).replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep); } catch (e) { return null; } };
 
-function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA = () => {}, illustrer = null }) {
+function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA = () => {}, illustrer = null, titrer = null }) {
   const SORTIES = opts.sortiesPico || path.join(os.homedir(), 'Movies', 'QuentInvest');
   const nav = () => opts.navigateur || null;
   const entier = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v) || a));
@@ -52,7 +52,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       // groupe à part (detached) : « Arrêter » arrête episode.js, fabriquer.js et leurs FFmpeg d'un coup (kill() de enGroupe)
       const jeton = crypto.randomBytes(18).toString('hex'); jetons.set(jeton, new Set());
       const fermerFenetres = () => { const ids = jetons.get(jeton) || []; jetons.delete(jeton); const N = nav(); if (N) for (const id of ids) Promise.resolve().then(() => N.fermer(id)).catch(() => {}); };
-      const enfant = enGroupe(spawn(process.execPath, [path.join(pico, 'fabrication', script), ...args], { env: envFabrication(pico, fProg, job.port, jeton), stdio: ['ignore', 'pipe', 'pipe'], detached: true })); job.enfant = enfant;
+      const enfant = enGroupe(spawn(process.execPath, [path.join(pico, 'fabrication', script), ...args], { env: { ...envFabrication(pico, fProg, job.port, jeton), QI_SOUS_TITRES: job.sousTitres ? '1' : '0' }, stdio: ['ignore', 'pipe', 'pipe'], detached: true })); job.enfant = enfant;
       // MacBook Air (16 Go, sans ventilateur) : la fabrication et ses FFmpeg passent après le montage en cours, la fenêtre reste fluide
       try { os.setPriority(enfant.pid, 10); } catch (e) { /* priorité inchangée */ }
       let sortie = '', erreurs = '', phase = phase0; const n = Math.max(1, phases.length);
@@ -137,15 +137,18 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
     const C = require(path.join(pico, 'fabrication', 'composer.js')).compose(fiche); // erreur claire si la fiche est incomplète
     const dossier = path.join(SORTIES, C.base), fiches = path.join(SORTIES, 'fiches');
     for (const d of [dossier, fiches, path.join(SORTIES, 'medias'), path.join(SORTIES, 'episodes')]) fs.mkdirSync(d, { recursive: true });
-    require('./fiche-quentinvest').finirEcrans(fiche); // aucun écran ne finit par « … » ni par un petit mot
+    // relecture automatique des écrans (règles du programme, puis titres courts écrits par l'IA locale et contrôlés)
+    const relecture = await require('./relecture-ecrans').relire(fiche, { titrer, job });
     const illustrations = o.illustrer === false ? 0 : await illustrerFiche(job, fiche, C.base);
+    fs.writeFileSync(path.join(dossier, 'options.json'), JSON.stringify({ sousTitres: !!o.sousTitres })); // reprise par « Refaire »
     const fFiche = path.join(fiches, C.base + '.json'); fs.writeFileSync(fFiche, JSON.stringify(fiche, null, 1) + '\n');
+    job.sousTitres = !!o.sousTitres; // sous-titres incrustés : seulement si demandés, l'écran explique déjà
     const choix = o.choixVoix || modeVoix(); fs.writeFileSync(path.join(dossier, 'voix.json'), JSON.stringify(choix));
     const V = await voixDesVersions(job, choix, dossier, [['youtube', C.long], ['tiktok', C.tiktok]]);
     const perso = [...(V.youtube ? ['--voix-perso', V.youtube] : []), ...(V.tiktok ? ['--voix-perso-tiktok', V.tiktok] : [])];
     const args = [fFiche, '--sortie', dossier, '--modeles', path.join(BASE, 'modeles'), ...perso, ...(o.court ? ['--court'] : []), ...(o.sansTiktok ? ['--sans-tiktok'] : []), ...(o.sansYoutube ? ['--sans-youtube'] : [])];
     const lignes = await lancer(job, pico, 'episode.js', args, C.base, [...(o.sansYoutube ? [] : ['YouTube']), ...(o.sansTiktok ? [] : ['TikTok'])]);
-    return { base: C.base, titre: fiche.titre || C.base, dossier, fichier: fFiche, illustrations, fichiers: fs.readdirSync(dossier).filter(n => /\.(mp4|png|md|zip)$/.test(n)),
+    return { base: C.base, titre: fiche.titre || C.base, dossier, fichier: fFiche, illustrations, relecture, fichiers: fs.readdirSync(dossier).filter(n => /\.(mp4|png|md|zip)$/.test(n)),
       assemblage: ((lignes.find(l => /· assemblage (rapide|complet)/.test(l)) || '').match(/assemblage (rapide|complet)/) || [])[1] || '', // « rapide » : répliques recollées sans réencoder
       avertissements: lignes.filter(l => /^⚠/.test(l)).map(l => l.replace(/^⚠\s*/, '')).slice(0, 30), controle: lignes.filter(l => /^\s+.* · /.test(l)).map(l => l.trim()).slice(0, 30) };
   }
@@ -174,6 +177,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       if (typeof c.texte === 'string' && c.texte.trim()) { const t = c.texte.replace(/\s+/g, ' ').trim().slice(0, 600); if (t !== s.texte) { s.texte = t; delete s.voix; } } // `voix` (lecture différente du texte) ne correspond plus
     }
     fs.writeFileSync(E.f, JSON.stringify(EP, null, 1) + '\n');
+    try { job.sousTitres = !!lireJson(path.join(E.dossier, 'options.json')).sousTitres; } catch (e) { job.sousTitres = true; } // épisode d'avant ce choix : avec sous-titres, comme à sa fabrication
     const choix = choixVoix(E.dossier), fT = path.join(SORTIES, 'episodes', E.base + '-tiktok.json');
     const V = await voixDesVersions(job, choix, E.dossier, [['youtube', EP], ...(choix.mode === 'ma-voix' && avecTiktok && E.tiktok ? [['tiktok', lireJson(fT)]] : [])]);
     const versions = [['', E.f, 'travail', `${E.base}-youtube.mp4`, 'YouTube'], ...(avecTiktok && E.tiktok ? [['-tiktok', path.join(SORTIES, 'episodes', E.base + '-tiktok.json'), 'travail-tiktok', `${E.base}-tiktok.mp4`, 'TikTok']] : [])];
@@ -320,7 +324,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       else if (v.moteur === 'kokoro' || !v.moteur) { if (!PAROLE().etat().pico.installee) { job.step = 'Voix de Pico…'; await PAROLE().installer('pico', job); } }
       else { const pv = PA.VOIX.find(x => x.archive === (v.modele || 'vits-piper-fr_FR-upmc-medium')); if (pv && !PAROLE().etat().voix.find(x => x.id === pv.id).installee) await PAROLE().installer('voix:' + pv.id, job); }
       job.progress = 0; job.step = 'Préparation de l’épisode';
-      job.port = port; return await fabriquer(job, fiche, { court: !!o.court, sansTiktok: !!o.sansTiktok, sansYoutube: !!o.sansYoutube, illustrer: o.illustrer !== false, choixVoix: choixVoix_ });
+      job.port = port; return await fabriquer(job, fiche, { court: !!o.court, sansTiktok: !!o.sansTiktok, sansYoutube: !!o.sansYoutube, illustrer: o.illustrer !== false, sousTitres: !!o.sousTitres, choixVoix: choixVoix_ });
     } finally { enCours.delete(place); } }));
   }
 }

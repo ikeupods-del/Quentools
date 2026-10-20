@@ -322,7 +322,7 @@ async function montage(clips) {
   EP.scenes.forEach((s, i) => {
     const nom = `pico-${sh(i)}.mp4`; fs.copyFileSync(clips[i].out, path.join(base, 'medias', nom));
     const suivante = EP.scenes[i + 1];
-    liste.push({ nom, d: clips[i].d, subs: sousTitres(s.texte, Math.max(0.5, clips[i].d - (suivante && !suivante.section ? PAUSE : PAUSE_SECTION)), VERT ? 3 : 8), fondu: !!(suivante && suivante.section) });
+    liste.push({ nom, d: clips[i].d, subs: process.env.QI_SOUS_TITRES === '0' ? [] /* QuentMovie : sous-titres incrustés seulement si demandés */ : sousTitres(s.texte, Math.max(0.5, clips[i].d - (suivante && !suivante.section ? PAUSE : PAUSE_SECTION)), VERT ? 3 : 8), fondu: !!(suivante && suivante.section) });
   });
   return { app, port, U, liste, base };
 }

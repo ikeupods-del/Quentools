@@ -4,6 +4,10 @@ Chaque section devient le texte affiché dans l'application quand la mise à jou
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
 ## 2.7.9
+**Relecture automatique des écrans** avant chaque vidéo QuentInvest (ce que tu faisais à l'œil) : aucun texte qui finit par « … », pas de sous-titre qui répète le titre, pas de titre trop long. L'IA du Mac réécrit en quelques mots le titre d'un écran dont la phrase est trop longue. Le programme vérifie chaque titre : aucun chiffre ni aucun nom absent de ta phrase, sinon le titre d'origine reste. Le résultat de la relecture est affiché à la fin de la fabrication.
+
+**Sous-titres incrustés retirés par défaut** : l'écran explique déjà. La case « Sous-titres incrustés » les remet.
+
 **Pico vivant** (nouvelles vidéos ; les épisodes 1 et 2 gardent leur rendu) :
 - Il cligne des yeux, à intervalles irréguliers, comme une vraie personne.
 - Sa bouche suit vraiment ta voix : fermée, mi-ouverte ou grande ouverte selon la force de chaque syllabe (avant : ouverte ou fermée).

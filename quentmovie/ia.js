@@ -333,6 +333,21 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
     return { chapitres: garde, ia: false };
   }
 
+  // Titres d'écran des épisodes QuentInvest : l'idée principale d'une phrase trop longue pour un écran, en quelques mots (relecture-ecrans.js
+  // contrôle chaque titre : rien d'ajouté à la phrase). Un seul appel pour tout l'épisode ; null pour un titre manquant.
+  async function titrerEcrans({ phrases = [], sujet = '' }) {
+    utiliser('');
+    if (!installe() || !phrases.length) return { titres: phrases.map(() => null), ia: false };
+    const systeme = 'Tu écris le titre affiché à l’écran pour chaque phrase d’une vidéo d’économie en français : l’idée principale en 3 à 9 mots, une phrase complète et claire, sans point final, sans guillemets, sans points de suspension. Tu reprends les mots de la phrase ; tu n’ajoutes aucun chiffre, aucun nom, aucune date, aucun fait.';
+    const demande = (sujet ? `Sujet de la vidéo : ${String(sujet).slice(0, 160)}\n\n` : '') + phrases.map((p, i) => `Phrase ${i + 1} : ${String(p).slice(0, 400)}`).join('\n') + `\n\nDonne exactement ${phrases.length} titres, dans l’ordre.`;
+    const schema = { type: 'object', properties: { titres: { type: 'array', minItems: phrases.length, maxItems: phrases.length, items: { type: 'string', maxLength: 80 } } }, required: ['titres'] };
+    try {
+      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.3 }, phrases.length * 40 + 60);
+      const l = (r.resultat && r.resultat.titres) || [];
+      return { titres: phrases.map((_, i) => (typeof l[i] === 'string' ? SQ.nettoyerTexte(l[i]).replace(/[.:;,]+$/, '').trim() : null)), ia: true };
+    } catch (e) { return { titres: phrases.map(() => null), ia: false }; }
+  }
+
   // Analyse de la vidéo : l'IA lit des extraits datés de toute la vidéo (une part par minute environ, jusqu'à 10) et résume le sujet,
   // le public, les idées fortes (avec leur moment), les mots-clés et le genre (choisi dans la liste du programme).
   // Elle ne fait que décrire ce qui est dit : chaque phrase est comparée au texte de la vidéo (ancrage) et ce qui n'y est pas est écarté ;
@@ -418,7 +433,7 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
   }
 
   const arreter = () => { if (proc) proc.kill(); };
-  return { etat, installer, ecrireScript, reecrireScene, traduire, comprendreDemande, textesPublication, titrerChapitres, analyserVideo, choisirExtraits, telecharger, arreter };
+  return { etat, installer, ecrireScript, reecrireScene, traduire, comprendreDemande, textesPublication, titrerChapitres, titrerEcrans, analyserVideo, choisirExtraits, telecharger, arreter };
 }
 
 module.exports = { creer, STYLES, MODELE, lireConsignes, regroupe, TYPES, PUBLICS, TONS, RYTHMES, LANGUES, controleTraduction, nettoyerTraduction };

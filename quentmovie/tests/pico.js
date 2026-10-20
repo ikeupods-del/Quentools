@@ -109,7 +109,7 @@ async function navigateurEssai(exe) {
     for (const k of [1, 2, 3]) { const id = 'p' + k; execFileSync(bins.ffmpeg, ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=f=180:d=4', '-ar', '24000', '-ac', '1', path.join(corpus, 'wavs', id + '.wav')]); idx[id] = { texte: 'Phrase lue numéro ' + k, duree: 4 }; }
     fs.writeFileSync(path.join(corpus, 'index.json'), JSON.stringify(idx));
     check('état : ta voix enregistrée suffit', (await (await fetch(U('/api/pico'))).json()).maVoix.assez === true);
-    const { id } = await (await post('/api/pico/fabriquer', { fiche, options: { court: true, sansTiktok: true } })).json();
+    const { id } = await (await post('/api/pico/fabriquer', { fiche, options: { court: true, sansTiktok: true, sousTitres: true } })).json(); // sous-titres demandés (case cochée)
     let j; for (;;) { await new Promise(r => setTimeout(r, 700)); j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.step) etapes.add(j.step.replace(/ \d+\/\d+$/, '')); if (j.error || j.done) break; }
     const r = j.resultat || {};
     check('fabrication réelle : terminée', j.done && !j.error, j.error || '');
@@ -190,6 +190,9 @@ async function navigateurEssai(exe) {
     const scriptActu = '# La BCE baisse ses taux\n\nLa banque centrale vient de baisser son taux de 0,25 %. Pourquoi ça change ton crédit ?\n\nUn taux directeur, c’est le prix auquel les banques empruntent. Quand il baisse, les crédits deviennent souvent moins chers.\n\nEn une phrase : un taux plus bas rend l’argent emprunté moins cher.';
     const au = await (await post('/api/quentinvest/auto', { script: scriptActu, options: { voix: 'ma-voix', sansTiktok: true } })).json(), ja = await attendre(au.id); // ton script : moins de 5 minutes accepté, signalé
     check('ton script de moins de 5 minutes : fabriqué, avec un avertissement', ja.done && !ja.error && (ja.resultat.avertissements || []).some(x => /moins de 5 minutes/.test(x)), ja.error || JSON.stringify(ja.resultat && ja.resultat.avertissements));
+    { const pj = JSON.parse(fs.readFileSync(path.join(ja.resultat.dossier, 'travail', 'projet-quentmovie.json'), 'utf8'));
+      check('sous-titres incrustés : absents par défaut (l’écran explique déjà)', pj.clips.every(c => !c.subs || !c.subs.length), JSON.stringify(pj.clips.map(c => (c.subs || []).length)));
+      check('relecture automatique des écrans faite avant la fabrication', Array.isArray(ja.resultat.relecture), JSON.stringify(ja.resultat.relecture)); }
     check('vidéo d’une traite : ton script devient une vidéo sans autre clic', ja.done && !ja.error && (ja.resultat.fichiers || []).some(n => /-youtube\.mp4$/.test(n)) && ja.resultat.fiche && /BCE/.test(ja.resultat.fiche.titre), ja.error || JSON.stringify(ja.resultat && ja.resultat.fichiers));
     // ton script dit avec un doublage : les répliques à enregistrer sont celles de la fabrication ; un doublage d'un autre découpage est refusé
     const rq = await (await post('/api/pico/repliques', { script: scriptActu })).json();
