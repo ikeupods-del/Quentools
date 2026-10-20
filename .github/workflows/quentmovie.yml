@@ -74,6 +74,8 @@ jobs:
         run: QM_RESEAU=1 node tests/parole.js
       - name: Essai réel des banques de photos (Wikimedia, Openverse, NASA)
         run: QM_RESEAU=1 node tests/banques-reel.js
+      - name: Essai réel de la recherche de Python pour la voix clonée (sans l'API de GitHub, limitée à 60 demandes par heure)
+        run: node -e 'require("./voix-clone").pythonParLaPage().then(a => { console.log(a); if (!/aarch64-apple-darwin-install_only\.tar\.gz$/.test(a.name) || !/^sha256:[0-9a-f]{64}$/.test(a.digest)) process.exit(1); }, e => { console.error(e.message); process.exit(1); })'
       - name: Essai réel de l'IA locale et du téléchargement depuis un lien
         run: QM_RESEAU=1 QM_BASE="$RUNNER_TEMP/qm-autotest" node tests/ia.js
       - name: Construire l'application

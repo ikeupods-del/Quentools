@@ -10,6 +10,26 @@ const MOTEURS = {
   qwen: { nom: 'Qwen3-TTS', paquets: ['qwen-tts', 'soundfile'], go: 4 }
 };
 const PYTHON_RELEASES = 'https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest';
+const PYTHON_PAGE = 'https://github.com/astral-sh/python-build-standalone/releases';
+const PYTHON_NOM = new RegExp(`^cpython-3\\.11\\.\\d+\\+\\d+-${process.arch === 'arm64' ? 'aarch64' : 'x86_64'}-apple-darwin-install_only\\.tar\\.gz$`);
+// Python autonome à télécharger : par l'API de GitHub, sinon (limite de 60 demandes par heure dépassée : « erreur 403 »)
+// par la page des versions : dernière étiquette lue dans la redirection de « latest », nom et empreinte lus dans SHA256SUMS
+async function pythonParLaPage() {
+  const r = await fetch(`${PYTHON_PAGE}/latest`, { redirect: 'manual' }), tag = (/\/releases\/tag\/([^/?#]+)/.exec(r.headers.get('location') || '') || [])[1];
+  if (!tag) throw new Error(`page des versions de Python illisible (${r.status})`);
+  const t = await fetch(`${PYTHON_PAGE}/download/${tag}/SHA256SUMS`); if (!t.ok) throw new Error(`liste des fichiers de Python illisible (${t.status})`);
+  const l = (await t.text()).split('\n').map(x => x.trim().split(/\s+/)).find(([h, n]) => n && PYTHON_NOM.test(n) && /^[0-9a-f]{64}$/.test(h));
+  if (!l) throw new Error('Python 3.11 pour ce Mac introuvable dans la dernière version publiée');
+  return { name: l[1], browser_download_url: `${PYTHON_PAGE}/download/${tag}/${l[1]}`, digest: 'sha256:' + l[0] };
+}
+async function trouverPython() {
+  try {
+    const sortie = await requete(PYTHON_RELEASES, { quoi: 'de Python' }), a = (sortie.assets || []).find(x => PYTHON_NOM.test(x.name));
+    if (a) return a;
+  } catch (e) { /* limite de l'API ou réseau : la page des versions prend le relais */ }
+  try { return await pythonParLaPage(); }
+  catch (e) { throw new Error('Téléchargement de Python impossible pour l’instant (' + e.message + '). Vérifie la connexion internet et relance dans quelques minutes.'); }
+}
 const ARCH = process.arch === 'arm64' ? 'aarch64' : 'x86_64';
 // Python ne lit pas dans l'archive de l'application : le script est livré à côté, dans app.asar.unpacked (asarUnpack de package.json)
 const ESSAI = path.join(__dirname, 'voix-clone', 'essai.py').replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep);
@@ -129,10 +149,7 @@ function creer(base) {
     if (process.platform !== 'darwin') throw new Error('Le Python autonome n’est prévu que pour le Mac : définis QM_PYTHON pour utiliser un autre Python.');
     fs.mkdirSync(dossier, { recursive: true });
     job.step = 'Recherche de Python…';
-    const sortie = await requete(PYTHON_RELEASES, { quoi: 'de Python' });
-    const re = new RegExp(`^cpython-3\\.11\\.\\d+\\+\\d+-${ARCH}-apple-darwin-install_only\\.tar\\.gz$`);
-    const actif = (sortie.assets || []).find(a => re.test(a.name));
-    if (!actif) throw new Error('Python 3.11 pour ce Mac introuvable dans la dernière version publiée');
+    const actif = await trouverPython();
     const archive = path.join(dossier, 'python.tar.gz'), tmp = path.join(dossier, 'python-extraction'), final = path.join(dossier, 'python');
     const r = await requete(actif.browser_download_url, { dest: archive, quoi: 'de Python', onProgress: (r, t) => { if (t) { job.progress = 0.02 + 0.06 * r / t; job.step = `Téléchargement de Python… ${Math.round(100 * r / t)} %`; } } });
     const attendu = /^sha256:([0-9a-f]{64})$/.exec(actif.digest || '');
@@ -231,4 +248,4 @@ function creer(base) {
   return { etat, essai, dire, prete, annuler, fichier, journalFin, dossier, essais, MOTEURS };
 }
 
-module.exports = { creer, MOTEURS, voixEnregistree, SANS_VOIX, VOIX_MIN, enGroupe, finGroupe, arreterTout };
+module.exports = { creer, MOTEURS, pythonParLaPage, trouverPython, voixEnregistree, SANS_VOIX, VOIX_MIN, enGroupe, finGroupe, arreterTout };
