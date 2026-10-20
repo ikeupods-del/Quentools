@@ -4,6 +4,13 @@ Chaque section devient le texte affiché dans l'application quand la mise à jou
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
 ## 2.7.9
+**Pico vivant** (nouvelles vidéos ; les épisodes 1 et 2 gardent leur rendu) :
+- Il cligne des yeux, à intervalles irréguliers, comme une vraie personne.
+- Sa bouche suit vraiment ta voix : fermée, mi-ouverte ou grande ouverte selon la force de chaque syllabe (avant : ouverte ou fermée).
+- Sa tête plonge légèrement sur les mots appuyés de ta phrase.
+- Ses gestes suivent la phrase : tête penchée sur une question, hochement quand il affirme, il se penche vers l'écran quand un chiffre s'affiche.
+- Quand il réfléchit, sa bouche bouge enfin quand il parle (elle restait figée).
+
 J'ai fabriqué une vraie vidéo et relu chaque écran comme toi ; voici ce qui est corrigé :
 - Le titre d'un écran n'est plus répété mot pour mot dans le sous-titre.
 - Une phrase trop longue pour un titre garde son idée principale (« Le gouvernement n'a d'autre choix que d'intervenir », « Les banques se retrouvent en faillite les unes après les autres ») au lieu d'être coupée.

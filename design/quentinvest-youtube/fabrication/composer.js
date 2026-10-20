@@ -24,9 +24,11 @@ const exprDe = (b, role) => {
 };
 const gesteDe = b => {
   if (b.geste !== undefined) return b.geste || undefined;
-  const type = b.ecran && b.ecran.type;
-  if (b.ecran === '=') return undefined;
-  if (['definition', 'calcul', 'courbe', 'croissance', 'comparaison', 'barres', 'duo', 'taux'].includes(type)) return 'pointe';
+  const type = b.ecran && b.ecran.type, t = b.texte || '';
+  if (b.ecran !== '=' && ['definition', 'calcul', 'courbe', 'croissance', 'comparaison', 'barres', 'duo', 'taux', 'chiffre'].includes(type)) return 'pointe'; // il montre l'écran
+  // selon la phrase, comme quelqu'un qui parle : tête penchée sur une question, hochement quand il affirme
+  if (/\?/.test(t)) return 'penche';
+  if (/!|\b(?:oui|exactement|voilà|bravo|bien sûr|c[’']est ça|retiens)\b/i.test(t)) return 'hoche';
   return undefined;
 };
 const maj = t => t.charAt(0).toUpperCase() + t.slice(1);
