@@ -335,17 +335,35 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
 
   // Titres d'écran des épisodes QuentInvest : l'idée principale d'une phrase trop longue pour un écran, en quelques mots (relecture-ecrans.js
   // contrôle chaque titre : rien d'ajouté à la phrase). Un seul appel pour tout l'épisode ; null pour un titre manquant.
-  async function titrerEcrans({ phrases = [], sujet = '' }) {
+  // chiffres : légendes écrites sous un grand chiffre (ce qu'il mesure, sans répéter la phrase)
+  async function titrerEcrans({ phrases = [], sujet = '', chiffres = null }) {
     utiliser('');
     if (!installe() || !phrases.length) return { titres: phrases.map(() => null), ia: false };
-    const systeme = 'Tu écris le titre affiché à l’écran pour chaque phrase d’une vidéo d’économie en français : l’idée principale en 3 à 9 mots, une phrase complète et claire, sans point final, sans guillemets, sans points de suspension. Tu reprends les mots de la phrase ; tu n’ajoutes aucun chiffre, aucun nom, aucune date, aucun fait.';
-    const demande = (sujet ? `Sujet de la vidéo : ${String(sujet).slice(0, 160)}\n\n` : '') + phrases.map((p, i) => `Phrase ${i + 1} : ${String(p).slice(0, 400)}`).join('\n') + `\n\nDonne exactement ${phrases.length} titres, dans l’ordre.`;
+    const systeme = chiffres
+      ? 'Tu écris la légende affichée sous un grand chiffre dans une vidéo d’économie en français : ce que mesure ce chiffre, en 3 à 8 mots clairs (par exemple « Hausse du cours en deux semaines »), sans répéter le chiffre, sans point final, sans guillemets, sans points de suspension. Tu reprends les mots de la phrase ; tu n’ajoutes aucun autre chiffre, aucun nom, aucune date, aucun fait.'
+      : 'Tu écris le titre affiché à l’écran pour chaque phrase d’une vidéo d’économie en français : l’idée principale en 3 à 9 mots, une phrase complète et claire, sans point final, sans guillemets, sans points de suspension. Tu reprends les mots de la phrase ; tu n’ajoutes aucun chiffre, aucun nom, aucune date, aucun fait.';
+    const demande = (sujet ? `Sujet de la vidéo : ${String(sujet).slice(0, 160)}\n\n` : '') + phrases.map((p, i) => `Phrase ${i + 1}${chiffres && chiffres[i] ? ` (chiffre affiché : ${chiffres[i]})` : ''} : ${String(p).slice(0, 400)}`).join('\n') + `\n\nDonne exactement ${phrases.length} ${chiffres ? 'légendes' : 'titres'}, dans l’ordre.`;
     const schema = { type: 'object', properties: { titres: { type: 'array', minItems: phrases.length, maxItems: phrases.length, items: { type: 'string', maxLength: 80 } } }, required: ['titres'] };
     try {
       const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande, schema, ctx: contexteDe(systeme, demande), temperature: 0.3 }, phrases.length * 40 + 60);
       const l = (r.resultat && r.resultat.titres) || [];
       return { titres: phrases.map((_, i) => (typeof l[i] === 'string' ? SQ.nettoyerTexte(l[i]).replace(/[.:;,]+$/, '').trim() : null)), ia: true };
     } catch (e) { return { titres: phrases.map(() => null), ia: false }; }
+  }
+
+  // Retour du propriétaire sur un écran d'épisode QuentInvest : l'IA réécrit les textes de cet écran seulement (retour-ecran.js contrôle le résultat)
+  async function retoucherEcran({ type = '', champs = {}, points = null, phrase = '', demande = '', sujet = '' }) {
+    utiliser('');
+    if (!installe()) return { ia: false };
+    const cles = Object.keys(champs).filter(k => k !== 'source');
+    const systeme = 'Tu corriges les textes affichés sur un écran de vidéo d’économie en français, selon la demande du monteur. Textes courts et clairs, sans point final, sans guillemets, sans points de suspension. Tu reprends les mots de la phrase dite ; tu n’ajoutes aucun chiffre, aucun nom, aucune date, aucun fait. Un champ peut être laissé vide si la demande le veut.';
+    const demandeIA = `${sujet ? `Sujet de la vidéo : ${String(sujet).slice(0, 160)}\n` : ''}Phrase dite pendant l’écran : ${String(phrase).slice(0, 500)}\nÉcran (${type || 'message'}) :\n${cles.map(k => `- ${k} : ${String(champs[k]).slice(0, 300)}`).join('\n')}${points ? `\n- points : ${points.join(' | ')}` : ''}\n\nDemande du monteur : ${String(demande).slice(0, 400)}\n\nDonne les nouveaux textes de l’écran.`;
+    const props = Object.fromEntries(cles.map(k => [k, { type: 'string', maxLength: 160 }])); if (points) props.points = { type: 'array', maxItems: 6, items: { type: 'string', maxLength: 80 } };
+    const schema = { type: 'object', properties: props, required: Object.keys(props) };
+    try {
+      const r = await demanderAvecMarge({ type: 'ecrire', modele: cheminModele, systeme, demande: demandeIA, schema, ctx: contexteDe(systeme, demandeIA), temperature: 0.3 }, 260);
+      return { ia: true, ecran: r.resultat || {} };
+    } catch (e) { return { ia: false }; }
   }
 
   // Analyse de la vidéo : l'IA lit des extraits datés de toute la vidéo (une part par minute environ, jusqu'à 10) et résume le sujet,
@@ -433,7 +451,7 @@ function creer({ BASE, FFMPEG, memoire }) { // memoire : () => texte des consign
   }
 
   const arreter = () => { if (proc) proc.kill(); };
-  return { etat, installer, ecrireScript, reecrireScene, traduire, comprendreDemande, textesPublication, titrerChapitres, titrerEcrans, analyserVideo, choisirExtraits, telecharger, arreter };
+  return { etat, installer, ecrireScript, reecrireScene, traduire, comprendreDemande, textesPublication, titrerChapitres, titrerEcrans, retoucherEcran, analyserVideo, choisirExtraits, telecharger, arreter };
 }
 
 module.exports = { creer, STYLES, MODELE, lireConsignes, regroupe, TYPES, PUBLICS, TONS, RYTHMES, LANGUES, controleTraduction, nettoyerTraduction };

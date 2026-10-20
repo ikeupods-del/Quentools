@@ -90,6 +90,25 @@ const { controler, nombres } = require('../fiche-quentinvest');
     }
     check('fiche de ton script : aucun écran avec « … »', !/…/.test(JSON.stringify([fs2.accroche, fs2.blocs.map(b => b.ecran)])), JSON.stringify(fs2.blocs.map(b => b.ecran)).slice(0, 400));
   }
+  // grand chiffre : la légende dit ce que mesure le chiffre, jamais toute la phrase dite recopiée dessous
+  { const FQ = require('../fiche-quentinvest'), RE = require('../relecture-ecrans'), RT = require('../retour-ecran');
+    const ph = "Voir le cours d'une entreprise bidon grimper de 200 à 500 % en l'espace de deux semaines devient la norme.";
+    const e1 = FQ.ecranDe(ph, '');
+    check('chiffre : légende courte, pas la phrase entière', e1.type === 'chiffre' && e1.valeur === '500 %' && e1.legende === "En l'espace de deux semaines", JSON.stringify(e1));
+    check('chiffre : phrase courte gardée en légende', FQ.ecranDe('Le Livret A rapporte 3 % par an.', '').legende === 'Le Livret A rapporte 3 % par an');
+    const f3 = { titre: 'Bulle', blocs: [{ texte: ph, ecran: { type: 'chiffre', valeur: '500 %', legende: ph.replace(/\.$/, '') } }] };
+    const c3 = await RE.relire(f3, { titrer: async ({ chiffres }) => ({ titres: chiffres ? ["Le cours d'une entreprise bidon grimpe en deux semaines"] : [] }) });
+    check('relecture : ancienne légende (phrase entière) remplacée, puis réécrite par l’IA', f3.blocs[0].ecran.legende === "Le cours d'une entreprise bidon grimpe en deux semaines" && c3.some(x => /légende/.test(x)), JSON.stringify([f3.blocs[0].ecran, c3]));
+    // retour sur un écran : règles sûres, puis IA contrôlée
+    let rr = await RT.corriger({ type: 'chiffre', champs: { valeur: '500 %', legende: 'Voir le cours grimper' }, phrase: ph, demande: 'la phrase en dessous n’a aucun sens', photo: true });
+    check('retour écran : « la phrase en dessous n’a aucun sens » → légende retirée, sans IA', rr.ok && rr.ecran.legende === '' && !rr.sansFond && !rr.ia, JSON.stringify(rr));
+    rr = await RT.corriger({ type: 'message', champs: { titre: 'Les prix montent' }, phrase: 'Les prix montent.', demande: 'enlève la photo', photo: true });
+    check('retour écran : « enlève la photo » → photo retirée', rr.ok && rr.sansFond, JSON.stringify(rr));
+    rr = await RT.corriger({ type: 'message', champs: { titre: 'Les prix montent' }, phrase: 'Les prix montent de 5 %.', demande: 'mets le chiffre en avant' }, async () => ({ ia: true, ecran: { titre: 'Les prix montent de 8 %' } }));
+    check('retour écran : chiffre inventé par l’IA refusé', !rr.ok, JSON.stringify(rr));
+    rr = await RT.corriger({ type: 'message', champs: { titre: 'Les prix montent' }, phrase: 'Les prix montent de 5 %.', demande: 'mets le chiffre en avant' }, async () => ({ ia: true, ecran: { titre: 'Les prix montent de 5 %' } }));
+    check('retour écran : réécriture de l’IA gardée si elle reprend la phrase', rr.ok && rr.ecran.titre === 'Les prix montent de 5 %', JSON.stringify(rr));
+  }
   app.stop(); srv.close(); fs.rmSync(racine, { recursive: true, force: true });
   console.log(`Fiches QuentInvest : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

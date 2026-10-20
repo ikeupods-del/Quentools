@@ -138,22 +138,29 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
     if (req.method === 'POST' && p === '/api/quentinvest/brouillon') {
       const b = await readJson(req), sujet = String(b.sujet || '').trim().slice(0, 120);
       if (sujet.length < 3) throw new Error('Écris le sujet de l’épisode (par exemple « Le krach de 1929 »).');
-      return send(res, 200, travail(job => brouillonDe(sujet, job, { article: b.article, numero: b.numero })));
+      // auto : même texte que « Tout seul » (titre tiré du sujet, rien à compléter), pour le lire soi-même dans le Doublage
+      return send(res, 200, travail(async job => { const r = await brouillonDe(sujet, job, { article: b.article, numero: b.numero });
+        if (b.auto) { r.fiche = require('./fiche-ia').pourAuto(r.fiche, sujet); fs.writeFileSync(r.fichier, JSON.stringify(r.fiche, null, 1) + '\n'); }
+        return r; }));
     }
     // Vidéo QuentInvest d'une traite : « fais une vidéo sur le krach de 2008 » (texte écrit d'après Wikipédia) ou ton script (sujet d'actualité),
     // puis contrôle et fabrication par /api/pico/fabriquer (mêmes voix, une fabrication à la fois) ; l'avancement des deux étapes est suivi ici
     if (req.method === 'POST' && p === '/api/quentinvest/auto') {
       const b = await readJson(req), FI = require('./fiche-ia'), FQ = require('./fiche-quentinvest');
       const script = String(b.script || '').slice(0, 60000), sujet = FI.sujetDe(String(b.demande || '').slice(0, 200)).slice(0, 120);
-      if (script.trim()) { if (script.trim().length < 80) throw new Error('Ton script est trop court : une accroche, quelques paragraphes et une conclusion.'); }
+      // fiche déjà prête (texte écrit puis photos choisies dans la fenêtre) : fabriquée telle quelle
+      const ficheDonnee = b.fiche && typeof b.fiche === 'object' && Array.isArray(b.fiche.blocs) ? b.fiche : null;
+      if (ficheDonnee) { /* rien à écrire */ } else if (script.trim()) { if (script.trim().length < 80) throw new Error('Ton script est trop court : une accroche, quelques paragraphes et une conclusion.'); }
       else if (sujet.length < 3) throw new Error('Écris le sujet de la vidéo (par exemple « fais une vidéo sur le krach de 2008 »).');
       const voixClone = require('./voix-clone'); // ta voix clonée sans enregistrement : refusé tout de suite, avant d'écrire le texte
+      if (String((b.options || {}).voix || 'ma-voix') === 'moi') throw new Error('Avec ta vraie voix, enregistre d’abord les répliques dans le Doublage, puis choisis « Mon doublage ».');
       if (String((b.options || {}).voix || 'ma-voix') === 'ma-voix' && !voixClone.voixEnregistree(BASE).assez) throw new Error(voixClone.SANS_VOIX);
       const port = req.socket.localPort, U = q => `http://127.0.0.1:${port}${q}`, o = b.options && typeof b.options === 'object' ? b.options : {};
       return send(res, 200, travail(async job => {
         const part = (a, z) => k => { job.step = k.step || job.step; job.progress = a + (z - a) * (k.progress || 0); };
         let fiche, fichier = null, article = null;
-        if (script.trim()) { job.step = 'Découpage de ton script…'; fiche = FQ.ficheDepuisScript(script, { titre: String(b.titre || '').slice(0, 120), numero: prochainNumero() }); }
+        if (ficheDonnee) fiche = ficheDonnee;
+        else if (script.trim()) { job.step = 'Découpage de ton script…'; fiche = FQ.ficheDepuisScript(script, { titre: String(b.titre || '').slice(0, 120), numero: prochainNumero() }); }
         else {
           const sous = { step: '', progress: 0 }, suivre = setInterval(() => part(0, 0.3)(sous), 500);
           try { const r = await brouillonDe(sujet, sous); fiche = FI.pourAuto(r.fiche, sujet); article = r.article; fichier = r.fichier; fs.writeFileSync(fichier, JSON.stringify(fiche, null, 1) + '\n'); }

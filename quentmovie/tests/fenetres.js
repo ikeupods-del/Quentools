@@ -35,7 +35,7 @@ function chromium() {
     if (p === '/api/parole/dictee') return json(r, { id: 'faux-dictee' });
     if (p === '/api/pico/episode') return json(r, { base: 'ep1', titre: 'Épisode essai', scenes: [{ i: 0, texte: 'Bonjour Berkshire et merci', expr: 'neutre' }], expressions: ['neutre', 'content'], difficiles: ['Berkshire'], tiktok: false });
     if (p === '/api/pico/refaire') return json(r, { id: 'faux-refaire' });
-    if (p === '/api/quentinvest/brouillon') return json(r, { id: 'faux-brouillon' });
+    if (p === '/api/quentinvest/brouillon') return json(r, { id: /"auto":true/.test(r.request().postData() || '') ? 'faux-texte-auto' : 'faux-brouillon' }); // texte pour ta voix : jamais fini ici
     if (p === '/api/quentinvest/auto') return json(r, { error: 'essai : fabrication simulée' });
     if (p === '/api/animations/rendre') return json(r, { id: 'faux-anim' });
     const id = u.searchParams.get('id') || '';
@@ -53,8 +53,14 @@ function chromium() {
   check('épisode : « exporte la vidéo de Pico sur YouTube » n’est pas un sujet', await ev(() => sujetPico('exporte la vidéo de Pico sur YouTube') === '' && sujetPico('la vidéo de pico sur youtube') === ''));
   await ev(() => { ouvrirChat(); envoyerChat('fais un épisode sur la bourse'); }); await dort(200);
   check('épisode : proposé avec un bouton, sans ouvrir la fabrication', await ev(() => !$('#fiAuto') && /Fabriquer la vidéo sur « la bourse »/.test([...document.querySelectorAll('#chMsgs .ch-m.ia')].pop().textContent)));
-  await pg.click('#chMsgs .ch-m.ia:last-child button.pri'); await pg.waitForFunction(() => /fabrication simulée/.test(($('#fiAutoRes') || {}).textContent || ''), null, { timeout: 8000 }).catch(() => {});
-  check('épisode : le bouton ouvre la fenêtre avec le sujet et lance', await ev(() => $('#fiSujet') && $('#fiSujet').value === 'la bourse' && /fabrication simulée/.test($('#fiAutoRes').textContent)));
+  await pg.click('#chMsgs .ch-m.ia:last-child button.pri'); await pg.waitForFunction(() => /%|Écriture/.test(($('#fiProg') || {}).textContent || ''), null, { timeout: 8000 }).catch(() => {});
+  // voix par défaut : ta vraie voix → le texte est écrit d'abord, pour être lu dans le Doublage
+  check('épisode : le bouton ouvre la fenêtre avec le sujet et écrit le texte à lire', await ev(() => $('#fiSujet') && $('#fiSujet').value === 'la bourse' && $('#fiAutoVoix').value === 'moi' && /%|Écriture/.test($('#fiProg').textContent)));
+  // voix clonée et photos automatiques : fabrication d'une traite, erreur signalée
+  await ev(() => { fermer(); ouvrirFiche(); }); await dort(300);
+  await ev(() => { const s = $('#fiAutoVoix'); s.innerHTML += '<option value="ma-voix">clone</option>'; s.value = 'ma-voix'; document.querySelector('[name="fiPhotos"][value="auto"]').checked = true; $('#fiSujet').value = 'la bourse'; $('#fiLancer').click(); });
+  await pg.waitForFunction(() => /fabrication simulée/.test(($('#fiAutoRes') || {}).textContent || ''), null, { timeout: 8000 }).catch(() => {});
+  check('épisode : voix clonée et photos automatiques, fabrication lancée d’une traite', await ev(() => /fabrication simulée/.test($('#fiAutoRes').textContent)));
   check('épisode : l’erreur est aussi signalée', /fabrication simulée/.test(await signalTexte()));
 
   // 2) brouillon d'épisode : fenêtre fermée pendant le travail → pas d'erreur, résultat signalé

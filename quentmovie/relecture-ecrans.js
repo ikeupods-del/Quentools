@@ -44,6 +44,15 @@ async function relire(fiche, { titrer = null, job = {} } = {}) {
     const morceau = t => { const m = IM.termes(t), d = IM.termes(p0); return norm(p0).startsWith(norm(t)) || (m.length > 0 && m.filter(w => d.includes(w)).length / m.length >= 0.8); };
     if ((!e.type || e.type === 'message') && e.titre && e.titre !== x.section && !/[.!?]$/.test(e.titre) && norm(p0) !== norm(e.titre) && p0.length > e.titre.length + 15 && morceau(e.titre)) aTitrer.push({ e, phrase: p0 });
   }
+  // grand chiffre : la légende dit ce que mesure le chiffre en quelques mots, pas toute la phrase dite (recopiée, coupée de son contexte)
+  const aLegender = []; let legendes = 0;
+  for (const x of ecrans) {
+    const e = x.e; if (e.type !== 'chiffre' || typeof e.valeur !== 'string') continue;
+    const p = phrasesDe(x.texte).find(t => t.includes(e.valeur.trim())) || phrasesDe(x.texte)[0] || '';
+    if (typeof e.legende === 'string' && e.legende.length > 70 && norm(p).includes(norm(e.legende).slice(0, 40))) { e.legende = FQ.legendeChiffre(p, e.valeur.trim()); legendes++; }
+    if (p.length > 70 && (!e.legende || norm(p).includes(norm(e.legende)))) aLegender.push({ e, phrase: p });
+  }
+  if (legendes) corrections.push(`${legendes} légende${legendes > 1 ? 's' : ''} de chiffre raccourcie${legendes > 1 ? 's' : ''} (plus la phrase entière sous le chiffre)`);
   if (doublons) corrections.push(`${doublons} sous-titre${doublons > 1 ? 's' : ''} d’écran qui répétai${doublons > 1 ? 'en' : ''}t le titre retiré${doublons > 1 ? 's' : ''}`);
   if (longs) corrections.push(`${longs} titre${longs > 1 ? 's' : ''} trop long${longs > 1 ? 's' : ''} raccourci${longs > 1 ? 's' : ''}`);
   if (titrer && aTitrer.length) {
@@ -51,6 +60,12 @@ async function relire(fiche, { titrer = null, job = {} } = {}) {
     let r = null; try { r = await titrer({ phrases: aTitrer.map(x => x.phrase), sujet: fiche.titre || '' }); } catch (e) { r = null; }
     let k = 0; (r && r.titres || []).forEach((t, i) => { if (t && titreValide(t, aTitrer[i].phrase) && t !== aTitrer[i].e.titre) { aTitrer[i].e.titre = t.charAt(0).toUpperCase() + t.slice(1); k++; } });
     if (k) corrections.push(`${k} titre${k > 1 ? 's' : ''} d’écran réécrit${k > 1 ? 's' : ''} par l’IA (idée principale de la phrase)`);
+  }
+  if (titrer && aLegender.length) {
+    job.step = 'Légendes des chiffres par l’IA…';
+    let r = null; try { r = await titrer({ phrases: aLegender.map(x => x.phrase), sujet: fiche.titre || '', chiffres: aLegender.map(x => x.e.valeur) }); } catch (e) { r = null; }
+    let k = 0; (r && r.titres || []).forEach((t, i) => { if (t && t.length <= 70 && titreValide(t, aLegender[i].phrase) && t !== aLegender[i].e.legende) { aLegender[i].e.legende = t.charAt(0).toUpperCase() + t.slice(1); k++; } });
+    if (k) corrections.push(`${k} légende${k > 1 ? 's' : ''} de chiffre écrite${k > 1 ? 's' : ''} par l’IA (ce que mesure le chiffre)`);
   }
   return corrections;
 }

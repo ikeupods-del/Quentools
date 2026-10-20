@@ -33,19 +33,34 @@ const sujetDemande = t => String(t || '').replace(/\s+/g, ' ').trim().replace(/^
 const siLa = (sel, f) => { const e = $(sel); if (e) f(e); return e; };
 // zone du résultat : la sienne si la fenêtre est restée ouverte, sinon celle de la fenêtre rouverte (si elle ne suit pas un autre travail)
 const zoneFin = (z, sel) => { const n = $(sel); return z.isConnected || !n || n.querySelector('progress') ? z : n; };
-const fiMemo = { script: '', doublage: '' }; // script en cours gardé pendant l'enregistrement du Doublage
+const fiMemo = { script: '', doublage: '', fiche: '' }; // script ou fiche en cours gardés pendant l'enregistrement du Doublage
+// ta vraie voix : les répliques exactes de la vidéo (découpées comme à la fabrication) envoyées au Doublage ; au retour, la fiche est reprise
+async function doublerRepliques(corps) {
+  const r = await api('/api/pico/repliques', { method: 'POST', body: JSON.stringify(corps) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Texte illisible');
+  if (corps.script) fiMemo.script = corps.script; fiMemo.fiche = corps.fiche ? JSON.stringify(corps.fiche, null, 1) : ''; fiMemo.doublage = j.nom;
+  fermer(); ouvrirDoublage();
+  siLa('#dbTexte', e => { e.value = j.lignes.map(x => String(x).replace(/\s+/g, ' ').trim()).join('\n'); }); siLa('#dbNom', e => { e.value = j.nom; });
+  siLa('#dbMsg', e => { e.textContent = `${j.lignes.length} répliques de ta vidéo, dans l’ordre de la fabrication (avec l’accroche, le salut et la fin de la chaîne). Ne change ni l’ordre ni les phrases : enregistre-les, puis clique « 🧾 Fiche » pour revenir à l’épisode et lancer la fabrication avec « Mon doublage « ${j.nom} » ».`; });
+}
 // Contrôle d'une fiche d'épisode QuentInvest : colle ou charge le fichier .json, le rapport dit ce qu'il faut corriger avant la fabrication
 function ouvrirFiche() {
   if (dbl) dblFin();
   ouvrir(`<h2>🎬 Épisode QuentInvest</h2>
-    <div class="encart" id="fiAuto" style="margin-bottom:8px"><h4>Nouvelle vidéo</h4>
-      <div class="ligne fiModes" role="radiogroup" aria-label="Façon de faire">${[['seul', '🤖 Tout seul', 'Tu donnes le sujet, QuentMovie écrit le texte d’après Wikipédia, le contrôle et fabrique la vidéo.'], ['relire', '👀 Je relis avant', 'Le texte est écrit d’après Wikipédia, tu le relis et le corriges avant la fabrication.'], ['script', '✍️ Mon script', 'Tu écris le texte toi-même : idéal pour un sujet d’actualité, que Wikipédia ne connaît pas encore.']].map(([id, nom, aide]) => `<label class="fiMode" title="${aide}"><input type="radio" name="fiMode" value="${id}" ${id === 'seul' ? 'checked' : ''}> ${nom}</label>`).join('')}</div>
+    <div class="encart" id="fiAuto" style="margin-bottom:8px">
+      <h4 class="fiEtape"><span>1</span> Le texte</h4>
+      <div class="ligne fiModes" role="radiogroup" aria-label="Façon de faire">${[['seul', '🤖 QuentMovie l’écrit', 'Tu donnes le sujet, QuentMovie écrit le texte d’après Wikipédia, le contrôle et fabrique la vidéo.'], ['relire', '👀 Écrit, puis je relis', 'Le texte est écrit d’après Wikipédia, tu le relis et le corriges avant la fabrication.'], ['script', '✍️ J’écris mon texte', 'Tu écris le texte toi-même : idéal pour un sujet d’actualité, que Wikipédia ne connaît pas encore.']].map(([id, nom, aide]) => `<label class="fiMode" title="${aide}"><input type="radio" name="fiMode" value="${id}" ${id === 'seul' ? 'checked' : ''}> ${nom}</label>`).join('')}</div>
       <p class="mut" id="fiModeAide" style="margin:6px 0"></p>
-      <div id="fiZoneSujet" class="ligne"><input id="fiSujet" placeholder="Ex. : fais une vidéo sur le krach de 2008" style="flex:1"></div>
+      <div id="fiZoneSujet" class="ligne"><input id="fiSujet" placeholder="Le sujet, par exemple : le krach de 2008" style="flex:1"></div>
       <div id="fiZoneScript" hidden><p class="mut" style="margin:0 0 6px">Un titre (# Titre), l’accroche, des paragraphes (une ligne courte = un titre de partie, des lignes « - » = une liste), puis « En une phrase : … ». QuentMovie le découpe en répliques et choisit les écrans (chiffres, définitions, listes) sans rien ajouter.</p>
         <textarea id="fiScript" rows="6" style="width:100%" placeholder="# Pourquoi les prix montent ?&#10;&#10;Ton panier coûtait 50 € il y a cinq ans…"></textarea></div>
-      <div class="ligne" id="fiZoneVoix" style="margin-top:6px"><label>Voix <select id="fiAutoVoix"><option value="ma-voix">Ma voix clonée</option></select></label><label><input type="checkbox" id="fiAutoTiktok" checked> Version TikTok aussi</label><label title="QuentMovie cherche des photos libres de droits sur le sujet et les pose en fond des écrans de texte (crédit affiché)"><input type="checkbox" id="fiAutoPhotos" checked> 🖼 Photos d’illustration</label><label title="Le texte dit, incrusté en bas de la vidéo. Inutile la plupart du temps : l’écran explique déjà."><input type="checkbox" id="fiAutoSous"> Sous-titres incrustés</label></div><div id="fiAutoVoixInfo" class="mut"></div>
-      <div class="ligne" style="margin-top:6px"><span class="sp"></span><button id="fiDoubler" hidden title="Ouvre le Doublage avec exactement les répliques de la vidéo, dans l’ordre">🎙 Enregistrer ces répliques</button><button id="fiDepuisScript" hidden>📄 Voir la fiche d’abord</button><button id="fiBrouillon" hidden>✍️ Écrire le texte</button><button class="pri" id="fiLancer">🎬 Faire la vidéo</button></div>
+      <div id="fiZoneVoix">
+        <h4 class="fiEtape"><span>2</span> La voix</h4>
+        <select id="fiAutoVoix" style="width:100%"><option value="moi">🎙 Ma vraie voix (je lis les répliques)</option></select><div id="fiAutoVoixInfo" class="mut" style="margin-top:4px"></div>
+        <h4 class="fiEtape"><span>3</span> Les photos</h4>
+        <div class="ligne fiModes" role="radiogroup" aria-label="Photos d’illustration">${[['choix', '👆 Je choisis', 'QuentMovie cherche des photos libres de droits pour chaque écran et te les propose ; seules celles que tu valides sont intégrées.'], ['auto', '🤖 Automatiques', 'QuentMovie pose seul la photo la plus pertinente sur chaque écran de texte.'], ['aucune', '🚫 Sans photo', 'Écrans sur fond uni.']].map(([id, nom, aide]) => `<label class="fiMode" title="${aide}"><input type="radio" name="fiPhotos" value="${id}" ${id === 'choix' ? 'checked' : ''}> ${nom}</label>`).join('')}</div>
+        <details style="margin-top:6px"><summary class="mut">Plus d’options</summary><div class="ligne" style="margin-top:4px;flex-wrap:wrap"><label><input type="checkbox" id="fiAutoTiktok" checked> Version TikTok aussi</label><label title="Le texte dit, incrusté en bas de la vidéo. Inutile la plupart du temps : l’écran explique déjà."><input type="checkbox" id="fiAutoSous"> Sous-titres incrustés</label></div></details>
+      </div>
+      <div class="ligne" style="margin-top:10px"><span class="sp"></span><button id="fiDoubler" hidden title="Ouvre le Doublage avec exactement les répliques de la vidéo, dans l’ordre">🎙 Enregistrer ces répliques</button><button id="fiDepuisScript" hidden>📄 Voir la fiche d’abord</button><button id="fiBrouillon" hidden>✍️ Écrire le texte</button><button class="pri" id="fiLancer">🎬 Faire la vidéo</button></div>
       <div id="fiProg" class="mut" style="margin-top:6px"></div><div id="fiAutoRes" style="margin-top:6px"></div></div>
     <div id="fiDeja"></div>
     <details id="fiAvance"><summary>Fiche détaillée (texte de l’épisode, contrôle)</summary><p class="mut">Le texte complet de l’épisode : QuentMovie vérifie qu’il est complet, qu’il dépasse 5 minutes, que les phrases restent courtes, que les chiffres ont une source, qu’aucun conseil d’investissement ne s’est glissé dedans, et liste les mots à ajouter au dictionnaire de prononciation.</p>
@@ -60,38 +75,53 @@ function ouvrirFiche() {
   const mode = () => (document.querySelector('[name="fiMode"]:checked') || {}).value || 'seul';
   const majMode = () => { const m = mode(); $('#fiModeAide').textContent = AIDES[m]; $('#fiZoneSujet').hidden = m === 'script'; $('#fiZoneScript').hidden = m !== 'script'; $('#fiDepuisScript').hidden = m !== 'script'; $('#fiDoubler').hidden = m !== 'script'; $('#fiZoneVoix').hidden = m === 'relire'; $('#fiAutoVoixInfo').hidden = m === 'relire'; $('#fiLancer').textContent = m === 'relire' ? '✍️ Écrire le texte' : '🎬 Faire la vidéo'; };
   document.querySelectorAll('[name="fiMode"]').forEach(x => { x.onchange = majMode; });
-  if (fiMemo.script) { $('#fiScript').value = fiMemo.script; const r = document.querySelector('[name="fiMode"][value="script"]'); if (r) r.checked = true; } // retour du Doublage : ton script est gardé
+  if (fiMemo.script && !fiMemo.fiche) { $('#fiScript').value = fiMemo.script; const r = document.querySelector('[name="fiMode"][value="script"]'); if (r) r.checked = true; } // retour du Doublage : ton script est gardé
   majMode();
   $('#fiScript').oninput = () => { fiMemo.script = $('#fiScript').value; };
   // ton script lu avec ta voix : le Doublage reçoit les répliques telles que la fabrication les découpe (accroche, salut, blocs, fin)
   $('#fiDoubler').onclick = async () => {
     const script = $('#fiScript').value; if (script.trim().length < 80) return signal('Écris d’abord ton script : une accroche, quelques paragraphes et une conclusion.');
-    try {
-      const r = await api('/api/pico/repliques', { method: 'POST', body: JSON.stringify({ script }) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Script illisible');
-      fiMemo.script = script; fiMemo.doublage = j.nom;
-      fermer(); ouvrirDoublage();
-      siLa('#dbTexte', e => { e.value = j.lignes.map(x => String(x).replace(/\s+/g, ' ').trim()).join('\n'); }); siLa('#dbNom', e => { e.value = j.nom; });
-      siLa('#dbMsg', e => { e.textContent = `${j.lignes.length} répliques de ta vidéo, dans l’ordre de la fabrication (avec l’accroche, le salut et la fin de la chaîne). Ne change ni l’ordre ni les phrases : enregistre-les, puis reviens dans Épisode QuentInvest et choisis « Mon doublage « ${j.nom} » ».`; });
-    } catch (er) { signal(er.message); }
+    try { await doublerRepliques({ script }); } catch (er) { signal(er.message); }
   };
   choixVoixPico('#fiAutoVoix', '#fiAutoVoixInfo');
   $('#fiSujet').onkeydown = e => { if (e.key === 'Enter') $('#fiLancer').click(); };
+  const photosMode = () => (document.querySelector('[name="fiPhotos"]:checked') || {}).value || 'choix';
+  // texte de la vidéo prêt à relire ou à illustrer : écrit d'après Wikipédia (même texte que « Tout seul ») ou découpé depuis ton script
+  const ficheDuTexte = async (m, corps) => {
+    if (m === 'script') { const r = await api('/api/quentinvest/script', { method: 'POST', body: JSON.stringify({ texte: corps.script }) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Script illisible'); return j.fiche; }
+    const { id } = await (await api('/api/quentinvest/brouillon', { method: 'POST', body: JSON.stringify({ sujet: sujetDemande(corps.demande), auto: true }) })).json();
+    return (await suivreTravail(id, j => { siLa('#fiProg', e => { e.textContent = Math.round((j.progress || 0) * 100) + ' % · ' + (j.step || ''); }); })).fiche;
+  };
   $('#fiLancer').onclick = async () => {
     const m = mode(); if (m === 'relire') return $('#fiBrouillon').click();
     const corps = m === 'script' ? { script: $('#fiScript').value } : { demande: $('#fiSujet').value };
-    if (m === 'seul' && sujetDemande(corps.demande).length < 3) return signal('Écris le sujet de la vidéo, par exemple « fais une vidéo sur le krach de 2008 ».');
+    if (m === 'seul' && sujetDemande(corps.demande).length < 3) return signal('Écris le sujet de la vidéo, par exemple « le krach de 2008 ».');
     if (m === 'script' && corps.script.trim().length < 80) return signal('Écris ton script : une accroche, quelques paragraphes et une conclusion.');
+    const voix = $('#fiAutoVoix').value, ph = photosMode();
+    // ta vraie voix : le texte est écrit (ou découpé), puis le Doublage s'ouvre avec les répliques à lire ; photos et fabrication viennent au retour
+    if (voix === 'moi' && m === 'script') return doublerRepliques({ script: corps.script }).catch(er => signal(er.message));
     const z = $('#fiAutoRes'), b = $('#fiLancer'); b.disabled = true; $('#fiProg').textContent = '';
     try {
-      const r = await api('/api/quentinvest/auto', { method: 'POST', body: JSON.stringify({ ...corps, options: { voix: $('#fiAutoVoix').value, sansTiktok: !$('#fiAutoTiktok').checked, illustrer: $('#fiAutoPhotos').checked, sousTitres: $('#fiAutoSous').checked } }) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Impossible de lancer la vidéo');
-      z.innerHTML = '<progress max="100" value="0" style="width:100%"></progress><div id="fiAutoEtape"></div><button class="mini" id="fiAutoStop" style="margin-top:6px">Arrêter</button>';
+      let fiche = null;
+      if (voix === 'moi' || ph === 'choix') {
+        $('#fiProg').textContent = 'Écriture du texte…';
+        fiche = await ficheDuTexte(m, corps); siLa('#fiProg', e => { e.textContent = ''; });
+        if (voix === 'moi') return await doublerRepliques({ fiche });
+        fiche = await choisirPhotos(fiche, zoneFin(z, '#fiAutoRes')); if (!fiche) return;
+      }
+      const options = { voix, sansTiktok: !$('#fiAutoTiktok').checked, illustrer: !fiche && ph === 'auto', sousTitres: $('#fiAutoSous').checked, court: m === 'script' };
+      const r = await api('/api/quentinvest/auto', { method: 'POST', body: JSON.stringify(fiche ? { fiche, options } : { ...corps, options }) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Impossible de lancer la vidéo');
+      const zz = zoneFin(z, '#fiAutoRes');
+      zz.innerHTML = '<progress max="100" value="0" style="width:100%"></progress><div id="fiAutoEtape"></div><button class="mini" id="fiAutoStop" style="margin-top:6px">Arrêter</button>';
       $('#fiAutoStop').onclick = () => { $('#fiAutoStop').disabled = true; annulerJob(j.id); };
       const t0 = Date.now(), x = await suivreTravail(j.id, k => { const p = $('#fiAutoRes progress'), e = $('#fiAutoEtape'); if (p) p.value = Math.round((k.progress || 0) * 100); if (e) e.textContent = `${k.step || ''}${k.progress > 0.08 ? ` · environ ${Math.max(1, Math.round((Date.now() - t0) / 60000 * (1 - k.progress) / k.progress))} min restantes` : ''}`; });
       if (x.fiche) siLa('#fiTexte', e => { e.value = JSON.stringify(x.fiche, null, 1); });
       finPico(zoneFin(z, '#fiAutoRes'), x, x.article ? `Texte écrit d’après l’article Wikipédia « ${x.article} » : vérifie les faits en regardant la vidéo.` : '');
     } catch (er) { zoneFin(z, '#fiAutoRes').innerHTML = `<span style="color:#f87171">${esc(er.message)}</span>`; signal('Épisode QuentInvest : ' + er.message); }
-    b.disabled = false;
+    finally { siLa('#fiLancer', e => { e.disabled = false; }); }
   };
+  // retour du Doublage avec le texte écrit d'après Wikipédia : la fiche est reprise, prête à fabriquer avec ton doublage
+  if (fiMemo.fiche) { $('#fiTexte').value = fiMemo.fiche; $('#fiAvance').open = true; $('#fiProg').textContent = `Ton texte est repris ci-dessous. Une fois toutes les répliques enregistrées, choisis « Mon doublage « ${fiMemo.doublage} » » puis « 🎬 Fabriquer ».`; setTimeout(() => siLa('#fiGo', e => e.click()), 0); }
   $('#fiF').onchange = async e => { const f = e.target.files[0]; if (f) $('#fiTexte').value = await f.text(); };
   $('#fiDepuisScript').onclick = async () => {
     const t = $('#fiScript').value, prog = $('#fiProg');
@@ -120,20 +150,26 @@ function ouvrirFiche() {
       res.innerHTML = li('ℹ️', r.infos) + li('❌', r.erreurs) + li('⚠️', r.avertissements) + `<p><b>${r.ok ? '✅ Fiche fabricable.' : '❌ À corriger avant la fabrication.'}</b></p>`
         + (r.ok ? `<div class="encart" id="fiFab"><h4>🎬 Fabriquer l’épisode</h4><p class="mut" style="margin:0 0 6px">Vidéo YouTube, version TikTok, miniatures et texte de publication. Compte environ 15 à 20 minutes ; tu peux continuer à monter pendant ce temps. Rien n’est publié.</p>
           <div class="ligne"><label>Voix <select id="fiVoix"><option value="ma-voix">Ma voix clonée</option></select></label><label><input type="checkbox" id="fiTiktok" checked> Version TikTok aussi</label><span class="sp"></span><button class="pri" id="fiFabriquer">🎬 Fabriquer</button></div><div id="fiVoixInfo" class="mut"></div><div id="fiFabRes" class="mut" style="margin-top:6px"></div></div>` : '');
-      const fb = $('#fiFabriquer'); if (fb) { fb.onclick = () => fabriquerPico($('#fiTexte').value, { sansTiktok: !$('#fiTiktok').checked, voix: $('#fiVoix').value, sousTitres: !!($('#fiAutoSous') || {}).checked, illustrer: !$('#fiAutoPhotos') || $('#fiAutoPhotos').checked }); choixVoixPico(); }
+      const fb = $('#fiFabriquer'); if (fb) { fb.onclick = () => $('#fiVoix').value === 'moi' ? (() => { let f; try { f = JSON.parse($('#fiTexte').value); } catch (er) { return signal('La fiche n’est pas un texte JSON valide.'); } doublerRepliques({ fiche: f }).catch(er => signal(er.message)); })() : (async () => { // photos au choix : proposées et validées avant la fabrication
+          const ph = (document.querySelector('[name="fiPhotos"]:checked') || {}).value || 'choix', o = { sansTiktok: !$('#fiTiktok').checked, voix: $('#fiVoix').value, sousTitres: !!($('#fiAutoSous') || {}).checked, illustrer: ph === 'auto' };
+          let texte = $('#fiTexte').value;
+          if (ph === 'choix') { let f; try { f = JSON.parse(texte); } catch (er) { return signal('La fiche n’est pas un texte JSON valide.'); } f = await choisirPhotos(f, $('#fiFabRes')); if (!f) return; texte = JSON.stringify(f, null, 1); siLa('#fiTexte', e => { e.value = texte; }); }
+          fabriquerPico(texte, o); })(); choixVoixPico(); }
     } catch (er) { res.innerHTML = '<span style="color:#f87171">' + esc(er.message) + '</span>'; }
   };
 }
-// voix proposées : ta voix clonée (par défaut) et tes doublages enregistrés ; jamais de voix de synthèse pour la chaîne
+// voix proposées : ta vraie voix (par défaut : tu lis les répliques dans le Doublage), tes doublages enregistrés, puis ta voix clonée
+// (essai : son rendu ne valait pas ta vraie voix) ; jamais de voix de synthèse pour la chaîne
 async function choixVoixPico(selId = '#fiVoix', infoId = '#fiVoixInfo') {
   const sel = $(selId), info = $(infoId); if (!sel) return;
   let e; try { e = await (await api('/api/pico')).json(); } catch (er) { return; }
   // jamais de voix de synthèse sur la chaîne : ta voix clonée ou un de tes doublages
   const mv = e.maVoix || {}, sansVoix = mv.assez === false;
-  sel.innerHTML = `<option value="ma-voix">Ma voix clonée${sansVoix ? ' (enregistre d’abord ta voix)' : mv.installee ? '' : ' (à installer, plusieurs Go)'}</option>${(e.doublages || []).map(n => `<option value="doublage:${esc(n)}">Mon doublage « ${esc(n)} »</option>`).join('')}`;
-  sel.value = fiMemo.doublage && (e.doublages || []).includes(fiMemo.doublage) ? 'doublage:' + fiMemo.doublage : 'ma-voix';
+  sel.innerHTML = `<option value="moi">🎙 Ma vraie voix (je lis les répliques)</option>${(e.doublages || []).map(n => `<option value="doublage:${esc(n)}">Mon doublage « ${esc(n)} »</option>`).join('')}<option value="ma-voix">Ma voix clonée (essai)${sansVoix ? ' (enregistre d’abord ta voix)' : mv.installee ? '' : ' (à installer, plusieurs Go)'}</option>`;
+  sel.value = fiMemo.doublage && (e.doublages || []).includes(fiMemo.doublage) ? 'doublage:' + fiMemo.doublage : 'moi';
   // la voix clonée imite ta voix à partir de tes enregistrements du Doublage : sans eux, rien à imiter
   const dire = () => {
+    if (sel.value === 'moi') { info.textContent = 'Le meilleur rendu : tu lis toi-même chaque réplique. QuentMovie prépare le texte, ouvre le Doublage avec les répliques dans l’ordre ; une fois enregistrées, reviens ici (bouton « 🧾 Fiche » du Doublage), choisis « Mon doublage » et lance la fabrication.'; return; }
     if (sel.value !== 'ma-voix') { info.textContent = 'Tes enregistrements du Doublage, réplique par réplique. Il faut une prise pour chaque réplique : s’il en manque, la fabrication s’arrête et liste celles à enregistrer.'; return; }
     if (sansVoix) { info.innerHTML = `<b style="color:#fbbf24">Pas encore assez de ta voix enregistrée</b> (${mv.secondes || 0} s sur ${mv.min || 8} s). La voix clonée imite ta voix à partir de tes enregistrements : ouvre le Doublage, lis 3 ou 4 phrases à voix haute (3 à 10 secondes chacune), une seule fois. Ensuite, toutes tes vidéos peuvent être dites par ta voix clonée. <button class="mini" type="button" data-ouvre-doublage>🎙 Enregistrer ma voix</button>`;
       const b = info.querySelector('[data-ouvre-doublage]'); if (b) b.onclick = () => ouvrirDoublage(); return; }
@@ -141,11 +177,51 @@ async function choixVoixPico(selId = '#fiVoix', infoId = '#fiVoixInfo') {
   };
   sel.onchange = dire; dire();
 }
+// Photos d'illustration au choix : QuentMovie cherche quelques photos libres de droits pour chaque écran de texte, tu cliques celles qui te
+// conviennent (« Aucune » garde l'écran uni) ; seules les photos validées sont téléchargées et posées en fond (`fond` du bloc). → fiche, ou null si abandon
+async function choisirPhotos(fiche, z) {
+  if (!z) return null;
+  z.innerHTML = '<progress style="width:100%"></progress><div class="mut">Recherche de photos libres de droits pour chaque écran…</div>';
+  let r;
+  try { const { id, error } = await (await api('/api/pico/photos', { method: 'POST', body: JSON.stringify({ fiche }) })).json(); if (error) throw new Error(error);
+    r = await suivreTravail(id, k => { const e = z.querySelector('.mut'); if (e && k.step) e.textContent = k.step; }); }
+  catch (er) { r = { ecrans: [], erreur: er.message }; }
+  const l = (r.ecrans || []).filter(e => e.propositions.length);
+  if (!l.length) { signal(r.erreur ? 'Photos : ' + r.erreur + ' — vidéo faite sans photo.' : 'Aucune photo assez pertinente trouvée : vidéo faite sans photo.'); z.innerHTML = ''; return fiche; }
+  const choix = {}; l.forEach(e => { choix[e.i] = e.actuelle ? -2 : 0; }); // première proposition cochée ; photo déjà posée gardée
+  return new Promise(ok => {
+    const dessiner = () => {
+      z.innerHTML = `<div class="encart"><h4>🖼 Photos proposées (${l.length} écran${l.length > 1 ? 's' : ''})</h4><p class="mut" style="margin:0">Clique la photo qui illustre le mieux chaque écran, ou « Aucune ». Seules les photos validées sont intégrées (libres de droits, crédit affiché).</p>
+        ${l.map(e => `<div class="phEcran"><b>${esc(e.section ? e.section + ' · ' : '')}${esc(e.ecran || '')}</b><div class="mut" style="font-size:12px">« ${esc(e.texte)} »</div><div class="phGrille">
+          ${e.actuelle ? `<div class="phChoix ${choix[e.i] === -2 ? 'on' : ''}" data-ph="${e.i}:-2">Photo actuelle</div>` : ''}
+          ${e.propositions.map((p, k) => `<div class="phChoix ${choix[e.i] === k ? 'on' : ''}" data-ph="${e.i}:${k}" title="${esc(p.credit)}"><img loading="lazy" alt="" src="${petiteImage(p.apercu || p.url)}"></div>`).join('')}
+          <div class="phChoix ${choix[e.i] === -1 ? 'on' : ''}" data-ph="${e.i}:-1">Aucune</div></div></div>`).join('')}
+        <div class="ligne" style="margin-top:8px"><button id="phAucune">Continuer sans photo</button><span class="sp"></span><button class="pri" id="phValider">✅ Valider ces photos et fabriquer</button></div></div>`;
+      z.querySelectorAll('[data-ph]').forEach(d => { d.onclick = () => { const [i, k] = d.dataset.ph.split(':').map(Number); choix[i] = k; dessiner(); }; });
+      z.querySelector('#phAucune').onclick = () => { l.forEach(e => { if (!e.actuelle) choix[e.i] = -1; }); valider(); };
+      z.querySelector('#phValider').onclick = valider;
+    };
+    const valider = async () => {
+      const pris = l.filter(e => choix[e.i] >= 0).map(e => ({ i: e.i, ...e.propositions[choix[e.i]] }));
+      l.filter(e => choix[e.i] === -1).forEach(e => { delete fiche.blocs[e.i].fond; });
+      if (!pris.length) { z.innerHTML = ''; return ok(fiche); }
+      z.innerHTML = `<progress style="width:100%"></progress><div class="mut">Intégration de ${pris.length} photo${pris.length > 1 ? 's' : ''}…</div>`;
+      try {
+        const j = await (await api('/api/pico/photos/garder', { method: 'POST', body: JSON.stringify({ slug: fiche.slug || 'episode', choix: pris }) })).json();
+        const rates = (j.fonds || []).filter(f => !f.fichier).length;
+        (j.fonds || []).forEach(f => { if (f.fichier && fiche.blocs[f.i]) fiche.blocs[f.i].fond = { fichier: f.fichier, credit: f.credit }; });
+        if (rates) signal(`${rates} photo${rates > 1 ? 's' : ''} injoignable${rates > 1 ? 's' : ''} : écran${rates > 1 ? 's' : ''} laissé${rates > 1 ? 's' : ''} sans photo.`);
+      } catch (er) { signal('Photos : ' + er.message); }
+      z.innerHTML = ''; ok(fiche);
+    };
+    dessiner();
+  });
+}
 // Épisode Pico fabriqué dans QuentMovie (routes-pico.js) : avancement, arrêt possible, puis dossier, publication et avertissements du rythme
 async function fabriquerPico(texte, options) {
   const z = $('#fiFabRes'), b = $('#fiFabriquer'); if (!z) return;
   let fiche; try { fiche = JSON.parse(texte); } catch (e) { z.innerHTML = '<span style="color:#f87171">La fiche n’est pas un texte JSON valide.</span>'; return; }
-  b.disabled = true; z.innerHTML = 'Démarrage…';
+  b.disabled = true; z.innerHTML = 'Démarrage…'; fiMemo.fiche = ''; // fiche fabriquée : la prochaine fenêtre repart de zéro
   let id;
   try {
     const r = await api('/api/pico/fabriquer', { method: 'POST', body: JSON.stringify({ fiche, options }) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Fabrication impossible'); id = j.id;
@@ -198,7 +274,7 @@ async function ouvrirRelecturePico(base) {
   const ecranDe = s => { const e = s.ecran, c = (ch.get(s.i) || {}).ecran || {}; return { champs: { ...e.champs, ...Object.fromEntries(Object.entries(c).filter(([k]) => k !== 'points')) }, points: c.points || e.points }; };
   const apercuEcran = s => { const e = ecranDe(s); return [...Object.entries(e.champs).filter(([k]) => k !== 'source').map(([, v]) => v), ...(e.points || [])].filter(Boolean).join(' · '); };
   ouvrir(`<h2>🔍 Relire « ${esc(E.titre)} »</h2>
-    <p class="mut">Pour chaque réplique : l’expression de Pico, la phrase (✏ pour la modifier), le texte écrit sur l’écran (🖼) et la prononciation (clic sur un mot ; les mots <span class="rlMot dur">soulignés</span> sont à vérifier). Seules les voix et les écrans des répliques changées sont refaits ; le montage final est refait en entier (quelques minutes).</p>
+    <p class="mut">Pour chaque réplique : l’expression de Pico, la phrase (✏ pour la modifier), le texte écrit sur l’écran (🖼 ; 💬 pour dire à l’IA ce qui ne va pas, elle corrige l’écran et le refait aussitôt) et la prononciation (clic sur un mot ; les mots <span class="rlMot dur">soulignés</span> sont à vérifier). Seules les voix et les écrans des répliques changées sont refaits ; le montage final est refait en entier (quelques minutes).</p>
     <div id="rlListe" class="rlListe"></div>
     <div id="rlPied" class="ligne" style="margin-top:10px;flex-wrap:wrap"><span class="mut" id="rlEtat">Aucun changement.</span><span class="sp"></span><span id="rlMonter">${boutonsMontage(true, E.tiktok)}</span><button id="rlFermer">Fermer</button><button class="pri" id="rlRefaire" disabled>Refaire</button></div>`, 'xl');
   const fen = $('#rlListe'), ouverte = () => fen.isConnected; // fenêtre de relecture encore affichée
@@ -207,8 +283,8 @@ async function ouvrirRelecturePico(base) {
     $('#rlListe').innerHTML = E.scenes.map(s => `<div class="rlLigne ${aRefaire.has(s.i) ? 'change' : ''}" data-i="${s.i}">
       ${s.section ? `<div class="rlSection">${esc(s.section)}</div>` : ''}
       <div class="rlCorps"><span class="rlNum">${s.i + 1}</span><select data-expr="${s.i}" title="Expression de Pico">${E.expressions.map(x => `<option value="${x}" ${x === exprDe(s) ? 'selected' : ''}>${NOMS_EXPR[x] || x}</option>`).join('')}</select>
-      <div class="rlTexte" data-texte="${s.i}">${motsDe(texteDe(s))}</div><button class="mini" data-edit="${s.i}" title="Modifier la phrase">✏</button>${s.ecran ? `<button class="mini" data-ecran="${s.i}" title="Corriger le texte écrit sur l’écran">🖼</button>` : ''}</div>
-      ${s.ecran ? `<div class="rlEcran mut" data-ecranvu="${s.i}">🖼 ${esc(apercuEcran(s))}</div>` : ''}</div>`).join('');
+      <div class="rlTexte" data-texte="${s.i}">${motsDe(texteDe(s))}</div><button class="mini" data-edit="${s.i}" title="Modifier la phrase">✏</button>${s.ecran ? `<button class="mini" data-ecran="${s.i}" title="Corriger le texte écrit sur l’écran">🖼</button><button class="mini" data-retour="${s.i}" title="Dire à l’IA ce qui ne va pas sur cet écran : elle le corrige et seule cette réplique est refaite">💬</button>` : ''}</div>
+      ${s.ecran ? `<div class="rlEcran mut" data-ecranvu="${s.i}">🖼 ${esc(apercuEcran(s))}${(ch.get(s.i) || {}).sansFond ? ' · sans photo' : s.photo ? ' · 📷 photo en fond' : ''}</div>` : ''}</div>`).join('');
     const n = aRefaire.size; $('#rlEtat').textContent = n ? `${n} réplique${n > 1 ? 's' : ''} à refaire${dico && E.tiktok ? ' · la version TikTok sera aussi refaite (prononciation)' : ''}.` : 'Aucun changement.';
     $('#rlRefaire').disabled = !n; $('#rlRefaire').textContent = n ? `Refaire ${n} réplique${n > 1 ? 's' : ''}` : 'Refaire';
   };
@@ -225,6 +301,18 @@ async function ouvrirRelecturePico(base) {
       z.innerHTML = `<div class="rlEcranEdit">${Object.entries(x.champs).map(([k, v]) => `<label>${esc(NOMS_CHAMP[k] || k)} <input data-champ="${esc(k)}" value="${esc(v)}" style="width:100%"></label>`).join('')}
         ${x.points ? `<label>${NOMS_CHAMP.points} <textarea data-champ="points" rows="${Math.min(8, x.points.length + 1)}" style="width:100%">${esc(x.points.join('\n'))}</textarea></label>` : ''}
         <div class="ligne"><button class="mini pri" data-ecranok="${i}">OK</button><span class="mut">Le texte écrit sur l’écran (la voix ne change pas).</span></div></div>`; z.querySelector('input,textarea').focus(); return; }
+    // retour à l'IA sur cet écran : corrigé tout de suite, puis seule cette réplique (et celles déjà changées) est refaite
+    const br = e.target.closest('[data-retour]');
+    if (br) { const i = +br.dataset.retour, ligne = br.closest('.rlLigne'); document.querySelectorAll('.rlRetour').forEach(x => x.remove());
+      ligne.insertAdjacentHTML('beforeend', `<div class="rlRetour rlPron"><input id="rlDemande" style="flex:1;min-width:240px" placeholder="Ce qui ne va pas (ex. : la phrase en dessous n’a aucun sens, plus court, sans photo)"><button class="mini pri" id="rlCorriger">Corriger maintenant</button><span class="mut" id="rlRetourEtat"></span></div>`);
+      const go = async () => { const d = $('#rlDemande').value.trim(), et = $('#rlRetourEtat'); if (d.length < 3) return $('#rlDemande').focus();
+        const s = E.scenes[i], x = ecranDe(s); $('#rlCorriger').disabled = true; et.textContent = 'Correction de l’écran…';
+        try { const r = await (await api('/api/pico/ecran-ia', { method: 'POST', body: JSON.stringify({ base: E.base, i, demande: d, champs: x.champs, points: x.points, texte: texteDe(s) }) })).json();
+          if (r.error || !r.ok) { et.textContent = r.error || r.message; $('#rlCorriger').disabled = false; return; }
+          const c = ch.get(i) || {}; if (Object.keys(r.ecran || {}).length) c.ecran = { ...(c.ecran || {}), ...r.ecran }; if (r.sansFond) c.sansFond = true; ch.set(i, c); aRefaire.add(i);
+          signal(`Écran ${i + 1} : ${r.message}. Seule cette réplique est refaite.`); dessiner(); if (!$('#rlRefaire').disabled) $('#rlRefaire').click();
+        } catch (er) { et.textContent = er.message; siLa('#rlCorriger', b => { b.disabled = false; }); } };
+      $('#rlCorriger').onclick = go; $('#rlDemande').onkeydown = ev => { if (ev.key === 'Enter') go(); }; $('#rlDemande').focus(); return; }
     const eo = e.target.closest('[data-ecranok]');
     if (eo) { const i = +eo.dataset.ecranok, s = E.scenes[i], v = {}; let change = false;
       $(`[data-ecranvu="${i}"]`).querySelectorAll('[data-champ]').forEach(c => { const k = c.dataset.champ;

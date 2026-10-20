@@ -24,7 +24,7 @@ const racinePolices = pico => [path.join(pico, '..', '..'), pico].find(d => fs.e
 // chemin d'un module livré avec QuentMovie (le programme de la chaîne ne les cherche pas tout seul quand il est dans l'application)
 const module_ = n => { try { return path.dirname(require.resolve(n + '/package.json')).replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep); } catch (e) { return null; } };
 
-function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA = () => {}, illustrer = null, titrer = null }) {
+function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA = () => {}, illustrer = null, gen = null, titrer = null, retoucher = null }) {
   const SORTIES = opts.sortiesPico || path.join(os.homedir(), 'Movies', 'QuentInvest');
   const nav = () => opts.navigateur || null;
   const entier = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v) || a));
@@ -131,6 +131,16 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
     let n = 0; (r || []).forEach((x, k) => { if (x && x.fichier && fs.existsSync(x.fichier)) { blocs[k].fond = { fichier: x.fichier, credit: x.credit }; n++; } });
     return n;
   }
+  // photos au choix du propriétaire : pour chaque écran de texte, quelques photos libres proposées ; il valide, elles deviennent le `fond` du bloc
+  const requetePhoto = b => ({ fr: [b.section, b.ecran.titre, b.ecran.mot, b.ecran.legende].filter(Boolean).join(' '), en: '', texte: b.texte });
+  async function proposerPhotos(job, fiche) {
+    const l = (fiche.blocs || []).map((b, i) => ({ b, i })).filter(({ b }) => b && b.ecran && typeof b.ecran === 'object' && TYPES_PHOTO.has(b.ecran.type));
+    if (!l.length) return { ecrans: [] };
+    if (!gen) throw new Error('Recherche de photos indisponible.');
+    job.step = 'Recherche de photos libres de droits…';
+    const r = await gen().proposerIllustrations(l.map(x => requetePhoto(x.b)), { ancre: fiche.titre || '' });
+    return { ecrans: l.map((x, k) => ({ i: x.i, section: x.b.section || '', ecran: x.b.ecran.titre || x.b.ecran.mot || x.b.ecran.valeur || '', texte: String(x.b.texte || '').slice(0, 220), actuelle: x.b.fond || null, propositions: r[k] || [] })) };
+  }
   // une fabrication complète : episode.js (YouTube, TikTok, miniatures, texte de publication)
   async function fabriquer(job, fiche, o) {
     const pico = dossierPico(opts); if (!pico) throw new Error('Programme de la chaîne QuentInvest introuvable dans cette installation.');
@@ -174,6 +184,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
         if (k === 'points' && Array.isArray(s.ecran.points) && Array.isArray(v)) { const l = v.map(x => String(x).replace(/\s+/g, ' ').trim().slice(0, 200)).filter(Boolean).slice(0, 8); if (l.length) s.ecran.points = l; }
         else if (k !== 'type' && typeof s.ecran[k] === 'string' && typeof v === 'string') s.ecran[k] = v.replace(/\s+/g, ' ').trim().slice(0, 300);
       }
+      if (c.sansFond) delete s.fond; // photo de fond retirée (retour « sans photo » sur l'écran)
       if (typeof c.texte === 'string' && c.texte.trim()) { const t = c.texte.replace(/\s+/g, ' ').trim().slice(0, 600); if (t !== s.texte) { s.texte = t; delete s.voix; } } // `voix` (lecture différente du texte) ne correspond plus
     }
     fs.writeFileSync(E.f, JSON.stringify(EP, null, 1) + '\n');
@@ -221,6 +232,29 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       const C = require(path.join(pico, 'fabrication', 'composer.js')).compose(fiche);
       return send(res, 200, { nom: C.base.replace(/^\d+-/, ''), titre: fiche.titre || '', lignes: C.long.scenes.map(s => s.texte) });
     }
+    // retour sur un écran (« pas de phrase en dessous », « plus court », « sans photo »…) : l'écran de cette réplique seulement est corrigé,
+    // par des règles sûres d'abord, sinon par l'IA locale (contrôlée : aucun chiffre absent de la phrase) ; « Refaire » ne refait que cette réplique
+    if (req.method === 'POST' && p === '/api/pico/ecran-ia') {
+      const b = await readJson(req), E = episodeFabrique(nomSur(b.base)), s = E.EP.scenes[entier(b.i, 0, 9999)];
+      if (!s || !s.ecran || s.ecran === '=' || typeof s.ecran !== 'object') throw new Error('Cette réplique n’a pas d’écran à elle.');
+      const demande = String(b.demande || '').replace(/\s+/g, ' ').trim().slice(0, 400); if (demande.length < 3) throw new Error('Dis ce qui ne va pas sur cet écran.');
+      const base = champsEcran(s.ecran) || { champs: {} }, champs = { ...base.champs, ...(b.champs && typeof b.champs === 'object' ? b.champs : {}) }, points = Array.isArray(b.points) ? b.points : base.points;
+      return send(res, 200, await require('./retour-ecran').corriger({ type: s.ecran.type, champs, points, phrase: (b.texte || s.texte || ''), demande, photo: !!s.fond, sujet: E.EP.titre || '' }, retoucher));
+    }
+    if (req.method === 'POST' && p === '/api/pico/photos') {
+      const b = await readJson(req); let fiche = b.fiche; if (typeof fiche === 'string') { try { fiche = JSON.parse(fiche); } catch (e) { throw new Error('La fiche n’est pas un texte JSON valide.'); } }
+      if (!fiche || typeof fiche !== 'object') throw new Error('Fiche manquante.');
+      return send(res, 200, travail(job => proposerPhotos(job, fiche)));
+    }
+    if (req.method === 'POST' && p === '/api/pico/photos/garder') {
+      const b = await readJson(req), slug = String(b.slug || 'episode').replace(/[^a-z0-9-]/gi, '').slice(0, 60) || 'episode';
+      if (!gen) throw new Error('Recherche de photos indisponible.');
+      const dossier = path.join(SORTIES, 'medias', 'illustrations', slug), fonds = [];
+      for (const c of (Array.isArray(b.choix) ? b.choix : []).slice(0, 80)) {
+        try { fonds.push({ i: entier(c.i, 0, 999), ...(await gen().garderPhoto(c, dossier, entier(c.i, 0, 999))) }); } catch (e) { fonds.push({ i: entier(c.i, 0, 999), erreur: e.message }); }
+      }
+      return send(res, 200, { fonds });
+    }
     if (req.method === 'GET' && p === '/api/pico') {
       const pico = dossierPico(opts), e = PAROLE().etat();
       let doublages = []; try { doublages = fs.readdirSync(path.join(BASE, 'doublages')).filter(n => fs.existsSync(path.join(BASE, 'doublages', n, 'v00.wav'))); } catch (er) { /* aucun */ }
@@ -235,7 +269,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       try { const VT = require('./voix-texte'); difficiles = require('./fiche-quentinvest').controler(lireJson(fFiche), { lexique: VT.lexiqueActuel() }).difficiles || []; } catch (e) { /* sans fiche : aucun mot signalé */ }
       let section = '';
       return send(res, 200, { base: E.base, titre: E.EP.titre, tiktok: E.tiktok, expressions: EXPRESSIONS, difficiles,
-        scenes: E.EP.scenes.map((x, i) => ({ i, section: x.section ? (section = x.section) : '', dans: section, expr: x.expr || 'neutre', texte: x.texte, ecran: champsEcran(x.ecran) })) });
+        scenes: E.EP.scenes.map((x, i) => ({ i, section: x.section ? (section = x.section) : '', dans: section, expr: x.expr || 'neutre', texte: x.texte, ecran: champsEcran(x.ecran), photo: !!x.fond })) });
     }
     // épisode fabriqué posé sur la timeline : une réplique = un clip (écran + Pico + voix), sous-titres, musique ; tout reste modifiable
     if (req.method === 'POST' && p === '/api/pico/montage') {

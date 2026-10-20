@@ -101,12 +101,22 @@ function chromium() {
   check('dynamiser : un plan sur deux zoomé', await ev(() => proj.clips.map(c => c.zoom).join() === '100,135,100'), await ev(() => proj.clips.map(c => c.zoom).join()));
   await ev(() => dynamiserZooms(true)); check('dynamiser : zooms retirés', await ev(() => proj.clips.every(c => c.zoom === 100)));
   check('transition sur toutes les coupures', await ev(() => proj.clips.filter(c => c.transition).length === 2));
-  // packs de montage : un clic pose transitions, effets de coupe et sons sur toutes les coupes
+  // packs de montage : un clic pose transitions et effets de coupe sur toutes les coupes (bruitages seulement si la case est cochée)
   await ev(() => { proj.audio = []; proj.clips.forEach(c => { c.transition = null; c.overlays = []; }); commit(); tout(); allerOnglet('packs'); });
   await pg.waitForSelector('[data-pack-app="glitch"]', { timeout: 5000 });
   check('onglet Packs : 29 packs proposés (montage, vlog, podcast, pro, événement, gaming, tech et finance, style de vie)', await ev(() => document.querySelectorAll('#navbody [data-pack-app]').length === 29 && CAT.packs.every(p => p.transitions.every(t => CAT.transitions.some(x => x.id === t)) && p.titres.every(t => CAT.reportage.some(x => x.id === t)) && p.calques.every(c => LIB().calques.some(x => x.id === c)) && p.sons.every(c => LIB().sons.some(x => x.id === c)) && (!p.musique || LIB().musiques.some(x => x.id === p.musique)) && (!p.look || LIB().luts.some(x => 'luts/' + x.id + '.cube' === p.look)))));
   await pg.click('[data-pack-app="glitch"]');
-  check('pack appliqué : transitions, effets de coupe et sons sur chaque coupe', await ev(() => { const n = proj.clips.length - 1; return proj.clips.slice(0, -1).every(c => c.transition && c.overlays.some(o => o.pack === 'glitch' && !o.ss)) && proj.clips.slice(1).every(c => c.overlays.some(o => o.pack === 'glitch' && o.ss > 0)) && proj.audio.length === n; }));
+  check('pack appliqué : transitions et effets de coupe sur chaque coupe, aucun bruitage par défaut (ils cassent l’immersion)', await ev(() => { const n = proj.clips.length - 1; return proj.clips.slice(0, -1).every(c => c.transition && c.overlays.some(o => o.pack === 'glitch' && !o.ss)) && proj.clips.slice(1).every(c => c.overlays.some(o => o.pack === 'glitch' && o.ss > 0)) && proj.audio.length === 0 && n > 0; }));
+  // mixage : un curseur par famille de sons, bruitages retirés d'un clic, réducteur de bruit sur la voix et le son des vidéos
+  await ev(() => { proj.audio = [{ file: 'lib:musiques/documentaire-doux.mp3', vol: 100, start: 0, loop: true, duck: true }, { file: 'lib:sons/pop.mp3', vol: 100, start: 1 }, { file: 'voix.wav', vol: 100, start: 0, detache: true }]; commit(); tout(); ouvrirMixage(); });
+  check('mixage : voix, musique et bruitages reconnus', await ev(() => !!$('#mx-musique') && !!$('#mx-bruitages') && !!$('#mx-voix') && groupesMixage().musique.length === 1 && groupesMixage().bruitages.length === 1 && groupesMixage().voix.length === 1));
+  await ev(() => { const r = $('#mx-musique'); r.value = '40'; r.dispatchEvent(new Event('change')); });
+  check('mixage : curseur de la musique', await ev(() => proj.audio[0].vol === 40 && proj.audio[2].vol === 100));
+  await ev(() => { $('#mxBruit').value = '20'; $('#mxBruit').dispatchEvent(new Event('change')); });
+  check('mixage : réducteur de bruit sur la voix enregistrée et le son des vidéos, pas sur la musique', await ev(() => proj.audio[2].debruit === 20 && !proj.audio[0].debruit && groupesMixage().video.every(c => c.afx.some(e => e.id === 'bruit' && e.p.n === 20))));
+  await ev(() => $('#mxSansBruitages').click());
+  check('mixage : bruitages retirés d’un clic', await ev(() => proj.audio.length === 2 && !proj.audio.some(a => /lib:sons/.test(a.file))));
+  await ev(() => { fermer(); proj.audio = []; proj.clips.forEach(c => { c.afx = (c.afx || []).filter(e => e.id !== 'bruit'); }); commit(); tout(); });
   await ev(() => { allerOnglet('packs'); }); await pg.waitForSelector('[data-pack-app="vlog-voyage"]', { timeout: 5000 });
   await pg.evaluate(() => { const c = document.querySelector('[data-pack="vlog-voyage"]'); c.querySelector('.pk-mus').checked = true; c.querySelector('.pk-look').checked = true; });
   await pg.click('[data-pack-app="vlog-voyage"]');

@@ -191,13 +191,15 @@ const rmsDb = (f, filtre) => { const r = spawnSync(FFMPEG, ['-v', 'info', '-i', 
 const RMS_SON = {}, rmsSon = f => RMS_SON[f] != null ? RMS_SON[f] : (RMS_SON[f] = rmsDb(f, 'silenceremove=stop_periods=-1:stop_threshold=-50dB'));
 const rmsVoix = wav => rmsDb(wav, 'silenceremove=stop_periods=-1:stop_threshold=-40dB:stop_duration=0.15'); // niveau de la voix quand elle parle (sans les silences)
 const SFX = { baisse: 'baisse', hausse: 'hausse', pieces: 'pieces', ding: 'ding-cloche', succes: 'succes', impact: 'impact-leger' };
-// style 2 : bruitages discrets posés sur les animations (pop quand un élément arrive, whoosh à chaque nouvel écran, effet choisi pour la révélation)
+// style 2 : seulement le son des animations (pop quand un élément arrive, whoosh à chaque nouvel écran). Les bruitages d'ambiance
+// (pièces, cloche, hausse, succès…) cassaient l'immersion : retirés à la demande du propriétaire ; `sons.bruitages: true` dans l'épisode les remet.
+const AVEC_EFFETS = !!(EP.sons && EP.sons.bruitages === true);
 function bruitages(i, d) {
   const s = EP.scenes[i], l = [];
   if (i > 0 && s.ecran !== '=') l.push(['whoosh-court', 0.02, 0.8]);
   let dernier = -1, n = 0;
   for (const t of EVENTS[i] || []) if (t > 0.25 && t - dernier >= 0.45 && n < 6 && t < d - 0.4) { l.push(['pop', t, 0.8]); dernier = t; n++; }
-  if (s.effet && SFX[s.effet]) l.push([SFX[s.effet], s.effetT != null ? s.effetT : 0.9, 1]);
+  if (AVEC_EFFETS && s.effet && SFX[s.effet]) l.push([SFX[s.effet], s.effetT != null ? s.effetT : 0.9, 1]);
   const voix = rmsVoix(wavDe(i)); // chaque son est calé à (niveau de la voix + EFFETS_DB), quel que soit son niveau d'origine ; v = poids relatif (1 = niveau cible)
   return l.map(([nom, t, v]) => ({ f: path.join(SONS, nom + '.mp3'), t, v })).filter(x => fs.existsSync(x.f)).map(x => ({ ...x, db: +(voix + EFFETS_DB + 20 * Math.log10(x.v) - rmsSon(x.f)).toFixed(2) }));
 }

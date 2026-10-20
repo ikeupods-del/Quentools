@@ -54,7 +54,7 @@ h3{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut)
 h3:first-child{margin-top:0}
 .encart{background:var(--pan2);border-radius:8px;padding:10px;margin-bottom:10px}
 .encart h4{margin:0 0 6px;font-size:13px}
-.fiModes{gap:6px;flex-wrap:wrap}.fiMode{border:1px solid var(--ligne);border-radius:8px;padding:6px 10px;cursor:pointer}.fiMode:has(input:checked){border-color:var(--ac);background:#3f5ef01f}
+.fiModes{gap:6px;flex-wrap:wrap}.fiEtape{display:flex;align-items:center;gap:8px;margin:12px 0 6px}.fiEtape span{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--ac);color:#fff;font-size:12px}.phGrille{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:6px}.phChoix{position:relative;border:2px solid transparent;border-radius:8px;overflow:hidden;cursor:pointer;background:#0003;aspect-ratio:16/9;display:grid;place-items:center;font-size:12px;color:var(--mut,#aaa)}.phChoix img{width:100%;height:100%;object-fit:cover;display:block}.phChoix.on{border-color:var(--ac)}.phChoix.on::after{content:'✓';position:absolute;top:4px;right:6px;background:var(--ac);color:#fff;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-size:12px}.phEcran{border-top:1px solid var(--ligne);padding:8px 0}.fiMode{border:1px solid var(--ligne);border-radius:8px;padding:6px 10px;cursor:pointer}.fiMode:has(input:checked){border-color:var(--ac);background:#3f5ef01f}
 /* visionneuse */
 #view{grid-area:view;display:flex;flex-direction:column;align-items:center;padding:8px 10px;gap:6px;min-width:0;min-height:0;overflow:hidden}
 #stage{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
@@ -537,7 +537,7 @@ button.dictee.on{background:#5a1a1f;border-color:#ff5a5f;color:#fff}
       <div class="ent" id="eT" title="Titres : textes et titres animés posés par-dessus tout le montage, indépendants des clips"><b>T</b><small>Titres</small><span class="pbt"><button data-piste="T:ajout" title="Ajouter un titre à la tête de lecture">＋</button><button data-piste="T:cache" title="Masquer cette piste"><svg class="ic"><use href="#i-oeil"/></svg></button><button data-piste="T:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div>
       <div class="ent" id="eV2" title="Vidéo 2 : image dans l’image, plans de coupe (au-dessus du montage)"><b>V2</b><small>Incrustations</small><span class="pbt"><button data-piste="V2:cache" title="Masquer cette piste"><svg class="ic"><use href="#i-oeil"/></svg></button><button data-piste="V2:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div>
       <div class="ent" id="eV" title="Vidéo principale : les clips se suivent"><b>V1</b><small>Vidéo</small><span class="pbt"><button data-piste="V1:muet" title="Couper le son des vidéos"><svg class="ic"><use href="#i-son"/></svg></button><button data-piste="V1:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div>
-      <div class="ent" id="eA" title="Audio : musique, voix off, bruitages"><b>A1</b><small>Voix et musique</small><span class="pbt"><button data-piste="A:muet" title="Couper la piste audio"><svg class="ic"><use href="#i-son"/></svg></button><button data-piste="A:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div></div>
+      <div class="ent" id="eA" title="Audio : musique, voix off, bruitages"><b>A1</b><small>Voix et musique</small><span class="pbt"><button data-mixage title="Mixage : volume de la voix, des vidéos, de la musique et des bruitages, réducteur de bruit">🎚</button><button data-piste="A:muet" title="Couper la piste audio"><svg class="ic"><use href="#i-son"/></svg></button><button data-piste="A:verrou" title="Verrouiller cette piste"><svg class="ic"><use href="#i-cadenas"/></svg></button></span></div></div>
     <div id="scroll"><div id="lane">
       <div id="regle"></div>
       <div class="piste t" id="pT"></div>
@@ -836,7 +836,7 @@ function navigateur() {
         <div class="pkh">Effets de coupe</div><div class="pkgr">${P.calques.map(c => `<div><img loading="lazy" src="/api/frame?file=${enc('lib:calques/' + c + '.mp4')}&t=0.5" alt="">${esc(nomLib(L.calques, c))}</div>`).join('')}</div>
         <div class="pkh">Sons${P.musique ? ' et musique' : ''}</div><div class="pksons">${P.sons.map(c => { const x = L.sons.find(y => y.id === c); return x ? `<button class="mini" data-play="${x.file}" title="Écouter">▶ ${esc(x.nom.replace(/^(Transition|Vlog) : /, ''))}</button>` : ''; }).join('')}${P.musique ? (() => { const m = L.musiques.find(y => y.id === P.musique); return m ? `<button class="mini" data-play="${m.file}" title="Écouter">♪ ${esc(m.nom)}</button>` : ''; })() : ''}</div>
         ${P.look ? `<div class="pkh">Look</div><div class="mut">${esc(nomLib(L.luts, P.look.replace(/^luts\//, '').replace(/\.cube$/, '')))}</div>` : ''}
-        <div class="ligne" style="margin-top:8px;flex-wrap:wrap;gap:8px"><label><input type="checkbox" class="pk-tr" checked> transitions</label><label><input type="checkbox" class="pk-cal" checked> effets de coupe</label><label><input type="checkbox" class="pk-son" checked> sons</label>${P.look ? '<label><input type="checkbox" class="pk-look"> look</label>' : ''}${P.musique ? '<label><input type="checkbox" class="pk-mus"> musique</label>' : ''}${P.viz ? '<label title="S’applique aux clips audio (podcast sans image) : pochette et visualiseur"><input type="checkbox" class="pk-viz"> pochette et visualiseur</label>' : ''}${P.ambiance ? '<label title="Grain de pellicule ou lumière douce posés sur tous les clips"><input type="checkbox" class="pk-amb"> ambiance</label>' : ''}<label title="Pose le premier titre du pack sur le premier clip et un titre de fin sur le dernier"><input type="checkbox" class="pk-tit"> titres d’ouverture et de fin</label></div>
+        <div class="ligne" style="margin-top:8px;flex-wrap:wrap;gap:8px"><label><input type="checkbox" class="pk-tr" checked> transitions</label><label><input type="checkbox" class="pk-cal" checked> effets de coupe</label><label><input type="checkbox" class="pk-son" title="Bruitages sur les coupes : décochés par défaut, ils cassent l’immersion"> bruitages</label>${P.look ? '<label><input type="checkbox" class="pk-look"> look</label>' : ''}${P.musique ? '<label><input type="checkbox" class="pk-mus"> musique</label>' : ''}${P.viz ? '<label title="S’applique aux clips audio (podcast sans image) : pochette et visualiseur"><input type="checkbox" class="pk-viz"> pochette et visualiseur</label>' : ''}${P.ambiance ? '<label title="Grain de pellicule ou lumière douce posés sur tous les clips"><input type="checkbox" class="pk-amb"> ambiance</label>' : ''}<label title="Pose le premier titre du pack sur le premier clip et un titre de fin sur le dernier"><input type="checkbox" class="pk-tit"> titres d’ouverture et de fin</label></div>
         <button class="pri" data-pack-app="${P.id}" style="width:100%;margin-top:6px">Appliquer ${esc(P.nom)} à toutes les coupes</button></div>`).join('')).join('');
     setTimeout(chargerApercusTitres, 30); setTimeout(chargerApercusSousTitres, 60);
     setTimeout(() => { const cp = $('#cherchePack'); if (cp) cp.oninput = () => { const q = cp.value.trim().toLowerCase(); document.querySelectorAll('#navbody .pack').forEach(el => { const P = (CAT.packs || []).find(x => x.id === el.dataset.pack); el.hidden = !!q && !(`${P.nom} ${P.desc} ${P.famille || ''}`.toLowerCase().includes(q)); }); }; }, 80);
@@ -1088,7 +1088,7 @@ function brancherCarteAnalyse(racine) {
     try { await avecRevue('conseil', async () => { if (b.dataset.conseil === 'normaliser') { proj.normaliser = true; commit(); } else await executerAction({ action: b.dataset.conseil, parametre: '' }); }); b.textContent = '✅ Fait'; }
     catch (e) { b.textContent = '✖'; b.title = e.message; }
   }; });
-  racine.querySelectorAll('[data-pack-sujet]').forEach(b => { b.onclick = () => { avecRevue('style conseillé', () => appliquerPack(b.dataset.packSujet, { tr: true, cal: true, son: true, look: true, mus: false, viz: false, amb: false, tit: false })); b.disabled = true; b.textContent = '✅ Pack appliqué (annulable avec ' + (MAC ? '⌘Z' : 'Ctrl+Z') + ')'; }; });
+  racine.querySelectorAll('[data-pack-sujet]').forEach(b => { b.onclick = () => { avecRevue('style conseillé', () => appliquerPack(b.dataset.packSujet, { tr: true, cal: true, son: false, look: true, mus: false, viz: false, amb: false, tit: false })); b.disabled = true; b.textContent = '✅ Pack appliqué (annulable avec ' + (MAC ? '⌘Z' : 'Ctrl+Z') + ')'; }; });
 }
 // vraie coupe = changement de plan, de fichier ou saut dans le temps ; pas une coupe de blanc au milieu d'une même prise
 function vraieCoupe(a, b) {
@@ -1556,7 +1556,7 @@ function majPistes() {
   document.querySelectorAll('[data-piste]').forEach(b => { const [k, q] = b.dataset.piste.split(':'); const on = !!etatPiste(k)[q]; b.classList.toggle('on', on); if (q === 'muet') b.innerHTML = icone(on ? 'muet' : 'son'); });
   const c = curClip(); $('#vTitre').textContent = c ? (c.file ? nomOf(c.file) : 'Fond uni') + ' · ' + fmt(effDur(c)) : (proj.clips.length ? 'Projet · ' + fmt(total()) : 'Visionneuse');
 }
-document.getElementById('entetes').addEventListener('click', e => { const b = e.target.closest('[data-piste]'); if (!b) return; const [k, q] = b.dataset.piste.split(':'); if (q === 'ajout') return ajouterTitreT('angle'); basculerPiste(k, q); });
+document.getElementById('entetes').addEventListener('click', e => { if (e.target.closest('[data-mixage]')) return ouvrirMixage(); const b = e.target.closest('[data-piste]'); if (!b) return; const [k, q] = b.dataset.piste.split(':'); if (q === 'ajout') return ajouterTitreT('angle'); basculerPiste(k, q); });
 const verrouillee = k => { if (!etatPiste(k).verrou) return false; aide(`🔒 Piste ${k === 'A' ? 'audio' : k} verrouillée : clique sur son cadenas pour la libérer.`); return true; };
 // projet envoyé au moteur : pistes masquées ou coupées appliquées
 function pourRendu(p) {
@@ -2655,6 +2655,45 @@ async function recadrerClips(indices, res) {
 // ---------- Miniature (vignette YouTube, TikTok…) : image du montage, gros titre, détourage de la personne ----------
 let mini = null;
 const MINI_DEF = { fond: 'flou', couleur: '#141a33', l1: '', l2: '', coul: '#ffe600', pos: 'gauche', detoure: true, contour: '#ffffff', badge: '', sombre: 45, zoom: 100, taille: 100 };
+// Mixage : un curseur par famille de sons au lieu d'un réglage clip par clip, et le réducteur de bruit sur toute la vidéo.
+// Familles (mêmes règles que l'export, typeSon de server.js) : son des clips de la timeline, voix posées dans la piste audio (doublage, voix off,
+// son détaché), musique (boucle, baissée quand on parle, bibliothèque musiques/), bruitages (bibliothèque sons/, packs).
+const familleSon = a => (a.loop || a.duck || /musiques\//.test(String(a.file)) ? 'musique' : /^lib:sons\/|^pack:.*\/sons?\//i.test(String(a.file)) || a.pack || (/^lib:/.test(String(a.file)) && !a.detache) ? 'bruitages' : 'voix');
+const DEBRUIT = [['0', 'Aucun'], ['12', 'Léger (souffle, ventilation)'], ['20', 'Moyen (pièce bruyante)'], ['30', 'Fort (rue, vent)']];
+function groupesMixage() {
+  const g = { video: proj.clips.filter(c => (c.kind === 'video' && c.hasAudio !== false && !c.sonDetache) || c.kind === 'audio'), voix: [], musique: [], bruitages: [] };
+  proj.audio.forEach(a => g[familleSon(a)].push(a));
+  return g;
+}
+function ouvrirMixage() {
+  stopLecture();
+  const g = groupesMixage(), moy = l => l.length ? Math.round(l.reduce((s, x) => s + (x.vol == null ? 100 : +x.vol || 0), 0) / l.length) : 100;
+  const n0 = (g.video.map(c => (c.afx || []).find(e => e.id === 'bruit')).find(Boolean) || {}).p, a0 = g.voix.find(a => a.debruit > 0);
+  const force = String(n0 ? n0.n : a0 ? a0.debruit : 0), proche = DEBRUIT.map(x => x[0]).reduce((m, v) => Math.abs(+v - +force) < Math.abs(+m - +force) ? v : m, '0');
+  const LIB = { video: ['🎬', 'Voix et son des vidéos', 'le son des clips de la timeline (ta voix filmée, les répliques de Pico)'], voix: ['🎙', 'Voix enregistrées', 'doublage, voix off, sons détachés'], musique: ['🎵', 'Musique', 'musique de fond'], bruitages: ['🔊', 'Bruitages', 'petits sons posés sur la piste audio'] };
+  const ligne = k => g[k].length ? `<div class="encart" style="margin:6px 0"><label class="l">${LIB[k][0]} ${LIB[k][1]} <span class="mut">(${g[k].length} élément${g[k].length > 1 ? 's' : ''} : ${LIB[k][2]})</span><span id="mx-${k}-v">${moy(g[k])} %</span></label>
+      <div class="ligne"><button class="mini" data-mx-pas="${k}:-10" title="Baisser">−</button><input type="range" id="mx-${k}" min="0" max="200" step="5" value="${moy(g[k])}" style="flex:1"><button class="mini" data-mx-pas="${k}:10" title="Monter">+</button><button class="mini" data-mx-muet="${k}">${g[k].every(x => !(x.vol > 0)) ? '🔈 Remettre' : '🔇 Couper'}</button></div></div>` : '';
+  ouvrir(`<h2>🎚 Mixage</h2><p class="mut">Monte ou baisse chaque famille de sons d’un seul geste (100 % = niveau calculé à l’export : musique sous la voix, bruitages discrets). Tout est annulable avec ${MAC ? '⌘Z' : 'Ctrl+Z'}.</p>
+    ${['video', 'voix', 'musique', 'bruitages'].map(ligne).join('') || '<p class="mut">Aucun son dans le montage pour l’instant.</p>'}
+    ${g.bruitages.length ? `<button id="mxSansBruitages" style="width:100%;margin:4px 0">🚫 Retirer tous les bruitages (${g.bruitages.length})</button>` : ''}
+    <div class="encart" style="margin:6px 0"><h4>🧹 Réducteur de bruit</h4><p class="mut">Retire le souffle et le bruit de fond de la voix et du son des vidéos (pas de la musique). Plus c’est fort, plus la voix peut sembler étouffée : commence par « Léger ».</p>
+      <select id="mxBruit">${opts(DEBRUIT, proche)}</select></div>
+    <div class="ligne" style="margin-top:8px"><button id="mxEgal" title="Met tous les clips au même volume">⚖ Égaliser le volume des clips</button><button class="pri" id="mxOk">Fermer</button></div><div class="mut" id="mxRes" style="margin-top:6px"></div>`);
+  const B = $('#boite'), regler = (k, v, fin) => { v = clamp(Math.round(v), 0, 200); groupesMixage()[k].forEach(x => { x.vol = v; if (v > 0) x.volAvant = v; }); const s = $(`#mx-${k}`); if (s) s.value = v; const t = $(`#mx-${k}-v`); if (t) t.textContent = v + ' %'; commit(!fin); tout(); fin ? apercu() : apercuRetarde(); };
+  ['video', 'voix', 'musique', 'bruitages'].forEach(k => { const s = $(`#mx-${k}`); if (!s) return; s.oninput = () => regler(k, +s.value, false); s.onchange = () => regler(k, +s.value, true); });
+  B.querySelectorAll('[data-mx-pas]').forEach(b => { b.onclick = () => { const [k, d] = b.dataset.mxPas.split(':'); regler(k, +$(`#mx-${k}`).value + +d, true); }; });
+  B.querySelectorAll('[data-mx-muet]').forEach(b => { b.onclick = () => { const k = b.dataset.mxMuet, l = groupesMixage()[k], muet = l.every(x => !(x.vol > 0)); l.forEach(x => { if (muet) x.vol = x.volAvant || 100; else { if (x.vol > 0) x.volAvant = x.vol; x.vol = 0; } }); commit(); tout(); apercu(); ouvrirMixage(); }; });
+  const sb = $('#mxSansBruitages'); if (sb) sb.onclick = () => { const n = proj.audio.length; proj.audio = proj.audio.filter(a => familleSon(a) !== 'bruitages'); selA = -1; commit(); tout(); apercu(); ouvrirMixage(); $('#mxRes').textContent = `✅ ${n - proj.audio.length} bruitage${n - proj.audio.length > 1 ? 's' : ''} retiré${n - proj.audio.length > 1 ? 's' : ''}.`; };
+  $('#mxBruit').onchange = () => {
+    const n = +$('#mxBruit').value, gg = groupesMixage();
+    gg.video.forEach(c => { c.afx = (c.afx || []).filter(e => e.id !== 'bruit'); if (n > 0) c.afx.unshift({ id: 'bruit', p: { n } }); });
+    gg.voix.forEach(a => { if (n > 0) a.debruit = n; else delete a.debruit; });
+    commit(); tout(); apercu();
+    $('#mxRes').textContent = n > 0 ? `✅ Réducteur de bruit ${DEBRUIT.find(x => +x[0] === n)[1].split(' ')[0].toLowerCase()} posé sur ${gg.video.length + gg.voix.length} élément${gg.video.length + gg.voix.length > 1 ? 's' : ''} (entendu à l’export).` : 'Réducteur de bruit retiré.';
+  };
+  $('#mxEgal').onclick = () => { egaliserVolumes(); $('#mxRes').textContent = '✅ Volume des clips égalisé (entendu à l’export).'; };
+  $('#mxOk').onclick = fermer;
+}
 async function ouvrirMiniature() {
   stopLecture();
   const ici = locate(gt), c = curClip() || proj.clips[ici.i];
@@ -3028,6 +3067,8 @@ function outilsHtml() {
       <label class="l">Force de la coupe</label><select id="oCoupeNiv">${opts([['douce', 'Douce : seulement les longs blancs (vidéo fluide, recommandé)'], ['normale', 'Normale : blancs et « euh »'], ['serree', 'Serrée : toutes les pauses (rythme haché)']], po.coupe || 'douce')}</select>
       <div class="ligne"><button class="pri" data-outil="coupe-clip">Clip sélectionné</button><button class="pri" data-outil="coupe-tout">Toute la vidéo</button></div>
       <div class="sw2"><input type="checkbox" id="oPriseCoupe" ${po.priseCoupe ? 'checked' : ''}><label for="oPriseCoupe">Couper automatiquement mes prises du studio</label></div><div class="mut" id="oCoupeRes" style="margin-top:4px"></div></div>
+    <div class="encart"><h4>🎚 Mixage et réducteur de bruit</h4><p class="mut">Un curseur par famille de sons (voix, son des vidéos, musique, bruitages) et le réducteur de bruit sur toute la vidéo.</p>
+      <button class="pri" data-outil="mixage" style="width:100%">Ouvrir le mixage</button></div>
     <div class="encart"><h4>✨ Améliorer la qualité</h4><p class="mut">Image débruitée et plus nette, couleurs ravivées ; son sans souffle, voix claire et volume régulier. Sur tous les clips en un clic.</p>
       <button class="pri" data-outil="qualite" style="width:100%">Améliorer toute la vidéo</button></div>
     <div class="encart"><h4>📱 Passer en vertical (TikTok, Reels, Shorts)</h4><p class="mut">Le montage passe en 9:16 et chaque vidéo filmée à l’horizontale suit automatiquement la personne, au lieu de couper au centre.</p>
@@ -3092,6 +3133,7 @@ async function outil(nom) {
   if (nom === 'generer') return ouvrirGenerateur();
   if (nom === 'voix') return gererVoix($('#oVoixZone'));
   if (nom === 'miniature') return ouvrirMiniature();
+  if (nom === 'mixage') return ouvrirMixage();
   if (nom === 'qualite') return ameliorerClips(proj.clips.map((c, i) => i));
   if (nom === 'plans-clip' || nom === 'plans-tout') return detecterPlans(nom === 'plans-tout');
   if (nom === 'rythme-reperes') return rythmeMusique('reperes'); if (nom === 'rythme-caler') return rythmeMusique('caler');
@@ -3267,7 +3309,7 @@ async function montageSujetBrut() {
   const a = await suivreTravail(id, j => aide(esc(j.step || '')));
   const g = a.genre || {}, fait = [];
   if (a.sujet && a.sujet.length <= 60) proj.sujet = a.sujet; // vrai titre possible pour les packs (jamais de texte d'exemple)
-  if (g.id && g.id !== 'general' && proj.clips.length >= 2) { appliquerPack(g.pack, { tr: true, cal: true, son: true, look: true, mus: false, viz: false, amb: false, tit: false }); fait.push(`style « ${g.nom} »`); }
+  if (g.id && g.id !== 'general' && proj.clips.length >= 2) { appliquerPack(g.pack, { tr: true, cal: true, son: false, look: true, mus: false, viz: false, amb: false, tit: false }); fait.push(`style « ${g.nom} »`); }
   const m = musiquePour(GENRE_MUSIQUE[g.id] || 'calme');
   if (m && total() > 15 && !proj.audio.some(x => estMusiqueLib(x))) { proj.audio.push({ file: 'lib:' + m.file, vol: a.rythme === 'rapide' ? 30 : 35, start: 0, fade: true, loop: true, duck: true }); fait.push(`musique « ${m.nom} » baissée quand on parle`); }
   if (proj.clips.length >= 2 && !proj.clips.every(c => (c.afx || []).some(e => e.id === 'normaliser') || c.hasAudio === false || c.kind === 'image')) { try { egaliserVolumes(); fait.push('volume égalisé'); } catch (e) { /* facultatif */ } }
