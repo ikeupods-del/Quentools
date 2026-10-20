@@ -3,6 +3,17 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.7.9
+J'ai fabriqué une vraie vidéo et relu chaque écran comme toi ; voici ce qui est corrigé :
+- Le titre d'un écran n'est plus répété mot pour mot dans le sous-titre.
+- Une phrase trop longue pour un titre garde son idée principale (« Le gouvernement n'a d'autre choix que d'intervenir », « Les banques se retrouvent en faillite les unes après les autres ») au lieu d'être coupée.
+- Les sous-titres de la vidéo ne s'arrêtent plus sur « des », « les » ou « qu'une » : ils sont coupés à une virgule ou entre deux idées.
+- TikTok : les sous-titres sont sous Pico, et non plus par-dessus lui.
+- L'écran « En une phrase » montre l'idée principale, pas un pavé de huit lignes.
+- Ton script sans titres de partie : l'étiquette en haut de l'écran n'affiche plus « La question » jusqu'à la fin, et l'écran des sources n'affiche plus « (sources à ajouter…) ».
+- Photos en fond : un voile sombre dégradé garde le texte lisible, même sur une photo très colorée ; le crédit de la photo s'affiche aussi quand l'écran cite déjà sa source.
+- **Tout seul** : chaque réplique a son propre écran (chiffre, définition ou phrase clé) au lieu d'un écran figé pendant 20 secondes, et l'accroche ne compare plus deux chiffres sans rapport (un jour du mois et un nombre de banques).
+
 ## 2.7.8
 - **Photos d'illustration automatiques** (case « 🖼 Photos d'illustration », cochée d'office) : pour chaque écran de texte, QuentMovie cherche une photo libre de droits sur le sujet (Wikimedia Commons, Openverse, NASA, et Pexels, Pixabay ou Unsplash si tu as mis leur clé), garde la plus pertinente et la pose en fond, assombrie sous le texte, avec son crédit à l'écran. Sans photo assez proche du sujet, l'écran reste tel quel. Les photos non commerciales ou « tous droits réservés » ne sont jamais prises.
 - **Dernier contrôle des écrans avant la fabrication** : quelle que soit l'origine du texte (ton script, l'IA, une fiche), aucun écran ne finit par « … » ni par un petit mot (« d'un », « et »).

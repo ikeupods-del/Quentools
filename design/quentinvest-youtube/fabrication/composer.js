@@ -31,7 +31,8 @@ const gesteDe = b => {
 };
 const maj = t => t.charAt(0).toUpperCase() + t.slice(1);
 // photo ou vidéo en fond d'un bloc (`fond: { fichier | url, credit }`) : le crédit s'affiche à l'écran et dans la description
-const avecCredit = b => { if (b.fond && b.fond.credit && b.ecran && b.ecran !== '=' && !b.ecran.source) b.ecran.source = 'Image : ' + b.fond.credit; return b; };
+// (écran qui cite déjà sa source : le crédit de l'image s'ajoute à la suite)
+const avecCredit = b => { if (b.fond && b.fond.credit && b.ecran && b.ecran !== '=' && !/Image :/.test(b.ecran.source || '')) b.ecran.source = (b.ecran.source ? b.ecran.source + ' · ' : '') + 'Image : ' + b.fond.credit; return b; };
 const nettoie = o => { for (const k of Object.keys(o)) if (o[k] === undefined) delete o[k]; return o; };
 
 // vérifie la fiche avant de lancer une fabrication longue : message clair en français plutôt qu'une erreur au milieu du montage

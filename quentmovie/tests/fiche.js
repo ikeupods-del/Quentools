@@ -69,6 +69,12 @@ const { controler, nombres } = require('../fiche-quentinvest');
     const fx = { accroche: { ecran: { titre: 'Imagine un monde où tu signes un chèque d’un…' } }, blocs: [{ texte: 'Dit… tel quel…', ecran: { type: 'liste', titre: 'Trois idées et', points: ['Une villa, des…', 'Bien'] } }, { ecran: '=' }] };
     const nf = require('../fiche-quentinvest').finirEcrans(fx);
     check('dernier contrôle : écrans sans « … » ni petit mot final, texte dit inchangé', nf === 3 && fx.accroche.ecran.titre === 'Imagine un monde où tu signes un chèque' && fx.blocs[0].ecran.titre === 'Trois idées' && fx.blocs[0].ecran.points[0] === 'Une villa' && fx.blocs[0].texte === 'Dit… tel quel…', JSON.stringify(fx));
+    check('écran : incise retirée plutôt qu’une phrase coupée', resumer('Les banques, qui avaient prêté massivement pour acheter des actions, se retrouvent en faillite les unes après les autres, entraînant la fermeture de 9 000 établissements.', 75) === 'Les banques se retrouvent en faillite les unes après les autres');
+    const { chiffreChoc } = require('../fiche-ia');
+    check('accroche : deux chiffres de même nature seulement', chiffreChoc('Le 24 octobre, 9 000 banques ferment.') === null && JSON.stringify(chiffreChoc('Le Dow Jones perd 25 % puis 89 % en 1932.')) === JSON.stringify({ avant: '25 %', apres: '89 %', de: 25, a: 89 }), JSON.stringify(chiffreChoc('Le 24 octobre, 9 000 banques ferment.')));
+    const fsouk = ficheDepuisScript(fs.readFileSync(path.join(__dirname, 'reel', 'script-souk.txt'), 'utf8'));
+    check('ton script : le sous-titre de l’accroche ne répète pas son titre', fsouk.accroche.ecran.sous && !fsouk.accroche.ecran.sous.startsWith(fsouk.accroche.ecran.titre), JSON.stringify(fsouk.accroche.ecran));
+    check('ton script sans titres de partie : étiquette « Les faits », sources sans note de travail, résumé court à l’écran', fsouk.blocs[0].section === 'Les faits' && !/à ajouter/.test(fsouk.sources.join(' ')) && fsouk.resume.ecran.length <= 120, JSON.stringify([fsouk.blocs[0].section, fsouk.sources, fsouk.resume.ecran]));
     check('fiche de ton script : aucun écran avec « … »', !/…/.test(JSON.stringify([fs2.accroche, fs2.blocs.map(b => b.ecran)])), JSON.stringify(fs2.blocs.map(b => b.ecran)).slice(0, 400));
   }
   app.stop(); srv.close(); fs.rmSync(racine, { recursive: true, force: true });

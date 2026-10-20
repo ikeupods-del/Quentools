@@ -655,7 +655,8 @@ function buildClip(c, P, o = {}) {
       const T = `(t+${ctx.t0})`, tk = c.subStyle === 'tiktok', col = c.subStyle === 'jaune' ? '0xffe600' : 'white', def = SUBDEF[c.subStyle];
       // « tiktok » : 1 à 3 mots, gros, au centre bas de l'image, contour épais et ombre ; les styles de pack (SUBDEF) ajoutent police, capitales, couleurs et calques
       const st = c.subStyle === 'bandeau' ? `:box=1:boxcolor=black@0.6:boxborderw=${Math.round(size / 3)}` : tk ? `:borderw=${Math.max(3, Math.round(size / 7))}:bordercolor=black:shadowx=${Math.round(size / 16)}:shadowy=${Math.round(size / 12)}:shadowcolor=black@0.55` : `:borderw=${Math.max(2, Math.round(size / 10))}:bordercolor=black`;
-      const yy = tk ? 'h*0.70-text_h/2' : 'h*0.84-text_h';
+      // subY : hauteur du centre des sous-titres TikTok (part de l'image), réglée par un montage qui place autre chose au milieu (Pico des épisodes QuentInvest)
+      const yy = tk ? `h*${clamp(num(c.subY, 0.70), 0.15, 0.9).toFixed(3)}-text_h/2` : 'h*0.84-text_h';
       const parts = subs.map((x, k) => {
         const file = `s${idx}_${k}.txt`, en = `:enable='between(${T},${num(x.s, 0)},${num(x.e, 0)})'`;
         if (def) { // style de pack : un ou plusieurs calques de texte superposés

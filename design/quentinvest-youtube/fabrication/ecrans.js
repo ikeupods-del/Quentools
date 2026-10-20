@@ -165,6 +165,8 @@ body.vert{width:1080px;height:1920px}
 // ---------- photo ou vidéo en fond (`fond` d'une réplique) : l'écran est rendu sur fond transparent, fabriquer.js le pose sur le média ----------
 const CSS_TRANSP = `
 body.transp{background:none!important}
+body.transp:not(.pleine)::before{content:'';position:fixed;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(8,10,14,.82) 0%,rgba(8,10,14,.62) 42%,rgba(8,10,14,.18) 72%,rgba(8,10,14,0) 100%)}
+body.vert.transp:not(.pleine)::before{background:linear-gradient(180deg,rgba(8,10,14,.85) 0%,rgba(8,10,14,.6) 38%,rgba(8,10,14,.2) 62%,rgba(8,10,14,.45) 100%)}
 .transp .mention{background:rgba(0,0,0,.5)}
 .transp h1,.transp h2,.transp .sous,.transp .resume,.transp .def{text-shadow:0 3px 14px rgba(0,0,0,.65)}
 .legende-visuel{position:absolute;left:90px;top:150px;max-width:1100px;background:rgba(0,0,0,.62);padding:18px 32px;border-radius:16px;font-size:40px;font-weight:700}
@@ -203,7 +205,7 @@ const k=Math.max(0.6,Math.min(1,r.width/(R-r.left),r.height/(B-H)));
 if(k<0.995){ z.style.transformOrigin='left center'; z.style.transform='scale('+k.toFixed(3)+')'; }
 window.setT(0); });`;
 const EVENTS = `window.EVENTS=[...new Set([...document.querySelectorAll('[data-a]')].filter(e=>/pop|count|on/.test(e.dataset.a)).map(e=>+e.dataset.d))].sort((a,b)=>a-b);`;
-const page = (corps, { section, source, mention, chaine, style, vertical, transp }) => `<!doctype html><html lang="fr"><meta charset="utf-8"><style>${CSS}${style >= 2 ? CSS_V2 : ''}${vertical ? CSS_VERT : ''}${transp ? CSS_TRANSP : ''}</style><body${style >= 2 || vertical || transp ? ` class="${[style >= 2 ? 'v2' : '', vertical ? 'vert' : '', transp ? 'transp' : ''].filter(Boolean).join(' ')}"` : ''}>
+const page = (corps, { section, source, mention, chaine, style, vertical, transp }) => `<!doctype html><html lang="fr"><meta charset="utf-8"><style>${CSS}${style >= 2 ? CSS_V2 : ''}${vertical ? CSS_VERT : ''}${transp ? CSS_TRANSP : ''}</style><body${style >= 2 || vertical || transp ? ` class="${[style >= 2 ? 'v2' : '', vertical ? 'vert' : '', transp ? 'transp' : '', transp === 'pleine' ? 'pleine' : ''].filter(Boolean).join(' ')}"` : ''}>
 <div class="marque"><i></i><span>${esc(chaine)}</span></div>${section ? `<div class="section">${esc(section)}</div>` : ''}
 ${corps}${source ? `<div class="source">${esc(source)}</div>` : ''}
 <div class="mention">${esc(mention)}</div><script>${RUNTIME}${style >= 2 ? EVENTS + AJUSTE : ''}</script></body></html>`;
@@ -303,6 +305,6 @@ function image(ecran, ctx) {
   FIN_SOURCES = ctx.sources || [];
   const f = TYPES[ecran.type];
   if (!f) throw new Error('Type d’écran inconnu : ' + ecran.type);
-  return page(f(ecran, ctx), { section: ctx.section, source: ecran.source, mention: ctx.mention, chaine: ctx.chaine, style: ctx.style, vertical: ctx.vertical, transp: ctx.transp });
+  return page(f(ecran, ctx), { section: ctx.section, source: ecran.source, mention: ctx.mention, chaine: ctx.chaine, style: ctx.style, vertical: ctx.vertical, transp: ctx.transp && ecran.type === 'visuel' ? 'pleine' : ctx.transp }); // « visuel » : le média seul, sans voile sombre
 }
 module.exports = { image, b64 };

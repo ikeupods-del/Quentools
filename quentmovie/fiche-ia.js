@@ -2,7 +2,7 @@
 // (script contrôlé : mêmes noms, dates et chiffres), le programme ajoute la structure (accroche, blocs de 40 mots, écrans, sources, à retenir, TikTok).
 // Rien n'est inventé : le piège, la question et le teaser sont des modèles à réécrire ; le contrôle (fiche-quentinvest.js) dit ce qui reste à faire.
 'use strict';
-const { controler, resumer, resumerDit } = require('./fiche-quentinvest');
+const { controler, resumer, resumerDit, ecranDe } = require('./fiche-quentinvest');
 
 const slugDe = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'sujet';
 const mots = t => String(t).match(/\S+/g) || [];
@@ -19,11 +19,13 @@ function blocsDe(texte, max = 40) {
   return sortie;
 }
 // deux nombres à mettre face à face dans l'accroche (le premier et le plus grand des suivants), pris dans les faits
+// seulement des nombres de même nature (deux pourcentages, deux montants…) : « 24 » (un jour du mois) face à « 9 000 » (des banques) ne voulait rien dire
+const NATURE = u => (/%/.test(u) ? '%' : /€|euro/.test(u) ? '€' : /dollar/.test(u) ? '$' : /florin/.test(u) ? 'fl' : /million|milliard/.test(u) ? 'grand' : '');
 function chiffreChoc(faits) {
-  const nb = []; for (const m of String(faits).matchAll(/(\d{1,3}(?:[  ]\d{3})+|\d+)(?:[.,]\d+)?\s?(€|%|euros?|florins?|dollars?|millions?|milliards?)?/g)) { const v = +m[1].replace(/[  ]/g, ''); if (v >= 10 && !(v >= 1000 && v <= 2100 && !m[2])) nb.push({ v, brut: m[0].trim(), u: m[2] || '' }); }
-  if (nb.length < 2) return null;
-  const a = nb[0], b = nb.slice(1).sort((x, y) => y.v - x.v)[0];
-  return a.v === b.v ? null : { avant: a.brut, apres: b.brut, de: a.v, a: b.v };
+  const nb = []; for (const m of String(faits).matchAll(/(\d{1,3}(?:[  ]\d{3})+|\d+)(?:[.,]\d+)?\s?(€|%|euros?|florins?|dollars?|millions?(?: d['’]\p{L}+)?|milliards?(?: d['’]\p{L}+| de \p{L}+)?)?/gu)) {
+    const v = +m[1].replace(/[  ]/g, ''); if (v >= 2 && m[2]) nb.push({ v, brut: m[0].trim(), n: NATURE(m[2]) }); }
+  for (const a of nb) { const b = nb.filter(x => x !== a && x.n === a.n && x.v !== a.v).sort((x, y) => y.v - x.v)[0]; if (b) return { avant: a.brut, apres: b.brut, de: a.v, a: b.v }; }
+  return null;
 }
 
 // dépendances injectées : article (titre), faits (article, duree) → [{ section, texte }], ecrire ({ titre, paragraphes, duree }) → { scenes }, source (url)
@@ -46,9 +48,11 @@ async function brouillon({ sujet, numero = 99, article, faits, ecrire, url = '' 
     numero, slug: slugDe(article), titre,
     promesse: coupe(phrases(scenes[0].texte)[0] || titre, 22), description: `Pico explique ${article} d'après Wikipédia : les faits, les chiffres cités par les sources, et ce qu'il faut retenir.`,
     hashtags: `#${slugDe(article).replace(/-/g, '')} #économie #apprendre #QuentInvest`, musique: 'documentaire-doux', musiqueRevelation: 'corporate-lumineux',
-    accroche: { texte: accrocheTexte, court: coupeDit(accrocheTexte, 16), ecran: { intro: coupe(phr, 14), avant: choc ? choc.avant : '', apres: choc ? choc.apres : '', ...(choc ? { de: choc.de, a: choc.a } : {}), legende: `Chiffres cités par Wikipédia (${article}).`, source: 'S1 · Wikipédia' }, effet: 'hausse' },
+    accroche: { texte: accrocheTexte, court: coupeDit(accrocheTexte, 16), ecran: choc ? { intro: coupe(phr, 14), avant: choc.avant, apres: choc.apres, de: choc.de, a: choc.a, legende: `Chiffres cités par Wikipédia (${article}).`, source: 'S1 · Wikipédia' }
+      : { type: 'message', titre: coupe(phr, 14), sous: '', source: 'S1 · Wikipédia' }, effet: 'hausse' }, // sans deux chiffres comparables : la première phrase en grand
     intro: { texte: `Au programme : ${scenes.slice(0, 4).map(s => String(s.section || '').toLowerCase()).filter(Boolean).join(', ') || 'les faits essentiels'}.`, ecran: { type: 'liste', titre: 'Au programme', points: scenes.slice(0, 4).map(s => coupe(String(s.section || article), 5)) } },
-    blocs: blocs.map((b, i) => ({ ...(b.section ? { section: b.section } : {}), texte: b.texte, ...(i % 3 === 0 ? { court: coupeDit(b.texte, 20) } : {}), ecran: b.section || i === 0 ? { type: 'message', titre: coupe(String(b.section || article), 6), sous: coupe(phrases(b.texte)[0] || b.texte, 12), source: 'S1 · Wikipédia' } : '=' })),
+    blocs: blocs.map((b, i) => ({ ...(b.section ? { section: b.section } : {}), texte: b.texte, ...(i % 3 === 0 ? { court: coupeDit(b.texte, 20) } : {}), // chaque passage a son écran (chiffre, définition ou phrase clé, comme « Mon script ») : un écran figé 20 s sur plusieurs passages lassait
+      ecran: { ...(b.section || i === 0 ? { type: 'message', titre: coupe(String(b.section || article), 6), sous: coupe(phrases(b.texte)[0] || b.texte, 12) } : ecranDe(b.texte, '')), source: 'S1 · Wikipédia' } })),
     piege: { intro: 'Attention, grain de sable. Il y a trois erreurs courantes.', court: 'Attention, grain de sable : une histoire spectaculaire n\'est pas forcément vraie.', erreurs: [
       { titre: 'Croire sans vérifier', texte: 'Un : croire une histoire spectaculaire sans vérifier ses sources.' }, { titre: 'Généraliser un cas', texte: 'Deux : prendre un cas célèbre pour la règle générale.' }, { titre: 'Confondre prix et valeur', texte: 'Trois : confondre le prix et la valeur.' }] },
     recap: { texte: `Pour résumer. ${scenes.slice(0, 3).map((s, i) => `${['Un', 'Deux', 'Trois'][i]} : ${coupeDit(phrases(s.texte)[0] || '', 18)}`).join(' ')}`, points: scenes.slice(0, 3).map(s => coupe(String(s.section || article), 6)) },

@@ -237,7 +237,7 @@ function clip(i, debut) {
   // photo ou vidéo en fond : cadrée plein écran (assombrie sous le texte), zoom lent sur une photo, lecture en boucle pour une vidéo ; l'écran transparent est posé dessus
   let entreeFond = [], composition = '[b]', fondMedia = '';
   if (F) {
-    const iFond = 3 + sons.length, sombre = F.sombre ? ',eq=brightness=-0.28:saturation=0.9' : '', f0 = Math.round(g.t0 * FPS), fT = Math.max(1, Math.round(g.T * FPS));
+    const iFond = 3 + sons.length, sombre = F.sombre ? ',eq=brightness=-0.2:contrast=0.9:saturation=0.85,gblur=sigma=1' : '' /* photo un peu adoucie ; le voile dégradé de l'écran (ecrans.js) garde le texte lisible */, f0 = Math.round(g.t0 * FPS), fT = Math.max(1, Math.round(g.T * FPS));
     if (F.video) { entreeFond = ['-stream_loop', '-1', '-ss', (F.debut + g.t0).toFixed(2), '-i', F.fichier]; fondMedia = `[${iFond}:v]fps=${FPS},scale=${LARG}:${HAUT}:force_original_aspect_ratio=increase,crop=${LARG}:${HAUT}${sombre}[m]`; }
     else { entreeFond = ['-loop', '1', '-framerate', String(FPS), '-t', d.toFixed(3), '-i', F.fichier]; fondMedia = `[${iFond}:v]scale=${LARG * 2}:${HAUT * 2}:force_original_aspect_ratio=increase,crop=${LARG * 2}:${HAUT * 2},zoompan=z='1+0.12*(${f0}+on)/${fT}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${LARG}x${HAUT}:fps=${FPS}${sombre}[m]`; }
     composition = '[m][b]overlay=0:0:format=auto[bm];[bm]';
@@ -265,8 +265,21 @@ function controle(durees) {
 }
 
 // ---------- sous-titres : phrases coupées en morceaux courts, répartis selon la longueur du texte ----------
+// style 2 : morceaux de taille égale, coupés de préférence à une virgule et jamais après un petit mot (« au début des | années » → « au début | des années »)
+const PETIT_MOT = /^(?:de|du|des|un|une|le|la|les|à|au|aux|en|et|ou|où|ce|cet|cette|ces|son|sa|ses|mon|ma|mes|ton|ta|tes|nos|vos|leur|leurs|qui|que|dont|pour|par|sur|avec|dans|sans|ne|pas|se|y|il|elle|on|tu|je|nous|vous|ils|elles|plus|très|mais|car|si|tout|toute|tous|[dlnsjcm]['’]\p{L}{0,4}|qu['’]\p{L}{0,4})$/iu;
+function decouperPhrase(mots, par) {
+  const k = Math.ceil(mots.length / par), coupes = [0];
+  for (let j = 1; j < k; j++) {
+    const prec = coupes[coupes.length - 1], cible = Math.round(j * mots.length / k); let c = cible;
+    for (const d of [0, 1, -1, 2, -2]) { const x = cible + d; if (x > prec + 1 && x < mots.length && /[,;]$/.test(mots[x - 1])) { c = x; break; } }
+    while (c > prec + 2 && PETIT_MOT.test(mots[c - 1].replace(/[,;:.!?…]+$/, ''))) c--;
+    coupes.push(c);
+  }
+  return coupes.map((c, j) => mots.slice(c, coupes[j + 1] || mots.length).join(' ')).filter(Boolean);
+}
 function sousTitres(texte, voixDuree, par = 8) {
-  const morceaux = []; for (const ph of texte.match(/[^.!?:]+[.!?:]*/g) || [texte]) { const mots = ph.trim().split(/\s+/).filter(Boolean); for (let k = 0; k < mots.length; k += par) morceaux.push(mots.slice(k, k + par).join(' ')); }
+  const morceaux = []; for (const ph of texte.match(/[^.!?:]+[.!?:]*/g) || [texte]) { const mots = ph.trim().split(/\s+/).filter(Boolean);
+    if (STYLE2) morceaux.push(...decouperPhrase(mots, par)); else for (let k = 0; k < mots.length; k += par) morceaux.push(mots.slice(k, k + par).join(' ')); }
   const total = morceaux.reduce((a, m) => a + m.length, 0); let t = 0;
   return morceaux.map(m => { const dd = voixDuree * m.length / total, o = { s: +t.toFixed(2), e: +(t + dd).toFixed(2), t: m.replace(/[:]$/, '') }; t += dd; return o; });
 }
@@ -298,7 +311,7 @@ async function exporter() {
   const lib = id => 'lib:' + (STYLE2 && !/\//.test(id) ? `musiques/${id}.mp3` : id);
   const projet = {
     format: VERT ? 'vertical' : 'horizontal', res: 1080, fps: FPS, quality: 'rapide', sortie: 'mp4', normaliser: true, pistes: [], textes: [], markers: [],
-    clips: M.liste.map(c => ({ file: c.nom, kind: 'video', in: 0, out: +c.d.toFixed(STYLE2 ? 6 : 3), dur: +c.d.toFixed(STYLE2 ? 6 : 3), speed: 1, vol: 100, hasAudio: true, fx: [], afx: [], overlays: [], key: { on: false }, subs: c.subs, subStyle: VERT ? 'tiktok' : 'bandeau', subSize: VERT ? 5.6 : STYLE2 ? 4.6 : 4,
+    clips: M.liste.map(c => ({ file: c.nom, kind: 'video', in: 0, out: +c.d.toFixed(STYLE2 ? 6 : 3), dur: +c.d.toFixed(STYLE2 ? 6 : 3), speed: 1, vol: 100, hasAudio: true, fx: [], afx: [], overlays: [], key: { on: false }, subs: c.subs, subStyle: VERT ? 'tiktok' : 'bandeau', subSize: VERT ? 5.6 : STYLE2 ? 4.6 : 4, ...(VERT && STYLE2 ? { subY: 0.755 } : {}), // vertical : sous Pico (au milieu de l'image), au-dessus de la légende de TikTok
       transition: c.fondu ? { type: 'fade', dur: 0.5 } : null })),
     audio: EP.musiqueRevelation && STYLE2 // la musique change au chiffre clé : douce avant, plus vivante après
       ? [{ file: lib(EP.musique), vol: 15, start: 0, dur: +debuts[EP.musiqueRevelation.scene].toFixed(2), fade: true, loop: true, duck: true },
