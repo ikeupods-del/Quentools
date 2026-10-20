@@ -186,6 +186,7 @@ async function monterPico(base, version = 'youtube') {
   } catch (er) { alert(er.message); }
 }
 // Relecture d'un épisode Pico fabriqué : expression de chaque réplique, phrase, prononciation d'un mot (dictionnaire) ; seules les répliques changées sont refaites
+const NOMS_CHAMP = { titre: 'Titre', sous: 'Sous-titre', legende: 'Légende', texte: 'Texte', mot: 'Mot', intro: 'Introduction', avant: 'Avant', apres: 'Après', suffixe: 'Unité', source: 'Source', label: 'Étiquette', numero: 'Numéro', resultat: 'Résultat', points: 'Points (un par ligne)' };
 const NOMS_EXPR = { neutre: 'neutre', content: 'content', inquiet: 'inquiet', surpris: 'surpris', curieux: 'curieux', reflechi: 'réfléchi' };
 async function ouvrirRelecturePico(base) {
   let E; try { const r = await api('/api/pico/episode?base=' + encodeURIComponent(base)), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Épisode introuvable'); E = j; } catch (er) { return alert(er.message); }
@@ -193,8 +194,11 @@ async function ouvrirRelecturePico(base) {
   const difficiles = new Set(E.difficiles.map(m => m.toLowerCase()));
   const motsDe = t => String(t).split(/(\s+)/).map(m => { const nu = m.replace(/^[«(“"']+|[»)”"'.,;:!?…]+$/g, ''); return /\S/.test(m) && nu ? `<span class="rlMot${difficiles.has(nu.toLowerCase()) ? ' dur' : ''}" data-mot="${esc(nu)}" tabindex="0" role="button">${esc(m)}</span>` : esc(m); }).join('');
   const texteDe = s => (ch.get(s.i) || {}).texte ?? s.texte, exprDe = s => (ch.get(s.i) || {}).expr || s.expr;
+  // écran de la réplique : ses textes (titre, sous-titre, légende, points…), corrigés à la main avant « Refaire »
+  const ecranDe = s => { const e = s.ecran, c = (ch.get(s.i) || {}).ecran || {}; return { champs: { ...e.champs, ...Object.fromEntries(Object.entries(c).filter(([k]) => k !== 'points')) }, points: c.points || e.points }; };
+  const apercuEcran = s => { const e = ecranDe(s); return [...Object.entries(e.champs).filter(([k]) => k !== 'source').map(([, v]) => v), ...(e.points || [])].filter(Boolean).join(' · '); };
   ouvrir(`<h2>🔍 Relire « ${esc(E.titre)} »</h2>
-    <p class="mut">Pour chaque réplique : l’expression de Pico, la phrase (✏ pour la modifier) et la prononciation (clic sur un mot ; les mots <span class="rlMot dur">soulignés</span> sont à vérifier). Seules les voix et les écrans des répliques changées sont refaits ; le montage final est refait en entier (quelques minutes).</p>
+    <p class="mut">Pour chaque réplique : l’expression de Pico, la phrase (✏ pour la modifier), le texte écrit sur l’écran (🖼) et la prononciation (clic sur un mot ; les mots <span class="rlMot dur">soulignés</span> sont à vérifier). Seules les voix et les écrans des répliques changées sont refaits ; le montage final est refait en entier (quelques minutes).</p>
     <div id="rlListe" class="rlListe"></div>
     <div id="rlPied" class="ligne" style="margin-top:10px;flex-wrap:wrap"><span class="mut" id="rlEtat">Aucun changement.</span><span class="sp"></span><span id="rlMonter">${boutonsMontage(true, E.tiktok)}</span><button id="rlFermer">Fermer</button><button class="pri" id="rlRefaire" disabled>Refaire</button></div>`, 'xl');
   const fen = $('#rlListe'), ouverte = () => fen.isConnected; // fenêtre de relecture encore affichée
@@ -203,7 +207,8 @@ async function ouvrirRelecturePico(base) {
     $('#rlListe').innerHTML = E.scenes.map(s => `<div class="rlLigne ${aRefaire.has(s.i) ? 'change' : ''}" data-i="${s.i}">
       ${s.section ? `<div class="rlSection">${esc(s.section)}</div>` : ''}
       <div class="rlCorps"><span class="rlNum">${s.i + 1}</span><select data-expr="${s.i}" title="Expression de Pico">${E.expressions.map(x => `<option value="${x}" ${x === exprDe(s) ? 'selected' : ''}>${NOMS_EXPR[x] || x}</option>`).join('')}</select>
-      <div class="rlTexte" data-texte="${s.i}">${motsDe(texteDe(s))}</div><button class="mini" data-edit="${s.i}" title="Modifier la phrase">✏</button></div></div>`).join('');
+      <div class="rlTexte" data-texte="${s.i}">${motsDe(texteDe(s))}</div><button class="mini" data-edit="${s.i}" title="Modifier la phrase">✏</button>${s.ecran ? `<button class="mini" data-ecran="${s.i}" title="Corriger le texte écrit sur l’écran">🖼</button>` : ''}</div>
+      ${s.ecran ? `<div class="rlEcran mut" data-ecranvu="${s.i}">🖼 ${esc(apercuEcran(s))}</div>` : ''}</div>`).join('');
     const n = aRefaire.size; $('#rlEtat').textContent = n ? `${n} réplique${n > 1 ? 's' : ''} à refaire${dico && E.tiktok ? ' · la version TikTok sera aussi refaite (prononciation)' : ''}.` : 'Aucun changement.';
     $('#rlRefaire').disabled = !n; $('#rlRefaire').textContent = n ? `Refaire ${n} réplique${n > 1 ? 's' : ''}` : 'Refaire';
   };
@@ -215,6 +220,17 @@ async function ouvrirRelecturePico(base) {
   $('#rlListe').onclick = async e => {
     const ed = e.target.closest('[data-edit]');
     if (ed) { const i = +ed.dataset.edit, s = E.scenes[i], z = $(`[data-texte="${i}"]`); z.innerHTML = `<textarea rows="3" style="width:100%">${esc(texteDe(s))}</textarea><div class="ligne"><button class="mini pri" data-ok="${i}">OK</button></div>`; z.querySelector('textarea').focus(); return; }
+    const be = e.target.closest('[data-ecran]');
+    if (be) { const i = +be.dataset.ecran, s = E.scenes[i], x = ecranDe(s), z = $(`[data-ecranvu="${i}"]`);
+      z.innerHTML = `<div class="rlEcranEdit">${Object.entries(x.champs).map(([k, v]) => `<label>${esc(NOMS_CHAMP[k] || k)} <input data-champ="${esc(k)}" value="${esc(v)}" style="width:100%"></label>`).join('')}
+        ${x.points ? `<label>${NOMS_CHAMP.points} <textarea data-champ="points" rows="${Math.min(8, x.points.length + 1)}" style="width:100%">${esc(x.points.join('\n'))}</textarea></label>` : ''}
+        <div class="ligne"><button class="mini pri" data-ecranok="${i}">OK</button><span class="mut">Le texte écrit sur l’écran (la voix ne change pas).</span></div></div>`; z.querySelector('input,textarea').focus(); return; }
+    const eo = e.target.closest('[data-ecranok]');
+    if (eo) { const i = +eo.dataset.ecranok, s = E.scenes[i], v = {}; let change = false;
+      $(`[data-ecranvu="${i}"]`).querySelectorAll('[data-champ]').forEach(c => { const k = c.dataset.champ;
+        if (k === 'points') { const l = c.value.split('\n').map(x => x.trim()).filter(Boolean); if (l.join('\n') !== (s.ecran.points || []).join('\n')) { v.points = l; change = true; } }
+        else { const t = c.value.replace(/\s+/g, ' ').trim(); if (t !== s.ecran.champs[k]) { v[k] = t; change = true; } } });
+      if (change) changer(i, 'ecran', v); else { const c = ch.get(i); if (c) delete c.ecran; dessiner(); } return; }
     const ok = e.target.closest('[data-ok]');
     if (ok) { const i = +ok.dataset.ok, v = $(`[data-texte="${i}"] textarea`).value.replace(/\s+/g, ' ').trim(); if (v && v !== E.scenes[i].texte) changer(i, 'texte', v); else dessiner(); return; }
     const m = e.target.closest('[data-mot]'); if (!m || e.target.closest('textarea')) return;

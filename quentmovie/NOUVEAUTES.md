@@ -3,6 +3,11 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.7.8
+- **Écrans QuentInvest sans phrase coupée** : quand une phrase est trop longue pour l'écran, elle n'est plus coupée au milieu avec « … ». L'écran garde des phrases entières, s'arrête à une virgule, ou met « etc. » après une énumération (« …s'acheter une villa, etc. »).
+- **Corriger le texte d'un écran** : dans « 🔍 Relire et corriger », le bouton 🖼 de chaque réplique permet de réécrire le titre, le sous-titre ou les points de son écran ; « Refaire » ne redessine que cet écran.
+- Dans la discussion, « corrige cette image » sur un plan de ton épisode ouvre directement la correction de son écran.
+
 ## 2.7.7
 - **Ta vidéo QuentInvest sur la timeline** : bouton « 🎞 Monter dans la timeline » à la fin de la fabrication et dans « 🔍 Relire et corriger » (aussi pour la version TikTok). Chaque réplique devient un clip (écran, Pico et ta voix), avec ses sous-titres et la musique : coupe un plan, remplace-le, mets une photo, une vidéo ou un titre par-dessus, puis exporte. Le montage est enregistré comme projet ; si la timeline est vide, la vidéo y est posée toute seule.
 - La musique des vidéos QuentInvest est de nouveau là (à 15/100, sous ta voix) : son nom n'était pas trouvé et elle disparaissait sans prévenir.

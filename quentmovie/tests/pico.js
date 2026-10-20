@@ -128,6 +128,16 @@ async function navigateurEssai(exe) {
     check('refaire : l’expression changée refait sa réplique', date(`clips/scene${String(der).padStart(2, '0')}.mp4`) > avant.cDer);
     check('refaire : vidéo YouTube remplacée', fs.statSync(path.join(sorties, '98-essai-pico', '98-essai-pico-youtube.mp4')).mtimeMs > t1);
     console.log(`  refaire en ${Math.round((Date.now() - t1) / 1000)} s`);
+    // texte d'un écran corrigé à la main : seul l'écran de cette réplique est redessiné
+    const je_ = E2.scenes.findIndex((x, k) => k > 1 && k < der && x.ecran && Object.keys(x.ecran.champs).length);
+    check('relecture : textes de l’écran donnés', je_ > 1, JSON.stringify(E2.scenes.map(x => x.ecran)).slice(0, 300));
+    if (je_ > 1) {
+      const champ = Object.keys(E2.scenes[je_].ecran.champs).find(k => k !== 'source'), avantImg = date(`images/i${String(je_).padStart(2, '0')}-fin.png`), avant0 = date('images/i00-fin.png');
+      const rq2 = await (await post('/api/pico/refaire', { base: '98-essai-pico', changements: [{ i: je_, ecran: { [champ]: 'Écran corrigé à la main', type: 'pirate' } }] })).json(), jq2 = await attendre(rq2.id);
+      const E3 = await (await fetch(U('/api/pico/episode?base=98-essai-pico'))).json();
+      check('écran corrigé : texte gardé, type inchangé', jq2.done && E3.scenes[je_].ecran.champs[champ] === 'Écran corrigé à la main' && E3.scenes[je_].ecran.type === E2.scenes[je_].ecran.type, jq2.error || JSON.stringify(E3.scenes[je_].ecran));
+      check('écran corrigé : seul cet écran est redessiné', date(`images/i${String(je_).padStart(2, '0')}-fin.png`) > avantImg && date('images/i00-fin.png') === avant0);
+    }
     // la vidéo posée sur la timeline : une réplique = un clip, médias copiés dans ceux du montage, sous-titres et musique
     const mo = await (await post('/api/pico/montage', { base: '98-essai-pico' })).json(), Pm = mo.projet || { clips: [] };
     check('timeline : un clip par réplique', Pm.clips.length === E2.scenes.length && Pm.clips.every(c => c.kind === 'video' && c.dur > 0.3 && c.subs && c.subs.length), JSON.stringify(mo).slice(0, 300));
@@ -203,11 +213,18 @@ async function navigateurEssai(exe) {
     check('écran de relecture : clic sur un mot → « se dit », écouter, ajouter au dictionnaire', await pg.evaluate(() => !!document.querySelector('#rlEcouter') && !!document.querySelector('#rlAjouter')));
     await pg.fill('#rlDit', 'eux'); await pg.click('#rlAjouter'); await pg.waitForTimeout(500);
     check('écran de relecture : mot ajouté → répliques qui le contiennent à refaire', await pg.evaluate(() => document.querySelectorAll('#rlListe .rlLigne.change').length >= 2), await pg.evaluate(() => document.querySelector('#rlEtat').textContent));
+    check('écran de relecture : 🖼 pour corriger le texte d’un écran', await pg.evaluate(() => document.querySelectorAll('#rlListe [data-ecran]').length >= 2));
+    await pg.click('#rlListe [data-ecran]'); await pg.waitForSelector('.rlEcranEdit [data-champ]');
+    await pg.evaluate(() => { const c = document.querySelector('.rlEcranEdit input[data-champ]'); c.value = 'Nouveau texte'; }); await pg.click('[data-ecranok]');
+    check('écran corrigé dans la relecture → réplique à refaire', await pg.evaluate(() => /Nouveau texte/.test(document.querySelector('#rlListe').textContent) && document.querySelectorAll('#rlListe .rlLigne.change').length >= 1));
     // « Monter dans la timeline » depuis la relecture : la timeline reçoit un clip par réplique, enregistrée comme projet
     await pg.evaluate(() => { window.confirm = () => true; }); await pg.click('#rlMonter [data-monter="youtube"]');
     await pg.waitForFunction(() => proj.clips.length > 0, null, { timeout: 15000 }).catch(() => {});
     check('timeline : l’épisode monté réplique par réplique, avec la musique', await pg.evaluate(n => proj.clips.length === n && proj.clips.every(c => /^98-essai-pico-\d{2}\.mp4$/.test(c.file)) && proj.audio.length >= 1 && proj.format === 'horizontal' && !document.querySelector('#modal').classList.contains('on'), E.scenes.length), await pg.evaluate(() => JSON.stringify([proj.clips.length, proj.audio, proj.format, !!document.querySelector('#rlListe')])));
     await pg.waitForFunction(n => projetCourant === n, mo.nom, { timeout: 10000 }).catch(() => {});
+    // « corrige cette image » dans la discussion, sur un plan de l'épisode : la relecture de l'écran est proposée
+    const repCh = await pg.evaluate(async () => { placerTete(starts()[2] + 0.1); await envoyerChat('corrige cette image, ça n’a aucun sens'); return discussion[discussion.length - 1]; });
+    check('discussion : « corrige cette image » sur un plan d’épisode → corriger l’écran de la réplique', /réplique 3/.test(repCh.texte) && repCh.boutons.some(b => /Corriger l’écran/.test(b.nom)), JSON.stringify(repCh));
     check('timeline : montage enregistré comme projet', (await (await fetch(U('/api/projets'))).json()).items.includes(mo.nom), JSON.stringify((await (await fetch(U('/api/projets'))).json()).items));
     check('écran de relecture : aucune erreur dans la page', !errs.length, errs.join(' | '));
     await pg.close();

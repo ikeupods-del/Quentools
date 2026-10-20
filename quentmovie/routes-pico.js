@@ -137,6 +137,9 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
   // ---------- relecture d'un épisode fabriqué : expression, phrase, prononciation ; seules les répliques changées sont refaites ----------
   const nomSur = b => { const n = String(b || ''); if (!/^\d{2,3}-[a-z0-9-]{1,80}$/.test(n)) throw new Error('Épisode inconnu'); return n; };
   const lireJson = f => JSON.parse(fs.readFileSync(f, 'utf8'));
+  // textes modifiables d'un écran (« = » : l'écran de la réplique précédente continue) : champs texte et points d'une liste
+  const champsEcran = e => { if (!e || e === '=' || typeof e !== 'object') return null; const champs = {}; for (const [k, v] of Object.entries(e)) if (k !== 'type' && typeof v === 'string') champs[k] = v;
+    return Object.keys(champs).length || Array.isArray(e.points) ? { type: e.type, champs, ...(Array.isArray(e.points) && e.points.every(x => typeof x === 'string') ? { points: e.points } : {}) } : null; };
   const dossierVoix = (EP) => path.join(BASE, 'modeles', EP.voix && EP.voix.moteur === 'kokoro' ? 'kokoro-multi-lang-v1_0' : (EP.voix && EP.voix.modele) || 'vits-piper-fr_FR-upmc-medium');
   function episodeFabrique(base) {
     base = nomSur(base); const f = path.join(SORTIES, 'episodes', base + '.json'), dossier = path.join(SORTIES, base);
@@ -149,6 +152,10 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
     for (const c of changements) {
       const s = EP.scenes[c.i]; if (!s) continue;
       if (c.expr && EXPRESSIONS.includes(c.expr)) s.expr = c.expr;
+      if (c.ecran && s.ecran && s.ecran !== '=') for (const [k, v] of Object.entries(c.ecran)) { // texte de l'écran corrigé à la main (titre, sous-titre, points d'une liste…)
+        if (k === 'points' && Array.isArray(s.ecran.points) && Array.isArray(v)) { const l = v.map(x => String(x).replace(/\s+/g, ' ').trim().slice(0, 200)).filter(Boolean).slice(0, 8); if (l.length) s.ecran.points = l; }
+        else if (k !== 'type' && typeof s.ecran[k] === 'string' && typeof v === 'string') s.ecran[k] = v.replace(/\s+/g, ' ').trim().slice(0, 300);
+      }
       if (typeof c.texte === 'string' && c.texte.trim()) { const t = c.texte.replace(/\s+/g, ' ').trim().slice(0, 600); if (t !== s.texte) { s.texte = t; delete s.voix; } } // `voix` (lecture différente du texte) ne correspond plus
     }
     fs.writeFileSync(E.f, JSON.stringify(EP, null, 1) + '\n');
@@ -209,7 +216,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       try { const VT = require('./voix-texte'); difficiles = require('./fiche-quentinvest').controler(lireJson(fFiche), { lexique: VT.lexiqueActuel() }).difficiles || []; } catch (e) { /* sans fiche : aucun mot signalé */ }
       let section = '';
       return send(res, 200, { base: E.base, titre: E.EP.titre, tiktok: E.tiktok, expressions: EXPRESSIONS, difficiles,
-        scenes: E.EP.scenes.map((x, i) => ({ i, section: x.section ? (section = x.section) : '', dans: section, expr: x.expr || 'neutre', texte: x.texte })) });
+        scenes: E.EP.scenes.map((x, i) => ({ i, section: x.section ? (section = x.section) : '', dans: section, expr: x.expr || 'neutre', texte: x.texte, ecran: champsEcran(x.ecran) })) });
     }
     // épisode fabriqué posé sur la timeline : une réplique = un clip (écran + Pico + voix), sous-titres, musique ; tout reste modifiable
     if (req.method === 'POST' && p === '/api/pico/montage') {
@@ -244,7 +251,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       if (enCours.size) throw new Error(OCCUPE);
       const place = {}; enCours.add(place);
       try {
-        const b = await readJson(req), E = episodeFabrique(b.base), ch = (Array.isArray(b.changements) ? b.changements : []).slice(0, 200).map(c => ({ i: Math.round(+c.i), expr: c.expr ? String(c.expr) : '', texte: c.texte != null ? String(c.texte) : null }));
+        const b = await readJson(req), E = episodeFabrique(b.base), ch = (Array.isArray(b.changements) ? b.changements : []).slice(0, 200).map(c => ({ i: Math.round(+c.i), expr: c.expr ? String(c.expr) : '', texte: c.texte != null ? String(c.texte) : null, ecran: c.ecran && typeof c.ecran === 'object' && !Array.isArray(c.ecran) ? c.ecran : null }));
         const port = req.socket.localPort;
         return send(res, 200, travail(async job => { job.port = port; try { return await refaire(job, E.base, ch, !!b.tiktok); } finally { enCours.delete(place); } }));
       } catch (e) { enCours.delete(place); throw e; }

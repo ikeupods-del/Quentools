@@ -57,6 +57,17 @@ const { controler, nombres } = require('../fiche-quentinvest');
     check('script sans ligne vide : une ligne finie = un paragraphe', f && f.blocs.length >= 3, f ? f.blocs.length : 'refusé');
     check('script : la fin « abonne-toi / la cloche » n’est pas dite deux fois', f && /anomalie/.test(f.resume.texte) && !JSON.stringify(f).includes('cloche'), f && f.resume.texte);
   }
+  { // texte des écrans : jamais une phrase coupée au milieu ni « … »
+    const { resumer, resumerDit, ficheDepuisScript } = require('../fiche-quentinvest');
+    check('écran : énumération trop longue → « etc. »', resumer('Mieux : avec ton chèque en carton, ce même commerçant court s\'acheter une villa, des voitures de sport, des montres en or et des actions.', 90) === 'Mieux : avec ton chèque en carton, ce même commerçant court s\'acheter une villa, etc.');
+    const r1 = resumer('Imagine un monde où tu signes un chèque d\'un million de dollars sans avoir un seul dinar sur ton compte en banque.', 50);
+    check('écran : jamais « … » ni un petit mot en fin', !/…|\s(?:d'un|de|du|un|et|le|la)$/.test(r1) && r1.length <= 50 && r1.length > 20, r1);
+    check('écran : coupé avant « et » plutôt qu\'au milieu', resumer('Tant que les prix montaient, tout le monde se croyait riche et personne ne voyait la catastrophe arriver doucement.', 90) === 'Tant que les prix montaient, tout le monde se croyait riche');
+    check('écran : phrases entières gardées', resumer('Une phrase. Deux phrases ici. Trois phrases bien plus longues que les autres pour dépasser.', 30) === 'Une phrase. Deux phrases ici.');
+    check('phrase dite : toujours terminée', /\.$/.test(resumerDit('Tant que les prix montaient, tout le monde se croyait riche et personne ne voyait rien venir du tout.', 60)));
+    const fs2 = ficheDepuisScript('# Le souk\n\nImagine un monde où tu signes un chèque d\'un million de dollars sans avoir un seul dinar sur ton compte en banque ni aucune garantie. Mieux : avec ton chèque en carton, ce même commerçant court s\'acheter une villa, des voitures de sport, des montres en or et des actions.\n\nPersonne ne vérifiait les chèques. Tout le monde payait plus tard, avec des promesses.\n\nLe trou atteint 94 milliards de dollars.\n\nEn une phrase : une promesse n\'est pas de l\'argent.');
+    check('fiche de ton script : aucun écran avec « … »', !/…/.test(JSON.stringify([fs2.accroche, fs2.blocs.map(b => b.ecran)])), JSON.stringify(fs2.blocs.map(b => b.ecran)).slice(0, 400));
+  }
   app.stop(); srv.close(); fs.rmSync(racine, { recursive: true, force: true });
   console.log(`Fiches QuentInvest : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
