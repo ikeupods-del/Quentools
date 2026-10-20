@@ -293,14 +293,17 @@ async function exporter() {
   fs.writeFileSync(path.join(TRAVAIL, 'rapport.json'), JSON.stringify({ duree: +durees.reduce((a, b) => a + b, 0).toFixed(2), scenes: EP.scenes.map((s, i) => ({ debut: +debuts[i].toFixed(2), debutExport: +(debuts[i] - 0.5 * EP.scenes.slice(1, i + 1).filter(x => x.section).length).toFixed(2), duree: +durees[i].toFixed(2), section: s.section || '' })) }));
   let t0 = 0; const clips = EP.scenes.map((_, i) => { progres({ etape: 'clips', i: i + 1, n: EP.scenes.length }); const c = clip(i, t0); t0 += c.d; return c; }), M = await montage(clips);
   await Promise.all(M.liste.map(async c => { await fetch(M.U('/api/import?name=' + c.nom), { method: 'POST', body: fs.readFileSync(path.join(M.base, 'medias', c.nom)) }); }));
+  // musique de la bibliothèque de QuentMovie : la fiche donne son nom (« documentaire-doux »), le montage lit « lib:musiques/documentaire-doux.mp3 »
+  // (le nom seul n'était pas trouvé et la musique disparaissait sans prévenir ; épisodes 1 et 2 : rendu d'origine gardé)
+  const lib = id => 'lib:' + (STYLE2 && !/\//.test(id) ? `musiques/${id}.mp3` : id);
   const projet = {
     format: VERT ? 'vertical' : 'horizontal', res: 1080, fps: FPS, quality: 'rapide', sortie: 'mp4', normaliser: true, pistes: [], textes: [], markers: [],
     clips: M.liste.map(c => ({ file: c.nom, kind: 'video', in: 0, out: +c.d.toFixed(STYLE2 ? 6 : 3), dur: +c.d.toFixed(STYLE2 ? 6 : 3), speed: 1, vol: 100, hasAudio: true, fx: [], afx: [], overlays: [], key: { on: false }, subs: c.subs, subStyle: VERT ? 'tiktok' : 'bandeau', subSize: VERT ? 5.6 : STYLE2 ? 4.6 : 4,
       transition: c.fondu ? { type: 'fade', dur: 0.5 } : null })),
     audio: EP.musiqueRevelation && STYLE2 // la musique change au chiffre clé : douce avant, plus vivante après
-      ? [{ file: 'lib:' + EP.musique, vol: 15, start: 0, dur: +debuts[EP.musiqueRevelation.scene].toFixed(2), fade: true, loop: true, duck: true },
-         { file: 'lib:' + EP.musiqueRevelation.id, vol: 15, start: +debuts[EP.musiqueRevelation.scene].toFixed(2), fade: true, loop: true, duck: true }]
-      : [{ file: 'lib:' + EP.musique, vol: 15, start: 0, fade: true, loop: true, duck: true }]
+      ? [{ file: lib(EP.musique), vol: 15, start: 0, dur: +debuts[EP.musiqueRevelation.scene].toFixed(2), fade: true, loop: true, duck: true },
+         { file: lib(EP.musiqueRevelation.id), vol: 15, start: +debuts[EP.musiqueRevelation.scene].toFixed(2), fade: true, loop: true, duck: true }]
+      : [{ file: lib(EP.musique), vol: 15, start: 0, fade: true, loop: true, duck: true }]
   };
   projet.clips[projet.clips.length - 1].transition = null;
   fs.writeFileSync(path.join(TRAVAIL, 'projet-quentmovie.json'), JSON.stringify(projet));
