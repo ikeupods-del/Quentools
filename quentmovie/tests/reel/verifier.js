@@ -22,7 +22,7 @@ for (const [nom, k] of [['Mon script', r.script], ['Tout seul', r.seul]]) {
   if (!k || k.erreur) { ko.push(`${nom} : ${k ? k.erreur : 'pas de résultat'}`); continue; }
   const fichiers = k.fichiers || [], yt = fichiers.find(n => /-youtube\.mp4$/.test(n)), tt = fichiers.find(n => /-tiktok\.mp4$/.test(n));
   if (!yt) { ko.push(`${nom} : pas de vidéo YouTube`); continue; }
-  if (!tt) ko.push(`${nom} : pas de version TikTok`);
+  if (!tt && !process.env.QM_QI_DUREE) ko.push(`${nom} : pas de version TikTok`);
   if (!fichiers.some(n => /miniature.*\.png$/.test(n))) ko.push(`${nom} : pas de miniature`);
   for (const n of [yt, tt].filter(Boolean)) {
     const v = video(path.join(k.dossier, n)); console.log(`${nom} · ${n} : ${v.lisible ? 'lisible' : 'ILLISIBLE'}, ${v.duree} s, son moyen ${v.volume} dB${v.erreurs.length ? ', ' + v.erreurs.join(' | ') : ''}`);

@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.7.5
+- **Ta voix clonée plus rapide** : une phrase identique dans la version YouTube et la version TikTok n'est plus dite deux fois, le son est réutilisé.
+
 ## 2.7.4
 - **Mon script** : un script de moins de 5 minutes n'est plus refusé (« Trop court ») ; la vidéo est fabriquée et une remarque le signale. La longueur de ton script, c'est toi qui la choisis.
 - Ta voix clonée recharge son modèle moins souvent : un épisode est dit un peu plus vite.

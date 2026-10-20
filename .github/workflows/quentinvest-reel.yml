@@ -36,7 +36,7 @@ jobs:
         mode: [script, seul]
     name: ${{ matrix.mode == 'script' && 'Mon script' || 'Tout seul' }}
     runs-on: macos-latest
-    timeout-minutes: 200
+    timeout-minutes: ${{ matrix.mode == 'seul' && 355 || 200 }}
     defaults:
       run:
         working-directory: quentmovie
@@ -55,16 +55,17 @@ jobs:
         run: node tests/reel/preparer-voix.js "$RUNNER_TEMP/qm-qi"
       - name: Fabriquer la vidéo dans l'application installée
         if: ${{ matrix.mode == 'script' || github.event_name != 'workflow_dispatch' || inputs.seul }}
-        timeout-minutes: 170
+        timeout-minutes: ${{ matrix.mode == 'seul' && 335 || 170 }}
         env:
           QM_AUTOTEST_SUJET: ${{ inputs.sujet || 'fais une vidéo sur le krach de 1929' }}
           QM_AUTOTEST_MODE: ${{ matrix.mode }}
-          # Mac du workflow sans puce graphique : la voix clonée y prend plusieurs minutes par réplique ; « Tout seul » écrit donc un texte d'environ 1 min 30
-          QM_QI_DUREE: ${{ matrix.mode == 'seul' && '90' || '' }}
+          # Mac du workflow sans puce graphique : la voix clonée y prend plusieurs minutes par réplique ; « Tout seul » écrit donc un texte
+          # d'environ une minute, version YouTube seulement (la version TikTok est vérifiée par « Mon script »)
+          QM_QI_DUREE: ${{ matrix.mode == 'seul' && '60' || '' }}
         run: |
-          QM_AUTOTEST="$PWD/autotest-qi.json" QM_AUTOTEST_QI=1 QM_AUTOTEST_MAX_MIN=165 QM_AUTOTEST_SCRIPT="$PWD/tests/reel/script-souk.txt" \
+          QM_AUTOTEST="$PWD/autotest-qi.json" QM_AUTOTEST_QI=1 QM_AUTOTEST_MAX_MIN=${{ matrix.mode == 'seul' && 330 || 165 }} QM_AUTOTEST_SCRIPT="$PWD/tests/reel/script-souk.txt" \
             QM_BASE="$RUNNER_TEMP/qm-qi" dist/mac-arm64/QuentMovie.app/Contents/MacOS/QuentMovie || true
-          QM_QI_DUREE="${{ matrix.mode == 'seul' && '90' || '' }}" node tests/reel/verifier.js autotest-qi.json
+          QM_QI_DUREE="${{ matrix.mode == 'seul' && '60' || '' }}" node tests/reel/verifier.js autotest-qi.json
       - name: Journaux de la voix clonée et de l'IA
         if: always()
         run: |

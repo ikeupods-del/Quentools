@@ -185,7 +185,7 @@ async function autotestQuentinvest(port, res) {
   // ton script, collé comme dans la fenêtre (paragraphes séparés par un simple retour à la ligne, fin « abonne-toi / cloche »)
   if (mode !== 'seul') res.script = await lancer('Mon script', { script: fs.readFileSync(process.env.QM_AUTOTEST_SCRIPT, 'utf8'), options: { voix: 'ma-voix' } });
   // « Tout seul » : Wikipédia + IA locale + ta voix clonée
-  if (mode !== 'script') res.seul = await lancer('Tout seul', { demande: process.env.QM_AUTOTEST_SUJET || 'fais une vidéo sur le krach de 1929', options: { voix: 'ma-voix', court: !!process.env.QM_QI_DUREE } });
+  if (mode !== 'script') res.seul = await lancer('Tout seul', { demande: process.env.QM_AUTOTEST_SUJET || 'fais une vidéo sur le krach de 1929', options: { voix: 'ma-voix', court: !!process.env.QM_QI_DUREE, sansTiktok: !!process.env.QM_QI_DUREE } }); // essai court : la version TikTok est vérifiée par « Mon script »
 }
 
 const js = code => () => win && win.webContents.executeJavaScript(code);
