@@ -66,6 +66,9 @@ const { controler, nombres } = require('../fiche-quentinvest');
     check('écran : phrases entières gardées', resumer('Une phrase. Deux phrases ici. Trois phrases bien plus longues que les autres pour dépasser.', 30) === 'Une phrase. Deux phrases ici.');
     check('phrase dite : toujours terminée', /\.$/.test(resumerDit('Tant que les prix montaient, tout le monde se croyait riche et personne ne voyait rien venir du tout.', 60)));
     const fs2 = ficheDepuisScript('# Le souk\n\nImagine un monde où tu signes un chèque d\'un million de dollars sans avoir un seul dinar sur ton compte en banque ni aucune garantie. Mieux : avec ton chèque en carton, ce même commerçant court s\'acheter une villa, des voitures de sport, des montres en or et des actions.\n\nPersonne ne vérifiait les chèques. Tout le monde payait plus tard, avec des promesses.\n\nLe trou atteint 94 milliards de dollars.\n\nEn une phrase : une promesse n\'est pas de l\'argent.');
+    const fx = { accroche: { ecran: { titre: 'Imagine un monde où tu signes un chèque d’un…' } }, blocs: [{ texte: 'Dit… tel quel…', ecran: { type: 'liste', titre: 'Trois idées et', points: ['Une villa, des…', 'Bien'] } }, { ecran: '=' }] };
+    const nf = require('../fiche-quentinvest').finirEcrans(fx);
+    check('dernier contrôle : écrans sans « … » ni petit mot final, texte dit inchangé', nf === 3 && fx.accroche.ecran.titre === 'Imagine un monde où tu signes un chèque' && fx.blocs[0].ecran.titre === 'Trois idées' && fx.blocs[0].ecran.points[0] === 'Une villa' && fx.blocs[0].texte === 'Dit… tel quel…', JSON.stringify(fx));
     check('fiche de ton script : aucun écran avec « … »', !/…/.test(JSON.stringify([fs2.accroche, fs2.blocs.map(b => b.ecran)])), JSON.stringify(fs2.blocs.map(b => b.ecran)).slice(0, 400));
   }
   app.stop(); srv.close(); fs.rmSync(racine, { recursive: true, force: true });

@@ -116,6 +116,17 @@ function resumer(t, n) {
   for (let i = 0; i < 6 && PETITS.test(c); i++) c = c.replace(PETITS, '').replace(/[\s,;:—–]+$/, '');
   return c;
 }
+// dernier contrôle avant fabrication, quelle que soit l'origine de la fiche (IA, script, fiche écrite à la main) : un texte d'écran ne finit
+// jamais par « … » ni par un petit mot (« d'un », « et ») ; renvoie le nombre de textes corrigés
+function finirEcrans(fiche) {
+  let n = 0;
+  const finir = t => { let c = String(t).replace(/\s*(?:…|\.{3})\s*$/, '').replace(/[\s,;:—–]+$/, ''); for (let i = 0; i < 6 && PETITS.test(c); i++) c = c.replace(PETITS, '').replace(/[\s,;:—–]+$/, ''); return c; };
+  const ecran = e => { if (!e || typeof e !== 'object') return; for (const k of Object.keys(e)) {
+    if (typeof e[k] === 'string' && k !== 'type' && k !== 'source' && /(?:…|\.{3})\s*$|\s(?:de|du|des|d['’]un|d['’]une|un|une|le|la|les|et|ou|à|au|en)$/i.test(e[k])) { const v = finir(e[k]); if (v && v !== e[k]) { e[k] = v; n++; } }
+    else if (Array.isArray(e[k])) e[k].forEach((x, i) => { if (typeof x === 'string' && /(?:…|\.{3})\s*$/.test(x)) { const v = finir(x); if (v) { e[k][i] = v; n++; } } }); } };
+  const parcourir = o => { if (!o || typeof o !== 'object') return; if (Array.isArray(o)) return o.forEach(parcourir); for (const [k, v] of Object.entries(o)) { if (k === 'ecran' || k === 'ecranTiktok') ecran(v); else parcourir(v); } };
+  parcourir(fiche); return n;
+}
 // phrase dite par la voix : résumée comme un écran, et toujours terminée par une ponctuation
 const resumerDit = (t, n) => { const r = resumer(t, n); return /[.!?…»"”)]$/.test(r) ? r : r + '.'; };
 const NOMBRE = /(?:≈\s*)?\d[\d\s  ]*(?:[.,]\d+)?\s*(?:%|€|\$|euros?\b|dollars?\b|ans?\b|mois\b|millions?\b|milliards?\b)/i;
@@ -186,7 +197,7 @@ function ficheDepuisScript(script, { titre = '', numero = 1 } = {}) {
   };
 }
 
-module.exports = { controler, textesDits, nombres, ficheDepuisScript, resumer, resumerDit };
+module.exports = { controler, textesDits, nombres, ficheDepuisScript, resumer, resumerDit, finirEcrans };
 
 if (require.main === module) {
   const [, , fiche, faits] = process.argv;

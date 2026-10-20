@@ -24,6 +24,8 @@ Carte « Épisode QuentInvest » de l'accueil (ou bouton « 🧾 Fiche » du Dou
 Ce que le programme ajoute seul : appel à s'abonner dans les premières secondes, accroche chiffrée, expressions et gestes de Pico, bruitages, musique qui change au chiffre clé, zoom lent, sous-titres, contrôle du rythme (avertissements affichés), chapitres, miniatures, texte de publication. Seul le fond de la fiche demande de la rédaction.
 
 ## Photos et vidéos
+**Dans QuentMovie, automatique** : avant la fabrication, chaque bloc à écran de texte (message, définition, chiffre) sans `fond` reçoit la photo libre de droits la mieux notée sur son sujet (`illustrerFiche` dans routes-pico.js → `illustrer` de generateur.js : Commons, Openverse, NASA, banques à clé ; licences NC/ND refusées ; photos dans `~/Movies/QuentInvest/medias/illustrations/<épisode>/`, gardées dans la fiche). Case « 🖼 Photos d'illustration » de la fenêtre Épisode QuentInvest (option `illustrer: false` pour s'en passer). Puis `finirEcrans` (fiche-quentinvest.js) retire tout « … » ou petit mot en fin de texte d'écran.
+
 Un bloc de fiche peut avoir une **photo ou une vidéo en fond** (le texte et les calculs restent affichés par-dessus, Pico reste à l'écran) :
 - `"fond": { "fichier": "nom.jpg", "credit": "Auteur, licence, source" }` : fichier rangé dans `medias/` (ou chemin complet), ou `"url"` (téléchargée une fois dans `medias/cache/`). Une photo est cadrée plein écran, assombrie sous le texte, avec un zoom lent ; une vidéo tourne en boucle (`"debut"` : seconde de départ, `"sombre": false` pour la laisser claire). Le fond dure jusqu'au prochain nouvel écran (un bloc `"ecran": "="` le garde).
 - Écran `{ "type": "visuel", "legende": "…" }` : uniquement le média, avec une légende facultative.

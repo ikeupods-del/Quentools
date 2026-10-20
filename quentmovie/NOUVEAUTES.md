@@ -4,6 +4,8 @@ Chaque section devient le texte affiché dans l'application quand la mise à jou
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
 ## 2.7.8
+- **Photos d'illustration automatiques** (case « 🖼 Photos d'illustration », cochée d'office) : pour chaque écran de texte, QuentMovie cherche une photo libre de droits sur le sujet (Wikimedia Commons, Openverse, NASA, et Pexels, Pixabay ou Unsplash si tu as mis leur clé), garde la plus pertinente et la pose en fond, assombrie sous le texte, avec son crédit à l'écran. Sans photo assez proche du sujet, l'écran reste tel quel. Les photos non commerciales ou « tous droits réservés » ne sont jamais prises.
+- **Dernier contrôle des écrans avant la fabrication** : quelle que soit l'origine du texte (ton script, l'IA, une fiche), aucun écran ne finit par « … » ni par un petit mot (« d'un », « et »).
 - **Écrans QuentInvest sans phrase coupée** : quand une phrase est trop longue pour l'écran, elle n'est plus coupée au milieu avec « … ». L'écran garde des phrases entières, s'arrête à une virgule, ou met « etc. » après une énumération (« …s'acheter une villa, etc. »).
 - **Corriger le texte d'un écran** : dans « 🔍 Relire et corriger », le bouton 🖼 de chaque réplique permet de réécrire le titre, le sous-titre ou les points de son écran ; « Refaire » ne redessine que cet écran.
 - Dans la discussion, « corrige cette image » sur un plan de ton épisode ouvre directement la correction de son écran.

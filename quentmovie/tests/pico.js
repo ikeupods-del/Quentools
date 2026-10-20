@@ -41,7 +41,18 @@ async function navigateurEssai(exe) {
   const vc = path.join(base, 'voix-clone', 'venv-chatterbox'), fauxPython = path.join(vc, 'bin', 'python'); fs.mkdirSync(path.dirname(fauxPython), { recursive: true });
   fs.writeFileSync(fauxPython, `#!${process.execPath}\nconst fs = require('fs'), { execFileSync } = require('child_process'), a = process.argv, lot = a[a.indexOf('--lot') + 1];\nfor (const x of JSON.parse(fs.readFileSync(lot, 'utf8'))) { console.log('ETAPE : Ta voix'); fs.mkdirSync(require('path').dirname(x.fichier), { recursive: true }); execFileSync(${JSON.stringify(bins.ffmpeg)}, ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=f=200:d=' + Math.min(6, 0.5 + x.texte.length / 18), '-ar', '24000', '-ac', '1', x.fichier]); }\n`); fs.chmodSync(fauxPython, 0o755);
   fs.writeFileSync(path.join(vc, '.complet'), 'essai'); process.env.QM_PYTHON = fauxPython;
-  const app = create({ port: 0, base, ...bins, ...(process.env.QM_SANS_FFPROBE ? { ffprobe: null } : {}), sortiesPico: sorties, navigateur: nav }), port = await app.start(), U = p => `http://127.0.0.1:${port}${p}`;
+  // fausses banques de photos (Wikimedia Commons, Openverse, NASA) : une photo libre sur l'euro, une autre sous licence non commerciale (refusée)
+  const photo = path.join(base, 'photo-banque.jpg'); execFileSync(bins.ffmpeg, ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'testsrc2=s=1920x1280', '-frames:v', '1', photo]);
+  const photos = { n: 0 }, banque = require('http').createServer((req, res) => {
+    const u = new URL(req.url, 'http://x'), q = Object.fromEntries(u.searchParams), pt = banque.address().port;
+    if (u.pathname.startsWith('/images/')) { photos.n++; res.writeHead(200, { 'Content-Type': 'image/jpeg' }); return res.end(fs.readFileSync(photo)); }
+    res.setHeader('Content-Type', 'application/json');
+    const info = (t, lic) => ({ title: t, imageinfo: [{ mime: 'image/jpeg', width: 1920, height: 1280, url: `http://127.0.0.1:${pt}/images/${encodeURIComponent(t)}`, thumburl: `http://127.0.0.1:${pt}/images/${encodeURIComponent(t)}`, descriptionurl: 'https://commons.wikimedia.org/wiki/' + t, extmetadata: { Artist: { value: 'Photographe' }, LicenseShortName: { value: lic } } }] });
+    if (q.generator === 'search') return res.end(JSON.stringify({ query: { pages: [{ index: 1, ...info('File:Pièces euro monnaie commune.jpg', 'CC BY-SA 4.0') }, { index: 2, ...info('File:Euro pièce monnaie gros plan.jpg', 'CC BY-NC 2.0') }] } }));
+    res.end('{}');
+  });
+  await new Promise(r => banque.listen(0, '127.0.0.1', r)); const fausseBanque = `http://127.0.0.1:${banque.address().port}`;
+  const app = create({ port: 0, base, ...bins, ...(process.env.QM_SANS_FFPROBE ? { ffprobe: null } : {}), sortiesPico: sorties, navigateur: nav, commons: fausseBanque, banques: { openverse: fausseBanque, nasa: fausseBanque } }), port = await app.start(), U = p => `http://127.0.0.1:${port}${p}`;
   const post = (p, o, h = {}) => fetch(U(p), { method: 'POST', headers: h, body: JSON.stringify(o || {}) });
   const attendre = async id => { for (;;) { await new Promise(r => setTimeout(r, 800)); const j = await (await fetch(U('/api/job?id=' + id))).json(); if (j.error || j.done) return j; } };
 
@@ -108,6 +119,11 @@ async function navigateurEssai(exe) {
     check('fabrication : écrans dessinés par le pont du navigateur', nav.appels.ouvrir >= 3 && nav.appels.capture > 20, JSON.stringify(nav.appels));
     check('fabrication : avancement suivi (voix, écrans, montage)', ['voix', 'écrans animés', 'montage'].every(m => [...etapes].some(x => x.includes(m))), JSON.stringify([...etapes]));
     check('fabrication : fiche gardée avec les épisodes', fs.existsSync(path.join(sorties, 'fiches', '98-essai-pico.json')));
+    { const fg = JSON.parse(fs.readFileSync(path.join(sorties, 'fiches', '98-essai-pico.json'), 'utf8')), fd = fg.blocs[0].fond || {};
+      check('illustrations : photo libre trouvée et posée en fond, avec son crédit', r.illustrations === 1 && fd.fichier && fs.existsSync(fd.fichier) && /Photographe, CC BY-SA 4\.0/.test(fd.credit || '') && photos.n >= 1, JSON.stringify([r.illustrations, fd]));
+      check('illustrations : photo non commerciale (NC) jamais prise', !/NC/.test(fd.credit || ''));
+      const EPf = JSON.parse(fs.readFileSync(path.join(sorties, 'episodes', '98-essai-pico.json'), 'utf8'));
+      check('illustrations : crédit affiché sur l’écran', EPf.scenes.some(x => x.fond && x.ecran && /^Image : Photographe/.test(x.ecran.source || '')), JSON.stringify(EPf.scenes.map(x => x.ecran && x.ecran.source))); }
     check('fabrication : épisode prêt pour « Publier »', require('../publication').episodes(sorties).some(x => x.nom === '98-essai-pico'), JSON.stringify(require('../publication').episodes(sorties).map(x => x.nom)));
     if (r.dossier) { const out = execFileSync(bins.ffmpeg, ['-hide_banner', '-i', path.join(r.dossier, '98-essai-pico-youtube.mp4'), '-f', 'null', '-'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).toString(); check('fabrication : vidéo lisible', true, out.slice(0, 1)); }
     console.log(`  fabrication réelle en ${Math.round((Date.now() - t0) / 1000)} s`);
@@ -231,6 +247,6 @@ async function navigateurEssai(exe) {
 
   }
   if (nav) await nav.b.close();
-  app.stop && app.stop(); if (process.env.QM_GARDER) console.log('  dossier gardé : ' + base); else fs.rmSync(base, { recursive: true, force: true });
+  app.stop && app.stop(); banque.close(); if (process.env.QM_GARDER) console.log('  dossier gardé : ' + base); else fs.rmSync(base, { recursive: true, force: true });
   console.log(`Pico : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

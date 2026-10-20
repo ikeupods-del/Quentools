@@ -167,7 +167,7 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
         c.ok = !c.erreurs.length;
         if (!c.ok) throw new Error('Texte pas encore fabricable : ' + c.erreurs.join(' ; ') + (article ? ` (article Wikipédia « ${article} »). Choisis « Je relis avant » pour le compléter.` : ''));
         job.step = 'Fabrication de la vidéo…'; job.progress = script.trim() ? 0.05 : 0.3;
-        const r = await fetch(U('/api/pico/fabriquer'), { method: 'POST', body: JSON.stringify({ fiche, options: { voix: o.voix, sansTiktok: !!o.sansTiktok, court } }) }), j = await r.json();
+        const r = await fetch(U('/api/pico/fabriquer'), { method: 'POST', body: JSON.stringify({ fiche, options: { voix: o.voix, sansTiktok: !!o.sansTiktok, court, illustrer: o.illustrer !== false } }) }), j = await r.json();
         if (!r.ok || j.error) throw new Error(j.error || 'Fabrication impossible');
         const a = job.progress;
         for (;;) {
