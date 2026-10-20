@@ -133,10 +133,28 @@ function finirEcrans(fiche) {
 // phrase dite par la voix : résumée comme un écran, et toujours terminée par une ponctuation
 const resumerDit = (t, n) => { const r = resumer(t, n); return /[.!?…»"”)]$/.test(r) ? r : r + '.'; };
 const NOMBRE = /(?:≈\s*)?\d[\d\s  ]*(?:[.,]\d+)?\s*(?:%|€|\$|euros?\b|dollars?\b|ans?\b|mois\b|millions?\b|milliards?\b)/i;
+// Légende sous un grand chiffre : ce que mesure le chiffre, en quelques mots, jamais toute la phrase dite (recopiée sous le chiffre, coupée
+// de son contexte, elle ne voulait plus rien dire : « 500 % » + « Voir le cours d'une entreprise bidon grimper de 200 à 500 %… devient la norme »).
+// Phrase courte : gardée. Sinon le complément qui suit le chiffre (« en l'espace de deux semaines »), arrêté avant le verbe principal ;
+// sinon rien (la voix explique). L'IA locale peut ensuite écrire mieux (relecture-ecrans.js, contrôlée : rien d'ajouté à la phrase).
+const VERBE_SUITE = /\s(?:devient|deviennent|est|sont|reste|restent|semble|semblent|paraît|paraissent|représente|représentent|signifie|veut dire|montre|montrent|prouve|change|changent)\b/i;
+function legendeChiffre(phrase, nombre) {
+  const p = String(phrase || '').replace(/\s+/g, ' ').trim().replace(/[.!?…]+["»”)]*$/, '');
+  if (p.length <= 70) return p;
+  const i = p.indexOf(nombre); if (i < 0) return '';
+  const propre = t => { let c = t.trim().replace(/^[,;:—–\s]+|[,;:—–\s]+$/g, ''); for (let k = 0; k < 6 && PETITS.test(c); k++) c = c.replace(PETITS, '').replace(/[\s,;:—–]+$/, ''); return c; };
+  const suite = propre((p.slice(i + nombre.length).split(/[,;:—–(]/)[0] || '').split(VERBE_SUITE)[0]), ns = nbMots(suite);
+  const maj = t => t.charAt(0).toUpperCase() + t.slice(1);
+  if (ns >= 2 && ns <= 9 && suite.length <= 70 && !/^(?:et|ou|mais|donc|car|qui|que|qu['’]|de|d['’])\b/i.test(suite)) return maj(suite);
+  // sinon ce qui précède le chiffre dans la même partie de phrase (« les banques américaines avaient prêté »)
+  const avant = propre(p.slice(0, i).split(/[,;:—–(]/).pop() || ''), na = nbMots(avant);
+  if (na >= 3 && na <= 9 && avant.length <= 70 && !/\d/.test(avant)) return maj(avant);
+  return '';
+}
 function ecranDe(texte, section, points, titreListe) {
   if (points && points.length >= 2) return { type: 'liste', titre: resumer(titreListe || section || '', 60), points: points.slice(0, 6).map(x => resumer(x.replace(/^./, c => c.toUpperCase()), 70)) };
   const ph = phrasesDe(texte), n = NOMBRE.exec(texte);
-  if (n) { const p = ph.find(x => x.includes(n[0].trim())) || ph[0] || ''; return { type: 'chiffre', valeur: n[0].replace(/\s+/g, ' ').trim(), legende: resumer(p, 110) }; }
+  if (n) { const p = ph.find(x => x.includes(n[0].trim())) || ph[0] || ''; return { type: 'chiffre', valeur: n[0].replace(/\s+/g, ' ').trim(), legende: legendeChiffre(p, n[0].trim()) }; }
   const d = /^(?:l[ea]s?\s+|l'|un[e]?\s+)?([\p{L}\p{N}'’ -]{2,32}?),?\s+(?:c'est|c’est|est|désigne|signifie)\s+(.{8,})$/iu.exec(ph[0] || '');
   if (d) return { type: 'definition', mot: d[1].trim().replace(/^./, c => c.toUpperCase()), texte: resumer(d[2].replace(/[.!]$/, ''), 130) };
   if (section) return { type: 'message', titre: resumer(section, 60), sous: resumer(ph[0] || '', 150) };
@@ -200,7 +218,7 @@ function ficheDepuisScript(script, { titre = '', numero = 1 } = {}) {
     numero, slug: slugDe(titreF), titre: titreF, promesse: titreF, description: coupe(ph0.slice(0, 2).join(' '), 300),
     hashtags: '#économie #investissement #apprendre #QuentInvest', musique: 'documentaire-doux',
     accroche: { texte: resumerDit(accroche.texte, 400), court: resumerDit(ph0[0] || accroche.texte, 160),
-      ecran: n0 ? { type: 'chiffre', valeur: n0[0].replace(/\s+/g, ' ').trim(), legende: resumer(ph0[0] || '', 110) }
+      ecran: n0 ? { type: 'chiffre', valeur: n0[0].replace(/\s+/g, ' ').trim(), legende: legendeChiffre(ph0.find(x => x.includes(n0[0].trim())) || ph0[0] || '', n0[0].trim()) }
         : { type: 'message', titre: resumer(titreF, 70), sous: resumer(repete(resumer(titreF, 70), ph0[0] || '') ? ph0[1] || '' : ph0[0] || '', 150) } },
     blocs,
     // l'écran du résumé : l'idée principale en quelques mots, pas tout le paragraphe (la voix dit le résumé en entier)
@@ -211,7 +229,7 @@ function ficheDepuisScript(script, { titre = '', numero = 1 } = {}) {
   };
 }
 
-module.exports = { controler, textesDits, nombres, ficheDepuisScript, resumer, resumerDit, finirEcrans, ecranDe };
+module.exports = { controler, textesDits, nombres, ficheDepuisScript, resumer, resumerDit, finirEcrans, ecranDe, legendeChiffre };
 
 if (require.main === module) {
   const [, , fiche, faits] = process.argv;

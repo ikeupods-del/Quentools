@@ -317,6 +317,22 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     }
     return out;
   }
+  // Photos proposées au propriétaire pour chaque passage (épisodes QuentInvest : il choisit, rien n'est posé sans son accord) :
+  // jusqu'à n photos libres de droits par passage, la mieux notée d'abord, jamais de vidéo ni de licence NC/ND
+  async function proposerIllustrations(requetes, { ancre = '', vertical = false, n = 4 } = {}) {
+    const r = await mediasPour(requetes, { ancre, ancreRequete: '', vertical });
+    return requetes.map((_, i) => [...new Set([r.choix[i], ...((r.propositions || [])[i] || [])])].filter(k => k != null && k >= 0).map(k => r.images[k])
+      .filter(im => im && !im.video && LICENCE_LIBRE(im.licence)).slice(0, n)
+      .map(im => ({ url: im.url, apercu: im.apercu || im.url, nom: im.nom, page: im.page || '', credit: `${im.auteur}, ${im.licence}${im.source ? ', ' + im.source : ''}` })));
+  }
+  // photo validée par le propriétaire : téléchargée une fois dans `dossier` (adresse https seulement)
+  async function garderPhoto(ph, dossier, i = 0) {
+    const u = String(ph && ph.url || ''); if (!/^https:\/\/[^\s]+$/i.test(u)) throw new Error('Adresse de photo invalide');
+    fs.mkdirSync(dossier, { recursive: true });
+    const f = path.join(dossier, `photo-${String(i + 1).padStart(2, '0')}-${require('crypto').createHash('md5').update(u).digest('hex').slice(0, 8)}${/\.png($|\?)/i.test(u) ? '.png' : '.jpg'}`);
+    if (!fs.existsSync(f)) await requete(u, { dest: f, ua: UA, accept: 'image/*', quoi: 'd’images' });
+    return { fichier: f, credit: String(ph.credit || '').slice(0, 200) };
+  }
   // Toutes les banques activées (Commons + Openverse, NASA, Pexels, Pixabay, Unsplash) ; une banque en panne est ignorée
   async function rechercherImages(q, { vertical = false, limit = 20 } = {}) {
     const B = banques ? banques() : null;
@@ -352,7 +368,7 @@ function creer({ run, FFMPEG, probe, MEDIAS, wiki = 'https://fr.wikipedia.org', 
     } catch (err) { return { texte: '', articles: [] }; }
   }
   const lireMac = async (texte, fichier, v) => { const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-essai-')); try { return await lire(texte, fichier, { voix: v }, dir); } finally { fs.rmSync(dir, { recursive: true, force: true }); } };
-  return { chercher, contexte, preparer, voix, fabriquer, lireMac, faits, mediasPour, illustrer, imagesDeScenes, proposer };
+  return { chercher, contexte, preparer, voix, fabriquer, lireMac, faits, mediasPour, illustrer, imagesDeScenes, proposer, proposerIllustrations, garderPhoto };
 }
 
 module.exports = { creer, sujetDe, phrases, nettoyerPhrase, construireScript, construireScenes, choisirImages, imageDe };

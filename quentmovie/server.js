@@ -1449,7 +1449,9 @@ function buildClip(c, P, o = {}) {
           // fichier court (le son seul) : le décalage et le silence jusqu'à la fin sont ajoutés au moment du mélange
           // (avant : un WAV de toute la durée par son, plus de 400 Mo chacun pour un montage de 36 min)
           a.ms = ms;
-          await ff([...(decal > 0.01 ? ['-ss', decal.toFixed(3)] : []), ...entree, '-af', `${tempo.length ? tempo.join(',') + ',' : ''}${gain}${fd}`, '-t', Math.max(0.05, dur - st).toFixed(3), ...wav], `son${i + 1}.wav`);
+          // réducteur de bruit du mixage (voix enregistrées, sons détachés) : avant le gain
+          const debruit = num(a.debruit, 0) > 0 && filters.has('afftdn') ? `afftdn=nr=${clamp(num(a.debruit, 0), 5, 40)}:nf=-30,` : '';
+          await ff([...(decal > 0.01 ? ['-ss', decal.toFixed(3)] : []), ...entree, '-af', `${debruit}${tempo.length ? tempo.join(',') + ',' : ''}${gain}${fd}`, '-t', Math.max(0.05, dur - st).toFixed(3), ...wav], `son${i + 1}.wav`);
           jeter(`brut${i}.wav`, `net${i}.wav`, `boucle${i}.wav`, `boucle${i}.txt`); // étapes du son, plus utiles
         };
         await Promise.all(Array.from({ length: Math.min(4, audios.length) }, async () => { while (prochain < audios.length) { const i = prochain++; await unSon(audios[i], i); } }));
@@ -2104,7 +2106,7 @@ function buildClip(c, P, o = {}) {
       }
       { const r = await RPR.creer({ BASE, EXPORTS, PROJETS, TMP, send, readJson, mediaPath, projFile, occupe: () => [...jobs.values()].some(j => !j.done && !j.error) })(req, res, p); if (r !== RPR.NON) return r; } // tableau des projets (routes-projets.js)
       { const r = await RAN.creer({ MEDIAS, FFMPEG, opts, send, readJson, travail })(req, res, p); if (r !== RAN.NON) return r; } // animations (génériques, chiffres clés, bandeaux…) : routes-animations.js
-      { const r = await RPI.creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA: () => { try { if (ia && ia.arreter) ia.arreter(); } catch (e) { /* déjà arrêtée */ } }, illustrer: (...a) => GEN().illustrer(...a), titrer: (...a) => IA().titrerEcrans(...a) })(req, res, p, url); if (r !== RPI.NON) return r; } // épisode Pico fabriqué dans QuentMovie, navigateur des écrans (routes-pico.js)
+      { const r = await RPI.creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE, libererIA: () => { try { if (ia && ia.arreter) ia.arreter(); } catch (e) { /* déjà arrêtée */ } }, illustrer: (...a) => GEN().illustrer(...a), gen: () => GEN(), titrer: (...a) => IA().titrerEcrans(...a), retoucher: (...a) => IA().retoucherEcran(...a) })(req, res, p, url); if (r !== RPI.NON) return r; } // épisode Pico fabriqué dans QuentMovie, navigateur des écrans (routes-pico.js)
       { const r = await RP.creer({ PUB, opts, send, readJson, travail, EXPORTS, safeName })(req, res, p); if (r !== RP.NON) return r; } // publication YouTube et TikTok (routes-publier.js)
       { const r = await RV.creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail, PAROLE, VOIXCLONE, GEN, IA, safeName, num })(req, res, p, url); if (r !== RV.NON) return r; } // doublage, voix clonée, prononciations, fiche (routes-voix.js)
       if (p === '/api/projet') { // enregistrement automatique

@@ -3,6 +3,21 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.8.0
+**Ta vraie voix par défaut** pour les épisodes QuentInvest : la voix clonée ne valait pas ta voix. « Ma vraie voix (je lis les répliques) » écrit le texte, ouvre le Doublage avec les répliques dans l'ordre ; une fois enregistrées, le bouton « 🧾 Fiche » du Doublage te ramène à l'épisode, prêt à fabriquer avec ton doublage. La voix clonée reste proposée, en essai.
+
+**Fenêtre Épisode plus simple**, en trois étapes : le texte, la voix, les photos.
+
+**Photos au choix** : QuentMovie cherche des photos libres de droits pour chaque écran et te les propose ; tu cliques celle qui convient (ou « Aucune »). Seules les photos validées sont intégrées. Le mode automatique et « Sans photo » restent possibles.
+
+**Écrans de chiffres corrigés** : sous un grand chiffre, plus jamais toute la phrase dite recopiée (coupée de son contexte, elle ne voulait rien dire). La légende dit en quelques mots ce que mesure le chiffre ; l'IA du Mac l'écrit à partir de ta phrase, sans rien ajouter. Les anciennes fiches sont corrigées à la fabrication.
+
+**💬 Dire à l'IA ce qui ne va pas sur un écran**, dans la relecture : « la phrase en dessous n'a aucun sens », « plus court », « sans photo »… L'écran est corrigé tout de suite et seule cette réplique est refaite, pas toute la vidéo.
+
+**Plus de bruitages d'ambiance** dans les épisodes (pièces, cloche, montée…) : ils cassaient l'immersion. Restent seulement les petits sons des animations (un élément qui apparaît, le changement d'écran). Les packs de montage ne posent plus de bruitages, sauf si tu coches la case.
+
+**🎚 Mixage** (bouton de la piste audio, ou Outils) : un curseur pour la voix, le son des vidéos, la musique et les bruitages, « − » et « + », couper une famille de sons, retirer tous les bruitages d'un clic, égaliser le volume, et un **réducteur de bruit** (léger, moyen, fort) sur ta voix et le son des vidéos.
+
 ## 2.7.9
 **Relecture automatique des écrans** avant chaque vidéo QuentInvest (ce que tu faisais à l'œil) : aucun texte qui finit par « … », pas de sous-titre qui répète le titre, pas de titre trop long. L'IA du Mac réécrit en quelques mots le titre d'un écran dont la phrase est trop longue. Le programme vérifie chaque titre : aucun chiffre ni aucun nom absent de ta phrase, sinon le titre d'origine reste. Le résultat de la relecture est affiché à la fin de la fabrication.
 
