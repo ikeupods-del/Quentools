@@ -154,7 +154,8 @@ async function navigateurEssai(exe) {
     check('vidéo d’une traite : sujet vide refusé', (await post('/api/quentinvest/auto', { demande: 'fais une vidéo sur' })).status >= 400);
     check('vidéo d’une traite : script trop court refusé', (await post('/api/quentinvest/auto', { script: 'Bonjour.' })).status >= 400);
     const scriptActu = '# La BCE baisse ses taux\n\nLa banque centrale vient de baisser son taux de 0,25 %. Pourquoi ça change ton crédit ?\n\nUn taux directeur, c’est le prix auquel les banques empruntent. Quand il baisse, les crédits deviennent souvent moins chers.\n\nEn une phrase : un taux plus bas rend l’argent emprunté moins cher.';
-    const au = await (await post('/api/quentinvest/auto', { script: scriptActu, options: { voix: 'ma-voix', sansTiktok: true, court: true } })).json(), ja = await attendre(au.id);
+    const au = await (await post('/api/quentinvest/auto', { script: scriptActu, options: { voix: 'ma-voix', sansTiktok: true } })).json(), ja = await attendre(au.id); // ton script : moins de 5 minutes accepté, signalé
+    check('ton script de moins de 5 minutes : fabriqué, avec un avertissement', ja.done && !ja.error && (ja.resultat.avertissements || []).some(x => /moins de 5 minutes/.test(x)), ja.error || JSON.stringify(ja.resultat && ja.resultat.avertissements));
     check('vidéo d’une traite : ton script devient une vidéo sans autre clic', ja.done && !ja.error && (ja.resultat.fichiers || []).some(n => /-youtube\.mp4$/.test(n)) && ja.resultat.fiche && /BCE/.test(ja.resultat.fiche.titre), ja.error || JSON.stringify(ja.resultat && ja.resultat.fichiers));
     // ton script dit avec un doublage : les répliques à enregistrer sont celles de la fabrication ; un doublage d'un autre découpage est refusé
     const rq = await (await post('/api/pico/repliques', { script: scriptActu })).json();

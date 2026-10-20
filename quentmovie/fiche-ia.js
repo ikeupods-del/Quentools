@@ -33,7 +33,7 @@ async function brouillon({ sujet, numero = 99, article, faits, ecrire, url = '' 
   if (!paragraphes.length) throw new Error('Cet article ne contient pas assez de texte pour un épisode.');
   const brut = paragraphes.map(p => p.texte).join(' ');
   etape('L’IA locale reformule les faits pour la voix…', 0.15);
-  const r = await ecrire({ titre: article, paragraphes, duree: 380 }, job);
+  const r = await ecrire({ titre: article, paragraphes, duree: +process.env.QM_QI_DUREE || 380 }, job); // QM_QI_DUREE : texte plus court pour l'essai réel du workflow (Mac sans puce graphique, voix clonée lente)
   const scenes = (r && r.scenes && r.scenes.length ? r.scenes : paragraphes).filter(s => s.texte);
   etape('Construction de la fiche…', 0.9);
   const blocs = [];

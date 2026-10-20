@@ -41,7 +41,7 @@ function arreterTout() { for (const p of groupes) { try { process.kill(-p.pid, '
 // secondes de ta voix utilisables pour la cloner, choisies comme choisir_reference d'essai.py : répliques de 3 à 10 s
 // (corpus « Ma voix », sinon anciens doublages), jusqu'à environ 12 s ; il en faut au moins VOIX_MIN.
 const VOIX_MIN = 8;
-const paquetVoix = () => Math.max(1, +process.env.QM_VC_PAQUET || 8); // répliques dites par un même processus Python
+const paquetVoix = () => Math.max(1, +process.env.QM_VC_PAQUET || 12); // répliques dites par un même processus Python (le modèle se recharge entre deux paquets)
 function dureeWav(f) {
   try {
     const d = fs.readFileSync(f); let o = 12, fmt = null;

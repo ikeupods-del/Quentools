@@ -167,10 +167,12 @@ async function autotestQuentinvest(port, res) {
   const fs = require('fs'), U = q => `http://127.0.0.1:${port}${q}`, post = (q, b) => fetch(U(q), { method: 'POST', body: JSON.stringify(b) });
   const pause = ms => new Promise(r => setTimeout(r, ms));
   const suivre = async (id, nom) => {
-    const t0 = Date.now(), etapes = [];
+    const t0 = Date.now(), etapes = []; let cle = '', dit = 0;
     for (;;) {
       await pause(3000); const k = await (await fetch(U('/api/job?id=' + id))).json(), s = Math.round((Date.now() - t0) / 1000);
-      if (k.step && etapes[etapes.length - 1] !== k.step) { etapes.push(k.step); console.log(`[${nom}] ${s} s · ${k.step}`); }
+      // une ligne par étape (les barres de progression changent sans cesse : une ligne par minute au plus pour la même étape)
+      const c = String(k.step || '').replace(/[\d.,%|/:█▏▎▍▌▋▊▉\s-]+/g, '');
+      if (k.step && (c !== cle || Date.now() - dit > 60000)) { if (c !== cle) etapes.push(k.step); cle = c; dit = Date.now(); console.log(`[${nom}] ${s} s · ${String(k.step).slice(0, 160)}`); }
       if (k.error) { console.log(`[${nom}] ÉCHEC après ${s} s : ${k.error}`); return { erreur: k.error, etapes: etapes.slice(-20), s }; }
       if (k.done) { const r = k.resultat || {}; console.log(`[${nom}] terminé en ${s} s : ${(r.fichiers || []).join(', ')}`); return { s, base: r.base, dossier: r.dossier, fichiers: r.fichiers, avertissements: r.avertissements, article: r.article, titre: r.fiche && r.fiche.titre, repliques: r.fiche && r.fiche.blocs && r.fiche.blocs.length }; }
     }
@@ -179,10 +181,11 @@ async function autotestQuentinvest(port, res) {
   res.etat = (await (await fetch(U('/api/pico'))).json()).maVoix;
   console.log('Ma voix enregistrée :', JSON.stringify(res.etat));
   const lancer = async (nom, corps) => { const r = await post('/api/quentinvest/auto', corps), j = await r.json(); if (!r.ok) { console.log(`[${nom}] refusé : ${j.error}`); return { erreur: j.error }; } return suivre(j.id, nom); };
-  // 1. ton script, collé comme dans la fenêtre (paragraphes séparés par un simple retour à la ligne, fin « abonne-toi / cloche »)
-  res.script = await lancer('Mon script', { script: fs.readFileSync(process.env.QM_AUTOTEST_SCRIPT, 'utf8'), options: { voix: 'ma-voix' } });
-  // 2. « Tout seul » : Wikipédia + IA locale + ta voix clonée
-  if (!process.env.QM_AUTOTEST_SANS_SEUL) res.seul = await lancer('Tout seul', { demande: process.env.QM_AUTOTEST_SUJET || 'fais une vidéo sur le krach de 1929', options: { voix: 'ma-voix' } });
+  const mode = process.env.QM_AUTOTEST_MODE || 'les deux';
+  // ton script, collé comme dans la fenêtre (paragraphes séparés par un simple retour à la ligne, fin « abonne-toi / cloche »)
+  if (mode !== 'seul') res.script = await lancer('Mon script', { script: fs.readFileSync(process.env.QM_AUTOTEST_SCRIPT, 'utf8'), options: { voix: 'ma-voix' } });
+  // « Tout seul » : Wikipédia + IA locale + ta voix clonée
+  if (mode !== 'script') res.seul = await lancer('Tout seul', { demande: process.env.QM_AUTOTEST_SUJET || 'fais une vidéo sur le krach de 1929', options: { voix: 'ma-voix', court: !!process.env.QM_QI_DUREE } });
 }
 
 const js = code => () => win && win.webContents.executeJavaScript(code);

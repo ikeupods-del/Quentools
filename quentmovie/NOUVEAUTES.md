@@ -3,6 +3,10 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.7.4
+- **Mon script** : un script de moins de 5 minutes n'est plus refusé (« Trop court ») ; la vidéo est fabriquée et une remarque le signale. La longueur de ton script, c'est toi qui la choisis.
+- Ta voix clonée recharge son modèle moins souvent : un épisode est dit un peu plus vite.
+
 ## 2.7.3
 - **Mon script** : un script collé sans ligne vide entre les paragraphes est bien découpé (il était refusé comme « trop court »). Ta fin « abonne-toi, la cloche, c'était Pico » n'est plus dite en double : la chaîne a déjà sa fin.
 - **🎙 Enregistrer ces répliques** (Épisode QuentInvest, Mon script) : le Doublage s'ouvre avec exactement les phrases de la vidéo, dans l'ordre (accroche, salut, blocs, fin). Ton script est gardé, et ton doublage est choisi quand tu reviens.
