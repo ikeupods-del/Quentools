@@ -42,6 +42,16 @@ function chromium() {
   let g = await (await fetch(U(`/api/doublage?nom=${nom}`))).json();
   check('liste : prises 0 et 2 reprises, ligne 1 manquante', g.prises.map(p => p.n).join() === '0,2' && g.lignes.length === 3 && g.dossier === dossier, JSON.stringify(g));
 
+  // clics du clavier : touche relâchée à 0,2 s (clic à 0,05 s), voix de 0,6 à 2,1 s, touche d'arrêt à 3,0 s (clic juste après) → coupés
+  const clics = path.join(base, 'clics.webm');
+  ff('-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=mono', '-f', 'lavfi', '-i', 'anoisesrc=r=48000:a=0.9:d=0.04', '-f', 'lavfi', '-i', 'sine=f=300:r=48000:d=1.5', '-filter_complex',
+    '[0:a]atrim=0:0.05[s0];[0:a]atrim=0:0.51[s1];[0:a]atrim=0:0.9[s2];[0:a]atrim=0:0.3[s3];[1:a]asplit[k1][k2];[2:a]volume=0.5[v];[s0][k1][s1][v][s2][k2][s3]concat=n=7:v=0:a=1', '-c:a', 'libopus', clics);
+  r = await (await fetch(U(`/api/doublage/prise?nom=${nom}&n=4&texte=Clic&debut=0.28&fin=2.94`), { method: 'POST', body: fs.readFileSync(clics) })).json();
+  check('bruits du clavier au début et à la fin coupés : il ne reste que la voix', r.duree > 1.4 && r.duree < 1.75, 'durée ' + r.duree);
+  const sansCoupe = await (await fetch(U(`/api/doublage/prise?nom=${nom}&n=5&texte=Clic`), { method: 'POST', body: fs.readFileSync(clics) })).json();
+  check('sans les instants des touches, les clics restaient (contrôle de l’essai)', sansCoupe.duree > 2.6, 'durée ' + sansCoupe.duree);
+  await fetch(U(`/api/doublage/prise?nom=${nom}&n=4`), { method: 'DELETE' }); await fetch(U(`/api/doublage/prise?nom=${nom}&n=5`), { method: 'DELETE' });
+
   // un enregistrement sans voix est refusé, rien n'est écrit
   const muet = path.join(base, 'muet.webm'); ff('-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=mono', '-t', '2', '-c:a', 'libopus', muet);
   const e1 = await fetch(U(`/api/doublage/prise?nom=${nom}&n=1`), { method: 'POST', body: fs.readFileSync(muet) });
@@ -74,7 +84,10 @@ function chromium() {
     check('doublage : première réplique affichée', await ev(() => /Salut la colonie/.test(document.querySelector('.dblTexte').textContent) && document.querySelectorAll('.dblL').length === 3));
     await pg.keyboard.press('Space'); await pg.waitForTimeout(1800);
     check('doublage : enregistrement en cours (Espace)', await ev(() => dbl.enreg && /Arrêter/.test(document.querySelector('#dbRec').textContent)));
+    check('doublage : relâchement de la touche noté (son du clic coupé au début), arrêt tout seul proposé', await ev(() => dbl.relache != null && dbl.relache < 1 && !!document.querySelector('#dbArretAuto:checked')), await ev(() => String(dbl.relache)));
+    const envoi = pg.waitForRequest(q => /\/api\/doublage\/prise\?/.test(q.url()), { timeout: 15000 }).catch(() => null);
     await pg.keyboard.press('Space'); await pg.waitForFunction(() => dbl && dbl.prises[0], null, { timeout: 15000 }).catch(() => {});
+    { const q = await envoi, u = q ? new URL(q.url()) : null; check('doublage : instants des touches envoyés (début après le relâchement, fin avant l’appui)', u && +u.searchParams.get('debut') > 0.1 && +u.searchParams.get('fin') > 1.2, q ? q.url() : 'aucun envoi'); }
     check('doublage : réplique 1 enregistrée et passage à la suivante', await ev(() => !!dbl.prises[0] && dbl.cur === 1 && /intérêts composés/.test(document.querySelector('.dblTexte').textContent)), await ev(() => JSON.stringify(dbl && dbl.prises)));
     check('doublage : fichier créé dans le dossier', fs.existsSync(path.join(base, 'doublages', 'ui-essai', 'v00.wav')));
     await pg.keyboard.press('ArrowLeft'); check('doublage : touche ← revient à la réplique 1', await ev(() => dbl.cur === 0));

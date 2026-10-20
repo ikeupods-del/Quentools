@@ -136,7 +136,8 @@ const NOMBRE = /(?:≈\s*)?\d[\d\s  ]*(?:[.,]\d+)?\s*(?:%|€|\$|euros?\b|dollar
 // Légende sous un grand chiffre : ce que mesure le chiffre, en quelques mots, jamais toute la phrase dite (recopiée sous le chiffre, coupée
 // de son contexte, elle ne voulait plus rien dire : « 500 % » + « Voir le cours d'une entreprise bidon grimper de 200 à 500 %… devient la norme »).
 // Phrase courte : gardée. Sinon le complément qui suit le chiffre (« en l'espace de deux semaines »), arrêté avant le verbe principal ;
-// sinon rien (la voix explique). L'IA locale peut ensuite écrire mieux (relecture-ecrans.js, contrôlée : rien d'ajouté à la phrase).
+// sinon rien (la voix explique). Décision du propriétaire (octobre 2026) : les écrans écrits par le programme n'ont plus de légende sous le
+// chiffre (toujours tirée du script, elle cassait l'écran) ; cette fonction ne sert plus qu'au retour sur un écran (retour-ecran.js).
 const VERBE_SUITE = /\s(?:devient|deviennent|est|sont|reste|restent|semble|semblent|paraît|paraissent|représente|représentent|signifie|veut dire|montre|montrent|prouve|change|changent)\b/i;
 function legendeChiffre(phrase, nombre) {
   const p = String(phrase || '').replace(/\s+/g, ' ').trim().replace(/[.!?…]+["»”)]*$/, '');
@@ -154,7 +155,7 @@ function legendeChiffre(phrase, nombre) {
 function ecranDe(texte, section, points, titreListe) {
   if (points && points.length >= 2) return { type: 'liste', titre: resumer(titreListe || section || '', 60), points: points.slice(0, 6).map(x => resumer(x.replace(/^./, c => c.toUpperCase()), 70)) };
   const ph = phrasesDe(texte), n = NOMBRE.exec(texte);
-  if (n) { const p = ph.find(x => x.includes(n[0].trim())) || ph[0] || ''; return { type: 'chiffre', valeur: n[0].replace(/\s+/g, ' ').trim(), legende: legendeChiffre(p, n[0].trim()) }; }
+  if (n) return { type: 'chiffre', valeur: n[0].replace(/\s+/g, ' ').trim(), legende: '' }; // le grand chiffre seul : une légende tirée de la phrase dite ne voulait rien dire
   const d = /^(?:l[ea]s?\s+|l'|un[e]?\s+)?([\p{L}\p{N}'’ -]{2,32}?),?\s+(?:c'est|c’est|est|désigne|signifie)\s+(.{8,})$/iu.exec(ph[0] || '');
   if (d) return { type: 'definition', mot: d[1].trim().replace(/^./, c => c.toUpperCase()), texte: resumer(d[2].replace(/[.!]$/, ''), 130) };
   if (section) return { type: 'message', titre: resumer(section, 60), sous: resumer(ph[0] || '', 150) };
@@ -218,7 +219,7 @@ function ficheDepuisScript(script, { titre = '', numero = 1 } = {}) {
     numero, slug: slugDe(titreF), titre: titreF, promesse: titreF, description: coupe(ph0.slice(0, 2).join(' '), 300),
     hashtags: '#économie #investissement #apprendre #QuentInvest', musique: 'documentaire-doux',
     accroche: { texte: resumerDit(accroche.texte, 400), court: resumerDit(ph0[0] || accroche.texte, 160),
-      ecran: n0 ? { type: 'chiffre', valeur: n0[0].replace(/\s+/g, ' ').trim(), legende: legendeChiffre(ph0.find(x => x.includes(n0[0].trim())) || ph0[0] || '', n0[0].trim()) }
+      ecran: n0 ? { type: 'chiffre', valeur: n0[0].replace(/\s+/g, ' ').trim(), legende: '' }
         : { type: 'message', titre: resumer(titreF, 70), sous: resumer(repete(resumer(titreF, 70), ph0[0] || '') ? ph0[1] || '' : ph0[0] || '', 150) } },
     blocs,
     // l'écran du résumé : l'idée principale en quelques mots, pas tout le paragraphe (la voix dit le résumé en entier)

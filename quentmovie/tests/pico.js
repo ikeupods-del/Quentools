@@ -221,7 +221,14 @@ async function navigateurEssai(exe) {
     check('doublage d’un épisode : bandeau « la vidéo se fabrique toute seule »', await pg.evaluate(() => /se fabrique toute seule/.test((document.querySelector('#dbEpisode') || {}).textContent || '') && !document.querySelector('#dbFabriquer')));
     await pg.evaluate(() => { window.__fab = null; fabriquerPico = (t, o) => { window.__fab = { fiche: JSON.parse(t), o }; }; dbl.lignes.forEach((_, i) => { dbl.prises[i] = { duree: 1, file: 'x.wav' }; }); dblVue(); });
     await pg.click('#dbFabriquer'); await pg.waitForTimeout(300);
-    check('toutes les répliques enregistrées : fabrication avec ce doublage et la fiche des répliques', await pg.evaluate(n => !!window.__fab && window.__fab.o.voix === 'doublage:' + n && /BCE/.test(window.__fab.fiche.titre) && !dbl && !fiMemo.episode, rq.nom), await pg.evaluate(() => JSON.stringify(window.__fab && window.__fab.o)));
+    check('toutes les répliques enregistrées : fabrication avec ce doublage et la fiche des répliques', await pg.evaluate(n => !!window.__fab && window.__fab.o.voix === 'doublage:' + n && /BCE/.test(window.__fab.fiche.titre) && !dbl, rq.nom), await pg.evaluate(() => JSON.stringify(window.__fab && window.__fab.o)));
+    // épisode en cours gardé (fenêtre ou QuentMovie fermés) jusqu'à la fin de la fabrication : « Reprendre » rouvre le Doublage avec ses répliques
+    check('épisode en cours gardé sur le Mac jusqu’à la fin de la fabrication', await pg.evaluate(() => !!fiMemo.episode && JSON.parse(localStorage.getItem(EP_COURS)).lignes.length === fiMemo.episode.n));
+    await pg.evaluate(() => { fermer(); ouvrirFiche(); }); await pg.waitForSelector('#fiReprendre', { timeout: 10000 }).catch(() => {});
+    check('fenêtre Épisode : « ⏯ Reprendre » l’épisode en cours, avec où il en est', await pg.evaluate(() => /Épisode en cours/.test(document.querySelector('#fiReprise').textContent) && /enregistrée/.test(document.querySelector('#fiReprise').textContent)));
+    await pg.click('#fiReprendre'); await pg.waitForFunction(() => document.querySelector('#dbTexte') || document.querySelector('#dbRec'), null, { timeout: 10000 }).catch(() => {});
+    check('« Reprendre » : le Doublage s’ouvre avec les répliques de l’épisode', await pg.evaluate(n => (document.querySelector('#dbTexte') ? document.querySelector('#dbTexte').value.split('\n').length : dbl.lignes.length) === n, rq.lignes.length));
+    await pg.evaluate(() => { dblFin(); fermer(); garderEpisode(null); });
     await pg.evaluate(() => { fermer(); fiMemo.script = ''; fiMemo.doublage = ''; });
     await pg.evaluate(() => ouvrirRelecturePico('98-essai-pico')); await pg.waitForSelector('#rlListe .rlLigne');
     check('écran de relecture : une ligne par réplique avec son expression', await pg.evaluate(n => document.querySelectorAll('#rlListe .rlLigne').length === n && document.querySelectorAll('#rlListe select[data-expr]').length === n, E.scenes.length));

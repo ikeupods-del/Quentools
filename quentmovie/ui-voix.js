@@ -4,6 +4,10 @@
 // Chaque réplique est envoyée au moteur (/api/doublage/prise) qui retire le silence du début et de la fin et la range dans
 // ~/Movies/QuentMovie/doublages/<nom>/vNN.wav ; ce dossier est celui que la chaîne QuentInvest lit avec --voix-perso.
 let dbl = null;
+// bruit du clavier : la touche qui lance la prise (enfoncée puis relâchée) et celle qui l'arrête s'entendent dans le micro ;
+// le moteur coupe le début jusqu'au relâchement de la touche et la fin à partir de l'appui (paramètres debut et fin de la prise)
+const dblMaintenant = () => (performance.now() - dbl.t0) / 1000;
+document.addEventListener('keyup', e => { if (dbl && dbl.enreg && dbl.relache == null && (e.key === ' ' || e.key.toLowerCase() === 'r')) dbl.relache = dblMaintenant(); });
 const dblNom = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'doublage';
 const dblLignes = txt => String(txt || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
 // un épisode QuentInvest (scenes[].texte), une liste de textes ou un simple texte : une ligne par réplique, dans l'ordre
@@ -34,15 +38,37 @@ const siLa = (sel, f) => { const e = $(sel); if (e) f(e); return e; };
 // zone du résultat : la sienne si la fenêtre est restée ouverte, sinon celle de la fenêtre rouverte (si elle ne suit pas un autre travail)
 const zoneFin = (z, sel) => { const n = $(sel); return z.isConnected || !n || n.querySelector('progress') ? z : n; };
 const fiMemo = { script: '', doublage: '', fiche: '', episode: null }; // script ou fiche en cours gardés pendant l'enregistrement du Doublage
+// épisode en cours (fiche, répliques, réglages) gardé sur ce Mac jusqu'à la fin de sa fabrication : fenêtre ou QuentMovie fermés,
+// « Reprendre » repart de la première réplique manquante, ou relance la fabrication (le travail déjà fait est réutilisé)
+const EP_COURS = 'qm:episode-en-cours';
+function garderEpisode(e) { fiMemo.episode = e; try { if (e) localStorage.setItem(EP_COURS, JSON.stringify(e)); else localStorage.removeItem(EP_COURS); } catch (er) { /* gardé en mémoire seulement */ } }
+try { fiMemo.episode = JSON.parse(localStorage.getItem(EP_COURS) || 'null'); } catch (er) { fiMemo.episode = null; }
 // ta vraie voix : les répliques exactes de la vidéo (découpées comme à la fabrication) envoyées au Doublage ; la fiche et les réglages de
 // l'épisode sont gardés (`fiMemo.episode`) : dès la dernière réplique enregistrée, la vidéo se fabrique toute seule avec ce doublage
 async function doublerRepliques(corps, reglages = {}) {
   const r = await api('/api/pico/repliques', { method: 'POST', body: JSON.stringify(corps) }), j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || 'Texte illisible');
   if (corps.script) fiMemo.script = corps.script; fiMemo.fiche = corps.fiche ? JSON.stringify(corps.fiche, null, 1) : ''; fiMemo.doublage = j.nom;
-  fiMemo.episode = { nom: j.nom, titre: j.titre, fiche: j.fiche || corps.fiche, n: j.lignes.length, tiktok: reglages.tiktok !== false, sous: !!reglages.sous, illustrer: !!reglages.illustrer };
+  garderEpisode({ nom: j.nom, titre: j.titre, fiche: j.fiche || corps.fiche, lignes: j.lignes, n: j.lignes.length, tiktok: reglages.tiktok !== false, sous: !!reglages.sous, illustrer: !!reglages.illustrer, le: Date.now() });
   fermer(); ouvrirDoublage();
   siLa('#dbTexte', e => { e.value = j.lignes.map(x => String(x).replace(/\s+/g, ' ').trim()).join('\n'); }); siLa('#dbNom', e => { e.value = j.nom; });
   siLa('#dbMsg', e => { e.textContent = `${j.lignes.length} répliques de ta vidéo, dans l’ordre. Clique « Commencer l’enregistrement » et lis-les une par une : dès la dernière enregistrée, la vidéo (Pico, animations, écrans) se fabrique toute seule.`; });
+}
+// reprise de l'épisode en cours : le Doublage s'ouvre avec ses répliques et repart de la première manquante ; tout enregistré → bouton Fabriquer
+function reprendreEpisode() {
+  const e = fiMemo.episode; if (!e || !Array.isArray(e.lignes)) return;
+  fiMemo.doublage = e.nom; fermer(); ouvrirDoublage();
+  siLa('#dbTexte', x => { x.value = e.lignes.map(l => String(l).replace(/\s+/g, ' ').trim()).join('\n'); }); siLa('#dbNom', x => { x.value = e.nom; });
+  siLa('#dbGo', b => b.click());
+}
+// carte de la fenêtre Épisode : l'épisode commencé, où il en est, reprendre ou abandonner
+async function carteReprise(z) {
+  const e = fiMemo.episode; if (!z || !e || !Array.isArray(e.lignes)) return;
+  let fait = 0; try { fait = ((await (await api('/api/doublage?nom=' + enc(e.nom))).json()).prises || []).filter(p => p.n < e.n).length; } catch (er) { /* inconnu */ }
+  if (!z.isConnected) return;
+  z.innerHTML = `<div class="encart" style="margin-bottom:8px"><h4>⏯ Épisode en cours : ${esc(e.titre || e.nom)}</h4><p class="mut" style="margin:0 0 6px">${fait >= e.n ? 'Toutes les répliques sont enregistrées : il reste à fabriquer la vidéo (le travail déjà fait est gardé).' : `${fait} réplique${fait > 1 ? 's' : ''} enregistrée${fait > 1 ? 's' : ''} sur ${e.n}. Tu reprends à la première qui manque, rien n’est à refaire.`}</p>
+    <div class="ligne"><button class="pri" id="fiReprendre">⏯ Reprendre</button><button id="fiAbandon">Abandonner cet épisode</button></div></div>`;
+  $('#fiReprendre').onclick = reprendreEpisode;
+  $('#fiAbandon').onclick = () => { if (!confirm('Abandonner l’épisode « ' + (e.titre || e.nom) + ' » ? Tes enregistrements restent dans le dossier du doublage.')) return; garderEpisode(null); z.innerHTML = ''; };
 }
 // réglages de la fenêtre Épisode (lus avant qu'elle se ferme pour le Doublage)
 const reglagesEpisode = () => ({ tiktok: !!(($('#fiAutoTiktok') || $('#fiTiktok') || {}).checked ?? true), sous: !!($('#fiAutoSous') || {}).checked, illustrer: ((document.querySelector('[name="fiPhotos"]:checked') || {}).value || 'choix') === 'auto' });
@@ -51,7 +77,7 @@ const episodeDuDoublage = () => { const e = fiMemo.episode; return e && dbl && e
 // toutes les répliques enregistrées : la vidéo est fabriquée avec ce doublage, sans autre réglage
 function dblFabriquer() {
   const e = episodeDuDoublage(); if (!e || dbl.enreg) return;
-  clearTimeout(dbl.minuteur); fiMemo.episode = null; fiMemo.script = '';
+  clearTimeout(dbl.minuteur); fiMemo.script = ''; // l'épisode reste gardé jusqu'à la fin de la fabrication (« Reprendre » si elle est arrêtée)
   ouvrir(`<h2>🎬 ${esc(e.titre || 'Ton épisode')}</h2><p class="mut">Fabriqué avec ta voix : Pico, animations, écrans, miniatures et texte de publication. Compte environ 15 à 20 minutes ; tu peux continuer à monter pendant ce temps. Rien n’est publié.</p>
     <div id="fiFabRes" class="mut" style="margin-top:6px"></div><div class="ligne" style="margin-top:10px"><span class="sp"></span><button id="fiFabriquer" hidden></button><button id="fiFermer">Fermer</button></div>`, 'xl');
   $('#fiFermer').onclick = fermer;
@@ -61,6 +87,7 @@ function dblFabriquer() {
 function ouvrirFiche() {
   if (dbl) dblFin();
   ouvrir(`<h2>🎬 Épisode QuentInvest</h2>
+    <div id="fiReprise"></div>
     <div class="encart" id="fiAuto" style="margin-bottom:8px">
       <h4 class="fiEtape"><span>1</span> Le texte</h4>
       <div class="ligne fiModes" role="radiogroup" aria-label="Façon de faire">${[['seul', '🤖 QuentMovie l’écrit', 'Tu donnes le sujet, QuentMovie écrit le texte d’après Wikipédia, le contrôle et fabrique la vidéo.'], ['relire', '👀 Écrit, puis je relis', 'Le texte est écrit d’après Wikipédia, tu le relis et le corriges avant la fabrication.'], ['script', '✍️ J’écris mon texte', 'Tu écris le texte toi-même : idéal pour un sujet d’actualité, que Wikipédia ne connaît pas encore.']].map(([id, nom, aide]) => `<label class="fiMode" title="${aide}"><input type="radio" name="fiMode" value="${id}" ${id === 'seul' ? 'checked' : ''}> ${nom}</label>`).join('')}</div>
@@ -83,6 +110,7 @@ function ouvrirFiche() {
     <div class="ligne"><label class="bouton" style="cursor:pointer">📂 Charger un fichier<input type="file" id="fiF" accept=".json,application/json" hidden></label><button class="pri" id="fiGo">Contrôler</button><button id="fiFermer">Fermer</button></div>
     <div id="fiRes" style="margin-top:8px"></div></details>`, 'xl');
   $('#fiFermer').onclick = fermer;
+  carteReprise($('#fiReprise'));
   api('/api/pico/episodes').then(r => r.json()).then(r => { const l = (r.episodes || []).slice(0, 6), z = $('#fiDeja'); if (!z || !l.length) return;
     z.innerHTML = `<div class="encart" style="margin-bottom:8px"><h4>Épisodes déjà fabriqués</h4><div class="ligne" style="flex-wrap:wrap">${l.map(e => `<button class="mini" data-relire="${esc(e.base)}">🔍 ${esc(e.titre || e.base)}</button>`).join('')}</div></div>`;
     z.onclick = ev => { const b = ev.target.closest('[data-relire]'); if (b) ouvrirRelecturePico(b.dataset.relire); }; }).catch(() => {});
@@ -244,6 +272,7 @@ async function fabriquerPico(texte, options) {
     $('#fiFabStop').onclick = () => { $('#fiFabStop').disabled = true; annulerJob(id); };
     const t0 = Date.now(), x = await suivreTravail(id, k => { const p = $('#fiFabRes progress'), e = $('#fiFabEtape'); if (p) p.value = Math.round((k.progress || 0) * 100); if (e) e.textContent = `${k.step || ''}${k.progress > 0.05 ? ` · environ ${Math.max(1, Math.round((Date.now() - t0) / 60000 * (1 - k.progress) / k.progress))} min restantes` : ''}`; });
     finPico(zoneFin(z, '#fiFabRes'), x);
+    if (fiMemo.episode && options.voix === 'doublage:' + fiMemo.episode.nom) garderEpisode(null); // vidéo faite : plus rien à reprendre
   } catch (er) { zoneFin(z, '#fiFabRes').innerHTML = `<span style="color:#f87171">${esc(er.message)}</span>`; signal('Fabrication de l’épisode : ' + er.message); }
   b.disabled = false;
 }
@@ -458,7 +487,7 @@ function ouvrirDoublage() {
   if (dbl) return;
   stopLecture();
   const dblMedias = medias.filter(m => m.kind === 'video' || m.kind === 'audio'), nom0 = dblNom((proj.gen && proj.gen.titre) || proj.sujet || ''), texteVideo = (proj.gen && proj.gen.texte) || '';
-  dbl = { nom: nom0, lignes: [], prises: {}, cur: 0, enreg: false, auto: true, flux: null, vue: false };
+  dbl = { nom: nom0, lignes: [], prises: {}, cur: 0, enreg: false, auto: true, arretAuto: true, flux: null, vue: false };
   ouvrir(`<h2>🎙 Doublage : ta voix, phrase par phrase</h2>
     <p class="mut">Colle le texte à lire (une réplique par ligne) ou charge un épisode QuentInvest. Tu enregistres chaque ligne, tu la réécoutes, tu la refais si besoin : le silence du début et de la fin est retiré tout seul. Ensuite les répliques se posent dans la piste audio, ou la chaîne QuentInvest les utilise à la place de la voix de Pico.</p>
     <label class="l">Nom du doublage (un dossier à ce nom est créé)</label><input type="text" id="dbNom" value="${esc(nom0)}">
@@ -488,14 +517,16 @@ function ouvrirDoublage() {
     if (!lignes.length) return alert('Écris ou charge d’abord le texte à lire.');
     dbl.nom = nom; dbl.lignes = lignes; if (dbl.debuts && dbl.debuts.length !== lignes.length) dbl.debuts = null; $('#dbGo').disabled = true; $('#dbMsg').textContent = 'Préparation du micro…';
     try {
-      dbl.flux = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-    } catch (er) { $('#dbGo').disabled = false; $('#dbMsg').innerHTML = `<span class="err">Micro indisponible : ${esc(er.message)}. Autorise QuentMovie dans Réglages Système → Confidentialité et sécurité → Micro.</span>`; return; }
+      const d = dbl, flux = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      if (dbl !== d) { flux.getTracks().forEach(t => t.stop()); return; } dbl.flux = flux;
+    } catch (er) { if (!$('#dbGo')) return; $('#dbGo').disabled = false; $('#dbMsg').innerHTML = `<span class="err">Micro indisponible : ${esc(er.message)}. Autorise QuentMovie dans Réglages Système → Confidentialité et sécurité → Micro.</span>`; return; }
     try {
       const avant = await (await api('/api/doublage?nom=' + enc(nom))).json(); // prises déjà enregistrées sous ce nom : on reprend
       for (const p of avant.prises) if (p.n < lignes.length) dbl.prises[p.n] = { duree: p.duree, file: p.file };
       dbl.dossier = avant.dossier; dbl.voix = avant.voix;
       await api('/api/doublage/script?nom=' + enc(nom), { method: 'PUT', body: JSON.stringify({ lignes }) });
     } catch (er) { /* le doublage fonctionne aussi sans la liste des anciennes prises */ }
+    if (!dbl || !$('#dbGo')) { if (dbl) dblFin(); return; } // fenêtre fermée pendant la préparation du micro : micro rendu
     const premiere = lignes.findIndex((_, i) => !dbl.prises[i]); dbl.cur = premiere < 0 ? 0 : premiere;
     dblMicroVu(); dbl.vue = true; dblVue();
   };
@@ -507,7 +538,12 @@ function dblMicroVu() {
   const boucle = () => {
     if (!dbl) return; an.getByteTimeDomainData(buf); let m = 0; for (const v of buf) m = Math.max(m, Math.abs(v - 128));
     const i = document.querySelector('#dbVu i'); if (i) i.style.width = Math.min(100, m / 128 * 140) + '%';
-    if (dbl.enreg) { const t = $('#dbTemps'); if (t) t.textContent = dblSec((Date.now() - dbl.t0) / 1000); }
+    if (dbl.enreg) {
+      const t = $('#dbTemps'), now = dblMaintenant(); if (t) t.textContent = dblSec(now);
+      // fin de la phrase : 1,3 s de silence après au moins 0,3 s de voix (le clic de la touche du début ne compte pas) → arrêt sans toucher le clavier
+      if (now > Math.max(0.35, (dbl.relache || 0) + 0.1) && m > 8) { dbl.voixDuree += 1 / 60; dbl.dernierSon = now; }
+      if (dbl.arretAuto && dbl.voixDuree > 0.3 && now - dbl.dernierSon > 1.3 && !dbl.arretDemande) { dbl.fin = dbl.dernierSon + 0.35; dbl.arretDemande = true; dbl.rec.stop(); }
+    }
     dbl.raf = requestAnimationFrame(boucle);
   };
   boucle();
@@ -526,6 +562,7 @@ function dblVue() {
       <button id="dbEcoute" ${dbl.prises[n] ? '' : 'disabled'}>▶ Réécouter (L)</button><button id="dbPrec" title="Réplique précédente (←)">←</button><button id="dbSuiv" title="Réplique suivante (→)">→</button>
       <div id="dbVu"><i></i></div><span id="dbTemps"></span></div>
     <div class="sw2"><input type="checkbox" id="dbAuto" ${dbl.auto ? 'checked' : ''}><label for="dbAuto">Passer à la réplique suivante dès que j’arrête</label></div>
+    <div class="sw2"><input type="checkbox" id="dbArretAuto" ${dbl.arretAuto ? 'checked' : ''}><label for="dbArretAuto">Arrêter tout seul quand je me tais (pas besoin de toucher le clavier à la fin)</label></div>
     <div class="dblListe" id="dbListe">${liste}</div>
     <div class="ligne"><button class="${ep ? '' : 'pri'}" id="dbPoser" ${fait ? '' : 'disabled'}>Poser sur la timeline (piste audio)</button><button id="dbDossier">📂 Ouvrir le dossier</button><button id="dbTexteRetour">✏️ Modifier le texte</button><button id="dbClone" title="Essayer des modèles qui imitent ta voix">🧬 Voix clonée</button><button id="dbPron" title="Mots que la voix prononce mal">📖 Prononciations</button><button id="dbFiche" title="Vérifier une fiche d’épisode QuentInvest">🧾 Fiche</button><button id="dbFermer">Fermer</button></div>
     <p class="mut" id="dbInfo" style="margin:8px 0 0" ${ep ? 'hidden' : ''}>Dossier des répliques : <b>${esc(dbl.dossier || '~/Movies/QuentMovie/doublages/' + dbl.nom)}</b> (fichiers v00.wav, v01.wav…). Pour fabriquer un épisode QuentInvest avec ta voix : <code>episode.js &lt;fiche&gt; --voix-perso &lt;ce dossier&gt;</code>.</p>
@@ -533,6 +570,7 @@ function dblVue() {
   dbl.vue = true;
   $('#dbRec').onclick = dblBascule; $('#dbEcoute').onclick = dblEcouter; $('#dbPrec').onclick = () => dblAller(n - 1); $('#dbSuiv').onclick = () => dblAller(n + 1);
   $('#dbAuto').onchange = e => { dbl.auto = e.target.checked; };
+  $('#dbArretAuto').onchange = e => { dbl.arretAuto = e.target.checked; };
   $('#dbListe').onclick = e => { const l = e.target.closest('.dblL'); if (l) dblAller(+l.dataset.n); };
   const c = document.querySelector('.dblL.cur'); if (c) c.scrollIntoView({ block: 'nearest' });
   $('#dbPoser').onclick = dblPoser;
@@ -554,7 +592,7 @@ function dblEcouter() {
 function dblBascule() {
   if (!dbl || !dbl.flux) return;
   if (dbl.ap) dbl.ap.pause();
-  if (dbl.enreg) { dbl.rec.stop(); return; }
+  if (dbl.enreg) { if (dbl.arretDemande) return; dbl.fin = dblMaintenant(); dbl.arretDemande = true; dbl.rec.stop(); return; }
   if (dbl.minuteur) { clearTimeout(dbl.minuteur); dbl.minuteur = null; } // une prise refaite : la fabrication attend ton clic
   const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(t => MediaRecorder.isTypeSupported(t)) || '', morceaux = [], n = dbl.cur;
   const rec = new MediaRecorder(dbl.flux, mime ? { mimeType: mime } : undefined);
@@ -562,7 +600,8 @@ function dblBascule() {
   rec.onstop = async () => {
     if (!dbl) return; dbl.enreg = false; const b = $('#dbRec'); if (b) { b.classList.remove('enreg'); b.textContent = 'Envoi…'; b.disabled = true; }
     try {
-      const r = await (await api(`/api/doublage/prise?nom=${enc(dbl.nom)}&n=${n}&texte=${enc(dbl.lignes[n])}`, { method: 'POST', body: new Blob(morceaux, { type: 'audio/webm' }) })).json();
+      const debut = Math.max(0.12, (dbl.relache != null ? dbl.relache : 0) + 0.08), fin = Math.max(0, dbl.fin - 0.06); // sans les clics des touches
+      const r = await (await api(`/api/doublage/prise?nom=${enc(dbl.nom)}&n=${n}&texte=${enc(dbl.lignes[n])}&debut=${debut.toFixed(2)}&fin=${fin.toFixed(2)}`, { method: 'POST', body: new Blob(morceaux, { type: 'audio/webm' }) })).json();
       const avant = Object.keys(dbl.prises).length; dbl.prises[n] = { duree: r.duree, file: r.file }; dbl.voix = r.voix;
       const reste = dbl.lignes.findIndex((_, i) => !dbl.prises[i]);
       if (dbl.auto && reste >= 0) dbl.cur = reste > n || n >= dbl.lignes.length - 1 ? reste : n + 1;
@@ -571,7 +610,9 @@ function dblBascule() {
     } catch (er) { alert(er.message); }
     if (dbl) dblVue();
   };
-  dbl.rec = rec; dbl.enreg = true; dbl.t0 = Date.now(); rec.start();
+  dbl.rec = rec; dbl.enreg = true; dbl.t0 = performance.now(); dbl.relache = null; dbl.fin = 0; dbl.voixDuree = 0; dbl.dernierSon = 0; dbl.arretDemande = false;
+  rec.onstart = () => { if (dbl && dbl.rec === rec) { const dec = (performance.now() - dbl.t0) / 1000; dbl.t0 = performance.now(); if (dbl.relache != null) dbl.relache -= dec; } }; // horloge calée sur le vrai début du son
+  rec.start();
   const b = $('#dbRec'); b.classList.add('enreg'); b.textContent = '■ Arrêter (Espace)';
   for (const id of ['dbPrec', 'dbSuiv', 'dbEcoute', 'dbPoser', 'dbTexteRetour']) { const x = $('#' + id); if (x) x.disabled = true; }
 }
@@ -600,7 +641,7 @@ function toucheDoublage(e) {
   if (e.metaKey || e.ctrlKey) return false;
   if (k === 'Escape') return f(() => { if (dbl.enreg && !confirm('Un enregistrement est en cours. Le perdre et fermer ?')) return; fermer(); });
   if (!dbl.vue || tag === 'textarea' || (tag === 'input' && e.target.type === 'text')) return true; // préparation du texte : les touches restent à la saisie
-  if (k === ' ' || kl === 'r') return f(dblBascule);
+  if (k === ' ' || kl === 'r') return f(() => { if (!e.repeat) dblBascule(); }); // touche gardée enfoncée : pas d'arrêt involontaire
   if (kl === 'l') return f(dblEcouter);
   if (k === 'ArrowRight' || k === 'ArrowDown' || (k === 'Enter' && tag !== 'button')) return f(() => dblAller(dbl.cur + 1));
   if (k === 'ArrowLeft' || k === 'ArrowUp') return f(() => dblAller(dbl.cur - 1));
