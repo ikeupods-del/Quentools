@@ -75,7 +75,8 @@ function compose(f) {
     L.push({ expr: 'inquiet', section: 'Le piège', ecran: { type: 'message', titre: 'Grain de sable', sous: f.piege.sous || 'Ce qui est souvent mal compris' }, texte: f.piege.intro || `Attention, grain de sable. Il y a ${er.length > 1 ? er.length + ' erreurs courantes' : 'une erreur courante'}.` });
     er.forEach((e, i) => L.push({ expr: 'inquiet', ecran: { type: 'erreur', numero: i + 1, titre: e.titre }, texte: e.texte }));
   }
-  if (f.recap) L.push({ expr: 'content', section: 'À retenir', ecran: f.recap.ecran, texte: f.recap.texte });
+  // sans écran donné, la liste de ses points (une fiche « points » seule faisait planter la fabrication)
+  if (f.recap) L.push({ expr: 'content', section: 'À retenir', ecran: f.recap.ecran || { type: 'liste', titre: 'À retenir', points: (f.recap.points || []).slice(0, 6) }, texte: f.recap.texte });
   L.push({ expr: 'content', section: 'En une phrase', ecran: { type: 'resume', titre: 'En une phrase', texte: maj(f.resume.ecran || f.resume.texte.replace(/^En une phrase\s*:\s*/i, '')) }, texte: f.resume.texte });
   const suite = f.suite || {}, fin = (suite.texte ? suite.texte + ' ' : '') + f.question + ' Dis-le en commentaire.';
   L.push({ expr: 'curieux', geste: 'penche', ecran: { type: 'suite', label: 'Prochain épisode', titre: suite.titre || 'À bientôt', sous: suite.sous || f.question + ' Dis-le en commentaire.' }, texte: fin });
