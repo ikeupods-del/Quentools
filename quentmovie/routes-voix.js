@@ -161,11 +161,13 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
         }
         if (job.annule) throw new Error('Arrêté.');
         const c = FQ.controler(fiche, { lexique: require('./voix-texte').lexiqueActuel() });
-        if (o.court) c.erreurs = c.erreurs.filter(e => !/^Trop court/.test(e)); // version courte (essais) : moins de 5 minutes accepté
+        // ton script : sa longueur est ton choix (sujet d'actualité, format court) ; moins de 5 minutes est signalé, pas refusé
+        const court = !!o.court || !!script.trim();
+        if (court) { const tc = c.erreurs.filter(e => /^Trop court/.test(e)); c.erreurs = c.erreurs.filter(e => !/^Trop court/.test(e)); if (script.trim()) c.avertissements = [...tc.map(e => e.replace(/^Trop court : /, 'Vidéo de moins de 5 minutes : ')), ...(c.avertissements || [])]; }
         c.ok = !c.erreurs.length;
         if (!c.ok) throw new Error('Texte pas encore fabricable : ' + c.erreurs.join(' ; ') + (article ? ` (article Wikipédia « ${article} »). Choisis « Je relis avant » pour le compléter.` : ''));
         job.step = 'Fabrication de la vidéo…'; job.progress = script.trim() ? 0.05 : 0.3;
-        const r = await fetch(U('/api/pico/fabriquer'), { method: 'POST', body: JSON.stringify({ fiche, options: { voix: o.voix, sansTiktok: !!o.sansTiktok, court: !!o.court } }) }), j = await r.json();
+        const r = await fetch(U('/api/pico/fabriquer'), { method: 'POST', body: JSON.stringify({ fiche, options: { voix: o.voix, sansTiktok: !!o.sansTiktok, court } }) }), j = await r.json();
         if (!r.ok || j.error) throw new Error(j.error || 'Fabrication impossible');
         const a = job.progress;
         for (;;) {
@@ -174,7 +176,7 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
           const k = await (await fetch(U('/api/job?id=' + j.id))).json();
           if (k.error) throw new Error(k.error);
           part(a, 1)(k);
-          if (k.done) return { ...k.resultat, fiche, fichierFiche: fichier, article, controle: c };
+          if (k.done) return { ...k.resultat, avertissements: [...(c.avertissements || []).filter(x => /^Vidéo de moins/.test(x)), ...(k.resultat.avertissements || [])], fiche, fichierFiche: fichier, article, controle: c };
         }
       }));
     }
