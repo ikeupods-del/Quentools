@@ -70,7 +70,12 @@ const { controler, nombres } = require('../fiche-quentinvest');
     const nf = require('../fiche-quentinvest').finirEcrans(fx);
     check('dernier contrôle : écrans sans « … » ni petit mot final, texte dit inchangé', nf === 3 && fx.accroche.ecran.titre === 'Imagine un monde où tu signes un chèque' && fx.blocs[0].ecran.titre === 'Trois idées' && fx.blocs[0].ecran.points[0] === 'Une villa' && fx.blocs[0].texte === 'Dit… tel quel…', JSON.stringify(fx));
     check('écran : incise retirée plutôt qu’une phrase coupée', resumer('Les banques, qui avaient prêté massivement pour acheter des actions, se retrouvent en faillite les unes après les autres, entraînant la fermeture de 9 000 établissements.', 75) === 'Les banques se retrouvent en faillite les unes après les autres');
-    const { chiffreChoc } = require('../fiche-ia');
+    const { chiffreChoc, brouillon: bro, pourAuto: pa } = require('../fiche-ia');
+    { // « Tout seul » : chaque réplique de la vidéo a un écran (l'écran « À retenir » manquait et faisait planter la fabrication)
+      const P = [{ section: 'Origines', texte: 'Le krach commence en octobre 1929 à New York. Les cours s’effondrent.' }, { section: 'Suite', texte: 'Le Dow Jones perd 25 % en quelques jours. Les banques ferment.' }, { section: 'Fin', texte: 'Le chômage atteint 25 % en 1933. La crise touche l’Europe.' }];
+      const rb = await bro({ sujet: 'le krach', article: 'Krach de 1929', faits: async () => P, ecrire: async () => ({ scenes: P }) }), C = require('../../design/quentinvest-youtube/fabrication/composer.js').compose(pa(rb.fiche, 'le krach de 1929'));
+      check('Tout seul : chaque réplique (YouTube et TikTok) a un écran', [...C.long.scenes, ...C.tiktok.scenes].every(s => s.ecran), JSON.stringify(C.long.scenes.filter(s => !s.ecran).map(s => s.texte.slice(0, 40))));
+    }
     check('accroche : deux chiffres de même nature seulement', chiffreChoc('Le 24 octobre, 9 000 banques ferment.') === null && JSON.stringify(chiffreChoc('Le Dow Jones perd 25 % puis 89 % en 1932.')) === JSON.stringify({ avant: '25 %', apres: '89 %', de: 25, a: 89 }), JSON.stringify(chiffreChoc('Le 24 octobre, 9 000 banques ferment.')));
     const fsouk = ficheDepuisScript(fs.readFileSync(path.join(__dirname, 'reel', 'script-souk.txt'), 'utf8'));
     check('ton script : le sous-titre de l’accroche ne répète pas son titre', fsouk.accroche.ecran.sous && !fsouk.accroche.ecran.sous.startsWith(fsouk.accroche.ecran.titre), JSON.stringify(fsouk.accroche.ecran));
