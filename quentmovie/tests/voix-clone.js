@@ -126,6 +126,10 @@ exit 1
     check('paquets : numérotation continue sur tout l’épisode', /--premiere 3 --total 5/.test(appels[1] || '') && /--premiere 5 --total 5/.test(appels[2] || ''), appels.join(' | '));
     fs.rmSync(trace, { force: true }); const r2 = await VC.dire('qwen', lignes, {});
     check('paquets : répliques déjà dites gardées', r2.faites === 0 && !fs.existsSync(trace));
+    // même phrase dans la version YouTube et la version TikTok : dite une seule fois, copiée pour l'autre
+    fs.rmSync(trace, { force: true }); const tk = [{ texte: 'Phrase 1.', fichier: path.join(base, 'lot-tk', 'v00.wav') }, { texte: 'Phrase neuve.', fichier: path.join(base, 'lot-tk', 'v01.wav') }, { texte: 'Phrase neuve.', fichier: path.join(base, 'lot-tk', 'v02.wav') }];
+    fs.mkdirSync(path.join(base, 'lot-tk'), { recursive: true }); const r3 = await VC.dire('qwen', [...lignes, ...tk], {}), dits = fs.existsSync(trace) ? fs.readFileSync(trace, 'utf8').trim().split('\n').length : 0;
+    check('phrase identique : dite une fois, copiée ailleurs', r3.faites === 1 && r3.copiees === 2 && dits === 1 && tk.every(x => fs.existsSync(x.fichier) && fs.readFileSync(x.fichier + '.txt', 'utf8') === x.texte), JSON.stringify(r3) + ' appels ' + dits);
     delete process.env.QM_VC_PAQUET;
   }
   fs.rmSync(base, { recursive: true, force: true });

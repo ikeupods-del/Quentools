@@ -192,8 +192,14 @@ function creer(base) {
   // répliques d'un épisode dites avec la voix clonée : lignes [{ texte, fichier }] ; une réplique déjà dite avec le même texte est gardée (fichier .txt à côté)
   async function dire(moteur, lignes, job) {
     if (!MOTEURS[moteur]) throw new Error('Modèle de voix clonée inconnu');
-    const aFaire = lignes.filter(x => { try { return fs.readFileSync(x.fichier + '.txt', 'utf8') !== x.texte || !fs.existsSync(x.fichier); } catch (e) { return true; } });
-    if (!aFaire.length) return { faites: 0 };
+    const aRefaire = lignes.filter(x => { try { return fs.readFileSync(x.fichier + '.txt', 'utf8') !== x.texte || !fs.existsSync(x.fichier); } catch (e) { return true; } });
+    if (!aRefaire.length) return { faites: 0 };
+    // une même phrase (version YouTube et version TikTok) n'est dite qu'une fois : déjà dite ailleurs, elle est copiée
+    const dejaDite = new Map(); for (const x of lignes) if (!aRefaire.includes(x)) dejaDite.set(x.texte, x.fichier);
+    const copies = [], aFaire = [], vus = new Map();
+    for (const x of aRefaire) { const d = dejaDite.get(x.texte) || vus.get(x.texte); if (d) copies.push([d, x]); else { vus.set(x.texte, x.fichier); aFaire.push(x); } }
+    const copier = () => { for (const [d, x] of copies) { fs.mkdirSync(path.dirname(x.fichier), { recursive: true }); fs.copyFileSync(d, x.fichier); fs.writeFileSync(x.fichier + '.txt', x.texte); } };
+    if (!aFaire.length) { copier(); return { faites: 0, copiees: copies.length }; }
     if (!voixEnregistree(base).assez) throw new Error(SANS_VOIX); // avant d'installer plusieurs Go pour rien
     const libre = espaceLibre();
     if (!fs.existsSync(marque(moteur)) && libre != null && libre < MOTEURS[moteur].go * 2 + 2) throw new Error(`Espace disque insuffisant pour installer ta voix clonée : ${libre} Go libres, environ ${MOTEURS[moteur].go * 2 + 2} Go nécessaires.`);
@@ -209,7 +215,8 @@ function creer(base) {
       finally { fs.rmSync(liste, { force: true }); }
       for (const x of paquet) { if (!fs.existsSync(x.fichier)) throw new Error('Réplique non dite par la voix clonée : ' + path.basename(x.fichier)); fs.writeFileSync(x.fichier + '.txt', x.texte); }
     }
-    return { faites: aFaire.length };
+    copier();
+    return { faites: aFaire.length, copiees: copies.length };
   }
   const prete = () => Object.keys(MOTEURS).filter(m => fs.existsSync(marque(m))); // modèles déjà installés (l'essai a été fait)
 
