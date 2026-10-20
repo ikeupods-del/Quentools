@@ -99,11 +99,12 @@ const { controler, nombres } = require('../fiche-quentinvest');
   { const FQ = require('../fiche-quentinvest'), RE = require('../relecture-ecrans'), RT = require('../retour-ecran');
     const ph = "Voir le cours d'une entreprise bidon grimper de 200 à 500 % en l'espace de deux semaines devient la norme.";
     const e1 = FQ.ecranDe(ph, '');
-    check('chiffre : légende courte, pas la phrase entière', e1.type === 'chiffre' && e1.valeur === '500 %' && e1.legende === "En l'espace de deux semaines", JSON.stringify(e1));
-    check('chiffre : phrase courte gardée en légende', FQ.ecranDe('Le Livret A rapporte 3 % par an.', '').legende === 'Le Livret A rapporte 3 % par an');
-    const f3 = { titre: 'Bulle', blocs: [{ texte: ph, ecran: { type: 'chiffre', valeur: '500 %', legende: ph.replace(/\.$/, '') } }] };
-    const c3 = await RE.relire(f3, { titrer: async ({ chiffres }) => ({ titres: chiffres ? ["Le cours d'une entreprise bidon grimpe en deux semaines"] : [] }) });
-    check('relecture : ancienne légende (phrase entière) remplacée, puis réécrite par l’IA', f3.blocs[0].ecran.legende === "Le cours d'une entreprise bidon grimpe en deux semaines" && c3.some(x => /légende/.test(x)), JSON.stringify([f3.blocs[0].ecran, c3]));
+    check('chiffre : le grand chiffre seul, aucune légende tirée de la phrase', e1.type === 'chiffre' && e1.valeur === '500 %' && e1.legende === '', JSON.stringify(e1));
+    check('chiffre : même une phrase courte n’est pas recopiée dessous', FQ.ecranDe('Le Livret A rapporte 3 % par an.', '').legende === '');
+    const f3 = { titre: 'Bulle', blocs: [{ texte: ph, ecran: { type: 'chiffre', valeur: '500 %', legende: ph.replace(/\.$/, '') } }, { texte: 'Le trou abyssal atteint 94 milliards de dollars.', ecran: { type: 'chiffre', valeur: '94 milliards', legende: 'Trou abyssal atteint 94 milliards de dollars' } }, { texte: 'Les pertes atteignent 3 %.', ecran: { type: 'chiffre', valeur: '3 %', legende: 'Taux du Livret A' } }] };
+    const c3 = await RE.relire(f3, { titrer: async () => ({ titres: ['Le cours grimpe en deux semaines'] }) });
+    check('relecture : légende reprise de la phrase (programme ou IA) retirée, l’IA n’en écrit plus', f3.blocs[0].ecran.legende === '' && f3.blocs[1].ecran.legende === '' && c3.some(x => /grand chiffre/.test(x)), JSON.stringify([f3.blocs.map(b => b.ecran.legende), c3]));
+    check('relecture : légende écrite à la main (autre chose que la phrase) gardée', f3.blocs[2].ecran.legende === 'Taux du Livret A');
     // retour sur un écran : règles sûres, puis IA contrôlée
     let rr = await RT.corriger({ type: 'chiffre', champs: { valeur: '500 %', legende: 'Voir le cours grimper' }, phrase: ph, demande: 'la phrase en dessous n’a aucun sens', photo: true });
     check('retour écran : « la phrase en dessous n’a aucun sens » → légende retirée, sans IA', rr.ok && rr.ecran.legende === '' && !rr.sansFond && !rr.ia, JSON.stringify(rr));

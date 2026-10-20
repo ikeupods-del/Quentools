@@ -102,7 +102,10 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
         const brut = path.join(dossier, `brut-${String(n).padStart(2, '0')}.webm`);
         await new Promise((ok, ko) => { const w = fs.createWriteStream(brut); req.pipe(w); w.on('finish', ok); w.on('error', ko); req.on('error', ko); });
         const tmp = wav(n) + '.tmp.wav', garde = '-45dB';
-        const filtre = `highpass=f=70,silenceremove=start_periods=1:start_threshold=${garde}:start_silence=0.08,areverse,silenceremove=start_periods=1:start_threshold=${garde}:start_silence=0.15,areverse`;
+        // clics du clavier (touche qui lance la prise, touche qui l'arrête) : coupés aux instants envoyés par la fenêtre du Doublage
+        const debut = Math.min(1.5, Math.max(0, +url.searchParams.get('debut') || 0)), fin = +url.searchParams.get('fin') || 0;
+        const coupe = `atrim=start=${debut.toFixed(2)}${fin > debut + 0.3 ? ':end=' + fin.toFixed(2) : ''},asetpts=PTS-STARTPTS,`;
+        const filtre = `${coupe}highpass=f=70,silenceremove=start_periods=1:start_threshold=${garde}:start_silence=0.08,areverse,silenceremove=start_periods=1:start_threshold=${garde}:start_silence=0.15,areverse`;
         try { await run(FFMPEG, ['-y', '-v', 'error', '-i', brut, '-vn', '-af', filtre, '-ac', '1', '-ar', '44100', '-c:a', 'pcm_s16le', tmp]); }
         catch (e) { try { fs.unlinkSync(tmp); } catch (e2) { /* rien à retirer */ } throw new Error('Cet enregistrement n’a pas pu être lu : recommence la réplique.'); }
         const info = await probe(tmp), duree = +(info.duration || 0);

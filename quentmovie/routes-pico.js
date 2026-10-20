@@ -230,7 +230,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
       if (!fiche && String(b.script || '').trim().length >= 80) fiche = require('./fiche-quentinvest').ficheDepuisScript(String(b.script).slice(0, 60000), { numero: 1 });
       if (!fiche || typeof fiche !== 'object') throw new Error('Écris d’abord ton script ou ta fiche.');
       const C = require(path.join(pico, 'fabrication', 'composer.js')).compose(fiche);
-      return send(res, 200, { nom: C.base.replace(/^\d+-/, ''), titre: fiche.titre || '', lignes: C.long.scenes.map(s => s.texte) });
+      return send(res, 200, { nom: C.base.replace(/^\d+-/, ''), titre: fiche.titre || '', lignes: C.long.scenes.map(s => s.texte), fiche });
     }
     // retour sur un écran (« pas de phrase en dessous », « plus court », « sans photo »…) : l'écran de cette réplique seulement est corrigé,
     // par des règles sûres d'abord, sinon par l'IA locale (contrôlée : aucun chiffre absent de la phrase) ; « Refaire » ne refait que cette réplique

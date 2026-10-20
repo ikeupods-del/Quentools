@@ -3,6 +3,15 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.8.2
+**Doublage d'un épisode tout simple** : tu choisis le sujet (ou ton texte) et les photos, puis tu lis tes répliques une par une. Une barre montre où tu en es. Dès la dernière réplique enregistrée, la vidéo (Pico, animations, écrans, miniatures) se fabrique toute seule avec ta voix, sans repasser par la fiche ni choisir le doublage. « Attendre, je réécoute » laisse le temps de refaire une prise avant.
+
+**Plus de bruit de clavier dans tes répliques** : le clic de la touche qui lance la prise et celui de la touche qui l'arrête sont coupés tout seuls. Mieux encore, la prise s'arrête d'elle-même quand tu te tais (case « Arrêter tout seul quand je me tais », cochée par défaut) : tu n'as plus à toucher le clavier à la fin d'une phrase.
+
+**⏯ Reprendre l'épisode en cours** : l'épisode commencé (texte, photos, répliques déjà lues) est gardé même si tu fermes la fenêtre ou QuentMovie. Dans la fenêtre Épisode, « Reprendre » repart de la première réplique qui manque, ou relance la vidéo si elle a été arrêtée, sans refaire ce qui est déjà prêt.
+
+**Grands chiffres : le chiffre en jaune, seul.** Plus aucun texte sous le chiffre recopié de ton script (il cassait l'écran, comme « Trou abyssal atteint 94 milliards de dollars »). La voix explique ; les anciennes fiches sont nettoyées à la fabrication. Un texte que tu écris toi-même sous un chiffre reste.
+
 ## 2.8.1
 - **Tout seul** : la vidéo est de nouveau fabriquée jusqu'au bout. L'écran « À retenir » manquait et la fabrication s'arrêtait juste après la voix, sans vidéo.
 - **Tout seul** : « En une phrase » reprend la leçon du sujet, et non plus un détail de fin d'article.
