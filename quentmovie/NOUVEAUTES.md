@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.8.1
+**Doublage d'un épisode tout simple** : tu choisis le sujet (ou ton texte) et les photos, puis tu lis tes répliques une par une. Une barre montre où tu en es. Dès la dernière réplique enregistrée, la vidéo (Pico, animations, écrans, miniatures) se fabrique toute seule avec ta voix, sans repasser par la fiche ni choisir le doublage. « Attendre, je réécoute » laisse le temps de refaire une prise avant.
+
 ## 2.8.0
 **Ta vraie voix par défaut** pour les épisodes QuentInvest : la voix clonée ne valait pas ta voix. « Ma vraie voix (je lis les répliques) » écrit le texte, ouvre le Doublage avec les répliques dans l'ordre ; une fois enregistrées, le bouton « 🧾 Fiche » du Doublage te ramène à l'épisode, prêt à fabriquer avec ton doublage. La voix clonée reste proposée, en essai.
 

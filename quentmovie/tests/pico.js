@@ -214,6 +214,14 @@ async function navigateurEssai(exe) {
     check('« Enregistrer ces répliques » : le Doublage s’ouvre avec les répliques de la vidéo', await pg.evaluate(l => document.querySelector('#dbTexte').value.split('\n').length === l.length && document.querySelector('#dbNom').value, rq.lignes));
     await pg.evaluate(() => { dblFin(); fermer(); ouvrirFiche(); }); await pg.waitForTimeout(500);
     check('retour dans Épisode QuentInvest : ton script est gardé et ton doublage choisi', await pg.evaluate(n => document.querySelector('#fiScript').value.length > 80 && document.querySelector('#fiAutoVoix').value === 'doublage:' + n, rq.nom));
+    // doublage d'un épisode : un bandeau dit quoi faire ; après la dernière réplique, la vidéo se fabrique avec ce doublage, sans autre clic
+    await pg.evaluate(() => { fermer(); ouvrirFiche(); }); await pg.waitForTimeout(300); await pg.click('[name="fiMode"][value="script"]'); await pg.fill('#fiScript', scriptActu);
+    await pg.click('#fiDoubler'); await pg.waitForSelector('#dbTexte');
+    await pg.evaluate(() => { dbl.lignes = dblLignes($('#dbTexte').value); dbl.nom = $('#dbNom').value; dbl.vue = true; dblVue(); });
+    check('doublage d’un épisode : bandeau « la vidéo se fabrique toute seule »', await pg.evaluate(() => /se fabrique toute seule/.test((document.querySelector('#dbEpisode') || {}).textContent || '') && !document.querySelector('#dbFabriquer')));
+    await pg.evaluate(() => { window.__fab = null; fabriquerPico = (t, o) => { window.__fab = { fiche: JSON.parse(t), o }; }; dbl.lignes.forEach((_, i) => { dbl.prises[i] = { duree: 1, file: 'x.wav' }; }); dblVue(); });
+    await pg.click('#dbFabriquer'); await pg.waitForTimeout(300);
+    check('toutes les répliques enregistrées : fabrication avec ce doublage et la fiche des répliques', await pg.evaluate(n => !!window.__fab && window.__fab.o.voix === 'doublage:' + n && /BCE/.test(window.__fab.fiche.titre) && !dbl && !fiMemo.episode, rq.nom), await pg.evaluate(() => JSON.stringify(window.__fab && window.__fab.o)));
     await pg.evaluate(() => { fermer(); fiMemo.script = ''; fiMemo.doublage = ''; });
     await pg.evaluate(() => ouvrirRelecturePico('98-essai-pico')); await pg.waitForSelector('#rlListe .rlLigne');
     check('écran de relecture : une ligne par réplique avec son expression', await pg.evaluate(n => document.querySelectorAll('#rlListe .rlLigne').length === n && document.querySelectorAll('#rlListe select[data-expr]').length === n, E.scenes.length));
