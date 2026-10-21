@@ -170,6 +170,7 @@ async function navigateurEssai(exe) {
     check('ta voix : épisode fabriqué sans voix de synthèse', jm.done && !jm.error && (jm.resultat.fichiers || []).includes('97-essai-ma-voix-youtube.mp4'), jm.error || '');
     const dmv = path.join(sorties, '97-essai-ma-voix');
     check('ta voix : une réplique dite par ta voix pour chaque réplique', fs.existsSync(path.join(dmv, 'ma-voix-youtube', 'v00.wav')) && JSON.parse(fs.readFileSync(path.join(dmv, 'voix.json'), 'utf8')).mode === 'ma-voix');
+    check('ta voix : sans version TikTok, ses répliques ne sont pas dites', !fs.existsSync(path.join(dmv, 'ma-voix-tiktok')), fs.existsSync(path.join(dmv, 'ma-voix-tiktok')) ? fs.readdirSync(path.join(dmv, 'ma-voix-tiktok')).length + ' répliques TikTok dites' : '');
     check('ta voix : la voix de Pico n’a pas été téléchargée', !fs.existsSync(path.join(base, 'modeles', 'kokoro-multi-lang-v1_0')));
     const d0 = fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v00.wav')).mtimeMs, d1 = fs.statSync(path.join(dmv, 'ma-voix-youtube', 'v01.wav')).mtimeMs;
     const rm = await (await post('/api/pico/refaire', { base: '97-essai-ma-voix', changements: [{ i: 1, texte: 'Une phrase refaite avec ta voix.' }] })).json(), jrm = await attendre(rm.id);

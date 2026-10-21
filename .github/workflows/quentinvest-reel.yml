@@ -70,9 +70,15 @@ jobs:
         if: always()
         run: |
           for f in "$RUNNER_TEMP/qm-qi/voix-clone/journal.txt" "$RUNNER_TEMP/qm-qi/ia-journal.txt"; do
-            [ -f "$f" ] && { echo "=== $f"; tail -n 150 "$f"; }
+            # barres d'avancement (« Sampling », retours chariot) retirées : sinon elles noient l'erreur dans des milliers de lignes
+            [ -f "$f" ] && { echo "=== $f"; tr '\r' '\n' < "$f" | grep -v -E 'Sampling|it/s\]|s/it\]|^\s*$' | tail -n 60; }
           done
           ls -la "$RUNNER_TEMP/qm-qi" "$RUNNER_TEMP/qm-qi/QuentInvest" 2>/dev/null || true
+      - name: Résultat de l'essai (rappel en fin de journal)
+        if: always()
+        run: |
+          [ -f autotest-qi.json ] && node -e "const r=require('./autotest-qi.json');console.log(JSON.stringify({erreur:r.erreur,script:r.script&&{erreur:r.script.erreur,fichiers:r.script.fichiers},seul:r.seul&&{erreur:r.seul.erreur,fichiers:r.seul.fichiers,minutes:r.seul.minutes}},null,1))" || echo "Aucun résultat de l'application (autotest-qi.json absent)"
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:

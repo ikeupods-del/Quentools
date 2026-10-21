@@ -154,7 +154,7 @@ function creer({ BASE, FFMPEG, opts, send, readJson, travail, PAROLE, VOIXCLONE,
     const fFiche = path.join(fiches, C.base + '.json'); fs.writeFileSync(fFiche, JSON.stringify(fiche, null, 1) + '\n');
     job.sousTitres = !!o.sousTitres; // sous-titres incrustés : seulement si demandés, l'écran explique déjà
     const choix = o.choixVoix || modeVoix(); fs.writeFileSync(path.join(dossier, 'voix.json'), JSON.stringify(choix));
-    const V = await voixDesVersions(job, choix, dossier, [['youtube', C.long], ['tiktok', C.tiktok]]);
+    const V = await voixDesVersions(job, choix, dossier, [['youtube', C.long], ...(o.sansTiktok ? [] : [['tiktok', C.tiktok]])]); // sans version TikTok, ses répliques ne sont pas dites (de longues minutes avec ta voix clonée)
     const perso = [...(V.youtube ? ['--voix-perso', V.youtube] : []), ...(V.tiktok ? ['--voix-perso-tiktok', V.tiktok] : [])];
     const args = [fFiche, '--sortie', dossier, '--modeles', path.join(BASE, 'modeles'), ...perso, ...(o.court ? ['--court'] : []), ...(o.sansTiktok ? ['--sans-tiktok'] : []), ...(o.sansYoutube ? ['--sans-youtube'] : [])];
     const lignes = await lancer(job, pico, 'episode.js', args, C.base, [...(o.sansYoutube ? [] : ['YouTube']), ...(o.sansTiktok ? [] : ['TikTok'])]);

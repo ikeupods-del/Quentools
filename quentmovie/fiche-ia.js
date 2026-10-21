@@ -32,7 +32,7 @@ function chiffreChoc(faits) {
 async function brouillon({ sujet, numero = 99, article, faits, ecrire, url = '' }, job = {}) {
   const etape = (t, p) => { job.step = t; if (p != null) job.progress = p; };
   etape('Lecture de l’article Wikipédia…', 0.05);
-  const paragraphes = await faits(article, 380);
+  const paragraphes = await faits(article, +process.env.QM_QI_DUREE || 380); // même durée que le texte demandé à l'IA
   if (!paragraphes.length) throw new Error('Cet article ne contient pas assez de texte pour un épisode.');
   const brut = paragraphes.map(p => p.texte).join(' ');
   etape('L’IA locale reformule les faits pour la voix…', 0.15);
