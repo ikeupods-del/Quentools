@@ -1841,6 +1841,25 @@ function buildClip(c, P, o = {}) {
           return { fichiers };
         }));
       }
+      // Version verticale pour TikTok d'un montage horizontal, à l'export : 3 minutes au plus (coupée à la fin d'un plan quand c'est possible),
+      // image entière sur fond flouté (rien du cadre 16:9 n'est perdu, textes compris), sous-titres en grand ; rangée à côté de l'export principal
+      if (req.method === 'POST' && p === '/api/export/vertical') {
+        const b = await readJson(req);
+        return send(res, 200, travail(async job => {
+          const D = require('./decoupe'), P = b.project || {}, MAX = 180;
+          const debut = Math.max(0, num(b.debut, 0)), fin0 = Math.max(debut + 1, num(b.fin, 0) || (P.clips || []).reduce((s, c) => s + D.effDur(c), 0));
+          let fin = Math.min(fin0, debut + MAX);
+          if (fin0 > debut + MAX) { let t = 0, bord = 0; for (const c of P.clips || []) { t += D.effDur(c); if (t > debut + MAX) break; if (t > debut) bord = t; } if (bord - debut >= 120) fin = bord; } // fin d'un plan plutôt qu'au milieu d'une phrase
+          const q = D.habillerTikTok(D.extraireSegment(P, debut, fin), { format: 'vertical', cadrage: b.cadrage === 'remplir' ? '' : 'flou' });
+          if (b.cadrage !== 'remplir') q.clips.forEach(c => { if (c.kind === 'image' && !c.fit) c.fit = 'flou'; }); // photos entières aussi
+          q.sortie = 'mp4'; q.normaliser = !!P.normaliser;
+          const sub = { progress: 0, step: '', out: null, error: null, done: false }, suivi = setInterval(() => { job.progress = sub.progress; job.step = 'Version verticale : ' + (sub.step || '…'); }, 300);
+          try { await exportProject(sub, q); } finally { clearInterval(suivi); }
+          const nom = String(b.nom || '').replace(/\.\w+$/, '').replace(/[^\w.\- ()]/g, '_').slice(0, 100) || 'export';
+          const dest = `${nom}-vertical-tiktok.mp4`; fs.renameSync(path.join(EXPORTS, sub.out), path.join(EXPORTS, dest));
+          return { out: dest, duree: +(fin - debut).toFixed(1), coupee: fin0 - debut > MAX };
+        }));
+      }
       if (req.method === 'POST' && p === '/api/assistant/publication') { const b = await readJson(req); return send(res, 200, travail(job => { job.step = 'Écriture du titre, de la description et des hashtags…'; const a = b.analyse && typeof b.analyse === 'object' ? b.analyse : {};
         return IA().textesPublication({ texte: String(b.texte || '').slice(0, 3000), plateforme: String(b.plateforme || '').slice(0, 20), titre: String(b.titre || '').slice(0, 120),
           analyse: { sujet: String(a.sujet || '').slice(0, 160), resume: String(a.resume || '').slice(0, 400), motsCles: (Array.isArray(a.motsCles) ? a.motsCles : []).map(m => String(m).slice(0, 40)).slice(0, 6), points: (Array.isArray(a.points) ? a.points : []).map(m => String(m).slice(0, 100)).slice(0, 6) },

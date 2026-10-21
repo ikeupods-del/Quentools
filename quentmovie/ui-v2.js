@@ -197,7 +197,7 @@ const DESTS_V2 = [
 ];
 const VISIBILITES_V2 = [['private', 'Privée'], ['unlisted', 'Non répertoriée'], ['prog', 'Programmée']];
 const FORMATS_V2 = { vertical: '9:16', horizontal: '16:9', carre: '1:1' };
-const pubV2 = { dest: { mac: true, youtube: false, tiktok: false, airdrop: false }, vis: 'private', comptes: null };
+const pubV2 = { dest: { mac: true, youtube: false, tiktok: false, airdrop: false }, vis: 'private', comptes: null, vertical: true }; // vertical : version TikTok d'un montage 16:9
 const qualiteV2 = () => proj.sortie === 'mp3' ? 'son' : (QUALITES_V2.find(q => q.res === +proj.res) || QUALITES_V2[1]).id;
 const textesV2 = () => (proj.publication = proj.publication || { titre: '', description: '', tags: '' });
 const enLigneV2 = () => pubV2.dest.youtube || pubV2.dest.tiktok;
@@ -217,7 +217,7 @@ function exporter() {
     <section class="pv2-reglages">
       <div><h1>Exporter et publier</h1><p class="mut">Choisis la qualité et où envoyer la vidéo. Rien n’est mis en ligne sans ton clic.</p></div>
       <div><h2>Qualité</h2><div class="pv2-qualites" id="pvQualites"></div></div>
-      <div><h2>Où l’envoyer</h2><div class="pv2-dests" id="pvDests"></div><div id="pvComptes" class="mut"></div></div>
+      <div><h2>Où l’envoyer</h2><div class="pv2-dests" id="pvDests"></div><div id="pvComptes" class="mut"></div><div id="pvVertical"></div></div>
       <div class="pv2-textes" id="pvTextes"></div>
       <details class="pv2-avance"><summary>Réglages avancés</summary>
         <label class="l">Type de fichier</label><select id="xSortie">${CAT.sorties.map(f => `<option value="${f}" ${proj.sortie === f ? 'selected' : ''}>${SORTIES[f] || f}</option>`).join('')}</select>
@@ -252,12 +252,15 @@ function dessinerPublierV2() {
   const mo = total() * (son ? 0.192 : Q.mbps) / 8;
   $('#pvTaille').textContent = '≈ ' + (mo < 1 ? '1 Mo' : mo < 1000 ? Math.round(mo) + ' Mo' : (mo / 1000).toFixed(1).replace('.', ',') + ' Go');
   $('#pvQualites').innerHTML = QUALITES_V2.map(y => `<button data-qv2="${y.id}" aria-pressed="${y.id === q}" class="${y.id === q ? 'on' : ''}">${y.nom}<span>${y.info}</span></button>`).join('');
+  // montage 16:9 : une version verticale pour TikTok est faite en plus (3 minutes au plus, image entière sur fond flouté)
+  $('#pvVertical').innerHTML = !son && proj.format === 'horizontal' ? `<div class="sw2"><input type="checkbox" id="xVert" ${pubV2.vertical ? 'checked' : ''}><label for="xVert">📱 Aussi une version verticale pour TikTok (3 min au plus)${total() > 180 ? ' : les 3 premières minutes' : ''}</label></div>` : '';
+  const xv = $('#xVert'); if (xv) xv.onchange = () => { pubV2.vertical = xv.checked; dessinerPublierV2(); };
   $('#pvDests').innerHTML = DESTS_V2.map(d => { const on = !!D[d.id], off = son && (d.id === 'youtube' || d.id === 'tiktok');
     return `<button class="pv2-dest ${on ? 'on' : ''}" data-dv2="${d.id}" aria-pressed="${on}" ${off ? 'disabled title="Une vidéo est nécessaire"' : ''}><span class="pv2-ic" style="background:${d.fond}"><svg viewBox="0 0 24 24" fill="none" stroke="${d.couleur}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d.icone}"/></svg></span><span class="pv2-t"><b>${d.nom}</b><small>${d.info}</small></span><span class="pv2-case">${on ? '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>' : ''}</span></button>`; }).join('');
   // comptes à connecter
   const C = pubV2.comptes, manque = C ? ['youtube', 'tiktok'].filter(p => D[p] && !(C[p] && C[p].connecte)) : [];
   $('#pvComptes').innerHTML = (manque.length ? `⚠️ ${manque.map(p => p === 'youtube' ? 'YouTube' : 'TikTok').join(' et ')} : compte à connecter (une seule fois). <a href="#" id="pvComptesReg">Régler les comptes</a>` : '')
-    + (D.tiktok && proj.format !== 'vertical' ? `${manque.length ? '<br>' : ''}ℹ TikTok préfère les vidéos verticales (9:16) : change le format en haut à droite si besoin.` : '');
+    + (D.tiktok && proj.format !== 'vertical' && !(proj.format === 'horizontal' && pubV2.vertical) ? `${manque.length ? '<br>' : ''}ℹ TikTok préfère les vidéos verticales (9:16) : change le format en haut à droite si besoin.` : '');
   // textes de publication, juste en dessous, seulement si on met en ligne
   const z = $('#pvTextes');
   if (!enLigneV2()) z.innerHTML = '';
@@ -309,14 +312,22 @@ async function lancerPublierV2() {
   let j;
   try { j = await lancerJob('/api/export', { project: proj, plage, nomProjet: projetCourant || undefined }, (p, s) => barre(p, `${s} — ${Math.round(p * 100)} %${reste(p)}`), id => { idExp = id; }); }
   catch (e) { exportEnCours = false; z.innerHTML = `<p class="${/annulé/.test(e.message) ? 'mut' : 'err'}">${esc(e.message)}</p><button id="xFin">Revenir</button>`; z.querySelector('#xFin').onclick = () => exporter(); signal('Export : ' + e.message); preparerEnFond(); return; }
-  try { await finExportV2(j, D, T, z, t0, barre); } finally { exportEnCours = false; } // l'envoi en ligne compte dans l'export : pas de second export pendant ce temps
+  // version verticale pour TikTok (montage 16:9) : faite juste après, c'est elle qui part dans les brouillons TikTok
+  let jv = null;
+  if (pubV2.vertical && proj.format === 'horizontal' && !/^(mp3|m4a|wav)$/.test(proj.sortie)) {
+    try { jv = await lancerJob('/api/export/vertical', { project: proj, debut: plage ? plage.s : 0, fin: plage ? plage.e : 0, nom: j.out }, (p, s) => barre(p, `${s} — ${Math.round(p * 100)} %`), id => { idExp = id; }); }
+    catch (e) { jv = { erreur: e.message }; }
+  }
+  try { await finExportV2(j, D, T, z, t0, barre, jv); } finally { exportEnCours = false; } // l'envoi en ligne compte dans l'export : pas de second export pendant ce temps
   preparerEnFond();
 }
-async function finExportV2(j, D, T, z, t0, barre) {
+async function finExportV2(j, D, T, z, t0, barre, jv = null) {
   const lignes = [`✅ Exporté${j.duree ? ` en ${fmt(j.duree)}` : ''} : <b>${esc(j.out)}</b>${j.repris ? ` <span class="mut">(${j.repris} clip${j.repris > 1 ? 's' : ''} inchangé${j.repris > 1 ? 's' : ''} repris)</span>` : ''}${j.avertissement ? `<br><span class="mut">ℹ ${esc(j.avertissement)}</span>` : ''}`];
+  if (jv) lignes.push(jv.erreur ? `<span class="err">Version verticale : ${esc(jv.erreur)}</span>` : `✅ Version verticale pour TikTok : <b>${esc(jv.out)}</b> (${fmt(jv.duree)}${jv.coupee ? ', les 3 premières minutes' : ''})`);
+  const vertical = jv && !jv.erreur ? jv.out : null, fichiers = [j.out, ...(vertical ? [vertical] : [])];
   let envoisOk = true; const enLigne = D.youtube || D.tiktok; // destinations choisies au lancement
   const envoyer = async (plateforme, corps) => {
-    const { id } = await (await api('/api/publier/montage', { method: 'POST', body: JSON.stringify({ plateforme, fichier: j.out, ...corps }) })).json();
+    const { id } = await (await api('/api/publier/montage', { method: 'POST', body: JSON.stringify({ plateforme, fichier: plateforme === 'tiktok' && vertical ? vertical : j.out, ...corps }) })).json();
     return suivreTravail(id, k => barre(k.progress || 0, `${plateforme === 'youtube' ? 'YouTube' : 'TikTok'} : ${k.step || 'envoi…'}`));
   };
   const tags = String(T.tags || '').split(/[\s,]+/).map(t => t.replace(/^#/, '')).filter(Boolean);
@@ -331,15 +342,15 @@ async function finExportV2(j, D, T, z, t0, barre) {
       lignes.push(`✅ TikTok : ${esc(r.message || 'brouillon envoyé')}${copie ? ' La légende est copiée : colle-la dans l’application.' : ''}`); }
     catch (e) { envoisOk = false; lignes.push(`<span class="err">TikTok : ${esc(e.message)}</span>`); }
   }
-  if (D.airdrop) { partagerFichiers([j.out]); lignes.push('📲 AirDrop : choisis ton iPhone dans la fenêtre de partage.'); }
+  if (D.airdrop) { partagerFichiers(fichiers); lignes.push('📲 AirDrop : choisis ton iPhone dans la fenêtre de partage.'); }
   // AirDrop coché : le fichier reste sur le Mac (la feuille de partage le lit encore)
-  if (!D.mac && !D.airdrop && enLigne && envoisOk) { await api('/api/exports/retirer', { method: 'POST', body: JSON.stringify({ file: j.out }) }).catch(() => {}); lignes.push('<span class="mut">Fichier retiré du Mac après l’envoi (case « Enregistrer sur le Mac » décochée).</span>'); }
+  if (!D.mac && !D.airdrop && enLigne && envoisOk) { for (const f of fichiers) await api('/api/exports/retirer', { method: 'POST', body: JSON.stringify({ file: f }) }).catch(() => {}); lignes.push('<span class="mut">Fichier retiré du Mac après l’envoi (case « Enregistrer sur le Mac » décochée).</span>'); }
   else lignes.push('<span class="mut">Dossier : Films → QuentMovie → exports</span>');
   if (document.hidden || Date.now() - t0 > 60000) { try { new Notification(enLigne ? 'Export et envoi terminés' : 'Export terminé', { body: j.out, silent: false }); } catch (er) { /* notifications indisponibles */ } }
   const garde = D.mac || D.airdrop || !enLigne || !envoisOk;
   z.innerHTML = `<div class="pv2-fin">${lignes.map(l => `<p>${l}</p>`).join('')}<div class="ligne">${garde ? `<button id="xFind">Afficher dans le Finder</button>${D.airdrop ? '' : '<button id="xAir">Envoyer par AirDrop</button>'}` : ''}<button class="pri" id="xFin">Retour au montage</button></div></div>`;
   const l = (id, f) => { const b = z.querySelector('#' + id); if (b) b.onclick = f; };
-  l('xFin', fermerPublierV2); l('xAir', () => partagerFichiers([j.out])); l('xFind', () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) }));
+  l('xFin', fermerPublierV2); l('xAir', () => partagerFichiers(fichiers)); l('xFind', () => api('/api/reveal', { method: 'POST', body: JSON.stringify({ file: j.out }) }));
   z.querySelectorAll('[data-ouvrir]').forEach(a => { a.onclick = ev => { ev.preventDefault(); api('/api/publier/ouvrir', { method: 'POST', body: JSON.stringify({ cible: a.dataset.ouvrir }) }); }; });
   signal(`${envoisOk ? 'Export terminé' : 'Export terminé, envoi en échec'} : ${j.out}`);
 }
