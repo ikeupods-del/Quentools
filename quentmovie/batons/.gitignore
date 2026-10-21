@@ -1,0 +1,5 @@
+node_modules/
+out/
+# Projets fabriqués (voix, textes) : générés à la demande, jamais versionnés
+public/projets/*
+!public/projets/.gitkeep
