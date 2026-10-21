@@ -3,6 +3,9 @@
 Chaque section devient le texte affiché dans l'application quand la mise à jour est proposée.
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
+## 2.8.3
+- **Ta voix clonée plus rapide** : quand « Version TikTok » est décochée, les répliques TikTok ne sont plus dites pour rien. Jusqu'à une vingtaine de répliques et de longues minutes en moins.
+
 ## 2.8.2
 **Doublage d'un épisode tout simple** : tu choisis le sujet (ou ton texte) et les photos, puis tu lis tes répliques une par une. Une barre montre où tu en es. Dès la dernière réplique enregistrée, la vidéo (Pico, animations, écrans, miniatures) se fabrique toute seule avec ta voix, sans repasser par la fiche ni choisir le doublage. « Attendre, je réécoute » laisse le temps de refaire une prise avant.
 
