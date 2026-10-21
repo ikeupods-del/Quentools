@@ -26,6 +26,7 @@ const ecran = {
 // Économie de batterie : la fenêtre passée derrière est ralentie, sauf pendant que le studio (caméra, enregistrement) est ouvert
 const energie = studio => { if (win && !win.isDestroyed()) win.webContents.setBackgroundThrottling(!studio); };
 const ouvrirDossier = dossier => shell.openPath(dossier);
+const corbeille = chemin => shell.trashItem(chemin); // Corbeille du Mac : récupérable
 const ouvrirUrl = url => { if (/^https:\/\//.test(url)) shell.openExternal(url); }; // connexion aux comptes (YouTube, TikTok) et pages de publication
 // clés des comptes de publication : chiffrées par le trousseau de macOS quand il est disponible
 const coffre = { chiffrer: t => safeStorage.encryptString(t).toString('base64'), dechiffrer: t => safeStorage.decryptString(Buffer.from(t, 'base64')) };
@@ -37,8 +38,8 @@ async function demarrer() {
   const bins = await resolveFfmpeg(), navigateur = navigateurEcrans.creer(BrowserWindow);
   const base = process.env.QM_AUTOTEST && process.env.QM_BASE ? process.env.QM_BASE : path.join(app.getPath('home'), 'Movies', 'QuentMovie');
   let port;
-  try { moteur = create({ port: 41730, base, ...bins, maj: hooksMaj, partager, ecran, energie, ouvrirDossier, ouvrirUrl, navigateur, ...(process.env.QM_AUTOTEST ? { sortiesPico: path.join(base, 'QuentInvest') } : {}), coffre: safeStorage.isEncryptionAvailable() ? coffre : null }); port = await moteur.start(); }
-  catch (e) { moteur = create({ port: 0, base, ...bins, maj: hooksMaj, partager, ecran, energie, ouvrirDossier, ouvrirUrl, navigateur, ...(process.env.QM_AUTOTEST ? { sortiesPico: path.join(base, 'QuentInvest') } : {}), coffre: safeStorage.isEncryptionAvailable() ? coffre : null }); port = await moteur.start(); }
+  try { moteur = create({ port: 41730, base, ...bins, maj: hooksMaj, partager, ecran, energie, ouvrirDossier, corbeille, ouvrirUrl, navigateur, ...(process.env.QM_AUTOTEST ? { sortiesPico: path.join(base, 'QuentInvest') } : {}), coffre: safeStorage.isEncryptionAvailable() ? coffre : null }); port = await moteur.start(); }
+  catch (e) { moteur = create({ port: 0, base, ...bins, maj: hooksMaj, partager, ecran, energie, ouvrirDossier, corbeille, ouvrirUrl, navigateur, ...(process.env.QM_AUTOTEST ? { sortiesPico: path.join(base, 'QuentInvest') } : {}), coffre: safeStorage.isEncryptionAvailable() ? coffre : null }); port = await moteur.start(); }
 
   // Caméra et micro (studio, voix off) : autorisés uniquement pour la fenêtre de QuentMovie
   const local = u => /^http:\/\/127\.0\.0\.1:\d+\//.test(u || '');

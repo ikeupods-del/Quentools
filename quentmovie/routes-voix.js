@@ -85,6 +85,20 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
       const resumeVoix = d => { const l = Object.values(d); return { prises: l.length, secondes: +l.reduce((t, x) => t + (x.duree || 0), 0).toFixed(1), dossier: MAVOIX }; };
       const ecrireVoix = d => { fs.mkdirSync(MAVOIX, { recursive: true }); fs.writeFileSync(idx, JSON.stringify(d, null, 1)); fs.writeFileSync(path.join(MAVOIX, 'metadata.csv'), Object.entries(d).sort(([a], [b]) => a.localeCompare(b)).map(([id, x]) => { const t = String(x.texte || '').replace(/[|\r\n]+/g, ' ').trim(); return `${id}|${t}|${t}`; }).join('\n') + '\n'); };
       const idVoix = k => `${nom}-${String(k).padStart(2, '0')}`;
+      // nouveau doublage : ceux des vidéos précédentes partent à la Corbeille du Mac (récupérables), pour ne garder en vue que le dernier enregistrement.
+      // Restent : le corpus « Ma voix » (ta voix clonée en a besoin) et les répliques posées dans un projet enregistré.
+      const rangerAnciens = async () => {
+        const racine = path.join(BASE, 'doublages'); let autres = [];
+        try { autres = fs.readdirSync(racine).filter(d => d !== nom && fs.statSync(path.join(racine, d)).isDirectory()); } catch (e) { return; }
+        if (!autres.length) return;
+        let utilises = ''; for (const d of [path.join(BASE, 'projets'), BASE]) { try { for (const f of fs.readdirSync(d).filter(x => /\.(qmovie|json)$/.test(x))) utilises += fs.readFileSync(path.join(d, f), 'utf8'); } catch (e) { /* aucun projet */ } }
+        const jeter = async f => { try { if (opts.corbeille) await opts.corbeille(f); else { const c = path.join(BASE, '.corbeille-doublages'); fs.mkdirSync(c, { recursive: true }); fs.renameSync(f, path.join(c, `${Date.now()}-${path.basename(f)}`)); } } catch (e) { /* laissé en place */ } };
+        for (const d of autres) {
+          for (const m of fs.readdirSync(MEDIAS).filter(x => x.startsWith(`doublage-${d}-`) && !utilises.includes(x))) await jeter(path.join(MEDIAS, m));
+          await jeter(path.join(racine, d));
+        }
+      };
+      if (!fs.existsSync(dossier) && ((req.method === 'PUT' && p === '/api/doublage/script') || (req.method === 'POST' && p === '/api/doublage/prise'))) await rangerAnciens();
       if (req.method === 'GET' && p === '/api/doublage') { // lignes gardées et prises déjà enregistrées
         let lignes = []; try { lignes = JSON.parse(fs.readFileSync(path.join(dossier, 'script.json'), 'utf8')).lignes || []; } catch (e) { /* nouveau doublage */ }
         const prises = []; let l = []; try { l = fs.readdirSync(dossier); } catch (e) { /* dossier absent */ }

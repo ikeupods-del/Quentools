@@ -60,8 +60,6 @@ function chromium() {
   check('fichier illisible refusé', e2.status >= 400 && !fs.existsSync(path.join(dossier, 'v05.wav')));
   const e3 = await fetch(U(`/api/doublage/prise?nom=${nom}`), { method: 'POST', body: corps });
   check('numéro de réplique obligatoire', e3.status >= 400);
-  const e4 = await fetch(U('/api/doublage/prise?nom=../../evasion&n=0'), { method: 'POST', body: corps });
-  check('nom de dossier assaini', e4.status === 200 && !fs.existsSync(path.join(base, '..', 'evasion')) && fs.existsSync(path.join(base, 'doublages', '.._.._evasion', 'v00.wav')) || fs.readdirSync(path.join(base, 'doublages')).every(d => !d.includes('/')));
 
   await fetch(U(`/api/doublage/prise?nom=${nom}&n=2`), { method: 'DELETE' });
   g = await (await fetch(U(`/api/doublage?nom=${nom}`))).json();
@@ -69,6 +67,14 @@ function chromium() {
   check('prise supprimée (dossier et médias)', g.prises.map(p => p.n).join() === '0' && !fs.existsSync(path.join(base, 'medias', `doublage-${nom}-02.wav`)));
   const d = await (await fetch(U(`/api/doublage/dossier?nom=${nom}`), { method: 'POST' })).json();
   check('ouverture du dossier : chemin renvoyé', d.dossier === dossier);
+  // un nouveau doublage range ceux des vidéos précédentes (ici dans .corbeille-doublages ; dans l'application, la Corbeille du Mac)
+  fs.writeFileSync(path.join(base, 'projets', 'garde.qmovie'), JSON.stringify({ clips: [], audio: [{ file: `doublage-${nom}-00.wav` }] })); // réplique posée dans un projet
+  const e4 = await fetch(U('/api/doublage/prise?nom=../../evasion&n=0'), { method: 'POST', body: corps });
+  check('nom de dossier assaini', e4.status === 200 && !fs.existsSync(path.join(base, '..', 'evasion')) && fs.existsSync(path.join(base, 'doublages', '.._.._evasion', 'v00.wav')) || fs.readdirSync(path.join(base, 'doublages')).every(d => !d.includes('/')));
+  check('nouveau doublage : le précédent est rangé à la corbeille', !fs.existsSync(dossier) && fs.readdirSync(path.join(base, '.corbeille-doublages')).some(x => x.endsWith(nom)), fs.readdirSync(path.join(base, 'doublages')).join());
+  check('nouveau doublage : la réplique posée dans un projet reste dans les médias, le corpus « Ma voix » aussi', fs.existsSync(path.join(base, 'medias', `doublage-${nom}-00.wav`)) && fs.existsSync(path.join(mv, 'wavs', `${nom}-00.wav`)));
+  await fetch(U('/api/doublage/prise?nom=../../evasion&n=1'), { method: 'POST', body: corps });
+  check('même doublage : rien n’est rangé', fs.existsSync(path.join(base, 'doublages', 'evasion', 'v00.wav')) && fs.existsSync(path.join(base, 'doublages', 'evasion', 'v01.wav')));
 
   // ---------- interface ----------
   const exe = chromium(); let pw = null; try { pw = require('playwright-core'); } catch (e) { try { pw = require(process.env.PW || 'playwright'); } catch (e2) { /* module absent */ } }
