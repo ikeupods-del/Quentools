@@ -140,6 +140,9 @@
 <script>
   // Anciens liens de Wouf (adresse racine avec « # » ou « ? ») : on les renvoie vers l'app.
   if (/^#\//.test(location.hash) || /[?&](maj|proprio)=/.test(location.search)) location.replace('wouf/' + location.search + location.hash);
+  // Retour de la banque pour l'application Mac de Patrimoine AI (adresse déclarée chez Enable Banking) : renvoyé vers l'application,
+  // qui attend sur ce Mac au port écrit au début du « state » (mac<port>-…).
+  try { const q = new URLSearchParams(location.search), m = /^mac(\d{2,5})-[0-9a-f]{16,}$/.exec(q.get('state') || ''); if (m && (q.get('code') || q.get('error'))) location.replace('http://127.0.0.1:' + m[1] + '/banque' + location.search); } catch (e) { /* adresse sans retour bancaire */ }
   // Ancien mode hors connexion de Wouf resté installé à la racine (avant son déménagement) : retiré, l'accueil s'affiche à nouveau (voir sw.js).
   try { navigator.serviceWorker && navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => { if (new URL(r.scope).pathname === '/') r.unregister(); })).catch(() => {}); } catch (e) { /* navigateur sans prise en charge */ }
 </script>
