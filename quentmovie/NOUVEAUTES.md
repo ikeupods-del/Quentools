@@ -4,6 +4,7 @@ Chaque section devient le texte affiché dans l'application quand la mise à jou
 Changer aussi `version` dans `package.json` : une version déjà publiée n'est pas republiée.
 
 ## 2.8.4
+- **Une version 16:9 et une version verticale à chaque export** : quand ton montage est horizontal, « Exporter et publier » fait aussi une version verticale pour TikTok (case cochée d'office). L'image entière est gardée sur un fond flouté, les sous-titres sont en grand, et la vidéo dure 3 minutes au plus (coupée à la fin d'un plan plutôt qu'au milieu d'une phrase). YouTube reçoit la version 16:9, tes brouillons TikTok la version verticale.
 - **Plus de confusion entre tes doublages** : quand tu commences le doublage d'une nouvelle vidéo, ceux des vidéos précédentes partent à la Corbeille du Mac (tu peux les récupérer tant qu'elle n'est pas vidée). Il ne reste que ton dernier enregistrement. Une réplique que tu as posée dans un projet enregistré est gardée, et ta voix clonée garde tout ce qu'elle a appris.
 
 ## 2.8.3

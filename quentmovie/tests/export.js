@@ -256,6 +256,18 @@ const { execFileSync, spawnSync } = require('child_process');
   check('analyse : changements de plan trouvés (2 s et 4 s)', (te.scenes || []).some(x => Math.abs(x - 2) < 0.4) && (te.scenes || []).some(x => Math.abs(x - 4) < 0.4), JSON.stringify(te));
   check('analyse : part de blancs et niveau sonore mesurés', te.blancs >= 20 && te.blancs <= 50 && te.lufs < -20, JSON.stringify(te));
   check('analyse : conseils avec l’action qui corrige (niveau, blancs)', (te.conseils || []).some(c => c.action === 'normaliser') && (te.conseils || []).some(c => c.action === 'couper_blancs'), JSON.stringify(te.conseils));
+  { // version verticale pour TikTok d'un montage 16:9 : 3 minutes au plus, coupée à la fin d'un plan, format 9:16
+    ff('-f', 'lavfi', '-i', 'testsrc=s=320x180:r=15:d=70', '-f', 'lavfi', '-i', 'sine=f=300:d=70', '-shortest', '-pix_fmt', 'yuv420p', path.join(base, 'l.mp4'));
+    await fetch(U('/api/import?name=l.mp4'), { method: 'POST', body: fs.readFileSync(path.join(base, 'l.mp4')) });
+    const plan = () => ({ ...clip('l.mp4', 'video', { out: 70, dur: 70 }), transition: null });
+    const P = { ...projet('Long'), res: 360, clips: [plan(), plan(), plan(), plan()] }; // 4 × 70 s = 280 s
+    const { id } = await (await fetch(U('/api/export/vertical'), { method: 'POST', body: JSON.stringify({ project: P, nom: 'mon-montage.mp4' }) })).json();
+    let jv; for (;;) { jv = await (await fetch(U('/api/job?id=' + id))).json(); if (jv.error || jv.done) break; await new Promise(r => setTimeout(r, 300)); }
+    const rv = jv.resultat || {}, info = rv.out ? execFileSync(bins.ffmpeg, ['-hide_banner', '-i', path.join(base, 'exports', rv.out), '-f', 'null', '-'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).toString() : '';
+    const dim = (spawnSync(bins.ffmpeg, ['-hide_banner', '-i', path.join(base, 'exports', rv.out || 'x')], { encoding: 'utf8' }).stderr.match(/, (\d{2,5})x(\d{2,5})/) || []).slice(1).map(Number);
+    check('version verticale : fichier « -vertical-tiktok », image 9:16', jv.done && rv.out === 'mon-montage-vertical-tiktok.mp4' && dim[1] > dim[0], (jv.error || '') + JSON.stringify([rv, dim]) + info.slice(0, 0));
+    check('version verticale : 3 minutes au plus, coupée à la fin d’un plan', rv.coupee && rv.duree === 140 && Math.abs(lireDuree(rv.out) - 140) < 1.5, JSON.stringify(rv) + ' ' + lireDuree(rv.out || 'x'));
+  }
   app.stop(); fs.rmSync(base, { recursive: true, force: true });
   console.log(`Export : ${ok} contrôles réussis, ${ko} échecs`); process.exit(ko ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
