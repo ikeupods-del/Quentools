@@ -1,0 +1,851 @@
+@theme Crédit, levier et produits risqués
+
+# Qu'est-ce qu'un crédit lombard ?
+
+Certains très riches ne vendent presque jamais leurs actions. Quand ils ont besoin d'argent, ils empruntent en les mettant en garantie. Une banque peut prêter jusqu'à 50 % ou 70 % de leur valeur. Ce prêt a un nom venu du Moyen Âge : le crédit lombard. Comment fonctionne-t-il ?
+
+Des banquiers venus d'Italie
+
+Au Moyen Âge, des marchands et banquiers venus du nord de l'Italie s'installent dans toute l'Europe. On les appelle les Lombards, du nom de la Lombardie. Ils prêtent de l'argent contre des objets laissés en gage.
+
+Ils ont laissé leur nom dans les villes. À Paris, la rue des Lombards rappelle leur présence. À Londres, Lombard Street est restée une rue de banques. Leur métier, prêter contre une garantie, a donné son nom au crédit lombard.
+
+Le principe
+
+Le crédit lombard est un prêt garanti par des placements financiers. Des actions, des obligations, des fonds, ou un contrat d'assurance-vie. Ces placements sont mis en gage auprès de la banque. On parle de nantissement.
+
+Tu restes propriétaire de tes placements. Ils continuent de vivre, de monter ou de baisser. Mais tu ne peux plus les vendre librement tant que le prêt n'est pas remboursé. Et si tu ne rembourses pas, la banque peut les vendre pour se payer.
+
+Combien prête la banque ?
+
+La banque ne prête jamais la totalité de la valeur. Elle applique une décote, selon le risque de chaque placement. On parle de quotité de financement.
+
+Pour des actions, elle prête souvent autour de 50 % de leur valeur, parfois un peu plus. Pour des placements plus stables, elle peut aller beaucoup plus haut. Par exemple un fonds en euros d'assurance-vie, ou des obligations solides. Les pourcentages varient selon les banques.
+
+Par exemple, avec un portefeuille d'actions de 200 000 euros, la banque pourrait prêter environ 100 000 euros. Sans que tu aies à vendre une seule action.
+
+Pourquoi l'utiliser ?
+
+Première raison : ne pas vendre. Vendre des placements qui ont beaucoup monté déclenche un impôt sur les plus-values. Emprunter évite cette vente, et donc cet impôt, au moins pour le moment.
+
+Deuxième raison : garder ses placements. Si tu penses qu'ils vont continuer à monter, tu ne veux pas t'en séparer. Le prêt te donne de l'argent tout en les gardant.
+
+Troisième raison : la souplesse. Le crédit lombard peut financer presque tout : un achat immobilier, un projet d'entreprise, une dépense importante. Il est souvent remboursable in fine, c'est-à-dire en une fois à la fin. En attendant, on paie seulement les intérêts.
+
+La stratégie des grandes fortunes
+
+Aux États-Unis, on parle parfois d'une stratégie surnommée « acheter, emprunter, mourir ». De grandes fortunes achètent des actions. Elles empruntent dessus pour vivre, au lieu de les vendre. Puis elles les transmettent à leur décès.
+
+Selon les règles fiscales américaines, leurs héritiers échappent alors à l'impôt sur une grande partie des plus-values accumulées. Cette stratégie fait l'objet de nombreux débats sur la justice fiscale. Les règles françaises sont différentes, mais l'idée d'emprunter plutôt que de vendre existe aussi.
+
+Le grand risque : la baisse
+
+Le danger arrive quand les placements baissent. La garantie vaut moins. La banque exige alors que tu rétablisses l'équilibre. Soit en remboursant une partie du prêt, soit en ajoutant d'autres placements en garantie. C'est un appel de marge.
+
+Si tu ne peux pas, la banque vend tes placements. Souvent au pire moment, pendant une baisse. Tu peux alors perdre une grande partie de ton patrimoine, et rester avec un prêt à rembourser.
+
+Les taux
+
+Le taux d'un crédit lombard est souvent variable, indexé sur un taux de marché, plus une marge de la banque. Quand les taux montent, comme en 2022 et 2023, le coût du prêt augmente fortement. Ce qui était bon marché peut devenir cher.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : avec un crédit lombard, il faut vendre ses actions pour obtenir l'argent ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. C'est justement l'inverse. Tu gardes tes actions, mises en garantie, et la banque te prête de l'argent. Tu ne vends qu'en cas de problème.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes avec le crédit lombard.
+
+Un : emprunter le maximum possible. Au moindre recul des marchés, l'appel de marge arrive très vite.
+
+Deux : oublier que le taux peut monter. Un prêt à taux variable peut coûter beaucoup plus cher que prévu.
+
+Trois : utiliser le prêt pour acheter encore plus de placements risqués. On cumule alors deux risques, et la chute peut être brutale.
+
+Ce qu'il faut retenir
+
+- Le crédit lombard est un prêt garanti par des placements financiers
+- Il permet d'obtenir de l'argent sans vendre
+- Si les placements baissent, la banque peut exiger des garanties ou vendre
+
+En une phrase : le crédit lombard prête contre tes placements, sans les vendre, mais gare aux baisses. Et toi, préférerais-tu vendre tes placements ou emprunter dessus ?
+
+Sources : S1 · Banque de France et Autorité de contrôle prudentiel et de résolution, fiches sur le nantissement de titres et de contrats d'assurance-vie ; Wikipédia, « Crédit lombard » et « Lombards » (rue des Lombards à Paris, Lombard Street à Londres)
+S2 · Quotités habituelles autour de 50 % pour des actions, jusqu'à 70 % ou plus pour des supports stables (documentation des banques privées) ; stratégie « buy, borrow, die » (presse financière américaine) ; hausse des taux en 2022 et 2023
+S3 · Calcul de la chaîne : 50 % de 200 000 euros = 100 000 euros
+
+===
+
+# L'effet de levier : multiplier ses gains… et ses pertes
+
+Avec 10 000 euros et un levier de 10, on contrôle 100 000 euros de placements. Une hausse de 10 % double ta mise. Mais une baisse de 10 % l'efface entièrement. Qu'est-ce que l'effet de levier, et pourquoi a-t-il ruiné tant d'investisseurs ?
+
+Le principe
+
+L'effet de levier consiste à utiliser de l'argent emprunté pour investir plus que ce qu'on possède. Comme un levier en physique, qui permet de soulever une charge lourde avec peu de force.
+
+Si tu places 10 000 euros de ton argent, tu profites des gains et des pertes sur 10 000 euros. Si tu empruntes 90 000 euros de plus, tu profites des gains et des pertes sur 100 000 euros. Ton levier est de 10.
+
+Le scénario rêvé
+
+Imagine que le placement monte de 10 %. Tes 100 000 euros deviennent 110 000 euros. Tu rembourses les 90 000 euros empruntés. Il te reste 20 000 euros.
+
+Ta mise de 10 000 euros a doublé. Un gain de 100 %, avec une hausse de seulement 10 %. Sans levier, tu aurais gagné 1 000 euros. Avec levier, tu en gagnes 10 000, hors frais et intérêts.
+
+Le scénario cauchemar
+
+Maintenant, imagine une baisse de 10 %. Tes 100 000 euros tombent à 90 000 euros. Tu dois rembourser 90 000 euros. Il ne te reste rien. Ta mise a entièrement disparu.
+
+Et si la baisse atteint 15 %, c'est pire. Tes placements valent 85 000 euros, mais tu dois toujours 90 000 euros. Tu as perdu ta mise, et tu dois encore 5 000 euros.
+
+Plus le levier est grand, plus une petite variation suffit à tout effacer. Avec un levier de 2, il faut une baisse de 50 % pour perdre ta mise. Avec un levier de 10, une baisse de 10 % suffit. Avec un levier de 30, environ 3,3 %.
+
+L'immobilier, un levier courant
+
+Le levier n'existe pas qu'en Bourse. Quand tu achètes un logement à crédit, tu utilises aussi un levier. Avec un apport de 30 000 euros, tu achètes un bien de 300 000 euros. Si le bien prend 10 %, ton apport double.
+
+Mais si le prix baisse de 10 %, ton apport disparaît. C'est ce qu'ont vécu des millions de ménages américains en 2008. Leur maison valait moins que leur crédit.
+
+La différence avec la Bourse, c'est que personne ne t'oblige à vendre ta maison quand son prix baisse. Tant que tu paies tes mensualités, tu peux attendre. En Bourse, un levier peut être coupé automatiquement.
+
+Les catastrophes célèbres
+
+Le levier est au cœur de nombreuses catastrophes. Le krach de 1929, nourri par les achats d'actions à crédit. La faillite de Lehman Brothers en 2008, qui empruntait environ trente fois son capital. La chute d'Archegos en 2021.
+
+Le fonds LTCM, en 1998, en est un autre exemple. Dirigé par des financiers réputés et conseillé par deux futurs prix Nobel d'économie, il utilisait un levier énorme. Une crise en Russie a suffi à le faire tomber. La banque centrale de New York a dû organiser son sauvetage.
+
+Le coût du levier
+
+Le levier a aussi un coût. L'argent emprunté n'est pas gratuit. Il faut payer des intérêts, chaque jour, chaque mois, chaque année. Si le placement stagne, ces intérêts font perdre de l'argent à coup sûr.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : avec un levier de 10, une baisse de 10 % du placement fait perdre 10 % de ta mise ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Elle fait perdre 100 % de ta mise. Le levier multiplie les variations. Une baisse de 10 % sur une position dix fois plus grande que ta mise efface tout.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes avec le levier.
+
+Un : ne regarder que les gains possibles. Le levier multiplie les pertes exactement de la même façon.
+
+Deux : oublier qu'on peut perdre plus que sa mise. Avec un emprunt, la dette reste due même si le placement s'effondre.
+
+Trois : croire qu'on aura le temps d'attendre une remontée. Avec un levier en Bourse, la position peut être coupée avant.
+
+Ce qu'il faut retenir
+
+- L'effet de levier consiste à investir avec de l'argent emprunté
+- Il multiplie les gains et les pertes
+- Plus le levier est grand, plus une petite baisse peut tout effacer
+
+En une phrase : le levier transforme une petite hausse en gros gain, et une petite baisse en ruine. Et toi, avec quel levier dormirais-tu tranquille ?
+
+Sources : S1 · Autorité des marchés financiers, « L'effet de levier » ; Wikipédia, « Long-Term Capital Management » (1998, sauvetage organisé par la Réserve fédérale de New York)
+S2 · Krach de 1929, Lehman Brothers en 2008 avec un levier d'environ 30, Archegos en 2021 (voir épisodes de la chaîne)
+S3 · Calcul de la chaîne : 10 000 euros + 90 000 euros empruntés = 100 000 euros ; +10 % = 110 000 euros, 20 000 euros restants ; −10 % = 90 000 euros ; −15 % = 85 000 euros, 5 000 euros dus ; 1 000 euros sans levier ; levier de 2, 10 et 30, baisse de 50 %, 10 % et environ 3,3 % ; apport de 30 000 euros pour 300 000 euros
+
+===
+
+# La vente à découvert : parier sur la baisse
+
+En Bourse, on peut gagner de l'argent quand une action baisse. Il suffit de vendre une action qu'on ne possède pas. Mais le risque est sans limite : si l'action triple, la perte peut dépasser 200 %. Comment fonctionne la vente à découvert ?
+
+Vendre ce qu'on n'a pas
+
+En temps normal, on achète une action, puis on la revend. On gagne si son prix monte entre-temps. La vente à découvert inverse l'ordre. On vend d'abord, on rachète ensuite.
+
+Comment vendre une action qu'on ne possède pas ? En l'empruntant. Un investisseur qui possède l'action la prête, contre une rémunération. Le vendeur à découvert la vend aussitôt. Plus tard, il devra la racheter pour la rendre à son propriétaire.
+
+Un exemple
+
+L'action vaut 100 euros. Tu penses qu'elle va baisser. Tu l'empruntes et tu la vends 100 euros. Quelques semaines plus tard, elle vaut 70 euros. Tu la rachètes 70 euros et tu la rends. Tu as gagné 30 euros, moins les frais d'emprunt.
+
+Mais si l'action monte à 150 euros, tu dois la racheter 150 euros pour la rendre. Tu perds 50 euros. Et si elle monte à 300 euros, tu perds 200 euros, soit le double de la vente initiale.
+
+Un risque sans plafond
+
+C'est la grande particularité de la vente à découvert. Quand on achète une action, on ne peut pas perdre plus que sa mise. Le prix ne descend pas sous zéro. Quand on vend à découvert, le prix peut monter sans limite. La perte aussi.
+
+C'est ce qui est arrivé aux fonds qui pariaient contre GameStop en janvier 2021. L'action a été multipliée par plus de vingt-cinq en quelques semaines. Leurs pertes ont été colossales.
+
+À quoi ça sert ?
+
+La vente à découvert a mauvaise réputation. On accuse ceux qui la pratiquent de faire chuter les entreprises. Mais elle a aussi une utilité.
+
+Elle permet à des investisseurs sceptiques d'exprimer leur avis. Sans elle, seuls les optimistes pourraient agir sur le prix. Certains vendeurs à découvert enquêtent en profondeur sur des entreprises qu'ils soupçonnent de tricher. Dans l'affaire Wirecard, ils avaient raison.
+
+Elle sert aussi à se protéger. Un gérant qui possède beaucoup d'actions peut vendre un indice à découvert. Il limite ainsi ses pertes en cas de baisse générale. On appelle ça une couverture.
+
+Les règles
+
+La vente à découvert est encadrée. En Europe, les positions importantes doivent être déclarées aux autorités. Au-delà d'un certain seuil, elles sont même rendues publiques.
+
+En période de crise, les autorités peuvent l'interdire temporairement. Ça a été le cas en 2008, en 2011 et en mars 2020, en France et dans d'autres pays européens. L'objectif est d'éviter d'aggraver une panique.
+
+Le piège du « short squeeze »
+
+Imagine que beaucoup d'investisseurs aient vendu une action à découvert. Si elle monte, ils doivent racheter pour limiter leurs pertes. Ces rachats font encore monter le prix. D'autres doivent racheter à leur tour. C'est la spirale du « short squeeze ».
+
+Les vendeurs à découvert célèbres
+
+Certains investisseurs se sont fait un nom en pariant sur la baisse. Pendant la crise des subprimes, quelques-uns avaient compris avant les autres que les crédits immobiliers américains allaient s'effondrer. Leur histoire est racontée dans le film The Big Short, sorti en 2015.
+
+D'autres publient des rapports pour dénoncer des fraudes présumées. Ils prennent une position à la baisse, puis rendent publique leur enquête. Cette pratique est légale, mais très surveillée. Les entreprises visées les accusent parfois de manipulation.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : en vendant à découvert, la perte maximale est égale à la somme reçue lors de la vente ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. La perte n'a pas de limite théorique. Si l'action double, triple ou décuple, la perte augmente d'autant.
+
+Attention, grain de sable
+
+Il y a trois idées reçues.
+
+Un : croire que vendre à découvert est un jeu facile pour gagner pendant les crises. Les marchés montent aussi pendant les crises, parfois très fort.
+
+Deux : penser que les vendeurs à découvert ont toujours tort ou toujours raison. Leurs enquêtes méritent d'être vérifiées, comme toute information.
+
+Trois : oublier les coûts. Emprunter une action coûte de l'argent, chaque jour, et les dividendes doivent être reversés au prêteur.
+
+Ce qu'il faut retenir
+
+- La vente à découvert consiste à vendre une action empruntée, pour la racheter plus tard
+- On gagne si le prix baisse, on perd s'il monte
+- La perte n'a pas de limite théorique
+
+En une phrase : vendre à découvert, c'est parier sur la baisse avec un risque de perte sans plafond. Et toi, trouves-tu normal de pouvoir parier contre une entreprise ?
+
+Sources : S1 · Autorité des marchés financiers, « La vente à découvert » (emprunt de titres, déclaration des positions importantes, interdictions temporaires en 2008, 2011 et mars 2020) ; règlement européen sur la vente à découvert ; film « The Big Short » (2015)
+S2 · Calcul de la chaîne : vente à 100 euros, rachat à 70 euros = 30 euros de gain ; à 150 euros = 50 euros de perte ; à 300 euros = 200 euros de perte, soit 200 % ; GameStop, multiplication par plus de vingt-cinq en janvier 2021
+
+===
+
+# L'appel de marge : quand ton courtier te réclame de l'argent
+
+Tu as acheté pour 50 000 euros d'actions avec seulement 10 000 euros à toi. La Bourse baisse de 15 %. Ton téléphone sonne : ton courtier exige de l'argent, tout de suite. C'est l'appel de marge. Comment fonctionne-t-il, et pourquoi a-t-il provoqué tant de catastrophes ?
+
+Le dépôt de garantie
+
+Quand tu investis avec de l'argent emprunté, ton courtier ou ta banque prend un risque. Si tes placements baissent, tu pourrais ne pas pouvoir rembourser. Pour se protéger, il exige une garantie.
+
+Cette garantie s'appelle la marge, ou le dépôt de garantie. C'est une somme minimale que tu dois toujours avoir sur ton compte, en proportion de tes positions. Elle sert de coussin en cas de perte.
+
+L'appel
+
+Si tes placements baissent, ton coussin fond. Quand il descend sous le niveau exigé, ton courtier te demande de le reconstituer. Soit en versant de l'argent, soit en vendant une partie de tes placements. C'est l'appel de marge.
+
+Le délai est souvent très court. Parfois quelques heures, parfois une journée. Sur certaines plateformes, il n'y a même pas d'appel : la position est coupée automatiquement quand le seuil est atteint.
+
+Un exemple
+
+Reprenons. Tu as 10 000 euros à toi et tu en empruntes 40 000. Tu détiens 50 000 euros d'actions. Ton courtier exige que ta part propre représente au moins 25 % des actions détenues.
+
+La Bourse baisse de 15 %. Tes actions valent 42 500 euros. Tu dois toujours 40 000 euros. Il ne te reste que 2 500 euros à toi, soit environ 6 % de tes positions. Bien sous les 25 % exigés. L'appel de marge tombe.
+
+Pour revenir à 25 %, tu dois verser plusieurs milliers d'euros. Si tu ne le peux pas, le courtier vend tes actions. Au prix du moment, en pleine baisse.
+
+La spirale
+
+L'appel de marge a un effet terrible sur les marchés. Quand beaucoup d'investisseurs reçoivent un appel en même temps, beaucoup vendent en même temps. Ces ventes font encore baisser les prix. Ce qui déclenche d'autres appels de marge.
+
+C'est exactement la mécanique du krach de 1929. Des millions d'Américains avaient acheté des actions à crédit. Les appels de marge ont transformé une baisse en effondrement.
+
+On l'a revue en 1980 avec les frères Hunt et l'argent métal. En 2021 avec Archegos. À chaque fois, les ventes forcées ont accéléré la chute.
+
+Les règles d'aujourd'hui
+
+Depuis 2018, les règles européennes protègent mieux les particuliers sur certains produits risqués, comme les CFD. Le levier est limité, et la position est fermée automatiquement quand les pertes atteignent la moitié de la marge.
+
+Ces mêmes règles imposent une protection contre le solde négatif. Un particulier ne peut pas perdre plus que l'argent déposé sur ces produits. Mais sur d'autres formes de crédit, la dette peut dépasser la mise.
+
+L'appel de marge dans la vraie vie
+
+Les appels de marge ne concernent pas que les grands fonds. Des particuliers qui utilisent des comptes à crédit chez leur courtier peuvent aussi en recevoir. Souvent par courriel, ou par une notification sur leur application.
+
+Le stress est immense. Il faut trouver de l'argent très vite, souvent un jour où les marchés sont en chute. Beaucoup découvrent à ce moment-là qu'ils avaient sous-estimé le risque de leur position.
+
+Le service de règlement différé
+
+À la Bourse de Paris, il existe un système appelé service de règlement différé, ou SRD. Il permet d'acheter ou de vendre des actions en ne payant qu'à la fin du mois. Le courtier avance l'argent, contre une couverture. C'est une forme d'effet de levier, avec ses appels de couverture en cas de baisse.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : quand on reçoit un appel de marge, on peut toujours attendre que la Bourse remonte ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Si tu ne verses pas l'argent demandé, le courtier peut vendre tes placements, souvent très vite. Tu n'as pas toujours le temps d'attendre un rebond.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : utiliser tout le crédit disponible. Il ne reste alors aucune marge de sécurité en cas de baisse.
+
+Deux : compter sur un rebond rapide. Les marchés peuvent baisser plus longtemps que tu ne peux tenir.
+
+Trois : oublier que les appels arrivent en même temps pour tout le monde. Pendant une crise, les prix chutent justement parce que beaucoup doivent vendre.
+
+Ce qu'il faut retenir
+
+- L'appel de marge exige de remettre de l'argent quand des placements à crédit baissent
+- Sans versement, le courtier vend, souvent au pire moment
+- Les ventes forcées en chaîne aggravent les krachs
+
+En une phrase : l'appel de marge oblige à payer ou à vendre quand un placement à crédit baisse. Et toi, aurais-tu de quoi répondre à un appel de marge demain matin ?
+
+Sources : S1 · Autorité des marchés financiers, glossaire (dépôt de garantie, appel de marge) ; mesures de l'Autorité européenne des marchés financiers de 2018 sur les CFD (fermeture à 50 % de la marge, protection contre le solde négatif)
+S2 · Calcul de la chaîne : 10 000 euros + 40 000 euros empruntés = 50 000 euros ; −15 % = 42 500 euros ; 2 500 euros restants, environ 6 % ; seuil de 25 % ; krach de 1929, frères Hunt en 1980, Archegos en 2021 ; Euronext, service de règlement différé
+
+===
+
+# CFD, turbos, forex : pourquoi la plupart des particuliers perdent
+
+D'après une étude de l'AMF, 89 % des particuliers qui spéculaient sur le forex ont perdu sur quatre ans. Leur perte moyenne dépassait 10 000 euros. Pourtant, ces produits attirent toujours. Que sont les CFD, les turbos et le forex ?
+
+Les CFD
+
+CFD veut dire « contrat sur la différence ». C'est un contrat passé avec un intermédiaire. On ne possède pas l'action, la devise ou la matière première. On parie simplement sur la variation de son prix.
+
+Si le prix évolue dans le sens prévu, l'intermédiaire paie la différence. Sinon, c'est toi qui paies. Et presque toujours avec un effet de levier. Avec 1 000 euros, on peut prendre une position de plusieurs milliers d'euros.
+
+Le forex
+
+Le forex, c'est le marché des devises. On y parie sur l'évolution d'une monnaie par rapport à une autre. L'euro contre le dollar, par exemple. Les variations quotidiennes sont faibles, souvent moins de 1 %.
+
+Pour les rendre intéressantes, les plateformes proposent des leviers importants. Une petite variation devient alors un gros gain, ou une grosse perte. C'est un marché très rapide, ouvert jour et nuit, et dominé par des professionnels.
+
+Les turbos
+
+Les turbos sont des produits émis par des banques. Ils permettent aussi de parier, avec un levier, sur la hausse ou la baisse d'un actif. Ils ont une particularité : une barrière désactivante.
+
+Si le prix de l'actif touche cette barrière, le turbo disparaît. Il ne vaut plus rien, ou presque. Même si le prix repart ensuite dans le bon sens, c'est trop tard. La perte est définitive.
+
+Les chiffres de l'AMF
+
+En 2014, l'Autorité des marchés financiers publie une étude sur les particuliers qui spéculaient sur le forex. Sur quatre ans, 89 % d'entre eux ont perdu de l'argent. La perte moyenne atteignait environ 10 900 euros par client.
+
+Les plateformes européennes doivent d'ailleurs afficher un avertissement. Il indique le pourcentage de clients particuliers qui perdent de l'argent avec leurs CFD. Ce chiffre dépasse souvent les deux tiers.
+
+Pourquoi ils perdent
+
+Plusieurs raisons expliquent ces pertes. Le levier d'abord, qui amplifie chaque erreur. Les frais ensuite : écarts de prix, frais de financement chaque nuit. Ils grignotent les gains, opération après opération.
+
+La psychologie joue aussi un rôle. Les petites victoires donnent confiance, et poussent à prendre plus de risques. Une seule grosse perte peut alors effacer des mois de gains.
+
+Enfin, face aux particuliers, il y a des professionnels équipés, rapides et bien informés. Le combat est inégal.
+
+Ce que dit la loi
+
+En France, la loi Sapin 2 de 2016 interdit la publicité électronique pour les produits les plus spéculatifs. Comme les CFD et le forex. Depuis 2018, l'Europe limite aussi le levier proposé aux particuliers.
+
+Par exemple, le levier est plafonné à 30 sur les grandes devises, et à 2 sur les cryptoactifs. Les particuliers ne peuvent plus perdre plus que l'argent déposé sur leur compte.
+
+Les faux conseillers
+
+Ces produits sont aussi l'outil préféré de nombreux escrocs. Des plateformes non autorisées contactent des particuliers par téléphone ou sur les réseaux sociaux. Elles promettent des gains rapides, avec un « conseiller » dédié.
+
+Au début, le compte affiche des gains. La victime verse davantage. Puis, quand elle veut retirer son argent, des frais imprévus apparaissent, ou la plateforme disparaît. L'AMF publie régulièrement des listes noires de ces sites.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : avec un CFD sur une action, on devient actionnaire de l'entreprise ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. On ne possède rien. On parie seulement sur la variation du prix, auprès d'un intermédiaire. Pas de droit de vote, et on n'est pas propriétaire d'une part de l'entreprise.
+
+Attention, grain de sable
+
+Il y a trois signaux d'alerte.
+
+Un : une publicité qui promet des gains rapides. En France, la publicité électronique pour ces produits est interdite.
+
+Deux : un conseiller qui t'appelle pour te pousser à trader. C'est souvent une arnaque. Il faut vérifier sur la liste noire de l'AMF.
+
+Trois : croire qu'on fera partie des rares gagnants. Les statistiques montrent qu'une large majorité perd.
+
+Ce qu'il faut retenir
+
+- CFD, forex et turbos sont des paris avec effet de levier
+- Une large majorité des particuliers y perd de l'argent
+- Leur publicité est encadrée et leur levier limité en Europe
+
+En une phrase : CFD, forex et turbos sont des paris à levier où la plupart des particuliers perdent. Et toi, as-tu déjà vu une publicité pour ce genre de produit ?
+
+Sources : S1 · Autorité des marchés financiers, étude sur les investisseurs particuliers sur le forex, 2014 (89 % de clients perdants sur quatre ans, perte moyenne d'environ 10 900 euros)
+S2 · Autorité européenne des marchés financiers, mesures de 2018 (levier plafonné à 30 sur les grandes devises et à 2 sur les cryptoactifs, avertissement obligatoire, protection contre le solde négatif) ; loi Sapin 2 de 2016 (interdiction de la publicité électronique)
+S3 · Exemples de la chaîne : 1 000 euros de dépôt ; variations quotidiennes de moins de 1 % ; plus de 10 000 euros
+
+===
+
+# Le TAEG : le vrai prix d'un crédit
+
+Deux crédits de 10 000 euros affichent le même taux d'intérêt. Pourtant, l'un peut coûter plusieurs centaines d'euros de plus que l'autre. La raison ? Les frais cachés autour du taux. Pour les comparer, la loi impose un chiffre : le TAEG. Qu'est-ce que c'est ?
+
+Le taux nominal ne suffit pas
+
+Quand tu empruntes, la banque t'annonce un taux d'intérêt. C'est le taux nominal, ou taux débiteur. Il sert à calculer les intérêts que tu vas payer.
+
+Mais un crédit coûte souvent plus que ses intérêts. Il peut y avoir des frais de dossier, une assurance emprunteur obligatoire, des frais de garantie, des frais de courtage. Ces coûts s'ajoutent au prix total.
+
+Le TAEG
+
+Le TAEG veut dire taux annuel effectif global. Il regroupe en un seul pourcentage les intérêts et tous les frais obligatoires pour obtenir le crédit. C'est le vrai coût du crédit, exprimé en taux annuel.
+
+Il comprend les intérêts, les frais de dossier et l'assurance quand elle est exigée. Ainsi que les frais de garantie et les commissions d'intermédiaires. Il ne comprend pas, en revanche, les frais qui ne sont pas obligatoires.
+
+Une obligation légale
+
+En France, le TAEG doit figurer dans toute publicité et toute offre de crédit. Il permet de comparer des offres différentes sur une même base. C'est l'outil le plus simple pour savoir quel crédit est vraiment le moins cher.
+
+Si une publicité met en avant un taux très bas, il faut chercher le TAEG. Il est obligatoire, souvent écrit en plus petit. C'est lui qu'il faut comparer.
+
+Un exemple
+
+Imagine deux crédits de 10 000 euros sur quatre ans. Les deux ont un taux nominal de 5 %. Le premier n'a aucun frais. Le second ajoute 300 euros de frais de dossier.
+
+Le premier a un TAEG d'environ 5,1 %. Le second, avec les frais, monte à environ 6,8 %. Le même taux affiché, mais pas le même prix. Sur la durée, l'écart dépasse les 300 euros de frais, car les frais sont payés dès le départ.
+
+Le coût total du crédit
+
+L'autre chiffre important, c'est le coût total du crédit. C'est la somme de tout ce que tu paies en plus du capital emprunté. Intérêts et frais compris.
+
+Pour un crédit immobilier sur vingt ans, ce coût peut représenter des dizaines de milliers d'euros. Il dépend énormément du taux et de la durée. Plus le crédit est long, plus le coût total augmente, même avec des mensualités plus petites.
+
+Le TAEG et le taux d'usure
+
+Le TAEG sert aussi à vérifier le respect du taux d'usure. C'est un plafond légal. Aucun crédit ne peut avoir un TAEG supérieur à ce plafond. C'est une protection contre les crédits abusifs.
+
+L'assurance emprunteur
+
+Sur un crédit immobilier, l'assurance emprunteur peut représenter une part importante du coût total. Elle couvre le remboursement en cas de décès, d'invalidité, parfois d'arrêt de travail.
+
+Depuis 2022, la loi Lemoine permet de changer d'assurance emprunteur à tout moment, sans frais. Une assurance moins chère, aux garanties équivalentes, peut faire économiser des milliers d'euros sur la durée du crédit.
+
+Le délai de réflexion
+
+Pour un crédit à la consommation, l'emprunteur dispose d'un délai de rétractation de 14 jours après la signature. Pour un crédit immobilier, l'offre de prêt doit être conservée au moins 10 jours avant d'être acceptée. Ces délais permettent de réfléchir et de comparer.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : deux crédits avec le même taux nominal coûtent forcément le même prix ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Les frais de dossier, l'assurance et les garanties peuvent changer beaucoup le coût. C'est pour ça qu'il faut comparer les TAEG, pas les taux nominaux.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : comparer les mensualités seulement. Une petite mensualité sur une très longue durée peut coûter beaucoup plus cher au total.
+
+Deux : oublier l'assurance emprunteur. Sur un crédit immobilier, elle peut représenter une part importante du coût. Et on peut souvent en changer.
+
+Trois : se fier au taux mis en avant dans la publicité. Le TAEG est le seul chiffre qui permet de comparer.
+
+Ce qu'il faut retenir
+
+- Le TAEG regroupe intérêts et frais obligatoires d'un crédit
+- Il est obligatoire dans toute publicité et toute offre de crédit
+- C'est le chiffre à comparer entre deux offres
+
+En une phrase : le TAEG est le vrai prix d'un crédit, frais compris, et le seul à comparer. Et toi, regardes-tu le TAEG ou la mensualité ?
+
+Sources : S1 · Service-public.fr et Banque de France, « Taux annuel effectif global (TAEG) » (composition, obligation d'affichage dans la publicité et l'offre, lien avec le taux d'usure)
+S3 · Loi Lemoine de 2022 (changement d'assurance emprunteur à tout moment) ; délai de rétractation de 14 jours pour un crédit à la consommation, offre de prêt immobilier conservée 10 jours
+S2 · Calcul de la chaîne : 10 000 euros sur quatre ans à 5 % sans frais, TAEG d'environ 5,1 % ; avec 300 euros de frais de dossier, TAEG d'environ 6,8 % (mensualité d'environ 230 euros) ; crédit immobilier sur vingt ans
+
+===
+
+# Le taux d'usure : le plafond qui protège les emprunteurs
+
+En France, il est interdit de prêter à un taux trop élevé. Au-delà d'un plafond fixé par la Banque de France, le prêt devient usuraire : c'est un délit. Une règle dont l'histoire remonte à plus de 2 000 ans. Comment fonctionne ce taux d'usure ?
+
+Une très vieille interdiction
+
+Le prêt à intérêt a longtemps été mal vu. Dans l'Antiquité, des philosophes le critiquent déjà. Au Moyen Âge, l'Église catholique interdit aux chrétiens de prêter avec intérêt. On appelle ça l'usure.
+
+Peu à peu, les règles s'assouplissent. Le prêt à intérêt devient légal, mais on cherche à empêcher les excès. Aujourd'hui, le mot « usure » ne désigne plus tout prêt avec intérêt, mais un prêt à un taux abusif.
+
+Le principe actuel
+
+En France, le taux d'usure est le taux maximal auquel un prêteur peut accorder un crédit. Il est fixé par la Banque de France. Il dépend de la catégorie de crédit : crédit immobilier, crédit à la consommation, découvert, prêt aux entreprises.
+
+On le calcule à partir des taux réellement pratiqués par les banques. Il correspond au taux moyen observé, augmenté d'un tiers. Si le taux moyen d'une catégorie est de 6 %, le taux d'usure est d'environ 8 %.
+
+Un prêt dont le TAEG dépasse ce plafond est usuraire. Le prêteur s'expose à des sanctions pénales. Et l'emprunteur peut demander le remboursement des intérêts trop perçus.
+
+Revu régulièrement
+
+Le taux d'usure est en principe publié chaque trimestre. Il suit donc l'évolution des taux du marché, avec un peu de retard.
+
+En 2022 et 2023, ce retard pose problème. Les taux du marché montent très vite. Le taux d'usure, lui, suit plus lentement. Certains emprunteurs ne peuvent plus obtenir de crédit immobilier : avec l'assurance, leur TAEG dépasse le plafond.
+
+Pour corriger ce décalage, le taux d'usure est calculé chaque mois pendant une partie de 2023. Puis il revient à un calcul trimestriel.
+
+Protecteur, mais pas parfait
+
+Le taux d'usure protège les emprunteurs fragiles contre des crédits trop chers. Sans lui, certains prêteurs pourraient proposer des taux exorbitants.
+
+Mais il a un effet secondaire. Certaines personnes sont jugées risquées. Un prêteur leur aurait accordé un crédit à un taux élevé. Avec le plafond, elles n'en obtiennent plus du tout. Certains économistes estiment qu'il exclut une partie de la population du crédit.
+
+C'est un débat ancien. Certains pays n'ont pas de taux d'usure, ou des plafonds différents. Chacun choisit son équilibre entre protection et accès au crédit.
+
+Les intérêts dans les religions
+
+L'interdiction de l'intérêt n'a pas disparu partout. La finance islamique, par exemple, refuse le prêt à intérêt. Elle utilise d'autres montages, comme le partage des profits, ou la revente avec une marge connue à l'avance.
+
+Ces produits existent aussi en France, sous certaines formes. Ils montrent que la question de l'intérêt reste avant tout une question de valeurs, autant que d'économie.
+
+Les découverts aussi
+
+Le taux d'usure ne concerne pas seulement les crédits classiques. Il s'applique aussi aux découverts bancaires autorisés. Le taux des agios ne peut pas dépasser le plafond fixé pour cette catégorie. Les frais liés aux incidents, eux, sont encadrés par d'autres règles.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : le taux d'usure est le même pour tous les crédits ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Il existe plusieurs taux d'usure, selon la catégorie de crédit et parfois selon la durée ou le montant. Un crédit renouvelable n'a pas le même plafond qu'un crédit immobilier.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : croire que le taux d'usure s'applique au seul taux nominal. Il s'applique au TAEG, frais et assurance compris.
+
+Deux : penser qu'un crédit proche du taux d'usure est une bonne affaire parce qu'il est légal. Il peut rester très cher.
+
+Trois : oublier que ce plafond change. Il est revu régulièrement, selon les taux du marché.
+
+Ce qu'il faut retenir
+
+- Le taux d'usure est le taux maximal légal d'un crédit
+- Il est fixé par la Banque de France, selon la catégorie de crédit
+- Il s'applique au TAEG, frais et assurance compris
+
+En une phrase : le taux d'usure plafonne le coût des crédits pour protéger les emprunteurs. Et toi, savais-tu qu'un taux trop élevé pouvait être un délit ?
+
+Sources : S1 · Banque de France, « Taux d'usure » (calcul : taux effectif moyen augmenté d'un tiers, publication trimestrielle, calcul mensuel temporaire en 2023, catégories de crédits) ; Code de la consommation
+S2 · Wikipédia, « Usure » (interdiction du prêt à intérêt au Moyen Âge, critiques antiques, plus de 2 000 ans) ; hausse des taux de 2022 et 2023
+S3 · Calcul de la chaîne : 6 % + un tiers = 8 %
+
+===
+
+# Taux fixe ou taux variable : le grand choix du crédit immobilier
+
+Prenons un crédit de 200 000 euros sur 20 ans. Passer de 3 % à 4 % ajoute environ 100 euros par mois. Et plus de 24 000 euros sur la durée. Avec un taux variable, ce scénario peut arriver en cours de route. Quelle est la différence entre taux fixe et taux variable ?
+
+Le taux fixe
+
+Avec un taux fixe, le taux d'intérêt est décidé à la signature. Il ne bouge plus jusqu'à la fin du crédit. Tes mensualités restent les mêmes pendant 15, 20 ou 25 ans.
+
+C'est le choix de l'immense majorité des emprunteurs en France. Il apporte une grande sécurité. Quoi qu'il arrive aux taux du marché, tu sais exactement ce que tu paieras.
+
+Le taux variable
+
+Avec un taux variable, le taux évolue au fil du temps. Il est lié à un indice de marché, souvent l'Euribor, plus une marge de la banque. Quand l'indice monte, ton taux monte. Quand il baisse, ton taux baisse.
+
+Au départ, un taux variable est souvent un peu plus bas qu'un taux fixe. C'est son attrait. Mais tu acceptes une incertitude sur l'avenir.
+
+Le taux capé
+
+Pour limiter le risque, il existe des taux variables « capés ». Le taux peut varier, mais seulement dans une limite fixée. Par exemple, il ne peut pas monter de plus d'un ou deux points au-dessus du taux de départ.
+
+Certains contrats prévoient aussi que la mensualité reste fixe. C'est alors la durée du crédit qui s'allonge ou se raccourcit selon les taux.
+
+Un exemple chiffré
+
+Prenons un crédit de 200 000 euros sur 20 ans. À 3 %, la mensualité est d'environ 1 109 euros, hors assurance. À 4 %, elle passe à environ 1 212 euros. Soit environ 100 euros de plus chaque mois.
+
+Sur toute la durée, le coût total des intérêts passe d'environ 66 000 euros à environ 91 000 euros. L'écart dépasse 24 000 euros. Un seul point de taux pèse lourd.
+
+Ce que d'autres pays ont vécu
+
+Dans certains pays, les crédits à taux variable sont la norme. En 2022 et 2023, quand la Banque centrale européenne relève fortement ses taux, des millions d'emprunteurs voient leurs mensualités grimper. En Espagne ou en Italie, beaucoup de ménages sont touchés.
+
+Au Royaume-Uni, beaucoup de crédits ont un taux fixe pour quelques années seulement, puis variable. Les hausses de taux y ont aussi fortement pesé sur les budgets.
+
+En France, la domination du taux fixe a protégé la plupart des emprunteurs. Leurs mensualités n'ont pas bougé.
+
+Renégocier
+
+Avec un taux fixe, si les taux du marché baissent fortement, tu peux essayer de renégocier avec ta banque. Ou le faire racheter par une autre banque. Il faut alors tenir compte des frais : indemnités de remboursement anticipé, frais de dossier, garanties.
+
+L'assurance et la durée
+
+La durée du crédit change beaucoup le coût total. Sur 25 ans au lieu de 20, la mensualité baisse, mais les intérêts augmentent. On paie moins chaque mois, mais plus au total.
+
+Et l'assurance emprunteur est payée chaque mois, pendant toute la durée. Sur un crédit long, elle coûte donc plus cher. C'est un arbitrage entre le confort du budget mensuel et le coût global.
+
+Le rôle de la Banque centrale
+
+Les taux des crédits immobiliers suivent en partie les décisions de la Banque centrale européenne. Quand elle monte ses taux pour lutter contre l'inflation, emprunter devient plus cher. Quand elle les baisse, les crédits redeviennent plus abordables. Mais les banques ajoutent leur marge, selon leurs coûts et leur stratégie.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : avec un taux fixe, la mensualité peut augmenter si la Banque centrale européenne monte ses taux ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Avec un taux fixe, la mensualité ne bouge pas, quoi qu'il arrive aux taux du marché. Seule l'assurance peut parfois évoluer selon le contrat.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : choisir un taux variable seulement parce qu'il est plus bas au départ. Il faut se demander si on supporterait une forte hausse.
+
+Deux : oublier de regarder le plafond d'un taux capé. Une limite de trois points peut déjà représenter une grosse hausse de mensualité.
+
+Trois : ignorer les frais de renégociation. Un taux plus bas ne vaut pas toujours le coût du changement.
+
+Ce qu'il faut retenir
+
+- Le taux fixe garantit la même mensualité jusqu'au bout
+- Le taux variable suit le marché, à la hausse comme à la baisse
+- Un point de taux peut coûter des dizaines de milliers d'euros sur 20 ans
+
+En une phrase : le taux fixe achète la tranquillité, le taux variable parie sur la baisse des taux. Et toi, préférerais-tu une mensualité certaine ou un pari sur les taux ?
+
+Sources : S1 · Banque de France et service-public.fr, fiches sur les crédits immobiliers à taux fixe, variable et capé (Euribor, part très majoritaire du taux fixe en France)
+S2 · Hausse des taux de la Banque centrale européenne en 2022 et 2023, effets en Espagne, en Italie et au Royaume-Uni (BCE, presse économique)
+S4 · Durée de 25 ans au lieu de 20 ans
+S3 · Calcul de la chaîne : 200 000 euros sur 20 ans, mensualité d'environ 1 109 euros à 3 % et 1 212 euros à 4 % hors assurance, soit environ 100 euros de plus ; intérêts d'environ 66 000 et 91 000 euros, écart de plus de 24 000 euros ; durées de 15, 20 ou 25 ans
+
+===
+
+# Le crédit renouvelable : la réserve d'argent qui coûte cher
+
+Une réserve d'argent toujours disponible, sans justificatif. C'est la promesse du crédit renouvelable. Mais son taux peut dépasser 15 % ou 20 % par an. Et il est souvent à l'origine des situations de surendettement. Comment fonctionne-t-il ?
+
+Une réserve d'argent
+
+Le crédit renouvelable, appelé aussi crédit revolving, met à ta disposition une somme d'argent. Une réserve, par exemple de 3 000 euros. Tu l'utilises quand tu veux, en partie ou en totalité.
+
+Chaque mois, tu rembourses une partie de ce que tu as utilisé, avec des intérêts. Et à mesure que tu rembourses, la réserve se reconstitue. Tu peux réutiliser l'argent. C'est pour ça qu'on dit « renouvelable ».
+
+Il est souvent associé à une carte de magasin ou à une carte de crédit. Au moment de payer, on te propose parfois de régler « en plusieurs fois », grâce à cette réserve.
+
+Pourquoi il coûte cher
+
+Les taux du crédit renouvelable sont parmi les plus élevés du marché. Ils sont nettement supérieurs à ceux d'un prêt personnel classique. Selon le montant, ils peuvent approcher le taux d'usure.
+
+Et les intérêts courent tant que la somme n'est pas remboursée. Avec de petites mensualités, le remboursement peut s'étaler sur longtemps. Le coût total grimpe.
+
+Le piège de la petite mensualité
+
+Le danger du crédit renouvelable, c'est sa facilité. Pas besoin d'expliquer à quoi sert l'argent. Les mensualités paraissent petites. On peut l'utiliser encore et encore.
+
+Certaines personnes cumulent plusieurs crédits renouvelables, chez plusieurs organismes. Elles remboursent l'un avec l'autre. La dette grossit sans qu'elles s'en rendent compte. C'est ainsi que commencent beaucoup de situations de surendettement.
+
+La loi Lagarde
+
+En 2010, une loi réforme le crédit à la consommation. On l'appelle la loi Lagarde, du nom de la ministre de l'Économie de l'époque. Elle encadre fortement le crédit renouvelable.
+
+Désormais, chaque mensualité doit comprendre un remboursement minimum du capital. La somme doit être remboursée en trois ans au plus jusqu'à 3 000 euros. Et en cinq ans au-delà.
+
+Au-delà de 1 000 euros d'achat, le vendeur qui propose ce crédit doit aussi proposer un crédit classique. Avec une durée et des mensualités fixes. Et le prêteur doit vérifier la solvabilité de l'emprunteur.
+
+Une réserve qui peut disparaître
+
+Un crédit renouvelable inutilisé pendant deux ans peut être résilié par le prêteur. Et l'emprunteur peut à tout moment le résilier, par simple courrier. Beaucoup de gens gardent des réserves dont ils ne se servent pas, et qui peuvent tenter un jour difficile.
+
+Les alternatives
+
+Pour un imprévu, une épargne de précaution évite de recourir à ce type de crédit. Pour un achat important, un prêt personnel classique coûte en général beaucoup moins cher. Et il a une durée fixée dès le départ.
+
+Le paiement fractionné
+
+Depuis quelques années, le paiement en trois ou quatre fois s'est répandu, notamment en ligne. Certains de ces services sont présentés comme gratuits. D'autres comportent des frais.
+
+Courtes et sans gros frais, ces facilités ne sont pas toujours des crédits au sens de la loi. Les règles européennes évoluent pour mieux les encadrer. Le risque est le même : multiplier les petites dettes sans en voir le total.
+
+Un exemple de coût
+
+Imagine 2 000 euros utilisés sur une réserve, remboursés à petites mensualités, à un taux élevé. Le remboursement peut prendre plusieurs années. Et les intérêts totaux peuvent atteindre plusieurs centaines d'euros. Pour un achat qu'on aurait pu épargner en quelques mois.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : un crédit renouvelable peut être utilisé de nouveau au fur et à mesure qu'on le rembourse ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : vrai. C'est son principe. La réserve se reconstitue avec les remboursements. C'est aussi ce qui le rend dangereux : on peut s'endetter sans fin.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : regarder seulement la petite mensualité. Il faut regarder le TAEG et le coût total.
+
+Deux : accepter un paiement en plusieurs fois sans lire les conditions. Il peut s'agir d'un crédit renouvelable caché.
+
+Trois : rembourser un crédit avec un autre. C'est souvent le début d'une spirale.
+
+Ce qu'il faut retenir
+
+- Le crédit renouvelable est une réserve d'argent qui se reconstitue
+- Ses taux sont parmi les plus élevés du marché
+- La loi Lagarde impose un remboursement minimum et un choix de crédit classique
+
+En une phrase : le crédit renouvelable est pratique mais très cher, et souvent au début du surendettement. Et toi, as-tu une carte de magasin avec une réserve d'argent ?
+
+Sources : S1 · Service-public.fr et Banque de France, « Crédit renouvelable » (remboursement minimum du capital, trois ans pour 3 000 euros ou moins et cinq ans au-delà, offre alternative de crédit amortissable au-delà de 1 000 euros, résiliation après deux ans d'inutilisation)
+S2 · Loi Lagarde de 2010 portant réforme du crédit à la consommation ; taux souvent supérieurs à 15 % ou 20 % selon le montant (taux d'usure publiés par la Banque de France) ; exemple de réserve de 3 000 euros ; exemple de 2 000 euros utilisés ; paiement en trois ou quatre fois
+
+===
+
+# La règle des 35 % : pourquoi la banque refuse ton crédit
+
+Depuis 2022, une banque ne peut en principe pas te prêter si tes crédits dépassent 35 % de tes revenus. Ni pour plus de 25 ans. Cette règle a fait renoncer de nombreux acheteurs. D'où vient-elle, et comment est-elle calculée ?
+
+Le taux d'endettement
+
+Pour accorder un crédit immobilier, la banque regarde d'abord une chose. La part de tes revenus qui partira dans les remboursements. On l'appelle le taux d'endettement, ou taux d'effort.
+
+On le calcule simplement. On additionne toutes les mensualités de crédits, assurance comprise. On les divise par les revenus nets mensuels. Puis on multiplie par 100.
+
+Par exemple, avec 3 000 euros de revenus et 900 euros de mensualités, le taux d'endettement est de 30 %. Avec 1 200 euros de mensualités, il atteint 40 %.
+
+Une recommandation devenue obligatoire
+
+Pendant longtemps, la limite de 33 % était une habitude des banques, pas une loi. Puis le Haut Conseil de stabilité financière, un organisme chargé de surveiller les risques du système financier, s'en mêle.
+
+En 2019, il recommande de limiter les crédits risqués. Fin 2021, sa recommandation devient obligatoire, à partir du 1er janvier 2022. Le taux d'effort ne doit pas dépasser 35 %, assurance comprise. Et la durée du crédit ne doit pas dépasser 25 ans.
+
+Pour un logement neuf ou de gros travaux, la durée peut aller jusqu'à 27 ans. Avec un différé pendant la construction.
+
+Une marge de souplesse
+
+Les banques gardent une marge de manœuvre. Chaque trimestre, elles peuvent accorder jusqu'à 20 % de leurs crédits immobiliers hors de ces règles.
+
+Cette souplesse est surtout réservée aux achats de résidence principale. Et une partie doit aller aux primo-accédants, ceux qui achètent leur premier logement. Les investissements locatifs en bénéficient beaucoup moins.
+
+Pourquoi cette règle ?
+
+Le but est d'éviter que les ménages s'endettent au-delà de leurs moyens. Un taux d'endettement trop élevé laisse peu d'argent pour vivre. Au moindre imprévu, perte d'emploi ou divorce, le remboursement devient impossible.
+
+Le Haut Conseil veut aussi éviter une bulle immobilière. Dans plusieurs pays, des crédits trop faciles ont fait flamber les prix, avant un effondrement. Ce fut le cas aux États-Unis avant 2008.
+
+Les critiques
+
+La règle a aussi ses critiques. Elle s'applique pareil à qui gagne 2 000 euros et à qui en gagne 10 000. Or, avec 10 000 euros, il reste beaucoup d'argent pour vivre même en remboursant 40 %.
+
+Les professionnels de l'immobilier estiment qu'elle a exclu de nombreux acheteurs, surtout quand les taux ont monté. D'autres répondent que c'est justement son rôle : protéger les ménages quand le crédit devient cher.
+
+Le reste à vivre
+
+C'est pour ça que les banques regardent aussi le reste à vivre. C'est ce qui reste chaque mois une fois les crédits payés. Il doit permettre de couvrir les dépenses courantes, selon la taille du foyer.
+
+L'apport personnel
+
+En plus du taux d'endettement, les banques regardent l'apport personnel. C'est l'argent que tu mets toi-même dans l'achat, sans l'emprunter. Il sert souvent à payer les frais de notaire et une partie du prix.
+
+Un apport rassure la banque. Il montre que tu sais épargner, et il réduit le montant emprunté. Sans apport, obtenir un crédit est devenu plus difficile depuis quelques années.
+
+Le saut de charge
+
+Les banques regardent aussi l'évolution de tes dépenses. Imagine un loyer actuel de 800 euros, et une future mensualité de 1 000 euros. L'écart est de 200 euros. Si tu as l'habitude d'épargner au moins ce montant chaque mois, la banque sera plus confiante.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : la limite de 35 % s'applique hors assurance emprunteur ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Les 35 % s'entendent assurance comprise. C'est un point important, car l'assurance peut représenter une part notable de la mensualité.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : oublier les autres crédits. Un crédit auto ou un crédit renouvelable entrent dans le calcul et réduisent la capacité d'emprunt.
+
+Deux : croire qu'une banque ne peut jamais dépasser 35 %. Elle dispose d'une petite marge, mais limitée.
+
+Trois : emprunter au maximum de sa capacité. Il faut garder de la place pour les imprévus.
+
+Ce qu'il faut retenir
+
+- Le taux d'endettement compare les mensualités aux revenus
+- Depuis 2022, il est limité à 35 %, assurance comprise, sur 25 ans au plus
+- Les banques gardent 20 % de souplesse, surtout pour les résidences principales
+
+En une phrase : la règle des 35 % limite le poids des crédits pour éviter le surendettement et les bulles. Et toi, sais-tu calculer ton taux d'endettement ?
+
+Sources : S1 · Haut Conseil de stabilité financière, décision de décembre 2021 applicable au 1er janvier 2022 (taux d'effort de 35 % assurance comprise, durée de 25 ans, 27 ans avec différé pour le neuf, souplesse de 20 % par trimestre, priorité aux résidences principales et aux primo-accédants ; recommandation de 2019)
+S2 · Ancienne habitude des 33 % ; Calcul de la chaîne : 900 ÷ 3 000 = 30 % ; 1 200 ÷ 3 000 = 40 % ; revenus de 2 000 et 10 000 euros ; crise américaine de 2008 ; loyer de 800 euros, mensualité de 1 000 euros, écart de 200 euros
+
+===
+
+# Le surendettement : quand les dettes deviennent impossibles à payer
+
+Chaque année en France, plus de 100 000 ménages déposent un dossier de surendettement à la Banque de France. Derrière ces chiffres, des familles qui ne peuvent plus payer leurs dettes. Comment en arrive-t-on là, et quelles solutions existent ?
+
+Une définition légale
+
+Une personne est surendettée quand elle ne peut manifestement plus payer l'ensemble de ses dettes non professionnelles. Crédits, loyers, factures d'énergie, impôts, dettes envers des proches.
+
+Ce n'est pas une faute. La loi reconnaît que des accidents de la vie peuvent rendre les dettes impossibles à payer. Elle prévoit une procédure pour aider ces personnes.
+
+Les causes
+
+Le surendettement a souvent deux origines. Le surendettement actif, quand une personne a accumulé trop de crédits, notamment des crédits renouvelables. Et le surendettement passif, le plus fréquent aujourd'hui.
+
+Le surendettement passif vient d'un accident de la vie. Une perte d'emploi, une séparation, une maladie, un décès. Les revenus baissent brutalement, mais les charges restent. Les dettes s'accumulent alors, même sans excès de crédit.
+
+Selon la Banque de France, les personnes surendettées ont souvent de faibles revenus. Beaucoup vivent seules, parfois avec des enfants à charge. Les dettes de la vie courante, comme le loyer ou l'énergie, y occupent une place importante.
+
+Le dossier
+
+Le dossier se dépose auprès de la commission de surendettement de la Banque de France. C'est gratuit. On peut le faire en ligne ou au guichet. Il faut lister toutes ses dettes, ses revenus et ses charges.
+
+La commission examine d'abord si le dossier est recevable. Si c'est le cas, les poursuites des créanciers sont en général suspendues. Les saisies s'arrêtent, au moins temporairement. C'est souvent un grand soulagement.
+
+Les solutions
+
+Ensuite, la commission cherche une solution. Elle peut proposer un plan de remboursement : étaler les dettes, réduire les taux d'intérêt, reporter certains paiements. La durée totale est en principe limitée à sept ans.
+
+Quand la situation est vraiment sans issue, elle peut décider d'effacer une partie des dettes, voire toutes. On parle de rétablissement personnel. C'est une seconde chance, pour repartir de zéro.
+
+Les conséquences
+
+Le dépôt d'un dossier entraîne une inscription au fichier national des incidents de remboursement des crédits aux particuliers, le FICP. Pendant ce temps, il est très difficile d'obtenir un nouveau crédit.
+
+Cette inscription dure le temps du plan, dans la limite de sept ans. En cas de rétablissement personnel, elle dure cinq ans. C'est une protection, autant qu'une sanction : elle évite de s'endetter à nouveau.
+
+Prévenir
+
+Des points conseil budget existent partout en France. Ils aident gratuitement les personnes en difficulté financière à faire le point. Et à trouver des solutions, avant que la situation ne s'aggrave. Les banques doivent aussi proposer une offre spécifique aux clients fragiles, avec des frais limités.
+
+Une procédure qui protège
+
+Pendant la procédure, la commission peut aussi demander au juge de suspendre une expulsion de logement, sous conditions. Les créanciers ne peuvent plus multiplier les relances et les frais.
+
+La procédure ne règle pas tout. Certaines dettes ne peuvent pas être effacées, comme les pensions alimentaires ou les amendes pénales. Mais elle offre un cadre et du temps pour respirer.
+
+L'accompagnement
+
+Après la procédure, l'enjeu est de ne pas retomber. Des associations, des travailleurs sociaux et les points conseil budget accompagnent les personnes qui le souhaitent. Ils aident à construire un budget, à suivre ses dépenses, et à faire valoir ses droits.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : déposer un dossier de surendettement coûte cher ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. La procédure devant la Banque de France est entièrement gratuite. Il faut se méfier des sociétés qui proposent de s'en charger contre paiement.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : attendre trop longtemps. Plus on attend, plus les dettes et les frais s'accumulent.
+
+Deux : contracter un nouveau crédit pour rembourser les anciens. C'est souvent ce qui aggrave la situation.
+
+Trois : payer un intermédiaire pour le dossier. La Banque de France le traite gratuitement.
+
+Ce qu'il faut retenir
+
+- Le surendettement est l'impossibilité de payer ses dettes personnelles
+- Le dossier se dépose gratuitement à la Banque de France
+- Il peut aboutir à un plan de remboursement ou à un effacement des dettes
+
+En une phrase : le surendettement n'est pas une faute, et la Banque de France aide gratuitement à s'en sortir. Et toi, connaissais-tu les points conseil budget ?
+
+Sources : S1 · Banque de France, « Le surendettement » et enquête typologique annuelle (plus de 100 000 dossiers déposés par an, procédure gratuite, recevabilité, suspension des poursuites, plan de sept ans au plus, rétablissement personnel)
+S2 · Service-public.fr, « Fichier national des incidents de remboursement des crédits aux particuliers (FICP) » (durée du plan dans la limite de sept ans, cinq ans en cas de rétablissement personnel) ; points conseil budget

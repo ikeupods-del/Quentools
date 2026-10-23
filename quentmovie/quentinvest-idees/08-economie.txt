@@ -1,0 +1,1018 @@
+@theme Économie expliquée
+
+# L'inflation : pourquoi ton argent perd de la valeur
+
+Avec 3 % d'inflation par an, 1 000 euros n'achètent plus que l'équivalent d'environ 744 euros au bout de 10 ans. Sans que tu aies rien dépensé. C'est l'inflation. Mais d'où vient-elle, et comment est-elle mesurée ?
+
+La hausse générale des prix
+
+L'inflation, c'est la hausse générale et durable des prix. Pas le prix d'un seul produit qui augmente, comme les fraises en hiver. Mais un mouvement d'ensemble, sur la plupart des biens et services.
+
+Quand il y a de l'inflation, chaque euro achète un peu moins qu'avant. On dit que la monnaie perd de son pouvoir d'achat. Ton salaire, tes économies, ton livret : tout vaut un peu moins, en quantité de choses achetables.
+
+Comment la mesure-t-on ?
+
+En France, c'est l'Insee qui mesure l'inflation. Chaque mois, ses enquêteurs relèvent les prix de centaines de milliers de produits. Dans des magasins, sur internet, chez des prestataires de services. Partout en France.
+
+Ces prix sont regroupés dans un panier moyen, qui représente les achats d'un ménage type. Alimentation, énergie, loyers, transports, loisirs. Chaque poste a un poids selon sa place dans le budget des ménages. On obtient l'indice des prix à la consommation.
+
+Attention : ce panier est une moyenne. Ton inflation personnelle peut être très différente. Quelqu'un qui roule beaucoup en voiture ressent davantage la hausse de l'essence. Un locataire, celle des loyers.
+
+D'où vient l'inflation ?
+
+Les économistes distinguent plusieurs causes. L'inflation par la demande, quand les gens veulent acheter plus que ce que l'économie peut produire. Les prix montent, car les produits deviennent rares.
+
+L'inflation par les coûts, quand les entreprises paient plus cher l'énergie, les matières premières ou les salaires. Elles répercutent ces hausses sur leurs prix de vente.
+
+Et l'inflation monétaire, quand la quantité de monnaie augmente beaucoup plus vite que la production. Trop d'argent pour trop peu de biens.
+
+La flambée de 2022
+
+En 2021 et 2022, l'inflation fait son grand retour. La reprise après le Covid et les problèmes d'approvisionnement jouent. Puis la guerre en Ukraine fait flamber l'énergie et l'alimentation.
+
+En zone euro, l'inflation atteint 10,6 % sur un an en octobre 2022. Un record depuis la création de l'euro. En France, elle est plus faible, grâce notamment au bouclier tarifaire sur l'énergie. Mais elle atteint 5,2 % en moyenne sur l'année 2022.
+
+L'objectif de 2 %
+
+La Banque centrale européenne vise une inflation de 2 % par an, à moyen terme. Pourquoi pas zéro ? Parce qu'une légère inflation est jugée saine. Elle évite le risque de déflation, une baisse générale des prix qui peut paralyser l'économie.
+
+En cas de déflation, les ménages attendent pour acheter, puisque les prix baissent. Les entreprises vendent moins, réduisent leurs effectifs. Et la spirale s'installe.
+
+Le calcul de l'érosion
+
+Revenons à notre exemple. Avec 3 % d'inflation par an, il faut chaque année 3 % de plus pour acheter la même chose. Au bout de 10 ans, les prix ont augmenté d'environ 34 %. Tes 1 000 euros n'achètent plus que ce qu'achetaient environ 744 euros au départ.
+
+C'est pour ça que l'épargne qui dort sur un compte courant perd de la valeur. Et qu'on compare toujours le rendement d'un placement à l'inflation. Un placement qui rapporte 2 % quand l'inflation est de 3 % fait perdre du pouvoir d'achat.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : quand l'inflation baisse, les prix baissent ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Quand l'inflation baisse, les prix montent moins vite. Mais ils continuent de monter. Pour que les prix baissent, il faudrait une inflation négative : la déflation.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes sur l'inflation.
+
+Un : confondre son ressenti et l'indice officiel. Ton panier personnel n'est pas celui du ménage moyen.
+
+Deux : regarder le rendement d'un placement sans le comparer à l'inflation. Ce qui compte, c'est le rendement réel.
+
+Trois : croire que toute inflation est mauvaise. Une inflation faible et stable est l'objectif des banques centrales.
+
+Ce qu'il faut retenir
+
+- L'inflation est la hausse générale et durable des prix
+- Elle est mesurée en France par l'Insee, avec un panier moyen
+- La Banque centrale européenne vise 2 % par an
+
+En une phrase : l'inflation fait perdre de la valeur à ton argent, d'où l'importance du rendement réel. Et toi, quelle hausse de prix as-tu le plus ressentie ces dernières années ?
+
+Sources : S1 · Insee, « Indice des prix à la consommation » (méthode, panier, 5,2 % en moyenne en 2022) ; Eurostat (10,6 % sur un an en zone euro en octobre 2022)
+S2 · Banque centrale européenne, stratégie de politique monétaire (objectif de 2 % à moyen terme) ; flambée de 2021 et 2022
+S3 · Calcul de la chaîne : 1,03¹⁰ ≈ 1,34, soit environ 34 % de hausse ; 1 000 ÷ 1,34 ≈ 744 euros ; exemple de 3 % d'inflation et 2 % de rendement sur 10 ans
+
+===
+
+# La Banque centrale européenne : qui décide du prix de l'argent ?
+
+Entre juillet 2022 et septembre 2023, la Banque centrale européenne a relevé ses taux 10 fois de suite. Son taux de dépôt est passé de −0,5 % à 4 %. Ces décisions ont changé le coût des crédits pour des millions d'Européens. Qui sont ces banquiers centraux, et comment agissent-ils ?
+
+Une banque pas comme les autres
+
+La Banque centrale européenne, ou BCE, est née le 1er juin 1998. Son siège est à Francfort, en Allemagne. Elle est chargée de la politique monétaire de tous les pays qui utilisent l'euro.
+
+Ce n'est pas une banque où l'on ouvre un compte. C'est la banque des banques. Elle leur prête de l'argent, garde leurs réserves, et surveille les plus grandes d'entre elles. Elle travaille avec les banques centrales nationales, comme la Banque de France.
+
+Sa mission principale
+
+Sa mission principale est inscrite dans les traités européens : maintenir la stabilité des prix. Concrètement, elle vise une inflation de 2 % par an, à moyen terme.
+
+Elle est indépendante. Les gouvernements ne peuvent pas lui donner d'ordres. Cette indépendance doit l'empêcher de créer trop de monnaie pour plaire aux politiques. Car ça provoquerait de l'inflation.
+
+Les taux directeurs
+
+Son principal outil, ce sont les taux directeurs. Ce sont les taux auxquels les banques peuvent emprunter auprès de la BCE, ou y placer leur argent. Ces taux servent de référence à toute l'économie.
+
+Quand la BCE monte ses taux, emprunter devient plus cher pour les banques. Elles augmentent à leur tour les taux de leurs crédits. Les ménages et les entreprises empruntent moins. La demande ralentit, et l'inflation finit par baisser.
+
+Quand la BCE baisse ses taux, c'est l'inverse. Le crédit devient moins cher. On emprunte, on investit, on consomme davantage. L'activité est soutenue.
+
+Les taux négatifs
+
+Pendant les années 2010, l'inflation est très faible en Europe. La BCE baisse ses taux jusqu'à des niveaux jamais vus. En 2014, elle adopte même un taux négatif sur les dépôts des banques. Il descend jusqu'à −0,5 % en 2019.
+
+Concrètement, les banques qui déposent leur argent à la BCE doivent payer pour ça. Le but : les pousser à prêter plutôt qu'à garder leur argent. Cette période a aussi rendu les crédits immobiliers très bon marché.
+
+Le grand retournement
+
+En 2022, l'inflation explose. La BCE réagit, avec un peu de retard selon ses critiques. À partir de juillet 2022, elle relève ses taux, réunion après réunion. Dix hausses de suite, jusqu'en septembre 2023. Le taux de dépôt atteint 4 %.
+
+C'est la hausse la plus rapide de son histoire. Les crédits immobiliers deviennent beaucoup plus chers. Les livrets d'épargne rapportent davantage. Puis, avec le recul de l'inflation, la BCE commence à baisser ses taux à partir de juin 2024. En juin 2025, son taux de dépôt revient à 2 %.
+
+Les autres outils
+
+La BCE a d'autres outils. Pendant les crises, elle a acheté massivement des obligations d'État et d'entreprises. On parle d'assouplissement quantitatif. Le but : faire baisser les taux à long terme et soutenir le système financier.
+
+Les réunions de la BCE
+
+Le conseil des gouverneurs de la BCE se réunit toutes les six semaines environ pour décider des taux. Il rassemble les gouverneurs des banques centrales nationales de la zone euro et les membres du directoire.
+
+Après chaque réunion, la présidente ou le président de la BCE tient une conférence de presse. Chaque mot est scruté par les marchés. Un adjectif changé peut faire bouger les taux et les Bourses. On parle de communication des banques centrales : leurs paroles sont presque aussi importantes que leurs actes.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : la BCE peut décider seule du taux de ton Livret A ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Le taux du Livret A est fixé par l'État français, sur proposition de la Banque de France. Mais la formule de calcul tient compte des taux du marché, eux-mêmes influencés par la BCE.
+
+Attention, grain de sable
+
+Il y a trois idées reçues sur la BCE.
+
+Un : croire qu'elle contrôle l'inflation instantanément. Ses décisions mettent souvent un an ou plus à produire leurs effets.
+
+Deux : penser qu'elle prête directement aux États. Les traités européens lui interdisent de financer directement les budgets des États.
+
+Trois : croire qu'elle fixe tous les taux. Elle fixe ses taux directeurs. Les banques fixent ensuite leurs propres taux, en ajoutant leur marge.
+
+Ce qu'il faut retenir
+
+- La BCE conduit la politique monétaire de la zone euro
+- Elle vise une inflation de 2 % par an
+- Ses taux directeurs influencent les crédits et l'épargne
+
+En une phrase : la BCE monte ou baisse ses taux pour tenir l'inflation près de 2 %. Et toi, as-tu ressenti la hausse des taux de 2022 ?
+
+Sources : S1 · Banque centrale européenne (créée le 1er juin 1998, siège à Francfort, conseil des gouverneurs réuni environ toutes les six semaines, objectif de 2 %, 10 hausses ; taux de dépôt négatif depuis 2014 jusqu'à −0,5 % en 2019, dix hausses de juillet 2022 à septembre 2023 jusqu'à 4 %, baisses à partir de juin 2024, taux de dépôt à 2 % en juin 2025)
+S2 · Banque de France, « La politique monétaire » ; traité sur le fonctionnement de l'Union européenne (interdiction du financement monétaire) ; années 2010
+
+===
+
+# Comment les banques créent l'argent
+
+Les billets et les pièces ne représentent qu'environ 10 % de l'argent en circulation en zone euro. Le reste, ce sont des chiffres sur des comptes. Et la plupart de ces chiffres sont créés par les banques elles-mêmes, quand elles accordent un crédit. Comment est-ce possible ?
+
+L'idée reçue
+
+Beaucoup de gens imaginent qu'une banque prête l'argent déposé par d'autres clients. Tu déposes 1 000 euros, la banque les prête à quelqu'un d'autre. Elle joue les intermédiaires.
+
+Ce n'est pas faux, mais c'est incomplet. En réalité, quand une banque accorde un crédit, elle crée de la monnaie nouvelle. Elle n'a pas besoin d'avoir l'argent sur un autre compte avant de prêter.
+
+Les crédits font les dépôts
+
+Imaginons que ta banque t'accorde un prêt de 10 000 euros. Elle inscrit 10 000 euros sur ton compte courant. Ces 10 000 euros n'existaient pas avant. Ils viennent d'apparaître, par un simple jeu d'écritures.
+
+En même temps, la banque inscrit dans ses comptes que tu lui dois 10 000 euros. D'un côté, une dette. De l'autre, un dépôt. Les deux s'équilibrent. Mais la quantité d'argent disponible dans l'économie a augmenté de 10 000 euros.
+
+Quand tu rembourses ton crédit, l'inverse se produit. La monnaie est détruite. C'est pour ça que les économistes disent que les crédits font les dépôts.
+
+Une explication officielle
+
+Cette mécanique a longtemps été mal connue du grand public. En 2014, la Banque d'Angleterre publie un article très remarqué pour l'expliquer. Elle y confirme que la plupart de l'argent en circulation est créé par les banques commerciales, à travers leurs prêts.
+
+La Banque de France présente aussi cette explication dans ses documents pédagogiques. Ce n'est donc pas une théorie marginale. C'est le fonctionnement normal du système monétaire.
+
+Mais pas sans limites
+
+Les banques ne peuvent pas créer de l'argent sans fin. Plusieurs freins existent. D'abord, il faut des emprunteurs solvables, capables de rembourser. Une banque qui prête à n'importe qui fait faillite.
+
+Ensuite, les règles prudentielles. Les banques doivent garder des fonds propres en proportion de leurs prêts. Plus elles prêtent, plus elles doivent avoir de capital.
+
+Enfin, la banque centrale. Les banques ont besoin de monnaie de banque centrale pour régler leurs échanges entre elles. Le prix de cette monnaie dépend des taux directeurs. Quand ils montent, créer du crédit devient plus coûteux.
+
+Et la banque centrale ?
+
+La banque centrale crée elle aussi de la monnaie. Les billets, d'abord. Et la monnaie que les banques détiennent sur leurs comptes auprès d'elle. On l'appelle la monnaie de banque centrale.
+
+Pendant les crises, elle peut en créer massivement, en achetant des obligations. C'est ce qu'elle a fait après 2008 et pendant le Covid. Cette création soutient le système, mais elle doit être maîtrisée pour éviter l'inflation.
+
+La monnaie en trois couches
+
+On peut voir la monnaie comme une pyramide à trois étages. En haut, la monnaie de la banque centrale : les billets, et les réserves des banques. Au milieu, les dépôts sur les comptes courants, créés par les banques commerciales. En bas, l'épargne placée sur des livrets ou des comptes à terme.
+
+Quand tu paies par carte, tu utilises la monnaie du milieu. Elle passe d'un compte à un autre. Les banques règlent ensuite les différences entre elles, avec de la monnaie de banque centrale.
+
+Et si tout le monde retirait son argent ?
+
+Les banques ne gardent pas en billets tout l'argent déposé sur les comptes. Si tous les clients voulaient retirer leurs dépôts le même jour, aucune banque ne pourrait les payer. C'est ce qu'on appelle une panique bancaire.
+
+C'est pour éviter ce scénario que les dépôts sont garantis. En France, un fonds de garantie protège les dépôts jusqu'à 100 000 euros par client et par banque. Cette garantie rassure, et rend les paniques bien plus rares.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : quand tu rembourses un crédit, de la monnaie disparaît ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : vrai. Le remboursement annule la dette et le dépôt correspondant. La monnaie créée au moment du prêt est détruite.
+
+Attention, grain de sable
+
+Il y a trois idées reçues.
+
+Un : croire que la monnaie, ce sont surtout des billets. L'essentiel est de la monnaie électronique, sur des comptes.
+
+Deux : penser que les banques peuvent créer autant d'argent qu'elles veulent. Elles sont limitées par la demande, les règles et la banque centrale.
+
+Trois : imaginer que la monnaie est adossée à de l'or. Ce n'est plus le cas depuis le début des années 1970.
+
+Ce qu'il faut retenir
+
+- L'essentiel de la monnaie est créé par les banques quand elles prêtent
+- Le remboursement des crédits détruit cette monnaie
+- Cette création est limitée par les règles et la banque centrale
+
+En une phrase : en accordant un crédit, une banque crée de la monnaie, qui disparaît au remboursement. Et toi, savais-tu que ton crédit avait créé de l'argent ?
+
+Sources : S1 · Banque d'Angleterre, « Money creation in the modern economy », bulletin trimestriel 2014 ; Banque de France, « La création monétaire » (les crédits font les dépôts, destruction au remboursement, limites)
+S2 · Banque centrale européenne, statistiques monétaires (billets et pièces autour de 10 % de la masse monétaire large de la zone euro) ; achats d'obligations après 2008 et pendant le Covid ; fin de la convertibilité en or au début des années 1970
+S3 · Exemples de la chaîne : dépôt de 1 000 euros, prêt de 10 000 euros ; Fonds de garantie des dépôts et de résolution (100 000 euros par client et par banque)
+
+===
+
+# Allemagne 1923 : quand un pain coûtait 200 milliards de marks
+
+En novembre 1923, en Allemagne, un pain coûte environ 200 milliards de marks. Un dollar s'échange contre 4 200 milliards de marks. Les billets servent de papier peint ou de combustible. Comment une grande puissance a-t-elle vécu la pire inflation de son histoire ?
+
+L'Allemagne après la guerre
+
+En 1918, l'Allemagne perd la Première Guerre mondiale. Elle a financé la guerre surtout par l'emprunt, en espérant faire payer les vaincus. Mais c'est elle qui a perdu. Ses dettes sont immenses.
+
+En 1919, le traité de Versailles lui impose des réparations envers les vainqueurs. Notamment la France et la Belgique. En 1921, leur montant est fixé à 132 milliards de marks-or. Une somme considérable.
+
+La planche à billets
+
+Pour payer ses dépenses et une partie de ses dettes, le gouvernement fait imprimer des billets. Beaucoup de billets. Plus il y a de billets, plus le mark perd de sa valeur. Les prix commencent à grimper.
+
+Les réparations doivent être payées en or ou en devises étrangères. Pour en acheter, l'Allemagne vend des marks. Ce qui fait encore baisser leur valeur. Une spirale s'enclenche.
+
+L'occupation de la Ruhr
+
+En janvier 1923, l'Allemagne prend du retard dans ses livraisons. La France et la Belgique occupent alors la Ruhr, son grand bassin industriel. Elles veulent se payer directement en charbon et en acier.
+
+Le gouvernement allemand appelle les ouvriers à la résistance passive : ils cessent de travailler. Mais il faut bien payer leurs salaires. Il imprime encore plus de billets. L'inflation devient une hyperinflation.
+
+La folie des prix
+
+Pendant l'année 1923, les prix s'envolent de façon vertigineuse. Ils doublent parfois en quelques jours. Les salaires sont versés deux fois par jour. Les ouvriers courent dépenser leur paie avant qu'elle ne perde sa valeur.
+
+On raconte qu'un café pouvait coûter plus cher à la fin du repas qu'au moment de la commande. Les billets s'entassent dans des brouettes. Des enfants construisent des châteaux avec des liasses. Certains les brûlent pour se chauffer : c'est moins cher que le bois.
+
+En novembre 1923, un dollar vaut environ 4 200 milliards de marks. Un simple pain coûte environ 200 milliards de marks. Les imprimeries ne suffisent plus. On émet des billets de 100 000 milliards de marks.
+
+Les gagnants et les perdants
+
+L'hyperinflation ruine les épargnants. Ceux qui avaient placé leur argent sur un livret ou en obligations voient leurs économies réduites à rien. La classe moyenne est durement touchée. Les retraités aussi.
+
+À l'inverse, ceux qui avaient des dettes s'en débarrassent facilement. Une dette de plusieurs milliers de marks peut être remboursée avec quelques billets sans valeur. Certains industriels, très endettés, s'enrichissent.
+
+La fin de la crise
+
+Le 15 novembre 1923, une nouvelle monnaie est créée : le Rentenmark. Un Rentenmark vaut 1 000 milliards d'anciens marks. Son émission est strictement limitée. La confiance revient peu à peu.
+
+En 1924, un nouveau plan réorganise le paiement des réparations, avec l'aide de prêts américains. L'économie allemande se stabilise pour quelques années. Mais les plaies sociales de 1923 resteront profondes.
+
+Une mémoire durable
+
+L'hyperinflation de 1923 a profondément marqué l'Allemagne. Pendant des décennies, la peur de l'inflation y est restée très forte. Après la guerre, la banque centrale allemande, la Bundesbank, en a fait sa priorité : la stabilité des prix.
+
+Cette culture a ensuite influencé la création de l'euro. L'indépendance de la Banque centrale européenne et son objectif de stabilité des prix doivent beaucoup à l'expérience allemande.
+
+D'autres hyperinflations
+
+L'Allemagne n'est pas un cas unique. La Hongrie a connu en 1946 la pire hyperinflation jamais mesurée. Plus récemment, la monnaie du Zimbabwe s'est effondrée à la fin des années 2000. Celle du Venezuela, à la fin des années 2010. Avec à chaque fois les mêmes drames pour les épargnants.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : pendant l'hyperinflation, ceux qui avaient des dettes ont été avantagés ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : vrai. Leurs dettes, fixées en marks, ne valaient plus presque rien. Les prêteurs, eux, ont tout perdu. L'inflation transfère la richesse des créanciers vers les débiteurs.
+
+Attention, grain de sable
+
+Il y a trois idées à nuancer.
+
+Un : croire que l'hyperinflation vient seulement de la planche à billets. Elle naît aussi d'une perte totale de confiance dans la monnaie.
+
+Deux : penser que l'inflation actuelle ressemble à 1923. Quelques pour cents par an n'ont rien à voir avec des prix qui doublent en quelques jours.
+
+Trois : oublier le contexte politique. Les réparations, l'occupation et l'instabilité ont joué un rôle majeur.
+
+Ce qu'il faut retenir
+
+- En 1923, l'Allemagne a connu une hyperinflation extrême
+- L'impression massive de billets et la perte de confiance l'ont provoquée
+- Les épargnants ont été ruinés, les débiteurs avantagés
+
+En une phrase : en 1923, l'Allemagne a imprimé tant de billets que sa monnaie ne valait plus rien. Et toi, aurais-tu gardé tes économies en marks ?
+
+Sources : S1 · Wikipédia, « Hyperinflation de la république de Weimar » (pain à environ 200 milliards de marks et dollar à environ 4 200 milliards de marks en novembre 1923, billets de 100 000 milliards de marks, Rentenmark créé le 15 novembre 1923 valant 1 000 milliards de marks)
+S2 · Wikipédia, « Traité de Versailles » (1919) et « Réparations de la Première Guerre mondiale » (132 milliards de marks-or fixés en 1921, plan de 1924) ; « Occupation de la Ruhr » (janvier 1923) ; fin de la guerre en 1918 ; hyperinflations de la Hongrie en 1946, du Zimbabwe à la fin des années 2000 et du Venezuela à la fin des années 2010
+
+===
+
+# 15 août 1971 : le jour où le dollar a quitté l'or
+
+Le 15 août 1971, le président américain Richard Nixon fait une annonce à la télévision. Le dollar ne sera plus échangeable contre de l'or. Jusque-là, une once valait 35 dollars. En 2025, elle a dépassé 3 000 dollars. Comment cette décision a-t-elle changé l'argent du monde entier ?
+
+Le système de Bretton Woods
+
+En 1944, à la fin de la Seconde Guerre mondiale, les grandes puissances organisent le système monétaire international. Elles se réunissent à Bretton Woods, aux États-Unis. Le dollar devient la monnaie centrale du monde.
+
+Le principe : les autres monnaies ont un taux fixe par rapport au dollar. Et le dollar, lui, est convertible en or. Les banques centrales étrangères peuvent échanger leurs dollars contre de l'or, au prix fixe de 35 dollars l'once.
+
+Pendant plus de vingt ans, ce système fonctionne. Il accompagne la reconstruction de l'Europe et la croissance des Trente Glorieuses.
+
+Les fissures
+
+Mais dans les années 1960, les États-Unis dépensent beaucoup. La guerre du Vietnam, les programmes sociaux, les investissements à l'étranger. Ils émettent de plus en plus de dollars.
+
+Il y a bientôt beaucoup plus de dollars dans le monde que d'or dans les coffres américains. Des pays commencent à douter. La France du général de Gaulle demande à convertir une partie de ses dollars en or. Elle fait même rapatrier de l'or à Paris.
+
+L'économiste français Jacques Rueff, conseiller de de Gaulle, critique ce système. Il estime qu'il permet aux États-Unis de vivre à crédit sur le reste du monde.
+
+La décision de Nixon
+
+Au début des années 1970, la pression devient trop forte. Les réserves d'or américaines fondent. Le 15 août 1971, un dimanche soir, Richard Nixon prend la parole à la télévision.
+
+Il annonce que les États-Unis suspendent la convertibilité du dollar en or. Les banques centrales étrangères ne pourront plus échanger leurs dollars contre du métal. Il annonce aussi un gel des prix et des salaires, et une taxe sur les importations.
+
+La suspension devait être temporaire. Elle est devenue définitive. Les économistes parlent du « choc Nixon ».
+
+La fin des taux fixes
+
+Dans les années qui suivent, les tentatives pour maintenir des taux fixes échouent. En 1973, les grandes monnaies se mettent à flotter. Leur valeur dépend désormais de l'offre et de la demande sur les marchés.
+
+Depuis, aucune grande monnaie n'est adossée à l'or. On parle de monnaie fiduciaire, du latin fides, la confiance. Sa valeur repose sur la confiance dans l'État et la banque centrale qui l'émettent.
+
+Les conséquences
+
+Libéré de l'or, le prix du métal s'envole. Il passe de 35 dollars à plusieurs centaines de dollars l'once dès la fin des années 1970. En 2025, il dépasse les 3 000 dollars.
+
+Les années 1970 sont aussi marquées par une forte inflation dans de nombreux pays, aggravée par les chocs pétroliers. Les critiques du système actuel y voient un effet de la fin de l'or. D'autres économistes estiment que l'or aurait empêché les banques centrales de réagir aux crises.
+
+L'or aujourd'hui
+
+Même sans lien avec les monnaies, l'or reste très présent. Les banques centrales en détiennent encore des milliers de tonnes. Ces dernières années, plusieurs d'entre elles en ont même acheté massivement. Elles y voient une réserve de valeur indépendante du dollar.
+
+Pour les particuliers, l'or est souvent vu comme une valeur refuge. Mais son prix peut aussi baisser fortement, pendant de longues périodes. Et il ne verse ni intérêts ni dividendes.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : aujourd'hui, la Banque de France doit détenir de l'or pour chaque euro en circulation ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. L'euro n'est pas convertible en or. La Banque de France détient de l'or dans ses réserves, mais sans lien fixe avec la quantité de monnaie.
+
+Attention, grain de sable
+
+Il y a trois idées reçues.
+
+Un : croire que l'or garantit la stabilité. Sous l'étalon-or, il y a eu aussi des crises et des paniques bancaires.
+
+Deux : penser qu'une monnaie sans or ne vaut rien. Sa valeur repose sur la confiance et sur l'économie qui la soutient.
+
+Trois : imaginer que Nixon a agi par caprice. La convertibilité était devenue intenable face aux réserves d'or.
+
+Ce qu'il faut retenir
+
+- Jusqu'en 1971, le dollar était convertible en or à 35 dollars l'once
+- Nixon a suspendu cette convertibilité le 15 août 1971
+- Depuis, les grandes monnaies reposent sur la confiance
+
+En une phrase : en 1971, Nixon a détaché le dollar de l'or, et la monnaie repose sur la confiance. Et toi, ferais-tu plus confiance à l'or ou à une monnaie ?
+
+Sources : S1 · Wikipédia, « Choc Nixon » (annonce du 15 août 1971, suspension de la convertibilité, gel des prix et des salaires, taxe sur les importations) ; « Accords de Bretton Woods » (1944, 35 dollars l'once)
+S2 · Wikipédia, « Jacques Rueff » ; flottement des monnaies en 1973 ; or au-dessus de 3 000 dollars l'once en 2025 (World Gold Council) ; années 1960 et 1970 ; plus de vingt ans de Bretton Woods
+
+===
+
+# Bretton Woods : la conférence qui a organisé l'argent du monde
+
+En juillet 1944, la guerre fait encore rage. Les délégués de 44 pays se réunissent dans un hôtel du New Hampshire. Pendant trois semaines, ils dessinent le système monétaire de l'après-guerre. Ils créent deux institutions qui existent toujours. Lesquelles ?
+
+Les leçons de l'entre-deux-guerres
+
+Entre les deux guerres mondiales, l'économie mondiale a connu le chaos. Hyperinflation en Allemagne, krach de 1929, Grande Dépression. Les pays dévaluent leur monnaie les uns après les autres pour vendre moins cher que leurs voisins.
+
+Ces guerres des monnaies ont aggravé la crise. Le commerce mondial s'est effondré. Le chômage a explosé. Et ce désordre a nourri les extrémismes qui ont mené à la Seconde Guerre mondiale.
+
+En 1944, les Alliés veulent éviter que ça recommence. Ils veulent un système stable, avec des règles communes.
+
+Deux visions face à face
+
+Deux hommes dominent la conférence. Pour le Royaume-Uni, le célèbre économiste John Maynard Keynes. Pour les États-Unis, un haut fonctionnaire du Trésor, Harry Dexter White.
+
+Keynes propose une monnaie internationale nouvelle, qu'il appelle le bancor. Elle serait gérée par une institution mondiale. Les pays trop excédentaires comme les pays trop déficitaires devraient faire des efforts.
+
+White propose un système centré sur le dollar. Les États-Unis sortent de la guerre comme la première puissance économique. Ils détiennent l'essentiel de l'or mondial. C'est leur plan qui l'emporte.
+
+Les règles adoptées
+
+Le dollar devient la monnaie pivot. Il est convertible en or, à 35 dollars l'once. Les autres monnaies ont un taux fixe par rapport au dollar. Elles ne peuvent bouger que dans des marges étroites.
+
+Un pays ne peut pas dévaluer sa monnaie à sa guise. Il doit obtenir l'accord d'une nouvelle institution internationale. L'idée est d'empêcher les guerres des monnaies.
+
+Deux institutions
+
+La conférence crée deux organisations. Le Fonds monétaire international, le FMI. Il doit surveiller les monnaies et prêter aux pays qui ont des difficultés temporaires de paiement.
+
+Et la Banque internationale pour la reconstruction et le développement. On l'appelle aujourd'hui la Banque mondiale. Elle doit d'abord financer la reconstruction de l'Europe, puis le développement des pays plus pauvres.
+
+Ces deux institutions ont leur siège à Washington. Elles existent toujours et comptent aujourd'hui presque tous les pays du monde.
+
+Un système qui finit par céder
+
+Le système de Bretton Woods accompagne les Trente Glorieuses, une période de forte croissance. Mais il repose sur la confiance dans le dollar, et sur l'or américain.
+
+Dans les années 1960, les dollars en circulation dépassent largement l'or disponible. En 1971, le président Nixon suspend la convertibilité du dollar en or. En 1973, les taux fixes sont abandonnés. Le système de Bretton Woods prend fin.
+
+Ce qu'il en reste
+
+Même sans l'or, le dollar est resté la monnaie centrale du monde. Le FMI et la Banque mondiale jouent un rôle majeur dans les crises financières des pays. Leurs prêts, souvent accompagnés de conditions strictes, font débat.
+
+Le destin de White
+
+L'histoire de Harry Dexter White a une suite étonnante. Après sa mort, en 1948, des documents déclassifiés révèlent qu'il transmettait des informations aux services soviétiques. L'architecte du système monétaire occidental est ainsi soupçonné d'espionnage. Les historiens débattent encore de l'ampleur de son rôle.
+
+Keynes, lui, meurt en 1946. Il a passé ses dernières années à négocier un prêt américain pour le Royaume-Uni, ruiné par la guerre. Son idée de monnaie mondiale reste un sujet de débat parmi les économistes.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : le plan de Keynes, avec sa monnaie mondiale appelée bancor, a été adopté à Bretton Woods ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. C'est le plan américain, centré sur le dollar, qui l'a emporté. Le bancor de Keynes n'a jamais vu le jour, même si l'idée revient parfois dans les débats.
+
+Attention, grain de sable
+
+Il y a trois idées reçues.
+
+Un : croire que Bretton Woods a créé l'euro ou une monnaie mondiale. Il a organisé les monnaies nationales autour du dollar.
+
+Deux : penser que le système a duré jusqu'à aujourd'hui. Il a pris fin au début des années 1970.
+
+Trois : réduire le FMI à une banque. C'est d'abord une institution de surveillance et d'aide en cas de crise.
+
+Ce qu'il faut retenir
+
+- En 1944, 44 pays organisent le système monétaire de l'après-guerre
+- Le dollar devient la monnaie centrale, convertible en or
+- La conférence crée le FMI et la Banque mondiale
+
+En une phrase : Bretton Woods a mis le dollar au centre et créé le FMI et la Banque mondiale. Et toi, penses-tu qu'une monnaie mondiale serait une bonne idée ?
+
+Sources : S1 · Wikipédia, « Accords de Bretton Woods » (juillet 1944, 44 pays, trois semaines, leçons du krach de 1929, plans de Keynes et de White, bancor, 35 dollars l'once, fin du système de 1971 à 1973)
+S2 · Fonds monétaire international et Banque mondiale, présentation de leur histoire (sièges à Washington) ; années 1960 ; Wikipédia, « Harry Dexter White » (mort en 1948) et « John Maynard Keynes » (mort en 1946)
+
+===
+
+# Le PIB : que mesure vraiment ce chiffre ?
+
+Chaque trimestre, on annonce que le PIB de la France a progressé de 0,2 % ou reculé de 0,1 %. Ce chiffre de près de 3 000 milliards d'euros par an guide les décisions politiques. Mais que mesure-t-il vraiment, et qu'oublie-t-il ?
+
+Une définition
+
+Le PIB, c'est le produit intérieur brut. Il mesure la valeur de tout ce qui est produit dans un pays en une année. Les biens, comme les voitures ou le pain. Et les services, comme les soins, les cours ou les coupes de cheveux.
+
+En France, il est calculé par l'Insee. Il représente près de 3 000 milliards d'euros par an. C'est l'indicateur le plus utilisé pour mesurer la taille et la santé d'une économie.
+
+Trois façons de le calculer
+
+On peut calculer le PIB de trois manières, qui doivent donner le même résultat. Par la production : on additionne la valeur ajoutée de toutes les entreprises et administrations. Par les dépenses : consommation, investissement, dépenses publiques et exportations, moins les importations.
+
+Et par les revenus : on additionne les salaires versés, les profits des entreprises et les impôts sur la production. Ce que l'un dépense, l'autre le gagne.
+
+Une invention récente
+
+Le PIB n'a pas toujours existé. Il est surtout développé dans les années 1930, aux États-Unis, par l'économiste Simon Kuznets. Pendant la Grande Dépression, le gouvernement voulait mesurer précisément l'activité économique.
+
+Kuznets lui-même prévient que ce chiffre ne mesure pas le bien-être d'une nation. Il le répète dès 1934. Mais le PIB devient rapidement la référence mondiale, surtout après la Seconde Guerre mondiale.
+
+Ce qu'il oublie
+
+Le PIB a de nombreuses limites. Il ne compte pas le travail domestique non rémunéré. Cuisiner, s'occuper des enfants, aider un parent âgé : sans paiement, rien de tout ça n'entre dans le PIB.
+
+Il ne mesure pas les dégâts sur l'environnement. Une usine qui pollue augmente le PIB. Et le nettoyage de la pollution l'augmente aussi. Un accident de voiture fait monter le PIB, à travers les réparations et les soins.
+
+Il ne dit rien non plus sur la répartition des richesses. Le PIB peut augmenter alors qu'une majorité de la population voit ses revenus stagner.
+
+PIB par habitant
+
+Pour comparer des pays de tailles différentes, on utilise le PIB par habitant. On divise le PIB par le nombre d'habitants. C'est une mesure du niveau de vie moyen, plus parlante que le PIB total.
+
+On le corrige souvent des différences de prix entre pays. On parle de parité de pouvoir d'achat. Car avec un euro, on n'achète pas la même chose à Paris et à Lisbonne.
+
+D'autres indicateurs
+
+Face à ces limites, d'autres indicateurs ont été créés. L'indice de développement humain, par exemple, ajoute l'espérance de vie et l'éducation. En 2009, un rapport commandé par la France, dirigé notamment par Joseph Stiglitz, propose de mieux mesurer le bien-être.
+
+Le PIB par habitant en France
+
+Le PIB par habitant de la France tourne autour de 40 000 euros par an. Attention, ce n'est pas un revenu moyen. Il comprend la production des entreprises, des administrations, et des services publics. Le revenu disponible d'un ménage est nettement plus faible.
+
+Les révisions
+
+Le premier chiffre du PIB d'un trimestre est publié environ un mois après sa fin. C'est une estimation rapide. L'Insee l'affine ensuite pendant plusieurs années, avec des données plus complètes. Une croissance de 0,1 % peut ainsi devenir 0,3 %, ou zéro. C'est pour ça qu'il faut éviter de tirer de grandes conclusions d'un seul chiffre trimestriel.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : quand tu fais le ménage chez toi gratuitement, ton travail est compté dans le PIB ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Seul le travail rémunéré compte. Si tu paies une personne pour faire le ménage, son travail entre dans le PIB. Le même travail fait gratuitement n'y entre pas.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : confondre PIB et bien-être. Un pays peut produire beaucoup sans que ses habitants vivent mieux.
+
+Deux : comparer des PIB sans tenir compte de la population. Le PIB par habitant est plus parlant.
+
+Trois : oublier que le PIB est une estimation. Il est souvent révisé plusieurs fois après sa première publication.
+
+Ce qu'il faut retenir
+
+- Le PIB mesure la valeur de la production d'un pays en une année
+- Il est calculé en France par l'Insee
+- Il ne mesure ni le bien-être, ni l'environnement, ni la répartition
+
+En une phrase : le PIB mesure ce qu'un pays produit, mais pas forcément comment vivent ses habitants. Et toi, quel indicateur ajouterais-tu pour mesurer le bien-être ?
+
+Sources : S1 · Insee, « Produit intérieur brut » (définition, trois approches, PIB de la France proche de 3 000 milliards d'euros par an, révisions)
+S2 · Wikipédia, « Simon Kuznets » (années 1930, avertissement de 1934) ; rapport de la Commission Stiglitz, Sen et Fitoussi, 2009 ; exemples de 0,2 %, 0,1 % et 0,3 % ; Insee, PIB par habitant autour de 40 000 euros par an
+
+===
+
+# Récession, crise, dépression : quelle différence ?
+
+En 2020, le PIB de la France a reculé d'environ 7,5 %. Sa plus forte baisse depuis la Seconde Guerre mondiale. On a parlé de récession, de crise, parfois de dépression. Mais que veulent dire ces mots, et comment reconnaît-on une récession ?
+
+La croissance
+
+Pour comprendre la récession, il faut partir de la croissance. La croissance économique, c'est l'augmentation de la production d'un pays, mesurée par le PIB. On la calcule souvent d'un trimestre à l'autre, ou d'une année à l'autre.
+
+Une croissance positive signifie que l'économie produit plus que la période précédente. Une croissance négative, qu'elle produit moins. Les économistes parlent alors de recul de l'activité.
+
+La récession
+
+Il n'existe pas de définition unique de la récession. La règle la plus citée est simple : deux trimestres consécutifs de baisse du PIB. C'est une convention pratique, utilisée par beaucoup de médias.
+
+Aux États-Unis, c'est un comité d'économistes indépendants qui décide officiellement des dates de début et de fin des récessions. Il regarde plusieurs indicateurs : l'emploi, les revenus, la production industrielle, la consommation.
+
+Une récession s'accompagne souvent d'une hausse du chômage, d'une baisse des investissements et d'un recul de la consommation.
+
+La dépression
+
+Une dépression est une récession très profonde et très longue. Il n'existe pas non plus de seuil officiel. On réserve souvent ce mot aux crises exceptionnelles, comme la Grande Dépression des années 1930.
+
+Aux États-Unis, entre 1929 et 1933, la production a chuté d'environ un quart. Le chômage a touché environ un quart de la population active. Rien de comparable n'a été vu depuis dans les grands pays développés.
+
+La crise
+
+Le mot « crise » est le plus flou. On l'utilise pour une crise financière, une crise de la dette, une crise sanitaire. Il désigne un moment de rupture, souvent brutal. Une crise peut provoquer une récession, mais pas toujours.
+
+Les récessions récentes en France
+
+En 2009, après la crise financière, le PIB de la France recule d'environ 2,9 %. C'est alors sa plus forte baisse depuis la guerre.
+
+En 2020, avec les confinements, la chute est bien plus forte : environ 7,5 % sur l'année. Mais elle est aussi plus courte. En 2021, l'économie rebondit fortement, de près de 7 %.
+
+Chaque récession a son profil. Certaines sont rapides et brutales, d'autres lentes et prolongées. On parle parfois de récession en V, en U ou en L, selon la forme de la courbe.
+
+Et la Bourse ?
+
+La Bourse anticipe souvent les récessions. Elle baisse parfois avant, et remonte souvent avant la fin. En 2020, la Bourse américaine a retrouvé son record dès l'été, alors que l'économie était encore très affaiblie.
+
+Les indicateurs avancés
+
+Pour savoir si une récession approche, les économistes surveillent des indicateurs avancés. Les enquêtes de confiance des chefs d'entreprise et des ménages. Les commandes industrielles. Les permis de construire. Les embauches et les intentions d'embauche.
+
+En Europe, on regarde notamment les indices des directeurs d'achat. Ce sont des enquêtes mensuelles auprès des entreprises. Au-dessus de 50, l'activité progresse. En dessous, elle recule. Ces indices sont publiés bien avant le PIB.
+
+Les amortisseurs
+
+En France, des mécanismes limitent l'impact des récessions sur les ménages. L'assurance chômage, les aides sociales, et pendant le Covid, le chômage partiel. On les appelle les stabilisateurs automatiques. Ils soutiennent la consommation quand l'activité baisse, au prix d'un déficit public plus élevé.
+
+Pendant la crise de 2020, le chômage partiel a concerné jusqu'à plusieurs millions de salariés. Il a permis d'éviter des licenciements massifs.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : la Bourse attend toujours la fin d'une récession pour remonter ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Elle anticipe. Elle remonte souvent quand les investisseurs pensent que le pire est passé. Parfois bien avant le vrai rétablissement de l'économie.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : croire que la règle des deux trimestres est une loi. C'est une convention, pas une définition officielle partout.
+
+Deux : confondre crise et récession. Une crise financière n'entraîne pas forcément une récession.
+
+Trois : penser que la Bourse suit l'économie au jour le jour. Elle regarde surtout l'avenir.
+
+Ce qu'il faut retenir
+
+- La règle la plus citée : deux trimestres consécutifs de baisse du PIB
+- Une dépression est une récession très profonde et longue
+- En 2020, le PIB français a reculé d'environ 7,5 %
+
+En une phrase : une récession est un recul de l'activité, une dépression un recul profond et durable. Et toi, te souviens-tu de la récession de 2020 ?
+
+Sources : S1 · Insee, comptes nationaux (PIB 2009 environ −2,9 %, 2020 environ −7,5 %, 2021 près de +7 %)
+S2 · National Bureau of Economic Research, datation des récessions américaines ; Wikipédia, « Grande Dépression » (1929 à 1933, production en baisse d'environ un quart, chômage d'environ un quart) ; années 1930 ; indices des directeurs d'achat (seuil de 50) ; chômage partiel en 2020
+
+===
+
+# La dette publique : la France est-elle trop endettée ?
+
+Fin 2024, la dette publique française dépassait 3 300 milliards d'euros, soit environ 113 % du PIB. Ses seuls intérêts coûtent chaque année des dizaines de milliards. Mais comment un État s'endette-t-il, et est-ce si grave ?
+
+Dette et déficit
+
+Il ne faut pas confondre dette et déficit. Le déficit, c'est la différence entre ce que l'État dépense et ce qu'il gagne en une année. Quand il dépense plus qu'il ne gagne, il est en déficit.
+
+La dette, c'est l'accumulation de tous les déficits passés. Chaque année de déficit ajoute de la dette. La France n'a pas voté de budget à l'équilibre depuis le milieu des années 1970.
+
+La dette publique ne concerne pas seulement l'État. Elle comprend aussi celle des collectivités locales et des organismes de sécurité sociale.
+
+Comment un État emprunte
+
+L'État français emprunte surtout en émettant des obligations, appelées OAT. Elles sont achetées par des banques, des assureurs, des fonds, des banques centrales. Une grande partie est détenue par des investisseurs étrangers.
+
+L'État paie des intérêts sur ces obligations. Quand elles arrivent à échéance, il les rembourse le plus souvent en empruntant de nouveau. On dit qu'il fait « rouler » sa dette.
+
+Les règles européennes
+
+Le traité de Maastricht, signé en 1992, fixe deux repères pour les pays de l'euro. Le déficit ne doit pas dépasser 3 % du PIB. La dette ne doit pas dépasser 60 % du PIB.
+
+La France dépasse ces limites depuis longtemps. Comme beaucoup d'autres pays européens. Ces règles ont été assouplies pendant les crises, puis réformées en 2024.
+
+Est-ce grave ?
+
+La réponse dépend de plusieurs choses. D'abord, du coût de la dette. Quand les taux d'intérêt étaient très bas, dans les années 2010, s'endetter coûtait peu. Depuis la remontée des taux, la charge des intérêts augmente.
+
+Ensuite, de la croissance. Si l'économie grandit plus vite que la dette, le poids de la dette diminue. Un pays en forte croissance supporte mieux une dette élevée.
+
+Enfin, de la confiance des prêteurs. Tant qu'ils acceptent de prêter à des taux raisonnables, la dette est soutenable. S'ils doutent, ils exigent des taux plus élevés. Ce qui alourdit encore la dette.
+
+Les comparaisons
+
+D'autres pays ont des dettes plus élevées. Le Japon dépasse largement 200 % de son PIB. L'Italie et la Grèce sont aussi au-dessus de la France. L'Allemagne, elle, est bien en dessous.
+
+La dette n'est pas forcément un mal. Elle peut financer des investissements utiles : écoles, hôpitaux, transports, transition énergétique. La question est de savoir à quoi sert l'argent emprunté.
+
+Qui détient la dette française ?
+
+Une grande partie de la dette française est détenue par des investisseurs étrangers, autour de la moitié selon les périodes. Le reste est détenu par des banques, des assureurs et des fonds français. Et par la Banque de France, qui en a acheté beaucoup dans le cadre des programmes de la BCE.
+
+Quand des investisseurs du monde entier achètent la dette française, c'est un signe de confiance. Mais ça rend aussi le pays sensible à l'humeur des marchés internationaux.
+
+L'écart avec l'Allemagne
+
+On surveille souvent l'écart entre le taux d'emprunt de la France et celui de l'Allemagne, à dix ans. On l'appelle le « spread ». Plus il est élevé, plus les investisseurs jugent la France risquée par rapport à l'Allemagne.
+
+En période de tension politique ou budgétaire, cet écart s'élargit. Il est devenu un véritable thermomètre de la confiance des marchés envers la France.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : un État doit rembourser toute sa dette, comme un ménage ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : pas tout à fait. Un État rembourse chaque obligation à son échéance, mais il réemprunte en général pour le faire. Contrairement à un ménage, il ne disparaît pas. Il peut faire rouler sa dette, tant que les prêteurs lui font confiance.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : confondre dette et déficit. Le déficit est annuel, la dette est le total accumulé.
+
+Deux : regarder le montant sans le comparer au PIB. 3 000 milliards ne pèsent pas pareil pour tous les pays.
+
+Trois : croire qu'une dette élevée est toujours une catastrophe. Tout dépend du coût, de la croissance et de la confiance.
+
+Ce qu'il faut retenir
+
+- Le déficit est annuel, la dette accumule les déficits passés
+- Fin 2024, la dette française dépassait 3 300 milliards d'euros, environ 113 % du PIB
+- Sa soutenabilité dépend des taux, de la croissance et de la confiance
+
+En une phrase : la dette publique accumule les déficits, et son poids dépend des taux et de la croissance. Et toi, penses-tu qu'un pays peut s'endetter sans limite ?
+
+Sources : S1 · Insee, « Dette des administrations publiques » (plus de 3 300 milliards d'euros fin 2024, environ 113 % du PIB) ; Cour des comptes, charge des intérêts de plusieurs dizaines de milliards d'euros par an
+S2 · Traité de Maastricht (1992, repères de 3 % et 60 % du PIB), réforme des règles européennes en 2024 ; Agence France Trésor (OAT) ; dernier budget en équilibre au milieu des années 1970 ; Japon au-delà de 200 % du PIB (FMI) ; années 2010 ; Banque de France, détention de la dette par les non-résidents ; écart de taux à dix ans avec l'Allemagne
+
+===
+
+# Les agences de notation : qui note les pays ?
+
+En janvier 2012, la France perd son fameux « triple A ». Une agence américaine baisse sa note d'un cran. L'événement fait la une des journaux. Mais que sont ces agences de notation, et pourquoi leurs avis comptent-ils autant ?
+
+Trois grandes agences
+
+Les agences de notation évaluent la capacité d'un emprunteur à rembourser ses dettes. Elles notent des États, des collectivités, des entreprises, des produits financiers.
+
+Trois agences dominent le marché mondial. Deux américaines, Standard & Poor's et Moody's, et Fitch, à capitaux américains et européens. Ensemble, elles réalisent l'essentiel des notations dans le monde.
+
+L'échelle des notes
+
+Les notes vont de la meilleure, le triple A, aux plus mauvaises, qui signalent un défaut de paiement. Entre les deux, une échelle de lettres et de signes. AA plus, AA, AA moins, A plus, et ainsi de suite.
+
+Une distinction est capitale. Les notes de BBB moins et au-dessus sont dites de catégorie « investissement ». En dessous, on parle de catégorie spéculative, ou haut rendement. Beaucoup d'investisseurs institutionnels n'ont pas le droit d'acheter ces titres spéculatifs.
+
+Pourquoi elles comptent
+
+Une note influence le taux d'intérêt payé par l'emprunteur. Plus la note est bonne, plus les prêteurs ont confiance, et plus le taux est bas. Une baisse de note peut renchérir le coût de l'emprunt.
+
+Mais l'effet n'est pas automatique. Après 2012, les taux d'emprunt de la France ont pourtant continué de baisser pendant des années. Les marchés avaient déjà intégré la situation.
+
+La note de la France
+
+Après 2012, la note de la France baisse encore plusieurs fois au fil des années. Ces dégradations reflètent l'inquiétude des agences face à la dette publique et aux déficits. En 2024 et 2025, plusieurs agences abaissent encore sa note ou sa perspective.
+
+Chaque annonce est très suivie. Elle intervient souvent un vendredi soir, après la fermeture des marchés, pour éviter des réactions trop brutales pendant la séance.
+
+Les critiques
+
+Les agences ont été vivement critiquées après la crise de 2008. Elles avaient donné d'excellentes notes à des produits financiers construits avec des crédits immobiliers fragiles. Ces produits se sont effondrés.
+
+On leur reproche aussi un conflit d'intérêts. Pour beaucoup de produits, c'est l'émetteur qui paie l'agence pour être noté. Difficile, dans ces conditions, d'être totalement indépendant.
+
+Depuis, l'Europe a renforcé leur encadrement. Elles sont surveillées par l'Autorité européenne des marchés financiers. Et les notations des États doivent suivre un calendrier annoncé à l'avance.
+
+Les notes des entreprises
+
+Les agences notent aussi les grandes entreprises. Une entreprise ne peut en général pas avoir une meilleure note que l'État où elle est installée, sauf exception. Quand la note d'un pays baisse, celle de certaines grandes entreprises ou banques peut suivre.
+
+Une note dégradée peut aussi déclencher des clauses dans des contrats. Certains fonds doivent vendre les titres d'un émetteur qui passe en catégorie spéculative. Ces ventes forcées peuvent faire chuter les prix.
+
+L'agence européenne
+
+L'Europe a longtemps rêvé de sa propre grande agence de notation, pour ne pas dépendre des agences américaines. Plusieurs projets ont été lancés. Des agences européennes existent, mais elles restent beaucoup plus petites que les trois géants.
+
+Comment elles notent
+
+Pour noter un État, les agences examinent de nombreux critères. Le niveau de la dette et des déficits. La croissance économique. La stabilité politique. La capacité à mener des réformes. Et l'appartenance à une zone monétaire comme l'euro.
+
+Elles publient ensuite un rapport qui explique leur décision. Elles précisent aussi une perspective : stable, positive ou négative. Une perspective négative signale qu'une baisse de note est possible dans les mois à venir.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : après 2012, la France a payé des taux d'intérêt bien plus élevés ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Ses taux ont continué de baisser les années suivantes. Une note est un avis parmi d'autres. Les investisseurs regardent aussi la politique de la banque centrale, la croissance et la situation des autres pays.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : croire qu'une note est une vérité absolue. C'est une opinion, qui peut se tromper.
+
+Deux : penser qu'une baisse de note entraîne toujours une hausse des taux. L'effet dépend du contexte.
+
+Trois : oublier les conflits d'intérêts. Celui qui paie la note n'est pas toujours celui qui l'utilise.
+
+Ce qu'il faut retenir
+
+- Les agences notent la capacité des emprunteurs à rembourser
+- Trois agences dominent : S&P, Moody's et Fitch
+- La France a perdu son triple A en janvier 2012
+
+En une phrase : les agences de notation jugent la solidité des emprunteurs, mais leurs avis ne sont pas infaillibles. Et toi, accordes-tu de l'importance à ces notes ?
+
+Sources : S1 · Wikipédia, « Agence de notation financière » (Standard & Poor's, Moody's, Fitch, échelle des notes, catégorie investissement à partir de BBB moins, critiques après 2008) ; Standard & Poor's, perte du triple A de la France en janvier 2012
+S2 · Autorité européenne des marchés financiers, surveillance des agences et calendrier des notations souveraines ; dégradations et perspectives de la France en 2024 et 2025 (communiqués des agences) ; taux d'emprunt français en baisse après 2012 (Agence France Trésor)
+
+===
+
+# La courbe des taux inversée : un signal de récession ?
+
+En temps normal, prêter pour 10 ans rapporte plus que prêter pour 2 ans. Mais parfois, c'est l'inverse. Aux États-Unis, ce phénomène a précédé presque toutes les récessions depuis 1970. On l'appelle l'inversion de la courbe des taux. Qu'est-ce que c'est ?
+
+La courbe des taux
+
+Un État emprunte sur différentes durées. Pour 3 mois, 2 ans, 10 ans, 30 ans. Pour chaque durée, il paie un taux d'intérêt différent. Mettons tous ces taux sur un graphique, de la plus courte à la plus longue durée. On obtient la courbe des taux.
+
+En temps normal, cette courbe monte. Plus la durée est longue, plus le taux est élevé. C'est logique : prêter pour longtemps comporte plus d'incertitudes. Le prêteur demande une récompense supplémentaire.
+
+L'inversion
+
+Parfois, la courbe s'inverse. Les taux à court terme deviennent plus élevés que les taux à long terme. Prêter pour 2 ans rapporte plus que prêter pour 10 ans. Pourquoi cette anomalie ?
+
+D'abord parce que la banque centrale a fortement monté ses taux. Les taux courts suivent directement ses décisions. Ensuite parce que les investisseurs anticipent une baisse des taux à l'avenir. Ils pensent que l'économie va ralentir, et que la banque centrale devra baisser ses taux. Ils achètent des obligations longues, ce qui fait baisser leurs taux.
+
+Un signal souvent fiable
+
+Aux États-Unis, l'inversion de la courbe a précédé presque toutes les récessions depuis la fin des années 1960. L'économiste Campbell Harvey l'a mis en évidence dès les années 1980. Depuis, elle est surveillée de très près.
+
+Le délai entre l'inversion et la récession varie. Souvent entre six mois et deux ans. Ce qui en fait un signal d'alerte, pas une date précise.
+
+L'exception récente
+
+En 2022, la courbe américaine s'inverse fortement, après la hausse rapide des taux de la banque centrale. Beaucoup prévoient alors une récession aux États-Unis en 2023.
+
+Pourtant, l'économie américaine résiste. Pas de récession en 2023, ni en 2024. La courbe est restée inversée pendant environ deux ans, l'une des plus longues périodes de l'histoire. Ce signal réputé fiable s'est, cette fois, trompé, au moins sur le calendrier.
+
+Pourquoi c'est important
+
+La courbe des taux influence aussi les banques. Elles empruntent souvent à court terme et prêtent à long terme. Quand la courbe est inversée, cette activité devient moins rentable. Elles peuvent alors prêter moins, ce qui ralentit l'économie.
+
+Pour un épargnant, l'inversion a un effet concret. Les placements courts, comme les livrets ou les comptes à terme, rapportent alors parfois autant que les longs. Voire plus.
+
+Les taux longs en Europe
+
+En zone euro, on observe aussi la courbe des taux, notamment celle de l'Allemagne, jugée la plus sûre. En 2022 et 2023, elle s'est également inversée. Mais l'économie européenne a surtout stagné, sans grande récession.
+
+Ces écarts montrent que la courbe des taux n'est qu'un indicateur parmi d'autres. Elle dépend aussi des achats d'obligations par les banques centrales, qui peuvent la déformer.
+
+Le retour à la normale
+
+Quand la courbe redevient normale, après une inversion, certains économistes y voient un signal encore plus inquiétant. Historiquement, la récession commençait souvent au moment où la courbe se « désinversait ». Là encore, aucune règle n'est absolue.
+
+Un graphique très simple à suivre
+
+La courbe des taux est publiée chaque jour, gratuitement, par les Trésors publics et les banques centrales. Beaucoup de médias économiques suivent l'écart entre le taux à 10 ans et le taux à 2 ans. Quand cet écart devient négatif, la courbe est inversée.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : une inversion de la courbe des taux annonce une récession dans le mois qui suit ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Quand une récession suit, elle arrive souvent entre six mois et deux ans plus tard. Et en 2022, l'inversion n'a pas été suivie de récession aux États-Unis.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : croire qu'un indicateur prédit l'avenir à coup sûr. Même les meilleurs signaux se trompent parfois.
+
+Deux : vendre tous ses placements dès l'inversion. La Bourse a souvent continué de monter pendant des mois après.
+
+Trois : oublier que le délai varie énormément. Le signal ne donne pas de date.
+
+Ce qu'il faut retenir
+
+- La courbe des taux montre les taux d'intérêt selon les durées
+- Elle s'inverse quand les taux courts dépassent les taux longs
+- C'est un signal de récession souvent fiable, mais pas infaillible
+
+En une phrase : une courbe des taux inversée signale souvent une récession, mais sans date ni certitude. Et toi, te fierais-tu à un seul indicateur pour prévoir l'économie ?
+
+Sources : S1 · Réserve fédérale de New York, travaux sur la courbe des taux comme indicateur de récession (inversions avant presque toutes les récessions depuis la fin des années 1960, délai souvent de six mois à deux ans) ; Campbell Harvey, thèse des années 1980
+S2 · Département du Trésor américain, taux à 2 ans et 10 ans (inversion de 2022, environ deux ans, pas de récession en 2023 ni en 2024, écart entre les taux à 10 ans et à 2 ans) ; depuis 1970 ; courbe allemande inversée en 2022 et 2023 ; durées de 3 mois, 2, 10 et 30 ans
+
+===
+
+# La naissance de l'euro : 6,55957 francs pour un euro
+
+Le 1er janvier 2002, 12 pays changent de monnaie en même temps. En France, un euro vaut exactement 6,55957 francs. Une opération géante, préparée pendant des années. Comment l'euro est-il né, et qu'a-t-il changé ?
+
+Une vieille idée
+
+L'idée d'une monnaie européenne commune est ancienne. Dès 1970, un rapport propose une union monétaire en plusieurs étapes. Mais les crises monétaires des années 1970 freinent le projet.
+
+En 1979, les pays européens créent le système monétaire européen. Leurs monnaies doivent rester dans des marges de fluctuation étroites. C'est une première étape, avec des crises régulières.
+
+Maastricht
+
+Le 7 février 1992, le traité de Maastricht est signé. Il prévoit la création d'une monnaie unique. Pour l'adopter, les pays doivent respecter des critères. Une inflation maîtrisée, un déficit limité à 3 % du PIB, une dette limitée à 60 % du PIB.
+
+En France, le traité est soumis à référendum en septembre 1992. Le oui l'emporte de justesse, avec environ 51 % des voix. Le débat est passionné.
+
+Deux étapes
+
+Le 1er janvier 1999, l'euro naît officiellement, dans 11 pays. Mais seulement sous forme électronique : sur les comptes, dans les échanges financiers. Les taux de conversion sont fixés définitivement. Un euro vaut 6,55957 francs.
+
+La même année, la Banque centrale européenne prend en charge la politique monétaire de la zone.
+
+Le 1er janvier 2002, les pièces et les billets en euros arrivent dans les poches. 12 pays, avec la Grèce. Pendant quelques semaines, les deux monnaies circulent ensemble. Le 17 février 2002, le franc cesse d'avoir cours légal en France.
+
+Le grand changement
+
+L'opération est gigantesque. Des milliards de pièces et de billets sont fabriqués. Les distributeurs, les caisses, les distributeurs de boissons doivent être adaptés. Les prix sont affichés dans les deux monnaies pendant des mois.
+
+Beaucoup de Français ont longtemps continué de convertir les prix en francs dans leur tête. Pour les grosses sommes, certains le font encore.
+
+L'euro a-t-il fait monter les prix ?
+
+Beaucoup de Français ont eu l'impression que l'euro avait fait flamber les prix. Les études de l'Insee montrent un effet réel, mais limité, sur l'inflation globale. Quelques dixièmes de point en 2002.
+
+En revanche, certains produits de consommation courante, comme le café en terrasse ou la baguette, ont augmenté de façon visible. Ces achats fréquents ont marqué les esprits. L'écart entre l'inflation ressentie et l'inflation mesurée a été important.
+
+L'euro aujourd'hui
+
+Au fil des années, de nouveaux pays ont rejoint la zone euro. La Croatie en 2023, la Bulgarie en 2026. Plus de 340 millions de personnes utilisent aujourd'hui l'euro au quotidien. C'est la deuxième monnaie la plus utilisée dans le monde, après le dollar.
+
+Les billets et les pièces
+
+Les billets en euros sont identiques dans tous les pays de la zone. Ils représentent des styles architecturaux européens, des fenêtres, des portes et des ponts imaginaires. Aucun monument réel, pour ne froisser aucun pays.
+
+Les pièces, elles, ont une face commune et une face nationale. En France, on y voit notamment Marianne, la Semeuse ou un arbre. Toutes les pièces peuvent être utilisées dans tous les pays de la zone euro.
+
+Les petites pièces
+
+Certains pays ont arrêté d'utiliser les pièces de 1 et 2 centimes. Les prix y sont arrondis aux 5 centimes à la caisse. La Finlande et les Pays-Bas l'ont fait très tôt. D'autres pays ont suivi. Le débat existe aussi en France.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : tous les pays de l'Union européenne utilisent l'euro ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Plusieurs pays de l'Union gardent leur propre monnaie, comme la Suède, la Pologne, la Hongrie ou la République tchèque. Le Danemark a obtenu le droit de rester en dehors.
+
+Attention, grain de sable
+
+Il y a trois idées reçues.
+
+Un : croire que l'euro a été créé en 2002. Il existait déjà depuis 1999, sur les comptes.
+
+Deux : penser que l'euro a doublé tous les prix. Son effet global sur l'inflation a été limité, même si certains prix ont nettement augmenté.
+
+Trois : imaginer que tous les pays européens l'ont adopté. Certains ont choisi de garder leur monnaie.
+
+Ce qu'il faut retenir
+
+- L'euro est né sur les comptes en 1999, dans 11 pays
+- Pièces et billets sont arrivés le 1er janvier 2002, dans 12 pays
+- Un euro vaut exactement 6,55957 francs
+
+En une phrase : l'euro est né en 1999 sur les comptes, puis en 2002 dans les poches. Et toi, convertis-tu encore les prix en francs ?
+
+Sources : S1 · Banque de France et Banque centrale européenne, histoire de l'euro (1er janvier 1999 dans 11 pays, 1er janvier 2002 dans 12 pays, 6,55957 francs, fin du cours légal du franc le 17 février 2002 ; plus de 340 millions d'utilisateurs ; Croatie en 2023, Bulgarie en 2026)
+S2 · Wikipédia, « Traité de Maastricht » (7 février 1992, critères de 3 % et 60 %, référendum de septembre 1992 avec environ 51 % de oui) ; rapport Werner de 1970 ; système monétaire européen de 1979 ; Insee, effet du passage à l'euro sur l'inflation en 2002 ; pièces de 1 et 2 centimes, arrondi aux 5 centimes
+
+===
+
+# Les chocs pétroliers : quand l'essence a fait trembler le monde
+
+En quelques mois, entre 1973 et 1974, le prix du baril de pétrole est multiplié par quatre. Puis il triple encore en 1979. Ces chocs pétroliers ont mis fin aux Trente Glorieuses et inventé un mot : la stagflation. Que s'est-il passé ?
+
+Un monde qui roule au pétrole
+
+Après la Seconde Guerre mondiale, le pétrole devient l'énergie reine. Voitures, chauffage, industrie, électricité : tout en dépend. Et il est très bon marché. Le baril coûte quelques dollars seulement.
+
+Les pays occidentaux importent l'essentiel de leur pétrole. Beaucoup vient du Moyen-Orient. Les pays producteurs se sont organisés en 1960 au sein d'une organisation : l'OPEP.
+
+Le premier choc
+
+En octobre 1973 éclate la guerre du Kippour, entre Israël et plusieurs pays arabes. Les pays arabes producteurs décident d'utiliser le pétrole comme une arme. Ils réduisent leur production et imposent un embargo à certains pays soutenant Israël.
+
+Le prix du baril explose. Il passe d'environ 3 dollars à environ 12 dollars en quelques mois. Il est multiplié par quatre. Les pays importateurs subissent un choc brutal.
+
+En France, le gouvernement lance une grande campagne d'économies d'énergie. On limite le chauffage, on réduit l'éclairage public. C'est l'époque du slogan : en France, on n'a pas de pétrole, mais on a des idées.
+
+Le second choc
+
+En 1979, la révolution iranienne perturbe la production d'un des grands pays pétroliers. Puis la guerre entre l'Iran et l'Irak éclate en 1980. Le prix du baril repart à la hausse, et il triple encore.
+
+Les économies occidentales, à peine remises du premier choc, sont de nouveau frappées. Le chômage augmente partout.
+
+La stagflation
+
+Ces chocs créent une situation que les économistes jugeaient presque impossible. Une forte inflation, et en même temps une économie qui stagne, avec du chômage. On invente un mot pour la décrire : la stagflation.
+
+Normalement, quand l'économie ralentit, l'inflation baisse. Ici, les deux maux s'additionnent. Les prix montent à cause du pétrole. Et l'activité ralentit pour la même raison. En France, l'inflation dépasse 13 % en 1974.
+
+La réponse de Volcker
+
+Aux États-Unis, l'inflation reste très élevée à la fin des années 1970. En 1979, Paul Volcker prend la tête de la banque centrale américaine. Il décide de casser l'inflation, quoi qu'il en coûte.
+
+Il monte les taux d'intérêt à des niveaux historiques. Le taux directeur américain atteint environ 20 % en 1981. L'économie plonge dans une récession douloureuse. Mais l'inflation finit par reculer fortement. Cette période reste une référence pour les banquiers centraux.
+
+Ce qui a changé
+
+Les chocs pétroliers ont transformé les politiques énergétiques. La France a lancé un vaste programme de centrales nucléaires pour réduire sa dépendance. Les voitures sont devenues plus économes. Et la recherche d'autres énergies a commencé.
+
+Les dimanches sans voitures
+
+Pendant le premier choc pétrolier, certains pays européens prennent des mesures spectaculaires. Aux Pays-Bas, en Allemagne ou en Belgique, des dimanches sans voiture sont organisés. Les autoroutes vides deviennent des pistes pour les vélos et les patins.
+
+En France, on avance l'heure en été à partir de 1976, en partie pour économiser l'énergie. Le changement d'heure, toujours en vigueur, est un héritage de cette époque.
+
+La fin des Trente Glorieuses
+
+Les chocs pétroliers marquent la fin d'une période exceptionnelle. Pendant les Trente Glorieuses, de 1945 à 1975 environ, la France connaît une forte croissance et peu de chômage. Après 1974, la croissance ralentit durablement et le chômage s'installe.
+
+C'est l'économiste Jean Fourastié qui invente l'expression « Trente Glorieuses », dans un livre publié en 1979.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : pendant une stagflation, l'inflation et le chômage augmentent en même temps ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : vrai. C'est exactement sa définition. Une économie qui stagne, avec du chômage, et des prix qui montent fortement. C'est l'une des situations les plus difficiles à gérer.
+
+Attention, grain de sable
+
+Il y a trois idées à nuancer.
+
+Un : croire que le pétrole était la seule cause. D'autres facteurs, comme la fin de Bretton Woods, ont aussi nourri l'inflation.
+
+Deux : penser que monter les taux est sans douleur. Volcker a cassé l'inflation au prix d'une sévère récession.
+
+Trois : imaginer que ces chocs appartiennent au passé. En 2022, la hausse de l'énergie a rappelé cette époque.
+
+Ce qu'il faut retenir
+
+- En 1973, le prix du baril a été multiplié par quatre
+- Les chocs pétroliers ont provoqué la stagflation
+- La France y a répondu notamment par le nucléaire
+
+En une phrase : les chocs pétroliers de 1973 et 1979 ont fait naître la stagflation et changé la politique énergétique. Et toi, as-tu déjà entendu tes parents parler de ces années-là ?
+
+Sources : S1 · Wikipédia, « Premier choc pétrolier » (guerre du Kippour d'octobre 1973, baril d'environ 3 à environ 12 dollars, multiplié par quatre) et « Deuxième choc pétrolier » (1979, guerre Iran-Irak en 1980, triplement) ; OPEP créée en 1960
+S2 · Insee (inflation de plus de 13 % en 1974) ; Wikipédia, « Paul Volcker » (président de la Réserve fédérale en 1979, taux directeur d'environ 20 % en 1981) ; programme nucléaire français ; énergie en 2022 ; heure d'été depuis 1976 ; Jean Fourastié, « Les Trente Glorieuses », 1979 (période de 1945 à 1975 environ)
