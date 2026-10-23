@@ -1,7 +1,8 @@
 name: Pax Mythica — jeu Mac
 
 # Construit le jeu Pax Mythica (.dmg) sur un vrai Mac de GitHub, l'essaie, puis le publie dans « Releases »
-# (étiquette pax-mythica-vX.Y.Z). Nouvelle version = changer « version » dans paxmythica/package.json.
+# (étiquette pax-mythica-vX.Y.Z). Nouvelle version = changer « version » dans paxmythica/package.json
+# et ajouter sa section dans paxmythica/NOUVEAUTES.md (texte montré dans le jeu). Les Mac installés se mettent à jour seuls.
 # Une version déjà publiée n'est pas republiée.
 on:
   workflow_dispatch:
@@ -51,6 +52,7 @@ jobs:
             if (!g.decret || !g.rechargement) ko.push("décret ou sauvegarde");
             if (!g.oracle || !r.oracle || !r.oracle.mo) ko.push("pont de l oracle : " + JSON.stringify(r.oracle));
             if (!g.maj) ko.push("pont des mises à jour");
+            if (!g.vue3d) ko.push("vue 3D indisponible");
             if (ko.length) { console.log("Échecs :", ko.join(" ; ")); process.exit(1); } else console.log("Application : tout fonctionne");'
       - name: Contrôler que tous les fichiers du jeu sont dans l'application
         run: |
@@ -74,7 +76,9 @@ jobs:
             echo "La version $VERSION est déjà publiée : rien à faire (changer la version dans package.json pour publier)."
             exit 0
           fi
-          printf '%s\n\n%s\n' "Pax Mythica : jeu de stratégie mythologique (panthéons, dieux, créatures, alliances, décrets libres)." \
-            "Installation : ouvrir le .dmg et glisser Pax Mythica dans Applications. Au premier lancement : clic droit sur l'application → Ouvrir." > notes.md
+          # texte montré dans le jeu quand la mise à jour est prête : la section de NOUVEAUTES.md pour cette version
+          awk -v v="## $VERSION" '$0==v{on=1;next} /^## /{if(on)exit} on' NOUVEAUTES.md > notes.md
+          [ -s notes.md ] || { echo "Section « ## $VERSION » absente de paxmythica/NOUVEAUTES.md"; exit 1; }
+          printf '\n%s\n' "Installation : ouvrir le .dmg et glisser Pax Mythica dans Applications. Au premier lancement : clic droit sur l'application → Ouvrir." >> notes.md
           gh release create "pax-mythica-v$VERSION" "dist/Pax-Mythica-$VERSION-arm64.dmg" \
             --title "Pax Mythica $VERSION" --notes-file notes.md --target "${{ github.sha }}"

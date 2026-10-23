@@ -27,6 +27,8 @@
 <!-- jeu (et éditeur de carte) -->
 <section id="jeu" class="ecran">
   <canvas id="carte"></canvas>
+  <canvas id="carte3d" class="cache"></canvas>
+  <canvas id="etiquettes3d" class="cache"></canvas>
   <header id="barre"></header>
   <aside id="gauche" class="panneau cache"></aside>
   <aside id="droite" class="panneau">
@@ -42,16 +44,20 @@
   <div id="toasts"></div>
 </section>
 
+<div id="bandeauMaj" class="bandeau-maj cache"></div>
 <div id="modal" class="modal cache"><div class="modal-boite" id="modalBoite"></div></div>
 <input type="file" id="fichierImport" accept=".json,application/json" hidden>
 
 <script src="donnees.js"></script>
+<script src="epoques.js"></script>
 <script src="carte.js"></script>
 <script src="moteur.js"></script>
 <script src="alliances.js"></script>
 <script src="ia-nations.js"></script>
 <script src="oracle.js"></script>
+<script src="vendor/three.min.js"></script>
 <script src="rendu.js"></script>
+<script src="vue3d.js"></script>
 <script src="son.js"></script>
 <script src="interface.js"></script>
 </body>

@@ -214,7 +214,7 @@
 
   // événements de la chronique (pour le joueur) : choix → effets appliqués par le moteur (voir appliquerEffets)
   PM.EVENEMENTS = [
-    { id: 'oracle', titre: 'La Pythie a parlé', texte: 'Une prophétie trouble circule : « Le peuple qui honore les dieux verra ses ennemis trembler. »',
+    { id: 'oracle', epoques: ['antique', 'medieval'], titre: 'La Pythie a parlé', texte: 'Une prophétie trouble circule : « Le peuple qui honore les dieux verra ses ennemis trembler. »',
       choix: [{ t: 'Offrir des sacrifices (−150 nourriture)', e: { nourriture: -150, faveur: 30 } }, { t: 'Ignorer les augures', e: { faveur: -5 } }] },
     { id: 'comete', titre: 'Une comète dans le ciel', texte: 'Une traînée de feu traverse la nuit. Le peuple y voit un signe.',
       choix: [{ t: 'Proclamer un présage de victoire', e: { attaque: 0.15, duree: 6 } }, { t: 'Rassurer le peuple par des fêtes (−100 nourriture)', e: { nourriture: -100, faveur: 10, dev: 1 } }] },
@@ -228,7 +228,7 @@
       choix: [{ t: 'L’accueillir (−80 or)', e: { or: -80, heros: 2 } }, { t: 'Le renvoyer poliment', e: { faveur: 5 } }] },
     { id: 'epidemie', titre: 'Une fièvre se répand', texte: 'Une maladie frappe les campements de tes soldats.',
       choix: [{ t: 'Prier les dieux (−25 faveur)', e: { faveur: -25 } }, { t: 'Laisser faire', e: { pertes: 0.12 } }] },
-    { id: 'monstre', titre: 'Une bête ravage {province}', texte: 'Une créature sortie des marais dévore les troupeaux de {province}.',
+    { id: 'monstre', epoques: ['antique', 'medieval'], titre: 'Une bête ravage {province}', texte: 'Une créature sortie des marais dévore les troupeaux de {province}.',
       choix: [{ t: 'Payer un chasseur (−100 or)', e: { or: -100 } }, { t: 'La laisser faire', e: { nourriture: -200, devMoins: 1 } }, { t: 'Lui offrir un culte', e: { faveur: 20, nourriture: -100 } }] },
     { id: 'mariage', titre: 'Une alliance par le mariage', texte: 'La cour de {nation} propose d’unir vos maisons.',
       choix: [{ t: 'Accepter (−100 or)', e: { or: -100, relationNation: 35 } }, { t: 'Refuser', e: { relationNation: -15 } }] },
@@ -240,7 +240,7 @@
       choix: [{ t: 'Reconstruire (−120 bois)', e: { bois: -120 } }, { t: 'Abandonner les entrepôts', e: { batimentMoins: 1 } }] },
     { id: 'deserteurs', titre: 'Des déserteurs étrangers', texte: 'Des soldats de {nation} ont fui leur armée et demandent asile.',
       choix: [{ t: 'Les enrôler', e: { soldats: 6, relationNation: -10 } }, { t: 'Les renvoyer chez eux', e: { relationNation: 10 } }] },
-    { id: 'temple_ancien', titre: 'Les ruines d’un temple', texte: 'Des ruines oubliées ont été découvertes près de {province}.',
+    { id: 'temple_ancien', epoques: ['antique', 'medieval'], titre: 'Les ruines d’un temple', texte: 'Des ruines oubliées ont été découvertes près de {province}.',
       choix: [{ t: 'Les restaurer (−100 bois, −60 or)', e: { bois: -100, or: -60, batiment: 'temple' } }, { t: 'Piller les trésors', e: { or: 150, faveur: -15 } }] },
     { id: 'eclipse', titre: 'Éclipse', texte: 'Le soleil disparaît en plein jour. Les prêtres réclament des offrandes.',
       choix: [{ t: 'Offrandes (−100 or)', e: { or: -100, faveur: 25 } }, { t: 'Rester impassible', e: { faveur: -10 } }] },

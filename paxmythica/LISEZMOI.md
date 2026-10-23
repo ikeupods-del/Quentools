@@ -8,11 +8,12 @@ Jeu de stratégie pour Mac : un mélange d’*Age of Mythology* (panthéons, die
 2. Ouvrir le .dmg et glisser **Pax Mythica** dans Applications.
 3. Premier lancement : clic droit sur l’application → **Ouvrir**.
 
-Les versions suivantes s’installent toutes seules (à la fermeture, ou bouton « Redémarrer pour installer » dans les réglages).
+**Mises à jour à distance** : chaque nouvelle version publiée (changement de `version` dans `package.json` + section dans `NOUVEAUTES.md`) est téléchargée toute seule par les Mac où le jeu est installé (au démarrage puis toutes les 6 heures). Un bandeau annonce la version prête et ses nouveautés : « Redémarrer pour installer », ou installation automatique à la fermeture. Menu Partie → « Rechercher les mises à jour… » pour vérifier tout de suite.
 
 ## Jouer
 
-- **Nouvelle partie** : panthéon (Grecs, Égyptiens, Nordiques, Atlantes), dieu majeur, nom du peuple.
+- **Nouvelle partie** : époque (Antiquité, Moyen Âge, ère industrielle, époque moderne, futur), peuple (quatre cultures par époque), dieu majeur ou doctrine, nom du peuple. L’époque change les peuples, unités, unités spéciales, bâtiments, âges, pouvoirs, vocabulaire et l’allure des villes ; les règles restent équilibrées de la même façon.
+- **Vue 3D** façon Age of Mythology (par défaut) : relief, mer animée, ombres, forêts, villes qui grandissent, soldats en formation. Glisser ou deux doigts pour se déplacer, molette ou pincement pour zoomer, Q/E pour tourner, **V** pour passer à la carte de stratégie 2D.
 - **Partie personnalisée** : graine, taille et forme du monde, part de terres, peuples (nom, couleur, panthéon, dieu, humeur), règles (ressources, âge de départ, difficulté, tribus, paix initiale, événements, mythes, victoires). **Modifier la carte** ouvre l’éditeur : frontières, terrains, niveaux, capitales, noms ; le résultat s’enregistre comme scénario.
 - **Scénarios** : cinq mondes prêts à jouer et les scénarios enregistrés.
 - Le temps passe mois par mois (pause, trois vitesses). Province → construire, développer, recruter. Armée → clic sur une province pour y marcher ; les terres hostiles se prennent par siège.
@@ -28,7 +29,7 @@ Les versions suivantes s’installent toutes seules (à la fermeture, ou bouton 
 
 ## Pour le développement
 
-- Fichiers : `donnees.js` (panthéons, dieux, unités, pouvoirs, événements), `carte.js` (génération du monde), `moteur.js` (règles), `alliances.js`, `ia-nations.js` (peuples de l’ordinateur), `oracle.js` (décrets), `rendu.js` (carte), `son.js`, `interface.js`, `main.js` / `preload.js` (Electron).
+- Fichiers : `donnees.js` (panthéons, dieux, unités, pouvoirs, événements), `epoques.js` (les cinq époques), `vue3d.js` (vue 3D, three.js hébergé dans `vendor/`), `carte.js` (génération du monde), `moteur.js` (règles), `alliances.js`, `ia-nations.js` (peuples de l’ordinateur), `oracle.js` (décrets), `rendu.js` (carte), `son.js`, `interface.js`, `main.js` / `preload.js` (Electron).
 - Copies générées (ne pas modifier) : `ia-locale.js`, `ia-worker.js`, `maj.js` → `node tools/synchro-ia-locale.js`.
 - Essais : `node tests/moteur.js` et `node tests/interface.js` (Chromium).
-- Publier : changer `version` dans `package.json` ; le workflow « Pax Mythica — jeu Mac » construit, essaie et publie le .dmg.
+- Publier : changer `version` dans `package.json` et ajouter sa section dans `NOUVEAUTES.md` ; le workflow « Pax Mythica — jeu Mac » construit, essaie et publie le .dmg.

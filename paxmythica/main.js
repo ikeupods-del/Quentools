@@ -18,7 +18,11 @@ ipcMain.handle('ia:ecrire', (e, m) => {
 // mises à jour automatiques (versions publiées dans les Releases) : installées à la fermeture ou au clic sur « Redémarrer »
 const { Maj, emplacementApp } = require('./maj');
 const maj = new Maj({ nom: 'Pax Mythica', fichier: 'Pax-Mythica', version: app.getVersion(), dossier: path.join(app.getPath('userData'), 'mises-a-jour'), app: emplacementApp(process.execPath), actif: app.isPackaged && process.platform === 'darwin' && !process.env.PAX_AUTOTEST });
-const verifierMaj = () => { maj.verifier().then(() => { if (win && !win.isDestroyed()) win.webContents.send('maj:etat', maj.etat); }); };
+const verifierMaj = () => {
+  // l'état est envoyé pendant le téléchargement (progression) puis à la fin
+  const suivi = setInterval(() => { if (win && !win.isDestroyed()) win.webContents.send('maj:etat', maj.etat); }, 1500);
+  return maj.verifier().then(() => { clearInterval(suivi); if (win && !win.isDestroyed()) win.webContents.send('maj:etat', maj.etat); });
+};
 ipcMain.handle('maj:etat', e => { if (!depuisNotrePage(e)) throw new Error('refusé'); return maj.etat; });
 ipcMain.handle('maj:verifier', e => { if (!depuisNotrePage(e)) throw new Error('refusé'); verifierMaj(); return maj.etat; });
 ipcMain.handle('maj:installer', e => { if (!depuisNotrePage(e)) throw new Error('refusé'); if (maj.installer(true)) setTimeout(() => app.quit(), 200); return maj.etat; });
@@ -42,6 +46,7 @@ function menu() {
       { label: 'Ouvrir un fichier de partie…', accelerator: 'CmdOrCtrl+Shift+O', click: () => act('importer') },
       { type: 'separator' },
       { label: 'Réglages et oracle…', accelerator: 'CmdOrCtrl+,', click: () => act('reglages') },
+      { label: 'Rechercher les mises à jour…', click: () => act('maj-chercher') },
       { label: 'Menu principal', click: () => act('accueil') },
       { type: 'separator' },
       mac ? { role: 'close', label: 'Fermer la fenêtre' } : { role: 'quit', label: 'Quitter' }
@@ -81,14 +86,16 @@ function autotest() {
     try {
       res.jeu = await win.webContents.executeJavaScript(`(async () => {
         await new Promise(ok => { const t = setInterval(() => { if (window.UI && window.PM) { clearInterval(t); ok(); } }, 50); });
-        const j = PM.nouvellePartie({ graine: 4242, taille: 'moyenne', nombre: 6, nations: PM.nationsParDefaut(6, 4242, 'grecs') });
+        const j = PM.nouvellePartie({ graine: 4242, taille: 'moyenne', nombre: 6, paixInitiale: 600, nations: PM.nationsParDefaut(6, 4242, 'grecs') });
         UI.lancerPartie(j); UI.fermerModal();
-        for (let m = 0; m < 120; m++) { UI.unMois(); for (let k = 0; k < 5 && !document.querySelector('#modal').classList.contains('cache'); k++) { const b = document.querySelector('#modalBoite .carte-choix, #modalBoite .choix .btn:not([disabled]), #modalBoite [data-act$=oui], #modalBoite [data-act=fermer], #modalBoite [data-act=accueil]'); if (!b) break; b.click(); } }
+        for (let m = 0; m < 120 && UI.j && !UI.j.etat.fin; m++) { UI.unMois(); for (let k = 0; k < 5 && !document.querySelector('#modal').classList.contains('cache'); k++) { const b = document.querySelector('#modalBoite .carte-choix, #modalBoite .choix .btn:not([disabled]), #modalBoite [data-act$=oui], #modalBoite [data-act=fermer]'); if (!b) break; b.click(); } }
+        await new Promise(ok => requestAnimationFrame(() => requestAnimationFrame(ok)));
+        const v3 = !!(UI.vue3d && UI.mode3d); if (v3) UI.ACT.vue();
         await new Promise(ok => requestAnimationFrame(() => requestAnimationFrame(ok)));
         const cv = document.querySelector('#carte'), px = cv.getContext('2d').getImageData(cv.width / 2, cv.height / 2, 1, 1).data;
         const d = await PM.decret(UI.j, UI.j.etat.joueur, 'prier les dieux', null);
         const copie = PM.charger(JSON.parse(JSON.stringify(UI.j.etat)));
-        return { mois: UI.j.etat.mois, provinces: UI.j.etat.provinces.length, carteDessinee: px[3] === 255 && (px[0] + px[1] + px[2]) > 0, decret: d.resultats.length > 0, rechargement: copie.carte.provinces.length === UI.j.etat.provinces.length, oracle: !!window.paxIA, maj: !!window.paxMaj };
+        return { vue3d: v3, mois: UI.j.etat.mois, provinces: UI.j.etat.provinces.length, carteDessinee: px[3] === 255 && (px[0] + px[1] + px[2]) > 0, decret: d.resultats.length > 0, rechargement: copie.carte.provinces.length === UI.j.etat.provinces.length, oracle: !!window.paxIA, maj: !!window.paxMaj };
       })()`);
       if (res.jeu.oracle) res.oracle = await win.webContents.executeJavaScript('window.paxIA.etat()');
     } catch (e) { res.erreur = e.message; }
@@ -96,6 +103,6 @@ function autotest() {
   });
 }
 
-app.whenReady().then(() => { menu(); ouvrir(); setTimeout(verifierMaj, 8000); setInterval(verifierMaj, 6 * 3600 * 1000); });
+app.whenReady().then(() => { menu(); ouvrir(); setTimeout(verifierMaj, 6000); setInterval(verifierMaj, 6 * 3600 * 1000); });
 app.on('activate', () => { if (!win) ouvrir(); });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin' || process.env.PAX_AUTOTEST) app.quit(); });

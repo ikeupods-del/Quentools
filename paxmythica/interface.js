@@ -12,6 +12,27 @@
   const UI = G.UI = { j: null, rendu: null, vitesse: 0, avantModal: 0, sel: null, onglet: 'pantheon', cible: null, filtre: 'tout', ecran: 'accueil', editeur: null, cre: null, signature: '', vuJournal: 0, oracle: { pret: false, installee: false, actif: true } };
   try { UI.oracle.actif = localStorage.getItem('pm:oracle') !== 'non'; } catch (e) { /* stockage indisponible */ }
   const ACT = {};
+  // vue active : 3D façon Age of Mythology (si la carte graphique le permet) ou carte 2D de stratégie
+  try { UI.mode3d = localStorage.getItem('pm:vue') !== '2d'; } catch (e) { UI.mode3d = true; }
+  const vue = () => (UI.mode3d && UI.vue3d ? UI.vue3d : UI.rendu);
+  UI.vue = vue;
+  function appliquerVue() {
+    const v3 = UI.mode3d && !!UI.vue3d;
+    $('#carte').classList.toggle('cache', v3); $('#carte3d').classList.toggle('cache', !v3); $('#etiquettes3d').classList.toggle('cache', !v3);
+    if (UI.j) barre();
+  }
+  ACT['vue'] = () => {
+    if (!UI.vue3d && !creerVue3d()) return toast('La vue 3D n’est pas disponible sur cet ordinateur.', 'ko');
+    const avant = vue(), centre = avant.provinceA((innerWidth) / 2, innerHeight / 2);
+    UI.mode3d = !UI.mode3d; try { localStorage.setItem('pm:vue', UI.mode3d ? '3d' : '2d'); } catch (e) { /* sans stockage */ }
+    appliquerVue(); if (centre >= 0) vue().centrerSur(centre, avant === UI.rendu ? UI.rendu.cam.z : UI.vue3d.z);
+  };
+  function creerVue3d() {
+    if (UI.vue3d) return true;
+    if (!PM.vue3dPossible || !PM.vue3dPossible()) return false;
+    try { UI.vue3d = new PM.Vue3D($('#carte3d'), $('#etiquettes3d'), UI.rendu); evenementsCarte($('#carte3d')); if (UI.j) UI.vue3d.lier(UI.j); return true; }
+    catch (e) { UI.vue3d = null; UI.mode3d = false; return false; }
+  }
 
   // ---------- stockage ----------
   const lire = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
@@ -56,51 +77,56 @@
   }
 
   // ---------- création rapide ----------
-  ACT.rapide = () => { UI.cre = { mode: 'rapide', etape: 0, pantheon: null, dieu: null, nom: '', difficulte: 1, taille: 'moyenne', nombre: 6 }; creationRapide(); montrer('creation'); };
+  ACT.rapide = () => { PM.appliquerEpoque('antique'); UI.cre = { mode: 'rapide', etape: 0, epoque: 'antique', pantheon: null, dieu: null, nom: '', difficulte: 1, taille: 'moyenne', nombre: 6 }; creationRapide(); montrer('creation'); };
   function creationRapide() {
-    const c = UI.cre, P = c.pantheon && PM.PANTHEONS[c.pantheon];
-    const etapes = `<div class="etapes"><span class="${c.etape === 0 ? 'actif' : ''}">1. Panthéon</span>›<span class="${c.etape === 1 ? 'actif' : ''}">2. Dieu majeur</span>›<span class="${c.etape === 2 ? 'actif' : ''}">3. Ton peuple</span></div>`;
+    const c = UI.cre, P = c.pantheon && PM.PANTHEONS[c.pantheon], antique = c.epoque === 'antique';
+    const etapes = `<div class="etapes">${['Époque', PM.mot('pantheon'), PM.mot('majeur').charAt(0).toUpperCase() + PM.mot('majeur').slice(1), 'Ton peuple'].map((t, i) => `<span class="${c.etape === i ? 'actif' : ''}">${i + 1}. ${esc(t)}</span>`).join('›')}</div>`;
     let corps = '';
-    if (c.etape === 0) corps = `<div class="cartes">${Object.entries(PM.PANTHEONS).map(([id, p]) => `
-      <button class="carte-choix" data-act="cre-pantheon" data-v="${id}"><div class="em">${p.emoji}</div><h3>${p.nom}</h3>
-      <p>${p.majeurs.map(d => d.nom).join(' · ')}</p><p><i>${esc(p.faveur)}</i></p>
-      <p>Créatures : ${p.mineurs.flat().map(g => PM.UNITES[g.unite].emoji).join(' ')}</p></button>`).join('')}</div>`;
-    else if (c.etape === 1) corps = `<div class="cartes">${P.majeurs.map(d => `
-      <button class="carte-choix" data-act="cre-dieu" data-v="${d.id}"><div class="em">${P.emoji}</div><h3>${d.nom}</h3><p>${esc(d.desc)}</p>
-      <p>Pouvoir : ${PM.POUVOIRS[d.pouvoir].emoji} <b>${PM.POUVOIRS[d.pouvoir].nom}</b> — ${esc(PM.POUVOIRS[d.pouvoir].desc)}</p></button>`).join('')}</div>
-      <div class="actions-bas"><button class="btn" data-act="cre-retour">← Panthéon</button></div>`;
+    if (c.etape === 0) corps = `<div class="cartes">${Object.entries(PM.EPOQUES).map(([id, e]) => `
+      <button class="carte-choix" data-act="cre-epoque" data-v="${id}"><div class="em">${e.emoji}</div><h3>${esc(e.nom)}</h3><p>${esc(e.desc)}</p></button>`).join('')}</div>`;
+    else if (c.etape === 1) corps = `<div class="cartes">${Object.entries(PM.PANTHEONS).map(([id, p]) => `
+      <button class="carte-choix" data-act="cre-pantheon" data-v="${id}"><div class="em">${p.emoji}</div><h3>${esc(p.nom)}</h3>
+      <p>${p.majeurs.map(d => esc(d.nom)).join(' · ')}</p><p><i>${esc(p.faveur)}</i></p>
+      <p>${antique ? 'Créatures' : 'Unités spéciales'} : ${p.mineurs.flat().map(g => PM.UNITES[g.unite].emoji).join(' ')}</p></button>`).join('')}</div>
+      <div class="actions-bas"><button class="btn" data-act="cre-retour">← Époque</button></div>`;
+    else if (c.etape === 2) corps = `<div class="cartes">${P.majeurs.map(d => `
+      <button class="carte-choix" data-act="cre-dieu" data-v="${d.id}"><div class="em">${P.emoji}</div><h3>${esc(d.nom)}</h3><p>${esc(d.desc)}</p>
+      <p>${antique ? 'Pouvoir' : 'Action spéciale'} : ${PM.POUVOIRS[d.pouvoir].emoji} <b>${esc(PM.POUVOIRS[d.pouvoir].nom)}</b> — ${esc(PM.POUVOIRS[d.pouvoir].desc)}</p></button>`).join('')}</div>
+      <div class="actions-bas"><button class="btn" data-act="cre-retour">← ${esc(PM.mot('pantheon'))}</button></div>`;
     else corps = `<div class="bloc" style="max-width:620px">
       <div class="champ"><label>Nom de ton peuple</label><input type="text" id="creNom" maxlength="36" value="${esc(c.nom)}"></div>
       <div class="champ"><label>Difficulté</label><select id="creDif">${['Paisible', 'Normale', 'Difficile'].map((t, i) => `<option value="${i}" ${c.difficulte === i ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
       <div class="champ"><label>Taille du monde</label><select id="creTaille">${Object.entries(PM.TAILLES).map(([k, t]) => `<option value="${k}" ${c.taille === k ? 'selected' : ''}>${t.nom} (${t.n} provinces)</option>`).join('')}</select></div>
       <div class="champ"><label>Peuples</label><input type="range" id="creNombre" min="2" max="10" value="${c.nombre}"><b id="creNombreV">${c.nombre}</b></div>
-      <p class="sous">Tu joues ${PM.PANTHEONS[c.pantheon].nom} sous la protection de ${P.majeurs.find(d => d.id === c.dieu).nom}. Le monde est tiré au hasard.</p>
-      <div class="actions-bas"><button class="btn" data-act="cre-retour">← Dieu</button><button class="btn or grand" data-act="cre-lancer">Fonder mon peuple</button></div></div>`;
-    $('#creationContenu').innerHTML = `<h1>Nouvelle partie</h1><p class="sous">Choisis tes dieux. Ils décideront de tes créatures et de tes pouvoirs.</p>${etapes}${corps}
+      <p class="sous">${esc(PM.EPOQUES[c.epoque].nom)} · tu joues ${esc(P.nom)}, ${esc(PM.mot('majeur'))} : ${esc(P.majeurs.find(d => d.id === c.dieu).nom)}. Le monde est tiré au hasard.</p>
+      <div class="actions-bas"><button class="btn" data-act="cre-retour">← Retour</button><button class="btn or grand" data-act="cre-lancer">Fonder mon peuple</button></div></div>`;
+    $('#creationContenu').innerHTML = `<h1>Nouvelle partie</h1><p class="sous">Choisis l’époque, ton peuple et sa ${esc(PM.mot('dieu'))}. Ils décident de tes unités et de tes ${esc(PM.mot('pouvoirs').toLowerCase())}.</p>${etapes}${corps}
       <div class="actions-bas" style="justify-content:flex-start;margin-top:22px"><button class="btn" data-act="accueil">Menu principal</button></div>`;
     const r = $('#creNombre'); if (r) r.oninput = () => { $('#creNombreV').textContent = r.value; };
   }
-  ACT['cre-pantheon'] = e => { const c = UI.cre; c.pantheon = e.dataset.v; c.etape = 1; c.nom = PM.NOMS_PEUPLES[c.pantheon][Math.floor(Math.random() * 3)]; creationRapide(); };
-  ACT['cre-dieu'] = e => { UI.cre.dieu = e.dataset.v; UI.cre.etape = 2; creationRapide(); };
+  ACT['cre-epoque'] = e => { UI.cre.epoque = e.dataset.v; PM.appliquerEpoque(e.dataset.v); UI.cre.etape = 1; creationRapide(); };
+  ACT['cre-pantheon'] = e => { const c = UI.cre; c.pantheon = e.dataset.v; c.etape = 2; c.nom = PM.NOMS_PEUPLES[c.pantheon][Math.floor(Math.random() * 3)]; creationRapide(); };
+  ACT['cre-dieu'] = e => { UI.cre.dieu = e.dataset.v; UI.cre.etape = 3; creationRapide(); };
   ACT['cre-retour'] = () => { UI.cre.etape--; creationRapide(); };
   ACT['cre-lancer'] = () => {
     const c = UI.cre; c.nom = $('#creNom').value.trim() || c.nom; c.difficulte = +$('#creDif').value; c.taille = $('#creTaille').value; c.nombre = +$('#creNombre').value;
     const graine = 1 + Math.floor(Math.random() * 999999), nations = PM.nationsParDefaut(c.nombre, graine, c.pantheon);
     Object.assign(nations[0], { nom: c.nom, pantheon: c.pantheon, dieu: c.dieu });
-    lancerPartie(PM.nouvellePartie({ graine, taille: c.taille, forme: ['continent', 'continent', 'deux', 'mer', 'pangee'][graine % 5], nations, difficulte: c.difficulte, joueur: 0 }));
+    lancerPartie(PM.nouvellePartie({ epoque: c.epoque, graine, taille: c.taille, forme: ['continent', 'continent', 'deux', 'mer', 'pangee'][graine % 5], nations, difficulte: c.difficulte, joueur: 0 }));
   };
 
   // ---------- partie personnalisée ----------
   ACT.perso = (e, base) => {
     const g = 1 + Math.floor(Math.random() * 999999);
     UI.cre = Object.assign({ mode: 'perso', reglages: JSON.parse(JSON.stringify(Object.assign({}, PM.REGLAGES, { graine: g }))), nations: PM.nationsParDefaut(6, g), joueur: 0 }, base || {});
-    creationPerso(); montrer('creation'); majApercu();
+    PM.appliquerEpoque(UI.cre.reglages.epoque); creationPerso(); montrer('creation'); majApercu();
   };
   function creationPerso() {
     const c = UI.cre, r = c.reglages, sel = (id, opts, v) => `<select id="${id}">${opts.map(([k, t]) => `<option value="${k}" ${String(v) === String(k) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
     $('#creationContenu').innerHTML = `<h1>Partie personnalisée</h1><p class="sous">Façonne le monde, ses peuples et ses règles, puis redessine la carte si tu le souhaites.</p>
       <div class="grille2"><div>
         <div class="bloc"><h2>Le monde</h2>
+          <div class="champ"><label>Époque</label>${sel('pEpoque', Object.entries(PM.EPOQUES).map(([k, e]) => [k, e.emoji + ' ' + e.nom]), r.epoque || 'antique')}</div>
           <div class="champ"><label>Graine du monde</label><input type="number" id="pGraine" value="${r.graine}" style="width:120px"><button class="btn petit" data-act="p-graine">🎲 Autre monde</button></div>
           <div class="champ"><label>Taille</label>${sel('pTaille', Object.entries(PM.TAILLES).map(([k, t]) => [k, `${t.nom} (${t.n} provinces)`]), r.taille)}</div>
           <div class="champ"><label>Forme</label>${sel('pForme', Object.entries(PM.FORMES), r.forme)}</div>
@@ -115,13 +141,13 @@
           <div class="champ"><label>Tribus des terres libres</label>${sel('pNeutres', [[0.5, 'Faibles'], [1, 'Normales'], [1.7, 'Redoutables']], r.neutres)}</div>
           <div class="champ"><label>Paix imposée au début</label>${sel('pPaix', [[0, 'Aucune'], [12, '1 an'], [24, '2 ans'], [60, '5 ans']], r.paixInitiale)}</div>
           <div class="champ"><label>Événements</label>${sel('pEvts', [[0, 'Aucun'], [1, 'Normaux'], [2, 'Fréquents']], r.evenements)}</div>
-          <div class="champ"><label>Dieux et créatures</label><label><input type="checkbox" id="pMythes" ${r.mythes !== false ? 'checked' : ''}> Pouvoirs divins et créatures mythiques</label></div>
+          <div class="champ"><label>${esc(PM.mot('pouvoirs'))}</label><label><input type="checkbox" id="pMythes" ${r.mythes !== false ? 'checked' : ''}> ${esc(PM.mot('pouvoirs'))} et unités spéciales</label></div>
           <div class="champ"><label>Victoires</label><span><label><input type="checkbox" id="pVConq" ${r.victoire.conquete !== false ? 'checked' : ''}> Conquête</label>&nbsp; <label><input type="checkbox" id="pVMerv" ${r.victoire.merveille !== false ? 'checked' : ''}> Merveille</label></span></div>
           <div class="champ"><label>Limite de temps</label>${sel('pAns', [[0, 'Aucune'], [30, '30 ans (au score)'], [60, '60 ans (au score)'], [120, '120 ans (au score)']], r.victoire.annees)}</div>
         </div>
       </div><div>
         <div class="bloc"><h2>Les peuples <small class="sous">(${c.nations.length})</small></h2>
-          <table class="peuples"><tr><th>Toi</th><th></th><th>Nom</th><th>Panthéon</th><th>Dieu</th><th>Humeur</th><th></th></tr>
+          <table class="peuples"><tr><th>Toi</th><th></th><th>Nom</th><th>${esc(PM.mot('pantheon'))}</th><th>${esc(PM.mot('majeur').charAt(0).toUpperCase() + PM.mot('majeur').slice(1))}</th><th>Humeur</th><th></th></tr>
           ${c.nations.map((N, i) => `<tr>
             <td><input type="radio" name="pJoueur" value="${i}" ${c.joueur === i ? 'checked' : ''}></td>
             <td><input type="color" data-n="${i}" data-k="couleur" value="${esc(N.couleur)}"></td>
@@ -139,6 +165,7 @@
         </div>
       </div></div>`;
     const maj = () => { lireReglages(); majApercu(); };
+    $('#pEpoque').onchange = () => { lireReglages(); PM.appliquerEpoque(c.reglages.epoque); c.nations.forEach((N, i) => { const l = PM.NOMS_PEUPLES[N.pantheon]; N.nom = l[i % l.length]; }); creationPerso(); majApercu(); };
     ['#pTaille', '#pForme'].forEach(s => { $(s).onchange = maj; });
     $('#pGraine').onchange = maj;
     $('#pTerre').oninput = () => { $('#pTerreV').textContent = $('#pTerre').value + ' %'; clearTimeout(UI.tApercu); UI.tApercu = setTimeout(maj, 260); };
@@ -148,7 +175,7 @@
   function lireReglages() {
     const c = UI.cre, r = c.reglages, v = s => $(s) && $(s).value;
     if (!$('#pTaille')) return;
-    Object.assign(r, { graine: Math.max(1, Math.floor(+v('#pGraine') || 1)), taille: v('#pTaille'), forme: v('#pForme'), terre: +v('#pTerre') / 100, ressources: v('#pRes'), depart: +v('#pDepart'), ageDepart: +v('#pAge'),
+    Object.assign(r, { epoque: v('#pEpoque') || 'antique', graine: Math.max(1, Math.floor(+v('#pGraine') || 1)), taille: v('#pTaille'), forme: v('#pForme'), terre: +v('#pTerre') / 100, ressources: v('#pRes'), depart: +v('#pDepart'), ageDepart: +v('#pAge'),
       difficulte: +v('#pDif'), neutres: +v('#pNeutres'), paixInitiale: +v('#pPaix'), evenements: +v('#pEvts'), mythes: $('#pMythes').checked,
       victoire: { conquete: $('#pVConq').checked, merveille: $('#pVMerv').checked, annees: +v('#pAns') } });
     document.querySelectorAll('table.peuples [data-n]').forEach(el => { const N = c.nations[+el.dataset.n], k = el.dataset.k; N[k] = k === 'agress' ? +el.value : el.value; });
@@ -260,15 +287,17 @@
   function preparerJeu(j) {
     UI.j = j; UI.sel = null; UI.cible = null; UI.vuJournal = j.etat.journal.length;
     montrer('jeu');
-    if (!UI.rendu) { UI.rendu = new PM.Rendu($('#carte')); evenementsCarte(); requestAnimationFrame(boucle); }
-    UI.rendu.lier(j); UI.rendu.sel = null; UI.rendu.majHalo(-1); UI.signature = signature();
+    if (!UI.rendu) { UI.rendu = new PM.Rendu($('#carte')); evenementsCarte($('#carte')); requestAnimationFrame(boucle); }
+    UI.rendu.lier(j);
+    if (UI.mode3d) creerVue3d(); if (UI.vue3d) UI.vue3d.lier(j); appliquerVue(); UI.rendu.sel = null; UI.rendu.majHalo(-1); UI.signature = signature();
     $('#gauche').classList.add('cache'); $('#droite').classList.remove('cache'); $('#decret').classList.remove('cache');
   }
   function lancerPartie(j) {
     preparerJeu(j); UI.editeur = null; onglets(); rafraichir();
-    const N = j.etat.nations[j.etat.joueur]; UI.rendu.centrerSur(N.capitale, Math.max(UI.rendu.cam.z, 1.5));
+    const N = j.etat.nations[j.etat.joueur]; UI.rendu.centrerSur(N.capitale, Math.max(UI.rendu.cam.z, 1.5)); if (UI.vue3d) UI.vue3d.centrerSur(N.capitale, 1.3);
     if (j.etat.mois === 0) ouvrirModal(`<h2>${PM.PANTHEONS[N.pantheon].emoji} ${esc(N.nom)}</h2>
-      <p class="recit">Les dieux ont posé ton peuple sur la terre de ${esc(j.etat.provinces[N.capitale].nom)}. ${esc(PM.majeur(N).nom)} veille sur toi. Étends ton domaine, élève des temples, gagne la faveur des dieux et fais trembler tes voisins.</p>
+      <p class="recit">${PM.epoque === 'antique' ? `Les dieux ont posé ton peuple sur la terre de ${esc(j.etat.provinces[N.capitale].nom)}. ${esc(PM.majeur(N).nom)} veille sur toi. Étends ton domaine, élève des temples, gagne la faveur des dieux et fais trembler tes voisins.`
+        : `${esc(PM.EPOQUES[PM.epoque].nom)}. Ton peuple s’établit à ${esc(j.etat.provinces[N.capitale].nom)}, guidé par « ${esc(PM.majeur(N).nom)} ». Étends ton domaine, bâtis, accumule ${esc(PM.mot('faveur'))} et fais trembler tes voisins.`}</p>
       <ul class="aide"><li>Clique une province pour <b>construire</b> ou <b>recruter</b> ; clique ton armée puis une province pour <b>marcher</b>.</li>
       <li>Les <b>terres libres</b> se conquièrent sans déclarer de guerre.</li>
       <li>Écris des <b>décrets</b> en bas de l’écran : ton peuple obéit.</li>
@@ -288,7 +317,7 @@
         if (acc >= MS[UI.vitesse]) { acc = 0; unMois(); }
       }
       UI.rendu.fraction = UI.vitesse ? Math.min(1, acc / MS[UI.vitesse]) : 0;
-      UI.rendu.dessiner(dt);
+      vue().dessiner(dt);
     }
     requestAnimationFrame(boucle);
   }
@@ -318,7 +347,7 @@
     const de = a.de != null ? E.nations[a.de] : null;
     if (a.type === 'mineur') {
       const l = PM.mineursProposes(j, E.joueur, a.age); PM.son('age');
-      ouvrirModal(`<h2>✨ ${PM.AGES[a.age].nom}</h2><p class="recit">Ton peuple entre dans un nouvel âge. Quel dieu veux-tu honorer ? Il t’offre une créature et un pouvoir.</p>
+      ouvrirModal(`<h2>✨ ${PM.AGES[a.age].nom}</h2><p class="recit">Ton peuple entre dans un nouvel âge. ${PM.epoque === 'antique' ? 'Quel dieu veux-tu honorer ? Il t’offre une créature et un pouvoir.' : 'Que choisis-tu ? Chaque voie t’offre une unité spéciale et une action.'}</p>
         <div class="deux">${l.map(g => { const u = PM.UNITES[g.unite], p = PM.POUVOIRS[g.pouvoir]; return `<button class="carte-choix" data-act="mineur" data-v="${g.id}"><h3>${esc(g.nom)}</h3>
           <p>${u.emoji} <b>${esc(u.nom)}</b> — ⚔ ${u.att} · ❤ ${u.pv} · 👥 ${u.pop}<br><small>${coutHtml(PM.coutUnite(j, E.joueur, g.unite))}</small></p>
           <p>${p.emoji} <b>${esc(p.nom)}</b> — ${esc(p.desc)} <small>(${p.cout} ✨)</small></p></button>`; }).join('')}</div>`);
@@ -380,13 +409,14 @@
       <div class="res">${res}<div class="r" title="Population"><b>${PM.ICONES.pop} ${fmt(pop)}/${fmt(pmax)}</b><small>armées</small></div></div>
       <div class="espace"></div>
       ${UI.editeur ? '<b class="titre">ÉDITEUR</b>' : `<div class="age-barre"><b>${PM.AGES[N.age].nom}</b><br>${ageTxt}</div>
+      ${UI.vue3d || (PM.vue3dPossible && PM.vue3dPossible()) ? `<button class="btn petit" data-act="vue" title="Changer de vue (V)">${UI.mode3d && UI.vue3d ? '🗺️ Carte' : '🏛️ Vue 3D'}</button>` : ''}
       <div class="date">${esc(PM.date(E.mois))}</div>
       <div class="vitesses">${['⏸', '▶', '⏩', '⏭'].map((t, i) => `<button data-act="vitesse" data-v="${i}" class="${UI.vitesse === i ? 'actif' : ''}" title="${['Pause (Espace)', 'Lent (1)', 'Normal (2)', 'Rapide (3)'][i]}">${t}</button>`).join('')}</div>`}`;
   }
 
   // ---------- onglets de droite ----------
   function onglets() {
-    $('#onglets').innerHTML = [['pantheon', '⚡ Dieux'], ['diplo', '🏛️ Peuples'], ['alliances', '🤝 Alliances'], ['armees', '⚔️ Armées'], ['chronique', '📜 Chronique']].map(([k, t]) => `<button data-act="onglet" data-v="${k}" class="${UI.onglet === k ? 'actif' : ''}">${t}</button>`).join('');
+    $('#onglets').innerHTML = [['pantheon', PM.EPOQUES[PM.epoque].emoji + ' ' + PM.mot('dieux')], ['diplo', '🏛️ Peuples'], ['alliances', '🤝 Alliances'], ['armees', '⚔️ Armées'], ['chronique', '📜 Chronique']].map(([k, t]) => `<button data-act="onglet" data-v="${k}" class="${UI.onglet === k ? 'actif' : ''}">${t}</button>`).join('');
   }
   ACT.onglet = e => { UI.onglet = e.dataset.v; onglets(); ongletContenu(); };
   function ongletContenu() {
@@ -395,14 +425,14 @@
       const P = PM.PANTHEONS[N.pantheon], maj = PM.majeur(N), A = N.age < 3 ? PM.AGES[N.age + 1] : null;
       const pouvoirs = PM.pouvoirsDe(j, n).map(pid => { const p = PM.POUVOIRS[pid], c = PM.coutPouvoir(j, n, pid), r = N.pouvoirs[pid];
         return `<div class="pouvoir"><div class="em">${p.emoji}</div><div><b>${esc(p.nom)}</b><small>${esc(p.desc)}</small><small>${c} ✨ · recharge ${p.recharge} mois${r > 0 ? ` · <b style="color:var(--rouge)">prêt dans ${r} mois</b>` : ''}</small></div>
-          <button class="btn petit ${r > 0 || N.res.faveur < c ? '' : 'or'}" data-act="pouvoir" data-v="${pid}" ${r > 0 || N.res.faveur < c || E.reglages.mythes === false ? 'disabled' : ''}>Invoquer</button></div>`; }).join('');
-      box.innerHTML = `<div class="dieu"><b>${P.emoji} ${esc(maj.nom)}</b> <small class="sous">dieu majeur des ${P.nom}</small><p>${esc(maj.desc)} ${esc(P.faveur)}</p></div>
+          <button class="btn petit ${r > 0 || N.res.faveur < c ? '' : 'or'}" data-act="pouvoir" data-v="${pid}" ${r > 0 || N.res.faveur < c || E.reglages.mythes === false ? 'disabled' : ''}>${PM.mot('lancer')}</button></div>`; }).join('');
+      box.innerHTML = `<div class="dieu"><b>${P.emoji} ${esc(maj.nom)}</b> <small class="sous">${esc(PM.mot('majeur'))} · ${esc(P.nom)}</small><p>${esc(maj.desc)} ${esc(P.faveur)}</p></div>
         <h3>Les âges</h3><div class="ages">${PM.AGES.map((a, i) => `<div class="${i <= N.age ? 'fait' : N.ageCours && N.ageCours.vers === i ? 'cours' : ''}">${a.court}</div>`).join('')}</div>
-        ${N.ageCours ? `<p class="info">Passage à l’${PM.AGES[N.ageCours.vers].nom.toLowerCase()} : encore ${N.ageCours.reste} mois.</p>` : A ? `<button class="btn plein ${PM.peutPayer(N, A.cout) ? 'or' : ''}" data-act="age" ${PM.peutPayer(N, A.cout) ? '' : 'disabled'}>Passer à l’${A.nom.toLowerCase()} — ${coutHtml(A.cout)}</button>` : '<p class="info">Ton peuple a atteint l’âge mythique : bâtis une merveille !</p>'}
-        ${N.mineurs.length ? `<h3>Dieux mineurs</h3><div class="chips">${N.mineurs.map(id => { const g = P.mineurs.flat().find(x => x.id === id); return `<span class="chip">${esc(g.nom)} · ${PM.UNITES[g.unite].emoji} ${esc(PM.UNITES[g.unite].nom)}</span>`; }).join('')}</div>` : ''}
-        <h3>Pouvoirs divins</h3>${E.reglages.mythes === false ? '<p class="info">Les mythes sont désactivés dans cette partie.</p>' : pouvoirs}
+        ${N.ageCours ? `<p class="info">Passage à l’${PM.AGES[N.ageCours.vers].nom.toLowerCase()} : encore ${N.ageCours.reste} mois.</p>` : A ? `<button class="btn plein ${PM.peutPayer(N, A.cout) ? 'or' : ''}" data-act="age" ${PM.peutPayer(N, A.cout) ? '' : 'disabled'}>Passer à l’${A.nom.toLowerCase()} — ${coutHtml(A.cout)}</button>` : `<p class="info">Ton peuple a atteint l’${esc(PM.AGES[3].nom.toLowerCase())} : bâtis : ${esc(PM.MERVEILLE.nom)} !</p>`}
+        ${N.mineurs.length ? `<h3>${esc(PM.mot('mineurs'))}</h3><div class="chips">${N.mineurs.map(id => { const g = P.mineurs.flat().find(x => x.id === id); return `<span class="chip">${esc(g.nom)} · ${PM.UNITES[g.unite].emoji} ${esc(PM.UNITES[g.unite].nom)}</span>`; }).join('')}</div>` : ''}
+        <h3>${esc(PM.mot('pouvoirs'))}</h3>${E.reglages.mythes === false ? '<p class="info">Désactivés dans cette partie.</p>' : pouvoirs}
         ${N.effets.length ? `<h3>Bénédictions en cours</h3><div class="chips">${N.effets.map(e => `<span class="chip">${esc({ attaque: '⚔️ attaque', nourriture: '🌾 nourriture', production: '🏭 production', vitesse: '🏃 vitesse' }[e.cle] || e.cle)} ${e.valeur > 0 ? '+' : ''}${Math.round(e.valeur * 100)} % · ${e.reste} mois</span>`).join('')}</div>` : ''}
-        ${N.merveille ? `<h3>Merveille</h3><p class="info">${N.merveille.reste > 0 ? `Chantier à ${esc(E.provinces[N.merveille.prov].nom)} : encore ${N.merveille.reste} mois.` : `Achevée à ${esc(E.provinces[N.merveille.prov].nom)}. Gardée ${N.merveille.garde} / ${PM.MERVEILLE.garde} mois${E.reglages.victoire.merveille !== false ? ' pour la victoire' : ''}.`}</p>` : ''}`;
+        ${N.merveille ? `<h3>${esc(PM.MERVEILLE.nom)}</h3><p class="info">${N.merveille.reste > 0 ? `Chantier à ${esc(E.provinces[N.merveille.prov].nom)} : encore ${N.merveille.reste} mois.` : `Achevée à ${esc(E.provinces[N.merveille.prov].nom)}. Gardée ${N.merveille.garde} / ${PM.MERVEILLE.garde} mois${E.reglages.victoire.merveille !== false ? ' pour la victoire' : ''}.`}</p>` : ''}`;
     } else if (UI.onglet === 'diplo') {
       const autres = E.nations.filter(M => M.id !== n).sort((a, b) => b.vivante - a.vivante || PM.relation(j, n, b.id) - PM.relation(j, n, a.id));
       const maForce = PM.force(j, n) || 1;
@@ -516,13 +546,13 @@
   ACT['d-alliance'] = e => { UI.choixPacte = Object.assign(UI.choixPacte || { type: 'defensive' }, { nation: +e.dataset.v }); UI.onglet = 'alliances'; onglets(); ongletContenu(); };
   ACT['d-tribut'] = e => resultat(PM.envoyerTribut(UI.j, UI.j.etat.joueur, +e.dataset.v, 100));
   ACT['d-exiger'] = e => resultat(PM.exigerTribut(UI.j, UI.j.etat.joueur, +e.dataset.v));
-  ACT['d-voir'] = e => { const M = UI.j.etat.nations[+e.dataset.v]; if (M.capitale >= 0) { UI.rendu.centrerSur(M.capitale); selectionnerProvince(M.capitale); } };
+  ACT['d-voir'] = e => { const M = UI.j.etat.nations[+e.dataset.v]; if (M.capitale >= 0) { vue().centrerSur(M.capitale); selectionnerProvince(M.capitale); } };
 
   // ---------- pouvoirs (ciblage) ----------
   ACT.pouvoir = e => {
     const j = UI.j, n = j.etat.joueur, pid = e.dataset.v, Pw = PM.POUVOIRS[pid];
     if (Pw.cible === 'aucune') return lancer(pid, -1);
-    UI.cible = pid; $('#carte').classList.add('cible'); UI.rendu.cibleMode = pid;
+    UI.cible = pid; document.querySelectorAll('#carte, #carte3d').forEach(c => c.classList.add('cible')); UI.rendu.cibleMode = pid;
     const b = $('#bandeauCible'); b.classList.remove('cache');
     b.innerHTML = `${Pw.emoji} ${esc(Pw.nom)} : choisis ${Pw.cible === 'propre' ? 'une de tes provinces' : Pw.cible === 'nation' ? 'une province du peuple visé' : 'une province ennemie'} — <button class="lien" data-act="annuler-cible">annuler (Échap)</button>`;
     void n;
@@ -532,14 +562,14 @@
     if (r.ok) { PM.son('pouvoir'); UI.vuJournal = UI.j.etat.journal.length; }
     resultat(r);
   }
-  function annulerCible() { UI.cible = null; UI.rendu.cibleMode = null; $('#carte').classList.remove('cible'); $('#bandeauCible').classList.add('cache'); }
+  function annulerCible() { UI.cible = null; UI.rendu.cibleMode = null; document.querySelectorAll('#carte, #carte3d').forEach(c => c.classList.remove('cible')); $('#bandeauCible').classList.add('cache'); }
   ACT['annuler-cible'] = annulerCible;
 
   // ---------- sélection : province ou armée ----------
   function selectionnerProvince(p) { UI.sel = { type: 'province', id: p }; UI.rendu.sel = UI.sel; UI.rendu.majHalo(p); UI.rendu.chemin = null; panneauGauche(); }
   function selectionnerArmee(id) { const a = UI.j.etat.armees.find(x => x.id === id); if (!a) return; UI.sel = { type: 'armee', id }; UI.rendu.sel = UI.sel; UI.rendu.majHalo(a.prov); panneauGauche(); }
   function deselectionner() { UI.sel = null; UI.rendu.sel = null; UI.rendu.majHalo(-1); UI.rendu.chemin = null; $('#gauche').classList.add('cache'); }
-  ACT['sel-armee'] = e => { const id = +e.dataset.v, a = UI.j.etat.armees.find(x => x.id === id); if (a) { selectionnerArmee(id); UI.rendu.centrerSur(a.prov); } };
+  ACT['sel-armee'] = e => { const id = +e.dataset.v, a = UI.j.etat.armees.find(x => x.id === id); if (a) { selectionnerArmee(id); vue().centrerSur(a.prov); } };
   ACT['fermer-sel'] = deselectionner;
   function panneauGauche() {
     if (UI.editeur) return panneauEditeur();
@@ -561,7 +591,7 @@
     if (moi) {
       h += `<h3>Bâtiments</h3>${Object.entries(PM.BATIMENTS).map(([b, B]) => { const c = PM.coutBatiment(j, n, b), age = (B.age || 0) > N.age;
         return `<div class="ligne"><span>${B.icone}</span><div class="nom">${B.nom}<small>${esc(B.desc)}</small></div>${P.bat[b] ? '<span class="chip allie">✓</span>' : `<button class="btn petit" data-act="construire" data-v="${b}" ${age || !PM.peutPayer(N, c) ? 'disabled' : ''} title="${age ? 'Âge ' + PM.AGES[B.age].court : ''}">${age ? '🔒 ' + PM.AGES[B.age].court : coutHtml(c)}</button>`}</div>`; }).join('')}`;
-      if (N.age >= PM.MERVEILLE.age && !P.merveille && !N.merveille) { const c = PM.coutBatiment(j, n, 'merveille'); h += `<div class="ligne"><span>🗼</span><div class="nom">Merveille<small>${esc(PM.MERVEILLE.desc)}</small></div><button class="btn petit or" data-act="construire" data-v="merveille" ${PM.peutPayer(N, c) ? '' : 'disabled'}>${coutHtml(c)}</button></div>`; }
+      if (N.age >= PM.MERVEILLE.age && !P.merveille && !N.merveille) { const c = PM.coutBatiment(j, n, 'merveille'); h += `<div class="ligne"><span>🗼</span><div class="nom">${esc(PM.MERVEILLE.nom)}<small>${esc(PM.MERVEILLE.desc)}</small></div><button class="btn petit or" data-act="construire" data-v="merveille" ${PM.peutPayer(N, c) ? '' : 'disabled'}>${coutHtml(c)}</button></div>`; }
       if (P.dev < 5) { const c = PM.coutDev(j, p); h += `<button class="btn plein" style="margin-top:8px" data-act="developper" ${PM.peutPayer(N, c) ? '' : 'disabled'}>⭐ Développer au niveau ${P.dev + 1} — ${coutHtml(c)}</button>`; }
       h += `<h3>Recruter <small class="sous">(👥 ${fmt(PM.pop(j, n))}/${fmt(PM.popMax(j, n))})</small></h3>${PM.unitesDispo(j, n).map(id => { const u = PM.UNITES[id], c = PM.coutUnite(j, n, id), ok = PM.peutPayer(N, c);
         return `<div class="unite"><div class="em">${u.emoji}</div><div><b>${esc(u.nom)}</b> <small>${PM.CATEGORIES[u.cat]} · ⚔ ${u.att} · ❤ ${u.pv} · 👥 ${u.pop}${u.vitesse && u.vitesse !== 1 ? ' · 🏃 ' + u.vitesse : ''}</small><small>${coutHtml(c)}</small></div>
@@ -595,7 +625,7 @@
   ACT.envoyer = e => { const r = PM.ordonner(UI.j, +e.dataset.v, +e.dataset.p); resultat(r); };
   ACT.scinder = e => { const r = PM.scinder(UI.j, +e.dataset.v); resultat(r); };
   ACT.arreter = e => { const a = UI.j.etat.armees.find(x => x.id === +e.dataset.v); if (a) { a.chemin = []; rafraichir(); } };
-  ACT.centrer = e => UI.rendu.centrerSur(+e.dataset.v);
+  ACT.centrer = e => vue().centrerSur(+e.dataset.v);
   ACT.dissoudre = e => { const r = PM.dissoudre(UI.j, +e.dataset.v); deselectionner(); resultat(r); };
 
   function rafraichir() {
@@ -608,14 +638,14 @@
   }
 
   // ---------- souris, trackpad, clavier ----------
-  function evenementsCarte() {
-    const cv = $('#carte'); let bas = null, glisse = false, peint = new Set();
+  function evenementsCarte(cv) {
+    let bas = null, glisse = false, peint = new Set(), der = null;
     const pos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
     cv.addEventListener('contextmenu', e => e.preventDefault());
-    cv.addEventListener('pointerdown', e => { bas = { ...pos(e), cx: UI.rendu.cam.x, cy: UI.rendu.cam.y, b: e.button }; glisse = false; peint = new Set(); cv.setPointerCapture(e.pointerId); });
+    cv.addEventListener('pointerdown', e => { bas = { ...pos(e), b: e.button }; der = pos(e); glisse = false; peint = new Set(); cv.setPointerCapture(e.pointerId); });
     cv.addEventListener('pointermove', e => {
       const p = pos(e); if (!UI.j) return;
-      const prov = UI.rendu.provinceA(p.x, p.y);
+      const prov = vue().provinceA(p.x, p.y);
       if (prov !== UI.rendu.survol) {
         UI.rendu.survol = prov;
         if (UI.sel && UI.sel.type === 'armee' && prov >= 0 && !bas) { const a = UI.j.etat.armees.find(x => x.id === UI.sel.id); UI.rendu.chemin = a && a.owner === UI.j.etat.joueur && prov !== a.prov ? (c => c ? [a.prov, ...c] : null)(PM.chemin(UI.j, a.owner, a.prov, prov)) : null; }
@@ -624,7 +654,7 @@
       // éditeur : glisser peint les frontières (clic gauche)
       if (UI.editeur && UI.editeur.outil === 'peindre' && bas.b === 0) { if (prov >= 0 && !peint.has(prov)) { peint.add(prov); appliquerOutil(prov, true); } glisse = true; return; }
       if (Math.abs(p.x - bas.x) + Math.abs(p.y - bas.y) > 5) glisse = true;
-      if (glisse) { UI.rendu.cam.x = bas.cx + p.x - bas.x; UI.rendu.cam.y = bas.cy + p.y - bas.y; cv.classList.add('glisse'); }
+      if (glisse) { vue().deplacer(p.x - der.x, p.y - der.y); der = p; cv.classList.add('glisse'); }
     });
     cv.addEventListener('pointerup', e => {
       const p = pos(e), b = bas; bas = null; cv.classList.remove('glisse');
@@ -633,24 +663,24 @@
       if (glisse) return;
       clic(p.x, p.y, b.b === 2 || e.ctrlKey);
     });
-    cv.addEventListener('dblclick', e => { const p = pos(e); UI.rendu.zoomer(1.8, p.x, p.y); });
+    cv.addEventListener('dblclick', e => { const p = pos(e); vue().zoomer(1.8, p.x, p.y); });
     cv.addEventListener('wheel', e => {
       e.preventDefault(); const p = pos(e);
-      if (e.ctrlKey) UI.rendu.zoomer(Math.exp(-e.deltaY * 0.012), p.x, p.y);
-      else if (e.deltaMode === 1 || (Math.abs(e.deltaY) >= 40 && e.deltaX === 0 && Number.isInteger(e.deltaY))) UI.rendu.zoomer(e.deltaY < 0 ? 1.15 : 1 / 1.15, p.x, p.y);
-      else { UI.rendu.cam.x -= e.deltaX; UI.rendu.cam.y -= e.deltaY; }
+      if (e.ctrlKey) vue().zoomer(Math.exp(-e.deltaY * 0.012), p.x, p.y);
+      else if (e.deltaMode === 1 || (Math.abs(e.deltaY) >= 40 && e.deltaX === 0 && Number.isInteger(e.deltaY))) vue().zoomer(e.deltaY < 0 ? 1.15 : 1 / 1.15, p.x, p.y);
+      else vue().deplacer(-e.deltaX, -e.deltaY);
     }, { passive: false });
     window.addEventListener('resize', () => { if (UI.rendu) UI.rendu.dirty = true; });
   }
   function clic(x, y, droit) {
-    const j = UI.j, E = j.etat, prov = UI.rendu.provinceA(x, y);
+    const j = UI.j, E = j.etat, prov = vue().provinceA(x, y);
     if (UI.editeur) { if (prov >= 0) appliquerOutil(prov, false); return; }
     if (UI.cible) {
       if (prov < 0) return;
       const Pw = PM.POUVOIRS[UI.cible];
       return lancer(UI.cible, Pw.cible === 'nation' ? E.provinces[prov].owner : prov);
     }
-    const aid = UI.rendu.armeeA(x, y);
+    const aid = vue().armeeA(x, y);
     const armeeSel = UI.sel && UI.sel.type === 'armee' ? E.armees.find(a => a.id === UI.sel.id) : null;
     if (armeeSel && armeeSel.owner === E.joueur && prov >= 0 && (droit || (aid == null && prov !== armeeSel.prov))) {
       const r = PM.ordonner(j, armeeSel.id, prov); UI.rendu.chemin = null; resultat(r); if (r.ok) PM.son('clic'); return;
@@ -666,11 +696,13 @@
     if (k === ' ') { e.preventDefault(); if (!UI.editeur) reglerVitesse(UI.vitesse ? 0 : (UI.derniereVitesse || 1)); }
     else if (['1', '2', '3'].includes(k) && !UI.editeur) reglerVitesse(+k);
     else if (k === 'Escape') { if (UI.cible) annulerCible(); else deselectionner(); }
-    else if (k === '+' || k === '=') UI.rendu.zoomer(1.2, innerWidth / 2, innerHeight / 2);
-    else if (k === '-') UI.rendu.zoomer(1 / 1.2, innerWidth / 2, innerHeight / 2);
-    else if (k === 'c' || k === 'C') UI.rendu.centrerSur(UI.j.etat.nations[UI.j.etat.joueur].capitale);
-    else if (k === 'ArrowLeft') UI.rendu.cam.x += 60; else if (k === 'ArrowRight') UI.rendu.cam.x -= 60;
-    else if (k === 'ArrowUp') UI.rendu.cam.y += 60; else if (k === 'ArrowDown') UI.rendu.cam.y -= 60;
+    else if (k === '+' || k === '=') vue().zoomer(1.2, innerWidth / 2, innerHeight / 2);
+    else if (k === '-') vue().zoomer(1 / 1.2, innerWidth / 2, innerHeight / 2);
+    else if (k === 'c' || k === 'C') vue().centrerSur(UI.j.etat.nations[UI.j.etat.joueur].capitale);
+    else if (k === 'ArrowLeft' || k === 'a' || k === 'A') vue().deplacer(60, 0); else if (k === 'ArrowRight' || k === 'd' || k === 'D') vue().deplacer(-60, 0);
+    else if (k === 'ArrowUp' || k === 'w' || k === 'W') vue().deplacer(0, 60); else if (k === 'ArrowDown' || k === 's' || k === 'S') vue().deplacer(0, -60);
+    else if ((k === 'q' || k === 'Q') && vue().tourner) vue().tourner(-0.25); else if ((k === 'e' || k === 'E') && vue().tourner) vue().tourner(0.25);
+    else if (k === 'v' || k === 'V') ACT.vue();
     else if (k === 'Enter') { e.preventDefault(); $('#decretTexte').focus(); }
     if (UI.vitesse) UI.derniereVitesse = UI.vitesse;
   });
@@ -755,6 +787,7 @@
         : `<p class="info">L’oracle est une IA qui tourne sur ton Mac (sans internet une fois installée). Il comprend les décrets écrits librement, comme dans Pax Historia. Téléchargement unique d’environ ${etat ? etat.mo : 2500} Mo, partagé avec QuentMovie et tes autres outils.</p>
           <button class="btn or" id="rInstaller">Installer l’oracle</button><div class="progression" style="margin-top:8px"><i id="rProg" style="width:0"></i></div><p class="sous" id="rProgT"></p>`}
       <h3>Mises à jour</h3><p class="sous" id="rMaj">${G.paxMaj ? 'Recherche…' : 'Version en ligne.'}</p>
+      ${G.paxMaj ? '<p class="sous">Les nouvelles versions se téléchargent seules (au démarrage puis toutes les 6 heures) et s’installent à la fermeture.</p><button class="btn petit" data-act="maj-chercher">Rechercher maintenant</button>' : ''}
       <div class="actions-bas"><button class="btn or" data-act="fermer">Fermer</button></div>`);
     $('#rSons').onchange = e => PM.changerSon('sons', e.target.checked);
     $('#rMusique').onchange = e => PM.changerSon('musique', e.target.checked);
@@ -773,6 +806,16 @@
     el.innerHTML = e.etat === 'pret' ? `Version ${esc(e.nouvelle)} prête. <button class="btn petit or" data-act="maj-installer">Redémarrer pour installer</button>` : esc(t || '');
   }
   ACT['maj-installer'] = () => G.paxMaj && G.paxMaj.installer();
+  ACT['maj-plus-tard'] = () => { $('#bandeauMaj').classList.add('cache'); UI.majCachee = true; };
+  // une nouvelle version téléchargée en arrière-plan : on le dit, sans interrompre la partie
+  function bandeauMaj(e) {
+    const b = $('#bandeauMaj'); if (!b || !e || e.etat !== 'pret' || UI.majCachee) return;
+    b.innerHTML = `<b>🆕 Pax Mythica ${esc(e.nouvelle)} est prête</b><p>${esc(String(e.notes || '').replace(/\r/g, '').slice(0, 600))}</p>
+      <div class="chips"><button class="btn petit or" data-act="maj-installer">Redémarrer pour installer</button><button class="btn petit" data-act="maj-plus-tard">À la fermeture</button></div>`;
+    b.classList.remove('cache');
+  }
+  UI.bandeauMaj = bandeauMaj;
+  ACT['maj-chercher'] = async () => { if (!G.paxMaj) return toast('Les mises à jour se font dans l’application Mac.'); toast('Recherche d’une nouvelle version…'); const e = await G.paxMaj.verifier(); setTimeout(async () => { const x = await G.paxMaj.etat(); majTexte(x); bandeauMaj(x); if (x.etat === 'a-jour') toast(`Pax Mythica ${x.version} est à jour.`, 'ok'); else if (x.etat === 'erreur') toast('Mise à jour impossible : ' + x.erreur, 'ko'); }, 4000); void e; };
 
   ACT.aide = () => ouvrirModal(`<h2>Comment jouer</h2><div class="aide">
     <h3>Le but</h3><ul><li><b>Conquête</b> : soumettre tous les peuples (ou les trois quarts du monde).</li><li><b>Merveille</b> : à l’âge mythique, bâtir une merveille et la garder 5 ans.</li><li>Ou le meilleur score si une limite de temps est fixée.</li></ul>
@@ -802,7 +845,7 @@
   window.addEventListener('beforeunload', () => { if (UI.j && !UI.editeur && UI.ecran === 'jeu') sauverAuto(); });
 
   // démarrage
-  if (G.paxMaj) { G.paxMaj.surChangement(majTexte); G.paxMaj.etat().then(e => { if (e && e.version) $('#versionApp').textContent = 'Version ' + e.version; }).catch(() => {}); }
+  if (G.paxMaj) { G.paxMaj.surChangement(e => { majTexte(e); bandeauMaj(e); }); G.paxMaj.etat().then(e => { if (e && e.version) $('#versionApp').textContent = 'Version ' + e.version; bandeauMaj(e); }).catch(() => {}); }
   if (G.paxIA) G.paxIA.etat().then(e => { UI.oracle.installee = !!(e && e.installee); }).catch(() => {});
   UI.ACT = ACT; UI.rafraichir = rafraichir; UI.selectionnerProvince = selectionnerProvince; UI.lancerPartie = lancerPartie; UI.unMois = unMois; UI.accueil = accueil; UI.ouvrirEditeur = ouvrirEditeur; UI.verifierAttente = verifierAttente; UI.fermerModal = fermerModal;
   accueil();

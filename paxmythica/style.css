@@ -73,8 +73,10 @@ table.peuples input[type=text] { width: 100%; }
 
 /* jeu */
 #carte { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
-#carte.glisse { cursor: grabbing; }
-#carte.cible { cursor: crosshair; }
+#carte3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+#etiquettes3d { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#carte.glisse, #carte3d.glisse { cursor: grabbing; }
+#carte.cible, #carte3d.cible { cursor: crosshair; }
 #barre { position: absolute; top: 0; left: 0; right: 0; height: 48px; display: flex; align-items: center; gap: 14px; padding: 0 12px 0 84px; background: linear-gradient(rgba(20,16,11,.97), rgba(20,16,11,.88)); border-bottom: 1px solid var(--bord); z-index: 5; -webkit-app-region: drag; }
 #barre > * { -webkit-app-region: no-drag; }
 #barre .nation { display: flex; align-items: center; gap: 8px; font-family: var(--serif); font-size: 16px; font-weight: 700; white-space: nowrap; }
@@ -171,3 +173,8 @@ table.peuples input[type=text] { width: 100%; }
 .outils { display: flex; flex-wrap: wrap; gap: 6px; }
 .outils .btn.actif { border-color: var(--or); background: linear-gradient(#5a4628, #3a2d1b); }
 @media (max-width: 1100px) { #droite { width: 300px; } #gauche { width: 290px; } .decret { width: min(620px, calc(100vw - 40px)); bottom: 10px; } .res .r { min-width: 46px; } }
+
+/* mise à jour prête (visible sur tous les écrans) */
+.bandeau-maj { position: fixed; right: 16px; bottom: 16px; z-index: 30; max-width: 380px; background: linear-gradient(#3a2e1f, #241c13); border: 1px solid var(--or); border-radius: 12px; padding: 12px 14px; box-shadow: 0 12px 40px rgba(0,0,0,.5); font-size: 13px; }
+.bandeau-maj b { color: var(--or2); font-family: var(--serif); font-size: 15px; }
+.bandeau-maj p { margin: 4px 0 10px; color: var(--doux); max-height: 110px; overflow: auto; white-space: pre-line; }

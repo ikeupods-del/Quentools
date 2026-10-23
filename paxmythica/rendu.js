@@ -11,7 +11,7 @@
     constructor(canvas) {
       this.cv = canvas; this.cx = canvas.getContext('2d');
       this.cam = { x: 0, y: 0, z: 1 }; this.sel = null; this.survol = -1; this.chemin = null; this.cibleMode = null;
-      this.temps = 0; this.dirty = true;
+      this.temps = 0; this.dirty = true; this.version = { base: 0, calque: 0, halo: 0 };
     }
     // nouvelle partie ou nouvelle carte
     lier(j) {
@@ -25,21 +25,31 @@
       const C = this.j.carte, E = this.j.etat, W = C.w, H = C.h, ctx = this.base.getContext('2d'), img = ctx.createImageData(W, H), d = img.data;
       const cols = E.provinces.map(p => PM.TERRAINS[p.terrain].couleur);
       let s = 1234567; const grain = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return (s / 0x7fffffff) - 0.5; };
+      // carte peinte : mer en dégradé avec courbes de profondeur, écume des côtes, relief ombré, forêts en touches, dunes, neiges
+      const hash = (x, y) => { let n = (x * 374761393 + y * 668265263) | 0; n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
         const k = y * W + x, a = C.pix[k], h = PM.hauteurPixel(C, x, y), o = k * 4;
         if (a < 0) {
-          // mer : plus claire près des côtes
-          const t = Math.max(0, Math.min(1, (h - 0.25) / 0.25)), cote = (x > 1 && C.pix[k - 2] >= 0) || (x < W - 2 && C.pix[k + 2] >= 0) || (y > 1 && C.pix[k - 2 * W] >= 0) || (y < H - 2 && C.pix[k + 2 * W] >= 0);
-          d[o] = 22 + t * 40; d[o + 1] = 52 + t * 62; d[o + 2] = 84 + t * 64;
-          if (cote) { d[o] += 40; d[o + 1] += 44; d[o + 2] += 36; }
+          let dist = 9; // distance à la côte (pixels, jusqu'à 8)
+          for (let r = 1; r <= 8 && dist > 8; r++) if ((x >= r && C.pix[k - r] >= 0) || (x < W - r && C.pix[k + r] >= 0) || (y >= r && C.pix[k - r * W] >= 0) || (y < H - r && C.pix[k + r * W] >= 0)) dist = r;
+          const t = Math.max(0, Math.min(1, (h - 0.18) / 0.32)), iso = Math.abs(((h * 22) % 1) - 0.5) < 0.04 ? 10 : 0, vague = Math.sin(x * 0.21 + Math.sin(y * 0.05) * 3) * Math.sin(y * 0.19) > 0.93 ? 8 : 0;
+          d[o] = 14 + t * 46 + iso + vague; d[o + 1] = 40 + t * 76 + iso + vague; d[o + 2] = 70 + t * 78 + iso * 0.8 + vague;
+          if (dist <= 8) { const f = (9 - dist) / 8; d[o] += f * 40; d[o + 1] += f * 52; d[o + 2] += f * 40; if (dist <= 2) { d[o] = 214; d[o + 1] = 230; d[o + 2] = 228; } }
         } else {
           const hx = PM.hauteurPixel(C, Math.min(W - 1, x + 2), y) - PM.hauteurPixel(C, Math.max(0, x - 2), y), hy = PM.hauteurPixel(C, x, Math.min(H - 1, y + 2)) - PM.hauteurPixel(C, x, Math.max(0, y - 2));
-          const ombre = 1 + (-(hx + hy) * 9) + grain() * 0.06 + (h - 0.6) * 0.25, c = cols[a];
-          d[o] = c[0] * ombre; d[o + 1] = c[1] * ombre; d[o + 2] = c[2] * ombre;
+          const t = E.provinces[a].terrain, rnd = hash(x, y), gros = hash(x >> 3, y >> 3);
+          let c = cols[a], ombre = 1 + (-(hx + hy) * 11) + grain() * 0.05 + (gros - 0.5) * 0.1 + (h - 0.6) * 0.2;
+          let r = c[0], g = c[1], b = c[2];
+          if (t === 'foret' && rnd < 0.18) { r *= 0.62; g *= 0.7; b *= 0.6; }
+          if (t === 'desert') { const dune = Math.sin(x * 0.35 + Math.sin(y * 0.08) * 4); ombre += dune * 0.05; }
+          if (t === 'montagne' && h > 0.86) { const nv = Math.min(1, (h - 0.86) * 9); r += (245 - r) * nv; g += (247 - g) * nv; b += (250 - b) * nv; }
+          const bord = (x > 0 && C.pix[k - 1] < 0) || (x < W - 1 && C.pix[k + 1] < 0) || (y > 0 && C.pix[k - W] < 0) || (y < H - 1 && C.pix[k + W] < 0);
+          if (bord) ombre *= 0.55; else if (h < 0.52) { r += (226 - r) * 0.55; g += (210 - g) * 0.55; b += (160 - b) * 0.55; }
+          d[o] = r * ombre; d[o + 1] = g * ombre; d[o + 2] = b * ombre;
         }
         d[o + 3] = 255;
       }
-      ctx.putImageData(img, 0, 0);
+      ctx.putImageData(img, 0, 0); this.version.base++;
     }
     // couleurs des peuples, frontières des provinces (fines) et des peuples (épaisses)
     majProprietaires() {
@@ -60,12 +70,12 @@
         else if ((x + y) % 11 === 0) { d[b] = 70; d[b + 1] = 58; d[b + 2] = 44; d[b + 3] = 16; } // terres libres finement hachurées
       }
       ctx.putImageData(img, 0, 0);
-      this.etiquettes = this.calculerEtiquettes(); this.dirty = true;
+      this.etiquettes = this.calculerEtiquettes(); this.dirty = true; this.version.calque++;
     }
     // surbrillance d'une province (sélection)
     majHalo(p) {
       const C = this.j.carte, W = C.w, H = C.h, ctx = this.halo.getContext('2d');
-      ctx.clearRect(0, 0, W, H); this.selProv = p; if (p == null || p < 0) return;
+      ctx.clearRect(0, 0, W, H); this.selProv = p; this.version.halo++; if (p == null || p < 0) return;
       const pr = C.provinces[p], r = Math.ceil(C.rayon * 3), x0 = Math.max(0, Math.floor(pr.cx - r)), y0 = Math.max(0, Math.floor(pr.cy - r)), x1 = Math.min(W, Math.ceil(pr.cx + r)), y1 = Math.min(H, Math.ceil(pr.cy + r));
       const img = ctx.createImageData(x1 - x0, y1 - y0), d = img.data;
       for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
@@ -212,6 +222,9 @@
       }
       j.anims = A.filter(a => a.t < 1600);
     }
+    stabiliser() { this.dessiner(0); }
+    deplacer(dx, dy) { this.cam.x += dx; this.cam.y += dy; this.dirty = true; }
+    ecranArmee(id) { const b = (this.boites || []).find(x => x.id === id); return b ? { x: b.x + b.w / 2, y: b.y + b.h / 2 - 2 } : null; }
     armeeA(sx, sy) { for (const b of (this.boites || []).slice().reverse()) if (sx >= b.x && sx <= b.x + b.w && sy >= b.y && sy <= b.y + b.h) return b.id; return null; }
   }
   PM.Rendu = Rendu;

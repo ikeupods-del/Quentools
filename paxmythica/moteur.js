@@ -137,7 +137,7 @@
   }
 
   // ---------- création d'une partie ----------
-  PM.REGLAGES = { graine: 1, taille: 'moyenne', forme: 'continent', terre: 0.48, depart: 3, ressources: 'normales', ageDepart: 0, mythes: true, evenements: 1, difficulte: 1, neutres: 1, paixInitiale: 24,
+  PM.REGLAGES = { epoque: 'antique', graine: 1, taille: 'moyenne', forme: 'continent', terre: 0.48, depart: 3, ressources: 'normales', ageDepart: 0, mythes: true, evenements: 1, difficulte: 1, neutres: 1, paixInitiale: 24,
     victoire: { conquete: true, merveille: true, annees: 0 } };
   PM.RES_DEPART = { faibles: { nourriture: 150, bois: 100, or: 80, faveur: 10 }, normales: { nourriture: 300, bois: 220, or: 200, faveur: 25 }, riches: { nourriture: 800, bois: 600, or: 600, faveur: 80 } };
   // nations proposées : n peuples, panthéons alternés, noms et couleurs distincts
@@ -153,6 +153,7 @@
 
   PM.nouvellePartie = function (r, carte) {
     const reglages = Object.assign({}, PM.REGLAGES, r, { victoire: Object.assign({}, PM.REGLAGES.victoire, r && r.victoire) });
+    if (PM.appliquerEpoque) PM.appliquerEpoque(reglages.epoque);
     if (!reglages.nations || reglages.nations.length < 2) reglages.nations = PM.nationsParDefaut(reglages.nombre || 5, reglages.graine);
     const C = carte || PM.genererCarte(reglages);
     const E = { version: 1, reglages, alea: (reglages.graine * 2654435761) >>> 0, mois: 0, joueur: reglages.joueur || 0, nations: [], provinces: [], armees: [], guerres: [], pactes: [], seqPacte: 0, treves: {}, journal: [], attente: [], fin: null, seqArmee: 0, prochainEvt: 8 };
@@ -199,12 +200,13 @@
       nouvelleArmee(j, N.id, N.capitale, { [us[0]]: Math.round(6 * k), [us[1]]: Math.round(4 * k), [us[2]]: Math.round(2 * k) });
     }
     for (const N of E.nations) for (const M of E.nations) if (N.id < M.id) N.relations[M.id] = M.relations[N.id] = Math.round(((N.relations[M.id] || 0) + (M.relations[N.id] || 0)) / 2);
-    journal(j, `Les dieux regardent le monde. ${E.nations.length} peuples se partagent les terres.`, 'info');
+    journal(j, `${(reglages.epoque || 'antique') === 'antique' ? 'Les dieux regardent le monde.' : PM.EPOQUES ? PM.EPOQUES[reglages.epoque].nom + '.' : ''} ${E.nations.length} peuples se partagent les terres.`, 'info');
     return j;
   };
 
   // reprise d'une sauvegarde : la carte est régénérée depuis la graine
   PM.charger = function (etat, carte) {
+    if (PM.appliquerEpoque) PM.appliquerEpoque(etat.reglages.epoque);
     const C = carte || PM.genererCarte(etat.reglages);
     if (C.provinces.length !== etat.provinces.length) throw new Error('Carte différente de la sauvegarde');
     return { etat, carte: C, anims: [] };
@@ -308,13 +310,13 @@
     if (!g) return refus('Ce dieu n’est pas proposé.');
     if (i >= 0) E.attente.splice(i, 1);
     N.mineurs.push(g.id); N.pouvoirs[g.pouvoir] = 0;
-    journal(j, `${N.nom} vénère désormais ${g.nom}.`, 'age', [n]);
+    journal(j, `${N.nom} ${PM.mot ? PM.mot('venere') : 'vénère'} désormais ${g.nom}.`, 'age', [n]);
     return { ok: true, message: `${g.nom} t’accorde ${PM.UNITES[g.unite].nom} et « ${PM.POUVOIRS[g.pouvoir].nom} ».` };
   };
   function choisirMineurAuto(j, n, silencieux) {
     const N = nat(j, n), l = PM.mineursProposes(j, n, N.age); if (!l.length) return;
     const g = l[Math.floor(alea(j.etat) * l.length)]; N.mineurs.push(g.id); N.pouvoirs[g.pouvoir] = 0;
-    if (!silencieux) journal(j, `${N.nom} entre dans l’${PM.AGES[N.age].nom.toLowerCase()} et vénère ${g.nom}.`, 'age', [n]);
+    if (!silencieux) journal(j, `${N.nom} entre dans l’${PM.AGES[N.age].nom.toLowerCase()} et ${PM.mot ? PM.mot('venere') : 'vénère'} ${g.nom}.`, 'age', [n]);
   }
   PM.ordonner = function (j, id, vers) {
     const E = j.etat, a = E.armees.find(x => x.id === id); if (!a) return refus('Armée introuvable.');
@@ -467,7 +469,7 @@
     if (f.vortex) { let k = 0; for (const a of E.armees) if (a.owner === n && !a.paralysie) { a.prov = cible; a.chemin = []; k++; } texte += ` ${k} armée${k > 1 ? 's' : ''} transportée${k > 1 ? 's' : ''}.`; resoudreProvince(j, cible); }
     nettoyerArmees(j);
     const cibleNom = Pw.cible === 'nation' ? nat(j, cible).nom : P ? P.nom : '';
-    journal(j, `${Pw.emoji} ${N.nom} invoque ${Pw.nom}${cibleNom ? ' sur ' + cibleNom : ''}.${texte}`, 'pouvoir', [n].concat(Pw.cible === 'nation' ? [cible] : P && P.owner >= 0 ? [P.owner] : []));
+    journal(j, `${Pw.emoji} ${N.nom} ${PM.mot ? PM.mot('invoque') : 'invoque'} ${Pw.nom}${cibleNom ? ' sur ' + cibleNom : ''}.${texte}`, 'pouvoir', [n].concat(Pw.cible === 'nation' ? [cible] : P && P.owner >= 0 ? [P.owner] : []));
     anim(j, { type: 'pouvoir', prov: P ? P.id : Pw.cible === 'nation' ? nat(j, cible).capitale : cap, emoji: Pw.emoji, pid });
     return { ok: true, message: `${Pw.nom} !${texte}` };
   };
@@ -667,7 +669,7 @@
   // ---------- événements ----------
   PM.lancerEvenement = function (j, id) {
     const E = j.etat, n = E.joueur, deja = E.evtsVus || (E.evtsVus = []);
-    const l = PM.EVENEMENTS.filter(e => !deja.slice(-6).includes(e.id)), ev = id ? PM.EVENEMENTS.find(e => e.id === id) : choix(E, l);
+    const l = PM.EVENEMENTS.filter(e => !deja.slice(-6).includes(e.id) && (!e.epoques || e.epoques.includes(E.reglages.epoque || 'antique'))), ev = id ? PM.EVENEMENTS.find(e => e.id === id) : choix(E, l);
     const miennes = E.provinces.filter(p => p.owner === n), autres = vivantes(j).filter(N => N.id !== n);
     if (!ev || !miennes.length) return null;
     deja.push(ev.id);

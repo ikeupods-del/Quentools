@@ -214,7 +214,7 @@
     const E = j.etat, N = E.nations[n], P = PM.PANTHEONS[N.pantheon];
     const miennes = E.provinces.filter(p => p.owner === n), autres = E.nations.filter(M => M.vivante && M.id !== n);
     return [
-      `Date : ${PM.date(E.mois)}. Peuple du joueur : ${N.nom} (${P.nom}, dieu ${PM.majeur(N).nom}, ${PM.AGES[N.age].nom}).`,
+      `Époque : ${PM.EPOQUES ? PM.EPOQUES[PM.epoque].nom : 'Antiquité'}. Date : ${PM.date(E.mois)}. Peuple du joueur : ${N.nom} (${P.nom}, dieu ${PM.majeur(N).nom}, ${PM.AGES[N.age].nom}).`,
       `Ressources : ${Math.round(N.res.nourriture)} nourriture, ${Math.round(N.res.bois)} bois, ${Math.round(N.res.or)} or, ${Math.round(N.res.faveur)} faveur.`,
       `Provinces du joueur : ${miennes.slice(0, 30).map(p => p.nom + (p.id === N.capitale ? ' (capitale)' : '')).join(', ')}.`,
       `Autres peuples : ${autres.map(M => `${M.nom} (${PM.PANTHEONS[M.pantheon].nom}, ${PM.enGuerre(j, n, M.id) ? 'en guerre' : PM.allies(j, n, M.id) ? 'allié' : PM.lies(j, n, M.id) ? 'pacte de non-agression' : 'paix'}, relations ${Math.round(PM.relation(j, n, M.id))}, provinces : ${E.provinces.filter(p => p.owner === M.id).slice(0, 8).map(p => p.nom).join(', ')})`).join(' ; ')}.`,
@@ -236,7 +236,7 @@
     },
     required: ['recit', 'actions']
   };
-  const SYSTEME = `Tu es l'oracle et le chroniqueur d'un jeu de stratégie mythologique. Le joueur écrit un décret pour son peuple.
+  const SYSTEME = `Tu es l'oracle et le chroniqueur d'un jeu de stratégie (époque indiquée dans la situation : garde son vocabulaire). Le joueur écrit un décret pour son peuple.
 1. Traduis le décret en actions du jeu, uniquement parmi : guerre, paix, pacte (nation, pacte = nonagression, defensive ou totale ; nom éventuel du pacte), appel (appeler l'allié « nation » aux armes contre « ennemi »), soutien (demander de l'or à un allié), rompre (quitter le pacte qui lie à « nation »), renommer_pacte (nom), tribut (offrir de l'or, nombre = or), exiger (un tribut), recruter (unite, nombre, province), construire (batiment, province), developper (province), age (passer à l'âge suivant), pouvoir (pouvoir, province ou nation visée), marcher (province visée par la plus grande armée), offrande (prier les dieux), jeux (fêtes pour plaire aux autres peuples), commerce, renommer_province (province, nom), renommer_peuple (nom), capitale (province).
 2. Utilise exactement les noms de peuples, provinces, unités et pouvoirs donnés. N'invente aucune action ni aucun chiffre : le jeu applique ses propres règles et coûts.
 3. Écris un récit épique de 2 à 4 phrases au présent, en français, qui raconte le décret sans annoncer de résultat chiffré. Ajoute au plus deux réactions d'autres peuples (une phrase chacune).

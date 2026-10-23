@@ -2,7 +2,7 @@
 // ordres et pouvoirs, décrets lus par mots-clés, sauvegarde et rechargement identiques. Lancer : node tests/moteur.js
 'use strict';
 const path = require('path');
-for (const f of ['donnees', 'carte', 'moteur', 'alliances', 'ia-nations', 'oracle']) require(path.join(__dirname, '..', f + '.js'));
+for (const f of ['donnees', 'epoques', 'carte', 'moteur', 'alliances', 'ia-nations', 'oracle']) require(path.join(__dirname, '..', f + '.js'));
 const PM = globalThis.PM;
 let ko = 0, n = 0;
 const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
@@ -147,6 +147,23 @@ console.log(`  (${finies} partie(s) sur 3 terminée(s) par une victoire en 40 an
   // sauvegarde avec les pactes
   const c = PM.charger(JSON.parse(JSON.stringify(Tt)));
   ok(PM.allies(c, 1, 2) && PM.lies(c, 0, 3), 'pactes gardés dans la sauvegarde');
+}
+
+// 7. époques : chaque époque renomme tout, garde les règles, se joue, puis l'Antiquité revient intacte
+{
+  const ref = JSON.stringify([PM.UNITES.hoplite, PM.POUVOIRS.foudre, PM.AGES, PM.PANTHEONS.grecs.majeurs]);
+  for (const ep of Object.keys(PM.EPOQUES)) {
+    const j = PM.nouvellePartie({ epoque: ep, graine: 8, nombre: 4, taille: 'petite' });
+    ok(PM.epoque === ep, `époque ${ep} appliquée`);
+    ok(Object.values(PM.UNITES).every(u => u.nom && u.emoji) && Object.values(PM.POUVOIRS).every(p => p.nom && p.emoji && p.desc), `époque ${ep} : noms complets`);
+    ok(new Set(Object.values(PM.POUVOIRS).map(p => p.nom)).size >= 20, `époque ${ep} : pouvoirs variés`);
+    ok(Object.values(PM.PANTHEONS).every(P => P.nom && P.majeurs.every(d => d.nom) && PM.NOMS_PEUPLES[Object.keys(PM.PANTHEONS).find(k => PM.PANTHEONS[k] === P)].length >= 3), `époque ${ep} : cultures`);
+    j.etat.nations[0].ia = true; for (let m = 0; m < 60; m++) { PM.mois(j); j.etat.attente = []; }
+    const c = PM.charger(JSON.parse(JSON.stringify(j.etat)));
+    ok(PM.epoque === ep && c.etat.reglages.epoque === ep, `époque ${ep} gardée au rechargement`);
+  }
+  PM.appliquerEpoque('antique');
+  ok(JSON.stringify([PM.UNITES.hoplite, PM.POUVOIRS.foudre, PM.AGES, PM.PANTHEONS.grecs.majeurs]) === ref, 'retour à l’Antiquité sans trace');
 }
 
 // 5. décrets lus par mots-clés

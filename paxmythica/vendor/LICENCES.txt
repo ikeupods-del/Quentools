@@ -1,0 +1,2 @@
+three.js r128 (three-r128.min.js) — licence MIT, © 2010-2021 three.js authors, https://github.com/mrdoob/three.js
+Copie du fichier build/three.min.js du paquet npm « three@0.128.0 », hébergée ici pour ne dépendre d'aucun service externe.
